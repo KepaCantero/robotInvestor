@@ -1,13 +1,19 @@
 # robotInvestor — Bloque A (Buscador de Oportunidades de Inversión)
 
-Proyecto: implementar el Bloque A V5.0 (25 agentes LLM + Motor determinista) descrito en
-este paquete, con Claude Code como desarrollador. La entrega V5.0 (02-11-2026) es la
+Proyecto: implementar el Bloque A V5.1 (25 agentes LLM + Motor determinista) descrito en
+este paquete, con Claude Code como desarrollador. La entrega V5.1 (03-11-2026) es la
 **fuente de verdad**; este archivo es el protocolo de trabajo que la acompaña.
 
 Lectura mínima obligatoria antes de tocar código:
-1. `README - Índice de la entrega y registro de la reforma V5.0.md` (mapa del paquete)
-2. `08_Arquitectura/Arquitectura del Bloque A - Descripción detallada para LLM - V4.0.md` (89 líneas, resumen denso)
-3. `01_Gobernanza/Documento 0 - Protocolo maestro del Bloque A - Versión óptima V5.0.md` (950 líneas — la constitución: R1–R25, CT-01..CT-22, Anexo A/B)
+1. `README - Índice de la entrega y registro de la actualización V5.1.md` (mapa del paquete y registro de cambios A1–A4)
+2. `08_Arquitectura/Arquitectura del Bloque A - Descripción detallada para LLM - V4.0.md` (resumen denso; la imagen V5.1 añade CT-23/24/25, F11 y C6)
+3. `01_Gobernanza/Documento 0 - Protocolo maestro del Bloque A - Versión óptima V5.1.md` (la constitución: R1–R27, CT-01..CT-25, F1–F11, seis ciclos C1–C6, H1–H5, Anexo A/B)
+
+Novedades V5.1 (A1–A4) ya presentes en el ejecutor V1.2 (bóveda simulada; revisión C6
+determinista sin llamada al Analista): CT-23 consulta al Broker, CT-24 seguimiento
+encargado (ciclo C6, F11, informe de seguimiento), CT-25 credenciales con bóveda en
+HT-01, horizonte H5 décadas con hitos HIT- y `horizonte_principal`/`naturaleza_inversion`
+obligatorios validados por HT-09 (C17–C19).
 
 ## Reglas del proyecto (innegociables)
 
@@ -23,7 +29,7 @@ Lectura mínima obligatoria antes de tocar código:
    contra ellos (jsonschema), nunca al revés.
 4. **Mock antes que API.** Toda funcionalidad nueva se valida primero con
    `--cliente mock` (coste cero, reproducible). La API real solo en modo sombra.
-5. **Nada cuenta como hecho sin tests.** El ejecutor arranca con 45 tests verdes;
+5. **Nada cuenta como hecho sin tests.** El ejecutor arranca con 58 tests verdes (V5.1);
    ninguna fase puede dejarlos por debajo. Cada contrato/ficha nueva añade sus pruebas.
 6. **F7/F8/F9 son almacenes indexados**, no contexto: se accede por identificador
    (RF-xxxx, TM-xx, fondo_entry_NNN), nunca se cargan enteros (7.200–11.300 líneas).
@@ -43,6 +49,9 @@ Lectura mínima obligatoria antes de tocar código:
 - **Identificadores de modelo sin verificar:** `config/por_defecto.yaml` usa
   `claude-opus-5-5`/`claude-sonnet-5-5`/`claude-haiku-5-5` y el propio paquete exige
   comprobarlos en la página de modelos de Anthropic antes de usar la API real.
+- **Versión del ejecutor sin subir:** el README V5.1 declara "ejecutor V1.2" pero
+  `11_Ejecutor/pyproject.toml` sigue en `version = "1.1.0"`. Anotado en
+  `docs/incidencias.md`; no corregir en silencio.
 - **Referencias con estado PENDIENTE_BARRIDO** (RF-0035, RF-0550, RF-0555): confirmar
   con `bloque-a verificar-enlaces` en el primer barrido, no asumirlas válidas.
 
@@ -54,7 +63,7 @@ Lectura mínima obligatoria antes de tocar código:
 | 1 | Implementar las 21 fichas V5.0 (IDX, FON, DER, MON, TCV) | Catálogo V5.0, `motor/operaciones.py` |
 | 2 | Fichas restantes DOCUMENTADO por prioridad P0/P1 | Ídem, por familias |
 | 3 | Esquemas congelados (goldens) para CT-01..CT-22 | Anexo B, `contratos.py` |
-| 4 | Ejecutar el plan de 57 pruebas y registrar evidencias | `09_Pruebas/Plan V3.0` |
+| 4 | Ejecutar el plan de 67 pruebas y registrar evidencias (PB-58..67 nuevas en V5.1) | `09_Pruebas/Plan V3.0` |
 | 5 | Modo sombra real con API (ciclo semanal, sin entrega al Broker) | `11_Ejecutor/README.md`, config |
 | 6 | Conexión con el backtester de robotTrading (`senales.csv`, `pronosticos.csv`, `metricas.json`) | Los 3 CSV de interfaz del README del ejecutor |
 
@@ -66,7 +75,7 @@ Avance registrado en `docs/AVANCE.md`.
 cd 11_Ejecutor
 source ../.venv/bin/activate          # venv del proyecto (Python 3.12, ~/.local/bin/python3.12)
 pip install -e ".[pruebas]"
-pytest -q                             # línea base: 45 pasando
+pytest -q                             # línea base: 58 pasando
 
 # Ciclo simulado sin coste (crea estado_bloque_a/ y entregables/, ignorados por git)
 bloque-a --cliente mock --datos ejemplos/datos_sinteticos --universo config/universo_ejemplo.csv \
