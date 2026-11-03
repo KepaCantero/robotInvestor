@@ -25,7 +25,8 @@ los prompts solo definen el alcance de cada sesión.
 Reglas fijas (van dentro de cada prompt, no las quites): kit de contexto cerrado,
 F7/F8/F9 solo por identificador, corpus .md intocable, no mezclar bloques, líneas base
 de tests innegociables (58/68/118), decisiones documentadas en `docs/incidencias.md`,
-prefijo de commit por fase, avance en `docs/AVANCE.md`.
+prefijo de commit por fase, avance en `docs/AVANCE.md`, y **cierre de fase =
+`./tools/check_all.sh` en verde (12/12)** con cuotas sin subir.
 
 ## Entre fases
 

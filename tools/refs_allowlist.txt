@@ -1,0 +1,5 @@
+# Entregables planificados citados en prompts de fases: existirán cuando su fase
+# aterrice; al aterrizar, QUITAR la línea (el gate pasa a exigirlos).
+bloque_a/11_Ejecutor/bloque_a/herramientas/verificador_ids.py   # FASE 0
+docs/auditoria_ids_bloque_a.md                                   # FASE 0
+docs/cadena_A_B.md                                               # FASE 6

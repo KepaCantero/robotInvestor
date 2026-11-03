@@ -49,13 +49,15 @@ H5 décadas con hitos HIT- y `horizonte_principal` obligatorio (HT-09 C17–C19)
    (`docs/incidencias.md`), no se decide en silencio.
 8. **No mezclar bloques en una misma fase** salvo la interfaz de encargos (A→B), que es
    la única frontera que se toca por los dos lados y con esquemas congelados de ambos.
+9. **Una fase no cierra sin `./tools/check_all.sh` en verde (12/12)** y con las cuotas
+   (si se tocaron) más bajas que como se encontraron.
 
 ## Trampas conocidas de los corpus (auditadas 03-11-2026)
 
 - **Versiones cruzadas en bloque_a:** los prompts MC citan "Catálogo V4.0"; el catálogo
   entregado es V5.0 (81 fichas); el ejecutor implementa las 60 del índice V4.0
-  (`bloque_a/…/motor/servicio.py`, `CATALOG_VERSION = "4.0"`). Las 21 fichas nuevas V5.0
-  (IDX, FON, DER, MON, TCV) están DOCUMENTADAS sin código y responden
+  (`bloque_a/11_Ejecutor/bloque_a/motor/servicio.py`, `CATALOG_VERSION = "4.0"`). Las 21
+  fichas nuevas V5.0 (IDX, FON, DER, MON, TCV) están DOCUMENTADAS sin código y responden
   `METODO_NO_IMPLEMENTADO` con alternativa. → Fase 0 de bloque_a.
 - **Versión sin subir en pyprojects (INC-001/002):** `bloque_a/11_Ejecutor` declara
   1.1.0 (README dice V1.2); `bloque_a_forex/11_Ejecutor` declara 1.0.0 (README dice
@@ -84,6 +86,34 @@ H5 décadas con hitos HIT- y `horizonte_principal` obligatorio (HT-09 C17–C19)
 Avance registrado en `docs/AVANCE.md`. Los prompts paste-ready de cada fase viven en
 `prompts/` (empezando por `prompts/00_ENTORNO.md`, que verifica venv, dependencias y
 MCPs); no reinventar su contenido: se pegan tal cual.
+
+## Calidad (gates transplantados de robotTrading)
+
+**`./tools/check_all.sh` es EL gate del repo. Una fase no cierra sin él en verde (12/12).**
+Flags: `--core` (rápido: corpus+config+tests), `--strict` (corta al primer fallo, CI),
+`--update-corpus` (re-congelado del corpus, ver abajo).
+
+| Gate | Qué protege |
+|---|---|
+| corpus-integridad | El corpus canónico congelado por hash (695 archivos: prompts, catálogo, esquemas, referencias…). Adaptación de los goldens de conformance: **re-congelar solo es deliberado** — `--update-corpus` en el MISMO commit que el cambio y con el motivo en el mensaje. Nada silencioso. |
+| nombres-nfc | Lección macOS pagada 2×: nombres NFD rompen tests que en Linux pasan. |
+| yaml-configs | Los 3 `por_defecto.yaml` parsean. |
+| secrets | Repo público: patrones reales con allowlist explícita (`tools/secrets_allowlist.txt`, solo cadadas verificadas a mano). |
+| refs-vivas | Rutas citadas en CLAUDE.md/prompts/docs existen — antídoto contra planes rancios. Entregables futuros: `tools/refs_allowlist.txt` (quitar la línea al aterrizar la fase). |
+| ruff, mypy ×3 | **Cuotas (ratchet): solo bajan.** El código entregado no era limpio (ruff 3490, mypy A 135 / FX 174 / B 160); las cuotas congelan el estado y cada fase debe dejarlas más bajas si toca el paquete. Al llegar a 0, la línea se borra y el gate se vuelve estricto. Andamiaje temporal — política sin-deuda. |
+| pytest ×3 | Líneas base innegociables: A ≥ 58 · FX ≥ 68 · B ≥ 118 (el gate comprueba el NÚMERO, no solo el exit code: quitar tests no pasa). |
+
+**Pre-commit** (`.venv/bin/pre-commit install`): check-yaml, merge-conflicts,
+debug-statements, detect-secrets con `.secrets.baseline` (48 hallazgos auditados como
+falsos el 03-11: fixtures de tests y huellas hex de salidas simuladas — verificados a
+mano). Los fixers de espacios SOLO tocan lo nuestro (`docs/`, `prompts/`, `tools/`,
+`CLAUDE.md`): el paquete entregado ni un espacio se le toca.
+
+**Procesos heredados de robotTrading además de los gates:** veredictos binarios con
+umbral duro (ya llegan en el diseño G3/HT-09 del corpus); bench propio ANTES de adoptar
+la receta de otro repo (lección NautilusTrader: prometía 10×, dio 0.26–1.05×); si algún
+día hay sesiones paralelas de agentes: clústeres disjuntos de archivos y solo el
+propietario (o una sesión coordinadora) hace commit.
 
 ## Comandos
 
