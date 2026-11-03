@@ -1,0 +1,39 @@
+{
+ "pet_ref_broker": "BRK-EJEMPLO",
+ "origen": "LIBRE",
+ "objeto": {
+  "descripcion": "Inmobiliario logístico cotizado en Europa",
+  "tipo_objeto_sugerido": "SEGMENTO_DE_CLASE",
+  "clave_universo": "logistica_europea",
+  "ambito": {
+   "incluye": "REIT, SOCIMI e inmobiliarias cotizadas con mayoría del valor de sus activos en logística europea",
+   "excluye": "Oficinas, residencial y centros comerciales",
+   "region": "Europa"
+  }
+ },
+ "tipos_activo_admitidos": [
+  "INM"
+ ],
+ "horizontes": [
+  "H3"
+ ],
+ "preguntas": [
+  "¿Qué instrumentos expresan mejor «Los almacenes y naves logísticas de Europa»?"
+ ],
+ "nivel": "AUTO",
+ "limite": {
+  "minutos": null,
+  "uc": null
+ },
+ "prioridad": "NORMAL",
+ "marco_invertibilidad": {
+  "perfil": "MINORISTA_UE_DEFECTO",
+  "divisa_base": "EUR",
+  "ucits_requerido": true
+ },
+ "top_n": null,
+ "alto_impacto": false,
+ "referencia_previa": null,
+ "idioma_usuario": "es-ES",
+ "x_ejemplo": "Petición ficticia para pruebas"
+}

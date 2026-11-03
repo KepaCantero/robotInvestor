@@ -1,0 +1,7 @@
+# Lista de jerga personalizada para HT-07 (un término por línea; '#' = comentario)
+volatilidad
+liquidez
+renta fija
+prima de riesgo
+duración modificada
+diferencial

@@ -1,0 +1,45 @@
+{
+ "pet_id": "PET-B-2026-0001",
+ "estado": "EN_PAUSA",
+ "estado_peticion": "EN_PAUSA_PUNTO_CONTROL",
+ "aut_id": "AUT-B-2026-0001",
+ "checkpoint_id": "CKP-2026-0003",
+ "puerta": "PT30",
+ "momento": "EN_EJECUCION",
+ "estimacion": {
+  "minutos_p50": 23.3,
+  "minutos_p80": 28.0,
+  "uc_p50": 24.5,
+  "uc_p80": 29.4,
+  "desglose_por_fase": {
+   "F2": 5.28,
+   "F3": 1.5,
+   "F4": 2.5,
+   "F5": 3.34,
+   "F6": 4.5,
+   "F7": 1.5,
+   "F8": 3.5,
+   "F9": 2.0,
+   "F10": 0.5
+  }
+ },
+ "requiere_autorizacion": true,
+ "recomendacion": {
+  "opcion": "CONTINUAR",
+  "motivo": "el exceso es moderado y el recorte reduciría E"
+ },
+ "opciones": [
+  "CONTINUAR",
+  "VERSION_30_MIN",
+  "DIVIDIR_EN_FASES",
+  "HASTA_PV2",
+  "CANCELAR"
+ ],
+ "nivel": "N2",
+ "minutos_consumidos": 3.1,
+ "consultas_pendientes": [],
+ "acuse_inmediato": {
+  "pet_id": "PET-B-2026-0001",
+  "admision": "ADMITIDA"
+ }
+}

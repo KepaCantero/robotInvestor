@@ -1,0 +1,3 @@
+﻿variable,valor_base,valor_bajo,valor_alto,efecto_bajo,efecto_alto,unidad,calc_id
+Volatilidad relativa del ámbito,22.7%,17.0%,28.4%,p10 -2.7%,p10 -4.4%,%,CALC-B-2025-0011
+Deriva relativa (rentabilidad mediana del escenario base),+28.7%,+23.7%,+33.7%,RE −15 a −25 puntos,RE +15 a +25 puntos,%,CALC-B-2025-0011

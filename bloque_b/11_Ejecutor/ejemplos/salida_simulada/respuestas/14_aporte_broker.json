@@ -1,0 +1,8 @@
+{
+ "cns_id": "CNS-B-2026-0002",
+ "sentido": "ENTRANTE",
+ "naturaleza": "PREFERENCIA",
+ "estado": "REGISTRADO",
+ "efecto": "vincula (alcance o preferencia)",
+ "destino": null
+}

@@ -1,0 +1,26 @@
+{
+ "cns_id": "CNS-B-2025-0001",
+ "sentido": "SALIENTE",
+ "pet_id": "PET-B-2025-0001",
+ "run_id": "RUN-B-2025-0001-01",
+ "seg_id": null,
+ "tipo": "PREFERENCIA_O_CRITERIO",
+ "modo": "NO_BLOQUEANTE",
+ "preguntas": [
+  {
+   "n": 1,
+   "pregunta": "¿Admite bonos sin calificación crediticia pública en la selección de renta fija?",
+   "origen_agente": "AG-B12",
+   "por_que_importa": "Cambia el universo invertible de RF",
+   "opciones": [],
+   "supuesto_si_no_hay_respuesta": "Solo bonos con calificación pública",
+   "efecto_si_supuesto_falso": "Se omitirían emisiones sin calificación"
+  }
+ ],
+ "plazo": "2025-02-02T07:01:28+01:00",
+ "punto_control": {
+  "checkpoint_id": null,
+  "capa": 3
+ },
+ "puede_forzar_continuacion": false
+}

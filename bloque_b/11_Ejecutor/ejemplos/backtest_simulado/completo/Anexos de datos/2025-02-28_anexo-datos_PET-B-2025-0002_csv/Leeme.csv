@@ -1,0 +1,24 @@
+﻿campo,valor
+pet_id,PET-B-2025-0002
+run_ids,RUN-B-2025-0002-01
+rec_id,REC-B-2025-0002
+fecha,2025-02-28
+data_cutoff,2025-02-28
+methodology_version,2.1
+ambito,"Equipos para redes eléctricas en Europa (transformadores, cables de alta tensión, subestaciones y aparamenta)"
+tipo_objeto,CADENA_DE_VALOR
+veredicto,INVERTIR_ESCALONADO
+generado_por,HT-10 v2.1
+hoja Leeme,Identificación del análisis y guía de las hojas.
+hoja Puntuaciones,"Componentes de A y E (0–100 en múltiplos de 10, NA o NE) con sus pesos; RF, RE y C; veredicto (HT-03)."
+hoja Cifras,"Cada cifra entregada con valor, unidad, fecha, fuente, DAT-B o CALC-B, etiqueta epistémica y clase de cifra."
+hoja Fuentes,"Referencias de F7, F8 y F9 y fuentes de datos usadas, con nivel (A–D) y calidad Q."
+hoja Universo_<TIPO>,"Todos los activos cribados del tipo: métricas, componentes de S, S, IC 90 %, rango, veredicto y motivo de exclusión."
+hoja Escenarios,"Escenarios base, favorable y adverso con premisas, régimen, probabilidad (solo con base calibrable o certificado) o banda."
+hoja Sensibilidades,"Variables críticas, rango probado y efecto en el resultado."
+hoja Pronosticos,Pronósticos PRG-B congelados con criterio y fecha de resolución.
+hoja Artefactos,"Artefactos reproducibles del Motor (CALC-B) con método, semilla, fecha de corte y huella de los datos."
+hoja Encargos_C,"Resumen de los encargos preparados para los Bloques C.x, con su eslabón y su origen (top-N o tabla por eslabón)."
+hoja Eslabones,"Desglose de la cadena por eslabón: métricas, indicadores de cuello en semáforo, PCB y componentes de AE (9.12)."
+hoja Opciones_eslabon,"Hasta cinco mejores opciones por eslabón atractivo o con cuello material, adicionales al top-N (9.13)."
+hoja Emergentes,"Radar de emergentes, startups y spin-offs por eslabón: criterios, PEM y vía de exposición (8.7.3)."

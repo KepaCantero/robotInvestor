@@ -1,0 +1,11 @@
+id,isin,nombre,tipo_activo,region_mercado,mercado,divisa,emisor,ambitos,subcluster,sancionado,suspendido,fecha_alta,fecha_baja,fecha_dato,capitalizacion_meur,volumen_medio_meur,flotante_pct,ejercicios_auditados,salida_bolsa_reciente,opinion_auditoria,pureza,roic
+PRY,IT0004176001,Prysmian,RV,EEE,MTA,EUR,Prysmian,redes_electricas_europa,cables,no,no,2007-05-03,,2026-03-31,38000,90,99,10,no,limpia,0.55,0.14
+NKT,DK0010287663,NKT,RV,EEE,XCSE,DKK,NKT,redes_electricas_europa,cables,no,no,1990-01-01,,2026-03-31,4800,20,100,10,no,limpia,0.80,0.11
+ENR,DE000ENER6Y0,Siemens Energy,RV,EEE,XETR,EUR,Siemens Energy,redes_electricas_europa,transformadores,no,no,2020-09-28,,2026-03-31,70000,250,75,5,no,limpia,0.35,0.06
+MICRO,XX0000000001,Microfabricante ilustrativo,RV,EEE,XMAD,EUR,Micro,redes_electricas_europa,cables,no,no,2015-01-01,,2026-03-31,120,0.3,40,8,no,limpia,0.9,0.05
+OTC1,XX0000000002,Cotizado fuera de marco (ilustrativo),RV,OTRO,OTC,USD,OTC,redes_electricas_europa,cables,no,no,2010-01-01,,2026-03-31,900,3,60,8,no,limpia,0.7,0.08
+BAJA,XX0000000003,Excotizada (ilustrativo),RV,EEE,XPAR,EUR,Baja,redes_electricas_europa,aparamenta,no,no,2001-01-01,2025-06-30,2025-03-31,2000,5,50,10,no,limpia,0.4,0.07
+FUT,XX0000000004,Salida a bolsa futura (ilustrativo),RV,EEE,XAMS,EUR,Fut,redes_electricas_europa,aparamenta,no,no,2027-02-01,,2026-03-31,1500,4,30,4,no,limpia,0.5,0.09
+SANC,XX0000000005,Sancionada (ilustrativo),RV,EEE,XWBO,EUR,Sanc,redes_electricas_europa,aparamenta,si,no,2005-01-01,,2026-03-31,1500,4,30,9,no,limpia,0.5,0.09
+SINDATO,XX0000000006,Sin flotante (ilustrativo),RV,EEE,XBRU,EUR,SD,redes_electricas_europa,aparamenta,no,no,2005-01-01,,2026-03-31,1500,4,,9,no,limpia,0.5,0.09
+OTRO_AMB,XX0000000007,Otro ámbito (ilustrativo),RV,EEE,XLIS,EUR,OA,semiconductores,chips,no,no,2005-01-01,,2026-03-31,1500,4,30,9,no,limpia,0.5,0.09

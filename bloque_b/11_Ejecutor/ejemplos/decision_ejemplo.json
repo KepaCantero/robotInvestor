@@ -1,0 +1,12 @@
+{
+ "decision_ambito": {
+  "rec_id": "REC-B-2026-0001",
+  "decision": "CANDIDATOS_ENVIADOS_A_C",
+  "motivo": "Ejemplo ficticio"
+ },
+ "valoracion_entregables": {
+  "pet_id": "PET-B-2026-0001",
+  "utilidad": 4,
+  "comentario": "Ejemplo ficticio"
+ }
+}

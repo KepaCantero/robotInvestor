@@ -1,0 +1,162 @@
+# Configuración por defecto del ejecutor del Bloque B (bloque_b V1.1)
+# Bloque B · Robot Investor · V2.0 (actualizado V2.1, 03/11/2026) · subordinado al Documento 0 del Bloque B, óptima V2.1
+# (Anexos A y A.2).
+# Cualquier clave puede sobrescribirse con un YAML propio (--config), que se fusiona sobre este.
+
+modo: vivo                    # vivo | backtest (el subcomando «backtest» fuerza «backtest»)
+zona_horaria: Europe/Madrid
+idioma: es-ES
+methodology_version: "2.1"
+
+rutas:
+  raiz_paquete: null          # null = carpeta padre de 11_Ejecutor o variable BLOQUE_B_RAIZ
+  prompts: 02_System_prompts
+  plantillas: 06_Plantillas_entregables
+  archivos_operativos: 05_Archivos_operativos
+  universos: config/universos  # relativo a 11_Ejecutor
+  ambitos: config/ambitos_ejemplo.yaml
+
+prompts:
+  # Si falta el prompt de un especialista por dimensión (AG-B03…AG-B11) se usa el «Marco común de los Analistas de
+  # dimensión (plantilla)» con incidencia en HA (modo degradado declarado).
+  marco_comun_si_falta: true
+  # Si falta cualquier otro prompt: con el cliente simulado se usa un marcador con incidencia (las pruebas no dependen
+  # del contenido de los prompts); con el cliente Anthropic es un error.
+  marcador_si_falta_con_mock: true
+
+# Modelos por agente: compruebe los identificadores en la documentación de Anthropic antes de usar el cliente real.
+modelos:
+  por_defecto: claude-sonnet-5-5
+  AG-B01: claude-haiku-5-5     # Coordinador de Peticiones y Consultas
+  AG-B02: claude-opus-5-5      # Director del Análisis de Mercado
+  AG-B12: claude-opus-5-5      # Seleccionador de Activos
+  AG-B14: claude-opus-5-5      # Analista de hipótesis contrarias
+  AG-B15: claude-haiku-5-5     # Curador de Evidencia
+  AG-B22: claude-opus-5-5      # Auditor
+  AG-B23: claude-opus-5-5      # Evaluador de Previsiones, Aprendizaje y Seguimiento
+
+max_tokens:
+  por_defecto: 8000
+  AG-B02: 16000
+  AG-B12: 12000
+  AG-B13: 12000
+  AG-B14: 10000
+  AG-B17: 10000
+
+llm:
+  semilla_mock: 20261103
+  max_reintentos_api: 4
+  timeout_s: 600
+  salida_estructurada: false
+  max_continuaciones_pause_turn: 3
+  cache_ttl: 1h
+  busqueda_web:
+    activa_en_vivo: true
+    agentes: [AG-B18, AG-B19, AG-B20]     # solo los agentes de conocimiento; nunca en backtest
+    tipo: web_search_20260318
+    max_usos: 5
+
+# 1 UC ≈ 8 000 tokens de entrada y 1 500 de salida (Anexo A)
+uc:
+  tokens_entrada: 8000
+  tokens_salida: 1500
+  peso_lectura_cache: 0.1
+  calculo_STD: 1.0
+  calculo_MIN: 0.3
+  calculo_EXT: 2.0
+precios_por_millon: {entrada: null, salida: null, cache_escritura: null, cache_lectura: null}
+
+# Reloj de la puerta de tiempo: «real» (minutos de pared) o «simulado» (cada fase dura su p50 del modelo HT-08
+# × factor × ruido lognormal con semilla). El cliente simulado usa por defecto el reloj simulado.
+reloj:
+  tipo: auto                  # auto = simulado con mock y replay, real con anthropic
+  factor_simulado: 1.0
+  sigma_ruido: 0.15
+
+puerta_tiempo:
+  umbral_min: 30
+  tope_automatico_min: 240
+  n3_por_defecto_min: 240
+  recordatorio_h: 24
+  caducidad_dias: 7
+  modelo: {}                  # sobrescribe parámetros de HT-08 (factores calibrados por el Evaluador)
+
+# Política de autorización automática del Broker (F10). Por defecto, ninguna: todas las ampliaciones son manuales.
+politica_autorizacion: []
+
+niveles:
+  criterio_auto:
+    n1_ficha_dias: 30
+  objetivos_min: {N0: 2, N1: 10, N2: 30, N3: 240}
+
+marco_invertibilidad:
+  perfil: MINORISTA_UE_DEFECTO
+  divisa_base: EUR
+  ucits_requerido: true
+  mercados_admitidos: [EEE, UK, CH, US, CA, JP, AU, HK, SG]
+  permitir_cfd: false
+  permitir_microcap: false
+  exclusiones: []
+
+top_n: {N1: [3, 0], N2: [5, 2], N3: [10, 5]}
+
+# Horizontes en sesiones hábiles (para pronósticos, rankings y backtest)
+horizontes_sesiones: {H1: 5, H2: 21, H3: 63, H4: 252, H5: 1260}
+
+motor:
+  bootstrap_replicas: 200
+  perturbacion_pesos: 5
+  ruido_metricas: 0.10        # incertidumbre por defecto: 10 % de la desviación típica transversal
+  montecarlo_simulaciones: 2000
+  bloque_bootstrap: 21
+  ventana_correlacion: 504
+
+auditoria:
+  muestreo: {N1: 0.3, N2: 1.0, N3: 1.0, PERS: 1.0, PARADA: 0.3, N1-SEG: 0.2}
+  max_vueltas: 3
+  en_backtest: false          # el Auditor LLM no se invoca en backtest (coste); G3 siempre
+
+evaluacion:
+  muestra_minima_recalibrar_pronosticos: 30
+  muestra_minima_recalibrar_rankings: 15
+  certificado_probabilidad_n: 100
+  certificado_ranking_n: 30
+  ece_max: 0.15
+  bootstrap_replicas: 1000
+  aplicar_recalibracion: false   # modo sombra
+
+vigia:
+  frecuencia: {H1: diaria, H2: cada_2_dias_habiles, H3: semanal, H4: mensual, H5: trimestral}
+
+# V2.1 · capas y puertas de viabilidad (7.10, Anexo A)
+capas:
+  plazo_forzar_continuacion_dias: 7
+  hitos_h5_minimos: 3
+
+# V2.1 · consultas del bloque al Broker (CT-B-28, 7.12, Anexo A)
+consultas_broker:
+  limite_por_peticion: {N1: 1, N2: 3, N3: 6, PERS: 3, N1-SEG: 1}
+  bloqueantes_max: {N1: 1, N2: 1, N3: 2, PERS: 1, N1-SEG: 1}
+  plazo_bloqueante_h: 4
+  recordatorio_bloqueante_h: 2
+  plazo_no_bloqueante_h: 48
+  recurrente: {peticiones: 3, semanas: 8}
+
+# V2.1 · seguimientos encargados (CT-B-29, 7.13, Anexo A; archivo F11)
+seguimientos:
+  max_activos: 25
+  objetivo_ciclo_min: 10
+  uc_ciclo: 5
+  linea_base_max_min: 20
+  revision_sin_fecha_fin_meses: 6
+  dias_frecuencia: {DIARIA: 1, SEMANAL: 7, QUINCENAL: 14, MENSUAL: 30, TRIMESTRAL: 91}
+  ciclos_verdes_para_cancelar: 6
+
+backtest:
+  frecuencia: mensual
+  fecha_corte_modelo: "2026-03-31"   # orientativo: compruébelo en la documentación de Anthropic
+  solo_seleccion: false
+
+# Datos sintéticos (cuando no se pasa --datos): series deterministas 2021-01-04 → 2026-10-30
+datos_sinteticos:
+  semilla: 14

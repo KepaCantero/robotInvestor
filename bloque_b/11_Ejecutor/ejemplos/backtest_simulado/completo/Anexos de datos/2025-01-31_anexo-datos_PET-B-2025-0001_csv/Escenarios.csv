@@ -1,0 +1,4 @@
+﻿nombre,premisas,regimen,probabilidad,base_probabilidad,banda,resultado_vs_referencia,disparadores
+base,Continuidad de la demanda y de la oferta del plan,régimen vigente,,,más probable que no,Rentabilidad relativa frente a STOXX Europe 600 Industrial Goods & Services (serie sintética): +23.1% (p50 del Motor),resultados trimestrales
+favorable,Aceleración de la demanda y precios al alza,régimen vigente,,,poco probable,Rentabilidad relativa frente a STOXX Europe 600 Industrial Goods & Services (serie sintética): +61.8% (p90 del Motor),nuevos contratos
+adverso,Pausa de la demanda y capacidad nueva,transición,,,poco probable,Rentabilidad relativa frente a STOXX Europe 600 Industrial Goods & Services (serie sintética): -8.0% (p10 del Motor),caída de pedidos

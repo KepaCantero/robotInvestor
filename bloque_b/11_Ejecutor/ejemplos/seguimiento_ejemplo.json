@@ -1,0 +1,26 @@
+{
+ "accion": "ALTA",
+ "objeto": {
+  "tipo": "AMBITO_ANALIZADO",
+  "rec_id": "REC-B-2026-0001"
+ },
+ "frecuencia": {
+  "tipo": "MENSUAL"
+ },
+ "motivo": "Vigilar la cartera de pedidos y la valoración del ámbito (ejemplo ficticio)",
+ "senales_de_interes": [
+  "book-to-bill de los fabricantes de cable",
+  "valoración relativa del ámbito"
+ ],
+ "disparadores_broker": [
+  {
+   "descripcion": "book-to-bill inferior a 1 durante dos trimestres",
+   "umbral": "1,0"
+  }
+ ],
+ "dimensiones_clave": [
+  "D3",
+  "D9"
+ ],
+ "fecha_fin": "2027-11-03"
+}

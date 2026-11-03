@@ -1,0 +1,39 @@
+{
+ "pet_ref_broker": "BRK-EJEMPLO",
+ "origen": "LIBRE",
+ "objeto": {
+  "descripcion": "Capital privado cotizado europeo",
+  "tipo_objeto_sugerido": "SEGMENTO_DE_CLASE",
+  "clave_universo": "capital_privado_cotizado",
+  "ambito": {
+   "incluye": "Gestoras y vehículos de capital privado cotizados en mercados del marco",
+   "excluye": "Fondos privados no accesibles al minorista (solo vigilancia informativa)",
+   "region": "Europa"
+  }
+ },
+ "tipos_activo_admitidos": [
+  "ALT"
+ ],
+ "horizontes": [
+  "H4"
+ ],
+ "preguntas": [
+  "¿Qué instrumentos expresan mejor «Las empresas cotizadas que invierten en empresas que no cotizan»?"
+ ],
+ "nivel": "AUTO",
+ "limite": {
+  "minutos": null,
+  "uc": null
+ },
+ "prioridad": "NORMAL",
+ "marco_invertibilidad": {
+  "perfil": "MINORISTA_UE_DEFECTO",
+  "divisa_base": "EUR",
+  "ucits_requerido": true
+ },
+ "top_n": null,
+ "alto_impacto": false,
+ "referencia_previa": null,
+ "idioma_usuario": "es-ES",
+ "x_ejemplo": "Petición ficticia para pruebas"
+}

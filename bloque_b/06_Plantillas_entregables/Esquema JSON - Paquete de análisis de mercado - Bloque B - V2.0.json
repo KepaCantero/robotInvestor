@@ -1,0 +1,4702 @@
+{
+ "$schema": "https://json-schema.org/draft/2020-12/schema",
+ "$id": "https://robot-investor.local/esquemas/bloque-b/paquete_analisis_mercado/2.1",
+ "title": "paquete_analisis_mercado · Bloque B · V2.0 (actualizado V2.1, 03/11/2026)",
+ "description": "Esquema completo del paquete JSON del Bloque B (entregable 3), conforme al Anexo B del Documento 0 del Bloque B, óptima V2.0 (B.9 núcleo, B.10 paquete_para_bloque_C, B.11 plan_de_seguimiento) y a los vocabularios del Anexo D.5. Amplía el núcleo con las secciones del informe técnico que HT-09 comprueba (dimensiones, despliegue estructural, proyecciones, refutación, pronósticos detallados, respuestas a las preguntas). Los campos con prefijo «x_» son extensiones del operador o del ejecutor y se admiten en cualquier objeto cerrado. La coherencia aritmética (A, E, C, S, veredictos, puertas) no la comprueba el esquema: la comprueba HT-09 con HT-03. 03/11/2026. Actualizado V2.1 (03/11/2026): horizonte H5 e hitos (HITO_H5), horizonte principal y secundarios, capas y puertas de viabilidad (capas), consultas al Broker y supuestos aplicados (consultas_broker, supuestos_aplicados), lista de comprobación profesional (lista_profesional), mapa por eslabón (mapa_cadena_valor, B.16) y eslabon_id en todo candidato y encargo C.x; resultado DETENIDO_EN_PUERTA. PCB, AE y PEM los reconstruye HT-09 con HT-03.",
+ "type": "object",
+ "properties": {
+  "pet_id": {
+   "$ref": "#/$defs/pet_id"
+  },
+  "run_ids": {
+   "type": "array",
+   "items": {
+    "$ref": "#/$defs/run_id"
+   },
+   "minItems": 1
+  },
+  "rec_id": {
+   "$ref": "#/$defs/rec_id"
+  },
+  "fecha": {
+   "$ref": "#/$defs/fecha"
+  },
+  "data_cutoff": {
+   "$ref": "#/$defs/fecha"
+  },
+  "methodology_version": {
+   "type": "string",
+   "pattern": "^[0-9]+\\.[0-9]+$"
+  },
+  "aviso": {
+   "type": "string"
+  },
+  "origen": {
+   "type": "object",
+   "properties": {
+    "tipo": {
+     "enum": [
+      "BLOQUE_A",
+      "LIBRE"
+     ]
+    },
+    "opp_id_A": {
+     "type": [
+      "string",
+      "null"
+     ]
+    },
+    "confirmado": {
+     "type": "array",
+     "items": {
+      "type": "string"
+     }
+    },
+    "refutado": {
+     "type": "array",
+     "items": {
+      "type": "string"
+     }
+    },
+    "sin_verificar": {
+     "type": "array",
+     "items": {
+      "type": "string"
+     }
+    },
+    "reclasificacion": {
+     "type": [
+      "string",
+      "null"
+     ]
+    }
+   },
+   "required": [
+    "tipo",
+    "opp_id_A",
+    "confirmado",
+    "refutado"
+   ],
+   "additionalProperties": false,
+   "patternProperties": {
+    "^x_": {}
+   }
+  },
+  "ambito": {
+   "type": "object",
+   "properties": {
+    "nombre": {
+     "type": "string",
+     "minLength": 1
+    },
+    "nombre_llano": {
+     "type": "string",
+     "minLength": 1
+    },
+    "tipo_objeto": {
+     "$ref": "#/$defs/tipo_objeto"
+    },
+    "incluye": {
+     "type": "string",
+     "minLength": 1
+    },
+    "excluye": {
+     "type": "string",
+     "minLength": 1
+    },
+    "region": {
+     "type": "string",
+     "minLength": 1
+    },
+    "mkt_id": {
+     "type": [
+      "string",
+      "null"
+     ],
+     "pattern": "^MKT-B-[0-9]{4}-[0-9]{4,}$"
+    },
+    "acentos_secundarios": {
+     "type": [
+      "string",
+      "null"
+     ]
+    },
+    "indicador_seguimiento": {
+     "type": "object",
+     "properties": {
+      "nombre": {
+       "type": "string",
+       "minLength": 1
+      },
+      "simbolo": {
+       "type": "string",
+       "minLength": 1
+      },
+      "construccion": {
+       "type": "string"
+      }
+     },
+     "required": [
+      "nombre",
+      "simbolo"
+     ],
+     "additionalProperties": false,
+     "patternProperties": {
+      "^x_": {}
+     }
+    },
+    "referencia_comparacion": {
+     "type": "object",
+     "properties": {
+      "nombre": {
+       "type": "string",
+       "minLength": 1
+      },
+      "simbolo": {
+       "type": "string",
+       "minLength": 1
+      }
+     },
+     "required": [
+      "nombre",
+      "simbolo"
+     ],
+     "additionalProperties": false,
+     "patternProperties": {
+      "^x_": {}
+     }
+    }
+   },
+   "required": [
+    "nombre",
+    "nombre_llano",
+    "tipo_objeto",
+    "incluye",
+    "excluye",
+    "region",
+    "mkt_id",
+    "indicador_seguimiento",
+    "referencia_comparacion"
+   ],
+   "additionalProperties": false,
+   "patternProperties": {
+    "^x_": {}
+   }
+  },
+  "estrategia": {
+   "type": "object",
+   "properties": {
+    "pesos_efectivos": {
+     "type": "object",
+     "properties": {
+      "D1": {
+       "type": "number",
+       "minimum": 0,
+       "maximum": 100
+      },
+      "D2": {
+       "type": "number",
+       "minimum": 0,
+       "maximum": 100
+      },
+      "D3": {
+       "type": "number",
+       "minimum": 0,
+       "maximum": 100
+      },
+      "D4": {
+       "type": "number",
+       "minimum": 0,
+       "maximum": 100
+      },
+      "D5": {
+       "type": "number",
+       "minimum": 0,
+       "maximum": 100
+      },
+      "D6": {
+       "type": "number",
+       "minimum": 0,
+       "maximum": 100
+      },
+      "D7": {
+       "type": "number",
+       "minimum": 0,
+       "maximum": 100
+      },
+      "D8": {
+       "type": "number",
+       "minimum": 0,
+       "maximum": 100
+      },
+      "D9": {
+       "type": "number",
+       "minimum": 0,
+       "maximum": 100
+      },
+      "D10": {
+       "type": "number",
+       "minimum": 0,
+       "maximum": 100
+      },
+      "D11": {
+       "type": "number",
+       "minimum": 0,
+       "maximum": 100
+      },
+      "D12": {
+       "type": "number",
+       "minimum": 0,
+       "maximum": 100
+      }
+     },
+     "required": [
+      "D1",
+      "D2",
+      "D3",
+      "D4",
+      "D5",
+      "D6",
+      "D7",
+      "D8",
+      "D9",
+      "D10",
+      "D11",
+      "D12"
+     ],
+     "additionalProperties": false,
+     "patternProperties": {
+      "^x_": {}
+     }
+    },
+    "profundidad": {
+     "type": "object",
+     "properties": {
+      "D1": {
+       "$ref": "#/$defs/profundidad"
+      },
+      "D2": {
+       "$ref": "#/$defs/profundidad"
+      },
+      "D3": {
+       "$ref": "#/$defs/profundidad"
+      },
+      "D4": {
+       "$ref": "#/$defs/profundidad"
+      },
+      "D5": {
+       "$ref": "#/$defs/profundidad"
+      },
+      "D6": {
+       "$ref": "#/$defs/profundidad"
+      },
+      "D7": {
+       "$ref": "#/$defs/profundidad"
+      },
+      "D8": {
+       "$ref": "#/$defs/profundidad"
+      },
+      "D9": {
+       "$ref": "#/$defs/profundidad"
+      },
+      "D10": {
+       "$ref": "#/$defs/profundidad"
+      },
+      "D11": {
+       "$ref": "#/$defs/profundidad"
+      },
+      "D12": {
+       "$ref": "#/$defs/profundidad"
+      }
+     },
+     "required": [
+      "D1",
+      "D2",
+      "D3",
+      "D4",
+      "D5",
+      "D6",
+      "D7",
+      "D8",
+      "D9",
+      "D10",
+      "D11",
+      "D12"
+     ],
+     "additionalProperties": false,
+     "patternProperties": {
+      "^x_": {}
+     }
+    },
+    "exclusiones": {
+     "type": "array",
+     "items": {
+      "type": "object",
+      "properties": {
+       "dim": {
+        "enum": [
+         "D1",
+         "D2",
+         "D3",
+         "D4",
+         "D5",
+         "D6",
+         "D7",
+         "D8",
+         "D9",
+         "D10",
+         "D11",
+         "D12"
+        ]
+       },
+       "motivo": {
+        "type": "string",
+        "minLength": 1
+       },
+       "momento": {
+        "type": "string"
+       },
+       "condicion_reapertura": {
+        "type": "string"
+       }
+      },
+      "required": [
+       "dim",
+       "motivo"
+      ],
+      "additionalProperties": false,
+      "patternProperties": {
+       "^x_": {}
+      }
+     }
+    },
+    "perfil_motor": {
+     "type": "array",
+     "items": {
+      "type": "string",
+      "pattern": "^PERF-B-(SECT|TEMA|GEO|SEGM|FACT|CADENA)$"
+     },
+     "minItems": 1
+    },
+    "playbooks": {
+     "type": "array",
+     "items": {
+      "type": "string",
+      "pattern": "^SEL-(RV|RF|DIV|MP|IDX|FON|DER|INM|CRI|ALT|MON|TCV)$"
+     }
+    },
+    "plan_calculo": {
+     "enum": [
+      "MIN",
+      "STD",
+      "EXT"
+     ]
+    },
+    "horizonte_dominante": {
+     "$ref": "#/$defs/horizonte"
+    },
+    "horizontes": {
+     "type": "array",
+     "items": {
+      "$ref": "#/$defs/horizonte"
+     }
+    },
+    "nivel": {
+     "$ref": "#/$defs/nivel"
+    },
+    "desviaciones": {
+     "type": "array",
+     "items": {
+      "type": "object",
+      "properties": {
+       "dim": {
+        "enum": [
+         "D1",
+         "D2",
+         "D3",
+         "D4",
+         "D5",
+         "D6",
+         "D7",
+         "D8",
+         "D9",
+         "D10",
+         "D11",
+         "D12"
+        ]
+       },
+       "puntos": {
+        "type": "integer",
+        "minimum": -5,
+        "maximum": 5
+       },
+       "motivo": {
+        "type": "string"
+       }
+      },
+      "required": [
+       "dim",
+       "puntos"
+      ],
+      "additionalProperties": false,
+      "patternProperties": {
+       "^x_": {}
+      }
+     }
+    },
+    "especialistas_activados": {
+     "type": "array",
+     "items": {
+      "type": "string"
+     }
+    },
+    "tipos_materiales": {
+     "type": "array",
+     "items": {
+      "$ref": "#/$defs/tipo_activo"
+     }
+    },
+    "plan_id": {
+     "type": "string"
+    },
+    "recortes_declarados": {
+     "type": "array",
+     "items": {
+      "type": "string"
+     }
+    },
+    "horizontes_secundarios": {
+     "type": "array",
+     "items": {
+      "$ref": "#/$defs/horizonte"
+     }
+    }
+   },
+   "required": [
+    "pesos_efectivos",
+    "profundidad",
+    "exclusiones",
+    "perfil_motor",
+    "playbooks",
+    "horizonte_dominante",
+    "nivel",
+    "desviaciones"
+   ],
+   "additionalProperties": false,
+   "patternProperties": {
+    "^x_": {}
+   }
+  },
+  "dimensiones": {
+   "type": "array",
+   "items": {
+    "$ref": "#/$defs/dimension"
+   },
+   "minItems": 1
+  },
+  "despliegue_estructural": {
+   "type": "object",
+   "properties": {
+    "alcance": {
+     "type": "string"
+    },
+    "mapa_cadena": {
+     "type": "array",
+     "items": {
+      "type": "object",
+      "properties": {
+       "eslabon": {
+        "type": "string",
+        "minLength": 1
+       },
+       "papel_del_ambito": {
+        "enum": [
+         "es",
+         "consume",
+         "alimenta"
+        ]
+       },
+       "participantes": {
+        "type": "array",
+        "items": {
+         "type": "string"
+        }
+       },
+       "concentracion": {
+        "type": "string"
+       },
+       "margen_aprox": {
+        "type": "string"
+       },
+       "captura_valor": {
+        "type": "string"
+       },
+       "dependencias": {
+        "type": "array",
+        "items": {
+         "type": "string"
+        }
+       },
+       "evidencias": {
+        "type": "array",
+        "items": {
+         "$ref": "#/$defs/ref_traza"
+        }
+       }
+      },
+      "required": [
+       "eslabon",
+       "papel_del_ambito"
+      ],
+      "additionalProperties": false,
+      "patternProperties": {
+       "^x_": {}
+      }
+     }
+    },
+    "actores": {
+     "type": "array",
+     "items": {
+      "type": "object",
+      "properties": {
+       "actor": {
+        "type": "string",
+        "minLength": 1
+       },
+       "eslabon": {
+        "type": "string"
+       },
+       "tipo": {
+        "enum": [
+         "establecido",
+         "emergente"
+        ]
+       },
+       "invertibilidad": {
+        "enum": [
+         "cotizado",
+         "salida_verosimil",
+         "privado_sin_salida"
+        ]
+       },
+       "evidencia": {
+        "type": "string"
+       }
+      },
+      "required": [
+       "actor",
+       "tipo",
+       "invertibilidad"
+      ],
+      "additionalProperties": false,
+      "patternProperties": {
+       "^x_": {}
+      }
+     }
+    },
+    "vigilancia_tecnologica": {
+     "type": "array",
+     "items": {
+      "type": "object",
+      "properties": {
+       "horizonte_anos": {
+        "enum": [
+         "0-2",
+         "2-5",
+         "5+"
+        ]
+       },
+       "avance": {
+        "type": "string",
+        "minLength": 1
+       },
+       "madurez": {
+        "type": "string"
+       },
+       "etiqueta": {
+        "$ref": "#/$defs/etiqueta"
+       },
+       "implicacion": {
+        "type": "string"
+       }
+      },
+      "required": [
+       "horizonte_anos",
+       "avance",
+       "etiqueta"
+      ],
+      "additionalProperties": false,
+      "patternProperties": {
+       "^x_": {}
+      }
+     }
+    },
+    "cuellos_botella": {
+     "type": "array",
+     "items": {
+      "type": "object",
+      "properties": {
+       "eslabon": {
+        "type": "string",
+        "minLength": 1
+       },
+       "causa": {
+        "type": "string",
+        "minLength": 1
+       },
+       "persistencia": {
+        "type": "string"
+       },
+       "senal_resolucion": {
+        "type": "string",
+        "minLength": 1
+       },
+       "favorecidos": {
+        "type": "array",
+        "items": {
+         "type": "string"
+        }
+       },
+       "perjudicados": {
+        "type": "array",
+        "items": {
+         "type": "string"
+        }
+       },
+       "perdedores_sistematicos": {
+        "type": "array",
+        "items": {
+         "type": "string"
+        }
+       },
+       "reflejo_en_tesis": {
+        "type": "string"
+       }
+      },
+      "required": [
+       "eslabon",
+       "causa",
+       "senal_resolucion"
+      ],
+      "additionalProperties": false,
+      "patternProperties": {
+       "^x_": {}
+      }
+     }
+    },
+    "efectos_segundo_orden": {
+     "type": "array",
+     "items": {
+      "type": "object",
+      "properties": {
+       "pregunta": {
+        "type": "string"
+       },
+       "respuesta": {
+        "type": "string",
+        "minLength": 1
+       },
+       "etiqueta": {
+        "$ref": "#/$defs/etiqueta"
+       },
+       "invertible": {
+        "type": "boolean"
+       }
+      },
+      "required": [
+       "respuesta",
+       "etiqueta"
+      ],
+      "additionalProperties": false,
+      "patternProperties": {
+       "^x_": {}
+      }
+     }
+    }
+   },
+   "required": [
+    "mapa_cadena",
+    "actores",
+    "vigilancia_tecnologica",
+    "cuellos_botella",
+    "efectos_segundo_orden"
+   ],
+   "additionalProperties": false,
+   "patternProperties": {
+    "^x_": {}
+   }
+  },
+  "proyecciones": {
+   "type": "object",
+   "properties": {
+    "activada": {
+     "type": "boolean"
+    },
+    "motivo_exclusion": {
+     "type": [
+      "string",
+      "null"
+     ]
+    },
+    "etapas": {
+     "type": "array",
+     "items": {
+      "type": "object",
+      "properties": {
+       "etapa": {
+        "type": "string",
+        "minLength": 1
+       },
+       "contenido": {
+        "type": "string",
+        "minLength": 1
+       },
+       "resultado": {
+        "type": "string"
+       },
+       "calculos": {
+        "type": "array",
+        "items": {
+         "$ref": "#/$defs/ref_traza"
+        }
+       }
+      },
+      "required": [
+       "etapa",
+       "contenido"
+      ],
+      "additionalProperties": false,
+      "patternProperties": {
+       "^x_": {}
+      }
+     }
+    },
+    "premisas": {
+     "type": "array",
+     "items": {
+      "type": "object",
+      "properties": {
+       "premisa": {
+        "type": "string",
+        "minLength": 1
+       },
+       "valor": {
+        "type": "string"
+       },
+       "fuente": {
+        "type": "string"
+       },
+       "sensibilidad": {
+        "type": "string"
+       },
+       "invalidacion": {
+        "type": "string"
+       }
+      },
+      "required": [
+       "premisa",
+       "valor",
+       "fuente"
+      ],
+      "additionalProperties": false,
+      "patternProperties": {
+       "^x_": {}
+      }
+     }
+    },
+    "brecha_expectativas": {
+     "type": [
+      "string",
+      "null"
+     ]
+    }
+   },
+   "required": [
+    "activada"
+   ],
+   "additionalProperties": false,
+   "patternProperties": {
+    "^x_": {}
+   }
+  },
+  "regimen": {
+   "type": "object",
+   "properties": {
+    "rgm_id": {
+     "type": [
+      "string",
+      "null"
+     ],
+     "pattern": "^RGM-B-[0-9]{4}-[0-9]{4,}$"
+    },
+    "estado_confianza": {
+     "enum": [
+      "definido",
+      "mixto",
+      "incierto",
+      "en_transicion"
+     ]
+    },
+    "variables_dominantes": {
+     "type": "array",
+     "items": {
+      "type": "string"
+     },
+     "minItems": 1
+    },
+    "relaciones": {
+     "type": "array",
+     "items": {
+      "type": "object",
+      "properties": {
+       "relacion": {
+        "type": "string",
+        "minLength": 1
+       },
+       "naturaleza": {
+        "enum": [
+         "historica_observada",
+         "causal_demostrada"
+        ]
+       },
+       "ventana_o_mecanismo": {
+        "type": "string"
+       }
+      },
+      "required": [
+       "relacion",
+       "naturaleza"
+      ],
+      "additionalProperties": false,
+      "patternProperties": {
+       "^x_": {}
+      }
+     }
+    },
+    "resumen": {
+     "type": "string"
+    }
+   },
+   "required": [
+    "rgm_id",
+    "estado_confianza",
+    "variables_dominantes"
+   ],
+   "additionalProperties": false,
+   "patternProperties": {
+    "^x_": {}
+   }
+  },
+  "tesis": {
+   "type": "object",
+   "properties": {
+    "enunciado": {
+     "type": "string"
+    },
+    "mecanismo": {
+     "type": "string"
+    },
+    "premisas": {
+     "type": "array",
+     "items": {
+      "$ref": "#/$defs/premisa"
+     }
+    },
+    "hipotesis": {
+     "type": "array",
+     "items": {
+      "$ref": "#/$defs/hipotesis"
+     },
+     "minItems": 1
+    },
+    "steelman_contrario": {
+     "type": "string"
+    },
+    "lo_que_no_sabemos": {
+     "type": "array",
+     "items": {
+      "type": "string"
+     }
+    }
+   },
+   "required": [
+    "enunciado",
+    "premisas",
+    "hipotesis"
+   ],
+   "additionalProperties": false,
+   "patternProperties": {
+    "^x_": {}
+   }
+  },
+  "evaluaciones_separadas": {
+   "type": "object",
+   "properties": {
+    "mercado": {
+     "type": "string",
+     "minLength": 1
+    },
+    "calidad_ambito": {
+     "type": "string",
+     "minLength": 1
+    },
+    "atractivo_bursatil": {
+     "type": "string",
+     "minLength": 1
+    },
+    "accesibilidad": {
+     "type": "string",
+     "minLength": 1
+    }
+   },
+   "required": [
+    "mercado",
+    "calidad_ambito",
+    "atractivo_bursatil",
+    "accesibilidad"
+   ],
+   "additionalProperties": false,
+   "patternProperties": {
+    "^x_": {}
+   }
+  },
+  "puntuaciones": {
+   "type": "object",
+   "properties": {
+    "A": {
+     "type": "integer",
+     "minimum": 0,
+     "maximum": 100
+    },
+    "E": {
+     "type": "integer",
+     "minimum": 0,
+     "maximum": 100
+    },
+    "C": {
+     "type": "integer",
+     "minimum": 0,
+     "maximum": 100
+    },
+    "RF": {
+     "type": "integer",
+     "minimum": 0,
+     "maximum": 100
+    },
+    "RE": {
+     "type": [
+      "integer",
+      "null"
+     ],
+     "minimum": 0,
+     "maximum": 100,
+     "description": "null = NA (N1 sin simulación; A.2)"
+    },
+    "desglose": {
+     "type": "object",
+     "properties": {
+      "A": {
+       "type": "object",
+       "properties": {
+        "asimetria": {
+         "$ref": "#/$defs/comp_ambito"
+        },
+        "valoracion_expectativas": {
+         "$ref": "#/$defs/comp_ambito"
+        },
+        "calidad_crecimiento": {
+         "$ref": "#/$defs/comp_ambito"
+        },
+        "ventaja_estructural": {
+         "$ref": "#/$defs/comp_ambito"
+        },
+        "catalizadores": {
+         "$ref": "#/$defs/comp_ambito"
+        },
+        "momento_flujos": {
+         "$ref": "#/$defs/comp_ambito"
+        },
+        "riesgos": {
+         "$ref": "#/$defs/comp_ambito"
+        }
+       },
+       "required": [
+        "asimetria",
+        "valoracion_expectativas",
+        "calidad_crecimiento",
+        "ventaja_estructural",
+        "catalizadores",
+        "momento_flujos",
+        "riesgos"
+       ],
+       "additionalProperties": false,
+       "patternProperties": {
+        "^x_": {}
+       }
+      },
+      "E": {
+       "type": "object",
+       "properties": {
+        "calidad_raices": {
+         "$ref": "#/$defs/comp_ambito"
+        },
+        "cobertura_dimensional": {
+         "$ref": "#/$defs/comp_ambito"
+        },
+        "calidad_metodologica": {
+         "$ref": "#/$defs/comp_ambito"
+        },
+        "trazabilidad": {
+         "$ref": "#/$defs/comp_ambito"
+        },
+        "actualidad": {
+         "$ref": "#/$defs/comp_ambito"
+        },
+        "discrepancias_resueltas": {
+         "$ref": "#/$defs/comp_ambito"
+        },
+        "hipotesis_cerradas": {
+         "$ref": "#/$defs/comp_ambito"
+        }
+       },
+       "required": [
+        "calidad_raices",
+        "cobertura_dimensional",
+        "calidad_metodologica",
+        "trazabilidad",
+        "actualidad",
+        "discrepancias_resueltas",
+        "hipotesis_cerradas"
+       ],
+       "additionalProperties": false,
+       "patternProperties": {
+        "^x_": {}
+       }
+      },
+      "C": {
+       "type": "object"
+      }
+     },
+     "required": [
+      "A",
+      "E"
+     ],
+     "additionalProperties": false,
+     "patternProperties": {
+      "^x_": {}
+     }
+    },
+    "segunda_pasada": {
+     "type": "boolean"
+    },
+    "saturacion_narrativa": {
+     "type": "boolean"
+    },
+    "lectura_C": {
+     "enum": [
+      "alta",
+      "media",
+      "baja"
+     ]
+    },
+    "cambio_frente_previo": {
+     "type": [
+      "object",
+      "null"
+     ]
+    }
+   },
+   "required": [
+    "A",
+    "E",
+    "C",
+    "RF",
+    "RE",
+    "desglose",
+    "segunda_pasada"
+   ],
+   "additionalProperties": false,
+   "patternProperties": {
+    "^x_": {}
+   }
+  },
+  "puertas_ambito": {
+   "type": "object",
+   "properties": {
+    "PA1": {
+     "$ref": "#/$defs/puerta_ambito"
+    },
+    "PA2": {
+     "$ref": "#/$defs/puerta_ambito"
+    },
+    "PA3": {
+     "$ref": "#/$defs/puerta_ambito"
+    },
+    "PA4": {
+     "$ref": "#/$defs/puerta_ambito"
+    },
+    "PA5": {
+     "$ref": "#/$defs/puerta_ambito"
+    },
+    "PA6": {
+     "$ref": "#/$defs/puerta_ambito"
+    },
+    "PA7": {
+     "$ref": "#/$defs/puerta_ambito"
+    },
+    "PA8": {
+     "$ref": "#/$defs/puerta_ambito"
+    }
+   },
+   "required": [
+    "PA1",
+    "PA2",
+    "PA3",
+    "PA4",
+    "PA5",
+    "PA6",
+    "PA7",
+    "PA8"
+   ],
+   "additionalProperties": false,
+   "patternProperties": {
+    "^x_": {}
+   }
+  },
+  "veredicto": {
+   "type": "object",
+   "properties": {
+    "valor": {
+     "enum": [
+      "INVERTIR",
+      "INVERTIR_ESCALONADO",
+      "VIGILAR",
+      "DESCARTAR"
+     ]
+    },
+    "horizonte": {
+     "$ref": "#/$defs/horizonte"
+    },
+    "condiciones_entrada": {
+     "type": "array",
+     "items": {
+      "type": "string"
+     }
+    },
+    "tramos": {
+     "type": "array",
+     "items": {
+      "type": "object",
+      "properties": {
+       "tramo": {
+        "type": "integer"
+       },
+       "condicion": {
+        "type": "string",
+        "minLength": 1
+       },
+       "horizonte": {
+        "$ref": "#/$defs/horizonte"
+       },
+       "peso_orientativo": {
+        "type": "string"
+       }
+      },
+      "required": [
+       "tramo",
+       "condicion"
+      ],
+      "additionalProperties": false,
+      "patternProperties": {
+       "^x_": {}
+      }
+     }
+    },
+    "cancelacion_tramos": {
+     "type": "string"
+    },
+    "disparadores": {
+     "type": "array",
+     "items": {
+      "type": "object",
+      "properties": {
+       "disparador": {
+        "type": "string",
+        "minLength": 1
+       },
+       "fecha_esperada": {
+        "type": "string"
+       }
+      },
+      "required": [
+       "disparador"
+      ],
+      "additionalProperties": false,
+      "patternProperties": {
+       "^x_": {}
+      }
+     }
+    },
+    "motivo_descarte": {
+     "type": [
+      "string",
+      "null"
+     ]
+    },
+    "motivo": {
+     "type": "string"
+    },
+    "resultado_del_analisis": {
+     "enum": [
+      "CONCLUYENTE",
+      "PARCIAL",
+      "NO_CONCLUYENTE",
+      "DETENIDO_EN_PUERTA",
+      "BLOQUEADO"
+     ]
+    },
+    "relevancia_decisional": {
+     "enum": [
+      "ALTA",
+      "MEDIA",
+      "BAJA"
+     ]
+    },
+    "reversibilidad": {
+     "enum": [
+      "alta",
+      "media",
+      "baja"
+     ]
+    },
+    "siguiente_paso_sugerido": {
+     "enum": [
+      "ENVIAR_CANDIDATOS_A_C",
+      "PROFUNDIZAR_EN_B",
+      "VIGILAR",
+      "DESCARTAR"
+     ]
+    },
+    "prioritarios_por_bloque_C": {
+     "type": "object",
+     "propertyNames": {
+      "$ref": "#/$defs/bloque_c"
+     },
+     "additionalProperties": {
+      "type": "array",
+      "items": {
+       "$ref": "#/$defs/cand_id"
+      }
+     }
+    },
+    "que_cambiaria_la_conclusion": {
+     "type": "array",
+     "items": {
+      "type": "string"
+     },
+     "minItems": 1
+    },
+    "confianza_verbal": {
+     "enum": [
+      "establecido",
+      "probable",
+      "especulativo",
+      "en disputa"
+     ]
+    }
+   },
+   "required": [
+    "valor",
+    "horizonte",
+    "condiciones_entrada",
+    "tramos",
+    "disparadores",
+    "motivo_descarte",
+    "resultado_del_analisis",
+    "relevancia_decisional",
+    "reversibilidad",
+    "siguiente_paso_sugerido",
+    "que_cambiaria_la_conclusion"
+   ],
+   "additionalProperties": false,
+   "patternProperties": {
+    "^x_": {}
+   }
+  },
+  "escenarios": {
+   "type": "array",
+   "items": {
+    "$ref": "#/$defs/escenario"
+   },
+   "minItems": 3
+  },
+  "sensibilidades": {
+   "type": "array",
+   "items": {
+    "$ref": "#/$defs/sensibilidad"
+   }
+  },
+  "pronosticos": {
+   "type": "array",
+   "items": {
+    "$ref": "#/$defs/prg_id"
+   }
+  },
+  "pronosticos_detalle": {
+   "type": "array",
+   "items": {
+    "$ref": "#/$defs/pronostico"
+   }
+  },
+  "riesgos": {
+   "type": "array",
+   "items": {
+    "$ref": "#/$defs/riesgo"
+   }
+  },
+  "riesgo_1a5": {
+   "type": "integer",
+   "minimum": 1,
+   "maximum": 5
+  },
+  "catalizadores": {
+   "type": "array",
+   "items": {
+    "$ref": "#/$defs/evento"
+   }
+  },
+  "invalidacion": {
+   "type": "array",
+   "items": {
+    "type": "string"
+   }
+  },
+  "refutacion": {
+   "type": "object",
+   "properties": {
+    "realizada_por": {
+     "enum": [
+      "AG-B14",
+      "AUTORREFUTACION"
+     ]
+    },
+    "veredicto_tesis": {
+     "enum": [
+      "robusta",
+      "fragil",
+      "refutada"
+     ]
+    },
+    "veredicto_candidatos": {
+     "type": "object",
+     "additionalProperties": {
+      "enum": [
+       "robusto",
+       "fragil",
+       "descartable"
+      ]
+     }
+    },
+    "objeciones": {
+     "type": "array",
+     "items": {
+      "$ref": "#/$defs/objecion"
+     }
+    },
+    "pre_mortem": {
+     "type": "string"
+    }
+   },
+   "required": [
+    "realizada_por",
+    "veredicto_tesis",
+    "objeciones"
+   ],
+   "additionalProperties": false,
+   "patternProperties": {
+    "^x_": {}
+   }
+  },
+  "candidatos_por_tipo": {
+   "type": "object",
+   "properties": {
+    "RV": {
+     "$ref": "#/$defs/tipo_en_paquete"
+    },
+    "RF": {
+     "$ref": "#/$defs/tipo_en_paquete"
+    },
+    "DIV": {
+     "$ref": "#/$defs/tipo_en_paquete"
+    },
+    "MP": {
+     "$ref": "#/$defs/tipo_en_paquete"
+    },
+    "IDX": {
+     "$ref": "#/$defs/tipo_en_paquete"
+    },
+    "FON": {
+     "$ref": "#/$defs/tipo_en_paquete"
+    },
+    "DER": {
+     "$ref": "#/$defs/tipo_en_paquete"
+    },
+    "INM": {
+     "$ref": "#/$defs/tipo_en_paquete"
+    },
+    "CRI": {
+     "$ref": "#/$defs/tipo_en_paquete"
+    },
+    "ALT": {
+     "$ref": "#/$defs/tipo_en_paquete"
+    },
+    "MON": {
+     "$ref": "#/$defs/tipo_en_paquete"
+    },
+    "TCV": {
+     "$ref": "#/$defs/tipo_en_paquete"
+    }
+   },
+   "required": [
+    "RV",
+    "RF",
+    "DIV",
+    "MP",
+    "IDX",
+    "FON",
+    "DER",
+    "INM",
+    "CRI",
+    "ALT",
+    "MON",
+    "TCV"
+   ],
+   "additionalProperties": false,
+   "patternProperties": {
+    "^x_": {}
+   }
+  },
+  "apuestas_independientes": {
+   "type": "integer",
+   "minimum": 0
+  },
+  "grupos_apuestas": {
+   "type": "array",
+   "items": {
+    "type": "array",
+    "items": {
+     "type": "string"
+    }
+   }
+  },
+  "paquete_para_bloque_C": {
+   "type": "object",
+   "propertyNames": {
+    "$ref": "#/$defs/bloque_c"
+   },
+   "additionalProperties": {
+    "type": "array",
+    "items": {
+     "$ref": "#/$defs/encargo_C"
+    }
+   }
+  },
+  "plan_de_seguimiento": {
+   "$ref": "#/$defs/plan_de_seguimiento"
+  },
+  "mapa_cobertura": {
+   "type": "object",
+   "properties": {
+    "directas": {
+     "type": "array",
+     "items": {
+      "$ref": "#/$defs/item_cobertura"
+     }
+    },
+    "indirectas": {
+     "type": "array",
+     "items": {
+      "$ref": "#/$defs/item_cobertura"
+     }
+    },
+    "perdedores_sistematicos": {
+     "type": "array",
+     "items": {
+      "$ref": "#/$defs/item_cobertura"
+     }
+    },
+    "investigado": {
+     "type": "array",
+     "items": {
+      "$ref": "#/$defs/item_cobertura"
+     }
+    },
+    "excluido_con_motivo": {
+     "type": "array",
+     "items": {
+      "$ref": "#/$defs/item_cobertura"
+     }
+    },
+    "vigilancia_informativa": {
+     "type": "array",
+     "items": {
+      "$ref": "#/$defs/item_cobertura"
+     }
+    },
+    "vigilancia_pre_salida": {
+     "type": "array",
+     "items": {
+      "$ref": "#/$defs/item_cobertura"
+     }
+    }
+   },
+   "required": [
+    "directas",
+    "indirectas",
+    "perdedores_sistematicos",
+    "investigado",
+    "excluido_con_motivo",
+    "vigilancia_informativa",
+    "vigilancia_pre_salida"
+   ],
+   "additionalProperties": false,
+   "patternProperties": {
+    "^x_": {}
+   }
+  },
+  "historial_aciertos": {
+   "type": "object",
+   "properties": {
+    "ventana": {
+     "type": "string",
+     "minLength": 1
+    },
+    "ambitos": {
+     "type": "object"
+    },
+    "rankings": {
+     "type": "object"
+    },
+    "certificacion": {
+     "type": "string",
+     "minLength": 1
+    },
+    "nota": {
+     "type": "string"
+    }
+   },
+   "required": [
+    "ventana",
+    "ambitos",
+    "rankings",
+    "certificacion"
+   ],
+   "additionalProperties": false,
+   "patternProperties": {
+    "^x_": {}
+   }
+  },
+  "tiempo_consumo": {
+   "type": "object",
+   "properties": {
+    "minutos": {
+     "type": "number",
+     "minimum": 0
+    },
+    "uc": {
+     "type": "number",
+     "minimum": 0
+    },
+    "estimado_p50_min": {
+     "type": [
+      "number",
+      "null"
+     ]
+    },
+    "estimado_p80_min": {
+     "type": [
+      "number",
+      "null"
+     ]
+    },
+    "autorizaciones": {
+     "type": "array",
+     "items": {
+      "$ref": "#/$defs/aut_id"
+     }
+    },
+    "por_fase_min": {
+     "type": "object",
+     "additionalProperties": {
+      "type": "number"
+     }
+    },
+    "puntos_control": {
+     "type": "array",
+     "items": {
+      "type": "string"
+     }
+    },
+    "reloj": {
+     "enum": [
+      "real",
+      "simulado"
+     ]
+    },
+    "minutos_autorizados": {
+     "type": [
+      "number",
+      "null"
+     ]
+    },
+    "n3_expreso": {
+     "type": "boolean"
+    },
+    "opcion_autorizada": {
+     "enum": [
+      "CONTINUAR",
+      "VERSION_30_MIN",
+      "DIVIDIR_EN_FASES",
+      "HASTA_PV2",
+      null
+     ]
+    },
+    "por_capa_min": {
+     "type": "object",
+     "additionalProperties": {
+      "type": "number"
+     }
+    },
+    "estimado_por_capa": {
+     "type": "object"
+    }
+   },
+   "required": [
+    "minutos",
+    "uc",
+    "autorizaciones",
+    "estimado_p80_min",
+    "por_fase_min"
+   ],
+   "additionalProperties": false,
+   "patternProperties": {
+    "^x_": {}
+   }
+  },
+  "puertas_continuidad": {
+   "type": "object",
+   "properties": {
+    "GC0": {
+     "type": "string",
+     "minLength": 1
+    },
+    "GC1": {
+     "type": "object",
+     "additionalProperties": {
+      "type": "string"
+     }
+    },
+    "GC2": {
+     "type": "string",
+     "minLength": 1
+    },
+    "GC3": {
+     "type": "string",
+     "minLength": 1
+    }
+   },
+   "required": [
+    "GC0",
+    "GC1",
+    "GC2",
+    "GC3"
+   ],
+   "additionalProperties": false,
+   "patternProperties": {
+    "^x_": {}
+   }
+  },
+  "respuestas_preguntas": {
+   "type": "array",
+   "items": {
+    "type": "object",
+    "properties": {
+     "pregunta": {
+      "type": "string",
+      "minLength": 1
+     },
+     "origen": {
+      "enum": [
+       "BROKER",
+       "BLOQUE_A",
+       "DIRECTOR"
+      ]
+     },
+     "respuesta": {
+      "type": "string",
+      "minLength": 1
+     },
+     "referencias": {
+      "type": "array",
+      "items": {
+       "type": "string"
+      }
+     }
+    },
+    "required": [
+     "pregunta",
+     "origen",
+     "respuesta"
+    ],
+    "additionalProperties": false,
+    "patternProperties": {
+     "^x_": {}
+    }
+   }
+  },
+  "preguntas_sugeridas": {
+   "type": "array",
+   "items": {
+    "type": "string"
+   }
+  },
+  "limitaciones": {
+   "type": "array",
+   "items": {
+    "type": "string"
+   }
+  },
+  "reservas_auditoria": {
+   "type": "array",
+   "items": {
+    "type": "string"
+   }
+  },
+  "estados_degradados": {
+   "type": "array",
+   "items": {
+    "type": "string"
+   }
+  },
+  "fechas_datos_criticos": {
+   "type": "array",
+   "items": {
+    "type": "object",
+    "properties": {
+     "dato": {
+      "type": "string",
+      "minLength": 1
+     },
+     "fecha": {
+      "$ref": "#/$defs/fecha"
+     },
+     "clase": {
+      "enum": [
+       "mercado",
+       "fundamental",
+       "macro",
+       "otro"
+      ]
+     },
+     "justificacion": {
+      "type": [
+       "string",
+       "null"
+      ]
+     }
+    },
+    "required": [
+     "dato",
+     "fecha"
+    ],
+    "additionalProperties": false,
+    "patternProperties": {
+     "^x_": {}
+    }
+   }
+  },
+  "auditoria": {
+   "type": "object",
+   "properties": {
+    "realizada": {
+     "type": "boolean"
+    },
+    "muestreo": {
+     "type": "boolean"
+    },
+    "vueltas": {
+     "type": "integer"
+    },
+    "hallazgos_abiertos": {
+     "type": "array",
+     "items": {
+      "type": "string"
+     }
+    },
+    "dictamen_g3": {
+     "type": "string"
+    },
+    "autorizacion_contenido": {
+     "anyOf": [
+      {
+       "$ref": "#/$defs/autcs_id"
+      },
+      {
+       "type": "null"
+      }
+     ]
+    },
+    "autorizacion_salida": {
+     "anyOf": [
+      {
+       "$ref": "#/$defs/autcs_id"
+      },
+      {
+       "type": "null"
+      }
+     ]
+    }
+   },
+   "required": [
+    "realizada"
+   ],
+   "additionalProperties": false,
+   "patternProperties": {
+    "^x_": {}
+   }
+  },
+  "mapa_cadena_valor": {
+   "type": "object",
+   "properties": {
+    "rec_id": {
+     "$ref": "#/$defs/rec_id"
+    },
+    "data_cutoff": {
+     "$ref": "#/$defs/fecha"
+    },
+    "nivel_detalle": {
+     "enum": [
+      "N1",
+      "N2",
+      "N3",
+      "PERS"
+     ]
+    },
+    "eslabon_critico": {
+     "anyOf": [
+      {
+       "$ref": "#/$defs/eslabon_id"
+      },
+      {
+       "type": "null"
+      }
+     ]
+    },
+    "eslabones": {
+     "type": "array",
+     "minItems": 1,
+     "items": {
+      "$ref": "#/$defs/eslabon"
+     }
+    },
+    "omisiones": {
+     "type": "array",
+     "items": {
+      "type": "object"
+     }
+    },
+    "sintesis": {
+     "type": "string"
+    }
+   },
+   "required": [
+    "rec_id",
+    "data_cutoff",
+    "nivel_detalle",
+    "eslabones",
+    "omisiones",
+    "sintesis"
+   ],
+   "additionalProperties": false,
+   "patternProperties": {
+    "^x_": {}
+   }
+  },
+  "capas": {
+   "type": "object",
+   "properties": {
+    "puertas_viabilidad": {
+     "type": "object",
+     "properties": {
+      "PV1": {
+       "enum": [
+        "SUPERADA",
+        "NO_SUPERADA",
+        "FORZADA",
+        "NO_EVALUADA"
+       ]
+      },
+      "PV2": {
+       "enum": [
+        "SUPERADA",
+        "NO_SUPERADA",
+        "FORZADA",
+        "NO_EVALUADA"
+       ]
+      },
+      "PV3": {
+       "enum": [
+        "SUPERADA",
+        "NO_SUPERADA",
+        "FORZADA",
+        "NO_EVALUADA"
+       ]
+      }
+     },
+     "required": [
+      "PV1",
+      "PV2",
+      "PV3"
+     ],
+     "additionalProperties": false
+    },
+    "continuacion_forzada": {
+     "anyOf": [
+      {
+       "type": "null"
+      },
+      {
+       "type": "object",
+       "properties": {
+        "puerta": {
+         "enum": [
+          "PV1",
+          "PV2",
+          "PV3"
+         ]
+        },
+        "motivo": {
+         "type": "string"
+        },
+        "fecha": {
+         "type": "string"
+        },
+        "por": {
+         "type": "string"
+        }
+       },
+       "required": [
+        "puerta"
+       ]
+      }
+     ]
+    },
+    "minutos_por_capa": {
+     "type": "object",
+     "additionalProperties": {
+      "type": "number"
+     }
+    },
+    "detalle": {
+     "type": "object"
+    }
+   },
+   "required": [
+    "puertas_viabilidad",
+    "continuacion_forzada",
+    "minutos_por_capa"
+   ],
+   "additionalProperties": false,
+   "patternProperties": {
+    "^x_": {}
+   }
+  },
+  "consultas_broker": {
+   "type": "array",
+   "items": {
+    "type": "object",
+    "properties": {
+     "cns_id": {
+      "$ref": "#/$defs/cns_id"
+     },
+     "tipo": {
+      "enum": [
+       "ACLARACION_ALCANCE",
+       "DATO_O_DOCUMENTO",
+       "PREFERENCIA_O_CRITERIO",
+       "CONFIRMACION_SUPUESTO",
+       "OTRA"
+      ]
+     },
+     "modo": {
+      "enum": [
+       "BLOQUEANTE",
+       "NO_BLOQUEANTE"
+      ]
+     },
+     "origen_agente": {
+      "type": "string"
+     },
+     "pregunta": {
+      "type": "string"
+     },
+     "supuesto": {
+      "type": "string",
+      "minLength": 1
+     },
+     "resolucion": {
+      "enum": [
+       "RESPONDIDA",
+       "SUPUESTO_APLICADO",
+       "RESPUESTA_TARDIA"
+      ]
+     },
+     "respuesta": {
+      "type": [
+       "string",
+       "null"
+      ]
+     },
+     "efecto": {
+      "enum": [
+       "SIN_CAMBIO",
+       "SUPUESTO_CAMBIADO",
+       "CONCLUSION_CAMBIADA"
+      ]
+     }
+    },
+    "required": [
+     "cns_id",
+     "tipo",
+     "modo",
+     "supuesto",
+     "resolucion"
+    ],
+    "additionalProperties": false,
+    "patternProperties": {
+     "^x_": {}
+    }
+   }
+  },
+  "supuestos_aplicados": {
+   "type": "array",
+   "items": {
+    "type": "object",
+    "properties": {
+     "cns_id": {
+      "$ref": "#/$defs/cns_id"
+     },
+     "supuesto": {
+      "type": "string",
+      "minLength": 1
+     }
+    },
+    "required": [
+     "cns_id",
+     "supuesto"
+    ],
+    "additionalProperties": false
+   }
+  },
+  "lista_profesional": {
+   "type": "array",
+   "items": {
+    "type": "object",
+    "properties": {
+     "item": {
+      "type": "integer",
+      "minimum": 1,
+      "maximum": 22
+     },
+     "estado": {
+      "enum": [
+       "TRATADO",
+       "NO_APLICABLE",
+       "LAGUNA"
+      ]
+     },
+     "referencia": {
+      "type": "string",
+      "minLength": 1
+     }
+    },
+    "required": [
+     "item",
+     "estado",
+     "referencia"
+    ],
+    "additionalProperties": false
+   }
+  }
+ },
+ "required": [
+  "pet_id",
+  "run_ids",
+  "rec_id",
+  "fecha",
+  "data_cutoff",
+  "methodology_version",
+  "origen",
+  "ambito",
+  "estrategia",
+  "dimensiones",
+  "despliegue_estructural",
+  "proyecciones",
+  "regimen",
+  "tesis",
+  "evaluaciones_separadas",
+  "puntuaciones",
+  "puertas_ambito",
+  "veredicto",
+  "escenarios",
+  "pronosticos",
+  "pronosticos_detalle",
+  "riesgos",
+  "riesgo_1a5",
+  "catalizadores",
+  "invalidacion",
+  "refutacion",
+  "candidatos_por_tipo",
+  "apuestas_independientes",
+  "paquete_para_bloque_C",
+  "plan_de_seguimiento",
+  "mapa_cobertura",
+  "historial_aciertos",
+  "tiempo_consumo",
+  "preguntas_sugeridas",
+  "limitaciones",
+  "reservas_auditoria",
+  "puertas_continuidad",
+  "mapa_cadena_valor",
+  "capas",
+  "consultas_broker",
+  "lista_profesional"
+ ],
+ "additionalProperties": false,
+ "patternProperties": {
+  "^x_": {}
+ },
+ "$defs": {
+  "fecha": {
+   "type": "string",
+   "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}$"
+  },
+  "fecha_o_texto": {
+   "type": "string",
+   "minLength": 4,
+   "description": "AAAA-MM-DD o periodo («T1 2027», «2027»)"
+  },
+  "pet_id": {
+   "type": "string",
+   "pattern": "^PET-B-[0-9]{4}-[0-9]{4}$"
+  },
+  "run_id": {
+   "type": "string",
+   "pattern": "^RUN-B-[0-9]{4}-[0-9]{4}(-[0-9]{2})?$",
+   "description": "RUN-B-AAAA-NNNN-rr (rr = reanudación o fase; Anexo A.2)"
+  },
+  "rec_id": {
+   "type": "string",
+   "pattern": "^REC-B-[0-9]{4}-[0-9]{4}$"
+  },
+  "cand_id": {
+   "type": "string",
+   "pattern": "^CAND-B-[0-9]{4}-[0-9]{4,}$"
+  },
+  "prg_id": {
+   "type": "string",
+   "pattern": "^PRG-B-[0-9]{4}-[0-9]{4,}$"
+  },
+  "hip_id": {
+   "type": "string",
+   "pattern": "^HIP-B-[0-9]{4}-[0-9]{4,}(-[0-9]+)?$"
+  },
+  "obj_id": {
+   "type": "string",
+   "pattern": "^OBJ-B-[0-9]{4}-[0-9]{4,}$"
+  },
+  "sig_id": {
+   "type": "string",
+   "pattern": "^SIG-[0-9]{4}-[0-9]{4,}(-[0-9]+)?$"
+  },
+  "aut_id": {
+   "type": "string",
+   "pattern": "^AUT-B-[0-9]{4}-[0-9]{4}$"
+  },
+  "autcs_id": {
+   "type": "string",
+   "pattern": "^AUT[CS]-B-[0-9]{4}-[0-9]{4,}$"
+  },
+  "ref_traza": {
+   "type": "string",
+   "pattern": "^(CLM|EVD|DAT|CALC)-B-[0-9]{4}-[0-9]{4,}$",
+   "description": "Identificador de F2 (CLM-B, EVD-B, DAT-B) o de RC (CALC-B)"
+  },
+  "ref_dato_calc": {
+   "type": "string",
+   "pattern": "^(DAT|CALC)-B-[0-9]{4}-[0-9]{4,}$"
+  },
+  "isin": {
+   "type": [
+    "string",
+    "null"
+   ],
+   "pattern": "^[A-Z]{2}[A-Z0-9]{9}[0-9]$"
+  },
+  "tipo_activo": {
+   "enum": [
+    "RV",
+    "RF",
+    "DIV",
+    "MP",
+    "IDX",
+    "FON",
+    "DER",
+    "INM",
+    "CRI",
+    "ALT",
+    "MON",
+    "TCV"
+   ]
+  },
+  "tipo_objeto": {
+   "enum": [
+    "SECTOR",
+    "TEMATICA",
+    "MERCADO_GEOGRAFICO",
+    "SEGMENTO_DE_CLASE",
+    "ESTRATEGIA_FACTOR",
+    "CADENA_DE_VALOR"
+   ]
+  },
+  "horizonte": {
+   "enum": [
+    "H1",
+    "H2",
+    "H3",
+    "H4",
+    "H5"
+   ]
+  },
+  "nivel": {
+   "enum": [
+    "N1",
+    "N2",
+    "N3",
+    "PERS"
+   ]
+  },
+  "profundidad": {
+   "enum": [
+    "P0",
+    "P1",
+    "P2",
+    "P3"
+   ]
+  },
+  "etiqueta": {
+   "enum": [
+    "[HECHO]",
+    "[INTERPRETACIÓN]",
+    "[ESPECULACIÓN]"
+   ]
+  },
+  "clase_cifra": {
+   "enum": [
+    "determinista",
+    "estimacion_estadistica",
+    "juicio_experto"
+   ]
+  },
+  "confianza_nivel": {
+   "enum": [
+    "alta",
+    "media",
+    "baja"
+   ]
+  },
+  "banda_verbal": {
+   "enum": [
+    "muy probable",
+    "más probable que no",
+    "incierto",
+    "poco probable",
+    "muy poco probable"
+   ]
+  },
+  "bloque_c": {
+   "type": "string",
+   "pattern": "^C\\.([1-9]|1[0-2])$"
+  },
+  "comp_ambito": {
+   "oneOf": [
+    {
+     "type": "integer",
+     "minimum": 0,
+     "maximum": 100,
+     "multipleOf": 10
+    },
+    {
+     "enum": [
+      "NA",
+      "NE"
+     ]
+    }
+   ]
+  },
+  "comp_S": {
+   "type": [
+    "number",
+    "null"
+   ],
+   "minimum": 0,
+   "maximum": 100,
+   "description": "Componente 0–100 (percentil en el universo cribado); null = NA del playbook o NE"
+  },
+  "intervalo": {
+   "type": "array",
+   "items": {
+    "type": "number"
+   },
+   "minItems": 2,
+   "maxItems": 2
+  },
+  "puerta_ambito": {
+   "enum": [
+    "OK",
+    "BLOQUEA"
+   ]
+  },
+  "puerta_candidato": {
+   "enum": [
+    "OK",
+    "LIMITA",
+    "NO_INVERTIBLE",
+    "PUREZA_INSUFICIENTE",
+    "DATOS_INSUFICIENTES",
+    "ALERTA_CRITICA",
+    "REFUTADO"
+   ]
+  },
+  "motivo_exclusion": {
+   "enum": [
+    "NO_INVERTIBLE",
+    "PUREZA_INSUFICIENTE",
+    "DATOS_INSUFICIENTES",
+    "ALERTA_CRITICA",
+    "S_INSUFICIENTE",
+    "REFUTADO",
+    "DUPLICADO",
+    "FUERA_DE_MARCO"
+   ]
+  },
+  "evento": {
+   "type": "object",
+   "properties": {
+    "evento": {
+     "type": "string",
+     "minLength": 1
+    },
+    "fecha": {
+     "$ref": "#/$defs/fecha_o_texto"
+    },
+    "que_vigilar": {
+     "type": "string"
+    },
+    "fuente": {
+     "type": "string"
+    }
+   },
+   "required": [
+    "evento",
+    "fecha"
+   ],
+   "additionalProperties": false,
+   "patternProperties": {
+    "^x_": {}
+   }
+  },
+  "nota": {
+   "type": "object",
+   "properties": {
+    "afirmacion": {
+     "type": "string",
+     "minLength": 1
+    },
+    "etiqueta": {
+     "$ref": "#/$defs/etiqueta"
+    },
+    "contiene_cifra": {
+     "type": "boolean"
+    },
+    "clase_cifra": {
+     "$ref": "#/$defs/clase_cifra"
+    },
+    "evidencias": {
+     "type": "array",
+     "items": {
+      "$ref": "#/$defs/ref_traza"
+     }
+    },
+    "datos": {
+     "type": "array",
+     "items": {
+      "$ref": "#/$defs/ref_traza"
+     }
+    },
+    "calculos": {
+     "type": "array",
+     "items": {
+      "$ref": "#/$defs/ref_traza"
+     }
+    },
+    "fuentes_ref": {
+     "type": "array",
+     "items": {
+      "type": "string"
+     }
+    }
+   },
+   "required": [
+    "afirmacion",
+    "etiqueta"
+   ],
+   "additionalProperties": false,
+   "patternProperties": {
+    "^x_": {}
+   }
+  },
+  "confianza": {
+   "type": "object",
+   "properties": {
+    "nivel": {
+     "$ref": "#/$defs/confianza_nivel"
+    },
+    "factores_a_favor": {
+     "type": "array",
+     "items": {
+      "type": "string"
+     }
+    },
+    "factores_en_contra": {
+     "type": "array",
+     "items": {
+      "type": "string"
+     }
+    }
+   },
+   "required": [
+    "nivel"
+   ],
+   "additionalProperties": false,
+   "patternProperties": {
+    "^x_": {}
+   }
+  },
+  "dimension": {
+   "type": "object",
+   "properties": {
+    "dim": {
+     "enum": [
+      "D1",
+      "D2",
+      "D3",
+      "D4",
+      "D5",
+      "D6",
+      "D7",
+      "D8",
+      "D9",
+      "D10",
+      "D11",
+      "D12"
+     ]
+    },
+    "nombre": {
+     "type": "string"
+    },
+    "especialista": {
+     "type": "string",
+     "pattern": "^(AG-B(0[2-9]|1[0-3])|DIR)$"
+    },
+    "profundidad_tratada": {
+     "$ref": "#/$defs/profundidad"
+    },
+    "pregunta_central": {
+     "type": "string"
+    },
+    "notas": {
+     "type": "array",
+     "items": {
+      "$ref": "#/$defs/nota"
+     },
+     "minItems": 1
+    },
+    "conclusion": {
+     "type": "string",
+     "minLength": 1
+    },
+    "confianza": {
+     "$ref": "#/$defs/confianza"
+    },
+    "lagunas": {
+     "type": "array",
+     "items": {
+      "type": "string"
+     }
+    },
+    "discrepancias": {
+     "type": "array",
+     "items": {
+      "type": "string"
+     }
+    },
+    "senales_para_otras_dimensiones": {
+     "type": "array",
+     "items": {
+      "type": "string"
+     }
+    },
+    "reutilizada_de": {
+     "type": [
+      "string",
+      "null"
+     ]
+    },
+    "capa": {
+     "type": "integer",
+     "minimum": 2,
+     "maximum": 3
+    }
+   },
+   "required": [
+    "dim",
+    "especialista",
+    "profundidad_tratada",
+    "notas",
+    "conclusion",
+    "confianza"
+   ],
+   "additionalProperties": false,
+   "patternProperties": {
+    "^x_": {}
+   }
+  },
+  "premisa": {
+   "type": "object",
+   "properties": {
+    "premisa": {
+     "type": "string",
+     "minLength": 1
+    },
+    "evidencia": {
+     "type": "array",
+     "items": {
+      "$ref": "#/$defs/ref_traza"
+     },
+     "minItems": 1
+    },
+    "comprobacion": {
+     "type": "string",
+     "minLength": 1
+    },
+    "horizonte": {
+     "$ref": "#/$defs/horizonte"
+    },
+    "invalidacion": {
+     "type": "string",
+     "minLength": 1
+    },
+    "valor": {
+     "type": "string"
+    },
+    "sensibilidad": {
+     "type": "string"
+    }
+   },
+   "required": [
+    "premisa",
+    "evidencia",
+    "comprobacion",
+    "invalidacion"
+   ],
+   "additionalProperties": false,
+   "patternProperties": {
+    "^x_": {}
+   }
+  },
+  "hipotesis": {
+   "type": "object",
+   "properties": {
+    "hip_id": {
+     "$ref": "#/$defs/hip_id"
+    },
+    "enunciado": {
+     "type": "string",
+     "minLength": 1
+    },
+    "naturaleza": {
+     "type": "string"
+    },
+    "discriminante": {
+     "type": "string",
+     "minLength": 1
+    },
+    "indicador_anticipado": {
+     "type": "string"
+    },
+    "invalidacion": {
+     "type": "string"
+    },
+    "estado": {
+     "enum": [
+      "confirmada",
+      "debilitada",
+      "indeterminada",
+      "invalidada"
+     ]
+    },
+    "evidencia": {
+     "type": "array",
+     "items": {
+      "$ref": "#/$defs/ref_traza"
+     }
+    }
+   },
+   "required": [
+    "hip_id",
+    "enunciado",
+    "discriminante",
+    "estado"
+   ],
+   "additionalProperties": false,
+   "patternProperties": {
+    "^x_": {}
+   }
+  },
+  "escenario": {
+   "type": "object",
+   "properties": {
+    "nombre": {
+     "enum": [
+      "base",
+      "favorable",
+      "adverso"
+     ]
+    },
+    "premisas": {
+     "type": "string",
+     "minLength": 1
+    },
+    "regimen": {
+     "type": "string"
+    },
+    "disparadores": {
+     "type": "array",
+     "items": {
+      "type": "string"
+     }
+    },
+    "probabilidad": {
+     "type": [
+      "number",
+      "null"
+     ],
+     "minimum": 0,
+     "maximum": 1
+    },
+    "base_probabilidad": {
+     "type": [
+      "string",
+      "null"
+     ]
+    },
+    "banda": {
+     "anyOf": [
+      {
+       "$ref": "#/$defs/banda_verbal"
+      },
+      {
+       "type": "null"
+      }
+     ]
+    },
+    "resultado_vs_referencia": {
+     "type": "string",
+     "minLength": 1
+    },
+    "rango_p10_p50_p90": {
+     "type": [
+      "array",
+      "null"
+     ]
+    },
+    "calculos": {
+     "type": "array",
+     "items": {
+      "$ref": "#/$defs/ref_traza"
+     }
+    }
+   },
+   "required": [
+    "nombre",
+    "premisas",
+    "probabilidad",
+    "banda",
+    "resultado_vs_referencia"
+   ],
+   "additionalProperties": false,
+   "patternProperties": {
+    "^x_": {}
+   }
+  },
+  "sensibilidad": {
+   "type": "object",
+   "properties": {
+    "variable": {
+     "type": "string",
+     "minLength": 1
+    },
+    "valor_base": {},
+    "valor_bajo": {},
+    "valor_alto": {},
+    "efecto_bajo": {},
+    "efecto_alto": {},
+    "unidad": {
+     "type": "string"
+    },
+    "calc_id": {
+     "$ref": "#/$defs/ref_traza"
+    }
+   },
+   "required": [
+    "variable",
+    "efecto_bajo",
+    "efecto_alto"
+   ],
+   "additionalProperties": false,
+   "patternProperties": {
+    "^x_": {}
+   }
+  },
+  "pronostico": {
+   "type": "object",
+   "properties": {
+    "prg_id": {
+     "$ref": "#/$defs/prg_id"
+    },
+    "tipo": {
+     "enum": [
+      "AMBITO",
+      "RANKING",
+      "HITO_H5"
+     ]
+    },
+    "afirmacion": {
+     "type": "string",
+     "minLength": 1
+    },
+    "horizonte": {
+     "$ref": "#/$defs/horizonte"
+    },
+    "fecha_emision": {
+     "$ref": "#/$defs/fecha"
+    },
+    "fecha_resolucion": {
+     "$ref": "#/$defs/fecha"
+    },
+    "criterio": {
+     "type": "string",
+     "minLength": 1
+    },
+    "referencia": {
+     "type": "string",
+     "minLength": 1
+    },
+    "indicador": {
+     "type": [
+      "string",
+      "null"
+     ]
+    },
+    "tipo_activo": {
+     "anyOf": [
+      {
+       "$ref": "#/$defs/tipo_activo"
+      },
+      {
+       "type": "null"
+      }
+     ]
+    },
+    "banda": {
+     "$ref": "#/$defs/banda_verbal"
+    },
+    "probabilidad_publicada": {
+     "type": [
+      "number",
+      "null"
+     ]
+    },
+    "celda": {
+     "type": "string"
+    },
+    "referencia_ingenua": {
+     "type": "string",
+     "minLength": 1
+    },
+    "universo_ref": {
+     "type": "string"
+    },
+    "tratamiento_bajas": {
+     "type": "string"
+    },
+    "fuente": {
+     "type": "string"
+    },
+    "hito": {
+     "type": "object"
+    }
+   },
+   "required": [
+    "prg_id",
+    "tipo",
+    "afirmacion",
+    "horizonte",
+    "fecha_emision",
+    "fecha_resolucion",
+    "criterio",
+    "referencia",
+    "banda",
+    "probabilidad_publicada",
+    "referencia_ingenua"
+   ],
+   "additionalProperties": false,
+   "patternProperties": {
+    "^x_": {}
+   }
+  },
+  "riesgo": {
+   "type": "object",
+   "properties": {
+    "riesgo": {
+     "type": "string",
+     "minLength": 1
+    },
+    "mecanismo": {
+     "type": "string",
+     "minLength": 1
+    },
+    "senal_temprana": {
+     "type": "string",
+     "minLength": 1
+    },
+    "magnitud": {
+     "type": "string"
+    },
+    "probabilidad_verbal": {
+     "type": "string"
+    }
+   },
+   "required": [
+    "riesgo",
+    "mecanismo",
+    "senal_temprana"
+   ],
+   "additionalProperties": false,
+   "patternProperties": {
+    "^x_": {}
+   }
+  },
+  "objecion": {
+   "type": "object",
+   "properties": {
+    "obj_id": {
+     "$ref": "#/$defs/obj_id"
+    },
+    "objeto": {
+     "type": "string",
+     "pattern": "^(TESIS|CADENA|CAND-B-[0-9]{4}-[0-9]{4,})$"
+    },
+    "tipo": {
+     "type": "string"
+    },
+    "fuerza": {
+     "enum": [
+      "fuerte",
+      "moderada",
+      "debil"
+     ]
+    },
+    "argumento": {
+     "type": "string",
+     "minLength": 1
+    },
+    "evidencia": {
+     "type": "array",
+     "items": {
+      "$ref": "#/$defs/ref_traza"
+     }
+    },
+    "que_la_resolveria": {
+     "type": "string"
+    },
+    "respuesta": {
+     "type": [
+      "string",
+      "null"
+     ]
+    },
+    "resuelta": {
+     "type": "boolean"
+    },
+    "estado_contraste": {
+     "enum": [
+      "aceptada",
+      "resuelta",
+      "incertidumbre_abierta"
+     ]
+    }
+   },
+   "required": [
+    "obj_id",
+    "objeto",
+    "fuerza",
+    "argumento",
+    "resuelta",
+    "estado_contraste"
+   ],
+   "additionalProperties": false,
+   "patternProperties": {
+    "^x_": {}
+   }
+  },
+  "objecion_candidato": {
+   "type": "object",
+   "properties": {
+    "obj_id": {
+     "$ref": "#/$defs/obj_id"
+    },
+    "fuerza": {
+     "enum": [
+      "fuerte",
+      "moderada",
+      "debil"
+     ]
+    },
+    "respuesta": {
+     "type": "string"
+    },
+    "resuelta": {
+     "type": "boolean"
+    },
+    "resumen": {
+     "type": "string"
+    }
+   },
+   "required": [
+    "obj_id",
+    "fuerza",
+    "resuelta"
+   ],
+   "additionalProperties": false,
+   "patternProperties": {
+    "^x_": {}
+   }
+  },
+  "alerta": {
+   "type": "object",
+   "properties": {
+    "senal": {
+     "type": "string",
+     "minLength": 1
+    },
+    "valor": {},
+    "estado": {
+     "enum": [
+      "critica",
+      "no_critica"
+     ]
+    },
+    "verificar_en_C": {
+     "type": "boolean"
+    }
+   },
+   "required": [
+    "senal",
+    "estado"
+   ],
+   "additionalProperties": false,
+   "patternProperties": {
+    "^x_": {}
+   }
+  },
+  "puertas_candidato": {
+   "type": "object",
+   "properties": {
+    "PC1": {
+     "$ref": "#/$defs/puerta_candidato"
+    },
+    "PC2": {
+     "$ref": "#/$defs/puerta_candidato"
+    },
+    "PC3": {
+     "$ref": "#/$defs/puerta_candidato"
+    },
+    "PC4": {
+     "$ref": "#/$defs/puerta_candidato"
+    },
+    "PC5": {
+     "$ref": "#/$defs/puerta_candidato"
+    },
+    "PC6": {
+     "$ref": "#/$defs/puerta_candidato"
+    },
+    "PC7": {
+     "$ref": "#/$defs/puerta_candidato"
+    },
+    "PC8": {
+     "$ref": "#/$defs/puerta_candidato"
+    }
+   },
+   "required": [
+    "PC1",
+    "PC2",
+    "PC3",
+    "PC4",
+    "PC5",
+    "PC6",
+    "PC7",
+    "PC8"
+   ],
+   "additionalProperties": false,
+   "patternProperties": {
+    "^x_": {}
+   }
+  },
+  "candidato": {
+   "type": "object",
+   "properties": {
+    "cand_id": {
+     "$ref": "#/$defs/cand_id"
+    },
+    "rango": {
+     "type": "integer",
+     "minimum": 1
+    },
+    "nombre": {
+     "type": "string",
+     "minLength": 1
+    },
+    "isin": {
+     "$ref": "#/$defs/isin"
+    },
+    "ticker": {
+     "type": [
+      "string",
+      "null"
+     ]
+    },
+    "mercado": {
+     "type": [
+      "string",
+      "null"
+     ]
+    },
+    "divisa": {
+     "type": [
+      "string",
+      "null"
+     ]
+    },
+    "tipo_instrumento": {
+     "enum": [
+      "accion",
+      "bono",
+      "etf",
+      "fondo",
+      "futuro",
+      "opcion",
+      "etc",
+      "etn",
+      "token",
+      "letra",
+      "indice",
+      "par",
+      "vehiculo_cotizado",
+      "warrant",
+      "certificado"
+     ]
+    },
+    "tipo_subyacente": {
+     "anyOf": [
+      {
+       "$ref": "#/$defs/tipo_activo"
+      },
+      {
+       "type": "null"
+      }
+     ]
+    },
+    "emisor": {
+     "type": [
+      "string",
+      "null"
+     ]
+    },
+    "subcluster": {
+     "type": [
+      "string",
+      "null"
+     ]
+    },
+    "indice_replicado": {
+     "type": [
+      "string",
+      "null"
+     ]
+    },
+    "fecha_dato": {
+     "$ref": "#/$defs/fecha"
+    },
+    "S": {
+     "type": "integer",
+     "minimum": 0,
+     "maximum": 100
+    },
+    "desglose": {
+     "type": "object",
+     "properties": {
+      "PE": {
+       "$ref": "#/$defs/comp_S"
+      },
+      "QL": {
+       "$ref": "#/$defs/comp_S"
+      },
+      "VA": {
+       "$ref": "#/$defs/comp_S"
+      },
+      "MO": {
+       "$ref": "#/$defs/comp_S"
+      },
+      "RI": {
+       "$ref": "#/$defs/comp_S"
+      },
+      "LA": {
+       "$ref": "#/$defs/comp_S"
+      },
+      "CO": {
+       "$ref": "#/$defs/comp_S"
+      }
+     },
+     "required": [
+      "PE",
+      "QL",
+      "VA",
+      "MO",
+      "RI",
+      "LA",
+      "CO"
+     ],
+     "additionalProperties": false,
+     "patternProperties": {
+      "^x_": {}
+     }
+    },
+    "ic90_S": {
+     "$ref": "#/$defs/intervalo"
+    },
+    "ic90_rango": {
+     "$ref": "#/$defs/intervalo"
+    },
+    "frontera": {
+     "type": "boolean"
+    },
+    "segunda_pasada": {
+     "type": "boolean"
+    },
+    "pureza": {
+     "type": "object",
+     "properties": {
+      "metrica": {
+       "type": "string",
+       "minLength": 1
+      },
+      "valor": {
+       "type": "number",
+       "minimum": 0,
+       "maximum": 1
+      },
+      "fuente": {
+       "$ref": "#/$defs/ref_dato_calc"
+      },
+      "metodo": {
+       "enum": [
+        "publicado",
+        "estimado"
+       ]
+      }
+     },
+     "required": [
+      "metrica",
+      "valor",
+      "fuente"
+     ],
+     "additionalProperties": false,
+     "patternProperties": {
+      "^x_": {}
+     }
+    },
+    "alertas": {
+     "type": "array",
+     "items": {
+      "$ref": "#/$defs/alerta"
+     }
+    },
+    "puertas": {
+     "$ref": "#/$defs/puertas_candidato"
+    },
+    "veredicto": {
+     "enum": [
+      "PRIORITARIO_PARA_C",
+      "SECUNDARIO"
+     ]
+    },
+    "motivo_secundario": {
+     "type": "array",
+     "items": {
+      "type": "string"
+     }
+    },
+    "rol_en_tesis": {
+     "type": "string",
+     "minLength": 1
+    },
+    "objeciones": {
+     "type": "array",
+     "items": {
+      "$ref": "#/$defs/objecion_candidato"
+     }
+    },
+    "exposicion_compartida": {
+     "type": [
+      "string",
+      "null"
+     ]
+    },
+    "metricas_resumen": {
+     "type": "object"
+    },
+    "eslabon_id": {
+     "$ref": "#/$defs/eslabon_id"
+    },
+    "eslabones_secundarios": {
+     "type": "array",
+     "items": {
+      "$ref": "#/$defs/eslabon_id"
+     }
+    },
+    "pureza_eslabon": {
+     "type": [
+      "number",
+      "null"
+     ],
+     "minimum": 0,
+     "maximum": 1
+    }
+   },
+   "required": [
+    "cand_id",
+    "rango",
+    "nombre",
+    "isin",
+    "tipo_instrumento",
+    "S",
+    "desglose",
+    "ic90_S",
+    "ic90_rango",
+    "frontera",
+    "pureza",
+    "alertas",
+    "puertas",
+    "veredicto",
+    "rol_en_tesis",
+    "fecha_dato",
+    "eslabon_id"
+   ],
+   "additionalProperties": false,
+   "patternProperties": {
+    "^x_": {}
+   }
+  },
+  "tipo_aplicable": {
+   "type": "object",
+   "properties": {
+    "aplicable": {
+     "const": true
+    },
+    "playbook": {
+     "type": "string",
+     "pattern": "^SEL-(RV|RF|DIV|MP|IDX|FON|DER|INM|CRI|ALT|MON|TCV)$"
+    },
+    "universo": {
+     "type": "object",
+     "properties": {
+      "tamano": {
+       "type": "integer",
+       "minimum": 0
+      },
+      "tamano_invertible": {
+       "type": "integer",
+       "minimum": 0
+      },
+      "fuentes": {
+       "type": "array",
+       "items": {
+        "type": "string"
+       },
+       "minItems": 1
+      },
+      "fecha": {
+       "$ref": "#/$defs/fecha"
+      },
+      "metodo": {
+       "type": "string"
+      }
+     },
+     "required": [
+      "tamano",
+      "fuentes",
+      "fecha"
+     ],
+     "additionalProperties": false,
+     "patternProperties": {
+      "^x_": {}
+     }
+    },
+    "excluidos_por_motivo": {
+     "type": "object",
+     "propertyNames": {
+      "$ref": "#/$defs/motivo_exclusion"
+     },
+     "additionalProperties": {
+      "type": "integer",
+      "minimum": 0
+     }
+    },
+    "top_n": {
+     "type": "array",
+     "items": {
+      "$ref": "#/$defs/candidato"
+     }
+    },
+    "alternativas": {
+     "type": "array",
+     "items": {
+      "$ref": "#/$defs/cand_id"
+     }
+    },
+    "sustituciones_diversidad": {
+     "type": "array",
+     "items": {
+      "type": "object",
+      "properties": {
+       "desplazado": {
+        "$ref": "#/$defs/cand_id"
+       },
+       "S": {
+        "type": "integer"
+       },
+       "motivo": {
+        "type": "string",
+        "minLength": 1
+       },
+       "frente_a": {
+        "type": [
+         "string",
+         "null"
+        ]
+       }
+      },
+      "required": [
+       "desplazado",
+       "S",
+       "motivo"
+      ],
+      "additionalProperties": false,
+      "patternProperties": {
+       "^x_": {}
+      }
+     }
+    },
+    "menos_de_N_motivo": {
+     "type": [
+      "string",
+      "null"
+     ]
+    },
+    "traduccion_rasgos_metricas": {
+     "type": "array",
+     "items": {
+      "type": "object",
+      "properties": {
+       "rasgo": {
+        "type": "string",
+        "minLength": 1
+       },
+       "metricas": {
+        "type": "array",
+        "items": {
+         "type": "string"
+        }
+       },
+       "componente": {
+        "type": "string"
+       }
+      },
+      "required": [
+       "rasgo",
+       "metricas"
+      ],
+      "additionalProperties": false,
+      "patternProperties": {
+       "^x_": {}
+      }
+     }
+    },
+    "referencia": {
+     "type": "object",
+     "properties": {
+      "ambito": {
+       "type": "string",
+       "minLength": 1
+      },
+      "ranking": {
+       "type": "string",
+       "minLength": 1
+      }
+     },
+     "required": [
+      "ambito",
+      "ranking"
+     ],
+     "additionalProperties": false,
+     "patternProperties": {
+      "^x_": {}
+     }
+    },
+    "ambito_es_subcluster": {
+     "type": "boolean"
+    },
+    "exclusiones_destacadas": {
+     "type": "array",
+     "items": {
+      "type": "object",
+      "properties": {
+       "nombre": {
+        "type": "string",
+        "minLength": 1
+       },
+       "motivo": {
+        "$ref": "#/$defs/motivo_exclusion"
+       },
+       "detalle": {
+        "type": "string"
+       }
+      },
+      "required": [
+       "nombre",
+       "motivo"
+      ],
+      "additionalProperties": false,
+      "patternProperties": {
+       "^x_": {}
+      }
+     }
+    }
+   },
+   "required": [
+    "aplicable",
+    "playbook",
+    "universo",
+    "excluidos_por_motivo",
+    "top_n",
+    "alternativas",
+    "sustituciones_diversidad",
+    "menos_de_N_motivo",
+    "referencia"
+   ],
+   "additionalProperties": false,
+   "patternProperties": {
+    "^x_": {}
+   }
+  },
+  "tipo_no_aplicable": {
+   "type": "object",
+   "properties": {
+    "aplicable": {
+     "const": false
+    },
+    "motivo": {
+     "type": "string",
+     "minLength": 1
+    }
+   },
+   "required": [
+    "aplicable",
+    "motivo"
+   ],
+   "additionalProperties": false,
+   "patternProperties": {
+    "^x_": {}
+   }
+  },
+  "tipo_en_paquete": {
+   "oneOf": [
+    {
+     "$ref": "#/$defs/tipo_aplicable"
+    },
+    {
+     "$ref": "#/$defs/tipo_no_aplicable"
+    }
+   ]
+  },
+  "encargo_C": {
+   "type": "object",
+   "properties": {
+    "cand_id": {
+     "$ref": "#/$defs/cand_id"
+    },
+    "pet_id": {
+     "$ref": "#/$defs/pet_id"
+    },
+    "rec_id": {
+     "$ref": "#/$defs/rec_id"
+    },
+    "bloque_destino": {
+     "$ref": "#/$defs/bloque_c"
+    },
+    "tipo_activo": {
+     "$ref": "#/$defs/tipo_activo"
+    },
+    "tipo_subyacente": {
+     "anyOf": [
+      {
+       "$ref": "#/$defs/tipo_activo"
+      },
+      {
+       "type": "null"
+      }
+     ]
+    },
+    "veredicto_candidato": {
+     "enum": [
+      "PRIORITARIO_PARA_C",
+      "SECUNDARIO"
+     ]
+    },
+    "instrumento": {
+     "type": "object",
+     "properties": {
+      "nombre": {
+       "type": "string",
+       "minLength": 1
+      },
+      "isin": {
+       "$ref": "#/$defs/isin"
+      },
+      "ticker": {
+       "type": [
+        "string",
+        "null"
+       ]
+      },
+      "mercado": {
+       "type": [
+        "string",
+        "null"
+       ]
+      },
+      "divisa": {
+       "type": [
+        "string",
+        "null"
+       ]
+      },
+      "tipo_instrumento": {
+       "enum": [
+        "accion",
+        "bono",
+        "etf",
+        "fondo",
+        "futuro",
+        "opcion",
+        "etc",
+        "etn",
+        "token",
+        "letra",
+        "indice",
+        "par",
+        "vehiculo_cotizado",
+        "warrant",
+        "certificado"
+       ]
+      }
+     },
+     "required": [
+      "nombre",
+      "isin",
+      "tipo_instrumento"
+     ],
+     "additionalProperties": false,
+     "patternProperties": {
+      "^x_": {}
+     }
+    },
+    "contexto_ambito": {
+     "type": "object",
+     "properties": {
+      "ambito": {
+       "type": "string",
+       "minLength": 1
+      },
+      "veredicto": {
+       "enum": [
+        "INVERTIR",
+        "INVERTIR_ESCALONADO",
+        "VIGILAR",
+        "DESCARTAR"
+       ]
+      },
+      "A": {
+       "type": "integer"
+      },
+      "E": {
+       "type": "integer"
+      },
+      "C": {
+       "type": "integer"
+      },
+      "tesis_resumen": {
+       "type": "string",
+       "minLength": 1
+      },
+      "horizonte": {
+       "$ref": "#/$defs/horizonte"
+      },
+      "regimen": {
+       "type": "string"
+      }
+     },
+     "required": [
+      "ambito",
+      "veredicto",
+      "A",
+      "E",
+      "C",
+      "tesis_resumen",
+      "horizonte"
+     ],
+     "additionalProperties": false,
+     "patternProperties": {
+      "^x_": {}
+     }
+    },
+    "rol_en_tesis": {
+     "type": "string",
+     "minLength": 1
+    },
+    "puntuacion": {
+     "type": "object",
+     "properties": {
+      "S": {
+       "type": "integer"
+      },
+      "desglose": {
+       "type": "object"
+      },
+      "ic90_S": {
+       "$ref": "#/$defs/intervalo"
+      },
+      "rango": {
+       "type": "integer"
+      },
+      "ic90_rango": {
+       "$ref": "#/$defs/intervalo"
+      },
+      "tamano_universo": {
+       "type": "integer"
+      },
+      "playbook": {
+       "type": "string"
+      },
+      "pesos": {
+       "type": "object"
+      }
+     },
+     "required": [
+      "S",
+      "desglose",
+      "ic90_S",
+      "rango",
+      "ic90_rango",
+      "tamano_universo",
+      "playbook",
+      "pesos"
+     ],
+     "additionalProperties": false,
+     "patternProperties": {
+      "^x_": {}
+     }
+    },
+    "pureza": {
+     "type": "object",
+     "properties": {
+      "metrica": {
+       "type": "string",
+       "minLength": 1
+      },
+      "valor": {
+       "type": "number"
+      },
+      "fuente": {
+       "$ref": "#/$defs/ref_dato_calc"
+      },
+      "metodo": {
+       "enum": [
+        "publicado",
+        "estimado"
+       ]
+      }
+     },
+     "required": [
+      "metrica",
+      "valor",
+      "fuente",
+      "metodo"
+     ],
+     "additionalProperties": false,
+     "patternProperties": {
+      "^x_": {}
+     }
+    },
+    "metricas_clave": {
+     "type": "array",
+     "items": {
+      "type": "object",
+      "properties": {
+       "metrica": {
+        "type": "string",
+        "minLength": 1
+       },
+       "valor": {},
+       "unidad": {
+        "type": "string"
+       },
+       "fecha": {
+        "$ref": "#/$defs/fecha_o_texto"
+       },
+       "fuente": {
+        "$ref": "#/$defs/ref_dato_calc"
+       }
+      },
+      "required": [
+       "metrica",
+       "valor",
+       "fecha",
+       "fuente"
+      ],
+      "additionalProperties": false,
+      "patternProperties": {
+       "^x_": {}
+      }
+     }
+    },
+    "campos_especificos_playbook": {
+     "type": "object"
+    },
+    "senales_alerta": {
+     "type": "array",
+     "items": {
+      "$ref": "#/$defs/alerta"
+     }
+    },
+    "catalizadores": {
+     "type": "array",
+     "items": {
+      "$ref": "#/$defs/evento"
+     }
+    },
+    "riesgos_especificos": {
+     "type": "array",
+     "items": {
+      "type": "string"
+     }
+    },
+    "invalidacion_candidato": {
+     "type": "array",
+     "items": {
+      "type": "string"
+     }
+    },
+    "objeciones_y_respuestas": {
+     "type": "array",
+     "items": {
+      "type": "object",
+      "properties": {
+       "obj_id": {
+        "$ref": "#/$defs/obj_id"
+       },
+       "fuerza": {
+        "enum": [
+         "fuerte",
+         "moderada",
+         "debil"
+        ]
+       },
+       "resumen": {
+        "type": "string"
+       },
+       "respuesta": {
+        "type": "string"
+       }
+      },
+      "required": [
+       "obj_id",
+       "fuerza"
+      ],
+      "additionalProperties": false,
+      "patternProperties": {
+       "^x_": {}
+      }
+     }
+    },
+    "preguntas_para_C": {
+     "type": "array",
+     "items": {
+      "type": "string"
+     },
+     "minItems": 1
+    },
+    "supuestos_a_verificar": {
+     "type": "array",
+     "items": {
+      "type": "string"
+     }
+    },
+    "referencia_comparacion": {
+     "type": "object",
+     "properties": {
+      "ambito": {
+       "type": "string",
+       "minLength": 1
+      },
+      "ranking": {
+       "type": "string",
+       "minLength": 1
+      }
+     },
+     "required": [
+      "ambito",
+      "ranking"
+     ],
+     "additionalProperties": false,
+     "patternProperties": {
+      "^x_": {}
+     }
+    },
+    "alternativas": {
+     "type": "array",
+     "items": {
+      "$ref": "#/$defs/cand_id"
+     }
+    },
+    "evidencias": {
+     "type": "array",
+     "items": {
+      "$ref": "#/$defs/ref_traza"
+     }
+    },
+    "calculos": {
+     "type": "array",
+     "items": {
+      "$ref": "#/$defs/ref_traza"
+     }
+    },
+    "data_cutoff": {
+     "$ref": "#/$defs/fecha"
+    },
+    "limitaciones": {
+     "type": "array",
+     "items": {
+      "type": "string"
+     }
+    },
+    "aviso": {
+     "const": "Selección del Bloque B: no es una valoración individual ni una recomendación personal."
+    },
+    "eslabon_id": {
+     "$ref": "#/$defs/eslabon_id"
+    },
+    "origen_seleccion": {
+     "enum": [
+      "TOP_N",
+      "MEJORES_POR_ESLABON"
+     ]
+    },
+    "contexto_eslabon": {
+     "type": "object",
+     "properties": {
+      "nombre": {
+       "type": "string"
+      },
+      "AE": {
+       "type": [
+        "integer",
+        "null"
+       ]
+      },
+      "cuello_botella": {
+       "type": "boolean"
+      },
+      "PCB": {
+       "type": [
+        "integer",
+        "null"
+       ]
+      }
+     },
+     "additionalProperties": false,
+     "patternProperties": {
+      "^x_": {}
+     }
+    }
+   },
+   "required": [
+    "cand_id",
+    "pet_id",
+    "rec_id",
+    "bloque_destino",
+    "tipo_activo",
+    "tipo_subyacente",
+    "instrumento",
+    "contexto_ambito",
+    "rol_en_tesis",
+    "puntuacion",
+    "pureza",
+    "metricas_clave",
+    "campos_especificos_playbook",
+    "senales_alerta",
+    "catalizadores",
+    "riesgos_especificos",
+    "invalidacion_candidato",
+    "objeciones_y_respuestas",
+    "preguntas_para_C",
+    "supuestos_a_verificar",
+    "referencia_comparacion",
+    "alternativas",
+    "evidencias",
+    "calculos",
+    "data_cutoff",
+    "limitaciones",
+    "aviso",
+    "eslabon_id",
+    "origen_seleccion"
+   ],
+   "additionalProperties": false,
+   "patternProperties": {
+    "^x_": {}
+   }
+  },
+  "senal": {
+   "type": "object",
+   "properties": {
+    "sig_id": {
+     "$ref": "#/$defs/sig_id"
+    },
+    "nombre": {
+     "type": "string",
+     "minLength": 1
+    },
+    "serie": {
+     "type": "string",
+     "pattern": "^HT-01:"
+    },
+    "frecuencia": {
+     "enum": [
+      "diaria",
+      "cada_2_dias_habiles",
+      "semanal",
+      "mensual",
+      "trimestral",
+      "en_catalizador"
+     ]
+    },
+    "unidad": {
+     "type": "string"
+    },
+    "valor_entrega": {
+     "type": [
+      "number",
+      "null"
+     ]
+    },
+    "umbral_fluctuacion": {
+     "type": "object",
+     "properties": {
+      "min": {
+       "type": "number"
+      },
+      "max": {
+       "type": "number"
+      }
+     },
+     "required": [
+      "min",
+      "max"
+     ],
+     "additionalProperties": false,
+     "patternProperties": {
+      "^x_": {}
+     }
+    },
+    "umbral_revision": {
+     "type": "number"
+    },
+    "umbral_invalidacion": {
+     "type": "number"
+    },
+    "direccion": {
+     "enum": [
+      "por_encima",
+      "por_debajo"
+     ]
+    },
+    "criterio_cambio_estructural": {
+     "type": "string",
+     "minLength": 1
+    },
+    "afecta_a": {
+     "type": "array",
+     "items": {
+      "type": "string",
+      "pattern": "^(AMBITO|CAND-B-[0-9]{4}-[0-9]{4,})$"
+     },
+     "minItems": 1
+    },
+    "transformacion": {
+     "type": "string"
+    }
+   },
+   "required": [
+    "sig_id",
+    "nombre",
+    "serie",
+    "frecuencia",
+    "umbral_fluctuacion",
+    "umbral_revision",
+    "umbral_invalidacion",
+    "direccion",
+    "criterio_cambio_estructural",
+    "afecta_a"
+   ],
+   "additionalProperties": false,
+   "patternProperties": {
+    "^x_": {}
+   }
+  },
+  "plan_de_seguimiento": {
+   "type": "object",
+   "properties": {
+    "rec_id": {
+     "$ref": "#/$defs/rec_id"
+    },
+    "pet_id": {
+     "$ref": "#/$defs/pet_id"
+    },
+    "vigente_hasta": {
+     "$ref": "#/$defs/fecha"
+    },
+    "horizonte": {
+     "$ref": "#/$defs/horizonte"
+    },
+    "frecuencia": {
+     "enum": [
+      "diaria",
+      "cada_2_dias_habiles",
+      "semanal",
+      "mensual",
+      "trimestral"
+     ]
+    },
+    "regimen_referencia": {
+     "type": "string"
+    },
+    "senales": {
+     "type": "array",
+     "items": {
+      "$ref": "#/$defs/senal"
+     }
+    },
+    "condiciones_invalidacion_ambito": {
+     "type": "array",
+     "items": {
+      "type": "string"
+     }
+    },
+    "condiciones_invalidacion_candidatos": {
+     "type": "array",
+     "items": {
+      "type": "object",
+      "properties": {
+       "cand_id": {
+        "$ref": "#/$defs/cand_id"
+       },
+       "condiciones": {
+        "type": "array",
+        "items": {
+         "type": "string"
+        },
+        "minItems": 1
+       }
+      },
+      "required": [
+       "cand_id",
+       "condiciones"
+      ],
+      "additionalProperties": false,
+      "patternProperties": {
+       "^x_": {}
+      }
+     }
+    },
+    "catalizadores": {
+     "type": "array",
+     "items": {
+      "$ref": "#/$defs/evento"
+     }
+    },
+    "pronosticos_a_resolver": {
+     "type": "array",
+     "items": {
+      "type": "object",
+      "properties": {
+       "prg_id": {
+        "$ref": "#/$defs/prg_id"
+       },
+       "fecha_resolucion": {
+        "$ref": "#/$defs/fecha"
+       }
+      },
+      "required": [
+       "prg_id",
+       "fecha_resolucion"
+      ],
+      "additionalProperties": false,
+      "patternProperties": {
+       "^x_": {}
+      }
+     }
+    },
+    "acciones_al_disparo": {
+     "type": "object",
+     "properties": {
+      "REVISION": {
+       "type": "string",
+       "minLength": 1
+      },
+      "INVALIDACION_PROBABLE": {
+       "type": "string",
+       "minLength": 1
+      },
+      "INVALIDACION_CONFIRMADA": {
+       "type": "string",
+       "minLength": 1
+      }
+     },
+     "required": [
+      "REVISION",
+      "INVALIDACION_PROBABLE",
+      "INVALIDACION_CONFIRMADA"
+     ],
+     "additionalProperties": false,
+     "patternProperties": {
+      "^x_": {}
+     }
+    },
+    "nota": {
+     "type": "string"
+    }
+   },
+   "required": [
+    "rec_id",
+    "pet_id",
+    "vigente_hasta",
+    "horizonte",
+    "frecuencia",
+    "regimen_referencia",
+    "senales",
+    "condiciones_invalidacion_ambito",
+    "condiciones_invalidacion_candidatos",
+    "catalizadores",
+    "pronosticos_a_resolver",
+    "acciones_al_disparo"
+   ],
+   "additionalProperties": false,
+   "patternProperties": {
+    "^x_": {}
+   }
+  },
+  "item_cobertura": {
+   "oneOf": [
+    {
+     "type": "string",
+     "minLength": 1
+    },
+    {
+     "type": "object",
+     "properties": {
+      "objeto": {
+       "type": "string",
+       "minLength": 1
+      },
+      "tipo_activo": {
+       "anyOf": [
+        {
+         "$ref": "#/$defs/tipo_activo"
+        },
+        {
+         "type": "null"
+        }
+       ]
+      },
+      "invertibilidad": {
+       "type": "string"
+      },
+      "mecanismo": {
+       "type": "string"
+      },
+      "motivo": {
+       "type": "string"
+      },
+      "caducidad": {
+       "type": "string"
+      },
+      "detalle": {
+       "type": "string"
+      },
+      "candidatos": {
+       "type": "array",
+       "items": {
+        "$ref": "#/$defs/cand_id"
+       }
+      }
+     },
+     "required": [
+      "objeto"
+     ],
+     "additionalProperties": false,
+     "patternProperties": {
+      "^x_": {}
+     }
+    }
+   ]
+  },
+  "eslabon_id": {
+   "type": "string",
+   "pattern": "^ESL-\\d{2}(\\.\\d{2}){0,2}(\\.[a-z])?$"
+  },
+  "cns_id": {
+   "type": "string",
+   "pattern": "^CNS-B-\\d{4}-\\d{4,}$"
+  },
+  "indicador_cuello": {
+   "type": "object",
+   "properties": {
+    "indicador": {
+     "enum": [
+      "utilizacion",
+      "plazo_entrega_ratio",
+      "book_to_bill",
+      "hhi_proveedores",
+      "cuota_primer_pais",
+      "margen_sobre_adyacentes_pp",
+      "spot_contrato",
+      "capacidad_vs_deficit",
+      "permisos_meses",
+      "inventarios_percentil",
+      "insumo_sin_sustituto"
+     ]
+    },
+    "valor": {},
+    "estado": {
+     "enum": [
+      "VERDE",
+      "AMBAR",
+      "ROJO"
+     ]
+    },
+    "fuente": {
+     "type": [
+      "string",
+      "null"
+     ]
+    }
+   },
+   "required": [
+    "indicador",
+    "estado"
+   ],
+   "additionalProperties": false,
+   "patternProperties": {
+    "^x_": {}
+   }
+  },
+  "opcion_eslabon": {
+   "type": "object",
+   "properties": {
+    "rango": {
+     "type": "integer",
+     "minimum": 1,
+     "maximum": 5
+    },
+    "cand_id": {
+     "$ref": "#/$defs/cand_id"
+    },
+    "nombre": {
+     "type": "string",
+     "minLength": 1
+    },
+    "ticker": {
+     "type": [
+      "string",
+      "null"
+     ]
+    },
+    "isin": {
+     "anyOf": [
+      {
+       "$ref": "#/$defs/isin"
+      },
+      {
+       "type": "null"
+      }
+     ]
+    },
+    "tipo_activo": {
+     "$ref": "#/$defs/tipo_activo"
+    },
+    "rol_en_eslabon": {
+     "type": "string"
+    },
+    "pureza_eslabon": {
+     "type": [
+      "number",
+      "null"
+     ],
+     "minimum": 0,
+     "maximum": 1
+    },
+    "S": {
+     "type": "integer",
+     "minimum": 50,
+     "maximum": 100
+    },
+    "ic90_S": {
+     "type": [
+      "array",
+      "null"
+     ]
+    },
+    "veredicto": {
+     "enum": [
+      "PRIORITARIO_PARA_C",
+      "SECUNDARIO"
+     ]
+    },
+    "en_top_n_tipo": {
+     "type": "boolean"
+    },
+    "motivo": {
+     "type": "string"
+    },
+    "riesgos_clave": {
+     "type": "array",
+     "items": {
+      "type": "string"
+     }
+    }
+   },
+   "required": [
+    "rango",
+    "cand_id",
+    "nombre",
+    "tipo_activo",
+    "S",
+    "veredicto",
+    "en_top_n_tipo",
+    "motivo"
+   ],
+   "additionalProperties": false,
+   "patternProperties": {
+    "^x_": {}
+   }
+  },
+  "emergente": {
+   "type": "object",
+   "properties": {
+    "emg_id": {
+     "type": "string",
+     "pattern": "^EMG-B-\\d{4}-\\d{4,}$"
+    },
+    "nombre": {
+     "type": "string",
+     "minLength": 1
+    },
+    "tipo": {
+     "enum": [
+      "STARTUP",
+      "SCALE_UP",
+      "SPIN_OFF_UNIVERSITARIO",
+      "SPIN_OFF_CORPORATIVO",
+      "SALIDA_A_BOLSA_RECIENTE"
+     ]
+    },
+    "financiacion_conocida": {
+     "type": [
+      "object",
+      "null"
+     ]
+    },
+    "tecnologia_o_ventaja": {
+     "type": "string"
+    },
+    "senales_traccion": {
+     "type": "array",
+     "items": {
+      "type": "string"
+     }
+    },
+    "via_exposicion": {
+     "enum": [
+      "COTIZADA_DIRECTA",
+      "MATRIZ_COTIZADA",
+      "ETF_O_FONDO",
+      "FUTURA_SALIDA_A_BOLSA",
+      "NO_INVERTIBLE_HOY"
+     ]
+    },
+    "instrumento_exposicion": {
+     "type": [
+      "object",
+      "null"
+     ]
+    },
+    "criterios": {
+     "type": "object"
+    },
+    "PEM": {
+     "type": [
+      "integer",
+      "null"
+     ],
+     "minimum": 0,
+     "maximum": 100
+    },
+    "riesgos": {
+     "type": "array",
+     "items": {
+      "type": "string"
+     }
+    },
+    "etiqueta": {
+     "$ref": "#/$defs/etiqueta"
+    }
+   },
+   "required": [
+    "emg_id",
+    "nombre",
+    "tipo",
+    "via_exposicion",
+    "PEM",
+    "etiqueta"
+   ],
+   "additionalProperties": false,
+   "patternProperties": {
+    "^x_": {}
+   }
+  },
+  "eslabon": {
+   "type": "object",
+   "properties": {
+    "eslabon_id": {
+     "$ref": "#/$defs/eslabon_id"
+    },
+    "padre": {
+     "anyOf": [
+      {
+       "$ref": "#/$defs/eslabon_id"
+      },
+      {
+       "type": "null"
+      }
+     ]
+    },
+    "nombre": {
+     "type": "string",
+     "minLength": 1
+    },
+    "nivel": {
+     "enum": [
+      "macro",
+      "sub",
+      "actividad",
+      "insumo"
+     ]
+    },
+    "descripcion": {
+     "type": "string",
+     "minLength": 1
+    },
+    "papel_ambito": {
+     "enum": [
+      "ES",
+      "CONSUME",
+      "ALIMENTA"
+     ]
+    },
+    "metricas": {
+     "type": "object"
+    },
+    "cuello_botella": {
+     "type": "object",
+     "properties": {
+      "es_cuello": {
+       "type": "boolean"
+      },
+      "severidad": {
+       "type": "integer",
+       "minimum": 1,
+       "maximum": 5
+      },
+      "persistencia": {
+       "type": "integer",
+       "minimum": 1,
+       "maximum": 5
+      },
+      "relevancia_valor": {
+       "type": "integer",
+       "minimum": 1,
+       "maximum": 5
+      },
+      "PCB": {
+       "type": "integer",
+       "minimum": 0,
+       "maximum": 100
+      },
+      "material": {
+       "type": "boolean"
+      },
+      "indicadores": {
+       "type": "array",
+       "items": {
+        "$ref": "#/$defs/indicador_cuello"
+       }
+      },
+      "causa": {
+       "enum": [
+        "capacidad",
+        "tecnologia",
+        "regulacion",
+        "geopolitica",
+        "materia_prima"
+       ]
+      },
+      "senal_resolucion": {
+       "type": "string"
+      },
+      "calc_id": {
+       "type": [
+        "string",
+        "null"
+       ]
+      }
+     },
+     "required": [
+      "es_cuello",
+      "severidad",
+      "persistencia",
+      "relevancia_valor",
+      "PCB",
+      "material",
+      "indicadores"
+     ],
+     "additionalProperties": false,
+     "patternProperties": {
+      "^x_": {}
+     }
+    },
+    "atractivo": {
+     "type": "object",
+     "properties": {
+      "AE": {
+       "type": "integer",
+       "minimum": 0,
+       "maximum": 100
+      },
+      "desglose": {
+       "type": "object"
+      },
+      "calc_id": {
+       "type": [
+        "string",
+        "null"
+       ]
+      }
+     },
+     "required": [
+      "AE"
+     ],
+     "additionalProperties": false,
+     "patternProperties": {
+      "^x_": {}
+     }
+    },
+    "opciones": {
+     "type": "array",
+     "maxItems": 5,
+     "items": {
+      "$ref": "#/$defs/opcion_eslabon"
+     }
+    },
+    "sin_opciones_motivo": {
+     "type": [
+      "string",
+      "null"
+     ]
+    },
+    "emergentes": {
+     "type": "array",
+     "items": {
+      "$ref": "#/$defs/emergente"
+     }
+    }
+   },
+   "required": [
+    "eslabon_id",
+    "nombre",
+    "nivel",
+    "descripcion",
+    "metricas",
+    "cuello_botella",
+    "atractivo",
+    "opciones",
+    "emergentes"
+   ],
+   "additionalProperties": false,
+   "patternProperties": {
+    "^x_": {}
+   }
+  }
+ }
+}

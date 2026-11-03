@@ -1,0 +1,16 @@
+{
+ "seg_id": "SEG-B-2026-0001",
+ "estado": "ACTIVO",
+ "motivo": "Vigilar la cartera de pedidos y la valoración del ámbito (ejemplo ficticio)",
+ "proximo_ciclo": "2026-12-03",
+ "estimacion_ciclo": {
+  "minutos_p50": 6.0,
+  "minutos_p80": 9.0,
+  "uc_p80": 5.0
+ },
+ "linea_base": {
+  "necesaria": false,
+  "minutos_p80": null
+ },
+ "advertencias": []
+}

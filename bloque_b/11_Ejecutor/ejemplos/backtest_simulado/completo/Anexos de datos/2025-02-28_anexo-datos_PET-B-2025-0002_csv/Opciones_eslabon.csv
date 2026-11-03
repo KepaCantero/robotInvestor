@@ -1,0 +1,6 @@
+﻿eslabon_id,rango,cand_id,nombre,tipo_activo,rol_en_eslabon,pureza_eslabon,S,ic90_S_inf,ic90_S_sup,veredicto,en_top_n_tipo,motivo
+ESL-02,1,CAND-B-2025-0060,Bono sénior de Prysmian 2029 (ilustrativo),RF,Exposición a Fabricación de cables de alta tensión (cables de alta tensión),0.5,70,66,74,PRIORITARIO_PARA_C,True,En el top-N de su tipo
+ESL-02,2,CAND-B-2025-0072,Pagaré verde corto (ilustrativo),RF,Exposición a Fabricación de cables de alta tensión (núcleo),0.63,64,59,69,SECUNDARIO,True,En el top-N de su tipo; S < 65
+ESL-02,3,CAND-B-2025-0053,ETF UCITS de infraestructura de redes inteligentes (ilustrativo A),FON,Exposición a Fabricación de cables de alta tensión (vehículo temático),0.61,64,57,69,SECUNDARIO,True,En el top-N de su tipo; S < 65
+ESL-02,4,CAND-B-2025-0048,Integrador británico de redes (ilustrativo),RV,Exposición a Fabricación de cables de alta tensión (ingeniería de redes),0.62,61,56,64,SECUNDARIO,True,En el top-N de su tipo; S < 65
+ESL-02,5,CAND-B-2025-0065,Bono sénior de Nexans 2032 (ilustrativo),RF,Exposición a Fabricación de cables de alta tensión (cables de alta tensión),0.41,61,57,65,SECUNDARIO,True,En el top-N de su tipo; S < 65

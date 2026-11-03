@@ -1,0 +1,46 @@
+{
+ "F7": {
+  "archivo": "Documentación para el Analizador de Mercados - V2.0.md",
+  "fichas": 618,
+  "sin_enlace": 1,
+  "por_estado": {
+   "PENDIENTE_BARRIDO": 20
+  },
+  "acciones": {
+   "NINGUNA": 20
+  }
+ },
+ "F8": {
+  "archivo": "Documentación para el Motor de Cálculo Avanzado de Mercados - V2.0.md",
+  "fichas": 410,
+  "sin_enlace": 20,
+  "por_estado": {
+   "PENDIENTE_BARRIDO": 20
+  },
+  "acciones": {
+   "NINGUNA": 20
+  }
+ },
+ "F9": {
+  "archivo": "Registro de Fuentes para el Analizador de Mercados - V2.0.md",
+  "fichas": 443,
+  "sin_enlace": 2,
+  "por_estado": {
+   "PENDIENTE_BARRIDO": 20
+  },
+  "acciones": {
+   "NINGUNA": 20
+  }
+ },
+ "FM": {
+  "archivo": "Fondo Metodológico Bibliográfico - V3.1.md",
+  "fichas": 164,
+  "sin_enlace": 0,
+  "por_estado": {
+   "PENDIENTE_BARRIDO": 20
+  },
+  "acciones": {
+   "NINGUNA": 20
+  }
+ }
+}

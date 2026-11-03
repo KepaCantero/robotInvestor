@@ -1,0 +1,21 @@
+﻿puntuacion,componente,valor,peso,nota
+A,asimetria,70,25,
+A,valoracion_expectativas,50,20,
+A,calidad_crecimiento,70,15,
+A,ventaja_estructural,70,10,
+A,catalizadores,60,10,
+A,momento_flujos,60,10,
+A,riesgos,50,10,
+A,TOTAL,60,100,media ponderada redondeada al múltiplo de 5
+E,calidad_raices,60,25,
+E,cobertura_dimensional,80,15,
+E,calidad_metodologica,70,15,
+E,trazabilidad,100,15,
+E,actualidad,90,10,
+E,discrepancias_resueltas,70,10,
+E,hipotesis_cerradas,80,10,
+E,TOTAL,75,100,media ponderada redondeada al múltiplo de 5
+RF,TOTAL,100,25,resultado de la refutación
+RE,TOTAL,82,20,robustez entre escenarios
+C,TOTAL,80,,"C = 0,20·A + 0,35·E + 0,25·RF + 0,20·RE; C ≤ E + 10"
+VEREDICTO,INVERTIR_ESCALONADO,,,CONCLUYENTE · relevancia MEDIA · siguiente paso ENVIAR_CANDIDATOS_A_C

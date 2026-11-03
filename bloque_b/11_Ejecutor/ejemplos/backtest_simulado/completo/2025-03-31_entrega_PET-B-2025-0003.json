@@ -1,0 +1,69 @@
+{
+ "pet_id": "PET-B-2025-0003",
+ "run_ids": [
+  "RUN-B-2025-0003-01"
+ ],
+ "rec_id": "REC-B-2025-0003",
+ "entregables": {
+  "informe_tecnico": "ejemplos/backtest_simulado/completo/Informes técnicos Broker/2025-03-31_informe-tecnico_PET-B-2025-0003.md",
+  "informe_visual": "ejemplos/backtest_simulado/completo/Informes visuales Usuario/2025-03-31_informe-visual_PET-B-2025-0003.html",
+  "paquete_json": "ejemplos/backtest_simulado/completo/Paquetes JSON/2025-03-31_paquete-json_PET-B-2025-0003.json",
+  "memorando": "ejemplos/backtest_simulado/completo/Memorandos ejecutivos/2025-03-31_memorando_PET-B-2025-0003.md",
+  "anexo_datos": "ejemplos/backtest_simulado/completo/Anexos de datos/2025-03-31_anexo-datos_PET-B-2025-0003.xlsx",
+  "mapa_eslabones": "ejemplos/backtest_simulado/completo/Mapas por eslabón/2025-03-31_mapa-eslabones_PET-B-2025-0003.md",
+  "mapa_eslabones_json": "ejemplos/backtest_simulado/completo/Mapas por eslabón/2025-03-31_mapa-eslabones_PET-B-2025-0003.json",
+  "mapa_eslabones_docx": "ejemplos/backtest_simulado/completo/Mapas por eslabón/2025-03-31_mapa-eslabones_PET-B-2025-0003.docx"
+ },
+ "resumen": {
+  "veredicto": "INVERTIR_ESCALONADO",
+  "A": 60,
+  "E": 75,
+  "C": 81,
+  "resultado_del_analisis": "CONCLUYENTE",
+  "prioritarios_por_bloque_C": {
+   "C.2": [
+    "CAND-B-2025-0096"
+   ]
+  },
+  "siguiente_paso_sugerido": "ENVIAR_CANDIDATOS_A_C",
+  "relevancia_decisional": "MEDIA",
+  "eslabones_destacados": [
+   "ESL-02"
+  ]
+ },
+ "puertas_viabilidad": {
+  "PV1": "SUPERADA",
+  "PV2": "SUPERADA",
+  "PV3": "SUPERADA",
+  "continuacion_forzada": null
+ },
+ "supuestos_aplicados": [
+  {
+   "cns_id": "CNS-B-2025-0003",
+   "supuesto": "Solo bonos con calificación pública (supuesto aplicado por falta de respuesta)"
+  }
+ ],
+ "estado_g3": "APTO",
+ "auditoria": {
+  "realizada": false,
+  "reservas": []
+ },
+ "tiempo": {
+  "estimado_p80_min": 30.0,
+  "real_min": 26.8,
+  "por_capa_min": {
+   "0": 0.99,
+   "1": 1.58,
+   "2": 3.56,
+   "3": 7.37,
+   "4": 13.29
+  },
+  "autorizaciones": [
+   "AUT-B-2025-0003"
+  ]
+ },
+ "consumo_uc": 64.3,
+ "estado_peticion": "ENTREGADA",
+ "fase": null,
+ "autorizacion_salida": "AUTS-B-2025-0003"
+}

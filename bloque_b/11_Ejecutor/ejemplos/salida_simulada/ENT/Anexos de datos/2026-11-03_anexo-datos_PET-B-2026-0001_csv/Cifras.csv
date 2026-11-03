@@ -1,0 +1,12 @@
+﻿id,descripcion,valor,unidad,fecha,fuente,dat_calc,etiqueta,clase_cifra,dimension
+CALC-B-2026-0001:p10,Escenarios: p10,0.0055,fracción,2026-11-03,Motor MC-B08,CALC-B-2026-0001,[INTERPRETACIÓN],estimacion_estadistica,D12
+CALC-B-2026-0001:p50,Escenarios: p50,0.4185,fracción,2026-11-03,Motor MC-B08,CALC-B-2026-0001,[INTERPRETACIÓN],estimacion_estadistica,D12
+CALC-B-2026-0001:p90,Escenarios: p90,1.0655,fracción,2026-11-03,Motor MC-B08,CALC-B-2026-0001,[INTERPRETACIÓN],estimacion_estadistica,D12
+CALC-B-2026-0001:RE,Escenarios: RE,91,0–100,2026-11-03,Motor MC-B08,CALC-B-2026-0001,[INTERPRETACIÓN],estimacion_estadistica,D12
+DAT-B-2026-0007:n_obs,Indicador CESTA-REDES-EU: n_obs,1520,,2026-11-03,HT-01,DAT-B-2026-0007,[HECHO],determinista,D9
+DAT-B-2026-0007:momento_12_1,Indicador CESTA-REDES-EU: momento_12_1,-0.035022,,2026-11-03,HT-01,DAT-B-2026-0007,[HECHO],determinista,D9
+DAT-B-2026-0007:momento_12m,Indicador CESTA-REDES-EU: momento_12m,-0.03486,,2026-11-03,HT-01,DAT-B-2026-0007,[HECHO],determinista,D9
+DAT-B-2026-0007:caida_maxima_1a,Indicador CESTA-REDES-EU: caida_maxima_1a,0.174665,,2026-11-03,HT-01,DAT-B-2026-0007,[HECHO],determinista,D9
+DAT-B-2026-0007:momento_3m,Indicador CESTA-REDES-EU: momento_3m,-0.056231,,2026-11-03,HT-01,DAT-B-2026-0007,[HECHO],determinista,D9
+DAT-B-2026-0007:volatilidad_1a,Indicador CESTA-REDES-EU: volatilidad_1a,0.147899,,2026-11-03,HT-01,DAT-B-2026-0007,[HECHO],determinista,D9
+DAT-B-2026-0007:beta,Indicador CESTA-REDES-EU: beta,-0.040069,,2026-11-03,HT-01,DAT-B-2026-0007,[HECHO],determinista,D9

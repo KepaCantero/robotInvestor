@@ -1,0 +1,4746 @@
+{
+ "pet_id": "PET-B-2026-0042",
+ "run_ids": [
+  "RUN-B-2026-0042-01",
+  "RUN-B-2026-0042-02"
+ ],
+ "rec_id": "REC-B-2026-0042",
+ "fecha": "2026-11-02",
+ "data_cutoff": "2026-10-30",
+ "methodology_version": "2.1",
+ "x_ejemplo": true,
+ "aviso": "EJEMPLO ILUSTRATIVO del paquete V2.0: cifras, métricas e identificadores internos son ficticios o aproximados; no es un análisis real ni una recomendación.",
+ "origen": {
+  "tipo": "BLOQUE_A",
+  "opp_id_A": "OPP-2026-0118",
+  "confirmado": [
+   "La inversión europea en redes crece de forma estructural (re-verificado con EVD-B-2026-0612)"
+  ],
+  "refutado": [
+   "«Toda la cadena eléctrica se beneficia por igual»: los operadores regulados y los promotores sin contratos no capturan el cuello"
+  ],
+  "sin_verificar": [
+   "Cuota de mercado de fabricantes asiáticos en transformadores en 2026"
+  ],
+  "reclasificacion": "SECTOR (Bloque A) → CADENA_DE_VALOR: el ámbito es un eslabón con cuello de botella"
+ },
+ "ambito": {
+  "nombre": "Equipos para redes eléctricas en Europa (transformadores, cables de alta tensión, subestaciones y aparamenta)",
+  "nombre_llano": "Las empresas que fabrican lo necesario para ampliar la red eléctrica de Europa",
+  "tipo_objeto": "CADENA_DE_VALOR",
+  "incluye": "Fabricantes de transformadores de potencia, cables de alta y media tensión (incluido HVDC), equipos de subestación y aparamenta para redes europeas",
+  "excluye": "Operadores de red regulados, generación eléctrica, instaladores sin fabricación propia y equipos de consumo final",
+  "region": "Europa (EEE, Reino Unido y Suiza)",
+  "mkt_id": "MKT-B-2026-0007",
+  "acentos_secundarios": "SECTOR (bienes de equipo eléctrico)",
+  "indicador_seguimiento": {
+   "nombre": "Cesta equiponderada de fabricantes europeos de equipos de red (ilustrativa)",
+   "simbolo": "CESTA-REDES-EU",
+   "construccion": "Media equiponderada de los cinco primeros del universo RV, rebalanceo trimestral"
+  },
+  "referencia_comparacion": {
+   "nombre": "STOXX Europe 600 Industrial Goods & Services",
+   "simbolo": "SXNP"
+  }
+ },
+ "estrategia": {
+  "pesos_efectivos": {
+   "D1": 5,
+   "D2": 11,
+   "D3": 14,
+   "D4": 18,
+   "D5": 12,
+   "D6": 8,
+   "D7": 4,
+   "D8": 11,
+   "D9": 10,
+   "D10": 1,
+   "D11": 3,
+   "D12": 3
+  },
+  "profundidad": {
+   "D1": "P1",
+   "D2": "P2",
+   "D3": "P3",
+   "D4": "P3",
+   "D5": "P3",
+   "D6": "P2",
+   "D7": "P1",
+   "D8": "P2",
+   "D9": "P2",
+   "D10": "P0",
+   "D11": "P0",
+   "D12": "P1"
+  },
+  "exclusiones": [],
+  "perfil_motor": [
+   "PERF-B-CADENA",
+   "PERF-B-SECT"
+  ],
+  "playbooks": [
+   "SEL-RV",
+   "SEL-FON",
+   "SEL-RF"
+  ],
+  "plan_calculo": "STD",
+  "horizonte_dominante": "H4",
+  "horizontes": [
+   "H3",
+   "H4"
+  ],
+  "nivel": "N2",
+  "desviaciones": [],
+  "especialistas_activados": [
+   "AG-B03",
+   "AG-B04",
+   "AG-B05",
+   "AG-B06",
+   "AG-B07",
+   "AG-B09",
+   "AG-B24"
+  ],
+  "tipos_materiales": [
+   "RV"
+  ],
+  "plan_id": "PLAN-B-2026-0042-v2",
+  "recortes_declarados": [],
+  "horizontes_secundarios": [
+   "H3"
+  ]
+ },
+ "dimensiones": [
+  {
+   "dim": "D1",
+   "nombre": "Definición y delimitación del mercado",
+   "especialista": "AG-B03",
+   "profundidad_tratada": "P1",
+   "pregunta_central": "¿Qué equipos y qué eslabones entran en el ámbito?",
+   "notas": [
+    {
+     "afirmacion": "El ámbito comprende transformadores de potencia, cables de alta y media tensión, subestaciones y aparamenta para redes de transporte y distribución europeas.",
+     "etiqueta": "[HECHO]",
+     "evidencias": [
+      "CLM-B-2026-0401"
+     ],
+     "calculos": [],
+     "contiene_cifra": false
+    },
+    {
+     "afirmacion": "Se excluyen los operadores de red regulados y la generación, porque su rentabilidad depende de la tarifa y no del cuello de capacidad.",
+     "etiqueta": "[INTERPRETACIÓN]",
+     "evidencias": [
+      "CLM-B-2026-0402"
+     ],
+     "calculos": [],
+     "contiene_cifra": false
+    }
+   ],
+   "conclusion": "Ámbito delimitado por la exposición económica real a la inversión en equipos de red, no por la clasificación sectorial.",
+   "confianza": {
+    "nivel": "alta",
+    "factores_a_favor": [
+     "segmentos publicados"
+    ],
+    "factores_en_contra": [
+     "aparamenta compartida con industria"
+    ]
+   },
+   "lagunas": []
+  },
+  {
+   "dim": "D2",
+   "nombre": "Tamaño, crecimiento y demanda",
+   "especialista": "AG-B04",
+   "profundidad_tratada": "P2",
+   "pregunta_central": "¿Cuánto crece la inversión europea en redes y qué la impulsa?",
+   "notas": [
+    {
+     "afirmacion": "La inversión anual en redes eléctricas en la UE pasaría de unos 60 000 M€ en 2024 a unos 85 000 M€ en 2030 en el escenario base (ilustrativo).",
+     "etiqueta": "[INTERPRETACIÓN]",
+     "evidencias": [
+      "CLM-B-2026-0411"
+     ],
+     "calculos": [
+      "CALC-B-2026-0901"
+     ],
+     "contiene_cifra": true,
+     "clase_cifra": "estimacion_estadistica"
+    },
+    {
+     "afirmacion": "El plan de acción de la Comisión Europea para las redes reconoce un déficit de inversión y plazos de conexión crecientes.",
+     "etiqueta": "[HECHO]",
+     "evidencias": [
+      "CLM-B-2026-0412"
+     ],
+     "calculos": [],
+     "contiene_cifra": false
+    }
+   ],
+   "conclusion": "Demanda estructural respaldada por la electrificación, las interconexiones y la conexión de renovables.",
+   "confianza": {
+    "nivel": "media",
+    "factores_a_favor": [
+     "planes públicos"
+    ],
+    "factores_en_contra": [
+     "dependencia de la aprobación tarifaria"
+    ]
+   },
+   "lagunas": [
+    "Desglose por país de la inversión en distribución"
+   ]
+  },
+  {
+   "dim": "D3",
+   "nombre": "Oferta, capacidad y costes",
+   "especialista": "AG-B05",
+   "profundidad_tratada": "P3",
+   "pregunta_central": "¿Puede la oferta servir la demanda y a qué coste?",
+   "notas": [
+    {
+     "afirmacion": "Los plazos de entrega de transformadores de potencia superan los 30 meses en la muestra de licitaciones de 2026 (ilustrativo).",
+     "etiqueta": "[HECHO]",
+     "evidencias": [
+      "CLM-B-2026-0421"
+     ],
+     "calculos": [
+      "CALC-B-2026-0903"
+     ],
+     "contiene_cifra": true,
+     "clase_cifra": "determinista"
+    },
+    {
+     "afirmacion": "La capacidad de extrusión de cable HVDC está comprometida hasta 2028 en los tres principales fabricantes europeos.",
+     "etiqueta": "[INTERPRETACIÓN]",
+     "evidencias": [
+      "CLM-B-2026-0422"
+     ],
+     "calculos": [],
+     "contiene_cifra": false
+    }
+   ],
+   "conclusion": "Oferta rígida a corto plazo: el cuello de botella sostiene precios y márgenes.",
+   "confianza": {
+    "nivel": "media",
+    "factores_a_favor": [
+     "plazos observados"
+    ],
+    "factores_en_contra": [
+     "capacidad asiática en construcción"
+    ]
+   },
+   "lagunas": []
+  },
+  {
+   "dim": "D4",
+   "nombre": "Estructura de la cadena de valor y competencia",
+   "especialista": "AG-B03",
+   "profundidad_tratada": "P3",
+   "pregunta_central": "¿Dónde se captura el valor y cuánto dura?",
+   "notas": [
+    {
+     "afirmacion": "El mercado europeo de cable HVDC está concentrado (HHI estimado superior a 2 500).",
+     "etiqueta": "[INTERPRETACIÓN]",
+     "evidencias": [
+      "CLM-B-2026-0431"
+     ],
+     "calculos": [
+      "CALC-B-2026-0904"
+     ],
+     "contiene_cifra": true,
+     "clase_cifra": "estimacion_estadistica"
+    },
+    {
+     "afirmacion": "Los fabricantes con capacidad instalada capturan precio; los promotores sin contratos de suministro firmados son perdedores sistemáticos del cuello.",
+     "etiqueta": "[INTERPRETACIÓN]",
+     "evidencias": [
+      "CLM-B-2026-0432"
+     ],
+     "calculos": [],
+     "contiene_cifra": false
+    }
+   ],
+   "conclusion": "Valor capturado por cables HVDC y transformadores de potencia mientras dure la escasez.",
+   "confianza": {
+    "nivel": "media",
+    "factores_a_favor": [
+     "cuotas estables"
+    ],
+    "factores_en_contra": [
+     "entrada asiática"
+    ]
+   },
+   "lagunas": []
+  },
+  {
+   "dim": "D5",
+   "nombre": "Tecnología e innovación",
+   "especialista": "AG-B06",
+   "profundidad_tratada": "P3",
+   "pregunta_central": "¿Qué tecnología puede aliviar o desplazar el cuello?",
+   "notas": [
+    {
+     "afirmacion": "Los transformadores de estado sólido no alcanzan escala de transporte antes de 2032 (TRL 5–6).",
+     "etiqueta": "[INTERPRETACIÓN]",
+     "evidencias": [
+      "CLM-B-2026-0441"
+     ],
+     "calculos": [],
+     "contiene_cifra": false
+    },
+    {
+     "afirmacion": "Los conductores de alta capacidad (reconductoring) pueden aplazar parte de la inversión en líneas nuevas.",
+     "etiqueta": "[ESPECULACIÓN]",
+     "evidencias": [],
+     "calculos": [],
+     "contiene_cifra": false
+    }
+   ],
+   "conclusion": "Sin sustituto tecnológico relevante en el horizonte; el reconductoring es un riesgo parcial para cables aéreos.",
+   "confianza": {
+    "nivel": "media",
+    "factores_a_favor": [
+     "hojas de ruta públicas"
+    ],
+    "factores_en_contra": [
+     "incertidumbre tecnológica"
+    ]
+   },
+   "lagunas": []
+  },
+  {
+   "dim": "D6",
+   "nombre": "Regulación, política y geopolítica",
+   "especialista": "AG-B07",
+   "profundidad_tratada": "P2",
+   "pregunta_central": "¿Qué decisiones públicas mueven la demanda y la oferta?",
+   "notas": [
+    {
+     "afirmacion": "El paquete europeo de redes de 2025 acelera la planificación transfronteriza y la aprobación de inversiones anticipatorias.",
+     "etiqueta": "[HECHO]",
+     "evidencias": [
+      "CLM-B-2026-0451"
+     ],
+     "calculos": [],
+     "contiene_cifra": false
+    },
+    {
+     "afirmacion": "Las preferencias de contenido europeo en contratación pública favorecen a fabricantes con plantas en la UE.",
+     "etiqueta": "[INTERPRETACIÓN]",
+     "evidencias": [
+      "CLM-B-2026-0452"
+     ],
+     "calculos": [],
+     "contiene_cifra": false
+    }
+   ],
+   "conclusion": "Marco regulatorio favorable; el riesgo es el ritmo de aprobación de tarifas nacionales.",
+   "confianza": {
+    "nivel": "alta",
+    "factores_a_favor": [
+     "normativa aprobada"
+    ],
+    "factores_en_contra": [
+     "transposición nacional"
+    ]
+   },
+   "lagunas": []
+  },
+  {
+   "dim": "D7",
+   "nombre": "Macro y ciclo",
+   "especialista": "DIR",
+   "profundidad_tratada": "P1",
+   "pregunta_central": "¿Qué sensibilidad tiene el ámbito a tipos y ciclo?",
+   "notas": [
+    {
+     "afirmacion": "La beta de la cesta al PMI manufacturero europeo es baja (0,4) frente al sector industrial (0,9) en 2019–2026.",
+     "etiqueta": "[HECHO]",
+     "evidencias": [],
+     "calculos": [
+      "CALC-B-2026-0905"
+     ],
+     "contiene_cifra": true,
+     "clase_cifra": "estimacion_estadistica"
+    }
+   ],
+   "conclusion": "Ámbito poco cíclico; sensible a tipos por el coste de capital de los operadores.",
+   "confianza": {
+    "nivel": "media",
+    "factores_a_favor": [
+     "series largas"
+    ],
+    "factores_en_contra": [
+     "régimen de tipos en transición"
+    ]
+   },
+   "lagunas": []
+  },
+  {
+   "dim": "D8",
+   "nombre": "Economía y finanzas del sector",
+   "especialista": "AG-B09",
+   "profundidad_tratada": "P2",
+   "pregunta_central": "¿Gana dinero el eslabón y es sostenible?",
+   "notas": [
+    {
+     "afirmacion": "El margen EBITDA agregado de la cesta pasó del 9 % en 2021 al 14 % en 2025 (ilustrativo).",
+     "etiqueta": "[HECHO]",
+     "evidencias": [],
+     "calculos": [
+      "CALC-B-2026-0906"
+     ],
+     "contiene_cifra": true,
+     "clase_cifra": "determinista"
+    },
+    {
+     "afirmacion": "El ROIC agregado supera el coste de capital en unos 6 puntos desde 2024.",
+     "etiqueta": "[INTERPRETACIÓN]",
+     "evidencias": [],
+     "calculos": [
+      "CALC-B-2026-0906"
+     ],
+     "contiene_cifra": true,
+     "clase_cifra": "estimacion_estadistica"
+    }
+   ],
+   "conclusion": "Rentabilidad sobre el capital por encima de su coste, sostenida por precio y cartera de pedidos.",
+   "confianza": {
+    "nivel": "media",
+    "factores_a_favor": [
+     "cuentas auditadas"
+    ],
+    "factores_en_contra": [
+     "ciclo de márgenes en máximos"
+    ]
+   },
+   "lagunas": []
+  },
+  {
+   "dim": "D9",
+   "nombre": "Valoración y expectativas descontadas",
+   "especialista": "AG-B09",
+   "profundidad_tratada": "P2",
+   "pregunta_central": "¿Qué descuenta el precio?",
+   "notas": [
+    {
+     "afirmacion": "El DCF inverso del agregado implica un crecimiento de ingresos del 9 % anual hasta 2032, frente al 7 % plausible del escenario base.",
+     "etiqueta": "[INTERPRETACIÓN]",
+     "evidencias": [],
+     "calculos": [
+      "CALC-B-2026-0902"
+     ],
+     "contiene_cifra": true,
+     "clase_cifra": "estimacion_estadistica"
+    },
+    {
+     "afirmacion": "El PER adelantado relativo de la cesta frente a la referencia está en el percentil 85 de su historia de diez años.",
+     "etiqueta": "[HECHO]",
+     "evidencias": [],
+     "calculos": [
+      "CALC-B-2026-0909"
+     ],
+     "contiene_cifra": true,
+     "clase_cifra": "determinista"
+    }
+   ],
+   "conclusion": "Expectativas parcialmente descontadas: atractivo bursátil moderado pese a un mercado excelente.",
+   "confianza": {
+    "nivel": "media",
+    "factores_a_favor": [
+     "comparables líquidos"
+    ],
+    "factores_en_contra": [
+     "sensibilidad a la tasa de descuento"
+    ]
+   },
+   "lagunas": []
+  },
+  {
+   "dim": "D10",
+   "nombre": "Flujos, posicionamiento y sentimiento",
+   "especialista": "AG-B10",
+   "profundidad_tratada": "P0",
+   "pregunta_central": "¿Está concurrida la idea?",
+   "notas": [
+    {
+     "afirmacion": "Las entradas netas en ETF de electrificación suman doce meses consecutivos, con riesgo de saturación narrativa moderado.",
+     "etiqueta": "[INTERPRETACIÓN]",
+     "evidencias": [
+      "CLM-B-2026-0461"
+     ],
+     "calculos": [],
+     "contiene_cifra": false
+    }
+   ],
+   "conclusion": "Posicionamiento creciente sin señal de saturación extrema.",
+   "confianza": {
+    "nivel": "baja",
+    "factores_a_favor": [
+     "datos semanales de flujos"
+    ],
+    "factores_en_contra": [
+     "fuente de flujos sin clave en la bóveda (D10 en P1)"
+    ]
+   },
+   "lagunas": [
+    "Flujos diarios por vehículo (requieren credencial)"
+   ]
+  },
+  {
+   "dim": "D11",
+   "nombre": "Sostenibilidad y riesgos ESG y físicos",
+   "especialista": "AG-B11",
+   "profundidad_tratada": "P0",
+   "pregunta_central": "¿Qué riesgos de sostenibilidad son materiales?",
+   "notas": [
+    {
+     "afirmacion": "El uso de hexafluoruro de azufre (SF6) en aparamenta afronta restricciones de la UE a partir de 2026–2030.",
+     "etiqueta": "[HECHO]",
+     "evidencias": [
+      "CLM-B-2026-0471"
+     ],
+     "calculos": [],
+     "contiene_cifra": false
+    }
+   ],
+   "conclusion": "Riesgo de transición acotado y gestionable por los líderes con alternativas sin SF6.",
+   "confianza": {
+    "nivel": "media",
+    "factores_a_favor": [
+     "normativa publicada"
+    ],
+    "factores_en_contra": []
+   },
+   "lagunas": []
+  },
+  {
+   "dim": "D12",
+   "nombre": "Riesgos, catalizadores y escenarios",
+   "especialista": "AG-B11",
+   "profundidad_tratada": "P1",
+   "pregunta_central": "¿Qué puede hacer fallar la tesis y cuándo?",
+   "notas": [
+    {
+     "afirmacion": "El riesgo dominante es un aplazamiento de la inversión por la aprobación tarifaria lenta en dos grandes mercados.",
+     "etiqueta": "[INTERPRETACIÓN]",
+     "evidencias": [
+      "CLM-B-2026-0481"
+     ],
+     "calculos": [],
+     "contiene_cifra": false
+    },
+    {
+     "afirmacion": "Una caída del 40 % en el escenario de estrés histórico (2008) tendría probabilidad baja pero no despreciable.",
+     "etiqueta": "[INTERPRETACIÓN]",
+     "evidencias": [],
+     "calculos": [
+      "CALC-B-2026-0910"
+     ],
+     "contiene_cifra": true,
+     "clase_cifra": "estimacion_estadistica"
+    }
+   ],
+   "conclusion": "Riesgos identificados con señal temprana; catalizadores fechados en 2027.",
+   "confianza": {
+    "nivel": "media",
+    "factores_a_favor": [
+     "calendario regulatorio"
+    ],
+    "factores_en_contra": [
+     "dependencia política"
+    ]
+   },
+   "lagunas": []
+  }
+ ],
+ "despliegue_estructural": {
+  "alcance": "N2: eslabones relevantes del plan",
+  "mapa_cadena": [
+   {
+    "eslabon": "Materias primas (cobre, aluminio, acero eléctrico de grano orientado)",
+    "papel_del_ambito": "consume",
+    "participantes": [
+     "mineras y laminadoras"
+    ],
+    "concentracion": "acero de grano orientado muy concentrado",
+    "margen_aprox": "variable",
+    "captura_valor": "baja para el ámbito (coste repercutido parcialmente)",
+    "dependencias": [
+     "importaciones de acero eléctrico"
+    ],
+    "evidencias": [
+     "CLM-B-2026-0421"
+    ]
+   },
+   {
+    "eslabon": "Fabricación de cables de alta tensión y HVDC",
+    "papel_del_ambito": "es",
+    "participantes": [
+     "Prysmian",
+     "NKT",
+     "Nexans"
+    ],
+    "concentracion": "HHI > 2 500 (estimado)",
+    "margen_aprox": "EBITDA 12–16 %",
+    "captura_valor": "alta mientras dure la escasez",
+    "dependencias": [
+     "buques cableros",
+     "extrusión"
+    ],
+    "evidencias": [
+     "CLM-B-2026-0431"
+    ]
+   },
+   {
+    "eslabon": "Transformadores de potencia y subestaciones",
+    "papel_del_ambito": "es",
+    "participantes": [
+     "Siemens Energy",
+     "Hitachi Energy (no cotizada por separado)",
+     "GE Vernova"
+    ],
+    "concentracion": "alta",
+    "margen_aprox": "EBITDA 10–15 %",
+    "captura_valor": "alta; plazos de 30+ meses",
+    "dependencias": [
+     "acero eléctrico"
+    ],
+    "evidencias": [
+     "CLM-B-2026-0422"
+    ]
+   },
+   {
+    "eslabon": "Operadores de red (TSO y DSO)",
+    "papel_del_ambito": "alimenta",
+    "participantes": [
+     "operadores regulados"
+    ],
+    "concentracion": "monopolios regulados",
+    "margen_aprox": "retribución regulada",
+    "captura_valor": "limitada por la tarifa",
+    "dependencias": [
+     "aprobación tarifaria"
+    ],
+    "evidencias": []
+   }
+  ],
+  "actores": [
+   {
+    "actor": "Prysmian",
+    "eslabon": "cables",
+    "tipo": "establecido",
+    "invertibilidad": "cotizado",
+    "evidencia": "cartera de pedidos publicada"
+   },
+   {
+    "actor": "Fabricante asiático de cables HVDC (ilustrativo)",
+    "eslabon": "cables",
+    "tipo": "emergente",
+    "invertibilidad": "cotizado",
+    "evidencia": "planta anunciada en la UE para 2029"
+   },
+   {
+    "actor": "Fabricante privado de transformadores (ilustrativo)",
+    "eslabon": "transformadores",
+    "tipo": "emergente",
+    "invertibilidad": "salida_verosimil",
+    "evidencia": "ronda de financiación para ampliar capacidad"
+   }
+  ],
+  "vigilancia_tecnologica": [
+   {
+    "horizonte_anos": "0-2",
+    "avance": "Aparamenta sin SF6 a escala comercial",
+    "madurez": "comercial",
+    "etiqueta": "[HECHO]",
+    "implicacion": "favorece a los líderes con producto"
+   },
+   {
+    "horizonte_anos": "5+",
+    "avance": "Transformadores de estado sólido en transporte",
+    "madurez": "TRL 5–6",
+    "etiqueta": "[ESPECULACIÓN]",
+    "implicacion": "sustituto lejano"
+   }
+  ],
+  "cuellos_botella": [
+   {
+    "eslabon": "Cables HVDC",
+    "causa": "capacidad de extrusión y de buques cableros",
+    "persistencia": "hasta 2028–2029",
+    "senal_resolucion": "book-to-bill < 1 durante dos trimestres o anuncios de capacidad > 30 % del mercado",
+    "favorecidos": [
+     "Prysmian",
+     "NKT"
+    ],
+    "perjudicados": [
+     "promotores sin contratos firmados"
+    ],
+    "perdedores_sistematicos": [
+     "fabricantes de cable de baja tensión sin capacidad HVDC"
+    ],
+    "reflejo_en_tesis": "premisa 2 y escenario adverso"
+   },
+   {
+    "eslabon": "Transformadores de potencia",
+    "causa": "acero eléctrico y mano de obra cualificada",
+    "persistencia": "hasta 2028",
+    "senal_resolucion": "plazos de entrega < 18 meses en licitaciones",
+    "favorecidos": [
+     "Siemens Energy"
+    ],
+    "perjudicados": [
+     "operadores con planes acelerados"
+    ],
+    "perdedores_sistematicos": [],
+    "reflejo_en_tesis": "premisa 2"
+   }
+  ],
+  "efectos_segundo_orden": [
+   {
+    "pregunta": "¿Quién suministra herramientas y materiales?",
+    "respuesta": "Proveedores de acero eléctrico de grano orientado y de aislantes: beneficiarios derivados, fuera del ámbito por delimitación.",
+    "etiqueta": "[INTERPRETACIÓN]",
+    "invertible": true
+   },
+   {
+    "pregunta": "¿Qué alternativas podrían capturar el valor?",
+    "respuesta": "El almacenamiento en baterías reduce parte de la necesidad de refuerzo de red local.",
+    "etiqueta": "[ESPECULACIÓN]",
+    "invertible": true
+   }
+  ]
+ },
+ "proyecciones": {
+  "activada": true,
+  "motivo_exclusion": null,
+  "etapas": [
+   {
+    "etapa": "1. Mercado",
+    "contenido": "Inversión en redes UE 2024–2032 por segmento",
+    "resultado": "TCAC 6–8 %",
+    "calculos": [
+     "CALC-B-2026-0901"
+    ]
+   },
+   {
+    "etapa": "2. Agregado del ámbito",
+    "contenido": "Ingresos de la cesta = capacidad × utilización × precio",
+    "resultado": "TCAC 7 % (base)",
+    "calculos": [
+     "CALC-B-2026-0901"
+    ]
+   },
+   {
+    "etapa": "3. Márgenes y caja",
+    "contenido": "Margen EBITDA normalizado 13 % (base)",
+    "resultado": "FCF agregado creciente",
+    "calculos": [
+     "CALC-B-2026-0906"
+    ]
+   },
+   {
+    "etapa": "4. Valor implícito",
+    "contenido": "Múltiplos de salida anclados a comparables industriales",
+    "resultado": "rango p10–p90 de la capitalización implícita",
+    "calculos": [
+     "CALC-B-2026-0902"
+    ]
+   },
+   {
+    "etapa": "5. Contraste con el precio",
+    "contenido": "DCF inverso",
+    "resultado": "precio implica 9 % frente a 7 % plausible",
+    "calculos": [
+     "CALC-B-2026-0902"
+    ]
+   }
+  ],
+  "premisas": [
+   {
+    "premisa": "Crecimiento de la inversión en redes UE",
+    "valor": "6–8 % anual",
+    "fuente": "CLM-B-2026-0411",
+    "sensibilidad": "alta",
+    "invalidacion": "< 3 % anual en dos años"
+   },
+   {
+    "premisa": "Margen EBITDA normalizado",
+    "valor": "13 %",
+    "fuente": "CALC-B-2026-0906",
+    "sensibilidad": "media",
+    "invalidacion": "< 10 %"
+   }
+  ],
+  "brecha_expectativas": "El precio descuenta ~2 puntos más de crecimiento anual que el escenario base."
+ },
+ "regimen": {
+  "rgm_id": "RGM-B-2026-0011",
+  "estado_confianza": "mixto",
+  "variables_dominantes": [
+   "tipos de interés a largo plazo",
+   "aprobación tarifaria",
+   "precio del cobre"
+  ],
+  "relaciones": [
+   {
+    "relacion": "Valoración de la cesta frente a tipos reales a 10 años",
+    "naturaleza": "historica_observada",
+    "ventana_o_mecanismo": "2015–2026"
+   }
+  ],
+  "resumen": "Crecimiento débil con inversión pública en transición energética; tipos estabilizados."
+ },
+ "tesis": {
+  "enunciado": "La capacidad europea de fabricación de transformadores y cables de alta tensión no crecerá al ritmo de la inversión en redes hasta 2029; los fabricantes con capacidad instalada mantendrán precios y márgenes superiores a su media histórica.",
+  "mecanismo": "Demanda regulada y planificada que crece más deprisa que una oferta con plazos de ampliación de 3–4 años.",
+  "premisas": [
+   {
+    "premisa": "La inversión en redes de la UE crece al menos un 6 % anual hasta 2030",
+    "evidencia": [
+     "CLM-B-2026-0411",
+     "CLM-B-2026-0451"
+    ],
+    "comprobacion": "Planes de inversión de los operadores y TYNDP",
+    "horizonte": "H4",
+    "invalidacion": "Recortes de planes de inversión superiores al 15 %"
+   },
+   {
+    "premisa": "Los plazos de entrega se mantienen por encima de 24 meses",
+    "evidencia": [
+     "CLM-B-2026-0421",
+     "CLM-B-2026-0422"
+    ],
+    "comprobacion": "Muestra trimestral de licitaciones",
+    "horizonte": "H3",
+    "invalidacion": "Plazos < 18 meses durante dos trimestres"
+   },
+   {
+    "premisa": "Los márgenes no se erosionan por la entrada asiática antes de 2029",
+    "evidencia": [
+     "CLM-B-2026-0431"
+    ],
+    "comprobacion": "Márgenes trimestrales y adjudicaciones a fabricantes no europeos",
+    "horizonte": "H4",
+    "invalidacion": "Cuota asiática > 25 % de adjudicaciones HVDC"
+   }
+  ],
+  "hipotesis": [
+   {
+    "hip_id": "HIP-B-2026-0042-0",
+    "enunciado": "Cuello de botella estructural de capacidad (tesis de partida)",
+    "naturaleza": "estructural",
+    "discriminante": "plazos de entrega y book-to-bill",
+    "indicador_anticipado": "book-to-bill trimestral",
+    "invalidacion": "book-to-bill < 0,9 dos trimestres",
+    "estado": "confirmada",
+    "evidencia": [
+     "CLM-B-2026-0421"
+    ]
+   },
+   {
+    "hip_id": "HIP-B-2026-0042-1",
+    "enunciado": "Repunte cíclico de pedidos tras la crisis energética, que se normalizará en 2027",
+    "naturaleza": "cíclica",
+    "discriminante": "composición de la cartera (contratos marco plurianuales frente a pedidos puntuales)",
+    "indicador_anticipado": "peso de contratos marco",
+    "invalidacion": "contratos marco < 30 % de la cartera",
+    "estado": "debilitada",
+    "evidencia": [
+     "CLM-B-2026-0432"
+    ]
+   },
+   {
+    "hip_id": "HIP-B-2026-0042-2",
+    "enunciado": "La capacidad asiática y estadounidense cierra la brecha antes de 2028",
+    "naturaleza": "competitiva",
+    "discriminante": "adjudicaciones a fabricantes no europeos",
+    "indicador_anticipado": "anuncios de plantas en la UE",
+    "invalidacion": "cuota asiática > 25 %",
+    "estado": "indeterminada",
+    "evidencia": [
+     "CLM-B-2026-0612"
+    ]
+   }
+  ],
+  "steelman_contrario": "Los operadores podrían aplazar inversiones si las tarifas no se aprueban, y la capacidad nueva anunciada coincidiría con esa pausa.",
+  "lo_que_no_sabemos": [
+   "Ritmo real de aprobación tarifaria en Alemania e Italia",
+   "Precio de la capacidad asiática en licitaciones europeas"
+  ]
+ },
+ "evaluaciones_separadas": {
+  "mercado": "Excelente: demanda estructural y planificada.",
+  "calidad_ambito": "Alta: ROIC por encima del coste de capital y barreras de capacidad.",
+  "atractivo_bursatil": "Moderado: parte del crecimiento ya está en el precio.",
+  "accesibilidad": "Alta en renta variable; limitada en fondos (solo dos vehículos con pureza suficiente)."
+ },
+ "puntuaciones": {
+  "A": 65,
+  "E": 70,
+  "C": 73,
+  "RF": 90,
+  "RE": 65,
+  "desglose": {
+   "A": {
+    "asimetria": 70,
+    "valoracion_expectativas": 50,
+    "calidad_crecimiento": 80,
+    "ventaja_estructural": 80,
+    "catalizadores": 70,
+    "momento_flujos": 70,
+    "riesgos": 50
+   },
+   "E": {
+    "calidad_raices": 70,
+    "cobertura_dimensional": 80,
+    "calidad_metodologica": 70,
+    "trazabilidad": 80,
+    "actualidad": 70,
+    "discrepancias_resueltas": 60,
+    "hipotesis_cerradas": 70
+   },
+   "C": {
+    "formula": "0,20·A + 0,35·E + 0,25·RF + 0,20·RE",
+    "tope": 80
+   }
+  },
+  "segunda_pasada": true,
+  "saturacion_narrativa": false,
+  "lectura_C": "alta",
+  "cambio_frente_previo": null
+ },
+ "puertas_ambito": {
+  "PA1": "OK",
+  "PA2": "OK",
+  "PA3": "OK",
+  "PA4": "OK",
+  "PA5": "OK",
+  "PA6": "OK",
+  "PA7": "OK",
+  "PA8": "OK"
+ },
+ "x_flags_veredicto": {
+  "valoracion_parcialmente_descontada": true
+ },
+ "veredicto": {
+  "valor": "INVERTIR_ESCALONADO",
+  "horizonte": "H4",
+  "condiciones_entrada": [
+   "PER adelantado relativo de la cesta por debajo del percentil 90 de su historia"
+  ],
+  "tramos": [
+   {
+    "tramo": 1,
+    "condicion": "Inmediato: mantener la tesis con el PER relativo por debajo del percentil 90",
+    "horizonte": "H4",
+    "peso_orientativo": "un tercio"
+   },
+   {
+    "tramo": 2,
+    "condicion": "Tras las adjudicaciones del TYNDP 2026 (enero de 2027) si el book-to-bill sigue > 1,1",
+    "horizonte": "H4",
+    "peso_orientativo": "un tercio"
+   },
+   {
+    "tramo": 3,
+    "condicion": "Si el PER relativo vuelve a la mediana de diez años",
+    "horizonte": "H4",
+    "peso_orientativo": "un tercio"
+   }
+  ],
+  "cancelacion_tramos": "Cancelar los tramos pendientes si los plazos de entrega bajan de 18 meses o la cuota asiática supera el 25 %.",
+  "disparadores": [],
+  "motivo_descarte": null,
+  "motivo": "A, E y C superan los umbrales de INVERTIR, pero la valoración está parcialmente descontada (escalonamiento).",
+  "resultado_del_analisis": "CONCLUYENTE",
+  "relevancia_decisional": "MEDIA",
+  "reversibilidad": "media",
+  "siguiente_paso_sugerido": "ENVIAR_CANDIDATOS_A_C",
+  "prioritarios_por_bloque_C": {
+   "C.1": [
+    "CAND-B-2026-0201",
+    "CAND-B-2026-0202",
+    "CAND-B-2026-0203",
+    "CAND-B-2026-0204"
+   ],
+   "C.6": [
+    "CAND-B-2026-0231"
+   ]
+  },
+  "que_cambiaria_la_conclusion": [
+   "Plazos de entrega < 18 meses dos trimestres seguidos",
+   "Recortes de planes de inversión de los operadores > 15 %",
+   "PER relativo por encima del percentil 95"
+  ],
+  "confianza_verbal": "probable"
+ },
+ "escenarios": [
+  {
+   "nombre": "base",
+   "premisas": "Inversión +7 % anual, plazos > 24 meses hasta 2028, márgenes estables",
+   "regimen": "RGM-B-2026-0011",
+   "disparadores": [
+    "adjudicaciones TYNDP"
+   ],
+   "probabilidad": null,
+   "base_probabilidad": null,
+   "banda": "más probable que no",
+   "resultado_vs_referencia": "La cesta supera a la referencia por 3–5 puntos anuales",
+   "calculos": [
+    "CALC-B-2026-0910"
+   ]
+  },
+  {
+   "nombre": "favorable",
+   "premisas": "Aceleración por interconexiones y centros de datos; precios al alza",
+   "regimen": "RGM-B-2026-0011",
+   "disparadores": [
+    "nuevos contratos marco"
+   ],
+   "probabilidad": null,
+   "base_probabilidad": null,
+   "banda": "poco probable",
+   "resultado_vs_referencia": "Supera por más de 8 puntos anuales",
+   "calculos": [
+    "CALC-B-2026-0910"
+   ]
+  },
+  {
+   "nombre": "adverso",
+   "premisas": "Aplazamiento tarifario y entrada asiática en 2027; compresión del múltiplo",
+   "regimen": "transición a tipos más altos",
+   "disparadores": [
+    "book-to-bill < 0,9"
+   ],
+   "probabilidad": null,
+   "base_probabilidad": null,
+   "banda": "poco probable",
+   "resultado_vs_referencia": "Queda 10–15 puntos por debajo de la referencia en 12 meses",
+   "calculos": [
+    "CALC-B-2026-0910"
+   ]
+  }
+ ],
+ "sensibilidades": [
+  {
+   "variable": "Crecimiento de la inversión en redes",
+   "valor_base": "7 %",
+   "valor_bajo": "4 %",
+   "valor_alto": "10 %",
+   "efecto_bajo": "−18 % valor implícito",
+   "efecto_alto": "+15 % valor implícito",
+   "unidad": "%",
+   "calc_id": "CALC-B-2026-0910"
+  },
+  {
+   "variable": "Margen EBITDA normalizado",
+   "valor_base": "13 %",
+   "valor_bajo": "10 %",
+   "valor_alto": "15 %",
+   "efecto_bajo": "−22 %",
+   "efecto_alto": "+12 %",
+   "unidad": "%",
+   "calc_id": "CALC-B-2026-0910"
+  }
+ ],
+ "pronosticos": [
+  "PRG-B-2026-0101",
+  "PRG-B-2026-0102"
+ ],
+ "pronosticos_detalle": [
+  {
+   "prg_id": "PRG-B-2026-0101",
+   "tipo": "AMBITO",
+   "afirmacion": "La cesta CESTA-REDES-EU supera al STOXX Europe 600 Industrial Goods & Services en rentabilidad total a 12 meses",
+   "horizonte": "H4",
+   "fecha_emision": "2026-11-02",
+   "fecha_resolucion": "2027-11-02",
+   "criterio": "Rentabilidad total relativa > 0 entre el cierre del 2026-10-30 y el del 2027-10-29",
+   "referencia": "SXNP",
+   "indicador": "CESTA-REDES-EU",
+   "tipo_activo": null,
+   "banda": "más probable que no",
+   "probabilidad_publicada": null,
+   "celda": "CADENA_DE_VALOR×RV×H4",
+   "referencia_ingenua": "paseo aleatorio (rentabilidad relativa nula)",
+   "fuente": "HT-01"
+  },
+  {
+   "prg_id": "PRG-B-2026-0102",
+   "tipo": "RANKING",
+   "afirmacion": "El top-5 RV equiponderado supera a la media equiponderada del universo RV cribado a 12 meses",
+   "horizonte": "H4",
+   "fecha_emision": "2026-11-02",
+   "fecha_resolucion": "2027-11-02",
+   "criterio": "Rentabilidad del top-5 − media del universo cribado > 0",
+   "referencia": "media equiponderada del universo cribado RV (31 valores)",
+   "indicador": null,
+   "tipo_activo": "RV",
+   "banda": "incierto",
+   "probabilidad_publicada": null,
+   "celda": "SEL-RV×H4",
+   "referencia_ingenua": "ranking aleatorio; ranking por capitalización",
+   "universo_ref": "CALC-B-2026-0913 (universo RV cribado a 2026-10-30, 31 valores)",
+   "tratamiento_bajas": "un valor deslistado se valora a su último precio y el importe queda en liquidez hasta la resolución",
+   "fuente": "HT-01"
+  }
+ ],
+ "riesgos": [
+  {
+   "riesgo": "Aplazamiento de inversiones por aprobación tarifaria lenta",
+   "mecanismo": "menos pedidos nuevos y renegociación de plazos",
+   "senal_temprana": "decisiones tarifarias de los reguladores nacionales",
+   "magnitud": "alta",
+   "probabilidad_verbal": "poco probable"
+  },
+  {
+   "riesgo": "Entrada de capacidad asiática",
+   "mecanismo": "presión en precios de licitación",
+   "senal_temprana": "adjudicaciones HVDC a fabricantes no europeos",
+   "magnitud": "media",
+   "probabilidad_verbal": "incierto"
+  },
+  {
+   "riesgo": "Compresión del múltiplo por subida de tipos reales",
+   "mecanismo": "mayor tasa de descuento de flujos lejanos",
+   "senal_temprana": "tipo real a 10 años > 1,5 %",
+   "magnitud": "media",
+   "probabilidad_verbal": "incierto"
+  }
+ ],
+ "riesgo_1a5": 3,
+ "catalizadores": [
+  {
+   "evento": "Adjudicaciones del TYNDP 2026 de ENTSO-E",
+   "fecha": "2027-01"
+  },
+  {
+   "evento": "Resultados anuales de los fabricantes (cartera de pedidos)",
+   "fecha": "2027-02"
+  }
+ ],
+ "invalidacion": [
+  "Plazos de entrega de transformadores < 18 meses dos trimestres seguidos",
+  "Book-to-bill agregado < 0,9 dos trimestres",
+  "Recortes de los planes de inversión de los operadores > 15 %"
+ ],
+ "refutacion": {
+  "realizada_por": "AG-B14",
+  "veredicto_tesis": "robusta",
+  "veredicto_candidatos": {
+   "CAND-B-2026-0201": "robusto",
+   "CAND-B-2026-0202": "robusto",
+   "CAND-B-2026-0203": "robusto",
+   "CAND-B-2026-0204": "fragil",
+   "CAND-B-2026-0231": "robusto"
+  },
+  "objeciones": [
+   {
+    "obj_id": "OBJ-B-2026-0071",
+    "objeto": "TESIS",
+    "tipo": "explicación alternativa",
+    "fuerza": "moderada",
+    "argumento": "El aumento de pedidos puede ser cíclico (adelanto de compras tras la crisis energética).",
+    "evidencia": [
+     "CLM-B-2026-0432"
+    ],
+    "que_la_resolveria": "peso de contratos marco plurianuales en la cartera",
+    "respuesta": "Los contratos marco superan el 50 % de la cartera de los líderes (CLM-B-2026-0432); la hipótesis cíclica queda debilitada.",
+    "resuelta": true,
+    "estado_contraste": "resuelta"
+   },
+   {
+    "obj_id": "OBJ-B-2026-0072",
+    "objeto": "TESIS",
+    "tipo": "riesgo omitido",
+    "fuerza": "moderada",
+    "argumento": "La capacidad asiática anunciada podría llegar antes de 2029.",
+    "evidencia": [
+     "CLM-B-2026-0612"
+    ],
+    "que_la_resolveria": "fechas de puesta en marcha verificadas",
+    "respuesta": "No hay evidencia suficiente de la fecha; se mantiene como incertidumbre abierta con señal en el plan de seguimiento.",
+    "resuelta": false,
+    "estado_contraste": "incertidumbre_abierta"
+   },
+   {
+    "obj_id": "OBJ-B-2026-0074",
+    "objeto": "CAND-B-2026-0201",
+    "tipo": "pureza",
+    "fuerza": "moderada",
+    "argumento": "Parte de los ingresos de Prysmian procede de cable de telecomunicaciones y construcción.",
+    "evidencia": [
+     "DAT-B-2026-0311"
+    ],
+    "que_la_resolveria": "segmentos publicados",
+    "respuesta": "La pureza (55 %) ya descuenta esos segmentos; supera el mínimo de PC2 (25 %).",
+    "resuelta": true,
+    "estado_contraste": "resuelta"
+   },
+   {
+    "obj_id": "OBJ-B-2026-0075",
+    "objeto": "CAND-B-2026-0204",
+    "tipo": "contabilidad y ejecución",
+    "fuerza": "debil",
+    "argumento": "Las pérdidas de la división eólica pueden absorber caja del grupo.",
+    "evidencia": [],
+    "que_la_resolveria": "flujo de caja por segmento",
+    "respuesta": "Alerta no crítica trasladada al encargo C.1.",
+    "resuelta": true,
+    "estado_contraste": "aceptada"
+   }
+  ],
+  "pre_mortem": "Si la tesis falla en 2027 será por una pausa tarifaria coincidente con la capacidad nueva."
+ },
+ "candidatos_por_tipo": {
+  "RV": {
+   "aplicable": true,
+   "playbook": "SEL-RV",
+   "universo": {
+    "tamano": 58,
+    "tamano_invertible": 31,
+    "fuentes": [
+     "Constituyentes STOXX Europe 600 Industrial Goods & Services (TFB-08)",
+     "Despliegue estructural 4b/4d",
+     "Carteras de ETF temáticos de redes"
+    ],
+    "fecha": "2026-10-30",
+    "metodo": "HT-11 en punto del tiempo"
+   },
+   "excluidos_por_motivo": {
+    "NO_INVERTIBLE": 9,
+    "PUREZA_INSUFICIENTE": 16,
+    "DATOS_INSUFICIENTES": 2
+   },
+   "top_n": [
+    {
+     "cand_id": "CAND-B-2026-0201",
+     "rango": 1,
+     "nombre": "Prysmian S.p.A.",
+     "isin": "IT0004176001",
+     "ticker": "PRY",
+     "mercado": "Borsa Italiana (MTA)",
+     "divisa": "EUR",
+     "tipo_instrumento": "accion",
+     "tipo_subyacente": null,
+     "emisor": "Prysmian",
+     "subcluster": "cables de alta tensión",
+     "indice_replicado": null,
+     "fecha_dato": "2026-10-30",
+     "S": 79,
+     "desglose": {
+      "PE": 90,
+      "QL": 80,
+      "VA": 65,
+      "MO": 85,
+      "RI": 70,
+      "LA": 90,
+      "CO": null
+     },
+     "ic90_S": [
+      72,
+      85
+     ],
+     "ic90_rango": [
+      1,
+      2
+     ],
+     "frontera": false,
+     "segunda_pasada": false,
+     "pureza": {
+      "metrica": "% de ingresos en cables de transmisión y redes",
+      "valor": 0.55,
+      "fuente": "DAT-B-2026-0311",
+      "metodo": "publicado"
+     },
+     "alertas": [],
+     "puertas": {
+      "PC1": "OK",
+      "PC2": "OK",
+      "PC3": "OK",
+      "PC4": "OK",
+      "PC5": "OK",
+      "PC6": "OK",
+      "PC7": "OK",
+      "PC8": "OK"
+     },
+     "veredicto": "PRIORITARIO_PARA_C",
+     "rol_en_tesis": "Eslabón crítico: cables HVDC submarinos y terrestres con cartera de pedidos de varios años; ganador del cuello de botella de capacidad de extrusión.",
+     "objeciones": [
+      {
+       "obj_id": "OBJ-B-2026-0074",
+       "fuerza": "moderada",
+       "resuelta": true,
+       "respuesta": "La capacidad nueva anunciada por competidores asiáticos no llega antes de 2029 (EVD-B-2026-0612)."
+      }
+     ],
+     "exposicion_compartida": "Prysmian (también candidato RF)",
+     "eslabon_id": "ESL-02",
+     "pureza_eslabon": 0.55,
+     "eslabones_secundarios": []
+    },
+    {
+     "cand_id": "CAND-B-2026-0202",
+     "rango": 2,
+     "nombre": "NKT A/S",
+     "isin": "DK0010287663",
+     "ticker": "NKT",
+     "mercado": "Nasdaq Copenhagen",
+     "divisa": "DKK",
+     "tipo_instrumento": "accion",
+     "tipo_subyacente": null,
+     "emisor": "NKT",
+     "subcluster": "cables de alta tensión",
+     "indice_replicado": null,
+     "fecha_dato": "2026-10-30",
+     "S": 73,
+     "desglose": {
+      "PE": 95,
+      "QL": 70,
+      "VA": 70,
+      "MO": 75,
+      "RI": 60,
+      "LA": 60,
+      "CO": null
+     },
+     "ic90_S": [
+      65,
+      80
+     ],
+     "ic90_rango": [
+      2,
+      4
+     ],
+     "frontera": false,
+     "segunda_pasada": false,
+     "pureza": {
+      "metrica": "% de ingresos en cables de alta tensión",
+      "valor": 0.8,
+      "fuente": "DAT-B-2026-0312",
+      "metodo": "publicado"
+     },
+     "alertas": [],
+     "puertas": {
+      "PC1": "OK",
+      "PC2": "OK",
+      "PC3": "OK",
+      "PC4": "OK",
+      "PC5": "OK",
+      "PC6": "OK",
+      "PC7": "OK",
+      "PC8": "OK"
+     },
+     "veredicto": "PRIORITARIO_PARA_C",
+     "rol_en_tesis": "Pure play de cables de alta tensión; máxima pureza del universo; exposición directa a interconexiones y eólica marina.",
+     "objeciones": [],
+     "exposicion_compartida": null,
+     "eslabon_id": "ESL-02",
+     "pureza_eslabon": 0.8,
+     "eslabones_secundarios": []
+    },
+    {
+     "cand_id": "CAND-B-2026-0203",
+     "rango": 3,
+     "nombre": "Schneider Electric SE",
+     "isin": "FR0000121972",
+     "ticker": "SU",
+     "mercado": "Euronext Paris",
+     "divisa": "EUR",
+     "tipo_instrumento": "accion",
+     "tipo_subyacente": null,
+     "emisor": "Schneider Electric",
+     "subcluster": "aparamenta y automatización",
+     "indice_replicado": null,
+     "fecha_dato": "2026-10-30",
+     "S": 72,
+     "desglose": {
+      "PE": 50,
+      "QL": 90,
+      "VA": 55,
+      "MO": 75,
+      "RI": 80,
+      "LA": 100,
+      "CO": null
+     },
+     "ic90_S": [
+      64,
+      79
+     ],
+     "ic90_rango": [
+      2,
+      5
+     ],
+     "frontera": false,
+     "segunda_pasada": false,
+     "pureza": {
+      "metrica": "% de ingresos en distribución eléctrica y automatización de red (estimado)",
+      "valor": 0.3,
+      "fuente": "CALC-B-2026-0907",
+      "metodo": "estimado"
+     },
+     "alertas": [],
+     "puertas": {
+      "PC1": "OK",
+      "PC2": "OK",
+      "PC3": "OK",
+      "PC4": "OK",
+      "PC5": "OK",
+      "PC6": "OK",
+      "PC7": "OK",
+      "PC8": "OK"
+     },
+     "veredicto": "PRIORITARIO_PARA_C",
+     "rol_en_tesis": "Aparamenta de media tensión y software de gestión de red; calidad máxima del universo; pureza moderada.",
+     "objeciones": [],
+     "exposicion_compartida": null,
+     "eslabon_id": "ESL-03",
+     "pureza_eslabon": 0.3,
+     "eslabones_secundarios": []
+    },
+    {
+     "cand_id": "CAND-B-2026-0204",
+     "rango": 4,
+     "nombre": "Siemens Energy AG",
+     "isin": "DE000ENER6Y0",
+     "ticker": "ENR",
+     "mercado": "Xetra",
+     "divisa": "EUR",
+     "tipo_instrumento": "accion",
+     "tipo_subyacente": null,
+     "emisor": "Siemens Energy",
+     "subcluster": "transformadores y equipos de alta tensión",
+     "indice_replicado": null,
+     "fecha_dato": "2026-10-30",
+     "S": 71,
+     "desglose": {
+      "PE": 65,
+      "QL": 70,
+      "VA": 60,
+      "MO": 95,
+      "RI": 55,
+      "LA": 100,
+      "CO": null
+     },
+     "ic90_S": [
+      62,
+      78
+     ],
+     "ic90_rango": [
+      2,
+      5
+     ],
+     "frontera": false,
+     "segunda_pasada": false,
+     "pureza": {
+      "metrica": "% de ingresos del segmento Grid Technologies",
+      "valor": 0.35,
+      "fuente": "DAT-B-2026-0313",
+      "metodo": "publicado"
+     },
+     "alertas": [
+      {
+       "senal": "historial reciente de pérdidas en eólica (segmento ajeno al ámbito)",
+       "valor": "margen negativo en 2024",
+       "estado": "no_critica",
+       "verificar_en_C": true
+      }
+     ],
+     "puertas": {
+      "PC1": "OK",
+      "PC2": "OK",
+      "PC3": "OK",
+      "PC4": "OK",
+      "PC5": "OK",
+      "PC6": "OK",
+      "PC7": "OK",
+      "PC8": "OK"
+     },
+     "veredicto": "PRIORITARIO_PARA_C",
+     "rol_en_tesis": "Transformadores de potencia y subestaciones HVDC: eslabón con plazos de entrega de 3–4 años.",
+     "objeciones": [],
+     "exposicion_compartida": "Siemens Energy (también candidato RF)",
+     "eslabon_id": "ESL-03",
+     "pureza_eslabon": 0.35,
+     "eslabones_secundarios": []
+    },
+    {
+     "cand_id": "CAND-B-2026-0206",
+     "rango": 6,
+     "nombre": "ABB Ltd",
+     "isin": "CH0012221716",
+     "ticker": "ABBN",
+     "mercado": "SIX Swiss Exchange",
+     "divisa": "CHF",
+     "tipo_instrumento": "accion",
+     "tipo_subyacente": null,
+     "emisor": "ABB",
+     "subcluster": "aparamenta y automatización",
+     "indice_replicado": null,
+     "fecha_dato": "2026-10-30",
+     "S": 64,
+     "desglose": {
+      "PE": 45,
+      "QL": 85,
+      "VA": 40,
+      "MO": 60,
+      "RI": 80,
+      "LA": 95,
+      "CO": null
+     },
+     "ic90_S": [
+      57,
+      70
+     ],
+     "ic90_rango": [
+      4,
+      8
+     ],
+     "frontera": false,
+     "segunda_pasada": false,
+     "pureza": {
+      "metrica": "% de ingresos de Electrification ligado a redes (estimado)",
+      "valor": 0.28,
+      "fuente": "CALC-B-2026-0908",
+      "metodo": "estimado"
+     },
+     "alertas": [],
+     "puertas": {
+      "PC1": "OK",
+      "PC2": "OK",
+      "PC3": "OK",
+      "PC4": "OK",
+      "PC5": "OK",
+      "PC6": "OK",
+      "PC7": "OK",
+      "PC8": "OK"
+     },
+     "veredicto": "SECUNDARIO",
+     "rol_en_tesis": "Electrificación y aparamenta; entra en el top-5 por la regla de diversidad (subclúster de cables al 40 %).",
+     "objeciones": [],
+     "exposicion_compartida": null,
+     "motivo_secundario": [
+      "S < 65"
+     ],
+     "eslabon_id": "ESL-03",
+     "pureza_eslabon": 0.28,
+     "eslabones_secundarios": []
+    }
+   ],
+   "alternativas": [
+    "CAND-B-2026-0205",
+    "CAND-B-2026-0207"
+   ],
+   "sustituciones_diversidad": [
+    {
+     "desplazado": "CAND-B-2026-0205",
+     "S": 69,
+     "motivo": "subclúster «cables de alta tensión» alcanzaría más del 40 % del top-N",
+     "frente_a": null
+    }
+   ],
+   "menos_de_N_motivo": null,
+   "traduccion_rasgos_metricas": [
+    {
+     "rasgo": "capacidad instalada en el eslabón crítico",
+     "metricas": [
+      "pureza",
+      "revisiones_bpa_3m"
+     ],
+     "componente": "PE/MO"
+    },
+    {
+     "rasgo": "balance capaz de financiar la ampliación",
+     "metricas": [
+      "deuda_neta_ebitda"
+     ],
+     "componente": "QL"
+    }
+   ],
+   "referencia": {
+    "ambito": "STOXX Europe 600 Industrial Goods & Services",
+    "ranking": "media equiponderada del universo cribado"
+   },
+   "exclusiones_destacadas": [
+    {
+     "nombre": "Legrand (pureza 22 %)",
+     "motivo": "PUREZA_INSUFICIENTE",
+     "detalle": "aparamenta de edificios, no de red"
+    }
+   ]
+  },
+  "FON": {
+   "aplicable": true,
+   "playbook": "SEL-FON",
+   "universo": {
+    "tamano": 14,
+    "tamano_invertible": 9,
+    "fuentes": [
+     "Listas de ETF UCITS por categoría (TFB-08)"
+    ],
+    "fecha": "2026-10-30",
+    "metodo": "HT-11 en punto del tiempo"
+   },
+   "excluidos_por_motivo": {
+    "PUREZA_INSUFICIENTE": 7,
+    "NO_INVERTIBLE": 5
+   },
+   "top_n": [
+    {
+     "cand_id": "CAND-B-2026-0231",
+     "rango": 1,
+     "nombre": "ETF UCITS de infraestructura de redes inteligentes (ilustrativo A)",
+     "isin": null,
+     "ticker": null,
+     "mercado": "Xetra",
+     "divisa": "EUR",
+     "tipo_instrumento": "etf",
+     "tipo_subyacente": "RV",
+     "emisor": null,
+     "subcluster": "vehículo temático de redes",
+     "indice_replicado": "Índice de infraestructura de redes inteligentes (ilustrativo)",
+     "fecha_dato": "2026-10-30",
+     "S": 70,
+     "desglose": {
+      "PE": 80,
+      "QL": 70,
+      "VA": 50,
+      "MO": 60,
+      "RI": 70,
+      "LA": 75,
+      "CO": 65
+     },
+     "ic90_S": [
+      62,
+      74
+     ],
+     "ic90_rango": [
+      1,
+      2
+     ],
+     "frontera": false,
+     "segunda_pasada": false,
+     "pureza": {
+      "metrica": "% del patrimonio en candidatos del ámbito que superan PC2",
+      "valor": 0.68,
+      "fuente": "CALC-B-2026-0911",
+      "metodo": "estimado"
+     },
+     "alertas": [],
+     "puertas": {
+      "PC1": "OK",
+      "PC2": "OK",
+      "PC3": "OK",
+      "PC4": "OK",
+      "PC5": "OK",
+      "PC6": "OK",
+      "PC7": "OK",
+      "PC8": "OK"
+     },
+     "veredicto": "PRIORITARIO_PARA_C",
+     "rol_en_tesis": "Única vía colectiva con pureza ≥ 50 %: cesta diversificada de fabricantes de equipos de red.",
+     "objeciones": [],
+     "exposicion_compartida": null,
+     "eslabon_id": "ESL-03",
+     "pureza_eslabon": 0.3,
+     "eslabones_secundarios": []
+    },
+    {
+     "cand_id": "CAND-B-2026-0232",
+     "rango": 2,
+     "nombre": "ETF UCITS de electrificación global (ilustrativo B)",
+     "isin": null,
+     "ticker": null,
+     "mercado": "Borsa Italiana (ETFplus)",
+     "divisa": "EUR",
+     "tipo_instrumento": "etf",
+     "tipo_subyacente": "RV",
+     "emisor": null,
+     "subcluster": "vehículo de electrificación",
+     "indice_replicado": "Índice global de electrificación (ilustrativo)",
+     "fecha_dato": "2026-10-30",
+     "S": 58,
+     "desglose": {
+      "PE": 55,
+      "QL": 60,
+      "VA": 55,
+      "MO": 50,
+      "RI": 65,
+      "LA": 50,
+      "CO": 70
+     },
+     "ic90_S": [
+      52,
+      66
+     ],
+     "ic90_rango": [
+      1,
+      2
+     ],
+     "frontera": false,
+     "segunda_pasada": false,
+     "pureza": {
+      "metrica": "% del patrimonio en candidatos del ámbito que superan PC2",
+      "valor": 0.52,
+      "fuente": "CALC-B-2026-0912",
+      "metodo": "estimado"
+     },
+     "alertas": [],
+     "puertas": {
+      "PC1": "OK",
+      "PC2": "OK",
+      "PC3": "OK",
+      "PC4": "OK",
+      "PC5": "OK",
+      "PC6": "OK",
+      "PC7": "OK",
+      "PC8": "OK"
+     },
+     "veredicto": "SECUNDARIO",
+     "rol_en_tesis": "Cartera más amplia (incluye renovables): pureza en el límite; alternativa de menor coste.",
+     "objeciones": [],
+     "exposicion_compartida": null,
+     "motivo_secundario": [
+      "S < 65"
+     ],
+     "eslabon_id": "ESL-03",
+     "pureza_eslabon": 0.22,
+     "eslabones_secundarios": []
+    }
+   ],
+   "alternativas": [],
+   "sustituciones_diversidad": [],
+   "traduccion_rasgos_metricas": [
+    {
+     "rasgo": "cartera concentrada en el eslabón crítico",
+     "metricas": [
+      "pureza"
+     ],
+     "componente": "PE"
+    },
+    {
+     "rasgo": "coste bajo de mantener la exposición",
+     "metricas": [
+      "ter"
+     ],
+     "componente": "CO"
+    }
+   ],
+   "menos_de_N_motivo": "Solo 2 vehículos superan el mínimo de pureza del 50 % (PC2); el resto son ETF de energía limpia o de infraestructuras con menos del 30 % del patrimonio en el ámbito. No se rellena el top-5 (R21).",
+   "referencia": {
+    "ambito": "Índice del ámbito (cesta ilustrativa)",
+    "ranking": "media equiponderada de los vehículos cribados (rentabilidad neta)"
+   },
+   "exclusiones_destacadas": [
+    {
+     "nombre": "iShares Global Clean Energy UCITS ETF",
+     "motivo": "PUREZA_INSUFICIENTE",
+     "detalle": "≈ 8 % del patrimonio en el ámbito (ilustrativo)"
+    },
+    {
+     "nombre": "iShares Global Infrastructure UCITS ETF",
+     "motivo": "PUREZA_INSUFICIENTE",
+     "detalle": "operadores y transporte, no fabricantes (ilustrativo)"
+    }
+   ]
+  },
+  "RF": {
+   "aplicable": true,
+   "playbook": "SEL-RF",
+   "universo": {
+    "tamano": 17,
+    "tamano_invertible": 9,
+    "fuentes": [
+     "Emisiones vivas de emisores del ámbito (TFB-03)"
+    ],
+    "fecha": "2026-10-30",
+    "metodo": "HT-11 en punto del tiempo"
+   },
+   "excluidos_por_motivo": {
+    "NO_INVERTIBLE": 6,
+    "PUREZA_INSUFICIENTE": 2
+   },
+   "top_n": [
+    {
+     "cand_id": "CAND-B-2026-0251",
+     "rango": 1,
+     "nombre": "Bono sénior de Prysmian 2030 (ilustrativo)",
+     "isin": null,
+     "ticker": null,
+     "mercado": "Borsa Italiana (MOT)",
+     "divisa": "EUR",
+     "tipo_instrumento": "bono",
+     "tipo_subyacente": null,
+     "emisor": "Prysmian",
+     "subcluster": "cables de alta tensión",
+     "indice_replicado": null,
+     "fecha_dato": "2026-10-30",
+     "S": 58,
+     "desglose": {
+      "PE": 70,
+      "QL": 60,
+      "VA": 45,
+      "MO": 60,
+      "RI": 65,
+      "LA": 60,
+      "CO": null
+     },
+     "ic90_S": [
+      54,
+      68
+     ],
+     "ic90_rango": [
+      1,
+      3
+     ],
+     "frontera": false,
+     "segunda_pasada": false,
+     "pureza": {
+      "metrica": "% de ingresos del emisor en cables de transmisión",
+      "valor": 0.55,
+      "fuente": "DAT-B-2026-0311",
+      "metodo": "publicado"
+     },
+     "alertas": [],
+     "puertas": {
+      "PC1": "OK",
+      "PC2": "OK",
+      "PC3": "OK",
+      "PC4": "OK",
+      "PC5": "OK",
+      "PC6": "OK",
+      "PC7": "OK",
+      "PC8": "OK"
+     },
+     "veredicto": "SECUNDARIO",
+     "rol_en_tesis": "Exposición de crédito al ganador del cuello; diferencial ya estrecho frente a su calificación.",
+     "objeciones": [],
+     "exposicion_compartida": "Prysmian (también candidato RV)",
+     "motivo_secundario": [
+      "S < 65"
+     ],
+     "eslabon_id": "ESL-02",
+     "pureza_eslabon": 0.55,
+     "eslabones_secundarios": []
+    },
+    {
+     "cand_id": "CAND-B-2026-0252",
+     "rango": 2,
+     "nombre": "Bono verde de Siemens Energy 2031 (ilustrativo)",
+     "isin": null,
+     "ticker": null,
+     "mercado": "Luxembourg Stock Exchange",
+     "divisa": "EUR",
+     "tipo_instrumento": "bono",
+     "tipo_subyacente": null,
+     "emisor": "Siemens Energy",
+     "subcluster": "transformadores y equipos de alta tensión",
+     "indice_replicado": null,
+     "fecha_dato": "2026-10-30",
+     "S": 57,
+     "desglose": {
+      "PE": 50,
+      "QL": 55,
+      "VA": 60,
+      "MO": 60,
+      "RI": 55,
+      "LA": 65,
+      "CO": null
+     },
+     "ic90_S": [
+      51,
+      64
+     ],
+     "ic90_rango": [
+      1,
+      3
+     ],
+     "frontera": false,
+     "segunda_pasada": false,
+     "pureza": {
+      "metrica": "uso de los fondos ligado a redes (marco verde verificado) y % de ingresos del segmento",
+      "valor": 0.35,
+      "fuente": "DAT-B-2026-0313",
+      "metodo": "publicado"
+     },
+     "alertas": [],
+     "puertas": {
+      "PC1": "OK",
+      "PC2": "OK",
+      "PC3": "OK",
+      "PC4": "OK",
+      "PC5": "OK",
+      "PC6": "OK",
+      "PC7": "OK",
+      "PC8": "OK"
+     },
+     "veredicto": "SECUNDARIO",
+     "rol_en_tesis": "Diferencial más amplio por el historial de la división eólica; la mejora del crédito depende de redes.",
+     "objeciones": [],
+     "exposicion_compartida": "Siemens Energy (también candidato RV)",
+     "motivo_secundario": [
+      "S < 65"
+     ],
+     "eslabon_id": "ESL-03",
+     "pureza_eslabon": 0.35,
+     "eslabones_secundarios": []
+    },
+    {
+     "cand_id": "CAND-B-2026-0253",
+     "rango": 3,
+     "nombre": "Bono sénior de Nexans 2029 (ilustrativo)",
+     "isin": null,
+     "ticker": null,
+     "mercado": "Euronext Paris",
+     "divisa": "EUR",
+     "tipo_instrumento": "bono",
+     "tipo_subyacente": null,
+     "emisor": "Nexans",
+     "subcluster": "cables de alta tensión",
+     "indice_replicado": null,
+     "fecha_dato": "2026-10-30",
+     "S": 53,
+     "desglose": {
+      "PE": 55,
+      "QL": 50,
+      "VA": 55,
+      "MO": 50,
+      "RI": 60,
+      "LA": 50,
+      "CO": null
+     },
+     "ic90_S": [
+      48,
+      62
+     ],
+     "ic90_rango": [
+      2,
+      3
+     ],
+     "frontera": false,
+     "segunda_pasada": false,
+     "pureza": {
+      "metrica": "% de ingresos en transmisión y distribución",
+      "valor": 0.45,
+      "fuente": "DAT-B-2026-0314",
+      "metodo": "publicado"
+     },
+     "alertas": [],
+     "puertas": {
+      "PC1": "OK",
+      "PC2": "OK",
+      "PC3": "OK",
+      "PC4": "OK",
+      "PC5": "OK",
+      "PC6": "OK",
+      "PC7": "OK",
+      "PC8": "OK"
+     },
+     "veredicto": "SECUNDARIO",
+     "rol_en_tesis": "Exposición de crédito a un fabricante de cables con menor escala; carry moderado.",
+     "objeciones": [],
+     "exposicion_compartida": null,
+     "motivo_secundario": [
+      "S < 65"
+     ],
+     "eslabon_id": "ESL-02",
+     "pureza_eslabon": 0.45,
+     "eslabones_secundarios": []
+    }
+   ],
+   "alternativas": [],
+   "sustituciones_diversidad": [],
+   "traduccion_rasgos_metricas": [
+    {
+     "rasgo": "emisor con capacidad instalada en el eslabón",
+     "metricas": [
+      "pureza"
+     ],
+     "componente": "PE"
+    },
+    {
+     "rasgo": "balance capaz de financiar la ampliación",
+     "metricas": [
+      "deuda_ebitda",
+      "cobertura_intereses"
+     ],
+     "componente": "QL"
+    }
+   ],
+   "menos_de_N_motivo": "Ningún bono es prioritario: los diferenciales de los emisores del ámbito ya están estrechos frente a su calificación (VA bajo); 9 emisiones invertibles, 3 en el top-N como SECUNDARIO.",
+   "referencia": {
+    "ambito": "Índice de crédito corporativo industrial en EUR",
+    "ranking": "rentabilidad total media equiponderada del universo cribado, ajustada por duración"
+   }
+  },
+  "DIV": {
+   "aplicable": false,
+   "motivo": "La tesis no tiene un factor de divisa material: los ingresos y costes de los fabricantes están mayoritariamente en EUR."
+  },
+  "MP": {
+   "aplicable": false,
+   "motivo": "El cobre y el aluminio son insumos del ámbito (exposición inversa en márgenes); no capturan la tesis. Figuran como riesgo."
+  },
+  "IDX": {
+   "aplicable": false,
+   "motivo": "Ningún índice publicado tiene ≥ 60 % en el eslabón; el índice sectorial se usa solo como referencia de comparación."
+  },
+  "DER": {
+   "aplicable": false,
+   "motivo": "No existen futuros ni opciones listados sobre el eslabón; los derivados sobre valores individuales serían valoración individual."
+  },
+  "INM": {
+   "aplicable": false,
+   "motivo": "Sin inmobiliarias con exposición material al ámbito."
+  },
+  "CRI": {
+   "aplicable": false,
+   "motivo": "Sin relación económica con el ámbito."
+  },
+  "ALT": {
+   "aplicable": false,
+   "motivo": "Los fondos de infraestructuras cotizados invierten en operadores regulados, excluidos por la delimitación."
+  },
+  "MON": {
+   "aplicable": false,
+   "motivo": "No procede en una tesis de horizonte H4 sobre fabricantes."
+  },
+  "TCV": {
+   "aplicable": false,
+   "motivo": "La sensibilidad a tipos se trata en D7 y en los escenarios; no hay producto de factor que capture la tesis."
+  }
+ },
+ "apuestas_independientes": 3,
+ "grupos_apuestas": [
+  [
+   "CAND-B-2026-0201",
+   "CAND-B-2026-0202"
+  ],
+  [
+   "CAND-B-2026-0203",
+   "CAND-B-2026-0204"
+  ],
+  [
+   "CAND-B-2026-0231"
+  ]
+ ],
+ "paquete_para_bloque_C": {
+  "C.1": [
+   {
+    "cand_id": "CAND-B-2026-0201",
+    "pet_id": "PET-B-2026-0042",
+    "rec_id": "REC-B-2026-0042",
+    "bloque_destino": "C.1",
+    "tipo_activo": "RV",
+    "tipo_subyacente": null,
+    "veredicto_candidato": "PRIORITARIO_PARA_C",
+    "instrumento": {
+     "nombre": "Prysmian S.p.A.",
+     "isin": "IT0004176001",
+     "ticker": "PRY",
+     "mercado": "Borsa Italiana (MTA)",
+     "divisa": "EUR",
+     "tipo_instrumento": "accion"
+    },
+    "contexto_ambito": {
+     "ambito": "Equipos para redes eléctricas en Europa",
+     "veredicto": "INVERTIR_ESCALONADO",
+     "A": 65,
+     "E": 70,
+     "C": 73,
+     "horizonte": "H4",
+     "regimen": "RGM-B-2026-0011",
+     "tesis_resumen": "La capacidad de transformadores y cables de alta tensión no crece al ritmo de la inversión en redes; los fabricantes con capacidad instalada capturan precio hasta 2029."
+    },
+    "rol_en_tesis": "Eslabón crítico: cables HVDC submarinos y terrestres con cartera de pedidos de varios años; ganador del cuello de botella de capacidad de extrusión.",
+    "puntuacion": {
+     "S": 79,
+     "desglose": {
+      "PE": 90,
+      "QL": 80,
+      "VA": 65,
+      "MO": 85,
+      "RI": 70,
+      "LA": 90,
+      "CO": null
+     },
+     "ic90_S": [
+      72,
+      85
+     ],
+     "rango": 1,
+     "ic90_rango": [
+      1,
+      2
+     ],
+     "tamano_universo": 31,
+     "playbook": "SEL-RV",
+     "pesos": {
+      "PE": 20,
+      "QL": 20,
+      "VA": 20,
+      "MO": 15,
+      "RI": 15,
+      "LA": 10,
+      "CO": null
+     }
+    },
+    "pureza": {
+     "metrica": "% de ingresos en cables de transmisión y redes",
+     "valor": 0.55,
+     "fuente": "DAT-B-2026-0311",
+     "metodo": "publicado"
+    },
+    "metricas_clave": [
+     {
+      "metrica": "pureza",
+      "valor": 0.55,
+      "unidad": "fracción",
+      "fecha": "2025 (último ejercicio)",
+      "fuente": "DAT-B-2026-0311"
+     }
+    ],
+    "campos_especificos_playbook": {
+     "segmentos_exposicion": [
+      {
+       "segmento": "% de ingresos en cables de transmisión y redes",
+       "valor": 0.55,
+       "fuente": "DAT-B-2026-0311"
+      }
+     ],
+     "rol_cadena": "cables de alta tensión",
+     "ganador_o_perdedor": "ganador del cuello de botella"
+    },
+    "senales_alerta": [],
+    "catalizadores": [
+     {
+      "evento": "Adjudicaciones del plan decenal de red de ENTSO-E (TYNDP 2026)",
+      "fecha": "2027-01"
+     }
+    ],
+    "riesgos_especificos": [
+     "Ejecución de proyectos llave en mano con penalizaciones",
+     "Coste del cobre y del aluminio no repercutido"
+    ],
+    "invalidacion_candidato": [
+     "Cartera de pedidos que cae dos trimestres seguidos con book-to-bill < 0,9"
+    ],
+    "objeciones_y_respuestas": [
+     {
+      "obj_id": "OBJ-B-2026-0074",
+      "fuerza": "moderada",
+      "resumen": "capacidad nueva de competidores",
+      "respuesta": "La capacidad nueva anunciada por competidores asiáticos no llega antes de 2029 (EVD-B-2026-0612)."
+     }
+    ],
+    "preguntas_para_C": [
+     "¿Qué parte de la cartera de pedidos tiene precio con cláusulas de revisión por metales?",
+     "¿Qué margen implica el precio actual frente al margen normalizado del ciclo?"
+    ],
+    "supuestos_a_verificar": [
+     "Pureza estimada a partir de segmentos publicados (verificar en notas de segmentos)"
+    ],
+    "referencia_comparacion": {
+     "ambito": "STOXX Europe 600 Industrial Goods & Services",
+     "ranking": "media equiponderada del universo cribado"
+    },
+    "alternativas": [
+     "CAND-B-2026-0205",
+     "CAND-B-2026-0207"
+    ],
+    "evidencias": [
+     "CLM-B-2026-0451"
+    ],
+    "calculos": [
+     "CALC-B-2026-0901"
+    ],
+    "data_cutoff": "2026-10-30",
+    "limitaciones": [
+     "Datos ilustrativos del ejemplo"
+    ],
+    "aviso": "Selección del Bloque B: no es una valoración individual ni una recomendación personal.",
+    "eslabon_id": "ESL-02",
+    "origen_seleccion": "TOP_N",
+    "contexto_eslabon": {
+     "nombre": "Fabricación de cables de alta tensión y HVDC",
+     "AE": 69,
+     "cuello_botella": true,
+     "PCB": 51
+    }
+   },
+   {
+    "cand_id": "CAND-B-2026-0202",
+    "pet_id": "PET-B-2026-0042",
+    "rec_id": "REC-B-2026-0042",
+    "bloque_destino": "C.1",
+    "tipo_activo": "RV",
+    "tipo_subyacente": null,
+    "veredicto_candidato": "PRIORITARIO_PARA_C",
+    "instrumento": {
+     "nombre": "NKT A/S",
+     "isin": "DK0010287663",
+     "ticker": "NKT",
+     "mercado": "Nasdaq Copenhagen",
+     "divisa": "DKK",
+     "tipo_instrumento": "accion"
+    },
+    "contexto_ambito": {
+     "ambito": "Equipos para redes eléctricas en Europa",
+     "veredicto": "INVERTIR_ESCALONADO",
+     "A": 65,
+     "E": 70,
+     "C": 73,
+     "horizonte": "H4",
+     "regimen": "RGM-B-2026-0011",
+     "tesis_resumen": "La capacidad de transformadores y cables de alta tensión no crece al ritmo de la inversión en redes; los fabricantes con capacidad instalada capturan precio hasta 2029."
+    },
+    "rol_en_tesis": "Pure play de cables de alta tensión; máxima pureza del universo; exposición directa a interconexiones y eólica marina.",
+    "puntuacion": {
+     "S": 73,
+     "desglose": {
+      "PE": 95,
+      "QL": 70,
+      "VA": 70,
+      "MO": 75,
+      "RI": 60,
+      "LA": 60,
+      "CO": null
+     },
+     "ic90_S": [
+      65,
+      80
+     ],
+     "rango": 2,
+     "ic90_rango": [
+      2,
+      4
+     ],
+     "tamano_universo": 31,
+     "playbook": "SEL-RV",
+     "pesos": {
+      "PE": 20,
+      "QL": 20,
+      "VA": 20,
+      "MO": 15,
+      "RI": 15,
+      "LA": 10,
+      "CO": null
+     }
+    },
+    "pureza": {
+     "metrica": "% de ingresos en cables de alta tensión",
+     "valor": 0.8,
+     "fuente": "DAT-B-2026-0312",
+     "metodo": "publicado"
+    },
+    "metricas_clave": [
+     {
+      "metrica": "pureza",
+      "valor": 0.8,
+      "unidad": "fracción",
+      "fecha": "2025 (último ejercicio)",
+      "fuente": "DAT-B-2026-0312"
+     }
+    ],
+    "campos_especificos_playbook": {
+     "segmentos_exposicion": [
+      {
+       "segmento": "% de ingresos en cables de alta tensión",
+       "valor": 0.8,
+       "fuente": "DAT-B-2026-0312"
+      }
+     ],
+     "rol_cadena": "cables de alta tensión",
+     "ganador_o_perdedor": "ganador del cuello de botella"
+    },
+    "senales_alerta": [],
+    "catalizadores": [
+     {
+      "evento": "Adjudicaciones del plan decenal de red de ENTSO-E (TYNDP 2026)",
+      "fecha": "2027-01"
+     }
+    ],
+    "riesgos_especificos": [
+     "Ejecución de proyectos llave en mano con penalizaciones",
+     "Coste del cobre y del aluminio no repercutido"
+    ],
+    "invalidacion_candidato": [
+     "Cartera de pedidos que cae dos trimestres seguidos con book-to-bill < 0,9"
+    ],
+    "objeciones_y_respuestas": [],
+    "preguntas_para_C": [
+     "¿Qué parte de la cartera de pedidos tiene precio con cláusulas de revisión por metales?",
+     "¿Qué margen implica el precio actual frente al margen normalizado del ciclo?"
+    ],
+    "supuestos_a_verificar": [
+     "Pureza estimada a partir de segmentos publicados (verificar en notas de segmentos)"
+    ],
+    "referencia_comparacion": {
+     "ambito": "STOXX Europe 600 Industrial Goods & Services",
+     "ranking": "media equiponderada del universo cribado"
+    },
+    "alternativas": [
+     "CAND-B-2026-0205",
+     "CAND-B-2026-0207"
+    ],
+    "evidencias": [
+     "CLM-B-2026-0451"
+    ],
+    "calculos": [
+     "CALC-B-2026-0901"
+    ],
+    "data_cutoff": "2026-10-30",
+    "limitaciones": [
+     "Datos ilustrativos del ejemplo"
+    ],
+    "aviso": "Selección del Bloque B: no es una valoración individual ni una recomendación personal.",
+    "eslabon_id": "ESL-02",
+    "origen_seleccion": "TOP_N",
+    "contexto_eslabon": {
+     "nombre": "Fabricación de cables de alta tensión y HVDC",
+     "AE": 69,
+     "cuello_botella": true,
+     "PCB": 51
+    }
+   },
+   {
+    "cand_id": "CAND-B-2026-0203",
+    "pet_id": "PET-B-2026-0042",
+    "rec_id": "REC-B-2026-0042",
+    "bloque_destino": "C.1",
+    "tipo_activo": "RV",
+    "tipo_subyacente": null,
+    "veredicto_candidato": "PRIORITARIO_PARA_C",
+    "instrumento": {
+     "nombre": "Schneider Electric SE",
+     "isin": "FR0000121972",
+     "ticker": "SU",
+     "mercado": "Euronext Paris",
+     "divisa": "EUR",
+     "tipo_instrumento": "accion"
+    },
+    "contexto_ambito": {
+     "ambito": "Equipos para redes eléctricas en Europa",
+     "veredicto": "INVERTIR_ESCALONADO",
+     "A": 65,
+     "E": 70,
+     "C": 73,
+     "horizonte": "H4",
+     "regimen": "RGM-B-2026-0011",
+     "tesis_resumen": "La capacidad de transformadores y cables de alta tensión no crece al ritmo de la inversión en redes; los fabricantes con capacidad instalada capturan precio hasta 2029."
+    },
+    "rol_en_tesis": "Aparamenta de media tensión y software de gestión de red; calidad máxima del universo; pureza moderada.",
+    "puntuacion": {
+     "S": 72,
+     "desglose": {
+      "PE": 50,
+      "QL": 90,
+      "VA": 55,
+      "MO": 75,
+      "RI": 80,
+      "LA": 100,
+      "CO": null
+     },
+     "ic90_S": [
+      64,
+      79
+     ],
+     "rango": 3,
+     "ic90_rango": [
+      2,
+      5
+     ],
+     "tamano_universo": 31,
+     "playbook": "SEL-RV",
+     "pesos": {
+      "PE": 20,
+      "QL": 20,
+      "VA": 20,
+      "MO": 15,
+      "RI": 15,
+      "LA": 10,
+      "CO": null
+     }
+    },
+    "pureza": {
+     "metrica": "% de ingresos en distribución eléctrica y automatización de red (estimado)",
+     "valor": 0.3,
+     "fuente": "CALC-B-2026-0907",
+     "metodo": "estimado"
+    },
+    "metricas_clave": [
+     {
+      "metrica": "pureza",
+      "valor": 0.3,
+      "unidad": "fracción",
+      "fecha": "2025 (último ejercicio)",
+      "fuente": "CALC-B-2026-0907"
+     }
+    ],
+    "campos_especificos_playbook": {
+     "segmentos_exposicion": [
+      {
+       "segmento": "% de ingresos en distribución eléctrica y automatización de red (estimado)",
+       "valor": 0.3,
+       "fuente": "CALC-B-2026-0907"
+      }
+     ],
+     "rol_cadena": "aparamenta y automatización",
+     "ganador_o_perdedor": "beneficiario indirecto"
+    },
+    "senales_alerta": [],
+    "catalizadores": [
+     {
+      "evento": "Adjudicaciones del plan decenal de red de ENTSO-E (TYNDP 2026)",
+      "fecha": "2027-01"
+     }
+    ],
+    "riesgos_especificos": [
+     "Ejecución de proyectos llave en mano con penalizaciones",
+     "Coste del cobre y del aluminio no repercutido"
+    ],
+    "invalidacion_candidato": [
+     "Cartera de pedidos que cae dos trimestres seguidos con book-to-bill < 0,9"
+    ],
+    "objeciones_y_respuestas": [],
+    "preguntas_para_C": [
+     "¿Qué parte de la cartera de pedidos tiene precio con cláusulas de revisión por metales?",
+     "¿Qué margen implica el precio actual frente al margen normalizado del ciclo?"
+    ],
+    "supuestos_a_verificar": [
+     "Pureza estimada a partir de segmentos publicados (verificar en notas de segmentos)"
+    ],
+    "referencia_comparacion": {
+     "ambito": "STOXX Europe 600 Industrial Goods & Services",
+     "ranking": "media equiponderada del universo cribado"
+    },
+    "alternativas": [
+     "CAND-B-2026-0205",
+     "CAND-B-2026-0207"
+    ],
+    "evidencias": [
+     "CLM-B-2026-0451"
+    ],
+    "calculos": [
+     "CALC-B-2026-0901"
+    ],
+    "data_cutoff": "2026-10-30",
+    "limitaciones": [
+     "Datos ilustrativos del ejemplo"
+    ],
+    "aviso": "Selección del Bloque B: no es una valoración individual ni una recomendación personal.",
+    "eslabon_id": "ESL-03",
+    "origen_seleccion": "TOP_N",
+    "contexto_eslabon": {
+     "nombre": "Transformadores de potencia, subestaciones y aparamenta",
+     "AE": 61,
+     "cuello_botella": true,
+     "PCB": 38
+    }
+   },
+   {
+    "cand_id": "CAND-B-2026-0204",
+    "pet_id": "PET-B-2026-0042",
+    "rec_id": "REC-B-2026-0042",
+    "bloque_destino": "C.1",
+    "tipo_activo": "RV",
+    "tipo_subyacente": null,
+    "veredicto_candidato": "PRIORITARIO_PARA_C",
+    "instrumento": {
+     "nombre": "Siemens Energy AG",
+     "isin": "DE000ENER6Y0",
+     "ticker": "ENR",
+     "mercado": "Xetra",
+     "divisa": "EUR",
+     "tipo_instrumento": "accion"
+    },
+    "contexto_ambito": {
+     "ambito": "Equipos para redes eléctricas en Europa",
+     "veredicto": "INVERTIR_ESCALONADO",
+     "A": 65,
+     "E": 70,
+     "C": 73,
+     "horizonte": "H4",
+     "regimen": "RGM-B-2026-0011",
+     "tesis_resumen": "La capacidad de transformadores y cables de alta tensión no crece al ritmo de la inversión en redes; los fabricantes con capacidad instalada capturan precio hasta 2029."
+    },
+    "rol_en_tesis": "Transformadores de potencia y subestaciones HVDC: eslabón con plazos de entrega de 3–4 años.",
+    "puntuacion": {
+     "S": 71,
+     "desglose": {
+      "PE": 65,
+      "QL": 70,
+      "VA": 60,
+      "MO": 95,
+      "RI": 55,
+      "LA": 100,
+      "CO": null
+     },
+     "ic90_S": [
+      62,
+      78
+     ],
+     "rango": 4,
+     "ic90_rango": [
+      2,
+      5
+     ],
+     "tamano_universo": 31,
+     "playbook": "SEL-RV",
+     "pesos": {
+      "PE": 20,
+      "QL": 20,
+      "VA": 20,
+      "MO": 15,
+      "RI": 15,
+      "LA": 10,
+      "CO": null
+     }
+    },
+    "pureza": {
+     "metrica": "% de ingresos del segmento Grid Technologies",
+     "valor": 0.35,
+     "fuente": "DAT-B-2026-0313",
+     "metodo": "publicado"
+    },
+    "metricas_clave": [
+     {
+      "metrica": "pureza",
+      "valor": 0.35,
+      "unidad": "fracción",
+      "fecha": "2025 (último ejercicio)",
+      "fuente": "DAT-B-2026-0313"
+     }
+    ],
+    "campos_especificos_playbook": {
+     "segmentos_exposicion": [
+      {
+       "segmento": "% de ingresos del segmento Grid Technologies",
+       "valor": 0.35,
+       "fuente": "DAT-B-2026-0313"
+      }
+     ],
+     "rol_cadena": "transformadores y equipos de alta tensión",
+     "ganador_o_perdedor": "ganador del cuello de botella"
+    },
+    "senales_alerta": [
+     {
+      "senal": "historial reciente de pérdidas en eólica (segmento ajeno al ámbito)",
+      "valor": "margen negativo en 2024",
+      "estado": "no_critica",
+      "verificar_en_C": true
+     }
+    ],
+    "catalizadores": [
+     {
+      "evento": "Adjudicaciones del plan decenal de red de ENTSO-E (TYNDP 2026)",
+      "fecha": "2027-01"
+     }
+    ],
+    "riesgos_especificos": [
+     "Ejecución de proyectos llave en mano con penalizaciones",
+     "Coste del cobre y del aluminio no repercutido"
+    ],
+    "invalidacion_candidato": [
+     "Cartera de pedidos que cae dos trimestres seguidos con book-to-bill < 0,9"
+    ],
+    "objeciones_y_respuestas": [],
+    "preguntas_para_C": [
+     "¿Qué parte de la cartera de pedidos tiene precio con cláusulas de revisión por metales?",
+     "¿Qué margen implica el precio actual frente al margen normalizado del ciclo?"
+    ],
+    "supuestos_a_verificar": [
+     "Pureza estimada a partir de segmentos publicados (verificar en notas de segmentos)"
+    ],
+    "referencia_comparacion": {
+     "ambito": "STOXX Europe 600 Industrial Goods & Services",
+     "ranking": "media equiponderada del universo cribado"
+    },
+    "alternativas": [
+     "CAND-B-2026-0205",
+     "CAND-B-2026-0207"
+    ],
+    "evidencias": [
+     "CLM-B-2026-0451"
+    ],
+    "calculos": [
+     "CALC-B-2026-0901"
+    ],
+    "data_cutoff": "2026-10-30",
+    "limitaciones": [
+     "Datos ilustrativos del ejemplo"
+    ],
+    "aviso": "Selección del Bloque B: no es una valoración individual ni una recomendación personal.",
+    "eslabon_id": "ESL-03",
+    "origen_seleccion": "TOP_N",
+    "contexto_eslabon": {
+     "nombre": "Transformadores de potencia, subestaciones y aparamenta",
+     "AE": 61,
+     "cuello_botella": true,
+     "PCB": 38
+    }
+   },
+   {
+    "cand_id": "CAND-B-2026-0206",
+    "pet_id": "PET-B-2026-0042",
+    "rec_id": "REC-B-2026-0042",
+    "bloque_destino": "C.1",
+    "tipo_activo": "RV",
+    "tipo_subyacente": null,
+    "veredicto_candidato": "SECUNDARIO",
+    "instrumento": {
+     "nombre": "ABB Ltd",
+     "isin": "CH0012221716",
+     "ticker": "ABBN",
+     "mercado": "SIX Swiss Exchange",
+     "divisa": "CHF",
+     "tipo_instrumento": "accion"
+    },
+    "contexto_ambito": {
+     "ambito": "Equipos para redes eléctricas en Europa",
+     "veredicto": "INVERTIR_ESCALONADO",
+     "A": 65,
+     "E": 70,
+     "C": 73,
+     "horizonte": "H4",
+     "regimen": "RGM-B-2026-0011",
+     "tesis_resumen": "La capacidad de transformadores y cables de alta tensión no crece al ritmo de la inversión en redes; los fabricantes con capacidad instalada capturan precio hasta 2029."
+    },
+    "rol_en_tesis": "Electrificación y aparamenta; entra en el top-5 por la regla de diversidad (subclúster de cables al 40 %).",
+    "puntuacion": {
+     "S": 64,
+     "desglose": {
+      "PE": 45,
+      "QL": 85,
+      "VA": 40,
+      "MO": 60,
+      "RI": 80,
+      "LA": 95,
+      "CO": null
+     },
+     "ic90_S": [
+      57,
+      70
+     ],
+     "rango": 6,
+     "ic90_rango": [
+      4,
+      8
+     ],
+     "tamano_universo": 31,
+     "playbook": "SEL-RV",
+     "pesos": {
+      "PE": 20,
+      "QL": 20,
+      "VA": 20,
+      "MO": 15,
+      "RI": 15,
+      "LA": 10,
+      "CO": null
+     }
+    },
+    "pureza": {
+     "metrica": "% de ingresos de Electrification ligado a redes (estimado)",
+     "valor": 0.28,
+     "fuente": "CALC-B-2026-0908",
+     "metodo": "estimado"
+    },
+    "metricas_clave": [
+     {
+      "metrica": "pureza",
+      "valor": 0.28,
+      "unidad": "fracción",
+      "fecha": "2025 (último ejercicio)",
+      "fuente": "CALC-B-2026-0908"
+     }
+    ],
+    "campos_especificos_playbook": {
+     "segmentos_exposicion": [
+      {
+       "segmento": "% de ingresos de Electrification ligado a redes (estimado)",
+       "valor": 0.28,
+       "fuente": "CALC-B-2026-0908"
+      }
+     ],
+     "rol_cadena": "aparamenta y automatización",
+     "ganador_o_perdedor": "beneficiario indirecto"
+    },
+    "senales_alerta": [],
+    "catalizadores": [
+     {
+      "evento": "Adjudicaciones del plan decenal de red de ENTSO-E (TYNDP 2026)",
+      "fecha": "2027-01"
+     }
+    ],
+    "riesgos_especificos": [
+     "Ejecución de proyectos llave en mano con penalizaciones",
+     "Coste del cobre y del aluminio no repercutido"
+    ],
+    "invalidacion_candidato": [
+     "Cartera de pedidos que cae dos trimestres seguidos con book-to-bill < 0,9"
+    ],
+    "objeciones_y_respuestas": [],
+    "preguntas_para_C": [
+     "¿Qué parte de la cartera de pedidos tiene precio con cláusulas de revisión por metales?",
+     "¿Qué margen implica el precio actual frente al margen normalizado del ciclo?"
+    ],
+    "supuestos_a_verificar": [
+     "Pureza estimada a partir de segmentos publicados (verificar en notas de segmentos)"
+    ],
+    "referencia_comparacion": {
+     "ambito": "STOXX Europe 600 Industrial Goods & Services",
+     "ranking": "media equiponderada del universo cribado"
+    },
+    "alternativas": [
+     "CAND-B-2026-0205",
+     "CAND-B-2026-0207"
+    ],
+    "evidencias": [
+     "CLM-B-2026-0451"
+    ],
+    "calculos": [
+     "CALC-B-2026-0901"
+    ],
+    "data_cutoff": "2026-10-30",
+    "limitaciones": [
+     "Datos ilustrativos del ejemplo"
+    ],
+    "aviso": "Selección del Bloque B: no es una valoración individual ni una recomendación personal.",
+    "eslabon_id": "ESL-03",
+    "origen_seleccion": "TOP_N",
+    "contexto_eslabon": {
+     "nombre": "Transformadores de potencia, subestaciones y aparamenta",
+     "AE": 61,
+     "cuello_botella": true,
+     "PCB": 38
+    }
+   },
+   {
+    "cand_id": "CAND-B-2026-0205",
+    "pet_id": "PET-B-2026-0042",
+    "rec_id": "REC-B-2026-0042",
+    "bloque_destino": "C.1",
+    "tipo_activo": "RV",
+    "tipo_subyacente": null,
+    "veredicto_candidato": "SECUNDARIO",
+    "instrumento": {
+     "nombre": "Nexans S.A.",
+     "isin": "FR0000044448",
+     "ticker": "NEX",
+     "mercado": "Euronext París",
+     "divisa": "EUR",
+     "tipo_instrumento": "accion"
+    },
+    "contexto_ambito": {
+     "ambito": "Equipos para redes eléctricas en Europa",
+     "veredicto": "INVERTIR_ESCALONADO",
+     "A": 65,
+     "E": 70,
+     "C": 73,
+     "horizonte": "H4",
+     "regimen": "RGM-B-2026-0011",
+     "tesis_resumen": "La capacidad de transformadores y cables de alta tensión no crece al ritmo de la inversión en redes; los fabricantes con capacidad instalada capturan precio hasta 2029."
+    },
+    "rol_en_tesis": "Tercer fabricante europeo de cable HVDC; añadido por cobertura del eslabón ESL-02 (9.13)",
+    "puntuacion": {
+     "S": 63,
+     "desglose": {
+      "PE": 95,
+      "QL": 70,
+      "VA": 70,
+      "MO": 75,
+      "RI": 60,
+      "LA": 60,
+      "CO": null
+     },
+     "ic90_S": [
+      56,
+      69
+     ],
+     "rango": 6,
+     "ic90_rango": [
+      5,
+      8
+     ],
+     "tamano_universo": 31,
+     "playbook": "SEL-RV",
+     "pesos": {
+      "PE": 20,
+      "QL": 20,
+      "VA": 20,
+      "MO": 15,
+      "RI": 15,
+      "LA": 10,
+      "CO": null
+     }
+    },
+    "pureza": {
+     "metrica": "% de ingresos en cables de transmisión",
+     "valor": 0.45,
+     "fuente": "DAT-B-2026-0311",
+     "metodo": "estimado"
+    },
+    "metricas_clave": [
+     {
+      "metrica": "pureza",
+      "valor": 0.8,
+      "unidad": "fracción",
+      "fecha": "2025 (último ejercicio)",
+      "fuente": "DAT-B-2026-0312"
+     }
+    ],
+    "campos_especificos_playbook": {
+     "segmentos_exposicion": [
+      {
+       "segmento": "% de ingresos en cables de alta tensión",
+       "valor": 0.8,
+       "fuente": "DAT-B-2026-0312"
+      }
+     ],
+     "rol_cadena": "cables de alta tensión",
+     "ganador_o_perdedor": "ganador del cuello de botella"
+    },
+    "senales_alerta": [],
+    "catalizadores": [
+     {
+      "evento": "Adjudicaciones del plan decenal de red de ENTSO-E (TYNDP 2026)",
+      "fecha": "2027-01"
+     }
+    ],
+    "riesgos_especificos": [
+     "Ejecución de proyectos llave en mano con penalizaciones",
+     "Coste del cobre y del aluminio no repercutido"
+    ],
+    "invalidacion_candidato": [
+     "Cartera de pedidos que cae dos trimestres seguidos con book-to-bill < 0,9"
+    ],
+    "objeciones_y_respuestas": [],
+    "preguntas_para_C": [
+     "¿Qué parte de la cartera de pedidos tiene precio con cláusulas de revisión por metales?",
+     "¿Qué margen implica el precio actual frente al margen normalizado del ciclo?"
+    ],
+    "supuestos_a_verificar": [
+     "Pureza estimada a partir de segmentos publicados (verificar en notas de segmentos)"
+    ],
+    "referencia_comparacion": {
+     "ambito": "STOXX Europe 600 Industrial Goods & Services",
+     "ranking": "media equiponderada del universo cribado"
+    },
+    "alternativas": [
+     "CAND-B-2026-0205",
+     "CAND-B-2026-0207"
+    ],
+    "evidencias": [
+     "CLM-B-2026-0451"
+    ],
+    "calculos": [
+     "CALC-B-2026-0901"
+    ],
+    "data_cutoff": "2026-10-30",
+    "limitaciones": [
+     "Datos ilustrativos del ejemplo"
+    ],
+    "aviso": "Selección del Bloque B: no es una valoración individual ni una recomendación personal.",
+    "eslabon_id": "ESL-02",
+    "origen_seleccion": "MEJORES_POR_ESLABON",
+    "contexto_eslabon": {
+     "nombre": "Fabricación de cables de alta tensión y HVDC",
+     "AE": 69,
+     "cuello_botella": true,
+     "PCB": 51
+    }
+   }
+  ],
+  "C.6": [
+   {
+    "cand_id": "CAND-B-2026-0231",
+    "pet_id": "PET-B-2026-0042",
+    "rec_id": "REC-B-2026-0042",
+    "bloque_destino": "C.6",
+    "tipo_activo": "FON",
+    "tipo_subyacente": "RV",
+    "veredicto_candidato": "PRIORITARIO_PARA_C",
+    "instrumento": {
+     "nombre": "ETF UCITS de infraestructura de redes inteligentes (ilustrativo A)",
+     "isin": null,
+     "ticker": null,
+     "mercado": "Xetra",
+     "divisa": "EUR",
+     "tipo_instrumento": "etf"
+    },
+    "contexto_ambito": {
+     "ambito": "Equipos para redes eléctricas en Europa",
+     "veredicto": "INVERTIR_ESCALONADO",
+     "A": 65,
+     "E": 70,
+     "C": 73,
+     "horizonte": "H4",
+     "regimen": "RGM-B-2026-0011",
+     "tesis_resumen": "La capacidad de transformadores y cables de alta tensión no crece al ritmo de la inversión en redes; los fabricantes con capacidad instalada capturan precio hasta 2029."
+    },
+    "rol_en_tesis": "Única vía colectiva con pureza ≥ 50 %: cesta diversificada de fabricantes de equipos de red.",
+    "puntuacion": {
+     "S": 70,
+     "desglose": {
+      "PE": 80,
+      "QL": 70,
+      "VA": 50,
+      "MO": 60,
+      "RI": 70,
+      "LA": 75,
+      "CO": 65
+     },
+     "ic90_S": [
+      62,
+      74
+     ],
+     "rango": 1,
+     "ic90_rango": [
+      1,
+      2
+     ],
+     "tamano_universo": 2,
+     "playbook": "SEL-FON",
+     "pesos": {
+      "PE": 25,
+      "QL": 20,
+      "VA": 10,
+      "MO": 5,
+      "RI": 10,
+      "LA": 15,
+      "CO": 15
+     }
+    },
+    "pureza": {
+     "metrica": "% del patrimonio en candidatos del ámbito que superan PC2",
+     "valor": 0.68,
+     "fuente": "CALC-B-2026-0911",
+     "metodo": "estimado"
+    },
+    "metricas_clave": [
+     {
+      "metrica": "pureza",
+      "valor": 0.68,
+      "unidad": "fracción",
+      "fecha": "2025 (último ejercicio)",
+      "fuente": "CALC-B-2026-0911"
+     }
+    ],
+    "campos_especificos_playbook": {
+     "indice_o_estrategia": "Índice de infraestructura de redes inteligentes (ilustrativo)",
+     "solapamiento_ambito": 0.68,
+     "replica": "física",
+     "domicilio": "Irlanda (ilustrativo)",
+     "distribucion": "acumulación",
+     "ter_pct": 0.5
+    },
+    "senales_alerta": [],
+    "catalizadores": [
+     {
+      "evento": "Adjudicaciones del plan decenal de red de ENTSO-E (TYNDP 2026)",
+      "fecha": "2027-01"
+     }
+    ],
+    "riesgos_especificos": [
+     "Ejecución de proyectos llave en mano con penalizaciones",
+     "Coste del cobre y del aluminio no repercutido"
+    ],
+    "invalidacion_candidato": [
+     "Cartera de pedidos que cae dos trimestres seguidos con book-to-bill < 0,9"
+    ],
+    "objeciones_y_respuestas": [],
+    "preguntas_para_C": [
+     "¿Qué parte de la cartera de pedidos tiene precio con cláusulas de revisión por metales?",
+     "¿Qué margen implica el precio actual frente al margen normalizado del ciclo?"
+    ],
+    "supuestos_a_verificar": [
+     "Pureza estimada a partir de segmentos publicados (verificar en notas de segmentos)"
+    ],
+    "referencia_comparacion": {
+     "ambito": "STOXX Europe 600 Industrial Goods & Services",
+     "ranking": "media equiponderada de los vehículos cribados (rentabilidad neta)"
+    },
+    "alternativas": [],
+    "evidencias": [
+     "CLM-B-2026-0451"
+    ],
+    "calculos": [
+     "CALC-B-2026-0901"
+    ],
+    "data_cutoff": "2026-10-30",
+    "limitaciones": [
+     "Datos ilustrativos del ejemplo"
+    ],
+    "aviso": "Selección del Bloque B: no es una valoración individual ni una recomendación personal.",
+    "eslabon_id": "ESL-03",
+    "origen_seleccion": "TOP_N",
+    "contexto_eslabon": {
+     "nombre": "Transformadores de potencia, subestaciones y aparamenta",
+     "AE": 61,
+     "cuello_botella": true,
+     "PCB": 38
+    }
+   },
+   {
+    "cand_id": "CAND-B-2026-0232",
+    "pet_id": "PET-B-2026-0042",
+    "rec_id": "REC-B-2026-0042",
+    "bloque_destino": "C.6",
+    "tipo_activo": "FON",
+    "tipo_subyacente": "RV",
+    "veredicto_candidato": "SECUNDARIO",
+    "instrumento": {
+     "nombre": "ETF UCITS de electrificación global (ilustrativo B)",
+     "isin": null,
+     "ticker": null,
+     "mercado": "Borsa Italiana (ETFplus)",
+     "divisa": "EUR",
+     "tipo_instrumento": "etf"
+    },
+    "contexto_ambito": {
+     "ambito": "Equipos para redes eléctricas en Europa",
+     "veredicto": "INVERTIR_ESCALONADO",
+     "A": 65,
+     "E": 70,
+     "C": 73,
+     "horizonte": "H4",
+     "regimen": "RGM-B-2026-0011",
+     "tesis_resumen": "La capacidad de transformadores y cables de alta tensión no crece al ritmo de la inversión en redes; los fabricantes con capacidad instalada capturan precio hasta 2029."
+    },
+    "rol_en_tesis": "Cartera más amplia (incluye renovables): pureza en el límite; alternativa de menor coste.",
+    "puntuacion": {
+     "S": 58,
+     "desglose": {
+      "PE": 55,
+      "QL": 60,
+      "VA": 55,
+      "MO": 50,
+      "RI": 65,
+      "LA": 50,
+      "CO": 70
+     },
+     "ic90_S": [
+      52,
+      66
+     ],
+     "rango": 2,
+     "ic90_rango": [
+      1,
+      2
+     ],
+     "tamano_universo": 2,
+     "playbook": "SEL-FON",
+     "pesos": {
+      "PE": 25,
+      "QL": 20,
+      "VA": 10,
+      "MO": 5,
+      "RI": 10,
+      "LA": 15,
+      "CO": 15
+     }
+    },
+    "pureza": {
+     "metrica": "% del patrimonio en candidatos del ámbito que superan PC2",
+     "valor": 0.52,
+     "fuente": "CALC-B-2026-0912",
+     "metodo": "estimado"
+    },
+    "metricas_clave": [
+     {
+      "metrica": "pureza",
+      "valor": 0.52,
+      "unidad": "fracción",
+      "fecha": "2025 (último ejercicio)",
+      "fuente": "CALC-B-2026-0912"
+     }
+    ],
+    "campos_especificos_playbook": {
+     "indice_o_estrategia": "Índice global de electrificación (ilustrativo)",
+     "solapamiento_ambito": 0.52,
+     "replica": "física",
+     "domicilio": "Irlanda (ilustrativo)",
+     "distribucion": "acumulación",
+     "ter_pct": 0.5
+    },
+    "senales_alerta": [],
+    "catalizadores": [
+     {
+      "evento": "Adjudicaciones del plan decenal de red de ENTSO-E (TYNDP 2026)",
+      "fecha": "2027-01"
+     }
+    ],
+    "riesgos_especificos": [
+     "Ejecución de proyectos llave en mano con penalizaciones",
+     "Coste del cobre y del aluminio no repercutido"
+    ],
+    "invalidacion_candidato": [
+     "Cartera de pedidos que cae dos trimestres seguidos con book-to-bill < 0,9"
+    ],
+    "objeciones_y_respuestas": [],
+    "preguntas_para_C": [
+     "¿Qué parte de la cartera de pedidos tiene precio con cláusulas de revisión por metales?",
+     "¿Qué margen implica el precio actual frente al margen normalizado del ciclo?"
+    ],
+    "supuestos_a_verificar": [
+     "Pureza estimada a partir de segmentos publicados (verificar en notas de segmentos)"
+    ],
+    "referencia_comparacion": {
+     "ambito": "STOXX Europe 600 Industrial Goods & Services",
+     "ranking": "media equiponderada de los vehículos cribados (rentabilidad neta)"
+    },
+    "alternativas": [],
+    "evidencias": [
+     "CLM-B-2026-0451"
+    ],
+    "calculos": [
+     "CALC-B-2026-0901"
+    ],
+    "data_cutoff": "2026-10-30",
+    "limitaciones": [
+     "Datos ilustrativos del ejemplo"
+    ],
+    "aviso": "Selección del Bloque B: no es una valoración individual ni una recomendación personal.",
+    "eslabon_id": "ESL-03",
+    "origen_seleccion": "TOP_N",
+    "contexto_eslabon": {
+     "nombre": "Transformadores de potencia, subestaciones y aparamenta",
+     "AE": 61,
+     "cuello_botella": true,
+     "PCB": 38
+    }
+   }
+  ],
+  "C.2": [
+   {
+    "cand_id": "CAND-B-2026-0251",
+    "pet_id": "PET-B-2026-0042",
+    "rec_id": "REC-B-2026-0042",
+    "bloque_destino": "C.2",
+    "tipo_activo": "RF",
+    "tipo_subyacente": null,
+    "veredicto_candidato": "SECUNDARIO",
+    "instrumento": {
+     "nombre": "Bono sénior de Prysmian 2030 (ilustrativo)",
+     "isin": null,
+     "ticker": null,
+     "mercado": "Borsa Italiana (MOT)",
+     "divisa": "EUR",
+     "tipo_instrumento": "bono"
+    },
+    "contexto_ambito": {
+     "ambito": "Equipos para redes eléctricas en Europa",
+     "veredicto": "INVERTIR_ESCALONADO",
+     "A": 65,
+     "E": 70,
+     "C": 73,
+     "horizonte": "H4",
+     "regimen": "RGM-B-2026-0011",
+     "tesis_resumen": "La capacidad de transformadores y cables de alta tensión no crece al ritmo de la inversión en redes; los fabricantes con capacidad instalada capturan precio hasta 2029."
+    },
+    "rol_en_tesis": "Exposición de crédito al ganador del cuello; diferencial ya estrecho frente a su calificación.",
+    "puntuacion": {
+     "S": 58,
+     "desglose": {
+      "PE": 70,
+      "QL": 60,
+      "VA": 45,
+      "MO": 60,
+      "RI": 65,
+      "LA": 60,
+      "CO": null
+     },
+     "ic90_S": [
+      54,
+      68
+     ],
+     "rango": 1,
+     "ic90_rango": [
+      1,
+      3
+     ],
+     "tamano_universo": 9,
+     "playbook": "SEL-RF",
+     "pesos": {
+      "PE": 15,
+      "QL": 25,
+      "VA": 25,
+      "MO": 5,
+      "RI": 15,
+      "LA": 15,
+      "CO": null
+     }
+    },
+    "pureza": {
+     "metrica": "% de ingresos del emisor en cables de transmisión",
+     "valor": 0.55,
+     "fuente": "DAT-B-2026-0311",
+     "metodo": "publicado"
+    },
+    "metricas_clave": [
+     {
+      "metrica": "pureza",
+      "valor": 0.55,
+      "unidad": "fracción",
+      "fecha": "2025 (último ejercicio)",
+      "fuente": "DAT-B-2026-0311"
+     }
+    ],
+    "campos_especificos_playbook": {
+     "prelacion": "sénior no garantizada",
+     "opciones": "amortización anticipada a la par en los 3 últimos meses (ilustrativo)",
+     "calificacion": "BBB− / perspectiva estable (ilustrativo)",
+     "cupon_pct": 3.75,
+     "vencimiento": "2030 (ilustrativo)"
+    },
+    "senales_alerta": [],
+    "catalizadores": [
+     {
+      "evento": "Adjudicaciones del plan decenal de red de ENTSO-E (TYNDP 2026)",
+      "fecha": "2027-01"
+     }
+    ],
+    "riesgos_especificos": [
+     "Ejecución de proyectos llave en mano con penalizaciones",
+     "Coste del cobre y del aluminio no repercutido"
+    ],
+    "invalidacion_candidato": [
+     "Cartera de pedidos que cae dos trimestres seguidos con book-to-bill < 0,9"
+    ],
+    "objeciones_y_respuestas": [],
+    "preguntas_para_C": [
+     "¿Qué parte de la cartera de pedidos tiene precio con cláusulas de revisión por metales?",
+     "¿Qué margen implica el precio actual frente al margen normalizado del ciclo?"
+    ],
+    "supuestos_a_verificar": [
+     "Pureza estimada a partir de segmentos publicados (verificar en notas de segmentos)"
+    ],
+    "referencia_comparacion": {
+     "ambito": "STOXX Europe 600 Industrial Goods & Services",
+     "ranking": "rentabilidad total media equiponderada del universo cribado, ajustada por duración"
+    },
+    "alternativas": [],
+    "evidencias": [
+     "CLM-B-2026-0451"
+    ],
+    "calculos": [
+     "CALC-B-2026-0901"
+    ],
+    "data_cutoff": "2026-10-30",
+    "limitaciones": [
+     "Datos ilustrativos del ejemplo"
+    ],
+    "aviso": "Selección del Bloque B: no es una valoración individual ni una recomendación personal.",
+    "eslabon_id": "ESL-02",
+    "origen_seleccion": "TOP_N",
+    "contexto_eslabon": {
+     "nombre": "Fabricación de cables de alta tensión y HVDC",
+     "AE": 69,
+     "cuello_botella": true,
+     "PCB": 51
+    }
+   },
+   {
+    "cand_id": "CAND-B-2026-0252",
+    "pet_id": "PET-B-2026-0042",
+    "rec_id": "REC-B-2026-0042",
+    "bloque_destino": "C.2",
+    "tipo_activo": "RF",
+    "tipo_subyacente": null,
+    "veredicto_candidato": "SECUNDARIO",
+    "instrumento": {
+     "nombre": "Bono verde de Siemens Energy 2031 (ilustrativo)",
+     "isin": null,
+     "ticker": null,
+     "mercado": "Luxembourg Stock Exchange",
+     "divisa": "EUR",
+     "tipo_instrumento": "bono"
+    },
+    "contexto_ambito": {
+     "ambito": "Equipos para redes eléctricas en Europa",
+     "veredicto": "INVERTIR_ESCALONADO",
+     "A": 65,
+     "E": 70,
+     "C": 73,
+     "horizonte": "H4",
+     "regimen": "RGM-B-2026-0011",
+     "tesis_resumen": "La capacidad de transformadores y cables de alta tensión no crece al ritmo de la inversión en redes; los fabricantes con capacidad instalada capturan precio hasta 2029."
+    },
+    "rol_en_tesis": "Diferencial más amplio por el historial de la división eólica; la mejora del crédito depende de redes.",
+    "puntuacion": {
+     "S": 57,
+     "desglose": {
+      "PE": 50,
+      "QL": 55,
+      "VA": 60,
+      "MO": 60,
+      "RI": 55,
+      "LA": 65,
+      "CO": null
+     },
+     "ic90_S": [
+      51,
+      64
+     ],
+     "rango": 2,
+     "ic90_rango": [
+      1,
+      3
+     ],
+     "tamano_universo": 9,
+     "playbook": "SEL-RF",
+     "pesos": {
+      "PE": 15,
+      "QL": 25,
+      "VA": 25,
+      "MO": 5,
+      "RI": 15,
+      "LA": 15,
+      "CO": null
+     }
+    },
+    "pureza": {
+     "metrica": "uso de los fondos ligado a redes (marco verde verificado) y % de ingresos del segmento",
+     "valor": 0.35,
+     "fuente": "DAT-B-2026-0313",
+     "metodo": "publicado"
+    },
+    "metricas_clave": [
+     {
+      "metrica": "pureza",
+      "valor": 0.35,
+      "unidad": "fracción",
+      "fecha": "2025 (último ejercicio)",
+      "fuente": "DAT-B-2026-0313"
+     }
+    ],
+    "campos_especificos_playbook": {
+     "prelacion": "sénior no garantizada",
+     "opciones": "amortización anticipada a la par en los 3 últimos meses (ilustrativo)",
+     "calificacion": "BBB− / perspectiva estable (ilustrativo)",
+     "cupon_pct": 3.75,
+     "vencimiento": "2030 (ilustrativo)"
+    },
+    "senales_alerta": [],
+    "catalizadores": [
+     {
+      "evento": "Adjudicaciones del plan decenal de red de ENTSO-E (TYNDP 2026)",
+      "fecha": "2027-01"
+     }
+    ],
+    "riesgos_especificos": [
+     "Ejecución de proyectos llave en mano con penalizaciones",
+     "Coste del cobre y del aluminio no repercutido"
+    ],
+    "invalidacion_candidato": [
+     "Cartera de pedidos que cae dos trimestres seguidos con book-to-bill < 0,9"
+    ],
+    "objeciones_y_respuestas": [],
+    "preguntas_para_C": [
+     "¿Qué parte de la cartera de pedidos tiene precio con cláusulas de revisión por metales?",
+     "¿Qué margen implica el precio actual frente al margen normalizado del ciclo?"
+    ],
+    "supuestos_a_verificar": [
+     "Pureza estimada a partir de segmentos publicados (verificar en notas de segmentos)"
+    ],
+    "referencia_comparacion": {
+     "ambito": "STOXX Europe 600 Industrial Goods & Services",
+     "ranking": "rentabilidad total media equiponderada del universo cribado, ajustada por duración"
+    },
+    "alternativas": [],
+    "evidencias": [
+     "CLM-B-2026-0451"
+    ],
+    "calculos": [
+     "CALC-B-2026-0901"
+    ],
+    "data_cutoff": "2026-10-30",
+    "limitaciones": [
+     "Datos ilustrativos del ejemplo"
+    ],
+    "aviso": "Selección del Bloque B: no es una valoración individual ni una recomendación personal.",
+    "eslabon_id": "ESL-03",
+    "origen_seleccion": "TOP_N",
+    "contexto_eslabon": {
+     "nombre": "Transformadores de potencia, subestaciones y aparamenta",
+     "AE": 61,
+     "cuello_botella": true,
+     "PCB": 38
+    }
+   },
+   {
+    "cand_id": "CAND-B-2026-0253",
+    "pet_id": "PET-B-2026-0042",
+    "rec_id": "REC-B-2026-0042",
+    "bloque_destino": "C.2",
+    "tipo_activo": "RF",
+    "tipo_subyacente": null,
+    "veredicto_candidato": "SECUNDARIO",
+    "instrumento": {
+     "nombre": "Bono sénior de Nexans 2029 (ilustrativo)",
+     "isin": null,
+     "ticker": null,
+     "mercado": "Euronext Paris",
+     "divisa": "EUR",
+     "tipo_instrumento": "bono"
+    },
+    "contexto_ambito": {
+     "ambito": "Equipos para redes eléctricas en Europa",
+     "veredicto": "INVERTIR_ESCALONADO",
+     "A": 65,
+     "E": 70,
+     "C": 73,
+     "horizonte": "H4",
+     "regimen": "RGM-B-2026-0011",
+     "tesis_resumen": "La capacidad de transformadores y cables de alta tensión no crece al ritmo de la inversión en redes; los fabricantes con capacidad instalada capturan precio hasta 2029."
+    },
+    "rol_en_tesis": "Exposición de crédito a un fabricante de cables con menor escala; carry moderado.",
+    "puntuacion": {
+     "S": 53,
+     "desglose": {
+      "PE": 55,
+      "QL": 50,
+      "VA": 55,
+      "MO": 50,
+      "RI": 60,
+      "LA": 50,
+      "CO": null
+     },
+     "ic90_S": [
+      48,
+      62
+     ],
+     "rango": 3,
+     "ic90_rango": [
+      2,
+      3
+     ],
+     "tamano_universo": 9,
+     "playbook": "SEL-RF",
+     "pesos": {
+      "PE": 15,
+      "QL": 25,
+      "VA": 25,
+      "MO": 5,
+      "RI": 15,
+      "LA": 15,
+      "CO": null
+     }
+    },
+    "pureza": {
+     "metrica": "% de ingresos en transmisión y distribución",
+     "valor": 0.45,
+     "fuente": "DAT-B-2026-0314",
+     "metodo": "publicado"
+    },
+    "metricas_clave": [
+     {
+      "metrica": "pureza",
+      "valor": 0.45,
+      "unidad": "fracción",
+      "fecha": "2025 (último ejercicio)",
+      "fuente": "DAT-B-2026-0314"
+     }
+    ],
+    "campos_especificos_playbook": {
+     "prelacion": "sénior no garantizada",
+     "opciones": "amortización anticipada a la par en los 3 últimos meses (ilustrativo)",
+     "calificacion": "BBB− / perspectiva estable (ilustrativo)",
+     "cupon_pct": 3.75,
+     "vencimiento": "2030 (ilustrativo)"
+    },
+    "senales_alerta": [],
+    "catalizadores": [
+     {
+      "evento": "Adjudicaciones del plan decenal de red de ENTSO-E (TYNDP 2026)",
+      "fecha": "2027-01"
+     }
+    ],
+    "riesgos_especificos": [
+     "Ejecución de proyectos llave en mano con penalizaciones",
+     "Coste del cobre y del aluminio no repercutido"
+    ],
+    "invalidacion_candidato": [
+     "Cartera de pedidos que cae dos trimestres seguidos con book-to-bill < 0,9"
+    ],
+    "objeciones_y_respuestas": [],
+    "preguntas_para_C": [
+     "¿Qué parte de la cartera de pedidos tiene precio con cláusulas de revisión por metales?",
+     "¿Qué margen implica el precio actual frente al margen normalizado del ciclo?"
+    ],
+    "supuestos_a_verificar": [
+     "Pureza estimada a partir de segmentos publicados (verificar en notas de segmentos)"
+    ],
+    "referencia_comparacion": {
+     "ambito": "STOXX Europe 600 Industrial Goods & Services",
+     "ranking": "rentabilidad total media equiponderada del universo cribado, ajustada por duración"
+    },
+    "alternativas": [],
+    "evidencias": [
+     "CLM-B-2026-0451"
+    ],
+    "calculos": [
+     "CALC-B-2026-0901"
+    ],
+    "data_cutoff": "2026-10-30",
+    "limitaciones": [
+     "Datos ilustrativos del ejemplo"
+    ],
+    "aviso": "Selección del Bloque B: no es una valoración individual ni una recomendación personal.",
+    "eslabon_id": "ESL-02",
+    "origen_seleccion": "TOP_N",
+    "contexto_eslabon": {
+     "nombre": "Fabricación de cables de alta tensión y HVDC",
+     "AE": 69,
+     "cuello_botella": true,
+     "PCB": 51
+    }
+   }
+  ]
+ },
+ "plan_de_seguimiento": {
+  "rec_id": "REC-B-2026-0042",
+  "pet_id": "PET-B-2026-0042",
+  "vigente_hasta": "2027-11-02",
+  "horizonte": "H4",
+  "frecuencia": "mensual",
+  "regimen_referencia": "RGM-B-2026-0011",
+  "senales": [
+   {
+    "sig_id": "SIG-2026-0042-01",
+    "nombre": "Rentabilidad relativa a 3 meses de la cesta frente a la referencia",
+    "serie": "HT-01:CESTA-REDES-EU/SXNP",
+    "frecuencia": "mensual",
+    "unidad": "%",
+    "valor_entrega": 2.1,
+    "umbral_fluctuacion": {
+     "min": -8.0,
+     "max": 8.0
+    },
+    "umbral_revision": -10.0,
+    "umbral_invalidacion": -18.0,
+    "direccion": "por_debajo",
+    "criterio_cambio_estructural": "Dos lecturas mensuales seguidas por debajo del umbral de revisión con book-to-bill < 1",
+    "afecta_a": [
+     "AMBITO"
+    ],
+    "transformacion": "rentabilidad relativa acumulada a 63 sesiones"
+   },
+   {
+    "sig_id": "SIG-2026-0042-02",
+    "nombre": "Book-to-bill agregado de los fabricantes",
+    "serie": "HT-01:BTB-REDES-EU",
+    "frecuencia": "en_catalizador",
+    "unidad": "ratio",
+    "valor_entrega": 1.25,
+    "umbral_fluctuacion": {
+     "min": 1.0,
+     "max": 1.6
+    },
+    "umbral_revision": 1.0,
+    "umbral_invalidacion": 0.9,
+    "direccion": "por_debajo",
+    "criterio_cambio_estructural": "Caída por debajo de 1 en dos publicaciones trimestrales seguidas",
+    "afecta_a": [
+     "AMBITO",
+     "CAND-B-2026-0201",
+     "CAND-B-2026-0202",
+     "CAND-B-2026-0204"
+    ]
+   },
+   {
+    "sig_id": "SIG-2026-0042-03",
+    "nombre": "PER adelantado relativo de la cesta (percentil de 10 años)",
+    "serie": "HT-01:PER-REL-REDES-EU",
+    "frecuencia": "mensual",
+    "unidad": "percentil",
+    "valor_entrega": 85.0,
+    "umbral_fluctuacion": {
+     "min": 60.0,
+     "max": 90.0
+    },
+    "umbral_revision": 92.0,
+    "umbral_invalidacion": 97.0,
+    "direccion": "por_encima",
+    "criterio_cambio_estructural": "Percentil > 95 sin revisión al alza de beneficios (expansión de múltiplo pura)",
+    "afecta_a": [
+     "AMBITO"
+    ]
+   }
+  ],
+  "condiciones_invalidacion_ambito": [
+   "Plazos de entrega de transformadores < 18 meses dos trimestres seguidos",
+   "Recortes de planes de inversión > 15 %"
+  ],
+  "condiciones_invalidacion_candidatos": [
+   {
+    "cand_id": "CAND-B-2026-0201",
+    "condiciones": [
+     "Book-to-bill del segmento de transmisión < 0,9"
+    ]
+   },
+   {
+    "cand_id": "CAND-B-2026-0204",
+    "condiciones": [
+     "Nuevas provisiones relevantes en la división eólica"
+    ]
+   }
+  ],
+  "catalizadores": [
+   {
+    "evento": "Adjudicaciones del TYNDP 2026",
+    "fecha": "2027-01",
+    "que_vigilar": "cuota de fabricantes no europeos"
+   },
+   {
+    "evento": "Resultados anuales",
+    "fecha": "2027-02",
+    "que_vigilar": "cartera de pedidos y márgenes"
+   }
+  ],
+  "pronosticos_a_resolver": [
+   {
+    "prg_id": "PRG-B-2026-0101",
+    "fecha_resolucion": "2027-11-02"
+   },
+   {
+    "prg_id": "PRG-B-2026-0102",
+    "fecha_resolucion": "2027-11-02"
+   }
+  ],
+  "acciones_al_disparo": {
+   "REVISION": "alerta MEDIA",
+   "INVALIDACION_PROBABLE": "alerta ALTA y sugerencia de petición N1",
+   "INVALIDACION_CONFIRMADA": "alerta ALTA; REC-B a INVALIDADA"
+  }
+ },
+ "mapa_cobertura": {
+  "directas": [
+   {
+    "objeto": "Fabricantes de cables HVDC y transformadores",
+    "tipo_activo": "RV",
+    "invertibilidad": "cotizado",
+    "candidatos": [
+     "CAND-B-2026-0201",
+     "CAND-B-2026-0202",
+     "CAND-B-2026-0204"
+    ]
+   },
+   {
+    "objeto": "Vehículo temático de redes con pureza ≥ 50 %",
+    "tipo_activo": "FON",
+    "invertibilidad": "cotizado",
+    "candidatos": [
+     "CAND-B-2026-0231"
+    ]
+   }
+  ],
+  "indirectas": [
+   {
+    "objeto": "Proveedores de acero eléctrico de grano orientado",
+    "tipo_activo": "RV",
+    "invertibilidad": "cotizado",
+    "mecanismo": "insumo escaso del eslabón de transformadores"
+   }
+  ],
+  "perdedores_sistematicos": [
+   {
+    "objeto": "Promotores renovables sin contratos de suministro firmados",
+    "mecanismo": "retrasos de conexión y sobrecostes"
+   },
+   {
+    "objeto": "Fabricantes de cable de baja tensión sin capacidad HVDC",
+    "mecanismo": "quedan fuera de la parte escasa del mercado"
+   }
+  ],
+  "investigado": [
+   "cables (alta tensión y HVDC)",
+   "transformadores de potencia",
+   "aparamenta de media tensión",
+   "renta variable, fondos y bonos de emisores europeos"
+  ],
+  "excluido_con_motivo": [
+   {
+    "objeto": "Operadores de red regulados",
+    "motivo": "rentabilidad fijada por tarifa; fuera de la delimitación"
+   },
+   {
+    "objeto": "Fabricantes asiáticos sin planta en la UE",
+    "motivo": "fuera del marco de invertibilidad o de la región"
+   },
+   {
+    "objeto": "Tipos DIV, MP, IDX, DER, INM, CRI, ALT, MON y TCV",
+    "motivo": "sin exposición material (ver candidatos_por_tipo)"
+   }
+  ],
+  "vigilancia_informativa": [
+   {
+    "objeto": "Hitachi Energy (filial no cotizada por separado)",
+    "motivo": "no invertible de forma directa"
+   },
+   {
+    "objeto": "Startup de monitorización de cables submarinos por fibra (ilustrativa)",
+    "motivo": "radar de emergentes (AG-B24): no invertible hoy"
+   }
+  ],
+  "vigilancia_pre_salida": [
+   {
+    "objeto": "Fabricante privado de transformadores (ilustrativo)",
+    "caducidad": "dos horizontes sin señal (2028-11)"
+   },
+   {
+    "objeto": "Fabricante privado de transformadores (ilustrativo)",
+    "motivo": "radar de emergentes (AG-B24): salida a bolsa verosímil",
+    "caducidad": "dos horizontes"
+   }
+  ]
+ },
+ "historial_aciertos": {
+  "ventana": "2026-01-01 a 2026-10-30",
+  "ambitos": {
+   "resueltos": 6,
+   "aciertos": 4,
+   "referencia_ingenua_aciertos": 3,
+   "nota": "muestra insuficiente para certificar"
+  },
+  "rankings": {
+   "resueltos": 3,
+   "exceso_medio_top_n_pct": 1.2,
+   "ic_rango_medio": 0.08
+  },
+  "certificacion": "sin ventaja demostrada todavía",
+  "nota": "Datos del historial ilustrativos"
+ },
+ "tiempo_consumo": {
+  "minutos": 41.5,
+  "uc": 58.3,
+  "estimado_p50_min": 30.2,
+  "estimado_p80_min": 36.2,
+  "autorizaciones": [
+   "AUT-B-2026-0019"
+  ],
+  "por_fase_min": {
+   "F0": 1.4,
+   "F1": 2.1,
+   "F2": 9.8,
+   "F3": 1.9,
+   "F4": 3.2,
+   "F5": 6.1,
+   "F6": 4.6,
+   "F7": 1.7,
+   "F8": 5.4,
+   "F9": 4.6,
+   "F10": 0.7
+  },
+  "puntos_control": [
+   "CKP-2026-0031"
+  ],
+  "reloj": "real",
+  "minutos_autorizados": 45,
+  "n3_expreso": false,
+  "opcion_autorizada": "CONTINUAR",
+  "por_capa_min": {
+   "0": 1.4,
+   "1": 2.1,
+   "2": 7.0,
+   "3": 13.2,
+   "4": 17.8
+  }
+ },
+ "puertas_continuidad": {
+  "GC0": "Sin ficha MKT-B vigente del ámbito: análisis completo",
+  "GC1": {
+   "D1": "suficiente",
+   "D2": "suficiente",
+   "D3": "suficiente",
+   "D4": "suficiente",
+   "D5": "suficiente",
+   "D6": "suficiente",
+   "D7": "suficiente",
+   "D8": "suficiente",
+   "D9": "suficiente",
+   "D11": "suficiente",
+   "D12": "suficiente",
+   "D10": "laguna declarada (flujos diarios sin credencial)"
+  },
+  "GC2": "Tesis con mecanismo; A provisional 65 y E provisional 70 (≥ 50)",
+  "GC3": "Finalistas: 2 × top-N por S provisional que superan PC1–PC4"
+ },
+ "respuestas_preguntas": [
+  {
+   "pregunta": "¿Qué parte de la cadena captura el valor del cuello de botella?",
+   "origen": "BLOQUE_A",
+   "respuesta": "Cables HVDC y transformadores de potencia; la aparamenta captura menos (D4).",
+   "referencias": [
+    "CLM-B-2026-0431"
+   ]
+  },
+  {
+   "pregunta": "¿Hay vehículos UCITS con exposición pura?",
+   "origen": "BROKER",
+   "respuesta": "Solo dos superan el 50 % de pureza; uno es prioritario.",
+   "referencias": [
+    "CALC-B-2026-0911"
+   ]
+  }
+ ],
+ "preguntas_sugeridas": [
+  "¿Cómo cambiaría el ranking RV con un margen normalizado del 10 %?",
+  "¿Qué señal adelantaría la entrada asiática?"
+ ],
+ "limitaciones": [
+  "Flujos diarios de ETF no disponibles sin credencial: D10 tratada en P1 con fuentes semanales públicas",
+  "Datos de este ejemplo ilustrativos",
+  "Supuesto aplicado por falta de respuesta (CNS-B-2026-0012): solo bonos con calificación pública"
+ ],
+ "reservas_auditoria": [],
+ "estados_degradados": [
+  "Conector de flujos de ETF sin clave en la bóveda (CRED-B-2026-0004 pendiente)"
+ ],
+ "fechas_datos_criticos": [
+  {
+   "dato": "Precios de cierre del universo RV",
+   "fecha": "2026-10-30",
+   "clase": "mercado",
+   "justificacion": null
+  },
+  {
+   "dato": "Cartera de pedidos de los fabricantes (último trimestre publicado)",
+   "fecha": "2026-09-30",
+   "clase": "fundamental",
+   "justificacion": null
+  }
+ ],
+ "auditoria": {
+  "realizada": true,
+  "muestreo": false,
+  "vueltas": 1,
+  "hallazgos_abiertos": [],
+  "dictamen_g3": "APTO",
+  "autorizacion_contenido": "AUTC-B-2026-0042",
+  "autorizacion_salida": "AUTS-B-2026-0042"
+ },
+ "x_actualizado": "Ejemplo actualizado V2.1 (03/11/2026): capas y puertas PV, consultas al Broker, lista profesional, mapa por eslabón",
+ "mapa_cadena_valor": {
+  "rec_id": "REC-B-2026-0042",
+  "data_cutoff": "2026-10-30",
+  "nivel_detalle": "N2",
+  "eslabon_critico": "ESL-02",
+  "eslabones": [
+   {
+    "eslabon_id": "ESL-02",
+    "padre": null,
+    "nombre": "Fabricación de cables de alta tensión y HVDC",
+    "nivel": "macro",
+    "descripcion": "Diseño, extrusión, ensayo e instalación de cables de alta tensión terrestres y submarinos, incluido HVDC.",
+    "papel_ambito": "ES",
+    "metricas": {
+     "tamano": {
+      "valor": 9800,
+      "unidad": "M€",
+      "fecha": "2025",
+      "fuente": "DAT-B-2026-0315"
+     },
+     "crecimiento_anual": 0.14,
+     "margen_tipico": {
+      "bruto": 0.24,
+      "operativo": 0.13
+     },
+     "roic": null,
+     "poder_negociacion": "ALTO",
+     "hhi": 2800,
+     "concentracion_pais": {
+      "pais": "Italia",
+      "cuota": 0.35
+     },
+     "capacidad": null,
+     "utilizacion": 0.94,
+     "plazo_entrega_semanas": 150,
+     "sustitutos": [
+      "líneas aéreas HVAC (parcial)"
+     ],
+     "actores": [
+      {
+       "nombre": "Prysmian",
+       "cuota": 0.38,
+       "cotizado": true
+      },
+      {
+       "nombre": "NKT",
+       "cuota": 0.18,
+       "cotizado": true
+      },
+      {
+       "nombre": "Nexans",
+       "cuota": 0.16,
+       "cotizado": true
+      }
+     ]
+    },
+    "cuello_botella": {
+     "es_cuello": true,
+     "severidad": 4,
+     "persistencia": 4,
+     "relevancia_valor": 4,
+     "PCB": 51,
+     "material": true,
+     "indicadores": [
+      {
+       "indicador": "utilizacion",
+       "valor": 0.94,
+       "estado": "ROJO",
+       "fuente": "DAT-B-2026-0318"
+      },
+      {
+       "indicador": "book_to_bill",
+       "valor": 1.4,
+       "estado": "ROJO",
+       "fuente": "DAT-B-2026-0318"
+      },
+      {
+       "indicador": "plazo_entrega_ratio",
+       "valor": 2.3,
+       "estado": "ROJO",
+       "fuente": "DAT-B-2026-0318"
+      },
+      {
+       "indicador": "hhi_proveedores",
+       "valor": 2800,
+       "estado": "ROJO",
+       "fuente": "DAT-B-2026-0318"
+      }
+     ],
+     "causa": "capacidad",
+     "senal_resolucion": "book-to-bill < 1 durante dos trimestres o capacidad anunciada > 30 % del mercado",
+     "calc_id": "CALC-B-2026-0240"
+    },
+    "atractivo": {
+     "AE": 69,
+     "desglose": {
+      "crecimiento": 90,
+      "margen_roic": 70,
+      "poder_negociacion": 80,
+      "expectativas_inv": 50,
+      "sustitucion_inv": 80,
+      "cuello": 50
+     },
+     "calc_id": "CALC-B-2026-0241"
+    },
+    "opciones": [
+     {
+      "rango": 1,
+      "cand_id": "CAND-B-2026-0201",
+      "nombre": "Prysmian S.p.A.",
+      "ticker": "PRY",
+      "isin": "IT0004176001",
+      "tipo_activo": "RV",
+      "rol_en_eslabon": "Líder mundial en HVDC con cartera de varios años",
+      "pureza_eslabon": 0.55,
+      "S": 79,
+      "ic90_S": [
+       72,
+       85
+      ],
+      "veredicto": "PRIORITARIO_PARA_C",
+      "en_top_n_tipo": true,
+      "motivo": "Mayor exposición y capacidad instalada",
+      "riesgos_clave": [
+       "Penalizaciones llave en mano",
+       "Metales no repercutidos"
+      ]
+     },
+     {
+      "rango": 2,
+      "cand_id": "CAND-B-2026-0202",
+      "nombre": "NKT A/S",
+      "ticker": "NKT",
+      "isin": "DK0010287663",
+      "tipo_activo": "RV",
+      "rol_en_eslabon": "Especialista en HVDC con pureza alta",
+      "pureza_eslabon": 0.8,
+      "S": 73,
+      "ic90_S": [
+       65,
+       80
+      ],
+      "veredicto": "PRIORITARIO_PARA_C",
+      "en_top_n_tipo": true,
+      "motivo": "Pureza al eslabón 0,80",
+      "riesgos_clave": [
+       "Concentración de proyectos",
+       "Ampliación de capital"
+      ]
+     },
+     {
+      "rango": 3,
+      "cand_id": "CAND-B-2026-0205",
+      "nombre": "Nexans S.A.",
+      "ticker": "NEX",
+      "isin": "FR0000044448",
+      "tipo_activo": "RV",
+      "rol_en_eslabon": "Tercer fabricante europeo de cable HVDC; capacidad nueva en Halden",
+      "pureza_eslabon": 0.45,
+      "S": 63,
+      "ic90_S": [
+       56,
+       69
+      ],
+      "veredicto": "SECUNDARIO",
+      "en_top_n_tipo": false,
+      "motivo": "Añadido por cobertura del eslabón (9.13): alternativa RV desplazada del top-N por diversidad de subclúster; S < 65",
+      "riesgos_clave": [
+       "Ejecución del plan de capacidad",
+       "Exposición a cable de baja tensión cíclico"
+      ]
+     },
+     {
+      "rango": 4,
+      "cand_id": "CAND-B-2026-0251",
+      "nombre": "Bono sénior de Prysmian 2030 (ilustrativo)",
+      "ticker": null,
+      "isin": null,
+      "tipo_activo": "RF",
+      "rol_en_eslabon": "Deuda sénior del líder del eslabón",
+      "pureza_eslabon": 0.55,
+      "S": 58,
+      "ic90_S": [
+       54,
+       68
+      ],
+      "veredicto": "SECUNDARIO",
+      "en_top_n_tipo": true,
+      "motivo": "Exposición de crédito al eslabón con menor volatilidad",
+      "riesgos_clave": [
+       "Diferencial ya estrecho"
+      ]
+     },
+     {
+      "rango": 5,
+      "cand_id": "CAND-B-2026-0253",
+      "nombre": "Bono sénior de Nexans 2029 (ilustrativo)",
+      "ticker": null,
+      "isin": null,
+      "tipo_activo": "RF",
+      "rol_en_eslabon": "Deuda sénior del tercer fabricante",
+      "pureza_eslabon": 0.45,
+      "S": 53,
+      "ic90_S": [
+       48,
+       62
+      ],
+      "veredicto": "SECUNDARIO",
+      "en_top_n_tipo": true,
+      "motivo": "Diversifica emisor dentro del eslabón",
+      "riesgos_clave": [
+       "Liquidez del bono"
+      ]
+     }
+    ],
+    "sin_opciones_motivo": null,
+    "emergentes": [
+     {
+      "emg_id": "EMG-B-2026-0001",
+      "nombre": "Startup de monitorización de cables submarinos por fibra (ilustrativa)",
+      "tipo": "STARTUP",
+      "financiacion_conocida": {
+       "importe": 12.0,
+       "divisa": "EUR",
+       "ultima_ronda": "Serie A",
+       "fecha": "2026-03",
+       "fuente": "EVD-B-2026-0650"
+      },
+      "tecnologia_o_ventaja": "Sensado distribuido de temperatura y tensión en cables HVDC",
+      "senales_traccion": [
+       "dos pilotos con operadores de red publicados"
+      ],
+      "via_exposicion": "NO_INVERTIBLE_HOY",
+      "instrumento_exposicion": {
+       "nombre": null,
+       "isin": null,
+       "cand_id": null,
+       "fuera_de_filtros": false
+      },
+      "criterios": {
+       "tecnologia": 70,
+       "traccion": 50,
+       "equipo": 60,
+       "financiacion": 50,
+       "posicion_cadena": 60,
+       "via_exposicion": 0
+      },
+      "PEM": 52,
+      "riesgos": [
+       "Ejecución y financiación"
+      ],
+      "etiqueta": "[INTERPRETACIÓN]"
+     }
+    ]
+   },
+   {
+    "eslabon_id": "ESL-03",
+    "padre": null,
+    "nombre": "Transformadores de potencia, subestaciones y aparamenta",
+    "nivel": "macro",
+    "descripcion": "Transformadores de potencia, equipos de subestación y aparamenta de alta y media tensión.",
+    "papel_ambito": "ES",
+    "metricas": {
+     "tamano": {
+      "valor": 21500,
+      "unidad": "M€",
+      "fecha": "2025",
+      "fuente": "DAT-B-2026-0315"
+     },
+     "crecimiento_anual": 0.11,
+     "margen_tipico": {
+      "bruto": 0.3,
+      "operativo": 0.12
+     },
+     "roic": null,
+     "poder_negociacion": "ALTO",
+     "hhi": 2200,
+     "concentracion_pais": {
+      "pais": "Alemania",
+      "cuota": 0.3
+     },
+     "capacidad": null,
+     "utilizacion": 0.92,
+     "plazo_entrega_semanas": 130,
+     "sustitutos": [
+      "transformadores de estado sólido (lejano)"
+     ],
+     "actores": [
+      {
+       "nombre": "Siemens Energy",
+       "cuota": 0.2,
+       "cotizado": true
+      },
+      {
+       "nombre": "Hitachi Energy",
+       "cuota": 0.22,
+       "cotizado": false
+      },
+      {
+       "nombre": "Schneider Electric",
+       "cuota": 0.12,
+       "cotizado": true
+      }
+     ]
+    },
+    "cuello_botella": {
+     "es_cuello": true,
+     "severidad": 3,
+     "persistencia": 4,
+     "relevancia_valor": 4,
+     "PCB": 38,
+     "material": true,
+     "indicadores": [
+      {
+       "indicador": "utilizacion",
+       "valor": 0.92,
+       "estado": "ROJO",
+       "fuente": "DAT-B-2026-0318"
+      },
+      {
+       "indicador": "plazo_entrega_ratio",
+       "valor": 2.5,
+       "estado": "ROJO",
+       "fuente": "DAT-B-2026-0318"
+      },
+      {
+       "indicador": "book_to_bill",
+       "valor": 1.15,
+       "estado": "AMBAR",
+       "fuente": "DAT-B-2026-0318"
+      }
+     ],
+     "causa": "capacidad",
+     "senal_resolucion": "plazos de entrega por debajo de 1,5× su media de cinco años",
+     "calc_id": "CALC-B-2026-0240"
+    },
+    "atractivo": {
+     "AE": 61,
+     "desglose": {
+      "crecimiento": 80,
+      "margen_roic": 60,
+      "poder_negociacion": 70,
+      "expectativas_inv": 50,
+      "sustitucion_inv": 70,
+      "cuello": 40
+     },
+     "calc_id": "CALC-B-2026-0241"
+    },
+    "opciones": [
+     {
+      "rango": 1,
+      "cand_id": "CAND-B-2026-0203",
+      "nombre": "Schneider Electric SE",
+      "ticker": "SU",
+      "isin": "FR0000121972",
+      "tipo_activo": "RV",
+      "rol_en_eslabon": "Aparamenta y automatización de subestaciones",
+      "pureza_eslabon": 0.3,
+      "S": 72,
+      "ic90_S": [
+       64,
+       79
+      ],
+      "veredicto": "PRIORITARIO_PARA_C",
+      "en_top_n_tipo": true,
+      "motivo": "Calidad y liquidez máximas del eslabón",
+      "riesgos_clave": [
+       "Pureza baja (0,30)"
+      ]
+     },
+     {
+      "rango": 2,
+      "cand_id": "CAND-B-2026-0204",
+      "nombre": "Siemens Energy AG",
+      "ticker": "ENR",
+      "isin": "DE000ENER6Y0",
+      "tipo_activo": "RV",
+      "rol_en_eslabon": "Transformadores y equipos de alta tensión",
+      "pureza_eslabon": 0.35,
+      "S": 71,
+      "ic90_S": [
+       62,
+       78
+      ],
+      "veredicto": "PRIORITARIO_PARA_C",
+      "en_top_n_tipo": true,
+      "motivo": "Plazos de 30+ meses con precio revisable",
+      "riesgos_clave": [
+       "Negocio eólico deficitario"
+      ]
+     },
+     {
+      "rango": 3,
+      "cand_id": "CAND-B-2026-0231",
+      "nombre": "ETF UCITS de infraestructura de redes inteligentes (ilustrativo A)",
+      "ticker": null,
+      "isin": null,
+      "tipo_activo": "FON",
+      "rol_en_eslabon": "Vehículo temático con peso alto en el eslabón",
+      "pureza_eslabon": 0.3,
+      "S": 70,
+      "ic90_S": [
+       62,
+       74
+      ],
+      "veredicto": "PRIORITARIO_PARA_C",
+      "en_top_n_tipo": true,
+      "motivo": "Exposición diversificada al eslabón",
+      "riesgos_clave": [
+       "Solapamiento con los directos"
+      ]
+     },
+     {
+      "rango": 4,
+      "cand_id": "CAND-B-2026-0206",
+      "nombre": "ABB Ltd",
+      "ticker": "ABBN",
+      "isin": "CH0012221716",
+      "tipo_activo": "RV",
+      "rol_en_eslabon": "Aparamenta y automatización",
+      "pureza_eslabon": 0.28,
+      "S": 64,
+      "ic90_S": [
+       57,
+       70
+      ],
+      "veredicto": "SECUNDARIO",
+      "en_top_n_tipo": true,
+      "motivo": "Alternativa de calidad",
+      "riesgos_clave": [
+       "Pureza baja (0,28)"
+      ]
+     },
+     {
+      "rango": 5,
+      "cand_id": "CAND-B-2026-0232",
+      "nombre": "ETF UCITS de electrificación global (ilustrativo B)",
+      "ticker": null,
+      "isin": null,
+      "tipo_activo": "FON",
+      "rol_en_eslabon": "Vehículo de electrificación global",
+      "pureza_eslabon": 0.22,
+      "S": 58,
+      "ic90_S": [
+       52,
+       66
+      ],
+      "veredicto": "SECUNDARIO",
+      "en_top_n_tipo": true,
+      "motivo": "Exposición indirecta",
+      "riesgos_clave": [
+       "Pureza al eslabón 0,22"
+      ]
+     }
+    ],
+    "sin_opciones_motivo": null,
+    "emergentes": [
+     {
+      "emg_id": "EMG-B-2026-0002",
+      "nombre": "Fabricante privado de transformadores (ilustrativo)",
+      "tipo": "SCALE_UP",
+      "financiacion_conocida": {
+       "importe": 85.0,
+       "divisa": "EUR",
+       "ultima_ronda": "crecimiento",
+       "fecha": "2026-06",
+       "fuente": "EVD-B-2026-0651"
+      },
+      "tecnologia_o_ventaja": "Capacidad nueva de transformadores de potencia en Europa del Este",
+      "senales_traccion": [
+       "ampliación de planta anunciada",
+       "contratos con dos operadores"
+      ],
+      "via_exposicion": "FUTURA_SALIDA_A_BOLSA",
+      "instrumento_exposicion": {
+       "nombre": null,
+       "isin": null,
+       "cand_id": null,
+       "fuera_de_filtros": false
+      },
+      "criterios": {
+       "tecnologia": 50,
+       "traccion": 70,
+       "equipo": 60,
+       "financiacion": 70,
+       "posicion_cadena": 80,
+       "via_exposicion": 30
+      },
+      "PEM": 62,
+      "riesgos": [
+       "Ejecución y financiación"
+      ],
+      "etiqueta": "[INTERPRETACIÓN]"
+     },
+     {
+      "emg_id": "EMG-B-2026-0003",
+      "nombre": "Unidad de aparamenta sin SF6 (ilustrativa)",
+      "tipo": "SPIN_OFF_CORPORATIVO",
+      "financiacion_conocida": {
+       "importe": null,
+       "divisa": "EUR",
+       "ultima_ronda": "no publicada",
+       "fecha": null,
+       "fuente": null
+      },
+      "tecnologia_o_ventaja": "Aparamenta de media tensión sin SF6 a escala comercial",
+      "senales_traccion": [
+       "pedidos de distribuidoras europeas"
+      ],
+      "via_exposicion": "MATRIZ_COTIZADA",
+      "instrumento_exposicion": {
+       "nombre": "Schneider Electric SE",
+       "isin": "FR0000121972",
+       "cand_id": "CAND-B-2026-0203",
+       "fuera_de_filtros": false
+      },
+      "criterios": {
+       "tecnologia": 80,
+       "traccion": 60,
+       "equipo": 70,
+       "financiacion": 60,
+       "posicion_cadena": 70,
+       "via_exposicion": 70
+      },
+      "PEM": 68,
+      "riesgos": [
+       "Ejecución y financiación"
+      ],
+      "etiqueta": "[INTERPRETACIÓN]"
+     }
+    ]
+   },
+   {
+    "eslabon_id": "ESL-03.a",
+    "padre": "ESL-03",
+    "nombre": "Acero eléctrico de grano orientado",
+    "nivel": "insumo",
+    "descripcion": "Insumo crítico de los núcleos de transformador, con pocos productores y sin sustituto industrial.",
+    "papel_ambito": "CONSUME",
+    "metricas": {
+     "tamano": {
+      "valor": 2400,
+      "unidad": "M€",
+      "fecha": "2025",
+      "fuente": "DAT-B-2026-0315"
+     },
+     "crecimiento_anual": 0.06,
+     "margen_tipico": {
+      "bruto": 0.18,
+      "operativo": 0.08
+     },
+     "roic": null,
+     "poder_negociacion": "ALTO",
+     "hhi": 3200,
+     "concentracion_pais": {
+      "pais": "Japón",
+      "cuota": 0.55
+     },
+     "capacidad": null,
+     "utilizacion": null,
+     "plazo_entrega_semanas": null,
+     "sustitutos": [],
+     "actores": []
+    },
+    "cuello_botella": {
+     "es_cuello": true,
+     "severidad": 3,
+     "persistencia": 4,
+     "relevancia_valor": 4,
+     "PCB": 38,
+     "material": true,
+     "indicadores": [
+      {
+       "indicador": "hhi_proveedores",
+       "valor": 3200,
+       "estado": "ROJO",
+       "fuente": "DAT-B-2026-0318"
+      },
+      {
+       "indicador": "cuota_primer_pais",
+       "valor": 0.55,
+       "estado": "AMBAR",
+       "fuente": "DAT-B-2026-0318"
+      },
+      {
+       "indicador": "insumo_sin_sustituto",
+       "valor": true,
+       "estado": "ROJO",
+       "fuente": "DAT-B-2026-0318"
+      }
+     ],
+     "causa": "materia_prima",
+     "senal_resolucion": "nueva capacidad de acero de grano orientado en la UE",
+     "calc_id": "CALC-B-2026-0240"
+    },
+    "atractivo": {
+     "AE": 59,
+     "desglose": {
+      "crecimiento": 60,
+      "margen_roic": 50,
+      "poder_negociacion": 80,
+      "expectativas_inv": 60,
+      "sustitucion_inv": 80,
+      "cuello": 40
+     },
+     "calc_id": "CALC-B-2026-0241"
+    },
+    "opciones": [],
+    "sin_opciones_motivo": "Solo laminadoras diversificadas con pureza al insumo inferior al mínimo del playbook RV (PC2)",
+    "emergentes": []
+   },
+   {
+    "eslabon_id": "ESL-01",
+    "padre": null,
+    "nombre": "Materias primas (cobre, aluminio, acero eléctrico)",
+    "nivel": "macro",
+    "descripcion": "Metales y laminados que consume el ámbito; el coste se repercute solo en parte.",
+    "papel_ambito": "CONSUME",
+    "metricas": {
+     "tamano": {
+      "valor": null,
+      "unidad": "M€",
+      "fecha": "2025",
+      "fuente": "DAT-B-2026-0315"
+     },
+     "crecimiento_anual": 0.04,
+     "margen_tipico": {
+      "bruto": null,
+      "operativo": null
+     },
+     "roic": null,
+     "poder_negociacion": "MEDIO",
+     "hhi": null,
+     "concentracion_pais": null,
+     "capacidad": null,
+     "utilizacion": null,
+     "plazo_entrega_semanas": null,
+     "sustitutos": [],
+     "actores": []
+    },
+    "cuello_botella": {
+     "es_cuello": false,
+     "severidad": 1,
+     "persistencia": 2,
+     "relevancia_valor": 2,
+     "PCB": 3,
+     "material": false,
+     "indicadores": [
+      {
+       "indicador": "spot_contrato",
+       "valor": 1.18,
+       "estado": "AMBAR",
+       "fuente": "DAT-B-2026-0318"
+      },
+      {
+       "indicador": "inventarios_percentil",
+       "valor": 30,
+       "estado": "VERDE",
+       "fuente": "DAT-B-2026-0318"
+      }
+     ],
+     "causa": "materia_prima",
+     "senal_resolucion": "precio spot del cobre por debajo del contrato",
+     "calc_id": "CALC-B-2026-0240"
+    },
+    "atractivo": {
+     "AE": 37,
+     "desglose": {
+      "crecimiento": 50,
+      "margen_roic": 40,
+      "poder_negociacion": 50,
+      "expectativas_inv": 40,
+      "sustitucion_inv": 60,
+      "cuello": 0
+     },
+     "calc_id": "CALC-B-2026-0241"
+    },
+    "opciones": [],
+    "sin_opciones_motivo": null,
+    "emergentes": []
+   },
+   {
+    "eslabon_id": "ESL-04",
+    "padre": null,
+    "nombre": "Operadores de red (TSO y DSO)",
+    "nivel": "macro",
+    "descripcion": "Clientes del ámbito; retribución regulada, fuera del ámbito por delimitación.",
+    "papel_ambito": "ALIMENTA",
+    "metricas": {
+     "tamano": {
+      "valor": null,
+      "unidad": "M€",
+      "fecha": "2025",
+      "fuente": "DAT-B-2026-0315"
+     },
+     "crecimiento_anual": 0.05,
+     "margen_tipico": {
+      "bruto": null,
+      "operativo": null
+     },
+     "roic": null,
+     "poder_negociacion": "BAJO",
+     "hhi": null,
+     "concentracion_pais": null,
+     "capacidad": null,
+     "utilizacion": null,
+     "plazo_entrega_semanas": null,
+     "sustitutos": [],
+     "actores": []
+    },
+    "cuello_botella": {
+     "es_cuello": false,
+     "severidad": 1,
+     "persistencia": 1,
+     "relevancia_valor": 1,
+     "PCB": 1,
+     "material": false,
+     "indicadores": [],
+     "causa": "regulacion",
+     "senal_resolucion": "aprobación tarifaria de los planes de inversión",
+     "calc_id": "CALC-B-2026-0240"
+    },
+    "atractivo": {
+     "AE": 37,
+     "desglose": {
+      "crecimiento": 50,
+      "margen_roic": 30,
+      "poder_negociacion": 40,
+      "expectativas_inv": 50,
+      "sustitucion_inv": 80,
+      "cuello": 0
+     },
+     "calc_id": "CALC-B-2026-0241"
+    },
+    "opciones": [],
+    "sin_opciones_motivo": null,
+    "emergentes": []
+   }
+  ],
+  "omisiones": [
+   {
+    "eslabon": "Instalación y obra civil",
+    "motivo": "fuera del ámbito por delimitación (instaladores sin fabricación)"
+   }
+  ],
+  "sintesis": "El valor se captura en los dos eslabones con cuello material (cables HVDC y transformadores), con el acero eléctrico como insumo crítico; materias primas y operadores de red no ofrecen opciones con exposición pura."
+ },
+ "capas": {
+  "puertas_viabilidad": {
+   "PV1": "SUPERADA",
+   "PV2": "SUPERADA",
+   "PV3": "SUPERADA"
+  },
+  "continuacion_forzada": null,
+  "minutos_por_capa": {
+   "0": 1.4,
+   "1": 2.1,
+   "2": 7.0,
+   "3": 13.2,
+   "4": 17.8
+  },
+  "detalle": {
+   "PV1": {
+    "debilidades": [],
+    "eliminatorios": []
+   },
+   "PV2": {
+    "A": 64,
+    "E": 66,
+    "tesis_viva": true
+   },
+   "PV3": {
+    "eslabones_que_cumplen": [
+     "ESL-02",
+     "ESL-03"
+    ]
+   }
+  }
+ },
+ "consultas_broker": [
+  {
+   "cns_id": "CNS-B-2026-0011",
+   "tipo": "ACLARACION_ALCANCE",
+   "modo": "NO_BLOQUEANTE",
+   "origen_agente": "AG-B03",
+   "pregunta": "¿El ámbito incluye a los fabricantes de Reino Unido y Suiza?",
+   "supuesto": "Sí: EEE, Reino Unido y Suiza",
+   "resolucion": "RESPONDIDA",
+   "respuesta": "Sí, incluidos",
+   "efecto": "SIN_CAMBIO"
+  },
+  {
+   "cns_id": "CNS-B-2026-0012",
+   "tipo": "PREFERENCIA_O_CRITERIO",
+   "modo": "NO_BLOQUEANTE",
+   "origen_agente": "AG-B12",
+   "pregunta": "¿Admite bonos sin calificación pública en la selección de renta fija?",
+   "supuesto": "No: solo bonos con calificación pública",
+   "resolucion": "SUPUESTO_APLICADO",
+   "respuesta": null,
+   "efecto": "SIN_CAMBIO"
+  }
+ ],
+ "supuestos_aplicados": [
+  {
+   "cns_id": "CNS-B-2026-0012",
+   "supuesto": "Solo bonos con calificación pública (supuesto aplicado por falta de respuesta)"
+  }
+ ],
+ "lista_profesional": [
+  {
+   "item": 1,
+   "estado": "TRATADO",
+   "referencia": "Informe técnico, sección 5 (D1)"
+  },
+  {
+   "item": 2,
+   "estado": "TRATADO",
+   "referencia": "Informe técnico, sección 5 (D8, D3)"
+  },
+  {
+   "item": 3,
+   "estado": "TRATADO",
+   "referencia": "Informe técnico, sección 5 (D4)"
+  },
+  {
+   "item": 4,
+   "estado": "TRATADO",
+   "referencia": "Informe técnico, sección 5 (D4, 8.7.1)"
+  },
+  {
+   "item": 5,
+   "estado": "TRATADO",
+   "referencia": "Informe técnico, sección 5 (D8, D2)"
+  },
+  {
+   "item": 6,
+   "estado": "TRATADO",
+   "referencia": "Informe técnico, sección 5 (D3)"
+  },
+  {
+   "item": 7,
+   "estado": "TRATADO",
+   "referencia": "Informe técnico, sección 5 (D7, D8)"
+  },
+  {
+   "item": 8,
+   "estado": "TRATADO",
+   "referencia": "Informe técnico, sección 5 (D8)"
+  },
+  {
+   "item": 9,
+   "estado": "TRATADO",
+   "referencia": "Informe técnico, sección 5 (D4, D6)"
+  },
+  {
+   "item": 10,
+   "estado": "TRATADO",
+   "referencia": "Informe técnico, sección 5 (D6)"
+  },
+  {
+   "item": 11,
+   "estado": "TRATADO",
+   "referencia": "Informe técnico, sección 5 (D5)"
+  },
+  {
+   "item": 12,
+   "estado": "TRATADO",
+   "referencia": "Informe técnico, sección 5 (D2, D4)"
+  },
+  {
+   "item": 13,
+   "estado": "TRATADO",
+   "referencia": "Informe técnico, sección 5 (D4, mapa por eslabón)"
+  },
+  {
+   "item": 14,
+   "estado": "TRATADO",
+   "referencia": "Informe técnico, sección 5 (D12)"
+  },
+  {
+   "item": 15,
+   "estado": "TRATADO",
+   "referencia": "Informe técnico, sección 5 (D2, D7, D10)"
+  },
+  {
+   "item": 16,
+   "estado": "TRATADO",
+   "referencia": "Informe técnico, sección 5 (D9, D10)"
+  },
+  {
+   "item": 17,
+   "estado": "TRATADO",
+   "referencia": "Informe técnico, sección 5 (D9)"
+  },
+  {
+   "item": 18,
+   "estado": "TRATADO",
+   "referencia": "Informe técnico, sección 5 (D12)"
+  },
+  {
+   "item": 19,
+   "estado": "LAGUNA",
+   "referencia": "Sin transcripciones de expertos publicadas sobre el ámbito en la fecha de corte; laguna declarada"
+  },
+  {
+   "item": 20,
+   "estado": "TRATADO",
+   "referencia": "Informe técnico, sección 5 (D8, D11)"
+  },
+  {
+   "item": 21,
+   "estado": "NO_APLICABLE",
+   "referencia": "D11 excluida en P0: sin factores ESG materiales diferenciales (motivo en la sección 5)"
+  },
+  {
+   "item": 22,
+   "estado": "TRATADO",
+   "referencia": "Informe técnico, sección 5 (anexo de datos)"
+  }
+ ]
+}

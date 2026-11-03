@@ -1,0 +1,16 @@
+{
+ "seg_id": "SEG-B-2026-0001",
+ "ciclo_id": "CIC-B-2026-0001-01",
+ "estado": "ENTREGADO",
+ "semaforo": "VERDE",
+ "recomendacion": "MANTENER_VIGILANCIA",
+ "proximo_ciclo": "2026-12-03",
+ "informe_seguimiento": {
+  "markdown": "ejemplos/salida_simulada/ENT/Informes de seguimiento/2026-11-03_informe-seguimiento_SEG-B-2026-0001_c01.md",
+  "json": "ejemplos/salida_simulada/ENT/Informes de seguimiento/2026-11-03_informe-seguimiento_SEG-B-2026-0001_c01.json"
+ },
+ "estado_g3": "APTO",
+ "tiempo_min": 5.8,
+ "uc": 2.9,
+ "nota": "Ciclo N1-SEG encargado por el Broker (CT-B-29): el bloque no ha iniciado ningún análisis profundo."
+}

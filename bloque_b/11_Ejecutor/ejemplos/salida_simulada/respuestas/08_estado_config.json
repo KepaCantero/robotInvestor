@@ -1,0 +1,271 @@
+{
+ "fecha_corte": "2026-11-03",
+ "peticiones": {
+  "PET-B-2026-0001": {
+   "estado": "ENTREGADA",
+   "nivel": "N2",
+   "aut_id": "AUT-B-2026-0001"
+  }
+ },
+ "autorizaciones_pendientes": [],
+ "agentes": {
+  "AG-B01": {
+   "nombre": "Coordinador de Peticiones y Consultas",
+   "archivo": "System prompt - Coordinador de Peticiones y Consultas - Bloque B - Versión óptima V2.0.md",
+   "estado": "CARGADO"
+  },
+  "AG-B02": {
+   "nombre": "Director del Análisis de Mercado",
+   "archivo": "System prompt - Director del Análisis de Mercado - Bloque B - Versión óptima V2.0.md",
+   "estado": "CARGADO"
+  },
+  "AG-B03": {
+   "nombre": "Analista de Estructura Sectorial y Competencia",
+   "archivo": "System prompt - Analista de Estructura Sectorial y Competencia - Bloque B - Versión óptima V2.0.md",
+   "estado": "CARGADO"
+  },
+  "AG-B04": {
+   "nombre": "Analista de Demanda, Tamaño de Mercado y Adopción",
+   "archivo": "System prompt - Analista de Demanda, Tamaño de Mercado y Adopción - Bloque B - Versión óptima V2.0.md",
+   "estado": "CARGADO"
+  },
+  "AG-B05": {
+   "nombre": "Analista de Oferta, Capacidad, Costes y Cadena de Suministro",
+   "archivo": "System prompt - Analista de Oferta, Capacidad, Costes y Cadena de Suministro - Bloque B - Versión óptima V2.0.md",
+   "estado": "CARGADO"
+  },
+  "AG-B06": {
+   "nombre": "Analista de Tecnología e Innovación",
+   "archivo": "System prompt - Analista de Tecnología e Innovación - Bloque B - Versión óptima V2.0.md",
+   "estado": "CARGADO"
+  },
+  "AG-B07": {
+   "nombre": "Analista de Regulación, Política y Geopolítica",
+   "archivo": "System prompt - Analista de Regulación, Política y Geopolítica - Bloque B - Versión óptima V2.0.md",
+   "estado": "CARGADO"
+  },
+  "AG-B08": {
+   "nombre": "Analista de Macro, Ciclo y Mercados de Capitales",
+   "archivo": "System prompt - Analista de Macro, Ciclo y Mercados de Capitales - Bloque B - Versión óptima V2.0.md",
+   "estado": "CARGADO"
+  },
+  "AG-B09": {
+   "nombre": "Analista de Finanzas y Valoración del Sector",
+   "archivo": "System prompt - Analista de Finanzas y Valoración del Sector - Bloque B - Versión óptima V2.0.md",
+   "estado": "CARGADO"
+  },
+  "AG-B10": {
+   "nombre": "Analista de Flujos, Posicionamiento y Sentimiento",
+   "archivo": "System prompt - Analista de Flujos, Posicionamiento y Sentimiento - Bloque B - Versión óptima V2.0.md",
+   "estado": "CARGADO"
+  },
+  "AG-B11": {
+   "nombre": "Analista de Sostenibilidad, Riesgos y Eventos Extremos",
+   "archivo": "System prompt - Analista de Sostenibilidad, Riesgos y Eventos Extremos - Bloque B - Versión óptima V2.0.md",
+   "estado": "CARGADO"
+  },
+  "AG-B12": {
+   "nombre": "Seleccionador de Activos",
+   "archivo": "System prompt - Seleccionador de Activos - Bloque B - Versión óptima V2.0.md",
+   "estado": "CARGADO"
+  },
+  "AG-B13": {
+   "nombre": "Analista de Prospectiva, Escenarios y Proyecciones",
+   "archivo": "System prompt - Analista de Prospectiva, Escenarios y Proyecciones - Bloque B - Versión óptima V2.0.md",
+   "estado": "CARGADO"
+  },
+  "AG-B14": {
+   "nombre": "Analista de hipótesis contrarias",
+   "archivo": "System prompt - Analista de hipótesis contrarias - Bloque B - Versión óptima V2.0.md",
+   "estado": "CARGADO"
+  },
+  "AG-B15": {
+   "nombre": "Curador de Evidencia",
+   "archivo": "System prompt - Curador de Evidencia - Bloque B - Versión óptima V2.0.md",
+   "estado": "CARGADO"
+  },
+  "AG-B16": {
+   "nombre": "Motor de Cálculo Avanzado de Mercados",
+   "archivo": "System prompt - Motor de Cálculo Avanzado de Mercados - Bloque B - Versión óptima V2.0.md",
+   "estado": "CARGADO"
+  },
+  "AG-B17": {
+   "nombre": "Redactor y Diseñador de Informes",
+   "archivo": "System prompt - Redactor y Diseñador de Informes - Bloque B - Versión óptima V2.0.md",
+   "estado": "CARGADO"
+  },
+  "AG-B18": {
+   "nombre": "Documentador para el Director",
+   "archivo": "System prompt - Documentador para el Director - Bloque B - Versión óptima V2.0.md",
+   "estado": "CARGADO"
+  },
+  "AG-B19": {
+   "nombre": "Documentador para el Motor",
+   "archivo": "System prompt - Documentador para el Motor - Bloque B - Versión óptima V2.0.md",
+   "estado": "CARGADO"
+  },
+  "AG-B20": {
+   "nombre": "Buscador de Fuentes Avanzadas",
+   "archivo": "System prompt - Buscador de Fuentes Avanzadas - Bloque B - Versión óptima V2.0.md",
+   "estado": "CARGADO"
+  },
+  "AG-B21": {
+   "nombre": "Orquestador técnico",
+   "archivo": "System prompt - Orquestador técnico - Bloque B - Versión óptima V2.0.md",
+   "estado": "CARGADO"
+  },
+  "AG-B22": {
+   "nombre": "Auditor",
+   "archivo": "System prompt - Auditor - Bloque B - Versión óptima V2.0.md",
+   "estado": "CARGADO"
+  },
+  "AG-B23": {
+   "nombre": "Evaluador de Previsiones, Aprendizaje y Seguimiento",
+   "archivo": "System prompt - Evaluador de Previsiones, Aprendizaje y Seguimiento - Bloque B - Versión óptima V2.0.md",
+   "estado": "CARGADO"
+  },
+  "AG-B24": {
+   "nombre": "Analista de Emergentes, Startups y Spin-offs",
+   "archivo": "System prompt - Analista de Emergentes, Startups y Spin-offs - Bloque B - Versión óptima V2.0.md",
+   "estado": "CARGADO"
+  }
+ },
+ "conectores": {
+  "precios_csv": {
+   "tipo_acceso": "GRATUITO",
+   "requiere_clave": false,
+   "credencial_ref": null,
+   "estado": "ACTIVO"
+  },
+  "flujos_etf_diarios": {
+   "tipo_acceso": "GRATUITO_CON_REGISTRO",
+   "requiere_clave": true,
+   "credencial_ref": "alias-flujos-etf-diarios",
+   "estado": "SIN_CREDENCIAL"
+  },
+  "fundamentales_pago": {
+   "tipo_acceso": "DE_PAGO_FUTURO",
+   "requiere_clave": true,
+   "credencial_ref": "alias-fundamentales-pago",
+   "estado": "DESACTIVADO_PAGO"
+  }
+ },
+ "integridad": {
+  "F1": true,
+  "F2": true,
+  "F3": true,
+  "F4": true,
+  "F5": true,
+  "F6": true,
+  "F10": true,
+  "F11": true,
+  "RC": true,
+  "HA": true
+ },
+ "incidencias": 0,
+ "referencias": {
+  "F7": 618,
+  "F8": 410,
+  "F9": 443,
+  "FM": 164
+ },
+ "methodology_version": "2.1",
+ "consultas_broker_pendientes": [],
+ "seguimientos_activos": [],
+ "agentes_resumen": {
+  "CARGADO": 24,
+  "AUSENTE": 0,
+  "DEGRADADO": 0
+ },
+ "f10": {
+  "methodology_version": "2.1",
+  "politica_autorizacion": [
+   {
+    "regla_id": "POL-1",
+    "condicion": {
+     "origen": "BLOQUE_A",
+     "siguiente_paso_A": "ENVIAR_A_BLOQUE_B",
+     "nivel": [
+      "N2"
+     ]
+    },
+    "accion": "AUTORIZAR_HASTA",
+    "minutos": 60
+   },
+   {
+    "regla_id": "POL-2",
+    "condicion": {
+     "relevancia": "ALTA",
+     "nivel": [
+      "N2",
+      "N3"
+     ]
+    },
+    "accion": "AUTORIZAR_HASTA",
+    "minutos": 90
+   },
+   {
+    "regla_id": "POL-3",
+    "condicion": {
+     "minutos_p80_min": 120
+    },
+    "accion": "ELEGIR_OPCION",
+    "opcion": "DIVIDIR_EN_FASES"
+   }
+  ],
+  "tope_autorizacion_automatica_min": 240,
+  "marco_invertibilidad": {
+   "perfil": "MINORISTA_UE_DEFECTO",
+   "divisa_base": "EUR",
+   "ucits_requerido": true,
+   "mercados_admitidos": [
+    "EEE",
+    "UK",
+    "CH",
+    "US",
+    "CA",
+    "JP",
+    "AU",
+    "HK",
+    "SG"
+   ],
+   "permitir_cfd": false,
+   "permitir_microcap": false,
+   "exclusiones": []
+  },
+  "top_n": {
+   "N1": [
+    3,
+    0
+   ],
+   "N2": [
+    5,
+    2
+   ],
+   "N3": [
+    10,
+    5
+   ]
+  },
+  "conectores": {
+   "precios_csv": {
+    "tipo_acceso": "GRATUITO",
+    "requiere_clave": false,
+    "credencial_ref": null,
+    "estado": "ACTIVO"
+   },
+   "flujos_etf_diarios": {
+    "tipo_acceso": "GRATUITO_CON_REGISTRO",
+    "requiere_clave": true,
+    "credencial_ref": "alias-flujos-etf-diarios",
+    "estado": "SIN_CREDENCIAL"
+   },
+   "fundamentales_pago": {
+    "tipo_acceso": "DE_PAGO_FUTURO",
+    "requiere_clave": true,
+    "credencial_ref": "alias-fundamentales-pago",
+    "estado": "DESACTIVADO_PAGO"
+   }
+  }
+ }
+}

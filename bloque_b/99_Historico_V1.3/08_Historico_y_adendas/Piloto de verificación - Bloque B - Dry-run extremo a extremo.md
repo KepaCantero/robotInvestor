@@ -1,0 +1,68 @@
+# Piloto de verificación del Bloque B — Dry-run extremo a extremo
+
+VERSIÓN V1.0 · Piloto del procedimiento de activación (5.5, paso 2 del Documento 0 --- Protocolo maestro del Bloque B, óptima V1.0) · Solicitud FICTICIA declarada como tal: todos los objetos, empresas, tickers, cifras, resultados y comunicaciones de este documento son inventados y sirven exclusivamente a la verificación del flujo del bloque; ninguna operación real, ninguna recomendación real y ningún dato de mercado real intervienen · es-ES
+
+> **Qué es este documento.** La ejecución narrada y trazada de un ciclo completo del Bloque B con una solicitud ficticia, más una segunda solicitud ficticia para verificar el catálogo de rechazo. Su resultado (con sus incidencias y su resolución) acompaña a la propuesta de activación del bloque: un piloto con incidencias sin resolver la bloquea (5.5, paso 2). No es un entregable de análisis ni un ejemplo de aplicación más: es la prueba de fuego documentada del bloque antes de entrar en servicio.
+
+## 1. Objetivo y alcance del piloto
+
+El piloto verifica, sobre el flujo real del bloque y con material ficticio: (a) el protocolo on-demand completo (CT-B-01 y CT-B-02) con sus estados S0-S7 y el catálogo de rechazo R1-R4 (D7); (b) los cuatro contratos de servicio del ciclo (CT-B-03 búsqueda, CT-B-04 registro y conocimiento, CT-B-09 cálculo en transición, y la remisión de fuentes por conducto del Documentador); (c) el circuito de auditoría previa a la salida (CT-B-05, CT-B-06, CT-B-07, CT-B-08) con al menos una vuelta completa con hallazgo, subsanación y autorización (regla crítica 10); (d) la escritura de los tres entregables en las carpetas de salida tras la autorización, con su convención de nombres; (e) el alta de REC-B y su seguimiento (CT-B-04 y CT-B-12) hasta el cierre S7; y (f) el registro íntegro en los cuatro archivos operativos con sus reglas de custodia (regla crítica 4) y de solo añadir.
+
+Elementos declarados no verificables en este piloto: el carril B del Motor (CT-B-09/CT-B-10, elemento en transición 2.6: las fases dependientes de cálculo declaran la limitación y la máquina de proyecciones queda con sus premisas documentadas y sus cálculos pendientes documentados, conforme al modo degradado 3.4 del prompt del Analizador); y las herramientas de búsqueda reales del Buscador (las fuentes «encontradas» son ficticias pero pasan por el filtro y el registro con la misma disciplina).
+
+## 2. Las solicitudes ficticias
+
+**REQ-B-0001 (ciclo principal).** Objeto: «Helios Semiconductor S.A. (ticker ficticio HLMX, Bolsa ficticia de Madrid), fabricante de controladores de gestión térmica para centros de datos». Scope: universo geográfico Europa, moneda EUR, horizonte sugerido 24 meses, nivel sugerido Estándar. Context: referencia a una tendencia ficticia del Bloque A («infraestructura térmica de centros de datos», como pista, nunca como evidencia). Restrictions: exclusión temática de proveedores no cotizados en el listado, prioridad de lectura del informe resumido.
+
+**REQ-B-0002 (prueba del catálogo de rechazo).** Objeto: «el sector de las baterías». Sin más campos. Solicitud deliberadamente ambigua para verificar el motivo R1 (D7) y el flujo de reformulación.
+
+## 3. Cronología del ciclo principal (REQ-B-0001)
+
+**S0 RECIBIDA (día 1).** El Broker Personal envía la solicitud por el CT-B-01; el Orquestador la registra en el «Registro de solicitudes y ejecuciones del Bloque B» con request_id REQ-B-0001 y devuelve acuse. Comprobación de seguridad: sin credenciales ni datos personales (correcto).
+
+**S1 EN ENCUADRE (día 1).** El Orquestador normaliza: objeto identificable y único (sociedad cotizada ficticia con ticker), familia tentativa «acciones (sociedad individual)» de la taxonomía del Analizador, alcance final Europa/EUR, horizonte fijado 24 meses, nivel confirmado Estándar, restricciones normalizadas en cláusulas operables, y anota la advertencia de herencia para la referencia del Bloque A (pista, nunca evidencia).
+
+**S2 ASIGNADA (día 1).** Asignación por CT-B-02 con plan_id vacío y presupuesto cualitativo del nivel Estándar; el Analizador acepta y arranca F0.
+
+**F0 --- Encuadre y plan (día 1-2).** El Analizador compone el ANA-M-PLAN v1 (PLAN-B-0001-v1): objeto y familia; dimensiones activadas las doce excepto la dimensión 5 (técnico y posicionamiento), excluida con motivo registrado («horizonte estructural de 24 meses y tesis de fondo: el técnico no sostiene premisas falsables del plan; exclusión revisable por cambio de plan versionado»); despliegue estructural previsto con la cadena de valor de gestión térmica y sus eslabones relevantes (diseño de componentes, fabricación, ensamblaje y test, distribución e integración); cálculos previstos al Motor declarados (modelo de flujo de caja descontado SYNC y sensibilidades ASYNC) con la limitación del carril B en transición anotada; fuentes de partida del Registro de Mercados arrastradas (sin re-verificar todavía); presupuesto del nivel; riesgos de encuadre. Remite el plan por CT-B-04 al Documentador, que lo registra en la Documentación de Mercados con confirmación DOC-B-0001 y lo ancla al ciclo. Puerta de F0 superada: sin plan registrado no se abre F1.
+
+**F1 --- Recopilación (día 2-4).** El Analizador consulta el Registro de Mercados y pide al Buscador: SRCH-B-0001 (ordinaria por dimensiones 1-4 y 7-12, con source_requirements de nivel A/B y antigüedad máxima 12 meses) y SRCH-B-0002 (estructural AM-8: actores emergentes y cuellos de botella en el eslabón de fabricación, consenso de proyecciones del segmento). El Buscador ejecuta la comprobación previa contra el Registro, verifica cada fuente candidata, rechaza dos (una por muro de pago sin ruta gratuita; una por ser material promocional sin corroboración) y devuelve el paquete con estrategia, rechazos y lagunas declaradas. Remite al Documentador las fuentes nuevas; el Documentador las registra con aporte marginal y confirma (DOC-B-0002). En el primer uso de RF-B-0002 (SEC EDGAR, sembrada), el Analizador ejecuta la re-verificación y el Documentador promueve la ficha a «vigente» con fecha (5.3 del prompt del Documentador): la primera sembrada re-verificada del bloque.
+
+**F2-F4 --- Análisis, tesis y escenarios (día 4-6).** Notas dimensionales con etiquetado epistémico por afirmación; despliegue estructural con las plantillas AM-8 (4a mapa de cadena de valor; 4b actores establecidos y emergentes por eslabón con evidencia independiente —un competidor emergente ficticio con ronda documentada y contratos verificables—; 4c vigilancia tecnológica por horizontes 0-2/2-5/+5 con TRL declarado; 4d cuello de botella en el eslabón de fabricación con causa de capacidad, persistencia estimada, señal de resolución y mapa de favorecidos y perjudicados con mecanismo de transmisión). Tesis falsable con convicción media (calibrada por la calidad de la evidencia: una premisa de demanda apoyada por fuentes de nivel B), tres escenarios con el bajista desarrollado en serio, pre-mortem abreviado. La máquina de proyecciones (AM-9) queda con sus premisas falsables documentadas en la plantilla y sus cálculos pendientes documentados por el carril B en transición: sin cifras proyectadas emitidas (modo degradado declarado, 3.4 del Analizador).
+
+**F5 --- Auto-revisión (día 6).** Checklist del Anexo F del prompt del Analizador cumplimentada: muestreo de etiquetas, corroboración de cifras críticas, sesgos (anclaje a la referencia del Bloque A detectada y corregida), steelman contrario redactado, coherencia plan-notas-tesis-entregables, puntos ciegos declarados (dos: dependencia de un único proveedor de datos del segmento y cobertura europea sin contraste de Asia).
+
+**F6 y S4 --- Paquete y bucle de auditoría (día 6-9).** El Analizador redacta los tres entregables en borrador y remite el paquete PKT-B-v1 por CT-B-05 (plan, evidencia, borradores, plantillas, checklist, puntos ciegos). El Orquestador aplica la rúbrica determinista (14 comprobaciones: OK) y remite al Auditor (REV-B-0001, CT-B-07) con los seis focos declarados. El Auditor devuelve por CT-B-08: FND-B-0001 (Material, tipo 1: una premisa de la plantilla AM-9 usada en el texto del informe sin estar documentada en la plantilla; cita y ruta de reproducción incluidas) y FND-B-0002 (Operativa, tipo 1: antigüedad de dos fuentes de contexto no declarada en la sección correspondiente), más dictámenes AM-8 y AM-10 correctos y blind_spots del revisor. El Orquestador consolida (severidad definitiva conforme a las propuestas), emite la devolución con el consolidado y la guía GUI-B-0001 (tipo 1) por CT-B-06. El Analizador subsana y remite PKT-B-v2; el Auditor revisa el delta (REV-B-0002): sin hallazgos abiertos. El Orquestador autoriza la salida (S5) con fecha, packet_id final y resumen de las dos vueltas.
+
+**S6 ENTREGADA (día 9).** El Analizador escribe, en una sola operación por entregable: «2026-10-29_Estandar_REQ-B-0001» en «Informes completos Mercados» y «2026-10-29_Estandar_REQ-B-0001_REC-B» (informe resumido + listado) en «Informes resumidos Mercados». Remite la REC-B-0001 al Documentador por CT-B-04; el Documentador verifica la constancia de autorización en el Registro de solicitudes y da de alta en el «Registro de recomendaciones y seguimiento del Bloque B» los once campos (dirección alcista, convicción media, invertibilidad «invertible hoy», premisas falsables, señales, condiciones de invalidación, trazabilidad completa). El Orquestador registra la entrega con las referencias de los tres entregables.
+
+**CT-B-12 y S7 CERRADA (día 9).** Para verificar el circuito completo, el piloto simula el primer evento de retroalimentación: el Broker Personal comunica seguimiento de la REC-B-0001 (decisión: seguimiento; sin resultados observados aún, ficticio). El Orquestador remite al Documentador (registro con fidelidad al evento) y notifica al Analizador. El ciclo pasa a S7 CERRADA con su primer registro de seguimiento.
+
+## 4. Prueba del catálogo de rechazo (REQ-B-0002, día 1)
+
+El Orquestador recibe «el sector de las baterías» por CT-B-01, la registra (REQ-B-0002), la rechaza con motivo R1 (ambigüedad insubsanable) con justificación sustantiva y dos opciones de reformulación (un mercado concreto o un activo concreto de la cadena), y responde al Broker. Estado R con su trazabilidad completa en el Registro de solicitudes. La solicitud no llega al Analizador: el rechazo es una salida válida del protocolo (G.1 del Documento 0).
+
+## 5. Evidencias del piloto
+
+**Contratos ejecutados.** CT-B-01 (dos solicitudes, una con rechazo R1) · CT-B-02 (asignación con aceptación) · CT-B-03 (dos peticiones de búsqueda con paquete de respuesta) · CT-B-04 (plan, fuentes, materiales, estados y alta REC-B, con confirmaciones) · CT-B-05 (dos versiones del paquete) · CT-B-06 (dos vueltas con consolidado, guía y autorización) · CT-B-07 (dos revisiones) · CT-B-08 (dos paquetes de hallazgos) · CT-B-11 (canal declarado, sin evento en este piloto: calibración por paquete de servicio) · CT-B-12 (un evento simulado) · CT-B-09 y CT-B-10 (no ejecutables: elemento en transición 2.6, limitación declarada en el plan y en el paquete).
+
+**Estados transitados.** REQ-B-0001: S0→S1→S2→S3→S4→S5→S6→S7 completo. REQ-B-0002: S0→S1→R.
+
+**Registros generados.** Registro de solicitudes: dos entradas maestras con sus bloques y sub-entradas fechadas; Documentación de Mercados: plan PLAN-B-0001-v1 registrado y materiales del ciclo; Registro de Mercados: fuentes nuevas dadas de alta con aporte marginal, RF-B-0002 promovida a «vigente» por re-verificación en primer uso; Registro de recomendaciones: REC-B-0001 con sus once campos y su primer seguimiento. Todas las escrituras por sus propietarios; ninguna escritura fuera de matriz (regla crítica 4 verificada por abstinencia).
+
+**Regla crítica 10 verificada.** Ningún entregable en las carpetas antes de la autorización (S5); lo autorizado es lo escrito, sin retoques; el bucle cerró con la subsanación documentada.
+
+## 6. Incidencias del piloto y su resolución
+
+| # | Incidencia | Resolución |
+|---|---|---|
+| 1 | FND-B-0001: premisa usada en el texto sin estar documentada en la plantilla AM-9 | Subsanada en PKT-B-v2 (premisa documentada en la plantilla con su fuente); verificación del delta en REV-B-0002. Cerrada |
+| 2 | FND-B-0002: antigüedades no declaradas en contexto | Subsanada en PKT-B-0001-v2 con declaración por sección; guía GUI-B-0001 para el siguiente ciclo. Cerrada |
+| 3 | Limitación del carril B (CT-B-09/10 no activos) | Declarada por diseño en plan, paquete y entregables; sin cálculos no trazados. Vigente hasta la activación, sin incidencia |
+| 4 | Dos fuentes rechazadas por el Buscador (muro de pago; promoción comercial) | Comportamiento correcto del filtro (reglas críticas 4 y 6 del Buscador): rechazos trazables en el paquete. Sin incidencia |
+
+Ninguna incidencia sin resolver: el piloto no bloquea la activación (5.5, paso 2).
+
+## 7. Resultado
+
+El ciclo completo del Bloque B funciona extremo a extremo conforme al Documento 0 y a los cinco system prompts: protocolo on-demand con rechazo justificado, ciclo F0-F6 con puertas de calidad, bucle de auditoría previa a la salida con hallazgo, subsanación y autorización (regla crítica 10), tres entregables con su convención de nombres, alta y seguimiento de REC-B, y registro íntegro en los cuatro archivos con custodia centralizada. Las limitaciones declaradas (carril B en transición) se comportaron como el diseño prevé: visibles, trazadas y sin sustituciones no trazadas. Este resultado acompaña a la propuesta de activación del bloque (5.5, paso 3) como prueba documentada de la madurez operativa del conjunto.

@@ -1,0 +1,84 @@
+{
+ "pet_ref_broker": "BRK-2026-115",
+ "origen": "BLOQUE_A",
+ "paquete_para_bloque_B": {
+  "opp_id": "OPP-2026-0118",
+  "tipo_activo": "RV",
+  "subtipo": "Sector",
+  "ambito": {
+   "incluye": "Fabricantes europeos de equipos para redes eléctricas",
+   "excluye": "Operadores de red regulados",
+   "region": "Europa"
+  },
+  "tesis": "La inversión en redes eléctricas europeas crece más deprisa que la capacidad de fabricación de equipos.",
+  "mecanismo": "Cuello de botella en transformadores y cables de alta tensión",
+  "horizontes": [
+   "H4"
+  ],
+  "catalizadores": [
+   {
+    "evento": "Adjudicaciones del plan decenal de red",
+    "fecha": "2027-01"
+   }
+  ],
+  "riesgos": [
+   "Retraso de la aprobación tarifaria"
+  ],
+  "invalidacion": [
+   "Plazos de entrega por debajo de 18 meses"
+  ],
+  "indicador_seguimiento": {
+   "nombre": "Cesta de fabricantes de equipos de red",
+   "simbolo": "CESTA-REDES-EU"
+  },
+  "criterios_seleccion_sugeridos": [
+   "capacidad instalada en el eslabón crítico",
+   "balance capaz de financiar la ampliación"
+  ],
+  "metricas_clave": [
+   "cartera de pedidos",
+   "margen EBITDA"
+  ],
+  "preguntas_para_B": [
+   "¿Qué parte de la cadena captura el valor del cuello de botella?"
+  ],
+  "evidencias": [
+   "CLM-2026-0410"
+  ],
+  "calculos": [
+   "CALC-2026-0388"
+  ],
+  "relevancia_decisional": "MEDIA",
+  "x_clave_universo": "redes_electricas_europa"
+ },
+ "objeto": {
+  "descripcion": "Equipos para redes eléctricas en Europa",
+  "tipo_objeto_sugerido": "CADENA_DE_VALOR",
+  "clave_universo": "redes_electricas_europa"
+ },
+ "tipos_activo_admitidos": [
+  "CRI"
+ ],
+ "horizontes": [
+  "H4"
+ ],
+ "preguntas": [
+  "¿Hay vehículos UCITS con exposición pura?"
+ ],
+ "nivel": "N2",
+ "limite": {
+  "minutos": null,
+  "uc": null
+ },
+ "prioridad": "NORMAL",
+ "marco_invertibilidad": {
+  "perfil": "MINORISTA_UE_DEFECTO",
+  "divisa_base": "EUR",
+  "ucits_requerido": true
+ },
+ "top_n": null,
+ "alto_impacto": false,
+ "referencia_previa": null,
+ "idioma_usuario": "es-ES",
+ "x_nota": "Ejemplo ficticio V2.1: el único tipo admitido (CRI) no tiene instrumentos invertibles en el ámbito → PV1 no superada (SIN_INVERTIBILIDAD), informe de parada y REC-B DETENIDO_EN_PUERTA"
+}

@@ -1,0 +1,144 @@
+{
+ "desde": "2025-01-01",
+ "hasta": "2025-03-31",
+ "frecuencia": "mensual",
+ "fechas": 3,
+ "fin_datos": "2026-10-30",
+ "modo": "completo",
+ "cliente": "mock",
+ "metricas_rankings": {
+  "FON": {
+   "n_rankings": 3,
+   "horizonte": "H4",
+   "sesiones": 252,
+   "exceso_medio_top_n_vs_universo": -0.053073,
+   "ic90_exceso": [
+    -0.058977,
+    -0.047169
+   ],
+   "acierto_top_n_vs_universo": 0.0,
+   "exceso_medio_top_n_vs_referencia_ambito": 0.182945,
+   "ic90_exceso_referencia": [
+    0.110386,
+    0.255505
+   ],
+   "ic_rango_medio": 0.5,
+   "ic90_ic_rango": [
+    0.440476,
+    0.559524
+   ],
+   "certificable": false,
+   "nota": "rankings solapados si el horizonte supera la frecuencia: los IC por bootstrap simple son optimistas"
+  },
+  "RF": {
+   "n_rankings": 3,
+   "horizonte": "H4",
+   "sesiones": 252,
+   "exceso_medio_top_n_vs_universo": 0.022389,
+   "ic90_exceso": [
+    0.01965,
+    0.025127
+   ],
+   "acierto_top_n_vs_universo": 1.0,
+   "exceso_medio_top_n_vs_referencia_ambito": 0.288536,
+   "ic90_exceso_referencia": [
+    0.215221,
+    0.36185
+   ],
+   "ic_rango_medio": 0.0842,
+   "ic90_ic_rango": [
+    -0.010989,
+    0.179487
+   ],
+   "certificable": false,
+   "nota": "rankings solapados si el horizonte supera la frecuencia: los IC por bootstrap simple son optimistas"
+  },
+  "RV": {
+   "n_rankings": 3,
+   "horizonte": "H4",
+   "sesiones": 252,
+   "exceso_medio_top_n_vs_universo": 0.035239,
+   "ic90_exceso": [
+    0.029196,
+    0.041282
+   ],
+   "acierto_top_n_vs_universo": 1.0,
+   "exceso_medio_top_n_vs_referencia_ambito": 0.079123,
+   "ic90_exceso_referencia": [
+    0.011942,
+    0.146303
+   ],
+   "ic_rango_medio": 0.281,
+   "ic90_ic_rango": [
+    0.268239,
+    0.293786
+   ],
+   "certificable": false,
+   "nota": "rankings solapados si el horizonte supera la frecuencia: los IC por bootstrap simple son optimistas"
+  }
+ },
+ "evaluacion_pronosticos": {
+  "AMBITO|CADENA_DE_VALOR×RV×H4": {
+   "n": 3,
+   "acierto": 1.0,
+   "brier": 0.0191,
+   "bss_frente_a_climatologia": null,
+   "muestra_suficiente_recalibrar": false
+  },
+  "RANKING|SEL-RV×H4": {
+   "n": 3,
+   "acierto": 1.0,
+   "brier": 0.25,
+   "bss_frente_a_climatologia": null,
+   "exceso_medio_top_n": 0.035666,
+   "ic90_exceso": [
+    0.030109,
+    0.041223
+   ],
+   "ic_rango_medio": 0.2923,
+   "ic90_ic_rango": [
+    0.2756,
+    0.309
+   ],
+   "muestra_suficiente_recalibrar": false
+  },
+  "RANKING|SEL-FON×H4": {
+   "n": 3,
+   "acierto": 0.0,
+   "brier": 0.25,
+   "bss_frente_a_climatologia": null,
+   "exceso_medio_top_n": -0.052794,
+   "ic90_exceso": [
+    -0.058851,
+    -0.046738
+   ],
+   "ic_rango_medio": 0.4047,
+   "ic90_ic_rango": [
+    0.3095,
+    0.499967
+   ],
+   "muestra_suficiente_recalibrar": false
+  },
+  "RANKING|SEL-RF×H4": {
+   "n": 3,
+   "acierto": 1.0,
+   "brier": 0.25,
+   "bss_frente_a_climatologia": null,
+   "exceso_medio_top_n": 0.021163,
+   "ic90_exceso": [
+    0.019479,
+    0.022848
+   ],
+   "ic_rango_medio": 0.033,
+   "ic90_ic_rango": [
+    -0.0604,
+    0.1264
+   ],
+   "muestra_suficiente_recalibrar": false
+  }
+ },
+ "certificados": [],
+ "consumo_uc_total": 65.56,
+ "advertencias": [],
+ "aviso": "Con el cliente simulado y datos sintéticos, estas métricas no dicen nada de la capacidad del bloque."
+}

@@ -1,0 +1,5 @@
+﻿ref_id,nombre,archivo,tematica,nivel,q,url,fecha_consulta,uso
+ANA-DOC-0279,Quality Minus Junk,F7,TB-18,A,96,DOI: 10.1007/s11142-018-9470-2 · https://research-api.cbs.dk/ws/portalfiles/portal/60211462/lasse_heje_pedersen_et_al_quality_minus_junk_publishersversion.pdf,2026-11-03,método
+ANA-DOC-0280,Is There a Replication Crisis in Finance?,F7,TB-18,A,98,DOI: 10.1111/jofi.13249 · https://www.nber.org/papers/w28432 · versión editorial: https://research-api.cbs.dk/ws/portalfiles/portal/95651880/theis_ingerslev_jensen_et_al_is_there_a_replication_crisis_,2026-11-03,método
+DOC-MOT-0061,A Five-Factor Asset Pricing Model,F7,TB-18,A,95,,2026-11-03,método
+HT-01,Proveedor de datos sintetico,HT-01,,A,,,,precios y series

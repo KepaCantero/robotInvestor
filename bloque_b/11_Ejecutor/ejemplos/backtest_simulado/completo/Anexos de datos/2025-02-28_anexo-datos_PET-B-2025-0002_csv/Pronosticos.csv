@@ -1,0 +1,5 @@
+﻿prg_id,tipo,afirmacion,horizonte,fecha_emision,fecha_resolucion,criterio,referencia,banda,probabilidad_publicada
+PRG-B-2025-0005,AMBITO,El indicador CESTA-REDES-EU supera a SXNP en rentabilidad total en el horizonte H4,H4,2025-02-28,2026-02-28,Rentabilidad relativa > 0 entre el cierre ≤ 2025-02-28 y el cierre ≤ 2026-02-28,SXNP,muy probable,
+PRG-B-2025-0006,RANKING,El top-N RV equiponderado supera a la media equiponderada del universo RV cribado en el horizonte H4,H4,2025-02-28,2026-02-28,Rentabilidad media del top-N − media del universo cribado > 0,media equiponderada del universo RV cribado,incierto,
+PRG-B-2025-0007,RANKING,El top-N FON equiponderado supera a la media equiponderada del universo FON cribado en el horizonte H4,H4,2025-02-28,2026-02-28,Rentabilidad media del top-N − media del universo cribado > 0,media equiponderada del universo FON cribado,incierto,
+PRG-B-2025-0008,RANKING,El top-N RF equiponderado supera a la media equiponderada del universo RF cribado en el horizonte H4,H4,2025-02-28,2026-02-28,Rentabilidad media del top-N − media del universo cribado > 0,media equiponderada del universo RF cribado,incierto,

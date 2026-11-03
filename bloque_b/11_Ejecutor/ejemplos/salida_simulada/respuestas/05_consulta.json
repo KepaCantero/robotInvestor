@@ -1,0 +1,15 @@
+{
+ "query_id": "QRY-B-2026-0001",
+ "clase_consulta": "ACLARACION",
+ "ruta": "N0",
+ "respuesta": "Según el análisis registrado REC-B-2026-0001, la conclusión y sus candidatos constan con su fecha de corte; no se añade conocimiento propio.",
+ "referencias": [
+  "REC-B-2026-0001",
+  "CAND-B-2026-0004",
+  "CAND-B-2026-0007",
+  "CAND-B-2026-0010",
+  "CAND-B-2026-0011"
+ ],
+ "confianza": "probable",
+ "caducidades_afectadas": []
+}
