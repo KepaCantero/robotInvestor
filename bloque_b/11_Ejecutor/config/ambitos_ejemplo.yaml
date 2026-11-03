@@ -1,0 +1,126 @@
+# Ámbitos de ejemplo del ejecutor del Bloque B (ILUSTRATIVOS). Cada ámbito tiene una clave que enlaza con la columna
+# «ambitos» de los universos (config/universos/universo_<TIPO>.csv), un indicador de seguimiento y una referencia de
+# comparación (series HT-01). El Director elige la clave en F0 entre las disponibles (o la fija la petición en
+# objeto.clave_universo). «cadena_llana» (opcional) da el nombre sin jerga de un eslabón para el informe visual.
+# Para backtesting real, sustituya universos y series por datos en punto del tiempo.
+redes_electricas_europa:
+  nombre: Equipos para redes eléctricas en Europa (transformadores, cables de alta tensión, subestaciones y aparamenta)
+  nombre_llano: Las empresas que fabrican lo necesario para ampliar la red eléctrica de Europa
+  tipo_objeto: CADENA_DE_VALOR
+  incluye: Fabricantes de transformadores de potencia, cables de alta y media tensión, equipos de subestación y aparamenta para redes europeas
+  excluye: Operadores de red regulados, generación eléctrica e instaladores sin fabricación propia
+  region: Europa (EEE, Reino Unido y Suiza)
+  tipos_activo: [RV, FON, RF]
+  horizonte: H4
+  indicador: {nombre: Cesta equiponderada de fabricantes europeos de equipos de red (sintética), simbolo: CESTA-REDES-EU}
+  referencia: {nombre: STOXX Europe 600 Industrial Goods & Services (serie sintética), simbolo: SXNP}
+  cadena: ["Materias primas (cobre, aluminio, acero eléctrico)", Fabricación de cables de alta tensión, Transformadores y subestaciones, Operadores de red]
+divisas_materias_primas:
+  nombre: Divisas de exportadores de materias primas frente al euro
+  nombre_llano: Las monedas de los países que venden petróleo y metales
+  tipo_objeto: SEGMENTO_DE_CLASE
+  incluye: Pares frente a EUR de NOK, AUD, CAD, NZD, CLP, ZAR y BRL con instrumento de acceso del marco
+  excluye: Divisas con controles de capital y monedas ancladas
+  region: Global
+  tipos_activo: [DIV]
+  horizonte: H3
+  indicador: {nombre: Cesta de divisas de materias primas frente a EUR (sintética), simbolo: CESTA-DIV-MP}
+  referencia: {nombre: Cesta equiponderada G10 frente a EUR (sintética), simbolo: CESTA-G10-EUR}
+  cadena: [Materias primas exportadas, Balanza comercial, Tipo de cambio]
+cobre:
+  nombre: Cobre (exposición al precio del metal refinado)
+  nombre_llano: El precio del cobre
+  tipo_objeto: SEGMENTO_DE_CLASE
+  incluye: Futuros de cobre en mercados regulados y ETC de cobre físico o sobre futuros cotizados en el EEE
+  excluye: Productoras de cobre (RV) y cestas de metales (FON)
+  region: Global
+  tipos_activo: [MP]
+  horizonte: H3
+  indicador: {nombre: Cobre de grado A (serie sintética), simbolo: COBRE-LME}
+  referencia: {nombre: Bloomberg Commodity Index (serie sintética), simbolo: BCOM}
+  cadena: [Minería, Fundición y refino, Consumo industrial]
+india:
+  nombre: Renta variable de la India
+  nombre_llano: La bolsa de la India
+  tipo_objeto: MERCADO_GEOGRAFICO
+  incluye: Índices de renta variable india por capitalización, estilo y tamaño
+  excluye: Índices de otros mercados emergentes
+  region: India
+  tipos_activo: [IDX]
+  horizonte: H4
+  indicador: {nombre: Nifty 50 (serie sintética), simbolo: NIFTY50}
+  referencia: {nombre: MSCI ACWI (serie sintética), simbolo: ACWI}
+  cadena: [Consumo interno, Servicios tecnológicos, Bancos]
+volatilidad_rv_europea:
+  nombre: Volatilidad de la renta variable europea
+  nombre_llano: Los nervios de la bolsa europea
+  tipo_objeto: SEGMENTO_DE_CLASE
+  incluye: Futuros y opciones listados sobre índices europeos y sobre su volatilidad
+  excluye: CFD, opciones binarias y productos OTC
+  region: Zona euro
+  tipos_activo: [DER]
+  horizonte: H2
+  indicador: {nombre: VSTOXX (serie sintética), simbolo: VSTOXX}
+  referencia: {nombre: Euro Stoxx 50 (serie sintética), simbolo: SX5E}
+  cadena: [Riesgo de evento, Cobertura institucional, Prima de volatilidad]
+  cadena_llana: {Prima de volatilidad: Lo que se cobra por asegurar caídas}   # nombre llano para el informe visual
+logistica_europea:
+  nombre: Inmobiliario logístico cotizado en Europa
+  nombre_llano: Los almacenes y naves logísticas de Europa
+  tipo_objeto: SEGMENTO_DE_CLASE
+  incluye: REIT, SOCIMI e inmobiliarias cotizadas con mayoría del valor de sus activos en logística europea
+  excluye: Oficinas, residencial y centros comerciales
+  region: Europa
+  tipos_activo: [INM]
+  horizonte: H3
+  indicador: {nombre: Cesta de inmobiliarias logísticas europeas (sintética), simbolo: CESTA-LOG-EU}
+  referencia: {nombre: FTSE EPRA Nareit Developed Europe (serie sintética), simbolo: EPRA-EU}
+  cadena: [Suelo, Promoción, Alquiler a operadores logísticos]
+infraestructura_cripto:
+  nombre: Redes de contratos inteligentes y su infraestructura
+  nombre_llano: Las redes de criptomonedas que ejecutan aplicaciones
+  tipo_objeto: TEMATICA
+  incluye: Tokens de capas base y capa 2 con uso real y ETP de subyacente único cotizados en el EEE
+  excluye: Stablecoins como candidatos de rentabilidad, tokens sin acceso MiCA
+  region: Global
+  tipos_activo: [CRI]
+  horizonte: H3
+  indicador: {nombre: Cesta de redes de contratos inteligentes (sintética), simbolo: CESTA-CRI}
+  referencia: {nombre: Bitcoin (serie sintética), simbolo: BTC-EUR}
+  cadena: [Validadores, Redes, Aplicaciones]
+capital_privado_cotizado:
+  nombre: Capital privado cotizado europeo
+  nombre_llano: Las empresas cotizadas que invierten en empresas que no cotizan
+  tipo_objeto: SEGMENTO_DE_CLASE
+  incluye: Gestoras y vehículos de capital privado cotizados en mercados del marco
+  excluye: Fondos privados no accesibles al minorista (solo vigilancia informativa)
+  region: Europa
+  tipos_activo: [ALT]
+  horizonte: H4
+  indicador: {nombre: LPX Europe (serie sintética), simbolo: LPX-EU}
+  referencia: {nombre: LPX50 (serie sintética), simbolo: LPX50}
+  cadena: [Captación, Inversión, Desinversión]
+liquidez_eur:
+  nombre: Liquidez en euros a 3–12 meses
+  nombre_llano: Dónde guardar dinero a corto plazo en euros
+  tipo_objeto: SEGMENTO_DE_CLASE
+  incluye: Letras del Tesoro de la zona euro, fondos monetarios UCITS y ETF ligados a €STR
+  excluye: Depósitos bancarios y pagarés sin calificación
+  region: Zona euro
+  tipos_activo: [MON]
+  horizonte: H3
+  indicador: {nombre: €STR compuesto (serie sintética), simbolo: ESTR-IDX}
+  referencia: {nombre: €STR compuesto (serie sintética), simbolo: ESTR-IDX}
+  cadena: [Banco central, Mercado monetario, Ahorrador]
+inflacion_eur:
+  nombre: Inflación implícita en euros
+  nombre_llano: La inflación que espera el mercado en la zona euro
+  tipo_objeto: ESTRATEGIA_FACTOR
+  incluye: Futuros y ETF UCITS de bonos ligados a la inflación y de tramos de curva en euros
+  excluye: Productos apalancados para horizontes superiores a H2
+  region: Zona euro
+  tipos_activo: [TCV]
+  horizonte: H3
+  indicador: {nombre: Inflación implícita a 5 años (índice sintético de posición), simbolo: BEI5-EUR-TR}
+  referencia: {nombre: Liquidez €STR (serie sintética), simbolo: ESTR-IDX}
+  cadena: [Política monetaria, Expectativas de inflación, Prima de riesgo de inflación]

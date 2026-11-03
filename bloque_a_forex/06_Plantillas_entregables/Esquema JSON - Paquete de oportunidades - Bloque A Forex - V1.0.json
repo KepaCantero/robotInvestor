@@ -1,0 +1,2367 @@
+{
+ "$schema": "https://json-schema.org/draft/2020-12/schema",
+ "$id": "urn:robot-investor:bloque-a-forex:paquete-oportunidades:FX-1.0",
+ "title": "Paquete de oportunidades del Bloque A Forex (V1.0, actualizado V1.1)",
+ "description": "Esquema del entregable 'paquete_oportunidades' del Bloque A Forex (Documento 0 Forex V1.1, secciones 2.4–2.6, 7.8, 8.3, 9.6, 14.3 y Anexo B). Versión V1.0 · 02/11/2026 · actualizado V1.1 (03/11/2026): naturaleza de la inversión y horizonte principal (regla de adecuación de 8.3), H5 «limitado» con hitos HIT-FX- y supuestos declarados (6.2.9). Lo genera AG-17 Redactor a partir del paquete de síntesis (CT-15) y lo publica AG-01 Coordinador por CT-02. Las claves de 'segmentos' son los seis códigos de 2.6. Cada opción es un ámbito cambiario (par, cruce, cesta, bloque, estrategia, volatilidad o régimen) en notación BASE/COTIZADA con dirección referida a la base, composición, divisa de financiación, carry y convertibilidad (PS3); nunca un instrumento, proveedor, coste, apalancamiento, tamaño o nivel de entrada (R21). 'paquete_para_bloque_B' es el encargo de 2.5 con consideraciones de implementación. Ampliaciones del operador solo con prefijo 'x_'; cualquier otro campo no declarado se rechaza. Las cifras coinciden con el informe técnico y el informe visual del mismo run_id. Las reglas que necesitan aritmética (RK, exposición agregada frente a la composición, diversidad 9.6.3, notación convencional) las comprueba HT-09.",
+ "type": "object",
+ "required": [
+  "run_id",
+  "fecha",
+  "methodology_version",
+  "tipo",
+  "regimen_macro",
+  "regimen_cambiario",
+  "apuestas_independientes",
+  "exposicion_agregada",
+  "segmentos",
+  "seguimiento_vigentes",
+  "historial_aciertos",
+  "paquete_para_bloque_B",
+  "preguntas_sugeridas",
+  "limitaciones"
+ ],
+ "properties": {
+  "run_id": {
+   "$ref": "#/$defs/run_id"
+  },
+  "fecha": {
+   "type": "string",
+   "format": "date",
+   "description": "Fecha de referencia del análisis (AAAA-MM-DD)."
+  },
+  "fecha_datos_mercado": {
+   "type": "string",
+   "format": "date",
+   "description": "Último cierre usado (HT-01; cierre de Nueva York del viernes en el ciclo semanal)."
+  },
+  "methodology_version": {
+   "type": "string",
+   "pattern": "^FX-[0-9]+\\.[0-9]+$",
+   "description": "Versión de metodología de F10 (FX-1.0, FX-1.1…)."
+  },
+  "tipo": {
+   "enum": [
+    "PERIODICO",
+    "AD_HOC",
+    "PROFUNDIZACION"
+   ]
+  },
+  "nivel_por_segmento": {
+   "type": "object",
+   "propertyNames": {
+    "$ref": "#/$defs/codigo_segmento"
+   },
+   "additionalProperties": {
+    "enum": [
+     "N1",
+     "N2",
+     "N3"
+    ]
+   }
+  },
+  "divisa_base_usuario": {
+   "$ref": "#/$defs/divisa",
+   "description": "Divisa base del usuario (F10; EUR por defecto)."
+  },
+  "regimen_macro": {
+   "type": "string",
+   "minLength": 10
+  },
+  "regimen_cambiario": {
+   "type": "object",
+   "required": [
+    "dolar",
+    "riesgo",
+    "volatilidad"
+   ],
+   "properties": {
+    "dolar": {
+     "enum": [
+      "fuerte",
+      "neutro",
+      "debil"
+     ]
+    },
+    "riesgo": {
+     "enum": [
+      "apetito",
+      "neutro",
+      "aversion"
+     ]
+    },
+    "volatilidad": {
+     "enum": [
+      "baja",
+      "media",
+      "alta"
+     ]
+    },
+    "nota": {
+     "type": "string"
+    }
+   },
+   "additionalProperties": false
+  },
+  "informes_transversales": {
+   "type": "object",
+   "description": "Informes CT-06T del ciclo: AG-09 (BCM) y AG-21 (PFV), con prefijo TRV-FX-, o declaración de su ausencia o reutilización en «nota» (G3-FX-10).",
+   "properties": {
+    "BCM": {
+     "oneOf": [
+      {
+       "$ref": "#/$defs/trv_id"
+      },
+      {
+       "type": "null"
+      }
+     ]
+    },
+    "PFV": {
+     "oneOf": [
+      {
+       "$ref": "#/$defs/trv_id"
+      },
+      {
+       "type": "null"
+      }
+     ]
+    },
+    "nota": {
+     "type": "string"
+    }
+   },
+   "additionalProperties": false
+  },
+  "apuestas_independientes": {
+   "type": "integer",
+   "minimum": 0,
+   "description": "Número de apuestas efectivamente independientes (9.6.6)."
+  },
+  "clusteres_exposicion": {
+   "type": "array",
+   "items": {
+    "type": "object",
+    "required": [
+     "cluster_id",
+     "factor_dominante",
+     "opp_ids"
+    ],
+    "properties": {
+     "cluster_id": {
+      "type": "string",
+      "pattern": "^CL-[0-9]{1,3}$"
+     },
+     "factor_dominante": {
+      "type": "string"
+     },
+     "opp_ids": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+       "$ref": "#/$defs/opp_id"
+      }
+     }
+    },
+    "additionalProperties": false
+   }
+  },
+  "exposicion_agregada": {
+   "type": "object",
+   "propertyNames": {
+    "$ref": "#/$defs/divisa"
+   },
+   "additionalProperties": {
+    "type": "string",
+    "pattern": "^(?:(?:larga|corta)(?: moderada| fuerte)?|neutra)$"
+   },
+   "description": "Exposición agregada por divisa del conjunto de opciones (14.1; Anexo B): larga, corta (moderada o fuerte) o neutra."
+  },
+  "lectura_divisa_base": {
+   "type": "object",
+   "required": [
+    "divisa",
+    "sentido",
+    "texto_llano"
+   ],
+   "description": "Termómetro del euro (14.2.2): qué significan las opciones para quien ahorra en la divisa base.",
+   "properties": {
+    "divisa": {
+     "$ref": "#/$defs/divisa"
+    },
+    "sentido": {
+     "enum": [
+      "se_aprecia",
+      "estable",
+      "se_deprecia"
+     ]
+    },
+    "texto_llano": {
+     "type": "string",
+     "maxLength": 200
+    }
+   },
+   "additionalProperties": false
+  },
+  "contradicciones_entre_segmentos": {
+   "type": "array",
+   "description": "Misma divisa como pata activa de la tesis con direcciones opuestas en segmentos distintos, justificada con mecanismos u horizontes distintos (9.6.6). El USD o el EUR como contrapartida o financiación no cuentan: se reflejan en exposicion_agregada.",
+   "items": {
+    "type": "object",
+    "required": [
+     "divisa",
+     "opp_ids",
+     "justificacion_contradiccion"
+    ],
+    "properties": {
+     "divisa": {
+      "$ref": "#/$defs/divisa"
+     },
+     "opp_ids": {
+      "type": "array",
+      "minItems": 2,
+      "items": {
+       "$ref": "#/$defs/opp_id"
+      }
+     },
+     "justificacion_contradiccion": {
+      "type": "string",
+      "minLength": 10
+     }
+    },
+    "additionalProperties": false
+   }
+  },
+  "segmentos": {
+   "type": "object",
+   "minProperties": 1,
+   "additionalProperties": false,
+   "description": "Una entrada por segmento activo en F10 (los seis por defecto). En cada segmento, el «segmento» de sus opciones coincide con la clave.",
+   "properties": {
+    "G10N": {
+     "allOf": [
+      {
+       "$ref": "#/$defs/segmento"
+      },
+      {
+       "properties": {
+        "opciones": {
+         "items": {
+          "properties": {
+           "segmento": {
+            "const": "G10N"
+           }
+          }
+         }
+        }
+       }
+      }
+     ]
+    },
+    "G10M": {
+     "allOf": [
+      {
+       "$ref": "#/$defs/segmento"
+      },
+      {
+       "properties": {
+        "opciones": {
+         "items": {
+          "properties": {
+           "segmento": {
+            "const": "G10M"
+           }
+          }
+         }
+        }
+       }
+      }
+     ]
+    },
+    "EMAS": {
+     "allOf": [
+      {
+       "$ref": "#/$defs/segmento"
+      },
+      {
+       "properties": {
+        "opciones": {
+         "items": {
+          "properties": {
+           "segmento": {
+            "const": "EMAS"
+           }
+          }
+         }
+        }
+       }
+      }
+     ]
+    },
+    "EMLA": {
+     "allOf": [
+      {
+       "$ref": "#/$defs/segmento"
+      },
+      {
+       "properties": {
+        "opciones": {
+         "items": {
+          "properties": {
+           "segmento": {
+            "const": "EMLA"
+           }
+          }
+         }
+        }
+       }
+      }
+     ]
+    },
+    "EMEA": {
+     "allOf": [
+      {
+       "$ref": "#/$defs/segmento"
+      },
+      {
+       "properties": {
+        "opciones": {
+         "items": {
+          "properties": {
+           "segmento": {
+            "const": "EMEA"
+           }
+          }
+         }
+        }
+       }
+      }
+     ]
+    },
+    "ESTR": {
+     "allOf": [
+      {
+       "$ref": "#/$defs/segmento"
+      },
+      {
+       "properties": {
+        "opciones": {
+         "items": {
+          "properties": {
+           "segmento": {
+            "const": "ESTR"
+           }
+          }
+         }
+        }
+       }
+      }
+     ]
+    }
+   }
+  },
+  "seguimiento_vigentes": {
+   "type": "array",
+   "items": {
+    "type": "object",
+    "required": [
+     "opp_id",
+     "estado",
+     "comentario"
+    ],
+    "properties": {
+     "opp_id": {
+      "$ref": "#/$defs/opp_id"
+     },
+     "estado": {
+      "enum": [
+       "VIGENTE",
+       "CERRADA"
+      ]
+     },
+     "motivo_cierre": {
+      "enum": [
+       "INVALIDACION",
+       "VENCIMIENTO_HORIZONTE",
+       "OBJETIVO_ALCANZADO",
+       "SUSTITUCION",
+       null
+      ]
+     },
+     "comentario": {
+      "type": "string"
+     },
+     "decision_broker": {
+      "enum": [
+       "ENVIADA_A_BLOQUE_B",
+       "EN_SEGUIMIENTO",
+       "DESCARTADA",
+       "APLAZADA",
+       null
+      ]
+     }
+    },
+    "additionalProperties": false,
+    "if": {
+     "properties": {
+      "estado": {
+       "const": "CERRADA"
+      }
+     }
+    },
+    "then": {
+     "required": [
+      "motivo_cierre"
+     ],
+     "properties": {
+      "motivo_cierre": {
+       "type": "string"
+      }
+     }
+    }
+   }
+  },
+  "historial_aciertos": {
+   "$ref": "#/$defs/historial_aciertos"
+  },
+  "paquete_para_bloque_B": {
+   "type": "array",
+   "items": {
+    "$ref": "#/$defs/entrada_bloque_B"
+   },
+   "description": "Una entrada por cada opción del top-3; la decisión de reenviar es del Broker (R4)."
+  },
+  "preguntas_sugeridas": {
+   "type": "array",
+   "items": {
+    "type": "string",
+    "minLength": 5
+   }
+  },
+  "supuestos_declarados": {
+   "type": "array",
+   "items": {
+    "$ref": "#/$defs/supuesto_declarado"
+   }
+  },
+  "consultas_broker_sin_respuesta": {
+   "type": "array",
+   "items": {
+    "type": "string",
+    "pattern": "^CNS-FX-[0-9]{4}-[0-9]{4,}$"
+   },
+   "description": "CNS-FX- vencidas sin respuesta; cada una debe tener supuesto declarado (HT-09 C19)."
+  },
+  "limitaciones": {
+   "type": "array",
+   "items": {
+    "type": "string",
+    "minLength": 5
+   }
+  },
+  "estado_g3": {
+   "enum": [
+    "APTO",
+    "APTO_CON_ADVERTENCIAS"
+   ]
+  },
+  "aviso_legal": {
+   "type": "string"
+  }
+ },
+ "patternProperties": {
+  "^x_": {}
+ },
+ "additionalProperties": false,
+ "$defs": {
+  "run_id": {
+   "type": "string",
+   "pattern": "^RUN-FX-[0-9]{4}-[0-9]{4,}$",
+   "description": "Prefijo RUN-FX- (Anexo C Forex)."
+  },
+  "opp_id": {
+   "type": "string",
+   "pattern": "^OPP-FX-[0-9]{4}-[0-9]{4,}$",
+   "description": "Prefijo OPP-FX- (Anexo C Forex)."
+  },
+  "tnd_id": {
+   "type": "string",
+   "pattern": "^TND-FX-[0-9]{4}-[0-9]{4,}$"
+  },
+  "prg_id": {
+   "type": "string",
+   "pattern": "^PRG-FX-[0-9]{4}-[0-9]{4,}$"
+  },
+  "clm_id": {
+   "type": "string",
+   "pattern": "^(CLM|EVD)-FX-[0-9]{4}-[0-9]{4,}$",
+   "description": "CLM-FX- (o EVD-FX-)."
+  },
+  "calc_id": {
+   "type": "string",
+   "pattern": "^CALC-FX-[0-9]{4}-[0-9]{4,}$"
+  },
+  "trv_id": {
+   "type": "string",
+   "pattern": "^TRV-FX-[0-9]{4}-[0-9]{4,}$",
+   "description": "Informe transversal CT-06T (AG-09 o AG-21)."
+  },
+  "codigo_segmento": {
+   "enum": [
+    "G10N",
+    "G10M",
+    "EMAS",
+    "EMLA",
+    "EMEA",
+    "ESTR"
+   ],
+   "description": "Seis segmentos de divisas (2.6): G10N G10 núcleo (USD, EUR, JPY, GBP, CHF) · G10M G10 de materias primas y escandinavas (AUD, NZD, CAD, NOK, SEK) · EMAS emergentes de Asia · EMLA emergentes de Latinoamérica · EMEA emergentes de Europa, Oriente Medio y África · ESTR estrategias y cestas cambiarias."
+  },
+  "divisa": {
+   "type": "string",
+   "pattern": "^[A-Z]{3}$",
+   "description": "Código ISO 4217 (p. ej., EUR, USD, JPY, MXN). XAU solo como referencia de refugio."
+  },
+  "par": {
+   "type": "string",
+   "pattern": "^[A-Z]{3}/[A-Z]{3}$",
+   "description": "Notación de mercado BASE/COTIZADA con códigos ISO 4217: EUR/USD = dólares por euro (2.4)."
+  },
+  "horizonte": {
+   "enum": [
+    "H1",
+    "H2",
+    "H3",
+    "H4",
+    "H5"
+   ],
+   "description": "H1 días (1–10 sesiones), H2 semanas (2–8), H3 meses (3–12), H4 años (1–5), H5 décadas (5–30; «limitado»: solo naturaleza ESTRUCTURAL en los tres ámbitos de `ambito_h5`, probabilidad siempre cualitativa e hitos)."
+  },
+  "puntuacion_total": {
+   "type": "integer",
+   "minimum": 0,
+   "maximum": 100,
+   "multipleOf": 5
+  },
+  "confianza": {
+   "enum": [
+    "establecido",
+    "probable",
+    "especulativo",
+    "en disputa"
+   ]
+  },
+  "direccion": {
+   "enum": [
+    "ALCISTA_BASE",
+    "BAJISTA_BASE",
+    null
+   ],
+   "description": "Dirección referida siempre a la divisa base (ALCISTA_BASE o BAJISTA_BASE) en las opciones con par (PAR, CRUCE, REGIMEN). En CESTA, BLOQUE y ESTRATEGIA es null: la dirección se expresa con `composicion` (lado LARGO/CORTO y peso); en VOLATILIDAD es null y la vista va en `vista_volatilidad` (2.4)."
+  },
+  "vista_volatilidad": {
+   "type": "object",
+   "required": [
+    "sentido",
+    "plazo"
+   ],
+   "description": "Vista de una opción VOLATILIDAD (2.4): ALZA o BAJA de la volatilidad implícita y plazo (p. ej., 1M, 3M).",
+   "properties": {
+    "sentido": {
+     "enum": [
+      "ALZA",
+      "BAJA"
+     ]
+    },
+    "plazo": {
+     "type": "string",
+     "pattern": "^[0-9]{1,2}[SMA]$"
+    },
+    "medida": {
+     "type": "string"
+    }
+   },
+   "additionalProperties": false
+  },
+  "tipo_opcion": {
+   "enum": [
+    "PAR",
+    "CRUCE",
+    "CESTA",
+    "BLOQUE",
+    "ESTRATEGIA",
+    "VOLATILIDAD",
+    "REGIMEN"
+   ],
+   "description": "Tipos de opción cambiaria (2.4): PAR principal con dirección; CRUCE sin USD; CESTA de varias divisas frente a una base u otra cesta; BLOQUE regional o temático; ESTRATEGIA (carry, valor, momentum, dólar amplio, refugio); VOLATILIDAD (nivel o estructura de la volatilidad de un par o bloque); REGIMEN (ruptura o ajuste de un tipo fijo, una banda o un control de capitales). Nunca un instrumento (R21)."
+  },
+  "regimen_divisa": {
+   "enum": [
+    "LIBRE_FLOTACION",
+    "FLOTACION_ADMINISTRADA",
+    "BANDA",
+    "TIPO_FIJO",
+    "CAJA_CONVERSION",
+    "CONTROLES"
+   ],
+   "description": "Régimen cambiario de facto (clasificación de Ilzetzki, Reinhart y Rogoff)."
+  },
+  "componente": {
+   "type": "object",
+   "required": [
+    "divisa",
+    "peso",
+    "lado"
+   ],
+   "properties": {
+    "divisa": {
+     "$ref": "#/$defs/divisa"
+    },
+    "peso": {
+     "type": "number",
+     "exclusiveMinimum": 0,
+     "maximum": 1,
+     "description": "Peso dentro de su lado (los pesos de cada lado suman 1)."
+    },
+    "lado": {
+     "enum": [
+      "LARGO",
+      "CORTO"
+     ]
+    }
+   },
+   "additionalProperties": false
+  },
+  "composicion": {
+   "type": "array",
+   "items": {
+    "$ref": "#/$defs/componente"
+   },
+   "description": "Exposición por divisa con pesos y lados. En un PAR o CRUCE: base y cotizada con peso 1 y lados según la dirección; en una CESTA, BLOQUE o ESTRATEGIA: todas las divisas (PS4 exige pesos y divisa de financiación); en VOLATILIDAD puede ir vacía."
+  },
+  "carry": {
+   "type": "object",
+   "required": [
+    "anual_pct",
+    "signo",
+    "ajustado_vol"
+   ],
+   "properties": {
+    "anual_pct": {
+     "type": [
+      "number",
+      "null"
+     ],
+     "description": "Carry anual de la exposición a favor de la tesis, en % (tipo de las divisas largas − tipo de las cortas), calculado desde los puntos forward."
+    },
+    "diferencial_tipos_pct": {
+     "type": [
+      "number",
+      "null"
+     ],
+     "description": "Diferencial de tipos base − cotizada (en pares); HT-09 comprueba la coherencia del signo con la dirección (G3-FX-05)."
+    },
+    "signo": {
+     "enum": [
+      "a favor",
+      "en contra",
+      "neutro",
+      "no aplicable"
+     ]
+    },
+    "ajustado_vol": {
+     "type": [
+      "number",
+      "null"
+     ],
+     "description": "Carry dividido por la volatilidad anual (ratio de carry)."
+    },
+    "calc_id": {
+     "$ref": "#/$defs/calc_id"
+    }
+   },
+   "additionalProperties": false,
+   "allOf": [
+    {
+     "if": {
+      "properties": {
+       "anual_pct": {
+        "type": "number",
+        "exclusiveMinimum": 0.25
+       }
+      },
+      "required": [
+       "anual_pct"
+      ]
+     },
+     "then": {
+      "properties": {
+       "signo": {
+        "const": "a favor"
+       }
+      }
+     }
+    },
+    {
+     "if": {
+      "properties": {
+       "anual_pct": {
+        "type": "number",
+        "exclusiveMaximum": -0.25
+       }
+      },
+      "required": [
+       "anual_pct"
+      ]
+     },
+     "then": {
+      "properties": {
+       "signo": {
+        "const": "en contra"
+       }
+      }
+     }
+    }
+   ]
+  },
+  "convertibilidad": {
+   "type": "object",
+   "required": [
+    "convertible",
+    "ndf",
+    "controles_capitales",
+    "profundidad",
+    "nota"
+   ],
+   "description": "PS3 · Convertibilidad e invertibilidad a nivel de mercado (2.5): la divisa es convertible para un inversor minorista europeo o existe exposición alternativa (NDF, futuros o productos cotizados), y no hay controles de capitales que impidan la exposición o la repatriación. No elige instrumento.",
+   "properties": {
+    "convertible": {
+     "type": "boolean"
+    },
+    "ndf": {
+     "type": "boolean",
+     "description": "Existe mercado no entregable."
+    },
+    "controles_capitales": {
+     "type": "boolean"
+    },
+    "impiden_exposicion": {
+     "const": false,
+     "description": "Una opción del top-3 ha superado PS3."
+    },
+    "exposicion_alternativa": {
+     "type": "boolean"
+    },
+    "profundidad": {
+     "enum": [
+      "muy alta",
+      "alta",
+      "media",
+      "baja"
+     ]
+    },
+    "nota": {
+     "type": "string",
+     "minLength": 5
+    }
+   },
+   "additionalProperties": false,
+   "if": {
+    "properties": {
+     "convertible": {
+      "const": false
+     }
+    }
+   },
+   "then": {
+    "anyOf": [
+     {
+      "properties": {
+       "ndf": {
+        "const": true
+       }
+      }
+     },
+     {
+      "properties": {
+       "exposicion_alternativa": {
+        "const": true
+       }
+      },
+      "required": [
+       "exposicion_alternativa"
+      ]
+     }
+    ]
+   }
+  },
+  "ambito": {
+   "type": "object",
+   "required": [
+    "incluye",
+    "excluye"
+   ],
+   "description": "Delimitación del ámbito cambiario (2.4–2.5): qué entra y qué queda fuera. Granularidad máxima: par, cruce, cesta, bloque, estrategia o régimen.",
+   "properties": {
+    "incluye": {
+     "type": "string",
+     "minLength": 5
+    },
+    "excluye": {
+     "type": "string",
+     "minLength": 2
+    },
+    "region": {
+     "type": "string",
+     "minLength": 2
+    }
+   },
+   "additionalProperties": false
+  },
+  "indicador_seguimiento": {
+   "type": "object",
+   "required": [
+    "nombre",
+    "fuente"
+   ],
+   "description": "Serie pública que mide la evolución del ámbito (2.4): tipo de cambio del par (BCE, Fed H.10 o WM/Reuters), índice de la cesta, tipo de cambio efectivo (BPI) o índice de estrategia. Sirve para medir la tendencia y resolver los pronósticos (F4); no es una recomendación.",
+   "properties": {
+    "nombre": {
+     "type": "string",
+     "minLength": 3
+    },
+    "simbolo": {
+     "type": [
+      "string",
+      "null"
+     ]
+    },
+    "fuente": {
+     "type": "string",
+     "minLength": 2
+    },
+    "tipo": {
+     "enum": [
+      "TIPO_DE_CAMBIO",
+      "INDICE_CESTA",
+      "TIPO_EFECTIVO",
+      "INDICE_ESTRATEGIA",
+      "VOLATILIDAD_IMPLICITA"
+     ]
+    },
+    "nota": {
+     "type": "string"
+    }
+   },
+   "additionalProperties": false
+  },
+  "puntuaciones": {
+   "type": "object",
+   "required": [
+    "T",
+    "E",
+    "M",
+    "A",
+    "RK",
+    "desglose_ref"
+   ],
+   "properties": {
+    "T": {
+     "oneOf": [
+      {
+       "type": "integer",
+       "minimum": 50,
+       "maximum": 100,
+       "multipleOf": 5
+      },
+      {
+       "const": "NA"
+      }
+     ],
+     "description": "Elegibilidad: T ≥ 50, o NA en oportunidades tácticas (entonces A ≥ 65)."
+    },
+    "E": {
+     "type": "integer",
+     "minimum": 60,
+     "maximum": 100,
+     "multipleOf": 5,
+     "description": "Elegibilidad: E ≥ 60."
+    },
+    "M": {
+     "$ref": "#/$defs/puntuacion_total"
+    },
+    "A": {
+     "type": "integer",
+     "minimum": 55,
+     "maximum": 100,
+     "multipleOf": 5,
+     "description": "A FX: asimetría 30 · valoración y desviación del equilibrio 20 · carry 15 · catalizadores 15 · momento y posicionamiento 10 · convertibilidad y profundidad 10."
+    },
+    "P": {
+     "$ref": "#/$defs/puntuacion_total"
+    },
+    "RK": {
+     "type": "number",
+     "minimum": 0,
+     "maximum": 100,
+     "description": "RK = 0,45·A + 0,35·E + 0,20·T (HT-03); clave de ordenación, no probabilidad."
+    },
+    "desglose_ref": {
+     "type": "string",
+     "minLength": 3
+    }
+   },
+   "additionalProperties": false
+  },
+  "vista_horizonte": {
+   "type": "object",
+   "required": [
+    "vista",
+    "banda",
+    "prob",
+    "prg_id",
+    "certificado_r13",
+    "referencia",
+    "tipo_rentabilidad",
+    "divisa_medicion"
+   ],
+   "properties": {
+    "vista": {
+     "enum": [
+      "alcista",
+      "bajista",
+      "lateral"
+     ],
+     "description": "Sobre el indicador de seguimiento (el par: alcista = sube la base)."
+    },
+    "banda": {
+     "enum": [
+      "más probable que no",
+      "incierto",
+      "poco probable"
+     ]
+    },
+    "prob": {
+     "type": [
+      "number",
+      "null"
+     ],
+     "minimum": 0,
+     "maximum": 1
+    },
+    "certificado_r13": {
+     "type": "boolean",
+     "description": "true solo si el Evaluador certificó la celda segmento × horizonte."
+    },
+    "etiqueta": {
+     "type": "string",
+     "description": "«sin ventaja demostrada frente al paseo aleatorio» sin certificado (R13)."
+    },
+    "referencia": {
+     "enum": [
+      "paseo aleatorio",
+      "paseo aleatorio y forward",
+      "forward",
+      "rentabilidad nula",
+      "índice de la estrategia"
+     ],
+     "description": "Referencia ingenua frente a la que se evalúa el pronóstico (8.4)."
+    },
+    "tipo_rentabilidad": {
+     "enum": [
+      "PRECIO_CONTADO",
+      "RENTABILIDAD_TOTAL",
+      "NIVEL_VOLATILIDAD"
+     ],
+     "description": "2.4: PRECIO_CONTADO, RENTABILIDAD_TOTAL o, en opciones VOLATILIDAD, NIVEL_VOLATILIDAD (nivel de volatilidad implícita)."
+    },
+    "divisa_medicion": {
+     "$ref": "#/$defs/divisa",
+     "description": "Divisa en que se mide el resultado (G3-FX-11)."
+    },
+    "prg_id": {
+     "$ref": "#/$defs/prg_id"
+    },
+    "fecha_resolucion": {
+     "type": "string",
+     "format": "date"
+    },
+    "criterio_resolucion": {
+     "type": "string"
+    },
+    "advertencia": {
+     "type": "string",
+     "description": "Obligatoria en H1: previsión de menor fiabilidad."
+    },
+    "metodo": {
+     "type": [
+      "string",
+      "null"
+     ]
+    },
+    "ambito_h5": {
+     "$ref": "#/$defs/ambito_h5"
+    },
+    "hitos": {
+     "type": "array",
+     "items": {
+      "$ref": "#/$defs/hito"
+     },
+     "description": "Solo en H5 (≥ 3)."
+    }
+   },
+   "additionalProperties": false,
+   "allOf": [
+    {
+     "description": "R13: probabilidad numérica solo con certificado.",
+     "if": {
+      "properties": {
+       "certificado_r13": {
+        "const": false
+       }
+      }
+     },
+     "then": {
+      "properties": {
+       "prob": {
+        "type": "null"
+       }
+      },
+      "required": [
+       "etiqueta"
+      ]
+     }
+    }
+   ]
+  },
+  "objecion": {
+   "type": "object",
+   "required": [
+    "fuerza",
+    "resumen",
+    "respuesta",
+    "estado"
+   ],
+   "properties": {
+    "objecion_id": {
+     "type": "string"
+    },
+    "fuerza": {
+     "enum": [
+      "fuerte",
+      "moderada",
+      "debil"
+     ]
+    },
+    "resumen": {
+     "type": "string"
+    },
+    "respuesta": {
+     "type": [
+      "string",
+      "null"
+     ]
+    },
+    "estado": {
+     "enum": [
+      "RESPONDIDA",
+      "SIN_RESOLVER"
+     ]
+    },
+    "resuelta": {
+     "type": "boolean",
+     "description": "Usado por HT-09."
+    }
+   },
+   "additionalProperties": false,
+   "allOf": [
+    {
+     "description": "Una objeción fuerte sin resolver impide entrar en el top-3 (6.2.7, 9.2).",
+     "if": {
+      "properties": {
+       "fuerza": {
+        "const": "fuerte"
+       }
+      }
+     },
+     "then": {
+      "properties": {
+       "estado": {
+        "const": "RESPONDIDA"
+       }
+      }
+     }
+    },
+    {
+     "if": {
+      "properties": {
+       "estado": {
+        "const": "RESPONDIDA"
+       }
+      }
+     },
+     "then": {
+      "properties": {
+       "respuesta": {
+        "type": "string",
+        "minLength": 10
+       }
+      }
+     }
+    }
+   ]
+  },
+  "celda_acierto": {
+   "type": "object",
+   "required": [
+    "n",
+    "aciertos",
+    "tasa_acierto",
+    "referencia"
+   ],
+   "properties": {
+    "n": {
+     "type": "integer",
+     "minimum": 0
+    },
+    "aciertos": {
+     "type": "integer",
+     "minimum": 0
+    },
+    "tasa_acierto": {
+     "type": [
+      "number",
+      "null"
+     ],
+     "minimum": 0,
+     "maximum": 1
+    },
+    "referencia": {
+     "type": "string",
+     "description": "Paseo aleatorio (y forward cuando procede)."
+    },
+    "tasa_esperada_azar": {
+     "type": "number",
+     "minimum": 0,
+     "maximum": 1,
+     "description": "Tasa del paseo aleatorio para el mismo suceso (0,5 sin deriva)."
+    },
+    "tasa_forward": {
+     "type": [
+      "number",
+      "null"
+     ],
+     "minimum": 0,
+     "maximum": 1,
+     "description": "Acierto del forward como predictor sobre los mismos pronósticos."
+    },
+    "significativo": {
+     "type": "boolean"
+    },
+    "por_horizonte": {
+     "type": "object",
+     "propertyNames": {
+      "$ref": "#/$defs/horizonte"
+     },
+     "additionalProperties": {
+      "type": "object",
+      "required": [
+       "n",
+       "aciertos"
+      ],
+      "properties": {
+       "n": {
+        "type": "integer",
+        "minimum": 0
+       },
+       "aciertos": {
+        "type": "integer",
+        "minimum": 0
+       }
+      },
+      "additionalProperties": false
+     }
+    }
+   },
+   "additionalProperties": false
+  },
+  "historial_aciertos": {
+   "type": "object",
+   "required": [
+    "ventana",
+    "referencia",
+    "por_segmento"
+   ],
+   "properties": {
+    "ventana": {
+     "type": "string"
+    },
+    "referencia": {
+     "type": "string"
+    },
+    "global": {
+     "$ref": "#/$defs/celda_acierto"
+    },
+    "por_segmento": {
+     "type": "object",
+     "propertyNames": {
+      "$ref": "#/$defs/codigo_segmento"
+     },
+     "additionalProperties": {
+      "$ref": "#/$defs/celda_acierto"
+     }
+    },
+    "nota": {
+     "type": "string"
+    }
+   },
+   "additionalProperties": false
+  },
+  "opcion": {
+   "type": "object",
+   "required": [
+    "opp_id",
+    "rango",
+    "tipo_opcion",
+    "segmento",
+    "nombre",
+    "nombre_llano",
+    "par",
+    "composicion",
+    "direccion",
+    "divisa_financiacion",
+    "tesis",
+    "mecanismo",
+    "tnd_ids",
+    "puntuaciones",
+    "naturaleza_inversion",
+    "horizonte_principal",
+    "horizontes",
+    "valoracion",
+    "carry",
+    "catalizadores",
+    "riesgos",
+    "riesgo_1a5",
+    "invalidacion",
+    "ambito",
+    "indicador_seguimiento",
+    "convertibilidad",
+    "liquidez",
+    "relevancia_decisional",
+    "reversibilidad",
+    "siguiente_paso_sugerido",
+    "que_cambiaria_la_conclusion",
+    "objeciones",
+    "lo_que_no_sabemos",
+    "confianza",
+    "evidencias",
+    "calculos"
+   ],
+   "properties": {
+    "opp_id": {
+     "$ref": "#/$defs/opp_id"
+    },
+    "rango": {
+     "type": "integer",
+     "minimum": 1,
+     "maximum": 3
+    },
+    "tipo_opcion": {
+     "$ref": "#/$defs/tipo_opcion"
+    },
+    "segmento": {
+     "$ref": "#/$defs/codigo_segmento",
+     "description": "Asignado según las reglas de 2.6; coincide con la clave de «segmentos»."
+    },
+    "nombre": {
+     "type": "string",
+     "minLength": 3,
+     "description": "Nombre técnico, p. ej., «USD/JPY bajista (yen al alza)»."
+    },
+    "nombre_llano": {
+     "type": "string",
+     "minLength": 3,
+     "maxLength": 70,
+     "description": "Para el informe del usuario: «El yen podría ganar valor frente al dólar»."
+    },
+    "sube_baja_llano": {
+     "type": "string",
+     "maxLength": 160,
+     "description": "Frase de la tarjeta que dice qué divisa sube y cuál baja (14.2)."
+    },
+    "por_que_llano": {
+     "type": "string",
+     "maxLength": 160,
+     "description": "Frase de la tarjeta (≤ 20 palabras)."
+    },
+    "que_puede_salir_mal_llano": {
+     "type": "string",
+     "maxLength": 200
+    },
+    "par": {
+     "oneOf": [
+      {
+       "$ref": "#/$defs/par"
+      },
+      {
+       "type": "null"
+      }
+     ],
+     "description": "Obligatorio (no nulo) en PAR, CRUCE y VOLATILIDAD."
+    },
+    "composicion": {
+     "$ref": "#/$defs/composicion"
+    },
+    "direccion": {
+     "$ref": "#/$defs/direccion"
+    },
+    "vista_volatilidad": {
+     "$ref": "#/$defs/vista_volatilidad"
+    },
+    "motivo_asignacion_segmento": {
+     "type": "string",
+     "minLength": 5,
+     "description": "Motivo del Analizador si el segmento no es el de las reglas 1–3 de 2.6."
+    },
+    "divisa_financiacion": {
+     "oneOf": [
+      {
+       "$ref": "#/$defs/divisa"
+      },
+      {
+       "type": "null"
+      }
+     ],
+     "description": "Divisa que se vende o se toma prestada (p. ej., JPY en el carry clásico). Nula solo en VOLATILIDAD."
+    },
+    "regimen_cambiario_divisa": {
+     "$ref": "#/$defs/regimen_divisa"
+    },
+    "tesis": {
+     "type": "string",
+     "minLength": 10
+    },
+    "mecanismo": {
+     "type": "string",
+     "minLength": 10
+    },
+    "tnd_ids": {
+     "type": "array",
+     "items": {
+      "$ref": "#/$defs/tnd_id"
+     },
+     "description": "Vacío solo en oportunidades tácticas (T = NA)."
+    },
+    "cluster_id": {
+     "type": "string",
+     "pattern": "^CL-[0-9]{1,3}$"
+    },
+    "factor_dominante": {
+     "type": "string",
+     "description": "Clúster de exposición en divisas: dólar, yen o refugio, carry y riesgo global, materias primas o una divisa concreta (9.6.3)."
+    },
+    "puntuaciones": {
+     "$ref": "#/$defs/puntuaciones"
+    },
+    "naturaleza_inversion": {
+     "$ref": "#/$defs/naturaleza_inversion"
+    },
+    "horizontes": {
+     "type": "object",
+     "minProperties": 1,
+     "propertyNames": {
+      "$ref": "#/$defs/horizonte"
+     },
+     "additionalProperties": {
+      "$ref": "#/$defs/vista_horizonte"
+     }
+    },
+    "horizonte_principal": {
+     "$ref": "#/$defs/horizonte"
+    },
+    "justificacion_horizonte": {
+     "type": [
+      "string",
+      "null"
+     ],
+     "description": "Obligatoria si el horizonte principal queda fuera del rango de su naturaleza (8.3)."
+    },
+    "ambito_h5": {
+     "oneOf": [
+      {
+       "$ref": "#/$defs/ambito_h5"
+      },
+      {
+       "type": "null"
+      }
+     ]
+    },
+    "valoracion": {
+     "type": "string",
+     "minLength": 10,
+     "description": "PPA, BEER, REER y cuánto descuentan ya el forward, la curva y el posicionamiento."
+    },
+    "carry": {
+     "$ref": "#/$defs/carry"
+    },
+    "catalizadores": {
+     "type": "array",
+     "items": {
+      "type": "object",
+      "required": [
+       "evento",
+       "fecha"
+      ],
+      "properties": {
+       "evento": {
+        "type": "string",
+        "minLength": 3
+       },
+       "fecha": {
+        "type": "string",
+        "pattern": "^[0-9]{4}-[0-9]{2}(-[0-9]{2})?$|^[0-9]{4}-T[1-4]$|^[0-9]{4}-S[12]$",
+        "description": "AAAA-MM-DD, AAAA-MM, AAAA-Tn (trimestre) o AAAA-Sn (semestre)."
+       }
+      },
+      "additionalProperties": false
+     }
+    },
+    "riesgos": {
+     "type": "array",
+     "minItems": 1,
+     "items": {
+      "type": "string"
+     }
+    },
+    "riesgo_1a5": {
+     "type": "integer",
+     "minimum": 1,
+     "maximum": 5,
+     "description": "RISK-DD-001; un tipo fijo con riesgo de ruptura o una divisa con controles parte de 4 (Anexo A, nota 2)."
+    },
+    "invalidacion": {
+     "type": "array",
+     "minItems": 1,
+     "items": {
+      "type": "string"
+     },
+     "description": "Pueden incluir niveles del par como condición de invalidación, nunca como nivel de entrada (2.5)."
+    },
+    "ambito": {
+     "$ref": "#/$defs/ambito"
+    },
+    "indicador_seguimiento": {
+     "$ref": "#/$defs/indicador_seguimiento"
+    },
+    "convertibilidad": {
+     "$ref": "#/$defs/convertibilidad"
+    },
+    "liquidez": {
+     "enum": [
+      "alta",
+      "media",
+      "baja"
+     ],
+     "description": "Liquidez del par o de la cesta (Anexo A)."
+    },
+    "relevancia_decisional": {
+     "enum": [
+      "ALTA",
+      "MEDIA",
+      "BAJA"
+     ]
+    },
+    "reversibilidad": {
+     "enum": [
+      "alta",
+      "media",
+      "baja"
+     ]
+    },
+    "siguiente_paso_sugerido": {
+     "enum": [
+      "ENVIAR_A_BLOQUE_B",
+      "PROFUNDIZAR_EN_A",
+      "VIGILAR",
+      "DESCARTAR"
+     ]
+    },
+    "que_cambiaria_la_conclusion": {
+     "type": "array",
+     "minItems": 1,
+     "items": {
+      "type": "string"
+     }
+    },
+    "objeciones": {
+     "type": "array",
+     "items": {
+      "$ref": "#/$defs/objecion"
+     }
+    },
+    "lo_que_no_sabemos": {
+     "type": "array",
+     "minItems": 1,
+     "items": {
+      "type": "string"
+     },
+     "description": "Declaración obligatoria de lagunas (R12)."
+    },
+    "confianza": {
+     "$ref": "#/$defs/confianza"
+    },
+    "evidencias": {
+     "type": "array",
+     "minItems": 1,
+     "items": {
+      "$ref": "#/$defs/clm_id"
+     }
+    },
+    "calculos": {
+     "type": "array",
+     "minItems": 1,
+     "items": {
+      "$ref": "#/$defs/calc_id"
+     }
+    },
+    "minigrafico": {
+     "type": "object",
+     "required": [
+      "tipo"
+     ],
+     "properties": {
+      "tipo": {
+       "enum": [
+        "PAR_UN_ANO",
+        "VALOR_VS_EQUILIBRIO",
+        "NINGUNO"
+       ]
+      },
+      "serie_ref": {
+       "type": "string"
+      },
+      "equilibrio": {
+       "type": [
+        "number",
+        "null"
+       ]
+      },
+      "calc_id": {
+       "$ref": "#/$defs/calc_id"
+      }
+     },
+     "additionalProperties": false,
+     "description": "Instrucción para HT-04 (14.2.5)."
+    },
+    "puertas": {
+     "type": "object",
+     "additionalProperties": {
+      "type": [
+       "string",
+       "boolean"
+      ]
+     },
+     "description": "Resultado de G1–G4 y PS1–PS8 (PS3 = convertibilidad e invertibilidad), usado por HT-09."
+    },
+    "cluster": {
+     "type": "string",
+     "description": "Alias de cluster_id usado por HT-03 y HT-09."
+    },
+    "vigente": {
+     "type": "boolean",
+     "description": "true si estaba en el top-3 del ciclo anterior (9.6.4)."
+    },
+    "desglose": {
+     "type": "object",
+     "additionalProperties": {
+      "type": "object"
+     },
+     "description": "Dimensiones de T, E, M, P y A FX para reconstruirlas con HT-03."
+    },
+    "segunda_pasada": {
+     "type": [
+      "boolean",
+      "object"
+     ]
+    },
+    "pata_activa": {
+     "type": "array",
+     "minItems": 1,
+     "uniqueItems": true,
+     "items": {
+      "$ref": "#/$defs/divisa"
+     },
+     "description": "Pata activa de la tesis (9.6.6): la divisa o divisas cuyo movimiento se pronostica (no la contrapartida ni la financiación). Opcional: si falta, se deduce (en un par, la divisa distinta de USD y EUR; en una cesta, el lado opuesto a la divisa de financiación). Las contradicciones entre segmentos se evalúan sobre ella."
+    }
+   },
+   "patternProperties": {
+    "^x_": {}
+   },
+   "additionalProperties": false,
+   "allOf": [
+    {
+     "description": "PAR, CRUCE y VOLATILIDAD se expresan sobre un par BASE/COTIZADA.",
+     "if": {
+      "properties": {
+       "tipo_opcion": {
+        "enum": [
+         "PAR",
+         "CRUCE",
+         "VOLATILIDAD"
+        ]
+       }
+      }
+     },
+     "then": {
+      "properties": {
+       "par": {
+        "$ref": "#/$defs/par"
+       }
+      }
+     }
+    },
+    {
+     "description": "PAR, CRUCE y REGIMEN: dirección referida a la base, divisa de financiación y composición con base y cotizada.",
+     "if": {
+      "properties": {
+       "tipo_opcion": {
+        "enum": [
+         "PAR",
+         "CRUCE",
+         "REGIMEN"
+        ]
+       }
+      }
+     },
+     "then": {
+      "properties": {
+       "direccion": {
+        "enum": [
+         "ALCISTA_BASE",
+         "BAJISTA_BASE"
+        ]
+       },
+       "divisa_financiacion": {
+        "$ref": "#/$defs/divisa"
+       },
+       "composicion": {
+        "minItems": 2
+       }
+      }
+     }
+    },
+    {
+     "description": "PS4: cestas, bloques y estrategias con la dirección en la composición ponderada y divisa de financiación.",
+     "if": {
+      "properties": {
+       "tipo_opcion": {
+        "enum": [
+         "CESTA",
+         "BLOQUE",
+         "ESTRATEGIA"
+        ]
+       }
+      }
+     },
+     "then": {
+      "properties": {
+       "direccion": {
+        "type": "null"
+       },
+       "composicion": {
+        "minItems": 2
+       },
+       "divisa_financiacion": {
+        "$ref": "#/$defs/divisa"
+       }
+      }
+     }
+    },
+    {
+     "description": "VOLATILIDAD: la vista va en vista_volatilidad (ALZA/BAJA y plazo).",
+     "if": {
+      "properties": {
+       "tipo_opcion": {
+        "const": "VOLATILIDAD"
+       }
+      }
+     },
+     "then": {
+      "required": [
+       "vista_volatilidad"
+      ],
+      "properties": {
+       "direccion": {
+        "type": "null"
+       }
+      }
+     }
+    },
+    {
+     "description": "REGIMEN declara el régimen cambiario y parte de un riesgo 4 (Anexo A, nota 2).",
+     "if": {
+      "properties": {
+       "tipo_opcion": {
+        "const": "REGIMEN"
+       }
+      }
+     },
+     "then": {
+      "required": [
+       "regimen_cambiario_divisa"
+      ],
+      "properties": {
+       "riesgo_1a5": {
+        "minimum": 4
+       },
+       "relevancia_decisional": {
+        "const": "ALTA"
+       }
+      }
+     }
+    },
+    {
+     "description": "Oportunidad táctica: con T = NA se exige A ≥ 65 (9.2).",
+     "if": {
+      "properties": {
+       "puntuaciones": {
+        "properties": {
+         "T": {
+          "const": "NA"
+         }
+        }
+       }
+      }
+     },
+     "then": {
+      "properties": {
+       "puntuaciones": {
+        "properties": {
+         "A": {
+          "minimum": 65
+         }
+        }
+       }
+      }
+     }
+    },
+    {
+     "description": "Con riesgo ≥ 4 la relevancia decisional es ALTA (Anexo A, nota 3).",
+     "if": {
+      "properties": {
+       "riesgo_1a5": {
+        "minimum": 4
+       }
+      }
+     },
+     "then": {
+      "properties": {
+       "relevancia_decisional": {
+        "const": "ALTA"
+       }
+      }
+     }
+    },
+    {
+     "description": "Con reversibilidad baja la relevancia decisional es ALTA (Anexo A, nota 3).",
+     "if": {
+      "properties": {
+       "reversibilidad": {
+        "const": "baja"
+       }
+      }
+     },
+     "then": {
+      "properties": {
+       "relevancia_decisional": {
+        "const": "ALTA"
+       }
+      }
+     }
+    },
+    {
+     "description": "Nota 3 del Anexo A: H4 con riesgo ≥ 3 exige relevancia ALTA (H4 con liquidez baja: comprobado por HT-09, C10).",
+     "if": {
+      "properties": {
+       "horizontes": {
+        "required": [
+         "H4"
+        ]
+       },
+       "riesgo_1a5": {
+        "minimum": 3
+       }
+      },
+      "required": [
+       "horizontes",
+       "riesgo_1a5"
+      ]
+     },
+     "then": {
+      "properties": {
+       "relevancia_decisional": {
+        "const": "ALTA"
+       }
+      }
+     }
+    },
+    {
+     "description": "Divisa con controles de capitales: riesgo mínimo 4 (Anexo A, nota 2).",
+     "if": {
+      "properties": {
+       "convertibilidad": {
+        "properties": {
+         "controles_capitales": {
+          "const": true
+         }
+        }
+       }
+      }
+     },
+     "then": {
+      "properties": {
+       "riesgo_1a5": {
+        "minimum": 4
+       }
+      }
+     }
+    },
+    {
+     "if": {
+      "properties": {
+       "horizonte_principal": {
+        "const": "H5"
+       }
+      },
+      "required": [
+       "horizonte_principal"
+      ]
+     },
+     "then": {
+      "properties": {
+       "naturaleza_inversion": {
+        "const": "ESTRUCTURAL"
+       }
+      }
+     }
+    },
+    {
+     "if": {
+      "properties": {
+       "horizontes": {
+        "required": [
+         "H5"
+        ]
+       }
+      },
+      "required": [
+       "horizontes"
+      ]
+     },
+     "then": {
+      "properties": {
+       "naturaleza_inversion": {
+        "const": "ESTRUCTURAL"
+       },
+       "horizontes": {
+        "properties": {
+         "H5": {
+          "required": [
+           "hitos"
+          ],
+          "properties": {
+           "prob": {
+            "type": "null"
+           },
+           "hitos": {
+            "minItems": 3
+           }
+          }
+         }
+        }
+       }
+      }
+     }
+    }
+   ],
+   "description": "Opción del top-3 de un segmento con todos los campos de 9.6.7 y 7.8 (Anexo B Forex)."
+  },
+  "segmento": {
+   "type": "object",
+   "required": [
+    "estado_semaforo",
+    "regimen_segmento",
+    "candidatas_analizadas",
+    "opciones",
+    "menos_de_tres_motivo"
+   ],
+   "properties": {
+    "estado_semaforo": {
+     "enum": [
+      "VERDE",
+      "AMBAR",
+      "GRIS"
+     ]
+    },
+    "regimen_segmento": {
+     "type": "string",
+     "minLength": 10
+    },
+    "candidatas_analizadas": {
+     "type": "integer",
+     "minimum": 0
+    },
+    "embudo": {
+     "type": "object",
+     "description": "Recuento por puerta de continuidad (F5).",
+     "properties": {
+      "gc0_delta_material": {
+       "type": "boolean"
+      },
+      "cribadas": {
+       "type": "integer",
+       "minimum": 0
+      },
+      "pasan_gc1": {
+       "type": "integer",
+       "minimum": 0
+      },
+      "pasan_gc2": {
+       "type": "integer",
+       "minimum": 0
+      },
+      "finalistas_gc3": {
+       "type": "integer",
+       "minimum": 0,
+       "maximum": 5
+      },
+      "elegibles": {
+       "type": "integer",
+       "minimum": 0
+      }
+     },
+     "additionalProperties": false
+    },
+    "opciones": {
+     "type": "array",
+     "maxItems": 3,
+     "items": {
+      "$ref": "#/$defs/opcion"
+     }
+    },
+    "menos_de_tres_motivo": {
+     "type": [
+      "string",
+      "null"
+     ],
+     "description": "Obligatorio si hay menos de tres opciones (R14): cuántas se analizaron, por qué no llegaron y qué tendría que ocurrir."
+    }
+   },
+   "patternProperties": {
+    "^x_": {}
+   },
+   "additionalProperties": false,
+   "allOf": [
+    {
+     "if": {
+      "properties": {
+       "opciones": {
+        "maxItems": 2
+       }
+      }
+     },
+     "then": {
+      "properties": {
+       "menos_de_tres_motivo": {
+        "type": "string",
+        "minLength": 20
+       }
+      }
+     }
+    },
+    {
+     "if": {
+      "properties": {
+       "estado_semaforo": {
+        "const": "GRIS"
+       }
+      }
+     },
+     "then": {
+      "properties": {
+       "opciones": {
+        "maxItems": 0
+       }
+      }
+     }
+    },
+    {
+     "if": {
+      "properties": {
+       "estado_semaforo": {
+        "enum": [
+         "VERDE",
+         "AMBAR"
+        ]
+       }
+      }
+     },
+     "then": {
+      "properties": {
+       "opciones": {
+        "minItems": 1
+       }
+      }
+     }
+    }
+   ],
+   "description": "Resultado de un segmento de divisas: semáforo, régimen, embudo y hasta tres opciones (R14)."
+  },
+  "entrada_bloque_B": {
+   "type": "object",
+   "description": "Encargo para el Bloque B (2.5 y Anexo B Forex): el Bloque B analiza el ámbito cambiario y elige el instrumento (contado, forward, futuro, opción, ETF/ETC o CFD), el coste, la cobertura y la ejecución. El Bloque A Forex no los propone.",
+   "required": [
+    "opp_id",
+    "segmento",
+    "tipo_opcion",
+    "par",
+    "composicion",
+    "direccion",
+    "divisa_financiacion",
+    "ambito",
+    "tesis",
+    "mecanismo",
+    "horizonte_principal",
+    "horizontes",
+    "pronosticos",
+    "catalizadores",
+    "riesgos",
+    "invalidacion",
+    "indicador_seguimiento",
+    "carry_esperado",
+    "consideraciones_implementacion",
+    "metricas_clave",
+    "preguntas_para_B",
+    "evidencias",
+    "calculos"
+   ],
+   "properties": {
+    "opp_id": {
+     "$ref": "#/$defs/opp_id"
+    },
+    "segmento": {
+     "$ref": "#/$defs/codigo_segmento"
+    },
+    "tipo_opcion": {
+     "$ref": "#/$defs/tipo_opcion"
+    },
+    "nombre": {
+     "type": "string",
+     "minLength": 3
+    },
+    "par": {
+     "oneOf": [
+      {
+       "$ref": "#/$defs/par"
+      },
+      {
+       "type": "null"
+      }
+     ]
+    },
+    "composicion": {
+     "$ref": "#/$defs/composicion"
+    },
+    "direccion": {
+     "$ref": "#/$defs/direccion"
+    },
+    "vista_volatilidad": {
+     "$ref": "#/$defs/vista_volatilidad"
+    },
+    "divisa_financiacion": {
+     "oneOf": [
+      {
+       "$ref": "#/$defs/divisa"
+      },
+      {
+       "type": "null"
+      }
+     ]
+    },
+    "ambito": {
+     "$ref": "#/$defs/ambito"
+    },
+    "tesis": {
+     "type": "string",
+     "minLength": 10
+    },
+    "mecanismo": {
+     "type": "string",
+     "minLength": 10
+    },
+    "horizontes": {
+     "type": "array",
+     "minItems": 1,
+     "uniqueItems": true,
+     "items": {
+      "$ref": "#/$defs/horizonte"
+     }
+    },
+    "horizonte_principal": {
+     "$ref": "#/$defs/horizonte"
+    },
+    "pronosticos": {
+     "type": "array",
+     "minItems": 1,
+     "items": {
+      "$ref": "#/$defs/prg_id"
+     }
+    },
+    "catalizadores": {
+     "type": "array",
+     "items": {
+      "type": "object",
+      "required": [
+       "evento",
+       "fecha"
+      ],
+      "properties": {
+       "evento": {
+        "type": "string",
+        "minLength": 3
+       },
+       "fecha": {
+        "type": "string",
+        "pattern": "^[0-9]{4}-[0-9]{2}(-[0-9]{2})?$|^[0-9]{4}-T[1-4]$|^[0-9]{4}-S[12]$",
+        "description": "AAAA-MM-DD, AAAA-MM, AAAA-Tn (trimestre) o AAAA-Sn (semestre)."
+       }
+      },
+      "additionalProperties": false
+     }
+    },
+    "riesgos": {
+     "type": "array",
+     "minItems": 1,
+     "items": {
+      "type": "string",
+      "minLength": 3
+     }
+    },
+    "invalidacion": {
+     "type": "array",
+     "minItems": 1,
+     "items": {
+      "type": "string",
+      "minLength": 3
+     }
+    },
+    "indicador_seguimiento": {
+     "$ref": "#/$defs/indicador_seguimiento"
+    },
+    "niveles_referencia": {
+     "type": "object",
+     "description": "Niveles del indicador (valor, unidad, fecha del dato y fuente HT-01). Solo referencia y condiciones de invalidación: nunca nivel de entrada.",
+     "additionalProperties": {
+      "type": "object",
+      "required": [
+       "valor",
+       "unidad",
+       "fecha_dato",
+       "fuente",
+       "hora_fijacion"
+      ],
+      "properties": {
+       "valor": {
+        "type": "number"
+       },
+       "unidad": {
+        "type": "string"
+       },
+       "fecha_dato": {
+        "type": "string",
+        "format": "date"
+       },
+       "fuente": {
+        "type": "string"
+       },
+       "hora_fijacion": {
+        "type": "string",
+        "pattern": "^[0-9]{1,2}:[0-9]{2} [A-Za-z_]+/[A-Za-z_]+$",
+        "description": "Hora y zona de la fijación (p. ej., «16:00 Europe/London», WM/Reuters)."
+       },
+       "conocible_desde": {
+        "type": "string",
+        "description": "Fecha y hora en que el dato fue conocible (G3-FX-07)."
+       }
+      },
+      "additionalProperties": false
+     }
+    },
+    "carry_esperado": {
+     "type": "object",
+     "required": [
+      "anual_pct",
+      "signo"
+     ],
+     "properties": {
+      "anual_pct": {
+       "type": [
+        "number",
+        "null"
+       ]
+      },
+      "signo": {
+       "enum": [
+        "a favor",
+        "en contra",
+        "neutro",
+        "no aplicable"
+       ]
+      }
+     },
+     "additionalProperties": false
+    },
+    "consideraciones_implementacion": {
+     "type": "array",
+     "minItems": 1,
+     "items": {
+      "type": "string",
+      "minLength": 3
+     },
+     "description": "Liquidez del par, mercado NDF, riesgo de evento y horario de liquidez. Son información, no una recomendación de instrumento (2.5)."
+    },
+    "metricas_clave": {
+     "type": "array",
+     "minItems": 1,
+     "items": {
+      "type": "string",
+      "minLength": 3
+     }
+    },
+    "preguntas_para_B": {
+     "type": "array",
+     "minItems": 1,
+     "items": {
+      "type": "string",
+      "minLength": 3
+     }
+    },
+    "evidencias": {
+     "type": "array",
+     "minItems": 1,
+     "items": {
+      "$ref": "#/$defs/clm_id"
+     }
+    },
+    "calculos": {
+     "type": "array",
+     "minItems": 1,
+     "items": {
+      "$ref": "#/$defs/calc_id"
+     }
+    },
+    "siguiente_paso_sugerido": {
+     "enum": [
+      "ENVIAR_A_BLOQUE_B",
+      "PROFUNDIZAR_EN_A",
+      "VIGILAR",
+      "DESCARTAR"
+     ]
+    },
+    "relevancia_decisional": {
+     "enum": [
+      "ALTA",
+      "MEDIA",
+      "BAJA"
+     ]
+    }
+   },
+   "patternProperties": {
+    "^x_": {}
+   },
+   "additionalProperties": false
+  },
+  "naturaleza_inversion": {
+   "enum": [
+    "TACTICA",
+    "CICLICA",
+    "PRIMA_RIESGO",
+    "VALORACION",
+    "ESTRUCTURAL"
+   ],
+   "description": "Regla de adecuación (8.3): TACTICA H1–H2 · CICLICA H2–H4 · PRIMA_RIESGO H2–H4 · VALORACION H3–H4 · ESTRUCTURAL H4–H5. LIQUIDEZ (Bloque A general) no se usa. HT-09 C17 valida la coherencia con `horizonte_principal`."
+  },
+  "ambito_h5": {
+   "enum": [
+    "EQUILIBRIO_LARGO_PLAZO",
+    "REGIMEN_CAMBIARIO",
+    "SISTEMA_MONETARIO_INTERNACIONAL"
+   ],
+   "description": "Los tres únicos ámbitos admitidos para H5 (8.3)."
+  },
+  "hito": {
+   "type": "object",
+   "required": [
+    "fecha",
+    "indicador",
+    "criterio"
+   ],
+   "additionalProperties": false,
+   "properties": {
+    "hit_id": {
+     "type": "string",
+     "pattern": "^HIT-FX-[0-9]{4}-[0-9]{4,}$"
+    },
+    "fecha": {
+     "type": "string",
+     "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}$"
+    },
+    "indicador": {
+     "type": "string",
+     "minLength": 3
+    },
+    "criterio": {
+     "type": "string",
+     "minLength": 3
+    },
+    "referencia_ingenua": {
+     "type": "string"
+    },
+    "estado": {
+     "enum": [
+      "ABIERTO",
+      "CUMPLIDO",
+      "NO_CUMPLIDO",
+      "NO_RESOLUBLE"
+     ]
+    }
+   },
+   "description": "Hito intermedio verificable de un pronóstico H5 (Anexo A: ≥ 3; el primero a ≤ 12 meses; ≤ 24 meses entre hitos)."
+  },
+  "supuesto_declarado": {
+   "type": "object",
+   "required": [
+    "supuesto",
+    "efecto_si_falso"
+   ],
+   "additionalProperties": false,
+   "properties": {
+    "supuesto": {
+     "type": "string",
+     "minLength": 3
+    },
+    "cns_id": {
+     "type": [
+      "string",
+      "null"
+     ],
+     "pattern": "^CNS-FX-[0-9]{4}-[0-9]{4,}$"
+    },
+    "efecto_si_falso": {
+     "type": "string",
+     "minLength": 3
+    }
+   },
+   "description": "6.2.9: supuesto aplicado por una consulta CT-23 sin respuesta."
+  }
+ }
+}

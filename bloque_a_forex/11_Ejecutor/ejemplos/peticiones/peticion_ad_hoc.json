@@ -1,0 +1,4 @@
+{"tipo": "AD_HOC",
+ "alcance": {"segmentos": ["G10N", "EMLA"], "divisas": ["EUR", "USD", "MXN", "BRL"], "pares": ["EUR/USD", "USD/MXN"], "tematicas": [],
+             "pregunta": "¿Hay oportunidades en el euro frente al dólar y en el peso mexicano a 1-6 meses?"},
+ "horizontes": ["H2", "H3"], "prioridad": "NORMAL", "nivel_forzado": null, "fecha_objetivo": "2026-06-08T07:00", "referencia_previa": null}

@@ -1,0 +1,13 @@
+﻿bloque_c,cand_id,tipo_activo,nombre,isin,S,rango,veredicto,eslabon_id,origen_seleccion,preguntas_para_C
+C.1,CAND-B-2025-0084,RV,Integrador británico de redes (ilustrativo),,62,1,SECUNDARIO,ESL-02,TOP_N,¿Qué margen implica el precio frente al margen normalizado? · ¿Qué parte de la cartera de pedidos tiene precio revisable?
+C.1,CAND-B-2025-0076,RV,Nexans,FR0000044448,59,2,SECUNDARIO,ESL-02,TOP_N,¿Qué margen implica el precio frente al margen normalizado? · ¿Qué parte de la cartera de pedidos tiene precio revisable?
+C.1,CAND-B-2025-0085,RV,"Excotizada de aparamenta (ilustrativo, dada de baja)",,55,3,SECUNDARIO,ESL-02,TOP_N,¿Qué margen implica el precio frente al margen normalizado? · ¿Qué parte de la cartera de pedidos tiene precio revisable?
+C.1,CAND-B-2025-0079,RV,Prysmian,IT0004176001,53,4,SECUNDARIO,ESL-02,TOP_N,¿Qué margen implica el precio frente al margen normalizado? · ¿Qué parte de la cartera de pedidos tiene precio revisable?
+C.1,CAND-B-2025-0083,RV,Fabricante italiano de cables de media tensión (ilustrativo),,53,5,SECUNDARIO,ESL-03,TOP_N,¿Qué margen implica el precio frente al margen normalizado? · ¿Qué parte de la cartera de pedidos tiene precio revisable?
+C.2,CAND-B-2025-0096,RF,Bono sénior de Prysmian 2029 (ilustrativo),,70,1,PRIORITARIO_PARA_C,ESL-02,TOP_N,¿Qué margen implica el precio frente al margen normalizado? · ¿Qué parte de la cartera de pedidos tiene precio revisable?
+C.2,CAND-B-2025-0108,RF,Pagaré verde corto (ilustrativo),,64,2,SECUNDARIO,ESL-03,TOP_N,¿Qué margen implica el precio frente al margen normalizado? · ¿Qué parte de la cartera de pedidos tiene precio revisable?
+C.2,CAND-B-2025-0101,RF,Bono sénior de Nexans 2032 (ilustrativo),,61,3,SECUNDARIO,ESL-02,TOP_N,¿Qué margen implica el precio frente al margen normalizado? · ¿Qué parte de la cartera de pedidos tiene precio revisable?
+C.2,CAND-B-2025-0099,RF,Bono sénior de Siemens Energy 2032 (ilustrativo),,60,4,SECUNDARIO,ESL-03,TOP_N,¿Qué margen implica el precio frente al margen normalizado? · ¿Qué parte de la cartera de pedidos tiene precio revisable?
+C.2,CAND-B-2025-0105,RF,Bono sénior de ABB 2032 (ilustrativo),,53,7,SECUNDARIO,ESL-02,TOP_N,¿Qué margen implica el precio frente al margen normalizado? · ¿Qué parte de la cartera de pedidos tiene precio revisable?
+C.6,CAND-B-2025-0089,FON,ETF UCITS de infraestructura de redes inteligentes (ilustrativo A),,64,1,SECUNDARIO,ESL-02,TOP_N,¿Qué margen implica el precio frente al margen normalizado? · ¿Qué parte de la cartera de pedidos tiene precio revisable?
+C.6,CAND-B-2025-0095,FON,Fondo activo UCITS de transición eléctrica (ilustrativo H),,51,3,SECUNDARIO,ESL-02,TOP_N,¿Qué margen implica el precio frente al margen normalizado? · ¿Qué parte de la cartera de pedidos tiene precio revisable?

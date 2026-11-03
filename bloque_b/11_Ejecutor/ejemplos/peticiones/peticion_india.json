@@ -1,0 +1,39 @@
+{
+ "pet_ref_broker": "BRK-EJEMPLO",
+ "origen": "LIBRE",
+ "objeto": {
+  "descripcion": "Renta variable de la India",
+  "tipo_objeto_sugerido": "MERCADO_GEOGRAFICO",
+  "clave_universo": "india",
+  "ambito": {
+   "incluye": "Índices de renta variable india por capitalización, estilo y tamaño",
+   "excluye": "Índices de otros mercados emergentes",
+   "region": "India"
+  }
+ },
+ "tipos_activo_admitidos": [
+  "IDX"
+ ],
+ "horizontes": [
+  "H4"
+ ],
+ "preguntas": [
+  "¿Qué instrumentos expresan mejor «La bolsa de la India»?"
+ ],
+ "nivel": "AUTO",
+ "limite": {
+  "minutos": null,
+  "uc": null
+ },
+ "prioridad": "NORMAL",
+ "marco_invertibilidad": {
+  "perfil": "MINORISTA_UE_DEFECTO",
+  "divisa_base": "EUR",
+  "ucits_requerido": true
+ },
+ "top_n": null,
+ "alto_impacto": false,
+ "referencia_previa": null,
+ "idioma_usuario": "es-ES",
+ "x_ejemplo": "Petición ficticia para pruebas"
+}

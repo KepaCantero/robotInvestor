@@ -1,0 +1,4245 @@
+{
+ "run_id": "RUN-FX-2026-0013",
+ "fecha": "2026-09-25",
+ "fecha_datos_mercado": "2026-09-25",
+ "methodology_version": "FX-1.1",
+ "tipo": "PERIODICO",
+ "nivel_por_segmento": {
+  "G10N": "N1",
+  "G10M": "N2",
+  "EMAS": "N1",
+  "EMLA": "N2",
+  "EMEA": "N2",
+  "ESTR": "N1"
+ },
+ "divisa_base_usuario": "EUR",
+ "regimen_macro": "Régimen sintético a 2026-09-25: lectura agregada de las señales de 6 segmentos.",
+ "regimen_cambiario": {
+  "dolar": "debil",
+  "riesgo": "neutro",
+  "volatilidad": "baja"
+ },
+ "informes_transversales": {
+  "BCM": "TRV-FX-2026-0025",
+  "PFV": "TRV-FX-2026-0026"
+ },
+ "apuestas_independientes": 14,
+ "clusteres_exposicion": [
+  {
+   "cluster_id": "CL-1",
+   "factor_dominante": "Factor común del clúster CL-1",
+   "opp_ids": [
+    "OPP-FX-2026-0045"
+   ]
+  },
+  {
+   "cluster_id": "CL-11",
+   "factor_dominante": "Factor común del clúster CL-11",
+   "opp_ids": [
+    "OPP-FX-2026-0004"
+   ]
+  },
+  {
+   "cluster_id": "CL-13",
+   "factor_dominante": "Factor común del clúster CL-13",
+   "opp_ids": [
+    "OPP-FX-2026-0054"
+   ]
+  },
+  {
+   "cluster_id": "CL-14",
+   "factor_dominante": "Factor común del clúster CL-14",
+   "opp_ids": [
+    "OPP-FX-2026-0019"
+   ]
+  },
+  {
+   "cluster_id": "CL-16",
+   "factor_dominante": "Factor común del clúster CL-16",
+   "opp_ids": [
+    "OPP-FX-2026-0025"
+   ]
+  },
+  {
+   "cluster_id": "CL-17",
+   "factor_dominante": "Factor común del clúster CL-17",
+   "opp_ids": [
+    "OPP-FX-2026-0050"
+   ]
+  },
+  {
+   "cluster_id": "CL-19",
+   "factor_dominante": "Factor común del clúster CL-19",
+   "opp_ids": [
+    "OPP-FX-2026-0012"
+   ]
+  },
+  {
+   "cluster_id": "CL-2",
+   "factor_dominante": "Factor común del clúster CL-2",
+   "opp_ids": [
+    "OPP-FX-2026-0036"
+   ]
+  },
+  {
+   "cluster_id": "CL-21",
+   "factor_dominante": "Factor común del clúster CL-21",
+   "opp_ids": [
+    "OPP-FX-2026-0037"
+   ]
+  },
+  {
+   "cluster_id": "CL-3",
+   "factor_dominante": "Factor común del clúster CL-3",
+   "opp_ids": [
+    "OPP-FX-2026-0022"
+   ]
+  },
+  {
+   "cluster_id": "CL-4",
+   "factor_dominante": "Factor común del clúster CL-4",
+   "opp_ids": [
+    "OPP-FX-2026-0002"
+   ]
+  },
+  {
+   "cluster_id": "CL-5",
+   "factor_dominante": "Factor común del clúster CL-5",
+   "opp_ids": [
+    "OPP-FX-2026-0007"
+   ]
+  },
+  {
+   "cluster_id": "CL-7",
+   "factor_dominante": "Factor común del clúster CL-7",
+   "opp_ids": [
+    "OPP-FX-2026-0039"
+   ]
+  },
+  {
+   "cluster_id": "CL-8",
+   "factor_dominante": "Factor común del clúster CL-8",
+   "opp_ids": [
+    "OPP-FX-2026-0003"
+   ]
+  }
+ ],
+ "exposicion_agregada": {
+  "AUD": "larga moderada",
+  "BRL": "larga moderada",
+  "CAD": "larga moderada",
+  "CHF": "corta",
+  "CLP": "larga moderada",
+  "COP": "larga",
+  "EGP": "larga",
+  "EUR": "corta moderada",
+  "GBP": "larga",
+  "JPY": "corta fuerte",
+  "KRW": "corta",
+  "MXN": "larga",
+  "NOK": "corta",
+  "THB": "corta",
+  "USD": "larga",
+  "ZAR": "corta"
+ },
+ "lectura_divisa_base": {
+  "divisa": "EUR",
+  "sentido": "se_deprecia",
+  "texto_llano": "Las ideas de esta semana apuntan a que el euro pierda algo de valor."
+ },
+ "contradicciones_entre_segmentos": [],
+ "segmentos": {
+  "G10N": {
+   "estado_semaforo": "VERDE",
+   "regimen_segmento": "Régimen de G10N a 2026-09-25: fuerza media de la señal 0.20.",
+   "candidatas_analizadas": 3,
+   "embudo": {
+    "gc0_delta_material": false,
+    "cribadas": 0,
+    "pasan_gc1": 0,
+    "pasan_gc2": 0,
+    "finalistas_gc3": 0,
+    "elegibles": 3
+   },
+   "opciones": [
+    {
+     "opp_id": "OPP-FX-2026-0003",
+     "rango": 1,
+     "tipo_opcion": "CRUCE",
+     "segmento": "G10N",
+     "nombre": "GBP/JPY alcista",
+     "nombre_llano": "La libra esterlina podría ganar valor frente al yen japonés",
+     "sube_baja_llano": "Sube la libra esterlina y baja el yen japonés.",
+     "par": "GBP/JPY",
+     "composicion": [
+      {
+       "divisa": "GBP",
+       "peso": 1.0,
+       "lado": "LARGO"
+      },
+      {
+       "divisa": "JPY",
+       "peso": 1.0,
+       "lado": "CORTO"
+      }
+     ],
+     "direccion": "ALCISTA_BASE",
+     "divisa_financiacion": "JPY",
+     "tesis": "GBP/JPY alcista: la señal compuesta, el carry y la valoración sostienen el movimiento en los próximos meses. Sube la libra esterlina y baja el yen japonés.",
+     "mecanismo": "Diferencial de tipos y flujos de carry coherentes con la señal compuesta del segmento.",
+     "tnd_ids": [
+      "TND-FX-2026-0001"
+     ],
+     "cluster_id": "CL-8",
+     "puntuaciones": {
+      "T": 60,
+      "E": 80,
+      "M": 50,
+      "A": 65,
+      "P": 60,
+      "RK": 69,
+      "desglose_ref": "HT03-FX-2026-0013-0003"
+     },
+     "naturaleza_inversion": "CICLICA",
+     "horizontes": {
+      "H2": {
+       "vista": "alcista",
+       "banda": "incierto",
+       "prob": null,
+       "certificado_r13": false,
+       "referencia": "paseo aleatorio y forward",
+       "tipo_rentabilidad": "PRECIO_CONTADO",
+       "divisa_medicion": "JPY",
+       "prg_id": "PRG-FX-2026-0209",
+       "etiqueta": "sin ventaja demostrada frente al paseo aleatorio",
+       "fecha_resolucion": "2026-10-09",
+       "criterio_resolucion": "Cierre HT-01 (17:00 America/New_York) de la última sesión ≤ 2026-10-09 frente al de la última sesión ≤ 2026-09-11; suceso: subida de GBPJPY (precio contado, medida en JPY) entre 2026-09-11 y 2026-10-09: Sube la libra esterlina y baja el yen japonés."
+      },
+      "H3": {
+       "vista": "alcista",
+       "banda": "incierto",
+       "prob": null,
+       "certificado_r13": false,
+       "referencia": "paseo aleatorio y forward",
+       "tipo_rentabilidad": "PRECIO_CONTADO",
+       "divisa_medicion": "JPY",
+       "prg_id": "PRG-FX-2026-0042",
+       "etiqueta": "sin ventaja demostrada frente al paseo aleatorio",
+       "fecha_resolucion": "2027-01-17",
+       "criterio_resolucion": "Cierre HT-01 (17:00 America/New_York) de la última sesión ≤ 2027-01-17 frente al de la última sesión ≤ 2026-07-17; suceso: subida de GBPJPY (precio contado, medida en JPY) entre 2026-07-17 y 2027-01-17: Sube la libra esterlina y baja el yen japonés."
+      }
+     },
+     "horizonte_principal": "H3",
+     "justificacion_horizonte": null,
+     "valoracion": "Indicador en el percentil 82% de sus últimos tres años (ST-DESC-001).",
+     "carry": {
+      "anual_pct": 5.1,
+      "signo": "a favor",
+      "ajustado_vol": 0.757,
+      "calc_id": "CALC-FX-2026-1217",
+      "diferencial_tipos_pct": 5.1
+     },
+     "catalizadores": [
+      {
+       "evento": "Reunión de política monetaria del banco central de la divisa",
+       "fecha": "2026-08-17"
+      }
+     ],
+     "riesgos": [
+      "Giro de la política monetaria",
+      "Episodio de aversión al riesgo"
+     ],
+     "riesgo_1a5": 2,
+     "invalidacion": [
+      "Cierre de GBPJPY por debajo de 212.9637 (nivel de invalidación, no de entrada)"
+     ],
+     "ambito": {
+      "incluye": "GBP/JPY, cruce de fixings WM/Reuters: tipo de cambio al contado y su rentabilidad total con carry",
+      "excluye": "Instrumentos concretos: su elección corresponde al Bloque B"
+     },
+     "indicador_seguimiento": {
+      "nombre": "GBP/JPY, cruce de fixings WM/Reuters",
+      "simbolo": "GBPJPY",
+      "fuente": "HT-01:csv",
+      "tipo": "TIPO_DE_CAMBIO"
+     },
+     "convertibilidad": {
+      "convertible": true,
+      "ndf": false,
+      "controles_capitales": false,
+      "profundidad": "alta",
+      "nota": "Convertibilidad según el universo del ejecutor y las notas del Analista."
+     },
+     "liquidez": "alta",
+     "reversibilidad": "alta",
+     "que_cambiaria_la_conclusion": [
+      "Cierre de GBPJPY por debajo de 212.9637 (nivel de invalidación, no de entrada)",
+      "Confirmación del impulso en las próximas cuatro semanas"
+     ],
+     "objeciones": [
+      {
+       "objecion_id": "OBJ-GBPJPY-01",
+       "fuerza": "moderada",
+       "resumen": "El forward ya descuenta parte del movimiento y el carry puede deshacerse de golpe.",
+       "respuesta": "Respondida con los datos HT-01, el carry y los cálculos CALC-FX- del segmento.",
+       "estado": "RESPONDIDA"
+      }
+     ],
+     "lo_que_no_sabemos": [
+      "Si el diferencial de tipos se mantendrá tras la próxima reunión"
+     ],
+     "confianza": "probable",
+     "evidencias": [
+      "CLM-FX-2026-0133",
+      "CLM-FX-2026-0134",
+      "CLM-FX-2026-0011",
+      "CLM-FX-2026-0135"
+     ],
+     "calculos": [
+      "CALC-FX-2026-1204",
+      "CALC-FX-2026-1205",
+      "CALC-FX-2026-1206",
+      "CALC-FX-2026-1207",
+      "CALC-FX-2026-1208",
+      "CALC-FX-2026-1209",
+      "CALC-FX-2026-1217",
+      "CALC-FX-2026-1282"
+     ],
+     "minigrafico": {
+      "tipo": "PAR_UN_ANO",
+      "serie_ref": "HT01:GBPJPY",
+      "equilibrio": null,
+      "calc_id": "CALC-FX-2026-1204"
+     },
+     "x_referencia": null,
+     "x_indicador_sube": true,
+     "regimen_cambiario_divisa": "LIBRE_FLOTACION",
+     "relevancia_decisional": "BAJA",
+     "siguiente_paso_sugerido": "ENVIAR_A_BLOQUE_B",
+     "factor_dominante": "Factor común del clúster CL-8",
+     "por_que_llano": "Esta moneda paga más interés que la otra.",
+     "que_puede_salir_mal_llano": "Si el banco central cambia de idea, la moneda puede ir al revés."
+    },
+    {
+     "opp_id": "OPP-FX-2026-0002",
+     "rango": 2,
+     "tipo_opcion": "CRUCE",
+     "segmento": "G10N",
+     "nombre": "EUR/GBP bajista",
+     "nombre_llano": "La libra esterlina podría ganar valor frente al euro",
+     "sube_baja_llano": "Sube la libra esterlina y baja el euro.",
+     "par": "EUR/GBP",
+     "composicion": [
+      {
+       "divisa": "EUR",
+       "peso": 1.0,
+       "lado": "CORTO"
+      },
+      {
+       "divisa": "GBP",
+       "peso": 1.0,
+       "lado": "LARGO"
+      }
+     ],
+     "direccion": "BAJISTA_BASE",
+     "divisa_financiacion": "EUR",
+     "tesis": "EUR/GBP bajista: la señal compuesta, el carry y la valoración sostienen el movimiento en los próximos meses. Sube la libra esterlina y baja el euro.",
+     "mecanismo": "Diferencial de tipos y flujos de carry coherentes con la señal compuesta del segmento.",
+     "tnd_ids": [
+      "TND-FX-2026-0001"
+     ],
+     "cluster_id": "CL-4",
+     "puntuaciones": {
+      "T": 60,
+      "E": 75,
+      "M": 50,
+      "A": 65,
+      "P": 60,
+      "RK": 67,
+      "desglose_ref": "HT03-FX-2026-0013-0002"
+     },
+     "naturaleza_inversion": "CICLICA",
+     "horizontes": {
+      "H2": {
+       "vista": "bajista",
+       "banda": "incierto",
+       "prob": null,
+       "certificado_r13": false,
+       "referencia": "paseo aleatorio y forward",
+       "tipo_rentabilidad": "PRECIO_CONTADO",
+       "divisa_medicion": "GBP",
+       "prg_id": "PRG-FX-2026-0184",
+       "etiqueta": "sin ventaja demostrada frente al paseo aleatorio",
+       "fecha_resolucion": "2026-10-02",
+       "criterio_resolucion": "Cierre HT-01 (17:00 America/New_York) de la última sesión ≤ 2026-10-02 frente al de la última sesión ≤ 2026-09-04; suceso: bajada de EURGBP (precio contado, medida en GBP) entre 2026-09-04 y 2026-10-02: Sube la libra esterlina y baja el euro."
+      },
+      "H3": {
+       "vista": "bajista",
+       "banda": "incierto",
+       "prob": null,
+       "certificado_r13": false,
+       "referencia": "paseo aleatorio y forward",
+       "tipo_rentabilidad": "PRECIO_CONTADO",
+       "divisa_medicion": "GBP",
+       "prg_id": "PRG-FX-2026-0093",
+       "etiqueta": "sin ventaja demostrada frente al paseo aleatorio",
+       "fecha_resolucion": "2027-02-07",
+       "criterio_resolucion": "Cierre HT-01 (17:00 America/New_York) de la última sesión ≤ 2027-02-07 frente al de la última sesión ≤ 2026-08-07; suceso: bajada de EURGBP (precio contado, medida en GBP) entre 2026-08-07 y 2027-02-07: Sube la libra esterlina y baja el euro."
+      }
+     },
+     "horizonte_principal": "H3",
+     "justificacion_horizonte": null,
+     "valoracion": "Indicador en el percentil 29% de sus últimos tres años (ST-DESC-001).",
+     "carry": {
+      "anual_pct": 2.96,
+      "signo": "a favor",
+      "ajustado_vol": 0.522,
+      "calc_id": "CALC-FX-2026-1215",
+      "diferencial_tipos_pct": -2.96
+     },
+     "catalizadores": [
+      {
+       "evento": "Reunión de política monetaria del banco central de la divisa",
+       "fecha": "2026-09-07"
+      }
+     ],
+     "riesgos": [
+      "Giro de la política monetaria",
+      "Episodio de aversión al riesgo"
+     ],
+     "riesgo_1a5": 1,
+     "invalidacion": [
+      "Cierre de EURGBP por encima de 1.004 (nivel de invalidación, no de entrada)"
+     ],
+     "ambito": {
+      "incluye": "EUR/GBP, tipo de referencia del BCE: tipo de cambio al contado y su rentabilidad total con carry",
+      "excluye": "Instrumentos concretos: su elección corresponde al Bloque B"
+     },
+     "indicador_seguimiento": {
+      "nombre": "EUR/GBP, tipo de referencia del BCE",
+      "simbolo": "EURGBP",
+      "fuente": "HT-01:csv",
+      "tipo": "TIPO_DE_CAMBIO"
+     },
+     "convertibilidad": {
+      "convertible": true,
+      "ndf": false,
+      "controles_capitales": false,
+      "profundidad": "alta",
+      "nota": "Convertibilidad según el universo del ejecutor y las notas del Analista."
+     },
+     "liquidez": "alta",
+     "reversibilidad": "alta",
+     "que_cambiaria_la_conclusion": [
+      "Cierre de EURGBP por encima de 1.004 (nivel de invalidación, no de entrada)",
+      "Confirmación del impulso en las próximas cuatro semanas"
+     ],
+     "objeciones": [
+      {
+       "objecion_id": "OBJ-EURGBP-01",
+       "fuerza": "moderada",
+       "resumen": "El forward ya descuenta parte del movimiento y el carry puede deshacerse de golpe.",
+       "respuesta": "Respondida con los datos HT-01, el carry y los cálculos CALC-FX- del segmento.",
+       "estado": "RESPONDIDA"
+      }
+     ],
+     "lo_que_no_sabemos": [
+      "Si el diferencial de tipos se mantendrá tras la próxima reunión"
+     ],
+     "confianza": "probable",
+     "evidencias": [
+      "CLM-FX-2026-0189",
+      "CLM-FX-2026-0190",
+      "CLM-FX-2026-0007",
+      "CLM-FX-2026-0208"
+     ],
+     "calculos": [
+      "CALC-FX-2026-1204",
+      "CALC-FX-2026-1205",
+      "CALC-FX-2026-1206",
+      "CALC-FX-2026-1207",
+      "CALC-FX-2026-1208",
+      "CALC-FX-2026-1209",
+      "CALC-FX-2026-1215",
+      "CALC-FX-2026-1282"
+     ],
+     "minigrafico": {
+      "tipo": "PAR_UN_ANO",
+      "serie_ref": "HT01:EURGBP",
+      "equilibrio": null,
+      "calc_id": "CALC-FX-2026-1204"
+     },
+     "x_referencia": null,
+     "x_indicador_sube": false,
+     "regimen_cambiario_divisa": "LIBRE_FLOTACION",
+     "relevancia_decisional": "BAJA",
+     "siguiente_paso_sugerido": "ENVIAR_A_BLOQUE_B",
+     "factor_dominante": "Factor común del clúster CL-4",
+     "por_que_llano": "Esta moneda paga más interés que la otra.",
+     "que_puede_salir_mal_llano": "Si el banco central cambia de idea, la moneda puede ir al revés."
+    },
+    {
+     "opp_id": "OPP-FX-2026-0004",
+     "rango": 3,
+     "tipo_opcion": "PAR",
+     "segmento": "G10N",
+     "nombre": "USD/CHF alcista",
+     "nombre_llano": "El dólar de EE. UU. podría ganar valor frente al franco suizo",
+     "sube_baja_llano": "Sube el dólar de EE. UU. y baja el franco suizo.",
+     "par": "USD/CHF",
+     "composicion": [
+      {
+       "divisa": "USD",
+       "peso": 1.0,
+       "lado": "LARGO"
+      },
+      {
+       "divisa": "CHF",
+       "peso": 1.0,
+       "lado": "CORTO"
+      }
+     ],
+     "direccion": "ALCISTA_BASE",
+     "divisa_financiacion": "CHF",
+     "tesis": "USD/CHF alcista: la señal compuesta, el carry y la valoración sostienen el movimiento en los próximos meses. Sube el dólar de EE. UU. y baja el franco suizo.",
+     "mecanismo": "Diferencial de tipos y flujos de carry coherentes con la señal compuesta del segmento.",
+     "tnd_ids": [
+      "TND-FX-2026-0001"
+     ],
+     "cluster_id": "CL-11",
+     "puntuaciones": {
+      "T": 60,
+      "E": 75,
+      "M": 50,
+      "A": 60,
+      "P": 60,
+      "RK": 65,
+      "desglose_ref": "HT03-FX-2026-0013-0004"
+     },
+     "naturaleza_inversion": "CICLICA",
+     "horizontes": {
+      "H2": {
+       "vista": "alcista",
+       "banda": "incierto",
+       "prob": null,
+       "certificado_r13": false,
+       "referencia": "paseo aleatorio y forward",
+       "tipo_rentabilidad": "PRECIO_CONTADO",
+       "divisa_medicion": "CHF",
+       "prg_id": "PRG-FX-2026-0210",
+       "etiqueta": "sin ventaja demostrada frente al paseo aleatorio",
+       "fecha_resolucion": "2026-10-09",
+       "criterio_resolucion": "Cierre HT-01 (17:00 America/New_York) de la última sesión ≤ 2026-10-09 frente al de la última sesión ≤ 2026-09-11; suceso: subida de USDCHF (precio contado, medida en CHF) entre 2026-09-11 y 2026-10-09: Sube el dólar de EE. UU. y baja el franco suizo."
+      },
+      "H3": {
+       "vista": "alcista",
+       "banda": "incierto",
+       "prob": null,
+       "certificado_r13": false,
+       "referencia": "paseo aleatorio y forward",
+       "tipo_rentabilidad": "PRECIO_CONTADO",
+       "divisa_medicion": "CHF",
+       "prg_id": "PRG-FX-2026-0211",
+       "etiqueta": "sin ventaja demostrada frente al paseo aleatorio",
+       "fecha_resolucion": "2027-03-11",
+       "criterio_resolucion": "Cierre HT-01 (17:00 America/New_York) de la última sesión ≤ 2027-03-11 frente al de la última sesión ≤ 2026-09-11; suceso: subida de USDCHF (precio contado, medida en CHF) entre 2026-09-11 y 2027-03-11: Sube el dólar de EE. UU. y baja el franco suizo."
+      }
+     },
+     "horizonte_principal": "H3",
+     "justificacion_horizonte": null,
+     "valoracion": "Indicador en el percentil 91% de sus últimos tres años (ST-DESC-001).",
+     "carry": {
+      "anual_pct": 2.45,
+      "signo": "a favor",
+      "ajustado_vol": 0.385,
+      "calc_id": "CALC-FX-2026-1213",
+      "diferencial_tipos_pct": 2.45
+     },
+     "catalizadores": [
+      {
+       "evento": "Reunión de política monetaria del banco central de la divisa",
+       "fecha": "2026-10-11"
+      }
+     ],
+     "riesgos": [
+      "Giro de la política monetaria",
+      "Episodio de aversión al riesgo"
+     ],
+     "riesgo_1a5": 2,
+     "invalidacion": [
+      "Cierre de USDCHF por debajo de 1.3256 (nivel de invalidación, no de entrada)"
+     ],
+     "ambito": {
+      "incluye": "USD/CHF, Fed H.10: tipo de cambio al contado y su rentabilidad total con carry",
+      "excluye": "Instrumentos concretos: su elección corresponde al Bloque B"
+     },
+     "indicador_seguimiento": {
+      "nombre": "USD/CHF, Fed H.10",
+      "simbolo": "USDCHF",
+      "fuente": "HT-01:csv",
+      "tipo": "TIPO_DE_CAMBIO"
+     },
+     "convertibilidad": {
+      "convertible": true,
+      "ndf": false,
+      "controles_capitales": false,
+      "profundidad": "alta",
+      "nota": "Convertibilidad según el universo del ejecutor y las notas del Analista."
+     },
+     "liquidez": "alta",
+     "reversibilidad": "alta",
+     "que_cambiaria_la_conclusion": [
+      "Cierre de USDCHF por debajo de 1.3256 (nivel de invalidación, no de entrada)",
+      "Confirmación del impulso en las próximas cuatro semanas"
+     ],
+     "objeciones": [
+      {
+       "objecion_id": "OBJ-USDCHF-01",
+       "fuerza": "moderada",
+       "resumen": "El forward ya descuenta parte del movimiento y el carry puede deshacerse de golpe.",
+       "respuesta": "Respondida con los datos HT-01, el carry y los cálculos CALC-FX- del segmento.",
+       "estado": "RESPONDIDA"
+      }
+     ],
+     "lo_que_no_sabemos": [
+      "Si el diferencial de tipos se mantendrá tras la próxima reunión"
+     ],
+     "confianza": "probable",
+     "evidencias": [
+      "CLM-FX-2026-0368",
+      "CLM-FX-2026-0289",
+      "CLM-FX-2026-0015",
+      "CLM-FX-2026-0369"
+     ],
+     "calculos": [
+      "CALC-FX-2026-1204",
+      "CALC-FX-2026-1205",
+      "CALC-FX-2026-1206",
+      "CALC-FX-2026-1207",
+      "CALC-FX-2026-1208",
+      "CALC-FX-2026-1209",
+      "CALC-FX-2026-1213",
+      "CALC-FX-2026-1282"
+     ],
+     "minigrafico": {
+      "tipo": "PAR_UN_ANO",
+      "serie_ref": "HT01:USDCHF",
+      "equilibrio": null,
+      "calc_id": "CALC-FX-2026-1204"
+     },
+     "x_referencia": null,
+     "x_indicador_sube": true,
+     "regimen_cambiario_divisa": "FLOTACION_ADMINISTRADA",
+     "relevancia_decisional": "BAJA",
+     "siguiente_paso_sugerido": "ENVIAR_A_BLOQUE_B",
+     "factor_dominante": "Factor común del clúster CL-11",
+     "por_que_llano": "Esta moneda paga más interés que la otra.",
+     "que_puede_salir_mal_llano": "Si el banco central cambia de idea, la moneda puede ir al revés."
+    }
+   ],
+   "menos_de_tres_motivo": null
+  },
+  "G10M": {
+   "estado_semaforo": "VERDE",
+   "regimen_segmento": "Régimen de G10M a 2026-09-25: fuerza media de la señal 0.28.",
+   "candidatas_analizadas": 8,
+   "embudo": {
+    "gc0_delta_material": true,
+    "cribadas": 8,
+    "pasan_gc1": 6,
+    "pasan_gc2": 4,
+    "finalistas_gc3": 4,
+    "elegibles": 3
+   },
+   "opciones": [
+    {
+     "opp_id": "OPP-FX-2026-0045",
+     "rango": 1,
+     "tipo_opcion": "CRUCE",
+     "segmento": "G10M",
+     "nombre": "AUD/JPY alcista",
+     "nombre_llano": "El dólar australiano podría ganar valor frente al yen japonés",
+     "sube_baja_llano": "Sube el dólar australiano y baja el yen japonés.",
+     "par": "AUD/JPY",
+     "composicion": [
+      {
+       "divisa": "AUD",
+       "peso": 1.0,
+       "lado": "LARGO"
+      },
+      {
+       "divisa": "JPY",
+       "peso": 1.0,
+       "lado": "CORTO"
+      }
+     ],
+     "direccion": "ALCISTA_BASE",
+     "divisa_financiacion": "JPY",
+     "tesis": "AUD/JPY alcista: la señal compuesta, el carry y la valoración sostienen el movimiento en los próximos meses. Sube el dólar australiano y baja el yen japonés.",
+     "mecanismo": "Diferencial de tipos y flujos de carry coherentes con la señal compuesta del segmento.",
+     "tnd_ids": [
+      "TND-FX-2026-0007"
+     ],
+     "cluster_id": "CL-1",
+     "puntuaciones": {
+      "T": 70,
+      "E": 75,
+      "M": 50,
+      "A": 70,
+      "P": 65,
+      "RK": 72,
+      "desglose_ref": "HT03-FX-2026-0013-0045"
+     },
+     "naturaleza_inversion": "CICLICA",
+     "horizontes": {
+      "H2": {
+       "vista": "alcista",
+       "banda": "más probable que no",
+       "prob": null,
+       "certificado_r13": false,
+       "referencia": "paseo aleatorio y forward",
+       "tipo_rentabilidad": "PRECIO_CONTADO",
+       "divisa_medicion": "JPY",
+       "prg_id": "PRG-FX-2026-0247",
+       "etiqueta": "sin ventaja demostrada frente al paseo aleatorio",
+       "fecha_resolucion": "2026-10-23",
+       "criterio_resolucion": "Cierre HT-01 (17:00 America/New_York) de la última sesión ≤ 2026-10-23 frente al de la última sesión ≤ 2026-09-25; suceso: subida de AUDJPY (precio contado, medida en JPY) entre 2026-09-25 y 2026-10-23: Sube el dólar australiano y baja el yen japonés."
+      },
+      "H3": {
+       "vista": "alcista",
+       "banda": "más probable que no",
+       "prob": null,
+       "certificado_r13": false,
+       "referencia": "paseo aleatorio y forward",
+       "tipo_rentabilidad": "PRECIO_CONTADO",
+       "divisa_medicion": "JPY",
+       "prg_id": "PRG-FX-2026-0248",
+       "etiqueta": "sin ventaja demostrada frente al paseo aleatorio",
+       "fecha_resolucion": "2027-03-25",
+       "criterio_resolucion": "Cierre HT-01 (17:00 America/New_York) de la última sesión ≤ 2027-03-25 frente al de la última sesión ≤ 2026-09-25; suceso: subida de AUDJPY (precio contado, medida en JPY) entre 2026-09-25 y 2027-03-25: Sube el dólar australiano y baja el yen japonés."
+      }
+     },
+     "horizonte_principal": "H3",
+     "justificacion_horizonte": null,
+     "valoracion": "Indicador en el percentil 59% de sus últimos tres años (ST-DESC-001).",
+     "carry": {
+      "anual_pct": 2.49,
+      "signo": "a favor",
+      "ajustado_vol": 0.312,
+      "calc_id": "CALC-FX-2026-1230",
+      "diferencial_tipos_pct": 2.49
+     },
+     "catalizadores": [
+      {
+       "evento": "Reunión de política monetaria del banco central de la divisa",
+       "fecha": "2026-10-25"
+      }
+     ],
+     "riesgos": [
+      "Giro de la política monetaria",
+      "Episodio de aversión al riesgo"
+     ],
+     "riesgo_1a5": 2,
+     "invalidacion": [
+      "Cierre de AUDJPY por debajo de 98.9076 (nivel de invalidación, no de entrada)"
+     ],
+     "ambito": {
+      "incluye": "AUD/JPY, cruce de fixings WM/Reuters: tipo de cambio al contado y su rentabilidad total con carry",
+      "excluye": "Instrumentos concretos: su elección corresponde al Bloque B"
+     },
+     "indicador_seguimiento": {
+      "nombre": "AUD/JPY, cruce de fixings WM/Reuters",
+      "simbolo": "AUDJPY",
+      "fuente": "HT-01:csv",
+      "tipo": "TIPO_DE_CAMBIO"
+     },
+     "convertibilidad": {
+      "convertible": true,
+      "ndf": false,
+      "controles_capitales": false,
+      "profundidad": "alta",
+      "nota": "Convertibilidad según el universo del ejecutor y las notas del Analista."
+     },
+     "liquidez": "alta",
+     "reversibilidad": "alta",
+     "que_cambiaria_la_conclusion": [
+      "Cierre de AUDJPY por debajo de 98.9076 (nivel de invalidación, no de entrada)",
+      "Confirmación del impulso en las próximas cuatro semanas"
+     ],
+     "objeciones": [
+      {
+       "objecion_id": "OBJ-AUDJPY-01",
+       "fuerza": "moderada",
+       "resumen": "El forward ya descuenta parte del movimiento y el carry puede deshacerse de golpe.",
+       "respuesta": "Respondida con los datos HT-01, el carry y los cálculos CALC-FX- del segmento.",
+       "estado": "RESPONDIDA"
+      }
+     ],
+     "lo_que_no_sabemos": [
+      "Si el diferencial de tipos se mantendrá tras la próxima reunión"
+     ],
+     "confianza": "probable",
+     "evidencias": [
+      "CLM-FX-2026-0350",
+      "CLM-FX-2026-0143",
+      "CLM-FX-2026-0025",
+      "CLM-FX-2026-0426"
+     ],
+     "calculos": [
+      "CALC-FX-2026-1218",
+      "CALC-FX-2026-1219",
+      "CALC-FX-2026-1220",
+      "CALC-FX-2026-1221",
+      "CALC-FX-2026-1222",
+      "CALC-FX-2026-1223",
+      "CALC-FX-2026-1230",
+      "CALC-FX-2026-1282"
+     ],
+     "minigrafico": {
+      "tipo": "PAR_UN_ANO",
+      "serie_ref": "HT01:AUDJPY",
+      "equilibrio": null,
+      "calc_id": "CALC-FX-2026-1218"
+     },
+     "x_referencia": null,
+     "x_indicador_sube": true,
+     "regimen_cambiario_divisa": "LIBRE_FLOTACION",
+     "relevancia_decisional": "MEDIA",
+     "siguiente_paso_sugerido": "ENVIAR_A_BLOQUE_B",
+     "factor_dominante": "Factor común del clúster CL-1",
+     "por_que_llano": "Esta moneda paga más interés que la otra.",
+     "que_puede_salir_mal_llano": "Si el banco central cambia de idea, la moneda puede ir al revés."
+    },
+    {
+     "opp_id": "OPP-FX-2026-0007",
+     "rango": 2,
+     "tipo_opcion": "CRUCE",
+     "segmento": "G10M",
+     "nombre": "EUR/NOK alcista",
+     "nombre_llano": "El euro podría ganar valor frente a la corona noruega",
+     "sube_baja_llano": "Sube el euro y baja la corona noruega.",
+     "par": "EUR/NOK",
+     "composicion": [
+      {
+       "divisa": "EUR",
+       "peso": 1.0,
+       "lado": "LARGO"
+      },
+      {
+       "divisa": "NOK",
+       "peso": 1.0,
+       "lado": "CORTO"
+      }
+     ],
+     "direccion": "ALCISTA_BASE",
+     "divisa_financiacion": "NOK",
+     "tesis": "EUR/NOK alcista: la señal compuesta, el carry y la valoración sostienen el movimiento en los próximos meses. Sube el euro y baja la corona noruega.",
+     "mecanismo": "Diferencial de tipos y flujos de carry coherentes con la señal compuesta del segmento.",
+     "tnd_ids": [
+      "TND-FX-2026-0007"
+     ],
+     "cluster_id": "CL-5",
+     "puntuaciones": {
+      "T": 70,
+      "E": 75,
+      "M": 50,
+      "A": 65,
+      "P": 65,
+      "RK": 69,
+      "desglose_ref": "HT03-FX-2026-0013-0007"
+     },
+     "naturaleza_inversion": "CICLICA",
+     "horizontes": {
+      "H2": {
+       "vista": "alcista",
+       "banda": "más probable que no",
+       "prob": null,
+       "certificado_r13": false,
+       "referencia": "paseo aleatorio y forward",
+       "tipo_rentabilidad": "PRECIO_CONTADO",
+       "divisa_medicion": "NOK",
+       "prg_id": "PRG-FX-2026-0249",
+       "etiqueta": "sin ventaja demostrada frente al paseo aleatorio",
+       "fecha_resolucion": "2026-10-23",
+       "criterio_resolucion": "Cierre HT-01 (17:00 America/New_York) de la última sesión ≤ 2026-10-23 frente al de la última sesión ≤ 2026-09-25; suceso: subida de EURNOK (precio contado, medida en NOK) entre 2026-09-25 y 2026-10-23: Sube el euro y baja la corona noruega."
+      },
+      "H3": {
+       "vista": "alcista",
+       "banda": "más probable que no",
+       "prob": null,
+       "certificado_r13": false,
+       "referencia": "paseo aleatorio y forward",
+       "tipo_rentabilidad": "PRECIO_CONTADO",
+       "divisa_medicion": "NOK",
+       "prg_id": "PRG-FX-2026-0250",
+       "etiqueta": "sin ventaja demostrada frente al paseo aleatorio",
+       "fecha_resolucion": "2027-03-25",
+       "criterio_resolucion": "Cierre HT-01 (17:00 America/New_York) de la última sesión ≤ 2027-03-25 frente al de la última sesión ≤ 2026-09-25; suceso: subida de EURNOK (precio contado, medida en NOK) entre 2026-09-25 y 2027-03-25: Sube el euro y baja la corona noruega."
+      }
+     },
+     "horizonte_principal": "H3",
+     "justificacion_horizonte": null,
+     "valoracion": "Indicador en el percentil 36% de sus últimos tres años (ST-DESC-001).",
+     "carry": {
+      "anual_pct": -4.17,
+      "signo": "en contra",
+      "ajustado_vol": -0.565,
+      "calc_id": "CALC-FX-2026-1227",
+      "diferencial_tipos_pct": -4.17
+     },
+     "catalizadores": [
+      {
+       "evento": "Reunión de política monetaria del banco central de la divisa",
+       "fecha": "2026-10-25"
+      }
+     ],
+     "riesgos": [
+      "Giro de la política monetaria",
+      "Episodio de aversión al riesgo"
+     ],
+     "riesgo_1a5": 2,
+     "invalidacion": [
+      "Cierre de EURNOK por debajo de 9.4029 (nivel de invalidación, no de entrada)"
+     ],
+     "ambito": {
+      "incluye": "EUR/NOK, tipo de referencia del BCE: tipo de cambio al contado y su rentabilidad total con carry",
+      "excluye": "Instrumentos concretos: su elección corresponde al Bloque B"
+     },
+     "indicador_seguimiento": {
+      "nombre": "EUR/NOK, tipo de referencia del BCE",
+      "simbolo": "EURNOK",
+      "fuente": "HT-01:csv",
+      "tipo": "TIPO_DE_CAMBIO"
+     },
+     "convertibilidad": {
+      "convertible": true,
+      "ndf": false,
+      "controles_capitales": false,
+      "profundidad": "media",
+      "nota": "Convertibilidad según el universo del ejecutor y las notas del Analista."
+     },
+     "liquidez": "media",
+     "reversibilidad": "media",
+     "que_cambiaria_la_conclusion": [
+      "Cierre de EURNOK por debajo de 9.4029 (nivel de invalidación, no de entrada)",
+      "Confirmación del impulso en las próximas cuatro semanas"
+     ],
+     "objeciones": [
+      {
+       "objecion_id": "OBJ-EURNOK-01",
+       "fuerza": "moderada",
+       "resumen": "El forward ya descuenta parte del movimiento y el carry puede deshacerse de golpe.",
+       "respuesta": "Respondida con los datos HT-01, el carry y los cálculos CALC-FX- del segmento.",
+       "estado": "RESPONDIDA"
+      }
+     ],
+     "lo_que_no_sabemos": [
+      "Si el diferencial de tipos se mantendrá tras la próxima reunión"
+     ],
+     "confianza": "probable",
+     "evidencias": [
+      "CLM-FX-2026-0242",
+      "CLM-FX-2026-0028",
+      "CLM-FX-2026-0029",
+      "CLM-FX-2026-0428"
+     ],
+     "calculos": [
+      "CALC-FX-2026-1218",
+      "CALC-FX-2026-1219",
+      "CALC-FX-2026-1220",
+      "CALC-FX-2026-1221",
+      "CALC-FX-2026-1222",
+      "CALC-FX-2026-1223",
+      "CALC-FX-2026-1227",
+      "CALC-FX-2026-1282"
+     ],
+     "minigrafico": {
+      "tipo": "PAR_UN_ANO",
+      "serie_ref": "HT01:EURNOK",
+      "equilibrio": null,
+      "calc_id": "CALC-FX-2026-1218"
+     },
+     "x_referencia": null,
+     "x_indicador_sube": true,
+     "regimen_cambiario_divisa": "LIBRE_FLOTACION",
+     "relevancia_decisional": "MEDIA",
+     "siguiente_paso_sugerido": "ENVIAR_A_BLOQUE_B",
+     "factor_dominante": "Factor común del clúster CL-5",
+     "por_que_llano": "Su banco central va a otro ritmo que el de la otra moneda.",
+     "que_puede_salir_mal_llano": "Si el banco central cambia de idea, la moneda puede ir al revés."
+    },
+    {
+     "opp_id": "OPP-FX-2026-0036",
+     "rango": 3,
+     "tipo_opcion": "CRUCE",
+     "segmento": "G10M",
+     "nombre": "CAD/JPY alcista",
+     "nombre_llano": "El dólar canadiense podría ganar valor frente al yen japonés",
+     "sube_baja_llano": "Sube el dólar canadiense y baja el yen japonés.",
+     "par": "CAD/JPY",
+     "composicion": [
+      {
+       "divisa": "CAD",
+       "peso": 1.0,
+       "lado": "LARGO"
+      },
+      {
+       "divisa": "JPY",
+       "peso": 1.0,
+       "lado": "CORTO"
+      }
+     ],
+     "direccion": "ALCISTA_BASE",
+     "divisa_financiacion": "JPY",
+     "tesis": "CAD/JPY alcista: la señal compuesta, el carry y la valoración sostienen el movimiento en los próximos meses. Sube el dólar canadiense y baja el yen japonés.",
+     "mecanismo": "Diferencial de tipos y flujos de carry coherentes con la señal compuesta del segmento.",
+     "tnd_ids": [
+      "TND-FX-2026-0007"
+     ],
+     "cluster_id": "CL-2",
+     "puntuaciones": {
+      "T": 60,
+      "E": 75,
+      "M": 50,
+      "A": 60,
+      "P": 60,
+      "RK": 65,
+      "desglose_ref": "HT03-FX-2026-0013-0036"
+     },
+     "naturaleza_inversion": "CICLICA",
+     "horizontes": {
+      "H2": {
+       "vista": "alcista",
+       "banda": "incierto",
+       "prob": null,
+       "certificado_r13": false,
+       "referencia": "paseo aleatorio y forward",
+       "tipo_rentabilidad": "PRECIO_CONTADO",
+       "divisa_medicion": "JPY",
+       "prg_id": "PRG-FX-2026-0237",
+       "etiqueta": "sin ventaja demostrada frente al paseo aleatorio",
+       "fecha_resolucion": "2026-10-16",
+       "criterio_resolucion": "Cierre HT-01 (17:00 America/New_York) de la última sesión ≤ 2026-10-16 frente al de la última sesión ≤ 2026-09-18; suceso: subida de CADJPY (precio contado, medida en JPY) entre 2026-09-18 y 2026-10-16: Sube el dólar canadiense y baja el yen japonés."
+      },
+      "H3": {
+       "vista": "alcista",
+       "banda": "incierto",
+       "prob": null,
+       "certificado_r13": false,
+       "referencia": "paseo aleatorio y forward",
+       "tipo_rentabilidad": "PRECIO_CONTADO",
+       "divisa_medicion": "JPY",
+       "prg_id": "PRG-FX-2026-0238",
+       "etiqueta": "sin ventaja demostrada frente al paseo aleatorio",
+       "fecha_resolucion": "2027-03-18",
+       "criterio_resolucion": "Cierre HT-01 (17:00 America/New_York) de la última sesión ≤ 2027-03-18 frente al de la última sesión ≤ 2026-09-18; suceso: subida de CADJPY (precio contado, medida en JPY) entre 2026-09-18 y 2027-03-18: Sube el dólar canadiense y baja el yen japonés."
+      }
+     },
+     "horizonte_principal": "H3",
+     "justificacion_horizonte": null,
+     "valoracion": "Indicador en el percentil 51% de sus últimos tres años (ST-DESC-001).",
+     "carry": {
+      "anual_pct": 3.52,
+      "signo": "a favor",
+      "ajustado_vol": 0.536,
+      "calc_id": "CALC-FX-2026-1231",
+      "diferencial_tipos_pct": 3.53
+     },
+     "catalizadores": [
+      {
+       "evento": "Reunión de política monetaria del banco central de la divisa",
+       "fecha": "2026-10-18"
+      }
+     ],
+     "riesgos": [
+      "Giro de la política monetaria",
+      "Episodio de aversión al riesgo"
+     ],
+     "riesgo_1a5": 2,
+     "invalidacion": [
+      "Cierre de CADJPY por debajo de 95.144 (nivel de invalidación, no de entrada)"
+     ],
+     "ambito": {
+      "incluye": "CAD/JPY, cruce de fixings WM/Reuters: tipo de cambio al contado y su rentabilidad total con carry",
+      "excluye": "Instrumentos concretos: su elección corresponde al Bloque B"
+     },
+     "indicador_seguimiento": {
+      "nombre": "CAD/JPY, cruce de fixings WM/Reuters",
+      "simbolo": "CADJPY",
+      "fuente": "HT-01:csv",
+      "tipo": "TIPO_DE_CAMBIO"
+     },
+     "convertibilidad": {
+      "convertible": true,
+      "ndf": false,
+      "controles_capitales": false,
+      "profundidad": "media",
+      "nota": "Convertibilidad según el universo del ejecutor y las notas del Analista."
+     },
+     "liquidez": "media",
+     "reversibilidad": "media",
+     "que_cambiaria_la_conclusion": [
+      "Cierre de CADJPY por debajo de 95.144 (nivel de invalidación, no de entrada)",
+      "Confirmación del impulso en las próximas cuatro semanas"
+     ],
+     "objeciones": [
+      {
+       "objecion_id": "OBJ-CADJPY-01",
+       "fuerza": "moderada",
+       "resumen": "El forward ya descuenta parte del movimiento y el carry puede deshacerse de golpe.",
+       "respuesta": "Respondida con los datos HT-01, el carry y los cálculos CALC-FX- del segmento.",
+       "estado": "RESPONDIDA"
+      }
+     ],
+     "lo_que_no_sabemos": [
+      "Si el diferencial de tipos se mantendrá tras la próxima reunión"
+     ],
+     "confianza": "probable",
+     "evidencias": [
+      "CLM-FX-2026-0409",
+      "CLM-FX-2026-0294",
+      "CLM-FX-2026-0248",
+      "CLM-FX-2026-0410"
+     ],
+     "calculos": [
+      "CALC-FX-2026-1218",
+      "CALC-FX-2026-1219",
+      "CALC-FX-2026-1220",
+      "CALC-FX-2026-1221",
+      "CALC-FX-2026-1222",
+      "CALC-FX-2026-1223",
+      "CALC-FX-2026-1231",
+      "CALC-FX-2026-1282"
+     ],
+     "minigrafico": {
+      "tipo": "PAR_UN_ANO",
+      "serie_ref": "HT01:CADJPY",
+      "equilibrio": null,
+      "calc_id": "CALC-FX-2026-1218"
+     },
+     "x_referencia": null,
+     "x_indicador_sube": true,
+     "regimen_cambiario_divisa": "LIBRE_FLOTACION",
+     "relevancia_decisional": "BAJA",
+     "siguiente_paso_sugerido": "ENVIAR_A_BLOQUE_B",
+     "factor_dominante": "Factor común del clúster CL-2",
+     "por_que_llano": "Esta moneda paga más interés que la otra.",
+     "que_puede_salir_mal_llano": "Si el banco central cambia de idea, la moneda puede ir al revés."
+    }
+   ],
+   "menos_de_tres_motivo": null
+  },
+  "EMAS": {
+   "estado_semaforo": "VERDE",
+   "regimen_segmento": "Régimen de EMAS a 2026-09-25: fuerza media de la señal 0.22.",
+   "candidatas_analizadas": 2,
+   "embudo": {
+    "gc0_delta_material": false,
+    "cribadas": 0,
+    "pasan_gc1": 0,
+    "pasan_gc2": 0,
+    "finalistas_gc3": 0,
+    "elegibles": 2
+   },
+   "opciones": [
+    {
+     "opp_id": "OPP-FX-2026-0012",
+     "rango": 1,
+     "tipo_opcion": "PAR",
+     "segmento": "EMAS",
+     "nombre": "USD/THB alcista",
+     "nombre_llano": "El dólar de EE. UU. podría ganar valor frente al baht tailandés",
+     "sube_baja_llano": "Sube el dólar de EE. UU. y baja el baht tailandés.",
+     "par": "USD/THB",
+     "composicion": [
+      {
+       "divisa": "USD",
+       "peso": 1.0,
+       "lado": "LARGO"
+      },
+      {
+       "divisa": "THB",
+       "peso": 1.0,
+       "lado": "CORTO"
+      }
+     ],
+     "direccion": "ALCISTA_BASE",
+     "divisa_financiacion": "THB",
+     "tesis": "USD/THB alcista: la señal compuesta, el carry y la valoración sostienen el movimiento en los próximos meses. Sube el dólar de EE. UU. y baja el baht tailandés.",
+     "mecanismo": "Diferencial de tipos y flujos de carry coherentes con la señal compuesta del segmento.",
+     "tnd_ids": [
+      "TND-FX-2026-0008"
+     ],
+     "cluster_id": "CL-19",
+     "puntuaciones": {
+      "T": 70,
+      "E": 80,
+      "M": 50,
+      "A": 65,
+      "P": 65,
+      "RK": 71,
+      "desglose_ref": "HT03-FX-2026-0013-0012"
+     },
+     "naturaleza_inversion": "CICLICA",
+     "horizontes": {
+      "H2": {
+       "vista": "alcista",
+       "banda": "incierto",
+       "prob": null,
+       "certificado_r13": false,
+       "referencia": "paseo aleatorio y forward",
+       "tipo_rentabilidad": "PRECIO_CONTADO",
+       "divisa_medicion": "THB",
+       "prg_id": "PRG-FX-2026-0241",
+       "etiqueta": "sin ventaja demostrada frente al paseo aleatorio",
+       "fecha_resolucion": "2026-10-16",
+       "criterio_resolucion": "Cierre HT-01 (17:00 America/New_York) de la última sesión ≤ 2026-10-16 frente al de la última sesión ≤ 2026-09-18; suceso: subida de USDTHB (precio contado, medida en THB) entre 2026-09-18 y 2026-10-16: Sube el dólar de EE. UU. y baja el baht tailandés."
+      },
+      "H3": {
+       "vista": "alcista",
+       "banda": "incierto",
+       "prob": null,
+       "certificado_r13": false,
+       "referencia": "paseo aleatorio y forward",
+       "tipo_rentabilidad": "PRECIO_CONTADO",
+       "divisa_medicion": "THB",
+       "prg_id": "PRG-FX-2026-0242",
+       "etiqueta": "sin ventaja demostrada frente al paseo aleatorio",
+       "fecha_resolucion": "2027-03-18",
+       "criterio_resolucion": "Cierre HT-01 (17:00 America/New_York) de la última sesión ≤ 2027-03-18 frente al de la última sesión ≤ 2026-09-18; suceso: subida de USDTHB (precio contado, medida en THB) entre 2026-09-18 y 2027-03-18: Sube el dólar de EE. UU. y baja el baht tailandés."
+      }
+     },
+     "horizonte_principal": "H3",
+     "justificacion_horizonte": null,
+     "valoracion": "Indicador en el percentil 80% de sus últimos tres años (ST-DESC-001).",
+     "carry": {
+      "anual_pct": 0.39,
+      "signo": "a favor",
+      "ajustado_vol": 0.099,
+      "calc_id": "CALC-FX-2026-1244",
+      "diferencial_tipos_pct": 0.39
+     },
+     "catalizadores": [
+      {
+       "evento": "Reunión de política monetaria del banco central de la divisa",
+       "fecha": "2026-10-18"
+      }
+     ],
+     "riesgos": [
+      "Giro de la política monetaria",
+      "Episodio de aversión al riesgo"
+     ],
+     "riesgo_1a5": 1,
+     "invalidacion": [
+      "Cierre de USDTHB por debajo de 34.5688 (nivel de invalidación, no de entrada)"
+     ],
+     "ambito": {
+      "incluye": "USD/THB, Banco de Tailandia: tipo de cambio al contado y su rentabilidad total con carry",
+      "excluye": "Instrumentos concretos: su elección corresponde al Bloque B"
+     },
+     "indicador_seguimiento": {
+      "nombre": "USD/THB, Banco de Tailandia",
+      "simbolo": "USDTHB",
+      "fuente": "HT-01:csv",
+      "tipo": "TIPO_DE_CAMBIO"
+     },
+     "convertibilidad": {
+      "convertible": true,
+      "ndf": false,
+      "controles_capitales": false,
+      "profundidad": "media",
+      "nota": "Convertibilidad según el universo del ejecutor y las notas del Analista."
+     },
+     "liquidez": "media",
+     "reversibilidad": "media",
+     "que_cambiaria_la_conclusion": [
+      "Cierre de USDTHB por debajo de 34.5688 (nivel de invalidación, no de entrada)",
+      "Confirmación del impulso en las próximas cuatro semanas"
+     ],
+     "objeciones": [
+      {
+       "objecion_id": "OBJ-USDTHB-01",
+       "fuerza": "moderada",
+       "resumen": "El forward ya descuenta parte del movimiento y el carry puede deshacerse de golpe.",
+       "respuesta": "Respondida con los datos HT-01, el carry y los cálculos CALC-FX- del segmento.",
+       "estado": "RESPONDIDA"
+      }
+     ],
+     "lo_que_no_sabemos": [
+      "Si el diferencial de tipos se mantendrá tras la próxima reunión"
+     ],
+     "confianza": "probable",
+     "evidencias": [
+      "CLM-FX-2026-0411",
+      "CLM-FX-2026-0304",
+      "CLM-FX-2026-0049",
+      "CLM-FX-2026-0412"
+     ],
+     "calculos": [
+      "CALC-FX-2026-1232",
+      "CALC-FX-2026-1233",
+      "CALC-FX-2026-1234",
+      "CALC-FX-2026-1235",
+      "CALC-FX-2026-1236",
+      "CALC-FX-2026-1237",
+      "CALC-FX-2026-1244",
+      "CALC-FX-2026-1282"
+     ],
+     "minigrafico": {
+      "tipo": "PAR_UN_ANO",
+      "serie_ref": "HT01:USDTHB",
+      "equilibrio": null,
+      "calc_id": "CALC-FX-2026-1232"
+     },
+     "x_referencia": "CESTA",
+     "x_indicador_sube": true,
+     "regimen_cambiario_divisa": "FLOTACION_ADMINISTRADA",
+     "relevancia_decisional": "BAJA",
+     "siguiente_paso_sugerido": "ENVIAR_A_BLOQUE_B",
+     "factor_dominante": "Factor común del clúster CL-19",
+     "por_que_llano": "Esta moneda paga más interés que la otra.",
+     "que_puede_salir_mal_llano": "Si el banco central cambia de idea, la moneda puede ir al revés."
+    },
+    {
+     "opp_id": "OPP-FX-2026-0025",
+     "rango": 2,
+     "tipo_opcion": "PAR",
+     "segmento": "EMAS",
+     "nombre": "USD/KRW alcista",
+     "nombre_llano": "El dólar de EE. UU. podría ganar valor frente al won coreano",
+     "sube_baja_llano": "Sube el dólar de EE. UU. y baja el won coreano.",
+     "par": "USD/KRW",
+     "composicion": [
+      {
+       "divisa": "USD",
+       "peso": 1.0,
+       "lado": "LARGO"
+      },
+      {
+       "divisa": "KRW",
+       "peso": 1.0,
+       "lado": "CORTO"
+      }
+     ],
+     "direccion": "ALCISTA_BASE",
+     "divisa_financiacion": "KRW",
+     "tesis": "USD/KRW alcista: la señal compuesta, el carry y la valoración sostienen el movimiento en los próximos meses. Sube el dólar de EE. UU. y baja el won coreano.",
+     "mecanismo": "Diferencial de tipos y flujos de carry coherentes con la señal compuesta del segmento.",
+     "tnd_ids": [
+      "TND-FX-2026-0008"
+     ],
+     "cluster_id": "CL-16",
+     "puntuaciones": {
+      "T": 60,
+      "E": 80,
+      "M": 50,
+      "A": 60,
+      "P": 60,
+      "RK": 67,
+      "desglose_ref": "HT03-FX-2026-0013-0025"
+     },
+     "naturaleza_inversion": "CICLICA",
+     "horizontes": {
+      "H2": {
+       "vista": "alcista",
+       "banda": "más probable que no",
+       "prob": null,
+       "certificado_r13": false,
+       "referencia": "paseo aleatorio y forward",
+       "tipo_rentabilidad": "PRECIO_CONTADO",
+       "divisa_medicion": "KRW",
+       "prg_id": "PRG-FX-2026-0199",
+       "etiqueta": "sin ventaja demostrada frente al paseo aleatorio",
+       "fecha_resolucion": "2026-10-02",
+       "criterio_resolucion": "Cierre HT-01 (17:00 America/New_York) de la última sesión ≤ 2026-10-02 frente al de la última sesión ≤ 2026-09-04; suceso: subida de USDKRW (precio contado, medida en KRW) entre 2026-09-04 y 2026-10-02: Sube el dólar de EE. UU. y baja el won coreano."
+      },
+      "H3": {
+       "vista": "alcista",
+       "banda": "más probable que no",
+       "prob": null,
+       "certificado_r13": false,
+       "referencia": "paseo aleatorio y forward",
+       "tipo_rentabilidad": "PRECIO_CONTADO",
+       "divisa_medicion": "KRW",
+       "prg_id": "PRG-FX-2026-0034",
+       "etiqueta": "sin ventaja demostrada frente al paseo aleatorio",
+       "fecha_resolucion": "2027-01-10",
+       "criterio_resolucion": "Cierre HT-01 (17:00 America/New_York) de la última sesión ≤ 2027-01-10 frente al de la última sesión ≤ 2026-07-10; suceso: subida de USDKRW (precio contado, medida en KRW) entre 2026-07-10 y 2027-01-10: Sube el dólar de EE. UU. y baja el won coreano."
+      }
+     },
+     "horizonte_principal": "H3",
+     "justificacion_horizonte": null,
+     "valoracion": "Indicador en el percentil 97% de sus últimos tres años (ST-DESC-001).",
+     "carry": {
+      "anual_pct": 0.19,
+      "signo": "neutro",
+      "ajustado_vol": 0.051,
+      "calc_id": "CALC-FX-2026-1240",
+      "diferencial_tipos_pct": 0.19
+     },
+     "catalizadores": [
+      {
+       "evento": "Reunión de política monetaria del banco central de la divisa",
+       "fecha": "2026-08-10"
+      }
+     ],
+     "riesgos": [
+      "Giro de la política monetaria",
+      "Episodio de aversión al riesgo"
+     ],
+     "riesgo_1a5": 2,
+     "invalidacion": [
+      "Cierre de USDKRW por debajo de 1283.1146 (nivel de invalidación, no de entrada)"
+     ],
+     "ambito": {
+      "incluye": "USD/KRW, cierre de Seúl: tipo de cambio al contado y su rentabilidad total con carry",
+      "excluye": "Instrumentos concretos: su elección corresponde al Bloque B"
+     },
+     "indicador_seguimiento": {
+      "nombre": "USD/KRW, cierre de Seúl",
+      "simbolo": "USDKRW",
+      "fuente": "HT-01:csv",
+      "tipo": "TIPO_DE_CAMBIO"
+     },
+     "convertibilidad": {
+      "convertible": false,
+      "ndf": true,
+      "controles_capitales": false,
+      "profundidad": "media",
+      "nota": "Convertibilidad según el universo del ejecutor y las notas del Analista."
+     },
+     "liquidez": "media",
+     "reversibilidad": "baja",
+     "que_cambiaria_la_conclusion": [
+      "Cierre de USDKRW por debajo de 1283.1146 (nivel de invalidación, no de entrada)",
+      "Confirmación del impulso en las próximas cuatro semanas"
+     ],
+     "objeciones": [
+      {
+       "objecion_id": "OBJ-USDKRW-01",
+       "fuerza": "moderada",
+       "resumen": "El forward ya descuenta parte del movimiento y el carry puede deshacerse de golpe.",
+       "respuesta": "Respondida con los datos HT-01, el carry y los cálculos CALC-FX- del segmento.",
+       "estado": "RESPONDIDA"
+      }
+     ],
+     "lo_que_no_sabemos": [
+      "Si el diferencial de tipos se mantendrá tras la próxima reunión"
+     ],
+     "confianza": "probable",
+     "evidencias": [
+      "CLM-FX-2026-0113",
+      "CLM-FX-2026-0114",
+      "CLM-FX-2026-0115",
+      "CLM-FX-2026-0116"
+     ],
+     "calculos": [
+      "CALC-FX-2026-1232",
+      "CALC-FX-2026-1233",
+      "CALC-FX-2026-1234",
+      "CALC-FX-2026-1235",
+      "CALC-FX-2026-1236",
+      "CALC-FX-2026-1237",
+      "CALC-FX-2026-1240",
+      "CALC-FX-2026-1282"
+     ],
+     "minigrafico": {
+      "tipo": "PAR_UN_ANO",
+      "serie_ref": "HT01:USDKRW",
+      "equilibrio": null,
+      "calc_id": "CALC-FX-2026-1232"
+     },
+     "x_referencia": "CESTA",
+     "x_indicador_sube": true,
+     "regimen_cambiario_divisa": "LIBRE_FLOTACION",
+     "relevancia_decisional": "ALTA",
+     "siguiente_paso_sugerido": "ENVIAR_A_BLOQUE_B",
+     "factor_dominante": "Factor común del clúster CL-16",
+     "por_que_llano": "Su banco central va a otro ritmo que el de la otra moneda.",
+     "que_puede_salir_mal_llano": "Si el banco central cambia de idea, la moneda puede ir al revés."
+    }
+   ],
+   "menos_de_tres_motivo": "Se proponen 2 opción(es) en Emergentes de Asia. Se proponen 2 opción(es): de 2 candidatas analizadas, 2 finalistas evaluadas y 2 elegibles (R14)."
+  },
+  "EMLA": {
+   "estado_semaforo": "VERDE",
+   "regimen_segmento": "Régimen de EMLA a 2026-09-25: fuerza media de la señal 0.23.",
+   "candidatas_analizadas": 5,
+   "embudo": {
+    "gc0_delta_material": true,
+    "cribadas": 5,
+    "pasan_gc1": 3,
+    "pasan_gc2": 3,
+    "finalistas_gc3": 3,
+    "elegibles": 2
+   },
+   "opciones": [
+    {
+     "opp_id": "OPP-FX-2026-0054",
+     "rango": 1,
+     "tipo_opcion": "PAR",
+     "segmento": "EMLA",
+     "nombre": "USD/COP bajista",
+     "nombre_llano": "El peso colombiano podría ganar valor frente al dólar de EE. UU.",
+     "sube_baja_llano": "Sube el peso colombiano y baja el dólar de EE. UU.",
+     "par": "USD/COP",
+     "composicion": [
+      {
+       "divisa": "USD",
+       "peso": 1.0,
+       "lado": "CORTO"
+      },
+      {
+       "divisa": "COP",
+       "peso": 1.0,
+       "lado": "LARGO"
+      }
+     ],
+     "direccion": "BAJISTA_BASE",
+     "divisa_financiacion": "USD",
+     "tesis": "USD/COP bajista: la señal compuesta, el carry y la valoración sostienen el movimiento en los próximos meses. Sube el peso colombiano y baja el dólar de EE. UU.",
+     "mecanismo": "Diferencial de tipos y flujos de carry coherentes con la señal compuesta del segmento.",
+     "tnd_ids": [
+      "TND-FX-2026-0004"
+     ],
+     "cluster_id": "CL-13",
+     "puntuaciones": {
+      "T": 70,
+      "E": 75,
+      "M": 50,
+      "A": 65,
+      "P": 65,
+      "RK": 69,
+      "desglose_ref": "HT03-FX-2026-0013-0054"
+     },
+     "naturaleza_inversion": "CICLICA",
+     "horizontes": {
+      "H2": {
+       "vista": "bajista",
+       "banda": "incierto",
+       "prob": null,
+       "certificado_r13": false,
+       "referencia": "paseo aleatorio y forward",
+       "tipo_rentabilidad": "PRECIO_CONTADO",
+       "divisa_medicion": "COP",
+       "prg_id": "PRG-FX-2026-0251",
+       "etiqueta": "sin ventaja demostrada frente al paseo aleatorio",
+       "fecha_resolucion": "2026-10-23",
+       "criterio_resolucion": "Cierre HT-01 (17:00 America/New_York) de la última sesión ≤ 2026-10-23 frente al de la última sesión ≤ 2026-09-25; suceso: bajada de USDCOP (precio contado, medida en COP) entre 2026-09-25 y 2026-10-23: Sube el peso colombiano y baja el dólar de EE. UU."
+      },
+      "H3": {
+       "vista": "bajista",
+       "banda": "incierto",
+       "prob": null,
+       "certificado_r13": false,
+       "referencia": "paseo aleatorio y forward",
+       "tipo_rentabilidad": "PRECIO_CONTADO",
+       "divisa_medicion": "COP",
+       "prg_id": "PRG-FX-2026-0252",
+       "etiqueta": "sin ventaja demostrada frente al paseo aleatorio",
+       "fecha_resolucion": "2027-03-25",
+       "criterio_resolucion": "Cierre HT-01 (17:00 America/New_York) de la última sesión ≤ 2027-03-25 frente al de la última sesión ≤ 2026-09-25; suceso: bajada de USDCOP (precio contado, medida en COP) entre 2026-09-25 y 2027-03-25: Sube el peso colombiano y baja el dólar de EE. UU."
+      }
+     },
+     "horizonte_principal": "H3",
+     "justificacion_horizonte": null,
+     "valoracion": "Indicador en el percentil 0% de sus últimos tres años (ST-DESC-001).",
+     "carry": {
+      "anual_pct": 11.25,
+      "signo": "a favor",
+      "ajustado_vol": 0.919,
+      "calc_id": "CALC-FX-2026-1255",
+      "diferencial_tipos_pct": -11.25
+     },
+     "catalizadores": [
+      {
+       "evento": "Reunión de política monetaria del banco central de la divisa",
+       "fecha": "2026-10-25"
+      }
+     ],
+     "riesgos": [
+      "Giro de la política monetaria",
+      "Episodio de aversión al riesgo"
+     ],
+     "riesgo_1a5": 5,
+     "invalidacion": [
+      "Cierre de USDCOP por encima de 2233.9339 (nivel de invalidación, no de entrada)"
+     ],
+     "ambito": {
+      "incluye": "USD/COP, TRM de Colombia: tipo de cambio al contado y su rentabilidad total con carry",
+      "excluye": "Instrumentos concretos: su elección corresponde al Bloque B"
+     },
+     "indicador_seguimiento": {
+      "nombre": "USD/COP, TRM de Colombia",
+      "simbolo": "USDCOP",
+      "fuente": "HT-01:csv",
+      "tipo": "TIPO_DE_CAMBIO"
+     },
+     "convertibilidad": {
+      "convertible": false,
+      "ndf": true,
+      "controles_capitales": false,
+      "profundidad": "media",
+      "nota": "Convertibilidad según el universo del ejecutor y las notas del Analista."
+     },
+     "liquidez": "media",
+     "reversibilidad": "baja",
+     "que_cambiaria_la_conclusion": [
+      "Cierre de USDCOP por encima de 2233.9339 (nivel de invalidación, no de entrada)",
+      "Confirmación del impulso en las próximas cuatro semanas"
+     ],
+     "objeciones": [
+      {
+       "objecion_id": "OBJ-USDCOP-01",
+       "fuerza": "moderada",
+       "resumen": "El forward ya descuenta parte del movimiento y el carry puede deshacerse de golpe.",
+       "respuesta": "Respondida con los datos HT-01, el carry y los cálculos CALC-FX- del segmento.",
+       "estado": "RESPONDIDA"
+      }
+     ],
+     "lo_que_no_sabemos": [
+      "Si el diferencial de tipos se mantendrá tras la próxima reunión"
+     ],
+     "confianza": "probable",
+     "evidencias": [
+      "CLM-FX-2026-0381",
+      "CLM-FX-2026-0321",
+      "CLM-FX-2026-0057",
+      "CLM-FX-2026-0433"
+     ],
+     "calculos": [
+      "CALC-FX-2026-1246",
+      "CALC-FX-2026-1247",
+      "CALC-FX-2026-1248",
+      "CALC-FX-2026-1249",
+      "CALC-FX-2026-1250",
+      "CALC-FX-2026-1251",
+      "CALC-FX-2026-1255",
+      "CALC-FX-2026-1282"
+     ],
+     "minigrafico": {
+      "tipo": "PAR_UN_ANO",
+      "serie_ref": "HT01:USDCOP",
+      "equilibrio": null,
+      "calc_id": "CALC-FX-2026-1246"
+     },
+     "x_referencia": "CESTA",
+     "x_indicador_sube": false,
+     "regimen_cambiario_divisa": "LIBRE_FLOTACION",
+     "relevancia_decisional": "ALTA",
+     "siguiente_paso_sugerido": "ENVIAR_A_BLOQUE_B",
+     "factor_dominante": "Factor común del clúster CL-13",
+     "por_que_llano": "Esta moneda paga más interés que la otra.",
+     "que_puede_salir_mal_llano": "Si el banco central cambia de idea, la moneda puede ir al revés."
+    },
+    {
+     "opp_id": "OPP-FX-2026-0050",
+     "rango": 2,
+     "tipo_opcion": "PAR",
+     "segmento": "EMLA",
+     "nombre": "USD/MXN bajista",
+     "nombre_llano": "El peso mexicano podría ganar valor frente al dólar de EE. UU.",
+     "sube_baja_llano": "Sube el peso mexicano y baja el dólar de EE. UU.",
+     "par": "USD/MXN",
+     "composicion": [
+      {
+       "divisa": "USD",
+       "peso": 1.0,
+       "lado": "CORTO"
+      },
+      {
+       "divisa": "MXN",
+       "peso": 1.0,
+       "lado": "LARGO"
+      }
+     ],
+     "direccion": "BAJISTA_BASE",
+     "divisa_financiacion": "USD",
+     "tesis": "USD/MXN bajista: la señal compuesta, el carry y la valoración sostienen el movimiento en los próximos meses. Sube el peso mexicano y baja el dólar de EE. UU.",
+     "mecanismo": "Diferencial de tipos y flujos de carry coherentes con la señal compuesta del segmento.",
+     "tnd_ids": [
+      "TND-FX-2026-0004"
+     ],
+     "cluster_id": "CL-17",
+     "puntuaciones": {
+      "T": 60,
+      "E": 75,
+      "M": 50,
+      "A": 60,
+      "P": 60,
+      "RK": 65,
+      "desglose_ref": "HT03-FX-2026-0013-0050"
+     },
+     "naturaleza_inversion": "CICLICA",
+     "horizontes": {
+      "H2": {
+       "vista": "bajista",
+       "banda": "incierto",
+       "prob": null,
+       "certificado_r13": false,
+       "referencia": "paseo aleatorio y forward",
+       "tipo_rentabilidad": "PRECIO_CONTADO",
+       "divisa_medicion": "MXN",
+       "prg_id": "PRG-FX-2026-0253",
+       "etiqueta": "sin ventaja demostrada frente al paseo aleatorio",
+       "fecha_resolucion": "2026-10-23",
+       "criterio_resolucion": "Cierre HT-01 (17:00 America/New_York) de la última sesión ≤ 2026-10-23 frente al de la última sesión ≤ 2026-09-25; suceso: bajada de USDMXN (precio contado, medida en MXN) entre 2026-09-25 y 2026-10-23: Sube el peso mexicano y baja el dólar de EE. UU."
+      },
+      "H3": {
+       "vista": "bajista",
+       "banda": "incierto",
+       "prob": null,
+       "certificado_r13": false,
+       "referencia": "paseo aleatorio y forward",
+       "tipo_rentabilidad": "PRECIO_CONTADO",
+       "divisa_medicion": "MXN",
+       "prg_id": "PRG-FX-2026-0254",
+       "etiqueta": "sin ventaja demostrada frente al paseo aleatorio",
+       "fecha_resolucion": "2027-03-25",
+       "criterio_resolucion": "Cierre HT-01 (17:00 America/New_York) de la última sesión ≤ 2027-03-25 frente al de la última sesión ≤ 2026-09-25; suceso: bajada de USDMXN (precio contado, medida en MXN) entre 2026-09-25 y 2027-03-25: Sube el peso mexicano y baja el dólar de EE. UU."
+      }
+     },
+     "horizonte_principal": "H3",
+     "justificacion_horizonte": null,
+     "valoracion": "Indicador en el percentil 0% de sus últimos tres años (ST-DESC-001).",
+     "carry": {
+      "anual_pct": 4.72,
+      "signo": "a favor",
+      "ajustado_vol": 0.489,
+      "calc_id": "CALC-FX-2026-1252",
+      "diferencial_tipos_pct": -4.72
+     },
+     "catalizadores": [
+      {
+       "evento": "Reunión de política monetaria del banco central de la divisa",
+       "fecha": "2026-10-25"
+      }
+     ],
+     "riesgos": [
+      "Giro de la política monetaria",
+      "Episodio de aversión al riesgo"
+     ],
+     "riesgo_1a5": 4,
+     "invalidacion": [
+      "Cierre de USDMXN por encima de 12.8755 (nivel de invalidación, no de entrada)"
+     ],
+     "ambito": {
+      "incluye": "USD/MXN, FIX de Banxico: tipo de cambio al contado y su rentabilidad total con carry",
+      "excluye": "Instrumentos concretos: su elección corresponde al Bloque B"
+     },
+     "indicador_seguimiento": {
+      "nombre": "USD/MXN, FIX de Banxico",
+      "simbolo": "USDMXN",
+      "fuente": "HT-01:csv",
+      "tipo": "TIPO_DE_CAMBIO"
+     },
+     "convertibilidad": {
+      "convertible": true,
+      "ndf": false,
+      "controles_capitales": false,
+      "profundidad": "alta",
+      "nota": "Convertibilidad según el universo del ejecutor y las notas del Analista."
+     },
+     "liquidez": "alta",
+     "reversibilidad": "alta",
+     "que_cambiaria_la_conclusion": [
+      "Cierre de USDMXN por encima de 12.8755 (nivel de invalidación, no de entrada)",
+      "Confirmación del impulso en las próximas cuatro semanas"
+     ],
+     "objeciones": [
+      {
+       "objecion_id": "OBJ-USDMXN-01",
+       "fuerza": "moderada",
+       "resumen": "El forward ya descuenta parte del movimiento y el carry puede deshacerse de golpe.",
+       "respuesta": "Respondida con los datos HT-01, el carry y los cálculos CALC-FX- del segmento.",
+       "estado": "RESPONDIDA"
+      }
+     ],
+     "lo_que_no_sabemos": [
+      "Si el diferencial de tipos se mantendrá tras la próxima reunión"
+     ],
+     "confianza": "probable",
+     "evidencias": [
+      "CLM-FX-2026-0384",
+      "CLM-FX-2026-0385",
+      "CLM-FX-2026-0163",
+      "CLM-FX-2026-0434"
+     ],
+     "calculos": [
+      "CALC-FX-2026-1246",
+      "CALC-FX-2026-1247",
+      "CALC-FX-2026-1248",
+      "CALC-FX-2026-1249",
+      "CALC-FX-2026-1250",
+      "CALC-FX-2026-1251",
+      "CALC-FX-2026-1252",
+      "CALC-FX-2026-1282"
+     ],
+     "minigrafico": {
+      "tipo": "PAR_UN_ANO",
+      "serie_ref": "HT01:USDMXN",
+      "equilibrio": null,
+      "calc_id": "CALC-FX-2026-1246"
+     },
+     "x_referencia": "CESTA",
+     "x_indicador_sube": false,
+     "regimen_cambiario_divisa": "LIBRE_FLOTACION",
+     "relevancia_decisional": "ALTA",
+     "siguiente_paso_sugerido": "ENVIAR_A_BLOQUE_B",
+     "factor_dominante": "Factor común del clúster CL-17",
+     "por_que_llano": "Esta moneda paga más interés que la otra.",
+     "que_puede_salir_mal_llano": "Si el banco central cambia de idea, la moneda puede ir al revés."
+    }
+   ],
+   "menos_de_tres_motivo": "Se proponen 2 opción(es) en Emergentes de Latinoamérica. Se proponen 2 opción(es): de 5 candidatas analizadas, 3 finalistas evaluadas y 2 elegibles (R14). OPP-FX-2026-0015: CLP con dirección opuesta en otro segmento sin justificación (9.6.6); sale la de menor RK → CLP con dirección opuesta en otro segmento sin justificación (9.6.6); sale la de menor RK."
+  },
+  "EMEA": {
+   "estado_semaforo": "VERDE",
+   "regimen_segmento": "Régimen de EMEA a 2026-09-25: fuerza media de la señal 0.25.",
+   "candidatas_analizadas": 7,
+   "embudo": {
+    "gc0_delta_material": true,
+    "cribadas": 7,
+    "pasan_gc1": 5,
+    "pasan_gc2": 4,
+    "finalistas_gc3": 4,
+    "elegibles": 2
+   },
+   "opciones": [
+    {
+     "opp_id": "OPP-FX-2026-0019",
+     "rango": 1,
+     "tipo_opcion": "REGIMEN",
+     "segmento": "EMEA",
+     "nombre": "USD/EGP bajista",
+     "nombre_llano": "La libra egipcia podría ganar valor frente al dólar de EE. UU.",
+     "sube_baja_llano": "Sube la libra egipcia y baja el dólar de EE. UU.",
+     "par": "USD/EGP",
+     "composicion": [
+      {
+       "divisa": "USD",
+       "peso": 1.0,
+       "lado": "CORTO"
+      },
+      {
+       "divisa": "EGP",
+       "peso": 1.0,
+       "lado": "LARGO"
+      }
+     ],
+     "direccion": "BAJISTA_BASE",
+     "divisa_financiacion": "USD",
+     "tesis": "USD/EGP bajista: la señal compuesta, el carry y la valoración sostienen el movimiento en los próximos meses. Sube la libra egipcia y baja el dólar de EE. UU.",
+     "mecanismo": "Diferencial de tipos y flujos de carry coherentes con la señal compuesta del segmento.",
+     "tnd_ids": [
+      "TND-FX-2026-0005"
+     ],
+     "cluster_id": "CL-14",
+     "puntuaciones": {
+      "T": 60,
+      "E": 80,
+      "M": 50,
+      "A": 65,
+      "P": 60,
+      "RK": 69,
+      "desglose_ref": "HT03-FX-2026-0013-0019"
+     },
+     "naturaleza_inversion": "CICLICA",
+     "horizontes": {
+      "H2": {
+       "vista": "bajista",
+       "banda": "más probable que no",
+       "prob": null,
+       "certificado_r13": false,
+       "referencia": "paseo aleatorio y forward",
+       "tipo_rentabilidad": "PRECIO_CONTADO",
+       "divisa_medicion": "EGP",
+       "prg_id": "PRG-FX-2026-0200",
+       "etiqueta": "sin ventaja demostrada frente al paseo aleatorio",
+       "fecha_resolucion": "2026-10-02",
+       "criterio_resolucion": "Cierre HT-01 (17:00 America/New_York) de la última sesión ≤ 2026-10-02 frente al de la última sesión ≤ 2026-09-04; suceso: bajada de USDEGP (precio contado, medida en EGP) entre 2026-09-04 y 2026-10-02: Sube la libra egipcia y baja el dólar de EE. UU."
+      },
+      "H3": {
+       "vista": "bajista",
+       "banda": "más probable que no",
+       "prob": null,
+       "certificado_r13": false,
+       "referencia": "paseo aleatorio y forward",
+       "tipo_rentabilidad": "PRECIO_CONTADO",
+       "divisa_medicion": "EGP",
+       "prg_id": "PRG-FX-2026-0108",
+       "etiqueta": "sin ventaja demostrada frente al paseo aleatorio",
+       "fecha_resolucion": "2027-02-07",
+       "criterio_resolucion": "Cierre HT-01 (17:00 America/New_York) de la última sesión ≤ 2027-02-07 frente al de la última sesión ≤ 2026-08-07; suceso: bajada de USDEGP (precio contado, medida en EGP) entre 2026-08-07 y 2027-02-07: Sube la libra egipcia y baja el dólar de EE. UU."
+      }
+     },
+     "horizonte_principal": "H3",
+     "justificacion_horizonte": null,
+     "valoracion": "Indicador en el percentil 60% de sus últimos tres años (ST-DESC-001).",
+     "carry": {
+      "anual_pct": 22.0,
+      "signo": "a favor",
+      "ajustado_vol": 2.712,
+      "calc_id": "CALC-FX-2026-1269",
+      "diferencial_tipos_pct": -22.0
+     },
+     "catalizadores": [
+      {
+       "evento": "Reunión de política monetaria del banco central de la divisa",
+       "fecha": "2026-09-07"
+      }
+     ],
+     "riesgos": [
+      "Giro de la política monetaria",
+      "Episodio de aversión al riesgo"
+     ],
+     "riesgo_1a5": 4,
+     "invalidacion": [
+      "Cierre de USDEGP por encima de 51.271 (nivel de invalidación, no de entrada)"
+     ],
+     "ambito": {
+      "incluye": "USD/EGP, Banco Central de Egipto: tipo de cambio al contado y su rentabilidad total con carry",
+      "excluye": "Instrumentos concretos: su elección corresponde al Bloque B"
+     },
+     "indicador_seguimiento": {
+      "nombre": "USD/EGP, Banco Central de Egipto",
+      "simbolo": "USDEGP",
+      "fuente": "HT-01:csv",
+      "tipo": "TIPO_DE_CAMBIO"
+     },
+     "convertibilidad": {
+      "convertible": false,
+      "ndf": true,
+      "controles_capitales": true,
+      "profundidad": "baja",
+      "nota": "Convertibilidad según el universo del ejecutor y las notas del Analista."
+     },
+     "liquidez": "baja",
+     "reversibilidad": "baja",
+     "que_cambiaria_la_conclusion": [
+      "Cierre de USDEGP por encima de 51.271 (nivel de invalidación, no de entrada)",
+      "Confirmación del impulso en las próximas cuatro semanas"
+     ],
+     "objeciones": [
+      {
+       "objecion_id": "OBJ-USDEGP-01",
+       "fuerza": "moderada",
+       "resumen": "El forward ya descuenta parte del movimiento y el carry puede deshacerse de golpe.",
+       "respuesta": "Respondida con los datos HT-01, el carry y los cálculos CALC-FX- del segmento.",
+       "estado": "RESPONDIDA"
+      }
+     ],
+     "lo_que_no_sabemos": [
+      "Si el diferencial de tipos se mantendrá tras la próxima reunión"
+     ],
+     "confianza": "probable",
+     "evidencias": [
+      "CLM-FX-2026-0171",
+      "CLM-FX-2026-0078",
+      "CLM-FX-2026-0079",
+      "CLM-FX-2026-0227"
+     ],
+     "calculos": [
+      "CALC-FX-2026-1257",
+      "CALC-FX-2026-1258",
+      "CALC-FX-2026-1259",
+      "CALC-FX-2026-1260",
+      "CALC-FX-2026-1261",
+      "CALC-FX-2026-1262",
+      "CALC-FX-2026-1269",
+      "CALC-FX-2026-1282"
+     ],
+     "minigrafico": {
+      "tipo": "PAR_UN_ANO",
+      "serie_ref": "HT01:USDEGP",
+      "equilibrio": null,
+      "calc_id": "CALC-FX-2026-1257"
+     },
+     "x_referencia": "CESTA",
+     "x_indicador_sube": false,
+     "regimen_cambiario_divisa": "FLOTACION_ADMINISTRADA",
+     "relevancia_decisional": "ALTA",
+     "siguiente_paso_sugerido": "ENVIAR_A_BLOQUE_B",
+     "factor_dominante": "Factor común del clúster CL-14",
+     "por_que_llano": "Esta moneda paga más interés que la otra.",
+     "que_puede_salir_mal_llano": "Si el banco central cambia de idea, la moneda puede ir al revés."
+    },
+    {
+     "opp_id": "OPP-FX-2026-0037",
+     "rango": 2,
+     "tipo_opcion": "PAR",
+     "segmento": "EMEA",
+     "nombre": "USD/ZAR alcista",
+     "nombre_llano": "El dólar de EE. UU. podría ganar valor frente al rand sudafricano",
+     "sube_baja_llano": "Sube el dólar de EE. UU. y baja el rand sudafricano.",
+     "par": "USD/ZAR",
+     "composicion": [
+      {
+       "divisa": "USD",
+       "peso": 1.0,
+       "lado": "LARGO"
+      },
+      {
+       "divisa": "ZAR",
+       "peso": 1.0,
+       "lado": "CORTO"
+      }
+     ],
+     "direccion": "ALCISTA_BASE",
+     "divisa_financiacion": "ZAR",
+     "tesis": "USD/ZAR alcista: la señal compuesta, el carry y la valoración sostienen el movimiento en los próximos meses. Sube el dólar de EE. UU. y baja el rand sudafricano.",
+     "mecanismo": "Diferencial de tipos y flujos de carry coherentes con la señal compuesta del segmento.",
+     "tnd_ids": [
+      "TND-FX-2026-0005"
+     ],
+     "cluster_id": "CL-21",
+     "puntuaciones": {
+      "T": 60,
+      "E": 80,
+      "M": 50,
+      "A": 55,
+      "P": 60,
+      "RK": 65,
+      "desglose_ref": "HT03-FX-2026-0013-0037"
+     },
+     "naturaleza_inversion": "CICLICA",
+     "horizontes": {
+      "H2": {
+       "vista": "alcista",
+       "banda": "incierto",
+       "prob": null,
+       "certificado_r13": false,
+       "referencia": "paseo aleatorio y forward",
+       "tipo_rentabilidad": "PRECIO_CONTADO",
+       "divisa_medicion": "ZAR",
+       "prg_id": "PRG-FX-2026-0255",
+       "etiqueta": "sin ventaja demostrada frente al paseo aleatorio",
+       "fecha_resolucion": "2026-10-23",
+       "criterio_resolucion": "Cierre HT-01 (17:00 America/New_York) de la última sesión ≤ 2026-10-23 frente al de la última sesión ≤ 2026-09-25; suceso: subida de USDZAR (precio contado, medida en ZAR) entre 2026-09-25 y 2026-10-23: Sube el dólar de EE. UU. y baja el rand sudafricano."
+      },
+      "H3": {
+       "vista": "alcista",
+       "banda": "incierto",
+       "prob": null,
+       "certificado_r13": false,
+       "referencia": "paseo aleatorio y forward",
+       "tipo_rentabilidad": "PRECIO_CONTADO",
+       "divisa_medicion": "ZAR",
+       "prg_id": "PRG-FX-2026-0256",
+       "etiqueta": "sin ventaja demostrada frente al paseo aleatorio",
+       "fecha_resolucion": "2027-03-25",
+       "criterio_resolucion": "Cierre HT-01 (17:00 America/New_York) de la última sesión ≤ 2027-03-25 frente al de la última sesión ≤ 2026-09-25; suceso: subida de USDZAR (precio contado, medida en ZAR) entre 2026-09-25 y 2027-03-25: Sube el dólar de EE. UU. y baja el rand sudafricano."
+      }
+     },
+     "horizonte_principal": "H3",
+     "justificacion_horizonte": null,
+     "valoracion": "Indicador en el percentil 75% de sus últimos tres años (ST-DESC-001).",
+     "carry": {
+      "anual_pct": -4.03,
+      "signo": "en contra",
+      "ajustado_vol": -0.508,
+      "calc_id": "CALC-FX-2026-1267",
+      "diferencial_tipos_pct": -4.03
+     },
+     "catalizadores": [
+      {
+       "evento": "Reunión de política monetaria del banco central de la divisa",
+       "fecha": "2026-10-25"
+      }
+     ],
+     "riesgos": [
+      "Giro de la política monetaria",
+      "Episodio de aversión al riesgo"
+     ],
+     "riesgo_1a5": 2,
+     "invalidacion": [
+      "Cierre de USDZAR por debajo de 19.1165 (nivel de invalidación, no de entrada)"
+     ],
+     "ambito": {
+      "incluye": "USD/ZAR, fixing WM/Reuters: tipo de cambio al contado y su rentabilidad total con carry",
+      "excluye": "Instrumentos concretos: su elección corresponde al Bloque B"
+     },
+     "indicador_seguimiento": {
+      "nombre": "USD/ZAR, fixing WM/Reuters",
+      "simbolo": "USDZAR",
+      "fuente": "HT-01:csv",
+      "tipo": "TIPO_DE_CAMBIO"
+     },
+     "convertibilidad": {
+      "convertible": true,
+      "ndf": false,
+      "controles_capitales": false,
+      "profundidad": "alta",
+      "nota": "Convertibilidad según el universo del ejecutor y las notas del Analista."
+     },
+     "liquidez": "alta",
+     "reversibilidad": "alta",
+     "que_cambiaria_la_conclusion": [
+      "Cierre de USDZAR por debajo de 19.1165 (nivel de invalidación, no de entrada)",
+      "Confirmación del impulso en las próximas cuatro semanas"
+     ],
+     "objeciones": [
+      {
+       "objecion_id": "OBJ-USDZAR-01",
+       "fuerza": "moderada",
+       "resumen": "El forward ya descuenta parte del movimiento y el carry puede deshacerse de golpe.",
+       "respuesta": "Respondida con los datos HT-01, el carry y los cálculos CALC-FX- del segmento.",
+       "estado": "RESPONDIDA"
+      }
+     ],
+     "lo_que_no_sabemos": [
+      "Si el diferencial de tipos se mantendrá tras la próxima reunión"
+     ],
+     "confianza": "probable",
+     "evidencias": [
+      "CLM-FX-2026-0437",
+      "CLM-FX-2026-0324",
+      "CLM-FX-2026-0075",
+      "CLM-FX-2026-0438"
+     ],
+     "calculos": [
+      "CALC-FX-2026-1257",
+      "CALC-FX-2026-1258",
+      "CALC-FX-2026-1259",
+      "CALC-FX-2026-1260",
+      "CALC-FX-2026-1261",
+      "CALC-FX-2026-1262",
+      "CALC-FX-2026-1267",
+      "CALC-FX-2026-1282"
+     ],
+     "minigrafico": {
+      "tipo": "PAR_UN_ANO",
+      "serie_ref": "HT01:USDZAR",
+      "equilibrio": null,
+      "calc_id": "CALC-FX-2026-1257"
+     },
+     "x_referencia": "CESTA",
+     "x_indicador_sube": true,
+     "regimen_cambiario_divisa": "LIBRE_FLOTACION",
+     "relevancia_decisional": "MEDIA",
+     "siguiente_paso_sugerido": "ENVIAR_A_BLOQUE_B",
+     "factor_dominante": "Factor común del clúster CL-21",
+     "por_que_llano": "Su banco central va a otro ritmo que el de la otra moneda.",
+     "que_puede_salir_mal_llano": "Si el banco central cambia de idea, la moneda puede ir al revés."
+    }
+   ],
+   "menos_de_tres_motivo": "Se proponen 2 opción(es) en Emergentes de Europa, Oriente Medio y África. Se proponen 2 opción(es): de 7 candidatas analizadas, 5 finalistas evaluadas y 2 elegibles (R14). OPP-FX-2026-0047: A=60 en banda marginal sin segunda pasada independiente → Segunda pasada independiente de A y cálculo verificado. OPP-FX-2026-0020: A=60 en banda marginal sin segunda pasada independiente → Segunda pasada independiente de A y cálculo verificado. OPP-FX-2026-0038: G2 no superada; 1 objeción(es) fuerte(s) sin resolver → Superar la puerta G2; Resolver las objeciones fuertes con evidencia."
+  },
+  "ESTR": {
+   "estado_semaforo": "VERDE",
+   "regimen_segmento": "Régimen de ESTR a 2026-09-25: fuerza media de la señal 0.35.",
+   "candidatas_analizadas": 2,
+   "embudo": {
+    "gc0_delta_material": false,
+    "cribadas": 0,
+    "pasan_gc1": 0,
+    "pasan_gc2": 0,
+    "finalistas_gc3": 0,
+    "elegibles": 2
+   },
+   "opciones": [
+    {
+     "opp_id": "OPP-FX-2026-0022",
+     "rango": 1,
+     "tipo_opcion": "CESTA",
+     "segmento": "ESTR",
+     "nombre": "Divisas latinoamericanas frente al USD",
+     "nombre_llano": "Divisas latinoamericanas frente al USD",
+     "sube_baja_llano": "Suben el real brasileño, el peso mexicano y el peso chileno y baja el dólar de EE. UU.",
+     "par": null,
+     "composicion": [
+      {
+       "divisa": "BRL",
+       "peso": 0.25,
+       "lado": "LARGO"
+      },
+      {
+       "divisa": "MXN",
+       "peso": 0.25,
+       "lado": "LARGO"
+      },
+      {
+       "divisa": "CLP",
+       "peso": 0.25,
+       "lado": "LARGO"
+      },
+      {
+       "divisa": "COP",
+       "peso": 0.25,
+       "lado": "LARGO"
+      },
+      {
+       "divisa": "USD",
+       "peso": 1.0,
+       "lado": "CORTO"
+      }
+     ],
+     "direccion": null,
+     "divisa_financiacion": "USD",
+     "tesis": "Divisas latinoamericanas frente al USD: la señal compuesta, el carry y la valoración sostienen el movimiento en los próximos meses. Suben el real brasileño, el peso mexicano y el peso chileno y baja el dólar de EE. UU.",
+     "mecanismo": "Diferencial de tipos y flujos de carry coherentes con la señal compuesta del segmento.",
+     "tnd_ids": [
+      "TND-FX-2026-0006"
+     ],
+     "cluster_id": "CL-3",
+     "puntuaciones": {
+      "T": 80,
+      "E": 75,
+      "M": 50,
+      "A": 70,
+      "P": 70,
+      "RK": 74,
+      "desglose_ref": "HT03-FX-2026-0013-0022"
+     },
+     "naturaleza_inversion": "CICLICA",
+     "horizontes": {
+      "H2": {
+       "vista": "alcista",
+       "banda": "incierto",
+       "prob": null,
+       "certificado_r13": false,
+       "referencia": "rentabilidad nula",
+       "tipo_rentabilidad": "PRECIO_CONTADO",
+       "divisa_medicion": "USD",
+       "prg_id": "PRG-FX-2026-0230",
+       "etiqueta": "sin ventaja demostrada frente al paseo aleatorio",
+       "fecha_resolucion": "2026-10-09",
+       "criterio_resolucion": "Cierre HT-01 (17:00 America/New_York) de la última sesión ≤ 2026-10-09 frente al de la última sesión ≤ 2026-09-11; suceso: subida de CESTA-LATAM (precio contado, medida en USD) entre 2026-09-11 y 2026-10-09: Suben el real brasileño, el peso mexicano y el peso chileno y baja el dólar de EE. UU."
+      },
+      "H3": {
+       "vista": "alcista",
+       "banda": "incierto",
+       "prob": null,
+       "certificado_r13": false,
+       "referencia": "rentabilidad nula",
+       "tipo_rentabilidad": "PRECIO_CONTADO",
+       "divisa_medicion": "USD",
+       "prg_id": "PRG-FX-2026-0231",
+       "etiqueta": "sin ventaja demostrada frente al paseo aleatorio",
+       "fecha_resolucion": "2027-03-11",
+       "criterio_resolucion": "Cierre HT-01 (17:00 America/New_York) de la última sesión ≤ 2027-03-11 frente al de la última sesión ≤ 2026-09-11; suceso: subida de CESTA-LATAM (precio contado, medida en USD) entre 2026-09-11 y 2027-03-11: Suben el real brasileño, el peso mexicano y el peso chileno y baja el dólar de EE. UU."
+      }
+     },
+     "horizonte_principal": "H3",
+     "justificacion_horizonte": null,
+     "valoracion": "Indicador en el percentil 66% de sus últimos tres años (ST-DESC-001).",
+     "carry": {
+      "anual_pct": 5.15,
+      "signo": "a favor",
+      "ajustado_vol": 0.95,
+      "calc_id": "CALC-FX-2026-1281"
+     },
+     "catalizadores": [
+      {
+       "evento": "Reunión de política monetaria del banco central de la divisa",
+       "fecha": "2026-10-11"
+      }
+     ],
+     "riesgos": [
+      "Giro de la política monetaria",
+      "Episodio de aversión al riesgo"
+     ],
+     "riesgo_1a5": 4,
+     "invalidacion": [
+      "Cierre de CESTA-LATAM por debajo de 109.9333 (nivel de invalidación, no de entrada)"
+     ],
+     "ambito": {
+      "incluye": "Índice de la cesta latinoamericana frente al USD (propio): tipo de cambio al contado y su rentabilidad total con carry",
+      "excluye": "Instrumentos concretos: su elección corresponde al Bloque B"
+     },
+     "indicador_seguimiento": {
+      "nombre": "Índice de la cesta latinoamericana frente al USD (propio)",
+      "simbolo": "CESTA-LATAM",
+      "fuente": "HT-01:csv",
+      "tipo": "INDICE_CESTA"
+     },
+     "convertibilidad": {
+      "convertible": false,
+      "ndf": true,
+      "controles_capitales": false,
+      "profundidad": "media",
+      "nota": "Convertibilidad según el universo del ejecutor y las notas del Analista."
+     },
+     "liquidez": "media",
+     "reversibilidad": "baja",
+     "que_cambiaria_la_conclusion": [
+      "Cierre de CESTA-LATAM por debajo de 109.9333 (nivel de invalidación, no de entrada)",
+      "Confirmación del impulso en las próximas cuatro semanas"
+     ],
+     "objeciones": [
+      {
+       "objecion_id": "OBJ-CESTA-LATAM-01",
+       "fuerza": "moderada",
+       "resumen": "El forward ya descuenta parte del movimiento y el carry puede deshacerse de golpe.",
+       "respuesta": "Respondida con los datos HT-01, el carry y los cálculos CALC-FX- del segmento.",
+       "estado": "RESPONDIDA"
+      }
+     ],
+     "lo_que_no_sabemos": [
+      "Si el diferencial de tipos se mantendrá tras la próxima reunión"
+     ],
+     "confianza": "probable",
+     "evidencias": [
+      "CLM-FX-2026-0258",
+      "CLM-FX-2026-0332",
+      "CLM-FX-2026-0093",
+      "CLM-FX-2026-0396"
+     ],
+     "calculos": [
+      "CALC-FX-2026-1270",
+      "CALC-FX-2026-1271",
+      "CALC-FX-2026-1272",
+      "CALC-FX-2026-1273",
+      "CALC-FX-2026-1274",
+      "CALC-FX-2026-1275",
+      "CALC-FX-2026-1281",
+      "CALC-FX-2026-1282"
+     ],
+     "minigrafico": {
+      "tipo": "PAR_UN_ANO",
+      "serie_ref": "HT01:CESTA-LATAM",
+      "equilibrio": null,
+      "calc_id": "CALC-FX-2026-1270"
+     },
+     "x_referencia": null,
+     "x_indicador_sube": true,
+     "regimen_cambiario_divisa": "LIBRE_FLOTACION",
+     "relevancia_decisional": "ALTA",
+     "siguiente_paso_sugerido": "ENVIAR_A_BLOQUE_B",
+     "factor_dominante": "Factor común del clúster CL-3",
+     "por_que_llano": "Esta moneda paga más interés que la otra.",
+     "que_puede_salir_mal_llano": "Si el banco central cambia de idea, la moneda puede ir al revés."
+    },
+    {
+     "opp_id": "OPP-FX-2026-0039",
+     "rango": 2,
+     "tipo_opcion": "ESTRATEGIA",
+     "segmento": "ESTR",
+     "nombre": "Momentum G10 frente al USD (posición invertida)",
+     "nombre_llano": "Tendencia grandes monedas frente al USD",
+     "sube_baja_llano": "Sube el dólar de EE. UU. y bajan el euro, la libra esterlina y el dólar australiano.",
+     "par": null,
+     "composicion": [
+      {
+       "divisa": "EUR",
+       "peso": 0.25,
+       "lado": "CORTO"
+      },
+      {
+       "divisa": "GBP",
+       "peso": 0.25,
+       "lado": "CORTO"
+      },
+      {
+       "divisa": "AUD",
+       "peso": 0.25,
+       "lado": "CORTO"
+      },
+      {
+       "divisa": "CAD",
+       "peso": 0.25,
+       "lado": "CORTO"
+      },
+      {
+       "divisa": "USD",
+       "peso": 1.0,
+       "lado": "LARGO"
+      }
+     ],
+     "direccion": null,
+     "divisa_financiacion": "AUD",
+     "tesis": "Momentum G10 frente al USD (posición invertida): la señal compuesta, el carry y la valoración sostienen el movimiento en los próximos meses. Sube el dólar de EE. UU. y bajan el euro, la libra esterlina y el dólar australiano.",
+     "mecanismo": "Diferencial de tipos y flujos de carry coherentes con la señal compuesta del segmento.",
+     "tnd_ids": [
+      "TND-FX-2026-0006"
+     ],
+     "cluster_id": "CL-7",
+     "puntuaciones": {
+      "T": 60,
+      "E": 75,
+      "M": 50,
+      "A": 60,
+      "P": 60,
+      "RK": 65,
+      "desglose_ref": "HT03-FX-2026-0013-0039"
+     },
+     "naturaleza_inversion": "PRIMA_RIESGO",
+     "horizontes": {
+      "H2": {
+       "vista": "bajista",
+       "banda": "incierto",
+       "prob": null,
+       "certificado_r13": false,
+       "referencia": "rentabilidad nula",
+       "tipo_rentabilidad": "RENTABILIDAD_TOTAL",
+       "divisa_medicion": "AUD",
+       "prg_id": "PRG-FX-2026-0232",
+       "etiqueta": "sin ventaja demostrada frente al paseo aleatorio",
+       "fecha_resolucion": "2026-10-09",
+       "criterio_resolucion": "Cierre HT-01 (17:00 America/New_York) de la última sesión ≤ 2026-10-09 frente al de la última sesión ≤ 2026-09-11; suceso: bajada de FX-MOM-G10 (rentabilidad total, medida en AUD) entre 2026-09-11 y 2026-10-09: Sube el dólar de EE. UU. y bajan el euro, la libra esterlina y el dólar australiano."
+      },
+      "H3": {
+       "vista": "bajista",
+       "banda": "incierto",
+       "prob": null,
+       "certificado_r13": false,
+       "referencia": "rentabilidad nula",
+       "tipo_rentabilidad": "RENTABILIDAD_TOTAL",
+       "divisa_medicion": "AUD",
+       "prg_id": "PRG-FX-2026-0135",
+       "etiqueta": "sin ventaja demostrada frente al paseo aleatorio",
+       "fecha_resolucion": "2027-02-14",
+       "criterio_resolucion": "Cierre HT-01 (17:00 America/New_York) de la última sesión ≤ 2027-02-14 frente al de la última sesión ≤ 2026-08-14; suceso: bajada de FX-MOM-G10 (rentabilidad total, medida en AUD) entre 2026-08-14 y 2027-02-14: Sube el dólar de EE. UU. y bajan el euro, la libra esterlina y el dólar australiano."
+      }
+     },
+     "horizonte_principal": "H3",
+     "justificacion_horizonte": null,
+     "valoracion": "Indicador en el percentil 39% de sus últimos tres años (ST-DESC-001).",
+     "carry": {
+      "anual_pct": -0.99,
+      "signo": "en contra",
+      "ajustado_vol": -0.218,
+      "calc_id": "CALC-FX-2026-1278"
+     },
+     "catalizadores": [
+      {
+       "evento": "Reunión de política monetaria del banco central de la divisa",
+       "fecha": "2026-09-14"
+      }
+     ],
+     "riesgos": [
+      "Giro de la política monetaria",
+      "Episodio de aversión al riesgo"
+     ],
+     "riesgo_1a5": 2,
+     "invalidacion": [
+      "Cierre de FX-MOM-G10 por encima de 106.6234 (nivel de invalidación, no de entrada)"
+     ],
+     "ambito": {
+      "incluye": "Índice de momentum G10 (exceso de rentabilidad, propio): tipo de cambio al contado y su rentabilidad total con carry",
+      "excluye": "Instrumentos concretos: su elección corresponde al Bloque B"
+     },
+     "indicador_seguimiento": {
+      "nombre": "Índice de momentum G10 (exceso de rentabilidad, propio)",
+      "simbolo": "FX-MOM-G10",
+      "fuente": "HT-01:csv",
+      "tipo": "INDICE_ESTRATEGIA"
+     },
+     "convertibilidad": {
+      "convertible": true,
+      "ndf": false,
+      "controles_capitales": false,
+      "profundidad": "alta",
+      "nota": "Convertibilidad según el universo del ejecutor y las notas del Analista."
+     },
+     "liquidez": "alta",
+     "reversibilidad": "alta",
+     "que_cambiaria_la_conclusion": [
+      "Cierre de FX-MOM-G10 por encima de 106.6234 (nivel de invalidación, no de entrada)",
+      "Confirmación del impulso en las próximas cuatro semanas"
+     ],
+     "objeciones": [
+      {
+       "objecion_id": "OBJ-FX-MOM-G10-01",
+       "fuerza": "moderada",
+       "resumen": "El forward ya descuenta parte del movimiento y el carry puede deshacerse de golpe.",
+       "respuesta": "Respondida con los datos HT-01, el carry y los cálculos CALC-FX- del segmento.",
+       "estado": "RESPONDIDA"
+      }
+     ],
+     "lo_que_no_sabemos": [
+      "Si el diferencial de tipos se mantendrá tras la próxima reunión"
+     ],
+     "confianza": "probable",
+     "evidencias": [
+      "CLM-FX-2026-0263",
+      "CLM-FX-2026-0264",
+      "CLM-FX-2026-0265",
+      "CLM-FX-2026-0266"
+     ],
+     "calculos": [
+      "CALC-FX-2026-1270",
+      "CALC-FX-2026-1271",
+      "CALC-FX-2026-1272",
+      "CALC-FX-2026-1273",
+      "CALC-FX-2026-1274",
+      "CALC-FX-2026-1275",
+      "CALC-FX-2026-1278",
+      "CALC-FX-2026-1282"
+     ],
+     "minigrafico": {
+      "tipo": "PAR_UN_ANO",
+      "serie_ref": "HT01:FX-MOM-G10",
+      "equilibrio": null,
+      "calc_id": "CALC-FX-2026-1270"
+     },
+     "x_referencia": null,
+     "x_indicador_sube": false,
+     "regimen_cambiario_divisa": "LIBRE_FLOTACION",
+     "relevancia_decisional": "BAJA",
+     "siguiente_paso_sugerido": "ENVIAR_A_BLOQUE_B",
+     "factor_dominante": "Factor común del clúster CL-7",
+     "por_que_llano": "Su banco central va a otro ritmo que el de la otra moneda.",
+     "que_puede_salir_mal_llano": "Si el banco central cambia de idea, la moneda puede ir al revés."
+    }
+   ],
+   "menos_de_tres_motivo": "Se proponen 2 opción(es) en Estrategias y cestas cambiarias. Se proponen 2 opción(es): de 2 candidatas analizadas, 2 finalistas evaluadas y 2 elegibles (R14)."
+  }
+ },
+ "seguimiento_vigentes": [
+  {
+   "opp_id": "OPP-FX-2026-0002",
+   "estado": "VIGENTE",
+   "comentario": "Se mantiene en el top-3 (continuidad 9.6.4)",
+   "decision_broker": null
+  },
+  {
+   "opp_id": "OPP-FX-2026-0003",
+   "estado": "VIGENTE",
+   "comentario": "Se mantiene en el top-3 (continuidad 9.6.4)",
+   "decision_broker": null
+  },
+  {
+   "opp_id": "OPP-FX-2026-0004",
+   "estado": "VIGENTE",
+   "comentario": "Se mantiene en el top-3 (continuidad 9.6.4)",
+   "decision_broker": null
+  },
+  {
+   "opp_id": "OPP-FX-2026-0036",
+   "estado": "VIGENTE",
+   "comentario": "Se mantiene en el top-3 (continuidad 9.6.4)",
+   "decision_broker": null
+  },
+  {
+   "opp_id": "OPP-FX-2026-0043",
+   "estado": "CERRADA",
+   "motivo_cierre": "SUSTITUCION",
+   "comentario": "Sale del top-3: sustituida o ya no elegible",
+   "decision_broker": null
+  },
+  {
+   "opp_id": "OPP-FX-2026-0045",
+   "estado": "VIGENTE",
+   "comentario": "Se mantiene en el top-3 (continuidad 9.6.4)",
+   "decision_broker": null
+  },
+  {
+   "opp_id": "OPP-FX-2026-0012",
+   "estado": "VIGENTE",
+   "comentario": "Se mantiene en el top-3 (continuidad 9.6.4)",
+   "decision_broker": null
+  },
+  {
+   "opp_id": "OPP-FX-2026-0025",
+   "estado": "VIGENTE",
+   "comentario": "Se mantiene en el top-3 (continuidad 9.6.4)",
+   "decision_broker": null
+  },
+  {
+   "opp_id": "OPP-FX-2026-0016",
+   "estado": "CERRADA",
+   "motivo_cierre": "INVALIDACION",
+   "comentario": "Condición de invalidación cumplida",
+   "decision_broker": null
+  },
+  {
+   "opp_id": "OPP-FX-2026-0050",
+   "estado": "VIGENTE",
+   "comentario": "Se mantiene en el top-3 (continuidad 9.6.4)",
+   "decision_broker": null
+  },
+  {
+   "opp_id": "OPP-FX-2026-0019",
+   "estado": "VIGENTE",
+   "comentario": "Se mantiene en el top-3 (continuidad 9.6.4)",
+   "decision_broker": null
+  },
+  {
+   "opp_id": "OPP-FX-2026-0038",
+   "estado": "CERRADA",
+   "motivo_cierre": "SUSTITUCION",
+   "comentario": "Sale del top-3: sustituida o ya no elegible",
+   "decision_broker": null
+  },
+  {
+   "opp_id": "OPP-FX-2026-0047",
+   "estado": "CERRADA",
+   "motivo_cierre": "SUSTITUCION",
+   "comentario": "Sale del top-3: sustituida o ya no elegible",
+   "decision_broker": null
+  },
+  {
+   "opp_id": "OPP-FX-2026-0022",
+   "estado": "VIGENTE",
+   "comentario": "Se mantiene en el top-3 (continuidad 9.6.4)",
+   "decision_broker": null
+  },
+  {
+   "opp_id": "OPP-FX-2026-0039",
+   "estado": "VIGENTE",
+   "comentario": "Se mantiene en el top-3 (continuidad 9.6.4)",
+   "decision_broker": null
+  }
+ ],
+ "historial_aciertos": {
+  "ventana": "12 semanas",
+  "referencia": "paseo aleatorio y forward",
+  "global": {
+   "n": 70,
+   "aciertos": 27,
+   "tasa_acierto": 0.3857,
+   "referencia": "Paseo aleatorio (0,5 sin deriva) y forward como predictor",
+   "tasa_esperada_azar": 0.5,
+   "tasa_forward": 0.5,
+   "significativo": false,
+   "por_horizonte": {
+    "H2": {
+     "n": 70,
+     "aciertos": 27
+    }
+   }
+  },
+  "por_segmento": {
+   "G10N": {
+    "n": 11,
+    "aciertos": 2,
+    "tasa_acierto": 0.1818,
+    "referencia": "Paseo aleatorio (0,5 sin deriva) y forward como predictor",
+    "tasa_esperada_azar": 0.5,
+    "tasa_forward": 0.8182,
+    "significativo": false,
+    "por_horizonte": {
+     "H2": {
+      "n": 11,
+      "aciertos": 2
+     }
+    }
+   },
+   "G10M": {
+    "n": 14,
+    "aciertos": 10,
+    "tasa_acierto": 0.7143,
+    "referencia": "Paseo aleatorio (0,5 sin deriva) y forward como predictor",
+    "tasa_esperada_azar": 0.5,
+    "tasa_forward": 0.6429,
+    "significativo": false,
+    "por_horizonte": {
+     "H2": {
+      "n": 14,
+      "aciertos": 10
+     }
+    }
+   },
+   "EMAS": {
+    "n": 8,
+    "aciertos": 1,
+    "tasa_acierto": 0.125,
+    "referencia": "Paseo aleatorio (0,5 sin deriva) y forward como predictor",
+    "tasa_esperada_azar": 0.5,
+    "tasa_forward": 0.625,
+    "significativo": false,
+    "por_horizonte": {
+     "H2": {
+      "n": 8,
+      "aciertos": 1
+     }
+    }
+   },
+   "EMLA": {
+    "n": 12,
+    "aciertos": 7,
+    "tasa_acierto": 0.5833,
+    "referencia": "Paseo aleatorio (0,5 sin deriva) y forward como predictor",
+    "tasa_esperada_azar": 0.5,
+    "tasa_forward": 0.0833,
+    "significativo": false,
+    "por_horizonte": {
+     "H2": {
+      "n": 12,
+      "aciertos": 7
+     }
+    }
+   },
+   "EMEA": {
+    "n": 13,
+    "aciertos": 2,
+    "tasa_acierto": 0.1538,
+    "referencia": "Paseo aleatorio (0,5 sin deriva) y forward como predictor",
+    "tasa_esperada_azar": 0.5,
+    "tasa_forward": 0.2308,
+    "significativo": false,
+    "por_horizonte": {
+     "H2": {
+      "n": 13,
+      "aciertos": 2
+     }
+    }
+   },
+   "ESTR": {
+    "n": 12,
+    "aciertos": 5,
+    "tasa_acierto": 0.4167,
+    "referencia": "Paseo aleatorio (0,5 sin deriva) y forward como predictor",
+    "tasa_esperada_azar": 0.5,
+    "tasa_forward": 0.6667,
+    "significativo": false,
+    "por_horizonte": {
+     "H2": {
+      "n": 12,
+      "aciertos": 5
+     }
+    }
+   }
+  },
+  "nota": "Ventana de 12 semanas; 70 pronósticos de opciones publicadas resueltos"
+ },
+ "paquete_para_bloque_B": [
+  {
+   "opp_id": "OPP-FX-2026-0003",
+   "segmento": "G10N",
+   "tipo_opcion": "CRUCE",
+   "nombre": "GBP/JPY alcista",
+   "par": "GBP/JPY",
+   "composicion": [
+    {
+     "divisa": "GBP",
+     "peso": 1.0,
+     "lado": "LARGO"
+    },
+    {
+     "divisa": "JPY",
+     "peso": 1.0,
+     "lado": "CORTO"
+    }
+   ],
+   "direccion": "ALCISTA_BASE",
+   "divisa_financiacion": "JPY",
+   "ambito": {
+    "incluye": "GBP/JPY, cruce de fixings WM/Reuters: tipo de cambio al contado y su rentabilidad total con carry",
+    "excluye": "Instrumentos concretos: su elección corresponde al Bloque B"
+   },
+   "tesis": "GBP/JPY alcista: la señal compuesta, el carry y la valoración sostienen el movimiento en los próximos meses. Sube la libra esterlina y baja el yen japonés.",
+   "mecanismo": "Diferencial de tipos y flujos de carry coherentes con la señal compuesta del segmento.",
+   "horizontes": [
+    "H2",
+    "H3"
+   ],
+   "horizonte_principal": "H3",
+   "pronosticos": [
+    "PRG-FX-2026-0209",
+    "PRG-FX-2026-0042"
+   ],
+   "catalizadores": [
+    {
+     "evento": "Reunión de política monetaria del banco central de la divisa",
+     "fecha": "2026-08-17"
+    }
+   ],
+   "riesgos": [
+    "Giro de la política monetaria",
+    "Episodio de aversión al riesgo"
+   ],
+   "invalidacion": [
+    "Cierre de GBPJPY por debajo de 212.9637 (nivel de invalidación, no de entrada)"
+   ],
+   "indicador_seguimiento": {
+    "nombre": "GBP/JPY, cruce de fixings WM/Reuters",
+    "simbolo": "GBPJPY",
+    "fuente": "HT-01:csv",
+    "tipo": "TIPO_DE_CAMBIO"
+   },
+   "niveles_referencia": {
+    "nivel_actual": {
+     "valor": 225.31222,
+     "unidad": "nivel del indicador de seguimiento",
+     "fecha_dato": "2026-09-25",
+     "fuente": "HT-01:csv",
+     "hora_fijacion": "17:00 America/New_York",
+     "conocible_desde": "2026-09-25"
+    },
+    "invalidacion_1": {
+     "valor": 212.9637,
+     "unidad": "nivel de GBPJPY (invalidación, no de entrada)",
+     "fecha_dato": "2026-09-25",
+     "fuente": "HT-01:csv",
+     "hora_fijacion": "17:00 America/New_York",
+     "conocible_desde": "2026-09-25"
+    }
+   },
+   "carry_esperado": {
+    "anual_pct": 5.1,
+    "signo": "a favor"
+   },
+   "consideraciones_implementacion": [
+    "Liquidez máxima en el solape de las sesiones de Londres y Nueva York",
+    "Divisas convertibles para un inversor minorista europeo; liquidez máxima en las sesiones de Londres y Nueva York",
+    "Carry de la exposición +5.10 % anual (a favor)"
+   ],
+   "metricas_clave": [
+    "Evolución del indicador de seguimiento (GBPJPY)",
+    "Diferencial de tipos y carry de la exposición"
+   ],
+   "preguntas_para_B": [
+    "¿Qué forma de exposición a «GBP/JPY alcista» ofrece mejor carry neto de costes para un inversor europeo?"
+   ],
+   "evidencias": [
+    "CLM-FX-2026-0133",
+    "CLM-FX-2026-0134",
+    "CLM-FX-2026-0011",
+    "CLM-FX-2026-0135"
+   ],
+   "calculos": [
+    "CALC-FX-2026-1204",
+    "CALC-FX-2026-1205",
+    "CALC-FX-2026-1206",
+    "CALC-FX-2026-1207",
+    "CALC-FX-2026-1208",
+    "CALC-FX-2026-1209",
+    "CALC-FX-2026-1217",
+    "CALC-FX-2026-1282"
+   ],
+   "siguiente_paso_sugerido": "ENVIAR_A_BLOQUE_B",
+   "relevancia_decisional": "BAJA"
+  },
+  {
+   "opp_id": "OPP-FX-2026-0002",
+   "segmento": "G10N",
+   "tipo_opcion": "CRUCE",
+   "nombre": "EUR/GBP bajista",
+   "par": "EUR/GBP",
+   "composicion": [
+    {
+     "divisa": "EUR",
+     "peso": 1.0,
+     "lado": "CORTO"
+    },
+    {
+     "divisa": "GBP",
+     "peso": 1.0,
+     "lado": "LARGO"
+    }
+   ],
+   "direccion": "BAJISTA_BASE",
+   "divisa_financiacion": "EUR",
+   "ambito": {
+    "incluye": "EUR/GBP, tipo de referencia del BCE: tipo de cambio al contado y su rentabilidad total con carry",
+    "excluye": "Instrumentos concretos: su elección corresponde al Bloque B"
+   },
+   "tesis": "EUR/GBP bajista: la señal compuesta, el carry y la valoración sostienen el movimiento en los próximos meses. Sube la libra esterlina y baja el euro.",
+   "mecanismo": "Diferencial de tipos y flujos de carry coherentes con la señal compuesta del segmento.",
+   "horizontes": [
+    "H2",
+    "H3"
+   ],
+   "horizonte_principal": "H3",
+   "pronosticos": [
+    "PRG-FX-2026-0184",
+    "PRG-FX-2026-0093"
+   ],
+   "catalizadores": [
+    {
+     "evento": "Reunión de política monetaria del banco central de la divisa",
+     "fecha": "2026-09-07"
+    }
+   ],
+   "riesgos": [
+    "Giro de la política monetaria",
+    "Episodio de aversión al riesgo"
+   ],
+   "invalidacion": [
+    "Cierre de EURGBP por encima de 1.004 (nivel de invalidación, no de entrada)"
+   ],
+   "indicador_seguimiento": {
+    "nombre": "EUR/GBP, tipo de referencia del BCE",
+    "simbolo": "EURGBP",
+    "fuente": "HT-01:csv",
+    "tipo": "TIPO_DE_CAMBIO"
+   },
+   "niveles_referencia": {
+    "nivel_actual": {
+     "valor": 0.993657,
+     "unidad": "nivel del indicador de seguimiento",
+     "fecha_dato": "2026-09-25",
+     "fuente": "HT-01:csv",
+     "hora_fijacion": "17:00 America/New_York",
+     "conocible_desde": "2026-09-25"
+    },
+    "invalidacion_1": {
+     "valor": 1.004,
+     "unidad": "nivel de EURGBP (invalidación, no de entrada)",
+     "fecha_dato": "2026-09-25",
+     "fuente": "HT-01:csv",
+     "hora_fijacion": "17:00 America/New_York",
+     "conocible_desde": "2026-09-25"
+    }
+   },
+   "carry_esperado": {
+    "anual_pct": 2.96,
+    "signo": "a favor"
+   },
+   "consideraciones_implementacion": [
+    "Liquidez máxima en el solape de las sesiones de Londres y Nueva York",
+    "Divisas convertibles para un inversor minorista europeo; liquidez máxima en las sesiones de Londres y Nueva York",
+    "Carry de la exposición +2.96 % anual (a favor)"
+   ],
+   "metricas_clave": [
+    "Evolución del indicador de seguimiento (EURGBP)",
+    "Diferencial de tipos y carry de la exposición"
+   ],
+   "preguntas_para_B": [
+    "¿Qué forma de exposición a «EUR/GBP bajista» ofrece mejor carry neto de costes para un inversor europeo?"
+   ],
+   "evidencias": [
+    "CLM-FX-2026-0189",
+    "CLM-FX-2026-0190",
+    "CLM-FX-2026-0007",
+    "CLM-FX-2026-0208"
+   ],
+   "calculos": [
+    "CALC-FX-2026-1204",
+    "CALC-FX-2026-1205",
+    "CALC-FX-2026-1206",
+    "CALC-FX-2026-1207",
+    "CALC-FX-2026-1208",
+    "CALC-FX-2026-1209",
+    "CALC-FX-2026-1215",
+    "CALC-FX-2026-1282"
+   ],
+   "siguiente_paso_sugerido": "ENVIAR_A_BLOQUE_B",
+   "relevancia_decisional": "BAJA"
+  },
+  {
+   "opp_id": "OPP-FX-2026-0004",
+   "segmento": "G10N",
+   "tipo_opcion": "PAR",
+   "nombre": "USD/CHF alcista",
+   "par": "USD/CHF",
+   "composicion": [
+    {
+     "divisa": "USD",
+     "peso": 1.0,
+     "lado": "LARGO"
+    },
+    {
+     "divisa": "CHF",
+     "peso": 1.0,
+     "lado": "CORTO"
+    }
+   ],
+   "direccion": "ALCISTA_BASE",
+   "divisa_financiacion": "CHF",
+   "ambito": {
+    "incluye": "USD/CHF, Fed H.10: tipo de cambio al contado y su rentabilidad total con carry",
+    "excluye": "Instrumentos concretos: su elección corresponde al Bloque B"
+   },
+   "tesis": "USD/CHF alcista: la señal compuesta, el carry y la valoración sostienen el movimiento en los próximos meses. Sube el dólar de EE. UU. y baja el franco suizo.",
+   "mecanismo": "Diferencial de tipos y flujos de carry coherentes con la señal compuesta del segmento.",
+   "horizontes": [
+    "H2",
+    "H3"
+   ],
+   "horizonte_principal": "H3",
+   "pronosticos": [
+    "PRG-FX-2026-0210",
+    "PRG-FX-2026-0211"
+   ],
+   "catalizadores": [
+    {
+     "evento": "Reunión de política monetaria del banco central de la divisa",
+     "fecha": "2026-10-11"
+    }
+   ],
+   "riesgos": [
+    "Giro de la política monetaria",
+    "Episodio de aversión al riesgo"
+   ],
+   "invalidacion": [
+    "Cierre de USDCHF por debajo de 1.3256 (nivel de invalidación, no de entrada)"
+   ],
+   "indicador_seguimiento": {
+    "nombre": "USD/CHF, Fed H.10",
+    "simbolo": "USDCHF",
+    "fuente": "HT-01:csv",
+    "tipo": "TIPO_DE_CAMBIO"
+   },
+   "niveles_referencia": {
+    "nivel_actual": {
+     "valor": 1.386024,
+     "unidad": "nivel del indicador de seguimiento",
+     "fecha_dato": "2026-09-25",
+     "fuente": "HT-01:csv",
+     "hora_fijacion": "17:00 America/New_York",
+     "conocible_desde": "2026-09-25"
+    },
+    "invalidacion_1": {
+     "valor": 1.3256,
+     "unidad": "nivel de USDCHF (invalidación, no de entrada)",
+     "fecha_dato": "2026-09-25",
+     "fuente": "HT-01:csv",
+     "hora_fijacion": "17:00 America/New_York",
+     "conocible_desde": "2026-09-25"
+    }
+   },
+   "carry_esperado": {
+    "anual_pct": 2.45,
+    "signo": "a favor"
+   },
+   "consideraciones_implementacion": [
+    "Liquidez máxima en el solape de las sesiones de Londres y Nueva York",
+    "Divisas convertibles para un inversor minorista europeo; liquidez máxima en las sesiones de Londres y Nueva York",
+    "Carry de la exposición +2.45 % anual (a favor)"
+   ],
+   "metricas_clave": [
+    "Evolución del indicador de seguimiento (USDCHF)",
+    "Diferencial de tipos y carry de la exposición"
+   ],
+   "preguntas_para_B": [
+    "¿Qué forma de exposición a «USD/CHF alcista» ofrece mejor carry neto de costes para un inversor europeo?"
+   ],
+   "evidencias": [
+    "CLM-FX-2026-0368",
+    "CLM-FX-2026-0289",
+    "CLM-FX-2026-0015",
+    "CLM-FX-2026-0369"
+   ],
+   "calculos": [
+    "CALC-FX-2026-1204",
+    "CALC-FX-2026-1205",
+    "CALC-FX-2026-1206",
+    "CALC-FX-2026-1207",
+    "CALC-FX-2026-1208",
+    "CALC-FX-2026-1209",
+    "CALC-FX-2026-1213",
+    "CALC-FX-2026-1282"
+   ],
+   "siguiente_paso_sugerido": "ENVIAR_A_BLOQUE_B",
+   "relevancia_decisional": "BAJA"
+  },
+  {
+   "opp_id": "OPP-FX-2026-0045",
+   "segmento": "G10M",
+   "tipo_opcion": "CRUCE",
+   "nombre": "AUD/JPY alcista",
+   "par": "AUD/JPY",
+   "composicion": [
+    {
+     "divisa": "AUD",
+     "peso": 1.0,
+     "lado": "LARGO"
+    },
+    {
+     "divisa": "JPY",
+     "peso": 1.0,
+     "lado": "CORTO"
+    }
+   ],
+   "direccion": "ALCISTA_BASE",
+   "divisa_financiacion": "JPY",
+   "ambito": {
+    "incluye": "AUD/JPY, cruce de fixings WM/Reuters: tipo de cambio al contado y su rentabilidad total con carry",
+    "excluye": "Instrumentos concretos: su elección corresponde al Bloque B"
+   },
+   "tesis": "AUD/JPY alcista: la señal compuesta, el carry y la valoración sostienen el movimiento en los próximos meses. Sube el dólar australiano y baja el yen japonés.",
+   "mecanismo": "Diferencial de tipos y flujos de carry coherentes con la señal compuesta del segmento.",
+   "horizontes": [
+    "H2",
+    "H3"
+   ],
+   "horizonte_principal": "H3",
+   "pronosticos": [
+    "PRG-FX-2026-0247",
+    "PRG-FX-2026-0248"
+   ],
+   "catalizadores": [
+    {
+     "evento": "Reunión de política monetaria del banco central de la divisa",
+     "fecha": "2026-10-25"
+    }
+   ],
+   "riesgos": [
+    "Giro de la política monetaria",
+    "Episodio de aversión al riesgo"
+   ],
+   "invalidacion": [
+    "Cierre de AUDJPY por debajo de 98.9076 (nivel de invalidación, no de entrada)"
+   ],
+   "indicador_seguimiento": {
+    "nombre": "AUD/JPY, cruce de fixings WM/Reuters",
+    "simbolo": "AUDJPY",
+    "fuente": "HT-01:csv",
+    "tipo": "TIPO_DE_CAMBIO"
+   },
+   "niveles_referencia": {
+    "nivel_actual": {
+     "valor": 104.113274,
+     "unidad": "nivel del indicador de seguimiento",
+     "fecha_dato": "2026-09-25",
+     "fuente": "HT-01:csv",
+     "hora_fijacion": "17:00 America/New_York",
+     "conocible_desde": "2026-09-25"
+    },
+    "invalidacion_1": {
+     "valor": 98.9076,
+     "unidad": "nivel de AUDJPY (invalidación, no de entrada)",
+     "fecha_dato": "2026-09-25",
+     "fuente": "HT-01:csv",
+     "hora_fijacion": "17:00 America/New_York",
+     "conocible_desde": "2026-09-25"
+    }
+   },
+   "carry_esperado": {
+    "anual_pct": 2.49,
+    "signo": "a favor"
+   },
+   "consideraciones_implementacion": [
+    "Liquidez máxima en el solape de las sesiones de Londres y Nueva York",
+    "Divisas convertibles para un inversor minorista europeo; liquidez máxima en las sesiones de Londres y Nueva York",
+    "Carry de la exposición +2.49 % anual (a favor)"
+   ],
+   "metricas_clave": [
+    "Evolución del indicador de seguimiento (AUDJPY)",
+    "Diferencial de tipos y carry de la exposición"
+   ],
+   "preguntas_para_B": [
+    "¿Qué forma de exposición a «AUD/JPY alcista» ofrece mejor carry neto de costes para un inversor europeo?"
+   ],
+   "evidencias": [
+    "CLM-FX-2026-0350",
+    "CLM-FX-2026-0143",
+    "CLM-FX-2026-0025",
+    "CLM-FX-2026-0426"
+   ],
+   "calculos": [
+    "CALC-FX-2026-1218",
+    "CALC-FX-2026-1219",
+    "CALC-FX-2026-1220",
+    "CALC-FX-2026-1221",
+    "CALC-FX-2026-1222",
+    "CALC-FX-2026-1223",
+    "CALC-FX-2026-1230",
+    "CALC-FX-2026-1282"
+   ],
+   "siguiente_paso_sugerido": "ENVIAR_A_BLOQUE_B",
+   "relevancia_decisional": "MEDIA"
+  },
+  {
+   "opp_id": "OPP-FX-2026-0007",
+   "segmento": "G10M",
+   "tipo_opcion": "CRUCE",
+   "nombre": "EUR/NOK alcista",
+   "par": "EUR/NOK",
+   "composicion": [
+    {
+     "divisa": "EUR",
+     "peso": 1.0,
+     "lado": "LARGO"
+    },
+    {
+     "divisa": "NOK",
+     "peso": 1.0,
+     "lado": "CORTO"
+    }
+   ],
+   "direccion": "ALCISTA_BASE",
+   "divisa_financiacion": "NOK",
+   "ambito": {
+    "incluye": "EUR/NOK, tipo de referencia del BCE: tipo de cambio al contado y su rentabilidad total con carry",
+    "excluye": "Instrumentos concretos: su elección corresponde al Bloque B"
+   },
+   "tesis": "EUR/NOK alcista: la señal compuesta, el carry y la valoración sostienen el movimiento en los próximos meses. Sube el euro y baja la corona noruega.",
+   "mecanismo": "Diferencial de tipos y flujos de carry coherentes con la señal compuesta del segmento.",
+   "horizontes": [
+    "H2",
+    "H3"
+   ],
+   "horizonte_principal": "H3",
+   "pronosticos": [
+    "PRG-FX-2026-0249",
+    "PRG-FX-2026-0250"
+   ],
+   "catalizadores": [
+    {
+     "evento": "Reunión de política monetaria del banco central de la divisa",
+     "fecha": "2026-10-25"
+    }
+   ],
+   "riesgos": [
+    "Giro de la política monetaria",
+    "Episodio de aversión al riesgo"
+   ],
+   "invalidacion": [
+    "Cierre de EURNOK por debajo de 9.4029 (nivel de invalidación, no de entrada)"
+   ],
+   "indicador_seguimiento": {
+    "nombre": "EUR/NOK, tipo de referencia del BCE",
+    "simbolo": "EURNOK",
+    "fuente": "HT-01:csv",
+    "tipo": "TIPO_DE_CAMBIO"
+   },
+   "niveles_referencia": {
+    "nivel_actual": {
+     "valor": 9.897797,
+     "unidad": "nivel del indicador de seguimiento",
+     "fecha_dato": "2026-09-25",
+     "fuente": "HT-01:csv",
+     "hora_fijacion": "17:00 America/New_York",
+     "conocible_desde": "2026-09-25"
+    },
+    "invalidacion_1": {
+     "valor": 9.4029,
+     "unidad": "nivel de EURNOK (invalidación, no de entrada)",
+     "fecha_dato": "2026-09-25",
+     "fuente": "HT-01:csv",
+     "hora_fijacion": "17:00 America/New_York",
+     "conocible_desde": "2026-09-25"
+    }
+   },
+   "carry_esperado": {
+    "anual_pct": -4.17,
+    "signo": "en contra"
+   },
+   "consideraciones_implementacion": [
+    "Liquidez máxima en el solape de las sesiones de Londres y Nueva York",
+    "Divisas convertibles para un inversor minorista europeo; liquidez máxima en las sesiones de Londres y Nueva York",
+    "Carry de la exposición -4.17 % anual (en contra)"
+   ],
+   "metricas_clave": [
+    "Evolución del indicador de seguimiento (EURNOK)",
+    "Diferencial de tipos y carry de la exposición"
+   ],
+   "preguntas_para_B": [
+    "¿Qué forma de exposición a «EUR/NOK alcista» ofrece mejor carry neto de costes para un inversor europeo?"
+   ],
+   "evidencias": [
+    "CLM-FX-2026-0242",
+    "CLM-FX-2026-0028",
+    "CLM-FX-2026-0029",
+    "CLM-FX-2026-0428"
+   ],
+   "calculos": [
+    "CALC-FX-2026-1218",
+    "CALC-FX-2026-1219",
+    "CALC-FX-2026-1220",
+    "CALC-FX-2026-1221",
+    "CALC-FX-2026-1222",
+    "CALC-FX-2026-1223",
+    "CALC-FX-2026-1227",
+    "CALC-FX-2026-1282"
+   ],
+   "siguiente_paso_sugerido": "ENVIAR_A_BLOQUE_B",
+   "relevancia_decisional": "MEDIA"
+  },
+  {
+   "opp_id": "OPP-FX-2026-0036",
+   "segmento": "G10M",
+   "tipo_opcion": "CRUCE",
+   "nombre": "CAD/JPY alcista",
+   "par": "CAD/JPY",
+   "composicion": [
+    {
+     "divisa": "CAD",
+     "peso": 1.0,
+     "lado": "LARGO"
+    },
+    {
+     "divisa": "JPY",
+     "peso": 1.0,
+     "lado": "CORTO"
+    }
+   ],
+   "direccion": "ALCISTA_BASE",
+   "divisa_financiacion": "JPY",
+   "ambito": {
+    "incluye": "CAD/JPY, cruce de fixings WM/Reuters: tipo de cambio al contado y su rentabilidad total con carry",
+    "excluye": "Instrumentos concretos: su elección corresponde al Bloque B"
+   },
+   "tesis": "CAD/JPY alcista: la señal compuesta, el carry y la valoración sostienen el movimiento en los próximos meses. Sube el dólar canadiense y baja el yen japonés.",
+   "mecanismo": "Diferencial de tipos y flujos de carry coherentes con la señal compuesta del segmento.",
+   "horizontes": [
+    "H2",
+    "H3"
+   ],
+   "horizonte_principal": "H3",
+   "pronosticos": [
+    "PRG-FX-2026-0237",
+    "PRG-FX-2026-0238"
+   ],
+   "catalizadores": [
+    {
+     "evento": "Reunión de política monetaria del banco central de la divisa",
+     "fecha": "2026-10-18"
+    }
+   ],
+   "riesgos": [
+    "Giro de la política monetaria",
+    "Episodio de aversión al riesgo"
+   ],
+   "invalidacion": [
+    "Cierre de CADJPY por debajo de 95.144 (nivel de invalidación, no de entrada)"
+   ],
+   "indicador_seguimiento": {
+    "nombre": "CAD/JPY, cruce de fixings WM/Reuters",
+    "simbolo": "CADJPY",
+    "fuente": "HT-01:csv",
+    "tipo": "TIPO_DE_CAMBIO"
+   },
+   "niveles_referencia": {
+    "nivel_actual": {
+     "valor": 99.663482,
+     "unidad": "nivel del indicador de seguimiento",
+     "fecha_dato": "2026-09-25",
+     "fuente": "HT-01:csv",
+     "hora_fijacion": "17:00 America/New_York",
+     "conocible_desde": "2026-09-25"
+    },
+    "invalidacion_1": {
+     "valor": 95.144,
+     "unidad": "nivel de CADJPY (invalidación, no de entrada)",
+     "fecha_dato": "2026-09-25",
+     "fuente": "HT-01:csv",
+     "hora_fijacion": "17:00 America/New_York",
+     "conocible_desde": "2026-09-25"
+    }
+   },
+   "carry_esperado": {
+    "anual_pct": 3.52,
+    "signo": "a favor"
+   },
+   "consideraciones_implementacion": [
+    "Liquidez máxima en el solape de las sesiones de Londres y Nueva York",
+    "Divisas convertibles para un inversor minorista europeo; liquidez máxima en las sesiones de Londres y Nueva York",
+    "Carry de la exposición +3.52 % anual (a favor)"
+   ],
+   "metricas_clave": [
+    "Evolución del indicador de seguimiento (CADJPY)",
+    "Diferencial de tipos y carry de la exposición"
+   ],
+   "preguntas_para_B": [
+    "¿Qué forma de exposición a «CAD/JPY alcista» ofrece mejor carry neto de costes para un inversor europeo?"
+   ],
+   "evidencias": [
+    "CLM-FX-2026-0409",
+    "CLM-FX-2026-0294",
+    "CLM-FX-2026-0248",
+    "CLM-FX-2026-0410"
+   ],
+   "calculos": [
+    "CALC-FX-2026-1218",
+    "CALC-FX-2026-1219",
+    "CALC-FX-2026-1220",
+    "CALC-FX-2026-1221",
+    "CALC-FX-2026-1222",
+    "CALC-FX-2026-1223",
+    "CALC-FX-2026-1231",
+    "CALC-FX-2026-1282"
+   ],
+   "siguiente_paso_sugerido": "ENVIAR_A_BLOQUE_B",
+   "relevancia_decisional": "BAJA"
+  },
+  {
+   "opp_id": "OPP-FX-2026-0012",
+   "segmento": "EMAS",
+   "tipo_opcion": "PAR",
+   "nombre": "USD/THB alcista",
+   "par": "USD/THB",
+   "composicion": [
+    {
+     "divisa": "USD",
+     "peso": 1.0,
+     "lado": "LARGO"
+    },
+    {
+     "divisa": "THB",
+     "peso": 1.0,
+     "lado": "CORTO"
+    }
+   ],
+   "direccion": "ALCISTA_BASE",
+   "divisa_financiacion": "THB",
+   "ambito": {
+    "incluye": "USD/THB, Banco de Tailandia: tipo de cambio al contado y su rentabilidad total con carry",
+    "excluye": "Instrumentos concretos: su elección corresponde al Bloque B"
+   },
+   "tesis": "USD/THB alcista: la señal compuesta, el carry y la valoración sostienen el movimiento en los próximos meses. Sube el dólar de EE. UU. y baja el baht tailandés.",
+   "mecanismo": "Diferencial de tipos y flujos de carry coherentes con la señal compuesta del segmento.",
+   "horizontes": [
+    "H2",
+    "H3"
+   ],
+   "horizonte_principal": "H3",
+   "pronosticos": [
+    "PRG-FX-2026-0241",
+    "PRG-FX-2026-0242"
+   ],
+   "catalizadores": [
+    {
+     "evento": "Reunión de política monetaria del banco central de la divisa",
+     "fecha": "2026-10-18"
+    }
+   ],
+   "riesgos": [
+    "Giro de la política monetaria",
+    "Episodio de aversión al riesgo"
+   ],
+   "invalidacion": [
+    "Cierre de USDTHB por debajo de 34.5688 (nivel de invalidación, no de entrada)"
+   ],
+   "indicador_seguimiento": {
+    "nombre": "USD/THB, Banco de Tailandia",
+    "simbolo": "USDTHB",
+    "fuente": "HT-01:csv",
+    "tipo": "TIPO_DE_CAMBIO"
+   },
+   "niveles_referencia": {
+    "nivel_actual": {
+     "valor": 36.640121,
+     "unidad": "nivel del indicador de seguimiento",
+     "fecha_dato": "2026-09-25",
+     "fuente": "HT-01:csv",
+     "hora_fijacion": "17:00 America/New_York",
+     "conocible_desde": "2026-09-25"
+    },
+    "invalidacion_1": {
+     "valor": 34.5688,
+     "unidad": "nivel de USDTHB (invalidación, no de entrada)",
+     "fecha_dato": "2026-09-25",
+     "fuente": "HT-01:csv",
+     "hora_fijacion": "17:00 America/New_York",
+     "conocible_desde": "2026-09-25"
+    }
+   },
+   "carry_esperado": {
+    "anual_pct": 0.39,
+    "signo": "a favor"
+   },
+   "consideraciones_implementacion": [
+    "Liquidez máxima en el solape de las sesiones de Londres y Nueva York",
+    "Divisas convertibles para un inversor minorista europeo; liquidez máxima en las sesiones de Londres y Nueva York",
+    "Carry de la exposición +0.39 % anual (a favor)"
+   ],
+   "metricas_clave": [
+    "Evolución del indicador de seguimiento (USDTHB)",
+    "Diferencial de tipos y carry de la exposición"
+   ],
+   "preguntas_para_B": [
+    "¿Qué forma de exposición a «USD/THB alcista» ofrece mejor carry neto de costes para un inversor europeo?"
+   ],
+   "evidencias": [
+    "CLM-FX-2026-0411",
+    "CLM-FX-2026-0304",
+    "CLM-FX-2026-0049",
+    "CLM-FX-2026-0412"
+   ],
+   "calculos": [
+    "CALC-FX-2026-1232",
+    "CALC-FX-2026-1233",
+    "CALC-FX-2026-1234",
+    "CALC-FX-2026-1235",
+    "CALC-FX-2026-1236",
+    "CALC-FX-2026-1237",
+    "CALC-FX-2026-1244",
+    "CALC-FX-2026-1282"
+   ],
+   "siguiente_paso_sugerido": "ENVIAR_A_BLOQUE_B",
+   "relevancia_decisional": "BAJA"
+  },
+  {
+   "opp_id": "OPP-FX-2026-0025",
+   "segmento": "EMAS",
+   "tipo_opcion": "PAR",
+   "nombre": "USD/KRW alcista",
+   "par": "USD/KRW",
+   "composicion": [
+    {
+     "divisa": "USD",
+     "peso": 1.0,
+     "lado": "LARGO"
+    },
+    {
+     "divisa": "KRW",
+     "peso": 1.0,
+     "lado": "CORTO"
+    }
+   ],
+   "direccion": "ALCISTA_BASE",
+   "divisa_financiacion": "KRW",
+   "ambito": {
+    "incluye": "USD/KRW, cierre de Seúl: tipo de cambio al contado y su rentabilidad total con carry",
+    "excluye": "Instrumentos concretos: su elección corresponde al Bloque B"
+   },
+   "tesis": "USD/KRW alcista: la señal compuesta, el carry y la valoración sostienen el movimiento en los próximos meses. Sube el dólar de EE. UU. y baja el won coreano.",
+   "mecanismo": "Diferencial de tipos y flujos de carry coherentes con la señal compuesta del segmento.",
+   "horizontes": [
+    "H2",
+    "H3"
+   ],
+   "horizonte_principal": "H3",
+   "pronosticos": [
+    "PRG-FX-2026-0199",
+    "PRG-FX-2026-0034"
+   ],
+   "catalizadores": [
+    {
+     "evento": "Reunión de política monetaria del banco central de la divisa",
+     "fecha": "2026-08-10"
+    }
+   ],
+   "riesgos": [
+    "Giro de la política monetaria",
+    "Episodio de aversión al riesgo"
+   ],
+   "invalidacion": [
+    "Cierre de USDKRW por debajo de 1283.1146 (nivel de invalidación, no de entrada)"
+   ],
+   "indicador_seguimiento": {
+    "nombre": "USD/KRW, cierre de Seúl",
+    "simbolo": "USDKRW",
+    "fuente": "HT-01:csv",
+    "tipo": "TIPO_DE_CAMBIO"
+   },
+   "niveles_referencia": {
+    "nivel_actual": {
+     "valor": 1310.886627,
+     "unidad": "nivel del indicador de seguimiento",
+     "fecha_dato": "2026-09-25",
+     "fuente": "HT-01:csv",
+     "hora_fijacion": "17:00 America/New_York",
+     "conocible_desde": "2026-09-25"
+    },
+    "invalidacion_1": {
+     "valor": 1283.1146,
+     "unidad": "nivel de USDKRW (invalidación, no de entrada)",
+     "fecha_dato": "2026-09-25",
+     "fuente": "HT-01:csv",
+     "hora_fijacion": "17:00 America/New_York",
+     "conocible_desde": "2026-09-25"
+    }
+   },
+   "carry_esperado": {
+    "anual_pct": 0.19,
+    "signo": "neutro"
+   },
+   "consideraciones_implementacion": [
+    "Liquidez máxima en el solape de las sesiones de Londres y Nueva York",
+    "Divisa no plenamente convertible: existe mercado no entregable (liquidación en otra divisa)",
+    "Carry de la exposición +0.19 % anual (neutro)"
+   ],
+   "metricas_clave": [
+    "Evolución del indicador de seguimiento (USDKRW)",
+    "Diferencial de tipos y carry de la exposición"
+   ],
+   "preguntas_para_B": [
+    "¿Qué forma de exposición a «USD/KRW alcista» ofrece mejor carry neto de costes para un inversor europeo?"
+   ],
+   "evidencias": [
+    "CLM-FX-2026-0113",
+    "CLM-FX-2026-0114",
+    "CLM-FX-2026-0115",
+    "CLM-FX-2026-0116"
+   ],
+   "calculos": [
+    "CALC-FX-2026-1232",
+    "CALC-FX-2026-1233",
+    "CALC-FX-2026-1234",
+    "CALC-FX-2026-1235",
+    "CALC-FX-2026-1236",
+    "CALC-FX-2026-1237",
+    "CALC-FX-2026-1240",
+    "CALC-FX-2026-1282"
+   ],
+   "siguiente_paso_sugerido": "ENVIAR_A_BLOQUE_B",
+   "relevancia_decisional": "ALTA"
+  },
+  {
+   "opp_id": "OPP-FX-2026-0054",
+   "segmento": "EMLA",
+   "tipo_opcion": "PAR",
+   "nombre": "USD/COP bajista",
+   "par": "USD/COP",
+   "composicion": [
+    {
+     "divisa": "USD",
+     "peso": 1.0,
+     "lado": "CORTO"
+    },
+    {
+     "divisa": "COP",
+     "peso": 1.0,
+     "lado": "LARGO"
+    }
+   ],
+   "direccion": "BAJISTA_BASE",
+   "divisa_financiacion": "USD",
+   "ambito": {
+    "incluye": "USD/COP, TRM de Colombia: tipo de cambio al contado y su rentabilidad total con carry",
+    "excluye": "Instrumentos concretos: su elección corresponde al Bloque B"
+   },
+   "tesis": "USD/COP bajista: la señal compuesta, el carry y la valoración sostienen el movimiento en los próximos meses. Sube el peso colombiano y baja el dólar de EE. UU.",
+   "mecanismo": "Diferencial de tipos y flujos de carry coherentes con la señal compuesta del segmento.",
+   "horizontes": [
+    "H2",
+    "H3"
+   ],
+   "horizonte_principal": "H3",
+   "pronosticos": [
+    "PRG-FX-2026-0251",
+    "PRG-FX-2026-0252"
+   ],
+   "catalizadores": [
+    {
+     "evento": "Reunión de política monetaria del banco central de la divisa",
+     "fecha": "2026-10-25"
+    }
+   ],
+   "riesgos": [
+    "Giro de la política monetaria",
+    "Episodio de aversión al riesgo"
+   ],
+   "invalidacion": [
+    "Cierre de USDCOP por encima de 2233.9339 (nivel de invalidación, no de entrada)"
+   ],
+   "indicador_seguimiento": {
+    "nombre": "USD/COP, TRM de Colombia",
+    "simbolo": "USDCOP",
+    "fuente": "HT-01:csv",
+    "tipo": "TIPO_DE_CAMBIO"
+   },
+   "niveles_referencia": {
+    "nivel_actual": {
+     "valor": 2127.556112,
+     "unidad": "nivel del indicador de seguimiento",
+     "fecha_dato": "2026-09-25",
+     "fuente": "HT-01:csv",
+     "hora_fijacion": "17:00 America/New_York",
+     "conocible_desde": "2026-09-25"
+    },
+    "invalidacion_1": {
+     "valor": 2233.9339,
+     "unidad": "nivel de USDCOP (invalidación, no de entrada)",
+     "fecha_dato": "2026-09-25",
+     "fuente": "HT-01:csv",
+     "hora_fijacion": "17:00 America/New_York",
+     "conocible_desde": "2026-09-25"
+    }
+   },
+   "carry_esperado": {
+    "anual_pct": 11.25,
+    "signo": "a favor"
+   },
+   "consideraciones_implementacion": [
+    "Liquidez máxima en el solape de las sesiones de Londres y Nueva York",
+    "Divisa no plenamente convertible: existe mercado no entregable (liquidación en otra divisa)",
+    "Carry de la exposición +11.25 % anual (a favor)"
+   ],
+   "metricas_clave": [
+    "Evolución del indicador de seguimiento (USDCOP)",
+    "Diferencial de tipos y carry de la exposición"
+   ],
+   "preguntas_para_B": [
+    "¿Qué forma de exposición a «USD/COP bajista» ofrece mejor carry neto de costes para un inversor europeo?"
+   ],
+   "evidencias": [
+    "CLM-FX-2026-0381",
+    "CLM-FX-2026-0321",
+    "CLM-FX-2026-0057",
+    "CLM-FX-2026-0433"
+   ],
+   "calculos": [
+    "CALC-FX-2026-1246",
+    "CALC-FX-2026-1247",
+    "CALC-FX-2026-1248",
+    "CALC-FX-2026-1249",
+    "CALC-FX-2026-1250",
+    "CALC-FX-2026-1251",
+    "CALC-FX-2026-1255",
+    "CALC-FX-2026-1282"
+   ],
+   "siguiente_paso_sugerido": "ENVIAR_A_BLOQUE_B",
+   "relevancia_decisional": "ALTA"
+  },
+  {
+   "opp_id": "OPP-FX-2026-0050",
+   "segmento": "EMLA",
+   "tipo_opcion": "PAR",
+   "nombre": "USD/MXN bajista",
+   "par": "USD/MXN",
+   "composicion": [
+    {
+     "divisa": "USD",
+     "peso": 1.0,
+     "lado": "CORTO"
+    },
+    {
+     "divisa": "MXN",
+     "peso": 1.0,
+     "lado": "LARGO"
+    }
+   ],
+   "direccion": "BAJISTA_BASE",
+   "divisa_financiacion": "USD",
+   "ambito": {
+    "incluye": "USD/MXN, FIX de Banxico: tipo de cambio al contado y su rentabilidad total con carry",
+    "excluye": "Instrumentos concretos: su elección corresponde al Bloque B"
+   },
+   "tesis": "USD/MXN bajista: la señal compuesta, el carry y la valoración sostienen el movimiento en los próximos meses. Sube el peso mexicano y baja el dólar de EE. UU.",
+   "mecanismo": "Diferencial de tipos y flujos de carry coherentes con la señal compuesta del segmento.",
+   "horizontes": [
+    "H2",
+    "H3"
+   ],
+   "horizonte_principal": "H3",
+   "pronosticos": [
+    "PRG-FX-2026-0253",
+    "PRG-FX-2026-0254"
+   ],
+   "catalizadores": [
+    {
+     "evento": "Reunión de política monetaria del banco central de la divisa",
+     "fecha": "2026-10-25"
+    }
+   ],
+   "riesgos": [
+    "Giro de la política monetaria",
+    "Episodio de aversión al riesgo"
+   ],
+   "invalidacion": [
+    "Cierre de USDMXN por encima de 12.8755 (nivel de invalidación, no de entrada)"
+   ],
+   "indicador_seguimiento": {
+    "nombre": "USD/MXN, FIX de Banxico",
+    "simbolo": "USDMXN",
+    "fuente": "HT-01:csv",
+    "tipo": "TIPO_DE_CAMBIO"
+   },
+   "niveles_referencia": {
+    "nivel_actual": {
+     "valor": 12.262347,
+     "unidad": "nivel del indicador de seguimiento",
+     "fecha_dato": "2026-09-25",
+     "fuente": "HT-01:csv",
+     "hora_fijacion": "17:00 America/New_York",
+     "conocible_desde": "2026-09-25"
+    },
+    "invalidacion_1": {
+     "valor": 12.8755,
+     "unidad": "nivel de USDMXN (invalidación, no de entrada)",
+     "fecha_dato": "2026-09-25",
+     "fuente": "HT-01:csv",
+     "hora_fijacion": "17:00 America/New_York",
+     "conocible_desde": "2026-09-25"
+    }
+   },
+   "carry_esperado": {
+    "anual_pct": 4.72,
+    "signo": "a favor"
+   },
+   "consideraciones_implementacion": [
+    "Liquidez máxima en el solape de las sesiones de Londres y Nueva York",
+    "Divisas convertibles para un inversor minorista europeo; liquidez máxima en las sesiones de Londres y Nueva York",
+    "Carry de la exposición +4.72 % anual (a favor)"
+   ],
+   "metricas_clave": [
+    "Evolución del indicador de seguimiento (USDMXN)",
+    "Diferencial de tipos y carry de la exposición"
+   ],
+   "preguntas_para_B": [
+    "¿Qué forma de exposición a «USD/MXN bajista» ofrece mejor carry neto de costes para un inversor europeo?"
+   ],
+   "evidencias": [
+    "CLM-FX-2026-0384",
+    "CLM-FX-2026-0385",
+    "CLM-FX-2026-0163",
+    "CLM-FX-2026-0434"
+   ],
+   "calculos": [
+    "CALC-FX-2026-1246",
+    "CALC-FX-2026-1247",
+    "CALC-FX-2026-1248",
+    "CALC-FX-2026-1249",
+    "CALC-FX-2026-1250",
+    "CALC-FX-2026-1251",
+    "CALC-FX-2026-1252",
+    "CALC-FX-2026-1282"
+   ],
+   "siguiente_paso_sugerido": "ENVIAR_A_BLOQUE_B",
+   "relevancia_decisional": "ALTA"
+  },
+  {
+   "opp_id": "OPP-FX-2026-0019",
+   "segmento": "EMEA",
+   "tipo_opcion": "REGIMEN",
+   "nombre": "USD/EGP bajista",
+   "par": "USD/EGP",
+   "composicion": [
+    {
+     "divisa": "USD",
+     "peso": 1.0,
+     "lado": "CORTO"
+    },
+    {
+     "divisa": "EGP",
+     "peso": 1.0,
+     "lado": "LARGO"
+    }
+   ],
+   "direccion": "BAJISTA_BASE",
+   "divisa_financiacion": "USD",
+   "ambito": {
+    "incluye": "USD/EGP, Banco Central de Egipto: tipo de cambio al contado y su rentabilidad total con carry",
+    "excluye": "Instrumentos concretos: su elección corresponde al Bloque B"
+   },
+   "tesis": "USD/EGP bajista: la señal compuesta, el carry y la valoración sostienen el movimiento en los próximos meses. Sube la libra egipcia y baja el dólar de EE. UU.",
+   "mecanismo": "Diferencial de tipos y flujos de carry coherentes con la señal compuesta del segmento.",
+   "horizontes": [
+    "H2",
+    "H3"
+   ],
+   "horizonte_principal": "H3",
+   "pronosticos": [
+    "PRG-FX-2026-0200",
+    "PRG-FX-2026-0108"
+   ],
+   "catalizadores": [
+    {
+     "evento": "Reunión de política monetaria del banco central de la divisa",
+     "fecha": "2026-09-07"
+    }
+   ],
+   "riesgos": [
+    "Giro de la política monetaria",
+    "Episodio de aversión al riesgo"
+   ],
+   "invalidacion": [
+    "Cierre de USDEGP por encima de 51.271 (nivel de invalidación, no de entrada)"
+   ],
+   "indicador_seguimiento": {
+    "nombre": "USD/EGP, Banco Central de Egipto",
+    "simbolo": "USDEGP",
+    "fuente": "HT-01:csv",
+    "tipo": "TIPO_DE_CAMBIO"
+   },
+   "niveles_referencia": {
+    "nivel_actual": {
+     "valor": 47.73897,
+     "unidad": "nivel del indicador de seguimiento",
+     "fecha_dato": "2026-09-25",
+     "fuente": "HT-01:csv",
+     "hora_fijacion": "17:00 America/New_York",
+     "conocible_desde": "2026-09-25"
+    },
+    "invalidacion_1": {
+     "valor": 51.271,
+     "unidad": "nivel de USDEGP (invalidación, no de entrada)",
+     "fecha_dato": "2026-09-25",
+     "fuente": "HT-01:csv",
+     "hora_fijacion": "17:00 America/New_York",
+     "conocible_desde": "2026-09-25"
+    }
+   },
+   "carry_esperado": {
+    "anual_pct": 22.0,
+    "signo": "a favor"
+   },
+   "consideraciones_implementacion": [
+    "Liquidez máxima en el solape de las sesiones de Londres y Nueva York",
+    "Divisa no plenamente convertible: existe mercado no entregable (liquidación en otra divisa)",
+    "Controles de capitales vigentes: posibles límites a la repatriación",
+    "Carry de la exposición +22.00 % anual (a favor)"
+   ],
+   "metricas_clave": [
+    "Evolución del indicador de seguimiento (USDEGP)",
+    "Diferencial de tipos y carry de la exposición"
+   ],
+   "preguntas_para_B": [
+    "¿Qué forma de exposición a «USD/EGP bajista» ofrece mejor carry neto de costes para un inversor europeo?"
+   ],
+   "evidencias": [
+    "CLM-FX-2026-0171",
+    "CLM-FX-2026-0078",
+    "CLM-FX-2026-0079",
+    "CLM-FX-2026-0227"
+   ],
+   "calculos": [
+    "CALC-FX-2026-1257",
+    "CALC-FX-2026-1258",
+    "CALC-FX-2026-1259",
+    "CALC-FX-2026-1260",
+    "CALC-FX-2026-1261",
+    "CALC-FX-2026-1262",
+    "CALC-FX-2026-1269",
+    "CALC-FX-2026-1282"
+   ],
+   "siguiente_paso_sugerido": "ENVIAR_A_BLOQUE_B",
+   "relevancia_decisional": "ALTA"
+  },
+  {
+   "opp_id": "OPP-FX-2026-0037",
+   "segmento": "EMEA",
+   "tipo_opcion": "PAR",
+   "nombre": "USD/ZAR alcista",
+   "par": "USD/ZAR",
+   "composicion": [
+    {
+     "divisa": "USD",
+     "peso": 1.0,
+     "lado": "LARGO"
+    },
+    {
+     "divisa": "ZAR",
+     "peso": 1.0,
+     "lado": "CORTO"
+    }
+   ],
+   "direccion": "ALCISTA_BASE",
+   "divisa_financiacion": "ZAR",
+   "ambito": {
+    "incluye": "USD/ZAR, fixing WM/Reuters: tipo de cambio al contado y su rentabilidad total con carry",
+    "excluye": "Instrumentos concretos: su elección corresponde al Bloque B"
+   },
+   "tesis": "USD/ZAR alcista: la señal compuesta, el carry y la valoración sostienen el movimiento en los próximos meses. Sube el dólar de EE. UU. y baja el rand sudafricano.",
+   "mecanismo": "Diferencial de tipos y flujos de carry coherentes con la señal compuesta del segmento.",
+   "horizontes": [
+    "H2",
+    "H3"
+   ],
+   "horizonte_principal": "H3",
+   "pronosticos": [
+    "PRG-FX-2026-0255",
+    "PRG-FX-2026-0256"
+   ],
+   "catalizadores": [
+    {
+     "evento": "Reunión de política monetaria del banco central de la divisa",
+     "fecha": "2026-10-25"
+    }
+   ],
+   "riesgos": [
+    "Giro de la política monetaria",
+    "Episodio de aversión al riesgo"
+   ],
+   "invalidacion": [
+    "Cierre de USDZAR por debajo de 19.1165 (nivel de invalidación, no de entrada)"
+   ],
+   "indicador_seguimiento": {
+    "nombre": "USD/ZAR, fixing WM/Reuters",
+    "simbolo": "USDZAR",
+    "fuente": "HT-01:csv",
+    "tipo": "TIPO_DE_CAMBIO"
+   },
+   "niveles_referencia": {
+    "nivel_actual": {
+     "valor": 20.122615,
+     "unidad": "nivel del indicador de seguimiento",
+     "fecha_dato": "2026-09-25",
+     "fuente": "HT-01:csv",
+     "hora_fijacion": "17:00 America/New_York",
+     "conocible_desde": "2026-09-25"
+    },
+    "invalidacion_1": {
+     "valor": 19.1165,
+     "unidad": "nivel de USDZAR (invalidación, no de entrada)",
+     "fecha_dato": "2026-09-25",
+     "fuente": "HT-01:csv",
+     "hora_fijacion": "17:00 America/New_York",
+     "conocible_desde": "2026-09-25"
+    }
+   },
+   "carry_esperado": {
+    "anual_pct": -4.03,
+    "signo": "en contra"
+   },
+   "consideraciones_implementacion": [
+    "Liquidez máxima en el solape de las sesiones de Londres y Nueva York",
+    "Divisas convertibles para un inversor minorista europeo; liquidez máxima en las sesiones de Londres y Nueva York",
+    "Carry de la exposición -4.03 % anual (en contra)"
+   ],
+   "metricas_clave": [
+    "Evolución del indicador de seguimiento (USDZAR)",
+    "Diferencial de tipos y carry de la exposición"
+   ],
+   "preguntas_para_B": [
+    "¿Qué forma de exposición a «USD/ZAR alcista» ofrece mejor carry neto de costes para un inversor europeo?"
+   ],
+   "evidencias": [
+    "CLM-FX-2026-0437",
+    "CLM-FX-2026-0324",
+    "CLM-FX-2026-0075",
+    "CLM-FX-2026-0438"
+   ],
+   "calculos": [
+    "CALC-FX-2026-1257",
+    "CALC-FX-2026-1258",
+    "CALC-FX-2026-1259",
+    "CALC-FX-2026-1260",
+    "CALC-FX-2026-1261",
+    "CALC-FX-2026-1262",
+    "CALC-FX-2026-1267",
+    "CALC-FX-2026-1282"
+   ],
+   "siguiente_paso_sugerido": "ENVIAR_A_BLOQUE_B",
+   "relevancia_decisional": "MEDIA"
+  },
+  {
+   "opp_id": "OPP-FX-2026-0022",
+   "segmento": "ESTR",
+   "tipo_opcion": "CESTA",
+   "nombre": "Divisas latinoamericanas frente al USD",
+   "par": null,
+   "composicion": [
+    {
+     "divisa": "BRL",
+     "peso": 0.25,
+     "lado": "LARGO"
+    },
+    {
+     "divisa": "MXN",
+     "peso": 0.25,
+     "lado": "LARGO"
+    },
+    {
+     "divisa": "CLP",
+     "peso": 0.25,
+     "lado": "LARGO"
+    },
+    {
+     "divisa": "COP",
+     "peso": 0.25,
+     "lado": "LARGO"
+    },
+    {
+     "divisa": "USD",
+     "peso": 1.0,
+     "lado": "CORTO"
+    }
+   ],
+   "direccion": null,
+   "divisa_financiacion": "USD",
+   "ambito": {
+    "incluye": "Índice de la cesta latinoamericana frente al USD (propio): tipo de cambio al contado y su rentabilidad total con carry",
+    "excluye": "Instrumentos concretos: su elección corresponde al Bloque B"
+   },
+   "tesis": "Divisas latinoamericanas frente al USD: la señal compuesta, el carry y la valoración sostienen el movimiento en los próximos meses. Suben el real brasileño, el peso mexicano y el peso chileno y baja el dólar de EE. UU.",
+   "mecanismo": "Diferencial de tipos y flujos de carry coherentes con la señal compuesta del segmento.",
+   "horizontes": [
+    "H2",
+    "H3"
+   ],
+   "horizonte_principal": "H3",
+   "pronosticos": [
+    "PRG-FX-2026-0230",
+    "PRG-FX-2026-0231"
+   ],
+   "catalizadores": [
+    {
+     "evento": "Reunión de política monetaria del banco central de la divisa",
+     "fecha": "2026-10-11"
+    }
+   ],
+   "riesgos": [
+    "Giro de la política monetaria",
+    "Episodio de aversión al riesgo"
+   ],
+   "invalidacion": [
+    "Cierre de CESTA-LATAM por debajo de 109.9333 (nivel de invalidación, no de entrada)"
+   ],
+   "indicador_seguimiento": {
+    "nombre": "Índice de la cesta latinoamericana frente al USD (propio)",
+    "simbolo": "CESTA-LATAM",
+    "fuente": "HT-01:csv",
+    "tipo": "INDICE_CESTA"
+   },
+   "niveles_referencia": {
+    "nivel_actual": {
+     "valor": 116.132226,
+     "unidad": "nivel del indicador de seguimiento",
+     "fecha_dato": "2026-09-25",
+     "fuente": "HT-01:csv",
+     "hora_fijacion": "17:00 America/New_York",
+     "conocible_desde": "2026-09-25"
+    },
+    "invalidacion_1": {
+     "valor": 109.9333,
+     "unidad": "nivel de CESTA-LATAM (invalidación, no de entrada)",
+     "fecha_dato": "2026-09-25",
+     "fuente": "HT-01:csv",
+     "hora_fijacion": "17:00 America/New_York",
+     "conocible_desde": "2026-09-25"
+    }
+   },
+   "carry_esperado": {
+    "anual_pct": 5.15,
+    "signo": "a favor"
+   },
+   "consideraciones_implementacion": [
+    "Liquidez máxima en el solape de las sesiones de Londres y Nueva York",
+    "Divisa no plenamente convertible: existe mercado no entregable (liquidación en otra divisa)",
+    "Carry de la exposición +5.15 % anual (a favor)"
+   ],
+   "metricas_clave": [
+    "Evolución del indicador de seguimiento (CESTA-LATAM)",
+    "Diferencial de tipos y carry de la exposición"
+   ],
+   "preguntas_para_B": [
+    "¿Qué forma de exposición a «Divisas latinoamericanas frente al USD» ofrece mejor carry neto de costes para un inversor europeo?"
+   ],
+   "evidencias": [
+    "CLM-FX-2026-0258",
+    "CLM-FX-2026-0332",
+    "CLM-FX-2026-0093",
+    "CLM-FX-2026-0396"
+   ],
+   "calculos": [
+    "CALC-FX-2026-1270",
+    "CALC-FX-2026-1271",
+    "CALC-FX-2026-1272",
+    "CALC-FX-2026-1273",
+    "CALC-FX-2026-1274",
+    "CALC-FX-2026-1275",
+    "CALC-FX-2026-1281",
+    "CALC-FX-2026-1282"
+   ],
+   "siguiente_paso_sugerido": "ENVIAR_A_BLOQUE_B",
+   "relevancia_decisional": "ALTA"
+  },
+  {
+   "opp_id": "OPP-FX-2026-0039",
+   "segmento": "ESTR",
+   "tipo_opcion": "ESTRATEGIA",
+   "nombre": "Momentum G10 frente al USD (posición invertida)",
+   "par": null,
+   "composicion": [
+    {
+     "divisa": "EUR",
+     "peso": 0.25,
+     "lado": "CORTO"
+    },
+    {
+     "divisa": "GBP",
+     "peso": 0.25,
+     "lado": "CORTO"
+    },
+    {
+     "divisa": "AUD",
+     "peso": 0.25,
+     "lado": "CORTO"
+    },
+    {
+     "divisa": "CAD",
+     "peso": 0.25,
+     "lado": "CORTO"
+    },
+    {
+     "divisa": "USD",
+     "peso": 1.0,
+     "lado": "LARGO"
+    }
+   ],
+   "direccion": null,
+   "divisa_financiacion": "AUD",
+   "ambito": {
+    "incluye": "Índice de momentum G10 (exceso de rentabilidad, propio): tipo de cambio al contado y su rentabilidad total con carry",
+    "excluye": "Instrumentos concretos: su elección corresponde al Bloque B"
+   },
+   "tesis": "Momentum G10 frente al USD (posición invertida): la señal compuesta, el carry y la valoración sostienen el movimiento en los próximos meses. Sube el dólar de EE. UU. y bajan el euro, la libra esterlina y el dólar australiano.",
+   "mecanismo": "Diferencial de tipos y flujos de carry coherentes con la señal compuesta del segmento.",
+   "horizontes": [
+    "H2",
+    "H3"
+   ],
+   "horizonte_principal": "H3",
+   "pronosticos": [
+    "PRG-FX-2026-0232",
+    "PRG-FX-2026-0135"
+   ],
+   "catalizadores": [
+    {
+     "evento": "Reunión de política monetaria del banco central de la divisa",
+     "fecha": "2026-09-14"
+    }
+   ],
+   "riesgos": [
+    "Giro de la política monetaria",
+    "Episodio de aversión al riesgo"
+   ],
+   "invalidacion": [
+    "Cierre de FX-MOM-G10 por encima de 106.6234 (nivel de invalidación, no de entrada)"
+   ],
+   "indicador_seguimiento": {
+    "nombre": "Índice de momentum G10 (exceso de rentabilidad, propio)",
+    "simbolo": "FX-MOM-G10",
+    "fuente": "HT-01:csv",
+    "tipo": "INDICE_ESTRATEGIA"
+   },
+   "niveles_referencia": {
+    "nivel_actual": {
+     "valor": 99.900244,
+     "unidad": "nivel del indicador de seguimiento",
+     "fecha_dato": "2026-09-25",
+     "fuente": "HT-01:csv",
+     "hora_fijacion": "17:00 America/New_York",
+     "conocible_desde": "2026-09-25"
+    },
+    "invalidacion_1": {
+     "valor": 106.6234,
+     "unidad": "nivel de FX-MOM-G10 (invalidación, no de entrada)",
+     "fecha_dato": "2026-09-25",
+     "fuente": "HT-01:csv",
+     "hora_fijacion": "17:00 America/New_York",
+     "conocible_desde": "2026-09-25"
+    }
+   },
+   "carry_esperado": {
+    "anual_pct": -0.99,
+    "signo": "en contra"
+   },
+   "consideraciones_implementacion": [
+    "Liquidez máxima en el solape de las sesiones de Londres y Nueva York",
+    "Divisas convertibles para un inversor minorista europeo; liquidez máxima en las sesiones de Londres y Nueva York",
+    "Carry de la exposición -0.99 % anual (en contra)"
+   ],
+   "metricas_clave": [
+    "Evolución del indicador de seguimiento (FX-MOM-G10)",
+    "Diferencial de tipos y carry de la exposición"
+   ],
+   "preguntas_para_B": [
+    "¿Qué forma de exposición a «Momentum G10 frente al USD (posición invertida)» ofrece mejor carry neto de costes para un inversor europeo?"
+   ],
+   "evidencias": [
+    "CLM-FX-2026-0263",
+    "CLM-FX-2026-0264",
+    "CLM-FX-2026-0265",
+    "CLM-FX-2026-0266"
+   ],
+   "calculos": [
+    "CALC-FX-2026-1270",
+    "CALC-FX-2026-1271",
+    "CALC-FX-2026-1272",
+    "CALC-FX-2026-1273",
+    "CALC-FX-2026-1274",
+    "CALC-FX-2026-1275",
+    "CALC-FX-2026-1278",
+    "CALC-FX-2026-1282"
+   ],
+   "siguiente_paso_sugerido": "ENVIAR_A_BLOQUE_B",
+   "relevancia_decisional": "BAJA"
+  }
+ ],
+ "preguntas_sugeridas": [
+  "¿Qué opciones comparten el mismo factor de riesgo?",
+  "¿Qué haría cambiar el semáforo de cada segmento?"
+ ],
+ "limitaciones": [
+  "Datos sintéticos o de proveedor sin posicionamiento ni volatilidad implícita",
+  "Backtest: búsqueda web desactivada; evidencia limitada a datos HT-01 y referencias anteriores a la fecha as_of; riesgo de fuga por conocimiento del modelo"
+ ],
+ "aviso_legal": "Este informe describe oportunidades generales del mercado de divisas y no constituye asesoramiento personalizado; el Broker Personal valora si encaja con el usuario. El instrumento, el coste, la cobertura y la ejecución los analiza el Bloque B.",
+ "supuestos_declarados": [],
+ "consultas_broker_sin_respuesta": [],
+ "x_lectura_conjunto": "Las opciones dependen sobre todo del dólar y del carry; las apuestas comparten riesgo de giro de tipos.",
+ "x_lectura_divisa_base_analizador": "Para quien ahorra en euros, las ideas de esta semana cambian poco su poder de compra.",
+ "x_cambios_vs_anterior": "Cambios derivados de la evolución de las señales y de los diferenciales.",
+ "x_n_efectivo": 11.290174517647445,
+ "x_estado_run": "COMPLETO",
+ "estado_g3": "APTO"
+}

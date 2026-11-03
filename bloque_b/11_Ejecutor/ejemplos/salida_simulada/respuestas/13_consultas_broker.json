@@ -1,0 +1,16 @@
+{
+ "consultas": [
+  {
+   "id": "CNS-B-2026-0001",
+   "pet_id": "PET-B-2026-0001",
+   "seg_id": null,
+   "sentido": "SALIENTE",
+   "tipo": "PREFERENCIA_O_CRITERIO",
+   "modo": "NO_BLOQUEANTE",
+   "estado": "SUPUESTO_APLICADO",
+   "plazo": "2026-11-05T07:01:15+01:00",
+   "supuesto": "Solo bonos con calificación pública",
+   "efecto": "SIN_CAMBIO"
+  }
+ ]
+}

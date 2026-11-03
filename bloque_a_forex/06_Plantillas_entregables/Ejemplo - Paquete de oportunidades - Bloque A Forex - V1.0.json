@@ -1,0 +1,2177 @@
+{
+ "x_nota_ejemplo": "EJEMPLO CON DATOS ILUSTRATIVOS (ficticios): sirve para mostrar el formato del paquete del Bloque A Forex V1.1; no es un análisis real ni una recomendación.",
+ "run_id": "RUN-FX-2026-0019",
+ "fecha": "2026-11-02",
+ "fecha_datos_mercado": "2026-10-30",
+ "methodology_version": "FX-1.1",
+ "tipo": "PERIODICO",
+ "nivel_por_segmento": {
+  "G10N": "N2",
+  "G10M": "N2",
+  "EMAS": "N2",
+  "EMLA": "N2",
+  "EMEA": "N1",
+  "ESTR": "N2"
+ },
+ "divisa_base_usuario": "EUR",
+ "regimen_macro": "DATOS ILUSTRATIVOS. Ciclo de recortes de la Fed más rápido que el de los demás bancos centrales del G10, BoJ en endurecimiento gradual y volatilidad cambiaria baja (percentil 20). Los diferenciales de tipos frente al USD se estrechan y favorecen a las divisas con carry y a las de refugio con política monetaria más restrictiva.",
+ "regimen_cambiario": {
+  "dolar": "debil",
+  "riesgo": "apetito",
+  "volatilidad": "baja",
+  "nota": "Índice amplio del dólar de la Fed −4 % en 6 meses; volatilidad implícita G10 a 1 mes en el percentil 20."
+ },
+ "informes_transversales": {
+  "BCM": "TRV-FX-2026-0037",
+  "PFV": "TRV-FX-2026-0038"
+ },
+ "apuestas_independientes": 5,
+ "clusteres_exposicion": [
+  {
+   "cluster_id": "CL-1",
+   "factor_dominante": "Yen como refugio y divergencia Fed–BoJ",
+   "opp_ids": [
+    "OPP-FX-2026-0007"
+   ]
+  },
+  {
+   "cluster_id": "CL-2",
+   "factor_dominante": "Divergencia BCE–BoE",
+   "opp_ids": [
+    "OPP-FX-2026-0008"
+   ]
+  },
+  {
+   "cluster_id": "CL-3",
+   "factor_dominante": "Divergencia RBA–RBNZ y materias primas",
+   "opp_ids": [
+    "OPP-FX-2026-0012"
+   ]
+  },
+  {
+   "cluster_id": "CL-4",
+   "factor_dominante": "Dólar débil frente a emergentes",
+   "opp_ids": [
+    "OPP-FX-2026-0015",
+    "OPP-FX-2026-0020",
+    "OPP-FX-2026-0021"
+   ]
+  },
+  {
+   "cluster_id": "CL-5",
+   "factor_dominante": "Carry y riesgo global",
+   "opp_ids": [
+    "OPP-FX-2026-0030"
+   ]
+  }
+ ],
+ "exposicion_agregada": {
+  "USD": "corta fuerte",
+  "JPY": "larga moderada",
+  "EUR": "larga",
+  "GBP": "corta",
+  "AUD": "larga",
+  "NZD": "corta moderada",
+  "KRW": "larga",
+  "MXN": "larga",
+  "BRL": "larga",
+  "NOK": "larga moderada",
+  "CHF": "corta moderada"
+ },
+ "lectura_divisa_base": {
+  "divisa": "EUR",
+  "sentido": "estable",
+  "texto_llano": "Para quien ahorra en euros, el euro se mueve poco: sube algo frente a la libra y baja frente al yen."
+ },
+ "contradicciones_entre_segmentos": [
+  {
+   "divisa": "NZD",
+   "opp_ids": [
+    "OPP-FX-2026-0012",
+    "OPP-FX-2026-0030"
+   ],
+   "justificacion_contradiccion": "El NZD es pata activa en ambos: corto frente al AUD en G10M por la divergencia RBA–RBNZ (H2–H3) y largo en el carry G10 de ESTR frente al JPY y el CHF por su diferencial de tipos."
+  }
+ ],
+ "segmentos": {
+  "G10N": {
+   "estado_semaforo": "VERDE",
+   "regimen_segmento": "Régimen de dólar débil: la Fed recorta y el BoJ endurece; el diferencial a 2 años EE. UU.–Japón se estrecha 45 pb en tres meses. El euro y la libra divergen por el ritmo distinto del BCE y el BoE.",
+   "candidatas_analizadas": 14,
+   "embudo": {
+    "gc0_delta_material": true,
+    "cribadas": 14,
+    "pasan_gc1": 6,
+    "pasan_gc2": 4,
+    "finalistas_gc3": 4,
+    "elegibles": 3
+   },
+   "opciones": [
+    {
+     "opp_id": "OPP-FX-2026-0007",
+     "rango": 1,
+     "tipo_opcion": "PAR",
+     "segmento": "G10N",
+     "nombre": "USD/JPY bajista (yen al alza)",
+     "nombre_llano": "El yen japonés podría ganar valor frente al dólar",
+     "sube_baja_llano": "Sube el yen japonés y baja el dólar de EE. UU.",
+     "por_que_llano": "Japón sube sus tipos y EE. UU. los baja: la distancia entre ambos se estrecha.",
+     "que_puede_salir_mal_llano": "Si la inflación de EE. UU. repunta, la Reserva Federal frenaría los recortes y el yen se debilitaría.",
+     "par": "USD/JPY",
+     "composicion": [
+      {
+       "divisa": "USD",
+       "peso": 1.0,
+       "lado": "CORTO"
+      },
+      {
+       "divisa": "JPY",
+       "peso": 1.0,
+       "lado": "LARGO"
+      }
+     ],
+     "direccion": "BAJISTA_BASE",
+     "divisa_financiacion": "USD",
+     "tesis": "El Banco de Japón endurecerá su política antes de lo que descuenta el mercado mientras la Fed recorta; el estrechamiento del diferencial a 2 años y un posicionamiento corto en yen muy extendido favorecen la apreciación del yen en 3–6 meses.",
+     "mecanismo": "Estrechamiento del diferencial de tipos a 2 años EE. UU.–Japón → menor atractivo del carry financiado en yenes → cierre de posiciones cortas en JPY y repatriación de inversores japoneses con cobertura creciente.",
+     "tnd_ids": [
+      "TND-FX-2026-0003"
+     ],
+     "cluster_id": "CL-1",
+     "factor_dominante": "Yen como refugio y divergencia Fed–BoJ",
+     "puntuaciones": {
+      "T": 80,
+      "E": 80,
+      "M": 50,
+      "A": 70,
+      "P": 70,
+      "RK": 75,
+      "desglose_ref": "HT03-FX-2026-0019-0007"
+     },
+     "naturaleza_inversion": "CICLICA",
+     "horizonte_principal": "H3",
+     "justificacion_horizonte": null,
+     "horizontes": {
+      "H2": {
+       "vista": "bajista",
+       "banda": "incierto",
+       "prob": null,
+       "certificado_r13": false,
+       "referencia": "paseo aleatorio",
+       "tipo_rentabilidad": "PRECIO_CONTADO",
+       "divisa_medicion": "JPY",
+       "prg_id": "PRG-FX-2026-0041",
+       "fecha_resolucion": "2026-11-27",
+       "criterio_resolucion": "Cierre H.10 de USD/JPY del 27/11/2026 por debajo del 30/10/2026",
+       "etiqueta": "sin ventaja demostrada frente al paseo aleatorio"
+      },
+      "H3": {
+       "vista": "bajista",
+       "banda": "más probable que no",
+       "prob": 0.6,
+       "certificado_r13": true,
+       "referencia": "paseo aleatorio",
+       "tipo_rentabilidad": "PRECIO_CONTADO",
+       "divisa_medicion": "JPY",
+       "prg_id": "PRG-FX-2026-0042",
+       "fecha_resolucion": "2027-04-30",
+       "criterio_resolucion": "Cierre H.10 de USD/JPY del 30/04/2027 por debajo del 30/10/2026"
+      }
+     },
+     "valoracion": "USD/JPY cotiza un 18 % por encima de su valor PPA (OCDE) y el REER del yen está en el percentil 4 de 30 años; el forward a 6 meses ya descuenta una caída del 1,6 % por diferencial (CALC-FX-2026-0033).",
+     "carry": {
+      "anual_pct": -3.1,
+      "signo": "en contra",
+      "ajustado_vol": -0.31,
+      "calc_id": "CALC-FX-2026-0034",
+      "diferencial_tipos_pct": 3.1
+     },
+     "catalizadores": [
+      {
+       "evento": "Reunión de política monetaria del Banco de Japón",
+       "fecha": "2026-12-18"
+      },
+      {
+       "evento": "Reunión del FOMC de la Reserva Federal",
+       "fecha": "2026-12-16"
+      },
+      {
+       "evento": "Negociación salarial de primavera (shuntō)",
+       "fecha": "2027-03"
+      }
+     ],
+     "riesgos": [
+      "Repunte de la inflación en EE. UU. que frene los recortes de la Fed",
+      "Retraso de la subida del BoJ por debilidad del consumo japonés",
+      "Episodio de apetito por el riesgo que reactive el carry financiado en yenes"
+     ],
+     "riesgo_1a5": 3,
+     "invalidacion": [
+      "El diferencial a 2 años EE. UU.–Japón se amplía más de 50 pb desde el 30/10/2026",
+      "El BoJ descarta subidas en su comunicado de diciembre",
+      "Cierre semanal de USD/JPY por encima de 158,50 (nivel de invalidación, no de entrada)"
+     ],
+     "ambito": {
+      "incluye": "Tipo de cambio USD/JPY al contado y su rentabilidad total con carry",
+      "excluye": "Cruces del yen con divisas distintas del USD (EUR/JPY, AUD/JPY)"
+     },
+     "indicador_seguimiento": {
+      "nombre": "USD/JPY, referencia H.10 de la Reserva Federal",
+      "simbolo": "USDJPY",
+      "fuente": "HT-01 (Fed H.10)",
+      "tipo": "TIPO_DE_CAMBIO"
+     },
+     "convertibilidad": {
+      "convertible": true,
+      "ndf": false,
+      "controles_capitales": false,
+      "profundidad": "muy alta",
+      "nota": "Par G10 plenamente convertible; segundo par más negociado del mundo (encuesta trienal del BPI 2025)."
+     },
+     "liquidez": "alta",
+     "relevancia_decisional": "MEDIA",
+     "reversibilidad": "alta",
+     "siguiente_paso_sugerido": "ENVIAR_A_BLOQUE_B",
+     "que_cambiaria_la_conclusion": [
+      "El diferencial a 2 años EE. UU.–Japón se amplía más de 50 pb desde el 30/10/2026",
+      "El BoJ descarta subidas en su comunicado de diciembre"
+     ],
+     "objeciones": [
+      {
+       "objecion_id": "OBJ-0007-01",
+       "fuerza": "moderada",
+       "resumen": "El forward ya descuenta parte del estrechamiento del diferencial.",
+       "respuesta": "El forward descuenta un 1,6 % a 6 meses; la tesis espera un movimiento mayor por el cierre de posiciones cortas en yen (CLM-FX-2026-0102).",
+       "estado": "RESPONDIDA"
+      }
+     ],
+     "lo_que_no_sabemos": [
+      "Cuánto carry financiado en yenes queda por deshacer",
+      "La reacción del Ministerio de Finanzas japonés a un yen fuerte"
+     ],
+     "confianza": "probable",
+     "evidencias": [
+      "CLM-FX-2026-0101",
+      "CLM-FX-2026-0102"
+     ],
+     "calculos": [
+      "CALC-FX-2026-0033",
+      "CALC-FX-2026-0034"
+     ],
+     "minigrafico": {
+      "tipo": "PAR_UN_ANO",
+      "serie_ref": "HT01:USDJPY",
+      "equilibrio": null,
+      "calc_id": "CALC-FX-2026-0033"
+     }
+    },
+    {
+     "opp_id": "OPP-FX-2026-0008",
+     "rango": 2,
+     "tipo_opcion": "CRUCE",
+     "segmento": "G10N",
+     "nombre": "EUR/GBP alcista (euro al alza frente a la libra)",
+     "nombre_llano": "El euro podría ganar valor frente a la libra",
+     "sube_baja_llano": "Sube el euro y baja la libra esterlina.",
+     "por_que_llano": "El Banco de Inglaterra bajará tipos más rápido que el Banco Central Europeo.",
+     "que_puede_salir_mal_llano": "Si la inflación británica no baja, el Banco de Inglaterra esperaría y la libra resistiría.",
+     "par": "EUR/GBP",
+     "composicion": [
+      {
+       "divisa": "EUR",
+       "peso": 1.0,
+       "lado": "LARGO"
+      },
+      {
+       "divisa": "GBP",
+       "peso": 1.0,
+       "lado": "CORTO"
+      }
+     ],
+     "direccion": "ALCISTA_BASE",
+     "divisa_financiacion": "GBP",
+     "tesis": "El Banco de Inglaterra recortará más de lo que descuenta la curva por el enfriamiento del empleo británico, mientras el BCE mantiene el tipo de depósito; el diferencial a 2 años a favor de la libra se estrechará.",
+     "mecanismo": "Sorpresas macro negativas en el Reino Unido → repricing de la senda del BoE → estrechamiento del diferencial a 2 años → depreciación de la libra frente al euro.",
+     "tnd_ids": [
+      "TND-FX-2026-0005"
+     ],
+     "cluster_id": "CL-2",
+     "factor_dominante": "Divergencia BCE–BoE",
+     "puntuaciones": {
+      "T": 70,
+      "E": 70,
+      "M": 50,
+      "A": 65,
+      "P": 65,
+      "RK": 68,
+      "desglose_ref": "HT03-FX-2026-0019-0008"
+     },
+     "naturaleza_inversion": "CICLICA",
+     "horizonte_principal": "H3",
+     "justificacion_horizonte": null,
+     "horizontes": {
+      "H3": {
+       "vista": "alcista",
+       "banda": "más probable que no",
+       "prob": null,
+       "certificado_r13": false,
+       "referencia": "paseo aleatorio",
+       "tipo_rentabilidad": "PRECIO_CONTADO",
+       "divisa_medicion": "GBP",
+       "prg_id": "PRG-FX-2026-0043",
+       "fecha_resolucion": "2027-04-30",
+       "criterio_resolucion": "Cierre BCE de EUR/GBP del 30/04/2027 por encima del 30/10/2026",
+       "etiqueta": "sin ventaja demostrada frente al paseo aleatorio"
+      }
+     },
+     "valoracion": "EUR/GBP en 0,860, cerca de su valor BEER (0,87, CALC-FX-2026-0035); el forward a 6 meses apenas descuenta un 0,4 %.",
+     "carry": {
+      "anual_pct": -1.5,
+      "signo": "en contra",
+      "ajustado_vol": -0.27,
+      "calc_id": "CALC-FX-2026-0036",
+      "diferencial_tipos_pct": -1.5
+     },
+     "catalizadores": [
+      {
+       "evento": "Reunión del Banco de Inglaterra",
+       "fecha": "2026-12-17"
+      },
+      {
+       "evento": "Reunión de política monetaria del BCE",
+       "fecha": "2026-12-10"
+      }
+     ],
+     "riesgos": [
+      "Inflación de servicios británica persistente",
+      "Debilidad de la zona del euro que obligue al BCE a recortar"
+     ],
+     "riesgo_1a5": 2,
+     "invalidacion": [
+      "El diferencial a 2 años Reino Unido–zona del euro se amplía más de 40 pb",
+      "Cierre semanal de EUR/GBP por debajo de 0,8350"
+     ],
+     "ambito": {
+      "incluye": "Cruce EUR/GBP al contado y su rentabilidad total con carry",
+      "excluye": "Pares de la libra frente al USD (GBP/USD)"
+     },
+     "indicador_seguimiento": {
+      "nombre": "EUR/GBP, tipo de referencia del BCE",
+      "simbolo": "EURGBP",
+      "fuente": "HT-01 (BCE)",
+      "tipo": "TIPO_DE_CAMBIO"
+     },
+     "convertibilidad": {
+      "convertible": true,
+      "ndf": false,
+      "controles_capitales": false,
+      "profundidad": "muy alta",
+      "nota": "Cruce G10 convertible y profundo."
+     },
+     "liquidez": "alta",
+     "relevancia_decisional": "MEDIA",
+     "reversibilidad": "alta",
+     "siguiente_paso_sugerido": "ENVIAR_A_BLOQUE_B",
+     "que_cambiaria_la_conclusion": [
+      "El diferencial a 2 años Reino Unido–zona del euro se amplía más de 40 pb",
+      "Cierre semanal de EUR/GBP por debajo de 0,8350"
+     ],
+     "objeciones": [
+      {
+       "objecion_id": "OBJ-0008-01",
+       "fuerza": "moderada",
+       "resumen": "La curva británica ya descuenta tres recortes.",
+       "respuesta": "La curva descuenta 2,6 recortes a 12 meses; el Analista espera 4 por el deterioro del empleo (CLM-FX-2026-0103).",
+       "estado": "RESPONDIDA"
+      }
+     ],
+     "lo_que_no_sabemos": [
+      "El efecto del presupuesto británico de noviembre sobre la inflación"
+     ],
+     "confianza": "probable",
+     "evidencias": [
+      "CLM-FX-2026-0103"
+     ],
+     "calculos": [
+      "CALC-FX-2026-0035",
+      "CALC-FX-2026-0036"
+     ],
+     "minigrafico": {
+      "tipo": "VALOR_VS_EQUILIBRIO",
+      "serie_ref": "HT01:EURGBP",
+      "equilibrio": 0.87,
+      "calc_id": "CALC-FX-2026-0035"
+     }
+    },
+    {
+     "opp_id": "OPP-FX-2026-0009",
+     "rango": 3,
+     "tipo_opcion": "PAR",
+     "segmento": "G10N",
+     "nombre": "EUR/USD alcista estructural (euro al alza por la pérdida gradual de peso del dólar en las reservas)",
+     "nombre_llano": "El euro podría ganar valor frente al dólar durante muchos años",
+     "sube_baja_llano": "Sube el euro y baja el dólar de EE. UU.",
+     "por_que_llano": "Los bancos centrales guardan cada vez menos dólares en sus reservas.",
+     "que_puede_salir_mal_llano": "Si el dólar sigue siendo la moneda refugio de siempre, esto tardará mucho o no pasará.",
+     "par": "EUR/USD",
+     "composicion": [
+      {
+       "divisa": "EUR",
+       "peso": 1.0,
+       "lado": "LARGO"
+      },
+      {
+       "divisa": "USD",
+       "peso": 1.0,
+       "lado": "CORTO"
+      }
+     ],
+     "direccion": "ALCISTA_BASE",
+     "divisa_financiacion": "USD",
+     "tesis": "La diversificación gradual de las reservas oficiales fuera del dólar y un dólar caro frente a su equilibrio favorecen al euro en años y décadas.",
+     "mecanismo": "Menor cuota del USD en COFER y en la facturación → menor demanda estructural de activos en dólares → reversión del REER del dólar hacia su media de largo plazo.",
+     "tnd_ids": [
+      "TND-FX-2026-0002"
+     ],
+     "cluster_id": "CL-1",
+     "factor_dominante": "Dólar y sistema monetario internacional",
+     "puntuaciones": {
+      "T": 70,
+      "E": 70,
+      "M": 50,
+      "A": 75,
+      "P": 65,
+      "RK": 72,
+      "desglose_ref": "HT03-FX-2026-0019-0009"
+     },
+     "naturaleza_inversion": "ESTRUCTURAL",
+     "horizonte_principal": "H5",
+     "justificacion_horizonte": null,
+     "ambito_h5": "SISTEMA_MONETARIO_INTERNACIONAL",
+     "horizontes": {
+      "H4": {
+       "vista": "alcista",
+       "banda": "más probable que no",
+       "prob": null,
+       "certificado_r13": false,
+       "referencia": "paseo aleatorio y forward",
+       "tipo_rentabilidad": "PRECIO_CONTADO",
+       "divisa_medicion": "USD",
+       "prg_id": "PRG-FX-2026-0050",
+       "fecha_resolucion": "2027-10-29",
+       "criterio_resolucion": "Tipo de referencia del BCE de EUR/USD del 29/10/2027 por encima del de 30/10/2026",
+       "etiqueta": "sin ventaja demostrada frente al paseo aleatorio"
+      },
+      "H5": {
+       "vista": "alcista",
+       "banda": "más probable que no",
+       "prob": null,
+       "certificado_r13": false,
+       "referencia": "paseo aleatorio",
+       "tipo_rentabilidad": "PRECIO_CONTADO",
+       "divisa_medicion": "USD",
+       "prg_id": "PRG-FX-2026-0051",
+       "ambito_h5": "SISTEMA_MONETARIO_INTERNACIONAL",
+       "fecha_resolucion": "2036-10-31",
+       "criterio_resolucion": "REER del USD (BPI, amplio) de 2036 por debajo de su media 1995–2025; se evalúa por hitos",
+       "etiqueta": "probabilidad siempre cualitativa en H5 (sin certificado posible)",
+       "hitos": [
+        {
+         "hit_id": "HIT-FX-2026-0001",
+         "fecha": "2027-06-30",
+         "indicador": "Cuota del USD en las reservas asignadas (FMI COFER, dato 1T 2027)",
+         "criterio": "Por debajo del 57 %",
+         "referencia_ingenua": "sin cambio frente al último dato publicado"
+        },
+        {
+         "hit_id": "HIT-FX-2026-0002",
+         "fecha": "2029-06-30",
+         "indicador": "REER amplio del USD (BPI), media del 1S 2029",
+         "criterio": "Al menos un 5 % por debajo de su nivel de octubre de 2026",
+         "referencia_ingenua": "paseo aleatorio del REER"
+        },
+        {
+         "hit_id": "HIT-FX-2026-0003",
+         "fecha": "2031-06-30",
+         "indicador": "Cuota del EUR en las reservas asignadas (FMI COFER)",
+         "criterio": "Por encima del 21 %",
+         "referencia_ingenua": "sin cambio frente al último dato publicado"
+        }
+       ]
+      }
+     },
+     "valoracion": "EUR/USD en 1,16; el REER del dólar está un 12 % por encima de su media de 30 años (CALC-FX-2026-0047) y la cuota del USD en COFER cae de forma gradual (CLM-FX-2026-0109).",
+     "carry": {
+      "anual_pct": -1.6,
+      "signo": "en contra",
+      "ajustado_vol": -0.2,
+      "calc_id": "CALC-FX-2026-0048",
+      "diferencial_tipos_pct": -1.6
+     },
+     "catalizadores": [
+      {
+       "evento": "Publicación trimestral de COFER (FMI)",
+       "fecha": "2026-12-31"
+      }
+     ],
+     "riesgos": [
+      "El dólar conserva su papel de refugio en las crisis",
+      "Ventaja de crecimiento persistente de EE. UU."
+     ],
+     "riesgo_1a5": 2,
+     "invalidacion": [
+      "La cuota del USD en COFER vuelve a superar el 60 % durante dos trimestres seguidos",
+      "El REER del USD sube otro 10 % en 12 meses"
+     ],
+     "ambito": {
+      "incluye": "Tipo de cambio EUR/USD a largo plazo y el REER del dólar",
+      "excluye": "Opiniones tácticas sobre EUR/USD (H1–H3)"
+     },
+     "indicador_seguimiento": {
+      "nombre": "EUR/USD, tipo de referencia del BCE; REER amplio del USD (BPI)",
+      "simbolo": "EURUSD",
+      "fuente": "HT-01 (BCE, BPI)",
+      "tipo": "TIPO_DE_CAMBIO"
+     },
+     "convertibilidad": {
+      "convertible": true,
+      "ndf": false,
+      "controles_capitales": false,
+      "profundidad": "muy alta",
+      "nota": "El par más negociado del mundo; plenamente convertible."
+     },
+     "liquidez": "alta",
+     "relevancia_decisional": "ALTA",
+     "reversibilidad": "alta",
+     "siguiente_paso_sugerido": "VIGILAR",
+     "que_cambiaria_la_conclusion": [
+      "La cuota del USD en COFER vuelve a superar el 60 %",
+      "Un nuevo episodio de dominancia del dólar en la financiación global"
+     ],
+     "objeciones": [
+      {
+       "objecion_id": "OBJ-0009-01",
+       "fuerza": "moderada",
+       "resumen": "La desdolarización lleva décadas anunciándose sin ocurrir.",
+       "respuesta": "Por eso la tesis es H5, con probabilidad cualitativa e hitos medibles que la refutan pronto si no avanza (CLM-FX-2026-0109).",
+       "estado": "RESPONDIDA"
+      }
+     ],
+     "lo_que_no_sabemos": [
+      "Si el euro, el renminbi o el oro serán los beneficiarios de la diversificación"
+     ],
+     "confianza": "especulativo",
+     "evidencias": [
+      "CLM-FX-2026-0109"
+     ],
+     "calculos": [
+      "CALC-FX-2026-0047",
+      "CALC-FX-2026-0048"
+     ],
+     "minigrafico": {
+      "tipo": "PAR_UN_ANO",
+      "serie_ref": "HT01:EURUSD",
+      "equilibrio": null,
+      "calc_id": "CALC-FX-2026-0047"
+     }
+    }
+   ],
+   "menos_de_tres_motivo": null
+  },
+  "G10M": {
+   "estado_semaforo": "AMBAR",
+   "regimen_segmento": "Divergencia entre el RBA (pausa) y el RBNZ (recortes); el mineral de hierro estable sostiene los términos de intercambio australianos; las coronas escandinavas siguen poco líquidas.",
+   "candidatas_analizadas": 9,
+   "embudo": {
+    "gc0_delta_material": true,
+    "cribadas": 9,
+    "pasan_gc1": 4,
+    "pasan_gc2": 2,
+    "finalistas_gc3": 2,
+    "elegibles": 1
+   },
+   "opciones": [
+    {
+     "opp_id": "OPP-FX-2026-0012",
+     "rango": 1,
+     "tipo_opcion": "CRUCE",
+     "segmento": "G10M",
+     "nombre": "AUD/NZD alcista (dólar australiano frente al neozelandés)",
+     "nombre_llano": "El dólar australiano podría subir frente al neozelandés",
+     "sube_baja_llano": "Sube el dólar australiano y baja el dólar neozelandés.",
+     "por_que_llano": "Australia mantiene tipos altos y Nueva Zelanda los sigue bajando.",
+     "que_puede_salir_mal_llano": "Si China frena, bajarían los metales y el dólar australiano perdería apoyo.",
+     "par": "AUD/NZD",
+     "composicion": [
+      {
+       "divisa": "AUD",
+       "peso": 1.0,
+       "lado": "LARGO"
+      },
+      {
+       "divisa": "NZD",
+       "peso": 1.0,
+       "lado": "CORTO"
+      }
+     ],
+     "direccion": "ALCISTA_BASE",
+     "divisa_financiacion": "NZD",
+     "tesis": "El RBA mantendrá su tipo oficial mientras el RBNZ prolonga los recortes; el diferencial de tipos a favor del AUD y los términos de intercambio mineros sostienen el cruce.",
+     "mecanismo": "Divergencia RBA–RBNZ → diferencial de tipos creciente a favor del AUD → flujos de carry intra-Oceanía; los precios del mineral de hierro apoyan los términos de intercambio australianos.",
+     "tnd_ids": [
+      "TND-FX-2026-0006"
+     ],
+     "cluster_id": "CL-3",
+     "factor_dominante": "Divergencia RBA–RBNZ y materias primas",
+     "puntuaciones": {
+      "T": 70,
+      "E": 70,
+      "M": 50,
+      "A": 70,
+      "P": 65,
+      "RK": 70,
+      "desglose_ref": "HT03-FX-2026-0019-0012"
+     },
+     "naturaleza_inversion": "CICLICA",
+     "horizonte_principal": "H3",
+     "justificacion_horizonte": null,
+     "horizontes": {
+      "H2": {
+       "vista": "alcista",
+       "banda": "incierto",
+       "prob": null,
+       "certificado_r13": false,
+       "referencia": "paseo aleatorio",
+       "tipo_rentabilidad": "PRECIO_CONTADO",
+       "divisa_medicion": "NZD",
+       "prg_id": "PRG-FX-2026-0044",
+       "fecha_resolucion": "2026-11-27",
+       "criterio_resolucion": "Cierre WM/Reuters de AUD/NZD del 27/11/2026 por encima del 30/10/2026",
+       "etiqueta": "sin ventaja demostrada frente al paseo aleatorio"
+      },
+      "H3": {
+       "vista": "alcista",
+       "banda": "más probable que no",
+       "prob": null,
+       "certificado_r13": false,
+       "referencia": "paseo aleatorio",
+       "tipo_rentabilidad": "PRECIO_CONTADO",
+       "divisa_medicion": "NZD",
+       "prg_id": "PRG-FX-2026-0045",
+       "fecha_resolucion": "2027-04-30",
+       "criterio_resolucion": "Cierre WM/Reuters de AUD/NZD del 30/04/2027 por encima del 30/10/2026",
+       "etiqueta": "sin ventaja demostrada frente al paseo aleatorio"
+      }
+     },
+     "valoracion": "AUD/NZD en 1,095, un 3 % por debajo de su media de 10 años; el modelo de materias primas sitúa el equilibrio en 1,12 (CALC-FX-2026-0037).",
+     "carry": {
+      "anual_pct": 1.1,
+      "signo": "a favor",
+      "ajustado_vol": 0.18,
+      "calc_id": "CALC-FX-2026-0038",
+      "diferencial_tipos_pct": 1.1
+     },
+     "catalizadores": [
+      {
+       "evento": "Reunión del RBNZ",
+       "fecha": "2026-11-25"
+      },
+      {
+       "evento": "Reunión del RBA",
+       "fecha": "2026-12-08"
+      }
+     ],
+     "riesgos": [
+      "Caída del mineral de hierro por menor demanda china",
+      "Sorpresa de inflación en Nueva Zelanda"
+     ],
+     "riesgo_1a5": 2,
+     "invalidacion": [
+      "El RBNZ señala el fin del ciclo de recortes",
+      "Cierre semanal de AUD/NZD por debajo de 1,0700"
+     ],
+     "ambito": {
+      "incluye": "Cruce AUD/NZD al contado y su rentabilidad total con carry",
+      "excluye": "Exposición a las divisas de Oceanía frente al USD"
+     },
+     "indicador_seguimiento": {
+      "nombre": "AUD/NZD, cruce de los fixings de WM/Reuters",
+      "simbolo": "AUDNZD",
+      "fuente": "HT-01 (WM/Reuters)",
+      "tipo": "TIPO_DE_CAMBIO"
+     },
+     "convertibilidad": {
+      "convertible": true,
+      "ndf": false,
+      "controles_capitales": false,
+      "profundidad": "alta",
+      "nota": "Cruce G10 convertible; liquidez concentrada en la sesión asiática."
+     },
+     "liquidez": "alta",
+     "relevancia_decisional": "MEDIA",
+     "reversibilidad": "alta",
+     "siguiente_paso_sugerido": "ENVIAR_A_BLOQUE_B",
+     "que_cambiaria_la_conclusion": [
+      "El RBNZ señala el fin del ciclo de recortes",
+      "Cierre semanal de AUD/NZD por debajo de 1,0700"
+     ],
+     "objeciones": [
+      {
+       "objecion_id": "OBJ-0012-01",
+       "fuerza": "debil",
+       "resumen": "Correlación alta con el ciclo chino.",
+       "respuesta": null,
+       "estado": "SIN_RESOLVER"
+      }
+     ],
+     "lo_que_no_sabemos": [
+      "La senda de estímulos fiscales de China en 2027"
+     ],
+     "confianza": "probable",
+     "evidencias": [
+      "CLM-FX-2026-0104"
+     ],
+     "calculos": [
+      "CALC-FX-2026-0037",
+      "CALC-FX-2026-0038"
+     ],
+     "minigrafico": {
+      "tipo": "PAR_UN_ANO",
+      "serie_ref": "HT01:AUDNZD",
+      "equilibrio": 1.12,
+      "calc_id": "CALC-FX-2026-0037"
+     }
+    }
+   ],
+   "menos_de_tres_motivo": "Se propone 1 opción en G10 de materias primas y escandinavas: de 9 candidatas, 2 finalistas y 1 elegible. EUR/NOK bajista quedó con A = 50: necesitaría un catalizador fechado del Norges Bank."
+  },
+  "EMAS": {
+   "estado_semaforo": "AMBAR",
+   "regimen_segmento": "Asia emergente apoyada por el ciclo de semiconductores; el PBoC fija el CNY con estabilidad y el Banco de Corea solo suaviza la volatilidad.",
+   "candidatas_analizadas": 11,
+   "embudo": {
+    "gc0_delta_material": true,
+    "cribadas": 11,
+    "pasan_gc1": 5,
+    "pasan_gc2": 3,
+    "finalistas_gc3": 2,
+    "elegibles": 1
+   },
+   "opciones": [
+    {
+     "opp_id": "OPP-FX-2026-0015",
+     "rango": 1,
+     "tipo_opcion": "PAR",
+     "segmento": "EMAS",
+     "nombre": "USD/KRW bajista (won coreano al alza)",
+     "nombre_llano": "El won coreano podría ganar valor frente al dólar",
+     "sube_baja_llano": "Sube el won de Corea del Sur y baja el dólar de EE. UU.",
+     "por_que_llano": "Corea vende más chips al mundo y entran más inversores en su deuda.",
+     "que_puede_salir_mal_llano": "Si sube la tensión en la península o caen las ventas de chips, el won bajaría.",
+     "par": "USD/KRW",
+     "composicion": [
+      {
+       "divisa": "USD",
+       "peso": 1.0,
+       "lado": "CORTO"
+      },
+      {
+       "divisa": "KRW",
+       "peso": 1.0,
+       "lado": "LARGO"
+      }
+     ],
+     "direccion": "BAJISTA_BASE",
+     "divisa_financiacion": "USD",
+     "tesis": "El ciclo alcista de exportaciones de semiconductores y la inclusión de Corea en el índice WGBI atraen flujos de cartera que apreciarán el won frente al USD.",
+     "mecanismo": "Superávit comercial creciente por semiconductores + entradas en deuda por la inclusión en el WGBI → demanda de KRW; el Banco de Corea suaviza la volatilidad sin oponerse a la tendencia.",
+     "tnd_ids": [
+      "TND-FX-2026-0008"
+     ],
+     "cluster_id": "CL-4",
+     "factor_dominante": "Dólar débil frente a emergentes",
+     "puntuaciones": {
+      "T": 70,
+      "E": 80,
+      "M": 50,
+      "A": 65,
+      "P": 65,
+      "RK": 71,
+      "desglose_ref": "HT03-FX-2026-0019-0015"
+     },
+     "naturaleza_inversion": "CICLICA",
+     "horizonte_principal": "H3",
+     "justificacion_horizonte": null,
+     "horizontes": {
+      "H3": {
+       "vista": "bajista",
+       "banda": "más probable que no",
+       "prob": null,
+       "certificado_r13": false,
+       "referencia": "paseo aleatorio",
+       "tipo_rentabilidad": "PRECIO_CONTADO",
+       "divisa_medicion": "KRW",
+       "prg_id": "PRG-FX-2026-0046",
+       "fecha_resolucion": "2027-04-30",
+       "criterio_resolucion": "Fixing de USD/KRW del 30/04/2027 por debajo del 30/10/2026",
+       "etiqueta": "sin ventaja demostrada frente al paseo aleatorio"
+      }
+     },
+     "valoracion": "El REER del won está un 9 % por debajo de su media de 10 años; el NDF a 3 meses descuenta solo un 0,5 % de apreciación (CALC-FX-2026-0039).",
+     "carry": {
+      "anual_pct": -1.4,
+      "signo": "en contra",
+      "ajustado_vol": -0.17,
+      "calc_id": "CALC-FX-2026-0040",
+      "diferencial_tipos_pct": 1.4
+     },
+     "catalizadores": [
+      {
+       "evento": "Datos de exportaciones de Corea (primeros 20 días)",
+       "fecha": "2026-11-21"
+      },
+      {
+       "evento": "Inicio de la inclusión de Corea en el índice WGBI",
+       "fecha": "2026-11"
+      }
+     ],
+     "riesgos": [
+      "Tensión geopolítica en la península coreana",
+      "Giro del ciclo de semiconductores",
+      "Intervención del Banco de Corea"
+     ],
+     "riesgo_1a5": 3,
+     "invalidacion": [
+      "Las exportaciones de semiconductores caen dos meses seguidos",
+      "Cierre semanal de USD/KRW por encima de 1.420"
+     ],
+     "ambito": {
+      "incluye": "Tipo de cambio USD/KRW (mercado local y NDF) y su rentabilidad total con carry",
+      "excluye": "Otras divisas tecnológicas de Asia (TWD)"
+     },
+     "indicador_seguimiento": {
+      "nombre": "USD/KRW, fixing de cierre de Seúl (Seoul Money Brokerage)",
+      "simbolo": "USDKRW",
+      "fuente": "HT-01 (Banco de Corea)",
+      "tipo": "TIPO_DE_CAMBIO"
+     },
+     "convertibilidad": {
+      "convertible": false,
+      "ndf": true,
+      "controles_capitales": false,
+      "profundidad": "alta",
+      "nota": "El won no es plenamente convertible fuera de Corea, pero existe un NDF líquido y futuros cotizados; sin controles que impidan la exposición."
+     },
+     "liquidez": "media",
+     "relevancia_decisional": "ALTA",
+     "reversibilidad": "baja",
+     "siguiente_paso_sugerido": "ENVIAR_A_BLOQUE_B",
+     "que_cambiaria_la_conclusion": [
+      "Las exportaciones de semiconductores caen dos meses seguidos",
+      "Cierre semanal de USD/KRW por encima de 1.420"
+     ],
+     "objeciones": [
+      {
+       "objecion_id": "OBJ-0015-01",
+       "fuerza": "moderada",
+       "resumen": "El Banco de Corea podría frenar la apreciación para proteger a los exportadores.",
+       "respuesta": "Sus intervenciones recientes solo suavizaron movimientos bruscos (CLM-FX-2026-0105); no defendieron un nivel.",
+       "estado": "RESPONDIDA"
+      }
+     ],
+     "lo_que_no_sabemos": [
+      "El ritmo real de entrada de inversores tras la inclusión en el WGBI"
+     ],
+     "confianza": "probable",
+     "evidencias": [
+      "CLM-FX-2026-0105"
+     ],
+     "calculos": [
+      "CALC-FX-2026-0039",
+      "CALC-FX-2026-0040"
+     ],
+     "minigrafico": {
+      "tipo": "PAR_UN_ANO",
+      "serie_ref": "HT01:USDKRW",
+      "equilibrio": null,
+      "calc_id": "CALC-FX-2026-0039"
+     }
+    }
+   ],
+   "menos_de_tres_motivo": "Se propone 1 opción en emergentes de Asia: de 11 candidatas, 2 finalistas y 1 elegible. USD/INR bajista no superó PS2 por un dato de reservas desactualizado."
+  },
+  "EMLA": {
+   "estado_semaforo": "VERDE",
+   "regimen_segmento": "Carry alto con volatilidad implícita baja; Banxico y el BCB recortan despacio; la revisión del T-MEC y el marco fiscal brasileño son los riesgos principales.",
+   "candidatas_analizadas": 8,
+   "embudo": {
+    "gc0_delta_material": true,
+    "cribadas": 8,
+    "pasan_gc1": 5,
+    "pasan_gc2": 3,
+    "finalistas_gc3": 3,
+    "elegibles": 2
+   },
+   "opciones": [
+    {
+     "opp_id": "OPP-FX-2026-0020",
+     "rango": 1,
+     "tipo_opcion": "PAR",
+     "segmento": "EMLA",
+     "nombre": "USD/MXN bajista (peso mexicano al alza)",
+     "nombre_llano": "El peso mexicano podría ganar valor frente al dólar",
+     "sube_baja_llano": "Sube el peso mexicano y baja el dólar de EE. UU.",
+     "por_que_llano": "México paga tipos altos y recibe inversión de fábricas que se mudan cerca de EE. UU.",
+     "que_puede_salir_mal_llano": "Si hay un susto en los mercados, la gente vende monedas como el peso muy deprisa.",
+     "par": "USD/MXN",
+     "composicion": [
+      {
+       "divisa": "USD",
+       "peso": 1.0,
+       "lado": "CORTO"
+      },
+      {
+       "divisa": "MXN",
+       "peso": 1.0,
+       "lado": "LARGO"
+      }
+     ],
+     "direccion": "BAJISTA_BASE",
+     "divisa_financiacion": "USD",
+     "tesis": "El carry elevado del peso, ajustado por volatilidad, y la inversión directa ligada al nearshoring sostienen el MXN mientras Banxico recorta despacio.",
+     "mecanismo": "Diferencial de tipos de más de 3 puntos frente al USD + entradas de inversión directa → demanda estructural de MXN; volatilidad implícita baja que mejora el carry ajustado.",
+     "tnd_ids": [
+      "TND-FX-2026-0009"
+     ],
+     "cluster_id": "CL-4",
+     "factor_dominante": "Dólar débil frente a emergentes",
+     "puntuaciones": {
+      "T": 70,
+      "E": 70,
+      "M": 50,
+      "A": 75,
+      "P": 65,
+      "RK": 72,
+      "desglose_ref": "HT03-FX-2026-0019-0020"
+     },
+     "naturaleza_inversion": "CICLICA",
+     "horizonte_principal": "H3",
+     "justificacion_horizonte": null,
+     "horizontes": {
+      "H3": {
+       "vista": "bajista",
+       "banda": "más probable que no",
+       "prob": null,
+       "certificado_r13": false,
+       "referencia": "paseo aleatorio y forward",
+       "tipo_rentabilidad": "RENTABILIDAD_TOTAL",
+       "divisa_medicion": "USD",
+       "prg_id": "PRG-FX-2026-0047",
+       "fecha_resolucion": "2027-04-30",
+       "criterio_resolucion": "FIX de USD/MXN del 30/04/2027 por debajo del 30/10/2026",
+       "etiqueta": "sin ventaja demostrada frente al paseo aleatorio"
+      }
+     },
+     "valoracion": "USD/MXN en 18,9; el REER del peso está en su media de 10 años y el forward a 6 meses descuenta una depreciación del 1,7 % que la tesis no espera (CALC-FX-2026-0041).",
+     "carry": {
+      "anual_pct": 3.35,
+      "signo": "a favor",
+      "ajustado_vol": 0.31,
+      "calc_id": "CALC-FX-2026-0042",
+      "diferencial_tipos_pct": -3.35
+     },
+     "catalizadores": [
+      {
+       "evento": "Reunión de Banxico",
+       "fecha": "2026-12-17"
+      },
+      {
+       "evento": "Revisión del T-MEC (USMCA)",
+       "fecha": "2027-T3"
+      }
+     ],
+     "riesgos": [
+      "Episodio de aversión al riesgo global",
+      "Tensiones comerciales con EE. UU. en la revisión del T-MEC"
+     ],
+     "riesgo_1a5": 3,
+     "invalidacion": [
+      "Banxico acelera los recortes por debajo del 6,5 %",
+      "Cierre semanal de USD/MXN por encima de 20,10"
+     ],
+     "ambito": {
+      "incluye": "Tipo de cambio USD/MXN y su rentabilidad total con carry",
+      "excluye": "Cestas latinoamericanas (segmento ESTR)"
+     },
+     "indicador_seguimiento": {
+      "nombre": "USD/MXN, FIX de Banxico",
+      "simbolo": "USDMXN",
+      "fuente": "HT-01 (Banxico)",
+      "tipo": "TIPO_DE_CAMBIO"
+     },
+     "convertibilidad": {
+      "convertible": true,
+      "ndf": false,
+      "controles_capitales": false,
+      "profundidad": "alta",
+      "nota": "El peso es la divisa latinoamericana más negociada y plenamente convertible."
+     },
+     "liquidez": "alta",
+     "relevancia_decisional": "MEDIA",
+     "reversibilidad": "alta",
+     "siguiente_paso_sugerido": "ENVIAR_A_BLOQUE_B",
+     "que_cambiaria_la_conclusion": [
+      "Banxico acelera los recortes por debajo del 6,5 %",
+      "Cierre semanal de USD/MXN por encima de 20,10"
+     ],
+     "objeciones": [
+      {
+       "objecion_id": "OBJ-0020-01",
+       "fuerza": "moderada",
+       "resumen": "El posicionamiento especulativo largo en MXN es elevado (aglomeración).",
+       "respuesta": "Está en el percentil 70, no en el decil extremo; el tope por saturación no aplica (CLM-FX-2026-0106).",
+       "estado": "RESPONDIDA"
+      }
+     ],
+     "lo_que_no_sabemos": [
+      "El resultado de la revisión del T-MEC"
+     ],
+     "confianza": "probable",
+     "evidencias": [
+      "CLM-FX-2026-0106"
+     ],
+     "calculos": [
+      "CALC-FX-2026-0041",
+      "CALC-FX-2026-0042"
+     ],
+     "minigrafico": {
+      "tipo": "PAR_UN_ANO",
+      "serie_ref": "HT01:USDMXN",
+      "equilibrio": null,
+      "calc_id": "CALC-FX-2026-0041"
+     }
+    },
+    {
+     "opp_id": "OPP-FX-2026-0021",
+     "rango": 2,
+     "tipo_opcion": "PAR",
+     "segmento": "EMLA",
+     "nombre": "USD/BRL bajista (real brasileño al alza)",
+     "nombre_llano": "El real brasileño podría ganar valor frente al dólar",
+     "sube_baja_llano": "Sube el real de Brasil y baja el dólar de EE. UU.",
+     "por_que_llano": "Brasil paga tipos muy altos y su banco central no tiene prisa por bajarlos.",
+     "que_puede_salir_mal_llano": "Si el Gobierno gasta más de lo previsto, los inversores huirían del real.",
+     "par": "USD/BRL",
+     "composicion": [
+      {
+       "divisa": "USD",
+       "peso": 1.0,
+       "lado": "CORTO"
+      },
+      {
+       "divisa": "BRL",
+       "peso": 1.0,
+       "lado": "LARGO"
+      }
+     ],
+     "direccion": "BAJISTA_BASE",
+     "divisa_financiacion": "USD",
+     "tesis": "Con la Selic en el 15 % y un banco central ortodoxo, el carry del real compensa con holgura su volatilidad mientras el riesgo fiscal se estabiliza.",
+     "mecanismo": "Carry muy alto + credibilidad del Banco Central de Brasil → entradas de cartera en renta fija local → apreciación del BRL si el riesgo fiscal no empeora.",
+     "tnd_ids": [
+      "TND-FX-2026-0009"
+     ],
+     "cluster_id": "CL-4",
+     "factor_dominante": "Dólar débil frente a emergentes",
+     "puntuaciones": {
+      "T": 70,
+      "E": 70,
+      "M": 50,
+      "A": 85,
+      "P": 65,
+      "RK": 77,
+      "desglose_ref": "HT03-FX-2026-0019-0021"
+     },
+     "naturaleza_inversion": "PRIMA_RIESGO",
+     "horizonte_principal": "H3",
+     "justificacion_horizonte": null,
+     "horizontes": {
+      "H2": {
+       "vista": "bajista",
+       "banda": "incierto",
+       "prob": null,
+       "certificado_r13": false,
+       "referencia": "paseo aleatorio y forward",
+       "tipo_rentabilidad": "RENTABILIDAD_TOTAL",
+       "divisa_medicion": "USD",
+       "prg_id": "PRG-FX-2026-0048",
+       "fecha_resolucion": "2026-11-27",
+       "criterio_resolucion": "PTAX de USD/BRL del 27/11/2026 por debajo del 30/10/2026",
+       "etiqueta": "sin ventaja demostrada frente al paseo aleatorio"
+      },
+      "H3": {
+       "vista": "bajista",
+       "banda": "más probable que no",
+       "prob": null,
+       "certificado_r13": false,
+       "referencia": "paseo aleatorio y forward",
+       "tipo_rentabilidad": "RENTABILIDAD_TOTAL",
+       "divisa_medicion": "USD",
+       "prg_id": "PRG-FX-2026-0049",
+       "fecha_resolucion": "2027-04-30",
+       "criterio_resolucion": "PTAX de USD/BRL del 30/04/2027 por debajo del 30/10/2026",
+       "etiqueta": "sin ventaja demostrada frente al paseo aleatorio"
+      }
+     },
+     "valoracion": "El REER del real está un 6 % por debajo de su media de 10 años; el forward a 6 meses descuenta una depreciación del 5,4 % (CALC-FX-2026-0043).",
+     "carry": {
+      "anual_pct": 11.1,
+      "signo": "a favor",
+      "ajustado_vol": 0.74,
+      "calc_id": "CALC-FX-2026-0044",
+      "diferencial_tipos_pct": -11.1
+     },
+     "catalizadores": [
+      {
+       "evento": "Reunión del Copom",
+       "fecha": "2026-12-09"
+      },
+      {
+       "evento": "Presentación del marco fiscal de 2027",
+       "fecha": "2027-02"
+      }
+     ],
+     "riesgos": [
+      "Deterioro fiscal y prima de riesgo soberana",
+      "Aversión al riesgo global",
+      "Ruido político preelectoral"
+     ],
+     "riesgo_1a5": 4,
+     "invalidacion": [
+      "El CDS soberano de Brasil a 5 años supera 220 pb",
+      "Cierre semanal de USD/BRL por encima de 5,95"
+     ],
+     "ambito": {
+      "incluye": "Tipo de cambio USD/BRL (mercado local y NDF) y su rentabilidad total con carry",
+      "excluye": "Cestas latinoamericanas (segmento ESTR)"
+     },
+     "indicador_seguimiento": {
+      "nombre": "USD/BRL, PTAX del Banco Central de Brasil",
+      "simbolo": "USDBRL",
+      "fuente": "HT-01 (BCB)",
+      "tipo": "TIPO_DE_CAMBIO"
+     },
+     "convertibilidad": {
+      "convertible": false,
+      "ndf": true,
+      "controles_capitales": false,
+      "profundidad": "alta",
+      "nota": "El real no es plenamente convertible fuera de Brasil; hay NDF líquido y futuros de B3. El IOF encarece pero no impide la exposición."
+     },
+     "liquidez": "media",
+     "relevancia_decisional": "ALTA",
+     "reversibilidad": "media",
+     "siguiente_paso_sugerido": "ENVIAR_A_BLOQUE_B",
+     "que_cambiaria_la_conclusion": [
+      "El CDS soberano de Brasil a 5 años supera 220 pb",
+      "Cierre semanal de USD/BRL por encima de 5,95"
+     ],
+     "objeciones": [
+      {
+       "objecion_id": "OBJ-0021-01",
+       "fuerza": "fuerte",
+       "resumen": "El riesgo fiscal puede provocar una depreciación brusca que anule el carry.",
+       "respuesta": "El carry acumula un 5,5 % a 6 meses y el escenario adverso del Motor (−9 %) tiene probabilidad baja con la regla fiscal vigente (CALC-FX-2026-0043).",
+       "estado": "RESPONDIDA"
+      }
+     ],
+     "lo_que_no_sabemos": [
+      "El tono del marco fiscal de 2027",
+      "La reacción del real a un episodio global de aversión al riesgo"
+     ],
+     "confianza": "probable",
+     "evidencias": [
+      "CLM-FX-2026-0107"
+     ],
+     "calculos": [
+      "CALC-FX-2026-0043",
+      "CALC-FX-2026-0044"
+     ],
+     "minigrafico": {
+      "tipo": "PAR_UN_ANO",
+      "serie_ref": "HT01:USDBRL",
+      "equilibrio": null,
+      "calc_id": "CALC-FX-2026-0043"
+     }
+    }
+   ],
+   "menos_de_tres_motivo": "Se proponen 2 opciones en emergentes de Latinoamérica: de 8 candidatas, 3 finalistas y 2 elegibles. USD/CLP bajista tenía una objeción fuerte sin resolver sobre el precio del cobre."
+  },
+  "EMEA": {
+   "estado_semaforo": "GRIS",
+   "regimen_segmento": "Europa central sigue al BCE con diferenciales estrechos; la lira turca y el rand dependen de la ortodoxia monetaria y de los metales; ninguna candidata supera las puertas.",
+   "candidatas_analizadas": 12,
+   "embudo": {
+    "gc0_delta_material": false,
+    "cribadas": 12,
+    "pasan_gc1": 4,
+    "pasan_gc2": 1,
+    "finalistas_gc3": 1,
+    "elegibles": 0
+   },
+   "opciones": [],
+   "menos_de_tres_motivo": "Ninguna opción en emergentes de EMEA: de 12 candidatas, 1 finalista y 0 elegibles. EUR/PLN bajista quedó con E = 55; USD/TRY y USD/EGP no superaron PS3 por controles y liquidez. Tendría que publicarse el dato de inflación polaca de noviembre."
+  },
+  "ESTR": {
+   "estado_semaforo": "AMBAR",
+   "regimen_segmento": "Volatilidad cambiaria G10 en el percentil 20 y dispersión de tipos alta: régimen favorable al carry; el momentum del dólar amplio es débil.",
+   "candidatas_analizadas": 7,
+   "embudo": {
+    "gc0_delta_material": true,
+    "cribadas": 7,
+    "pasan_gc1": 3,
+    "pasan_gc2": 2,
+    "finalistas_gc3": 2,
+    "elegibles": 1
+   },
+   "opciones": [
+    {
+     "opp_id": "OPP-FX-2026-0030",
+     "rango": 1,
+     "tipo_opcion": "ESTRATEGIA",
+     "segmento": "ESTR",
+     "nombre": "Carry G10 ajustado por volatilidad",
+     "nombre_llano": "Monedas que pagan más interés frente a las que pagan menos",
+     "sube_baja_llano": "Suben el dólar australiano, el neozelandés y la corona noruega; bajan el yen y el franco suizo.",
+     "por_que_llano": "La calma del mercado favorece cobrar la diferencia de intereses entre monedas.",
+     "que_puede_salir_mal_llano": "En una caída fuerte de las bolsas, esta idea pierde mucho y muy deprisa.",
+     "par": null,
+     "composicion": [
+      {
+       "divisa": "AUD",
+       "peso": 0.34,
+       "lado": "LARGO"
+      },
+      {
+       "divisa": "NZD",
+       "peso": 0.33,
+       "lado": "LARGO"
+      },
+      {
+       "divisa": "NOK",
+       "peso": 0.33,
+       "lado": "LARGO"
+      },
+      {
+       "divisa": "JPY",
+       "peso": 0.5,
+       "lado": "CORTO"
+      },
+      {
+       "divisa": "CHF",
+       "peso": 0.5,
+       "lado": "CORTO"
+      }
+     ],
+     "direccion": null,
+     "divisa_financiacion": "JPY",
+     "tesis": "Con la volatilidad cambiaria G10 en el percentil 20 y una dispersión de tipos elevada, la estrategia de carry G10 ajustada por volatilidad ofrece una rentabilidad esperada positiva a 6–12 meses.",
+     "mecanismo": "Prima de carry documentada (Lustig, Roussanov y Verdelhan, 2011) en régimen de volatilidad baja; la financiación en JPY y CHF aprovecha los tipos más bajos del G10.",
+     "tnd_ids": [
+      "TND-FX-2026-0011"
+     ],
+     "cluster_id": "CL-5",
+     "factor_dominante": "Carry y riesgo global",
+     "puntuaciones": {
+      "T": 70,
+      "E": 70,
+      "M": 50,
+      "A": 70,
+      "P": 65,
+      "RK": 70,
+      "desglose_ref": "HT03-FX-2026-0019-0030"
+     },
+     "naturaleza_inversion": "PRIMA_RIESGO",
+     "horizonte_principal": "H3",
+     "justificacion_horizonte": null,
+     "horizontes": {
+      "H3": {
+       "vista": "alcista",
+       "banda": "más probable que no",
+       "prob": null,
+       "certificado_r13": false,
+       "referencia": "índice de la estrategia",
+       "tipo_rentabilidad": "RENTABILIDAD_TOTAL",
+       "divisa_medicion": "JPY",
+       "prg_id": "PRG-FX-2026-0050",
+       "fecha_resolucion": "2027-04-30",
+       "criterio_resolucion": "Índice FX-CARRY-G10 del 30/04/2027 por encima del 30/10/2026",
+       "etiqueta": "sin ventaja demostrada frente al paseo aleatorio"
+      },
+      "H4": {
+       "vista": "alcista",
+       "banda": "más probable que no",
+       "prob": null,
+       "certificado_r13": false,
+       "referencia": "índice de la estrategia",
+       "tipo_rentabilidad": "RENTABILIDAD_TOTAL",
+       "divisa_medicion": "JPY",
+       "prg_id": "PRG-FX-2026-0051",
+       "fecha_resolucion": "2027-10-29",
+       "criterio_resolucion": "Índice FX-CARRY-G10 del 29/10/2027 por encima del 30/10/2026",
+       "etiqueta": "sin ventaja demostrada frente al paseo aleatorio"
+      }
+     },
+     "valoracion": "El índice de la estrategia está un 4 % por debajo de su máximo de 12 meses; su ratio de carry (1,1) está en la mitad superior de su historia (CALC-FX-2026-0045).",
+     "carry": {
+      "anual_pct": 2.9,
+      "signo": "a favor",
+      "ajustado_vol": 0.42,
+      "calc_id": "CALC-FX-2026-0046"
+     },
+     "catalizadores": [
+      {
+       "evento": "Reuniones de diciembre del BoJ y del SNB",
+       "fecha": "2026-12"
+      }
+     ],
+     "riesgos": [
+      "Desplome del carry por aversión al riesgo (crash risk)",
+      "Subidas del BoJ que encarezcan la financiación en yenes",
+      "Aglomeración de la estrategia"
+     ],
+     "riesgo_1a5": 3,
+     "invalidacion": [
+      "La volatilidad implícita G10 a 1 mes supera el percentil 80",
+      "El índice de la estrategia cae un 6 % desde el 30/10/2026"
+     ],
+     "ambito": {
+      "incluye": "Estrategia de carry G10: largo AUD, NZD y NOK; corto JPY y CHF; pesos por volatilidad inversa",
+      "excluye": "Carry en divisas emergentes (cesta EM aparte)"
+     },
+     "indicador_seguimiento": {
+      "nombre": "Índice de carry G10 ajustado por volatilidad (exceso de rentabilidad)",
+      "simbolo": "FX-CARRY-G10",
+      "fuente": "HT-01 (índice propio del bloque)",
+      "tipo": "INDICE_ESTRATEGIA"
+     },
+     "convertibilidad": {
+      "convertible": true,
+      "ndf": false,
+      "controles_capitales": false,
+      "profundidad": "alta",
+      "nota": "Todas las divisas son G10 convertibles."
+     },
+     "liquidez": "alta",
+     "relevancia_decisional": "ALTA",
+     "reversibilidad": "alta",
+     "siguiente_paso_sugerido": "ENVIAR_A_BLOQUE_B",
+     "que_cambiaria_la_conclusion": [
+      "La volatilidad implícita G10 a 1 mes supera el percentil 80",
+      "El índice de la estrategia cae un 6 % desde el 30/10/2026"
+     ],
+     "objeciones": [
+      {
+       "objecion_id": "OBJ-0030-01",
+       "fuerza": "moderada",
+       "resumen": "El carry suele sufrir pérdidas grandes en los cambios de régimen de riesgo.",
+       "respuesta": "La invalidación por volatilidad (percentil 80) limita la exposición al régimen adverso; la caída máxima histórica se declara en los riesgos.",
+       "estado": "RESPONDIDA"
+      }
+     ],
+     "lo_que_no_sabemos": [
+      "La sensibilidad de la estrategia a una subida del BoJ mayor de lo esperado"
+     ],
+     "confianza": "probable",
+     "evidencias": [
+      "CLM-FX-2026-0108"
+     ],
+     "calculos": [
+      "CALC-FX-2026-0045",
+      "CALC-FX-2026-0046"
+     ],
+     "minigrafico": {
+      "tipo": "PAR_UN_ANO",
+      "serie_ref": "HT01:FX-CARRY-G10",
+      "equilibrio": null,
+      "calc_id": "CALC-FX-2026-0045"
+     }
+    }
+   ],
+   "menos_de_tres_motivo": "Se propone 1 opción en estrategias y cestas: de 7 candidatas, 2 finalistas y 1 elegible. La cesta de refugio (JPY, CHF y oro) quedó con T = 45 por falta de tendencia estructural."
+  }
+ },
+ "seguimiento_vigentes": [
+  {
+   "opp_id": "OPP-FX-2026-0007",
+   "estado": "VIGENTE",
+   "comentario": "Se mantiene en el top-3 (continuidad 9.6.4); invalidación lejos (USD/JPY 152,4 frente a 158,50).",
+   "decision_broker": "ENVIADA_A_BLOQUE_B"
+  },
+  {
+   "opp_id": "OPP-FX-2026-0003",
+   "estado": "CERRADA",
+   "motivo_cierre": "INVALIDACION",
+   "comentario": "EUR/CHF alcista: el BNS volvió a tipos negativos y se activó la invalidación.",
+   "decision_broker": "EN_SEGUIMIENTO"
+  }
+ ],
+ "historial_aciertos": {
+  "ventana": "12 semanas",
+  "referencia": "paseo aleatorio (sin cambio) y forward como predictor",
+  "global": {
+   "n": 14,
+   "aciertos": 8,
+   "tasa_acierto": 0.5714,
+   "referencia": "paseo aleatorio",
+   "tasa_esperada_azar": 0.5,
+   "tasa_forward": 0.5,
+   "significativo": false,
+   "por_horizonte": {
+    "H2": {
+     "n": 9,
+     "aciertos": 5
+    },
+    "H3": {
+     "n": 5,
+     "aciertos": 3
+    }
+   }
+  },
+  "por_segmento": {
+   "G10N": {
+    "n": 6,
+    "aciertos": 4,
+    "tasa_acierto": 0.6667,
+    "referencia": "paseo aleatorio",
+    "tasa_esperada_azar": 0.5,
+    "tasa_forward": 0.5,
+    "significativo": false
+   },
+   "EMLA": {
+    "n": 5,
+    "aciertos": 3,
+    "tasa_acierto": 0.6,
+    "referencia": "paseo aleatorio",
+    "tasa_esperada_azar": 0.5,
+    "tasa_forward": 0.4,
+    "significativo": false
+   },
+   "ESTR": {
+    "n": 3,
+    "aciertos": 1,
+    "tasa_acierto": 0.3333,
+    "referencia": "paseo aleatorio",
+    "tasa_esperada_azar": 0.5,
+    "tasa_forward": null,
+    "significativo": false
+   }
+  },
+  "nota": "Ventana de 12 semanas; 14 pronósticos de opciones publicadas resueltos; muestra pequeña (< 30): la diferencia frente al paseo aleatorio puede deberse a la suerte."
+ },
+ "paquete_para_bloque_B": [
+  {
+   "opp_id": "OPP-FX-2026-0007",
+   "segmento": "G10N",
+   "tipo_opcion": "PAR",
+   "nombre": "USD/JPY bajista (yen al alza)",
+   "par": "USD/JPY",
+   "composicion": [
+    {
+     "divisa": "USD",
+     "peso": 1.0,
+     "lado": "CORTO"
+    },
+    {
+     "divisa": "JPY",
+     "peso": 1.0,
+     "lado": "LARGO"
+    }
+   ],
+   "direccion": "BAJISTA_BASE",
+   "divisa_financiacion": "USD",
+   "ambito": {
+    "incluye": "Tipo de cambio USD/JPY al contado y su rentabilidad total con carry",
+    "excluye": "Cruces del yen con divisas distintas del USD (EUR/JPY, AUD/JPY)"
+   },
+   "tesis": "El Banco de Japón endurecerá su política antes de lo que descuenta el mercado mientras la Fed recorta; el estrechamiento del diferencial a 2 años y un posicionamiento corto en yen muy extendido favorecen la apreciación del yen en 3–6 meses.",
+   "mecanismo": "Estrechamiento del diferencial de tipos a 2 años EE. UU.–Japón → menor atractivo del carry financiado en yenes → cierre de posiciones cortas en JPY y repatriación de inversores japoneses con cobertura creciente.",
+   "horizontes": [
+    "H2",
+    "H3"
+   ],
+   "horizonte_principal": "H3",
+   "pronosticos": [
+    "PRG-FX-2026-0041",
+    "PRG-FX-2026-0042"
+   ],
+   "catalizadores": [
+    {
+     "evento": "Reunión de política monetaria del Banco de Japón",
+     "fecha": "2026-12-18"
+    },
+    {
+     "evento": "Reunión del FOMC de la Reserva Federal",
+     "fecha": "2026-12-16"
+    },
+    {
+     "evento": "Negociación salarial de primavera (shuntō)",
+     "fecha": "2027-03"
+    }
+   ],
+   "riesgos": [
+    "Repunte de la inflación en EE. UU. que frene los recortes de la Fed",
+    "Retraso de la subida del BoJ por debilidad del consumo japonés",
+    "Episodio de apetito por el riesgo que reactive el carry financiado en yenes"
+   ],
+   "invalidacion": [
+    "El diferencial a 2 años EE. UU.–Japón se amplía más de 50 pb desde el 30/10/2026",
+    "El BoJ descarta subidas en su comunicado de diciembre",
+    "Cierre semanal de USD/JPY por encima de 158,50 (nivel de invalidación, no de entrada)"
+   ],
+   "indicador_seguimiento": {
+    "nombre": "USD/JPY, referencia H.10 de la Reserva Federal",
+    "simbolo": "USDJPY",
+    "fuente": "HT-01 (Fed H.10)",
+    "tipo": "TIPO_DE_CAMBIO"
+   },
+   "niveles_referencia": {
+    "nivel_actual": {
+     "valor": 152.4,
+     "unidad": "nivel del indicador de seguimiento",
+     "fecha_dato": "2026-10-30",
+     "fuente": "HT-01 (Fed H.10)",
+     "hora_fijacion": "12:00 America/New_York",
+     "conocible_desde": "2026-10-30"
+    }
+   },
+   "carry_esperado": {
+    "anual_pct": -3.1,
+    "signo": "en contra"
+   },
+   "consideraciones_implementacion": [
+    "Par muy líquido; mercado 24 horas; los huecos de liquidez del fin de semana pueden saltar la invalidación",
+    "Riesgo de evento en las reuniones del BoJ y del FOMC",
+    "El carry negativo resta alrededor de un 1,5 % en 6 meses"
+   ],
+   "metricas_clave": [
+    "Diferencial a 2 años EE. UU.–Japón",
+    "Posicionamiento CFTC en JPY",
+    "Risk reversal a 25 delta a 1 mes de USD/JPY"
+   ],
+   "preguntas_para_B": [
+    "¿Qué forma de exposición minimiza el coste del carry negativo durante 6 meses?",
+    "¿Cómo se cubre el riesgo de evento de las reuniones de diciembre?"
+   ],
+   "evidencias": [
+    "CLM-FX-2026-0101",
+    "CLM-FX-2026-0102"
+   ],
+   "calculos": [
+    "CALC-FX-2026-0033",
+    "CALC-FX-2026-0034"
+   ],
+   "siguiente_paso_sugerido": "ENVIAR_A_BLOQUE_B",
+   "relevancia_decisional": "MEDIA"
+  },
+  {
+   "opp_id": "OPP-FX-2026-0008",
+   "segmento": "G10N",
+   "tipo_opcion": "CRUCE",
+   "nombre": "EUR/GBP alcista (euro al alza frente a la libra)",
+   "par": "EUR/GBP",
+   "composicion": [
+    {
+     "divisa": "EUR",
+     "peso": 1.0,
+     "lado": "LARGO"
+    },
+    {
+     "divisa": "GBP",
+     "peso": 1.0,
+     "lado": "CORTO"
+    }
+   ],
+   "direccion": "ALCISTA_BASE",
+   "divisa_financiacion": "GBP",
+   "ambito": {
+    "incluye": "Cruce EUR/GBP al contado y su rentabilidad total con carry",
+    "excluye": "Pares de la libra frente al USD (GBP/USD)"
+   },
+   "tesis": "El Banco de Inglaterra recortará más de lo que descuenta la curva por el enfriamiento del empleo británico, mientras el BCE mantiene el tipo de depósito; el diferencial a 2 años a favor de la libra se estrechará.",
+   "mecanismo": "Sorpresas macro negativas en el Reino Unido → repricing de la senda del BoE → estrechamiento del diferencial a 2 años → depreciación de la libra frente al euro.",
+   "horizontes": [
+    "H3"
+   ],
+   "horizonte_principal": "H3",
+   "pronosticos": [
+    "PRG-FX-2026-0043"
+   ],
+   "catalizadores": [
+    {
+     "evento": "Reunión del Banco de Inglaterra",
+     "fecha": "2026-12-17"
+    },
+    {
+     "evento": "Reunión de política monetaria del BCE",
+     "fecha": "2026-12-10"
+    }
+   ],
+   "riesgos": [
+    "Inflación de servicios británica persistente",
+    "Debilidad de la zona del euro que obligue al BCE a recortar"
+   ],
+   "invalidacion": [
+    "El diferencial a 2 años Reino Unido–zona del euro se amplía más de 40 pb",
+    "Cierre semanal de EUR/GBP por debajo de 0,8350"
+   ],
+   "indicador_seguimiento": {
+    "nombre": "EUR/GBP, tipo de referencia del BCE",
+    "simbolo": "EURGBP",
+    "fuente": "HT-01 (BCE)",
+    "tipo": "TIPO_DE_CAMBIO"
+   },
+   "niveles_referencia": {
+    "nivel_actual": {
+     "valor": 0.8602,
+     "unidad": "nivel del indicador de seguimiento",
+     "fecha_dato": "2026-10-30",
+     "fuente": "HT-01 (BCE)",
+     "hora_fijacion": "14:15 Europe/Berlin",
+     "conocible_desde": "2026-10-30"
+    }
+   },
+   "carry_esperado": {
+    "anual_pct": -1.5,
+    "signo": "en contra"
+   },
+   "consideraciones_implementacion": [
+    "Cruce líquido en horario europeo; liquidez menor en la sesión asiática",
+    "Riesgo de evento en los datos de empleo británicos"
+   ],
+   "metricas_clave": [
+    "Diferencial a 2 años Reino Unido–zona del euro",
+    "Inflación de servicios del Reino Unido"
+   ],
+   "preguntas_para_B": [
+    "¿Conviene esperar al dato de empleo de noviembre antes de tomar exposición?"
+   ],
+   "evidencias": [
+    "CLM-FX-2026-0103"
+   ],
+   "calculos": [
+    "CALC-FX-2026-0035",
+    "CALC-FX-2026-0036"
+   ],
+   "siguiente_paso_sugerido": "ENVIAR_A_BLOQUE_B",
+   "relevancia_decisional": "MEDIA"
+  },
+  {
+   "opp_id": "OPP-FX-2026-0012",
+   "segmento": "G10M",
+   "tipo_opcion": "CRUCE",
+   "nombre": "AUD/NZD alcista (dólar australiano frente al neozelandés)",
+   "par": "AUD/NZD",
+   "composicion": [
+    {
+     "divisa": "AUD",
+     "peso": 1.0,
+     "lado": "LARGO"
+    },
+    {
+     "divisa": "NZD",
+     "peso": 1.0,
+     "lado": "CORTO"
+    }
+   ],
+   "direccion": "ALCISTA_BASE",
+   "divisa_financiacion": "NZD",
+   "ambito": {
+    "incluye": "Cruce AUD/NZD al contado y su rentabilidad total con carry",
+    "excluye": "Exposición a las divisas de Oceanía frente al USD"
+   },
+   "tesis": "El RBA mantendrá su tipo oficial mientras el RBNZ prolonga los recortes; el diferencial de tipos a favor del AUD y los términos de intercambio mineros sostienen el cruce.",
+   "mecanismo": "Divergencia RBA–RBNZ → diferencial de tipos creciente a favor del AUD → flujos de carry intra-Oceanía; los precios del mineral de hierro apoyan los términos de intercambio australianos.",
+   "horizontes": [
+    "H2",
+    "H3"
+   ],
+   "horizonte_principal": "H3",
+   "pronosticos": [
+    "PRG-FX-2026-0044",
+    "PRG-FX-2026-0045"
+   ],
+   "catalizadores": [
+    {
+     "evento": "Reunión del RBNZ",
+     "fecha": "2026-11-25"
+    },
+    {
+     "evento": "Reunión del RBA",
+     "fecha": "2026-12-08"
+    }
+   ],
+   "riesgos": [
+    "Caída del mineral de hierro por menor demanda china",
+    "Sorpresa de inflación en Nueva Zelanda"
+   ],
+   "invalidacion": [
+    "El RBNZ señala el fin del ciclo de recortes",
+    "Cierre semanal de AUD/NZD por debajo de 1,0700"
+   ],
+   "indicador_seguimiento": {
+    "nombre": "AUD/NZD, cruce de los fixings de WM/Reuters",
+    "simbolo": "AUDNZD",
+    "fuente": "HT-01 (WM/Reuters)",
+    "tipo": "TIPO_DE_CAMBIO"
+   },
+   "niveles_referencia": {
+    "nivel_actual": {
+     "valor": 1.0951,
+     "unidad": "nivel del indicador de seguimiento",
+     "fecha_dato": "2026-10-30",
+     "fuente": "HT-01 (WM/Reuters)",
+     "hora_fijacion": "16:00 Europe/London",
+     "conocible_desde": "2026-10-30"
+    }
+   },
+   "carry_esperado": {
+    "anual_pct": 1.1,
+    "signo": "a favor"
+   },
+   "consideraciones_implementacion": [
+    "Cruce menos profundo que los pares frente al USD; diferenciales de compraventa mayores fuera de la sesión asiática"
+   ],
+   "metricas_clave": [
+    "Diferencial a 2 años Australia–Nueva Zelanda",
+    "Precio del mineral de hierro"
+   ],
+   "preguntas_para_B": [
+    "¿Qué horario de negociación ofrece mejor liquidez para el cruce?"
+   ],
+   "evidencias": [
+    "CLM-FX-2026-0104"
+   ],
+   "calculos": [
+    "CALC-FX-2026-0037",
+    "CALC-FX-2026-0038"
+   ],
+   "siguiente_paso_sugerido": "ENVIAR_A_BLOQUE_B",
+   "relevancia_decisional": "MEDIA"
+  },
+  {
+   "opp_id": "OPP-FX-2026-0015",
+   "segmento": "EMAS",
+   "tipo_opcion": "PAR",
+   "nombre": "USD/KRW bajista (won coreano al alza)",
+   "par": "USD/KRW",
+   "composicion": [
+    {
+     "divisa": "USD",
+     "peso": 1.0,
+     "lado": "CORTO"
+    },
+    {
+     "divisa": "KRW",
+     "peso": 1.0,
+     "lado": "LARGO"
+    }
+   ],
+   "direccion": "BAJISTA_BASE",
+   "divisa_financiacion": "USD",
+   "ambito": {
+    "incluye": "Tipo de cambio USD/KRW (mercado local y NDF) y su rentabilidad total con carry",
+    "excluye": "Otras divisas tecnológicas de Asia (TWD)"
+   },
+   "tesis": "El ciclo alcista de exportaciones de semiconductores y la inclusión de Corea en el índice WGBI atraen flujos de cartera que apreciarán el won frente al USD.",
+   "mecanismo": "Superávit comercial creciente por semiconductores + entradas en deuda por la inclusión en el WGBI → demanda de KRW; el Banco de Corea suaviza la volatilidad sin oponerse a la tendencia.",
+   "horizontes": [
+    "H3"
+   ],
+   "horizonte_principal": "H3",
+   "pronosticos": [
+    "PRG-FX-2026-0046"
+   ],
+   "catalizadores": [
+    {
+     "evento": "Datos de exportaciones de Corea (primeros 20 días)",
+     "fecha": "2026-11-21"
+    },
+    {
+     "evento": "Inicio de la inclusión de Corea en el índice WGBI",
+     "fecha": "2026-11"
+    }
+   ],
+   "riesgos": [
+    "Tensión geopolítica en la península coreana",
+    "Giro del ciclo de semiconductores",
+    "Intervención del Banco de Corea"
+   ],
+   "invalidacion": [
+    "Las exportaciones de semiconductores caen dos meses seguidos",
+    "Cierre semanal de USD/KRW por encima de 1.420"
+   ],
+   "indicador_seguimiento": {
+    "nombre": "USD/KRW, fixing de cierre de Seúl (Seoul Money Brokerage)",
+    "simbolo": "USDKRW",
+    "fuente": "HT-01 (Banco de Corea)",
+    "tipo": "TIPO_DE_CAMBIO"
+   },
+   "niveles_referencia": {
+    "nivel_actual": {
+     "valor": 1386.2,
+     "unidad": "nivel del indicador de seguimiento",
+     "fecha_dato": "2026-10-30",
+     "fuente": "HT-01 (Banco de Corea)",
+     "hora_fijacion": "15:30 Asia/Seoul",
+     "conocible_desde": "2026-10-30"
+    }
+   },
+   "carry_esperado": {
+    "anual_pct": -1.4,
+    "signo": "en contra"
+   },
+   "consideraciones_implementacion": [
+    "Mercado local con horario de Seúl; fuera de él la liquidez está en el NDF liquidado en USD",
+    "Riesgo de evento geopolítico con huecos de precio"
+   ],
+   "metricas_clave": [
+    "Exportaciones de semiconductores",
+    "Flujos de cartera hacia deuda coreana",
+    "Diferencial NDF–onshore"
+   ],
+   "preguntas_para_B": [
+    "¿Qué diferencia de coste hay entre la exposición onshore y la del NDF a 3–6 meses?"
+   ],
+   "evidencias": [
+    "CLM-FX-2026-0105"
+   ],
+   "calculos": [
+    "CALC-FX-2026-0039",
+    "CALC-FX-2026-0040"
+   ],
+   "siguiente_paso_sugerido": "ENVIAR_A_BLOQUE_B",
+   "relevancia_decisional": "ALTA"
+  },
+  {
+   "opp_id": "OPP-FX-2026-0020",
+   "segmento": "EMLA",
+   "tipo_opcion": "PAR",
+   "nombre": "USD/MXN bajista (peso mexicano al alza)",
+   "par": "USD/MXN",
+   "composicion": [
+    {
+     "divisa": "USD",
+     "peso": 1.0,
+     "lado": "CORTO"
+    },
+    {
+     "divisa": "MXN",
+     "peso": 1.0,
+     "lado": "LARGO"
+    }
+   ],
+   "direccion": "BAJISTA_BASE",
+   "divisa_financiacion": "USD",
+   "ambito": {
+    "incluye": "Tipo de cambio USD/MXN y su rentabilidad total con carry",
+    "excluye": "Cestas latinoamericanas (segmento ESTR)"
+   },
+   "tesis": "El carry elevado del peso, ajustado por volatilidad, y la inversión directa ligada al nearshoring sostienen el MXN mientras Banxico recorta despacio.",
+   "mecanismo": "Diferencial de tipos de más de 3 puntos frente al USD + entradas de inversión directa → demanda estructural de MXN; volatilidad implícita baja que mejora el carry ajustado.",
+   "horizontes": [
+    "H3"
+   ],
+   "horizonte_principal": "H3",
+   "pronosticos": [
+    "PRG-FX-2026-0047"
+   ],
+   "catalizadores": [
+    {
+     "evento": "Reunión de Banxico",
+     "fecha": "2026-12-17"
+    },
+    {
+     "evento": "Revisión del T-MEC (USMCA)",
+     "fecha": "2027-T3"
+    }
+   ],
+   "riesgos": [
+    "Episodio de aversión al riesgo global",
+    "Tensiones comerciales con EE. UU. en la revisión del T-MEC"
+   ],
+   "invalidacion": [
+    "Banxico acelera los recortes por debajo del 6,5 %",
+    "Cierre semanal de USD/MXN por encima de 20,10"
+   ],
+   "indicador_seguimiento": {
+    "nombre": "USD/MXN, FIX de Banxico",
+    "simbolo": "USDMXN",
+    "fuente": "HT-01 (Banxico)",
+    "tipo": "TIPO_DE_CAMBIO"
+   },
+   "niveles_referencia": {
+    "nivel_actual": {
+     "valor": 18.92,
+     "unidad": "nivel del indicador de seguimiento",
+     "fecha_dato": "2026-10-30",
+     "fuente": "HT-01 (Banxico)",
+     "hora_fijacion": "12:00 America/Mexico_City",
+     "conocible_desde": "2026-10-30"
+    }
+   },
+   "carry_esperado": {
+    "anual_pct": 3.35,
+    "signo": "a favor"
+   },
+   "consideraciones_implementacion": [
+    "Par muy líquido en horario americano; liquidez menor en la sesión asiática",
+    "Riesgo de evento en las reuniones de Banxico y de la Fed"
+   ],
+   "metricas_clave": [
+    "Carry ajustado por volatilidad del MXN",
+    "Posicionamiento CFTC en MXN",
+    "Diferencial de CDS soberano de México"
+   ],
+   "preguntas_para_B": [
+    "¿Cómo se protege la exposición frente a un episodio de aversión al riesgo?"
+   ],
+   "evidencias": [
+    "CLM-FX-2026-0106"
+   ],
+   "calculos": [
+    "CALC-FX-2026-0041",
+    "CALC-FX-2026-0042"
+   ],
+   "siguiente_paso_sugerido": "ENVIAR_A_BLOQUE_B",
+   "relevancia_decisional": "MEDIA"
+  },
+  {
+   "opp_id": "OPP-FX-2026-0021",
+   "segmento": "EMLA",
+   "tipo_opcion": "PAR",
+   "nombre": "USD/BRL bajista (real brasileño al alza)",
+   "par": "USD/BRL",
+   "composicion": [
+    {
+     "divisa": "USD",
+     "peso": 1.0,
+     "lado": "CORTO"
+    },
+    {
+     "divisa": "BRL",
+     "peso": 1.0,
+     "lado": "LARGO"
+    }
+   ],
+   "direccion": "BAJISTA_BASE",
+   "divisa_financiacion": "USD",
+   "ambito": {
+    "incluye": "Tipo de cambio USD/BRL (mercado local y NDF) y su rentabilidad total con carry",
+    "excluye": "Cestas latinoamericanas (segmento ESTR)"
+   },
+   "tesis": "Con la Selic en el 15 % y un banco central ortodoxo, el carry del real compensa con holgura su volatilidad mientras el riesgo fiscal se estabiliza.",
+   "mecanismo": "Carry muy alto + credibilidad del Banco Central de Brasil → entradas de cartera en renta fija local → apreciación del BRL si el riesgo fiscal no empeora.",
+   "horizontes": [
+    "H2",
+    "H3"
+   ],
+   "horizonte_principal": "H3",
+   "pronosticos": [
+    "PRG-FX-2026-0048",
+    "PRG-FX-2026-0049"
+   ],
+   "catalizadores": [
+    {
+     "evento": "Reunión del Copom",
+     "fecha": "2026-12-09"
+    },
+    {
+     "evento": "Presentación del marco fiscal de 2027",
+     "fecha": "2027-02"
+    }
+   ],
+   "riesgos": [
+    "Deterioro fiscal y prima de riesgo soberana",
+    "Aversión al riesgo global",
+    "Ruido político preelectoral"
+   ],
+   "invalidacion": [
+    "El CDS soberano de Brasil a 5 años supera 220 pb",
+    "Cierre semanal de USD/BRL por encima de 5,95"
+   ],
+   "indicador_seguimiento": {
+    "nombre": "USD/BRL, PTAX del Banco Central de Brasil",
+    "simbolo": "USDBRL",
+    "fuente": "HT-01 (BCB)",
+    "tipo": "TIPO_DE_CAMBIO"
+   },
+   "niveles_referencia": {
+    "nivel_actual": {
+     "valor": 5.48,
+     "unidad": "nivel del indicador de seguimiento",
+     "fecha_dato": "2026-10-30",
+     "fuente": "HT-01 (BCB)",
+     "hora_fijacion": "13:00 America/Sao_Paulo",
+     "conocible_desde": "2026-10-30"
+    }
+   },
+   "carry_esperado": {
+    "anual_pct": 11.1,
+    "signo": "a favor"
+   },
+   "consideraciones_implementacion": [
+    "Mercado local con horario de São Paulo; fuera de él la liquidez está en el NDF",
+    "El IOF sobre operaciones de cambio afecta al coste",
+    "Riesgo de evento fiscal y político"
+   ],
+   "metricas_clave": [
+    "CDS soberano de Brasil a 5 años",
+    "Carry ajustado por volatilidad del BRL",
+    "Flujos de cartera hacia renta fija local"
+   ],
+   "preguntas_para_B": [
+    "¿Qué coste añade el IOF frente a la exposición mediante el NDF a 6 meses?"
+   ],
+   "evidencias": [
+    "CLM-FX-2026-0107"
+   ],
+   "calculos": [
+    "CALC-FX-2026-0043",
+    "CALC-FX-2026-0044"
+   ],
+   "siguiente_paso_sugerido": "ENVIAR_A_BLOQUE_B",
+   "relevancia_decisional": "ALTA"
+  },
+  {
+   "opp_id": "OPP-FX-2026-0030",
+   "segmento": "ESTR",
+   "tipo_opcion": "ESTRATEGIA",
+   "nombre": "Carry G10 ajustado por volatilidad",
+   "par": null,
+   "composicion": [
+    {
+     "divisa": "AUD",
+     "peso": 0.34,
+     "lado": "LARGO"
+    },
+    {
+     "divisa": "NZD",
+     "peso": 0.33,
+     "lado": "LARGO"
+    },
+    {
+     "divisa": "NOK",
+     "peso": 0.33,
+     "lado": "LARGO"
+    },
+    {
+     "divisa": "JPY",
+     "peso": 0.5,
+     "lado": "CORTO"
+    },
+    {
+     "divisa": "CHF",
+     "peso": 0.5,
+     "lado": "CORTO"
+    }
+   ],
+   "direccion": null,
+   "divisa_financiacion": "JPY",
+   "ambito": {
+    "incluye": "Estrategia de carry G10: largo AUD, NZD y NOK; corto JPY y CHF; pesos por volatilidad inversa",
+    "excluye": "Carry en divisas emergentes (cesta EM aparte)"
+   },
+   "tesis": "Con la volatilidad cambiaria G10 en el percentil 20 y una dispersión de tipos elevada, la estrategia de carry G10 ajustada por volatilidad ofrece una rentabilidad esperada positiva a 6–12 meses.",
+   "mecanismo": "Prima de carry documentada (Lustig, Roussanov y Verdelhan, 2011) en régimen de volatilidad baja; la financiación en JPY y CHF aprovecha los tipos más bajos del G10.",
+   "horizontes": [
+    "H3",
+    "H4"
+   ],
+   "horizonte_principal": "H3",
+   "pronosticos": [
+    "PRG-FX-2026-0050",
+    "PRG-FX-2026-0051"
+   ],
+   "catalizadores": [
+    {
+     "evento": "Reuniones de diciembre del BoJ y del SNB",
+     "fecha": "2026-12"
+    }
+   ],
+   "riesgos": [
+    "Desplome del carry por aversión al riesgo (crash risk)",
+    "Subidas del BoJ que encarezcan la financiación en yenes",
+    "Aglomeración de la estrategia"
+   ],
+   "invalidacion": [
+    "La volatilidad implícita G10 a 1 mes supera el percentil 80",
+    "El índice de la estrategia cae un 6 % desde el 30/10/2026"
+   ],
+   "indicador_seguimiento": {
+    "nombre": "Índice de carry G10 ajustado por volatilidad (exceso de rentabilidad)",
+    "simbolo": "FX-CARRY-G10",
+    "fuente": "HT-01 (índice propio del bloque)",
+    "tipo": "INDICE_ESTRATEGIA"
+   },
+   "niveles_referencia": {
+    "nivel_actual": {
+     "valor": 104.37,
+     "unidad": "nivel del indicador de seguimiento",
+     "fecha_dato": "2026-10-30",
+     "fuente": "HT-01 (índice propio del bloque)",
+     "hora_fijacion": "16:00 Europe/London",
+     "conocible_desde": "2026-10-30"
+    }
+   },
+   "carry_esperado": {
+    "anual_pct": 2.9,
+    "signo": "a favor"
+   },
+   "consideraciones_implementacion": [
+    "Exposición a cinco divisas G10 líquidas; el reequilibrio periódico tiene costes",
+    "Riesgo de cola correlacionado con las caídas de las bolsas mundiales"
+   ],
+   "metricas_clave": [
+    "Volatilidad implícita G10 a 1 mes",
+    "Dispersión de tipos cortos del G10",
+    "Crowding de la estrategia (AG-21)"
+   ],
+   "preguntas_para_B": [
+    "¿Con qué frecuencia conviene reequilibrar los pesos por volatilidad?"
+   ],
+   "evidencias": [
+    "CLM-FX-2026-0108"
+   ],
+   "calculos": [
+    "CALC-FX-2026-0045",
+    "CALC-FX-2026-0046"
+   ],
+   "siguiente_paso_sugerido": "ENVIAR_A_BLOQUE_B",
+   "relevancia_decisional": "ALTA"
+  }
+ ],
+ "preguntas_sugeridas": [
+  "¿Cuántas apuestas son realmente independientes si el dólar se recupera?",
+  "¿Qué pasaría con la estrategia de carry si el BoJ sube más de lo previsto?",
+  "¿Por qué no hay opciones en Europa emergente esta semana?"
+ ],
+ "limitaciones": [
+  "DATOS ILUSTRATIVOS: ejemplo de formato con cifras, fechas e identificadores ficticios; no es un análisis real",
+  "Ninguna celda segmento × horizonte tiene certificado salvo G10N×H3 (ilustrativo); el resto se expresa en bandas",
+  "Dato de reservas de India desactualizado (PS2): USD/INR excluida",
+  "El historial de aciertos tiene menos de 30 pronósticos resueltos"
+ ],
+ "estado_g3": "APTO",
+ "aviso_legal": "Este informe describe oportunidades generales del mercado de divisas y no constituye asesoramiento personalizado; el Bloque A Forex no elige instrumentos y el Broker Personal valora si encaja con el usuario.",
+ "supuestos_declarados": [
+  {
+   "supuesto": "La divisa base del usuario sigue siendo el EUR para el termómetro y la referencia de rentabilidad de G10N y G10M",
+   "cns_id": "CNS-FX-2026-0004",
+   "efecto_si_falso": "Cambiarían la lectura de la divisa base y la referencia 8.4, no las opciones"
+  }
+ ],
+ "consultas_broker_sin_respuesta": [
+  "CNS-FX-2026-0004"
+ ]
+}

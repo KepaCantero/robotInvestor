@@ -1,0 +1,11 @@
+{
+ "credenciales": [
+  {
+   "cred_id": "CRED-B-2026-0001",
+   "estado": "PROVISTA",
+   "credencial_ref": "alias-flujos-etf-diarios",
+   "caducidad": "2027-11-03"
+  }
+ ],
+ "x_nota": "Respuesta de CT-B-06: solo estado y alias. La clave se deposita en la bóveda (BLOQUE_B_BOVEDA_ALIAS_FLUJOS_ETF_DIARIOS o --boveda), nunca aquí."
+}

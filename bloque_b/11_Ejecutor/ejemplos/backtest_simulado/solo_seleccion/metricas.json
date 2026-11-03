@@ -1,0 +1,85 @@
+{
+ "desde": "2023-01-01",
+ "hasta": "2024-12-31",
+ "frecuencia": "mensual",
+ "fechas": 24,
+ "fin_datos": "2026-10-30",
+ "modo": "solo_seleccion",
+ "cliente": "mock",
+ "metricas_rankings": {
+  "FON": {
+   "n_rankings": 24,
+   "horizonte": "H4",
+   "sesiones": 252,
+   "exceso_medio_top_n_vs_universo": -0.019267,
+   "ic90_exceso": [
+    -0.025604,
+    -0.013489
+   ],
+   "acierto_top_n_vs_universo": 0.0833,
+   "exceso_medio_top_n_vs_referencia_ambito": 0.126565,
+   "ic90_exceso_referencia": [
+    0.080689,
+    0.17159
+   ],
+   "ic_rango_medio": 0.1964,
+   "ic90_ic_rango": [
+    0.096726,
+    0.293155
+   ],
+   "certificable": false,
+   "nota": "rankings solapados si el horizonte supera la frecuencia: los IC por bootstrap simple son optimistas"
+  },
+  "RF": {
+   "n_rankings": 24,
+   "horizonte": "H4",
+   "sesiones": 252,
+   "exceso_medio_top_n_vs_universo": 0.02066,
+   "ic90_exceso": [
+    0.01652,
+    0.025119
+   ],
+   "acierto_top_n_vs_universo": 1.0,
+   "exceso_medio_top_n_vs_referencia_ambito": 0.076001,
+   "ic90_exceso_referencia": [
+    0.009909,
+    0.144698
+   ],
+   "ic_rango_medio": 0.4973,
+   "ic90_ic_rango": [
+    0.466346,
+    0.528159
+   ],
+   "certificable": false,
+   "nota": "rankings solapados si el horizonte supera la frecuencia: los IC por bootstrap simple son optimistas"
+  },
+  "RV": {
+   "n_rankings": 24,
+   "horizonte": "H4",
+   "sesiones": 252,
+   "exceso_medio_top_n_vs_universo": 0.002193,
+   "ic90_exceso": [
+    -0.007562,
+    0.012722
+   ],
+   "acierto_top_n_vs_universo": 0.5,
+   "exceso_medio_top_n_vs_referencia_ambito": 0.21183,
+   "ic90_exceso_referencia": [
+    0.175312,
+    0.250811
+   ],
+   "ic_rango_medio": -0.1072,
+   "ic90_ic_rango": [
+    -0.156789,
+    -0.056102
+   ],
+   "certificable": false,
+   "nota": "rankings solapados si el horizonte supera la frecuencia: los IC por bootstrap simple son optimistas"
+  }
+ },
+ "evaluacion_pronosticos": null,
+ "certificados": null,
+ "consumo_uc_total": 2.16,
+ "advertencias": [],
+ "aviso": "Con el cliente simulado y datos sintéticos, estas métricas no dicen nada de la capacidad del bloque."
+}

@@ -1,0 +1,44 @@
+codigo,segmento,tipo,base,cotizada,convertible,ndf,controles_capitales,nombre,composicion,divisa_financiacion,regimen,liquidez,indicador,notas
+EURUSD,G10N,PAR,EUR,USD,si,no,no,EUR/USD,,,LIBRE_FLOTACION,alta,"EUR/USD, tipo de referencia del BCE",SOLO EJEMPLO
+USDJPY,G10N,PAR,USD,JPY,si,no,no,USD/JPY,,,LIBRE_FLOTACION,alta,"USD/JPY, Fed H.10",SOLO EJEMPLO
+GBPUSD,G10N,PAR,GBP,USD,si,no,no,GBP/USD,,,LIBRE_FLOTACION,alta,"GBP/USD, fixing WM/Reuters 16:00 Londres",SOLO EJEMPLO
+USDCHF,G10N,PAR,USD,CHF,si,no,no,USD/CHF,,,FLOTACION_ADMINISTRADA,alta,"USD/CHF, Fed H.10",SOLO EJEMPLO
+EURJPY,G10N,CRUCE,EUR,JPY,si,no,no,EUR/JPY,,,LIBRE_FLOTACION,alta,"EUR/JPY, tipo de referencia del BCE",SOLO EJEMPLO
+EURGBP,G10N,CRUCE,EUR,GBP,si,no,no,EUR/GBP,,,LIBRE_FLOTACION,alta,"EUR/GBP, tipo de referencia del BCE",SOLO EJEMPLO
+EURCHF,G10N,CRUCE,EUR,CHF,si,no,no,EUR/CHF,,,FLOTACION_ADMINISTRADA,alta,"EUR/CHF, tipo de referencia del BCE",SOLO EJEMPLO
+GBPJPY,G10N,CRUCE,GBP,JPY,si,no,no,GBP/JPY,,,LIBRE_FLOTACION,alta,"GBP/JPY, cruce de fixings WM/Reuters",SOLO EJEMPLO
+VOL-EURUSD-1M,G10N,VOLATILIDAD,EUR,USD,si,no,no,Volatilidad implícita de EUR/USD a 1 mes,,,LIBRE_FLOTACION,alta,"Volatilidad implícita a 1 mes de EUR/USD (índice propio)",SOLO EJEMPLO
+AUDUSD,G10M,PAR,AUD,USD,si,no,no,AUD/USD,,,LIBRE_FLOTACION,alta,"AUD/USD, fixing WM/Reuters",SOLO EJEMPLO
+NZDUSD,G10M,PAR,NZD,USD,si,no,no,NZD/USD,,,LIBRE_FLOTACION,alta,"NZD/USD, fixing WM/Reuters",SOLO EJEMPLO
+USDCAD,G10M,PAR,USD,CAD,si,no,no,USD/CAD,,,LIBRE_FLOTACION,alta,"USD/CAD, Fed H.10",SOLO EJEMPLO
+EURNOK,G10M,CRUCE,EUR,NOK,si,no,no,EUR/NOK,,,LIBRE_FLOTACION,media,"EUR/NOK, tipo de referencia del BCE",SOLO EJEMPLO
+EURSEK,G10M,CRUCE,EUR,SEK,si,no,no,EUR/SEK,,,LIBRE_FLOTACION,media,"EUR/SEK, tipo de referencia del BCE",SOLO EJEMPLO
+AUDNZD,G10M,CRUCE,AUD,NZD,si,no,no,AUD/NZD,,,LIBRE_FLOTACION,alta,"AUD/NZD, cruce de fixings WM/Reuters",SOLO EJEMPLO
+AUDJPY,G10M,CRUCE,AUD,JPY,si,no,no,AUD/JPY,,,LIBRE_FLOTACION,alta,"AUD/JPY, cruce de fixings WM/Reuters",SOLO EJEMPLO
+CADJPY,G10M,CRUCE,CAD,JPY,si,no,no,CAD/JPY,,,LIBRE_FLOTACION,media,"CAD/JPY, cruce de fixings WM/Reuters",SOLO EJEMPLO
+USDCNH,EMAS,PAR,USD,CNH,si,no,no,USD/CNH,,,FLOTACION_ADMINISTRADA,alta,"USD/CNH, mercado extraterritorial de Hong Kong",SOLO EJEMPLO
+USDINR,EMAS,PAR,USD,INR,no,si,si,USD/INR,,,FLOTACION_ADMINISTRADA,media,"USD/INR, tipo de referencia del RBI (FBIL)",SOLO EJEMPLO
+USDKRW,EMAS,PAR,USD,KRW,no,si,no,USD/KRW,,,LIBRE_FLOTACION,media,"USD/KRW, cierre de Seúl",SOLO EJEMPLO
+USDTWD,EMAS,PAR,USD,TWD,no,si,no,USD/TWD,,,FLOTACION_ADMINISTRADA,media,"USD/TWD, cierre de Taipéi",SOLO EJEMPLO
+USDIDR,EMAS,PAR,USD,IDR,no,si,no,USD/IDR,,,FLOTACION_ADMINISTRADA,media,"USD/IDR, JISDOR del Banco de Indonesia",SOLO EJEMPLO
+USDSGD,EMAS,PAR,USD,SGD,si,no,no,USD/SGD,,,BANDA,alta,"USD/SGD, fixing WM/Reuters",SOLO EJEMPLO
+USDTHB,EMAS,PAR,USD,THB,si,no,no,USD/THB,,,FLOTACION_ADMINISTRADA,media,"USD/THB, Banco de Tailandia",SOLO EJEMPLO
+USDHKD,EMAS,REGIMEN,USD,HKD,si,no,no,Régimen de caja de conversión del HKD,,,CAJA_CONVERSION,alta,"USD/HKD, Autoridad Monetaria de Hong Kong",SOLO EJEMPLO
+USDMXN,EMLA,PAR,USD,MXN,si,no,no,USD/MXN,,,LIBRE_FLOTACION,alta,"USD/MXN, FIX de Banxico",SOLO EJEMPLO
+USDBRL,EMLA,PAR,USD,BRL,no,si,no,USD/BRL,,,LIBRE_FLOTACION,media,"USD/BRL, PTAX del Banco Central de Brasil",SOLO EJEMPLO
+USDCLP,EMLA,PAR,USD,CLP,no,si,no,USD/CLP,,,LIBRE_FLOTACION,media,"USD/CLP, dólar observado del Banco Central de Chile",SOLO EJEMPLO
+USDCOP,EMLA,PAR,USD,COP,no,si,no,USD/COP,,,LIBRE_FLOTACION,media,"USD/COP, TRM de Colombia",SOLO EJEMPLO
+USDPEN,EMLA,PAR,USD,PEN,no,si,no,USD/PEN,,,FLOTACION_ADMINISTRADA,media,"USD/PEN, Banco Central de Reserva del Perú",SOLO EJEMPLO
+EURPLN,EMEA,CRUCE,EUR,PLN,si,no,no,EUR/PLN,,,LIBRE_FLOTACION,alta,"EUR/PLN, tipo de referencia del BCE",SOLO EJEMPLO
+EURHUF,EMEA,CRUCE,EUR,HUF,si,no,no,EUR/HUF,,,LIBRE_FLOTACION,media,"EUR/HUF, tipo de referencia del BCE",SOLO EJEMPLO
+EURCZK,EMEA,CRUCE,EUR,CZK,si,no,no,EUR/CZK,,,LIBRE_FLOTACION,media,"EUR/CZK, tipo de referencia del BCE",SOLO EJEMPLO
+USDTRY,EMEA,PAR,USD,TRY,si,no,no,USD/TRY,,,FLOTACION_ADMINISTRADA,media,"USD/TRY, Banco Central de Turquía",SOLO EJEMPLO
+USDZAR,EMEA,PAR,USD,ZAR,si,no,no,USD/ZAR,,,LIBRE_FLOTACION,alta,"USD/ZAR, fixing WM/Reuters",SOLO EJEMPLO
+USDILS,EMEA,PAR,USD,ILS,si,no,no,USD/ILS,,,LIBRE_FLOTACION,media,"USD/ILS, Banco de Israel",SOLO EJEMPLO
+USDEGP,EMEA,REGIMEN,USD,EGP,no,si,si,Régimen cambiario de la libra egipcia,,,FLOTACION_ADMINISTRADA,baja,"USD/EGP, Banco Central de Egipto",SOLO EJEMPLO
+FX-CARRY-G10,ESTR,ESTRATEGIA,,JPY,si,no,no,Carry G10 ajustado por volatilidad,AUD:LARGO:0.34;NZD:LARGO:0.33;NOK:LARGO:0.33;JPY:CORTO:0.5;CHF:CORTO:0.5,JPY,LIBRE_FLOTACION,alta,"Índice de carry G10 (exceso de rentabilidad, propio)",SOLO EJEMPLO
+FX-CARRY-EM,ESTR,ESTRATEGIA,,USD,si,no,no,Carry emergente frente al USD,MXN:LARGO:0.25;BRL:LARGO:0.25;ZAR:LARGO:0.25;IDR:LARGO:0.25;USD:CORTO:1.0,USD,LIBRE_FLOTACION,media,"Índice de carry emergente (exceso de rentabilidad, propio)",SOLO EJEMPLO
+FX-MOM-G10,ESTR,ESTRATEGIA,,USD,si,no,no,Momentum G10 frente al USD,EUR:LARGO:0.25;GBP:LARGO:0.25;AUD:LARGO:0.25;CAD:LARGO:0.25;USD:CORTO:1.0,USD,LIBRE_FLOTACION,alta,"Índice de momentum G10 (exceso de rentabilidad, propio)",SOLO EJEMPLO
+DOLAR-AMPLIO,ESTR,CESTA,,USD,si,no,no,Dólar amplio frente a una cesta comercial,USD:LARGO:1.0;EUR:CORTO:0.4;JPY:CORTO:0.15;CNH:CORTO:0.15;MXN:CORTO:0.15;CAD:CORTO:0.15,EUR,LIBRE_FLOTACION,alta,"Índice amplio del dólar (aproximación del índice amplio de la Fed)",SOLO EJEMPLO
+CESTA-REFUGIO,ESTR,CESTA,,USD,si,no,no,Cesta de refugio (yen y franco) frente al USD,JPY:LARGO:0.5;CHF:LARGO:0.5;USD:CORTO:1.0,USD,LIBRE_FLOTACION,alta,"Índice de la cesta de refugio JPY y CHF frente al USD (propio)",SOLO EJEMPLO
+CESTA-LATAM,ESTR,CESTA,,USD,no,si,no,Divisas latinoamericanas frente al USD,BRL:LARGO:0.25;MXN:LARGO:0.25;CLP:LARGO:0.25;COP:LARGO:0.25;USD:CORTO:1.0,USD,LIBRE_FLOTACION,media,"Índice de la cesta latinoamericana frente al USD (propio)",SOLO EJEMPLO

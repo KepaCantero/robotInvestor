@@ -1,0 +1,78 @@
+{
+ "pet_id": "PET-B-2026-0002",
+ "run_id": "RUN-B-2026-0002-01",
+ "rec_id": "REC-B-2026-0002",
+ "fecha": "2026-11-03",
+ "data_cutoff": "2026-11-03",
+ "ambito": {
+  "nombre": "Equipos para redes eléctricas en Europa (transformadores, cables de alta tensión, subestaciones y aparamenta)",
+  "tipo_objeto": "CADENA_DE_VALOR",
+  "horizonte_principal": "H4"
+ },
+ "capa": 1,
+ "puerta": "PV1",
+ "motivos": [
+  {
+   "criterio": "SIN_INVERTIBILIDAD",
+   "clase": "ELIMINATORIO",
+   "detalle": "Ningún tipo de activo con instrumentos que superen PC1 en el universo preliminar",
+   "evidencia": [
+    "DAT-B-2026-0008"
+   ],
+   "calculos": [
+    "CALC-B-2026-0011"
+   ],
+   "etiqueta": "[HECHO]"
+  },
+  {
+   "criterio": "MATERIALIDAD",
+   "clase": "DEBILIDAD",
+   "detalle": "Capitalización agregada no disponible y 0 instrumentos invertibles frente a los mínimos (2000 M€; 3 instrumentos)",
+   "evidencia": [
+    "DAT-B-2026-0008"
+   ],
+   "calculos": [
+    "CALC-B-2026-0011"
+   ],
+   "etiqueta": "[INTERPRETACIÓN]"
+  }
+ ],
+ "por_que_no_merece_seguir": [
+  "SIN_INVERTIBILIDAD (eliminatorio): Ningún tipo de activo con instrumentos que superen PC1 en el universo preliminar",
+  "MATERIALIDAD (debilidad): Capitalización agregada no disponible y 0 instrumentos invertibles frente a los mínimos (2000 M€; 3 instrumentos)",
+  "Universo preliminar invertible: 0 instrumentos",
+  "Seguir costaría ≈ 23.1 min más (p80) sin cambiar la conclusión previsible",
+  "Tesis básica: La demanda del ámbito crece más que la oferta disponible a medio plazo."
+ ],
+ "puntuaciones_provisionales": {
+  "A": null,
+  "E": null
+ },
+ "que_lo_cambiaria": [
+  "Aparición de instrumentos invertibles que superen PC1",
+  "Un catalizador fechado que haga material la tesis"
+ ],
+ "sugerencia": "DESCARTAR",
+ "seguimiento_propuesto": null,
+ "veredicto_registrado": "DESCARTAR",
+ "resultado_del_analisis": "DETENIDO_EN_PUERTA",
+ "lo_que_ya_se_sabe": [
+  "Ámbito delimitado y universo preliminar construido",
+  "Lectura rápida de la valoración del indicador"
+ ],
+ "supuestos_aplicados": [],
+ "tiempo_consumo": {
+  "minutos": 2.2,
+  "uc": 6.9,
+  "por_capa_min": {
+   "0": 1.18,
+   "1": 1.06
+  }
+ },
+ "forzar_continuacion": {
+  "posible_hasta": "2026-11-10",
+  "estimacion_resto_p80_min": 23.1,
+  "checkpoint_id": "CKP-2026-0016"
+ },
+ "aviso": "Informe de parada del Bloque B: no es una recomendación personal."
+}

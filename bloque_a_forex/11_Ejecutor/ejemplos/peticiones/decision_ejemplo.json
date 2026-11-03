@@ -1,0 +1,4 @@
+{"decisiones": [{"opp_id": "OPP-FX-2026-0001", "decision": "EN_SEGUIMIENTO", "motivo": "esperar a la reunión del banco central"}],
+ "valoracion_informe": {"run_id": "RUN-FX-2026-0001", "utilidad": 4, "comentario": "claro"},
+ "configuracion": {"periodicidad": "SEMANAL", "dia_hora_entrega": "LUN 07:00", "horizontes": ["H2", "H3", "H4"],
+                   "divisa_base_usuario": "EUR"}}

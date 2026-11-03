@@ -1,0 +1,39 @@
+{
+ "configuracion": {
+  "politica_autorizacion": [
+   {
+    "regla_id": "POL-1",
+    "condicion": {
+     "origen": "BLOQUE_A",
+     "siguiente_paso_A": "ENVIAR_A_BLOQUE_B",
+     "nivel": [
+      "N2"
+     ]
+    },
+    "accion": "AUTORIZAR_HASTA",
+    "minutos": 60
+   },
+   {
+    "regla_id": "POL-2",
+    "condicion": {
+     "relevancia": "ALTA",
+     "nivel": [
+      "N2",
+      "N3"
+     ]
+    },
+    "accion": "AUTORIZAR_HASTA",
+    "minutos": 90
+   },
+   {
+    "regla_id": "POL-3",
+    "condicion": {
+     "minutos_p80_min": 120
+    },
+    "accion": "ELEGIR_OPCION",
+    "opcion": "DIVIDIR_EN_FASES"
+   }
+  ],
+  "tope_autorizacion_automatica_min": 240
+ }
+}

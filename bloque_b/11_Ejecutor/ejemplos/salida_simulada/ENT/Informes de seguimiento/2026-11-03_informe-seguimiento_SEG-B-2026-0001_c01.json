@@ -1,0 +1,176 @@
+{
+ "seg_id": "SEG-B-2026-0001",
+ "ciclo_id": "CIC-B-2026-0001-01",
+ "run_id": "RUN-B-2026-0001-c01",
+ "fecha": "2026-11-03",
+ "data_cutoff": "2026-11-03",
+ "objeto": {
+  "rec_id": "REC-B-2026-0001",
+  "mkt_id": "MKT-B-2026-0001",
+  "ambito": "Equipos para redes eléctricas en Europa (transformadores, cables de alta tensión, subestaciones y aparamenta)"
+ },
+ "semaforo": "VERDE",
+ "resumen": "Ciclo ligero: delta de las dimensiones clave y de las señales frente al ciclo anterior.",
+ "que_ha_cambiado": [
+  {
+   "dimension": "D3",
+   "antes": "lectura del ciclo anterior",
+   "ahora": "sin cambio material",
+   "importancia": "BAJA",
+   "evidencia": []
+  },
+  {
+   "dimension": "D9",
+   "antes": "lectura del ciclo anterior",
+   "ahora": "sin cambio material",
+   "importancia": "BAJA",
+   "evidencia": []
+  }
+ ],
+ "senales": [
+  {
+   "sig_id": "SIG-2026-0001-01",
+   "nombre": "Rentabilidad relativa a 3 meses de CESTA-REDES-EU frente a SXNP",
+   "valor": -4.44,
+   "umbral": -30.5,
+   "estado": "NORMAL"
+  },
+  {
+   "sig_id": "SIG-2026-0001-02",
+   "nombre": "Caída de CESTA-REDES-EU desde el nivel de la entrega",
+   "valor": 0.0,
+   "umbral": -12.0,
+   "estado": "NORMAL"
+  },
+  {
+   "sig_id": "SIG-2026-0001-03",
+   "nombre": "Rentabilidad relativa a 3 meses de CAND-B-2026-0023 frente a SXNP",
+   "valor": 6.03,
+   "umbral": -20.0,
+   "estado": "NORMAL"
+  }
+ ],
+ "disparadores": [
+  {
+   "descripcion": "book-to-bill inferior a 1 durante dos trimestres",
+   "origen": "BROKER",
+   "estado": "NO_ALCANZADO"
+  },
+  {
+   "descripcion": "Rentabilidad relativa a 3 meses por debajo del umbral de invalidación",
+   "origen": "PLAN",
+   "estado": "NO_ALCANZADO"
+  },
+  {
+   "descripcion": "Caída de la demanda dos trimestres seguidos",
+   "origen": "PLAN",
+   "estado": "NO_ALCANZADO"
+  }
+ ],
+ "candidatos": [
+  {
+   "cand_id": "CAND-B-2026-0004",
+   "eslabon_id": "ESL-02",
+   "cambio": "sin cambio material",
+   "estado": "VIGENTE"
+  },
+  {
+   "cand_id": "CAND-B-2026-0007",
+   "eslabon_id": "ESL-02",
+   "cambio": "sin cambio material",
+   "estado": "VIGENTE"
+  },
+  {
+   "cand_id": "CAND-B-2026-0010",
+   "eslabon_id": "ESL-03",
+   "cambio": "sin cambio material",
+   "estado": "VIGENTE"
+  },
+  {
+   "cand_id": "CAND-B-2026-0011",
+   "eslabon_id": "ESL-03",
+   "cambio": "sin cambio material",
+   "estado": "VIGENTE"
+  },
+  {
+   "cand_id": "CAND-B-2026-0013",
+   "eslabon_id": "ESL-03",
+   "cambio": "sin cambio material",
+   "estado": "VIGENTE"
+  },
+  {
+   "cand_id": "CAND-B-2026-0023",
+   "eslabon_id": "ESL-02",
+   "cambio": "sin cambio material",
+   "estado": "VIGENTE"
+  },
+  {
+   "cand_id": "CAND-B-2026-0026",
+   "eslabon_id": "ESL-03",
+   "cambio": "sin cambio material",
+   "estado": "VIGENTE"
+  },
+  {
+   "cand_id": "CAND-B-2026-0027",
+   "eslabon_id": "ESL-02",
+   "cambio": "sin cambio material",
+   "estado": "VIGENTE"
+  },
+  {
+   "cand_id": "CAND-B-2026-0028",
+   "eslabon_id": "ESL-02",
+   "cambio": "sin cambio material",
+   "estado": "VIGENTE"
+  },
+  {
+   "cand_id": "CAND-B-2026-0030",
+   "eslabon_id": "ESL-02",
+   "cambio": "sin cambio material",
+   "estado": "VIGENTE"
+  },
+  {
+   "cand_id": "CAND-B-2026-0032",
+   "eslabon_id": "ESL-02",
+   "cambio": "sin cambio material",
+   "estado": "VIGENTE"
+  },
+  {
+   "cand_id": "CAND-B-2026-0016",
+   "eslabon_id": "ESL-02",
+   "cambio": "sin cambio material",
+   "estado": "VIGENTE"
+  },
+  {
+   "cand_id": "CAND-B-2026-0022",
+   "eslabon_id": "ESL-02",
+   "cambio": "sin cambio material",
+   "estado": "VIGENTE"
+  }
+ ],
+ "alertas_vigia_incluidas": [],
+ "actualizacion_F6": {
+  "mkt_id": "MKT-B-2026-0001",
+  "version": "c01",
+  "dimensiones": [
+   "D3",
+   "D9"
+  ]
+ },
+ "recomendacion": "MANTENER_VIGILANCIA",
+ "motivo": "Sin cambio material desde el ciclo anterior",
+ "peticion_sugerida": null,
+ "candidatos_propuestos_para_C": [],
+ "proximo_ciclo": "2026-12-03",
+ "tiempo_consumo": {
+  "minutos": 5.8,
+  "uc": 2.9,
+  "estimado_p80_min": 9.0,
+  "autorizaciones": []
+ },
+ "supuestos_aplicados": [],
+ "limitaciones": [
+  "Datos sintéticos: resultados sin valor analítico"
+ ],
+ "autorrefutacion": "El cambio de semáforo se contrasta con la fluctuación normal del indicador.",
+ "nota": "El bloque no ha iniciado ningún análisis profundo."
+}

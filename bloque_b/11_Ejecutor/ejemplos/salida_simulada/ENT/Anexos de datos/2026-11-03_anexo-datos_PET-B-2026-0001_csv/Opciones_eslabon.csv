@@ -1,0 +1,6 @@
+﻿eslabon_id,rango,cand_id,nombre,tipo_activo,rol_en_eslabon,pureza_eslabon,S,ic90_S_inf,ic90_S_sup,veredicto,en_top_n_tipo,motivo
+ESL-02,1,CAND-B-2026-0023,Bono sénior de Prysmian 2029 (ilustrativo),RF,Exposición a Fabricación de cables de alta tensión (cables de alta tensión),0.5,72,66,76,PRIORITARIO_PARA_C,True,En el top-N de su tipo
+ESL-02,2,CAND-B-2026-0016,ETF UCITS de infraestructura de redes inteligentes (ilustrativo A),FON,Exposición a Fabricación de cables de alta tensión (vehículo temático),0.61,64,57,67,SECUNDARIO,True,En el top-N de su tipo; S < 65
+ESL-02,3,CAND-B-2026-0028,Bono sénior de Nexans 2032 (ilustrativo),RF,Exposición a Fabricación de cables de alta tensión (cables de alta tensión),0.41,62,58,67,SECUNDARIO,True,En el top-N de su tipo; S < 65
+ESL-02,4,CAND-B-2026-0007,Prysmian,RV,Exposición a Fabricación de cables de alta tensión (cables de alta tensión),0.5,60,58,64,SECUNDARIO,True,En el top-N de su tipo; S < 65
+ESL-02,5,CAND-B-2026-0027,Bono sénior de Nexans 2029 (ilustrativo),RF,Exposición a Fabricación de cables de alta tensión (cables de alta tensión),0.41,60,55,65,SECUNDARIO,False,"Añadida por cobertura del eslabón (9.13), adicional al top-N; S < 65"

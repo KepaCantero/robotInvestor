@@ -1,0 +1,235 @@
+<!doctype html>
+<html lang="es-ES">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="generator" content="Bloque B · AG-B17 Redactor y Diseñador de Informes · ejecutor bloque_b">
+<meta name="pet_id" content="PET-B-2025-0003">
+<meta name="run_id" content="RUN-B-2025-0003-01">
+<meta name="data_cutoff" content="2025-03-31">
+<meta name="semaforo" content="verde-claro">
+<meta name="color-scheme" content="light dark">
+<title>Tu informe: El ámbito pedido</title>
+<style>
+:root{
+  --fondo:#f6f4ef; --papel:#ffffff; --tinta:#1d2430; --tinta-suave:#4a5566; --linea:#dfdad0; --acento:#2b5c8a;
+  --verde:#1b7a55; --verde-claro:#3f9e74; --ambar:#a86b00; --gris:#5f6673; --gana:#1b7a55; --pierde:#b2452d;
+  --barra:#2b5c8a; --barra-fondo:#e7e3da; --sombra:0 1px 2px rgba(20,24,32,.06),0 4px 16px rgba(20,24,32,.05);
+  --radio:14px; --ancho:880px;
+  --letra:system-ui,-apple-system,"Segoe UI",Roboto,"Helvetica Neue",Arial,"Noto Sans",sans-serif;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --fondo:#14171c; --papel:#1c2027; --tinta:#eceae6; --tinta-suave:#b4b8c0; --linea:#2f3540; --acento:#8bb8e6;
+    --verde:#46b88a; --verde-claro:#7fd1a8; --ambar:#e2a83a; --gris:#9aa1ad; --gana:#46b88a; --pierde:#e98a72;
+    --barra:#8bb8e6; --barra-fondo:#2b313b; --sombra:none;
+  }
+}
+:root[data-theme="dark"]{
+  --fondo:#14171c; --papel:#1c2027; --tinta:#eceae6; --tinta-suave:#b4b8c0; --linea:#2f3540; --acento:#8bb8e6;
+  --verde:#46b88a; --verde-claro:#7fd1a8; --ambar:#e2a83a; --gris:#9aa1ad; --gana:#46b88a; --pierde:#e98a72;
+  --barra:#8bb8e6; --barra-fondo:#2b313b; --sombra:none;
+}
+*{box-sizing:border-box}
+html{-webkit-text-size-adjust:100%}
+body{margin:0;background:var(--fondo);color:var(--tinta);font:17px/1.6 var(--letra)}
+a{color:var(--acento)}
+:focus-visible{outline:3px solid var(--acento);outline-offset:2px;border-radius:4px}
+.salto{position:absolute;left:-999px;top:0;background:var(--papel);padding:.5rem 1rem}
+.salto:focus{left:1rem;z-index:2}
+.envoltorio{max-width:var(--ancho);margin:0 auto;padding:24px 16px 48px}
+.ejemplo{background:repeating-linear-gradient(135deg,#fff3c4 0 12px,#ffe9a0 12px 24px);color:#5a4300;border-radius:10px;
+  padding:.55rem .9rem;font-size:.85rem;font-weight:600;margin-bottom:16px;text-align:center}
+header.cabecera{display:flex;flex-wrap:wrap;gap:8px 16px;align-items:baseline;justify-content:space-between;margin-bottom:12px}
+.marca{font-size:.82rem;letter-spacing:.06em;text-transform:uppercase;color:var(--tinta-suave);font-weight:600}
+.fechas{font-size:.85rem;color:var(--tinta-suave)}
+h1{font-size:clamp(1.6rem,4.2vw,2.3rem);line-height:1.2;margin:.2rem 0 1rem;letter-spacing:-.01em}
+h2{font-size:1.15rem;margin:0 0 .7rem;letter-spacing:-.005em}
+.tarjeta{background:var(--papel);border:1px solid var(--linea);border-radius:var(--radio);padding:20px;margin:0 0 16px;
+  box-shadow:var(--sombra)}
+.resumen{display:grid;grid-template-columns:1fr auto;gap:20px;align-items:center}
+.resumen p{margin:.25rem 0}
+.semaforo{display:flex;flex-direction:column;align-items:center;gap:6px;min-width:150px;text-align:center}
+.luz{width:84px;height:84px;border-radius:50%;display:grid;place-items:center;color:#fff;border:4px solid rgba(255,255,255,.65);
+  box-shadow:0 0 0 2px var(--linea)}
+.luz svg{width:40px;height:40px}
+.luz.verde{background:var(--verde)} .luz.verde-claro{background:var(--verde-claro)} .luz.ambar{background:var(--ambar)} .luz.gris{background:var(--gris)}
+.semaforo strong{font-size:1rem}
+.semaforo span{font-size:.85rem;color:var(--tinta-suave);max-width:180px}
+.leyenda-semaforo{display:flex;flex-wrap:wrap;gap:6px 14px;margin-top:12px;padding-top:12px;border-top:1px dashed var(--linea);
+  font-size:.82rem;color:var(--tinta-suave);list-style:none;padding-left:0}
+.leyenda-semaforo li{display:flex;align-items:center;gap:6px}
+.punto{width:12px;height:12px;border-radius:50%;display:inline-block;flex:none}
+.punto.verde{background:var(--verde)} .punto.verde-claro{background:var(--verde-claro)} .punto.ambar{background:var(--ambar)} .punto.gris{background:var(--gris)}
+.actual{font-weight:700;color:var(--tinta)}
+.cadena{list-style:none;padding:0;margin:14px 0 0;display:grid;grid-template-columns:1fr auto 1fr auto 1fr auto 1fr;gap:8px;align-items:stretch}
+.cadena li{flex:1 1 150px;border:1px solid var(--linea);border-radius:12px;padding:10px 12px;position:relative;background:var(--fondo)}
+.cadena li .papel{display:inline-flex;align-items:center;gap:4px;font-size:.78rem;font-weight:700;border-radius:999px;padding:1px 8px;margin-bottom:4px}
+.papel.gana{color:var(--gana);border:1.5px solid var(--gana)} .papel.pierde{color:var(--pierde);border:1.5px solid var(--pierde)}
+.papel.neutro{color:var(--tinta-suave);border:1.5px solid var(--linea)}
+.cadena li .nombre{display:block;font-weight:600;line-height:1.3}
+.cadena li .nota{display:block;font-size:.85rem;color:var(--tinta-suave);line-height:1.4;margin-top:2px}
+.cadena li.flecha{border:0;background:none;padding:0;align-self:center;color:var(--tinta-suave);font-size:1.3rem}
+.tres{display:grid;grid-template-columns:repeat(3,1fr);gap:16px}
+.medida h3{font-size:.95rem;margin:0 0 .5rem;color:var(--tinta-suave);font-weight:600}
+.escala{display:flex;gap:6px;margin:.3rem 0}
+.escala i{width:22px;height:22px;border-radius:6px;border:2px solid var(--tinta-suave);display:inline-block}
+.escala i.lleno{background:var(--tinta);border-color:var(--tinta)}
+.horizontes{display:flex;gap:6px;flex-wrap:wrap;margin:.3rem 0}
+.horizontes span{font-size:.8rem;border:1px solid var(--linea);border-radius:8px;padding:4px 8px;color:var(--tinta-suave);display:inline-flex;gap:4px;align-items:center}
+.horizontes span.activo{border:2px solid var(--acento);color:var(--tinta);font-weight:700}
+.barra{height:14px;border-radius:999px;background:var(--barra-fondo);overflow:hidden;margin:.45rem 0}
+.barra b{display:block;height:100%;background:var(--barra);border-radius:999px}
+.valor{font-size:1.35rem;font-weight:700}
+.tipos{display:grid;grid-template-columns:repeat(6,1fr);gap:8px;list-style:none;padding:0;margin:.4rem 0 0}
+.tipos li{border:1px solid var(--linea);border-radius:12px;padding:10px 6px;text-align:center;font-size:.8rem;line-height:1.25;color:var(--tinta-suave)}
+.tipos li svg{width:26px;height:26px;display:block;margin:0 auto 4px}
+.tipos li.estudiado{border:2px solid var(--acento);color:var(--tinta);font-weight:600;background:var(--fondo)}
+.tipos li.no-aplica{opacity:.55}
+.tipos li small{display:block;font-weight:500;font-size:.72rem}
+ul.lista{margin:.2rem 0 0;padding-left:1.2rem} ul.lista li{margin:.25rem 0}
+.historial{display:flex;gap:16px;align-items:center;flex-wrap:wrap}
+.anillo{width:92px;height:92px;flex:none}
+dl.glosario{display:grid;grid-template-columns:max-content 1fr;gap:6px 14px;margin:0}
+dl.glosario dt{font-weight:700} dl.glosario dd{margin:0;color:var(--tinta-suave)}
+.eslabones{display:grid;gap:14px}
+table.eslabon{width:100%;border-collapse:collapse;font-size:.95rem}
+table.eslabon caption{text-align:left;font-weight:700;padding:0 0 6px;font-size:1.02rem}
+table.eslabon caption small{display:block;font-weight:500;color:var(--tinta-suave);font-size:.86rem}
+table.eslabon th,table.eslabon td{border-top:1px solid var(--linea);padding:8px 6px;text-align:left;vertical-align:top}
+table.eslabon th{font-size:.8rem;color:var(--tinta-suave);font-weight:600}
+table.eslabon td svg{width:20px;height:20px;vertical-align:-5px;margin-right:4px}
+table.eslabon tr.emergente td{font-style:italic;color:var(--tinta-suave)}
+.atasco{display:inline-block;border-radius:999px;padding:1px 9px;font-size:.78rem;font-weight:700;border:1px solid var(--linea)}
+.atasco.si{background:var(--fondo);border-color:var(--acento)}
+.rotulo{font-size:.9rem;color:var(--tinta-suave);margin:.2rem 0 .6rem}
+.paso{border-left:4px solid var(--acento)}
+.aviso{font-size:.92rem;color:var(--tinta-suave);text-align:center;margin-top:20px}
+.aviso strong{color:var(--tinta)}
+@media (max-width:720px){
+  body{font-size:16px}
+  .resumen{grid-template-columns:1fr}
+  .semaforo{flex-direction:row;justify-content:flex-start;text-align:left;min-width:0}
+  .semaforo span{max-width:none}
+  .tres{grid-template-columns:1fr}
+  .tipos{grid-template-columns:repeat(3,1fr)}
+  .cadena{grid-template-columns:1fr}
+  .cadena li.flecha{transform:rotate(90deg);justify-self:center;margin:-6px 0}
+  dl.glosario{grid-template-columns:1fr} dl.glosario dd{margin-bottom:6px}
+  table.eslabon thead{display:none}
+  table.eslabon tr{display:block;border-top:1px solid var(--linea);padding:6px 0}
+  table.eslabon td{display:block;border:0;padding:2px 0}
+}
+@media (prefers-reduced-motion:no-preference){.barra b{transition:width .6s ease}}
+@media print{body{background:#fff}.tarjeta{box-shadow:none;break-inside:avoid}.ejemplo,.salto{display:none}}
+</style>
+<style>.visually-hidden{position:absolute!important;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}</style>
+</head>
+<body>
+<a class="salto" href="#contenido">Saltar al contenido</a>
+<svg width="0" height="0" style="position:absolute" aria-hidden="true" focusable="false">
+  <defs>
+    <symbol id="i-ok" viewBox="0 0 24 24"><path d="M5 12.5l4.2 4.2L19 7" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+    <symbol id="i-escalon" viewBox="0 0 24 24"><path d="M4 19h5v-5h5V9h6" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+    <symbol id="i-ojo" viewBox="0 0 24 24"><path d="M2 12s3.6-6.5 10-6.5S22 12 22 12s-3.6 6.5-10 6.5S2 12 2 12z" fill="none" stroke="currentColor" stroke-width="2.2"/><circle cx="12" cy="12" r="3" fill="currentColor"/></symbol>
+    <symbol id="i-no" viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"/></symbol>
+    <symbol id="i-RV" viewBox="0 0 24 24"><path d="M4 18l5-6 4 3 7-9" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+    <symbol id="i-RF" viewBox="0 0 24 24"><rect x="4" y="5" width="16" height="14" rx="2" fill="none" stroke="currentColor" stroke-width="2"/><path d="M8 10h8M8 14h5" stroke="currentColor" stroke-width="2"/></symbol>
+    <symbol id="i-DIV" viewBox="0 0 24 24"><circle cx="9" cy="12" r="5" fill="none" stroke="currentColor" stroke-width="2"/><circle cx="15" cy="12" r="5" fill="none" stroke="currentColor" stroke-width="2"/></symbol>
+    <symbol id="i-MP" viewBox="0 0 24 24"><path d="M4 18l4-8h8l4 8z" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/></symbol>
+    <symbol id="i-IDX" viewBox="0 0 24 24"><path d="M5 19V9M10 19V5M15 19v-8M20 19v-5" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"/></symbol>
+    <symbol id="i-FON" viewBox="0 0 24 24"><path d="M4 9l8-4 8 4-8 4z M4 13l8 4 8-4 M4 17l8 4 8-4" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/></symbol>
+    <symbol id="i-DER" viewBox="0 0 24 24"><path d="M4 16c3-8 5 4 8-4s5 4 8-4" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></symbol>
+    <symbol id="i-INM" viewBox="0 0 24 24"><path d="M4 20V10l8-5 8 5v10H4zm6 0v-6h4v6" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/></symbol>
+    <symbol id="i-CRI" viewBox="0 0 24 24"><path d="M12 3l7 4v10l-7 4-7-4V7z" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/></symbol>
+    <symbol id="i-ALT" viewBox="0 0 24 24"><circle cx="12" cy="12" r="8" fill="none" stroke="currentColor" stroke-width="2"/><path d="M12 7v5l3 3" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></symbol>
+    <symbol id="i-MON" viewBox="0 0 24 24"><rect x="3" y="7" width="18" height="11" rx="2" fill="none" stroke="currentColor" stroke-width="2"/><circle cx="12" cy="12.5" r="2.5" fill="currentColor"/></symbol>
+    <symbol id="i-TCV" viewBox="0 0 24 24"><path d="M3 12h4l2-5 4 10 2-5h6" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+    <symbol id="i-reloj" viewBox="0 0 24 24"><circle cx="12" cy="12" r="8" fill="none" stroke="currentColor" stroke-width="2"/><path d="M12 8v4l3 2" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></symbol>
+  </defs>
+</svg>
+<div class="envoltorio">
+  <header class="cabecera">
+    <div class="marca">Robot Investor · Tu análisis a petición</div>
+    <div class="fechas">Informe del lunes, 31 de marzo de 2025. Datos hasta el lunes, 31 de marzo.</div>
+  </header>
+  <main id="contenido">
+    <h1>El ámbito pedido</h1>
+    <section class="tarjeta" aria-labelledby="t-30s">
+      <div class="resumen">
+        <div>
+          <h2 id="t-30s">En 30 segundos</h2>
+          <p>Hemos estudiado el ámbito pedido.</p><p>Miramos quién gana, quién pierde y cuánto cuesta.</p><p>La idea es buena, pero mejor entrar poco a poco.</p>
+        </div>
+        <div class="semaforo" role="img" aria-label="Semáforo: Buena idea, poco a poco">
+          <div class="luz verde-claro"><svg aria-hidden="true"><use href="#i-escalon"/></svg></div>
+          <div><strong>Buena idea, poco a poco</strong><br><span>Conviene repartir la entrada en el tiempo.</span></div>
+        </div>
+      </div>
+      <ul class="leyenda-semaforo" aria-label="Qué significa cada luz"><li class=""><i class="punto verde" aria-hidden="true"></i>Verde: buena idea ahora</li><li class="actual"><i class="punto verde-claro" aria-hidden="true"></i>Verde claro: buena idea, poco a poco</li><li class=""><i class="punto ambar" aria-hidden="true"></i>Ámbar: mirar y esperar</li><li class=""><i class="punto gris" aria-hidden="true"></i>Gris: no la vemos</li></ul>
+    </section>
+    <section class="tarjeta" aria-labelledby="t-porque">
+      <h2 id="t-porque">Por qué</h2>
+      <p>Hay más demanda que oferta y la oferta tarda en crecer.</p>
+      <ol class="cadena" aria-label="Esquema de la cadena: quién gana y quién pierde"><li><span class="papel neutro">Ni gana ni pierde</span><span class="nombre">Materias primas</span></li><li class="flecha" aria-hidden="true">→</li><li><span class="papel gana">▲ Gana</span><span class="nombre">Fabricación de cables de alta tensión</span></li><li class="flecha" aria-hidden="true">→</li><li><span class="papel gana">▲ Gana</span><span class="nombre">Transformadores y subestaciones</span></li><li class="flecha" aria-hidden="true">→</li><li><span class="papel neutro">Ni gana ni pierde</span><span class="nombre">Operadores de red</span></li><li class="flecha" aria-hidden="true">→</li><li><span class="papel pierde">▼ Pierde</span><span class="nombre">Compradores sin contratos de suministro</span></li></ol>
+    </section>
+    <section class="tarjeta" aria-labelledby="t-eslabones">
+      <h2 id="t-eslabones">Dónde está el valor, paso a paso</h2>
+      <p class="rotulo"><strong>Activos que el análisis ha estudiado; no son recomendaciones; tu Broker decide.</strong></p>
+      <p>Un ETF (fondo que cotiza en bolsa) junta muchas empresas en una sola compra.</p>
+      <p>Un bono (un préstamo que se compra y se vende) paga intereses.</p>
+      <div class="eslabones">
+        <table class="eslabon" data-eslabon="ESL-02">
+          <caption><span>Fabricación de cables de alta tensión</span> <span class="atasco si">Hay atasco</span>
+            <small>Piden más de lo que se puede hacer ahora.</small></caption>
+          <thead><tr><th scope="col">Opción estudiada</th><th scope="col">Tipo</th><th scope="col">En una frase</th></tr></thead>
+          <tbody><tr class="opcion"><td>Bono sénior de Prysmian 2029 (ilustrativo)</td><td><svg aria-hidden="true"><use href="#i-RF"/></svg>Bonos</td><td>Una de las mejor situadas de su tipo.</td></tr><tr class="opcion"><td>ETF UCITS de infraestructura de redes inteligentes (ilustrativo A)</td><td><svg aria-hidden="true"><use href="#i-FON"/></svg>Fondos</td><td>Una de las mejor situadas de su tipo.</td></tr><tr class="opcion"><td>Integrador británico de redes (ilustrativo)</td><td><svg aria-hidden="true"><use href="#i-RV"/></svg>Acciones</td><td>Una de las mejor situadas de su tipo.</td></tr><tr class="emergente"><td colspan="3">Empresa nueva a vigilar: Fabricante con salida a bolsa reciente (ilustrativo)…. Ya cotiza en bolsa.</td></tr></tbody>
+        </table>
+      </div>
+    </section>
+    <section class="tarjeta" aria-labelledby="t-medidas">
+      <h2 id="t-medidas" class="visually-hidden">Riesgo, plazo y confianza</h2>
+      <div class="tres">
+        <div class="medida"><h3>Riesgo</h3><div class="escala" role="img" aria-label="Riesgo 3 de 5"><i class="lleno"></i><i class="lleno"></i><i class="lleno"></i><i></i><i></i></div>
+          <span class="valor">3 de 5</span><p>Su precio puede bajar bastante en un mal año.</p></div>
+        <div class="medida"><h3>Plazo</h3><div class="horizontes" role="img" aria-label="Plazo: años"><span class="">Días</span><span class="">Semanas</span><span class="">Meses</span><span class="activo">Años</span><span class=""><span aria-hidden="true">🌳</span> Décadas</span></div>
+          <p>Es una idea para varios meses o años.</p></div>
+        <div class="medida"><h3>Confianza</h3><div class="barra" role="img" aria-label="Confianza 81 de 100, alta"><b style="width:81%"></b></div>
+          <span class="valor">81 de 100</span><p>Alta: Los datos son buenos, pero hay dudas abiertas.</p></div>
+      </div>
+    </section>
+    <section class="tarjeta" aria-labelledby="t-tipos">
+      <h2 id="t-tipos">Qué tipo de activos se están estudiando</h2>
+      <p>Hemos mirado 3 tipos. Otro equipo del sistema estudiará cada opción a fondo. Esto no es una lista de compra.</p>
+      <ul class="tipos"><li class="estudiado"><svg aria-hidden="true"><use href="#i-RV"/></svg>Acciones<small>en estudio</small></li><li class="estudiado"><svg aria-hidden="true"><use href="#i-RF"/></svg>Bonos<small>en estudio</small></li><li class="no-aplica"><svg aria-hidden="true"><use href="#i-DIV"/></svg>Monedas<small>no aplica</small></li><li class="no-aplica"><svg aria-hidden="true"><use href="#i-MP"/></svg>Materias primas<small>no aplica</small></li><li class="no-aplica"><svg aria-hidden="true"><use href="#i-IDX"/></svg>Bolsas enteras<small>no aplica</small></li><li class="estudiado"><svg aria-hidden="true"><use href="#i-FON"/></svg>Fondos<small>en estudio</small></li><li class="no-aplica"><svg aria-hidden="true"><use href="#i-DER"/></svg>Derivados<small>no aplica</small></li><li class="no-aplica"><svg aria-hidden="true"><use href="#i-INM"/></svg>Inmuebles<small>no aplica</small></li><li class="no-aplica"><svg aria-hidden="true"><use href="#i-CRI"/></svg>Criptomonedas<small>no aplica</small></li><li class="no-aplica"><svg aria-hidden="true"><use href="#i-ALT"/></svg>Alternativos<small>no aplica</small></li><li class="no-aplica"><svg aria-hidden="true"><use href="#i-MON"/></svg>Ahorro a corto<small>no aplica</small></li><li class="no-aplica"><svg aria-hidden="true"><use href="#i-TCV"/></svg>Tipos y nervios<small>no aplica</small></li></ul>
+    </section>
+    <section class="tarjeta" aria-labelledby="t-mal">
+      <h2 id="t-mal">Qué podría salir mal</h2>
+      <ul class="lista"><li>La demanda podría frenar.</li><li>Nuevas fábricas podrían bajar los precios.</li><li>Si sube el precio del dinero, estas inversiones valdrían menos.</li></ul>
+    </section>
+    <section class="tarjeta" aria-labelledby="t-historial">
+      <h2 id="t-historial">Cómo nos fue</h2>
+      <div class="historial">
+        <svg class="anillo" viewBox="0 0 36 36" role="img" aria-label="0 aciertos de 0 análisis cerrados">
+          <circle cx="18" cy="18" r="15.9" fill="none" stroke="var(--barra-fondo)" stroke-width="4"/>
+          <circle cx="18" cy="18" r="15.9" fill="none" stroke="var(--barra)" stroke-width="4" stroke-dasharray="0.0 100.0" stroke-dashoffset="25" stroke-linecap="round"/>
+          <text x="18" y="21" text-anchor="middle" font-size="9" font-weight="700" fill="currentColor">0/0</text>
+        </svg>
+        <div><p>Aún no hay análisis cerrados con los que medirnos.</p><p>Aún son pocos casos para saber si tenemos ventaja.</p></div>
+      </div>
+    </section>
+    <section class="tarjeta paso" aria-labelledby="t-paso">
+      <h2 id="t-paso">Qué pasa ahora</h2>
+      <p>Tu Broker decide si pide un estudio a fondo. Nosotros vigilamos las señales y te avisamos si cambian.</p>
+    </section>
+    <section class="tarjeta" aria-labelledby="t-glosario">
+      <h2 id="t-glosario">Palabras útiles</h2>
+      <dl class="glosario"><dt>Riesgo</dt><dd>Lo que puede bajar el precio en un mal año.</dd><dt>Fondo</dt><dd>Cesta con muchas empresas que compras de una vez.</dd></dl>
+    </section>
+  </main>
+  <p class="aviso"><strong>Esto no es una recomendación personal. Tu Broker Personal valora si encaja contigo.</strong><br>
+  Análisis PET-B-2025-0003 · datos hasta el 2025-03-31.</p>
+</div>
+<style>.visually-hidden{position:absolute!important;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}</style>
+</body>
+</html>

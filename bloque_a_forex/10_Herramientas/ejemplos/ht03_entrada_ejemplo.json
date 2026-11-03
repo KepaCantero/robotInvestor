@@ -1,0 +1,573 @@
+{
+ "parametros": {},
+ "candidatas_analizadas": {
+  "G10N": 10,
+  "EMLA": 6,
+  "EMAS": 5,
+  "ESTR": 4
+ },
+ "opciones": [
+  {
+   "opp_id": "OPP-FX-2026-0007",
+   "segmento": "G10N",
+   "nombre": "USD/JPY bajista (yen al alza)",
+   "par": "USD/JPY",
+   "direccion": "BAJISTA_BASE",
+   "cluster": "yen_refugio",
+   "dimensiones": {
+    "T": {
+     "magnitud": 80,
+     "alcance": 80,
+     "velocidad": 80,
+     "duracion": 80,
+     "difusion": 80,
+     "posicion_cadena_valor": 80,
+     "capacidad_transformadora": 80,
+     "claridad_causal": 80
+    },
+    "E": {
+     "calidad_raices": 80,
+     "cobertura_variables": 80,
+     "calidad_metodologica": 80,
+     "trazabilidad": 80,
+     "actualidad": 80,
+     "discrepancias_resueltas": 80,
+     "objeciones_respondidas": 80
+    },
+    "M": {
+     "adopcion": 50,
+     "escalado": 50,
+     "indicadores_disponibles": 50,
+     "persistencia": 50,
+     "estabilidad_impulsores": 50,
+     "hitos_claros": 50
+    },
+    "A": {
+     "asimetria": 80,
+     "valoracion": 80,
+     "carry": 40,
+     "catalizadores": 80,
+     "momento_posicionamiento": 80,
+     "convertibilidad": 80
+    },
+    "P": {
+     "novedad": 60,
+     "incertidumbre_reducible": 60,
+     "coste_eficiencia": 70
+    }
+   },
+   "puertas": {
+    "G1": true,
+    "G2": true,
+    "G3": true,
+    "G4": true,
+    "PS1": true,
+    "PS2": true,
+    "PS3": true,
+    "PS4": true,
+    "PS5": true,
+    "PS6": true,
+    "PS7": true,
+    "PS8": true
+   },
+   "objeciones_fuertes_abiertas": 0,
+   "riesgo_cola": 3
+  },
+  {
+   "opp_id": "OPP-FX-2026-0008",
+   "segmento": "G10N",
+   "nombre": "EUR/JPY bajista (yen al alza)",
+   "par": "EUR/JPY",
+   "direccion": "BAJISTA_BASE",
+   "cluster": "yen_refugio",
+   "dimensiones": {
+    "T": {
+     "magnitud": 80,
+     "alcance": 80,
+     "velocidad": 80,
+     "duracion": 80,
+     "difusion": 80,
+     "posicion_cadena_valor": 80,
+     "capacidad_transformadora": 80,
+     "claridad_causal": 80
+    },
+    "E": {
+     "calidad_raices": 70,
+     "cobertura_variables": 70,
+     "calidad_metodologica": 70,
+     "trazabilidad": 70,
+     "actualidad": 70,
+     "discrepancias_resueltas": 70,
+     "objeciones_respondidas": 70
+    },
+    "M": {
+     "adopcion": 50,
+     "escalado": 50,
+     "indicadores_disponibles": 50,
+     "persistencia": 50,
+     "estabilidad_impulsores": 50,
+     "hitos_claros": 50
+    },
+    "A": {
+     "asimetria": 80,
+     "valoracion": 80,
+     "carry": 50,
+     "catalizadores": 80,
+     "momento_posicionamiento": 80,
+     "convertibilidad": 80
+    },
+    "P": {
+     "novedad": 60,
+     "incertidumbre_reducible": 60,
+     "coste_eficiencia": 70
+    }
+   },
+   "puertas": {
+    "G1": true,
+    "G2": true,
+    "G3": true,
+    "G4": true,
+    "PS1": true,
+    "PS2": true,
+    "PS3": true,
+    "PS4": true,
+    "PS5": true,
+    "PS6": true,
+    "PS7": true,
+    "PS8": true
+   },
+   "objeciones_fuertes_abiertas": 0,
+   "riesgo_cola": 3
+  },
+  {
+   "opp_id": "OPP-FX-2026-0009",
+   "segmento": "G10N",
+   "nombre": "CHF/JPY bajista",
+   "par": "CHF/JPY",
+   "direccion": "BAJISTA_BASE",
+   "cluster": "yen_refugio",
+   "dimensiones": {
+    "T": {
+     "magnitud": 70,
+     "alcance": 70,
+     "velocidad": 70,
+     "duracion": 70,
+     "difusion": 70,
+     "posicion_cadena_valor": 70,
+     "capacidad_transformadora": 70,
+     "claridad_causal": 70
+    },
+    "E": {
+     "calidad_raices": 70,
+     "cobertura_variables": 70,
+     "calidad_metodologica": 70,
+     "trazabilidad": 70,
+     "actualidad": 70,
+     "discrepancias_resueltas": 70,
+     "objeciones_respondidas": 70
+    },
+    "M": {
+     "adopcion": 50,
+     "escalado": 50,
+     "indicadores_disponibles": 50,
+     "persistencia": 50,
+     "estabilidad_impulsores": 50,
+     "hitos_claros": 50
+    },
+    "A": {
+     "asimetria": 80,
+     "valoracion": 80,
+     "carry": 80,
+     "catalizadores": 80,
+     "momento_posicionamiento": 80,
+     "convertibilidad": 80
+    },
+    "P": {
+     "novedad": 60,
+     "incertidumbre_reducible": 60,
+     "coste_eficiencia": 70
+    }
+   },
+   "puertas": {
+    "G1": true,
+    "G2": true,
+    "G3": true,
+    "G4": true,
+    "PS1": true,
+    "PS2": true,
+    "PS3": true,
+    "PS4": true,
+    "PS5": true,
+    "PS6": true,
+    "PS7": true,
+    "PS8": true
+   },
+   "objeciones_fuertes_abiertas": 0,
+   "riesgo_cola": 2
+  },
+  {
+   "opp_id": "OPP-FX-2026-0010",
+   "segmento": "G10N",
+   "nombre": "EUR/GBP alcista (euro al alza frente a la libra)",
+   "par": "EUR/GBP",
+   "direccion": "ALCISTA_BASE",
+   "cluster": "divergencia_europa",
+   "dimensiones": {
+    "T": {
+     "magnitud": 70,
+     "alcance": 70,
+     "velocidad": 70,
+     "duracion": 70,
+     "difusion": 70,
+     "posicion_cadena_valor": 70,
+     "capacidad_transformadora": 70,
+     "claridad_causal": 70
+    },
+    "E": {
+     "calidad_raices": 70,
+     "cobertura_variables": 70,
+     "calidad_metodologica": 70,
+     "trazabilidad": 70,
+     "actualidad": 70,
+     "discrepancias_resueltas": 70,
+     "objeciones_respondidas": 70
+    },
+    "M": {
+     "adopcion": 50,
+     "escalado": 50,
+     "indicadores_disponibles": 50,
+     "persistencia": 50,
+     "estabilidad_impulsores": 50,
+     "hitos_claros": 50
+    },
+    "A": {
+     "asimetria": 70,
+     "valoracion": 70,
+     "carry": 70,
+     "catalizadores": 70,
+     "momento_posicionamiento": 70,
+     "convertibilidad": 70
+    },
+    "P": {
+     "novedad": 60,
+     "incertidumbre_reducible": 60,
+     "coste_eficiencia": 70
+    }
+   },
+   "puertas": {
+    "G1": true,
+    "G2": true,
+    "G3": true,
+    "G4": true,
+    "PS1": true,
+    "PS2": true,
+    "PS3": true,
+    "PS4": true,
+    "PS5": true,
+    "PS6": true,
+    "PS7": true,
+    "PS8": true
+   },
+   "objeciones_fuertes_abiertas": 0,
+   "riesgo_cola": 2
+  },
+  {
+   "opp_id": "OPP-FX-2026-0011",
+   "segmento": "G10N",
+   "nombre": "GBP/USD alcista",
+   "par": "GBP/USD",
+   "direccion": "ALCISTA_BASE",
+   "vigente": true,
+   "cluster": "dolar",
+   "dimensiones": {
+    "T": {
+     "magnitud": 60,
+     "alcance": 60,
+     "velocidad": 60,
+     "duracion": 60,
+     "difusion": 60,
+     "posicion_cadena_valor": 60,
+     "capacidad_transformadora": 60,
+     "claridad_causal": 60
+    },
+    "E": {
+     "calidad_raices": 70,
+     "cobertura_variables": 70,
+     "calidad_metodologica": 70,
+     "trazabilidad": 70,
+     "actualidad": 70,
+     "discrepancias_resueltas": 70,
+     "objeciones_respondidas": 70
+    },
+    "M": {
+     "adopcion": 50,
+     "escalado": 50,
+     "indicadores_disponibles": 50,
+     "persistencia": 50,
+     "estabilidad_impulsores": 50,
+     "hitos_claros": 50
+    },
+    "A": {
+     "asimetria": 60,
+     "valoracion": 60,
+     "carry": 60,
+     "catalizadores": 60,
+     "momento_posicionamiento": 60,
+     "convertibilidad": 60
+    },
+    "P": {
+     "novedad": 60,
+     "incertidumbre_reducible": 60,
+     "coste_eficiencia": 70
+    }
+   },
+   "puertas": {
+    "G1": true,
+    "G2": true,
+    "G3": true,
+    "G4": true,
+    "PS1": true,
+    "PS2": true,
+    "PS3": true,
+    "PS4": true,
+    "PS5": true,
+    "PS6": true,
+    "PS7": true,
+    "PS8": true
+   },
+   "objeciones_fuertes_abiertas": 0,
+   "riesgo_cola": 2,
+   "segunda_pasada": {
+    "A": {
+     "asimetria": 60,
+     "valoracion": 60,
+     "carry": 60,
+     "catalizadores": 60,
+     "momento_posicionamiento": 60,
+     "convertibilidad": 60
+    }
+   }
+  },
+  {
+   "opp_id": "OPP-FX-2026-0020",
+   "segmento": "EMLA",
+   "nombre": "USD/MXN bajista (peso mexicano al alza)",
+   "par": "USD/MXN",
+   "direccion": "BAJISTA_BASE",
+   "cluster": "carry_em",
+   "dimensiones": {
+    "T": {
+     "magnitud": 70,
+     "alcance": 70,
+     "velocidad": 70,
+     "duracion": 70,
+     "difusion": 70,
+     "posicion_cadena_valor": 70,
+     "capacidad_transformadora": 70,
+     "claridad_causal": 70
+    },
+    "E": {
+     "calidad_raices": 50,
+     "cobertura_variables": 50,
+     "calidad_metodologica": 50,
+     "trazabilidad": 50,
+     "actualidad": 50,
+     "discrepancias_resueltas": 50,
+     "objeciones_respondidas": 50
+    },
+    "M": {
+     "adopcion": 50,
+     "escalado": 50,
+     "indicadores_disponibles": 50,
+     "persistencia": 50,
+     "estabilidad_impulsores": 50,
+     "hitos_claros": 50
+    },
+    "A": {
+     "asimetria": 70,
+     "valoracion": 70,
+     "carry": 70,
+     "catalizadores": 70,
+     "momento_posicionamiento": 70,
+     "convertibilidad": 70
+    },
+    "P": {
+     "novedad": 60,
+     "incertidumbre_reducible": 60,
+     "coste_eficiencia": 70
+    }
+   },
+   "puertas": {
+    "G1": true,
+    "G2": true,
+    "G3": true,
+    "G4": true,
+    "PS1": true,
+    "PS2": true,
+    "PS3": true,
+    "PS4": true,
+    "PS5": true,
+    "PS6": true,
+    "PS7": true,
+    "PS8": true
+   },
+   "objeciones_fuertes_abiertas": 0
+  },
+  {
+   "opp_id": "OPP-FX-2026-0021",
+   "segmento": "EMLA",
+   "nombre": "USD/BRL bajista táctico tras la reunión del Copom",
+   "par": "USD/BRL",
+   "direccion": "BAJISTA_BASE",
+   "cluster": "carry_em",
+   "dimensiones": {
+    "T": "NA",
+    "E": {
+     "calidad_raices": 70,
+     "cobertura_variables": 70,
+     "calidad_metodologica": 70,
+     "trazabilidad": 70,
+     "actualidad": 70,
+     "discrepancias_resueltas": 70,
+     "objeciones_respondidas": 70
+    },
+    "M": {
+     "adopcion": 50,
+     "escalado": 50,
+     "indicadores_disponibles": 50,
+     "persistencia": 50,
+     "estabilidad_impulsores": 50,
+     "hitos_claros": 50
+    },
+    "A": {
+     "asimetria": 70,
+     "valoracion": 70,
+     "carry": 70,
+     "catalizadores": 70,
+     "momento_posicionamiento": 70,
+     "convertibilidad": 70
+    },
+    "P": {
+     "novedad": 60,
+     "incertidumbre_reducible": 60,
+     "coste_eficiencia": 70
+    }
+   },
+   "puertas": {
+    "G1": true,
+    "G2": true,
+    "G3": true,
+    "G4": true,
+    "PS1": true,
+    "PS2": true,
+    "PS3": true,
+    "PS4": true,
+    "PS5": true,
+    "PS6": true,
+    "PS7": true,
+    "PS8": true
+   },
+   "objeciones_fuertes_abiertas": 0,
+   "segunda_pasada": {
+    "A": {
+     "asimetria": 70,
+     "valoracion": 70,
+     "carry": 70,
+     "catalizadores": 70,
+     "momento_posicionamiento": 70,
+     "convertibilidad": 70
+    }
+   }
+  },
+  {
+   "opp_id": "OPP-FX-2026-0030",
+   "segmento": "ESTR",
+   "nombre": "Carry G10 ajustado por volatilidad",
+   "cluster": "carry_global",
+   "composicion": [
+    {
+     "divisa": "AUD",
+     "peso": 0.34,
+     "lado": "LARGO"
+    },
+    {
+     "divisa": "NZD",
+     "peso": 0.33,
+     "lado": "LARGO"
+    },
+    {
+     "divisa": "NOK",
+     "peso": 0.33,
+     "lado": "LARGO"
+    },
+    {
+     "divisa": "JPY",
+     "peso": 0.5,
+     "lado": "CORTO"
+    },
+    {
+     "divisa": "CHF",
+     "peso": 0.5,
+     "lado": "CORTO"
+    }
+   ],
+   "dimensiones": {
+    "T": {
+     "magnitud": 70,
+     "alcance": 70,
+     "velocidad": 70,
+     "duracion": 70,
+     "difusion": 70,
+     "posicion_cadena_valor": 70,
+     "capacidad_transformadora": 70,
+     "claridad_causal": 70
+    },
+    "E": {
+     "calidad_raices": 70,
+     "cobertura_variables": 70,
+     "calidad_metodologica": 70,
+     "trazabilidad": 70,
+     "actualidad": 70,
+     "discrepancias_resueltas": 70,
+     "objeciones_respondidas": 70
+    },
+    "M": {
+     "adopcion": 50,
+     "escalado": 50,
+     "indicadores_disponibles": 50,
+     "persistencia": 50,
+     "estabilidad_impulsores": 50,
+     "hitos_claros": 50
+    },
+    "A": {
+     "asimetria": 70,
+     "valoracion": 70,
+     "carry": 70,
+     "catalizadores": 70,
+     "momento_posicionamiento": 70,
+     "convertibilidad": 70
+    },
+    "P": {
+     "novedad": 60,
+     "incertidumbre_reducible": 60,
+     "coste_eficiencia": 70
+    }
+   },
+   "puertas": {
+    "G1": true,
+    "G2": true,
+    "G3": true,
+    "G4": true,
+    "PS1": true,
+    "PS2": true,
+    "PS3": true,
+    "PS4": true,
+    "PS5": true,
+    "PS6": true,
+    "PS7": true,
+    "PS8": true
+   },
+   "objeciones_fuertes_abiertas": 0
+  }
+ ]
+}

@@ -1,0 +1,271 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1820" height="1410" viewBox="0 0 1820 1410" font-family="DejaVu Sans, Helvetica, Arial, sans-serif"><defs><marker id="a1f3a5f" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#1f3a5f"/></marker><marker id="a2f855a" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#2f855a"/></marker><marker id="ac05621" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#c05621"/></marker><marker id="a6b46c1" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#6b46c1"/></marker><marker id="a444" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#444"/></marker><marker id="ac53030" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#c53030"/></marker><marker id="a2c7a7b" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#2c7a7b"/></marker></defs>
+<rect width="1820" height="1410" fill="#ffffff"/>
+<text x="910.0" y="34" text-anchor="middle" font-size="24" font-weight="bold" fill="#1a202c">Bloque A Forex — Buscador de Oportunidades en Divisas · Arquitectura óptima V1.1</text>
+<text x="910.0" y="56" text-anchor="middle" font-size="13" fill="#4a5568">Robot Investor · 03/11/2026 · 21 agentes en 4 planos · 6 segmentos de divisas · contratos CT-01…CT-25 + CT-06T · archivos F1…F11 · herramientas HT-01…HT-09</text>
+<rect x="30" y="72" width="1290" height="100" rx="14" fill="#f7fafc" stroke="#718096" stroke-width="1.6"/>
+<text x="46" y="94" font-size="14" font-weight="bold" fill="#718096">Exterior del bloque</text>
+<rect x="60" y="100" width="190" height="56" rx="10" fill="#edf2f7" stroke="#718096" stroke-width="1.4"/>
+<text x="155.0" y="124.5" text-anchor="middle" font-size="13" font-weight="bold" fill="#111">Usuario</text>
+<text x="155.0" y="139.5" text-anchor="middle" font-size="10.5" fill="#111" opacity="0.92">solo habla con el Broker</text>
+<rect x="470" y="92" width="520" height="72" rx="10" fill="#1f3a5f" stroke="#1f3a5f" stroke-width="1.4"/>
+<text x="730.0" y="118.5" text-anchor="middle" font-size="15" font-weight="bold" fill="#fff">Broker Personal</text>
+<text x="730.0" y="135.5" text-anchor="middle" font-size="10.5" fill="#fff" opacity="0.92">Decide en modo autónomo · manual · semiautónomo</text>
+<text x="730.0" y="149.5" text-anchor="middle" font-size="10.5" fill="#fff" opacity="0.92">Peticiones y consultas sin límite</text>
+<rect x="1080" y="92" width="230" height="72" rx="10" fill="#edf2f7" stroke="#718096" stroke-width="1.4"/>
+<text x="1195.0" y="117.5" text-anchor="middle" font-size="13" font-weight="bold" fill="#111">Bloque B</text>
+<text x="1195.0" y="132.5" text-anchor="middle" font-size="10.5" fill="#111" opacity="0.92">analiza la oportunidad y elige</text>
+<text x="1195.0" y="146.5" text-anchor="middle" font-size="10.5" fill="#111" opacity="0.92">instrumento, coste y cobertura</text>
+<line x1="250" y1="128" x2="470" y2="128" stroke="#1f3a5f" stroke-width="1.8" marker-end="url(#a1f3a5f)" marker-start="url(#a1f3a5f)"/>
+<line x1="990" y1="128" x2="1080" y2="128" stroke="#1f3a5f" stroke-width="1.8" marker-end="url(#a1f3a5f)"/>
+<text x="1035" y="120" font-size="10.5" fill="#1f3a5f" font-weight="bold" text-anchor="middle">decide enviar</text>
+<rect x="30" y="190" width="1290" height="100" rx="14" fill="#ebf4ff" stroke="#2b6cb0" stroke-width="1.6"/>
+<text x="46" y="212" font-size="14" font-weight="bold" fill="#2b6cb0">P1 · Interfaz y ciclo</text>
+<rect x="400" y="212" width="660" height="66" rx="10" fill="#bee3f8" stroke="#2b6cb0" stroke-width="1.4"/>
+<text x="730.0" y="234.5" text-anchor="middle" font-size="13" font-weight="bold" fill="#111">AG-01 Coordinador de Peticiones y Consultas</text>
+<text x="730.0" y="249.5" text-anchor="middle" font-size="10.5" fill="#111" opacity="0.92">Interfaz única · ciclo semanal · colas N0–N3 · consultas N0 · F5 Historial · F10 Configuración</text>
+<text x="730.0" y="263.5" text-anchor="middle" font-size="10.5" fill="#111" opacity="0.92">CT-23 dudas del bloque · CT-25 credenciales (bóveda HT-01) · CT-24 seguimientos → F11 y ciclo C6</text>
+<line x1="620" y1="164" x2="620" y2="212" stroke="#1f3a5f" stroke-width="1.8" marker-end="url(#a1f3a5f)"/>
+<text x="470" y="184" font-size="10.5" fill="#1f3a5f" font-weight="bold" text-anchor="end">CT-01 petición · CT-03 consulta · CT-04 decisiones</text>
+<line x1="840" y1="212" x2="840" y2="164" stroke="#1f3a5f" stroke-width="1.8" marker-end="url(#a1f3a5f)"/>
+<text x="852" y="184" font-size="10.5" fill="#1f3a5f" font-weight="bold" text-anchor="start">CT-02 entrega · CT-03 respuesta</text>
+<line x1="1040" y1="212" x2="1040" y2="164" stroke="#c53030" stroke-width="1.8" marker-end="url(#ac53030)" marker-start="url(#ac53030)"/>
+<text x="1072" y="232" font-size="10.5" fill="#c53030" font-weight="bold">↕ CT-23 consultas al Broker</text>
+<text x="1072" y="247" font-size="10.5" fill="#c53030" font-weight="bold">↕ CT-24 encargos de seguimiento</text>
+<text x="1072" y="262" font-size="10.5" fill="#c53030" font-weight="bold">↕ CT-25 credenciales</text>
+<rect x="30" y="308" width="1290" height="526" rx="14" fill="#f0fff4" stroke="#2f855a" stroke-width="1.6"/>
+<text x="46" y="330" font-size="14" font-weight="bold" fill="#2f855a">P2 · Análisis (primer plano)</text>
+<rect x="400" y="330" width="660" height="66" rx="10" fill="#9ae6b4" stroke="#2f855a" stroke-width="2.2"/>
+<text x="730.0" y="352.5" text-anchor="middle" font-size="13" font-weight="bold" fill="#111">AG-02 Analizador de Oportunidades en Divisas — director</text>
+<text x="730.0" y="367.5" text-anchor="middle" font-size="10.5" fill="#111" opacity="0.92">DÓNDE, POR QUÉ y CUÁNDO en divisas · top-3 por segmento (HT-03) · exposición agregada · encargo B</text>
+<text x="730.0" y="381.5" text-anchor="middle" font-size="10.5" fill="#111" opacity="0.92">Propietario de F1 (tendencias) y F3 (oportunidades)</text>
+<line x1="730" y1="278" x2="730" y2="330" stroke="#2f855a" stroke-width="1.8" marker-end="url(#a2f855a)"/>
+<text x="742" y="308" font-size="10.5" fill="#2f855a" font-weight="bold" text-anchor="start">CT-05 orden de análisis</text>
+<rect x="50" y="418" width="1250" height="152" rx="10" fill="#e6fffa" stroke="#2f855a" stroke-dasharray="5 4"/>
+<text x="66" y="436" font-size="12" font-weight="bold" fill="#2f855a">Dos Analistas transversales (CT-06T) alimentan a seis Analistas de segmento (CT-06) · pares, cruces, cestas y estrategias; nunca instrumentos</text>
+<rect x="62" y="446" width="610" height="52" rx="10" fill="#b2f5ea" stroke="#2c7a7b" stroke-width="1.4"/>
+<text x="367.0" y="468.0" text-anchor="middle" font-size="12.5" font-weight="bold" fill="#111">AG-09 · TR-BCM Bancos centrales y macro cambiaria</text>
+<text x="367.0" y="482.5" text-anchor="middle" font-size="11" fill="#111" opacity="0.92">sendas descontadas · diferenciales · calendario · intervención</text>
+<rect x="690" y="446" width="610" height="52" rx="10" fill="#b2f5ea" stroke="#2c7a7b" stroke-width="1.4"/>
+<text x="995.0" y="468.0" text-anchor="middle" font-size="12.5" font-weight="bold" fill="#111">AG-21 · TR-PFV Posicionamiento, flujos y volatilidad</text>
+<text x="995.0" y="482.5" text-anchor="middle" font-size="11" fill="#111" opacity="0.92">CFTC · flujos · volatilidad implícita · risk reversals · base</text>
+<rect x="62" y="506" width="196" height="52" rx="10" fill="#c6f6d5" stroke="#2f855a" stroke-width="1.4"/>
+<text x="160.0" y="528.0" text-anchor="middle" font-size="12.5" font-weight="bold" fill="#111">AG-03 · G10N</text>
+<text x="160.0" y="542.5" text-anchor="middle" font-size="11" fill="#111" opacity="0.92">G10 núcleo</text>
+<rect x="268" y="506" width="196" height="52" rx="10" fill="#c6f6d5" stroke="#2f855a" stroke-width="1.4"/>
+<text x="366.0" y="528.0" text-anchor="middle" font-size="12.5" font-weight="bold" fill="#111">AG-04 · G10M</text>
+<text x="366.0" y="542.5" text-anchor="middle" font-size="11" fill="#111" opacity="0.92">G10 mat. primas y escand.</text>
+<rect x="474" y="506" width="196" height="52" rx="10" fill="#c6f6d5" stroke="#2f855a" stroke-width="1.4"/>
+<text x="572.0" y="528.0" text-anchor="middle" font-size="12.5" font-weight="bold" fill="#111">AG-05 · EMAS</text>
+<text x="572.0" y="542.5" text-anchor="middle" font-size="11" fill="#111" opacity="0.92">Emergentes de Asia</text>
+<rect x="680" y="506" width="196" height="52" rx="10" fill="#c6f6d5" stroke="#2f855a" stroke-width="1.4"/>
+<text x="778.0" y="528.0" text-anchor="middle" font-size="12.5" font-weight="bold" fill="#111">AG-06 · EMLA</text>
+<text x="778.0" y="542.5" text-anchor="middle" font-size="11" fill="#111" opacity="0.92">Emergentes de Latam</text>
+<rect x="886" y="506" width="196" height="52" rx="10" fill="#c6f6d5" stroke="#2f855a" stroke-width="1.4"/>
+<text x="984.0" y="528.0" text-anchor="middle" font-size="12.5" font-weight="bold" fill="#111">AG-07 · EMEA</text>
+<text x="984.0" y="542.5" text-anchor="middle" font-size="11" fill="#111" opacity="0.92">Emergentes de EMEA</text>
+<rect x="1092" y="506" width="196" height="52" rx="10" fill="#c6f6d5" stroke="#2f855a" stroke-width="1.4"/>
+<text x="1190.0" y="528.0" text-anchor="middle" font-size="12.5" font-weight="bold" fill="#111">AG-08 · ESTR</text>
+<text x="1190.0" y="542.5" text-anchor="middle" font-size="11" fill="#111" opacity="0.92">Estrategias y cestas</text>
+<line x1="730" y1="396" x2="730" y2="418" stroke="#2f855a" stroke-width="1.8" marker-end="url(#a2f855a)" marker-start="url(#a2f855a)"/>
+<g transform="translate(0,56)">
+<rect x="62" y="532" width="285" height="72" rx="10" fill="#c6f6d5" stroke="#2f855a" stroke-width="1.4"/>
+<text x="204.5" y="557.25" text-anchor="middle" font-size="12.5" font-weight="bold" fill="#111">AG-10 Prospectiva y Horizontes</text>
+<text x="204.5" y="571.75" text-anchor="middle" font-size="10.5" fill="#111" opacity="0.92">H1 días · H2 sem. · H3 meses · H4 años · H5 décadas</text>
+<text x="204.5" y="585.75" text-anchor="middle" font-size="10.5" fill="#111" opacity="0.92">H5 limitado: banda + hitos HIT-FX- · F4 · CT-12</text>
+<rect x="367" y="532" width="285" height="72" rx="10" fill="#fed7d7" stroke="#c53030" stroke-width="1.4"/>
+<text x="509.5" y="557.25" text-anchor="middle" font-size="12.5" font-weight="bold" fill="#111">AG-11 Hipótesis contrarias</text>
+<text x="509.5" y="571.75" text-anchor="middle" font-size="10.5" fill="#111" opacity="0.92">refutación adversarial de finalistas</text>
+<text x="509.5" y="585.75" text-anchor="middle" font-size="10.5" fill="#111" opacity="0.92">autocrítica obligatoria · CT-13</text>
+<rect x="672" y="532" width="285" height="72" rx="10" fill="#c6f6d5" stroke="#2f855a" stroke-width="1.4"/>
+<text x="814.5" y="557.25" text-anchor="middle" font-size="12.5" font-weight="bold" fill="#111">AG-12 Curador de Evidencia</text>
+<text x="814.5" y="571.75" text-anchor="middle" font-size="10.5" fill="#111" opacity="0.92">deduplicación · raíces independientes</text>
+<text x="814.5" y="585.75" text-anchor="middle" font-size="10.5" fill="#111" opacity="0.92">fechas normalizadas → F2 · CT-11</text>
+<rect x="977" y="532" width="323" height="72" rx="10" fill="#c6f6d5" stroke="#2f855a" stroke-width="1.4"/>
+<text x="1138.5" y="557.25" text-anchor="middle" font-size="12.5" font-weight="bold" fill="#111">AG-17 Redactor y Diseñador de Informes</text>
+<text x="1138.5" y="571.75" text-anchor="middle" font-size="10.5" fill="#111" opacity="0.92">técnico · visual · JSON · informe de</text>
+<text x="1138.5" y="585.75" text-anchor="middle" font-size="10.5" fill="#111" opacity="0.92">seguimiento de opción (C6) · CT-15</text>
+<rect x="62" y="622" width="590" height="140" rx="10" fill="#9ae6b4" stroke="#2f855a" stroke-width="1.4"/>
+<text x="357.0" y="659.5" text-anchor="middle" font-size="13.5" font-weight="bold" fill="#111">AG-13 Motor de Cálculo Avanzado</text>
+<text x="357.0" y="675.0" text-anchor="middle" font-size="11" fill="#111" opacity="0.92">Perfiles PERF-FX-G10 · PERF-FX-EM · PERF-FX-FACT · CIP/UIP · carry · PPA/BEER/REER</text>
+<text x="357.0" y="689.5" text-anchor="middle" font-size="11" fill="#111" opacity="0.92">MC-01 Estadística · MC-02 Series y volatilidad · MC-03 Econometría</text>
+<text x="357.0" y="704.0" text-anchor="middle" font-size="11" fill="#111" opacity="0.92">MC-04 Crecimiento y prospectiva · MC-05 Simulación · MC-06 Aprendizaje automático</text>
+<text x="357.0" y="718.5" text-anchor="middle" font-size="11" fill="#111" opacity="0.92">MC-07 Optimización y riesgo · MC-08 Auditoría (CT-10) · MC-09 Valoración</text>
+<text x="357.0" y="733.0" text-anchor="middle" font-size="11" fill="#111" opacity="0.92">MC-10 Evaluación frente al paseo aleatorio y forward · CT-09</text>
+<rect x="672" y="622" width="628" height="140" rx="10" fill="#e6fffa" stroke="#2c7a7b" stroke-width="1.6"/>
+<text x="688" y="642" font-size="12.5" font-weight="bold" fill="#2c7a7b">Entregables al Broker (CT-02 · C6: CT-24)</text>
+<rect x="688" y="656" width="190" height="92" rx="10" fill="#fff" stroke="#2c7a7b" stroke-width="1.4"/>
+<text x="783.0" y="691.25" text-anchor="middle" font-size="12.5" font-weight="bold" fill="#111">Informe técnico</text>
+<text x="783.0" y="705.75" text-anchor="middle" font-size="10.5" fill="#111" opacity="0.92">detallado, por análisis</text>
+<text x="783.0" y="719.75" text-anchor="middle" font-size="10.5" fill="#111" opacity="0.92">para decidir</text>
+<rect x="892" y="656" width="190" height="92" rx="10" fill="#fff" stroke="#2c7a7b" stroke-width="1.4"/>
+<text x="987.0" y="684.25" text-anchor="middle" font-size="12.5" font-weight="bold" fill="#111">Informe visual</text>
+<text x="987.0" y="698.75" text-anchor="middle" font-size="10.5" fill="#111" opacity="0.92">minimalista, gráficos,</text>
+<text x="987.0" y="712.75" text-anchor="middle" font-size="10.5" fill="#111" opacity="0.92">mapa · lenguaje llano</text>
+<text x="987.0" y="726.75" text-anchor="middle" font-size="10.5" fill="#111" opacity="0.92">para el usuario</text>
+<rect x="1096" y="656" width="190" height="92" rx="10" fill="#fff" stroke="#2c7a7b" stroke-width="1.4"/>
+<text x="1191.0" y="684.25" text-anchor="middle" font-size="12.5" font-weight="bold" fill="#111">Paquete JSON</text>
+<text x="1191.0" y="698.75" text-anchor="middle" font-size="10.5" fill="#111" opacity="0.92">hasta 3 opciones</text>
+<text x="1191.0" y="712.75" text-anchor="middle" font-size="10.5" fill="#111" opacity="0.92">por segmento</text>
+<text x="1191.0" y="726.75" text-anchor="middle" font-size="10.5" fill="#111" opacity="0.92">+ encargo Bloque B</text>
+<line x1="1138" y1="604" x2="1138" y2="656" stroke="#2c7a7b" stroke-width="1.8" marker-end="url(#a2c7a7b)"/>
+<rect x="30" y="796" width="1290" height="110" rx="14" fill="#fffaf0" stroke="#c05621" stroke-width="1.6"/>
+<text x="46" y="818" font-size="14" font-weight="bold" fill="#c05621">P3 · Conocimiento — alimentación continua, verificación de enlaces y borrado de referencias</text>
+<rect x="62" y="824" width="395" height="70" rx="10" fill="#fbd38d" stroke="#c05621" stroke-width="1.4"/>
+<text x="259.5" y="848.25" text-anchor="middle" font-size="12.5" font-weight="bold" fill="#111">AG-14 Documentador para el Analizador</text>
+<text x="259.5" y="862.75" text-anchor="middle" font-size="10.5" fill="#111" opacity="0.92">literatura de divisas TX- → F7 · CT-08</text>
+<text x="259.5" y="876.75" text-anchor="middle" font-size="10.5" fill="#111" opacity="0.92">custodio del Fondo metodológico</text>
+<rect x="477" y="824" width="395" height="70" rx="10" fill="#fbd38d" stroke="#c05621" stroke-width="1.4"/>
+<text x="674.5" y="848.25" text-anchor="middle" font-size="12.5" font-weight="bold" fill="#111">AG-15 Documentador para el Motor</text>
+<text x="674.5" y="862.75" text-anchor="middle" font-size="10.5" fill="#111" opacity="0.92">métodos cuantitativos FX TMX- → F8</text>
+<text x="674.5" y="876.75" text-anchor="middle" font-size="10.5" fill="#111" opacity="0.92">CT-20 con el Motor</text>
+<rect x="892" y="824" width="408" height="70" rx="10" fill="#fbd38d" stroke="#c05621" stroke-width="1.4"/>
+<text x="1096.0" y="848.25" text-anchor="middle" font-size="12.5" font-weight="bold" fill="#111">AG-16 Buscador de Fuentes Avanzadas</text>
+<text x="1096.0" y="862.75" text-anchor="middle" font-size="10.5" fill="#111" opacity="0.92">bancos centrales · COT · COFER · prensa FX → F9</text>
+<text x="1096.0" y="876.75" text-anchor="middle" font-size="10.5" fill="#111" opacity="0.92">TFX- · CT-07 · CT-25 al Coordinador (credenciales)</text>
+<line x1="1310" y1="456" x2="1310" y2="824" stroke="#c05621" stroke-width="1.8" marker-end="url(#ac05621)" marker-start="url(#ac05621)"/>
+<text x="1302" y="790" font-size="10.5" fill="#c05621" font-weight="bold" text-anchor="end">CT-07 · CT-08 · CT-20</text>
+<rect x="30" y="924" width="1290" height="110" rx="14" fill="#faf5ff" stroke="#6b46c1" stroke-width="1.6"/>
+<text x="46" y="946" font-size="14" font-weight="bold" fill="#6b46c1">P4 · Calidad y aprendizaje — segundo plano, nunca bloquea (salvo G3)</text>
+<rect x="62" y="952" width="395" height="70" rx="10" fill="#d6bcfa" stroke="#6b46c1" stroke-width="1.4"/>
+<text x="259.5" y="976.25" text-anchor="middle" font-size="12.5" font-weight="bold" fill="#111">AG-18 Orquestador técnico</text>
+<text x="259.5" y="990.75" text-anchor="middle" font-size="10.5" fill="#111" opacity="0.92">G3 (CT-14 + HT-09) · auditoría · guías CT-18</text>
+<text x="259.5" y="1004.75" text-anchor="middle" font-size="10.5" fill="#111" opacity="0.92">colas, presupuestos e instancias · HA</text>
+<rect x="477" y="952" width="395" height="70" rx="10" fill="#d6bcfa" stroke="#6b46c1" stroke-width="1.4"/>
+<text x="674.5" y="976.25" text-anchor="middle" font-size="12.5" font-weight="bold" fill="#111">AG-19 Auditor</text>
+<text x="674.5" y="990.75" text-anchor="middle" font-size="10.5" fill="#111" opacity="0.92">revisión experta por muestreo de riesgo</text>
+<text x="674.5" y="1004.75" text-anchor="middle" font-size="10.5" fill="#111" opacity="0.92">CT-17 · sesgos · reglas R1–R27</text>
+<rect x="892" y="952" width="408" height="70" rx="10" fill="#b794f4" stroke="#6b46c1" stroke-width="2.2"/>
+<text x="1096.0" y="976.25" text-anchor="middle" font-size="12.5" font-weight="bold" fill="#111">AG-20 Evaluador de Previsiones y Aprendizaje</text>
+<text x="1096.0" y="990.75" text-anchor="middle" font-size="10.5" fill="#111" opacity="0.92">resuelve F4 frente al paseo aleatorio · H5 por hitos</text>
+<text x="1096.0" y="1004.75" text-anchor="middle" font-size="10.5" fill="#111" opacity="0.92">certifica horizontes · lecciones F6 · CT-19</text>
+</g>
+<rect x="1340" y="72" width="450" height="1018" rx="14" fill="#f7fafc" stroke="#4a5568" stroke-width="1.6"/>
+<text x="1356" y="94" font-size="14" font-weight="bold" fill="#4a5568">Archivos del bloque (memoria e historial)</text>
+<rect x="1360" y="100" width="410" height="58" rx="8" fill="#ffffff" stroke="#4a5568"/>
+<text x="1376" y="125" font-size="14" font-weight="bold" fill="#2d3748">F1</text>
+<text x="1420" y="125" font-size="12.5" fill="#1a202c">Registro maestro de tendencias</text>
+<text x="1420" y="144" font-size="10.5" fill="#718096">escribe: Analizador</text>
+<rect x="1360" y="169" width="410" height="58" rx="8" fill="#ffffff" stroke="#4a5568"/>
+<text x="1376" y="194" font-size="14" font-weight="bold" fill="#2d3748">F2</text>
+<text x="1420" y="194" font-size="12.5" fill="#1a202c">Evidencia y afirmaciones</text>
+<text x="1420" y="213" font-size="10.5" fill="#718096">escribe: Curador</text>
+<rect x="1360" y="238" width="410" height="58" rx="8" fill="#ffffff" stroke="#4a5568"/>
+<text x="1376" y="263" font-size="14" font-weight="bold" fill="#2d3748">F3</text>
+<text x="1420" y="263" font-size="12.5" fill="#1a202c">Registro de oportunidades</text>
+<text x="1420" y="282" font-size="10.5" fill="#718096">escribe: Analizador</text>
+<rect x="1360" y="307" width="410" height="58" rx="8" fill="#ffffff" stroke="#4a5568"/>
+<text x="1376" y="332" font-size="14" font-weight="bold" fill="#2d3748">F4</text>
+<text x="1420" y="332" font-size="12.5" fill="#1a202c">Pronósticos congelados</text>
+<text x="1420" y="351" font-size="10.5" fill="#718096">escribe: Prospectiva / Evaluador</text>
+<rect x="1360" y="376" width="410" height="58" rx="8" fill="#fefcbf" stroke="#4a5568"/>
+<text x="1376" y="401" font-size="14" font-weight="bold" fill="#2d3748">F5</text>
+<text x="1420" y="401" font-size="12.5" fill="#1a202c">Historial de análisis</text>
+<text x="1420" y="420" font-size="10.5" fill="#718096">escribe: Coordinador</text>
+<rect x="1360" y="445" width="410" height="58" rx="8" fill="#fefcbf" stroke="#4a5568"/>
+<text x="1376" y="470" font-size="14" font-weight="bold" fill="#2d3748">F6</text>
+<text x="1420" y="470" font-size="12.5" fill="#1a202c">Memoria de aprendizaje</text>
+<text x="1420" y="489" font-size="10.5" fill="#718096">escribe: Evaluador</text>
+<rect x="1360" y="514" width="410" height="58" rx="8" fill="#ffffff" stroke="#4a5568"/>
+<text x="1376" y="539" font-size="14" font-weight="bold" fill="#2d3748">F7</text>
+<text x="1420" y="539" font-size="12.5" fill="#1a202c">Documentación del Analizador (TX-)</text>
+<text x="1420" y="558" font-size="10.5" fill="#718096">escribe: Doc. Analizador</text>
+<rect x="1360" y="583" width="410" height="58" rx="8" fill="#ffffff" stroke="#4a5568"/>
+<text x="1376" y="608" font-size="14" font-weight="bold" fill="#2d3748">F8</text>
+<text x="1420" y="608" font-size="12.5" fill="#1a202c">Documentación del Motor (TMX-)</text>
+<text x="1420" y="627" font-size="10.5" fill="#718096">escribe: Doc. Motor</text>
+<rect x="1360" y="652" width="410" height="58" rx="8" fill="#ffffff" stroke="#4a5568"/>
+<text x="1376" y="677" font-size="14" font-weight="bold" fill="#2d3748">F9</text>
+<text x="1420" y="677" font-size="12.5" fill="#1a202c">Registro de Fuentes (TFX-)</text>
+<text x="1420" y="696" font-size="10.5" fill="#718096">escribe: Buscador</text>
+<rect x="1360" y="721" width="410" height="58" rx="8" fill="#fefcbf" stroke="#4a5568"/>
+<text x="1376" y="746" font-size="14" font-weight="bold" fill="#2d3748">F10</text>
+<text x="1420" y="746" font-size="12.5" fill="#1a202c">Configuración y parámetros</text>
+<text x="1420" y="765" font-size="10.5" fill="#718096">escribe: Coord. / Evaluador</text>
+<rect x="1360" y="790" width="410" height="58" rx="8" fill="#fefcbf" stroke="#4a5568"/>
+<text x="1376" y="815" font-size="14" font-weight="bold" fill="#2d3748">F11</text>
+<text x="1420" y="815" font-size="12.5" fill="#1a202c">Seguimientos encargados (CT-24, C6)</text>
+<text x="1420" y="834" font-size="10.5" fill="#718096">escribe: Coordinador</text>
+<rect x="1360" y="859" width="410" height="58" rx="8" fill="#fff0d6" stroke="#4a5568"/>
+<text x="1376" y="884" font-size="14" font-weight="bold" fill="#2d3748">FM</text>
+<text x="1420" y="884" font-size="12.5" fill="#1a202c">Fondo metodológico (todos los bloques)</text>
+<text x="1420" y="903" font-size="10.5" fill="#718096">escribe: Doc. Analizador</text>
+<rect x="1360" y="928" width="410" height="58" rx="8" fill="#ffffff" stroke="#4a5568"/>
+<text x="1376" y="953" font-size="14" font-weight="bold" fill="#2d3748">RC</text>
+<text x="1420" y="953" font-size="12.5" fill="#1a202c">Registro de cálculos</text>
+<text x="1420" y="972" font-size="10.5" fill="#718096">escribe: Motor</text>
+<rect x="1360" y="997" width="410" height="58" rx="8" fill="#ffffff" stroke="#4a5568"/>
+<text x="1376" y="1022" font-size="14" font-weight="bold" fill="#2d3748">HA</text>
+<text x="1420" y="1022" font-size="12.5" fill="#1a202c">Historial de auditorías</text>
+<text x="1420" y="1041" font-size="10.5" fill="#718096">escribe: Orquestador</text>
+<text x="1360" y="1082" font-size="10.5" fill="#718096">Amarillo: memoria y configuración. Append-only salvo bajas de referencias (R19).</text>
+<g transform="translate(0,56)">
+<rect x="30" y="1052" width="1760" height="92" rx="14" fill="#f7fafc" stroke="#4a5568" stroke-width="1.6"/>
+<text x="46" y="1074" font-size="14" font-weight="bold" fill="#4a5568">Herramientas deterministas compartidas (sin modelo de lenguaje: ahorro de cómputo)</text>
+<rect x="48" y="1082" width="182" height="48" rx="10" fill="#edf2f7" stroke="#4a5568" stroke-width="1.4"/>
+<text x="139.0" y="1102.0" text-anchor="middle" font-size="12" font-weight="bold" fill="#111">HT-01</text>
+<text x="139.0" y="1116.0" text-anchor="middle" font-size="10.5" fill="#111" opacity="0.92">Datos y bóveda de credenciales</text>
+<rect x="241" y="1082" width="182" height="48" rx="10" fill="#edf2f7" stroke="#4a5568" stroke-width="1.4"/>
+<text x="332.0" y="1102.0" text-anchor="middle" font-size="12" font-weight="bold" fill="#111">HT-02</text>
+<text x="332.0" y="1116.0" text-anchor="middle" font-size="10.5" fill="#111" opacity="0.92">Verificador de enlaces</text>
+<rect x="434" y="1082" width="182" height="48" rx="10" fill="#edf2f7" stroke="#4a5568" stroke-width="1.4"/>
+<text x="525.0" y="1102.0" text-anchor="middle" font-size="12" font-weight="bold" fill="#111">HT-03</text>
+<text x="525.0" y="1116.0" text-anchor="middle" font-size="10.5" fill="#111" opacity="0.92">Puntuaciones y ranking</text>
+<rect x="627" y="1082" width="182" height="48" rx="10" fill="#edf2f7" stroke="#4a5568" stroke-width="1.4"/>
+<text x="718.0" y="1102.0" text-anchor="middle" font-size="12" font-weight="bold" fill="#111">HT-04</text>
+<text x="718.0" y="1116.0" text-anchor="middle" font-size="10.5" fill="#111" opacity="0.92">Gráficos y mapas</text>
+<rect x="820" y="1082" width="182" height="48" rx="10" fill="#edf2f7" stroke="#4a5568" stroke-width="1.4"/>
+<text x="911.0" y="1102.0" text-anchor="middle" font-size="12" font-weight="bold" fill="#111">HT-05</text>
+<text x="911.0" y="1116.0" text-anchor="middle" font-size="10.5" fill="#111" opacity="0.92">Planificador (C1, C6)</text>
+<rect x="1013" y="1082" width="182" height="48" rx="10" fill="#edf2f7" stroke="#4a5568" stroke-width="1.4"/>
+<text x="1104.0" y="1102.0" text-anchor="middle" font-size="12" font-weight="bold" fill="#111">HT-06</text>
+<text x="1104.0" y="1116.0" text-anchor="middle" font-size="10.5" fill="#111" opacity="0.92">Índice y caché</text>
+<rect x="1206" y="1082" width="182" height="48" rx="10" fill="#edf2f7" stroke="#4a5568" stroke-width="1.4"/>
+<text x="1297.0" y="1102.0" text-anchor="middle" font-size="12" font-weight="bold" fill="#111">HT-07</text>
+<text x="1297.0" y="1116.0" text-anchor="middle" font-size="10.5" fill="#111" opacity="0.92">Legibilidad</text>
+<rect x="1399" y="1082" width="182" height="48" rx="10" fill="#edf2f7" stroke="#4a5568" stroke-width="1.4"/>
+<text x="1490.0" y="1102.0" text-anchor="middle" font-size="12" font-weight="bold" fill="#111">HT-08</text>
+<text x="1490.0" y="1116.0" text-anchor="middle" font-size="10.5" fill="#111" opacity="0.92">Colas y consumo</text>
+<rect x="1592" y="1082" width="182" height="48" rx="10" fill="#edf2f7" stroke="#4a5568" stroke-width="1.4"/>
+<text x="1683.0" y="1102.0" text-anchor="middle" font-size="12" font-weight="bold" fill="#111">HT-09</text>
+<text x="1683.0" y="1116.0" text-anchor="middle" font-size="10.5" fill="#111" opacity="0.92">Validador G3</text>
+<text x="30" y="1172" font-size="14" font-weight="bold" fill="#1a202c">Flujo de un análisis (embudo de eficiencia con puertas de continuidad)</text>
+<rect x="30" y="1184" width="176" height="60" rx="10" fill="#ffffff" stroke="#2f855a" stroke-width="1.4"/>
+<text x="118.0" y="1210.0" text-anchor="middle" font-size="11.5" font-weight="bold" fill="#111">F0 · Memoria + F0b</text>
+<text x="118.0" y="1223.5" text-anchor="middle" font-size="10" fill="#111" opacity="0.92">puerta / control: GC0</text>
+<line x1="206" y1="1214" x2="228" y2="1214" stroke="#2f855a" stroke-width="1.5" marker-end="url(#a2f855a)"/>
+<rect x="228" y="1184" width="176" height="60" rx="10" fill="#ffffff" stroke="#2f855a" stroke-width="1.4"/>
+<text x="316.0" y="1210.0" text-anchor="middle" font-size="11.5" font-weight="bold" fill="#111">F1 · Cribado por segmento</text>
+<text x="316.0" y="1223.5" text-anchor="middle" font-size="10" fill="#111" opacity="0.92">puerta / control: GC1</text>
+<line x1="404" y1="1214" x2="426" y2="1214" stroke="#2f855a" stroke-width="1.5" marker-end="url(#a2f855a)"/>
+<rect x="426" y="1184" width="176" height="60" rx="10" fill="#ffffff" stroke="#2f855a" stroke-width="1.4"/>
+<text x="514.0" y="1210.0" text-anchor="middle" font-size="11.5" font-weight="bold" fill="#111">F2 · Investigación dirigida</text>
+<text x="514.0" y="1223.5" text-anchor="middle" font-size="10" fill="#111" opacity="0.92">puerta / control: GC2</text>
+<line x1="602" y1="1214" x2="624" y2="1214" stroke="#2f855a" stroke-width="1.5" marker-end="url(#a2f855a)"/>
+<rect x="624" y="1184" width="176" height="60" rx="10" fill="#ffffff" stroke="#2f855a" stroke-width="1.4"/>
+<text x="712.0" y="1210.0" text-anchor="middle" font-size="11.5" font-weight="bold" fill="#111">F3 · Prospectiva H1–H5</text>
+<text x="712.0" y="1223.5" text-anchor="middle" font-size="10" fill="#111" opacity="0.92">puerta / control: GC3</text>
+<line x1="800" y1="1214" x2="822" y2="1214" stroke="#2f855a" stroke-width="1.5" marker-end="url(#a2f855a)"/>
+<rect x="822" y="1184" width="176" height="60" rx="10" fill="#ffffff" stroke="#2f855a" stroke-width="1.4"/>
+<text x="910.0" y="1210.0" text-anchor="middle" font-size="11.5" font-weight="bold" fill="#111">F4 · Refutación</text>
+<text x="910.0" y="1223.5" text-anchor="middle" font-size="10" fill="#111" opacity="0.92">puerta / control: G2</text>
+<line x1="998" y1="1214" x2="1020" y2="1214" stroke="#2f855a" stroke-width="1.5" marker-end="url(#a2f855a)"/>
+<rect x="1020" y="1184" width="176" height="60" rx="10" fill="#ffffff" stroke="#2f855a" stroke-width="1.4"/>
+<text x="1108.0" y="1210.0" text-anchor="middle" font-size="11.5" font-weight="bold" fill="#111">F5 · Selección top-3</text>
+<text x="1108.0" y="1223.5" text-anchor="middle" font-size="10" fill="#111" opacity="0.92">puerta / control: G1·G4</text>
+<line x1="1196" y1="1214" x2="1218" y2="1214" stroke="#2f855a" stroke-width="1.5" marker-end="url(#a2f855a)"/>
+<rect x="1218" y="1184" width="176" height="60" rx="10" fill="#ffffff" stroke="#2f855a" stroke-width="1.4"/>
+<text x="1306.0" y="1210.0" text-anchor="middle" font-size="11.5" font-weight="bold" fill="#111">F6 · Validación</text>
+<text x="1306.0" y="1223.5" text-anchor="middle" font-size="10" fill="#111" opacity="0.92">puerta / control: G3</text>
+<line x1="1394" y1="1214" x2="1416" y2="1214" stroke="#2f855a" stroke-width="1.5" marker-end="url(#a2f855a)"/>
+<rect x="1416" y="1184" width="176" height="60" rx="10" fill="#ffffff" stroke="#2f855a" stroke-width="1.4"/>
+<text x="1504.0" y="1210.0" text-anchor="middle" font-size="11.5" font-weight="bold" fill="#111">F7 · Redacción</text>
+<text x="1504.0" y="1223.5" text-anchor="middle" font-size="10" fill="#111" opacity="0.92">puerta / control: HT-07</text>
+<line x1="1592" y1="1214" x2="1614" y2="1214" stroke="#2f855a" stroke-width="1.5" marker-end="url(#a2f855a)"/>
+<rect x="1614" y="1184" width="176" height="60" rx="10" fill="#ffffff" stroke="#2f855a" stroke-width="1.4"/>
+<text x="1702.0" y="1210.0" text-anchor="middle" font-size="11.5" font-weight="bold" fill="#111">F8 · Entrega y registro</text>
+<text x="1702.0" y="1223.5" text-anchor="middle" font-size="10" fill="#111" opacity="0.92">registro: F4 · F5</text>
+<text x="30" y="1270" font-size="11.5" fill="#4a5568">En segundo plano: F9 auditoría asíncrona (Orquestador + Auditor) · F10 evaluación y aprendizaje (Evaluador) · mantenimiento continuo de referencias (P3).</text>
+<text x="30" y="1290" font-size="11.5" fill="#4a5568">Horizontes: H1 días · H2 semanas · H3 meses · H4 años (1–5) · H5 décadas («limitado»: solo estructural, banda e hitos HIT-FX-); horizonte principal según la naturaleza de la inversión (HT-09). Referencia: paseo aleatorio. Probabilidad numérica solo con certificado (R13).</text>
+<text x="30" y="1330" font-size="11.5" fill="#c53030">V1.1: el bloque pregunta antes que suponer (CT-23, supuestos declarados); credenciales solo por CT-25 a la bóveda de HT-01; seguimientos solo por encargo del Broker (CT-24, C6, F11; cancelables en cualquier momento).</text>
+<text x="30" y="1310" font-size="11.5" fill="#4a5568">El Bloque A Forex propone; el Broker decide. Solo el Coordinador habla con el Broker; ninguno habla con el usuario, el Bloque B ni el Bloque A general. Sin instrumentos: eso lo elige el Bloque B.</text>
+</g></svg>

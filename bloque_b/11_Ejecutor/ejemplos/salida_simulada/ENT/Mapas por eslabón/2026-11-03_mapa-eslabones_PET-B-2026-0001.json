@@ -1,0 +1,511 @@
+{
+ "rec_id": "REC-B-2026-0001",
+ "data_cutoff": "2026-11-03",
+ "nivel_detalle": "N2",
+ "eslabon_critico": "ESL-02",
+ "eslabones": [
+  {
+   "eslabon_id": "ESL-02",
+   "padre": null,
+   "nombre": "Fabricación de cables de alta tensión",
+   "nivel": "macro",
+   "descripcion": "Eslabón «Fabricación de cables de alta tensión» del mapa preliminar.",
+   "papel_ambito": "ES",
+   "metricas": {
+    "tamano": {
+     "valor": null,
+     "unidad": "M€",
+     "fecha": null,
+     "fuente": null
+    },
+    "crecimiento_anual": 0.12,
+    "margen_tipico": {
+     "bruto": null,
+     "operativo": null
+    },
+    "roic": null,
+    "poder_negociacion": "ALTO",
+    "hhi": null,
+    "concentracion_pais": null,
+    "capacidad": null,
+    "utilizacion": null,
+    "plazo_entrega_semanas": null,
+    "sustitutos": [],
+    "actores": []
+   },
+   "cuello_botella": {
+    "es_cuello": true,
+    "severidad": 3,
+    "persistencia": 4,
+    "relevancia_valor": 4,
+    "PCB": 38,
+    "material": true,
+    "indicadores": [
+     {
+      "indicador": "utilizacion",
+      "valor": 0.93,
+      "estado": "ROJO",
+      "fuente": "DAT-B-2026-0007"
+     },
+     {
+      "indicador": "book_to_bill",
+      "valor": 1.25,
+      "estado": "ROJO",
+      "fuente": "DAT-B-2026-0007"
+     },
+     {
+      "indicador": "plazo_entrega_ratio",
+      "valor": 1.7,
+      "estado": "AMBAR",
+      "fuente": "DAT-B-2026-0007"
+     }
+    ],
+    "causa": "capacidad",
+    "senal_resolucion": "Plazos de entrega en descenso y book-to-bill por debajo de 1",
+    "calc_id": "CALC-B-2026-0004"
+   },
+   "atractivo": {
+    "AE": 63,
+    "desglose": {
+     "crecimiento": 80,
+     "margen_roic": 70,
+     "poder_negociacion": 70,
+     "expectativas_inv": 50,
+     "sustitucion_inv": 70,
+     "cuello": 40
+    },
+    "calc_id": "CALC-B-2026-0002"
+   },
+   "opciones": [
+    {
+     "rango": 1,
+     "cand_id": "CAND-B-2026-0023",
+     "nombre": "Bono sénior de Prysmian 2029 (ilustrativo)",
+     "ticker": null,
+     "isin": null,
+     "tipo_activo": "RF",
+     "rol_en_eslabon": "Exposición a Fabricación de cables de alta tensión (cables de alta tensión)",
+     "pureza_eslabon": 0.5,
+     "S": 72,
+     "ic90_S": [
+      66,
+      76
+     ],
+     "veredicto": "PRIORITARIO_PARA_C",
+     "en_top_n_tipo": true,
+     "motivo": "En el top-N de su tipo",
+     "riesgos_clave": [
+      "Riesgos específicos por verificar en el Bloque C"
+     ]
+    },
+    {
+     "rango": 2,
+     "cand_id": "CAND-B-2026-0016",
+     "nombre": "ETF UCITS de infraestructura de redes inteligentes (ilustrativo A)",
+     "ticker": null,
+     "isin": null,
+     "tipo_activo": "FON",
+     "rol_en_eslabon": "Exposición a Fabricación de cables de alta tensión (vehículo temático)",
+     "pureza_eslabon": 0.61,
+     "S": 64,
+     "ic90_S": [
+      57,
+      67
+     ],
+     "veredicto": "SECUNDARIO",
+     "en_top_n_tipo": true,
+     "motivo": "En el top-N de su tipo; S < 65",
+     "riesgos_clave": [
+      "Riesgos específicos por verificar en el Bloque C"
+     ]
+    },
+    {
+     "rango": 3,
+     "cand_id": "CAND-B-2026-0028",
+     "nombre": "Bono sénior de Nexans 2032 (ilustrativo)",
+     "ticker": null,
+     "isin": null,
+     "tipo_activo": "RF",
+     "rol_en_eslabon": "Exposición a Fabricación de cables de alta tensión (cables de alta tensión)",
+     "pureza_eslabon": 0.41,
+     "S": 62,
+     "ic90_S": [
+      58,
+      67
+     ],
+     "veredicto": "SECUNDARIO",
+     "en_top_n_tipo": true,
+     "motivo": "En el top-N de su tipo; S < 65",
+     "riesgos_clave": [
+      "Riesgos específicos por verificar en el Bloque C"
+     ]
+    },
+    {
+     "rango": 4,
+     "cand_id": "CAND-B-2026-0007",
+     "nombre": "Prysmian",
+     "ticker": "PRY",
+     "isin": "IT0004176001",
+     "tipo_activo": "RV",
+     "rol_en_eslabon": "Exposición a Fabricación de cables de alta tensión (cables de alta tensión)",
+     "pureza_eslabon": 0.5,
+     "S": 60,
+     "ic90_S": [
+      58,
+      64
+     ],
+     "veredicto": "SECUNDARIO",
+     "en_top_n_tipo": true,
+     "motivo": "En el top-N de su tipo; S < 65",
+     "riesgos_clave": [
+      "Riesgos específicos por verificar en el Bloque C"
+     ]
+    },
+    {
+     "rango": 5,
+     "cand_id": "CAND-B-2026-0027",
+     "nombre": "Bono sénior de Nexans 2029 (ilustrativo)",
+     "ticker": null,
+     "isin": null,
+     "tipo_activo": "RF",
+     "rol_en_eslabon": "Exposición a Fabricación de cables de alta tensión (cables de alta tensión)",
+     "pureza_eslabon": 0.41,
+     "S": 60,
+     "ic90_S": [
+      55,
+      65
+     ],
+     "veredicto": "SECUNDARIO",
+     "en_top_n_tipo": false,
+     "motivo": "Añadida por cobertura del eslabón (9.13), adicional al top-N; S < 65",
+     "riesgos_clave": [
+      "denominación mínima 100000 € > 1 000 € (penaliza LA)"
+     ]
+    }
+   ],
+   "sin_opciones_motivo": null,
+   "emergentes": [
+    {
+     "emg_id": "EMG-B-2026-0003",
+     "nombre": "Fabricante con salida a bolsa reciente (ilustrativo) (menor capitalización del eslabón)",
+     "tipo": "SALIDA_A_BOLSA_RECIENTE",
+     "financiacion_conocida": null,
+     "tecnologia_o_ventaja": "Capacidad nueva en el eslabón crítico",
+     "senales_traccion": [
+      "contratos nuevos publicados"
+     ],
+     "via_exposicion": "COTIZADA_DIRECTA",
+     "instrumento_exposicion": {
+      "nombre": "Fabricante con salida a bolsa reciente (ilustrativo)",
+      "isin": "",
+      "cand_id": "CAND-B-2026-0013",
+      "fuera_de_filtros": false,
+      "motivo": null
+     },
+     "criterios": {
+      "tecnologia": 60,
+      "traccion": 70,
+      "equipo": 60,
+      "financiacion": 60,
+      "posicion_cadena": 70,
+      "via_exposicion": 100
+     },
+     "PEM": 68,
+     "riesgos": [
+      "Liquidez",
+      "Concentración de clientes"
+     ],
+     "etiqueta": "[INTERPRETACIÓN]"
+    },
+    {
+     "emg_id": "EMG-B-2026-0001",
+     "nombre": "Startup de sensórica para «Fabricación de cables de alta tensión» (simulada)",
+     "tipo": "STARTUP",
+     "financiacion_conocida": {
+      "importe": 8.0,
+      "divisa": "EUR",
+      "ultima_ronda": "Serie A",
+      "fecha": null,
+      "fuente": null
+     },
+     "tecnologia_o_ventaja": "Monitorización y mantenimiento predictivo",
+     "senales_traccion": [
+      "pilotos con clientes anunciados"
+     ],
+     "via_exposicion": "NO_INVERTIBLE_HOY",
+     "instrumento_exposicion": {
+      "nombre": null,
+      "isin": null,
+      "cand_id": null,
+      "fuera_de_filtros": false,
+      "motivo": null
+     },
+     "criterios": {
+      "tecnologia": 70,
+      "traccion": 50,
+      "equipo": 60,
+      "financiacion": 50,
+      "posicion_cadena": 60,
+      "via_exposicion": 0
+     },
+     "PEM": 52,
+     "riesgos": [
+      "Financiación",
+      "Ejecución"
+     ],
+     "etiqueta": "[INTERPRETACIÓN]"
+    }
+   ]
+  },
+  {
+   "eslabon_id": "ESL-03",
+   "padre": null,
+   "nombre": "Transformadores y subestaciones",
+   "nivel": "macro",
+   "descripcion": "Eslabón «Transformadores y subestaciones» del mapa preliminar.",
+   "papel_ambito": "ES",
+   "metricas": {
+    "tamano": {
+     "valor": null,
+     "unidad": "M€",
+     "fecha": null,
+     "fuente": null
+    },
+    "crecimiento_anual": 0.12,
+    "margen_tipico": {
+     "bruto": null,
+     "operativo": null
+    },
+    "roic": null,
+    "poder_negociacion": "ALTO",
+    "hhi": null,
+    "concentracion_pais": null,
+    "capacidad": null,
+    "utilizacion": null,
+    "plazo_entrega_semanas": null,
+    "sustitutos": [],
+    "actores": []
+   },
+   "cuello_botella": {
+    "es_cuello": true,
+    "severidad": 2,
+    "persistencia": 3,
+    "relevancia_valor": 3,
+    "PCB": 14,
+    "material": false,
+    "indicadores": [
+     {
+      "indicador": "utilizacion",
+      "valor": 0.88,
+      "estado": "AMBAR",
+      "fuente": "DAT-B-2026-0007"
+     },
+     {
+      "indicador": "plazo_entrega_ratio",
+      "valor": 1.6,
+      "estado": "AMBAR",
+      "fuente": "DAT-B-2026-0007"
+     },
+     {
+      "indicador": "hhi_proveedores",
+      "valor": 2000,
+      "estado": "AMBAR",
+      "fuente": "DAT-B-2026-0007"
+     }
+    ],
+    "causa": "capacidad",
+    "senal_resolucion": "Plazos de entrega en descenso y book-to-bill por debajo de 1",
+    "calc_id": "CALC-B-2026-0005"
+   },
+   "atractivo": {
+    "AE": 46,
+    "desglose": {
+     "crecimiento": 60,
+     "margen_roic": 50,
+     "poder_negociacion": 50,
+     "expectativas_inv": 50,
+     "sustitucion_inv": 70,
+     "cuello": 10
+    },
+    "calc_id": "CALC-B-2026-0002"
+   },
+   "opciones": [],
+   "sin_opciones_motivo": null,
+   "emergentes": [
+    {
+     "emg_id": "EMG-B-2026-0002",
+     "nombre": "Startup de sensórica para «Transformadores y subestaciones» (simulada)",
+     "tipo": "STARTUP",
+     "financiacion_conocida": {
+      "importe": 9.0,
+      "divisa": "EUR",
+      "ultima_ronda": "Serie A",
+      "fecha": null,
+      "fuente": null
+     },
+     "tecnologia_o_ventaja": "Monitorización y mantenimiento predictivo",
+     "senales_traccion": [
+      "pilotos con clientes anunciados"
+     ],
+     "via_exposicion": "NO_INVERTIBLE_HOY",
+     "instrumento_exposicion": {
+      "nombre": null,
+      "isin": null,
+      "cand_id": null,
+      "fuera_de_filtros": false,
+      "motivo": null
+     },
+     "criterios": {
+      "tecnologia": 70,
+      "traccion": 50,
+      "equipo": 60,
+      "financiacion": 50,
+      "posicion_cadena": 60,
+      "via_exposicion": 0
+     },
+     "PEM": 52,
+     "riesgos": [
+      "Financiación",
+      "Ejecución"
+     ],
+     "etiqueta": "[INTERPRETACIÓN]"
+    }
+   ]
+  },
+  {
+   "eslabon_id": "ESL-01",
+   "padre": null,
+   "nombre": "Materias primas (cobre, aluminio, acero eléctrico)",
+   "nivel": "macro",
+   "descripcion": "Eslabón «Materias primas (cobre, aluminio, acero eléctrico)» del mapa preliminar.",
+   "papel_ambito": "CONSUME",
+   "metricas": {
+    "tamano": {
+     "valor": null,
+     "unidad": "M€",
+     "fecha": null,
+     "fuente": null
+    },
+    "crecimiento_anual": 0.04,
+    "margen_tipico": {
+     "bruto": null,
+     "operativo": null
+    },
+    "roic": null,
+    "poder_negociacion": "MEDIO",
+    "hhi": null,
+    "concentracion_pais": null,
+    "capacidad": null,
+    "utilizacion": null,
+    "plazo_entrega_semanas": null,
+    "sustitutos": [],
+    "actores": []
+   },
+   "cuello_botella": {
+    "es_cuello": false,
+    "severidad": 1,
+    "persistencia": 1,
+    "relevancia_valor": 1,
+    "PCB": 1,
+    "material": false,
+    "indicadores": [
+     {
+      "indicador": "spot_contrato",
+      "valor": 1.05,
+      "estado": "VERDE",
+      "fuente": "DAT-B-2026-0007"
+     }
+    ],
+    "causa": "capacidad",
+    "senal_resolucion": "Plazos de entrega en descenso y book-to-bill por debajo de 1",
+    "calc_id": "CALC-B-2026-0003"
+   },
+   "atractivo": {
+    "AE": 39,
+    "desglose": {
+     "crecimiento": 50,
+     "margen_roic": 40,
+     "poder_negociacion": 50,
+     "expectativas_inv": 50,
+     "sustitucion_inv": 60,
+     "cuello": 0
+    },
+    "calc_id": "CALC-B-2026-0002"
+   },
+   "opciones": [],
+   "sin_opciones_motivo": null,
+   "emergentes": []
+  },
+  {
+   "eslabon_id": "ESL-04",
+   "padre": null,
+   "nombre": "Operadores de red",
+   "nivel": "macro",
+   "descripcion": "Eslabón «Operadores de red» del mapa preliminar.",
+   "papel_ambito": "ALIMENTA",
+   "metricas": {
+    "tamano": {
+     "valor": null,
+     "unidad": "M€",
+     "fecha": null,
+     "fuente": null
+    },
+    "crecimiento_anual": 0.04,
+    "margen_tipico": {
+     "bruto": null,
+     "operativo": null
+    },
+    "roic": null,
+    "poder_negociacion": "MEDIO",
+    "hhi": null,
+    "concentracion_pais": null,
+    "capacidad": null,
+    "utilizacion": null,
+    "plazo_entrega_semanas": null,
+    "sustitutos": [],
+    "actores": []
+   },
+   "cuello_botella": {
+    "es_cuello": false,
+    "severidad": 1,
+    "persistencia": 1,
+    "relevancia_valor": 1,
+    "PCB": 1,
+    "material": false,
+    "indicadores": [
+     {
+      "indicador": "spot_contrato",
+      "valor": 1.05,
+      "estado": "VERDE",
+      "fuente": "DAT-B-2026-0007"
+     }
+    ],
+    "causa": "capacidad",
+    "senal_resolucion": "Plazos de entrega en descenso y book-to-bill por debajo de 1",
+    "calc_id": "CALC-B-2026-0006"
+   },
+   "atractivo": {
+    "AE": 39,
+    "desglose": {
+     "crecimiento": 50,
+     "margen_roic": 40,
+     "poder_negociacion": 50,
+     "expectativas_inv": 50,
+     "sustitucion_inv": 60,
+     "cuello": 0
+    },
+    "calc_id": "CALC-B-2026-0002"
+   },
+   "opciones": [],
+   "sin_opciones_motivo": null,
+   "emergentes": []
+  }
+ ],
+ "omisiones": [
+  {
+   "eslabon": "Insumos y actividades por debajo del alcance del nivel",
+   "motivo": "profundidad del desglose del nivel N2 (Anexo A)"
+  }
+ ],
+ "sintesis": "El valor se concentra en Fabricación de cables de alta tensión."
+}

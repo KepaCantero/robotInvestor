@@ -1,0 +1,571 @@
+{
+ "periodo": {
+  "desde": "2026-07-03",
+  "hasta": "2026-09-25",
+  "frecuencia": "semanal",
+  "fecha_evaluacion": "2026-10-30",
+  "ciclos": 13
+ },
+ "advertencias": [
+  "Cliente simulado (mock): las señales proceden de reglas sintéticas, no de un modelo de lenguaje; sirve para probar la tubería, no para medir la capacidad predictiva."
+ ],
+ "anonimizado": false,
+ "pronosticos": {
+  "total": 256,
+  "resueltos": 133,
+  "abiertos": 123,
+  "no_resolubles": 0
+ },
+ "por_segmento_horizonte": {
+  "EMAS|H2": {
+   "n": 19,
+   "acierto": {
+    "tasa": 0.3157894736842105,
+    "ic90_wilson": [
+     0.17304212024652676,
+     0.5044596195830173
+    ],
+    "p_binomial_vs_tasa_base": 0.9682159423828125,
+    "tasa_base": 0.5
+   },
+   "brier": 0.29749999999999993,
+   "brier_ref": 0.25,
+   "log_score": 0.7895895429797936,
+   "bss": {
+    "valor": -0.18999999999999972,
+    "ic90": [
+     -0.361578947368421,
+     -0.07263157894736881
+    ]
+   },
+   "ece": {
+    "valor": 0.27105263157894754,
+    "nulo_media": 0.09144736842105264,
+    "nulo_q90": 0.20263157894736827
+   },
+   "brier_forward": 0.25457088473684214,
+   "bss_forward": -0.16863324848611394,
+   "tasa_forward": 0.5263157894736842,
+   "dm_hln": {
+    "estadistico": 2.4667528035435655,
+    "p_unilateral": 0.9880495544442726,
+    "p_bilateral": 0.02390089111145488,
+    "n": 19,
+    "h": 1
+   },
+   "calibracion_global": {
+    "p_media": 0.586842105263158,
+    "frecuencia": 0.3157894736842105
+   },
+   "rentabilidad_media_top3": -0.00402638909090909,
+   "rentabilidad_relativa_media_top3_vs_referencia_segmento": -0.003072452727272727,
+   "n_top3": 11,
+   "referencia": "paseo aleatorio y forward",
+   "referencia_segmento": "CESTA"
+  },
+  "EMEA|H2": {
+   "n": 26,
+   "acierto": {
+    "tasa": 0.34615384615384615,
+    "ic90_wilson": [
+     0.21388096673111992,
+     0.5074272184703471
+    ],
+    "p_binomial_vs_tasa_base": 0.9622406512498856,
+    "tasa_base": 0.5
+   },
+   "brier": 0.2856730769230769,
+   "brier_ref": 0.25,
+   "log_score": 0.7654896817986308,
+   "bss": {
+    "valor": -0.14269230769230767,
+    "ic90": [
+     -0.22423076923076923,
+     -0.05038461538461525
+    ]
+   },
+   "ece": {
+    "valor": 0.23269230769230775,
+    "nulo_media": 0.07735769230769234,
+    "nulo_q90": 0.15576923076923083
+   },
+   "brier_forward": 0.29754545615384614,
+   "bss_forward": 0.039901060443788494,
+   "tasa_forward": 0.23076923076923078,
+   "dm_hln": {
+    "estadistico": 2.2720749887547873,
+    "p_unilateral": 0.984028085629385,
+    "p_bilateral": 0.03194382874122992,
+    "n": 26,
+    "h": 1
+   },
+   "calibracion_global": {
+    "p_media": 0.5788461538461539,
+    "frecuencia": 0.34615384615384615
+   },
+   "rentabilidad_media_top3": -0.007781587222222223,
+   "rentabilidad_relativa_media_top3_vs_referencia_segmento": -0.0003876888888888896,
+   "n_top3": 18,
+   "referencia": "paseo aleatorio y forward",
+   "referencia_segmento": "CESTA"
+  },
+  "EMLA|H2": {
+   "n": 20,
+   "acierto": {
+    "tasa": 0.5,
+    "ic90_wilson": [
+     0.3274037678851559,
+     0.6725962321148441
+    ],
+    "p_binomial_vs_tasa_base": 0.5880985260009766,
+    "tasa_base": 0.5
+   },
+   "brier": 0.248375,
+   "brier_ref": 0.25,
+   "log_score": 0.6897363907382646,
+   "bss": {
+    "valor": 0.00649999999999995,
+    "ic90": [
+     -0.04200000000000026,
+     0.11202500000000007
+    ]
+   },
+   "ece": {
+    "valor": 0.07250000000000012,
+    "nulo_media": 0.0901375,
+    "nulo_q90": 0.17749999999999988
+   },
+   "brier_forward": 0.30135215899999995,
+   "bss_forward": 0.17579817306037604,
+   "tasa_forward": 0.3,
+   "dm_hln": {
+    "estadistico": -0.09416452084080938,
+    "p_unilateral": 0.4629822073514834,
+    "p_bilateral": 0.9259644147029666,
+    "n": 20,
+    "h": 1
+   },
+   "calibracion_global": {
+    "p_media": 0.5725000000000001,
+    "frecuencia": 0.5
+   },
+   "rentabilidad_media_top3": 0.006930943125000001,
+   "rentabilidad_relativa_media_top3_vs_referencia_segmento": 0.009379559999999999,
+   "n_top3": 16,
+   "referencia": "paseo aleatorio y forward",
+   "referencia_segmento": "CESTA"
+  },
+  "ESTR|H2": {
+   "n": 17,
+   "acierto": {
+    "tasa": 0.5294117647058824,
+    "ic90_wilson": [
+     0.3403811771932314,
+     0.7103659642053057
+    ],
+    "p_binomial_vs_tasa_base": 0.5,
+    "tasa_base": 0.5
+   },
+   "brier": 0.260735294117647,
+   "brier_ref": 0.25,
+   "log_score": 0.7151775847758407,
+   "bss": {
+    "valor": -0.04294117647058804,
+    "ic90": [
+     -0.13705882352941168,
+     0.06117647058823528
+    ]
+   },
+   "ece": {
+    "valor": 0.055882352941176494,
+    "nulo_media": 0.09654705882352943,
+    "nulo_q90": 0.17941176470588227
+   },
+   "brier_forward": 0.2500339394117647,
+   "bss_forward": -0.042799608449391124,
+   "tasa_forward": 0.5294117647058824,
+   "dm_hln": {
+    "estadistico": 0.4818324404611177,
+    "p_unilateral": 0.681775277845451,
+    "p_bilateral": 0.636449444309098,
+    "n": 17,
+    "h": 1
+   },
+   "calibracion_global": {
+    "p_media": 0.5852941176470589,
+    "frecuencia": 0.5294117647058824
+   },
+   "rentabilidad_media_top3": -0.00041414642857142856,
+   "rentabilidad_relativa_media_top3_vs_referencia_segmento": -0.00041414642857142856,
+   "n_top3": 14,
+   "referencia": "paseo aleatorio y forward",
+   "referencia_segmento": "rentabilidad en exceso nula"
+  },
+  "G10M|H2": {
+   "n": 26,
+   "acierto": {
+    "tasa": 0.5,
+    "ic90_wilson": [
+     0.34649788119966574,
+     0.6535021188003343
+    ],
+    "p_binomial_vs_tasa_base": 0.577490508556366,
+    "tasa_base": 0.5
+   },
+   "brier": 0.25884615384615384,
+   "brier_ref": 0.25,
+   "log_score": 0.7111911271533996,
+   "bss": {
+    "valor": -0.03538461538461535,
+    "ic90": [
+     -0.1846346153846154,
+     0.10961538461538456
+    ]
+   },
+   "ece": {
+    "valor": 0.0923076923076922,
+    "nulo_media": 0.0782923076923077,
+    "nulo_q90": 0.16923076923076913
+   },
+   "brier_forward": 0.2550438480769231,
+   "bss_forward": -0.014908439462079981,
+   "tasa_forward": 0.5,
+   "dm_hln": {
+    "estadistico": 0.47007545716587174,
+    "p_unilateral": 0.6788120037776051,
+    "p_bilateral": 0.6423759924447898,
+    "n": 26,
+    "h": 1
+   },
+   "calibracion_global": {
+    "p_media": 0.5923076923076922,
+    "frecuencia": 0.5
+   },
+   "rentabilidad_media_top3": 0.0005045436363636361,
+   "rentabilidad_relativa_media_top3_vs_referencia_segmento": 0.0005045436363636361,
+   "n_top3": 22,
+   "referencia": "paseo aleatorio y forward",
+   "referencia_segmento": "rentabilidad en exceso nula"
+  },
+  "G10N|H2": {
+   "n": 25,
+   "acierto": {
+    "tasa": 0.44,
+    "ic90_wilson": [
+     0.29062985029617305,
+     0.6010885704245531
+    ],
+    "p_binomial_vs_tasa_base": 0.787821888923645,
+    "tasa_base": 0.5
+   },
+   "brier": 0.2689,
+   "brier_ref": 0.25,
+   "log_score": 0.7315196086127869,
+   "bss": {
+    "valor": -0.07559999999999989,
+    "ic90": [
+     -0.16720000000000024,
+     -0.006800000000000139
+    ]
+   },
+   "ece": {
+    "valor": 0.12600000000000006,
+    "nulo_media": 0.08221799999999999,
+    "nulo_q90": 0.16600000000000004
+   },
+   "brier_forward": 0.2453200273913043,
+   "bss_forward": null,
+   "tasa_forward": 0.5217391304347826,
+   "dm_hln": {
+    "estadistico": 1.3242062391713723,
+    "p_unilateral": 0.9010459411509072,
+    "p_bilateral": 0.19790811769818561,
+    "n": 25,
+    "h": 1
+   },
+   "calibracion_global": {
+    "p_media": 0.5660000000000001,
+    "frecuencia": 0.44
+   },
+   "rentabilidad_media_top3": -0.0035297446666666668,
+   "rentabilidad_relativa_media_top3_vs_referencia_segmento": -0.0035297446666666668,
+   "n_top3": 15,
+   "referencia": "paseo aleatorio y forward",
+   "referencia_segmento": "rentabilidad en exceso nula"
+  }
+ },
+ "solo_opciones_publicadas": {
+  "EMAS|H2": {
+   "n": 11,
+   "acierto": 0.2727272727272727,
+   "brier": 0.3093181818181818,
+   "bss_paseo_aleatorio": -0.2372727272727273,
+   "bss_forward": -0.20594165272565035,
+   "tasa_forward": 0.5454545454545454,
+   "rentabilidad_relativa_media_top3_vs_referencia_segmento": -0.003072452727272727
+  },
+  "EMEA|H2": {
+   "n": 18,
+   "acierto": 0.2222222222222222,
+   "brier": 0.30430555555555555,
+   "bss_paseo_aleatorio": -0.2172222222222222,
+   "bss_forward": -0.09985523094029247,
+   "tasa_forward": 0.2222222222222222,
+   "rentabilidad_relativa_media_top3_vs_referencia_segmento": -0.0003876888888888896
+  },
+  "EMLA|H2": {
+   "n": 16,
+   "acierto": 0.5,
+   "brier": 0.25265625,
+   "bss_paseo_aleatorio": -0.010625000000000107,
+   "bss_forward": 0.18172741138783433,
+   "tasa_forward": 0.25,
+   "rentabilidad_relativa_media_top3_vs_referencia_segmento": 0.009379559999999999
+  },
+  "ESTR|H2": {
+   "n": 14,
+   "acierto": 0.5,
+   "brier": 0.2691071428571429,
+   "bss_paseo_aleatorio": -0.07642857142857151,
+   "bss_forward": -0.10700718417251065,
+   "tasa_forward": 0.6428571428571429,
+   "rentabilidad_relativa_media_top3_vs_referencia_segmento": -0.00041414642857142856
+  },
+  "G10M|H2": {
+   "n": 22,
+   "acierto": 0.5454545454545454,
+   "brier": 0.2547727272727273,
+   "bss_paseo_aleatorio": -0.01909090909090927,
+   "bss_forward": -0.010399146997424946,
+   "tasa_forward": 0.5454545454545454,
+   "rentabilidad_relativa_media_top3_vs_referencia_segmento": 0.0005045436363636361
+  },
+  "G10N|H2": {
+   "n": 15,
+   "acierto": 0.26666666666666666,
+   "brier": 0.29600000000000004,
+   "bss_paseo_aleatorio": -0.18400000000000016,
+   "bss_forward": -0.31804183156042853,
+   "tasa_forward": 0.7333333333333333,
+   "rentabilidad_relativa_media_top3_vs_referencia_segmento": -0.0035297446666666668
+  }
+ },
+ "certificados": {
+  "emitidos": [],
+  "celdas_evaluadas": {},
+  "celdas_con_muestra_insuficiente": {
+   "G10N|H2": "n = 25 < 100",
+   "G10M|H2": "n = 26 < 100",
+   "EMAS|H2": "n = 19 < 100",
+   "EMLA|H2": "n = 20 < 100",
+   "EMEA|H2": "n = 26 < 100",
+   "ESTR|H2": "n = 17 < 100"
+  },
+  "criterio": "Anexo A: n ≥ 100, IC 90 % del BSS > 0 (Holm), ECE ≤ q90 del nulo y < 0,15"
+ },
+ "consumo_total": {
+  "llamadas": 361,
+  "tokens_entrada": 1269040,
+  "tokens_salida": 403408,
+  "tokens_cache_escritura": 388585,
+  "tokens_cache_lectura": 8461205,
+  "uc": 311.6736
+ },
+ "runs": [
+  {
+   "run_id": "RUN-FX-2026-0001",
+   "as_of": "2026-07-03",
+   "estado": "COMPLETO",
+   "entrega": "ENTREGADA",
+   "nivel_por_segmento": {
+    "G10N": "N2",
+    "G10M": "N2",
+    "EMAS": "N2",
+    "EMLA": "N2",
+    "EMEA": "N2",
+    "ESTR": "N2"
+   },
+   "g3": "APTO"
+  },
+  {
+   "run_id": "RUN-FX-2026-0002",
+   "as_of": "2026-07-10",
+   "estado": "COMPLETO",
+   "entrega": "ENTREGADA",
+   "nivel_por_segmento": {
+    "G10N": "N1",
+    "G10M": "N2",
+    "EMAS": "N2",
+    "EMLA": "N1",
+    "EMEA": "N1",
+    "ESTR": "N2"
+   },
+   "g3": "APTO"
+  },
+  {
+   "run_id": "RUN-FX-2026-0003",
+   "as_of": "2026-07-17",
+   "estado": "COMPLETO",
+   "entrega": "ENTREGADA",
+   "nivel_por_segmento": {
+    "G10N": "N2",
+    "G10M": "N2",
+    "EMAS": "N2",
+    "EMLA": "N2",
+    "EMEA": "N2",
+    "ESTR": "N1"
+   },
+   "g3": "APTO"
+  },
+  {
+   "run_id": "RUN-FX-2026-0004",
+   "as_of": "2026-07-24",
+   "estado": "COMPLETO",
+   "entrega": "ENTREGADA",
+   "nivel_por_segmento": {
+    "G10N": "N1",
+    "G10M": "N2",
+    "EMAS": "N1",
+    "EMLA": "N2",
+    "EMEA": "N1",
+    "ESTR": "N1"
+   },
+   "g3": "APTO"
+  },
+  {
+   "run_id": "RUN-FX-2026-0005",
+   "as_of": "2026-07-31",
+   "estado": "COMPLETO",
+   "entrega": "ENTREGADA",
+   "nivel_por_segmento": {
+    "G10N": "N2",
+    "G10M": "N1",
+    "EMAS": "N1",
+    "EMLA": "N1",
+    "EMEA": "N1",
+    "ESTR": "N2"
+   },
+   "g3": "APTO"
+  },
+  {
+   "run_id": "RUN-FX-2026-0006",
+   "as_of": "2026-08-07",
+   "estado": "COMPLETO",
+   "entrega": "ENTREGADA",
+   "nivel_por_segmento": {
+    "G10N": "N2",
+    "G10M": "N2",
+    "EMAS": "N1",
+    "EMLA": "N2",
+    "EMEA": "N2",
+    "ESTR": "N2"
+   },
+   "g3": "APTO"
+  },
+  {
+   "run_id": "RUN-FX-2026-0007",
+   "as_of": "2026-08-14",
+   "estado": "COMPLETO",
+   "entrega": "ENTREGADA",
+   "nivel_por_segmento": {
+    "G10N": "N1",
+    "G10M": "N2",
+    "EMAS": "N1",
+    "EMLA": "N1",
+    "EMEA": "N2",
+    "ESTR": "N2"
+   },
+   "g3": "APTO"
+  },
+  {
+   "run_id": "RUN-FX-2026-0008",
+   "as_of": "2026-08-21",
+   "estado": "COMPLETO",
+   "entrega": "ENTREGADA",
+   "nivel_por_segmento": {
+    "G10N": "N1",
+    "G10M": "N1",
+    "EMAS": "N2",
+    "EMLA": "N2",
+    "EMEA": "N2",
+    "ESTR": "N1"
+   },
+   "g3": "APTO"
+  },
+  {
+   "run_id": "RUN-FX-2026-0009",
+   "as_of": "2026-08-28",
+   "estado": "COMPLETO",
+   "entrega": "ENTREGADA",
+   "nivel_por_segmento": {
+    "G10N": "N2",
+    "G10M": "N2",
+    "EMAS": "N2",
+    "EMLA": "N2",
+    "EMEA": "N2",
+    "ESTR": "N2"
+   },
+   "g3": "APTO"
+  },
+  {
+   "run_id": "RUN-FX-2026-0010",
+   "as_of": "2026-09-04",
+   "estado": "COMPLETO",
+   "entrega": "ENTREGADA",
+   "nivel_por_segmento": {
+    "G10N": "N2",
+    "G10M": "N2",
+    "EMAS": "N1",
+    "EMLA": "N1",
+    "EMEA": "N2",
+    "ESTR": "N1"
+   },
+   "g3": "APTO"
+  },
+  {
+   "run_id": "RUN-FX-2026-0011",
+   "as_of": "2026-09-11",
+   "estado": "COMPLETO",
+   "entrega": "ENTREGADA",
+   "nivel_por_segmento": {
+    "G10N": "N2",
+    "G10M": "N1",
+    "EMAS": "N2",
+    "EMLA": "N2",
+    "EMEA": "N2",
+    "ESTR": "N2"
+   },
+   "g3": "APTO"
+  },
+  {
+   "run_id": "RUN-FX-2026-0012",
+   "as_of": "2026-09-18",
+   "estado": "COMPLETO",
+   "entrega": "ENTREGADA",
+   "nivel_por_segmento": {
+    "G10N": "N1",
+    "G10M": "N2",
+    "EMAS": "N2",
+    "EMLA": "N2",
+    "EMEA": "N1",
+    "ESTR": "N1"
+   },
+   "g3": "APTO"
+  },
+  {
+   "run_id": "RUN-FX-2026-0013",
+   "as_of": "2026-09-25",
+   "estado": "COMPLETO",
+   "entrega": "ENTREGADA",
+   "nivel_por_segmento": {
+    "G10N": "N1",
+    "G10M": "N2",
+    "EMAS": "N1",
+    "EMLA": "N2",
+    "EMEA": "N2",
+    "ESTR": "N1"
+   },
+   "g3": "APTO"
+  }
+ ]
+}

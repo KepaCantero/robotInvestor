@@ -1,0 +1,24 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "bloque_a_forex"
+version = "1.0.0"
+description = "Ejecutor programático del Bloque A Forex (Robot Investor) para pruebas y backtesting"
+requires-python = ">=3.10"
+dependencies = ["anthropic>=2.0", "jsonschema>=4.18", "numpy>=1.26", "pandas>=2.1", "scipy>=1.11", "PyYAML>=6.0"]
+
+[project.optional-dependencies]
+garch = ["arch>=6.0"]
+yahoo = ["yfinance>=0.2"]
+pruebas = ["pytest>=8"]
+
+[project.scripts]
+bloque-a-forex = "bloque_a_forex.cli:main"
+
+[tool.setuptools]
+packages = ["bloque_a_forex", "bloque_a_forex.motor", "bloque_a_forex.herramientas", "bloque_a_forex.herramientas.referencia"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]

@@ -1,0 +1,39 @@
+{
+ "pet_ref_broker": "BRK-EJEMPLO",
+ "origen": "LIBRE",
+ "objeto": {
+  "descripcion": "Liquidez en euros a 3–12 meses",
+  "tipo_objeto_sugerido": "SEGMENTO_DE_CLASE",
+  "clave_universo": "liquidez_eur",
+  "ambito": {
+   "incluye": "Letras del Tesoro de la zona euro, fondos monetarios UCITS y ETF ligados a €STR",
+   "excluye": "Depósitos bancarios y pagarés sin calificación",
+   "region": "Zona euro"
+  }
+ },
+ "tipos_activo_admitidos": [
+  "MON"
+ ],
+ "horizontes": [
+  "H3"
+ ],
+ "preguntas": [
+  "¿Qué instrumentos expresan mejor «Dónde guardar dinero a corto plazo en euros»?"
+ ],
+ "nivel": "AUTO",
+ "limite": {
+  "minutos": null,
+  "uc": null
+ },
+ "prioridad": "NORMAL",
+ "marco_invertibilidad": {
+  "perfil": "MINORISTA_UE_DEFECTO",
+  "divisa_base": "EUR",
+  "ucits_requerido": true
+ },
+ "top_n": null,
+ "alto_impacto": false,
+ "referencia_previa": null,
+ "idioma_usuario": "es-ES",
+ "x_ejemplo": "Petición ficticia para pruebas"
+}

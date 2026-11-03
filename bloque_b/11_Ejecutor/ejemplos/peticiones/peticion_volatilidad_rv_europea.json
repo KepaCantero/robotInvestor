@@ -1,0 +1,39 @@
+{
+ "pet_ref_broker": "BRK-EJEMPLO",
+ "origen": "LIBRE",
+ "objeto": {
+  "descripcion": "Volatilidad de la renta variable europea",
+  "tipo_objeto_sugerido": "SEGMENTO_DE_CLASE",
+  "clave_universo": "volatilidad_rv_europea",
+  "ambito": {
+   "incluye": "Futuros y opciones listados sobre índices europeos y sobre su volatilidad",
+   "excluye": "CFD, opciones binarias y productos OTC",
+   "region": "Zona euro"
+  }
+ },
+ "tipos_activo_admitidos": [
+  "DER"
+ ],
+ "horizontes": [
+  "H2"
+ ],
+ "preguntas": [
+  "¿Qué instrumentos expresan mejor «Los nervios de la bolsa europea»?"
+ ],
+ "nivel": "AUTO",
+ "limite": {
+  "minutos": null,
+  "uc": null
+ },
+ "prioridad": "NORMAL",
+ "marco_invertibilidad": {
+  "perfil": "MINORISTA_UE_DEFECTO",
+  "divisa_base": "EUR",
+  "ucits_requerido": true
+ },
+ "top_n": null,
+ "alto_impacto": false,
+ "referencia_previa": null,
+ "idioma_usuario": "es-ES",
+ "x_ejemplo": "Petición ficticia para pruebas"
+}

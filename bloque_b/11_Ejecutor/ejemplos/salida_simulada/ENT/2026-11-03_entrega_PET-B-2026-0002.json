@@ -1,0 +1,59 @@
+{
+ "pet_id": "PET-B-2026-0002",
+ "run_ids": [
+  "RUN-B-2026-0002-01"
+ ],
+ "rec_id": "REC-B-2026-0002",
+ "entregables": {
+  "informe_tecnico": null,
+  "informe_visual": null,
+  "paquete_json": null,
+  "memorando": null,
+  "anexo_datos": null,
+  "mapa_eslabones": null,
+  "informe_parada": {
+   "markdown": "ejemplos/salida_simulada/ENT/Informes de parada/2026-11-03_informe-parada_PET-B-2026-0002.md",
+   "json": "ejemplos/salida_simulada/ENT/Informes de parada/2026-11-03_informe-parada_PET-B-2026-0002.json"
+  }
+ },
+ "resumen": {
+  "veredicto": "DESCARTAR",
+  "A": null,
+  "E": null,
+  "C": null,
+  "resultado_del_analisis": "DETENIDO_EN_PUERTA",
+  "prioritarios_por_bloque_C": {},
+  "eslabones_destacados": [],
+  "siguiente_paso_sugerido": "DESCARTAR",
+  "relevancia_decisional": "BAJA"
+ },
+ "puertas_viabilidad": {
+  "PV1": "NO_SUPERADA",
+  "PV2": "NO_EVALUADA",
+  "PV3": "NO_EVALUADA",
+  "continuacion_forzada": null
+ },
+ "supuestos_aplicados": [],
+ "estado_g3": "APTO",
+ "auditoria": {
+  "realizada": false,
+  "reservas": []
+ },
+ "tiempo": {
+  "estimado_p80_min": 25.5,
+  "real_min": 2.2,
+  "por_capa_min": {
+   "0": 1.18,
+   "1": 1.06
+  },
+  "autorizaciones": []
+ },
+ "consumo_uc": 6.9,
+ "estado_peticion": "DETENIDA_EN_PUERTA",
+ "autorizacion_salida": "AUTS-B-2026-0003",
+ "forzar_continuacion": {
+  "posible_hasta": "2026-11-10",
+  "estimacion_resto_p80_min": 23.1,
+  "checkpoint_id": "CKP-2026-0016"
+ }
+}
