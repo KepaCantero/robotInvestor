@@ -1,0 +1,5830 @@
+{
+ "run_id": "RUN-2026-0013",
+ "fecha": "2026-09-25",
+ "fecha_datos_mercado": "2026-09-25",
+ "methodology_version": "4.0",
+ "tipo": "PERIODICO",
+ "nivel_por_clase": {
+  "RV": "N2",
+  "RF": "N1",
+  "DIV": "N1",
+  "MP": "N1",
+  "IDX": "N2",
+  "FON": "N1",
+  "DER": "N1",
+  "INM": "N1",
+  "CRI": "N2",
+  "ALT": "N1",
+  "MON": "N1",
+  "TCV": "N1"
+ },
+ "regimen_macro": "Régimen sintético a 2026-09-25: lectura agregada de las señales de 12 clases.",
+ "apuestas_independientes": 23,
+ "clusteres_exposicion": [
+  {
+   "cluster_id": "CL-1",
+   "factor_dominante": "Factor común del clúster CL-1",
+   "opp_ids": [
+    "OPP-2026-0018"
+   ]
+  },
+  {
+   "cluster_id": "CL-11",
+   "factor_dominante": "Factor común del clúster CL-11",
+   "opp_ids": [
+    "OPP-2026-0020"
+   ]
+  },
+  {
+   "cluster_id": "CL-12",
+   "factor_dominante": "Factor común del clúster CL-12",
+   "opp_ids": [
+    "OPP-2026-0015"
+   ]
+  },
+  {
+   "cluster_id": "CL-13",
+   "factor_dominante": "Factor común del clúster CL-13",
+   "opp_ids": [
+    "OPP-2026-0027"
+   ]
+  },
+  {
+   "cluster_id": "CL-14",
+   "factor_dominante": "Factor común del clúster CL-14",
+   "opp_ids": [
+    "OPP-2026-0022"
+   ]
+  },
+  {
+   "cluster_id": "CL-15",
+   "factor_dominante": "Factor común del clúster CL-15",
+   "opp_ids": [
+    "OPP-2026-0008"
+   ]
+  },
+  {
+   "cluster_id": "CL-16",
+   "factor_dominante": "Factor común del clúster CL-16",
+   "opp_ids": [
+    "OPP-2026-0014"
+   ]
+  },
+  {
+   "cluster_id": "CL-17",
+   "factor_dominante": "Factor común del clúster CL-17",
+   "opp_ids": [
+    "OPP-2026-0028"
+   ]
+  },
+  {
+   "cluster_id": "CL-18",
+   "factor_dominante": "Factor común del clúster CL-18",
+   "opp_ids": [
+    "OPP-2026-0041"
+   ]
+  },
+  {
+   "cluster_id": "CL-19",
+   "factor_dominante": "Factor común del clúster CL-19",
+   "opp_ids": [
+    "OPP-2026-0039"
+   ]
+  },
+  {
+   "cluster_id": "CL-2",
+   "factor_dominante": "Factor común del clúster CL-2",
+   "opp_ids": [
+    "OPP-2026-0011"
+   ]
+  },
+  {
+   "cluster_id": "CL-20",
+   "factor_dominante": "Factor común del clúster CL-20",
+   "opp_ids": [
+    "OPP-2026-0007"
+   ]
+  },
+  {
+   "cluster_id": "CL-21",
+   "factor_dominante": "Factor común del clúster CL-21",
+   "opp_ids": [
+    "OPP-2026-0012"
+   ]
+  },
+  {
+   "cluster_id": "CL-22",
+   "factor_dominante": "Factor común del clúster CL-22",
+   "opp_ids": [
+    "OPP-2026-0010"
+   ]
+  },
+  {
+   "cluster_id": "CL-24",
+   "factor_dominante": "Factor común del clúster CL-24",
+   "opp_ids": [
+    "OPP-2026-0032"
+   ]
+  },
+  {
+   "cluster_id": "CL-27",
+   "factor_dominante": "Factor común del clúster CL-27",
+   "opp_ids": [
+    "OPP-2026-0002",
+    "OPP-2026-0004"
+   ]
+  },
+  {
+   "cluster_id": "CL-29",
+   "factor_dominante": "Factor común del clúster CL-29",
+   "opp_ids": [
+    "OPP-2026-0037"
+   ]
+  },
+  {
+   "cluster_id": "CL-3",
+   "factor_dominante": "Factor común del clúster CL-3",
+   "opp_ids": [
+    "OPP-2026-0023"
+   ]
+  },
+  {
+   "cluster_id": "CL-4",
+   "factor_dominante": "Factor común del clúster CL-4",
+   "opp_ids": [
+    "OPP-2026-0029"
+   ]
+  },
+  {
+   "cluster_id": "CL-5",
+   "factor_dominante": "Factor común del clúster CL-5",
+   "opp_ids": [
+    "OPP-2026-0042",
+    "OPP-2026-0034"
+   ]
+  },
+  {
+   "cluster_id": "CL-6",
+   "factor_dominante": "Factor común del clúster CL-6",
+   "opp_ids": [
+    "OPP-2026-0013"
+   ]
+  },
+  {
+   "cluster_id": "CL-7",
+   "factor_dominante": "Factor común del clúster CL-7",
+   "opp_ids": [
+    "OPP-2026-0036"
+   ]
+  },
+  {
+   "cluster_id": "CL-9",
+   "factor_dominante": "Factor común del clúster CL-9",
+   "opp_ids": [
+    "OPP-2026-0006"
+   ]
+  }
+ ],
+ "clases": {
+  "RV": {
+   "estado_semaforo": "VERDE",
+   "regimen_clase": "Régimen de RV a 2026-09-25: señal compuesta media 0.55.",
+   "candidatas_analizadas": 7,
+   "embudo": {
+    "gc0_delta_material": true,
+    "cribadas": 7,
+    "pasan_gc1": 4,
+    "pasan_gc2": 4,
+    "finalistas_gc3": 4,
+    "elegibles": 6
+   },
+   "opciones": [
+    {
+     "opp_id": "OPP-2026-0002",
+     "rango": 1,
+     "tipo_opcion": "SECTOR",
+     "tipo_activo": "RV",
+     "subtipo": "Sector",
+     "nombre": "Sector de servicios públicos de EE. UU.",
+     "nombre_llano": "Acciones de EE. UU.",
+     "tesis": "Sector de servicios públicos de EE. UU.: el impulso relativo y la tendencia sostienen una evolución favorable del ámbito en los próximos meses.",
+     "mecanismo": "Persistencia del impulso de precios y flujos coherentes con la señal compuesta de la clase.",
+     "tnd_ids": [
+      "TND-2026-0017"
+     ],
+     "cluster_id": "CL-27",
+     "regiones": [
+      "NAM"
+     ],
+     "puntuaciones": {
+      "T": 70,
+      "E": 75,
+      "M": 50,
+      "A": 70,
+      "P": 65,
+      "RK": 72,
+      "desglose_ref": "HT03-2026-0013-2026-0002"
+     },
+     "horizontes": {
+      "H2": {
+       "vista": "relativa_favorable",
+       "banda": "más probable que no",
+       "prob": null,
+       "certificado_r13": false,
+       "prg_id": "PRG-2026-0169",
+       "etiqueta": "sin ventaja demostrada todavía",
+       "fecha_resolucion": "2026-10-23",
+       "criterio_resolucion": "Cierre HT-01 de la última sesión ≤ 2026-10-23 frente al cierre de la última sesión ≤ 2026-09-25; suceso: rentabilidad de XLU superior a la de ACWI entre 2026-09-25 y 2026-10-23"
+      },
+      "H3": {
+       "vista": "relativa_favorable",
+       "banda": "más probable que no",
+       "prob": null,
+       "certificado_r13": false,
+       "prg_id": "PRG-2026-0170",
+       "etiqueta": "sin ventaja demostrada todavía",
+       "fecha_resolucion": "2027-03-25",
+       "criterio_resolucion": "Cierre HT-01 de la última sesión ≤ 2027-03-25 frente al cierre de la última sesión ≤ 2026-09-25; suceso: rentabilidad de XLU superior a la de ACWI entre 2026-09-25 y 2027-03-25"
+      }
+     },
+     "horizonte_principal": "H3",
+     "valoracion": "Precio en el percentil 67% de sus últimos tres años (ST-DESC-001).",
+     "catalizadores": [
+      {
+       "evento": "Publicación de datos mensuales de la clase",
+       "fecha": "2026-10"
+      }
+     ],
+     "riesgos": [
+      "Reversión brusca del impulso",
+      "Cambio de régimen de mercado"
+     ],
+     "riesgo_1a5": 3,
+     "invalidacion": [
+      "Cierre de XLU por debajo de 180.98"
+     ],
+     "ambito": {
+      "incluye": "Eléctricas, gasistas y empresas de agua cotizadas de EE. UU.",
+      "excluye": "Infraestructuras privadas (ALT)",
+      "region": "Norteamérica"
+     },
+     "indicador_seguimiento": {
+      "nombre": "Índice sectorial de servicios públicos de EE. UU. (proxy XLU)",
+      "simbolo": "XLU",
+      "fuente": "HT-01:csv"
+     },
+     "invertibilidad": {
+      "universo_suficiente": true,
+      "nota": "Existe un universo negociable amplio y accesible para un inversor minorista europeo en este ámbito."
+     },
+     "liquidez": "alta",
+     "reversibilidad": "alta",
+     "que_cambiaria_la_conclusion": [
+      "Cierre de XLU por debajo de 180.98",
+      "Confirmación del impulso en las próximas cuatro semanas"
+     ],
+     "objeciones": [
+      {
+       "objecion_id": "OBJ-XLU-01",
+       "fuerza": "moderada",
+       "resumen": "El impulso puede reflejar un rebote técnico y no un cambio de tendencia.",
+       "respuesta": "Respondida con la evidencia de datos HT-01 y los cálculos CALC- de la clase.",
+       "estado": "RESPONDIDA"
+      }
+     ],
+     "lo_que_no_sabemos": [
+      "Si el impulso reciente persistirá tras el próximo dato relevante"
+     ],
+     "confianza": "probable",
+     "evidencias": [
+      "CLM-2026-0183",
+      "CLM-2026-0184"
+     ],
+     "calculos": [
+      "CALC-2026-1052",
+      "CALC-2026-1053",
+      "CALC-2026-1054",
+      "CALC-2026-1055",
+      "CALC-2026-1056",
+      "CALC-2026-1057",
+      "CALC-2026-1124"
+     ],
+     "minigrafico": {
+      "tipo": "PRECIO_CON_ZONA",
+      "serie_ref": "HT01:XLU",
+      "zona_interes": {
+       "min": 202.267078,
+       "max": 223.55835,
+       "unidad": "nivel del indicador de seguimiento"
+      },
+      "calc_id": "CALC-2026-1052"
+     },
+     "x_referencia": "ACWI",
+     "relevancia_decisional": "MEDIA",
+     "siguiente_paso_sugerido": "ENVIAR_A_BLOQUE_B",
+     "por_que_llano": "Su precio sube más que el de otras ideas parecidas desde hace meses.",
+     "que_puede_salir_mal_llano": "Si el mercado cae, esta idea también puede caer."
+    },
+    {
+     "opp_id": "OPP-2026-0004",
+     "rango": 2,
+     "tipo_opcion": "SECTOR",
+     "tipo_activo": "RV",
+     "subtipo": "Sector",
+     "nombre": "Sector tecnológico de EE. UU.",
+     "nombre_llano": "Acciones de EE. UU.",
+     "tesis": "Sector tecnológico de EE. UU.: el impulso relativo y la tendencia sostienen una evolución favorable del ámbito en los próximos meses.",
+     "mecanismo": "Persistencia del impulso de precios y flujos coherentes con la señal compuesta de la clase.",
+     "tnd_ids": [
+      "TND-2026-0003"
+     ],
+     "cluster_id": "CL-27",
+     "regiones": [
+      "NAM"
+     ],
+     "puntuaciones": {
+      "T": 70,
+      "E": 75,
+      "M": 50,
+      "A": 70,
+      "P": 65,
+      "RK": 72,
+      "desglose_ref": "HT03-2026-0013-2026-0004"
+     },
+     "horizontes": {
+      "H2": {
+       "vista": "relativa_favorable",
+       "banda": "más probable que no",
+       "prob": null,
+       "certificado_r13": false,
+       "prg_id": "PRG-2026-0134",
+       "etiqueta": "sin ventaja demostrada todavía",
+       "fecha_resolucion": "2026-10-09",
+       "criterio_resolucion": "Cierre HT-01 de la última sesión ≤ 2026-10-09 frente al cierre de la última sesión ≤ 2026-09-11; suceso: rentabilidad de XLK superior a la de ACWI entre 2026-09-11 y 2026-10-09"
+      },
+      "H3": {
+       "vista": "relativa_favorable",
+       "banda": "más probable que no",
+       "prob": null,
+       "certificado_r13": false,
+       "prg_id": "PRG-2026-0080",
+       "etiqueta": "sin ventaja demostrada todavía",
+       "fecha_resolucion": "2027-02-14",
+       "criterio_resolucion": "Cierre HT-01 de la última sesión ≤ 2027-02-14 frente al cierre de la última sesión ≤ 2026-08-14; suceso: rentabilidad de XLK superior a la de ACWI entre 2026-08-14 y 2027-02-14"
+      }
+     },
+     "horizonte_principal": "H3",
+     "valoracion": "Precio en el percentil 36% de sus últimos tres años (ST-DESC-001).",
+     "catalizadores": [
+      {
+       "evento": "Publicación de datos mensuales de la clase",
+       "fecha": "2026-09"
+      }
+     ],
+     "riesgos": [
+      "Reversión brusca del impulso",
+      "Cambio de régimen de mercado"
+     ],
+     "riesgo_1a5": 3,
+     "invalidacion": [
+      "Cierre de XLK por debajo de 130.58"
+     ],
+     "ambito": {
+      "incluye": "Empresas tecnológicas cotizadas de EE. UU. (software, semiconductores, equipos)",
+      "excluye": "Telecomunicaciones y comercio electrónico",
+      "region": "Norteamérica"
+     },
+     "indicador_seguimiento": {
+      "nombre": "Índice sectorial de tecnología de EE. UU. (proxy XLK)",
+      "simbolo": "XLK",
+      "fuente": "HT-01:csv"
+     },
+     "invertibilidad": {
+      "universo_suficiente": true,
+      "nota": "Existe un universo negociable amplio y accesible para un inversor minorista europeo en este ámbito."
+     },
+     "liquidez": "alta",
+     "reversibilidad": "alta",
+     "que_cambiaria_la_conclusion": [
+      "Cierre de XLK por debajo de 130.58",
+      "Confirmación del impulso en las próximas cuatro semanas"
+     ],
+     "objeciones": [
+      {
+       "objecion_id": "OBJ-XLK-01",
+       "fuerza": "moderada",
+       "resumen": "El impulso puede reflejar un rebote técnico y no un cambio de tendencia.",
+       "respuesta": "Respondida con la evidencia de datos HT-01 y los cálculos CALC- de la clase.",
+       "estado": "RESPONDIDA"
+      }
+     ],
+     "lo_que_no_sabemos": [
+      "Si el impulso reciente persistirá tras el próximo dato relevante"
+     ],
+     "confianza": "probable",
+     "evidencias": [
+      "CLM-2026-0089",
+      "CLM-2026-0090"
+     ],
+     "calculos": [
+      "CALC-2026-1052",
+      "CALC-2026-1053",
+      "CALC-2026-1054",
+      "CALC-2026-1055",
+      "CALC-2026-1056",
+      "CALC-2026-1057",
+      "CALC-2026-1124"
+     ],
+     "minigrafico": {
+      "tipo": "PRECIO_CON_ZONA",
+      "serie_ref": "HT01:XLK",
+      "zona_interes": {
+       "min": 152.183913,
+       "max": 168.203273,
+       "unidad": "nivel del indicador de seguimiento"
+      },
+      "calc_id": "CALC-2026-1052"
+     },
+     "x_referencia": "ACWI",
+     "relevancia_decisional": "BAJA",
+     "siguiente_paso_sugerido": "ENVIAR_A_BLOQUE_B",
+     "por_que_llano": "Su precio sube más que el de otras ideas parecidas desde hace meses.",
+     "que_puede_salir_mal_llano": "Si el mercado cae, esta idea también puede caer."
+    },
+    {
+     "opp_id": "OPP-2026-0032",
+     "rango": 3,
+     "tipo_opcion": "SECTOR",
+     "tipo_activo": "RV",
+     "subtipo": "Sector",
+     "nombre": "Sector energético de EE. UU.",
+     "nombre_llano": "Acciones de EE. UU.",
+     "tesis": "Sector energético de EE. UU.: el impulso relativo y la tendencia sostienen una evolución favorable del ámbito en los próximos meses.",
+     "mecanismo": "Persistencia del impulso de precios y flujos coherentes con la señal compuesta de la clase.",
+     "tnd_ids": [
+      "TND-2026-0002"
+     ],
+     "cluster_id": "CL-24",
+     "regiones": [
+      "NAM"
+     ],
+     "puntuaciones": {
+      "T": 70,
+      "E": 75,
+      "M": 50,
+      "A": 65,
+      "P": 65,
+      "RK": 69,
+      "desglose_ref": "HT03-2026-0013-2026-0032"
+     },
+     "horizontes": {
+      "H2": {
+       "vista": "relativa_desfavorable",
+       "banda": "incierto",
+       "prob": null,
+       "certificado_r13": false,
+       "prg_id": "PRG-2026-0147",
+       "etiqueta": "sin ventaja demostrada todavía",
+       "fecha_resolucion": "2026-10-16",
+       "criterio_resolucion": "Cierre HT-01 de la última sesión ≤ 2026-10-16 frente al cierre de la última sesión ≤ 2026-09-18; suceso: rentabilidad de XLE inferior a la de ACWI entre 2026-09-18 y 2026-10-16"
+      },
+      "H3": {
+       "vista": "relativa_desfavorable",
+       "banda": "incierto",
+       "prob": null,
+       "certificado_r13": false,
+       "prg_id": "PRG-2026-0148",
+       "etiqueta": "sin ventaja demostrada todavía",
+       "fecha_resolucion": "2027-03-18",
+       "criterio_resolucion": "Cierre HT-01 de la última sesión ≤ 2027-03-18 frente al cierre de la última sesión ≤ 2026-09-18; suceso: rentabilidad de XLE inferior a la de ACWI entre 2026-09-18 y 2027-03-18"
+      }
+     },
+     "horizonte_principal": "H3",
+     "valoracion": "Precio en el percentil 45% de sus últimos tres años (ST-DESC-001).",
+     "catalizadores": [
+      {
+       "evento": "Publicación de datos mensuales de la clase",
+       "fecha": "2026-10"
+      }
+     ],
+     "riesgos": [
+      "Reversión brusca del impulso",
+      "Cambio de régimen de mercado"
+     ],
+     "riesgo_1a5": 3,
+     "invalidacion": [
+      "Cierre de XLE por debajo de 137.82"
+     ],
+     "ambito": {
+      "incluye": "Productoras, refinadoras y servicios de petróleo y gas cotizados de EE. UU.",
+      "excluye": "El precio de la energía como materia prima (MP)",
+      "region": "Norteamérica"
+     },
+     "indicador_seguimiento": {
+      "nombre": "Índice sectorial de energía de EE. UU. (proxy XLE)",
+      "simbolo": "XLE",
+      "fuente": "HT-01:csv"
+     },
+     "invertibilidad": {
+      "universo_suficiente": true,
+      "nota": "Existe un universo negociable amplio y accesible para un inversor minorista europeo en este ámbito."
+     },
+     "liquidez": "alta",
+     "reversibilidad": "alta",
+     "que_cambiaria_la_conclusion": [
+      "Cierre de XLE por debajo de 137.82",
+      "Confirmación del impulso en las próximas cuatro semanas"
+     ],
+     "objeciones": [
+      {
+       "objecion_id": "OBJ-XLE-01",
+       "fuerza": "moderada",
+       "resumen": "El impulso puede reflejar un rebote técnico y no un cambio de tendencia.",
+       "respuesta": "Respondida con la evidencia de datos HT-01 y los cálculos CALC- de la clase.",
+       "estado": "RESPONDIDA"
+      }
+     ],
+     "lo_que_no_sabemos": [
+      "Si el impulso reciente persistirá tras el próximo dato relevante"
+     ],
+     "confianza": "probable",
+     "evidencias": [
+      "CLM-2026-0160",
+      "CLM-2026-0161"
+     ],
+     "calculos": [
+      "CALC-2026-1052",
+      "CALC-2026-1053",
+      "CALC-2026-1054",
+      "CALC-2026-1055",
+      "CALC-2026-1056",
+      "CALC-2026-1057",
+      "CALC-2026-1124"
+     ],
+     "minigrafico": {
+      "tipo": "PRECIO_CON_ZONA",
+      "serie_ref": "HT01:XLE",
+      "zona_interes": {
+       "min": 154.84692,
+       "max": 171.146596,
+       "unidad": "nivel del indicador de seguimiento"
+      },
+      "calc_id": "CALC-2026-1052"
+     },
+     "x_referencia": "ACWI",
+     "relevancia_decisional": "BAJA",
+     "siguiente_paso_sugerido": "ENVIAR_A_BLOQUE_B",
+     "por_que_llano": "Su precio sube más que el de otras ideas parecidas desde hace meses.",
+     "que_puede_salir_mal_llano": "Si el mercado cae, esta idea también puede caer."
+    }
+   ],
+   "menos_de_tres_motivo": null
+  },
+  "RF": {
+   "estado_semaforo": "VERDE",
+   "regimen_clase": "Régimen de RF a 2026-09-25: señal compuesta media 0.58.",
+   "candidatas_analizadas": 3,
+   "embudo": {
+    "gc0_delta_material": false,
+    "cribadas": 0,
+    "pasan_gc1": 0,
+    "pasan_gc2": 0,
+    "finalistas_gc3": 0,
+    "elegibles": 3
+   },
+   "opciones": [
+    {
+     "opp_id": "OPP-2026-0006",
+     "rango": 1,
+     "tipo_opcion": "SEGMENTO",
+     "tipo_activo": "RF",
+     "subtipo": "Emergentes",
+     "nombre": "Deuda soberana emergente en dólares",
+     "nombre_llano": "Bonos de Asia",
+     "tesis": "Deuda soberana emergente en dólares: el impulso relativo y la tendencia sostienen una evolución favorable del ámbito en los próximos meses.",
+     "mecanismo": "Persistencia del impulso de precios y flujos coherentes con la señal compuesta de la clase.",
+     "tnd_ids": [
+      "TND-2026-0004"
+     ],
+     "cluster_id": "CL-9",
+     "regiones": [
+      "ASE"
+     ],
+     "puntuaciones": {
+      "T": 70,
+      "E": 80,
+      "M": 50,
+      "A": 65,
+      "P": 65,
+      "RK": 71,
+      "desglose_ref": "HT03-2026-0013-2026-0006"
+     },
+     "horizontes": {
+      "H2": {
+       "vista": "relativa_favorable",
+       "banda": "más probable que no",
+       "prob": null,
+       "certificado_r13": false,
+       "prg_id": "PRG-2026-0177",
+       "etiqueta": "sin ventaja demostrada todavía",
+       "fecha_resolucion": "2026-10-23",
+       "criterio_resolucion": "Cierre HT-01 de la última sesión ≤ 2026-10-23 frente al cierre de la última sesión ≤ 2026-09-25; suceso: rentabilidad de EMB superior a la de AGG entre 2026-09-25 y 2026-10-23"
+      },
+      "H3": {
+       "vista": "relativa_favorable",
+       "banda": "más probable que no",
+       "prob": null,
+       "certificado_r13": false,
+       "prg_id": "PRG-2026-0008",
+       "etiqueta": "sin ventaja demostrada todavía",
+       "fecha_resolucion": "2027-01-03",
+       "criterio_resolucion": "Cierre HT-01 de la última sesión ≤ 2027-01-03 frente al cierre de la última sesión ≤ 2026-07-03; suceso: rentabilidad de EMB superior a la de AGG entre 2026-07-03 y 2027-01-03"
+      }
+     },
+     "horizonte_principal": "H3",
+     "valoracion": "Precio en el percentil 54% de sus últimos tres años (ST-DESC-001).",
+     "catalizadores": [
+      {
+       "evento": "Publicación de datos mensuales de la clase",
+       "fecha": "2026-08"
+      }
+     ],
+     "riesgos": [
+      "Reversión brusca del impulso",
+      "Cambio de régimen de mercado"
+     ],
+     "riesgo_1a5": 2,
+     "invalidacion": [
+      "Cierre de EMB por debajo de 151.88"
+     ],
+     "ambito": {
+      "incluye": "Deuda soberana y cuasisoberana emergente en dólares",
+      "excluye": "Deuda emergente en moneda local",
+      "region": "Asia emergente"
+     },
+     "indicador_seguimiento": {
+      "nombre": "Índice de deuda soberana emergente en dólares (proxy EMB)",
+      "simbolo": "EMB",
+      "fuente": "HT-01:csv"
+     },
+     "invertibilidad": {
+      "universo_suficiente": true,
+      "nota": "Existe un universo negociable amplio y accesible para un inversor minorista europeo en este ámbito."
+     },
+     "liquidez": "alta",
+     "reversibilidad": "alta",
+     "que_cambiaria_la_conclusion": [
+      "Cierre de EMB por debajo de 151.88",
+      "Confirmación del impulso en las próximas cuatro semanas"
+     ],
+     "objeciones": [
+      {
+       "objecion_id": "OBJ-EMB-01",
+       "fuerza": "moderada",
+       "resumen": "El impulso puede reflejar un rebote técnico y no un cambio de tendencia.",
+       "respuesta": "Respondida con la evidencia de datos HT-01 y los cálculos CALC- de la clase.",
+       "estado": "RESPONDIDA"
+      }
+     ],
+     "lo_que_no_sabemos": [
+      "Si el impulso reciente persistirá tras el próximo dato relevante"
+     ],
+     "confianza": "probable",
+     "evidencias": [
+      "CLM-2026-0011",
+      "CLM-2026-0012"
+     ],
+     "calculos": [
+      "CALC-2026-1058",
+      "CALC-2026-1059",
+      "CALC-2026-1060",
+      "CALC-2026-1061",
+      "CALC-2026-1062",
+      "CALC-2026-1063",
+      "CALC-2026-1124"
+     ],
+     "minigrafico": {
+      "tipo": "PRECIO_CON_ZONA",
+      "serie_ref": "HT01:EMB",
+      "zona_interes": {
+       "min": 168.580375,
+       "max": 186.325677,
+       "unidad": "nivel del indicador de seguimiento"
+      },
+      "calc_id": "CALC-2026-1058"
+     },
+     "x_referencia": "AGG",
+     "relevancia_decisional": "BAJA",
+     "siguiente_paso_sugerido": "ENVIAR_A_BLOQUE_B",
+     "por_que_llano": "Su precio sube más que el de otras ideas parecidas desde hace meses.",
+     "que_puede_salir_mal_llano": "Si el mercado cae, esta idea también puede caer."
+    },
+    {
+     "opp_id": "OPP-2026-0007",
+     "rango": 2,
+     "tipo_opcion": "SEGMENTO",
+     "tipo_activo": "RF",
+     "subtipo": "Ligados a la inflación",
+     "nombre": "Bonos ligados a la inflación de EE. UU.",
+     "nombre_llano": "Bonos de EE. UU.",
+     "tesis": "Bonos ligados a la inflación de EE. UU.: el impulso relativo y la tendencia sostienen una evolución favorable del ámbito en los próximos meses.",
+     "mecanismo": "Persistencia del impulso de precios y flujos coherentes con la señal compuesta de la clase.",
+     "tnd_ids": [
+      "TND-2026-0005"
+     ],
+     "cluster_id": "CL-20",
+     "regiones": [
+      "NAM"
+     ],
+     "puntuaciones": {
+      "T": 70,
+      "E": 80,
+      "M": 50,
+      "A": 65,
+      "P": 65,
+      "RK": 71,
+      "desglose_ref": "HT03-2026-0013-2026-0007"
+     },
+     "horizontes": {
+      "H2": {
+       "vista": "relativa_favorable",
+       "banda": "incierto",
+       "prob": null,
+       "certificado_r13": false,
+       "prg_id": "PRG-2026-0108",
+       "etiqueta": "sin ventaja demostrada todavía",
+       "fecha_resolucion": "2026-10-02",
+       "criterio_resolucion": "Cierre HT-01 de la última sesión ≤ 2026-10-02 frente al cierre de la última sesión ≤ 2026-09-04; suceso: rentabilidad de TIP superior a la de AGG entre 2026-09-04 y 2026-10-02"
+      },
+      "H3": {
+       "vista": "relativa_favorable",
+       "banda": "incierto",
+       "prob": null,
+       "certificado_r13": false,
+       "prg_id": "PRG-2026-0109",
+       "etiqueta": "sin ventaja demostrada todavía",
+       "fecha_resolucion": "2027-03-04",
+       "criterio_resolucion": "Cierre HT-01 de la última sesión ≤ 2027-03-04 frente al cierre de la última sesión ≤ 2026-09-04; suceso: rentabilidad de TIP superior a la de AGG entre 2026-09-04 y 2027-03-04"
+      }
+     },
+     "horizonte_principal": "H3",
+     "valoracion": "Precio en el percentil 92% de sus últimos tres años (ST-DESC-001).",
+     "catalizadores": [
+      {
+       "evento": "Publicación de datos mensuales de la clase",
+       "fecha": "2026-10"
+      }
+     ],
+     "riesgos": [
+      "Reversión brusca del impulso",
+      "Cambio de régimen de mercado"
+     ],
+     "riesgo_1a5": 2,
+     "invalidacion": [
+      "Cierre de TIP por debajo de 138.59"
+     ],
+     "ambito": {
+      "incluye": "Bonos del Tesoro de EE. UU. ligados a la inflación",
+      "excluye": "La inflación implícita como factor (TCV)",
+      "region": "Norteamérica"
+     },
+     "indicador_seguimiento": {
+      "nombre": "Índice de TIPS (proxy TIP)",
+      "simbolo": "TIP",
+      "fuente": "HT-01:csv"
+     },
+     "invertibilidad": {
+      "universo_suficiente": true,
+      "nota": "Existe un universo negociable amplio y accesible para un inversor minorista europeo en este ámbito."
+     },
+     "liquidez": "alta",
+     "reversibilidad": "alta",
+     "que_cambiaria_la_conclusion": [
+      "Cierre de TIP por debajo de 138.59",
+      "Confirmación del impulso en las próximas cuatro semanas"
+     ],
+     "objeciones": [
+      {
+       "objecion_id": "OBJ-TIP-01",
+       "fuerza": "moderada",
+       "resumen": "El impulso puede reflejar un rebote técnico y no un cambio de tendencia.",
+       "respuesta": "Respondida con la evidencia de datos HT-01 y los cálculos CALC- de la clase.",
+       "estado": "RESPONDIDA"
+      }
+     ],
+     "lo_que_no_sabemos": [
+      "Si el impulso reciente persistirá tras el próximo dato relevante"
+     ],
+     "confianza": "probable",
+     "evidencias": [
+      "CLM-2026-0126",
+      "CLM-2026-0127"
+     ],
+     "calculos": [
+      "CALC-2026-1058",
+      "CALC-2026-1059",
+      "CALC-2026-1060",
+      "CALC-2026-1061",
+      "CALC-2026-1062",
+      "CALC-2026-1063",
+      "CALC-2026-1124"
+     ],
+     "minigrafico": {
+      "tipo": "PRECIO_CON_ZONA",
+      "serie_ref": "HT01:TIP",
+      "zona_interes": {
+       "min": 154.652593,
+       "max": 170.931813,
+       "unidad": "nivel del indicador de seguimiento"
+      },
+      "calc_id": "CALC-2026-1058"
+     },
+     "x_referencia": "AGG",
+     "relevancia_decisional": "BAJA",
+     "siguiente_paso_sugerido": "ENVIAR_A_BLOQUE_B",
+     "por_que_llano": "Su precio sube más que el de otras ideas parecidas desde hace meses.",
+     "que_puede_salir_mal_llano": "Si el mercado cae, esta idea también puede caer."
+    },
+    {
+     "opp_id": "OPP-2026-0008",
+     "rango": 3,
+     "tipo_opcion": "SEGMENTO",
+     "tipo_activo": "RF",
+     "subtipo": "Deuda pública",
+     "nombre": "Deuda pública de EE. UU. a 1-3 años",
+     "nombre_llano": "Bonos de EE. UU.",
+     "tesis": "Deuda pública de EE. UU. a 1-3 años: el impulso relativo y la tendencia sostienen una evolución favorable del ámbito en los próximos meses.",
+     "mecanismo": "Persistencia del impulso de precios y flujos coherentes con la señal compuesta de la clase.",
+     "tnd_ids": [
+      "TND-2026-0006"
+     ],
+     "cluster_id": "CL-15",
+     "regiones": [
+      "NAM"
+     ],
+     "puntuaciones": {
+      "T": 70,
+      "E": 75,
+      "M": 50,
+      "A": 65,
+      "P": 65,
+      "RK": 69,
+      "desglose_ref": "HT03-2026-0013-2026-0008"
+     },
+     "horizontes": {
+      "H2": {
+       "vista": "relativa_favorable",
+       "banda": "más probable que no",
+       "prob": null,
+       "certificado_r13": false,
+       "prg_id": "PRG-2026-0110",
+       "etiqueta": "sin ventaja demostrada todavía",
+       "fecha_resolucion": "2026-10-02",
+       "criterio_resolucion": "Cierre HT-01 de la última sesión ≤ 2026-10-02 frente al cierre de la última sesión ≤ 2026-09-04; suceso: rentabilidad de SHY superior a la de AGG entre 2026-09-04 y 2026-10-02"
+      },
+      "H3": {
+       "vista": "relativa_favorable",
+       "banda": "más probable que no",
+       "prob": null,
+       "certificado_r13": false,
+       "prg_id": "PRG-2026-0111",
+       "etiqueta": "sin ventaja demostrada todavía",
+       "fecha_resolucion": "2027-03-04",
+       "criterio_resolucion": "Cierre HT-01 de la última sesión ≤ 2027-03-04 frente al cierre de la última sesión ≤ 2026-09-04; suceso: rentabilidad de SHY superior a la de AGG entre 2026-09-04 y 2027-03-04"
+      }
+     },
+     "horizonte_principal": "H3",
+     "valoracion": "Precio en el percentil 84% de sus últimos tres años (ST-DESC-001).",
+     "catalizadores": [
+      {
+       "evento": "Publicación de datos mensuales de la clase",
+       "fecha": "2026-10"
+      }
+     ],
+     "riesgos": [
+      "Reversión brusca del impulso",
+      "Cambio de régimen de mercado"
+     ],
+     "riesgo_1a5": 2,
+     "invalidacion": [
+      "Cierre de SHY por debajo de 130.69"
+     ],
+     "ambito": {
+      "incluye": "Bonos del Tesoro de EE. UU. con vencimiento de 1 a 3 años",
+      "excluye": "Vencimientos inferiores a 12 meses (MON)",
+      "region": "Norteamérica"
+     },
+     "indicador_seguimiento": {
+      "nombre": "Índice del Tesoro de EE. UU. 1-3 años (proxy SHY)",
+      "simbolo": "SHY",
+      "fuente": "HT-01:csv"
+     },
+     "invertibilidad": {
+      "universo_suficiente": true,
+      "nota": "Existe un universo negociable amplio y accesible para un inversor minorista europeo en este ámbito."
+     },
+     "liquidez": "alta",
+     "reversibilidad": "alta",
+     "que_cambiaria_la_conclusion": [
+      "Cierre de SHY por debajo de 130.69",
+      "Confirmación del impulso en las próximas cuatro semanas"
+     ],
+     "objeciones": [
+      {
+       "objecion_id": "OBJ-SHY-01",
+       "fuerza": "moderada",
+       "resumen": "El impulso puede reflejar un rebote técnico y no un cambio de tendencia.",
+       "respuesta": "Respondida con la evidencia de datos HT-01 y los cálculos CALC- de la clase.",
+       "estado": "RESPONDIDA"
+      }
+     ],
+     "lo_que_no_sabemos": [
+      "Si el impulso reciente persistirá tras el próximo dato relevante"
+     ],
+     "confianza": "probable",
+     "evidencias": [
+      "CLM-2026-0128",
+      "CLM-2026-0129"
+     ],
+     "calculos": [
+      "CALC-2026-1058",
+      "CALC-2026-1059",
+      "CALC-2026-1060",
+      "CALC-2026-1061",
+      "CALC-2026-1062",
+      "CALC-2026-1063",
+      "CALC-2026-1124"
+     ],
+     "minigrafico": {
+      "tipo": "PRECIO_CON_ZONA",
+      "serie_ref": "HT01:SHY",
+      "zona_interes": {
+       "min": 145.715623,
+       "max": 161.054109,
+       "unidad": "nivel del indicador de seguimiento"
+      },
+      "calc_id": "CALC-2026-1058"
+     },
+     "x_referencia": "AGG",
+     "relevancia_decisional": "BAJA",
+     "siguiente_paso_sugerido": "ENVIAR_A_BLOQUE_B",
+     "por_que_llano": "Su precio sube más que el de otras ideas parecidas desde hace meses.",
+     "que_puede_salir_mal_llano": "Si el mercado cae, esta idea también puede caer."
+    }
+   ],
+   "menos_de_tres_motivo": null
+  },
+  "DIV": {
+   "estado_semaforo": "VERDE",
+   "regimen_clase": "Régimen de DIV a 2026-09-25: señal compuesta media 0.59.",
+   "candidatas_analizadas": 3,
+   "embudo": {
+    "gc0_delta_material": false,
+    "cribadas": 0,
+    "pasan_gc1": 0,
+    "pasan_gc2": 0,
+    "finalistas_gc3": 0,
+    "elegibles": 3
+   },
+   "opciones": [
+    {
+     "opp_id": "OPP-2026-0011",
+     "rango": 1,
+     "tipo_opcion": "ESTRATEGIA",
+     "tipo_activo": "DIV",
+     "subtipo": "Divisas de exportadores de materias primas",
+     "nombre": "Dólar australiano frente a dólar",
+     "nombre_llano": "Monedas de Australia",
+     "tesis": "Dólar australiano frente a dólar: el impulso relativo y la tendencia sostienen una evolución favorable del ámbito en los próximos meses.",
+     "mecanismo": "Persistencia del impulso de precios y flujos coherentes con la señal compuesta de la clase.",
+     "tnd_ids": [
+      "TND-2026-0007"
+     ],
+     "cluster_id": "CL-2",
+     "regiones": [
+      "OCE"
+     ],
+     "puntuaciones": {
+      "T": 70,
+      "E": 80,
+      "M": 50,
+      "A": 60,
+      "P": 65,
+      "RK": 69,
+      "desglose_ref": "HT03-2026-0013-2026-0011"
+     },
+     "horizontes": {
+      "H2": {
+       "vista": "relativa_favorable",
+       "banda": "incierto",
+       "prob": null,
+       "certificado_r13": false,
+       "prg_id": "PRG-2026-0178",
+       "etiqueta": "sin ventaja demostrada todavía",
+       "fecha_resolucion": "2026-10-23",
+       "criterio_resolucion": "Cierre HT-01 de la última sesión ≤ 2026-10-23 frente al cierre de la última sesión ≤ 2026-09-25; suceso: rentabilidad de AUDUSD=X superior a la de CESTA entre 2026-09-25 y 2026-10-23"
+      },
+      "H3": {
+       "vista": "relativa_favorable",
+       "banda": "incierto",
+       "prob": null,
+       "certificado_r13": false,
+       "prg_id": "PRG-2026-0014",
+       "etiqueta": "sin ventaja demostrada todavía",
+       "fecha_resolucion": "2027-01-03",
+       "criterio_resolucion": "Cierre HT-01 de la última sesión ≤ 2027-01-03 frente al cierre de la última sesión ≤ 2026-07-03; suceso: rentabilidad de AUDUSD=X superior a la de CESTA entre 2026-07-03 y 2027-01-03"
+      }
+     },
+     "horizonte_principal": "H3",
+     "valoracion": "Precio en el percentil 99% de sus últimos tres años (ST-DESC-001).",
+     "catalizadores": [
+      {
+       "evento": "Publicación de datos mensuales de la clase",
+       "fecha": "2026-08"
+      }
+     ],
+     "riesgos": [
+      "Reversión brusca del impulso",
+      "Cambio de régimen de mercado"
+     ],
+     "riesgo_1a5": 2,
+     "invalidacion": [
+      "Cierre de AUDUSD=X por debajo de 1.04"
+     ],
+     "ambito": {
+      "incluye": "Tipo de cambio del dólar australiano frente al dólar",
+      "excluye": "Otras divisas del bloque de materias primas",
+      "region": "Oceanía"
+     },
+     "indicador_seguimiento": {
+      "nombre": "AUD/USD",
+      "simbolo": "AUDUSD=X",
+      "fuente": "HT-01:csv"
+     },
+     "invertibilidad": {
+      "universo_suficiente": true,
+      "nota": "Existe un universo negociable amplio y accesible para un inversor minorista europeo en este ámbito."
+     },
+     "liquidez": "alta",
+     "reversibilidad": "alta",
+     "que_cambiaria_la_conclusion": [
+      "Cierre de AUDUSD=X por debajo de 1.04",
+      "Confirmación del impulso en las próximas cuatro semanas"
+     ],
+     "objeciones": [
+      {
+       "objecion_id": "OBJ-AUDUSD=X-01",
+       "fuerza": "moderada",
+       "resumen": "El impulso puede reflejar un rebote técnico y no un cambio de tendencia.",
+       "respuesta": "Respondida con la evidencia de datos HT-01 y los cálculos CALC- de la clase.",
+       "estado": "RESPONDIDA"
+      }
+     ],
+     "lo_que_no_sabemos": [
+      "Si el impulso reciente persistirá tras el próximo dato relevante"
+     ],
+     "confianza": "probable",
+     "evidencias": [
+      "CLM-2026-0021",
+      "CLM-2026-0022"
+     ],
+     "calculos": [
+      "CALC-2026-1064",
+      "CALC-2026-1065",
+      "CALC-2026-1066",
+      "CALC-2026-1067",
+      "CALC-2026-1068",
+      "CALC-2026-1069",
+      "CALC-2026-1124"
+     ],
+     "minigrafico": {
+      "tipo": "PRECIO_CON_ZONA",
+      "serie_ref": "HT01:AUDUSD=X",
+      "zona_interes": {
+       "min": 1.131732,
+       "max": 1.250862,
+       "unidad": "nivel del indicador de seguimiento"
+      },
+      "calc_id": "CALC-2026-1064"
+     },
+     "x_referencia": "CESTA",
+     "relevancia_decisional": "BAJA",
+     "siguiente_paso_sugerido": "ENVIAR_A_BLOQUE_B",
+     "por_que_llano": "Su precio sube más que el de otras ideas parecidas desde hace meses.",
+     "que_puede_salir_mal_llano": "Si el mercado cae, esta idea también puede caer."
+    },
+    {
+     "opp_id": "OPP-2026-0010",
+     "rango": 2,
+     "tipo_opcion": "ESTRATEGIA",
+     "tipo_activo": "DIV",
+     "subtipo": "Divisas emergentes",
+     "nombre": "Dólar frente a peso mexicano",
+     "nombre_llano": "Monedas de América Latina",
+     "tesis": "Dólar frente a peso mexicano: el impulso relativo y la tendencia sostienen una evolución favorable del ámbito en los próximos meses.",
+     "mecanismo": "Persistencia del impulso de precios y flujos coherentes con la señal compuesta de la clase.",
+     "tnd_ids": [
+      "TND-2026-0008"
+     ],
+     "cluster_id": "CL-22",
+     "regiones": [
+      "LAT"
+     ],
+     "puntuaciones": {
+      "T": 70,
+      "E": 75,
+      "M": 50,
+      "A": 65,
+      "P": 65,
+      "RK": 69,
+      "desglose_ref": "HT03-2026-0013-2026-0010"
+     },
+     "horizontes": {
+      "H2": {
+       "vista": "relativa_favorable",
+       "banda": "incierto",
+       "prob": null,
+       "certificado_r13": false,
+       "prg_id": "PRG-2026-0179",
+       "etiqueta": "sin ventaja demostrada todavía",
+       "fecha_resolucion": "2026-10-23",
+       "criterio_resolucion": "Cierre HT-01 de la última sesión ≤ 2026-10-23 frente al cierre de la última sesión ≤ 2026-09-25; suceso: rentabilidad de USDMXN=X superior a la de CESTA entre 2026-09-25 y 2026-10-23"
+      },
+      "H3": {
+       "vista": "relativa_favorable",
+       "banda": "incierto",
+       "prob": null,
+       "certificado_r13": false,
+       "prg_id": "PRG-2026-0016",
+       "etiqueta": "sin ventaja demostrada todavía",
+       "fecha_resolucion": "2027-01-03",
+       "criterio_resolucion": "Cierre HT-01 de la última sesión ≤ 2027-01-03 frente al cierre de la última sesión ≤ 2026-07-03; suceso: rentabilidad de USDMXN=X superior a la de CESTA entre 2026-07-03 y 2027-01-03"
+      }
+     },
+     "horizonte_principal": "H3",
+     "valoracion": "Precio en el percentil 100% de sus últimos tres años (ST-DESC-001).",
+     "catalizadores": [
+      {
+       "evento": "Publicación de datos mensuales de la clase",
+       "fecha": "2026-08"
+      }
+     ],
+     "riesgos": [
+      "Reversión brusca del impulso",
+      "Cambio de régimen de mercado"
+     ],
+     "riesgo_1a5": 2,
+     "invalidacion": [
+      "Cierre de USDMXN=X por debajo de 2.07"
+     ],
+     "ambito": {
+      "incluye": "Tipo de cambio del dólar frente al peso mexicano",
+      "excluye": "Otras divisas latinoamericanas",
+      "region": "Latinoamérica"
+     },
+     "indicador_seguimiento": {
+      "nombre": "USD/MXN",
+      "simbolo": "USDMXN=X",
+      "fuente": "HT-01:csv"
+     },
+     "invertibilidad": {
+      "universo_suficiente": true,
+      "nota": "Existe un universo negociable amplio y accesible para un inversor minorista europeo en este ámbito."
+     },
+     "liquidez": "alta",
+     "reversibilidad": "alta",
+     "que_cambiaria_la_conclusion": [
+      "Cierre de USDMXN=X por debajo de 2.07",
+      "Confirmación del impulso en las próximas cuatro semanas"
+     ],
+     "objeciones": [
+      {
+       "objecion_id": "OBJ-USDMXN=X-01",
+       "fuerza": "moderada",
+       "resumen": "El impulso puede reflejar un rebote técnico y no un cambio de tendencia.",
+       "respuesta": "Respondida con la evidencia de datos HT-01 y los cálculos CALC- de la clase.",
+       "estado": "RESPONDIDA"
+      }
+     ],
+     "lo_que_no_sabemos": [
+      "Si el impulso reciente persistirá tras el próximo dato relevante"
+     ],
+     "confianza": "probable",
+     "evidencias": [
+      "CLM-2026-0019",
+      "CLM-2026-0020"
+     ],
+     "calculos": [
+      "CALC-2026-1064",
+      "CALC-2026-1065",
+      "CALC-2026-1066",
+      "CALC-2026-1067",
+      "CALC-2026-1068",
+      "CALC-2026-1069",
+      "CALC-2026-1124"
+     ],
+     "minigrafico": {
+      "tipo": "PRECIO_CON_ZONA",
+      "serie_ref": "HT01:USDMXN=X",
+      "zona_interes": {
+       "min": 2.319664,
+       "max": 2.56384,
+       "unidad": "nivel del indicador de seguimiento"
+      },
+      "calc_id": "CALC-2026-1064"
+     },
+     "x_referencia": "CESTA",
+     "relevancia_decisional": "BAJA",
+     "siguiente_paso_sugerido": "ENVIAR_A_BLOQUE_B",
+     "por_que_llano": "Su precio sube más que el de otras ideas parecidas desde hace meses.",
+     "que_puede_salir_mal_llano": "Si el mercado cae, esta idea también puede caer."
+    },
+    {
+     "opp_id": "OPP-2026-0012",
+     "rango": 3,
+     "tipo_opcion": "ESTRATEGIA",
+     "tipo_activo": "DIV",
+     "subtipo": "Pares principales",
+     "nombre": "Dólar frente a franco suizo",
+     "nombre_llano": "Monedas de Europa",
+     "tesis": "Dólar frente a franco suizo: el impulso relativo y la tendencia sostienen una evolución favorable del ámbito en los próximos meses.",
+     "mecanismo": "Persistencia del impulso de precios y flujos coherentes con la señal compuesta de la clase.",
+     "tnd_ids": [
+      "TND-2026-0019"
+     ],
+     "cluster_id": "CL-21",
+     "regiones": [
+      "EUR"
+     ],
+     "puntuaciones": {
+      "T": 70,
+      "E": 75,
+      "M": 50,
+      "A": 60,
+      "P": 65,
+      "RK": 67,
+      "desglose_ref": "HT03-2026-0013-2026-0012"
+     },
+     "horizontes": {
+      "H2": {
+       "vista": "relativa_favorable",
+       "banda": "incierto",
+       "prob": null,
+       "certificado_r13": false,
+       "prg_id": "PRG-2026-0180",
+       "etiqueta": "sin ventaja demostrada todavía",
+       "fecha_resolucion": "2026-10-23",
+       "criterio_resolucion": "Cierre HT-01 de la última sesión ≤ 2026-10-23 frente al cierre de la última sesión ≤ 2026-09-25; suceso: rentabilidad de USDCHF=X superior a la de CESTA entre 2026-09-25 y 2026-10-23"
+      },
+      "H3": {
+       "vista": "relativa_favorable",
+       "banda": "incierto",
+       "prob": null,
+       "certificado_r13": false,
+       "prg_id": "PRG-2026-0018",
+       "etiqueta": "sin ventaja demostrada todavía",
+       "fecha_resolucion": "2027-01-03",
+       "criterio_resolucion": "Cierre HT-01 de la última sesión ≤ 2027-01-03 frente al cierre de la última sesión ≤ 2026-07-03; suceso: rentabilidad de USDCHF=X superior a la de CESTA entre 2026-07-03 y 2027-01-03"
+      }
+     },
+     "horizonte_principal": "H3",
+     "valoracion": "Precio en el percentil 99% de sus últimos tres años (ST-DESC-001).",
+     "catalizadores": [
+      {
+       "evento": "Publicación de datos mensuales de la clase",
+       "fecha": "2026-08"
+      }
+     ],
+     "riesgos": [
+      "Reversión brusca del impulso",
+      "Cambio de régimen de mercado"
+     ],
+     "riesgo_1a5": 2,
+     "invalidacion": [
+      "Cierre de USDCHF=X por debajo de 2.09"
+     ],
+     "ambito": {
+      "incluye": "Tipo de cambio del dólar frente al franco suizo",
+      "excluye": "Cruces del franco con el euro",
+      "region": "Europa"
+     },
+     "indicador_seguimiento": {
+      "nombre": "USD/CHF",
+      "simbolo": "USDCHF=X",
+      "fuente": "HT-01:csv"
+     },
+     "invertibilidad": {
+      "universo_suficiente": true,
+      "nota": "Existe un universo negociable amplio y accesible para un inversor minorista europeo en este ámbito."
+     },
+     "liquidez": "alta",
+     "reversibilidad": "alta",
+     "que_cambiaria_la_conclusion": [
+      "Cierre de USDCHF=X por debajo de 2.09",
+      "Confirmación del impulso en las próximas cuatro semanas"
+     ],
+     "objeciones": [
+      {
+       "objecion_id": "OBJ-USDCHF=X-01",
+       "fuerza": "moderada",
+       "resumen": "El impulso puede reflejar un rebote técnico y no un cambio de tendencia.",
+       "respuesta": "Respondida con la evidencia de datos HT-01 y los cálculos CALC- de la clase.",
+       "estado": "RESPONDIDA"
+      }
+     ],
+     "lo_que_no_sabemos": [
+      "Si el impulso reciente persistirá tras el próximo dato relevante"
+     ],
+     "confianza": "probable",
+     "evidencias": [
+      "CLM-2026-0023",
+      "CLM-2026-0024"
+     ],
+     "calculos": [
+      "CALC-2026-1064",
+      "CALC-2026-1065",
+      "CALC-2026-1066",
+      "CALC-2026-1067",
+      "CALC-2026-1068",
+      "CALC-2026-1069",
+      "CALC-2026-1124"
+     ],
+     "minigrafico": {
+      "tipo": "PRECIO_CON_ZONA",
+      "serie_ref": "HT01:USDCHF=X",
+      "zona_interes": {
+       "min": 2.440461,
+       "max": 2.697351,
+       "unidad": "nivel del indicador de seguimiento"
+      },
+      "calc_id": "CALC-2026-1064"
+     },
+     "x_referencia": "CESTA",
+     "relevancia_decisional": "BAJA",
+     "siguiente_paso_sugerido": "ENVIAR_A_BLOQUE_B",
+     "por_que_llano": "Su precio sube más que el de otras ideas parecidas desde hace meses.",
+     "que_puede_salir_mal_llano": "Si el mercado cae, esta idea también puede caer."
+    }
+   ],
+   "menos_de_tres_motivo": null
+  },
+  "MP": {
+   "estado_semaforo": "VERDE",
+   "regimen_clase": "Régimen de MP a 2026-09-25: señal compuesta media 0.53.",
+   "candidatas_analizadas": 3,
+   "embudo": {
+    "gc0_delta_material": false,
+    "cribadas": 0,
+    "pasan_gc1": 0,
+    "pasan_gc2": 0,
+    "finalistas_gc3": 0,
+    "elegibles": 3
+   },
+   "opciones": [
+    {
+     "opp_id": "OPP-2026-0015",
+     "rango": 1,
+     "tipo_opcion": "SEGMENTO",
+     "tipo_activo": "MP",
+     "subtipo": "Metales preciosos",
+     "nombre": "Oro",
+     "nombre_llano": "Materias primas de todo el mundo",
+     "tesis": "Oro: el impulso relativo y la tendencia sostienen una evolución favorable del ámbito en los próximos meses.",
+     "mecanismo": "Persistencia del impulso de precios y flujos coherentes con la señal compuesta de la clase.",
+     "tnd_ids": [
+      "TND-2026-0020"
+     ],
+     "cluster_id": "CL-12",
+     "regiones": [
+      "GLB"
+     ],
+     "puntuaciones": {
+      "T": 70,
+      "E": 80,
+      "M": 50,
+      "A": 70,
+      "P": 65,
+      "RK": 73,
+      "desglose_ref": "HT03-2026-0013-2026-0015"
+     },
+     "horizontes": {
+      "H2": {
+       "vista": "relativa_desfavorable",
+       "banda": "incierto",
+       "prob": null,
+       "certificado_r13": false,
+       "prg_id": "PRG-2026-0116",
+       "etiqueta": "sin ventaja demostrada todavía",
+       "fecha_resolucion": "2026-10-02",
+       "criterio_resolucion": "Cierre HT-01 de la última sesión ≤ 2026-10-02 frente al cierre de la última sesión ≤ 2026-09-04; suceso: rentabilidad de GLD inferior a la de DBC entre 2026-09-04 y 2026-10-02"
+      },
+      "H3": {
+       "vista": "relativa_desfavorable",
+       "banda": "incierto",
+       "prob": null,
+       "certificado_r13": false,
+       "prg_id": "PRG-2026-0064",
+       "etiqueta": "sin ventaja demostrada todavía",
+       "fecha_resolucion": "2027-02-07",
+       "criterio_resolucion": "Cierre HT-01 de la última sesión ≤ 2027-02-07 frente al cierre de la última sesión ≤ 2026-08-07; suceso: rentabilidad de GLD inferior a la de DBC entre 2026-08-07 y 2027-02-07"
+      }
+     },
+     "horizonte_principal": "H3",
+     "valoracion": "Precio en el percentil 7% de sus últimos tres años (ST-DESC-001).",
+     "catalizadores": [
+      {
+       "evento": "Publicación de datos mensuales de la clase",
+       "fecha": "2026-09"
+      }
+     ],
+     "riesgos": [
+      "Reversión brusca del impulso",
+      "Cambio de régimen de mercado"
+     ],
+     "riesgo_1a5": 5,
+     "invalidacion": [
+      "Cierre de GLD por debajo de 74.91"
+     ],
+     "ambito": {
+      "incluye": "Precio del oro",
+      "excluye": "Empresas mineras de oro (RV)",
+      "region": "Global"
+     },
+     "indicador_seguimiento": {
+      "nombre": "Precio del oro (proxy GLD)",
+      "simbolo": "GLD",
+      "fuente": "HT-01:csv"
+     },
+     "invertibilidad": {
+      "universo_suficiente": true,
+      "nota": "Existe un universo negociable amplio y accesible para un inversor minorista europeo en este ámbito."
+     },
+     "liquidez": "alta",
+     "reversibilidad": "alta",
+     "que_cambiaria_la_conclusion": [
+      "Cierre de GLD por debajo de 74.91",
+      "Confirmación del impulso en las próximas cuatro semanas"
+     ],
+     "objeciones": [
+      {
+       "objecion_id": "OBJ-GLD-01",
+       "fuerza": "moderada",
+       "resumen": "El impulso puede reflejar un rebote técnico y no un cambio de tendencia.",
+       "respuesta": "Respondida con la evidencia de datos HT-01 y los cálculos CALC- de la clase.",
+       "estado": "RESPONDIDA"
+      }
+     ],
+     "lo_que_no_sabemos": [
+      "Si el impulso reciente persistirá tras el próximo dato relevante"
+     ],
+     "confianza": "probable",
+     "evidencias": [
+      "CLM-2026-0029",
+      "CLM-2026-0079"
+     ],
+     "calculos": [
+      "CALC-2026-1070",
+      "CALC-2026-1071",
+      "CALC-2026-1072",
+      "CALC-2026-1073",
+      "CALC-2026-1074",
+      "CALC-2026-1075",
+      "CALC-2026-1124"
+     ],
+     "minigrafico": {
+      "tipo": "PRECIO_CON_ZONA",
+      "serie_ref": "HT01:GLD",
+      "zona_interes": {
+       "min": 81.35769,
+       "max": 89.921658,
+       "unidad": "nivel del indicador de seguimiento"
+      },
+      "calc_id": "CALC-2026-1070"
+     },
+     "x_referencia": "DBC",
+     "relevancia_decisional": "ALTA",
+     "siguiente_paso_sugerido": "ENVIAR_A_BLOQUE_B",
+     "por_que_llano": "Su precio sube más que el de otras ideas parecidas desde hace meses.",
+     "que_puede_salir_mal_llano": "Si el mercado cae, esta idea también puede caer."
+    },
+    {
+     "opp_id": "OPP-2026-0013",
+     "rango": 2,
+     "tipo_opcion": "MERCADO",
+     "tipo_activo": "MP",
+     "subtipo": "Índice amplio",
+     "nombre": "Materias primas en conjunto",
+     "nombre_llano": "Materias primas de todo el mundo",
+     "tesis": "Materias primas en conjunto: el impulso relativo y la tendencia sostienen una evolución favorable del ámbito en los próximos meses.",
+     "mecanismo": "Persistencia del impulso de precios y flujos coherentes con la señal compuesta de la clase.",
+     "tnd_ids": [
+      "TND-2026-0010"
+     ],
+     "cluster_id": "CL-6",
+     "regiones": [
+      "GLB"
+     ],
+     "puntuaciones": {
+      "T": 70,
+      "E": 75,
+      "M": 50,
+      "A": 65,
+      "P": 65,
+      "RK": 69,
+      "desglose_ref": "HT03-2026-0013-2026-0013"
+     },
+     "horizontes": {
+      "H2": {
+       "vista": "alcista",
+       "banda": "incierto",
+       "prob": null,
+       "certificado_r13": false,
+       "prg_id": "PRG-2026-0153",
+       "etiqueta": "sin ventaja demostrada todavía",
+       "fecha_resolucion": "2026-10-16",
+       "criterio_resolucion": "Cierre HT-01 de la última sesión ≤ 2026-10-16 frente al cierre de la última sesión ≤ 2026-09-18; suceso: rentabilidad de DBC positiva entre 2026-09-18 y 2026-10-16"
+      },
+      "H3": {
+       "vista": "alcista",
+       "banda": "incierto",
+       "prob": null,
+       "certificado_r13": false,
+       "prg_id": "PRG-2026-0154",
+       "etiqueta": "sin ventaja demostrada todavía",
+       "fecha_resolucion": "2027-03-18",
+       "criterio_resolucion": "Cierre HT-01 de la última sesión ≤ 2027-03-18 frente al cierre de la última sesión ≤ 2026-09-18; suceso: rentabilidad de DBC positiva entre 2026-09-18 y 2027-03-18"
+      }
+     },
+     "horizonte_principal": "H3",
+     "valoracion": "Precio en el percentil 78% de sus últimos tres años (ST-DESC-001).",
+     "catalizadores": [
+      {
+       "evento": "Publicación de datos mensuales de la clase",
+       "fecha": "2026-10"
+      }
+     ],
+     "riesgos": [
+      "Reversión brusca del impulso",
+      "Cambio de régimen de mercado"
+     ],
+     "riesgo_1a5": 3,
+     "invalidacion": [
+      "Cierre de DBC por debajo de 123.51"
+     ],
+     "ambito": {
+      "incluye": "Cesta amplia de materias primas (energía, metales y agrícolas)",
+      "excluye": "Empresas productoras (RV)",
+      "region": "Global"
+     },
+     "indicador_seguimiento": {
+      "nombre": "Índice amplio de materias primas (proxy DBC)",
+      "simbolo": "DBC",
+      "fuente": "HT-01:csv"
+     },
+     "invertibilidad": {
+      "universo_suficiente": true,
+      "nota": "Existe un universo negociable amplio y accesible para un inversor minorista europeo en este ámbito."
+     },
+     "liquidez": "alta",
+     "reversibilidad": "alta",
+     "que_cambiaria_la_conclusion": [
+      "Cierre de DBC por debajo de 123.51",
+      "Confirmación del impulso en las próximas cuatro semanas"
+     ],
+     "objeciones": [
+      {
+       "objecion_id": "OBJ-DBC-01",
+       "fuerza": "moderada",
+       "resumen": "El impulso puede reflejar un rebote técnico y no un cambio de tendencia.",
+       "respuesta": "Respondida con la evidencia de datos HT-01 y los cálculos CALC- de la clase.",
+       "estado": "RESPONDIDA"
+      }
+     ],
+     "lo_que_no_sabemos": [
+      "Si el impulso reciente persistirá tras el próximo dato relevante"
+     ],
+     "confianza": "probable",
+     "evidencias": [
+      "CLM-2026-0162",
+      "CLM-2026-0163"
+     ],
+     "calculos": [
+      "CALC-2026-1070",
+      "CALC-2026-1071",
+      "CALC-2026-1072",
+      "CALC-2026-1073",
+      "CALC-2026-1074",
+      "CALC-2026-1075",
+      "CALC-2026-1124"
+     ],
+     "minigrafico": {
+      "tipo": "PRECIO_CON_ZONA",
+      "serie_ref": "HT01:DBC",
+      "zona_interes": {
+       "min": 133.05368,
+       "max": 147.05933,
+       "unidad": "nivel del indicador de seguimiento"
+      },
+      "calc_id": "CALC-2026-1070"
+     },
+     "x_referencia": null,
+     "relevancia_decisional": "BAJA",
+     "siguiente_paso_sugerido": "ENVIAR_A_BLOQUE_B",
+     "por_que_llano": "Su precio sube más que el de otras ideas parecidas desde hace meses.",
+     "que_puede_salir_mal_llano": "Si el mercado cae, esta idea también puede caer."
+    },
+    {
+     "opp_id": "OPP-2026-0014",
+     "rango": 3,
+     "tipo_opcion": "SEGMENTO",
+     "tipo_activo": "MP",
+     "subtipo": "Metales preciosos",
+     "nombre": "Plata",
+     "nombre_llano": "Materias primas de todo el mundo",
+     "tesis": "Plata: el impulso relativo y la tendencia sostienen una evolución favorable del ámbito en los próximos meses.",
+     "mecanismo": "Persistencia del impulso de precios y flujos coherentes con la señal compuesta de la clase.",
+     "tnd_ids": [
+      "TND-2026-0020"
+     ],
+     "cluster_id": "CL-16",
+     "regiones": [
+      "GLB"
+     ],
+     "puntuaciones": {
+      "T": 70,
+      "E": 75,
+      "M": 50,
+      "A": 65,
+      "P": 65,
+      "RK": 69,
+      "desglose_ref": "HT03-2026-0013-2026-0014"
+     },
+     "horizontes": {
+      "H2": {
+       "vista": "relativa_favorable",
+       "banda": "incierto",
+       "prob": null,
+       "certificado_r13": false,
+       "prg_id": "PRG-2026-0118",
+       "etiqueta": "sin ventaja demostrada todavía",
+       "fecha_resolucion": "2026-10-02",
+       "criterio_resolucion": "Cierre HT-01 de la última sesión ≤ 2026-10-02 frente al cierre de la última sesión ≤ 2026-09-04; suceso: rentabilidad de SLV superior a la de DBC entre 2026-09-04 y 2026-10-02"
+      },
+      "H3": {
+       "vista": "relativa_favorable",
+       "banda": "incierto",
+       "prob": null,
+       "certificado_r13": false,
+       "prg_id": "PRG-2026-0068",
+       "etiqueta": "sin ventaja demostrada todavía",
+       "fecha_resolucion": "2027-02-07",
+       "criterio_resolucion": "Cierre HT-01 de la última sesión ≤ 2027-02-07 frente al cierre de la última sesión ≤ 2026-08-07; suceso: rentabilidad de SLV superior a la de DBC entre 2026-08-07 y 2027-02-07"
+      }
+     },
+     "horizonte_principal": "H3",
+     "valoracion": "Precio en el percentil 62% de sus últimos tres años (ST-DESC-001).",
+     "catalizadores": [
+      {
+       "evento": "Publicación de datos mensuales de la clase",
+       "fecha": "2026-09"
+      }
+     ],
+     "riesgos": [
+      "Reversión brusca del impulso",
+      "Cambio de régimen de mercado"
+     ],
+     "riesgo_1a5": 5,
+     "invalidacion": [
+      "Cierre de SLV por debajo de 51.50"
+     ],
+     "ambito": {
+      "incluye": "Precio de la plata",
+      "excluye": "Empresas mineras de plata (RV)",
+      "region": "Global"
+     },
+     "indicador_seguimiento": {
+      "nombre": "Precio de la plata (proxy SLV)",
+      "simbolo": "SLV",
+      "fuente": "HT-01:csv"
+     },
+     "invertibilidad": {
+      "universo_suficiente": true,
+      "nota": "Existe un universo negociable amplio y accesible para un inversor minorista europeo en este ámbito."
+     },
+     "liquidez": "alta",
+     "reversibilidad": "alta",
+     "que_cambiaria_la_conclusion": [
+      "Cierre de SLV por debajo de 51.50",
+      "Confirmación del impulso en las próximas cuatro semanas"
+     ],
+     "objeciones": [
+      {
+       "objecion_id": "OBJ-SLV-01",
+       "fuerza": "moderada",
+       "resumen": "El impulso puede reflejar un rebote técnico y no un cambio de tendencia.",
+       "respuesta": "Respondida con la evidencia de datos HT-01 y los cálculos CALC- de la clase.",
+       "estado": "RESPONDIDA"
+      }
+     ],
+     "lo_que_no_sabemos": [
+      "Si el impulso reciente persistirá tras el próximo dato relevante"
+     ],
+     "confianza": "probable",
+     "evidencias": [
+      "CLM-2026-0077",
+      "CLM-2026-0078"
+     ],
+     "calculos": [
+      "CALC-2026-1070",
+      "CALC-2026-1071",
+      "CALC-2026-1072",
+      "CALC-2026-1073",
+      "CALC-2026-1074",
+      "CALC-2026-1075",
+      "CALC-2026-1124"
+     ],
+     "minigrafico": {
+      "tipo": "PRECIO_CON_ZONA",
+      "serie_ref": "HT01:SLV",
+      "zona_interes": {
+       "min": 56.90357,
+       "max": 62.89342,
+       "unidad": "nivel del indicador de seguimiento"
+      },
+      "calc_id": "CALC-2026-1070"
+     },
+     "x_referencia": "DBC",
+     "relevancia_decisional": "ALTA",
+     "siguiente_paso_sugerido": "ENVIAR_A_BLOQUE_B",
+     "por_que_llano": "Su precio sube más que el de otras ideas parecidas desde hace meses.",
+     "que_puede_salir_mal_llano": "Si el mercado cae, esta idea también puede caer."
+    }
+   ],
+   "menos_de_tres_motivo": null
+  },
+  "IDX": {
+   "estado_semaforo": "VERDE",
+   "regimen_clase": "Régimen de IDX a 2026-09-25: señal compuesta media 0.60.",
+   "candidatas_analizadas": 6,
+   "embudo": {
+    "gc0_delta_material": true,
+    "cribadas": 6,
+    "pasan_gc1": 4,
+    "pasan_gc2": 4,
+    "finalistas_gc3": 4,
+    "elegibles": 5
+   },
+   "opciones": [
+    {
+     "opp_id": "OPP-2026-0018",
+     "rango": 1,
+     "tipo_opcion": "MERCADO",
+     "tipo_activo": "IDX",
+     "subtipo": "Índices globales",
+     "nombre": "Renta variable mundial como mercado completo",
+     "nombre_llano": "Bolsa entera de todo el mundo",
+     "tesis": "Renta variable mundial como mercado completo: el impulso relativo y la tendencia sostienen una evolución favorable del ámbito en los próximos meses.",
+     "mecanismo": "Persistencia del impulso de precios y flujos coherentes con la señal compuesta de la clase.",
+     "tnd_ids": [
+      "TND-2026-0010"
+     ],
+     "cluster_id": "CL-1",
+     "regiones": [
+      "GLB"
+     ],
+     "puntuaciones": {
+      "T": 70,
+      "E": 80,
+      "M": 50,
+      "A": 65,
+      "P": 65,
+      "RK": 71,
+      "desglose_ref": "HT03-2026-0013-2026-0018"
+     },
+     "horizontes": {
+      "H2": {
+       "vista": "alcista",
+       "banda": "incierto",
+       "prob": null,
+       "certificado_r13": false,
+       "prg_id": "PRG-2026-0137",
+       "etiqueta": "sin ventaja demostrada todavía",
+       "fecha_resolucion": "2026-10-09",
+       "criterio_resolucion": "Cierre HT-01 de la última sesión ≤ 2026-10-09 frente al cierre de la última sesión ≤ 2026-09-11; suceso: rentabilidad de ACWI positiva entre 2026-09-11 y 2026-10-09"
+      },
+      "H3": {
+       "vista": "alcista",
+       "banda": "incierto",
+       "prob": null,
+       "certificado_r13": false,
+       "prg_id": "PRG-2026-0086",
+       "etiqueta": "sin ventaja demostrada todavía",
+       "fecha_resolucion": "2027-02-14",
+       "criterio_resolucion": "Cierre HT-01 de la última sesión ≤ 2027-02-14 frente al cierre de la última sesión ≤ 2026-08-14; suceso: rentabilidad de ACWI positiva entre 2026-08-14 y 2027-02-14"
+      }
+     },
+     "horizonte_principal": "H3",
+     "valoracion": "Precio en el percentil 35% de sus últimos tres años (ST-DESC-001).",
+     "catalizadores": [
+      {
+       "evento": "Publicación de datos mensuales de la clase",
+       "fecha": "2026-09"
+      }
+     ],
+     "riesgos": [
+      "Reversión brusca del impulso",
+      "Cambio de régimen de mercado"
+     ],
+     "riesgo_1a5": 3,
+     "invalidacion": [
+      "Cierre de ACWI por debajo de 104.65"
+     ],
+     "ambito": {
+      "incluye": "Índice mundial amplio de renta variable",
+      "excluye": "Sectores y temáticas (RV)",
+      "region": "Global"
+     },
+     "indicador_seguimiento": {
+      "nombre": "MSCI ACWI (proxy ACWI)",
+      "simbolo": "ACWI",
+      "fuente": "HT-01:csv"
+     },
+     "invertibilidad": {
+      "universo_suficiente": true,
+      "nota": "Existe un universo negociable amplio y accesible para un inversor minorista europeo en este ámbito."
+     },
+     "liquidez": "alta",
+     "reversibilidad": "alta",
+     "que_cambiaria_la_conclusion": [
+      "Cierre de ACWI por debajo de 104.65",
+      "Confirmación del impulso en las próximas cuatro semanas"
+     ],
+     "objeciones": [
+      {
+       "objecion_id": "OBJ-ACWI-01",
+       "fuerza": "moderada",
+       "resumen": "El impulso puede reflejar un rebote técnico y no un cambio de tendencia.",
+       "respuesta": "Respondida con la evidencia de datos HT-01 y los cálculos CALC- de la clase.",
+       "estado": "RESPONDIDA"
+      }
+     ],
+     "lo_que_no_sabemos": [
+      "Si el impulso reciente persistirá tras el próximo dato relevante"
+     ],
+     "confianza": "probable",
+     "evidencias": [
+      "CLM-2026-0101",
+      "CLM-2026-0102"
+     ],
+     "calculos": [
+      "CALC-2026-1076",
+      "CALC-2026-1077",
+      "CALC-2026-1078",
+      "CALC-2026-1079",
+      "CALC-2026-1080",
+      "CALC-2026-1081",
+      "CALC-2026-1124"
+     ],
+     "minigrafico": {
+      "tipo": "PRECIO_CON_ZONA",
+      "serie_ref": "HT01:ACWI",
+      "zona_interes": {
+       "min": 130.521044,
+       "max": 144.260102,
+       "unidad": "nivel del indicador de seguimiento"
+      },
+      "calc_id": "CALC-2026-1076"
+     },
+     "x_referencia": null,
+     "relevancia_decisional": "BAJA",
+     "siguiente_paso_sugerido": "ENVIAR_A_BLOQUE_B",
+     "por_que_llano": "Su precio sube más que el de otras ideas parecidas desde hace meses.",
+     "que_puede_salir_mal_llano": "Si el mercado cae, esta idea también puede caer."
+    },
+    {
+     "opp_id": "OPP-2026-0020",
+     "rango": 2,
+     "tipo_opcion": "MERCADO",
+     "tipo_activo": "IDX",
+     "subtipo": "Índices de Asia",
+     "nombre": "Renta variable japonesa como mercado completo",
+     "nombre_llano": "Bolsa entera de Japón",
+     "tesis": "Renta variable japonesa como mercado completo: el impulso relativo y la tendencia sostienen una evolución favorable del ámbito en los próximos meses.",
+     "mecanismo": "Persistencia del impulso de precios y flujos coherentes con la señal compuesta de la clase.",
+     "tnd_ids": [
+      "TND-2026-0012"
+     ],
+     "cluster_id": "CL-11",
+     "regiones": [
+      "JPN"
+     ],
+     "puntuaciones": {
+      "T": 70,
+      "E": 75,
+      "M": 50,
+      "A": 65,
+      "P": 65,
+      "RK": 69,
+      "desglose_ref": "HT03-2026-0013-2026-0020"
+     },
+     "horizontes": {
+      "H2": {
+       "vista": "relativa_desfavorable",
+       "banda": "más probable que no",
+       "prob": null,
+       "certificado_r13": false,
+       "prg_id": "PRG-2026-0181",
+       "etiqueta": "sin ventaja demostrada todavía",
+       "fecha_resolucion": "2026-10-23",
+       "criterio_resolucion": "Cierre HT-01 de la última sesión ≤ 2026-10-23 frente al cierre de la última sesión ≤ 2026-09-25; suceso: rentabilidad de EWJ inferior a la de ACWI entre 2026-09-25 y 2026-10-23"
+      },
+      "H3": {
+       "vista": "relativa_desfavorable",
+       "banda": "más probable que no",
+       "prob": null,
+       "certificado_r13": false,
+       "prg_id": "PRG-2026-0182",
+       "etiqueta": "sin ventaja demostrada todavía",
+       "fecha_resolucion": "2027-03-25",
+       "criterio_resolucion": "Cierre HT-01 de la última sesión ≤ 2027-03-25 frente al cierre de la última sesión ≤ 2026-09-25; suceso: rentabilidad de EWJ inferior a la de ACWI entre 2026-09-25 y 2027-03-25"
+      }
+     },
+     "horizonte_principal": "H3",
+     "valoracion": "Precio en el percentil 11% de sus últimos tres años (ST-DESC-001).",
+     "catalizadores": [
+      {
+       "evento": "Publicación de datos mensuales de la clase",
+       "fecha": "2026-10"
+      }
+     ],
+     "riesgos": [
+      "Reversión brusca del impulso",
+      "Cambio de régimen de mercado"
+     ],
+     "riesgo_1a5": 3,
+     "invalidacion": [
+      "Cierre de EWJ por debajo de 153.71"
+     ],
+     "ambito": {
+      "incluye": "Índice amplio de Japón",
+      "excluye": "Temáticas japonesas concretas (RV)",
+      "region": "Japón"
+     },
+     "indicador_seguimiento": {
+      "nombre": "MSCI Japan (proxy EWJ)",
+      "simbolo": "EWJ",
+      "fuente": "HT-01:csv"
+     },
+     "invertibilidad": {
+      "universo_suficiente": true,
+      "nota": "Existe un universo negociable amplio y accesible para un inversor minorista europeo en este ámbito."
+     },
+     "liquidez": "alta",
+     "reversibilidad": "alta",
+     "que_cambiaria_la_conclusion": [
+      "Cierre de EWJ por debajo de 153.71",
+      "Confirmación del impulso en las próximas cuatro semanas"
+     ],
+     "objeciones": [
+      {
+       "objecion_id": "OBJ-EWJ-01",
+       "fuerza": "moderada",
+       "resumen": "El impulso puede reflejar un rebote técnico y no un cambio de tendencia.",
+       "respuesta": "Respondida con la evidencia de datos HT-01 y los cálculos CALC- de la clase.",
+       "estado": "RESPONDIDA"
+      }
+     ],
+     "lo_que_no_sabemos": [
+      "Si el impulso reciente persistirá tras el próximo dato relevante"
+     ],
+     "confianza": "probable",
+     "evidencias": [
+      "CLM-2026-0195",
+      "CLM-2026-0196"
+     ],
+     "calculos": [
+      "CALC-2026-1076",
+      "CALC-2026-1077",
+      "CALC-2026-1078",
+      "CALC-2026-1079",
+      "CALC-2026-1080",
+      "CALC-2026-1081",
+      "CALC-2026-1124"
+     ],
+     "minigrafico": {
+      "tipo": "PRECIO_CON_ZONA",
+      "serie_ref": "HT01:EWJ",
+      "zona_interes": {
+       "min": 171.790714,
+       "max": 189.873947,
+       "unidad": "nivel del indicador de seguimiento"
+      },
+      "calc_id": "CALC-2026-1076"
+     },
+     "x_referencia": "ACWI",
+     "relevancia_decisional": "MEDIA",
+     "siguiente_paso_sugerido": "ENVIAR_A_BLOQUE_B",
+     "por_que_llano": "Su precio sube más que el de otras ideas parecidas desde hace meses.",
+     "que_puede_salir_mal_llano": "Si el mercado cae, esta idea también puede caer."
+    },
+    {
+     "opp_id": "OPP-2026-0041",
+     "rango": 3,
+     "tipo_opcion": "MERCADO",
+     "tipo_activo": "IDX",
+     "subtipo": "Índices de EE. UU.",
+     "nombre": "Renta variable de EE. UU. como mercado completo",
+     "nombre_llano": "Bolsa entera de EE. UU.",
+     "tesis": "Renta variable de EE. UU. como mercado completo: el impulso relativo y la tendencia sostienen una evolución favorable del ámbito en los próximos meses.",
+     "mecanismo": "Persistencia del impulso de precios y flujos coherentes con la señal compuesta de la clase.",
+     "tnd_ids": [
+      "TND-2026-0034"
+     ],
+     "cluster_id": "CL-18",
+     "regiones": [
+      "NAM"
+     ],
+     "puntuaciones": {
+      "T": 70,
+      "E": 75,
+      "M": 50,
+      "A": 65,
+      "P": 65,
+      "RK": 69,
+      "desglose_ref": "HT03-2026-0013-2026-0041"
+     },
+     "horizontes": {
+      "H2": {
+       "vista": "relativa_favorable",
+       "banda": "más probable que no",
+       "prob": null,
+       "certificado_r13": false,
+       "prg_id": "PRG-2026-0183",
+       "etiqueta": "sin ventaja demostrada todavía",
+       "fecha_resolucion": "2026-10-23",
+       "criterio_resolucion": "Cierre HT-01 de la última sesión ≤ 2026-10-23 frente al cierre de la última sesión ≤ 2026-09-25; suceso: rentabilidad de SPY superior a la de ACWI entre 2026-09-25 y 2026-10-23"
+      },
+      "H3": {
+       "vista": "relativa_favorable",
+       "banda": "más probable que no",
+       "prob": null,
+       "certificado_r13": false,
+       "prg_id": "PRG-2026-0184",
+       "etiqueta": "sin ventaja demostrada todavía",
+       "fecha_resolucion": "2027-03-25",
+       "criterio_resolucion": "Cierre HT-01 de la última sesión ≤ 2027-03-25 frente al cierre de la última sesión ≤ 2026-09-25; suceso: rentabilidad de SPY superior a la de ACWI entre 2026-09-25 y 2027-03-25"
+      }
+     },
+     "horizonte_principal": "H3",
+     "valoracion": "Precio en el percentil 100% de sus últimos tres años (ST-DESC-001).",
+     "catalizadores": [
+      {
+       "evento": "Publicación de datos mensuales de la clase",
+       "fecha": "2026-10"
+      }
+     ],
+     "riesgos": [
+      "Reversión brusca del impulso",
+      "Cambio de régimen de mercado"
+     ],
+     "riesgo_1a5": 4,
+     "invalidacion": [
+      "Cierre de SPY por debajo de 117.48"
+     ],
+     "ambito": {
+      "incluye": "Índice amplio de EE. UU. (S&P 500)",
+      "excluye": "Sectores concretos de EE. UU. (RV)",
+      "region": "Norteamérica"
+     },
+     "indicador_seguimiento": {
+      "nombre": "S&P 500 (proxy SPY)",
+      "simbolo": "SPY",
+      "fuente": "HT-01:csv"
+     },
+     "invertibilidad": {
+      "universo_suficiente": true,
+      "nota": "Existe un universo negociable amplio y accesible para un inversor minorista europeo en este ámbito."
+     },
+     "liquidez": "alta",
+     "reversibilidad": "alta",
+     "que_cambiaria_la_conclusion": [
+      "Cierre de SPY por debajo de 117.48",
+      "Confirmación del impulso en las próximas cuatro semanas"
+     ],
+     "objeciones": [
+      {
+       "objecion_id": "OBJ-SPY-01",
+       "fuerza": "moderada",
+       "resumen": "El impulso puede reflejar un rebote técnico y no un cambio de tendencia.",
+       "respuesta": "Respondida con la evidencia de datos HT-01 y los cálculos CALC- de la clase.",
+       "estado": "RESPONDIDA"
+      }
+     ],
+     "lo_que_no_sabemos": [
+      "Si el impulso reciente persistirá tras el próximo dato relevante"
+     ],
+     "confianza": "probable",
+     "evidencias": [
+      "CLM-2026-0170",
+      "CLM-2026-0192"
+     ],
+     "calculos": [
+      "CALC-2026-1076",
+      "CALC-2026-1077",
+      "CALC-2026-1078",
+      "CALC-2026-1079",
+      "CALC-2026-1080",
+      "CALC-2026-1081",
+      "CALC-2026-1124"
+     ],
+     "minigrafico": {
+      "tipo": "PRECIO_CON_ZONA",
+      "serie_ref": "HT01:SPY",
+      "zona_interes": {
+       "min": 131.304086,
+       "max": 145.125568,
+       "unidad": "nivel del indicador de seguimiento"
+      },
+      "calc_id": "CALC-2026-1076"
+     },
+     "x_referencia": "ACWI",
+     "relevancia_decisional": "ALTA",
+     "siguiente_paso_sugerido": "ENVIAR_A_BLOQUE_B",
+     "por_que_llano": "Su precio sube más que el de otras ideas parecidas desde hace meses.",
+     "que_puede_salir_mal_llano": "Si el mercado cae, esta idea también puede caer."
+    }
+   ],
+   "menos_de_tres_motivo": null
+  },
+  "FON": {
+   "estado_semaforo": "AMBAR",
+   "regimen_clase": "Régimen de FON a 2026-09-25: señal compuesta media 0.75.",
+   "candidatas_analizadas": 1,
+   "embudo": {
+    "gc0_delta_material": false,
+    "cribadas": 0,
+    "pasan_gc1": 0,
+    "pasan_gc2": 0,
+    "finalistas_gc3": 0,
+    "elegibles": 1
+   },
+   "opciones": [
+    {
+     "opp_id": "OPP-2026-0036",
+     "rango": 1,
+     "tipo_opcion": "ESTRATEGIA",
+     "tipo_activo": "FON",
+     "subtipo": "Estrategias de gestión",
+     "nombre": "Estrategias de futuros gestionados (CTA)",
+     "nombre_llano": "Fondos de todo el mundo",
+     "tesis": "Estrategias de futuros gestionados (CTA): el impulso relativo y la tendencia sostienen una evolución favorable del ámbito en los próximos meses.",
+     "mecanismo": "Persistencia del impulso de precios y flujos coherentes con la señal compuesta de la clase.",
+     "tnd_ids": [
+      "TND-2026-0030"
+     ],
+     "cluster_id": "CL-7",
+     "regiones": [
+      "GLB"
+     ],
+     "puntuaciones": {
+      "T": 70,
+      "E": 75,
+      "M": 50,
+      "A": 65,
+      "P": 65,
+      "RK": 69,
+      "desglose_ref": "HT03-2026-0013-2026-0036"
+     },
+     "horizontes": {
+      "H3": {
+       "vista": "relativa_desfavorable",
+       "banda": "incierto",
+       "prob": null,
+       "certificado_r13": false,
+       "prg_id": "PRG-2026-0101",
+       "etiqueta": "sin ventaja demostrada todavía",
+       "fecha_resolucion": "2027-02-28",
+       "criterio_resolucion": "Cierre HT-01 de la última sesión ≤ 2027-02-28 frente al cierre de la última sesión ≤ 2026-08-28; suceso: rentabilidad de DBMF inferior a la de CESTA entre 2026-08-28 y 2027-02-28"
+      },
+      "H4": {
+       "vista": "relativa_desfavorable",
+       "banda": "incierto",
+       "prob": null,
+       "certificado_r13": false,
+       "prg_id": "PRG-2026-0102",
+       "etiqueta": "sin ventaja demostrada todavía",
+       "fecha_resolucion": "2027-08-28",
+       "criterio_resolucion": "Cierre HT-01 de la última sesión ≤ 2027-08-28 frente al cierre de la última sesión ≤ 2026-08-28; suceso: rentabilidad de DBMF inferior a la de CESTA entre 2026-08-28 y 2027-08-28"
+      }
+     },
+     "horizonte_principal": "H3",
+     "valoracion": "Precio en el percentil 69% de sus últimos tres años (ST-DESC-001).",
+     "catalizadores": [
+      {
+       "evento": "Publicación de datos mensuales de la clase",
+       "fecha": "2026-09"
+      }
+     ],
+     "riesgos": [
+      "Reversión brusca del impulso",
+      "Cambio de régimen de mercado"
+     ],
+     "riesgo_1a5": 3,
+     "invalidacion": [
+      "Cierre de DBMF por debajo de 20.47"
+     ],
+     "ambito": {
+      "incluye": "Categoría de fondos de futuros gestionados (seguimiento de tendencias)",
+      "excluye": "Futuros concretos (DER)",
+      "region": "Global"
+     },
+     "indicador_seguimiento": {
+      "nombre": "Índice de futuros gestionados (proxy DBMF)",
+      "simbolo": "DBMF",
+      "fuente": "HT-01:csv"
+     },
+     "invertibilidad": {
+      "universo_suficiente": true,
+      "nota": "Existe un universo negociable amplio y accesible para un inversor minorista europeo en este ámbito."
+     },
+     "liquidez": "alta",
+     "reversibilidad": "alta",
+     "que_cambiaria_la_conclusion": [
+      "Cierre de DBMF por debajo de 20.47",
+      "Confirmación del impulso en las próximas cuatro semanas"
+     ],
+     "objeciones": [
+      {
+       "objecion_id": "OBJ-DBMF-01",
+       "fuerza": "moderada",
+       "resumen": "El impulso puede reflejar un rebote técnico y no un cambio de tendencia.",
+       "respuesta": "Respondida con la evidencia de datos HT-01 y los cálculos CALC- de la clase.",
+       "estado": "RESPONDIDA"
+      }
+     ],
+     "lo_que_no_sabemos": [
+      "Si el impulso reciente persistirá tras el próximo dato relevante"
+     ],
+     "confianza": "probable",
+     "evidencias": [
+      "CLM-2026-0116",
+      "CLM-2026-0117"
+     ],
+     "calculos": [
+      "CALC-2026-1082",
+      "CALC-2026-1083",
+      "CALC-2026-1084",
+      "CALC-2026-1085",
+      "CALC-2026-1086",
+      "CALC-2026-1087",
+      "CALC-2026-1124"
+     ],
+     "minigrafico": {
+      "tipo": "PRECIO_CON_ZONA",
+      "serie_ref": "HT01:DBMF",
+      "zona_interes": {
+       "min": 21.757912,
+       "max": 24.048218,
+       "unidad": "nivel del indicador de seguimiento"
+      },
+      "calc_id": "CALC-2026-1082"
+     },
+     "x_referencia": "CESTA",
+     "relevancia_decisional": "BAJA",
+     "siguiente_paso_sugerido": "ENVIAR_A_BLOQUE_B",
+     "por_que_llano": "Su precio sube más que el de otras ideas parecidas desde hace meses.",
+     "que_puede_salir_mal_llano": "Si el mercado cae, esta idea también puede caer."
+    }
+   ],
+   "menos_de_tres_motivo": "Se proponen 1 opción(es) en Fondos y vehículos de inversión colectiva. Se proponen 1 opción(es): de 1 candidatas analizadas, 1 finalistas evaluadas y 1 elegibles (R14)."
+  },
+  "DER": {
+   "estado_semaforo": "VERDE",
+   "regimen_clase": "Régimen de DER a 2026-09-25: señal compuesta media 0.61.",
+   "candidatas_analizadas": 2,
+   "embudo": {
+    "gc0_delta_material": false,
+    "cribadas": 0,
+    "pasan_gc1": 0,
+    "pasan_gc2": 0,
+    "finalistas_gc3": 0,
+    "elegibles": 2
+   },
+   "opciones": [
+    {
+     "opp_id": "OPP-2026-0037",
+     "rango": 1,
+     "tipo_opcion": "ESTRATEGIA",
+     "tipo_activo": "DER",
+     "subtipo": "Opciones sobre índices",
+     "nombre": "Venta de opciones de venta cubiertas por liquidez sobre el S&P 500",
+     "nombre_llano": "Derivados de EE. UU.",
+     "tesis": "Venta de opciones de venta cubiertas por liquidez sobre el S&P 500: el impulso relativo y la tendencia sostienen una evolución favorable del ámbito en los próximos meses.",
+     "mecanismo": "Persistencia del impulso de precios y flujos coherentes con la señal compuesta de la clase.",
+     "tnd_ids": [
+      "TND-2026-0031"
+     ],
+     "cluster_id": "CL-29",
+     "regiones": [
+      "NAM"
+     ],
+     "puntuaciones": {
+      "T": 70,
+      "E": 75,
+      "M": 50,
+      "A": 70,
+      "P": 65,
+      "RK": 72,
+      "desglose_ref": "HT03-2026-0013-2026-0037"
+     },
+     "horizontes": {
+      "H2": {
+       "vista": "relativa_favorable",
+       "banda": "más probable que no",
+       "prob": null,
+       "certificado_r13": false,
+       "prg_id": "PRG-2026-0161",
+       "etiqueta": "sin ventaja demostrada todavía",
+       "fecha_resolucion": "2026-10-16",
+       "criterio_resolucion": "Cierre HT-01 de la última sesión ≤ 2026-10-16 frente al cierre de la última sesión ≤ 2026-09-18; suceso: rentabilidad de ^PUT superior a la de SPY entre 2026-09-18 y 2026-10-16"
+      },
+      "H3": {
+       "vista": "relativa_favorable",
+       "banda": "más probable que no",
+       "prob": null,
+       "certificado_r13": false,
+       "prg_id": "PRG-2026-0162",
+       "etiqueta": "sin ventaja demostrada todavía",
+       "fecha_resolucion": "2027-03-18",
+       "criterio_resolucion": "Cierre HT-01 de la última sesión ≤ 2027-03-18 frente al cierre de la última sesión ≤ 2026-09-18; suceso: rentabilidad de ^PUT superior a la de SPY entre 2026-09-18 y 2027-03-18"
+      }
+     },
+     "horizonte_principal": "H3",
+     "valoracion": "Precio en el percentil 100% de sus últimos tres años (ST-DESC-001).",
+     "catalizadores": [
+      {
+       "evento": "Publicación de datos mensuales de la clase",
+       "fecha": "2026-10"
+      }
+     ],
+     "riesgos": [
+      "Reversión brusca del impulso",
+      "Cambio de régimen de mercado"
+     ],
+     "riesgo_1a5": 3,
+     "invalidacion": [
+      "Cierre de ^PUT por debajo de 3669.48"
+     ],
+     "ambito": {
+      "incluye": "Estrategia de venta de opciones de venta a un mes sobre el S&P 500",
+      "excluye": "La volatilidad como factor macro (TCV)",
+      "region": "Norteamérica"
+     },
+     "indicador_seguimiento": {
+      "nombre": "Cboe S&P 500 PutWrite Index",
+      "simbolo": "^PUT",
+      "fuente": "HT-01:csv"
+     },
+     "invertibilidad": {
+      "universo_suficiente": true,
+      "nota": "Existe un universo negociable amplio y accesible para un inversor minorista europeo en este ámbito."
+     },
+     "liquidez": "alta",
+     "reversibilidad": "alta",
+     "que_cambiaria_la_conclusion": [
+      "Cierre de ^PUT por debajo de 3669.48",
+      "Confirmación del impulso en las próximas cuatro semanas"
+     ],
+     "objeciones": [
+      {
+       "objecion_id": "OBJ-^PUT-01",
+       "fuerza": "moderada",
+       "resumen": "El impulso puede reflejar un rebote técnico y no un cambio de tendencia.",
+       "respuesta": "Respondida con la evidencia de datos HT-01 y los cálculos CALC- de la clase.",
+       "estado": "RESPONDIDA"
+      }
+     ],
+     "lo_que_no_sabemos": [
+      "Si el impulso reciente persistirá tras el próximo dato relevante"
+     ],
+     "confianza": "probable",
+     "evidencias": [
+      "CLM-2026-0173",
+      "CLM-2026-0174"
+     ],
+     "calculos": [
+      "CALC-2026-1088",
+      "CALC-2026-1089",
+      "CALC-2026-1090",
+      "CALC-2026-1091",
+      "CALC-2026-1092",
+      "CALC-2026-1093",
+      "CALC-2026-1124"
+     ],
+     "minigrafico": {
+      "tipo": "PRECIO_CON_ZONA",
+      "serie_ref": "HT01:^PUT",
+      "zona_interes": {
+       "min": 4049.844876,
+       "max": 4476.144336,
+       "unidad": "nivel del indicador de seguimiento"
+      },
+      "calc_id": "CALC-2026-1088"
+     },
+     "x_referencia": "SPY",
+     "relevancia_decisional": "BAJA",
+     "siguiente_paso_sugerido": "ENVIAR_A_BLOQUE_B",
+     "por_que_llano": "Su precio sube más que el de otras ideas parecidas desde hace meses.",
+     "que_puede_salir_mal_llano": "Si el mercado cae, esta idea también puede caer."
+    },
+    {
+     "opp_id": "OPP-2026-0039",
+     "rango": 2,
+     "tipo_opcion": "ESTRATEGIA",
+     "tipo_activo": "DER",
+     "subtipo": "Opciones sobre índices",
+     "nombre": "Protección de cola con opciones de venta sobre la bolsa de EE. UU.",
+     "nombre_llano": "Derivados de EE. UU.",
+     "tesis": "Protección de cola con opciones de venta sobre la bolsa de EE. UU.: el impulso relativo y la tendencia sostienen una evolución favorable del ámbito en los próximos meses.",
+     "mecanismo": "Persistencia del impulso de precios y flujos coherentes con la señal compuesta de la clase.",
+     "tnd_ids": [
+      "TND-2026-0032"
+     ],
+     "cluster_id": "CL-19",
+     "regiones": [
+      "NAM"
+     ],
+     "puntuaciones": {
+      "T": 70,
+      "E": 80,
+      "M": 50,
+      "A": 60,
+      "P": 65,
+      "RK": 69,
+      "desglose_ref": "HT03-2026-0013-2026-0039"
+     },
+     "horizontes": {
+      "H2": {
+       "vista": "relativa_desfavorable",
+       "banda": "incierto",
+       "prob": null,
+       "certificado_r13": false,
+       "prg_id": "PRG-2026-0163",
+       "etiqueta": "sin ventaja demostrada todavía",
+       "fecha_resolucion": "2026-10-16",
+       "criterio_resolucion": "Cierre HT-01 de la última sesión ≤ 2026-10-16 frente al cierre de la última sesión ≤ 2026-09-18; suceso: rentabilidad de TAIL inferior a la de SPY entre 2026-09-18 y 2026-10-16"
+      },
+      "H3": {
+       "vista": "relativa_desfavorable",
+       "banda": "incierto",
+       "prob": null,
+       "certificado_r13": false,
+       "prg_id": "PRG-2026-0164",
+       "etiqueta": "sin ventaja demostrada todavía",
+       "fecha_resolucion": "2027-03-18",
+       "criterio_resolucion": "Cierre HT-01 de la última sesión ≤ 2027-03-18 frente al cierre de la última sesión ≤ 2026-09-18; suceso: rentabilidad de TAIL inferior a la de SPY entre 2026-09-18 y 2027-03-18"
+      }
+     },
+     "horizonte_principal": "H3",
+     "valoracion": "Precio en el percentil 77% de sus últimos tres años (ST-DESC-001).",
+     "catalizadores": [
+      {
+       "evento": "Publicación de datos mensuales de la clase",
+       "fecha": "2026-10"
+      }
+     ],
+     "riesgos": [
+      "Reversión brusca del impulso",
+      "Cambio de régimen de mercado"
+     ],
+     "riesgo_1a5": 3,
+     "invalidacion": [
+      "Cierre de TAIL por debajo de 3678.40"
+     ],
+     "ambito": {
+      "incluye": "Estrategias de compra de protección con opciones de venta fuera de dinero sobre la bolsa de EE. UU.",
+      "excluye": "Venta de volatilidad",
+      "region": "Norteamérica"
+     },
+     "indicador_seguimiento": {
+      "nombre": "Índice de protección de cola (proxy TAIL)",
+      "simbolo": "TAIL",
+      "fuente": "HT-01:csv"
+     },
+     "invertibilidad": {
+      "universo_suficiente": true,
+      "nota": "Existe un universo negociable amplio y accesible para un inversor minorista europeo en este ámbito."
+     },
+     "liquidez": "alta",
+     "reversibilidad": "alta",
+     "que_cambiaria_la_conclusion": [
+      "Cierre de TAIL por debajo de 3678.40",
+      "Confirmación del impulso en las próximas cuatro semanas"
+     ],
+     "objeciones": [
+      {
+       "objecion_id": "OBJ-TAIL-01",
+       "fuerza": "moderada",
+       "resumen": "El impulso puede reflejar un rebote técnico y no un cambio de tendencia.",
+       "respuesta": "Respondida con la evidencia de datos HT-01 y los cálculos CALC- de la clase.",
+       "estado": "RESPONDIDA"
+      }
+     ],
+     "lo_que_no_sabemos": [
+      "Si el impulso reciente persistirá tras el próximo dato relevante"
+     ],
+     "confianza": "probable",
+     "evidencias": [
+      "CLM-2026-0175",
+      "CLM-2026-0176"
+     ],
+     "calculos": [
+      "CALC-2026-1088",
+      "CALC-2026-1089",
+      "CALC-2026-1090",
+      "CALC-2026-1091",
+      "CALC-2026-1092",
+      "CALC-2026-1093",
+      "CALC-2026-1124"
+     ],
+     "minigrafico": {
+      "tipo": "PRECIO_CON_ZONA",
+      "serie_ref": "HT01:TAIL",
+      "zona_interes": {
+       "min": 4068.186284,
+       "max": 4496.41642,
+       "unidad": "nivel del indicador de seguimiento"
+      },
+      "calc_id": "CALC-2026-1088"
+     },
+     "x_referencia": "SPY",
+     "relevancia_decisional": "BAJA",
+     "siguiente_paso_sugerido": "ENVIAR_A_BLOQUE_B",
+     "por_que_llano": "Su precio sube más que el de otras ideas parecidas desde hace meses.",
+     "que_puede_salir_mal_llano": "Si el mercado cae, esta idea también puede caer."
+    }
+   ],
+   "menos_de_tres_motivo": "Se proponen 2 opción(es) en Derivados financieros. Se proponen 2 opción(es): de 2 candidatas analizadas, 2 finalistas evaluadas y 2 elegibles (R14)."
+  },
+  "INM": {
+   "estado_semaforo": "VERDE",
+   "regimen_clase": "Régimen de INM a 2026-09-25: señal compuesta media 0.66.",
+   "candidatas_analizadas": 2,
+   "embudo": {
+    "gc0_delta_material": false,
+    "cribadas": 0,
+    "pasan_gc1": 0,
+    "pasan_gc2": 0,
+    "finalistas_gc3": 0,
+    "elegibles": 2
+   },
+   "opciones": [
+    {
+     "opp_id": "OPP-2026-0027",
+     "rango": 1,
+     "tipo_opcion": "MERCADO",
+     "tipo_activo": "INM",
+     "subtipo": "REIT y SOCIMI",
+     "nombre": "Inmobiliario cotizado internacional sin EE. UU.",
+     "nombre_llano": "Inmuebles en bolsa de Europa",
+     "tesis": "Inmobiliario cotizado internacional sin EE. UU.: el impulso relativo y la tendencia sostienen una evolución favorable del ámbito en los próximos meses.",
+     "mecanismo": "Persistencia del impulso de precios y flujos coherentes con la señal compuesta de la clase.",
+     "tnd_ids": [
+      "TND-2026-0022"
+     ],
+     "cluster_id": "CL-13",
+     "regiones": [
+      "EUR"
+     ],
+     "puntuaciones": {
+      "T": 70,
+      "E": 80,
+      "M": 50,
+      "A": 60,
+      "P": 65,
+      "RK": 69,
+      "desglose_ref": "HT03-2026-0013-2026-0027"
+     },
+     "horizontes": {
+      "H3": {
+       "vista": "relativa_desfavorable",
+       "banda": "más probable que no",
+       "prob": null,
+       "certificado_r13": false,
+       "prg_id": "PRG-2026-0036",
+       "etiqueta": "sin ventaja demostrada todavía",
+       "fecha_resolucion": "2027-01-24",
+       "criterio_resolucion": "Cierre HT-01 de la última sesión ≤ 2027-01-24 frente al cierre de la última sesión ≤ 2026-07-24; suceso: rentabilidad de IFGL inferior a la de REET entre 2026-07-24 y 2027-01-24"
+      },
+      "H4": {
+       "vista": "relativa_desfavorable",
+       "banda": "más probable que no",
+       "prob": null,
+       "certificado_r13": false,
+       "prg_id": "PRG-2026-0037",
+       "etiqueta": "sin ventaja demostrada todavía",
+       "fecha_resolucion": "2027-07-24",
+       "criterio_resolucion": "Cierre HT-01 de la última sesión ≤ 2027-07-24 frente al cierre de la última sesión ≤ 2026-07-24; suceso: rentabilidad de IFGL inferior a la de REET entre 2026-07-24 y 2027-07-24"
+      }
+     },
+     "horizonte_principal": "H3",
+     "valoracion": "Precio en el percentil 80% de sus últimos tres años (ST-DESC-001).",
+     "catalizadores": [
+      {
+       "evento": "Publicación de datos mensuales de la clase",
+       "fecha": "2026-08"
+      }
+     ],
+     "riesgos": [
+      "Reversión brusca del impulso",
+      "Cambio de régimen de mercado"
+     ],
+     "riesgo_1a5": 3,
+     "invalidacion": [
+      "Cierre de IFGL por debajo de 100.66"
+     ],
+     "ambito": {
+      "incluye": "REIT e inmobiliarias cotizadas fuera de EE. UU.",
+      "excluye": "Inmobiliario privado (ALT)",
+      "region": "Europa"
+     },
+     "indicador_seguimiento": {
+      "nombre": "Índice de REIT internacionales (proxy IFGL)",
+      "simbolo": "IFGL",
+      "fuente": "HT-01:csv"
+     },
+     "invertibilidad": {
+      "universo_suficiente": true,
+      "nota": "Existe un universo negociable amplio y accesible para un inversor minorista europeo en este ámbito."
+     },
+     "liquidez": "alta",
+     "reversibilidad": "alta",
+     "que_cambiaria_la_conclusion": [
+      "Cierre de IFGL por debajo de 100.66",
+      "Confirmación del impulso en las próximas cuatro semanas"
+     ],
+     "objeciones": [
+      {
+       "objecion_id": "OBJ-IFGL-01",
+       "fuerza": "moderada",
+       "resumen": "El impulso puede reflejar un rebote técnico y no un cambio de tendencia.",
+       "respuesta": "Respondida con la evidencia de datos HT-01 y los cálculos CALC- de la clase.",
+       "estado": "RESPONDIDA"
+      }
+     ],
+     "lo_que_no_sabemos": [
+      "Si el impulso reciente persistirá tras el próximo dato relevante"
+     ],
+     "confianza": "probable",
+     "evidencias": [
+      "CLM-2026-0055",
+      "CLM-2026-0056"
+     ],
+     "calculos": [
+      "CALC-2026-1094",
+      "CALC-2026-1095",
+      "CALC-2026-1096",
+      "CALC-2026-1097",
+      "CALC-2026-1098",
+      "CALC-2026-1099",
+      "CALC-2026-1124"
+     ],
+     "minigrafico": {
+      "tipo": "PRECIO_CON_ZONA",
+      "serie_ref": "HT01:IFGL",
+      "zona_interes": {
+       "min": 109.324142,
+       "max": 120.831946,
+       "unidad": "nivel del indicador de seguimiento"
+      },
+      "calc_id": "CALC-2026-1094"
+     },
+     "x_referencia": "REET",
+     "relevancia_decisional": "BAJA",
+     "siguiente_paso_sugerido": "ENVIAR_A_BLOQUE_B",
+     "por_que_llano": "Su precio sube más que el de otras ideas parecidas desde hace meses.",
+     "que_puede_salir_mal_llano": "Si el mercado cae, esta idea también puede caer."
+    },
+    {
+     "opp_id": "OPP-2026-0022",
+     "rango": 2,
+     "tipo_opcion": "MERCADO",
+     "tipo_activo": "INM",
+     "subtipo": "REIT",
+     "nombre": "Inmobiliario cotizado global",
+     "nombre_llano": "Inmuebles en bolsa de todo el mundo",
+     "tesis": "Inmobiliario cotizado global: el impulso relativo y la tendencia sostienen una evolución favorable del ámbito en los próximos meses.",
+     "mecanismo": "Persistencia del impulso de precios y flujos coherentes con la señal compuesta de la clase.",
+     "tnd_ids": [
+      "TND-2026-0010"
+     ],
+     "cluster_id": "CL-14",
+     "regiones": [
+      "GLB"
+     ],
+     "puntuaciones": {
+      "T": 70,
+      "E": 75,
+      "M": 50,
+      "A": 65,
+      "P": 65,
+      "RK": 69,
+      "desglose_ref": "HT03-2026-0013-2026-0022"
+     },
+     "horizontes": {
+      "H3": {
+       "vista": "alcista",
+       "banda": "incierto",
+       "prob": null,
+       "certificado_r13": false,
+       "prg_id": "PRG-2026-0038",
+       "etiqueta": "sin ventaja demostrada todavía",
+       "fecha_resolucion": "2027-01-24",
+       "criterio_resolucion": "Cierre HT-01 de la última sesión ≤ 2027-01-24 frente al cierre de la última sesión ≤ 2026-07-24; suceso: rentabilidad de REET positiva entre 2026-07-24 y 2027-01-24"
+      },
+      "H4": {
+       "vista": "alcista",
+       "banda": "incierto",
+       "prob": null,
+       "certificado_r13": false,
+       "prg_id": "PRG-2026-0039",
+       "etiqueta": "sin ventaja demostrada todavía",
+       "fecha_resolucion": "2027-07-24",
+       "criterio_resolucion": "Cierre HT-01 de la última sesión ≤ 2027-07-24 frente al cierre de la última sesión ≤ 2026-07-24; suceso: rentabilidad de REET positiva entre 2026-07-24 y 2027-07-24"
+      }
+     },
+     "horizonte_principal": "H3",
+     "valoracion": "Precio en el percentil 88% de sus últimos tres años (ST-DESC-001).",
+     "catalizadores": [
+      {
+       "evento": "Publicación de datos mensuales de la clase",
+       "fecha": "2026-08"
+      }
+     ],
+     "riesgos": [
+      "Reversión brusca del impulso",
+      "Cambio de régimen de mercado"
+     ],
+     "riesgo_1a5": 3,
+     "invalidacion": [
+      "Cierre de REET por debajo de 77.21"
+     ],
+     "ambito": {
+      "incluye": "REIT e inmobiliarias cotizadas de países desarrollados",
+      "excluye": "Inmobiliario privado (ALT)",
+      "region": "Global"
+     },
+     "indicador_seguimiento": {
+      "nombre": "FTSE EPRA Nareit Developed (proxy REET)",
+      "simbolo": "REET",
+      "fuente": "HT-01:csv"
+     },
+     "invertibilidad": {
+      "universo_suficiente": true,
+      "nota": "Existe un universo negociable amplio y accesible para un inversor minorista europeo en este ámbito."
+     },
+     "liquidez": "alta",
+     "reversibilidad": "alta",
+     "que_cambiaria_la_conclusion": [
+      "Cierre de REET por debajo de 77.21",
+      "Confirmación del impulso en las próximas cuatro semanas"
+     ],
+     "objeciones": [
+      {
+       "objecion_id": "OBJ-REET-01",
+       "fuerza": "moderada",
+       "resumen": "El impulso puede reflejar un rebote técnico y no un cambio de tendencia.",
+       "respuesta": "Respondida con la evidencia de datos HT-01 y los cálculos CALC- de la clase.",
+       "estado": "RESPONDIDA"
+      }
+     ],
+     "lo_que_no_sabemos": [
+      "Si el impulso reciente persistirá tras el próximo dato relevante"
+     ],
+     "confianza": "probable",
+     "evidencias": [
+      "CLM-2026-0053",
+      "CLM-2026-0054"
+     ],
+     "calculos": [
+      "CALC-2026-1094",
+      "CALC-2026-1095",
+      "CALC-2026-1096",
+      "CALC-2026-1097",
+      "CALC-2026-1098",
+      "CALC-2026-1099",
+      "CALC-2026-1124"
+     ],
+     "minigrafico": {
+      "tipo": "PRECIO_CON_ZONA",
+      "serie_ref": "HT01:REET",
+      "zona_interes": {
+       "min": 88.412243,
+       "max": 97.718795,
+       "unidad": "nivel del indicador de seguimiento"
+      },
+      "calc_id": "CALC-2026-1094"
+     },
+     "x_referencia": null,
+     "relevancia_decisional": "BAJA",
+     "siguiente_paso_sugerido": "ENVIAR_A_BLOQUE_B",
+     "por_que_llano": "Su precio sube más que el de otras ideas parecidas desde hace meses.",
+     "que_puede_salir_mal_llano": "Si el mercado cae, esta idea también puede caer."
+    }
+   ],
+   "menos_de_tres_motivo": "Se proponen 2 opción(es) en Activos inmobiliarios cotizados. Se proponen 2 opción(es): de 2 candidatas analizadas, 2 finalistas evaluadas y 2 elegibles (R14)."
+  },
+  "CRI": {
+   "estado_semaforo": "VERDE",
+   "regimen_clase": "Régimen de CRI a 2026-09-25: señal compuesta media 0.69.",
+   "candidatas_analizadas": 3,
+   "embudo": {
+    "gc0_delta_material": true,
+    "cribadas": 3,
+    "pasan_gc1": 3,
+    "pasan_gc2": 3,
+    "finalistas_gc3": 3,
+    "elegibles": 2
+   },
+   "opciones": [
+    {
+     "opp_id": "OPP-2026-0028",
+     "rango": 1,
+     "tipo_opcion": "SEGMENTO",
+     "tipo_activo": "CRI",
+     "subtipo": "Altcoins",
+     "nombre": "Redes de alto rendimiento de nueva generación",
+     "nombre_llano": "Monedas digitales de todo el mundo",
+     "tesis": "Redes de alto rendimiento de nueva generación: el impulso relativo y la tendencia sostienen una evolución favorable del ámbito en los próximos meses.",
+     "mecanismo": "Persistencia del impulso de precios y flujos coherentes con la señal compuesta de la clase.",
+     "tnd_ids": [
+      "TND-2026-0025"
+     ],
+     "cluster_id": "CL-17",
+     "regiones": [
+      "GLB"
+     ],
+     "puntuaciones": {
+      "T": 70,
+      "E": 75,
+      "M": 50,
+      "A": 70,
+      "P": 65,
+      "RK": 72,
+      "desglose_ref": "HT03-2026-0013-2026-0028"
+     },
+     "horizontes": {
+      "H2": {
+       "vista": "relativa_favorable",
+       "banda": "más probable que no",
+       "prob": null,
+       "certificado_r13": false,
+       "prg_id": "PRG-2026-0189",
+       "etiqueta": "sin ventaja demostrada todavía",
+       "fecha_resolucion": "2026-10-23",
+       "criterio_resolucion": "Cierre HT-01 de la última sesión ≤ 2026-10-23 frente al cierre de la última sesión ≤ 2026-09-25; suceso: rentabilidad de SOL-USD superior a la de BTC-USD entre 2026-09-25 y 2026-10-23"
+      },
+      "H3": {
+       "vista": "relativa_favorable",
+       "banda": "más probable que no",
+       "prob": null,
+       "certificado_r13": false,
+       "prg_id": "PRG-2026-0190",
+       "etiqueta": "sin ventaja demostrada todavía",
+       "fecha_resolucion": "2027-03-25",
+       "criterio_resolucion": "Cierre HT-01 de la última sesión ≤ 2027-03-25 frente al cierre de la última sesión ≤ 2026-09-25; suceso: rentabilidad de SOL-USD superior a la de BTC-USD entre 2026-09-25 y 2027-03-25"
+      }
+     },
+     "horizonte_principal": "H3",
+     "valoracion": "Precio en el percentil 100% de sus últimos tres años (ST-DESC-001).",
+     "catalizadores": [
+      {
+       "evento": "Publicación de datos mensuales de la clase",
+       "fecha": "2026-10"
+      }
+     ],
+     "riesgos": [
+      "Reversión brusca del impulso",
+      "Cambio de régimen de mercado"
+     ],
+     "riesgo_1a5": 5,
+     "invalidacion": [
+      "Cierre de SOL-USD por debajo de 224561.42"
+     ],
+     "ambito": {
+      "incluye": "Redes de capa 1 alternativas de alto rendimiento",
+      "excluye": "Redes consolidadas de contratos inteligentes",
+      "region": "Global"
+     },
+     "indicador_seguimiento": {
+      "nombre": "Precio del solana",
+      "simbolo": "SOL-USD",
+      "fuente": "HT-01:csv"
+     },
+     "invertibilidad": {
+      "universo_suficiente": true,
+      "nota": "Existe un universo negociable amplio y accesible para un inversor minorista europeo en este ámbito."
+     },
+     "liquidez": "alta",
+     "reversibilidad": "alta",
+     "que_cambiaria_la_conclusion": [
+      "Cierre de SOL-USD por debajo de 224561.42",
+      "Confirmación del impulso en las próximas cuatro semanas"
+     ],
+     "objeciones": [
+      {
+       "objecion_id": "OBJ-SOL-USD-01",
+       "fuerza": "moderada",
+       "resumen": "El impulso puede reflejar un rebote técnico y no un cambio de tendencia.",
+       "respuesta": "Respondida con la evidencia de datos HT-01 y los cálculos CALC- de la clase.",
+       "estado": "RESPONDIDA"
+      }
+     ],
+     "lo_que_no_sabemos": [
+      "Si el impulso reciente persistirá tras el próximo dato relevante"
+     ],
+     "confianza": "probable",
+     "evidencias": [
+      "CLM-2026-0197",
+      "CLM-2026-0198"
+     ],
+     "calculos": [
+      "CALC-2026-1100",
+      "CALC-2026-1101",
+      "CALC-2026-1102",
+      "CALC-2026-1103",
+      "CALC-2026-1104",
+      "CALC-2026-1105",
+      "CALC-2026-1124"
+     ],
+     "minigrafico": {
+      "tipo": "PRECIO_CON_ZONA",
+      "serie_ref": "HT01:SOL-USD",
+      "zona_interes": {
+       "min": 250980.412976,
+       "max": 277399.403816,
+       "unidad": "nivel del indicador de seguimiento"
+      },
+      "calc_id": "CALC-2026-1100"
+     },
+     "x_referencia": "BTC-USD",
+     "relevancia_decisional": "ALTA",
+     "siguiente_paso_sugerido": "ENVIAR_A_BLOQUE_B",
+     "por_que_llano": "Su precio sube más que el de otras ideas parecidas desde hace meses.",
+     "que_puede_salir_mal_llano": "Si el mercado cae, esta idea también puede caer."
+    },
+    {
+     "opp_id": "OPP-2026-0029",
+     "rango": 2,
+     "tipo_opcion": "SEGMENTO",
+     "tipo_activo": "CRI",
+     "subtipo": "Bitcoin y reserva de valor",
+     "nombre": "Criptoactivos de reserva de valor",
+     "nombre_llano": "Monedas digitales de todo el mundo",
+     "tesis": "Criptoactivos de reserva de valor: el impulso relativo y la tendencia sostienen una evolución favorable del ámbito en los próximos meses.",
+     "mecanismo": "Persistencia del impulso de precios y flujos coherentes con la señal compuesta de la clase.",
+     "tnd_ids": [
+      "TND-2026-0026"
+     ],
+     "cluster_id": "CL-4",
+     "regiones": [
+      "GLB"
+     ],
+     "puntuaciones": {
+      "T": 70,
+      "E": 75,
+      "M": 50,
+      "A": 65,
+      "P": 65,
+      "RK": 69,
+      "desglose_ref": "HT03-2026-0013-2026-0029"
+     },
+     "horizontes": {
+      "H2": {
+       "vista": "alcista",
+       "banda": "incierto",
+       "prob": null,
+       "certificado_r13": false,
+       "prg_id": "PRG-2026-0191",
+       "etiqueta": "sin ventaja demostrada todavía",
+       "fecha_resolucion": "2026-10-23",
+       "criterio_resolucion": "Cierre HT-01 de la última sesión ≤ 2026-10-23 frente al cierre de la última sesión ≤ 2026-09-25; suceso: rentabilidad de BTC-USD positiva entre 2026-09-25 y 2026-10-23"
+      },
+      "H3": {
+       "vista": "alcista",
+       "banda": "incierto",
+       "prob": null,
+       "certificado_r13": false,
+       "prg_id": "PRG-2026-0192",
+       "etiqueta": "sin ventaja demostrada todavía",
+       "fecha_resolucion": "2027-03-25",
+       "criterio_resolucion": "Cierre HT-01 de la última sesión ≤ 2027-03-25 frente al cierre de la última sesión ≤ 2026-09-25; suceso: rentabilidad de BTC-USD positiva entre 2026-09-25 y 2027-03-25"
+      }
+     },
+     "horizonte_principal": "H3",
+     "valoracion": "Precio en el percentil 72% de sus últimos tres años (ST-DESC-001).",
+     "catalizadores": [
+      {
+       "evento": "Publicación de datos mensuales de la clase",
+       "fecha": "2026-10"
+      }
+     ],
+     "riesgos": [
+      "Reversión brusca del impulso",
+      "Cambio de régimen de mercado"
+     ],
+     "riesgo_1a5": 5,
+     "invalidacion": [
+      "Cierre de BTC-USD por debajo de 25679.54"
+     ],
+     "ambito": {
+      "incluye": "Criptoactivos de reserva de valor de gran capitalización",
+      "excluye": "Altcoins y stablecoins",
+      "region": "Global"
+     },
+     "indicador_seguimiento": {
+      "nombre": "Precio del bitcoin",
+      "simbolo": "BTC-USD",
+      "fuente": "HT-01:csv"
+     },
+     "invertibilidad": {
+      "universo_suficiente": true,
+      "nota": "Existe un universo negociable amplio y accesible para un inversor minorista europeo en este ámbito."
+     },
+     "liquidez": "alta",
+     "reversibilidad": "alta",
+     "que_cambiaria_la_conclusion": [
+      "Cierre de BTC-USD por debajo de 25679.54",
+      "Confirmación del impulso en las próximas cuatro semanas"
+     ],
+     "objeciones": [
+      {
+       "objecion_id": "OBJ-BTC-USD-01",
+       "fuerza": "moderada",
+       "resumen": "El impulso puede reflejar un rebote técnico y no un cambio de tendencia.",
+       "respuesta": "Respondida con la evidencia de datos HT-01 y los cálculos CALC- de la clase.",
+       "estado": "RESPONDIDA"
+      }
+     ],
+     "lo_que_no_sabemos": [
+      "Si el impulso reciente persistirá tras el próximo dato relevante"
+     ],
+     "confianza": "probable",
+     "evidencias": [
+      "CLM-2026-0201",
+      "CLM-2026-0202"
+     ],
+     "calculos": [
+      "CALC-2026-1100",
+      "CALC-2026-1101",
+      "CALC-2026-1102",
+      "CALC-2026-1103",
+      "CALC-2026-1104",
+      "CALC-2026-1105",
+      "CALC-2026-1124"
+     ],
+     "minigrafico": {
+      "tipo": "PRECIO_CON_ZONA",
+      "serie_ref": "HT01:BTC-USD",
+      "zona_interes": {
+       "min": 28700.665186,
+       "max": 31721.787838,
+       "unidad": "nivel del indicador de seguimiento"
+      },
+      "calc_id": "CALC-2026-1100"
+     },
+     "x_referencia": null,
+     "relevancia_decisional": "ALTA",
+     "siguiente_paso_sugerido": "ENVIAR_A_BLOQUE_B",
+     "por_que_llano": "Su precio sube más que el de otras ideas parecidas desde hace meses.",
+     "que_puede_salir_mal_llano": "Si el mercado cae, esta idea también puede caer."
+    }
+   ],
+   "menos_de_tres_motivo": "Se proponen 2 opción(es) en Criptoactivos y activos digitales. Se proponen 2 opción(es): de 3 candidatas analizadas, 3 finalistas evaluadas y 2 elegibles (R14). OPP-2026-0045: A=60 en banda marginal sin segunda pasada independiente → Segunda pasada independiente de A y cálculo verificado."
+  },
+  "ALT": {
+   "estado_semaforo": "VERDE",
+   "regimen_clase": "Régimen de ALT a 2026-09-25: señal compuesta media 0.60.",
+   "candidatas_analizadas": 1,
+   "embudo": {
+    "gc0_delta_material": false,
+    "cribadas": 0,
+    "pasan_gc1": 0,
+    "pasan_gc2": 0,
+    "finalistas_gc3": 0,
+    "elegibles": 1
+   },
+   "opciones": [
+    {
+     "opp_id": "OPP-2026-0023",
+     "rango": 1,
+     "tipo_opcion": "SEGMENTO",
+     "tipo_activo": "ALT",
+     "subtipo": "Deuda privada",
+     "nombre": "Deuda privada",
+     "nombre_llano": "Inversión alternativa de EE. UU.",
+     "tesis": "Deuda privada: el impulso relativo y la tendencia sostienen una evolución favorable del ámbito en los próximos meses.",
+     "mecanismo": "Persistencia del impulso de precios y flujos coherentes con la señal compuesta de la clase.",
+     "tnd_ids": [
+      "TND-2026-0014"
+     ],
+     "cluster_id": "CL-3",
+     "regiones": [
+      "NAM"
+     ],
+     "puntuaciones": {
+      "T": 70,
+      "E": 80,
+      "M": 50,
+      "A": 65,
+      "P": 65,
+      "RK": 71,
+      "desglose_ref": "HT03-2026-0013-2026-0023"
+     },
+     "horizontes": {
+      "H4": {
+       "vista": "relativa_favorable",
+       "banda": "más probable que no",
+       "prob": null,
+       "certificado_r13": false,
+       "prg_id": "PRG-2026-0107",
+       "etiqueta": "sin ventaja demostrada todavía",
+       "fecha_resolucion": "2027-08-28",
+       "criterio_resolucion": "Cierre HT-01 de la última sesión ≤ 2027-08-28 frente al cierre de la última sesión ≤ 2026-08-28; suceso: rentabilidad de BIZD superior a la de PSP entre 2026-08-28 y 2027-08-28"
+      }
+     },
+     "horizonte_principal": "H4",
+     "valoracion": "Precio en el percentil 90% de sus últimos tres años (ST-DESC-001).",
+     "catalizadores": [
+      {
+       "evento": "Publicación de datos mensuales de la clase",
+       "fecha": "2026-09"
+      }
+     ],
+     "riesgos": [
+      "Reversión brusca del impulso",
+      "Cambio de régimen de mercado"
+     ],
+     "riesgo_1a5": 4,
+     "invalidacion": [
+      "Cierre de BIZD por debajo de 42.67"
+     ],
+     "ambito": {
+      "incluye": "Préstamos directos a empresas medianas medidos por sociedades de desarrollo de negocio cotizadas",
+      "excluye": "Crédito cotizado (RF)",
+      "region": "Norteamérica"
+     },
+     "indicador_seguimiento": {
+      "nombre": "Índice de BDC (proxy BIZD)",
+      "simbolo": "BIZD",
+      "fuente": "HT-01:csv"
+     },
+     "invertibilidad": {
+      "universo_suficiente": true,
+      "nota": "Existe un universo negociable amplio y accesible para un inversor minorista europeo en este ámbito."
+     },
+     "liquidez": "alta",
+     "reversibilidad": "alta",
+     "que_cambiaria_la_conclusion": [
+      "Cierre de BIZD por debajo de 42.67",
+      "Confirmación del impulso en las próximas cuatro semanas"
+     ],
+     "objeciones": [
+      {
+       "objecion_id": "OBJ-BIZD-01",
+       "fuerza": "moderada",
+       "resumen": "El impulso puede reflejar un rebote técnico y no un cambio de tendencia.",
+       "respuesta": "Respondida con la evidencia de datos HT-01 y los cálculos CALC- de la clase.",
+       "estado": "RESPONDIDA"
+      }
+     ],
+     "lo_que_no_sabemos": [
+      "Si el impulso reciente persistirá tras el próximo dato relevante"
+     ],
+     "confianza": "probable",
+     "evidencias": [
+      "CLM-2026-0122",
+      "CLM-2026-0123"
+     ],
+     "calculos": [
+      "CALC-2026-1106",
+      "CALC-2026-1107",
+      "CALC-2026-1108",
+      "CALC-2026-1109",
+      "CALC-2026-1110",
+      "CALC-2026-1111",
+      "CALC-2026-1124"
+     ],
+     "minigrafico": {
+      "tipo": "PRECIO_CON_ZONA",
+      "serie_ref": "HT01:BIZD",
+      "zona_interes": {
+       "min": 48.922035,
+       "max": 54.071723,
+       "unidad": "nivel del indicador de seguimiento"
+      },
+      "calc_id": "CALC-2026-1106"
+     },
+     "x_referencia": "PSP",
+     "relevancia_decisional": "ALTA",
+     "siguiente_paso_sugerido": "ENVIAR_A_BLOQUE_B",
+     "por_que_llano": "Su precio sube más que el de otras ideas parecidas desde hace meses.",
+     "que_puede_salir_mal_llano": "Si el mercado cae, esta idea también puede caer."
+    }
+   ],
+   "menos_de_tres_motivo": "Se proponen 1 opción(es) en Capital privado y activos alternativos. Se proponen 1 opción(es): de 1 candidatas analizadas, 1 finalistas evaluadas y 1 elegibles (R14)."
+  },
+  "MON": {
+   "estado_semaforo": "GRIS",
+   "regimen_clase": "Régimen de MON a 2026-09-25: señal compuesta media 0.60.",
+   "candidatas_analizadas": 0,
+   "embudo": {
+    "gc0_delta_material": false,
+    "cribadas": 0,
+    "pasan_gc1": 0,
+    "pasan_gc2": 0,
+    "finalistas_gc3": 0,
+    "elegibles": 0
+   },
+   "opciones": [],
+   "menos_de_tres_motivo": "Se proponen 0 opción(es) en Instrumentos monetarios y liquidez. Se proponen 0 opción(es): de 0 candidatas analizadas, 0 finalistas evaluadas y 0 elegibles (R14)."
+  },
+  "TCV": {
+   "estado_semaforo": "VERDE",
+   "regimen_clase": "Régimen de TCV a 2026-09-25: señal compuesta media 0.69.",
+   "candidatas_analizadas": 2,
+   "embudo": {
+    "gc0_delta_material": false,
+    "cribadas": 0,
+    "pasan_gc1": 0,
+    "pasan_gc2": 0,
+    "finalistas_gc3": 0,
+    "elegibles": 2
+   },
+   "opciones": [
+    {
+     "opp_id": "OPP-2026-0042",
+     "rango": 1,
+     "tipo_opcion": "FACTOR",
+     "tipo_activo": "TCV",
+     "subtipo": "Índices de volatilidad",
+     "nombre": "Volatilidad implícita de la bolsa de EE. UU.",
+     "nombre_llano": "Tipos y nervios del mercado de EE. UU.",
+     "tesis": "Volatilidad implícita de la bolsa de EE. UU.: el impulso relativo y la tendencia sostienen una evolución favorable del ámbito en los próximos meses.",
+     "mecanismo": "Persistencia del impulso de precios y flujos coherentes con la señal compuesta de la clase.",
+     "tnd_ids": [
+      "TND-2026-0015"
+     ],
+     "cluster_id": "CL-5",
+     "regiones": [
+      "NAM"
+     ],
+     "puntuaciones": {
+      "T": 70,
+      "E": 75,
+      "M": 50,
+      "A": 70,
+      "P": 65,
+      "RK": 72,
+      "desglose_ref": "HT03-2026-0013-2026-0042"
+     },
+     "horizontes": {
+      "H2": {
+       "vista": "alcista",
+       "banda": "incierto",
+       "prob": null,
+       "certificado_r13": false,
+       "prg_id": "PRG-2026-0165",
+       "etiqueta": "sin ventaja demostrada todavía",
+       "fecha_resolucion": "2026-10-16",
+       "criterio_resolucion": "Cierre HT-01 de la última sesión ≤ 2026-10-16 frente al cierre de la última sesión ≤ 2026-09-18; suceso: rentabilidad de ^VIX positiva entre 2026-09-18 y 2026-10-16"
+      },
+      "H3": {
+       "vista": "alcista",
+       "banda": "incierto",
+       "prob": null,
+       "certificado_r13": false,
+       "prg_id": "PRG-2026-0166",
+       "etiqueta": "sin ventaja demostrada todavía",
+       "fecha_resolucion": "2027-03-18",
+       "criterio_resolucion": "Cierre HT-01 de la última sesión ≤ 2027-03-18 frente al cierre de la última sesión ≤ 2026-09-18; suceso: rentabilidad de ^VIX positiva entre 2026-09-18 y 2027-03-18"
+      }
+     },
+     "horizonte_principal": "H3",
+     "valoracion": "Precio en el percentil 47% de sus últimos tres años (ST-DESC-001).",
+     "catalizadores": [
+      {
+       "evento": "Publicación de datos mensuales de la clase",
+       "fecha": "2026-10"
+      }
+     ],
+     "riesgos": [
+      "Reversión brusca del impulso",
+      "Cambio de régimen de mercado"
+     ],
+     "riesgo_1a5": 4,
+     "invalidacion": [
+      "Cierre de ^VIX por debajo de 15.43"
+     ],
+     "ambito": {
+      "incluye": "Nivel de la volatilidad implícita a 30 días del S&P 500 como factor",
+      "excluye": "Estrategias de opciones (DER)",
+      "region": "Norteamérica"
+     },
+     "indicador_seguimiento": {
+      "nombre": "Índice VIX",
+      "simbolo": "^VIX",
+      "fuente": "HT-01:csv"
+     },
+     "invertibilidad": {
+      "universo_suficiente": true,
+      "nota": "Existe un universo negociable amplio y accesible para un inversor minorista europeo en este ámbito."
+     },
+     "liquidez": "alta",
+     "reversibilidad": "alta",
+     "que_cambiaria_la_conclusion": [
+      "Cierre de ^VIX por debajo de 15.43",
+      "Confirmación del impulso en las próximas cuatro semanas"
+     ],
+     "objeciones": [
+      {
+       "objecion_id": "OBJ-^VIX-01",
+       "fuerza": "moderada",
+       "resumen": "El impulso puede reflejar un rebote técnico y no un cambio de tendencia.",
+       "respuesta": "Respondida con la evidencia de datos HT-01 y los cálculos CALC- de la clase.",
+       "estado": "RESPONDIDA"
+      }
+     ],
+     "lo_que_no_sabemos": [
+      "Si el impulso reciente persistirá tras el próximo dato relevante"
+     ],
+     "confianza": "probable",
+     "evidencias": [
+      "CLM-2026-0150",
+      "CLM-2026-0181"
+     ],
+     "calculos": [
+      "CALC-2026-1118",
+      "CALC-2026-1119",
+      "CALC-2026-1120",
+      "CALC-2026-1121",
+      "CALC-2026-1122",
+      "CALC-2026-1123",
+      "CALC-2026-1124"
+     ],
+     "minigrafico": {
+      "tipo": "PRECIO_CON_ZONA",
+      "serie_ref": "HT01:^VIX",
+      "zona_interes": {
+       "min": 16.59885,
+       "max": 18.346098,
+       "unidad": "nivel del indicador de seguimiento"
+      },
+      "calc_id": "CALC-2026-1118"
+     },
+     "x_referencia": null,
+     "relevancia_decisional": "ALTA",
+     "siguiente_paso_sugerido": "ENVIAR_A_BLOQUE_B",
+     "por_que_llano": "Su precio sube más que el de otras ideas parecidas desde hace meses.",
+     "que_puede_salir_mal_llano": "Si el mercado cae, esta idea también puede caer."
+    },
+    {
+     "opp_id": "OPP-2026-0034",
+     "rango": 2,
+     "tipo_opcion": "ESTRATEGIA",
+     "tipo_activo": "TCV",
+     "subtipo": "Curvas y diferenciales entre vencimientos",
+     "nombre": "Pendiente de la curva de EE. UU. entre 2 y 10 años",
+     "nombre_llano": "Tipos y nervios del mercado de EE. UU.",
+     "tesis": "Pendiente de la curva de EE. UU. entre 2 y 10 años: el impulso relativo y la tendencia sostienen una evolución favorable del ámbito en los próximos meses.",
+     "mecanismo": "Persistencia del impulso de precios y flujos coherentes con la señal compuesta de la clase.",
+     "tnd_ids": [
+      "TND-2026-0016"
+     ],
+     "cluster_id": "CL-5",
+     "regiones": [
+      "NAM"
+     ],
+     "puntuaciones": {
+      "T": 70,
+      "E": 75,
+      "M": 50,
+      "A": 75,
+      "P": 65,
+      "RK": 74,
+      "desglose_ref": "HT03-2026-0013-2026-0034"
+     },
+     "horizontes": {
+      "H2": {
+       "vista": "alcista",
+       "banda": "incierto",
+       "prob": null,
+       "certificado_r13": false,
+       "prg_id": "PRG-2026-0167",
+       "etiqueta": "sin ventaja demostrada todavía",
+       "fecha_resolucion": "2026-10-16",
+       "criterio_resolucion": "Cierre HT-01 de la última sesión ≤ 2026-10-16 frente al cierre de la última sesión ≤ 2026-09-18; suceso: rentabilidad de CURVA-USD-2S10S-TR positiva entre 2026-09-18 y 2026-10-16"
+      },
+      "H3": {
+       "vista": "alcista",
+       "banda": "incierto",
+       "prob": null,
+       "certificado_r13": false,
+       "prg_id": "PRG-2026-0168",
+       "etiqueta": "sin ventaja demostrada todavía",
+       "fecha_resolucion": "2027-03-18",
+       "criterio_resolucion": "Cierre HT-01 de la última sesión ≤ 2027-03-18 frente al cierre de la última sesión ≤ 2026-09-18; suceso: rentabilidad de CURVA-USD-2S10S-TR positiva entre 2026-09-18 y 2027-03-18"
+      }
+     },
+     "horizonte_principal": "H3",
+     "valoracion": "Precio en el percentil 25% de sus últimos tres años (ST-DESC-001).",
+     "catalizadores": [
+      {
+       "evento": "Publicación de datos mensuales de la clase",
+       "fecha": "2026-10"
+      }
+     ],
+     "riesgos": [
+      "Reversión brusca del impulso",
+      "Cambio de régimen de mercado"
+     ],
+     "riesgo_1a5": 5,
+     "invalidacion": [
+      "Cierre de CURVA-USD-2S10S-TR por debajo de 26.58"
+     ],
+     "ambito": {
+      "incluye": "Pendiente 2-10 años de la curva del Tesoro de EE. UU. (empinamiento o aplanamiento)",
+      "excluye": "Dirección del nivel de tipos (RF)",
+      "region": "Norteamérica"
+     },
+     "indicador_seguimiento": {
+      "nombre": "Índice de rentabilidad de una posición 2s10s (serie propia)",
+      "simbolo": "CURVA-USD-2S10S-TR",
+      "fuente": "HT-01:csv"
+     },
+     "invertibilidad": {
+      "universo_suficiente": true,
+      "nota": "Existe un universo negociable amplio y accesible para un inversor minorista europeo en este ámbito."
+     },
+     "liquidez": "alta",
+     "reversibilidad": "alta",
+     "que_cambiaria_la_conclusion": [
+      "Cierre de CURVA-USD-2S10S-TR por debajo de 26.58",
+      "Confirmación del impulso en las próximas cuatro semanas"
+     ],
+     "objeciones": [
+      {
+       "objecion_id": "OBJ-CURVA-USD-2S10S-TR-01",
+       "fuerza": "moderada",
+       "resumen": "El impulso puede reflejar un rebote técnico y no un cambio de tendencia.",
+       "respuesta": "Respondida con la evidencia de datos HT-01 y los cálculos CALC- de la clase.",
+       "estado": "RESPONDIDA"
+      }
+     ],
+     "lo_que_no_sabemos": [
+      "Si el impulso reciente persistirá tras el próximo dato relevante"
+     ],
+     "confianza": "probable",
+     "evidencias": [
+      "CLM-2026-0177",
+      "CLM-2026-0178"
+     ],
+     "calculos": [
+      "CALC-2026-1118",
+      "CALC-2026-1119",
+      "CALC-2026-1120",
+      "CALC-2026-1121",
+      "CALC-2026-1122",
+      "CALC-2026-1123",
+      "CALC-2026-1124"
+     ],
+     "minigrafico": {
+      "tipo": "PRECIO_CON_ZONA",
+      "serie_ref": "HT01:CURVA-USD-2S10S-TR",
+      "zona_interes": {
+       "min": 28.355571,
+       "max": 31.340369,
+       "unidad": "nivel del indicador de seguimiento"
+      },
+      "calc_id": "CALC-2026-1118"
+     },
+     "x_referencia": null,
+     "relevancia_decisional": "ALTA",
+     "siguiente_paso_sugerido": "ENVIAR_A_BLOQUE_B",
+     "por_que_llano": "Su precio sube más que el de otras ideas parecidas desde hace meses.",
+     "que_puede_salir_mal_llano": "Si el mercado cae, esta idea también puede caer."
+    }
+   ],
+   "menos_de_tres_motivo": "Se proponen 2 opción(es) en Tipos de interés, crédito y volatilidad. Se proponen 2 opción(es): de 2 candidatas analizadas, 2 finalistas evaluadas y 2 elegibles (R14)."
+  }
+ },
+ "seguimiento_vigentes": [
+  {
+   "opp_id": "OPP-2026-0002",
+   "estado": "VIGENTE",
+   "comentario": "Se mantiene en el top-3 (continuidad 9.6.4)",
+   "decision_broker": null
+  },
+  {
+   "opp_id": "OPP-2026-0004",
+   "estado": "VIGENTE",
+   "comentario": "Se mantiene en el top-3 (continuidad 9.6.4)",
+   "decision_broker": null
+  },
+  {
+   "opp_id": "OPP-2026-0032",
+   "estado": "VIGENTE",
+   "comentario": "Se mantiene en el top-3 (continuidad 9.6.4)",
+   "decision_broker": null
+  },
+  {
+   "opp_id": "OPP-2026-0006",
+   "estado": "VIGENTE",
+   "comentario": "Se mantiene en el top-3 (continuidad 9.6.4)",
+   "decision_broker": null
+  },
+  {
+   "opp_id": "OPP-2026-0007",
+   "estado": "VIGENTE",
+   "comentario": "Se mantiene en el top-3 (continuidad 9.6.4)",
+   "decision_broker": null
+  },
+  {
+   "opp_id": "OPP-2026-0008",
+   "estado": "VIGENTE",
+   "comentario": "Se mantiene en el top-3 (continuidad 9.6.4)",
+   "decision_broker": null
+  },
+  {
+   "opp_id": "OPP-2026-0010",
+   "estado": "VIGENTE",
+   "comentario": "Se mantiene en el top-3 (continuidad 9.6.4)",
+   "decision_broker": null
+  },
+  {
+   "opp_id": "OPP-2026-0011",
+   "estado": "VIGENTE",
+   "comentario": "Se mantiene en el top-3 (continuidad 9.6.4)",
+   "decision_broker": null
+  },
+  {
+   "opp_id": "OPP-2026-0012",
+   "estado": "VIGENTE",
+   "comentario": "Se mantiene en el top-3 (continuidad 9.6.4)",
+   "decision_broker": null
+  },
+  {
+   "opp_id": "OPP-2026-0013",
+   "estado": "VIGENTE",
+   "comentario": "Se mantiene en el top-3 (continuidad 9.6.4)",
+   "decision_broker": null
+  },
+  {
+   "opp_id": "OPP-2026-0014",
+   "estado": "VIGENTE",
+   "comentario": "Se mantiene en el top-3 (continuidad 9.6.4)",
+   "decision_broker": null
+  },
+  {
+   "opp_id": "OPP-2026-0015",
+   "estado": "VIGENTE",
+   "comentario": "Se mantiene en el top-3 (continuidad 9.6.4)",
+   "decision_broker": null
+  },
+  {
+   "opp_id": "OPP-2026-0018",
+   "estado": "VIGENTE",
+   "comentario": "Se mantiene en el top-3 (continuidad 9.6.4)",
+   "decision_broker": null
+  },
+  {
+   "opp_id": "OPP-2026-0020",
+   "estado": "VIGENTE",
+   "comentario": "Se mantiene en el top-3 (continuidad 9.6.4)",
+   "decision_broker": null
+  },
+  {
+   "opp_id": "OPP-2026-0041",
+   "estado": "VIGENTE",
+   "comentario": "Se mantiene en el top-3 (continuidad 9.6.4)",
+   "decision_broker": null
+  },
+  {
+   "opp_id": "OPP-2026-0036",
+   "estado": "VIGENTE",
+   "comentario": "Se mantiene en el top-3 (continuidad 9.6.4)",
+   "decision_broker": null
+  },
+  {
+   "opp_id": "OPP-2026-0037",
+   "estado": "VIGENTE",
+   "comentario": "Se mantiene en el top-3 (continuidad 9.6.4)",
+   "decision_broker": null
+  },
+  {
+   "opp_id": "OPP-2026-0039",
+   "estado": "VIGENTE",
+   "comentario": "Se mantiene en el top-3 (continuidad 9.6.4)",
+   "decision_broker": null
+  },
+  {
+   "opp_id": "OPP-2026-0022",
+   "estado": "VIGENTE",
+   "comentario": "Se mantiene en el top-3 (continuidad 9.6.4)",
+   "decision_broker": null
+  },
+  {
+   "opp_id": "OPP-2026-0027",
+   "estado": "VIGENTE",
+   "comentario": "Se mantiene en el top-3 (continuidad 9.6.4)",
+   "decision_broker": null
+  },
+  {
+   "opp_id": "OPP-2026-0028",
+   "estado": "VIGENTE",
+   "comentario": "Se mantiene en el top-3 (continuidad 9.6.4)",
+   "decision_broker": null
+  },
+  {
+   "opp_id": "OPP-2026-0029",
+   "estado": "VIGENTE",
+   "comentario": "Se mantiene en el top-3 (continuidad 9.6.4)",
+   "decision_broker": null
+  },
+  {
+   "opp_id": "OPP-2026-0023",
+   "estado": "VIGENTE",
+   "comentario": "Se mantiene en el top-3 (continuidad 9.6.4)",
+   "decision_broker": null
+  },
+  {
+   "opp_id": "OPP-2026-0034",
+   "estado": "VIGENTE",
+   "comentario": "Se mantiene en el top-3 (continuidad 9.6.4)",
+   "decision_broker": null
+  },
+  {
+   "opp_id": "OPP-2026-0042",
+   "estado": "VIGENTE",
+   "comentario": "Se mantiene en el top-3 (continuidad 9.6.4)",
+   "decision_broker": null
+  }
+ ],
+ "historial_aciertos": {
+  "ventana": "12 semanas",
+  "global": {
+   "n": 55,
+   "aciertos": 26,
+   "tasa_acierto": 0.4727,
+   "referencia": "Tasa base sin fuga (RI-TB) de cada pronóstico",
+   "tasa_esperada_azar": 0.5394,
+   "significativo": false,
+   "por_horizonte": {
+    "H2": {
+     "n": 55,
+     "aciertos": 26
+    }
+   }
+  },
+  "por_clase": {
+   "RV": {
+    "n": 8,
+    "aciertos": 2,
+    "tasa_acierto": 0.25,
+    "referencia": "Tasa base sin fuga del mismo suceso (RI-TB) frente a ACWI",
+    "tasa_esperada_azar": 0.5513,
+    "significativo": false,
+    "por_horizonte": {
+     "H2": {
+      "n": 8,
+      "aciertos": 2
+     }
+    }
+   },
+   "RF": {
+    "n": 9,
+    "aciertos": 5,
+    "tasa_acierto": 0.5556,
+    "referencia": "Tasa base sin fuga del mismo suceso (RI-TB) frente a AGG",
+    "tasa_esperada_azar": 0.4786,
+    "significativo": false,
+    "por_horizonte": {
+     "H2": {
+      "n": 9,
+      "aciertos": 5
+     }
+    }
+   },
+   "DIV": {
+    "n": 9,
+    "aciertos": 5,
+    "tasa_acierto": 0.5556,
+    "referencia": "Tasa base sin fuga del mismo suceso (RI-TB) frente a CESTA",
+    "tasa_esperada_azar": 0.5954,
+    "significativo": false,
+    "por_horizonte": {
+     "H2": {
+      "n": 9,
+      "aciertos": 5
+     }
+    }
+   },
+   "MP": {
+    "n": 7,
+    "aciertos": 3,
+    "tasa_acierto": 0.4286,
+    "referencia": "Tasa base sin fuga del mismo suceso (RI-TB) frente a el propio activo",
+    "tasa_esperada_azar": 0.6447,
+    "significativo": false,
+    "por_horizonte": {
+     "H2": {
+      "n": 7,
+      "aciertos": 3
+     }
+    }
+   },
+   "IDX": {
+    "n": 9,
+    "aciertos": 4,
+    "tasa_acierto": 0.4444,
+    "referencia": "Tasa base sin fuga del mismo suceso (RI-TB) frente a el propio activo",
+    "tasa_esperada_azar": 0.49,
+    "significativo": false,
+    "por_horizonte": {
+     "H2": {
+      "n": 9,
+      "aciertos": 4
+     }
+    }
+   },
+   "CRI": {
+    "n": 5,
+    "aciertos": 3,
+    "tasa_acierto": 0.6,
+    "referencia": "Tasa base sin fuga del mismo suceso (RI-TB) frente a BTC-USD",
+    "tasa_esperada_azar": 0.559,
+    "significativo": false,
+    "por_horizonte": {
+     "H2": {
+      "n": 5,
+      "aciertos": 3
+     }
+    }
+   },
+   "TCV": {
+    "n": 8,
+    "aciertos": 4,
+    "tasa_acierto": 0.5,
+    "referencia": "Tasa base sin fuga del mismo suceso (RI-TB) frente a el propio activo",
+    "tasa_esperada_azar": 0.4839,
+    "significativo": false,
+    "por_horizonte": {
+     "H2": {
+      "n": 8,
+      "aciertos": 4
+     }
+    }
+   }
+  },
+  "nota": "Ventana de 12 semanas; 55 pronósticos de opciones publicadas resueltos"
+ },
+ "paquete_para_bloque_B": [
+  {
+   "opp_id": "OPP-2026-0002",
+   "tipo_activo": "RV",
+   "subtipo": "Sector",
+   "tipo_opcion": "SECTOR",
+   "nombre": "Sector de servicios públicos de EE. UU.",
+   "ambito": {
+    "incluye": "Eléctricas, gasistas y empresas de agua cotizadas de EE. UU.",
+    "excluye": "Infraestructuras privadas (ALT)",
+    "region": "Norteamérica"
+   },
+   "tesis": "Sector de servicios públicos de EE. UU.: el impulso relativo y la tendencia sostienen una evolución favorable del ámbito en los próximos meses.",
+   "mecanismo": "Persistencia del impulso de precios y flujos coherentes con la señal compuesta de la clase.",
+   "horizontes": [
+    "H2",
+    "H3"
+   ],
+   "horizonte_principal": "H3",
+   "pronosticos": [
+    "PRG-2026-0169",
+    "PRG-2026-0170"
+   ],
+   "catalizadores": [
+    {
+     "evento": "Publicación de datos mensuales de la clase",
+     "fecha": "2026-10"
+    }
+   ],
+   "riesgos": [
+    "Reversión brusca del impulso",
+    "Cambio de régimen de mercado"
+   ],
+   "invalidacion": [
+    "Cierre de XLU por debajo de 180.98"
+   ],
+   "indicador_seguimiento": {
+    "nombre": "Índice sectorial de servicios públicos de EE. UU. (proxy XLU)",
+    "simbolo": "XLU",
+    "fuente": "HT-01:csv"
+   },
+   "niveles_referencia": {
+    "nivel_actual": {
+     "valor": 212.912714,
+     "unidad": "nivel del indicador de seguimiento",
+     "fecha_dato": "2026-09-25",
+     "fuente": "HT-01:csv"
+    },
+    "invalidacion_1": {
+     "valor": 180.9758,
+     "unidad": "nivel de XLU",
+     "fecha_dato": "2026-09-25",
+     "fuente": "HT-01:csv"
+    }
+   },
+   "criterios_seleccion_sugeridos": [
+    "Exposición alta y directa a «Sector de servicios públicos de EE. UU.»",
+    "Liquidez diaria suficiente"
+   ],
+   "metricas_clave": [
+    "Evolución del indicador de seguimiento (XLU)",
+    "Momentum relativo frente a la referencia del tipo"
+   ],
+   "preguntas_para_B": [
+    "¿Qué activos del ámbito «Sector de servicios públicos de EE. UU.» capturan mejor la tendencia con menor riesgo?"
+   ],
+   "evidencias": [
+    "CLM-2026-0183",
+    "CLM-2026-0184"
+   ],
+   "calculos": [
+    "CALC-2026-1052",
+    "CALC-2026-1053",
+    "CALC-2026-1054",
+    "CALC-2026-1055",
+    "CALC-2026-1056",
+    "CALC-2026-1057",
+    "CALC-2026-1124"
+   ],
+   "siguiente_paso_sugerido": "ENVIAR_A_BLOQUE_B",
+   "relevancia_decisional": "MEDIA"
+  },
+  {
+   "opp_id": "OPP-2026-0004",
+   "tipo_activo": "RV",
+   "subtipo": "Sector",
+   "tipo_opcion": "SECTOR",
+   "nombre": "Sector tecnológico de EE. UU.",
+   "ambito": {
+    "incluye": "Empresas tecnológicas cotizadas de EE. UU. (software, semiconductores, equipos)",
+    "excluye": "Telecomunicaciones y comercio electrónico",
+    "region": "Norteamérica"
+   },
+   "tesis": "Sector tecnológico de EE. UU.: el impulso relativo y la tendencia sostienen una evolución favorable del ámbito en los próximos meses.",
+   "mecanismo": "Persistencia del impulso de precios y flujos coherentes con la señal compuesta de la clase.",
+   "horizontes": [
+    "H2",
+    "H3"
+   ],
+   "horizonte_principal": "H3",
+   "pronosticos": [
+    "PRG-2026-0134",
+    "PRG-2026-0080"
+   ],
+   "catalizadores": [
+    {
+     "evento": "Publicación de datos mensuales de la clase",
+     "fecha": "2026-09"
+    }
+   ],
+   "riesgos": [
+    "Reversión brusca del impulso",
+    "Cambio de régimen de mercado"
+   ],
+   "invalidacion": [
+    "Cierre de XLK por debajo de 130.58"
+   ],
+   "indicador_seguimiento": {
+    "nombre": "Índice sectorial de tecnología de EE. UU. (proxy XLK)",
+    "simbolo": "XLK",
+    "fuente": "HT-01:csv"
+   },
+   "niveles_referencia": {
+    "nivel_actual": {
+     "valor": 160.193593,
+     "unidad": "nivel del indicador de seguimiento",
+     "fecha_dato": "2026-09-25",
+     "fuente": "HT-01:csv"
+    },
+    "invalidacion_1": {
+     "valor": 130.5809,
+     "unidad": "nivel de XLK",
+     "fecha_dato": "2026-09-25",
+     "fuente": "HT-01:csv"
+    }
+   },
+   "criterios_seleccion_sugeridos": [
+    "Exposición alta y directa a «Sector tecnológico de EE. UU.»",
+    "Liquidez diaria suficiente"
+   ],
+   "metricas_clave": [
+    "Evolución del indicador de seguimiento (XLK)",
+    "Momentum relativo frente a la referencia del tipo"
+   ],
+   "preguntas_para_B": [
+    "¿Qué activos del ámbito «Sector tecnológico de EE. UU.» capturan mejor la tendencia con menor riesgo?"
+   ],
+   "evidencias": [
+    "CLM-2026-0089",
+    "CLM-2026-0090"
+   ],
+   "calculos": [
+    "CALC-2026-1052",
+    "CALC-2026-1053",
+    "CALC-2026-1054",
+    "CALC-2026-1055",
+    "CALC-2026-1056",
+    "CALC-2026-1057",
+    "CALC-2026-1124"
+   ],
+   "siguiente_paso_sugerido": "ENVIAR_A_BLOQUE_B",
+   "relevancia_decisional": "BAJA"
+  },
+  {
+   "opp_id": "OPP-2026-0032",
+   "tipo_activo": "RV",
+   "subtipo": "Sector",
+   "tipo_opcion": "SECTOR",
+   "nombre": "Sector energético de EE. UU.",
+   "ambito": {
+    "incluye": "Productoras, refinadoras y servicios de petróleo y gas cotizados de EE. UU.",
+    "excluye": "El precio de la energía como materia prima (MP)",
+    "region": "Norteamérica"
+   },
+   "tesis": "Sector energético de EE. UU.: el impulso relativo y la tendencia sostienen una evolución favorable del ámbito en los próximos meses.",
+   "mecanismo": "Persistencia del impulso de precios y flujos coherentes con la señal compuesta de la clase.",
+   "horizontes": [
+    "H2",
+    "H3"
+   ],
+   "horizonte_principal": "H3",
+   "pronosticos": [
+    "PRG-2026-0147",
+    "PRG-2026-0148"
+   ],
+   "catalizadores": [
+    {
+     "evento": "Publicación de datos mensuales de la clase",
+     "fecha": "2026-10"
+    }
+   ],
+   "riesgos": [
+    "Reversión brusca del impulso",
+    "Cambio de régimen de mercado"
+   ],
+   "invalidacion": [
+    "Cierre de XLE por debajo de 137.82"
+   ],
+   "indicador_seguimiento": {
+    "nombre": "Índice sectorial de energía de EE. UU. (proxy XLE)",
+    "simbolo": "XLE",
+    "fuente": "HT-01:csv"
+   },
+   "niveles_referencia": {
+    "nivel_actual": {
+     "valor": 162.996758,
+     "unidad": "nivel del indicador de seguimiento",
+     "fecha_dato": "2026-09-25",
+     "fuente": "HT-01:csv"
+    },
+    "invalidacion_1": {
+     "valor": 137.824,
+     "unidad": "nivel de XLE",
+     "fecha_dato": "2026-09-25",
+     "fuente": "HT-01:csv"
+    }
+   },
+   "criterios_seleccion_sugeridos": [
+    "Exposición alta y directa a «Sector energético de EE. UU.»",
+    "Liquidez diaria suficiente"
+   ],
+   "metricas_clave": [
+    "Evolución del indicador de seguimiento (XLE)",
+    "Momentum relativo frente a la referencia del tipo"
+   ],
+   "preguntas_para_B": [
+    "¿Qué activos del ámbito «Sector energético de EE. UU.» capturan mejor la tendencia con menor riesgo?"
+   ],
+   "evidencias": [
+    "CLM-2026-0160",
+    "CLM-2026-0161"
+   ],
+   "calculos": [
+    "CALC-2026-1052",
+    "CALC-2026-1053",
+    "CALC-2026-1054",
+    "CALC-2026-1055",
+    "CALC-2026-1056",
+    "CALC-2026-1057",
+    "CALC-2026-1124"
+   ],
+   "siguiente_paso_sugerido": "ENVIAR_A_BLOQUE_B",
+   "relevancia_decisional": "BAJA"
+  },
+  {
+   "opp_id": "OPP-2026-0006",
+   "tipo_activo": "RF",
+   "subtipo": "Emergentes",
+   "tipo_opcion": "SEGMENTO",
+   "nombre": "Deuda soberana emergente en dólares",
+   "ambito": {
+    "incluye": "Deuda soberana y cuasisoberana emergente en dólares",
+    "excluye": "Deuda emergente en moneda local",
+    "region": "Asia emergente"
+   },
+   "tesis": "Deuda soberana emergente en dólares: el impulso relativo y la tendencia sostienen una evolución favorable del ámbito en los próximos meses.",
+   "mecanismo": "Persistencia del impulso de precios y flujos coherentes con la señal compuesta de la clase.",
+   "horizontes": [
+    "H2",
+    "H3"
+   ],
+   "horizonte_principal": "H3",
+   "pronosticos": [
+    "PRG-2026-0177",
+    "PRG-2026-0008"
+   ],
+   "catalizadores": [
+    {
+     "evento": "Publicación de datos mensuales de la clase",
+     "fecha": "2026-08"
+    }
+   ],
+   "riesgos": [
+    "Reversión brusca del impulso",
+    "Cambio de régimen de mercado"
+   ],
+   "invalidacion": [
+    "Cierre de EMB por debajo de 151.88"
+   ],
+   "indicador_seguimiento": {
+    "nombre": "Índice de deuda soberana emergente en dólares (proxy EMB)",
+    "simbolo": "EMB",
+    "fuente": "HT-01:csv"
+   },
+   "niveles_referencia": {
+    "nivel_actual": {
+     "valor": 177.453026,
+     "unidad": "nivel del indicador de seguimiento",
+     "fecha_dato": "2026-09-25",
+     "fuente": "HT-01:csv"
+    },
+    "invalidacion_1": {
+     "valor": 151.8812,
+     "unidad": "nivel de EMB",
+     "fecha_dato": "2026-09-25",
+     "fuente": "HT-01:csv"
+    }
+   },
+   "criterios_seleccion_sugeridos": [
+    "Exposición alta y directa a «Deuda soberana emergente en dólares»",
+    "Liquidez diaria suficiente"
+   ],
+   "metricas_clave": [
+    "Evolución del indicador de seguimiento (EMB)",
+    "Momentum relativo frente a la referencia del tipo"
+   ],
+   "preguntas_para_B": [
+    "¿Qué activos del ámbito «Deuda soberana emergente en dólares» capturan mejor la tendencia con menor riesgo?"
+   ],
+   "evidencias": [
+    "CLM-2026-0011",
+    "CLM-2026-0012"
+   ],
+   "calculos": [
+    "CALC-2026-1058",
+    "CALC-2026-1059",
+    "CALC-2026-1060",
+    "CALC-2026-1061",
+    "CALC-2026-1062",
+    "CALC-2026-1063",
+    "CALC-2026-1124"
+   ],
+   "siguiente_paso_sugerido": "ENVIAR_A_BLOQUE_B",
+   "relevancia_decisional": "BAJA"
+  },
+  {
+   "opp_id": "OPP-2026-0007",
+   "tipo_activo": "RF",
+   "subtipo": "Ligados a la inflación",
+   "tipo_opcion": "SEGMENTO",
+   "nombre": "Bonos ligados a la inflación de EE. UU.",
+   "ambito": {
+    "incluye": "Bonos del Tesoro de EE. UU. ligados a la inflación",
+    "excluye": "La inflación implícita como factor (TCV)",
+    "region": "Norteamérica"
+   },
+   "tesis": "Bonos ligados a la inflación de EE. UU.: el impulso relativo y la tendencia sostienen una evolución favorable del ámbito en los próximos meses.",
+   "mecanismo": "Persistencia del impulso de precios y flujos coherentes con la señal compuesta de la clase.",
+   "horizontes": [
+    "H2",
+    "H3"
+   ],
+   "horizonte_principal": "H3",
+   "pronosticos": [
+    "PRG-2026-0108",
+    "PRG-2026-0109"
+   ],
+   "catalizadores": [
+    {
+     "evento": "Publicación de datos mensuales de la clase",
+     "fecha": "2026-10"
+    }
+   ],
+   "riesgos": [
+    "Reversión brusca del impulso",
+    "Cambio de régimen de mercado"
+   ],
+   "invalidacion": [
+    "Cierre de TIP por debajo de 138.59"
+   ],
+   "indicador_seguimiento": {
+    "nombre": "Índice de TIPS (proxy TIP)",
+    "simbolo": "TIP",
+    "fuente": "HT-01:csv"
+   },
+   "niveles_referencia": {
+    "nivel_actual": {
+     "valor": 162.792203,
+     "unidad": "nivel del indicador de seguimiento",
+     "fecha_dato": "2026-09-25",
+     "fuente": "HT-01:csv"
+    },
+    "invalidacion_1": {
+     "valor": 138.5947,
+     "unidad": "nivel de TIP",
+     "fecha_dato": "2026-09-25",
+     "fuente": "HT-01:csv"
+    }
+   },
+   "criterios_seleccion_sugeridos": [
+    "Exposición alta y directa a «Bonos ligados a la inflación de EE. UU.»",
+    "Liquidez diaria suficiente"
+   ],
+   "metricas_clave": [
+    "Evolución del indicador de seguimiento (TIP)",
+    "Momentum relativo frente a la referencia del tipo"
+   ],
+   "preguntas_para_B": [
+    "¿Qué activos del ámbito «Bonos ligados a la inflación de EE. UU.» capturan mejor la tendencia con menor riesgo?"
+   ],
+   "evidencias": [
+    "CLM-2026-0126",
+    "CLM-2026-0127"
+   ],
+   "calculos": [
+    "CALC-2026-1058",
+    "CALC-2026-1059",
+    "CALC-2026-1060",
+    "CALC-2026-1061",
+    "CALC-2026-1062",
+    "CALC-2026-1063",
+    "CALC-2026-1124"
+   ],
+   "siguiente_paso_sugerido": "ENVIAR_A_BLOQUE_B",
+   "relevancia_decisional": "BAJA"
+  },
+  {
+   "opp_id": "OPP-2026-0008",
+   "tipo_activo": "RF",
+   "subtipo": "Deuda pública",
+   "tipo_opcion": "SEGMENTO",
+   "nombre": "Deuda pública de EE. UU. a 1-3 años",
+   "ambito": {
+    "incluye": "Bonos del Tesoro de EE. UU. con vencimiento de 1 a 3 años",
+    "excluye": "Vencimientos inferiores a 12 meses (MON)",
+    "region": "Norteamérica"
+   },
+   "tesis": "Deuda pública de EE. UU. a 1-3 años: el impulso relativo y la tendencia sostienen una evolución favorable del ámbito en los próximos meses.",
+   "mecanismo": "Persistencia del impulso de precios y flujos coherentes con la señal compuesta de la clase.",
+   "horizontes": [
+    "H2",
+    "H3"
+   ],
+   "horizonte_principal": "H3",
+   "pronosticos": [
+    "PRG-2026-0110",
+    "PRG-2026-0111"
+   ],
+   "catalizadores": [
+    {
+     "evento": "Publicación de datos mensuales de la clase",
+     "fecha": "2026-10"
+    }
+   ],
+   "riesgos": [
+    "Reversión brusca del impulso",
+    "Cambio de régimen de mercado"
+   ],
+   "invalidacion": [
+    "Cierre de SHY por debajo de 130.69"
+   ],
+   "indicador_seguimiento": {
+    "nombre": "Índice del Tesoro de EE. UU. 1-3 años (proxy SHY)",
+    "simbolo": "SHY",
+    "fuente": "HT-01:csv"
+   },
+   "niveles_referencia": {
+    "nivel_actual": {
+     "valor": 153.384866,
+     "unidad": "nivel del indicador de seguimiento",
+     "fecha_dato": "2026-09-25",
+     "fuente": "HT-01:csv"
+    },
+    "invalidacion_1": {
+     "valor": 130.6936,
+     "unidad": "nivel de SHY",
+     "fecha_dato": "2026-09-25",
+     "fuente": "HT-01:csv"
+    }
+   },
+   "criterios_seleccion_sugeridos": [
+    "Exposición alta y directa a «Deuda pública de EE. UU. a 1-3 años»",
+    "Liquidez diaria suficiente"
+   ],
+   "metricas_clave": [
+    "Evolución del indicador de seguimiento (SHY)",
+    "Momentum relativo frente a la referencia del tipo"
+   ],
+   "preguntas_para_B": [
+    "¿Qué activos del ámbito «Deuda pública de EE. UU. a 1-3 años» capturan mejor la tendencia con menor riesgo?"
+   ],
+   "evidencias": [
+    "CLM-2026-0128",
+    "CLM-2026-0129"
+   ],
+   "calculos": [
+    "CALC-2026-1058",
+    "CALC-2026-1059",
+    "CALC-2026-1060",
+    "CALC-2026-1061",
+    "CALC-2026-1062",
+    "CALC-2026-1063",
+    "CALC-2026-1124"
+   ],
+   "siguiente_paso_sugerido": "ENVIAR_A_BLOQUE_B",
+   "relevancia_decisional": "BAJA"
+  },
+  {
+   "opp_id": "OPP-2026-0011",
+   "tipo_activo": "DIV",
+   "subtipo": "Divisas de exportadores de materias primas",
+   "tipo_opcion": "ESTRATEGIA",
+   "nombre": "Dólar australiano frente a dólar",
+   "ambito": {
+    "incluye": "Tipo de cambio del dólar australiano frente al dólar",
+    "excluye": "Otras divisas del bloque de materias primas",
+    "region": "Oceanía"
+   },
+   "tesis": "Dólar australiano frente a dólar: el impulso relativo y la tendencia sostienen una evolución favorable del ámbito en los próximos meses.",
+   "mecanismo": "Persistencia del impulso de precios y flujos coherentes con la señal compuesta de la clase.",
+   "horizontes": [
+    "H2",
+    "H3"
+   ],
+   "horizonte_principal": "H3",
+   "pronosticos": [
+    "PRG-2026-0178",
+    "PRG-2026-0014"
+   ],
+   "catalizadores": [
+    {
+     "evento": "Publicación de datos mensuales de la clase",
+     "fecha": "2026-08"
+    }
+   ],
+   "riesgos": [
+    "Reversión brusca del impulso",
+    "Cambio de régimen de mercado"
+   ],
+   "invalidacion": [
+    "Cierre de AUDUSD=X por debajo de 1.04"
+   ],
+   "indicador_seguimiento": {
+    "nombre": "AUD/USD",
+    "simbolo": "AUDUSD=X",
+    "fuente": "HT-01:csv"
+   },
+   "niveles_referencia": {
+    "nivel_actual": {
+     "valor": 1.191297,
+     "unidad": "nivel del indicador de seguimiento",
+     "fecha_dato": "2026-09-25",
+     "fuente": "HT-01:csv"
+    },
+    "invalidacion_1": {
+     "valor": 1.0425,
+     "unidad": "nivel de AUDUSD=X",
+     "fecha_dato": "2026-09-25",
+     "fuente": "HT-01:csv"
+    }
+   },
+   "criterios_seleccion_sugeridos": [
+    "Exposición alta y directa a «Dólar australiano frente a dólar»",
+    "Liquidez diaria suficiente"
+   ],
+   "metricas_clave": [
+    "Evolución del indicador de seguimiento (AUDUSD=X)",
+    "Momentum relativo frente a la referencia del tipo"
+   ],
+   "preguntas_para_B": [
+    "¿Qué activos del ámbito «Dólar australiano frente a dólar» capturan mejor la tendencia con menor riesgo?"
+   ],
+   "evidencias": [
+    "CLM-2026-0021",
+    "CLM-2026-0022"
+   ],
+   "calculos": [
+    "CALC-2026-1064",
+    "CALC-2026-1065",
+    "CALC-2026-1066",
+    "CALC-2026-1067",
+    "CALC-2026-1068",
+    "CALC-2026-1069",
+    "CALC-2026-1124"
+   ],
+   "siguiente_paso_sugerido": "ENVIAR_A_BLOQUE_B",
+   "relevancia_decisional": "BAJA"
+  },
+  {
+   "opp_id": "OPP-2026-0010",
+   "tipo_activo": "DIV",
+   "subtipo": "Divisas emergentes",
+   "tipo_opcion": "ESTRATEGIA",
+   "nombre": "Dólar frente a peso mexicano",
+   "ambito": {
+    "incluye": "Tipo de cambio del dólar frente al peso mexicano",
+    "excluye": "Otras divisas latinoamericanas",
+    "region": "Latinoamérica"
+   },
+   "tesis": "Dólar frente a peso mexicano: el impulso relativo y la tendencia sostienen una evolución favorable del ámbito en los próximos meses.",
+   "mecanismo": "Persistencia del impulso de precios y flujos coherentes con la señal compuesta de la clase.",
+   "horizontes": [
+    "H2",
+    "H3"
+   ],
+   "horizonte_principal": "H3",
+   "pronosticos": [
+    "PRG-2026-0179",
+    "PRG-2026-0016"
+   ],
+   "catalizadores": [
+    {
+     "evento": "Publicación de datos mensuales de la clase",
+     "fecha": "2026-08"
+    }
+   ],
+   "riesgos": [
+    "Reversión brusca del impulso",
+    "Cambio de régimen de mercado"
+   ],
+   "invalidacion": [
+    "Cierre de USDMXN=X por debajo de 2.07"
+   ],
+   "indicador_seguimiento": {
+    "nombre": "USD/MXN",
+    "simbolo": "USDMXN=X",
+    "fuente": "HT-01:csv"
+   },
+   "niveles_referencia": {
+    "nivel_actual": {
+     "valor": 2.441752,
+     "unidad": "nivel del indicador de seguimiento",
+     "fecha_dato": "2026-09-25",
+     "fuente": "HT-01:csv"
+    },
+    "invalidacion_1": {
+     "valor": 2.0651,
+     "unidad": "nivel de USDMXN=X",
+     "fecha_dato": "2026-09-25",
+     "fuente": "HT-01:csv"
+    }
+   },
+   "criterios_seleccion_sugeridos": [
+    "Exposición alta y directa a «Dólar frente a peso mexicano»",
+    "Liquidez diaria suficiente"
+   ],
+   "metricas_clave": [
+    "Evolución del indicador de seguimiento (USDMXN=X)",
+    "Momentum relativo frente a la referencia del tipo"
+   ],
+   "preguntas_para_B": [
+    "¿Qué activos del ámbito «Dólar frente a peso mexicano» capturan mejor la tendencia con menor riesgo?"
+   ],
+   "evidencias": [
+    "CLM-2026-0019",
+    "CLM-2026-0020"
+   ],
+   "calculos": [
+    "CALC-2026-1064",
+    "CALC-2026-1065",
+    "CALC-2026-1066",
+    "CALC-2026-1067",
+    "CALC-2026-1068",
+    "CALC-2026-1069",
+    "CALC-2026-1124"
+   ],
+   "siguiente_paso_sugerido": "ENVIAR_A_BLOQUE_B",
+   "relevancia_decisional": "BAJA"
+  },
+  {
+   "opp_id": "OPP-2026-0012",
+   "tipo_activo": "DIV",
+   "subtipo": "Pares principales",
+   "tipo_opcion": "ESTRATEGIA",
+   "nombre": "Dólar frente a franco suizo",
+   "ambito": {
+    "incluye": "Tipo de cambio del dólar frente al franco suizo",
+    "excluye": "Cruces del franco con el euro",
+    "region": "Europa"
+   },
+   "tesis": "Dólar frente a franco suizo: el impulso relativo y la tendencia sostienen una evolución favorable del ámbito en los próximos meses.",
+   "mecanismo": "Persistencia del impulso de precios y flujos coherentes con la señal compuesta de la clase.",
+   "horizontes": [
+    "H2",
+    "H3"
+   ],
+   "horizonte_principal": "H3",
+   "pronosticos": [
+    "PRG-2026-0180",
+    "PRG-2026-0018"
+   ],
+   "catalizadores": [
+    {
+     "evento": "Publicación de datos mensuales de la clase",
+     "fecha": "2026-08"
+    }
+   ],
+   "riesgos": [
+    "Reversión brusca del impulso",
+    "Cambio de régimen de mercado"
+   ],
+   "invalidacion": [
+    "Cierre de USDCHF=X por debajo de 2.09"
+   ],
+   "indicador_seguimiento": {
+    "nombre": "USD/CHF",
+    "simbolo": "USDCHF=X",
+    "fuente": "HT-01:csv"
+   },
+   "niveles_referencia": {
+    "nivel_actual": {
+     "valor": 2.568906,
+     "unidad": "nivel del indicador de seguimiento",
+     "fecha_dato": "2026-09-25",
+     "fuente": "HT-01:csv"
+    },
+    "invalidacion_1": {
+     "valor": 2.09,
+     "unidad": "nivel de USDCHF=X",
+     "fecha_dato": "2026-09-25",
+     "fuente": "HT-01:csv"
+    }
+   },
+   "criterios_seleccion_sugeridos": [
+    "Exposición alta y directa a «Dólar frente a franco suizo»",
+    "Liquidez diaria suficiente"
+   ],
+   "metricas_clave": [
+    "Evolución del indicador de seguimiento (USDCHF=X)",
+    "Momentum relativo frente a la referencia del tipo"
+   ],
+   "preguntas_para_B": [
+    "¿Qué activos del ámbito «Dólar frente a franco suizo» capturan mejor la tendencia con menor riesgo?"
+   ],
+   "evidencias": [
+    "CLM-2026-0023",
+    "CLM-2026-0024"
+   ],
+   "calculos": [
+    "CALC-2026-1064",
+    "CALC-2026-1065",
+    "CALC-2026-1066",
+    "CALC-2026-1067",
+    "CALC-2026-1068",
+    "CALC-2026-1069",
+    "CALC-2026-1124"
+   ],
+   "siguiente_paso_sugerido": "ENVIAR_A_BLOQUE_B",
+   "relevancia_decisional": "BAJA"
+  },
+  {
+   "opp_id": "OPP-2026-0015",
+   "tipo_activo": "MP",
+   "subtipo": "Metales preciosos",
+   "tipo_opcion": "SEGMENTO",
+   "nombre": "Oro",
+   "ambito": {
+    "incluye": "Precio del oro",
+    "excluye": "Empresas mineras de oro (RV)",
+    "region": "Global"
+   },
+   "tesis": "Oro: el impulso relativo y la tendencia sostienen una evolución favorable del ámbito en los próximos meses.",
+   "mecanismo": "Persistencia del impulso de precios y flujos coherentes con la señal compuesta de la clase.",
+   "horizontes": [
+    "H2",
+    "H3"
+   ],
+   "horizonte_principal": "H3",
+   "pronosticos": [
+    "PRG-2026-0116",
+    "PRG-2026-0064"
+   ],
+   "catalizadores": [
+    {
+     "evento": "Publicación de datos mensuales de la clase",
+     "fecha": "2026-09"
+    }
+   ],
+   "riesgos": [
+    "Reversión brusca del impulso",
+    "Cambio de régimen de mercado"
+   ],
+   "invalidacion": [
+    "Cierre de GLD por debajo de 74.91"
+   ],
+   "indicador_seguimiento": {
+    "nombre": "Precio del oro (proxy GLD)",
+    "simbolo": "GLD",
+    "fuente": "HT-01:csv"
+   },
+   "niveles_referencia": {
+    "nivel_actual": {
+     "valor": 85.639674,
+     "unidad": "nivel del indicador de seguimiento",
+     "fecha_dato": "2026-09-25",
+     "fuente": "HT-01:csv"
+    },
+    "invalidacion_1": {
+     "valor": 74.9088,
+     "unidad": "nivel de GLD",
+     "fecha_dato": "2026-09-25",
+     "fuente": "HT-01:csv"
+    }
+   },
+   "criterios_seleccion_sugeridos": [
+    "Exposición alta y directa a «Oro»",
+    "Liquidez diaria suficiente"
+   ],
+   "metricas_clave": [
+    "Evolución del indicador de seguimiento (GLD)",
+    "Momentum relativo frente a la referencia del tipo"
+   ],
+   "preguntas_para_B": [
+    "¿Qué activos del ámbito «Oro» capturan mejor la tendencia con menor riesgo?"
+   ],
+   "evidencias": [
+    "CLM-2026-0029",
+    "CLM-2026-0079"
+   ],
+   "calculos": [
+    "CALC-2026-1070",
+    "CALC-2026-1071",
+    "CALC-2026-1072",
+    "CALC-2026-1073",
+    "CALC-2026-1074",
+    "CALC-2026-1075",
+    "CALC-2026-1124"
+   ],
+   "siguiente_paso_sugerido": "ENVIAR_A_BLOQUE_B",
+   "relevancia_decisional": "ALTA"
+  },
+  {
+   "opp_id": "OPP-2026-0013",
+   "tipo_activo": "MP",
+   "subtipo": "Índice amplio",
+   "tipo_opcion": "MERCADO",
+   "nombre": "Materias primas en conjunto",
+   "ambito": {
+    "incluye": "Cesta amplia de materias primas (energía, metales y agrícolas)",
+    "excluye": "Empresas productoras (RV)",
+    "region": "Global"
+   },
+   "tesis": "Materias primas en conjunto: el impulso relativo y la tendencia sostienen una evolución favorable del ámbito en los próximos meses.",
+   "mecanismo": "Persistencia del impulso de precios y flujos coherentes con la señal compuesta de la clase.",
+   "horizontes": [
+    "H2",
+    "H3"
+   ],
+   "horizonte_principal": "H3",
+   "pronosticos": [
+    "PRG-2026-0153",
+    "PRG-2026-0154"
+   ],
+   "catalizadores": [
+    {
+     "evento": "Publicación de datos mensuales de la clase",
+     "fecha": "2026-10"
+    }
+   ],
+   "riesgos": [
+    "Reversión brusca del impulso",
+    "Cambio de régimen de mercado"
+   ],
+   "invalidacion": [
+    "Cierre de DBC por debajo de 123.51"
+   ],
+   "indicador_seguimiento": {
+    "nombre": "Índice amplio de materias primas (proxy DBC)",
+    "simbolo": "DBC",
+    "fuente": "HT-01:csv"
+   },
+   "niveles_referencia": {
+    "nivel_actual": {
+     "valor": 140.056505,
+     "unidad": "nivel del indicador de seguimiento",
+     "fecha_dato": "2026-09-25",
+     "fuente": "HT-01:csv"
+    },
+    "invalidacion_1": {
+     "valor": 123.5135,
+     "unidad": "nivel de DBC",
+     "fecha_dato": "2026-09-25",
+     "fuente": "HT-01:csv"
+    }
+   },
+   "criterios_seleccion_sugeridos": [
+    "Exposición alta y directa a «Materias primas en conjunto»",
+    "Liquidez diaria suficiente"
+   ],
+   "metricas_clave": [
+    "Evolución del indicador de seguimiento (DBC)",
+    "Momentum relativo frente a la referencia del tipo"
+   ],
+   "preguntas_para_B": [
+    "¿Qué activos del ámbito «Materias primas en conjunto» capturan mejor la tendencia con menor riesgo?"
+   ],
+   "evidencias": [
+    "CLM-2026-0162",
+    "CLM-2026-0163"
+   ],
+   "calculos": [
+    "CALC-2026-1070",
+    "CALC-2026-1071",
+    "CALC-2026-1072",
+    "CALC-2026-1073",
+    "CALC-2026-1074",
+    "CALC-2026-1075",
+    "CALC-2026-1124"
+   ],
+   "siguiente_paso_sugerido": "ENVIAR_A_BLOQUE_B",
+   "relevancia_decisional": "BAJA"
+  },
+  {
+   "opp_id": "OPP-2026-0014",
+   "tipo_activo": "MP",
+   "subtipo": "Metales preciosos",
+   "tipo_opcion": "SEGMENTO",
+   "nombre": "Plata",
+   "ambito": {
+    "incluye": "Precio de la plata",
+    "excluye": "Empresas mineras de plata (RV)",
+    "region": "Global"
+   },
+   "tesis": "Plata: el impulso relativo y la tendencia sostienen una evolución favorable del ámbito en los próximos meses.",
+   "mecanismo": "Persistencia del impulso de precios y flujos coherentes con la señal compuesta de la clase.",
+   "horizontes": [
+    "H2",
+    "H3"
+   ],
+   "horizonte_principal": "H3",
+   "pronosticos": [
+    "PRG-2026-0118",
+    "PRG-2026-0068"
+   ],
+   "catalizadores": [
+    {
+     "evento": "Publicación de datos mensuales de la clase",
+     "fecha": "2026-09"
+    }
+   ],
+   "riesgos": [
+    "Reversión brusca del impulso",
+    "Cambio de régimen de mercado"
+   ],
+   "invalidacion": [
+    "Cierre de SLV por debajo de 51.50"
+   ],
+   "indicador_seguimiento": {
+    "nombre": "Precio de la plata (proxy SLV)",
+    "simbolo": "SLV",
+    "fuente": "HT-01:csv"
+   },
+   "niveles_referencia": {
+    "nivel_actual": {
+     "valor": 59.898495,
+     "unidad": "nivel del indicador de seguimiento",
+     "fecha_dato": "2026-09-25",
+     "fuente": "HT-01:csv"
+    },
+    "invalidacion_1": {
+     "valor": 51.5017,
+     "unidad": "nivel de SLV",
+     "fecha_dato": "2026-09-25",
+     "fuente": "HT-01:csv"
+    }
+   },
+   "criterios_seleccion_sugeridos": [
+    "Exposición alta y directa a «Plata»",
+    "Liquidez diaria suficiente"
+   ],
+   "metricas_clave": [
+    "Evolución del indicador de seguimiento (SLV)",
+    "Momentum relativo frente a la referencia del tipo"
+   ],
+   "preguntas_para_B": [
+    "¿Qué activos del ámbito «Plata» capturan mejor la tendencia con menor riesgo?"
+   ],
+   "evidencias": [
+    "CLM-2026-0077",
+    "CLM-2026-0078"
+   ],
+   "calculos": [
+    "CALC-2026-1070",
+    "CALC-2026-1071",
+    "CALC-2026-1072",
+    "CALC-2026-1073",
+    "CALC-2026-1074",
+    "CALC-2026-1075",
+    "CALC-2026-1124"
+   ],
+   "siguiente_paso_sugerido": "ENVIAR_A_BLOQUE_B",
+   "relevancia_decisional": "ALTA"
+  },
+  {
+   "opp_id": "OPP-2026-0018",
+   "tipo_activo": "IDX",
+   "subtipo": "Índices globales",
+   "tipo_opcion": "MERCADO",
+   "nombre": "Renta variable mundial como mercado completo",
+   "ambito": {
+    "incluye": "Índice mundial amplio de renta variable",
+    "excluye": "Sectores y temáticas (RV)",
+    "region": "Global"
+   },
+   "tesis": "Renta variable mundial como mercado completo: el impulso relativo y la tendencia sostienen una evolución favorable del ámbito en los próximos meses.",
+   "mecanismo": "Persistencia del impulso de precios y flujos coherentes con la señal compuesta de la clase.",
+   "horizontes": [
+    "H2",
+    "H3"
+   ],
+   "horizonte_principal": "H3",
+   "pronosticos": [
+    "PRG-2026-0137",
+    "PRG-2026-0086"
+   ],
+   "catalizadores": [
+    {
+     "evento": "Publicación de datos mensuales de la clase",
+     "fecha": "2026-09"
+    }
+   ],
+   "riesgos": [
+    "Reversión brusca del impulso",
+    "Cambio de régimen de mercado"
+   ],
+   "invalidacion": [
+    "Cierre de ACWI por debajo de 104.65"
+   ],
+   "indicador_seguimiento": {
+    "nombre": "MSCI ACWI (proxy ACWI)",
+    "simbolo": "ACWI",
+    "fuente": "HT-01:csv"
+   },
+   "niveles_referencia": {
+    "nivel_actual": {
+     "valor": 137.390573,
+     "unidad": "nivel del indicador de seguimiento",
+     "fecha_dato": "2026-09-25",
+     "fuente": "HT-01:csv"
+    },
+    "invalidacion_1": {
+     "valor": 104.6529,
+     "unidad": "nivel de ACWI",
+     "fecha_dato": "2026-09-25",
+     "fuente": "HT-01:csv"
+    }
+   },
+   "criterios_seleccion_sugeridos": [
+    "Exposición alta y directa a «Renta variable mundial como mercado completo»",
+    "Liquidez diaria suficiente"
+   ],
+   "metricas_clave": [
+    "Evolución del indicador de seguimiento (ACWI)",
+    "Momentum relativo frente a la referencia del tipo"
+   ],
+   "preguntas_para_B": [
+    "¿Qué activos del ámbito «Renta variable mundial como mercado completo» capturan mejor la tendencia con menor riesgo?"
+   ],
+   "evidencias": [
+    "CLM-2026-0101",
+    "CLM-2026-0102"
+   ],
+   "calculos": [
+    "CALC-2026-1076",
+    "CALC-2026-1077",
+    "CALC-2026-1078",
+    "CALC-2026-1079",
+    "CALC-2026-1080",
+    "CALC-2026-1081",
+    "CALC-2026-1124"
+   ],
+   "siguiente_paso_sugerido": "ENVIAR_A_BLOQUE_B",
+   "relevancia_decisional": "BAJA"
+  },
+  {
+   "opp_id": "OPP-2026-0020",
+   "tipo_activo": "IDX",
+   "subtipo": "Índices de Asia",
+   "tipo_opcion": "MERCADO",
+   "nombre": "Renta variable japonesa como mercado completo",
+   "ambito": {
+    "incluye": "Índice amplio de Japón",
+    "excluye": "Temáticas japonesas concretas (RV)",
+    "region": "Japón"
+   },
+   "tesis": "Renta variable japonesa como mercado completo: el impulso relativo y la tendencia sostienen una evolución favorable del ámbito en los próximos meses.",
+   "mecanismo": "Persistencia del impulso de precios y flujos coherentes con la señal compuesta de la clase.",
+   "horizontes": [
+    "H2",
+    "H3"
+   ],
+   "horizonte_principal": "H3",
+   "pronosticos": [
+    "PRG-2026-0181",
+    "PRG-2026-0182"
+   ],
+   "catalizadores": [
+    {
+     "evento": "Publicación de datos mensuales de la clase",
+     "fecha": "2026-10"
+    }
+   ],
+   "riesgos": [
+    "Reversión brusca del impulso",
+    "Cambio de régimen de mercado"
+   ],
+   "invalidacion": [
+    "Cierre de EWJ por debajo de 153.71"
+   ],
+   "indicador_seguimiento": {
+    "nombre": "MSCI Japan (proxy EWJ)",
+    "simbolo": "EWJ",
+    "fuente": "HT-01:csv"
+   },
+   "niveles_referencia": {
+    "nivel_actual": {
+     "valor": 180.83233,
+     "unidad": "nivel del indicador de seguimiento",
+     "fecha_dato": "2026-09-25",
+     "fuente": "HT-01:csv"
+    },
+    "invalidacion_1": {
+     "valor": 153.7075,
+     "unidad": "nivel de EWJ",
+     "fecha_dato": "2026-09-25",
+     "fuente": "HT-01:csv"
+    }
+   },
+   "criterios_seleccion_sugeridos": [
+    "Exposición alta y directa a «Renta variable japonesa como mercado completo»",
+    "Liquidez diaria suficiente"
+   ],
+   "metricas_clave": [
+    "Evolución del indicador de seguimiento (EWJ)",
+    "Momentum relativo frente a la referencia del tipo"
+   ],
+   "preguntas_para_B": [
+    "¿Qué activos del ámbito «Renta variable japonesa como mercado completo» capturan mejor la tendencia con menor riesgo?"
+   ],
+   "evidencias": [
+    "CLM-2026-0195",
+    "CLM-2026-0196"
+   ],
+   "calculos": [
+    "CALC-2026-1076",
+    "CALC-2026-1077",
+    "CALC-2026-1078",
+    "CALC-2026-1079",
+    "CALC-2026-1080",
+    "CALC-2026-1081",
+    "CALC-2026-1124"
+   ],
+   "siguiente_paso_sugerido": "ENVIAR_A_BLOQUE_B",
+   "relevancia_decisional": "MEDIA"
+  },
+  {
+   "opp_id": "OPP-2026-0041",
+   "tipo_activo": "IDX",
+   "subtipo": "Índices de EE. UU.",
+   "tipo_opcion": "MERCADO",
+   "nombre": "Renta variable de EE. UU. como mercado completo",
+   "ambito": {
+    "incluye": "Índice amplio de EE. UU. (S&P 500)",
+    "excluye": "Sectores concretos de EE. UU. (RV)",
+    "region": "Norteamérica"
+   },
+   "tesis": "Renta variable de EE. UU. como mercado completo: el impulso relativo y la tendencia sostienen una evolución favorable del ámbito en los próximos meses.",
+   "mecanismo": "Persistencia del impulso de precios y flujos coherentes con la señal compuesta de la clase.",
+   "horizontes": [
+    "H2",
+    "H3"
+   ],
+   "horizonte_principal": "H3",
+   "pronosticos": [
+    "PRG-2026-0183",
+    "PRG-2026-0184"
+   ],
+   "catalizadores": [
+    {
+     "evento": "Publicación de datos mensuales de la clase",
+     "fecha": "2026-10"
+    }
+   ],
+   "riesgos": [
+    "Reversión brusca del impulso",
+    "Cambio de régimen de mercado"
+   ],
+   "invalidacion": [
+    "Cierre de SPY por debajo de 117.48"
+   ],
+   "indicador_seguimiento": {
+    "nombre": "S&P 500 (proxy SPY)",
+    "simbolo": "SPY",
+    "fuente": "HT-01:csv"
+   },
+   "niveles_referencia": {
+    "nivel_actual": {
+     "valor": 138.214827,
+     "unidad": "nivel del indicador de seguimiento",
+     "fecha_dato": "2026-09-25",
+     "fuente": "HT-01:csv"
+    },
+    "invalidacion_1": {
+     "valor": 117.4826,
+     "unidad": "nivel de SPY",
+     "fecha_dato": "2026-09-25",
+     "fuente": "HT-01:csv"
+    }
+   },
+   "criterios_seleccion_sugeridos": [
+    "Exposición alta y directa a «Renta variable de EE. UU. como mercado completo»",
+    "Liquidez diaria suficiente"
+   ],
+   "metricas_clave": [
+    "Evolución del indicador de seguimiento (SPY)",
+    "Momentum relativo frente a la referencia del tipo"
+   ],
+   "preguntas_para_B": [
+    "¿Qué activos del ámbito «Renta variable de EE. UU. como mercado completo» capturan mejor la tendencia con menor riesgo?"
+   ],
+   "evidencias": [
+    "CLM-2026-0170",
+    "CLM-2026-0192"
+   ],
+   "calculos": [
+    "CALC-2026-1076",
+    "CALC-2026-1077",
+    "CALC-2026-1078",
+    "CALC-2026-1079",
+    "CALC-2026-1080",
+    "CALC-2026-1081",
+    "CALC-2026-1124"
+   ],
+   "siguiente_paso_sugerido": "ENVIAR_A_BLOQUE_B",
+   "relevancia_decisional": "ALTA"
+  },
+  {
+   "opp_id": "OPP-2026-0036",
+   "tipo_activo": "FON",
+   "subtipo": "Estrategias de gestión",
+   "tipo_opcion": "ESTRATEGIA",
+   "nombre": "Estrategias de futuros gestionados (CTA)",
+   "ambito": {
+    "incluye": "Categoría de fondos de futuros gestionados (seguimiento de tendencias)",
+    "excluye": "Futuros concretos (DER)",
+    "region": "Global"
+   },
+   "tesis": "Estrategias de futuros gestionados (CTA): el impulso relativo y la tendencia sostienen una evolución favorable del ámbito en los próximos meses.",
+   "mecanismo": "Persistencia del impulso de precios y flujos coherentes con la señal compuesta de la clase.",
+   "horizontes": [
+    "H3",
+    "H4"
+   ],
+   "horizonte_principal": "H3",
+   "pronosticos": [
+    "PRG-2026-0101",
+    "PRG-2026-0102"
+   ],
+   "catalizadores": [
+    {
+     "evento": "Publicación de datos mensuales de la clase",
+     "fecha": "2026-09"
+    }
+   ],
+   "riesgos": [
+    "Reversión brusca del impulso",
+    "Cambio de régimen de mercado"
+   ],
+   "invalidacion": [
+    "Cierre de DBMF por debajo de 20.47"
+   ],
+   "indicador_seguimiento": {
+    "nombre": "Índice de futuros gestionados (proxy DBMF)",
+    "simbolo": "DBMF",
+    "fuente": "HT-01:csv"
+   },
+   "niveles_referencia": {
+    "nivel_actual": {
+     "valor": 22.903065,
+     "unidad": "nivel del indicador de seguimiento",
+     "fecha_dato": "2026-09-25",
+     "fuente": "HT-01:csv"
+    },
+    "invalidacion_1": {
+     "valor": 20.4732,
+     "unidad": "nivel de DBMF",
+     "fecha_dato": "2026-09-25",
+     "fuente": "HT-01:csv"
+    }
+   },
+   "criterios_seleccion_sugeridos": [
+    "Exposición alta y directa a «Estrategias de futuros gestionados (CTA)»",
+    "Liquidez diaria suficiente"
+   ],
+   "metricas_clave": [
+    "Evolución del indicador de seguimiento (DBMF)",
+    "Momentum relativo frente a la referencia del tipo"
+   ],
+   "preguntas_para_B": [
+    "¿Qué activos del ámbito «Estrategias de futuros gestionados (CTA)» capturan mejor la tendencia con menor riesgo?"
+   ],
+   "evidencias": [
+    "CLM-2026-0116",
+    "CLM-2026-0117"
+   ],
+   "calculos": [
+    "CALC-2026-1082",
+    "CALC-2026-1083",
+    "CALC-2026-1084",
+    "CALC-2026-1085",
+    "CALC-2026-1086",
+    "CALC-2026-1087",
+    "CALC-2026-1124"
+   ],
+   "siguiente_paso_sugerido": "ENVIAR_A_BLOQUE_B",
+   "relevancia_decisional": "BAJA"
+  },
+  {
+   "opp_id": "OPP-2026-0037",
+   "tipo_activo": "DER",
+   "subtipo": "Opciones sobre índices",
+   "tipo_opcion": "ESTRATEGIA",
+   "nombre": "Venta de opciones de venta cubiertas por liquidez sobre el S&P 500",
+   "ambito": {
+    "incluye": "Estrategia de venta de opciones de venta a un mes sobre el S&P 500",
+    "excluye": "La volatilidad como factor macro (TCV)",
+    "region": "Norteamérica"
+   },
+   "tesis": "Venta de opciones de venta cubiertas por liquidez sobre el S&P 500: el impulso relativo y la tendencia sostienen una evolución favorable del ámbito en los próximos meses.",
+   "mecanismo": "Persistencia del impulso de precios y flujos coherentes con la señal compuesta de la clase.",
+   "horizontes": [
+    "H2",
+    "H3"
+   ],
+   "horizonte_principal": "H3",
+   "pronosticos": [
+    "PRG-2026-0161",
+    "PRG-2026-0162"
+   ],
+   "catalizadores": [
+    {
+     "evento": "Publicación de datos mensuales de la clase",
+     "fecha": "2026-10"
+    }
+   ],
+   "riesgos": [
+    "Reversión brusca del impulso",
+    "Cambio de régimen de mercado"
+   ],
+   "invalidacion": [
+    "Cierre de ^PUT por debajo de 3669.48"
+   ],
+   "indicador_seguimiento": {
+    "nombre": "Cboe S&P 500 PutWrite Index",
+    "simbolo": "^PUT",
+    "fuente": "HT-01:csv"
+   },
+   "niveles_referencia": {
+    "nivel_actual": {
+     "valor": 4262.994606,
+     "unidad": "nivel del indicador de seguimiento",
+     "fecha_dato": "2026-09-25",
+     "fuente": "HT-01:csv"
+    },
+    "invalidacion_1": {
+     "valor": 3669.4784,
+     "unidad": "nivel de ^PUT",
+     "fecha_dato": "2026-09-25",
+     "fuente": "HT-01:csv"
+    }
+   },
+   "criterios_seleccion_sugeridos": [
+    "Exposición alta y directa a «Venta de opciones de venta cubiertas por liquidez sobre el S&P 500»",
+    "Liquidez diaria suficiente"
+   ],
+   "metricas_clave": [
+    "Evolución del indicador de seguimiento (^PUT)",
+    "Momentum relativo frente a la referencia del tipo"
+   ],
+   "preguntas_para_B": [
+    "¿Qué activos del ámbito «Venta de opciones de venta cubiertas por liquidez sobre el S&P 500» capturan mejor la tendencia con menor riesgo?"
+   ],
+   "evidencias": [
+    "CLM-2026-0173",
+    "CLM-2026-0174"
+   ],
+   "calculos": [
+    "CALC-2026-1088",
+    "CALC-2026-1089",
+    "CALC-2026-1090",
+    "CALC-2026-1091",
+    "CALC-2026-1092",
+    "CALC-2026-1093",
+    "CALC-2026-1124"
+   ],
+   "siguiente_paso_sugerido": "ENVIAR_A_BLOQUE_B",
+   "relevancia_decisional": "BAJA"
+  },
+  {
+   "opp_id": "OPP-2026-0039",
+   "tipo_activo": "DER",
+   "subtipo": "Opciones sobre índices",
+   "tipo_opcion": "ESTRATEGIA",
+   "nombre": "Protección de cola con opciones de venta sobre la bolsa de EE. UU.",
+   "ambito": {
+    "incluye": "Estrategias de compra de protección con opciones de venta fuera de dinero sobre la bolsa de EE. UU.",
+    "excluye": "Venta de volatilidad",
+    "region": "Norteamérica"
+   },
+   "tesis": "Protección de cola con opciones de venta sobre la bolsa de EE. UU.: el impulso relativo y la tendencia sostienen una evolución favorable del ámbito en los próximos meses.",
+   "mecanismo": "Persistencia del impulso de precios y flujos coherentes con la señal compuesta de la clase.",
+   "horizontes": [
+    "H2",
+    "H3"
+   ],
+   "horizonte_principal": "H3",
+   "pronosticos": [
+    "PRG-2026-0163",
+    "PRG-2026-0164"
+   ],
+   "catalizadores": [
+    {
+     "evento": "Publicación de datos mensuales de la clase",
+     "fecha": "2026-10"
+    }
+   ],
+   "riesgos": [
+    "Reversión brusca del impulso",
+    "Cambio de régimen de mercado"
+   ],
+   "invalidacion": [
+    "Cierre de TAIL por debajo de 3678.40"
+   ],
+   "indicador_seguimiento": {
+    "nombre": "Índice de protección de cola (proxy TAIL)",
+    "simbolo": "TAIL",
+    "fuente": "HT-01:csv"
+   },
+   "niveles_referencia": {
+    "nivel_actual": {
+     "valor": 4282.301352,
+     "unidad": "nivel del indicador de seguimiento",
+     "fecha_dato": "2026-09-25",
+     "fuente": "HT-01:csv"
+    },
+    "invalidacion_1": {
+     "valor": 3678.3953,
+     "unidad": "nivel de TAIL",
+     "fecha_dato": "2026-09-25",
+     "fuente": "HT-01:csv"
+    }
+   },
+   "criterios_seleccion_sugeridos": [
+    "Exposición alta y directa a «Protección de cola con opciones de venta sobre la bolsa de EE. UU.»",
+    "Liquidez diaria suficiente"
+   ],
+   "metricas_clave": [
+    "Evolución del indicador de seguimiento (TAIL)",
+    "Momentum relativo frente a la referencia del tipo"
+   ],
+   "preguntas_para_B": [
+    "¿Qué activos del ámbito «Protección de cola con opciones de venta sobre la bolsa de EE. UU.» capturan mejor la tendencia con menor riesgo?"
+   ],
+   "evidencias": [
+    "CLM-2026-0175",
+    "CLM-2026-0176"
+   ],
+   "calculos": [
+    "CALC-2026-1088",
+    "CALC-2026-1089",
+    "CALC-2026-1090",
+    "CALC-2026-1091",
+    "CALC-2026-1092",
+    "CALC-2026-1093",
+    "CALC-2026-1124"
+   ],
+   "siguiente_paso_sugerido": "ENVIAR_A_BLOQUE_B",
+   "relevancia_decisional": "BAJA"
+  },
+  {
+   "opp_id": "OPP-2026-0027",
+   "tipo_activo": "INM",
+   "subtipo": "REIT y SOCIMI",
+   "tipo_opcion": "MERCADO",
+   "nombre": "Inmobiliario cotizado internacional sin EE. UU.",
+   "ambito": {
+    "incluye": "REIT e inmobiliarias cotizadas fuera de EE. UU.",
+    "excluye": "Inmobiliario privado (ALT)",
+    "region": "Europa"
+   },
+   "tesis": "Inmobiliario cotizado internacional sin EE. UU.: el impulso relativo y la tendencia sostienen una evolución favorable del ámbito en los próximos meses.",
+   "mecanismo": "Persistencia del impulso de precios y flujos coherentes con la señal compuesta de la clase.",
+   "horizontes": [
+    "H3",
+    "H4"
+   ],
+   "horizonte_principal": "H3",
+   "pronosticos": [
+    "PRG-2026-0036",
+    "PRG-2026-0037"
+   ],
+   "catalizadores": [
+    {
+     "evento": "Publicación de datos mensuales de la clase",
+     "fecha": "2026-08"
+    }
+   ],
+   "riesgos": [
+    "Reversión brusca del impulso",
+    "Cambio de régimen de mercado"
+   ],
+   "invalidacion": [
+    "Cierre de IFGL por debajo de 100.66"
+   ],
+   "indicador_seguimiento": {
+    "nombre": "Índice de REIT internacionales (proxy IFGL)",
+    "simbolo": "IFGL",
+    "fuente": "HT-01:csv"
+   },
+   "niveles_referencia": {
+    "nivel_actual": {
+     "valor": 115.078044,
+     "unidad": "nivel del indicador de seguimiento",
+     "fecha_dato": "2026-09-25",
+     "fuente": "HT-01:csv"
+    },
+    "invalidacion_1": {
+     "valor": 100.6572,
+     "unidad": "nivel de IFGL",
+     "fecha_dato": "2026-09-25",
+     "fuente": "HT-01:csv"
+    }
+   },
+   "criterios_seleccion_sugeridos": [
+    "Exposición alta y directa a «Inmobiliario cotizado internacional sin EE. UU.»",
+    "Liquidez diaria suficiente"
+   ],
+   "metricas_clave": [
+    "Evolución del indicador de seguimiento (IFGL)",
+    "Momentum relativo frente a la referencia del tipo"
+   ],
+   "preguntas_para_B": [
+    "¿Qué activos del ámbito «Inmobiliario cotizado internacional sin EE. UU.» capturan mejor la tendencia con menor riesgo?"
+   ],
+   "evidencias": [
+    "CLM-2026-0055",
+    "CLM-2026-0056"
+   ],
+   "calculos": [
+    "CALC-2026-1094",
+    "CALC-2026-1095",
+    "CALC-2026-1096",
+    "CALC-2026-1097",
+    "CALC-2026-1098",
+    "CALC-2026-1099",
+    "CALC-2026-1124"
+   ],
+   "siguiente_paso_sugerido": "ENVIAR_A_BLOQUE_B",
+   "relevancia_decisional": "BAJA"
+  },
+  {
+   "opp_id": "OPP-2026-0022",
+   "tipo_activo": "INM",
+   "subtipo": "REIT",
+   "tipo_opcion": "MERCADO",
+   "nombre": "Inmobiliario cotizado global",
+   "ambito": {
+    "incluye": "REIT e inmobiliarias cotizadas de países desarrollados",
+    "excluye": "Inmobiliario privado (ALT)",
+    "region": "Global"
+   },
+   "tesis": "Inmobiliario cotizado global: el impulso relativo y la tendencia sostienen una evolución favorable del ámbito en los próximos meses.",
+   "mecanismo": "Persistencia del impulso de precios y flujos coherentes con la señal compuesta de la clase.",
+   "horizontes": [
+    "H3",
+    "H4"
+   ],
+   "horizonte_principal": "H3",
+   "pronosticos": [
+    "PRG-2026-0038",
+    "PRG-2026-0039"
+   ],
+   "catalizadores": [
+    {
+     "evento": "Publicación de datos mensuales de la clase",
+     "fecha": "2026-08"
+    }
+   ],
+   "riesgos": [
+    "Reversión brusca del impulso",
+    "Cambio de régimen de mercado"
+   ],
+   "invalidacion": [
+    "Cierre de REET por debajo de 77.21"
+   ],
+   "indicador_seguimiento": {
+    "nombre": "FTSE EPRA Nareit Developed (proxy REET)",
+    "simbolo": "REET",
+    "fuente": "HT-01:csv"
+   },
+   "niveles_referencia": {
+    "nivel_actual": {
+     "valor": 93.065519,
+     "unidad": "nivel del indicador de seguimiento",
+     "fecha_dato": "2026-09-25",
+     "fuente": "HT-01:csv"
+    },
+    "invalidacion_1": {
+     "valor": 77.2143,
+     "unidad": "nivel de REET",
+     "fecha_dato": "2026-09-25",
+     "fuente": "HT-01:csv"
+    }
+   },
+   "criterios_seleccion_sugeridos": [
+    "Exposición alta y directa a «Inmobiliario cotizado global»",
+    "Liquidez diaria suficiente"
+   ],
+   "metricas_clave": [
+    "Evolución del indicador de seguimiento (REET)",
+    "Momentum relativo frente a la referencia del tipo"
+   ],
+   "preguntas_para_B": [
+    "¿Qué activos del ámbito «Inmobiliario cotizado global» capturan mejor la tendencia con menor riesgo?"
+   ],
+   "evidencias": [
+    "CLM-2026-0053",
+    "CLM-2026-0054"
+   ],
+   "calculos": [
+    "CALC-2026-1094",
+    "CALC-2026-1095",
+    "CALC-2026-1096",
+    "CALC-2026-1097",
+    "CALC-2026-1098",
+    "CALC-2026-1099",
+    "CALC-2026-1124"
+   ],
+   "siguiente_paso_sugerido": "ENVIAR_A_BLOQUE_B",
+   "relevancia_decisional": "BAJA"
+  },
+  {
+   "opp_id": "OPP-2026-0028",
+   "tipo_activo": "CRI",
+   "subtipo": "Altcoins",
+   "tipo_opcion": "SEGMENTO",
+   "nombre": "Redes de alto rendimiento de nueva generación",
+   "ambito": {
+    "incluye": "Redes de capa 1 alternativas de alto rendimiento",
+    "excluye": "Redes consolidadas de contratos inteligentes",
+    "region": "Global"
+   },
+   "tesis": "Redes de alto rendimiento de nueva generación: el impulso relativo y la tendencia sostienen una evolución favorable del ámbito en los próximos meses.",
+   "mecanismo": "Persistencia del impulso de precios y flujos coherentes con la señal compuesta de la clase.",
+   "horizontes": [
+    "H2",
+    "H3"
+   ],
+   "horizonte_principal": "H3",
+   "pronosticos": [
+    "PRG-2026-0189",
+    "PRG-2026-0190"
+   ],
+   "catalizadores": [
+    {
+     "evento": "Publicación de datos mensuales de la clase",
+     "fecha": "2026-10"
+    }
+   ],
+   "riesgos": [
+    "Reversión brusca del impulso",
+    "Cambio de régimen de mercado"
+   ],
+   "invalidacion": [
+    "Cierre de SOL-USD por debajo de 224561.42"
+   ],
+   "indicador_seguimiento": {
+    "nombre": "Precio del solana",
+    "simbolo": "SOL-USD",
+    "fuente": "HT-01:csv"
+   },
+   "niveles_referencia": {
+    "nivel_actual": {
+     "valor": 264189.908396,
+     "unidad": "nivel del indicador de seguimiento",
+     "fecha_dato": "2026-09-25",
+     "fuente": "HT-01:csv"
+    },
+    "invalidacion_1": {
+     "valor": 224561.4221,
+     "unidad": "nivel de SOL-USD",
+     "fecha_dato": "2026-09-25",
+     "fuente": "HT-01:csv"
+    }
+   },
+   "criterios_seleccion_sugeridos": [
+    "Exposición alta y directa a «Redes de alto rendimiento de nueva generación»",
+    "Liquidez diaria suficiente"
+   ],
+   "metricas_clave": [
+    "Evolución del indicador de seguimiento (SOL-USD)",
+    "Momentum relativo frente a la referencia del tipo"
+   ],
+   "preguntas_para_B": [
+    "¿Qué activos del ámbito «Redes de alto rendimiento de nueva generación» capturan mejor la tendencia con menor riesgo?"
+   ],
+   "evidencias": [
+    "CLM-2026-0197",
+    "CLM-2026-0198"
+   ],
+   "calculos": [
+    "CALC-2026-1100",
+    "CALC-2026-1101",
+    "CALC-2026-1102",
+    "CALC-2026-1103",
+    "CALC-2026-1104",
+    "CALC-2026-1105",
+    "CALC-2026-1124"
+   ],
+   "siguiente_paso_sugerido": "ENVIAR_A_BLOQUE_B",
+   "relevancia_decisional": "ALTA"
+  },
+  {
+   "opp_id": "OPP-2026-0029",
+   "tipo_activo": "CRI",
+   "subtipo": "Bitcoin y reserva de valor",
+   "tipo_opcion": "SEGMENTO",
+   "nombre": "Criptoactivos de reserva de valor",
+   "ambito": {
+    "incluye": "Criptoactivos de reserva de valor de gran capitalización",
+    "excluye": "Altcoins y stablecoins",
+    "region": "Global"
+   },
+   "tesis": "Criptoactivos de reserva de valor: el impulso relativo y la tendencia sostienen una evolución favorable del ámbito en los próximos meses.",
+   "mecanismo": "Persistencia del impulso de precios y flujos coherentes con la señal compuesta de la clase.",
+   "horizontes": [
+    "H2",
+    "H3"
+   ],
+   "horizonte_principal": "H3",
+   "pronosticos": [
+    "PRG-2026-0191",
+    "PRG-2026-0192"
+   ],
+   "catalizadores": [
+    {
+     "evento": "Publicación de datos mensuales de la clase",
+     "fecha": "2026-10"
+    }
+   ],
+   "riesgos": [
+    "Reversión brusca del impulso",
+    "Cambio de régimen de mercado"
+   ],
+   "invalidacion": [
+    "Cierre de BTC-USD por debajo de 25679.54"
+   ],
+   "indicador_seguimiento": {
+    "nombre": "Precio del bitcoin",
+    "simbolo": "BTC-USD",
+    "fuente": "HT-01:csv"
+   },
+   "niveles_referencia": {
+    "nivel_actual": {
+     "valor": 30211.226512,
+     "unidad": "nivel del indicador de seguimiento",
+     "fecha_dato": "2026-09-25",
+     "fuente": "HT-01:csv"
+    },
+    "invalidacion_1": {
+     "valor": 25679.5425,
+     "unidad": "nivel de BTC-USD",
+     "fecha_dato": "2026-09-25",
+     "fuente": "HT-01:csv"
+    }
+   },
+   "criterios_seleccion_sugeridos": [
+    "Exposición alta y directa a «Criptoactivos de reserva de valor»",
+    "Liquidez diaria suficiente"
+   ],
+   "metricas_clave": [
+    "Evolución del indicador de seguimiento (BTC-USD)",
+    "Momentum relativo frente a la referencia del tipo"
+   ],
+   "preguntas_para_B": [
+    "¿Qué activos del ámbito «Criptoactivos de reserva de valor» capturan mejor la tendencia con menor riesgo?"
+   ],
+   "evidencias": [
+    "CLM-2026-0201",
+    "CLM-2026-0202"
+   ],
+   "calculos": [
+    "CALC-2026-1100",
+    "CALC-2026-1101",
+    "CALC-2026-1102",
+    "CALC-2026-1103",
+    "CALC-2026-1104",
+    "CALC-2026-1105",
+    "CALC-2026-1124"
+   ],
+   "siguiente_paso_sugerido": "ENVIAR_A_BLOQUE_B",
+   "relevancia_decisional": "ALTA"
+  },
+  {
+   "opp_id": "OPP-2026-0023",
+   "tipo_activo": "ALT",
+   "subtipo": "Deuda privada",
+   "tipo_opcion": "SEGMENTO",
+   "nombre": "Deuda privada",
+   "ambito": {
+    "incluye": "Préstamos directos a empresas medianas medidos por sociedades de desarrollo de negocio cotizadas",
+    "excluye": "Crédito cotizado (RF)",
+    "region": "Norteamérica"
+   },
+   "tesis": "Deuda privada: el impulso relativo y la tendencia sostienen una evolución favorable del ámbito en los próximos meses.",
+   "mecanismo": "Persistencia del impulso de precios y flujos coherentes con la señal compuesta de la clase.",
+   "horizontes": [
+    "H4"
+   ],
+   "horizonte_principal": "H4",
+   "pronosticos": [
+    "PRG-2026-0107"
+   ],
+   "catalizadores": [
+    {
+     "evento": "Publicación de datos mensuales de la clase",
+     "fecha": "2026-09"
+    }
+   ],
+   "riesgos": [
+    "Reversión brusca del impulso",
+    "Cambio de régimen de mercado"
+   ],
+   "invalidacion": [
+    "Cierre de BIZD por debajo de 42.67"
+   ],
+   "indicador_seguimiento": {
+    "nombre": "Índice de BDC (proxy BIZD)",
+    "simbolo": "BIZD",
+    "fuente": "HT-01:csv"
+   },
+   "niveles_referencia": {
+    "nivel_actual": {
+     "valor": 51.496879,
+     "unidad": "nivel del indicador de seguimiento",
+     "fecha_dato": "2026-09-25",
+     "fuente": "HT-01:csv"
+    },
+    "invalidacion_1": {
+     "valor": 42.6738,
+     "unidad": "nivel de BIZD",
+     "fecha_dato": "2026-09-25",
+     "fuente": "HT-01:csv"
+    }
+   },
+   "criterios_seleccion_sugeridos": [
+    "Exposición alta y directa a «Deuda privada»",
+    "Liquidez diaria suficiente"
+   ],
+   "metricas_clave": [
+    "Evolución del indicador de seguimiento (BIZD)",
+    "Momentum relativo frente a la referencia del tipo"
+   ],
+   "preguntas_para_B": [
+    "¿Qué activos del ámbito «Deuda privada» capturan mejor la tendencia con menor riesgo?"
+   ],
+   "evidencias": [
+    "CLM-2026-0122",
+    "CLM-2026-0123"
+   ],
+   "calculos": [
+    "CALC-2026-1106",
+    "CALC-2026-1107",
+    "CALC-2026-1108",
+    "CALC-2026-1109",
+    "CALC-2026-1110",
+    "CALC-2026-1111",
+    "CALC-2026-1124"
+   ],
+   "siguiente_paso_sugerido": "ENVIAR_A_BLOQUE_B",
+   "relevancia_decisional": "ALTA"
+  },
+  {
+   "opp_id": "OPP-2026-0042",
+   "tipo_activo": "TCV",
+   "subtipo": "Índices de volatilidad",
+   "tipo_opcion": "FACTOR",
+   "nombre": "Volatilidad implícita de la bolsa de EE. UU.",
+   "ambito": {
+    "incluye": "Nivel de la volatilidad implícita a 30 días del S&P 500 como factor",
+    "excluye": "Estrategias de opciones (DER)",
+    "region": "Norteamérica"
+   },
+   "tesis": "Volatilidad implícita de la bolsa de EE. UU.: el impulso relativo y la tendencia sostienen una evolución favorable del ámbito en los próximos meses.",
+   "mecanismo": "Persistencia del impulso de precios y flujos coherentes con la señal compuesta de la clase.",
+   "horizontes": [
+    "H2",
+    "H3"
+   ],
+   "horizonte_principal": "H3",
+   "pronosticos": [
+    "PRG-2026-0165",
+    "PRG-2026-0166"
+   ],
+   "catalizadores": [
+    {
+     "evento": "Publicación de datos mensuales de la clase",
+     "fecha": "2026-10"
+    }
+   ],
+   "riesgos": [
+    "Reversión brusca del impulso",
+    "Cambio de régimen de mercado"
+   ],
+   "invalidacion": [
+    "Cierre de ^VIX por debajo de 15.43"
+   ],
+   "indicador_seguimiento": {
+    "nombre": "Índice VIX",
+    "simbolo": "^VIX",
+    "fuente": "HT-01:csv"
+   },
+   "niveles_referencia": {
+    "nivel_actual": {
+     "valor": 17.472474,
+     "unidad": "nivel del indicador de seguimiento",
+     "fecha_dato": "2026-09-25",
+     "fuente": "HT-01:csv"
+    },
+    "invalidacion_1": {
+     "valor": 15.4283,
+     "unidad": "nivel de ^VIX",
+     "fecha_dato": "2026-09-25",
+     "fuente": "HT-01:csv"
+    }
+   },
+   "criterios_seleccion_sugeridos": [
+    "Exposición alta y directa a «Volatilidad implícita de la bolsa de EE. UU.»",
+    "Liquidez diaria suficiente"
+   ],
+   "metricas_clave": [
+    "Evolución del indicador de seguimiento (^VIX)",
+    "Momentum relativo frente a la referencia del tipo"
+   ],
+   "preguntas_para_B": [
+    "¿Qué activos del ámbito «Volatilidad implícita de la bolsa de EE. UU.» capturan mejor la tendencia con menor riesgo?"
+   ],
+   "evidencias": [
+    "CLM-2026-0150",
+    "CLM-2026-0181"
+   ],
+   "calculos": [
+    "CALC-2026-1118",
+    "CALC-2026-1119",
+    "CALC-2026-1120",
+    "CALC-2026-1121",
+    "CALC-2026-1122",
+    "CALC-2026-1123",
+    "CALC-2026-1124"
+   ],
+   "siguiente_paso_sugerido": "ENVIAR_A_BLOQUE_B",
+   "relevancia_decisional": "ALTA"
+  },
+  {
+   "opp_id": "OPP-2026-0034",
+   "tipo_activo": "TCV",
+   "subtipo": "Curvas y diferenciales entre vencimientos",
+   "tipo_opcion": "ESTRATEGIA",
+   "nombre": "Pendiente de la curva de EE. UU. entre 2 y 10 años",
+   "ambito": {
+    "incluye": "Pendiente 2-10 años de la curva del Tesoro de EE. UU. (empinamiento o aplanamiento)",
+    "excluye": "Dirección del nivel de tipos (RF)",
+    "region": "Norteamérica"
+   },
+   "tesis": "Pendiente de la curva de EE. UU. entre 2 y 10 años: el impulso relativo y la tendencia sostienen una evolución favorable del ámbito en los próximos meses.",
+   "mecanismo": "Persistencia del impulso de precios y flujos coherentes con la señal compuesta de la clase.",
+   "horizontes": [
+    "H2",
+    "H3"
+   ],
+   "horizonte_principal": "H3",
+   "pronosticos": [
+    "PRG-2026-0167",
+    "PRG-2026-0168"
+   ],
+   "catalizadores": [
+    {
+     "evento": "Publicación de datos mensuales de la clase",
+     "fecha": "2026-10"
+    }
+   ],
+   "riesgos": [
+    "Reversión brusca del impulso",
+    "Cambio de régimen de mercado"
+   ],
+   "invalidacion": [
+    "Cierre de CURVA-USD-2S10S-TR por debajo de 26.58"
+   ],
+   "indicador_seguimiento": {
+    "nombre": "Índice de rentabilidad de una posición 2s10s (serie propia)",
+    "simbolo": "CURVA-USD-2S10S-TR",
+    "fuente": "HT-01:csv"
+   },
+   "niveles_referencia": {
+    "nivel_actual": {
+     "valor": 29.84797,
+     "unidad": "nivel del indicador de seguimiento",
+     "fecha_dato": "2026-09-25",
+     "fuente": "HT-01:csv"
+    },
+    "invalidacion_1": {
+     "valor": 26.5795,
+     "unidad": "nivel de CURVA-USD-2S10S-TR",
+     "fecha_dato": "2026-09-25",
+     "fuente": "HT-01:csv"
+    }
+   },
+   "criterios_seleccion_sugeridos": [
+    "Exposición alta y directa a «Pendiente de la curva de EE. UU. entre 2 y 10 años»",
+    "Liquidez diaria suficiente"
+   ],
+   "metricas_clave": [
+    "Evolución del indicador de seguimiento (CURVA-USD-2S10S-TR)",
+    "Momentum relativo frente a la referencia del tipo"
+   ],
+   "preguntas_para_B": [
+    "¿Qué activos del ámbito «Pendiente de la curva de EE. UU. entre 2 y 10 años» capturan mejor la tendencia con menor riesgo?"
+   ],
+   "evidencias": [
+    "CLM-2026-0177",
+    "CLM-2026-0178"
+   ],
+   "calculos": [
+    "CALC-2026-1118",
+    "CALC-2026-1119",
+    "CALC-2026-1120",
+    "CALC-2026-1121",
+    "CALC-2026-1122",
+    "CALC-2026-1123",
+    "CALC-2026-1124"
+   ],
+   "siguiente_paso_sugerido": "ENVIAR_A_BLOQUE_B",
+   "relevancia_decisional": "ALTA"
+  }
+ ],
+ "preguntas_sugeridas": [
+  "¿Qué opciones comparten el mismo factor de riesgo?",
+  "¿Qué haría cambiar el semáforo de cada clase?"
+ ],
+ "limitaciones": [
+  "Datos sintéticos o de proveedor sin flujos ni posicionamiento",
+  "Backtest: búsqueda web desactivada; evidencia limitada a datos HT-01 y referencias anteriores a la fecha as_of; riesgo de fuga por conocimiento del modelo"
+ ],
+ "aviso_legal": "Este informe describe oportunidades generales de mercado y no constituye asesoramiento personalizado; el Broker Personal valora si encaja con el usuario.",
+ "x_lectura_conjunto": "Las opciones dependen sobre todo del impulso de precios; las apuestas comparten riesgo de reversión.",
+ "x_cambios_vs_anterior": "Cambios derivados de la evolución de las señales.",
+ "x_n_efectivo": 12.410682316405431,
+ "x_estado_run": "COMPLETO",
+ "estado_g3": "APTO"
+}

@@ -1,0 +1,705 @@
+{
+ "periodo": {
+  "desde": "2026-07-03",
+  "hasta": "2026-09-25",
+  "frecuencia": "semanal",
+  "fecha_evaluacion": "2026-10-30",
+  "ciclos": 13
+ },
+ "advertencias": [
+  "Cliente simulado (mock): las señales proceden de reglas sintéticas, no de un modelo de lenguaje; sirve para probar la tubería, no para medir la capacidad predictiva."
+ ],
+ "anonimizado": false,
+ "pronosticos": {
+  "total": 192,
+  "resueltos": 106,
+  "abiertos": 86,
+  "no_resolubles": 0
+ },
+ "por_clase_horizonte": {
+  "CRI|H2": {
+   "n": 9,
+   "acierto": {
+    "tasa": 0.7777777777777778,
+    "ic90_wilson": [
+     0.5036427823767539,
+     0.9235052624456036
+    ],
+    "p_binomial_vs_tasa_base": 0.1453219167706873,
+    "tasa_base": 0.5470111111111111
+   },
+   "brier": 0.1847222222222222,
+   "brier_ref": 0.2139778811111111,
+   "log_score": 0.5589849242251996,
+   "bss": {
+    "valor": 0.13672281797059893,
+    "ic90": [
+     -0.12314099841258952,
+     0.3631616467451051
+    ]
+   },
+   "ece": {
+    "valor": 0.1722222222222222,
+    "nulo_media": 0.18085,
+    "nulo_q90": 0.2944444444444445
+   },
+   "dm_hln": {
+    "estadistico": -0.9430408043874832,
+    "p_unilateral": 0.18663168107069716,
+    "p_bilateral": 0.37326336214139433,
+    "n": 9,
+    "h": 1
+   },
+   "calibracion_global": {
+    "p_media": 0.6277777777777778,
+    "frecuencia": 0.7777777777777778
+   },
+   "rentabilidad_relativa_media_top3_vs_indice": 0.19940886444444444,
+   "n_top3": 9,
+   "referencia": "BTC-USD"
+  },
+  "DER|H2": {
+   "n": 4,
+   "acierto": {
+    "tasa": 0.25,
+    "ic90_wilson": [
+     0.0579073211998587,
+     0.6438319914014936
+    ],
+    "p_binomial_vs_tasa_base": 0.9436699709366553,
+    "tasa_base": 0.5128250000000001
+   },
+   "brier": 0.3375,
+   "brier_ref": 0.27103428749999997,
+   "log_score": 0.873997236492687,
+   "bss": {
+    "valor": -0.24522990472192596,
+    "ic90": [
+     null,
+     null
+    ]
+   },
+   "ece": {
+    "valor": 0.35000000000000003,
+    "nulo_media": 0.286675,
+    "nulo_q90": 0.45
+   },
+   "dm_hln": {
+    "estadistico": 1.537142596374202,
+    "p_unilateral": 0.8890724257235731,
+    "p_bilateral": 0.2218551485528537,
+    "n": 4,
+    "h": 1
+   },
+   "calibracion_global": {
+    "p_media": 0.6000000000000001,
+    "frecuencia": 0.25
+   },
+   "rentabilidad_relativa_media_top3_vs_indice": -0.012601672500000001,
+   "n_top3": 4,
+   "referencia": "SPY"
+  },
+  "DIV|H2": {
+   "n": 12,
+   "acierto": {
+    "tasa": 0.4166666666666667,
+    "ic90_wilson": [
+     0.2199778806917808,
+     0.6440189850994654
+    ],
+    "p_binomial_vs_tasa_base": 0.9335679007989084,
+    "tasa_base": 0.5897333333333333
+   },
+   "brier": 0.2608333333333334,
+   "brier_ref": 0.2945842,
+   "log_score": 0.7148949064418755,
+   "bss": {
+    "valor": 0.11457120465614445,
+    "ic90": [
+     0.011501486978773248,
+     0.2313670718833096
+    ]
+   },
+   "ece": {
+    "valor": 0.13333333333333325,
+    "nulo_media": 0.11944166666666668,
+    "nulo_q90": 0.21666666666666662
+   },
+   "dm_hln": {
+    "estadistico": -1.0891831383875774,
+    "p_unilateral": 0.14967978377619517,
+    "p_bilateral": 0.29935956755239035,
+    "n": 12,
+    "h": 1
+   },
+   "calibracion_global": {
+    "p_media": 0.5499999999999999,
+    "frecuencia": 0.4166666666666667
+   },
+   "rentabilidad_relativa_media_top3_vs_indice": 2.4518333333332936e-05,
+   "n_top3": 12,
+   "referencia": "CESTA"
+  },
+  "IDX|H2": {
+   "n": 18,
+   "acierto": {
+    "tasa": 0.5555555555555556,
+    "ic90_wilson": [
+     0.36852889549929546,
+     0.7280635945473454
+    ],
+    "p_binomial_vs_tasa_base": 0.3836694509243376,
+    "tasa_base": 0.4928777777777778
+   },
+   "brier": 0.2536111111111111,
+   "brier_ref": 0.2525326911111111,
+   "log_score": 0.7011488450402174,
+   "bss": {
+    "valor": -0.004270417407168603,
+    "ic90": [
+     -0.18838281785411343,
+     0.15679266875664533
+    ]
+   },
+   "ece": {
+    "valor": 0.07222222222222234,
+    "nulo_media": 0.13463611111111115,
+    "nulo_q90": 0.22222222222222232
+   },
+   "dm_hln": {
+    "estadistico": 0.030835292597559773,
+    "p_unilateral": 0.5121199899468565,
+    "p_bilateral": 0.975760020106287,
+    "n": 18,
+    "h": 1
+   },
+   "calibracion_global": {
+    "p_media": 0.6111111111111112,
+    "frecuencia": 0.5555555555555556
+   },
+   "rentabilidad_relativa_media_top3_vs_indice": 0.000814356875,
+   "n_top3": 16,
+   "referencia": null
+  },
+  "MP|H2": {
+   "n": 13,
+   "acierto": {
+    "tasa": 0.46153846153846156,
+    "ic90_wilson": [
+     0.2611477730749896,
+     0.6751804410410754
+    ],
+    "p_binomial_vs_tasa_base": 0.8734455571462425,
+    "tasa_base": 0.5798692307692308
+   },
+   "brier": 0.2563461538461539,
+   "brier_ref": 0.3968900023076923,
+   "log_score": 0.7058904521583172,
+   "bss": {
+    "valor": 0.3541128464923654,
+    "ic90": [
+     0.2386912734631353,
+     0.4379340771195669
+    ]
+   },
+   "ece": {
+    "valor": 0.08846153846153837,
+    "nulo_media": 0.11405,
+    "nulo_q90": 0.24230769230769222
+   },
+   "dm_hln": {
+    "estadistico": -4.069103183200755,
+    "p_unilateral": 0.0007780524478184313,
+    "p_bilateral": 0.001556104895636956,
+    "n": 13,
+    "h": 1
+   },
+   "calibracion_global": {
+    "p_media": 0.5499999999999999,
+    "frecuencia": 0.46153846153846156
+   },
+   "rentabilidad_relativa_media_top3_vs_indice": -0.013128530909090908,
+   "n_top3": 11,
+   "referencia": null
+  },
+  "RF|H2": {
+   "n": 15,
+   "acierto": {
+    "tasa": 0.6,
+    "ic90_wilson": [
+     0.3926063693439541,
+     0.7768320897340177
+    ],
+    "p_binomial_vs_tasa_base": 0.28734311407884583,
+    "tasa_base": 0.49400666666666665
+   },
+   "brier": 0.2531666666666667,
+   "brier_ref": 0.23737847133333337,
+   "log_score": 0.7005747039052115,
+   "bss": {
+    "valor": -0.06651064540374052,
+    "ic90": [
+     -0.2079759333021783,
+     0.20006279074016156
+    ]
+   },
+   "ece": {
+    "valor": 0.0033333333333335213,
+    "nulo_media": 0.1003866666666667,
+    "nulo_q90": 0.20333333333333348
+   },
+   "dm_hln": {
+    "estadistico": 0.4663437706189696,
+    "p_unilateral": 0.6759285570329352,
+    "p_bilateral": 0.6481428859341296,
+    "n": 15,
+    "h": 1
+   },
+   "calibracion_global": {
+    "p_media": 0.6033333333333335,
+    "frecuencia": 0.6
+   },
+   "rentabilidad_relativa_media_top3_vs_indice": 0.0009810641666666668,
+   "n_top3": 12,
+   "referencia": "AGG"
+  },
+  "RV|H2": {
+   "n": 19,
+   "acierto": {
+    "tasa": 0.3157894736842105,
+    "ic90_wilson": [
+     0.17304212024652676,
+     0.5044596195830173
+    ],
+    "p_binomial_vs_tasa_base": 0.9825011230573116,
+    "tasa_base": 0.5290157894736843
+   },
+   "brier": 0.30250000000000005,
+   "brier_ref": 0.25938417315789475,
+   "log_score": 0.8013505683864,
+   "bss": {
+    "valor": -0.16622381511249507,
+    "ic90": [
+     -0.3287054894019703,
+     -0.06918945332551812
+    ]
+   },
+   "ece": {
+    "valor": 0.286842105263158,
+    "nulo_media": 0.09194210526315788,
+    "nulo_q90": 0.1868421052631578
+   },
+   "dm_hln": {
+    "estadistico": 2.0286626517649595,
+    "p_unilateral": 0.971224323197797,
+    "p_bilateral": 0.05755135360440611,
+    "n": 19,
+    "h": 1
+   },
+   "calibracion_global": {
+    "p_media": 0.6026315789473685,
+    "frecuencia": 0.3157894736842105
+   },
+   "rentabilidad_relativa_media_top3_vs_indice": -0.05180971785714285,
+   "n_top3": 14,
+   "referencia": "ACWI"
+  },
+  "TCV|H2": {
+   "n": 16,
+   "acierto": {
+    "tasa": 0.625,
+    "ic90_wilson": [
+     0.4219159873257088,
+     0.7919243648573888
+    ],
+    "p_binomial_vs_tasa_base": 0.23512863888575264,
+    "tasa_base": 0.50319375
+   },
+   "brier": 0.24,
+   "brier_ref": 0.228138183125,
+   "log_score": 0.6730885115539271,
+   "bss": {
+    "valor": -0.05199400079600336,
+    "ic90": [
+     -0.14671822415183516,
+     0.07301502412640193
+    ]
+   },
+   "ece": {
+    "valor": 0.07499999999999996,
+    "nulo_media": 0.1005625,
+    "nulo_q90": 0.19999999999999996
+   },
+   "dm_hln": {
+    "estadistico": 0.63171578834525,
+    "p_unilateral": 0.7314590119549408,
+    "p_bilateral": 0.5370819760901184,
+    "n": 16,
+    "h": 1
+   },
+   "calibracion_global": {
+    "p_media": 0.55,
+    "frecuencia": 0.625
+   },
+   "rentabilidad_relativa_media_top3_vs_indice": 0.048575801875,
+   "n_top3": 16,
+   "referencia": null
+  }
+ },
+ "solo_opciones_publicadas": {
+  "CRI|H2": {
+   "n": 9,
+   "acierto": 0.7777777777777778,
+   "brier": 0.1847222222222222,
+   "bss": 0.13672281797059893,
+   "rentabilidad_relativa_media_top3_vs_indice": 0.19940886444444444
+  },
+  "DER|H2": {
+   "n": 4,
+   "acierto": 0.25,
+   "brier": 0.3375,
+   "bss": -0.24522990472192596,
+   "rentabilidad_relativa_media_top3_vs_indice": -0.012601672500000001
+  },
+  "DIV|H2": {
+   "n": 12,
+   "acierto": 0.4166666666666667,
+   "brier": 0.2608333333333334,
+   "bss": 0.11457120465614445,
+   "rentabilidad_relativa_media_top3_vs_indice": 2.4518333333332936e-05
+  },
+  "IDX|H2": {
+   "n": 16,
+   "acierto": 0.5625,
+   "brier": 0.24625000000000002,
+   "bss": 0.05847245237240484,
+   "rentabilidad_relativa_media_top3_vs_indice": 0.000814356875
+  },
+  "MP|H2": {
+   "n": 11,
+   "acierto": 0.36363636363636365,
+   "brier": 0.26613636363636367,
+   "bss": 0.31943509844599693,
+   "rentabilidad_relativa_media_top3_vs_indice": -0.013128530909090908
+  },
+  "RF|H2": {
+   "n": 12,
+   "acierto": 0.5833333333333334,
+   "brier": 0.2541666666666667,
+   "bss": -0.0808829533680091,
+   "rentabilidad_relativa_media_top3_vs_indice": 0.0009810641666666668
+  },
+  "RV|H2": {
+   "n": 14,
+   "acierto": 0.21428571428571427,
+   "brier": 0.33535714285714285,
+   "bss": -0.21429074177822094,
+   "rentabilidad_relativa_media_top3_vs_indice": -0.05180971785714285
+  },
+  "TCV|H2": {
+   "n": 16,
+   "acierto": 0.625,
+   "brier": 0.24,
+   "bss": -0.05199400079600336,
+   "rentabilidad_relativa_media_top3_vs_indice": 0.048575801875
+  }
+ },
+ "certificados": {
+  "emitidos": [],
+  "celdas_evaluadas": {},
+  "celdas_con_muestra_insuficiente": {
+   "RV|H2": "n = 19 < 100",
+   "RF|H2": "n = 15 < 100",
+   "DIV|H2": "n = 12 < 100",
+   "MP|H2": "n = 13 < 100",
+   "IDX|H2": "n = 18 < 100",
+   "TCV|H2": "n = 16 < 100",
+   "CRI|H2": "n = 9 < 100",
+   "DER|H2": "n = 4 < 100"
+  },
+  "criterio": "Anexo A: n ≥ 100, IC 90 % del BSS > 0 (Holm), ECE ≤ q90 del nulo y < 0,15"
+ },
+ "consumo_total": {
+  "llamadas": 337,
+  "tokens_entrada": 890155,
+  "tokens_salida": 218251,
+  "tokens_cache_escritura": 328882,
+  "tokens_cache_lectura": 5606066,
+  "uc": 203.0981
+ },
+ "runs": [
+  {
+   "run_id": "RUN-2026-0001",
+   "as_of": "2026-07-03",
+   "estado": "COMPLETO",
+   "entrega": "ENTREGADA",
+   "nivel_por_clase": {
+    "RV": "N2",
+    "RF": "N2",
+    "DIV": "N2",
+    "MP": "N2",
+    "IDX": "N2",
+    "FON": "N2",
+    "DER": "N2",
+    "INM": "N2",
+    "CRI": "N2",
+    "ALT": "N2",
+    "MON": "N2",
+    "TCV": "N2"
+   },
+   "g3": "APTO"
+  },
+  {
+   "run_id": "RUN-2026-0002",
+   "as_of": "2026-07-10",
+   "estado": "COMPLETO",
+   "entrega": "ENTREGADA",
+   "nivel_por_clase": {
+    "RV": "N1",
+    "RF": "N1",
+    "DIV": "N1",
+    "MP": "N1",
+    "IDX": "N1",
+    "FON": "N1",
+    "DER": "N1",
+    "INM": "N1",
+    "CRI": "N2",
+    "ALT": "N1",
+    "MON": "N1",
+    "TCV": "N1"
+   },
+   "g3": "APTO"
+  },
+  {
+   "run_id": "RUN-2026-0003",
+   "as_of": "2026-07-17",
+   "estado": "COMPLETO",
+   "entrega": "ENTREGADA",
+   "nivel_por_clase": {
+    "RV": "N1",
+    "RF": "N1",
+    "DIV": "N1",
+    "MP": "N1",
+    "IDX": "N1",
+    "FON": "N1",
+    "DER": "N1",
+    "INM": "N1",
+    "CRI": "N1",
+    "ALT": "N1",
+    "MON": "N1",
+    "TCV": "N1"
+   },
+   "g3": "APTO"
+  },
+  {
+   "run_id": "RUN-2026-0004",
+   "as_of": "2026-07-24",
+   "estado": "COMPLETO",
+   "entrega": "ENTREGADA",
+   "nivel_por_clase": {
+    "RV": "N1",
+    "RF": "N1",
+    "DIV": "N1",
+    "MP": "N1",
+    "IDX": "N1",
+    "FON": "N1",
+    "DER": "N1",
+    "INM": "N2",
+    "CRI": "N2",
+    "ALT": "N2",
+    "MON": "N1",
+    "TCV": "N1"
+   },
+   "g3": "APTO"
+  },
+  {
+   "run_id": "RUN-2026-0005",
+   "as_of": "2026-07-31",
+   "estado": "COMPLETO",
+   "entrega": "ENTREGADA",
+   "nivel_por_clase": {
+    "RV": "N2",
+    "RF": "N1",
+    "DIV": "N1",
+    "MP": "N1",
+    "IDX": "N1",
+    "FON": "N1",
+    "DER": "N1",
+    "INM": "N1",
+    "CRI": "N1",
+    "ALT": "N1",
+    "MON": "N1",
+    "TCV": "N1"
+   },
+   "g3": "APTO"
+  },
+  {
+   "run_id": "RUN-2026-0006",
+   "as_of": "2026-08-07",
+   "estado": "COMPLETO",
+   "entrega": "ENTREGADA",
+   "nivel_por_clase": {
+    "RV": "N1",
+    "RF": "N2",
+    "DIV": "N1",
+    "MP": "N2",
+    "IDX": "N1",
+    "FON": "N1",
+    "DER": "N1",
+    "INM": "N1",
+    "CRI": "N2",
+    "ALT": "N1",
+    "MON": "N1",
+    "TCV": "N2"
+   },
+   "g3": "APTO"
+  },
+  {
+   "run_id": "RUN-2026-0007",
+   "as_of": "2026-08-14",
+   "estado": "COMPLETO",
+   "entrega": "ENTREGADA",
+   "nivel_por_clase": {
+    "RV": "N2",
+    "RF": "N1",
+    "DIV": "N1",
+    "MP": "N1",
+    "IDX": "N2",
+    "FON": "N1",
+    "DER": "N1",
+    "INM": "N1",
+    "CRI": "N1",
+    "ALT": "N1",
+    "MON": "N1",
+    "TCV": "N1"
+   },
+   "g3": "APTO"
+  },
+  {
+   "run_id": "RUN-2026-0008",
+   "as_of": "2026-08-21",
+   "estado": "COMPLETO",
+   "entrega": "ENTREGADA",
+   "nivel_por_clase": {
+    "RV": "N1",
+    "RF": "N1",
+    "DIV": "N1",
+    "MP": "N1",
+    "IDX": "N1",
+    "FON": "N1",
+    "DER": "N1",
+    "INM": "N1",
+    "CRI": "N1",
+    "ALT": "N2",
+    "MON": "N1",
+    "TCV": "N2"
+   },
+   "g3": "APTO"
+  },
+  {
+   "run_id": "RUN-2026-0009",
+   "as_of": "2026-08-28",
+   "estado": "COMPLETO",
+   "entrega": "ENTREGADA",
+   "nivel_por_clase": {
+    "RV": "N1",
+    "RF": "N1",
+    "DIV": "N1",
+    "MP": "N1",
+    "IDX": "N1",
+    "FON": "N2",
+    "DER": "N1",
+    "INM": "N1",
+    "CRI": "N2",
+    "ALT": "N2",
+    "MON": "N1",
+    "TCV": "N1"
+   },
+   "g3": "APTO"
+  },
+  {
+   "run_id": "RUN-2026-0010",
+   "as_of": "2026-09-04",
+   "estado": "COMPLETO",
+   "entrega": "ENTREGADA",
+   "nivel_por_clase": {
+    "RV": "N1",
+    "RF": "N2",
+    "DIV": "N1",
+    "MP": "N1",
+    "IDX": "N1",
+    "FON": "N1",
+    "DER": "N2",
+    "INM": "N1",
+    "CRI": "N2",
+    "ALT": "N1",
+    "MON": "N1",
+    "TCV": "N2"
+   },
+   "g3": "APTO"
+  },
+  {
+   "run_id": "RUN-2026-0011",
+   "as_of": "2026-09-11",
+   "estado": "COMPLETO",
+   "entrega": "ENTREGADA",
+   "nivel_por_clase": {
+    "RV": "N1",
+    "RF": "N1",
+    "DIV": "N1",
+    "MP": "N1",
+    "IDX": "N1",
+    "FON": "N1",
+    "DER": "N1",
+    "INM": "N1",
+    "CRI": "N1",
+    "ALT": "N1",
+    "MON": "N1",
+    "TCV": "N2"
+   },
+   "g3": "APTO"
+  },
+  {
+   "run_id": "RUN-2026-0012",
+   "as_of": "2026-09-18",
+   "estado": "COMPLETO",
+   "entrega": "ENTREGADA",
+   "nivel_por_clase": {
+    "RV": "N2",
+    "RF": "N1",
+    "DIV": "N1",
+    "MP": "N2",
+    "IDX": "N2",
+    "FON": "N1",
+    "DER": "N2",
+    "INM": "N1",
+    "CRI": "N1",
+    "ALT": "N1",
+    "MON": "N1",
+    "TCV": "N2"
+   },
+   "g3": "APTO"
+  },
+  {
+   "run_id": "RUN-2026-0013",
+   "as_of": "2026-09-25",
+   "estado": "COMPLETO",
+   "entrega": "ENTREGADA",
+   "nivel_por_clase": {
+    "RV": "N2",
+    "RF": "N1",
+    "DIV": "N1",
+    "MP": "N1",
+    "IDX": "N2",
+    "FON": "N1",
+    "DER": "N1",
+    "INM": "N1",
+    "CRI": "N2",
+    "ALT": "N1",
+    "MON": "N1",
+    "TCV": "N1"
+   },
+   "g3": "APTO"
+  }
+ ]
+}

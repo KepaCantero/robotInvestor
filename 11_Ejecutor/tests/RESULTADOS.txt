@@ -1,0 +1,55 @@
+============================= test session starts ==============================
+platform linux -- Python 3.13.18, pytest-9.1.1, pluggy-1.6.0 -- /usr/local/bin/python3
+cachedir: .pytest_cache
+rootdir: /home/claude/v4/11_Ejecutor
+configfile: pyproject.toml
+plugins: platformdirs-4.13.3, anyio-4.15.1
+collecting ... collected 45 items
+
+tests/test_autocritica.py::test_objecion_fuerte_sin_resolver_excluye_del_top3 PASSED [  2%]
+tests/test_autocritica.py::test_arrastre_con_invalidacion_activada PASSED [  4%]
+tests/test_integracion.py::test_ciclo_semanal_completo_apto PASSED       [  6%]
+tests/test_integracion.py::test_canales_y_matriz_respetados PASSED       [  8%]
+tests/test_integracion.py::test_gc0_negativo_arrastre_verificado PASSED  [ 11%]
+tests/test_integracion.py::test_consulta_n0_sin_escalado PASSED          [ 13%]
+tests/test_integracion.py::test_consulta_que_escala_y_pregunta_repetida PASSED [ 15%]
+tests/test_integracion.py::test_peticion_ad_hoc_y_decisiones PASSED      [ 17%]
+tests/test_integracion.py::test_presupuesto_agotado_parcial_declarado PASSED [ 20%]
+tests/test_integracion.py::test_instruccion_incrustada_ignorada_y_registrada PASSED [ 22%]
+tests/test_integracion.py::test_reproducibilidad_con_replay_y_anonimizacion PASSED [ 24%]
+tests/test_integracion.py::test_anonimizacion_oculta_simbolos PASSED     [ 26%]
+tests/test_integracion.py::test_backtest_12_semanas_csv_y_metricas PASSED [ 28%]
+tests/test_integracion.py::test_pronosticos_resueltos_sin_look_ahead PASSED [ 31%]
+tests/test_integracion.py::test_certificados_no_emitidos_con_n_insuficiente PASSED [ 33%]
+tests/test_integracion.py::test_certificado_emitido_con_muestra_suficiente PASSED [ 35%]
+tests/test_integracion.py::test_cli_backtest_y_estado PASSED             [ 37%]
+tests/test_unitarias.py::test_herramientas_de_referencia_sin_divergencia[ht02_verificador_enlaces.py] PASSED [ 40%]
+tests/test_unitarias.py::test_herramientas_de_referencia_sin_divergencia[ht03_puntuaciones.py] PASSED [ 42%]
+tests/test_unitarias.py::test_herramientas_de_referencia_sin_divergencia[ht07_legibilidad.py] PASSED [ 44%]
+tests/test_unitarias.py::test_herramientas_de_referencia_sin_divergencia[ht09_validador_g3.py] PASSED [ 46%]
+tests/test_unitarias.py::test_ht05_fechas PASSED                         [ 48%]
+tests/test_unitarias.py::test_ht04_y_ht06_y_ht08 PASSED                  [ 51%]
+tests/test_unitarias.py::test_guardia_de_fuga_del_proveedor PASSED       [ 53%]
+tests/test_unitarias.py::test_fecha_publicacion_filtra_revisiones PASSED [ 55%]
+tests/test_unitarias.py::test_sintetico_determinista PASSED              [ 57%]
+tests/test_unitarias.py::test_casos_de_control_de_las_fichas PASSED      [ 60%]
+tests/test_unitarias.py::test_score_rk_identico_a_ht03 PASSED            [ 62%]
+tests/test_unitarias.py::test_metricas_de_pronostico_con_pronosticadores_sinteticos PASSED [ 64%]
+tests/test_unitarias.py::test_servicio_del_motor_rc_cache_fuga_y_reejecucion PASSED [ 66%]
+tests/test_unitarias.py::test_contratos_canales_credenciales_e_idempotencia PASSED [ 68%]
+tests/test_unitarias.py::test_almacen_reserva_integridad_y_as_of PASSED  [ 71%]
+tests/test_unitarias.py::test_saneamiento_r9 PASSED                      [ 73%]
+tests/test_unitarias.py::test_cliente_anthropic_cache_herramienta_y_pause_turn PASSED [ 75%]
+tests/test_unitarias.py::test_busqueda_web_solo_en_vivo_y_reparacion_json PASSED [ 77%]
+tests/test_unitarias.py::test_mock_determinista_y_uc PASSED              [ 80%]
+tests/test_v5.py::test_doce_tipos_agentes_y_canales PASSED               [ 82%]
+tests/test_v5.py::test_configuracion_por_defecto_v5 PASSED               [ 84%]
+tests/test_v5.py::test_referencias_de_comparacion PASSED                 [ 86%]
+tests/test_v5.py::test_busqueda_de_archivos_versionados PASSED           [ 88%]
+tests/test_v5.py::test_prompts_de_los_analistas_nuevos_y_modo_degradado PASSED [ 91%]
+tests/test_v5.py::test_universo_de_ambitos_con_indicador PASSED          [ 93%]
+tests/test_v5.py::test_esquema_de_finalista_sin_vehiculos PASSED         [ 95%]
+tests/test_v5.py::test_sin_duplicados_entre_tipos PASSED                 [ 97%]
+tests/test_v5.py::test_referencias_reales_se_cargan_con_cualquier_version PASSED [100%]
+
+======================== 45 passed in 95.90s (0:01:35) =========================

@@ -1,0 +1,1674 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:robot-investor:bloque-a:paquete-oportunidades:5.0",
+  "title": "Paquete de oportunidades del Bloque A (V5.0)",
+  "description": "Esquema del entregable 'paquete_oportunidades' (Documento 0 óptima V5.0, secciones 2.4–2.6, 9.6.7, 14.3 y Anexo B). Versión óptima V5.0 · 02/11/2026. Lo genera AG-17 Redactor a partir del paquete de síntesis (CT-15) y lo publica AG-01 Coordinador por CT-02. Las claves de 'clases' son los doce códigos de tipo de activo (2.6). Frontera con el Bloque B (2.5, R21): cada opción es un ÁMBITO de inversión (granularidad máxima: segmento) con su delimitación ('ambito'), su indicador de seguimiento y su invertibilidad; nunca un activo o instrumento concreto, ni sus costes o plataformas. Los nombres concretos solo pueden aparecer en 'ejemplos_ilustrativos'. 'paquete_para_bloque_B' es el encargo de 2.5. Contiene los campos mínimos del Anexo B más las ampliaciones del operador necesarias para los informes (regiones, lo_que_no_sabemos, estado de objeciones, certificados R13). Ampliaciones adicionales solo con prefijo 'x_' (patternProperties); cualquier otro campo no declarado se rechaza para detectar erratas. Las cifras deben coincidir exactamente con el informe técnico y el informe visual del mismo run_id.",
+  "type": "object",
+  "required": [
+    "run_id",
+    "fecha",
+    "methodology_version",
+    "tipo",
+    "regimen_macro",
+    "apuestas_independientes",
+    "clases",
+    "seguimiento_vigentes",
+    "historial_aciertos",
+    "paquete_para_bloque_B",
+    "preguntas_sugeridas",
+    "limitaciones"
+  ],
+  "properties": {
+    "run_id": {
+      "$ref": "#/$defs/run_id"
+    },
+    "fecha": {
+      "type": "string",
+      "format": "date",
+      "description": "Fecha de referencia del análisis (AAAA-MM-DD)."
+    },
+    "fecha_datos_mercado": {
+      "type": "string",
+      "format": "date",
+      "description": "Fecha del último cierre de mercado usado (HT-01)."
+    },
+    "methodology_version": {
+      "type": "string",
+      "pattern": "^[0-9]+\\.[0-9]+$",
+      "description": "Versión de metodología vigente en F10 (p. ej. 4.0, 4.1)."
+    },
+    "tipo": {
+      "enum": [
+        "PERIODICO",
+        "AD_HOC",
+        "PROFUNDIZACION"
+      ]
+    },
+    "nivel_por_clase": {
+      "type": "object",
+      "description": "Nivel N1–N3 aplicado a cada tipo de activo en este RUN.",
+      "propertyNames": {
+        "$ref": "#/$defs/codigo_clase"
+      },
+      "additionalProperties": {
+        "enum": [
+          "N1",
+          "N2",
+          "N3"
+        ]
+      }
+    },
+    "regimen_macro": {
+      "type": "string",
+      "minLength": 10
+    },
+    "apuestas_independientes": {
+      "type": "integer",
+      "minimum": 0,
+      "description": "Número de grupos de opciones que dependen del mismo factor dominante (9.6.6)."
+    },
+    "clusteres_exposicion": {
+      "type": "array",
+      "description": "Detalle de las apuestas independientes: factor dominante y opciones que dependen de él.",
+      "items": {
+        "type": "object",
+        "required": [
+          "cluster_id",
+          "factor_dominante",
+          "opp_ids"
+        ],
+        "properties": {
+          "cluster_id": {
+            "type": "string",
+            "pattern": "^CL-[0-9]{1,3}$"
+          },
+          "factor_dominante": {
+            "type": "string"
+          },
+          "opp_ids": {
+            "type": "array",
+            "minItems": 1,
+            "items": {
+              "$ref": "#/$defs/opp_id"
+            }
+          }
+        },
+        "additionalProperties": false
+      }
+    },
+    "clases": {
+      "type": "object",
+      "description": "Una entrada por cada tipo de activo activo en F10 (los doce por defecto). En cada tipo, el 'tipo_activo' de sus opciones coincide con la clave.",
+      "minProperties": 1,
+      "additionalProperties": false,
+      "properties": {
+        "RV": {
+          "allOf": [
+            {
+              "$ref": "#/$defs/clase"
+            },
+            {
+              "properties": {
+                "opciones": {
+                  "items": {
+                    "properties": {
+                      "tipo_activo": {
+                        "const": "RV"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          ]
+        },
+        "RF": {
+          "allOf": [
+            {
+              "$ref": "#/$defs/clase"
+            },
+            {
+              "properties": {
+                "opciones": {
+                  "items": {
+                    "properties": {
+                      "tipo_activo": {
+                        "const": "RF"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          ]
+        },
+        "DIV": {
+          "allOf": [
+            {
+              "$ref": "#/$defs/clase"
+            },
+            {
+              "properties": {
+                "opciones": {
+                  "items": {
+                    "properties": {
+                      "tipo_activo": {
+                        "const": "DIV"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          ]
+        },
+        "MP": {
+          "allOf": [
+            {
+              "$ref": "#/$defs/clase"
+            },
+            {
+              "properties": {
+                "opciones": {
+                  "items": {
+                    "properties": {
+                      "tipo_activo": {
+                        "const": "MP"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          ]
+        },
+        "IDX": {
+          "allOf": [
+            {
+              "$ref": "#/$defs/clase"
+            },
+            {
+              "properties": {
+                "opciones": {
+                  "items": {
+                    "properties": {
+                      "tipo_activo": {
+                        "const": "IDX"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          ]
+        },
+        "FON": {
+          "allOf": [
+            {
+              "$ref": "#/$defs/clase"
+            },
+            {
+              "properties": {
+                "opciones": {
+                  "items": {
+                    "properties": {
+                      "tipo_activo": {
+                        "const": "FON"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          ]
+        },
+        "DER": {
+          "allOf": [
+            {
+              "$ref": "#/$defs/clase"
+            },
+            {
+              "properties": {
+                "opciones": {
+                  "items": {
+                    "properties": {
+                      "tipo_activo": {
+                        "const": "DER"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          ]
+        },
+        "INM": {
+          "allOf": [
+            {
+              "$ref": "#/$defs/clase"
+            },
+            {
+              "properties": {
+                "opciones": {
+                  "items": {
+                    "properties": {
+                      "tipo_activo": {
+                        "const": "INM"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          ]
+        },
+        "CRI": {
+          "allOf": [
+            {
+              "$ref": "#/$defs/clase"
+            },
+            {
+              "properties": {
+                "opciones": {
+                  "items": {
+                    "properties": {
+                      "tipo_activo": {
+                        "const": "CRI"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          ]
+        },
+        "ALT": {
+          "allOf": [
+            {
+              "$ref": "#/$defs/clase"
+            },
+            {
+              "properties": {
+                "opciones": {
+                  "items": {
+                    "properties": {
+                      "tipo_activo": {
+                        "const": "ALT"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          ]
+        },
+        "MON": {
+          "allOf": [
+            {
+              "$ref": "#/$defs/clase"
+            },
+            {
+              "properties": {
+                "opciones": {
+                  "items": {
+                    "properties": {
+                      "tipo_activo": {
+                        "const": "MON"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          ]
+        },
+        "TCV": {
+          "allOf": [
+            {
+              "$ref": "#/$defs/clase"
+            },
+            {
+              "properties": {
+                "opciones": {
+                  "items": {
+                    "properties": {
+                      "tipo_activo": {
+                        "const": "TCV"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          ]
+        }
+      }
+    },
+    "seguimiento_vigentes": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": [
+          "opp_id",
+          "estado",
+          "comentario"
+        ],
+        "properties": {
+          "opp_id": {
+            "$ref": "#/$defs/opp_id"
+          },
+          "estado": {
+            "enum": [
+              "VIGENTE",
+              "CERRADA"
+            ]
+          },
+          "motivo_cierre": {
+            "enum": [
+              "INVALIDACION",
+              "VENCIMIENTO_HORIZONTE",
+              "OBJETIVO_ALCANZADO",
+              "SUSTITUCION",
+              null
+            ]
+          },
+          "comentario": {
+            "type": "string"
+          },
+          "decision_broker": {
+            "enum": [
+              "ENVIADA_A_BLOQUE_B",
+              "EN_SEGUIMIENTO",
+              "DESCARTADA",
+              "APLAZADA",
+              null
+            ]
+          }
+        },
+        "additionalProperties": false,
+        "if": {
+          "properties": {
+            "estado": {
+              "const": "CERRADA"
+            }
+          }
+        },
+        "then": {
+          "required": [
+            "motivo_cierre"
+          ],
+          "properties": {
+            "motivo_cierre": {
+              "type": "string"
+            }
+          }
+        }
+      }
+    },
+    "historial_aciertos": {
+      "$ref": "#/$defs/historial_aciertos"
+    },
+    "paquete_para_bloque_B": {
+      "type": "array",
+      "description": "Encargo para el Bloque B (2.5, Anexo B): una entrada por cada opción del top-3 (la decisión de reenviar es del Broker, R4).",
+      "items": {
+        "$ref": "#/$defs/entrada_bloque_B"
+      }
+    },
+    "preguntas_sugeridas": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "minLength": 5
+      }
+    },
+    "limitaciones": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "minLength": 5
+      }
+    },
+    "estado_g3": {
+      "enum": [
+        "APTO",
+        "APTO_CON_ADVERTENCIAS"
+      ]
+    },
+    "aviso_legal": {
+      "type": "string"
+    }
+  },
+  "patternProperties": {
+    "^x_": {}
+  },
+  "additionalProperties": false,
+  "$defs": {
+    "run_id": {
+      "type": "string",
+      "pattern": "^RUN-[0-9]{4}-[0-9]{4,}$"
+    },
+    "opp_id": {
+      "type": "string",
+      "pattern": "^OPP-[0-9]{4}-[0-9]{4,}$"
+    },
+    "tnd_id": {
+      "type": "string",
+      "pattern": "^TND-[0-9]{4}-[0-9]{4,}$"
+    },
+    "prg_id": {
+      "type": "string",
+      "pattern": "^PRG-[0-9]{4}-[0-9]{4,}$"
+    },
+    "clm_id": {
+      "type": "string",
+      "pattern": "^CLM-[0-9]{4}-[0-9]{4,}$"
+    },
+    "calc_id": {
+      "type": "string",
+      "pattern": "^CALC-[0-9]{4}-[0-9]{4,}$"
+    },
+    "codigo_clase": {
+      "enum": [
+        "RV",
+        "RF",
+        "DIV",
+        "MP",
+        "IDX",
+        "FON",
+        "DER",
+        "INM",
+        "CRI",
+        "ALT",
+        "MON",
+        "TCV"
+      ],
+      "description": "Doce tipos de activo (2.6): RV renta variable · RF renta fija · DIV divisas · MP materias primas · IDX índices bursátiles · FON fondos y vehículos de inversión colectiva · DER derivados financieros · INM activos inmobiliarios cotizados · CRI criptoactivos y activos digitales · ALT capital privado y activos alternativos · MON instrumentos monetarios y liquidez · TCV tipos de interés, crédito y volatilidad."
+    },
+    "codigo_region": {
+      "enum": [
+        "NAM",
+        "LAT",
+        "EUR",
+        "AFR",
+        "ORM",
+        "CHN",
+        "ASE",
+        "JPN",
+        "OCE",
+        "GLB"
+      ],
+      "description": "Regiones del cartograma del informe visual: Norteamérica, Latinoamérica, Europa, África, Oriente Medio, China, Asia emergente, Japón, Oceanía, Global (sin región)."
+    },
+    "horizonte": {
+      "enum": [
+        "H1",
+        "H2",
+        "H3",
+        "H4"
+      ]
+    },
+    "puntuacion_total": {
+      "type": "integer",
+      "minimum": 0,
+      "maximum": 100,
+      "multipleOf": 5
+    },
+    "confianza": {
+      "enum": [
+        "establecido",
+        "probable",
+        "especulativo",
+        "en disputa"
+      ]
+    },
+    "clase": {
+      "type": "object",
+      "required": [
+        "estado_semaforo",
+        "regimen_clase",
+        "candidatas_analizadas",
+        "opciones",
+        "menos_de_tres_motivo"
+      ],
+      "properties": {
+        "estado_semaforo": {
+          "enum": [
+            "VERDE",
+            "AMBAR",
+            "GRIS"
+          ]
+        },
+        "regimen_clase": {
+          "type": "string",
+          "minLength": 10
+        },
+        "candidatas_analizadas": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "embudo": {
+          "type": "object",
+          "description": "Recuento por puerta de continuidad (F5).",
+          "properties": {
+            "gc0_delta_material": {
+              "type": "boolean"
+            },
+            "cribadas": {
+              "type": "integer",
+              "minimum": 0
+            },
+            "pasan_gc1": {
+              "type": "integer",
+              "minimum": 0
+            },
+            "pasan_gc2": {
+              "type": "integer",
+              "minimum": 0
+            },
+            "finalistas_gc3": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 5
+            },
+            "elegibles": {
+              "type": "integer",
+              "minimum": 0
+            }
+          },
+          "additionalProperties": false
+        },
+        "opciones": {
+          "type": "array",
+          "maxItems": 3,
+          "items": {
+            "$ref": "#/$defs/opcion"
+          }
+        },
+        "menos_de_tres_motivo": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "description": "Obligatorio (texto) si hay menos de tres opciones (R14): cuántas se analizaron, por qué no llegaron y qué tendría que ocurrir."
+        }
+      },
+      "patternProperties": {
+        "^x_": {}
+      },
+      "additionalProperties": false,
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "opciones": {
+                "maxItems": 2
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "menos_de_tres_motivo": {
+                "type": "string",
+                "minLength": 20
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "estado_semaforo": {
+                "const": "GRIS"
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "opciones": {
+                "maxItems": 0
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "estado_semaforo": {
+                "enum": [
+                  "VERDE",
+                  "AMBAR"
+                ]
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "opciones": {
+                "minItems": 1
+              }
+            }
+          }
+        }
+      ],
+      "description": "Resultado de un tipo de activo: semáforo, régimen, embudo y hasta tres opciones (R14)."
+    },
+    "opcion": {
+      "type": "object",
+      "required": [
+        "opp_id",
+        "rango",
+        "tipo_opcion",
+        "tipo_activo",
+        "subtipo",
+        "nombre",
+        "nombre_llano",
+        "tesis",
+        "mecanismo",
+        "tnd_ids",
+        "regiones",
+        "puntuaciones",
+        "horizontes",
+        "valoracion",
+        "catalizadores",
+        "riesgos",
+        "riesgo_1a5",
+        "invalidacion",
+        "ambito",
+        "indicador_seguimiento",
+        "invertibilidad",
+        "liquidez",
+        "relevancia_decisional",
+        "reversibilidad",
+        "siguiente_paso_sugerido",
+        "que_cambiaria_la_conclusion",
+        "objeciones",
+        "lo_que_no_sabemos",
+        "confianza",
+        "evidencias",
+        "calculos"
+      ],
+      "properties": {
+        "opp_id": {
+          "$ref": "#/$defs/opp_id"
+        },
+        "rango": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 3
+        },
+        "tipo_opcion": {
+          "enum": [
+            "MERCADO",
+            "SECTOR",
+            "SUBSECTOR",
+            "TEMATICA",
+            "SEGMENTO",
+            "FACTOR",
+            "ESTILO",
+            "ESTRATEGIA"
+          ],
+          "description": "Granularidad del ámbito (2.4): MERCADO (país, región o índice de referencia), SECTOR, SUBSECTOR, TEMATICA, SEGMENTO (subconjunto por rating, vencimiento, tamaño, estilo o estructura), FACTOR, ESTILO o ESTRATEGIA. Nunca un activo concreto (R21)."
+        },
+        "tipo_activo": {
+          "$ref": "#/$defs/codigo_clase",
+          "description": "Tipo de activo asignado según las reglas de 2.6 (motor de rentabilidad). Coincide con la clave de 'clases'."
+        },
+        "tipos_secundarios": {
+          "type": "array",
+          "uniqueItems": true,
+          "items": {
+            "$ref": "#/$defs/codigo_clase"
+          },
+          "description": "Tipos secundarios citados (regla 5 de 2.6); la opción solo figura en el top-3 de su tipo principal."
+        },
+        "subtipo": {
+          "type": "string",
+          "minLength": 2,
+          "description": "Subtipo de la tabla 2.6 dentro del que se delimita el ámbito (p. ej., «Sector», «Deuda pública», «Metales preciosos», «Volatilidad»)."
+        },
+        "nombre": {
+          "type": "string",
+          "minLength": 3
+        },
+        "nombre_llano": {
+          "type": "string",
+          "minLength": 3,
+          "maxLength": 70
+        },
+        "por_que_llano": {
+          "type": "string",
+          "maxLength": 160,
+          "description": "Frase de la tarjeta del informe visual (≤ 20 palabras)."
+        },
+        "que_puede_salir_mal_llano": {
+          "type": "string",
+          "maxLength": 200
+        },
+        "tesis": {
+          "type": "string",
+          "minLength": 10
+        },
+        "mecanismo": {
+          "type": "string",
+          "minLength": 10
+        },
+        "tnd_ids": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/tnd_id"
+          },
+          "description": "Vacío solo en oportunidades tácticas sin tendencia estructural (T = NA)."
+        },
+        "cluster_id": {
+          "type": "string",
+          "pattern": "^CL-[0-9]{1,3}$"
+        },
+        "regiones": {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": {
+            "$ref": "#/$defs/codigo_region"
+          }
+        },
+        "puntuaciones": {
+          "$ref": "#/$defs/puntuaciones"
+        },
+        "horizontes": {
+          "type": "object",
+          "minProperties": 1,
+          "propertyNames": {
+            "$ref": "#/$defs/horizonte"
+          },
+          "additionalProperties": {
+            "$ref": "#/$defs/vista_horizonte"
+          }
+        },
+        "horizonte_principal": {
+          "$ref": "#/$defs/horizonte"
+        },
+        "valoracion": {
+          "type": "string",
+          "minLength": 10
+        },
+        "catalizadores": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": [
+              "evento",
+              "fecha"
+            ],
+            "properties": {
+              "evento": {
+                "type": "string"
+              },
+              "fecha": {
+                "type": "string",
+                "pattern": "^[0-9]{4}-[0-9]{2}(-[0-9]{2})?$|^[0-9]{4}-T[1-4]$|^[0-9]{4}-S[12]$",
+                "description": "AAAA-MM-DD, AAAA-MM, AAAA-Tn (trimestre) o AAAA-Sn (semestre)."
+              }
+            },
+            "additionalProperties": false
+          }
+        },
+        "riesgos": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "type": "string"
+          }
+        },
+        "riesgo_1a5": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 5
+        },
+        "invalidacion": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "type": "string"
+          }
+        },
+        "ambito": {
+          "$ref": "#/$defs/ambito"
+        },
+        "indicador_seguimiento": {
+          "$ref": "#/$defs/indicador_seguimiento"
+        },
+        "invertibilidad": {
+          "$ref": "#/$defs/invertibilidad"
+        },
+        "ejemplos_ilustrativos": {
+          "$ref": "#/$defs/ejemplos_ilustrativos"
+        },
+        "liquidez": {
+          "enum": [
+            "alta",
+            "media",
+            "baja"
+          ],
+          "description": "Liquidez del ámbito (profundidad del universo negociable), no la de un instrumento (Anexo B)."
+        },
+        "relevancia_decisional": {
+          "enum": [
+            "ALTA",
+            "MEDIA",
+            "BAJA"
+          ]
+        },
+        "reversibilidad": {
+          "enum": [
+            "alta",
+            "media",
+            "baja"
+          ]
+        },
+        "siguiente_paso_sugerido": {
+          "enum": [
+            "ENVIAR_A_BLOQUE_B",
+            "PROFUNDIZAR_EN_A",
+            "VIGILAR",
+            "DESCARTAR"
+          ]
+        },
+        "que_cambiaria_la_conclusion": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "type": "string"
+          }
+        },
+        "objeciones": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/objecion"
+          }
+        },
+        "lo_que_no_sabemos": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "type": "string"
+          },
+          "description": "Declaración obligatoria de lagunas (R12)."
+        },
+        "confianza": {
+          "$ref": "#/$defs/confianza"
+        },
+        "evidencias": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "$ref": "#/$defs/clm_id"
+          }
+        },
+        "calculos": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "$ref": "#/$defs/calc_id"
+          }
+        },
+        "minigrafico": {
+          "type": "object",
+          "description": "Instrucción para HT-04: qué gráfico acompaña a la tarjeta del informe visual.",
+          "required": [
+            "tipo"
+          ],
+          "properties": {
+            "tipo": {
+              "enum": [
+                "PRECIO_CON_ZONA",
+                "VALORACION_VS_MEDIA",
+                "NINGUNO"
+              ]
+            },
+            "serie_ref": {
+              "type": "string"
+            },
+            "zona_interes": {
+              "type": "object",
+              "required": [
+                "min",
+                "max",
+                "unidad"
+              ],
+              "properties": {
+                "min": {
+                  "type": "number"
+                },
+                "max": {
+                  "type": "number"
+                },
+                "unidad": {
+                  "type": "string"
+                }
+              },
+              "additionalProperties": false
+            },
+            "calc_id": {
+              "$ref": "#/$defs/calc_id"
+            }
+          },
+          "additionalProperties": false
+        },
+        "puertas": {
+          "type": "object",
+          "description": "Resultado de G1–G4 y PS1–PS8 (usado por HT-09; PS3 = invertibilidad del ámbito). Valores: SUPERADA | SUPERADA_CON_NOTA | NO_SUPERADA | NA, o booleanos.",
+          "additionalProperties": {
+            "type": "string"
+          }
+        },
+        "cluster": {
+          "type": "string",
+          "description": "Clúster de exposición (alias aceptado de cluster_id, usado por HT-03/HT-09)."
+        },
+        "vigente": {
+          "type": "boolean",
+          "description": "true si la opción ya estaba en el top-3 del ciclo anterior (regla de continuidad 9.6.4)."
+        },
+        "desglose": {
+          "type": "object",
+          "description": "Dimensiones de cada puntuación (T, E, M, P, A) para reconstruirlas con HT-03. A: asimetria 30, valoracion 25, catalizadores 15, momento 15, invertibilidad 15 (9.1).",
+          "additionalProperties": {
+            "type": "object"
+          }
+        },
+        "segunda_pasada": {
+          "type": [
+            "boolean",
+            "object"
+          ],
+          "description": "Indica si hubo segunda pasada por banda marginal (PS8)."
+        },
+        "advertencia_h1": {
+          "type": [
+            "boolean",
+            "string"
+          ],
+          "description": "Advertencia obligatoria de baja fiabilidad en horizontes de días (8.3)."
+        }
+      },
+      "patternProperties": {
+        "^x_": {}
+      },
+      "additionalProperties": false,
+      "allOf": [
+        {
+          "description": "Oportunidad táctica: con T = NA se exige A ≥ 65 (9.2).",
+          "if": {
+            "properties": {
+              "puntuaciones": {
+                "properties": {
+                  "T": {
+                    "const": "NA"
+                  }
+                }
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "puntuaciones": {
+                "properties": {
+                  "A": {
+                    "minimum": 65
+                  }
+                }
+              }
+            }
+          }
+        },
+        {
+          "description": "Con riesgo ≥ 4 la relevancia decisional es ALTA (Anexo A).",
+          "if": {
+            "properties": {
+              "riesgo_1a5": {
+                "minimum": 4
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "relevancia_decisional": {
+                "const": "ALTA"
+              }
+            }
+          }
+        },
+        {
+          "description": "Con reversibilidad baja la relevancia decisional es ALTA (Anexo A).",
+          "if": {
+            "properties": {
+              "reversibilidad": {
+                "const": "baja"
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "relevancia_decisional": {
+                "const": "ALTA"
+              }
+            }
+          }
+        }
+      ]
+    },
+    "puntuaciones": {
+      "type": "object",
+      "required": [
+        "T",
+        "E",
+        "M",
+        "A",
+        "RK",
+        "desglose_ref"
+      ],
+      "properties": {
+        "T": {
+          "oneOf": [
+            {
+              "type": "integer",
+              "minimum": 50,
+              "maximum": 100,
+              "multipleOf": 5
+            },
+            {
+              "const": "NA"
+            }
+          ],
+          "description": "Elegibilidad: T ≥ 50 o NA en oportunidades tácticas."
+        },
+        "E": {
+          "type": "integer",
+          "minimum": 60,
+          "maximum": 100,
+          "multipleOf": 5,
+          "description": "Elegibilidad: E ≥ 60."
+        },
+        "M": {
+          "$ref": "#/$defs/puntuacion_total"
+        },
+        "A": {
+          "type": "integer",
+          "minimum": 55,
+          "maximum": 100,
+          "multipleOf": 5,
+          "description": "Elegibilidad: A ≥ 55."
+        },
+        "P": {
+          "$ref": "#/$defs/puntuacion_total"
+        },
+        "RK": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 100,
+          "description": "Clave de ordenación calculada por HT-03; no es probabilidad ni rentabilidad."
+        },
+        "desglose_ref": {
+          "type": "string",
+          "minLength": 3,
+          "description": "Identificador del cálculo HT-03 con el desglose por dimensiones."
+        }
+      },
+      "additionalProperties": false
+    },
+    "vista_horizonte": {
+      "type": "object",
+      "required": [
+        "vista",
+        "banda",
+        "prob",
+        "prg_id",
+        "certificado_r13"
+      ],
+      "properties": {
+        "vista": {
+          "enum": [
+            "alcista",
+            "bajista",
+            "lateral",
+            "relativa_favorable",
+            "relativa_desfavorable"
+          ]
+        },
+        "banda": {
+          "enum": [
+            "más probable que no",
+            "incierto",
+            "poco probable"
+          ]
+        },
+        "prob": {
+          "type": [
+            "number",
+            "null"
+          ],
+          "minimum": 0,
+          "maximum": 1
+        },
+        "certificado_r13": {
+          "type": "boolean",
+          "description": "true solo si el Evaluador certificó la celda tipo de activo × horizonte (R13)."
+        },
+        "etiqueta": {
+          "type": "string",
+          "description": "«sin ventaja demostrada todavía» cuando no hay certificado."
+        },
+        "prg_id": {
+          "$ref": "#/$defs/prg_id"
+        },
+        "fecha_resolucion": {
+          "type": "string",
+          "format": "date"
+        },
+        "criterio_resolucion": {
+          "type": "string"
+        }
+      },
+      "additionalProperties": false,
+      "allOf": [
+        {
+          "description": "R13: probabilidad numérica solo con certificado.",
+          "if": {
+            "properties": {
+              "certificado_r13": {
+                "const": false
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "prob": {
+                "type": "null"
+              }
+            },
+            "required": [
+              "etiqueta"
+            ]
+          }
+        }
+      ]
+    },
+    "objecion": {
+      "type": "object",
+      "required": [
+        "fuerza",
+        "resumen",
+        "respuesta",
+        "estado"
+      ],
+      "properties": {
+        "objecion_id": {
+          "type": "string"
+        },
+        "fuerza": {
+          "enum": [
+            "fuerte",
+            "moderada",
+            "debil"
+          ]
+        },
+        "resumen": {
+          "type": "string"
+        },
+        "respuesta": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "estado": {
+          "enum": [
+            "RESPONDIDA",
+            "SIN_RESOLVER"
+          ]
+        },
+        "resuelta": {
+          "type": "boolean",
+          "description": "true si la objeción quedó respondida con evidencia (usado por HT-09)."
+        }
+      },
+      "additionalProperties": false,
+      "allOf": [
+        {
+          "description": "Una objeción fuerte sin resolver impide entrar en el top-3 (6.2.7, 9.2).",
+          "if": {
+            "properties": {
+              "fuerza": {
+                "const": "fuerte"
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "estado": {
+                "const": "RESPONDIDA"
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "estado": {
+                "const": "RESPONDIDA"
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "respuesta": {
+                "type": "string",
+                "minLength": 10
+              }
+            }
+          }
+        }
+      ]
+    },
+    "historial_aciertos": {
+      "type": "object",
+      "required": [
+        "ventana",
+        "por_clase"
+      ],
+      "properties": {
+        "ventana": {
+          "type": "string"
+        },
+        "global": {
+          "$ref": "#/$defs/celda_acierto"
+        },
+        "por_clase": {
+          "type": "object",
+          "propertyNames": {
+            "$ref": "#/$defs/codigo_clase"
+          },
+          "additionalProperties": {
+            "$ref": "#/$defs/celda_acierto"
+          },
+          "description": "Por tipo de activo."
+        },
+        "nota": {
+          "type": "string"
+        }
+      },
+      "additionalProperties": false
+    },
+    "celda_acierto": {
+      "type": "object",
+      "required": [
+        "n",
+        "aciertos",
+        "tasa_acierto",
+        "referencia"
+      ],
+      "properties": {
+        "n": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "aciertos": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "tasa_acierto": {
+          "type": [
+            "number",
+            "null"
+          ],
+          "minimum": 0,
+          "maximum": 1
+        },
+        "referencia": {
+          "type": "string",
+          "description": "Referencia ingenua usada (p. ej., la referencia de su tipo de activo de 8.4)."
+        },
+        "tasa_esperada_azar": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1
+        },
+        "significativo": {
+          "type": "boolean"
+        },
+        "por_horizonte": {
+          "type": "object",
+          "propertyNames": {
+            "$ref": "#/$defs/horizonte"
+          },
+          "additionalProperties": {
+            "type": "object",
+            "required": [
+              "n",
+              "aciertos"
+            ],
+            "properties": {
+              "n": {
+                "type": "integer",
+                "minimum": 0
+              },
+              "aciertos": {
+                "type": "integer",
+                "minimum": 0
+              }
+            },
+            "additionalProperties": false
+          }
+        }
+      },
+      "additionalProperties": false
+    },
+    "entrada_bloque_B": {
+      "type": "object",
+      "description": "Encargo para el Bloque B (2.5 y Anexo B): el Bloque B analiza en profundidad el ámbito y localiza los mejores activos concretos.",
+      "required": [
+        "opp_id",
+        "tipo_activo",
+        "subtipo",
+        "ambito",
+        "tesis",
+        "mecanismo",
+        "horizontes",
+        "pronosticos",
+        "catalizadores",
+        "riesgos",
+        "invalidacion",
+        "indicador_seguimiento",
+        "criterios_seleccion_sugeridos",
+        "metricas_clave",
+        "preguntas_para_B",
+        "evidencias",
+        "calculos"
+      ],
+      "properties": {
+        "opp_id": {
+          "$ref": "#/$defs/opp_id"
+        },
+        "tipo_activo": {
+          "$ref": "#/$defs/codigo_clase"
+        },
+        "subtipo": {
+          "type": "string",
+          "minLength": 2
+        },
+        "tipo_opcion": {
+          "enum": [
+            "MERCADO",
+            "SECTOR",
+            "SUBSECTOR",
+            "TEMATICA",
+            "SEGMENTO",
+            "FACTOR",
+            "ESTILO",
+            "ESTRATEGIA"
+          ]
+        },
+        "nombre": {
+          "type": "string",
+          "minLength": 3
+        },
+        "ambito": {
+          "$ref": "#/$defs/ambito"
+        },
+        "tesis": {
+          "type": "string",
+          "minLength": 10
+        },
+        "mecanismo": {
+          "type": "string",
+          "minLength": 10
+        },
+        "horizontes": {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": {
+            "$ref": "#/$defs/horizonte"
+          }
+        },
+        "horizonte_principal": {
+          "$ref": "#/$defs/horizonte"
+        },
+        "pronosticos": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "$ref": "#/$defs/prg_id"
+          }
+        },
+        "catalizadores": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": [
+              "evento",
+              "fecha"
+            ],
+            "properties": {
+              "evento": {
+                "type": "string"
+              },
+              "fecha": {
+                "type": "string",
+                "pattern": "^[0-9]{4}-[0-9]{2}(-[0-9]{2})?$|^[0-9]{4}-T[1-4]$|^[0-9]{4}-S[12]$",
+                "description": "AAAA-MM-DD, AAAA-MM, AAAA-Tn (trimestre) o AAAA-Sn (semestre)."
+              }
+            },
+            "additionalProperties": false
+          }
+        },
+        "riesgos": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "type": "string",
+            "minLength": 3
+          }
+        },
+        "invalidacion": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "type": "string",
+            "minLength": 3
+          }
+        },
+        "indicador_seguimiento": {
+          "$ref": "#/$defs/indicador_seguimiento"
+        },
+        "niveles_referencia": {
+          "type": "object",
+          "description": "Opcional. Niveles del indicador de seguimiento con valor, unidad, fecha del dato y fuente (HT-01).",
+          "additionalProperties": {
+            "type": "object",
+            "required": [
+              "valor",
+              "unidad",
+              "fecha_dato",
+              "fuente"
+            ],
+            "properties": {
+              "valor": {
+                "type": "number"
+              },
+              "unidad": {
+                "type": "string"
+              },
+              "fecha_dato": {
+                "type": "string",
+                "format": "date"
+              },
+              "fuente": {
+                "type": "string"
+              }
+            },
+            "additionalProperties": false
+          }
+        },
+        "criterios_seleccion_sugeridos": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "type": "string",
+            "minLength": 3
+          },
+          "description": "Rasgos que deberían tener los activos que mejor capturan la tesis (p. ej., exposición a ventas en Europa, margen bruto, apalancamiento)."
+        },
+        "metricas_clave": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "type": "string",
+            "minLength": 3
+          },
+          "description": "Métricas que conviene vigilar en el ámbito y en los activos que el Bloque B estudie."
+        },
+        "preguntas_para_B": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "type": "string",
+            "minLength": 3
+          },
+          "description": "Preguntas abiertas que el Bloque B debe responder."
+        },
+        "ejemplos_ilustrativos": {
+          "$ref": "#/$defs/ejemplos_ilustrativos"
+        },
+        "evidencias": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "$ref": "#/$defs/clm_id"
+          }
+        },
+        "calculos": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "$ref": "#/$defs/calc_id"
+          }
+        },
+        "siguiente_paso_sugerido": {
+          "enum": [
+            "ENVIAR_A_BLOQUE_B",
+            "PROFUNDIZAR_EN_A",
+            "VIGILAR",
+            "DESCARTAR"
+          ]
+        },
+        "relevancia_decisional": {
+          "enum": [
+            "ALTA",
+            "MEDIA",
+            "BAJA"
+          ]
+        }
+      },
+      "patternProperties": {
+        "^x_": {}
+      },
+      "additionalProperties": false
+    },
+    "ambito": {
+      "type": "object",
+      "description": "Delimitación del ámbito de la oportunidad (2.4–2.5): qué incluye, qué excluye y en qué región. Granularidad máxima: segmento.",
+      "required": [
+        "incluye",
+        "excluye",
+        "region"
+      ],
+      "properties": {
+        "incluye": {
+          "type": "string",
+          "minLength": 5,
+          "description": "Qué entra en el ámbito (mercado, sector, subsector, temática, segmento o estrategia)."
+        },
+        "excluye": {
+          "type": "string",
+          "minLength": 2,
+          "description": "Qué queda fuera para evitar ambigüedad y duplicados entre tipos."
+        },
+        "region": {
+          "type": "string",
+          "minLength": 2,
+          "description": "Región o país del ámbito en texto (p. ej., «Europa», «Zona del euro», «Global»)."
+        }
+      },
+      "additionalProperties": false
+    },
+    "indicador_seguimiento": {
+      "type": "object",
+      "description": "Índice, serie o cesta pública que mejor representa la evolución del ámbito (2.4). Sirve para medir la tendencia y resolver los pronósticos (F4), no como recomendación de compra.",
+      "required": [
+        "nombre",
+        "fuente"
+      ],
+      "properties": {
+        "nombre": {
+          "type": "string",
+          "minLength": 3
+        },
+        "simbolo": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "description": "Símbolo de la serie en HT-01 (opcional). En el ejecutor, símbolo del universo usado para medir y resolver."
+        },
+        "fuente": {
+          "type": "string",
+          "minLength": 2,
+          "description": "Proveedor o herramienta (p. ej., HT-01)."
+        },
+        "tipo": {
+          "enum": [
+            "INDICE",
+            "SERIE",
+            "CESTA"
+          ],
+          "description": "Naturaleza del indicador (opcional)."
+        },
+        "nota": {
+          "type": "string"
+        }
+      },
+      "additionalProperties": false
+    },
+    "invertibilidad": {
+      "type": "object",
+      "description": "Invertibilidad del ámbito a nivel de mercado (PS3, 2.5): existe un universo de activos negociables suficiente y accesible para un inversor minorista europeo. No selecciona ni compara instrumentos concretos ni sus costes.",
+      "required": [
+        "universo_suficiente",
+        "nota"
+      ],
+      "properties": {
+        "universo_suficiente": {
+          "const": true,
+          "description": "Una opción del top-3 ha superado PS3: debe ser true."
+        },
+        "nota": {
+          "type": "string",
+          "minLength": 5,
+          "description": "Por qué el universo es suficiente y accesible (número aproximado de activos negociables, mercados, restricciones)."
+        }
+      },
+      "additionalProperties": false
+    },
+    "ejemplos_ilustrativos": {
+      "type": "array",
+      "description": "Opcional. Nombres concretos (empresas, emisiones, productos) citados SOLO para ilustrar el ámbito, nunca como propuesta de inversión (2.4, R21).",
+      "maxItems": 8,
+      "items": {
+        "type": "string",
+        "minLength": 2
+      }
+    }
+  }
+}
