@@ -32,3 +32,9 @@ prefijo de commit por fase, avance en `docs/AVANCE.md`.
 Verifica TÚ el entregable (el criterio de éxito de cada prompt es un comando que
 puedes lanzar). Si algo no cuadra, no sigas de fase: la incidencia se documenta y se
 corrige antes. Una fase nueva no arranca con la anterior sin verificar.
+
+## Auditorías puntuales (fuera del orden de fases, tras el 00)
+
+| Archivo | Qué hace | Modelo recomendado |
+|---|---|---|
+| `VERIF_F6_MEMORIA_APRENDIZAJE.md` | Solo lectura: ¿F6 (memoria de aprendizaje) está implementada en los ejecutores o es solo esquema? Matriz 3 bloques × 5 capacidades con evidencia + INC por hueco | el más capaz |
