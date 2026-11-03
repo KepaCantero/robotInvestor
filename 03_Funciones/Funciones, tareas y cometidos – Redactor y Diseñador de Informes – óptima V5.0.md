@@ -1,6 +1,6 @@
 # Funciones, tareas y cometidos — Redactor y Diseñador de Informes
 
-**Bloque A · Robot Investor · Versión óptima V5.0 · 02/11/2026** · Subordinado al Documento 0 óptima V5.0.
+**Bloque A · Robot Investor · Versión óptima V5.0 · 02/11/2026 · actualizado V5.1 (03/11/2026)** · Subordinado al Documento 0 óptima V5.1. Cambios V5.1: RED-F18 y RED-F19 (informe de seguimiento de opción; H5, horizonte principal y supuestos declarados en los entregables).
 
 ---
 
@@ -32,6 +32,8 @@ Los informes hablan de **ámbitos** (dónde está la oportunidad, por qué y cu�
 | RED-F15 | Devolver el resultado | Rutas, métricas, coherencia, validación del JSON, estado, limitaciones, consumo y autoevaluación | Fin de cada encargo | Resultados de RED-F03 a RED-F14 | Retorno al Analizador | CT-15 |
 | RED-F16 | Proponer mejoras de producto | Señalar en la autoevaluación lagunas recurrentes del paquete, jerga frecuente y cambios de plantilla propuestos | Cada entrega | Métricas propias | Propuestas (no aplicadas) | CT-15 |
 | RED-F17 | Operar en modo degradado | Sin HT-04: listas en lugar de gráficos; sin HT-07: estado PARCIAL; sin PDF: entregar fuentes; con plazo ajustado: reducir diseño, nunca verificación ni avisos | Fallo o presión de plazo | Estado de herramientas | Entrega declarada | CT-15 |
+| RED-F18 | Informe de seguimiento de opción (V5.1) | En el ciclo C6, generar el informe breve (una pantalla, ≤ 300 palabras) y su JSON `informe_seguimiento_opcion` con la plantilla: identificación, qué ha cambiado, semáforo, señales de interés, invalidación, catalizadores, puntuaciones y variación, pronósticos e hitos, una recomendación con motivo y, si es `PROPONER_ENVIO_A_B`, el `paquete_para_bloque_B`; versión «sin novedad» de pocas líneas; guardar en `Informes de seguimiento/` | Cada ciclo C6 | Revisión de seguimiento (CT-15) | `AAAA-MM-DD_informe-seguimiento_RUN-id` (.md y .json) | CT-15; HT-07; ENT |
+| RED-F19 | H5, horizonte principal y supuestos (V5.1) | Destacar el horizonte principal en fichas y tarjetas (iconos días · semanas · meses · años · décadas); en H5, solo banda verbal y lista de hitos con fecha; mostrar `supuestos_declarados` (CT-23) en limitaciones del informe técnico y en lenguaje llano en el visual | Cada entrega | Paquete de síntesis | Entregables coherentes con HT-09 | CT-15 |
 
 ---
 

@@ -186,6 +186,52 @@ Bayes `P(A|B) = P(B|A)P(A)/P(B)`; probabilidad total para combinar escenarios; i
 
 Casella y Berger (2002) *Statistical Inference*; Wasserman (2004) *All of Statistics*; Efron y Tibshirani (1993) *An Introduction to the Bootstrap*; Huber y Ronchetti (2009) *Robust Statistics*; Hyndman y Fan (1996) «Sample Quantiles in Statistical Packages»; Benjamini y Hochberg (1995); Holm (1979); Benjamini y Yekutieli (2001); Wasserstein y Lazar (2016) «The ASA Statement on p-Values»; Lo (2002) «The Statistics of Sharpe Ratios»; Mertens (2002); Ledoit y Wolf (2008) «Robust Performance Hypothesis Testing with the Sharpe Ratio»; Kaplan y Schoar (2005); Gredil, Griffiths y Stucke (2014); Rouvinez (2003); CFA Institute, Global Investment Performance Standards (GIPS).
 
+### 10.10 Convenciones monetarias y tipo real a corto (MON-YLD-001, MON-REAL-001; área 67)
+
+- Descuento `d = (VN − P)/VN·360/t`; *money market yield* `MMY = (VN − P)/P·360/t = d/(1 − d·t/360)`; equivalente de bono `(VN − P)/P·365/t`; Real/360 → Real/365: `×365/360`; efectiva anual `(1 + r·t/360)^{365/t} − 1`. Solo se comparan segmentos con la misma base, plazo y tratamiento de comisiones; diferencias en pb.
+- Tipo a un día compuesto a plazo vencido (€STR, SOFR en Real/360; SONIA en Real/365): `[Π(1 + r_i·n_i/B) − 1]·B/D`, con `n_i` días naturales de cada fijación (el viernes arrastra el fin de semana).
+- Rentabilidad cubierta de un depósito exterior (S y F en divisa base por unidad extranjera): `1 + r_cub·t/B = (1 + r_ext·t/B_ext)·F/S`.
+- Real a corto: Fisher exacta con π esperada del mismo plazo (*swaps* de inflación o encuestas, fuente declarada); ex post con la inflación realizada, alineando el desfase de publicación del IPC con `conocible_desde`.
+
+### 10.11 Diferencia y error de seguimiento por categoría (FON-TD-001; área 56)
+
+- `TD = R_vehículo − R_índice` anual, con rentabilidad total de NAV y la variante del índice declarada (neta o bruta de retenciones); `TE = σ(R_v − R_i)·√m`. Agregación por categoría con mediana y percentiles; ponderación por patrimonio, declarada.
+- Desfases horarios entre NAV e índice inflan el TE diario: usa datos semanales o mensuales. Descomposición orientativa: `TD ≈ −gastos corrientes + préstamo de valores ± ventaja de retenciones − efectivo y rebalanceo`. Incluye vehículos cerrados o fusionados (supervivencia) y nunca compares productos concretos.
+
+### 10.12 Números índice y empalme de series (área 23)
+
+- Laspeyres `Σp_t q_0/Σp_0 q_0` (sobrestima con sustitución), Paasche `Σp_t q_t/Σp_0 q_t`, Fisher = media geométrica de ambos. Cambio de base: no altera tasas. Encadenamiento: producto de eslabones; componentes no aditivos (residuo declarado, 10.2).
+- Empalme por retropolación: tasas de la serie antigua aplicadas hacia atrás desde el nivel de la nueva en el solapamiento; ruptura declarada; nunca concatenar niveles. Deflactor con cobertura y vintage coherentes.
+
+### 10.13 Muestreo, sesgos y datos ausentes (área 27)
+
+- **Supervivencia** (del orden de 1 pp anual en fondos; Elton, Gruber y Blake, 1996), **relleno retrospectivo** en bases de gestores (excluye los primeros 12–24 meses de historia aportada al alta; Fung y Hsieh, 2000), **autoselección** del reporte, **anticipación** (composición actual aplicada al pasado, datos revisados) y **dependencia del periodo**: cada uno se declara con su sentido probable; en bases privadas, n de fondos, cosechas y proveedor.
+- Ausencias (Rubin, 1976): MCAR, MAR, MNAR; la eliminación por listas solo es insesgada con MCAR. Paradoja de Simpson y regresión a la media se comprueban antes de comparar grupos.
+
+### 10.14 Métricas de mercado y microestructura (área 33)
+
+- Horquilla cotizada `(ask − bid)/medio` y efectiva `2|P − M|/M`; Roll (1984) `2√(−cov(ΔP_t, ΔP_{t−1}))`; iliquidez de Amihud (2002) `media(|R_t|/volumen en divisa_t)`; impacto ≈ `σ_diaria·√(Q/V)` (orden de magnitud). Amplitud: % sobre media de 200 sesiones, avances menos descensos.
+- CFTC: neto no comercial/interés abierto en percentil a 3 años; datos del martes publicados el viernes. Cierres asíncronos sesgan correlaciones a la baja (Epps, 1979): frecuencia semanal.
+
+### 10.15 Complementos numéricos y probabilísticos (áreas 1, 3 y 41)
+
+- Número de condición `κ = λ_max/λ_min` (> 1e8: regulariza); interpolación monótona en curvas, sin extrapolar; varianza por Welford, no `E[x²] − E[x]²` (cancelación).
+- Pareto `P(X > x) = (x_m/x)^α`: con α < 2 la varianza muestral no converge y el TCL no aplica.
+- Método delta `Var(g(θ̂)) ≈ ∇g'Σ∇g`; IC de una correlación `tanh(atanh r ± z/√(n − 3))`; TOST con margen δ previo para afirmar «sin diferencia material»; n efectivo de Kish `(Σw)²/Σw²`.
+
+### 10.16 Reconstrucción de puntuaciones (SCORE-RK-001; área 37)
+
+Reproduces HT-03 al dígito: dimensiones 0–100 en múltiplos de 10; NA redistribuye su peso proporcionalmente; NE puntúa 0; máximo dos NA/NE; total redondeado al múltiplo de 5; `RK = 0,45·A + 0,35·E + 0,20·T` redondeado al entero con empates hacia abajo (T NA: pesos de A y E reescalados). Pesos vigentes de F10. Señalas totales a ≤ 5 puntos de un umbral (E 60, A 55 o 65 táctica, T 50) para la banda marginal. Toda diferencia con HT-03 es discrepancia, nunca redondeo tolerable.
+
+### 10.17 Inventario de competencias
+
+- **Cálculo financiero**: rentabilidades, divisas, anualización, TIR/XIRR/MIRR, TWR/MWR, CAGR, nominal/real, días (10.1, 10.2); monetario (10.10).
+- **Rendimiento ajustado**: Sharpe, Sortino, IR, Calmar, Omega; TD/TE (10.3, 10.11); privados: DPI/TVPI, PME (10.4).
+- **Probabilidad y estadística**: distribuciones, Bayes, contrastes, potencia, múltiples, bootstrap, método delta, TOST (10.5, 10.6, 10.15).
+- **Índices y puntuaciones**: normalización, agregación, HHI, números índice, empalmes, T/E/M/P/A y RK (10.7, 10.12, 10.16).
+- **Datos, mercado y numérica**: sesgos y ausencias (10.13); microestructura y CFTC (10.14); condicionamiento y Welford (10.15).
+- **Errores típicos y referencias** (10.8, 10.9).
+
 ---
 
 ## 11. FORMATO DE SALIDA (INTERNO) Y EJEMPLO

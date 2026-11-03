@@ -1,6 +1,6 @@
 # Funciones, tareas y cometidos — Analizador de Tendencias de Inversión
 
-**Bloque A · Robot Investor · Versión óptima V5.0 · 02/11/2026** · Subordinado al Documento 0 óptima V5.0.
+**Bloque A · Robot Investor · Versión óptima V5.0 · 02/11/2026 · actualizado V5.1 (03/11/2026)** · Subordinado al Documento 0 óptima V5.1. Cambios V5.1: ANZ-F25 a ANZ-F28 (consultas al Broker, credenciales, horizonte principal y H5, revisiones C6).
 
 ---
 
@@ -44,6 +44,10 @@ Mantener como propietario el Registro maestro de tendencias (F1) y el Registro d
 | ANZ-F22 | Aprendizaje y guías | Aplicar LEC- y certificados; aplicar guías de tipos 1 y 2; rechazar como tipo 3 lo que altere parámetros o reglas | Inicio de cada orden; recepción de CT-18/CT-19 | F6; guías | Ajustes de práctica registrados | CT-18; CT-19; F6 |
 | ANZ-F23 | Modos degradados | Aplicar la tabla de degradación ante caídas de agentes o herramientas; declarar limitaciones | Ante incidencias | Estado de agentes y herramientas | Entrega degradada declarada | CT-05 |
 | ANZ-F24 | Autocrítica | Lista previa a HT-09; pre-mortem del informe; autoevaluación en cada retorno | Cada entrega | Paquete | Correcciones; `autoevaluacion` | CT-05 |
+| ANZ-F25 | Filtrar y agrupar consultas al Broker (V5.1) | Descartar lo resoluble con los archivos o una búsqueda; fusionar duplicadas; redactar cada duda autosuficiente con supuesto y efecto si es falso; fijar tipo y modo (`BLOQUEANTE` solo si puede cambiar el alcance o un top-3); agrupar por RUN- (≤ 3 mensajes); aplicar respuestas o vencimientos en el punto de control; trasladar las aportaciones del Broker como evidencia `BROKER` | `consultas_broker` en los retornos de los agentes; respuestas CT-23 | Retornos CT-06, CT-07, CT-08, CT-12, CT-13 | Consultas elevadas; `supuestos_declarados` | CT-05 (retorno parcial); CT-23 (vía Coordinador) |
+| ANZ-F26 | Elevar solicitudes de credenciales (V5.1) | Deduplicar las `solicitudes_credenciales` de los agentes y elevarlas sin valores; declarar el modo degradado mientras falten | Retornos con solicitudes | Retornos de los agentes | Solicitudes para CT-25 | CT-05 (retorno parcial); CT-25 (vía Coordinador) |
+| ANZ-F27 | Horizonte principal y H5 (V5.1) | Confirmar `naturaleza_inversion` y `horizonte_principal` de cada opción con la regla de adecuación (8.3) y su aplicabilidad por tipo; exigir `justificacion_horizonte` fuera de rango; en H5, banda cualitativa e hitos HIT- (≥ 3); relevancia ALTA si el principal es H5 | Selección (F5 del flujo) | Fichas; prospectiva | Campos de horizonte coherentes (validados por HT-09) | F3; paquete de síntesis; HT-09 |
+| ANZ-F28 | Dirigir revisiones de seguimiento encargado (V5.1) | Ante un CT-05 `SEGUIMIENTO`: delta de la opción; «sin novedad» si no hay cambio material; si lo hay, CT-06 fase `SEGUIMIENTO` al Analista (delta, invalidación, catalizadores, puntuaciones con HT-03, pronósticos e hitos abiertos); semáforo y una recomendación (`MANTENER_VIGILANCIA`, `PROPONER_ENVIO_A_B` solo si vuelve a ser elegible y sin objeción fuerte abierta, con `paquete_para_bloque_B` actualizado y N3 sugerido si procede, `CERRAR`, `PROPONER_CANCELACION`); HT-09; envío al Redactor; anotar `seg_id` y `EN_SEGUIMIENTO` en F3 | Cada ciclo C6; altas CT-24 | F3, F4, F11 | Revisión de seguimiento; informe de seguimiento de opción | CT-05; CT-06; CT-15; HT-03; HT-09; F3 |
 
 ---
 
@@ -68,12 +72,16 @@ Mantener como propietario el Registro maestro de tendencias (F1) y el Registro d
 | Granularidad | Opciones entregadas que son activos concretos (R21) | 0 |
 | Duplicados | Oportunidades presentes en dos top-3 | 0 |
 | Encargo para el Bloque B | Opciones del top-3 con `paquete_para_bloque_B` completo | 100 % |
+| Horizonte principal coherente | Opciones con `horizonte_principal` y `naturaleza_inversion` válidos según HT-09 a la primera | ≥ 95 % (0 bloqueos por horizonte en la entrega final) |
+| Consultas al Broker útiles | Consultas CT-23 cuya respuesta cambió un alcance, un supuesto o un top-3 / consultas elevadas | ≥ 50 % |
+| Coste de los ciclos C6 | Consumo medio por ciclo de seguimiento | ≤ 2 UC (≤ 0,5 UC si «sin novedad») |
 
 ---
 
 ## 4. Lo que el Analizador NO hace
 
-- No se comunica con el Broker, el usuario, el Bloque B, otros bloques ni el Auditor.
+- No se comunica con el Broker, el usuario, el Bloque B, otros bloques ni el Auditor (sus dudas para el Broker y las solicitudes de credenciales suben al Coordinador por CT-05).
+- No maneja valores de credenciales ni inventa respuestas del Broker; un ciclo C6 no rellena un top-3.
 - No investiga cada tipo de activo por su cuenta ni sustituye la estrategia de un Analista de tipo de activo.
 - No selecciona, compara ni recomienda activos o instrumentos concretos, ni sus costes o plataformas (Bloque B); su granularidad máxima es el segmento.
 - No cura evidencia ni escribe en F2; no escribe en F4 (solo ordena la congelación a Prospectiva).

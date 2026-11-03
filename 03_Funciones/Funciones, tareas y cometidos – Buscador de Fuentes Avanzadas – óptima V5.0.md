@@ -1,6 +1,6 @@
 # Funciones, tareas y cometidos — Buscador de Fuentes Avanzadas
 
-**Bloque A · Robot Investor · Versión óptima V5.0 · 02/11/2026** · Subordinado al Documento 0 óptima V5.0.
+**Bloque A · Robot Investor · Versión óptima V5.0 · 02/11/2026 · actualizado V5.1 (03/11/2026)** · Subordinado al Documento 0 óptima V5.1. Cambios V5.1: BFA-F16 (solicitud de credenciales por CT-25 y operación degradada) y dudas al Broker vía Analizador.
 
 ## 1. Misión
 
@@ -27,6 +27,8 @@ Verificar y depurar continuamente sus fuentes con potestad plena de reparar, deg
 | BFA-F13 | Publicar Novedades | Fuentes nuevas, bajas y degradaciones, cambios de fiabilidad, calendario de catalizadores, alertas de campañas, «Pistas para F7», «Propuestas al Fondo metodológico», salud de enlaces | Semanal (viernes) | Movimientos de la semana | Sección «Novedades» de F9 | F9 (leída vía HT-06) |
 | BFA-F14 | Informar al Orquestador | Altas, reparaciones, degradaciones, bajas, salud, cobertura por TF-, idiomas y regiones, fiabilidad (pronósticos registrados y resueltos), uso, peticiones, incidencias, lagunas, consumo, autoevaluación, propuestas | Mensual | F9 | Paquete de mantenimiento | CT-21 |
 | BFA-F15 | Aplicar guías, escalar y autocriticarse | Guías de tipos 1 y 2; instancias con escritura serializada; lista de control; `autoevaluacion`; lecciones de F6 | CT-18; cada encargo | Guía; F6 | Cambios aplicados; autoevaluación | CT-18; F6 (lectura) |
+| BFA-F16 | Solicitar credenciales (V5.1) | Detectar fuentes de pago o API necesarias sin credencial en la bóveda de HT-01 (`AUSENTE`, `CADUCADA`, `REVOCADA`); enviarlas al Coordinador junto con el retorno (`solicitudes_credenciales`: servicio, motivo, impacto si falta), nunca con valores; usar fuentes alternativas con su calidad declarada mientras falten; no repetir una solicitud `DENEGADA` salvo cambio de circunstancias | Retornos CT-07 y mantenimiento C4 | Estado de la bóveda (HT-01) | Solicitudes CT-25 vía Coordinador | CT-25; HT-01 |
+| BFA-F17 | Dudas al Broker (V5.1) | Incluir en `consultas_broker` de la respuesta CT-07 las dudas que pueden cambiar una conclusión, con supuesto declarado (el Analizador las filtra; CT-23) | Cuando surja | Petición CT-07 | Consultas en el retorno | CT-07 |
 
 ## 3. Indicadores de desempeño
 

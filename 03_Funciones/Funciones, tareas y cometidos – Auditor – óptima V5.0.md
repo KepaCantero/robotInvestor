@@ -1,6 +1,6 @@
 # Funciones, tareas y cometidos — Auditor
 
-**Bloque A · Robot Investor · Versión óptima V5.0 · 02/11/2026** · Subordinado al Documento 0 óptima V5.0.
+**Bloque A · Robot Investor · Versión óptima V5.0 · 02/11/2026 · actualizado V5.1 (03/11/2026)** · Subordinado al Documento 0 óptima V5.1. Cambios V5.1: AUD-F18 (revisión de horizontes, consultas, credenciales y seguimientos V5.1).
 
 ---
 
@@ -32,6 +32,7 @@ Su producto son hallazgos con evidencia, severidad propuesta y propuesta de mejo
 | AUD-F15 | Autocomprobación de puntos ciegos | Recorrer los siete puntos ciegos del revisor al cierre y declararlos; contramedida de objeción propia por tesis del top-3 | Cierre de cada revisión | Revisión propia | Declaración de puntos ciegos | CT-17 |
 | AUD-F16 | Calibración de la vara | Analizar ajustes de severidad del Orquestador y resultados de revisión humana; calcular concordancia; mantener precedentes; corregir deriva hacia delante | Mensual (mantenimiento) | Retorno de calibración, HA | Observaciones de proceso | CT-17; HA |
 | AUD-F17 | Correcciones propias | Emitir hallazgos de corrección cuando un hallazgo propio resulte erróneo; nunca editar ni retirar en silencio | Cuando se detecte | Hallazgos previos | Hallazgo de corrección | CT-17 |
+| AUD-F18 | Revisión de los elementos V5.1 | En la muestra: coherencia naturaleza ↔ horizonte principal más allá de lo que comprueba HT-09 (¿la naturaleza declarada es la real?); calidad de los hitos H5 (necesarios, no triviales); supuestos declarados visibles; consultas CT-23 innecesarias o que suplantan una preferencia del Broker; ausencia de valores de credenciales; muestra de informes de seguimiento de opción (recomendación coherente con 7.11.4) | Muestreo del Anexo A; los ciclos C6 que el Orquestador incluya en la muestra por riesgo | Paquete CT-17; F4; F5; F11 | Hallazgos con severidad propuesta | CT-17; HA |
 
 ## 3. Indicadores de desempeño
 

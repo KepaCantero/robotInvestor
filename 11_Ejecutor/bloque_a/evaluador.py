@@ -27,6 +27,15 @@ BANDAS = [(0.80, "MUY_PROBABLE"), (0.60, "MAS_PROBABLE_QUE_NO"), (0.45, "INCIERT
 CADUCIDAD_MESES = {"anecdotica": 3, "recurrente": 6, "estadistica": 12}
 
 
+def _version_menor_siguiente(v) -> str:
+    """12.2: todo ajuste se aplica con una versión menor nueva (p. ej., 5.1 → 5.2)."""
+    try:
+        mayor, menor = str(v).split(".")[:2]
+        return f"{int(mayor)}.{int(menor) + 1}"
+    except ValueError:
+        return str(v)
+
+
 def banda_de(p: float) -> str:
     """Banda verbal (F4) a partir de la probabilidad interna; los huecos entre bandas van a la más prudente."""
     if p >= 0.80:
@@ -38,6 +47,11 @@ def banda_de(p: float) -> str:
     if p >= 0.25:
         return "POCO_PROBABLE"
     return "MUY_POCO_PROBABLE"
+
+
+# Probabilidad representativa de cada banda verbal (Anexo A): solo para uso interno cuando un PRG H5 no
+# registra probabilidad interna (V5.1: en H5 solo se registra la banda)
+PROB_DE_BANDA = {"MUY_PROBABLE": 0.85, "MAS_PROBABLE_QUE_NO": 0.65, "INCIERTO": 0.5, "POCO_PROBABLE": 0.35, "MUY_POCO_PROBABLE": 0.15}
 
 
 def banda_publicable(p: float) -> str:
@@ -121,7 +135,9 @@ class Evaluador:
     def resolver(self, as_of, run_id: Optional[str] = None) -> List[Dict]:
         as_of = pd.Timestamp(as_of).normalize()
         abiertos = [p for p in self.almacen.estado("F4", as_of).values() if p.get("estado") == "ABIERTO"]
-        pendientes = [p for p in abiertos if pd.Timestamp(p["fecha_resolucion"]) <= as_of]
+        # V5.1: los PRG H5 (sin probabilidad interna) no se puntúan con Brier: se evalúan por sus hitos HIT-,
+        # que son pronósticos ordinarios de su propio horizonte y se resuelven aquí como los demás
+        pendientes = [p for p in abiertos if pd.Timestamp(p["fecha_resolucion"]) <= as_of and p.get("prob_interna") is not None]
         resueltos: List[Dict] = []
         filas = []
         for p in sorted(pendientes, key=lambda x: x["prg_id"]):
@@ -250,6 +266,32 @@ class Evaluador:
     # ------------------------------------------------------------------------------------
     # Certificados, lecciones y recalibración
     # ------------------------------------------------------------------------------------
+    def estado_h5(self, as_of=None) -> Dict[str, Dict]:
+        """V5.1 (12.1): estado de cada PRG H5 a partir de sus hitos resueltos y tasa de hitos cumplidos por celda tipo × H5.
+        EN_CURSO_CONFORME: como mucho un hito fallado y no el último; DESVIADO: dos o más fallados o el último fallado;
+        INVALIDADO: falla un hito marcado como necesario."""
+        f4 = self.almacen.estado("F4", as_of)
+        out: Dict[str, Dict] = {}
+        celdas: Dict[str, List[int]] = defaultdict(list)
+        for p in f4.values():
+            if p.get("horizonte") != "H5" or p.get("es_hito"):
+                continue
+            hitos = sorted((f4.get(h) or {} for h in p.get("hit_ids", [])), key=lambda x: str(x.get("fecha_resolucion")))
+            res = [int(h["resolucion"]["resultado_binario"]) for h in hitos if h.get("estado") == "RESUELTO" and h.get("resolucion")]
+            fallos = res.count(0)
+            if any(h.get("necesario") and h.get("estado") == "RESUELTO" and not (h.get("resolucion") or {}).get("resultado_binario")
+                   for h in hitos):
+                est = "INVALIDADO"
+            elif fallos >= 2 or (res and res[-1] == 0):
+                est = "DESVIADO"
+            else:
+                est = "EN_CURSO_CONFORME"
+            out[p["prg_id"]] = {"estado": est, "hitos_resueltos": len(res), "hitos_cumplidos": sum(res), "hitos_totales": len(hitos)}
+            celdas[p["clase"]].extend(res)
+        resumen = {c: {"n": len(v), "tasa_cumplidos": round(sum(v) / len(v), 4) if v else None,
+                       "degradar": bool(len(v) >= 20 and sum(v) / len(v) < 0.5)} for c, v in celdas.items()}
+        return {"pronosticos": out, "celdas": resumen}
+
     def certificados_vigentes(self, as_of=None) -> List[Dict]:
         return [c for c in self.almacen.estado("F6", as_of, clave="id").values()
                 if c.get("tipo_entrada") in ("CERT", "CERT_REVOCACION") and c.get("estado") == "VIGENTE"]
@@ -391,7 +433,7 @@ class Evaluador:
         aju = {"tipo_entrada": "AJU", "id": self.almacen.nuevo_id("AJU"), "parametro": "P-11", "de": pesos, "a": nuevos,
                "delta": delta, "trimestre": trimestre, "banda": {"trimestral": 0.05, "total": 0.15}, "acumulado_vs_inicial": acumulado + delta,
                "evidencia": {"objetivo": "capacidad ordenadora de RK", "ic_A": ic_a, "ic_E": ic_e, "n": len(res)},
-               "methodology_version": {"de": self.cfg.get("methodology_version", "4.0"), "a": "4.1"},
+               "methodology_version": {"de": self.cfg.get("methodology_version", "5.1"), "a": _version_menor_siguiente(self.cfg.get("methodology_version", "5.1"))},
                "efecto_desde": str(pd.Timestamp(as_of).date()), "sombra_hasta": str((pd.Timestamp(as_of) + pd.DateOffset(months=3)).date()),
                "estado": "EN_SOMBRA", "aplicado_en_produccion": bool(self.ev_cfg.get("aplicar_recalibracion", False))}
         self.almacen.escribir("F6", "AG-20", aju)

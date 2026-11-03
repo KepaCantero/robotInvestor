@@ -147,6 +147,47 @@ Regresión espuria en niveles; EE de MCO con datos solapados o autocorrelacionad
 
 Greene (2018) *Econometric Analysis*; Wooldridge (2010) *Econometric Analysis of Cross Section and Panel Data*; Stock y Watson (2019); Hamilton (1994); Lütkepohl (2005) *New Introduction to Multiple Time Series Analysis*; Kilian y Lütkepohl (2017) *Structural Vector Autoregressive Analysis*; Newey y West (1987, 1994); Andrews (1991); Hodrick (1992); Stambaugh (1999); Engle y Granger (1987); Johansen (1991); MacKinnon (2010) «Critical Values for Cointegration Tests»; Stock y Watson (1993) DOLS; Granger (1969); Toda y Yamamoto (1995); Angrist y Pischke (2009); Staiger y Stock (1997); Stock y Yogo (2005); Montiel Olea y Pflueger (2013); Goodman-Bacon (2021); Callaway y Sant'Anna (2021); Abadie, Diamond y Hainmueller (2010); MacKinlay (1997) «Event Studies in Economics and Finance»; Boehmer, Musumeci y Poulsen (1991); Petersen (2009); Cameron, Gelbach y Miller (2011); Driscoll y Kraay (1998); Engle (2002) «Dynamic Conditional Correlation»; Forbes y Rigobon (2002); Taylor (1993); Fama (1984) «Forward and Spot Exchange Rates»; Rogoff (1996) «The Purchasing Power Parity Puzzle»; Estrella y Mishkin (1998).
 
+### 10.9 Paridad cubierta, base y carry cambiario (FX-CARRY-001, FX-PPA-001; área 51)
+
+- Paridad cubierta `F/S = (1 + i_cot·t/B)/(1 + i_base·t/B)` (S en unidades de cotizada por unidad base); la **base de divisas cruzadas** mide su desviación y es persistente desde 2008 por restricciones de balance, con picos en cierres trimestrales (Du, Tarlo y Verdelhan, 2018). Comparar rendimientos entre divisas sin cubrir o con la paridad teórica en lugar de la base observada es error.
+- Carry: rentabilidad media positiva con asimetría negativa y caídas bruscas cuando sube la aversión al riesgo (Brunnermeier, Nagel y Pedersen, 2008); factor común de carry entre divisas (Lustig, Roussanov y Verdelhan, 2011). Entrega carry/volatilidad y la peor caída histórica junto a la media.
+- PPA: semividas de desviación del tipo real de 3–5 años (Rogoff, 1996): útil para H4, no para H1–H2; Balassa-Samuelson desplaza el equilibrio en economías de convergencia.
+
+### 10.10 Eventos de índice (IDX-REB-001; área 64)
+
+- Demanda estimada `= Δpeso × activos indexados`, en días de volumen medio de la cesta; estudio de eventos (10.4) solo con ≥ 20 eventos comparables, ventanas anuncio→efectividad y efectividad→+20 sesiones, contraste BMP.
+- Curvas de demanda con pendiente (Shleifer, 1986; Harris y Gurel, 1986); efecto en declive y anticipado por arbitrajistas (Petajisto, 2011): entrega la tendencia del efecto por década. La salida describe la cesta, nunca selecciona valores.
+
+### 10.11 Complementos macro (área 19)
+
+- Phillips aumentada con expectativas `π_t = π^e_t − κ(u_t − u*) + ν_t`; κ pequeña e inestable (aplanamiento), u* inobservable: IC amplios. Expectativas de inflación: encuestas (SPF de la Fed de Filadelfia y del BCE), consumidores y mercado (*breakevens* con primas de liquidez y riesgo: ficha TCV-BEI-001 de MC-09).
+- Condiciones financieras: índices compuestos (p. ej., NFCI de la Fed de Chicago; CISS del BCE, DOC-MOT-0357) son sumas ponderadas de tipos, diferenciales, volatilidad y divisa; su ponderación se declara.
+- Balanza de pagos: `CC = S − I`; posición de inversión internacional neta; un déficit corriente persistente financiado a corto es vulnerabilidad cambiaria, no predicción de fecha.
+- *Nowcasting*: modelos de factores dinámicos con datos de distinta frecuencia y publicación escalonada (Giannone, Reichlin y Small, 2008), ecuaciones puente y MIDAS; cada actualización se fecha con la información disponible.
+
+### 10.12 Covarianzas de alta dimensión y correlación robusta (área 18)
+
+- Con N/T no despreciable, la matriz muestral es ruidosa: autovalores dentro de Marchenko-Pastur `λ± = σ²(1 ± √(N/T))²` son indistinguibles del ruido (recorte de autovalores); encogimiento de Ledoit-Wolf (DOC-MOT-0068) como estimador por defecto para N/T > 0,1.
+- Pearson robusto desde Kendall en distribuciones elípticas `ρ = sin(πτ/2)`; matrices construidas por pares se reparan (Higham) y se declara.
+
+### 10.13 Clima cuantitativo (área 57, parte econométrica)
+
+- Alcances 1–3 del GHG Protocol (el 3 es mayormente estimado); intensidad media ponderada `WACI = Σ w_i·(emisiones_i/ingresos_i)` (métrica TCFD); atribución por valor de empresa con caja (PCAF). Datos reportados frente a estimados, siempre separados.
+- Regresiones de prima de carbono (Bolton y Kacperczyk, 2021): sensibles a la normalización (absoluta frente a intensidad) y a los controles sectoriales; etiqueta `asociacion`. Coste de un precio de carbono `= emisiones × precio`, sobre EBITDA, como sensibilidad, no previsión.
+
+### 10.14 Inventario de competencias
+
+| Grupo | Competencias | Dónde |
+|---|---|---|
+| Regresión | MCO, HC, Newey-West, solapamiento, Stambaugh, colinealidad, influencia, especificación, robusta, cuantílica, logit/probit | 10.1 |
+| Paneles | Efectos fijos y aleatorios, EE agrupados, Driscoll-Kraay, Nickell, GMM dinámico | 10.2 |
+| Sistemas | VAR, IRF, FEVD, Engle-Granger, Johansen, DOLS, semivida, Gregory-Hansen | 10.3 |
+| Causalidad | Granger y sus límites, VI, DiD escalonado, control sintético, RD, estudios de eventos, placebos | 10.4, 10.10 |
+| Dependencia | Correlaciones estáticas y dinámicas (DCC), cola, PCA, apuestas independientes, Marchenko-Pastur, encogimiento | 10.5, 10.12 |
+| Macro y divisas | Taylor, Okun, brecha, deuda, sorpresas, PPA, TCER, UIP, CIP y base, carry, BEER, Phillips, expectativas, condiciones financieras, balanza de pagos, *nowcasting*, vintages | 10.6, 10.9, 10.11 |
+| Clima | Alcances, WACI, PCAF, prima de carbono | 10.13 |
+| Errores típicos y referencias | Trampas y bibliografía | 10.7, 10.8 |
+
 ---
 
 ## 11. FORMATO DE SALIDA (INTERNO) Y EJEMPLO

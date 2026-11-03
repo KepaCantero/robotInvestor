@@ -1,6 +1,6 @@
 # Plan de pruebas — Bloque A
 
-**Bloque A · Robot Investor · Versión óptima V5.0 · 02/11/2026** · Subordinado al Documento 0 óptima V5.0.
+**Bloque A · Robot Investor · Versión óptima V5.0 · 02/11/2026 · actualizado V5.1 (03/11/2026)** · Subordinado al Documento 0 óptima V5.1. Cambios V5.1: requisitos RP-16 a RP-19 y pruebas PB-58 a PB-67 (credenciales por CT-25 y bóveda, consultas al Broker CT-23, H5 con hitos y horizonte principal, seguimiento encargado CT-24 con ciclo C6 y F11); matrices de cobertura con R26 y R27.
 
 ---
 
@@ -29,6 +29,10 @@ Este plan fija la batería de pruebas de **integración**, **regresión** y **ca
 | RP-13 | Informe periódico (semanal por defecto, configurable) con hasta 3 opciones por clase, menos si no las hay |
 | RP-14 | Informe técnico para el Broker e informe visual y minimalista para un usuario inexperto |
 | RP-15 | El Broker pide y consulta sin límite y decide, en su modo, si envía una petición al Bloque B |
+| RP-16 | Credenciales solicitadas por el Coordinador al Broker (CT-25) y custodiadas en la bóveda de HT-01, nunca en el contexto de un agente; servicio degradado y declarado si faltan (A1, V5.1) |
+| RP-17 | Consultas del bloque al Broker y comunicación fluida en los dos sentidos (CT-23; modos bloqueante y no bloqueante; supuestos declarados) (A2, V5.1) |
+| RP-18 | Horizonte H5 (décadas) con probabilidad cualitativa e hitos intermedios verificables; horizonte principal coherente con la naturaleza de la inversión, validado por HT-09 (A3, V5.1) |
+| RP-19 | Seguimiento periódico encargado de una opción (CT-24, ciclo C6, F11, informe de seguimiento de opción), cancelable en cualquier momento (A4, V5.1) |
 
 ### 1.2 Estados de una prueba
 
@@ -786,6 +790,136 @@ Este plan fija la batería de pruebas de **integración**, **regresión** y **ca
 | Criterio de aprobación | Auditor sin hallazgos Materiales de R21 |
 | Estado | diseñada |
 
+### PB-58 · Solicitud y provisión de una credencial por CT-25
+
+| Campo | Contenido |
+|---|---|
+| Tipo | INT · SEG |
+| Objetivo | Comprobar el circuito de credenciales de 7.10 |
+| Cubre | RP-16; R8, R3; 17.1, 17.5 |
+| Preparación | El Buscador detecta en el mantenimiento C4 una API de datos de pago sin credencial en la bóveda (estado `AUSENTE`) |
+| Pasos | 1) El BFA envía `solicitudes_credenciales` con su retorno 2) El Coordinador comprueba HT-01 y emite CT-25 3) El Broker deposita la clave en la bóveda y responde PROVISTA con el alias 4) Se repite la petición |
+| Resultado esperado | CRD- en F5 sin valor; servicio degradado y declarado hasta la provisión; tras ella, la herramienta usa la credencial y ningún agente ve el valor |
+| Criterio de aprobación | Cero apariciones del valor en mensajes, F1–F11, entregables y contextos; segunda solicitud resuelta sin molestar al Broker |
+| Estado | diseñada (mecánica cubierta por el ejecutor: `test_v51::test_credenciales_boveda`, `test_cli_v51`) |
+
+### PB-59 · Credencial expuesta en un mensaje del Broker
+
+| Campo | Contenido |
+|---|---|
+| Tipo | SEG |
+| Objetivo | Comprobar 6.2.5 y 7.10.3 |
+| Cubre | RP-16; R8 |
+| Preparación | El Broker responde a un CT-25 incluyendo el valor de la clave |
+| Pasos | 1) Recepción del mensaje |
+| Resultado esperado | Rechazo íntegro, incidencia de seguridad sin copiar el valor, petición de depósito en la bóveda y de renovación |
+| Criterio de aprobación | El valor no aparece en ningún registro; incidencia en HA |
+| Estado | diseñada (mecánica: `test_v51::test_credenciales_boveda`) |
+
+### PB-60 · Credencial denegada
+
+| Campo | Contenido |
+|---|---|
+| Tipo | INT |
+| Objetivo | Comprobar el modo degradado permanente |
+| Cubre | RP-16; R8, R16 |
+| Preparación | El Broker responde DENEGADA |
+| Pasos | 1) Respuesta 2) Nueva necesidad del mismo servicio |
+| Resultado esperado | Limitación de servicio en F10; no se vuelve a pedir salvo cambio de circunstancias; los entregables declaran la degradación |
+| Criterio de aprobación | Ninguna nueva CT-25 para ese servicio; limitación visible |
+| Estado | diseñada (mecánica: `test_v51::test_credenciales_boveda`) |
+
+### PB-61 · Consulta bloqueante al Broker con vencimiento
+
+| Campo | Contenido |
+|---|---|
+| Tipo | INT |
+| Objetivo | Comprobar 7.9 en modo `BLOQUEANTE` |
+| Cubre | RP-17; R26, R24 |
+| Preparación | Petición ad hoc ambigua sobre CRI; el Analizador eleva una consulta `ACLARACION_ALCANCE` bloqueante |
+| Pasos | 1) Envío CT-23 2) Sin respuesta en plazo 3) Respuesta tardía |
+| Resultado esperado | Solo CRI se pausa en su punto de control; el resto sigue; al vencer, el análisis continúa con el supuesto declarado, que aparece en los entregables; la respuesta tardía que invalida el supuesto abre una revisión C2 |
+| Criterio de aprobación | `supuestos_declarados` con CNS- en el paquete (HT-09 C19 OK); ningún dato del Broker inventado |
+| Estado | diseñada (mecánica: `test_v51::test_consulta_bloqueante_pausa_y_vencimiento`) |
+
+### PB-62 · Filtro, agrupación y recurrencia de consultas
+
+| Campo | Contenido |
+|---|---|
+| Tipo | INT · APR |
+| Objetivo | Comprobar que el Analizador filtra y el Coordinador agrupa (máx. 3 mensajes por RUN-) y que las recurrentes generan lección |
+| Cubre | RP-17, RP-02; R15, R26 |
+| Preparación | Cinco agentes plantean dudas, dos resolubles con F1–F6 y dos duplicadas; el mismo tipo de consulta se repite en tres análisis en 8 semanas |
+| Pasos | 1) Retornos 2) Retorno parcial del CT-05 3) Envío 4) Aviso CT-22 |
+| Resultado esperado | Solo las dudas que cambian una conclusión llegan al Broker, agrupadas; aviso `CONSULTA_RECURRENTE` y lección de normalización del CT-01 |
+| Criterio de aprobación | ≤ 3 mensajes CT-23 por RUN-; LEC- de producto creada |
+| Estado | diseñada (mecánica: `test_v51::test_consulta_validaciones_agrupacion_y_entrante`) |
+
+### PB-63 · Pronóstico H5 con hitos
+
+| Campo | Contenido |
+|---|---|
+| Tipo | INT · REG |
+| Objetivo | Comprobar 8.3 y R13 en H5 |
+| Cubre | RP-18, RP-11; R13, R11 |
+| Preparación | Temática estructural de RV con H5 aplicable |
+| Pasos | 1) Prospectiva formula el H5 2) HT-09 3) Congelación |
+| Resultado esperado | H5 solo con banda verbal y ≥ 3 hitos HIT- (primero ≤ 12 meses, ≤ 24 meses entre hitos) con fecha, indicador y criterio; congelados con su PRG padre |
+| Criterio de aprobación | HT-09 C18 OK; un H5 sin hitos o con probabilidad numérica queda BLOQUEADO |
+| Estado | diseñada (mecánica: `test_v51::test_h5_con_hitos_y_sin_probabilidad`, `test_ht09_bloquea_h5_sin_hitos`; HT-09: `TestV51`) |
+
+### PB-64 · Evaluación de H5 por hitos y degradación
+
+| Campo | Contenido |
+|---|---|
+| Tipo | APR |
+| Objetivo | Comprobar 12.1 y 12.2 para H5 |
+| Cubre | RP-18, RP-02; R13, R18 |
+| Preparación | 20 hitos resueltos en la celda MP × H5 con tasa de cumplimiento del 40 % |
+| Pasos | 1) Ciclo C5 mensual |
+| Resultado esperado | Estados `EN_CURSO_CONFORME`/`DESVIADO`/`INVALIDADO` publicados; aplicabilidad de MP × H5 baja de «Sí» a «Limitado» (tipo 2) |
+| Criterio de aprobación | Ajuste registrado en F6 y F10; ningún certificado H5 emitido |
+| Estado | diseñada (estado de H5: `Evaluador.estado_h5`) |
+
+### PB-65 · Horizonte principal incoherente con la naturaleza
+
+| Campo | Contenido |
+|---|---|
+| Tipo | REG |
+| Objetivo | Comprobar la regla de adecuación de 8.3 |
+| Cubre | RP-18; R13, R17 |
+| Preparación | Opción `TACTICA` con horizonte principal H4 sin justificación; otra `ESTRUCTURAL` en H3 con justificación; una DER con principal H5 |
+| Pasos | 1) HT-09 2) CT-14 |
+| Resultado esperado | Primera y tercera: BLOQUEADO (C17); segunda: APTO_CON_ADVERTENCIAS que dictamina el Orquestador |
+| Criterio de aprobación | Dictámenes correctos y motivados |
+| Estado | diseñada (HT-09: `TestV51::test_fuera_de_rango_sin_y_con_justificacion`, `test_principal_en_celda_no`) |
+
+### PB-66 · Seguimiento encargado: alta, ciclos y cancelación
+
+| Campo | Contenido |
+|---|---|
+| Tipo | INT |
+| Objetivo | Comprobar 7.11 y R27 |
+| Cubre | RP-19, RP-15; R5, R27, R24 |
+| Preparación | El Broker encarga por CT-24 el seguimiento semanal de una OPP- que no envió al Bloque B |
+| Pasos | 1) Alta 2) Dos ciclos C6 3) Pausa y reanudación 4) Cancelación 5) Fecha del siguiente ciclo |
+| Resultado esperado | SEG- en F11; `EN_SEGUIMIENTO` y `seg_id` en F3; informe de seguimiento de opción breve con una recomendación, validado por HT-09; cancelación con efecto inmediato |
+| Criterio de aprobación | Ningún ciclo tras la cancelación; C6 no retrasa C1–C3; informes ≤ 300 palabras |
+| Estado | diseñada (mecánica: `test_v51::test_seguimiento_alta_ciclo_y_cancelacion`) |
+
+### PB-67 · Seguimiento que propone el envío al Bloque B
+
+| Campo | Contenido |
+|---|---|
+| Tipo | INT |
+| Objetivo | Comprobar la recomendación `PROPONER_ENVIO_A_B` (7.11.4) |
+| Cubre | RP-19; R4, R12 |
+| Preparación | La OPP- vigilada vuelve a superar los umbrales de 9.2 sin objeciones fuertes abiertas |
+| Pasos | 1) Ciclo C6 |
+| Resultado esperado | Recomendación `PROPONER_ENVIO_A_B` con `paquete_para_bloque_B` actualizado y, si la evidencia es antigua, sugerencia de N3; la decisión queda en el Broker |
+| Criterio de aprobación | HT-09 (perfil SEGUIMIENTO) APTO; sin envío automático |
+| Estado | diseñada (HT-09: `TestV51::test_seguimiento_envio_a_b`) |
+
 ## 4. Registro de ejecuciones
 
 | ID | Fecha | Versión probada | Resultado | Evidencia (identificadores) | Incidencias |
@@ -812,7 +946,11 @@ Este plan fija la batería de pruebas de **integración**, **regresión** y **ca
 | RP-12 | PB-51 |
 | RP-13 | PB-01, PB-02, PB-03, PB-09 |
 | RP-14 | PB-01, PB-03, PB-31, PB-39, PB-40, PB-41, PB-44 |
-| RP-15 | PB-06, PB-07, PB-08, PB-09, PB-11, PB-12 |
+| RP-15 | PB-06, PB-07, PB-08, PB-09, PB-11, PB-12, PB-66 |
+| RP-16 | PB-58, PB-59, PB-60 |
+| RP-17 | PB-61, PB-62 |
+| RP-18 | PB-63, PB-64, PB-65 |
+| RP-19 | PB-66, PB-67 |
 
 ### 5.2 Reglas críticas
 
@@ -825,12 +963,13 @@ Este plan fija la batería de pruebas de **integración**, **regresión** y **ca
 | R5 | PB-06, PB-07, PB-08 | R18 | PB-10, PB-34, PB-35, PB-36, PB-50 |
 | R6 | PB-09, PB-10, PB-19, PB-23 | R19 | PB-24, PB-25 |
 | R7 | PB-06, PB-29, PB-30 | R20 | PB-27, PB-28 |
-| R8 | PB-21 | R21 | PB-04, PB-05, PB-53 a PB-57 |
+| R8 | PB-21, PB-58, PB-59, PB-60 | R21 | PB-04, PB-05, PB-53 a PB-57 |
 | R9 | PB-20 | R22 | PB-47, PB-51 |
 | R10 | PB-29 | R23 | PB-48 |
 | R11 | PB-11, PB-37, PB-49 | R24 | PB-01, PB-24, PB-49 |
 | R12 | PB-01, PB-14, PB-38, PB-41 | R25 | PB-08, PB-18, PB-19 |
-| R13 | PB-31, PB-32, PB-33, PB-50 | | |
+| R13 | PB-31, PB-32, PB-33, PB-50, PB-63, PB-64, PB-65 | R26 | PB-61, PB-62 |
+| | | R27 | PB-66, PB-67 |
 
 ## 6. Batería de regresión
 

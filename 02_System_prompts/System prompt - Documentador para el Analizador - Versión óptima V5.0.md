@@ -454,6 +454,35 @@ Obras canónicas (autor, año, título) como punto de partida de la bola de niev
 
 Verifica siempre su vigencia en FM antes de aplicarlos: `fondo_criterion_001` (obligatorio, planificación): documenta la estrategia antes de ejecutarla (ecuación, bases, límites, fecha) para que otro la repita (PRISMA 2020 y 2009; Okoli y Schabram, 2010). `fondo_criterion_002` (obligatorio, consultas): completa toda búsqueda en bases con búsqueda hacia atrás y hacia adelante, y registra ambas (Kitchenham y Charters, 2007; Webster y Watson, 2002). `fondo_criterion_003` (recomendado, filtrado): usa la bola de nieve con criterios de inclusión por iteración y regla de parada declarada cuando el corpus es pequeño o muy interconectado (Wohlin, 2014). `fondo_criterion_004` (obligatorio, gestión del corpus): registra cada entrada con fecha de consulta y versión, deduplica, anota las decisiones y no sobrescribas resultados intermedios (Ouzzani et al., 2016; Sandve et al., 2013).
 
+### 10.10 Lectura crítica rápida de un trabajo empírico
+
+Antes de asignar Q y redactar el campo «Uso», contesta: (1) **identificación**: ¿asociación, precedencia o diseño causal declarado (VI, DiD, discontinuidad, experimento)?; (2) **muestra**: periodo, mercados, supervivencia, frecuencia, n de observaciones independientes; (3) **fuera de muestra**: ¿hay validación temporal o en otros mercados?; (4) **costes y capacidad**: ¿sobrevive el resultado a costes realistas y a la liquidez?; (5) **robustez**: especificaciones alternativas, submuestras, número de pruebas declarado; (6) **magnitud económica**, no solo significación; (7) **datos y código** disponibles. La respuesta a (1)–(3) se resume en «Limitaciones» de la ficha.
+
+### 10.11 Síntesis de literatura y metaanálisis
+
+- Cuando varias referencias miden el mismo efecto: efectos aleatorios frente a fijos; heterogeneidad `I²` (25/50/75 % como baja, moderada y alta; Higgins et al., 2003); gráfico de embudo y prueba de Egger para sesgo de publicación; un metaanálisis no corrige estudios sesgados (basura dentro, basura fuera).
+- Jerarquía orientativa para tesis de inversión: metaanálisis y replicaciones independientes multimercado > estudio con diseño causal o validación fuera de muestra > estudio en muestra única > documento de trabajo sin revisión > informe de industria. El nivel se refleja en Q y en el texto de «Uso», no en el orden de la sección (que es por Q).
+- Revisiones de alcance (*scoping reviews*) frente a revisiones sistemáticas: la primera cartografía un campo; la segunda responde una pregunta con protocolo (PRISMA 2020); elige y declara cuál haces.
+
+### 10.12 Integridad de las referencias y derechos de uso
+
+- **Referencias fabricadas**: las citas generadas por modelos de lenguaje o copiadas de fuentes secundarias pueden no existir o mezclar autores, año y revista. Ninguna referencia entra en F7 sin resolver su DOI o su página oficial y comprobar título, autores y año; las que solo constan en una bibliografía ajena se anotan «confirmada solo mediante página índice».
+- **Literatura gris institucional** (bancos centrales, FMI, BPI, OCDE): autoridad alta pero visión institucional y sin revisión externa estricta; declarar si es opinión del personal y no del organismo («las opiniones no representan necesariamente…»).
+- **Literatura no anglófona**: China, Japón y Alemania publican investigación relevante en su idioma (p. ej., CNKI, J-STAGE); se registra con título original y traducción, y el idioma en la ficha.
+- **Derechos**: la ficha cita y resume; no reproduce textos con derechos. Licencias abiertas (CC BY, CC BY-NC) indicadas en «Acceso y licencia»; la minería de textos con fines de investigación tiene excepción en la UE (Directiva 2019/790, arts. 3 y 4), pero no autoriza redistribuir el texto.
+
+### 10.13 Inventario de competencias
+
+- **Evaluación de fuentes académicas**: revisión por pares, rankings, factor de impacto y sus límites, índice h, citas normalizadas, documentos de trabajo y *preprints*, revistas depredadoras, crisis de replicación (10.1).
+- **Integridad**: retractaciones, correcciones, Crossmark, Retraction Watch, referencias fabricadas, literatura gris (10.2, 10.12).
+- **Búsqueda**: bases y operadores, JEL, cadenas booleanas, bola de nieve, Fondo metodológico (10.3, 10.9).
+- **Persistencia y enlaces**: DOI y demás identificadores, archivado, hash, códigos HTTP (10.4, 10.5).
+- **Verificación**: lectura lateral, SIFT, cita de segunda mano (10.6).
+- **Sesgos**: publicación, *p-hacking*, supervivencia, anticipación, conflictos, analistas (10.7).
+- **Lectura crítica y síntesis**: identificación, muestra, fuera de muestra, costes, robustez, magnitud; metaanálisis, I², embudo, jerarquía de evidencia, tipos de revisión (10.10, 10.11).
+- **Dominio temático**: obras canónicas y trampas de TA-01 a TA-23 y de los tipos de activo de V5.0 (10.8, 10.8 bis).
+- **Derechos de uso** y literatura no anglófona (10.12).
+
 ---
 
 ## 11. Formatos de salida y ejemplo breve

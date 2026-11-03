@@ -1,8 +1,8 @@
-# Ejecutor programático del Bloque A (V1.1)
+# Ejecutor programático del Bloque A (V1.2)
 
-**Bloque A · Robot Investor · Versión óptima V5.0 · 02/11/2026** · Subordinado al Documento 0 óptima V5.0.
+**Bloque A · Robot Investor · Versión óptima V5.0 · 02/11/2026 · actualizado V5.1 (03/11/2026)** · Subordinado al Documento 0 óptima V5.1. Cambios V5.1 (ejecutor V1.2): horizonte H5 con hitos HIT- y horizonte principal con naturaleza de la inversión; contratos CT-23 a CT-25; archivo F11; subcomandos `seguimiento`, `consulta-broker` y `credencial` (bóveda simulada de HT-01); 13 pruebas nuevas (`tests/test_v51.py`).
 
-Programa en Python que hace funcionar el Bloque A de extremo a extremo con la API de Claude: los 25 agentes (doce Analistas de tipo de activo: AG-03..AG-09 y AG-21..AG-25) con sus system prompts íntegros (`02_System_prompts`), los contratos CT-01…CT-22, los archivos F1–F6, F10, RC y HA, las herramientas HT-01…HT-09 y un Motor de cálculo determinista. Puede ejecutarse **como si** fuera una fecha histórica, sin fuga de información, para que un ingeniero haga sus propios backtests y conecte las señales y los pronósticos a su backtester.
+Programa en Python que hace funcionar el Bloque A de extremo a extremo con la API de Claude: los 25 agentes (doce Analistas de tipo de activo: AG-03..AG-09 y AG-21..AG-25) con sus system prompts íntegros (`02_System_prompts`), los contratos CT-01…CT-25, los archivos F1–F6, F10, F11, RC y HA, las herramientas HT-01…HT-09 y un Motor de cálculo determinista. Puede ejecutarse **como si** fuera una fecha histórica, sin fuga de información, para que un ingeniero haga sus propios backtests y conecte las señales y los pronósticos a su backtester.
 
 **Función del Bloque A (V5.0).** El bloque solo busca oportunidades: delimita **ámbitos** de inversión (mercado, sector, subsector, temática, segmento, factor, estilo o estrategia) en cualquiera de los **doce tipos de activo** (RV, RF, DIV, MP, IDX, FON, DER, INM, CRI, ALT, MON, TCV) y entrega al Bloque B un encargo para que localice los mejores activos concretos. El ejecutor no selecciona ni compara activos, instrumentos, costes ni plataformas: cada opción lleva su `ambito`, su `indicador_seguimiento` (un símbolo del universo con el que se miden la tendencia y los pronósticos), su `invertibilidad` y su `paquete_para_bloque_B`.
 
@@ -85,6 +85,21 @@ bloque-a --datos DATOS --estado ./estado decision --json ejemplos/peticiones/dec
 bloque-a --datos DATOS --estado ./estado evaluar          # C5: resolver pronósticos vencidos, métricas, lecciones
 bloque-a --datos DATOS --estado ./estado estado           # colas, consumo, últimos runs, integridad
 bloque-a --salida ./informes_enlaces verificar-enlaces    # HT-02 sobre F7, F8, F9 y FM (sin --aplicar no modifica)
+# V5.1 · Seguimiento encargado de opción (CT-24, ciclo C6, F11)
+bloque-a --datos DATOS --estado ./estado seguimiento alta --json '{"opp_id":"OPP-2026-0002","frecuencia":"SEMANAL","motivo":"…","senales_interes":["…"],"fecha_fin":null}'
+bloque-a --datos DATOS --estado ./estado seguimiento modificar|pausar|reanudar|cancelar --seg SEG-2026-0001 [--json '{"frecuencia":"MENSUAL"}']
+bloque-a --datos DATOS --estado ./estado --as-of 2026-06-12 seguimiento ejecutar [--seg SEG-… --forzar]   # ciclos C6 vencidos → informe de seguimiento
+bloque-a --datos DATOS --estado ./estado seguimiento responder --seg SEG-2026-0001 --decision RECHAZADA   # CT-22 DECISION_SEGUIMIENTO
+bloque-a --datos DATOS --estado ./estado seguimiento listar
+# V5.1 · Consultas del bloque al Broker (CT-23)
+bloque-a --datos DATOS --estado ./estado consulta-broker enviar --json '{"tipo":"ACLARACION_ALCANCE","modo":"BLOQUEANTE","clases":["CRI"],"preguntas":[{"texto":"…","supuesto_declarado":"…","efecto_si_falso":"…"}]}'
+bloque-a --datos DATOS --estado ./estado consulta-broker responder --cns CNS-2026-0001 --json '{"respuestas":[{"indice":0,"texto":"…"}]}'
+bloque-a --datos DATOS --estado ./estado consulta-broker entrante|vencer|listar
+# V5.1 · Credenciales (CT-25, bóveda simulada de HT-01: el valor nunca entra en mensajes, F1–F11 ni salidas)
+bloque-a --datos DATOS --estado ./estado credencial solicitar --servicio "API de fondos cerrados" --solicitante AG-16
+CLAVE=… bloque-a --datos DATOS --estado ./estado credencial depositar --crd CRD-2026-0001 --valor-desde-entorno CLAVE   # el Broker, fuera de banda
+bloque-a --datos DATOS --estado ./estado credencial responder --crd CRD-2026-0002 --respuesta DENEGADA
+bloque-a --datos DATOS --estado ./estado credencial estado|recordatorios
 # Backtest
 bloque-a --datos DATOS --universo MI_UNIVERSO.csv --salida ./bt --cliente anthropic \
          backtest --desde 2026-07-03 --hasta 2026-12-25 --frecuencia semanal [--clases RV,RF] [--anonimizar]
@@ -152,6 +167,13 @@ Las salidas reales del modelo serán más largas que las simuladas; tómelo como
 6. Puntos simplificados respecto del diseño completo: el Curador LLM clasifica pero la deduplicación y las raíces son deterministas (las raíces HT-01 cuentan como primarias de nivel A); las peticiones CT-07/CT-08 se limitan a una por clase y ciclo; las colas son síncronas (HT-08 registra órdenes de instancias, el paralelismo real es el de los hilos de Analistas); no se mide la fiabilidad de fuentes de opinión (FUE-); el planificador HT-05 calcula fechas pero no programa tareas en el sistema operativo (use cron/systemd con `bloque-a ciclo`).
 7. El informe visual se genera a partir de la cabecera, los estilos y los iconos de la plantilla vigente (doce tipos) con texto llano; si el índice Fernández-Huerta queda por debajo de 70, se pide una reescritura y, si persiste, la entrega se bloquea (C12).
 
+## 9 bis. Novedades V5.1 (ejecutor V1.2)
+
+- **H5 y horizonte principal.** La tabla 8.3 incluye H5 (décadas). En los tipos con H5 «Sí» (RV, MP, IDX, ALT) el mock ofrece H5 como horizonte secundario. El PRG H5 se congela **sin probabilidad interna** (solo banda) y con **3 hitos HIT-** (a 12, 30 y 54 meses; `h5.meses_hitos`), cada uno un PRG ordinario de horizonte H4 que el Evaluador resuelve en su fecha; `Evaluador.estado_h5` deriva `EN_CURSO_CONFORME`, `DESVIADO` o `INVALIDADO` y la tasa de hitos cumplidos por tipo. Cada opción lleva `naturaleza_inversion` (la del Analista si es válida; si no, por defecto por tipo: MON `LIQUIDEZ`, DER `PRIMA_RIESGO`, ALT `ESTRUCTURAL`, resto `CICLICA`) y un `horizonte_principal` coherente con ella (si ninguno lo es, se ajusta la naturaleza al horizonte); HT-09 lo valida (C17, C18).
+- **Consultas al Broker (CT-23).** `consulta-broker` registra las CNS- en F5 (máx. 3 por RUN-, agrupación automática), vigila plazos y detecta consultas recurrentes (CT-22 `CONSULTA_RECURRENTE`). En el F0 de cada ciclo, las vencidas pasan a `VENCIDA` y una `BLOQUEANTE` sin respuesta **pausa** los tipos de activo afectados (limitación declarada); los supuestos de las pendientes o vencidas viajan en `supuestos_declarados` del paquete y del informe técnico.
+- **Credenciales (CT-25).** `credencial` registra las CRD- en F5 sin valores; la bóveda simulada (`<estado>/boveda/`, `secretos.json` con permisos 0600) solo devuelve alias y estado; una respuesta del Broker que traiga el valor se rechaza íntegra y se pide su depósito y renovación; las denegadas quedan como limitación de servicio en F10.
+- **Seguimiento encargado (CT-24, C6, F11).** `seguimiento` gestiona los encargos en F11 (propietario AG-01) y ejecuta los ciclos vencidos: revisión ligera **determinista** (delta del indicador frente a 1,5 σ semanales, distancia a la invalidación, catalizadores, T/E/A/RK reconstruidos con HT-03 y umbrales de F10, pronósticos e hitos abiertos), una recomendación, informe breve (.md) y JSON en `Informes de seguimiento/`, validados con HT-09 (`validar_seguimiento`) y con el esquema JSON V5.1; RUN- de tipo `SEGUIMIENTO` en F5 (`tipo_entrada: RUN_C6`, para no mezclarse con los RUN de C1–C3). Estado de madurez: implementado sin llamada al Analista de tipo de activo (el CT-06 de fase SEGUIMIENTO queda registrado).
+
 ## 10. Decisiones de diseño relevantes
 
 - El paquete de síntesis que valida HT-09 incluye `puertas`, `cluster`, `vigente`, la advertencia de H1 y `objeciones[].resuelta`; el entregable JSON los elimina para cumplir el esquema (que no los admite) y añade `x_referencia`, `x_lectura_conjunto`. El símbolo con el que se mide la opción va en `indicador_seguimiento.simbolo` (V1.0: `x_proxy_backtest`). En F3 el campo interno es `simbolo_seguimiento`; los registros V1.0 con `proxy_backtest` se siguen leyendo.
@@ -172,9 +194,9 @@ Las salidas reales del modelo serán más largas que las simuladas; tómelo como
   bloque_a/
     llm.py (Anthropic, Mock, Replay) · mock_respuestas.py · prompts.py · contratos.py · agentes.py · consumo.py
     almacen.py · orquestacion.py · sintesis.py · redaccion.py · evaluador.py · backtest.py · cli.py
-    referencias.py · anonimizacion.py · configuracion.py
+    referencias.py · anonimizacion.py · configuracion.py · interfaz_broker.py (CT-23, CT-25) · seguimiento.py (CT-24, C6, F11)
     motor/ (operaciones.py, evaluacion.py, servicio.py)
-    herramientas/ (ht01_datos, ht02, ht03, ht04_graficos, ht05_planificador, ht06_indice, ht07, ht08_monitor, ht09, referencia/)
-  tests/ (pytest: test_unitarias, test_integracion, test_autocritica, test_v5; MAPA_PLAN_DE_PRUEBAS.md; RESULTADOS.txt)
+    herramientas/ (ht01_datos, ht01_boveda, ht02, ht03, ht04_graficos, ht05_planificador, ht06_indice, ht07, ht08_monitor, ht09, referencia/)
+  tests/ (pytest: test_unitarias, test_integracion, test_autocritica, test_v5, test_v51; MAPA_PLAN_DE_PRUEBAS.md; RESULTADOS.txt)
   ejemplos/datos_sinteticos/ · ejemplos/peticiones/
 ```

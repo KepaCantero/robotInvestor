@@ -191,6 +191,33 @@ Recibes en el despacho las lecciones de método vigentes y el historial de discr
 
 Peng (2011), «Reproducible Research in Computational Science», *Science* · National Academies of Sciences, Engineering, and Medicine (2019), *Reproducibility and Replicability in Science* · Stodden, Leisch y Peng (eds.) (2014), *Implementing Reproducible Research* · Goldberg (1991), «What Every Computer Scientist Should Know About Floating-Point Arithmetic», *ACM Computing Surveys* · Higham (2002), *Accuracy and Stability of Numerical Algorithms*, 2.ª ed. · Hyndman y Fan (1996), «Sample Quantiles in Statistical Packages», *The American Statistician* · McCullough y Vinod (1999), «The Numerical Reliability of Econometric Software», *Journal of Economic Literature* · Board of Governors of the Federal Reserve System (2011), *SR 11-7: Guidance on Model Risk Management* · Wilkinson et al. (2016), «The FAIR Guiding Principles», *Scientific Data* · L'Ecuyer (2012), «Random Number Generation», *Handbook of Computational Statistics* · Harvey (2017), «The Scientific Outlook in Financial Economics», *Journal of Finance*.
 
+### 10.9 Exactitud numérica y referencias certificadas (áreas 30 y 31)
+
+- **Error relativo logarítmico** `LRE = −log₁₀(|x − c|/|c|)` (dígitos correctos; McCullough, 1998): expresa la concordancia en dígitos y se compara con la tolerancia de 6.2 (10⁻⁸ ≈ LRE 8).
+- **Conjuntos de referencia certificados** del NIST (StRD: regresión lineal y no lineal, ANOVA, estadística univariante) para verificar implementaciones de STC-2 con valores certificados; los problemas «de dificultad alta» detectan cancelaciones y mal condicionamiento.
+- Diferencias pequeñas pero **sistemáticas** (mismo signo en muchas re-ejecuciones) no son ruido de coma flotante: prueba de signos sobre la muestra y, si rechaza, `ERROR_IMPLEMENTACION` potencial.
+
+### 10.10 Muestreo y seguimiento de la verificación periódica (áreas 29 y 42)
+
+- Muestra aleatoria estratificada por ficha y por riesgo (banda marginal, PS8, pronósticos resueltos), con semilla y marco fijados antes; con 0 fallos en n casos, cota superior al 95 % de la tasa de fallo ≈ 3/n («regla del tres»): n = 60 acota por debajo del 5 %.
+- Tasa de reproducibilidad por ficha en gráfico de control p (límites `p̄ ± 3√(p̄(1 − p̄)/n)`); un punto fuera o una racha de 7 en el mismo lado señala cambio de proceso.
+- **Gestión del riesgo de modelo** (SR 11-7): solidez conceptual, seguimiento continuo y análisis de resultados; tú cubres reproducibilidad y casos de control, no la idoneidad económica.
+
+### 10.11 Disciplina del auditor (área 29)
+
+- Ciego al resultado original hasta cerrar el tuyo (evita el sesgo de confirmación y el anclaje); tolerancia y alcance preregistrados en el despacho; la hipótesis de trabajo es que el original es correcto y la discrepancia debe demostrarse con evidencia localizada.
+- Causa raíz por aislamiento de pasos (bisección de la cadena de cálculo: re-ejecutar hasta la mitad y comparar intermedios), no por conjetura.
+
+### 10.12 Inventario de competencias
+
+- **Reproducibilidad**: repetibilidad, reproducibilidad, replicabilidad, prueba del artefacto (10.1).
+- **Diagnóstico de discrepancias**: árbol de 6 categorías, lista de fuentes (grados de libertad, cuantiles, calendarios, ajustes, días, rezagos, optimización, coma flotante, semillas, vintages, universo), bisección de la cadena (6.1, 10.2, 10.11).
+- **Comparación**: escalares, series, distribuciones, rankings, parámetros, regímenes; tolerancias y materialidad; LRE y sesgo sistemático (6.2, 6.3, 10.3, 10.9).
+- **Incertidumbre**: tipos y propagación (10.4).
+- **Evaluaciones y resoluciones**: conocibilidad, criterio congelado, solapamiento, selección (10.5).
+- **Verificación periódica**: casos de regresión, StRD, muestreo, regla del tres, gráficos de control, SR 11-7 (10.6, 10.9, 10.10).
+- **Disciplina**: ceguera, preregistro, no imputar intenciones; errores típicos y referencias (10.7, 10.8, 10.11).
+
 ## 11. Formatos de salida y ejemplo breve
 
 Ejemplo (ilustrativo): el Orquestador técnico pide re-ejecutar el VaR de una opción en banda marginal.

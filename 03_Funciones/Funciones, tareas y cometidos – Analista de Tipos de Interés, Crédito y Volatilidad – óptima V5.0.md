@@ -1,6 +1,6 @@
 # Funciones, tareas y cometidos — Analista de Tipos de Interés, Crédito y Volatilidad
 
-**Bloque A · Robot Investor · Versión óptima V5.0 · 02/11/2026** · Subordinado al Documento 0 óptima V5.0.
+**Bloque A · Robot Investor · Versión óptima V5.0 · 02/11/2026 · actualizado V5.1 (03/11/2026)** · Subordinado al Documento 0 óptima V5.1. Cambios V5.1: ACTCV-F19 a ACTCV-F21 (horizonte principal y H5, seguimiento encargado, dudas al Broker y credenciales).
 
 Agente: **Analista de Tipos de Interés, Crédito y Volatilidad** (AC-TCV, AG-25) · Tipo de activo 12 (TCV) · Plano P2 · Sin estado, escalable por instancias (R25) · Perfil del Motor: PERF-TCV · System prompt: «System prompt - Analista de Tipos de Interés, Crédito y Volatilidad - Versión óptima V5.0».
 
@@ -32,6 +32,9 @@ Gastar solo lo que puede cambiar la conclusión y aprender de su historial por h
 | ACTCV-F16 | Dependencia común y apuestas independientes | Medir con FX-CORR-001 y ML-CLUS-001 la dependencia entre sus finalistas y con opciones de RF, RV, DER y DIV (aversión al riesgo, régimen de inflación) | Toda finalista | CALC- | Nota de clúster en la ficha | CT-09; CT-06 |
 | ACTCV-F17 | Señales para otros tipos | Comunicar al Analizador régimen de volatilidad y prima de varianza (DER), MOVE y prima por plazo (RF), estrés de crédito (RV, INM, ALT), correlación bonos-acciones | Cada informe | Régimen, factores | `senales_para_otras_clases` | CT-06 |
 | ACTCV-F18 | Informe de clase y autoevaluación | Completar el JSON; declarar lagunas, estado de madurez de los métodos (sin fichas propias PERF-TCV), consumo y observaciones aprovechables como lecciones | Cierre de cada encargo | Todo lo anterior | Informe de clase | CT-06 |
+| ACTCV-F19 | Naturaleza de la inversión y horizonte principal (V5.1) | Clasificar cada finalista (`TACTICA`, `LIQUIDEZ`, `CICLICA`, `PRIMA_RIESGO`, `VALORACION`, `ESTRUCTURAL`); declarar `horizonte_principal` aplicable al tipo (tabla 6.9 del prompt, con H5 décadas) y dentro del rango de su naturaleza, o `justificacion_horizonte`; en H5, banda cualitativa e indicadores para los hitos HIT- | Cada finalista | Ficha; tabla 8.3 | Campos de horizonte (validados por HT-09) | CT-06 |
+| ACTCV-F20 | Revisión de seguimiento encargado (V5.1) | En fase SEGUIMIENTO (ciclo C6): delta y señales de interés, distancia a la invalidación, catalizadores, T/E/A con HT-03, pronósticos abiertos e hitos; recomendación sugerida y `paquete_para_bloque_B` actualizado si vuelve a ser elegible; «sin novedad» si no hay cambio material | Encargo CT-06 SEGUIMIENTO | Ficha OPP- (F3), F4, F11 | `revision_seguimiento` | CT-06; HT-03 |
+| ACTCV-F21 | Dudas al Broker y credenciales (V5.1) | Incluir en `consultas_broker` las dudas que pueden cambiar una conclusión, con supuesto declarado y efecto si es falso (las filtra el Analizador; CT-23); declarar en `solicitudes_credenciales` los servicios sin credencial en la bóveda de HT-01 (CT-25), sin valores; trabajar degradado y declararlo mientras tanto | Cuando surja | Encargo; estado de HT-01 | Consultas y solicitudes en el informe | CT-06 (vía Analizador) |
 
 ## 3. Indicadores de desempeño (KPI)
 

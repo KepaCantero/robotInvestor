@@ -1,12 +1,12 @@
 # Configuración por defecto del Ejecutor programático del Bloque A (V1.1)
-# Bloque A · Robot Investor · Versión óptima V5.0 · 02/11/2026 · subordinado al Documento 0 óptima V5.0
+# Bloque A · Robot Investor · Versión óptima V5.0 · 02/11/2026 · actualizado V5.1 (03/11/2026) · subordinado al Documento 0 óptima V5.1
 # (doce tipos de activo de 2.6, presupuestos del Anexo A, referencias de 8.4, Analistas AG-03..AG-09 y AG-21..AG-25).
 # Cualquier clave puede sobrescribirse con un YAML propio (--config) que se fusiona sobre este.
 
 modo: vivo                 # vivo | backtest  (el comando «backtest» fuerza «backtest»)
 zona_horaria: Europe/Madrid
 idioma: es-ES
-methodology_version: "5.0"
+methodology_version: "5.1"
 
 rutas:
   # Raíz del paquete del Bloque A (carpetas 01_…10_). null = autodetección (carpeta padre de 11_Ejecutor)
@@ -139,7 +139,32 @@ horizontes:
   H2: {semanas: 4}
   H3: {meses: 6}
   H4: {meses: 12}
-horizonte_principal_preferente: [H3, H2, H4, H1]
+  H5: {meses: 120}            # V5.1: décadas (5–30 años); se evalúa por sus hitos HIT-
+horizonte_principal_preferente: [H3, H2, H4, H1, H5]
+
+# Pronósticos H5 (Anexo A V5.1): solo banda verbal; ≥ 3 hitos; el primero a ≤ 12 meses; ≤ 24 meses entre hitos
+h5:
+  meses_hitos: [12, 30, 54]
+
+# Seguimiento encargado de opción (CT-24, ciclo C6, F11; Anexo A V5.1)
+seguimiento:
+  frecuencias: {DIARIA: 1, SEMANAL: 7, QUINCENAL: 14, MENSUAL: 30, TRIMESTRAL: 91}   # días; PERSONALIZADA: calendario_personalizado.cada_dias
+  frecuencia_orientativa_dias: {H1: 1, H2: 7, H3: 7, H4: 30, H5: 91}                  # aviso, no veto
+  presupuesto_uc: {normal: 2, material: 5, sin_novedad: 0.5}
+  ciclos_sin_novedad_para_proponer_cancelacion: 4
+  umbral_rk_semaforo: 5          # variación de RK que pone el semáforo en VERDE (+) o ROJO (−)
+
+# Consultas del bloque al Broker (CT-23; Anexo A V5.1)
+consultas_broker:
+  plazo_horas: {BLOQUEANTE: 4, NO_BLOQUEANTE: 24}
+  max_mensajes_por_run: 3
+  recurrente: {repeticiones: 3, semanas: 8}
+
+# Credenciales (CT-25; bóveda simulada de HT-01)
+credenciales:
+  respuesta_esperada_horas: 72
+  recordatorio_dias: 7
+  max_recordatorios: 3
 
 # Referencias de comparación por tipo de activo (8.4; propuesta inicial, a ratificar por el operador en F10).
 # Valores: símbolo HT-01 · CESTA (equiponderada de los indicadores del tipo en el universo) · SUBYACENTE (columna

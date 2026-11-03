@@ -1,4 +1,4 @@
-"""Contratos CT-01 a CT-22 (sección 6 y Anexo B del Documento 0).
+"""Contratos CT-01 a CT-25 (sección 6 y Anexo B del Documento 0 óptima V5.1; CT-23 a CT-25 añadidos en V5.1).
 
 - `crear_mensaje` añade los campos comunes (msg_id, contrato, version_contrato, emisor, receptor,
   run_id/query_id, timestamp, presupuesto/consumo, estado…).
@@ -17,8 +17,13 @@ import re
 import threading
 from typing import Any, Dict, List, Optional, Tuple
 
-VERSION_CONTRATO = "4.0"
+VERSION_CONTRATO = "5.1"
 ESTADOS = ("COMPLETO", "PARCIAL", "SIN_RESULTADO", "RECHAZADO")
+# V5.1 (Anexo B): los retornos de CT-23, CT-24 y CT-25 reutilizan «estado» con valores propios del contrato
+# (el Anexo B no distingue estos valores del estado común de retorno de 6.2.6; el ejecutor admite ambos)
+ESTADOS_ESPECIFICOS = {"CT-23": ("RESPONDIDA", "PARCIAL", "VENCIDA", "RECIBIDA"),
+                       "CT-24": ("ACTIVO", "PAUSADO", "CANCELADO", "FINALIZADO"),
+                       "CT-25": ("PROVISTA", "DENEGADA", "APLAZADA")}
 # Analistas de tipo de activo (Documento 0 óptima V5.0, 4.2): AG-03..AG-09 y AG-21..AG-25
 ANALISTAS = {"AG-03", "AG-04", "AG-05", "AG-06", "AG-07", "AG-08", "AG-09", "AG-21", "AG-22", "AG-23", "AG-24", "AG-25"}
 TODOS = {f"AG-{i:02d}" for i in range(1, 26)}
@@ -54,6 +59,10 @@ CANALES: Dict[str, List[Tuple[set, set]]] = {
     "CT-20": _par({"AG-13"}, {"AG-15"}),
     "CT-21": [({"AG-14", "AG-15", "AG-16"}, {"AG-18"})],
     "CT-22": [({"AG-01"}, {"AG-20"})],
+    # V5.1: consulta al Broker (en ambos sentidos), encargo de seguimiento de opción y credenciales
+    "CT-23": _par({"AG-01"}, {"BROKER"}),
+    "CT-24": _par({"BROKER"}, {"AG-01"}),
+    "CT-25": _par({"AG-01"}, {"BROKER"}),
 }
 
 CAMPOS_MINIMOS = {
@@ -71,8 +80,12 @@ CAMPOS_MINIMOS = {
     "CT-13": ["peticiones"],
     "CT-14": ["paquete_sintesis"],
     "CT-15": ["paquete_sintesis"],
+    "CT-23": ["cns_id", "sentido", "tipo", "modo"],
+    "CT-24": ["accion"],
+    "CT-25": ["crd_id", "servicio", "uso_previsto", "solicitante", "impacto_si_falta"],
 }
-CAMPOS_RETORNO = {"CT-03": ["clase_consulta", "ruta", "respuesta", "referencias", "confianza"]}
+CAMPOS_RETORNO = {"CT-03": ["clase_consulta", "ruta", "respuesta", "referencias", "confianza"],
+                  "CT-23": ["cns_id", "estado"], "CT-24": ["seg_id", "estado"], "CT-25": ["crd_id", "estado"]}
 
 RE_SECRETO = re.compile(
     r"(?i)(\"(api[_-]?key|apikey|secret|client_secret|password|passwd|contraseña|access[_-]?token|bearer)\"\s*:\s*\"[^\"]+\")"
@@ -197,14 +210,14 @@ class Mensajeria:
             self.almacen.incidencia("SEGURIDAD", "Mensaje con credenciales o datos personales rechazado íntegro (R8)",
                                     msg["emisor"], campo_afectado=campos)
             raise DatosSensibles(f"Mensaje {msg['msg_id']} con datos protegidos en {campos}")
-        if not msg.get("run_id") and not msg.get("query_id") and msg["contrato"] not in ("CT-01", "CT-03", "CT-04", "CT-18", "CT-21"):
+        if not msg.get("run_id") and not msg.get("query_id") and msg["contrato"] not in ("CT-01", "CT-03", "CT-04", "CT-18", "CT-21", "CT-23", "CT-24", "CT-25"):
             raise MensajeInvalido("Falta run_id o query_id")
         tipo = msg.get("tipo_mensaje", "ENCARGO")
         req = CAMPOS_MINIMOS.get(msg["contrato"], []) if tipo == "ENCARGO" else CAMPOS_RETORNO.get(msg["contrato"], [])
         falta = [c for c in req if c not in msg]
         if falta:
             raise MensajeInvalido(f"{msg['contrato']}: faltan campos mínimos {falta}")
-        if tipo != "ENCARGO" and msg.get("estado") not in ESTADOS:
+        if tipo != "ENCARGO" and msg.get("estado") not in ESTADOS + ESTADOS_ESPECIFICOS.get(msg["contrato"], ()):
             raise MensajeInvalido(f"Estado de retorno no válido {msg.get('estado')!r}")
 
     def procesar_una_vez(self, msg: Dict, funcion) -> Tuple[Dict, bool]:
@@ -261,7 +274,8 @@ FINALISTA = {
         "invalidacion_cuantitativa": {"type": "array", "items": {"type": "object", "required": ["simbolo", "umbral", "direccion"],
                                       "properties": {"simbolo": TXT, "umbral": {"type": "number"},
                                                      "direccion": {"enum": ["por_debajo", "por_encima"]}}}},
-        "horizontes_aplicables": {"type": "array", "minItems": 1, "items": {"enum": ["H1", "H2", "H3", "H4"]}},
+        "horizontes_aplicables": {"type": "array", "minItems": 1, "items": {"enum": ["H1", "H2", "H3", "H4", "H5"]}},
+        "naturaleza_inversion": {"enum": ["TACTICA", "LIQUIDEZ", "CICLICA", "PRIMA_RIESGO", "VALORACION", "ESTRUCTURAL"]},
         "dimensiones": {"type": "object", "required": ["T", "E", "M", "A", "P"],
                         "properties": {"T": {"anyOf": [DIMS, {"const": "NA"}]}, "E": DIMS, "M": DIMS, "A": DIMS, "P": DIMS}},
         "segunda_pasada": {"type": "object"},
@@ -315,7 +329,7 @@ ESQUEMAS: Dict[str, Dict] = {
                            "indicadores_adelantados": {"type": "array"}, "invalidacion": {"type": "array"},
                            "pronosticos": {"type": "array", "items": {"type": "object",
                                "required": ["horizonte", "vista", "prob_interna", "afirmacion", "escenario_asociado"],
-                               "properties": {"horizonte": {"enum": ["H1", "H2", "H3", "H4"]},
+                               "properties": {"horizonte": {"enum": ["H1", "H2", "H3", "H4", "H5"]},
                                               "vista": {"enum": ["alcista", "bajista", "lateral", "relativa_favorable", "relativa_desfavorable"]},
                                               "prob_interna": {"type": "number", "minimum": 0.05, "maximum": 0.95},
                                               "afirmacion": TXT, "escenario_asociado": {"enum": ["BASE", "FAVORABLE", "ADVERSO"]},

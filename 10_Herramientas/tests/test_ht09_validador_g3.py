@@ -53,7 +53,7 @@ class TestEjemplo(Base):
     def test_ejemplo_completo_apto(self):
         res = self.validar()
         self.assertEqual(res["dictamen"], "APTO", [c for c in res["comprobaciones"] if c["resultado"] != "OK"])
-        self.assertEqual(len(res["comprobaciones"]), 16)
+        self.assertEqual(len(res["comprobaciones"]), 19)
         self.assertGreaterEqual(self.comprobacion(res, "C12")["datos"]["fernandez_huerta"], 70)
 
     def test_sin_entradas_auxiliares(self):
@@ -243,9 +243,9 @@ class TestV5(Base):
     def test_doce_tipos_y_tabla_8_3(self):
         self.assertEqual(h.CLASES, ("RV", "RF", "DIV", "MP", "IDX", "FON", "DER", "INM", "CRI", "ALT", "MON", "TCV"))
         self.assertEqual(set(h.TABLA_HORIZONTES), set(h.CLASES))
-        self.assertEqual(h.TABLA_HORIZONTES["FON"], {"H1": "NO", "H2": "LIMITADO", "H3": "SI", "H4": "SI"})
+        self.assertEqual(h.TABLA_HORIZONTES["FON"], {"H1": "NO", "H2": "LIMITADO", "H3": "SI", "H4": "SI", "H5": "LIMITADO"})
         self.assertEqual(h.TABLA_HORIZONTES["DER"]["H4"], "NO")
-        self.assertEqual(h.TABLA_HORIZONTES["MON"], {"H1": "LIMITADO", "H2": "SI", "H3": "SI", "H4": "NO"})
+        self.assertEqual(h.TABLA_HORIZONTES["MON"], {"H1": "LIMITADO", "H2": "SI", "H3": "SI", "H4": "NO", "H5": "NO"})
         self.assertEqual(h.TABLA_HORIZONTES["INM"]["H1"], "NO")
         self.assertEqual(h.TABLA_HORIZONTES["TCV"]["H4"], "LIMITADO")
         self.assertEqual(h.TABLA_HORIZONTES["IDX"]["H1"], "LIMITADO")
@@ -334,6 +334,185 @@ class TestV5(Base):
         self.assertEqual(self.comprobacion(self.validar(p), "C11")["resultado"], "ADVERTENCIA")
 
 
+class TestV51(Base):
+    """V5.1: horizonte principal y naturaleza de la inversión (C17), H5 con hitos (C18), supuestos declarados (C19),
+    informe de seguimiento de opción (validar_seguimiento)."""
+
+    def h5(self, p):
+        return self.op(p, 1)["horizontes"]["H5"]
+
+    def test_tabla_h5(self):
+        self.assertEqual(h.HORIZONTES, ("H1", "H2", "H3", "H4", "H5"))
+        self.assertEqual({k: v["H5"] for k, v in h.TABLA_HORIZONTES.items()},
+                         {"RV": "SI", "RF": "LIMITADO", "DIV": "LIMITADO", "MP": "SI", "IDX": "SI", "FON": "LIMITADO",
+                          "DER": "NO", "INM": "LIMITADO", "CRI": "LIMITADO", "ALT": "SI", "MON": "NO", "TCV": "NO"})
+        self.assertEqual(h.NATURALEZAS["ESTRUCTURAL"], ("H4", "H5"))
+        self.assertEqual(h.NATURALEZAS["TACTICA"], ("H1", "H2"))
+
+    def test_horizonte_principal_obligatorio(self):
+        for campo in ("horizonte_principal", "naturaleza_inversion"):
+            p = copy.deepcopy(self.paquete)
+            del self.op(p)[campo]
+            self.assertBloquea(self.validar(p), "C17", "ausente")
+
+    def test_principal_no_ofrecido_o_desconocido(self):
+        p = copy.deepcopy(self.paquete)
+        self.op(p)["horizonte_principal"] = "H4"
+        self.assertBloquea(self.validar(p), "C17", "no figura")
+        p = copy.deepcopy(self.paquete)
+        self.op(p)["horizonte_principal"] = "H9"
+        self.assertBloquea(self.validar(p), "C17", "desconocido")
+        p = copy.deepcopy(self.paquete)
+        self.op(p)["naturaleza_inversion"] = "ESPECULATIVA"
+        self.assertBloquea(self.validar(p), "C17", "no permitido")
+
+    def test_fuera_de_rango_sin_y_con_justificacion(self):
+        p = copy.deepcopy(self.paquete)
+        self.op(p)["naturaleza_inversion"] = "TACTICA"      # principal H3 fuera de H1–H2
+        self.assertBloquea(self.validar(p), "C17", "fuera del rango H1–H2")
+        self.op(p)["justificacion_horizonte"] = "Catalizador táctico identificado: resultados del 4T."
+        res = self.validar(p)
+        self.assertEqual(self.comprobacion(res, "C17")["resultado"], "ADVERTENCIA")
+        self.assertEqual(res["dictamen"], "APTO_CON_ADVERTENCIAS")
+
+    def test_principal_en_celda_no(self):
+        p = copy.deepcopy(self.paquete)
+        TestV5.opcion_en(self, p, "DER", "OPP-2026-0610", nombre="Prima de varianza en índices europeos",
+                         naturaleza_inversion="ESTRUCTURAL", horizonte_principal="H5",
+                         horizontes={"H5": {"vista": "alcista", "banda": "incierto", "prob": None, "prg_id": "PRG-2026-0910"}})
+        res = self.validar(p, desgloses={})
+        self.assertBloquea(res, "C17", "celda «No»")
+        self.assertBloquea(res, "C06", "no aplicable a DER")
+
+    def test_principal_limitado_sin_catalizador(self):
+        p = copy.deepcopy(self.paquete)
+        o = TestV5.opcion_en(self, p, "FON", "OPP-2026-0611", nombre="Cambio estructural hacia ETF activos",
+                             naturaleza_inversion="ESTRUCTURAL", horizonte_principal="H5", catalizadores=[],
+                             justificacion_horizonte="Tesis estructural sin catalizador fechado: aplicabilidad limitada declarada",
+                             horizontes={"H5": copy.deepcopy(self.h5(self.paquete))})
+        res = self.validar(p, desgloses={})
+        c17 = self.comprobacion(res, "C17")
+        self.assertEqual(c17["resultado"], "ADVERTENCIA", c17)
+        self.assertTrue(any("limitado" in i["detalle"] for i in c17["incidencias"]))
+        self.assertEqual(self.comprobacion(res, "C06")["resultado"], "ADVERTENCIA")
+        o["justificacion_horizonte"] = None
+        self.assertBloquea(self.validar(p, desgloses={}), "C06", "catalizador identificado o justificación")
+
+    def test_h5_relevancia_alta(self):
+        op_h5 = {"puntuaciones": {}, "horizonte_principal": "H5", "horizontes": {"H5": {"prg_id": "PRG-1"}}}
+        self.assertEqual(h.relevancia_esperada_alta(op_h5, "RV", True, {}), ["horizonte principal H5"])
+
+    def test_h5_valido_en_ejemplo(self):
+        res = self.validar()
+        self.assertEqual(self.comprobacion(res, "C18")["resultado"], "OK")
+
+    def test_h5_con_probabilidad_numerica(self):
+        p = copy.deepcopy(self.paquete)
+        self.h5(p)["prob"] = 0.7
+        self.assertBloquea(self.validar(p), "C18", "siempre cualitativa")
+
+    def test_h5_sin_hitos_o_insuficientes(self):
+        p = copy.deepcopy(self.paquete)
+        self.h5(p)["hitos"] = []
+        self.assertBloquea(self.validar(p), "C18", "sin hitos")
+        p = copy.deepcopy(self.paquete)
+        self.h5(p)["hitos"] = self.h5(p)["hitos"][:2]
+        self.assertBloquea(self.validar(p), "C18", "< 3")
+        p = copy.deepcopy(self.paquete)
+        del self.h5(p)["hitos"][0]["criterio"]
+        self.assertBloquea(self.validar(p), "C18", "obligatorios")
+        p = copy.deepcopy(self.paquete)
+        self.h5(p)["hitos"][1]["hit_id"] = "H-2"
+        self.assertBloquea(self.validar(p), "C18", "HIT-")
+
+    def test_h5_espaciado_de_hitos(self):
+        p = copy.deepcopy(self.paquete)
+        self.h5(p)["hitos"][0]["fecha"] = "2028-06-30"   # primer hito a ~20 meses
+        self.h5(p)["hitos"][2]["fecha"] = "2034-03-31"   # 60 meses tras el segundo
+        c18 = self.comprobacion(self.validar(p), "C18")
+        self.assertEqual(c18["resultado"], "ADVERTENCIA", c18)
+        self.assertEqual(len(c18["incidencias"]), 2)
+
+    def test_h5_certificado_no_habilita_probabilidad(self):
+        p = copy.deepcopy(self.paquete)
+        self.h5(p)["prob"] = 0.6
+        certs = self.certs + [{"clase": "RV", "horizonte": "H5", "vigente": True}]
+        self.assertBloquea(self.validar(p, certificados=certs), "C18")
+
+    def test_supuestos_declarados(self):
+        p = copy.deepcopy(self.paquete)
+        p["supuestos_declarados"][0]["cns_id"] = None
+        self.assertBloquea(self.validar(p), "C19", "CNS-")
+        p["supuestos_declarados"] = "texto"
+        self.assertBloquea(self.validar(p), "C19", "lista")
+        p = copy.deepcopy(self.paquete)
+        del p["supuestos_declarados"][0]["efecto_si_falso"]
+        self.assertEqual(self.comprobacion(self.validar(p), "C19")["resultado"], "ADVERTENCIA")
+
+    def test_valor_de_credencial(self):
+        p = copy.deepcopy(self.paquete)
+        p["limitaciones"].append('{"valor_credencial": "abc123"}')
+        p["x"] = {"valor_credencial": "abc123"}
+        self.assertBloquea(self.validar(p), "C13")
+
+    def test_bloque_b_horizonte_principal(self):
+        p = copy.deepcopy(self.paquete)
+        p["paquete_para_bloque_B"][0]["horizonte_principal"] = "H2"
+        self.assertBloquea(self.validar(p), "C11", "horizonte principal")
+        p = copy.deepcopy(self.paquete)
+        del p["paquete_para_bloque_B"][0]["horizonte_principal"]
+        self.assertBloquea(self.validar(p), "C11", "ausente")
+
+    # Informe de seguimiento de opción (ciclo C6, 14.4)
+    def seguimiento(self, **kw):
+        s = {"seg_id": "SEG-2026-0007", "opp_id": "OPP-2026-0011", "run_id": "RUN-2026-0201", "ciclo": 3, "fecha": "2026-11-23",
+             "tipo_activo": "RV", "horizonte_principal": "H3", "sin_novedad": False, "semaforo": "VERDE",
+             "que_ha_cambiado": ["Revisiones de beneficios al alza en el segmento"],
+             "senales_interes": [{"senal": "PMI de la zona euro", "estado": "por debajo de 50"}],
+             "invalidacion": [{"condicion": "Rentabilidad relativa < −5 % en 3 meses", "distancia": "7 pp", "activada": False}],
+             "catalizadores": [{"evento": "PMI zona euro", "fecha": "2026-12-01", "estado": "PENDIENTE"}],
+             "puntuaciones": {"T": 60, "E": 65, "A": 60, "RK": 62, "variacion_RK": 5, "elegible": True},
+             "pronosticos_abiertos": [{"prg_id": "PRG-2026-0103", "horizonte": "H3", "estado": "EN_CURSO", "hitos": []},
+                                      {"prg_id": "PRG-2026-0104", "horizonte": "H5", "estado": "EN_CURSO_CONFORME",
+                                       "hitos": [{"hit_id": "HIT-2026-0001", "estado": "PENDIENTE"}]}],
+             "recomendacion": "MANTENER_VIGILANCIA", "motivo": "Mejora sin catalizador inmediato.",
+             "sugerir_profundizacion_N3": False, "paquete_para_bloque_B": None, "supuestos_declarados": [], "limitaciones": []}
+        s.update(kw)
+        return s
+
+    def test_seguimiento_apto(self):
+        res = h.validar_seguimiento(self.seguimiento())
+        self.assertEqual(res["dictamen"], "APTO", res["comprobaciones"])
+        self.assertTrue(res["elegible_recalculado"])
+
+    def test_seguimiento_envio_a_b(self):
+        res = h.validar_seguimiento(self.seguimiento(recomendacion="PROPONER_ENVIO_A_B"))
+        self.assertEqual(res["dictamen"], "BLOQUEADO")
+        self.assertIn("paquete_para_bloque_B", json.dumps(res["comprobaciones"], ensure_ascii=False))
+        ok = h.validar_seguimiento(self.seguimiento(recomendacion="PROPONER_ENVIO_A_B",
+                                                    paquete_para_bloque_B={"opp_id": "OPP-2026-0011", "horizonte_principal": "H3"}))
+        self.assertEqual(ok["dictamen"], "APTO")
+        no_eleg = h.validar_seguimiento(self.seguimiento(
+            recomendacion="PROPONER_ENVIO_A_B", paquete_para_bloque_B={"opp_id": "OPP-2026-0011"},
+            puntuaciones={"T": 60, "E": 55, "A": 60, "RK": 59, "elegible": False}))
+        self.assertEqual(no_eleg["dictamen"], "BLOQUEADO")
+
+    def test_seguimiento_valores_y_rk(self):
+        self.assertEqual(h.validar_seguimiento(self.seguimiento(recomendacion="VENDER"))["dictamen"], "BLOQUEADO")
+        self.assertEqual(h.validar_seguimiento(self.seguimiento(semaforo="GRIS"))["dictamen"], "BLOQUEADO")
+        malo = self.seguimiento(puntuaciones={"T": 60, "E": 65, "A": 60, "RK": 70, "elegible": True})
+        self.assertEqual(h.validar_seguimiento(malo)["dictamen"], "BLOQUEADO")
+        sin_hitos = self.seguimiento()
+        sin_hitos["pronosticos_abiertos"][1]["hitos"] = []
+        self.assertEqual(h.validar_seguimiento(sin_hitos)["dictamen"], "BLOQUEADO")
+
+    def test_seguimiento_brevedad_y_credenciales(self):
+        res = h.validar_seguimiento(self.seguimiento(), texto_breve="palabra " * 320)
+        self.assertEqual(res["dictamen"], "APTO_CON_ADVERTENCIAS")
+        res = h.validar_seguimiento(self.seguimiento(limitaciones=['"api_key": "sk-ABCDEFGHIJKLMNOPQRSTUVWX12"']))
+        self.assertEqual(res["dictamen"], "BLOQUEADO")
+
+
 class TestCLI(Base):
     def test_codigos_de_salida(self):
         with tempfile.TemporaryDirectory() as d:
@@ -352,6 +531,10 @@ class TestCLI(Base):
             with open(malo, "w") as fh:
                 fh.write("{no es json")
             self.assertEqual(h.main([malo]), 3)
+            seg = os.path.join(d, "seg.json")
+            with open(seg, "w", encoding="utf-8") as fh:
+                json.dump(TestV51.seguimiento(self), fh, ensure_ascii=False)
+            self.assertEqual(h.main([seg, "--seguimiento", "--salida", out]), 0)
 
 
 if __name__ == "__main__":

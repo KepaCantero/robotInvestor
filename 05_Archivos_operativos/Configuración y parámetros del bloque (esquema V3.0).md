@@ -1,6 +1,6 @@
 # Esquema de archivo operativo — F10 Configuración y parámetros del bloque
 
-**Bloque A · Robot Investor · Versión óptima V5.0 · 02/11/2026** · Subordinado al Documento 0 óptima V5.0.
+**Bloque A · Robot Investor · Versión óptima V5.0 · 02/11/2026 · actualizado V5.1 (03/11/2026)** · Subordinado al Documento 0 óptima V5.1. Cambios V5.1: P-03 y P-13 con H5; P-27 con horizonte principal H5; P-30 = 5.1; P-31 con columna H5; parámetros nuevos P-34 a P-44 (consultas al Broker, credenciales, seguimientos encargados, H5 y rangos de horizonte principal); limitaciones de servicio por credenciales denegadas (régimen SERVICIO, AG-01).
 
 ---
 
@@ -12,7 +12,7 @@ F10 publica los **valores vigentes** de todos los parámetros del Bloque A (Anex
 
 | Régimen | Quién escribe | Cómo | Ejemplos |
 |---|---|---|---|
-| SERVICIO | AG-01 Coordinador | A petición del Broker por CT-04, registrada en F5 (RET-) | Periodicidad, tipos de activo activos (de entre los doce), horizontes de interés, idioma |
+| SERVICIO | AG-01 Coordinador | A petición del Broker por CT-04, registrada en F5 (RET-); y, desde V5.1, las **limitaciones de servicio por credenciales denegadas** (CT-25, sin valores) | Periodicidad, tipos de activo activos (de entre los doce), horizontes de interés, idioma, frecuencias de seguimiento encargado, plazos de consulta, estado de servicios externos |
 | CALIBRABLE | AG-20 Evaluador | Dentro de banda, con evidencia, `aju_id` en F6 y nueva `methodology_version` menor | Pesos, umbrales, presupuestos (si tienen banda) |
 | OPERADOR | Operador humano (registro técnico por el Orquestador tras aprobación de tipo 3) | Propuesta de tipo 3 aprobada (`p3_id`) | Corroboración mínima, muestra para certificar, criterio de certificado |
 
@@ -23,7 +23,7 @@ F10 publica los **valores vigentes** de todos los parámetros del Bloque A (Anex
 1. **Escritura por régimen**: un cambio fuera del régimen del parámetro se rechaza y se registra como incidencia (R6, R18).
 2. **Bandas** (12.2 del Documento 0): pesos ±5 puntos porcentuales (±0,05) por trimestre y ±15 (±0,15) en total frente al valor inicial; umbrales ±5 puntos por trimestre y ±10 en total. **Calibrables sin banda explícita** en el Documento 0: banda `PENDIENTE_OPERADOR`; mientras el operador no la fije, cualquier cambio es tipo 3 (regla más restrictiva, R23). Se incluye una banda propuesta para su ratificación.
 3. **Servicio con límites**: el Broker no puede activar un horizonte «No» de la matriz 8.3 ni cambiar parámetros de otro régimen; el Coordinador rechaza esa parte con motivo (RET- `APLICADA_PARCIALMENTE`).
-4. **Versionado**: todo cambio CALIBRABLE incrementa la versión menor (4.0 → 4.1); los cambios del operador que alteren metodología pueden incrementar la mayor (4.x → 5.0), lo que **revoca los certificados vigentes**. Los cambios de SERVICIO no cambian la versión de metodología.
+4. **Versionado**: todo cambio CALIBRABLE incrementa la versión menor (5.1 → 5.2); los cambios del operador que alteren metodología pueden incrementar la mayor (4.x → 5.0), lo que **revoca los certificados vigentes**. Los cambios de SERVICIO no cambian la versión de metodología.
 5. **Efecto**: cada cambio declara `fecha_efecto`; los análisis en curso terminan con los valores con que empezaron (registrados en su RUN-).
 6. **Append-only**: el historial de cambios conserva todos los valores anteriores; la reversión es un cambio nuevo.
 7. Una vez por trimestre como máximo por parámetro CALIBRABLE; máximo tres parámetros en evaluación sombra simultánea.
@@ -56,7 +56,7 @@ F10 publica los **valores vigentes** de todos los parámetros del Bloque A (Anex
 |---|---|---|---|---|
 | P-01 | Periodicidad del ciclo C1 | Semanal; ejecución el sábado, entrega el lunes 07:00 (zona horaria del usuario) | SERVICIO | — (opciones: diaria, semanal, quincenal, mensual, personalizada) |
 | P-02 | Tipos de activo activos | Los doce: RV, RF, DIV, MP, IDX, FON, DER, INM, CRI, ALT, MON, TCV | SERVICIO | — (subconjunto no vacío de los doce) |
-| P-03 | Horizontes de interés del usuario | H1–H4 según aplicabilidad 8.3 | SERVICIO | No puede activar un horizonte «No» |
+| P-03 | Horizontes de interés del usuario | H1–H5 según aplicabilidad 8.3 | SERVICIO | No puede activar un horizonte «No» |
 | P-04 | Opciones máximas por tipo de activo en el informe periódico | 3 | OPERADOR | — |
 | P-05 | Candidatas máximas tras cribado | 8 por tipo de activo | CALIBRABLE | PENDIENTE_OPERADOR (propuesta: ±1 por trimestre; ±2 total) |
 | P-06 | Finalistas máximas (GC3) | 5 por tipo de activo | CALIBRABLE | PENDIENTE_OPERADOR (propuesta: ±1 por trimestre; ±2 total) |
@@ -66,7 +66,7 @@ F10 publica los **valores vigentes** de todos los parámetros del Bloque A (Anex
 | P-10 | Umbral GC2 | E provisional ≥ 50 | CALIBRABLE | ±5 por trimestre; ±10 total |
 | P-11 | Pesos de RK | A 0,45 · E 0,35 · T 0,20 | CALIBRABLE | ±0,05 por trimestre; ±0,15 total (cada peso; suma 1) |
 | P-12 | Pesos de A, E, T, M, P | Tabla 4.4 | CALIBRABLE | ±5 puntos por trimestre; ±15 total (cada peso; suma 100) |
-| P-13 | Antigüedad máxima de datos de mercado (PS2) | H1: 1 día; H2: 3 días; H3: 7 días; H4: 30 días | OPERADOR | — |
+| P-13 | Antigüedad máxima de datos de mercado (PS2) | H1: 1 día; H2: 3 días; H3: 7 días; H4: 30 días; H5: 90 días | OPERADOR | — |
 | P-14 | Corroboración mínima (PS1) | 2 raíces independientes A/B o 1 fuente primaria A | OPERADOR | — |
 | P-15 | Muestra mínima para calibrar o certificar | 30 resueltos por celda clase × horizonte; 100 para certificar | OPERADOR | — |
 | P-16 | Criterio de certificado de horizonte (R13) | n ≥ 100; extremo inferior del IC 90 % del BSS frente a la referencia > 0; calibración no rechazada (ECE observado ≤ percentil 90 del ECE simulado bajo calibración perfecta con el mismo n y las mismas probabilidades —remuestreo de consistencia de Bröcker y Smith, 2007— y, en todo caso, ECE < 0,15) | OPERADOR | — |
@@ -80,13 +80,24 @@ F10 publica los **valores vigentes** de todos los parámetros del Bloque A (Anex
 | P-24 | Umbral de cambio de contenido | Similitud de texto < 0,8 frente a la versión archivada | CALIBRABLE | PENDIENTE_OPERADOR (propuesta: ±0,05 por trimestre) |
 | P-25 | Criterio de borrado por baja calidad | Q < 50 y sin uso en 180 días | CALIBRABLE | PENDIENTE_OPERADOR (propuesta: Q ±5; días ±30) |
 | P-26 | Pregunta repetida (lección de producto) | 3 veces en 4 semanas | CALIBRABLE | PENDIENTE_OPERADOR |
-| P-27 | Relevancia decisional ALTA | Cualquiera de: riesgo ≥ 4/5; reversibilidad baja; H4 con iliquidez; E < 70 con A ≥ 75; opción nueva en CRI o ALT | CALIBRABLE | PENDIENTE_OPERADOR (propuesta: umbrales de E y A ±5 por trimestre) |
+| P-27 | Relevancia decisional ALTA | Cualquiera de: riesgo ≥ 4/5; reversibilidad baja; H4 con iliquidez; horizonte principal H5; E < 70 con A ≥ 75; opción nueva en CRI o ALT | CALIBRABLE | PENDIENTE_OPERADOR (propuesta: umbrales de E y A ±5 por trimestre) |
 | P-28 | Retención | F1–F6, RC, HA: indefinida; extractos externos: mínimos; artefactos del Motor: 5 años | OPERADOR | — |
 | P-29 | Idioma | es-ES (informe del usuario en el idioma configurado por el Broker) | SERVICIO | — |
-| P-30 | Versión de metodología | 4.0 | CALIBRABLE (menores) / OPERADOR (mayores) | — |
+| P-30 | Versión de metodología | 5.1 | CALIBRABLE (menores) / OPERADOR (mayores) | — |
 | P-31 | Matriz de aplicabilidad de horizontes | Tabla 4.5 | CALIBRABLE_RESTRINGIDO | «Sí» ↔ «Limitado» automático con las condiciones de 12.2; todo cambio desde o hacia «No», tipo 3 |
 | P-32 | Referencias de comparación por tipo de activo | Tabla 4.6 (las de 8.4) | OPERADOR | — |
-| P-33 | Bandas verbales de probabilidad | Tabla 4.7 | OPERADOR | — |
+| P-33 | Bandas verbales de probabilidad | Tabla 4.7 (en H5, solo banda: nunca probabilidad interna ni publicada) | OPERADOR | — |
+| P-34 | Consultas al Broker (CT-23): plazo de respuesta | `BLOQUEANTE`: 4 h en peticiones ad hoc; en el ciclo periódico, hasta la hora que permite cumplir la entrega (como tarde, domingo 18:00). `NO_BLOQUEANTE`: 24 h o hasta la entrega, lo que llegue antes | SERVICIO | — |
+| P-35 | Consultas al Broker: máximo por análisis | 3 mensajes CT-23 por RUN- (cada uno puede agrupar varias preguntas); las bloqueantes, solo si la respuesta puede cambiar el alcance o un top-3 | CALIBRABLE | PENDIENTE_OPERADOR (propuesta: ±1 por trimestre; mínimo 1) |
+| P-36 | Consulta recurrente (lección de normalización) | El mismo tipo y motivo de consulta 3 veces en 8 semanas | CALIBRABLE | PENDIENTE_OPERADOR |
+| P-37 | Credenciales (CT-25) | Respuesta esperada en 72 h; recordatorio cada 7 días mientras el servicio siga degradado, máximo 3; una credencial `DENEGADA` no se vuelve a pedir salvo cambio de circunstancias | OPERADOR | — |
+| P-38 | Frecuencias de seguimiento encargado (CT-24) | Diaria, semanal (por defecto), quincenal, mensual, trimestral o personalizada, a elección del Broker; sin límite de encargos (prioridad inferior a C1–C3) | SERVICIO | — |
+| P-39 | Frecuencia orientativa por horizonte principal (aviso, no veto) | H1: diaria · H2: diaria o semanal · H3: semanal a mensual · H4: mensual o trimestral · H5: trimestral | CALIBRABLE | PENDIENTE_OPERADOR |
+| P-40 | Presupuesto por ciclo de seguimiento encargado (C6) | 2 UC; hasta 5 UC si el delta es material; ciclo «sin novedad»: ≤ 0,5 UC | CALIBRABLE | PENDIENTE_OPERADOR (propuesta: ±0,5 UC por trimestre) |
+| P-41 | Pronósticos H5 | Solo banda verbal (sin probabilidad numérica ni certificado); ≥ 3 hitos HIT- por pronóstico, el primero a ≤ 12 meses y con ≤ 24 meses entre hitos consecutivos | OPERADOR | — |
+| P-42 | Degradación automática de H5 (12.2) | Tasa de hitos cumplidos < 50 % con ≥ 20 hitos resueltos en la celda tipo × H5 → la aplicabilidad baja un escalón («Sí» → «Limitado» → «No») | CALIBRABLE | PENDIENTE_OPERADOR; volver a subir exige tipo 3 |
+| P-43 | Rangos de horizonte principal por naturaleza de la inversión | Tabla 4.8 (los de 8.3) | OPERADOR | — |
+| P-44 | Estado de servicios externos por credencial (V5.1) | Una entrada `SRV-<servicio>` por servicio con credencial denegada: «degradado (credencial denegada)», `crd_id`; sin valores | SERVICIO (AG-01) | — |
 
 ### 4.4 Pesos iniciales de las dimensiones (P-12)
 
@@ -100,20 +111,22 @@ F10 publica los **valores vigentes** de todos los parámetros del Bloque A (Anex
 
 ### 4.5 Matriz inicial de aplicabilidad de horizontes (P-31; Documento 0, 8.3)
 
-| Tipo de activo | H1 | H2 | H3 | H4 |
-|---|---|---|---|---|
-| RV | Limitado | Sí | Sí | Sí |
-| RF | Limitado | Sí | Sí | Sí |
-| DIV | Sí | Sí | Sí | Limitado |
-| MP | Sí (energía y metales líquidos) | Sí | Sí | Sí (superciclos) |
-| IDX | Limitado (eventos de índice) | Sí | Sí | Sí |
-| FON | No | Limitado | Sí | Sí |
-| DER | Sí | Sí | Sí (hasta 12 meses) | No |
-| INM | No | Limitado | Sí | Sí |
-| CRI | Sí | Sí | Sí | Limitado |
-| ALT | No | No | Limitado | Sí |
-| MON | Limitado (decisiones de bancos centrales) | Sí | Sí | No |
-| TCV | Sí | Sí | Sí | Limitado |
+| Tipo de activo | H1 | H2 | H3 | H4 (1–5 años) | H5 (5–30 años, V5.1) |
+|---|---|---|---|---|---|
+| RV | Limitado | Sí | Sí | Sí | Sí |
+| RF | Limitado | Sí | Sí | Sí | Limitado |
+| DIV | Sí | Sí | Sí | Limitado | Limitado |
+| MP | Sí (energía y metales líquidos) | Sí | Sí | Sí (superciclos) | Sí (superciclos y transición energética) |
+| IDX | Limitado (eventos de índice) | Sí | Sí | Sí | Sí |
+| FON | No | Limitado | Sí | Sí | Limitado |
+| DER | Sí | Sí | Sí (hasta 12 meses) | No | No |
+| INM | No | Limitado | Sí | Sí | Limitado |
+| CRI | Sí | Sí | Sí | Limitado | Limitado |
+| ALT | No | No | Limitado | Sí | Sí |
+| MON | Limitado (decisiones de bancos centrales) | Sí | Sí | No | No |
+| TCV | Sí | Sí | Sí | Limitado | No |
+
+La columna H5 baja automáticamente un escalón con la regla de P-42 y solo vuelve a subir con un cambio de tipo 3; H5 nunca obtiene certificado de probabilidad numérica.
 
 ### 4.6 Referencias de comparación por tipo de activo (P-32; Documento 0, 8.4; propuesta inicial a ratificar por el operador)
 
@@ -143,6 +156,19 @@ Todas en EUR y en rentabilidad total cuando aplique; si HT-01 no dispone de una 
 | Incierto | 45–55 % | 50 % |
 | Poco probable | 25–40 % | 35 % |
 | Muy poco probable | 5–20 % | 15 % |
+
+### 4.8 Rangos del horizonte principal por naturaleza de la inversión (P-43; Documento 0, 8.3; V5.1)
+
+| Naturaleza | Horizonte principal admisible | Ejemplos |
+|---|---|---|
+| `TACTICA` | H1–H2 | Carry táctico, eventos de índice, momentum corto, volatilidad de evento |
+| `LIQUIDEZ` | H1–H3 | Monetario |
+| `CICLICA` | H2–H4 | Rotación sectorial, ciclo de crédito, pendiente de curva |
+| `PRIMA_RIESGO` | H2–H4 | Carry estructural, venta sistemática de volatilidad |
+| `VALORACION` | H3–H4 | Reversión de múltiplos, descuentos, equilibrio cambiario |
+| `ESTRUCTURAL` | H4–H5 | Temáticas estructurales, superciclos, capital privado, infraestructuras |
+
+Fuera de rango solo con `justificacion_horizonte` (HT-09: advertencia que dictamina el Orquestador); sin ella, bloqueo.
 
 ## 5. Estados y transiciones
 

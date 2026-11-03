@@ -1,6 +1,6 @@
 # Funciones, tareas y cometidos — Evaluador de Previsiones y Aprendizaje
 
-**Bloque A · Robot Investor · Versión óptima V5.0 · 02/11/2026** · Subordinado al Documento 0 óptima V5.0.
+**Bloque A · Robot Investor · Versión óptima V5.0 · 02/11/2026 · actualizado V5.1 (03/11/2026)** · Subordinado al Documento 0 óptima V5.1. Cambios V5.1: EVAL-F19 a EVAL-F21 (evaluación de H5 por hitos, lecciones de consultas al Broker y de seguimientos encargados).
 
 ---
 
@@ -32,6 +32,9 @@ Publicar cada semana un historial de aciertos honesto y medir la fiabilidad de l
 | EVAL-F16 | Asignación exploratoria con bandits | Muestreo de Thompson Beta-Bernoulli con descuento sobre segmentos de cada clase y prioridades de fuentes; suelo 5 %, techo 40 %; registro de propensiones | Mensual | F5, F3, F4 | Recomendación de reparto de la rotación exploratoria | CT-19 |
 | EVAL-F17 | Informe de aprendizaje | Emitir CT-19 semanal, mensual y trimestral con extractos por destinatario; publicar «Novedades» en F6 | Semanal, mensual, trimestral | Todo lo anterior | CT-19; Novedades | CT-19; F6 |
 | EVAL-F18 | Revisión trimestral | Aportar estado de calibración, certificados, lecciones, ajustes y propuestas a la revisión con Orquestador y operador | Trimestral | F6, F10 | Dossier de aprendizaje | CT-19 |
+| EVAL-F19 | Evaluación de H5 por hitos (V5.1) | Resolver cada HIT- en su fecha como pronóstico ordinario de su horizonte; estado del PRG H5 (`EN_CURSO_CONFORME`, `DESVIADO`, `INVALIDADO`); tasa de hitos cumplidos por celda tipo × H5; degradación automática de un escalón si < 50 % con ≥ 20 hitos; nunca certificar H5 | Diario (hitos vencidos); mensual (métricas) | F4 (HIT-); HT-01 | Resolución de hitos; estados H5; ajuste de aplicabilidad | F4; F6; F10; CT-19 |
+| EVAL-F20 | Lecciones de las consultas al Broker (V5.1) | Procesar avisos `CONSULTA_RECURRENTE`; proponer normalización de peticiones (preguntas de admisión, valores por defecto del CT-01); medir consultas vencidas y respuestas que cambiaron un alcance o un top-3 | Cada aviso CT-22; mensual | CT-22; F5 (CNS-) | LEC- de producto para el Coordinador | CT-22; F6; CT-19 |
+| EVAL-F21 | Valor de los seguimientos encargados (V5.1) | Procesar avisos `DECISION_SEGUIMIENTO`; comparar recomendaciones C6 con la evolución posterior del indicador y con la decisión del Broker; tasas de acierto de `PROPONER_ENVIO_A_B` y `CERRAR` (descriptivo hasta n ≥ 30) | Cada aviso; mensual | CT-22; F11; F5; HT-01 | Métricas y LEC- de seguimiento | F6; CT-19 |
 
 ## 3. Indicadores de desempeño
 

@@ -1,7 +1,7 @@
 {
  "run_id": "RUN-2026-0042",
  "fecha": "2026-11-02",
- "methodology_version": "4.0",
+ "methodology_version": "5.1",
  "tipo": "PERIODICO",
  "regimen_macro": "Desaceleración suave con inflación a la baja; bancos centrales en fase de recortes graduales.",
  "apuestas_independientes": 2,
@@ -33,6 +33,9 @@
       "RK": 72,
       "desglose_ref": "HT03-RUN-2026-0042-OPP-2026-0007"
      },
+     "naturaleza_inversion": "CICLICA",
+     "horizonte_principal": "H3",
+     "justificacion_horizonte": null,
      "horizontes": {
       "H2": {
        "vista": "alcista",
@@ -135,12 +138,42 @@
       "RK": 66,
       "desglose_ref": "HT03-RUN-2026-0042-OPP-2026-0011"
      },
+     "naturaleza_inversion": "CICLICA",
+     "horizonte_principal": "H3",
+     "justificacion_horizonte": null,
      "horizontes": {
       "H3": {
        "vista": "alcista",
        "banda": "incierto",
        "prob": null,
        "prg_id": "PRG-2026-0103"
+      },
+      "H5": {
+       "vista": "alcista",
+       "banda": "más probable que no",
+       "prob": null,
+       "prg_id": "PRG-2026-0104",
+       "tesis_estructural": "La prima del factor calidad en Europa persiste en las próximas décadas.",
+       "hitos": [
+        {
+         "hit_id": "HIT-2026-0001",
+         "fecha": "2027-09-30",
+         "indicador": "Rentabilidad relativa a 3 años del índice de calidad europeo de mediana capitalización frente a su índice matriz (HT-01)",
+         "criterio": "Diferencial acumulado ≥ 0 % a la fecha"
+        },
+        {
+         "hit_id": "HIT-2026-0002",
+         "fecha": "2029-03-31",
+         "indicador": "Diferencial de rentabilidad sobre recursos propios entre el quintil de calidad y el índice matriz (HT-01)",
+         "criterio": "Diferencial ≥ 5 puntos porcentuales"
+        },
+        {
+         "hit_id": "HIT-2026-0003",
+         "fecha": "2031-03-31",
+         "indicador": "Rentabilidad relativa a 5 años del índice de calidad frente a su índice matriz (HT-01)",
+         "criterio": "Diferencial anualizado ≥ 0,5 %"
+        }
+       ]
       }
      },
      "valoracion": "Prima de valoración del 12 % frente a su media de 10 años (CALC-2026-0040).",
@@ -309,5 +342,12 @@
  ],
  "limitaciones": [
   "Sin certificado de horizonte para H2 en renta variable: banda cualitativa."
+ ],
+ "supuestos_declarados": [
+  {
+   "supuesto": "El análisis de RV se limita a Europa, como en peticiones anteriores del Broker",
+   "cns_id": "CNS-2026-0003",
+   "efecto_si_falso": "Habría que ampliar el cribado a Estados Unidos y Japón"
+  }
  ]
 }

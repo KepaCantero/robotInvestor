@@ -14,7 +14,7 @@ from typing import Dict, List, Optional, Set, Tuple
 
 import pandas as pd
 
-from .configuracion import CLASES, NOMBRE_CLASE
+from .configuracion import CLASES, HORIZONTES, NATURALEZA_POR_DEFECTO, NATURALEZAS, NOMBRE_CLASE, naturaleza_coherente, naturaleza_para
 from .contratos import REGIONES
 from .evaluador import banda_de, banda_publicable
 from .herramientas import ht09
@@ -88,7 +88,8 @@ def construir(bloque, run_id, tipo, as_of, clases, nivel, gc0, analisis, selecci
     cfg = bloque.cfg
     as_of = pd.Timestamp(as_of)
     certs = {(c["celda"]["clase"], c["celda"]["horizonte"]): c["id"] for c in bloque.evaluador.certificados_vigentes(as_of)}
-    prefer = cfg.get("horizonte_principal_preferente") or ["H3", "H2", "H4", "H1"]
+    prefer = cfg.get("horizonte_principal_preferente") or ["H3", "H2", "H4", "H1", "H5"]
+    meses_hitos = (cfg.get("h5") or {}).get("meses_hitos") or [12, 30, 54]
     prg_borradores: List[Dict] = []
     desgloses, paquete_clases, por_opp = {}, {}, {}
     clases_out: Dict[str, Dict] = {}
@@ -108,7 +109,7 @@ def construir(bloque, run_id, tipo, as_of, clases, nivel, gc0, analisis, selecci
             pid = bloque.almacen.nuevo_id("PRG")
             ids[h] = pid
             positivo = d["vista"] in ("alcista", "relativa_favorable")
-            ses = {"H1": 5, "H2": 20, "H3": 126, "H4": 252}[h]
+            ses = {"H1": 5, "H2": 20, "H3": 126, "H4": 252, "H5": 2520}[h]
             ref = f.get("_referencia")
             ri = bloque.evaluador.tasa_base(f["proxy"], ref, c, ses, positivo, as_of, run_id)
             fr = fecha_resolucion(as_of, h, cfg["horizontes"])
@@ -135,7 +136,32 @@ def construir(bloque, run_id, tipo, as_of, clases, nivel, gc0, analisis, selecci
                 "metodo": d.get("metodo"), "referencia_ingenua": ri, "escenario_asociado": d.get("escenario", "BASE"),
                 "en_informe": en_informe, "estado": "ABIERTO",
                 "puntuaciones_opcion": {k: f["_ht03"]["puntuaciones"].get(k) for k in ("T", "E", "A", "RK")}})
+            if h == "H5":
+                _h5_con_hitos(prg_borradores[-1], f, c, ref, tp, positivo, d)
         return ids
+
+    def _h5_con_hitos(b: Dict, f: Dict, c: str, ref, tp: str, positivo: bool, d: Dict) -> None:
+        """V5.1 (8.3, R13): el PRG H5 solo registra la banda (sin probabilidad ni certificado) y lleva ≥ 3 hitos HIT-,
+        cada uno un pronóstico ordinario de su propio horizonte (H4) que el Evaluador resuelve en su fecha."""
+        b.update({"prob_interna": None, "prob_publicada": None, "certificado_r13": False, "certificado_ref": None,
+                  "referencia_ingenua": {"tipo": "NO_APLICA", "nota": "H5 se evalúa por sus hitos HIT-"},
+                  "tesis_estructural": f.get("tesis"), "hit_ids": [], "hitos": []})
+        for m in meses_hitos:
+            hid = bloque.almacen.nuevo_id("HIT")
+            fh = (as_of + pd.DateOffset(months=int(m))).normalize()
+            ev = (f"rentabilidad acumulada de {f['proxy']} {'superior' if positivo else 'inferior'} a la de {ref} entre {as_of.date()} y {fh.date()}"
+                  if tp == "RELATIVO" else f"rentabilidad acumulada de {f['proxy']} {'positiva' if positivo else 'negativa'} entre {as_of.date()} y {fh.date()}")
+            hito = copy.deepcopy({k: v for k, v in b.items() if k not in ("hit_ids", "hitos", "tesis_estructural")})
+            hito.update({"prg_id": hid, "prg_padre": b["prg_id"], "es_hito": True, "necesario": m == meses_hitos[-1], "horizonte": "H4",
+                         "afirmacion": f"Hito de la senda H5: {ev}", "evento": ev, "fecha_resolucion": str(fh.date()),
+                         "criterio_resolucion": f"Cierre HT-01 de la última sesión ≤ {fh.date()} frente al cierre de la última sesión ≤ {as_of.date()}; suceso: {ev}",
+                         "prob_interna": d["prob_interna"], "banda_verbal": banda_de(d["prob_interna"]), "prob_publicada": None,
+                         "referencia_ingenua": {"tipo": "RI-TB", "valor_o_prob": 0.5, "nota": "tasa base neutra (ventana superior a la historia disponible)"}})
+            prg_borradores.append(hito)
+            b["hit_ids"].append(hid)
+            b["hitos"].append({"hit_id": hid, "fecha": str(fh.date()), "indicador": f"Rentabilidad acumulada de {f['proxy']}"
+                               + (f" frente a {ref}" if tp == "RELATIVO" else "") + " (HT-01)", "criterio": ev,
+                               "banda": banda_publicable(d["prob_interna"])})
 
     for c in clases:
         an, sel = analisis[c], seleccion[c]
@@ -165,7 +191,19 @@ def construir(bloque, run_id, tipo, as_of, clases, nivel, gc0, analisis, selecci
                     hz[h]["fecha_resolucion"], hz[h]["criterio_resolucion"] = prev.get("fecha_resolucion"), prev.get("criterio_resolucion")
                 if h == "H1":
                     hz[h]["advertencia"] = ADVERTENCIA_H1
-            hp = next((h for h in prefer if h in hz), sorted(hz)[0])
+                if h == "H5":
+                    b5 = b if "hitos" in b else bloque.almacen.estado("F4", as_of).get(ids[h], {})
+                    hz[h].update({"prob": None, "certificado_r13": False, "etiqueta": ETIQUETA_SIN_CERT,
+                                  "hitos": copy.deepcopy(b5.get("hitos") or [])})
+                    if b5.get("tesis_estructural"):
+                        hz[h]["tesis_estructural"] = b5["tesis_estructural"]
+            # V5.1 (8.3): naturaleza de la inversión y horizonte principal coherentes
+            nat = f.get("naturaleza_inversion") if f.get("naturaleza_inversion") in NATURALEZAS else NATURALEZA_POR_DEFECTO.get(c, "CICLICA")
+            hp = next((h for h in prefer if h in hz and naturaleza_coherente(nat, h)), None)
+            if hp is None:
+                hp = next((h for h in prefer if h in hz), sorted(hz)[0])
+                nat = naturaleza_para(hp)
+            f["_naturaleza"], f["_hp"] = nat, hp
             sen = f["senales"]
             if sen.get("fecha_dato"):
                 fechas_dato.append(sen["fecha_dato"])
@@ -190,7 +228,8 @@ def construir(bloque, run_id, tipo, as_of, clases, nivel, gc0, analisis, selecci
                   "regiones": [r for r in (f.get("regiones") or []) if r in REGIONES] or ["GLB"],
                   "puntuaciones": {"T": pu.get("T"), "E": pu["E"], "M": pu.get("M"), "A": pu["A"], "P": pu.get("P"), "RK": pu["RK"],
                                    "desglose_ref": f"HT03-{run_id[4:]}-{f['opp_id'][4:]}"},
-                  "horizontes": hz, "horizonte_principal": hp, "valoracion": f.get("valoracion"),
+                  "horizontes": hz, "naturaleza_inversion": nat, "horizonte_principal": hp, "justificacion_horizonte": None,
+                  "valoracion": f.get("valoracion"),
                   "catalizadores": [x for x in (f.get("catalizadores") or []) if RE_FECHA_CAT.match(str(x.get("fecha", "")))],
                   "riesgos": f.get("riesgos") or ["riesgo de mercado"], "riesgo_1a5": int(sen.get("riesgo_1a5") or 3),
                   "invalidacion": f.get("invalidacion"), "ambito": _ambito(f, c), "indicador_seguimiento": _indicador(f, fuente),
@@ -300,7 +339,8 @@ def construir(bloque, run_id, tipo, as_of, clases, nivel, gc0, analisis, selecci
                "apuestas_independientes": len(clust), "clusteres_exposicion": clusteres_exp, "clases": clases_out,
                "seguimiento_vigentes": seguimiento, "historial_aciertos": hist, "paquete_para_bloque_B": bloque_b,
                "preguntas_sugeridas": [x for x in integ.get("preguntas_sugeridas", []) if isinstance(x, str) and len(x) >= 5][:6],
-               "limitaciones": limit, "aviso_legal": AVISO_LEGAL,
+               "limitaciones": limit, "supuestos_declarados": bloque.consultas.supuestos_declarados(as_of, clases) if hasattr(bloque, "consultas") else [],
+               "aviso_legal": AVISO_LEGAL,
                "x_lectura_conjunto": integ.get("lectura_conjunto", ""), "x_cambios_vs_anterior": integ.get("cambios_vs_anterior", ""),
                "x_n_efectivo": clusteres.get("n_efectivo")}
     extras = {"prg_borradores": prg_borradores, "desgloses": desgloses, "paquete_clases": paquete_clases, "por_opp": por_opp,
