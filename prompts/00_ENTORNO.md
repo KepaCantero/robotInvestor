@@ -11,11 +11,11 @@ ENTORNO — deja el repo listo para implementar y verifica cada punto con un com
 1. Python y venv:
    - `~/.local/bin/python3.12 --version` debe existir. Si no existe: PARA y díselo al propietario; no instales Python por tu cuenta.
    - El venv del repo es `.venv/`. Si no existe, créalo con ese intérprete exacto.
-   - Instala los tres ejecutores y los opcionales de tests:
+   - Instala los tres ejecutores, los opcionales de tests y las herramientas de calidad:
      `pip install -e bloque_a/11_Ejecutor -e bloque_a_forex/11_Ejecutor -e bloque_b/11_Ejecutor`
-     `pip install arch openpyxl python-docx pytest`
-   - Verifica las tres líneas base y anota los números REALES obtenidos:
-     `pytest -q bloque_a/11_Ejecutor` → 58 · `pytest -q bloque_a_forex/11_Ejecutor` → 68 · `pytest -q bloque_b/11_Ejecutor` → 118
+     `pip install arch openpyxl python-docx pytest ruff mypy pre-commit detect-secrets`
+   - Activa el pre-commit: `.venv/bin/pre-commit install` (config ya en el repo).
+   - El gate del repo es `./tools/check_all.sh`: debe terminar **12/12 en verde**. Anota los números REALES obtenidos.
    - Nota conocida: sin `python-docx`, bloque_b falla 3 tests (el .docx del mapa de eslabones degrada con elegancia) — es la incidencia INC-003, no un bug tuyo.
 
 2. MCPs (con `claude mcp list`):

@@ -1,0 +1,27 @@
+# Pre-commit de robotInvestor (adaptación del de robotTrading).
+# Instalación:  .venv/bin/pre-commit install
+# El corpus canónico (bloque_*/ salvo 11_Ejecutor) queda EXCLUIDO de los fixers:
+# es fuente de verdad y no se debe tocar ni con un espacio en blanco.
+# El QA completo vive en tools/check_all.sh (12 gates); aquí solo lo barato.
+
+repos:
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v4.6.0
+    hooks:
+      # Fixers SOLO sobre lo nuestro: nada de reescribir espacios del paquete
+      # entregado (ni corpus ni ejemplos ni código entregado).
+      - id: trailing-whitespace
+        files: ^(docs/|prompts/|tools/|CLAUDE\.md)
+      - id: end-of-file-fixer
+        files: ^(docs/|prompts/|tools/|CLAUDE\.md)
+      - id: check-yaml
+      - id: check-merge-conflict
+      - id: debug-statements
+        files: ^(tools/|bloque_.*/11_Ejecutor/)
+
+  - repo: https://github.com/Yelp/detect-secrets
+    rev: v1.5.0
+    hooks:
+      - id: detect-secrets
+        args: ["--baseline", ".secrets.baseline"]
+        exclude: ^\.venv/.*$

@@ -1,0 +1,695 @@
+26691b68bf3f6277779209f29710c686b9e29276a05a9098940563c43d3d4d1b  bloque_a/01_Gobernanza/Documento 0 - Protocolo maestro del Bloque A - Versión óptima V5.1.docx
+7e708a030dad30d70517c26c7641e14488401fb76c1457b8dd8e1f9af31ff8cb  bloque_a/01_Gobernanza/Documento 0 - Protocolo maestro del Bloque A - Versión óptima V5.1.md
+cb1c4ab900c73df2bc6256171d463e6f4a7ecea535fcafe1ee2e0dc012b4f91a  bloque_a/02_System_prompts/Marco común de los Analistas de tipo de activo (plantilla) - V5.0.docx
+a3c7bf05530d0ccaf18c14d6fd5eec01e3c07b859c08088881ed6e2ac90ab38d  bloque_a/02_System_prompts/Marco común de los Analistas de tipo de activo (plantilla) - V5.0.md
+fc4ae71b420b1e00f2260753eb6c74add16d26483dadac39dd3d2afb55e3117a  bloque_a/02_System_prompts/System prompt - Analista Inmobiliario y de Infraestructuras - Versión óptima V5.0.docx
+65d8de6a405b5506a56ade7fa4ef81339da1a5ee142c226d01947d0399b03f53  bloque_a/02_System_prompts/System prompt - Analista Inmobiliario y de Infraestructuras - Versión óptima V5.0.md
+a9a9039a3fe2841da194ccc5cd15731a090ce429915506f05be1ec518e24fb3e  bloque_a/02_System_prompts/System prompt - Analista de Alternativos y Mercados Privados - Versión óptima V5.0.docx
+afeab531c7647a635253899db27d8fac37c35ef9e9848f7cb06e6d6e409c56e0  bloque_a/02_System_prompts/System prompt - Analista de Alternativos y Mercados Privados - Versión óptima V5.0.md
+4cbe7bf044e1a8b8a09db98156f21206d8c41a42c8a84425f0bd4438a666c6fa  bloque_a/02_System_prompts/System prompt - Analista de Criptoactivos y Activos Digitales - Versión óptima V5.0.docx
+297e060fff047ffb1b8bd8300a84107bf4e7c08897ae811a37b1f6aa25e6158b  bloque_a/02_System_prompts/System prompt - Analista de Criptoactivos y Activos Digitales - Versión óptima V5.0.md
+422cda0317e4c48e3b915346de76778ac1d4dc54394074bf2dd4dae38697bf36  bloque_a/02_System_prompts/System prompt - Analista de Derivados Financieros - Versión óptima V5.0.docx
+aa9ab72ff92f20baedc3cc27441713284338242ac5221163712e3d770a26a7ac  bloque_a/02_System_prompts/System prompt - Analista de Derivados Financieros - Versión óptima V5.0.md
+edda015b422866fc70701a4fc97d7a82e3dd2b1b5a1e21f9a77d1a8ec97a57c0  bloque_a/02_System_prompts/System prompt - Analista de Divisas - Versión óptima V5.0.docx
+67fead91aafd6652b86d300de1c302635c13a659fbfd65283bcc0111f5eb9e45  bloque_a/02_System_prompts/System prompt - Analista de Divisas - Versión óptima V5.0.md
+cab3390854488a4ced1566229860c930eb6a5dd62c414b9aab0997fa36f7c229  bloque_a/02_System_prompts/System prompt - Analista de Fondos y Vehículos de Inversión Colectiva - Versión óptima V5.0.docx
+f8551a701dbf822405b197e9660acd5d7323ea3773035d8e9ce7c611c4f0e2fd  bloque_a/02_System_prompts/System prompt - Analista de Fondos y Vehículos de Inversión Colectiva - Versión óptima V5.0.md
+65ad17520b15657fa3e189a4305640505262d448a62e2e3d1e12d30a3d38753d  bloque_a/02_System_prompts/System prompt - Analista de Instrumentos Monetarios y Liquidez - Versión óptima V5.0.docx
+8afa098a6e38dc1325867dd5cc21dcc0c4975c061e2c11b4ff26bd432c40d503  bloque_a/02_System_prompts/System prompt - Analista de Instrumentos Monetarios y Liquidez - Versión óptima V5.0.md
+eed8e34704712c5507b42be4dac061257aee38c1d261f4417952081336c7d5fa  bloque_a/02_System_prompts/System prompt - Analista de Materias Primas - Versión óptima V5.0.docx
+71f8fd89fe089c4457c0e2d4e8c3859b40730aeba6a7dac9517aaf91f3d6bade  bloque_a/02_System_prompts/System prompt - Analista de Materias Primas - Versión óptima V5.0.md
+16140890897586d164dbd3ed867508af13397952516d193490ccacfcf4a1e48f  bloque_a/02_System_prompts/System prompt - Analista de Prospectiva y Horizontes - Versión óptima V5.0.docx
+1e961372a4d46effa1e43138d1f3390bee9dc33e2b9e8ec607242e05c0e4f3f2  bloque_a/02_System_prompts/System prompt - Analista de Prospectiva y Horizontes - Versión óptima V5.0.md
+7a53ca9061a1ac064e1c2c03aa3bc6c4e76761bcc9d9b0684917d08a06f05795  bloque_a/02_System_prompts/System prompt - Analista de Renta Fija y Crédito - Versión óptima V5.0.docx
+9687fdb3f5f6a70034188938fb8a63e201e4a63f5c71dd84314dde4987885734  bloque_a/02_System_prompts/System prompt - Analista de Renta Fija y Crédito - Versión óptima V5.0.md
+dfea6759bd65654d53e9f829226225ebbed9cac16959b8a98d71e3218bb05f60  bloque_a/02_System_prompts/System prompt - Analista de Renta Variable - Versión óptima V5.0.docx
+52699440f9a9e5b69e7214159977e8cb41f068e2e7e95f1b306f79bc4677dae8  bloque_a/02_System_prompts/System prompt - Analista de Renta Variable - Versión óptima V5.0.md
+76cfa34f167efb99fb63ce27d7b3397aa616f17a310b02e63bbd02cdf149256e  bloque_a/02_System_prompts/System prompt - Analista de Tipos de Interés, Crédito y Volatilidad - Versión óptima V5.0.docx
+3805f46c8c1d342f70439251097b5c71c89e10b8a291ad57c0dd5fc34d8a0b14  bloque_a/02_System_prompts/System prompt - Analista de Tipos de Interés, Crédito y Volatilidad - Versión óptima V5.0.md
+ed67314112e6af7f97cca99027240af6704172826136477176bdc99591618d9a  bloque_a/02_System_prompts/System prompt - Analista de hipótesis contrarias - Versión óptima V5.0.docx
+1a88a60008f28deafc7bbbf145f47a9cfbc436aa2ed42de08d150b75d6d3987e  bloque_a/02_System_prompts/System prompt - Analista de hipótesis contrarias - Versión óptima V5.0.md
+56f20528d3cffeac5f7054094cc45cbd031b0b43055f9322fbe7b0509551b662  bloque_a/02_System_prompts/System prompt - Analista de Índices Bursátiles - Versión óptima V5.0.docx
+f49ed12cd54a98f58d449514c47ab8734ba51feef5ffecc29bf09183e8e47d67  bloque_a/02_System_prompts/System prompt - Analista de Índices Bursátiles - Versión óptima V5.0.md
+706572d77d3049037294ee5823edef8458b17a3f8bb85e5598cf727591e0e9c5  bloque_a/02_System_prompts/System prompt - Analizador de Tendencias de Inversión - Versión óptima V5.0.docx
+bb98bce380baf517f7633bf5582deeaa87e4724bcd97d7e5bbb0c2779dc5ed36  bloque_a/02_System_prompts/System prompt - Analizador de Tendencias de Inversión - Versión óptima V5.0.md
+778151ce9a3c9dd7998d4f6dc39d1971351045556c1261f74545f150a51407fa  bloque_a/02_System_prompts/System prompt - Auditor - Versión óptima V5.0.docx
+a5b4711bf947d10510136738c5bbaebe78442f49b7da74246db73bb7f1c0bccc  bloque_a/02_System_prompts/System prompt - Auditor - Versión óptima V5.0.md
+facf5a932a73fc462b521c66080a1bfbb8d8dbef582b95562f14d85e3f1fa33e  bloque_a/02_System_prompts/System prompt - Buscador de Fuentes Avanzadas - Versión óptima V5.0.docx
+c403c8e2b830a92c6557766c93ff19530ff97fa9989a2c3590fc479fe988009f  bloque_a/02_System_prompts/System prompt - Buscador de Fuentes Avanzadas - Versión óptima V5.0.md
+8389a6a6959986d12a0cadcd8acce2f536777d3746d752e51b68e76001a970fc  bloque_a/02_System_prompts/System prompt - Coordinador de Peticiones y Consultas - Versión óptima V5.0.docx
+07f1e0206c46130150f139f63f15fdaf4920cf20563b5ebbfa34d50a49ab38cc  bloque_a/02_System_prompts/System prompt - Coordinador de Peticiones y Consultas - Versión óptima V5.0.md
+5cf59503c90f32956fe0b3f3af687458c63d300649096ba8b39ef719e004643c  bloque_a/02_System_prompts/System prompt - Curador de Evidencia - Versión óptima V5.0.docx
+22fabc4f81bb5861880fc0f0fbdadec1798582e6d40c30e4ae5ce1ddae1e6b49  bloque_a/02_System_prompts/System prompt - Curador de Evidencia - Versión óptima V5.0.md
+b52accee2b382366aa8ab6f182c94c76f8196ce7a1418f8120f025b8dc214fbf  bloque_a/02_System_prompts/System prompt - Documentador para el Analizador - Versión óptima V5.0.docx
+0b161d44a5aacf9cd9cb458051275f555d2e530342c52f7cc36397c1d1f0b7a4  bloque_a/02_System_prompts/System prompt - Documentador para el Analizador - Versión óptima V5.0.md
+17d06779d8a3e150bfa49c5f3f49ce59044e0b04bd6e55a7bc7dc2ac8910135a  bloque_a/02_System_prompts/System prompt - Documentador para el Motor de Cálculo Avanzado - Versión óptima V5.0.docx
+35cdca45a81d8f20e4951d3868c872934fcb5353a01ff861e5b7bf6d16cca268  bloque_a/02_System_prompts/System prompt - Documentador para el Motor de Cálculo Avanzado - Versión óptima V5.0.md
+c2cfe1e2ca67e6d7eb503c2bdf7d5ab4afb246f7aafd16559090d358e05be2a5  bloque_a/02_System_prompts/System prompt - Evaluador de Previsiones y Aprendizaje - Versión óptima V5.0.docx
+ded6b16b72d3ebb02d248f1c03288da4b6536de8eba492bb4981ae50658cea63  bloque_a/02_System_prompts/System prompt - Evaluador de Previsiones y Aprendizaje - Versión óptima V5.0.md
+534d035ee45344350a2d712af31ae641e36fdaeb79cadb373ad845f7b9452190  bloque_a/02_System_prompts/System prompt - MC-01 Fundamentos cuantitativos y estadística - Versión óptima V5.0.docx
+2e258d3f8c6d005a4613f0504b08cc13adfff5d5141010bd032881e0ddb1c409  bloque_a/02_System_prompts/System prompt - MC-01 Fundamentos cuantitativos y estadística - Versión óptima V5.0.md
+8e5b6340cd5397c2ef9bef673b2c2c67dc27d48d82f542b3dfe43fdd0e538782  bloque_a/02_System_prompts/System prompt - MC-02 Series temporales, tendencias, regímenes y volatilidad - Versión óptima V5.0.docx
+9783076409f783e37b0bb10cb30e54c85c377fec1feb4dd58ad84fe6ecec8776  bloque_a/02_System_prompts/System prompt - MC-02 Series temporales, tendencias, regímenes y volatilidad - Versión óptima V5.0.md
+4ae7faf1b8008f09a317349c42325ee421041e5cc390e70a98bbef6b38660f41  bloque_a/02_System_prompts/System prompt - MC-03 Econometría, causalidad y macroeconomía cuantitativa - Versión óptima V5.0.docx
+f2c629ef1e0cd2723faf3ca19347e93f916ecae4bae6093de5ad70e75a33d989  bloque_a/02_System_prompts/System prompt - MC-03 Econometría, causalidad y macroeconomía cuantitativa - Versión óptima V5.0.md
+686619d185087aeb455db26317e98aae8221bfa79195cec6b0c91472742714df  bloque_a/02_System_prompts/System prompt - MC-04 Crecimiento, difusión y prospectiva cuantitativa - Versión óptima V5.0.docx
+e4d4f05319dacb51cc96499b239049f50229a90c126cbac038f8356fa4ff028c  bloque_a/02_System_prompts/System prompt - MC-04 Crecimiento, difusión y prospectiva cuantitativa - Versión óptima V5.0.md
+c79d31868043199ed95fbadba97c5c79bbf8423f7c419aebd97b21beed2b8eca  bloque_a/02_System_prompts/System prompt - MC-05 Simulación estocástica y escenarios - Versión óptima V5.0.docx
+3029867a97a5861cfb858def978cb0768aca20c5016f9f33f12ed703aa24483a  bloque_a/02_System_prompts/System prompt - MC-05 Simulación estocástica y escenarios - Versión óptima V5.0.md
+6a953c155b9ba648bba5e63444ad7f65050b99a1b28eba1647c533c46f2f3439  bloque_a/02_System_prompts/System prompt - MC-06 Aprendizaje automático y predicción calibrada - Versión óptima V5.0.docx
+ba32181f3c7d834bf728df4d0705bdd844a6dde7da5b488ac59fa7dd82546c42  bloque_a/02_System_prompts/System prompt - MC-06 Aprendizaje automático y predicción calibrada - Versión óptima V5.0.md
+1324b79a004710e7e32ccc225e552db5a7be371d113793f6045aaf4233e29961  bloque_a/02_System_prompts/System prompt - MC-07 Optimización, decisión y riesgo - Versión óptima V5.0.docx
+fc24ee4a4d8138b8dc13b6b957f3502073530fba2f158311a2a413fb77787ad1  bloque_a/02_System_prompts/System prompt - MC-07 Optimización, decisión y riesgo - Versión óptima V5.0.md
+2fcefc76cdeb3a6538d2609251004fa44c2e69b60bca900be03a500d45f82ef5  bloque_a/02_System_prompts/System prompt - MC-08 Auditoría cuantitativa independiente - Versión óptima V5.0.docx
+b11204a6b4029b45a3c34e0f146014bdd09a7fcd5b011775a13a0021f59fc42a  bloque_a/02_System_prompts/System prompt - MC-08 Auditoría cuantitativa independiente - Versión óptima V5.0.md
+e495825bc6738c9d822843a81c3ebc51b5fb3acf88e56722cac5856090461142  bloque_a/02_System_prompts/System prompt - MC-09 Valoración y modelos de precios de activos - Versión óptima V5.0.docx
+f66c116e18fd6eb9b718e4e73d469b6bef97b6b4a3f3bbc3f3e2f878c234437a  bloque_a/02_System_prompts/System prompt - MC-09 Valoración y modelos de precios de activos - Versión óptima V5.0.md
+3b2b19f1d852b8b31378bc215e348443dc644a874b4a41599e2245bf01f40acd  bloque_a/02_System_prompts/System prompt - MC-10 Evaluación predictiva y backtesting - Versión óptima V5.0.docx
+c32e23068af651a158db912ad665518eded85528f064994415095193679403e5  bloque_a/02_System_prompts/System prompt - MC-10 Evaluación predictiva y backtesting - Versión óptima V5.0.md
+9bbf62cab24096efc2b383779e5575e19977130cd807c14816a10558224fc7b5  bloque_a/02_System_prompts/System prompt - Motor de Cálculo Avanzado para el Analizador de Tendencias de Inversión - Versión óptima V5.0.docx
+e64d03fd3becdc0975571aa934d67af1139274da24c6a6bcf82801d4d21569a4  bloque_a/02_System_prompts/System prompt - Motor de Cálculo Avanzado para el Analizador de Tendencias de Inversión - Versión óptima V5.0.md
+df9384c1dff636dd3f851a72fa1b16b846ce48a6aa2b215c10fd1d86bff5cd15  bloque_a/02_System_prompts/System prompt - Orquestador técnico - Versión óptima V5.0.docx
+f512cd323db5e8a0071a15de730485ac093319477f8f72a92e30c30000350c9e  bloque_a/02_System_prompts/System prompt - Orquestador técnico - Versión óptima V5.0.md
+9fa25560e88476f8990fff4ceb758afa11811f485174e202290d827b82a5ed48  bloque_a/02_System_prompts/System prompt - Redactor y Diseñador de Informes - Versión óptima V5.0.docx
+e19add3f161deb3c1ac4bbf8f1bcc10baf84d2abfa3f5d452617102e32dc828f  bloque_a/02_System_prompts/System prompt - Redactor y Diseñador de Informes - Versión óptima V5.0.md
+413e141237a1233a45c19955e98395df009fbdbe098099bd452e0a44b1ded3e5  bloque_a/03_Funciones/Funciones, tareas y cometidos – Analista Inmobiliario y de Infraestructuras – óptima V5.0.docx
+fc9e330ac1ab6b0515a4e4e806bd55762b9231b4212be72ff53559583f1670b4  bloque_a/03_Funciones/Funciones, tareas y cometidos – Analista Inmobiliario y de Infraestructuras – óptima V5.0.md
+c056543983c78329be28a3c53713c3521ef94cb9242548b83a70becb1c8ccf51  bloque_a/03_Funciones/Funciones, tareas y cometidos – Analista de Alternativos y Mercados Privados – óptima V5.0.docx
+d7fccfd7f836aa608910188141d1473fd8a8b1b3fa767ad653c17f370f748682  bloque_a/03_Funciones/Funciones, tareas y cometidos – Analista de Alternativos y Mercados Privados – óptima V5.0.md
+77fb86e4a00fef9d0215706b269ad62da4720387fb7f9ac6af3fbf410fed1cf4  bloque_a/03_Funciones/Funciones, tareas y cometidos – Analista de Criptoactivos y Activos Digitales – óptima V5.0.docx
+33bda36958c4e13b7d4e6ba58267444441de9947efb5d83fc5dbf5bb5dd28a5e  bloque_a/03_Funciones/Funciones, tareas y cometidos – Analista de Criptoactivos y Activos Digitales – óptima V5.0.md
+15dc31785232a188eac389c58f4c3c7b3050843ef157a5d113593ab2f133c4cc  bloque_a/03_Funciones/Funciones, tareas y cometidos – Analista de Derivados Financieros – óptima V5.0.docx
+8aa532bff6bd2fe11534ee3e06bc4af1d64662d63a8916829a26621cfa290f04  bloque_a/03_Funciones/Funciones, tareas y cometidos – Analista de Derivados Financieros – óptima V5.0.md
+fb9a8711fab5142e09f72740a2cef1f4b8adad541af2da91b901198f0e3245c3  bloque_a/03_Funciones/Funciones, tareas y cometidos – Analista de Divisas – óptima V5.0.docx
+35d1bcab64f7a45f77072abaa3cd68a7b9a3d054e3893b95cc0a77a99f4c6b91  bloque_a/03_Funciones/Funciones, tareas y cometidos – Analista de Divisas – óptima V5.0.md
+5ba3458e075e2c41782a5c3b53be9d521f64f98597350fdac2b60190f24c7d4e  bloque_a/03_Funciones/Funciones, tareas y cometidos – Analista de Fondos y Vehículos de Inversión Colectiva – óptima V5.0.docx
+717a8d259b69db061d866a5998ca5dae01f47f0f545f192258e437fbb152e3ab  bloque_a/03_Funciones/Funciones, tareas y cometidos – Analista de Fondos y Vehículos de Inversión Colectiva – óptima V5.0.md
+5ce49ce31885d99d6ff5cd28e5b694a7a37c895d7a19a7546bba000040b3e942  bloque_a/03_Funciones/Funciones, tareas y cometidos – Analista de Instrumentos Monetarios y Liquidez – óptima V5.0.docx
+ec0ca69ba3b2283ea88ba0a00d7528cefc9568907c1596397f93a994522f1a5b  bloque_a/03_Funciones/Funciones, tareas y cometidos – Analista de Instrumentos Monetarios y Liquidez – óptima V5.0.md
+a8eb1f2a5faa24dc43d6845e3af2e021928c382560951e0a64458a65675478ce  bloque_a/03_Funciones/Funciones, tareas y cometidos – Analista de Materias Primas – óptima V5.0.docx
+739d8436488a8d55605801a1536ae6e3b722a21a0824b169a68f8b72eb62b2dd  bloque_a/03_Funciones/Funciones, tareas y cometidos – Analista de Materias Primas – óptima V5.0.md
+6ffd8ed27ba149b6b8ff2f03d90ed7fdf45611960e825a11284d1b2783043a83  bloque_a/03_Funciones/Funciones, tareas y cometidos – Analista de Prospectiva y Horizontes – óptima V5.0.docx
+e56a47ece7f770260334cbb1e57adcb0f95c750bb508329a6c1798c5fcc76654  bloque_a/03_Funciones/Funciones, tareas y cometidos – Analista de Prospectiva y Horizontes – óptima V5.0.md
+6d52389ffd4c17942fc641f9d374f0e3790034c0e34f8d7714f5043c19f1feb2  bloque_a/03_Funciones/Funciones, tareas y cometidos – Analista de Renta Fija y Crédito – óptima V5.0.docx
+c28472431114642e5146b330bc62291e3fbcdc31e895e104b80232bd5c3d64a8  bloque_a/03_Funciones/Funciones, tareas y cometidos – Analista de Renta Fija y Crédito – óptima V5.0.md
+fc75389a85d1f496b7c52a6789acb028fb77a8c1f32ba097c0bbab29c43b1aa3  bloque_a/03_Funciones/Funciones, tareas y cometidos – Analista de Renta Variable – óptima V5.0.docx
+5f6f498d1b3f96e64faa581f1cab205b2ccb631528b6d4bb363ed6a41815e179  bloque_a/03_Funciones/Funciones, tareas y cometidos – Analista de Renta Variable – óptima V5.0.md
+13c30c5a4ea888caf1a1ffed0a425863ce1039fbd167c4e611cd437d3d37dd98  bloque_a/03_Funciones/Funciones, tareas y cometidos – Analista de Tipos de Interés, Crédito y Volatilidad – óptima V5.0.docx
+30722820415507fdf8148a3007331adc30d14d6022336285fc39ae28e0486c28  bloque_a/03_Funciones/Funciones, tareas y cometidos – Analista de Tipos de Interés, Crédito y Volatilidad – óptima V5.0.md
+cbcc183ab0e1e8b7085289d23528e1bb7dcfee994ad631ab0c7d913f0a6e0646  bloque_a/03_Funciones/Funciones, tareas y cometidos – Analista de hipótesis contrarias – óptima V5.0.docx
+ebac563d7517ba083820e373cd05310120e46f6b54b5c998c818462348d11f5e  bloque_a/03_Funciones/Funciones, tareas y cometidos – Analista de hipótesis contrarias – óptima V5.0.md
+c87ed488252656e23ca70301dfe192e9e4f64b70c6eb2892ec30d2f9c8e59a5b  bloque_a/03_Funciones/Funciones, tareas y cometidos – Analista de Índices Bursátiles – óptima V5.0.docx
+5525bf120c49c484cc113ec4d0cbcd5724d7f3f54868a5e8beed46f271e6dbb8  bloque_a/03_Funciones/Funciones, tareas y cometidos – Analista de Índices Bursátiles – óptima V5.0.md
+c2223b5ea42cca8e38a353d88f6772b1e380e68cdb80c0d4fbad0130b9f89271  bloque_a/03_Funciones/Funciones, tareas y cometidos – Analizador de Tendencias de Inversión – óptima V5.0.docx
+2d0e38391ae8d3cd9f4ee6c90ff5a0c15f6bd5a181d00e102c0f8e98f8beb4e7  bloque_a/03_Funciones/Funciones, tareas y cometidos – Analizador de Tendencias de Inversión – óptima V5.0.md
+0621de20e498b1eacff055aa787eb8d252ecf1141e7a23f355c11a922cece8e1  bloque_a/03_Funciones/Funciones, tareas y cometidos – Auditor – óptima V5.0.docx
+3881e01532be797b40f32790e33f662da708b7bc51178574117ab38ab106515b  bloque_a/03_Funciones/Funciones, tareas y cometidos – Auditor – óptima V5.0.md
+6c9bc55b15e9d9a93f510f6765a4fa09e44b22afc48687b16982c97dfca870c1  bloque_a/03_Funciones/Funciones, tareas y cometidos – Buscador de Fuentes Avanzadas – óptima V5.0.docx
+6bb7c4bf9057a6977904b757606894dabfe816f7fc2ffa2f794b6f8e95ea03f3  bloque_a/03_Funciones/Funciones, tareas y cometidos – Buscador de Fuentes Avanzadas – óptima V5.0.md
+cd1c8f56f684f2903097e3bbc1767d624d65e4372bed6adcb7a65db332f0cb2f  bloque_a/03_Funciones/Funciones, tareas y cometidos – Coordinador de Peticiones y Consultas – óptima V5.0.docx
+b928cf140d7b75aac7ad2671bdfe4228793ab1ee70f99923c2267eb1b1afd329  bloque_a/03_Funciones/Funciones, tareas y cometidos – Coordinador de Peticiones y Consultas – óptima V5.0.md
+68caa6c5e66383d17d7e5b3d9c352c1aface09e506bd36a281134c9b51506fea  bloque_a/03_Funciones/Funciones, tareas y cometidos – Curador de Evidencia – óptima V5.0.docx
+0a7ae7bf524d3a27dbc036d44129cfd71a34337bfc5da5c2bb2ffe0defd1ffca  bloque_a/03_Funciones/Funciones, tareas y cometidos – Curador de Evidencia – óptima V5.0.md
+a1c24f885db763526328c07ecc5cffd4e924837e3499b76400e863682618be1e  bloque_a/03_Funciones/Funciones, tareas y cometidos – Documentador para el Analizador – óptima V5.0.docx
+e484ba10cf3a555794eb40135c524618f9f106e53b9cbcbc24dea767b243c40f  bloque_a/03_Funciones/Funciones, tareas y cometidos – Documentador para el Analizador – óptima V5.0.md
+e4b3733503290fe79a5c3861620eaf6407a6cd77985fd735030369cbd9fee5bf  bloque_a/03_Funciones/Funciones, tareas y cometidos – Documentador para el Motor de Cálculo Avanzado – óptima V5.0.docx
+e271ea1562d48fc0414e75e2c637e3a782caea3d2ce413ae1f50df85d74f4325  bloque_a/03_Funciones/Funciones, tareas y cometidos – Documentador para el Motor de Cálculo Avanzado – óptima V5.0.md
+94c88cdf886a70a059f6adfa5b74cfdeb72cb08f90a223eacf81a5dbdde74411  bloque_a/03_Funciones/Funciones, tareas y cometidos – Evaluador de Previsiones y Aprendizaje – óptima V5.0.docx
+7e4815fc3cdf93b3d532691665f05d6ac7f89ace91a6adebc862042dbf818a1c  bloque_a/03_Funciones/Funciones, tareas y cometidos – Evaluador de Previsiones y Aprendizaje – óptima V5.0.md
+81dc7ff721da9a03a2199f2e2af001bfff4e802c26ee2399a15fddc158cd00a9  bloque_a/03_Funciones/Funciones, tareas y cometidos – Motor de Cálculo Avanzado para el Analizador de Tendencias de Inversión – óptima V5.0.docx
+174fdaf335de0f32566c80fdb6a63f02e76532687e50ba9056fbaf9be70038d7  bloque_a/03_Funciones/Funciones, tareas y cometidos – Motor de Cálculo Avanzado para el Analizador de Tendencias de Inversión – óptima V5.0.md
+6aa63a960427f57e3b8b7fe4e2111437d773b7d28379c2e3884c0a136857d96b  bloque_a/03_Funciones/Funciones, tareas y cometidos – Orquestador técnico – óptima V5.0.docx
+6a84b23f551ee99e04b3cac01cb776a5498dae97c7cb344f52427717cf50d713  bloque_a/03_Funciones/Funciones, tareas y cometidos – Orquestador técnico – óptima V5.0.md
+6479a2c67348fbf859ffd9c2400b133d5067f8f097e489dd274ae78f42d18624  bloque_a/03_Funciones/Funciones, tareas y cometidos – Redactor y Diseñador de Informes – óptima V5.0.docx
+a66dac4888b116bc56cee03bfd64cb661b011c8af17f5fbaa073de818dd0beab  bloque_a/03_Funciones/Funciones, tareas y cometidos – Redactor y Diseñador de Informes – óptima V5.0.md
+bb707078b121b3e380930354a6a4a0397bff05bfd3272a822bf788dc6ddbd209  bloque_a/04_Motor_conocimiento_y_catalogo/Catálogo de cálculos del Motor - V5.0.docx
+2d1b00ec0ce5f164b27c9359d9ff1b3bb2605624433137e62b34cd3cf340016f  bloque_a/04_Motor_conocimiento_y_catalogo/Catálogo de cálculos del Motor - V5.0.md
+4cad8d66a728e33081f12efe295d2f2ce76db659e23370cb2aed6818d5bcc03c  bloque_a/04_Motor_conocimiento_y_catalogo/Mapa de conocimientos del Motor - V4.0.docx
+e9bbf0c3a17538f1e95ab51473393c1787ceb7ef29c6daecf032db7ffae30315  bloque_a/04_Motor_conocimiento_y_catalogo/Mapa de conocimientos del Motor - V4.0.md
+4e2ff6b21e269f39edb5d090716c16e8c898381f18b7e0c108d9b9052bc666ff  bloque_a/04_Motor_conocimiento_y_catalogo/Perfiles de tipo de activo del Motor - V3.0.docx
+ffa35454c9497e99914cfa68033f0914b6fdd829170c23566fb8b29c7b134112  bloque_a/04_Motor_conocimiento_y_catalogo/Perfiles de tipo de activo del Motor - V3.0.md
+29b2928596e455a4e99ba5f26178f547e44df550a84bd1ef4c0c1a4e074f73aa  bloque_a/05_Archivos_operativos/Configuración y parámetros del bloque (esquema V3.0).docx
+05736dd3b9e937d58a3b31e6ebda33990b136faa230915509120de0617420305  bloque_a/05_Archivos_operativos/Configuración y parámetros del bloque (esquema V3.0).md
+0b10fc117db0a2b7186d3912f8fa58ba7751151ffc9cd953144376d9e4515d5e  bloque_a/05_Archivos_operativos/Documentación para el Analizador de Tendencias de Inversión - V3.2.docx
+97faa162fe99ced12e8f4d36401dac4af41810922bf85a347b6a2d348f34e9ce  bloque_a/05_Archivos_operativos/Documentación para el Analizador de Tendencias de Inversión - V3.2.md
+c22752be5558c7e05259d626cd5f3b0dbed587a17115e8b4b629c1eedd41a672  bloque_a/05_Archivos_operativos/Documentación para el Motor de Cálculo Avanzado - V3.2.docx
+a5049f20f7054b4394ef62b14d50c2600585669e4b4ba307c3bfdcb877c2cd8f  bloque_a/05_Archivos_operativos/Documentación para el Motor de Cálculo Avanzado - V3.2.md
+198c0848e4731b46d773474cf3ba3272f3153a7123072b0b1194620d75a7276d  bloque_a/05_Archivos_operativos/Fondo Metodológico Bibliográfico - V3.1.docx
+65d3ec6c01b440f704ddbccca89600c2ae7bdc53528e324c73e6bec22d2b0187  bloque_a/05_Archivos_operativos/Fondo Metodológico Bibliográfico - V3.1.md
+50f85f8f0ca2bc57fbeb67fc5e0ec09103aa72fad2d2f96148706097d20bc84a  bloque_a/05_Archivos_operativos/Historial de análisis (esquema V2.0).docx
+4dd33f56e3e83759a19ddbed0e08281ae486fc09ad24ae3a1612f9c3e2045cf3  bloque_a/05_Archivos_operativos/Historial de análisis (esquema V2.0).md
+69a4fec8df56f7b3f83395a1741a964f454eded805863115d56be8ddcc6a1034  bloque_a/05_Archivos_operativos/Historial de auditorías (esquema V2.0).docx
+489684b0d9ce13661701e9cd2db5c81e22d73e7521f20698458ea9e021c17709  bloque_a/05_Archivos_operativos/Historial de auditorías (esquema V2.0).md
+c1197a41e4e0d931c8521e2fab232773f2e7504362588db08ba5a67f66cbc3a2  bloque_a/05_Archivos_operativos/Memoria de aprendizaje (esquema V2.0).docx
+cb7ddb883e6a32b6f138c5b78399ef252d48bdde0906db8e8d18f93e9b65e9b6  bloque_a/05_Archivos_operativos/Memoria de aprendizaje (esquema V2.0).md
+84e015d1ee945e496c672a79376f22b1b7c5c415ef4df22bcfd3abe83c967a54  bloque_a/05_Archivos_operativos/Registro de Fuentes para el Analizador de Tendencias de Inversión - V3.2.docx
+ae3b98ddc39cbdaf37b9362637f012db1258735a2ed97c01d56b99dcde5e5365  bloque_a/05_Archivos_operativos/Registro de Fuentes para el Analizador de Tendencias de Inversión - V3.2.md
+191aaf4a4601a89364cc1f9e5e0d9c2930dd6c9a78a967c4e464fc703c6c919b  bloque_a/05_Archivos_operativos/Registro de cálculos del Motor (esquema V2.0).docx
+d775b0ce8ba2e5fc0670beae3ec7aa708e06734f0f6d4ae71ef8a5435ff2e6b0  bloque_a/05_Archivos_operativos/Registro de cálculos del Motor (esquema V2.0).md
+2693fb7e80616beecbf36a47657921d7406cf0a6b957a0d27b9409cfddd35fab  bloque_a/05_Archivos_operativos/Registro de evidencia y afirmaciones (esquema V2.0).docx
+5d20f04352cfa10aec6720682015405c140c67c4c7e29259872f8ca7f8c37b0c  bloque_a/05_Archivos_operativos/Registro de evidencia y afirmaciones (esquema V2.0).md
+acdf1858faaade94096779a89d9357601f0a732de9129caedf351efdaf7abc98  bloque_a/05_Archivos_operativos/Registro de oportunidades (esquema V3.0).docx
+7dfd5c70107101cfe8937e17478ee366d6d1a64e9bb11f5d833a29b5e36b3c92  bloque_a/05_Archivos_operativos/Registro de oportunidades (esquema V3.0).md
+40b7b41e9dd05a50026fd77e1759064c77e9cefaf2a3dc8dd43fd7c38da36a96  bloque_a/05_Archivos_operativos/Registro de pronósticos congelados (esquema V2.0).docx
+00593aab36ff6755346afe16dc9e1ed77b8654ddf957c10f1ede36d9f09c2b1b  bloque_a/05_Archivos_operativos/Registro de pronósticos congelados (esquema V2.0).md
+dafc995a41e949a44aff17a8c7c5ea974c55aded4276c3cd591bc2a8285e21c1  bloque_a/05_Archivos_operativos/Registro de seguimientos encargados (esquema V1.0).docx
+eb3f2b41b4551cf3a21e931dfb76e079a2b6408af148f26ca8602105dd484cbb  bloque_a/05_Archivos_operativos/Registro de seguimientos encargados (esquema V1.0).md
+2f0300c651130ee5f0204a81985abc1a742741666059fe8184cacc1bad8302e0  bloque_a/05_Archivos_operativos/Registro maestro de tendencias (esquema V2.0).docx
+f68743658fc475fa756c9673028d3852e91b7d5060ffbf2171799090830d8a82  bloque_a/05_Archivos_operativos/Registro maestro de tendencias (esquema V2.0).md
+df4eb4224642136c5a21976d3e0284ce965d63511f3710c43347e87f3cfb0f38  bloque_a/06_Plantillas_entregables/Ejemplo - Informe de seguimiento de opción - V5.1.json
+1a24188b43202e7f067cb3af3ffdfa2aad5ef008682221b9d0d7ae472bd4dbe5  bloque_a/06_Plantillas_entregables/Ejemplo - Informe visual (escritorio).png
+218c0b84edb0893173b028ebb9bbe736c85f2282990e15cd9337769e8a022926  bloque_a/06_Plantillas_entregables/Ejemplo - Informe visual (móvil).png
+b928a63518007dbd7839de8ff903b3d315d8c11197189bb1c8c103ba1f730b9b  bloque_a/06_Plantillas_entregables/Ejemplo - Paquete de oportunidades - V5.0.json
+e21a922222cab8fe6e7ebe9f66995f1729234e847f4cc65af745da868259c4be  bloque_a/06_Plantillas_entregables/Esquema JSON - Informe de seguimiento de opción - V5.1.json
+8bf00afdecae0ca61229e41a35eeda09d0b8cd7722457d76e648df8cc4129084  bloque_a/06_Plantillas_entregables/Esquema JSON - Paquete de oportunidades - V5.0.json
+09c5e8baa0785223de32a671f248be82e2d2f3440d207e3e60b161560d950b5b  bloque_a/06_Plantillas_entregables/Plantilla - Informe de seguimiento de opción - V5.1.docx
+80071ed9ae4ff526368e7d1225cfb51ef5b6e2279095d0db1698f0530cf4bb31  bloque_a/06_Plantillas_entregables/Plantilla - Informe de seguimiento de opción - V5.1.md
+b3be7522532c928372c666d604673fe1392112f252902ab3151af5ccbb9c74e1  bloque_a/06_Plantillas_entregables/Plantilla - Informe técnico para el Broker - V5.0.docx
+84d3a84cf43c92a55c0f88d37f64f3dacf6aa18228cc929ce7aa0d641c9a5bdb  bloque_a/06_Plantillas_entregables/Plantilla - Informe técnico para el Broker - V5.0.md
+51935a5804134c2d16f3daea7bdea7c3c65c427e1a3fb36f117b50a75d991b00  bloque_a/06_Plantillas_entregables/Plantilla - Informe visual para el usuario - V5.0.html
+ae070f008debf3645ba294c1f85227be07b40bd14337996be85bac3a22a40183  bloque_a/07_Objetivos/Objetivos del Bloque A - Versión óptima V5.0.docx
+5cd0c27e39e72c19f1c6908cf783082dacd475d88ef890b1e8c244b9a2511837  bloque_a/07_Objetivos/Objetivos del Bloque A - Versión óptima V5.0.md
+095490ae52e196cdf7abbc9065519a356efb32b3b72b24744165b4446d47aac0  bloque_a/08_Arquitectura/Arquitectura del Bloque A - Descripción detallada para LLM - V4.0.docx
+596b7fa634e7f59cd4002a70a7ca597b44dc1508d1bdaf6865e926e0727127c0  bloque_a/08_Arquitectura/Arquitectura del Bloque A - Descripción detallada para LLM - V4.0.md
+fe8047ec7b7999438f4517e6738a794d3c9b08487e981bef94700eeb21bc65e1  bloque_a/08_Arquitectura/Arquitectura del Bloque A - V5.0.png
+10272971755cd291aaf0bbb5e7f76eb30f8ae7befce4ec19cbb60118c4879e7e  bloque_a/08_Arquitectura/Arquitectura del Bloque A - V5.0.svg
+e778c83334c410d0e2db6ad4b3599767fd90ed3ebc595bb33942705d317e9f6c  bloque_a/08_Arquitectura/Arquitectura del Bloque A - V5.1.png
+6f46eb0c2544b9d4eecba43a616ea22289c115deab18ce22e2ee2a9ae55b32f5  bloque_a/08_Arquitectura/Arquitectura del Bloque A - V5.1.svg
+6d498cc5d9996df2de0d89e2b2c8aef15fd01431aa60c736913beb85699345b2  bloque_a/09_Pruebas/Plan de pruebas del Bloque A - V3.0.docx
+9ecc6095fd64dfc23c32dc1990fb9264c2040521043e8f7bc92141ffb291af46  bloque_a/09_Pruebas/Plan de pruebas del Bloque A - V3.0.md
+982f55d3c9de5852a361dda376e9a221b06fe121c3cee8286186e5291896fb9b  bloque_a/10_Herramientas/README.md
+c501c370015d2a1c01bb1acbdbb9144a9fc51c75acb0e0c8437a7d82041bd86d  bloque_a/10_Herramientas/ejemplos/artefactos_ejemplo.json
+6879ed6c2f29f3a54feb99b9b457abb30b468e05bd18bdb26b7df485a2d2924d  bloque_a/10_Herramientas/ejemplos/certificados_ejemplo.json
+fbd1e38a6ab73379c69135297f977a9cab67323c98065e5a64c83c97e8e175af  bloque_a/10_Herramientas/ejemplos/desgloses_ejemplo.json
+6b634a60c46250ae227aba4bfdb67c3eada8b5a2d2242472fa8d27ccec720c4d  bloque_a/10_Herramientas/ejemplos/ht03_entrada_ejemplo.json
+fccc76921d9994bcd7b3b35d72bb5f82593592c3a19adad96971c57458c2a955  bloque_a/10_Herramientas/ejemplos/informe_visual_ejemplo.html
+362b16ef43cf35f2ffece2fe61f718f161e10da0f0200eb7592a25c370cd6334  bloque_a/10_Herramientas/ejemplos/jerga_personalizada.txt
+7591b818ac32d95fe8114ffea2a331a5a894009aacc44df407eb6c31fabd9a14  bloque_a/10_Herramientas/ejemplos/paquete_oportunidades_ejemplo.json
+8cb267ca6f0cd00d93e825a3d58d7861013cc62aeecc86ec53e78144e4c470f2  bloque_a/10_Herramientas/ejemplos/referencias_ejemplo.md
+942e0120efc2981db2e5d9c6ef1c5ed98ce9ca2293577e3a22e143c4e221299e  bloque_a/10_Herramientas/ejemplos/trazas_ejemplo.json
+bc70c71428cab92cae96110e132d34cbf62ac777c88a9e2720fff3b7967e5e01  bloque_a/10_Herramientas/ht02_verificador_enlaces.py
+e6d1214f03a32e0daf0b6ac23233f851ce745161ed5593ce3f75f9d90c0a41c8  bloque_a/10_Herramientas/ht03_puntuaciones.py
+761ee2d10ad06de9c9cdad8d599dc4641c8ee6cb763f96aca1f36a35d184891b  bloque_a/10_Herramientas/ht05_planificador_ejemplo.md
+b4873522de29461990b94dc0afde5db3622abb09199de1fb3712718de2d8a466  bloque_a/10_Herramientas/ht07_legibilidad.py
+8cf1474b1914fb51105ff4b64433ed92a50e0917022421edf3137f99cd4985d5  bloque_a/10_Herramientas/ht09_validador_g3.py
+7056a7b8c29c98dcb0ccfc7b90f1b01cbdca36d62383d20e2db60ba43cc74b20  bloque_a/10_Herramientas/tests/test_ht02_verificador_enlaces.py
+1e4a4372aeb2b2ab56921b7dbfdfd10f722f68b039a6ed5cad3a24a63915e826  bloque_a/10_Herramientas/tests/test_ht03_puntuaciones.py
+91c567cee5d0654596c0d3f21849d82e78808251bad0996e832fc6fd50bbbe0d  bloque_a/10_Herramientas/tests/test_ht07_legibilidad.py
+8049465e91272e037d2e5f8ce186f37d3faca8187aeb5a24cabc0ab786f90553  bloque_a/10_Herramientas/tests/test_ht09_validador_g3.py
+16fd5f340aa83b0a69cdc4ed3209851c5b22e4d875b47910212a9398f19d7fa3  bloque_a/99_Historico_V3.0/01_Gobernanza/Documento 0 - Protocolo maestro del Bloque A - Versión óptima V3.0.md
+f6805372226907441a0fb766844181b69dd45a34bd45d5f497b0b30cf3830952  bloque_a/99_Historico_V3.0/02_System_prompts/System prompt - Analista de hipótesis contrarias - Versión óptima V1.3.md
+22cd2d8ebe18f3fbf8720769298d8a593b2e839ada6be521fa050ce4f20c0ccb  bloque_a/99_Historico_V3.0/02_System_prompts/System prompt - Analizador de Tendencias de Inversión - Versión óptima V2.1.md
+611ded43a765a585e11bf86b0553ecabd22ee9b416ad8e6f32066b7162e3f67b  bloque_a/99_Historico_V3.0/02_System_prompts/System prompt - Auditor - Versión óptima V2.2.md
+9a723cb473903f8a07a2b20ff7d31b6b51d80f0a85de8b0dd974601cb4c89bd6  bloque_a/99_Historico_V3.0/02_System_prompts/System prompt - Buscador de fuentes avanzadas - Versión óptima V2.2.md
+04c624f13de76c1a36e7882a3ae66d2bba2ab409972438d70f265b635562ae85  bloque_a/99_Historico_V3.0/02_System_prompts/System prompt - Documentador para el Analizador - Versión óptima V2.2.md
+342a2d76dce3deb8fafa41c0779bf0ad1b91f5a888dbf4cf755fa3c0988dd254  bloque_a/99_Historico_V3.0/02_System_prompts/System prompt - Documentador para el Motor de Cálculo Avanzado - Versión óptima V1.8.md
+e7b7d4db0a78cfba36f7cfffcc9b8a618d704950d7d32a7039bbb7cc3b0a33e5  bloque_a/99_Historico_V3.0/02_System_prompts/System prompt - Flujo de Investigación del Bloque A - Versión óptima V1.1.md
+69385844dbe7036a3666d6c2b51cf025082a1424fefdefe8723834a86632aadd  bloque_a/99_Historico_V3.0/02_System_prompts/System prompt - MC-01 Fundamentos cuantitativos y estadística - Versión óptima V1.1.md
+b26c4f406c16d049c807a91cf8f635152aa50fbe71ae36858da285a6e1852cff  bloque_a/99_Historico_V3.0/02_System_prompts/System prompt - MC-02 Series temporales y detección de tendencias - Versión óptima V1.1.md
+dd8f45be14b60a26e280bc4f2abaeeb8796cbfbaa8b41106f9f1f0f528ab59b2  bloque_a/99_Historico_V3.0/02_System_prompts/System prompt - MC-03 Econometría, causalidad y relaciones económicas - Versión óptima V1.1.md
+fb3fee4935ff35854c7c39cedaab04d00b3cc7af3ac6e4617cef4190f3475246  bloque_a/99_Historico_V3.0/02_System_prompts/System prompt - MC-04 Crecimiento, difusión y prospectiva cuantitativa - Versión óptima V1.1.md
+7ced360a59a91913c357590cfab4d98e78bfc3d835994106ff06d4b884f71fd7  bloque_a/99_Historico_V3.0/02_System_prompts/System prompt - MC-05 Simulación estocástica y análisis de escenarios - Versión óptima V1.1.md
+1bd054192ae9aca06b5018b2ffaddb6df4be49ea0435ffb532dde207385c81d8  bloque_a/99_Historico_V3.0/02_System_prompts/System prompt - MC-06 Aprendizaje automático y predicción calibrada - Versión óptima V1.1.md
+d35b4565ebd00c280effd2bee4037e46d57c9bffa2c556b72b9d27d7c6662f0f  bloque_a/99_Historico_V3.0/02_System_prompts/System prompt - MC-07 Optimización, decisión y riesgo cuantitativo - Versión óptima V1.1.md
+344e11fa0d7f1c5d7d81c1d2124b2dbee5ee68b11aa393db83a9a5c86e87916f  bloque_a/99_Historico_V3.0/02_System_prompts/System prompt - MC-08 Auditoría cuantitativa independiente - Versión óptima V1.1.md
+18e9f6de54c27adc2b105da6899114ab99595add686fdd3fe3c16feaad1ed7b0  bloque_a/99_Historico_V3.0/02_System_prompts/System prompt - Motor de Cálculo Avanzado para el Analizador de Tendencias de Inversión - Versión óptima V3.0.md
+d3ee7015d79f14eedb15e68cf4b740be7860f4bb63a465dae27c502009cba43b  bloque_a/99_Historico_V3.0/02_System_prompts/System prompt - Orquestador técnico - Versión óptima V2.2.md
+f8716bdb0a024b022789e848aad04f1c9e20dce0988273256806ec5a5dde4ac5  bloque_a/99_Historico_V3.0/03_Conocimientos/Mapa de conocimientos del Motor - cobertura transversal y perfiles de clase de activo - V2.0.md
+20867eda4388d3d309b507b0dd70e36c66458b147f2f316e908a838b0248425a  bloque_a/99_Historico_V3.0/04_Catalogo/Catálogo de cálculos del Motor - V3.0.md
+dd1acf201244edb79ffe70052be64cd02051bf00a1fcb0d20c127e7cf6c711c9  bloque_a/99_Historico_V3.0/04_Catalogo/Perfiles de clase de activo del Motor - V1.0.md
+e494cb223134550fbd42a6dbcb7db148ee2afd265a327c5891a8558e4d17fa06  bloque_a/99_Historico_V3.0/05_Listados/Funciones, tareas y cometidos - Analista de hipótesis contrarias - Versión óptima V1.1.md
+10a499f03815398aa9b4d99ab4bdd1c0be2c30d2577e12ca63bfa9b39b563973  bloque_a/99_Historico_V3.0/05_Listados/Funciones, tareas y cometidos - Analizador de Tendencias de Inversión - Versión óptima V2.1.md
+2fa0196fc5f1f38c6c94108276064905602cf2c95ba360a40f4c8d911a88f5b3  bloque_a/99_Historico_V3.0/05_Listados/Funciones, tareas y cometidos - Auditor - Versión óptima V2.1.md
+fe22573747e8ec6c623a0ffaae53f0092a45d6d5c66112a6ac7bf5a9ef94583c  bloque_a/99_Historico_V3.0/05_Listados/Funciones, tareas y cometidos - Buscador de fuentes avanzadas - Versión óptima V2.1.md
+02b2331c77e798b2cc8807b348ff728204f98a22b8da8c167f2f2cef383a4311  bloque_a/99_Historico_V3.0/05_Listados/Funciones, tareas y cometidos - Documentador para el Analizador - Versión óptima V2.1.md
+a561e226a62e62b0ebb88bddc54303442b532648f0cd015caf1fadcde6282a98  bloque_a/99_Historico_V3.0/05_Listados/Funciones, tareas y cometidos - Documentador para el Motor de Cálculo Avanzado - Versión óptima V2.1.md
+24bf7bb357d8f912f35a13174cdc6304220d848603a4a65a7766c52550682d6e  bloque_a/99_Historico_V3.0/05_Listados/Funciones, tareas y cometidos - Motor de Cálculo Avanzado para el Analizador de Tendencias de Inversión - Versión óptima V3.0.md
+5224ae39bb3a127b5040608bdb84509bdc205d4e4a6cad4474d81165feec3212  bloque_a/99_Historico_V3.0/05_Listados/Funciones, tareas y cometidos - Orquestador técnico - Versión óptima V2.1.md
+ea4f956ce2b28327e2f9a1cbaa17896039828150f8894ba7ad681714f97ae794  bloque_a/99_Historico_V3.0/06_Archivos_operativos/Documentación para el Analizador de Tendencias - V2.7.md
+07ab0b19b932d43b5a5f06399c9e67481718fd50344e4aff1ab36466e5379733  bloque_a/99_Historico_V3.0/06_Archivos_operativos/Documentación para el Motor de Cálculo Avanzado - V2.3 (sin cambios).md
+066349bf66aa2c217b56cefe1bf4de51ff02cb9fd6b7dc9f38b2953311adfd06  bloque_a/99_Historico_V3.0/06_Archivos_operativos/Fondo Metodológico Bibliográfico - V2.3 (sin cambios).md
+23922f722d2f35290722a4a63e71e01f7d6fb4342670b051dabdb1903eed8fd2  bloque_a/99_Historico_V3.0/06_Archivos_operativos/Historial de auditorías (esquema V1.1).md
+df50b16903af377495d86887970172158d01bd69daa13e5bbfb10c1515a409c6  bloque_a/99_Historico_V3.0/06_Archivos_operativos/Modulo_de_Automatizacion_y_Gobernanza_Bloque_A - V1.0 (sin cambios).md
+ec65521ba89f51f57c53d38c33b5676d163382a09c109b5e8eced8f80b918042  bloque_a/99_Historico_V3.0/06_Archivos_operativos/Registro de Fuentes Fiables para el Analizador de Tendencias - V2.4.md
+18ca7fd7b74833d06a1b86d94dc3f871d4cbc94fa6e4758a2758cac0350233c7  bloque_a/99_Historico_V3.0/06_Archivos_operativos/Registro de cálculos del Motor de Cálculo Avanzado (esquema V1.2).md
+b53bdd866a635c7fa5bc7a2574bd9fe719c2c07ba16df480ae30352860b5e875  bloque_a/99_Historico_V3.0/06_Archivos_operativos/Registro de evidencia y afirmaciones (esquema V1.1).md
+54a53f0922a2740cb233627c8d73bf850fc76cefbdd98113d3b1fc14d1d08419  bloque_a/99_Historico_V3.0/06_Archivos_operativos/Registro de oportunidades e hipótesis cuantitativas (esquema V1.0).md
+b0850d35a4b002b0d9cef1bd740ee1a753b02c3b0d3b7014d328d7a0c70d2d46  bloque_a/99_Historico_V3.0/06_Archivos_operativos/Registro de pronósticos congelados (esquema V1.0).md
+7d6bd17359985026e4e139257e7240448d58f427e7eb9b84a893aae6168fccd3  bloque_a/99_Historico_V3.0/06_Archivos_operativos/Registro maestro de tendencias (esquema V1.1).md
+a59b7246c42787cb19d6fddac820f774b0d97f081f19ad8bfc6723341a339d2d  bloque_a/99_Historico_V3.0/07_Objetivos/Objetivos del Bloque A - Versión óptima V2.1.md
+7d2204b54d68253d191373fa6d6c653683a12b8657fef014f9ff7dd3c9a48701  bloque_a/99_Historico_V3.0/08_Descripcion/Arquitectura del Bloque A - Descripción detallada para LLM V2.0 (2026-11-01).md
+47afd38d14ced5bc3c3528d1cf98df85ff4c7ed1b85f5fed9074eecd323f5f56  bloque_a/99_Historico_V3.0/09_Pruebas/Plan de pruebas del Bloque A - batería mínima - V1.0.md
+983d4a70af8f261de9b2576d7c0562894d9a52d5c0d50c3f72941567f4bfa523  bloque_a/99_Historico_V3.0/README - índice de la entrega y registro de la actualización.md
+be660fc35264bb0f2602c65c2a9c6d45a1f34f79586bdbfd3b5f4d11c4a8c857  bloque_a/README - Índice de la entrega y registro de la actualización V5.1.docx
+70f6b0de3a16b14883d8ffdfbae56bfc94974bcc8e6c8c25a4d2239e4f8d544d  bloque_a/README - Índice de la entrega y registro de la actualización V5.1.md
+be5d4f2fa3bd0a212059b9a371d0d73df4675b4a47cdfe56292e1ac2b399272b  bloque_a_forex/01_Gobernanza/Documento 0 - Protocolo maestro del Bloque A Forex - Versión óptima V1.1.docx
+4ab8f5eb83b9151047c32e0b5cccda57ad515c1c094036bd90396af0063c63e1  bloque_a_forex/01_Gobernanza/Documento 0 - Protocolo maestro del Bloque A Forex - Versión óptima V1.1.md
+d623031dd5b91328211d7dae3e0af8837bcccee812d00c5609a4302833d582d8  bloque_a_forex/02_System_prompts/Marco común de los Analistas de segmento (plantilla) - Bloque A Forex - V1.0.docx
+e56d8ab249587022116d49578aeaf35055585f5ae8d29dd15ca2dfc0c236462a  bloque_a_forex/02_System_prompts/Marco común de los Analistas de segmento (plantilla) - Bloque A Forex - V1.0.md
+a9a882cd3f6636e3404f0938ca4ea8fd74413dcc3403c574dc2b88651bcfb6fd  bloque_a_forex/02_System_prompts/System prompt - Analista de Bancos Centrales y Macro Cambiaria - Bloque A Forex - Versión óptima V1.0.docx
+fa2db76dca538fd162d5322931bfa48eee97c94e2737800fbad1d1d79bd43806  bloque_a_forex/02_System_prompts/System prompt - Analista de Bancos Centrales y Macro Cambiaria - Bloque A Forex - Versión óptima V1.0.md
+7b744d8e8778448f359700fc341d9e38ffdbe561a8ff772ee8305a7b8a8fb6c8  bloque_a_forex/02_System_prompts/System prompt - Analista de Divisas Emergentes de Asia - Bloque A Forex - Versión óptima V1.0.docx
+5af320fbd5191dbc038873b2b0519e9e669181b89382e5602d5f927bf74ff185  bloque_a_forex/02_System_prompts/System prompt - Analista de Divisas Emergentes de Asia - Bloque A Forex - Versión óptima V1.0.md
+85630a8fc451f1aea4b590eefd3837e000edf41de737b7852beda525183a9105  bloque_a_forex/02_System_prompts/System prompt - Analista de Divisas Emergentes de EMEA - Bloque A Forex - Versión óptima V1.0.docx
+a247740ca5998fb7e695be60a8b2290f38b8415db263e33a1b4875b2e9053477  bloque_a_forex/02_System_prompts/System prompt - Analista de Divisas Emergentes de EMEA - Bloque A Forex - Versión óptima V1.0.md
+1e4455777103e452c0bf553dbf82e08c462712862753117399554d9985bd2369  bloque_a_forex/02_System_prompts/System prompt - Analista de Divisas Emergentes de Latinoamérica - Bloque A Forex - Versión óptima V1.0.docx
+0e839cfef24e424fd71d4f444b7b515a354c3301309afd79e15e4b5bfab6b446  bloque_a_forex/02_System_prompts/System prompt - Analista de Divisas Emergentes de Latinoamérica - Bloque A Forex - Versión óptima V1.0.md
+7731e70e4824f2543e28d7160334f8f08d172e4abba83547ff137fc31f7784e1  bloque_a_forex/02_System_prompts/System prompt - Analista de Estrategias y Cestas Cambiarias - Bloque A Forex - Versión óptima V1.0.docx
+85c58ca05453f30295df5aa354e11ca42618e94abdd5227fdbb563b70796d952  bloque_a_forex/02_System_prompts/System prompt - Analista de Estrategias y Cestas Cambiarias - Bloque A Forex - Versión óptima V1.0.md
+366db52d948d45cfe6de60b20b1657fee369881fe0b75cf3c6ef1e807391e7ab  bloque_a_forex/02_System_prompts/System prompt - Analista de G10 de materias primas y escandinavas - Bloque A Forex - Versión óptima V1.0.docx
+7ed3b529f854e3b6111ba5fa229ed3b6ae052da39b200d18110efabaf5b443a0  bloque_a_forex/02_System_prompts/System prompt - Analista de G10 de materias primas y escandinavas - Bloque A Forex - Versión óptima V1.0.md
+f95abbfdf10aae710ed61da2e0969f7fbd8f79b2a596a6f7c2a0754f531b1065  bloque_a_forex/02_System_prompts/System prompt - Analista de G10 núcleo - Bloque A Forex - Versión óptima V1.0.docx
+8a3fb772c2efc8edb9eff58777bb0e2513591e10c137e393c0037f724e4693e4  bloque_a_forex/02_System_prompts/System prompt - Analista de G10 núcleo - Bloque A Forex - Versión óptima V1.0.md
+6242b59c740e207c211bdf555b95f4411fa94070ebe62455c816fe4eb8804421  bloque_a_forex/02_System_prompts/System prompt - Analista de Posicionamiento, Flujos y Volatilidad Cambiaria - Bloque A Forex - Versión óptima V1.0.docx
+99eaba7a25fdc1c549dc4d125cdfb98607e9e1fcba0a58e86ece607252435819  bloque_a_forex/02_System_prompts/System prompt - Analista de Posicionamiento, Flujos y Volatilidad Cambiaria - Bloque A Forex - Versión óptima V1.0.md
+ced7acce111c9fdf18fa772d5f590697f9712741d038dc8d3639990c161689a3  bloque_a_forex/02_System_prompts/System prompt - Analista de Prospectiva y Horizontes - Bloque A Forex - Versión óptima V1.0.docx
+798947295db3658bde37f44e2b318963de4750dd649ea03a6fd62c49c84d9f23  bloque_a_forex/02_System_prompts/System prompt - Analista de Prospectiva y Horizontes - Bloque A Forex - Versión óptima V1.0.md
+633252c2901f52d0bc52427d02705fd1abef48623b2b4963ba7fa5d8e944cb39  bloque_a_forex/02_System_prompts/System prompt - Analista de hipótesis contrarias - Bloque A Forex - Versión óptima V1.0.docx
+12cec600fa37717e94588d42dd3d1465aba5de5fdeb8b6ca5d0c9cae5884ab5f  bloque_a_forex/02_System_prompts/System prompt - Analista de hipótesis contrarias - Bloque A Forex - Versión óptima V1.0.md
+6e6c0bb78f6fa1bab46d8d18a7713ccc9a38c301b12c6692b07a2fb6fcad8ac4  bloque_a_forex/02_System_prompts/System prompt - Analizador de Oportunidades en Divisas - Bloque A Forex - Versión óptima V1.0.docx
+de8e81a54a260b7a0f64ec7dd609c7370f46cf5e0f6eeddcbd5d4901d3433aed  bloque_a_forex/02_System_prompts/System prompt - Analizador de Oportunidades en Divisas - Bloque A Forex - Versión óptima V1.0.md
+429ca16791f3774a1072ea8ea1d129aa615c8d6f7415224013473cc2acab3ba7  bloque_a_forex/02_System_prompts/System prompt - Auditor - Bloque A Forex - Versión óptima V1.0.docx
+692dd09b433b37b616181d8884cf444d66aa96034c8698302331bd41a9396db1  bloque_a_forex/02_System_prompts/System prompt - Auditor - Bloque A Forex - Versión óptima V1.0.md
+8f9371d7299c6955e4a05350a4891001d467f2056b408507c2c391a155bc1b1b  bloque_a_forex/02_System_prompts/System prompt - Buscador de Fuentes Avanzadas - Bloque A Forex - Versión óptima V1.0.docx
+c1553736f0ccdc6a69dd4b614e21f5f0d3e2f85cf5678b74e04a906c3c8ebc2b  bloque_a_forex/02_System_prompts/System prompt - Buscador de Fuentes Avanzadas - Bloque A Forex - Versión óptima V1.0.md
+75837dc23c58165045af491b27fbed5b50461e57cc2a5f4bd31889630b9f792f  bloque_a_forex/02_System_prompts/System prompt - Coordinador de Peticiones y Consultas - Bloque A Forex - Versión óptima V1.0.docx
+f83b244015de2f5a708671e8f7f9e985f0e8759f55a9c96a858106aad5eb6e3a  bloque_a_forex/02_System_prompts/System prompt - Coordinador de Peticiones y Consultas - Bloque A Forex - Versión óptima V1.0.md
+3767ad1465572691efef82b417d58ac00fdce04f9b897b93169b2c3499888a1f  bloque_a_forex/02_System_prompts/System prompt - Curador de Evidencia - Bloque A Forex - Versión óptima V1.0.docx
+e9bc06d6695ce9b90acdf38b4e681361f3b780372c07b0f7d7cc8fd046d0d1d6  bloque_a_forex/02_System_prompts/System prompt - Curador de Evidencia - Bloque A Forex - Versión óptima V1.0.md
+110f4da4dba07e351cc41a41f0e6e118566cdf32f54b3ed529371e87b55be6d3  bloque_a_forex/02_System_prompts/System prompt - Documentador para el Analizador - Bloque A Forex - Versión óptima V1.0.docx
+20fff6f68de8d6824c52875553cc89d198a17a2d18cbedff6f5b00f85321041d  bloque_a_forex/02_System_prompts/System prompt - Documentador para el Analizador - Bloque A Forex - Versión óptima V1.0.md
+6d7c15c9ac345544bbccb4d0998b8ef2ebb834fb390fb3e8da480e2065642f30  bloque_a_forex/02_System_prompts/System prompt - Documentador para el Motor de Cálculo Avanzado - Bloque A Forex - Versión óptima V1.0.docx
+a29aedefe26572169448bd852d2d9b15acbe7efd8297e12223756817d435ef51  bloque_a_forex/02_System_prompts/System prompt - Documentador para el Motor de Cálculo Avanzado - Bloque A Forex - Versión óptima V1.0.md
+be7eca3cdb0b4ff32145fbda880fab4ed7c1cefe1145cbe2debca3413cc99aff  bloque_a_forex/02_System_prompts/System prompt - Evaluador de Previsiones y Aprendizaje - Bloque A Forex - Versión óptima V1.0.docx
+ac85f998570093bc2e6899cbe1c4d3b5034f2598d398f7ac53204be645b5edb4  bloque_a_forex/02_System_prompts/System prompt - Evaluador de Previsiones y Aprendizaje - Bloque A Forex - Versión óptima V1.0.md
+aab00773b1d0879aec57ae77e1ad17d5947b24734b0b71aaa57b09156a622805  bloque_a_forex/02_System_prompts/System prompt - MC-01 Fundamentos cuantitativos y estadística - Bloque A Forex - Versión óptima V1.0.docx
+5e637a710269fefbf194872ba382914ac12d114d5b2ddee1cf968f73c78a868e  bloque_a_forex/02_System_prompts/System prompt - MC-01 Fundamentos cuantitativos y estadística - Bloque A Forex - Versión óptima V1.0.md
+79db1a08edcb41ffcecaacd13ed09ee53811fbb52d93361aa9a9821f96125813  bloque_a_forex/02_System_prompts/System prompt - MC-02 Series temporales, tendencias, regímenes y volatilidad - Bloque A Forex - Versión óptima V1.0.docx
+58239d2f3f2b6b21a1495ef6b91a8890c7df5be2f17fa19b5dabdd8d15d81684  bloque_a_forex/02_System_prompts/System prompt - MC-02 Series temporales, tendencias, regímenes y volatilidad - Bloque A Forex - Versión óptima V1.0.md
+8f02018f2032463aaddd02eaa183ae10136aeda404356ac27ab92c7f9cc31369  bloque_a_forex/02_System_prompts/System prompt - MC-03 Econometría, causalidad y macroeconomía cuantitativa - Bloque A Forex - Versión óptima V1.0.docx
+4118980df2be7cf02add2432512d6241287fe0bd5237eed586a7cc00d50f59e8  bloque_a_forex/02_System_prompts/System prompt - MC-03 Econometría, causalidad y macroeconomía cuantitativa - Bloque A Forex - Versión óptima V1.0.md
+99ccab19755d1d2e161dc34884e838081a469f92a5d021956b8cf30d82acac8b  bloque_a_forex/02_System_prompts/System prompt - MC-04 Crecimiento, difusión y prospectiva cuantitativa - Bloque A Forex - Versión óptima V1.0.docx
+47a3bbe1258dbfc896f306066f44f6028a32252ee4b3647e5237f395fff0dc4a  bloque_a_forex/02_System_prompts/System prompt - MC-04 Crecimiento, difusión y prospectiva cuantitativa - Bloque A Forex - Versión óptima V1.0.md
+6402a6c20bb81044dc6abc47827a81a5188de839fa727d92a169184b76dfb4b4  bloque_a_forex/02_System_prompts/System prompt - MC-05 Simulación estocástica y escenarios - Bloque A Forex - Versión óptima V1.0.docx
+5b84c3df014947d83086d511f7e7de38c236a757a3f7be44608ed376353a9320  bloque_a_forex/02_System_prompts/System prompt - MC-05 Simulación estocástica y escenarios - Bloque A Forex - Versión óptima V1.0.md
+f7a4da7e9e87e03dde9d075b7313d6b6237f85e3c3b35165de2c50287908dd1a  bloque_a_forex/02_System_prompts/System prompt - MC-06 Aprendizaje automático y predicción calibrada - Bloque A Forex - Versión óptima V1.0.docx
+25becff44680f8e8e8d2c6413dee15b17a3e7643e9a7bb89412b25c71adb1eb1  bloque_a_forex/02_System_prompts/System prompt - MC-06 Aprendizaje automático y predicción calibrada - Bloque A Forex - Versión óptima V1.0.md
+1c50762080ba17db97ad6786bd9c8ef64b91855d621d99484b714ece41dfaa69  bloque_a_forex/02_System_prompts/System prompt - MC-07 Optimización, decisión y riesgo - Bloque A Forex - Versión óptima V1.0.docx
+d6b5e50f313bc61268b8876b958d48b156ca8c2de53ae37b7f3103ac1ef8b0e4  bloque_a_forex/02_System_prompts/System prompt - MC-07 Optimización, decisión y riesgo - Bloque A Forex - Versión óptima V1.0.md
+3cc771bdfbdf7933d19fc225abbbf69c2eb55914ed405f73fec853f29ae5b8b2  bloque_a_forex/02_System_prompts/System prompt - MC-08 Auditoría cuantitativa independiente - Bloque A Forex - Versión óptima V1.0.docx
+b7da7b0913c1eae79536c03a62ea7450776435dff6e317b1cf246e13e0f6c512  bloque_a_forex/02_System_prompts/System prompt - MC-08 Auditoría cuantitativa independiente - Bloque A Forex - Versión óptima V1.0.md
+f62ff609ae977b029aa36d6f5d492fad4624e2254cf85a5b2f1e9c8417c13a6d  bloque_a_forex/02_System_prompts/System prompt - MC-09 Valoración y modelos de precios de activos - Bloque A Forex - Versión óptima V1.0.docx
+2d668070aa34a3fc159eb5b8cd1b92ff9ce24182ca49588cb90bd8a19774c953  bloque_a_forex/02_System_prompts/System prompt - MC-09 Valoración y modelos de precios de activos - Bloque A Forex - Versión óptima V1.0.md
+33a12ce253f7bb15b511bf734c7cbe297bbd5b5c5877f9b8b5032dcfc39cc9fa  bloque_a_forex/02_System_prompts/System prompt - MC-10 Evaluación predictiva y backtesting - Bloque A Forex - Versión óptima V1.0.docx
+13521f42f61ab8d2039a7720cc22a7d9f268e2fa98969a5a7c390e096ca150be  bloque_a_forex/02_System_prompts/System prompt - MC-10 Evaluación predictiva y backtesting - Bloque A Forex - Versión óptima V1.0.md
+abf00961fad68b1054539ea56933ac825251e13c48c2b200af079ff84d0ac96e  bloque_a_forex/02_System_prompts/System prompt - Motor de Cálculo Avanzado (Forex) - Bloque A Forex - Versión óptima V1.0.docx
+497da23156fb27b7a08df89065cca0cf471d116076c7f4b039691bdd7f5ee4b9  bloque_a_forex/02_System_prompts/System prompt - Motor de Cálculo Avanzado (Forex) - Bloque A Forex - Versión óptima V1.0.md
+aabbd26e03d9c78f8e33e69c327e8dbfc6bc3e87a8a98827cb4d961ef366fb06  bloque_a_forex/02_System_prompts/System prompt - Orquestador técnico - Bloque A Forex - Versión óptima V1.0.docx
+4e7f88009aac967f69225994eb31f3772116da6fabe3a65781213f2c76eeef75  bloque_a_forex/02_System_prompts/System prompt - Orquestador técnico - Bloque A Forex - Versión óptima V1.0.md
+3fa294d2efdb35f6a3daea260a23a41e75a9e13112696f17087e8afef8ce9ac1  bloque_a_forex/02_System_prompts/System prompt - Redactor y Diseñador de Informes - Bloque A Forex - Versión óptima V1.0.docx
+2043ec261450830d00263df33efc1005d0a158d2bdc540906eaec5169b005322  bloque_a_forex/02_System_prompts/System prompt - Redactor y Diseñador de Informes - Bloque A Forex - Versión óptima V1.0.md
+da6624d51b2d5bca6f6bc394ed5e85e1bce530b919dac459e5fe54d77cc0b976  bloque_a_forex/03_Funciones/Funciones, tareas y cometidos – Analista de Bancos Centrales y Macro Cambiaria – Bloque A Forex – óptima V1.0.docx
+2e655f2690d0c022a7ef501ce2b46aa0fd672ccbe73fc39e3d4f788aa1a889ff  bloque_a_forex/03_Funciones/Funciones, tareas y cometidos – Analista de Bancos Centrales y Macro Cambiaria – Bloque A Forex – óptima V1.0.md
+4830dae1c465a2c1f6fd90611c05c21973883b65f81c4d209550cc0822fcfc7b  bloque_a_forex/03_Funciones/Funciones, tareas y cometidos – Analista de Divisas Emergentes de Asia – Bloque A Forex – óptima V1.0.docx
+d4e6c200089c6b0f06879e5ca5c10988baf8019b5ad20971974a903388d373cc  bloque_a_forex/03_Funciones/Funciones, tareas y cometidos – Analista de Divisas Emergentes de Asia – Bloque A Forex – óptima V1.0.md
+401dbe720139b121cbb43038f9df1a3f7c55d5998cbbb6e5568b6bff0702cdae  bloque_a_forex/03_Funciones/Funciones, tareas y cometidos – Analista de Divisas Emergentes de EMEA – Bloque A Forex – óptima V1.0.docx
+25cfef04a4bea3240fc83e40995cdbec5fdfa0031bc266cf445fe81bb396e5dc  bloque_a_forex/03_Funciones/Funciones, tareas y cometidos – Analista de Divisas Emergentes de EMEA – Bloque A Forex – óptima V1.0.md
+ecc5b596f1ca3f1b07bb8da079b8157a74e15a3a090078e166a52c88ae052073  bloque_a_forex/03_Funciones/Funciones, tareas y cometidos – Analista de Divisas Emergentes de Latinoamérica – Bloque A Forex – óptima V1.0.docx
+b02657deb9948df7e60c1e88314d364bcf8e09c7bace0f64997f56d1e5b9bc89  bloque_a_forex/03_Funciones/Funciones, tareas y cometidos – Analista de Divisas Emergentes de Latinoamérica – Bloque A Forex – óptima V1.0.md
+ac47c366d9d0c8d225eb5dfaa567802c87884aa2c5221e642c7d9146c34fcb5f  bloque_a_forex/03_Funciones/Funciones, tareas y cometidos – Analista de Estrategias y Cestas Cambiarias – Bloque A Forex – óptima V1.0.docx
+171736a71670e5f21901a8e7840dda850d7b8615a1b749312d60275a3348f605  bloque_a_forex/03_Funciones/Funciones, tareas y cometidos – Analista de Estrategias y Cestas Cambiarias – Bloque A Forex – óptima V1.0.md
+87b6cc171874e4bf221facba9741b4608d9baa783f3211b56d235265bbc1624b  bloque_a_forex/03_Funciones/Funciones, tareas y cometidos – Analista de G10 de materias primas y escandinavas – Bloque A Forex – óptima V1.0.docx
+f7991c5cd68ef62a9b83134aa350a77a18de2e984df9bf9dd4b8a2583cd4dfbe  bloque_a_forex/03_Funciones/Funciones, tareas y cometidos – Analista de G10 de materias primas y escandinavas – Bloque A Forex – óptima V1.0.md
+d54318a0a6e30249d58b99e09adce3e2e55e52fb69822b040a1d77af44864475  bloque_a_forex/03_Funciones/Funciones, tareas y cometidos – Analista de G10 núcleo – Bloque A Forex – óptima V1.0.docx
+bf36fea1dc02ef2b993161db315299679b2b6419b275c77da177f25fd5a134df  bloque_a_forex/03_Funciones/Funciones, tareas y cometidos – Analista de G10 núcleo – Bloque A Forex – óptima V1.0.md
+42fb5ad24a1f912223ae769cad19ee484d8b5d0c418c122968f16ebef6297f38  bloque_a_forex/03_Funciones/Funciones, tareas y cometidos – Analista de Posicionamiento, Flujos y Volatilidad Cambiaria – Bloque A Forex – óptima V1.0.docx
+6d5931031bfdaa1b563076e3554c35ed53e5860b15468fd28041a9da0009199b  bloque_a_forex/03_Funciones/Funciones, tareas y cometidos – Analista de Posicionamiento, Flujos y Volatilidad Cambiaria – Bloque A Forex – óptima V1.0.md
+d8441926c4c354fb09044b0f21010ab53e9567d3b4f9b34d7c487997e3ead8ca  bloque_a_forex/03_Funciones/Funciones, tareas y cometidos – Analista de Prospectiva y Horizontes – Bloque A Forex – óptima V1.0.docx
+3a3628162f75f4cf326a0a68b73f3d7947b99f734e6ff699ef3514c7dd69ac39  bloque_a_forex/03_Funciones/Funciones, tareas y cometidos – Analista de Prospectiva y Horizontes – Bloque A Forex – óptima V1.0.md
+24ba53c1d6a57c51a421279fbda38587f5923fb72fc850ec3def1ae71ec357f6  bloque_a_forex/03_Funciones/Funciones, tareas y cometidos – Analista de hipótesis contrarias – Bloque A Forex – óptima V1.0.docx
+dfd3d7c5bc754f31692ab72aa8656dc3f5fe30b8bdf1e3372890c90b5d891ae7  bloque_a_forex/03_Funciones/Funciones, tareas y cometidos – Analista de hipótesis contrarias – Bloque A Forex – óptima V1.0.md
+f5258decead1f2ddb66028dc80a5359610c1ab77ca10dcd4cd8e61207de8d43b  bloque_a_forex/03_Funciones/Funciones, tareas y cometidos – Analizador de Oportunidades en Divisas – Bloque A Forex – óptima V1.0.docx
+bc53ee98223aeb103b53cb31e039787e6a15002c4db7fbbd4184b7fd084acf51  bloque_a_forex/03_Funciones/Funciones, tareas y cometidos – Analizador de Oportunidades en Divisas – Bloque A Forex – óptima V1.0.md
+5344b2ea74ae7b36a2d4a0ec989a4851bdc176d404c48c45ef1b7ea7b6078e78  bloque_a_forex/03_Funciones/Funciones, tareas y cometidos – Auditor – Bloque A Forex – óptima V1.0.docx
+4e30de3b7b4a47d7c06b05a29f7c0b3fd38195c6bc9ee817662c5a9d6a86238a  bloque_a_forex/03_Funciones/Funciones, tareas y cometidos – Auditor – Bloque A Forex – óptima V1.0.md
+fcc26757d4d0436346ad59abe7ff3e08c61c64f2e38382206e9923bdd7c37e6c  bloque_a_forex/03_Funciones/Funciones, tareas y cometidos – Buscador de Fuentes Avanzadas – Bloque A Forex – óptima V1.0.docx
+8e847b634ead2132968566aa0b72b9d0e9789c981d7afbb4991f82e396258ea7  bloque_a_forex/03_Funciones/Funciones, tareas y cometidos – Buscador de Fuentes Avanzadas – Bloque A Forex – óptima V1.0.md
+29d6a864208b63ef652db607c435facf17ce2d71db82f680b580253bd0013794  bloque_a_forex/03_Funciones/Funciones, tareas y cometidos – Coordinador de Peticiones y Consultas – Bloque A Forex – óptima V1.0.docx
+252f2f717de9c67c4c637040a87338c808a1a022e2a79a82efa5eadc7821a13d  bloque_a_forex/03_Funciones/Funciones, tareas y cometidos – Coordinador de Peticiones y Consultas – Bloque A Forex – óptima V1.0.md
+fa40d264f6726b1188f0bb0d2df6abca705510a586c04085b92c82341212f10d  bloque_a_forex/03_Funciones/Funciones, tareas y cometidos – Curador de Evidencia – Bloque A Forex – óptima V1.0.docx
+e8f8ccdf791a5c51164732759ac5aa1f3a169e201e53fa847bf4d22e82cf674a  bloque_a_forex/03_Funciones/Funciones, tareas y cometidos – Curador de Evidencia – Bloque A Forex – óptima V1.0.md
+c93a73b3eab0b24e212e035bfc73be3d834139c2ac37e885a6b8831b3ab42b16  bloque_a_forex/03_Funciones/Funciones, tareas y cometidos – Documentador para el Analizador – Bloque A Forex – óptima V1.0.docx
+b35edffcd14191525d35d6880f8bafff058dc40c203fd80a017176b7ef3fc16d  bloque_a_forex/03_Funciones/Funciones, tareas y cometidos – Documentador para el Analizador – Bloque A Forex – óptima V1.0.md
+aa798f8fb5198238297deaa5d502d061fc6d168975e40d08a2519a8b05cddde4  bloque_a_forex/03_Funciones/Funciones, tareas y cometidos – Documentador para el Motor de Cálculo Avanzado – Bloque A Forex – óptima V1.0.docx
+101c546be23755f34377f110616be46ab4ffec6c69abfca2b38bfb00c24c90dd  bloque_a_forex/03_Funciones/Funciones, tareas y cometidos – Documentador para el Motor de Cálculo Avanzado – Bloque A Forex – óptima V1.0.md
+a595dbf859cfb3778b6147a68f6010be23d8bddbf133f29e342d273671fc7915  bloque_a_forex/03_Funciones/Funciones, tareas y cometidos – Evaluador de Previsiones y Aprendizaje – Bloque A Forex – óptima V1.0.docx
+8197a98eba1f2f07d040b6cceccba6df8f3ca1134e3205028793db2ccf188c0f  bloque_a_forex/03_Funciones/Funciones, tareas y cometidos – Evaluador de Previsiones y Aprendizaje – Bloque A Forex – óptima V1.0.md
+63824b8deaafa97fc1b37f7f760ed7f20f7466ae4157b08db6c76406674af8a5  bloque_a_forex/03_Funciones/Funciones, tareas y cometidos – Motor de Cálculo Avanzado (Forex) – Bloque A Forex – óptima V1.0.docx
+c99d1969c44481a14cc12741876b64e6a2521f20c47c27391395a7786319ed8b  bloque_a_forex/03_Funciones/Funciones, tareas y cometidos – Motor de Cálculo Avanzado (Forex) – Bloque A Forex – óptima V1.0.md
+a46293a6bf4e531f3882a1e1b01589dd262e0fdca81c4a09e1c62e811555ce4e  bloque_a_forex/03_Funciones/Funciones, tareas y cometidos – Orquestador técnico – Bloque A Forex – óptima V1.0.docx
+837f0c05282d8591e4d78e8b0f144e34a54dc4a73927ccbd037701b6d3559875  bloque_a_forex/03_Funciones/Funciones, tareas y cometidos – Orquestador técnico – Bloque A Forex – óptima V1.0.md
+875143b82b81160e7db5bf23aa84226ce9b9339322cd39c6887073cee8463f6e  bloque_a_forex/03_Funciones/Funciones, tareas y cometidos – Redactor y Diseñador de Informes – Bloque A Forex – óptima V1.0.docx
+9c494a479eeebac2351701950a7eacfa36fc8e75255e58a7a1d864c2602d7bca  bloque_a_forex/03_Funciones/Funciones, tareas y cometidos – Redactor y Diseñador de Informes – Bloque A Forex – óptima V1.0.md
+8d132da6aa4583c413075135e2d09dfbbe320cb4fe9943dc71a5202af2be3da0  bloque_a_forex/04_Motor_conocimiento_y_catalogo/Catálogo de cálculos del Motor - Bloque A Forex - V1.0.docx
+9031fdf708012a9e3ef7a6ba1a2cc9f680e7e1c1b155d6678739cbdb331f80e9  bloque_a_forex/04_Motor_conocimiento_y_catalogo/Catálogo de cálculos del Motor - Bloque A Forex - V1.0.md
+a18041ddfd7a8e328f70fcc0a75ca4e1548a2e22ca1d8fcab7ba72b2ba204d73  bloque_a_forex/04_Motor_conocimiento_y_catalogo/Mapa de conocimientos del Motor - Bloque A Forex - V1.0.docx
+bdf85f37bfea6ddc554209bc0b95d2672260d608ff23557e2c12eb7db625cad2  bloque_a_forex/04_Motor_conocimiento_y_catalogo/Mapa de conocimientos del Motor - Bloque A Forex - V1.0.md
+ac34c15229df3bc44d92cd916616e724562c3e779c565069b3045fa19db22bc5  bloque_a_forex/04_Motor_conocimiento_y_catalogo/Perfiles cambiarios del Motor - Bloque A Forex - V1.0.docx
+f70f83971ebbb777dd30513eea19a689e12238760273f85fd0d21c4b36e000eb  bloque_a_forex/04_Motor_conocimiento_y_catalogo/Perfiles cambiarios del Motor - Bloque A Forex - V1.0.md
+9968a169f930007e84212755f31b44ec8248e2c419737ad3933032e673ce28c7  bloque_a_forex/05_Archivos_operativos/Configuración y parámetros del bloque (esquema Bloque A Forex V1.0).docx
+e50b607737032d3309d6d253f09f7245d8a51a237ddb8489a648be04ea6f9ca9  bloque_a_forex/05_Archivos_operativos/Configuración y parámetros del bloque (esquema Bloque A Forex V1.0).md
+6eda870a07c25d255e005e81c1ec0acbbf9fa5a78ad2b70576ed71f468738e15  bloque_a_forex/05_Archivos_operativos/Documentación para el Analizador de Oportunidades en Divisas - V1.0.docx
+fecac105724949119e4d105325c8728cdf5754129a55945fe324ffee331fc42f  bloque_a_forex/05_Archivos_operativos/Documentación para el Analizador de Oportunidades en Divisas - V1.0.md
+cfa9f52946554eb9e70f89dea75ad67186a57231631991b8fabda3970a46a332  bloque_a_forex/05_Archivos_operativos/Documentación para el Motor de Cálculo Avanzado (Forex) - V1.0.docx
+768954e93e4e46e8067c5240df4952ca6b157cd54d351b242c5bb48fa993dd5d  bloque_a_forex/05_Archivos_operativos/Documentación para el Motor de Cálculo Avanzado (Forex) - V1.0.md
+4e590414f92645eb26798dca5f736210ca41d442f789eb7aa4ea7da41578d98b  bloque_a_forex/05_Archivos_operativos/Fondo Metodológico Bibliográfico - V3.1.docx
+65d3ec6c01b440f704ddbccca89600c2ae7bdc53528e324c73e6bec22d2b0187  bloque_a_forex/05_Archivos_operativos/Fondo Metodológico Bibliográfico - V3.1.md
+20c18083c9ae5db0e9516c70f9c7df66919029534f5b89bb921f408b5be20708  bloque_a_forex/05_Archivos_operativos/Historial de análisis (esquema Bloque A Forex V1.0).docx
+76e1944ca5fc6123a650a57b551ea24b128af0be05eeaa15549b4de3c262e075  bloque_a_forex/05_Archivos_operativos/Historial de análisis (esquema Bloque A Forex V1.0).md
+a2173529bcf4aeb118e92dd8e61888218ea8f6444464840ea102b6255ec1ea02  bloque_a_forex/05_Archivos_operativos/Historial de auditorías (esquema Bloque A Forex V1.0).docx
+700c62d6825897a9b44e22ed8a50d69691b61a279008aeadc77d9c93141fa288  bloque_a_forex/05_Archivos_operativos/Historial de auditorías (esquema Bloque A Forex V1.0).md
+ab3398a896409b6230ed3f477ecc248bb777243016d1f16909c932cb0ca50e89  bloque_a_forex/05_Archivos_operativos/Memoria de aprendizaje (esquema Bloque A Forex V1.0).docx
+fb8d72a44e28fcf8983ebfc1dd9b39e8b3c32a64cedd3a14107dcbe24e0b3082  bloque_a_forex/05_Archivos_operativos/Memoria de aprendizaje (esquema Bloque A Forex V1.0).md
+45fbed9741fe033072489cae15b8b60c7a9db17ad39a939a84c99f8857a6ddae  bloque_a_forex/05_Archivos_operativos/Registro de Fuentes para el Analizador de Oportunidades en Divisas - V1.0.docx
+3cf1afba110bd4269216ed37cf41f298291098b6de8dab82d9a89d85ad2266b3  bloque_a_forex/05_Archivos_operativos/Registro de Fuentes para el Analizador de Oportunidades en Divisas - V1.0.md
+e5bcd0d852bc3a34237bdb7539c674edd54cabb1cb941e8111e402bfe8f5ba22  bloque_a_forex/05_Archivos_operativos/Registro de cálculos del Motor (esquema Bloque A Forex V1.0).docx
+b1a683b113480671fd1b570b8ce383c98113c202e38365c3942a26189c6d2621  bloque_a_forex/05_Archivos_operativos/Registro de cálculos del Motor (esquema Bloque A Forex V1.0).md
+0a11f844347e274d070ae4fb15bd00061160b8ad30659eee9dfaa1ed03a6d75d  bloque_a_forex/05_Archivos_operativos/Registro de evidencia y afirmaciones (esquema Bloque A Forex V1.0).docx
+97f0a7d0da59ef238b2162729822d5e4e35bfd999e1d3378ae878247cd7389b8  bloque_a_forex/05_Archivos_operativos/Registro de evidencia y afirmaciones (esquema Bloque A Forex V1.0).md
+c84357d37e6c2a35f49a8ce2f37db529b031327ee496349425cbc6dd97d09d06  bloque_a_forex/05_Archivos_operativos/Registro de oportunidades (esquema Bloque A Forex V1.0).docx
+0e35fe7b29a55bc35dfb9108e066248b2313012bb5be7e5843d788e1b0847c4a  bloque_a_forex/05_Archivos_operativos/Registro de oportunidades (esquema Bloque A Forex V1.0).md
+e1db450b38d66e0672aa3e58df653eed6fe71f713dd1490da6c2eac3349af8e0  bloque_a_forex/05_Archivos_operativos/Registro de pronósticos congelados (esquema Bloque A Forex V1.0).docx
+a9c36ece4b941d8f8ed31118963bb16184db3a86537e766ce469777e2b8ee828  bloque_a_forex/05_Archivos_operativos/Registro de pronósticos congelados (esquema Bloque A Forex V1.0).md
+3f0075174c22672a4f06d59e301949a46621cdb6ec5589b73bbb9ea37f9f86d5  bloque_a_forex/05_Archivos_operativos/Registro de seguimientos encargados (esquema Bloque A Forex V1.1).docx
+2af6cef2181bc9288f7decba7c2f1caf670c7ccb455de2f4e255000b2a1b826a  bloque_a_forex/05_Archivos_operativos/Registro de seguimientos encargados (esquema Bloque A Forex V1.1).md
+ca5712a5c0231e992575777c5c8c9f1246aca7f470a5d27d27648a51e1d4fc6b  bloque_a_forex/05_Archivos_operativos/Registro maestro de tendencias (esquema Bloque A Forex V1.0).docx
+fbff9a6508a3fd4a2fabfb440b4ef0ddc66c2f9f4cf1d970a503b4cce4bd3c76  bloque_a_forex/05_Archivos_operativos/Registro maestro de tendencias (esquema Bloque A Forex V1.0).md
+e66550f9e859e95b1ede400aa532b345213ebc44c8d19c9e26dd8bf5a72ee369  bloque_a_forex/06_Plantillas_entregables/Ejemplo - Informe de seguimiento de opción - Bloque A Forex - V1.1.json
+27af6dca21fbd3b0233b71da2580a9a6db9f232d6067993e52711704f5f6682c  bloque_a_forex/06_Plantillas_entregables/Ejemplo - Informe visual Forex (escritorio).png
+ac0dead04adbb498f77154135f69f73d2ff962efa5eb85a02e0d4fd9f5b33448  bloque_a_forex/06_Plantillas_entregables/Ejemplo - Informe visual Forex (móvil).png
+7de142f35987f25d2e764fee01d5856f2ef4afeba05ff5be9edc623884ef8e88  bloque_a_forex/06_Plantillas_entregables/Ejemplo - Paquete de oportunidades - Bloque A Forex - V1.0.json
+e7f722ee409c4cacb8d83c1d6e313131c2fdcfc994d420903fb434667c5b31a2  bloque_a_forex/06_Plantillas_entregables/Esquema JSON - Paquete de oportunidades - Bloque A Forex - V1.0.json
+c39910c2af12e8a0031bebb3f01b1f1fbdedea5fb56a47f075bc53bd7a658916  bloque_a_forex/06_Plantillas_entregables/Plantilla - Informe de seguimiento de opción - Bloque A Forex - V1.1.md
+a190d2dfff72d1643d0097d13683f048fdaf27678603605eadc9f9fd9af29d20  bloque_a_forex/06_Plantillas_entregables/Plantilla - Informe técnico para el Broker - Bloque A Forex - V1.0.md
+d070b38946a23cbef74ca41822f900aaa216db326fc99c9a80a05b15f98ad53f  bloque_a_forex/06_Plantillas_entregables/Plantilla - Informe visual para el usuario - Bloque A Forex - V1.0.html
+105b8c15e103d924f7450de298cb22dc35c8aeaebd168578ce65e91f9b173917  bloque_a_forex/07_Objetivos/Objetivos del Bloque A Forex - Versión óptima V1.0.docx
+91d67af77bf2b93336525d6278851f1cc75dac58b778148d1a3f059d0ccc33cf  bloque_a_forex/07_Objetivos/Objetivos del Bloque A Forex - Versión óptima V1.0.md
+1625ba0d78ce34678c214fb93adddc5714df15fe1b74631c296ce56a1e7b7b66  bloque_a_forex/08_Arquitectura/Arquitectura del Bloque A Forex - Descripción detallada para LLM - V1.0.docx
+d72434a07f825bff87ca54d9d05a85022d3db813e61322298257c493fd96e988  bloque_a_forex/08_Arquitectura/Arquitectura del Bloque A Forex - Descripción detallada para LLM - V1.0.md
+18a42a86db2d6430a1e86711fd98203f0e4ced7bf9b90fecb3c48f216678cac1  bloque_a_forex/08_Arquitectura/Arquitectura del Bloque A Forex - V1.1.png
+5b2d844d0aac75b0ab317a45674ec8b2d2394c33304649d89aa6a750dd84fb72  bloque_a_forex/08_Arquitectura/Arquitectura del Bloque A Forex - V1.1.svg
+0957147092201652669fde058286619aeb11ae2329927cb7cba3b40b91dee040  bloque_a_forex/09_Pruebas/Plan de pruebas del Bloque A Forex - V1.0.docx
+5390dd2d92cd83f1cf4b209f4fe3c18f72473e1d6788b66f5616cd75c4352ce7  bloque_a_forex/09_Pruebas/Plan de pruebas del Bloque A Forex - V1.0.md
+ecfeb0a99829de3f30a875995943e368d31c89d1aa6b78914e1a174644718029  bloque_a_forex/10_Herramientas/README.md
+6117559d62d87bfdcf18140ea0ed737ddc58c2daf755f35766c566f1b309a15d  bloque_a_forex/10_Herramientas/ejemplos/artefactos_ejemplo.json
+b8f36592aec5b46c9865937f1ad9d87c8eafb177e44cf3c5f86907db52ea497e  bloque_a_forex/10_Herramientas/ejemplos/certificados_ejemplo.json
+8809a156f662e446b2598a43d8dc215adb5ca172692563f45f8aebe1d2f26ca5  bloque_a_forex/10_Herramientas/ejemplos/desgloses_ejemplo.json
+97910011a291bc83fc3833e8af0c2c948b84df12de3c2bbab335b1c4add7fbf1  bloque_a_forex/10_Herramientas/ejemplos/ht03_entrada_ejemplo.json
+e66550f9e859e95b1ede400aa532b345213ebc44c8d19c9e26dd8bf5a72ee369  bloque_a_forex/10_Herramientas/ejemplos/informe_seguimiento_ejemplo.json
+51bf917e755f8d1096ef92d866fd84f5e071e535b1a5c175a566270829193ec7  bloque_a_forex/10_Herramientas/ejemplos/informe_visual_ejemplo.html
+362b16ef43cf35f2ffece2fe61f718f161e10da0f0200eb7592a25c370cd6334  bloque_a_forex/10_Herramientas/ejemplos/jerga_personalizada.txt
+f5f6ddacbe837eab09a79e5f5c8ebb2b80a37b92425192323d91f3eeebcf3a77  bloque_a_forex/10_Herramientas/ejemplos/paquete_oportunidades_ejemplo.json
+8cb267ca6f0cd00d93e825a3d58d7861013cc62aeecc86ec53e78144e4c470f2  bloque_a_forex/10_Herramientas/ejemplos/referencias_ejemplo.md
+38a8d38b7c58dd7b07e0f580031d1807d00e5a121b0f7773d7dae1b8ef555912  bloque_a_forex/10_Herramientas/ejemplos/trazas_ejemplo.json
+bc70c71428cab92cae96110e132d34cbf62ac777c88a9e2720fff3b7967e5e01  bloque_a_forex/10_Herramientas/ht02_verificador_enlaces.py
+0a2469f27b58020483c21836c1c7fefd7cc5ef1aa658c3d33d9a0d86ad996fbf  bloque_a_forex/10_Herramientas/ht03_puntuaciones.py
+b51d7e391eb35a23c6c4d455d1d1bfcf04a34dd5252b55bdb3557b5c99f78f8d  bloque_a_forex/10_Herramientas/ht05_planificador_ejemplo.md
+b4873522de29461990b94dc0afde5db3622abb09199de1fb3712718de2d8a466  bloque_a_forex/10_Herramientas/ht07_legibilidad.py
+39b8195e6ad5aa1f60d1f0e983a70ed1267a7fdf48f5bfc8374e5edd4d3beb83  bloque_a_forex/10_Herramientas/ht09_validador_g3.py
+7056a7b8c29c98dcb0ccfc7b90f1b01cbdca36d62383d20e2db60ba43cc74b20  bloque_a_forex/10_Herramientas/tests/test_ht02_verificador_enlaces.py
+fcb38ec3c24bfc00cdae6c25ebe1ff11a71d049acc0f69d67147390321dea104  bloque_a_forex/10_Herramientas/tests/test_ht03_puntuaciones.py
+91c567cee5d0654596c0d3f21849d82e78808251bad0996e832fc6fd50bbbe0d  bloque_a_forex/10_Herramientas/tests/test_ht07_legibilidad.py
+9085da8e7d65c71b4489feee501d1b3ad5999d325eb3912989204bfbbecbc9df  bloque_a_forex/10_Herramientas/tests/test_ht09_validador_g3.py
+73ce64fc6069d6e5229feb9d0422320ca16c2b48f35d7fe8b89281ef235a9f07  bloque_a_forex/README - Índice de la entrega del Bloque A Forex V1.1.docx
+9349b90606f772dffba85458225f0e13a0be0f3e5672586ad504f3e0e8712fe4  bloque_a_forex/README - Índice de la entrega del Bloque A Forex V1.1.md
+14556cfa1239fee99b230b67c4890bb6001879fe8a195af77e49365b13aece75  bloque_b/01_Gobernanza/Documento 0 - Protocolo maestro del Bloque B - Versión óptima V2.1.docx
+859c536b94612fdd65f6b05c61adce60d95f8cde8815a7ac23e6479ce21c3b45  bloque_b/01_Gobernanza/Documento 0 - Protocolo maestro del Bloque B - Versión óptima V2.1.md
+f2faf4013fce30173e3ee54837dc4c50a32f101cbd073221e0067eef53bc26eb  bloque_b/02_System_prompts/Marco común de los Analistas de dimensión (plantilla) - Bloque B - V2.0.docx
+10d26718d4331c68b5bc4b37d7595a5bd42c55843a9ea2dbb6700331b546aad4  bloque_b/02_System_prompts/Marco común de los Analistas de dimensión (plantilla) - Bloque B - V2.0.md
+044c28c8f79827f4862c1990f80d40e29b60f1ca2dda6cd07eed35870319dce5  bloque_b/02_System_prompts/System prompt - Analista de Demanda, Tamaño de Mercado y Adopción - Bloque B - Versión óptima V2.0.docx
+accfc6078f4ff32e0fb1a4b5ea9ddcf1fb18d39b322538ceec54a386ec3b7038  bloque_b/02_System_prompts/System prompt - Analista de Demanda, Tamaño de Mercado y Adopción - Bloque B - Versión óptima V2.0.md
+74b77655a4288e1c497f95530a4012ea75eeb40e7ae81dbc32d9a0116db69eb4  bloque_b/02_System_prompts/System prompt - Analista de Emergentes, Startups y Spin-offs - Bloque B - Versión óptima V2.0.docx
+e5b0dc0a54b710115da92e67d9f756c0d0b81f0eb6088258bbb625fc0241323c  bloque_b/02_System_prompts/System prompt - Analista de Emergentes, Startups y Spin-offs - Bloque B - Versión óptima V2.0.md
+84cbcc4e43397d9d2b61643baf0ffb9c386874f877620c09301771042f8460a4  bloque_b/02_System_prompts/System prompt - Analista de Estructura Sectorial y Competencia - Bloque B - Versión óptima V2.0.docx
+87eb11ea487ed465834a2e721b9185000ecf81d84bb0105da69864387e02dd70  bloque_b/02_System_prompts/System prompt - Analista de Estructura Sectorial y Competencia - Bloque B - Versión óptima V2.0.md
+7ec69b4143f1f7675ffcca129f50c5aec37432fc34f4208cfe48bf64cbe0aebc  bloque_b/02_System_prompts/System prompt - Analista de Finanzas y Valoración del Sector - Bloque B - Versión óptima V2.0.docx
+a25ab63908a573cc6d229f22c9589d2947a7e27dd5e0da5e9ada2ceb4abdb244  bloque_b/02_System_prompts/System prompt - Analista de Finanzas y Valoración del Sector - Bloque B - Versión óptima V2.0.md
+5ca4f0ab28dc0f27cfd0c62f191254d53fa9b1ee40f7e5a7dc91b67b5e4a5d60  bloque_b/02_System_prompts/System prompt - Analista de Flujos, Posicionamiento y Sentimiento - Bloque B - Versión óptima V2.0.docx
+e4ed844fa7e694e645d003f2348edd28ef17cafaa0eb2f52a1113e87e867bb14  bloque_b/02_System_prompts/System prompt - Analista de Flujos, Posicionamiento y Sentimiento - Bloque B - Versión óptima V2.0.md
+2727e681181be47a06ea5e76b3dba1175a4e4eb0c75ca92e3c59f1a687d516b1  bloque_b/02_System_prompts/System prompt - Analista de Macro, Ciclo y Mercados de Capitales - Bloque B - Versión óptima V2.0.docx
+8555a31738483da20fcf5dbf8b422cd62156a6f350ad926a17fbf04a684d921d  bloque_b/02_System_prompts/System prompt - Analista de Macro, Ciclo y Mercados de Capitales - Bloque B - Versión óptima V2.0.md
+23932d89e8ecc369c8c37bd310a7a358f552ff27493ae4f0b965c97ea732ae27  bloque_b/02_System_prompts/System prompt - Analista de Oferta, Capacidad, Costes y Cadena de Suministro - Bloque B - Versión óptima V2.0.docx
+b3e156c043f51aed6a03c9db18fcad3f44e713cf3f15f418f96552f01e59289f  bloque_b/02_System_prompts/System prompt - Analista de Oferta, Capacidad, Costes y Cadena de Suministro - Bloque B - Versión óptima V2.0.md
+affeca569cc4374e9169784d4d37eb4c27e5a373ded0494fc0b06577a18b4e63  bloque_b/02_System_prompts/System prompt - Analista de Prospectiva, Escenarios y Proyecciones - Bloque B - Versión óptima V2.0.docx
+e374b02cbe015539df61f2e2e8bc7a1069953aab8bb6f3a9a3f6bbe4a3e080f2  bloque_b/02_System_prompts/System prompt - Analista de Prospectiva, Escenarios y Proyecciones - Bloque B - Versión óptima V2.0.md
+1c4fe5f5aa4ed6b08f0ad93a0211412659f81d789974bf9ead15fd4c25b62235  bloque_b/02_System_prompts/System prompt - Analista de Regulación, Política y Geopolítica - Bloque B - Versión óptima V2.0.docx
+de7715795c260185df4046e16e72be0431c7acd08a40382504bf6e8cd4db7ce0  bloque_b/02_System_prompts/System prompt - Analista de Regulación, Política y Geopolítica - Bloque B - Versión óptima V2.0.md
+6c2547ae297e1d319230ec5596321f5dc5945e4e2598abe127f3f5074efa9b91  bloque_b/02_System_prompts/System prompt - Analista de Sostenibilidad, Riesgos y Eventos Extremos - Bloque B - Versión óptima V2.0.docx
+f173468145648389e2679bb342ffe66b8c3d8e0e4644ad9dd8a5584d02ece7a7  bloque_b/02_System_prompts/System prompt - Analista de Sostenibilidad, Riesgos y Eventos Extremos - Bloque B - Versión óptima V2.0.md
+7bc3b9dcb931280ba286bf448fbc655bebb391e2b69e4bc0b12c993067acd675  bloque_b/02_System_prompts/System prompt - Analista de Tecnología e Innovación - Bloque B - Versión óptima V2.0.docx
+b4352845db940aa26bef68c34651045e01577987829953ab9d1a8129629a953c  bloque_b/02_System_prompts/System prompt - Analista de Tecnología e Innovación - Bloque B - Versión óptima V2.0.md
+9880b275b46903d72dbcd92850005af556e4bc744d8d248c4176f9f90ca0e2f8  bloque_b/02_System_prompts/System prompt - Analista de hipótesis contrarias - Bloque B - Versión óptima V2.0.docx
+d445c242fca58d1a0b55499f9a4673b1cbf055ed2deef65eaf8b872e93b69e97  bloque_b/02_System_prompts/System prompt - Analista de hipótesis contrarias - Bloque B - Versión óptima V2.0.md
+e6786ea8bec07cfb5a00200d097d2b9c300651962d0dca4f14e59e79cfe3c3ad  bloque_b/02_System_prompts/System prompt - Auditor - Bloque B - Versión óptima V2.0.docx
+2ce76db22269c9de99feb87a5e613f93d6d7e7678e660237a3109d19d468de1a  bloque_b/02_System_prompts/System prompt - Auditor - Bloque B - Versión óptima V2.0.md
+03e292d5cb56123cefa561e9f6d5cf36a3b123ecbb1527ff6c7c1fd1b2230c67  bloque_b/02_System_prompts/System prompt - Buscador de Fuentes Avanzadas - Bloque B - Versión óptima V2.0.docx
+85dadeab96ca729f68dc3369559ae7ec62f09cf0e11f847eec94e931c2ba4ce4  bloque_b/02_System_prompts/System prompt - Buscador de Fuentes Avanzadas - Bloque B - Versión óptima V2.0.md
+29168c3f873dfd5957efe4612852db8088c880ab81af61085fdcd6d2e0ad5bc4  bloque_b/02_System_prompts/System prompt - Coordinador de Peticiones y Consultas - Bloque B - Versión óptima V2.0.docx
+bf26a40398644886da6a12326f33362be1875c1a3ef7fe1cb93b6dc6a9ec8efa  bloque_b/02_System_prompts/System prompt - Coordinador de Peticiones y Consultas - Bloque B - Versión óptima V2.0.md
+366af13e5f3434065ecbeb545c8cb3958f1a5cd19e35a869821b05630fb7bc54  bloque_b/02_System_prompts/System prompt - Curador de Evidencia - Bloque B - Versión óptima V2.0.docx
+368536b75d55e4a4a77be9305c0f4988d66b35e9e5b1f6fb4ad6b841fbfa8070  bloque_b/02_System_prompts/System prompt - Curador de Evidencia - Bloque B - Versión óptima V2.0.md
+2811fd6ccd20953317809e4a4a0d9f60a6555eef56dab6ceece8459927f2f352  bloque_b/02_System_prompts/System prompt - Director del Análisis de Mercado - Bloque B - Versión óptima V2.0.docx
+89e8c7c14f808ac186c9a66d008410ffdc0c00d3518d3e92a44959750f66d4ed  bloque_b/02_System_prompts/System prompt - Director del Análisis de Mercado - Bloque B - Versión óptima V2.0.md
+993446d2b599ad179f09aa3835e0e0cfa4dfed735d99cdceb941301204385c40  bloque_b/02_System_prompts/System prompt - Documentador para el Director - Bloque B - Versión óptima V2.0.docx
+946d8525301abadebbf0ad66dafb4a77935158555e54616ede70c311caf24271  bloque_b/02_System_prompts/System prompt - Documentador para el Director - Bloque B - Versión óptima V2.0.md
+9796be9440a943a4534fae950d18b0c8678fdbca17edf65fd473d25d2d6adeed  bloque_b/02_System_prompts/System prompt - Documentador para el Motor - Bloque B - Versión óptima V2.0.docx
+ded6c1089f97d5285b2197afafe72a1e0ea65c34c2723962f8cc9bf452f0ac9a  bloque_b/02_System_prompts/System prompt - Documentador para el Motor - Bloque B - Versión óptima V2.0.md
+9acb75048ebc11e5b27f1ed451ee2d1f876b39f15d00315ca23c2935cd7a15b8  bloque_b/02_System_prompts/System prompt - Evaluador de Previsiones, Aprendizaje y Seguimiento - Bloque B - Versión óptima V2.0.docx
+2ef325dc23802734879e6e80ac24de5b6b79398e39cb40bb835a4babe863d7fa  bloque_b/02_System_prompts/System prompt - Evaluador de Previsiones, Aprendizaje y Seguimiento - Bloque B - Versión óptima V2.0.md
+e1ae8f6292b0019ec6b84f42dc0b280e878f59f858275ef9105eff2ff9df900e  bloque_b/02_System_prompts/System prompt - MC-B01 Estadística y series - Bloque B - Versión óptima V2.0.docx
+0e9aa697663c49fb81f0d6c004a0b1d9b16f40bac177537f454426ec9772930d  bloque_b/02_System_prompts/System prompt - MC-B01 Estadística y series - Bloque B - Versión óptima V2.0.md
+9ecc44b696de377c857feb6af3adab98a9966f2f4622234344eccbf34b8a06b2  bloque_b/02_System_prompts/System prompt - MC-B02 Dimensionado de mercado y difusión - Bloque B - Versión óptima V2.0.docx
+2ec6788d974386d0a604547264453a4718083baf9ca56d00778fe76cb8454f61  bloque_b/02_System_prompts/System prompt - MC-B02 Dimensionado de mercado y difusión - Bloque B - Versión óptima V2.0.md
+98a8ac1ed7283c9e975c7d30b3a961c1484f3ee57976a22d26b50c125917e987  bloque_b/02_System_prompts/System prompt - MC-B03 Organización industrial - Bloque B - Versión óptima V2.0.docx
+f29147d80dded19472adecb6b1ea737f568492389024f5644054da4766d1149f  bloque_b/02_System_prompts/System prompt - MC-B03 Organización industrial - Bloque B - Versión óptima V2.0.md
+62680f6b7f67effc1f11e5db3350d95c7bd622157afe886139be5ecb37521d77  bloque_b/02_System_prompts/System prompt - MC-B04 Oferta y costes - Bloque B - Versión óptima V2.0.docx
+b4652dd76a30ac1f0d2b4759c37c8484277f7f719facb320fcc2c10cfb8a8f34  bloque_b/02_System_prompts/System prompt - MC-B04 Oferta y costes - Bloque B - Versión óptima V2.0.md
+d0184de3b065a9fb6ec56dedec0b708773cf5e4fcfd9038306fd6961de66be88  bloque_b/02_System_prompts/System prompt - MC-B05 Econometría y macro-sector - Bloque B - Versión óptima V2.0.docx
+6692761b75201424c0abf3753079b9de8a4bb86eb02998a80071c8ac125afb0c  bloque_b/02_System_prompts/System prompt - MC-B05 Econometría y macro-sector - Bloque B - Versión óptima V2.0.md
+dbf976e0898d7f035855f6944f0bb490b4e6c014efbe7e325321fbd8a80e2de4  bloque_b/02_System_prompts/System prompt - MC-B06 Valoración sectorial y de candidatos - Bloque B - Versión óptima V2.0.docx
+565b6066eff1ac32b04f3fd8138d895aba8d4c006ffa8509b3add4dd4caa0617  bloque_b/02_System_prompts/System prompt - MC-B06 Valoración sectorial y de candidatos - Bloque B - Versión óptima V2.0.md
+60723bab3fbda5ddca3966b899cc429ee6f74d30e730b3f32c60dd8f8dd22a0e  bloque_b/02_System_prompts/System prompt - MC-B07 Cribado y ranking - Bloque B - Versión óptima V2.0.docx
+77e0cd61f97e736224ee02dc503b998c471c98ffa297450b75c7afdfb4e50bf6  bloque_b/02_System_prompts/System prompt - MC-B07 Cribado y ranking - Bloque B - Versión óptima V2.0.md
+407d5a09f13eb905c23580756f87699b74b5388c4f6cda10e76078b9ed8a40e8  bloque_b/02_System_prompts/System prompt - MC-B08 Simulación, escenarios y sensibilidad - Bloque B - Versión óptima V2.0.docx
+e3a3b1aee4cc463896ea2670f5528d5725a2f115d090be21d4628abf15e9b1e1  bloque_b/02_System_prompts/System prompt - MC-B08 Simulación, escenarios y sensibilidad - Bloque B - Versión óptima V2.0.md
+08dff72f5ed294649738c9774142bfd06a4d284be47ffc812480c5ce8ebaabf2  bloque_b/02_System_prompts/System prompt - MC-B09 Riesgo y redes - Bloque B - Versión óptima V2.0.docx
+de1fea9a71b917232ffc95aa38796b55246dd34179d2d2673dcc7a9165c1c9a4  bloque_b/02_System_prompts/System prompt - MC-B09 Riesgo y redes - Bloque B - Versión óptima V2.0.md
+a1c55b6c9c4fbad64da2863d6d3c378202e874ea72e2403f361dc165f1b2ff54  bloque_b/02_System_prompts/System prompt - MC-B10 Evaluación predictiva y backtesting de selección - Bloque B - Versión óptima V2.0.docx
+0b0d1c3adb3a72efe8294095f96b1db05d5efe9701df3633b7c8cdb89b5d43db  bloque_b/02_System_prompts/System prompt - MC-B10 Evaluación predictiva y backtesting de selección - Bloque B - Versión óptima V2.0.md
+02d50b2c589387ef02dc16272c8a464ce7282c88257f6cd847b2e1fc49f52e0c  bloque_b/02_System_prompts/System prompt - Motor de Cálculo Avanzado de Mercados - Bloque B - Versión óptima V2.0.docx
+019fc670ca25f9b91a5814af3930a414f1066c802a8df539105cc653d6a94518  bloque_b/02_System_prompts/System prompt - Motor de Cálculo Avanzado de Mercados - Bloque B - Versión óptima V2.0.md
+95ccc3440a238e2bad0969639749d408c89076cbc574c4556e1b98d99026dcd7  bloque_b/02_System_prompts/System prompt - Orquestador técnico - Bloque B - Versión óptima V2.0.docx
+ec2f7fbca4b5cc093b0013307d195c0339ef4ebcaf6ea400d330e25d790f7aa9  bloque_b/02_System_prompts/System prompt - Orquestador técnico - Bloque B - Versión óptima V2.0.md
+8774f94541f743ef43289d90534827fc96454e21b3c36d15302e3b9625043287  bloque_b/02_System_prompts/System prompt - Redactor y Diseñador de Informes - Bloque B - Versión óptima V2.0.docx
+a6bb0a4cf7d19f45bca69844767ec278f11a460a8f226aad41d855ef600dcc30  bloque_b/02_System_prompts/System prompt - Redactor y Diseñador de Informes - Bloque B - Versión óptima V2.0.md
+295b2143c4bc1500d72ed8e119480064844ecf265df7347ced9fdff74151f592  bloque_b/02_System_prompts/System prompt - Seleccionador de Activos - Bloque B - Versión óptima V2.0.docx
+d8cb74274ea9abcf399ac643e6a6f31aa3ed45a7d2a592a1e93d0ac1855ef4f4  bloque_b/02_System_prompts/System prompt - Seleccionador de Activos - Bloque B - Versión óptima V2.0.md
+7c4517347b352039461a0bea27ba6817dd1003803366e6baa32327a21eaf6697  bloque_b/03_Funciones/Funciones, tareas y cometidos – Analista de Demanda, Tamaño de Mercado y Adopción – Bloque B – óptima V2.0.docx
+d3f6274f5cac87772ed37c0691c022dec2f0c375a85ed4fb3aa1c6ae82028811  bloque_b/03_Funciones/Funciones, tareas y cometidos – Analista de Demanda, Tamaño de Mercado y Adopción – Bloque B – óptima V2.0.md
+99dd5e4a2c56a763680260d05bef349ad77004cb94865feb164ab4a52551d8b4  bloque_b/03_Funciones/Funciones, tareas y cometidos – Analista de Emergentes, Startups y Spin-offs – Bloque B – óptima V2.0.docx
+24e86e20d6d6f5fe696e1179f3d8524a8604b1f9c05f50c0c27fb923deeb0c5d  bloque_b/03_Funciones/Funciones, tareas y cometidos – Analista de Emergentes, Startups y Spin-offs – Bloque B – óptima V2.0.md
+3823ff44b04d1eeb8a0a6d5647de8b4388a13af4467e7e80275aff8de217efc3  bloque_b/03_Funciones/Funciones, tareas y cometidos – Analista de Estructura Sectorial y Competencia – Bloque B – óptima V2.0.docx
+0857ce1e374958224b565f25346692b99e69ee54e7a90d1e05da47b0f8becb39  bloque_b/03_Funciones/Funciones, tareas y cometidos – Analista de Estructura Sectorial y Competencia – Bloque B – óptima V2.0.md
+cc6eb9813d7a5929e15c62fc0281d7413d8ec3d2e256a6c8925de3d3b4238775  bloque_b/03_Funciones/Funciones, tareas y cometidos – Analista de Finanzas y Valoración del Sector – Bloque B – óptima V2.0.docx
+016f6093db79718383c545a9b26cfe89d2a5a5c9ba0dd7e6ecc5241d5c0d692a  bloque_b/03_Funciones/Funciones, tareas y cometidos – Analista de Finanzas y Valoración del Sector – Bloque B – óptima V2.0.md
+ba24a9799633d7fb6c1bfa76b46eac75bcda6bf4d3474ffd314fb19a268a4548  bloque_b/03_Funciones/Funciones, tareas y cometidos – Analista de Flujos, Posicionamiento y Sentimiento – Bloque B – óptima V2.0.docx
+9dbeed388dad06b0e3cedbe99f485a0a13883a35d882bf9caa4be61cd319fea1  bloque_b/03_Funciones/Funciones, tareas y cometidos – Analista de Flujos, Posicionamiento y Sentimiento – Bloque B – óptima V2.0.md
+2b2dfa443d876e38799d53a1aafc070aade73f1e8971b3311cee6b943b0f280e  bloque_b/03_Funciones/Funciones, tareas y cometidos – Analista de Macro, Ciclo y Mercados de Capitales – Bloque B – óptima V2.0.docx
+72242492c9cf390b6fdcf5c9fb773b256c2151b03cfa4be507d53f7e94e14f21  bloque_b/03_Funciones/Funciones, tareas y cometidos – Analista de Macro, Ciclo y Mercados de Capitales – Bloque B – óptima V2.0.md
+c22ea108799c04a09b836c0d22847f57d6a03e2a8a253f57e527029c569c4ba9  bloque_b/03_Funciones/Funciones, tareas y cometidos – Analista de Oferta, Capacidad, Costes y Cadena de Suministro – Bloque B – óptima V2.0.docx
+67aec6386f0ee97b1c15a2bb283570f6d670194a881e57bd073c31f8774db560  bloque_b/03_Funciones/Funciones, tareas y cometidos – Analista de Oferta, Capacidad, Costes y Cadena de Suministro – Bloque B – óptima V2.0.md
+fc5c22f55636e294c85cf637315f072a91a852f761490c61fe76e30893a42b37  bloque_b/03_Funciones/Funciones, tareas y cometidos – Analista de Prospectiva, Escenarios y Proyecciones – Bloque B – óptima V2.0.docx
+bedca9ca2f4da4499adbca50303f123ac7a04ca481bd713fff7164fd99d4a2c5  bloque_b/03_Funciones/Funciones, tareas y cometidos – Analista de Prospectiva, Escenarios y Proyecciones – Bloque B – óptima V2.0.md
+f89a542576058a9c94000a60e58782eb01d5bd18d533d9a90f0a380298f2ec0b  bloque_b/03_Funciones/Funciones, tareas y cometidos – Analista de Regulación, Política y Geopolítica – Bloque B – óptima V2.0.docx
+3e56b009581fb53e7efcfee147916315de083823f458bcc21ec5ebef6995b8b8  bloque_b/03_Funciones/Funciones, tareas y cometidos – Analista de Regulación, Política y Geopolítica – Bloque B – óptima V2.0.md
+091b0f70d4f3a373f48b405ca5caf476a3058a6e9f1640d7960b0cdf18ae36e0  bloque_b/03_Funciones/Funciones, tareas y cometidos – Analista de Sostenibilidad, Riesgos y Eventos Extremos – Bloque B – óptima V2.0.docx
+a5e9a4650543cef7dc63bee5cfb2f92b9b111d24eb7c6ceb6ed17a0b070a19d9  bloque_b/03_Funciones/Funciones, tareas y cometidos – Analista de Sostenibilidad, Riesgos y Eventos Extremos – Bloque B – óptima V2.0.md
+3974a76d5319c9536bcd84ff517b399e7767cc2a87415e079547cd85cbbf6e36  bloque_b/03_Funciones/Funciones, tareas y cometidos – Analista de Tecnología e Innovación – Bloque B – óptima V2.0.docx
+86e7616154c5d57d8944814af663d09674b730ce30a41099298df962a92ff926  bloque_b/03_Funciones/Funciones, tareas y cometidos – Analista de Tecnología e Innovación – Bloque B – óptima V2.0.md
+24cfd82095ffe980bef14cb4e9d34772d3d53f4eee5436b30fd7fa708d920337  bloque_b/03_Funciones/Funciones, tareas y cometidos – Analista de hipótesis contrarias – Bloque B – óptima V2.0.docx
+03fbe6fdd98c0b4d9e181e5fd53447e3d3da65829c3d60f92ac58f0cda07ed0e  bloque_b/03_Funciones/Funciones, tareas y cometidos – Analista de hipótesis contrarias – Bloque B – óptima V2.0.md
+cde3c094d4449e3dece9a3f133408faa0e4a92a94f7a96135cd04d617ecd8121  bloque_b/03_Funciones/Funciones, tareas y cometidos – Auditor – Bloque B – óptima V2.0.docx
+61a81fdfe6a751d5a7c691e3400ab1d9175c9589ea62d7a96227e172c53d41dd  bloque_b/03_Funciones/Funciones, tareas y cometidos – Auditor – Bloque B – óptima V2.0.md
+ff0c9258e52ff2612736dbb53cdb9ec8b8c1a971b6a44ae1adbdaa155b5a7fff  bloque_b/03_Funciones/Funciones, tareas y cometidos – Buscador de Fuentes Avanzadas – Bloque B – óptima V2.0.docx
+9ffa2a842ce0624084f60712f405e93ed5173f21dd0c4a21060e2c821cee761d  bloque_b/03_Funciones/Funciones, tareas y cometidos – Buscador de Fuentes Avanzadas – Bloque B – óptima V2.0.md
+79a55570871b817b50787863847caa855cecd4fffca716497c4c8b6aefea9963  bloque_b/03_Funciones/Funciones, tareas y cometidos – Coordinador de Peticiones y Consultas – Bloque B – óptima V2.0.docx
+4a03590cba5aa88883186ad2029dc0afb89c047bcd6984820c0f0cec6c829dd2  bloque_b/03_Funciones/Funciones, tareas y cometidos – Coordinador de Peticiones y Consultas – Bloque B – óptima V2.0.md
+772ebb2f3f47e8bde40a55bf400f6d96df2a8d7070b0b595fae0b41fa1b37beb  bloque_b/03_Funciones/Funciones, tareas y cometidos – Curador de Evidencia – Bloque B – óptima V2.0.docx
+25b607e7f0ed8bbcf6435b022e849fa4e40134098677b6dbb3f5ea46cb776a34  bloque_b/03_Funciones/Funciones, tareas y cometidos – Curador de Evidencia – Bloque B – óptima V2.0.md
+44d0ca557589127723d1622a9e4baca18f4fefee59fc4856c9e97dd224d09292  bloque_b/03_Funciones/Funciones, tareas y cometidos – Director del Análisis de Mercado – Bloque B – óptima V2.0.docx
+47fc09ce1a8727197b0e6e961b554f32d47b298ff2d1cf0933654077ff87e9a5  bloque_b/03_Funciones/Funciones, tareas y cometidos – Director del Análisis de Mercado – Bloque B – óptima V2.0.md
+9bbc36153a2eb6a84e589e4f64356d2ea362b950bba36ca0385ef8c79b069218  bloque_b/03_Funciones/Funciones, tareas y cometidos – Documentador para el Director – Bloque B – óptima V2.0.docx
+d1e934b8cbe1073fc35bfd969acc8c3de1c7bcf119593140ee552b7b7b557986  bloque_b/03_Funciones/Funciones, tareas y cometidos – Documentador para el Director – Bloque B – óptima V2.0.md
+2304603f91e3eafbcd07e150e9bd4a23ae58d33426be20eaaa54b0fa1fc4df9c  bloque_b/03_Funciones/Funciones, tareas y cometidos – Documentador para el Motor – Bloque B – óptima V2.0.docx
+c212d4b87ddee96909cf01b219c964eed9a45d2473b6ca5f2ef178326e01648f  bloque_b/03_Funciones/Funciones, tareas y cometidos – Documentador para el Motor – Bloque B – óptima V2.0.md
+c4f2d3f37607c74957fdf2752749253a4ee63dcb6fa7c6b676f6b6526c25fd8a  bloque_b/03_Funciones/Funciones, tareas y cometidos – Evaluador de Previsiones, Aprendizaje y Seguimiento – Bloque B – óptima V2.0.docx
+a659207e2313419cbeefceedc085c36fa124192155ccbf8a04cec7f70fd50e97  bloque_b/03_Funciones/Funciones, tareas y cometidos – Evaluador de Previsiones, Aprendizaje y Seguimiento – Bloque B – óptima V2.0.md
+24b8ca9913d55e52f294cab317911a25ebbad7e8622a97842a68d3b56ae28914  bloque_b/03_Funciones/Funciones, tareas y cometidos – Motor de Cálculo Avanzado de Mercados – Bloque B – óptima V2.0.docx
+9e9db9bf0f64b34256af535530061562f95fa63d7008ed7ecfd0100094f790c0  bloque_b/03_Funciones/Funciones, tareas y cometidos – Motor de Cálculo Avanzado de Mercados – Bloque B – óptima V2.0.md
+5182bc56dae53b1875438666570ab065272ceb543cb2c7d5403d62146dcf6056  bloque_b/03_Funciones/Funciones, tareas y cometidos – Orquestador técnico – Bloque B – óptima V2.0.docx
+6bfbd8ceef62abe666d0c33a5fc2c50059efc9a8e27317ff6b42099965a9c066  bloque_b/03_Funciones/Funciones, tareas y cometidos – Orquestador técnico – Bloque B – óptima V2.0.md
+cc6e600df702255f7a9c5d7212eedb73ff809138fddf40711cbf74901e3afb2e  bloque_b/03_Funciones/Funciones, tareas y cometidos – Redactor y Diseñador de Informes – Bloque B – óptima V2.0.docx
+09a4c5320e61efdd067c0468016e60b4f1e8d70eb5aedcf5b92103ece1f00256  bloque_b/03_Funciones/Funciones, tareas y cometidos – Redactor y Diseñador de Informes – Bloque B – óptima V2.0.md
+541c36eb436e148c1200111c2a007e9f00ef2b4dd687bc3c88d395202894463e  bloque_b/03_Funciones/Funciones, tareas y cometidos – Seleccionador de Activos – Bloque B – óptima V2.0.docx
+82f521161dd6be0051c4f8a78a52a983471b24eed4175483b1eb5c70c828d726  bloque_b/03_Funciones/Funciones, tareas y cometidos – Seleccionador de Activos – Bloque B – óptima V2.0.md
+189d291bdfc6e827b09f518f0425e9d58001639ea84f550511e349ebff7b3fb9  bloque_b/04_Motor_conocimiento_y_catalogo/Catálogo de cálculos del Motor - Bloque B - V2.0.docx
+3635205dcf782ea936daa4ef0d830113a058767efe2979282e7aaf3d21b69a91  bloque_b/04_Motor_conocimiento_y_catalogo/Catálogo de cálculos del Motor - Bloque B - V2.0.md
+035007265ffc867730121653dee809b057df87929f3b22c1efb4b1cc8ef9df52  bloque_b/04_Motor_conocimiento_y_catalogo/Mapa de conocimientos del Motor - Bloque B - V2.0.docx
+a3fdd8df10a8d5cc94d9db30ebc09852842feb2db72775cef72e100bae8ecf04  bloque_b/04_Motor_conocimiento_y_catalogo/Mapa de conocimientos del Motor - Bloque B - V2.0.md
+f8ce71c8fc1f308cef5fcc9bf78e379a82e6934872d0f4b116fcb039b484e3f3  bloque_b/04_Motor_conocimiento_y_catalogo/Perfiles de estrategia y de selección del Motor - Bloque B - V2.0.docx
+763f1b756b4efeed40cf31289f69e42e6449b6ee08bb9c1509e9bda2f76f32ab  bloque_b/04_Motor_conocimiento_y_catalogo/Perfiles de estrategia y de selección del Motor - Bloque B - V2.0.md
+4d4b2f2c5632d0f5079997800f0ceb225159d223ab3a6b556455535f444d8ac4  bloque_b/05_Archivos_operativos/Biblioteca de mercados (esquema Bloque B V2.0).docx
+709559b7ead70bad865f496334dcebd8eff1379934b75b39028e4af7e5d6f457  bloque_b/05_Archivos_operativos/Biblioteca de mercados (esquema Bloque B V2.0).md
+665ecca389a4c4c5688f4ecc477bf541f0a1a420fa122622070becf490a0e58f  bloque_b/05_Archivos_operativos/Configuración y parámetros (esquema Bloque B V2.0).docx
+33d504a6e4451c2fa0abd7908aefcea0533452c78dd074ffc4eda95af9897ec6  bloque_b/05_Archivos_operativos/Configuración y parámetros (esquema Bloque B V2.0).md
+d767404c222efd38c53d85a51eb28ecdc85f14351425dde171cfeae1e3324bc7  bloque_b/05_Archivos_operativos/Documentación para el Analizador de Mercados - V2.0.docx
+a7849bec90a78592382660543338a6b0b0a0eb6c7997cd8d091bc8da1caa0d1c  bloque_b/05_Archivos_operativos/Documentación para el Analizador de Mercados - V2.0.md
+368e55edae1dc39943b2d265e02260994bcf57b58dda010ec876e60a4b7031d6  bloque_b/05_Archivos_operativos/Documentación para el Motor de Cálculo Avanzado de Mercados - V2.0.docx
+a9b4e644b7ff8a71932f7de42ec3a38b11313dfee7687f7807e36ecb8ba70eef  bloque_b/05_Archivos_operativos/Documentación para el Motor de Cálculo Avanzado de Mercados - V2.0.md
+096a5985595c56e70981bd395a099f6fcf7993e6222e0410f4ae20ca3690f421  bloque_b/05_Archivos_operativos/Fondo Metodológico Bibliográfico - V3.1.docx
+65d3ec6c01b440f704ddbccca89600c2ae7bdc53528e324c73e6bec22d2b0187  bloque_b/05_Archivos_operativos/Fondo Metodológico Bibliográfico - V3.1.md
+8a3fdb088b786fe34e7973c91eadd0cdb725feb5546a751025aeaf94a7591944  bloque_b/05_Archivos_operativos/Historial de auditorías (esquema Bloque B V2.0).docx
+d9fc004efb95bf15f8eb8811efe5a8316488ce69ca834b293435dd724af0d503  bloque_b/05_Archivos_operativos/Historial de auditorías (esquema Bloque B V2.0).md
+2b84573cab9642277c9974224ad2aa9bb4c3b343939c64473a4632f7ef5b57f1  bloque_b/05_Archivos_operativos/Memoria de aprendizaje (esquema Bloque B V2.0).docx
+5d247c313518f96833f9ad8ac6996403926d3f921f5dd26f2d34040492fca1ca  bloque_b/05_Archivos_operativos/Memoria de aprendizaje (esquema Bloque B V2.0).md
+4f10881431b074c721b3f96ebc48c5bf5c566c3c0ed4ad8b37a4cc2b52b6cb12  bloque_b/05_Archivos_operativos/Registro de Fuentes para el Analizador de Mercados - V2.0.docx
+494403ff18aa91df8d2412626550fadeef0d8d2fc63d3af48e95c071e7f1d978  bloque_b/05_Archivos_operativos/Registro de Fuentes para el Analizador de Mercados - V2.0.md
+7995c1e9b0dfbe8647b7492b4249c17a78e39e07692387e2cca345eae5da319e  bloque_b/05_Archivos_operativos/Registro de análisis, recomendaciones y candidatos (esquema Bloque B V2.0).docx
+276a8ce990c7179c4b0ca9bf65e5ca39225674b5305542c50c05d84be3da664b  bloque_b/05_Archivos_operativos/Registro de análisis, recomendaciones y candidatos (esquema Bloque B V2.0).md
+3f3f1826049430bc281550e5900a17a3c9b1b7654f87f504f467c4d130a76fc0  bloque_b/05_Archivos_operativos/Registro de cálculos del Motor (esquema Bloque B V2.0).docx
+a4da6aa91e1deef894ef4287b75e0aedf6a47c98150f527dbfab3e38b638ffd4  bloque_b/05_Archivos_operativos/Registro de cálculos del Motor (esquema Bloque B V2.0).md
+2e625af2ab12fb9a44447e4cca6c540c2dfcd301a941a67ac391b592967704e8  bloque_b/05_Archivos_operativos/Registro de evidencia y afirmaciones (esquema Bloque B V2.0).docx
+a540fe0d4bed4b547ac36b0fa8516fd5c2b36d9d2ef5c6e17ca77a4ab08775f5  bloque_b/05_Archivos_operativos/Registro de evidencia y afirmaciones (esquema Bloque B V2.0).md
+34b2113da67c5f0c0630230fd923eebf9b72a21b75fe9a1f85bf190fdc8a1305  bloque_b/05_Archivos_operativos/Registro de peticiones y ejecuciones (esquema Bloque B V2.0).docx
+60c693b3f5c4fe94138b378fdbbee2d7c20eeb1d1a4d2683a9c08a939c7c6f1d  bloque_b/05_Archivos_operativos/Registro de peticiones y ejecuciones (esquema Bloque B V2.0).md
+8489b5eb77479d95736a182087a2b6136e0644085a7e81db932f9d391a1b6ef3  bloque_b/05_Archivos_operativos/Registro de pronósticos congelados (esquema Bloque B V2.0).docx
+de3d2102602b8533c31b56146fd23a7626b9ffe06bec6b715a6986523ef8bdfe  bloque_b/05_Archivos_operativos/Registro de pronósticos congelados (esquema Bloque B V2.0).md
+67e3d2fce152f96fb2106255da41883edc7874e3d83bd70308d2d006c22c5b28  bloque_b/05_Archivos_operativos/Registro de seguimientos encargados (esquema Bloque B V2.1).docx
+b471fee08dac2c8076bd549e838e20de08bc8c6f113addc8d54af8c261daf613  bloque_b/05_Archivos_operativos/Registro de seguimientos encargados (esquema Bloque B V2.1).md
+2aa77b8e3a70a3907609adbfd8caa1f8e7ed23fa022f9f7f4ed07644c0aa16ae  bloque_b/06_Plantillas_entregables/Descripción - Anexo de datos y cálculos - Bloque B - V2.0.md
+875c5eb4dd63182dde9c308040082d566498d2cc4233bea348c6c7ef9db89f77  bloque_b/06_Plantillas_entregables/Ejemplo - Informe visual (escritorio) - Bloque B - V2.0.png
+6d924de7b94d3482248948e9d79599951ce4e906fb657668037eb5f671d7c088  bloque_b/06_Plantillas_entregables/Ejemplo - Informe visual (móvil) - Bloque B - V2.0.png
+96b29caeb8d81c1faa54a92dece345c5516d1ff1f5398c4d2f7571c6df9c1a98  bloque_b/06_Plantillas_entregables/Ejemplo - Paquete de análisis de mercado - Bloque B - V2.0.json
+059880955dc023f53ff21a247dd4b64055b9ac1b0061d18c2702de02774a4db1  bloque_b/06_Plantillas_entregables/Esquema JSON - Paquete de análisis de mercado - Bloque B - V2.0.json
+660ac77bd1effbc02f7da52a4f03cf0ddfd45b59fb45d76468a7cead5c82ba71  bloque_b/06_Plantillas_entregables/Plantilla - Anexo de datos y cálculos - Bloque B - V2.0.xlsx
+acddd4ab25d920cea72c0ed79c6540bf741fa7e5cfda57fc449a40dcb5630d6a  bloque_b/06_Plantillas_entregables/Plantilla - Informe de parada - Bloque B - V2.1.md
+7fbfc254d520c9a596d0744c312d738781c3f57172dfef0d021c61a6121e05d6  bloque_b/06_Plantillas_entregables/Plantilla - Informe de seguimiento - Bloque B - V2.1.md
+b681ea8130b1df4b55308a841cf8708282c4610596274afec91ef688066798f4  bloque_b/06_Plantillas_entregables/Plantilla - Informe técnico para el Broker - Bloque B - V2.0.md
+0940e9df03f83b3b00ea91a0832f59daa4b5d9f88bcbed829191848726cb0f2d  bloque_b/06_Plantillas_entregables/Plantilla - Informe visual para el usuario - Bloque B - V2.0.html
+ea147d2b3f7d8075ffc68baf12bd35f0514265774bc062d55fb9b28b17feffc4  bloque_b/06_Plantillas_entregables/Plantilla - Mapa de oportunidades por eslabón - Bloque B - V2.1.md
+1b8acd6a80a3b09ce6ce8a14f1a3395f1a96b98498eede721500e7d8ab9d6e80  bloque_b/06_Plantillas_entregables/Plantilla - Memorando ejecutivo - Bloque B - V2.0.md
+1befdfeed9be28f58357f5d704c3db2ede80583c3608f623dbd5a3ae4574da4e  bloque_b/07_Objetivos/Objetivos del Bloque B - Versión óptima V2.0.docx
+8db589fe97f0ba84e88ed1c9c3c9ece322ed34cbac218592491d6aa129394bd2  bloque_b/07_Objetivos/Objetivos del Bloque B - Versión óptima V2.0.md
+c15fd631d6ab54bccfac02c308c67818293c654626a04e41fa900d0d2b2baab1  bloque_b/08_Arquitectura/Arquitectura del Bloque B - Descripción detallada para LLM - V2.0.docx
+f621ffd6e0f6aa65ec5bb7fb73e5b4fff7eca6494d07bae1050f149f937a12ab  bloque_b/08_Arquitectura/Arquitectura del Bloque B - Descripción detallada para LLM - V2.0.md
+e857fddd58707709c229f9f932029511e446acb896e046fa2cbc203dfa571f9b  bloque_b/08_Arquitectura/Arquitectura del Bloque B - V2.1.png
+13ad3c5d8cb2f3c69976926d771ae5ba9639dc5d29e4fd29dda073ff4e4f6243  bloque_b/08_Arquitectura/Arquitectura del Bloque B - V2.1.svg
+fa57113c84126111abe1ce4b8e9850151c1371b919e34d0557681acf42499ef9  bloque_b/09_Pruebas/Plan de pruebas del Bloque B - V2.0.docx
+78ea0efc19e1fdc19253b304ed0538f2b99c50b0a2ebd8abdf7a75dcf6dac06d  bloque_b/09_Pruebas/Plan de pruebas del Bloque B - V2.0.md
+7597177684af0eec27b3d5ec513da15a86826d3a0bf2fc9f41d233c5c7531059  bloque_b/10_Herramientas/README.md
+bbda161dec0975870f91674ee0b4ae354491107cea0bd2d986b9ce75f8759534  bloque_b/10_Herramientas/ejemplos/informe_visual_ejemplo.html
+362b16ef43cf35f2ffece2fe61f718f161e10da0f0200eb7592a25c370cd6334  bloque_b/10_Herramientas/ejemplos/jerga_personalizada.txt
+96b29caeb8d81c1faa54a92dece345c5516d1ff1f5398c4d2f7571c6df9c1a98  bloque_b/10_Herramientas/ejemplos/paquete_analisis_mercado_ejemplo.json
+6d14cd1fcdf6516193c98a8086c6427e12d9234caf08bca07bde3006abae1fa4  bloque_b/10_Herramientas/ejemplos/plan_ejemplo.json
+b4e300f093804f1815ab40c779c8157181e142932008baa994250f857dd2d56b  bloque_b/10_Herramientas/ejemplos/referencias_ejemplo.md
+9d13ad18107ccdf0ede1545f88db74886f08ab94187f26f49311a016c3acaedb  bloque_b/10_Herramientas/ejemplos/universo_rv_ejemplo.csv
+20ef3b46a30d7e80f344d62820badc3b18e8539d24fba110723df0beb44c7111  bloque_b/10_Herramientas/ht02_verificador_enlaces.py
+396d9a78857c9468d7e59f17a5f90b952df9247d9a70a210c233e8ded7968f27  bloque_b/10_Herramientas/ht03_puntuaciones.py
+2e2be7e2e3db535d964409a9441f04723ec7e0d784667f57cd8aa3f27549ded7  bloque_b/10_Herramientas/ht07_legibilidad.py
+1fa22537cc0cb339150139945a682a7ea039532872d1c9e38eb056348f25f7a5  bloque_b/10_Herramientas/ht08_monitor_tiempo.py
+9a789365dc35e63bf3c8d8f04028bda4f0876da812cbb2c8176eae70c46e1c8d  bloque_b/10_Herramientas/ht09_validador_g3.py
+93087d4aa91ffd3d617306c5a927bee6afbc214360f8bb2be706ee13a21f4a1c  bloque_b/10_Herramientas/ht10_anexo_datos.py
+00e269153ef5f2f60c591eb9d0cea8e835c8c7d94ec31d3f7240b15d820dc023  bloque_b/10_Herramientas/ht11_cribador.py
+7056a7b8c29c98dcb0ccfc7b90f1b01cbdca36d62383d20e2db60ba43cc74b20  bloque_b/10_Herramientas/tests/test_ht02_verificador_enlaces.py
+d30755986cb5f3d609a97033e5edf294eb7e971d694b395ff58675fee613d8bc  bloque_b/10_Herramientas/tests/test_ht03_puntuaciones.py
+91c567cee5d0654596c0d3f21849d82e78808251bad0996e832fc6fd50bbbe0d  bloque_b/10_Herramientas/tests/test_ht07_legibilidad.py
+4b72b4d93873cbb0a9a723523a004718564edf48f8e1a6d528ef2a992f26e364  bloque_b/10_Herramientas/tests/test_ht08_monitor_tiempo.py
+918d6d7df6924b44a662d43407985224223c90b05b670fd4b91d6d566c07738e  bloque_b/10_Herramientas/tests/test_ht09_validador_g3.py
+4cb8ffcba92495547e6488659ee5e09015b3ef11f783a48ef2bac2012c374c02  bloque_b/10_Herramientas/tests/test_ht10_anexo_datos.py
+351e6ca6362b5787cb2bc5ff22bef050d3f725e95253a7a4e60bf3dea6d65c38  bloque_b/10_Herramientas/tests/test_ht11_cribador.py
+74773af0d386946fd6845d75a061e4557b71ff5d1d9b9055059d1d9087e368cc  bloque_b/12_Runbook/Runbook del operador - Bloque B - V2.0.docx
+b2e3798b9a88fa7de7a9643719867d6b8569559b70b49c5f2c62ee7ceb1e8818  bloque_b/12_Runbook/Runbook del operador - Bloque B - V2.0.md
+249555279991661122c414a1ea4526062c16f5d41c65d145a6f5587c24750dc6  bloque_b/99_Historico_V1.3/01_Gobernanza/Documento 0 - Protocolo maestro del Bloque B - Versión óptima V1.3.docx
+37a57a6ec654e7ce225e5524a91d6ce44303cefd898b146c6ed511716c7719aa  bloque_b/99_Historico_V1.3/01_Gobernanza/Documento 0 - Protocolo maestro del Bloque B - Versión óptima V1.3.md
+85ce32ca851b29f52009e33ea2c5673e6b38b5c7a6cc970186ae69aec5927ecb  bloque_b/99_Historico_V1.3/02_System_prompts/System prompt - Analizador de Mercados - Versión óptima V1.3.docx
+38bb4160ed4ba326b733b14554e15f384bef504952fa4722ffc73f77780b40e0  bloque_b/99_Historico_V1.3/02_System_prompts/System prompt - Analizador de Mercados - Versión óptima V1.3.md
+9ace00a3d85734b68b844c1bb29876aabb2671dd594f08c79c5125bf056cfafe  bloque_b/99_Historico_V1.3/02_System_prompts/System prompt - Auditor para el Analizador de Mercados - Versión óptima V1.3.docx
+78443392beaa67526212b34a4f2dfd61c169e845f268ff93ad820261a1bbcecf  bloque_b/99_Historico_V1.3/02_System_prompts/System prompt - Auditor para el Analizador de Mercados - Versión óptima V1.3.md
+2eecfe67795dceade9b9b70f8ae6304f3f9dab5850ec75b8a4dd5f3c7bf954c0  bloque_b/99_Historico_V1.3/02_System_prompts/System prompt - Buscador de fuentes avanzadas para el Analizador de Mercados - Versión óptima V1.2.docx
+8eecd4047847a2e430e9b3ca14efea783497ce9202b195949a1a2130cce49ecb  bloque_b/99_Historico_V1.3/02_System_prompts/System prompt - Buscador de fuentes avanzadas para el Analizador de Mercados - Versión óptima V1.2.md
+9add79e45455225dd9fca8674fccd48f3d09b6173b07561ec98e4e5f5776b83d  bloque_b/99_Historico_V1.3/02_System_prompts/System prompt - Documentador para el Analizador de Mercados - Versión óptima V1.3.docx
+b5662b0db7ea5bb6c2f8258cd6c7558e1696ded7d335964750441f71b58801f5  bloque_b/99_Historico_V1.3/02_System_prompts/System prompt - Documentador para el Analizador de Mercados - Versión óptima V1.3.md
+294683862f44b7af9b34f0bc8960eac80fe7a06ca044980612f62d950215b79f  bloque_b/99_Historico_V1.3/02_System_prompts/System prompt - Documentador para el Motor de Cálculo Avanzado - Versión óptima V1.6.docx
+175ac4994350bc193fd039018ce8432f2a7f0aa2c4c066040fef5b9825a75d8b  bloque_b/99_Historico_V1.3/02_System_prompts/System prompt - Documentador para el Motor de Cálculo Avanzado - Versión óptima V1.6.md
+c6f640db410bcd025e5b039b551ca1738d574dadcc99ab9a6a985cc289fc28cc  bloque_b/99_Historico_V1.3/02_System_prompts/System prompt - Motor de Cálculo Avanzado - Versión óptima V1.4.docx
+9a369408e15263f5877392f39531926e974357dcbec4a44eea82c95140cda105  bloque_b/99_Historico_V1.3/02_System_prompts/System prompt - Motor de Cálculo Avanzado - Versión óptima V1.4.md
+dde869846b6ecf147db00bba707588a5914aa353b7baab9f4365d108be7f148b  bloque_b/99_Historico_V1.3/02_System_prompts/System prompt - Orquestador técnico para el Analizador de Mercados - Versión óptima V1.3.docx
+1be383269fdbbe7a74ea4325c94e1404921953e99515a48811a5d560e13014c1  bloque_b/99_Historico_V1.3/02_System_prompts/System prompt - Orquestador técnico para el Analizador de Mercados - Versión óptima V1.3.md
+8f8ced4dce1da154135f6ede63220492fa7c682e237edfa87fd7302d1b4439b5  bloque_b/99_Historico_V1.3/03_Listados_funciones_tareas_cometidos/Listado exhaustivo de funciones, tareas y cometidos - Analizador de Mercados - Bloque B - V1.2.docx
+5e87107b2875fd190763742c27aa6c395459345826f9c9812507995b4ca15b04  bloque_b/99_Historico_V1.3/03_Listados_funciones_tareas_cometidos/Listado exhaustivo de funciones, tareas y cometidos - Analizador de Mercados - Bloque B - V1.2.md
+3611fb5a24c96f486605a7ef90118076142e71149c4439d18f512053589de188  bloque_b/99_Historico_V1.3/03_Listados_funciones_tareas_cometidos/Listado exhaustivo de funciones, tareas y cometidos - Auditor de Mercados - Bloque B - V1.2.docx
+9f8344fa533cffe5c3f474e6610afa2a9b104f9a3be43d7e8813147f4e850284  bloque_b/99_Historico_V1.3/03_Listados_funciones_tareas_cometidos/Listado exhaustivo de funciones, tareas y cometidos - Auditor de Mercados - Bloque B - V1.2.md
+93adfab0a29c91706e9e3a1a23964bfe44c3803c11d2ca597aff5854ce47336e  bloque_b/99_Historico_V1.3/03_Listados_funciones_tareas_cometidos/Listado exhaustivo de funciones, tareas y cometidos - Buscador avanzado de Mercados - Bloque B - V1.2.docx
+71f467fca16f57e99ed4daad8271cf2d1edc6ed5acd7309b9dfeefac55c7c348  bloque_b/99_Historico_V1.3/03_Listados_funciones_tareas_cometidos/Listado exhaustivo de funciones, tareas y cometidos - Buscador avanzado de Mercados - Bloque B - V1.2.md
+b764ed7e236c7d8c1448c078930df64b75dca4fe9712941439fdec4c621ad3f3  bloque_b/99_Historico_V1.3/03_Listados_funciones_tareas_cometidos/Listado exhaustivo de funciones, tareas y cometidos - Documentador de Mercados - Bloque B - V1.2.docx
+19aad4e7f3de06079faa943cb028c911d4b1419495063f9c512f040c4148f5ab  bloque_b/99_Historico_V1.3/03_Listados_funciones_tareas_cometidos/Listado exhaustivo de funciones, tareas y cometidos - Documentador de Mercados - Bloque B - V1.2.md
+58b48fe61fb28363ae47f844fdc712745ed6030ae779543992ff3e9374e6496f  bloque_b/99_Historico_V1.3/03_Listados_funciones_tareas_cometidos/Listado exhaustivo de funciones, tareas y cometidos - Documentador para el Motor de Cálculo Avanzado - Bloque B - V1.2.docx
+7f6b2523c2122e8fd90544437d5dd70c4dc12234e903ce91ecd5f909ec7f2452  bloque_b/99_Historico_V1.3/03_Listados_funciones_tareas_cometidos/Listado exhaustivo de funciones, tareas y cometidos - Documentador para el Motor de Cálculo Avanzado - Bloque B - V1.2.md
+de0136ab47e9efba7f24cc5a49a3a54dd4c5f2c99d0a4f2ed15b50d23f8dbadc  bloque_b/99_Historico_V1.3/03_Listados_funciones_tareas_cometidos/Listado exhaustivo de funciones, tareas y cometidos - Motor de Cálculo Avanzado - Bloque B - V1.2.docx
+bb648730201dc00f2ae77f8820052983c0d11db5755bba38d7fbfbc2e1cabdde  bloque_b/99_Historico_V1.3/03_Listados_funciones_tareas_cometidos/Listado exhaustivo de funciones, tareas y cometidos - Motor de Cálculo Avanzado - Bloque B - V1.2.md
+f742cd350656706b18a14d2f5f235a47c37bd43ba49a6bed8e160d7bb4714e81  bloque_b/99_Historico_V1.3/03_Listados_funciones_tareas_cometidos/Listado exhaustivo de funciones, tareas y cometidos - Orquestador técnico de Mercados - Bloque B - V1.2.docx
+53487fba9e4b3a4973322f92890f6de975d1c21980a584ffb30aecad4386dc08  bloque_b/99_Historico_V1.3/03_Listados_funciones_tareas_cometidos/Listado exhaustivo de funciones, tareas y cometidos - Orquestador técnico de Mercados - Bloque B - V1.2.md
+6556c4069237c5defa4a9a5c31bf766558124e715cffc9a15e01c17e9b75db2f  bloque_b/99_Historico_V1.3/04_Objetivos/Objetivos del Bloque B - Versión óptima V1.3.docx
+20786b3ab37c9b9d242546b2343e2ad99a17659953abc92e9d80f4b00f27b742  bloque_b/99_Historico_V1.3/04_Objetivos/Objetivos del Bloque B - Versión óptima V1.3.md
+99e1ca953c98cbfc04cd5edcddd1861fc510da48f1ceeab5ef7f41c52759a584  bloque_b/99_Historico_V1.3/05_Archivos_operativos/Documentación para el Analizador de Mercados (esquema V1.2).docx
+3a4097da0d403930fa9136279069f5139c3344bc10ce04f29d824c5cf8baed39  bloque_b/99_Historico_V1.3/05_Archivos_operativos/Documentación para el Analizador de Mercados (esquema V1.2).md
+2c96ad4184ef01674e169933e5778879b1c8a7816b25d7091552ccaadd363519  bloque_b/99_Historico_V1.3/05_Archivos_operativos/Registro de Fuentes Fiables para el Analizador de Mercados (esquema V1.2).docx
+90305e67fbbf49bb18904ee51da1b4fba9f1d06a8557b783ad432ec3d7b96c47  bloque_b/99_Historico_V1.3/05_Archivos_operativos/Registro de Fuentes Fiables para el Analizador de Mercados (esquema V1.2).md
+d7d552aa94fbdc1efc9401a09574f580826cfbc692243d15ea33f1571f8193e7  bloque_b/99_Historico_V1.3/05_Archivos_operativos/Registro de recomendaciones y seguimiento del Bloque B (esquema V1.1).docx
+677b2db26402ecf997682fdba364e3d7c70e746138f093e85a98f235a04d0a0a  bloque_b/99_Historico_V1.3/05_Archivos_operativos/Registro de recomendaciones y seguimiento del Bloque B (esquema V1.1).md
+c9c4957cb97b52f53ed0f71dbe5a2c06d35bd08109342c0d48e8b2282ce9636e  bloque_b/99_Historico_V1.3/05_Archivos_operativos/Registro de solicitudes y ejecuciones del Bloque B (esquema V1.1).docx
+b1eb574f7ed0e917cf3fdecd1145779bcaae30f1d9ea0bc3bb0454bbaf7562e6  bloque_b/99_Historico_V1.3/05_Archivos_operativos/Registro de solicitudes y ejecuciones del Bloque B (esquema V1.1).md
+4733f22e81d1f659bd031205a985311a73c23a5a69c8392cf81d2344a35d5d7c  bloque_b/99_Historico_V1.3/06_Arquitectura/Arquitectura - Bloque B - por capas - estado consolidado (2026-10-31).png
+6e6c3c3e68b564fb51be25a566e82e2cca604c0e8be60a9b64540ec163f7b751  bloque_b/99_Historico_V1.3/06_Arquitectura/Arquitectura - Bloque B - versión simplificada - estado consolidado (2026-10-31).png
+8c0cdeae0c97cdcdd87e3aba2063f629026b4beb3d6ddd4218ebeb66545b9b0f  bloque_b/99_Historico_V1.3/07_Runbook/Runbook del operador - Bloque B - Versión óptima V1.1.docx
+9347f028f6714b365948ef929181908d6d76dd8d2ca67b6e24b93a8f6769c024  bloque_b/99_Historico_V1.3/07_Runbook/Runbook del operador - Bloque B - Versión óptima V1.1.md
+4d0337e87dc797add763125041e3e23b6a1f927d8a4d0f2892a9363ea9c7e9d4  bloque_b/99_Historico_V1.3/08_Historico_y_adendas/Adenda de arquitectura - Bloque B - Asimilación de la propuesta de mejoras y evolución arquitectónica (2026-10-31).docx
+9b2749c6c44bfe28bc7e4d08422f819e5708c62c72122e931cf9343350afee56  bloque_b/99_Historico_V1.3/08_Historico_y_adendas/Adenda de arquitectura - Bloque B - Asimilación de la propuesta de mejoras y evolución arquitectónica (2026-10-31).md
+f3698bf3988f7186684679ffeabb8d605c61bb9aa0ca951b288506a1c3af7692  bloque_b/99_Historico_V1.3/08_Historico_y_adendas/Adenda de arquitectura - Bloque B - Integración de las mejoras de la evaluación estratégica (2026-10-30).docx
+806481542347f5254c77296d7d5aac5fc28a6312f45781b224440fe601b4b516  bloque_b/99_Historico_V1.3/08_Historico_y_adendas/Adenda de arquitectura - Bloque B - Integración de las mejoras de la evaluación estratégica (2026-10-30).md
+2dd19e6638de9108e7f2395cc3efe2760bc5d0da42fd206e99d254fdb370c3cd  bloque_b/99_Historico_V1.3/08_Historico_y_adendas/Adenda ligera - Motor y Documentador del Motor - Carril B del Bloque B.docx
+d20c373da34b2be681c2d182852cf2acb1deca56c2f7fbc18f64ba5a17db536f  bloque_b/99_Historico_V1.3/08_Historico_y_adendas/Adenda ligera - Motor y Documentador del Motor - Carril B del Bloque B.md
+ded7bc95261d78fa26caef31647c180344afcdcea0aed2f59e50ec8b0e96dde9  bloque_b/99_Historico_V1.3/08_Historico_y_adendas/Diseño del Analizador de Mercados - Bloque B (2026-10-28).docx
+0f18c051b9cb655f1b12e8346bab9cbea6ec552c78db0608395c374ab4eef220  bloque_b/99_Historico_V1.3/08_Historico_y_adendas/Piloto de verificación - Bloque B - Dry-run extremo a extremo.docx
+27135ea592fe1bf62a44704560443b799fa9de2e81437d85a581d7440b4a0208  bloque_b/99_Historico_V1.3/08_Historico_y_adendas/Piloto de verificación - Bloque B - Dry-run extremo a extremo.md
+2b9399da43a972b3ec5a2fb1d07cb1f1e6eec6079d1afa150dc02f8326ab4d2b  bloque_b/99_Historico_V1.3/08_Historico_y_adendas/Propuesta de activación - Bloque B - Publicación coordinada (5.5, paso 3) - V1.1.docx
+40515c9b5e660ae8cad9664640af55ed9c068f4d73470587b0941aeac172a51f  bloque_b/99_Historico_V1.3/08_Historico_y_adendas/Propuesta de activación - Bloque B - Publicación coordinada (5.5, paso 3) - V1.1.md
+e6e1cef6f1b23c16df1fb8ce029ba1c73ed65c8524b1831154e6f148cff076aa  bloque_b/99_Historico_V1.3/08_Historico_y_adendas/Prueba interna - Bloque B - Auditoría de coherencia y dry-run de caminos alternos.docx
+a376b0247be3e81383ca43ef86adf5e67c1f3a5f8a7c56d606ce1c2895a5d269  bloque_b/99_Historico_V1.3/08_Historico_y_adendas/Prueba interna - Bloque B - Auditoría de coherencia y dry-run de caminos alternos.md
+3297360c6490dc5cb991a55a95cf26e7ddc16891af3ad06bdb65b2e14187766d  bloque_b/99_Historico_V1.3/08_Historico_y_adendas/README - índice de la entrega (system prompts V1.3 y V1.5).docx
+f5404ed04406a2c1ee9cb4bf23e985f686e3390a4384dfd4c0b82cbd66be60fd  bloque_b/99_Historico_V1.3/08_Historico_y_adendas/README - índice de la entrega (system prompts V1.3 y V1.5).md
+26dfdb66dac04d1138ff9473d1f3d0e92bcca4b3dd5125b9fb8f0c71c851cdfe  bloque_b/99_Historico_V1.3/08_Historico_y_adendas/README - índice de la entrega V1.2 (adenda de capacidades adaptativas).docx
+0fd839888db5ae08cd362b9542567eeb83b58bf23844c311def5055c9481b47e  bloque_b/99_Historico_V1.3/08_Historico_y_adendas/README - índice de la entrega V1.2 (adenda de capacidades adaptativas).md
+7646399877c3ac88838819f996c14b83121a1c6912baa133077e2252b1491337  bloque_b/99_Historico_V1.3/09_Fichas_de_agentes/Funciones, tareas y cometidos - Analizador de Mercados - Versión óptima V1.docx
+a75f583afd555410b9058d46d0bc7a762229cf0a355eea2f0e1d8d50d74144f0  bloque_b/99_Historico_V1.3/09_Fichas_de_agentes/Funciones, tareas y cometidos - Auditor de Mercados - Versión óptima V1.docx
+0fb690ba279c46f3be6f91a3bc47e6dfcfbf84720f47620ede76bd4f7051fcbe  bloque_b/99_Historico_V1.3/09_Fichas_de_agentes/Funciones, tareas y cometidos - Buscador avanzado de Mercados - Versión óptima V1.docx
+cd395985317020cb7d338d5d56cde93b885e7783ac0744f29446ee30d4f6d936  bloque_b/99_Historico_V1.3/09_Fichas_de_agentes/Funciones, tareas y cometidos - Documentador de Mercados - Versión óptima V1.docx
+ea37db7280cd02c696f848ad24dd7cf1be4b21cd5c14c804abe51407bddd6c16  bloque_b/99_Historico_V1.3/09_Fichas_de_agentes/Funciones, tareas y cometidos - Documentador para el Motor - Versión óptima V1.docx
+8d165c6e324f1485bc9e16f940faa81736878867a088939b255964aedd513a49  bloque_b/99_Historico_V1.3/09_Fichas_de_agentes/Funciones, tareas y cometidos - Motor de Cálculo Avanzado - Versión óptima V1.docx
+2458183ab33ac251393dcc171d2ccc0bb6c549747b220ded4acfe96f4e16f084  bloque_b/99_Historico_V1.3/09_Fichas_de_agentes/Funciones, tareas y cometidos - Orquestador técnico de Mercados - Versión óptima V1.docx
+2cab5b7829c5330f73f1e9dc5cc6249be6c9e8a4eae0dd92f9f99837fde33e7d  bloque_b/99_Historico_V1.3/Informe de verificación interna - Bloque B (2026-10-31).docx
+694ac5cd1c9a797ced3f397c1941fcd382263d8350feb3bd1f1ce529cd9e61f1  bloque_b/99_Historico_V1.3/Informe de verificación interna - Bloque B (2026-10-31).md
+4a8b18834472286b46fbe65e209ffddf6b5bee984d425e10b1f1fdce60dbe453  bloque_b/99_Historico_V1.3/README - índice del paquete.docx
+84db126d7df0f945103090e98d59a79bf4d5f615cf8e32516cd6200d0b839ff4  bloque_b/99_Historico_V1.3/README - índice del paquete.md
+c4a65312744ad08f963b6e0ee1504abd3fc57bfc7cf3781658369a9e67eb943f  bloque_b/README - Índice de la entrega del Bloque B V2.1.docx
+8941757353f9da4591622d3b0109bd75c8f40ff6b1d7e2e0b4839339dc5496e3  bloque_b/README - Índice de la entrega del Bloque B V2.1.md
