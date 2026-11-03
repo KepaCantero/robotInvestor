@@ -1,0 +1,3 @@
+{"decisiones": [{"opp_id": "OPP-2026-0001", "decision": "EN_SEGUIMIENTO", "motivo": "esperar al siguiente dato"}],
+ "valoracion_informe": {"run_id": "RUN-2026-0001", "utilidad": 4, "comentario": "claro"},
+ "configuracion": {"periodicidad": "SEMANAL", "dia_hora_entrega": "LUN 07:00", "horizontes": ["H2", "H3", "H4"]}}

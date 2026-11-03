@@ -1,0 +1,21 @@
+# macOS
+.DS_Store
+
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+dist/
+build/
+.venv/
+venv/
+.pytest_cache/
+.mypy_cache/
+
+# Estado del bloque generado en ejecución (F1–F6, F10, RC, HA, entregables)
+estado_bloque_a/
+entregables/
+
+# Secretos
+.env
+*.pem

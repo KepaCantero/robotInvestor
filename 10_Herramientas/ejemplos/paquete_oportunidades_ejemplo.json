@@ -1,0 +1,313 @@
+{
+ "run_id": "RUN-2026-0042",
+ "fecha": "2026-11-02",
+ "methodology_version": "4.0",
+ "tipo": "PERIODICO",
+ "regimen_macro": "Desaceleración suave con inflación a la baja; bancos centrales en fase de recortes graduales.",
+ "apuestas_independientes": 2,
+ "clases": {
+  "RV": {
+   "estado_semaforo": "VERDE",
+   "regimen_clase": "Revisiones de beneficios estables; valoraciones europeas por debajo de su media histórica.",
+   "candidatas_analizadas": 12,
+   "opciones": [
+    {
+     "opp_id": "OPP-2026-0007",
+     "rango": 1,
+     "tipo_opcion": "SECTOR",
+     "tipo_activo": "RV",
+     "subtipo": "Sector",
+     "nombre": "Bancos europeos",
+     "nombre_llano": "Bancos de Europa",
+     "tesis": "Márgenes sostenidos y recompras con valoración inferior a la media histórica.",
+     "mecanismo": "Curva positiva y calidad crediticia estable sostienen el margen de intereses.",
+     "tnd_ids": [
+      "TND-2026-0003"
+     ],
+     "cluster": "ciclo_europeo",
+     "puntuaciones": {
+      "T": 70,
+      "E": 75,
+      "M": 50,
+      "A": 70,
+      "RK": 72,
+      "desglose_ref": "HT03-RUN-2026-0042-OPP-2026-0007"
+     },
+     "horizontes": {
+      "H2": {
+       "vista": "alcista",
+       "banda": "más probable que no",
+       "prob": null,
+       "prg_id": "PRG-2026-0101"
+      },
+      "H3": {
+       "vista": "alcista",
+       "banda": "más probable que no",
+       "prob": 0.6,
+       "prg_id": "PRG-2026-0102"
+      }
+     },
+     "valoracion": "PER 8,5 frente a media de 10 años de 10,2 (CALC-2026-0033).",
+     "catalizadores": [
+      {
+       "evento": "Resultados del 4T",
+       "fecha": "2027-02-05"
+      }
+     ],
+     "riesgos": [
+      "Recesión con aumento de morosidad",
+      "Impuestos extraordinarios a la banca"
+     ],
+     "riesgo_1a5": 3,
+     "invalidacion": [
+      "Pendiente 2s10s por debajo de 0 durante 4 semanas"
+     ],
+     "ambito": {
+      "incluye": "Bancos comerciales y minoristas cotizados de la zona del euro",
+      "excluye": "Aseguradoras, gestoras de activos y bancos fuera de la zona del euro",
+      "region": "Zona del euro"
+     },
+     "indicador_seguimiento": {
+      "nombre": "Índice sectorial de bancos de la zona del euro",
+      "simbolo": "IDX-BANCOS-EUR",
+      "fuente": "HT-01"
+     },
+     "invertibilidad": {
+      "universo_suficiente": true,
+      "nota": "Más de 30 bancos cotizados con liquidez diaria alta en mercados regulados de la UE."
+     },
+     "liquidez": "alta",
+     "relevancia_decisional": "MEDIA",
+     "reversibilidad": "alta",
+     "siguiente_paso_sugerido": "ENVIAR_A_BLOQUE_B",
+     "que_cambiaria_la_conclusion": [
+      "Revisiones de BPA negativas dos meses seguidos"
+     ],
+     "objeciones": [
+      {
+       "fuerza": "moderada",
+       "resumen": "La recompra ya está descontada",
+       "respuesta": "El rendimiento total implícito sigue por encima del coste de capital (CALC-2026-0034).",
+       "resuelta": true
+      }
+     ],
+     "confianza": "probable",
+     "evidencias": [
+      "CLM-2026-0101",
+      "EVD-2026-0200"
+     ],
+     "calculos": [
+      "CALC-2026-0033",
+      "CALC-2026-0034"
+     ],
+     "puertas": {
+      "G1": true,
+      "G2": true,
+      "G3": true,
+      "G4": true,
+      "PS1": true,
+      "PS2": true,
+      "PS3": true,
+      "PS4": true,
+      "PS5": true,
+      "PS6": true,
+      "PS7": true,
+      "PS8": true
+     }
+    },
+    {
+     "opp_id": "OPP-2026-0011",
+     "rango": 2,
+     "tipo_opcion": "FACTOR",
+     "tipo_activo": "RV",
+     "subtipo": "Estilo y tamaño",
+     "nombre": "Calidad europea de mediana capitalización",
+     "nombre_llano": "Empresas medianas sólidas de Europa",
+     "tesis": "El factor calidad se comporta mejor en fases de desaceleración.",
+     "mecanismo": "Balances sólidos reducen la sensibilidad al ciclo de crédito.",
+     "tnd_ids": [],
+     "cluster": "defensivo",
+     "puntuaciones": {
+      "T": 60,
+      "E": 70,
+      "M": 40,
+      "A": 65,
+      "RK": 66,
+      "desglose_ref": "HT03-RUN-2026-0042-OPP-2026-0011"
+     },
+     "horizontes": {
+      "H3": {
+       "vista": "alcista",
+       "banda": "incierto",
+       "prob": null,
+       "prg_id": "PRG-2026-0103"
+      }
+     },
+     "valoracion": "Prima de valoración del 12 % frente a su media de 10 años (CALC-2026-0040).",
+     "catalizadores": [
+      {
+       "evento": "Publicación de PMI de la zona euro",
+       "fecha": "2026-12-01"
+      }
+     ],
+     "riesgos": [
+      "Rotación brusca hacia valor"
+     ],
+     "riesgo_1a5": 2,
+     "invalidacion": [
+      "Diferencial de rentabilidad calidad-mercado < −5 % en 3 meses"
+     ],
+     "ambito": {
+      "incluye": "Empresas europeas de mediana capitalización con balances sólidos y rentabilidad alta sobre el capital",
+      "excluye": "Gran y pequeña capitalización; empresas financieras",
+      "region": "Europa"
+     },
+     "indicador_seguimiento": {
+      "nombre": "Índice de calidad de mediana capitalización europea",
+      "simbolo": "IDX-CAL-MID-EUR",
+      "fuente": "HT-01"
+     },
+     "invertibilidad": {
+      "universo_suficiente": true,
+      "nota": "Cientos de valores líquidos de mediana capitalización en mercados europeos."
+     },
+     "liquidez": "alta",
+     "relevancia_decisional": "BAJA",
+     "reversibilidad": "alta",
+     "siguiente_paso_sugerido": "VIGILAR",
+     "que_cambiaria_la_conclusion": [
+      "Reaceleración del crecimiento europeo"
+     ],
+     "objeciones": [
+      {
+       "fuerza": "debil",
+       "resumen": "Factor muy concurrido",
+       "respuesta": "Posicionamiento en la media de 5 años."
+      }
+     ],
+     "confianza": "probable",
+     "evidencias": [
+      "CLM-2026-0102"
+     ],
+     "calculos": [
+      "CALC-2026-0040"
+     ],
+     "puertas": {
+      "G1": true,
+      "G2": true,
+      "G3": true,
+      "G4": true,
+      "PS1": true,
+      "PS2": true,
+      "PS3": true,
+      "PS4": true,
+      "PS5": true,
+      "PS6": true,
+      "PS7": true,
+      "PS8": true
+     }
+    }
+   ],
+   "menos_de_tres_motivo": "12 candidatas analizadas; 5 finalistas; solo 2 elegibles: las otras 3 no alcanzan E ≥ 60 (falta corroboración independiente)."
+  },
+  "RF": {
+   "estado_semaforo": "GRIS",
+   "regimen_clase": "Curva con pendiente positiva moderada; diferenciales de crédito estrechos.",
+   "candidatas_analizadas": 6,
+   "opciones": [],
+   "menos_de_tres_motivo": "6 candidatas analizadas; ninguna supera A ≥ 55: los diferenciales están en mínimos de 10 años."
+  },
+  "TCV": {
+   "estado_semaforo": "GRIS",
+   "regimen_clase": "Curvas con pendiente positiva moderada; volatilidad de tipos en descenso.",
+   "candidatas_analizadas": 5,
+   "opciones": [],
+   "menos_de_tres_motivo": "5 exposiciones a factores analizadas; ninguna supera A ≥ 55: la pendiente y los diferenciales están cerca de su valor razonable."
+  }
+ },
+ "seguimiento_vigentes": [
+  {
+   "opp_id": "OPP-2026-0011",
+   "estado": "VIGENTE",
+   "comentario": "Arrastre verificado; condiciones de invalidación lejos."
+  }
+ ],
+ "historial_aciertos": {
+  "ventana": "12 semanas",
+  "por_clase": {
+   "RV": {
+    "resueltos": 9,
+    "aciertos": 6
+   }
+  }
+ },
+ "paquete_para_bloque_B": [
+  {
+   "opp_id": "OPP-2026-0007",
+   "tipo_activo": "RV",
+   "subtipo": "Sector",
+   "tipo_opcion": "SECTOR",
+   "nombre": "Bancos europeos",
+   "ambito": {
+    "incluye": "Bancos comerciales y minoristas cotizados de la zona del euro",
+    "excluye": "Aseguradoras, gestoras de activos y bancos fuera de la zona del euro",
+    "region": "Zona del euro"
+   },
+   "tesis": "Márgenes sostenidos y recompras con valoración inferior a la media histórica.",
+   "mecanismo": "Curva positiva y calidad crediticia estable sostienen el margen de intereses.",
+   "horizontes": [
+    "H2",
+    "H3"
+   ],
+   "horizonte_principal": "H3",
+   "pronosticos": [
+    "PRG-2026-0101",
+    "PRG-2026-0102"
+   ],
+   "catalizadores": [
+    {
+     "evento": "Resultados del 4T",
+     "fecha": "2027-02-05"
+    }
+   ],
+   "riesgos": [
+    "Recesión con aumento de morosidad",
+    "Impuestos extraordinarios a la banca"
+   ],
+   "invalidacion": [
+    "Pendiente 2s10s por debajo de 0 durante 4 semanas"
+   ],
+   "indicador_seguimiento": {
+    "nombre": "Índice sectorial de bancos de la zona del euro",
+    "simbolo": "IDX-BANCOS-EUR",
+    "fuente": "HT-01"
+   },
+   "criterios_seleccion_sugeridos": [
+    "Mayor peso de la banca minorista en el margen de intereses",
+    "Ratio de capital holgado"
+   ],
+   "metricas_clave": [
+    "Margen de intereses",
+    "Coste del riesgo",
+    "Ratio CET1"
+   ],
+   "preguntas_para_B": [
+    "¿Qué bancos del ámbito tienen más recompras aprobadas para 2027?"
+   ],
+   "evidencias": [
+    "CLM-2026-0101",
+    "EVD-2026-0200"
+   ],
+   "calculos": [
+    "CALC-2026-0033",
+    "CALC-2026-0034"
+   ]
+  }
+ ],
+ "preguntas_sugeridas": [
+  "¿Qué ocurriría con los bancos europeos si el BCE recortara 50 puntos básicos más?"
+ ],
+ "limitaciones": [
+  "Sin certificado de horizonte para H2 en renta variable: banda cualitativa."
+ ]
+}

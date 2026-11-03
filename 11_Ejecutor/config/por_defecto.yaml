@@ -1,0 +1,202 @@
+# Configuración por defecto del Ejecutor programático del Bloque A (V1.1)
+# Bloque A · Robot Investor · Versión óptima V5.0 · 02/11/2026 · subordinado al Documento 0 óptima V5.0
+# (doce tipos de activo de 2.6, presupuestos del Anexo A, referencias de 8.4, Analistas AG-03..AG-09 y AG-21..AG-25).
+# Cualquier clave puede sobrescribirse con un YAML propio (--config) que se fusiona sobre este.
+
+modo: vivo                 # vivo | backtest  (el comando «backtest» fuerza «backtest»)
+zona_horaria: Europe/Madrid
+idioma: es-ES
+methodology_version: "5.0"
+
+rutas:
+  # Raíz del paquete del Bloque A (carpetas 01_…10_). null = autodetección (carpeta padre de 11_Ejecutor)
+  # o variable de entorno BLOQUE_A_RAIZ.
+  raiz_paquete: null
+  prompts: 02_System_prompts
+  plantillas: 06_Plantillas_entregables
+  archivos_operativos: 05_Archivos_operativos
+  # Estado del bloque (F1–F6, F10, RC, HA en JSONL) y entregables del modo vivo
+  almacen: ./estado_bloque_a
+  entregables: ./entregables
+
+# Carga de prompts: cada agente se busca en «prompts» por el nombre de su agente con cualquier sufijo de versión
+# («System prompt - <nombre> - Versión óptima V5.0.md», «… V5.0.md», …; se toma la versión más alta).
+prompts:
+  # Si falta el prompt específico de un Analista de tipo de activo, se usa el «Marco común de los Analistas de
+  # tipo de activo (plantilla)» y se registra una incidencia (modo degradado). false = error si falta.
+  marco_comun_si_falta: true
+
+# ---------------------------------------------------------------------------
+# Modelos por agente. IMPORTANTE: los identificadores deben comprobarse en la
+# documentación de Anthropic (página de modelos) antes de usar el cliente real.
+# ---------------------------------------------------------------------------
+modelos:
+  por_defecto: claude-sonnet-5-5
+  AG-01: claude-haiku-5-5     # Coordinador de Peticiones y Consultas
+  AG-02: claude-opus-5-5      # Analizador de Tendencias de Inversión
+  AG-03: claude-sonnet-5-5    # Analista de Renta Variable (RV)
+  AG-04: claude-sonnet-5-5    # Analista de Renta Fija (RF)
+  AG-05: claude-sonnet-5-5    # Analista de Divisas (DIV)
+  AG-06: claude-sonnet-5-5    # Analista de Materias Primas (MP)
+  AG-07: claude-sonnet-5-5    # Analista de Activos Inmobiliarios Cotizados (INM)
+  AG-08: claude-sonnet-5-5    # Analista de Criptoactivos y Activos Digitales (CRI)
+  AG-09: claude-sonnet-5-5    # Analista de Capital Privado y Activos Alternativos (ALT)
+  AG-10: claude-sonnet-5-5    # Analista de Prospectiva y Horizontes
+  AG-11: claude-opus-5-5      # Analista de hipótesis contrarias
+  AG-12: claude-haiku-5-5     # Curador de Evidencia
+  AG-13: claude-sonnet-5-5    # Motor de Cálculo Avanzado (solo planificación no estándar)
+  AG-14: claude-sonnet-5-5    # Documentador para el Analizador
+  AG-15: claude-sonnet-5-5    # Documentador para el Motor
+  AG-16: claude-sonnet-5-5    # Buscador de Fuentes Avanzadas
+  AG-17: claude-sonnet-5-5    # Redactor y Diseñador de Informes
+  AG-18: claude-sonnet-5-5    # Orquestador técnico
+  AG-19: claude-sonnet-5-5    # Auditor
+  AG-20: claude-opus-5-5      # Evaluador de Previsiones y Aprendizaje
+  AG-21: claude-sonnet-5-5    # Analista de Índices Bursátiles (IDX)
+  AG-22: claude-sonnet-5-5    # Analista de Fondos y Vehículos de Inversión Colectiva (FON)
+  AG-23: claude-sonnet-5-5    # Analista de Derivados Financieros (DER)
+  AG-24: claude-sonnet-5-5    # Analista de Instrumentos Monetarios y Liquidez (MON)
+  AG-25: claude-sonnet-5-5    # Analista de Tipos de Interés, Crédito y Volatilidad (TCV)
+
+max_tokens:
+  por_defecto: 8000
+  AG-02: 8000
+  AG-03: 12000
+  AG-04: 12000
+  AG-05: 12000
+  AG-06: 12000
+  AG-07: 12000
+  AG-08: 12000
+  AG-09: 12000
+  AG-21: 12000
+  AG-22: 12000
+  AG-23: 12000
+  AG-24: 12000
+  AG-25: 12000
+  AG-10: 10000
+  AG-11: 10000
+  AG-17: 10000
+
+llm:
+  max_reintentos_api: 4          # reintentos del SDK ante 429/5xx/conexión
+  timeout_s: 600
+  cache_prompts: true            # cache_control en el system prompt (caché de prompts)
+  cache_ttl: "1h"                # 5m | 1h
+  salida_estructurada: false     # true = output_config.format json_schema (comprobar soporte del modelo)
+  reintento_reparacion: 1        # reintentos de reparación de JSON no conforme
+  max_continuaciones_pause_turn: 3
+  cache_resultados: true         # HT-06: misma petición → misma respuesta desde caché
+  semilla_mock: 20261102
+
+busqueda_web:
+  habilitada_en_vivo: true       # en backtest siempre desactivada (fuga de información)
+  tipo_herramienta: web_search_20260318
+  max_usos_por_llamada: 5
+  agentes: [AG-14, AG-15, AG-16]
+
+# ---------------------------------------------------------------------------
+# Presupuestos (Anexo A del Documento 0 óptima V5.0) y conversión a UC
+# ---------------------------------------------------------------------------
+presupuesto_uc:
+  N0: 1
+  N1: 5          # por tipo de activo
+  N2: 18         # por tipo de activo
+  N3: 50         # por petición
+  ciclo_semanal_max: 240   # ciclo semanal completo con los doce tipos
+  ampliacion_sin_autorizacion: 0.25
+  ampliacion_max_autorizable: 0.50
+  reparto_fases:                # fracción del presupuesto del tipo de activo
+    cribado: 0.35
+    investigacion: 0.20
+    prospectiva: 0.15
+    refutacion: 0.20
+    respuesta_objeciones: 0.10
+  rotacion_exploratoria: 0.20
+
+uc:
+  # 1 UC ≈ 8 000 tokens de entrada y 1 500 de salida (Anexo A). Decisión del ejecutor:
+  # UC_llamada = 0,5·(entrada_equivalente/8000) + 0,5·(salida/1500), con
+  # entrada_equivalente = entrada_no_cacheada + escritura_cache + factor_lectura_cache·lectura_cache.
+  tokens_entrada_por_uc: 8000
+  tokens_salida_por_uc: 1500
+  factor_lectura_cache: 0.1
+  # Cálculos deterministas del Motor (sin modelo de lenguaje)
+  motor_por_plan: {PLAN_MIN: 0.02, PLAN_STD: 0.1, PLAN_EXT: 0.5}
+
+# Precios por millón de tokens (USD) para estimar el coste. SIN VALORES: rellénelos con la
+# tarifa vigente publicada por Anthropic. Mientras sean null, consumo.csv deja el coste vacío.
+precios_por_millon:
+  claude-opus-5-5: {entrada: null, salida: null, escritura_cache: null, lectura_cache: null}
+  claude-sonnet-5-5: {entrada: null, salida: null, escritura_cache: null, lectura_cache: null}
+  claude-haiku-5-5: {entrada: null, salida: null, escritura_cache: null, lectura_cache: null}
+precio_busqueda_web_por_mil: null
+
+# ---------------------------------------------------------------------------
+# Horizontes, referencias y parámetros de análisis
+# ---------------------------------------------------------------------------
+horizontes:
+  H1: {sesiones: 5}
+  H2: {semanas: 4}
+  H3: {meses: 6}
+  H4: {meses: 12}
+horizonte_principal_preferente: [H3, H2, H4, H1]
+
+# Referencias de comparación por tipo de activo (8.4; propuesta inicial, a ratificar por el operador en F10).
+# Valores: símbolo HT-01 · CESTA (equiponderada de los indicadores del tipo en el universo) · SUBYACENTE (columna
+# «subyacente» del universo para cada indicador; si falta, CESTA) · NINGUNA (pronóstico absoluto: posición neutra).
+# Los símbolos del ejemplo son aproximaciones disponibles en el universo de ejemplo (ver README).
+indices_referencia:
+  RV: ACWI        # MSCI ACWI
+  RF: AGG         # Bloomberg Global Aggregate cubierto a EUR (aproximación del ejemplo: agregado de EE. UU.)
+  DIV: CESTA      # cesta equiponderada G10 frente a EUR (aproximación: cesta de pares del universo)
+  MP: DBC         # Bloomberg Commodity Index (aproximación: cesta amplia de materias primas)
+  IDX: ACWI       # MSCI ACWI
+  FON: CESTA      # índice de la categoría del vehículo (aproximación: cesta de categorías del universo)
+  DER: SUBYACENTE # rentabilidad del subyacente sin derivado
+  INM: REET       # FTSE EPRA Nareit Developed (aproximación: REIT globales)
+  CRI: BTC-USD    # bitcoin
+  ALT: PSP        # LPX50, capital privado cotizado (aproximación)
+  MON: XEON.DE    # €STR compuesto
+  TCV: NINGUNA    # posición neutra (rentabilidad cero frente al índice de liquidez)
+
+gc0:
+  sigma_semanal: 1.5          # movimiento > 1,5 σ semanales del tipo de activo
+  invalidacion_cercana: 0.10  # condición de invalidación a < 10 % de activarse
+  ventana_sigma_semanas: 104
+  eventos_calendario: []       # [{fecha: AAAA-MM-DD, clases: [RV], evento: "…"}]
+
+seleccion:
+  max_candidatas: 8
+  max_finalistas: 5
+  umbral_senal_gc1: 0.75
+  peticiones_conocimiento_por_clase: 1
+
+auditoria:
+  en_vivo: true
+  en_backtest: false
+  muestreo_ad_hoc: 0.30
+
+evaluacion:
+  min_calibrar: 30
+  min_certificar: 100
+  ece_max: 0.15
+  bootstrap_replicas: 2000
+  simulaciones_ece: 2000
+  nivel_ic: 0.90
+  aplicar_recalibracion: false   # false = modo sombra: se registra y se compara, no se aplica
+  dias_habiles_no_resoluble: 10
+  llm_informe_aprendizaje: true
+
+# Paralelismo de agentes sin estado (R25)
+paralelismo:
+  hilos_analistas: 4
+  umbral_cola: 3
+
+backtest:
+  frecuencia: semanal          # semanal | quincenal | mensual | diaria
+  dia_semana: 4                # 0 = lunes … 4 = viernes (fecha as_of de cada ciclo)
+  resolver_al_final: true      # tras el último ciclo, resolver con los datos disponibles
+  # Fecha de corte de conocimiento del modelo (valor orientativo: compruébelo en la
+  # documentación de Anthropic). Un periodo anterior genera advertencia de fuga por conocimiento.
+  fecha_corte_modelo: "2026-06-30"
+  anonimizar: false

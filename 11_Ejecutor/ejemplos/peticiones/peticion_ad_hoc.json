@@ -1,0 +1,4 @@
+{"tipo": "AD_HOC",
+ "alcance": {"clases": ["RF", "DIV"], "regiones": ["EUR", "NAM"], "tematicas": [], "activos_concretos": [],
+             "pregunta": "¿Hay oportunidades en deuda soberana y divisas G10 a 1-6 meses?"},
+ "horizontes": ["H2", "H3"], "prioridad": "NORMAL", "nivel_forzado": null, "fecha_objetivo": "2026-06-08T07:00", "referencia_previa": null}

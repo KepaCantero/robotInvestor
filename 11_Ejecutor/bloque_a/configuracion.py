@@ -1,0 +1,128 @@
+"""Carga y fusión de la configuración del ejecutor (YAML) y resolución de rutas."""
+from __future__ import annotations
+
+import copy
+import os
+from pathlib import Path
+from typing import Any, Dict, Optional
+
+import yaml
+
+DIR_PAQUETE = Path(__file__).resolve().parent            # .../11_Ejecutor/bloque_a
+DIR_EJECUTOR = DIR_PAQUETE.parent                         # .../11_Ejecutor
+RUTA_CONFIG_POR_DEFECTO = DIR_EJECUTOR / "config" / "por_defecto.yaml"
+RUTA_UNIVERSO_EJEMPLO = DIR_EJECUTOR / "config" / "universo_ejemplo.csv"
+
+# Los doce tipos de activo del Documento 0 óptima V5.0 (2.6), en el orden canónico de la tabla.
+# «Clase» se mantiene en el código como sinónimo de «tipo de activo» (2.6).
+CLASES = ("RV", "RF", "DIV", "MP", "IDX", "FON", "DER", "INM", "CRI", "ALT", "MON", "TCV")
+TIPOS_ACTIVO = CLASES
+NOMBRE_CLASE = {
+    "RV": "Renta variable", "RF": "Renta fija", "DIV": "Divisas", "MP": "Materias primas",
+    "IDX": "Índices bursátiles", "FON": "Fondos y vehículos de inversión colectiva", "DER": "Derivados financieros",
+    "INM": "Activos inmobiliarios cotizados", "CRI": "Criptoactivos y activos digitales",
+    "ALT": "Capital privado y activos alternativos", "MON": "Instrumentos monetarios y liquidez",
+    "TCV": "Tipos de interés, crédito y volatilidad",
+}
+# Granularidad del ámbito (2.4): nunca un activo concreto (R21)
+TIPOS_OPCION = ("MERCADO", "SECTOR", "SUBSECTOR", "TEMATICA", "SEGMENTO", "FACTOR", "ESTILO", "ESTRATEGIA")
+# Compatibilidad con universos V4.x: valores retirados y su equivalente V5.0
+TIPOS_OPCION_RETIRADOS = {"INSTRUMENTO_GENERICO": "SEGMENTO", "INDUSTRIA": "SUBSECTOR"}
+HORIZONTES = ("H1", "H2", "H3", "H4")
+# Tabla 8.3 del Documento 0 óptima V5.0: SI · LIMITADO · NO
+TABLA_HORIZONTES = {
+    "RV": {"H1": "LIMITADO", "H2": "SI", "H3": "SI", "H4": "SI"},
+    "RF": {"H1": "LIMITADO", "H2": "SI", "H3": "SI", "H4": "SI"},
+    "DIV": {"H1": "SI", "H2": "SI", "H3": "SI", "H4": "LIMITADO"},
+    "MP": {"H1": "SI", "H2": "SI", "H3": "SI", "H4": "SI"},
+    "IDX": {"H1": "LIMITADO", "H2": "SI", "H3": "SI", "H4": "SI"},
+    "FON": {"H1": "NO", "H2": "LIMITADO", "H3": "SI", "H4": "SI"},
+    "DER": {"H1": "SI", "H2": "SI", "H3": "SI", "H4": "NO"},
+    "INM": {"H1": "NO", "H2": "LIMITADO", "H3": "SI", "H4": "SI"},
+    "CRI": {"H1": "SI", "H2": "SI", "H3": "SI", "H4": "LIMITADO"},
+    "ALT": {"H1": "NO", "H2": "NO", "H3": "LIMITADO", "H4": "SI"},
+    "MON": {"H1": "LIMITADO", "H2": "SI", "H3": "SI", "H4": "NO"},
+    "TCV": {"H1": "SI", "H2": "SI", "H3": "SI", "H4": "LIMITADO"},
+}
+
+
+def fusionar(base: Dict, extra: Optional[Dict]) -> Dict:
+    """Fusión recursiva (extra prevalece)."""
+    out = copy.deepcopy(base)
+    for k, v in (extra or {}).items():
+        if isinstance(v, dict) and isinstance(out.get(k), dict):
+            out[k] = fusionar(out[k], v)
+        else:
+            out[k] = copy.deepcopy(v)
+    return out
+
+
+def raiz_paquete(cfg: Dict) -> Path:
+    r = (cfg.get("rutas") or {}).get("raiz_paquete") or os.environ.get("BLOQUE_A_RAIZ")
+    return Path(r).resolve() if r else DIR_EJECUTOR.parent
+
+
+def ruta(cfg: Dict, clave: str) -> Path:
+    """Ruta de una carpeta del paquete (prompts, plantillas, archivos_operativos)."""
+    valor = (cfg.get("rutas") or {}).get(clave)
+    p = Path(valor)
+    return p if p.is_absolute() else raiz_paquete(cfg) / p
+
+
+def buscar_versionado(carpeta: Path, bases, extension: str = ".md") -> Optional[Path]:
+    """Busca «<base> - … V<x.y><ext>» (o «<base> - V<x.y><ext>», o «<base><ext>») con cualquier sufijo de versión.
+
+    `bases` puede ser un texto o una lista de nombres alternativos (p. ej., el nombre V5.0 de un agente y su
+    nombre anterior); se devuelve el archivo de versión más alta y, a igual versión, el del primer nombre de la
+    lista. Robusto al renombrado de «V4.0» a «V5.0» (y posteriores), a mayúsculas y a variantes NFC/NFD de los
+    nombres de archivo. Devuelve None si no hay ninguno."""
+    import re
+    import unicodedata
+    if isinstance(bases, str):
+        bases = [bases]
+    if not carpeta.is_dir():
+        return None
+    archivos = [p for p in carpeta.iterdir() if p.is_file() and p.suffix.lower() == extension.lower()]
+    candidatos = []
+    for orden, base in enumerate(bases):
+        nb = unicodedata.normalize("NFC", base).casefold()
+        for p in archivos:
+            tallo = unicodedata.normalize("NFC", p.stem)
+            t = tallo.casefold()
+            if t == nb:
+                candidatos.append(((0, 0), -orden, p.name, p))
+                continue
+            if not t.startswith(nb):
+                continue
+            m = re.fullmatch(r"\s*[-–—]\s*(?:.*?\s)?V(\d+)\.(\d+)\s*", tallo[len(base):], flags=re.IGNORECASE)
+            if m:
+                candidatos.append(((int(m.group(1)), int(m.group(2))), -orden, p.name, p))
+    if not candidatos:
+        return None
+    return max(candidatos, key=lambda x: x[:3])[3]
+
+
+def cargar_config(ruta_yaml: Optional[str] = None, extra: Optional[Dict] = None) -> Dict:
+    with open(RUTA_CONFIG_POR_DEFECTO, encoding="utf-8") as fh:
+        cfg = yaml.safe_load(fh)
+    if ruta_yaml:
+        with open(ruta_yaml, encoding="utf-8") as fh:
+            cfg = fusionar(cfg, yaml.safe_load(fh) or {})
+    if extra:
+        cfg = fusionar(cfg, extra)
+    return cfg
+
+
+def modelo_de(cfg: Dict, agente: str) -> str:
+    m = cfg.get("modelos") or {}
+    return m.get(agente) or m.get("por_defecto")
+
+
+def max_tokens_de(cfg: Dict, agente: str) -> int:
+    m = cfg.get("max_tokens") or {}
+    return int(m.get(agente) or m.get("por_defecto") or 8000)
+
+
+def aplicabilidad(cfg: Dict, clase: str, horizonte: str) -> str:
+    tabla = cfg.get("_tabla_horizontes") or TABLA_HORIZONTES
+    return tabla[clase][horizonte]

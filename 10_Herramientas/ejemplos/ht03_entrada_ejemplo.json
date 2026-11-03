@@ -1,0 +1,521 @@
+{
+ "parametros": {},
+ "candidatas_analizadas": {
+  "RV": 12,
+  "RF": 6,
+  "IDX": 5,
+  "TCV": 4
+ },
+ "opciones": [
+  {
+   "opp_id": "OPP-2026-0007",
+   "tipo_activo": "RV",
+   "cluster": "ciclo_europeo",
+   "vigente": false,
+   "dimensiones": {
+    "T": {
+     "magnitud": 70,
+     "alcance": 70,
+     "velocidad": 70,
+     "duracion": 70,
+     "difusion": 70,
+     "posicion_cadena_valor": 70,
+     "capacidad_transformadora": 70,
+     "claridad_causal": 70
+    },
+    "E": {
+     "calidad_raices": 80,
+     "cobertura_variables": 80,
+     "calidad_metodologica": 70,
+     "trazabilidad": 80,
+     "actualidad": 70,
+     "discrepancias_resueltas": 70,
+     "objeciones_respondidas": 70
+    },
+    "M": {
+     "adopcion": 50,
+     "escalado": 50,
+     "indicadores_disponibles": 50,
+     "persistencia": 50,
+     "estabilidad_impulsores": 50,
+     "hitos_claros": 50
+    },
+    "A": {
+     "asimetria": 70,
+     "valoracion": 70,
+     "catalizadores": 70,
+     "momento": 70,
+     "invertibilidad": 70
+    },
+    "P": {
+     "novedad": 60,
+     "incertidumbre_reducible": 60,
+     "coste_eficiencia": 70
+    }
+   },
+   "puertas": {
+    "G1": true,
+    "G2": true,
+    "G3": true,
+    "G4": true,
+    "PS1": true,
+    "PS2": true,
+    "PS3": true,
+    "PS4": true,
+    "PS5": true,
+    "PS6": true,
+    "PS7": true,
+    "PS8": true
+   },
+   "objeciones_fuertes_abiertas": 0,
+   "riesgo_cola": 2
+  },
+  {
+   "opp_id": "OPP-2026-0011",
+   "tipo_activo": "RV",
+   "cluster": "defensivo",
+   "vigente": true,
+   "dimensiones": {
+    "T": {
+     "magnitud": 60,
+     "alcance": 60,
+     "velocidad": 60,
+     "duracion": 60,
+     "difusion": 60,
+     "posicion_cadena_valor": 60,
+     "capacidad_transformadora": 60,
+     "claridad_causal": 60
+    },
+    "E": {
+     "calidad_raices": 70,
+     "cobertura_variables": 70,
+     "calidad_metodologica": 70,
+     "trazabilidad": 70,
+     "actualidad": 70,
+     "discrepancias_resueltas": 70,
+     "objeciones_respondidas": 70
+    },
+    "M": {
+     "adopcion": 40,
+     "escalado": 40,
+     "indicadores_disponibles": 40,
+     "persistencia": 40,
+     "estabilidad_impulsores": 40,
+     "hitos_claros": 40
+    },
+    "A": {
+     "asimetria": 70,
+     "valoracion": 60,
+     "catalizadores": 60,
+     "momento": 60,
+     "invertibilidad": 60
+    },
+    "P": {
+     "novedad": 60,
+     "incertidumbre_reducible": 60,
+     "coste_eficiencia": 70
+    }
+   },
+   "puertas": {
+    "G1": true,
+    "G2": true,
+    "G3": true,
+    "G4": true,
+    "PS1": true,
+    "PS2": true,
+    "PS3": true,
+    "PS4": true,
+    "PS5": true,
+    "PS6": true,
+    "PS7": true,
+    "PS8": true
+   },
+   "objeciones_fuertes_abiertas": 0,
+   "riesgo_cola": 1,
+   "anterior": {
+    "A": 80
+   }
+  },
+  {
+   "opp_id": "OPP-2026-0015",
+   "tipo_activo": "RV",
+   "cluster": "ciclo_europeo",
+   "vigente": false,
+   "dimensiones": {
+    "T": {
+     "magnitud": 80,
+     "alcance": 80,
+     "velocidad": 80,
+     "duracion": 80,
+     "difusion": 80,
+     "posicion_cadena_valor": 80,
+     "capacidad_transformadora": 80,
+     "claridad_causal": 80
+    },
+    "E": {
+     "calidad_raices": 80,
+     "cobertura_variables": 80,
+     "calidad_metodologica": 80,
+     "trazabilidad": 80,
+     "actualidad": 80,
+     "discrepancias_resueltas": 80,
+     "objeciones_respondidas": 80
+    },
+    "M": {
+     "adopcion": 50,
+     "escalado": 50,
+     "indicadores_disponibles": 50,
+     "persistencia": 50,
+     "estabilidad_impulsores": 50,
+     "hitos_claros": 50
+    },
+    "A": {
+     "asimetria": 80,
+     "valoracion": 80,
+     "catalizadores": 80,
+     "momento": 80,
+     "invertibilidad": 80
+    },
+    "P": {
+     "novedad": 60,
+     "incertidumbre_reducible": 60,
+     "coste_eficiencia": 70
+    }
+   },
+   "puertas": {
+    "G1": true,
+    "G2": true,
+    "G3": true,
+    "G4": true,
+    "PS1": true,
+    "PS2": true,
+    "PS3": true,
+    "PS4": true,
+    "PS5": true,
+    "PS6": true,
+    "PS7": true,
+    "PS8": true
+   },
+   "objeciones_fuertes_abiertas": 0,
+   "riesgo_cola": 3
+  },
+  {
+   "opp_id": "OPP-2026-0016",
+   "tipo_activo": "RV",
+   "cluster": "ciclo_europeo",
+   "vigente": false,
+   "dimensiones": {
+    "T": {
+     "magnitud": 80,
+     "alcance": 80,
+     "velocidad": 80,
+     "duracion": 80,
+     "difusion": 80,
+     "posicion_cadena_valor": 80,
+     "capacidad_transformadora": 80,
+     "claridad_causal": 80
+    },
+    "E": {
+     "calidad_raices": 70,
+     "cobertura_variables": 70,
+     "calidad_metodologica": 70,
+     "trazabilidad": 70,
+     "actualidad": 70,
+     "discrepancias_resueltas": 70,
+     "objeciones_respondidas": 70
+    },
+    "M": {
+     "adopcion": 50,
+     "escalado": 50,
+     "indicadores_disponibles": 50,
+     "persistencia": 50,
+     "estabilidad_impulsores": 50,
+     "hitos_claros": 50
+    },
+    "A": {
+     "asimetria": 80,
+     "valoracion": 80,
+     "catalizadores": 80,
+     "momento": 80,
+     "invertibilidad": 80
+    },
+    "P": {
+     "novedad": 60,
+     "incertidumbre_reducible": 60,
+     "coste_eficiencia": 70
+    }
+   },
+   "puertas": {
+    "G1": true,
+    "G2": true,
+    "G3": true,
+    "G4": true,
+    "PS1": true,
+    "PS2": true,
+    "PS3": true,
+    "PS4": true,
+    "PS5": true,
+    "PS6": true,
+    "PS7": true,
+    "PS8": true
+   },
+   "objeciones_fuertes_abiertas": 0,
+   "riesgo_cola": 2
+  },
+  {
+   "opp_id": "OPP-2026-0017",
+   "tipo_activo": "RV",
+   "cluster": "tecnologia",
+   "vigente": false,
+   "dimensiones": {
+    "T": {
+     "magnitud": 70,
+     "alcance": 70,
+     "velocidad": 70,
+     "duracion": 70,
+     "difusion": 70,
+     "posicion_cadena_valor": 70,
+     "capacidad_transformadora": 70,
+     "claridad_causal": 70
+    },
+    "E": {
+     "calidad_raices": 60,
+     "cobertura_variables": 60,
+     "calidad_metodologica": 60,
+     "trazabilidad": 60,
+     "actualidad": 60,
+     "discrepancias_resueltas": 60,
+     "objeciones_respondidas": 60
+    },
+    "M": {
+     "adopcion": 50,
+     "escalado": 50,
+     "indicadores_disponibles": 50,
+     "persistencia": 50,
+     "estabilidad_impulsores": 50,
+     "hitos_claros": 50
+    },
+    "A": {
+     "asimetria": 70,
+     "valoracion": 70,
+     "catalizadores": 70,
+     "momento": 70,
+     "invertibilidad": 70
+    },
+    "P": {
+     "novedad": 60,
+     "incertidumbre_reducible": 60,
+     "coste_eficiencia": 70
+    }
+   },
+   "puertas": {
+    "G1": true,
+    "G2": true,
+    "G3": true,
+    "G4": true,
+    "PS1": true,
+    "PS2": true,
+    "PS3": true,
+    "PS4": true,
+    "PS5": true,
+    "PS6": true,
+    "PS7": true,
+    "PS8": true
+   },
+   "objeciones_fuertes_abiertas": 0,
+   "riesgo_cola": 2,
+   "segunda_pasada": {
+    "E": {
+     "calidad_raices": 60,
+     "cobertura_variables": 60,
+     "calidad_metodologica": 60,
+     "trazabilidad": 60,
+     "actualidad": 60,
+     "discrepancias_resueltas": 60,
+     "objeciones_respondidas": 60
+    }
+   }
+  },
+  {
+   "opp_id": "OPP-2026-0020",
+   "tipo_activo": "RF",
+   "cluster": "duracion_core",
+   "vigente": false,
+   "dimensiones": {
+    "T": {
+     "magnitud": 70,
+     "alcance": 70,
+     "velocidad": 70,
+     "duracion": 70,
+     "difusion": 70,
+     "posicion_cadena_valor": 70,
+     "capacidad_transformadora": 70,
+     "claridad_causal": 70
+    },
+    "E": {
+     "calidad_raices": 50,
+     "cobertura_variables": 50,
+     "calidad_metodologica": 50,
+     "trazabilidad": 50,
+     "actualidad": 50,
+     "discrepancias_resueltas": 50,
+     "objeciones_respondidas": 50
+    },
+    "M": {
+     "adopcion": 50,
+     "escalado": 50,
+     "indicadores_disponibles": 50,
+     "persistencia": 50,
+     "estabilidad_impulsores": 50,
+     "hitos_claros": 50
+    },
+    "A": {
+     "asimetria": 60,
+     "valoracion": 60,
+     "catalizadores": 60,
+     "momento": 60,
+     "invertibilidad": 60
+    },
+    "P": {
+     "novedad": 60,
+     "incertidumbre_reducible": 60,
+     "coste_eficiencia": 70
+    }
+   },
+   "puertas": {
+    "G1": true,
+    "G2": true,
+    "G3": true,
+    "G4": true,
+    "PS1": true,
+    "PS2": true,
+    "PS3": true,
+    "PS4": true,
+    "PS5": true,
+    "PS6": true,
+    "PS7": true,
+    "PS8": true
+   },
+   "objeciones_fuertes_abiertas": 0,
+   "riesgo_cola": 2
+  },
+  {
+   "opp_id": "OPP-2026-0021",
+   "tipo_activo": "RF",
+   "cluster": "credito_hy",
+   "vigente": false,
+   "dimensiones": {
+    "T": "NA",
+    "E": {
+     "calidad_raices": 70,
+     "cobertura_variables": 70,
+     "calidad_metodologica": 70,
+     "trazabilidad": 70,
+     "actualidad": 70,
+     "discrepancias_resueltas": 70,
+     "objeciones_respondidas": 70
+    },
+    "M": {
+     "adopcion": 50,
+     "escalado": 50,
+     "indicadores_disponibles": 50,
+     "persistencia": 50,
+     "estabilidad_impulsores": 50,
+     "hitos_claros": 50
+    },
+    "A": {
+     "asimetria": 70,
+     "valoracion": 70,
+     "catalizadores": 70,
+     "momento": 70,
+     "invertibilidad": 70
+    },
+    "P": {
+     "novedad": 60,
+     "incertidumbre_reducible": 60,
+     "coste_eficiencia": 70
+    }
+   },
+   "puertas": {
+    "G1": true,
+    "G2": true,
+    "G3": true,
+    "G4": true,
+    "PS1": true,
+    "PS2": true,
+    "PS3": true,
+    "PS4": true,
+    "PS5": true,
+    "PS6": true,
+    "PS7": true,
+    "PS8": true
+   },
+   "objeciones_fuertes_abiertas": 0,
+   "riesgo_cola": 4,
+   "tactica": true
+  },
+  {
+   "opp_id": "OPP-2026-0030",
+   "tipo_activo": "TCV",
+   "cluster": "pendiente_euro",
+   "vigente": false,
+   "dimensiones": {
+    "T": {
+     "magnitud": 70,
+     "alcance": 70,
+     "velocidad": 70,
+     "duracion": 70,
+     "difusion": 70,
+     "posicion_cadena_valor": 70,
+     "capacidad_transformadora": 70,
+     "claridad_causal": 70
+    },
+    "E": {
+     "calidad_raices": 70,
+     "cobertura_variables": 70,
+     "calidad_metodologica": 70,
+     "trazabilidad": 70,
+     "actualidad": 70,
+     "discrepancias_resueltas": 70,
+     "objeciones_respondidas": 70
+    },
+    "M": {
+     "adopcion": 50,
+     "escalado": 50,
+     "indicadores_disponibles": 50,
+     "persistencia": 50,
+     "estabilidad_impulsores": 50,
+     "hitos_claros": 50
+    },
+    "A": {
+     "asimetria": 70,
+     "valoracion": 70,
+     "catalizadores": 70,
+     "momento": 70,
+     "invertibilidad": 70
+    },
+    "P": {
+     "novedad": 60,
+     "incertidumbre_reducible": 60,
+     "coste_eficiencia": 70
+    }
+   },
+   "puertas": {
+    "G1": true,
+    "G2": true,
+    "G3": true,
+    "G4": true,
+    "PS1": true,
+    "PS2": true,
+    "PS3": true,
+    "PS4": true,
+    "PS5": true,
+    "PS6": true,
+    "PS7": true,
+    "PS8": true
+   },
+   "objeciones_fuertes_abiertas": 0,
+   "riesgo_cola": 2
+  }
+ ]
+}

@@ -1,0 +1,810 @@
+<!doctype html>
+<!--
+=====================================================================================
+PLANTILLA · INFORME VISUAL PARA EL USUARIO · Bloque A · Robot Investor · Versión óptima V5.0 · 02/11/2026
+Subordinada al Documento 0 óptima V5.0 (secciones 2.4–2.6 y 14.2). Generador: AG-17 Redactor y Diseñador de Informes.
+
+ESTE ARCHIVO SE ENTREGA RELLENO CON DATOS DE EJEMPLO FICTICIOS (los del «Ejemplo - Paquete de oportunidades» V5.0)
+para mostrar el resultado final. Antes de publicar un informe real, el Redactor:
+  1. Sustituye cada valor de ejemplo por el dato del paquete de síntesis (CT-15). Cada elemento
+     sustituible lleva el atributo data-ph="{{MARCADOR}}"; el texto o el atributo indicado se reemplaza.
+  2. Repite los bloques marcados con <!- - REPETIR: … - -> … <!- - FIN REPETIR - -> tantas veces como haga falta
+     (y los elimina si no hay elementos).
+  3. ELIMINA la franja «EJEMPLO — datos ficticios» (elementos con class="ejemplo" y class="sello"); este comentario
+     no se elimina: se conserva como documentación técnica (no es visible).
+  4. Pasa HT-07 (Fernández-Huerta ≥ 70; frases ≤ 20 palabras) sobre el texto visible.
+  5. Comprueba que todas las cifras coinciden con el informe técnico y el paquete JSON del mismo RUN.
+
+FRONTERA CON EL BLOQUE B (2.5, R21): las tarjetas describen ÁMBITOS del mercado (mercado, sector, subsector,
+temática, segmento, factor o estrategia), nunca productos ni activos concretos. No se muestran vehículos,
+fondos concretos, comisiones ni plataformas. Cada tarjeta muestra «Qué abarca» (el ámbito en lenguaje llano)
+y el bloque «Qué pasa después» incluye siempre, sin cambios, la frase fija:
+  «Después, otro equipo del sistema estudiará cada idea a fondo para encontrar las mejores inversiones concretas.»
+
+MARCADORES GLOBALES
+  {{IDIOMA}}                 lang del documento (F10, p. ej. es-ES)
+  {{RUN_ID}}                 RUN-AAAA-NNNN
+  {{FECHA_INFORME}}          fecha legible («lunes, 9 de noviembre de 2026»)
+  {{FECHA_DATOS}}            fecha de cierre de los datos de mercado («viernes, 6 de noviembre»)
+  {{PERIODO}}                «Semana 45 de 2026» o «Informe a petición»
+  {{METODOLOGIA}}            methodology_version (F10)
+  {{N_OPCIONES_TOTAL}}       número total de opciones en el informe
+  {{N_CLASES_CON_OPCIONES}}  tipos de activo en verde o ámbar («10 de 12»)
+  {{N_APUESTAS}}             apuestas independientes
+
+«LA SEMANA EN 30 SEGUNDOS» (exactamente tres frases, ≤ 20 palabras cada una)
+  {{FRASE_1}} {{FRASE_2}} {{FRASE_3}}
+
+SEMÁFORO POR TIPO DE ACTIVO (doce casillas fijas, en el orden de la tabla 2.6):
+  RV Acciones · RF Bonos · DIV Monedas · MP Materias primas · IDX Bolsas enteras · FON Fondos · DER Derivados ·
+  INM Inmuebles · CRI Criptomonedas · ALT Alternativas · MON Ahorro a corto plazo · TCV Tipos y nervios del mercado
+  {{SEM_<TIPO>_ESTADO}}  verde | ambar | gris   (clase CSS y texto: «Claras» / «Dudosas» / «Nada»)
+  {{SEM_<TIPO>_N}}       número de opciones del tipo (0–3)
+  El subtítulo de cada casilla va entre paréntesis: explica el nombre la primera vez (regla de jerga de 14.2).
+
+CARTOGRAMA DE REGIONES (dos versiones del mismo SVG: escritorio y móvil; actualizar AMBAS)
+  {{REG_<COD>_N}}     número de opciones en la región (0, 1, 2, 3+)
+  {{REG_<COD>_NIVEL}} clase CSS de color: n0 | n1 | n2 | n3 (3 = tres o más)
+  Códigos: NAM Norteamérica · LAT Latinoamérica · EUR Europa · AFR África · ORM Oriente Medio ·
+           CHN China · ASE Asia emergente (India, Sudeste asiático, Corea, Taiwán) · JPN Japón ·
+           OCE Oceanía · GLB Global (sin región concreta)
+  {{ALT_MAPA}}        texto alternativo completo del cartograma (lista de regiones con su número)
+
+TARJETA DE OPCIÓN (bloque REPETIR por opción, agrupadas por tipo de activo; máximo 3 por tipo)
+  {{OPP_ID}}            identificador OPP- (pie de tarjeta, para que el Broker lo cite)
+  {{CLASE_ICONO}}       k-<tipo> + #i-<tipo>: #i-rv | #i-rf | #i-div | #i-mp | #i-idx | #i-fon | #i-der | #i-inm |
+                        #i-cri | #i-alt | #i-mon | #i-tcv
+  {{CLASE_NOMBRE}}      nombre llano del tipo (lista del semáforo)
+  {{NOMBRE_LLANO}}      nombre_llano del JSON
+  {{POR_QUE}}           una frase (≤ 20 palabras)
+  {{AMBITO_LLANO}}      el ámbito (ambito.incluye / excluye / región) en lenguaje llano, ≤ 20 palabras:
+                        «Qué abarca: … Fuera: …». Nunca nombres de productos ni de valores concretos.
+  {{RIESGO}}            1–5: marcar con class="on" tantos puntos como el valor; texto «3 de 5 · medio»
+  {{HORIZONTES}}        class="on" en los horizontes con pronóstico: dias | semanas | meses | anos
+  {{BANDA}}             banda verbal del horizonte principal («Más probable que no»)
+  {{CERTIFICADO}}       «sin ventaja demostrada todavía» si no hay certificado R13; si lo hay,
+                        frecuencia natural («en 7 de cada 10 casos parecidos acertamos»)
+  {{CONFIANZA}}         baja | media | alta (1, 2 o 3 segmentos con class="on")
+  {{QUE_PUEDE_SALIR_MAL}} una frase
+  {{GRAFICO_PUNTOS}}    puntos del polyline (generados por HT-04 sobre el indicador de seguimiento, nunca a mano)
+  {{GRAFICO_ALT}}       texto alternativo del minigráfico (qué muestra y qué conclusión aporta)
+  {{GRAFICO_PIE}}       pie del minigráfico (periodo, unidad, qué es la franja)
+
+TIPO SIN OPCIONES O CON MENOS DE TRES (bloque REPETIR)
+  {{MOTIVO_SIN_OPCIONES}} una o dos frases (R14): cuántas se miraron, por qué no llegaron, qué haría falta
+
+«CÓMO NOS FUE» (del historial_aciertos del paquete; Evaluador)
+  {{HIST_VENTANA}} {{HIST_N}} {{HIST_ACIERTOS}} {{HIST_PCT}} {{HIST_REF_PCT}} {{HIST_FRASE}}
+  Mosaico: un <rect> por opción evaluada; class="ok" para las acertadas.
+
+MINIGLOSARIO: máximo 5 términos ({{TERMINO_n}}, {{DEFINICION_n}}), elegidos entre los que aparecen
+en este informe. AVISO: texto fijo; solo se adapta al idioma.
+=====================================================================================
+-->
+<html lang="es-ES" data-ph="{{IDIOMA}}">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="color-scheme" content="light dark">
+<title>Tu resumen de oportunidades</title>
+<style>
+:root{
+  --bg:#f6f4ef; --surface:#ffffff; --surface-2:#f0ede6; --ink:#1c1c1a; --ink-2:#4f4d48; --muted:#7c7972;
+  --line:#e2ded4; --accent:#0b5cad;
+  /* Doce tipos de activo: Okabe-Ito + Tol «muted» (aptas para daltonismo); el color nunca va solo: siempre icono y nombre */
+  --c-rv:#0072B2; --c-rf:#009E73; --c-div:#56B4E9; --c-mp:#E69F00; --c-inm:#CC79A7; --c-cri:#D55E00; --c-alt:#6E6A60;
+  --c-idx:#332288; --c-fon:#999933; --c-der:#882255; --c-mon:#DDCC77; --c-tcv:#44AA99;
+  /* Semáforo: nunca solo color (forma + texto) */
+  --s-verde:#118a4f; --s-ambar:#d18a00; --s-gris:#9b978d;
+  /* Escala secuencial (cartograma): un solo tono, de claro a oscuro */
+  --n0:#ebe7de; --n1:#b7d3f6; --n2:#2f74c4; --n3:#123f78; --n-ink-claro:#1c1c1a; --n2-ink:#ffffff; --n3-ink:#ffffff;
+  --riesgo:#D55E00; --conf:#0072B2; --ok:#0072B2; --ko:#d9d5cb;
+  --ejemplo-bg:#fff1c2; --ejemplo-ink:#5c4300;
+  --radius:16px; --shadow:0 1px 2px rgba(0,0,0,.04),0 4px 16px rgba(0,0,0,.05);
+}
+@media (prefers-color-scheme: dark){
+  :root{
+    --bg:#121211; --surface:#1c1c1a; --surface-2:#252522; --ink:#f1efe9; --ink-2:#c9c6bd; --muted:#97948b;
+    --line:#34332f; --accent:#6aa9ee;
+    --c-rv:#3d9be0; --c-rf:#22b98a; --c-div:#7cc6f0; --c-mp:#f0ae1f; --c-inm:#dc93bd; --c-cri:#f07a2a; --c-alt:#a29d92;
+    --c-idx:#8b80e0; --c-fon:#c4c45e; --c-der:#d0679b; --c-mon:#e8dc9a; --c-tcv:#62c7b6;
+    --s-verde:#2fb874; --s-ambar:#f0ae1f; --s-gris:#7d7a72;
+    --n0:#2a2a27; --n1:#1f4a7c; --n2:#2f74c4; --n3:#86b6ef; --n-ink-claro:#f1efe9; --n2-ink:#ffffff; --n3-ink:#0f1d2e;
+    --riesgo:#f07a2a; --conf:#5aa8ec; --ok:#5aa8ec; --ko:#3a3935;
+    --ejemplo-bg:#3b3010; --ejemplo-ink:#ffd86b;
+    --shadow:0 1px 2px rgba(0,0,0,.3),0 4px 16px rgba(0,0,0,.25);
+  }
+}
+*{box-sizing:border-box}
+html{-webkit-text-size-adjust:100%}
+body{margin:0;background:var(--bg);color:var(--ink);
+  font-family:system-ui,-apple-system,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;
+  font-size:17px;line-height:1.55;}
+.wrap{max-width:1080px;margin:0 auto;padding:0 16px 48px}
+h1,h2,h3{line-height:1.2;margin:0;font-weight:700;letter-spacing:-.01em}
+h2{font-size:1.35rem;margin-bottom:.35rem}
+h3{font-size:1.08rem}
+p{margin:.35rem 0}
+.sub{color:var(--ink-2)}
+.peq{font-size:.86rem;color:var(--muted)}
+section{margin-top:28px}
+.panel{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);padding:20px;box-shadow:var(--shadow)}
+.visually-hidden{position:absolute!important;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+
+/* Franja de ejemplo (eliminar en informes reales) */
+.ejemplo{background:var(--ejemplo-bg);color:var(--ejemplo-ink);font-weight:700;text-align:center;
+  padding:8px 16px;font-size:.9rem;letter-spacing:.04em;border-bottom:1px dashed currentColor}
+.sello{display:inline-block;border:1.5px dashed var(--ejemplo-ink);color:var(--ejemplo-ink);background:var(--ejemplo-bg);
+  border-radius:6px;padding:1px 8px;font-size:.72rem;font-weight:700;letter-spacing:.05em;vertical-align:middle}
+
+/* Cabecera */
+header.top{padding:28px 0 8px;display:flex;flex-wrap:wrap;gap:12px 24px;align-items:flex-end;justify-content:space-between}
+.marca{font-size:.8rem;text-transform:uppercase;letter-spacing:.12em;color:var(--muted);font-weight:600}
+header.top h1{font-size:2rem;margin-top:4px}
+.meta{font-size:.9rem;color:var(--ink-2);text-align:right}
+@media (max-width:640px){.meta{text-align:left} header.top h1{font-size:1.65rem}}
+
+/* La semana en 30 segundos */
+.treinta{display:grid;gap:14px;margin:0;padding:0;list-style:none}
+.treinta li{display:grid;grid-template-columns:36px 1fr;gap:12px;align-items:start;font-size:1.12rem;line-height:1.45}
+.treinta .num{width:32px;height:32px;border-radius:50%;background:var(--ink);color:var(--surface);
+  display:grid;place-items:center;font-weight:700;font-size:.95rem;margin-top:1px}
+.cifras{display:grid;grid-template-columns:repeat(3,minmax(0,170px));gap:10px;margin-top:16px}
+.cifra{background:var(--surface-2);border-radius:12px;padding:10px 12px}
+@media (max-width:640px){.cifras{grid-template-columns:repeat(3,1fr)}.cifra b{font-size:1.3rem}.cifra span{font-size:.78rem;line-height:1.3;display:block}}
+.cifra b{display:block;font-size:1.6rem;line-height:1.1}
+.cifra span{font-size:.85rem;color:var(--ink-2)}
+
+/* Dos columnas: mapa + semáforo */
+.duo{display:grid;grid-template-columns:1.45fr 1fr;gap:20px}
+@media (max-width:900px){.duo{grid-template-columns:1fr}}
+
+/* Cartograma */
+.carto svg{width:100%;height:auto;display:block}
+.carto .movil{display:none}
+@media (max-width:640px){.carto .escritorio{display:none}.carto .movil{display:block}}
+.t rect{stroke:var(--surface);stroke-width:2}
+.t.n0 rect{fill:var(--n0)} .t.n1 rect{fill:var(--n1)} .t.n2 rect{fill:var(--n2)} .t.n3 rect{fill:var(--n3)}
+.t text{font-family:inherit}
+.t .rn{font-size:14px;font-weight:600}
+.t .rc{font-size:32px;font-weight:700}
+.t.n0 text,.t.n1 text{fill:var(--n-ink-claro)}
+.t.n2 text{fill:var(--n2-ink)} .t.n3 text{fill:var(--n3-ink)}
+.t.n0 .rc{fill:var(--muted)}
+.escritorio .rn{font-size:13px}
+.movil .rn{font-size:12.5px}
+.t.glb rect{stroke-dasharray:5 4;stroke:var(--muted);stroke-width:1.5}
+.leyenda{display:flex;flex-wrap:wrap;gap:6px 14px;align-items:center;font-size:.85rem;color:var(--ink-2);margin-top:10px}
+.leyenda i{display:inline-block;width:18px;height:12px;border-radius:3px;vertical-align:-1px;margin-right:5px}
+
+/* Semáforo: doce tipos en rejilla */
+.sem{list-style:none;margin:6px 0 0;padding:0;display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:0 22px}
+@media (max-width:900px){.sem{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media (max-width:600px){.sem{grid-template-columns:1fr}}
+.sem li{display:grid;grid-template-columns:34px 1fr auto;gap:10px;align-items:center;padding:9px 2px;border-bottom:1px solid var(--line)}
+.sem .nom{font-weight:600}
+.sem .nom small{display:block;font-weight:400;color:var(--muted);font-size:.8rem}
+.estado{display:inline-flex;align-items:center;gap:6px;font-size:.85rem;font-weight:600;padding:3px 10px 3px 8px;border-radius:999px;white-space:nowrap}
+.estado svg{width:14px;height:14px}
+.estado.verde{color:var(--s-verde);background:color-mix(in srgb,var(--s-verde) 14%,transparent)}
+.estado.ambar{color:var(--s-ambar);background:color-mix(in srgb,var(--s-ambar) 16%,transparent)}
+.estado.gris{color:var(--ink-2);background:color-mix(in srgb,var(--s-gris) 18%,transparent)}
+.ico{width:34px;height:34px;border-radius:10px;display:grid;place-items:center;color:#fff}
+.ico svg{width:20px;height:20px}
+.k-rv{background:var(--c-rv)} .k-rf{background:var(--c-rf)} .k-div{background:var(--c-div);color:#0b2233}
+.k-mp{background:var(--c-mp);color:#2b1d00} .k-inm{background:var(--c-inm);color:#2a0f1f} .k-cri{background:var(--c-cri)} .k-alt{background:var(--c-alt)}
+.k-idx{background:var(--c-idx)} .k-fon{background:var(--c-fon);color:#1f1f05} .k-der{background:var(--c-der)}
+.k-mon{background:var(--c-mon);color:#2b2405} .k-tcv{background:var(--c-tcv);color:#06231e}
+@media (prefers-color-scheme: dark){.k-idx,.k-der{color:#14112b}}
+
+/* Qué pasa después (frontera con el Bloque B) */
+.pasos{list-style:none;margin:10px 0 0;padding:0;display:grid;gap:14px}
+.pasos li{display:grid;grid-template-columns:36px 1fr;gap:12px;align-items:start}
+.pasos .num{width:32px;height:32px;border-radius:50%;display:grid;place-items:center;font-weight:700;font-size:.95rem;background:var(--surface-2);color:var(--ink);border:1.5px solid var(--line)}
+.pasos li.aqui .num{background:var(--accent);border-color:var(--accent);color:var(--surface)}
+.pasos b{display:block}
+.nota-b{display:grid;grid-template-columns:24px 1fr;gap:10px;align-items:start;background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:12px 14px;margin:10px 0 4px;font-size:.95rem}
+.nota-b svg{width:20px;height:20px;color:var(--accent);margin-top:2px}
+.ambito{font-size:.92rem;color:var(--ink-2);border-left:3px solid var(--line);padding:2px 0 2px 10px;margin:0}
+.ambito b{color:var(--ink)}
+.tarjetas>.vacia{align-self:start}
+.nivel{white-space:nowrap}
+
+/* Bloques por tipo de activo */
+.clase-h{display:flex;align-items:center;gap:12px;margin:26px 0 12px}
+.clase-h h3{font-size:1.15rem}
+.clase-h .estado{margin-left:auto}
+.tarjetas{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:16px}
+@media (max-width:400px){.tarjetas{grid-template-columns:1fr}}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);padding:18px;box-shadow:var(--shadow);
+  display:flex;flex-direction:column;gap:12px}
+.card .cab{display:grid;grid-template-columns:34px 1fr;gap:10px;align-items:center}
+.card .cab h4{margin:0;font-size:1.12rem;line-height:1.25}
+.card .cab small{color:var(--muted);font-size:.78rem;text-transform:uppercase;letter-spacing:.06em;font-weight:600}
+.card .porque{font-size:1rem;margin:0}
+.fila{display:grid;grid-template-columns:84px 1fr;gap:10px;align-items:start;font-size:.9rem}
+.fila>span:last-child{display:flex;flex-wrap:wrap;align-items:center;gap:4px 8px}
+.fila .banda{flex-basis:100%}
+.fila.apilada{grid-template-columns:1fr;gap:6px}
+.fila>span:first-child{padding-top:2px;color:var(--muted);font-size:.8rem;text-transform:uppercase;letter-spacing:.05em;font-weight:600}
+.pips{display:inline-flex;gap:4px}
+.pips i{width:16px;height:10px;border-radius:3px;background:var(--line);display:block}
+.pips i.on{background:var(--riesgo)}
+.hz{display:flex;gap:4px;flex-wrap:wrap}
+.hz span{display:inline-flex;align-items:center;gap:3px;font-size:.76rem;padding:3px 6px;border-radius:8px;border:1px solid var(--line);color:var(--muted);opacity:.55}
+.hz span.on{opacity:1;color:var(--ink);border-color:var(--ink);font-weight:600}
+.hz svg{width:13px;height:13px}
+.conf{display:inline-flex;gap:3px}
+.conf i{width:26px;height:10px;border-radius:3px;background:var(--line);display:block}
+.conf i.on{background:var(--conf)}
+.banda{font-size:.82rem;color:var(--ink-2)}
+.mal{background:var(--surface-2);border-radius:10px;padding:10px 12px;font-size:.92rem;display:grid;grid-template-columns:20px 1fr;gap:8px}
+.mal svg{width:18px;height:18px;color:var(--riesgo);margin-top:2px}
+.spark svg{width:100%;height:auto;display:block}
+.spark .lin{fill:none;stroke:var(--ink);stroke-width:2;stroke-linejoin:round;stroke-linecap:round}
+.spark .zona{fill:var(--conf);opacity:.16}
+.spark .zona-borde{stroke:var(--conf);stroke-width:1;stroke-dasharray:3 3;opacity:.7}
+.spark .media{stroke:var(--muted);stroke-width:1.5;stroke-dasharray:5 4}
+.spark .hoy{fill:var(--ink);stroke:var(--surface);stroke-width:2}
+.spark text{font-size:11px;fill:var(--muted);font-family:inherit}
+.spark figcaption{font-size:.78rem;color:var(--muted);margin-top:4px}
+.pie-card{display:flex;justify-content:space-between;font-size:.74rem;color:var(--muted);border-top:1px solid var(--line);padding-top:8px;margin-top:auto}
+.vacia{border:1.5px dashed var(--line);border-radius:var(--radius);padding:14px 18px;color:var(--ink-2);font-size:.95rem;background:transparent}
+
+/* Cómo nos fue */
+.historial{display:grid;grid-template-columns:1fr 1fr;gap:24px;align-items:center}
+@media (max-width:760px){.historial{grid-template-columns:1fr}}
+.mosaico svg{width:100%;max-width:420px;height:auto;display:block}
+.mosaico rect{fill:var(--ko)} .mosaico rect.ok{fill:var(--ok)}
+.barras{display:grid;gap:12px}
+.barra{display:grid;gap:4px}
+.barra .rotulo{display:flex;justify-content:space-between;gap:12px;font-size:.9rem}
+.barra .rotulo b{white-space:nowrap}
+.barra .pista{height:14px;background:var(--surface-2);border-radius:4px;overflow:hidden}
+.barra .relleno{height:100%;border-radius:4px;background:var(--ok)}
+.barra .relleno.ref{background:var(--muted)}
+
+/* Glosario y aviso */
+.glosario{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:12px;margin:0}
+.glosario div{background:var(--surface-2);border-radius:12px;padding:12px 14px}
+.glosario dt{font-weight:700}
+.glosario dd{margin:2px 0 0;font-size:.92rem;color:var(--ink-2)}
+.aviso{display:grid;grid-template-columns:28px 1fr;gap:12px;border-left:4px solid var(--accent);background:var(--surface);padding:16px 18px;border-radius:0 12px 12px 0}
+.aviso svg{width:24px;height:24px;color:var(--accent)}
+footer{margin-top:28px;font-size:.78rem;color:var(--muted);display:flex;flex-wrap:wrap;gap:6px 18px}
+
+@media print{
+  body{background:#fff;font-size:12pt} .panel,.card{box-shadow:none} .carto .movil{display:none!important} .carto .escritorio{display:block!important}
+  .card{break-inside:avoid}
+}
+@media (prefers-reduced-motion:no-preference){.card{transition:transform .15s} .card:hover{transform:translateY(-2px)}}
+</style>
+</head>
+<body>
+
+<!-- Sprite de iconos (no visible) -->
+<svg width="0" height="0" style="position:absolute" aria-hidden="true" focusable="false">
+  <defs>
+    <symbol id="i-rv" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 20h18"/><path d="M4 16l5-5 4 3 7-8"/><path d="M15 6h5v5"/></symbol>
+    <symbol id="i-rf" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 3h9l4 4v14H6z"/><path d="M14 3v5h5"/><path d="M9 12h7M9 16h7"/></symbol>
+    <symbol id="i-div" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 8h14l-3-3"/><path d="M20 16H6l3 3"/></symbol>
+    <symbol id="i-mp" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M7 9h10l3 8H4z"/><path d="M9 9l1-4h4l1 4"/></symbol>
+    <symbol id="i-inm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 11l9-7 9 7"/><path d="M5 10v10h14V10"/><path d="M10 20v-5h4v5"/></symbol>
+    <symbol id="i-cri" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2l8.5 5v10L12 22l-8.5-5V7z"/><path d="M12 8v8M9 10h6M9 14h6"/></symbol>
+    <symbol id="i-alt" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l2.6 5.6 6 .7-4.5 4.1 1.2 6L12 16.4 6.7 19.4l1.2-6L3.4 9.3l6-.7z"/></symbol>
+    <symbol id="i-idx" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 21h18"/><rect x="4.5" y="13" width="3.5" height="5" rx="0.5"/><rect x="10.25" y="9" width="3.5" height="9" rx="0.5"/><rect x="16" y="5" width="3.5" height="13" rx="0.5"/></symbol>
+    <symbol id="i-fon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 10h18l-2.2 10H5.2z"/><path d="M8 10l4-6 4 6"/><path d="M9 14v3M12 14v3M15 14v3"/></symbol>
+    <symbol id="i-der" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12h6"/><path d="M9 12l9-7M9 12l9 7"/><path d="M14.5 5H18v3.5M14.5 19H18v-3.5"/><circle cx="9" cy="12" r="1.2" fill="currentColor"/></symbol>
+    <symbol id="i-mon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3c3.6 4.4 6 7.6 6 10.6a6 6 0 0 1-12 0C6 10.6 8.4 7.4 12 3z"/><path d="M9.6 14.4A2.6 2.6 0 0 0 12.2 17"/></symbol>
+    <symbol id="i-tcv" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 17.5a8 8 0 1 1 16 0"/><path d="M12 17.5l4.2-5.2"/><path d="M7 13.2l1.2.9M12 9.5v1.4M17 13.2l-1.2.9"/><circle cx="12" cy="17.5" r="1.3" fill="currentColor"/></symbol>
+    <symbol id="i-equipo" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="10.5" cy="10.5" r="6"/><path d="M15 15l5.5 5.5"/><path d="M8 10.5h5M10.5 8v5"/></symbol>
+    <symbol id="i-dias" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M2 12h2M20 12h2M5 5l1.5 1.5M17.5 17.5L19 19M5 19l1.5-1.5M17.5 6.5L19 5"/></symbol>
+    <symbol id="i-semanas" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 3v4M16 3v4"/></symbol>
+    <symbol id="i-meses" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 21a9 9 0 1 1 0-18 6 6 0 0 0 0 18z"/></symbol>
+    <symbol id="i-anos" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v18"/><path d="M12 8c-3 0-5-2-5-5M12 8c3 0 5-2 5-5M12 14c-4 0-6-2-6-5M12 14c4 0 6-2 6-5"/></symbol>
+    <symbol id="s-verde" viewBox="0 0 16 16"><circle cx="8" cy="8" r="6" fill="currentColor"/></symbol>
+    <symbol id="s-ambar" viewBox="0 0 16 16"><path d="M8 2l6.5 11.5h-13z" fill="currentColor"/></symbol>
+    <symbol id="s-gris" viewBox="0 0 16 16"><rect x="2" y="6.5" width="12" height="3" rx="1.5" fill="currentColor"/></symbol>
+    <symbol id="i-alerta" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l10 18H2z"/><path d="M12 10v5M12 18v.01"/></symbol>
+    <symbol id="i-info" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><path d="M12 11v6M12 7.5v.01"/></symbol>
+  </defs>
+</svg>
+
+<div class="ejemplo" role="note">EJEMPLO — datos ficticios · plantilla del informe visual V5.0 · no usar para decidir</div>
+
+<div class="wrap">
+
+<header class="top">
+  <div>
+    <div class="marca">Robot Investor · tu resumen de oportunidades</div>
+    <h1 data-ph="{{PERIODO}}">Semana 45 de 2026</h1>
+    <p class="sub">Dónde ve el sistema buenas ideas esta semana, explicado sin jerga.</p>
+  </div>
+  <div class="meta">
+    <div data-ph="{{FECHA_INFORME}}">Lunes, 9 de noviembre de 2026</div>
+    <div>Datos de mercado al cierre del <span data-ph="{{FECHA_DATOS}}">viernes, 6 de noviembre</span></div>
+    <div><span class="sello">EJEMPLO</span></div>
+  </div>
+</header>
+
+<!-- 1. LA SEMANA EN 30 SEGUNDOS -->
+<section aria-labelledby="h-30">
+  <div class="panel">
+    <h2 id="h-30">La semana en 30 segundos</h2>
+    <ol class="treinta">
+      <li><span class="num" aria-hidden="true">1</span><span data-ph="{{FRASE_1}}">Hemos encontrado 13 ideas en 10 de los 12 tipos de inversión que vigilamos.</span></li>
+      <li><span class="num" aria-hidden="true">2</span><span data-ph="{{FRASE_2}}">Las más claras están en acciones de Europa y Japón y en los tipos de interés del euro.</span></li>
+      <li><span class="num" aria-hidden="true">3</span><span data-ph="{{FRASE_3}}">Muchas dependen de lo mismo: que los tipos de interés bajen despacio. Si no, fallarían juntas.</span></li>
+    </ol>
+    <div class="cifras">
+      <div class="cifra"><b data-ph="{{N_OPCIONES_TOTAL}}">13</b><span>ideas esta semana</span></div>
+      <div class="cifra"><b data-ph="{{N_CLASES_CON_OPCIONES}}">10 de 12</b><span>tipos de inversión con ideas</span></div>
+      <div class="cifra"><b data-ph="{{N_APUESTAS}}">5</b><span>apuestas de verdad distintas</span></div>
+    </div>
+  </div>
+</section>
+
+<!-- 2. SEMÁFORO POR TIPO DE ACTIVO (doce casillas, orden de la tabla 2.6) -->
+<section aria-labelledby="h-sem">
+  <div class="panel">
+    <h2 id="h-sem">Semáforo de los 12 tipos de inversión</h2>
+    <p class="peq">Verde: hay ideas claras. Ámbar: pocas o dudosas. Gris: nada que destacar esta semana.</p>
+    <ul class="sem">
+      <li><span class="ico k-rv" aria-hidden="true"><svg><use href="#i-rv"/></svg></span><span class="nom">Acciones <small>(empresas de un sector o tema)</small></span>
+        <span class="estado verde" data-ph="{{SEM_RV_ESTADO}}"><svg aria-hidden="true"><use href="#s-verde"/></svg>Claras · <span data-ph="{{SEM_RV_N}}">3</span></span></li>
+      <li><span class="ico k-rf" aria-hidden="true"><svg><use href="#i-rf"/></svg></span><span class="nom">Bonos <small>(préstamos a Estados y empresas)</small></span>
+        <span class="estado ambar" data-ph="{{SEM_RF_ESTADO}}"><svg aria-hidden="true"><use href="#s-ambar"/></svg>Dudosas · <span data-ph="{{SEM_RF_N}}">1</span></span></li>
+      <li><span class="ico k-div" aria-hidden="true"><svg><use href="#i-div"/></svg></span><span class="nom">Monedas <small>(euro, dólar, yen…)</small></span>
+        <span class="estado ambar" data-ph="{{SEM_DIV_ESTADO}}"><svg aria-hidden="true"><use href="#s-ambar"/></svg>Dudosas · <span data-ph="{{SEM_DIV_N}}">1</span></span></li>
+      <li><span class="ico k-mp" aria-hidden="true"><svg><use href="#i-mp"/></svg></span><span class="nom">Materias primas <small>(oro, petróleo, trigo…)</small></span>
+        <span class="estado ambar" data-ph="{{SEM_MP_ESTADO}}"><svg aria-hidden="true"><use href="#s-ambar"/></svg>Dudosas · <span data-ph="{{SEM_MP_N}}">1</span></span></li>
+      <li><span class="ico k-idx" aria-hidden="true"><svg><use href="#i-idx"/></svg></span><span class="nom">Bolsas enteras <small>(la bolsa de un país o zona)</small></span>
+        <span class="estado ambar" data-ph="{{SEM_IDX_ESTADO}}"><svg aria-hidden="true"><use href="#s-ambar"/></svg>Dudosas · <span data-ph="{{SEM_IDX_N}}">1</span></span></li>
+      <li><span class="ico k-fon" aria-hidden="true"><svg><use href="#i-fon"/></svg></span><span class="nom">Fondos <small>(dinero de muchos, invertido junto)</small></span>
+        <span class="estado ambar" data-ph="{{SEM_FON_ESTADO}}"><svg aria-hidden="true"><use href="#s-ambar"/></svg>Dudosas · <span data-ph="{{SEM_FON_N}}">1</span></span></li>
+      <li><span class="ico k-der" aria-hidden="true"><svg><use href="#i-der"/></svg></span><span class="nom">Derivados <small>(contratos ligados a otro precio)</small></span>
+        <span class="estado ambar" data-ph="{{SEM_DER_ESTADO}}"><svg aria-hidden="true"><use href="#s-ambar"/></svg>Dudosas · <span data-ph="{{SEM_DER_N}}">1</span></span></li>
+      <li><span class="ico k-inm" aria-hidden="true"><svg><use href="#i-inm"/></svg></span><span class="nom">Inmuebles <small>(empresas de casas y locales en bolsa)</small></span>
+        <span class="estado gris" data-ph="{{SEM_INM_ESTADO}}"><svg aria-hidden="true"><use href="#s-gris"/></svg>Nada · <span data-ph="{{SEM_INM_N}}">0</span></span></li>
+      <li><span class="ico k-cri" aria-hidden="true"><svg><use href="#i-cri"/></svg></span><span class="nom">Criptomonedas <small>(monedas digitales)</small></span>
+        <span class="estado ambar" data-ph="{{SEM_CRI_ESTADO}}"><svg aria-hidden="true"><use href="#s-ambar"/></svg>Dudosas · <span data-ph="{{SEM_CRI_N}}">1</span></span></li>
+      <li><span class="ico k-alt" aria-hidden="true"><svg><use href="#i-alt"/></svg></span><span class="nom">Alternativas <small>(empresas que no cotizan, arte…)</small></span>
+        <span class="estado gris" data-ph="{{SEM_ALT_ESTADO}}"><svg aria-hidden="true"><use href="#s-gris"/></svg>Nada · <span data-ph="{{SEM_ALT_N}}">0</span></span></li>
+      <li><span class="ico k-mon" aria-hidden="true"><svg><use href="#i-mon"/></svg></span><span class="nom">Ahorro a corto plazo <small>(letras del Tesoro y depósitos)</small></span>
+        <span class="estado ambar" data-ph="{{SEM_MON_ESTADO}}"><svg aria-hidden="true"><use href="#s-ambar"/></svg>Dudosas · <span data-ph="{{SEM_MON_N}}">1</span></span></li>
+      <li><span class="ico k-tcv" aria-hidden="true"><svg><use href="#i-tcv"/></svg></span><span class="nom">Tipos y nervios del mercado <small>(interés, crédito y sustos)</small></span>
+        <span class="estado verde" data-ph="{{SEM_TCV_ESTADO}}"><svg aria-hidden="true"><use href="#s-verde"/></svg>Claras · <span data-ph="{{SEM_TCV_N}}">2</span></span></li>
+    </ul>
+  </div>
+</section>
+
+<!-- 3. CARTOGRAMA + QUÉ PASA DESPUÉS -->
+<section class="duo">
+  <div class="panel carto" aria-labelledby="h-mapa">
+    <h2 id="h-mapa">Dónde las hemos visto</h2>
+    <p class="peq">Cada casilla es una zona del mundo. Cuanto más intenso el azul, más ideas.</p>
+
+    <!-- Versión escritorio (6 columnas). Actualizar a la vez que la versión móvil. -->
+    <svg class="escritorio" viewBox="0 0 660 340" role="img" aria-labelledby="mapa-t mapa-d">
+      <title id="mapa-t">Mapa esquemático de regiones con ideas detectadas</title>
+      <desc id="mapa-d" data-ph="{{ALT_MAPA}}">Europa 7 ideas, Japón 2, Norteamérica 1, Asia emergente 1, Global sin región concreta 2. Latinoamérica, África, Oriente Medio, China y Oceanía: ninguna.</desc>
+      <g class="t n1" data-ph="{{REG_NAM_NIVEL}}"><rect x="10" y="10" width="208" height="96" rx="12"/><text class="rn" x="24" y="34">Norteamérica</text><text class="rc" x="24" y="88" data-ph="{{REG_NAM_N}}">1</text></g>
+      <g class="t n0" data-ph="{{REG_LAT_NIVEL}}"><rect x="64" y="114" width="154" height="200" rx="12"/><text class="rn" x="78" y="138">Latinoamérica</text><text class="rc" x="78" y="192" data-ph="{{REG_LAT_N}}">0</text></g>
+      <g class="t n3" data-ph="{{REG_EUR_NIVEL}}"><rect x="226" y="10" width="208" height="96" rx="12"/><text class="rn" x="240" y="34">Europa</text><text class="rc" x="240" y="88" data-ph="{{REG_EUR_N}}">7</text></g>
+      <g class="t n0" data-ph="{{REG_AFR_NIVEL}}"><rect x="226" y="114" width="100" height="200" rx="12"/><text class="rn" x="240" y="138">África</text><text class="rc" x="240" y="192" data-ph="{{REG_AFR_N}}">0</text></g>
+      <g class="t n0" data-ph="{{REG_ORM_NIVEL}}"><rect x="334" y="114" width="100" height="96" rx="12"/><text class="rn" x="343" y="138">Oriente Medio</text><text class="rc" x="348" y="192" data-ph="{{REG_ORM_N}}">0</text></g>
+      <g class="t n0" data-ph="{{REG_CHN_NIVEL}}"><rect x="442" y="10" width="100" height="96" rx="12"/><text class="rn" x="456" y="34">China</text><text class="rc" x="456" y="88" data-ph="{{REG_CHN_N}}">0</text></g>
+      <g class="t n2" data-ph="{{REG_JPN_NIVEL}}"><rect x="550" y="10" width="100" height="96" rx="12"/><text class="rn" x="564" y="34">Japón</text><text class="rc" x="564" y="88" data-ph="{{REG_JPN_N}}">2</text></g>
+      <g class="t n1" data-ph="{{REG_ASE_NIVEL}}"><rect x="442" y="114" width="208" height="96" rx="12"/><text class="rn" x="456" y="138">Asia emergente</text><text class="rc" x="456" y="192" data-ph="{{REG_ASE_N}}">1</text></g>
+      <g class="t n0" data-ph="{{REG_OCE_NIVEL}}"><rect x="550" y="218" width="100" height="96" rx="12"/><text class="rn" x="564" y="242">Oceanía</text><text class="rc" x="564" y="296" data-ph="{{REG_OCE_N}}">0</text></g>
+      <g class="t n2 glb" data-ph="{{REG_GLB_NIVEL}}"><rect x="334" y="218" width="208" height="96" rx="12"/><text class="rn" x="348" y="242">Global (sin región)</text><text class="rc" x="348" y="296" data-ph="{{REG_GLB_N}}">2</text></g>
+      <text x="10" y="334" font-size="12" fill="var(--muted)">Esquema, no a escala</text>
+    </svg>
+
+    <!-- Versión móvil (3 columnas). Mismos datos. -->
+    <svg class="movil" viewBox="0 0 334 384" role="img" aria-labelledby="mapa-tm mapa-dm">
+      <title id="mapa-tm">Mapa esquemático de regiones con ideas detectadas</title>
+      <desc id="mapa-dm" data-ph="{{ALT_MAPA}}">Europa 7 ideas, Japón 2, Norteamérica 1, Asia emergente 1, Global sin región concreta 2. Latinoamérica, África, Oriente Medio, China y Oceanía: ninguna.</desc>
+      <g class="t n1"><rect x="2" y="2" width="216" height="84" rx="12"/><text class="rn" x="16" y="26">Norteamérica</text><text class="rc" x="16" y="72">1</text></g>
+      <g class="t n3"><rect x="224" y="2" width="108" height="84" rx="12"/><text class="rn" x="236" y="26">Europa</text><text class="rc" x="236" y="72">7</text></g>
+      <g class="t n0"><rect x="2" y="92" width="106" height="84" rx="12"/><text class="rn" x="10" y="116">Latinoamérica</text><text class="rc" x="12" y="162">0</text></g>
+      <g class="t n0"><rect x="114" y="92" width="104" height="84" rx="12"/><text class="rn" x="126" y="116">África</text><text class="rc" x="126" y="162">0</text></g>
+      <g class="t n0"><rect x="224" y="92" width="108" height="84" rx="12"/><text class="rn" x="232" y="116">Oriente Medio</text><text class="rc" x="234" y="162">0</text></g>
+      <g class="t n0"><rect x="2" y="182" width="106" height="84" rx="12"/><text class="rn" x="12" y="206">China</text><text class="rc" x="12" y="252">0</text></g>
+      <g class="t n1"><rect x="114" y="182" width="104" height="84" rx="12"/><text class="rn" x="124" y="206">Asia emerg.</text><text class="rc" x="124" y="252">1</text></g>
+      <g class="t n2"><rect x="224" y="182" width="108" height="84" rx="12"/><text class="rn" x="236" y="206">Japón</text><text class="rc" x="236" y="252">2</text></g>
+      <g class="t n2 glb"><rect x="2" y="272" width="216" height="84" rx="12"/><text class="rn" x="16" y="296">Global (sin región)</text><text class="rc" x="16" y="342">2</text></g>
+      <g class="t n0"><rect x="224" y="272" width="108" height="84" rx="12"/><text class="rn" x="236" y="296">Oceanía</text><text class="rc" x="236" y="342">0</text></g>
+      <text x="4" y="376" font-size="12" fill="var(--muted)">Esquema, no a escala</text>
+    </svg>
+
+    <div class="leyenda" aria-hidden="true">
+      <span><i style="background:var(--n0);border:1px solid var(--line)"></i>Ninguna</span>
+      <span><i style="background:var(--n1)"></i>1 idea</span>
+      <span><i style="background:var(--n2)"></i>2 ideas</span>
+      <span><i style="background:var(--n3)"></i>3 o más</span>
+    </div>
+    <p class="peq" style="margin-top:10px">«Global» son ideas que no dependen de un país, como el oro.</p>
+  </div>
+
+  <!-- QUÉ PASA DESPUÉS (frontera con el Bloque B: texto fijo; solo se adapta al idioma) -->
+  <div class="panel" aria-labelledby="h-despues">
+    <h2 id="h-despues">Qué pasa después</h2>
+    <p class="peq">Este informe señala zonas del mercado, no productos para comprar.</p>
+    <ol class="pasos">
+      <li class="aqui"><span class="num" aria-hidden="true">1</span><span><b>Buscamos dónde hay buenas ideas</b>Un sector, un país, un grupo de bonos o una forma de invertir con buenas perspectivas.</span></li>
+      <li><span class="num" aria-hidden="true">2</span><span><b>Otro equipo elige qué comprar</b>Después, otro equipo del sistema estudiará cada idea a fondo para encontrar las mejores inversiones concretas.</span></li>
+      <li><span class="num" aria-hidden="true">3</span><span><b>Tu Broker decide contigo</b>Tu Broker Personal mira si alguna idea encaja con tus metas y tu riesgo.</span></li>
+    </ol>
+  </div>
+</section>
+
+<!-- 4. TARJETAS DE OPCIÓN -->
+<section aria-labelledby="h-ideas">
+  <h2 id="h-ideas">Las ideas, una a una</h2>
+  <p class="sub">Riesgo de 1 (muy bajo) a 5 (muy alto). La barra azul indica cuánto confiamos en el análisis.</p>
+  <div class="nota-b" role="note"><svg aria-hidden="true"><use href="#i-equipo"/></svg><span>Cada idea es una zona del mercado. Después, otro equipo del sistema estudiará cada idea a fondo para encontrar las mejores inversiones concretas.</span></div>
+
+  <!-- REPETIR: BLOQUE_TIPO por cada tipo de activo (los que tienen opciones primero, en el orden de 2.6) -->
+  <div class="clase-h"><span class="ico k-rv" aria-hidden="true"><svg><use href="#i-rv"/></svg></span><h3>Acciones</h3>
+    <span class="estado verde"><svg aria-hidden="true"><use href="#s-verde"/></svg>3 ideas claras</span></div>
+  <div class="tarjetas">
+
+    <!-- REPETIR: TARJETA_OPCION -->
+    <article class="card" aria-labelledby="c1">
+      <div class="cab"><span class="ico k-rv" aria-hidden="true" data-ph="{{CLASE_ICONO}}"><svg><use href="#i-rv"/></svg></span>
+        <div><small data-ph="{{CLASE_NOMBRE}}">Acciones</small><h4 id="c1" data-ph="{{NOMBRE_LLANO}}">Bancos europeos</h4></div></div>
+      <p class="porque" data-ph="{{POR_QUE}}">Ganan más con los tipos de interés actuales y aún cotizan más baratos que su media.</p>
+      <p class="ambito"><b>Qué abarca:</b> <span data-ph="{{AMBITO_LLANO}}">Bancos de los países del euro. Fuera: aseguradoras y bancos de otros países.</span></p>
+      <div class="fila"><span>Riesgo</span> <span><span class="pips" aria-hidden="true"><i class="on"></i><i class="on"></i><i class="on"></i><i></i><i></i></span> <span class="nivel"><b data-ph="{{RIESGO}}">3 de 5</b> · medio</span></span></div>
+      <div class="fila apilada"><span>Plazo</span> <span class="hz" data-ph="{{{{HORIZONTES}}}}"><span><svg aria-hidden="true"><use href="#i-dias"/></svg>días</span> <span><svg aria-hidden="true"><use href="#i-semanas"/></svg>semanas</span> <span class="on"><svg aria-hidden="true"><use href="#i-meses"/></svg>meses</span> <span class="on"><svg aria-hidden="true"><use href="#i-anos"/></svg>años</span></span></div>
+      <div class="fila"><span>Confianza</span> <span><span class="conf" aria-hidden="true"><i class="on"></i><i class="on"></i><i></i></span> <b data-ph="{{CONFIANZA}}">Media</b>
+        <div class="banda"><span data-ph="{{BANDA}}">Más probable que no</span> · <span data-ph="{{CERTIFICADO}}">sin ventaja demostrada todavía</span></div></span></div>
+      <figure class="spark" style="margin:0">
+        <svg viewBox="0 0 280 72" role="img" aria-labelledby="g1t"><title id="g1t" data-ph="{{GRAFICO_ALT}}">Precio en el último año: subió hasta octubre, bajó un poco y hoy está dentro de la zona de interés.</title>
+          <rect class="zona" x="0" y="30" width="280" height="16"/><line class="zona-borde" x1="0" y1="30" x2="280" y2="30"/><line class="zona-borde" x1="0" y1="46" x2="280" y2="46"/>
+          <polyline class="lin" data-ph="{{GRAFICO_PUNTOS}}" points="2,60 26,56 50,58 74,50 98,47 122,41 146,36 170,28 194,22 218,27 242,34 266,38"/>
+          <circle class="hoy" cx="266" cy="38" r="4.5"/><text x="2" y="70">hace 1 año</text><text x="243" y="70">hoy</text></svg>
+        <figcaption data-ph="{{GRAFICO_PIE}}">Precio en 12 meses. Franja azul: zona de interés.</figcaption>
+      </figure>
+      <div class="mal"><svg aria-hidden="true"><use href="#i-alerta"/></svg><span><b>Qué podría salir mal:</b> <span data-ph="{{QUE_PUEDE_SALIR_MAL}}">si la economía europea se frena, más clientes dejarían de pagar sus préstamos.</span></span></div>
+      <div class="pie-card"><span data-ph="{{OPP_ID}}">OPP-2026-9101</span><span class="sello">EJEMPLO</span></div>
+    </article>
+    <!-- FIN REPETIR -->
+
+    <article class="card" aria-labelledby="c2">
+      <div class="cab"><span class="ico k-rv" aria-hidden="true"><svg><use href="#i-rv"/></svg></span>
+        <div><small>Acciones</small><h4 id="c2">Empresas japonesas que reparten más a sus accionistas</h4></div></div>
+      <p class="porque">Las nuevas normas de la bolsa de Tokio les empujan a usar mejor su dinero.</p>
+      <p class="ambito"><b>Qué abarca:</b> <span>Empresas de Japón que valen en bolsa menos que lo que tienen. Fuera: la bolsa japonesa entera.</span></p>
+      <div class="fila"><span>Riesgo</span> <span><span class="pips" aria-hidden="true"><i class="on"></i><i class="on"></i><i class="on"></i><i></i><i></i></span> <span class="nivel"><b>3 de 5</b> · medio</span></span></div>
+      <div class="fila apilada"><span>Plazo</span> <span class="hz"><span><svg aria-hidden="true"><use href="#i-dias"/></svg>días</span> <span><svg aria-hidden="true"><use href="#i-semanas"/></svg>semanas</span> <span class="on"><svg aria-hidden="true"><use href="#i-meses"/></svg>meses</span> <span class="on"><svg aria-hidden="true"><use href="#i-anos"/></svg>años</span></span></div>
+      <div class="fila"><span>Confianza</span> <span><span class="conf" aria-hidden="true"><i class="on"></i><i class="on"></i><i></i></span> <b>Media</b>
+        <div class="banda"><span>Más probable que no</span> · <span>sin ventaja demostrada todavía</span></div></span></div>
+      <figure class="spark" style="margin:0">
+        <svg viewBox="0 0 280 72" role="img" aria-labelledby="g2t"><title id="g2t">Valoración frente a su media de diez años: sigue por debajo de la media, aunque se acerca.</title>
+          <line class="media" x1="0" y1="26" x2="280" y2="26"/><text x="196" y="20">media 10 años</text>
+          <polyline class="lin" points="2,58 26,55 50,57 74,52 98,50 122,47 146,49 170,44 194,41 218,40 242,37 266,35"/>
+          <circle class="hoy" cx="266" cy="35" r="4.5"/><text x="2" y="70">hace 1 año</text><text x="243" y="70">hoy</text></svg>
+        <figcaption>Lo que se paga por cada euro de beneficio, frente a su media.</figcaption>
+      </figure>
+      <div class="mal"><svg aria-hidden="true"><use href="#i-alerta"/></svg><span><b>Qué podría salir mal:</b> <span>si el yen sube mucho, los beneficios de los exportadores bajarían.</span></span></div>
+      <div class="pie-card"><span>OPP-2026-9102</span><span class="sello">EJEMPLO</span></div>
+    </article>
+
+    <article class="card" aria-labelledby="c3">
+      <div class="cab"><span class="ico k-rv" aria-hidden="true"><svg><use href="#i-rv"/></svg></span>
+        <div><small>Acciones</small><h4 id="c3">Fabricantes europeos de tejidos técnicos</h4></div></div>
+      <p class="porque">Crece la demanda de tejidos para defensa, coches y hospitales. Y la energía les cuesta menos.</p>
+      <p class="ambito"><b>Qué abarca:</b> <span>Fábricas europeas de tejidos para defensa, coches y hospitales. Fuera: moda y tiendas de ropa.</span></p>
+      <div class="fila"><span>Riesgo</span> <span><span class="pips" aria-hidden="true"><i class="on"></i><i class="on"></i><i class="on"></i><i></i><i></i></span> <span class="nivel"><b>3 de 5</b> · medio</span></span></div>
+      <div class="fila apilada"><span>Plazo</span> <span class="hz"><span><svg aria-hidden="true"><use href="#i-dias"/></svg>días</span> <span><svg aria-hidden="true"><use href="#i-semanas"/></svg>semanas</span> <span class="on"><svg aria-hidden="true"><use href="#i-meses"/></svg>meses</span> <span><svg aria-hidden="true"><use href="#i-anos"/></svg>años</span></span></div>
+      <div class="fila"><span>Confianza</span> <span><span class="conf" aria-hidden="true"><i class="on"></i><i></i><i></i></span> <b>Baja</b>
+        <div class="banda"><span>Más probable que no</span> · <span>sin ventaja demostrada todavía</span></div></span></div>
+      <div class="mal"><svg aria-hidden="true"><use href="#i-alerta"/></svg><span><b>Qué podría salir mal:</b> <span>si la industria europea se frena, sus pedidos bajarían.</span></span></div>
+      <div class="pie-card"><span>OPP-2026-9109</span><span class="sello">EJEMPLO</span></div>
+    </article>
+
+  </div>
+  <!-- FIN REPETIR (BLOQUE_TIPO) -->
+
+  <div class="clase-h"><span class="ico k-rf" aria-hidden="true"><svg><use href="#i-rf"/></svg></span><h3>Bonos</h3>
+    <span class="estado ambar"><svg aria-hidden="true"><use href="#s-ambar"/></svg>1 idea dudosa</span></div>
+  <div class="tarjetas">
+
+    <article class="card" aria-labelledby="c4">
+      <div class="cab"><span class="ico k-rf" aria-hidden="true"><svg><use href="#i-rf"/></svg></span>
+        <div><small>Bonos</small><h4 id="c4">Bonos de Alemania a medio plazo</h4></div></div>
+      <p class="porque">Pagan un interés razonable y suelen subir de precio si los tipos bajan.</p>
+      <p class="ambito"><b>Qué abarca:</b> <span>Bonos del Estado alemán que vencen en tres a siete años. Fuera: los de menos de un año.</span></p>
+      <div class="fila"><span>Riesgo</span> <span><span class="pips" aria-hidden="true"><i class="on"></i><i class="on"></i><i></i><i></i><i></i></span> <span class="nivel"><b>2 de 5</b> · bajo</span></span></div>
+      <div class="fila apilada"><span>Plazo</span> <span class="hz"><span><svg aria-hidden="true"><use href="#i-dias"/></svg>días</span> <span class="on"><svg aria-hidden="true"><use href="#i-semanas"/></svg>semanas</span> <span class="on"><svg aria-hidden="true"><use href="#i-meses"/></svg>meses</span> <span><svg aria-hidden="true"><use href="#i-anos"/></svg>años</span></span></div>
+      <div class="fila"><span>Confianza</span> <span><span class="conf" aria-hidden="true"><i class="on"></i><i class="on"></i><i></i></span> <b>Media</b>
+        <div class="banda"><span>Más probable que no</span> · <span>sin ventaja demostrada todavía</span></div></span></div>
+      <figure class="spark" style="margin:0">
+        <svg viewBox="0 0 280 72" role="img" aria-labelledby="g4t"><title id="g4t">Interés que pagan estos bonos en el último año: ha bajado algo y está dentro de la zona de interés.</title>
+          <rect class="zona" x="0" y="24" width="280" height="18"/><line class="zona-borde" x1="0" y1="24" x2="280" y2="24"/><line class="zona-borde" x1="0" y1="42" x2="280" y2="42"/>
+          <polyline class="lin" points="2,14 26,18 50,16 74,22 98,20 122,26 146,24 170,30 194,28 218,33 242,31 266,34"/>
+          <circle class="hoy" cx="266" cy="34" r="4.5"/><text x="2" y="70">hace 1 año</text><text x="243" y="70">hoy</text></svg>
+        <figcaption>Interés anual que paga, en 12 meses. Franja: zona de interés.</figcaption>
+      </figure>
+      <div class="mal"><svg aria-hidden="true"><use href="#i-alerta"/></svg><span><b>Qué podría salir mal:</b> <span>si los precios vuelven a subir rápido, los tipos no bajarían.</span></span></div>
+      <div class="pie-card"><span>OPP-2026-9104</span><span class="sello">EJEMPLO</span></div>
+    </article>
+
+    <!-- REPETIR: TIPO SIN OPCIONES / MENOS DE TRES (R14) -->
+    <div class="vacia"><b>¿Por qué no hay más?</b> <span data-ph="{{MOTIVO_SIN_OPCIONES}}">Miramos 10 grupos de bonos. Solo este superó todos los filtros. Los bonos de empresas más arriesgadas pagan poco por su riesgo.</span></div>
+    <!-- FIN REPETIR -->
+  </div>
+
+  <div class="clase-h"><span class="ico k-div" aria-hidden="true"><svg><use href="#i-div"/></svg></span><h3>Monedas</h3>
+    <span class="estado ambar"><svg aria-hidden="true"><use href="#s-ambar"/></svg>1 idea dudosa</span></div>
+  <div class="tarjetas">
+
+    <article class="card" aria-labelledby="c5">
+      <div class="cab"><span class="ico k-div" aria-hidden="true"><svg><use href="#i-div"/></svg></span>
+        <div><small>Monedas</small><h4 id="c5">El yen japonés frente al dólar</h4></div></div>
+      <p class="porque">El yen está muy barato frente a su historia y Japón empieza a subir tipos.</p>
+      <p class="ambito"><b>Qué abarca:</b> <span>El cambio entre el yen y el dólar. Fuera: la bolsa de Japón.</span></p>
+      <div class="fila"><span>Riesgo</span> <span><span class="pips" aria-hidden="true"><i class="on"></i><i class="on"></i><i class="on"></i><i></i><i></i></span> <span class="nivel"><b>3 de 5</b> · medio</span></span></div>
+      <div class="fila apilada"><span>Plazo</span> <span class="hz"><span><svg aria-hidden="true"><use href="#i-dias"/></svg>días</span> <span class="on"><svg aria-hidden="true"><use href="#i-semanas"/></svg>semanas</span> <span class="on"><svg aria-hidden="true"><use href="#i-meses"/></svg>meses</span> <span><svg aria-hidden="true"><use href="#i-anos"/></svg>años</span></span></div>
+      <div class="fila"><span>Confianza</span> <span><span class="conf" aria-hidden="true"><i class="on"></i><i></i><i></i></span> <b>Baja</b>
+        <div class="banda"><span>Incierto</span> · <span>sin ventaja demostrada todavía</span></div></span></div>
+      <div class="mal"><svg aria-hidden="true"><use href="#i-alerta"/></svg><span><b>Qué podría salir mal:</b> <span>las monedas pueden tardar años en volver a su valor «normal».</span></span></div>
+      <div class="pie-card"><span>OPP-2026-9106</span><span class="sello">EJEMPLO</span></div>
+    </article>
+
+    <div class="vacia"><b>¿Por qué no hay más?</b> <span>Miramos 9 parejas de monedas. Solo esta superó todos los filtros. Las demás tenían señales débiles.</span></div>
+  </div>
+
+  <div class="clase-h"><span class="ico k-mp" aria-hidden="true"><svg><use href="#i-mp"/></svg></span><h3>Materias primas</h3>
+    <span class="estado ambar"><svg aria-hidden="true"><use href="#s-ambar"/></svg>1 idea dudosa</span></div>
+  <div class="tarjetas">
+
+    <article class="card" aria-labelledby="c6">
+      <div class="cab"><span class="ico k-mp" aria-hidden="true"><svg><use href="#i-mp"/></svg></span>
+        <div><small>Materias primas</small><h4 id="c6">Oro</h4></div></div>
+      <p class="porque">Los bancos centrales siguen comprando oro y eso sostiene su precio.</p>
+      <p class="ambito"><b>Qué abarca:</b> <span>El precio del oro. Fuera: las empresas que lo sacan de la mina.</span></p>
+      <div class="fila"><span>Riesgo</span> <span><span class="pips" aria-hidden="true"><i class="on"></i><i class="on"></i><i class="on"></i><i></i><i></i></span> <span class="nivel"><b>3 de 5</b> · medio</span></span></div>
+      <div class="fila apilada"><span>Plazo</span> <span class="hz"><span><svg aria-hidden="true"><use href="#i-dias"/></svg>días</span> <span><svg aria-hidden="true"><use href="#i-semanas"/></svg>semanas</span> <span class="on"><svg aria-hidden="true"><use href="#i-meses"/></svg>meses</span> <span class="on"><svg aria-hidden="true"><use href="#i-anos"/></svg>años</span></span></div>
+      <div class="fila"><span>Confianza</span> <span><span class="conf" aria-hidden="true"><i class="on"></i><i class="on"></i><i></i></span> <b>Media</b>
+        <div class="banda"><span>Incierto</span> · <span>sin ventaja demostrada todavía</span></div></span></div>
+      <figure class="spark" style="margin:0">
+        <svg viewBox="0 0 280 72" role="img" aria-labelledby="g6t"><title id="g6t">Precio del oro en el último año: ha subido mucho y está por encima de la zona de interés.</title>
+          <rect class="zona" x="0" y="34" width="280" height="14"/><line class="zona-borde" x1="0" y1="34" x2="280" y2="34"/><line class="zona-borde" x1="0" y1="48" x2="280" y2="48"/>
+          <polyline class="lin" points="2,58 26,55 50,52 74,48 98,46 122,40 146,36 170,30 194,24 218,20 242,22 266,18"/>
+          <circle class="hoy" cx="266" cy="18" r="4.5"/><text x="2" y="70">hace 1 año</text><text x="243" y="70">hoy</text></svg>
+        <figcaption>Precio en 12 meses. Hoy está por encima de la franja: mejor esperar.</figcaption>
+      </figure>
+      <div class="mal"><svg aria-hidden="true"><use href="#i-alerta"/></svg><span><b>Qué podría salir mal:</b> <span>tras subir tanto, una corrección del 10 % sería normal.</span></span></div>
+      <div class="pie-card"><span>OPP-2026-9107</span><span class="sello">EJEMPLO</span></div>
+    </article>
+
+    <div class="vacia"><b>¿Por qué no hay más?</b> <span>Miramos 11 ideas. El cobre y el petróleo no pasaron los filtros por dudas sobre su demanda y su coste.</span></div>
+  </div>
+
+  <div class="clase-h"><span class="ico k-idx" aria-hidden="true"><svg><use href="#i-idx"/></svg></span><h3>Bolsas enteras</h3>
+    <span class="estado ambar"><svg aria-hidden="true"><use href="#s-ambar"/></svg>1 idea dudosa</span></div>
+  <div class="tarjetas">
+
+    <article class="card" aria-labelledby="c7">
+      <div class="cab"><span class="ico k-idx" aria-hidden="true"><svg><use href="#i-idx"/></svg></span>
+        <div><small>Bolsas enteras</small><h4 id="c7">Bolsa de la India</h4></div></div>
+      <p class="porque">Su economía crece rápido y sus empresas ganan cada vez más.</p>
+      <p class="ambito"><b>Qué abarca:</b> <span>La bolsa de la India entera, medida por su índice principal.</span></p>
+      <div class="fila"><span>Riesgo</span> <span><span class="pips" aria-hidden="true"><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><i></i></span> <span class="nivel"><b>4 de 5</b> · alto</span></span></div>
+      <div class="fila apilada"><span>Plazo</span> <span class="hz"><span><svg aria-hidden="true"><use href="#i-dias"/></svg>días</span> <span><svg aria-hidden="true"><use href="#i-semanas"/></svg>semanas</span> <span><svg aria-hidden="true"><use href="#i-meses"/></svg>meses</span> <span class="on"><svg aria-hidden="true"><use href="#i-anos"/></svg>años</span></span></div>
+      <div class="fila"><span>Confianza</span> <span><span class="conf" aria-hidden="true"><i class="on"></i><i></i><i></i></span> <b>Baja</b>
+        <div class="banda"><span>Más probable que no</span> · <span>sin ventaja demostrada todavía</span></div></span></div>
+      <figure class="spark" style="margin:0">
+        <svg viewBox="0 0 280 72" role="img" aria-labelledby="g7t"><title id="g7t">Valoración frente a su media de diez años: está por encima de la media, es decir, no es barata.</title>
+          <line class="media" x1="0" y1="40" x2="280" y2="40"/><text x="196" y="53">media 10 años</text>
+          <polyline class="lin" points="2,30 26,28 50,24 74,22 98,26 122,25 146,21 170,18 194,23 218,26 242,28 266,27"/>
+          <circle class="hoy" cx="266" cy="27" r="4.5"/><text x="2" y="70">hace 1 año</text><text x="243" y="70">hoy</text></svg>
+        <figcaption>Está más cara que su media: por eso el riesgo es 4.</figcaption>
+      </figure>
+      <div class="mal"><svg aria-hidden="true"><use href="#i-alerta"/></svg><span><b>Qué podría salir mal:</b> <span>ya es cara; una mala noticia podría hacerla caer con fuerza.</span></span></div>
+      <div class="pie-card"><span>OPP-2026-9103</span><span class="sello">EJEMPLO</span></div>
+    </article>
+
+    <div class="vacia"><b>¿Por qué no hay más?</b> <span>Miramos 8 bolsas enteras. Europa y Japón aún no son lo bastante atractivas como bolsa completa.</span></div>
+  </div>
+
+  <div class="clase-h"><span class="ico k-fon" aria-hidden="true"><svg><use href="#i-fon"/></svg></span><h3>Fondos</h3>
+    <span class="estado ambar"><svg aria-hidden="true"><use href="#s-ambar"/></svg>1 idea dudosa</span></div>
+  <div class="tarjetas">
+
+    <article class="card" aria-labelledby="c8">
+      <div class="cab"><span class="ico k-fon" aria-hidden="true"><svg><use href="#i-fon"/></svg></span>
+        <div><small>Fondos</small><h4 id="c8">Fondos británicos que cotizan por debajo de lo que valen</h4></div></div>
+      <p class="porque">Se compran más baratos que lo que tienen dentro. Ese hueco suele cerrarse.</p>
+      <p class="ambito"><b>Qué abarca:</b> <span>Fondos de Londres que invierten en bolsa y hoy se venden con rebaja.</span></p>
+      <div class="fila"><span>Riesgo</span> <span><span class="pips" aria-hidden="true"><i class="on"></i><i class="on"></i><i class="on"></i><i></i><i></i></span> <span class="nivel"><b>3 de 5</b> · medio</span></span></div>
+      <div class="fila apilada"><span>Plazo</span> <span class="hz"><span><svg aria-hidden="true"><use href="#i-dias"/></svg>días</span> <span><svg aria-hidden="true"><use href="#i-semanas"/></svg>semanas</span> <span class="on"><svg aria-hidden="true"><use href="#i-meses"/></svg>meses</span> <span class="on"><svg aria-hidden="true"><use href="#i-anos"/></svg>años</span></span></div>
+      <div class="fila"><span>Confianza</span> <span><span class="conf" aria-hidden="true"><i class="on"></i><i class="on"></i><i></i></span> <b>Media</b>
+        <div class="banda"><span>Más probable que no</span> · <span>sin ventaja demostrada todavía</span></div></span></div>
+      <figure class="spark" style="margin:0">
+        <svg viewBox="0 0 280 72" role="img" aria-labelledby="g8t"><title id="g8t">Rebaja media de estos fondos frente a su media de diez años: hoy la rebaja es el doble de lo normal.</title>
+          <line class="media" x1="0" y1="30" x2="280" y2="30"/><text x="196" y="24">media 10 años</text>
+          <polyline class="lin" points="2,30 26,32 50,35 74,34 98,38 122,42 146,41 170,46 194,49 218,52 242,54 266,56"/>
+          <circle class="hoy" cx="266" cy="56" r="4.5"/><text x="2" y="70">hace 1 año</text><text x="243" y="70">hoy</text></svg>
+        <figcaption>Rebaja frente a lo que valen. Línea: su media de diez años.</figcaption>
+      </figure>
+      <div class="mal"><svg aria-hidden="true"><use href="#i-alerta"/></svg><span><b>Qué podría salir mal:</b> <span>el descuento puede seguir abierto mucho tiempo.</span></span></div>
+      <div class="pie-card"><span>OPP-2026-9110</span><span class="sello">EJEMPLO</span></div>
+    </article>
+
+    <div class="vacia"><b>¿Por qué no hay más?</b> <span>Miramos 6 ideas sobre fondos. Las demás no mejoraban lo que ya ofrecen los bonos.</span></div>
+  </div>
+
+  <div class="clase-h"><span class="ico k-der" aria-hidden="true"><svg><use href="#i-der"/></svg></span><h3>Derivados</h3>
+    <span class="estado ambar"><svg aria-hidden="true"><use href="#s-ambar"/></svg>1 idea dudosa</span></div>
+  <div class="tarjetas">
+
+    <article class="card" aria-labelledby="c9">
+      <div class="cab"><span class="ico k-der" aria-hidden="true"><svg><use href="#i-der"/></svg></span>
+        <div><small>Derivados</small><h4 id="c9">Seguros baratos contra caídas de la bolsa europea</h4></div></div>
+      <p class="porque">Protegerse de una caída cuesta hoy menos de lo normal.</p>
+      <p class="ambito"><b>Qué abarca:</b> <span>Seguros contra caídas de la bolsa europea, de uno a tres meses.</span></p>
+      <div class="fila"><span>Riesgo</span> <span><span class="pips" aria-hidden="true"><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><i></i></span> <span class="nivel"><b>4 de 5</b> · alto</span></span></div>
+      <div class="fila apilada"><span>Plazo</span> <span class="hz"><span><svg aria-hidden="true"><use href="#i-dias"/></svg>días</span> <span class="on"><svg aria-hidden="true"><use href="#i-semanas"/></svg>semanas</span> <span class="on"><svg aria-hidden="true"><use href="#i-meses"/></svg>meses</span> <span><svg aria-hidden="true"><use href="#i-anos"/></svg>años</span></span></div>
+      <div class="fila"><span>Confianza</span> <span><span class="conf" aria-hidden="true"><i class="on"></i><i></i><i></i></span> <b>Baja</b>
+        <div class="banda"><span>Incierto</span> · <span>sin ventaja demostrada todavía</span></div></span></div>
+      <figure class="spark" style="margin:0">
+        <svg viewBox="0 0 280 72" role="img" aria-labelledby="g9t"><title id="g9t">Precio de protegerse de caídas en el último año: está por debajo de su media.</title>
+          <line class="media" x1="0" y1="34" x2="280" y2="34"/><text x="196" y="28">media 10 años</text>
+          <polyline class="lin" points="2,28 26,26 50,30 74,34 98,32 122,38 146,42 170,40 194,46 218,48 242,50 266,52"/>
+          <circle class="hoy" cx="266" cy="52" r="4.5"/><text x="2" y="70">hace 1 año</text><text x="243" y="70">hoy</text></svg>
+        <figcaption>Lo que cuesta el seguro, frente a su media.</figcaption>
+      </figure>
+      <div class="mal"><svg aria-hidden="true"><use href="#i-alerta"/></svg><span><b>Qué podría salir mal:</b> <span>si la bolsa no cae, el dinero pagado por la protección se pierde.</span></span></div>
+      <div class="pie-card"><span>OPP-2026-9111</span><span class="sello">EJEMPLO</span></div>
+    </article>
+
+    <div class="vacia"><b>¿Por qué no hay más?</b> <span>Miramos 5 ideas. Vender seguros hoy paga muy poco, así que no la proponemos.</span></div>
+  </div>
+
+  <div class="clase-h"><span class="ico k-cri" aria-hidden="true"><svg><use href="#i-cri"/></svg></span><h3>Criptomonedas</h3>
+    <span class="estado ambar"><svg aria-hidden="true"><use href="#s-ambar"/></svg>1 idea dudosa</span></div>
+  <div class="tarjetas">
+
+    <article class="card" aria-labelledby="c10">
+      <div class="cab"><span class="ico k-cri" aria-hidden="true"><svg><use href="#i-cri"/></svg></span>
+        <div><small>Criptomonedas</small><h4 id="c10">Las monedas digitales más grandes</h4></div></div>
+      <p class="porque">Entra dinero nuevo de grandes inversores a través de la bolsa.</p>
+      <p class="ambito"><b>Qué abarca:</b> <span>Las monedas digitales más grandes, como el bitcoin. Fuera: las pequeñas.</span></p>
+      <div class="fila"><span>Riesgo</span> <span><span class="pips" aria-hidden="true"><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i></span> <span class="nivel"><b>5 de 5</b> · muy alto</span></span></div>
+      <div class="fila apilada"><span>Plazo</span> <span class="hz"><span><svg aria-hidden="true"><use href="#i-dias"/></svg>días</span> <span class="on"><svg aria-hidden="true"><use href="#i-semanas"/></svg>semanas</span> <span class="on"><svg aria-hidden="true"><use href="#i-meses"/></svg>meses</span> <span><svg aria-hidden="true"><use href="#i-anos"/></svg>años</span></span></div>
+      <div class="fila"><span>Confianza</span> <span><span class="conf" aria-hidden="true"><i class="on"></i><i></i><i></i></span> <b>Baja</b>
+        <div class="banda"><span>Incierto</span> · <span>sin ventaja demostrada todavía</span></div></span></div>
+      <div class="mal"><svg aria-hidden="true"><use href="#i-alerta"/></svg><span><b>Qué podría salir mal:</b> <span>pueden caer a la mitad en pocas semanas; ya ha pasado varias veces.</span></span></div>
+      <div class="pie-card"><span>OPP-2026-9108</span><span class="sello">EJEMPLO</span></div>
+    </article>
+
+    <div class="vacia"><b>¿Por qué no hay más?</b> <span>Miramos 8 ideas. Las demás no tenían pruebas suficientes de fuentes fiables.</span></div>
+  </div>
+
+  <div class="clase-h"><span class="ico k-mon" aria-hidden="true"><svg><use href="#i-mon"/></svg></span><h3>Ahorro a corto plazo</h3>
+    <span class="estado ambar"><svg aria-hidden="true"><use href="#s-ambar"/></svg>1 idea dudosa</span></div>
+  <div class="tarjetas">
+
+    <article class="card" aria-labelledby="c11">
+      <div class="cab"><span class="ico k-mon" aria-hidden="true"><svg><use href="#i-mon"/></svg></span>
+        <div><small>Ahorro a corto plazo</small><h4 id="c11">Dinero a corto plazo: fijar el interés ahora</h4></div></div>
+      <p class="porque">Los tipos a corto pueden bajar. Fijar ahora un año asegura el interés actual.</p>
+      <p class="ambito"><b>Qué abarca:</b> <span>Letras del Tesoro de países del euro, de seis meses a un año.</span></p>
+      <div class="fila"><span>Riesgo</span> <span><span class="pips" aria-hidden="true"><i class="on"></i><i></i><i></i><i></i><i></i></span> <span class="nivel"><b>1 de 5</b> · muy bajo</span></span></div>
+      <div class="fila apilada"><span>Plazo</span> <span class="hz"><span><svg aria-hidden="true"><use href="#i-dias"/></svg>días</span> <span class="on"><svg aria-hidden="true"><use href="#i-semanas"/></svg>semanas</span> <span class="on"><svg aria-hidden="true"><use href="#i-meses"/></svg>meses</span> <span><svg aria-hidden="true"><use href="#i-anos"/></svg>años</span></span></div>
+      <div class="fila"><span>Confianza</span> <span><span class="conf" aria-hidden="true"><i class="on"></i><i class="on"></i><i></i></span> <b>Media</b>
+        <div class="banda"><span>Más probable que no</span> · <span>sin ventaja demostrada todavía</span></div></span></div>
+      <div class="mal"><svg aria-hidden="true"><use href="#i-alerta"/></svg><span><b>Qué podría salir mal:</b> <span>si los tipos suben, habría sido mejor esperar.</span></span></div>
+      <div class="pie-card"><span>OPP-2026-9112</span><span class="sello">EJEMPLO</span></div>
+    </article>
+
+    <div class="vacia"><b>¿Por qué no hay más?</b> <span>Miramos 4 formas de guardar el dinero. Las de otras monedas pierden por el coste de cambio.</span></div>
+  </div>
+
+  <div class="clase-h"><span class="ico k-tcv" aria-hidden="true"><svg><use href="#i-tcv"/></svg></span><h3>Tipos y nervios del mercado</h3>
+    <span class="estado verde"><svg aria-hidden="true"><use href="#s-verde"/></svg>2 ideas claras</span></div>
+  <div class="tarjetas">
+
+    <article class="card" aria-labelledby="c12">
+      <div class="cab"><span class="ico k-tcv" aria-hidden="true"><svg><use href="#i-tcv"/></svg></span>
+        <div><small>Tipos y nervios del mercado</small><h4 id="c12">Más diferencia entre intereses a corto y a largo en el euro</h4></div></div>
+      <p class="porque">Si el BCE baja los tipos a corto, la diferencia con el largo plazo suele crecer.</p>
+      <p class="ambito"><b>Qué abarca:</b> <span>La diferencia entre el interés a dos y a diez años en el euro.</span></p>
+      <div class="fila"><span>Riesgo</span> <span><span class="pips" aria-hidden="true"><i class="on"></i><i class="on"></i><i class="on"></i><i></i><i></i></span> <span class="nivel"><b>3 de 5</b> · medio</span></span></div>
+      <div class="fila apilada"><span>Plazo</span> <span class="hz"><span><svg aria-hidden="true"><use href="#i-dias"/></svg>días</span> <span class="on"><svg aria-hidden="true"><use href="#i-semanas"/></svg>semanas</span> <span class="on"><svg aria-hidden="true"><use href="#i-meses"/></svg>meses</span> <span><svg aria-hidden="true"><use href="#i-anos"/></svg>años</span></span></div>
+      <div class="fila"><span>Confianza</span> <span><span class="conf" aria-hidden="true"><i class="on"></i><i class="on"></i><i></i></span> <b>Media</b>
+        <div class="banda"><span>Más probable que no</span> · <span>sin ventaja demostrada todavía</span></div></span></div>
+      <div class="mal"><svg aria-hidden="true"><use href="#i-alerta"/></svg><span><b>Qué podría salir mal:</b> <span>si el BCE se detiene, la diferencia podría no crecer.</span></span></div>
+      <div class="pie-card"><span>OPP-2026-9113</span><span class="sello">EJEMPLO</span></div>
+    </article>
+
+    <article class="card" aria-labelledby="c13">
+      <div class="cab"><span class="ico k-tcv" aria-hidden="true"><svg><use href="#i-tcv"/></svg></span>
+        <div><small>Tipos y nervios del mercado</small><h4 id="c13">Protección contra la inflación en EE. UU. a precio bajo</h4></div></div>
+      <p class="porque">Hoy cuesta poco protegerse de que suban los precios en EE. UU.</p>
+      <p class="ambito"><b>Qué abarca:</b> <span>La subida de precios que esperan los mercados de EE. UU. en diez años.</span></p>
+      <div class="fila"><span>Riesgo</span> <span><span class="pips" aria-hidden="true"><i class="on"></i><i class="on"></i><i></i><i></i><i></i></span> <span class="nivel"><b>2 de 5</b> · bajo</span></span></div>
+      <div class="fila apilada"><span>Plazo</span> <span class="hz"><span><svg aria-hidden="true"><use href="#i-dias"/></svg>días</span> <span><svg aria-hidden="true"><use href="#i-semanas"/></svg>semanas</span> <span class="on"><svg aria-hidden="true"><use href="#i-meses"/></svg>meses</span> <span class="on"><svg aria-hidden="true"><use href="#i-anos"/></svg>años</span></span></div>
+      <div class="fila"><span>Confianza</span> <span><span class="conf" aria-hidden="true"><i class="on"></i><i class="on"></i><i></i></span> <b>Media</b>
+        <div class="banda"><span>Incierto</span> · <span>sin ventaja demostrada todavía</span></div></span></div>
+      <div class="mal"><svg aria-hidden="true"><use href="#i-alerta"/></svg><span><b>Qué podría salir mal:</b> <span>si la subida de precios es menor de lo previsto, esta idea no ganaría.</span></span></div>
+      <div class="pie-card"><span>OPP-2026-9105</span><span class="sello">EJEMPLO</span></div>
+    </article>
+
+    <div class="vacia"><b>¿Por qué no hay más?</b> <span>Miramos 7 ideas. Las demás ya están a su precio justo.</span></div>
+  </div>
+
+  <div class="clase-h"><span class="ico k-inm" aria-hidden="true"><svg><use href="#i-inm"/></svg></span><h3>Inmuebles</h3>
+    <span class="estado gris"><svg aria-hidden="true"><use href="#s-gris"/></svg>Nada destacable</span></div>
+  <div class="vacia">Miramos 7 ideas. Ninguna superó los filtros: los precios ya descuentan lo bueno. Volveremos a mirar si bajan los tipos.</div>
+
+  <div class="clase-h"><span class="ico k-alt" aria-hidden="true"><svg><use href="#i-alt"/></svg></span><h3>Alternativas</h3>
+    <span class="estado gris"><svg aria-hidden="true"><use href="#s-gris"/></svg>Nada destacable</span></div>
+  <div class="vacia">Miramos 5 ideas. Faltan datos fiables y recientes. Preferimos no rellenar el hueco.</div>
+
+</section>
+
+<!-- 5. CÓMO NOS FUE -->
+<section aria-labelledby="h-hist">
+  <div class="panel">
+    <h2 id="h-hist">Cómo nos fue</h2>
+    <p class="sub">Ideas de <span data-ph="{{HIST_VENTANA}}">las últimas 12 semanas</span> cuyo plazo ya ha terminado.</p>
+    <div class="historial">
+      <figure class="mosaico" style="margin:0">
+        <svg viewBox="0 0 330 96" role="img" aria-labelledby="mos-t">
+          <title id="mos-t">De 30 ideas ya evaluadas, 17 lo hicieron mejor que su referencia y 13 peor.</title>
+          <!-- 30 casillas: 10 por fila; class="ok" en las acertadas (generado por HT-04) -->
+          <g>
+            <rect class="ok" x="0" y="0" width="28" height="28" rx="5"/><rect class="ok" x="33" y="0" width="28" height="28" rx="5"/><rect class="ok" x="66" y="0" width="28" height="28" rx="5"/><rect class="ok" x="99" y="0" width="28" height="28" rx="5"/><rect class="ok" x="132" y="0" width="28" height="28" rx="5"/><rect class="ok" x="165" y="0" width="28" height="28" rx="5"/><rect class="ok" x="198" y="0" width="28" height="28" rx="5"/><rect class="ok" x="231" y="0" width="28" height="28" rx="5"/><rect class="ok" x="264" y="0" width="28" height="28" rx="5"/><rect class="ok" x="297" y="0" width="28" height="28" rx="5"/>
+            <rect class="ok" x="0" y="33" width="28" height="28" rx="5"/><rect class="ok" x="33" y="33" width="28" height="28" rx="5"/><rect class="ok" x="66" y="33" width="28" height="28" rx="5"/><rect class="ok" x="99" y="33" width="28" height="28" rx="5"/><rect class="ok" x="132" y="33" width="28" height="28" rx="5"/><rect class="ok" x="165" y="33" width="28" height="28" rx="5"/><rect class="ok" x="198" y="33" width="28" height="28" rx="5"/><rect x="231" y="33" width="28" height="28" rx="5"/><rect x="264" y="33" width="28" height="28" rx="5"/><rect x="297" y="33" width="28" height="28" rx="5"/>
+            <rect x="0" y="66" width="28" height="28" rx="5"/><rect x="33" y="66" width="28" height="28" rx="5"/><rect x="66" y="66" width="28" height="28" rx="5"/><rect x="99" y="66" width="28" height="28" rx="5"/><rect x="132" y="66" width="28" height="28" rx="5"/><rect x="165" y="66" width="28" height="28" rx="5"/><rect x="198" y="66" width="28" height="28" rx="5"/><rect x="231" y="66" width="28" height="28" rx="5"/><rect x="264" y="66" width="28" height="28" rx="5"/><rect x="297" y="66" width="28" height="28" rx="5"/>
+          </g>
+        </svg>
+        <figcaption class="leyenda"><span><i style="background:var(--ok)"></i>Mejor que su referencia</span><span><i style="background:var(--ko)"></i>Peor</span></figcaption>
+      </figure>
+      <div>
+        <p style="font-size:1.2rem;margin-top:0"><b><span data-ph="{{HIST_ACIERTOS}}">17</span> de cada <span data-ph="{{HIST_N}}">30</span></b> ideas lo hicieron mejor que comprar el conjunto de su mercado (nuestra referencia).</p>
+        <div class="barras">
+          <div class="barra"><div class="rotulo"><span>Nuestras ideas</span><b data-ph="{{HIST_PCT}}">57&nbsp;%</b></div><div class="pista"><div class="relleno" style="width:57%"></div></div></div>
+          <div class="barra"><div class="rotulo"><span>Acertar por azar (como lanzar una moneda)</span><b data-ph="{{HIST_REF_PCT}}">50&nbsp;%</b></div><div class="pista"><div class="relleno ref" style="width:50%"></div></div></div>
+        </div>
+        <p class="peq" style="margin-top:12px" data-ph="{{HIST_FRASE}}">Con solo 30 casos, esta diferencia puede deberse a la suerte. Aún no podemos decir que acertemos más que el azar.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- 6. MINIGLOSARIO (máx. 5) -->
+<section aria-labelledby="h-glos">
+  <h2 id="h-glos">Cinco palabras que aparecen hoy</h2>
+  <dl class="glosario">
+    <div><dt data-ph="{{TERMINO_1}}">Tipos de interés</dt><dd data-ph="{{DEFINICION_1}}">El «precio» del dinero prestado. Si suben, pedir prestado cuesta más.</dd></div>
+    <div><dt>Inflación</dt><dd>La subida general de precios. Con ella, el mismo dinero compra menos.</dd></div>
+    <div><dt>Índice</dt><dd>Una cesta que resume cómo va una bolsa entera o un grupo de empresas.</dd></div>
+    <div><dt>Zona de interés</dt><dd>Franja de precios en la que la idea nos parece razonable.</dd></div>
+    <div><dt>Referencia</dt><dd>La opción sencilla con la que nos comparamos. Si no la superamos, no aportamos nada.</dd></div>
+  </dl>
+</section>
+
+<!-- 7. AVISO (texto fijo) -->
+<section>
+  <div class="aviso" role="note"><svg aria-hidden="true"><use href="#i-info"/></svg>
+    <div><b>Esto no es una recomendación personal; tu Broker Personal valora si encaja contigo.</b>
+    <p class="peq" style="margin-top:6px">Este resumen describe zonas del mercado con buenas perspectivas, no productos concretos. No conoce tu situación, tus ahorros ni tus metas. Invertir puede hacerte perder dinero. Lo que pasó antes no asegura lo que pasará.</p></div>
+  </div>
+</section>
+
+<footer>
+  <span>Informe <span data-ph="{{RUN_ID}}">RUN-2026-9045</span></span>
+  <span>Metodología <span data-ph="{{METODOLOGIA}}">4.0</span></span>
+  <span>Bloque A · Robot Investor</span>
+  <span class="sello">EJEMPLO — datos ficticios</span>
+</footer>
+
+</div>
+</body>
+</html>

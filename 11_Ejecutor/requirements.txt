@@ -1,0 +1,10 @@
+anthropic>=2.0
+jsonschema>=4.18
+numpy>=1.26
+pandas>=2.1
+scipy>=1.11
+PyYAML>=6.0
+pytest>=8
+# opcionales
+arch>=6.0        # VOL-GARCH-001
+# yfinance>=0.2  # ProveedorYahoo (solo modo vivo)

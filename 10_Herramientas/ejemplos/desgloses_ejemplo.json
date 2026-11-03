@@ -1,0 +1,88 @@
+{
+ "OPP-2026-0007": {
+  "dimensiones": {
+   "T": {
+    "magnitud": 70,
+    "alcance": 70,
+    "velocidad": 70,
+    "duracion": 70,
+    "difusion": 70,
+    "posicion_cadena_valor": 70,
+    "capacidad_transformadora": 70,
+    "claridad_causal": 70
+   },
+   "E": {
+    "calidad_raices": 80,
+    "cobertura_variables": 80,
+    "calidad_metodologica": 70,
+    "trazabilidad": 80,
+    "actualidad": 70,
+    "discrepancias_resueltas": 70,
+    "objeciones_respondidas": 70
+   },
+   "M": {
+    "adopcion": 50,
+    "escalado": 50,
+    "indicadores_disponibles": 50,
+    "persistencia": 50,
+    "estabilidad_impulsores": 50,
+    "hitos_claros": 50
+   },
+   "A": {
+    "asimetria": 70,
+    "valoracion": 70,
+    "catalizadores": 70,
+    "momento": 70,
+    "invertibilidad": 70
+   },
+   "P": {
+    "novedad": 60,
+    "incertidumbre_reducible": 60,
+    "coste_eficiencia": 70
+   }
+  }
+ },
+ "OPP-2026-0011": {
+  "dimensiones": {
+   "T": {
+    "magnitud": 60,
+    "alcance": 60,
+    "velocidad": 60,
+    "duracion": 60,
+    "difusion": 60,
+    "posicion_cadena_valor": 60,
+    "capacidad_transformadora": 60,
+    "claridad_causal": 60
+   },
+   "E": {
+    "calidad_raices": 70,
+    "cobertura_variables": 70,
+    "calidad_metodologica": 70,
+    "trazabilidad": 70,
+    "actualidad": 70,
+    "discrepancias_resueltas": 70,
+    "objeciones_respondidas": 70
+   },
+   "M": {
+    "adopcion": 40,
+    "escalado": 40,
+    "indicadores_disponibles": 40,
+    "persistencia": 40,
+    "estabilidad_impulsores": 40,
+    "hitos_claros": 40
+   },
+   "A": {
+    "asimetria": 70,
+    "valoracion": 60,
+    "catalizadores": 60,
+    "momento": 60,
+    "invertibilidad": 60
+   },
+   "P": {
+    "novedad": 60,
+    "incertidumbre_reducible": 60,
+    "coste_eficiencia": 70
+   }
+  }
+ }
+}

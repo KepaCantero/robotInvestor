@@ -1,0 +1,2674 @@
+{
+ "x_aviso_ejemplo": "EJEMPLO — datos ficticios (Versión óptima V5.0 · 02/11/2026). No usar para decidir.",
+ "run_id": "RUN-2026-9045",
+ "fecha": "2026-11-09",
+ "fecha_datos_mercado": "2026-11-06",
+ "methodology_version": "4.0",
+ "tipo": "PERIODICO",
+ "nivel_por_clase": {
+  "RV": "N2",
+  "RF": "N2",
+  "DIV": "N1",
+  "MP": "N2",
+  "IDX": "N2",
+  "FON": "N1",
+  "DER": "N2",
+  "INM": "N1",
+  "CRI": "N2",
+  "ALT": "N1",
+  "MON": "N1",
+  "TCV": "N2"
+ },
+ "regimen_macro": "EJEMPLO FICTICIO. Desinflación lenta en economías desarrolladas; bancos centrales en recortes graduales; crecimiento global moderado con divergencia entre regiones.",
+ "apuestas_independientes": 5,
+ "clusteres_exposicion": [
+  {
+   "cluster_id": "CL-1",
+   "factor_dominante": "Tipos de interés a corto y reales a la baja de forma gradual",
+   "opp_ids": [
+    "OPP-2026-9101",
+    "OPP-2026-9104",
+    "OPP-2026-9107",
+    "OPP-2026-9112",
+    "OPP-2026-9113",
+    "OPP-2026-9105"
+   ]
+  },
+  {
+   "cluster_id": "CL-2",
+   "factor_dominante": "Normalización monetaria y de gobierno corporativo en Japón",
+   "opp_ids": [
+    "OPP-2026-9102",
+    "OPP-2026-9106"
+   ]
+  },
+  {
+   "cluster_id": "CL-3",
+   "factor_dominante": "Apetito por riesgo y crecimiento de alto beta",
+   "opp_ids": [
+    "OPP-2026-9103",
+    "OPP-2026-9108"
+   ]
+  },
+  {
+   "cluster_id": "CL-4",
+   "factor_dominante": "Recuperación del ciclo industrial y de valoración en Europa",
+   "opp_ids": [
+    "OPP-2026-9109",
+    "OPP-2026-9110"
+   ]
+  },
+  {
+   "cluster_id": "CL-5",
+   "factor_dominante": "Riesgo de caída de la renta variable europea (cobertura)",
+   "opp_ids": [
+    "OPP-2026-9111"
+   ]
+  }
+ ],
+ "clases": {
+  "RV": {
+   "estado_semaforo": "VERDE",
+   "regimen_clase": "EJEMPLO. Expansión tardía de beneficios con amplitud creciente fuera de EE. UU.",
+   "candidatas_analizadas": 14,
+   "embudo": {
+    "gc0_delta_material": true,
+    "cribadas": 14,
+    "pasan_gc1": 8,
+    "pasan_gc2": 6,
+    "finalistas_gc3": 5,
+    "elegibles": 4
+   },
+   "opciones": [
+    {
+     "opp_id": "OPP-2026-9101",
+     "rango": 1,
+     "tipo_opcion": "SECTOR",
+     "tipo_activo": "RV",
+     "subtipo": "Sector",
+     "nombre": "Bancos de la zona del euro",
+     "nombre_llano": "Bancos europeos",
+     "por_que_llano": "Ganan más con los tipos de interés actuales y aún cotizan más baratos que su media.",
+     "que_puede_salir_mal_llano": "Si la economía europea se frena, más clientes dejarían de pagar sus préstamos.",
+     "tesis": "EJEMPLO. Los márgenes de intermediación se mantienen altos con tipos que bajan despacio y la valoración sigue por debajo de su media de 10 años.",
+     "mecanismo": "Margen de intereses estable + recompra de acciones + PER inferior a la media histórica.",
+     "tnd_ids": [
+      "TND-2026-9011"
+     ],
+     "cluster_id": "CL-1",
+     "regiones": [
+      "EUR"
+     ],
+     "puntuaciones": {
+      "T": 70,
+      "E": 75,
+      "M": 60,
+      "A": 70,
+      "RK": 72,
+      "desglose_ref": "HT03-2026-9101"
+     },
+     "horizontes": {
+      "H3": {
+       "vista": "alcista",
+       "banda": "más probable que no",
+       "prob": null,
+       "certificado_r13": false,
+       "etiqueta": "sin ventaja demostrada todavía",
+       "prg_id": "PRG-2026-9201",
+       "fecha_resolucion": "2027-05-07",
+       "criterio_resolucion": "Índice sectorial bate al índice europeo amplio en el periodo"
+      },
+      "H4": {
+       "vista": "relativa_favorable",
+       "banda": "más probable que no",
+       "prob": null,
+       "certificado_r13": false,
+       "etiqueta": "sin ventaja demostrada todavía",
+       "prg_id": "PRG-2026-9202",
+       "fecha_resolucion": "2028-11-06",
+       "criterio_resolucion": "Rentabilidad total relativa positiva frente al índice europeo"
+      }
+     },
+     "horizonte_principal": "H3",
+     "valoracion": "EJEMPLO. PER adelantado en el percentil 30 de su historia de 10 años.",
+     "catalizadores": [
+      {
+       "evento": "Test de estrés de la EBA",
+       "fecha": "2027-T3"
+      }
+     ],
+     "riesgos": [
+      "Recesión en la zona euro",
+      "Recortes de tipos más rápidos de lo previsto"
+     ],
+     "riesgo_1a5": 3,
+     "invalidacion": [
+      "Morosidad por encima del umbral fijado en CALC-2026-9301",
+      "Recorte acumulado de tipos superior a 100 pb en 6 meses"
+     ],
+     "ambito": {
+      "incluye": "Bancos comerciales y minoristas cotizados con sede en la zona del euro",
+      "excluye": "Aseguradoras, gestoras de activos, bancos de inversión puros y bancos fuera de la zona del euro",
+      "region": "Zona del euro"
+     },
+     "indicador_seguimiento": {
+      "nombre": "Índice sectorial de bancos de la zona del euro (EJEMPLO)",
+      "simbolo": "IDX-BANCOS-EUR",
+      "fuente": "HT-01 (EJEMPLO)",
+      "tipo": "INDICE"
+     },
+     "invertibilidad": {
+      "universo_suficiente": true,
+      "nota": "EJEMPLO. Más de 30 bancos cotizados con liquidez diaria alta en mercados regulados de la UE; universo accesible a un minorista europeo."
+     },
+     "ejemplos_ilustrativos": [
+      "Grandes bancos minoristas de España, Francia, Italia y Alemania (solo ilustración del ámbito)"
+     ],
+     "liquidez": "alta",
+     "relevancia_decisional": "MEDIA",
+     "reversibilidad": "alta",
+     "siguiente_paso_sugerido": "ENVIAR_A_BLOQUE_B",
+     "que_cambiaria_la_conclusion": [
+      "Revisión a la baja de beneficios del sector superior al 10 %"
+     ],
+     "objeciones": [
+      {
+       "fuerza": "moderada",
+       "resumen": "El consenso ya es favorable (riesgo de narrativa saturada).",
+       "respuesta": "Posicionamiento neutral según datos de flujos (CLM-2026-9403); tope de valoración aplicado.",
+       "estado": "RESPONDIDA"
+      }
+     ],
+     "lo_que_no_sabemos": [
+      "Efecto de la nueva normativa de capital sobre los dividendos"
+     ],
+     "confianza": "probable",
+     "evidencias": [
+      "CLM-2026-9401",
+      "CLM-2026-9402",
+      "CLM-2026-9403"
+     ],
+     "calculos": [
+      "CALC-2026-9301",
+      "CALC-2026-9302"
+     ],
+     "minigrafico": {
+      "tipo": "PRECIO_CON_ZONA",
+      "serie_ref": "HT01:IDX-BANCOS-EUR",
+      "zona_interes": {
+       "min": 95,
+       "max": 110,
+       "unidad": "puntos de índice"
+      },
+      "calc_id": "CALC-2026-9302"
+     }
+    },
+    {
+     "opp_id": "OPP-2026-9102",
+     "rango": 2,
+     "tipo_opcion": "TEMATICA",
+     "tipo_activo": "RV",
+     "subtipo": "Temática",
+     "nombre": "Mejora del gobierno corporativo en Japón",
+     "nombre_llano": "Empresas japonesas que reparten más a sus accionistas",
+     "por_que_llano": "Las nuevas normas de la bolsa de Tokio les empujan a usar mejor su dinero.",
+     "que_puede_salir_mal_llano": "Si el yen sube mucho, los beneficios de los exportadores bajarían.",
+     "tesis": "EJEMPLO. La presión regulatoria sobre empresas que cotizan por debajo de su valor contable impulsa recompras y dividendos.",
+     "mecanismo": "Reformas de la bolsa + recompras récord + reducción de participaciones cruzadas.",
+     "tnd_ids": [
+      "TND-2026-9012"
+     ],
+     "cluster_id": "CL-2",
+     "regiones": [
+      "JPN"
+     ],
+     "puntuaciones": {
+      "T": 70,
+      "E": 80,
+      "M": 65,
+      "A": 65,
+      "RK": 71,
+      "desglose_ref": "HT03-2026-9102"
+     },
+     "horizontes": {
+      "H3": {
+       "vista": "alcista",
+       "banda": "más probable que no",
+       "prob": null,
+       "certificado_r13": false,
+       "etiqueta": "sin ventaja demostrada todavía",
+       "prg_id": "PRG-2026-9203",
+       "fecha_resolucion": "2027-05-07",
+       "criterio_resolucion": "Índice de empresas con mejora de gobierno bate al índice japonés amplio"
+      },
+      "H4": {
+       "vista": "relativa_favorable",
+       "banda": "más probable que no",
+       "prob": null,
+       "certificado_r13": false,
+       "etiqueta": "sin ventaja demostrada todavía",
+       "prg_id": "PRG-2026-9204",
+       "fecha_resolucion": "2028-11-06",
+       "criterio_resolucion": "Rentabilidad relativa positiva frente al índice japonés amplio"
+      }
+     },
+     "horizonte_principal": "H3",
+     "valoracion": "EJEMPLO. Precio/valor contable por debajo de su media de 10 años.",
+     "catalizadores": [
+      {
+       "evento": "Junta general de accionistas (temporada)",
+       "fecha": "2027-06"
+      }
+     ],
+     "riesgos": [
+      "Apreciación brusca del yen",
+      "Retroceso del impulso regulatorio"
+     ],
+     "riesgo_1a5": 3,
+     "invalidacion": [
+      "Recompras anuales inferiores en un 30 % a las del año anterior"
+     ],
+     "ambito": {
+      "incluye": "Empresas japonesas cotizadas que cotizan por debajo de su valor contable y están sometidas a la presión de reforma de la bolsa de Tokio",
+      "excluye": "Índice japonés amplio como asignación de mercado completo (eso sería IDX) y empresas sin exceso de capital",
+      "region": "Japón"
+     },
+     "indicador_seguimiento": {
+      "nombre": "Cesta de empresas japonesas con precio/valor contable < 1 (EJEMPLO)",
+      "simbolo": "CESTA-JPN-PBV",
+      "fuente": "HT-01 (EJEMPLO)",
+      "tipo": "CESTA"
+     },
+     "invertibilidad": {
+      "universo_suficiente": true,
+      "nota": "EJEMPLO. Cientos de valores líquidos en la bolsa de Tokio; acceso minorista europeo mediante intermediarios habituales."
+     },
+     "liquidez": "alta",
+     "relevancia_decisional": "MEDIA",
+     "reversibilidad": "alta",
+     "siguiente_paso_sugerido": "ENVIAR_A_BLOQUE_B",
+     "que_cambiaria_la_conclusion": [
+      "Fin del programa de reformas de la bolsa de Tokio"
+     ],
+     "objeciones": [
+      {
+       "fuerza": "debil",
+       "resumen": "Parte del efecto ya está en precio.",
+       "respuesta": "Valoración aún bajo la media (CALC-2026-9303).",
+       "estado": "RESPONDIDA"
+      }
+     ],
+     "lo_que_no_sabemos": [
+      "Ritmo real de reducción de participaciones cruzadas"
+     ],
+     "confianza": "probable",
+     "evidencias": [
+      "CLM-2026-9404",
+      "CLM-2026-9405"
+     ],
+     "calculos": [
+      "CALC-2026-9303"
+     ],
+     "minigrafico": {
+      "tipo": "VALORACION_VS_MEDIA",
+      "serie_ref": "HT01:IDX-JP-PBV",
+      "zona_interes": {
+       "min": 0.9,
+       "max": 1.3,
+       "unidad": "precio/valor contable"
+      },
+      "calc_id": "CALC-2026-9303"
+     }
+    },
+    {
+     "opp_id": "OPP-2026-9109",
+     "rango": 3,
+     "tipo_opcion": "SUBSECTOR",
+     "tipo_activo": "RV",
+     "subtipo": "Subsector",
+     "nombre": "Textil técnico europeo",
+     "nombre_llano": "Fabricantes europeos de tejidos técnicos",
+     "por_que_llano": "Crece la demanda de tejidos para defensa, coches y hospitales. Y la energía les cuesta menos.",
+     "que_puede_salir_mal_llano": "Si la industria europea se frena, sus pedidos bajarían.",
+     "tesis": "EJEMPLO. La demanda de tejidos técnicos (defensa, automoción y sanidad) crece más que el consumo textil y los costes energéticos bajan, con valoraciones aún deprimidas.",
+     "mecanismo": "Gasto en defensa + abaratamiento del gas + recuperación de márgenes desde mínimos.",
+     "tnd_ids": [
+      "TND-2026-9017"
+     ],
+     "cluster_id": "CL-4",
+     "regiones": [
+      "EUR"
+     ],
+     "puntuaciones": {
+      "T": 70,
+      "E": 65,
+      "M": 50,
+      "A": 70,
+      "RK": 68,
+      "desglose_ref": "HT03-2026-9109"
+     },
+     "horizontes": {
+      "H3": {
+       "vista": "relativa_favorable",
+       "banda": "más probable que no",
+       "prob": null,
+       "certificado_r13": false,
+       "etiqueta": "sin ventaja demostrada todavía",
+       "prg_id": "PRG-2026-9213",
+       "fecha_resolucion": "2027-05-07",
+       "criterio_resolucion": "El indicador del subsector bate al índice europeo amplio en el periodo"
+      }
+     },
+     "horizonte_principal": "H3",
+     "valoracion": "EJEMPLO. Múltiplo EV/EBITDA agregado del subsector en el percentil 20 de su historia de 10 años (CALC-2026-9310).",
+     "catalizadores": [
+      {
+       "evento": "Presupuestos de defensa de la UE para 2027",
+       "fecha": "2027-T1"
+      }
+     ],
+     "riesgos": [
+      "Recesión industrial europea",
+      "Competencia asiática en precio",
+      "Universo de tamaño medio-pequeño"
+     ],
+     "riesgo_1a5": 3,
+     "invalidacion": [
+      "Cartera de pedidos agregada del subsector a la baja dos trimestres seguidos"
+     ],
+     "ambito": {
+      "incluye": "Fabricantes cotizados europeos de textiles técnicos y no tejidos para defensa, automoción, sanidad e industria",
+      "excluye": "Confección y moda de consumo, distribución minorista textil y fabricantes fuera de Europa",
+      "region": "Europa"
+     },
+     "indicador_seguimiento": {
+      "nombre": "Cesta equiponderada de textil técnico europeo (EJEMPLO)",
+      "simbolo": "CESTA-TEXTIL-TEC-EUR",
+      "fuente": "HT-01 (EJEMPLO)",
+      "tipo": "CESTA"
+     },
+     "invertibilidad": {
+      "universo_suficiente": true,
+      "nota": "EJEMPLO. Unos 15 valores cotizados en mercados regulados europeos, varios de pequeña capitalización; suficiente para que el Bloque B elija."
+     },
+     "liquidez": "media",
+     "relevancia_decisional": "MEDIA",
+     "reversibilidad": "media",
+     "siguiente_paso_sugerido": "ENVIAR_A_BLOQUE_B",
+     "que_cambiaria_la_conclusion": [
+      "Recorte de los presupuestos de defensa europeos"
+     ],
+     "objeciones": [
+      {
+       "fuerza": "moderada",
+       "resumen": "El universo es pequeño y poco líquido.",
+       "respuesta": "PS3 superada: hay unos 15 valores negociables; la selección fina corresponde al Bloque B.",
+       "estado": "RESPONDIDA"
+      }
+     ],
+     "lo_que_no_sabemos": [
+      "Cuota de los ingresos de defensa en cada empresa del subsector"
+     ],
+     "confianza": "especulativo",
+     "evidencias": [
+      "CLM-2026-9416",
+      "CLM-2026-9417"
+     ],
+     "calculos": [
+      "CALC-2026-9310"
+     ]
+    }
+   ],
+   "menos_de_tres_motivo": null
+  },
+  "RF": {
+   "estado_semaforo": "AMBAR",
+   "regimen_clase": "EJEMPLO. Ciclo de recortes graduales; curvas con pendiente positiva moderada.",
+   "candidatas_analizadas": 10,
+   "embudo": {
+    "gc0_delta_material": true,
+    "cribadas": 10,
+    "pasan_gc1": 6,
+    "pasan_gc2": 4,
+    "finalistas_gc3": 4,
+    "elegibles": 1
+   },
+   "opciones": [
+    {
+     "opp_id": "OPP-2026-9104",
+     "rango": 1,
+     "tipo_opcion": "SEGMENTO",
+     "tipo_activo": "RF",
+     "subtipo": "Deuda pública",
+     "nombre": "Deuda pública alemana a 3–7 años",
+     "nombre_llano": "Bonos de Alemania a medio plazo",
+     "por_que_llano": "Pagan un interés razonable y suelen subir de precio si los tipos bajan.",
+     "que_puede_salir_mal_llano": "Si los precios vuelven a subir rápido, los tipos no bajarían.",
+     "tesis": "EJEMPLO. La rentabilidad a 5 años descuenta menos recortes de los que implica la senda de inflación prevista.",
+     "mecanismo": "Carry + rolldown positivos y opcionalidad ante desaceleración.",
+     "tnd_ids": [
+      "TND-2026-9014"
+     ],
+     "cluster_id": "CL-1",
+     "regiones": [
+      "EUR"
+     ],
+     "puntuaciones": {
+      "T": 60,
+      "E": 80,
+      "M": 70,
+      "A": 65,
+      "RK": 69,
+      "desglose_ref": "HT03-2026-9104"
+     },
+     "horizontes": {
+      "H2": {
+       "vista": "alcista",
+       "banda": "más probable que no",
+       "prob": null,
+       "certificado_r13": false,
+       "etiqueta": "sin ventaja demostrada todavía",
+       "prg_id": "PRG-2026-9206",
+       "fecha_resolucion": "2026-12-18",
+       "criterio_resolucion": "Rentabilidad a 5 años por debajo del nivel de referencia del 06/11/2026"
+      },
+      "H3": {
+       "vista": "alcista",
+       "banda": "más probable que no",
+       "prob": null,
+       "certificado_r13": false,
+       "etiqueta": "sin ventaja demostrada todavía",
+       "prg_id": "PRG-2026-9207",
+       "fecha_resolucion": "2027-05-07",
+       "criterio_resolucion": "Rentabilidad total positiva superior al monetario"
+      }
+     },
+     "horizonte_principal": "H3",
+     "valoracion": "EJEMPLO. Rentabilidad del tramo en la parte alta de la zona de interés calculada (CALC-2026-9305).",
+     "catalizadores": [
+      {
+       "evento": "Reunión de política monetaria del BCE",
+       "fecha": "2026-12-17"
+      }
+     ],
+     "riesgos": [
+      "Repunte de la inflación",
+      "Aumento de la oferta de deuda"
+     ],
+     "riesgo_1a5": 2,
+     "invalidacion": [
+      "Inflación subyacente de la zona euro por encima del 3 % dos meses seguidos"
+     ],
+     "ambito": {
+      "incluye": "Bonos del Estado alemán con vencimiento residual entre 3 y 7 años",
+      "excluye": "Letras a menos de 12 meses (serían MON) y apuestas sobre la pendiente de la curva (serían TCV)",
+      "region": "Alemania"
+     },
+     "indicador_seguimiento": {
+      "nombre": "Índice de deuda pública alemana 3–7 años (EJEMPLO)",
+      "simbolo": "IDX-BUND-3-7",
+      "fuente": "HT-01 (EJEMPLO)",
+      "tipo": "INDICE"
+     },
+     "invertibilidad": {
+      "universo_suficiente": true,
+      "nota": "EJEMPLO. Decenas de emisiones vivas en el tramo, mercado muy profundo y accesible."
+     },
+     "liquidez": "alta",
+     "relevancia_decisional": "MEDIA",
+     "reversibilidad": "alta",
+     "siguiente_paso_sugerido": "ENVIAR_A_BLOQUE_B",
+     "que_cambiaria_la_conclusion": [
+      "Cambio de discurso del BCE hacia subidas"
+     ],
+     "objeciones": [
+      {
+       "fuerza": "moderada",
+       "resumen": "Los recortes ya están descontados por el mercado.",
+       "respuesta": "La curva implícita descuenta menos recortes que el escenario base (CALC-2026-9305).",
+       "estado": "RESPONDIDA"
+      }
+     ],
+     "lo_que_no_sabemos": [
+      "Calendario de emisiones del Tesoro alemán para 2027"
+     ],
+     "confianza": "probable",
+     "evidencias": [
+      "CLM-2026-9408",
+      "CLM-2026-9409"
+     ],
+     "calculos": [
+      "CALC-2026-9305"
+     ],
+     "minigrafico": {
+      "tipo": "PRECIO_CON_ZONA",
+      "serie_ref": "HT01:DE-5Y-YLD",
+      "zona_interes": {
+       "min": 2.1,
+       "max": 2.5,
+       "unidad": "% rentabilidad"
+      },
+      "calc_id": "CALC-2026-9305"
+     }
+    }
+   ],
+   "menos_de_tres_motivo": "EJEMPLO. Se analizaron 10 segmentos; solo 1 superó E ≥ 60 y A ≥ 55. El crédito de alto rendimiento no compensa sus diferenciales actuales; entraría con diferenciales 100 pb más amplios."
+  },
+  "DIV": {
+   "estado_semaforo": "AMBAR",
+   "regimen_clase": "EJEMPLO. Dólar fuerte con señales de agotamiento; carry decreciente.",
+   "candidatas_analizadas": 9,
+   "embudo": {
+    "gc0_delta_material": false,
+    "cribadas": 9,
+    "pasan_gc1": 3,
+    "pasan_gc2": 2,
+    "finalistas_gc3": 2,
+    "elegibles": 1
+   },
+   "opciones": [
+    {
+     "opp_id": "OPP-2026-9106",
+     "rango": 1,
+     "tipo_opcion": "ESTRATEGIA",
+     "tipo_activo": "DIV",
+     "subtipo": "Pares principales",
+     "nombre": "Yen japonés frente al dólar (valor y convergencia de tipos)",
+     "nombre_llano": "El yen japonés frente al dólar",
+     "por_que_llano": "El yen está muy barato frente a su historia y Japón empieza a subir tipos.",
+     "que_puede_salir_mal_llano": "Las monedas pueden tardar años en volver a su valor «normal».",
+     "tesis": "EJEMPLO. Desviación extrema frente a la PPA con estrechamiento del diferencial de tipos.",
+     "mecanismo": "Convergencia del diferencial de tipos + repatriación de capitales.",
+     "tnd_ids": [],
+     "cluster_id": "CL-2",
+     "regiones": [
+      "JPN"
+     ],
+     "puntuaciones": {
+      "T": "NA",
+      "E": 60,
+      "M": 50,
+      "A": 70,
+      "RK": 66,
+      "desglose_ref": "HT03-2026-9106"
+     },
+     "horizontes": {
+      "H2": {
+       "vista": "alcista",
+       "banda": "incierto",
+       "prob": null,
+       "certificado_r13": false,
+       "etiqueta": "sin ventaja demostrada todavía",
+       "prg_id": "PRG-2026-9210",
+       "fecha_resolucion": "2026-12-18",
+       "criterio_resolucion": "USD/JPY por debajo del nivel de referencia del 06/11/2026"
+      },
+      "H3": {
+       "vista": "alcista",
+       "banda": "incierto",
+       "prob": null,
+       "certificado_r13": false,
+       "etiqueta": "sin ventaja demostrada todavía",
+       "prg_id": "PRG-2026-9211",
+       "fecha_resolucion": "2027-05-07",
+       "criterio_resolucion": "USD/JPY por debajo del nivel de referencia"
+      }
+     },
+     "horizonte_principal": "H3",
+     "valoracion": "EJEMPLO. Yen infravalorado frente a PPA según CALC-2026-9307.",
+     "catalizadores": [
+      {
+       "evento": "Reunión del Banco de Japón",
+       "fecha": "2026-12-19"
+      }
+     ],
+     "riesgos": [
+      "Persistencia del carry a favor del dólar",
+      "Intervención cambiaria"
+     ],
+     "riesgo_1a5": 3,
+     "invalidacion": [
+      "Diferencial a 2 años EE. UU.–Japón se amplía 50 pb"
+     ],
+     "ambito": {
+      "incluye": "Tipo de cambio del yen japonés frente al dólar estadounidense",
+      "excluye": "Cruces del yen con divisas emergentes y exposición a bolsa japonesa",
+      "region": "Japón y EE. UU."
+     },
+     "indicador_seguimiento": {
+      "nombre": "Tipo de cambio USD/JPY (EJEMPLO)",
+      "simbolo": "USDJPY",
+      "fuente": "HT-01 (EJEMPLO)",
+      "tipo": "SERIE"
+     },
+     "invertibilidad": {
+      "universo_suficiente": true,
+      "nota": "EJEMPLO. Uno de los pares más negociados del mundo; acceso minorista europeo amplio."
+     },
+     "liquidez": "alta",
+     "relevancia_decisional": "MEDIA",
+     "reversibilidad": "alta",
+     "siguiente_paso_sugerido": "VIGILAR",
+     "que_cambiaria_la_conclusion": [
+      "Subida de tipos del Banco de Japón aplazada a 2027"
+     ],
+     "objeciones": [
+      {
+       "fuerza": "moderada",
+       "resumen": "La infravaloración por PPA puede persistir años.",
+       "respuesta": "Aceptada: banda «incierto» y confianza baja; horizonte H3, no H1.",
+       "estado": "RESPONDIDA"
+      }
+     ],
+     "lo_que_no_sabemos": [
+      "Momento de la repatriación de capitales japoneses"
+     ],
+     "confianza": "especulativo",
+     "evidencias": [
+      "CLM-2026-9411"
+     ],
+     "calculos": [
+      "CALC-2026-9307"
+     ],
+     "minigrafico": {
+      "tipo": "NINGUNO"
+     }
+    }
+   ],
+   "menos_de_tres_motivo": "EJEMPLO. Se analizaron 9 pares; solo uno superó todas las puertas. Los demás tenían señales débiles o una objeción moderada sin resolver."
+  },
+  "MP": {
+   "estado_semaforo": "AMBAR",
+   "regimen_clase": "EJEMPLO. Metales preciosos fuertes; energía en contango con inventarios altos.",
+   "candidatas_analizadas": 11,
+   "embudo": {
+    "gc0_delta_material": true,
+    "cribadas": 11,
+    "pasan_gc1": 5,
+    "pasan_gc2": 3,
+    "finalistas_gc3": 3,
+    "elegibles": 1
+   },
+   "opciones": [
+    {
+     "opp_id": "OPP-2026-9107",
+     "rango": 1,
+     "tipo_opcion": "SEGMENTO",
+     "tipo_activo": "MP",
+     "subtipo": "Metales preciosos",
+     "nombre": "Oro (metales preciosos)",
+     "nombre_llano": "Oro",
+     "por_que_llano": "Los bancos centrales siguen comprando oro y eso sostiene su precio.",
+     "que_puede_salir_mal_llano": "Tras subir tanto, una corrección del 10 % sería normal.",
+     "tesis": "EJEMPLO. Demanda estructural de bancos centrales y tipos reales a la baja sostienen el precio a medio plazo.",
+     "mecanismo": "Diversificación de reservas + coste de oportunidad decreciente.",
+     "tnd_ids": [
+      "TND-2026-9015"
+     ],
+     "cluster_id": "CL-1",
+     "regiones": [
+      "GLB"
+     ],
+     "puntuaciones": {
+      "T": 65,
+      "E": 70,
+      "M": 80,
+      "A": 55,
+      "RK": 62,
+      "desglose_ref": "HT03-2026-9107"
+     },
+     "horizontes": {
+      "H3": {
+       "vista": "lateral",
+       "banda": "incierto",
+       "prob": null,
+       "certificado_r13": false,
+       "etiqueta": "sin ventaja demostrada todavía",
+       "prg_id": "PRG-2026-9212",
+       "fecha_resolucion": "2027-05-07",
+       "criterio_resolucion": "Precio dentro de ±5 % del nivel de referencia"
+      },
+      "H4": {
+       "vista": "alcista",
+       "banda": "más probable que no",
+       "prob": null,
+       "certificado_r13": false,
+       "etiqueta": "sin ventaja demostrada todavía",
+       "prg_id": "PRG-2026-9213",
+       "fecha_resolucion": "2028-11-06",
+       "criterio_resolucion": "Precio en euros superior al de referencia"
+      }
+     },
+     "horizonte_principal": "H3",
+     "valoracion": "EJEMPLO. Precio por encima de la zona de interés calculada.",
+     "catalizadores": [
+      {
+       "evento": "Datos trimestrales de demanda de bancos centrales",
+       "fecha": "2027-01"
+      }
+     ],
+     "riesgos": [
+      "Repunte de tipos reales",
+      "Venta de bancos centrales"
+     ],
+     "riesgo_1a5": 3,
+     "invalidacion": [
+      "Tipo real a 10 años de EE. UU. por encima del 2,5 %"
+     ],
+     "ambito": {
+      "incluye": "Oro como metal precioso, medido por su precio al contado en dólares",
+      "excluye": "Empresas mineras de oro (serían RV) y otros metales preciosos",
+      "region": "Global"
+     },
+     "indicador_seguimiento": {
+      "nombre": "Precio al contado del oro en dólares por onza (EJEMPLO)",
+      "simbolo": "XAUUSD",
+      "fuente": "HT-01 (EJEMPLO)",
+      "tipo": "SERIE"
+     },
+     "invertibilidad": {
+      "universo_suficiente": true,
+      "nota": "EJEMPLO. Mercado global profundo con numerosas formas de exposición accesibles en la UE."
+     },
+     "liquidez": "alta",
+     "relevancia_decisional": "MEDIA",
+     "reversibilidad": "alta",
+     "siguiente_paso_sugerido": "VIGILAR",
+     "que_cambiaria_la_conclusion": [
+      "Retroceso del precio a la zona de interés"
+     ],
+     "objeciones": [
+      {
+       "fuerza": "moderada",
+       "resumen": "Posicionamiento especulativo elevado.",
+       "respuesta": "Se refleja en siguiente paso VIGILAR y banda «incierto» en H3.",
+       "estado": "RESPONDIDA"
+      }
+     ],
+     "lo_que_no_sabemos": [
+      "Volumen real de compras no declaradas de bancos centrales"
+     ],
+     "confianza": "probable",
+     "evidencias": [
+      "CLM-2026-9412",
+      "CLM-2026-9413"
+     ],
+     "calculos": [
+      "CALC-2026-9308"
+     ],
+     "minigrafico": {
+      "tipo": "PRECIO_CON_ZONA",
+      "serie_ref": "HT01:XAU-USD",
+      "zona_interes": {
+       "min": 2300,
+       "max": 2500,
+       "unidad": "USD por onza"
+      },
+      "calc_id": "CALC-2026-9308"
+     }
+    }
+   ],
+   "menos_de_tres_motivo": "EJEMPLO. Se analizaron 11 candidatas; el cobre quedó fuera por una objeción fuerte sin resolver sobre la demanda china y el petróleo por coste de roll elevado."
+  },
+  "IDX": {
+   "estado_semaforo": "AMBAR",
+   "regimen_clase": "EJEMPLO. Valoraciones relativas muy dispersas entre índices; alta concentración en el índice estadounidense.",
+   "candidatas_analizadas": 8,
+   "embudo": {
+    "gc0_delta_material": true,
+    "cribadas": 8,
+    "pasan_gc1": 4,
+    "pasan_gc2": 2,
+    "finalistas_gc3": 2,
+    "elegibles": 1
+   },
+   "opciones": [
+    {
+     "opp_id": "OPP-2026-9103",
+     "rango": 1,
+     "tipo_opcion": "MERCADO",
+     "tipo_activo": "IDX",
+     "subtipo": "Índices de emergentes",
+     "nombre": "Mercado completo de la India (índice amplio)",
+     "nombre_llano": "Bolsa de la India",
+     "por_que_llano": "Su economía crece rápido y sus empresas ganan cada vez más.",
+     "que_puede_salir_mal_llano": "Ya es cara; una mala noticia podría hacerla caer con fuerza.",
+     "tesis": "EJEMPLO. Crecimiento estructural de beneficios superior al de otros emergentes, con flujos domésticos persistentes.",
+     "mecanismo": "Demografía + inversión pública + entrada de ahorro doméstico en bolsa.",
+     "tnd_ids": [
+      "TND-2026-9013"
+     ],
+     "cluster_id": "CL-3",
+     "regiones": [
+      "ASE"
+     ],
+     "puntuaciones": {
+      "T": 80,
+      "E": 65,
+      "M": 55,
+      "A": 60,
+      "RK": 66,
+      "desglose_ref": "HT03-2026-9103"
+     },
+     "horizontes": {
+      "H4": {
+       "vista": "alcista",
+       "banda": "más probable que no",
+       "prob": null,
+       "certificado_r13": false,
+       "etiqueta": "sin ventaja demostrada todavía",
+       "prg_id": "PRG-2026-9205",
+       "fecha_resolucion": "2029-11-06",
+       "criterio_resolucion": "Rentabilidad total en euros positiva y superior al índice emergente amplio"
+      }
+     },
+     "horizonte_principal": "H4",
+     "valoracion": "EJEMPLO. PER por encima de su media de 10 años: el precio ya descuenta parte del crecimiento.",
+     "catalizadores": [
+      {
+       "evento": "Presupuestos generales de la India",
+       "fecha": "2027-02"
+      }
+     ],
+     "riesgos": [
+      "Valoración exigente",
+      "Riesgo de divisa (rupia)",
+      "Concentración de flujos minoristas"
+     ],
+     "riesgo_1a5": 4,
+     "invalidacion": [
+      "Crecimiento de beneficios por acción inferior al 8 % anual durante dos trimestres"
+     ],
+     "ambito": {
+      "incluye": "Renta variable india representada por su índice amplio de referencia, como asignación de mercado completo",
+      "excluye": "Sectores o temáticas concretas de la India (serían RV) y otros emergentes asiáticos",
+      "region": "India"
+     },
+     "indicador_seguimiento": {
+      "nombre": "Índice amplio de renta variable india en euros (EJEMPLO)",
+      "simbolo": "IDX-INDIA-EUR",
+      "fuente": "HT-01 (EJEMPLO)",
+      "tipo": "INDICE"
+     },
+     "invertibilidad": {
+      "universo_suficiente": true,
+      "nota": "EJEMPLO. Índice con cientos de componentes líquidos y amplia oferta de exposición indexada en la UE."
+     },
+     "liquidez": "media",
+     "relevancia_decisional": "ALTA",
+     "reversibilidad": "media",
+     "siguiente_paso_sugerido": "PROFUNDIZAR_EN_A",
+     "que_cambiaria_la_conclusion": [
+      "Corrección del PER hasta su media sin deterioro de beneficios (mejoraría el atractivo)"
+     ],
+     "objeciones": [
+      {
+       "fuerza": "moderada",
+       "resumen": "La valoración elevada limita la asimetría.",
+       "respuesta": "Se refleja en A = 60 y riesgo 4; se sugiere profundizar antes de enviar.",
+       "estado": "RESPONDIDA"
+      }
+     ],
+     "lo_que_no_sabemos": [
+      "Sensibilidad de los flujos minoristas a una caída prolongada"
+     ],
+     "confianza": "especulativo",
+     "evidencias": [
+      "CLM-2026-9406",
+      "CLM-2026-9407"
+     ],
+     "calculos": [
+      "CALC-2026-9304"
+     ],
+     "minigrafico": {
+      "tipo": "VALORACION_VS_MEDIA",
+      "serie_ref": "HT01:IDX-IN-PER",
+      "zona_interes": {
+       "min": 18,
+       "max": 22,
+       "unidad": "PER adelantado"
+      },
+      "calc_id": "CALC-2026-9304"
+     }
+    }
+   ],
+   "menos_de_tres_motivo": "EJEMPLO. Se analizaron 8 mercados completos; solo la India superó todas las puertas. Europa y Japón quedaron por debajo de A ≥ 55; entrarían con una mejora de las revisiones de beneficios."
+  },
+  "FON": {
+   "estado_semaforo": "AMBAR",
+   "regimen_clase": "EJEMPLO. Descuentos de fondos cerrados en máximos de 15 años; flujos fuertes hacia ETF activos.",
+   "candidatas_analizadas": 6,
+   "embudo": {
+    "gc0_delta_material": true,
+    "cribadas": 6,
+    "pasan_gc1": 3,
+    "pasan_gc2": 2,
+    "finalistas_gc3": 2,
+    "elegibles": 1
+   },
+   "opciones": [
+    {
+     "opp_id": "OPP-2026-9110",
+     "rango": 1,
+     "tipo_opcion": "SEGMENTO",
+     "tipo_activo": "FON",
+     "subtipo": "Fondos cerrados cotizados",
+     "nombre": "Descuento de los fondos cerrados británicos de renta variable",
+     "nombre_llano": "Fondos británicos que cotizan por debajo de lo que valen",
+     "por_que_llano": "Se compran más baratos que lo que tienen dentro. Ese hueco suele cerrarse.",
+     "que_puede_salir_mal_llano": "El descuento puede seguir abierto mucho tiempo.",
+     "tesis": "EJEMPLO. El descuento medio sobre el valor liquidativo está en máximos de 15 años y las gestoras han acelerado recompras y fusiones.",
+     "mecanismo": "Recompras de participaciones + presión de accionistas activistas + reversión del descuento hacia su media.",
+     "tnd_ids": [
+      "TND-2026-9018"
+     ],
+     "cluster_id": "CL-4",
+     "regiones": [
+      "EUR"
+     ],
+     "puntuaciones": {
+      "T": 60,
+      "E": 70,
+      "M": 60,
+      "A": 65,
+      "RK": 66,
+      "desglose_ref": "HT03-2026-9110"
+     },
+     "horizontes": {
+      "H3": {
+       "vista": "alcista",
+       "banda": "más probable que no",
+       "prob": null,
+       "certificado_r13": false,
+       "etiqueta": "sin ventaja demostrada todavía",
+       "prg_id": "PRG-2026-9214",
+       "fecha_resolucion": "2027-05-07",
+       "criterio_resolucion": "El descuento medio del segmento se estrecha al menos 2 puntos porcentuales"
+      },
+      "H4": {
+       "vista": "alcista",
+       "banda": "más probable que no",
+       "prob": null,
+       "certificado_r13": false,
+       "etiqueta": "sin ventaja demostrada todavía",
+       "prg_id": "PRG-2026-9215",
+       "fecha_resolucion": "2027-11-08",
+       "criterio_resolucion": "El descuento medio del segmento vuelve a su media de 10 años"
+      }
+     },
+     "horizonte_principal": "H3",
+     "valoracion": "EJEMPLO. Descuento medio del 14 % frente a una media de 10 años del 7 % (CALC-2026-9311).",
+     "catalizadores": [
+      {
+       "evento": "Temporada de juntas y votaciones de continuidad",
+       "fecha": "2027-T2"
+      }
+     ],
+     "riesgos": [
+      "Descuento persistente",
+      "Caída de la bolsa británica",
+      "Apalancamiento de algunos fondos"
+     ],
+     "riesgo_1a5": 3,
+     "invalidacion": [
+      "Descuento medio del segmento por encima del 18 %"
+     ],
+     "ambito": {
+      "incluye": "Fondos cerrados cotizados en Londres que invierten en renta variable, con descuento superior al 10 %",
+      "excluye": "Fondos cerrados de activos privados o inmobiliarios y fondos abiertos",
+      "region": "Reino Unido"
+     },
+     "indicador_seguimiento": {
+      "nombre": "Descuento medio ponderado del segmento sobre el valor liquidativo (EJEMPLO)",
+      "simbolo": "DESC-FC-UK",
+      "fuente": "HT-01 (EJEMPLO)",
+      "tipo": "SERIE"
+     },
+     "invertibilidad": {
+      "universo_suficiente": true,
+      "nota": "EJEMPLO. Más de 100 fondos cerrados cotizados en el segmento; negociables en bolsa por minoristas europeos."
+     },
+     "liquidez": "media",
+     "relevancia_decisional": "MEDIA",
+     "reversibilidad": "media",
+     "siguiente_paso_sugerido": "ENVIAR_A_BLOQUE_B",
+     "que_cambiaria_la_conclusion": [
+      "Fin de las recompras por cambios fiscales en el Reino Unido"
+     ],
+     "objeciones": [
+      {
+       "fuerza": "moderada",
+       "resumen": "Los descuentos pueden ser estructurales por costes.",
+       "respuesta": "El descuento supera en 7 puntos su media histórica con costes estables (CALC-2026-9311).",
+       "estado": "RESPONDIDA"
+      }
+     ],
+     "lo_que_no_sabemos": [
+      "Ritmo de las fusiones anunciadas en el sector"
+     ],
+     "confianza": "probable",
+     "evidencias": [
+      "CLM-2026-9418"
+     ],
+     "calculos": [
+      "CALC-2026-9311"
+     ]
+    }
+   ],
+   "menos_de_tres_motivo": "EJEMPLO. Se analizaron 6 oportunidades propias de vehículos; los ETF de bonos con vencimiento no superaron A ≥ 55 frente a la RF directa."
+  },
+  "DER": {
+   "estado_semaforo": "AMBAR",
+   "regimen_clase": "EJEMPLO. Volatilidad implícita baja frente a la realizada; estructura de plazos plana.",
+   "candidatas_analizadas": 5,
+   "embudo": {
+    "gc0_delta_material": true,
+    "cribadas": 5,
+    "pasan_gc1": 2,
+    "pasan_gc2": 1,
+    "finalistas_gc3": 1,
+    "elegibles": 1
+   },
+   "opciones": [
+    {
+     "opp_id": "OPP-2026-9111",
+     "rango": 1,
+     "tipo_opcion": "ESTRATEGIA",
+     "tipo_activo": "DER",
+     "subtipo": "Opciones sobre índices",
+     "nombre": "Protección barata con opciones de venta sobre la bolsa europea",
+     "nombre_llano": "Seguros baratos contra caídas de la bolsa europea",
+     "por_que_llano": "Protegerse de una caída cuesta hoy menos de lo normal.",
+     "que_puede_salir_mal_llano": "Si la bolsa no cae, el dinero pagado por la protección se pierde.",
+     "tesis": "EJEMPLO. La volatilidad implícita a 3 meses de la renta variable europea está en el percentil 10 y el sesgo es plano: la protección cotiza barata frente a la volatilidad realizada.",
+     "mecanismo": "Prima de varianza negativa + sesgo plano + calendario de riesgos políticos.",
+     "tnd_ids": [],
+     "cluster_id": "CL-5",
+     "regiones": [
+      "EUR"
+     ],
+     "puntuaciones": {
+      "T": "NA",
+      "E": 70,
+      "M": 50,
+      "A": 70,
+      "RK": 70,
+      "desglose_ref": "HT03-2026-9111"
+     },
+     "horizontes": {
+      "H2": {
+       "vista": "alcista",
+       "banda": "incierto",
+       "prob": null,
+       "certificado_r13": false,
+       "etiqueta": "sin ventaja demostrada todavía",
+       "prg_id": "PRG-2026-9216",
+       "fecha_resolucion": "2026-12-21",
+       "criterio_resolucion": "La volatilidad implícita a 3 meses sube al menos 3 puntos en el periodo"
+      },
+      "H3": {
+       "vista": "alcista",
+       "banda": "incierto",
+       "prob": null,
+       "certificado_r13": false,
+       "etiqueta": "sin ventaja demostrada todavía",
+       "prg_id": "PRG-2026-9217",
+       "fecha_resolucion": "2027-05-07",
+       "criterio_resolucion": "La volatilidad implícita a 3 meses supera su mediana de 5 años"
+      }
+     },
+     "horizonte_principal": "H2",
+     "valoracion": "EJEMPLO. Volatilidad implícita a 3 meses 4 puntos por debajo de la realizada a 1 mes (CALC-2026-9312).",
+     "catalizadores": [
+      {
+       "evento": "Elecciones en un gran país de la zona del euro",
+       "fecha": "2027-04"
+      }
+     ],
+     "riesgos": [
+      "Pérdida de toda la prima pagada",
+      "Apalancamiento y saltos de precio",
+      "Liquidez de vencimientos largos"
+     ],
+     "riesgo_1a5": 4,
+     "invalidacion": [
+      "Volatilidad implícita a 3 meses por encima de su percentil 60"
+     ],
+     "ambito": {
+      "incluye": "Estrategias de compra de protección con opciones sobre índices de renta variable europea a 1–3 meses",
+      "excluye": "Venta de volatilidad, opciones sobre valores individuales y la volatilidad como factor macro (sería TCV)",
+      "region": "Europa"
+     },
+     "indicador_seguimiento": {
+      "nombre": "Índice de volatilidad implícita de la renta variable europea (EJEMPLO)",
+      "simbolo": "VOL-EUR-3M",
+      "fuente": "HT-01 (EJEMPLO)",
+      "tipo": "INDICE"
+     },
+     "invertibilidad": {
+      "universo_suficiente": true,
+      "nota": "EJEMPLO. Mercado de opciones sobre índices europeos muy líquido en mercados regulados accesibles a minoristas cualificados."
+     },
+     "liquidez": "alta",
+     "relevancia_decisional": "ALTA",
+     "reversibilidad": "media",
+     "siguiente_paso_sugerido": "ENVIAR_A_BLOQUE_B",
+     "que_cambiaria_la_conclusion": [
+      "Repunte de la volatilidad implícita sin caída de la bolsa (encarece la protección)"
+     ],
+     "objeciones": [
+      {
+       "fuerza": "moderada",
+       "resumen": "La volatilidad barata puede seguir barata meses.",
+       "respuesta": "Se acota el horizonte a 1–3 meses con catalizador fechado; el coste máximo es la prima.",
+       "estado": "RESPONDIDA"
+      }
+     ],
+     "lo_que_no_sabemos": [
+      "Si el calendario político moverá de verdad la volatilidad"
+     ],
+     "confianza": "especulativo",
+     "evidencias": [
+      "CLM-2026-9419"
+     ],
+     "calculos": [
+      "CALC-2026-9312"
+     ]
+    }
+   ],
+   "menos_de_tres_motivo": "EJEMPLO. Se analizaron 5 estrategias; la venta cubierta de opciones no supera A ≥ 55 con primas tan bajas."
+  },
+  "INM": {
+   "estado_semaforo": "GRIS",
+   "regimen_clase": "EJEMPLO. Descuentos sobre NAV estrechándose; cap rates aún por debajo del bono más prima.",
+   "candidatas_analizadas": 7,
+   "embudo": {
+    "gc0_delta_material": false,
+    "cribadas": 7,
+    "pasan_gc1": 2,
+    "pasan_gc2": 1,
+    "finalistas_gc3": 1,
+    "elegibles": 0
+   },
+   "opciones": [],
+   "menos_de_tres_motivo": "EJEMPLO. Se analizaron 7 candidatas; ninguna alcanzó A ≥ 55 porque los precios ya descuentan la bajada de tipos. Serían elegibles con un descuento sobre NAV superior al 15 %."
+  },
+  "CRI": {
+   "estado_semaforo": "AMBAR",
+   "regimen_clase": "EJEMPLO. Fase de acumulación con flujos institucionales; volatilidad realizada en descenso.",
+   "candidatas_analizadas": 8,
+   "embudo": {
+    "gc0_delta_material": true,
+    "cribadas": 8,
+    "pasan_gc1": 4,
+    "pasan_gc2": 2,
+    "finalistas_gc3": 2,
+    "elegibles": 1
+   },
+   "opciones": [
+    {
+     "opp_id": "OPP-2026-9108",
+     "rango": 1,
+     "tipo_opcion": "SEGMENTO",
+     "tipo_activo": "CRI",
+     "subtipo": "Criptoactivos de reserva de valor",
+     "nombre": "Criptoactivos de gran capitalización con demanda institucional",
+     "nombre_llano": "Las monedas digitales más grandes",
+     "por_que_llano": "Entra dinero nuevo a través de fondos cotizados que lo compran.",
+     "que_puede_salir_mal_llano": "Puede caer a la mitad en pocas semanas; ya ha ocurrido varias veces.",
+     "tesis": "EJEMPLO. Flujos netos positivos de ETP al contado y oferta en exchanges decreciente.",
+     "mecanismo": "Demanda institucional vía ETP + emisión decreciente.",
+     "tnd_ids": [
+      "TND-2026-9016"
+     ],
+     "cluster_id": "CL-3",
+     "regiones": [
+      "GLB"
+     ],
+     "puntuaciones": {
+      "T": 70,
+      "E": 60,
+      "M": 60,
+      "A": 65,
+      "RK": 64,
+      "desglose_ref": "HT03-2026-9108"
+     },
+     "horizontes": {
+      "H2": {
+       "vista": "alcista",
+       "banda": "incierto",
+       "prob": null,
+       "certificado_r13": false,
+       "etiqueta": "sin ventaja demostrada todavía",
+       "prg_id": "PRG-2026-9214",
+       "fecha_resolucion": "2026-12-18",
+       "criterio_resolucion": "Precio superior al de referencia"
+      },
+      "H3": {
+       "vista": "alcista",
+       "banda": "incierto",
+       "prob": null,
+       "certificado_r13": false,
+       "etiqueta": "sin ventaja demostrada todavía",
+       "prg_id": "PRG-2026-9215",
+       "fecha_resolucion": "2027-05-07",
+       "criterio_resolucion": "Precio superior al de referencia"
+      }
+     },
+     "horizonte_principal": "H2",
+     "valoracion": "EJEMPLO. MVRV en zona intermedia según CALC-2026-9309.",
+     "catalizadores": [
+      {
+       "evento": "Decisión regulatoria sobre ETP en la UE",
+       "fecha": "2027-T1"
+      }
+     ],
+     "riesgos": [
+      "Volatilidad extrema",
+      "Riesgo regulatorio",
+      "Riesgo de custodia"
+     ],
+     "riesgo_1a5": 5,
+     "invalidacion": [
+      "Salidas netas de ETP durante cuatro semanas consecutivas"
+     ],
+     "ambito": {
+      "incluye": "Criptoactivos de gran capitalización con productos cotizados al contado y flujos institucionales",
+      "excluye": "Altcoins de baja capitalización, stablecoins y tokens de proyectos concretos",
+      "region": "Global"
+     },
+     "indicador_seguimiento": {
+      "nombre": "Índice de criptoactivos de gran capitalización (EJEMPLO)",
+      "simbolo": "IDX-CRI-GC",
+      "fuente": "HT-01 (EJEMPLO)",
+      "tipo": "INDICE"
+     },
+     "invertibilidad": {
+      "universo_suficiente": true,
+      "nota": "EJEMPLO. Mercado continuo con exposición cotizada regulada en la UE (MiCA)."
+     },
+     "ejemplos_ilustrativos": [
+      "bitcoin",
+      "ether (solo ilustración del ámbito)"
+     ],
+     "liquidez": "alta",
+     "relevancia_decisional": "ALTA",
+     "reversibilidad": "alta",
+     "siguiente_paso_sugerido": "PROFUNDIZAR_EN_A",
+     "que_cambiaria_la_conclusion": [
+      "Cambio regulatorio adverso en EE. UU. o la UE"
+     ],
+     "objeciones": [
+      {
+       "fuerza": "fuerte",
+       "resumen": "Los flujos de ETP pueden revertirse con rapidez.",
+       "respuesta": "Respondida con datos de flujos de 26 semanas (CLM-2026-9414): persistencia superior a la media; se mantiene relevancia ALTA.",
+       "estado": "RESPONDIDA"
+      }
+     ],
+     "lo_que_no_sabemos": [
+      "Proporción de flujos de cobertura frente a flujos direccionales"
+     ],
+     "confianza": "especulativo",
+     "evidencias": [
+      "CLM-2026-9414",
+      "CLM-2026-9415"
+     ],
+     "calculos": [
+      "CALC-2026-9309"
+     ],
+     "minigrafico": {
+      "tipo": "NINGUNO"
+     }
+    }
+   ],
+   "menos_de_tres_motivo": "EJEMPLO. Se analizaron 8 segmentos; las plataformas de contratos inteligentes no superaron PS1 (corroboración insuficiente)."
+  },
+  "ALT": {
+   "estado_semaforo": "GRIS",
+   "regimen_clase": "EJEMPLO. Mercado secundario de capital privado con descuentos moderados; datos con retraso.",
+   "candidatas_analizadas": 5,
+   "embudo": {
+    "gc0_delta_material": false,
+    "cribadas": 5,
+    "pasan_gc1": 2,
+    "pasan_gc2": 0,
+    "finalistas_gc3": 0,
+    "elegibles": 0
+   },
+   "opciones": [],
+   "menos_de_tres_motivo": "EJEMPLO. Se analizaron 5 candidatas; ninguna superó GC2 por datos de valoración con más de 90 días (PS2). Se revisarán con los datos del próximo trimestre."
+  },
+  "MON": {
+   "estado_semaforo": "AMBAR",
+   "regimen_clase": "EJEMPLO. Curva monetaria del euro con pendiente negativa; recortes del BCE descontados.",
+   "candidatas_analizadas": 4,
+   "embudo": {
+    "gc0_delta_material": true,
+    "cribadas": 4,
+    "pasan_gc1": 2,
+    "pasan_gc2": 1,
+    "finalistas_gc3": 1,
+    "elegibles": 1
+   },
+   "opciones": [
+    {
+     "opp_id": "OPP-2026-9112",
+     "rango": 1,
+     "tipo_opcion": "SEGMENTO",
+     "tipo_activo": "MON",
+     "subtipo": "Letras a corto plazo",
+     "nombre": "Fijar ahora la rentabilidad de letras de la zona del euro a 6–12 meses",
+     "nombre_llano": "Dinero a corto plazo: fijar el interés ahora",
+     "por_que_llano": "Los tipos a corto pueden bajar. Fijar ahora un año asegura el interés actual.",
+     "que_puede_salir_mal_llano": "Si los tipos suben, habría sido mejor esperar.",
+     "tesis": "EJEMPLO. Las letras a 12 meses rinden por encima de los depósitos a la vista y el mercado descuenta recortes del BCE: fijar plazo ahora mejora la rentabilidad esperada de la liquidez.",
+     "mecanismo": "Curva monetaria con pendiente negativa + recortes descontados en €STR.",
+     "tnd_ids": [],
+     "cluster_id": "CL-1",
+     "regiones": [
+      "EUR"
+     ],
+     "puntuaciones": {
+      "T": "NA",
+      "E": 75,
+      "M": 70,
+      "A": 70,
+      "RK": 72,
+      "desglose_ref": "HT03-2026-9112"
+     },
+     "horizontes": {
+      "H2": {
+       "vista": "alcista",
+       "banda": "más probable que no",
+       "prob": null,
+       "certificado_r13": false,
+       "etiqueta": "sin ventaja demostrada todavía",
+       "prg_id": "PRG-2026-9218",
+       "fecha_resolucion": "2026-12-21",
+       "criterio_resolucion": "La rentabilidad de las letras a 12 meses baja al menos 10 pb"
+      },
+      "H3": {
+       "vista": "relativa_favorable",
+       "banda": "más probable que no",
+       "prob": null,
+       "certificado_r13": false,
+       "etiqueta": "sin ventaja demostrada todavía",
+       "prg_id": "PRG-2026-9219",
+       "fecha_resolucion": "2027-05-07",
+       "criterio_resolucion": "La rentabilidad acumulada de letras a 12 meses supera al €STR compuesto"
+      }
+     },
+     "horizonte_principal": "H3",
+     "valoracion": "EJEMPLO. Diferencial letras a 12 meses frente a depósito a la vista de 60 pb (CALC-2026-9313).",
+     "catalizadores": [
+      {
+       "evento": "Reunión de política monetaria del BCE",
+       "fecha": "2026-12-17"
+      }
+     ],
+     "riesgos": [
+      "Subida inesperada de tipos",
+      "Riesgo de reinversión al vencimiento"
+     ],
+     "riesgo_1a5": 1,
+     "invalidacion": [
+      "El mercado deja de descontar recortes del BCE en 12 meses"
+     ],
+     "ambito": {
+      "incluye": "Letras del Tesoro de países de la zona del euro con grado de inversión a 6–12 meses",
+      "excluye": "Bonos a más de 12 meses (serían RF) y depósitos no negociables",
+      "region": "Zona del euro"
+     },
+     "indicador_seguimiento": {
+      "nombre": "Rentabilidad de las letras de la zona del euro a 12 meses (EJEMPLO)",
+      "simbolo": "LETRAS-EUR-12M",
+      "fuente": "HT-01 (EJEMPLO)",
+      "tipo": "SERIE"
+     },
+     "invertibilidad": {
+      "universo_suficiente": true,
+      "nota": "EJEMPLO. Subastas periódicas de varios Tesoros y mercado secundario accesible a minoristas."
+     },
+     "liquidez": "alta",
+     "relevancia_decisional": "MEDIA",
+     "reversibilidad": "alta",
+     "siguiente_paso_sugerido": "ENVIAR_A_BLOQUE_B",
+     "que_cambiaria_la_conclusion": [
+      "Repunte de la inflación subyacente que aleje los recortes"
+     ],
+     "objeciones": [
+      {
+       "fuerza": "debil",
+       "resumen": "La ventaja frente a la cuenta remunerada es pequeña.",
+       "respuesta": "60 pb sobre la liquidez a la vista con riesgo soberano de alta calidad.",
+       "estado": "RESPONDIDA"
+      }
+     ],
+     "lo_que_no_sabemos": [
+      "Ritmo exacto de los recortes del BCE en 2027"
+     ],
+     "confianza": "probable",
+     "evidencias": [
+      "CLM-2026-9420"
+     ],
+     "calculos": [
+      "CALC-2026-9313"
+     ]
+    }
+   ],
+   "menos_de_tres_motivo": "EJEMPLO. Se analizaron 4 colocaciones de liquidez; las letras en dólares quedan fuera por el coste de la cobertura de divisa."
+  },
+  "TCV": {
+   "estado_semaforo": "VERDE",
+   "regimen_clase": "EJEMPLO. Curvas con pendiente positiva moderada; inflación implícita baja; volatilidad de tipos en descenso.",
+   "candidatas_analizadas": 7,
+   "embudo": {
+    "gc0_delta_material": true,
+    "cribadas": 7,
+    "pasan_gc1": 4,
+    "pasan_gc2": 3,
+    "finalistas_gc3": 3,
+    "elegibles": 2
+   },
+   "opciones": [
+    {
+     "opp_id": "OPP-2026-9113",
+     "rango": 1,
+     "tipo_opcion": "ESTRATEGIA",
+     "tipo_activo": "TCV",
+     "subtipo": "Curvas y diferenciales entre vencimientos",
+     "nombre": "Empinamiento de la curva del euro entre 2 y 10 años",
+     "nombre_llano": "Más diferencia entre intereses a corto y a largo en el euro",
+     "por_que_llano": "Si el BCE baja los tipos a corto, la diferencia con el largo plazo suele crecer.",
+     "que_puede_salir_mal_llano": "Si el BCE se detiene, la diferencia podría no crecer.",
+     "tesis": "EJEMPLO. La pendiente 2–10 años del euro está por debajo de su valor razonable dada la senda de recortes descontada.",
+     "mecanismo": "Recortes en el tramo corto + prima por plazo creciente por la oferta de deuda.",
+     "tnd_ids": [
+      "TND-2026-9014"
+     ],
+     "cluster_id": "CL-1",
+     "regiones": [
+      "EUR"
+     ],
+     "puntuaciones": {
+      "T": 60,
+      "E": 70,
+      "M": 60,
+      "A": 65,
+      "RK": 66,
+      "desglose_ref": "HT03-2026-9113"
+     },
+     "horizontes": {
+      "H2": {
+       "vista": "alcista",
+       "banda": "incierto",
+       "prob": null,
+       "certificado_r13": false,
+       "etiqueta": "sin ventaja demostrada todavía",
+       "prg_id": "PRG-2026-9220",
+       "fecha_resolucion": "2026-12-21",
+       "criterio_resolucion": "La pendiente 2–10 años del euro sube al menos 5 pb"
+      },
+      "H3": {
+       "vista": "alcista",
+       "banda": "más probable que no",
+       "prob": null,
+       "certificado_r13": false,
+       "etiqueta": "sin ventaja demostrada todavía",
+       "prg_id": "PRG-2026-9221",
+       "fecha_resolucion": "2027-05-07",
+       "criterio_resolucion": "La pendiente 2–10 años del euro sube al menos 20 pb"
+      }
+     },
+     "horizonte_principal": "H3",
+     "valoracion": "EJEMPLO. Pendiente 2–10 años 25 pb por debajo de su valor razonable (CALC-2026-9314).",
+     "catalizadores": [
+      {
+       "evento": "Reunión de política monetaria del BCE",
+       "fecha": "2026-12-17"
+      }
+     ],
+     "riesgos": [
+      "Pausa en los recortes del BCE",
+      "Aplanamiento por recesión"
+     ],
+     "riesgo_1a5": 3,
+     "invalidacion": [
+      "Pendiente 2–10 años por debajo de 20 pb durante 4 semanas"
+     ],
+     "ambito": {
+      "incluye": "Pendiente de la curva soberana del euro entre 2 y 10 años como factor",
+      "excluye": "Dirección del nivel de tipos (sería RF) y curvas de otras divisas",
+      "region": "Zona del euro"
+     },
+     "indicador_seguimiento": {
+      "nombre": "Pendiente 2–10 años de la curva soberana del euro (EJEMPLO)",
+      "simbolo": "PEND-EUR-2-10",
+      "fuente": "HT-01 (EJEMPLO)",
+      "tipo": "SERIE"
+     },
+     "invertibilidad": {
+      "universo_suficiente": true,
+      "nota": "EJEMPLO. Exposición disponible mediante futuros sobre bonos y productos de curva negociados en mercados regulados."
+     },
+     "liquidez": "alta",
+     "relevancia_decisional": "MEDIA",
+     "reversibilidad": "alta",
+     "siguiente_paso_sugerido": "VIGILAR",
+     "que_cambiaria_la_conclusion": [
+      "Cambio de discurso del BCE hacia pausa prolongada"
+     ],
+     "objeciones": [
+      {
+       "fuerza": "moderada",
+       "resumen": "El mercado ya descuenta la mayor parte de los recortes.",
+       "respuesta": "La pendiente sigue 25 pb por debajo de su valor razonable incluso con esa senda (CALC-2026-9314).",
+       "estado": "RESPONDIDA"
+      }
+     ],
+     "lo_que_no_sabemos": [
+      "Efecto de la oferta de deuda alemana de 2027 sobre la prima por plazo"
+     ],
+     "confianza": "probable",
+     "evidencias": [
+      "CLM-2026-9421"
+     ],
+     "calculos": [
+      "CALC-2026-9314"
+     ]
+    },
+    {
+     "opp_id": "OPP-2026-9105",
+     "rango": 2,
+     "tipo_opcion": "FACTOR",
+     "tipo_activo": "TCV",
+     "subtipo": "Inflación implícita",
+     "nombre": "Inflación implícita de EE. UU. a 10 años (breakevens) baja frente a la esperada",
+     "nombre_llano": "Protección contra la inflación en EE. UU. a precio bajo",
+     "por_que_llano": "Suben con los precios; hoy cuestan poco para la protección que dan.",
+     "que_puede_salir_mal_llano": "Si la inflación baja más de lo previsto, rendirían menos que un bono normal. Además, el dólar puede moverse.",
+     "tesis": "EJEMPLO. La inflación implícita a 10 años (breakeven) está por debajo de la inflación esperada por encuestas: el factor está infravalorado.",
+     "mecanismo": "Breakeven bajo + rentabilidad real positiva.",
+     "tnd_ids": [
+      "TND-2026-9014"
+     ],
+     "cluster_id": "CL-1",
+     "regiones": [
+      "NAM"
+     ],
+     "puntuaciones": {
+      "T": 55,
+      "E": 70,
+      "M": 70,
+      "A": 65,
+      "RK": 65,
+      "desglose_ref": "HT03-2026-9105"
+     },
+     "horizontes": {
+      "H3": {
+       "vista": "relativa_favorable",
+       "banda": "incierto",
+       "prob": null,
+       "certificado_r13": false,
+       "etiqueta": "sin ventaja demostrada todavía",
+       "prg_id": "PRG-2026-9208",
+       "fecha_resolucion": "2027-05-07",
+       "criterio_resolucion": "La inflación implícita a 10 años sube al menos 15 pb en el periodo"
+      },
+      "H4": {
+       "vista": "relativa_favorable",
+       "banda": "más probable que no",
+       "prob": null,
+       "certificado_r13": false,
+       "etiqueta": "sin ventaja demostrada todavía",
+       "prg_id": "PRG-2026-9209",
+       "fecha_resolucion": "2028-11-06",
+       "criterio_resolucion": "Rentabilidad relativa positiva frente al bono nominal equivalente"
+      }
+     },
+     "horizonte_principal": "H3",
+     "valoracion": "EJEMPLO. Breakeven a 10 años en el percentil 25 de su historia de 10 años (CALC-2026-9306).",
+     "catalizadores": [
+      {
+       "evento": "Publicación del IPC de EE. UU.",
+       "fecha": "2026-12-10"
+      }
+     ],
+     "riesgos": [
+      "Desinflación más rápida",
+      "Riesgo de divisa EUR/USD"
+     ],
+     "riesgo_1a5": 2,
+     "invalidacion": [
+      "Breakeven a 10 años por encima del 2,6 % (objetivo alcanzado)"
+     ],
+     "ambito": {
+      "incluye": "Inflación implícita (breakeven) de EE. UU. a 10 años como factor",
+      "excluye": "Compra de bonos nominales o ligados a la inflación para cobrar su rentabilidad (sería RF)",
+      "region": "EE. UU."
+     },
+     "indicador_seguimiento": {
+      "nombre": "Inflación implícita de EE. UU. a 10 años (EJEMPLO)",
+      "simbolo": "BEI-US-10A",
+      "fuente": "HT-01 (EJEMPLO)",
+      "tipo": "SERIE"
+     },
+     "invertibilidad": {
+      "universo_suficiente": true,
+      "nota": "EJEMPLO. Mercado de bonos ligados a la inflación y de derivados de inflación profundo; exposición accesible en la UE."
+     },
+     "liquidez": "alta",
+     "relevancia_decisional": "MEDIA",
+     "reversibilidad": "alta",
+     "siguiente_paso_sugerido": "VIGILAR",
+     "que_cambiaria_la_conclusion": [
+      "Cambio en la metodología del IPC"
+     ],
+     "objeciones": [],
+     "lo_que_no_sabemos": [
+      "Coste real de la cobertura de divisa a 12 meses"
+     ],
+     "confianza": "probable",
+     "evidencias": [
+      "CLM-2026-9410"
+     ],
+     "calculos": [
+      "CALC-2026-9306"
+     ],
+     "minigrafico": {
+      "tipo": "NINGUNO"
+     }
+    }
+   ],
+   "menos_de_tres_motivo": "EJEMPLO. Se analizaron 7 exposiciones a factores; los diferenciales de crédito agregados están en mínimos y no ofrecen asimetría."
+  }
+ },
+ "seguimiento_vigentes": [
+  {
+   "opp_id": "OPP-2026-9031",
+   "estado": "VIGENTE",
+   "comentario": "EJEMPLO. Se mantiene por continuidad (9.6.4); condiciones de invalidación lejos de activarse.",
+   "decision_broker": "EN_SEGUIMIENTO"
+  },
+  {
+   "opp_id": "OPP-2026-9012",
+   "estado": "CERRADA",
+   "motivo_cierre": "INVALIDACION",
+   "comentario": "EJEMPLO. Se activó la condición de invalidación (diferencial por encima del umbral).",
+   "decision_broker": "DESCARTADA"
+  }
+ ],
+ "historial_aciertos": {
+  "ventana": "12 semanas",
+  "global": {
+   "n": 30,
+   "aciertos": 17,
+   "tasa_acierto": 0.57,
+   "referencia": "Comprar y mantener el índice de la clase durante el mismo horizonte",
+   "tasa_esperada_azar": 0.5,
+   "significativo": false
+  },
+  "por_clase": {
+   "RV": {
+    "n": 9,
+    "aciertos": 6,
+    "tasa_acierto": 0.67,
+    "referencia": "Índice mundial de renta variable",
+    "tasa_esperada_azar": 0.5,
+    "significativo": false,
+    "por_horizonte": {
+     "H3": {
+      "n": 9,
+      "aciertos": 6
+     }
+    }
+   },
+   "RF": {
+    "n": 7,
+    "aciertos": 4,
+    "tasa_acierto": 0.57,
+    "referencia": "Índice agregado de deuda soberana euro",
+    "tasa_esperada_azar": 0.5,
+    "significativo": false
+   },
+   "DIV": {
+    "n": 4,
+    "aciertos": 2,
+    "tasa_acierto": 0.5,
+    "referencia": "Paseo aleatorio (sin cambio)",
+    "tasa_esperada_azar": 0.5,
+    "significativo": false
+   },
+   "MP": {
+    "n": 5,
+    "aciertos": 3,
+    "tasa_acierto": 0.6,
+    "referencia": "Índice amplio de materias primas",
+    "tasa_esperada_azar": 0.5,
+    "significativo": false
+   },
+   "CRI": {
+    "n": 5,
+    "aciertos": 2,
+    "tasa_acierto": 0.4,
+    "referencia": "Comprar y mantener bitcoin",
+    "tasa_esperada_azar": 0.5,
+    "significativo": false
+   }
+  },
+  "nota": "EJEMPLO. Muestra insuficiente para certificar ninguna celda tipo de activo × horizonte (umbral del Anexo A: 30 resueltos para recalibrar; 100 para probabilidad numérica)."
+ },
+ "paquete_para_bloque_B": [
+  {
+   "opp_id": "OPP-2026-9101",
+   "tipo_activo": "RV",
+   "subtipo": "Sector",
+   "tipo_opcion": "SECTOR",
+   "nombre": "Bancos de la zona del euro",
+   "ambito": {
+    "incluye": "Bancos comerciales y minoristas cotizados con sede en la zona del euro",
+    "excluye": "Aseguradoras, gestoras de activos, bancos de inversión puros y bancos fuera de la zona del euro",
+    "region": "Zona del euro"
+   },
+   "tesis": "EJEMPLO. Los márgenes de intermediación se mantienen altos con tipos que bajan despacio y la valoración sigue por debajo de su media de 10 años.",
+   "mecanismo": "Margen de intereses estable + recompra de acciones + PER inferior a la media histórica.",
+   "horizontes": [
+    "H3",
+    "H4"
+   ],
+   "horizonte_principal": "H3",
+   "pronosticos": [
+    "PRG-2026-9201",
+    "PRG-2026-9202"
+   ],
+   "catalizadores": [
+    {
+     "evento": "Test de estrés de la EBA",
+     "fecha": "2027-T3"
+    }
+   ],
+   "riesgos": [
+    "Recesión en la zona euro",
+    "Recortes de tipos más rápidos de lo previsto"
+   ],
+   "invalidacion": [
+    "Morosidad por encima del umbral fijado en CALC-2026-9301",
+    "Recorte acumulado de tipos superior a 100 pb en 6 meses"
+   ],
+   "indicador_seguimiento": {
+    "nombre": "Índice sectorial de bancos de la zona del euro (EJEMPLO)",
+    "simbolo": "IDX-BANCOS-EUR",
+    "fuente": "HT-01 (EJEMPLO)",
+    "tipo": "INDICE"
+   },
+   "niveles_referencia": {
+    "nivel_actual": {
+     "valor": 104.2,
+     "unidad": "puntos de índice",
+     "fecha_dato": "2026-11-06",
+     "fuente": "HT-01 (EJEMPLO)"
+    }
+   },
+   "criterios_seleccion_sugeridos": [
+    "Mayor peso de la banca minorista en el margen de intereses",
+    "Ratio de capital CET1 holgado",
+    "Baja exposición a inmobiliario comercial"
+   ],
+   "metricas_clave": [
+    "Margen de intereses",
+    "Coste del riesgo",
+    "Ratio CET1",
+    "Rentabilidad sobre recursos propios tangibles"
+   ],
+   "preguntas_para_B": [
+    "¿Qué bancos del ámbito tienen más sensibilidad positiva a una bajada lenta de tipos?",
+    "¿Cuáles tienen recompras ya aprobadas para 2027?"
+   ],
+   "ejemplos_ilustrativos": [
+    "Grandes bancos minoristas de España, Francia, Italia y Alemania (solo ilustración del ámbito)"
+   ],
+   "evidencias": [
+    "CLM-2026-9401",
+    "CLM-2026-9402",
+    "CLM-2026-9403"
+   ],
+   "calculos": [
+    "CALC-2026-9301",
+    "CALC-2026-9302"
+   ],
+   "siguiente_paso_sugerido": "ENVIAR_A_BLOQUE_B",
+   "relevancia_decisional": "MEDIA"
+  },
+  {
+   "opp_id": "OPP-2026-9102",
+   "tipo_activo": "RV",
+   "subtipo": "Temática",
+   "tipo_opcion": "TEMATICA",
+   "nombre": "Mejora del gobierno corporativo en Japón",
+   "ambito": {
+    "incluye": "Empresas japonesas cotizadas que cotizan por debajo de su valor contable y están sometidas a la presión de reforma de la bolsa de Tokio",
+    "excluye": "Índice japonés amplio como asignación de mercado completo (eso sería IDX) y empresas sin exceso de capital",
+    "region": "Japón"
+   },
+   "tesis": "EJEMPLO. La presión regulatoria sobre empresas que cotizan por debajo de su valor contable impulsa recompras y dividendos.",
+   "mecanismo": "Reformas de la bolsa + recompras récord + reducción de participaciones cruzadas.",
+   "horizontes": [
+    "H3",
+    "H4"
+   ],
+   "horizonte_principal": "H3",
+   "pronosticos": [
+    "PRG-2026-9203",
+    "PRG-2026-9204"
+   ],
+   "catalizadores": [
+    {
+     "evento": "Junta general de accionistas (temporada)",
+     "fecha": "2027-06"
+    }
+   ],
+   "riesgos": [
+    "Apreciación brusca del yen",
+    "Retroceso del impulso regulatorio"
+   ],
+   "invalidacion": [
+    "Recompras anuales inferiores en un 30 % a las del año anterior"
+   ],
+   "indicador_seguimiento": {
+    "nombre": "Cesta de empresas japonesas con precio/valor contable < 1 (EJEMPLO)",
+    "simbolo": "CESTA-JPN-PBV",
+    "fuente": "HT-01 (EJEMPLO)",
+    "tipo": "CESTA"
+   },
+   "criterios_seleccion_sugeridos": [
+    "Caja neta elevada sobre capitalización",
+    "Participaciones cruzadas pendientes de vender",
+    "Planes de recompra anunciados"
+   ],
+   "metricas_clave": [
+    "Precio/valor contable",
+    "Rentabilidad sobre recursos propios",
+    "Recompras anunciadas sobre capitalización"
+   ],
+   "preguntas_para_B": [
+    "¿Qué empresas del ámbito tienen planes de mejora del capital publicados?",
+    "¿Qué sensibilidad al yen tienen sus beneficios?"
+   ],
+   "evidencias": [
+    "CLM-2026-9404",
+    "CLM-2026-9405"
+   ],
+   "calculos": [
+    "CALC-2026-9303"
+   ],
+   "siguiente_paso_sugerido": "ENVIAR_A_BLOQUE_B",
+   "relevancia_decisional": "MEDIA"
+  },
+  {
+   "opp_id": "OPP-2026-9109",
+   "tipo_activo": "RV",
+   "subtipo": "Subsector",
+   "tipo_opcion": "SUBSECTOR",
+   "nombre": "Textil técnico europeo",
+   "ambito": {
+    "incluye": "Fabricantes cotizados europeos de textiles técnicos y no tejidos para defensa, automoción, sanidad e industria",
+    "excluye": "Confección y moda de consumo, distribución minorista textil y fabricantes fuera de Europa",
+    "region": "Europa"
+   },
+   "tesis": "EJEMPLO. La demanda de tejidos técnicos (defensa, automoción y sanidad) crece más que el consumo textil y los costes energéticos bajan, con valoraciones aún deprimidas.",
+   "mecanismo": "Gasto en defensa + abaratamiento del gas + recuperación de márgenes desde mínimos.",
+   "horizontes": [
+    "H3"
+   ],
+   "horizonte_principal": "H3",
+   "pronosticos": [
+    "PRG-2026-9213"
+   ],
+   "catalizadores": [
+    {
+     "evento": "Presupuestos de defensa de la UE para 2027",
+     "fecha": "2027-T1"
+    }
+   ],
+   "riesgos": [
+    "Recesión industrial europea",
+    "Competencia asiática en precio",
+    "Universo de tamaño medio-pequeño"
+   ],
+   "invalidacion": [
+    "Cartera de pedidos agregada del subsector a la baja dos trimestres seguidos"
+   ],
+   "indicador_seguimiento": {
+    "nombre": "Cesta equiponderada de textil técnico europeo (EJEMPLO)",
+    "simbolo": "CESTA-TEXTIL-TEC-EUR",
+    "fuente": "HT-01 (EJEMPLO)",
+    "tipo": "CESTA"
+   },
+   "criterios_seleccion_sugeridos": [
+    "Más del 30 % de las ventas en defensa, automoción o sanidad",
+    "Margen bruto en recuperación",
+    "Deuda neta/EBITDA inferior a 2 veces"
+   ],
+   "metricas_clave": [
+    "Cartera de pedidos",
+    "Margen bruto",
+    "Coste energético sobre ventas",
+    "Deuda neta/EBITDA"
+   ],
+   "preguntas_para_B": [
+    "¿Qué empresas del subsector tienen contratos de defensa plurianuales?",
+    "¿Cuáles han trasladado ya la bajada de costes energéticos a márgenes?"
+   ],
+   "evidencias": [
+    "CLM-2026-9416",
+    "CLM-2026-9417"
+   ],
+   "calculos": [
+    "CALC-2026-9310"
+   ],
+   "siguiente_paso_sugerido": "ENVIAR_A_BLOQUE_B",
+   "relevancia_decisional": "MEDIA"
+  },
+  {
+   "opp_id": "OPP-2026-9103",
+   "tipo_activo": "IDX",
+   "subtipo": "Índices de emergentes",
+   "tipo_opcion": "MERCADO",
+   "nombre": "Mercado completo de la India (índice amplio)",
+   "ambito": {
+    "incluye": "Renta variable india representada por su índice amplio de referencia, como asignación de mercado completo",
+    "excluye": "Sectores o temáticas concretas de la India (serían RV) y otros emergentes asiáticos",
+    "region": "India"
+   },
+   "tesis": "EJEMPLO. Crecimiento estructural de beneficios superior al de otros emergentes, con flujos domésticos persistentes.",
+   "mecanismo": "Demografía + inversión pública + entrada de ahorro doméstico en bolsa.",
+   "horizontes": [
+    "H4"
+   ],
+   "horizonte_principal": "H4",
+   "pronosticos": [
+    "PRG-2026-9205"
+   ],
+   "catalizadores": [
+    {
+     "evento": "Presupuestos generales de la India",
+     "fecha": "2027-02"
+    }
+   ],
+   "riesgos": [
+    "Valoración exigente",
+    "Riesgo de divisa (rupia)",
+    "Concentración de flujos minoristas"
+   ],
+   "invalidacion": [
+    "Crecimiento de beneficios por acción inferior al 8 % anual durante dos trimestres"
+   ],
+   "indicador_seguimiento": {
+    "nombre": "Índice amplio de renta variable india en euros (EJEMPLO)",
+    "simbolo": "IDX-INDIA-EUR",
+    "fuente": "HT-01 (EJEMPLO)",
+    "tipo": "INDICE"
+   },
+   "niveles_referencia": {
+    "nivel_actual": {
+     "valor": 23.4,
+     "unidad": "veces (PER adelantado)",
+     "fecha_dato": "2026-11-06",
+     "fuente": "HT-01 (EJEMPLO)"
+    }
+   },
+   "criterios_seleccion_sugeridos": [
+    "Exposición representativa al índice amplio",
+    "Coste de seguimiento del índice bajo",
+    "Tratamiento de la divisa coherente con el perfil del usuario"
+   ],
+   "metricas_clave": [
+    "PER adelantado del índice",
+    "Crecimiento de beneficios por acción",
+    "Flujos de inversores extranjeros",
+    "Tipo de cambio de la rupia"
+   ],
+   "preguntas_para_B": [
+    "¿Qué formas de exposición al índice amplio indio existen y qué diferencias de réplica tienen?",
+    "¿Conviene cubrir la divisa en este horizonte?"
+   ],
+   "evidencias": [
+    "CLM-2026-9406",
+    "CLM-2026-9407"
+   ],
+   "calculos": [
+    "CALC-2026-9304"
+   ],
+   "siguiente_paso_sugerido": "PROFUNDIZAR_EN_A",
+   "relevancia_decisional": "ALTA"
+  },
+  {
+   "opp_id": "OPP-2026-9104",
+   "tipo_activo": "RF",
+   "subtipo": "Deuda pública",
+   "tipo_opcion": "SEGMENTO",
+   "nombre": "Deuda pública alemana a 3–7 años",
+   "ambito": {
+    "incluye": "Bonos del Estado alemán con vencimiento residual entre 3 y 7 años",
+    "excluye": "Letras a menos de 12 meses (serían MON) y apuestas sobre la pendiente de la curva (serían TCV)",
+    "region": "Alemania"
+   },
+   "tesis": "EJEMPLO. La rentabilidad a 5 años descuenta menos recortes de los que implica la senda de inflación prevista.",
+   "mecanismo": "Carry + rolldown positivos y opcionalidad ante desaceleración.",
+   "horizontes": [
+    "H2",
+    "H3"
+   ],
+   "horizonte_principal": "H3",
+   "pronosticos": [
+    "PRG-2026-9206",
+    "PRG-2026-9207"
+   ],
+   "catalizadores": [
+    {
+     "evento": "Reunión de política monetaria del BCE",
+     "fecha": "2026-12-17"
+    }
+   ],
+   "riesgos": [
+    "Repunte de la inflación",
+    "Aumento de la oferta de deuda"
+   ],
+   "invalidacion": [
+    "Inflación subyacente de la zona euro por encima del 3 % dos meses seguidos"
+   ],
+   "indicador_seguimiento": {
+    "nombre": "Índice de deuda pública alemana 3–7 años (EJEMPLO)",
+    "simbolo": "IDX-BUND-3-7",
+    "fuente": "HT-01 (EJEMPLO)",
+    "tipo": "INDICE"
+   },
+   "niveles_referencia": {
+    "nivel_actual": {
+     "valor": 2.38,
+     "unidad": "%",
+     "fecha_dato": "2026-11-06",
+     "fuente": "HT-01 (EJEMPLO)"
+    }
+   },
+   "criterios_seleccion_sugeridos": [
+    "Vencimiento residual entre 3 y 7 años",
+    "Duración modificada cercana a 5",
+    "Emisiones con liquidez alta"
+   ],
+   "metricas_clave": [
+    "Rentabilidad a vencimiento del tramo",
+    "Duración",
+    "Diferencial frente al swap"
+   ],
+   "preguntas_para_B": [
+    "¿Qué emisiones del tramo ofrecen mejor carry y rolldown?",
+    "¿Cómo afectaría el calendario de emisiones de 2027?"
+   ],
+   "evidencias": [
+    "CLM-2026-9408",
+    "CLM-2026-9409"
+   ],
+   "calculos": [
+    "CALC-2026-9305"
+   ],
+   "siguiente_paso_sugerido": "ENVIAR_A_BLOQUE_B",
+   "relevancia_decisional": "MEDIA"
+  },
+  {
+   "opp_id": "OPP-2026-9106",
+   "tipo_activo": "DIV",
+   "subtipo": "Pares principales",
+   "tipo_opcion": "ESTRATEGIA",
+   "nombre": "Yen japonés frente al dólar (valor y convergencia de tipos)",
+   "ambito": {
+    "incluye": "Tipo de cambio del yen japonés frente al dólar estadounidense",
+    "excluye": "Cruces del yen con divisas emergentes y exposición a bolsa japonesa",
+    "region": "Japón y EE. UU."
+   },
+   "tesis": "EJEMPLO. Desviación extrema frente a la PPA con estrechamiento del diferencial de tipos.",
+   "mecanismo": "Convergencia del diferencial de tipos + repatriación de capitales.",
+   "horizontes": [
+    "H2",
+    "H3"
+   ],
+   "horizonte_principal": "H3",
+   "pronosticos": [
+    "PRG-2026-9210",
+    "PRG-2026-9211"
+   ],
+   "catalizadores": [
+    {
+     "evento": "Reunión del Banco de Japón",
+     "fecha": "2026-12-19"
+    }
+   ],
+   "riesgos": [
+    "Persistencia del carry a favor del dólar",
+    "Intervención cambiaria"
+   ],
+   "invalidacion": [
+    "Diferencial a 2 años EE. UU.–Japón se amplía 50 pb"
+   ],
+   "indicador_seguimiento": {
+    "nombre": "Tipo de cambio USD/JPY (EJEMPLO)",
+    "simbolo": "USDJPY",
+    "fuente": "HT-01 (EJEMPLO)",
+    "tipo": "SERIE"
+   },
+   "niveles_referencia": {
+    "nivel_actual": {
+     "valor": 151.8,
+     "unidad": "JPY por USD",
+     "fecha_dato": "2026-11-06",
+     "fuente": "HT-01 (EJEMPLO)"
+    }
+   },
+   "criterios_seleccion_sugeridos": [
+    "Exposición directa al par USD/JPY",
+    "Coste del carry negativo acotado",
+    "Liquidez diaria"
+   ],
+   "metricas_clave": [
+    "Diferencial de tipos a 2 años EE. UU.–Japón",
+    "Posicionamiento especulativo",
+    "Desviación frente a la PPA"
+   ],
+   "preguntas_para_B": [
+    "¿Qué forma de exposición minimiza el coste del carry en un horizonte de meses?"
+   ],
+   "evidencias": [
+    "CLM-2026-9411"
+   ],
+   "calculos": [
+    "CALC-2026-9307"
+   ],
+   "siguiente_paso_sugerido": "VIGILAR",
+   "relevancia_decisional": "MEDIA"
+  },
+  {
+   "opp_id": "OPP-2026-9107",
+   "tipo_activo": "MP",
+   "subtipo": "Metales preciosos",
+   "tipo_opcion": "SEGMENTO",
+   "nombre": "Oro (metales preciosos)",
+   "ambito": {
+    "incluye": "Oro como metal precioso, medido por su precio al contado en dólares",
+    "excluye": "Empresas mineras de oro (serían RV) y otros metales preciosos",
+    "region": "Global"
+   },
+   "tesis": "EJEMPLO. Demanda estructural de bancos centrales y tipos reales a la baja sostienen el precio a medio plazo.",
+   "mecanismo": "Diversificación de reservas + coste de oportunidad decreciente.",
+   "horizontes": [
+    "H3",
+    "H4"
+   ],
+   "horizonte_principal": "H3",
+   "pronosticos": [
+    "PRG-2026-9212",
+    "PRG-2026-9213"
+   ],
+   "catalizadores": [
+    {
+     "evento": "Datos trimestrales de demanda de bancos centrales",
+     "fecha": "2027-01"
+    }
+   ],
+   "riesgos": [
+    "Repunte de tipos reales",
+    "Venta de bancos centrales"
+   ],
+   "invalidacion": [
+    "Tipo real a 10 años de EE. UU. por encima del 2,5 %"
+   ],
+   "indicador_seguimiento": {
+    "nombre": "Precio al contado del oro en dólares por onza (EJEMPLO)",
+    "simbolo": "XAUUSD",
+    "fuente": "HT-01 (EJEMPLO)",
+    "tipo": "SERIE"
+   },
+   "niveles_referencia": {
+    "nivel_actual": {
+     "valor": 2610.0,
+     "unidad": "USD por onza",
+     "fecha_dato": "2026-11-06",
+     "fuente": "HT-01 (EJEMPLO)"
+    }
+   },
+   "criterios_seleccion_sugeridos": [
+    "Exposición al precio del metal, no a mineras",
+    "Custodia física verificable",
+    "Divisa de cotización y cobertura"
+   ],
+   "metricas_clave": [
+    "Tipo real a 10 años de EE. UU.",
+    "Compras de bancos centrales",
+    "Flujos hacia productos respaldados por oro"
+   ],
+   "preguntas_para_B": [
+    "¿Qué formas de exposición al precio del oro replican mejor el indicador de seguimiento?"
+   ],
+   "evidencias": [
+    "CLM-2026-9412",
+    "CLM-2026-9413"
+   ],
+   "calculos": [
+    "CALC-2026-9308"
+   ],
+   "siguiente_paso_sugerido": "VIGILAR",
+   "relevancia_decisional": "MEDIA"
+  },
+  {
+   "opp_id": "OPP-2026-9110",
+   "tipo_activo": "FON",
+   "subtipo": "Fondos cerrados cotizados",
+   "tipo_opcion": "SEGMENTO",
+   "nombre": "Descuento de los fondos cerrados británicos de renta variable",
+   "ambito": {
+    "incluye": "Fondos cerrados cotizados en Londres que invierten en renta variable, con descuento superior al 10 %",
+    "excluye": "Fondos cerrados de activos privados o inmobiliarios y fondos abiertos",
+    "region": "Reino Unido"
+   },
+   "tesis": "EJEMPLO. El descuento medio sobre el valor liquidativo está en máximos de 15 años y las gestoras han acelerado recompras y fusiones.",
+   "mecanismo": "Recompras de participaciones + presión de accionistas activistas + reversión del descuento hacia su media.",
+   "horizontes": [
+    "H3",
+    "H4"
+   ],
+   "horizonte_principal": "H3",
+   "pronosticos": [
+    "PRG-2026-9214",
+    "PRG-2026-9215"
+   ],
+   "catalizadores": [
+    {
+     "evento": "Temporada de juntas y votaciones de continuidad",
+     "fecha": "2027-T2"
+    }
+   ],
+   "riesgos": [
+    "Descuento persistente",
+    "Caída de la bolsa británica",
+    "Apalancamiento de algunos fondos"
+   ],
+   "invalidacion": [
+    "Descuento medio del segmento por encima del 18 %"
+   ],
+   "indicador_seguimiento": {
+    "nombre": "Descuento medio ponderado del segmento sobre el valor liquidativo (EJEMPLO)",
+    "simbolo": "DESC-FC-UK",
+    "fuente": "HT-01 (EJEMPLO)",
+    "tipo": "SERIE"
+   },
+   "criterios_seleccion_sugeridos": [
+    "Descuento sobre el valor liquidativo superior al 10 % y a su media de 5 años",
+    "Programa de recompras activo",
+    "Apalancamiento moderado"
+   ],
+   "metricas_clave": [
+    "Descuento sobre el valor liquidativo",
+    "Recompras ejecutadas",
+    "Gastos corrientes",
+    "Apalancamiento"
+   ],
+   "preguntas_para_B": [
+    "¿Qué fondos del segmento tienen catalizadores propios (votaciones de continuidad, fusiones)?",
+    "¿Cuáles combinan descuento alto y cartera de calidad?"
+   ],
+   "evidencias": [
+    "CLM-2026-9418"
+   ],
+   "calculos": [
+    "CALC-2026-9311"
+   ],
+   "siguiente_paso_sugerido": "ENVIAR_A_BLOQUE_B",
+   "relevancia_decisional": "MEDIA"
+  },
+  {
+   "opp_id": "OPP-2026-9111",
+   "tipo_activo": "DER",
+   "subtipo": "Opciones sobre índices",
+   "tipo_opcion": "ESTRATEGIA",
+   "nombre": "Protección barata con opciones de venta sobre la bolsa europea",
+   "ambito": {
+    "incluye": "Estrategias de compra de protección con opciones sobre índices de renta variable europea a 1–3 meses",
+    "excluye": "Venta de volatilidad, opciones sobre valores individuales y la volatilidad como factor macro (sería TCV)",
+    "region": "Europa"
+   },
+   "tesis": "EJEMPLO. La volatilidad implícita a 3 meses de la renta variable europea está en el percentil 10 y el sesgo es plano: la protección cotiza barata frente a la volatilidad realizada.",
+   "mecanismo": "Prima de varianza negativa + sesgo plano + calendario de riesgos políticos.",
+   "horizontes": [
+    "H2",
+    "H3"
+   ],
+   "horizonte_principal": "H2",
+   "pronosticos": [
+    "PRG-2026-9216",
+    "PRG-2026-9217"
+   ],
+   "catalizadores": [
+    {
+     "evento": "Elecciones en un gran país de la zona del euro",
+     "fecha": "2027-04"
+    }
+   ],
+   "riesgos": [
+    "Pérdida de toda la prima pagada",
+    "Apalancamiento y saltos de precio",
+    "Liquidez de vencimientos largos"
+   ],
+   "invalidacion": [
+    "Volatilidad implícita a 3 meses por encima de su percentil 60"
+   ],
+   "indicador_seguimiento": {
+    "nombre": "Índice de volatilidad implícita de la renta variable europea (EJEMPLO)",
+    "simbolo": "VOL-EUR-3M",
+    "fuente": "HT-01 (EJEMPLO)",
+    "tipo": "INDICE"
+   },
+   "criterios_seleccion_sugeridos": [
+    "Opciones sobre índices europeos amplios a 1–3 meses",
+    "Coste de la prima acotado al presupuesto de riesgo",
+    "Mercado regulado con liquidez alta"
+   ],
+   "metricas_clave": [
+    "Volatilidad implícita frente a realizada",
+    "Sesgo 25-delta",
+    "Estructura de plazos"
+   ],
+   "preguntas_para_B": [
+    "¿Qué vencimientos y precios de ejercicio ofrecen la mejor relación coste/protección?",
+    "¿Qué alternativas de cobertura existen para un minorista?"
+   ],
+   "evidencias": [
+    "CLM-2026-9419"
+   ],
+   "calculos": [
+    "CALC-2026-9312"
+   ],
+   "siguiente_paso_sugerido": "ENVIAR_A_BLOQUE_B",
+   "relevancia_decisional": "ALTA"
+  },
+  {
+   "opp_id": "OPP-2026-9108",
+   "tipo_activo": "CRI",
+   "subtipo": "Criptoactivos de reserva de valor",
+   "tipo_opcion": "SEGMENTO",
+   "nombre": "Criptoactivos de gran capitalización con demanda institucional",
+   "ambito": {
+    "incluye": "Criptoactivos de gran capitalización con productos cotizados al contado y flujos institucionales",
+    "excluye": "Altcoins de baja capitalización, stablecoins y tokens de proyectos concretos",
+    "region": "Global"
+   },
+   "tesis": "EJEMPLO. Flujos netos positivos de ETP al contado y oferta en exchanges decreciente.",
+   "mecanismo": "Demanda institucional vía ETP + emisión decreciente.",
+   "horizontes": [
+    "H2",
+    "H3"
+   ],
+   "horizonte_principal": "H2",
+   "pronosticos": [
+    "PRG-2026-9214",
+    "PRG-2026-9215"
+   ],
+   "catalizadores": [
+    {
+     "evento": "Decisión regulatoria sobre ETP en la UE",
+     "fecha": "2027-T1"
+    }
+   ],
+   "riesgos": [
+    "Volatilidad extrema",
+    "Riesgo regulatorio",
+    "Riesgo de custodia"
+   ],
+   "invalidacion": [
+    "Salidas netas de ETP durante cuatro semanas consecutivas"
+   ],
+   "indicador_seguimiento": {
+    "nombre": "Índice de criptoactivos de gran capitalización (EJEMPLO)",
+    "simbolo": "IDX-CRI-GC",
+    "fuente": "HT-01 (EJEMPLO)",
+    "tipo": "INDICE"
+   },
+   "criterios_seleccion_sugeridos": [
+    "Exposición a criptoactivos de gran capitalización con custodia regulada",
+    "Liquidez diaria",
+    "Cumplimiento de MiCA"
+   ],
+   "metricas_clave": [
+    "Flujos netos de productos cotizados",
+    "Oferta en plataformas de negociación",
+    "Volatilidad realizada"
+   ],
+   "preguntas_para_B": [
+    "¿Qué formas de exposición reguladas en la UE capturan mejor el ámbito?",
+    "¿Qué riesgos de custodia tiene cada una?"
+   ],
+   "ejemplos_ilustrativos": [
+    "bitcoin",
+    "ether (solo ilustración del ámbito)"
+   ],
+   "evidencias": [
+    "CLM-2026-9414",
+    "CLM-2026-9415"
+   ],
+   "calculos": [
+    "CALC-2026-9309"
+   ],
+   "siguiente_paso_sugerido": "PROFUNDIZAR_EN_A",
+   "relevancia_decisional": "ALTA"
+  },
+  {
+   "opp_id": "OPP-2026-9112",
+   "tipo_activo": "MON",
+   "subtipo": "Letras a corto plazo",
+   "tipo_opcion": "SEGMENTO",
+   "nombre": "Fijar ahora la rentabilidad de letras de la zona del euro a 6–12 meses",
+   "ambito": {
+    "incluye": "Letras del Tesoro de países de la zona del euro con grado de inversión a 6–12 meses",
+    "excluye": "Bonos a más de 12 meses (serían RF) y depósitos no negociables",
+    "region": "Zona del euro"
+   },
+   "tesis": "EJEMPLO. Las letras a 12 meses rinden por encima de los depósitos a la vista y el mercado descuenta recortes del BCE: fijar plazo ahora mejora la rentabilidad esperada de la liquidez.",
+   "mecanismo": "Curva monetaria con pendiente negativa + recortes descontados en €STR.",
+   "horizontes": [
+    "H2",
+    "H3"
+   ],
+   "horizonte_principal": "H3",
+   "pronosticos": [
+    "PRG-2026-9218",
+    "PRG-2026-9219"
+   ],
+   "catalizadores": [
+    {
+     "evento": "Reunión de política monetaria del BCE",
+     "fecha": "2026-12-17"
+    }
+   ],
+   "riesgos": [
+    "Subida inesperada de tipos",
+    "Riesgo de reinversión al vencimiento"
+   ],
+   "invalidacion": [
+    "El mercado deja de descontar recortes del BCE en 12 meses"
+   ],
+   "indicador_seguimiento": {
+    "nombre": "Rentabilidad de las letras de la zona del euro a 12 meses (EJEMPLO)",
+    "simbolo": "LETRAS-EUR-12M",
+    "fuente": "HT-01 (EJEMPLO)",
+    "tipo": "SERIE"
+   },
+   "criterios_seleccion_sugeridos": [
+    "Letras de Tesoros de la zona del euro con grado de inversión",
+    "Vencimiento entre 6 y 12 meses",
+    "Acceso en subasta o en mercado secundario"
+   ],
+   "metricas_clave": [
+    "Rentabilidad de letras por plazo y emisor",
+    "€STR y expectativas implícitas",
+    "Diferencial frente a depósitos"
+   ],
+   "preguntas_para_B": [
+    "¿Qué Tesoros y plazos ofrecen hoy la mejor rentabilidad con riesgo bajo?"
+   ],
+   "evidencias": [
+    "CLM-2026-9420"
+   ],
+   "calculos": [
+    "CALC-2026-9313"
+   ],
+   "siguiente_paso_sugerido": "ENVIAR_A_BLOQUE_B",
+   "relevancia_decisional": "MEDIA"
+  },
+  {
+   "opp_id": "OPP-2026-9105",
+   "tipo_activo": "TCV",
+   "subtipo": "Inflación implícita",
+   "tipo_opcion": "FACTOR",
+   "nombre": "Inflación implícita de EE. UU. a 10 años (breakevens) baja frente a la esperada",
+   "ambito": {
+    "incluye": "Inflación implícita (breakeven) de EE. UU. a 10 años como factor",
+    "excluye": "Compra de bonos nominales o ligados a la inflación para cobrar su rentabilidad (sería RF)",
+    "region": "EE. UU."
+   },
+   "tesis": "EJEMPLO. La inflación implícita a 10 años (breakeven) está por debajo de la inflación esperada por encuestas: el factor está infravalorado.",
+   "mecanismo": "Breakeven bajo + rentabilidad real positiva.",
+   "horizontes": [
+    "H3",
+    "H4"
+   ],
+   "horizonte_principal": "H3",
+   "pronosticos": [
+    "PRG-2026-9208",
+    "PRG-2026-9209"
+   ],
+   "catalizadores": [
+    {
+     "evento": "Publicación del IPC de EE. UU.",
+     "fecha": "2026-12-10"
+    }
+   ],
+   "riesgos": [
+    "Desinflación más rápida",
+    "Riesgo de divisa EUR/USD"
+   ],
+   "invalidacion": [
+    "Breakeven a 10 años por encima del 2,6 % (objetivo alcanzado)"
+   ],
+   "indicador_seguimiento": {
+    "nombre": "Inflación implícita de EE. UU. a 10 años (EJEMPLO)",
+    "simbolo": "BEI-US-10A",
+    "fuente": "HT-01 (EJEMPLO)",
+    "tipo": "SERIE"
+   },
+   "niveles_referencia": {
+    "nivel_actual": {
+     "valor": 2.21,
+     "unidad": "%",
+     "fecha_dato": "2026-11-06",
+     "fuente": "HT-01 (EJEMPLO)"
+    }
+   },
+   "criterios_seleccion_sugeridos": [
+    "Exposición a la inflación implícita y no al nivel de tipos reales",
+    "Cobertura de divisa a euros",
+    "Liquidez alta"
+   ],
+   "metricas_clave": [
+    "Inflación implícita a 10 años",
+    "Inflación esperada por encuestas",
+    "Coste de la cobertura de divisa"
+   ],
+   "preguntas_para_B": [
+    "¿Qué forma de exposición aísla mejor la inflación implícita del nivel de tipos?"
+   ],
+   "evidencias": [
+    "CLM-2026-9410"
+   ],
+   "calculos": [
+    "CALC-2026-9306"
+   ],
+   "siguiente_paso_sugerido": "VIGILAR",
+   "relevancia_decisional": "MEDIA"
+  },
+  {
+   "opp_id": "OPP-2026-9113",
+   "tipo_activo": "TCV",
+   "subtipo": "Curvas y diferenciales entre vencimientos",
+   "tipo_opcion": "ESTRATEGIA",
+   "nombre": "Empinamiento de la curva del euro entre 2 y 10 años",
+   "ambito": {
+    "incluye": "Pendiente de la curva soberana del euro entre 2 y 10 años como factor",
+    "excluye": "Dirección del nivel de tipos (sería RF) y curvas de otras divisas",
+    "region": "Zona del euro"
+   },
+   "tesis": "EJEMPLO. La pendiente 2–10 años del euro está por debajo de su valor razonable dada la senda de recortes descontada.",
+   "mecanismo": "Recortes en el tramo corto + prima por plazo creciente por la oferta de deuda.",
+   "horizontes": [
+    "H2",
+    "H3"
+   ],
+   "horizonte_principal": "H3",
+   "pronosticos": [
+    "PRG-2026-9220",
+    "PRG-2026-9221"
+   ],
+   "catalizadores": [
+    {
+     "evento": "Reunión de política monetaria del BCE",
+     "fecha": "2026-12-17"
+    }
+   ],
+   "riesgos": [
+    "Pausa en los recortes del BCE",
+    "Aplanamiento por recesión"
+   ],
+   "invalidacion": [
+    "Pendiente 2–10 años por debajo de 20 pb durante 4 semanas"
+   ],
+   "indicador_seguimiento": {
+    "nombre": "Pendiente 2–10 años de la curva soberana del euro (EJEMPLO)",
+    "simbolo": "PEND-EUR-2-10",
+    "fuente": "HT-01 (EJEMPLO)",
+    "tipo": "SERIE"
+   },
+   "criterios_seleccion_sugeridos": [
+    "Exposición a la pendiente 2–10 años neutral a duración",
+    "Instrumentos de mercado regulado",
+    "Riesgo máximo acotado"
+   ],
+   "metricas_clave": [
+    "Pendiente 2–10 años",
+    "Prima por plazo",
+    "Expectativas de €STR"
+   ],
+   "preguntas_para_B": [
+    "¿Qué combinación de exposiciones replica la pendiente con menor riesgo de nivel?"
+   ],
+   "evidencias": [
+    "CLM-2026-9421"
+   ],
+   "calculos": [
+    "CALC-2026-9314"
+   ],
+   "siguiente_paso_sugerido": "VIGILAR",
+   "relevancia_decisional": "MEDIA"
+  }
+ ],
+ "preguntas_sugeridas": [
+  "¿Qué ocurriría con las opciones del clúster CL-1 si la inflación subyacente repunta medio punto?",
+  "¿Por qué OPP-2026-9107 (oro) se sugiere vigilar y no enviar al Bloque B?",
+  "¿Qué tendría que pasar para que el textil técnico europeo (OPP-2026-9109) pasara a confianza «probable»?",
+  "¿Cuántas candidatas inmobiliarias se analizaron y qué nivel de tipos las haría elegibles?"
+ ],
+ "limitaciones": [
+  "EJEMPLO. Ninguna celda tipo de activo × horizonte tiene certificado R13: todas las previsiones se expresan en bandas.",
+  "EJEMPLO. Datos de valoraciones privadas (ALT) con más de 90 días de antigüedad: tipo en gris por PS2.",
+  "EJEMPLO. El Bloque A delimita ámbitos y no selecciona activos concretos: la elección de activos corresponde al Bloque B (2.5)."
+ ],
+ "estado_g3": "APTO",
+ "aviso_legal": "Información general de mercado. No constituye asesoramiento personalizado ni recomendación de compra o venta; el Broker Personal valora su adecuación al usuario."
+}
