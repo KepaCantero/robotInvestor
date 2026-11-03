@@ -81,7 +81,9 @@ H5 décadas con hitos HIT- y `horizonte_principal` obligatorio (HT-09 C17–C19)
 | 5 (todos) | Modo sombra real con API (ciclo semanal, sin entrega al Broker) | `11_Ejecutor/README.md` + config de cada bloque |
 | 6 (A→B) | Cadena de encargos A→B real y conexión al backtester de robotTrading (`senales.csv`, `pronosticos.csv`, `metricas.json`) | READMEs de ejecutores + esquemas de encargo |
 
-Avance registrado en `docs/AVANCE.md`.
+Avance registrado en `docs/AVANCE.md`. Los prompts paste-ready de cada fase viven en
+`prompts/` (empezando por `prompts/00_ENTORNO.md`, que verifica venv, dependencias y
+MCPs); no reinventar su contenido: se pegan tal cual.
 
 ## Comandos
 
