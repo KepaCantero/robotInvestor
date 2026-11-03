@@ -1,0 +1,87 @@
+{
+ "x_aviso_ejemplo": "EJEMPLO — datos ficticios (V5.1 · 03/11/2026). No usar para decidir.",
+ "seg_id": "SEG-2026-9007",
+ "opp_id": "OPP-2026-9110",
+ "run_id": "RUN-2026-9162",
+ "ciclo": 3,
+ "fecha": "2026-11-23",
+ "tipo_activo": "FON",
+ "horizonte_principal": "H3",
+ "sin_novedad": false,
+ "semaforo": "VERDE",
+ "que_ha_cambiado": [
+  "El descuento medio de los fondos cerrados británicos de infraestructuras pasa del 18 % al 14 % (HT-01, cierre del 2026-11-20)",
+  "Ocurrido: anuncio de recompras en tres gestoras del segmento"
+ ],
+ "senales_interes": [
+  {
+   "senal": "Descuento sobre NAV",
+   "estado": "se estrecha 4 puntos en tres semanas"
+  },
+  {
+   "senal": "Gilt a 10 años",
+   "estado": "estable (−5 pb)"
+  }
+ ],
+ "invalidacion": [
+  {
+   "condicion": "Descuento medio por encima del 25 %",
+   "distancia": "11 puntos",
+   "activada": false
+  }
+ ],
+ "catalizadores": [
+  {
+   "evento": "Anuncio de recompras",
+   "fecha": "2026-11-14",
+   "estado": "OCURRIDO"
+  },
+  {
+   "evento": "Publicación de NAV trimestrales",
+   "fecha": "2027-01-31",
+   "estado": "PENDIENTE"
+  }
+ ],
+ "puntuaciones": {
+  "T": 60,
+  "E": 65,
+  "A": 60,
+  "RK": 62,
+  "variacion_RK": 7,
+  "elegible": true
+ },
+ "objeciones_fuertes_abiertas": [],
+ "pronosticos_abiertos": [
+  {
+   "prg_id": "PRG-2026-9219",
+   "horizonte": "H3",
+   "estado": "EN_CURSO",
+   "hitos": []
+  }
+ ],
+ "recomendacion": "PROPONER_ENVIO_A_B",
+ "motivo": "Vuelve a ser elegible con las puntuaciones actualizadas (E 65, A 60, T 60) y sin objeciones fuertes abiertas.",
+ "sugerir_profundizacion_N3": true,
+ "paquete_para_bloque_B": {
+  "opp_id": "OPP-2026-9110",
+  "tipo_activo": "FON",
+  "subtipo": "Fondos cerrados",
+  "horizonte_principal": "H3",
+  "horizontes": [
+   "H3",
+   "H4"
+  ],
+  "pronosticos": [
+   "PRG-2026-9219"
+  ],
+  "ambito": {
+   "incluye": "Fondos cerrados cotizados británicos de infraestructuras",
+   "excluye": "Fondos abiertos y ETF",
+   "region": "Reino Unido"
+  }
+ },
+ "supuestos_declarados": [],
+ "limitaciones": [
+  "Revisión ligera (N1 de seguimiento); no se congelan pronósticos nuevos."
+ ]
+}

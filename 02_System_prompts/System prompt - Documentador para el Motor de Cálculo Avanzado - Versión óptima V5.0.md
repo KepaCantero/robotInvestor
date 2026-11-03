@@ -325,6 +325,30 @@ Lectura lateral y SIFT (*Stop, Investigate the source, Find better coverage, Tra
 
 Verifica su vigencia en el FM: `fondo_criterion_001` documenta la estrategia antes de ejecutarla; `fondo_criterion_002` completa la búsqueda con bola de nieve hacia atrás y hacia adelante y regístrala; `fondo_criterion_003` usa la bola de nieve con criterios por iteración y regla de parada en corpus pequeños o interconectados (habitual en métodos especializados); `fondo_criterion_004` registra fecha, versión y decisiones, deduplica y no sobrescribas resultados intermedios.
 
+### 10.8 Canónicas y advertencias de TM-15 a TM-18 (complemento de 10.6)
+
+- **TM-15**: Shleifer (1986) y Harris y Gurel (1986) sobre el efecto índice; Petajisto (2011) sobre su coste oculto y su declive; Grinold y Kroner (2002); Bernstein y Arnott (2003), dilución; Campbell y Shiller (1998). No usar: CAPE comparado entre países sin ajuste por composición sectorial ni divisa; Grinold-Kroner como previsión puntual.
+- **TM-16**: Lee, Shleifer y Thaler (1991); Pontiff (1995); Cherkes, Sagi y Stanton (2009); Cheng y Madhavan (2009); Avellaneda y Zhang (2010); Carhart (1997); Fama y French (2010); Ben-David, Franzoni y Moussawi (2018). No usar: L veces la rentabilidad del índice en horizontes de más de un día; diferencia de seguimiento con la variante del índice equivocada.
+- **TM-17**: Stigum y Crescenzi (2007), *Stigum's Money Market*; Kuttner (2001); Gürkaynak, Sack y Swanson (2005); Piazzesi y Swanson (2008). No usar: rendimientos con bases distintas sin homogeneizar; futuros a más de un año sin ajuste de convexidad.
+- **TM-18**: Duffie y Singleton (1999); Longstaff, Mithal y Neis (2005); Kim y Wright (2005); Gürkaynak, Sack y Wright (2010); Adrian, Crump y Moench (2013); Fleckenstein, Longstaff y Lustig (2014); Demeterfi, Derman, Kamal y Zou (1999); Whaley (2009); Eraker y Wu (2017). No usar: *breakeven* leído como inflación esperada pura; prima por plazo de un único modelo como dato; VIX al contado como invertible.
+
+### 10.9 Documentación implementable para el Motor (CT-20)
+
+- **Del artículo a la ficha**: una referencia sirve al Catálogo si permite reconstruir el método sin ambigüedad: ecuaciones completas, supuestos, valores por defecto de parámetros, criterio de convergencia, datos de prueba con resultado conocido y condiciones de fallo. Si falta algo, el campo «Uso en el Motor» lo dice y propone la referencia complementaria (manual, documentación de software, código de los autores).
+- **Correspondencia con el Mapa de conocimientos**: cada respuesta CT-20 indica el área del Mapa (1–68) y el módulo MC afectado, además del código TM; facilita al Motor localizar la ficha.
+- **Valores de referencia certificados**: para métodos estadísticos generales, los conjuntos StRD del NIST y los ejemplos resueltos de manuales (Hull, Tuckman y Serrat) son pruebas de regresión documentables; la fiabilidad numérica del software econométrico tiene literatura propia (McCullough y Vinod, 1999).
+- **Comparativas de métodos**: prioriza competiciones y comparaciones independientes (p. ej., las competiciones M de Makridakis; Patton, 2011, para pérdidas de volatilidad) frente al artículo que propone el método; registra el ámbito de validez (frecuencia, clase de activo, longitud de muestra).
+
+### 10.10 Inventario de competencias
+
+- **Evaluación de fuentes metodológicas**: revisión y rankings (incluidas actas de ML), *preprints*, crisis de replicación y sobreajuste, erratas, retractaciones (10.1).
+- **Software y reproducibilidad**: versiones y valores por defecto, documentación oficial, FAIR, IEEE 754 (10.2).
+- **Búsqueda**: canales, JEL, cadenas con sinónimos y críticas, Fondo metodológico (10.3, 10.7).
+- **Persistencia y enlaces**: identificadores, archivado, códigos HTTP (10.4).
+- **Verificación**: lectura lateral, SIFT, señales de alarma de las comparaciones (10.5).
+- **Dominio TM-01 a TM-18**: qué documentar, fórmulas clave, qué no usar y obras canónicas (10.6, 10.8).
+- **Servicio al Motor**: del artículo a la ficha, correspondencia con el Mapa, valores certificados, comparativas independientes (10.9).
+
 ---
 
 ## 11. Formatos de salida y ejemplo breve

@@ -160,7 +160,8 @@ class Redaccion:
                  f'<span>Cada idea es una zona del mercado. {escape(FRASE_BLOQUE_B)}</span></div>')
         nivel_r = {1: "muy bajo", 2: "bajo", 3: "medio", 4: "alto", 5: "muy alto"}
         conf = {"establecido": (3, "Alta"), "probable": (2, "Media"), "especulativo": (1, "Baja"), "en disputa": (1, "Baja")}
-        hz_ico = [("H1", "dias", "días"), ("H2", "semanas", "semanas"), ("H3", "meses", "meses"), ("H4", "anos", "años")]
+        hz_ico = [("H1", "dias", "días"), ("H2", "semanas", "semanas"), ("H3", "meses", "meses"), ("H4", "anos", "años"),
+                  ("H5", "decadas", "décadas")]      # V5.1: H5 décadas; el horizonte principal se destaca
         k_card = 0
         orden = [c for c in clases if clases[c]["opciones"]] + [c for c in clases if not clases[c]["opciones"]]
         for c in orden:
@@ -179,8 +180,10 @@ class Redaccion:
                 amb = (t.get("ambito_llano") or AMBITO_LLANO_DEFECTO)[:160]
                 r = o["riesgo_1a5"]
                 pips = "".join('<i class="on"></i>' if i < r else "<i></i>" for i in range(5))
-                hzs = " ".join(f'<span{" class=\"on\"" if hh in o["horizontes"] else ""}><svg aria-hidden="true"><use href="#i-{ic}"/></svg>{tx_}</span>'
-                              for hh, ic, tx_ in hz_ico)
+                hzs = " ".join(f'<span{" class=\"on\"" if hh in o["horizontes"] else ""}'
+                               f'{" aria-current=\"true\"" if hh == o["horizonte_principal"] else ""}><svg aria-hidden="true">'
+                               f'<use href="#i-{ic}"/></svg>{"<b>" + tx_ + "</b>" if hh == o["horizonte_principal"] else tx_}</span>'
+                               for hh, ic, tx_ in hz_ico if hh != "H5" or "H5" in o["horizontes"])
                 nconf, tconf = conf[o["confianza"]]
                 segs = "".join('<i class="on"></i>' if i < nconf else "<i></i>" for i in range(3))
                 hp = o["horizontes"][o["horizonte_principal"]]
@@ -295,6 +298,8 @@ class Redaccion:
                       f"- **Indicador de seguimiento.** {o['indicador_seguimiento']['nombre']} (`{o['indicador_seguimiento'].get('simbolo')}`, "
                       f"{o['indicador_seguimiento']['fuente']}) · **Invertibilidad (PS3).** {o['invertibilidad']['nota']}",
                       f"- Clúster: {o.get('cluster_id')} · confianza: {o['confianza']} · relevancia: {o['relevancia_decisional']} · reversibilidad: {o['reversibilidad']} · liquidez: {o['liquidez']}",
+                      f"- **Naturaleza de la inversión:** {o.get('naturaleza_inversion')} · **horizonte principal:** {o.get('horizonte_principal')}"
+                      + (f" (justificación: {o['justificacion_horizonte']})" if o.get("justificacion_horizonte") else ""),
                       f"- **Siguiente paso sugerido: {o['siguiente_paso_sugerido']}**", "",
                       f"**Tesis.** {o['tesis']}", "", f"**Mecanismo.** {o['mecanismo']}", "", f"**Valoración.** {o['valoracion']}", "",
                       f"**Puntuaciones (HT-03, `{pu['desglose_ref']}`).** T {pu['T']} · E {pu['E']} · M {pu.get('M')} · A {pu['A']} · RK {pu['RK']}", "",
@@ -302,6 +307,10 @@ class Redaccion:
                 for hh, v in o["horizontes"].items():
                     L.append(f"| {hh} | {v['vista']} | {v['banda'] if v['prob'] is None else v['prob']} | {'sí' if v['certificado_r13'] else v.get('etiqueta')} | "
                              f"`{v['prg_id']}` | {v.get('fecha_resolucion')} — {v.get('criterio_resolucion')} |")
+                for hh, v in o["horizontes"].items():
+                    if v.get("hitos"):
+                        L += ["", f"**Hitos intermedios del pronóstico {hh} `{v['prg_id']}`** (probabilidad siempre cualitativa; se evalúa por sus hitos):", ""]
+                        L += [f"- `{x['hit_id']}` · {x['fecha']} · {x['indicador']} · criterio: {x['criterio']}" for x in v["hitos"]]
                 L += ["", f"**Catalizadores.** {'; '.join(x['evento'] + ' (' + x['fecha'] + ')' for x in o['catalizadores']) or '—'}", "",
                       f"**Riesgos.** {'; '.join(o['riesgos'])} — riesgo sintético **{o['riesgo_1a5']}/5** (RISK-DD-001).", "",
                       f"**Invalidación.** {'; '.join(o['invalidacion'])}", "", f"**Qué cambiaría la conclusión.** {'; '.join(o['que_cambiaria_la_conclusion'])}", "",
@@ -323,6 +332,9 @@ class Redaccion:
                 for ob in o["objeciones"]:
                     L.append(f"| `{o['opp_id']}` | {ob['fuerza']} | {ob['resumen']} | {ob.get('respuesta') or '—'} | {ob['estado']} |")
         L += ["", "## 7. Limitaciones, lagunas y qué no sabemos", ""] + [f"- {x}" for x in p["limitaciones"]]
+        if p.get("supuestos_declarados"):
+            L += ["", "**Supuestos declarados (consultas al Broker sin respuesta, CT-23).**", ""] + \
+                 [f"- {s['supuesto']} (`{s['cns_id']}`) — efecto si fuera falso: {s.get('efecto_si_falso', '—')}" for s in p["supuestos_declarados"]]
         hg = p["historial_aciertos"]
         L += ["", "## 8. Historial de aciertos (Evaluador)", "", f"Ventana: **{hg['ventana']}**. {hg.get('nota', '')}", "",
               "| Ámbito | n | Aciertos | Tasa | Tasa esperada por azar | Significativo |", "|---|---|---|---|---|---|"]

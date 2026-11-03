@@ -1,6 +1,6 @@
 # Especificación — HT-05 Planificador (ejemplo de configuración por defecto)
 
-**Bloque A · Robot Investor · Versión óptima V4.0 · 01/11/2026** · Subordinado al Documento 0 óptima V4.0.
+**Bloque A · Robot Investor · Versión óptima V4.0 · 01/11/2026 · actualizado V5.1 (03/11/2026)** · Subordinado al Documento 0 óptima V5.1. Cambios V5.1: ciclos C6 de los seguimientos encargados (F11, CT-24), vencimientos de las consultas al Broker (CT-23), recordatorios de credenciales (CT-25) y de los hitos H5.
 
 **Estado de madurez (R22):** documentado (especificación de referencia). No implementado ni validado.
 
@@ -55,11 +55,22 @@ Formato de cinco campos `minuto hora día-mes mes día-semana` (0 = domingo).
 
 Si el Broker fija «día y hora de entrega» (p. ej., `MIE 08:00`), la ejecución se adelanta automáticamente 49 horas (por defecto, sábado 06:00 → lunes 07:00) y se redondea a la hora en punto.
 
+## 4 bis. Agendas nuevas de la V5.1
+
+| ID | Disparo | Destino | Acción |
+|---|---|---|---|
+| C6-<SEG-id> | Según la frecuencia del encargo en F11: DIARIA `0 5 * * *` · SEMANAL (por defecto) el día del alta · QUINCENAL cada 14 días desde el alta · MENSUAL el mismo día del mes (o el último hábil) · TRIMESTRAL cada tres meses · PERSONALIZADA (`cada_dias` o cron con zona IANA) | AG-01 | `ABRIR_RUN_SEGUIMIENTO` (CT-05 `SEGUIMIENTO`); se omite si la OPP- está `VIGENTE` en el top-3 (anotación en F11) |
+| CT23-VENCE-<CNS-id> | `plazo_respuesta` de la consulta (4 h `BLOQUEANTE` en ad hoc; hasta la entrega en el ciclo periódico; 24 h `NO_BLOQUEANTE`) | AG-01 | `APLICAR_SUPUESTO` (CNS- → `VENCIDA`; el análisis sigue con el supuesto declarado) |
+| CT25-RECORDATORIO-<CRD-id> | Cada 7 días mientras la solicitud siga `SOLICITADA`, máximo 3 | AG-01 | `RECORDAR_CREDENCIAL` (CT-25, sin valores) |
+| C5-HITO-<HIT-id> | Fecha de cada hito de un pronóstico H5 (siguiente día hábil del mercado si cae en festivo) | AG-20 | `RESOLVER_HITO` |
+
+Los disparos C6 se ejecutan con prioridad inferior a C1–C3 (regla 3) y una pausa o cancelación del encargo los anula al momento (R27). Al reanudar tras una caída, si se acumularon varios disparos C6 del mismo encargo, se ejecuta **uno solo** que cubre el periodo.
+
 ## 5. Reglas de funcionamiento
 
 1. **Idempotencia** (6.2): cada disparo lleva `disparo_id = <ID>-<fecha programada ISO>`; un segundo disparo con el mismo identificador se descarta.
 2. **Disparos perdidos**: si el sistema estuvo parado, al reanudarse se ejecuta **una sola vez** cada disparo perdido de C1 cuya entrega aún no haya vencido en más de 24 h, y una vez cada disparo de C4/C5 pendiente; nunca se acumulan repeticiones.
-3. **Prioridad**: C1–C3 > C5 > C4. Si coinciden, los ciclos de fondo esperan a que el Orquestador (HT-08) confirme capacidad.
+3. **Prioridad**: C1–C3 > C6 > C5 > C4 (V5.1: los seguimientos encargados C6 nunca retrasan C1–C3). Si coinciden, los ciclos de fondo esperan a que el Orquestador (HT-08) confirme capacidad.
 4. **Registro**: cada disparo y su resultado (emitido, descartado por duplicado, recuperado) se anota en F5.
 5. **Cambios**: el Coordinador actualiza F10 y regenera el calendario; el cambio surte efecto desde el siguiente disparo, nunca a mitad de un RUN-.
 6. **Sin credenciales** (R8): los disparos solo contienen identificadores y parámetros.
@@ -73,5 +84,7 @@ Si el Broker fija «día y hora de entrega» (p. ej., `MIE 08:00`), la ejecució
   {"id":"C1-ENTREGA","cron":"CRON_TZ=Europe/Madrid 0 7 * * 1","destino":"AG-01","accion":"ENTREGAR_CT02"},
   {"id":"C4-BARRIDO","cron":"CRON_TZ=Europe/Madrid 0 4 * * 0","destino":"AG-14,AG-15,AG-16","accion":"HT02_BARRIDO"},
   {"id":"C4-REINTENTO","cron":"CRON_TZ=Europe/Madrid 0 5 * * 1","destino":"AG-14,AG-15,AG-16","accion":"HT02_REINTENTO_ROTOS"},
-  {"id":"C5-DIARIO","cron":"CRON_TZ=Europe/Madrid 45 0 * * *","destino":"AG-20","accion":"RESOLVER_PRG_VENCIDOS"}]}}
+  {"id":"C5-DIARIO","cron":"CRON_TZ=Europe/Madrid 45 0 * * *","destino":"AG-20","accion":"RESOLVER_PRG_VENCIDOS"},
+  {"id":"C6-SEG-2026-0007","cron":"CRON_TZ=Europe/Madrid 30 5 * * 4","destino":"AG-01","accion":"ABRIR_RUN_SEGUIMIENTO","seg_id":"SEG-2026-0007"},
+  {"id":"CT23-VENCE-CNS-2026-0014","una_vez":"2026-11-13T09:00:00+01:00","destino":"AG-01","accion":"APLICAR_SUPUESTO","cns_id":"CNS-2026-0014"}]}}
 ```

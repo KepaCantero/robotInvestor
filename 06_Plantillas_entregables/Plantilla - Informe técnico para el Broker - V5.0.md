@@ -1,6 +1,6 @@
 # Plantilla — Informe técnico para el Broker
 
-**Bloque A · Robot Investor · Versión óptima V5.0 · 02/11/2026** · Subordinado al Documento 0 óptima V5.0.
+**Bloque A · Robot Investor · Versión óptima V5.0 · 02/11/2026 · actualizado V5.1 (03/11/2026)** · Subordinado al Documento 0 óptima V5.1. Cambios V5.1: naturaleza de la inversión y horizonte principal en cada ficha; H5 (décadas) con hitos HIT-; supuestos declarados por consultas al Broker sin respuesta (CT-23).
 
 > **Uso.** Plantilla del entregable 14.1 del Documento 0. La rellena **AG-17 Redactor y Diseñador de Informes** a partir del paquete de síntesis (CT-15) y la publica **AG-01 Coordinador** por CT-02. Los marcadores `{{…}}` se sustituyen por valores del paquete; los bloques entre `<!-- REPETIR: … -->` y `<!-- FIN REPETIR -->` se repiten por elemento y se eliminan si no hay ninguno; un comentario `<!-- REPETIR (fila con marcadores de la tabla siguiente): … -->` indica que la fila con marcadores de esa tabla se repite tantas veces como elementos haya (los comentarios se colocan fuera de las tablas para no romper su formato). Las líneas que empiezan por `> Instrucción:` se borran del entregable final.
 >
@@ -8,7 +8,7 @@
 > 1. **Mismos números en los tres entregables**: toda cifra, puntuación, estado, banda o identificador de este informe es idéntica a la del paquete JSON (`Paquetes JSON/`) y a la del informe visual del mismo `run_id`. El JSON es la fuente de verdad; ante discrepancia se corrige el origen y se regeneran los tres.
 > 2. **Trazabilidad (R7)**: cada afirmación material lleva su `CLM-`; cada cifra, su `CALC-` o su dato HT-01 con fecha. No se calcula nada al redactar.
 > 3. **Vocabulario de confianza** en cada conclusión: *establecido · probable · especulativo · en disputa*.
-> 4. **R13**: sin certificado del Evaluador, ningún horizonte lleva probabilidad numérica; se usa la banda («más probable que no», «incierto», «poco probable») y la etiqueta «sin ventaja demostrada todavía».
+> 4. **R13**: sin certificado del Evaluador, ningún horizonte lleva probabilidad numérica; en **H5** (décadas) nunca, y el pronóstico se presenta con sus hitos intermedios HIT-; se usa la banda («más probable que no», «incierto», «poco probable») y la etiqueta «sin ventaja demostrada todavía».
 > 5. **R14**: si un tipo de activo tiene menos de tres opciones, se explica; nunca se rellena.
 > 5 bis. **Frontera con el Bloque B (R21)**: el informe habla de **ámbitos** (mercado, región, sector, subsector, temática, segmento, factor o estrategia) en los doce tipos de activo, nunca de activos concretos. No se seleccionan ni comparan valores, emisiones, fondos, contratos o tokens, ni sus costes o plataformas: eso lo hace el Bloque B con el encargo de cada opción. Los nombres concretos solo aparecen como «Ejemplos ilustrativos del ámbito (no son propuestas)».
 > 6. Registro formal, conciso, sin adornos. Tablas para lo comparable; prosa breve para el razonamiento.
@@ -128,6 +128,7 @@
 | Confianza global | {{CONFIANZA}} |
 | Relevancia decisional · reversibilidad | {{RELEVANCIA_DECISIONAL}} · {{REVERSIBILIDAD}} |
 | Liquidez del ámbito | {{LIQUIDEZ}} |
+| Naturaleza de la inversión · horizonte principal | {{NATURALEZA_INVERSION}} · **{{HORIZONTE_PRINCIPAL}}** {{JUSTIFICACION_HORIZONTE}} (8.3: TACTICA H1–H2 · LIQUIDEZ H1–H3 · CICLICA y PRIMA_RIESGO H2–H4 · VALORACION H3–H4 · ESTRUCTURAL H4–H5) |
 | Siguiente paso sugerido | **{{SIGUIENTE_PASO}}** |
 
 **Tesis.** {{TESIS}} *(`{{CLM_TESIS}}`)*
@@ -150,6 +151,14 @@
 | Horizonte | Vista | Banda / probabilidad | Certificado R13 | `PRG-` | Fecha y criterio de resolución |
 |---|---|---|---|---|---|
 | {{H}} | {{VISTA}} | {{BANDA_O_PROB}} | {{CERTIFICADO}} | `{{PRG_ID}}` | {{FECHA_RESOLUCION}} — {{CRITERIO}} |
+
+<!-- REPETIR solo si la opción tiene H5 (V5.1): HITOS_H5 -->
+**Hitos intermedios del pronóstico H5 `{{PRG_ID_H5}}`** (probabilidad siempre cualitativa; se evalúa por sus hitos, 8.3 y 12.1). Tesis estructural: {{TESIS_ESTRUCTURAL}}
+
+| `HIT-` | Fecha | Indicador | Criterio | Banda | Estado |
+|---|---|---|---|---|---|
+| `{{HIT_ID}}` | {{FECHA_HITO}} | {{INDICADOR_HITO}} | {{CRITERIO_HITO}} | {{BANDA_HITO}} | {{ESTADO_HITO}} |
+<!-- FIN REPETIR -->
 
 **Catalizadores.** {{CATALIZADORES}} (evento · fecha)
 
@@ -222,7 +231,7 @@
 
 ## 7. Limitaciones, lagunas y qué no sabemos
 
-> Instrucción: lista honesta, priorizada por impacto en la decisión. Incluir: celdas sin certificado R13, datos desactualizados (PS2), fuentes retiradas, reducciones de alcance, degradaciones de herramientas, dependencia de una sola raíz.
+> Instrucción: lista honesta, priorizada por impacto en la decisión. Incluir (V5.1) los **supuestos declarados** de las consultas al Broker sin respuesta, con su `CNS-` y su efecto si fueran falsos, y los servicios degradados por falta de credencial (CT-25); y además: celdas sin certificado R13, datos desactualizados (PS2), fuentes retiradas, reducciones de alcance, degradaciones de herramientas, dependencia de una sola raíz.
 
 <!-- REPETIR: LIMITACION -->
 - {{LIMITACION}} — efecto: {{EFECTO}}.

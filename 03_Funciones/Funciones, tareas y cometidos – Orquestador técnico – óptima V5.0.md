@@ -1,6 +1,6 @@
 # Funciones, tareas y cometidos — Orquestador técnico
 
-**Bloque A · Robot Investor · Versión óptima V5.0 · 02/11/2026** · Subordinado al Documento 0 óptima V5.0.
+**Bloque A · Robot Investor · Versión óptima V5.0 · 02/11/2026 · actualizado V5.1 (03/11/2026)** · Subordinado al Documento 0 óptima V5.1. Cambios V5.1: ORQ-F18 y ORQ-F19 (dictámenes G3 de horizonte principal y H5; supervisión de seguimientos, consultas y credenciales).
 
 ---
 
@@ -32,6 +32,8 @@ Es propietario único del Historial de auditorías (HA) y eleva al operador las 
 | ORQ-F15 | Informes al operador | Informe mensual (G3, auditoría, guías, carga, presupuesto, conocimiento, cola de tipo 3, limitaciones); escalado inmediato de Críticas | Mensual; inmediato para Críticas | HA | Informe de gobernanza | Canal del operador |
 | ORQ-F16 | Revisión trimestral | Preparar dossier (calibración y certificados del CT-19, cuellos de botella, eficacia de guías, salud del conocimiento, FMEA del catálogo G3, tasa de escape, concordancia de severidades, madurez R22); participar con Evaluador y operador | Trimestral | HA, CT-19, F6 | Dossier y actas en HA | HA; CT-19 |
 | ORQ-F17 | Seguridad e incidencias | Aislar credenciales o datos personales sin copiarlos; registrar instrucciones incrustadas; rechazar canales no previstos (R2); gestionar modos degradados (HT-09, HT-08, HT-07 caídos, Auditor o Motor no disponibles) | Cuando se produzca | Cualquier mensaje o paquete | Incidencias INC-; escalados | HA |
+| ORQ-F18 | Dictamen G3 de horizontes (V5.1) | Dictaminar las advertencias de HT-09 sobre horizonte principal (fuera del rango de su naturaleza con justificación; celda «Limitado» sin catalizador) y confirmar los bloqueos (principal ausente, celda «No», fuera de rango sin justificación, H5 sin hitos o con probabilidad numérica); validar también los informes de seguimiento de opción | Cada CT-14 con advertencias o bloqueo | Resultado de HT-09; Documento 0, 8.3 | Dictamen motivado | CT-14; HA |
+| ORQ-F19 | Supervisión de los canales V5.1 | Incluir en la vigilancia de carga los ciclos C6 (prioridad inferior a C1–C3, consumo frente a 2 UC); revisar en HA incidencias de credenciales expuestas en mensajes (sin copiar el valor) y consultas CT-23 vencidas o excesivas (> 3 por RUN-) | Continua; informe mensual | HT-08; F5; F11 | Guías CT-18; alertas | CT-18; HA |
 
 ## 3. Indicadores de desempeño
 

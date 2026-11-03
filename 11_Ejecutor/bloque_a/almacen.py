@@ -1,4 +1,4 @@
-"""Almacén de archivos operativos del bloque (F1–F6, F10, RC, HA) en JSONL append-only.
+"""Almacén de archivos operativos del bloque (F1–F6, F10, F11, RC, HA) en JSONL append-only.
 
 - Cada línea es una entrada con metadatos `_seq`, `_fecha` (fecha as_of en que se conoció), `_ts`,
   `_autor`, `_hash_prev` y `_hash` (cadena de integridad: cualquier modificación o borrado se detecta).
@@ -27,12 +27,13 @@ ARCHIVOS = {
     "F5": "F5_historial_analisis.jsonl",
     "F6": "F6_memoria_aprendizaje.jsonl",
     "F10": "F10_configuracion.jsonl",
+    "F11": "F11_registro_seguimientos.jsonl",    # V5.1: Registro de seguimientos encargados (CT-24)
     "RC": "RC_registro_calculos.jsonl",
     "HA": "HA_historial_auditorias.jsonl",
 }
 PROPIETARIOS = {"F1": {"AG-02"}, "F2": {"AG-12"}, "F3": {"AG-02"}, "F4": {"AG-10", "AG-20"}, "F5": {"AG-01"},
-                "F6": {"AG-20"}, "F10": {"AG-01", "AG-20", "OPERADOR"}, "RC": {"AG-13"}, "HA": {"AG-18"}}
-CLAVES = {"F1": "tnd_id", "F2": "id", "F3": "opp_id", "F4": "prg_id", "F5": "id", "F6": "id", "F10": "param_id",
+                "F6": {"AG-20"}, "F10": {"AG-01", "AG-20", "OPERADOR"}, "F11": {"AG-01"}, "RC": {"AG-13"}, "HA": {"AG-18"}}
+CLAVES = {"F1": "tnd_id", "F2": "id", "F3": "opp_id", "F4": "prg_id", "F5": "id", "F6": "id", "F10": "param_id", "F11": "seg_id",
           "RC": "calc_id", "HA": "id"}
 PARAMETROS_SERVICIO = {"P-01", "P-02", "P-03", "P-21", "P-29"}
 PARAMETROS_CALIBRABLES = {"P-05", "P-06", "P-07", "P-08", "P-09", "P-10", "P-11", "P-12", "P-17", "P-20", "P-22",

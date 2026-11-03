@@ -1,6 +1,6 @@
 # Esquema de archivo operativo — RC Registro de cálculos del Motor
 
-**Bloque A · Robot Investor · Versión óptima V4.0 · 01/11/2026** · Subordinado al Documento 0 óptima V5.0.
+**Bloque A · Robot Investor · Versión óptima V4.0 · 01/11/2026 · actualizado V5.1 (03/11/2026)** · Subordinado al Documento 0 óptima V5.1. Cambio V5.1: horizonte H5.
 
 ---
 
@@ -40,7 +40,7 @@ El Registro de cálculos (RC) conserva cada servicio del Motor de Cálculo Avanz
 | `solicitante` | Enumerado | Sí | AG-02 · AG-03…AG-09 · AG-10 · AG-18 · AG-19 · AG-20 (CT-09); AG-18 · AG-19 · AG-20 (CT-10) |
 | `operacion` | Objeto | Sí | `{method_id, method_version, ficha_id, ficha_version, catalog_version, familia, op_sin_ficha}` |
 | `perfil` | Lista | Sí | PERF-xx · TRANSVERSAL (combinados en híbridos) |
-| `clase` / `horizonte` | Enumerado | Si aplica | RV…ALT / H1–H4 |
+| `clase` / `horizonte` | Enumerado | Si aplica | RV…TCV (doce tipos) / H1–H5 |
 | `modo` | Enumerado | Sí | SYNC_CALC · ASYNC_CALC |
 | `plan` | Enumerado | Sí | PLAN_MIN · PLAN_STD · PLAN_EXT |
 | `modulos` | Lista | Sí | MC-01 … MC-10 (efectivos, no previstos) |

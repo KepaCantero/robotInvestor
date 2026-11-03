@@ -196,6 +196,28 @@ Una regla de puntuación es **propia** si el pronosticador minimiza su pérdida 
 
 Gneiting y Raftery (2007), «Strictly Proper Scoring Rules, Prediction, and Estimation», *JASA* · Brier (1950), *Monthly Weather Review* · Murphy (1973), «A New Vector Partition of the Probability Score», *Journal of Applied Meteorology* · Stephenson, Coelho y Jolliffe (2008), *Weather and Forecasting* · Bröcker y Smith (2007), «Increasing the Reliability of Reliability Diagrams», *Weather and Forecasting* · Matheson y Winkler (1976), *Management Science* · Gneiting, Balabdaoui y Raftery (2007), «Probabilistic Forecasts, Calibration and Sharpness», *JRSS B* · Diebold y Mariano (1995), «Comparing Predictive Accuracy», *JBES* · Harvey, Leybourne y Newbold (1997), *International Journal of Forecasting* · Diebold (2015), «Comparing Predictive Accuracy, Twenty Years Later», *JBES* · Clark y West (2007), «Approximately Normal Tests for Equal Predictive Accuracy in Nested Models», *Journal of Econometrics* · Giacomini y White (2006), «Tests of Conditional Predictive Ability», *Econometrica* · Pesaran y Timmermann (1992), *JBES* · White (2000), «A Reality Check for Data Snooping», *Econometrica* · Hansen (2005), «A Test for Superior Predictive Ability», *JBES* · Hansen, Lunde y Nason (2011), «The Model Confidence Set», *Econometrica* · Politis y Romano (1994), «The Stationary Bootstrap», *JASA* · Kupiec (1995), *Journal of Derivatives* · Christoffersen (1998), «Evaluating Interval Forecasts», *International Economic Review* · Acerbi y Székely (2014), «Backtesting Expected Shortfall», *Risk* · Lo (2002), «The Statistics of Sharpe Ratios», *FAJ* · Bailey y López de Prado (2012), «The Sharpe Ratio Efficient Frontier», *Journal of Risk* · Bailey y López de Prado (2014), «The Deflated Sharpe Ratio», *JPM* · Bailey, Borwein, López de Prado y Zhu (2017), «The Probability of Backtest Overfitting», *Journal of Computational Finance* · Harvey y Liu (2015), «Backtesting», *JPM* · Benjamini y Hochberg (1995), *JRSS B* · Tetlock y Gardner (2015), *Superforecasting* · Jolliffe y Stephenson (eds.) (2012), *Forecast Verification*, 2.ª ed.
 
+### 10.14 Complementos de verificación (áreas 58–60)
+
+- **Insesgadez y eficiencia** (Mincer y Zarnowitz, 1969): `y_t = a + b·ŷ_t + e_t`, contraste conjunto a = 0, b = 1 con HAC; b < 1 indica pronósticos demasiado extremos. **Englobamiento** (Harvey, Leybourne y Newbold, 1998): si el pronóstico 2 aporta información no contenida en el 1, la combinación supera a ambos; base para proponer combinaciones al Evaluador.
+- **Discriminación**: área bajo la curva ROC (AUC; 0,5 = azar) mide la capacidad de ordenar casos con independencia de la calibración; se entrega junto al Brier, nunca en su lugar.
+- **PIT con contraste formal**: prueba de Berkowitz (2001) sobre `Φ⁻¹(u_t)` (media 0, varianza 1, sin autocorrelación) además del histograma; en multivariante, *energy score* como generalización del CRPS.
+- **Acierto frente a valor económico**: acertar la dirección más a menudo no implica más rentabilidad si se fallan los movimientos grandes (Leitch y Tanner, 1991); acompaña el acierto de la rentabilidad media condicionada a la señal.
+- **Habilidad sobre referencia ingenua en distribuciones**: CRPSS = 1 − CRPS/CRPS_ref con la misma ventana y la misma fecha de corte que el pronóstico evaluado.
+- **Recorte por multiplicidad de un Sharpe** (Harvey y Liu, 2015): ajustar el p-valor del Sharpe por Bonferroni, Holm o BHY según los ensayos y convertirlo de nuevo en Sharpe «recortado»; segunda vía del DSR.
+
+### 10.15 Inventario de competencias
+
+- **Reglas propias**: Brier, Murphy, BSS, log-score, RPS, bandas cualitativas (10.1).
+- **Distribuciones**: CRPS, CRPSS, pinball, cobertura, Winkler, PIT, Berkowitz, *energy score* (10.2, 10.14).
+- **Dirección**: binomial con tasa base, Pesaran-Timmermann, potencia, valor económico (10.3, 10.14).
+- **Comparación**: DM con HLN, Clark-West, Giacomini-White, Reality Check, SPA, MCS, Holm/BH, Mincer-Zarnowitz, englobamiento, AUC (10.4, 10.14).
+- **Calibración**: fiabilidad con bandas, ECE y su nulo, recalibración, sobreconfianza (10.5).
+- **Incertidumbre**: bootstrap estacionario, BSS con IC, clúster por fecha (10.6).
+- **Riesgo**: Kupiec, Christoffersen, semáforo, ES (10.7).
+- **Backtesting**: datos a fecha, ejecución, costes, purga, EE del Sharpe, PSR, DSR, MinTRL, PBO, recorte de Harvey-Liu (10.8, 10.14).
+- **Resolución y fuentes**: criterio congelado, no hábiles, revisiones, eventos, encogimiento de fuentes, evaluación del top-3 (10.9–10.11).
+- **Errores típicos y referencias** (10.12, 10.13).
+
 ## 11. Formatos de salida y ejemplo breve
 
 Ejemplo (ilustrativo): FC-EVAL-001 + FC-CAL-001 para el Evaluador, celda RV × H3, 64 pronósticos resueltos.

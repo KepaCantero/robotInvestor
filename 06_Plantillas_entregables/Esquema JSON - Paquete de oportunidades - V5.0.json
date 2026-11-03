@@ -1,8 +1,8 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "urn:robot-investor:bloque-a:paquete-oportunidades:5.0",
-  "title": "Paquete de oportunidades del Bloque A (V5.0)",
-  "description": "Esquema del entregable 'paquete_oportunidades' (Documento 0 óptima V5.0, secciones 2.4–2.6, 9.6.7, 14.3 y Anexo B). Versión óptima V5.0 · 02/11/2026. Lo genera AG-17 Redactor a partir del paquete de síntesis (CT-15) y lo publica AG-01 Coordinador por CT-02. Las claves de 'clases' son los doce códigos de tipo de activo (2.6). Frontera con el Bloque B (2.5, R21): cada opción es un ÁMBITO de inversión (granularidad máxima: segmento) con su delimitación ('ambito'), su indicador de seguimiento y su invertibilidad; nunca un activo o instrumento concreto, ni sus costes o plataformas. Los nombres concretos solo pueden aparecer en 'ejemplos_ilustrativos'. 'paquete_para_bloque_B' es el encargo de 2.5. Contiene los campos mínimos del Anexo B más las ampliaciones del operador necesarias para los informes (regiones, lo_que_no_sabemos, estado de objeciones, certificados R13). Ampliaciones adicionales solo con prefijo 'x_' (patternProperties); cualquier otro campo no declarado se rechaza para detectar erratas. Las cifras deben coincidir exactamente con el informe técnico y el informe visual del mismo run_id.",
+  "$id": "urn:robot-investor:bloque-a:paquete-oportunidades:5.1",
+  "title": "Paquete de oportunidades del Bloque A (V5.1)",
+  "description": "Esquema del entregable 'paquete_oportunidades' (Documento 0 óptima V5.1, secciones 2.4–2.6, 9.6.7, 14.3 y Anexo B). Versión óptima V5.0 · 02/11/2026. Lo genera AG-17 Redactor a partir del paquete de síntesis (CT-15) y lo publica AG-01 Coordinador por CT-02. Las claves de 'clases' son los doce códigos de tipo de activo (2.6). Frontera con el Bloque B (2.5, R21): cada opción es un ÁMBITO de inversión (granularidad máxima: segmento) con su delimitación ('ambito'), su indicador de seguimiento y su invertibilidad; nunca un activo o instrumento concreto, ni sus costes o plataformas. Los nombres concretos solo pueden aparecer en 'ejemplos_ilustrativos'. 'paquete_para_bloque_B' es el encargo de 2.5. Contiene los campos mínimos del Anexo B más las ampliaciones del operador necesarias para los informes (regiones, lo_que_no_sabemos, estado de objeciones, certificados R13). Ampliaciones adicionales solo con prefijo 'x_' (patternProperties); cualquier otro campo no declarado se rechaza para detectar erratas. Las cifras deben coincidir exactamente con el informe técnico y el informe visual del mismo run_id. Actualizado V5.1 (03/11/2026): horizonte H5 (décadas) con banda cualitativa e hitos HIT-, `naturaleza_inversion` y `horizonte_principal` obligatorios por opción (regla de adecuación, 8.3), `supuestos_declarados` (CT-23).",
   "type": "object",
   "required": [
     "run_id",
@@ -35,7 +35,7 @@
     "methodology_version": {
       "type": "string",
       "pattern": "^[0-9]+\\.[0-9]+$",
-      "description": "Versión de metodología vigente en F10 (p. ej. 4.0, 4.1)."
+      "description": "Versión de metodología vigente en F10 (p. ej. 5.0, 5.1)."
     },
     "tipo": {
       "enum": [
@@ -437,6 +437,36 @@
     },
     "aviso_legal": {
       "type": "string"
+    },
+    "supuestos_declarados": {
+      "type": "array",
+      "description": "Supuestos aplicados por consultas al Broker (CT-23) sin respuesta (6.2.9); el Redactor los muestra y HT-09 los comprueba (C19).",
+      "items": {
+        "type": "object",
+        "required": [
+          "supuesto",
+          "cns_id"
+        ],
+        "properties": {
+          "supuesto": {
+            "type": "string",
+            "minLength": 5
+          },
+          "cns_id": {
+            "$ref": "#/$defs/cns_id"
+          },
+          "efecto_si_falso": {
+            "type": "string"
+          },
+          "clases": {
+            "type": "array",
+            "items": {
+              "$ref": "#/$defs/codigo_clase"
+            }
+          }
+        },
+        "additionalProperties": false
+      }
     }
   },
   "patternProperties": {
@@ -505,8 +535,10 @@
         "H1",
         "H2",
         "H3",
-        "H4"
-      ]
+        "H4",
+        "H5"
+      ],
+      "description": "H1 días · H2 semanas · H3 meses · H4 años (1–5) · H5 décadas (5–30) (8.3)."
     },
     "puntuacion_total": {
       "type": "integer",
@@ -686,7 +718,9 @@
         "lo_que_no_sabemos",
         "confianza",
         "evidencias",
-        "calculos"
+        "calculos",
+        "naturaleza_inversion",
+        "horizonte_principal"
       ],
       "properties": {
         "opp_id": {
@@ -781,12 +815,18 @@
           "propertyNames": {
             "$ref": "#/$defs/horizonte"
           },
+          "properties": {
+            "H5": {
+              "$ref": "#/$defs/vista_h5"
+            }
+          },
           "additionalProperties": {
             "$ref": "#/$defs/vista_horizonte"
           }
         },
         "horizonte_principal": {
-          "$ref": "#/$defs/horizonte"
+          "$ref": "#/$defs/horizonte",
+          "description": "Horizonte en el que la opción expresa su tesis central (8.3); debe figurar en 'horizontes', ser aplicable a su tipo y estar en el rango de su naturaleza (HT-09 C17)."
         },
         "valoracion": {
           "type": "string",
@@ -990,6 +1030,16 @@
             "string"
           ],
           "description": "Advertencia obligatoria de baja fiabilidad en horizontes de días (8.3)."
+        },
+        "naturaleza_inversion": {
+          "$ref": "#/$defs/naturaleza_inversion"
+        },
+        "justificacion_horizonte": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "description": "Obligatoria si el horizonte principal queda fuera del rango de su naturaleza (8.3)."
         }
       },
       "patternProperties": {
@@ -1138,9 +1188,11 @@
         },
         "banda": {
           "enum": [
+            "muy probable",
             "más probable que no",
             "incierto",
-            "poco probable"
+            "poco probable",
+            "muy poco probable"
           ]
         },
         "prob": {
@@ -1168,6 +1220,17 @@
         },
         "criterio_resolucion": {
           "type": "string"
+        },
+        "hitos": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/hito"
+          },
+          "description": "Solo en H5: ≥ 3 hitos HIT- (Anexo A)."
+        },
+        "tesis_estructural": {
+          "type": "string",
+          "description": "Solo en H5: tesis estructural de largo plazo."
         }
       },
       "additionalProperties": false,
@@ -1374,6 +1437,7 @@
         "ambito",
         "tesis",
         "mecanismo",
+        "horizonte_principal",
         "horizontes",
         "pronosticos",
         "catalizadores",
@@ -1669,6 +1733,91 @@
         "type": "string",
         "minLength": 2
       }
+    },
+    "hit_id": {
+      "type": "string",
+      "pattern": "^HIT-[0-9]{4}-[0-9]{4,6}$"
+    },
+    "cns_id": {
+      "type": "string",
+      "pattern": "^CNS-[0-9]{4}-[0-9]{4,6}$"
+    },
+    "naturaleza_inversion": {
+      "enum": [
+        "TACTICA",
+        "LIQUIDEZ",
+        "CICLICA",
+        "PRIMA_RIESGO",
+        "VALORACION",
+        "ESTRUCTURAL"
+      ],
+      "description": "Naturaleza de la inversión (8.3): fija el rango admisible del horizonte principal (TACTICA H1–H2, LIQUIDEZ H1–H3, CICLICA y PRIMA_RIESGO H2–H4, VALORACION H3–H4, ESTRUCTURAL H4–H5)."
+    },
+    "hito": {
+      "type": "object",
+      "description": "Hito intermedio verificable de un pronóstico H5 (8.3, Anexo A): se evalúa como un pronóstico ordinario de su propio horizonte.",
+      "required": [
+        "hit_id",
+        "fecha",
+        "indicador",
+        "criterio"
+      ],
+      "properties": {
+        "hit_id": {
+          "$ref": "#/$defs/hit_id"
+        },
+        "fecha": {
+          "type": "string",
+          "format": "date"
+        },
+        "indicador": {
+          "type": "string",
+          "minLength": 5
+        },
+        "criterio": {
+          "type": "string",
+          "minLength": 5
+        },
+        "banda": {
+          "type": "string"
+        },
+        "prg_id": {
+          "$ref": "#/$defs/prg_id"
+        },
+        "estado": {
+          "enum": [
+            "PENDIENTE",
+            "CUMPLIDO",
+            "FALLADO",
+            "NO_RESOLUBLE"
+          ]
+        }
+      },
+      "additionalProperties": false
+    },
+    "vista_h5": {
+      "description": "H5 (décadas): probabilidad siempre cualitativa (prob = null, sin certificado) y ≥ 3 hitos HIT- (R13, 8.3).",
+      "allOf": [
+        {
+          "$ref": "#/$defs/vista_horizonte"
+        },
+        {
+          "required": [
+            "hitos"
+          ],
+          "properties": {
+            "prob": {
+              "type": "null"
+            },
+            "certificado_r13": {
+              "const": false
+            },
+            "hitos": {
+              "minItems": 3
+            }
+          }
+        }
+      ]
     }
   }
 }

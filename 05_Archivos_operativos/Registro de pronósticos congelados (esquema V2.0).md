@@ -1,12 +1,12 @@
 # Esquema de archivo operativo — F4 Registro de pronósticos congelados
 
-**Bloque A · Robot Investor · Versión óptima V4.0 · 01/11/2026** · Subordinado al Documento 0 óptima V5.0.
+**Bloque A · Robot Investor · Versión óptima V4.0 · 01/11/2026 · actualizado V5.1 (03/11/2026)** · Subordinado al Documento 0 óptima V5.1. Cambios V5.1: horizonte H5 (décadas) con solo banda verbal e hitos intermedios HIT- (4.3); `es_principal`; estado de los pronósticos H5 derivado de sus hitos (5.1); doce tipos de activo en `clase`.
 
 ---
 
 ## 1. Propósito
 
-F4 conserva cada **pronóstico verificable** (PRG-) que el bloque emite, congelado en su fecha con su horizonte (H1–H4), su afirmación, su probabilidad interna y su banda, su criterio y fecha de resolución y su referencia ingenua; y, cuando vence, su **resolución** y puntuación. Es la base de la evaluación sin fuga de información, de los certificados de horizonte (R13), del historial de aciertos y de la recalibración (sección 12 del Documento 0).
+F4 conserva cada **pronóstico verificable** (PRG-) que el bloque emite, congelado en su fecha con su horizonte (H1–H5), su afirmación, su probabilidad interna y su banda (en H5, solo la banda y sus hitos HIT-), su criterio y fecha de resolución y su referencia ingenua; y, cuando vence, su **resolución** y puntuación. Es la base de la evaluación sin fuga de información, de los certificados de horizonte (R13), del historial de aciertos y de la recalibración (sección 12 del Documento 0).
 
 **No es editable hacia atrás** (R11): nadie retoca un pronóstico congelado. Incluye los pronósticos de finalistas no seleccionadas (`en_informe: false`) para medir falsos negativos.
 
@@ -24,7 +24,8 @@ F4 conserva cada **pronóstico verificable** (PRG-) que el bloque emite, congela
 
 1. **Congelación**: la entrada de alta no se modifica jamás. Una corrección es un PRG nuevo con `version_de` = PRG anterior; **el original sigue evaluándose** en su fecha (impide «corregir» los pronósticos que van mal) y la versión nueva se evalúa desde su propia congelación.
 2. **Separación de escritura**: los campos de alta los escribe solo Prospectiva; los de resolución solo el Evaluador. Cualquier otra escritura es incidencia Material.
-3. **Probabilidad**: `prob_interna` se registra siempre (en rejilla de 5 puntos, 5–95 %; 15–85 % sin certificado); `prob_publicada` solo con certificado vigente (`certificado_ref`).
+3. **Probabilidad**: `prob_interna` se registra siempre (en rejilla de 5 puntos, 5–95 %; 15–85 % sin certificado), **salvo en H5**, donde se registra solo la banda verbal; `prob_publicada` solo con certificado vigente (`certificado_ref`), que H5 nunca obtiene (R13).
+3 bis. **H5 (V5.1)**: todo PRG H5 lleva ≥ 3 hitos HIT- (el primero a ≤ 12 meses, ≤ 24 meses entre hitos), dados de alta en la misma congelación; cada hito es un pronóstico ordinario de su propio horizonte (con su `prob_interna`), se resuelve en su fecha y es lo que se evalúa (12.1). El PRG H5 no se puntúa con Brier ni log-score antes de su vencimiento.
 4. **Sin fuga**: nada en el alta puede ser posterior a `fecha_congelacion`; el nivel de referencia respeta la antigüedad máxima de PS2.
 5. **Universo completo**: todos los PRG se resuelven, incluidos los de opciones cerradas, invalidadas o descartadas por el Broker. La invalidación de una opción no anula sus PRG.
 6. **NO_RESOLUBLE** solo con motivo (dato inexistente tras fallback, afirmación ambigua, variable discontinuada); se cuenta y se publica.
@@ -40,8 +41,9 @@ F4 conserva cada **pronóstico verificable** (PRG-) que el bloque emite, congela
 | `version_de` | Identificador | No | PRG- anterior | Corrección |
 | `opp_id` / `tnd_ids` | Identificadores | Sí / No | OPP- / TND- | Vínculos |
 | `run_id` | Identificador | Sí | RUN- | Ejecución |
-| `clase` | Enumerado | Sí | RV · RF · DIV · MP · INM · CRI · ALT | Celda |
-| `horizonte` | Enumerado | Sí | H1 · H2 · H3 · H4 | Celda (aplicable según 8.3 vigente) |
+| `clase` | Enumerado | Sí | RV · RF · DIV · MP · IDX · FON · DER · INM · CRI · ALT · MON · TCV | Celda |
+| `horizonte` | Enumerado | Sí | H1 · H2 · H3 · H4 · H5 | Celda (aplicable según 8.3 vigente; un hito HIT- lleva el horizonte de su propio plazo) |
+| `es_principal` | Booleano | Sí (V5.1) | — | Pronóstico del horizonte principal de la opción (8.3) |
 | `estrategia` | Texto codificado | Sí | Lente de la clase (p. ej. RV-REVISIONES, RF-CARRY, DIV-PPA) | Celda de diagnóstico |
 | `tipo_opcion` | Enumerado | Sí | Tipos de 2.4 | Celda de diagnóstico |
 | `tipo_pronostico` | Enumerado | Sí | DIRECCIONAL · RELATIVO · RANGO · UMBRAL · EVENTO · CUANTIL | Forma |
@@ -55,7 +57,7 @@ F4 conserva cada **pronóstico verificable** (PRG-) que el bloque emite, congela
 | `fuente_resolucion` | Texto | Sí | Serie HT-01 o fuente oficial | — |
 | `regla_fallback` | Texto | Sí | Fuente alternativa, festivos, revisiones | — |
 | `banda_verbal` | Enumerado | Sí | MUY_PROBABLE · MAS_PROBABLE_QUE_NO · INCIERTO · POCO_PROBABLE · MUY_POCO_PROBABLE | Correspondencia fija (80–95 %, 60–75 %, 45–55 %, 25–40 %, 5–20 %) |
-| `prob_interna` | Número | Sí | 0,05–0,95 (rejilla 0,05) | Siempre registrada |
+| `prob_interna` | Número o null | Sí | 0,05–0,95 (rejilla 0,05); null en H5 | Siempre registrada salvo en H5 |
 | `prob_publicada` | Número o null | Sí | null salvo certificado | R13 |
 | `certificado_ref` | Identificador | Si `prob_publicada` | CERT- | — |
 | `metodo` | Texto | Sí | Método o combinación (method_id del Catálogo) | Celda de certificación |
@@ -64,6 +66,16 @@ F4 conserva cada **pronóstico verificable** (PRG-) que el bloque emite, congela
 | `escenario_asociado` | Texto | Sí | BASE · FAVORABLE · ADVERSO | — |
 | `en_informe` | Booleano | Sí | — | Publicado o no |
 | `estado` | Enumerado | Sí | ABIERTO al alta | — |
+
+### 4.3 Campos propios de H5 y de sus hitos (V5.1)
+
+| Campo | Tipo | Oblig. | Valores / formato | Descripción |
+|---|---|---|---|---|
+| `hit_ids` | Lista | Sí en H5 | ≥ 3 `HIT-AAAA-NNNN` | Hitos de la senda del PRG H5 |
+| `tesis_estructural` | Texto | Sí en H5 | — | Tesis de largo plazo que sostiene el H5 |
+| `prg_padre` | Identificador | Sí en un hito | PRG- H5 | Vínculo del hito con su pronóstico H5 |
+| `es_hito` / `necesario` | Booleanos | Sí en un hito | — | Un hito necesario fallado invalida el H5 |
+| (resto de campos) | — | Sí en un hito | Los de 4.1 | Fecha, indicador (`variable`), criterio y fuente de resolución, banda y `prob_interna` propias |
 
 ### 4.2 Campos de resolución (exclusivos del Evaluador)
 
@@ -92,6 +104,10 @@ F4 conserva cada **pronóstico verificable** (PRG-) que el bloque emite, congela
 
 No existen estados «anulado» ni «invalidado»: la invalidación de una opción no detiene la resolución.
 
+### 5.1 Estado derivado de un pronóstico H5 (V5.1, 12.1)
+
+El Evaluador publica en F6 (no en F4) el estado de cada PRG H5 a partir de sus hitos resueltos: `EN_CURSO_CONFORME` (todos cumplidos, o como mucho uno fallado que no sea el último), `DESVIADO` (dos o más fallados, o el último fallado), `INVALIDADO` (se activa la invalidación o falla un hito `necesario`). Por celda tipo × H5 publica la tasa de hitos cumplidos (P-42 de F10). Al vencer, el PRG H5 se resuelve solo de forma descriptiva.
+
 ## 6. Índices de consulta
 
 | Índice | Clave | Uso |
@@ -104,6 +120,7 @@ No existen estados «anulado» ni «invalidado»: la invalidación de una opció
 | Publicados / no publicados | `en_informe` | Falsos negativos; sesgo de selección |
 | Por banda | `banda_verbal` | Sobreconfianza por banda |
 | Versiones | `version_de` | Trazabilidad de correcciones |
+| Hitos H5 (V5.1) | `prg_padre`, `fecha_resolucion` | Recordatorios de HT-05; estado del H5 |
 
 ## 7. Ejemplo ficticio
 

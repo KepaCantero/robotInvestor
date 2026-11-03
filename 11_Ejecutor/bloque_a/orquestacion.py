@@ -25,15 +25,17 @@ from . import sintesis as sint
 from .agentes import Agentes
 from .almacen import Almacen, Reloj
 from .anonimizacion import Anonimizador
-from .configuracion import CLASES, HORIZONTES, NOMBRE_CLASE, aplicabilidad
+from .configuracion import ANTIGUEDAD_PS2, CLASES, HORIZONTES, NOMBRE_CLASE, aplicabilidad
 from .consumo import Contabilidad, Presupuesto
 from .contratos import AGENTE_CLASE, ESQUEMAS, Mensajeria, contiene_credenciales, sanear_contenido_externo, sanear_estructura
-from .evaluador import Evaluador, banda_de, banda_publicable
+from .evaluador import PROB_DE_BANDA, Evaluador, banda_de, banda_publicable
 from .herramientas import ht03, ht09
 from .herramientas.ht01_datos import DatosNoDisponibles
 from .herramientas.ht05_planificador import fecha_resolucion
 from .herramientas.ht06_indice import CacheResultados, Indice, RE_ID, clave_hash, normalizar
 from .herramientas.ht08_monitor import Monitor
+from .interfaz_broker import ConsultasBroker, Credenciales
+from .seguimiento import Seguimientos
 from .llm import LLMClient, Uso
 from .motor import Motor
 from .redaccion import Redaccion
@@ -105,6 +107,11 @@ class Bloque:
         self.params_ht03 = ht03.fusionar_parametros(cfg.get("_parametros_ht03"))
         self._incidencias_universo_registradas = False
         self._inicializar_f10()
+        # V5.1: comunicación fluida con el Broker (CT-23), credenciales en la bóveda de HT-01 (CT-25) y
+        # seguimientos encargados de opción (CT-24, ciclo C6, F11)
+        self.consultas = ConsultasBroker(self)
+        self.credenciales = Credenciales(self, Path(carpeta_estado) / "boveda")
+        self.seguimientos = Seguimientos(self)
 
     # ====================================================================================
     # Utilidades
@@ -355,6 +362,14 @@ class Bloque:
         f10 = self.f10(as_of)
         activas = list(f10.get("P-02") or CLASES)
         clases = [c for c in ((alcance or {}).get("clases") or activas) if c in activas]
+        # V5.1 (7.9): las consultas CT-23 vencidas siguen con su supuesto declarado; una BLOQUEANTE sin respuesta pausa
+        # en este punto de control (F0) los tipos de activo afectados, y el resto del análisis sigue
+        self.consultas.vencer(as_of)
+        pausadas = self.consultas.clases_pausadas(as_of, clases)
+        if pausadas and len(pausadas) < len(clases):
+            clases = [c for c in clases if c not in pausadas]
+            limitaciones += [f"{NOMBRE_CLASE[c]}: pausado en F0 a la espera de la respuesta del Broker a {k} (consulta BLOQUEANTE, R26)"
+                             for c, k in sorted(pausadas.items())]
         hz_interes = horizontes or list(f10.get("P-03") or HORIZONTES)
         vigentes = {c: self.vigentes(as_of, c) for c in clases}
         gc0 = {c: self.gc0(c, as_of, vigentes[c]) for c in clases}
@@ -411,6 +426,8 @@ class Bloque:
         historial = self.evaluador.historial_aciertos(as_of)
         paquete, extras = sint.construir(self, run_id, tipo, as_of, clases, nivel, gc0, analisis, seleccion, clusteres, integ,
                                          historial, presupuesto)
+        if limitaciones:
+            paquete["limitaciones"] = limitaciones + [x for x in paquete["limitaciones"] if not x.startswith("Ninguna limitación")]
         # F6 · G3 (HT-09) + dictamen del Orquestador si no es APTO
         paquete, g3 = self._validar_g3(paquete, extras, as_of, run_id)
         estado_run = "COMPLETO"
@@ -839,7 +856,7 @@ class Bloque:
     def _puertas(self, f: Dict, nivel: str, as_of, horizontes_ok: List[str]) -> Dict[str, bool]:
         fecha_dato = f["senales"].get("fecha_dato")
         edad = (pd.Timestamp(as_of) - pd.Timestamp(fecha_dato)).days if fecha_dato else 999
-        lim = {"H1": 1, "H2": 3, "H3": 7, "H4": 30}
+        lim = ANTIGUEDAD_PS2
         ps2 = bool(horizontes_ok) and all(edad <= lim[h] + (2 if h == "H1" else 0) for h in horizontes_ok)
         refut = f.get("_refutacion")
         fuertes_abiertas = sum(1 for o in f.get("_objeciones", []) if o["fuerza"] == "fuerte" and not o["resuelta"])
@@ -1009,7 +1026,8 @@ class Bloque:
             p = abiertos.get(d.get("prg_id"))
             if p is None:
                 continue
-            base = {"vista": d["vista"], "prob_interna": p["prob_interna"], "afirmacion": p["afirmacion"],
+            prob = p["prob_interna"] if p.get("prob_interna") is not None else PROB_DE_BANDA.get(p.get("banda_verbal"), 0.5)
+            base = {"vista": d["vista"], "prob_interna": prob, "afirmacion": p["afirmacion"],
                     "escenario": p.get("escenario_asociado", "BASE"), "metodo": p.get("metodo")}
             if p.get("estado") == "ABIERTO":
                 hz[h] = {**base, "prg_existente": p["prg_id"]}
@@ -1123,6 +1141,8 @@ class Bloque:
         sel_ids = {o["opp_id"]: o for c in extras["paquete_clases"] for o in extras["paquete_clases"][c]}
         prg_por_opp: Dict[str, Dict] = {}
         for p in extras["prg_borradores"]:
+            if p.get("es_hito"):
+                continue
             prg_por_opp.setdefault(p["opp_id"], {})[p["horizonte"]] = {"prg_id": p.get("prg_existente") or p["prg_id"], "vista": p["vista"]}
         for c in seleccion:
             for f in seleccion[c]["candidatos"]:
@@ -1151,6 +1171,7 @@ class Bloque:
                      "objeciones_internas": f.get("_objeciones", []), "premortem": f.get("premortem"), "cluster_id": f.get("_cluster"),
                      "ps1": f.get("_ps1"), "evidencias": f.get("_evidencias", []), "tipo_pronostico": f.get("_tipo_pronostico"),
                      "referencia_indice": f.get("_referencia"), "horizontes_prg": prg_por_opp.get(f["opp_id"], {}),
+                     "naturaleza_inversion": f.get("_naturaleza"), "horizonte_principal": f.get("_hp"),
                      "estado": estado, "de": (previa or {}).get("estado"), "rango_top3": (sel_ids.get(f["opp_id"]) or {}).get("rango"),
                      "run_ids": ((previa or {}).get("run_ids") or []) + [run_id], "confianza": (sel_ids.get(f["opp_id"]) or {}).get("confianza")}
                 self.almacen.escribir("F3", "AG-02", e)

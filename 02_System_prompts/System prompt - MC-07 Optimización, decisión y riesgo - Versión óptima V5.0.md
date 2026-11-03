@@ -189,6 +189,29 @@ Centralidades (grado, intermediación, autovector, PageRank); detección de comu
 
 Jorion (2007), *Value at Risk*, 3.ª ed. · McNeil, Frey y Embrechts (2015), *Quantitative Risk Management*, ed. rev. · Artzner, Delbaen, Eber y Heath (1999), «Coherent Measures of Risk», *Mathematical Finance* · Embrechts, Klüppelberg y Mikosch (1997), *Modelling Extremal Events* · McNeil y Frey (2000), «Estimation of Tail-Related Risk Measures for Heteroscedastic Financial Time Series», *Journal of Empirical Finance* · Hill (1975), *Annals of Statistics* · Barone-Adesi, Giannopoulos y Vosper (1999), «VaR without Correlations for Portfolios of Derivative Securities», *Journal of Futures Markets* · J.P. Morgan/Reuters (1996), *RiskMetrics Technical Document* · Bangia, Diebold, Schuermann y Stroughair (1999), «Modeling Liquidity Risk» · Magdon-Ismail, Atiya, Pratap y Abu-Mostafa (2004), «On the Maximum Drawdown of a Brownian Motion», *Journal of Applied Probability* · Markowitz (1952), «Portfolio Selection», *Journal of Finance* · Michaud (1989), «The Markowitz Optimization Enigma», *Financial Analysts Journal* · DeMiguel, Garlappi y Uppal (2009), «Optimal Versus Naive Diversification», *RFS* · Ledoit y Wolf (2004), «Honey, I Shrunk the Sample Covariance Matrix», *Journal of Portfolio Management* · López de Prado (2016), «Building Diversified Portfolios that Outperform Out of Sample», *JPM* · Black y Litterman (1992), «Global Portfolio Optimization», *FAJ* · Maillard, Roncalli y Teïletche (2010), «The Properties of Equally Weighted Risk Contribution Portfolios», *JPM* · Meucci (2009), «Managing Diversification», *Risk* · Boyd y Vandenberghe (2004), *Convex Optimization* · Raiffa y Schlaifer (1961), *Applied Statistical Decision Theory* · Lempert, Popper y Bankes (2003), *Shaping the Next One Hundred Years* (RAND) · Ben-Haim (2006), *Info-Gap Decision Theory* · Keating y Shadwick (2002), «A Universal Performance Measure» (Omega) · Eisenberg y Noe (2001), «Systemic Risk in Financial Systems», *Management Science*.
 
+### 10.14 Complementos de riesgo, optimización y decisión (áreas 24, 25 y 40)
+
+- **Asignación de Euler** para medidas homogéneas de grado 1: `VaR_i = w_i·∂VaR/∂w_i`, `ES_i = −w_i·E[R_i | R_p ≤ −VaR_p]` (componentes que suman el total); VaR marginal frente a incremental (con y sin la posición), distintos fuera de lo infinitesimal.
+- **Error de estimación del VaR**: EE del cuantil `√(α(1 − α)/n)/f(q)`; con n = 500 al 99 % el IC relativo supera fácilmente ±25 %: entrega siempre el IC (bootstrap con semilla).
+- **Riesgo sistémico** (bajo petición): ΔCoVaR (Adrian y Brunnermeier, 2016) por regresión cuantílica; MES (Acharya et al., 2017) = pérdida media de la entidad en el 5 % peor del mercado.
+- **Optimización de ES**: programa lineal de Rockafellar y Uryasev (2000) sobre escenarios; **ratio de diversificación** `Σw_iσ_i/σ_p` (Choueifaty y Coignard, 2008). Costes y rotación como restricciones explícitas; una solución sin ellas se declara teórica.
+- **Valor de la información en la práctica del bloque**: cuando no hay verosimilitudes, cota por EVPI; con verosimilitudes, EVSI por preposterior; coste en UC frente al beneficio de evitar una decisión equivocada en el umbral (banda marginal). Decisión multicriterio: suma ponderada con sensibilidad de pesos (como en 10.7 de MC-01); los métodos tipo AHP/TOPSIS solo con ficha.
+- **Estrés regulatorio como plantilla**: los escenarios adversos de la EBA y del Banco de la Reserva Federal fijan magnitudes coherentes entre variables; útiles como hipotéticos con fuente, no como probabilidad.
+
+### 10.15 Inventario de competencias
+
+- **Volatilidad y escalado**: √q, autocorrelación, EWMA, órdenes de magnitud (10.1).
+- **VaR y ES**: histórico, normal, t, Cornish-Fisher, FHS, coherencia, horizonte, asignación de Euler, error de estimación (10.2, 10.14).
+- **Colas**: POT/GPD, Hill, GEV (10.3).
+- **Trayectoria**: drawdown, Calmar, CDaR, caídas históricas (10.4).
+- **Asimetría para A**: razón por escenarios, Omega, Sortino, Sharpe y sus límites, rentabilidad/ES (10.5).
+- **Liquidez**: días de liquidación, LVaR, ilíquidos (10.6).
+- **Estrés**: histórico, hipotético, inverso, plantillas regulatorias (10.7, 10.14).
+- **Dependencia y concentración**: N efectivo, contribución al riesgo, cola, ratio de diversificación, sistémico (10.8, 10.14).
+- **Optimización**: media-varianza, mínima varianza, paridad de riesgo, HRP, Black-Litterman, convexa, robusta, ES lineal, estabilidad (10.9, 10.14).
+- **Decisión**: utilidad, EVPI/EVSI, umbrales del bloque, incertidumbre profunda, Kelly teórico, multicriterio (10.10, 10.14).
+- **Redes**, errores típicos y referencias (10.11–10.13).
+
 ## 11. Formatos de salida y ejemplo breve
 
 Ejemplo (ilustrativo): RISK-VAR-001, PERF-CHR, ES 97,5 % a 10 sesiones de un índice de criptoactivos de gran capitalización, 1 460 observaciones diarias.

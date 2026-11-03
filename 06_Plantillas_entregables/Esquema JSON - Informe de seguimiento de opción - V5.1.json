@@ -1,0 +1,364 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:robot-investor:bloque-a:informe-seguimiento-opcion:5.1",
+  "title": "Informe de seguimiento de opción del Bloque A (V5.1)",
+  "description": "Esquema del JSON 'informe_seguimiento_opcion' (Documento 0 óptima V5.1, 7.11, 14.4 y Anexo B): uno por ciclo C6 y encargo CT-24. Nuevo en V5.1 (03/11/2026). HT-09 lo valida con el perfil SEGUIMIENTO (validar_seguimiento).",
+  "type": "object",
+  "required": [
+    "seg_id",
+    "opp_id",
+    "run_id",
+    "ciclo",
+    "fecha",
+    "tipo_activo",
+    "horizonte_principal",
+    "sin_novedad",
+    "semaforo",
+    "que_ha_cambiado",
+    "senales_interes",
+    "invalidacion",
+    "catalizadores",
+    "puntuaciones",
+    "pronosticos_abiertos",
+    "recomendacion",
+    "motivo",
+    "sugerir_profundizacion_N3",
+    "paquete_para_bloque_B",
+    "supuestos_declarados",
+    "limitaciones"
+  ],
+  "properties": {
+    "seg_id": {
+      "type": "string",
+      "pattern": "^SEG-[0-9]{4}-[0-9]{4,6}$"
+    },
+    "opp_id": {
+      "type": "string",
+      "pattern": "^OPP-[0-9]{4}-[0-9]{4,6}$"
+    },
+    "run_id": {
+      "type": "string",
+      "pattern": "^RUN-[0-9]{4}-[0-9]{4,6}$"
+    },
+    "ciclo": {
+      "type": "integer",
+      "minimum": 1
+    },
+    "fecha": {
+      "type": "string",
+      "format": "date"
+    },
+    "tipo_activo": {
+      "enum": [
+        "RV",
+        "RF",
+        "DIV",
+        "MP",
+        "IDX",
+        "FON",
+        "DER",
+        "INM",
+        "CRI",
+        "ALT",
+        "MON",
+        "TCV"
+      ]
+    },
+    "horizonte_principal": {
+      "enum": [
+        "H1",
+        "H2",
+        "H3",
+        "H4",
+        "H5"
+      ]
+    },
+    "sin_novedad": {
+      "type": "boolean",
+      "description": "Ciclo sin cambio material: informe de pocas líneas (14.4)."
+    },
+    "semaforo": {
+      "enum": [
+        "VERDE",
+        "AMBAR",
+        "ROJO"
+      ],
+      "description": "VERDE: la tesis mejora; AMBAR: sin cambio material o señales mixtas; ROJO: deterioro o invalidación cercana."
+    },
+    "que_ha_cambiado": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "senales_interes": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": [
+          "senal",
+          "estado"
+        ],
+        "properties": {
+          "senal": {
+            "type": "string"
+          },
+          "estado": {
+            "type": "string"
+          }
+        },
+        "additionalProperties": false
+      }
+    },
+    "invalidacion": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": [
+          "condicion",
+          "distancia",
+          "activada"
+        ],
+        "properties": {
+          "condicion": {
+            "type": "string"
+          },
+          "distancia": {
+            "type": "string"
+          },
+          "activada": {
+            "type": "boolean"
+          }
+        },
+        "additionalProperties": false
+      }
+    },
+    "catalizadores": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": [
+          "evento",
+          "fecha",
+          "estado"
+        ],
+        "properties": {
+          "evento": {
+            "type": "string"
+          },
+          "fecha": {
+            "type": "string"
+          },
+          "estado": {
+            "enum": [
+              "PENDIENTE",
+              "OCURRIDO",
+              "APLAZADO"
+            ]
+          }
+        },
+        "additionalProperties": false
+      }
+    },
+    "puntuaciones": {
+      "type": "object",
+      "required": [
+        "T",
+        "E",
+        "A",
+        "RK",
+        "elegible"
+      ],
+      "properties": {
+        "T": {
+          "anyOf": [
+            {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 100
+            },
+            {
+              "const": "NA"
+            }
+          ]
+        },
+        "E": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 100
+        },
+        "A": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 100
+        },
+        "RK": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 100
+        },
+        "variacion_RK": {
+          "type": "number"
+        },
+        "elegible": {
+          "type": "boolean",
+          "description": "Elegibilidad de 9.2 con los umbrales vigentes de F10."
+        }
+      },
+      "additionalProperties": false
+    },
+    "objeciones_fuertes_abiertas": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "pronosticos_abiertos": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": [
+          "prg_id",
+          "horizonte",
+          "estado"
+        ],
+        "properties": {
+          "prg_id": {
+            "type": "string",
+            "pattern": "^PRG-[0-9]{4}-[0-9]{4,6}$"
+          },
+          "horizonte": {
+            "enum": [
+              "H1",
+              "H2",
+              "H3",
+              "H4",
+              "H5"
+            ]
+          },
+          "estado": {
+            "enum": [
+              "EN_CURSO",
+              "RESUELTO",
+              "EN_CURSO_CONFORME",
+              "DESVIADO",
+              "INVALIDADO"
+            ]
+          },
+          "hitos": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "required": [
+                "hit_id"
+              ],
+              "properties": {
+                "hit_id": {
+                  "type": "string",
+                  "pattern": "^HIT-[0-9]{4}-[0-9]{4,6}$"
+                },
+                "fecha": {
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                },
+                "estado": {
+                  "enum": [
+                    "PENDIENTE",
+                    "CUMPLIDO",
+                    "FALLADO",
+                    "NO_RESOLUBLE"
+                  ]
+                }
+              },
+              "additionalProperties": false
+            }
+          }
+        },
+        "additionalProperties": false
+      }
+    },
+    "recomendacion": {
+      "enum": [
+        "MANTENER_VIGILANCIA",
+        "PROPONER_ENVIO_A_B",
+        "CERRAR",
+        "PROPONER_CANCELACION"
+      ],
+      "description": "Una sola por ciclo (7.11.4); la decisión es del Broker (R4)."
+    },
+    "motivo": {
+      "type": "string",
+      "minLength": 5
+    },
+    "sugerir_profundizacion_N3": {
+      "type": "boolean"
+    },
+    "paquete_para_bloque_B": {
+      "type": [
+        "object",
+        "null"
+      ],
+      "description": "Solo con PROPONER_ENVIO_A_B: el encargo actualizado (Anexo B)."
+    },
+    "supuestos_declarados": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": [
+          "supuesto",
+          "cns_id"
+        ],
+        "properties": {
+          "supuesto": {
+            "type": "string"
+          },
+          "cns_id": {
+            "type": "string",
+            "pattern": "^CNS-"
+          },
+          "efecto_si_falso": {
+            "type": "string"
+          },
+          "clases": {
+            "type": "array"
+          }
+        },
+        "additionalProperties": false
+      }
+    },
+    "limitaciones": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    }
+  },
+  "additionalProperties": false,
+  "allOf": [
+    {
+      "if": {
+        "properties": {
+          "recomendacion": {
+            "const": "PROPONER_ENVIO_A_B"
+          }
+        }
+      },
+      "then": {
+        "properties": {
+          "paquete_para_bloque_B": {
+            "type": "object"
+          },
+          "puntuaciones": {
+            "properties": {
+              "elegible": {
+                "const": true
+              }
+            }
+          }
+        }
+      }
+    }
+  ]
+}

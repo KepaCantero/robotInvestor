@@ -1,9 +1,9 @@
 {
- "x_aviso_ejemplo": "EJEMPLO — datos ficticios (Versión óptima V5.0 · 02/11/2026). No usar para decidir.",
+ "x_aviso_ejemplo": "EJEMPLO — datos ficticios (Versión óptima V5.0 · 02/11/2026; actualizado V5.1 · 03/11/2026: naturaleza de la inversión, horizonte principal, H5 con hitos y supuestos declarados). No usar para decidir.",
  "run_id": "RUN-2026-9045",
  "fecha": "2026-11-09",
  "fecha_datos_mercado": "2026-11-06",
- "methodology_version": "4.0",
+ "methodology_version": "5.1",
  "tipo": "PERIODICO",
  "nivel_por_clase": {
   "RV": "N2",
@@ -107,6 +107,9 @@
       "RK": 72,
       "desglose_ref": "HT03-2026-9101"
      },
+     "naturaleza_inversion": "CICLICA",
+     "horizonte_principal": "H3",
+     "justificacion_horizonte": null,
      "horizontes": {
       "H3": {
        "vista": "alcista",
@@ -129,7 +132,6 @@
        "criterio_resolucion": "Rentabilidad total relativa positiva frente al índice europeo"
       }
      },
-     "horizonte_principal": "H3",
      "valoracion": "EJEMPLO. PER adelantado en el percentil 30 de su historia de 10 años.",
      "catalizadores": [
       {
@@ -230,6 +232,9 @@
       "RK": 71,
       "desglose_ref": "HT03-2026-9102"
      },
+     "naturaleza_inversion": "ESTRUCTURAL",
+     "horizonte_principal": "H4",
+     "justificacion_horizonte": null,
      "horizontes": {
       "H3": {
        "vista": "alcista",
@@ -250,9 +255,42 @@
        "prg_id": "PRG-2026-9204",
        "fecha_resolucion": "2028-11-06",
        "criterio_resolucion": "Rentabilidad relativa positiva frente al índice japonés amplio"
+      },
+      "H5": {
+       "vista": "alcista",
+       "banda": "más probable que no",
+       "prob": null,
+       "certificado_r13": false,
+       "etiqueta": "sin ventaja demostrada todavía",
+       "prg_id": "PRG-2026-9230",
+       "fecha_resolucion": "2036-11-07",
+       "criterio_resolucion": "EJEMPLO FICTICIO. Rentabilidad sobre recursos propios agregada del TOPIX ≥ 10 % en el ejercicio fiscal 2035, según la Bolsa de Tokio (HT-01).",
+       "tesis_estructural": "EJEMPLO FICTICIO. La reforma del gobierno corporativo eleva de forma duradera la rentabilidad del capital de las empresas japonesas.",
+       "hitos": [
+        {
+         "hit_id": "HIT-2026-9001",
+         "fecha": "2027-09-30",
+         "indicador": "Porcentaje de empresas del índice Prime que publican un plan de coste de capital (Bolsa de Tokio)",
+         "criterio": "≥ 70 % a la fecha",
+         "banda": "más probable que no"
+        },
+        {
+         "hit_id": "HIT-2026-9002",
+         "fecha": "2029-06-30",
+         "indicador": "Rentabilidad sobre recursos propios agregada del TOPIX (HT-01)",
+         "criterio": "≥ 9 % en el último ejercicio cerrado",
+         "banda": "incierto"
+        },
+        {
+         "hit_id": "HIT-2026-9003",
+         "fecha": "2031-06-30",
+         "indicador": "Proporción de empresas del TOPIX que cotizan por debajo de su valor contable (HT-01)",
+         "criterio": "≤ 30 %",
+         "banda": "incierto"
+        }
+       ]
       }
      },
-     "horizonte_principal": "H3",
      "valoracion": "EJEMPLO. Precio/valor contable por debajo de su media de 10 años.",
      "catalizadores": [
       {
@@ -347,6 +385,9 @@
       "RK": 68,
       "desglose_ref": "HT03-2026-9109"
      },
+     "naturaleza_inversion": "CICLICA",
+     "horizonte_principal": "H3",
+     "justificacion_horizonte": null,
      "horizontes": {
       "H3": {
        "vista": "relativa_favorable",
@@ -359,7 +400,6 @@
        "criterio_resolucion": "El indicador del subsector bate al índice europeo amplio en el periodo"
       }
      },
-     "horizonte_principal": "H3",
      "valoracion": "EJEMPLO. Múltiplo EV/EBITDA agregado del subsector en el percentil 20 de su historia de 10 años (CALC-2026-9310).",
      "catalizadores": [
       {
@@ -461,6 +501,9 @@
       "RK": 69,
       "desglose_ref": "HT03-2026-9104"
      },
+     "naturaleza_inversion": "CICLICA",
+     "horizonte_principal": "H3",
+     "justificacion_horizonte": null,
      "horizontes": {
       "H2": {
        "vista": "alcista",
@@ -483,7 +526,6 @@
        "criterio_resolucion": "Rentabilidad total positiva superior al monetario"
       }
      },
-     "horizonte_principal": "H3",
      "valoracion": "EJEMPLO. Rentabilidad del tramo en la parte alta de la zona de interés calculada (CALC-2026-9305).",
      "catalizadores": [
       {
@@ -592,6 +634,9 @@
       "RK": 66,
       "desglose_ref": "HT03-2026-9106"
      },
+     "naturaleza_inversion": "VALORACION",
+     "horizonte_principal": "H3",
+     "justificacion_horizonte": null,
      "horizontes": {
       "H2": {
        "vista": "alcista",
@@ -614,7 +659,6 @@
        "criterio_resolucion": "USD/JPY por debajo del nivel de referencia"
       }
      },
-     "horizonte_principal": "H3",
      "valoracion": "EJEMPLO. Yen infravalorado frente a PPA según CALC-2026-9307.",
      "catalizadores": [
       {
@@ -717,6 +761,9 @@
       "RK": 62,
       "desglose_ref": "HT03-2026-9107"
      },
+     "naturaleza_inversion": "CICLICA",
+     "horizonte_principal": "H3",
+     "justificacion_horizonte": null,
      "horizontes": {
       "H3": {
        "vista": "lateral",
@@ -739,7 +786,6 @@
        "criterio_resolucion": "Precio en euros superior al de referencia"
       }
      },
-     "horizonte_principal": "H3",
      "valoracion": "EJEMPLO. Precio por encima de la zona de interés calculada.",
      "catalizadores": [
       {
@@ -850,6 +896,9 @@
       "RK": 66,
       "desglose_ref": "HT03-2026-9103"
      },
+     "naturaleza_inversion": "ESTRUCTURAL",
+     "horizonte_principal": "H4",
+     "justificacion_horizonte": null,
      "horizontes": {
       "H4": {
        "vista": "alcista",
@@ -862,7 +911,6 @@
        "criterio_resolucion": "Rentabilidad total en euros positiva y superior al índice emergente amplio"
       }
      },
-     "horizonte_principal": "H4",
      "valoracion": "EJEMPLO. PER por encima de su media de 10 años: el precio ya descuenta parte del crecimiento.",
      "catalizadores": [
       {
@@ -974,6 +1022,9 @@
       "RK": 66,
       "desglose_ref": "HT03-2026-9110"
      },
+     "naturaleza_inversion": "VALORACION",
+     "horizonte_principal": "H3",
+     "justificacion_horizonte": null,
      "horizontes": {
       "H3": {
        "vista": "alcista",
@@ -996,7 +1047,6 @@
        "criterio_resolucion": "El descuento medio del segmento vuelve a su media de 10 años"
       }
      },
-     "horizonte_principal": "H3",
      "valoracion": "EJEMPLO. Descuento medio del 14 % frente a una media de 10 años del 7 % (CALC-2026-9311).",
      "catalizadores": [
       {
@@ -1095,6 +1145,9 @@
       "RK": 70,
       "desglose_ref": "HT03-2026-9111"
      },
+     "naturaleza_inversion": "TACTICA",
+     "horizonte_principal": "H2",
+     "justificacion_horizonte": null,
      "horizontes": {
       "H2": {
        "vista": "alcista",
@@ -1117,7 +1170,6 @@
        "criterio_resolucion": "La volatilidad implícita a 3 meses supera su mediana de 5 años"
       }
      },
-     "horizonte_principal": "H2",
      "valoracion": "EJEMPLO. Volatilidad implícita a 3 meses 4 puntos por debajo de la realizada a 1 mes (CALC-2026-9312).",
      "catalizadores": [
       {
@@ -1233,6 +1285,9 @@
       "RK": 64,
       "desglose_ref": "HT03-2026-9108"
      },
+     "naturaleza_inversion": "TACTICA",
+     "horizonte_principal": "H2",
+     "justificacion_horizonte": null,
      "horizontes": {
       "H2": {
        "vista": "alcista",
@@ -1255,7 +1310,6 @@
        "criterio_resolucion": "Precio superior al de referencia"
       }
      },
-     "horizonte_principal": "H2",
      "valoracion": "EJEMPLO. MVRV en zona intermedia según CALC-2026-9309.",
      "catalizadores": [
       {
@@ -1377,6 +1431,9 @@
       "RK": 72,
       "desglose_ref": "HT03-2026-9112"
      },
+     "naturaleza_inversion": "LIQUIDEZ",
+     "horizonte_principal": "H3",
+     "justificacion_horizonte": null,
      "horizontes": {
       "H2": {
        "vista": "alcista",
@@ -1399,7 +1456,6 @@
        "criterio_resolucion": "La rentabilidad acumulada de letras a 12 meses supera al €STR compuesto"
       }
      },
-     "horizonte_principal": "H3",
      "valoracion": "EJEMPLO. Diferencial letras a 12 meses frente a depósito a la vista de 60 pb (CALC-2026-9313).",
      "catalizadores": [
       {
@@ -1499,6 +1555,9 @@
       "RK": 66,
       "desglose_ref": "HT03-2026-9113"
      },
+     "naturaleza_inversion": "CICLICA",
+     "horizonte_principal": "H3",
+     "justificacion_horizonte": null,
      "horizontes": {
       "H2": {
        "vista": "alcista",
@@ -1521,7 +1580,6 @@
        "criterio_resolucion": "La pendiente 2–10 años del euro sube al menos 20 pb"
       }
      },
-     "horizonte_principal": "H3",
      "valoracion": "EJEMPLO. Pendiente 2–10 años 25 pb por debajo de su valor razonable (CALC-2026-9314).",
      "catalizadores": [
       {
@@ -1605,6 +1663,9 @@
       "RK": 65,
       "desglose_ref": "HT03-2026-9105"
      },
+     "naturaleza_inversion": "VALORACION",
+     "horizonte_principal": "H3",
+     "justificacion_horizonte": null,
      "horizontes": {
       "H3": {
        "vista": "relativa_favorable",
@@ -1627,7 +1688,6 @@
        "criterio_resolucion": "Rentabilidad relativa positiva frente al bono nominal equivalente"
       }
      },
-     "horizonte_principal": "H3",
      "valoracion": "EJEMPLO. Breakeven a 10 años en el percentil 25 de su historia de 10 años (CALC-2026-9306).",
      "catalizadores": [
       {
@@ -1855,12 +1915,14 @@
    "mecanismo": "Reformas de la bolsa + recompras récord + reducción de participaciones cruzadas.",
    "horizontes": [
     "H3",
-    "H4"
+    "H4",
+    "H5"
    ],
-   "horizonte_principal": "H3",
+   "horizonte_principal": "H4",
    "pronosticos": [
     "PRG-2026-9203",
-    "PRG-2026-9204"
+    "PRG-2026-9204",
+    "PRG-2026-9230"
    ],
    "catalizadores": [
     {
@@ -2663,6 +2725,16 @@
   "¿Por qué OPP-2026-9107 (oro) se sugiere vigilar y no enviar al Bloque B?",
   "¿Qué tendría que pasar para que el textil técnico europeo (OPP-2026-9109) pasara a confianza «probable»?",
   "¿Cuántas candidatas inmobiliarias se analizaron y qué nivel de tipos las haría elegibles?"
+ ],
+ "supuestos_declarados": [
+  {
+   "supuesto": "EJEMPLO FICTICIO. El análisis de renta variable de Japón incluye las empresas de mediana capitalización.",
+   "cns_id": "CNS-2026-9001",
+   "efecto_si_falso": "La opción OPP-2026-9102 se limitaría a grandes empresas y su invertibilidad se revisaría.",
+   "clases": [
+    "RV"
+   ]
+  }
  ],
  "limitaciones": [
   "EJEMPLO. Ninguna celda tipo de activo × horizonte tiene certificado R13: todas las previsiones se expresan en bandas.",

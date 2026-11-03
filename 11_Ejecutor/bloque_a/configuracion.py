@@ -13,7 +13,7 @@ DIR_EJECUTOR = DIR_PAQUETE.parent                         # .../11_Ejecutor
 RUTA_CONFIG_POR_DEFECTO = DIR_EJECUTOR / "config" / "por_defecto.yaml"
 RUTA_UNIVERSO_EJEMPLO = DIR_EJECUTOR / "config" / "universo_ejemplo.csv"
 
-# Los doce tipos de activo del Documento 0 óptima V5.0 (2.6), en el orden canónico de la tabla.
+# Los doce tipos de activo del Documento 0 óptima V5.0–V5.1 (2.6), en el orden canónico de la tabla.
 # «Clase» se mantiene en el código como sinónimo de «tipo de activo» (2.6).
 CLASES = ("RV", "RF", "DIV", "MP", "IDX", "FON", "DER", "INM", "CRI", "ALT", "MON", "TCV")
 TIPOS_ACTIVO = CLASES
@@ -28,22 +28,39 @@ NOMBRE_CLASE = {
 TIPOS_OPCION = ("MERCADO", "SECTOR", "SUBSECTOR", "TEMATICA", "SEGMENTO", "FACTOR", "ESTILO", "ESTRATEGIA")
 # Compatibilidad con universos V4.x: valores retirados y su equivalente V5.0
 TIPOS_OPCION_RETIRADOS = {"INSTRUMENTO_GENERICO": "SEGMENTO", "INDUSTRIA": "SUBSECTOR"}
-HORIZONTES = ("H1", "H2", "H3", "H4")
-# Tabla 8.3 del Documento 0 óptima V5.0: SI · LIMITADO · NO
+HORIZONTES = ("H1", "H2", "H3", "H4", "H5")   # H4 años (1–5) · H5 décadas (5–30), V5.1
+# Tabla 8.3 del Documento 0 óptima V5.1 (con H5): SI · LIMITADO · NO
 TABLA_HORIZONTES = {
-    "RV": {"H1": "LIMITADO", "H2": "SI", "H3": "SI", "H4": "SI"},
-    "RF": {"H1": "LIMITADO", "H2": "SI", "H3": "SI", "H4": "SI"},
-    "DIV": {"H1": "SI", "H2": "SI", "H3": "SI", "H4": "LIMITADO"},
-    "MP": {"H1": "SI", "H2": "SI", "H3": "SI", "H4": "SI"},
-    "IDX": {"H1": "LIMITADO", "H2": "SI", "H3": "SI", "H4": "SI"},
-    "FON": {"H1": "NO", "H2": "LIMITADO", "H3": "SI", "H4": "SI"},
-    "DER": {"H1": "SI", "H2": "SI", "H3": "SI", "H4": "NO"},
-    "INM": {"H1": "NO", "H2": "LIMITADO", "H3": "SI", "H4": "SI"},
-    "CRI": {"H1": "SI", "H2": "SI", "H3": "SI", "H4": "LIMITADO"},
-    "ALT": {"H1": "NO", "H2": "NO", "H3": "LIMITADO", "H4": "SI"},
-    "MON": {"H1": "LIMITADO", "H2": "SI", "H3": "SI", "H4": "NO"},
-    "TCV": {"H1": "SI", "H2": "SI", "H3": "SI", "H4": "LIMITADO"},
+    "RV": {"H1": "LIMITADO", "H2": "SI", "H3": "SI", "H4": "SI", "H5": "SI"},
+    "RF": {"H1": "LIMITADO", "H2": "SI", "H3": "SI", "H4": "SI", "H5": "LIMITADO"},
+    "DIV": {"H1": "SI", "H2": "SI", "H3": "SI", "H4": "LIMITADO", "H5": "LIMITADO"},
+    "MP": {"H1": "SI", "H2": "SI", "H3": "SI", "H4": "SI", "H5": "SI"},
+    "IDX": {"H1": "LIMITADO", "H2": "SI", "H3": "SI", "H4": "SI", "H5": "SI"},
+    "FON": {"H1": "NO", "H2": "LIMITADO", "H3": "SI", "H4": "SI", "H5": "LIMITADO"},
+    "DER": {"H1": "SI", "H2": "SI", "H3": "SI", "H4": "NO", "H5": "NO"},
+    "INM": {"H1": "NO", "H2": "LIMITADO", "H3": "SI", "H4": "SI", "H5": "LIMITADO"},
+    "CRI": {"H1": "SI", "H2": "SI", "H3": "SI", "H4": "LIMITADO", "H5": "LIMITADO"},
+    "ALT": {"H1": "NO", "H2": "NO", "H3": "LIMITADO", "H4": "SI", "H5": "SI"},
+    "MON": {"H1": "LIMITADO", "H2": "SI", "H3": "SI", "H4": "NO", "H5": "NO"},
+    "TCV": {"H1": "SI", "H2": "SI", "H3": "SI", "H4": "LIMITADO", "H5": "NO"},
 }
+# Regla de adecuación del horizonte al tipo de inversión (8.3, V5.1): rango admisible del horizonte principal
+NATURALEZAS = {"TACTICA": ("H1", "H2"), "LIQUIDEZ": ("H1", "H3"), "CICLICA": ("H2", "H4"),
+               "PRIMA_RIESGO": ("H2", "H4"), "VALORACION": ("H3", "H4"), "ESTRUCTURAL": ("H4", "H5")}
+# Naturaleza por defecto de cada tipo de activo cuando el Analista no la declara (decisión del ejecutor)
+NATURALEZA_POR_DEFECTO = {"MON": "LIQUIDEZ", "DER": "PRIMA_RIESGO", "ALT": "ESTRUCTURAL"}
+# Antigüedad máxima de los datos de mercado por horizonte (PS2, Anexo A), en días
+ANTIGUEDAD_PS2 = {"H1": 1, "H2": 3, "H3": 7, "H4": 30, "H5": 90}
+
+
+def naturaleza_coherente(naturaleza: str, horizonte: str) -> bool:
+    lo, hi = NATURALEZAS[naturaleza]
+    return HORIZONTES.index(lo) <= HORIZONTES.index(horizonte) <= HORIZONTES.index(hi)
+
+
+def naturaleza_para(horizonte: str) -> str:
+    """Naturaleza mínima coherente con un horizonte principal dado (para cuadrar la regla de 8.3)."""
+    return {"H1": "TACTICA", "H2": "TACTICA", "H3": "CICLICA", "H4": "CICLICA", "H5": "ESTRUCTURAL"}[horizonte]
 
 
 def fusionar(base: Dict, extra: Optional[Dict]) -> Dict:

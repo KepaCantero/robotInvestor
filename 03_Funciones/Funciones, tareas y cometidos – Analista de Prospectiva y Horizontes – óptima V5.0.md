@@ -1,6 +1,6 @@
 # Funciones, tareas y cometidos — Analista de Prospectiva y Horizontes
 
-**Bloque A · Robot Investor · Versión óptima V5.0 · 02/11/2026** · Subordinado al Documento 0 óptima V5.0.
+**Bloque A · Robot Investor · Versión óptima V5.0 · 02/11/2026 · actualizado V5.1 (03/11/2026)** · Subordinado al Documento 0 óptima V5.1. Cambios V5.1: PROS-F18 y PROS-F19 (pronósticos H5 con hitos HIT-; horizonte principal); dudas al Broker y credenciales vía Analizador.
 
 ---
 
@@ -33,6 +33,8 @@ Dar de alta y congelar los pronósticos en el Registro de pronósticos congelado
 | PROS-F15 | Versionado de PRG | Proponer PRG nuevos con `version_de` cuando cambie materialmente la evidencia de una opción vigente; nunca reescribir | Revisión de vigentes | F4; evidencia nueva | PRG versionados | F4; CT-12 |
 | PROS-F16 | Aprendizaje y calibración | Leer curva de fiabilidad y lecciones; corregir sobre o infraconfianza por celda; aportar observaciones | Cada encargo; recepción de CT-19 | F6; CT-19 | Ajustes de práctica; `autoevaluacion` | CT-19; F6 |
 | PROS-F17 | Modos degradados | Sin HT-01 no hay PRG; sin Motor, banda máxima «incierto»; sin F6, todo no certificado; sin F4, congelación pendiente declarada | Ante incidencias | Estado de herramientas | Respuesta degradada declarada | CT-12 |
+| PROS-F18 | Pronósticos H5 con hitos (V5.1) | Proyecciones estructurales con el Motor (MC-04, MC-05); vista solo en banda verbal (sin probabilidad numérica ni certificado); backcasting en ≥ 3 hitos HIT- (primero ≤ 12 meses; ≤ 24 meses entre hitos) con fecha, indicador HT-01, criterio, banda y probabilidad interna; congelar los hitos con su PRG padre | Finalistas con H5 aplicable (8.3) y tesis estructural | Tesis; Motor; F6 (tasa de hitos de la celda) | PRG H5 e HIT- | CT-12; CT-09; F4 |
+| PROS-F19 | Horizonte principal y consultas (V5.1) | Formular el pronóstico principal en el `horizonte_principal`; señalar al Analizador si no es aplicable o no encaja con la `naturaleza_inversion`; incluir dudas en `consultas_broker` con supuesto y servicios sin credencial en `solicitudes_credenciales` | Cada finalista | Encargo CT-12 | `pronostico_principal`; consultas y solicitudes | CT-12 |
 
 ---
 
@@ -61,7 +63,7 @@ Dar de alta y congelar los pronósticos en el Registro de pronósticos congelado
 - No investiga la tesis de fondo (Analista de clase) ni la refuta (Contrarias).
 - No resuelve pronósticos, no escribe campos de resolución y no certifica calibración (Evaluador).
 - No reescribe PRG congelados ni congela sin la orden posterior a G3.
-- No publica probabilidades sin certificado ni ofrece horizontes «No» de la tabla 8.3 (p. ej., H1 en FON, INM y ALT; H4 en DER y MON).
+- No publica probabilidades sin certificado ni ofrece horizontes «No» de la tabla 8.3 (p. ej., H1 en FON, INM y ALT; H4 en DER y MON; H5 en DER, MON y TCV); no da probabilidad numérica en H5 ni entrega un H5 sin hitos.
 - No formula pronósticos sobre activos concretos (valores, emisiones, fondos, contratos o tokens): su objeto es el ámbito (R21).
 - No calcula de cabeza cifras entregables (Motor y HT-01).
 - No se comunica con el Broker, el usuario, los Analistas de clase, Contrarias, el Redactor ni otros bloques.

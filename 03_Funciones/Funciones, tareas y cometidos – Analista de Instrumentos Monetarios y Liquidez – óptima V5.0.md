@@ -1,6 +1,6 @@
 # Funciones, tareas y cometidos — Analista de Instrumentos Monetarios y Liquidez
 
-**Bloque A · Robot Investor · Versión óptima V5.0 · 02/11/2026** · Subordinado al Documento 0 óptima V5.0.
+**Bloque A · Robot Investor · Versión óptima V5.0 · 02/11/2026 · actualizado V5.1 (03/11/2026)** · Subordinado al Documento 0 óptima V5.1. Cambios V5.1: ACMON-F19 a ACMON-F21 (horizonte principal y H5, seguimiento encargado, dudas al Broker y credenciales).
 
 Agente: **Analista de Instrumentos Monetarios y Liquidez** (AC-MON, AG-24) · Tipo de activo 11 (MON) · Plano P2 · Sin estado, escalable por instancias (R25) · Perfil del Motor: PERF-MON · System prompt: «System prompt - Analista de Instrumentos Monetarios y Liquidez - Versión óptima V5.0».
 
@@ -32,6 +32,9 @@ Gastar solo lo que puede cambiar la conclusión y aprender de su historial por h
 | ACMON-F16 | Respuesta a objeciones y profundización | Responder con evidencia las objeciones fuertes o moderadas del CT-13; en PROFUNDIZACION, ampliar escenarios de senda (PLAN_EXT) y evidencia contraria | Tras la refutación; encargo N3 | Objeciones, F2, RC | Respuestas trazables; ficha ampliada | CT-06; CT-09 |
 | ACMON-F17 | Señales para otros tipos | Comunicar al Analizador el listón de la liquidez para RF (exceso alto con curva invertida), tensiones de financiación relevantes para RV, INM y CRI, y cambios de demanda de letras | Cada informe | Régimen, diferenciales | `senales_para_otras_clases` | CT-06 |
 | ACMON-F18 | Informe de clase y autoevaluación | Completar el JSON; declarar lagunas, estado de madurez de los métodos (sin fichas propias PERF-MON), consumo y observaciones aprovechables como lecciones | Cierre de cada encargo | Todo lo anterior | Informe de clase | CT-06 |
+| ACMON-F19 | Naturaleza de la inversión y horizonte principal (V5.1) | Clasificar cada finalista (`TACTICA`, `LIQUIDEZ`, `CICLICA`, `PRIMA_RIESGO`, `VALORACION`, `ESTRUCTURAL`); declarar `horizonte_principal` aplicable al tipo (tabla 6.9 del prompt, con H5 décadas) y dentro del rango de su naturaleza, o `justificacion_horizonte`; en H5, banda cualitativa e indicadores para los hitos HIT- | Cada finalista | Ficha; tabla 8.3 | Campos de horizonte (validados por HT-09) | CT-06 |
+| ACMON-F20 | Revisión de seguimiento encargado (V5.1) | En fase SEGUIMIENTO (ciclo C6): delta y señales de interés, distancia a la invalidación, catalizadores, T/E/A con HT-03, pronósticos abiertos e hitos; recomendación sugerida y `paquete_para_bloque_B` actualizado si vuelve a ser elegible; «sin novedad» si no hay cambio material | Encargo CT-06 SEGUIMIENTO | Ficha OPP- (F3), F4, F11 | `revision_seguimiento` | CT-06; HT-03 |
+| ACMON-F21 | Dudas al Broker y credenciales (V5.1) | Incluir en `consultas_broker` las dudas que pueden cambiar una conclusión, con supuesto declarado y efecto si es falso (las filtra el Analizador; CT-23); declarar en `solicitudes_credenciales` los servicios sin credencial en la bóveda de HT-01 (CT-25), sin valores; trabajar degradado y declararlo mientras tanto | Cuando surja | Encargo; estado de HT-01 | Consultas y solicitudes en el informe | CT-06 (vía Analizador) |
 
 ## 3. Indicadores de desempeño (KPI)
 

@@ -59,7 +59,10 @@ def _horizontes(msg: Dict) -> List[str]:
     tabla = msg.get("horizontes_aplicables_clase") or {}
     interes = msg.get("horizontes_interes") or ["H1", "H2", "H3", "H4"]
     si = [h for h in ("H2", "H3", "H4", "H1") if tabla.get(h) == "SI" and h in interes]
-    return si[:2] or [h for h in ("H3", "H4") if tabla.get(h) != "NO"][:1]
+    out = si[:2] or [h for h in ("H3", "H4") if tabla.get(h) != "NO"][:1]
+    if tabla.get("H5") == "SI" and "H5" in interes:      # V5.1: H5 solo como horizonte secundario estructural
+        out.append("H5")
+    return out
 
 
 def _ficha(u: Dict, msg: Dict, ctx: Dict, rng: random.Random, inyectado: bool) -> Dict:

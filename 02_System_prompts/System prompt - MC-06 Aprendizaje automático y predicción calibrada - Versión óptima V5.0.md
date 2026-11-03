@@ -228,6 +228,32 @@ H4 con menos de 60 observaciones no solapadas; series de valoración infrecuente
 
 Hastie, Tibshirani y Friedman (2009), *The Elements of Statistical Learning*, 2.ª ed. · López de Prado (2018), *Advances in Financial Machine Learning* · Gu, Kelly y Xiu (2020), «Empirical Asset Pricing via Machine Learning», *Review of Financial Studies* · Campbell y Thompson (2008), «Predicting Excess Stock Returns Out of Sample», *RFS* · Welch y Goyal (2008), «A Comprehensive Look at the Empirical Performance of Equity Premium Prediction», *RFS* · Bergmeir, Hyndman y Koo (2018), «A Note on the Validity of Cross-Validation for Evaluating Autoregressive Time Series Prediction», *Computational Statistics & Data Analysis* · Breiman (2001), «Random Forests», *Machine Learning* · Friedman (2001), «Greedy Function Approximation: A Gradient Boosting Machine», *Annals of Statistics* · Tibshirani (1996), «Regression Shrinkage and Selection via the Lasso», *JRSS B* · Zou y Hastie (2005), «Regularization and Variable Selection via the Elastic Net», *JRSS B* · Platt (1999), «Probabilistic Outputs for Support Vector Machines» · Niculescu-Mizil y Caruana (2005), «Predicting Good Probabilities with Supervised Learning», *ICML* · Vovk, Gammerman y Shafer (2005), *Algorithmic Learning in a Random World* · Romano, Patterson y Candès (2019), «Conformalized Quantile Regression», *NeurIPS* · Gibbs y Candès (2021), «Adaptive Conformal Inference Under Distribution Shift», *NeurIPS* · Lundberg y Lee (2017), «A Unified Approach to Interpreting Model Predictions», *NeurIPS* · Stock y Watson (2004), «Combination Forecasts of Output Growth in a Seven-Country Data Set», *Journal of Forecasting* · Timmermann (2006), «Forecast Combinations», *Handbook of Economic Forecasting* · Laloux, Cizeau, Bouchaud y Potters (1999), «Noise Dressing of Financial Correlation Matrices», *Physical Review Letters* · Hyndman y Koehler (2006), «Another Look at Measures of Forecast Accuracy», *International Journal of Forecasting* · Hyndman y Athanasopoulos (2021), *Forecasting: Principles and Practice*, 3.ª ed. · Gama et al. (2014), «A Survey on Concept Drift Adaptation», *ACM Computing Surveys* · Peduzzi et al. (1996), *Journal of Clinical Epidemiology*.
 
+### 10.15 Complementos de modelización (áreas 16 y 17)
+
+- **Pesos por unicidad** (López de Prado, 2018): con etiquetas solapadas, cada observación pesa según la inversa de su concurrencia media; el *bagging* debe muestrear por unicidad, no de forma uniforme. **Metaetiquetado**: un modelo secundario decide si actuar sobre la señal de uno primario; mejora la precisión a costa de la exhaustividad y suma ensayos.
+- **Clases desequilibradas**: pondera clases o ajusta el umbral de decisión; el sobremuestreo sintético (tipo SMOTE) distorsiona la calibración y, en series, fabrica observaciones con información cruzada: no por defecto. Parada temprana y selección de hiperparámetros con log-loss o Brier, no con acierto.
+- **Estabilidad de la selección**: frecuencia con que cada variable entra en el modelo a través de ventanas *walk-forward* o remuestreos (selección por estabilidad); una variable que entra en menos de la mitad no se presenta como «impulsor».
+- **Efectos de las variables**: gráficos de efectos locales acumulados (ALE; Apley y Zhu, 2020) en lugar de dependencia parcial cuando hay variables correlacionadas; restricciones de monotonía en *boosting* cuando el signo es conocido por teoría.
+- **Incertidumbre del modelo**: dispersión de un conjunto (semillas, *bootstrap* temporal) como incertidumbre epistémica, separada de la aleatoria; ambas se declaran.
+- **Relevancia económica de un R²_OOS** (Campbell y Thompson, 2008): `S*² = (S² + R²)/(1 − R²)` da el Sharpe de una estrategia de sincronización frente al de comprar y mantener S; la cifra es teórica y no descuenta costes.
+- **Parsimonia**: un modelo complejo solo sustituye a la logística o Ridge si su ventaja supera el ruido en la evaluación de MC-10; cada configuración probada cuenta en el número de ensayos (Deflated Sharpe, PBO).
+
+### 10.16 Inventario de competencias
+
+| Grupo | Competencias | Dónde |
+|---|---|---|
+| Planteamiento | Tipos de objetivo, exceso, solapamiento y n efectivo, triple barrera, señal/ruido, metaetiquetado | 10.1, 10.15 |
+| Variables | Conocibilidad y vintages, estacionariedad y diferenciación fraccional, normalización, sesgos de universo, pesos por unicidad | 10.2, 10.15 |
+| Validación | *Walk-forward*, purga y embargo, CPCV, anidamiento, mínimos | 10.3 |
+| Modelos | Ridge, Lasso, Elastic Net, logística, bosques, *boosting*, k-vecinos, cuantílica, procesos gaussianos, combinación, encogimiento, desequilibrio, parsimonia | 10.4, 10.15 |
+| Calibración | Platt, isotónica, temperatura, recalibración diagnóstica, intervalos, conformal adaptativo | 10.5 |
+| Métricas | MAE, RMSE, MASE, R²_OOS y su lectura económica, Brier, log-score, pinball, mejora con IC | 10.6, 10.15 |
+| No supervisado | PCA y Marchenko-Pastur, clústeres de exposición, k-medias, mezclas, DBSCAN, anomalías | 10.7 |
+| Interpretabilidad | Permutación, SHAP, MDI, ALE, monotonía, estabilidad de selección | 10.8, 10.15 |
+| Deriva y potencia | PSI, KS, CUSUM, deriva de concepto; tamaños mínimos | 10.9, 10.10 |
+| Texto estructurado | Frecuencias, TF-IDF, similitud, duplicados, métricas con referencia | 10.11 |
+| Límites, errores típicos y referencias | Cuándo no usar ML, trampas, bibliografía | 10.12–10.14 |
+
 ## 11. Formatos de salida y ejemplo breve
 
 Ejemplo (ilustrativo): ML-PRED-001, PERF-CMD, H2, dirección del rendimiento a 4 semanas de un índice de futuros de metales industriales; datos semanales 2006–2026; 8 variables.

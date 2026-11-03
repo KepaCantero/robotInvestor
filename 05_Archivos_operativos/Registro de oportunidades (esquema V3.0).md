@@ -1,6 +1,6 @@
 # Esquema de archivo operativo — F3 Registro de oportunidades
 
-**Bloque A · Robot Investor · Versión óptima V5.0 · 02/11/2026** · Subordinado al Documento 0 óptima V5.0.
+**Bloque A · Robot Investor · Versión óptima V5.0 · 02/11/2026 · actualizado V5.1 (03/11/2026)** · Subordinado al Documento 0 óptima V5.1. Cambios V5.1: `naturaleza_inversion`, `horizonte_principal` y `justificacion_horizonte` (8.3); H5 con hitos; `seg_id` del seguimiento encargado (CT-24); cierre verificado en un ciclo C6.
 
 ---
 
@@ -22,7 +22,7 @@ F3 registra cada **oportunidad** (OPP-): un **ámbito de inversión delimitado**
 ## 3. Reglas
 
 1. **Append-only**: cambios de estado, puntuaciones y decisiones son entradas nuevas; nada se borra.
-2. **Estado analítico y decisión del Broker son independientes**: `decision_broker` nunca altera `estado`; el resultado se mide aunque el Broker la descarte.
+2. **Estado analítico y decisión del Broker son independientes**: `decision_broker` nunca altera `estado`; el resultado se mide aunque el Broker la descarte. Una opción con seguimiento encargado (CT-24, V5.1) conserva su estado analítico y lleva su `seg_id`; solo pasa a `CERRADA` por invalidación, vencimiento, objetivo o sustitución, verificados en un ciclo C6 o C1.
 3. **Puntuaciones** A y RK solo con HT-03 y pesos de F10 vigentes; banda marginal (≤ 5 puntos de un umbral) con segunda pasada y menor valor; tope de 40 en valoración si la tendencia está saturada.
 4. **Elegibilidad para el top-3** (9.2): E ≥ 60, A ≥ 55, T ≥ 50 (o T = NA con A ≥ 65), G1–G4 y PS1–PS8 superadas, sin objeción fuerte sin resolver (umbrales de F10).
 5. **Horizontes** solo los aplicables según la matriz 8.3 vigente en F10; probabilidad numérica solo con certificado (R13).
@@ -55,7 +55,10 @@ F3 registra cada **oportunidad** (OPP-): un **ámbito de inversión delimitado**
 | `riesgo_1a5` / `riesgo_cola` | Entero / objeto | Sí desde FINALISTA | 1–5 / `{perdida_escenario_adverso, calc_id}` | — |
 | `invalidacion` | Lista | Sí (≥ 1) | `{indicador, umbral, plazo}` | Observables |
 | `que_no_sabemos` | Lista | Sí desde FINALISTA | Texto | R12 |
-| `horizontes` | Objeto | Sí desde FINALISTA | `{H1..H4: {aplicable SI·LIMITADO·NO, vista ALCISTA·BAJISTA·NEUTRAL·RELATIVA, banda, prob_publicada, certificado_ref, prg_ids}}` | — |
+| `horizontes` | Objeto | Sí desde FINALISTA | `{H1..H5: {aplicable SI·LIMITADO·NO, vista ALCISTA·BAJISTA·NEUTRAL·RELATIVA, banda, prob_publicada, certificado_ref, prg_ids}}`; en H5, `prob_publicada` siempre null y `hit_ids` | — |
+| `naturaleza_inversion` | Enumerado | Sí desde FINALISTA (V5.1) | TACTICA · LIQUIDEZ · CICLICA · PRIMA_RIESGO · VALORACION · ESTRUCTURAL | Fija el rango del horizonte principal (8.3) |
+| `horizonte_principal` | Enumerado | Sí desde FINALISTA (V5.1) | H1–H5 | Horizonte de la tesis central, de la asimetría de A y del pronóstico principal |
+| `justificacion_horizonte` | Texto o null | Si el principal queda fuera del rango de su naturaleza | — | HT-09 C17 |
 | `indicador_seguimiento` | Objeto | Sí desde FINALISTA | `{nombre, simbolo, serie_ht01, fuente, divisa}` | Base de medición de la tendencia y de los pronósticos |
 | `liquidez` / `reversibilidad` | Enumerado | Sí desde FINALISTA | ALTA · MEDIA · BAJA | Del ámbito (no de un instrumento) |
 | `invertibilidad` | Objeto | Sí desde FINALISTA | `{universo_suficiente: true·false, nota}` | PS3: existe un universo de activos negociables suficiente y accesible para un minorista europeo, sin seleccionar ninguno |
@@ -72,7 +75,8 @@ F3 registra cada **oportunidad** (OPP-): un **ámbito de inversión delimitado**
 | `confianza` | Enumerado | Sí | establecido · probable · especulativo · en disputa | — |
 | `estado` | Enumerado | Sí | Sección 5 | — |
 | `rango_top3` | Entero | Si PROPUESTA/VIGENTE | 1–3 | Por RUN- |
-| `decision_broker` | Lista append-only | No | `{fecha, decision ENVIADA_A_BLOQUE_B·EN_SEGUIMIENTO·DESCARTADA·APLAZADA, motivo, ret_id}` | Desde CT-04 (F5) |
+| `decision_broker` | Lista append-only | No | `{fecha, decision ENVIADA_A_BLOQUE_B·EN_SEGUIMIENTO·DESCARTADA·APLAZADA, motivo, ret_id}` | Desde CT-04 (F5); `EN_SEGUIMIENTO` es solo una anotación salvo que exista un encargo CT-24 |
+| `seg_id` | Identificador | Si hay seguimiento encargado (V5.1) | SEG- de F11 | Lo anota el Analizador a petición del Coordinador; no altera el estado analítico |
 | `cierre` | Objeto | Sí si CERRADA | `{fecha, motivo, resultado_relativo, referencia_indice, fuente}` | Resultado del indicador de seguimiento frente a la referencia del tipo (8.4) |
 | `run_ids` | Lista | Sí | RUN- | Ejecuciones |
 | `historial` | Lista append-only | Sí | `{fecha, run_id, de, a, campo, justificacion}` | — |

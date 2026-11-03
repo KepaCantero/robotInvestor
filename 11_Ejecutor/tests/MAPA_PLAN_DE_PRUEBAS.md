@@ -1,6 +1,6 @@
 # Mapa del Plan de pruebas V2.0 → pruebas automáticas del ejecutor
 
-**Bloque A · Robot Investor · Ejecutor programático V1.1 · Versión óptima V5.0 · 02/11/2026** · Subordinado al Documento 0 óptima V5.0.
+**Bloque A · Robot Investor · Ejecutor programático V1.1 · Versión óptima V5.0 · 02/11/2026 · actualizado V5.1 (03/11/2026, ejecutor V1.2)** · Subordinado al Documento 0 óptima V5.1.
 
 Cobertura de las 52 pruebas del `09_Pruebas/Plan de pruebas del Bloque A - V3.0.md` por la batería `pytest` de esta carpeta, ejecutada con `MockClient` (respuestas sintéticas deterministas). Resultado de la última ejecución en `RESULTADOS.txt`.
 
@@ -77,3 +77,18 @@ Pruebas adicionales exigidas por el encargo del ejecutor: guardia de fuga del pr
 | Regla 5 de 2.6: ninguna oportunidad en dos top-3 | `test_sin_duplicados_entre_tipos` (y C16 de HT-09 en `10_Herramientas`) | Superada |
 | `senales.csv` con `tipo_activo`, `subtipo`, `ambito`, `indicador_seguimiento_simbolo` y alias `proxy_backtest` | `test_integracion::test_backtest_12_semanas_csv_y_metricas` | Superada |
 
+## Pruebas añadidas en la actualización V5.1 (`tests/test_v51.py`)
+
+| Prueba del plan / aspecto de la V5.1 | Cobertura | Prueba automática | Resultado |
+|---|---|---|---|
+| Tabla 8.3 con H5, naturalezas y rangos del horizonte principal | Automática | `test_tabla_y_naturalezas` | Superada |
+| PB-65 Horizonte principal coherente con la naturaleza en cada opción | Automática | `test_horizonte_principal_y_naturaleza_en_cada_opcion`, `test_ht09_bloquea_h5_sin_hitos` (C17) | Superada |
+| PB-63 H5 solo con banda y ≥ 3 hitos HIT- congelados en F4; JSON conforme al esquema V5.1 | Automática | `test_h5_con_hitos_y_sin_probabilidad`, `test_ht09_bloquea_h5_sin_hitos` (C18) | Superada |
+| PB-64 Estado de los H5 por hitos | Parcial (sin hitos resueltos en la ventana de prueba) | `test_estado_h5_por_hitos` | Superada |
+| CT-23 a CT-25 en el catálogo de canales; solo el Coordinador habla con el Broker (R3) | Automática | `test_canales_v51` | Superada |
+| F11: escritura reservada a AG-01 | Automática | `test_f11_reserva_de_escritura` | Superada |
+| PB-66 Seguimiento encargado: alta, ciclo C6, informe validado (HT-09 y esquema), pausa, reanudación, cancelación inmediata, aviso al Evaluador | Automática | `test_seguimiento_alta_ciclo_y_cancelacion`, `test_seguimiento_frecuencia_corta_y_opp_inexistente` | Superada |
+| PB-61 Consulta BLOQUEANTE: pausa del tipo afectado, vencimiento con supuesto declarado (C19), respuesta tardía | Automática | `test_consulta_bloqueante_pausa_y_vencimiento` | Superada |
+| PB-62 Validación, agrupación (máx. 3 por RUN-), recurrencia y aportación espontánea | Automática | `test_consulta_validaciones_agrupacion_y_entrante` | Superada |
+| PB-58, PB-59, PB-60 Credenciales: solicitud, rechazo del valor en un mensaje, depósito en la bóveda, denegación y recordatorio | Automática | `test_credenciales_boveda`, `test_cli_v51` | Superada |
+| PB-67 Recomendación PROPONER_ENVIO_A_B | Parcial (perfil SEGUIMIENTO de HT-09) | `10_Herramientas/tests/test_ht09_validador_g3.py::TestV51::test_seguimiento_envio_a_b` | Superada |

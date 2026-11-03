@@ -1,6 +1,6 @@
 # README — Herramientas deterministas del Bloque A (HT-02, HT-03, HT-05, HT-07, HT-09)
 
-**Bloque A · Robot Investor · Versión óptima V5.0 · 02/11/2026** · Subordinado al Documento 0 óptima V5.0.
+**Bloque A · Robot Investor · Versión óptima V5.0 · 02/11/2026 · actualizado V5.1 (03/11/2026)** · Subordinado al Documento 0 óptima V5.1. Cambios V5.1: HT-09 con H5 y las comprobaciones C17 (horizonte principal y naturaleza de la inversión), C18 (H5 con hitos HIT-) y C19 (supuestos declarados), y validación del informe de seguimiento de opción (`--seguimiento`); HT-05 de ejemplo con los ciclos C6, los vencimientos CT-23 y los recordatorios CT-25 y de hitos.
 
 Implementaciones de referencia de las herramientas deterministas de la sección 4.4 del Documento 0. Son herramientas, no agentes: no razonan, no tienen iniciativa y no consumen modelo de lenguaje (10.5). Todas son reproducibles: con la misma entrada devuelven la misma salida.
 
@@ -35,7 +35,7 @@ Implementaciones de referencia de las herramientas deterministas de la sección 
 ├── ejemplos/
 │   ├── referencias_ejemplo.md              (archivo de referencias para HT-02)
 │   ├── ht03_entrada_ejemplo.json           (opciones de RV, RF y TCV, y candidatas de IDX, para HT-03)
-│   ├── paquete_oportunidades_ejemplo.json  (paquete del Anexo B V5.0 para HT-09)
+│   ├── paquete_oportunidades_ejemplo.json  (paquete del Anexo B V5.1 para HT-09: naturaleza, horizonte principal, H5 con hitos y supuestos)
 │   ├── certificados_ejemplo.json           (certificados de horizonte para HT-09)
 │   ├── desgloses_ejemplo.json              (dimensiones HT-03 por opp_id para HT-09)
 │   ├── trazas_ejemplo.json                 (extracto CLM→EVD de F2 para HT-09)
@@ -57,7 +57,7 @@ python3 -m pytest -q tests          # o bien:
 python3 -m unittest discover -s tests
 ```
 
-Resultado de la última ejecución (02/11/2026): **116 pruebas superadas** (más 38 subpruebas de silabeo), en unos 5 segundos. Las pruebas de HT-02 levantan un servidor `http.server` local en un hilo y no necesitan red externa.
+Resultado de la última ejecución (03/11/2026, V5.1): **135 pruebas superadas** (más 38 subpruebas de silabeo), en unos 6 segundos; HT-09 tiene 59 (19 nuevas de la V5.1: tabla H5, C17, C18, C19, credenciales, encargo para el Bloque B con horizonte principal e informe de seguimiento de opción). Las pruebas de HT-02 levantan un servidor `http.server` local en un hilo y no necesitan red externa.
 
 ## 5. HT-02 · Verificador de enlaces y contenido
 
@@ -150,7 +150,7 @@ Claves de dimensiones: T `magnitud, alcance, velocidad, duracion, difusion, posi
 
 ## 8. HT-09 · Validador determinista G3
 
-**Qué hace.** Valida un `paquete_oportunidades` (Anexo B V5.0) y devuelve `APTO`, `APTO_CON_ADVERTENCIAS` o `BLOQUEADO` con 16 comprobaciones, cada una con sus incidencias (`ruta`, `detalle`, `severidad`):
+**Qué hace.** Valida un `paquete_oportunidades` (Anexo B V5.1) y devuelve `APTO`, `APTO_CON_ADVERTENCIAS` o `BLOQUEADO` con 19 comprobaciones, cada una con sus incidencias (`ruta`, `detalle`, `severidad`):
 
 | ID | Comprobación | Bloquea cuando… |
 |---|---|---|
@@ -159,17 +159,20 @@ Claves de dimensiones: T `magnitud, alcance, velocidad, duracion, difusion, posi
 | C03 | Menos de tres | Menos de 3 opciones sin `menos_de_tres_motivo` |
 | C04 | Puntuaciones reconstruibles | RK no coincide con 0,45·A + 0,35·E + 0,20·T; total no múltiplo de 5; desglose (si se aporta) distinto de HT-03 |
 | C05 | Elegibilidad y puertas | E < 60, A < 55 (A < 65 con T NA), T < 50; puerta G/PS no superada; banda marginal sin segunda pasada; PS3: `invertibilidad.universo_suficiente` distinto de `true` |
-| C06 | Horizontes (8.3 V5.0) | Horizonte «No» para el tipo (p. ej., FON H1, DER H4, MON H4, INM H1, ALT H1–H2); «Limitado» sin catalizador; horizonte sin PRG- |
+| C06 | Horizontes (8.3 V5.1, H1–H5) | Horizonte «No» para el tipo (p. ej., FON H1, DER H4–H5, MON H4–H5, TCV H5, INM H1, ALT H1–H2); «Limitado» sin catalizador ni `justificacion_horizonte` (con justificación y sin catalizador: advertencia); horizonte sin PRG- |
 | C07 | Probabilidad numérica (R13) | `prob` sin certificado vigente para tipo × horizonte (y método, si consta) |
 | C08 | Evidencias y cálculos (R7) | Listas vacías; CLM- sin EVD (si se aporta `--trazas`); CALC- sin artefacto (si se aporta `--artefactos`) |
 | C09 | Objeciones (R12) | Objeción fuerte sin resolver; objeción moderada sin respuesta |
 | C10 | Relevancia decisional | La regla del Anexo A exige ALTA y se declara otra |
 | C11 | Encargo para el Bloque B | Opción con `ENVIAR_A_BLOQUE_B` sin encargo; encargo sin alguno de los campos del Anexo B V5.0 (`tipo_activo`, `subtipo`, `ambito`, `tesis`, `mecanismo`, `horizontes`, `pronosticos`, `catalizadores`, `riesgos`, `invalidacion`, `indicador_seguimiento`, `criterios_seleccion_sugeridos`, `metricas_clave`, `preguntas_para_B`, `evidencias`, `calculos`) o con `tipo_activo` distinto; advierte de horizontes o PRG- ajenos a la opción y de ámbito distinto |
 | C12 | Legibilidad (HT-07) | Fernández-Huerta < 70 o informe ilegible |
-| C13 | Credenciales (R8) | Patrones de claves, contraseñas o tokens |
+| C13 | Credenciales (R8) | Patrones de claves, contraseñas o tokens; campos de valor de credencial (`valor_credencial`, `clave_api`) |
 | C14 | Semáforo y apuestas | Solo advertencias (VERDE sin opciones, GRIS con opciones, apuestas > opciones) |
 | C15 | Selección de activo concreto (frontera con el Bloque B, 2.4–2.5, R21) | `tipo_opcion` fuera de MERCADO/SECTOR/SUBSECTOR/TEMATICA/SEGMENTO/FACTOR/ESTILO/ESTRATEGIA (INSTRUMENTO_GENERICO e INDUSTRIA se retiraron; INDUSTRIA → SUBSECTOR); falta o está incompleto `ambito` (incluye, excluye, región); falta `indicador_seguimiento`; aparece el campo retirado `vehiculos_genericos` (en la opción o en el encargo); ISIN válido en nombre, tesis o ámbito (los nombres concretos solo caben en `ejemplos_ilustrativos`) |
 | C16 | Oportunidad duplicada en dos tipos (regla 5 de 2.6) | Dos opciones de tipos distintos con el mismo nombre normalizado o el mismo ámbito normalizado (`incluye` + `region`, sin tildes, mayúsculas, signos ni palabras vacías), o el mismo `opp_id` en dos tipos; en el mismo tipo solo advierte |
+| C17 | Horizonte principal y naturaleza de la inversión (8.3, V5.1) | `horizonte_principal` o `naturaleza_inversion` ausentes o fuera de vocabulario; principal que no figura entre los horizontes de la opción; principal en celda «No» del tipo; principal fuera del rango de su naturaleza (TACTICA H1–H2, LIQUIDEZ H1–H3, CICLICA y PRIMA_RIESGO H2–H4, VALORACION H3–H4, ESTRUCTURAL H4–H5) sin `justificacion_horizonte`. Con justificación, o principal «Limitado» sin catalizador: advertencia |
+| C18 | Pronósticos H5 (R13, V5.1) | H5 con probabilidad numérica (aunque haya certificado: H5 nunca se certifica); sin banda verbal; sin hitos o con menos de 3; hitos sin `HIT-`, fecha, indicador o criterio; primer hito anterior a la fecha del paquete. Primer hito a más de 12 meses o más de 24 meses entre hitos: advertencia |
+| C19 | Supuestos declarados (6.2.9, V5.1) | `supuestos_declarados` que no es lista o con supuestos sin texto o sin `cns_id` CNS-; sin `efecto_si_falso`: advertencia |
 
 **Invocación.**
 
@@ -182,6 +185,8 @@ python3 ht09_validador_g3.py ejemplos/paquete_oportunidades_ejemplo.json \
 ```
 
 Con todas las entradas, el ejemplo da `APTO`; sin certificados da `BLOQUEADO` (C07: probabilidad numérica en RV×H3). Opciones: `--parametros` (F10 en formato HT-03), `--umbral-fh`, `--salida`. Códigos de salida: 0 APTO, 1 APTO_CON_ADVERTENCIAS, 2 BLOQUEADO, 3 error de entrada.
+
+**Informe de seguimiento de opción (V5.1).** `validar_seguimiento(informe, parametros, texto_breve)` (CLI: `--seguimiento`) valida el JSON `informe_seguimiento_opcion` del ciclo C6: S01 campos y valores; S02 una sola recomendación coherente con 7.11.4 (`PROPONER_ENVIO_A_B` solo si vuelve a ser elegible con los umbrales vigentes, sin objeciones fuertes abiertas y con `paquete_para_bloque_B`); S03 RK y elegibilidad reconstruibles; S04 pronósticos abiertos con PRG- y H5 con el estado de sus hitos; S05 credenciales; S06 brevedad (≤ 300 palabras, advertencia).
 
 **Campos opcionales que HT-09 aprovecha si existen en la opción:** `puertas` (G1–G4, PS1–PS8), `cluster`, `vigente`, `objeciones[].resuelta`, `horizontes.Hn.advertencia` (exigida en H1), `horizontes.Hn.metodo` y `ejemplos_ilustrativos` (no se inspeccionan en C15: son ilustración permitida).
 

@@ -538,6 +538,58 @@ Objeciones típicas para los doce tipos de activo del Documento 0 (2.6). Se form
 - Liu, Y. y Tsyvinski, A. (2021). «Risks and Returns of Cryptocurrency». *Review of Financial Studies*.
 - Reinhart, C. y Rogoff, K. (2009). *This Time Is Different*. Shiller, R. (2019). *Narrative Economics*.
 
+### 10.8 Técnicas estructuradas de refutación
+
+- **Análisis de hipótesis en competencia (ACH; Heuer, 1999)**: (1) enumera hipótesis alternativas que expliquen los mismos hechos (incluida la nula: «no hay oportunidad»); (2) construye la matriz evidencias × hipótesis marcando consistencia o inconsistencia; (3) céntrate en la evidencia **diagnóstica** (la que distingue entre hipótesis) y descarta la que es consistente con todas; (4) la hipótesis preferida es la que tiene **menos inconsistencias**, no más consistencias; (5) identifica qué evidencia, si fuese falsa o engañosa, cambiaría la conclusión (sensibilidad).
+- **Comprobación de supuestos clave**: lista los supuestos explícitos e implícitos de la tesis («la demanda no es adelantada», «el regulador mantiene la medida», «la divisa no se deprecia») y clasifícalos en sólidos, sostenibles con salvedades o sin respaldo; cada supuesto sin respaldo es una objeción potencial.
+- **Equipo rojo y abogado del diablo**: construye la mejor tesis contraria posible con los mismos datos, no una caricatura; si el material del Analista permite construir una tesis opuesta igual de coherente, la evidencia no discrimina (10.1).
+- **Indicadores de cambio**: para cada objeción fuerte, el dato observable que la confirmaría o la descartaría en el horizonte de la opción; enlázalo con las condiciones de invalidación.
+- **«¿Quién está al otro lado?»**: si la oportunidad es real, ¿por qué no la han arbitrado otros? Respuestas válidas: límites al arbitraje (capital, horizonte, riesgo de carrera; Shleifer y Vishny, 1997, «The Limits of Arbitrage»), restricciones institucionales (mandatos, índices, regulación), prima de riesgo que se cobra por asumir colas, información que el mercado aún no procesa. Sin respuesta, la sospecha por defecto es que el precio ya lo descuenta (YA_DESCONTADO).
+
+### 10.9 Objeciones cuantitativas a la evidencia estadística
+
+- **Sesgo de anticipación**: el indicador usa datos que no eran conocibles en la fecha de la señal (datos revisados en lugar de la primera publicación, estados financieros antes de su publicación, composición actual de un índice). Pregunta por `conocible_desde` (F2).
+- **Supervivencia y selección** de la muestra (fondos, empresas, monedas y mercados desaparecidos).
+- **Sobreajuste y búsqueda de especificaciones**: muchas variantes probadas para un resultado; el **ratio de Sharpe deflactado** (Bailey y López de Prado, 2014, «The Deflated Sharpe Ratio») corrige por el número de pruebas, la longitud de la muestra y la no normalidad; pide al Motor (MC-10) el número de ensayos y la validación fuera de muestra.
+- **Periodo único o régimen único**: la evidencia procede de una sola fase (tipos a la baja 1982–2021, liquidez abundante); pregunta si el mecanismo sobrevive en el régimen actual.
+- **Muestras pequeñas y episodios contados**: tres ciclos o cinco crisis no permiten inferencia; los intervalos de confianza son enormes.
+- **Rentabilidades sin costes ni capacidad**: primas académicas en microcapitalizaciones o en mercados ilíquidos que desaparecen al aplicar costes y tamaño realista.
+- **Medición suavizada**: volatilidades y correlaciones de activos tasados (privados, inmobiliario directo) sin desuavizar (Geltner; Getmansky, Lo y Makarov).
+
+### 10.10 Expectativas implícitas y tasas base como arma de refutación
+
+- **Expectativas implícitas**: invierte la valoración (DCF inverso, rentabilidad implícita, crecimiento descontado) y compara lo que el precio exige con las **tasas base** de la clase de referencia: proporción histórica de empresas o sectores que lograron ese crecimiento durante ese plazo, de mercados que mantuvieron múltiplos así de altos, de tecnologías que alcanzaron esa adopción en ese tiempo (Mauboussin y Callahan, series sobre tasas base). Una tesis que requiere un resultado de percentil 95 de la historia no es una oportunidad salvo evidencia excepcional.
+- **Horizonte largo (H5)**: las tesis de décadas fallan sobre todo en el calendario y en la captura de valor (10.5); exige que cada hito intermedio discrimine entre la tesis y su alternativa y que la invalidación no dependa solo del final del horizonte.
+
+### 10.11 Casos de consenso equivocado (aprendizaje para el refutador)
+
+| Caso | Tipo de error que ilustra |
+|---|---|
+| Burbuja tecnológica (1999–2000) | Tendencia real con captura de valor y precio equivocados: «tendencia correcta, inversión equivocada» |
+| «Pico del petróleo» con crudo cerca de 150 USD (2008) | Extrapolación ignorando la respuesta de la oferta (esquisto) y de la demanda |
+| Inflación «transitoria» (2021) | Anclaje en el régimen anterior y negligencia del shock de oferta |
+| Recesión de EE. UU. «segura» tras la inversión de la curva (2022–2023) | Indicador histórico tratado como reloj; régimen distinto (10.4.2) |
+| Acciones de cannabis (2018–2019) y SPAC (2020–2021) | Saturación de narrativa, emisión masiva y rentabilidades posteriores muy pobres; en los SPAC, costes estructurales que diluían a los inversores (Klausner, Ohlrogge y Ruan, 2022, «A Sober Look at SPACs») |
+| Stablecoin algorítmica TerraUSD (2022) | Rendimiento alto sin fuente económica identificable: «¿de dónde sale la rentabilidad?» |
+
+### 10.12 Fuentes por área de los archivos de referencias
+
+- **F7 (vía DOC-A, CT-08)**: TA-17 (metodología de la investigación, evidencia y fuentes, área principal), TA-02 (eficiencia y comportamiento del inversor), TA-04 (evaluación de pronósticos), TA-18 (crisis y eventos extremos) y el área del tipo de activo de la opción (TA-05 a TA-11, TA-19 a TA-23).
+- **F8 (métodos que el Analizador puede pedir al Motor para comprobar tus objeciones)**: TM-11 (evaluación predictiva y backtesting), TM-01 (inferencia), TM-04 (causalidad), TM-14 (calidad de datos).
+- **F9 (lectura según la matriz 5.1)**: TF-13 (repositorios académicos), TF-12 (redes y foros: solo como síntoma de saturación, nunca como prueba), TF-02 (documentación primaria de emisores y reguladores).
+
+### 10.13 Inventario de competencias
+
+1. **Lógica y epistemología**: falsacionismo, subdeterminación, ausencia de evidencia, razón de verosimilitudes, doble recuento, regresión a la media, significación frente a relevancia, comparaciones múltiples, causalidad, tesis compuestas, clasificación de resultados (10.1).
+2. **Técnicas estructuradas**: ACH, comprobación de supuestos clave, equipo rojo, indicadores de cambio, «¿quién está al otro lado?» y límites al arbitraje (10.8).
+3. **Explicaciones alternativas** (10.2) y **sesgos de la tesis** (10.3).
+4. **Objeciones cuantitativas**: anticipación, supervivencia, sobreajuste y Sharpe deflactado, régimen único, muestras pequeñas, costes y capacidad, suavizado (10.9).
+5. **Expectativas implícitas y tasas base**; refutación de tesis H5 (10.10).
+6. **Trampas por tipo de activo**: RV, RF, DIV, MP, INM, CRI, ALT, IDX, FON, DER, MON, TCV (10.4.1–10.4.12).
+7. **Trampas transversales** (10.5) y **evaluación de puntuaciones y rankings** (10.6).
+8. **Casos de consenso equivocado** (10.11).
+9. **Fuentes**: áreas TA/TM/TF (10.12) y referencias canónicas (10.7).
+
 ---
 
 ## 11. Formato de salida y ejemplo

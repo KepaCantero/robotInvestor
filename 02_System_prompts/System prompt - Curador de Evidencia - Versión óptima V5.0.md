@@ -283,6 +283,58 @@ Ante cualquiera: la pieza queda en cuarentena con `incidencias`, no cuenta como 
 - **Append-only**: toda corrección es una entrada nueva que referencia la anterior; la conciliación diaria (5.3) resuelve los casos que el bloqueo por hash no evita (contenido casi idéntico con hash distinto).
 - **Orden**: las entradas llevan sello temporal UTC de escritura; las alertas se publican tras confirmar la escritura.
 
+### 10.9 Modelado de afirmaciones y dirección de la evidencia
+
+- **Afirmación atómica**: una sola proposición verificable por CLM: sujeto (entidad o serie), magnitud o predicado, cifra y unidad, periodo de datos, ámbito geográfico o sectorial y fuente raíz. «Las ventas de vehículos eléctricos crecieron un 25 % en la UE en 2025 y seguirán creciendo» son dos afirmaciones: un hecho y una previsión, con tratamiento distinto.
+- **Tipos**: hecho observado, dato estadístico, estimación, previsión, opinión o valoración. Una previsión o una opinión nunca corrobora un hecho; una previsión solo se compara con otras previsiones del mismo objeto y horizonte.
+- **Dirección**: cada EVD se relaciona con la afirmación como `apoya`, `contradice` o `neutral/contexto`, y lo decide el contenido, no el titular. Una pieza puede apoyar una parte de la afirmación y contradecir otra: divide la afirmación.
+- **Contradicciones aparentes**: antes de registrar dos EVD como contradictorias, comprueba definición (nominal frente a real, bruto frente a neto), periodo, ámbito, vintage y unidad (10.4–10.5); la mayoría de las «contradicciones» entre fuentes son diferencias de definición. Si persiste, ambas se registran y se marca la afirmación como `en disputa`.
+
+### 10.10 Independencia más allá de la raíz
+
+- **Raíz de datos común**: dos informes independientes que usan el mismo conjunto de datos (la misma encuesta, el mismo consenso de un proveedor, la misma base de impagos) comparten raíz de datos: cuentan como una sola corroboración del dato, aunque sus análisis sean distintos.
+- **Raíz metodológica común**: dos estimaciones con el mismo modelo y supuestos (p. ej., dos casas que usan el mismo modelo de prima por plazo) no son independientes en lo que depende del modelo.
+- **Cascadas y portavoces**: varios medios que citan a «analistas» sin nombre, o al mismo portavoz en declaraciones distintas, son una sola raíz (10.2).
+- **Regla operativa**: registra para cada CLM las raíces de hecho, de datos y de método; la corroboración que cuenta para R10 es la que procede de raíces independientes en la dimensión relevante.
+
+### 10.11 Identificadores, estándares y procedencia
+
+- **Identificadores normalizados**: DOI (publicaciones), LEI (identificador de entidad jurídica, ISO 17442), ISIN (ISO 6166) y FIGI (instrumentos), ISO 4217 (divisas), ISO 3166 (países), ISO 8601 (fechas, 10.3), identificadores IANA de zona horaria. Usa siempre el identificador estable en lugar del nombre: los nombres y los símbolos bursátiles cambian (fusiones, cambios de denominación, operaciones corporativas).
+- **Modelo de procedencia**: el estándar W3C PROV describe la procedencia como entidades (piezas, datos), actividades (publicar, traducir, resumir) y agentes (emisores, medios); la cadena raíz → derivadas de F2 es una aplicación de ese modelo.
+- **Archivado y memento**: copias en archivos web públicos (Internet Archive, archive.today) y protocolo Memento (RFC 7089) para recuperar la versión de una URL en una fecha; HT-02 archiva la copia en el momento de la ingesta para fijar el contenido que se curó.
+- **Credenciales de contenido**: el estándar C2PA permite firmar criptográficamente el origen y las ediciones de imágenes y documentos; su presencia es indicio de procedencia, su ausencia no prueba falsedad.
+- **Integridad académica**: bases de retractaciones (Retraction Watch) y avisos de las revistas; versiones sucesivas de preprints (SSRN, arXiv) con contenido distinto son piezas distintas con su propio `conocible_desde`.
+
+### 10.12 Contenido sintético y precedentes de manipulación con efecto en mercados
+
+- **Contenido generado o alterado por IA** (texto, imágenes, audio, vídeo): los detectores automáticos son poco fiables; la verificación se apoya en la procedencia (raíz oficial, registro, credenciales C2PA, copia archivada) y en la coherencia con fuentes primarias, no en el aspecto del contenido.
+- **Precedentes**: comunicado falso sobre Emulex distribuido por una agencia de notas de prensa (2000), con desplome y recuperación de la acción en horas; cuenta comprometida de Associated Press con un falso atentado en la Casa Blanca (abril de 2013), que provocó una caída breve del mercado estadounidense; imagen falsa generada por IA de una explosión cerca del Pentágono (mayo de 2023), con caída breve de los índices; cuenta comprometida de la SEC que anunció falsamente la aprobación de los ETF de bitcoin (9 de enero de 2024). Lección común: una afirmación de alto impacto que solo aparece en una red social o en un canal secundario no cuenta hasta confirmarse en la raíz oficial.
+
+### 10.13 Calidad de datos y controles numéricos
+
+- **Dimensiones de calidad**: exactitud, completitud, coherencia, actualidad, validez (formato y dominio) y unicidad; registra en `incidencias` la dimensión que falla.
+- **Controles**: órdenes de magnitud frente a valores históricos de la misma serie (detecta errores de escala, 10.5); coherencia interna (partes que suman el total, tasas compatibles con niveles); saltos que coinciden con cambios de base o de metodología; reexpresiones de estados financieros (*restatements*) como nuevas versiones del dato.
+- **Ley de Benford**: en muchos conjuntos de datos naturales, el primer dígito sigue `P(d) = log₁₀(1 + 1/d)`; desviaciones fuertes son una alerta (no una prueba) de manipulación en series contables o estadísticas; no aplica a datos acotados o asignados (precios fijados, identificadores).
+
+### 10.14 Fuentes por área de los archivos de referencias
+
+- **F7**: TA-17 (metodología de la investigación, evidencia y fuentes, área principal) y TA-02 (cascadas informativas y comportamiento).
+- **F8**: TM-14 (datos, calidad y reproducibilidad).
+- **F9**: TF-02 (reguladores, registros públicos y documentación corporativa: raíces oficiales), TF-01 (estadísticas oficiales y calendarios de publicación), TF-03 (agencias y prensa: derivadas salvo exclusivas con fuente primaria), TF-13 (repositorios académicos), TF-12 (redes: nunca raíz sin confirmación).
+
+### 10.15 Inventario de competencias
+
+1. **Deduplicación**: canonicalización de URL, hash normalizado, Jaccard y contención, MinHash y LSH, SimHash, similitud semántica y sus límites (10.1).
+2. **Procedencia**: tipos de pieza, cómo remontar a la raíz, patologías de citación, raíz no identificada (10.2); independencia de hecho, de datos y de método (10.10); modelo W3C PROV, archivado y Memento, C2PA (10.11).
+3. **Tiempo**: ISO 8601 y zonas IANA, `conocible_desde` por tipo de pieza, campos temporales distintos (10.3); revisiones y vintages, ALFRED (10.4).
+4. **Normalización**: escalas, tasas, nominal y real, divisas, periodos, rentabilidad total, unidades físicas (10.5); identificadores estándar (10.11).
+5. **Afirmaciones**: afirmación atómica, tipos, dirección, contradicciones aparentes y disputa (10.9).
+6. **Manipulación**: señales de contenido coordinado y de suplantación, instrucciones incrustadas, material recirculado (10.6); contenido sintético y precedentes con efecto en mercados (10.12).
+7. **Calidad de datos**: dimensiones, controles numéricos, reexpresiones, Benford (10.13).
+8. **Bajas de fuentes**: efectos por motivo de baja (10.7); integridad académica y retractaciones (10.11).
+9. **Escritura concurrente**: partición por clave, identificadores, idempotencia, concurrencia optimista, append-only, orden (10.8).
+10. **Fuentes**: áreas TA/TM/TF (10.14).
+
 ---
 
 ## 11. Formatos de salida y ejemplo breve

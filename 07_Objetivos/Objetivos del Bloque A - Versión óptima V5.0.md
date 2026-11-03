@@ -1,10 +1,10 @@
 # Objetivos del Bloque A — Buscador de Oportunidades de Inversión
 
-**Bloque A · Robot Investor · Versión óptima V5.0 · 02/11/2026** · Subordinado al Documento 0 óptima V5.0.
+**Bloque A · Robot Investor · Versión óptima V5.0 · 02/11/2026 · actualizado V5.1 (03/11/2026)** · Subordinado al Documento 0 óptima V5.1. Cambios V5.1: dimensión D11 (OBJ-73 a OBJ-84) para credenciales (CT-25), consultas al Broker (CT-23), H5 y horizonte principal, y seguimiento encargado de opción (CT-24, C6); requisitos RQ-13 a RQ-16; OBJ-23 incluye H5.
 
 Este documento fija **qué debe conseguir** el Bloque A y **cómo se mide**. Cada objetivo tiene un indicador, una meta inicial, el responsable de medirlo y el requisito del propietario que cubre. Las metas son valores de arranque: el Evaluador y el operador las revisan trimestralmente con la evidencia acumulada.
 
-**Requisitos del propietario (RQ):** RQ-0 funcionamiento descrito (periodicidad configurable, peticiones y consultas sin límite, dos informes, top-3 por clase, el Broker decide) · RQ-1 estrategias por clase de activo · RQ-2 automejora · RQ-3 sin cuellos de botella · RQ-4 eficiencia · RQ-5 autocrítica · RQ-6 historial interno · RQ-7 conocimiento verificado continuo · RQ-8 Fondo metodológico · RQ-9 verificación y borrado de referencias · RQ-10 referencias por temática y calidad · RQ-11 horizontes · RQ-12 conocimiento experto en los prompts.
+**Requisitos del propietario (RQ):** RQ-0 funcionamiento descrito (periodicidad configurable, peticiones y consultas sin límite, dos informes, top-3 por clase, el Broker decide) · RQ-1 estrategias por clase de activo · RQ-2 automejora · RQ-3 sin cuellos de botella · RQ-4 eficiencia · RQ-5 autocrítica · RQ-6 historial interno · RQ-7 conocimiento verificado continuo · RQ-8 Fondo metodológico · RQ-9 verificación y borrado de referencias · RQ-10 referencias por temática y calidad · RQ-11 horizontes · RQ-12 conocimiento experto en los prompts · (V5.1) RQ-13 credenciales vía Broker y bóveda de HT-01 · RQ-14 consultas del bloque al Broker · RQ-15 horizonte H5 y horizonte principal · RQ-16 seguimiento encargado de opción.
 
 ---
 
@@ -52,7 +52,7 @@ Encontrar pocas oportunidades de inversión buenas —dónde, por qué y cuándo
 | OBJ-20 | Separar tendencia de oportunidad | Opciones con valoración explícita de lo ya descontado | 100 % | HT-09 / Auditor |
 | OBJ-21 | Trazabilidad | Afirmaciones centrales con CLM→EVD; cifras con fuente y fecha o CALC- | 100 % | HT-09 |
 | OBJ-22 | Corroboración | Afirmaciones centrales con ≥ 2 raíces independientes A/B o 1 primaria A | 100 % | Curador / HT-09 |
-| OBJ-23 | Horizontes coherentes | Horizontes ofrecidos fuera de la tabla 8.3 | 0 | HT-09 |
+| OBJ-23 | Horizontes coherentes | Horizontes ofrecidos fuera de la tabla 8.3 (H1–H5) | 0 | HT-09 |
 | OBJ-24 | Honestidad predictiva | Probabilidades numéricas sin certificado del Evaluador | 0 | HT-09 |
 | OBJ-25 | Pronósticos verificables | Pronósticos del top-3 congelados en F4 con criterio y fecha de resolución | 100 % | Evaluador |
 | OBJ-26 | Diversificación honesta | Informes que declaran el número de apuestas independientes | 100 % | HT-09 |
@@ -92,7 +92,7 @@ Encontrar pocas oportunidades de inversión buenas —dónde, por qué y cuándo
 
 | ID | Objetivo | Indicador | Meta inicial | Mide |
 |---|---|---|---|---|
-| OBJ-38 | Respetar el presupuesto | Consumo del ciclo semanal | ≤ 160 UC; desviación ≤ +10 % | Orquestador |
+| OBJ-38 | Respetar el presupuesto | Consumo del ciclo semanal | ≤ 240 UC (Anexo A); desviación ≤ +10 % | Orquestador |
 | OBJ-39 | No gastar en lo que no cambia | Clases con GC0 negativo resueltas en N1 (arrastre verificado) | 100 % | Orquestador |
 | OBJ-40 | Embudo efectivo | Proporción candidatas GC1 / finalistas GC3 / top-3 registrada | Registrada en el 100 % de los ciclos | Coordinador |
 | OBJ-41 | Reutilizar | % de cálculos servidos desde caché cuando eran idénticos | 100 % | Motor |
@@ -143,6 +143,23 @@ Encontrar pocas oportunidades de inversión buenas —dónde, por qué y cuándo
 | OBJ-66 | Cambios gobernados | Cambios de tipo 3 aplicados sin aprobación | 0 | Orquestador |
 | OBJ-67 | Estados de madurez honestos | Componentes presentados como validados sin pruebas | 0 | Auditor |
 
+### D11 · Comunicación fluida con el Broker, horizontes largos y seguimiento encargado (RQ-13 a RQ-16, V5.1)
+
+| ID | Objetivo | Indicador | Meta inicial | Mide |
+|---|---|---|---|---|
+| OBJ-73 | Credenciales nunca expuestas | Valores de credenciales en mensajes, archivos, entregables o contextos de agente | 0 | HT-09 / Auditor |
+| OBJ-74 | Servicio degradado siempre declarado | Análisis con una credencial ausente, caducada o denegada que no declaran la degradación | 0 | Auditor |
+| OBJ-75 | Credenciales atendidas a tiempo | Solicitudes CT-25 con respuesta del Broker en ≤ 72 h | ≥ 80 % (informativo: depende del Broker) | Coordinador |
+| OBJ-76 | Preguntar lo que importa | Consultas CT-23 cuya respuesta cambió un alcance, un supuesto o un top-3 / consultas enviadas | ≥ 50 % | Evaluador |
+| OBJ-77 | Pocas consultas por análisis | Mensajes CT-23 por RUN- | ≤ 3; tendencia decreciente por normalización | Coordinador |
+| OBJ-78 | Supuestos siempre visibles | Conclusiones dependientes de una consulta sin respuesta sin `supuestos_declarados` | 0 | HT-09 |
+| OBJ-79 | Horizonte principal coherente | Opciones con horizonte principal ausente, en celda «No» o fuera del rango de su naturaleza sin justificación, en la entrega final | 0 | HT-09 |
+| OBJ-80 | H5 honesto y evaluable | Pronósticos H5 con probabilidad numérica o con menos de 3 hitos HIT- | 0 | HT-09 |
+| OBJ-81 | H5 que aciertan su senda | Tasa de hitos H5 cumplidos por celda tipo × H5 (≥ 20 hitos resueltos) | ≥ 50 % (por debajo, la celda baja un escalón, 12.2) | Evaluador |
+| OBJ-82 | Seguimientos puntuales | Ciclos C6 ejecutados en su fecha (o con retraso declarado) | ≥ 95 % | Coordinador |
+| OBJ-83 | Cancelación inmediata | Ciclos C6 ejecutados tras una cancelación | 0 | Orquestador |
+| OBJ-84 | Seguimientos ligeros y útiles | Consumo medio por ciclo C6; recomendaciones `PROPONER_ENVIO_A_B` seguidas de comportamiento favorable del indicador | ≤ 2 UC; tasa publicada con n ≥ 30 | Evaluador |
+
 ---
 
 ## 3. Correspondencia requisito → objetivos
@@ -162,6 +179,10 @@ Encontrar pocas oportunidades de inversión buenas —dónde, por qué y cuándo
 | RQ-10 Temática y calidad | OBJ-59, OBJ-60 |
 | RQ-11 Horizontes | OBJ-23 a OBJ-25, OBJ-27 a OBJ-29 |
 | RQ-12 Conocimiento en prompts | OBJ-63 |
+| RQ-13 Credenciales vía Broker y bóveda (A1, V5.1) | OBJ-73 a OBJ-75 |
+| RQ-14 Consultas al Broker (A2, V5.1) | OBJ-76 a OBJ-78 |
+| RQ-15 Horizonte H5 y horizonte principal (A3, V5.1) | OBJ-23, OBJ-79 a OBJ-81 |
+| RQ-16 Seguimiento encargado de opción (A4, V5.1) | OBJ-82 a OBJ-84 |
 
 ## 4. Revisión
 

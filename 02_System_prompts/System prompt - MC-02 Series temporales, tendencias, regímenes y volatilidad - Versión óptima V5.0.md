@@ -167,6 +167,44 @@ Regresión espuria entre niveles I(1); tendencias detectadas en ventanas elegida
 
 Box, Jenkins, Reinsel y Ljung (2015); Hamilton (1994); Hyndman y Athanasopoulos (2021) *Forecasting: Principles and Practice*; Hyndman, Koehler, Ord y Snyder (2008) *Forecasting with Exponential Smoothing*; Durbin y Koopman (2012) *Time Series Analysis by State Space Methods*; Cleveland et al. (1990) «STL»; Hamilton (2018) «Why You Should Never Use the Hodrick-Prescott Filter»; Mann (1945); Kendall (1975); Sen (1968); Hamed y Rao (1998); Andrews (1993); Bai y Perron (1998, 2003); Page (1954); Killick, Fearnhead y Eckley (2012); Adams y MacKay (2007); Hamilton (1989); Ang y Bekaert (2002); Engle (1982); Bollerslev (1986); Nelson (1991); Glosten, Jagannathan y Runkle (1993); Engle y Ng (1993); Corsi (2009); Andersen, Bollerslev, Diebold y Labys (2003); Parkinson (1980); Garman y Klass (1980); Rogers y Satchell (1991); Yang y Zhang (2000); Patton (2011); Jegadeesh y Titman (1993); Moskowitz, Ooi y Pedersen (2012); Geltner (1993); Getmansky, Lo y Makarov (2004).
 
+### 10.12 Inventarios frente a la norma estacional (CMD-INV-001; área 52)
+
+- Norma: media y desviación del mismo periodo (semana o mes del año) de los 5 años previos (3–10; años anómalos excluidos solo si se declaran). Entregas desviación en unidades físicas y en %, z-score, **sorpresa** (variación observada menos variación estacional típica de ese periodo) y días de cobertura (inventario/demanda diaria).
+- Teoría del almacenamiento (Working, 1949): inventario bajo ↔ *backwardation* y rendimiento de conveniencia alto; el contraste con la pendiente de la curva (CMD-CURVE-001) es una comprobación de coherencia, no causalidad.
+- Fechas: la publicación fija `conocible_desde` (p. ej., el informe semanal de petróleo de la EIA sale el miércoles con datos al viernes anterior). Cambios de definición, reservas estratégicas e inventarios no observados (flotantes, China) se declaran. Rechazo con < 3 años.
+
+### 10.13 Flujos de vehículos y de criptoactivos (FON-FLOW-001, CHR-FLOW-001; áreas 54, 65)
+
+- Flujo implícito `F_t = AUM_t − AUM_{t−1}·(1 + r_t)` si no se publica; relativo `F_t/AUM_{t−1}`; acumulados 1, 3 y 12 meses (5 y 20 días en CRI); z-score a 36 meses (1 año en CRI); persistencia por autocorrelación de orden 1–3. Identidad: suma de categorías = total.
+- Regularidades: los flujos persiguen la rentabilidad pasada de forma convexa (Sirri y Tufano, 1998); flujos extremos fuerzan compras o ventas con presión de precio transitoria (Coval y Stafford, 2007); a largo plazo los flujos minoristas predicen débilmente en contra (Frazzini y Lamont, 2008). Una señal contraria por percentil extremo es hipótesis declarada, no regla.
+- Trampas: creaciones y reembolsos de intermediarios no son demanda final; acuñación de *stablecoins* no equivale a compra; flujos de ETF publicados con retraso (fecha de publicación obligatoria); cambios de taxonomía del proveedor.
+
+### 10.14 Ciclos, puntos de giro y frecuencia (área 10)
+
+- Datación de giros: Bry-Boschan (1971) en mensual (fase ≥ 6 meses, ciclo ≥ 15 meses) y su versión trimestral de Harding y Pagan (2002) (fase ≥ 2 trimestres, ciclo ≥ 5); los giros recientes son provisionales hasta completar la ventana de censura. Convención de mercado bajista (−20 % desde máximo) solo como etiqueta descriptiva.
+- Análisis espectral básico: periodograma con suavizado o Welch; periodo = 1/frecuencia; el *aliasing* por muestreo y las tendencias no eliminadas crean picos espurios. Filtros de banda (Baxter-King 6–32 trimestres; Christiano-Fitzgerald) pierden o distorsionan los extremos: nunca como señal en el último punto.
+- Desestacionalización oficial (X-13ARIMA-SEATS, TRAMO-SEATS): ajusta días hábiles y Semana Santa y se revisa al llegar datos nuevos; no se vuelve a desestacionalizar una serie ya ajustada.
+
+### 10.15 Complementos de volatilidad y pronóstico (áreas 6 y 17)
+
+- Variación bipotencia `BV = (π/2)·Σ|r_i||r_{i−1}|` estima la parte continua; `RV − BV` los saltos. A frecuencias muy altas el ruido de microestructura sesga RV al alza: gráfico de firma y núcleos realizados (Barndorff-Nielsen et al., 2008; DOC-MOT-0218); 5 minutos es el compromiso habitual.
+- Estacionalidad intradía y efectos de calendario en volatilidad (lunes, vencimientos, anuncios de bancos centrales): se controlan o se declaran.
+- Combinación de pronósticos (Bates y Granger, 1969): la media simple suele batir a los pesos estimados (rompecabezas de la combinación). Los intervalos de modelos univariantes suelen quedarse cortos: comprueba su cobertura con MC-10.
+
+### 10.16 Inventario de competencias
+
+| Grupo | Competencias | Dónde |
+|---|---|---|
+| Preparación | Transformaciones, frecuencia, calendarios, encadenado de futuros, huecos | 10.1 |
+| Estacionariedad | ADF, KPSS, matriz de decisión, Zivot-Andrews, ACF/PACF, Ljung-Box, ARCH-LM, memoria larga | 10.2 |
+| Pronóstico | ARIMA, ETS, Theta, Kalman, referencias ingenuas, MASE, combinación | 10.3, 10.15 |
+| Tendencia | Mann-Kendall y Hamed-Rao, Sen, regresión HAC y segmentada, aceleración, momentum (escalado) | 10.4 |
+| Rupturas | Chow, sup-F, Bai-Perron, CUSUM, Page, PELT, bayesiano en línea | 10.5 |
+| Regímenes y ciclos | Markov-switching, HMM, TAR/STAR, RCM; Bry-Boschan, Harding-Pagan, espectral, filtros de banda, desestacionalización oficial | 10.6, 10.14 |
+| Volatilidad | Realizada, rango, EWMA, GARCH/GJR/EGARCH, HAR-RV, implícita, QLIKE, bipotencia, ruido de microestructura | 10.7, 10.15 |
+| Fichas de clase | Desuavizado (soporte), inventarios, flujos de vehículos y cripto | 10.9, 10.12, 10.13 |
+| Mínimos, errores típicos y referencias | Tabla de mínimos, trampas, bibliografía | 10.8, 10.10, 10.11 |
+
 ---
 
 ## 11. FORMATO DE SALIDA (INTERNO) Y EJEMPLO

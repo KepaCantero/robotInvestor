@@ -1,6 +1,6 @@
 # Esquema de archivo operativo — F1 Registro maestro de tendencias
 
-**Bloque A · Robot Investor · Versión óptima V4.0 · 01/11/2026** · Subordinado al Documento 0 óptima V5.0.
+**Bloque A · Robot Investor · Versión óptima V4.0 · 01/11/2026 · actualizado V5.1 (03/11/2026)** · Subordinado al Documento 0 óptima V5.1. Cambio V5.1: horizontes H1–H5.
 
 ---
 
@@ -26,7 +26,7 @@ F1 es la memoria estructurada de **tendencias** (TND-) del Bloque A y la fuente 
 3. **Fusión**: una de las fichas pasa a `archivada` con `fusionada_en` = TND- que subsiste.
 4. **Transiciones solo legales** (sección 5). Toda transición registra fecha, `run_id`, justificación y evidencia (EVD-/CLM-).
 5. **Puntuaciones** T, E, M y P solo con HT-03, con desglose por dimensión (múltiplos de 10) y pesos vigentes de F10; total redondeado al múltiplo de 5; máximo dos NA/NE; cambios ≥ 15 puntos con justificación.
-6. **Clases y horizontes unificados**: clases RV, RF, DIV, MP, INM, CRI, ALT; horizontes H1–H4. Una tendencia multiclase declara clase principal y secundarias.
+6. **Clases y horizontes unificados**: los doce tipos de activo (RV, RF, DIV, MP, IDX, FON, DER, INM, CRI, ALT, MON, TCV); horizontes H1–H5 (H5 décadas, V5.1). Una tendencia multiclase declara clase principal y secundarias.
 7. **Revisión periódica**: toda ficha abierta tiene `fecha_proxima_revision` (por defecto, 90 días) y disparadores de reevaluación. Dos revisiones trimestrales sin actividad → candidata a `archivada`.
 8. **Sin datos personales ni credenciales**; los extractos de contenido externo no se copian aquí (viven, mínimos, en F2).
 
@@ -51,7 +51,7 @@ F1 es la memoria estructurada de **tendencias** (TND-) del Bloque A y la fuente 
 | `condiciones_invalidacion` | Lista de objetos | Sí (≥ 1) | `{indicador, umbral, plazo}` | Observables y fechables |
 | `indicadores_seguimiento` | Lista de objetos | Sí | `{nombre, serie_ht01 o ref_id, nivel_fuente A·B·C·D, frecuencia DIARIA·SEMANAL·MENSUAL·TRIMESTRAL·ANUAL, umbral_alerta, tipo ADELANTADO·COINCIDENTE·CONFIRMATORIO}` | Seguimiento |
 | `hitos` | Lista de objetos | Sí | `{descripcion, fecha_o_condicion, indicador, estado PENDIENTE·ALCANZADO·INCUMPLIDO}` | Agenda |
-| `horizontes_relevantes` | Lista | Sí | H1 · H2 · H3 · H4 | Horizontes en que la tendencia es accionable |
+| `horizontes_relevantes` | Lista | Sí | H1 · H2 · H3 · H4 · H5 | Horizontes en que la tendencia es accionable |
 | `fase_madurez` | Enumerado | Sí | SENAL_TEMPRANA · EMERGENTE · EN_ADOPCION · CONSOLIDADA · EN_DECLIVE | Fase del fenómeno (distinta del estado epistémico) |
 | `estado` | Enumerado | Sí | Sección 5 | Último estado del historial |
 | `puntuaciones` | Objeto | Sí desde `en investigación` | `{T, E, M, P: {total, desglose[{dim, valor, NA/NE, justificacion}], fecha, methodology_version, pasada 1·2, ht03_ref}}` | Separadas, nunca fundidas |
