@@ -93,6 +93,14 @@ def main():
     # decisión ajustada: el flujo no debe elegir
     d = comparar_candidatos([cand(1), cand(2, instrumento="OTRO")], AHORA)
     h.chk("ajustada: D no señala ganador y el flujo se detiene en el operador", d["grupos"]["Q"]["decision"] == "AJUSTADA" and d["grupos"]["Q"]["primero"] is None)
+    # abstención: si ninguno supera a no hacer nada (referencia de la cartera), el flujo se detiene en D sin órdenes
+    from comparador import REFERENCIA_EFECTIVO
+    refs = {c: dict(REFERENCIA_EFECTIVO) for c in ("TRADING", "TACTICA", "LARGO_PLAZO")}
+    refs["TACTICA"]["rentabilidad_anual_pct"] = 40.0
+    o = nuevo({"referencias": refs}); candidatos(o)
+    r = o.comparar(["EXP-0001", "EXP-0002"], "D", AHORA)
+    h.chk("abstencion: D concluye no hacer nada y nadie se puede proponer", r["decision_global"] == "ABSTENERSE" and r["ganador"] is None
+          and o.proponer("EXP-0001", ENTRADA, SALIDA, "GESTOR_TACTICA", AHORA, dim(o))["codigo"] == "O-22" and o.posiciones == {}, r)
     # el intermediario cae durante la vigilancia: nada se da por cerrado y el panel lo muestra
     o = nuevo(); candidatos(o)
     assert o.comparar(["EXP-0001", "EXP-0002"], "D", AHORA)["ok"]

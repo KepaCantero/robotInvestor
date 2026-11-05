@@ -24,7 +24,7 @@ from k_calidad import (Calendario, ERRORES, SinCobertura, estado_sello, hash_ser
 from validar_encargo import sobre_responde_a_encargo, validar_encargo  # noqa: E402
 from validar_sobre import _dt  # noqa: E402
 from manual_g import neto_libre, validar_manual  # noqa: E402
-from comparador import MARGEN_AJUSTADO, comparar_candidatos  # noqa: E402
+from comparador import MARGEN_AJUSTADO, REFERENCIA_EFECTIVO, _referencia_ok, comparar_candidatos  # noqa: E402
 from dimensionado import dimensionar  # noqa: E402
 from validar_contradictor import validar_informe  # noqa: E402
 from control_f import POLITICA_DEFECTO, controlar, politica_valida, validar_informe_f  # noqa: E402
@@ -44,6 +44,7 @@ for _e in ("DETECTADA", "EN_OBSERVACION", "CADUCADA"):
 T[("EN_ANALISIS", "EN_ANALISIS")] = EMISORES          # reintento tras encargo incompleto, caducado o anulado
 T[("EN_ANALISIS", "VALIDADA")] = {"C"}
 T[("VALIDADA", "COMPARADA")] = {"D"}
+T[("COMPARADA", "COMPARADA")] = {"D"}   # al llegar candidatos nuevos se vuelve a comparar con todos
 T[("COMPARADA", "PROPUESTA")] = EMISORES
 T[("PROPUESTA", "AUTORIZADA")] = {"OPERADOR", "MATRIZ_AUTONOMIA"}
 T[("AUTORIZADA", "EJECUTADA")] = {"G"}
@@ -71,7 +72,8 @@ OPERADORES = {"<": lambda v, u: v < u, "<=": lambda v, u: v <= u, ">": lambda v,
 CONFIG_DEFECTO = {"max_reintentos": 3, "umbral_corte_comun_dias_habiles": 0,
                   "dia_coste_max_eur": 50.0, "dia_tiempo_max_min": 600, "tolerancia_precio_entrada": 0.05,
                   "exige_contradictor_en": [], "matriz_autonomia": {}, "politica_f": POLITICA_DEFECTO,
-                  "nivel_autonomia": {}, "tolerancia_conciliacion_rel": 0.0, "instrumentos_permitidos": None}   # cartera -> L0 (simulado) | L1 (el operador confirma) | L2 (automático con límites); sin dato = L1
+                  "nivel_autonomia": {}, "tolerancia_conciliacion_rel": 0.0, "instrumentos_permitidos": None,
+                  "referencias": {c: dict(REFERENCIA_EFECTIVO) for c in ("TRADING", "TACTICA", "LARGO_PLAZO")}}   # benchmark de cada cartera [PROPUESTO]   # cartera -> L0 (simulado) | L1 (el operador confirma) | L2 (automático con límites); sin dato = L1
 NIVELES = {"L0": 0, "L1": 1, "L2": 2}
 # Prioridad de cada aviso para el operador [PROPUESTO]
 PRIORIDAD_AVISO = {"O-20": "MEDIA", "O-18": "ALTA", "O-03": "ALTA", "O-08": "ALTA", "O-09": "ALTA", "O-13": "ALTA", "O-17": "ALTA"}
@@ -84,7 +86,6 @@ def _ins(x):
 
 
 MAX_EDAD_DIMENSIONADO_MIN = 60   # [PROPUESTO] el cálculo de E no puede ser más viejo que esto al proponer
-EXCLUSION_ELEGIBLE = (None, "SIN_PAR_EN_SU_CLASE", "DUPLICADO")   # el operador puede elegir; las demás exclusiones de D son duras
 
 
 def _num(x):
@@ -110,6 +111,8 @@ def _valida_config(c):
           and isinstance(c["nivel_autonomia"], dict)
           and all(k in ("TRADING", "TACTICA", "LARGO_PLAZO") and v in NIVELES for k, v in c["nivel_autonomia"].items())
           and _num(c["tolerancia_conciliacion_rel"]) and 0 <= c["tolerancia_conciliacion_rel"] <= 0.01
+          and isinstance(c["referencias"], dict) and set(c["referencias"]) == {"TRADING", "TACTICA", "LARGO_PLAZO"}
+          and all(_referencia_ok(v) for v in c["referencias"].values())
           and (c["instrumentos_permitidos"] is None or isinstance(c["instrumentos_permitidos"], dict)
                and all(k in ("TRADING", "TACTICA", "LARGO_PLAZO") and isinstance(v, list) and all(isinstance(x, str) for x in v)
                        for k, v in c["instrumentos_permitidos"].items())))
@@ -160,6 +163,7 @@ class Orquestador:
         Calendario(calendario)   # falla pronto si no es válido
         self.sellos, self.eventos, self.encargos = {}, {}, {}
         self.expedientes, self.posiciones, self.gasto_dia, self.avisos = {}, {}, {}, []
+        self.ultima_comparacion = {}   # cartera -> id de la comparación vigente
         self.manuales = []     # registros CT-G-14 aceptados (lo que el operador hizo fuera del sistema)
         self.degradadas = {}   # cartera -> motivo: bajada automática a L1 hasta que el operador la restablezca
 
@@ -447,6 +451,9 @@ class Orquestador:
             return _no("O-05", "el emisor del encargo no es quien lo pide")
         if encargo["payload"].get("cartera_destino") != e["cartera_destino"] if isinstance(encargo.get("payload"), dict) else True:
             return _no("O-12", "la cartera del encargo no es la del expediente")
+        mand = encargo["payload"].get("mandato")
+        if not (isinstance(mand, dict) and mand.get("benchmark_ref") == self.cfg["referencias"][e["cartera_destino"]]["benchmark_ref"]):
+            return _no("O-24", "el mandato del encargo no cita la referencia configurada para la cartera")
         ctx = self._ctx_encargo(ahora)
         if ctx is None:
             return _no("O-06", "no hay ningún sello de K registrado")
@@ -597,11 +604,16 @@ class Orquestador:
                     datos=e["sobre"].get("hash"))
         return _r(True, "OK", "objeción levantada; expediente validado")
 
+    def _candidato_vivo(self, x, cartera, a):
+        """Candidato que debe entrar en cualquier comparación de la cartera: VALIDADA o COMPARADA, con sobre vigente y sello válido."""
+        return (x["cartera_destino"] == cartera and x["estado"] in ("VALIDADA", "COMPARADA") and x.get("sobre")
+                and a <= _dt(x["sobre"]["valid_until"]) and not self._sello_anulado(x))
+
     @_seguro
     def comparar(self, expediente_ids, actor, ahora):
         a = self._ahora(ahora)
-        if not isinstance(expediente_ids, list) or len(expediente_ids) < 2 or len(set(expediente_ids)) != len(expediente_ids):
-            return _no("O-01", "se necesitan al menos dos expedientes distintos")
+        if not isinstance(expediente_ids, list) or not expediente_ids or len(set(map(str, expediente_ids))) != len(expediente_ids):
+            return _no("O-01", "se necesita al menos un expediente y sin repetidos")
         exps = []
         for eid in expediente_ids:
             e, err = self._exp(eid)
@@ -617,6 +629,14 @@ class Orquestador:
             exps.append(e)
         if len({x["cartera_destino"] for x in exps}) != 1:
             return _no("O-06", "los expedientes comparados deben ser de la misma cartera")
+        cartera = exps[0]["cartera_destino"]
+        faltan = sorted(k for k, x in self.expedientes.items() if k not in expediente_ids and self._candidato_vivo(x, cartera, a))
+        if faltan:   # T-34: quien llama no elige contra quién se compara
+            return _no("O-24", f"hay que comparar con todos los candidatos vigentes de la cartera; faltan {', '.join(faltan[:5])}", faltan=faltan)
+        ref = self.cfg["referencias"][cartera]
+        otra = [x["expediente_id"] for x in exps if self.encargos[x["encargo_actual"]]["msg"]["payload"]["mandato"]["benchmark_ref"] != ref["benchmark_ref"]]
+        if otra:
+            return _no("O-24", f"el mandato del encargo cita otra referencia que la configurada para la cartera: {', '.join(otra)}")
         from datetime import date
         cortes = sorted(date.fromisoformat(x["sobre"]["fecha_corte"]) for x in exps)
         cal = Calendario(self.cal_def)
@@ -627,25 +647,31 @@ class Orquestador:
             return _no("O-11", f"fechas de corte distintas ({dif} d.h.): hay que actualizar datos", actualizar=viejos)
         if any(_hash(x["sobre"]["documento"]) != x["sobre"]["hash"] for x in exps):
             return _no("O-13", "un sobre guardado no cuadra con su hash")
-        d = comparar_candidatos([{"expediente_id": x["expediente_id"], "sobre": copy.deepcopy(x["sobre"]["documento"])} for x in exps], ahora)
-        cid = "CMP-" + _hash([sorted(expediente_ids), ahora])[:12]
+        d = comparar_candidatos([{"expediente_id": x["expediente_id"], "sobre": copy.deepcopy(x["sobre"]["documento"])} for x in exps], ahora, ref)
+        if not d["ok"]:
+            return _no("O-01", f"D no pudo comparar: {d['motivo']}")
+        cid = "CMP-" + _hash([sorted(expediente_ids), ahora, len(self.ultima_comparacion)])[:12]
+        filas = {r["expediente_id"]: r for g in d["grupos"].values() for r in g["ranking"]}
         excl = {x["expediente_id"]: x["motivo"] for x in d.get("excluidos", [])}
         for e in exps:
             eid = e["expediente_id"]
             grupo = next((g for g in d.get("grupos", {}).values() if any(r["expediente_id"] == eid for r in g["ranking"])), None)
-            punt = next((r["puntuacion"] for r in grupo["ranking"] if r["expediente_id"] == eid), None) if grupo else None
-            empatado = bool(grupo and grupo["decision"] == "AJUSTADA"
-                            and abs(grupo["ranking"][0]["puntuacion"] - punt) <= MARGEN_AJUSTADO * max(abs(grupo["ranking"][0]["puntuacion"]), abs(punt), 1e-12))
-            e["comparacion"] = {"id": cid, "codigo_d": d["codigo"], "decision": grupo["decision"] if grupo else None,
-                                "ganador": bool(grupo and grupo["primero"] == eid), "empatado_con_el_primero": empatado,
-                                "excluido": excl.get(eid), "elegido_por_operador": None}
+            fila = filas.get(eid)
+            e["comparacion"] = {"id": cid, "codigo_d": d["codigo"], "decision_global": d["decision_global"], "referencia": d["referencia"],
+                                "decision": grupo["decision"] if grupo else None, "sensible": grupo["sensible"] if grupo else None,
+                                "ganador": d["ganador_global"] == eid, "aspirante": eid in d["aspirantes"] and d["ganador_global"] is None,
+                                "excluido": excl.get(eid), "elegido_por_operador": None,
+                                "detalle_d": {k: fila[k] for k in ("puntuacion", "exceso_sobre_referencia_pct", "horizonte_dias", "peor_escenario_pct",
+                                                                   "confianza_normalizada", "factor_evidencia", "dominado_por")} if fila else None}
             self._anota(e, e["estado"], "COMPARADA", actor, ahora, "comparada con " + ",".join(expediente_ids), cid, datos=_hash(e["comparacion"]))
         ganador = next((x["expediente_id"] for x in exps if x["comparacion"]["ganador"]), None)
-        return _r(True, "OK", "comparación registrada", ganador=ganador, codigo_d=d["codigo"])
+        self.ultima_comparacion[cartera] = cid
+        return _r(True, "OK", "comparación registrada" if d["decision_global"] == "INVERTIR" else "D se abstiene: ningún candidato supera la referencia",
+                  ganador=ganador, codigo_d=d["codigo"], decision_global=d["decision_global"])
 
     @_seguro
     def elegir(self, expediente_id, actor, motivo, ahora):
-        """El operador elige un candidato cuando D no señala ganador claro (AJUSTADA, sin par o análisis duplicado)."""
+        """El operador elige entre los aspirantes cuando D no da un ganador claro (empatados o primeros con otra ponderación)."""
         self._ahora(ahora)
         e, err = self._exp(expediente_id)
         if err:
@@ -659,12 +685,12 @@ class Orquestador:
             return _no("O-04", "solo se elige un expediente COMPARADA")
         if c["ganador"]:
             return _r(True, "O-02", "ya es el ganador de D", duplicado=True)
-        if c["excluido"] not in EXCLUSION_ELEGIBLE:
-            return _no("O-22", f"D lo excluyó por un motivo que no admite elección: {c['excluido']}")
-        if c["decision"] == "CLARA":
-            return _no("O-22", "D señaló un ganador claro distinto; no se elige otro")
-        if c["decision"] == "AJUSTADA" and not c["empatado_con_el_primero"]:
-            return _no("O-22", "en una decisión ajustada solo se elige entre los empatados con el primero")
+        if c["excluido"] is not None:
+            return _no("O-22", f"D lo excluyó: {c['excluido']}")
+        if c["id"] != self.ultima_comparacion.get(e["cartera_destino"]):
+            return _no("O-22", "esa comparación ya no es la vigente de la cartera: compare de nuevo")
+        if not c["aspirante"]:
+            return _no("O-22", "solo se elige entre los aspirantes de una decisión ajustada (empatados o primeros con otra ponderación)")
         if any(x.get("comparacion", {}).get("id") == c["id"] and (x["comparacion"]["ganador"] or x["comparacion"]["elegido_por_operador"])
                for x in self.expedientes.values()):
             return _no("O-22", "en esa comparación ya hay un candidato elegido")
@@ -709,6 +735,9 @@ class Orquestador:
         c = e.get("comparacion") or {}
         if not (c.get("ganador") or c.get("elegido_por_operador")):
             return _no("O-22", "solo se propone el ganador de D o el candidato que eligió el operador")
+        if c.get("id") != self.ultima_comparacion.get(e["cartera_destino"]) or any(
+                x["estado"] == "VALIDADA" and self._candidato_vivo(x, e["cartera_destino"], a) for x in self.expedientes.values()):
+            return _no("O-22", "hay candidatos nuevos o una comparación más reciente en la cartera: compare de nuevo con todos")
         err = self._coincide_con_sobre(e, ce, cs, stops[0])
         if err:
             return err
