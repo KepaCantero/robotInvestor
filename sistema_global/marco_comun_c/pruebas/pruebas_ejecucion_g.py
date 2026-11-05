@@ -18,6 +18,7 @@ HORA_DATOS = "2026-11-06T08:50:00+00:00"
 
 
 def broker(**kw):
+    kw.setdefault("tipos_cambio", {"USD": 1.0})   # neutro: las cifras de estas pruebas son las de antes de la conversión (T-10)
     return BrokerSimulado(100000.0, {"EURUSD": kw.pop("precio", 1.10)}, HORA_DATOS, **kw)
 
 
@@ -140,7 +141,7 @@ def main():
     h.rechaza("reportar_discrepancia_actor_ajeno_O05", o, lambda: o.reportar_discrepancia([{"tipo": "X"}], "BROKER", AHORA), "O-05")
     h.rechaza("reportar_discrepancia_vacia_O01", o, lambda: o.reportar_discrepancia([], "G", AHORA), "O-01")
     # --- fallos tras enviar órdenes (revisión independiente)
-    o, b = autorizado(b=CaeAlEnviarStop(100000.0, {"EURUSD": 1.10}, HORA_DATOS))
+    o, b = autorizado(b=CaeAlEnviarStop(100000.0, {"EURUSD": 1.10}, HORA_DATOS, tipos_cambio={"USD": 1.0}))
     r = ejecutar(o, "EXP-0001", b, AHORA)
     b.caido = False
     h.chk("caida_al_enviar_el_stop_no_dice_que_no_hay_efectos", r["codigo"] == "G-08" and r.get("incierto") is True and r["aviso_registrado"] is True
@@ -149,7 +150,7 @@ def main():
     r = ejecutar(o, "EXP-0001", b, AHORA)
     h.chk("reintento_tras_caida_con_posicion_viva_la_protege", r["ok"] and len(b.posiciones()) == 1 and o.posiciones["POS-EXP-0001"]["estado"] == "ABIERTA"
           and conciliar(o, b, AHORA)["ok"], r)
-    o, b = autorizado(b=ExplotaAlConsultar(100000.0, {"EURUSD": 1.10}, HORA_DATOS))
+    o, b = autorizado(b=ExplotaAlConsultar(100000.0, {"EURUSD": 1.10}, HORA_DATOS, tipos_cambio={"USD": 1.0}))
     try:
         r = ejecutar(o, "EXP-0001", b, AHORA)
         h.chk("excepcion_inesperada_tras_enviar_G08_sin_lanzar", r["codigo"] == "G-08" and r["aviso_registrado"], r)

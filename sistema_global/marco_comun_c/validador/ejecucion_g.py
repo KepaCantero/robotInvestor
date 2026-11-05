@@ -12,7 +12,7 @@ import copy
 import math
 import re
 
-from control_f import ERRORES
+from control_f import ERRORES, divisa_cotizada, par_divisas
 from manual_g import neto_libre
 from validar_sobre import _dt
 
@@ -31,8 +31,11 @@ def _num(x, minimo=None):
 class BrokerSimulado:
     """Intermediario de pruebas: precios fijos, ejecución completa o parcial, y fallos a demanda."""
 
-    def __init__(self, capital_eur, precios, hora_datos, fraccion_fill=1.0, rechaza_stops=False, caido=False, rechaza_mercado=False, fraccion_mercado=1.0):
+    def __init__(self, capital_eur, precios, hora_datos, fraccion_fill=1.0, rechaza_stops=False, caido=False, rechaza_mercado=False, fraccion_mercado=1.0,
+                 tipos_cambio=None):
         self.capital_eur, self.precios, self.hora_datos = capital_eur, dict(precios), hora_datos
+        self.tipos_cambio = dict(tipos_cambio) if tipos_cambio is not None else None   # euros por unidad; None: se deducen de los pares con EUR
+        self.cuenta = "SIM-1"
         self.fraccion_fill, self.rechaza_stops, self.caido, self.rechaza_mercado = fraccion_fill, rechaza_stops, caido, rechaza_mercado
         self.fraccion_mercado = fraccion_mercado
         self.ordenes, self.pos, self.perdida_dia_eur = {}, {}, 0.0
@@ -142,18 +145,51 @@ class BrokerSimulado:
         r = self.ordenes.get(orden_id)
         return self._res(r) if r else None
 
+    def tipos_cambio_eur(self):
+        """Euros por unidad de cada divisa: los fijados, o los que se deducen de los precios de pares con el euro."""
+        if self.caido:
+            raise ConexionPerdida("sin conexión con el intermediario")
+        if self.tipos_cambio is not None:
+            return dict(self.tipos_cambio)
+        t = {}
+        for ins, p in self.precios.items():
+            par = par_divisas(ins)
+            if par and par[0] == "EUR" and p > 0:
+                t[par[1]] = 1 / p
+            elif par and par[1] == "EUR" and p > 0:
+                t[par[0]] = p
+        return t
+
     def posiciones(self):
         if self.caido:
             raise ConexionPerdida("sin conexión con el intermediario")
         return [{"instrumento": k, "activo_base": v["activo_base"], "cantidad": v["cantidad"]} for k, v in sorted(self.pos.items())]
 
 
-def cartera_para_f(broker):
-    """El estado de cartera que F necesita, tomado del intermediario y no de quien emite el informe."""
+def cartera_para_f(broker, divisas=None):
+    """El estado de cartera que F necesita, tomado del intermediario y no de quien emite el informe, valorado en euros
+    con los tipos de cambio del propio intermediario. Si falta un tipo de cambio para valorar una posición, falla (fail-closed)."""
     pos = broker.posiciones()
+    tipos = broker.tipos_cambio_eur()
+    valores = []
+    for p in pos:
+        d = divisa_cotizada(p["instrumento"], divisas)
+        fx = 1.0 if d == "EUR" else tipos.get(d)
+        if fx is None:
+            raise ValueError(f"sin tipo de cambio para valorar {p['instrumento']} en euros")
+        valores.append({"instrumento": p["instrumento"], "activo_base": p["activo_base"],
+                        "valor_eur": abs(p["cantidad"]) * broker.precios[p["instrumento"]] * fx})
     return {"fecha_hora": broker.hora_datos, "capital_eur": broker.capital_eur, "perdida_dia_eur": broker.perdida_dia_eur,
-            "posiciones": [{"instrumento": p["instrumento"], "activo_base": p["activo_base"],
-                            "valor_eur": abs(p["cantidad"]) * broker.precios[p["instrumento"]]} for p in pos]}
+            "posiciones": valores, "tipos_cambio_eur": tipos}
+
+
+def foto_cartera(o, broker, ahora):
+    """G toma la foto de cartera del intermediario y la registra en el Orquestador (T-11). Devuelve la foto o None."""
+    try:
+        f = cartera_para_f(broker, o.cfg.get("divisas_cotizacion"))
+    except (ConexionPerdida, ValueError, KeyError):
+        return None
+    return f if o.registrar_cartera(f, "G", _instante(o, ahora), cuenta=getattr(broker, "cuenta", None))["ok"] else None
 
 
 def _r(ok, codigo, motivo, **extra):

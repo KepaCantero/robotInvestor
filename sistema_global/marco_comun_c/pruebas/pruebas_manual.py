@@ -258,7 +258,7 @@ def main():
     b.caido = True
     h.chk("G_sin_conexion_G01", declarar_manual(o, reg(), b, T1)["codigo"] == "G-01" and o.posiciones == {})
     # cierre manual con un intermediario que NO cancela solo los stops
-    o, b = autorizado(o=nuevo(L1), b=NoCancela(100000.0, {"EURUSD": 1.10}, "2026-11-06T08:59:00+00:00")); ejecutar(o, "EXP-0001", b, AHORA)
+    o, b = autorizado(o=nuevo(L1), b=NoCancela(100000.0, {"EURUSD": 1.10}, "2026-11-06T08:59:00+00:00", tipos_cambio={"USD": 1.0})); ejecutar(o, "EXP-0001", b, AHORA)
     a_mano(b, "EURUSD", "VENTA", 100.0, "MAN-CIERRE-1")
     h.chk("el_stop_seguiria_vivo", b.consultar("ORD-EXP-0001-S-1")["estado"] == "ACEPTADA")
     r = declarar_manual(o, cierre, b, T1)

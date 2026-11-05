@@ -14,7 +14,7 @@ from datetime import timedelta
 
 from validar_sobre import _dt
 
-VERSION_REGLAS = "F-0.1.0"
+VERSION_REGLAS = "F-0.2.0"   # 0.2.0: conversión a euros con los tipos de cambio de la cartera (T-10)
 POLITICA_DEFECTO = {"riesgo_max_pct": 1.0, "tamano_max_pct": 10.0, "exposicion_max_pct": 100.0,
                     "concentracion_max_pct": 20.0, "perdida_dia_max_pct": 2.0, "max_posiciones": 10,
                     "apalancamiento_max": 1.0, "frescura_max_min": 60.0, "valor_min_eur": 100.0,
@@ -24,7 +24,39 @@ CARTERAS = {"TRADING", "TACTICA", "LARGO_PLAZO"}
 ID = re.compile(r"^[A-Za-z0-9._:/-]{1,64}\Z")
 FH = re.compile(r"^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(\.\d+)?(Z|[+-]\d{2}:\d{2})\Z")
 ERRORES = (KeyError, TypeError, AttributeError, ValueError, IndexError, OverflowError, RecursionError, MemoryError)
-ORDEN_SOLICITUD = {"instrumento", "activo_base", "direccion", "cantidad", "precio_entrada", "stop_precio", "apalancamiento", "cartera"}
+ORDEN_SOLICITUD = {"instrumento", "activo_base", "divisa_cotizacion", "direccion", "cantidad", "precio_entrada", "stop_precio", "apalancamiento", "cartera"}
+DIVISA = re.compile(r"^[A-Z]{3}\Z")
+
+
+DIVISAS_ISO = {"EUR", "USD", "GBP", "JPY", "CHF", "AUD", "CAD", "NZD", "SEK", "NOK", "DKK", "PLN", "CZK", "HUF", "TRY", "MXN",
+               "ZAR", "SGD", "HKD", "CNH", "CNY", "KRW", "INR", "BRL"}
+
+
+def par_divisas(instrumento):
+    """(base, cotizada) si el instrumento es un par de dos divisas ISO conocidas (admite «EUR/USD»); si no, None."""
+    if not isinstance(instrumento, str):
+        return None
+    ins = re.sub(r"[/\-_. ]", "", instrumento.upper())
+    if re.fullmatch(r"[A-Z]{6}", ins) and ins[:3] in DIVISAS_ISO and ins[3:] in DIVISAS_ISO and ins[:3] != ins[3:]:
+        return ins[:3], ins[3:]
+    return None
+
+
+def divisa_cotizada(instrumento, tabla=None):
+    """Divisa en la que cotiza el precio del instrumento: la de la tabla de configuración o, en un par de divisas ISO, la
+    segunda. None si no se sabe (no se propone ni se valora: F veta)."""
+    if isinstance(tabla, dict) and instrumento in tabla:
+        return tabla[instrumento]
+    p = par_divisas(instrumento)
+    return p[1] if p else None
+
+
+def tipo_cambio(divisa, cart):
+    """Euros por una unidad de `divisa`, según la cartera que aporta G. None si falta."""
+    if divisa == "EUR":
+        return 1.0
+    t = cart.get("tipos_cambio_eur", {}).get(divisa) if isinstance(cart, dict) and isinstance(cart.get("tipos_cambio_eur"), dict) else None
+    return t if _num(t, 0, True) else None
 
 
 def hash_contenido(x) -> str:
@@ -60,7 +92,11 @@ def _forma(sol, cart, pol, ahora) -> str | None:
         return "cantidad, precios o apalancamiento no válidos"
     if not politica_valida(pol):
         return "política inválida"
-    if not (isinstance(cart, dict) and set(cart) == {"fecha_hora", "capital_eur", "perdida_dia_eur", "posiciones"}
+    if not (isinstance(sol["divisa_cotizacion"], str) and DIVISA.match(sol["divisa_cotizacion"])):
+        return "divisa de cotización inválida"
+    if not (isinstance(cart, dict) and set(cart) == {"fecha_hora", "capital_eur", "perdida_dia_eur", "posiciones", "tipos_cambio_eur"}
+            and isinstance(cart["tipos_cambio_eur"], dict)
+            and all(isinstance(k, str) and DIVISA.match(k) and _num(v, 0, True) for k, v in cart["tipos_cambio_eur"].items())
             and isinstance(cart["fecha_hora"], str) and FH.match(cart["fecha_hora"]) and _num(cart["capital_eur"], 0, True)
             and _num(cart["perdida_dia_eur"], 0) and isinstance(cart["posiciones"], list)):
         return "estado de cartera inválido"
@@ -93,7 +129,11 @@ def _controlar(sol, cart, pol, ahora):
         return {"resultado": "VETADO", "cantidad_aprobada": 0.0, "controles": [_c("F-01", "VETA", motivo=mal)]}
     cap_total = cart["capital_eur"]
     ent, stop, q = sol["precio_entrada"], sol["stop_precio"], sol["cantidad"]
-    ctl = [_c("F-01", "OK")]
+    fx = tipo_cambio(sol["divisa_cotizacion"], cart)
+    if fx is None:   # F-12: sin tipo de cambio no se puede valorar en euros
+        return {"resultado": "VETADO", "cantidad_aprobada": 0.0,
+                "controles": [_c("F-01", "OK"), _c("F-12", "VETA", sol["divisa_cotizacion"], None, "sin tipo de cambio a euros para la divisa de cotización")]}
+    ctl = [_c("F-01", "OK"), _c("F-12", "OK", fx)]
     # F-02 el stop existe y está del lado que pierde
     lado_ok = stop < ent if sol["direccion"] == "LARGO" else stop > ent
     ctl.append(_c("F-02", "OK" if lado_ok else "VETA", stop, ent, "" if lado_ok else "el stop debe estar del lado de la pérdida"))
@@ -113,18 +153,19 @@ def _controlar(sol, cart, pol, ahora):
     # topes de cantidad (REDUCE si la solicitud los supera)
     expuesto = sum(p["valor_eur"] for p in cart["posiciones"])
     mismo = sum(p["valor_eur"] for p in cart["posiciones"] if p["activo_base"] == sol["activo_base"])
-    riesgo_unit = abs(ent - stop)
+    riesgo_unit = abs(ent - stop) * fx   # en euros por unidad
+    ent_eur = ent * fx                    # valor en euros de una unidad
     topes = [("F-03", pol["riesgo_max_pct"] / 100 * cap_total / riesgo_unit if riesgo_unit > 0 else 0.0),
-             ("F-04", pol["tamano_max_pct"] / 100 * cap_total / ent),
-             ("F-06", max(0.0, pol["exposicion_max_pct"] / 100 * cap_total - expuesto) / ent),
-             ("F-07", max(0.0, pol["concentracion_max_pct"] / 100 * cap_total - mismo) / ent)]
+             ("F-04", pol["tamano_max_pct"] / 100 * cap_total / ent_eur),
+             ("F-06", max(0.0, pol["exposicion_max_pct"] / 100 * cap_total - expuesto) / ent_eur),
+             ("F-07", max(0.0, pol["concentracion_max_pct"] / 100 * cap_total - mismo) / ent_eur)]
     for regla, tope in topes:
         ctl.append(_c(regla, "OK" if q <= tope else "REDUCE", q, tope))
     veta = any(x["resultado"] == "VETA" for x in ctl)
     aprobada = min([q] + [t for _, t in topes])
     aprobada = math.floor(aprobada * 1e6) / 1e6
     # F-11 una reducción que deja una posición sin sentido se veta
-    ctl.append(_c("F-11", "OK" if aprobada * ent >= pol["valor_min_eur"] else "VETA", aprobada * ent, pol["valor_min_eur"]))
+    ctl.append(_c("F-11", "OK" if aprobada * ent_eur >= pol["valor_min_eur"] else "VETA", aprobada * ent_eur, pol["valor_min_eur"]))
     veta = veta or ctl[-1]["resultado"] == "VETA"
     if veta:
         return {"resultado": "VETADO", "cantidad_aprobada": 0.0, "controles": ctl}
@@ -197,8 +238,9 @@ def _validar(inf, ctx):
         if not (isinstance(sol, dict) and sol.get("precio_entrada") == en["limite"] and sol.get("stop_precio") == stops[0]["umbral"]
                 and sol.get("direccion") == direccion and sol.get("cartera") == ctx["cartera_destino"]
                 and sol.get("instrumento") == en["instrumento"] and sol.get("activo_base") == en["activo_base"]
-                and sol.get("apalancamiento") == en["apalancamiento"] and sol.get("cantidad") == en["cantidad"]):
-            f("CF-05", "la solicitud no coincide con la propuesta (límite, stop, dirección, cartera, instrumento, activo base, apalancamiento y cantidad)")
+                and sol.get("apalancamiento") == en["apalancamiento"] and sol.get("cantidad") == en["cantidad"]
+                and sol.get("divisa_cotizacion") == ctx.get("divisa_cotizacion")):
+            f("CF-05", "la solicitud no coincide con la propuesta (límite, stop, dirección, cartera, instrumento, activo base, divisa de cotización, apalancamiento y cantidad)")
     # CF-04 se recalcula con las mismas entradas
     r = controlar(sol, inf["entradas"]["cartera"], inf["entradas"]["politica"], inf["emitido_en"])
     if (r["resultado"], r["cantidad_aprobada"], r["controles"]) != (inf["resultado"], inf["cantidad_aprobada"], inf["controles"]):

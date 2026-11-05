@@ -14,8 +14,9 @@ from dimensionado import dimensionar  # noqa: E402
 from pruebas_orquestador import Arnes  # noqa: E402
 
 AHORA = "2026-11-06T09:00:00+00:00"
-CART = {"fecha_hora": "2026-11-06T08:50:00+00:00", "capital_eur": 100000.0, "perdida_dia_eur": 0.0, "posiciones": []}
-SOL = {"instrumento": "EURUSD", "activo_base": "EUR", "direccion": "LARGO", "precio_entrada": 1.10, "stop_precio": 1.05, "apalancamiento": 1.0, "cartera": "TACTICA"}
+CART = {"fecha_hora": "2026-11-06T08:50:00+00:00", "capital_eur": 100000.0, "perdida_dia_eur": 0.0, "posiciones": [],
+        "tipos_cambio_eur": {"USD": 1.0}}   # tipo neutro: cifras de antes de la conversión (T-10)
+SOL = {"instrumento": "EURUSD", "activo_base": "EUR", "divisa_cotizacion": "USD", "direccion": "LARGO", "precio_entrada": 1.10, "stop_precio": 1.05, "apalancamiento": 1.0, "cartera": "TACTICA"}
 
 
 def main():

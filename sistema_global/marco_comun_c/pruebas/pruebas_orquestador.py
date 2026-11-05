@@ -32,17 +32,20 @@ INV = {"id": "INV-1", "tipo": "INVALIDEZ", "metrica": "precio_cierre", "operador
 ENTRADA = {"limite": 1.10, "ventana_hasta": "2026-11-08T12:00:00+00:00", "instrumento": "EURUSD", "activo_base": "EUR",
            "apalancamiento": 1.0, "cantidad": 100.0}
 SALIDA = {"condiciones": [STOP, OBJ, INV], "fecha": "2026-12-05"}
-CART_E = {"fecha_hora": "2026-11-06T08:50:00+00:00", "capital_eur": 100000.0, "perdida_dia_eur": 0.0, "posiciones": []}
+CART_E = {"fecha_hora": "2026-11-06T08:50:00+00:00", "capital_eur": 100000.0, "perdida_dia_eur": 0.0, "posiciones": [],
+          "tipos_cambio_eur": {"USD": 1.0}}
 
 
 def dim(o, eid="EXP-0001", entrada=None, salida=None, cartera=None, ahora=AHORA, paso=1.0):
     """El cálculo de E que acompaña a una propuesta (las mismas entradas que el Orquestador repite)."""
     ent, sal = entrada or ENTRADA, salida or SALIDA
     st = [c for c in sal["condiciones"] if c.get("tipo") == "STOP"][0]
-    sol = {"instrumento": ent["instrumento"], "activo_base": ent["activo_base"], "direccion": "LARGO" if st["operador"] in ("<", "<=") else "CORTO",
+    sol = {"instrumento": ent["instrumento"], "activo_base": ent["activo_base"], "divisa_cotizacion": o.divisa(ent["instrumento"]), "direccion": "LARGO" if st["operador"] in ("<", "<=") else "CORTO",
            "precio_entrada": ent["limite"], "stop_precio": st["umbral"], "apalancamiento": ent["apalancamiento"],
            "cartera": o.expedientes[eid]["cartera_destino"] if eid in o.expedientes else "TACTICA"}
-    return {"solicitud": sol, "cartera": copy.deepcopy(cartera or CART_E), "riesgo_objetivo_pct": None, "paso": paso, "ahora": ahora}
+    from pruebas_control_f import registrar_foto
+    cart = registrar_foto(o, copy.deepcopy(cartera or CART_E))
+    return {"solicitud": sol, "cartera": cart, "riesgo_objetivo_pct": None, "paso": paso, "ahora": ahora}
 
 
 def autorizar_op(o, eid, informe, ahora=AHORA, importe=None, canal="CONSOLA", segundo_factor=True):

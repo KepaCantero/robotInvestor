@@ -53,6 +53,9 @@ def main():
         o = o or comparada()
         ent, sal = entrada or ENTRADA, salida or SALIDA
         dd = dim(o, "EXP-0001", ent, sal) if d == "auto" else d
+        if isinstance(dd, dict) and isinstance(dd.get("cartera"), dict):   # la foto la habría registrado G
+            from pruebas_control_f import registrar_foto
+            dd = {**dd, "cartera": registrar_foto(o, dd["cartera"])}
         antes = copy.deepcopy(o.expedientes["EXP-0001"])
         r = o.proponer("EXP-0001", ent, sal, PROP, ahora, dd)
         ok = r["codigo"] == esperado and (r["ok"] or o.expedientes["EXP-0001"] == antes)
@@ -102,7 +105,7 @@ def main():
 
     # ---------------------------------------------------------------- sobre (O-21)
     prop("instrumento_con_barra_es_el_mismo_OK", "OK", entrada={**ENTRADA, "instrumento": "EUR/USD"})
-    prop("otro_instrumento_O21", "O-21", entrada={**ENTRADA, "instrumento": "GBPUSD"})
+    prop("otro_instrumento_O21", "O-21", entrada={**ENTRADA, "instrumento": "GBPUSD", "activo_base": "GBP"})
     corto = {"condiciones": [{**STOP, "operador": ">=", "umbral": 1.15}, INV], "fecha": "2026-12-05"}
     prop("direccion_contraria_O21", "O-21", salida=corto)
     prop("stop_mas_holgado_O21", "O-21", salida={**SALIDA, "condiciones": [{**STOP, "umbral": 1.00}, OBJ, INV]})
@@ -117,7 +120,7 @@ def main():
     prop("ventana_mas_alla_del_sobre_O21", "O-21", entrada={**ENTRADA, "ventana_hasta": "2026-11-09T12:00:00+00:00"})
     o = comparada({"apalancamiento_permitido": True})
     prop("apalancamiento_mayor_que_el_del_sobre_O21", "O-21", entrada={**ENTRADA, "apalancamiento": 2.0}, o=o)
-    prop("activo_base_distinto_de_la_divisa_base_O21", "O-21", entrada={**ENTRADA, "activo_base": "ZZZ"})
+    prop("activo_base_distinto_de_la_divisa_base_O01", "O-01", entrada={**ENTRADA, "activo_base": "ZZZ"})
     prop("condicion_de_tipo_desconocido_O01", "O-01", salida={**SALIDA, "condiciones": [STOP, INV, {**OBJ, "tipo": "TP", "umbral": 9.0}]})
     sin_tipo = {k: v for k, v in OBJ.items() if k != "tipo"}
     prop("condicion_sin_tipo_O01", "O-01", salida={**SALIDA, "condiciones": [STOP, INV, {**sin_tipo, "id": "X-1", "umbral": 0}]})
