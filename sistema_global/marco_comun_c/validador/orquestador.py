@@ -67,6 +67,8 @@ OPERADORES = {"<": lambda v, u: v < u, "<=": lambda v, u: v <= u, ">": lambda v,
 CONFIG_DEFECTO = {"max_reintentos": 3, "umbral_corte_comun_dias_habiles": 0,
                   "dia_coste_max_eur": 50.0, "dia_tiempo_max_min": 600, "tolerancia_precio_entrada": 0.05,
                   "exige_contradictor_en": [], "matriz_autonomia": {}}
+# Prioridad de cada aviso para el operador [PROPUESTO]
+PRIORIDAD_AVISO = {"O-03": "ALTA", "O-08": "ALTA", "O-09": "ALTA", "O-13": "ALTA", "O-17": "ALTA"}
 ACTORES_PROPUESTA = {"H", "F", "D", "OPERADOR"} | EMISORES
 
 
@@ -111,7 +113,10 @@ def _seguro(fn):
     def w(self, *a, **k):
         copia = copy.deepcopy(self.__dict__)
         try:
-            return fn(self, *a, **k)
+            r = fn(self, *a, **k)
+            if not r["ok"]:   # una llamada rechazada no puede adelantar el reloj del Orquestador
+                self.ultimo_ahora = copia["ultimo_ahora"]
+            return r
         except RelojRetrocede as e:
             self.__dict__.clear(); self.__dict__.update(copia)
             return _no("O-16", str(e))
@@ -143,7 +148,24 @@ class Orquestador:
         return a
 
     def _aviso(self, codigo, motivo, ahora, ref=None):
-        self.avisos.append({"codigo": codigo, "motivo": motivo, "ref": ref, "ahora": ahora})
+        if any(x["acuse"] is None and x["codigo"] == codigo and x["ref"] == ref and x["motivo"] == motivo for x in self.avisos):
+            return   # ya hay uno igual sin acusar: no se multiplica
+        self.avisos.append({"id": f"AV-{len(self.avisos) + 1:05d}", "codigo": codigo, "prioridad": PRIORIDAD_AVISO.get(codigo, "MEDIA"),
+                            "motivo": motivo, "ref": ref, "ahora": ahora, "acuse": None})
+
+    @_seguro
+    def acusar_aviso(self, aviso_id, actor, ahora):
+        """El operador confirma que ha visto un aviso. No lo borra: queda constancia."""
+        if actor != "OPERADOR":
+            return _no("O-05", "solo el operador acusa recibo de un aviso")
+        av = next((x for x in self.avisos if x["id"] == aviso_id), None) if isinstance(aviso_id, str) else None
+        if av is None:
+            return _no("O-12", f"aviso inexistente: {aviso_id!r}")
+        self._ahora(ahora)
+        if av["acuse"] is not None:
+            return _r(True, "O-02", "aviso ya acusado", duplicado=True)
+        av["acuse"] = {"actor": actor, "ahora": ahora}
+        return _r(True, "OK", "aviso acusado")
 
     def _historial_ok(self, ent):
         if not ent["historial"]:
@@ -158,8 +180,19 @@ class Orquestador:
 
     def cabezas(self):
         """Hash de cabeza de cada historial, para anclarlo fuera del Orquestador (registro de solo añadir)."""
-        return {**{k: v["historial"][-1]["hash"] for k, v in self.expedientes.items()},
-                **{k: v["historial"][-1]["hash"] for k, v in self.posiciones.items()}}
+        return {**{"EXP:" + k: v["historial"][-1]["hash"] for k, v in self.expedientes.items()},
+                **{"POS:" + k: v["historial"][-1]["hash"] for k, v in self.posiciones.items()}}
+
+    def _propuesta_ok(self, e):
+        if not e["propuesta"]:
+            return True
+        ult = [h for h in e["historial"] if h["hasta"] == "PROPUESTA"]
+        return bool(ult) and ult[-1]["datos"] == _hash(e["propuesta"])
+
+    def integridad(self):
+        """Lista de expedientes (EXP:) y posiciones (POS:) cuyo historial o propuesta no cuadra."""
+        return sorted(["EXP:" + k for k, v in self.expedientes.items() if not (self._historial_ok(v) and self._propuesta_ok(v))]
+                      + ["POS:" + k for k, v in self.posiciones.items() if not self._historial_ok(v)])
 
     def _anota(self, ent, desde, hasta, actor, ahora, motivo, ref=None, datos=None):
         prev = ent["historial"][-1]["hash"] if ent["historial"] else "0" * 64
@@ -175,10 +208,8 @@ class Orquestador:
             return None, _no("O-12", f"expediente inexistente: {eid!r}")
         if not self._historial_ok(e):
             return None, _no("O-13", "el historial del expediente no es íntegro")
-        if e["propuesta"]:
-            ult = [h for h in e["historial"] if h["hasta"] == "PROPUESTA"]
-            if not ult or ult[-1]["datos"] != _hash(e["propuesta"]):
-                return None, _no("O-13", "la propuesta no coincide con la registrada en el historial")
+        if not self._propuesta_ok(e):
+            return None, _no("O-13", "la propuesta no coincide con la registrada en el historial")
         return e, None
 
     def _sello_anulado(self, e):
@@ -634,10 +665,12 @@ class Orquestador:
                     limites.append(_dt(e["propuesta"]["entrada"]["ventana_hasta"]))
                 if a > min(limites) or self._sello_anulado(e):
                     self._anota(e, e["estado"], "CADUCADA", "ORQUESTADOR", ahora, "venció valid_until o la ventana de entrada")
+                    self._aviso("O-10", f"expediente {eid} caducó sin decidirse", ahora, eid)
                     cambios.append(("expediente", eid, "CADUCADA"))
         for sid, s in self.sellos.items():
             if s["estado"] == "VIGENTE" and estado_sello(s, str(a.astimezone(timezone.utc).date()), s["cartera"], self.cal_def) == "CADUCADO":
                 s["estado"] = "CADUCADO"
+                self._aviso("O-10", f"el sello {sid} caducó por antigüedad", ahora, sid)
                 cambios.append(("sello", sid, "CADUCADO"))
         return _r(True, "OK", f"{len(cambios)} cambio(s)", cambios=cambios)
 

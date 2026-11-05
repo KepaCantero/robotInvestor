@@ -470,7 +470,7 @@ def main():
     R("actor_no_textual_O01", o, lambda: o.descartar("EXP-0002", "x", ["BROKER"], AHORA), "O-01")
     # cabezas
     cab = o.cabezas()
-    h.chk("cabezas_cubre_expedientes", set(cab) >= {"EXP-0001", "EXP-0002"} and all(len(v) == 64 for v in cab.values()))
+    h.chk("cabezas_cubre_expedientes", set(cab) >= {"EXP:EXP-0001", "EXP:EXP-0002"} and all(len(v) == 64 for v in cab.values()))
 
     print(f"\n{h.n} comprobaciones")
     print("RESULTADO ORQUESTADOR:", "TODAS LAS PRUEBAS PASAN" if h.ok else "HAY FALLOS")
