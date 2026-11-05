@@ -1,5 +1,5 @@
 """Validador determinista del encargo CT-G-01 0.1.0 (reglas E-01 a E-16) y
-comprobación de que un sobre CT-G-02 responde a su encargo (reglas R-00 a R-13).
+comprobación de que un sobre CT-G-02 responde a su encargo (reglas R-00 a R-14).
 
 Sin LLM, sin red, sin reloj propio. Nunca lanza excepciones por un mensaje mal formado.
 Todos los límites numéricos son valores de partida [PROPUESTO] y se pasan en el contexto.
@@ -289,6 +289,9 @@ def _cruzar(encargo: dict, sobre: dict, sello: dict) -> list[dict]:
             f("R-10", "emitido_en", "el sobre es anterior al encargo")
     except ValueError:
         f("R-10", "emitido_en", "fecha-hora inválida")
+    # R-14 la vía de acceso analizada es la encargada (un futuro no se analiza en lugar del contado, ni al revés)
+    if " ".join(ident["via_acceso"].split()).casefold() != " ".join(pe["candidato"]["via_acceso"].split()).casefold():
+        f("R-14", "payload.identificacion.via_acceso", "vía de acceso distinta de la encargada")
     # R-11 el sobre cita el sello de corte del encargo, y solo ese
     refs = sobre["data_refs"]
     if pe["sello_corte_ref"] not in refs:

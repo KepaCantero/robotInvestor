@@ -30,6 +30,7 @@ STOP = {"id": "STOP-1", "tipo": "STOP", "metrica": "precio", "operador": "<=", "
 OBJ = {"id": "OBJ-1", "tipo": "OBJETIVO", "metrica": "precio", "operador": ">=", "umbral": 1.14, "unidad": "USD"}
 INV = {"id": "INV-1", "tipo": "INVALIDEZ", "metrica": "precio_cierre", "operador": "<", "umbral": 1.05, "unidad": "EUR"}   # la del sobre
 ENTRADA = {"limite": 1.10, "ventana_hasta": "2026-11-08T12:00:00+00:00", "instrumento": "EURUSD", "activo_base": "EUR",
+           "via_acceso": "Futuro de divisas, vencimiento trimestral",
            "apalancamiento": 1.0, "cantidad": 100.0}
 SALIDA = {"condiciones": [STOP, OBJ, INV], "fecha": "2026-12-05"}
 CART_E = {"fecha_hora": "2026-11-06T08:50:00+00:00", "capital_eur": 100000.0, "perdida_dia_eur": 0.0, "posiciones": [],

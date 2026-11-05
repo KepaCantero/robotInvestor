@@ -14,7 +14,7 @@ import json
 import math
 import re
 import sys
-from datetime import datetime, timedelta, timezone
+from datetime import date, datetime, timedelta, timezone
 from pathlib import Path
 
 AQUI = Path(__file__).resolve().parent
@@ -23,7 +23,7 @@ from k_calidad import (Calendario, ERRORES, SinCobertura, estado_sello, hash_ser
                        validar_sello)
 from validar_encargo import sobre_responde_a_encargo, validar_encargo  # noqa: E402
 from validar_sobre import _dt  # noqa: E402
-from manual_g import neto_libre, validar_manual  # noqa: E402
+from manual_g import neto_libre, validar_manual, via_norm  # noqa: E402
 from comparador import MARGEN_AJUSTADO, REFERENCIA_EFECTIVO, _referencia_ok, comparar_candidatos  # noqa: E402
 from dimensionado import dimensionar  # noqa: E402
 from validar_contradictor import validar_informe  # noqa: E402
@@ -33,6 +33,7 @@ VERSION_REGLAS = "ORQ-0.1.0"
 _FH = re.compile(r"^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(\.\d+)?(Z|[+-]\d{2}:\d{2})\Z")
 _ID = re.compile(r"^[A-Za-z0-9._:/-]{1,64}\Z")
 GESTORES = {"GESTOR_TRADING", "GESTOR_TACTICA", "GESTOR_LARGO_PLAZO"}
+GESTOR_DE = {"TRADING": "GESTOR_TRADING", "TACTICA": "GESTOR_TACTICA", "LARGO_PLAZO": "GESTOR_LARGO_PLAZO"}
 EMISORES = {"BROKER"} | GESTORES
 DECISORES = EMISORES | {"OPERADOR"}
 TERMINALES = {"DESCARTADA", "EJECUTADA"}
@@ -72,7 +73,7 @@ OPERADORES = {"<": lambda v, u: v < u, "<=": lambda v, u: v <= u, ">": lambda v,
               ">=": lambda v, u: v >= u, "==": lambda v, u: v == u}
 
 CONFIG_DEFECTO = {"max_reintentos": 3, "umbral_corte_comun_dias_habiles": 0,
-                  "dia_coste_max_eur": 50.0, "dia_tiempo_max_min": 600, "tolerancia_precio_entrada": 0.05,
+                  "dia_coste_max_eur": 50.0, "revision_max_dias": 90, "dia_tiempo_max_min": 600, "tolerancia_precio_entrada": 0.05,
                   "exige_contradictor_en": [], "matriz_autonomia": {}, "politica_f": POLITICA_DEFECTO,
                   "nivel_autonomia": {}, "tolerancia_conciliacion_rel": 0.0, "instrumentos_permitidos": None,
                   "referencias": {c: dict(REFERENCIA_EFECTIVO) for c in ("TRADING", "TACTICA", "LARGO_PLAZO")},   # benchmark de cada cartera [PROPUESTO]
@@ -93,6 +94,12 @@ TIPOS_KILL = {"POSICION_DESCONOCIDA", "CANTIDAD", "SENTIDO_O_ACTIVO", "PROTECCIO
               "MANUAL_NO_CUADRA", "POSICION_SIN_PROTEGER"}   # lo que G sabe explicar (cierres propios, conexión, estado incierto, dato viejo) no
 PRIORIDAD_AVISO = {"O-20": "MEDIA", "O-25": "ALTA", "O-26": "ALTA", "O-19": "ALTA", "O-18": "ALTA", "O-03": "ALTA", "O-08": "ALTA", "O-09": "ALTA", "O-13": "ALTA", "O-17": "ALTA"}
 ACTORES_PROPUESTA = set(EMISORES)   # quien propone no aprueba ni controla: F, D y H no proponen (Constitución §2, P1)
+
+
+_via = via_norm   # identidad de una vía de acceso (texto libre del sobre), la misma en CT-G-14 y en R-14
+
+
+_FECHA = re.compile(r"^\d{4}-\d{2}-\d{2}\Z")
 
 
 def _ins(x):
@@ -159,6 +166,7 @@ def _valida_config(c):
           and all(isinstance(k, str) and re.fullmatch(r"[A-Z]{3}", k) and isinstance(v, list) and len(v) == 2 and all(_num(x) and x > 0 for x in v)
                   and v[0] < v[1] for k, v in c["rangos_tipo_cambio_eur"].items())
           and _num(c["tolerancia_tipo_par_pct"]) and 0 < c["tolerancia_tipo_par_pct"] <= 50
+          and isinstance(c["revision_max_dias"], int) and not isinstance(c["revision_max_dias"], bool) and 1 <= c["revision_max_dias"] <= 366
           and isinstance(c["cuenta_intermediario"], str) and _ID.match(c["cuenta_intermediario"])
           and isinstance(c["divisas_cotizacion"], dict)
           and all(isinstance(k, str) and isinstance(v, str) and re.fullmatch(r"[A-Z]{3}", v) for k, v in c["divisas_cotizacion"].items())
@@ -176,7 +184,7 @@ def _valida_config(c):
 TOL_Q = 1e-6   # tolerancia de cantidades (la misma que G)
 # Lo que define el control de una posición: va en la cadena de su historial (cada anotación lleva su hash)
 CAMPOS_POS = ("posicion_id", "expediente_id", "estado", "cantidad", "cantidad_inicial", "cartera", "direccion", "instrumento", "activo_base",
-              "stop_precio", "condiciones_salida", "protecciones", "protecciones_anteriores", "reduccion", "reducciones", "condiciones_consumidas")
+              "stop_precio", "condiciones_salida", "via_acceso", "fecha_revision", "protecciones", "protecciones_anteriores", "reduccion", "reducciones", "condiciones_consumidas")
 
 
 def _estado_pos(p):
@@ -484,7 +492,12 @@ class Orquestador:
         if not s or "documento" not in s:
             return True
         ult = [h for h in e["historial"] if h["hasta"] == "VALIDADA"]
-        return bool(ult) and ult[-1]["datos"] == s["hash"] == _hash(s["documento"])
+        return bool(ult) and ult[-1]["datos"] == self._huella_sobre(e) and s["hash"] == _hash(s["documento"])
+
+    @staticmethod
+    def _huella_sobre(e):
+        """Lo que se anota al validar: el sobre (con su vigencia, que puede acortar el Contradictor) y el informe del Contradictor."""
+        return _hash({"sobre": {k: v for k, v in e["sobre"].items() if k != "documento"}, "contradictor": e.get("contradictor")})
 
     def _comparacion_ok(self, e):
         """El resultado de D (y la elección del operador) es el que se anotó en la cadena del historial."""
@@ -819,7 +832,7 @@ class Orquestador:
             self._aviso("O-17", f"{expediente_id}: objeción mayor del Contradictor", ahora, expediente_id)
         e["sobre"], e["contradictor"] = info, contr
         e["sin_avance"] = 0
-        self._anota(e, e["estado"], "VALIDADA", "C", ahora, "sobre aceptado", sid, datos=h)
+        self._anota(e, e["estado"], "VALIDADA", "C", ahora, "sobre aceptado", sid, datos=self._huella_sobre(e))
         return _r(True, "OK", "sobre aceptado")
 
     @_seguro
@@ -841,7 +854,7 @@ class Orquestador:
         e["sobre"], e["contradictor"], e["retenido"] = r["sobre"], r["contradictor"], None
         e["sin_avance"] = 0
         self._anota(e, "EN_ANALISIS", "VALIDADA", "OPERADOR", ahora, f"objeción crítica levantada: {motivo.strip()}", r["contradictor"]["event_id"],
-                    datos=e["sobre"].get("hash"))
+                    datos=self._huella_sobre(e))
         return _r(True, "OK", "objeción levantada; expediente validado")
 
     def _candidato_vivo(self, x, cartera, a):
@@ -957,6 +970,16 @@ class Orquestador:
         if not (isinstance(ce.get("instrumento"), str) and _ID.match(ce["instrumento"]) and isinstance(ce.get("activo_base"), str) and _ID.match(ce["activo_base"])
                 and _num(ce.get("cantidad")) and ce["cantidad"] > 0 and _num(ce.get("apalancamiento")) and ce["apalancamiento"] >= 1 and ce["limite"] > 0):
             return _no("O-01", "condiciones_entrada: faltan instrumento, activo_base, cantidad positiva, apalancamiento (>= 1) y límite positivo")
+        if _via(ce.get("via_acceso")) is None:
+            return _no("O-01", "condiciones_entrada: falta via_acceso (por qué vía se opera: contado, futuro, ETF...)")
+        try:
+            fr = date.fromisoformat(cs["fecha"]) if isinstance(cs, dict) and isinstance(cs.get("fecha"), str) and _FECHA.match(cs["fecha"]) else None
+        except ValueError:
+            fr = None
+        if fr is None:
+            return _no("O-01", "condiciones_salida: falta la fecha de revisión (AAAA-MM-DD)")
+        if fr <= a.astimezone(timezone.utc).date():
+            return _no("O-10", "la fecha de revisión ya ha llegado: la tesis se revisa antes de proponer")
         if self.divisa(ce["instrumento"]) is None:
             return _no("O-01", "no se conoce la divisa de cotización del instrumento: configúrela en divisas_cotizacion")
         par = par_divisas(ce["instrumento"]) if ce["instrumento"] not in self.cfg["divisas_cotizacion"] else None
@@ -1021,6 +1044,10 @@ class Orquestador:
             return _no("O-21", "el sobre no da un stop de precio (valor numérico en una divisa): no hay con qué ligar la propuesta")
         if stop["umbral"] < sv if largo else stop["umbral"] > sv:
             return _no("O-21", "el stop es más holgado que el analizado (solo se admite igual o más prudente)")
+        if _via(ce["via_acceso"]) != _via(ident["via_acceso"]):
+            return _no("O-21", "la vía de acceso no es la analizada en el sobre (un futuro analizado no se opera como contado)")
+        if date.fromisoformat(cs["fecha"]) > date.fromisoformat(es["fecha_revision"]):
+            return _no("O-21", "la fecha de revisión pasa de la del sobre")
         ov = es["objetivo"]["valor"]
         objs = [x for x in cs["condiciones"] if x.get("tipo") == "OBJETIVO"]
         for o_ in objs:
@@ -1082,6 +1109,8 @@ class Orquestador:
             return _no("O-01", "falta el informe de control de F (CT-G-08)")
         if a > _dt(e["propuesta"]["entrada"]["ventana_hasta"]) or a > _dt(e["sobre"]["valid_until"]):
             return _no("O-10", "la propuesta caducó")
+        if date.fromisoformat(e["propuesta"]["salida"]["fecha"]) <= a.astimezone(timezone.utc).date():
+            return _no("O-10", "llegó la fecha de revisión de la tesis: se revisa antes de autorizar")
         if self._sello_anulado(e):
             return _no("O-06", "el sello del análisis ya no es válido")
         fallos = validar_informe_f(control_f, {"ahora": ahora, "expediente_id": expediente_id, "correlation_id": e["correlation_id"],
@@ -1127,8 +1156,8 @@ class Orquestador:
         motivos_espera = (["pérdida en el día"] if perdida > cfg["enfriamiento_tras_perdida_dia_eur"] else []) + (["fuera de horario"] if fuera else [])
         espera = timedelta(minutes=cfg["enfriamiento_min"]) if motivos_espera else timedelta(0)
         p = {"expediente_id": expediente_id, "informe_f": control_f["event_id"], "informe_f_hash": _hash(control_f), "resultado_f": control_f["resultado"],
-             "instrumento": en["instrumento"], "direccion": "LARGO" if st["operador"] in ("<", "<=") else "CORTO",
-             "cantidad": q, "precio_limite": en["limite"], "stop": st["umbral"],
+             "instrumento": en["instrumento"], "via_acceso": en["via_acceso"], "direccion": "LARGO" if st["operador"] in ("<", "<=") else "CORTO",
+             "fecha_revision": e["propuesta"]["salida"]["fecha"], "cantidad": q, "precio_limite": en["limite"], "stop": st["umbral"],
              "importe": round(q * en["limite"] * fx, 2), "riesgo": round(q * abs(en["limite"] - st["umbral"]) * fx, 2), "unidad_importe": "EUR",
              "divisa_cotizacion": control_f["entradas"]["solicitud"]["divisa_cotizacion"], "tipo_cambio_eur": fx,
              "apalancamiento": en["apalancamiento"], "cartera": e["cartera_destino"], "valid_until_f": control_f["valid_until"],
@@ -1272,6 +1301,8 @@ class Orquestador:
                 return _no("O-01", "ejecutada_en posterior al instante actual")
         if t > _dt(e["propuesta"]["entrada"]["ventana_hasta"]) or t > _dt(e["sobre"]["valid_until"]):
             return _no("O-10", "la ventana de entrada o el sobre vencieron antes de ejecutar")
+        if date.fromisoformat(e["propuesta"]["salida"]["fecha"]) <= t.astimezone(timezone.utc).date():
+            return _no("O-10", "llegó la fecha de revisión de la tesis antes de ejecutar: se revisa antes de abrir")
         quien = self.autorizada_por(e)
         if not manual and quien == "MATRIZ_AUTONOMIA" and NIVELES[self.nivel(e["cartera_destino"])] < 2:
             return _no("O-05", f"la autorización fue automática y la cartera está ahora en {self.nivel(e['cartera_destino'])}: la confirma el operador")
@@ -1315,7 +1346,8 @@ class Orquestador:
                                 "condiciones_salida": copy.deepcopy(e["propuesta"]["salida"]), "protecciones": list(prot), "propuestas": [],
                                 "origen": "MANUAL" if manual else "G", "ejecutada_en": orden.get("ejecutada_en") or ahora,
                                 "cantidad_inicial": orden["cantidad"], "protecciones_anteriores": [], "reduccion": None, "reducciones": [],
-                                "condiciones_consumidas": []}
+                                "condiciones_consumidas": [], "via_acceso": e["propuesta"]["entrada"]["via_acceso"],
+                                "fecha_revision": e["propuesta"]["salida"]["fecha"]}
         self.ordenes_usadas += [orden["orden_id"], *prot]
         self._anota_pos(self.posiciones[pid], None, "ABIERTA", actor if manual else "G", ahora,
                     "ejecución manual declarada (CT-G-14)" if manual else "orden conciliada", orden["orden_id"])
@@ -1341,8 +1373,9 @@ class Orquestador:
             return dup
         e = self.expedientes.get(ref) if v.get("tipo") == "EXPEDIENTE" else None
         p = self.posiciones.get(ref) if v.get("tipo") == "POSICION" else None
-        if (e is not None and not (self._historial_ok(e) and self._propuesta_ok(e))) or (p is not None and not self._posicion_ok(p)):
-            return _no("O-13", "el historial del vínculo no es íntegro")
+        if (e is not None and not self._todo_ok(e)) or (p is not None and not self._posicion_ok(p)):
+            self._activar_kill(f"integridad rota en {ref}", "ORQUESTADOR", self.ultimo_ahora or "1970-01-01T00:00:00+00:00")
+            return _no("O-13", "el expediente o la posición vinculados no son íntegros (historial, sobre, propuesta, orden, aprobación o estado)")
         ins = registro.get("instrumento")
         ocupado = any(q["estado"] != "CERRADA" and q["instrumento"] == ins for q in self.posiciones.values()) \
             or any(x["estado"] == "AUTORIZADA" and x.get("propuesta", {}).get("entrada", {}).get("instrumento") == ins for x in self.expedientes.values())
@@ -1480,7 +1513,7 @@ class Orquestador:
 
     @_seguro
     def posicion_transicion(self, posicion_id, hasta, actor, ahora, condicion=None, restante=None, orden=None, motivo=None,
-                            cantidad=None, protecciones=None):
+                            cantidad=None, protecciones=None, fecha_revision=None):
         """Transiciones de una posición. Reducir (T-12): el operador con cantidad y motivo; automático solo por una condición
         OBJETIVO que declare su fracción, una vez, y desde L2. Al terminar la reducción G aporta el stop redimensionado."""
         self._ahora(ahora)
@@ -1536,9 +1569,29 @@ class Orquestador:
                 return _no("O-06", "la reducción exige una cantidad positiva y mayor que la tolerancia de cantidades")
             if q >= p["cantidad"] - TOL_Q:
                 return _no("O-06", "la reducción dejaría la posición a cero o al revés: use el cierre (CERRANDO)")
+        if fecha_revision is not None and not (hasta == "ABIERTA" and p["estado"] == "EN_REVISION"):
+            return _no("O-01", "la fecha de revisión solo se renueva al confirmar la tesis (EN_REVISION -> ABIERTA)")
+        nueva_fr = None
         if hasta == "ABIERTA" and p["estado"] == "EN_REVISION":
+            if actor in GESTORES and actor != GESTOR_DE[p["cartera"]]:
+                return _no("O-05", "un gestor solo confirma la tesis de las posiciones de su cartera")
             if not (isinstance(motivo, str) and motivo.strip()):
                 return _no("O-15", "confirmar la tesis exige motivo")
+            hoy = _dt(ahora).astimezone(timezone.utc).date()
+            vencida = p.get("fecha_revision") is not None and date.fromisoformat(p["fecha_revision"]) <= hoy
+            if fecha_revision is not None:
+                try:
+                    nueva_fr = date.fromisoformat(fecha_revision) if isinstance(fecha_revision, str) and _FECHA.match(fecha_revision) else None
+                except ValueError:
+                    nueva_fr = None
+                if nueva_fr is None:
+                    return _no("O-01", "fecha_revision con formato inválido (AAAA-MM-DD)")
+                if nueva_fr <= hoy:
+                    return _no("O-10", "la nueva fecha de revisión debe ser futura")
+                if nueva_fr > hoy + timedelta(days=self.cfg["revision_max_dias"]):
+                    return _no("O-06", f"la nueva fecha de revisión no puede estar a más de {self.cfg['revision_max_dias']} días")
+            elif vencida:
+                return _no("O-15", "la fecha de revisión ya llegó: confirmar la tesis exige fijar la siguiente")
         nuevas = None
         if p["estado"] == "REDUCIENDO" and hasta in ("ABIERTA", "EN_REVISION") and hasta != p["reduccion"]["vuelve_a"]:
             return _no("O-04", f"la reducción salió de {p['reduccion']['vuelve_a']} y vuelve a ese estado")
@@ -1570,6 +1623,8 @@ class Orquestador:
             p["cantidad"] = restante
             ref = orden["orden_id"]
         # --- a partir de aquí todo es válido: se aplica
+        if nueva_fr is not None:
+            p["fecha_revision"] = p["condiciones_salida"]["fecha"] = nueva_fr.isoformat()
         if hasta == "REDUCIENDO":
             p["reduccion"] = {"n": len(p["reducciones"]) + 1, "cantidad": q, "desde": p["cantidad"], "objetivo_restante": p["cantidad"] - q,
                               "condicion": decl["id"] if decl else None, "actor": actor, "motivo": motivo, "pedida_en": ahora,

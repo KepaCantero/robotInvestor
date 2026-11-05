@@ -168,6 +168,8 @@ def respuestas():
         ("res_R12_prefijo_con_espacio", lambda s: s.update(data_refs=["K-20261105-001", " SRC-FANTASMA"]), {}, {"R-12"}),
         ("res_R12_tipo_desconocido", lambda s: s.update(data_refs=["K-20261105-001", "SRC-EURUSD", "EXT-NOEXISTE"]), {}, {"R-12"}),
         ("res_R12_ninguna_fuente", lambda s: s.update(data_refs=["K-20261105-001", "EVID-0001"]), {}, {"R-12"}),
+        ("res_R14_contado_en_vez_de_futuro", lambda s: I(s).update(via_acceso="Contado (spot) en intermediario"), {}, {"R-14"}),
+        ("res_R14_mayusculas_y_espacios_no_cuentan", lambda s: I(s).update(via_acceso="futuro de divisas,  VENCIMIENTO trimestral"), {}, set()),
         ("res_R10_sobre_anterior_al_encargo", lambda s: s.update(emitido_en="2026-11-05T11:00:00+00:00"), {}, {"R-10"}),
     ]
 
@@ -208,7 +210,7 @@ def main():
     # perfil distinto: el sobre de renta variable no responde al encargo de divisas
     rv = sobres_validos()["valido_rv_n3_discrepa.json"]
     obt = {x["regla"] for x in sobre_responde_a_encargo(encargo_div(), rv, CTX, sctx)}
-    esperadas = {"R-03", "R-09"}
+    esperadas = {"R-03", "R-09", "R-14"}   # y su vía de acceso (ETF) tampoco es la encargada
     print(("OK   " if obt == esperadas else "FALLA"), "res_R03_otro_perfil", f"esperadas={sorted(esperadas)} obtenidas={sorted(obt)}")
     ok &= obt == esperadas
     # R-12: una fuente que K marcó NO_DISPONIBLE no puede citarse
