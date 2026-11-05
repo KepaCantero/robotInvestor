@@ -5,7 +5,7 @@
   "producer": "C-DIV",
   "consumer": "D",
   "tipo_mensaje": "CT-G-02",
-  "version_esquema": "0.1.0",
+  "version_esquema": "0.2.0",
   "emitido_en": "2026-11-05T18:00:00+00:00",
   "valid_until": "2026-11-08T18:00:00+00:00",
   "data_refs": [
@@ -44,15 +44,25 @@
       ]
     },
     "entrada_salida": {
-      "entrada": "Límite en 1,08 durante 3 días",
+      "entrada": {
+        "limite": {
+          "valor": 1.12,
+          "unidad": "USD",
+          "estado": "ESTIMADO",
+          "modelo_ref": "MOD-SIM-30",
+          "motor_id": "MOTOR-RUN-0030"
+        },
+        "ventana_hasta": "2026-11-08T18:00:00+00:00",
+        "descripcion": "Compra limitada mientras dure la vigencia del sobre"
+      },
       "stop": {
         "valor": 1.05,
-        "unidad": "EUR",
+        "unidad": "USD",
         "estado": "SUPUESTO"
       },
       "objetivo": {
         "valor": 1.14,
-        "unidad": "EUR",
+        "unidad": "USD",
         "estado": "SUPUESTO"
       },
       "fecha_revision": "mañana"
@@ -292,9 +302,9 @@
     "evidencia": {
       "frescura_horas": 6,
       "proporcion": {
-        "VERIFICADO": 0.0769,
-        "ESTIMADO": 0.8462,
-        "SUPUESTO": 0.0769
+        "VERIFICADO": 0.0741,
+        "ESTIMADO": 0.8518,
+        "SUPUESTO": 0.0741
       }
     },
     "exclusiones_duras": {
@@ -328,7 +338,8 @@
         "MOTOR-RUN-0025",
         "MOTOR-RUN-0026",
         "MOTOR-RUN-0027",
-        "MOTOR-RUN-0028"
+        "MOTOR-RUN-0028",
+        "MOTOR-RUN-0030"
       ]
     },
     "cuerpo_especializado": {
@@ -361,7 +372,13 @@
           "rentabilidad_neta_pct": 5.0,
           "horizonte_dias": 90
         }
-      ]
+      ],
+      "horizonte_dias": 90,
+      "distribucion": {
+        "p05": -4.5,
+        "p50": 1.2,
+        "p95": 5.5
+      }
     },
     "capa3": {
       "tope_confianza": 0.8,

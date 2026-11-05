@@ -1,4 +1,8 @@
-"""Validador determinista del sobre CT-G-02 0.1.0 (reglas V-01 a V-23).
+"""Validador determinista del sobre CT-G-02 0.2.0 (reglas V-01 a V-25).
+
+0.2.0 (T-27): entrada numérica (V-24), capa 2 con horizonte común y distribución (V-25), capa 2 SUPUESTO con escenarios
+(V-13), V-23 solo en las clases Q y S, un candidato BLOQUEADO es un sobre válido que no compite (V-16; ver `bloqueos`) y
+el estrés admite ganancias (V-21). La 0.1.0 (entrada en texto) está retirada.
 
 Primero comprueba la forma con el esquema JSON; luego aplica las reglas que cruzan
 campos. Devuelve una lista de incumplimientos {regla, ruta, mensaje}. Lista vacía = válido.
@@ -16,7 +20,8 @@ from pathlib import Path
 from jsonschema import Draft202012Validator
 
 AQUI = Path(__file__).resolve().parent
-VERSIONES_CONOCIDAS = {"0.1.0"}
+VERSIONES_CONOCIDAS = {"0.2.0"}
+VERSIONES_RETIRADAS = {"0.1.0"}
 EPISODIOS_ESTANDAR = ["EP-2008-LEHMAN", "EP-2011-EUROZONA", "EP-2015-SNB",
                       "EP-2018-Q4", "EP-2020-COVID", "EP-2022-TIPOS"]
 FACTORES_ESTANDAR = ["TIPOS", "RV", "USD", "CREDITO", "INFLACION",
@@ -50,7 +55,8 @@ UNIDADES = {
     "capital.apalancamiento": ("x", 1, None),
     "factores.calidad_ajuste": ("R2", 0, 1),
 }
-UNIDAD_ESTRES = ("%", -100, 0)
+UNIDAD_ESTRES = ("%", -100, None)   # un corto o una cobertura ganan en una crisis (T-27, hallazgo 49)
+CLASES_V23 = ("Q", "S")             # un sobre K honesto es mayormente NO_ESTIMABLE (T-27, hallazgo 48)
 UNIDAD_BETA = ("beta", -10, 10)
 
 
@@ -62,7 +68,7 @@ def cargar_json(texto: str):
 
 
 def _esquema():
-    ruta = AQUI.parent / "esquemas" / "ct-g-02_0.1.0.schema.json"
+    ruta = AQUI.parent / "esquemas" / "ct-g-02_0.2.0.schema.json"
     return json.loads(ruta.read_text(encoding="utf-8"))
 
 
@@ -128,6 +134,15 @@ def proporcion_real(payload):
     return {k: (v / total if total else 0.0) for k, v in cuenta.items()}
 
 
+def bloqueos(sobre) -> list[str]:
+    """Exclusiones duras BLOQUEADO de un sobre (vacía si no hay o si no se pueden leer). Un sobre válido con bloqueos es un
+    informe: el candidato no compite (el Orquestador lo descarta con O-32 y D lo excluye)."""
+    try:
+        return sorted(k for k, v in sobre["payload"]["exclusiones_duras"].items() if v == "BLOQUEADO")
+    except (KeyError, TypeError, AttributeError):
+        return []
+
+
 def validar(sobre, ctx) -> list[dict]:
     """Nunca lanza excepciones: una entrada o un contexto mal formados se rechazan con V-01."""
     try:
@@ -157,7 +172,10 @@ def _validar(sobre, ctx) -> list[dict]:
     # V-01 forma, versión conocida, números finitos
     ver = sobre.get("version_esquema") if isinstance(sobre, dict) else None
     if not isinstance(ver, str) or ver not in VERSIONES_CONOCIDAS:
-        f("V-01", "version_esquema", f"versión desconocida: {ver!r}")
+        if isinstance(ver, str) and ver in VERSIONES_RETIRADAS:
+            f("V-01", "version_esquema", f"versión retirada: {ver} (vigente {sorted(VERSIONES_CONOCIDAS)[0]}; la entrada ya no es texto)")
+        else:
+            f("V-01", "version_esquema", f"versión desconocida: {ver!r}")
         return fallos
     for ruta in _numeros_no_finitos(sobre):
         f("V-01", ruta, "número no finito (NaN o infinito)")
@@ -267,19 +285,37 @@ def _validar(sobre, ctx) -> list[dict]:
             f("V-12", "payload.factores.exposiciones",
               "debe tener exactamente los factores comunes, uno cada uno")
 
-    # V-13 capa 2
+    # V-13 capa 2: ESTIMADO con método, datos y escenarios; SUPUESTO puede traerlos (D lo trata como opinión); NO_ESTIMABLE, nada
     if "capa2" in p:
         c2 = p["capa2"]
-        if c2["estado"] == "ESTIMADO":
-            esc = c2.get("escenarios") or []
-            if not (c2.get("metodo") and c2.get("base_datos")) or len(esc) < 2:
+        esc = c2.get("escenarios")
+        if c2["estado"] == "NO_ESTIMABLE":
+            if any(k in c2 for k in ("escenarios", "metodo", "base_datos", "horizonte_dias", "distribucion")):
+                f("V-13", "payload.capa2", "NO_ESTIMABLE no puede llevar método, datos, escenarios, horizonte ni distribución")
+        else:
+            if c2["estado"] == "ESTIMADO" and (not (c2.get("metodo") and c2.get("base_datos")) or len(esc or []) < 2):
                 f("V-13", "payload.capa2", "ESTIMADO exige metodo, base_datos y al menos 2 escenarios")
-            elif abs(sum(e["probabilidad"] for e in esc) - 1) > 1e-3:
+            elif esc is not None and len(esc) < 2:
+                f("V-13", "payload.capa2.escenarios", "al menos 2 escenarios")
+            elif esc and abs(math.fsum(e["probabilidad"] for e in esc) - 1) > 1e-3:
                 f("V-13", "payload.capa2.escenarios", "las probabilidades no suman 1")
-            elif len({e["nombre"] for e in esc}) != len(esc):
+            elif esc and len({e["nombre"] for e in esc}) != len(esc):
                 f("V-13", "payload.capa2.escenarios", "nombres de escenario repetidos")
-        elif c2.get("escenarios") or c2.get("metodo") or c2.get("base_datos"):
-            f("V-13", "payload.capa2", f"{c2['estado']} no puede llevar método, datos ni escenarios")
+            # V-25 horizonte común y distribución resumida (solo tiene sentido con escenarios)
+            if esc:
+                hz, dist = c2.get("horizonte_dias"), c2.get("distribucion")
+                if any(type(x) is not int for x in [e["horizonte_dias"] for e in esc] + ([hz] if hz is not None else [])):
+                    f("V-25", "payload.capa2", "los horizontes son un número entero de días (90, no 90.0)")
+                elif hz is None:
+                    f("V-25", "payload.capa2.horizonte_dias", "con escenarios hay que declarar el horizonte común")
+                elif any(e["horizonte_dias"] != hz for e in esc):
+                    f("V-25", "payload.capa2.escenarios", f"todos los escenarios deben usar el horizonte común ({hz} días)")
+                if dist is None:
+                    f("V-25", "payload.capa2.distribucion", "con escenarios hay que resumir la distribución (p05, p50, p95)")
+                elif not (-100 <= dist["p05"] <= dist["p50"] <= dist["p95"]):
+                    f("V-25", "payload.capa2.distribucion", "debe cumplir -100 <= p05 <= p50 <= p95")
+            elif "horizonte_dias" in c2 or "distribucion" in c2:
+                f("V-25", "payload.capa2", "horizonte y distribución resumen escenarios: sin escenarios no se declaran")
 
     # V-14 confianza
     if "capa3" in p:
@@ -301,11 +337,10 @@ def _validar(sobre, ctx) -> list[dict]:
         if a["estado"] == "NO_ESTIMABLE" or a["valor"] != 1:
             f("V-15", "payload.capital.apalancamiento", "apalancamiento no habilitado: debe declararse 1 (ratio de exposición sobre capital; 1 = sin apalancar)")
 
-    # V-16 exclusiones duras (en cualquier nivel)
+    # V-16 exclusiones duras (en cualquier nivel): lo DESCONOCIDO se resuelve antes; un BLOQUEADO es un sobre válido de un
+    # candidato que no compite (el consumidor lo comprueba con `bloqueos`)
     ex = p["exclusiones_duras"]
-    if any(v == "BLOQUEADO" for v in ex.values()):
-        f("V-16", "payload.exclusiones_duras", "candidato bloqueado: no pasa a D")
-    elif any(v == "DESCONOCIDO" for v in ex.values()):
+    if any(v == "DESCONOCIDO" for v in ex.values()):
         f("V-16", "payload.exclusiones_duras", "desconocido: resolver antes de entregar a D")
 
     # V-17 / V-21 unidades y rangos por ruta
@@ -337,16 +372,36 @@ def _validar(sobre, ctx) -> list[dict]:
         for ruta, msg in _numeros_sueltos(cuerpo["contenido"], "payload.cuerpo_especializado.contenido"):
             f("V-19", ruta, msg)
 
-    # V-22 coherencia interna
+    # V-22 coherencia interna / V-24 entrada numérica
     if "entrada_salida" in p:
-        st, ob = p["entrada_salida"]["stop"], p["entrada_salida"]["objetivo"]
-        if all(isinstance(c["valor"], (int, float)) and not isinstance(c["valor"], bool) for c in (st, ob)):
-            if (ident["direccion"] == "LARGO" and st["valor"] >= ob["valor"]) or \
-               (ident["direccion"] == "CORTO" and st["valor"] <= ob["valor"]):
-                f("V-22", "payload.entrada_salida", "stop y objetivo incoherentes con la dirección")
+        es = p["entrada_salida"]
+        st, ob, lim = es["stop"], es["objetivo"], es["entrada"]["limite"]
+        num = lambda c: isinstance(c["valor"], (int, float)) and not isinstance(c["valor"], bool)   # noqa: E731
+        largo = ident["direccion"] == "LARGO"
+        if num(st) and num(ob) and (st["valor"] >= ob["valor"] if largo else st["valor"] <= ob["valor"]):
+            f("V-22", "payload.entrada_salida", "stop y objetivo incoherentes con la dirección")
+        for c, nombre in ((st, "stop"), (ob, "objetivo")):
+            if num(lim) and num(c) and (lim["valor"] <= c["valor"] if (nombre == "stop") == largo else lim["valor"] >= c["valor"]):
+                f("V-22", "payload.entrada_salida.entrada.limite", f"el límite de entrada debe quedar entre el stop y el objetivo ({nombre})")
+        if not num(lim) or lim["valor"] <= 0:
+            f("V-24", "payload.entrada_salida.entrada.limite", "el límite de entrada es un precio positivo (no NO_ESTIMABLE)")
+        if lim["unidad"] != st["unidad"]:
+            f("V-24", "payload.entrada_salida.entrada.limite", f"el límite va en la unidad del stop ({st['unidad']!r})")
+        if num(ob) and ob["unidad"] != st["unidad"]:
+            f("V-22", "payload.entrada_salida.objetivo", f"el objetivo va en la unidad del stop ({st['unidad']!r}): si no, no se pueden comparar")
+        try:
+            vh = _dt(es["entrada"]["ventana_hasta"])
+            if emitido is not None and vh <= emitido:
+                f("V-24", "payload.entrada_salida.entrada.ventana_hasta", "la ventana de entrada acaba antes de la emisión")
+            if vh <= ahora < _dt(sobre["valid_until"]):   # si el sobre ya caducó, es V-03
+                f("V-24", "payload.entrada_salida.entrada.ventana_hasta", "la ventana de entrada ya se cerró: no hay entrada posible")
+            if vh > _dt(sobre["valid_until"]) and _dt(sobre["valid_until"]) > _dt(sobre["emitido_en"]):   # vigencia incoherente: ya es V-03
+                f("V-24", "payload.entrada_salida.entrada.ventana_hasta", "la ventana de entrada pasa de la vigencia del sobre")
+        except ValueError as e:
+            f("V-24", "payload.entrada_salida.entrada.ventana_hasta", f"fecha-hora inválida: {e}")
 
     # V-23 comparabilidad mínima: en N2 y N3 no más de la mitad de las cifras en NO_ESTIMABLE
-    if nivel in ("N2", "N3") and cifras:
+    if nivel in ("N2", "N3") and cifras and ident["clase_comparabilidad"] in CLASES_V23:
         ne = sum(1 for _, c in cifras if c["estado"] == "NO_ESTIMABLE") / len(cifras)
         if ne > MAX_NO_ESTIMABLE_N2:
             f("V-23", "payload", f"{ne:.0%} de las cifras son NO_ESTIMABLE; máximo {MAX_NO_ESTIMABLE_N2:.0%}")

@@ -1,6 +1,8 @@
-"""Genera el esquema JSON de CT-G-02 (sobre común de valoración) versión 0.1.0.
+"""Genera el esquema JSON de CT-G-02 (sobre común de valoración) versión 0.2.0.
 
-Uso: python3 generar_esquema.py > ct-g-02_0.1.0.schema.json
+Uso: python3 generar_esquema.py > ct-g-02_0.2.0.schema.json
+0.2.0 (T-27): entrada numérica (límite y ventana), capa 2 con horizonte común y distribución resumida. La 0.1.0
+(entrada en texto) queda RETIRADA y su esquema se conserva para leer el histórico.
 El esquema comprueba la FORMA. Las reglas que cruzan campos (topes de confianza,
 probabilidades que suman 1, caducidad, etc.) las aplica validador/validar_sobre.py.
 """
@@ -76,7 +78,11 @@ payload_props = {
         "condiciones_invalidez": {"type": "array", "items": ref("Condicion")},
     }),
     "entrada_salida": obj({
-        "entrada": ref("Texto"),
+        "entrada": obj({
+            "limite": ref("Cifra"),           # precio límite, en la divisa del stop (V-24)
+            "ventana_hasta": FECHAHORA,       # hasta cuándo vale la entrada (V-24)
+            "descripcion": ref("Texto"),      # solo para el lector
+        }, required=["limite", "ventana_hasta"]),
         "stop": ref("Cifra"),
         "objetivo": ref("Cifra"),
         "fecha_revision": FECHA,
@@ -135,6 +141,10 @@ payload_props = {
         "metodo": {"type": "string", "minLength": 1},
         "base_datos": {"type": "string", "minLength": 1},
         "escenarios": {"type": "array", "items": ref("Escenario")},
+        "horizonte_dias": {"type": "integer", "minimum": 1},     # horizonte común de todos los escenarios (V-25)
+        "distribucion": obj({                                    # rentabilidad neta a ese horizonte, en % (V-25)
+            "p05": {"type": "number"}, "p50": {"type": "number"}, "p95": {"type": "number"},
+        }),
     }, required=["estado"]),
     "capa3": obj({
         "tope_confianza": {"type": "number", "minimum": 0, "maximum": 1},
@@ -154,9 +164,9 @@ payload_props = {
 
 schema = {
     "$schema": "https://json-schema.org/draft/2020-12/schema",
-    "$id": "https://robot-inversor.local/esquemas/ct-g-02/0.1.0",
+    "$id": "https://robot-inversor.local/esquemas/ct-g-02/0.2.0",
     "title": "CT-G-02 · Sobre común de valoración",
-    "description": "Versión 0.1.0 (provisional, 0.x). Congelación en 1.0.0 tras C-DIV y C-RV.",
+    "description": "Versión 0.2.0 (provisional, 0.x; T-27: entrada numérica, horizonte común y distribución). La 0.1.0 está retirada. Congelación en 1.0.0 tras C-DIV y C-RV.",
     "type": "object",
     "properties": {
         "event_id": {"type": "string", "minLength": 1},

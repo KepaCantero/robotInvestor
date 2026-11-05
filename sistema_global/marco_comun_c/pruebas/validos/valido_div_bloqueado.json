@@ -1,0 +1,402 @@
+{
+  "event_id": "EV-C-DIV-0001",
+  "correlation_id": "COR-0001",
+  "expediente_id": "EXP-0001",
+  "producer": "C-DIV",
+  "consumer": "D",
+  "tipo_mensaje": "CT-G-02",
+  "version_esquema": "0.2.0",
+  "emitido_en": "2026-11-05T18:00:00+00:00",
+  "valid_until": "2026-11-08T18:00:00+00:00",
+  "data_refs": [
+    "K-20261105-001",
+    "SRC-EURUSD",
+    "EVID-0001"
+  ],
+  "payload": {
+    "identificacion": {
+      "perfil": "C-DIV",
+      "clase_comparabilidad": "Q",
+      "instrumento": "EUR/USD",
+      "via_acceso": "Futuro de divisas, vencimiento trimestral",
+      "direccion": "LARGO",
+      "cartera_compatible": [
+        "TACTICA"
+      ],
+      "nivel_analisis": "N3",
+      "fecha_corte": "2026-11-05",
+      "divisa_base": "EUR"
+    },
+    "tesis": {
+      "resumen": "Tesis de ejemplo con datos simulados.",
+      "supuestos": [
+        "Supuesto A de ejemplo"
+      ],
+      "condiciones_invalidez": [
+        {
+          "id": "INV-1",
+          "descripcion": "Cierre por debajo del nivel de invalidez",
+          "metrica": "precio_cierre",
+          "operador": "<",
+          "umbral": 1.05,
+          "unidad": "EUR"
+        }
+      ]
+    },
+    "entrada_salida": {
+      "entrada": {
+        "limite": {
+          "valor": 1.12,
+          "unidad": "USD",
+          "estado": "ESTIMADO",
+          "modelo_ref": "MOD-SIM-30",
+          "motor_id": "MOTOR-RUN-0030"
+        },
+        "ventana_hasta": "2026-11-08T18:00:00+00:00",
+        "descripcion": "Compra limitada mientras dure la vigencia del sobre"
+      },
+      "stop": {
+        "valor": 1.05,
+        "unidad": "USD",
+        "estado": "SUPUESTO"
+      },
+      "objetivo": {
+        "valor": 1.14,
+        "unidad": "USD",
+        "estado": "SUPUESTO"
+      },
+      "fecha_revision": "2026-12-05"
+    },
+    "liquidez": {
+      "tiempo_salida": {
+        "valor": 1,
+        "unidad": "días",
+        "estado": "ESTIMADO",
+        "modelo_ref": "MOD-SIM-01",
+        "motor_id": "MOTOR-RUN-0001"
+      },
+      "coste_salida": {
+        "valor": 2,
+        "unidad": "pb",
+        "estado": "ESTIMADO",
+        "modelo_ref": "MOD-SIM-02",
+        "motor_id": "MOTOR-RUN-0002"
+      },
+      "tamano_max_sin_impacto": {
+        "valor": 50000,
+        "unidad": "EUR",
+        "estado": "ESTIMADO",
+        "modelo_ref": "MOD-SIM-03",
+        "motor_id": "MOTOR-RUN-0003"
+      }
+    },
+    "costes": {
+      "entrada": {
+        "valor": 2,
+        "unidad": "pb",
+        "estado": "ESTIMADO",
+        "modelo_ref": "MOD-SIM-04",
+        "motor_id": "MOTOR-RUN-0004"
+      },
+      "mantenimiento_anual": {
+        "valor": 35,
+        "unidad": "pb",
+        "estado": "ESTIMADO",
+        "modelo_ref": "MOD-SIM-05",
+        "motor_id": "MOTOR-RUN-0005"
+      },
+      "salida": {
+        "valor": 2,
+        "unidad": "pb",
+        "estado": "ESTIMADO",
+        "modelo_ref": "MOD-SIM-06",
+        "motor_id": "MOTOR-RUN-0006"
+      },
+      "impacto_fiscal": {
+        "valor": null,
+        "unidad": "EUR",
+        "estado": "NO_ESTIMABLE"
+      }
+    },
+    "capital": {
+      "capital_necesario": {
+        "valor": 1000,
+        "unidad": "EUR",
+        "estado": "ESTIMADO",
+        "modelo_ref": "MOD-SIM-07",
+        "motor_id": "MOTOR-RUN-0007"
+      },
+      "margen": {
+        "valor": 0,
+        "unidad": "EUR",
+        "estado": "VERIFICADO",
+        "modelo_ref": "MOD-SIM-08",
+        "motor_id": "MOTOR-RUN-0008"
+      },
+      "apalancamiento": {
+        "valor": 1,
+        "unidad": "x",
+        "estado": "VERIFICADO",
+        "modelo_ref": "MOD-SIM-09",
+        "motor_id": "MOTOR-RUN-0009"
+      }
+    },
+    "estres_historico": {
+      "conjunto_version": "EST-v0",
+      "episodios": [
+        {
+          "episodio_id": "EP-2008-LEHMAN",
+          "perdida": {
+            "valor": -4.0,
+            "unidad": "%",
+            "estado": "ESTIMADO",
+            "modelo_ref": "MOD-SIM-10",
+            "motor_id": "MOTOR-RUN-0010"
+          }
+        },
+        {
+          "episodio_id": "EP-2011-EUROZONA",
+          "perdida": {
+            "valor": -5.0,
+            "unidad": "%",
+            "estado": "ESTIMADO",
+            "modelo_ref": "MOD-SIM-11",
+            "motor_id": "MOTOR-RUN-0011"
+          }
+        },
+        {
+          "episodio_id": "EP-2015-SNB",
+          "perdida": {
+            "valor": -6.0,
+            "unidad": "%",
+            "estado": "ESTIMADO",
+            "modelo_ref": "MOD-SIM-12",
+            "motor_id": "MOTOR-RUN-0012"
+          }
+        },
+        {
+          "episodio_id": "EP-2018-Q4",
+          "perdida": {
+            "valor": -7.0,
+            "unidad": "%",
+            "estado": "ESTIMADO",
+            "modelo_ref": "MOD-SIM-13",
+            "motor_id": "MOTOR-RUN-0013"
+          }
+        },
+        {
+          "episodio_id": "EP-2020-COVID",
+          "perdida": {
+            "valor": -8.0,
+            "unidad": "%",
+            "estado": "ESTIMADO",
+            "modelo_ref": "MOD-SIM-14",
+            "motor_id": "MOTOR-RUN-0014"
+          }
+        },
+        {
+          "episodio_id": "EP-2022-TIPOS",
+          "perdida": {
+            "valor": -9.0,
+            "unidad": "%",
+            "estado": "ESTIMADO",
+            "modelo_ref": "MOD-SIM-15",
+            "motor_id": "MOTOR-RUN-0015"
+          }
+        }
+      ]
+    },
+    "factores": {
+      "conjunto_version": "FAC-v0",
+      "ventana_dias": 750,
+      "calidad_ajuste": {
+        "valor": 0.35,
+        "unidad": "R2",
+        "estado": "ESTIMADO",
+        "modelo_ref": "MOD-SIM-20",
+        "motor_id": "MOTOR-RUN-0020"
+      },
+      "exposiciones": [
+        {
+          "factor": "TIPOS",
+          "beta": {
+            "valor": -0.3,
+            "unidad": "beta",
+            "estado": "ESTIMADO",
+            "modelo_ref": "MOD-SIM-21",
+            "motor_id": "MOTOR-RUN-0021"
+          }
+        },
+        {
+          "factor": "RV",
+          "beta": {
+            "valor": -0.2,
+            "unidad": "beta",
+            "estado": "ESTIMADO",
+            "modelo_ref": "MOD-SIM-22",
+            "motor_id": "MOTOR-RUN-0022"
+          }
+        },
+        {
+          "factor": "USD",
+          "beta": {
+            "valor": -0.1,
+            "unidad": "beta",
+            "estado": "ESTIMADO",
+            "modelo_ref": "MOD-SIM-23",
+            "motor_id": "MOTOR-RUN-0023"
+          }
+        },
+        {
+          "factor": "CREDITO",
+          "beta": {
+            "valor": 0.0,
+            "unidad": "beta",
+            "estado": "ESTIMADO",
+            "modelo_ref": "MOD-SIM-24",
+            "motor_id": "MOTOR-RUN-0024"
+          }
+        },
+        {
+          "factor": "INFLACION",
+          "beta": {
+            "valor": 0.1,
+            "unidad": "beta",
+            "estado": "ESTIMADO",
+            "modelo_ref": "MOD-SIM-25",
+            "motor_id": "MOTOR-RUN-0025"
+          }
+        },
+        {
+          "factor": "MATERIAS_PRIMAS",
+          "beta": {
+            "valor": 0.2,
+            "unidad": "beta",
+            "estado": "ESTIMADO",
+            "modelo_ref": "MOD-SIM-26",
+            "motor_id": "MOTOR-RUN-0026"
+          }
+        },
+        {
+          "factor": "VOLATILIDAD",
+          "beta": {
+            "valor": 0.3,
+            "unidad": "beta",
+            "estado": "ESTIMADO",
+            "modelo_ref": "MOD-SIM-27",
+            "motor_id": "MOTOR-RUN-0027"
+          }
+        },
+        {
+          "factor": "LIQUIDEZ",
+          "beta": {
+            "valor": 0.4,
+            "unidad": "beta",
+            "estado": "ESTIMADO",
+            "modelo_ref": "MOD-SIM-28",
+            "motor_id": "MOTOR-RUN-0028"
+          }
+        }
+      ]
+    },
+    "evidencia": {
+      "frescura_horas": 6,
+      "proporcion": {
+        "VERIFICADO": 0.0741,
+        "ESTIMADO": 0.8518,
+        "SUPUESTO": 0.0741
+      }
+    },
+    "exclusiones_duras": {
+      "sanciones": "BLOQUEADO",
+      "invertibilidad": "OK",
+      "acceso": "OK"
+    },
+    "referencias": {
+      "cuerpo_especializado_ref": "C-DIV-CUERPO-0001",
+      "artefactos_motor": [
+        "MOTOR-RUN-0001",
+        "MOTOR-RUN-0002",
+        "MOTOR-RUN-0003",
+        "MOTOR-RUN-0004",
+        "MOTOR-RUN-0005",
+        "MOTOR-RUN-0006",
+        "MOTOR-RUN-0007",
+        "MOTOR-RUN-0008",
+        "MOTOR-RUN-0009",
+        "MOTOR-RUN-0010",
+        "MOTOR-RUN-0011",
+        "MOTOR-RUN-0012",
+        "MOTOR-RUN-0013",
+        "MOTOR-RUN-0014",
+        "MOTOR-RUN-0015",
+        "MOTOR-RUN-0020",
+        "MOTOR-RUN-0021",
+        "MOTOR-RUN-0022",
+        "MOTOR-RUN-0023",
+        "MOTOR-RUN-0024",
+        "MOTOR-RUN-0025",
+        "MOTOR-RUN-0026",
+        "MOTOR-RUN-0027",
+        "MOTOR-RUN-0028",
+        "MOTOR-RUN-0030"
+      ]
+    },
+    "cuerpo_especializado": {
+      "esquema_ref": "C-DIV-cuerpo",
+      "version": "0.0.1",
+      "contenido": {
+        "nota": "campos propios del perfil"
+      }
+    },
+    "capa2": {
+      "estado": "ESTIMADO",
+      "metodo": "Simulación histórica de bloques",
+      "base_datos": "Serie K-20261105-001",
+      "escenarios": [
+        {
+          "nombre": "base",
+          "probabilidad": 0.5,
+          "rentabilidad_neta_pct": 1.5,
+          "horizonte_dias": 90
+        },
+        {
+          "nombre": "adverso",
+          "probabilidad": 0.3,
+          "rentabilidad_neta_pct": -4.0,
+          "horizonte_dias": 90
+        },
+        {
+          "nombre": "favorable",
+          "probabilidad": 0.2,
+          "rentabilidad_neta_pct": 5.0,
+          "horizonte_dias": 90
+        }
+      ],
+      "horizonte_dias": 90,
+      "distribucion": {
+        "p05": -4.5,
+        "p50": 1.2,
+        "p95": 5.5
+      }
+    },
+    "capa3": {
+      "tope_confianza": 0.8,
+      "confianza": 0.7,
+      "doble_analisis": {
+        "realizado": true,
+        "discrepa": false
+      }
+    }
+  },
+  "incertidumbre": [
+    "Datos simulados para pruebas"
+  ],
+  "resultado_politica": {
+    "controles": [
+      "SC-6"
+    ],
+    "resultado": "APROBADO",
+    "version_politica": "POL-0.1"
+  }
+}

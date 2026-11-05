@@ -313,7 +313,7 @@ def _cruzar(encargo: dict, sobre: dict, sello: dict) -> list[dict]:
             f("R-12", "data_refs", f"referencia de tipo desconocido: {r!r}")
     # R-13 el horizonte de cada escenario está dentro del del mandato (D mide la referencia con él)
     hz = pe["mandato"]["horizonte_dias"]
-    for i, x in enumerate(sobre["payload"]["capa2"].get("escenarios") or []):
+    for i, x in enumerate((sobre["payload"].get("capa2") or {}).get("escenarios") or []):   # N0/N1 no traen capa 2
         if isinstance(x, dict) and not (hz["min"] <= x.get("horizonte_dias", -1) <= hz["max"]):
             f("R-13", f"payload.capa2.escenarios[{i}].horizonte_dias", "horizonte fuera del que fija el mandato")
     return fallos

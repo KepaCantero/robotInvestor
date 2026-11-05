@@ -26,6 +26,8 @@ def validar_con(o, n, instrumento="EUR/USD", escenarios=None, mod=None, valid_un
                                                  for k, p, v in zip(("base", "adverso", "favorable"), (0.5, 0.3, 0.2), escenarios)]
     if valid_until:
         sob["valid_until"] = valid_until
+        en = sob["payload"]["entrada_salida"]["entrada"]   # V-24: la ventana de entrada no pasa de la vigencia
+        en["ventana_hasta"] = valid_until
     if mod:
         mod(sob["payload"])
         from validar_sobre import proporcion_real
@@ -130,7 +132,11 @@ def main():
     prop("invalidez_con_otro_tipo_O21", "O-21", salida={**SALIDA, "condiciones": [STOP, OBJ, {**INV, "tipo": "OBJETIVO", "metrica": "precio", "operador": ">=", "umbral": 1.13}]})
     for nombre, cambio in (("stop_no_estimable", {"valor": None, "estado": "NO_ESTIMABLE"}), ("stop_en_porcentaje", {"valor": 1.05, "unidad": "%"})):
         o = nuevo()
-        validar_con(o, 1, mod=lambda p, c=cambio: p["entrada_salida"]["stop"].update(c)); validar_con(o, 2, instrumento="GBP/USD")
+        def mod(p, c=cambio):
+            p["entrada_salida"]["stop"].update(c)
+            p["entrada_salida"]["entrada"]["limite"]["unidad"] = p["entrada_salida"]["stop"]["unidad"]   # V-24: el límite va en la unidad del stop
+            p["entrada_salida"]["objetivo"]["unidad"] = p["entrada_salida"]["stop"]["unidad"]   # V-22: y el objetivo también
+        validar_con(o, 1, mod=mod); validar_con(o, 2, instrumento="GBP/USD")
         o.comparar(["EXP-0001", "EXP-0002"], "D", AHORA)
         elegir_si(o)
         prop(f"sobre_con_{nombre}_O21", "O-21", o=o)
@@ -201,6 +207,7 @@ def main():
     s1 = _sobre(1)
     for x in s1["payload"]["capa2"]["escenarios"]:
         x["horizonte_dias"] = 1   # por debajo del mínimo del mandato (14 días): rebajaría el listón
+    s1["payload"]["capa2"]["horizonte_dias"] = 1   # V-25: horizonte común
     r = o.entregar_sobre("EXP-0001", s1, AHORA)
     h.chk("horizonte_fuera_del_mandato_R13", r["codigo"] == "O-01" and "R-13" in r["motivo"], r)
     o = nuevo(); validar_con(o, 1)

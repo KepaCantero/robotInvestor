@@ -100,6 +100,7 @@ def sobre(n=1, corte="2026-11-05", sello="K-20261105-001"):
     s["data_refs"] = [sello, "SRC-EURUSD", f"EVID-{n:04d}"]
     if corte == "2026-11-06":
         s["emitido_en"] = "2026-11-06T10:00:00+00:00"; s["valid_until"] = "2026-11-09T18:00:00+00:00"
+        s["payload"]["entrada_salida"]["entrada"]["ventana_hasta"] = s["valid_until"]
     return s
 
 
@@ -115,6 +116,9 @@ def sobre_para(n, salida):
     objs = [c for c in salida["condiciones"] if c.get("tipo") == "OBJETIVO"]
     if objs:
         p["entrada_salida"]["objetivo"]["valor"] = objs[0]["umbral"]
+    st_v, ob_v = p["entrada_salida"]["stop"]["valor"], p["entrada_salida"]["objetivo"]["valor"]
+    if isinstance(st_v, (int, float)) and isinstance(ob_v, (int, float)):   # V-22/V-24: límite entre stop y objetivo, cerca del objetivo
+        p["entrada_salida"]["entrada"]["limite"]["valor"] = round(ob_v - (ob_v - st_v) * 0.01, 6)   # para no restringir la propuesta (O-21)
     invs = [c for c in salida["condiciones"] if c.get("tipo") == "INVALIDEZ"]
     if invs:
         p["tesis"]["condiciones_invalidez"] = [{"id": c["id"], "descripcion": "invalidez de prueba", "metrica": c["metrica"], "operador": c["operador"],
