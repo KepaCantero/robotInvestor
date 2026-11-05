@@ -1,0 +1,673 @@
+"""Orquestador — código de referencia V0.1 (máquina de estados de expedientes y posiciones).
+
+Determinista: sin LLM, sin red, sin reloj propio (el tiempo entra por el parámetro `ahora`).
+Falla cerrado: cada operación devuelve {"ok", "codigo", "motivo", ...}; ante cualquier error
+rechaza, restaura el estado y no lanza excepciones. Solo el Orquestador cambia estados.
+Todos los valores numéricos de la configuración son de partida [PROPUESTO].
+"""
+from __future__ import annotations
+
+import copy
+import functools
+import hashlib
+import json
+import math
+import re
+import sys
+from datetime import datetime, timezone
+from pathlib import Path
+
+AQUI = Path(__file__).resolve().parent
+sys.path.insert(0, str(AQUI))
+from k_calidad import (Calendario, ERRORES, SinCobertura, estado_sello, hash_serie,  # noqa: E402
+                       validar_sello)
+from validar_encargo import sobre_responde_a_encargo, validar_encargo  # noqa: E402
+from validar_sobre import _dt  # noqa: E402
+
+VERSION_REGLAS = "ORQ-0.1.0"
+_FH = re.compile(r"^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(\.\d+)?(Z|[+-]\d{2}:\d{2})\Z")
+_ID = re.compile(r"^[A-Za-z0-9._:/-]{1,64}\Z")
+GESTORES = {"GESTOR_TRADING", "GESTOR_TACTICA", "GESTOR_LARGO_PLAZO"}
+EMISORES = {"BROKER"} | GESTORES
+DECISORES = EMISORES | {"OPERADOR"}
+TERMINALES = {"DESCARTADA", "EJECUTADA"}
+
+# (desde, hasta) -> actores que pueden pedirla
+T = {}
+for _e in ("DETECTADA", "EN_OBSERVACION", "CADUCADA"):
+    T[(_e, "EN_ANALISIS")] = EMISORES
+T[("EN_ANALISIS", "EN_ANALISIS")] = EMISORES          # reintento tras encargo incompleto, caducado o anulado
+T[("EN_ANALISIS", "VALIDADA")] = {"C"}
+T[("VALIDADA", "COMPARADA")] = {"D"}
+T[("COMPARADA", "PROPUESTA")] = EMISORES
+T[("PROPUESTA", "AUTORIZADA")] = {"OPERADOR", "MATRIZ_AUTONOMIA"}
+T[("AUTORIZADA", "EJECUTADA")] = {"G"}
+for _e in ("DETECTADA", "EN_ANALISIS", "VALIDADA", "COMPARADA", "PROPUESTA"):
+    T[(_e, "EN_OBSERVACION")] = DECISORES | {"D"}
+for _e in ("DETECTADA", "EN_ANALISIS", "VALIDADA", "COMPARADA", "PROPUESTA", "AUTORIZADA", "EN_OBSERVACION", "CADUCADA"):
+    T[(_e, "DESCARTADA")] = DECISORES
+for _e in ("VALIDADA", "COMPARADA", "PROPUESTA", "AUTORIZADA"):
+    T[(_e, "CADUCADA")] = {"ORQUESTADOR"}
+
+TP = {  # posiciones
+    ("ABIERTA", "EN_REVISION"): {"H", "ORQUESTADOR"},
+    ("EN_REVISION", "ABIERTA"): EMISORES | {"OPERADOR"},
+    ("ABIERTA", "REDUCIENDO"): {"F", "G", "ORQUESTADOR", "OPERADOR"},
+    ("ABIERTA", "CERRANDO"): {"F", "G", "ORQUESTADOR", "OPERADOR"},
+    ("EN_REVISION", "REDUCIENDO"): {"F", "G", "ORQUESTADOR", "OPERADOR"},
+    ("EN_REVISION", "CERRANDO"): {"F", "G", "ORQUESTADOR", "OPERADOR"},
+    ("REDUCIENDO", "ABIERTA"): {"G"},
+    ("REDUCIENDO", "CERRADA"): {"G"},
+    ("CERRANDO", "CERRADA"): {"G"},
+}
+OPERADORES = {"<": lambda v, u: v < u, "<=": lambda v, u: v <= u, ">": lambda v, u: v > u,
+              ">=": lambda v, u: v >= u, "==": lambda v, u: v == u}
+
+CONFIG_DEFECTO = {"max_reintentos": 3, "umbral_corte_comun_dias_habiles": 0,
+                  "dia_coste_max_eur": 50.0, "dia_tiempo_max_min": 600, "tolerancia_precio_entrada": 0.05,
+                  "exige_contradictor_en": [], "matriz_autonomia": {}}
+ACTORES_PROPUESTA = {"H", "F", "D", "OPERADOR"} | EMISORES
+
+
+def _num(x):
+    return isinstance(x, (int, float)) and not isinstance(x, bool) and math.isfinite(x)
+
+
+class RelojRetrocede(Exception):
+    pass
+
+
+def _valida_config(c):
+    """La configuración se valida al construir: una configuración mala no arranca el Orquestador."""
+    ok = (isinstance(c.get("perfiles_activos"), list) and c["perfiles_activos"] and all(isinstance(x, str) for x in c["perfiles_activos"])
+          and isinstance(c.get("clases_ratificadas"), dict) and isinstance(c.get("apalancamiento_permitido"), bool)
+          and all(_num(c[k]) and c[k] > 0 for k in ("dia_coste_max_eur", "dia_tiempo_max_min", "tolerancia_precio_entrada"))
+          and isinstance(c["max_reintentos"], int) and not isinstance(c["max_reintentos"], bool) and c["max_reintentos"] >= 1
+          and isinstance(c["umbral_corte_comun_dias_habiles"], int) and not isinstance(c["umbral_corte_comun_dias_habiles"], bool)
+          and c["umbral_corte_comun_dias_habiles"] >= 0
+          and isinstance(c["exige_contradictor_en"], list) and isinstance(c["matriz_autonomia"], dict)
+          and all(isinstance(v, bool) for v in c["matriz_autonomia"].values()))
+    if not ok:
+        raise ValueError("configuración del Orquestador inválida")
+
+
+def _hash(x) -> str:
+    return hashlib.sha256(json.dumps(x, sort_keys=True, separators=(",", ":"), ensure_ascii=False).encode()).hexdigest()
+
+
+def _r(ok, codigo, motivo="", **extra):
+    return {"ok": ok, "codigo": codigo, "motivo": motivo, **extra}
+
+
+def _no(codigo, motivo, **extra):
+    return _r(False, codigo, motivo, **extra)
+
+
+def _seguro(fn):
+    """Cada operación es atómica: ante un error inesperado restaura el estado y rechaza (O-00)."""
+    @functools.wraps(fn)
+    def w(self, *a, **k):
+        copia = copy.deepcopy(self.__dict__)
+        try:
+            return fn(self, *a, **k)
+        except RelojRetrocede as e:
+            self.__dict__.clear(); self.__dict__.update(copia)
+            return _no("O-16", str(e))
+        except (*ERRORES, SinCobertura) as e:
+            self.__dict__.clear(); self.__dict__.update(copia)
+            return _no("O-00", f"{fn.__name__}: {type(e).__name__}: {str(e)[:120]}")
+    return w
+
+
+class Orquestador:
+    def __init__(self, config, calendario):
+        cfg = {**CONFIG_DEFECTO, **config}
+        _valida_config(cfg)
+        self.cfg = cfg
+        self.ultimo_ahora, self.ordenes_usadas = None, []
+        self.cal_def = calendario
+        Calendario(calendario)   # falla pronto si no es válido
+        self.sellos, self.eventos, self.encargos = {}, {}, {}
+        self.expedientes, self.posiciones, self.gasto_dia, self.avisos = {}, {}, {}, []
+
+    # ------------------------------------------------------------ utilidades
+    def _ahora(self, ahora):
+        if not isinstance(ahora, str) or not _FH.match(ahora):
+            raise ValueError("ahora con formato inválido")
+        a = _dt(ahora)
+        if self.ultimo_ahora is not None and a < _dt(self.ultimo_ahora):
+            raise RelojRetrocede(f"el reloj retrocede: {ahora} < {self.ultimo_ahora}")
+        self.ultimo_ahora = ahora
+        return a
+
+    def _aviso(self, codigo, motivo, ahora, ref=None):
+        self.avisos.append({"codigo": codigo, "motivo": motivo, "ref": ref, "ahora": ahora})
+
+    def _historial_ok(self, ent):
+        if not ent["historial"]:
+            return False
+        prev, ant = "0" * 64, None
+        for i, h in enumerate(ent["historial"]):
+            cuerpo = {k: v for k, v in h.items() if k != "hash"}
+            if h["n"] != i or h["hash_prev"] != prev or h["hash"] != _hash(cuerpo) or h["desde"] != ant:
+                return False
+            prev, ant = h["hash"], h["hasta"]
+        return ent["estado"] == ant
+
+    def cabezas(self):
+        """Hash de cabeza de cada historial, para anclarlo fuera del Orquestador (registro de solo añadir)."""
+        return {**{k: v["historial"][-1]["hash"] for k, v in self.expedientes.items()},
+                **{k: v["historial"][-1]["hash"] for k, v in self.posiciones.items()}}
+
+    def _anota(self, ent, desde, hasta, actor, ahora, motivo, ref=None, datos=None):
+        prev = ent["historial"][-1]["hash"] if ent["historial"] else "0" * 64
+        h = {"n": len(ent["historial"]), "desde": desde, "hasta": hasta, "actor": actor, "ahora": ahora,
+             "motivo": motivo, "ref": ref, "datos": datos, "version_reglas": VERSION_REGLAS, "hash_prev": prev}
+        h["hash"] = _hash(h)
+        ent["historial"].append(h)
+        ent["estado"] = hasta
+
+    def _exp(self, eid):
+        e = self.expedientes.get(eid)
+        if e is None:
+            return None, _no("O-12", f"expediente inexistente: {eid!r}")
+        if not self._historial_ok(e):
+            return None, _no("O-13", "el historial del expediente no es íntegro")
+        if e["propuesta"]:
+            ult = [h for h in e["historial"] if h["hasta"] == "PROPUESTA"]
+            if not ult or ult[-1]["datos"] != _hash(e["propuesta"]):
+                return None, _no("O-13", "la propuesta no coincide con la registrada en el historial")
+        return e, None
+
+    def _sello_anulado(self, e):
+        en = self.encargos.get(e["encargo_actual"])
+        return en is None or self.sellos.get(en["sello_ref"], {}).get("estado") == "ANULADO"
+
+    def _caducar_encargos(self, a, ahora):
+        for eid, en in self.encargos.items():
+            if en["estado"] == "EN_CURSO" and a > _dt(en["valid_until"]):
+                en["estado"] = "CADUCADO"
+                self._aviso("O-10", f"encargo {eid} caducó (valid_until)", ahora, en["expediente_id"])
+
+    def _transicion_ok(self, e, hasta, actor):
+        if not isinstance(actor, str) or not isinstance(hasta, str):
+            return _no("O-01", "actor y estado deben ser texto")
+        if e["estado"] in TERMINALES:
+            return _no("O-14", f"{e['estado']} es un estado terminal")
+        quien = T.get((e["estado"], hasta))
+        if quien is None:
+            return _no("O-04", f"transición no permitida: {e['estado']} -> {hasta}")
+        if actor not in quien:
+            return _no("O-05", f"{actor!r} no puede pedir {e['estado']} -> {hasta}")
+        return None
+
+    def _duplicado(self, eid, h, expediente_id, ahora):
+        """Idempotencia: devuelve el resultado si el mensaje ya se vio, o None si es nuevo."""
+        v = self.eventos.get(eid)
+        if v is None:
+            return None
+        if v["hash"] != h:
+            self._aviso("O-03", f"event_id {eid} repetido con otro contenido", ahora, expediente_id)
+            return _no("O-03", "mismo event_id con contenido distinto")
+        if v["expediente_id"] != expediente_id:
+            return _no("O-12", "ese mensaje pertenece a otro expediente")
+        return _r(True, "O-02", "mensaje duplicado: se ignora", duplicado=True)
+
+    def _ctx_encargo(self, ahora_iso, fecha_vigente=None):
+        vigentes = [s["fecha_corte"] for s in self.sellos.values() if s["estado"] == "VIGENTE"]
+        if fecha_vigente is None:
+            if not vigentes:
+                return None
+            fecha_vigente = max(vigentes)
+        return {"ahora": ahora_iso, "fecha_corte_vigente": fecha_vigente,
+                "perfiles_activos": self.cfg["perfiles_activos"],
+                "apalancamiento_permitido": self.cfg["apalancamiento_permitido"],
+                "sellos": copy.deepcopy(self.sellos), "calendario": self.cal_def}
+
+    def _tope_dia(self, fecha):
+        g = self.gasto_dia.get(fecha, {"coste": 0.0, "tiempo": 0.0})
+        reservas_c = reservas_t = 0.0
+        for en in self.encargos.values():
+            if en["estado"] == "EN_CURSO":   # una reserva viva cuenta aunque se emitiera otro día
+                reservas_c += max(0.0, en["coste_max"] - en["coste"])
+                reservas_t += max(0.0, en["tiempo_max"] - en["tiempo"])
+        return g["coste"], g["tiempo"], reservas_c, reservas_t
+
+    # ------------------------------------------------------------ sellos de K
+    @_seguro
+    def registrar_sello(self, sello, ahora):
+        a = self._ahora(ahora)
+        fallos = validar_sello(sello, {"calendario": self.cal_def})
+        if fallos:
+            return _no("O-01", f"sello no válido: {fallos[0]['regla']}: {fallos[0]['mensaje'][:80]}")
+        if sello["estado"] != "VIGENTE":
+            return _no("O-01", "solo se registran sellos VIGENTES")
+        if _dt(sello["emitido_en"]) > a:
+            return _no("O-01", "sello emitido en el futuro")
+        sid = sello["sello_id"]
+        if sid in self.sellos:
+            if self.sellos[sid]["hash_sello"] == sello["hash_sello"]:
+                return _r(True, "O-02", "sello ya registrado", duplicado=True)
+            return _no("O-03", "mismo sello_id con contenido distinto")
+        viejo = sello.get("reemplaza_a")
+        if viejo is not None and viejo not in self.sellos:
+            return _no("O-12", "reemplaza un sello desconocido")
+        self.sellos[sid] = copy.deepcopy(sello)
+        if viejo is not None:
+            self.sellos[viejo]["estado"] = "ANULADO"
+            for eid, en in self.encargos.items():
+                if en["sello_ref"] == viejo and en["estado"] in ("EN_CURSO", "ENTREGADO"):
+                    en["estado"] = "ANULADO"
+                    self._aviso("O-06", f"encargo {eid} anulado: su sello {viejo} fue reemplazado", ahora, en["expediente_id"])
+            for xid, x in self.expedientes.items():
+                en = self.encargos.get(x["encargo_actual"])
+                if en and en["sello_ref"] == viejo and x["estado"] in ("VALIDADA", "COMPARADA", "PROPUESTA", "AUTORIZADA"):
+                    self._anota(x, x["estado"], "CADUCADA", "ORQUESTADOR", ahora, f"su sello {viejo} fue reemplazado")
+                    self._aviso("O-06", f"expediente {xid} caducado: su sello {viejo} fue reemplazado", ahora, xid)
+        return _r(True, "OK", "sello registrado")
+
+    # ------------------------------------------------------------ expedientes
+    @_seguro
+    def detectar(self, expediente_id, correlation_id, via_entrada, cartera_destino, actor, ahora):
+        self._ahora(ahora)
+        if actor not in EMISORES:
+            return _no("O-05", f"{actor!r} no puede abrir expedientes")
+        if not (isinstance(expediente_id, str) and _ID.match(expediente_id) and isinstance(correlation_id, str) and _ID.match(correlation_id)):
+            return _no("O-01", "identificadores inválidos")
+        if via_entrada not in ("DISCRECIONAL", "SISTEMATICA") or cartera_destino not in ("TRADING", "TACTICA", "LARGO_PLAZO"):
+            return _no("O-01", "via_entrada o cartera_destino inválidos")
+        if actor in GESTORES and actor != {"TRADING": "GESTOR_TRADING", "TACTICA": "GESTOR_TACTICA", "LARGO_PLAZO": "GESTOR_LARGO_PLAZO"}[cartera_destino]:
+            return _no("O-05", "un gestor solo abre expedientes de su cartera")
+        if expediente_id in self.expedientes:
+            return _no("O-03", "expediente ya existe")
+        e = {"expediente_id": expediente_id, "correlation_id": correlation_id, "via_entrada": via_entrada,
+             "cartera_destino": cartera_destino, "estado": "DETECTADA", "historial": [], "encargo_actual": None,
+             "sobre": None, "sin_avance": 0, "propuesta": None, "posicion_id": None, "reapertura": None}
+        self._anota(e, None, "DETECTADA", actor, ahora, "detectada")
+        self.expedientes[expediente_id] = e
+        return _r(True, "OK", "expediente creado")
+
+    @_seguro
+    def emitir_encargo(self, expediente_id, encargo, actor, ahora):
+        a = self._ahora(ahora)
+        e, err = self._exp(expediente_id)
+        if err:
+            return err
+        if not isinstance(encargo, dict) or not isinstance(encargo.get("event_id"), str):
+            return _no("O-01", "encargo mal formado")
+        eid, h = encargo["event_id"], _hash(encargo)
+        dup = self._duplicado(eid, h, expediente_id, ahora)
+        if dup:
+            return dup
+        self._caducar_encargos(a, ahora)
+        err = self._transicion_ok(e, "EN_ANALISIS", actor)
+        if err:
+            return err
+        if encargo.get("expediente_id") != expediente_id or encargo.get("correlation_id") != e["correlation_id"]:
+            return _no("O-12", "el encargo no pertenece a este expediente o petición")
+        if actor != "BROKER" and encargo.get("producer") != actor:
+            return _no("O-05", "el emisor del encargo no es quien lo pide")
+        if encargo["payload"].get("cartera_destino") != e["cartera_destino"] if isinstance(encargo.get("payload"), dict) else True:
+            return _no("O-12", "la cartera del encargo no es la del expediente")
+        ctx = self._ctx_encargo(ahora)
+        if ctx is None:
+            return _no("O-06", "no hay ningún sello de K registrado")
+        fallos = validar_encargo(encargo, ctx)
+        if fallos:
+            return _no("O-01", f"encargo no válido: {fallos[0]['regla']}: {fallos[0]['mensaje'][:80]}", reglas=sorted({x['regla'] for x in fallos}))
+        # reintento: el encargo anterior debe estar cerrado sin éxito
+        previo = self.encargos.get(e["encargo_actual"]) if e["encargo_actual"] else None
+        if e["estado"] == "EN_ANALISIS" and previo and previo["estado"] in ("EN_CURSO", "ENTREGADO"):
+            return _no("O-06", "ya hay un encargo en curso o entregado para este expediente")
+        if e["sin_avance"] >= self.cfg["max_reintentos"]:
+            self._aviso("O-09", f"{expediente_id}: {e['sin_avance']} encargos sin avance", ahora, expediente_id)
+            return _no("O-09", "máximo de reintentos sin avance; se avisa al operador")
+        p = encargo["payload"]["presupuesto"]
+        fecha = str(a.astimezone(timezone.utc).date())
+        gc, gt, rc, rt = self._tope_dia(fecha)
+        if gc + rc + p["coste_max_eur"] > self.cfg["dia_coste_max_eur"] or gt + rt + p["tiempo_max_min"] > self.cfg["dia_tiempo_max_min"]:
+            return _no("O-08", "presupuesto diario agotado o comprometido: no se aceptan encargos nuevos")
+        self.eventos[eid] = {"hash": h, "expediente_id": expediente_id}
+        self.encargos[eid] = {"event_id": eid, "expediente_id": expediente_id, "estado": "EN_CURSO",
+                              "sello_ref": encargo["payload"]["sello_corte_ref"], "msg": copy.deepcopy(encargo),
+                              "valid_until": encargo["valid_until"], "entrega_antes_de": p["entrega_antes_de"],
+                              "coste_max": p["coste_max_eur"], "tiempo_max": p["tiempo_max_min"], "coste": 0.0, "tiempo": 0.0,
+                              "fecha_emision": fecha, "ahora_emision": ahora, "fecha_corte": encargo["payload"]["fecha_corte"],
+                              "fecha_vigente_emision": ctx["fecha_corte_vigente"], "nivel": encargo["payload"]["nivel_analisis"]}
+        e["encargo_actual"] = eid
+        e["sin_avance"] += 1
+        self._anota(e, e["estado"], "EN_ANALISIS", actor, ahora, "encargo emitido", eid)
+        return _r(True, "OK", "encargo aceptado", encargo=eid)
+
+    @_seguro
+    def registrar_gasto(self, event_id_encargo, coste_eur, tiempo_min, ahora):
+        """Los gastos son hechos: se registran siempre (si son válidos) y pueden activar alertas."""
+        a = self._ahora(ahora)
+        en = self.encargos.get(event_id_encargo)
+        if en is None:
+            return _no("O-12", "encargo inexistente")
+        if not (_num(coste_eur) and _num(tiempo_min) and coste_eur >= 0 and tiempo_min >= 0):
+            return _no("O-01", "coste o tiempo inválidos")
+        en["coste"] += coste_eur
+        en["tiempo"] += tiempo_min
+        fecha = str(a.astimezone(timezone.utc).date())
+        g = self.gasto_dia.setdefault(fecha, {"coste": 0.0, "tiempo": 0.0})
+        g["coste"] += coste_eur
+        g["tiempo"] += tiempo_min
+        alertas = []
+        if en["estado"] == "EN_CURSO" and (en["coste"] > en["coste_max"] or en["tiempo"] > en["tiempo_max"]):
+            en["estado"] = "INCOMPLETO"
+            alertas.append("O-07")
+            self._aviso("O-07", f"encargo {event_id_encargo} superó su presupuesto", ahora, en["expediente_id"])
+        if g["coste"] >= self.cfg["dia_coste_max_eur"] or g["tiempo"] >= self.cfg["dia_tiempo_max_min"]:
+            alertas.append("O-08")
+            self._aviso("O-08", f"presupuesto diario agotado el {fecha}", ahora)
+        return _r(True, "OK", "gasto registrado", alertas=alertas)
+
+    @_seguro
+    def entregar_sobre(self, expediente_id, sobre, ahora, contradictor_ref=None):
+        a = self._ahora(ahora)
+        e, err = self._exp(expediente_id)
+        if err:
+            return err
+        if not isinstance(sobre, dict) or not isinstance(sobre.get("event_id"), str):
+            return _no("O-01", "sobre mal formado")
+        sid, h = sobre["event_id"], _hash(sobre)
+        dup = self._duplicado(sid, h, expediente_id, ahora)
+        if dup:
+            return dup
+        self._caducar_encargos(a, ahora)
+        err = self._transicion_ok(e, "VALIDADA", "C")
+        if err:
+            return err
+        en = self.encargos.get(e["encargo_actual"])
+        if en is not None and en["estado"] == "CADUCADO":
+            return _no("O-10", "el encargo caducó antes de la entrega")
+        if en is None or en["estado"] == "ANULADO":
+            return _no("O-06", f"el encargo actual no admite entrega ({en['estado'] if en else 'inexistente'})")
+        if en["estado"] == "INCOMPLETO":
+            return _no("O-07", "encargo incompleto por presupuesto: no se valida; reemitir o descartar")
+        if en["estado"] != "EN_CURSO":
+            return _no("O-06", f"el encargo está {en['estado']}")
+        if self.sellos.get(en["sello_ref"], {}).get("estado") != "VIGENTE":
+            en["estado"] = "ANULADO"
+            return _no("O-06", "el sello del encargo ya no está vigente")
+        ctx_enc = self._ctx_encargo(en["ahora_emision"], en["fecha_vigente_emision"])
+        ctx_sob = {"ahora": ahora, "fecha_corte_encargo": en["fecha_corte"], "perfiles_activos": self.cfg["perfiles_activos"],
+                   "clases_ratificadas": self.cfg["clases_ratificadas"], "apalancamiento_permitido": self.cfg["apalancamiento_permitido"]}
+        # el sobre se valida con su propio reloj; el encargo, con el de su emisión
+        fallos = sobre_responde_a_encargo(en["msg"], sobre, ctx_enc, ctx_sob)
+        if fallos:
+            return _no("O-01", f"el sobre no responde al encargo: {fallos[0]['regla']}: {fallos[0]['mensaje'][:80]}", reglas=sorted({x['regla'] for x in fallos}))
+        if en["nivel"] in self.cfg["exige_contradictor_en"] and not (isinstance(contradictor_ref, str) and _ID.match(contradictor_ref)):
+            return _no("O-06", f"el nivel {en['nivel']} exige el informe del Contradictor (CT-G-03)")
+        self.eventos[sid] = {"hash": h, "expediente_id": expediente_id}
+        en["estado"] = "ENTREGADO"
+        ident = sobre["payload"]["identificacion"]
+        e["sobre"] = {"event_id": sid, "fecha_corte": ident["fecha_corte"], "valid_until": sobre["valid_until"],
+                      "perfil": ident["perfil"], "nivel": ident["nivel_analisis"], "contradictor_ref": contradictor_ref}
+        e["sin_avance"] = 0
+        self._anota(e, e["estado"], "VALIDADA", "C", ahora, "sobre aceptado", sid)
+        return _r(True, "OK", "sobre aceptado")
+
+    @_seguro
+    def comparar(self, expediente_ids, actor, ahora):
+        a = self._ahora(ahora)
+        if not isinstance(expediente_ids, list) or len(expediente_ids) < 2 or len(set(expediente_ids)) != len(expediente_ids):
+            return _no("O-01", "se necesitan al menos dos expedientes distintos")
+        exps = []
+        for eid in expediente_ids:
+            e, err = self._exp(eid)
+            if err:
+                return err
+            err = self._transicion_ok(e, "COMPARADA", actor)
+            if err:
+                return err
+            if a > _dt(e["sobre"]["valid_until"]):
+                return _no("O-10", f"el sobre de {eid} caducó")
+            if self._sello_anulado(e):
+                return _no("O-06", f"el sello de {eid} ya no es válido")
+            exps.append(e)
+        if len({x["cartera_destino"] for x in exps}) != 1:
+            return _no("O-06", "los expedientes comparados deben ser de la misma cartera")
+        from datetime import date
+        cortes = sorted(date.fromisoformat(x["sobre"]["fecha_corte"]) for x in exps)
+        cal = Calendario(self.cal_def)
+        dif = max(cal.dias_habiles(m["mercado"], cortes[0], cortes[-1])
+                  for x in exps for m in self.sellos[self.encargos[x["encargo_actual"]]["sello_ref"]]["mercados"])
+        if dif > self.cfg["umbral_corte_comun_dias_habiles"]:
+            viejos = [x["expediente_id"] for x in exps if date.fromisoformat(x["sobre"]["fecha_corte"]) == cortes[0]]
+            return _no("O-11", f"fechas de corte distintas ({dif} d.h.): hay que actualizar datos", actualizar=viejos)
+        for e in exps:
+            self._anota(e, e["estado"], "COMPARADA", actor, ahora, "comparada con " + ",".join(expediente_ids))
+        return _r(True, "OK", "comparación registrada")
+
+    @_seguro
+    def proponer(self, expediente_id, condiciones_entrada, condiciones_salida, actor, ahora):
+        a = self._ahora(ahora)
+        e, err = self._exp(expediente_id)
+        if err:
+            return err
+        err = self._transicion_ok(e, "PROPUESTA", actor)
+        if err:
+            return err
+        if actor not in ACTORES_PROPUESTA:
+            return _no("O-05", f"{actor!r} no puede proponer")
+        if a > _dt(e["sobre"]["valid_until"]) or self._sello_anulado(e):
+            return _no("O-10", "el sobre caducó o su sello ya no es válido")
+        ce, cs = condiciones_entrada, condiciones_salida
+        if not (isinstance(ce, dict) and _num(ce.get("limite")) and isinstance(ce.get("ventana_hasta"), str) and _FH.match(ce["ventana_hasta"])):
+            return _no("O-01", "condiciones_entrada: faltan límite numérico y ventana_hasta")
+        if _dt(ce["ventana_hasta"]) <= a:
+            return _no("O-10", "la ventana de entrada ya venció")
+        conds = cs.get("condiciones") if isinstance(cs, dict) else None
+        if not (isinstance(conds, list) and conds and all(isinstance(c, dict) and isinstance(c.get("id"), str) and _ID.match(c["id"])
+                and isinstance(c.get("metrica"), str) and c.get("operador") in OPERADORES and _num(c.get("umbral")) for c in conds)):
+            return _no("O-01", "condiciones_salida: deben ser numéricas (id, métrica, operador, umbral)")
+        if len({c["id"] for c in conds}) != len(conds):
+            return _no("O-01", "condiciones_salida: ids repetidos")
+        if not any(c.get("tipo") == "STOP" for c in conds):
+            return _no("O-01", "condiciones_salida: falta una condición de tipo STOP")
+        e["propuesta"] = {"entrada": copy.deepcopy(ce), "salida": copy.deepcopy(cs)}
+        self._anota(e, e["estado"], "PROPUESTA", actor, ahora, "propuesta", datos=_hash(e["propuesta"]))
+        return _r(True, "OK", "propuesta registrada")
+
+    @_seguro
+    def autorizar(self, expediente_id, actor, control_f, ahora):
+        a = self._ahora(ahora)
+        e, err = self._exp(expediente_id)
+        if err:
+            return err
+        err = self._transicion_ok(e, "AUTORIZADA", actor)
+        if err:
+            return err
+        if actor == "MATRIZ_AUTONOMIA" and not self.cfg["matriz_autonomia"].get(e["cartera_destino"], False):
+            return _no("O-05", "la matriz de autonomía no autoriza esta cartera sin el operador")
+        if not (isinstance(control_f, dict) and control_f.get("resultado") in ("APROBADO", "REDUCIDO", "VETADO")
+                and isinstance(control_f.get("event_id"), str)):
+            return _no("O-01", "falta el resultado de control de F (CT-G-08)")
+        if control_f["resultado"] == "VETADO":
+            return _no("O-06", "F vetó la propuesta")
+        if a > _dt(e["propuesta"]["entrada"]["ventana_hasta"]) or a > _dt(e["sobre"]["valid_until"]):
+            return _no("O-10", "la propuesta caducó")
+        if self._sello_anulado(e):
+            return _no("O-06", "el sello del análisis ya no es válido")
+        e["control_f"] = control_f["resultado"]
+        self._anota(e, e["estado"], "AUTORIZADA", actor, ahora, f"control F: {control_f['resultado']}", control_f["event_id"])
+        return _r(True, "OK", "autorizada")
+
+    @_seguro
+    def ejecutar(self, expediente_id, orden, actor, ahora):
+        a = self._ahora(ahora)
+        e, err = self._exp(expediente_id)
+        if err:
+            return err
+        err = self._transicion_ok(e, "EJECUTADA", actor)
+        if err:
+            return err
+        ok = (isinstance(orden, dict) and isinstance(orden.get("orden_id"), str) and _ID.match(orden["orden_id"])
+              and _num(orden.get("cantidad")) and orden["cantidad"] > 0 and _num(orden.get("precio")) and orden["precio"] > 0
+              and orden.get("conciliada") is True)
+        if not ok:
+            return _no("O-06", "sin confirmación verificable del intermediario: no cuenta como ejecutada")
+        prot = orden.get("proteccion_orden_ids")
+        if not (isinstance(prot, list) and prot and all(isinstance(x, str) and _ID.match(x) for x in prot)):
+            return _no("O-06", "la orden no lleva órdenes de protección asociadas")
+        if a > _dt(e["propuesta"]["entrada"]["ventana_hasta"]) or a > _dt(e["sobre"]["valid_until"]):
+            return _no("O-10", "la ventana de entrada o el sobre vencieron antes de ejecutar")
+        if self._sello_anulado(e):
+            return _no("O-06", "el sello del análisis ya no es válido")
+        lim = e["propuesta"]["entrada"]["limite"]
+        if abs(orden["precio"] - lim) > self.cfg["tolerancia_precio_entrada"] * abs(lim):
+            return _no("O-06", "el precio de ejecución se aleja del límite autorizado")
+        if orden["orden_id"] in self.ordenes_usadas or any(x in self.ordenes_usadas for x in prot):
+            return _no("O-03", "orden ya usada en otro expediente o posición")
+        pid = "POS-" + e["expediente_id"]
+        if pid in self.posiciones:
+            return _no("O-03", "la posición ya existe")
+        self.posiciones[pid] = {"posicion_id": pid, "expediente_id": e["expediente_id"], "cartera": e["cartera_destino"],
+                                "cantidad": orden["cantidad"], "estado": "ABIERTA", "historial": [],
+                                "condiciones_salida": copy.deepcopy(e["propuesta"]["salida"]), "protecciones": list(prot), "propuestas": []}
+        self.ordenes_usadas += [orden["orden_id"], *prot]
+        self._anota(self.posiciones[pid], None, "ABIERTA", "G", ahora, "orden conciliada", orden["orden_id"])
+        e["posicion_id"] = pid
+        self._anota(e, e["estado"], "EJECUTADA", actor, ahora, "ejecutada", orden["orden_id"])
+        return _r(True, "OK", "ejecutada", posicion_id=pid)
+
+    @_seguro
+    def observar(self, expediente_id, condiciones_reapertura, motivo, actor, ahora):
+        self._ahora(ahora)
+        e, err = self._exp(expediente_id)
+        if err:
+            return err
+        err = self._transicion_ok(e, "EN_OBSERVACION", actor)
+        if err:
+            return err
+        if not (isinstance(motivo, str) and motivo.strip() and isinstance(condiciones_reapertura, list) and condiciones_reapertura
+                and all(isinstance(c, str) and c.strip() for c in condiciones_reapertura)):
+            return _no("O-15", "se exigen motivo y condiciones de reapertura")
+        e["reapertura"] = list(condiciones_reapertura)
+        self._anota(e, e["estado"], "EN_OBSERVACION", actor, ahora, motivo)
+        return _r(True, "OK", "en observación")
+
+    @_seguro
+    def descartar(self, expediente_id, motivo, actor, ahora):
+        self._ahora(ahora)
+        e, err = self._exp(expediente_id)
+        if err:
+            return err
+        err = self._transicion_ok(e, "DESCARTADA", actor)
+        if err:
+            return err
+        if not (isinstance(motivo, str) and motivo.strip()):
+            return _no("O-15", "el descarte exige motivo")
+        self._anota(e, e["estado"], "DESCARTADA", actor, ahora, motivo)
+        return _r(True, "OK", "descartada")
+
+    @_seguro
+    def barrer(self, ahora):
+        """Caduca lo vencido. Solo la ejecuta el Orquestador."""
+        a = self._ahora(ahora)
+        cambios = []
+        self._caducar_encargos(a, ahora)
+        for eid, en in self.encargos.items():
+            if en["estado"] == "EN_CURSO" and a > _dt(en["entrega_antes_de"]):
+                self._aviso("O-10", f"encargo {eid}: pasó la hora de entrega sin sobre", ahora, en["expediente_id"])
+                cambios.append(("aviso_entrega", eid, "EN_CURSO"))
+        for eid, e in self.expedientes.items():
+            if e["estado"] in ("VALIDADA", "COMPARADA", "PROPUESTA", "AUTORIZADA"):
+                limites = [_dt(e["sobre"]["valid_until"])]
+                if e["propuesta"]:
+                    limites.append(_dt(e["propuesta"]["entrada"]["ventana_hasta"]))
+                if a > min(limites) or self._sello_anulado(e):
+                    self._anota(e, e["estado"], "CADUCADA", "ORQUESTADOR", ahora, "venció valid_until o la ventana de entrada")
+                    cambios.append(("expediente", eid, "CADUCADA"))
+        for sid, s in self.sellos.items():
+            if s["estado"] == "VIGENTE" and estado_sello(s, str(a.astimezone(timezone.utc).date()), s["cartera"], self.cal_def) == "CADUCADO":
+                s["estado"] = "CADUCADO"
+                cambios.append(("sello", sid, "CADUCADO"))
+        return _r(True, "OK", f"{len(cambios)} cambio(s)", cambios=cambios)
+
+    # ------------------------------------------------------------ posiciones
+    def _pos(self, pid):
+        p = self.posiciones.get(pid)
+        if p is None:
+            return None, _no("O-12", f"posición inexistente: {pid!r}")
+        if not self._historial_ok(p):
+            return None, _no("O-13", "el historial de la posición no es íntegro")
+        return p, None
+
+    @_seguro
+    def proponer_sobre_posicion(self, posicion_id, texto, actor, ahora):
+        """H (o quien sea) propone; una invalidez cualitativa nunca vende."""
+        self._ahora(ahora)
+        p, err = self._pos(posicion_id)
+        if err:
+            return err
+        if not (isinstance(texto, str) and texto.strip()):
+            return _no("O-15", "la propuesta exige texto")
+        p["propuestas"].append({"actor": actor, "texto": texto, "ahora": ahora})
+        return _r(True, "OK", "propuesta registrada; no cambia el estado de la posición")
+
+    @_seguro
+    def posicion_transicion(self, posicion_id, hasta, actor, ahora, condicion=None, restante=None, orden=None, motivo=None):
+        self._ahora(ahora)
+        p, err = self._pos(posicion_id)
+        if err:
+            return err
+        if p["estado"] == "CERRADA":
+            return _no("O-14", "CERRADA es un estado terminal")
+        if not isinstance(actor, str) or not isinstance(hasta, str):
+            return _no("O-01", "actor y estado deben ser texto")
+        quien = TP.get((p["estado"], hasta))
+        if quien is None:
+            return _no("O-04", f"transición no permitida: {p['estado']} -> {hasta}")
+        if actor not in quien:
+            return _no("O-05", f"{actor!r} no puede pedir {p['estado']} -> {hasta}")
+        ref = None
+        if hasta in ("REDUCIENDO", "CERRANDO"):
+            if actor == "OPERADOR":
+                if not (isinstance(motivo, str) and motivo.strip()):
+                    return _no("O-15", "la decisión manual del operador exige motivo")
+            else:   # automático: solo por una condición numérica declarada de antemano
+                declaradas = {c["id"]: c for c in p["condiciones_salida"]["condiciones"]}
+                if not (isinstance(condicion, dict) and condicion.get("id") in declaradas and _num(condicion.get("valor_observado"))):
+                    return _no("O-06", "una reducción o cierre automático exige una condición numérica declarada y su valor observado")
+                c = declaradas[condicion["id"]]
+                if not OPERADORES[c["operador"]](condicion["valor_observado"], c["umbral"]):
+                    return _no("O-06", "la condición declarada no se cumple con el valor observado")
+                ref = c["id"]
+        if hasta == "ABIERTA" and p["estado"] == "EN_REVISION":
+            if not (isinstance(motivo, str) and motivo.strip()):
+                return _no("O-15", "confirmar la tesis exige motivo")
+        if p["estado"] in ("REDUCIENDO", "CERRANDO"):
+            ok = (isinstance(orden, dict) and orden.get("conciliada") is True and isinstance(orden.get("orden_id"), str)
+                  and _num(restante) and 0 <= restante <= p["cantidad"])
+            if not ok:
+                return _no("O-06", "se exige orden conciliada y cantidad restante")
+            if (hasta == "CERRADA") != (restante == 0):
+                return _no("O-06", "CERRADA exige restante 0; ABIERTA, restante mayor que 0")
+            if p["estado"] == "CERRANDO" and restante != 0:
+                return _no("O-06", "CERRANDO solo termina en CERRADA")
+            if orden["orden_id"] in self.ordenes_usadas:
+                return _no("O-03", "orden ya usada")
+            self.ordenes_usadas.append(orden["orden_id"])
+            p["cantidad"] = restante
+            ref = orden["orden_id"]
+        self._anota(p, p["estado"], hasta, actor, ahora, motivo or "transición de posición", ref)
+        return _r(True, "OK", f"posición {hasta}")
+
+    @_seguro
+    def reclasificar(self, posicion_id, nueva_cartera, actor, motivo, ahora):
+        self._ahora(ahora)
+        p, err = self._pos(posicion_id)
+        if err:
+            return err
+        if actor != "OPERADOR":
+            return _no("O-05", "reclasificar una posición exige la aprobación del operador")
+        if nueva_cartera not in ("TRADING", "TACTICA", "LARGO_PLAZO") or not (isinstance(motivo, str) and motivo.strip()):
+            return _no("O-15", "cartera destino y motivo obligatorios")
+        antes = p["cartera"]
+        p["cartera"] = nueva_cartera
+        self._anota(p, p["estado"], p["estado"], actor, ahora, f"reclasificada {antes} -> {nueva_cartera}: {motivo}")
+        return _r(True, "OK", "reclasificada")
