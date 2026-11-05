@@ -290,7 +290,7 @@ def main():
                                                    and next(v for v in c["versiones"] if v["estado"] == "VIGENTE")["version"] == c["version"] for c in con))
     h.chk("registro_08_y_14_en_020_con_la_010_retirada", all(reg_c[t]["version"] == "0.2.0" and [v["estado"] for v in reg_c[t]["versiones"]] == ["VIGENTE", "RETIRADA"]
                                                               for t in ("CT-G-08", "CT-G-14")))
-    h.chk("registro_version_REG020", ct.registro()["version_registro"] == "REG-0.2.0")
+    h.chk("registro_version_REG030", ct.registro()["version_registro"] == "REG-0.3.0")   # T-48 cambió CT-G-03
 
     print(f"\n{h.n} comprobaciones")
     print("RESULTADO ENVOLTURA:", "TODAS LAS PRUEBAS PASAN" if h.ok else "HAY FALLOS")

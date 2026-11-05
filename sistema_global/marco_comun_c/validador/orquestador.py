@@ -26,7 +26,7 @@ from validar_sobre import _dt, bloqueos  # noqa: E402
 from manual_g import aplanar_manual, neto_libre, validar_manual, via_norm  # noqa: E402
 from comparador import MARGEN_AJUSTADO, REFERENCIA_EFECTIVO, _referencia_ok, comparar_candidatos  # noqa: E402
 from dimensionado import dimensionar  # noqa: E402
-from validar_contradictor import validar_informe  # noqa: E402
+from validar_contradictor import diversidad, validar_informe  # noqa: E402
 from parametros import PARAMETROS, VERSION_PARAMETROS, como_dict  # noqa: E402
 from k_calidad import VERSION_REGLAS as VERSION_REGLAS_K  # noqa: E402
 from control_f import VERSION_REGLAS as VERSION_REGLAS_F  # noqa: E402
@@ -76,9 +76,11 @@ OPERADORES = {"<": lambda v, u: v < u, "<=": lambda v, u: v <= u, ">": lambda v,
               ">=": lambda v, u: v >= u, "==": lambda v, u: v == u}
 
 CONFIG_DEFECTO = {"max_reintentos": 3, "umbral_corte_comun_dias_habiles": 0,
-                  "version_config": "CFG-0.1.0",
+                  "version_config": "CFG-0.2.0",   # 0.2.0 (T-48): Contradictor exigido en N2 y N3 por defecto; autoria_c
                   "dia_coste_max_eur": 50.0, "revision_max_dias": 90, "observacion_max_dias": 30, "max_reaperturas": 2, "dia_tiempo_max_min": 600, "tolerancia_precio_entrada": 0.05,
-                  "exige_contradictor_en": [], "matriz_autonomia": {}, "politica_f": POLITICA_DEFECTO,
+                  "exige_contradictor_en": ["N2", "N3"], "contradictor_desactivado_motivo": None, "autoria_c": {}, "autoria_contradictor": None,
+                  "matriz_autonomia": {},   # T-48: Contradictor exigido por defecto donde se compara y propone [PROPUESTO]
+                  "politica_f": POLITICA_DEFECTO,
                   "nivel_autonomia": {}, "tolerancia_conciliacion_rel": 0.0, "instrumentos_permitidos": None,
                   "referencias": {c: dict(REFERENCIA_EFECTIVO) for c in ("TRADING", "TACTICA", "LARGO_PLAZO")},   # benchmark de cada cartera [PROPUESTO]
                   # [PROPUESTO] controles sobre el operador (§6) y avisos (§11); los canales reales los fija el operador (D-07, P-08)
@@ -96,7 +98,7 @@ NIVELES = {"L0": 0, "L1": 1, "L2": 2}
 # Prioridad de cada aviso para el operador [PROPUESTO]
 TIPOS_KILL = {"POSICION_DESCONOCIDA", "CANTIDAD", "SENTIDO_O_ACTIVO", "PROTECCION", "PROTECCION_HUERFANA", "ENTRADA_HUERFANA",
               "MANUAL_NO_CUADRA", "POSICION_SIN_PROTEGER", "INTEGRIDAD"}   # lo que G sabe explicar (cierres propios, conexión, estado incierto, dato viejo) no
-PRIORIDAD_AVISO = {"O-32": "MEDIA", "O-31": "MEDIA", "O-20": "MEDIA", "O-30": "ALTA", "O-25": "ALTA", "O-26": "ALTA", "O-19": "ALTA", "O-18": "ALTA", "O-03": "ALTA", "O-08": "ALTA", "O-09": "ALTA", "O-13": "ALTA", "O-17": "ALTA"}
+PRIORIDAD_AVISO = {"O-33": "MEDIA", "O-32": "MEDIA", "O-31": "MEDIA", "O-20": "MEDIA", "O-30": "ALTA", "O-25": "ALTA", "O-26": "ALTA", "O-19": "ALTA", "O-18": "ALTA", "O-03": "ALTA", "O-08": "ALTA", "O-09": "ALTA", "O-13": "ALTA", "O-17": "ALTA"}
 ACTORES_PROPUESTA = set(EMISORES)   # quien propone no aprueba ni controla: F, D y H no proponen (Constitución §2, P1)
 
 
@@ -140,6 +142,10 @@ def _avisos_ok(a):
             and isinstance(a["escalar_tras"], int) and not isinstance(a["escalar_tras"], bool) and a["escalar_tras"] >= 1)
 
 
+def _autoria_ok(v):
+    return isinstance(v, dict) and set(v) == {"modelo", "proveedor"} and all(isinstance(x, str) and _ID.match(x) for x in v.values())
+
+
 def _num(x):
     return isinstance(x, (int, float)) and not isinstance(x, bool) and math.isfinite(x)
 
@@ -157,6 +163,7 @@ class RelojRetrocede(Exception):
     pass
 
 
+NIVELES_CONTRADICTOR = ("N2", "N3")   # T-48: donde la Constitución lo quiere siempre (comparación y propuesta)
 CONFIG_OBLIGATORIA = {"perfiles_activos", "clases_ratificadas", "apalancamiento_permitido"}   # sin valor por defecto: las fija el operador
 
 
@@ -167,6 +174,7 @@ def _valida_config(c):
     if CONFIG_OBLIGATORIA - set(c):
         raise ValueError(f"configuración del Orquestador inválida: faltan {sorted(CONFIG_OBLIGATORIA - set(c))}")
     ok = (politica_valida(c["politica_f"])
+          and isinstance(c["exige_contradictor_en"], list)
           and all(isinstance(x, str) and x in ("N0", "N1", "N2", "N3") for x in c["exige_contradictor_en"])
           and isinstance(c.get("perfiles_activos"), list) and c["perfiles_activos"] and all(isinstance(x, str) for x in c["perfiles_activos"])
           and isinstance(c.get("clases_ratificadas"), dict) and isinstance(c.get("apalancamiento_permitido"), bool)
@@ -175,6 +183,12 @@ def _valida_config(c):
           and isinstance(c["umbral_corte_comun_dias_habiles"], int) and not isinstance(c["umbral_corte_comun_dias_habiles"], bool)
           and c["umbral_corte_comun_dias_habiles"] >= 0
           and isinstance(c["exige_contradictor_en"], list) and isinstance(c["matriz_autonomia"], dict)
+          and isinstance(c["autoria_c"], dict) and all(k in c["perfiles_activos"] and _autoria_ok(v) for k, v in c["autoria_c"].items())
+          and (c["autoria_contradictor"] is None or _autoria_ok(c["autoria_contradictor"]))
+          # quitar N2 o N3 de exige_contradictor_en (T-48) solo con motivo escrito en la configuración; con todos, sin motivo
+          and ((set(NIVELES_CONTRADICTOR) <= set(c["exige_contradictor_en"])) == (c["contradictor_desactivado_motivo"] is None))
+          and (c["contradictor_desactivado_motivo"] is None or (isinstance(c["contradictor_desactivado_motivo"], str)
+                                                                and 3 <= len(c["contradictor_desactivado_motivo"].strip()) <= 200))
           and all(isinstance(v, bool) for v in c["matriz_autonomia"].values())
           and isinstance(c["nivel_autonomia"], dict)
           and all(k in ("TRADING", "TACTICA", "LARGO_PLAZO") and v in NIVELES for k, v in c["nivel_autonomia"].items())
@@ -992,12 +1006,21 @@ class Orquestador:
             dup = self._duplicado(informe["event_id"], ih, expediente_id, ahora)
             if dup:
                 return _no("O-03", "el informe ya se usó")
-            fallos = validar_informe(informe, {"ahora": ahora, "sobre": sobre})
+            autoria_c = self.cfg["autoria_c"].get(sobre["payload"]["identificacion"]["perfil"])
+            fallos = validar_informe(informe, {"ahora": ahora, "sobre": sobre, "autoria_c": autoria_c,
+                                               "autoria_contradictor": self.cfg["autoria_contradictor"]})
             if fallos:
                 return _no("O-01", f"informe del Contradictor no válido: {fallos[0]['regla']}: {fallos[0]['mensaje'][:80]}", reglas=sorted({x['regla'] for x in fallos}))
             self.eventos[informe["event_id"]] = {"hash": ih, "expediente_id": expediente_id}
             contr = {"event_id": informe["event_id"], "veredicto": informe["payload"]["veredicto"], "hash": ih,
                      "valid_until": informe["valid_until"]}
+            div = diversidad(informe["payload"]["autoria"], autoria_c) or informe["payload"]["autoria"]["diversidad"]
+            contr["autoria"] = copy.deepcopy(informe["payload"]["autoria"])   # entra en la huella del sobre: queda auditado
+            contr["diversidad"] = div if autoria_c is not None else "NO_COMPROBABLE"
+            if autoria_c is None or div == "MISMO_MODELO":   # T-48: sin diversidad de modelo, o sin poder comprobarla, el operador lo sabe
+                self._aviso("O-33", f"{expediente_id}: " + ("el Contradictor es del mismo modelo que C" if autoria_c is not None and div == "MISMO_MODELO"
+                                                            else "no se puede comprobar la diversidad del Contradictor: falta la autoría de C en la configuración"),
+                            ahora, expediente_id, carteras={e["cartera_destino"]})
         self.eventos[sid] = {"hash": h, "expediente_id": expediente_id}
         en["estado"] = "ENTREGADO"
         ident = sobre["payload"]["identificacion"]
@@ -1018,7 +1041,11 @@ class Orquestador:
             self._aviso("O-17", f"{expediente_id}: objeción mayor del Contradictor", ahora, expediente_id)
         e["sobre"], e["contradictor"] = info, contr
         e["sin_avance"] = 0
-        self._anota(e, e["estado"], "VALIDADA", "C", ahora, "sobre aceptado", sid, datos=self._huella_sobre(e))
+        sin_contr = contr is None and en["nivel"] in NIVELES_CONTRADICTOR
+        # T-48 (revisión): apartarse del valor por defecto exige motivo en la configuración y queda en el historial de cada expediente
+        self._anota(e, e["estado"], "VALIDADA", "C", ahora,
+                    "sobre aceptado" + (f" sin Contradictor (desactivado: {self.cfg['contradictor_desactivado_motivo']})" if sin_contr else ""),
+                    sid, datos=self._huella_sobre(e))
         return _r(True, "OK", "sobre aceptado")
 
     @_seguro
