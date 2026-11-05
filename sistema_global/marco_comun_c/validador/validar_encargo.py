@@ -1,5 +1,5 @@
-"""Validador determinista del encargo CT-G-01 0.1.0 (reglas E-01 a E-12) y
-comprobación de que un sobre CT-G-02 responde a su encargo (reglas R-01 a R-08).
+"""Validador determinista del encargo CT-G-01 0.1.0 (reglas E-01 a E-16) y
+comprobación de que un sobre CT-G-02 responde a su encargo (reglas R-00 a R-12).
 
 Sin LLM, sin red, sin reloj propio. Nunca lanza excepciones por un mensaje mal formado.
 Todos los límites numéricos son valores de partida [PROPUESTO] y se pasan en el contexto.
@@ -7,6 +7,7 @@ Todos los límites numéricos son valores de partida [PROPUESTO] y se pasan en e
 from __future__ import annotations
 
 import json
+import re
 import sys
 from datetime import date, datetime, timedelta
 from pathlib import Path
@@ -14,6 +15,7 @@ from pathlib import Path
 from jsonschema import Draft202012Validator
 
 from validar_sobre import _dt, _numeros_no_finitos, cargar_json
+from k_calidad import Calendario, TOPE_ANTIGUEDAD, estado_sello, validar_sello
 
 AQUI = Path(__file__).resolve().parent
 VERSIONES_CONOCIDAS = {"0.1.0"}
@@ -21,6 +23,8 @@ VIGENCIA_MAX = timedelta(days=30)
 # Valores de partida por cartera (P-03, P-04, P-11, P-13 del cuestionario) [PROPUESTO]
 HORIZONTE_DIAS = {"TRADING": (1, 28), "TACTICA": (14, 183), "LARGO_PLAZO": (1095, 7300)}
 ANTIGUEDAD_CORTE_DIAS = {"TRADING": 1, "TACTICA": 1, "LARGO_PLAZO": 5}   # días HÁBILES
+PREFIJOS_REF = ("K-", "SRC-", "EVID-", "PAQ-")
+SELLO_RE = re.compile(r"^K-\d{8}-\d{3}\Z")
 CON_POSICION = {"AUMENTAR", "REDUCIR", "CERRAR", "MANTENER"}
 
 
@@ -53,13 +57,14 @@ def validar_encargo(msg, ctx) -> list[dict]:
     """Nunca lanza excepciones: un contexto o mensaje defectuoso se rechaza con E-01."""
     try:
         return _validar_encargo(msg, ctx)
-    except (KeyError, TypeError, AttributeError, ValueError, IndexError) as e:
+    except (KeyError, TypeError, AttributeError, ValueError, IndexError, OverflowError, RecursionError, MemoryError) as e:
         return [{"regla": "E-01", "ruta": "(interno)", "mensaje": f"entrada o contexto mal formado: {type(e).__name__}: {e}"}]
 
 
 def _validar_encargo(msg, ctx) -> list[dict]:
     """ctx: ahora (ISO con zona), fecha_corte_vigente (la de K), perfiles_activos,
-    apalancamiento_permitido, y opcionales: horizonte_dias, antiguedad_corte_dias,
+    apalancamiento_permitido, sellos {sello_id: sello emitido por K}, y opcionales: calendario (para
+    recomprobar la caducidad del sello; None = no recomprobar), horizonte_dias, antiguedad_corte_dias,
     tamano_max_pct, presupuesto_minimo {nivel: {coste_eur, tiempo_min}}, coste_max_eur."""
     fallos: list[dict] = []
 
@@ -70,6 +75,12 @@ def _validar_encargo(msg, ctx) -> list[dict]:
         ahora = _dt(ctx["ahora"])
         corte_vigente = date.fromisoformat(ctx["fecha_corte_vigente"])
         activos = list(ctx["perfiles_activos"])
+        sellos = ctx["sellos"]
+        if not isinstance(sellos, dict):
+            raise TypeError("sellos debe ser un objeto {sello_id: sello}")
+        calendario = ctx["calendario"]
+        if not isinstance(calendario, dict):
+            raise TypeError("calendario es obligatorio: sin él no se puede comprobar la caducidad del sello")
     except (KeyError, ValueError, TypeError) as e:
         f("E-01", "contexto", f"contexto de validación inválido: {e}")
         return fallos
@@ -121,7 +132,16 @@ def _validar_encargo(msg, ctx) -> list[dict]:
         if fc > ahora.date():
             f("E-04", "payload.fecha_corte", "posterior a hoy")
         tope = ctx.get("antiguedad_corte_dias", ANTIGUEDAD_CORTE_DIAS)[cartera]
-        if _dias_habiles(fc, ahora.date()) > tope:
+        edad = None
+        s_ = sellos.get(p.get("sello_corte_ref")) if isinstance(p, dict) else None
+        if isinstance(s_, dict) and isinstance(s_.get("mercados"), list) and s_["mercados"]:
+            try:   # con el calendario de K (festivos incluidos) cuando el sello es consultable
+                edad = Calendario(calendario).dias_habiles(s_["mercados"][0]["mercado"], fc, ahora.date())
+            except Exception:
+                edad = None
+        if edad is None:
+            edad = _dias_habiles(fc, ahora.date())
+        if edad > tope:
             f("E-04", "payload.fecha_corte", f"más antigua de {tope} día(s) hábil(es) para {cartera}")
     except (ValueError, KeyError):
         f("E-04", "payload.fecha_corte", "fecha no interpretable")
@@ -183,6 +203,26 @@ def _validar_encargo(msg, ctx) -> list[dict]:
     if cand["paquete_b_ref"] == p["sello_corte_ref"]:
         f("E-12", "payload", "paquete_b_ref y sello_corte_ref no pueden ser la misma referencia")
 
+    # E-16 el sello de corte existe, es íntegro, está vigente y es el de la fecha de corte del encargo
+    ref = p["sello_corte_ref"]
+    sello = sellos.get(ref)
+    if not isinstance(sello, dict):
+        f("E-16", "payload.sello_corte_ref", "el sello no existe en K")
+    else:
+        invalidos = validar_sello(sello, {"calendario": calendario})
+        if invalidos:
+            f("E-16", "payload.sello_corte_ref", f"el sello no es válido para K ({invalidos[0]['regla']}: {invalidos[0]['mensaje'][:80]})")
+        if sello.get("sello_id") != ref:
+            f("E-16", "payload.sello_corte_ref", "el identificador del sello no coincide con la referencia")
+        if sello.get("estado") != "VIGENTE":
+            f("E-16", "payload.sello_corte_ref", f"el sello no está VIGENTE (estado: {sello.get('estado')!r})")
+        if sello.get("fecha_corte") != p["fecha_corte"]:
+            f("E-16", "payload.fecha_corte", "la fecha de corte del encargo no es la del sello")
+        if sello.get("cartera") not in TOPE_ANTIGUEDAD or TOPE_ANTIGUEDAD[sello["cartera"]] > TOPE_ANTIGUEDAD[cartera]:
+            f("E-16", "payload.sello_corte_ref", f"el sello se emitió con una frescura menos exigente que la de {cartera}")
+        if estado_sello(sello, str(ahora.date()), cartera, calendario) != "VIGENTE":
+            f("E-16", "payload.sello_corte_ref", "el sello está caducado o no se puede verificar con el calendario")
+
     # E-13 decisiones sobre una posición existente llevan posicion_id; las demás no
     if decision in CON_POSICION and "posicion_id" not in p:
         f("E-13", "payload.posicion_id", f"{decision} exige posicion_id")
@@ -209,12 +249,12 @@ def sobre_responde_a_encargo(encargo, sobre, ctx_encargo, ctx_sobre) -> list[dic
     if previos:
         return previos
     try:
-        return _cruzar(encargo, sobre)
-    except (KeyError, TypeError, AttributeError, ValueError, IndexError) as e:
+        return _cruzar(encargo, sobre, ctx_encargo["sellos"][encargo["payload"]["sello_corte_ref"]])
+    except (KeyError, TypeError, AttributeError, ValueError, IndexError, OverflowError, RecursionError, MemoryError) as e:
         return [{"regla": "R-00", "ruta": "(interno)", "mensaje": f"{type(e).__name__}: {e}"}]
 
 
-def _cruzar(encargo: dict, sobre: dict) -> list[dict]:
+def _cruzar(encargo: dict, sobre: dict, sello: dict) -> list[dict]:
     fallos: list[dict] = []
 
     def f(regla, ruta, m):
@@ -249,6 +289,24 @@ def _cruzar(encargo: dict, sobre: dict) -> list[dict]:
             f("R-10", "emitido_en", "el sobre es anterior al encargo")
     except ValueError:
         f("R-10", "emitido_en", "fecha-hora inválida")
+    # R-11 el sobre cita el sello de corte del encargo, y solo ese
+    refs = sobre["data_refs"]
+    if pe["sello_corte_ref"] not in refs:
+        f("R-11", "data_refs", "el sobre no cita el sello de corte del encargo")
+    if any(SELLO_RE.match(r) and r != pe["sello_corte_ref"] for r in refs):
+        f("R-11", "data_refs", "el sobre cita otro sello de corte distinto del del encargo")
+    # R-12 las fuentes de datos (SRC-...) que cita figuran como DISPONIBLES en ese sello; hay al menos una;
+    # y no hay referencias de tipo desconocido
+    vivas = {x["fuente_id"] for x in sello.get("fuentes", []) if x.get("estado") == "DISPONIBLE"}
+    citadas = [r for r in refs if r.strip().upper().startswith("SRC-")]
+    if not citadas:
+        f("R-12", "data_refs", "el sobre no cita ninguna fuente de datos (SRC-...)")
+    for r in refs:
+        if r.strip().upper().startswith("SRC-"):
+            if r not in vivas:
+                f("R-12", "data_refs", f"{r!r} no es una fuente disponible del sello {pe['sello_corte_ref']}")
+        elif not r.startswith(PREFIJOS_REF):
+            f("R-12", "data_refs", f"referencia de tipo desconocido: {r!r}")
     return fallos
 
 

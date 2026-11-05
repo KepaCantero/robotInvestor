@@ -9,7 +9,8 @@
   "emitido_en": "2026-11-05T18:00:00+00:00",
   "valid_until": "2026-11-08T18:00:00+00:00",
   "data_refs": [
-    "K-SELLO-2026-11-05",
+    "K-20261105-001",
+    "SRC-EURUSD",
     "EVID-0001"
   ],
   "payload": {
@@ -345,7 +346,7 @@
     "capa2": {
       "estado": "ESTIMADO",
       "metodo": "Simulación histórica de bloques",
-      "base_datos": "Serie K-SELLO-2026-11-05",
+      "base_datos": "Serie K-20261105-001",
       "escenarios": [
         {
           "nombre": "base",

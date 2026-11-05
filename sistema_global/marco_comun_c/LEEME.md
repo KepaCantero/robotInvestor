@@ -1,4 +1,4 @@
-# Marco común de C, sobre CT-G-02 y encargo CT-G-01 — V0.2 (provisional, 0.x)
+# Marco común de C, sobres CT-G-02 y CT-G-01, y K (datos de corte) — V0.3 (provisional, 0.x)
 
 Fecha: 5 de noviembre de 2026. Fase 1 de la Constitución V0.3.
 
@@ -14,6 +14,9 @@ Fecha: 5 de noviembre de 2026. Fase 1 de la Constitución V0.3.
 | `esquemas/ct-g-01_0.1.0.schema.json` y `esquemas/generar_esquema_encargo.py` | Esquema del encargo CT-G-01 |
 | `validador/validar_encargo.py` | Reglas E-01 a E-15 del encargo y R-00 a R-10 (el sobre responde al encargo) |
 | `pruebas/pruebas_encargo.py` | Genera, guarda en `pruebas/encargos/` y ejecuta los casos del encargo |
+| `esquemas/k-sello_0.1.0.schema.json` y `esquemas/generar_esquema_sello.py` | Esquema del sello de corte de K |
+| `validador/k_calidad.py` | K: reglas de calidad Q-01 a Q-13, emisión del sello, validación del sello (S-01 a S-13) y caducidad |
+| `pruebas/pruebas_k.py` | Casos de K (sellos válidos, entradas inválidas, sellos alterados, caducidad); guarda en `pruebas/k/` |
 
 El documento explicativo es la Constitución de C: «Marco común de C y sobre CT-G-02».
 
@@ -26,6 +29,8 @@ python3 pruebas/generar_casos.py
 python3 pruebas/ejecutar_pruebas.py
 python3 esquemas/generar_esquema_encargo.py > esquemas/ct-g-01_0.1.0.schema.json
 python3 pruebas/pruebas_encargo.py
+python3 esquemas/generar_esquema_sello.py > esquemas/k-sello_0.1.0.schema.json
+python3 pruebas/pruebas_k.py
 python3 validador/validar_sobre.py sobre.json contexto.json
 ```
 
@@ -33,7 +38,9 @@ Resultado esperado de cada script de pruebas: `TODAS LAS PRUEBAS PASAN`.
 
 ## Qué está comprobado y qué no
 
-- Comprobado en CT-G-01: 3 encargos válidos, 36 inválidos, 1 respuesta válida y 13 inválidas; el cruce valida antes ambos mensajes.
+- Comprobado en CT-G-01: 4 encargos válidos, 46 inválidos y 21 comprobaciones de respuesta; el cruce valida antes ambos mensajes y contrasta con el sello de K (E-16, R-11, R-12).
+- Comprobado en K: 7 sellos válidos, 82 entradas inválidas, 38 comprobaciones del sello y 16 de caducidad. Datos simulados; no hay proveedor de datos elegido.
+- Límites de K: `hash_sello` detecta alteración pero no es una firma; la inmutabilidad real exige un registro de solo añadir. Q-10 no compara valores; `sello_id` no es único por sí mismo.
 - Comprobado: el esquema valida, el validador acepta los 3 sobres válidos y rechaza cada
   uno de los 51 inválidos por la regla que rompe.
 - No comprobado: ningún sobre real. Los datos de prueba son simulados. Falta pasar un
