@@ -1,0 +1,16 @@
+{
+  "ahora": "2026-11-06T09:00:00+00:00",
+  "fecha_corte_encargo": "2026-11-05",
+  "perfiles_activos": [
+    "C-DIV",
+    "C-RV",
+    "C-CRI"
+  ],
+  "clases_ratificadas": {
+    "C-DIV": "Q",
+    "C-RV": "Q",
+    "C-CRI": "K",
+    "C-RF": "S"
+  },
+  "apalancamiento_permitido": false
+}
