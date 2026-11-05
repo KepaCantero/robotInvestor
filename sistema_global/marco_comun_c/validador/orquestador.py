@@ -24,6 +24,8 @@ from k_calidad import (Calendario, ERRORES, SinCobertura, estado_sello, hash_ser
 from validar_encargo import sobre_responde_a_encargo, validar_encargo  # noqa: E402
 from validar_sobre import _dt  # noqa: E402
 from manual_g import neto_libre, validar_manual  # noqa: E402
+from comparador import MARGEN_AJUSTADO, comparar_candidatos  # noqa: E402
+from dimensionado import dimensionar  # noqa: E402
 from validar_contradictor import validar_informe  # noqa: E402
 from control_f import POLITICA_DEFECTO, controlar, politica_valida, validar_informe_f  # noqa: E402
 
@@ -72,8 +74,17 @@ CONFIG_DEFECTO = {"max_reintentos": 3, "umbral_corte_comun_dias_habiles": 0,
                   "nivel_autonomia": {}, "tolerancia_conciliacion_rel": 0.0, "instrumentos_permitidos": None}   # cartera -> L0 (simulado) | L1 (el operador confirma) | L2 (automático con límites); sin dato = L1
 NIVELES = {"L0": 0, "L1": 1, "L2": 2}
 # Prioridad de cada aviso para el operador [PROPUESTO]
-PRIORIDAD_AVISO = {"O-18": "ALTA", "O-03": "ALTA", "O-08": "ALTA", "O-09": "ALTA", "O-13": "ALTA", "O-17": "ALTA"}
+PRIORIDAD_AVISO = {"O-20": "MEDIA", "O-18": "ALTA", "O-03": "ALTA", "O-08": "ALTA", "O-09": "ALTA", "O-13": "ALTA", "O-17": "ALTA"}
 ACTORES_PROPUESTA = set(EMISORES)   # quien propone no aprueba ni controla: F, D y H no proponen (Constitución §2, P1)
+
+
+def _ins(x):
+    """Identidad de un instrumento: «EUR/USD» y «EURUSD» son el mismo."""
+    return re.sub(r"[^A-Z0-9]", "", x.upper()) if isinstance(x, str) else None
+
+
+MAX_EDAD_DIMENSIONADO_MIN = 60   # [PROPUESTO] el cálculo de E no puede ser más viejo que esto al proponer
+EXCLUSION_ELEGIBLE = (None, "SIN_PAR_EN_SU_CLASE", "DUPLICADO")   # el operador puede elegir; las demás exclusiones de D son duras
 
 
 def _num(x):
@@ -253,9 +264,28 @@ class Orquestador:
         ult = [h for h in e["historial"] if h["hasta"] == "PROPUESTA"]
         return bool(ult) and ult[-1]["datos"] == _hash(e["propuesta"])
 
+    def _sobre_ok(self, e):
+        """El sobre guardado es el que se anotó al validarlo (su hash está en la cadena del historial)."""
+        s = e.get("sobre")
+        if not s or "documento" not in s:
+            return True
+        ult = [h for h in e["historial"] if h["hasta"] == "VALIDADA"]
+        return bool(ult) and ult[-1]["datos"] == s["hash"] == _hash(s["documento"])
+
+    def _comparacion_ok(self, e):
+        """El resultado de D (y la elección del operador) es el que se anotó en la cadena del historial."""
+        c = e.get("comparacion")
+        if not c:
+            return True
+        ult = [h for h in e["historial"] if h["hasta"] == "COMPARADA"]
+        return bool(ult) and ult[-1]["datos"] == _hash(c)
+
+    def _todo_ok(self, e):
+        return self._historial_ok(e) and self._propuesta_ok(e) and self._sobre_ok(e) and self._comparacion_ok(e)
+
     def integridad(self):
-        """Lista de expedientes (EXP:) y posiciones (POS:) cuyo historial o propuesta no cuadra."""
-        return sorted(["EXP:" + k for k, v in self.expedientes.items() if not (self._historial_ok(v) and self._propuesta_ok(v))]
+        """Lista de expedientes (EXP:) y posiciones (POS:) cuyo historial, sobre, comparación o propuesta no cuadra."""
+        return sorted(["EXP:" + k for k, v in self.expedientes.items() if not self._todo_ok(v)]
                       + ["POS:" + k for k, v in self.posiciones.items() if not self._historial_ok(v)])
 
     def _anota(self, ent, desde, hasta, actor, ahora, motivo, ref=None, datos=None):
@@ -274,6 +304,8 @@ class Orquestador:
             return None, _no("O-13", "el historial del expediente no es íntegro")
         if not self._propuesta_ok(e):
             return None, _no("O-13", "la propuesta no coincide con la registrada en el historial")
+        if not (self._sobre_ok(e) and self._comparacion_ok(e)):
+            return None, _no("O-13", "el sobre o la comparación guardados no coinciden con los anotados en el historial")
         return e, None
 
     def _compromisos(self, excluir, cartera):
@@ -527,7 +559,8 @@ class Orquestador:
         en["estado"] = "ENTREGADO"
         ident = sobre["payload"]["identificacion"]
         info = {"event_id": sid, "fecha_corte": ident["fecha_corte"], "valid_until": sobre["valid_until"],
-                "perfil": ident["perfil"], "nivel": ident["nivel_analisis"], "contradictor_ref": contr["event_id"] if contr else None}
+                "perfil": ident["perfil"], "nivel": ident["nivel_analisis"], "contradictor_ref": contr["event_id"] if contr else None,
+                "hash": h, "documento": copy.deepcopy(sobre)}   # el sobre entero: D y la propuesta se contrastan con él
         if contr:   # el sobre vale solo mientras valga el informe del Contradictor
             info["valid_until"] = min(info["valid_until"], contr["valid_until"], key=_dt)
         if contr and contr["veredicto"] == "OBJECION_CRITICA":
@@ -539,7 +572,7 @@ class Orquestador:
             self._aviso("O-17", f"{expediente_id}: objeción mayor del Contradictor", ahora, expediente_id)
         e["sobre"], e["contradictor"] = info, contr
         e["sin_avance"] = 0
-        self._anota(e, e["estado"], "VALIDADA", "C", ahora, "sobre aceptado", sid)
+        self._anota(e, e["estado"], "VALIDADA", "C", ahora, "sobre aceptado", sid, datos=h)
         return _r(True, "OK", "sobre aceptado")
 
     @_seguro
@@ -560,7 +593,8 @@ class Orquestador:
             return _no("O-10", "el sobre retenido caducó o su sello ya no es válido")
         e["sobre"], e["contradictor"], e["retenido"] = r["sobre"], r["contradictor"], None
         e["sin_avance"] = 0
-        self._anota(e, "EN_ANALISIS", "VALIDADA", "OPERADOR", ahora, f"objeción crítica levantada: {motivo.strip()}", r["contradictor"]["event_id"])
+        self._anota(e, "EN_ANALISIS", "VALIDADA", "OPERADOR", ahora, f"objeción crítica levantada: {motivo.strip()}", r["contradictor"]["event_id"],
+                    datos=e["sobre"].get("hash"))
         return _r(True, "OK", "objeción levantada; expediente validado")
 
     @_seguro
@@ -591,12 +625,55 @@ class Orquestador:
         if dif > self.cfg["umbral_corte_comun_dias_habiles"]:
             viejos = [x["expediente_id"] for x in exps if date.fromisoformat(x["sobre"]["fecha_corte"]) == cortes[0]]
             return _no("O-11", f"fechas de corte distintas ({dif} d.h.): hay que actualizar datos", actualizar=viejos)
+        if any(_hash(x["sobre"]["documento"]) != x["sobre"]["hash"] for x in exps):
+            return _no("O-13", "un sobre guardado no cuadra con su hash")
+        d = comparar_candidatos([{"expediente_id": x["expediente_id"], "sobre": copy.deepcopy(x["sobre"]["documento"])} for x in exps], ahora)
+        cid = "CMP-" + _hash([sorted(expediente_ids), ahora])[:12]
+        excl = {x["expediente_id"]: x["motivo"] for x in d.get("excluidos", [])}
         for e in exps:
-            self._anota(e, e["estado"], "COMPARADA", actor, ahora, "comparada con " + ",".join(expediente_ids))
-        return _r(True, "OK", "comparación registrada")
+            eid = e["expediente_id"]
+            grupo = next((g for g in d.get("grupos", {}).values() if any(r["expediente_id"] == eid for r in g["ranking"])), None)
+            punt = next((r["puntuacion"] for r in grupo["ranking"] if r["expediente_id"] == eid), None) if grupo else None
+            empatado = bool(grupo and grupo["decision"] == "AJUSTADA"
+                            and abs(grupo["ranking"][0]["puntuacion"] - punt) <= MARGEN_AJUSTADO * max(abs(grupo["ranking"][0]["puntuacion"]), abs(punt), 1e-12))
+            e["comparacion"] = {"id": cid, "codigo_d": d["codigo"], "decision": grupo["decision"] if grupo else None,
+                                "ganador": bool(grupo and grupo["primero"] == eid), "empatado_con_el_primero": empatado,
+                                "excluido": excl.get(eid), "elegido_por_operador": None}
+            self._anota(e, e["estado"], "COMPARADA", actor, ahora, "comparada con " + ",".join(expediente_ids), cid, datos=_hash(e["comparacion"]))
+        ganador = next((x["expediente_id"] for x in exps if x["comparacion"]["ganador"]), None)
+        return _r(True, "OK", "comparación registrada", ganador=ganador, codigo_d=d["codigo"])
 
     @_seguro
-    def proponer(self, expediente_id, condiciones_entrada, condiciones_salida, actor, ahora):
+    def elegir(self, expediente_id, actor, motivo, ahora):
+        """El operador elige un candidato cuando D no señala ganador claro (AJUSTADA, sin par o análisis duplicado)."""
+        self._ahora(ahora)
+        e, err = self._exp(expediente_id)
+        if err:
+            return err
+        if actor != "OPERADOR":
+            return _no("O-05", "solo el operador elige cuando D no da un ganador claro")
+        if not (isinstance(motivo, str) and motivo.strip()):
+            return _no("O-15", "elegir exige motivo")
+        c = e.get("comparacion")
+        if e["estado"] != "COMPARADA" or c is None:
+            return _no("O-04", "solo se elige un expediente COMPARADA")
+        if c["ganador"]:
+            return _r(True, "O-02", "ya es el ganador de D", duplicado=True)
+        if c["excluido"] not in EXCLUSION_ELEGIBLE:
+            return _no("O-22", f"D lo excluyó por un motivo que no admite elección: {c['excluido']}")
+        if c["decision"] == "CLARA":
+            return _no("O-22", "D señaló un ganador claro distinto; no se elige otro")
+        if c["decision"] == "AJUSTADA" and not c["empatado_con_el_primero"]:
+            return _no("O-22", "en una decisión ajustada solo se elige entre los empatados con el primero")
+        if any(x.get("comparacion", {}).get("id") == c["id"] and (x["comparacion"]["ganador"] or x["comparacion"]["elegido_por_operador"])
+               for x in self.expedientes.values()):
+            return _no("O-22", "en esa comparación ya hay un candidato elegido")
+        c["elegido_por_operador"] = {"motivo": motivo[:200], "ahora": ahora}
+        self._anota(e, "COMPARADA", "COMPARADA", actor, ahora, f"elegido por el operador: {motivo[:120]}", c["id"], datos=_hash(c))
+        return _r(True, "OK", "elegido")
+
+    @_seguro
+    def proponer(self, expediente_id, condiciones_entrada, condiciones_salida, actor, ahora, dimensionado=None):
         a = self._ahora(ahora)
         e, err = self._exp(expediente_id)
         if err:
@@ -624,12 +701,87 @@ class Orquestador:
             return _no("O-01", "condiciones_salida: deben ser numéricas (id, métrica, operador, umbral)")
         if len({c["id"] for c in conds}) != len(conds):
             return _no("O-01", "condiciones_salida: ids repetidos")
+        if not all(c.get("tipo") in ("STOP", "OBJETIVO", "INVALIDEZ") for c in conds):
+            return _no("O-01", "condiciones_salida: cada condición debe ser STOP, OBJETIVO o INVALIDEZ")
         stops = [c for c in conds if c.get("tipo") == "STOP"]
         if len(stops) != 1 or stops[0]["metrica"] != "precio":
             return _no("O-01", "condiciones_salida: debe haber exactamente un STOP y su métrica debe ser el precio")
-        e["propuesta"] = {"entrada": copy.deepcopy(ce), "salida": copy.deepcopy(cs)}
+        c = e.get("comparacion") or {}
+        if not (c.get("ganador") or c.get("elegido_por_operador")):
+            return _no("O-22", "solo se propone el ganador de D o el candidato que eligió el operador")
+        err = self._coincide_con_sobre(e, ce, cs, stops[0])
+        if err:
+            return err
+        q_e, err = self._cantidad_de_e(e, ce, stops[0], dimensionado, a)
+        if err:
+            return err
+        e["propuesta"] = {"entrada": copy.deepcopy(ce), "salida": copy.deepcopy(cs), "cantidad_e": q_e, "dimensionado": copy.deepcopy(dimensionado)}
         self._anota(e, e["estado"], "PROPUESTA", actor, ahora, "propuesta", datos=_hash(e["propuesta"]))
         return _r(True, "OK", "propuesta registrada")
+
+    def _coincide_con_sobre(self, e, ce, cs, stop):
+        """O-21: la propuesta lleva a la orden lo que se analizó, no otra cosa."""
+        if _hash(e["sobre"]["documento"]) != e["sobre"]["hash"]:
+            return _no("O-13", "el sobre guardado no cuadra con su hash")
+        p = e["sobre"]["documento"]["payload"]
+        ident, es = p["identificacion"], p["entrada_salida"]
+        largo = stop["operador"] in ("<", "<=")
+        if not _ins(ident["instrumento"]) or _ins(ce["instrumento"]) != _ins(ident["instrumento"]):
+            return _no("O-21", "el instrumento no es el analizado en el sobre")
+        if ce["activo_base"] != ident["divisa_base"]:
+            return _no("O-21", "el activo base no es la divisa base del sobre (F mide la concentración con él)")
+        if ("LARGO" if largo else "CORTO") != ident["direccion"]:
+            return _no("O-21", "la dirección no es la del sobre")
+        lim = ce["limite"]
+        if not (stop["umbral"] < lim if largo else stop["umbral"] > lim):
+            return _no("O-21", "el stop no está del lado de la pérdida respecto al límite de entrada")
+        sv = es["stop"]["valor"]
+        if not (_num(sv) and isinstance(es["stop"].get("unidad"), str) and re.fullmatch(r"[A-Z]{3}", es["stop"]["unidad"])):
+            return _no("O-21", "el sobre no da un stop de precio (valor numérico en una divisa): no hay con qué ligar la propuesta")
+        if stop["umbral"] < sv if largo else stop["umbral"] > sv:
+            return _no("O-21", "el stop es más holgado que el analizado (solo se admite igual o más prudente)")
+        ov = es["objetivo"]["valor"]
+        objs = [x for x in cs["condiciones"] if x.get("tipo") == "OBJETIVO"]
+        for o_ in objs:
+            if o_["metrica"] != "precio" or not (o_["umbral"] > lim if largo else o_["umbral"] < lim):
+                return _no("O-21", "el objetivo debe ser un precio del lado de la ganancia")
+            if _num(ov) and (o_["umbral"] > ov if largo else o_["umbral"] < ov):
+                return _no("O-21", "el objetivo es más ambicioso que el analizado")
+        declaradas = {(x["metrica"], x["operador"], x["umbral"], x.get("unidad")) for x in cs["condiciones"] if x["tipo"] == "INVALIDEZ"}
+        for inv in p["tesis"].get("condiciones_invalidez", []):
+            if (inv["metrica"], inv["operador"], inv["umbral"], inv.get("unidad")) not in declaradas:
+                return _no("O-21", f"falta la condición de invalidez {inv['id']} del sobre en las condiciones de salida")
+        apal = p["capital"]["apalancamiento"]["valor"]
+        if _num(apal) and ce["apalancamiento"] > apal:
+            return _no("O-21", "el apalancamiento supera el analizado")
+        if _dt(ce["ventana_hasta"]) > _dt(e["sobre"]["valid_until"]):
+            return _no("O-21", "la ventana de entrada pasa de la vigencia del sobre")
+        if e["cartera_destino"] not in ident["cartera_compatible"]:
+            return _no("O-21", "la cartera de destino no es compatible según el sobre")
+        return None
+
+    def _cantidad_de_e(self, e, ce, stop, dim, a):
+        """O-23: la cantidad sale de E. El Orquestador repite el cálculo con las mismas entradas y la propuesta no puede pasarse."""
+        if not (isinstance(dim, dict) and set(dim) == {"solicitud", "cartera", "riesgo_objetivo_pct", "paso", "ahora"}
+                and isinstance(dim["ahora"], str) and _FH.match(dim["ahora"])):
+            return None, _no("O-23", "falta el cálculo de E (solicitud, cartera, riesgo_objetivo_pct, paso, ahora)")
+        try:
+            t_e = _dt(dim["ahora"])
+        except ValueError:
+            return None, _no("O-23", "instante del cálculo de E ilegible")
+        if not (t_e <= a and (a - t_e).total_seconds() <= MAX_EDAD_DIMENSIONADO_MIN * 60):
+            return None, _no("O-23", f"el cálculo de E es posterior al instante o tiene más de {MAX_EDAD_DIMENSIONADO_MIN} min")
+        sol = dim["solicitud"]
+        esperado = {"instrumento": ce["instrumento"], "activo_base": ce["activo_base"], "direccion": "LARGO" if stop["operador"] in ("<", "<=") else "CORTO",
+                    "precio_entrada": ce["limite"], "stop_precio": stop["umbral"], "apalancamiento": ce["apalancamiento"], "cartera": e["cartera_destino"]}
+        if sol != esperado:
+            return None, _no("O-23", "la solicitud de E no es la propuesta (instrumento, dirección, límite, stop, apalancamiento o cartera)")
+        r = dimensionar(copy.deepcopy(sol), copy.deepcopy(dim["cartera"]), self.cfg["politica_f"], dim["ahora"], dim["riesgo_objetivo_pct"], dim["paso"])
+        if not r["ok"]:
+            return None, _no("O-23", f"E no da una cantidad viable ({r['codigo']}): {r['motivo'][:80]}")
+        if ce["cantidad"] > r["cantidad"] * (1 + 1e-12):
+            return None, _no("O-23", f"la cantidad propuesta supera la que calcula E ({r['cantidad']})")
+        return r["cantidad"], None
 
     @_seguro
     def autorizar(self, expediente_id, actor, control_f, ahora):
@@ -659,6 +811,9 @@ class Orquestador:
                                                "compromisos": self._compromisos(expediente_id, e["cartera_destino"])})
         if fallos:
             return _no("O-01", f"informe de F no válido: {fallos[0]['regla']}: {fallos[0]['mensaje'][:80]}", reglas=sorted({x['regla'] for x in fallos}))
+        cap_e = (e["propuesta"].get("dimensionado") or {}).get("cartera", {}).get("capital_eur")
+        if cap_e != control_f["entradas"]["cartera"].get("capital_eur"):
+            return _no("O-23", "F controló con un capital distinto del que usó E para dimensionar")
         self.eventos[control_f["event_id"]] = {"hash": ih, "expediente_id": expediente_id}
         if control_f["resultado"] == "VETADO":
             return _no("O-06", "F vetó la propuesta")

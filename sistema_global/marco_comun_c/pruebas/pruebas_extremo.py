@@ -15,32 +15,46 @@ from dimensionado import dimensionar  # noqa: E402
 from ejecucion_g import BrokerSimulado, cartera_para_f, conciliar, ejecutar  # noqa: E402
 from pruebas_comparador import cand  # noqa: E402
 from pruebas_control_f import informe_f  # noqa: E402
-from pruebas_orquestador import AHORA, ENTRADA, SALIDA, Arnes, encargo, nuevo, sobre  # noqa: E402
+from pruebas_orquestador import AHORA, ENTRADA, SALIDA, Arnes, dim, encargo, nuevo, sobre  # noqa: E402
 from vigilancia import vigilar  # noqa: E402
 
 T1 = "2026-11-06T09:05:00+00:00"
 HORA_DATOS = "2026-11-06T08:50:00+00:00"
 
 
-def candidatos(o, ns=(1, 2)):
-    """Lleva dos expedientes hasta VALIDADA y devuelve los candidatos para D (sobres de prueba con escenarios propios)."""
+def candidatos(o, ns=(1, 2), apal=1):
+    """Lleva dos expedientes hasta VALIDADA: EXP-0001 en EUR/USD y EXP-0002 en GBP/USD con peores escenarios,
+    para que D (que ahora ejecuta el propio Orquestador) dé un ganador claro."""
     for n in ns:
         eid = f"EXP-{n:04d}"
+        enc, sob = encargo(n), sobre(n)
+        if apal != 1:
+            enc["payload"]["mandato"]["apalancamiento_max"] = apal
+            sob["payload"]["capital"]["apalancamiento"]["valor"] = apal
+        if n == 2:
+            enc["payload"]["candidato"]["instrumento"] = "GBP/USD"
+            sob["payload"]["identificacion"]["instrumento"] = "GBP/USD"
+            sob["payload"]["capa2"]["escenarios"] = [{"nombre": "base", "probabilidad": 0.5, "rentabilidad_neta_pct": 1.0, "horizonte_dias": 90},
+                                                     {"nombre": "adverso", "probabilidad": 0.3, "rentabilidad_neta_pct": -4.0, "horizonte_dias": 90},
+                                                     {"nombre": "favorable", "probabilidad": 0.2, "rentabilidad_neta_pct": 4.0, "horizonte_dias": 90}]
         assert o.detectar(eid, f"COR-{n:04d}", "DISCRECIONAL", "TACTICA", "GESTOR_TACTICA", AHORA)["ok"]
-        assert o.emitir_encargo(eid, encargo(n), "GESTOR_TACTICA", AHORA)["ok"]
-        assert o.entregar_sobre(eid, sobre(n), AHORA)["ok"]
+        r = o.emitir_encargo(eid, enc, "GESTOR_TACTICA", AHORA)
+        assert r["ok"], r
+        r = o.entregar_sobre(eid, sob, AHORA)
+        assert r["ok"], r
 
 
 def flujo(h, nombre, precios_finales, esperado_regla, esperado_estado="CERRADA"):
     o = nuevo()
     candidatos(o)
-    # D: los sobres de prueba del Orquestador llevan los escenarios de la plantilla; se comparan con los de cand()
-    cs = [cand(1), cand(2, esperado=(3.0, 0.5, -4.0))]
-    d = comparar_candidatos(cs, AHORA)
-    h.chk(nombre + ": D señala un ganador claro", d["ok"] and d["grupos"]["Q"]["decision"] == "CLARA" and d["grupos"]["Q"]["primero"] == "EXP-0001", d)
-    ganador = d["grupos"]["Q"]["primero"]
-    perdedor = "EXP-0002" if ganador == "EXP-0001" else "EXP-0001"
-    h.chk(nombre + ": el Orquestador registra la comparación", o.comparar([ganador, perdedor], "D", AHORA)["ok"])
+    # D: el Orquestador compara con los sobres que guardó
+    d = o.comparar(["EXP-0001", "EXP-0002"], "D", AHORA)
+    h.chk(nombre + ": D, dentro del Orquestador, señala un ganador claro", d["ok"] and d["ganador"] == "EXP-0001"
+          and o.expedientes["EXP-0001"]["comparacion"]["decision"] == "CLARA", d)
+    ganador = d["ganador"]
+    h.chk(nombre + ": el perdedor no se puede proponer", o.proponer("EXP-0002", {**ENTRADA, "instrumento": "GBPUSD", "activo_base": "GBP"}, SALIDA,
+                                                                    "GESTOR_TACTICA", AHORA, None)["codigo"] == "O-22")
+    h.chk(nombre + ": ni elegir habiendo un ganador claro", o.elegir("EXP-0002", "OPERADOR", "prefiero este", AHORA)["codigo"] == "O-22")
     b = BrokerSimulado(100000.0, {"EURUSD": 1.10}, HORA_DATOS)
     # E: cantidad con las reglas de F y la cartera real del intermediario
     stop = [c for c in SALIDA["condiciones"] if c["tipo"] == "STOP"][0]
@@ -48,7 +62,11 @@ def flujo(h, nombre, precios_finales, esperado_regla, esperado_estado="CERRADA")
            "stop_precio": stop["umbral"], "apalancamiento": 1.0, "cartera": "TACTICA"}
     e = dimensionar(sol, cartera_para_f(b), o.cfg["politica_f"], AHORA, paso=1.0)
     h.chk(nombre + ": E calcula una cantidad", e["ok"] and e["cantidad"] > 0, e)
-    h.chk(nombre + ": el Orquestador acepta la propuesta con esa cantidad", o.proponer(ganador, {**ENTRADA, "cantidad": e["cantidad"]}, SALIDA, "GESTOR_TACTICA", AHORA)["ok"])
+    ent = {**ENTRADA, "cantidad": e["cantidad"]}
+    h.chk(nombre + ": una cantidad mayor que la de E se rechaza", o.proponer(ganador, {**ent, "cantidad": e["cantidad"] + 1}, SALIDA, "GESTOR_TACTICA", AHORA,
+                                                                            dim(o, ganador, ent, SALIDA, cartera=cartera_para_f(b)))["codigo"] == "O-23")
+    h.chk(nombre + ": el Orquestador acepta la propuesta con la cantidad de E", o.proponer(ganador, ent, SALIDA, "GESTOR_TACTICA", AHORA,
+                                                                                         dim(o, ganador, ent, SALIDA, cartera=cartera_para_f(b)))["ok"])
     inf = informe_f(o, ganador, n=int(ganador[-4:]), cartera=cartera_para_f(b))
     h.chk(nombre + ": F aprueba exactamente lo que propuso E", inf["resultado"] == "APROBADO" and inf["cantidad_aprobada"] == e["cantidad"], inf["resultado"])
     h.chk(nombre + ": el operador autoriza", o.autorizar(ganador, "OPERADOR", inf, AHORA)["ok"])
@@ -79,7 +97,7 @@ def main():
     o = nuevo(); candidatos(o)
     assert o.comparar(["EXP-0001", "EXP-0002"], "D", AHORA)["ok"]
     b = BrokerSimulado(100000.0, {"EURUSD": 1.10}, HORA_DATOS)
-    assert o.proponer("EXP-0001", ENTRADA, SALIDA, "GESTOR_TACTICA", AHORA)["ok"]
+    assert o.proponer("EXP-0001", ENTRADA, SALIDA, "GESTOR_TACTICA", AHORA, dim(o, cartera=cartera_para_f(b)))["ok"]
     assert o.autorizar("EXP-0001", "OPERADOR", informe_f(o, "EXP-0001", 1, cartera=cartera_para_f(b)), AHORA)["ok"]
     assert ejecutar(o, "EXP-0001", b, AHORA)["ok"]
     b.caido = True
@@ -91,21 +109,24 @@ def main():
     # apalancamiento: sin permiso se rechaza; con permiso y política de F que lo admita, el recorrido funciona
     o = nuevo(); candidatos(o)
     assert o.comparar(["EXP-0001", "EXP-0002"], "D", AHORA)["ok"]
-    r = o.proponer("EXP-0001", {**ENTRADA, "apalancamiento": 2.0}, SALIDA, "GESTOR_TACTICA", AHORA)
+    r = o.proponer("EXP-0001", {**ENTRADA, "apalancamiento": 2.0}, SALIDA, "GESTOR_TACTICA", AHORA, dim(o, entrada={**ENTRADA, "apalancamiento": 2.0}))
     h.chk("apalancamiento: sin permiso la propuesta se rechaza", not r["ok"] and r["codigo"] == "O-06", r)
     from control_f import POLITICA_DEFECTO
-    o = nuevo({"apalancamiento_permitido": True, "politica_f": {**POLITICA_DEFECTO, "apalancamiento_max": 3.0}}); candidatos(o)
+    o = nuevo({"apalancamiento_permitido": True, "politica_f": {**POLITICA_DEFECTO, "apalancamiento_max": 3.0}}); candidatos(o, apal=2)
     assert o.comparar(["EXP-0001", "EXP-0002"], "D", AHORA)["ok"]
     b = BrokerSimulado(100000.0, {"EURUSD": 1.10}, HORA_DATOS)
-    h.chk("apalancamiento: con permiso la propuesta se acepta", o.proponer("EXP-0001", {**ENTRADA, "apalancamiento": 2.0}, SALIDA, "GESTOR_TACTICA", AHORA)["ok"])
+    ap2 = {**ENTRADA, "apalancamiento": 2.0}
+    h.chk("apalancamiento: más que el analizado en el sobre se rechaza", o.proponer("EXP-0001", {**ap2, "apalancamiento": 2.5}, SALIDA, "GESTOR_TACTICA", AHORA,
+                                                                                     dim(o, entrada={**ap2, "apalancamiento": 2.5}, cartera=cartera_para_f(b)))["codigo"] == "O-21")
+    h.chk("apalancamiento: con permiso la propuesta se acepta", o.proponer("EXP-0001", ap2, SALIDA, "GESTOR_TACTICA", AHORA, dim(o, entrada=ap2, cartera=cartera_para_f(b)))["ok"])
     inf = informe_f(o, "EXP-0001", 1, cartera=cartera_para_f(b))
     h.chk("apalancamiento: F lo aprueba dentro de su máximo", inf["resultado"] in ("APROBADO", "REDUCIDO"), inf["resultado"])
     h.chk("apalancamiento: se autoriza y se ejecuta", o.autorizar("EXP-0001", "OPERADOR", inf, AHORA)["ok"] and ejecutar(o, "EXP-0001", b, AHORA)["ok"])
-    o2 = nuevo({"apalancamiento_permitido": True, "politica_f": {**POLITICA_DEFECTO, "apalancamiento_max": 3.0}}); candidatos(o2)
+    o2 = nuevo({"apalancamiento_permitido": True, "politica_f": {**POLITICA_DEFECTO, "apalancamiento_max": 3.0}}); candidatos(o2, apal=5)
     assert o2.comparar(["EXP-0001", "EXP-0002"], "D", AHORA)["ok"]
-    assert o2.proponer("EXP-0001", {**ENTRADA, "apalancamiento": 5.0}, SALIDA, "GESTOR_TACTICA", AHORA)["ok"]
-    inf = informe_f(o2, "EXP-0001", 1, cartera=cartera_para_f(b))
-    h.chk("apalancamiento: por encima del máximo de F se veta", inf["resultado"] == "VETADO", inf["resultado"])
+    ap5 = {**ENTRADA, "apalancamiento": 5.0}
+    r = o2.proponer("EXP-0001", ap5, SALIDA, "GESTOR_TACTICA", AHORA, dim(o2, entrada=ap5, cartera=cartera_para_f(b)))
+    h.chk("apalancamiento: por encima del máximo de F, E ya no da cantidad y la propuesta se rechaza", r["codigo"] == "O-23", r)
     print(f"\n{h.n} comprobaciones")
     print("RESULTADO EXTREMO A EXTREMO:", "TODAS LAS PRUEBAS PASAN" if h.ok else "HAY FALLOS")
     return 0 if h.ok else 1

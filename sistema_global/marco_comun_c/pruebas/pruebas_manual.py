@@ -212,12 +212,11 @@ def main():
     r = o.registrar_manual(libre(instrumento="EURUSD", activo_base="EUR", cantidad=5000.0, precio=1.10, ref_intermediario="MAN-X"), T1)
     h.chk("libre_en_instrumento_de_expediente_autorizado_RM10", "RM-10" in r.get("reglas", []), r)
     o2, b2 = autorizado(o=nuevo(L1)); ejecutar(o2, "EXP-0001", b2, AHORA)
-    from pruebas_orquestador import ENTRADA, SALIDA
-    assert o2.proponer("EXP-0002", ENTRADA, SALIDA, "GESTOR_TACTICA", AHORA)["ok"]
+    hasta(o2, "PROPUESTA", n=3)   # otra comparación (EXP-0003 frente a EXP-0004), elegida y propuesta
     from ejecucion_g import cartera_para_f as _cpf
-    ra = o2.autorizar("EXP-0002", "OPERADOR", informe_f(o2, "EXP-0002", n=2, cartera=_cpf(b2)), AHORA)
+    ra = o2.autorizar("EXP-0003", "OPERADOR", informe_f(o2, "EXP-0003", n=3, cartera=_cpf(b2)), AHORA)
     h.chk("segundo_expediente_autorizado", ra["ok"], ra)
-    r = o2.registrar_manual(reg(event_id="EV-MAN-0020", vinculo={"tipo": "EXPEDIENTE", "id": "EXP-0002"}, ref_intermediario="MAN-2", proteccion_ref="MAN-S-2"), T1)
+    r = o2.registrar_manual(reg(event_id="EV-MAN-0020", vinculo={"tipo": "EXPEDIENTE", "id": "EXP-0003"}, ref_intermediario="MAN-2", proteccion_ref="MAN-S-2"), T1)
     h.chk("segunda_posicion_en_el_mismo_instrumento_O06", r["codigo"] == "O-06" and len(o2.posiciones) == 1, r)
     o, b = nuevo(L1), broker()
     h.chk("libre_dos_veces_la_misma_orden_O03", o.registrar_manual(libre(), T1)["ok"]

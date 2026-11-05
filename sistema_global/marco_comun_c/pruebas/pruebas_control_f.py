@@ -146,15 +146,19 @@ def main():
     R("autorizar_vetado_por_F_O06", o, lambda: o.autorizar("EXP-0001", "OPERADOR", veto, AHORA), "O-06", mutacion_permitida=True)
     R("informe_vetado_no_se_reutiliza_O03", o, lambda: o.autorizar("EXP-0001", "OPERADOR", veto, AHORA), "O-03")
     from pruebas_orquestador import ENTRADA
-    o = nuevo(); hasta(o, "PROPUESTA", entrada={**ENTRADA, "cantidad": 50000.0})
-    red = informe_f(o, n=3)
-    h.chk("autorizar_reducido_guarda_cantidad", o.autorizar("EXP-0001", "OPERADOR", red, AHORA)["ok"] and abs(o.expedientes["EXP-0001"]["control_f"]["cantidad_aprobada"] - 9090.909090) < 1e-4)
-    ORD = {"orden_id": "ORD-1", "cantidad": 9100.0, "precio": 1.1, "conciliada": True, "proteccion_orden_ids": ["ORD-1-STOP"]}
+    # E dimensiona con la cartera vacía (9090); cuando F controla ya hay 15.000 € en EUR y la concentración reduce a 4545,45
+    o = nuevo(); hasta(o, "PROPUESTA", entrada={**ENTRADA, "cantidad": 9090.0})
+    red = informe_f(o, n=3, cartera={"posiciones": [{"instrumento": "EURGBP", "activo_base": "EUR", "valor_eur": 15000.0}]})
+    h.chk("autorizar_reducido_guarda_cantidad", red["resultado"] == "REDUCIDO" and o.autorizar("EXP-0001", "OPERADOR", red, AHORA)["ok"]
+          and abs(o.expedientes["EXP-0001"]["control_f"]["cantidad_aprobada"] - 4545.454545) < 1e-4, red["resultado"])
+    ORD = {"orden_id": "ORD-1", "cantidad": 4600.0, "precio": 1.1, "conciliada": True, "proteccion_orden_ids": ["ORD-1-STOP"]}
     R("ejecutar_mas_de_lo_aprobado_O06", o, lambda: o.ejecutar("EXP-0001", ORD, "G", AHORA), "O-06")
-    R("ejecutar_por_debajo_del_stop_O06", o, lambda: o.ejecutar("EXP-0001", {**ORD, "cantidad": 9000.0, "precio": 1.0455}, "G", AHORA), "O-06")
-    R("ejecutar_con_precio_que_duplica_el_riesgo_O06", o, lambda: o.ejecutar("EXP-0001", {**ORD, "cantidad": 9000.0, "precio": 1.155}, "G", AHORA), "O-06")
-    R("ejecutar_con_informe_vencido_O10", o, lambda: o.ejecutar("EXP-0001", {**ORD, "cantidad": 9000.0}, "G", "2026-11-07T09:30:00+00:00"), "O-10")
-    h.chk("ejecutar_lo_aprobado_ok", o.ejecutar("EXP-0001", {**ORD, "cantidad": 9090.0}, "G", AHORA)["ok"])
+    R("ejecutar_por_debajo_del_stop_O06", o, lambda: o.ejecutar("EXP-0001", {**ORD, "cantidad": 4500.0, "precio": 1.0455}, "G", AHORA), "O-06")
+    R("ejecutar_con_precio_que_duplica_el_riesgo_O06", o, lambda: o.ejecutar("EXP-0001", {**ORD, "cantidad": 4500.0, "precio": 1.155}, "G", AHORA), "O-06")
+    R("ejecutar_con_informe_vencido_O10", o, lambda: o.ejecutar("EXP-0001", {**ORD, "cantidad": 4500.0}, "G", "2026-11-07T09:30:00+00:00"), "O-10")
+    h.chk("ejecutar_lo_aprobado_ok", o.ejecutar("EXP-0001", {**ORD, "cantidad": 4545.0}, "G", AHORA)["ok"])
+    o = nuevo(); hasta(o, "PROPUESTA", entrada={**ENTRADA, "cantidad": 9090.0})
+    R("F_con_otro_capital_que_E_O23", o, lambda: o.autorizar("EXP-0001", "OPERADOR", informe_f(o, n=12, cartera={"capital_eur": 1e7}), AHORA), "O-23")
     # el activo base declarado no se puede cambiar para esquivar la concentración
     o = nuevo(); hasta(o, "PROPUESTA")
     c_ = {"posiciones": [{"instrumento": "EURUSD", "activo_base": "EUR", "valor_eur": 20000.0}]}
