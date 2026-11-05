@@ -156,6 +156,8 @@ def main():
     R("ejecutar_por_debajo_del_stop_O06", o, lambda: o.ejecutar("EXP-0001", {**ORD, "cantidad": 4500.0, "precio": 1.0455}, "G", AHORA), "O-06")
     R("ejecutar_con_precio_que_duplica_el_riesgo_O06", o, lambda: o.ejecutar("EXP-0001", {**ORD, "cantidad": 4500.0, "precio": 1.155}, "G", AHORA), "O-06")
     R("ejecutar_con_informe_vencido_O10", o, lambda: o.ejecutar("EXP-0001", {**ORD, "cantidad": 4500.0}, "G", "2026-11-07T09:30:00+00:00"), "O-10")
+    from pruebas_orquestador import anotar_entrada
+    anotar_entrada(o, "EXP-0001", "ORD-1", 4545.0)
     h.chk("ejecutar_lo_aprobado_ok", o.ejecutar("EXP-0001", {**ORD, "cantidad": 4545.0}, "G", AHORA)["ok"])
     o = nuevo(); hasta(o, "PROPUESTA", entrada={**ENTRADA, "cantidad": 9090.0})
     R("F_con_otro_capital_que_E_O23", o, lambda: o.autorizar("EXP-0001", "OPERADOR", informe_f(o, n=12, cartera={"capital_eur": 1e7}), AHORA), "O-23")

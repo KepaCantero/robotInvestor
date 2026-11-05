@@ -76,7 +76,7 @@ CONFIG_DEFECTO = {"max_reintentos": 3, "umbral_corte_comun_dias_habiles": 0,
                   "referencias": {c: dict(REFERENCIA_EFECTIVO) for c in ("TRADING", "TACTICA", "LARGO_PLAZO")}}   # benchmark de cada cartera [PROPUESTO]   # cartera -> L0 (simulado) | L1 (el operador confirma) | L2 (automático con límites); sin dato = L1
 NIVELES = {"L0": 0, "L1": 1, "L2": 2}
 # Prioridad de cada aviso para el operador [PROPUESTO]
-PRIORIDAD_AVISO = {"O-20": "MEDIA", "O-18": "ALTA", "O-03": "ALTA", "O-08": "ALTA", "O-09": "ALTA", "O-13": "ALTA", "O-17": "ALTA"}
+PRIORIDAD_AVISO = {"O-20": "MEDIA", "O-25": "ALTA", "O-18": "ALTA", "O-03": "ALTA", "O-08": "ALTA", "O-09": "ALTA", "O-13": "ALTA", "O-17": "ALTA"}
 ACTORES_PROPUESTA = set(EMISORES)   # quien propone no aprueba ni controla: F, D y H no proponen (Constitución §2, P1)
 
 
@@ -284,8 +284,31 @@ class Orquestador:
         ult = [h for h in e["historial"] if h["hasta"] == "COMPARADA"]
         return bool(ult) and ult[-1]["datos"] == _hash(c)
 
+    def _orden_ok(self, e):
+        """El estado de la orden de entrada es el anotado en la cadena del historial."""
+        oe = e.get("orden_entrada")
+        if not oe:
+            return True
+        ult = [h for h in e["historial"] if h["hasta"] in ("AUTORIZADA", "EJECUTADA")]
+        return bool(ult) and ult[-1]["datos"] == _hash(oe)
+
+    @staticmethod
+    def autorizada_por(e):
+        """Quién autorizó de verdad (la transición a AUTORIZADA desde otro estado, no las anotaciones de la orden)."""
+        return next((x["actor"] for x in reversed(e["historial"]) if x["hasta"] == "AUTORIZADA" and x["desde"] != "AUTORIZADA"), None)
+
+    def autorizacion_vigente(self, e):
+        """Una autorización automática deja de valer si la cartera bajó de nivel."""
+        return not (self.autorizada_por(e) == "MATRIZ_AUTONOMIA" and NIVELES[self.nivel(e["cartera_destino"])] < 2)
+
+    @staticmethod
+    def _entrada_viva(e):
+        """Hay una orden de entrada enviada al intermediario que G aún no ha resuelto: no se caduca ni se descarta a ciegas."""
+        oe = e.get("orden_entrada")
+        return bool(oe) and oe["estado"] == "ENVIADA" and e["estado"] == "AUTORIZADA"
+
     def _todo_ok(self, e):
-        return self._historial_ok(e) and self._propuesta_ok(e) and self._sobre_ok(e) and self._comparacion_ok(e)
+        return self._historial_ok(e) and self._propuesta_ok(e) and self._sobre_ok(e) and self._comparacion_ok(e) and self._orden_ok(e)
 
     def integridad(self):
         """Lista de expedientes (EXP:) y posiciones (POS:) cuyo historial, sobre, comparación o propuesta no cuadra."""
@@ -308,8 +331,8 @@ class Orquestador:
             return None, _no("O-13", "el historial del expediente no es íntegro")
         if not self._propuesta_ok(e):
             return None, _no("O-13", "la propuesta no coincide con la registrada en el historial")
-        if not (self._sobre_ok(e) and self._comparacion_ok(e)):
-            return None, _no("O-13", "el sobre o la comparación guardados no coinciden con los anotados en el historial")
+        if not (self._sobre_ok(e) and self._comparacion_ok(e) and self._orden_ok(e)):
+            return None, _no("O-13", "el sobre, la comparación o la orden de entrada guardados no coinciden con los anotados en el historial")
         return e, None
 
     def _compromisos(self, excluir, cartera):
@@ -401,7 +424,7 @@ class Orquestador:
                     self._aviso("O-06", f"encargo {eid} anulado: su sello {viejo} fue reemplazado", ahora, en["expediente_id"])
             for xid, x in self.expedientes.items():
                 en = self.encargos.get(x["encargo_actual"])
-                if en and en["sello_ref"] == viejo and x["estado"] in ("VALIDADA", "COMPARADA", "PROPUESTA", "AUTORIZADA"):
+                if en and en["sello_ref"] == viejo and x["estado"] in ("VALIDADA", "COMPARADA", "PROPUESTA", "AUTORIZADA") and not self._entrada_viva(x):
                     self._anota(x, x["estado"], "CADUCADA", "ORQUESTADOR", ahora, f"su sello {viejo} fue reemplazado")
                     self._aviso("O-06", f"expediente {xid} caducado: su sello {viejo} fue reemplazado", ahora, xid)
         return _r(True, "OK", "sello registrado")
@@ -717,6 +740,8 @@ class Orquestador:
         if not (isinstance(ce.get("instrumento"), str) and _ID.match(ce["instrumento"]) and isinstance(ce.get("activo_base"), str) and _ID.match(ce["activo_base"])
                 and _num(ce.get("cantidad")) and ce["cantidad"] > 0 and _num(ce.get("apalancamiento")) and ce["apalancamiento"] >= 1 and ce["limite"] > 0):
             return _no("O-01", "condiciones_entrada: faltan instrumento, activo_base, cantidad positiva, apalancamiento (>= 1) y límite positivo")
+        if ce.get("resto_parcial", "CANCELAR") != "CANCELAR":
+            return _no("O-01", "condiciones_entrada.resto_parcial: solo se admite CANCELAR (mantener vivo el resto exige redimensionar el stop, T-12)")
         if ce["apalancamiento"] > 1 and not self.cfg["apalancamiento_permitido"]:
             return _no("O-06", "el apalancamiento no está permitido")
         if _dt(ce["ventana_hasta"]) <= a:
@@ -851,6 +876,54 @@ class Orquestador:
         self._anota(e, e["estado"], "AUTORIZADA", actor, ahora, f"control F: {control_f['resultado']} ({control_f['cantidad_aprobada']})", control_f["event_id"])
         return _r(True, "OK", "autorizada")
 
+    TRANS_ORDEN = {None: {"ENVIADA"}, "ENVIADA": {"PARCIAL", "EJECUTADA", "RECHAZADA", "CANCELADA"},
+                   "PARCIAL": {"DESHECHA"}, "EJECUTADA": {"DESHECHA"}}
+
+    @_seguro
+    def orden_entrada(self, expediente_id, orden_id, estado, cantidad_ejecutada, actor, ahora):
+        """G anota el estado de la orden de entrada (Constitución §4.2): ENVIADA, y luego PARCIAL, EJECUTADA, RECHAZADA o
+        CANCELADA. CONCILIADA la pone el Orquestador al aceptar la ejecución. Una orden enviada no cuenta como ejecutada."""
+        self._ahora(ahora)
+        e, err = self._exp(expediente_id)
+        if err:
+            return err
+        if actor != "G":
+            return _no("O-05", "solo G anota el estado de las órdenes")
+        if e["estado"] != "AUTORIZADA":
+            return _no("O-04", "solo un expediente AUTORIZADA tiene orden de entrada")
+        if not (isinstance(orden_id, str) and _ID.match(orden_id) and _num(cantidad_ejecutada) and cantidad_ejecutada >= 0):
+            return _no("O-01", "orden_id y cantidad_ejecutada (>= 0) obligatorios")
+        oe = e.get("orden_entrada")
+        actual = oe["estado"] if oe else None
+        anteriores = (oe or {}).get("anteriores", [])
+        if oe and oe["orden_id"] != orden_id:
+            # intento nuevo: tras uno que no ejecutó nada, o tras uno que G cerró y comprobó (DESHECHA)
+            if estado == "ENVIADA" and actual in ("RECHAZADA", "CANCELADA", "DESHECHA"):
+                anteriores = anteriores + [{k: oe[k] for k in ("orden_id", "estado", "cantidad_ejecutada")}]
+                oe, actual = None, None
+            else:
+                return _no("O-03", "ya hay otra orden de entrada para este expediente")
+        if actual == estado and oe and oe["cantidad_ejecutada"] == cantidad_ejecutada:
+            return _r(True, "O-02", "estado ya anotado", duplicado=True)
+        if estado not in self.TRANS_ORDEN.get(actual, set()):
+            return _no("O-04", f"transición de orden no permitida: {actual} -> {estado}")
+        if estado == "DESHECHA" and cantidad_ejecutada != oe["cantidad_ejecutada"]:
+            return _no("O-01", "DESHECHA debe llevar la cantidad que se ejecutó y se cerró")
+        if (estado in ("ENVIADA", "RECHAZADA", "CANCELADA") and cantidad_ejecutada != 0) or (estado in ("PARCIAL", "EJECUTADA") and cantidad_ejecutada <= 0) \
+                or cantidad_ejecutada > e["control_f"]["cantidad_aprobada"] * (1 + 1e-12):
+            return _no("O-01", "cantidad ejecutada incoherente con el estado o mayor que la aprobada por F")
+        if estado == "ENVIADA" and (orden_id in self.ordenes_usadas or any(x["orden_id"] == orden_id for x in anteriores)):
+            return _no("O-03", "orden ya usada")
+        if estado == "DESHECHA":
+            self.ordenes_usadas.append(orden_id)
+        hist = (oe or {}).get("historial", [])
+        if estado == "ENVIADA" and not self.autorizacion_vigente(e):
+            return _no("O-05", f"la autorización fue automática y la cartera está ahora en {self.nivel(e['cartera_destino'])}: la confirma el operador")
+        e["orden_entrada"] = {"orden_id": orden_id, "estado": estado, "cantidad_ejecutada": cantidad_ejecutada, "anteriores": anteriores,
+                              "historial": hist + [{"estado": estado, "ahora": ahora, "cantidad_ejecutada": cantidad_ejecutada}]}
+        self._anota(e, "AUTORIZADA", "AUTORIZADA", actor, ahora, f"orden de entrada {estado}", orden_id, datos=_hash(e["orden_entrada"]))
+        return _r(True, "OK", f"orden {estado}")
+
     @_seguro
     def ejecutar(self, expediente_id, orden, actor, ahora):
         a = self._ahora(ahora)
@@ -871,15 +944,22 @@ class Orquestador:
         prot = orden.get("proteccion_orden_ids")
         if not (isinstance(prot, list) and prot and all(isinstance(x, str) and _ID.match(x) for x in prot)):
             return _no("O-06", "la orden no lleva órdenes de protección asociadas")
-        if a > _dt(e["propuesta"]["entrada"]["ventana_hasta"]) or a > _dt(e["sobre"]["valid_until"]):
+        t = a   # la vigencia se mide en el instante en que el intermediario ejecutó, si G lo aporta
+        if orden.get("ejecutada_en") is not None:
+            if not (isinstance(orden["ejecutada_en"], str) and _FH.match(orden["ejecutada_en"])):
+                return _no("O-01", "ejecutada_en con formato inválido")
+            t = _dt(orden["ejecutada_en"])
+            if t > a:
+                return _no("O-01", "ejecutada_en posterior al instante actual")
+        if t > _dt(e["propuesta"]["entrada"]["ventana_hasta"]) or t > _dt(e["sobre"]["valid_until"]):
             return _no("O-10", "la ventana de entrada o el sobre vencieron antes de ejecutar")
-        quien = next((x["actor"] for x in reversed(e["historial"]) if x["hasta"] == "AUTORIZADA"), None)
+        quien = self.autorizada_por(e)
         if not manual and quien == "MATRIZ_AUTONOMIA" and NIVELES[self.nivel(e["cartera_destino"])] < 2:
             return _no("O-05", f"la autorización fue automática y la cartera está ahora en {self.nivel(e['cartera_destino'])}: la confirma el operador")
         if self._sello_anulado(e):
             return _no("O-06", "el sello del análisis ya no es válido")
         cf = e["control_f"]
-        if a > _dt(cf["valid_until"]):
+        if t > _dt(cf["valid_until"]):
             return _no("O-10", "el informe de F venció antes de ejecutar")
         if orden["cantidad"] > cf["cantidad_aprobada"]:
             return _no("O-06", "la orden supera la cantidad que F aprobó")
@@ -890,6 +970,14 @@ class Orquestador:
         lim = e["propuesta"]["entrada"]["limite"]
         if abs(orden["precio"] - lim) > self.cfg["tolerancia_precio_entrada"] * abs(lim):
             return _no("O-06", "el precio de ejecución se aleja del límite autorizado")
+        oe = e.get("orden_entrada")
+        if not manual:
+            if not (oe and oe["orden_id"] == orden["orden_id"] and oe["estado"] in ("PARCIAL", "EJECUTADA")
+                    and abs(oe["cantidad_ejecutada"] - orden["cantidad"]) <= 1e-9):
+                return _no("O-06", "la ejecución no corresponde a la orden de entrada anotada (estado y cantidad)")
+            ultimo_envio = next((h["ahora"] for h in reversed(oe["historial"]) if h["estado"] == "ENVIADA"), None)
+            if ultimo_envio and t < _dt(ultimo_envio):
+                return _no("O-01", "ejecutada_en anterior al envío de la orden")
         if orden["orden_id"] in self.ordenes_usadas or any(x in self.ordenes_usadas for x in prot):
             return _no("O-03", "orden ya usada en otro expediente o posición")
         ins = e["propuesta"]["entrada"]["instrumento"]
@@ -906,12 +994,15 @@ class Orquestador:
                                 "stop_precio": [c for c in e["propuesta"]["salida"]["condiciones"] if c["tipo"] == "STOP"][0]["umbral"],
                                 "instrumento": e["propuesta"]["entrada"]["instrumento"], "activo_base": e["propuesta"]["entrada"]["activo_base"],
                                 "condiciones_salida": copy.deepcopy(e["propuesta"]["salida"]), "protecciones": list(prot), "propuestas": [],
-                                "origen": "MANUAL" if manual else "G"}
+                                "origen": "MANUAL" if manual else "G", "ejecutada_en": orden.get("ejecutada_en") or ahora}
         self.ordenes_usadas += [orden["orden_id"], *prot]
         self._anota(self.posiciones[pid], None, "ABIERTA", actor if manual else "G", ahora,
                     "ejecución manual declarada (CT-G-14)" if manual else "orden conciliada", orden["orden_id"])
         e["posicion_id"] = pid
-        self._anota(e, e["estado"], "EJECUTADA", actor, ahora, "ejecutada", orden["orden_id"])
+        if oe and not manual:
+            oe["estado"] = "CONCILIADA"
+            oe["historial"].append({"estado": "CONCILIADA", "ahora": ahora, "cantidad_ejecutada": orden["cantidad"]})
+        self._anota(e, e["estado"], "EJECUTADA", actor, ahora, "ejecutada", orden["orden_id"], datos=_hash(oe) if oe else None)
         return _r(True, "OK", "ejecutada", posicion_id=pid)
 
     @_seguro
@@ -947,6 +1038,8 @@ class Orquestador:
         if registro["ref_intermediario"] in self.ordenes_usadas or registro.get("proteccion_ref") in self.ordenes_usadas \
                 or registro["ref_intermediario"] == registro.get("proteccion_ref"):
             return _no("O-03", "esa orden del intermediario ya está registrada")
+        if v["tipo"] == "EXPEDIENTE" and self._entrada_viva(e):
+            return _no("O-25", "hay una orden de entrada de G viva para este expediente: cancélela antes de ejecutar a mano")
         if v["tipo"] == "EXPEDIENTE":
             orden = {"orden_id": registro["ref_intermediario"], "cantidad": registro["cantidad"], "precio": registro["precio"], "conciliada": True,
                      "proteccion_orden_ids": [registro["proteccion_ref"]]}
@@ -995,6 +1088,8 @@ class Orquestador:
             return err
         if not (isinstance(motivo, str) and motivo.strip()):
             return _no("O-15", "el descarte exige motivo")
+        if self._entrada_viva(e):
+            return _no("O-25", "hay una orden de entrada viva en el intermediario: G debe cancelarla antes de descartar")
         self._anota(e, e["estado"], "DESCARTADA", actor, ahora, motivo)
         return _r(True, "OK", "descartada")
 
@@ -1013,7 +1108,10 @@ class Orquestador:
                 limites = [_dt(e["sobre"]["valid_until"])]
                 if e["propuesta"]:
                     limites.append(_dt(e["propuesta"]["entrada"]["ventana_hasta"]))
-                if a > min(limites) or self._sello_anulado(e):
+                if (a > min(limites) or self._sello_anulado(e)) and self._entrada_viva(e):
+                    self._aviso("O-25", f"expediente {eid}: venció con la orden de entrada aún viva; G debe cancelarla", ahora, eid)
+                    cambios.append(("aviso_entrada_viva", eid, "AUTORIZADA"))
+                elif a > min(limites) or self._sello_anulado(e):
                     self._anota(e, e["estado"], "CADUCADA", "ORQUESTADOR", ahora, "venció valid_until o la ventana de entrada")
                     self._aviso("O-10", f"expediente {eid} caducó sin decidirse", ahora, eid)
                     cambios.append(("expediente", eid, "CADUCADA"))

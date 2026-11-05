@@ -45,6 +45,13 @@ def dim(o, eid="EXP-0001", entrada=None, salida=None, cartera=None, ahora=AHORA,
     return {"solicitud": sol, "cartera": copy.deepcopy(cartera or CART_E), "riesgo_objetivo_pct": None, "paso": paso, "ahora": ahora}
 
 
+def anotar_entrada(o, eid, oid, cantidad, ahora=AHORA):
+    """Lo que G hace antes de reportar una ejecución: anotar la orden de entrada enviada y ejecutada."""
+    assert o.orden_entrada(eid, oid, "ENVIADA", 0.0, "G", ahora)["ok"]
+    r = o.orden_entrada(eid, oid, "EJECUTADA", cantidad, "G", ahora)
+    assert r["ok"], r
+
+
 def elegir_si_hace_falta(o, eid, ahora=AHORA):
     c = o.expedientes[eid].get("comparacion") or {}
     if not c.get("ganador"):
@@ -133,6 +140,7 @@ def hasta(o, estado, n=1, ahora=AHORA, entrada=None, salida=None, cartera_e=None
     assert o.autorizar(f"EXP-{n:04d}", "OPERADOR", informe_f(o, f"EXP-{n:04d}", n), ahora)["ok"]
     if estado == "AUTORIZADA":
         return
+    anotar_entrada(o, f"EXP-{n:04d}", "ORD-1", 100.0, ahora)
     r = o.ejecutar(f"EXP-{n:04d}", {"orden_id": "ORD-1", "cantidad": 100.0, "precio": 1.1, "conciliada": True,
                                     "proteccion_orden_ids": ["ORD-1-STOP"]}, "G", ahora)
     assert r["ok"], r
@@ -168,7 +176,7 @@ def main():
     h.chk("feliz_expediente_ejecutado", e["estado"] == "EJECUTADA" and e["posicion_id"] == "POS-EXP-0001")
     h.chk("feliz_posicion_abierta_con_protecciones", o.posiciones["POS-EXP-0001"]["estado"] == "ABIERTA" and o.posiciones["POS-EXP-0001"]["protecciones"])
     h.chk("feliz_historial_completo", [x["hasta"] for x in e["historial"]] ==
-          ["DETECTADA", "EN_ANALISIS", "VALIDADA", "COMPARADA", "PROPUESTA", "AUTORIZADA", "EJECUTADA"])
+          ["DETECTADA", "EN_ANALISIS", "VALIDADA", "COMPARADA", "PROPUESTA", "AUTORIZADA", "AUTORIZADA", "AUTORIZADA", "EJECUTADA"])   # orden ENVIADA y EJECUTADA
     h.chk("feliz_historial_integro", o._historial_ok(e))
     R("terminal_ejecutada_no_se_mueve", o, lambda: o.descartar("EXP-0001", "x", "BROKER", AHORA), "O-14")
 

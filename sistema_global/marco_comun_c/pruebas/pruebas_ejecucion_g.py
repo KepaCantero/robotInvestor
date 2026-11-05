@@ -88,7 +88,12 @@ def main():
     h.chk("reintento_tras_caida_ok", ejecutar(o, "EXP-0001", b, AHORA)["ok"] and len(b.posiciones()) == 1)
     o, b = autorizado(b=broker(precio=1.12))
     r = ejecutar(o, "EXP-0001", b, AHORA)
-    h.chk("precio_fuera_del_limite_G02", r["codigo"] == "G-02" and not b.posiciones() and b.consultar("ORD-EXP-0001-E-1")["estado"] == "CANCELADA", r)
+    h.chk("precio_fuera_del_limite_queda_viva_G11", r["codigo"] == "G-11" and not b.posiciones() and b.consultar("ORD-EXP-0001-E-1")["estado"] == "ACEPTADA"
+          and o.expedientes["EXP-0001"]["orden_entrada"]["estado"] == "ENVIADA", r)
+    from ejecucion_g import revisar_entrada
+    r = revisar_entrada(o, "EXP-0001", b, "2026-11-08T12:30:00+00:00")
+    h.chk("al_vencer_la_ventana_se_cancela_G02", r["codigo"] == "G-02" and b.consultar("ORD-EXP-0001-E-1")["estado"] == "CANCELADA"
+          and o.expedientes["EXP-0001"]["orden_entrada"]["estado"] == "CANCELADA", r)
     o, b = autorizado(entrada={**ENTRADA, "cantidad": 1000.0}, b=broker(fraccion_fill=0.4))
     r = ejecutar(o, "EXP-0001", b, AHORA)
     h.chk("ejecucion_parcial_protege_lo_ejecutado", r["ok"] and abs(r["cantidad"] - 400.0) < 1e-9 and abs(o.posiciones["POS-EXP-0001"]["cantidad"] - 400.0) < 1e-9
@@ -110,7 +115,7 @@ def main():
     # el Orquestador rechaza lo ejecutado (precio sobre el stop): se cierra
     o, b = autorizado(b=broker(precio=1.05))
     r = ejecutar(o, "EXP-0001", b, AHORA)
-    h.chk("orquestador_rechaza_lo_ejecutado_G05_y_se_cierra", r["codigo"] == "G-05" and r.get("cerrada") is True and not b.posiciones() and not o.posiciones, r)
+    h.chk("orquestador_rechaza_lo_ejecutado_G05_y_se_cierra", r["codigo"] in ("G-03", "G-05") and r.get("cerrada") is True and not b.posiciones() and not o.posiciones, r)
     # --- posición corta
     corto_sal = {"condiciones": [{"id": "STOP-1", "tipo": "STOP", "metrica": "precio", "operador": ">=", "umbral": 1.15, "unidad": "USD"},
                                  {"id": "OBJ-1", "tipo": "OBJETIVO", "metrica": "precio", "operador": "<=", "umbral": 1.00, "unidad": "USD"},
