@@ -73,7 +73,7 @@ OPERADORES = {"<": lambda v, u: v < u, "<=": lambda v, u: v <= u, ">": lambda v,
               ">=": lambda v, u: v >= u, "==": lambda v, u: v == u}
 
 CONFIG_DEFECTO = {"max_reintentos": 3, "umbral_corte_comun_dias_habiles": 0,
-                  "dia_coste_max_eur": 50.0, "revision_max_dias": 90, "dia_tiempo_max_min": 600, "tolerancia_precio_entrada": 0.05,
+                  "dia_coste_max_eur": 50.0, "revision_max_dias": 90, "observacion_max_dias": 30, "max_reaperturas": 2, "dia_tiempo_max_min": 600, "tolerancia_precio_entrada": 0.05,
                   "exige_contradictor_en": [], "matriz_autonomia": {}, "politica_f": POLITICA_DEFECTO,
                   "nivel_autonomia": {}, "tolerancia_conciliacion_rel": 0.0, "instrumentos_permitidos": None,
                   "referencias": {c: dict(REFERENCIA_EFECTIVO) for c in ("TRADING", "TACTICA", "LARGO_PLAZO")},   # benchmark de cada cartera [PROPUESTO]
@@ -92,7 +92,7 @@ NIVELES = {"L0": 0, "L1": 1, "L2": 2}
 # Prioridad de cada aviso para el operador [PROPUESTO]
 TIPOS_KILL = {"POSICION_DESCONOCIDA", "CANTIDAD", "SENTIDO_O_ACTIVO", "PROTECCION", "PROTECCION_HUERFANA", "ENTRADA_HUERFANA",
               "MANUAL_NO_CUADRA", "POSICION_SIN_PROTEGER", "INTEGRIDAD"}   # lo que G sabe explicar (cierres propios, conexión, estado incierto, dato viejo) no
-PRIORIDAD_AVISO = {"O-20": "MEDIA", "O-30": "ALTA", "O-25": "ALTA", "O-26": "ALTA", "O-19": "ALTA", "O-18": "ALTA", "O-03": "ALTA", "O-08": "ALTA", "O-09": "ALTA", "O-13": "ALTA", "O-17": "ALTA"}
+PRIORIDAD_AVISO = {"O-31": "MEDIA", "O-20": "MEDIA", "O-30": "ALTA", "O-25": "ALTA", "O-26": "ALTA", "O-19": "ALTA", "O-18": "ALTA", "O-03": "ALTA", "O-08": "ALTA", "O-09": "ALTA", "O-13": "ALTA", "O-17": "ALTA"}
 ACTORES_PROPUESTA = set(EMISORES)   # quien propone no aprueba ni controla: F, D y H no proponen (Constitución §2, P1)
 
 
@@ -167,6 +167,8 @@ def _valida_config(c):
                   and v[0] < v[1] for k, v in c["rangos_tipo_cambio_eur"].items())
           and _num(c["tolerancia_tipo_par_pct"]) and 0 < c["tolerancia_tipo_par_pct"] <= 50
           and isinstance(c["revision_max_dias"], int) and not isinstance(c["revision_max_dias"], bool) and 1 <= c["revision_max_dias"] <= 366
+          and isinstance(c["observacion_max_dias"], int) and not isinstance(c["observacion_max_dias"], bool) and 1 <= c["observacion_max_dias"] <= 366
+          and isinstance(c["max_reaperturas"], int) and not isinstance(c["max_reaperturas"], bool) and 0 <= c["max_reaperturas"] <= 20
           and isinstance(c["cuenta_intermediario"], str) and _ID.match(c["cuenta_intermediario"])
           and isinstance(c["divisas_cotizacion"], dict)
           and all(isinstance(k, str) and isinstance(v, str) and re.fullmatch(r"[A-Z]{3}", v) for k, v in c["divisas_cotizacion"].items())
@@ -189,6 +191,28 @@ CAMPOS_POS = ("posicion_id", "expediente_id", "estado", "cantidad", "cantidad_in
 
 def _estado_pos(p):
     return {k: p.get(k) for k in CAMPOS_POS}
+
+
+def _condiciones_reapertura_ok(conds, hoy):
+    """T-46: condiciones comprobables. PRECIO {instrumento, operador, umbral}; FECHA {fecha futura}; SELLO_NUEVO {}."""
+    if len(conds) > 10:
+        return "como mucho 10"
+    for c in conds:
+        if not isinstance(c, dict) or c.get("tipo") not in ("PRECIO", "FECHA", "SELLO_NUEVO"):
+            return "cada una debe ser PRECIO, FECHA o SELLO_NUEVO"
+        if c["tipo"] == "PRECIO" and not (set(c) == {"tipo", "instrumento", "operador", "umbral"} and isinstance(c["instrumento"], str)
+                                          and _ID.match(c["instrumento"]) and c["operador"] in OPERADORES and _num(c["umbral"]) and c["umbral"] > 0):
+            return "PRECIO exige instrumento, operador y umbral positivo"
+        if c["tipo"] == "FECHA":
+            try:
+                f = date.fromisoformat(c["fecha"]) if set(c) == {"tipo", "fecha"} and isinstance(c["fecha"], str) and _FECHA.match(c["fecha"]) else None
+            except ValueError:
+                f = None
+            if f is None or f <= hoy:
+                return "FECHA exige una fecha futura AAAA-MM-DD"
+        if c["tipo"] == "SELLO_NUEVO" and set(c) != {"tipo"}:
+            return "SELLO_NUEVO no lleva más campos"
+    return None
 
 
 def _identidad(e):
@@ -583,7 +607,7 @@ class Orquestador:
 
     def _todo_ok(self, e):
         return (self._historial_ok(e) and self._identidad_ok(e) and self._propuesta_ok(e) and self._sobre_ok(e) and self._comparacion_ok(e)
-                and self._orden_ok(e) and self._aprobacion_ok(e))
+                and self._orden_ok(e) and self._aprobacion_ok(e) and self._reapertura_ok(e))
 
     @staticmethod
     def _identidad_ok(e):
@@ -756,6 +780,17 @@ class Orquestador:
         err = self._transicion_ok(e, "EN_ANALISIS", actor)
         if err:
             return err
+        pendiente = None
+        if e["estado"] == "EN_OBSERVACION":   # T-46: solo con la condición cumplida (o el operador), dentro de plazo y del límite
+            r = e["reapertura"]
+            if a.astimezone(timezone.utc).date() > date.fromisoformat(r["vence"]):
+                return _no("O-10", f"la observación venció el {r['vence']}")
+            pendiente = None if r["cumplida"] is not None else self._primera_cumplida(e, None, a)   # fecha o datos nuevos: aquí mismo,
+            if r["cumplida"] is None and pendiente is None:                                       # pero se anota solo si el encargo se acepta
+                return _no("O-06", "no se ha cumplido ninguna condición de reapertura: el operador puede reabrir con motivo")
+            hechas = self._reaperturas_hechas(e)
+            if hechas >= self.cfg["max_reaperturas"] and (r["cumplida"] or {}).get("por") != "OPERADOR":
+                return _no("O-06", f"el expediente ya se reabrió {hechas} veces: solo el operador puede reabrirlo otra vez")
         if encargo.get("expediente_id") != expediente_id or encargo.get("correlation_id") != e["correlation_id"]:
             return _no("O-12", "el encargo no pertenece a este expediente o petición")
         if actor != "BROKER" and encargo.get("producer") != actor:
@@ -790,6 +825,11 @@ class Orquestador:
                               "coste_max": p["coste_max_eur"], "tiempo_max": p["tiempo_max_min"], "coste": 0.0, "tiempo": 0.0,
                               "fecha_emision": fecha, "ahora_emision": ahora, "fecha_corte": encargo["payload"]["fecha_corte"],
                               "fecha_vigente_emision": ctx["fecha_corte_vigente"], "nivel": encargo["payload"]["nivel_analisis"]}
+        if e["estado"] == "EN_OBSERVACION":
+            if pendiente is not None:   # la condición que se cumplió al reabrir queda anotada antes del encargo
+                self._marcar_cumplida(expediente_id, e, pendiente, "ORQUESTADOR", ahora)
+            if previo and previo["estado"] == "EN_CURSO":   # el encargo que quedó en curso al observar ya no se espera
+                previo["estado"] = "ANULADO"
         e["encargo_actual"] = eid
         e["sin_avance"] += 1
         self._anota(e, e["estado"], "EN_ANALISIS", actor, ahora, "encargo emitido", eid)
@@ -936,7 +976,7 @@ class Orquestador:
                     if a["actor"] == "OPERADOR" or (a["actor"] == "ORQUESTADOR" and a["hasta"] == "CADUCADA"):
                         return None
                     salida = a
-            elif a["actor"] == "OPERADOR" and (a["hasta"] in ("EN_OBSERVACION", "DESCARTADA") or a["ref"] == "RATIFICA_APARTADO"):
+            elif a["actor"] == "OPERADOR" and (a["ref"] == "RATIFICA_APARTADO" or (a["hasta"] in ("EN_OBSERVACION", "DESCARTADA") and a["desde"] != a["hasta"])):
                 return None   # el operador lo hizo suyo
         return salida
 
@@ -985,7 +1025,8 @@ class Orquestador:
             return _no("O-15", "ratificar un apartado exige motivo")
         if e["estado"] in VIVOS + ("EJECUTADA",) or not self._salida_no_operador(e):
             return _no("O-04", "no hay ningún apartado pendiente de ratificar en este expediente")
-        self._anota(e, e["estado"], e["estado"], "OPERADOR", ahora, f"apartado ratificado: {motivo.strip()[:160]}", "RATIFICA_APARTADO")
+        self._anota(e, e["estado"], e["estado"], "OPERADOR", ahora, f"apartado ratificado: {motivo.strip()[:160]}", "RATIFICA_APARTADO",
+                    datos=_hash(e["reapertura"]) if e["estado"] == "EN_OBSERVACION" else None)
         return _r(True, "OK", "apartado ratificado")
 
     @_seguro
@@ -1595,12 +1636,127 @@ class Orquestador:
             return _no("O-05", "un gestor solo aparta expedientes de su cartera")
         if e["retenido"] is not None:
             return _no("O-17", "hay una objeción crítica pendiente: no se puede aparcar el expediente")
-        if not (isinstance(motivo, str) and motivo.strip() and isinstance(condiciones_reapertura, list) and condiciones_reapertura
-                and all(isinstance(c, str) and c.strip() for c in condiciones_reapertura)):
+        if not (isinstance(motivo, str) and motivo.strip() and isinstance(condiciones_reapertura, list) and condiciones_reapertura):
             return _no("O-15", "se exigen motivo y condiciones de reapertura")
-        e["reapertura"] = list(condiciones_reapertura)
-        self._anota(e, e["estado"], "EN_OBSERVACION", actor, ahora, motivo)
-        return _r(True, "OK", "en observación")
+        hoy = _dt(ahora).astimezone(timezone.utc).date()
+        err = _condiciones_reapertura_ok(condiciones_reapertura, hoy)
+        if err:
+            return _no("O-01", f"condiciones de reapertura: {err}")
+        vence = hoy + timedelta(days=self.cfg["observacion_max_dias"])
+        if any(c["tipo"] == "FECHA" and date.fromisoformat(c["fecha"]) > vence for c in condiciones_reapertura):
+            return _no("O-01", f"condiciones de reapertura: una FECHA posterior al vencimiento de la observación ({vence}) no podría cumplirse")
+        en = self.encargos.get(e["encargo_actual"]) if e["encargo_actual"] else None
+        cortes = [x for x in ((e.get("sobre") or {}).get("fecha_corte"), en["fecha_corte"] if en else None) if x]
+        e["reapertura"] = {"condiciones": copy.deepcopy(condiciones_reapertura), "desde": ahora, "actor": actor, "motivo": motivo[:200],
+                           "vence": vence.isoformat(), "cumplida": None,
+                           "corte_previo": max(cortes) if cortes else None}   # el corte más reciente con que se analizó o se encargó
+        self._anota(e, e["estado"], "EN_OBSERVACION", actor, ahora, motivo, datos=_hash(e["reapertura"]))
+        return _r(True, "OK", "en observación", vence=e["reapertura"]["vence"])
+
+    def _reapertura_ok(self, e):
+        """En observación, las condiciones (y si se cumplieron) son las anotadas en la cadena."""
+        if e["estado"] != "EN_OBSERVACION":
+            return True
+        ult = [h for h in e["historial"] if h["hasta"] == "EN_OBSERVACION"]
+        return bool(ult) and isinstance(e.get("reapertura"), dict) and ult[-1]["datos"] == _hash(e["reapertura"])
+
+    def _cumple(self, e, cond, datos, a, max_edad_min=15):
+        """Valor con el que se cumple la condición, o None. PRECIO: dato fresco (15 min) del instrumento; FECHA: llegó;
+        SELLO_NUEVO: hay un sello vigente con corte posterior al del análisis (o al día de la observación)."""
+        if cond["tipo"] == "FECHA":
+            return cond["fecha"] if a.astimezone(timezone.utc).date() >= date.fromisoformat(cond["fecha"]) else None
+        if cond["tipo"] == "SELLO_NUEVO":
+            base = e["reapertura"]["corte_previo"] or str(_dt(e["reapertura"]["desde"]).astimezone(timezone.utc).date())
+            hoy = str(a.astimezone(timezone.utc).date())
+            nuevos = sorted(s["fecha_corte"] for s in self.sellos.values() if s["estado"] != "ANULADO" and s["fecha_corte"] > base
+                            and estado_sello({**s, "estado": "VIGENTE"}, hoy, e["cartera_destino"], self.cal_def) == "VIGENTE")
+            return nuevos[-1] if nuevos else None   # vigente hoy para la cartera del expediente (antigüedad de K por cartera)
+        d = next((v for k, v in datos.items() if _ins(k) == _ins(cond["instrumento"])), None) if isinstance(datos, dict) else None
+        try:
+            fresco = (isinstance(d, dict) and _num(d.get("precio")) and d["precio"] > 0
+                      and 0 <= (a - _dt(d["hora"])).total_seconds() <= max_edad_min * 60)
+        except Exception:   # noqa: BLE001
+            fresco = False
+        return d["precio"] if fresco and OPERADORES[cond["operador"]](d["precio"], cond["umbral"]) else None
+
+    def _primera_cumplida(self, e, datos, a, max_edad_min=15):
+        """(índice, valor) de la primera condición que se cumple, sin tocar nada; None si ninguna o si la observación venció."""
+        if a.astimezone(timezone.utc).date() > date.fromisoformat(e["reapertura"]["vence"]):
+            return None
+        for i, c in enumerate(e["reapertura"]["condiciones"]):
+            v = self._cumple(e, c, datos, a, max_edad_min)
+            if v is not None:
+                return i, v
+        return None
+
+    def _reaperturas_hechas(self, e):
+        """Reaperturas que cuentan para el límite: las que no autorizó el operador con reabrir."""
+        n, por_operador = 0, False
+        for h in e["historial"]:
+            if h["hasta"] == "EN_OBSERVACION" and h["desde"] != "EN_OBSERVACION":
+                por_operador = False
+            elif h["desde"] == h["hasta"] == "EN_OBSERVACION" and h["ref"] == "REABRE":
+                por_operador = True
+            elif h["desde"] == "EN_OBSERVACION" and h["hasta"] == "EN_ANALISIS" and not por_operador:
+                n += 1
+        return n
+
+    def _marcar_cumplida(self, eid, e, iv, actor, ahora):
+        i, v = iv
+        c = e["reapertura"]["condiciones"][i]
+        e["reapertura"]["cumplida"] = {"condicion": i, "valor": v, "ahora": ahora, "por": actor}
+        self._anota(e, "EN_OBSERVACION", "EN_OBSERVACION", actor, ahora, f"condición de reapertura {i} cumplida ({c['tipo']})",
+                    datos=_hash(e["reapertura"]))
+        if self._reaperturas_hechas(e) >= self.cfg["max_reaperturas"]:
+            txt = f"{eid}: se cumplió su condición de reapertura ({c['tipo']}: {v}), pero ya llegó al límite de reaperturas: solo el operador puede reabrirlo"
+        else:
+            txt = f"{eid}: se cumplió su condición de reapertura ({c['tipo']}: {v}); se puede re-encargar hasta {e['reapertura']['vence']}"
+        self._aviso("O-31", txt, ahora, eid, carteras={e["cartera_destino"]})
+
+    def _revisar_reapertura(self, eid, e, datos, actor, a, ahora, max_edad_min=15):
+        """Marca cumplida la primera condición que se cumpla (dentro de plazo) y avisa. Devuelve True si cambió algo."""
+        if e["reapertura"]["cumplida"] is not None:
+            return False
+        iv = self._primera_cumplida(e, datos, a, max_edad_min)
+        if iv is None:
+            return False
+        self._marcar_cumplida(eid, e, iv, actor, ahora)
+        return True
+
+    @_seguro
+    def revisar_reaperturas(self, datos, actor, ahora, max_edad_min=15):
+        """H (en cada pasada, con sus precios) o el Orquestador comprueban las condiciones de los expedientes en observación."""
+        a = self._ahora(ahora)
+        if actor not in ("H", "ORQUESTADOR"):
+            return _no("O-05", "solo H o el Orquestador vigilan las condiciones de reapertura")
+        cumplidas = []
+        for eid, e in sorted(self.expedientes.items()):
+            if e["estado"] == "EN_OBSERVACION":
+                if not self._todo_ok(e):
+                    continue   # alterado: no se marca nada (lo ve integridad y cualquier operación sobre él)
+                if self._revisar_reapertura(eid, e, datos, actor, a, ahora, max_edad_min):
+                    cumplidas.append(eid)
+        return _r(True, "OK", f"{len(cumplidas)} reapertura(s) cumplida(s)", cumplidas=cumplidas)
+
+    @_seguro
+    def reabrir(self, expediente_id, motivo, actor, ahora):
+        """El operador permite reabrir un expediente en observación aunque su condición no se haya cumplido (o pasado el límite)."""
+        self._ahora(ahora)
+        e, err = self._exp(expediente_id)
+        if err:
+            return err
+        if actor != "OPERADOR":
+            return _no("O-05", "solo el operador reabre sin que se cumpla la condición")
+        if not (isinstance(motivo, str) and motivo.strip()):
+            return _no("O-15", "reabrir exige motivo")
+        if e["estado"] != "EN_OBSERVACION":
+            return _no("O-04", "solo se reabre un expediente en observación")
+        if _dt(ahora).astimezone(timezone.utc).date() > date.fromisoformat(e["reapertura"]["vence"]):
+            return _no("O-10", f"la observación venció el {e['reapertura']['vence']}")
+        e["reapertura"]["cumplida"] = {"condicion": None, "valor": None, "ahora": ahora, "por": "OPERADOR", "motivo": motivo[:200]}
+        self._anota(e, "EN_OBSERVACION", "EN_OBSERVACION", "OPERADOR", ahora, f"reapertura autorizada por el operador: {motivo[:120]}",
+                    "REABRE", datos=_hash(e["reapertura"]))
+        return _r(True, "OK", "reapertura autorizada")
 
     @_seguro
     def descartar(self, expediente_id, motivo, actor, ahora):
@@ -1630,6 +1786,15 @@ class Orquestador:
             if en["estado"] == "EN_CURSO" and a > _dt(en["entrega_antes_de"]):
                 self._aviso("O-10", f"encargo {eid}: pasó la hora de entrega sin sobre", ahora, en["expediente_id"])
                 cambios.append(("aviso_entrega", eid, "EN_CURSO"))
+        for eid, e in sorted(self.expedientes.items()):   # T-46: observaciones
+            if e["estado"] != "EN_OBSERVACION" or not isinstance(e.get("reapertura"), dict) or not self._todo_ok(e):
+                continue
+            if a.astimezone(timezone.utc).date() > date.fromisoformat(e["reapertura"]["vence"]):
+                self._anota(e, "EN_OBSERVACION", "DESCARTADA", "ORQUESTADOR", ahora, f"la observación venció el {e['reapertura']['vence']}")
+                self._aviso("O-31", f"{eid}: la observación venció sin reabrirse; queda descartado", ahora, eid, carteras={e["cartera_destino"]})
+                cambios.append(("expediente", eid, "DESCARTADA"))
+            elif self._revisar_reapertura(eid, e, None, "ORQUESTADOR", a, ahora):
+                cambios.append(("reapertura", eid, "CUMPLIDA"))
         for eid, e in self.expedientes.items():
             if e["estado"] in ("VALIDADA", "COMPARADA", "PROPUESTA", "AUTORIZADA"):
                 limites = [_dt(e["sobre"]["valid_until"])]

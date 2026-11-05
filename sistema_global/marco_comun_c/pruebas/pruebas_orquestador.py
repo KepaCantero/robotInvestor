@@ -23,6 +23,7 @@ CFG = {"perfiles_activos": ["C-DIV", "C-RV", "C-CRI"], "apalancamiento_permitido
        "clases_ratificadas": {"C-DIV": "Q", "C-RV": "Q", "C-CRI": "K", "C-RF": "S"},
        "nivel_autonomia": {"TRADING": "L2", "TACTICA": "L2", "LARGO_PLAZO": "L2"}}   # las pruebas de mecánica usan L2; los niveles tienen su propio bloque
 AHORA = "2026-11-06T09:00:00+00:00"
+COND_OBS = [{"tipo": "FECHA", "fecha": "2026-11-20"}]   # condición de reapertura comprobable (T-46)
 A2 = "2026-11-08T13:00:00+00:00"
 S1 = SELLOS_ENC["K-20261105-001"]
 S2 = SELLOS_ENC["K-20261106-001"]
@@ -315,7 +316,7 @@ def main():
     R("objecion_critica_retiene_O17", o, lambda: o.entregar_sobre("EXP-0001", sobre(1), AHORA, informe=crit), "O-17", mutacion_permitida=True)
     h.chk("critica_deja_expediente_en_analisis", o.expedientes["EXP-0001"]["estado"] == "EN_ANALISIS" and o.expedientes["EXP-0001"]["sobre"] is None)
     R("critica_reenvio_sigue_rechazado_O17", o, lambda: o.entregar_sobre("EXP-0001", sobre(1), AHORA, informe=crit), "O-17")
-    R("critica_no_se_esquiva_con_observar_O17", o, lambda: o.observar("EXP-0001", ["x"], "m", "BROKER", AHORA), "O-17")
+    R("critica_no_se_esquiva_con_observar_O17", o, lambda: o.observar("EXP-0001", COND_OBS, "m", "BROKER", AHORA), "O-17")
     R("critica_no_se_esquiva_con_reencargo_O17", o, lambda: o.emitir_encargo("EXP-0001", {**encargo(1), "event_id": "EV-ENC-0101"}, "GESTOR_TACTICA", AHORA), "O-17")
     R("levantar_critica_actor_ajeno_O05", o, lambda: o.levantar_objecion("EXP-0001", "ok", "C", AHORA), "O-05")
     R("levantar_critica_sin_motivo_O15", o, lambda: o.levantar_objecion("EXP-0001", " ", "OPERADOR", AHORA), "O-15")
@@ -411,13 +412,13 @@ def main():
     # ---------------------------------------------------------------- observación, descarte, caducidad
     o = nuevo(); hasta(o, "VALIDADA")
     R("observar_sin_condiciones_O15", o, lambda: o.observar("EXP-0001", [], "esperar", "BROKER", AHORA), "O-15")
-    R("observar_sin_motivo_O15", o, lambda: o.observar("EXP-0001", ["EURUSD > 1.12"], " ", "BROKER", AHORA), "O-15")
-    R("observar_actor_C_O05", o, lambda: o.observar("EXP-0001", ["EURUSD > 1.12"], "esperar", "C", AHORA), "O-05")
-    h.chk("observar_ok", o.observar("EXP-0001", ["EURUSD > 1.12"], "esperar un nivel", "BROKER", AHORA)["ok"] and o.expedientes["EXP-0001"]["estado"] == "EN_OBSERVACION")
+    R("observar_sin_motivo_O15", o, lambda: o.observar("EXP-0001", [{"tipo": "PRECIO", "instrumento": "EURUSD", "operador": ">", "umbral": 1.12}], " ", "BROKER", AHORA), "O-15")
+    R("observar_actor_C_O05", o, lambda: o.observar("EXP-0001", [{"tipo": "PRECIO", "instrumento": "EURUSD", "operador": ">", "umbral": 1.12}], "esperar", "C", AHORA), "O-05")
+    h.chk("observar_ok", o.observar("EXP-0001", [{"tipo": "PRECIO", "instrumento": "EURUSD", "operador": ">", "umbral": 1.12}], "esperar un nivel", "BROKER", AHORA)["ok"] and o.expedientes["EXP-0001"]["estado"] == "EN_OBSERVACION")
     R("descartar_sin_motivo_O15", o, lambda: o.descartar("EXP-0001", "", "BROKER", AHORA), "O-15")
     R("descartar_actor_D_O05", o, lambda: o.descartar("EXP-0001", "no", "D", AHORA), "O-05")
     h.chk("descartar_ok", o.descartar("EXP-0001", "ya no interesa", "OPERADOR", AHORA)["ok"])
-    R("descartada_es_terminal_O14", o, lambda: o.observar("EXP-0001", ["x"], "y", "BROKER", AHORA), "O-14")
+    R("descartada_es_terminal_O14", o, lambda: o.observar("EXP-0001", COND_OBS, "y", "BROKER", AHORA), "O-14")
     o = nuevo(); hasta(o, "PROPUESTA")
     r = o.barrer("2026-11-08T13:00:00+00:00")
     h.chk("barrer_caduca_propuesta_vencida", ("expediente", "EXP-0001", "CADUCADA") in [tuple(c) for c in r["cambios"]] and o.expedientes["EXP-0001"]["estado"] == "CADUCADA", r)
