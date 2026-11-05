@@ -1,6 +1,6 @@
-# Marco común de C, sobres CT-G-02 y CT-G-01, K (datos de corte), Orquestador, Contradictor, consola N y control de riesgo F y ejecución G — V0.8 (provisional, 0.x)
+# Marco común de C, sobres CT-G-02 y CT-G-01, K (datos de corte), Orquestador, Contradictor, consola N y control de riesgo F y ejecución G y vigilancia H — V0.9 (provisional, 0.x)
 
-Fecha: 5 de noviembre de 2026 (V0.8: añade G, la ejecución con intermediario simulado, y su conciliación; V0.7 añadió F). Fase 1 de la Constitución V0.3.
+Fecha: 5 de noviembre de 2026 (V0.9: añade H, la vigilancia de posiciones, y el cierre de posiciones en G; V0.8 añadió G, la ejecución con intermediario simulado, y su conciliación; V0.7 añadió F). Fase 1 de la Constitución V0.3.
 
 ## Contenido
 
@@ -46,12 +46,15 @@ python3 pruebas/pruebas_orquestador.py
 python3 pruebas/pruebas_consola.py
 python3 pruebas/pruebas_control_f.py
 python3 pruebas/pruebas_ejecucion_g.py
+python3 pruebas/pruebas_vigilancia.py
 python3 validador/validar_sobre.py sobre.json contexto.json
 ```
 
 Resultado esperado de cada script de pruebas: `TODAS LAS PRUEBAS PASAN`.
 
 ## Qué está comprobado y qué no
+
+- Comprobado en H (`validador/vigilancia.py`) y en el cierre de G (`cerrar`): 41 comprobaciones con intermediario simulado; reglas H-01 a H-09. H aplica solo condiciones de salida ya declaradas, no cierra con un precio ausente o viejo (avisa) y el cierre lleva a cero la posición neta real del intermediario antes de pasar a CERRADA. Límites: solo cierre total (la reducción parcial sigue pendiente, T-12); solo condiciones sobre el precio; H no tiene reloj propio; el cierre a mercado no es de solo reducción en el simulador; umbrales de 15 min y 72 h [PROPUESTO].
 
 - Comprobado en G (`validador/ejecucion_g.py`): 50 comprobaciones con un intermediario simulado; códigos OK, G-01..G-06, G-08. Tras enviar órdenes, cualquier fallo se trata como estado incierto (G-08) con aviso, nunca como «sin efectos»; una posición sin stop se cierra o se alerta. `conciliar` compara Orquestador e intermediario (cantidad, sentido, activo, stop, stop huérfano). Límites: una posición por instrumento; no hay reducir/cerrar posiciones ni redimensionar el stop; sin conversión de divisa; el disparo del stop no se simula; el intermediario es simulado y los actores no se autentican (ver deuda técnica).
 
