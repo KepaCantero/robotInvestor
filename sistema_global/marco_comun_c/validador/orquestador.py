@@ -22,7 +22,7 @@ sys.path.insert(0, str(AQUI))
 from k_calidad import (Calendario, ERRORES, SinCobertura, estado_sello, hash_serie,  # noqa: E402
                        validar_sello)
 from validar_encargo import sobre_responde_a_encargo, validar_encargo  # noqa: E402
-from validar_sobre import _dt  # noqa: E402
+from validar_sobre import _dt, bloqueos  # noqa: E402
 from manual_g import aplanar_manual, neto_libre, validar_manual, via_norm  # noqa: E402
 from comparador import MARGEN_AJUSTADO, REFERENCIA_EFECTIVO, _referencia_ok, comparar_candidatos  # noqa: E402
 from dimensionado import dimensionar  # noqa: E402
@@ -96,7 +96,7 @@ NIVELES = {"L0": 0, "L1": 1, "L2": 2}
 # Prioridad de cada aviso para el operador [PROPUESTO]
 TIPOS_KILL = {"POSICION_DESCONOCIDA", "CANTIDAD", "SENTIDO_O_ACTIVO", "PROTECCION", "PROTECCION_HUERFANA", "ENTRADA_HUERFANA",
               "MANUAL_NO_CUADRA", "POSICION_SIN_PROTEGER", "INTEGRIDAD"}   # lo que G sabe explicar (cierres propios, conexión, estado incierto, dato viejo) no
-PRIORIDAD_AVISO = {"O-31": "MEDIA", "O-20": "MEDIA", "O-30": "ALTA", "O-25": "ALTA", "O-26": "ALTA", "O-19": "ALTA", "O-18": "ALTA", "O-03": "ALTA", "O-08": "ALTA", "O-09": "ALTA", "O-13": "ALTA", "O-17": "ALTA"}
+PRIORIDAD_AVISO = {"O-32": "MEDIA", "O-31": "MEDIA", "O-20": "MEDIA", "O-30": "ALTA", "O-25": "ALTA", "O-26": "ALTA", "O-19": "ALTA", "O-18": "ALTA", "O-03": "ALTA", "O-08": "ALTA", "O-09": "ALTA", "O-13": "ALTA", "O-17": "ALTA"}
 ACTORES_PROPUESTA = set(EMISORES)   # quien propone no aprueba ni controla: F, D y H no proponen (Constitución §2, P1)
 
 
@@ -142,6 +142,15 @@ def _avisos_ok(a):
 
 def _num(x):
     return isinstance(x, (int, float)) and not isinstance(x, bool) and math.isfinite(x)
+
+
+def _motivo_bloqueo(bl):
+    return f"exclusión dura BLOQUEADO ({', '.join(bl)}): el candidato no compite"
+
+
+def _es_bloqueo(a):
+    """La anotación con la que el Orquestador descarta un candidato bloqueado (T-27)."""
+    return a["actor"] == "ORQUESTADOR" and a["hasta"] == "DESCARTADA" and isinstance(a["motivo"], str) and a["motivo"].startswith("exclusión dura BLOQUEADO")
 
 
 class RelojRetrocede(Exception):
@@ -638,7 +647,18 @@ class Orquestador:
 
     def _todo_ok(self, e):
         return (self._historial_ok(e) and self._identidad_ok(e) and self._propuesta_ok(e) and self._sobre_ok(e) and self._comparacion_ok(e)
-                and self._orden_ok(e) and self._aprobacion_ok(e) and self._reapertura_ok(e))
+                and self._orden_ok(e) and self._aprobacion_ok(e) and self._reapertura_ok(e) and self._exclusion_ok(e))
+
+    @staticmethod
+    def _exclusion_ok(e):
+        """T-27: la exclusión guardada es la anotada por el Orquestador al descartar (hash del sobre, su id y los bloqueos)."""
+        b = [a for a in e["historial"] if _es_bloqueo(a)]
+        ex = e.get("exclusion")
+        if not b:
+            return ex is None
+        a = b[-1]
+        return (isinstance(ex, dict) and set(ex) == {"event_id", "hash", "bloqueos"} and a["datos"] == ex["hash"] and a["ref"] == ex["event_id"]
+                and a["motivo"] == _motivo_bloqueo(ex["bloqueos"]))
 
     @staticmethod
     def _identidad_ok(e):
@@ -951,6 +971,17 @@ class Orquestador:
         fallos = sobre_responde_a_encargo(en["msg"], sobre, ctx_enc, ctx_sob)
         if fallos:
             return _no("O-01", f"el sobre no responde al encargo: {fallos[0]['regla']}: {fallos[0]['mensaje'][:80]}", reglas=sorted({x['regla'] for x in fallos}))
+        bl = bloqueos(sobre)
+        if bl:   # T-27: un candidato bloqueado se informa, no compite: no pasa por VALIDADA (ni compite ni queda de testigo)
+            self.eventos[sid] = {"hash": h, "expediente_id": expediente_id}
+            en["estado"] = "ENTREGADO"
+            e["exclusion"] = {"event_id": sid, "hash": h, "bloqueos": bl}
+            e["sin_avance"] = 0
+            # transición interna del Orquestador (no está en T: nadie más puede pedirla)
+            self._anota(e, e["estado"], "DESCARTADA", "ORQUESTADOR", ahora, _motivo_bloqueo(bl), sid, datos=h)
+            self._aviso("O-32", f"{expediente_id}: candidato descartado por exclusión dura BLOQUEADO ({', '.join(bl)})", ahora, expediente_id,
+                        carteras={e["cartera_destino"]})
+            return _r(True, "O-32", f"sobre recibido como informe: exclusión dura BLOQUEADO ({', '.join(bl)}); expediente descartado")
         contr = None
         if en["nivel"] in self.cfg["exige_contradictor_en"] or informe is not None:
             if informe is None:
@@ -975,6 +1006,9 @@ class Orquestador:
                 "hash": h, "documento": copy.deepcopy(sobre)}   # el sobre entero: D y la propuesta se contrastan con él
         if contr:   # el sobre vale solo mientras valga el informe del Contradictor
             info["valid_until"] = min(info["valid_until"], contr["valid_until"], key=_dt)
+        # T-27: y solo mientras se pueda entrar como se analizó (después no hay propuesta posible: no compite ni es testigo)
+        info["valid_until"] = min(info["valid_until"], sobre["payload"]["entrada_salida"]["entrada"]["ventana_hasta"], key=_dt) \
+            if "entrada_salida" in sobre["payload"] else info["valid_until"]
         if contr and contr["veredicto"] == "OBJECION_CRITICA":
             e["retenido"] = {"sobre": info, "contradictor": contr}
             self._anota(e, e["estado"], "EN_ANALISIS", "ORQUESTADOR", ahora, "sobre retenido por objeción crítica del Contradictor", sid)
@@ -1032,6 +1066,8 @@ class Orquestador:
                     salida = a
             elif a["actor"] == "OPERADOR" and (a["ref"] == "RATIFICA_APARTADO" or (a["hasta"] in ("EN_OBSERVACION", "DESCARTADA") and a["desde"] != a["hasta"])):
                 return None   # el operador lo hizo suyo
+            elif _es_bloqueo(a):
+                return None   # T-27: su análisis nuevo lo bloqueó (exclusión dura): ya no es un candidato que pudiera ganar
         return salida
 
     def _sellos_validos(self, x):
@@ -1291,9 +1327,21 @@ class Orquestador:
         lim = ce["limite"]
         if not (stop["umbral"] < lim if largo else stop["umbral"] > lim):
             return _no("O-21", "el stop no está del lado de la pérdida respecto al límite de entrada")
+        sl = es["entrada"]["limite"]["valor"]   # T-27: la entrada del sobre es numérica (V-24)
+        if not _num(sl):
+            return _no("O-21", "el sobre no da un límite de entrada numérico: no hay con qué ligar la propuesta")
+        if lim > sl if largo else lim < sl:
+            return _no("O-21", f"el límite de entrada es peor que el analizado ({sl}): no se compra más caro ni se vende más barato")
+        if _dt(ce["ventana_hasta"]) > _dt(es["entrada"]["ventana_hasta"]):
+            return _no("O-21", "la ventana de entrada pasa de la analizada en el sobre")
         sv = es["stop"]["valor"]
         if not (_num(sv) and isinstance(es["stop"].get("unidad"), str) and re.fullmatch(r"[A-Z]{3}", es["stop"]["unidad"])):
             return _no("O-21", "el sobre no da un stop de precio (valor numérico en una divisa): no hay con qué ligar la propuesta")
+        div = self.divisa(ce["instrumento"])   # T-27: los precios del sobre y de la propuesta van en la divisa de cotización
+        if es["stop"]["unidad"] != div or es["entrada"]["limite"]["unidad"] != div or (_num(es["objetivo"]["valor"]) and es["objetivo"]["unidad"] != div):
+            return _no("O-21", f"los precios del sobre (stop, límite, objetivo) no están en la divisa de cotización del instrumento ({div})")
+        if any(x.get("metrica") == "precio" and x.get("tipo") in ("STOP", "OBJETIVO") and x.get("unidad") != div for x in cs["condiciones"]):
+            return _no("O-21", f"el stop y el objetivo de la propuesta van en la divisa de cotización ({div})")
         if stop["umbral"] < sv if largo else stop["umbral"] > sv:
             return _no("O-21", "el stop es más holgado que el analizado (solo se admite igual o más prudente)")
         if _via(ce["via_acceso"]) != _via(ident["via_acceso"]):

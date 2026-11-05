@@ -22,7 +22,7 @@ import math
 import re
 from collections import Counter
 
-from validar_sobre import _dt
+from validar_sobre import VERSIONES_CONOCIDAS, _dt
 
 from parametros import PARAMETROS as _P   # noqa: E402  (valores [PROPUESTO] versionados, T-25)
 
@@ -56,6 +56,8 @@ def _leer(c, ahora, ref=REFERENCIA_EFECTIVO):
     """Devuelve (datos, motivo_de_exclusion). Nunca lanza."""
     try:
         s = c["sobre"]
+        if s.get("version_esquema") not in VERSIONES_CONOCIDAS:   # T-27: una versión retirada no se interpreta
+            return None, "FORMA"
         p = s["payload"]
         ident = p["identificacion"]
         inst = ident["instrumento"]
@@ -70,6 +72,9 @@ def _leer(c, ahora, ref=REFERENCIA_EFECTIVO):
         if rechazado or any(v != "OK" for v in ex.values()):
             return None, "EXCLUSION_DURA"
         if not (isinstance(ahora, str) and _dt(s["emitido_en"]) <= _dt(ahora) < _dt(s["valid_until"])):
+            return None, "CADUCADO"
+        ent = (p.get("entrada_salida") or {}).get("entrada")
+        if isinstance(ent, dict) and not _dt(ahora) < _dt(ent["ventana_hasta"]):   # T-27: sin ventana de entrada no hay candidato
             return None, "CADUCADO"
         c2 = p["capa2"]
         esc = c2["escenarios"]
@@ -96,7 +101,7 @@ def _leer(c, ahora, ref=REFERENCIA_EFECTIVO):
         exceso = esperado - liston
         if not exceso > EXCESO_MIN_PCT:
             return None, "NO_SUPERA_REFERENCIA"
-        if c2["estado"] == "SUPUESTO":   # opinión, no dato: no se ordena (V-13 ya lo impide en un sobre válido; D se defiende igual)
+        if c2["estado"] == "SUPUESTO":   # opinión, no dato: no se ordena (desde T-27 un sobre válido puede traer escenarios SUPUESTO)
             return None, "ESCENARIOS_SUPUESTO"
         if conf <= 0:
             return None, "SIN_CONFIANZA"

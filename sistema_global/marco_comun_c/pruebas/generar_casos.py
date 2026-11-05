@@ -38,7 +38,7 @@ def base(perfil, clase, nivel, instrumento, via):
     return {
         "event_id": f"EV-{perfil}-0001", "correlation_id": "COR-0001",
         "expediente_id": "EXP-0001", "producer": perfil, "consumer": "D",
-        "tipo_mensaje": "CT-G-02", "version_esquema": "0.1.0",
+        "tipo_mensaje": "CT-G-02", "version_esquema": "0.2.0",
         "emitido_en": "2026-11-05T18:00:00+00:00", "valid_until": "2026-11-08T18:00:00+00:00",
         "data_refs": ["K-20261105-001", "SRC-EURUSD", "EVID-0001"],
         "payload": {
@@ -53,8 +53,9 @@ def base(perfil, clase, nivel, instrumento, via):
                     "id": "INV-1", "descripcion": "Cierre por debajo del nivel de invalidez",
                     "metrica": "precio_cierre", "operador": "<", "umbral": 1.05, "unidad": "EUR"}]},
             "entrada_salida": {
-                "entrada": "Límite en 1,08 durante 3 días",
-                "stop": cifra(1.05, "EUR", "SUPUESTO"), "objetivo": cifra(1.14, "EUR", "SUPUESTO"),
+                "entrada": {"limite": cifra(1.12, "USD", n=30), "ventana_hasta": "2026-11-08T18:00:00+00:00",
+                            "descripcion": "Compra limitada mientras dure la vigencia del sobre"},
+                "stop": cifra(1.05, "USD", "SUPUESTO"), "objetivo": cifra(1.14, "USD", "SUPUESTO"),   # EUR/USD cotiza en USD
                 "fecha_revision": "2026-12-05"},
             "liquidez": {
                 "tiempo_salida": cifra(1, "días"), "coste_salida": cifra(2, "pb", n=2),
@@ -108,7 +109,8 @@ def n3(s, tope, conf, discrepa=False, estimado=False):
                       "escenarios": [
                           {"nombre": "base", "probabilidad": 0.5, "rentabilidad_neta_pct": 1.5, "horizonte_dias": 90},
                           {"nombre": "adverso", "probabilidad": 0.3, "rentabilidad_neta_pct": -4.0, "horizonte_dias": 90},
-                          {"nombre": "favorable", "probabilidad": 0.2, "rentabilidad_neta_pct": 5.0, "horizonte_dias": 90}]}
+                          {"nombre": "favorable", "probabilidad": 0.2, "rentabilidad_neta_pct": 5.0, "horizonte_dias": 90}],
+                      "horizonte_dias": 90, "distribucion": {"p05": -4.5, "p50": 1.2, "p95": 5.5}}
     else:
         p["capa2"] = {"estado": "NO_ESTIMABLE"}
     p["capa3"] = {"tope_confianza": tope, "confianza": conf,
@@ -134,8 +136,26 @@ def validos():
     cri["payload"]["factores"]["exposiciones"] = [
         {"factor": f, "beta": cifra(None, "beta", "NO_ESTIMABLE")} for f in FACTORES]
     cri["payload"]["factores"]["calidad_ajuste"] = cifra(None, "R2", "NO_ESTIMABLE")
-    return {"valido_div_n3.json": fin(div), "valido_rv_n3_discrepa.json": fin(rv),
-            "valido_cri_k_no_estimable.json": fin(cri)}
+    out = {"valido_div_n3.json": fin(div), "valido_rv_n3_discrepa.json": fin(rv),
+           "valido_cri_k_no_estimable.json": fin(cri)}
+    # T-27: lo que la 0.1.0 rechazaba y la Constitución admite
+    sup = copy.deepcopy(out["valido_div_n3.json"])     # capa 2 SUPUESTO con escenarios (opinión: D no la ordena)
+    sup["payload"]["capa2"].update(estado="SUPUESTO")
+    sup["payload"]["capa2"].pop("metodo"); sup["payload"]["capa2"].pop("base_datos")
+    out["valido_div_capa2_supuesto.json"] = sup
+    blo = copy.deepcopy(out["valido_div_n3.json"])     # candidato bloqueado: sobre válido que no compite
+    blo["payload"]["exclusiones_duras"]["sanciones"] = "BLOQUEADO"
+    out["valido_div_bloqueado.json"] = blo
+    gan = copy.deepcopy(out["valido_div_n3.json"])     # un episodio de estrés con ganancia
+    gan["payload"]["estres_historico"]["episodios"][2]["perdida"]["valor"] = 12.0
+    out["valido_div_estres_con_ganancia.json"] = gan
+    kv = copy.deepcopy(out["valido_cri_k_no_estimable.json"])   # clase K casi toda NO_ESTIMABLE en N2: honesto, no se rechaza
+    pl = kv["payload"]
+    for x in [e["perdida"] for e in pl["estres_historico"]["episodios"]] + [e["beta"] for e in pl["factores"]["exposiciones"]] \
+            + [pl["factores"]["calidad_ajuste"]]:
+        x.update(valor=None, estado="NO_ESTIMABLE"); x.pop("modelo_ref", None); x.pop("motor_id", None)
+    out["valido_cri_k_vacio_n2.json"] = fin(kv)
+    return out
 
 
 def invalidos():
@@ -148,7 +168,9 @@ def invalidos():
 
     P = lambda s: s["payload"]
     caso("inv_V01_version_desconocida", lambda s: s.update(version_esquema="9.9.9"))
-    caso("inv_V01_version_no_texto", lambda s: s.update(version_esquema=["0.1.0"]))
+    caso("inv_V01_version_no_texto", lambda s: s.update(version_esquema=["0.2.0"]))
+    caso("inv_V01_version_retirada", lambda s: s.update(version_esquema="0.1.0"))
+    caso("inv_V01_entrada_en_texto", lambda s: P(s)["entrada_salida"].update(entrada="Límite en 1,08 durante 3 días"))
     caso("inv_V01_falta_campo", lambda s: P(s)["tesis"].pop("resumen"))
     caso("inv_V01_emitido_sin_zona", lambda s: s.update(emitido_en="2026-11-05T18:00:00"))
     caso("inv_V01_fecha_mal_formada", lambda s: P(s)["entrada_salida"].update(fecha_revision="mañana"))
@@ -158,7 +180,8 @@ def invalidos():
          P(s)["identificacion"].update(perfil="C-RF", clase_comparabilidad="S"),
          P(s)["capa3"].update(tope_confianza=0.60, confianza=0.50),
          P(s)["cuerpo_especializado"].update(esquema_ref="C-RF-cuerpo")))
-    caso("inv_V03_caducado", lambda s: s.update(valid_until="2026-11-05T19:00:00+00:00"))
+    caso("inv_V03_caducado", lambda s: (s.update(valid_until="2026-11-05T19:00:00+00:00"),
+         P(s)["entrada_salida"]["entrada"].update(ventana_hasta="2026-11-05T18:30:00+00:00")))
     caso("inv_V03_vigencia_excesiva", lambda s: s.update(valid_until="2036-11-05T18:00:00+00:00"))
     caso("inv_V03_valid_until_anterior", lambda s: s.update(valid_until="2026-11-05T17:00:00+00:00"))
     caso("inv_V03_emitido_en_futuro", lambda s: s.update(emitido_en="2026-11-07T18:00:00+00:00",
@@ -182,6 +205,18 @@ def invalidos():
     caso("inv_V13_un_solo_escenario", lambda s: P(s)["capa2"].update(escenarios=[
         {"nombre": "unico", "probabilidad": 1.0, "rentabilidad_neta_pct": 50.0, "horizonte_dias": 90}]))
     caso("inv_V13_no_estimable_con_metodo", lambda s: P(s)["capa2"].update(estado="NO_ESTIMABLE"))
+    caso("inv_V13_supuesto_un_escenario", lambda s: P(s)["capa2"].update(estado="SUPUESTO", escenarios=[
+        {"nombre": "unico", "probabilidad": 1.0, "rentabilidad_neta_pct": 5.0, "horizonte_dias": 90}]))
+    caso("inv_V13_supuesto_probabilidades", lambda s: (P(s)["capa2"].update(estado="SUPUESTO"),
+         P(s)["capa2"]["escenarios"][0].update(probabilidad=0.9)))
+    caso("inv_V13_no_estimable_con_horizonte", lambda s: P(s).update(capa2={"estado": "NO_ESTIMABLE", "horizonte_dias": 90}))
+    caso("inv_V25_sin_horizonte_comun", lambda s: P(s)["capa2"].pop("horizonte_dias"))
+    caso("inv_V25_escenario_con_otro_horizonte", lambda s: P(s)["capa2"]["escenarios"][1].update(horizonte_dias=30))
+    caso("inv_V25_sin_distribucion", lambda s: P(s)["capa2"].pop("distribucion"))
+    caso("inv_V25_distribucion_desordenada", lambda s: P(s)["capa2"]["distribucion"].update(p05=2.0))
+    caso("inv_V25_distribucion_bajo_menos_100", lambda s: P(s)["capa2"]["distribucion"].update(p05=-120.0))
+    caso("inv_V25_supuesto_sin_horizonte", lambda s: (P(s)["capa2"].update(estado="SUPUESTO"), P(s)["capa2"].pop("horizonte_dias")))
+    caso("inv_V25_horizonte_sin_escenarios", lambda s: P(s).update(capa2={"estado": "SUPUESTO", "horizonte_dias": 90}))
     caso("inv_V14_confianza_sobre_tope", lambda s: P(s)["capa3"].update(confianza=0.95))
     caso("inv_V14_discrepa_sin_rebaja", lambda s: (P(s)["capa3"]["doble_analisis"].update(discrepa=True),
          P(s)["capa3"].update(confianza=0.70)))
@@ -192,7 +227,6 @@ def invalidos():
         a = P(s)["capital"]["apalancamiento"]
         a.update(valor=None, estado="NO_ESTIMABLE"); a.pop("modelo_ref"); a.pop("motor_id"); fin(s)
     caso("inv_V15_apalancamiento_no_estimable", apal_ne)
-    caso("inv_V16_bloqueado", lambda s: P(s)["exclusiones_duras"].update(sanciones="BLOQUEADO"))
     caso("inv_V16_desconocido_en_n3", lambda s: P(s)["exclusiones_duras"].update(acceso="DESCONOCIDO"))
     caso("inv_V17_unidad_costes", lambda s: P(s)["costes"]["entrada"].update(unidad="%"))
     caso("inv_V17_unidad_coste_salida", lambda s: P(s)["liquidez"]["coste_salida"].update(unidad="EUR"))
@@ -208,6 +242,20 @@ def invalidos():
     caso("inv_V21_r2_fuera_de_rango", lambda s: P(s)["factores"]["calidad_ajuste"].update(valor=7.0))
     caso("inv_V21_tiempo_negativo", lambda s: P(s)["liquidez"]["tiempo_salida"].update(valor=-1))
     caso("inv_V22_stop_sobre_objetivo", lambda s: P(s)["entrada_salida"]["stop"].update(valor=2.0))
+    caso("inv_V22_limite_bajo_el_stop", lambda s: P(s)["entrada_salida"]["entrada"]["limite"].update(valor=1.04))
+    caso("inv_V22_limite_sobre_el_objetivo", lambda s: P(s)["entrada_salida"]["entrada"]["limite"].update(valor=1.15))
+    def lim_ne(s):
+        lim = P(s)["entrada_salida"]["entrada"]["limite"]
+        lim.update(valor=None, estado="NO_ESTIMABLE"); lim.pop("modelo_ref"); lim.pop("motor_id"); fin(s)
+    caso("inv_V24_limite_no_estimable", lim_ne)
+    caso("inv_V24_limite_en_otra_unidad", lambda s: P(s)["entrada_salida"]["entrada"]["limite"].update(unidad="EUR"))
+    caso("inv_V22_objetivo_en_otra_unidad", lambda s: P(s)["entrada_salida"]["objetivo"].update(unidad="%", valor=5.0))
+    caso("inv_V24_ventana_ya_cerrada", lambda s: P(s)["entrada_salida"]["entrada"].update(ventana_hasta="2026-11-06T08:00:00+00:00"))
+    caso("inv_V25_horizonte_no_entero", lambda s: (P(s)["capa2"].update(horizonte_dias=90.0),
+         [e.update(horizonte_dias=90.0) for e in P(s)["capa2"]["escenarios"]]))
+    caso("inv_V24_ventana_pasa_de_la_vigencia", lambda s: P(s)["entrada_salida"]["entrada"].update(ventana_hasta="2026-11-09T00:00:00+00:00"))
+    caso("inv_V24_ventana_antes_de_emitir", lambda s: P(s)["entrada_salida"]["entrada"].update(ventana_hasta="2026-11-05T17:00:00+00:00"))
+    caso("inv_V01_ventana_sin_zona", lambda s: P(s)["entrada_salida"]["entrada"].update(ventana_hasta="2026-11-08T18:00:00"))
     def vaciar(s):
         """Sobre K de nivel N2 en el que casi todo es NO_ESTIMABLE."""
         pl = s["payload"]
@@ -218,7 +266,7 @@ def invalidos():
             x.update(valor=None, estado="NO_ESTIMABLE")
             x.pop("modelo_ref", None); x.pop("motor_id", None)
         fin(s)
-    caso("inv_V23_sobre_vacio_n2", vaciar, base=c)
+    caso("inv_V23_sobre_vacio_q", lambda s: (vaciar(s), P(s)["capa3"].update(confianza=0.30)))    # la clase K queda fuera de V-23 (T-27): ver valido_cri_k_vacio_n2
     caso("inv_V05_n2_sin_capa2", lambda s: P(s).pop("capa2"), base=c)
     caso("inv_V05_n2_sin_capa3", lambda s: P(s).pop("capa3"), base=c)
     return out

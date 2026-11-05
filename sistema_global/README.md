@@ -5,7 +5,7 @@ Esta carpeta reúne lo que gobierna el sistema por encima de los bloques A, A Fo
 | Carpeta | Contenido |
 | --- | --- |
 | `constitucion/` | `Constitucion_Global.md`: la Constitución global (V0.3 vigente; el historial de git conserva la V0.1). Es la fuente de verdad: si algo de esta carpeta la contradice, vale la Constitución. |
-| `marco_comun_c/` | Código de referencia de la Fase 1 en Python (V0.27). Recorrido completo con datos simulados: detección, encargo, sobre, comparación, dimensionado, propuesta, control de riesgo, autorización, ejecución, vigilancia y cierre. Determinista, sin LLM, sin intermediario real. Su `LEEME.md` describe módulos, códigos y pruebas. |
+| `marco_comun_c/` | Código de referencia de la Fase 1 en Python (V0.28). Recorrido completo con datos simulados: detección, encargo, sobre, comparación, dimensionado, propuesta, control de riesgo, autorización, ejecución, vigilancia y cierre. Determinista, sin LLM, sin intermediario real. Su `LEEME.md` describe módulos, códigos y pruebas. |
 | `documentos_0/` | Un Documento 0 por pieza, nombrado por la versión del código que la introdujo (problema, diseño, reglas, revisión independiente y límites). |
 | `seguimiento/` | Deuda técnica (D-xx del operador, T-xx técnicas), briefing de arranque para retomar el trabajo en otra conversación y cuestionario de decisiones del operador. |
 
@@ -17,12 +17,12 @@ Requiere Python 3 con `jsonschema`. Desde `sistema_global/marco_comun_c/`:
 for f in pruebas/ejecutar_pruebas.py pruebas/pruebas_*.py; do python3 "$f" | tail -1; done
 ```
 
-Cada una de las 25 suites acaba con «TODAS LAS PRUEBAS PASAN».
+Cada una de las 26 suites acaba con «TODAS LAS PRUEBAS PASAN».
 
 ## Historial
 
-Cada versión del código (V0.1 a V0.27) es un commit propio con la fecha y hora de su entrega, de modo que `git log -- sistema_global/marco_comun_c` muestra cómo se construyó pieza a pieza. Los documentos se editaron en Claude Docs y se exportaron a Markdown el 5 de noviembre de 2026; las fechas y menciones de su cabecera quedan como texto y el diagrama de estados del Orquestador no se exporta.
+Cada versión del código (V0.1 a V0.28) es un commit propio con la fecha y hora de su entrega, de modo que `git log -- sistema_global/marco_comun_c` muestra cómo se construyó pieza a pieza. Los documentos se editaron en Claude Docs y se exportaron a Markdown el 5 de noviembre de 2026; las fechas y menciones de su cabecera quedan como texto y el diagrama de estados del Orquestador no se exporta.
 
 ## Siguiente paso
 
-T-27 (sobres más estrictos), pendiente antes de fijar las versiones 1.0.0 de los contratos. Lo que depende del operador está en la tabla D de `seguimiento/Deuda_tecnica_y_pendientes_del_operador.md`.
+T-48 (Contradictor exigido con modelo y proveedor) y T-49 (alertas de pérdida e invalidez de H), lo que queda de T-27 antes de fijar las versiones 1.0.0 de los contratos. Lo que depende del operador está en la tabla D de `seguimiento/Deuda_tecnica_y_pendientes_del_operador.md`.

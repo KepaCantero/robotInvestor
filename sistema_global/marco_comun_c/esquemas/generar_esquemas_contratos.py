@@ -177,11 +177,11 @@ ESQUEMAS[("CT-G-14", "0.2.0")] = {
 ESQUEMAS[("CT-G-14", "0.2.0")]["description"] += " Las reglas RM-01 a RM-11 las aplica validador/manual_g.py; data_refs = las órdenes del payload."
 
 # Versiones retiradas: su esquema se conserva para leer el histórico (contratos.validar(..., historico=True)); ningún consumidor las acepta
-RETIRADAS = {"CT-G-08": [("0.1.0", "ct-g-08_0.1.0.schema.json", "PARCIAL")], "CT-G-14": [("0.1.0", "ct-g-14_0.1.0.schema.json", "PROPIA")]}
+RETIRADAS = {"CT-G-02": [("0.1.0", "ct-g-02_0.1.0.schema.json", "COMPLETA")], "CT-G-08": [("0.1.0", "ct-g-08_0.1.0.schema.json", "PARCIAL")], "CT-G-14": [("0.1.0", "ct-g-14_0.1.0.schema.json", "PROPIA")]}
 
 REGISTRO = [
     ("CT-G-01", "Encargo de análisis", "Broker/gestor → C", "ESQUEMA", "0.1.0", "ct-g-01_0.1.0.schema.json", "COMPLETA"),
-    ("CT-G-02", "Sobre común de valoración", "C → verificación, D, Broker", "ESQUEMA", "0.1.0", "ct-g-02_0.1.0.schema.json", "COMPLETA"),
+    ("CT-G-02", "Sobre común de valoración", "C → verificación, D, Broker", "ESQUEMA", "0.2.0", "ct-g-02_0.2.0.schema.json", "COMPLETA"),
     ("CT-G-03", "Informe del Contradictor", "Contradictor → D, Broker", "ESQUEMA", "0.1.0", "ct-g-03_0.1.0.schema.json", "COMPLETA"),
     ("CT-G-04", "Petición de comparación", "Broker/gestor → D", "ESQUEMA", "0.1.0", "ct-g-04_0.1.0.schema.json", "COMPLETA"),
     ("CT-G-05", "Comparativa", "D → Broker/gestor", "ESQUEMA", "0.1.0", "ct-g-05_0.1.0.schema.json", "COMPLETA"),
