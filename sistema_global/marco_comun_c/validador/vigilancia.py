@@ -15,7 +15,7 @@ import math
 import math as _m
 
 from orquestador import NIVELES
-from ejecucion_g import _aviso, _instante, cerrar, conciliar
+from ejecucion_g import _aviso, _instante, cerrar, conciliar, revisar_entrada
 from orquestador import OPERADORES
 from validar_sobre import _dt
 
@@ -59,6 +59,12 @@ def vigilar(o, broker, datos, ahora, max_edad_min=MAX_EDAD_MIN):
         return {"acciones": [{"posicion": None, "regla": "H-09", "ok": False, "codigo": "H-09"}], "no_evaluadas": [], "conciliacion_ok": False,
                 "motivo": "instante ilegible"}
     acciones, no_eval, hechos = [], [], set()
+    # Órdenes de entrada vivas: si se ejecutaron se protegen y se reportan; si vencieron se cancelan (H-11)
+    for eid in sorted(o.expedientes):
+        x = o.expedientes[eid]
+        if x["estado"] == "AUTORIZADA" and (x.get("orden_entrada") or {}).get("estado") in ("ENVIADA", "PARCIAL", "EJECUTADA"):
+            r = revisar_entrada(o, eid, broker, ahora)
+            acciones.append({"expediente": eid, "posicion": None, "regla": "H-11", "ok": r["ok"], "codigo": r["codigo"]})
     # Primera pasada: hechos consumados (cierres pendientes y stops que el intermediario ya ejecutó).
     for pid in sorted(o.posiciones):
         p = o.posiciones[pid]

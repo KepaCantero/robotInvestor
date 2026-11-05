@@ -37,12 +37,24 @@ class BrokerSimulado:
         self.fraccion_mercado = fraccion_mercado
         self.ordenes, self.pos, self.perdida_dia_eur = {}, {}, 0.0
 
+    def _expirar(self):
+        """Una orden límite con valida_hasta deja de estar viva cuando el reloj del mercado pasa esa hora (GTD)."""
+        for r in self.ordenes.values():
+            x = r["orden"]
+            if x["tipo"] == "LIMITE" and r["estado"] == "ACEPTADA" and x.get("valida_hasta") and _dt(self.hora_datos) > _dt(x["valida_hasta"]):
+                r["estado"] = "CANCELADA"
+
+    def avanzar_reloj(self, hora):
+        self.hora_datos = hora
+        self._expirar()
+
     def enviar(self, o):
         if self.caido:
             raise ConexionPerdida("sin conexión con el intermediario")
         ok = (isinstance(o, dict) and isinstance(o.get("orden_id"), str) and ID.match(o["orden_id"]) and o.get("tipo") in ("LIMITE", "MERCADO", "STOP")
               and o.get("lado") in ("COMPRA", "VENTA") and isinstance(o.get("instrumento"), str) and isinstance(o.get("activo_base"), str)
-              and _num(o.get("cantidad"), 0) and (o["tipo"] == "MERCADO" or _num(o.get("precio"), 0)))
+              and _num(o.get("cantidad"), 0) and (o["tipo"] == "MERCADO" or _num(o.get("precio"), 0))
+              and (o.get("valida_hasta") is None or isinstance(o["valida_hasta"], str)))
         if not ok:
             return {"orden_id": o.get("orden_id") if isinstance(o, dict) else None, "estado": "RECHAZADA", "cantidad_ejecutada": 0.0, "precio_medio": None}
         prev = self.ordenes.get(o["orden_id"])
@@ -60,12 +72,15 @@ class BrokerSimulado:
             tiene = self.pos.get(o["instrumento"], {"cantidad": 0.0})["cantidad"] * signo
             if self.rechaza_stops or tiene + TOL < o["cantidad"]:
                 reg["estado"] = "RECHAZADA"
+            elif (o["lado"] == "VENTA" and p <= o["precio"]) or (o["lado"] == "COMPRA" and p >= o["precio"]):   # ya cruzado: salta al instante
+                self._fill(o, o["cantidad"], p)
+                reg["ejecutada"], reg["precio_medio"], reg["estado"] = o["cantidad"], p, "EJECUTADA"
         else:
             sale = o["tipo"] == "MERCADO" or (o["lado"] == "COMPRA" and p <= o["precio"]) or (o["lado"] == "VENTA" and p >= o["precio"])
             if sale:
                 q = o["cantidad"] * (self.fraccion_fill if o["tipo"] == "LIMITE" else self.fraccion_mercado)
                 self._fill(o, q, p)
-                reg["ejecutada"], reg["precio_medio"] = q, p
+                reg["ejecutada"], reg["precio_medio"] = q, p   # ejecución inmediata: el simulador no tiene reloj; G usará el instante de la llamada
                 reg["estado"] = "EJECUTADA" if q >= o["cantidad"] - TOL else "PARCIAL"
         return self._res(reg)
 
@@ -88,31 +103,42 @@ class BrokerSimulado:
         """Simula el mercado: cambia el precio y dispara los stops cruzados (se ejecutan al precio nuevo, como un salto)."""
         self.precios[instrumento] = precio
         if hora:
-            self.hora_datos = hora
+            self.hora_datos = hora   # también es el instante en que se ejecuta lo que el movimiento dispare
+        self._expirar()
         for r in self.ordenes.values():
             x = r["orden"]
             if x["tipo"] == "STOP" and r["estado"] == "ACEPTADA" and x["instrumento"] == instrumento \
                     and ((x["lado"] == "VENTA" and precio <= x["precio"]) or (x["lado"] == "COMPRA" and precio >= x["precio"])):
                 self._fill(x, x["cantidad"], precio)
-                r["ejecutada"], r["precio_medio"], r["estado"] = x["cantidad"], precio, "EJECUTADA"
+                r["ejecutada"], r["precio_medio"], r["estado"], r["ejecutada_en"] = x["cantidad"], precio, "EJECUTADA", self.hora_datos
+        for r in self.ordenes.values():   # una orden límite viva se ejecuta si el precio la alcanza
+            x = r["orden"]
+            if x["tipo"] == "LIMITE" and r["estado"] == "ACEPTADA" and x["instrumento"] == instrumento \
+                    and ((x["lado"] == "COMPRA" and precio <= x["precio"]) or (x["lado"] == "VENTA" and precio >= x["precio"])):
+                q = x["cantidad"] * self.fraccion_fill
+                self._fill(x, q, precio)
+                r["ejecutada"], r["precio_medio"], r["ejecutada_en"] = q, precio, self.hora_datos
+                r["estado"] = "EJECUTADA" if q >= x["cantidad"] - TOL else "PARCIAL"
 
     @staticmethod
     def _res(reg):
         o = reg["orden"]
         return {"orden_id": o["orden_id"], "estado": reg["estado"], "cantidad_ejecutada": reg["ejecutada"], "precio_medio": reg["precio_medio"],
-                "tipo": o["tipo"], "lado": o["lado"], "cantidad": o["cantidad"], "precio": o.get("precio"), "instrumento": o["instrumento"]}
+                "tipo": o["tipo"], "lado": o["lado"], "cantidad": o["cantidad"], "precio": o.get("precio"), "instrumento": o["instrumento"],
+                "ejecutada_en": reg.get("ejecutada_en")}
 
     def cancelar(self, orden_id):
         if self.caido:
             raise ConexionPerdida("sin conexión con el intermediario")
         r = self.ordenes.get(orden_id)
-        if r is not None and r["estado"] == "ACEPTADA":
+        if r is not None and r["estado"] in ("ACEPTADA", "PARCIAL"):   # de una parcial se cancela el resto; lo ejecutado queda
             r["estado"] = "CANCELADA"
         return self._res(r) if r else None
 
     def consultar(self, orden_id):
         if self.caido:
             raise ConexionPerdida("sin conexión con el intermediario")
+        self._expirar()
         r = self.ordenes.get(orden_id)
         return self._res(r) if r else None
 
@@ -160,17 +186,15 @@ def _id_libre(broker, base, reutilizable):
     raise ValueError("demasiados intentos con el mismo identificador")
 
 
-def _id_entrada(broker, base, instrumento):
-    """Identificador de la orden de entrada. Se reanuda la anterior solo si dejó una posición viva en el intermediario
-    (un reintento tras un fallo no duplica ni deja huérfana la posición); si ya se cerró, se empieza una nueva."""
-    viva = {p["instrumento"] for p in broker.posiciones()}
-    for n in range(1, 6):
+PENDIENTES = ("ENVIADA", "PARCIAL", "EJECUTADA")   # orden de entrada en curso: aún no conciliada ni cerrada
+
+
+def _id_nuevo(broker, base, usados=()):
+    """Identificador de un intento de entrada nuevo: nunca uno que el intermediario o el Orquestador ya conozcan."""
+    for n in range(1, 10):
         oid = f"{base}-{n}"
-        c = broker.consultar(oid)
-        if c is None:
-            return oid, False
-        if c["estado"] == "ACEPTADA" or (c["cantidad_ejecutada"] > 0 and instrumento in viva):
-            return oid, c["cantidad_ejecutada"] > 0
+        if oid not in usados and broker.consultar(oid) is None:
+            return oid
     raise ValueError("demasiados intentos de entrada")
 
 
@@ -178,7 +202,8 @@ def ejecutar(o, expediente_id, broker, ahora):
     """Ejecuta una propuesta AUTORIZADA. No lanza excepciones. Códigos: OK; G-01 (intermediario inalcanzable antes de enviar nada);
     G-02 (sin ejecución); G-03 (protección fallida: se cerró); G-04 (CRÍTICO: queda posición sin proteger);
     G-05 (el Orquestador rechazó lo ejecutado: se cerró); G-06 (no ejecutable: no se envió nada);
-    G-08 (fallo con órdenes ya enviadas: estado incierto, hay que conciliar)."""
+    G-08 (fallo con órdenes ya enviadas: estado incierto, hay que conciliar);
+    G-11 (la orden de entrada queda viva en el intermediario hasta que venza la ventana; la revisa `revisar_entrada`)."""
     est = {"enviado": False}
     try:
         return _ejecutar(o, expediente_id, broker, ahora, est)
@@ -201,31 +226,115 @@ def _ejecutar(o, eid, broker, ahora, est):
     e = o.expedientes.get(eid)
     if e is None or e["estado"] != "AUTORIZADA" or not e.get("control_f"):
         return _r(False, "G-06", "el expediente no está AUTORIZADA con un informe de F")
-    a = _dt(ahora)
-    cf, en = e["control_f"], e["propuesta"]["entrada"]
-    if o.ultimo_ahora and a < _dt(o.ultimo_ahora):
+    if o.ultimo_ahora and _dt(ahora) < _dt(o.ultimo_ahora):
         return _r(False, "G-06", "el instante recibido es anterior al último que vio el Orquestador; no se envía nada")
-    if a > min(_dt(en["ventana_hasta"]), _dt(e["sobre"]["valid_until"]), _dt(cf["valid_until"])) or o._sello_anulado(e):
+    oe = e.get("orden_entrada")
+    if oe and oe["estado"] in PENDIENTES:   # hay una entrada en curso: se revisa (y se protege si se ejecutó); nunca se envía otra
+        return revisar_entrada(o, eid, broker, ahora)
+    en, cf = e["propuesta"]["entrada"], e["control_f"]
+    if _dt(ahora) > _limite_entrada(o, e) or o._sello_anulado(e):
         return _r(False, "G-06", "la ventana de entrada, el sobre, el informe de F o el sello ya no valen; no se envía nada")
-    id_e, reanuda = _id_entrada(broker, f"ORD-{eid}-E", en["instrumento"])
+    if not o.autorizacion_vigente(e):
+        return _r(False, "G-06", "la autorización fue automática y la cartera ya no está en L2: la confirma el operador; no se envía nada")
     if any(p["instrumento"] == en["instrumento"] and p["estado"] != "CERRADA" for p in o.posiciones.values()) \
-            or (not reanuda and any(p["instrumento"] == en["instrumento"] for p in broker.posiciones())):
+            or any(p["instrumento"] == en["instrumento"] for p in broker.posiciones()):
         return _r(False, "G-06", "ya hay una posición sobre ese instrumento; en esta versión solo se admite una por instrumento")
+    previos = (oe or {}).get("anteriores", []) + ([oe] if oe else [])
+    for x in previos:   # un intento anterior que siga vivo (envío perdido que llegó tarde) se cancela antes de enviar otro
+        c = broker.consultar(x["orden_id"])
+        if c and c["estado"] in ("ACEPTADA", "PARCIAL"):
+            est["enviado"] = True
+            broker.cancelar(x["orden_id"])
+            c = broker.consultar(x["orden_id"])
+            if c and c["estado"] in ("ACEPTADA", "PARCIAL") or (c and c["cantidad_ejecutada"] > 0):
+                return _incierto(o, eid, ahora, f"un intento anterior ({x['orden_id']}) seguía vivo o se ejecutó")
+    id_e = _id_nuevo(broker, f"ORD-{eid}-E", {x["orden_id"] for x in previos})
+    st = [c for c in e["propuesta"]["salida"]["condiciones"] if c["tipo"] == "STOP"][0]
+    lado_e = "COMPRA" if st["operador"] in ("<", "<=") else "VENTA"
+    # se anota ENVIADA antes de enviar: si el envío se pierde, la revisión la marcará como rechazada; nunca hay una orden viva desconocida
+    t = o.orden_entrada(eid, id_e, "ENVIADA", 0.0, "G", _instante(o, ahora))
+    if not t["ok"]:
+        return _r(False, "G-06", f"el Orquestador no admite la orden de entrada ({t['codigo']}): {t['motivo']}")
+    est["enviado"] = True
+    r = broker.enviar({"instrumento": en["instrumento"], "activo_base": en["activo_base"], "orden_id": id_e, "tipo": "LIMITE",
+                       "lado": lado_e, "cantidad": cf["cantidad_aprobada"], "precio": en["limite"],
+                       "valida_hasta": _limite_entrada(o, e).isoformat()})   # caduca también en el intermediario, aunque G no vuelva
+    return _resolver(o, eid, broker, ahora, r, est)
+
+
+def _limite_entrada(o, e):
+    en, cf = e["propuesta"]["entrada"], e["control_f"]
+    return min(_dt(en["ventana_hasta"]), _dt(e["sobre"]["valid_until"]), _dt(cf["valid_until"]))
+
+
+def revisar_entrada(o, expediente_id, broker, ahora, forzar_cancelacion=False):
+    """Revisa la orden de entrada en curso. ENVIADA: si se ejecutó (toda o en parte) protege y reporta; si venció, la cartera
+    se degradó o se pide cancelar, la cancela. PARCIAL o EJECUTADA aún sin conciliar (p. ej., se perdió la conexión al poner
+    el stop): reanuda la protección. No lanza excepciones. Mismos códigos que ejecutar."""
+    est = {"enviado": True}
+    try:
+        e = o.expedientes.get(expediente_id) if isinstance(expediente_id, str) else None
+        oe = e.get("orden_entrada") if e else None
+        if not (e and e["estado"] == "AUTORIZADA" and oe and oe["estado"] in PENDIENTES):
+            return _r(False, "G-06", "no hay una orden de entrada en curso que revisar")
+        if o.ultimo_ahora and _dt(ahora) < _dt(o.ultimo_ahora):
+            return _r(False, "G-06", "el instante recibido es anterior al último que vio el Orquestador")
+        c = broker.consultar(oe["orden_id"])
+        if oe["estado"] != "ENVIADA":
+            if c is None or c["cantidad_ejecutada"] <= 0:
+                return _incierto(o, expediente_id, ahora, "la orden anotada como ejecutada no aparece ejecutada en el intermediario")
+            return _proteger(o, expediente_id, broker, ahora, c, oe["cantidad_ejecutada"], est)
+        if c is None:   # se anotó pero nunca llegó al intermediario
+            o.orden_entrada(expediente_id, oe["orden_id"], "RECHAZADA", 0.0, "G", _instante(o, ahora))
+            return _r(False, "G-02", "la orden de entrada no llegó al intermediario; se anota como rechazada")
+        return _resolver(o, expediente_id, broker, ahora, c, est, forzar_cancelacion)
+    except ConexionPerdida as ex:
+        oe = (o.expedientes.get(expediente_id) or {}).get("orden_entrada") if isinstance(expediente_id, str) else None
+        if oe and oe["estado"] == "ENVIADA":
+            return _r(False, "G-01", f"sin conexión con el intermediario; la orden sigue anotada como enviada y se revisará ({ex})")
+        return _incierto(o, expediente_id, ahora, f"conexión perdida con la entrada ya ejecutada: {ex}")
+    except Exception as ex:   # noqa: BLE001
+        return _incierto(o, expediente_id, ahora, f"{type(ex).__name__} al revisar la entrada")
+
+
+def cancelar_entrada(o, expediente_id, broker, ahora):
+    """Cancela a petición (operador o kill-switch) la orden de entrada viva. Lo que ya se hubiera ejecutado se protege y reporta."""
+    return revisar_entrada(o, expediente_id, broker, ahora, forzar_cancelacion=True)
+
+
+def _resolver(o, eid, broker, ahora, r, est, forzar=False):
+    """Decide qué hacer con la orden de entrada según su estado en el intermediario."""
+    e = o.expedientes[eid]
+    id_e = r["orden_id"]
+    vencida = forzar or _dt(ahora) > _limite_entrada(o, e) or o._sello_anulado(e) or not o.autorizacion_vigente(e)
+    if r["estado"] == "ACEPTADA" and not vencida:
+        return _r(False, "G-11", f"orden de entrada viva hasta {_limite_entrada(o, e).isoformat()}", orden_id=id_e, viva=True)
+    if r["estado"] in ("ACEPTADA", "PARCIAL"):   # vencida, cancelada a petición, o parcial: se cancela el resto (resto_parcial = CANCELAR)
+        broker.cancelar(id_e)
+        r2 = broker.consultar(id_e)
+        if r2 is None or r2["estado"] in ("ACEPTADA", "PARCIAL"):
+            return _incierto(o, eid, ahora, "la orden de entrada no se pudo cancelar")
+        r = r2
+    fq = r["cantidad_ejecutada"] or 0.0
+    if fq <= TOL:
+        estado = "RECHAZADA" if r["estado"] == "RECHAZADA" else "CANCELADA"
+        o.orden_entrada(eid, id_e, estado, 0.0, "G", _instante(o, ahora))
+        return _r(False, "G-02", f"sin ejecución ({r['estado']}{', cancelada' if vencida else ''}); nada que reportar al Orquestador")
+    estado = "EJECUTADA" if fq >= e["control_f"]["cantidad_aprobada"] - TOL else "PARCIAL"
+    t = o.orden_entrada(eid, id_e, estado, fq, "G", _instante(o, ahora))
+    if not t["ok"]:
+        return _incierto(o, eid, ahora, f"el Orquestador no anota la ejecución de la entrada ({t['codigo']})")
+    return _proteger(o, eid, broker, ahora, r, fq, est)
+
+
+def _proteger(o, eid, broker, ahora, r, fq, est):
+    e = o.expedientes[eid]
+    cf, en = e["control_f"], e["propuesta"]["entrada"]
+    id_e = r["orden_id"]
     st = [c for c in e["propuesta"]["salida"]["condiciones"] if c["tipo"] == "STOP"][0]
     largo = st["operador"] in ("<", "<=")
-    lado_e, lado_s = ("COMPRA", "VENTA") if largo else ("VENTA", "COMPRA")
+    lado_s = "VENTA" if largo else "COMPRA"
     base = {"instrumento": en["instrumento"], "activo_base": en["activo_base"]}
-    est["enviado"] = True
-    r = broker.enviar({**base, "orden_id": id_e, "tipo": "LIMITE", "lado": lado_e, "cantidad": cf["cantidad_aprobada"], "precio": en["limite"]})
-    fq = r["cantidad_ejecutada"] if r["estado"] in ("EJECUTADA", "PARCIAL") else 0.0
-    if r["estado"] == "ACEPTADA":
-        broker.cancelar(id_e)   # lo que no se ha ejecutado no se deja vivo
-        r2 = broker.consultar(id_e)
-        if r2["estado"] != "CANCELADA" and r2["cantidad_ejecutada"] <= 0:
-            return _incierto(o, eid, ahora, "la orden de entrada no se pudo cancelar")
-        fq = r2["cantidad_ejecutada"]
-    if fq <= 0:
-        return _r(False, "G-02", f"sin ejecución ({r['estado']}); nada que reportar al Orquestador")
     precio = r["precio_medio"]
     id_s = _id_libre(broker, f"ORD-{eid}-S", reutilizable=False)
 
@@ -235,13 +344,14 @@ def _ejecutar(o, eid, broker, ahora, est):
             broker.cancelar(id_s)
             neto = {p["instrumento"]: p["cantidad"] for p in broker.posiciones()}.get(en["instrumento"], 0.0)
             if abs(neto) > TOL:
-                id_x = _id_libre(broker, f"ORD-{eid}-X", reutilizable=True)
+                id_x = _id_libre(broker, f"ORD-{eid}-X", reutilizable=False)   # nunca la venta de un intento anterior
                 broker.enviar({**base, "orden_id": id_x, "tipo": "MERCADO", "lado": "VENTA" if neto > 0 else "COMPRA", "cantidad": abs(neto)})
             resto = {p["instrumento"]: p["cantidad"] for p in broker.posiciones()}.get(en["instrumento"], 0.0)
             vivo = broker.consultar(id_s)
         except Exception as ex:   # noqa: BLE001
             return _incierto(o, eid, ahora, f"{type(ex).__name__} al deshacer: {motivo}")
         if abs(resto) <= TOL and (vivo is None or vivo["estado"] != "ACEPTADA"):
+            o.orden_entrada(eid, id_e, "DESHECHA", fq, "G", _instante(o, ahora))   # cerrada y comprobada: admite un intento nuevo
             reg = _aviso(o, [{"tipo": "POSICION_CERRADA_POR_G", "ref": eid, "detalle": motivo}], ahora)
             return _r(False, codigo, motivo + " No queda posición ni stop vivos.", cerrada=True, aviso_registrado=reg)
         reg = _aviso(o, [{"tipo": "POSICION_SIN_PROTEGER", "ref": eid, "detalle": motivo + " Y no se pudo cerrar."}], ahora)
@@ -255,7 +365,8 @@ def _ejecutar(o, eid, broker, ahora, est):
     chk = broker.consultar(id_s)
     if not (p and abs(abs(p["cantidad"]) - fq) <= TOL and (p["cantidad"] > 0) == largo and chk and chk["estado"] == "ACEPTADA"):
         return deshacer("G-03", "el intermediario no confirma la posición y su stop.")
-    res = o.ejecutar(eid, {"orden_id": id_e, "cantidad": fq, "precio": precio, "conciliada": True, "proteccion_orden_ids": [id_s]}, "G", ahora)
+    res = o.ejecutar(eid, {"orden_id": id_e, "cantidad": fq, "precio": precio, "conciliada": True, "proteccion_orden_ids": [id_s],
+                           "ejecutada_en": r.get("ejecutada_en")}, "G", _instante(o, ahora))
     if not res["ok"]:
         return deshacer("G-05", f"el Orquestador rechazó la ejecución ({res['codigo']}: {res['motivo'][:80]}).")
     return _r(True, "OK", "ejecutada y conciliada", posicion_id=res.get("posicion_id"), cantidad=fq, precio=precio)
@@ -287,6 +398,17 @@ def conciliar(o, broker, ahora):
                     dif.append({"tipo": "PROTECCION", "ref": pid, "detalle": f"la orden de protección {prot} no está viva ({c['estado'] if c else 'inexistente'})"})
                 elif not (c["tipo"] == "STOP" and c["lado"] == lado_s and abs(c["cantidad"] - p["cantidad"]) <= TOL and c["precio"] == p["stop_precio"]):
                     dif.append({"tipo": "PROTECCION", "ref": pid, "detalle": f"el stop {prot} no coincide con la posición (tipo, lado, cantidad o precio)"})
+        for eid, e in o.expedientes.items():   # una orden de entrada viva que el Orquestador ya no espera abriría una posición sin control
+            oe = e.get("orden_entrada")
+            if not oe:
+                continue
+            esperada = oe["orden_id"] if (oe["estado"] == "ENVIADA" and e["estado"] == "AUTORIZADA") else None
+            for x in oe.get("anteriores", []) + [oe]:
+                if x["orden_id"] == esperada:
+                    continue
+                c = broker.consultar(x["orden_id"])
+                if c and c["estado"] in ("ACEPTADA", "PARCIAL"):
+                    dif.append({"tipo": "ENTRADA_HUERFANA", "ref": eid, "detalle": f"la orden de entrada {x['orden_id']} sigue viva y el Orquestador no la espera"})
         libres = {r["instrumento"] for r in manuales if r["vinculo"]["tipo"] == "LIBRE"}
         for ins in sorted(set(reales) | set(abiertas) | libres):
             ps = abiertas.get(ins, [])
@@ -299,6 +421,8 @@ def conciliar(o, broker, ahora):
             if abs(d) <= TOL:
                 if abs(libre) > TOL:
                     expl.append({"tipo": "MANUAL_DECLARADA", "ref": ins, "detalle": f"{libre:+} declarado por el operador (CT-G-14)"})
+            elif not ps and abs(libre) <= TOL and _entrada_en_curso(o, ins, real):
+                expl.append({"tipo": "ENTRADA_EN_CURSO", "ref": ins, "detalle": f"{real} de una orden de entrada ejecutada que G aún no ha protegido y reportado"})
             elif ps and real * esperado < 0:
                 dif.append({"tipo": "SENTIDO_O_ACTIVO", "ref": ref, "detalle": "el sentido no coincide con el intermediario"})
             elif ps and abs(d) <= tol * abs(esperado):
@@ -323,6 +447,18 @@ def conciliar(o, broker, ahora):
         return {"ok": False, "diferencias": [{"tipo": "SIN_CONEXION", "ref": None, "detalle": str(e)}], "explicadas": []}
     except Exception as e:   # noqa: BLE001
         return {"ok": False, "diferencias": [{"tipo": "ERROR", "ref": None, "detalle": type(e).__name__}], "explicadas": []}
+
+
+def _entrada_en_curso(o, ins, real):
+    """Cantidad que el intermediario tiene por una entrada en curso (ejecutada, aún sin conciliar): G la protegerá en su revisión."""
+    for e in o.expedientes.values():
+        oe = e.get("orden_entrada")
+        # solo mientras G aún no la ha visto ejecutada; si ya la anotó y no la protegió, es su fallo y debe verse como discrepancia
+        if e["estado"] == "AUTORIZADA" and oe and oe["estado"] == "ENVIADA" and e["propuesta"]["entrada"]["instrumento"] == ins:
+            st = [c for c in e["propuesta"]["salida"]["condiciones"] if c["tipo"] == "STOP"][0]
+            signo = 1 if st["operador"] in ("<", "<=") else -1
+            return real * signo > 0 and abs(real) <= e["control_f"]["cantidad_aprobada"] * (1 + 1e-12)
+    return False
 
 
 def _cierre_previo(broker, base):
