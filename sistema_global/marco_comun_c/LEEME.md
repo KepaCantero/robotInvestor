@@ -1,6 +1,6 @@
-# Marco común de C, sobres CT-G-02 y CT-G-01, K (datos de corte), Orquestador, Contradictor, consola N y control de riesgo F y ejecución G y vigilancia H y dimensionado E — V0.10 (provisional, 0.x)
+# Marco común de C, sobres CT-G-02 y CT-G-01, K (datos de corte), Orquestador, Contradictor, consola N y control de riesgo F y ejecución G y vigilancia H y dimensionado E y comparador D — V0.11 (provisional, 0.x)
 
-Fecha: 5 de noviembre de 2026 (V0.10: añade E, el dimensionado de posición; V0.9 añadió H, la vigilancia de posiciones, y el cierre de posiciones en G; V0.8 añadió G, la ejecución con intermediario simulado, y su conciliación; V0.7 añadió F). Fase 1 de la Constitución V0.3.
+Fecha: 5 de noviembre de 2026 (V0.11: añade D, el comparador de candidatos; V0.10 añadió E, el dimensionado de posición; V0.9 añadió H, la vigilancia de posiciones, y el cierre de posiciones en G; V0.8 añadió G, la ejecución con intermediario simulado, y su conciliación; V0.7 añadió F). Fase 1 de la Constitución V0.3.
 
 ## Contenido
 
@@ -48,12 +48,15 @@ python3 pruebas/pruebas_control_f.py
 python3 pruebas/pruebas_ejecucion_g.py
 python3 pruebas/pruebas_vigilancia.py
 python3 pruebas/pruebas_dimensionado.py
+python3 pruebas/pruebas_comparador.py
 python3 validador/validar_sobre.py sobre.json contexto.json
 ```
 
 Resultado esperado de cada script de pruebas: `TODAS LAS PRUEBAS PASAN`.
 
 ## Qué está comprobado y qué no
+
+- Comprobado en D (`validador/comparador.py`): 52 comprobaciones; códigos OK, D-01, D-03. Ordena solo dentro de una clase de comparabilidad, excluye con motivo (FORMA, DUPLICADO, EXCLUSION_DURA, CADUCADO, SIN_ESCENARIOS, SIN_RETORNO_POSITIVO), no depende del orden de entrada y declara AJUSTADA, sin ganador, si los dos primeros están a menos del 5 %. Límites: confianza y escenarios los declara el productor del sobre; sin normalizar horizontes ni descontar costes; pesos y margen sin calibrar [PROPUESTO]; el Orquestador no verifica que la comparación venga de D (T-16).
 
 - Comprobado en E (`validador/dimensionado.py`): 36 comprobaciones, incluida una prueba de 400 casos aleatorios en la que F aprueba siempre lo que E propone y el riesgo nunca supera el objetivo. Códigos OK, E-01..E-04. Límites: precios en euros sin conversión de divisa ni comisiones (T-10); no hay tabla de pasos por instrumento; un salto de precio puede superar la pérdida del stop.
 
