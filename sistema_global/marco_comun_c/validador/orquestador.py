@@ -24,6 +24,7 @@ from k_calidad import (Calendario, ERRORES, SinCobertura, estado_sello, hash_ser
 from validar_encargo import sobre_responde_a_encargo, validar_encargo  # noqa: E402
 from validar_sobre import _dt  # noqa: E402
 from validar_contradictor import validar_informe  # noqa: E402
+from control_f import POLITICA_DEFECTO, controlar, politica_valida, validar_informe_f  # noqa: E402
 
 VERSION_REGLAS = "ORQ-0.1.0"
 _FH = re.compile(r"^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(\.\d+)?(Z|[+-]\d{2}:\d{2})\Z")
@@ -66,7 +67,7 @@ OPERADORES = {"<": lambda v, u: v < u, "<=": lambda v, u: v <= u, ">": lambda v,
 
 CONFIG_DEFECTO = {"max_reintentos": 3, "umbral_corte_comun_dias_habiles": 0,
                   "dia_coste_max_eur": 50.0, "dia_tiempo_max_min": 600, "tolerancia_precio_entrada": 0.05,
-                  "exige_contradictor_en": [], "matriz_autonomia": {}}
+                  "exige_contradictor_en": [], "matriz_autonomia": {}, "politica_f": POLITICA_DEFECTO}
 # Prioridad de cada aviso para el operador [PROPUESTO]
 PRIORIDAD_AVISO = {"O-03": "ALTA", "O-08": "ALTA", "O-09": "ALTA", "O-13": "ALTA", "O-17": "ALTA"}
 ACTORES_PROPUESTA = {"H", "F", "D", "OPERADOR"} | EMISORES
@@ -82,7 +83,8 @@ class RelojRetrocede(Exception):
 
 def _valida_config(c):
     """La configuración se valida al construir: una configuración mala no arranca el Orquestador."""
-    ok = (all(isinstance(x, str) and x in ("N0", "N1", "N2", "N3") for x in c["exige_contradictor_en"])
+    ok = (politica_valida(c["politica_f"])
+          and all(isinstance(x, str) and x in ("N0", "N1", "N2", "N3") for x in c["exige_contradictor_en"])
           and isinstance(c.get("perfiles_activos"), list) and c["perfiles_activos"] and all(isinstance(x, str) for x in c["perfiles_activos"])
           and isinstance(c.get("clases_ratificadas"), dict) and isinstance(c.get("apalancamiento_permitido"), bool)
           and all(_num(c[k]) and c[k] > 0 for k in ("dia_coste_max_eur", "dia_tiempo_max_min", "tolerancia_precio_entrada"))
@@ -91,6 +93,8 @@ def _valida_config(c):
           and c["umbral_corte_comun_dias_habiles"] >= 0
           and isinstance(c["exige_contradictor_en"], list) and isinstance(c["matriz_autonomia"], dict)
           and all(isinstance(v, bool) for v in c["matriz_autonomia"].values()))
+    if ok and not c["apalancamiento_permitido"] and c["politica_f"]["apalancamiento_max"] > 1:
+        ok = False   # la política de F no puede permitir lo que el sistema prohíbe
     if not ok:
         raise ValueError("configuración del Orquestador inválida")
 
@@ -128,7 +132,7 @@ def _seguro(fn):
 
 class Orquestador:
     def __init__(self, config, calendario):
-        cfg = {**CONFIG_DEFECTO, **config}
+        cfg = copy.deepcopy({**CONFIG_DEFECTO, **config})
         _valida_config(cfg)
         self.cfg = cfg
         self.ultimo_ahora, self.ordenes_usadas = None, []
@@ -211,6 +215,13 @@ class Orquestador:
         if not self._propuesta_ok(e):
             return None, _no("O-13", "la propuesta no coincide con la registrada en el historial")
         return e, None
+
+    def _compromisos(self, excluir, cartera):
+        """Posiciones abiertas y autorizaciones sin ejecutar de esa cartera: la cartera que F recibe debe incluirlas."""
+        out = [[x["propuesta"]["entrada"]["instrumento"], x["propuesta"]["entrada"]["activo_base"]]
+               for k, x in self.expedientes.items() if k != excluir and x["estado"] == "AUTORIZADA" and x["cartera_destino"] == cartera]
+        out += [[p["instrumento"], p["activo_base"]] for p in self.posiciones.values() if p["cartera"] == cartera and p["estado"] != "CERRADA"]
+        return out
 
     def _sello_anulado(self, e):
         en = self.encargos.get(e["encargo_actual"])
@@ -540,6 +551,11 @@ class Orquestador:
         ce, cs = condiciones_entrada, condiciones_salida
         if not (isinstance(ce, dict) and _num(ce.get("limite")) and isinstance(ce.get("ventana_hasta"), str) and _FH.match(ce["ventana_hasta"])):
             return _no("O-01", "condiciones_entrada: faltan límite numérico y ventana_hasta")
+        if not (isinstance(ce.get("instrumento"), str) and _ID.match(ce["instrumento"]) and isinstance(ce.get("activo_base"), str) and _ID.match(ce["activo_base"])
+                and _num(ce.get("cantidad")) and ce["cantidad"] > 0 and _num(ce.get("apalancamiento")) and ce["apalancamiento"] >= 1 and ce["limite"] > 0):
+            return _no("O-01", "condiciones_entrada: faltan instrumento, activo_base, cantidad positiva, apalancamiento (>= 1) y límite positivo")
+        if ce["apalancamiento"] > 1 and not self.cfg["apalancamiento_permitido"]:
+            return _no("O-06", "el apalancamiento no está permitido")
         if _dt(ce["ventana_hasta"]) <= a:
             return _no("O-10", "la ventana de entrada ya venció")
         conds = cs.get("condiciones") if isinstance(cs, dict) else None
@@ -548,8 +564,9 @@ class Orquestador:
             return _no("O-01", "condiciones_salida: deben ser numéricas (id, métrica, operador, umbral)")
         if len({c["id"] for c in conds}) != len(conds):
             return _no("O-01", "condiciones_salida: ids repetidos")
-        if not any(c.get("tipo") == "STOP" for c in conds):
-            return _no("O-01", "condiciones_salida: falta una condición de tipo STOP")
+        stops = [c for c in conds if c.get("tipo") == "STOP"]
+        if len(stops) != 1 or stops[0]["metrica"] != "precio":
+            return _no("O-01", "condiciones_salida: debe haber exactamente un STOP y su métrica debe ser el precio")
         e["propuesta"] = {"entrada": copy.deepcopy(ce), "salida": copy.deepcopy(cs)}
         self._anota(e, e["estado"], "PROPUESTA", actor, ahora, "propuesta", datos=_hash(e["propuesta"]))
         return _r(True, "OK", "propuesta registrada")
@@ -565,17 +582,27 @@ class Orquestador:
             return err
         if actor == "MATRIZ_AUTONOMIA" and not self.cfg["matriz_autonomia"].get(e["cartera_destino"], False):
             return _no("O-05", "la matriz de autonomía no autoriza esta cartera sin el operador")
-        if not (isinstance(control_f, dict) and control_f.get("resultado") in ("APROBADO", "REDUCIDO", "VETADO")
-                and isinstance(control_f.get("event_id"), str)):
-            return _no("O-01", "falta el resultado de control de F (CT-G-08)")
-        if control_f["resultado"] == "VETADO":
-            return _no("O-06", "F vetó la propuesta")
+        if not isinstance(control_f, dict) or not isinstance(control_f.get("event_id"), str):
+            return _no("O-01", "falta el informe de control de F (CT-G-08)")
+        ih = _hash(control_f)
+        dup = self._duplicado(control_f["event_id"], ih, expediente_id, ahora)
+        if dup:
+            return _no("O-03", "el informe de F ya se usó")
         if a > _dt(e["propuesta"]["entrada"]["ventana_hasta"]) or a > _dt(e["sobre"]["valid_until"]):
             return _no("O-10", "la propuesta caducó")
         if self._sello_anulado(e):
             return _no("O-06", "el sello del análisis ya no es válido")
-        e["control_f"] = control_f["resultado"]
-        self._anota(e, e["estado"], "AUTORIZADA", actor, ahora, f"control F: {control_f['resultado']}", control_f["event_id"])
+        fallos = validar_informe_f(control_f, {"ahora": ahora, "expediente_id": expediente_id, "correlation_id": e["correlation_id"],
+                                               "propuesta": e["propuesta"], "cartera_destino": e["cartera_destino"], "politica": self.cfg["politica_f"],
+                                               "compromisos": self._compromisos(expediente_id, e["cartera_destino"])})
+        if fallos:
+            return _no("O-01", f"informe de F no válido: {fallos[0]['regla']}: {fallos[0]['mensaje'][:80]}", reglas=sorted({x['regla'] for x in fallos}))
+        self.eventos[control_f["event_id"]] = {"hash": ih, "expediente_id": expediente_id}
+        if control_f["resultado"] == "VETADO":
+            return _no("O-06", "F vetó la propuesta")
+        e["control_f"] = {"resultado": control_f["resultado"], "cantidad_aprobada": control_f["cantidad_aprobada"], "event_id": control_f["event_id"],
+                          "emitido_en": control_f["emitido_en"], "valid_until": control_f["valid_until"], "entradas": copy.deepcopy(control_f["entradas"])}
+        self._anota(e, e["estado"], "AUTORIZADA", actor, ahora, f"control F: {control_f['resultado']} ({control_f['cantidad_aprobada']})", control_f["event_id"])
         return _r(True, "OK", "autorizada")
 
     @_seguro
@@ -599,6 +626,15 @@ class Orquestador:
             return _no("O-10", "la ventana de entrada o el sobre vencieron antes de ejecutar")
         if self._sello_anulado(e):
             return _no("O-06", "el sello del análisis ya no es válido")
+        cf = e["control_f"]
+        if a > _dt(cf["valid_until"]):
+            return _no("O-10", "el informe de F venció antes de ejecutar")
+        if orden["cantidad"] > cf["cantidad_aprobada"]:
+            return _no("O-06", "la orden supera la cantidad que F aprobó")
+        real = controlar({**cf["entradas"]["solicitud"], "cantidad": orden["cantidad"], "precio_entrada": orden["precio"]},
+                         cf["entradas"]["cartera"], cf["entradas"]["politica"], cf["emitido_en"])
+        if real["resultado"] != "APROBADO":
+            return _no("O-06", "con el precio y la cantidad reales F no aprobaría la orden (stop, riesgo o tamaño)")
         lim = e["propuesta"]["entrada"]["limite"]
         if abs(orden["precio"] - lim) > self.cfg["tolerancia_precio_entrada"] * abs(lim):
             return _no("O-06", "el precio de ejecución se aleja del límite autorizado")
@@ -609,6 +645,7 @@ class Orquestador:
             return _no("O-03", "la posición ya existe")
         self.posiciones[pid] = {"posicion_id": pid, "expediente_id": e["expediente_id"], "cartera": e["cartera_destino"],
                                 "cantidad": orden["cantidad"], "estado": "ABIERTA", "historial": [],
+                                "instrumento": e["propuesta"]["entrada"]["instrumento"], "activo_base": e["propuesta"]["entrada"]["activo_base"],
                                 "condiciones_salida": copy.deepcopy(e["propuesta"]["salida"]), "protecciones": list(prot), "propuestas": []}
         self.ordenes_usadas += [orden["orden_id"], *prot]
         self._anota(self.posiciones[pid], None, "ABIERTA", "G", ahora, "orden conciliada", orden["orden_id"])

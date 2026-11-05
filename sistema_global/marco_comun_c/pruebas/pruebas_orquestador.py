@@ -17,6 +17,7 @@ from pruebas_encargo import encargo_div, SELLOS as SELLOS_ENC  # noqa: E402
 from pruebas_k import CAL, CTX as CTX_K, construir as construir_k  # noqa: E402
 from generar_casos import validos as sobres_validos  # noqa: E402
 from pruebas_contradictor import informe as informe_ctr, obj as obj_ctr  # noqa: E402
+from pruebas_control_f import informe_f  # noqa: E402
 
 CFG = {"perfiles_activos": ["C-DIV", "C-RV", "C-CRI"], "apalancamiento_permitido": False,
        "clases_ratificadas": {"C-DIV": "Q", "C-RV": "Q", "C-CRI": "K", "C-RF": "S"}}
@@ -26,7 +27,8 @@ S1 = SELLOS_ENC["K-20261105-001"]
 S2 = SELLOS_ENC["K-20261106-001"]
 STOP = {"id": "STOP-1", "tipo": "STOP", "metrica": "precio", "operador": "<=", "umbral": 1.05, "unidad": "USD"}
 OBJ = {"id": "OBJ-1", "tipo": "OBJETIVO", "metrica": "precio", "operador": ">=", "umbral": 1.15, "unidad": "USD"}
-ENTRADA = {"limite": 1.10, "ventana_hasta": "2026-11-08T12:00:00+00:00"}
+ENTRADA = {"limite": 1.10, "ventana_hasta": "2026-11-08T12:00:00+00:00", "instrumento": "EURUSD", "activo_base": "EUR",
+           "apalancamiento": 1.0, "cantidad": 100.0}
 SALIDA = {"condiciones": [STOP, OBJ], "fecha": "2026-12-05"}
 
 
@@ -59,7 +61,7 @@ def sobre(n=1, corte="2026-11-05", sello="K-20261105-001"):
     return s
 
 
-def hasta(o, estado, n=1, ahora=AHORA):
+def hasta(o, estado, n=1, ahora=AHORA, entrada=None):
     """Lleva el expediente EXP-000n hasta `estado` por el camino feliz (sin cambiar el reloj)."""
     if estado == "DESDE_CERO":
         return
@@ -80,10 +82,10 @@ def hasta(o, estado, n=1, ahora=AHORA):
     assert o.comparar([f"EXP-{n:04d}", f"EXP-{n + 1:04d}"], "D", ahora)["ok"]
     if estado == "COMPARADA":
         return
-    assert o.proponer(f"EXP-{n:04d}", ENTRADA, SALIDA, "GESTOR_TACTICA", ahora)["ok"]
+    assert o.proponer(f"EXP-{n:04d}", entrada or ENTRADA, SALIDA, "GESTOR_TACTICA", ahora)["ok"]
     if estado == "PROPUESTA":
         return
-    assert o.autorizar(f"EXP-{n:04d}", "OPERADOR", {"resultado": "APROBADO", "event_id": "EV-F-1"}, ahora)["ok"]
+    assert o.autorizar(f"EXP-{n:04d}", "OPERADOR", informe_f(o, f"EXP-{n:04d}", n), ahora)["ok"]
     if estado == "AUTORIZADA":
         return
     r = o.ejecutar(f"EXP-{n:04d}", {"orden_id": "ORD-1", "cantidad": 100.0, "precio": 1.1, "conciliada": True,
@@ -320,11 +322,11 @@ def main():
     R("proponer_ventana_vencida_O10", o, lambda: o.proponer("EXP-0001", {**ENTRADA, "ventana_hasta": "2026-11-06T08:00:00+00:00"}, SALIDA, "BROKER", AHORA), "O-10")
     R("proponer_limite_no_numerico_O01", o, lambda: o.proponer("EXP-0001", {**ENTRADA, "limite": "alto"}, SALIDA, "BROKER", AHORA), "O-01")
     o = nuevo(); hasta(o, "PROPUESTA")
-    F = {"resultado": "APROBADO", "event_id": "EV-F-1"}
+    F = informe_f(o)
     R("autorizar_actor_G_O05", o, lambda: o.autorizar("EXP-0001", "G", F, AHORA), "O-05")
     R("autorizar_matriz_sin_permiso_O05", o, lambda: o.autorizar("EXP-0001", "MATRIZ_AUTONOMIA", F, AHORA), "O-05")
     R("autorizar_sin_control_F_O01", o, lambda: o.autorizar("EXP-0001", "OPERADOR", None, AHORA), "O-01")
-    R("autorizar_vetado_por_F_O06", o, lambda: o.autorizar("EXP-0001", "OPERADOR", {**F, "resultado": "VETADO"}, AHORA), "O-06")
+    R("autorizar_vetado_por_F_O06", o, lambda: o.autorizar("EXP-0001", "OPERADOR", informe_f(o, n=2, cartera={"perdida_dia_eur": 5000.0}), AHORA), "O-06", mutacion_permitida=True)
     R("autorizar_propuesta_caducada_O10", o, lambda: o.autorizar("EXP-0001", "OPERADOR", F, "2026-11-08T13:00:00+00:00"), "O-10")
     o = nuevo({"matriz_autonomia": {"TACTICA": True}}); hasta(o, "PROPUESTA")
     h.chk("autorizar_matriz_con_permiso_ok", o.autorizar("EXP-0001", "MATRIZ_AUTONOMIA", F, AHORA)["ok"])
