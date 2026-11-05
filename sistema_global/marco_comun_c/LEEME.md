@@ -1,6 +1,6 @@
-# Marco común de C, sobres CT-G-02 y CT-G-01, K (datos de corte), Orquestador y Contradictor — V0.5 (provisional, 0.x)
+# Marco común de C, sobres CT-G-02 y CT-G-01, K (datos de corte), Orquestador, Contradictor y consola N — V0.6 (provisional, 0.x)
 
-Fecha: 5 de noviembre de 2026 (V0.5: añade el Contradictor CT-G-03). Fase 1 de la Constitución V0.3.
+Fecha: 5 de noviembre de 2026 (V0.6: añade la consola N mínima). Fase 1 de la Constitución V0.3.
 
 ## Contenido
 
@@ -21,6 +21,8 @@ Fecha: 5 de noviembre de 2026 (V0.5: añade el Contradictor CT-G-03). Fase 1 de 
 | `esquemas/ct-g-03_0.1.0.schema.json` y `esquemas/generar_esquema_contradictor.py` | Esquema del informe del Contradictor CT-G-03 |
 | `validador/validar_contradictor.py` | Reglas C-01 a C-10 del informe |
 | `pruebas/pruebas_contradictor.py` | 37 comprobaciones del informe |
+| `validador/consola.py` | N mínimo: panel verde/ámbar/rojo, cola de decisiones del operador y avisos pendientes (solo lectura) |
+| `pruebas/pruebas_consola.py` | 41 comprobaciones de la consola |
 | `pruebas/pruebas_orquestador.py` | 176 comprobaciones del Orquestador (transiciones, actores, caducidad, presupuesto, reloj, integridad) |
 
 El documento explicativo es la Constitución de C: «Marco común de C y sobre CT-G-02».
@@ -39,6 +41,7 @@ python3 pruebas/pruebas_k.py
 python3 esquemas/generar_esquema_contradictor.py > esquemas/ct-g-03_0.1.0.schema.json
 python3 pruebas/pruebas_contradictor.py
 python3 pruebas/pruebas_orquestador.py
+python3 pruebas/pruebas_consola.py
 python3 validador/validar_sobre.py sobre.json contexto.json
 ```
 
