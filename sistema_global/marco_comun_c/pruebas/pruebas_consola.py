@@ -89,10 +89,12 @@ def main():
     h.chk("avisos_pendientes_son_copias", len(avisos_pendientes(o)) == 2 and comp(o, "avisos") == "ROJO")
     o = nuevo(); hasta(o, "PROPUESTA"); o.expedientes["EXP-0001"]["propuesta"]["entrada"]["limite"] = 9.9
     h.chk("propuesta_alterada_es_rojo", comp(o, "integridad") == "ROJO" and "EXP:EXP-0001" in o.integridad())
-    o = nuevo(); hasta(o, "EJECUTADA"); o.detectar("POS-EXP-0001", "COR-9", "DISCRECIONAL", "TACTICA", "GESTOR_TACTICA", AHORA)
-    o.expedientes["POS-EXP-0001"]["historial"][0]["actor"] = "x"
-    h.chk("colision_de_ids_no_oculta_historial_roto", comp(o, "integridad") == "ROJO" and o.integridad() == ["EXP:POS-EXP-0001"], o.integridad())
-    h.chk("cabezas_no_colisionan", {"EXP:POS-EXP-0001", "POS:POS-EXP-0001"} <= set(o.cabezas()))
+    o = nuevo(); hasta(o, "EJECUTADA")
+    h.chk("colision_de_ids_ya_no_se_puede_crear", o.detectar("POS-EXP-0001", "COR-9", "DISCRECIONAL", "TACTICA", "GESTOR_TACTICA", AHORA)["codigo"] == "O-01"
+          and o.detectar("TACTICA", "COR-8", "DISCRECIONAL", "TACTICA", "GESTOR_TACTICA", AHORA)["codigo"] == "O-01")
+    o.expedientes["EXP-0001"]["historial"][0]["actor"] = "x"
+    h.chk("historial_roto_es_rojo", comp(o, "integridad") == "ROJO" and o.integridad() == ["EXP:EXP-0001"], o.integridad())
+    h.chk("cabezas_no_colisionan", {"EXP:EXP-0001", "POS:POS-EXP-0001"} <= set(o.cabezas()))
     o = nuevo(); hasta(o, "DETECTADA")
     r = o.acusar_aviso("AV-00001", "BROKER", "2099-01-01T00:00:00Z")
     h.chk("llamada_rechazada_no_adelanta_el_reloj", not r["ok"] and o.detectar("EXP-0005", "COR-5", "DISCRECIONAL", "TACTICA", "GESTOR_TACTICA", AHORA)["ok"])

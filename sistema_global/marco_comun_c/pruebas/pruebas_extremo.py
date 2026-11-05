@@ -113,9 +113,16 @@ def main():
     b.caido = True
     v = vigilar(o, b, {"EURUSD": {"precio": 1.20, "hora": T1}}, T1)
     h.chk("caida: no se da nada por cerrado y la conciliación falla", o.posiciones["POS-EXP-0001"]["estado"] != "CERRADA" and not v["conciliacion_ok"], v)
+    h.chk("caida: no poder conciliar degrada las carteras", o.nivel("TACTICA") == "L1" and any("SIN_CONEXION" in x["motivo"] for x in o.avisos), o.degradadas)
     b.caido = False
     v = vigilar(o, b, {"EURUSD": {"precio": 1.20, "hora": T1}}, T1)
-    h.chk("caida: al volver la conexión H cierra", o.posiciones["POS-EXP-0001"]["estado"] == "CERRADA" and b.posiciones() == [], v)
+    h.chk("caida: al volver la conexión H prepara el cierre (L1)", [a["regla"] for a in v["acciones"]] == ["H-10"] and o.posiciones["POS-EXP-0001"]["estado"] == "ABIERTA", v)
+    for x in o.avisos:
+        if x["acuse"] is None:
+            o.acusar_aviso(x["id"], "OPERADOR", T1)
+    assert o.restablecer_nivel("TACTICA", "OPERADOR", T1)["ok"]
+    v = vigilar(o, b, {"EURUSD": {"precio": 1.20, "hora": T1}}, T1)
+    h.chk("caida: restablecida la cartera, H cierra", o.posiciones["POS-EXP-0001"]["estado"] == "CERRADA" and b.posiciones() == [], v)
     # apalancamiento: sin permiso se rechaza; con permiso y política de F que lo admita, el recorrido funciona
     o = nuevo(); candidatos(o)
     assert o.comparar(["EXP-0001", "EXP-0002"], "D", AHORA)["ok"]
