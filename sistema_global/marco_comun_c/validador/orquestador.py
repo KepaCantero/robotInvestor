@@ -23,14 +23,14 @@ from k_calidad import (Calendario, ERRORES, SinCobertura, estado_sello, hash_ser
                        validar_sello)
 from validar_encargo import sobre_responde_a_encargo, validar_encargo  # noqa: E402
 from validar_sobre import _dt  # noqa: E402
-from manual_g import neto_libre, validar_manual, via_norm  # noqa: E402
+from manual_g import aplanar_manual, neto_libre, validar_manual, via_norm  # noqa: E402
 from comparador import MARGEN_AJUSTADO, REFERENCIA_EFECTIVO, _referencia_ok, comparar_candidatos  # noqa: E402
 from dimensionado import dimensionar  # noqa: E402
 from validar_contradictor import validar_informe  # noqa: E402
 from parametros import PARAMETROS, VERSION_PARAMETROS, como_dict  # noqa: E402
 from k_calidad import VERSION_REGLAS as VERSION_REGLAS_K  # noqa: E402
 from control_f import VERSION_REGLAS as VERSION_REGLAS_F  # noqa: E402
-from control_f import POLITICA_DEFECTO, controlar, divisa_cotizada, par_divisas, politica_valida, tipo_cambio, validar_informe_f  # noqa: E402
+from control_f import POLITICA_DEFECTO, aplanar_informe, controlar, divisa_cotizada, par_divisas, politica_valida, tipo_cambio, validar_informe_f  # noqa: E402
 
 VERSION_REGLAS = "ORQ-0.1.0"
 _FH = re.compile(r"^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(\.\d+)?(Z|[+-]\d{2}:\d{2})\Z")
@@ -1377,11 +1377,12 @@ class Orquestador:
                                                "compromisos": self._compromisos(expediente_id, e["cartera_destino"])})
         if fallos:
             return _no("O-01", f"informe de F no válido: {fallos[0]['regla']}: {fallos[0]['mensaje'][:80]}", reglas=sorted({x['regla'] for x in fallos}))
-        err = self._foto_de_g(control_f["entradas"]["cartera"], e["propuesta"]["entrada"]["instrumento"], e["propuesta"]["entrada"]["limite"])
+        cf = aplanar_informe(control_f)   # T-47: CT-G-08 0.2.0 llega envuelto; dentro se usa la forma plana
+        err = self._foto_de_g(cf["entradas"]["cartera"], e["propuesta"]["entrada"]["instrumento"], e["propuesta"]["entrada"]["limite"])
         if err:
             return err
         cap_e = (e["propuesta"].get("dimensionado") or {}).get("cartera", {}).get("capital_eur")
-        if cap_e != control_f["entradas"]["cartera"].get("capital_eur"):
+        if cap_e != cf["entradas"]["cartera"].get("capital_eur"):
             return _no("O-23", "F controló con un capital distinto del que usó E para dimensionar")
         return None
 
@@ -1398,27 +1399,28 @@ class Orquestador:
         err = self._comprobar_autorizacion(e, expediente_id, "OPERADOR", control_f, a, ahora)
         if err:
             return err
+        cf = aplanar_informe(control_f)   # el hash se toma del mensaje completo; las cifras, de su forma plana
         if control_f["event_id"] in self.eventos:
             self._duplicado(control_f["event_id"], _hash(control_f), expediente_id, ahora)
             return _no("O-03", "el informe de F ya se usó")
-        if control_f["resultado"] == "VETADO":   # el veto queda registrado: ese informe no se puede volver a usar
+        if cf["resultado"] == "VETADO":   # el veto queda registrado: ese informe no se puede volver a usar
             self.eventos[control_f["event_id"]] = {"hash": _hash(control_f), "expediente_id": expediente_id}
             return _no("O-06", "F vetó la propuesta: no hay nada que aprobar")
         en = e["propuesta"]["entrada"]
         st = [c for c in e["propuesta"]["salida"]["condiciones"] if c["tipo"] == "STOP"][0]
-        q = control_f["cantidad_aprobada"]
-        fx = tipo_cambio(control_f["entradas"]["solicitud"]["divisa_cotizacion"], control_f["entradas"]["cartera"])
+        q = cf["cantidad_aprobada"]
+        fx = tipo_cambio(cf["entradas"]["solicitud"]["divisa_cotizacion"], cf["entradas"]["cartera"])
         cfg = self.cfg["aprobacion"]
-        perdida = control_f["entradas"]["cartera"].get("perdida_dia_eur", 0.0)
+        perdida = cf["entradas"]["cartera"].get("perdida_dia_eur", 0.0)
         fuera = not _en_horario(a, cfg["horario_utc"])
         motivos_espera = (["pérdida en el día"] if perdida > cfg["enfriamiento_tras_perdida_dia_eur"] else []) + (["fuera de horario"] if fuera else [])
         espera = timedelta(minutes=cfg["enfriamiento_min"]) if motivos_espera else timedelta(0)
-        p = {"expediente_id": expediente_id, "informe_f": control_f["event_id"], "informe_f_hash": _hash(control_f), "resultado_f": control_f["resultado"],
+        p = {"expediente_id": expediente_id, "informe_f": control_f["event_id"], "informe_f_hash": _hash(control_f), "resultado_f": cf["resultado"],
              "instrumento": en["instrumento"], "via_acceso": en["via_acceso"], "direccion": "LARGO" if st["operador"] in ("<", "<=") else "CORTO",
              "fecha_revision": e["propuesta"]["salida"]["fecha"], "cantidad": q, "precio_limite": en["limite"], "stop": st["umbral"],
              "importe": round(q * en["limite"] * fx, 2), "riesgo": round(q * abs(en["limite"] - st["umbral"]) * fx, 2), "unidad_importe": "EUR",
-             "divisa_cotizacion": control_f["entradas"]["solicitud"]["divisa_cotizacion"], "tipo_cambio_eur": fx,
-             "apalancamiento": en["apalancamiento"], "cartera": e["cartera_destino"], "valid_until_f": control_f["valid_until"],
+             "divisa_cotizacion": cf["entradas"]["solicitud"]["divisa_cotizacion"], "tipo_cambio_eur": fx,
+             "apalancamiento": en["apalancamiento"], "cartera": e["cartera_destino"], "valid_until_f": cf["valid_until"],
              "generada_en": ahora, "caduca_en": (a + espera + timedelta(minutes=cfg["caduca_min"])).isoformat(),
              "enfriamiento_hasta": (a + espera).isoformat(), "motivos_enfriamiento": motivos_espera}
         p["hash"] = _hash(p)
@@ -1458,22 +1460,23 @@ class Orquestador:
         err = self._comprobar_autorizacion(e, expediente_id, actor, control_f, a, ahora)
         if err:
             return err
+        cf = aplanar_informe(control_f)
         ih = _hash(control_f)
         dup = self._duplicado(control_f["event_id"], ih, expediente_id, ahora)
         if dup:
             return _no("O-03", "el informe de F ya se usó")
-        if actor == "OPERADOR" and control_f["resultado"] != "VETADO":
+        if actor == "OPERADOR" and cf["resultado"] != "VETADO":
             err = self._comprobar_aprobacion(expediente_id, control_f, aprobacion, a)
             if err:
                 return err
             self.pantallas[expediente_id]["usada"] = True
         self.eventos[control_f["event_id"]] = {"hash": ih, "expediente_id": expediente_id}
-        if control_f["resultado"] == "VETADO":
+        if cf["resultado"] == "VETADO":
             return _no("O-06", "F vetó la propuesta")
-        e["control_f"] = {"resultado": control_f["resultado"], "cantidad_aprobada": control_f["cantidad_aprobada"], "event_id": control_f["event_id"],
-                          "emitido_en": control_f["emitido_en"], "valid_until": control_f["valid_until"], "entradas": copy.deepcopy(control_f["entradas"]),
+        e["control_f"] = {"resultado": cf["resultado"], "cantidad_aprobada": cf["cantidad_aprobada"], "event_id": cf["event_id"],
+                          "emitido_en": cf["emitido_en"], "valid_until": cf["valid_until"], "entradas": copy.deepcopy(cf["entradas"]),
                           "aprobacion": ({k: v for k, v in self.pantallas[expediente_id].items() if k != "usada"} if actor == "OPERADOR" else None)}
-        self._anota(e, e["estado"], "AUTORIZADA", actor, ahora, f"control F: {control_f['resultado']} ({control_f['cantidad_aprobada']})", control_f["event_id"],
+        self._anota(e, e["estado"], "AUTORIZADA", actor, ahora, f"control F: {cf['resultado']} ({cf['cantidad_aprobada']})", cf["event_id"],
                     datos=_hash(e["control_f"]))
         return _r(True, "OK", "autorizada")
 
@@ -1626,9 +1629,13 @@ class Orquestador:
         a = self._ahora(ahora)
         if not isinstance(registro, dict) or not isinstance(registro.get("event_id"), str):
             return _no("O-01", "registro CT-G-14 sin event_id")
-        v = registro.get("vinculo") if isinstance(registro.get("vinculo"), dict) else {}
+        plano = aplanar_manual(registro)   # T-47: CT-G-14 0.2.0 llega envuelto; dentro se usa la forma plana
+        if plano is None:
+            fallos = validar_manual(registro, {"ahora": ahora})
+            return _no("O-01", f"registro CT-G-14 no válido: {fallos[0]['regla']}: {fallos[0]['mensaje'][:80]}", reglas=sorted({x['regla'] for x in fallos}))
+        v = plano["vinculo"] if isinstance(plano["vinculo"], dict) else {}
         ref = v.get("id") if isinstance(v.get("id"), str) else None
-        h = _hash(registro)
+        h = _hash(registro)   # del mensaje completo: la misma operación con otra envoltura es otro contenido
         dup = self._duplicado(registro["event_id"], h, ref, ahora)
         if dup:
             return dup
@@ -1637,7 +1644,36 @@ class Orquestador:
         if (e is not None and not self._todo_ok(e)) or (p is not None and not self._posicion_ok(p)):
             self._activar_kill(f"integridad rota en {ref}", "ORQUESTADOR", self.ultimo_ahora or "1970-01-01T00:00:00+00:00")
             return _no("O-13", "el expediente o la posición vinculados no son íntegros (historial, sobre, propuesta, orden, aprobación o estado)")
-        ins = registro.get("instrumento")
+        err = self._reglas_manual(registro, plano, e, p, ahora)
+        if err:
+            return err
+        ins = plano.get("instrumento")
+        if v["tipo"] == "EXPEDIENTE":
+            orden = {"orden_id": plano["ref_intermediario"], "cantidad": plano["cantidad"], "precio": plano["precio"], "conciliada": True,
+                     "proteccion_orden_ids": [plano["proteccion_ref"]]}
+            r = self._ejecutar(e, orden, "OPERADOR", ahora, a, manual=True)
+            if not r["ok"]:
+                return r
+        elif v["tipo"] == "POSICION":
+            if p.get("reduccion"):   # una reducción a medias termina con el cierre total
+                p["reducciones"].append({**p["reduccion"], "restante": 0, "interrumpida": "cierre manual"})
+                p["reduccion"] = None
+            self._anota_pos(p, p["estado"], "CERRANDO", "OPERADOR", ahora, f"cierre manual declarado (CT-G-14): {plano['motivo'][:120]}")
+            p["cantidad"] = 0
+            self.ordenes_usadas.append(plano["ref_intermediario"])
+            self._anota_pos(p, "CERRANDO", "CERRADA", "OPERADOR", ahora, "cierre manual declarado (CT-G-14)", plano["ref_intermediario"])
+        else:   # LIBRE: fuera del control de F; queda a la vista del operador
+            self.ordenes_usadas.append(plano["ref_intermediario"])
+            self._aviso("O-20", f"operación libre declarada fuera del sistema (sin control de F ni stop): {plano['lado']} {plano['cantidad']} {ins}",
+                        ahora, plano["event_id"])
+        self.eventos[plano["event_id"]] = {"hash": h, "expediente_id": ref}
+        self.manuales.append(copy.deepcopy(plano))
+        return _r(True, "OK", f"registro manual aceptado ({v['tipo']})", posicion_id=(e or {}).get("posicion_id") or (p or {}).get("posicion_id"))
+
+    def _reglas_manual(self, registro, plano, e, p, ahora):
+        """Las reglas de CT-G-14 que no tocan nada (RM-01 a RM-11, O-03 orden ya usada, O-25 entrada viva)."""
+        v = plano["vinculo"]
+        ins = plano.get("instrumento")
         ocupado = any(q["estado"] != "CERRADA" and q["instrumento"] == ins for q in self.posiciones.values()) \
             or any(x["estado"] == "AUTORIZADA" and x.get("propuesta", {}).get("entrada", {}).get("instrumento") == ins for x in self.expedientes.values())
         desde = None
@@ -1647,35 +1683,51 @@ class Orquestador:
             desde = p["historial"][0]["ahora"]
         fallos = validar_manual(registro, {"ahora": ahora, "expediente": e, "posicion": p, "tolerancia_precio": self.cfg["tolerancia_precio_entrada"],
                                            "instrumentos_permitidos": self.cfg["instrumentos_permitidos"],
-                                           "instrumento_ocupado": ocupado, "no_antes_de": desde})
+                                           "instrumento_ocupado": ocupado, "no_antes_de": desde, "identidad": self._identidad_manual(e, p)})
         if fallos:
             return _no("O-01", f"registro CT-G-14 no válido: {fallos[0]['regla']}: {fallos[0]['mensaje'][:80]}", reglas=sorted({x['regla'] for x in fallos}))
-        if registro["ref_intermediario"] in self.ordenes_usadas or registro.get("proteccion_ref") in self.ordenes_usadas \
-                or registro["ref_intermediario"] == registro.get("proteccion_ref"):
+        if plano["ref_intermediario"] in self.ordenes_usadas or plano.get("proteccion_ref") in self.ordenes_usadas \
+                or plano["ref_intermediario"] == plano.get("proteccion_ref"):
             return _no("O-03", "esa orden del intermediario ya está registrada")
         if v["tipo"] == "EXPEDIENTE" and self._entrada_viva(e):
             return _no("O-25", "hay una orden de entrada de G viva para este expediente: cancélela antes de ejecutar a mano")
-        if v["tipo"] == "EXPEDIENTE":
-            orden = {"orden_id": registro["ref_intermediario"], "cantidad": registro["cantidad"], "precio": registro["precio"], "conciliada": True,
-                     "proteccion_orden_ids": [registro["proteccion_ref"]]}
-            r = self._ejecutar(e, orden, "OPERADOR", ahora, a, manual=True)
-            if not r["ok"]:
-                return r
-        elif v["tipo"] == "POSICION":
-            if p.get("reduccion"):   # una reducción a medias termina con el cierre total
-                p["reducciones"].append({**p["reduccion"], "restante": 0, "interrumpida": "cierre manual"})
-                p["reduccion"] = None
-            self._anota_pos(p, p["estado"], "CERRANDO", "OPERADOR", ahora, f"cierre manual declarado (CT-G-14): {registro['motivo'][:120]}")
-            p["cantidad"] = 0
-            self.ordenes_usadas.append(registro["ref_intermediario"])
-            self._anota_pos(p, "CERRANDO", "CERRADA", "OPERADOR", ahora, "cierre manual declarado (CT-G-14)", registro["ref_intermediario"])
-        else:   # LIBRE: fuera del control de F; queda a la vista del operador
-            self.ordenes_usadas.append(registro["ref_intermediario"])
-            self._aviso("O-20", f"operación libre declarada fuera del sistema (sin control de F ni stop): {registro['lado']} {registro['cantidad']} {ins}",
-                        ahora, registro["event_id"])
-        self.eventos[registro["event_id"]] = {"hash": h, "expediente_id": ref}
-        self.manuales.append(copy.deepcopy(registro))
-        return _r(True, "OK", f"registro manual aceptado ({v['tipo']})", posicion_id=(e or {}).get("posicion_id") or (p or {}).get("posicion_id"))
+        return None
+
+    def comprobar_manual(self, registro, ahora):
+        """Comprobación previa de un CT-G-14, SIN EFECTOS (no anota, no mueve el reloj, no activa nada): G la llama antes de consultar
+        o tocar el intermediario. None si registrar_manual no lo rechazaría por forma, reglas, duplicado o integridad; si no, el
+        motivo. Ante la duda (duplicado, integridad) también devuelve un rechazo: G delega entonces en registrar_manual."""
+        try:
+            if not (isinstance(ahora, str) and _FH.match(ahora)) or (self.ultimo_ahora is not None and _dt(ahora) < _dt(self.ultimo_ahora)):
+                return _no("O-00", "instante inválido o anterior al último")
+            if not isinstance(registro, dict) or not isinstance(registro.get("event_id"), str):
+                return _no("O-01", "registro CT-G-14 sin event_id")
+            plano = aplanar_manual(registro)
+            if plano is None:
+                fallos = validar_manual(registro, {"ahora": ahora})
+                return _no("O-01", f"registro CT-G-14 no válido: {fallos[0]['regla']}", reglas=sorted({x['regla'] for x in fallos}))
+            if registro["event_id"] in self.eventos:
+                return _no("O-03", "event_id ya registrado")
+            v = plano["vinculo"] if isinstance(plano["vinculo"], dict) else {}
+            ref = v.get("id") if isinstance(v.get("id"), str) else None
+            e = self.expedientes.get(ref) if v.get("tipo") == "EXPEDIENTE" else None
+            p = self.posiciones.get(ref) if v.get("tipo") == "POSICION" else None
+            if (e is not None and not self._todo_ok(e)) or (p is not None and not self._posicion_ok(p)):
+                return _no("O-13", "el expediente o la posición vinculados no son íntegros")
+            if not isinstance(plano["vinculo"], dict):
+                fallos = validar_manual(registro, {"ahora": ahora})
+                return _no("O-01", "registro CT-G-14 no válido", reglas=sorted({x['regla'] for x in fallos}))
+            return self._reglas_manual(registro, plano, e, p, ahora)
+        except Exception as ex:   # noqa: BLE001 - una comprobación previa nunca lanza: ante la duda, rechaza
+            return _no("O-00", f"no se pudo comprobar el registro ({type(ex).__name__})")
+
+    def _identidad_manual(self, e, p):
+        """(expediente_id, correlation_id) que debe llevar la envoltura de un CT-G-14 vinculado (RM-11); None si no hay vínculo."""
+        if e is not None:
+            return (e["expediente_id"], e["correlation_id"])
+        if p is not None and p.get("expediente_id") in self.expedientes:
+            return (p["expediente_id"], self.expedientes[p["expediente_id"]]["correlation_id"])
+        return None
 
     @_seguro
     def observar(self, expediente_id, condiciones_reapertura, motivo, actor, ahora):

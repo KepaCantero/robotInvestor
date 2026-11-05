@@ -308,7 +308,7 @@ def main():
 
     # ------------------------------------------------------------ revisión independiente (regresiones)
     from ejecucion_g import declarar_manual
-    from pruebas_manual import a_mano, reg as reg_manual
+    from pruebas_manual import a_mano, cambia, sin, reg as reg_manual
     # G1: retomar una reducción con el estado alterado no envía nada
     o, b = abierta()
     b.rechaza_mercado = True
@@ -342,19 +342,20 @@ def main():
     b2.fraccion_mercado = 1.0
     a_mano(b2, "EURUSD", "VENTA", 62.5, "MAN-CIERRE-1")
     cierre = reg_manual(event_id="EV-MAN-0002", vinculo={"tipo": "POSICION", "id": PID}, lado="VENTA", ref_intermediario="MAN-CIERRE-1", cantidad=62.5)
-    cierre.pop("proteccion_ref")
+    cierre = sin(cierre, "proteccion_ref")
     r = declarar_manual(o2, cierre, b2, T1)
     h.chk("M1_cierre_manual_a_media_reduccion", r["ok"] and o2.posiciones[PID]["estado"] == "CERRADA" and conciliar(o2, b2, T1)["ok"]
           and o2.posiciones[PID]["reducciones"][-1]["interrumpida"] == "cierre manual", r)
     o2, b2 = abierta(b=vigilado(fraccion_mercado=0.5))
     red(o2, b2)
-    h.chk("M1_cierre_manual_de_mas_RM06", "RM-06" in o2.registrar_manual({**cierre, "cantidad": 10.0}, T1).get("reglas", []))
+    h.chk("M1_cierre_manual_de_mas_RM06", "RM-06" in o2.registrar_manual(cambia(cierre, cantidad=10.0), T1).get("reglas", []))
     # M9: una declaración manual rechazada no deja la posición sin stop
     o2, b2 = abierta()
     red(o2, b2)                     # quedan 60 con el stop redimensionado
     a_mano(b2, "EURUSD", "VENTA", 30.0, "MAN-CIERRE-1")
-    r = declarar_manual(o2, {**cierre, "cantidad": 30.0}, b2, T1)
-    h.chk("M9_declaracion_rechazada_no_quita_el_stop", r["codigo"] == "G-10" and b2.consultar("ORD-POS-EXP-0001-R1-S-1")["estado"] == "ACEPTADA", r)
+    r = declarar_manual(o2, cambia(cierre, cantidad=30.0), b2, T1)
+    # desde T-47 el Orquestador la rechaza (RM-06) antes de que G consulte o toque el intermediario
+    h.chk("M9_declaracion_rechazada_no_quita_el_stop", r["codigo"] == "O-01" and "RM-06" in r.get("reglas", []) and b2.consultar("ORD-POS-EXP-0001-R1-S-1")["estado"] == "ACEPTADA", r)
     # M2: cerrar del todo desde REDUCIENDO sin falsos avisos y con el cierre a medias explicado
     o2, b2 = abierta(b=vigilado(fraccion_mercado=0.5))
     red(o2, b2)

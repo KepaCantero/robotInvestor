@@ -37,9 +37,9 @@ def main():
     h.chk("once_con_esquema_y_cinco_pendientes", len(con) == 11 and {c["tipo"] for c in reg if c["estado"] == "PENDIENTE"}
           == {"CT-G-07", "CT-G-11", "CT-G-12", "CT-G-13", "CT-G-15"})
     ok = True
-    for c in con:
+    for v in [v for c in con for v in c["versiones"]]:   # también las versiones retiradas (se conservan para el histórico)
         try:
-            Draft202012Validator.check_schema(json.loads((ESQ / c["esquema"]).read_text(encoding="utf-8")))
+            Draft202012Validator.check_schema(json.loads((ESQ / v["esquema"]).read_text(encoding="utf-8")))
         except Exception:   # noqa: BLE001
             ok = False
     h.chk("todos_los_esquemas_son_validos", ok)
@@ -91,7 +91,7 @@ def main():
     for nombre, msg, regla in casos:
         r = ct.validar(msg)
         h.chk(f"defecto_{nombre}_{regla.replace('-', '')}", r and r[0]["regla"] == regla, r)
-    inf = copy.deepcopy(inf_real); inf["resultado"] = "QUIZA"
+    inf = copy.deepcopy(inf_real); inf["resultado_politica"]["resultado"] = "QUIZA"
     h.chk("informe_F_con_resultado_inventado_CT03", ct.validar(inf)[0]["regla"] == "CT-03")
     h.chk("nunca_lanza", ct.validar({"tipo_mensaje": "CT-G-06", "version_esquema": "0.1.0", "valid_until": "basura", "emitido_en": object()})[0]["regla"]
           in ("CT-01", "CT-03"))
@@ -212,7 +212,7 @@ def main():
     h.chk("m2_referencia_fuera_de_rango_CT03", ct.validar(pc)[0]["regla"] == "CT-03")
     for nombre, cambio in (("libre_con_id", {"vinculo": {"tipo": "LIBRE", "id": "EXP-0001"}}), ("expediente_sin_id", {"vinculo": {"tipo": "EXPEDIENTE", "id": None}}),
                            ("motivo_en_blanco", {"motivo": "     "})):
-        r = ct.validar({**reg_manual(), **cambio})
+        r = ct.validar({**reg_manual(), "payload": {**reg_manual()["payload"], **cambio}})
         h.chk(f"m2_ct_g_14_{nombre}_CT03", r and r[0]["regla"] == "CT-03", r)
     o = nuevo(); hasta(o, "VALIDADA")
     o.reportar_discrepancia([{"tipo": "ESTADO_INCIERTO", "ref": "EXP-0001", "detalle": "x"}], "G", AHORA)

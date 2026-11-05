@@ -37,6 +37,19 @@ def informe_f(o, expediente_id="EXP-0001", n=1, cartera=None, sol=None, pol=None
                              cart, pol or o.cfg["politica_f"], emitido_en, valid_until)
 
 
+def pon(i, **kw):
+    """Cambia campos de un CT-G-08 0.2.0 donde viven: resultado, motivo, controles y versión en resultado_politica; cantidad,
+    entradas y propuesta en payload; el resto en la envoltura."""
+    for k, v in kw.items():
+        if k in ("resultado", "motivo", "controles", "version_politica"):
+            i["resultado_politica"][k] = v
+        elif k in ("cantidad_aprobada", "entradas", "propuesta_ref"):
+            i["payload"][k] = v
+        else:
+            i[k] = v
+    return i
+
+
 def registrar_foto(o, cart):
     """Lo que hace G: registrar en el Orquestador la foto de cartera que toma del intermediario. Devuelve la cartera que
     E y F deben usar (la foto más las autorizaciones pendientes), o la misma si la foto no se pudo registrar."""
@@ -137,26 +150,26 @@ def main():
     h.chk("CF01_no_objeto", vf(o, []) == ["CF-01"])
     h.chk("CF01_campo_extra", vf(o, mut(lambda i: i.update(x=1))) == ["CF-01"])
     h.chk("CF01_producer", vf(o, mut(lambda i: i.update(producer="C"))) == ["CF-01"])
-    h.chk("CF01_resultado_invalido", vf(o, mut(lambda i: i.update(resultado="OK"))) == ["CF-01"])
-    h.chk("CF02_hash_de_propuesta", vf(o, mut(lambda i: i["propuesta_ref"].update(hash="0" * 64))) == ["CF-02"])
+    h.chk("CF01_resultado_invalido", vf(o, mut(lambda i: pon(i, resultado="OK"))) == ["CF-01"])
+    h.chk("CF02_hash_de_propuesta", vf(o, mut(lambda i: i["payload"]["propuesta_ref"].update(hash="0" * 64))) == ["CF-02"])
     h.chk("CF02_otro_expediente", vf(o, mut(lambda i: i.update(expediente_id="EXP-0009"))) == ["CF-02"])
     h.chk("CF03_ya_vencido", vf(o, base, ahora="2026-11-08T10:00:00+00:00") == ["CF-03"])
     h.chk("CF03_demasiado_larga", vf(o, informe_f(o, valid_until="2026-11-20T09:00:00+00:00")) == ["CF-03"])
     h.chk("CF03_emitido_en_el_futuro", vf(o, informe_f(o, emitido_en="2026-11-06T10:00:00+00:00", valid_until="2026-11-07T09:00:00+00:00")) == ["CF-03"] or True)
     h.chk("CF07_politica_mas_laxa", vf(o, informe_f(o, pol={**o.cfg["politica_f"], "riesgo_max_pct": 50.0})) == ["CF-07"], vf(o, informe_f(o, pol={**o.cfg["politica_f"], "riesgo_max_pct": 50.0})))
-    h.chk("CF05_solicitud_distinta_a_la_propuesta", "CF-05" in vf(o, mut(lambda i: i["entradas"]["solicitud"].update(stop_precio=0.5))))
-    h.chk("CF05_cartera_distinta", "CF-05" in vf(o, mut(lambda i: i["entradas"]["solicitud"].update(cartera="TRADING"))))
-    h.chk("CF04_resultado_falsificado", "CF-04" in vf(o, mut(lambda i: i.update(resultado="APROBADO", cantidad_aprobada=1e9), sol={"cantidad": 1e9})))
-    h.chk("CF04_control_borrado", "CF-04" in vf(o, mut(lambda i: i["controles"].pop())))
-    h.chk("CF04_aprobado_con_perdida_del_dia", "CF-04" in vf(o, mut(lambda i: i.update(resultado="APROBADO", cantidad_aprobada=100.0), cartera={"perdida_dia_eur": 5000.0})))
-    h.chk("CF06_mas_de_lo_solicitado", "CF-06" in vf(o, mut(lambda i: i.update(cantidad_aprobada=1e6))))
-    h.chk("CF06_veto_con_cantidad", "CF-06" in vf(o, mut(lambda i: i.update(cantidad_aprobada=5.0), cartera={"perdida_dia_eur": 5000.0})))
+    h.chk("CF05_solicitud_distinta_a_la_propuesta", "CF-05" in vf(o, mut(lambda i: i["payload"]["entradas"]["solicitud"].update(stop_precio=0.5))))
+    h.chk("CF05_cartera_distinta", "CF-05" in vf(o, mut(lambda i: i["payload"]["entradas"]["solicitud"].update(cartera="TRADING"))))
+    h.chk("CF04_resultado_falsificado", "CF-04" in vf(o, mut(lambda i: pon(i, resultado="APROBADO", cantidad_aprobada=1e9), sol={"cantidad": 1e9})))
+    h.chk("CF04_control_borrado", "CF-04" in vf(o, mut(lambda i: i["resultado_politica"]["controles"].pop())))
+    h.chk("CF04_aprobado_con_perdida_del_dia", "CF-04" in vf(o, mut(lambda i: pon(i, resultado="APROBADO", cantidad_aprobada=100.0), cartera={"perdida_dia_eur": 5000.0})))
+    h.chk("CF06_mas_de_lo_solicitado", "CF-06" in vf(o, mut(lambda i: pon(i, cantidad_aprobada=1e6))))
+    h.chk("CF06_veto_con_cantidad", "CF-06" in vf(o, mut(lambda i: pon(i, cantidad_aprobada=5.0), cartera={"perdida_dia_eur": 5000.0})))
     # integración
     def R(nombre, o_, fn, codigo, ok_esperado=False, mutacion_permitida=False):
         return h.rechaza(nombre, o_, fn, codigo, ok_esperado=ok_esperado, mutacion_permitida=mutacion_permitida)
     R("autorizar_sin_informe_O01", o, lambda: autorizar_op(o, "EXP-0001", None, AHORA), "O-01")
     R("autorizar_con_el_formato_antiguo_O01", o, lambda: autorizar_op(o, "EXP-0001", {"resultado": "APROBADO", "event_id": "EV-F-1"}, AHORA), "O-01")
-    R("autorizar_informe_falsificado_O01", o, lambda: autorizar_op(o, "EXP-0001", mut(lambda i: i.update(resultado="APROBADO", cantidad_aprobada=1e9), sol={"cantidad": 1e9}), AHORA), "O-01", mutacion_permitida=True)
+    R("autorizar_informe_falsificado_O01", o, lambda: autorizar_op(o, "EXP-0001", mut(lambda i: pon(i, resultado="APROBADO", cantidad_aprobada=1e9), sol={"cantidad": 1e9}), AHORA), "O-01", mutacion_permitida=True)
     veto = informe_f(o, n=2, cartera={"perdida_dia_eur": 5000.0})
     R("autorizar_vetado_por_F_O06", o, lambda: autorizar_op(o, "EXP-0001", veto, AHORA), "O-06", mutacion_permitida=True)
     R("informe_vetado_no_se_reutiliza_O03", o, lambda: autorizar_op(o, "EXP-0001", veto, AHORA), "O-03")
@@ -164,8 +177,8 @@ def main():
     # E dimensiona con la cartera vacía (9090); cuando F controla ya hay 15.000 € en EUR y la concentración reduce a 4545,45
     o = nuevo(); hasta(o, "PROPUESTA", entrada={**ENTRADA, "cantidad": 9090.0})
     red = informe_f(o, n=3, cartera={"posiciones": [{"instrumento": "EURGBP", "activo_base": "EUR", "valor_eur": 15000.0}]})
-    h.chk("autorizar_reducido_guarda_cantidad", red["resultado"] == "REDUCIDO" and autorizar_op(o, "EXP-0001", red, AHORA)["ok"]
-          and abs(o.expedientes["EXP-0001"]["control_f"]["cantidad_aprobada"] - 4545.454545) < 1e-4, red["resultado"])
+    h.chk("autorizar_reducido_guarda_cantidad", red["resultado_politica"]["resultado"] == "REDUCIDO" and autorizar_op(o, "EXP-0001", red, AHORA)["ok"]
+          and abs(o.expedientes["EXP-0001"]["control_f"]["cantidad_aprobada"] - 4545.454545) < 1e-4, red["resultado_politica"]["resultado"])
     ORD = {"orden_id": "ORD-1", "cantidad": 4600.0, "precio": 1.1, "conciliada": True, "proteccion_orden_ids": ["ORD-1-STOP"]}
     R("ejecutar_mas_de_lo_aprobado_O06", o, lambda: o.ejecutar("EXP-0001", ORD, "G", AHORA), "O-06")
     R("ejecutar_por_debajo_del_stop_O06", o, lambda: o.ejecutar("EXP-0001", {**ORD, "cantidad": 4500.0, "precio": 1.0455}, "G", AHORA), "O-06")
@@ -179,7 +192,7 @@ def main():
     # el activo base declarado no se puede cambiar para esquivar la concentración
     o = nuevo(); hasta(o, "PROPUESTA")
     c_ = {"posiciones": [{"instrumento": "EURUSD", "activo_base": "EUR", "valor_eur": 20000.0}]}
-    h.chk("honesto_con_concentracion_se_veta", informe_f(o, n=7, cartera=c_)["resultado"] == "VETADO")
+    h.chk("honesto_con_concentracion_se_veta", informe_f(o, n=7, cartera=c_)["resultado_politica"]["resultado"] == "VETADO")
     R("activo_base_falseado_O01", o, lambda: autorizar_op(o, "EXP-0001", informe_f(o, n=8, cartera=c_, sol={"activo_base": "ZZZ"}), AHORA), "O-01", mutacion_permitida=True)
     R("cantidad_falseada_O01", o, lambda: autorizar_op(o, "EXP-0001", informe_f(o, n=9, sol={"cantidad": 99.0}), AHORA), "O-01", mutacion_permitida=True)
     R("apalancamiento_falseado_O01", o, lambda: autorizar_op(o, "EXP-0001", informe_f(o, n=11, sol={"apalancamiento": 0.5}), AHORA), "O-01", mutacion_permitida=True)

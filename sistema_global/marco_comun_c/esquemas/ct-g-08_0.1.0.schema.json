@@ -2,7 +2,7 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://robot-inversor.local/esquemas/ct-g-08/0.1.0",
   "title": "CT-G-08 · Resultado de control de F",
-  "description": "Versión 0.1.0 (provisional, 0.x). F → Orquestador (G, Broker). Envoltura parcial: sin data_refs ni payload (T-47).",
+  "description": "Versión 0.1.0 RETIRADA (T-47). F → Orquestador (G, Broker). Envoltura parcial: sin data_refs ni payload. Solo para leer el histórico.",
   "type": "object",
   "properties": {
     "event_id": {

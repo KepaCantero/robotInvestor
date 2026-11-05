@@ -2,7 +2,7 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://robot-inversor.local/esquemas/ct-g-14/0.1.0",
   "title": "CT-G-14 · Registro de ejecución manual",
-  "description": "Versión 0.1.0 (provisional, 0.x). Operador → G. Las reglas RM-01 a RM-10 las aplica validador/manual_g.py. Envoltura propia (contrato/version): migración a la común en 0.2.0 (T-47).",
+  "description": "Versión 0.1.0 (provisional, 0.x). Operador → G. Las reglas RM-01 a RM-10 las aplica validador/manual_g.py. Versión RETIRADA (T-47): envoltura propia (contrato/version). Solo para leer el histórico.",
   "type": "object",
   "properties": {
     "contrato": {
