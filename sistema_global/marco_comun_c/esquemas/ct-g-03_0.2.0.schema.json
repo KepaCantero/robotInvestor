@@ -1,0 +1,377 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://robot-inversor.local/esquemas/ct-g-03/0.2.0",
+  "title": "CT-G-03 · Informe del Contradictor",
+  "description": "Versión 0.2.0 (provisional, 0.x; T-48: autoría y escenarios de fallo). La 0.1.0 está retirada. Lo emite el Contradictor y lo recibe el Orquestador.",
+  "type": "object",
+  "properties": {
+    "event_id": {
+      "type": "string",
+      "pattern": "^[A-Za-z0-9._:/-]{1,64}\\Z"
+    },
+    "correlation_id": {
+      "type": "string",
+      "pattern": "^[A-Za-z0-9._:/-]{1,64}\\Z"
+    },
+    "expediente_id": {
+      "type": "string",
+      "pattern": "^[A-Za-z0-9._:/-]{1,64}\\Z"
+    },
+    "producer": {
+      "const": "CONTRADICTOR"
+    },
+    "consumer": {
+      "const": "ORQUESTADOR"
+    },
+    "tipo_mensaje": {
+      "const": "CT-G-03"
+    },
+    "version_esquema": {
+      "type": "string",
+      "pattern": "^\\d+\\.\\d+\\.\\d+\\Z"
+    },
+    "emitido_en": {
+      "type": "string",
+      "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}(\\.\\d+)?(Z|[+-]\\d{2}:\\d{2})\\Z"
+    },
+    "valid_until": {
+      "type": "string",
+      "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}(\\.\\d+)?(Z|[+-]\\d{2}:\\d{2})\\Z"
+    },
+    "data_refs": {
+      "type": "array",
+      "uniqueItems": true,
+      "items": {
+        "type": "string",
+        "pattern": "^[A-Za-z0-9._:/-]{1,64}\\Z"
+      }
+    },
+    "payload": {
+      "type": "object",
+      "properties": {
+        "sobre_ref": {
+          "type": "object",
+          "properties": {
+            "event_id": {
+              "type": "string",
+              "pattern": "^[A-Za-z0-9._:/-]{1,64}\\Z"
+            },
+            "hash": {
+              "type": "string",
+              "pattern": "^[0-9a-f]{64}\\Z"
+            }
+          },
+          "required": [
+            "event_id",
+            "hash"
+          ],
+          "additionalProperties": false
+        },
+        "nivel_analisis": {
+          "enum": [
+            "N0",
+            "N1",
+            "N2",
+            "N3"
+          ]
+        },
+        "independencia": {
+          "type": "object",
+          "properties": {
+            "vio_conclusion": {
+              "type": "boolean"
+            },
+            "vio_confianza": {
+              "type": "boolean"
+            },
+            "contexto_compartido_con_c": {
+              "type": "boolean"
+            }
+          },
+          "required": [
+            "vio_conclusion",
+            "vio_confianza",
+            "contexto_compartido_con_c"
+          ],
+          "additionalProperties": false
+        },
+        "objeciones": {
+          "type": "array",
+          "maxItems": 50,
+          "items": {
+            "type": "object",
+            "properties": {
+              "id": {
+                "type": "string",
+                "pattern": "^[A-Za-z0-9._:/-]{1,64}\\Z"
+              },
+              "tipo": {
+                "enum": [
+                  "DATO",
+                  "LOGICA",
+                  "SUPUESTO",
+                  "RIESGO_OMITIDO",
+                  "ALTERNATIVA"
+                ]
+              },
+              "gravedad": {
+                "enum": [
+                  "MENOR",
+                  "MAYOR",
+                  "CRITICA"
+                ]
+              },
+              "texto": {
+                "type": "string",
+                "pattern": "^[^\\s​-‍﻿]([\\s\\S]*[^\\s​-‍﻿])?\\Z"
+              },
+              "evid_refs": {
+                "type": "array",
+                "uniqueItems": true,
+                "items": {
+                  "type": "string",
+                  "pattern": "^[A-Za-z0-9._:/-]{1,64}\\Z"
+                }
+              },
+              "escenarios": {
+                "type": "array",
+                "uniqueItems": true,
+                "items": {
+                  "type": "string",
+                  "pattern": "^[A-Za-z0-9._:/-]{1,64}\\Z"
+                }
+              }
+            },
+            "required": [
+              "id",
+              "tipo",
+              "gravedad",
+              "texto",
+              "evid_refs",
+              "escenarios"
+            ],
+            "additionalProperties": false
+          }
+        },
+        "autoria": {
+          "type": "object",
+          "properties": {
+            "modelo": {
+              "type": "string",
+              "pattern": "^[A-Za-z0-9._:/-]{1,64}\\Z"
+            },
+            "proveedor": {
+              "type": "string",
+              "pattern": "^[A-Za-z0-9._:/-]{1,64}\\Z"
+            },
+            "diversidad": {
+              "enum": [
+                "OTRO_PROVEEDOR",
+                "OTRO_MODELO",
+                "MISMO_MODELO"
+              ]
+            },
+            "motivo_mismo_modelo": {
+              "type": "string",
+              "pattern": "^[^\\s​-‍﻿]([\\s\\S]*[^\\s​-‍﻿])?\\Z"
+            }
+          },
+          "required": [
+            "modelo",
+            "proveedor",
+            "diversidad"
+          ],
+          "additionalProperties": false,
+          "if": {
+            "properties": {
+              "diversidad": {
+                "const": "MISMO_MODELO"
+              }
+            }
+          },
+          "then": {
+            "required": [
+              "motivo_mismo_modelo"
+            ]
+          },
+          "else": {
+            "not": {
+              "required": [
+                "motivo_mismo_modelo"
+              ]
+            }
+          }
+        },
+        "escenarios_fallo": {
+          "type": "array",
+          "minItems": 1,
+          "maxItems": 20,
+          "items": {
+            "type": "object",
+            "properties": {
+              "id": {
+                "type": "string",
+                "pattern": "^[A-Za-z0-9._:/-]{1,64}\\Z"
+              },
+              "descripcion": {
+                "type": "string",
+                "pattern": "^[^\\s​-‍﻿]([\\s\\S]*[^\\s​-‍﻿])?\\Z"
+              },
+              "disparador": {
+                "type": "object",
+                "properties": {
+                  "metrica": {
+                    "type": "string",
+                    "pattern": "^[A-Za-z0-9._:/-]{1,64}\\Z"
+                  },
+                  "operador": {
+                    "enum": [
+                      "<",
+                      "<=",
+                      ">",
+                      ">=",
+                      "=="
+                    ]
+                  },
+                  "umbral": {
+                    "type": "number"
+                  },
+                  "unidad": {
+                    "type": "string",
+                    "pattern": "^[A-Za-z0-9._:/-]{1,64}\\Z"
+                  }
+                },
+                "required": [
+                  "metrica",
+                  "operador",
+                  "umbral",
+                  "unidad"
+                ],
+                "additionalProperties": false
+              },
+              "consecuencia": {
+                "enum": [
+                  "INVALIDA_TESIS",
+                  "PERDIDA"
+                ]
+              },
+              "perdida_pct": {
+                "type": "number",
+                "minimum": -100,
+                "exclusiveMaximum": 0
+              },
+              "evid_refs": {
+                "type": "array",
+                "minItems": 1,
+                "uniqueItems": true,
+                "items": {
+                  "type": "string",
+                  "pattern": "^[A-Za-z0-9._:/-]{1,64}\\Z"
+                }
+              }
+            },
+            "required": [
+              "id",
+              "descripcion",
+              "disparador",
+              "consecuencia",
+              "evid_refs"
+            ],
+            "additionalProperties": false,
+            "if": {
+              "properties": {
+                "consecuencia": {
+                  "const": "PERDIDA"
+                }
+              }
+            },
+            "then": {
+              "required": [
+                "perdida_pct"
+              ]
+            },
+            "else": {
+              "not": {
+                "required": [
+                  "perdida_pct"
+                ]
+              }
+            }
+          }
+        },
+        "veredicto": {
+          "enum": [
+            "SIN_OBJECIONES_RELEVANTES",
+            "OBJECION_MAYOR",
+            "OBJECION_CRITICA"
+          ]
+        },
+        "cobertura": {
+          "type": "object",
+          "properties": {
+            "revisadas": {
+              "type": "array",
+              "minItems": 1,
+              "uniqueItems": true,
+              "items": {
+                "type": "string",
+                "pattern": "^[a-z0-9_]{1,40}\\Z"
+              }
+            },
+            "no_revisadas": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "seccion": {
+                    "type": "string",
+                    "pattern": "^[a-z0-9_]{1,40}\\Z"
+                  },
+                  "motivo": {
+                    "type": "string",
+                    "pattern": "^[^\\s​-‍﻿]([\\s\\S]*[^\\s​-‍﻿])?\\Z"
+                  }
+                },
+                "required": [
+                  "seccion",
+                  "motivo"
+                ],
+                "additionalProperties": false
+              }
+            }
+          },
+          "required": [
+            "revisadas",
+            "no_revisadas"
+          ],
+          "additionalProperties": false
+        }
+      },
+      "required": [
+        "sobre_ref",
+        "nivel_analisis",
+        "independencia",
+        "objeciones",
+        "autoria",
+        "escenarios_fallo",
+        "veredicto",
+        "cobertura"
+      ],
+      "additionalProperties": false
+    }
+  },
+  "required": [
+    "event_id",
+    "correlation_id",
+    "expediente_id",
+    "producer",
+    "consumer",
+    "tipo_mensaje",
+    "version_esquema",
+    "emitido_en",
+    "valid_until",
+    "data_refs",
+    "payload"
+  ],
+  "additionalProperties": false
+}

@@ -1,6 +1,8 @@
-"""Genera el esquema JSON de CT-G-03 (informe del Contradictor) versión 0.1.0.
+"""Genera el esquema JSON de CT-G-03 (informe del Contradictor) versión 0.2.0.
 
-Uso: python3 generar_esquema_contradictor.py > ct-g-03_0.1.0.schema.json
+Uso: python3 generar_esquema_contradictor.py > ct-g-03_0.2.0.schema.json
+0.2.0 (T-48): autoría (modelo, proveedor y diversidad respecto a C) y escenarios en que la tesis falla, con disparador medible;
+cada objeción cita los escenarios a los que se refiere. La 0.1.0 queda RETIRADA (su esquema se conserva para el histórico).
 Comprueba la FORMA. Las reglas que cruzan campos las aplica validador/validar_contradictor.py.
 """
 import json
@@ -30,7 +32,25 @@ payload = obj({
         "gravedad": {"enum": ["MENOR", "MAYOR", "CRITICA"]},
         "texto": TXT,
         "evid_refs": {"type": "array", "uniqueItems": True, "items": ID},
+        "escenarios": {"type": "array", "uniqueItems": True, "items": ID},   # escenarios de fallo a los que se refiere (C-13)
     })},
+    "autoria": {**obj({   # C-11: quién hizo el informe y si aporta diversidad respecto a C (identificadores cerrados, no texto libre)
+        "modelo": ID, "proveedor": ID,
+        "diversidad": {"enum": ["OTRO_PROVEEDOR", "OTRO_MODELO", "MISMO_MODELO"]},
+        "motivo_mismo_modelo": TXT,
+    }, required=["modelo", "proveedor", "diversidad"]),
+        "if": {"properties": {"diversidad": {"const": "MISMO_MODELO"}}},
+        "then": {"required": ["motivo_mismo_modelo"]}, "else": {"not": {"required": ["motivo_mismo_modelo"]}}},
+    "escenarios_fallo": {"type": "array", "minItems": 1, "maxItems": 20, "items": obj({   # C-12: dónde falla la tesis
+        "id": ID,
+        "descripcion": TXT,
+        "disparador": obj({"metrica": ID, "operador": {"enum": ["<", "<=", ">", ">=", "=="]}, "umbral": {"type": "number"}, "unidad": ID}),
+        "consecuencia": {"enum": ["INVALIDA_TESIS", "PERDIDA"]},
+        "perdida_pct": {"type": "number", "minimum": -100, "exclusiveMaximum": 0},
+        "evid_refs": {"type": "array", "minItems": 1, "uniqueItems": True, "items": ID},
+    }, required=["id", "descripcion", "disparador", "consecuencia", "evid_refs"]) | {
+        "if": {"properties": {"consecuencia": {"const": "PERDIDA"}}},
+        "then": {"required": ["perdida_pct"]}, "else": {"not": {"required": ["perdida_pct"]}}}},
     "veredicto": {"enum": ["SIN_OBJECIONES_RELEVANTES", "OBJECION_MAYOR", "OBJECION_CRITICA"]},
     "cobertura": obj({
         "revisadas": {"type": "array", "minItems": 1, "uniqueItems": True, "items": SECCION},
@@ -40,9 +60,9 @@ payload = obj({
 
 schema = {
     "$schema": "https://json-schema.org/draft/2020-12/schema",
-    "$id": "https://robot-inversor.local/esquemas/ct-g-03/0.1.0",
+    "$id": "https://robot-inversor.local/esquemas/ct-g-03/0.2.0",
     "title": "CT-G-03 · Informe del Contradictor",
-    "description": "Versión 0.1.0 (provisional, 0.x). Lo emite el Contradictor y lo recibe el Orquestador.",
+    "description": "Versión 0.2.0 (provisional, 0.x; T-48: autoría y escenarios de fallo). La 0.1.0 está retirada. Lo emite el Contradictor y lo recibe el Orquestador.",
     "type": "object",
     "properties": {
         "event_id": ID, "correlation_id": ID, "expediente_id": ID,

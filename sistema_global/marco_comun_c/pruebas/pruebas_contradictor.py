@@ -21,12 +21,18 @@ def sobre_base():
     return s
 
 
-def informe(sobre, n=1, veredicto="SIN_OBJECIONES_RELEVANTES", objeciones=None, no_rev=()):
+AUTORIA = {"modelo": "modelo-contradictor-1", "proveedor": "proveedor-b", "diversidad": "OTRO_PROVEEDOR"}
+ESC = {"id": "EF-1", "descripcion": "El par cierra por debajo del soporte y la tesis queda invalidada",
+       "disparador": {"metrica": "precio_cierre", "operador": "<", "umbral": 1.05, "unidad": "USD"}, "consecuencia": "INVALIDA_TESIS",
+       "evid_refs": ["SRC-EURUSD"]}
+
+
+def informe(sobre, n=1, veredicto="SIN_OBJECIONES_RELEVANTES", objeciones=None, no_rev=(), escenarios=None, autoria=None):
     sec = sorted(sobre["payload"])
     no = [{"seccion": x, "motivo": "no se pudo revisar"} for x in no_rev]
     return {
         "event_id": f"EV-CTR-{n:04d}", "correlation_id": sobre["correlation_id"], "expediente_id": sobre["expediente_id"],
-        "producer": "CONTRADICTOR", "consumer": "ORQUESTADOR", "tipo_mensaje": "CT-G-03", "version_esquema": "0.1.0",
+        "producer": "CONTRADICTOR", "consumer": "ORQUESTADOR", "tipo_mensaje": "CT-G-03", "version_esquema": "0.2.0",
         "emitido_en": "2026-11-05T20:00:00+00:00", "valid_until": "2026-11-08T12:00:00+00:00",
         "data_refs": [sobre["event_id"]],
         "payload": {
@@ -34,13 +40,16 @@ def informe(sobre, n=1, veredicto="SIN_OBJECIONES_RELEVANTES", objeciones=None, 
             "nivel_analisis": sobre["payload"]["identificacion"]["nivel_analisis"],
             "independencia": {"vio_conclusion": False, "vio_confianza": False, "contexto_compartido_con_c": False},
             "objeciones": objeciones or [], "veredicto": veredicto,
+            "autoria": dict(autoria or AUTORIA), "escenarios_fallo": copy.deepcopy(escenarios if escenarios is not None else [ESC]),
             "cobertura": {"revisadas": [x for x in sec if x not in no_rev], "no_revisadas": no},
         },
     }
 
 
-def obj(i, gravedad="MENOR", refs=(), tipo="DATO"):
-    return {"id": f"OB-{i}", "tipo": tipo, "gravedad": gravedad, "texto": "La cifra no sostiene la tesis", "evid_refs": list(refs)}
+def obj(i, gravedad="MENOR", refs=(), tipo="DATO", esc=None):
+    """Una objeción; las MAYOR y CRITICA apuntan por defecto al escenario de fallo EF-1 (C-13)."""
+    esc = list(esc) if esc is not None else ([] if gravedad == "MENOR" else ["EF-1"])
+    return {"id": f"OB-{i}", "tipo": tipo, "gravedad": gravedad, "texto": "La cifra no sostiene la tesis", "evid_refs": list(refs), "escenarios": esc}
 
 
 def main():
