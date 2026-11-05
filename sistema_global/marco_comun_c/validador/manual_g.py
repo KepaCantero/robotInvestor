@@ -8,7 +8,7 @@ RM-01 forma: campos, tipos y valores cerrados.
 RM-02 emisor: solo el operador.
 RM-03 instantes: ejecutado_en <= emitido_en <= ahora, y no más antiguo que la ventana de declaración.
 RM-04 vínculo inexistente o en un estado que no admite el registro.
-RM-05 no coincide con lo que vincula (cartera, instrumento, activo base o sentido).
+RM-05 no coincide con lo que vincula (cartera, instrumento, activo base, sentido o vía de acceso).
 RM-06 cantidad: supera lo aprobado por F (expediente) o no es la de la posición (cierre total).
 RM-07 un registro que abre posición exige su orden de protección declarada.
 RM-08 instrumento no admitido en esa cartera (lista de la configuración, si la hay).
@@ -28,8 +28,8 @@ ID = re.compile(r"^[A-Za-z0-9._:/-]{1,64}\Z")
 FH = re.compile(r"^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(\.\d+)?(Z|[+-]\d{2}:\d{2})\Z")
 CARTERAS = ("TRADING", "TACTICA", "LARGO_PLAZO")
 CAMPOS = {"contrato", "version", "event_id", "producer", "emitido_en", "ejecutado_en", "cartera", "instrumento", "activo_base",
-          "lado", "cantidad", "precio", "ref_intermediario", "motivo", "vinculo", "proteccion_ref", "comision_eur"}
-OBLIGATORIOS = CAMPOS - {"proteccion_ref", "comision_eur"}
+          "lado", "cantidad", "precio", "ref_intermediario", "motivo", "vinculo", "proteccion_ref", "comision_eur", "via_acceso"}
+OBLIGATORIOS = CAMPOS - {"proteccion_ref", "comision_eur", "via_acceso"}   # la vía es obligatoria salvo en una operación LIBRE (RM-05)
 VENTANA_DECLARACION_H = 72   # [PROPUESTO] lo no declarado en 72 h es discrepancia; un registro más antiguo se rechaza
 
 
@@ -37,6 +37,11 @@ def _num(x, minimo=None, estricto=True):
     if not (isinstance(x, (int, float)) and not isinstance(x, bool) and math.isfinite(x)):
         return False
     return minimo is None or (x > minimo if estricto else x >= minimo)
+
+
+def via_norm(x):
+    """Identidad de una vía de acceso: sin distinguir mayúsculas ni espacios repetidos (la misma que el Orquestador y R-14)."""
+    return " ".join(x.split()).casefold() if isinstance(x, str) and x.strip() else None
 
 
 def _f(regla, mensaje):
@@ -62,7 +67,8 @@ def validar_manual(reg, ctx):
              and isinstance(v, dict) and set(v) == {"tipo", "id"} and v["tipo"] in ("EXPEDIENTE", "POSICION", "LIBRE")
              and (v["id"] is None if v["tipo"] == "LIBRE" else isinstance(v["id"], str) and ID.match(v["id"]))
              and ("proteccion_ref" not in reg or isinstance(reg["proteccion_ref"], str) and ID.match(reg["proteccion_ref"]))
-             and ("comision_eur" not in reg or _num(reg["comision_eur"], 0, estricto=False)))
+             and ("comision_eur" not in reg or _num(reg["comision_eur"], 0, estricto=False))
+             and ("via_acceso" not in reg or isinstance(reg["via_acceso"], str) and reg["via_acceso"].strip()))
     if not forma:
         return [_f("RM-01", "forma inválida: contrato, versión, identificadores, instantes, valores cerrados o números")]
     if reg["producer"] != "OPERADOR":
@@ -87,6 +93,8 @@ def validar_manual(reg, ctx):
         lado = "COMPRA" if stop["operador"] in ("<", "<=") else "VENTA"
         if (reg["cartera"], reg["instrumento"], reg["activo_base"], reg["lado"]) != (e["cartera_destino"], ent["instrumento"], ent["activo_base"], lado):
             fallos.append(_f("RM-05", "cartera, instrumento, activo base o sentido distintos de la propuesta autorizada"))
+        if via_norm(reg.get("via_acceso")) != via_norm(ent.get("via_acceso")):
+            fallos.append(_f("RM-05", "la vía de acceso no es la de la propuesta autorizada (un futuro analizado no se opera como contado)"))
         if reg["cantidad"] > e["control_f"]["cantidad_aprobada"]:
             fallos.append(_f("RM-06", "la cantidad supera la aprobada por F"))
         if "proteccion_ref" not in reg:
@@ -100,6 +108,8 @@ def validar_manual(reg, ctx):
         lado = "VENTA" if p["direccion"] == "LARGO" else "COMPRA"
         if (reg["cartera"], reg["instrumento"], reg["activo_base"], reg["lado"]) != (p["cartera"], p["instrumento"], p["activo_base"], lado):
             fallos.append(_f("RM-05", "cartera, instrumento, activo base o sentido no cierran esa posición"))
+        if via_norm(reg.get("via_acceso")) != via_norm(p.get("via_acceso")):
+            fallos.append(_f("RM-05", "la vía de acceso no es la de la posición"))
         red = p.get("reduccion") if p.get("estado") == "REDUCIENDO" else None
         if red:   # a media reducción queda entre lo que la reducción deja y lo que había; G comprueba que el intermediario queda plano
             if not (red["objetivo_restante"] - 1e-6 <= reg["cantidad"] <= p["cantidad"] + 1e-6):

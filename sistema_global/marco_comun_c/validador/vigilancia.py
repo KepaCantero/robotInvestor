@@ -8,11 +8,13 @@ H-04 cierre pendiente (CERRANDO) que se reintenta; H-05 stop cumplido sin que el
 H-06 métrica no soportada; H-07 diferencias de conciliación; H-08 reducción en curso (REDUCIENDO) que se retoma;
 H-09 instante sospechoso (no se hace nada); H-10 salida preparada para el operador (L0/L1); H-11 orden de entrada viva;
 H-12 reducción parcial por una condición OBJETIVO que declara su fracción (una sola vez; si ya no cabe, se informa y se sigue);
-H-13 posición con el estado de control alterado (no se envía nada por ella).
+H-13 posición con el estado de control alterado (no se envía nada por ella);
+H-14 llegó la fecha de revisión de la tesis: la posición pasa a EN_REVISION y la confirma (con fecha nueva) o la cierra el operador.
 """
 from __future__ import annotations
 
 import math
+from datetime import date, timezone
 
 import math as _m
 
@@ -104,6 +106,12 @@ def vigilar(o, broker, datos, ahora, max_edad_min=MAX_EDAD_MIN):
         p = o.posiciones[pid]
         if p["estado"] == "CERRADA" or pid in hechos:
             continue
+        if p["estado"] == "ABIERTA" and p.get("fecha_revision") and date.fromisoformat(p["fecha_revision"]) <= _dt(ahora).astimezone(timezone.utc).date():
+            r = o.posicion_transicion(pid, "EN_REVISION", "H", _instante(o, ahora), motivo=f"llegó la fecha de revisión {p['fecha_revision']}")
+            if r["ok"]:
+                o.proponer_sobre_posicion(pid, f"REVISIÓN: llegó la fecha de revisión {p['fecha_revision']}; confirme la tesis con una fecha nueva o cierre",
+                                          "H", _instante(o, ahora))
+            acciones.append({"posicion": pid, "regla": "H-14", "ok": r["ok"], "codigo": r["codigo"]})   # sigue vigilando sus condiciones
         d = datos.get(p["instrumento"]) if isinstance(datos, dict) else None
         if not _dato_fresco(d, ahora, max_edad_min):
             o.degradar(p["cartera"], f"sin precio fresco de {p['instrumento']}", "H", _instante(o, ahora))

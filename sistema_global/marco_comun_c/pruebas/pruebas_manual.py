@@ -19,6 +19,7 @@ T1 = "2026-11-06T09:05:00+00:00"
 T2 = "2026-11-06T09:10:00+00:00"
 L1 = {"nivel_autonomia": {"TACTICA": "L1"}}
 PID = "POS-EXP-0001"
+VIA = "Futuro de divisas, vencimiento trimestral"
 
 
 class NoCancela(BrokerSimulado):
@@ -37,7 +38,8 @@ def reg(**kw):
     r = {"contrato": "CT-G-14", "version": "0.1.0", "event_id": "EV-MAN-0001", "producer": "OPERADOR",
          "emitido_en": T1, "ejecutado_en": AHORA, "cartera": "TACTICA", "instrumento": "EURUSD", "activo_base": "EUR",
          "lado": "COMPRA", "cantidad": 100.0, "precio": 1.10, "ref_intermediario": "MAN-ORD-1",
-         "motivo": "ejecutado a mano en la plataforma", "vinculo": {"tipo": "EXPEDIENTE", "id": "EXP-0001"}, "proteccion_ref": "MAN-STOP-1"}
+         "motivo": "ejecutado a mano en la plataforma", "vinculo": {"tipo": "EXPEDIENTE", "id": "EXP-0001"}, "proteccion_ref": "MAN-STOP-1",
+         "via_acceso": VIA}
     r.update(kw)
     return r
 
@@ -50,13 +52,14 @@ def libre(**kw):
     return r
 
 
-def a_mano(b, ins, lado, q, oid, stop=None):
-    """El operador opera directamente en el intermediario, sin pasar por G."""
+def a_mano(b, ins, lado, q, oid, stop=None, via=None):
+    """El operador opera directamente en el intermediario, sin pasar por G (por la vía analizada, salvo que se diga otra)."""
     b.precios.setdefault(ins, 1.30)
-    r = b.enviar({"orden_id": oid, "tipo": "MERCADO", "lado": lado, "instrumento": ins, "activo_base": ins[:3], "cantidad": q})
+    via = via or VIA
+    r = b.enviar({"orden_id": oid, "tipo": "MERCADO", "lado": lado, "instrumento": ins, "activo_base": ins[:3], "cantidad": q, "via_acceso": via})
     if stop:
         b.enviar({"orden_id": stop[0], "tipo": "STOP", "lado": "VENTA" if lado == "COMPRA" else "COMPRA", "instrumento": ins,
-                  "activo_base": ins[:3], "cantidad": q, "precio": stop[1]})
+                  "activo_base": ins[:3], "cantidad": q, "precio": stop[1], "via_acceso": via})
     return r
 
 
