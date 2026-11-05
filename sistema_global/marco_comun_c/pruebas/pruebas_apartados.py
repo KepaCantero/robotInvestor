@@ -13,7 +13,7 @@ from pathlib import Path
 AQUI = Path(__file__).resolve().parent
 sys.path.insert(0, str(AQUI.parent / "validador"))
 sys.path.insert(0, str(AQUI))
-from pruebas_orquestador import AHORA, ENTRADA, SALIDA, Arnes, dim, nuevo  # noqa: E402
+from pruebas_orquestador import AHORA, COND_OBS, ENTRADA, SALIDA, Arnes, dim, nuevo  # noqa: E402
 from pruebas_propuesta import validar_con  # noqa: E402
 
 BUENO = (3.0, -4.0, 6.0)      # mejor que el sobre por defecto
@@ -36,9 +36,9 @@ def main():
     h.chk("control_gana_el_bueno", r["ok"] and r["ganador"] == "EXP-0001", r)
 
     # ------------------------------------------------------------ apartar al rival para que gane otro
-    for nombre, apartar in (("observar_gestor", lambda o: o.observar("EXP-0001", ["volver a mirar"], "esperar", "GESTOR_TACTICA", AHORA)),
+    for nombre, apartar in (("observar_gestor", lambda o: o.observar("EXP-0001", COND_OBS, "esperar", "GESTOR_TACTICA", AHORA)),
                             ("descartar_broker", lambda o: o.descartar("EXP-0001", "no me convence", "BROKER", AHORA)),
-                            ("observar_D", lambda o: o.observar("EXP-0001", ["x"], "aparcar", "D", AHORA))):
+                            ("observar_D", lambda o: o.observar("EXP-0001", COND_OBS, "aparcar", "D", AHORA))):
         o = dos()
         h.chk(f"{nombre}_aparta", apartar(o)["ok"])
         r = o.comparar(["EXP-0002"], "D", AHORA)
@@ -50,7 +50,7 @@ def main():
         rp = o.proponer("EXP-0002", {**ENTRADA, "instrumento": "GBPUSD", "activo_base": "GBP"}, SALIDA, "GESTOR_TACTICA", AHORA)
         h.chk(f"{nombre}_sin_ganador_no_se_propone_O22", rp["codigo"] == "O-22", rp)
     o = dos()
-    o.observar("EXP-0001", ["volver a mirar"], "esperar", "GESTOR_TACTICA", AHORA)
+    o.observar("EXP-0001", COND_OBS, "esperar", "GESTOR_TACTICA", AHORA)
     o.comparar(["EXP-0002"], "D", AHORA)
     h.chk("solo_el_operador_elige_O05", o.elegir("EXP-0002", "GESTOR_TACTICA", "x", AHORA)["codigo"] == "O-05")
     r = o.elegir("EXP-0002", "OPERADOR", "sé que EXP-0001 era mejor; lo apartamos por liquidez", AHORA)
@@ -58,7 +58,7 @@ def main():
 
     # ------------------------------------------------------------ lo que no deja testigo o no cambia el resultado
     o = dos()
-    o.observar("EXP-0001", ["volver a mirar"], "decisión del operador", "OPERADOR", AHORA)
+    o.observar("EXP-0001", COND_OBS, "decisión del operador", "OPERADOR", AHORA)
     r = o.comparar(["EXP-0002"], "D", AHORA)
     h.chk("lo_que_aparta_el_operador_no_es_testigo", r["ok"] and r["codigo"] == "OK" and r["ganador"] == "EXP-0002"
           and o.expedientes["EXP-0002"]["comparacion"]["testigos"] == [], r)
@@ -70,20 +70,20 @@ def main():
           and c["apartado_mejor"] is None and not [x for x in o.avisos if x["codigo"] == "O-30"], r)
     o = nuevo()
     o.detectar("EXP-0009", "COR-0009", "DISCRECIONAL", "TACTICA", "GESTOR_TACTICA", AHORA)
-    o.observar("EXP-0009", ["x"], "aún sin análisis", "GESTOR_TACTICA", AHORA)
+    o.observar("EXP-0009", COND_OBS, "aún sin análisis", "GESTOR_TACTICA", AHORA)
     from validar_sobre import _dt as _dt0
     h.chk("un_expediente_sin_sobre_no_es_testigo", o.expedientes["EXP-0009"]["estado"] == "EN_OBSERVACION" and o._testigos("TACTICA", _dt0(AHORA), set()) == [])
 
     # ------------------------------------------------------------ D se abstiene, pero el apartado superaba la referencia
     o = dos(otro=MALO)
-    o.observar("EXP-0001", ["x"], "aparcar", "GESTOR_TACTICA", AHORA)
+    o.observar("EXP-0001", COND_OBS, "aparcar", "GESTOR_TACTICA", AHORA)
     r = o.comparar(["EXP-0002"], "D", AHORA)
     h.chk("abstencion_con_un_apartado_que_si_superaba_O30", r["codigo"] == "O-30" and r["apartado_mejor"] == "EXP-0001"
           and r["decision_global"] == "ABSTENERSE", r)
 
     # ------------------------------------------------------------ un gestor solo aparta en su cartera
     o = dos()
-    h.rechaza("gestor_de_otra_cartera_no_observa_O05", o, lambda: o.observar("EXP-0001", ["x"], "y", "GESTOR_TRADING", AHORA), "O-05")
+    h.rechaza("gestor_de_otra_cartera_no_observa_O05", o, lambda: o.observar("EXP-0001", COND_OBS, "y", "GESTOR_TRADING", AHORA), "O-05")
     h.rechaza("gestor_de_otra_cartera_no_descarta_O05", o, lambda: o.descartar("EXP-0001", "y", "GESTOR_LARGO_PLAZO", AHORA), "O-05")
     h.chk("el_gestor_de_la_cartera_si", o.descartar("EXP-0001", "y", "GESTOR_TACTICA", AHORA)["ok"])
 
@@ -93,13 +93,13 @@ def main():
     from pruebas_orquestador import ENTRADA as E1
     r = o.proponer("EXP-0001", E1, SALIDA, "GESTOR_TACTICA", AHORA, dim(o, "EXP-0001"))
     h.chk("el_bueno_se_propone", r["ok"], r)
-    o.observar("EXP-0001", ["x"], "lo aparco", "GESTOR_TACTICA", AHORA)
+    o.observar("EXP-0001", COND_OBS, "lo aparco", "GESTOR_TACTICA", AHORA)
     r = o.comparar(["EXP-0002"], "D", AHORA)
     h.chk("aparcar_al_propuesto_y_comparar_O30", r["codigo"] == "O-30" and r["apartado_mejor"] == "EXP-0001", r)
 
     # ------------------------------------------------------------ integridad de los apartados
     o = dos()
-    o.observar("EXP-0001", ["x"], "aparcar", "GESTOR_TACTICA", AHORA)
+    o.observar("EXP-0001", COND_OBS, "aparcar", "GESTOR_TACTICA", AHORA)
     o.expedientes["EXP-0001"]["historial"][-1]["actor"] = "OPERADOR"   # finge que lo apartó el operador
     r = o.comparar(["EXP-0002"], "D", AHORA)
     h.chk("apartado_con_el_actor_falseado_O13_y_kill", r["codigo"] == "O-13" and o.kill is not None and o.expedientes["EXP-0002"]["estado"] == "VALIDADA", r)
@@ -127,17 +127,18 @@ def main():
     # ------------------------------------------------------------ revisión independiente (regresiones)
     # G1: apartar en dos pasos no borra el testigo
     o = dos()
-    o.observar("EXP-0001", ["x"], "esperar", "GESTOR_TACTICA", AHORA)
+    o.observar("EXP-0001", COND_OBS, "esperar", "GESTOR_TACTICA", AHORA)
     o.descartar("EXP-0001", "ya no", "GESTOR_TACTICA", AHORA)
     r = o.comparar(["EXP-0002"], "D", AHORA)
     h.chk("G1_observar_y_luego_descartar_sigue_siendo_testigo_O30", r["codigo"] == "O-30" and r["apartado_mejor"] == "EXP-0001", r)
     # G2: apartar y reabrir (nuevo encargo) tampoco
     from pruebas_orquestador import encargo
     for nombre, despues in (("queda_en_analisis", None),
-                            ("y_observar", lambda o: o.observar("EXP-0001", ["x"], "otra vez", "GESTOR_TACTICA", AHORA)),
+                            ("y_observar", lambda o: o.observar("EXP-0001", COND_OBS, "otra vez", "GESTOR_TACTICA", AHORA)),
                             ("y_descartar", lambda o: o.descartar("EXP-0001", "fuera", "BROKER", AHORA))):
         o = dos()
-        o.observar("EXP-0001", ["datos nuevos"], "actualizar", "GESTOR_TACTICA", AHORA)
+        o.observar("EXP-0001", COND_OBS, "actualizar", "GESTOR_TACTICA", AHORA)
+        assert o.reabrir("EXP-0001", "que lo actualice", "OPERADOR", AHORA)["ok"]   # reabrir no es ratificar el apartado
         enc = encargo(1, corte="2026-11-05")
         enc["event_id"] = "EV-ENC-0101"
         enc["payload"]["mandato"]["instrumentos_permitidos"] = ["EUR/USD", "GBP/USD", "USD/JPY"]
@@ -162,7 +163,7 @@ def main():
     o.comparar(["EXP-0001", "EXP-0002"], "D", AHORA)
     o.proponer("EXP-0001", ENTRADA, SALIDA, "GESTOR_TACTICA", AHORA, dim(o, "EXP-0001"))
     validar_con(o, 3, instrumento="USD/JPY", escenarios=BUENO)   # llega un candidato nuevo y lo apartan sin compararlo
-    o.observar("EXP-0003", ["x"], "aparcar", "GESTOR_TACTICA", AHORA)
+    o.observar("EXP-0003", COND_OBS, "aparcar", "GESTOR_TACTICA", AHORA)
     r = autorizar_op(o, "EXP-0001", informe_f(o, "EXP-0001", 1), AHORA)
     h.chk("G3_apartado_nuevo_tras_proponer_autorizar_O22", r["codigo"] == "O-22", r)
     o = dos()
@@ -173,8 +174,8 @@ def main():
     h.chk("G3_el_perdedor_de_la_misma_comparacion_no_bloquea", r["ok"], r)
     # M4: alteraciones que sacaban a un candidato sin dejar rastro
     for nombre, mut in (("cartera_del_vivo", lambda o: o.expedientes["EXP-0001"].__setitem__("cartera_destino", "TRADING")),
-                        ("sobre_del_apartado", lambda o: (o.observar("EXP-0001", ["x"], "y", "GESTOR_TACTICA", AHORA), o.expedientes["EXP-0001"].__setitem__("sobre", None))),
-                        ("encargo_del_apartado", lambda o: (o.observar("EXP-0001", ["x"], "y", "GESTOR_TACTICA", AHORA), o.expedientes["EXP-0001"].__setitem__("encargo_actual", None)))):
+                        ("sobre_del_apartado", lambda o: (o.observar("EXP-0001", COND_OBS, "y", "GESTOR_TACTICA", AHORA), o.expedientes["EXP-0001"].__setitem__("sobre", None))),
+                        ("encargo_del_apartado", lambda o: (o.observar("EXP-0001", COND_OBS, "y", "GESTOR_TACTICA", AHORA), o.expedientes["EXP-0001"].__setitem__("encargo_actual", None)))):
         o = dos()
         mut(o)
         r = o.comparar(["EXP-0002"], "D", AHORA)

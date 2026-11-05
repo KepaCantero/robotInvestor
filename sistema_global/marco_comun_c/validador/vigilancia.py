@@ -9,7 +9,8 @@ H-06 métrica no soportada; H-07 diferencias de conciliación; H-08 reducción e
 H-09 instante sospechoso (no se hace nada); H-10 salida preparada para el operador (L0/L1); H-11 orden de entrada viva;
 H-12 reducción parcial por una condición OBJETIVO que declara su fracción (una sola vez; si ya no cabe, se informa y se sigue);
 H-13 posición con el estado de control alterado (no se envía nada por ella);
-H-14 llegó la fecha de revisión de la tesis: la posición pasa a EN_REVISION y la confirma (con fecha nueva) o la cierra el operador.
+H-14 llegó la fecha de revisión de la tesis: la posición pasa a EN_REVISION y la confirma (con fecha nueva) o la cierra el operador;
+H-15 se cumplió la condición de reapertura de un expediente en observación (aviso O-31; se puede re-encargar).
 """
 from __future__ import annotations
 
@@ -145,6 +146,9 @@ def vigilar(o, broker, datos, ahora, max_edad_min=MAX_EDAD_MIN):
                 acciones.append({"posicion": pid, "regla": "H-05" if c["tipo"] == "STOP" else "H-02", "condicion": c["id"],
                                  "ok": r["ok"], "codigo": r["codigo"]})
                 break
+    rr = o.revisar_reaperturas(datos if isinstance(datos, dict) else {}, "H", ahora, max_edad_min)   # T-46: con la misma frescura que H
+    for eid in rr.get("cumplidas", []):
+        acciones.append({"expediente": eid, "posicion": None, "regla": "H-15", "ok": True, "codigo": "H-15"})
     if not conc["ok"]:
         acciones.append({"posicion": None, "regla": "H-07", "ok": False, "codigo": "H-07", "diferencias": [d["tipo"] for d in conc["diferencias"]]})
     return {"acciones": acciones, "no_evaluadas": no_eval, "conciliacion_ok": conc["ok"]}
