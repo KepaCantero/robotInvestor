@@ -123,7 +123,7 @@
         "motor_id": "MOTOR-RUN-0008"
       },
       "apalancamiento": {
-        "valor": 0,
+        "valor": 1,
         "unidad": "x",
         "estado": "VERIFICADO",
         "modelo_ref": "MOD-SIM-09",

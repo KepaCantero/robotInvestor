@@ -32,7 +32,7 @@ EXIGIDOS = {
     "N0": ["identificacion", "exclusiones_duras", "evidencia"],
     "N1": ["identificacion", "exclusiones_duras", "evidencia", "tesis",
            "entrada_salida", "liquidez", "costes", "capital", "referencias"],
-    "N2": CAPA1,
+    "N2": CAPA1 + ["capa2", "capa3"],   # decisión del operador (D-13): comparar exige escenarios y confianza desde N2
     "N3": CAPA1 + ["capa2", "capa3"],
 }
 # Unidad exigida y rango permitido por ruta de cifra (V-17, V-21). None = sin límite.
@@ -46,7 +46,7 @@ UNIDADES = {
     "costes.impacto_fiscal": ("EUR", None, None),
     "capital.capital_necesario": ("EUR", 0, None),
     "capital.margen": ("EUR", 0, None),
-    "capital.apalancamiento": ("x", 0, None),
+    "capital.apalancamiento": ("x", 1, None),
     "factores.calidad_ajuste": ("R2", 0, 1),
 }
 UNIDAD_ESTRES = ("%", -100, 0)
@@ -297,8 +297,8 @@ def _validar(sobre, ctx) -> list[dict]:
     # V-15 apalancamiento
     if "capital" in p and not ctx.get("apalancamiento_permitido", False):
         a = p["capital"]["apalancamiento"]
-        if a["estado"] == "NO_ESTIMABLE" or a["valor"] != 0:
-            f("V-15", "payload.capital.apalancamiento", "apalancamiento no habilitado: debe declararse 0")
+        if a["estado"] == "NO_ESTIMABLE" or a["valor"] != 1:
+            f("V-15", "payload.capital.apalancamiento", "apalancamiento no habilitado: debe declararse 1 (ratio de exposición sobre capital; 1 = sin apalancar)")
 
     # V-16 exclusiones duras (en cualquier nivel)
     ex = p["exclusiones_duras"]

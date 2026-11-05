@@ -14,6 +14,7 @@ import math
 
 import math as _m
 
+from orquestador import NIVELES
 from ejecucion_g import _aviso, _instante, cerrar, conciliar
 from orquestador import OPERADORES
 from validar_sobre import _dt
@@ -57,7 +58,8 @@ def vigilar(o, broker, datos, ahora, max_edad_min=MAX_EDAD_MIN):
     except Exception:   # noqa: BLE001
         return {"acciones": [{"posicion": None, "regla": "H-09", "ok": False, "codigo": "H-09"}], "no_evaluadas": [], "conciliacion_ok": False,
                 "motivo": "instante ilegible"}
-    acciones, no_eval = [], []
+    acciones, no_eval, hechos = [], [], set()
+    # Primera pasada: hechos consumados (cierres pendientes y stops que el intermediario ya ejecutó).
     for pid in sorted(o.posiciones):
         p = o.posiciones[pid]
         if p["estado"] == "CERRADA":
@@ -65,6 +67,7 @@ def vigilar(o, broker, datos, ahora, max_edad_min=MAX_EDAD_MIN):
         if p["estado"] == "CERRANDO":
             r = cerrar(o, pid, broker, ahora)
             acciones.append({"posicion": pid, "regla": "H-04", "ok": r["ok"], "codigo": r["codigo"]})
+            hechos.add(pid)
             continue
         try:
             ejec = [c for x in p["protecciones"] if (c := broker.consultar(x)) and c["estado"] in ("EJECUTADA", "PARCIAL")]
@@ -72,15 +75,22 @@ def vigilar(o, broker, datos, ahora, max_edad_min=MAX_EDAD_MIN):
             ejec = []
         if ejec:   # el intermediario ya ejecutó el stop: solo falta confirmar el cierre
             stop = next(c for c in o.posiciones[pid]["condiciones_salida"]["condiciones"] if c["tipo"] == "STOP")
-            cond = {"id": stop["id"], "valor_observado": _valor_cumplido(stop, ejec[0]["precio_medio"])}
+            cond = {"id": stop["id"], "valor_observado": _valor_cumplido(stop, ejec[0]["precio_medio"]), "stop_ejecutado_orden_id": ejec[0]["orden_id"]}
             r = cerrar(o, pid, broker, ahora, condicion=cond)
             acciones.append({"posicion": pid, "regla": "H-01", "ok": r["ok"], "codigo": r["codigo"]})
+            hechos.add(pid)
+    # Conciliar antes de cualquier decisión: una diferencia degrada la cartera y el cierre automático ya no se hace
+    conc = conciliar(o, broker, ahora)
+    for pid in sorted(o.posiciones):
+        p = o.posiciones[pid]
+        if p["estado"] == "CERRADA" or pid in hechos:
             continue
         if p["estado"] == "REDUCIENDO":   # la reducción no está implementada: no se vigila por precio
             acciones.append({"posicion": pid, "regla": "H-08", "ok": False, "codigo": "H-08"})
             continue
         d = datos.get(p["instrumento"]) if isinstance(datos, dict) else None
         if not _dato_fresco(d, ahora, max_edad_min):
+            o.degradar(p["cartera"], f"sin precio fresco de {p['instrumento']}", "H", _instante(o, ahora))
             reg = _aviso(o, [{"tipo": "DATO_VIEJO", "ref": pid, "detalle": f"sin precio fresco de {p['instrumento']}; no se vigila la posición"}], ahora)
             acciones.append({"posicion": pid, "regla": "H-03", "ok": False, "codigo": "H-03", "aviso_registrado": reg})
             continue
@@ -89,11 +99,16 @@ def vigilar(o, broker, datos, ahora, max_edad_min=MAX_EDAD_MIN):
                 no_eval.append({"posicion": pid, "condicion": c["id"], "regla": "H-06"})
                 continue
             if OPERADORES[c["operador"]](d["precio"], c["umbral"]):
+                if NIVELES[o.nivel(p["cartera"])] < 2:   # L0/L1: H prepara el cierre y lo confirma el operador
+                    txt = f"CIERRE PREPARADO: {c['id']} ({c['tipo']}) cumplida; confirme el cierre"
+                    if not any(x["texto"] == txt for x in p["propuestas"]):
+                        o.proponer_sobre_posicion(pid, txt, "H", _instante(o, ahora))
+                    acciones.append({"posicion": pid, "regla": "H-10", "condicion": c["id"], "ok": False, "codigo": "H-10"})
+                    break
                 r = cerrar(o, pid, broker, ahora, condicion={"id": c["id"], "valor_observado": d["precio"]})
                 acciones.append({"posicion": pid, "regla": "H-05" if c["tipo"] == "STOP" else "H-02", "condicion": c["id"],
                                  "ok": r["ok"], "codigo": r["codigo"]})
                 break
-    conc = conciliar(o, broker, ahora)
     if not conc["ok"]:
         acciones.append({"posicion": None, "regla": "H-07", "ok": False, "codigo": "H-07", "diferencias": [d["tipo"] for d in conc["diferencias"]]})
     return {"acciones": acciones, "no_evaluadas": no_eval, "conciliacion_ok": conc["ok"]}

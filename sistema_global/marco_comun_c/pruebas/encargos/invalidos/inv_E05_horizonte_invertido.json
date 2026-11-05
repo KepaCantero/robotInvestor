@@ -33,7 +33,7 @@
           "min": 90,
           "max": 20
         },
-        "apalancamiento_max": 0,
+        "apalancamiento_max": 1,
         "tamano_max_pct_cartera": 5,
         "instrumentos_permitidos": [
           "EUR/USD",

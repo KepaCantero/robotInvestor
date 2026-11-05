@@ -41,7 +41,7 @@ payload = obj({
         "benchmark_ref": ID,
         "horizonte_dias": obj({"min": {"type": "integer", "minimum": 1},
                                "max": {"type": "integer", "minimum": 1}}),
-        "apalancamiento_max": {"type": "number", "minimum": 0, "maximum": 10},
+        "apalancamiento_max": {"type": "number", "minimum": 1, "maximum": 10},
         "tamano_max_pct_cartera": {"type": "number", "exclusiveMinimum": 0, "maximum": 100},
         "instrumentos_permitidos": {"type": "array", "minItems": 1, "uniqueItems": True,
                                     "items": TXT},

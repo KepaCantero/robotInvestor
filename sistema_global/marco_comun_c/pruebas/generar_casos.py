@@ -65,7 +65,7 @@ def base(perfil, clase, nivel, instrumento, via):
                 "impacto_fiscal": cifra(None, "EUR", "NO_ESTIMABLE")},
             "capital": {
                 "capital_necesario": cifra(1000, "EUR", n=7), "margen": cifra(0, "EUR", "VERIFICADO", 8),
-                "apalancamiento": cifra(0, "x", "VERIFICADO", 9)},
+                "apalancamiento": cifra(1, "x", "VERIFICADO", 9)},
             "estres_historico": {
                 "conjunto_version": "EST-v0",
                 "episodios": [{"episodio_id": e, "perdida": cifra(-4.0 - i, "%", n=10 + i)}
@@ -125,7 +125,7 @@ def validos():
     rv["payload"]["costes"]["mantenimiento_anual"] = cifra(15, "pb", n=5)
     rv["payload"]["capa2"] = {"estado": "SUPUESTO"}
     cri = n3(base("C-CRI", "K", "N2", "BTC/EUR", "Custodia en intermediario regulado"), 0.40, 0.30)
-    del cri["payload"]["capa2"]; del cri["payload"]["capa3"]
+    cri["payload"]["capa3"]["doble_analisis"]["realizado"] = False   # en N2 la capa 2 y la 3 son obligatorias, pero el doble análisis solo en N3
     for k in ("liquidez", "costes", "entrada_salida"):
         pass
     cri["payload"]["estres_historico"]["episodios"] = [
@@ -219,6 +219,8 @@ def invalidos():
             x.pop("modelo_ref", None); x.pop("motor_id", None)
         fin(s)
     caso("inv_V23_sobre_vacio_n2", vaciar, base=c)
+    caso("inv_V05_n2_sin_capa2", lambda s: P(s).pop("capa2"), base=c)
+    caso("inv_V05_n2_sin_capa3", lambda s: P(s).pop("capa3"), base=c)
     return out
 
 
