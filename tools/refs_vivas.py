@@ -12,7 +12,7 @@ from pathlib import Path
 
 RAIZ = Path(__file__).resolve().parent.parent
 DOCS_NUESTROS = [RAIZ / "CLAUDE.md"] + sorted((RAIZ / "prompts").glob("*.md")) + sorted((RAIZ / "docs").glob("*.md"))
-RAICES_VALIDAS = ("bloque_a/", "bloque_a_forex/", "bloque_b/", "docs/", "prompts/", "tools/")
+RAICES_VALIDAS = ("bloque_a/", "bloque_a_forex/", "bloque_b/", "docs/", "prompts/", "tools/", "sistema_global/")
 PAT_RUTA = re.compile(r"`([^`\n]+?)`")
 # Entregables FUTUROS citados en prompts de fases (se quitan de aquí al aterrizar
 # la fase que los crea — mismo ratchet que las cuotas).
