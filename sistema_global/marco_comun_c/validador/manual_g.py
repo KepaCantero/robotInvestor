@@ -95,13 +95,17 @@ def validar_manual(reg, ctx):
             fallos.append(_f("RM-09", "el precio se aleja del límite autorizado más de la tolerancia"))
     elif v["tipo"] == "POSICION":
         p = ctx.get("posicion")
-        if p is None or p.get("estado") not in ("ABIERTA", "EN_REVISION"):
-            return fallos + [_f("RM-04", "la posición no existe o no está ABIERTA ni EN_REVISION")]
+        if p is None or p.get("estado") not in ("ABIERTA", "EN_REVISION", "REDUCIENDO"):
+            return fallos + [_f("RM-04", "la posición no existe o no está ABIERTA, EN_REVISION ni REDUCIENDO")]
         lado = "VENTA" if p["direccion"] == "LARGO" else "COMPRA"
         if (reg["cartera"], reg["instrumento"], reg["activo_base"], reg["lado"]) != (p["cartera"], p["instrumento"], p["activo_base"], lado):
             fallos.append(_f("RM-05", "cartera, instrumento, activo base o sentido no cierran esa posición"))
-        if abs(reg["cantidad"] - p["cantidad"]) > 1e-6:
-            fallos.append(_f("RM-06", "el cierre manual debe ser total (la reducción parcial no está implementada)"))
+        red = p.get("reduccion") if p.get("estado") == "REDUCIENDO" else None
+        if red:   # a media reducción queda entre lo que la reducción deja y lo que había; G comprueba que el intermediario queda plano
+            if not (red["objetivo_restante"] - 1e-6 <= reg["cantidad"] <= p["cantidad"] + 1e-6):
+                fallos.append(_f("RM-06", "a media reducción el cierre manual debe ser de lo que queda en el intermediario"))
+        elif abs(reg["cantidad"] - p["cantidad"]) > 1e-6:
+            fallos.append(_f("RM-06", "el cierre manual debe ser total (una reducción parcial la hace G con reducir; declararla a mano no está implementado)"))
     else:
         if "proteccion_ref" in reg:
             fallos.append(_f("RM-01", "un registro LIBRE no lleva orden de protección"))

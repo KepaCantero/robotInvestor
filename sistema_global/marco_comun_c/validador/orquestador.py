@@ -63,7 +63,9 @@ TP = {  # posiciones
     ("EN_REVISION", "REDUCIENDO"): {"F", "G", "ORQUESTADOR", "OPERADOR"},
     ("EN_REVISION", "CERRANDO"): {"F", "G", "ORQUESTADOR", "OPERADOR"},
     ("REDUCIENDO", "ABIERTA"): {"G"},
+    ("REDUCIENDO", "EN_REVISION"): {"G"},   # una reducción no confirma la tesis: vuelve al estado del que salió
     ("REDUCIENDO", "CERRADA"): {"G"},
+    ("REDUCIENDO", "CERRANDO"): {"F", "G", "ORQUESTADOR", "OPERADOR"},   # cerrar del todo una posición a media reducción
     ("CERRANDO", "CERRADA"): {"G"},
 }
 OPERADORES = {"<": lambda v, u: v < u, "<=": lambda v, u: v <= u, ">": lambda v, u: v > u,
@@ -169,6 +171,16 @@ def _valida_config(c):
         ok = False   # la política de F no puede permitir lo que el sistema prohíbe
     if not ok:
         raise ValueError("configuración del Orquestador inválida")
+
+
+TOL_Q = 1e-6   # tolerancia de cantidades (la misma que G)
+# Lo que define el control de una posición: va en la cadena de su historial (cada anotación lleva su hash)
+CAMPOS_POS = ("posicion_id", "expediente_id", "estado", "cantidad", "cantidad_inicial", "cartera", "direccion", "instrumento", "activo_base",
+              "stop_precio", "condiciones_salida", "protecciones", "protecciones_anteriores", "reduccion", "reducciones", "condiciones_consumidas")
+
+
+def _estado_pos(p):
+    return {k: p.get(k) for k in CAMPOS_POS}
 
 
 def _hash(x) -> str:
@@ -442,6 +454,19 @@ class Orquestador:
             prev, ant = h["hash"], h["hasta"]
         return ent["estado"] == ant
 
+    def _posicion_ok(self, p):
+        """Historial íntegro y el estado de control de la posición (cantidad, stops, reducción) es el anotado en la cadena."""
+        return self._historial_ok(p) and p["historial"][-1].get("datos") == _hash(_estado_pos(p))
+
+    def posicion_integra(self, posicion_id):
+        """Para G y H antes de enviar nada al intermediario por una posición (también al retomar un cierre o una reducción)."""
+        p = self.posiciones.get(posicion_id)
+        return p is not None and self._posicion_ok(p)
+
+    def _anota_pos(self, p, desde, hasta, actor, ahora, motivo, ref=None):
+        p["estado"] = hasta
+        self._anota(p, desde, hasta, actor, ahora, motivo, ref, datos=_hash(_estado_pos(p)))
+
     def cabezas(self):
         """Hash de cabeza de cada historial, para anclarlo fuera del Orquestador (registro de solo añadir)."""
         return {**{"EXP:" + k: v["historial"][-1]["hash"] for k, v in self.expedientes.items()},
@@ -507,7 +532,7 @@ class Orquestador:
     def integridad(self):
         """Lista de expedientes (EXP:) y posiciones (POS:) cuyo historial, sobre, comparación o propuesta no cuadra."""
         return sorted(["EXP:" + k for k, v in self.expedientes.items() if not self._todo_ok(v)]
-                      + ["POS:" + k for k, v in self.posiciones.items() if not self._historial_ok(v)])
+                      + ["POS:" + k for k, v in self.posiciones.items() if not self._posicion_ok(v)])
 
     def _anota(self, ent, desde, hasta, actor, ahora, motivo, ref=None, datos=None):
         prev = ent["historial"][-1]["hash"] if ent["historial"] else "0" * 64
@@ -951,6 +976,11 @@ class Orquestador:
             return _no("O-01", "condiciones_salida: ids repetidos")
         if not all(c.get("tipo") in ("STOP", "OBJETIVO", "INVALIDEZ") for c in conds):
             return _no("O-01", "condiciones_salida: cada condición debe ser STOP, OBJETIVO o INVALIDEZ")
+        for c_ in conds:   # T-12: un OBJETIVO puede declarar la fracción de la posición inicial que se reduce al cumplirse
+            if "fraccion" in c_ and not (c_["tipo"] == "OBJETIVO" and _num(c_["fraccion"]) and 0 < c_["fraccion"] < 1):
+                return _no("O-01", "condiciones_salida: solo un OBJETIVO declara fracción, y debe estar entre 0 y 1 (sin incluirlos)")
+        if sum(c_.get("fraccion", 0) for c_ in conds) >= 1:
+            return _no("O-01", "condiciones_salida: las fracciones declaradas suman la posición entera; para eso está un OBJETIVO sin fracción")
         stops = [c for c in conds if c.get("tipo") == "STOP"]
         if len(stops) != 1 or stops[0]["metrica"] != "precio":
             return _no("O-01", "condiciones_salida: debe haber exactamente un STOP y su métrica debe ser el precio")
@@ -1283,9 +1313,11 @@ class Orquestador:
                                 "stop_precio": [c for c in e["propuesta"]["salida"]["condiciones"] if c["tipo"] == "STOP"][0]["umbral"],
                                 "instrumento": e["propuesta"]["entrada"]["instrumento"], "activo_base": e["propuesta"]["entrada"]["activo_base"],
                                 "condiciones_salida": copy.deepcopy(e["propuesta"]["salida"]), "protecciones": list(prot), "propuestas": [],
-                                "origen": "MANUAL" if manual else "G", "ejecutada_en": orden.get("ejecutada_en") or ahora}
+                                "origen": "MANUAL" if manual else "G", "ejecutada_en": orden.get("ejecutada_en") or ahora,
+                                "cantidad_inicial": orden["cantidad"], "protecciones_anteriores": [], "reduccion": None, "reducciones": [],
+                                "condiciones_consumidas": []}
         self.ordenes_usadas += [orden["orden_id"], *prot]
-        self._anota(self.posiciones[pid], None, "ABIERTA", actor if manual else "G", ahora,
+        self._anota_pos(self.posiciones[pid], None, "ABIERTA", actor if manual else "G", ahora,
                     "ejecución manual declarada (CT-G-14)" if manual else "orden conciliada", orden["orden_id"])
         e["posicion_id"] = pid
         if oe and not manual:
@@ -1309,7 +1341,7 @@ class Orquestador:
             return dup
         e = self.expedientes.get(ref) if v.get("tipo") == "EXPEDIENTE" else None
         p = self.posiciones.get(ref) if v.get("tipo") == "POSICION" else None
-        if (e is not None and not (self._historial_ok(e) and self._propuesta_ok(e))) or (p is not None and not self._historial_ok(p)):
+        if (e is not None and not (self._historial_ok(e) and self._propuesta_ok(e))) or (p is not None and not self._posicion_ok(p)):
             return _no("O-13", "el historial del vínculo no es íntegro")
         ins = registro.get("instrumento")
         ocupado = any(q["estado"] != "CERRADA" and q["instrumento"] == ins for q in self.posiciones.values()) \
@@ -1336,10 +1368,13 @@ class Orquestador:
             if not r["ok"]:
                 return r
         elif v["tipo"] == "POSICION":
-            self._anota(p, p["estado"], "CERRANDO", "OPERADOR", ahora, f"cierre manual declarado (CT-G-14): {registro['motivo'][:120]}")
+            if p.get("reduccion"):   # una reducción a medias termina con el cierre total
+                p["reducciones"].append({**p["reduccion"], "restante": 0, "interrumpida": "cierre manual"})
+                p["reduccion"] = None
+            self._anota_pos(p, p["estado"], "CERRANDO", "OPERADOR", ahora, f"cierre manual declarado (CT-G-14): {registro['motivo'][:120]}")
             p["cantidad"] = 0
             self.ordenes_usadas.append(registro["ref_intermediario"])
-            self._anota(p, "CERRANDO", "CERRADA", "OPERADOR", ahora, "cierre manual declarado (CT-G-14)", registro["ref_intermediario"])
+            self._anota_pos(p, "CERRANDO", "CERRADA", "OPERADOR", ahora, "cierre manual declarado (CT-G-14)", registro["ref_intermediario"])
         else:   # LIBRE: fuera del control de F; queda a la vista del operador
             self.ordenes_usadas.append(registro["ref_intermediario"])
             self._aviso("O-20", f"operación libre declarada fuera del sistema (sin control de F ni stop): {registro['lado']} {registro['cantidad']} {ins}",
@@ -1427,8 +1462,8 @@ class Orquestador:
         p = self.posiciones.get(pid)
         if p is None:
             return None, _no("O-12", f"posición inexistente: {pid!r}")
-        if not self._historial_ok(p):
-            return None, _no("O-13", "el historial de la posición no es íntegro")
+        if not self._posicion_ok(p):
+            return None, _no("O-13", "el historial de la posición o su estado de control (cantidad, stops, reducción) no es íntegro")
         return p, None
 
     @_seguro
@@ -1444,7 +1479,10 @@ class Orquestador:
         return _r(True, "OK", "propuesta registrada; no cambia el estado de la posición")
 
     @_seguro
-    def posicion_transicion(self, posicion_id, hasta, actor, ahora, condicion=None, restante=None, orden=None, motivo=None):
+    def posicion_transicion(self, posicion_id, hasta, actor, ahora, condicion=None, restante=None, orden=None, motivo=None,
+                            cantidad=None, protecciones=None):
+        """Transiciones de una posición. Reducir (T-12): el operador con cantidad y motivo; automático solo por una condición
+        OBJETIVO que declare su fracción, una vez, y desde L2. Al terminar la reducción G aporta el stop redimensionado."""
         self._ahora(ahora)
         p, err = self._pos(posicion_id)
         if err:
@@ -1458,7 +1496,11 @@ class Orquestador:
             return _no("O-04", f"transición no permitida: {p['estado']} -> {hasta}")
         if actor not in quien:
             return _no("O-05", f"{actor!r} no puede pedir {p['estado']} -> {hasta}")
-        ref = None
+        if cantidad is not None and hasta != "REDUCIENDO":
+            return _no("O-01", "la cantidad solo se indica al pedir una reducción")
+        if protecciones is not None and not (p["estado"] == "REDUCIENDO" and hasta in ("ABIERTA", "EN_REVISION")):
+            return _no("O-01", "los stops solo se sustituyen al terminar una reducción")
+        ref, decl = None, None
         if hasta in ("REDUCIENDO", "CERRANDO"):
             if actor == "OPERADOR":
                 if not (isinstance(motivo, str) and motivo.strip()):
@@ -1475,11 +1517,32 @@ class Orquestador:
                 c = declaradas[condicion["id"]]
                 if not OPERADORES[c["operador"]](condicion["valor_observado"], c["umbral"]):
                     return _no("O-06", "la condición declarada no se cumple con el valor observado")
-                ref = c["id"]
+                parcial = c.get("fraccion") is not None
+                if hasta == "CERRANDO" and parcial:
+                    return _no("O-06", "esa condición declara una reducción parcial, no un cierre")
+                if hasta == "REDUCIENDO" and not parcial:
+                    return _no("O-06", "una reducción automática exige una condición que declare la fracción que se reduce")
+                if c["id"] in p["condiciones_consumidas"]:
+                    return _no("O-06", "esa condición ya redujo la posición una vez")
+                ref, decl = c["id"], c
+        if hasta == "REDUCIENDO":
+            if decl is not None:
+                q = decl["fraccion"] * p["cantidad_inicial"]
+                if cantidad is not None and not (_num(cantidad) and abs(cantidad - q) <= 1e-9 * max(1.0, q)):
+                    return _no("O-06", "la cantidad no es la que fija la fracción declarada")
+            else:
+                q = cantidad
+            if not (_num(q) and q > TOL_Q):
+                return _no("O-06", "la reducción exige una cantidad positiva y mayor que la tolerancia de cantidades")
+            if q >= p["cantidad"] - TOL_Q:
+                return _no("O-06", "la reducción dejaría la posición a cero o al revés: use el cierre (CERRANDO)")
         if hasta == "ABIERTA" and p["estado"] == "EN_REVISION":
             if not (isinstance(motivo, str) and motivo.strip()):
                 return _no("O-15", "confirmar la tesis exige motivo")
-        if p["estado"] in ("REDUCIENDO", "CERRANDO"):
+        nuevas = None
+        if p["estado"] == "REDUCIENDO" and hasta in ("ABIERTA", "EN_REVISION") and hasta != p["reduccion"]["vuelve_a"]:
+            return _no("O-04", f"la reducción salió de {p['reduccion']['vuelve_a']} y vuelve a ese estado")
+        if p["estado"] in ("REDUCIENDO", "CERRANDO") and hasta in ("ABIERTA", "EN_REVISION", "CERRADA"):
             ok = (isinstance(orden, dict) and orden.get("conciliada") is True and isinstance(orden.get("orden_id"), str)
                   and _num(restante) and 0 <= restante <= p["cantidad"])
             if not ok:
@@ -1488,6 +1551,17 @@ class Orquestador:
                 return _no("O-06", "CERRADA exige restante 0; ABIERTA, restante mayor que 0")
             if p["estado"] == "CERRANDO" and restante != 0:
                 return _no("O-06", "CERRANDO solo termina en CERRADA")
+            if hasta != "CERRADA":   # fin de una reducción: lo que queda y su stop
+                if restante > p["reduccion"]["objetivo_restante"] + TOL_Q:
+                    return _no("O-06", "la reducción no ha llegado a la cantidad pedida: sigue REDUCIENDO")
+                if not (isinstance(protecciones, list) and protecciones and len(set(protecciones)) == len(protecciones)
+                        and all(isinstance(x, str) and _ID.match(x) for x in protecciones)):
+                    return _no("O-06", "al terminar una reducción G debe aportar el stop redimensionado a lo que queda")
+                previas = set(p["protecciones"]) | set(p["protecciones_anteriores"])
+                if any(x in p["protecciones_anteriores"] or (x not in previas and x in self.ordenes_usadas) or x == orden["orden_id"]
+                       for x in protecciones):
+                    return _no("O-03", "ese stop ya se usó o es una orden retirada")
+                nuevas = list(protecciones)
             propia = hasta == "CERRADA" and orden["orden_id"] in p["protecciones"]   # el cierre puede ser el propio stop que saltó
             if orden["orden_id"] in self.ordenes_usadas and not propia:
                 return _no("O-03", "orden ya usada")
@@ -1495,7 +1569,24 @@ class Orquestador:
                 self.ordenes_usadas.append(orden["orden_id"])
             p["cantidad"] = restante
             ref = orden["orden_id"]
-        self._anota(p, p["estado"], hasta, actor, ahora, motivo or "transición de posición", ref)
+        # --- a partir de aquí todo es válido: se aplica
+        if hasta == "REDUCIENDO":
+            p["reduccion"] = {"n": len(p["reducciones"]) + 1, "cantidad": q, "desde": p["cantidad"], "objetivo_restante": p["cantidad"] - q,
+                              "condicion": decl["id"] if decl else None, "actor": actor, "motivo": motivo, "pedida_en": ahora,
+                              "vuelve_a": p["estado"]}
+        elif p["estado"] == "REDUCIENDO":
+            fin = {**p["reduccion"], "restante": p["cantidad"] if hasta != "CERRANDO" else None, "orden_id": ref, "terminada_en": ahora}
+            if hasta in ("CERRANDO", "CERRADA"):
+                fin["interrumpida"] = "cierre"
+            elif fin["condicion"]:
+                p["condiciones_consumidas"].append(fin["condicion"])
+            p["reducciones"].append(fin)
+            p["reduccion"] = None
+            if nuevas is not None:
+                p["protecciones_anteriores"] += [x for x in p["protecciones"] if x not in nuevas]
+                self.ordenes_usadas += [x for x in nuevas if x not in self.ordenes_usadas]
+                p["protecciones"] = nuevas
+        self._anota_pos(p, p["estado"], hasta, actor, ahora, motivo or "transición de posición", ref)
         return _r(True, "OK", f"posición {hasta}")
 
     @_seguro
@@ -1510,5 +1601,5 @@ class Orquestador:
             return _no("O-15", "cartera destino y motivo obligatorios")
         antes = p["cartera"]
         p["cartera"] = nueva_cartera
-        self._anota(p, p["estado"], p["estado"], actor, ahora, f"reclasificada {antes} -> {nueva_cartera}: {motivo}")
+        self._anota_pos(p, p["estado"], p["estado"], actor, ahora, f"reclasificada {antes} -> {nueva_cartera}: {motivo}")
         return _r(True, "OK", "reclasificada")
