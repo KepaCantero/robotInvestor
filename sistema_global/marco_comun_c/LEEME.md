@@ -1,4 +1,4 @@
-# Marco común de C y sobre CT-G-02 — V0.1 (provisional, 0.x)
+# Marco común de C, sobre CT-G-02 y encargo CT-G-01 — V0.2 (provisional, 0.x)
 
 Fecha: 5 de noviembre de 2026. Fase 1 de la Constitución V0.3.
 
@@ -10,9 +10,12 @@ Fecha: 5 de noviembre de 2026. Fase 1 de la Constitución V0.3.
 | `esquemas/generar_esquema.py` | Genera el esquema; se edita aquí, no a mano en el JSON |
 | `validador/validar_sobre.py` | Esquema + reglas V-01 a V-23 (código determinista, sin LLM) |
 | `pruebas/generar_casos.py` | Genera 3 sobres válidos y 51 inválidos (datos simulados) |
-| `pruebas/ejecutar_pruebas.py` | Ejecuta todos los casos y comprueba la regla esperada de cada uno |
+| `pruebas/ejecutar_pruebas.py` | Ejecuta los casos del sobre CT-G-02 y comprueba la regla esperada de cada uno |
+| `esquemas/ct-g-01_0.1.0.schema.json` y `esquemas/generar_esquema_encargo.py` | Esquema del encargo CT-G-01 |
+| `validador/validar_encargo.py` | Reglas E-01 a E-15 del encargo y R-00 a R-10 (el sobre responde al encargo) |
+| `pruebas/pruebas_encargo.py` | Genera, guarda en `pruebas/encargos/` y ejecuta los casos del encargo |
 
-El documento explicativo es la Constitución de C: «Marco común de C y sobre CT-G-02 — V0.1».
+El documento explicativo es la Constitución de C: «Marco común de C y sobre CT-G-02».
 
 ## Cómo se ejecuta
 
@@ -21,13 +24,16 @@ pip install jsonschema
 python3 esquemas/generar_esquema.py > esquemas/ct-g-02_0.1.0.schema.json
 python3 pruebas/generar_casos.py
 python3 pruebas/ejecutar_pruebas.py
+python3 esquemas/generar_esquema_encargo.py > esquemas/ct-g-01_0.1.0.schema.json
+python3 pruebas/pruebas_encargo.py
 python3 validador/validar_sobre.py sobre.json contexto.json
 ```
 
-Resultado esperado de las pruebas: `TODAS LAS PRUEBAS PASAN`.
+Resultado esperado de cada script de pruebas: `TODAS LAS PRUEBAS PASAN`.
 
 ## Qué está comprobado y qué no
 
+- Comprobado en CT-G-01: 3 encargos válidos, 36 inválidos, 1 respuesta válida y 13 inválidas; el cruce valida antes ambos mensajes.
 - Comprobado: el esquema valida, el validador acepta los 3 sobres válidos y rechaza cada
   uno de los 51 inválidos por la regla que rompe.
 - No comprobado: ningún sobre real. Los datos de prueba son simulados. Falta pasar un
