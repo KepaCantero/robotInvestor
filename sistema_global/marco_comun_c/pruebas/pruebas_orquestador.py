@@ -27,10 +27,29 @@ A2 = "2026-11-08T13:00:00+00:00"
 S1 = SELLOS_ENC["K-20261105-001"]
 S2 = SELLOS_ENC["K-20261106-001"]
 STOP = {"id": "STOP-1", "tipo": "STOP", "metrica": "precio", "operador": "<=", "umbral": 1.05, "unidad": "USD"}
-OBJ = {"id": "OBJ-1", "tipo": "OBJETIVO", "metrica": "precio", "operador": ">=", "umbral": 1.15, "unidad": "USD"}
+OBJ = {"id": "OBJ-1", "tipo": "OBJETIVO", "metrica": "precio", "operador": ">=", "umbral": 1.14, "unidad": "USD"}
+INV = {"id": "INV-1", "tipo": "INVALIDEZ", "metrica": "precio_cierre", "operador": "<", "umbral": 1.05, "unidad": "EUR"}   # la del sobre
 ENTRADA = {"limite": 1.10, "ventana_hasta": "2026-11-08T12:00:00+00:00", "instrumento": "EURUSD", "activo_base": "EUR",
            "apalancamiento": 1.0, "cantidad": 100.0}
-SALIDA = {"condiciones": [STOP, OBJ], "fecha": "2026-12-05"}
+SALIDA = {"condiciones": [STOP, OBJ, INV], "fecha": "2026-12-05"}
+CART_E = {"fecha_hora": "2026-11-06T08:50:00+00:00", "capital_eur": 100000.0, "perdida_dia_eur": 0.0, "posiciones": []}
+
+
+def dim(o, eid="EXP-0001", entrada=None, salida=None, cartera=None, ahora=AHORA, paso=1.0):
+    """El cálculo de E que acompaña a una propuesta (las mismas entradas que el Orquestador repite)."""
+    ent, sal = entrada or ENTRADA, salida or SALIDA
+    st = [c for c in sal["condiciones"] if c.get("tipo") == "STOP"][0]
+    sol = {"instrumento": ent["instrumento"], "activo_base": ent["activo_base"], "direccion": "LARGO" if st["operador"] in ("<", "<=") else "CORTO",
+           "precio_entrada": ent["limite"], "stop_precio": st["umbral"], "apalancamiento": ent["apalancamiento"],
+           "cartera": o.expedientes[eid]["cartera_destino"] if eid in o.expedientes else "TACTICA"}
+    return {"solicitud": sol, "cartera": copy.deepcopy(cartera or CART_E), "riesgo_objetivo_pct": None, "paso": paso, "ahora": ahora}
+
+
+def elegir_si_hace_falta(o, eid, ahora=AHORA):
+    c = o.expedientes[eid].get("comparacion") or {}
+    if not c.get("ganador"):
+        r = o.elegir(eid, "OPERADOR", "elección de prueba", ahora)
+        assert r["ok"], r
 
 
 def nuevo(cfg=None, sellos=(S1,)):
@@ -62,7 +81,26 @@ def sobre(n=1, corte="2026-11-05", sello="K-20261105-001"):
     return s
 
 
-def hasta(o, estado, n=1, ahora=AHORA, entrada=None, salida=None):
+def sobre_para(n, salida):
+    """Un sobre coherente con unas condiciones de salida dadas (dirección, stop, objetivo e invalidez)."""
+    s = sobre(n)
+    if salida is None:
+        return s
+    p = s["payload"]
+    st = [c for c in salida["condiciones"] if c.get("tipo") == "STOP"][0]
+    p["identificacion"]["direccion"] = "LARGO" if st["operador"] in ("<", "<=") else "CORTO"
+    p["entrada_salida"]["stop"]["valor"] = st["umbral"]
+    objs = [c for c in salida["condiciones"] if c.get("tipo") == "OBJETIVO"]
+    if objs:
+        p["entrada_salida"]["objetivo"]["valor"] = objs[0]["umbral"]
+    invs = [c for c in salida["condiciones"] if c.get("tipo") == "INVALIDEZ"]
+    if invs:
+        p["tesis"]["condiciones_invalidez"] = [{"id": c["id"], "descripcion": "invalidez de prueba", "metrica": c["metrica"], "operador": c["operador"],
+                                               "umbral": c["umbral"], "unidad": c["unidad"]} for c in invs]
+    return s
+
+
+def hasta(o, estado, n=1, ahora=AHORA, entrada=None, salida=None, cartera_e=None):
     """Lleva el expediente EXP-000n hasta `estado` por el camino feliz (sin cambiar el reloj)."""
     if estado == "DESDE_CERO":
         return
@@ -72,7 +110,7 @@ def hasta(o, estado, n=1, ahora=AHORA, entrada=None, salida=None):
     assert o.emitir_encargo(f"EXP-{n:04d}", encargo(n), "GESTOR_TACTICA", ahora)["ok"]
     if estado == "EN_ANALISIS":
         return
-    r = o.entregar_sobre(f"EXP-{n:04d}", sobre(n), ahora)
+    r = o.entregar_sobre(f"EXP-{n:04d}", sobre_para(n, salida), ahora)
     assert r["ok"], r
     if estado == "VALIDADA":
         return
@@ -83,7 +121,9 @@ def hasta(o, estado, n=1, ahora=AHORA, entrada=None, salida=None):
     assert o.comparar([f"EXP-{n:04d}", f"EXP-{n + 1:04d}"], "D", ahora)["ok"]
     if estado == "COMPARADA":
         return
-    assert o.proponer(f"EXP-{n:04d}", entrada or ENTRADA, salida or SALIDA, "GESTOR_TACTICA", ahora)["ok"]
+    elegir_si_hace_falta(o, f"EXP-{n:04d}", ahora)
+    r = o.proponer(f"EXP-{n:04d}", entrada or ENTRADA, salida or SALIDA, "GESTOR_TACTICA", ahora, dim(o, f"EXP-{n:04d}", entrada, salida, cartera=cartera_e, ahora=ahora))
+    assert r["ok"], r
     if estado == "PROPUESTA":
         return
     assert o.autorizar(f"EXP-{n:04d}", "OPERADOR", informe_f(o, f"EXP-{n:04d}", n), ahora)["ok"]
@@ -124,7 +164,7 @@ def main():
     h.chk("feliz_expediente_ejecutado", e["estado"] == "EJECUTADA" and e["posicion_id"] == "POS-EXP-0001")
     h.chk("feliz_posicion_abierta_con_protecciones", o.posiciones["POS-EXP-0001"]["estado"] == "ABIERTA" and o.posiciones["POS-EXP-0001"]["protecciones"])
     h.chk("feliz_historial_completo", [x["hasta"] for x in e["historial"]] ==
-          ["DETECTADA", "EN_ANALISIS", "VALIDADA", "COMPARADA", "PROPUESTA", "AUTORIZADA", "EJECUTADA"])
+          ["DETECTADA", "EN_ANALISIS", "VALIDADA", "COMPARADA", "COMPARADA", "PROPUESTA", "AUTORIZADA", "EJECUTADA"])   # la segunda: elección del operador
     h.chk("feliz_historial_integro", o._historial_ok(e))
     R("terminal_ejecutada_no_se_mueve", o, lambda: o.descartar("EXP-0001", "x", "BROKER", AHORA), "O-14")
 
