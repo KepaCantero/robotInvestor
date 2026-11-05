@@ -13,7 +13,7 @@ from pruebas_orquestador import AHORA, CART_E, ENTRADA, INV, OBJ, SALIDA, STOP, 
 PROP = "GESTOR_TACTICA"
 
 
-def validar_con(o, n, instrumento="EUR/USD", escenarios=None, mod=None):
+def validar_con(o, n, instrumento="EUR/USD", escenarios=None, mod=None, valid_until=None):
     """Lleva EXP-000n a VALIDADA con un sobre a medida."""
     from pruebas_orquestador import encargo, sobre
     eid = f"EXP-{n:04d}"
@@ -24,6 +24,8 @@ def validar_con(o, n, instrumento="EUR/USD", escenarios=None, mod=None):
     if escenarios:
         sob["payload"]["capa2"]["escenarios"] = [{"nombre": k, "probabilidad": p, "rentabilidad_neta_pct": v, "horizonte_dias": 90}
                                                  for k, p, v in zip(("base", "adverso", "favorable"), (0.5, 0.3, 0.2), escenarios)]
+    if valid_until:
+        sob["valid_until"] = valid_until
     if mod:
         mod(sob["payload"])
         from validar_sobre import proporcion_real
@@ -216,9 +218,8 @@ def main():
     o.comparar(["EXP-0001", "EXP-0002", "EXP-0003"], "D", AHORA)
     h.chk("duplicado_no_se_elige_en_ajustada_O22", o.expedientes["EXP-0003"]["comparacion"]["excluido"] == "DUPLICADO"
           and o.elegir("EXP-0003", "OPERADOR", "x", AHORA)["codigo"] == "O-22")
-    o = nuevo(); validar_con(o, 1); validar_con(o, 2, instrumento="GBP/USD")
-    o.expedientes["EXP-0002"]["sobre"]["valid_until"] = "2026-11-06T08:00:00+00:00"   # simulamos que su sobre ya venció
-    r = o.comparar(["EXP-0001"], "D", AHORA)
+    o = nuevo(); validar_con(o, 1); validar_con(o, 2, instrumento="GBP/USD", valid_until="2026-11-06T10:00:00+00:00")   # vence antes
+    r = o.comparar(["EXP-0001"], "D", "2026-11-06T11:00:00+00:00")
     h.chk("un_candidato_caducado_no_bloquea_a_los_demas", r["ok"] and r["ganador"] == "EXP-0001", r)
     from orquestador import Orquestador
     from pruebas_orquestador import CAL, CFG

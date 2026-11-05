@@ -92,7 +92,7 @@ NIVELES = {"L0": 0, "L1": 1, "L2": 2}
 # Prioridad de cada aviso para el operador [PROPUESTO]
 TIPOS_KILL = {"POSICION_DESCONOCIDA", "CANTIDAD", "SENTIDO_O_ACTIVO", "PROTECCION", "PROTECCION_HUERFANA", "ENTRADA_HUERFANA",
               "MANUAL_NO_CUADRA", "POSICION_SIN_PROTEGER"}   # lo que G sabe explicar (cierres propios, conexión, estado incierto, dato viejo) no
-PRIORIDAD_AVISO = {"O-20": "MEDIA", "O-25": "ALTA", "O-26": "ALTA", "O-19": "ALTA", "O-18": "ALTA", "O-03": "ALTA", "O-08": "ALTA", "O-09": "ALTA", "O-13": "ALTA", "O-17": "ALTA"}
+PRIORIDAD_AVISO = {"O-20": "MEDIA", "O-30": "ALTA", "O-25": "ALTA", "O-26": "ALTA", "O-19": "ALTA", "O-18": "ALTA", "O-03": "ALTA", "O-08": "ALTA", "O-09": "ALTA", "O-13": "ALTA", "O-17": "ALTA"}
 ACTORES_PROPUESTA = set(EMISORES)   # quien propone no aprueba ni controla: F, D y H no proponen (Constitución §2, P1)
 
 
@@ -189,6 +189,13 @@ CAMPOS_POS = ("posicion_id", "expediente_id", "estado", "cantidad", "cantidad_in
 
 def _estado_pos(p):
     return {k: p.get(k) for k in CAMPOS_POS}
+
+
+def _identidad(e):
+    return {k: e.get(k) for k in ("expediente_id", "correlation_id", "via_entrada", "cartera_destino")}
+
+
+VIVOS = ("VALIDADA", "COMPARADA", "PROPUESTA", "AUTORIZADA")   # candidato con análisis, en juego
 
 
 def _hash(x) -> str:
@@ -489,8 +496,8 @@ class Orquestador:
     def _sobre_ok(self, e):
         """El sobre guardado es el que se anotó al validarlo (su hash está en la cadena del historial)."""
         s = e.get("sobre")
-        if not s or "documento" not in s:
-            return True
+        if not s or "documento" not in s:   # sin sobre solo si nunca se validó
+            return not any(h["hasta"] == "VALIDADA" for h in e["historial"])
         ult = [h for h in e["historial"] if h["hasta"] == "VALIDADA"]
         return bool(ult) and ult[-1]["datos"] == self._huella_sobre(e) and s["hash"] == _hash(s["documento"])
 
@@ -539,8 +546,21 @@ class Orquestador:
         return bool(ult) and ult[-1]["datos"] == _hash(cf) and (ult[-1]["actor"] != "OPERADOR" or cf.get("aprobacion") is not None)
 
     def _todo_ok(self, e):
-        return (self._historial_ok(e) and self._propuesta_ok(e) and self._sobre_ok(e) and self._comparacion_ok(e) and self._orden_ok(e)
-                and self._aprobacion_ok(e))
+        return (self._historial_ok(e) and self._identidad_ok(e) and self._propuesta_ok(e) and self._sobre_ok(e) and self._comparacion_ok(e)
+                and self._orden_ok(e) and self._aprobacion_ok(e))
+
+    @staticmethod
+    def _identidad_ok(e):
+        """La cartera, la petición y el encargo vigente del expediente son los anotados (T-36: sin ellos se le saca de una comparación)."""
+        h = e["historial"]
+        if h[0]["datos"] != _hash(_identidad(e)):
+            return False
+        enc = [x["ref"] for x in h if x["hasta"] == "EN_ANALISIS" and x["motivo"] == "encargo emitido"]
+        return e.get("encargo_actual") == (enc[-1] if enc else None)
+
+    def _rota(self):
+        """Primer expediente cuya integridad no cuadra (cualquier cartera), o None."""
+        return next((k for k, x in sorted(self.expedientes.items()) if not self._todo_ok(x)), None)
 
     def integridad(self):
         """Lista de expedientes (EXP:) y posiciones (POS:) cuyo historial, sobre, comparación o propuesta no cuadra."""
@@ -676,7 +696,7 @@ class Orquestador:
         e = {"expediente_id": expediente_id, "correlation_id": correlation_id, "via_entrada": via_entrada,
              "cartera_destino": cartera_destino, "estado": "DETECTADA", "historial": [], "encargo_actual": None,
              "sobre": None, "contradictor": None, "retenido": None, "sin_avance": 0, "propuesta": None, "posicion_id": None, "reapertura": None}
-        self._anota(e, None, "DETECTADA", actor, ahora, "detectada")
+        self._anota(e, None, "DETECTADA", actor, ahora, "detectada", datos=_hash(_identidad(e)))
         self.expedientes[expediente_id] = e
         return _r(True, "OK", "expediente creado")
 
@@ -862,6 +882,74 @@ class Orquestador:
         return (x["cartera_destino"] == cartera and x["estado"] in ("VALIDADA", "COMPARADA") and x.get("sobre")
                 and a <= _dt(x["sobre"]["valid_until"]) and not self._sello_anulado(x))
 
+    @staticmethod
+    def _salida_no_operador(x):
+        """T-36: la anotación con la que el candidato salió del juego (desde VALIDADA, COMPARADA, PROPUESTA o AUTORIZADA) tras su
+        última validación, si no la decidió el operador y él no la ha ratificado después. Lo que pase luego (reabrir, observar
+        otra vez, descartar) no la borra. Una caducidad del Orquestador no es una salida decidida por nadie."""
+        h = x["historial"]
+        iv = max((i for i, a in enumerate(h) if a["hasta"] == "VALIDADA" and a["desde"] != "VALIDADA"), default=None)
+        if iv is None:
+            return None
+        salida = None
+        for a in h[iv + 1:]:
+            if salida is None:
+                if a["desde"] in VIVOS and a["hasta"] not in VIVOS + ("EJECUTADA",):
+                    if a["actor"] == "OPERADOR" or (a["actor"] == "ORQUESTADOR" and a["hasta"] == "CADUCADA"):
+                        return None
+                    salida = a
+            elif a["actor"] == "OPERADOR" and (a["hasta"] in ("EN_OBSERVACION", "DESCARTADA") or a["ref"] == "RATIFICA_APARTADO"):
+                return None   # el operador lo hizo suyo
+        return salida
+
+    def _sellos_validos(self, x):
+        refs = [r for r in x["sobre"]["documento"].get("data_refs", []) if isinstance(r, str) and r.startswith("K-")]
+        return bool(refs) and all(self.sellos.get(r, {}).get("estado") not in (None, "ANULADO") for r in refs)
+
+    def _testigos(self, cartera, a, excluir):
+        """Candidatos de la cartera sacados del juego por alguien distinto del operador (observar, descartar, reabrir…) cuyo sobre
+        validado sigue vigente. Se deducen del historial encadenado; la integridad de todos se comprueba antes (comparar, proponer)."""
+        out = []
+        for k, x in sorted(self.expedientes.items()):
+            if k in excluir or x["cartera_destino"] != cartera or x["estado"] in VIVOS + ("EJECUTADA",) or not x.get("sobre"):
+                continue
+            if self._salida_no_operador(x) and a <= _dt(x["sobre"]["valid_until"]) and self._sellos_validos(x):
+                out.append(x)
+        return out
+
+    def _testigos_nuevos(self, e, a):
+        """Testigos que no estaban cuando se comparó: la comparación ya no vale (proponer y autorizar)."""
+        c = e.get("comparacion") or {}
+        return sorted(x["expediente_id"] for x in self._testigos(e["cartera_destino"], a, {e["expediente_id"]})
+                      if x["expediente_id"] not in c.get("testigos", [])
+                      and (x.get("comparacion") or {}).get("id") != c.get("id"))   # ya se comparó con él en esa misma comparación
+
+    def _comprobar_testigos(self, e, a):
+        rota = self._rota()
+        if rota:
+            self._activar_kill(f"integridad rota en {rota}", "ORQUESTADOR", self.ultimo_ahora or "1970-01-01T00:00:00+00:00")
+            return _no("O-13", f"el expediente {rota} no es íntegro")
+        nuevos = self._testigos_nuevos(e, a)
+        if nuevos:
+            return _no("O-22", f"después de comparar se apartó a {', '.join(nuevos[:5])}: compare de nuevo")
+        return None
+
+    @_seguro
+    def ratificar_apartado(self, expediente_id, motivo, actor, ahora):
+        """El operador hace suyo el apartado de un candidato (p. ej. el que F vetó y su gestor descartó): deja de ser testigo."""
+        self._ahora(ahora)
+        e, err = self._exp(expediente_id)
+        if err:
+            return err
+        if actor != "OPERADOR":
+            return _no("O-05", "solo el operador ratifica un apartado")
+        if not (isinstance(motivo, str) and motivo.strip()):
+            return _no("O-15", "ratificar un apartado exige motivo")
+        if e["estado"] in VIVOS + ("EJECUTADA",) or not self._salida_no_operador(e):
+            return _no("O-04", "no hay ningún apartado pendiente de ratificar en este expediente")
+        self._anota(e, e["estado"], e["estado"], "OPERADOR", ahora, f"apartado ratificado: {motivo.strip()[:160]}", "RATIFICA_APARTADO")
+        return _r(True, "OK", "apartado ratificado")
+
     @_seguro
     def comparar(self, expediente_ids, actor, ahora):
         a = self._ahora(ahora)
@@ -903,22 +991,50 @@ class Orquestador:
         d = comparar_candidatos([{"expediente_id": x["expediente_id"], "sobre": copy.deepcopy(x["sobre"]["documento"])} for x in exps], ahora, ref)
         if not d["ok"]:
             return _no("O-01", f"D no pudo comparar: {d['motivo']}")
+        # T-36: ¿habría ganado alguno de los apartados? Se compara también con ellos; si es así, D no da ganador y elige el operador
+        rota = self._rota()   # T-36: cualquier expediente alterado (también uno sacado de la cartera) detiene la comparación
+        if rota:
+            self._activar_kill(f"integridad rota en {rota}", "ORQUESTADOR", self.ultimo_ahora or "1970-01-01T00:00:00+00:00")
+            return _no("O-13", f"el expediente {rota} no es íntegro: no se compara")
+        testigos = self._testigos(cartera, a, set(expediente_ids))
+        apartado_mejor = None
+        if testigos and d["decision_global"] == "INVERTIR":
+            t = comparar_candidatos([{"expediente_id": x["expediente_id"], "sobre": copy.deepcopy(x["sobre"]["documento"])} for x in exps + testigos],
+                                    ahora, ref)
+            tids = {x["expediente_id"] for x in testigos}
+            if not t["ok"]:
+                return _no("O-01", f"D no pudo comparar con los candidatos apartados: {t['motivo']}")
+            mejores = [t["ganador_global"]] if t["ganador_global"] else t["aspirantes"]
+            apartado_mejor = next((x for x in mejores if x in tids), None)
+        elif testigos and d["decision_global"] == "ABSTENERSE":
+            t = comparar_candidatos([{"expediente_id": x["expediente_id"], "sobre": copy.deepcopy(x["sobre"]["documento"])} for x in testigos], ahora, ref)
+            if t["ok"] and t["decision_global"] == "INVERTIR":   # D se abstiene, pero un apartado sí superaba la referencia
+                apartado_mejor = t["ganador_global"] or t["aspirantes"][0]
         cid = "CMP-" + _hash([sorted(expediente_ids), ahora, len(self.ultima_comparacion)])[:12]
         filas = {r["expediente_id"]: r for g in d["grupos"].values() for r in g["ranking"]}
         excl = {x["expediente_id"]: x["motivo"] for x in d.get("excluidos", [])}
+        en_juego = set([d["ganador_global"]] if d["ganador_global"] else d["aspirantes"])   # lo que D habría dejado elegir
         for e in exps:
             eid = e["expediente_id"]
             grupo = next((g for g in d.get("grupos", {}).values() if any(r["expediente_id"] == eid for r in g["ranking"])), None)
             fila = filas.get(eid)
             e["comparacion"] = {"id": cid, "codigo_d": d["codigo"], "decision_global": d["decision_global"], "referencia": d["referencia"],
                                 "decision": grupo["decision"] if grupo else None, "sensible": grupo["sensible"] if grupo else None,
-                                "ganador": d["ganador_global"] == eid, "aspirante": eid in d["aspirantes"] and d["ganador_global"] is None,
+                                "ganador": d["ganador_global"] == eid and apartado_mejor is None,
+                                "aspirante": eid in en_juego and (d["ganador_global"] is None or apartado_mejor is not None),
                                 "excluido": excl.get(eid), "elegido_por_operador": None,
+                                "testigos": [x["expediente_id"] for x in testigos], "apartado_mejor": apartado_mejor,
                                 "detalle_d": {k: fila[k] for k in ("puntuacion", "exceso_sobre_referencia_pct", "horizonte_dias", "peor_escenario_pct",
                                                                    "confianza_normalizada", "factor_evidencia", "dominado_por")} if fila else None}
             self._anota(e, e["estado"], "COMPARADA", actor, ahora, "comparada con " + ",".join(expediente_ids), cid, datos=_hash(e["comparacion"]))
         ganador = next((x["expediente_id"] for x in exps if x["comparacion"]["ganador"]), None)
         self.ultima_comparacion[cartera] = cid
+        if apartado_mejor:
+            quien = self.expedientes[apartado_mejor]["historial"][-1]["actor"]
+            self._aviso("O-30", f"{cartera}: el candidato {apartado_mejor}, apartado por {quien}, habría ganado la comparación; decide el operador",
+                        ahora, apartado_mejor)
+            return _r(True, "O-30", "un candidato apartado habría ganado: D no da ganador y elige el operador",
+                      ganador=None, apartado_mejor=apartado_mejor, codigo_d=d["codigo"], decision_global=d["decision_global"])
         return _r(True, "OK", "comparación registrada" if d["decision_global"] == "INVERTIR" else "D se abstiene: ningún candidato supera la referencia",
                   ganador=ganador, codigo_d=d["codigo"], decision_global=d["decision_global"])
 
@@ -943,7 +1059,7 @@ class Orquestador:
         if c["id"] != self.ultima_comparacion.get(e["cartera_destino"]):
             return _no("O-22", "esa comparación ya no es la vigente de la cartera: compare de nuevo")
         if not c["aspirante"]:
-            return _no("O-22", "solo se elige entre los aspirantes de una decisión ajustada (empatados o primeros con otra ponderación)")
+            return _no("O-22", "solo se elige entre los aspirantes de una decisión ajustada (empatados, primeros con otra ponderación o cuando un apartado habría ganado)")
         if any(x.get("comparacion", {}).get("id") == c["id"] and (x["comparacion"]["ganador"] or x["comparacion"]["elegido_por_operador"])
                for x in self.expedientes.values()):
             return _no("O-22", "en esa comparación ya hay un candidato elegido")
@@ -1010,6 +1126,9 @@ class Orquestador:
         c = e.get("comparacion") or {}
         if not (c.get("ganador") or c.get("elegido_por_operador")):
             return _no("O-22", "solo se propone el ganador de D o el candidato que eligió el operador")
+        err = self._comprobar_testigos(e, a)
+        if err:
+            return err
         if c.get("id") != self.ultima_comparacion.get(e["cartera_destino"]) or any(
                 x["estado"] == "VALIDADA" and self._candidato_vivo(x, e["cartera_destino"], a) for x in self.expedientes.values()):
             return _no("O-22", "hay candidatos nuevos o una comparación más reciente en la cartera: compare de nuevo con todos")
@@ -1107,6 +1226,9 @@ class Orquestador:
             return _no("O-05", f"la cartera está en {self.nivel(e['cartera_destino'])}: autoriza el operador")
         if not isinstance(control_f, dict) or not isinstance(control_f.get("event_id"), str):
             return _no("O-01", "falta el informe de control de F (CT-G-08)")
+        err = self._comprobar_testigos(e, a)   # T-36: nadie apartó a un rival después de comparar
+        if err:
+            return err
         if a > _dt(e["propuesta"]["entrada"]["ventana_hasta"]) or a > _dt(e["sobre"]["valid_until"]):
             return _no("O-10", "la propuesta caducó")
         if date.fromisoformat(e["propuesta"]["salida"]["fecha"]) <= a.astimezone(timezone.utc).date():
@@ -1425,6 +1547,8 @@ class Orquestador:
         err = self._transicion_ok(e, "EN_OBSERVACION", actor)
         if err:
             return err
+        if actor in GESTORES and actor != GESTOR_DE[e["cartera_destino"]]:
+            return _no("O-05", "un gestor solo aparta expedientes de su cartera")
         if e["retenido"] is not None:
             return _no("O-17", "hay una objeción crítica pendiente: no se puede aparcar el expediente")
         if not (isinstance(motivo, str) and motivo.strip() and isinstance(condiciones_reapertura, list) and condiciones_reapertura
@@ -1443,6 +1567,8 @@ class Orquestador:
         err = self._transicion_ok(e, "DESCARTADA", actor)
         if err:
             return err
+        if actor in GESTORES and actor != GESTOR_DE[e["cartera_destino"]]:
+            return _no("O-05", "un gestor solo aparta expedientes de su cartera")
         if not (isinstance(motivo, str) and motivo.strip()):
             return _no("O-15", "el descarte exige motivo")
         if self._entrada_viva(e):
