@@ -118,9 +118,9 @@ def main():
         h.chk("vigilar_sin_conexion_no_lanza_ni_da_nada_por_cerrado", False, type(ex).__name__)
     # --- métrica no soportada
     o, b = abierta()
-    o.posiciones[PID]["condiciones_salida"]["condiciones"].append({"id": "VOL", "tipo": "OBJETIVO", "metrica": "volatilidad", "operador": ">", "umbral": 1.0})
+    # la invalidez del sobre (precio_cierre) no es una métrica que H sepa vigilar: se informa (alterar las condiciones de una posición ya se detecta, H-13)
     r = vigilar(o, b, datos(1.10), T1)
-    h.chk("H06_metrica_no_soportada_se_informa", r["no_evaluadas"] and r["no_evaluadas"][0]["regla"] == "H-06", r)
+    h.chk("H06_metrica_no_soportada_se_informa", r["no_evaluadas"] and r["no_evaluadas"][0]["regla"] == "H-06" and r["no_evaluadas"][0]["condicion"] == "INV-1", r)
     # --- revisión independiente
     # 1. el stop salta entre la lectura y el cierre: la orden a mercado abre la posición contraria
     class SaltaAlCerrar(BrokerSimulado):
@@ -165,8 +165,15 @@ def main():
     h.chk("stop_parcial_se_cierra_el_resto", o.posiciones[PID]["estado"] == "CERRADA" and b.posiciones() == [], r)
     # 4. REDUCIENDO
     o, b = abierta()
-    o.posicion_transicion(PID, "REDUCIENDO", "OPERADOR", T1, motivo="reducir")
-    h.chk("REDUCIENDO_sin_novedad_no_se_cierra", vigilar(o, b, datos(1.30), T1)["acciones"][0]["regla"] == "H-08" and o.posiciones[PID]["estado"] == "REDUCIENDO" and len(b.posiciones()) == 1)
+    o.posicion_transicion(PID, "REDUCIENDO", "OPERADOR", T1, motivo="reducir", cantidad=40.0)   # pedida sin que G la llegara a enviar
+    r = vigilar(o, b, datos(1.10), T1)
+    h.chk("REDUCIENDO_pendiente_H_la_retoma", r["acciones"][0]["regla"] == "H-08" and r["acciones"][0]["ok"] and o.posiciones[PID]["estado"] == "ABIERTA"
+          and o.posiciones[PID]["cantidad"] == 60.0 and b.posiciones()[0]["cantidad"] == 60.0 and r["conciliacion_ok"], r)
+    o, b = abierta()
+    b.rechaza_mercado = True
+    from ejecucion_g import reducir
+    h.chk("REDUCIENDO_sin_poder_vender_G12", reducir(o, PID, b, T1, cantidad=40.0, actor="OPERADOR", motivo="reducir")["codigo"] == "G-12"
+          and o.posiciones[PID]["estado"] == "REDUCIENDO")
     b.mover_precio("EURUSD", 1.04, T1)
     r = vigilar(o, b, datos(1.04), T1)
     h.chk("REDUCIENDO_con_stop_ejecutado_se_cierra", o.posiciones[PID]["estado"] == "CERRADA" and b.posiciones() == [], r)

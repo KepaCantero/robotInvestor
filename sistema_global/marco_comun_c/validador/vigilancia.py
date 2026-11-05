@@ -5,8 +5,10 @@ declarada de antemano se cumple, pide a G que cierre. Determinista, sin LLM. H n
 las condiciones que la propuesta ya fijó. Ante un dato ausente o viejo no cierra: avisa.
 Reglas: H-01 stop ejecutado por el intermediario; H-02 condición de salida cumplida; H-03 dato ausente o viejo;
 H-04 cierre pendiente (CERRANDO) que se reintenta; H-05 stop cumplido sin que el intermediario lo ejecutara;
-H-06 métrica no soportada; H-07 diferencias de conciliación; H-08 posición REDUCIENDO (no se vigila por precio);
-H-09 instante sospechoso (no se hace nada).
+H-06 métrica no soportada; H-07 diferencias de conciliación; H-08 reducción en curso (REDUCIENDO) que se retoma;
+H-09 instante sospechoso (no se hace nada); H-10 salida preparada para el operador (L0/L1); H-11 orden de entrada viva;
+H-12 reducción parcial por una condición OBJETIVO que declara su fracción (una sola vez; si ya no cabe, se informa y se sigue);
+H-13 posición con el estado de control alterado (no se envía nada por ella).
 """
 from __future__ import annotations
 
@@ -15,7 +17,7 @@ import math
 import math as _m
 
 from orquestador import NIVELES
-from ejecucion_g import _aviso, _instante, cerrar, conciliar, revisar_entrada
+from ejecucion_g import _aviso, _instante, cerrar, conciliar, reducir, revisar_entrada
 from orquestador import OPERADORES
 from validar_sobre import _dt
 
@@ -70,11 +72,22 @@ def vigilar(o, broker, datos, ahora, max_edad_min=MAX_EDAD_MIN):
         p = o.posiciones[pid]
         if p["estado"] == "CERRADA":
             continue
+        if not o.posicion_integra(pid):   # fail-closed: con un estado alterado no se envía nada por esta posición
+            reg = _aviso(o, [{"tipo": "INTEGRIDAD", "ref": pid, "detalle": "el estado de control de la posición no cuadra con su historial"}], ahora)
+            acciones.append({"posicion": pid, "regla": "H-13", "ok": False, "codigo": "H-13", "aviso_registrado": reg})
+            hechos.add(pid)
+            continue
         if p["estado"] == "CERRANDO":
             r = cerrar(o, pid, broker, ahora)
             acciones.append({"posicion": pid, "regla": "H-04", "ok": r["ok"], "codigo": r["codigo"]})
             hechos.add(pid)
             continue
+        if p["estado"] == "REDUCIENDO":   # se retoma; si un stop la cerró entera, G la termina como cierre
+            r = reducir(o, pid, broker, ahora)
+            acciones.append({"posicion": pid, "regla": "H-08", "ok": r["ok"], "codigo": r["codigo"]})
+            if r["ok"] or o.posiciones[pid]["estado"] != "REDUCIENDO":
+                hechos.add(pid)
+            continue   # si sigue REDUCIENDO, la segunda pasada vigila sus condiciones de cierre
         try:
             ejec = [c for x in p["protecciones"] if (c := broker.consultar(x)) and c["estado"] in ("EJECUTADA", "PARCIAL")]
         except Exception:   # noqa: BLE001
@@ -91,9 +104,6 @@ def vigilar(o, broker, datos, ahora, max_edad_min=MAX_EDAD_MIN):
         p = o.posiciones[pid]
         if p["estado"] == "CERRADA" or pid in hechos:
             continue
-        if p["estado"] == "REDUCIENDO":   # la reducción no está implementada: no se vigila por precio
-            acciones.append({"posicion": pid, "regla": "H-08", "ok": False, "codigo": "H-08"})
-            continue
         d = datos.get(p["instrumento"]) if isinstance(datos, dict) else None
         if not _dato_fresco(d, ahora, max_edad_min):
             o.degradar(p["cartera"], f"sin precio fresco de {p['instrumento']}", "H", _instante(o, ahora))
@@ -104,12 +114,24 @@ def vigilar(o, broker, datos, ahora, max_edad_min=MAX_EDAD_MIN):
             if c["metrica"] != "precio":
                 no_eval.append({"posicion": pid, "condicion": c["id"], "regla": "H-06"})
                 continue
+            if c["id"] in p.get("condiciones_consumidas", []):   # una toma parcial ya hecha no se repite
+                continue
+            parcial = c.get("fraccion") is not None
+            if parcial and (p["estado"] == "REDUCIENDO" or c["fraccion"] * p["cantidad_inicial"] >= p["cantidad"] - 1e-6):
+                if p["estado"] != "REDUCIENDO":   # la toma parcial ya no cabe (se redujo antes): no bloquea las demás condiciones
+                    no_eval.append({"posicion": pid, "condicion": c["id"], "regla": "H-12", "motivo": "la toma parcial ya no cabe en lo que queda"})
+                continue
             if OPERADORES[c["operador"]](d["precio"], c["umbral"]):
-                if NIVELES[o.nivel(p["cartera"])] < 2:   # L0/L1: H prepara el cierre y lo confirma el operador
-                    txt = f"CIERRE PREPARADO: {c['id']} ({c['tipo']}) cumplida; confirme el cierre"
+                if NIVELES[o.nivel(p["cartera"])] < 2:   # L0/L1: H prepara la salida y la confirma el operador
+                    txt = (f"REDUCCIÓN PREPARADA: {c['id']} ({c['tipo']}, fracción {c['fraccion']}) cumplida; confirme la reducción" if parcial
+                           else f"CIERRE PREPARADO: {c['id']} ({c['tipo']}) cumplida; confirme el cierre")
                     if not any(x["texto"] == txt for x in p["propuestas"]):
                         o.proponer_sobre_posicion(pid, txt, "H", _instante(o, ahora))
                     acciones.append({"posicion": pid, "regla": "H-10", "condicion": c["id"], "ok": False, "codigo": "H-10"})
+                    break
+                if parcial:
+                    r = reducir(o, pid, broker, ahora, condicion={"id": c["id"], "valor_observado": d["precio"]})
+                    acciones.append({"posicion": pid, "regla": "H-12", "condicion": c["id"], "ok": r["ok"], "codigo": r["codigo"]})
                     break
                 r = cerrar(o, pid, broker, ahora, condicion={"id": c["id"], "valor_observado": d["precio"]})
                 acciones.append({"posicion": pid, "regla": "H-05" if c["tipo"] == "STOP" else "H-02", "condicion": c["id"],

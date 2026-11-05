@@ -455,13 +455,16 @@ def main():
     h.chk("H_pone_en_revision", o.posicion_transicion(P, "EN_REVISION", "H", AHORA)["ok"])
     R("confirmar_tesis_sin_motivo_O15", o, lambda: o.posicion_transicion(P, "ABIERTA", "BROKER", AHORA), "O-15")
     h.chk("confirmar_tesis_ok", o.posicion_transicion(P, "ABIERTA", "BROKER", AHORA, motivo="la tesis se mantiene")["ok"])
-    h.chk("stop_numerico_dispara_reduccion", o.posicion_transicion(P, "REDUCIENDO", "F", AHORA, condicion={"id": "STOP-1", "valor_observado": 1.04})["ok"])
+    R("stop_no_reduce_automaticamente_O06", o, lambda: o.posicion_transicion(P, "REDUCIENDO", "F", AHORA, condicion={"id": "STOP-1", "valor_observado": 1.04}), "O-06")
+    h.chk("operador_reduce_con_cantidad_y_motivo", o.posicion_transicion(P, "REDUCIENDO", "OPERADOR", AHORA, motivo="reducir riesgo", cantidad=60.0)["ok"])
     ORD2 = {"orden_id": "ORD-2", "conciliada": True}
     R("reduccion_sin_orden_conciliada_O06", o, lambda: o.posicion_transicion(P, "ABIERTA", "G", AHORA, restante=40.0, orden={"orden_id": "ORD-2", "conciliada": False}), "O-06")
     R("reduccion_total_no_puede_volver_a_abierta_O06", o, lambda: o.posicion_transicion(P, "ABIERTA", "G", AHORA, restante=0, orden=ORD2), "O-06")
     R("reduccion_parcial_no_puede_cerrar_O06", o, lambda: o.posicion_transicion(P, "CERRADA", "G", AHORA, restante=40.0, orden=ORD2), "O-06")
     R("restante_mayor_que_la_cantidad_O06", o, lambda: o.posicion_transicion(P, "ABIERTA", "G", AHORA, restante=500.0, orden=ORD2), "O-06")
-    h.chk("reduccion_parcial_vuelve_a_abierta", o.posicion_transicion(P, "ABIERTA", "G", AHORA, restante=40.0, orden=ORD2)["ok"] and o.posiciones[P]["cantidad"] == 40.0)
+    R("reduccion_sin_stop_redimensionado_O06", o, lambda: o.posicion_transicion(P, "ABIERTA", "G", AHORA, restante=40.0, orden=ORD2), "O-06")
+    h.chk("reduccion_parcial_vuelve_a_abierta", o.posicion_transicion(P, "ABIERTA", "G", AHORA, restante=40.0, orden=ORD2, protecciones=["ORD-S2"])["ok"]
+          and o.posiciones[P]["cantidad"] == 40.0 and o.posiciones[P]["protecciones"] == ["ORD-S2"])
     h.chk("objetivo_numerico_cierra", o.posicion_transicion(P, "CERRANDO", "ORQUESTADOR", AHORA, condicion={"id": "OBJ-1", "valor_observado": 1.16})["ok"])
     R("cerrando_no_admite_restante_O06", o, lambda: o.posicion_transicion(P, "CERRADA", "G", AHORA, restante=10.0, orden=ORD2), "O-06")
     h.chk("cierre_conciliado", o.posicion_transicion(P, "CERRADA", "G", AHORA, restante=0, orden={"orden_id": "ORD-3", "conciliada": True})["ok"])

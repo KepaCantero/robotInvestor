@@ -57,7 +57,8 @@ class BrokerSimulado:
         ok = (isinstance(o, dict) and isinstance(o.get("orden_id"), str) and ID.match(o["orden_id"]) and o.get("tipo") in ("LIMITE", "MERCADO", "STOP")
               and o.get("lado") in ("COMPRA", "VENTA") and isinstance(o.get("instrumento"), str) and isinstance(o.get("activo_base"), str)
               and _num(o.get("cantidad"), 0) and (o["tipo"] == "MERCADO" or _num(o.get("precio"), 0))
-              and (o.get("valida_hasta") is None or isinstance(o["valida_hasta"], str)))
+              and (o.get("valida_hasta") is None or isinstance(o["valida_hasta"], str))
+              and isinstance(o.get("solo_reduccion", False), bool) and not (o.get("solo_reduccion") and o["tipo"] == "LIMITE"))
         if not ok:
             return {"orden_id": o.get("orden_id") if isinstance(o, dict) else None, "estado": "RECHAZADA", "cantidad_ejecutada": 0.0, "precio_medio": None}
         prev = self.ordenes.get(o["orden_id"])
@@ -71,21 +72,32 @@ class BrokerSimulado:
         if p is None or (o["tipo"] == "MERCADO" and self.rechaza_mercado):
             reg["estado"] = "RECHAZADA"
         elif o["tipo"] == "STOP":
-            signo = 1 if o["lado"] == "VENTA" else -1   # un stop de venta protege un largo
-            tiene = self.pos.get(o["instrumento"], {"cantidad": 0.0})["cantidad"] * signo
-            if self.rechaza_stops or tiene + TOL < o["cantidad"]:
+            tiene = self._reducible(o)   # un stop de venta protege un largo
+            # un stop normal debe tener debajo toda su cantidad; uno de solo reducción, algo que reducir
+            if self.rechaza_stops or (tiene <= TOL if o.get("solo_reduccion") else tiene + TOL < o["cantidad"]):
                 reg["estado"] = "RECHAZADA"
             elif (o["lado"] == "VENTA" and p <= o["precio"]) or (o["lado"] == "COMPRA" and p >= o["precio"]):   # ya cruzado: salta al instante
-                self._fill(o, o["cantidad"], p)
-                reg["ejecutada"], reg["precio_medio"], reg["estado"] = o["cantidad"], p, "EJECUTADA"
+                q = min(o["cantidad"], tiene)
+                self._fill(o, q, p)
+                reg["ejecutada"], reg["precio_medio"], reg["estado"] = q, p, "EJECUTADA"
         else:
             sale = o["tipo"] == "MERCADO" or (o["lado"] == "COMPRA" and p <= o["precio"]) or (o["lado"] == "VENTA" and p >= o["precio"])
             if sale:
                 q = o["cantidad"] * (self.fraccion_fill if o["tipo"] == "LIMITE" else self.fraccion_mercado)
+                if o.get("solo_reduccion"):   # nunca abre ni da la vuelta a una posición
+                    q = min(q, max(self._reducible(o), 0.0))
+                if q <= TOL:
+                    reg["estado"] = "CANCELADA"
+                    return self._res(reg)
                 self._fill(o, q, p)
                 reg["ejecutada"], reg["precio_medio"] = q, p   # ejecución inmediata: el simulador no tiene reloj; G usará el instante de la llamada
                 reg["estado"] = "EJECUTADA" if q >= o["cantidad"] - TOL else "PARCIAL"
         return self._res(reg)
+
+    def _reducible(self, o):
+        """Cantidad de la posición que la orden reduciría (positiva si va en contra de la posición)."""
+        signo = 1 if o["lado"] == "VENTA" else -1
+        return self.pos.get(o["instrumento"], {"cantidad": 0.0})["cantidad"] * signo
 
     def _fill(self, o, q, p):
         d = q if o["lado"] == "COMPRA" else -q
@@ -98,8 +110,9 @@ class BrokerSimulado:
         for r in self.ordenes.values():   # un stop que ya no tiene posición debajo se cancela
             x = r["orden"]
             if x["tipo"] == "STOP" and r["estado"] == "ACEPTADA" and x["instrumento"] == o["instrumento"]:
-                signo = 1 if x["lado"] == "VENTA" else -1
-                if self.pos.get(x["instrumento"], {"cantidad": 0.0})["cantidad"] * signo + TOL < x["cantidad"]:
+                tiene = self._reducible(x)
+                # uno de solo reducción sigue vivo mientras quede algo que reducir: nunca abre la posición contraria
+                if (tiene <= TOL) if x.get("solo_reduccion") else (tiene + TOL < x["cantidad"]):
                     r["estado"] = "CANCELADA"
 
     def mover_precio(self, instrumento, precio, hora=None):
@@ -112,8 +125,12 @@ class BrokerSimulado:
             x = r["orden"]
             if x["tipo"] == "STOP" and r["estado"] == "ACEPTADA" and x["instrumento"] == instrumento \
                     and ((x["lado"] == "VENTA" and precio <= x["precio"]) or (x["lado"] == "COMPRA" and precio >= x["precio"])):
-                self._fill(x, x["cantidad"], precio)
-                r["ejecutada"], r["precio_medio"], r["estado"], r["ejecutada_en"] = x["cantidad"], precio, "EJECUTADA", self.hora_datos
+                q = min(x["cantidad"], self._reducible(x)) if x.get("solo_reduccion") else x["cantidad"]
+                if q <= TOL:
+                    r["estado"] = "CANCELADA"
+                    continue
+                self._fill(x, q, precio)
+                r["ejecutada"], r["precio_medio"], r["estado"], r["ejecutada_en"] = q, precio, "EJECUTADA", self.hora_datos
         for r in self.ordenes.values():   # una orden límite viva se ejecuta si el precio la alcanza
             x = r["orden"]
             if x["tipo"] == "LIMITE" and r["estado"] == "ACEPTADA" and x["instrumento"] == instrumento \
@@ -128,7 +145,7 @@ class BrokerSimulado:
         o = reg["orden"]
         return {"orden_id": o["orden_id"], "estado": reg["estado"], "cantidad_ejecutada": reg["ejecutada"], "precio_medio": reg["precio_medio"],
                 "tipo": o["tipo"], "lado": o["lado"], "cantidad": o["cantidad"], "precio": o.get("precio"), "instrumento": o["instrumento"],
-                "ejecutada_en": reg.get("ejecutada_en")}
+                "ejecutada_en": reg.get("ejecutada_en"), "solo_reduccion": bool(o.get("solo_reduccion"))}
 
     def cancelar(self, orden_id):
         if self.caido:
@@ -397,7 +414,8 @@ def _proteger(o, eid, broker, ahora, r, fq, est):
             neto = {p["instrumento"]: p["cantidad"] for p in broker.posiciones()}.get(en["instrumento"], 0.0)
             if abs(neto) > TOL:
                 id_x = _id_libre(broker, f"ORD-{eid}-X", reutilizable=False)   # nunca la venta de un intento anterior
-                broker.enviar({**base, "orden_id": id_x, "tipo": "MERCADO", "lado": "VENTA" if neto > 0 else "COMPRA", "cantidad": abs(neto)})
+                broker.enviar({**base, "orden_id": id_x, "tipo": "MERCADO", "lado": "VENTA" if neto > 0 else "COMPRA", "cantidad": abs(neto),
+                               "solo_reduccion": True})
             resto = {p["instrumento"]: p["cantidad"] for p in broker.posiciones()}.get(en["instrumento"], 0.0)
             vivo = broker.consultar(id_s)
         except Exception as ex:   # noqa: BLE001
@@ -409,7 +427,7 @@ def _proteger(o, eid, broker, ahora, r, fq, est):
         reg = _aviso(o, [{"tipo": "POSICION_SIN_PROTEGER", "ref": eid, "detalle": motivo + " Y no se pudo cerrar."}], ahora)
         return _r(False, "G-04", "CRÍTICO: " + motivo + " La posición no se pudo cerrar.", cerrada=False, aviso_registrado=reg)
 
-    s = broker.enviar({**base, "orden_id": id_s, "tipo": "STOP", "lado": lado_s, "cantidad": fq, "precio": st["umbral"]})
+    s = broker.enviar({**base, "orden_id": id_s, "tipo": "STOP", "lado": lado_s, "cantidad": fq, "precio": st["umbral"], "solo_reduccion": True})
     if s["estado"] != "ACEPTADA":
         return deshacer("G-03", f"el intermediario no aceptó el stop ({s['estado']}).")
     pos = {p["instrumento"]: p for p in broker.posiciones()}
@@ -436,24 +454,44 @@ def conciliar(o, broker, ahora):
         reales = {p["instrumento"]: p for p in broker.posiciones()}
         abiertas = {}
         for pid, p in o.posiciones.items():
+            todos = _stops_de(broker, pid, p)
             if p["estado"] == "CERRADA":
-                for prot in p["protecciones"]:   # un stop vivo de una posición cerrada abriría una posición contraria
+                for prot in todos:   # un stop vivo de una posición cerrada abriría una posición contraria
                     c = broker.consultar(prot)
                     if c and c["estado"] == "ACEPTADA":
                         dif.append({"tipo": "PROTECCION_HUERFANA", "ref": pid, "detalle": f"la orden {prot} sigue viva con la posición cerrada"})
                 continue
-            saltado = [c for c in (broker.consultar(x) for x in p["protecciones"]) if c and c["estado"] == "EJECUTADA"]
+            saltado = [c for c in (broker.consultar(x) for x in todos) if c and c["estado"] == "EJECUTADA"]
             if saltado and abs(_neto(broker, p["instrumento"])) <= TOL:   # el stop propio ya cerró la posición; H lo confirmará (H-01)
                 expl.append({"tipo": "STOP_EJECUTADO", "ref": pid, "detalle": f"el stop {saltado[0]['orden_id']} cerró la posición; falta que H lo confirme"})
                 continue
             abiertas.setdefault(p["instrumento"], []).append((pid, p))
             lado_s = "VENTA" if p["direccion"] == "LARGO" else "COMPRA"
-            for prot in p["protecciones"]:
+            if p["estado"] == "REDUCIENDO":   # a media reducción basta un stop vivo que cubra lo que hay de verdad
+                real_abs = abs(_neto(broker, p["instrumento"]))
+                buenos = [x for x in todos if (c := broker.consultar(x)) and c["estado"] == "ACEPTADA" and c["tipo"] == "STOP" and c["lado"] == lado_s
+                          and c["precio"] == p["stop_precio"] and c["cantidad"] + TOL >= real_abs and (c["solo_reduccion"] or abs(c["cantidad"] - real_abs) <= TOL)]
+                if not buenos:
+                    dif.append({"tipo": "PROTECCION", "ref": pid, "detalle": "a media reducción no hay un stop vivo que cubra la posición real"})
+                fijos = False
+            else:
+                fijos = True
+            for prot in (p["protecciones"] if fijos else []):
                 c = broker.consultar(prot)
                 if not c or c["estado"] != "ACEPTADA":
                     dif.append({"tipo": "PROTECCION", "ref": pid, "detalle": f"la orden de protección {prot} no está viva ({c['estado'] if c else 'inexistente'})"})
                 elif not (c["tipo"] == "STOP" and c["lado"] == lado_s and abs(c["cantidad"] - p["cantidad"]) <= TOL and c["precio"] == p["stop_precio"]):
                     dif.append({"tipo": "PROTECCION", "ref": pid, "detalle": f"el stop {prot} no coincide con la posición (tipo, lado, cantidad o precio)"})
+            for prot in (x for x in todos if x not in p["protecciones"] and fijos):   # stops retirados que siguen vivos
+                c = broker.consultar(prot)
+                if c and c["estado"] == "ACEPTADA":
+                    dif.append({"tipo": "PROTECCION_HUERFANA", "ref": pid, "detalle": f"el stop retirado {prot} sigue vivo"})
+        for pid, p in o.posiciones.items():   # una venta de reducción o una orden de cierre viva podría ejecutarse sin control
+            ns = [r["n"] for r in p.get("reducciones", [])] + ([p["reduccion"]["n"]] if p.get("reduccion") else [])
+            for x in [y for n in ns for y in _ids_reduccion(broker, pid, n, "M")] + _ids_cierre(broker, pid):
+                c = broker.consultar(x)
+                if c and c["estado"] in ("ACEPTADA", "PARCIAL"):
+                    dif.append({"tipo": "ORDEN_VIVA", "ref": pid, "detalle": f"la orden {x} de G sigue viva en el intermediario"})
         for eid, e in o.expedientes.items():   # una orden de entrada viva que el Orquestador ya no espera abriría una posición sin control
             oe = e.get("orden_entrada")
             if not oe:
@@ -479,6 +517,8 @@ def conciliar(o, broker, ahora):
                     expl.append({"tipo": "MANUAL_DECLARADA", "ref": ins, "detalle": f"{libre:+} declarado por el operador (CT-G-14)"})
             elif not ps and abs(libre) <= TOL and _entrada_en_curso(o, ins, real):
                 expl.append({"tipo": "ENTRADA_EN_CURSO", "ref": ins, "detalle": f"{real} de una orden de entrada ejecutada que G aún no ha protegido y reportado"})
+            elif len(ps) == 1 and abs(libre) <= TOL and (x := _en_curso(broker, ps[0][0], ps[0][1], real)):
+                expl.append({"tipo": x, "ref": ref, "detalle": f"el intermediario tiene {real}: lo que dejan las órdenes de G ya ejecutadas"})
             elif ps and real * esperado < 0:
                 dif.append({"tipo": "SENTIDO_O_ACTIVO", "ref": ref, "detalle": "el sentido no coincide con el intermediario"})
             elif ps and abs(d) <= tol * abs(esperado):
@@ -512,6 +552,33 @@ def conciliar(o, broker, ahora):
         return {"ok": False, "diferencias": [{"tipo": "ERROR", "ref": None, "detalle": type(e).__name__}], "explicadas": []}
 
 
+def _ids_cierre(broker, pid):
+    ids = []
+    for k in range(1, MAX_INTENTOS):
+        oid = f"ORD-{pid}-C-{k}"
+        if broker.consultar(oid) is None:
+            break
+        ids.append(oid)
+    return ids
+
+
+def _en_curso(broker, pid, p, real):
+    """Una reducción o un cierre a medias no son discrepancia si lo que tiene el intermediario es exactamente la cantidad
+    anotada menos lo que han ejecutado las órdenes de G para esa reducción o ese cierre (nunca una venta ajena)."""
+    signo = 1 if p["direccion"] == "LARGO" else -1
+    if real * signo <= TOL:
+        return None
+    if p["estado"] == "REDUCIENDO":
+        esperado = p["cantidad"] - _vendido(broker, pid, p["reduccion"]["n"])
+        return "REDUCCION_EN_CURSO" if abs(real * signo - esperado) <= TOL else None
+    if p["estado"] == "CERRANDO":
+        ult = p["reducciones"][-1] if p.get("reducciones") else None
+        previo = _vendido(broker, pid, ult["n"]) if ult and ult.get("interrumpida") == "cierre" else 0.0
+        cerrado = sum(broker.consultar(x)["cantidad_ejecutada"] for x in _ids_cierre(broker, pid))
+        return "CIERRE_EN_CURSO" if abs(real * signo - (p["cantidad"] - previo - cerrado)) <= TOL else None
+    return None
+
+
 def _entrada_en_curso(o, ins, real):
     """Cantidad que el intermediario tiene por una entrada en curso (ejecutada, aún sin conciliar): G la protegerá en su revisión."""
     for e in o.expedientes.values():
@@ -527,7 +594,7 @@ def _entrada_en_curso(o, ins, real):
 def _cierre_previo(broker, base):
     """Última orden de cierre a mercado ya ejecutada (total o parcial) en un intento anterior."""
     ult = None
-    for n in range(1, 10):
+    for n in range(1, MAX_INTENTOS):
         c = broker.consultar(f"{base}-{n}")
         if c is None:
             break
@@ -536,10 +603,13 @@ def _cierre_previo(broker, base):
     return ult
 
 
+MAX_INTENTOS = 50   # órdenes de cierre o de reducción por posición (las parciales repetidas consumen identificadores)
+
+
 def _id_cierre(broker, base, lado, cantidad):
     """Identificador de la siguiente orden de cierre. Se reutiliza el de una orden idéntica que sigue sin ejecutarse
     (reintento tras un fallo); si ya se ejecutó algo o cambió lo que hay que cerrar, se pasa al siguiente intento."""
-    for n in range(1, 10):
+    for n in range(1, MAX_INTENTOS):
         oid = f"{base}-{n}"
         c = broker.consultar(oid)
         if c is None or (c["estado"] == "ACEPTADA" and c["lado"] == lado and abs(c["cantidad"] - cantidad) <= TOL):
@@ -554,16 +624,17 @@ def cerrar(o, posicion_id, broker, ahora, actor="G", condicion=None, motivo=None
     p = o.posiciones.get(posicion_id) if isinstance(posicion_id, str) else None
     if p is None or p["estado"] not in ("ABIERTA", "EN_REVISION", "CERRANDO", "REDUCIENDO"):
         return _r(False, "G-06", "la posición no existe o no se puede cerrar en su estado")
+    if not o.posicion_integra(posicion_id):   # también al retomar un cierre: nada se envía con un estado alterado
+        return _r(False, "G-06", "O-13: el estado de control de la posición no es íntegro; no se envía nada")
     if o.ultimo_ahora and _dt(ahora) < _dt(o.ultimo_ahora):
         return _r(False, "G-06", "el instante recibido es anterior al último que vio el Orquestador; no se envía nada")
-    if p["estado"] == "REDUCIENDO":   # solo se termina si el intermediario ya está plano: la reducción en sí no está implementada
+    plano = False
+    if p["estado"] == "REDUCIENDO":   # plano en el intermediario (un stop saltó): se termina directamente como cierre
         try:
-            plano = abs({x["instrumento"]: x["cantidad"] for x in broker.posiciones()}.get(p["instrumento"], 0.0)) <= TOL
+            plano = abs(_neto(broker, p["instrumento"])) <= TOL
         except Exception as ex:   # noqa: BLE001
             return _r(False, "G-01", f"sin conexión con el intermediario ({type(ex).__name__})")
-        if not plano:
-            return _r(False, "G-06", "la posición está REDUCIENDO y el intermediario aún tiene cantidad: termine la reducción antes")
-    elif p["estado"] != "CERRANDO":
+    if not plano and p["estado"] != "CERRANDO":
         t = o.posicion_transicion(posicion_id, "CERRANDO", actor, ahora, condicion=condicion, motivo=motivo)
         if not t["ok"]:
             return _r(False, "G-06", f"el Orquestador no admite el cierre ({t['codigo']}): {t['motivo']}")
@@ -587,13 +658,25 @@ def _neto(broker, ins):
     return {x["instrumento"]: x["cantidad"] for x in broker.posiciones()}.get(ins, 0.0)
 
 
+def _minimo_vivo(p):
+    """Lo mínimo que el intermediario puede tener de la posición sin que sea una diferencia: lo que deja una reducción en curso
+    o interrumpida por el cierre; si no, la cantidad anotada."""
+    if p.get("reduccion"):
+        return p["reduccion"]["objetivo_restante"]
+    ult = p["reducciones"][-1] if p.get("reducciones") else None
+    if p["estado"] == "CERRANDO" and ult and ult.get("interrumpida") == "cierre":
+        return ult["objetivo_restante"]
+    return p["cantidad"]
+
+
 def _cerrar(o, p, pid, broker, ahora, est):
     """Lleva a cero la posición neta REAL del intermediario sobre el instrumento, sea cual sea su sentido o cantidad
     (si un stop saltó a mitad del cierre, la orden a mercado puede haber abierto la posición contraria: también se cierra)."""
     ins = p["instrumento"]
     base = f"ORD-{pid}-C"
     neto = _neto(broker, ins)
-    if abs(neto) > TOL and ((neto > 0) != (p["direccion"] == "LARGO") or abs(abs(neto) - p["cantidad"]) > TOL):
+    minimo = _minimo_vivo(p)   # a media reducción (o en un cierre que la interrumpió) vale lo ya reducido
+    if abs(neto) > TOL and ((neto > 0) != (p["direccion"] == "LARGO") or abs(neto) > p["cantidad"] + TOL or abs(neto) < minimo - TOL):
         _aviso(o, [{"tipo": "DIFERENCIA_AL_CERRAR", "ref": pid, "detalle": f"el Orquestador tiene {p['cantidad']} y el intermediario {neto}; se cierra lo que hay"}], ahora)
     for _ in range(4):
         if abs(neto) <= TOL:
@@ -601,21 +684,25 @@ def _cerrar(o, p, pid, broker, ahora, est):
         lado, cant = ("VENTA" if neto > 0 else "COMPRA"), abs(neto)
         id_c = _id_cierre(broker, base, lado, cant)
         est["enviado"] = True
-        broker.enviar({"orden_id": id_c, "instrumento": ins, "activo_base": p["activo_base"], "tipo": "MERCADO", "lado": lado, "cantidad": cant})
+        r = broker.enviar({"orden_id": id_c, "instrumento": ins, "activo_base": p["activo_base"], "tipo": "MERCADO", "lado": lado, "cantidad": cant,
+                           "solo_reduccion": True})   # si el stop salta entre medias, no abre la posición contraria
+        if r["estado"] in ("ACEPTADA", "PARCIAL"):   # el resto de una parcial no se deja vivo
+            broker.cancelar(id_c)
         neto = _neto(broker, ins)
     if abs(neto) > TOL:
         return _incompleto(o, pid, ahora, f"tras varios intentos el intermediario aún tiene {neto} sobre {ins}")
+    stops = _stops_de(broker, pid, p)   # los vigentes y los que una reducción a medias dejó en el intermediario
     orden_id = _cierre_previo(broker, base)
     if orden_id is None:
-        ejec = [x for x in p["protecciones"] if (c := broker.consultar(x)) and c["estado"] in ("EJECUTADA", "PARCIAL")]
+        ejec = [x for x in stops if (c := broker.consultar(x)) and c["estado"] in ("EJECUTADA", "PARCIAL")]
         if not ejec:
             return _incompleto(o, pid, ahora, "la posición ya no está en el intermediario y ninguna orden la explica")
         orden_id = ejec[0]
     est["enviado"] = True
     for _ in range(3):
-        for x in p["protecciones"]:
+        for x in stops:
             broker.cancelar(x)
-        vivos = [x for x in p["protecciones"] if (c := broker.consultar(x)) and c["estado"] == "ACEPTADA"]
+        vivos = [x for x in stops if (c := broker.consultar(x)) and c["estado"] == "ACEPTADA"]
         if not vivos:
             break
     if vivos:
@@ -624,6 +711,150 @@ def _cerrar(o, p, pid, broker, ahora, est):
     if not t["ok"]:
         return _incompleto(o, pid, ahora, f"el Orquestador rechazó el cierre ({t['codigo']})")
     return _r(True, "OK", "posición cerrada y conciliada", orden_id=orden_id)
+
+
+def _ids_reduccion(broker, pid, n, tipo):
+    """Órdenes que G envió al intermediario para la reducción n (tipo M: a mercado; S: stops redimensionados)."""
+    ids = []
+    for k in range(1, MAX_INTENTOS):
+        oid = f"ORD-{pid}-R{n}-{tipo}-{k}"
+        if broker.consultar(oid) is None:
+            break
+        ids.append(oid)
+    return ids
+
+
+def _stops_de(broker, pid, p):
+    """Stops de la posición: los vigentes y los de cualquier reducción (terminada o a medias)."""
+    ns = [r["n"] for r in p.get("reducciones", [])] + ([p["reduccion"]["n"]] if p.get("reduccion") else [])
+    return list(p["protecciones"]) + [x for n in ns for x in _ids_reduccion(broker, pid, n, "S") if x not in p["protecciones"]]
+
+
+def _id_stop(broker, base, lado, cantidad, precio):
+    """Stop redimensionado: se reutiliza el que ya esté vivo con lo pedido (reintento); si no, el primer identificador libre."""
+    for k in range(1, 10):
+        oid = f"{base}-{k}"
+        c = broker.consultar(oid)
+        if c is None or (c["estado"] == "ACEPTADA" and c["lado"] == lado and abs(c["cantidad"] - cantidad) <= TOL and c["precio"] == precio):
+            return oid
+    raise ValueError("demasiados intentos de stop")
+
+
+def reducir(o, posicion_id, broker, ahora, cantidad=None, actor="G", condicion=None, motivo=None):
+    """Reduce una posición (T-12). Pasa a REDUCIENDO (el Orquestador valida quién, cuánto y por qué), vende a mercado
+    con órdenes de solo reducción hasta la cantidad pedida, pone un stop nuevo del tamaño de lo que queda, retira el
+    anterior y solo entonces vuelve a su estado (ABIERTA, o EN_REVISION si la tesis estaba en revisión). El stop anterior es de solo reducción: mientras tanto cubre la posición
+    entera y no puede abrir la contraria. Repetir la llamada retoma la reducción en curso.
+    Códigos: OK; G-01 sin conexión antes de enviar; G-06 no admitida; G-08 estado incierto; G-12 reducción no completada
+    (sigue REDUCIENDO y a la vista); si el intermediario ya está plano, se termina como un cierre."""
+    p = o.posiciones.get(posicion_id) if isinstance(posicion_id, str) else None
+    if p is None or p["estado"] not in ("ABIERTA", "EN_REVISION", "REDUCIENDO"):
+        return _r(False, "G-06", "la posición no existe o no se puede reducir en su estado")
+    if o.ultimo_ahora and _dt(ahora) < _dt(o.ultimo_ahora):
+        return _r(False, "G-06", "el instante recibido es anterior al último que vio el Orquestador; no se envía nada")
+    if not o.posicion_integra(posicion_id):   # también al retomar: nada se envía con un estado alterado
+        return _r(False, "G-06", "O-13: el estado de control de la posición no es íntegro; no se envía nada")
+    if p["estado"] == "REDUCIENDO":
+        if cantidad is not None and not (_num(cantidad) and abs(cantidad - p["reduccion"]["cantidad"]) <= TOL):
+            return _r(False, "G-06", "ya hay una reducción en curso de otra cantidad: se termina esa antes")
+    else:
+        t = o.posicion_transicion(posicion_id, "REDUCIENDO", actor, ahora, condicion=condicion, motivo=motivo, cantidad=cantidad)
+        if not t["ok"]:
+            return _r(False, "G-06", f"el Orquestador no admite la reducción ({t['codigo']}): {t['motivo']}")
+    est = {"enviado": False}
+    try:
+        return _reducir(o, p, posicion_id, broker, ahora, est)
+    except ConexionPerdida as ex:
+        if not est["enviado"]:
+            return _r(False, "G-01", f"sin conexión con el intermediario; la posición sigue REDUCIENDO y se puede reintentar ({ex})")
+        return _incierto(o, posicion_id, ahora, "ConexionPerdida al reducir")
+    except Exception as ex:   # noqa: BLE001
+        if est["enviado"]:
+            return _incierto(o, posicion_id, ahora, f"{type(ex).__name__} al reducir")
+        return _red_incompleta(o, posicion_id, ahora, f"{type(ex).__name__} al preparar la reducción")
+
+
+def _vendido(broker, pid, n):
+    """Lo que han ejecutado las ventas (o compras, en un corto) de la reducción n."""
+    return sum(broker.consultar(x)["cantidad_ejecutada"] for x in _ids_reduccion(broker, pid, n, "M"))
+
+
+def _red_incompleta(o, pid, ahora, causa):
+    reg = _aviso(o, [{"tipo": "REDUCCION_INCOMPLETA", "ref": pid, "detalle": causa}], ahora)
+    return _r(False, "G-12", f"reducción no completada ({causa}); la posición sigue REDUCIENDO con su stop anterior.", aviso_registrado=reg)
+
+
+def _reducir(o, p, pid, broker, ahora, est):
+    red = p["reduccion"]
+    ins, largo = p["instrumento"], p["direccion"] == "LARGO"
+    signo, lado = (1, "VENTA") if largo else (-1, "COMPRA")
+    objetivo = red["objetivo_restante"]
+    base_m, base_s = f"ORD-{pid}-R{red['n']}-M", f"ORD-{pid}-R{red['n']}-S"
+    neto = _neto(broker, ins) * signo   # cantidad en el sentido de la posición
+    esperado = p["cantidad"] - _vendido(broker, pid, red["n"])
+    if abs(neto) > TOL and abs(neto - esperado) > TOL:   # algo ajeno a esta reducción movió la posición: no se vende a ciegas
+        _aviso(o, [{"tipo": "DIFERENCIA_AL_REDUCIR", "ref": pid, "detalle": f"el intermediario tiene {neto * signo} y lo esperado es {esperado * signo}"}], ahora)
+        return _red_incompleta(o, pid, ahora, f"el intermediario tiene {neto * signo} y, con lo vendido por la reducción, debería tener {esperado * signo}")
+    for _ in range(4):
+        if neto - objetivo <= TOL or neto <= TOL:
+            break
+        falta = neto - objetivo
+        oid = _id_cierre(broker, base_m, lado, falta)
+        est["enviado"] = True
+        r = broker.enviar({"orden_id": oid, "instrumento": ins, "activo_base": p["activo_base"], "tipo": "MERCADO", "lado": lado,
+                           "cantidad": falta, "solo_reduccion": True})
+        if r["estado"] in ("ACEPTADA", "PARCIAL"):   # el resto de una parcial no se deja vivo: podría ejecutarse después
+            broker.cancelar(oid)
+        neto = _neto(broker, ins) * signo
+    if abs(neto) <= TOL:   # un stop la cerró entera mientras tanto: se termina como cierre
+        return cerrar(o, pid, broker, ahora)
+    if neto < 0:
+        return _red_incompleta(o, pid, ahora, f"el intermediario tiene la posición en sentido contrario ({neto * signo})")
+    if neto - objetivo > TOL:   # no se llegó: el stop anterior (solo reducción) sigue cubriendo todo
+        return _red_incompleta(o, pid, ahora, f"tras varios intentos quedan {neto} y el objetivo es {objetivo}")
+    if neto < objetivo - TOL:
+        _aviso(o, [{"tipo": "DIFERENCIA_AL_REDUCIR", "ref": pid, "detalle": f"se pidió dejar {objetivo} y el intermediario tiene {neto}; se protege lo que hay"}], ahora)
+    # stop nuevo del tamaño de lo que queda, ANTES de retirar el anterior; si la posición cambia entre medias, otra vuelta
+    for _ in range(3):
+        sid = _id_stop(broker, base_s, lado, neto, p["stop_precio"])
+        est["enviado"] = True
+        s = broker.enviar({"orden_id": sid, "instrumento": ins, "activo_base": p["activo_base"], "tipo": "STOP", "lado": lado,
+                           "cantidad": neto, "precio": p["stop_precio"], "solo_reduccion": True})
+        if s["estado"] == "EJECUTADA" and abs(_neto(broker, ins)) <= TOL:   # el precio ya había cruzado el stop
+            return cerrar(o, pid, broker, ahora)
+        if s["estado"] != "ACEPTADA":
+            return _red_incompleta(o, pid, ahora, f"el intermediario no aceptó el stop redimensionado ({s['estado']})")
+        sobran = [x for x in _stops_de(broker, pid, p) if x != sid]
+        for _ in range(3):
+            for x in sobran:
+                broker.cancelar(x)
+            vivos = [x for x in sobran if (c := broker.consultar(x)) and c["estado"] == "ACEPTADA"]
+            if not vivos:
+                break
+        if vivos:
+            return _red_incompleta(o, pid, ahora, f"no se pudo retirar el stop {vivos[0]} (es de solo reducción: no abre la posición contraria)")
+        ahora_neto = _neto(broker, ins) * signo
+        if abs(ahora_neto) <= TOL:
+            return cerrar(o, pid, broker, ahora)
+        if abs(ahora_neto - neto) <= TOL:
+            break
+        neto = ahora_neto
+    else:
+        return _red_incompleta(o, pid, ahora, "la posición cambió mientras se redimensionaba el stop")
+    chk = broker.consultar(sid)
+    if not (chk and chk["estado"] == "ACEPTADA" and abs(chk["cantidad"] - neto) <= TOL and chk["precio"] == p["stop_precio"]):
+        return _red_incompleta(o, pid, ahora, "el intermediario no confirma el stop redimensionado")
+    orden_id = _cierre_previo(broker, base_m)
+    if orden_id is None:
+        ejec = [x for x in _stops_de(broker, pid, p) if (c := broker.consultar(x)) and c["estado"] in ("EJECUTADA", "PARCIAL")]
+        if not ejec:
+            return _red_incompleta(o, pid, ahora, "ninguna orden del intermediario explica la reducción")
+        orden_id = ejec[0]
+    t = o.posicion_transicion(pid, red["vuelve_a"], "G", _instante(o, ahora), restante=neto, orden={"orden_id": orden_id, "conciliada": True},
+                              protecciones=[sid])
+    if not t["ok"]:
+        return _red_incompleta(o, pid, ahora, f"el Orquestador rechazó la reducción ({t['codigo']}: {t['motivo'][:80]})")
+    return _r(True, "OK", "posición reducida, stop redimensionado y conciliado", orden_id=orden_id, restante=neto, stop_id=sid)
 
 
 def _cuadra(x, y):
@@ -654,18 +885,24 @@ def declarar_manual(o, registro, broker, ahora):
             p = o.posiciones.get(v.get("id"))
             if p is None:
                 return _r(False, "G-10", "la posición no existe")
-            for prot in p["protecciones"]:
+            if not o.posicion_integra(v["id"]):
+                return _r(False, "G-10", "O-13: el estado de control de la posición no es íntegro")
+            stops = _stops_de(broker, v["id"], p)
+            for prot in stops:
                 s = broker.consultar(prot)
-                if s and s["estado"] in ("EJECUTADA", "PARCIAL"):
+                if s and s["estado"] in ("EJECUTADA", "PARCIAL") and prot in p["protecciones"]:
                     return _r(False, "G-10", "el stop ya se ejecutó: el cierre lo concilia H (H-01), no un registro manual")
+            # antes de tocar ningún stop: si el intermediario aún tiene cantidad, no es un cierre total y la posición sigue protegida
+            if abs(_neto(broker, p["instrumento"])) > TOL:
+                return _r(False, "G-10", "el intermediario aún tiene cantidad en ese instrumento: el cierre no es total")
+            for prot in stops:
+                s = broker.consultar(prot)
                 for _ in range(3):
                     if not (s and s["estado"] == "ACEPTADA"):
                         break
                     s = broker.cancelar(prot)
                 if s and s["estado"] == "ACEPTADA":
                     return _r(False, "G-10", f"no se pudo cancelar el stop {prot}: la posición no se da por cerrada")
-            if abs(_neto(broker, p["instrumento"])) > TOL:
-                return _r(False, "G-10", "el intermediario aún tiene cantidad en ese instrumento: el cierre no es total")
         r = o.registrar_manual(registro, _instante(o, ahora))
         return r
     except ConexionPerdida as ex:
