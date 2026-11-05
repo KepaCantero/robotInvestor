@@ -91,7 +91,7 @@ CONFIG_DEFECTO = {"max_reintentos": 3, "umbral_corte_comun_dias_habiles": 0,
 NIVELES = {"L0": 0, "L1": 1, "L2": 2}
 # Prioridad de cada aviso para el operador [PROPUESTO]
 TIPOS_KILL = {"POSICION_DESCONOCIDA", "CANTIDAD", "SENTIDO_O_ACTIVO", "PROTECCION", "PROTECCION_HUERFANA", "ENTRADA_HUERFANA",
-              "MANUAL_NO_CUADRA", "POSICION_SIN_PROTEGER"}   # lo que G sabe explicar (cierres propios, conexión, estado incierto, dato viejo) no
+              "MANUAL_NO_CUADRA", "POSICION_SIN_PROTEGER", "INTEGRIDAD"}   # lo que G sabe explicar (cierres propios, conexión, estado incierto, dato viejo) no
 PRIORIDAD_AVISO = {"O-20": "MEDIA", "O-30": "ALTA", "O-25": "ALTA", "O-26": "ALTA", "O-19": "ALTA", "O-18": "ALTA", "O-03": "ALTA", "O-08": "ALTA", "O-09": "ALTA", "O-13": "ALTA", "O-17": "ALTA"}
 ACTORES_PROPUESTA = set(EMISORES)   # quien propone no aprueba ni controla: F, D y H no proponen (Constitución §2, P1)
 
@@ -258,7 +258,7 @@ class Orquestador:
     def _degradar(self, cartera, motivo, ahora):
         if cartera in ("TRADING", "TACTICA", "LARGO_PLAZO") and cartera not in self.degradadas and NIVELES[self.nivel(cartera)] > 1:
             self.degradadas[cartera] = {"motivo": motivo[:160], "ahora": ahora}
-            self._aviso("O-19", f"cartera {cartera} degradada a L1: {motivo[:120]}", ahora, cartera)
+            self._aviso("O-19", f"cartera {cartera} degradada a L1: {motivo[:120]}", ahora, cartera, carteras={cartera})
 
     @_seguro
     def degradar(self, cartera, motivo, actor, ahora):
@@ -279,8 +279,12 @@ class Orquestador:
             return _no("O-05", "solo el operador restablece el nivel de autonomía")
         if cartera not in self.degradadas:
             return _no("O-12", "la cartera no está degradada")
-        if any(x["acuse"] is None and x["codigo"] in ("O-18", "O-19", "O-26") for x in self.avisos):
-            return _no("O-06", "hay avisos de discrepancia, degradación o kill-switch sin acusar")
+        if _dt(ahora) < _dt(self.degradadas[cartera]["ahora"]):
+            return _no("O-16", "el restablecimiento no puede ser anterior a la degradación")
+        pend = [x for x in self.avisos if x["acuse"] is None and x["codigo"] in ("O-18", "O-19", "O-26")
+                and (x["codigo"] == "O-26" or x.get("carteras") is None or cartera in x["carteras"])]
+        if pend:   # T-29: solo los avisos que afectan a esta cartera (y los que no se pueden atribuir)
+            return _no("O-06", f"hay avisos de discrepancia, degradación o kill-switch sin acusar que afectan a {cartera}: {pend[0]['id']}")
         if self.kill is not None:
             return _no("O-26", "el kill-switch está activo: primero hay que rearmarlo")
         if self.rearmes and (_dt(ahora) - _dt(self.rearmes[-1]["ahora"])).total_seconds() < self.cfg["kill_switch"]["periodo_min_l1_horas"] * 3600:
@@ -298,13 +302,37 @@ class Orquestador:
         self.ultimo_ahora = ahora
         return a
 
-    def _aviso(self, codigo, motivo, ahora, ref=None):
+    def _aviso(self, codigo, motivo, ahora, ref=None, carteras=None):
         if any(x["acuse"] is None and x["codigo"] == codigo and x["ref"] == ref and x["motivo"] == motivo for x in self.avisos):
             return   # ya hay uno igual sin acusar: no se multiplica
         prio = PRIORIDAD_AVISO.get(codigo, "MEDIA")
         self.avisos.append({"id": f"AV-{len(self.avisos) + 1:05d}", "codigo": codigo, "prioridad": prio,
                             "motivo": motivo, "ref": ref, "ahora": ahora, "acuse": None,
-                            "canal": self.cfg["avisos"]["canal_alta"] if prio == "ALTA" else "CONSOLA", "reiteraciones": [], "escalado": False})
+                            "canal": self.cfg["avisos"]["canal_alta"] if prio == "ALTA" else "CONSOLA", "reiteraciones": [], "escalado": False,
+                            "carteras": sorted(carteras) if carteras is not None else None})
+
+    def _carteras_de(self, ref):
+        """Carteras a las que pertenece la referencia de una discrepancia o un aviso: una posición, un expediente, una cartera o un
+        instrumento (posiciones abiertas, autorizaciones y operaciones libres en él). Vacío si no se puede atribuir."""
+        if not isinstance(ref, str):
+            return set()
+        coincide = [ref in ("TRADING", "TACTICA", "LARGO_PLAZO"), ref in self.posiciones, ref in self.expedientes]
+        if sum(coincide) > 1:   # una referencia ambigua (un id que es a la vez otra cosa) no se atribuye: degrada todas
+            return set()
+        if coincide[0]:
+            return {ref}
+        if coincide[1]:
+            p = self.posiciones[ref]
+            return {p["cartera"]} if self._posicion_ok(p) and p["cartera"] in GESTOR_DE else set()   # alterada: no se fía de su cartera
+        if coincide[2]:
+            x = self.expedientes[ref]
+            return {x["cartera_destino"]} if self._todo_ok(x) and x["cartera_destino"] in GESTOR_DE else set()
+        ins = _ins(ref)
+        cs = {p["cartera"] for p in self.posiciones.values() if p["estado"] != "CERRADA" and _ins(p["instrumento"]) == ins}
+        cs |= {x["cartera_destino"] for x in self.expedientes.values()
+               if x["estado"] in ("AUTORIZADA", "EJECUTADA") and x.get("propuesta") and _ins(x["propuesta"]["entrada"]["instrumento"]) == ins}
+        cs |= {r["cartera"] for r in self.manuales if r["vinculo"]["tipo"] == "LIBRE" and _ins(r["instrumento"]) == ins}
+        return cs if cs <= set(GESTOR_DE) else set()
 
     @_seguro
     def reportar_discrepancia(self, diferencias, actor, ahora):
@@ -314,10 +342,16 @@ class Orquestador:
             return _no("O-05", "solo G reporta discrepancias de conciliación")
         if not (isinstance(diferencias, list) and diferencias and all(isinstance(d, dict) and isinstance(d.get("tipo"), str) for d in diferencias)):
             return _no("O-01", "una discrepancia exige una lista no vacía de diferencias con tipo")
+        for d in diferencias:   # T-29: la atribución se fija al avisar (no cambia si luego se reclasifica algo)
+            cs = self._carteras_de(d.get("ref"))
+            self._aviso("O-18", f"conciliación: {d['tipo']} {d.get('ref')}: {str(d.get('detalle'))[:120]}", ahora,
+                        d.get("ref") if isinstance(d.get("ref"), str) else None, carteras=cs or set(GESTOR_DE))
+        afectadas = set()   # T-29: cada diferencia degrada la cartera de su posición, expediente o instrumento; si no se puede atribuir, todas
         for d in diferencias:
-            self._aviso("O-18", f"conciliación: {d['tipo']} {d.get('ref')}: {str(d.get('detalle'))[:120]}", ahora, d.get("ref") if isinstance(d.get("ref"), str) else None)
-        for c in ("TRADING", "TACTICA", "LARGO_PLAZO"):   # una diferencia con el intermediario no se atribuye a una cartera: se baja todo
-            self._degradar(c, "discrepancia de conciliación", ahora)
+            cs = self._carteras_de(d.get("ref"))
+            afectadas |= cs if cs else {"TRADING", "TACTICA", "LARGO_PLAZO"}
+        for c in sorted(afectadas):
+            self._degradar(c, f"discrepancia de conciliación ({', '.join(sorted({d['tipo'] for d in diferencias}))[:80]})", ahora)
         graves = sorted({d["tipo"] for d in diferencias} & TIPOS_KILL)
         if graves:   # §11: una discrepancia sin explicar (o una posición sin proteger) dispara el kill-switch
             self._activar_kill(f"discrepancia sin explicar con el intermediario ({', '.join(graves)})", "ORQUESTADOR", ahora)
@@ -455,6 +489,8 @@ class Orquestador:
         self._ahora(ahora)
         if av["acuse"] is not None:
             return _r(True, "O-02", "aviso ya acusado", duplicado=True)
+        if _dt(ahora) < _dt(av["ahora"]):
+            return _no("O-16", "el acuse no puede ser anterior al aviso")
         av["acuse"] = {"actor": actor, "ahora": ahora}
         return _r(True, "OK", "aviso acusado")
 
@@ -693,6 +729,8 @@ class Orquestador:
             return _no("O-05", "un gestor solo abre expedientes de su cartera")
         if expediente_id in self.expedientes:
             return _no("O-03", "expediente ya existe")
+        if expediente_id in GESTOR_DE or expediente_id.startswith("POS-") or expediente_id in self.posiciones:
+            return _no("O-01", "el identificador del expediente no puede ser el nombre de una cartera ni el de una posición")
         e = {"expediente_id": expediente_id, "correlation_id": correlation_id, "via_entrada": via_entrada,
              "cartera_destino": cartera_destino, "estado": "DETECTADA", "historial": [], "encargo_actual": None,
              "sobre": None, "contradictor": None, "retenido": None, "sin_avance": 0, "propuesta": None, "posicion_id": None, "reapertura": None}
@@ -1224,6 +1262,9 @@ class Orquestador:
             return _no("O-05", "la matriz de autonomía no autoriza esta cartera sin el operador")
         if actor == "MATRIZ_AUTONOMIA" and NIVELES[self.nivel(e["cartera_destino"])] < 2:
             return _no("O-05", f"la cartera está en {self.nivel(e['cartera_destino'])}: autoriza el operador")
+        if actor == "MATRIZ_AUTONOMIA" and not self._sello_vigente_para(e, a):   # T-29: sin datos vigentes no hay decisión automática
+            self._degradar(e["cartera_destino"], "la matriz iba a autorizar con un sello que ya no está vigente", ahora)
+            return _no("O-10", "el sello del análisis ya no está vigente para la cartera: autoriza el operador")
         if not isinstance(control_f, dict) or not isinstance(control_f.get("event_id"), str):
             return _no("O-01", "falta el informe de control de F (CT-G-08)")
         err = self._comprobar_testigos(e, a)   # T-36: nadie apartó a un rival después de comparar
@@ -1428,6 +1469,9 @@ class Orquestador:
         quien = self.autorizada_por(e)
         if not manual and quien == "MATRIZ_AUTONOMIA" and NIVELES[self.nivel(e["cartera_destino"])] < 2:
             return _no("O-05", f"la autorización fue automática y la cartera está ahora en {self.nivel(e['cartera_destino'])}: la confirma el operador")
+        if not manual and quien == "MATRIZ_AUTONOMIA" and not self._sello_vigente_para(e, t):
+            self._degradar(e["cartera_destino"], "una autorización automática iba a ejecutarse con un sello que ya no está vigente", ahora)
+            return _no("O-10", "la autorización fue automática y el sello del análisis ya no está vigente: la confirma el operador")
         if self._sello_anulado(e):
             return _no("O-06", "el sello del análisis ya no es válido")
         cf = e["control_f"]
@@ -1614,7 +1658,29 @@ class Orquestador:
                 s["estado"] = "CADUCADO"
                 self._aviso("O-10", f"el sello {sid} caducó por antigüedad", ahora, sid)
                 cambios.append(("sello", sid, "CADUCADO"))
+        for c, sid, eid in self._datos_viejos(a):   # T-29: candidatos en juego sobre datos que ya no valen para su cartera
+            if c not in self.degradadas and NIVELES[self.nivel(c)] > 1:
+                self._degradar(c, f"el sello {sid} de {eid} ya no está vigente para {c}", ahora)
+                cambios.append(("degradada", c, sid))
         return _r(True, "OK", f"{len(cambios)} cambio(s)", cambios=cambios)
+
+    def _sello_vigente_para(self, e, a):
+        """El sello del análisis del expediente sigue VIGENTE para su cartera hoy (K: antigüedad por cartera)."""
+        en = self.encargos.get(e["encargo_actual"])
+        s = self.sellos.get(en["sello_ref"]) if en else None
+        if s is None or s["estado"] == "ANULADO":
+            return False
+        s = {**s, "estado": "VIGENTE"}   # CADUCADO lo marcó barrer para la cartera del sello; aquí manda la antigüedad para esta cartera
+        return estado_sello(s, str(a.astimezone(timezone.utc).date()), e["cartera_destino"], self.cal_def) == "VIGENTE"
+
+    def _datos_viejos(self, a):
+        """(cartera, sello, expediente) de los candidatos en juego cuyo sello ya no está vigente para su cartera."""
+        out = []
+        for eid, x in sorted(self.expedientes.items()):
+            if x["estado"] in VIVOS and not self._sello_vigente_para(x, a):   # también con la orden de entrada viva
+                en = self.encargos.get(x["encargo_actual"])
+                out.append((x["cartera_destino"], en["sello_ref"] if en else None, eid))
+        return out
 
     # ------------------------------------------------------------ posiciones
     def _pos(self, pid):
@@ -1780,6 +1846,9 @@ class Orquestador:
             return _no("O-05", "reclasificar una posición exige la aprobación del operador")
         if nueva_cartera not in ("TRADING", "TACTICA", "LARGO_PLAZO") or not (isinstance(motivo, str) and motivo.strip()):
             return _no("O-15", "cartera destino y motivo obligatorios")
+        if any(x["acuse"] is None and x["codigo"] in ("O-18", "O-19") and (x["ref"] in (posicion_id, p["cartera"]) or p["cartera"] in (x.get("carteras") or []))
+               for x in self.avisos) or p["cartera"] in self.degradadas:
+            return _no("O-06", "la cartera de la posición está degradada o tiene avisos sin acusar: resuélvalo antes de reclasificar")
         antes = p["cartera"]
         p["cartera"] = nueva_cartera
         self._anota_pos(p, p["estado"], p["estado"], actor, ahora, f"reclasificada {antes} -> {nueva_cartera}: {motivo}")

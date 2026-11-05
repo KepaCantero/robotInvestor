@@ -453,8 +453,8 @@ def conciliar(o, broker, ahora):
     Por instrumento, la cantidad esperada (con signo) es la de las posiciones abiertas más las operaciones LIBRES
     declaradas por el operador (CT-G-14). Una diferencia nula con operaciones declaradas, o dentro de la tolerancia
     configurada, es una diferencia EXPLICADA: se devuelve y no dispara nada. Lo demás es discrepancia y se avisa."""
+    dif, expl = [], []
     try:
-        dif, expl = [], []
         tol = o.cfg.get("tolerancia_conciliacion_rel", 0.0)
         manuales = getattr(o, "manuales", [])
         reales = {p["instrumento"]: p for p in broker.posiciones()}
@@ -553,10 +553,14 @@ def conciliar(o, broker, ahora):
                     if x["estado"] == "AUTORIZADA" and (x.get("orden_entrada") or {}).get("estado") == "ENVIADA":
                         revisar_entrada(o, eid, broker, ahora, forzar_cancelacion=True)
         return {"ok": not dif, "diferencias": dif, "explicadas": expl}
-    except ConexionPerdida as e:
-        return {"ok": False, "diferencias": [{"tipo": "SIN_CONEXION", "ref": None, "detalle": str(e)}], "explicadas": []}
+    except ConexionPerdida as e:   # T-29: no poder conciliar también se informa (degrada todo; lo ya encontrado, con su gravedad)
+        todo = dif + [{"tipo": "SIN_CONEXION", "ref": None, "detalle": str(e)[:120]}]
+        _aviso(o, todo, ahora)
+        return {"ok": False, "diferencias": todo, "explicadas": []}
     except Exception as e:   # noqa: BLE001
-        return {"ok": False, "diferencias": [{"tipo": "ERROR", "ref": None, "detalle": type(e).__name__}], "explicadas": []}
+        todo = dif + [{"tipo": "ERROR", "ref": None, "detalle": type(e).__name__}]
+        _aviso(o, todo, ahora)
+        return {"ok": False, "diferencias": todo, "explicadas": []}
 
 
 def _ids_cierre(broker, pid):
