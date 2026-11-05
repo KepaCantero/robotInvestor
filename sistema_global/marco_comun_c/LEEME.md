@@ -1,6 +1,6 @@
-# Marco común de C, sobres CT-G-02 y CT-G-01, K (datos de corte), Orquestador, Contradictor, consola N y control de riesgo F y ejecución G y vigilancia H — V0.9 (provisional, 0.x)
+# Marco común de C, sobres CT-G-02 y CT-G-01, K (datos de corte), Orquestador, Contradictor, consola N y control de riesgo F y ejecución G y vigilancia H y dimensionado E — V0.10 (provisional, 0.x)
 
-Fecha: 5 de noviembre de 2026 (V0.9: añade H, la vigilancia de posiciones, y el cierre de posiciones en G; V0.8 añadió G, la ejecución con intermediario simulado, y su conciliación; V0.7 añadió F). Fase 1 de la Constitución V0.3.
+Fecha: 5 de noviembre de 2026 (V0.10: añade E, el dimensionado de posición; V0.9 añadió H, la vigilancia de posiciones, y el cierre de posiciones en G; V0.8 añadió G, la ejecución con intermediario simulado, y su conciliación; V0.7 añadió F). Fase 1 de la Constitución V0.3.
 
 ## Contenido
 
@@ -47,12 +47,15 @@ python3 pruebas/pruebas_consola.py
 python3 pruebas/pruebas_control_f.py
 python3 pruebas/pruebas_ejecucion_g.py
 python3 pruebas/pruebas_vigilancia.py
+python3 pruebas/pruebas_dimensionado.py
 python3 validador/validar_sobre.py sobre.json contexto.json
 ```
 
 Resultado esperado de cada script de pruebas: `TODAS LAS PRUEBAS PASAN`.
 
 ## Qué está comprobado y qué no
+
+- Comprobado en E (`validador/dimensionado.py`): 36 comprobaciones, incluida una prueba de 400 casos aleatorios en la que F aprueba siempre lo que E propone y el riesgo nunca supera el objetivo. Códigos OK, E-01..E-04. Límites: precios en euros sin conversión de divisa ni comisiones (T-10); no hay tabla de pasos por instrumento; un salto de precio puede superar la pérdida del stop.
 
 - Comprobado en H (`validador/vigilancia.py`) y en el cierre de G (`cerrar`): 41 comprobaciones con intermediario simulado; reglas H-01 a H-09. H aplica solo condiciones de salida ya declaradas, no cierra con un precio ausente o viejo (avisa) y el cierre lleva a cero la posición neta real del intermediario antes de pasar a CERRADA. Límites: solo cierre total (la reducción parcial sigue pendiente, T-12); solo condiciones sobre el precio; H no tiene reloj propio; el cierre a mercado no es de solo reducción en el simulador; umbrales de 15 min y 72 h [PROPUESTO].
 
