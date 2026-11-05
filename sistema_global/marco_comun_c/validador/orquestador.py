@@ -23,6 +23,7 @@ from k_calidad import (Calendario, ERRORES, SinCobertura, estado_sello, hash_ser
                        validar_sello)
 from validar_encargo import sobre_responde_a_encargo, validar_encargo  # noqa: E402
 from validar_sobre import _dt  # noqa: E402
+from manual_g import neto_libre, validar_manual  # noqa: E402
 from validar_contradictor import validar_informe  # noqa: E402
 from control_f import POLITICA_DEFECTO, controlar, politica_valida, validar_informe_f  # noqa: E402
 
@@ -68,7 +69,7 @@ OPERADORES = {"<": lambda v, u: v < u, "<=": lambda v, u: v <= u, ">": lambda v,
 CONFIG_DEFECTO = {"max_reintentos": 3, "umbral_corte_comun_dias_habiles": 0,
                   "dia_coste_max_eur": 50.0, "dia_tiempo_max_min": 600, "tolerancia_precio_entrada": 0.05,
                   "exige_contradictor_en": [], "matriz_autonomia": {}, "politica_f": POLITICA_DEFECTO,
-                  "nivel_autonomia": {}}   # cartera -> L0 (simulado) | L1 (el operador confirma) | L2 (automático con límites); sin dato = L1
+                  "nivel_autonomia": {}, "tolerancia_conciliacion_rel": 0.0, "instrumentos_permitidos": None}   # cartera -> L0 (simulado) | L1 (el operador confirma) | L2 (automático con límites); sin dato = L1
 NIVELES = {"L0": 0, "L1": 1, "L2": 2}
 # Prioridad de cada aviso para el operador [PROPUESTO]
 PRIORIDAD_AVISO = {"O-18": "ALTA", "O-03": "ALTA", "O-08": "ALTA", "O-09": "ALTA", "O-13": "ALTA", "O-17": "ALTA"}
@@ -96,7 +97,11 @@ def _valida_config(c):
           and isinstance(c["exige_contradictor_en"], list) and isinstance(c["matriz_autonomia"], dict)
           and all(isinstance(v, bool) for v in c["matriz_autonomia"].values())
           and isinstance(c["nivel_autonomia"], dict)
-          and all(k in ("TRADING", "TACTICA", "LARGO_PLAZO") and v in NIVELES for k, v in c["nivel_autonomia"].items()))
+          and all(k in ("TRADING", "TACTICA", "LARGO_PLAZO") and v in NIVELES for k, v in c["nivel_autonomia"].items())
+          and _num(c["tolerancia_conciliacion_rel"]) and 0 <= c["tolerancia_conciliacion_rel"] <= 0.01
+          and (c["instrumentos_permitidos"] is None or isinstance(c["instrumentos_permitidos"], dict)
+               and all(k in ("TRADING", "TACTICA", "LARGO_PLAZO") and isinstance(v, list) and all(isinstance(x, str) for x in v)
+                       for k, v in c["instrumentos_permitidos"].items())))
     if ok and not c["apalancamiento_permitido"] and c["politica_f"]["apalancamiento_max"] > 1:
         ok = False   # la política de F no puede permitir lo que el sistema prohíbe
     if not ok:
@@ -144,6 +149,7 @@ class Orquestador:
         Calendario(calendario)   # falla pronto si no es válido
         self.sellos, self.eventos, self.encargos = {}, {}, {}
         self.expedientes, self.posiciones, self.gasto_dia, self.avisos = {}, {}, {}, []
+        self.manuales = []     # registros CT-G-14 aceptados (lo que el operador hizo fuera del sistema)
         self.degradadas = {}   # cartera -> motivo: bajada automática a L1 hasta que el operador la restablezca
 
     # ------------------------------------------------------------ niveles de autonomía
@@ -670,6 +676,9 @@ class Orquestador:
         err = self._transicion_ok(e, "EJECUTADA", actor)
         if err:
             return err
+        return self._ejecutar(e, orden, actor, ahora, a)
+
+    def _ejecutar(self, e, orden, actor, ahora, a, manual=False):
         ok = (isinstance(orden, dict) and isinstance(orden.get("orden_id"), str) and _ID.match(orden["orden_id"])
               and _num(orden.get("cantidad")) and orden["cantidad"] > 0 and _num(orden.get("precio")) and orden["precio"] > 0
               and orden.get("conciliada") is True)
@@ -681,7 +690,7 @@ class Orquestador:
         if a > _dt(e["propuesta"]["entrada"]["ventana_hasta"]) or a > _dt(e["sobre"]["valid_until"]):
             return _no("O-10", "la ventana de entrada o el sobre vencieron antes de ejecutar")
         quien = next((x["actor"] for x in reversed(e["historial"]) if x["hasta"] == "AUTORIZADA"), None)
-        if quien == "MATRIZ_AUTONOMIA" and NIVELES[self.nivel(e["cartera_destino"])] < 2:
+        if not manual and quien == "MATRIZ_AUTONOMIA" and NIVELES[self.nivel(e["cartera_destino"])] < 2:
             return _no("O-05", f"la autorización fue automática y la cartera está ahora en {self.nivel(e['cartera_destino'])}: la confirma el operador")
         if self._sello_anulado(e):
             return _no("O-06", "el sello del análisis ya no es válido")
@@ -699,6 +708,11 @@ class Orquestador:
             return _no("O-06", "el precio de ejecución se aleja del límite autorizado")
         if orden["orden_id"] in self.ordenes_usadas or any(x in self.ordenes_usadas for x in prot):
             return _no("O-03", "orden ya usada en otro expediente o posición")
+        ins = e["propuesta"]["entrada"]["instrumento"]
+        if any(q["estado"] != "CERRADA" and q["instrumento"] == ins for q in self.posiciones.values()):
+            return _no("O-06", "ya hay una posición abierta en ese instrumento (una por instrumento, T-13)")
+        if abs(neto_libre(self.manuales, ins)) > 1e-6:
+            return _no("O-06", "hay operaciones libres declaradas abiertas en ese instrumento: no se mezclan con una posición del sistema")
         pid = "POS-" + e["expediente_id"]
         if pid in self.posiciones:
             return _no("O-03", "la posición ya existe")
@@ -707,12 +721,66 @@ class Orquestador:
                                 "nivel": self.nivel(e["cartera_destino"]), "direccion": "LARGO" if [c for c in e["propuesta"]["salida"]["condiciones"] if c["tipo"] == "STOP"][0]["operador"] in ("<", "<=") else "CORTO",
                                 "stop_precio": [c for c in e["propuesta"]["salida"]["condiciones"] if c["tipo"] == "STOP"][0]["umbral"],
                                 "instrumento": e["propuesta"]["entrada"]["instrumento"], "activo_base": e["propuesta"]["entrada"]["activo_base"],
-                                "condiciones_salida": copy.deepcopy(e["propuesta"]["salida"]), "protecciones": list(prot), "propuestas": []}
+                                "condiciones_salida": copy.deepcopy(e["propuesta"]["salida"]), "protecciones": list(prot), "propuestas": [],
+                                "origen": "MANUAL" if manual else "G"}
         self.ordenes_usadas += [orden["orden_id"], *prot]
-        self._anota(self.posiciones[pid], None, "ABIERTA", "G", ahora, "orden conciliada", orden["orden_id"])
+        self._anota(self.posiciones[pid], None, "ABIERTA", actor if manual else "G", ahora,
+                    "ejecución manual declarada (CT-G-14)" if manual else "orden conciliada", orden["orden_id"])
         e["posicion_id"] = pid
         self._anota(e, e["estado"], "EJECUTADA", actor, ahora, "ejecutada", orden["orden_id"])
         return _r(True, "OK", "ejecutada", posicion_id=pid)
+
+    @_seguro
+    def registrar_manual(self, registro, ahora):
+        """CT-G-14: el operador declara lo que hizo fuera del sistema. Vinculado a un expediente AUTORIZADA abre su posición;
+        vinculado a una posición la cierra; LIBRE solo queda registrado y la conciliación lo cuenta como explicado."""
+        a = self._ahora(ahora)
+        if not isinstance(registro, dict) or not isinstance(registro.get("event_id"), str):
+            return _no("O-01", "registro CT-G-14 sin event_id")
+        v = registro.get("vinculo") if isinstance(registro.get("vinculo"), dict) else {}
+        ref = v.get("id") if isinstance(v.get("id"), str) else None
+        h = _hash(registro)
+        dup = self._duplicado(registro["event_id"], h, ref, ahora)
+        if dup:
+            return dup
+        e = self.expedientes.get(ref) if v.get("tipo") == "EXPEDIENTE" else None
+        p = self.posiciones.get(ref) if v.get("tipo") == "POSICION" else None
+        if (e is not None and not (self._historial_ok(e) and self._propuesta_ok(e))) or (p is not None and not self._historial_ok(p)):
+            return _no("O-13", "el historial del vínculo no es íntegro")
+        ins = registro.get("instrumento")
+        ocupado = any(q["estado"] != "CERRADA" and q["instrumento"] == ins for q in self.posiciones.values()) \
+            or any(x["estado"] == "AUTORIZADA" and x.get("propuesta", {}).get("entrada", {}).get("instrumento") == ins for x in self.expedientes.values())
+        desde = None
+        if e is not None:
+            desde = next((x["ahora"] for x in reversed(e["historial"]) if x["hasta"] == "AUTORIZADA"), None)
+        elif p is not None:
+            desde = p["historial"][0]["ahora"]
+        fallos = validar_manual(registro, {"ahora": ahora, "expediente": e, "posicion": p, "tolerancia_precio": self.cfg["tolerancia_precio_entrada"],
+                                           "instrumentos_permitidos": self.cfg["instrumentos_permitidos"],
+                                           "instrumento_ocupado": ocupado, "no_antes_de": desde})
+        if fallos:
+            return _no("O-01", f"registro CT-G-14 no válido: {fallos[0]['regla']}: {fallos[0]['mensaje'][:80]}", reglas=sorted({x['regla'] for x in fallos}))
+        if registro["ref_intermediario"] in self.ordenes_usadas or registro.get("proteccion_ref") in self.ordenes_usadas \
+                or registro["ref_intermediario"] == registro.get("proteccion_ref"):
+            return _no("O-03", "esa orden del intermediario ya está registrada")
+        if v["tipo"] == "EXPEDIENTE":
+            orden = {"orden_id": registro["ref_intermediario"], "cantidad": registro["cantidad"], "precio": registro["precio"], "conciliada": True,
+                     "proteccion_orden_ids": [registro["proteccion_ref"]]}
+            r = self._ejecutar(e, orden, "OPERADOR", ahora, a, manual=True)
+            if not r["ok"]:
+                return r
+        elif v["tipo"] == "POSICION":
+            self._anota(p, p["estado"], "CERRANDO", "OPERADOR", ahora, f"cierre manual declarado (CT-G-14): {registro['motivo'][:120]}")
+            p["cantidad"] = 0
+            self.ordenes_usadas.append(registro["ref_intermediario"])
+            self._anota(p, "CERRANDO", "CERRADA", "OPERADOR", ahora, "cierre manual declarado (CT-G-14)", registro["ref_intermediario"])
+        else:   # LIBRE: fuera del control de F; queda a la vista del operador
+            self.ordenes_usadas.append(registro["ref_intermediario"])
+            self._aviso("O-20", f"operación libre declarada fuera del sistema (sin control de F ni stop): {registro['lado']} {registro['cantidad']} {ins}",
+                        ahora, registro["event_id"])
+        self.eventos[registro["event_id"]] = {"hash": h, "expediente_id": ref}
+        self.manuales.append(copy.deepcopy(registro))
+        return _r(True, "OK", f"registro manual aceptado ({v['tipo']})", posicion_id=(e or {}).get("posicion_id") or (p or {}).get("posicion_id"))
 
     @_seguro
     def observar(self, expediente_id, condiciones_reapertura, motivo, actor, ahora):

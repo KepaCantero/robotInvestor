@@ -13,6 +13,7 @@ import math
 import re
 
 from control_f import ERRORES
+from manual_g import neto_libre
 from validar_sobre import _dt
 
 ID = re.compile(r"^[A-Za-z0-9._:/-]{1,64}\Z")
@@ -99,7 +100,7 @@ class BrokerSimulado:
     def _res(reg):
         o = reg["orden"]
         return {"orden_id": o["orden_id"], "estado": reg["estado"], "cantidad_ejecutada": reg["ejecutada"], "precio_medio": reg["precio_medio"],
-                "tipo": o["tipo"], "lado": o["lado"], "cantidad": o["cantidad"], "precio": o.get("precio")}
+                "tipo": o["tipo"], "lado": o["lado"], "cantidad": o["cantidad"], "precio": o.get("precio"), "instrumento": o["instrumento"]}
 
     def cancelar(self, orden_id):
         if self.caido:
@@ -261,11 +262,16 @@ def _ejecutar(o, eid, broker, ahora, est):
 
 
 def conciliar(o, broker, ahora):
-    """Compara lo que el Orquestador cree con lo que dice el intermediario (cantidad, sentido, activo y stop) e informa de las diferencias."""
+    """Compara lo que el Orquestador cree con lo que dice el intermediario e informa de las discrepancias.
+    Por instrumento, la cantidad esperada (con signo) es la de las posiciones abiertas más las operaciones LIBRES
+    declaradas por el operador (CT-G-14). Una diferencia nula con operaciones declaradas, o dentro de la tolerancia
+    configurada, es una diferencia EXPLICADA: se devuelve y no dispara nada. Lo demás es discrepancia y se avisa."""
     try:
-        dif = []
+        dif, expl = [], []
+        tol = o.cfg.get("tolerancia_conciliacion_rel", 0.0)
+        manuales = getattr(o, "manuales", [])
         reales = {p["instrumento"]: p for p in broker.posiciones()}
-        conocidas = set()
+        abiertas = {}
         for pid, p in o.posiciones.items():
             if p["estado"] == "CERRADA":
                 for prot in p["protecciones"]:   # un stop vivo de una posición cerrada abriría una posición contraria
@@ -273,12 +279,7 @@ def conciliar(o, broker, ahora):
                     if c and c["estado"] == "ACEPTADA":
                         dif.append({"tipo": "PROTECCION_HUERFANA", "ref": pid, "detalle": f"la orden {prot} sigue viva con la posición cerrada"})
                 continue
-            conocidas.add(p["instrumento"])
-            r = reales.get(p["instrumento"])
-            if r is None or abs(abs(r["cantidad"]) - p["cantidad"]) > TOL:
-                dif.append({"tipo": "CANTIDAD", "ref": pid, "detalle": f"Orquestador {p['cantidad']}, intermediario {abs(r['cantidad']) if r else 0}"})
-            elif (r["cantidad"] > 0) != (p["direccion"] == "LARGO") or r["activo_base"] != p["activo_base"]:
-                dif.append({"tipo": "SENTIDO_O_ACTIVO", "ref": pid, "detalle": "el sentido o el activo base no coinciden con el intermediario"})
+            abiertas.setdefault(p["instrumento"], []).append((pid, p))
             lado_s = "VENTA" if p["direccion"] == "LARGO" else "COMPRA"
             for prot in p["protecciones"]:
                 c = broker.consultar(prot)
@@ -286,15 +287,42 @@ def conciliar(o, broker, ahora):
                     dif.append({"tipo": "PROTECCION", "ref": pid, "detalle": f"la orden de protección {prot} no está viva ({c['estado'] if c else 'inexistente'})"})
                 elif not (c["tipo"] == "STOP" and c["lado"] == lado_s and abs(c["cantidad"] - p["cantidad"]) <= TOL and c["precio"] == p["stop_precio"]):
                     dif.append({"tipo": "PROTECCION", "ref": pid, "detalle": f"el stop {prot} no coincide con la posición (tipo, lado, cantidad o precio)"})
-        for ins in sorted(set(reales) - conocidas):
-            dif.append({"tipo": "POSICION_DESCONOCIDA", "ref": ins, "detalle": "el intermediario tiene una posición que el Orquestador no conoce"})
+        libres = {r["instrumento"] for r in manuales if r["vinculo"]["tipo"] == "LIBRE"}
+        for ins in sorted(set(reales) | set(abiertas) | libres):
+            ps = abiertas.get(ins, [])
+            libre = 0.0 if ps else neto_libre(manuales, ins)   # una LIBRE nunca explica la cantidad de una posición del sistema
+            esperado = sum(p["cantidad"] if p["direccion"] == "LARGO" else -p["cantidad"] for _, p in ps) + libre
+            r = reales.get(ins)
+            real = r["cantidad"] if r else 0.0
+            d = real - esperado
+            ref = ps[0][0] if len(ps) == 1 else ins
+            if abs(d) <= TOL:
+                if abs(libre) > TOL:
+                    expl.append({"tipo": "MANUAL_DECLARADA", "ref": ins, "detalle": f"{libre:+} declarado por el operador (CT-G-14)"})
+            elif ps and real * esperado < 0:
+                dif.append({"tipo": "SENTIDO_O_ACTIVO", "ref": ref, "detalle": "el sentido no coincide con el intermediario"})
+            elif ps and abs(d) <= tol * abs(esperado):
+                expl.append({"tipo": "REDONDEO", "ref": ref, "detalle": f"diferencia {d:+.6g} dentro de la tolerancia relativa {tol}"})
+            elif not ps and abs(libre) <= TOL:
+                dif.append({"tipo": "POSICION_DESCONOCIDA", "ref": ins, "detalle": f"el intermediario tiene {real} que el Orquestador no conoce ni el operador declaró"})
+            elif not ps:
+                dif.append({"tipo": "MANUAL_NO_CUADRA", "ref": ins, "detalle": f"el operador declaró {libre:+} y el intermediario tiene {real}"})
+            else:
+                dif.append({"tipo": "CANTIDAD", "ref": ref, "detalle": f"Orquestador {esperado}, intermediario {real}"})
+            for pid, p in ps:
+                if r is not None and r["activo_base"] != p["activo_base"]:
+                    dif.append({"tipo": "SENTIDO_O_ACTIVO", "ref": pid, "detalle": "el activo base no coincide con el intermediario"})
+            if not ps and r is not None and abs(libre) > TOL:
+                bases = {x["activo_base"] for x in manuales if x["vinculo"]["tipo"] == "LIBRE" and x["instrumento"] == ins}
+                if bases != {r["activo_base"]}:
+                    dif.append({"tipo": "SENTIDO_O_ACTIVO", "ref": ins, "detalle": "el activo base declarado no coincide con el intermediario"})
         if dif:
             _aviso(o, dif, ahora)
-        return {"ok": not dif, "diferencias": dif}
+        return {"ok": not dif, "diferencias": dif, "explicadas": expl}
     except ConexionPerdida as e:
-        return {"ok": False, "diferencias": [{"tipo": "SIN_CONEXION", "ref": None, "detalle": str(e)}]}
+        return {"ok": False, "diferencias": [{"tipo": "SIN_CONEXION", "ref": None, "detalle": str(e)}], "explicadas": []}
     except Exception as e:   # noqa: BLE001
-        return {"ok": False, "diferencias": [{"tipo": "ERROR", "ref": None, "detalle": type(e).__name__}]}
+        return {"ok": False, "diferencias": [{"tipo": "ERROR", "ref": None, "detalle": type(e).__name__}], "explicadas": []}
 
 
 def _cierre_previo(broker, base):
@@ -397,3 +425,51 @@ def _cerrar(o, p, pid, broker, ahora, est):
     if not t["ok"]:
         return _incompleto(o, pid, ahora, f"el Orquestador rechazó el cierre ({t['codigo']})")
     return _r(True, "OK", "posición cerrada y conciliada", orden_id=orden_id)
+
+
+def _cuadra(x, y):
+    return _num(x) and _num(y) and abs(x - y) <= 1e-6 * max(1.0, abs(y))
+
+
+def declarar_manual(o, registro, broker, ahora):
+    """Entrada de CT-G-14: antes de registrar lo que el operador declara, G lo contrasta con el intermediario.
+    Códigos: OK y los del Orquestador; G-01 sin conexión; G-10 lo declarado no cuadra con el intermediario."""
+    if not isinstance(registro, dict):
+        return _r(False, "G-10", "el registro no es un objeto")
+    try:
+        v = registro.get("vinculo") if isinstance(registro.get("vinculo"), dict) else {}
+        c = broker.consultar(registro.get("ref_intermediario")) if isinstance(registro.get("ref_intermediario"), str) else None
+        if not (c and c["estado"] in ("EJECUTADA", "PARCIAL") and c.get("instrumento") == registro.get("instrumento")
+                and c["lado"] == registro.get("lado") and _cuadra(c["cantidad_ejecutada"], registro.get("cantidad"))
+                and _cuadra(c["precio_medio"], registro.get("precio"))):
+            return _r(False, "G-10", "el intermediario no tiene esa orden ejecutada con ese instrumento, sentido, cantidad y precio")
+        if v.get("tipo") == "EXPEDIENTE":
+            e = o.expedientes.get(v.get("id"))
+            s = broker.consultar(registro.get("proteccion_ref")) if isinstance(registro.get("proteccion_ref"), str) else None
+            stop = next((x for x in e["propuesta"]["salida"]["condiciones"] if x["tipo"] == "STOP"), None) if e and e.get("propuesta") else None
+            lado_s = "VENTA" if registro.get("lado") == "COMPRA" else "COMPRA"
+            if not (s and stop and s["estado"] == "ACEPTADA" and s["tipo"] == "STOP" and s["lado"] == lado_s and s.get("instrumento") == registro.get("instrumento")
+                    and _cuadra(s["cantidad"], registro.get("cantidad")) and s["precio"] == stop["umbral"]):
+                return _r(False, "G-10", "la orden de protección no está viva en el intermediario o no es el stop de la propuesta")
+        elif v.get("tipo") == "POSICION":
+            p = o.posiciones.get(v.get("id"))
+            if p is None:
+                return _r(False, "G-10", "la posición no existe")
+            for prot in p["protecciones"]:
+                s = broker.consultar(prot)
+                if s and s["estado"] in ("EJECUTADA", "PARCIAL"):
+                    return _r(False, "G-10", "el stop ya se ejecutó: el cierre lo concilia H (H-01), no un registro manual")
+                for _ in range(3):
+                    if not (s and s["estado"] == "ACEPTADA"):
+                        break
+                    s = broker.cancelar(prot)
+                if s and s["estado"] == "ACEPTADA":
+                    return _r(False, "G-10", f"no se pudo cancelar el stop {prot}: la posición no se da por cerrada")
+            if abs(_neto(broker, p["instrumento"])) > TOL:
+                return _r(False, "G-10", "el intermediario aún tiene cantidad en ese instrumento: el cierre no es total")
+        r = o.registrar_manual(registro, _instante(o, ahora))
+        return r
+    except ConexionPerdida as ex:
+        return _r(False, "G-01", f"sin conexión con el intermediario: no se registra nada ({ex})")
+    except Exception as ex:   # noqa: BLE001
+        return _r(False, "G-10", f"no se pudo contrastar con el intermediario ({type(ex).__name__})")
