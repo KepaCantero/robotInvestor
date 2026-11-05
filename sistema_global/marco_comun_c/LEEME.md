@@ -1,6 +1,6 @@
-# Marco común de C, sobres CT-G-02 y CT-G-01, K (datos de corte), Orquestador, Contradictor, consola N y control de riesgo F — V0.7 (provisional, 0.x)
+# Marco común de C, sobres CT-G-02 y CT-G-01, K (datos de corte), Orquestador, Contradictor, consola N y control de riesgo F y ejecución G — V0.8 (provisional, 0.x)
 
-Fecha: 5 de noviembre de 2026 (V0.7: añade F, el control de riesgo previo a autorizar). Fase 1 de la Constitución V0.3.
+Fecha: 5 de noviembre de 2026 (V0.8: añade G, la ejecución con intermediario simulado, y su conciliación; V0.7 añadió F). Fase 1 de la Constitución V0.3.
 
 ## Contenido
 
@@ -45,12 +45,15 @@ python3 pruebas/pruebas_contradictor.py
 python3 pruebas/pruebas_orquestador.py
 python3 pruebas/pruebas_consola.py
 python3 pruebas/pruebas_control_f.py
+python3 pruebas/pruebas_ejecucion_g.py
 python3 validador/validar_sobre.py sobre.json contexto.json
 ```
 
 Resultado esperado de cada script de pruebas: `TODAS LAS PRUEBAS PASAN`.
 
 ## Qué está comprobado y qué no
+
+- Comprobado en G (`validador/ejecucion_g.py`): 50 comprobaciones con un intermediario simulado; códigos OK, G-01..G-06, G-08. Tras enviar órdenes, cualquier fallo se trata como estado incierto (G-08) con aviso, nunca como «sin efectos»; una posición sin stop se cierra o se alerta. `conciliar` compara Orquestador e intermediario (cantidad, sentido, activo, stop, stop huérfano). Límites: una posición por instrumento; no hay reducir/cerrar posiciones ni redimensionar el stop; sin conversión de divisa; el disparo del stop no se simula; el intermediario es simulado y los actores no se autentican (ver deuda técnica).
 
 - Comprobado en CT-G-01: 4 encargos válidos, 46 inválidos y 21 comprobaciones de respuesta; el cruce valida antes ambos mensajes y contrasta con el sello de K (E-16, R-11, R-12).
 - Comprobado en el Orquestador: 176 comprobaciones con datos simulados; códigos O-00 a O-17 (O-17: objeción del Contradictor). Límites: la cadena de hashes del historial detecta alteración pero no está anclada fuera (use `cabezas()` y un registro de solo añadir); no hay reloj real ni persistencia; el Contradictor (CT-G-03) no se exige por defecto y su independencia es declarada, no comprobada; las condiciones de reapertura de `observar` no se verifican solas; el resultado de F no se verifica de forma independiente; todos los umbrales son [PROPUESTO].
