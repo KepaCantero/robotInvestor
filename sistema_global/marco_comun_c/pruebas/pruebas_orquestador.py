@@ -61,7 +61,7 @@ def sobre(n=1, corte="2026-11-05", sello="K-20261105-001"):
     return s
 
 
-def hasta(o, estado, n=1, ahora=AHORA, entrada=None):
+def hasta(o, estado, n=1, ahora=AHORA, entrada=None, salida=None):
     """Lleva el expediente EXP-000n hasta `estado` por el camino feliz (sin cambiar el reloj)."""
     if estado == "DESDE_CERO":
         return
@@ -82,7 +82,7 @@ def hasta(o, estado, n=1, ahora=AHORA, entrada=None):
     assert o.comparar([f"EXP-{n:04d}", f"EXP-{n + 1:04d}"], "D", ahora)["ok"]
     if estado == "COMPARADA":
         return
-    assert o.proponer(f"EXP-{n:04d}", entrada or ENTRADA, SALIDA, "GESTOR_TACTICA", ahora)["ok"]
+    assert o.proponer(f"EXP-{n:04d}", entrada or ENTRADA, salida or SALIDA, "GESTOR_TACTICA", ahora)["ok"]
     if estado == "PROPUESTA":
         return
     assert o.autorizar(f"EXP-{n:04d}", "OPERADOR", informe_f(o, f"EXP-{n:04d}", n), ahora)["ok"]

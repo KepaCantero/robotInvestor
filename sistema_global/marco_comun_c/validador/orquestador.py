@@ -69,7 +69,7 @@ CONFIG_DEFECTO = {"max_reintentos": 3, "umbral_corte_comun_dias_habiles": 0,
                   "dia_coste_max_eur": 50.0, "dia_tiempo_max_min": 600, "tolerancia_precio_entrada": 0.05,
                   "exige_contradictor_en": [], "matriz_autonomia": {}, "politica_f": POLITICA_DEFECTO}
 # Prioridad de cada aviso para el operador [PROPUESTO]
-PRIORIDAD_AVISO = {"O-03": "ALTA", "O-08": "ALTA", "O-09": "ALTA", "O-13": "ALTA", "O-17": "ALTA"}
+PRIORIDAD_AVISO = {"O-18": "ALTA", "O-03": "ALTA", "O-08": "ALTA", "O-09": "ALTA", "O-13": "ALTA", "O-17": "ALTA"}
 ACTORES_PROPUESTA = {"H", "F", "D", "OPERADOR"} | EMISORES
 
 
@@ -156,6 +156,18 @@ class Orquestador:
             return   # ya hay uno igual sin acusar: no se multiplica
         self.avisos.append({"id": f"AV-{len(self.avisos) + 1:05d}", "codigo": codigo, "prioridad": PRIORIDAD_AVISO.get(codigo, "MEDIA"),
                             "motivo": motivo, "ref": ref, "ahora": ahora, "acuse": None})
+
+    @_seguro
+    def reportar_discrepancia(self, diferencias, actor, ahora):
+        """G informa de que lo que el intermediario tiene no coincide con lo que el Orquestador cree."""
+        self._ahora(ahora)
+        if actor != "G":
+            return _no("O-05", "solo G reporta discrepancias de conciliación")
+        if not (isinstance(diferencias, list) and diferencias and all(isinstance(d, dict) and isinstance(d.get("tipo"), str) for d in diferencias)):
+            return _no("O-01", "una discrepancia exige una lista no vacía de diferencias con tipo")
+        for d in diferencias:
+            self._aviso("O-18", f"conciliación: {d['tipo']} {d.get('ref')}: {str(d.get('detalle'))[:120]}", ahora, d.get("ref") if isinstance(d.get("ref"), str) else None)
+        return _r(True, "OK", f"{len(diferencias)} diferencia(s) registrada(s)")
 
     @_seguro
     def acusar_aviso(self, aviso_id, actor, ahora):
@@ -645,6 +657,8 @@ class Orquestador:
             return _no("O-03", "la posición ya existe")
         self.posiciones[pid] = {"posicion_id": pid, "expediente_id": e["expediente_id"], "cartera": e["cartera_destino"],
                                 "cantidad": orden["cantidad"], "estado": "ABIERTA", "historial": [],
+                                "direccion": "LARGO" if [c for c in e["propuesta"]["salida"]["condiciones"] if c["tipo"] == "STOP"][0]["operador"] in ("<", "<=") else "CORTO",
+                                "stop_precio": [c for c in e["propuesta"]["salida"]["condiciones"] if c["tipo"] == "STOP"][0]["umbral"],
                                 "instrumento": e["propuesta"]["entrada"]["instrumento"], "activo_base": e["propuesta"]["entrada"]["activo_base"],
                                 "condiciones_salida": copy.deepcopy(e["propuesta"]["salida"]), "protecciones": list(prot), "propuestas": []}
         self.ordenes_usadas += [orden["orden_id"], *prot]
