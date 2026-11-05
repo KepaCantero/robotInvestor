@@ -23,6 +23,7 @@ from k_calidad import (Calendario, ERRORES, SinCobertura, estado_sello, hash_ser
                        validar_sello)
 from validar_encargo import sobre_responde_a_encargo, validar_encargo  # noqa: E402
 from validar_sobre import _dt  # noqa: E402
+from validar_contradictor import validar_informe  # noqa: E402
 
 VERSION_REGLAS = "ORQ-0.1.0"
 _FH = re.compile(r"^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(\.\d+)?(Z|[+-]\d{2}:\d{2})\Z")
@@ -79,7 +80,8 @@ class RelojRetrocede(Exception):
 
 def _valida_config(c):
     """La configuración se valida al construir: una configuración mala no arranca el Orquestador."""
-    ok = (isinstance(c.get("perfiles_activos"), list) and c["perfiles_activos"] and all(isinstance(x, str) for x in c["perfiles_activos"])
+    ok = (all(isinstance(x, str) and x in ("N0", "N1", "N2", "N3") for x in c["exige_contradictor_en"])
+          and isinstance(c.get("perfiles_activos"), list) and c["perfiles_activos"] and all(isinstance(x, str) for x in c["perfiles_activos"])
           and isinstance(c.get("clases_ratificadas"), dict) and isinstance(c.get("apalancamiento_permitido"), bool)
           and all(_num(c[k]) and c[k] > 0 for k in ("dia_coste_max_eur", "dia_tiempo_max_min", "tolerancia_precio_entrada"))
           and isinstance(c["max_reintentos"], int) and not isinstance(c["max_reintentos"], bool) and c["max_reintentos"] >= 1
@@ -282,7 +284,7 @@ class Orquestador:
             return _no("O-03", "expediente ya existe")
         e = {"expediente_id": expediente_id, "correlation_id": correlation_id, "via_entrada": via_entrada,
              "cartera_destino": cartera_destino, "estado": "DETECTADA", "historial": [], "encargo_actual": None,
-             "sobre": None, "sin_avance": 0, "propuesta": None, "posicion_id": None, "reapertura": None}
+             "sobre": None, "contradictor": None, "retenido": None, "sin_avance": 0, "propuesta": None, "posicion_id": None, "reapertura": None}
         self._anota(e, None, "DETECTADA", actor, ahora, "detectada")
         self.expedientes[expediente_id] = e
         return _r(True, "OK", "expediente creado")
@@ -293,6 +295,8 @@ class Orquestador:
         e, err = self._exp(expediente_id)
         if err:
             return err
+        if e["retenido"] is not None:
+            return _no("O-17", "hay una objeción crítica pendiente: el operador debe levantarla o descartar el expediente")
         if not isinstance(encargo, dict) or not isinstance(encargo.get("event_id"), str):
             return _no("O-01", "encargo mal formado")
         eid, h = encargo["event_id"], _hash(encargo)
@@ -365,13 +369,15 @@ class Orquestador:
         return _r(True, "OK", "gasto registrado", alertas=alertas)
 
     @_seguro
-    def entregar_sobre(self, expediente_id, sobre, ahora, contradictor_ref=None):
+    def entregar_sobre(self, expediente_id, sobre, ahora, informe=None):
         a = self._ahora(ahora)
         e, err = self._exp(expediente_id)
         if err:
             return err
         if not isinstance(sobre, dict) or not isinstance(sobre.get("event_id"), str):
             return _no("O-01", "sobre mal formado")
+        if e["retenido"] is not None:
+            return _no("O-17", "hay una objeción crítica pendiente: el operador debe levantarla o descartar el expediente")
         sid, h = sobre["event_id"], _hash(sobre)
         dup = self._duplicado(sid, h, expediente_id, ahora)
         if dup:
@@ -399,16 +405,61 @@ class Orquestador:
         fallos = sobre_responde_a_encargo(en["msg"], sobre, ctx_enc, ctx_sob)
         if fallos:
             return _no("O-01", f"el sobre no responde al encargo: {fallos[0]['regla']}: {fallos[0]['mensaje'][:80]}", reglas=sorted({x['regla'] for x in fallos}))
-        if en["nivel"] in self.cfg["exige_contradictor_en"] and not (isinstance(contradictor_ref, str) and _ID.match(contradictor_ref)):
-            return _no("O-06", f"el nivel {en['nivel']} exige el informe del Contradictor (CT-G-03)")
+        contr = None
+        if en["nivel"] in self.cfg["exige_contradictor_en"] or informe is not None:
+            if informe is None:
+                return _no("O-06", f"el nivel {en['nivel']} exige el informe del Contradictor (CT-G-03)")
+            if not isinstance(informe, dict) or not isinstance(informe.get("event_id"), str):
+                return _no("O-01", "informe del Contradictor mal formado")
+            ih = _hash(informe)
+            dup = self._duplicado(informe["event_id"], ih, expediente_id, ahora)
+            if dup:
+                return _no("O-03", "el informe ya se usó")
+            fallos = validar_informe(informe, {"ahora": ahora, "sobre": sobre})
+            if fallos:
+                return _no("O-01", f"informe del Contradictor no válido: {fallos[0]['regla']}: {fallos[0]['mensaje'][:80]}", reglas=sorted({x['regla'] for x in fallos}))
+            self.eventos[informe["event_id"]] = {"hash": ih, "expediente_id": expediente_id}
+            contr = {"event_id": informe["event_id"], "veredicto": informe["payload"]["veredicto"], "hash": ih,
+                     "valid_until": informe["valid_until"]}
         self.eventos[sid] = {"hash": h, "expediente_id": expediente_id}
         en["estado"] = "ENTREGADO"
         ident = sobre["payload"]["identificacion"]
-        e["sobre"] = {"event_id": sid, "fecha_corte": ident["fecha_corte"], "valid_until": sobre["valid_until"],
-                      "perfil": ident["perfil"], "nivel": ident["nivel_analisis"], "contradictor_ref": contradictor_ref}
+        info = {"event_id": sid, "fecha_corte": ident["fecha_corte"], "valid_until": sobre["valid_until"],
+                "perfil": ident["perfil"], "nivel": ident["nivel_analisis"], "contradictor_ref": contr["event_id"] if contr else None}
+        if contr:   # el sobre vale solo mientras valga el informe del Contradictor
+            info["valid_until"] = min(info["valid_until"], contr["valid_until"], key=_dt)
+        if contr and contr["veredicto"] == "OBJECION_CRITICA":
+            e["retenido"] = {"sobre": info, "contradictor": contr}
+            self._anota(e, e["estado"], "EN_ANALISIS", "ORQUESTADOR", ahora, "sobre retenido por objeción crítica del Contradictor", sid)
+            self._aviso("O-17", f"{expediente_id}: objeción crítica del Contradictor; solo el operador puede levantarla", ahora, expediente_id)
+            return _no("O-17", "objeción crítica: el expediente queda detenido hasta que el operador la levante o lo descarte")
+        if contr and contr["veredicto"] == "OBJECION_MAYOR":
+            self._aviso("O-17", f"{expediente_id}: objeción mayor del Contradictor", ahora, expediente_id)
+        e["sobre"], e["contradictor"] = info, contr
         e["sin_avance"] = 0
         self._anota(e, e["estado"], "VALIDADA", "C", ahora, "sobre aceptado", sid)
         return _r(True, "OK", "sobre aceptado")
+
+    @_seguro
+    def levantar_objecion(self, expediente_id, motivo, actor, ahora):
+        """Solo el operador, con motivo escrito, levanta una objeción crítica del Contradictor."""
+        a = self._ahora(ahora)
+        e, err = self._exp(expediente_id)
+        if err:
+            return err
+        if actor != "OPERADOR":
+            return _no("O-05", "solo el operador levanta una objeción crítica")
+        if not (isinstance(motivo, str) and motivo.strip()):
+            return _no("O-15", "levantar una objeción crítica exige motivo escrito")
+        r = e["retenido"]
+        if r is None or e["estado"] != "EN_ANALISIS":
+            return _no("O-04", "no hay ninguna objeción crítica pendiente en este expediente")
+        if a > _dt(r["sobre"]["valid_until"]) or self._sello_anulado(e):
+            return _no("O-10", "el sobre retenido caducó o su sello ya no es válido")
+        e["sobre"], e["contradictor"], e["retenido"] = r["sobre"], r["contradictor"], None
+        e["sin_avance"] = 0
+        self._anota(e, "EN_ANALISIS", "VALIDADA", "OPERADOR", ahora, f"objeción crítica levantada: {motivo.strip()}", r["contradictor"]["event_id"])
+        return _r(True, "OK", "objeción levantada; expediente validado")
 
     @_seguro
     def comparar(self, expediente_ids, actor, ahora):
@@ -543,6 +594,8 @@ class Orquestador:
         err = self._transicion_ok(e, "EN_OBSERVACION", actor)
         if err:
             return err
+        if e["retenido"] is not None:
+            return _no("O-17", "hay una objeción crítica pendiente: no se puede aparcar el expediente")
         if not (isinstance(motivo, str) and motivo.strip() and isinstance(condiciones_reapertura, list) and condiciones_reapertura
                 and all(isinstance(c, str) and c.strip() for c in condiciones_reapertura)):
             return _no("O-15", "se exigen motivo y condiciones de reapertura")
