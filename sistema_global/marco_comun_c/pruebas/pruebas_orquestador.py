@@ -45,6 +45,16 @@ def dim(o, eid="EXP-0001", entrada=None, salida=None, cartera=None, ahora=AHORA,
     return {"solicitud": sol, "cartera": copy.deepcopy(cartera or CART_E), "riesgo_objetivo_pct": None, "paso": paso, "ahora": ahora}
 
 
+def autorizar_op(o, eid, informe, ahora=AHORA, importe=None, canal="CONSOLA", segundo_factor=True):
+    """Lo que hace el operador: pide la pantalla con las cifras de F y la aprueba tecleando el importe."""
+    p = o.pantalla_aprobacion(eid, informe, ahora)
+    if not p["ok"]:
+        return p
+    pa = p["pantalla"]
+    return o.autorizar(eid, "OPERADOR", informe, ahora, {"pantalla_hash": pa["hash"], "importe_tecleado": pa["importe"] if importe is None else importe,
+                                                         "canal": canal, "segundo_factor": segundo_factor})
+
+
 def anotar_entrada(o, eid, oid, cantidad, ahora=AHORA):
     """Lo que G hace antes de reportar una ejecución: anotar la orden de entrada enviada y ejecutada."""
     assert o.orden_entrada(eid, oid, "ENVIADA", 0.0, "G", ahora)["ok"]
@@ -137,7 +147,7 @@ def hasta(o, estado, n=1, ahora=AHORA, entrada=None, salida=None, cartera_e=None
     assert r["ok"], r
     if estado == "PROPUESTA":
         return
-    assert o.autorizar(f"EXP-{n:04d}", "OPERADOR", informe_f(o, f"EXP-{n:04d}", n), ahora)["ok"]
+    assert autorizar_op(o, f"EXP-{n:04d}", informe_f(o, f"EXP-{n:04d}", n), ahora)["ok"]
     if estado == "AUTORIZADA":
         return
     anotar_entrada(o, f"EXP-{n:04d}", "ORD-1", 100.0, ahora)
@@ -220,7 +230,7 @@ def main():
     assert o.emitir_encargo("EXP-0001", encargo(1), "GESTOR_TACTICA", AHORA)["ok"]
     R("encargo_duplicado_O02", o, lambda: o.emitir_encargo("EXP-0001", encargo(1), "GESTOR_TACTICA", AHORA), "O-02", ok_esperado=True)
     cambiado = encargo(1); cambiado["payload"]["pregunta"] = "otra pregunta distinta"
-    R("encargo_mismo_event_id_otro_contenido_O03", o, lambda: o.emitir_encargo("EXP-0001", cambiado, "GESTOR_TACTICA", AHORA), "O-03")
+    R("encargo_mismo_event_id_otro_contenido_O03", o, lambda: o.emitir_encargo("EXP-0001", cambiado, "GESTOR_TACTICA", AHORA), "O-03", mutacion_permitida=True)
     h.chk("conflicto_O03_deja_aviso", any(a["codigo"] == "O-03" for a in o.avisos))
     segundo = encargo(1); segundo["event_id"] = "EV-ENC-0099"
     R("encargo_con_otro_en_curso_O06", o, lambda: o.emitir_encargo("EXP-0001", segundo, "GESTOR_TACTICA", AHORA), "O-06")
@@ -328,7 +338,7 @@ def main():
     o = nuevo(); hasta(o, "EN_ANALISIS")
     s = sobre(1)
     o.eventos[s["event_id"]] = {"hash": "otro-hash", "expediente_id": "EXP-0001"}
-    R("sobre_mismo_event_id_otro_contenido_O03", o, lambda: o.entregar_sobre("EXP-0001", s, AHORA), "O-03")
+    R("sobre_mismo_event_id_otro_contenido_O03", o, lambda: o.entregar_sobre("EXP-0001", s, AHORA), "O-03", mutacion_permitida=True)
     o = nuevo(); hasta(o, "EN_ANALISIS")
     o.eventos[s["event_id"]] = {"hash": __import__("orquestador")._hash(s), "expediente_id": "EXP-0001"}
     R("sobre_duplicado_O02", o, lambda: o.entregar_sobre("EXP-0001", s, AHORA), "O-02", ok_esperado=True)
@@ -379,9 +389,9 @@ def main():
     F = informe_f(o)
     R("autorizar_actor_G_O05", o, lambda: o.autorizar("EXP-0001", "G", F, AHORA), "O-05")
     R("autorizar_matriz_sin_permiso_O05", o, lambda: o.autorizar("EXP-0001", "MATRIZ_AUTONOMIA", F, AHORA), "O-05")
-    R("autorizar_sin_control_F_O01", o, lambda: o.autorizar("EXP-0001", "OPERADOR", None, AHORA), "O-01")
-    R("autorizar_vetado_por_F_O06", o, lambda: o.autorizar("EXP-0001", "OPERADOR", informe_f(o, n=2, cartera={"perdida_dia_eur": 5000.0}), AHORA), "O-06", mutacion_permitida=True)
-    R("autorizar_propuesta_caducada_O10", o, lambda: o.autorizar("EXP-0001", "OPERADOR", F, "2026-11-08T13:00:00+00:00"), "O-10")
+    R("autorizar_sin_control_F_O01", o, lambda: autorizar_op(o, "EXP-0001", None, AHORA), "O-01")
+    R("autorizar_vetado_por_F_O06", o, lambda: autorizar_op(o, "EXP-0001", informe_f(o, n=2, cartera={"perdida_dia_eur": 5000.0}), AHORA), "O-06", mutacion_permitida=True)
+    R("autorizar_propuesta_caducada_O10", o, lambda: autorizar_op(o, "EXP-0001", F, "2026-11-08T13:00:00+00:00"), "O-10")
     o = nuevo({"matriz_autonomia": {"TACTICA": True}}); hasta(o, "PROPUESTA")
     h.chk("autorizar_matriz_con_permiso_ok", o.autorizar("EXP-0001", "MATRIZ_AUTONOMIA", F, AHORA)["ok"])
     o = nuevo(); hasta(o, "AUTORIZADA")
@@ -419,10 +429,11 @@ def main():
     # ---------------------------------------------------------------- integridad del historial
     o = nuevo(); hasta(o, "EN_ANALISIS")
     o.expedientes["EXP-0001"]["historial"][0]["motivo"] = "manipulado"
-    R("historial_alterado_O13", o, lambda: o.entregar_sobre("EXP-0001", sobre(1), AHORA), "O-13")
+    R("historial_alterado_O13", o, lambda: o.entregar_sobre("EXP-0001", sobre(1), AHORA), "O-13", mutacion_permitida=True)
+    h.chk("un_incidente_de_integridad_activa_el_kill", o.kill is not None and o.kill["actor"] == "ORQUESTADOR" and "integridad" in o.kill["motivo"])
     o = nuevo(); hasta(o, "EN_ANALISIS")
     del o.expedientes["EXP-0001"]["historial"][0]
-    R("historial_truncado_O13", o, lambda: o.descartar("EXP-0001", "x", "BROKER", AHORA), "O-13")
+    R("historial_truncado_O13", o, lambda: o.descartar("EXP-0001", "x", "BROKER", AHORA), "O-13", mutacion_permitida=True)
 
     # ---------------------------------------------------------------- posiciones
     o = nuevo(); hasta(o, "EJECUTADA")
@@ -500,7 +511,7 @@ def main():
     h.chk("reloj_igual_o_posterior_ok", o.barrer(AHORA)["ok"])
     o = nuevo(); hasta(o, "AUTORIZADA")
     o.expedientes["EXP-0001"]["propuesta"]["entrada"]["limite"] = 9.9
-    R("propuesta_alterada_sin_tocar_historial_O13", o, lambda: o.ejecutar("EXP-0001", {"orden_id": "ORD-1", "cantidad": 1.0, "precio": 9.9, "conciliada": True, "proteccion_orden_ids": ["P"]}, "G", AHORA), "O-13")
+    R("propuesta_alterada_sin_tocar_historial_O13", o, lambda: o.ejecutar("EXP-0001", {"orden_id": "ORD-1", "cantidad": 1.0, "precio": 9.9, "conciliada": True, "proteccion_orden_ids": ["P"]}, "G", AHORA), "O-13", mutacion_permitida=True)
     o = nuevo(); hasta(o, "AUTORIZADA")
     R("ejecutar_precio_fuera_de_tolerancia_O06", o, lambda: o.ejecutar("EXP-0001", {"orden_id": "ORD-1", "cantidad": 1.0, "precio": 1.50, "conciliada": True, "proteccion_orden_ids": ["P"]}, "G", AHORA), "O-06")
     o = nuevo(); hasta(o, "EJECUTADA")
