@@ -67,7 +67,9 @@ OPERADORES = {"<": lambda v, u: v < u, "<=": lambda v, u: v <= u, ">": lambda v,
 
 CONFIG_DEFECTO = {"max_reintentos": 3, "umbral_corte_comun_dias_habiles": 0,
                   "dia_coste_max_eur": 50.0, "dia_tiempo_max_min": 600, "tolerancia_precio_entrada": 0.05,
-                  "exige_contradictor_en": [], "matriz_autonomia": {}, "politica_f": POLITICA_DEFECTO}
+                  "exige_contradictor_en": [], "matriz_autonomia": {}, "politica_f": POLITICA_DEFECTO,
+                  "nivel_autonomia": {}}   # cartera -> L0 (simulado) | L1 (el operador confirma) | L2 (automático con límites); sin dato = L1
+NIVELES = {"L0": 0, "L1": 1, "L2": 2}
 # Prioridad de cada aviso para el operador [PROPUESTO]
 PRIORIDAD_AVISO = {"O-18": "ALTA", "O-03": "ALTA", "O-08": "ALTA", "O-09": "ALTA", "O-13": "ALTA", "O-17": "ALTA"}
 ACTORES_PROPUESTA = set(EMISORES)   # quien propone no aprueba ni controla: F, D y H no proponen (Constitución §2, P1)
@@ -92,7 +94,9 @@ def _valida_config(c):
           and isinstance(c["umbral_corte_comun_dias_habiles"], int) and not isinstance(c["umbral_corte_comun_dias_habiles"], bool)
           and c["umbral_corte_comun_dias_habiles"] >= 0
           and isinstance(c["exige_contradictor_en"], list) and isinstance(c["matriz_autonomia"], dict)
-          and all(isinstance(v, bool) for v in c["matriz_autonomia"].values()))
+          and all(isinstance(v, bool) for v in c["matriz_autonomia"].values())
+          and isinstance(c["nivel_autonomia"], dict)
+          and all(k in ("TRADING", "TACTICA", "LARGO_PLAZO") and v in NIVELES for k, v in c["nivel_autonomia"].items()))
     if ok and not c["apalancamiento_permitido"] and c["politica_f"]["apalancamiento_max"] > 1:
         ok = False   # la política de F no puede permitir lo que el sistema prohíbe
     if not ok:
@@ -140,6 +144,42 @@ class Orquestador:
         Calendario(calendario)   # falla pronto si no es válido
         self.sellos, self.eventos, self.encargos = {}, {}, {}
         self.expedientes, self.posiciones, self.gasto_dia, self.avisos = {}, {}, {}, []
+        self.degradadas = {}   # cartera -> motivo: bajada automática a L1 hasta que el operador la restablezca
+
+    # ------------------------------------------------------------ niveles de autonomía
+    def nivel(self, cartera):
+        """Nivel efectivo: el configurado, o L1 si la cartera está degradada (nunca sube solo)."""
+        base = self.cfg["nivel_autonomia"].get(cartera, "L1")
+        return "L1" if cartera in self.degradadas and NIVELES[base] > 1 else base
+
+    def _degradar(self, cartera, motivo, ahora):
+        if cartera in ("TRADING", "TACTICA", "LARGO_PLAZO") and cartera not in self.degradadas and NIVELES[self.nivel(cartera)] > 1:
+            self.degradadas[cartera] = {"motivo": motivo[:160], "ahora": ahora}
+            self._aviso("O-19", f"cartera {cartera} degradada a L1: {motivo[:120]}", ahora, cartera)
+
+    @_seguro
+    def degradar(self, cartera, motivo, actor, ahora):
+        """G o H bajan una cartera a L1 (dato viejo, intermediario caído, estado incierto)."""
+        self._ahora(ahora)
+        if actor not in ("G", "H", "ORQUESTADOR", "OPERADOR"):
+            return _no("O-05", "solo G, H, el Orquestador o el operador degradan una cartera")
+        if cartera not in ("TRADING", "TACTICA", "LARGO_PLAZO") or not (isinstance(motivo, str) and motivo.strip()):
+            return _no("O-15", "cartera válida y motivo obligatorios")
+        self._degradar(cartera, motivo, ahora)
+        return _r(True, "OK", f"{cartera} en {self.nivel(cartera)}")
+
+    @_seguro
+    def restablecer_nivel(self, cartera, actor, ahora):
+        """Solo el operador devuelve una cartera a su nivel configurado, y solo con las discrepancias y degradaciones acusadas."""
+        self._ahora(ahora)
+        if actor != "OPERADOR":
+            return _no("O-05", "solo el operador restablece el nivel de autonomía")
+        if cartera not in self.degradadas:
+            return _no("O-12", "la cartera no está degradada")
+        if any(x["acuse"] is None and x["codigo"] in ("O-18", "O-19") for x in self.avisos):
+            return _no("O-06", "hay avisos de discrepancia o degradación sin acusar")
+        del self.degradadas[cartera]
+        return _r(True, "OK", f"{cartera} vuelve a {self.nivel(cartera)}")
 
     # ------------------------------------------------------------ utilidades
     def _ahora(self, ahora):
@@ -167,6 +207,8 @@ class Orquestador:
             return _no("O-01", "una discrepancia exige una lista no vacía de diferencias con tipo")
         for d in diferencias:
             self._aviso("O-18", f"conciliación: {d['tipo']} {d.get('ref')}: {str(d.get('detalle'))[:120]}", ahora, d.get("ref") if isinstance(d.get("ref"), str) else None)
+        for c in ("TRADING", "TACTICA", "LARGO_PLAZO"):   # una diferencia con el intermediario no se atribuye a una cartera: se baja todo
+            self._degradar(c, "discrepancia de conciliación", ahora)
         return _r(True, "OK", f"{len(diferencias)} diferencia(s) registrada(s)")
 
     @_seguro
@@ -594,6 +636,8 @@ class Orquestador:
             return err
         if actor == "MATRIZ_AUTONOMIA" and not self.cfg["matriz_autonomia"].get(e["cartera_destino"], False):
             return _no("O-05", "la matriz de autonomía no autoriza esta cartera sin el operador")
+        if actor == "MATRIZ_AUTONOMIA" and NIVELES[self.nivel(e["cartera_destino"])] < 2:
+            return _no("O-05", f"la cartera está en {self.nivel(e['cartera_destino'])}: autoriza el operador")
         if not isinstance(control_f, dict) or not isinstance(control_f.get("event_id"), str):
             return _no("O-01", "falta el informe de control de F (CT-G-08)")
         ih = _hash(control_f)
@@ -636,6 +680,9 @@ class Orquestador:
             return _no("O-06", "la orden no lleva órdenes de protección asociadas")
         if a > _dt(e["propuesta"]["entrada"]["ventana_hasta"]) or a > _dt(e["sobre"]["valid_until"]):
             return _no("O-10", "la ventana de entrada o el sobre vencieron antes de ejecutar")
+        quien = next((x["actor"] for x in reversed(e["historial"]) if x["hasta"] == "AUTORIZADA"), None)
+        if quien == "MATRIZ_AUTONOMIA" and NIVELES[self.nivel(e["cartera_destino"])] < 2:
+            return _no("O-05", f"la autorización fue automática y la cartera está ahora en {self.nivel(e['cartera_destino'])}: la confirma el operador")
         if self._sello_anulado(e):
             return _no("O-06", "el sello del análisis ya no es válido")
         cf = e["control_f"]
@@ -657,7 +704,7 @@ class Orquestador:
             return _no("O-03", "la posición ya existe")
         self.posiciones[pid] = {"posicion_id": pid, "expediente_id": e["expediente_id"], "cartera": e["cartera_destino"],
                                 "cantidad": orden["cantidad"], "estado": "ABIERTA", "historial": [],
-                                "direccion": "LARGO" if [c for c in e["propuesta"]["salida"]["condiciones"] if c["tipo"] == "STOP"][0]["operador"] in ("<", "<=") else "CORTO",
+                                "nivel": self.nivel(e["cartera_destino"]), "direccion": "LARGO" if [c for c in e["propuesta"]["salida"]["condiciones"] if c["tipo"] == "STOP"][0]["operador"] in ("<", "<=") else "CORTO",
                                 "stop_precio": [c for c in e["propuesta"]["salida"]["condiciones"] if c["tipo"] == "STOP"][0]["umbral"],
                                 "instrumento": e["propuesta"]["entrada"]["instrumento"], "activo_base": e["propuesta"]["entrada"]["activo_base"],
                                 "condiciones_salida": copy.deepcopy(e["propuesta"]["salida"]), "protecciones": list(prot), "propuestas": []}
@@ -767,6 +814,11 @@ class Orquestador:
                 if not (isinstance(motivo, str) and motivo.strip()):
                     return _no("O-15", "la decisión manual del operador exige motivo")
             else:   # automático: solo por una condición numérica declarada de antemano
+                stop_ids = {c["id"] for c in p["condiciones_salida"]["condiciones"] if c["tipo"] == "STOP"}
+                hecho = (hasta == "CERRANDO" and isinstance(condicion, dict) and condicion.get("id") in stop_ids
+                         and condicion.get("stop_ejecutado_orden_id") in p["protecciones"])   # el stop propio ya saltó en el intermediario
+                if not hecho and NIVELES[self.nivel(p["cartera"])] < 2:
+                    return _no("O-05", f"la cartera está en {self.nivel(p['cartera'])}: el cierre automático solo desde L2; lo confirma el operador")
                 declaradas = {c["id"]: c for c in p["condiciones_salida"]["condiciones"]}
                 if not (isinstance(condicion, dict) and condicion.get("id") in declaradas and _num(condicion.get("valor_observado"))):
                     return _no("O-06", "una reducción o cierre automático exige una condición numérica declarada y su valor observado")

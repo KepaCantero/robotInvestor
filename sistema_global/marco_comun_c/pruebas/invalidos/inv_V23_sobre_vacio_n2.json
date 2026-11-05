@@ -124,7 +124,7 @@
         "motor_id": "MOTOR-RUN-0008"
       },
       "apalancamiento": {
-        "valor": 0,
+        "valor": 1,
         "unidad": "x",
         "estado": "VERIFICADO",
         "modelo_ref": "MOD-SIM-09",
@@ -291,6 +291,17 @@
       "version": "0.0.1",
       "contenido": {
         "nota": "campos propios del perfil"
+      }
+    },
+    "capa2": {
+      "estado": "NO_ESTIMABLE"
+    },
+    "capa3": {
+      "tope_confianza": 0.4,
+      "confianza": 0.3,
+      "doble_analisis": {
+        "realizado": false,
+        "discrepa": false
       }
     }
   },

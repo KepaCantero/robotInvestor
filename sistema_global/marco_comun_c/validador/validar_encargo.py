@@ -155,8 +155,8 @@ def _validar_encargo(msg, ctx) -> list[dict]:
         f("E-05", "payload.mandato.horizonte_dias", f"fuera del rango {lo}–{hi} días de {cartera}")
 
     # E-06 apalancamiento
-    if man["apalancamiento_max"] != 0 and ctx.get("apalancamiento_permitido") is not True:
-        f("E-06", "payload.mandato.apalancamiento_max", "apalancamiento no habilitado: debe ser 0")
+    if man["apalancamiento_max"] != 1 and ctx.get("apalancamiento_permitido") is not True:
+        f("E-06", "payload.mandato.apalancamiento_max", "apalancamiento no habilitado: debe ser 1 (ratio de exposición sobre capital; 1 = sin apalancar)")
 
     # E-07 tamaño máximo respecto al tope nominal de la cartera
     tope_t = ctx.get("tamano_max_pct", TAMANO_MAX_PCT)[cartera]

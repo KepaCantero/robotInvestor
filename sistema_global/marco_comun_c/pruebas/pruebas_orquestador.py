@@ -20,7 +20,8 @@ from pruebas_contradictor import informe as informe_ctr, obj as obj_ctr  # noqa:
 from pruebas_control_f import informe_f  # noqa: E402
 
 CFG = {"perfiles_activos": ["C-DIV", "C-RV", "C-CRI"], "apalancamiento_permitido": False,
-       "clases_ratificadas": {"C-DIV": "Q", "C-RV": "Q", "C-CRI": "K", "C-RF": "S"}}
+       "clases_ratificadas": {"C-DIV": "Q", "C-RV": "Q", "C-CRI": "K", "C-RF": "S"},
+       "nivel_autonomia": {"TRADING": "L2", "TACTICA": "L2", "LARGO_PLAZO": "L2"}}   # las pruebas de mecánica usan L2; los niveles tienen su propio bloque
 AHORA = "2026-11-06T09:00:00+00:00"
 A2 = "2026-11-08T13:00:00+00:00"
 S1 = SELLOS_ENC["K-20261105-001"]

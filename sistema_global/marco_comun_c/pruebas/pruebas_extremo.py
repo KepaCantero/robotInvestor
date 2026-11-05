@@ -88,6 +88,24 @@ def main():
     b.caido = False
     v = vigilar(o, b, {"EURUSD": {"precio": 1.20, "hora": T1}}, T1)
     h.chk("caida: al volver la conexión H cierra", o.posiciones["POS-EXP-0001"]["estado"] == "CERRADA" and b.posiciones() == [], v)
+    # apalancamiento: sin permiso se rechaza; con permiso y política de F que lo admita, el recorrido funciona
+    o = nuevo(); candidatos(o)
+    assert o.comparar(["EXP-0001", "EXP-0002"], "D", AHORA)["ok"]
+    r = o.proponer("EXP-0001", {**ENTRADA, "apalancamiento": 2.0}, SALIDA, "GESTOR_TACTICA", AHORA)
+    h.chk("apalancamiento: sin permiso la propuesta se rechaza", not r["ok"] and r["codigo"] == "O-06", r)
+    from control_f import POLITICA_DEFECTO
+    o = nuevo({"apalancamiento_permitido": True, "politica_f": {**POLITICA_DEFECTO, "apalancamiento_max": 3.0}}); candidatos(o)
+    assert o.comparar(["EXP-0001", "EXP-0002"], "D", AHORA)["ok"]
+    b = BrokerSimulado(100000.0, {"EURUSD": 1.10}, HORA_DATOS)
+    h.chk("apalancamiento: con permiso la propuesta se acepta", o.proponer("EXP-0001", {**ENTRADA, "apalancamiento": 2.0}, SALIDA, "GESTOR_TACTICA", AHORA)["ok"])
+    inf = informe_f(o, "EXP-0001", 1, cartera=cartera_para_f(b))
+    h.chk("apalancamiento: F lo aprueba dentro de su máximo", inf["resultado"] in ("APROBADO", "REDUCIDO"), inf["resultado"])
+    h.chk("apalancamiento: se autoriza y se ejecuta", o.autorizar("EXP-0001", "OPERADOR", inf, AHORA)["ok"] and ejecutar(o, "EXP-0001", b, AHORA)["ok"])
+    o2 = nuevo({"apalancamiento_permitido": True, "politica_f": {**POLITICA_DEFECTO, "apalancamiento_max": 3.0}}); candidatos(o2)
+    assert o2.comparar(["EXP-0001", "EXP-0002"], "D", AHORA)["ok"]
+    assert o2.proponer("EXP-0001", {**ENTRADA, "apalancamiento": 5.0}, SALIDA, "GESTOR_TACTICA", AHORA)["ok"]
+    inf = informe_f(o2, "EXP-0001", 1, cartera=cartera_para_f(b))
+    h.chk("apalancamiento: por encima del máximo de F se veta", inf["resultado"] == "VETADO", inf["resultado"])
     print(f"\n{h.n} comprobaciones")
     print("RESULTADO EXTREMO A EXTREMO:", "TODAS LAS PRUEBAS PASAN" if h.ok else "HAY FALLOS")
     return 0 if h.ok else 1

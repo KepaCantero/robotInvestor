@@ -177,7 +177,7 @@
             },
             "apalancamiento_max": {
               "type": "number",
-              "minimum": 0,
+              "minimum": 1,
               "maximum": 10
             },
             "tamano_max_pct_cartera": {

@@ -55,7 +55,7 @@ def encargo_div():
                           "paquete_b_ref": "PAQ-B-0001"},
             "nivel_analisis": "N3", "fecha_corte": "2026-11-05", "sello_corte_ref": "K-20261105-001",
             "mandato": {"benchmark_ref": "BENCH-EFECTIVO", "horizonte_dias": {"min": 14, "max": 90},
-                        "apalancamiento_max": 0, "tamano_max_pct_cartera": 5,
+                        "apalancamiento_max": 1, "tamano_max_pct_cartera": 5,
                         "instrumentos_permitidos": ["EUR/USD", "GBP/USD"], "exclusiones": []},
             "presupuesto": {"coste_max_eur": 5.0, "tiempo_max_min": 30,
                             "entrega_antes_de": "2026-11-05T20:00:00+00:00"},
