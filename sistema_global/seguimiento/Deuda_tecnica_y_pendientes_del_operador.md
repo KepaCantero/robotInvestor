@@ -1,0 +1,85 @@
+# Deuda técnica y pendientes del operador — V0.1
+
+Nov 5, 2026
+
+Todo lo que necesita una decisión o un dato tuyo queda aquí, con lo que bloquea. Mientras no se rellene, el sistema usa valores de partida marcados \[PROPUESTO\] y sigue adelante. Se actualiza en cada entrega.
+
+## 1. Pendientes del operador
+
+| N.º | Pendiente | Qué bloquea | Valor de partida mientras tanto |
+| --- | --- | --- | --- |
+| D-01 | Rellenar el cuestionario de decisiones (https://claude.ai/artifact/WWLPTvt4QMpRKh2xRXbV9w) | Horizontes, tamaños y límites reales por cartera | Valores \[PROPUESTO\] del cuestionario |
+| D-02 | Compartir el desarrollo parcial de C-DIV | El primer sobre real y congelar CT-G-02 en 1.0.0 | Sobres simulados |
+| D-03 | Ratificar las clases Q, S y K por perfil y sus topes de confianza | Confianza máxima de cada sobre | Q 0,80, S 0,60, K 0,40; factor 0,75 si el doble análisis discrepa |
+| D-04 | Elegir el proveedor de datos de mercado para K | Datos reales y su calendario de festivos | Datos y calendario simulados |
+| D-05 | Ratificar los umbrales del Orquestador y la matriz de autonomía por cartera | Qué se autoriza sin ti | 3 reintentos, 50 € y 600 min por día, tolerancia de precio 5 %, corte común 0 días hábiles; nada se autoriza sin ti |
+| D-06 | Decidir en qué niveles y perfiles se exige el Contradictor, y cómo se invoca para que no vea la conclusión de C | Independencia real de la revisión | No se exige en ningún nivel (propuesto: siempre en N3 y en clase K) |
+| D-07 | Elegir el canal de avisos (correo, teléfono, mensajería) y la regla de escalado | Que te enteres sin abrir la consola (CT-G-16) | Solo la consola N |
+| D-08 | Elegir dónde vive el registro de solo añadir y el reloj de referencia | Integridad real del historial y de los sellos | En memoria, con el reloj recibido por parámetro |
+| D-09 | Ratificar los umbrales de la consola (80 % del presupuesto, 6 horas de margen) y la prioridad de cada aviso | Cuándo se pone ámbar o rojo | Valores \[PROPUESTO\] |
+| D-10 | Decidir qué informes periódicos necesitas en la Fase 1 | Contenido de N | Ninguno |
+| D-11 | Dar los límites nominales en euros: máximo por orden, por día y por activo, pérdida diaria y semanal por cartera y global, órdenes por hora | F (T-22) | Porcentajes del capital \[PROPUESTO\] |
+| D-12 | Apalancamiento: ratio de exposición sobre capital (1 es sin apalancar) en todo el sistema, o «cero» (recomendado: el ratio) | Sobre, encargo, F, E y Orquestador | RESUELTO en V0.14: razón exposición/capital, 1 es sin apalancar, y el apalancamiento se permite por configuración |
+| D-13 | Nivel mínimo de análisis para abrir una posición: capas 2 y 3 desde N2 (recomendado) o N3 para abrir | D (T-21) y el sobre | RESUELTO en V0.14 (capas 2 y 3 obligatorias desde N2 en el sobre); falta que D lo use (T-21) |
+| D-14 | Orden de entrada: viva durante la ventana de la propuesta (recomendado) o inmediata | G (T-23) | RESUELTO en V0.18 con la opción recomendada: viva durante la ventana |
+| D-15 | Ratificar una versión mínima de H (cierre por condición numérica) en la Fase 1 (recomendado) o moverla a la Fase 3 | Plan de fases | H está construida |
+| D-16 | Niveles de autonomía en la Fase 1: L0 y L1 por cartera, bajada automática a L1 y cierre automático de H solo desde L2 (recomendado) | G, H y Orquestador (T-18) | RESUELTO en V0.14: niveles L0/L1/L2 por cartera, bajada automática a L1 y cierre automático solo desde L2 |
+| D-17 | Fijar la referencia de cada cartera (benchmark y rentabilidad anual) con la que D compara «no hacer nada» | D (T-37): con efectivo al 0 % casi todo supera la referencia | Efectivo al 0 % en las tres carteras \[PROPUESTO\] |
+| D-18 | Ratificar los parámetros de aprobación: horario supervisado, caducidad de la aprobación, enfriamiento y pérdida del día que lo activa | Cola de aprobaciones (§6) | 07:00–21:00 UTC, 15 min, 30 min, cualquier pérdida \[PROPUESTO\] |
+| D-19 | Elegir el canal de aprobación con segundo factor (P-08), el canal de escalado de avisos y el periodo mínimo en L1 tras el kill-switch | Aprobaciones, avisos y rehabilitación (T-01, T-41) | CONSOLA declarada, ESCALADO, 24 h \[PROPUESTO\] |
+| D-20 | Fijar la tolerancia de conciliación y la ventana de declaración de operaciones manuales (P-13) | Conciliación y CT-G-14 | Tolerancia 0 y 72 h \[PROPUESTO\] |
+| D-21 | Confirmar los rangos de referencia de los tipos de cambio, la tolerancia frente al precio del par y la cuenta del intermediario | Cartera real y euros (V0.20) | Rangos por divisa, 15 % y SIM-1 \[PROPUESTO\] |
+| D-22 | Fijar el plazo máximo de una nueva fecha de revisión al confirmar la tesis, y si un gestor puede confirmarla o solo el operador | Vía de acceso y fecha de revisión (V0.22) | 90 días; operador o gestor de la cartera \[PROPUESTO\] |
+| D-23 | Fijar cuánto dura como máximo una observación y cuántas veces se puede reabrir un expediente sin el operador | Reapertura vigilada (V0.25) | 30 días y 2 reaperturas \[PROPUESTO\] |
+
+## 2. Deuda técnica nuestra
+
+| N.º | Deuda | Riesgo si no se paga | Cuándo |
+| --- | --- | --- | --- |
+| T-01 | Autenticar a los actores: hoy el actor es un texto que dice quien llama | Cualquiera podría hacerse pasar por el operador | Antes de conectar un broker real (Fase 3) |
+| T-02 | Anclar fuera los hashes de sellos e historiales y pasar a firma | Alteración detectable pero no demostrable | Con D-08 |
+| T-03 | Persistencia y reloj real: hoy el estado vive en memoria | Se pierde el estado al reiniciar | Fase 1 |
+| T-04 | Verificar la independencia del Contradictor desde fuera | La independencia es solo declarada | Con D-06 |
+| T-05 | Verificar de forma independiente el resultado de F y las condiciones de reapertura de un expediente en observación | Se aceptan como entrada | Con F y D |
+| T-06 | Congelar CT-G-01, CT-G-02, CT-G-03 y el sello de K en 1.0.0 | Los esquemas siguen en 0.x y pueden cambiar | Tras dos perfiles reales (D-02 y C-RV) |
+| T-07 | Contratos y código de D, E, F, G, H y los gestores | El Orquestador los llama pero no existen | Fase 1 |
+| T-08 | Refactor de los bloques A y B a la nueva arquitectura | Dos modelos de contratos conviven | Fase 2 |
+| T-09 | M (riesgo de cartera) | Sin visión de riesgo agregado | Fase 3 |
+| T-10 | Conversión de divisa y margen por producto en F: hoy el valor es cantidad por precio, en euros | RESUELTO en V0.20 la conversión: F y E valoran en euros con los tipos de la foto de G (F-12, reglas F-0.2.0); el margen por producto pasa a T-22 y el contraste del tipo con K a T-42 | Antes de operar con dinero real |
+| T-11 | Estado real de la cartera para F: lo debe aportar G desde el intermediario, no quien emite el informe | RESUELTO en V0.20: G registra la foto del intermediario y E y F solo usan la cartera vigente (O-29); queda que el actor G sea verificable (T-01) | Con G (Fase 1) |
+| T-12 | G: reducir o cerrar posiciones y redimensionar o cancelar su stop | RESUELTO en V0.21: reducir con stop redimensionado de solo reducción, toma parcial por OBJETIVO con fracción, cierre desde REDUCIENDO (quedan T-43 y T-44) | Antes de Fase 3 |
+| T-13 | G: solo una posición por instrumento (G-06) | No se puede añadir a una posición ni operar dos estrategias sobre el mismo par | Fase 2-3 |
+| T-14 | Adaptador del intermediario real; hoy simulado y sin disparo de stop | Los fallos reales pueden diferir de los simulados | Fase 3 |
+| T-15 | H/G: el cierre total ya existe (T-12 queda solo para reducir parcialmente). Las órdenes de G ya son de solo reducción (V0.21; en un intermediario real, con T-38). Falta: reloj de referencia real y que H reporte con su propia identidad | Una carrera con el stop se corrige después, no se evita; un instante falso puede cegar a H | Fase 3, con T-01 y T-03 |
+| T-16 | El Orquestador no comprueba que la comparación venga de D, ni que E y D se usen en la propuesta; hoy quien llama elige los expedientes y la cantidad | RESUELTO en V0.16: D lo ejecuta el Orquestador, elegir con motivo, cantidad recalculada con E | Fase 1, al cerrar el flujo completo |
+| T-17 | D: normalizar horizontes, descontar costes y verificar la confianza y los escenarios declarados por los productores | La puntuación premia lo que el productor declare | Fase 2, con C-RV |
+| T-18 | Niveles de autonomía: hecho L0/L1/L2 por cartera, degradación a L1 y consulta por la matriz, G y H (V0.14). Degradación por sello caducado y por cartera hecha en V0.24. Falta L3 y un nivel por perfil (pasada de coherencia, hallazgos 1, 20 y 36) | Hoy G y H operan sin mirar el nivel y una discrepancia solo genera un aviso | Fase 1, tras la decisión 5 |
+| T-19 | Contrato CT-G-14 (ejecución manual) y conciliación con diferencias explicadas (2 y 33) | RESUELTO en V0.15: CT-G-14 con validador RM-01 a RM-10, declarar\_manual en G y conciliación con diferencias explicadas (quedan T-31 a T-33) | Fase 1 |
+| T-20 | Propuesta ligada al sobre (instrumento, dirección, stop, objetivo, invalidez) y cantidad que salga de E; cierra T-16 (16 y 17) | RESUELTO en V0.16: O-21, O-22 y O-23 (quedan T-34 y T-35) | Fase 1 |
+| T-21 | D: benchmark de la cartera, abstención, un solo candidato, confianza normalizada por su tope, nivel mínimo (15, 42, 43 y 44) | RESUELTO en V0.17: referencia compuesta, abstención, un candidato, sensibilidad, dominancia y aspirantes | Fase 1, tras la decisión 2 |
+| T-22 | F: límites nominales en euros y controles de la §8 que faltan: mandato, exclusiones, evidencia mínima, ventanas de eventos, autonomía, precio del intermediario (25, 26, 29 y 30) | El control de riesgo cubre menos de lo que exige la Constitución | Fase 1; necesita los importes del operador (D-11) |
+| T-23 | G: orden de entrada viva durante la ventana, resto de parcial según la propuesta, estados de orden de la §4.2 y objetivo como orden nativa (31, 32 y 34) | RESUELTO en V0.18: orden viva con caducidad, estados de la §4.2, parcial con resto cancelado (quedan T-38 y T-39) | Fase 1, tras la decisión 3 |
+| T-24 | Aprobación del operador con importe tecleado y ligada a las cifras de F; avisos con canal y escalada (55 y 21) | RESUELTO en V0.19: pantalla con cifras de F, importe tecleado, un solo uso, enfriamiento; kill-switch y escalada (quedan T-40 y T-41) | Fase 1, con T-01 |
+| T-25 | Contratos CT-G-04 a 16 como esquemas; sobre de mensaje común en CT-G-01, 03 y 08; configuración versionada en un solo objeto (3, 4 y 6) | RESUELTO en V0.26: esquemas de CT-G-04, 05, 06, 08, 09, 10, 14 y 16, registro de los 16 contratos, validador de contratos, parámetros versionados de solo lectura y huella de configuración en cada anotación (quedan T-47 y los contratos de bloques no construidos) | Antes de congelar a 1.0.0 (T-06) |
+| T-26 | Motor numérico SC-3: registro de artefactos que el validador consulte; K con procedencia completa, licencia, consulta de punto en el tiempo y calendario de eventos; advertencias de K que lleguen al Orquestador (5, 11, 12 y 13) | Hoy cualquier identificador de cifra pasa | Fase 1-2 |
+| T-27 | Sobres: escenarios SUPUESTO permitidos, V-23 y V-16 menos estrictos, horizonte común, entrada numérica; Contradictor exigido por defecto con modelo y proveedor; H con alertas, fechas e invalidez; controles sobre el operador (enfriamiento y anulaciones) (37, 46 a 53 y 57) | Reglas más estrictas o más laxas que la Constitución | Fase 1-2 |
+| T-28 | El Orquestador no verifica que el stop se ejecutó cuando G confirma el cierre en L0/L1: exige que la condición sea el STOP y que la orden sea una de las protecciones, pero la afirmación es de G | Un G defectuoso podría cerrar sin confirmar el operador | Fase 3, con T-01 |
+| T-29 | Degradación automática por sello caducado y por cartera (hoy una discrepancia baja todas las carteras) | RESUELTO en V0.24: degradación por cartera atribuida (ambiguo o no atribuible: todas), avisos con sus carteras, sello no vigente con candidatos en juego degrada su cartera y frena la matriz | Fase 1-2 |
+| T-30 | L0 no simula ni impide nada: se trata como L1 y la simulación depende del adaptador del intermediario | Una cartera en L0 podría enviar órdenes reales si se conecta un adaptador real | Antes de conectar un intermediario real (Fase 3) |
+| T-31 | Conciliación de efectivo: dividendos, comisiones y diferencias de cambio con tolerancia | Las diferencias de saldo no se ven | Con el adaptador del intermediario real (Fase 3) |
+| T-32 | Que registrar\_manual solo se pueda alcanzar a través de declarar\_manual de G | Un registro sin contraste con el intermediario podría abrir o cerrar en el Orquestador | Con T-01 |
+| T-33 | Tope por cartera a las operaciones LIBRES declaradas (hoy solo dejan aviso O-20) | Riesgo fuera de F sin límite | Con D-11 |
+| T-34 | Que D compare con todos los candidatos VALIDADA de la misma petición o cartera, no con los que elija quien llama | RESUELTO en V0.17: O-24 y nueva comparación al llegar candidatos (queda T-36) | Con T-21 |
+| T-35 | Ligar la vía de acceso del sobre y su fecha de revisión a la propuesta | RESUELTO en V0.22: vía de acceso del encargo al sobre (R-14), a la propuesta (O-21), a CT-G-14 (RM-05) y a las órdenes de G; fecha de revisión con H-14 (queda T-45) | Fase 1-2 |
+| T-36 | Un candidato puesto EN\_OBSERVACION antes de comparar no entra en la comparación | RESUELTO en V0.23: los apartados por otro actor siguen de testigos; si habrían ganado, elige el operador (O-30); comparar de nuevo antes de proponer o autorizar (O-22) (queda T-46) | Fase 1-2 |
+| T-37 | Rentabilidad de la referencia de cada cartera desde K y no desde la configuración | Con efectivo al 0 % casi todo supera a no hacer nada | Con P-03 y D-01 del operador |
+| T-38 | Órdenes con stop adjunto (bracket) y OCO; objetivo como orden nativa | Entre la ejecución de una orden viva y la revisión de G la posición no tiene stop | Con el adaptador del intermediario real (Fase 3) |
+| T-39 | Verificar la hora de ejecución que informa el intermediario | Una hora antigua podría colar una ejecución fuera de plazo | Fase 3 |
+| T-40 | Vigilante con latido como proceso independiente y cortacircuito global por pérdida acumulada | Si el plano de control se cuelga, nadie bloquea las entradas | Fase 3; el cortacircuito con D-11 |
+| T-41 | Envío real de avisos por un canal fuera del chat, con acuse y escalada | Un aviso crítico solo se ve si se abre la consola | Con D-07 |
+| T-42 | Contrastar los tipos de cambio de la foto de G con una segunda fuente (K), no solo con rangos fijos | Un tipo erróneo dentro del rango cambia el tamaño de la posición | Con T-26 (K) |
+| T-43 | Redondear la cantidad de una reducción (y la toma parcial) al lote del intermediario y vetar un resto por debajo del valor mínimo | Una fracción puede pedir una cantidad que el intermediario no admite o dejar un resto sin sentido | Con el adaptador del intermediario real (Fase 3) |
+| T-44 | Declarar a mano (CT-G-14) una reducción parcial hecha por el operador fuera del sistema | Hoy solo se declaran cierres totales; una venta parcial a mano es una discrepancia | Fase 1-2 |
+| T-45 | Traducir la vía de acceso (texto libre) a un producto concreto del intermediario (contrato, vencimiento, ISIN) y que el adaptador real la confirme; vencimientos y roll de futuros | Hoy la vía se compara como texto y el simulador la devuelve tal cual | Con el adaptador del intermediario real (Fase 3) |
+| T-46 | Vigilar solas las condiciones de reapertura de observar y limitar las reaperturas por expediente | RESUELTO en V0.25: condiciones PRECIO, FECHA y SELLO\_NUEVO vigiladas por H y el barrido (O-31, H-15), reabrir solo con condición cumplida o el operador, límite de reaperturas y vencimiento | Fase 1-2 |
+| T-47 | Pasar CT-G-08 (envoltura parcial) y CT-G-14 (envoltura propia) a la envoltura común en su versión 0.2.0 | Dos contratos no siguen la envoltura común de la Constitución | RESUELTO en V0.27: CT-G-08 y CT-G-14 en 0.2.0 con la envoltura común (RM-11 para la identidad del caso), la 0.1.0 retirada y el registro con varias versiones por contrato; G consulta al Orquestador sin efectos antes de tocar el intermediario por un registro manual |
