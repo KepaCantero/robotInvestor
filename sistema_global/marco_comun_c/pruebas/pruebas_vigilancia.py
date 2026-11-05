@@ -99,7 +99,7 @@ def main():
             super()._fill(o, q, p)
             for r in vivos:
                 r["estado"] = "ACEPTADA"
-    o, b = abierta(b=NoCancela(100000.0, {"EURUSD": 1.10}, "2026-11-06T08:50:00+00:00"))
+    o, b = abierta(b=NoCancela(100000.0, {"EURUSD": 1.10}, "2026-11-06T08:50:00+00:00", tipos_cambio={"USD": 1.0}))
     r = cerrar(o, PID, b, T1, actor="OPERADOR", motivo="x")
     h.chk("stop_que_no_se_retira_deja_CERRANDO_y_avisa", r["codigo"] == "G-09" and o.posiciones[PID]["estado"] == "CERRANDO" and b.posiciones() == [], r)
     # --- posición desaparecida sin explicación
@@ -151,7 +151,7 @@ def main():
     b.fraccion_mercado = 0.4
     r = cerrar(o, PID, b, T1, actor="OPERADOR", motivo="salida manual")
     h.chk("cierre_parcial_se_completa", r["ok"] and b.posiciones() == [] and o.posiciones[PID]["estado"] == "CERRADA", (r, b.posiciones()))
-    o, b = abierta(b=BrokerSimulado(100000.0, {"EURUSD": 1.10}, "2026-11-06T08:50:00+00:00", fraccion_mercado=0.01))
+    o, b = abierta(b=BrokerSimulado(100000.0, {"EURUSD": 1.10}, "2026-11-06T08:50:00+00:00", fraccion_mercado=0.01, tipos_cambio={"USD": 1.0}))
     r = cerrar(o, PID, b, T1, actor="OPERADOR", motivo="salida manual")
     h.chk("cierre_muy_parcial_G09_y_reintento_continua", r["codigo"] == "G-09" and o.posiciones[PID]["estado"] == "CERRANDO", r)
     b.fraccion_mercado = 1.0

@@ -103,7 +103,7 @@ def main():
     h.chk("degradada_no_se_envia_nada", r["codigo"] == "G-06" and b.ordenes == {}, r)
     # ---------------------------------------------------------------- revisión independiente de T-23
     from pruebas_ejecucion_g import CaeAlEnviarStop
-    o, b = autorizado(b=CaeAlEnviarStop(100000.0, {"EURUSD": 1.12}, "2026-11-06T08:50:00+00:00"))
+    o, b = autorizado(b=CaeAlEnviarStop(100000.0, {"EURUSD": 1.12}, "2026-11-06T08:50:00+00:00", tipos_cambio={"USD": 1.0}))
     assert ejecutar(o, EID, b, AHORA)["codigo"] == "G-11"
     b.mover_precio("EURUSD", 1.09, T1)
     r = revisar_entrada(o, EID, b, T1)
@@ -148,7 +148,7 @@ def main():
                 self.perdido = o_
                 raise __import__("ejecucion_g").ConexionPerdida("se perdió el envío")
             return super().enviar(o_)
-    o, b = autorizado(b=PierdeElEnvio(100000.0, {"EURUSD": 1.12}, "2026-11-06T08:50:00+00:00"))
+    o, b = autorizado(b=PierdeElEnvio(100000.0, {"EURUSD": 1.12}, "2026-11-06T08:50:00+00:00", tipos_cambio={"USD": 1.0}))
     h.chk("envio_perdido_G08", ejecutar(o, EID, b, AHORA)["codigo"] == "G-08")
     h.chk("envio_perdido_se_anota_rechazado", revisar_entrada(o, EID, b, T1)["codigo"] == "G-02" and o.expedientes[EID]["orden_entrada"]["estado"] == "RECHAZADA")
     BrokerSimulado.enviar(b, b.perdido)   # la orden perdida llega tarde al intermediario

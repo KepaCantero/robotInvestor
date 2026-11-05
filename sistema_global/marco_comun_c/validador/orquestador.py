@@ -27,7 +27,7 @@ from manual_g import neto_libre, validar_manual  # noqa: E402
 from comparador import MARGEN_AJUSTADO, REFERENCIA_EFECTIVO, _referencia_ok, comparar_candidatos  # noqa: E402
 from dimensionado import dimensionar  # noqa: E402
 from validar_contradictor import validar_informe  # noqa: E402
-from control_f import POLITICA_DEFECTO, controlar, politica_valida, validar_informe_f  # noqa: E402
+from control_f import POLITICA_DEFECTO, controlar, divisa_cotizada, par_divisas, politica_valida, tipo_cambio, validar_informe_f  # noqa: E402
 
 VERSION_REGLAS = "ORQ-0.1.0"
 _FH = re.compile(r"^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(\.\d+)?(Z|[+-]\d{2}:\d{2})\Z")
@@ -78,7 +78,13 @@ CONFIG_DEFECTO = {"max_reintentos": 3, "umbral_corte_comun_dias_habiles": 0,
                   "aprobacion": {"caduca_min": 15, "canales": ["CONSOLA"], "enfriamiento_min": 30, "enfriamiento_tras_perdida_dia_eur": 0.0,
                                  "horario_utc": ["07:00", "21:00"]},
                   "avisos": {"canal_alta": "CONSOLA", "canal_escalado": "ESCALADO", "reiterar_min": 15, "escalar_tras": 3},
-                  "kill_switch": {"periodo_min_l1_horas": 24}}   # cartera -> L0 (simulado) | L1 (el operador confirma) | L2 (automático con límites); sin dato = L1
+                  "kill_switch": {"periodo_min_l1_horas": 24},
+                  "divisas_cotizacion": {},   # instrumento -> divisa en que cotiza, si no es un par de divisas ISO
+                  # [PROPUESTO] rangos plausibles de euros por unidad; un tipo fuera de rango o sin rango no se acepta (D-21)
+                  "rangos_tipo_cambio_eur": {"USD": [0.6, 1.4], "GBP": [0.9, 1.6], "JPY": [0.003, 0.015], "CHF": [0.7, 1.4], "AUD": [0.4, 0.9],
+                                             "CAD": [0.45, 0.95], "SEK": [0.06, 0.13], "NOK": [0.06, 0.13], "DKK": [0.12, 0.15]},
+                  "tolerancia_tipo_par_pct": 15.0,   # [PROPUESTO] desvío máximo entre el tipo de la foto y el que implica el límite de un par con el euro
+                  "cuenta_intermediario": "SIM-1"}    # la cuenta de la que G toma las fotos (D-21)   # cartera -> L0 (simulado) | L1 (el operador confirma) | L2 (automático con límites); sin dato = L1
 NIVELES = {"L0": 0, "L1": 1, "L2": 2}
 # Prioridad de cada aviso para el operador [PROPUESTO]
 TIPOS_KILL = {"POSICION_DESCONOCIDA", "CANTIDAD", "SENTIDO_O_ACTIVO", "PROTECCION", "PROTECCION_HUERFANA", "ENTRADA_HUERFANA",
@@ -147,6 +153,13 @@ def _valida_config(c):
           and _aprob_ok(c["aprobacion"]) and _avisos_ok(c["avisos"])
           and isinstance(c["kill_switch"], dict) and set(c["kill_switch"]) == {"periodo_min_l1_horas"} and _num(c["kill_switch"]["periodo_min_l1_horas"])
           and c["kill_switch"]["periodo_min_l1_horas"] >= 0
+          and isinstance(c["rangos_tipo_cambio_eur"], dict)
+          and all(isinstance(k, str) and re.fullmatch(r"[A-Z]{3}", k) and isinstance(v, list) and len(v) == 2 and all(_num(x) and x > 0 for x in v)
+                  and v[0] < v[1] for k, v in c["rangos_tipo_cambio_eur"].items())
+          and _num(c["tolerancia_tipo_par_pct"]) and 0 < c["tolerancia_tipo_par_pct"] <= 50
+          and isinstance(c["cuenta_intermediario"], str) and _ID.match(c["cuenta_intermediario"])
+          and isinstance(c["divisas_cotizacion"], dict)
+          and all(isinstance(k, str) and isinstance(v, str) and re.fullmatch(r"[A-Z]{3}", v) for k, v in c["divisas_cotizacion"].items())
           and isinstance(c["referencias"], dict) and set(c["referencias"]) == {"TRADING", "TACTICA", "LARGO_PLAZO"}
           and all(_referencia_ok(v) for v in c["referencias"].values())
           and (c["instrumentos_permitidos"] is None or isinstance(c["instrumentos_permitidos"], dict)
@@ -204,6 +217,8 @@ class Orquestador:
         self.kill = None               # kill-switch activo: {"motivo", "actor", "ahora"}
         self.rearmes = []              # rehabilitaciones tras el kill-switch
         self.ultima_conciliacion = None   # {"ahora", "limpia"}: la anota G cada vez que concilia
+        self.fotos = {}                   # hash -> foto de cartera tomada por G del intermediario (T-11), para auditoría
+        self.ultima_foto = None           # la única que vale: la más reciente
         self.manuales = []     # registros CT-G-14 aceptados (lo que el operador hizo fuera del sistema)
         self.degradadas = {}   # cartera -> motivo: bajada automática a L1 hasta que el operador la restablezca
 
@@ -311,6 +326,72 @@ class Orquestador:
             return _no("O-05", "solo G anota conciliaciones, con un resultado booleano")
         self.ultima_conciliacion = {"ahora": ahora, "limpia": limpia}
         return _r(True, "OK", "conciliación anotada")
+
+    @_seguro
+    def registrar_cartera(self, foto, actor, ahora, cuenta=None):
+        """G registra la foto de cartera que ha tomado del intermediario. E y F solo valen con una foto registrada (T-11)."""
+        a = self._ahora(ahora)
+        if actor != "G":
+            return _no("O-05", "solo G registra el estado de cartera del intermediario")
+        ok = (isinstance(foto, dict) and set(foto) == {"fecha_hora", "capital_eur", "perdida_dia_eur", "posiciones", "tipos_cambio_eur"}
+              and isinstance(foto["fecha_hora"], str) and _FH.match(foto["fecha_hora"]) and _num(foto["capital_eur"]) and foto["capital_eur"] > 0
+              and _num(foto["perdida_dia_eur"]) and foto["perdida_dia_eur"] >= 0 and isinstance(foto["posiciones"], list)
+              and isinstance(foto["tipos_cambio_eur"], dict)
+              and all(isinstance(k, str) and re.fullmatch(r"[A-Z]{3}", k) and _num(v) and v > 0 for k, v in foto["tipos_cambio_eur"].items()))
+        ok = ok and all(isinstance(p, dict) and set(p) == {"instrumento", "activo_base", "valor_eur"} and isinstance(p["instrumento"], str)
+                        and isinstance(p["activo_base"], str) and _num(p["valor_eur"]) and p["valor_eur"] >= 0 for p in foto["posiciones"])
+        if not ok:
+            return _no("O-01", "foto de cartera mal formada")
+        if cuenta != self.cfg["cuenta_intermediario"]:
+            return _no("O-29", "la foto no es de la cuenta del intermediario configurada")
+        rangos = self.cfg["rangos_tipo_cambio_eur"]
+        fuera = sorted(k for k, v in foto["tipos_cambio_eur"].items() if k not in rangos or not rangos[k][0] <= v <= rangos[k][1])
+        if fuera:
+            return _no("O-29", f"tipo de cambio sin rango de referencia o fuera de él: {', '.join(fuera)}")
+        t = _dt(foto["fecha_hora"])
+        if t > a or (a - t).total_seconds() > self.cfg["politica_f"]["frescura_max_min"] * 60:
+            return _no("O-10", "la foto de cartera es del futuro o más vieja que la frescura que admite F")
+        if self.ultima_foto and t < _dt(self.ultima_foto["fecha_hora"]):
+            return _no("O-10", "la foto es anterior a la última registrada")
+        h = _hash(foto)
+        self.fotos[h] = {"ahora": ahora, "fecha_hora": foto["fecha_hora"]}
+        self.ultima_foto = copy.deepcopy(foto)
+        if len(self.fotos) > 200:   # solo hacen falta las recientes
+            for k in sorted(self.fotos, key=lambda k: _dt(self.fotos[k]["ahora"]))[:len(self.fotos) - 200]:
+                del self.fotos[k]
+        return _r(True, "OK", "foto de cartera registrada", hash=h)
+
+    def cartera_f(self):
+        """La única cartera que E y F pueden usar: la última foto de G más las autorizaciones que aún no están en el
+        intermediario (sin orden o con la orden de entrada viva), valoradas en euros con los tipos de esa foto."""
+        if self.ultima_foto is None:
+            return None
+        c = copy.deepcopy(self.ultima_foto)
+        for k in sorted(self.expedientes):
+            e = self.expedientes[k]
+            oe = e.get("orden_entrada")
+            if e["estado"] == "AUTORIZADA" and (oe is None or oe["estado"] in ("ENVIADA", "RECHAZADA", "CANCELADA", "DESHECHA")):
+                en = e["propuesta"]["entrada"]
+                fx = tipo_cambio(self.divisa(en["instrumento"]), c)
+                if fx is None:
+                    return None
+                c["posiciones"].append({"instrumento": en["instrumento"], "activo_base": en["activo_base"],
+                                        "valor_eur": e["control_f"]["cantidad_aprobada"] * en["limite"] * fx})
+        return c
+
+    def _foto_de_g(self, cart, instrumento=None, limite=None):
+        cf = self.cartera_f()
+        if cf is None or not isinstance(cart, dict) or _hash(cart) != _hash(cf):
+            return _no("O-29", "la cartera no es la vigente: la última foto de G del intermediario más las autorizaciones pendientes")
+        par = par_divisas(instrumento) if instrumento else None
+        if par and par[0] == "EUR" and _num(limite) and limite > 0:   # en un par con el euro, el tipo de la foto debe cuadrar con el precio
+            fx = tipo_cambio(par[1], cart)
+            if fx is None or abs(fx * limite - 1) * 100 > self.cfg["tolerancia_tipo_par_pct"]:
+                return _no("O-29", f"el tipo de cambio de {par[1]} no cuadra con el precio del par")
+        return None
+
+    def divisa(self, instrumento):
+        return divisa_cotizada(instrumento, self.cfg["divisas_cotizacion"])
 
     LISTA_REHABILITACION = ("causa_corregida", "conciliacion_limpia", "datos_frescos", "protecciones_verificadas")
 
@@ -851,6 +932,11 @@ class Orquestador:
         if not (isinstance(ce.get("instrumento"), str) and _ID.match(ce["instrumento"]) and isinstance(ce.get("activo_base"), str) and _ID.match(ce["activo_base"])
                 and _num(ce.get("cantidad")) and ce["cantidad"] > 0 and _num(ce.get("apalancamiento")) and ce["apalancamiento"] >= 1 and ce["limite"] > 0):
             return _no("O-01", "condiciones_entrada: faltan instrumento, activo_base, cantidad positiva, apalancamiento (>= 1) y límite positivo")
+        if self.divisa(ce["instrumento"]) is None:
+            return _no("O-01", "no se conoce la divisa de cotización del instrumento: configúrela en divisas_cotizacion")
+        par = par_divisas(ce["instrumento"]) if ce["instrumento"] not in self.cfg["divisas_cotizacion"] else None
+        if par and ce["activo_base"] != par[0]:
+            return _no("O-01", "en un par de divisas el activo base es la primera divisa")
         if ce.get("resto_parcial", "CANCELAR") != "CANCELAR":
             return _no("O-01", "condiciones_entrada.resto_parcial: solo se admite CANCELAR (mantener vivo el resto exige redimensionar el stop, T-12)")
         if ce["apalancamiento"] > 1 and not self.cfg["apalancamiento_permitido"]:
@@ -937,7 +1023,11 @@ class Orquestador:
         if not (t_e <= a and (a - t_e).total_seconds() <= MAX_EDAD_DIMENSIONADO_MIN * 60):
             return None, _no("O-23", f"el cálculo de E es posterior al instante o tiene más de {MAX_EDAD_DIMENSIONADO_MIN} min")
         sol = dim["solicitud"]
-        esperado = {"instrumento": ce["instrumento"], "activo_base": ce["activo_base"], "direccion": "LARGO" if stop["operador"] in ("<", "<=") else "CORTO",
+        err = self._foto_de_g(dim["cartera"], ce["instrumento"], ce["limite"])
+        if err:
+            return None, err
+        esperado = {"instrumento": ce["instrumento"], "activo_base": ce["activo_base"], "divisa_cotizacion": self.divisa(ce["instrumento"]),
+                    "direccion": "LARGO" if stop["operador"] in ("<", "<=") else "CORTO",
                     "precio_entrada": ce["limite"], "stop_precio": stop["umbral"], "apalancamiento": ce["apalancamiento"], "cartera": e["cartera_destino"]}
         if sol != esperado:
             return None, _no("O-23", "la solicitud de E no es la propuesta (instrumento, dirección, límite, stop, apalancamiento o cartera)")
@@ -965,10 +1055,14 @@ class Orquestador:
         if self._sello_anulado(e):
             return _no("O-06", "el sello del análisis ya no es válido")
         fallos = validar_informe_f(control_f, {"ahora": ahora, "expediente_id": expediente_id, "correlation_id": e["correlation_id"],
+                                               "divisa_cotizacion": self.divisa(e["propuesta"]["entrada"]["instrumento"]),
                                                "propuesta": e["propuesta"], "cartera_destino": e["cartera_destino"], "politica": self.cfg["politica_f"],
                                                "compromisos": self._compromisos(expediente_id, e["cartera_destino"])})
         if fallos:
             return _no("O-01", f"informe de F no válido: {fallos[0]['regla']}: {fallos[0]['mensaje'][:80]}", reglas=sorted({x['regla'] for x in fallos}))
+        err = self._foto_de_g(control_f["entradas"]["cartera"], e["propuesta"]["entrada"]["instrumento"], e["propuesta"]["entrada"]["limite"])
+        if err:
+            return err
         cap_e = (e["propuesta"].get("dimensionado") or {}).get("cartera", {}).get("capital_eur")
         if cap_e != control_f["entradas"]["cartera"].get("capital_eur"):
             return _no("O-23", "F controló con un capital distinto del que usó E para dimensionar")
@@ -996,6 +1090,7 @@ class Orquestador:
         en = e["propuesta"]["entrada"]
         st = [c for c in e["propuesta"]["salida"]["condiciones"] if c["tipo"] == "STOP"][0]
         q = control_f["cantidad_aprobada"]
+        fx = tipo_cambio(control_f["entradas"]["solicitud"]["divisa_cotizacion"], control_f["entradas"]["cartera"])
         cfg = self.cfg["aprobacion"]
         perdida = control_f["entradas"]["cartera"].get("perdida_dia_eur", 0.0)
         fuera = not _en_horario(a, cfg["horario_utc"])
@@ -1004,8 +1099,8 @@ class Orquestador:
         p = {"expediente_id": expediente_id, "informe_f": control_f["event_id"], "informe_f_hash": _hash(control_f), "resultado_f": control_f["resultado"],
              "instrumento": en["instrumento"], "direccion": "LARGO" if st["operador"] in ("<", "<=") else "CORTO",
              "cantidad": q, "precio_limite": en["limite"], "stop": st["umbral"],
-             "importe": round(q * en["limite"], 2), "riesgo": round(q * abs(en["limite"] - st["umbral"]), 2),
-             "unidad_importe": "divisa de cotización del instrumento (sin convertir a euros hasta T-10)",
+             "importe": round(q * en["limite"] * fx, 2), "riesgo": round(q * abs(en["limite"] - st["umbral"]) * fx, 2), "unidad_importe": "EUR",
+             "divisa_cotizacion": control_f["entradas"]["solicitud"]["divisa_cotizacion"], "tipo_cambio_eur": fx,
              "apalancamiento": en["apalancamiento"], "cartera": e["cartera_destino"], "valid_until_f": control_f["valid_until"],
              "generada_en": ahora, "caduca_en": (a + espera + timedelta(minutes=cfg["caduca_min"])).isoformat(),
              "enfriamiento_hasta": (a + espera).isoformat(), "motivos_enfriamiento": motivos_espera}

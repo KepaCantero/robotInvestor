@@ -12,7 +12,7 @@ sys.path.insert(0, str(AQUI))
 from comparador import comparar_candidatos  # noqa: E402
 from consola import panel  # noqa: E402
 from dimensionado import dimensionar  # noqa: E402
-from ejecucion_g import BrokerSimulado, cartera_para_f, conciliar, ejecutar  # noqa: E402
+from ejecucion_g import foto_cartera, BrokerSimulado, cartera_para_f, conciliar, ejecutar  # noqa: E402
 from pruebas_comparador import cand  # noqa: E402
 from pruebas_control_f import informe_f  # noqa: E402
 from pruebas_orquestador import autorizar_op, AHORA, ENTRADA, SALIDA, Arnes, dim, encargo, nuevo, sobre  # noqa: E402
@@ -58,16 +58,18 @@ def flujo(h, nombre, precios_finales, esperado_regla, esperado_estado="CERRADA")
     b = BrokerSimulado(100000.0, {"EURUSD": 1.10}, HORA_DATOS)
     # E: cantidad con las reglas de F y la cartera real del intermediario
     stop = [c for c in SALIDA["condiciones"] if c["tipo"] == "STOP"][0]
-    sol = {"instrumento": ENTRADA["instrumento"], "activo_base": ENTRADA["activo_base"], "direccion": "LARGO", "precio_entrada": ENTRADA["limite"],
+    sol = {"instrumento": ENTRADA["instrumento"], "activo_base": ENTRADA["activo_base"], "divisa_cotizacion": o.divisa(ENTRADA["instrumento"]), "direccion": "LARGO", "precio_entrada": ENTRADA["limite"],
            "stop_precio": stop["umbral"], "apalancamiento": 1.0, "cartera": "TACTICA"}
-    e = dimensionar(sol, cartera_para_f(b), o.cfg["politica_f"], AHORA, paso=1.0)
+    foto = foto_cartera(o, b, AHORA)   # G toma y registra la cartera real, con los tipos de cambio del intermediario
+    h.chk(nombre + ": G registra la foto de cartera en euros", foto is not None and abs(foto["tipos_cambio_eur"]["USD"] - 1 / 1.10) < 1e-12, foto)
+    e = dimensionar(sol, foto, o.cfg["politica_f"], AHORA, paso=1.0)
     h.chk(nombre + ": E calcula una cantidad", e["ok"] and e["cantidad"] > 0, e)
     ent = {**ENTRADA, "cantidad": e["cantidad"]}
     h.chk(nombre + ": una cantidad mayor que la de E se rechaza", o.proponer(ganador, {**ent, "cantidad": e["cantidad"] + 1}, SALIDA, "GESTOR_TACTICA", AHORA,
-                                                                            dim(o, ganador, ent, SALIDA, cartera=cartera_para_f(b)))["codigo"] == "O-23")
+                                                                            dim(o, ganador, ent, SALIDA, cartera=foto))["codigo"] == "O-23")
     h.chk(nombre + ": el Orquestador acepta la propuesta con la cantidad de E", o.proponer(ganador, ent, SALIDA, "GESTOR_TACTICA", AHORA,
-                                                                                         dim(o, ganador, ent, SALIDA, cartera=cartera_para_f(b)))["ok"])
-    inf = informe_f(o, ganador, n=int(ganador[-4:]), cartera=cartera_para_f(b))
+                                                                                         dim(o, ganador, ent, SALIDA, cartera=foto))["ok"])
+    inf = informe_f(o, ganador, n=int(ganador[-4:]), cartera=foto)
     h.chk(nombre + ": F aprueba exactamente lo que propuso E", inf["resultado"] == "APROBADO" and inf["cantidad_aprobada"] == e["cantidad"], inf["resultado"])
     h.chk(nombre + ": el operador autoriza", autorizar_op(o, ganador, inf, AHORA)["ok"])
     r = ejecutar(o, ganador, b, AHORA)

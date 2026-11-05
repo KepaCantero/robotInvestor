@@ -12,11 +12,12 @@ sys.path.insert(0, str(AQUI))
 from control_f import POLITICA_DEFECTO, controlar, construir_informe, hash_contenido, validar_informe_f  # noqa: E402
 
 AHORA_F = "2026-11-06T09:00:00+00:00"
-CART = {"fecha_hora": "2026-11-06T08:50:00+00:00", "capital_eur": 100000.0, "perdida_dia_eur": 0.0, "posiciones": []}
+CART = {"fecha_hora": "2026-11-06T08:50:00+00:00", "capital_eur": 100000.0, "perdida_dia_eur": 0.0, "posiciones": [],
+        "tipos_cambio_eur": {"USD": 1.0}}   # tipo neutro: las cifras de estas pruebas son las de antes de la conversión (T-10)
 
 
 def solicitud(**kw):
-    s = {"instrumento": "EURUSD", "activo_base": "EUR", "direccion": "LARGO", "cantidad": 100.0, "precio_entrada": 1.10,
+    s = {"instrumento": "EURUSD", "activo_base": "EUR", "divisa_cotizacion": "USD", "direccion": "LARGO", "cantidad": 100.0, "precio_entrada": 1.10,
          "stop_precio": 1.05, "apalancamiento": 1.0, "cartera": "TACTICA"}
     s.update(kw)
     return s
@@ -31,8 +32,22 @@ def informe_f(o, expediente_id="EXP-0001", n=1, cartera=None, sol=None, pol=None
                   activo_base=en["activo_base"], apalancamiento=en["apalancamiento"], cantidad=en["cantidad"],
                   direccion="LARGO" if st["operador"] in ("<", "<=") else "CORTO")
     s.update(sol or {})
+    cart = registrar_foto(o, {**CART, **(cartera or {})})
     return construir_informe(f"EV-F-{n:04d}", expediente_id, e["correlation_id"], e["propuesta"], s,
-                             {**CART, **(cartera or {})}, pol or o.cfg["politica_f"], emitido_en, valid_until)
+                             cart, pol or o.cfg["politica_f"], emitido_en, valid_until)
+
+
+def registrar_foto(o, cart):
+    """Lo que hace G: registrar en el Orquestador la foto de cartera que toma del intermediario. Devuelve la cartera que
+    E y F deben usar (la foto más las autorizaciones pendientes), o la misma si la foto no se pudo registrar."""
+    if not hasattr(o, "registrar_cartera"):
+        return cart
+    t = max([cart.get("fecha_hora"), o.ultimo_ahora] if o.ultimo_ahora else [cart.get("fecha_hora")], key=lambda x: x or "")
+    try:
+        r = o.registrar_cartera(cart, "G", t, cuenta=o.cfg["cuenta_intermediario"])
+    except Exception:   # noqa: BLE001 - una foto mal formada a propósito no se registra
+        return cart
+    return (o.cartera_f() or cart) if r["ok"] else cart
 
 
 def main():
@@ -108,7 +123,7 @@ def main():
 
     def vf(o, inf, ahora=AHORA, e="EXP-0001"):
         x = o.expedientes[e]
-        return sorted({f["regla"] for f in validar_informe_f(inf, {"ahora": ahora, "expediente_id": e, "correlation_id": x["correlation_id"],
+        return sorted({f["regla"] for f in validar_informe_f(inf, {"ahora": ahora, "expediente_id": e, "correlation_id": x["correlation_id"], "divisa_cotizacion": "USD",
                                                                     "propuesta": x["propuesta"], "cartera_destino": x["cartera_destino"], "politica": o.cfg["politica_f"]})})
 
     o = nuevo(); hasta(o, "PROPUESTA")
@@ -141,7 +156,7 @@ def main():
         return h.rechaza(nombre, o_, fn, codigo, ok_esperado=ok_esperado, mutacion_permitida=mutacion_permitida)
     R("autorizar_sin_informe_O01", o, lambda: autorizar_op(o, "EXP-0001", None, AHORA), "O-01")
     R("autorizar_con_el_formato_antiguo_O01", o, lambda: autorizar_op(o, "EXP-0001", {"resultado": "APROBADO", "event_id": "EV-F-1"}, AHORA), "O-01")
-    R("autorizar_informe_falsificado_O01", o, lambda: autorizar_op(o, "EXP-0001", mut(lambda i: i.update(resultado="APROBADO", cantidad_aprobada=1e9), sol={"cantidad": 1e9}), AHORA), "O-01")
+    R("autorizar_informe_falsificado_O01", o, lambda: autorizar_op(o, "EXP-0001", mut(lambda i: i.update(resultado="APROBADO", cantidad_aprobada=1e9), sol={"cantidad": 1e9}), AHORA), "O-01", mutacion_permitida=True)
     veto = informe_f(o, n=2, cartera={"perdida_dia_eur": 5000.0})
     R("autorizar_vetado_por_F_O06", o, lambda: autorizar_op(o, "EXP-0001", veto, AHORA), "O-06", mutacion_permitida=True)
     R("informe_vetado_no_se_reutiliza_O03", o, lambda: autorizar_op(o, "EXP-0001", veto, AHORA), "O-03")
@@ -160,22 +175,24 @@ def main():
     anotar_entrada(o, "EXP-0001", "ORD-1", 4545.0)
     h.chk("ejecutar_lo_aprobado_ok", o.ejecutar("EXP-0001", {**ORD, "cantidad": 4545.0}, "G", AHORA)["ok"])
     o = nuevo(); hasta(o, "PROPUESTA", entrada={**ENTRADA, "cantidad": 9090.0})
-    R("F_con_otro_capital_que_E_O23", o, lambda: autorizar_op(o, "EXP-0001", informe_f(o, n=12, cartera={"capital_eur": 1e7}), AHORA), "O-23")
+    R("F_con_otro_capital_que_E_O23", o, lambda: autorizar_op(o, "EXP-0001", informe_f(o, n=12, cartera={"capital_eur": 1e7}), AHORA), "O-23", mutacion_permitida=True)
     # el activo base declarado no se puede cambiar para esquivar la concentración
     o = nuevo(); hasta(o, "PROPUESTA")
     c_ = {"posiciones": [{"instrumento": "EURUSD", "activo_base": "EUR", "valor_eur": 20000.0}]}
     h.chk("honesto_con_concentracion_se_veta", informe_f(o, n=7, cartera=c_)["resultado"] == "VETADO")
-    R("activo_base_falseado_O01", o, lambda: autorizar_op(o, "EXP-0001", informe_f(o, n=8, cartera=c_, sol={"activo_base": "ZZZ"}), AHORA), "O-01")
-    R("cantidad_falseada_O01", o, lambda: autorizar_op(o, "EXP-0001", informe_f(o, n=9, sol={"cantidad": 99.0}), AHORA), "O-01")
-    R("apalancamiento_falseado_O01", o, lambda: autorizar_op(o, "EXP-0001", informe_f(o, n=11, sol={"apalancamiento": 0.5}), AHORA), "O-01")
-    R("cartera_vieja_respecto_a_ahora_O01", o, lambda: autorizar_op(o, "EXP-0001", informe_f(o, n=10, cartera={"fecha_hora": "2026-11-05T13:00:00+00:00"}, emitido_en="2026-11-05T13:10:00+00:00"), AHORA), "O-01")
+    R("activo_base_falseado_O01", o, lambda: autorizar_op(o, "EXP-0001", informe_f(o, n=8, cartera=c_, sol={"activo_base": "ZZZ"}), AHORA), "O-01", mutacion_permitida=True)
+    R("cantidad_falseada_O01", o, lambda: autorizar_op(o, "EXP-0001", informe_f(o, n=9, sol={"cantidad": 99.0}), AHORA), "O-01", mutacion_permitida=True)
+    R("apalancamiento_falseado_O01", o, lambda: autorizar_op(o, "EXP-0001", informe_f(o, n=11, sol={"apalancamiento": 0.5}), AHORA), "O-01", mutacion_permitida=True)
+    R("cartera_vieja_respecto_a_ahora_O01", o, lambda: autorizar_op(o, "EXP-0001", informe_f(o, n=10, cartera={"fecha_hora": "2026-11-05T13:00:00+00:00"}, emitido_en="2026-11-05T13:10:00+00:00"), AHORA), "O-01", mutacion_permitida=True)
     # exposición acumulada: lo autorizado y lo abierto debe figurar en la cartera del informe
     o = nuevo({"politica_f": {**POLITICA_DEFECTO, "concentracion_max_pct": 10.0}})
     hasta(o, "AUTORIZADA", entrada={**ENTRADA, "cantidad": 9000.0})
-    hasta(o, "PROPUESTA", n=3, entrada={**ENTRADA, "cantidad": 9000.0})
-    R("segunda_autorizacion_ignora_la_primera_O01", o, lambda: autorizar_op(o, "EXP-0003", informe_f(o, "EXP-0003", n=20), AHORA), "O-01")
-    honesto = informe_f(o, "EXP-0003", n=21, cartera={"posiciones": [{"instrumento": "EURUSD", "activo_base": "EUR", "valor_eur": 9900.0}]})
-    h.chk("segunda_autorizacion_con_la_primera_en_cartera_se_veta", honesto["resultado"] == "VETADO", honesto["resultado"])
+    hasta(o, "COMPARADA", n=3)
+    from pruebas_orquestador import SALIDA as _SAL, dim as _dim
+    cf_ = o.cartera_f()
+    h.chk("la_cartera_vigente_incluye_la_autorizacion_pendiente", any(abs(p["valor_eur"] - 9900.0) < 1e-6 for p in cf_["posiciones"]), cf_)
+    r = o.proponer("EXP-0003", {**ENTRADA, "cantidad": 9000.0}, _SAL, "GESTOR_TACTICA", AHORA, _dim(o, "EXP-0003", {**ENTRADA, "cantidad": 9000.0}))
+    h.chk("segunda_propuesta_ya_no_tiene_hueco_en_E_O23", r["codigo"] == "O-23" and "E-04" in r["motivo"], r)
     # propuesta sin los campos nuevos o con STOP que no es precio
     o = nuevo(); hasta(o, "COMPARADA")
     from pruebas_orquestador import SALIDA, STOP
