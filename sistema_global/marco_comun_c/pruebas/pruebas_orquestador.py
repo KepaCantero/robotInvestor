@@ -139,9 +139,9 @@ def hasta(o, estado, n=1, ahora=AHORA, entrada=None, salida=None, cartera_e=None
     assert o.detectar(f"EXP-{n + 1:04d}", f"COR-{n + 1:04d}", "DISCRECIONAL", "TACTICA", "GESTOR_TACTICA", ahora)["ok"]
     assert o.emitir_encargo(f"EXP-{n + 1:04d}", encargo(n + 1), "GESTOR_TACTICA", ahora)["ok"]
     assert o.entregar_sobre(f"EXP-{n + 1:04d}", sobre(n + 1), ahora)["ok"]
-    for k, x in list(o.expedientes.items()):   # los perdedores de comparaciones anteriores se descartan antes de comparar de nuevo
-        if k not in (f"EXP-{n:04d}", f"EXP-{n + 1:04d}") and x["estado"] in ("VALIDADA", "COMPARADA"):
-            assert o.descartar(k, "descartado antes de la comparación siguiente", "GESTOR_TACTICA", ahora)["ok"]
+    for k, x in list(o.expedientes.items()):   # el operador descarta a los perdedores de comparaciones anteriores (si lo hiciera
+        if k not in (f"EXP-{n:04d}", f"EXP-{n + 1:04d}") and x["estado"] in ("VALIDADA", "COMPARADA"):   # otro, seguirían de testigos, T-36)
+            assert o.descartar(k, "descartado antes de la comparación siguiente", "OPERADOR", ahora)["ok"]
     r = o.comparar([f"EXP-{n:04d}", f"EXP-{n + 1:04d}"], "D", ahora)
     assert r["ok"], r
     if estado == "COMPARADA":
