@@ -10,7 +10,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parent))
 from ejecucion_g import BrokerSimulado, cerrar, ejecutar  # noqa: E402
 from vigilancia import vigilar  # noqa: E402
 from pruebas_ejecucion_g import autorizado  # noqa: E402
-from pruebas_orquestador import AHORA, Arnes, nuevo  # noqa: E402
+from pruebas_orquestador import autorizar_op, AHORA, Arnes, nuevo  # noqa: E402
 from pruebas_control_f import informe_f  # noqa: E402
 from pruebas_orquestador import hasta  # noqa: E402
 
@@ -48,7 +48,7 @@ def main():
     o = nuevo({"matriz_autonomia": {"TACTICA": True}, **L1}); hasta(o, "PROPUESTA")
     r = o.autorizar("EXP-0001", "MATRIZ_AUTONOMIA", informe_f(o), AHORA)
     h.chk("matriz_en_L1_no_autoriza", r["codigo"] == "O-05" and o.expedientes["EXP-0001"]["estado"] == "PROPUESTA", r)
-    h.chk("operador_si_autoriza_en_L1", o.autorizar("EXP-0001", "OPERADOR", informe_f(o, n=2), AHORA)["ok"])
+    h.chk("operador_si_autoriza_en_L1", autorizar_op(o, "EXP-0001", informe_f(o, n=2), AHORA)["ok"])
     o = nuevo({"matriz_autonomia": {"TACTICA": True}, **{"nivel_autonomia": {"TACTICA": "L0"}}}); hasta(o, "PROPUESTA")
     h.chk("matriz_en_L0_no_autoriza", o.autorizar("EXP-0001", "MATRIZ_AUTONOMIA", informe_f(o), AHORA)["codigo"] == "O-05")
     o = nuevo({"matriz_autonomia": {"TACTICA": True}, **L2}); hasta(o, "PROPUESTA")

@@ -12,7 +12,7 @@ from ejecucion_g import BrokerSimulado, conciliar, declarar_manual, ejecutar  # 
 from manual_g import validar_manual  # noqa: E402
 from vigilancia import vigilar  # noqa: E402
 from pruebas_ejecucion_g import autorizado, broker  # noqa: E402
-from pruebas_orquestador import AHORA, Arnes, hasta, nuevo  # noqa: E402
+from pruebas_orquestador import autorizar_op, AHORA, Arnes, hasta, nuevo  # noqa: E402
 from pruebas_control_f import informe_f  # noqa: E402
 
 T1 = "2026-11-06T09:05:00+00:00"
@@ -214,7 +214,7 @@ def main():
     o2, b2 = autorizado(o=nuevo(L1)); ejecutar(o2, "EXP-0001", b2, AHORA)
     hasta(o2, "PROPUESTA", n=3)   # otra comparación (EXP-0003 frente a EXP-0004), elegida y propuesta
     from ejecucion_g import cartera_para_f as _cpf
-    ra = o2.autorizar("EXP-0003", "OPERADOR", informe_f(o2, "EXP-0003", n=3, cartera=_cpf(b2)), AHORA)
+    ra = autorizar_op(o2, "EXP-0003", informe_f(o2, "EXP-0003", n=3, cartera=_cpf(b2)), AHORA)
     h.chk("segundo_expediente_autorizado", ra["ok"], ra)
     r = o2.registrar_manual(reg(event_id="EV-MAN-0020", vinculo={"tipo": "EXPEDIENTE", "id": "EXP-0003"}, ref_intermediario="MAN-2", proteccion_ref="MAN-S-2"), T1)
     h.chk("segunda_posicion_en_el_mismo_instrumento_O06", r["codigo"] == "O-06" and len(o2.posiciones) == 1, r)

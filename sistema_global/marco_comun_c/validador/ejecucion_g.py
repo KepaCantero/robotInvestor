@@ -302,11 +302,27 @@ def cancelar_entrada(o, expediente_id, broker, ahora):
     return revisar_entrada(o, expediente_id, broker, ahora, forzar_cancelacion=True)
 
 
+def kill_switch(o, broker, ahora, motivo, actor="OPERADOR"):
+    """Kill-switch (§8): el Orquestador bloquea lo nuevo y pasa todo a L1; G cancela todas las órdenes de entrada vivas.
+    No toca las órdenes de protección ni liquida posiciones. Lo que ya se hubiera ejecutado se protege y reporta."""
+    r = o.activar_kill_switch(motivo, actor, _instante(o, ahora))
+    if not r["ok"]:
+        return r
+    resultados = {}
+    for eid in sorted(o.expedientes):
+        x = o.expedientes[eid]
+        if x["estado"] == "AUTORIZADA" and (x.get("orden_entrada") or {}).get("estado") in PENDIENTES:
+            resultados[eid] = revisar_entrada(o, eid, broker, ahora, forzar_cancelacion=True)["codigo"]
+    vivas = [k for k, v in resultados.items() if v in ("G-01", "G-08", "G-11")]
+    return _r(not vivas, "OK" if not vivas else "G-08", "kill-switch activo; entradas canceladas" if not vivas
+              else f"kill-switch activo, pero no se pudieron cancelar: {', '.join(vivas)}", entradas=resultados)
+
+
 def _resolver(o, eid, broker, ahora, r, est, forzar=False):
     """Decide qué hacer con la orden de entrada según su estado en el intermediario."""
     e = o.expedientes[eid]
     id_e = r["orden_id"]
-    vencida = forzar or _dt(ahora) > _limite_entrada(o, e) or o._sello_anulado(e) or not o.autorizacion_vigente(e)
+    vencida = forzar or o.kill is not None or _dt(ahora) > _limite_entrada(o, e) or o._sello_anulado(e) or not o.autorizacion_vigente(e)
     if r["estado"] == "ACEPTADA" and not vencida:
         return _r(False, "G-11", f"orden de entrada viva hasta {_limite_entrada(o, e).isoformat()}", orden_id=id_e, viva=True)
     if r["estado"] in ("ACEPTADA", "PARCIAL"):   # vencida, cancelada a petición, o parcial: se cancela el resto (resto_parcial = CANCELAR)
@@ -390,6 +406,10 @@ def conciliar(o, broker, ahora):
                     if c and c["estado"] == "ACEPTADA":
                         dif.append({"tipo": "PROTECCION_HUERFANA", "ref": pid, "detalle": f"la orden {prot} sigue viva con la posición cerrada"})
                 continue
+            saltado = [c for c in (broker.consultar(x) for x in p["protecciones"]) if c and c["estado"] == "EJECUTADA"]
+            if saltado and abs(_neto(broker, p["instrumento"])) <= TOL:   # el stop propio ya cerró la posición; H lo confirmará (H-01)
+                expl.append({"tipo": "STOP_EJECUTADO", "ref": pid, "detalle": f"el stop {saltado[0]['orden_id']} cerró la posición; falta que H lo confirme"})
+                continue
             abiertas.setdefault(p["instrumento"], []).append((pid, p))
             lado_s = "VENTA" if p["direccion"] == "LARGO" else "COMPRA"
             for prot in p["protecciones"]:
@@ -440,8 +460,15 @@ def conciliar(o, broker, ahora):
                 bases = {x["activo_base"] for x in manuales if x["vinculo"]["tipo"] == "LIBRE" and x["instrumento"] == ins}
                 if bases != {r["activo_base"]}:
                     dif.append({"tipo": "SENTIDO_O_ACTIVO", "ref": ins, "detalle": "el activo base declarado no coincide con el intermediario"})
+        if hasattr(o, "registrar_conciliacion"):
+            o.registrar_conciliacion(not dif, "G", _instante(o, ahora))
         if dif:
             _aviso(o, dif, ahora)
+            if getattr(o, "kill", None) is not None:   # el kill-switch automático: G cancela en el acto las entradas vivas
+                for eid in sorted(o.expedientes):
+                    x = o.expedientes[eid]
+                    if x["estado"] == "AUTORIZADA" and (x.get("orden_entrada") or {}).get("estado") == "ENVIADA":
+                        revisar_entrada(o, eid, broker, ahora, forzar_cancelacion=True)
         return {"ok": not dif, "diferencias": dif, "explicadas": expl}
     except ConexionPerdida as e:
         return {"ok": False, "diferencias": [{"tipo": "SIN_CONEXION", "ref": None, "detalle": str(e)}], "explicadas": []}

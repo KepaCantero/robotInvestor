@@ -15,7 +15,7 @@ from dimensionado import dimensionar  # noqa: E402
 from ejecucion_g import BrokerSimulado, cartera_para_f, conciliar, ejecutar  # noqa: E402
 from pruebas_comparador import cand  # noqa: E402
 from pruebas_control_f import informe_f  # noqa: E402
-from pruebas_orquestador import AHORA, ENTRADA, SALIDA, Arnes, dim, encargo, nuevo, sobre  # noqa: E402
+from pruebas_orquestador import autorizar_op, AHORA, ENTRADA, SALIDA, Arnes, dim, encargo, nuevo, sobre  # noqa: E402
 from vigilancia import vigilar  # noqa: E402
 
 T1 = "2026-11-06T09:05:00+00:00"
@@ -69,7 +69,7 @@ def flujo(h, nombre, precios_finales, esperado_regla, esperado_estado="CERRADA")
                                                                                          dim(o, ganador, ent, SALIDA, cartera=cartera_para_f(b)))["ok"])
     inf = informe_f(o, ganador, n=int(ganador[-4:]), cartera=cartera_para_f(b))
     h.chk(nombre + ": F aprueba exactamente lo que propuso E", inf["resultado"] == "APROBADO" and inf["cantidad_aprobada"] == e["cantidad"], inf["resultado"])
-    h.chk(nombre + ": el operador autoriza", o.autorizar(ganador, "OPERADOR", inf, AHORA)["ok"])
+    h.chk(nombre + ": el operador autoriza", autorizar_op(o, ganador, inf, AHORA)["ok"])
     r = ejecutar(o, ganador, b, AHORA)
     pid = "POS-" + ganador
     h.chk(nombre + ": G ejecuta, protege y concilia", r["ok"] and o.posiciones[pid]["estado"] == "ABIERTA" and conciliar(o, b, AHORA)["ok"], r)
@@ -106,7 +106,7 @@ def main():
     assert o.comparar(["EXP-0001", "EXP-0002"], "D", AHORA)["ok"]
     b = BrokerSimulado(100000.0, {"EURUSD": 1.10}, HORA_DATOS)
     assert o.proponer("EXP-0001", ENTRADA, SALIDA, "GESTOR_TACTICA", AHORA, dim(o, cartera=cartera_para_f(b)))["ok"]
-    assert o.autorizar("EXP-0001", "OPERADOR", informe_f(o, "EXP-0001", 1, cartera=cartera_para_f(b)), AHORA)["ok"]
+    assert autorizar_op(o, "EXP-0001", informe_f(o, "EXP-0001", 1, cartera=cartera_para_f(b)), AHORA)["ok"]
     assert ejecutar(o, "EXP-0001", b, AHORA)["ok"]
     b.caido = True
     v = vigilar(o, b, {"EURUSD": {"precio": 1.20, "hora": T1}}, T1)
@@ -129,7 +129,7 @@ def main():
     h.chk("apalancamiento: con permiso la propuesta se acepta", o.proponer("EXP-0001", ap2, SALIDA, "GESTOR_TACTICA", AHORA, dim(o, entrada=ap2, cartera=cartera_para_f(b)))["ok"])
     inf = informe_f(o, "EXP-0001", 1, cartera=cartera_para_f(b))
     h.chk("apalancamiento: F lo aprueba dentro de su máximo", inf["resultado"] in ("APROBADO", "REDUCIDO"), inf["resultado"])
-    h.chk("apalancamiento: se autoriza y se ejecuta", o.autorizar("EXP-0001", "OPERADOR", inf, AHORA)["ok"] and ejecutar(o, "EXP-0001", b, AHORA)["ok"])
+    h.chk("apalancamiento: se autoriza y se ejecuta", autorizar_op(o, "EXP-0001", inf, AHORA)["ok"] and ejecutar(o, "EXP-0001", b, AHORA)["ok"])
     o2 = nuevo({"apalancamiento_permitido": True, "politica_f": {**POLITICA_DEFECTO, "apalancamiento_max": 3.0}}); candidatos(o2, apal=5)
     assert o2.comparar(["EXP-0001", "EXP-0002"], "D", AHORA)["ok"]
     ap5 = {**ENTRADA, "apalancamiento": 5.0}

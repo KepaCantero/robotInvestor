@@ -102,7 +102,7 @@ def main():
         chk("anidamiento_extremo_veta", False, type(ex).__name__)
 
     # --- verificación del informe (CF) y su integración con el Orquestador
-    from pruebas_orquestador import AHORA, Arnes, encargo, hasta, nuevo  # noqa: E402
+    from pruebas_orquestador import autorizar_op, AHORA, Arnes, encargo, hasta, nuevo  # noqa: E402
     h = Arnes()
     h.ok, h.n = ok, 0
 
@@ -139,17 +139,17 @@ def main():
     # integración
     def R(nombre, o_, fn, codigo, ok_esperado=False, mutacion_permitida=False):
         return h.rechaza(nombre, o_, fn, codigo, ok_esperado=ok_esperado, mutacion_permitida=mutacion_permitida)
-    R("autorizar_sin_informe_O01", o, lambda: o.autorizar("EXP-0001", "OPERADOR", None, AHORA), "O-01")
-    R("autorizar_con_el_formato_antiguo_O01", o, lambda: o.autorizar("EXP-0001", "OPERADOR", {"resultado": "APROBADO", "event_id": "EV-F-1"}, AHORA), "O-01")
-    R("autorizar_informe_falsificado_O01", o, lambda: o.autorizar("EXP-0001", "OPERADOR", mut(lambda i: i.update(resultado="APROBADO", cantidad_aprobada=1e9), sol={"cantidad": 1e9}), AHORA), "O-01")
+    R("autorizar_sin_informe_O01", o, lambda: autorizar_op(o, "EXP-0001", None, AHORA), "O-01")
+    R("autorizar_con_el_formato_antiguo_O01", o, lambda: autorizar_op(o, "EXP-0001", {"resultado": "APROBADO", "event_id": "EV-F-1"}, AHORA), "O-01")
+    R("autorizar_informe_falsificado_O01", o, lambda: autorizar_op(o, "EXP-0001", mut(lambda i: i.update(resultado="APROBADO", cantidad_aprobada=1e9), sol={"cantidad": 1e9}), AHORA), "O-01")
     veto = informe_f(o, n=2, cartera={"perdida_dia_eur": 5000.0})
-    R("autorizar_vetado_por_F_O06", o, lambda: o.autorizar("EXP-0001", "OPERADOR", veto, AHORA), "O-06", mutacion_permitida=True)
-    R("informe_vetado_no_se_reutiliza_O03", o, lambda: o.autorizar("EXP-0001", "OPERADOR", veto, AHORA), "O-03")
+    R("autorizar_vetado_por_F_O06", o, lambda: autorizar_op(o, "EXP-0001", veto, AHORA), "O-06", mutacion_permitida=True)
+    R("informe_vetado_no_se_reutiliza_O03", o, lambda: autorizar_op(o, "EXP-0001", veto, AHORA), "O-03")
     from pruebas_orquestador import ENTRADA
     # E dimensiona con la cartera vacía (9090); cuando F controla ya hay 15.000 € en EUR y la concentración reduce a 4545,45
     o = nuevo(); hasta(o, "PROPUESTA", entrada={**ENTRADA, "cantidad": 9090.0})
     red = informe_f(o, n=3, cartera={"posiciones": [{"instrumento": "EURGBP", "activo_base": "EUR", "valor_eur": 15000.0}]})
-    h.chk("autorizar_reducido_guarda_cantidad", red["resultado"] == "REDUCIDO" and o.autorizar("EXP-0001", "OPERADOR", red, AHORA)["ok"]
+    h.chk("autorizar_reducido_guarda_cantidad", red["resultado"] == "REDUCIDO" and autorizar_op(o, "EXP-0001", red, AHORA)["ok"]
           and abs(o.expedientes["EXP-0001"]["control_f"]["cantidad_aprobada"] - 4545.454545) < 1e-4, red["resultado"])
     ORD = {"orden_id": "ORD-1", "cantidad": 4600.0, "precio": 1.1, "conciliada": True, "proteccion_orden_ids": ["ORD-1-STOP"]}
     R("ejecutar_mas_de_lo_aprobado_O06", o, lambda: o.ejecutar("EXP-0001", ORD, "G", AHORA), "O-06")
@@ -160,20 +160,20 @@ def main():
     anotar_entrada(o, "EXP-0001", "ORD-1", 4545.0)
     h.chk("ejecutar_lo_aprobado_ok", o.ejecutar("EXP-0001", {**ORD, "cantidad": 4545.0}, "G", AHORA)["ok"])
     o = nuevo(); hasta(o, "PROPUESTA", entrada={**ENTRADA, "cantidad": 9090.0})
-    R("F_con_otro_capital_que_E_O23", o, lambda: o.autorizar("EXP-0001", "OPERADOR", informe_f(o, n=12, cartera={"capital_eur": 1e7}), AHORA), "O-23")
+    R("F_con_otro_capital_que_E_O23", o, lambda: autorizar_op(o, "EXP-0001", informe_f(o, n=12, cartera={"capital_eur": 1e7}), AHORA), "O-23")
     # el activo base declarado no se puede cambiar para esquivar la concentración
     o = nuevo(); hasta(o, "PROPUESTA")
     c_ = {"posiciones": [{"instrumento": "EURUSD", "activo_base": "EUR", "valor_eur": 20000.0}]}
     h.chk("honesto_con_concentracion_se_veta", informe_f(o, n=7, cartera=c_)["resultado"] == "VETADO")
-    R("activo_base_falseado_O01", o, lambda: o.autorizar("EXP-0001", "OPERADOR", informe_f(o, n=8, cartera=c_, sol={"activo_base": "ZZZ"}), AHORA), "O-01")
-    R("cantidad_falseada_O01", o, lambda: o.autorizar("EXP-0001", "OPERADOR", informe_f(o, n=9, sol={"cantidad": 99.0}), AHORA), "O-01")
-    R("apalancamiento_falseado_O01", o, lambda: o.autorizar("EXP-0001", "OPERADOR", informe_f(o, n=11, sol={"apalancamiento": 0.5}), AHORA), "O-01")
-    R("cartera_vieja_respecto_a_ahora_O01", o, lambda: o.autorizar("EXP-0001", "OPERADOR", informe_f(o, n=10, cartera={"fecha_hora": "2026-11-05T13:00:00+00:00"}, emitido_en="2026-11-05T13:10:00+00:00"), AHORA), "O-01")
+    R("activo_base_falseado_O01", o, lambda: autorizar_op(o, "EXP-0001", informe_f(o, n=8, cartera=c_, sol={"activo_base": "ZZZ"}), AHORA), "O-01")
+    R("cantidad_falseada_O01", o, lambda: autorizar_op(o, "EXP-0001", informe_f(o, n=9, sol={"cantidad": 99.0}), AHORA), "O-01")
+    R("apalancamiento_falseado_O01", o, lambda: autorizar_op(o, "EXP-0001", informe_f(o, n=11, sol={"apalancamiento": 0.5}), AHORA), "O-01")
+    R("cartera_vieja_respecto_a_ahora_O01", o, lambda: autorizar_op(o, "EXP-0001", informe_f(o, n=10, cartera={"fecha_hora": "2026-11-05T13:00:00+00:00"}, emitido_en="2026-11-05T13:10:00+00:00"), AHORA), "O-01")
     # exposición acumulada: lo autorizado y lo abierto debe figurar en la cartera del informe
     o = nuevo({"politica_f": {**POLITICA_DEFECTO, "concentracion_max_pct": 10.0}})
     hasta(o, "AUTORIZADA", entrada={**ENTRADA, "cantidad": 9000.0})
     hasta(o, "PROPUESTA", n=3, entrada={**ENTRADA, "cantidad": 9000.0})
-    R("segunda_autorizacion_ignora_la_primera_O01", o, lambda: o.autorizar("EXP-0003", "OPERADOR", informe_f(o, "EXP-0003", n=20), AHORA), "O-01")
+    R("segunda_autorizacion_ignora_la_primera_O01", o, lambda: autorizar_op(o, "EXP-0003", informe_f(o, "EXP-0003", n=20), AHORA), "O-01")
     honesto = informe_f(o, "EXP-0003", n=21, cartera={"posiciones": [{"instrumento": "EURUSD", "activo_base": "EUR", "valor_eur": 9900.0}]})
     h.chk("segunda_autorizacion_con_la_primera_en_cartera_se_veta", honesto["resultado"] == "VETADO", honesto["resultado"])
     # propuesta sin los campos nuevos o con STOP que no es precio

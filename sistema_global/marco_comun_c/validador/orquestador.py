@@ -14,7 +14,7 @@ import json
 import math
 import re
 import sys
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 from pathlib import Path
 
 AQUI = Path(__file__).resolve().parent
@@ -73,10 +73,17 @@ CONFIG_DEFECTO = {"max_reintentos": 3, "umbral_corte_comun_dias_habiles": 0,
                   "dia_coste_max_eur": 50.0, "dia_tiempo_max_min": 600, "tolerancia_precio_entrada": 0.05,
                   "exige_contradictor_en": [], "matriz_autonomia": {}, "politica_f": POLITICA_DEFECTO,
                   "nivel_autonomia": {}, "tolerancia_conciliacion_rel": 0.0, "instrumentos_permitidos": None,
-                  "referencias": {c: dict(REFERENCIA_EFECTIVO) for c in ("TRADING", "TACTICA", "LARGO_PLAZO")}}   # benchmark de cada cartera [PROPUESTO]   # cartera -> L0 (simulado) | L1 (el operador confirma) | L2 (automático con límites); sin dato = L1
+                  "referencias": {c: dict(REFERENCIA_EFECTIVO) for c in ("TRADING", "TACTICA", "LARGO_PLAZO")},   # benchmark de cada cartera [PROPUESTO]
+                  # [PROPUESTO] controles sobre el operador (§6) y avisos (§11); los canales reales los fija el operador (D-07, P-08)
+                  "aprobacion": {"caduca_min": 15, "canales": ["CONSOLA"], "enfriamiento_min": 30, "enfriamiento_tras_perdida_dia_eur": 0.0,
+                                 "horario_utc": ["07:00", "21:00"]},
+                  "avisos": {"canal_alta": "CONSOLA", "canal_escalado": "ESCALADO", "reiterar_min": 15, "escalar_tras": 3},
+                  "kill_switch": {"periodo_min_l1_horas": 24}}   # cartera -> L0 (simulado) | L1 (el operador confirma) | L2 (automático con límites); sin dato = L1
 NIVELES = {"L0": 0, "L1": 1, "L2": 2}
 # Prioridad de cada aviso para el operador [PROPUESTO]
-PRIORIDAD_AVISO = {"O-20": "MEDIA", "O-25": "ALTA", "O-18": "ALTA", "O-03": "ALTA", "O-08": "ALTA", "O-09": "ALTA", "O-13": "ALTA", "O-17": "ALTA"}
+TIPOS_KILL = {"POSICION_DESCONOCIDA", "CANTIDAD", "SENTIDO_O_ACTIVO", "PROTECCION", "PROTECCION_HUERFANA", "ENTRADA_HUERFANA",
+              "MANUAL_NO_CUADRA", "POSICION_SIN_PROTEGER"}   # lo que G sabe explicar (cierres propios, conexión, estado incierto, dato viejo) no
+PRIORIDAD_AVISO = {"O-20": "MEDIA", "O-25": "ALTA", "O-26": "ALTA", "O-19": "ALTA", "O-18": "ALTA", "O-03": "ALTA", "O-08": "ALTA", "O-09": "ALTA", "O-13": "ALTA", "O-17": "ALTA"}
 ACTORES_PROPUESTA = set(EMISORES)   # quien propone no aprueba ni controla: F, D y H no proponen (Constitución §2, P1)
 
 
@@ -86,6 +93,32 @@ def _ins(x):
 
 
 MAX_EDAD_DIMENSIONADO_MIN = 60   # [PROPUESTO] el cálculo de E no puede ser más viejo que esto al proponer
+
+
+_HM = re.compile(r"^([01]\d|2[0-3]):[0-5]\d\Z")
+
+
+def _aprob_ok(a):
+    return (isinstance(a, dict) and set(a) == {"caduca_min", "canales", "enfriamiento_min", "enfriamiento_tras_perdida_dia_eur", "horario_utc"}
+            and _num(a["caduca_min"]) and 0 < a["caduca_min"] <= 120 and isinstance(a["canales"], list) and a["canales"]
+            and all(isinstance(x, str) and x and x.upper() != "CHAT" for x in a["canales"])
+            and _num(a["enfriamiento_min"]) and a["enfriamiento_min"] >= 0 and _num(a["enfriamiento_tras_perdida_dia_eur"])
+            and a["enfriamiento_tras_perdida_dia_eur"] >= 0 and isinstance(a["horario_utc"], list) and len(a["horario_utc"]) == 2
+            and all(isinstance(x, str) and _HM.match(x) for x in a["horario_utc"]) and a["horario_utc"][0] != a["horario_utc"][1])
+
+
+def _en_horario(a, horario):
+    """Horario supervisado [desde, hasta] en UTC; admite cruzar la medianoche (p. ej. 22:00-06:00)."""
+    hm = a.astimezone(timezone.utc).strftime("%H:%M")
+    d, h = horario
+    return d <= hm <= h if d < h else (hm >= d or hm <= h)
+
+
+def _avisos_ok(a):
+    return (isinstance(a, dict) and set(a) == {"canal_alta", "canal_escalado", "reiterar_min", "escalar_tras"}
+            and all(isinstance(a[k], str) and a[k] and a[k].upper() != "CHAT" for k in ("canal_alta", "canal_escalado"))
+            and a["canal_escalado"] != a["canal_alta"] and _num(a["reiterar_min"]) and a["reiterar_min"] > 0
+            and isinstance(a["escalar_tras"], int) and not isinstance(a["escalar_tras"], bool) and a["escalar_tras"] >= 1)
 
 
 def _num(x):
@@ -111,6 +144,9 @@ def _valida_config(c):
           and isinstance(c["nivel_autonomia"], dict)
           and all(k in ("TRADING", "TACTICA", "LARGO_PLAZO") and v in NIVELES for k, v in c["nivel_autonomia"].items())
           and _num(c["tolerancia_conciliacion_rel"]) and 0 <= c["tolerancia_conciliacion_rel"] <= 0.01
+          and _aprob_ok(c["aprobacion"]) and _avisos_ok(c["avisos"])
+          and isinstance(c["kill_switch"], dict) and set(c["kill_switch"]) == {"periodo_min_l1_horas"} and _num(c["kill_switch"]["periodo_min_l1_horas"])
+          and c["kill_switch"]["periodo_min_l1_horas"] >= 0
           and isinstance(c["referencias"], dict) and set(c["referencias"]) == {"TRADING", "TACTICA", "LARGO_PLAZO"}
           and all(_referencia_ok(v) for v in c["referencias"].values())
           and (c["instrumentos_permitidos"] is None or isinstance(c["instrumentos_permitidos"], dict)
@@ -164,6 +200,10 @@ class Orquestador:
         self.sellos, self.eventos, self.encargos = {}, {}, {}
         self.expedientes, self.posiciones, self.gasto_dia, self.avisos = {}, {}, {}, []
         self.ultima_comparacion = {}   # cartera -> id de la comparación vigente
+        self.pantallas = {}            # expediente -> pantalla de aprobación con las cifras de F (§6)
+        self.kill = None               # kill-switch activo: {"motivo", "actor", "ahora"}
+        self.rearmes = []              # rehabilitaciones tras el kill-switch
+        self.ultima_conciliacion = None   # {"ahora", "limpia"}: la anota G cada vez que concilia
         self.manuales = []     # registros CT-G-14 aceptados (lo que el operador hizo fuera del sistema)
         self.degradadas = {}   # cartera -> motivo: bajada automática a L1 hasta que el operador la restablezca
 
@@ -197,8 +237,12 @@ class Orquestador:
             return _no("O-05", "solo el operador restablece el nivel de autonomía")
         if cartera not in self.degradadas:
             return _no("O-12", "la cartera no está degradada")
-        if any(x["acuse"] is None and x["codigo"] in ("O-18", "O-19") for x in self.avisos):
-            return _no("O-06", "hay avisos de discrepancia o degradación sin acusar")
+        if any(x["acuse"] is None and x["codigo"] in ("O-18", "O-19", "O-26") for x in self.avisos):
+            return _no("O-06", "hay avisos de discrepancia, degradación o kill-switch sin acusar")
+        if self.kill is not None:
+            return _no("O-26", "el kill-switch está activo: primero hay que rearmarlo")
+        if self.rearmes and (_dt(ahora) - _dt(self.rearmes[-1]["ahora"])).total_seconds() < self.cfg["kill_switch"]["periodo_min_l1_horas"] * 3600:
+            return _no("O-26", "tras el kill-switch la cartera sigue en L1 durante el periodo mínimo")
         del self.degradadas[cartera]
         return _r(True, "OK", f"{cartera} vuelve a {self.nivel(cartera)}")
 
@@ -215,8 +259,10 @@ class Orquestador:
     def _aviso(self, codigo, motivo, ahora, ref=None):
         if any(x["acuse"] is None and x["codigo"] == codigo and x["ref"] == ref and x["motivo"] == motivo for x in self.avisos):
             return   # ya hay uno igual sin acusar: no se multiplica
-        self.avisos.append({"id": f"AV-{len(self.avisos) + 1:05d}", "codigo": codigo, "prioridad": PRIORIDAD_AVISO.get(codigo, "MEDIA"),
-                            "motivo": motivo, "ref": ref, "ahora": ahora, "acuse": None})
+        prio = PRIORIDAD_AVISO.get(codigo, "MEDIA")
+        self.avisos.append({"id": f"AV-{len(self.avisos) + 1:05d}", "codigo": codigo, "prioridad": prio,
+                            "motivo": motivo, "ref": ref, "ahora": ahora, "acuse": None,
+                            "canal": self.cfg["avisos"]["canal_alta"] if prio == "ALTA" else "CONSOLA", "reiteraciones": [], "escalado": False})
 
     @_seguro
     def reportar_discrepancia(self, diferencias, actor, ahora):
@@ -230,7 +276,65 @@ class Orquestador:
             self._aviso("O-18", f"conciliación: {d['tipo']} {d.get('ref')}: {str(d.get('detalle'))[:120]}", ahora, d.get("ref") if isinstance(d.get("ref"), str) else None)
         for c in ("TRADING", "TACTICA", "LARGO_PLAZO"):   # una diferencia con el intermediario no se atribuye a una cartera: se baja todo
             self._degradar(c, "discrepancia de conciliación", ahora)
+        graves = sorted({d["tipo"] for d in diferencias} & TIPOS_KILL)
+        if graves:   # §11: una discrepancia sin explicar (o una posición sin proteger) dispara el kill-switch
+            self._activar_kill(f"discrepancia sin explicar con el intermediario ({', '.join(graves)})", "ORQUESTADOR", ahora)
         return _r(True, "OK", f"{len(diferencias)} diferencia(s) registrada(s)")
+
+    # ------------------------------------------------------------ kill-switch (§8 y §11)
+    def _activar_kill(self, motivo, actor, ahora):
+        if self.kill is None:
+            self.kill = {"motivo": motivo[:200], "actor": actor, "ahora": ahora}
+            self._aviso("O-26", f"KILL-SWITCH activado por {actor}: {motivo[:120]}", ahora)
+        for c in ("TRADING", "TACTICA", "LARGO_PLAZO"):
+            self._degradar(c, f"kill-switch: {motivo[:80]}", ahora)
+
+    @_seguro
+    def activar_kill_switch(self, motivo, actor, ahora):
+        """Interruptor manual del operador o automático (Orquestador, vigilante). Bloquea autorizaciones y órdenes de entrada
+        nuevas y pasa todo a L1; G cancela las entradas vivas. No cancela protecciones ni liquida posiciones."""
+        self._ahora(ahora)
+        if actor not in ("OPERADOR", "ORQUESTADOR", "VIGILANTE"):
+            return _no("O-05", "solo el operador, el Orquestador o el vigilante activan el kill-switch")
+        if not (isinstance(motivo, str) and motivo.strip()):
+            return _no("O-15", "el kill-switch exige motivo")
+        if self.kill is not None:
+            return _r(True, "O-02", "el kill-switch ya está activo", duplicado=True)
+        self._activar_kill(motivo, actor, ahora)
+        return _r(True, "OK", "kill-switch activo: G debe cancelar las órdenes de entrada vivas")
+
+    @_seguro
+    def registrar_conciliacion(self, limpia, actor, ahora):
+        """G anota el resultado de cada conciliación (limpia o no): el rearme exige una limpia posterior al kill-switch."""
+        self._ahora(ahora)
+        if actor != "G" or not isinstance(limpia, bool):
+            return _no("O-05", "solo G anota conciliaciones, con un resultado booleano")
+        self.ultima_conciliacion = {"ahora": ahora, "limpia": limpia}
+        return _r(True, "OK", "conciliación anotada")
+
+    LISTA_REHABILITACION = ("causa_corregida", "conciliacion_limpia", "datos_frescos", "protecciones_verificadas")
+
+    @_seguro
+    def rearmar_kill_switch(self, lista, actor, ahora):
+        """Rehabilitación manual con la lista del §11. Las carteras siguen en L1 un periodo mínimo antes de poder restablecerse."""
+        self._ahora(ahora)
+        if actor != "OPERADOR":
+            return _no("O-05", "solo el operador rearma tras el kill-switch")
+        if self.kill is None:
+            return _no("O-12", "el kill-switch no está activo")
+        if not (isinstance(lista, dict) and set(lista) == set(self.LISTA_REHABILITACION) and all(v is True for v in lista.values())):
+            return _no("O-06", "la lista de rehabilitación debe venir completa y con todo comprobado: " + ", ".join(self.LISTA_REHABILITACION))
+        if any(x["acuse"] is None and x["prioridad"] == "ALTA" for x in self.avisos):
+            return _no("O-06", "hay avisos de prioridad alta sin acusar")
+        vivas = sorted(k for k, x in self.expedientes.items() if self._entrada_viva(x))
+        if vivas:
+            return _no("O-06", f"quedan órdenes de entrada vivas sin cancelar: {', '.join(vivas)}")
+        uc = self.ultima_conciliacion
+        if not (uc and uc["limpia"] and _dt(uc["ahora"]) >= _dt(self.kill["ahora"])):
+            return _no("O-06", "falta una conciliación limpia con el intermediario posterior al kill-switch")
+        self.rearmes.append({"kill": self.kill, "lista": dict(lista), "ahora": ahora})
+        self.kill = None
+        return _r(True, "OK", f"rearmado; las carteras siguen en L1 al menos {self.cfg['kill_switch']['periodo_min_l1_horas']} h")
 
     @_seguro
     def acusar_aviso(self, aviso_id, actor, ahora):
@@ -307,8 +411,17 @@ class Orquestador:
         oe = e.get("orden_entrada")
         return bool(oe) and oe["estado"] == "ENVIADA" and e["estado"] == "AUTORIZADA"
 
+    def _aprobacion_ok(self, e):
+        """Lo autorizado (cantidad de F y, si autorizó el operador, su aprobación) es lo anotado al autorizar."""
+        cf = e.get("control_f")
+        if not cf:
+            return True
+        ult = [h for h in e["historial"] if h["hasta"] == "AUTORIZADA" and h["desde"] != "AUTORIZADA"]
+        return bool(ult) and ult[-1]["datos"] == _hash(cf) and (ult[-1]["actor"] != "OPERADOR" or cf.get("aprobacion") is not None)
+
     def _todo_ok(self, e):
-        return self._historial_ok(e) and self._propuesta_ok(e) and self._sobre_ok(e) and self._comparacion_ok(e) and self._orden_ok(e)
+        return (self._historial_ok(e) and self._propuesta_ok(e) and self._sobre_ok(e) and self._comparacion_ok(e) and self._orden_ok(e)
+                and self._aprobacion_ok(e))
 
     def integridad(self):
         """Lista de expedientes (EXP:) y posiciones (POS:) cuyo historial, sobre, comparación o propuesta no cuadra."""
@@ -327,12 +440,9 @@ class Orquestador:
         e = self.expedientes.get(eid)
         if e is None:
             return None, _no("O-12", f"expediente inexistente: {eid!r}")
-        if not self._historial_ok(e):
-            return None, _no("O-13", "el historial del expediente no es íntegro")
-        if not self._propuesta_ok(e):
-            return None, _no("O-13", "la propuesta no coincide con la registrada en el historial")
-        if not (self._sobre_ok(e) and self._comparacion_ok(e) and self._orden_ok(e)):
-            return None, _no("O-13", "el sobre, la comparación o la orden de entrada guardados no coinciden con los anotados en el historial")
+        if not self._todo_ok(e):   # incidente de seguridad (§11): el registro se alteró fuera del Orquestador
+            self._activar_kill(f"integridad rota en {eid}", "ORQUESTADOR", self.ultimo_ahora or "1970-01-01T00:00:00+00:00")
+            return None, _no("O-13", "el historial, la propuesta, el sobre, la comparación, la orden o la aprobación del expediente no son íntegros")
         return e, None
 
     def _compromisos(self, excluir, cartera):
@@ -369,8 +479,9 @@ class Orquestador:
         v = self.eventos.get(eid)
         if v is None:
             return None
-        if v["hash"] != h:
+        if v["hash"] != h:   # posible inyección o suplantación: incidente de seguridad (§11)
             self._aviso("O-03", f"event_id {eid} repetido con otro contenido", ahora, expediente_id)
+            self._activar_kill(f"event_id {eid} repetido con otro contenido", "ORQUESTADOR", ahora)
             return _no("O-03", "mismo event_id con contenido distinto")
         if v["expediente_id"] != expediente_id:
             return _no("O-12", "ese mensaje pertenece a otro expediente")
@@ -837,25 +948,18 @@ class Orquestador:
             return None, _no("O-23", f"la cantidad propuesta supera la que calcula E ({r['cantidad']})")
         return r["cantidad"], None
 
-    @_seguro
-    def autorizar(self, expediente_id, actor, control_f, ahora):
-        a = self._ahora(ahora)
-        e, err = self._exp(expediente_id)
-        if err:
-            return err
+    def _comprobar_autorizacion(self, e, expediente_id, actor, control_f, a, ahora):
         err = self._transicion_ok(e, "AUTORIZADA", actor)
         if err:
             return err
+        if self.kill is not None:
+            return _no("O-26", "kill-switch activo: no se autoriza nada nuevo")
         if actor == "MATRIZ_AUTONOMIA" and not self.cfg["matriz_autonomia"].get(e["cartera_destino"], False):
             return _no("O-05", "la matriz de autonomía no autoriza esta cartera sin el operador")
         if actor == "MATRIZ_AUTONOMIA" and NIVELES[self.nivel(e["cartera_destino"])] < 2:
             return _no("O-05", f"la cartera está en {self.nivel(e['cartera_destino'])}: autoriza el operador")
         if not isinstance(control_f, dict) or not isinstance(control_f.get("event_id"), str):
             return _no("O-01", "falta el informe de control de F (CT-G-08)")
-        ih = _hash(control_f)
-        dup = self._duplicado(control_f["event_id"], ih, expediente_id, ahora)
-        if dup:
-            return _no("O-03", "el informe de F ya se usó")
         if a > _dt(e["propuesta"]["entrada"]["ventana_hasta"]) or a > _dt(e["sobre"]["valid_until"]):
             return _no("O-10", "la propuesta caducó")
         if self._sello_anulado(e):
@@ -868,12 +972,97 @@ class Orquestador:
         cap_e = (e["propuesta"].get("dimensionado") or {}).get("cartera", {}).get("capital_eur")
         if cap_e != control_f["entradas"]["cartera"].get("capital_eur"):
             return _no("O-23", "F controló con un capital distinto del que usó E para dimensionar")
+        return None
+
+    @_seguro
+    def pantalla_aprobacion(self, expediente_id, control_f, ahora, actor="OPERADOR"):
+        """Pantalla de la cola de aprobaciones (§6): solo cifras calculadas por F, sin texto de un LLM. El operador la aprueba
+        citando su hash y tecleando el importe. Vale una sola vez y caduca; con pérdida del día o fuera de horario, hay enfriamiento."""
+        a = self._ahora(ahora)
+        if actor != "OPERADOR":
+            return _no("O-05", "solo el operador pide la pantalla de aprobación")
+        e, err = self._exp(expediente_id)
+        if err:
+            return err
+        err = self._comprobar_autorizacion(e, expediente_id, "OPERADOR", control_f, a, ahora)
+        if err:
+            return err
+        if control_f["event_id"] in self.eventos:
+            self._duplicado(control_f["event_id"], _hash(control_f), expediente_id, ahora)
+            return _no("O-03", "el informe de F ya se usó")
+        if control_f["resultado"] == "VETADO":   # el veto queda registrado: ese informe no se puede volver a usar
+            self.eventos[control_f["event_id"]] = {"hash": _hash(control_f), "expediente_id": expediente_id}
+            return _no("O-06", "F vetó la propuesta: no hay nada que aprobar")
+        en = e["propuesta"]["entrada"]
+        st = [c for c in e["propuesta"]["salida"]["condiciones"] if c["tipo"] == "STOP"][0]
+        q = control_f["cantidad_aprobada"]
+        cfg = self.cfg["aprobacion"]
+        perdida = control_f["entradas"]["cartera"].get("perdida_dia_eur", 0.0)
+        fuera = not _en_horario(a, cfg["horario_utc"])
+        motivos_espera = (["pérdida en el día"] if perdida > cfg["enfriamiento_tras_perdida_dia_eur"] else []) + (["fuera de horario"] if fuera else [])
+        espera = timedelta(minutes=cfg["enfriamiento_min"]) if motivos_espera else timedelta(0)
+        p = {"expediente_id": expediente_id, "informe_f": control_f["event_id"], "informe_f_hash": _hash(control_f), "resultado_f": control_f["resultado"],
+             "instrumento": en["instrumento"], "direccion": "LARGO" if st["operador"] in ("<", "<=") else "CORTO",
+             "cantidad": q, "precio_limite": en["limite"], "stop": st["umbral"],
+             "importe": round(q * en["limite"], 2), "riesgo": round(q * abs(en["limite"] - st["umbral"]), 2),
+             "unidad_importe": "divisa de cotización del instrumento (sin convertir a euros hasta T-10)",
+             "apalancamiento": en["apalancamiento"], "cartera": e["cartera_destino"], "valid_until_f": control_f["valid_until"],
+             "generada_en": ahora, "caduca_en": (a + espera + timedelta(minutes=cfg["caduca_min"])).isoformat(),
+             "enfriamiento_hasta": (a + espera).isoformat(), "motivos_enfriamiento": motivos_espera}
+        p["hash"] = _hash(p)
+        self.pantallas[expediente_id] = {**p, "usada": False}
+        return _r(True, "OK", "pantalla de aprobación lista", pantalla=copy.deepcopy(p))
+
+    def _comprobar_aprobacion(self, expediente_id, control_f, aprobacion, a):
+        p = self.pantallas.get(expediente_id)
+        if not (isinstance(aprobacion, dict) and set(aprobacion) == {"pantalla_hash", "importe_tecleado", "canal", "segundo_factor"}):
+            return _no("O-27", "la autorización del operador exige su aprobación: pantalla_hash, importe_tecleado, canal y segundo_factor")
+        if p is None or _hash({k: v for k, v in p.items() if k not in ("hash", "usada")}) != p["hash"] or aprobacion["pantalla_hash"] != p["hash"]:
+            return _no("O-27", "la aprobación no corresponde a la pantalla con las cifras de F")
+        if p["usada"]:
+            return _no("O-03", "esa aprobación ya se usó")
+        if p["informe_f"] != control_f["event_id"] or p["informe_f_hash"] != _hash(control_f):
+            return _no("O-27", "la pantalla aprobada es de otro informe de F (o de otro contenido con el mismo identificador)")
+        if a > _dt(p["caduca_en"]):
+            return _no("O-10", "la aprobación caducó: no se actúa")
+        if a < _dt(p["enfriamiento_hasta"]):
+            return _no("O-28", f"enfriamiento hasta {p['enfriamiento_hasta']} ({', '.join(p['motivos_enfriamiento'])})")
+        cfg = self.cfg["aprobacion"]
+        if not _en_horario(a, cfg["horario_utc"]) and (a - _dt(p["generada_en"])).total_seconds() < cfg["enfriamiento_min"] * 60:
+            return _no("O-28", "la aprobación cae fuera de horario: espere el enfriamiento desde que se generó la pantalla")
+        imp = aprobacion["importe_tecleado"]
+        if not (_num(imp) and abs(imp - p["importe"]) < 0.005):
+            return _no("O-27", "el importe tecleado no coincide con el de la pantalla")
+        if aprobacion["canal"] not in self.cfg["aprobacion"]["canales"] or aprobacion["segundo_factor"] is not True:
+            return _no("O-05", "una acción que aumenta riesgo exige un canal de aprobación admitido (no el chat) y segundo factor")
+        return None
+
+    @_seguro
+    def autorizar(self, expediente_id, actor, control_f, ahora, aprobacion=None):
+        a = self._ahora(ahora)
+        e, err = self._exp(expediente_id)
+        if err:
+            return err
+        err = self._comprobar_autorizacion(e, expediente_id, actor, control_f, a, ahora)
+        if err:
+            return err
+        ih = _hash(control_f)
+        dup = self._duplicado(control_f["event_id"], ih, expediente_id, ahora)
+        if dup:
+            return _no("O-03", "el informe de F ya se usó")
+        if actor == "OPERADOR" and control_f["resultado"] != "VETADO":
+            err = self._comprobar_aprobacion(expediente_id, control_f, aprobacion, a)
+            if err:
+                return err
+            self.pantallas[expediente_id]["usada"] = True
         self.eventos[control_f["event_id"]] = {"hash": ih, "expediente_id": expediente_id}
         if control_f["resultado"] == "VETADO":
             return _no("O-06", "F vetó la propuesta")
         e["control_f"] = {"resultado": control_f["resultado"], "cantidad_aprobada": control_f["cantidad_aprobada"], "event_id": control_f["event_id"],
-                          "emitido_en": control_f["emitido_en"], "valid_until": control_f["valid_until"], "entradas": copy.deepcopy(control_f["entradas"])}
-        self._anota(e, e["estado"], "AUTORIZADA", actor, ahora, f"control F: {control_f['resultado']} ({control_f['cantidad_aprobada']})", control_f["event_id"])
+                          "emitido_en": control_f["emitido_en"], "valid_until": control_f["valid_until"], "entradas": copy.deepcopy(control_f["entradas"]),
+                          "aprobacion": ({k: v for k, v in self.pantallas[expediente_id].items() if k != "usada"} if actor == "OPERADOR" else None)}
+        self._anota(e, e["estado"], "AUTORIZADA", actor, ahora, f"control F: {control_f['resultado']} ({control_f['cantidad_aprobada']})", control_f["event_id"],
+                    datos=_hash(e["control_f"]))
         return _r(True, "OK", "autorizada")
 
     TRANS_ORDEN = {None: {"ENVIADA"}, "ENVIADA": {"PARCIAL", "EJECUTADA", "RECHAZADA", "CANCELADA"},
@@ -917,6 +1106,11 @@ class Orquestador:
         if estado == "DESHECHA":
             self.ordenes_usadas.append(orden_id)
         hist = (oe or {}).get("historial", [])
+        if estado == "ENVIADA" and self.kill is not None:
+            return _no("O-26", "kill-switch activo: no se envían órdenes de entrada")
+        aut = next((x["ahora"] for x in reversed(e["historial"]) if x["hasta"] == "AUTORIZADA" and x["desde"] != "AUTORIZADA"), None)
+        if estado == "ENVIADA" and aut and any(_dt(r["kill"]["ahora"]) >= _dt(aut) for r in self.rearmes):
+            return _no("O-26", "la autorización es anterior a un kill-switch: hay que volver a aprobar")
         if estado == "ENVIADA" and not self.autorizacion_vigente(e):
             return _no("O-05", f"la autorización fue automática y la cartera está ahora en {self.nivel(e['cartera_destino'])}: la confirma el operador")
         e["orden_entrada"] = {"orden_id": orden_id, "estado": estado, "cantidad_ejecutada": cantidad_ejecutada, "anteriores": anteriores,
@@ -1115,6 +1309,17 @@ class Orquestador:
                     self._anota(e, e["estado"], "CADUCADA", "ORQUESTADOR", ahora, "venció valid_until o la ventana de entrada")
                     self._aviso("O-10", f"expediente {eid} caducó sin decidirse", ahora, eid)
                     cambios.append(("expediente", eid, "CADUCADA"))
+        cfg_av = self.cfg["avisos"]
+        for av in self.avisos:   # CT-G-16: un aviso de prioridad alta sin acuse se reitera y, tras varias veces, escala
+            if av["prioridad"] == "ALTA" and av["acuse"] is None:
+                debidas = int((a - _dt(av["ahora"])).total_seconds() // (cfg_av["reiterar_min"] * 60))   # las que tocaban, aunque el barrido llegue tarde
+                if debidas > len(av["reiteraciones"]):
+                    av["reiteraciones"].append(ahora)
+                    av["reiteraciones_debidas"] = debidas
+                    cambios.append(("aviso_reiterado", av["id"], debidas))
+                if max(debidas, len(av["reiteraciones"])) >= cfg_av["escalar_tras"] and not av["escalado"]:
+                    av["escalado"], av["canal"] = True, cfg_av["canal_escalado"]
+                    cambios.append(("aviso_escalado", av["id"], cfg_av["canal_escalado"]))
         for sid, s in self.sellos.items():
             if s["estado"] == "VIGENTE" and estado_sello(s, str(a.astimezone(timezone.utc).date()), s["cartera"], self.cal_def) == "CADUCADO":
                 s["estado"] = "CADUCADO"

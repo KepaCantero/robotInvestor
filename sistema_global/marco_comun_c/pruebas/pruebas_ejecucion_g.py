@@ -12,7 +12,7 @@ sys.path.insert(0, str(AQUI))
 from ejecucion_g import BrokerSimulado, ConexionPerdida, _aviso, cartera_para_f, conciliar, ejecutar  # noqa: E402
 from consola import panel  # noqa: E402
 from pruebas_control_f import informe_f  # noqa: E402
-from pruebas_orquestador import AHORA, ENTRADA, OBJ, STOP, Arnes, hasta, nuevo  # noqa: E402
+from pruebas_orquestador import autorizar_op, AHORA, ENTRADA, OBJ, STOP, Arnes, hasta, nuevo  # noqa: E402
 
 HORA_DATOS = "2026-11-06T08:50:00+00:00"
 
@@ -57,7 +57,7 @@ def autorizado(entrada=None, salida=None, b=None, n=1, o=None):
     hasta(o, "PROPUESTA", n=n, entrada=entrada, salida=salida)
     b = b or broker()
     eid = f"EXP-{n:04d}"
-    r = o.autorizar(eid, "OPERADOR", informe_f(o, eid, n=n, cartera=cartera_para_f(b)), AHORA)
+    r = autorizar_op(o, eid, informe_f(o, eid, n=n, cartera=cartera_para_f(b)), AHORA)
     assert r["ok"], r
     return o, b
 
@@ -77,8 +77,8 @@ def main():
           or abs(cartera_para_f(b)["posiciones"][0]["valor_eur"] - 110.0) < 1e-9)
     # --- el segundo expediente ve la posición del primero
     hasta(o, "PROPUESTA", n=3)
-    h.rechaza("segunda_con_cartera_vacia_O01", o, lambda: o.autorizar("EXP-0003", "OPERADOR", informe_f(o, "EXP-0003", n=30), AHORA), "O-01", mutacion_permitida=True)
-    h.chk("segunda_con_cartera_del_intermediario_ok", o.autorizar("EXP-0003", "OPERADOR", informe_f(o, "EXP-0003", n=31, cartera=cartera_para_f(b)), AHORA)["ok"])
+    h.rechaza("segunda_con_cartera_vacia_O01", o, lambda: autorizar_op(o, "EXP-0003", informe_f(o, "EXP-0003", n=30), AHORA), "O-01", mutacion_permitida=True)
+    h.chk("segunda_con_cartera_del_intermediario_ok", autorizar_op(o, "EXP-0003", informe_f(o, "EXP-0003", n=31, cartera=cartera_para_f(b)), AHORA)["ok"])
     # --- fallos del intermediario
     o, b = autorizado(b=broker(caido=True) if False else None)
     b.caido = True
@@ -161,7 +161,7 @@ def main():
     # segunda posición sobre el mismo instrumento: no se envía nada
     o, b = autorizado(); ejecutar(o, "EXP-0001", b, AHORA)
     hasta(o, "PROPUESTA", n=3)
-    o.autorizar("EXP-0003", "OPERADOR", informe_f(o, "EXP-0003", n=40, cartera=cartera_para_f(b)), AHORA)
+    autorizar_op(o, "EXP-0003", informe_f(o, "EXP-0003", n=40, cartera=cartera_para_f(b)), AHORA)
     antes = dict(b.ordenes)
     r = ejecutar(o, "EXP-0003", b, AHORA)
     h.chk("segunda_posicion_en_el_mismo_instrumento_G06_sin_enviar", r["codigo"] == "G-06" and b.ordenes.keys() == antes.keys(), r)
