@@ -30,7 +30,8 @@ CARTERAS = ("TRADING", "TACTICA", "LARGO_PLAZO")
 CAMPOS = {"contrato", "version", "event_id", "producer", "emitido_en", "ejecutado_en", "cartera", "instrumento", "activo_base",
           "lado", "cantidad", "precio", "ref_intermediario", "motivo", "vinculo", "proteccion_ref", "comision_eur", "via_acceso"}
 OBLIGATORIOS = CAMPOS - {"proteccion_ref", "comision_eur", "via_acceso"}   # la vía es obligatoria salvo en una operación LIBRE (RM-05)
-VENTANA_DECLARACION_H = 72   # [PROPUESTO] lo no declarado en 72 h es discrepancia; un registro más antiguo se rechaza
+from parametros import PARAMETROS as _P   # noqa: E402
+VENTANA_DECLARACION_H = _P["manual_ventana_declaracion_horas"]   # [PROPUESTO] lo no declarado en 72 h es discrepancia; un registro más antiguo se rechaza
 
 
 def _num(x, minimo=None, estricto=True):

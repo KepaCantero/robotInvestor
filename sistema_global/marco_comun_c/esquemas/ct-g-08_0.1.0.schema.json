@@ -1,0 +1,138 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://robot-inversor.local/esquemas/ct-g-08/0.1.0",
+  "title": "CT-G-08 · Resultado de control de F",
+  "description": "Versión 0.1.0 (provisional, 0.x). F → Orquestador (G, Broker). Envoltura parcial: sin data_refs ni payload (T-47).",
+  "type": "object",
+  "properties": {
+    "event_id": {
+      "type": "string",
+      "pattern": "^[A-Za-z0-9._:/-]{1,64}\\Z"
+    },
+    "correlation_id": {
+      "type": "string",
+      "pattern": "^[A-Za-z0-9._:/-]{1,64}\\Z"
+    },
+    "expediente_id": {
+      "type": "string",
+      "pattern": "^[A-Za-z0-9._:/-]{1,64}\\Z"
+    },
+    "producer": {
+      "const": "F"
+    },
+    "consumer": {
+      "const": "ORQUESTADOR"
+    },
+    "tipo_mensaje": {
+      "const": "CT-G-08"
+    },
+    "version_esquema": {
+      "const": "0.1.0"
+    },
+    "emitido_en": {
+      "type": "string",
+      "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}(\\.\\d+)?(Z|[+-]\\d{2}:\\d{2})\\Z"
+    },
+    "valid_until": {
+      "type": "string",
+      "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}(\\.\\d+)?(Z|[+-]\\d{2}:\\d{2})\\Z"
+    },
+    "version_reglas": {
+      "type": "string",
+      "pattern": "^[A-Za-z0-9._:/-]{1,64}\\Z"
+    },
+    "propuesta_ref": {
+      "type": "object",
+      "properties": {
+        "expediente_id": {
+          "type": "string",
+          "pattern": "^[A-Za-z0-9._:/-]{1,64}\\Z"
+        },
+        "hash": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{64}\\Z"
+        }
+      },
+      "required": [
+        "expediente_id",
+        "hash"
+      ],
+      "additionalProperties": false
+    },
+    "entradas": {
+      "type": "object",
+      "properties": {
+        "solicitud": {
+          "type": "object"
+        },
+        "cartera": {
+          "type": "object"
+        },
+        "politica": {
+          "type": "object"
+        }
+      },
+      "required": [
+        "solicitud",
+        "cartera",
+        "politica"
+      ],
+      "additionalProperties": false
+    },
+    "resultado": {
+      "enum": [
+        "APROBADO",
+        "REDUCIDO",
+        "VETADO"
+      ]
+    },
+    "cantidad_aprobada": {
+      "type": "number",
+      "minimum": 0
+    },
+    "controles": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "regla": {
+            "type": "string",
+            "pattern": "^[A-Za-z0-9._:/-]{1,64}\\Z"
+          },
+          "resultado": {
+            "enum": [
+              "OK",
+              "REDUCE",
+              "VETA"
+            ]
+          },
+          "valor": {},
+          "limite": {}
+        },
+        "required": [
+          "regla",
+          "resultado"
+        ],
+        "additionalProperties": true
+      }
+    }
+  },
+  "required": [
+    "event_id",
+    "correlation_id",
+    "expediente_id",
+    "producer",
+    "consumer",
+    "tipo_mensaje",
+    "version_esquema",
+    "emitido_en",
+    "valid_until",
+    "version_reglas",
+    "propuesta_ref",
+    "entradas",
+    "resultado",
+    "cantidad_aprobada",
+    "controles"
+  ],
+  "additionalProperties": false
+}

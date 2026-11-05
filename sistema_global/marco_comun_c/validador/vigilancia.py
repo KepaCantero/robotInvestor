@@ -24,8 +24,9 @@ from ejecucion_g import _aviso, _instante, cerrar, conciliar, reducir, revisar_e
 from orquestador import OPERADORES
 from validar_sobre import _dt
 
-MAX_EDAD_MIN = 15   # [PROPUESTO]
-SALTO_MAX_H = 72    # [PROPUESTO] más allá, el instante recibido se considera sospechoso
+from parametros import PARAMETROS as _P   # noqa: E402
+MAX_EDAD_MIN = _P["h_max_edad_dato_min"]   # [PROPUESTO]
+SALTO_MAX_H = _P["h_salto_max_horas"]    # [PROPUESTO] más allá, el instante recibido se considera sospechoso
 
 
 def _valor_cumplido(c, pm):
@@ -54,7 +55,10 @@ def _dato_fresco(d, ahora, max_edad_min):
 
 
 def vigilar(o, broker, datos, ahora, max_edad_min=MAX_EDAD_MIN):
-    """datos: {instrumento: {"precio": número, "hora": ISO con zona}}. Devuelve las acciones y avisos de esta pasada."""
+    """datos: {instrumento: {"precio": número, "hora": ISO con zona}}. Devuelve las acciones y avisos de esta pasada.
+    max_edad_min solo puede ser más estricto que el parámetro (T-25): otro valor se ignora."""
+    if not (_num(max_edad_min) and 0 < max_edad_min <= MAX_EDAD_MIN):
+        max_edad_min = MAX_EDAD_MIN
     try:
         if o.ultimo_ahora and (_dt(ahora) - _dt(o.ultimo_ahora)).total_seconds() > SALTO_MAX_H * 3600:
             return {"acciones": [{"posicion": None, "regla": "H-09", "ok": False, "codigo": "H-09"}], "no_evaluadas": [], "conciliacion_ok": False,

@@ -379,7 +379,15 @@ def main():
     assert r["ok"], r
     r = R("comparar_cortes_distintos_O11", o, lambda: o.comparar(["EXP-0001", "EXP-0002"], "D", "2026-11-06T10:30:00+00:00"), "O-11")
     h.chk("O11_indica_que_datos_actualizar", r.get("actualizar") == ["EXP-0001"], r.get("actualizar"))
-    o.cfg["umbral_corte_comun_dias_habiles"] = 1
+    o_caliente = copy.deepcopy(o)
+    o_caliente.cfg["umbral_corte_comun_dias_habiles"] = 1   # cambiar la configuración en caliente se detecta (T-25)
+    r = o_caliente.comparar(["EXP-0001", "EXP-0002"], "D", "2026-11-06T10:30:00+00:00")
+    h.chk("configuracion_cambiada_en_caliente_O13", r["codigo"] == "O-13" and o_caliente.kill is not None and "CONFIG" in o_caliente.integridad(), r)
+    o = nuevo({"umbral_corte_comun_dias_habiles": 1}, sellos=(S1,)); hasta(o, "VALIDADA")
+    assert o.registrar_sello(S2, AHORA)["ok"]
+    o.detectar("EXP-0002", "COR-0002", "DISCRECIONAL", "TACTICA", "GESTOR_TACTICA", AHORA)
+    assert o.emitir_encargo("EXP-0002", encargo(2, corte="2026-11-06", sello="K-20261106-001"), "GESTOR_TACTICA", AHORA)["ok"]
+    assert o.entregar_sobre("EXP-0002", sobre(2, corte="2026-11-06", sello="K-20261106-001"), "2026-11-06T10:30:00+00:00")["ok"]
     h.chk("comparar_con_umbral_configurado_ok", o.comparar(["EXP-0001", "EXP-0002"], "D", "2026-11-06T10:30:00+00:00")["ok"])
 
     # ---------------------------------------------------------------- proponer / autorizar / ejecutar

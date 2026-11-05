@@ -1,0 +1,149 @@
+{
+  "version_registro": "REG-0.1.0",
+  "contratos": [
+    {
+      "tipo": "CT-G-01",
+      "nombre": "Encargo de análisis",
+      "de_a": "Broker/gestor → C",
+      "estado": "ESQUEMA",
+      "version": "0.1.0",
+      "esquema": "ct-g-01_0.1.0.schema.json",
+      "envoltura": "COMPLETA"
+    },
+    {
+      "tipo": "CT-G-02",
+      "nombre": "Sobre común de valoración",
+      "de_a": "C → verificación, D, Broker",
+      "estado": "ESQUEMA",
+      "version": "0.1.0",
+      "esquema": "ct-g-02_0.1.0.schema.json",
+      "envoltura": "COMPLETA"
+    },
+    {
+      "tipo": "CT-G-03",
+      "nombre": "Informe del Contradictor",
+      "de_a": "Contradictor → D, Broker",
+      "estado": "ESQUEMA",
+      "version": "0.1.0",
+      "esquema": "ct-g-03_0.1.0.schema.json",
+      "envoltura": "COMPLETA"
+    },
+    {
+      "tipo": "CT-G-04",
+      "nombre": "Petición de comparación",
+      "de_a": "Broker/gestor → D",
+      "estado": "ESQUEMA",
+      "version": "0.1.0",
+      "esquema": "ct-g-04_0.1.0.schema.json",
+      "envoltura": "COMPLETA"
+    },
+    {
+      "tipo": "CT-G-05",
+      "nombre": "Comparativa",
+      "de_a": "D → Broker/gestor",
+      "estado": "ESQUEMA",
+      "version": "0.1.0",
+      "esquema": "ct-g-05_0.1.0.schema.json",
+      "envoltura": "COMPLETA"
+    },
+    {
+      "tipo": "CT-G-06",
+      "nombre": "Propuesta de inversión",
+      "de_a": "Broker/gestor → E",
+      "estado": "ESQUEMA",
+      "version": "0.1.0",
+      "esquema": "ct-g-06_0.1.0.schema.json",
+      "envoltura": "COMPLETA"
+    },
+    {
+      "tipo": "CT-G-07",
+      "nombre": "Plan de cartera por libro",
+      "de_a": "E → F",
+      "estado": "PENDIENTE",
+      "version": null,
+      "esquema": null,
+      "motivo": "E solo dimensiona una propuesta; el plan por libro es de Fase 2"
+    },
+    {
+      "tipo": "CT-G-08",
+      "nombre": "Resultado de control",
+      "de_a": "F → G, Broker",
+      "estado": "ESQUEMA",
+      "version": "0.1.0",
+      "esquema": "ct-g-08_0.1.0.schema.json",
+      "envoltura": "PARCIAL"
+    },
+    {
+      "tipo": "CT-G-09",
+      "nombre": "Orden con su protección",
+      "de_a": "E/F → G",
+      "estado": "ESQUEMA",
+      "version": "0.1.0",
+      "esquema": "ct-g-09_0.1.0.schema.json",
+      "envoltura": "COMPLETA"
+    },
+    {
+      "tipo": "CT-G-10",
+      "nombre": "Alerta o petición de revisión de posición",
+      "de_a": "H → Broker/gestor",
+      "estado": "ESQUEMA",
+      "version": "0.1.0",
+      "esquema": "ct-g-10_0.1.0.schema.json",
+      "envoltura": "COMPLETA"
+    },
+    {
+      "tipo": "CT-G-11",
+      "nombre": "Consulta al Broker o al operador",
+      "de_a": "Cualquiera → Broker",
+      "estado": "PENDIENTE",
+      "version": null,
+      "esquema": null,
+      "motivo": "sin bloque que la emita en Fase 1"
+    },
+    {
+      "tipo": "CT-G-12",
+      "nombre": "Seguimiento de encargo",
+      "de_a": "Bloque → Orquestador",
+      "estado": "PENDIENTE",
+      "version": null,
+      "esquema": null,
+      "motivo": "hoy el gasto se registra con registrar_gasto, sin mensaje"
+    },
+    {
+      "tipo": "CT-G-13",
+      "nombre": "Propuesta de cambio y veredicto de validación",
+      "de_a": "I → J → operador",
+      "estado": "PENDIENTE",
+      "version": null,
+      "esquema": null,
+      "motivo": "bloques I y J no construidos"
+    },
+    {
+      "tipo": "CT-G-14",
+      "nombre": "Registro de ejecución manual",
+      "de_a": "Operador → G",
+      "estado": "ESQUEMA",
+      "version": "0.1.0",
+      "esquema": "ct-g-14_0.1.0.schema.json",
+      "envoltura": "PROPIA"
+    },
+    {
+      "tipo": "CT-G-15",
+      "nombre": "Estrategia validada y universo admitido",
+      "de_a": "J → E, F",
+      "estado": "PENDIENTE",
+      "version": null,
+      "esquema": null,
+      "motivo": "bloque J no construido"
+    },
+    {
+      "tipo": "CT-G-16",
+      "nombre": "Aviso al operador",
+      "de_a": "Orquestador → operador",
+      "estado": "ESQUEMA",
+      "version": "0.1.0",
+      "esquema": "ct-g-16_0.1.0.schema.json",
+      "envoltura": "COMPLETA"
+    }
+  ]
+}

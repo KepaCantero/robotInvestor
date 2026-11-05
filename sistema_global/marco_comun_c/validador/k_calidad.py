@@ -23,20 +23,22 @@ from validar_sobre import _dt, cargar_json  # noqa: E402
 
 VERSION_REGLAS = "Q-0.1.0"
 REGLAS = [f"Q-{i:02d}" for i in range(1, 14)]
-TOPE_ANTIGUEDAD = {"TRADING": 1, "TACTICA": 1, "LARGO_PLAZO": 5}   # días hábiles [PROPUESTO]
-SALTO_ADV, SALTO_BLOQ = 0.20, 0.50                                   # Q-04
-HUECO_ADV, HUECO_BLOQ = 0.02, 0.10                                   # Q-05
-CRUCE_ADV, CRUCE_BLOQ = 0.001, 0.01                                  # Q-09
+from parametros import PARAMETROS as _P   # noqa: E402  (valores [PROPUESTO] versionados, T-25)
+
+TOPE_ANTIGUEDAD = dict(_P["k_tope_antiguedad_dias_habiles"])   # días hábiles [PROPUESTO]
+SALTO_ADV, SALTO_BLOQ = _P["k_salto_adv_bloq"]                       # Q-04
+HUECO_ADV, HUECO_BLOQ = _P["k_hueco_adv_bloq"]                       # Q-05
+CRUCE_ADV, CRUCE_BLOQ = _P["k_cruce_adv_bloq"]                       # Q-09
 TIPOS_AJUSTE = {"SPLIT", "DIVIDENDO", "SIMBOLO"}
 ORDEN = {"OK": 0, "ADVERTENCIA": 1, "BLOQUEO": 2}
 _FECHA_RE = re.compile(r"^\d{4}-\d{2}-\d{2}\Z")
 _FECHAHORA_RE = re.compile(r"^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(\.\d+)?(Z|[+-]\d{2}:\d{2})\Z")
 ID_RE = re.compile(r"^[A-Za-z0-9._:/-]{1,64}\Z")
 SELLO_RE = re.compile(r"^K-\d{8}-\d{3}\Z")
-MIN_OBS = 20            # observaciones mínimas por fuente [PROPUESTO]
-RANGO_MAX = 1.5         # máximo/mínimo intradía admisible (Q-07) [PROPUESTO]
-VENTANA_ACUM = 5        # observaciones de la ventana de movimiento acumulado (Q-04)
-AJUSTE_TOL = 0.10       # tolerancia relativa entre factor del ajuste y salto observado
+MIN_OBS = _P["k_min_observaciones"]            # observaciones mínimas por fuente [PROPUESTO]
+RANGO_MAX = _P["k_rango_max_intradia"]         # máximo/mínimo intradía admisible (Q-07) [PROPUESTO]
+VENTANA_ACUM = _P["k_ventana_acumulado_obs"]   # observaciones de la ventana de movimiento acumulado (Q-04)
+AJUSTE_TOL = _P["k_ajuste_tol_rel"]            # tolerancia relativa entre factor del ajuste y salto observado
 MAX_SERIE, MAX_FUENTES = 20000, 100
 CLAVES_OBS = {"fecha", "apertura", "maximo", "minimo", "cierre", "volumen"}
 CLAVES_FUENTE = {"fuente_id", "instrumento", "version_conjunto", "serie", "critico", "contraste",

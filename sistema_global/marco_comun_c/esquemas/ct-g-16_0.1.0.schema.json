@@ -1,0 +1,184 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://robot-inversor.local/esquemas/ct-g-16/0.1.0",
+  "title": "CT-G-16 · Aviso al operador",
+  "description": "Versión 0.1.0 (provisional, 0.x). Orquestador → Operador. Envoltura común de la Constitución.",
+  "type": "object",
+  "properties": {
+    "event_id": {
+      "type": "string",
+      "pattern": "^[A-Za-z0-9._:/-]{1,64}\\Z"
+    },
+    "correlation_id": {
+      "anyOf": [
+        {
+          "type": "string",
+          "pattern": "^[A-Za-z0-9._:/-]{1,64}\\Z"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "expediente_id": {
+      "anyOf": [
+        {
+          "type": "string",
+          "pattern": "^[A-Za-z0-9._:/-]{1,64}\\Z"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "producer": {
+      "const": "ORQUESTADOR"
+    },
+    "consumer": {
+      "const": "OPERADOR"
+    },
+    "tipo_mensaje": {
+      "const": "CT-G-16"
+    },
+    "version_esquema": {
+      "const": "0.1.0"
+    },
+    "emitido_en": {
+      "type": "string",
+      "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}(\\.\\d+)?(Z|[+-]\\d{2}:\\d{2})\\Z"
+    },
+    "valid_until": {
+      "anyOf": [
+        {
+          "type": "string",
+          "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}(\\.\\d+)?(Z|[+-]\\d{2}:\\d{2})\\Z"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "data_refs": {
+      "type": "array",
+      "uniqueItems": true,
+      "items": {
+        "type": "string",
+        "minLength": 1
+      }
+    },
+    "payload": {
+      "type": "object",
+      "properties": {
+        "aviso_id": {
+          "type": "string",
+          "pattern": "^[A-Za-z0-9._:/-]{1,64}\\Z"
+        },
+        "codigo": {
+          "type": "string",
+          "pattern": "^O-\\d{2}\\Z"
+        },
+        "prioridad": {
+          "enum": [
+            "ALTA",
+            "MEDIA"
+          ]
+        },
+        "motivo": {
+          "type": "string",
+          "pattern": "\\S"
+        },
+        "ref": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "carteras": {
+          "anyOf": [
+            {
+              "type": "array",
+              "uniqueItems": true,
+              "items": {
+                "enum": [
+                  "TRADING",
+                  "TACTICA",
+                  "LARGO_PLAZO"
+                ]
+              }
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "canal": {
+          "type": "string",
+          "minLength": 1
+        },
+        "acuse": {
+          "anyOf": [
+            {
+              "type": "object",
+              "properties": {
+                "actor": {
+                  "type": "string",
+                  "pattern": "^[A-Za-z0-9._:/-]{1,64}\\Z"
+                },
+                "ahora": {
+                  "type": "string",
+                  "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}(\\.\\d+)?(Z|[+-]\\d{2}:\\d{2})\\Z"
+                }
+              },
+              "required": [
+                "actor",
+                "ahora"
+              ],
+              "additionalProperties": false
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "reiteraciones": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "escalado": {
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "aviso_id",
+        "codigo",
+        "prioridad",
+        "motivo",
+        "ref",
+        "carteras",
+        "canal",
+        "acuse",
+        "reiteraciones",
+        "escalado"
+      ],
+      "additionalProperties": false
+    }
+  },
+  "required": [
+    "event_id",
+    "correlation_id",
+    "expediente_id",
+    "producer",
+    "consumer",
+    "tipo_mensaje",
+    "version_esquema",
+    "emitido_en",
+    "valid_until",
+    "data_refs",
+    "payload"
+  ],
+  "additionalProperties": false
+}
