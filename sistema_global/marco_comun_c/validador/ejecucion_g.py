@@ -13,7 +13,7 @@ import math
 import re
 
 from control_f import ERRORES, divisa_cotizada, par_divisas
-from manual_g import neto_libre, via_norm
+from manual_g import aplanar_manual, neto_libre, via_norm
 from validar_sobre import _dt
 
 ID = re.compile(r"^[A-Za-z0-9._:/-]{1,64}\Z")
@@ -877,22 +877,27 @@ def declarar_manual(o, registro, broker, ahora):
     Códigos: OK y los del Orquestador; G-01 sin conexión; G-10 lo declarado no cuadra con el intermediario."""
     if not isinstance(registro, dict):
         return _r(False, "G-10", "el registro no es un objeto")
+    plano = aplanar_manual(registro)   # T-47: CT-G-14 0.2.0
+    # antes de consultar o tocar el intermediario, el Orquestador dice (sin efectos) si lo rechazaría; si es así, decide él
+    # con sus efectos de diseño (duplicado, integridad) y G no cancela ni consulta nada
+    if plano is None or o.comprobar_manual(registro, _instante(o, ahora)) is not None:
+        return o.registrar_manual(registro, _instante(o, ahora))
     try:
-        v = registro.get("vinculo") if isinstance(registro.get("vinculo"), dict) else {}
-        c = broker.consultar(registro.get("ref_intermediario")) if isinstance(registro.get("ref_intermediario"), str) else None
-        if not (c and c["estado"] in ("EJECUTADA", "PARCIAL") and c.get("instrumento") == registro.get("instrumento")
-                and c["lado"] == registro.get("lado") and _cuadra(c["cantidad_ejecutada"], registro.get("cantidad"))
-                and _cuadra(c["precio_medio"], registro.get("precio"))
-                and (v.get("tipo") == "LIBRE" or via_norm(c.get("via_acceso")) == via_norm(registro.get("via_acceso")))):
+        v = plano.get("vinculo") if isinstance(plano.get("vinculo"), dict) else {}
+        c = broker.consultar(plano.get("ref_intermediario")) if isinstance(plano.get("ref_intermediario"), str) else None
+        if not (c and c["estado"] in ("EJECUTADA", "PARCIAL") and c.get("instrumento") == plano.get("instrumento")
+                and c["lado"] == plano.get("lado") and _cuadra(c["cantidad_ejecutada"], plano.get("cantidad"))
+                and _cuadra(c["precio_medio"], plano.get("precio"))
+                and (v.get("tipo") == "LIBRE" or via_norm(c.get("via_acceso")) == via_norm(plano.get("via_acceso")))):
             return _r(False, "G-10", "el intermediario no tiene esa orden ejecutada con ese instrumento, sentido, cantidad, precio y vía de acceso")
         if v.get("tipo") == "EXPEDIENTE":
             e = o.expedientes.get(v.get("id"))
-            s = broker.consultar(registro.get("proteccion_ref")) if isinstance(registro.get("proteccion_ref"), str) else None
+            s = broker.consultar(plano.get("proteccion_ref")) if isinstance(plano.get("proteccion_ref"), str) else None
             stop = next((x for x in e["propuesta"]["salida"]["condiciones"] if x["tipo"] == "STOP"), None) if e and e.get("propuesta") else None
-            lado_s = "VENTA" if registro.get("lado") == "COMPRA" else "COMPRA"
-            if not (s and stop and s["estado"] == "ACEPTADA" and s["tipo"] == "STOP" and s["lado"] == lado_s and s.get("instrumento") == registro.get("instrumento")
-                    and via_norm(s.get("via_acceso")) == via_norm(registro.get("via_acceso"))
-                    and _cuadra(s["cantidad"], registro.get("cantidad")) and s["precio"] == stop["umbral"]):
+            lado_s = "VENTA" if plano.get("lado") == "COMPRA" else "COMPRA"
+            if not (s and stop and s["estado"] == "ACEPTADA" and s["tipo"] == "STOP" and s["lado"] == lado_s and s.get("instrumento") == plano.get("instrumento")
+                    and via_norm(s.get("via_acceso")) == via_norm(plano.get("via_acceso"))
+                    and _cuadra(s["cantidad"], plano.get("cantidad")) and s["precio"] == stop["umbral"]):
                 return _r(False, "G-10", "la orden de protección no está viva en el intermediario o no es el stop de la propuesta")
         elif v.get("tipo") == "POSICION":
             p = o.posiciones.get(v.get("id"))

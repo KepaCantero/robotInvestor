@@ -1,4 +1,4 @@
-"""F — control de riesgo previo a la autorización (CT-G-08, reglas de control F-01..F-11 y de verificación CF-01..CF-07).
+"""F — control de riesgo previo a la autorización (CT-G-08 0.2.0 con la envoltura común desde T-47, reglas de control F-01..F-11 y de verificación CF-01..CF-07).
 
 Determinista, sin LLM, sin red. F calcula su propia exposición a partir de la cartera que recibe; no consume M.
 `controlar` aplica las reglas y devuelve el informe; `validar_informe_f` lo verifica sin fiarse de él: lo
@@ -172,18 +172,56 @@ def _controlar(sol, cart, pol, ahora):
     return {"resultado": "REDUCIDO" if aprobada < q else "APROBADO", "cantidad_aprobada": aprobada, "controles": ctl}
 
 
+VERSION_ESQUEMA = "0.2.0"   # T-47: envoltura común (data_refs, payload, resultado_politica); la 0.1.0 plana está retirada
+
+
+def motivo_de(resultado, controles) -> str:
+    """Motivo del resultado, deducido de los controles (determinista: CF-04 lo recalcula)."""
+    if resultado == "VETADO":
+        c = next((x for x in controles if x.get("resultado") == "VETA"), None)
+        return f"veta {c['regla']}" + (f": {c['motivo']}" if c and c.get("motivo") else "") if c else "veta"
+    if resultado == "REDUCIDO":
+        return "reduce " + ", ".join(x["regla"] for x in controles if x.get("resultado") == "REDUCE")
+    return "todos los controles en OK"
+
+
 def construir_informe(event_id, expediente_id, correlation_id, propuesta, sol, cart, pol, emitido_en, valid_until) -> dict:
+    """CT-G-08 0.2.0 con la envoltura común."""
     r = controlar(sol, cart, pol, emitido_en)
     return {"event_id": event_id, "correlation_id": correlation_id, "expediente_id": expediente_id, "producer": "F",
-            "consumer": "ORQUESTADOR", "tipo_mensaje": "CT-G-08", "version_esquema": "0.1.0", "emitido_en": emitido_en,
-            "valid_until": valid_until, "version_reglas": VERSION_REGLAS,
-            "propuesta_ref": {"expediente_id": expediente_id, "hash": hash_contenido(propuesta)},
-            "entradas": {"solicitud": sol, "cartera": cart, "politica": pol},
-            "resultado": r["resultado"], "cantidad_aprobada": r["cantidad_aprobada"], "controles": r["controles"]}
+            "consumer": "ORQUESTADOR", "tipo_mensaje": "CT-G-08", "version_esquema": VERSION_ESQUEMA, "emitido_en": emitido_en,
+            "valid_until": valid_until, "data_refs": [],
+            "payload": {"propuesta_ref": {"expediente_id": expediente_id, "hash": hash_contenido(propuesta)},
+                        "entradas": {"solicitud": sol, "cartera": cart, "politica": pol},
+                        "cantidad_aprobada": r["cantidad_aprobada"]},
+            "resultado_politica": {"version_politica": VERSION_REGLAS, "resultado": r["resultado"],
+                                   "motivo": motivo_de(r["resultado"], r["controles"]), "controles": r["controles"]}}
 
 
+ENVOLTURA = {"event_id", "correlation_id", "expediente_id", "producer", "consumer", "tipo_mensaje", "version_esquema", "emitido_en",
+             "valid_until", "data_refs", "payload", "resultado_politica"}
+CAMPOS_PAYLOAD = {"propuesta_ref", "entradas", "cantidad_aprobada"}
+CAMPOS_POLITICA = {"version_politica", "resultado", "motivo", "controles"}
+# forma interna plana (la que usan el Orquestador y G); no es un mensaje
 CAMPOS = {"event_id", "correlation_id", "expediente_id", "producer", "consumer", "tipo_mensaje", "version_esquema", "emitido_en",
-          "valid_until", "version_reglas", "propuesta_ref", "entradas", "resultado", "cantidad_aprobada", "controles"}
+          "valid_until", "version_reglas", "propuesta_ref", "entradas", "resultado", "cantidad_aprobada", "controles", "motivo"}
+
+
+def aplanar_informe(inf):
+    """Del mensaje CT-G-08 0.2.0 a la forma interna plana. None si no tiene exactamente la forma de la envoltura (no lanza)."""
+    try:
+        if not (isinstance(inf, dict) and set(inf) == ENVOLTURA and inf["version_esquema"] == VERSION_ESQUEMA
+                and inf["tipo_mensaje"] == "CT-G-08" and inf["data_refs"] == []
+                and isinstance(inf["payload"], dict) and set(inf["payload"]) == CAMPOS_PAYLOAD
+                and isinstance(inf["resultado_politica"], dict) and set(inf["resultado_politica"]) == CAMPOS_POLITICA):
+            return None
+        pl, rp = inf["payload"], inf["resultado_politica"]
+        return {**{k: inf[k] for k in ("event_id", "correlation_id", "expediente_id", "producer", "consumer", "tipo_mensaje",
+                                       "version_esquema", "emitido_en", "valid_until")},
+                "version_reglas": rp["version_politica"], "propuesta_ref": pl["propuesta_ref"], "entradas": pl["entradas"],
+                "resultado": rp["resultado"], "cantidad_aprobada": pl["cantidad_aprobada"], "controles": rp["controles"], "motivo": rp["motivo"]}
+    except ERRORES:
+        return None
 
 
 def validar_informe_f(inf, ctx) -> list[dict]:
@@ -202,16 +240,19 @@ def _validar(inf, ctx):
         fallos.append({"regla": regla, "mensaje": m})
 
     ahora, prop = _dt(ctx["ahora"]), ctx["propuesta"]
-    if not (isinstance(inf, dict) and set(inf) == CAMPOS):
-        return [{"regla": "CF-01", "mensaje": "campos distintos de los exigidos"}]
+    if isinstance(inf, dict) and inf.get("version_esquema") != VERSION_ESQUEMA:
+        return [{"regla": "CF-01", "mensaje": f"versión de CT-G-08 no admitida: {str(inf.get('version_esquema'))[:20]} (vigente {VERSION_ESQUEMA})"}]
+    inf = aplanar_informe(inf)
+    if inf is None:
+        return [{"regla": "CF-01", "mensaje": "campos distintos de los exigidos (envoltura, payload, resultado_politica o data_refs)"}]
     if not (inf["producer"] == "F" and inf["consumer"] == "ORQUESTADOR" and inf["tipo_mensaje"] == "CT-G-08"
-            and inf["version_esquema"] == "0.1.0" and inf["version_reglas"] == VERSION_REGLAS
+            and inf["version_esquema"] == VERSION_ESQUEMA and inf["version_reglas"] == VERSION_REGLAS
             and isinstance(inf["event_id"], str) and ID.match(inf["event_id"])
             and inf["resultado"] in ("APROBADO", "REDUCIDO", "VETADO") and _num(inf["cantidad_aprobada"], 0)
             and isinstance(inf["emitido_en"], str) and FH.match(inf["emitido_en"]) and isinstance(inf["valid_until"], str) and FH.match(inf["valid_until"])
             and isinstance(inf["entradas"], dict) and set(inf["entradas"]) == {"solicitud", "cartera", "politica"}
             and isinstance(inf["propuesta_ref"], dict) and set(inf["propuesta_ref"]) == {"expediente_id", "hash"}
-            and isinstance(inf["controles"], list)):
+            and isinstance(inf["controles"], list) and isinstance(inf["motivo"], str)):
         return [{"regla": "CF-01", "mensaje": "forma inválida"}]
     # CF-02 el informe es de esta propuesta
     if (inf["expediente_id"] != ctx["expediente_id"] or inf["correlation_id"] != ctx["correlation_id"]
@@ -243,8 +284,9 @@ def _validar(inf, ctx):
             f("CF-05", "la solicitud no coincide con la propuesta (límite, stop, dirección, cartera, instrumento, activo base, divisa de cotización, apalancamiento y cantidad)")
     # CF-04 se recalcula con las mismas entradas
     r = controlar(sol, inf["entradas"]["cartera"], inf["entradas"]["politica"], inf["emitido_en"])
-    if (r["resultado"], r["cantidad_aprobada"], r["controles"]) != (inf["resultado"], inf["cantidad_aprobada"], inf["controles"]):
-        f("CF-04", "el resultado no es el que dan las reglas con esas entradas")
+    if (r["resultado"], r["cantidad_aprobada"], r["controles"], motivo_de(r["resultado"], r["controles"])) \
+            != (inf["resultado"], inf["cantidad_aprobada"], inf["controles"], inf["motivo"]):
+        f("CF-04", "el resultado (o su motivo) no es el que dan las reglas con esas entradas")
     # CF-08 la cartera debe incluir todo lo que el Orquestador ya tiene comprometido en esa cartera
     pos = inf["entradas"]["cartera"].get("posiciones") if isinstance(inf["entradas"]["cartera"], dict) else None
     if isinstance(pos, list):

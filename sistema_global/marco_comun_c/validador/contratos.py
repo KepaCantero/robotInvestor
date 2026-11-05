@@ -1,7 +1,7 @@
 """Contratos CT-G como esquemas (T-25): validación de cualquier mensaje por su tipo y versión, y construcción de los mensajes
 que el sistema produce a partir del estado real del Orquestador.
 
-Reglas: CT-01 forma (no es un objeto o le falta tipo y versión); CT-02 contrato pendiente o versión sin esquema;
+Reglas: CT-01 forma (no es un objeto o le falta tipo y versión); CT-02 contrato pendiente, versión sin esquema o retirada;
 CT-03 no cumple el esquema (ruta y motivo); CT-04 la envoltura no es coherente (valid_until anterior a emitido_en).
 Nunca lanza excepciones.
 """
@@ -17,6 +17,7 @@ from pathlib import Path
 
 from jsonschema import Draft202012Validator
 
+from manual_g import envolver_manual
 from validar_sobre import _dt
 
 ESQUEMAS = Path(__file__).resolve().parent.parent / "esquemas"
@@ -40,14 +41,16 @@ def _f(regla, ruta, mensaje):
     return {"regla": regla, "ruta": ruta, "mensaje": mensaje}
 
 
-def validar(msg) -> list[dict]:
+def validar(msg, historico=False) -> list[dict]:
+    """Valida un mensaje contra el esquema de su tipo y versión. Solo la versión VIGENTE pasa; una RETIRADA es CT-02 salvo
+    con historico=True (para leer el archivo, nunca para actuar)."""
     try:
-        return _validar(msg)
+        return _validar(msg, historico)
     except Exception as e:   # noqa: BLE001 - un mensaje mal formado nunca rompe al que valida
         return [_f("CT-01", "(interno)", f"{type(e).__name__}")]
 
 
-def _validar(msg):
+def _validar(msg, historico):
     if not isinstance(msg, dict):
         return [_f("CT-01", "", "el mensaje no es un objeto")]
     tipo = msg.get("tipo_mensaje", msg.get("contrato"))
@@ -59,10 +62,13 @@ def _validar(msg):
         return [_f("CT-02", "tipo_mensaje", f"contrato desconocido: {tipo}")]
     if c["estado"] != "ESQUEMA":
         return [_f("CT-02", "tipo_mensaje", f"{tipo} está pendiente: {c['motivo']}")]
-    if c["version"] != version:
+    v = next((x for x in c["versiones"] if x["version"] == version), None)
+    if v is None:
         return [_f("CT-02", "version_esquema", f"{tipo} no tiene esquema para la versión {version} (vigente {c['version']})")]
+    if v["estado"] != "VIGENTE" and not historico:
+        return [_f("CT-02", "version_esquema", f"{tipo} {version} está retirada (vigente {c['version']}): solo se lee como histórico")]
     fallos = [_f("CT-03", "/".join(str(p) for p in e.absolute_path), e.message[:200])
-              for e in sorted(_validador(c["esquema"]).iter_errors(msg), key=lambda e: [str(p) for p in e.absolute_path])]
+              for e in sorted(_validador(v["esquema"]).iter_errors(msg), key=lambda e: [str(p) for p in e.absolute_path])]
     fallos += _fechas_imposibles(msg, "")   # el esquema solo mira los dígitos: 30 de febrero o 25:61 no son fechas
     if not fallos and msg.get("valid_until") and _dt(msg["valid_until"]) < _dt(msg["emitido_en"]):
         fallos.append(_f("CT-04", "valid_until", "vence antes de emitirse"))
@@ -190,3 +196,18 @@ def aviso(o, aviso_id):
                  "escalado": a["escalado"]},
                 correlation_id=o.expedientes[a["ref"]]["correlation_id"] if a["ref"] in o.expedientes else None,
                 expediente_id=a["ref"] if a["ref"] in o.expedientes else None)
+
+
+def registro_manual(o, campos, event_id, emitido_en):
+    """CT-G-14 0.2.0 para la consola del operador: la identidad del caso (expediente_id, correlation_id) sale del vínculo y del
+    estado del Orquestador; en una operación LIBRE va nula. Si el vínculo no existe, la identidad queda nula y el Orquestador
+    lo rechaza (RM-04)."""
+    v = campos.get("vinculo") if isinstance(campos, dict) else None
+    vid = v.get("id") if isinstance(v, dict) and isinstance(v.get("id"), str) else None   # lo mal formado queda sin identidad: RM-01/RM-11
+    eid = None
+    if vid is not None and v.get("tipo") == "EXPEDIENTE" and vid in o.expedientes:
+        eid = vid
+    elif vid is not None and v.get("tipo") == "POSICION" and vid in o.posiciones:
+        eid = o.posiciones[vid].get("expediente_id")
+    cid = o.expedientes[eid]["correlation_id"] if isinstance(eid, str) and eid in o.expedientes else None
+    return envolver_manual(campos if isinstance(campos, dict) else {}, event_id, emitido_en, expediente_id=eid if cid else None, correlation_id=cid)

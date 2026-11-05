@@ -3,7 +3,8 @@
 Uso: python3 esquemas/generar_esquemas_contratos.py   (escribe los ficheros en esta carpeta)
 
 Envoltura común (Constitución, «sobre común»): event_id, correlation_id, expediente_id, producer, consumer, tipo_mensaje,
-version_esquema, emitido_en, valid_until, data_refs, payload y, si lo hay, resultado_politica. Los esquemas comprueban la
+version_esquema, emitido_en, valid_until, data_refs, payload y, si lo hay, resultado_politica. Desde T-47 (REG-0.2.0) todos los
+contratos con esquema la usan y el registro admite varias versiones por contrato (VIGENTE o RETIRADA). Los esquemas comprueban la
 FORMA; las reglas que cruzan campos o miran el estado del sistema las aplican el Orquestador y los validadores de cada bloque.
 """
 import json
@@ -30,7 +31,8 @@ def obj(props, required=None, extra=False):
             "additionalProperties": extra}
 
 
-def envoltura(tipo, version, titulo, de, a, payload, producer, consumer, con_expediente=True, con_vigencia=True, politica=False):
+def envoltura(tipo, version, titulo, de, a, payload, producer, consumer, con_expediente=True, con_vigencia=True, politica=False,
+              data_refs=None, sin_vigencia=False):
     props = {
         "event_id": ID,
         "correlation_id": ID if con_expediente else ID_O_NULO,
@@ -38,14 +40,13 @@ def envoltura(tipo, version, titulo, de, a, payload, producer, consumer, con_exp
         "producer": producer, "consumer": consumer,
         "tipo_mensaje": {"const": tipo}, "version_esquema": {"const": version},
         "emitido_en": FH,
-        "valid_until": FH if con_vigencia else {"anyOf": [FH, {"type": "null"}]},
-        "data_refs": {"type": "array", "uniqueItems": True, "items": REF},
+        "valid_until": {"type": "null"} if sin_vigencia else FH if con_vigencia else {"anyOf": [FH, {"type": "null"}]},
+        "data_refs": data_refs or {"type": "array", "uniqueItems": True, "items": REF},
         "payload": payload,
     }
-    req = list(props)
     if politica:
-        props["resultado_politica"] = obj({"controles": {"type": "array", "items": ID}, "resultado": {"enum": ["APROBADO", "RECHAZADO"]},
-                                           "version_politica": ID})
+        props["resultado_politica"] = politica
+    req = list(props)
     return {"$schema": "https://json-schema.org/draft/2020-12/schema",
             "$id": f"https://robot-inversor.local/esquemas/{tipo.lower()}/{version}",
             "title": f"{tipo} · {titulo}",
@@ -59,15 +60,15 @@ CONDICION = {**obj({"id": ID, "tipo": {"enum": ["STOP", "OBJETIVO", "INVALIDEZ"]
              "if": {"required": ["fraccion"]}, "then": {"properties": {"tipo": {"const": "OBJETIVO"}}}}   # solo un OBJETIVO reduce
 REFERENCIA = obj({"benchmark_ref": ID, "rentabilidad_anual_pct": {"type": "number", "minimum": -5, "maximum": 50}})
 
-ESQUEMAS = {}
+ESQUEMAS = {}   # (tipo, versión) -> esquema
 
-ESQUEMAS["CT-G-04"] = envoltura(
+ESQUEMAS[("CT-G-04", "0.1.0")] = envoltura(
     "CT-G-04", "0.1.0", "Petición de comparación", "Broker/gestor", "D",
     obj({"cartera": CARTERA, "expedientes": {"type": "array", "minItems": 1, "uniqueItems": True, "items": ID},
          "referencia": REFERENCIA, "testigos": {"type": "array", "uniqueItems": True, "items": ID}}),
     producer={"enum": ["BROKER", "GESTOR_TRADING", "GESTOR_TACTICA", "GESTOR_LARGO_PLAZO"]}, consumer={"const": "D"}, con_expediente=False)
 
-ESQUEMAS["CT-G-05"] = envoltura(
+ESQUEMAS[("CT-G-05", "0.1.0")] = envoltura(
     "CT-G-05", "0.1.0", "Comparativa", "D", "Broker/gestor",
     obj({"comparacion_id": ID, "cartera": CARTERA, "codigo_d": ID, "decision_global": {"enum": ["INVERTIR", "ABSTENERSE"]},
          "referencia": REFERENCIA,
@@ -79,7 +80,7 @@ ESQUEMAS["CT-G-05"] = envoltura(
     producer={"const": "D"}, consumer={"enum": ["BROKER", "GESTOR_TRADING", "GESTOR_TACTICA", "GESTOR_LARGO_PLAZO", "ORQUESTADOR"]},
     con_expediente=False)
 
-ESQUEMAS["CT-G-06"] = envoltura(
+ESQUEMAS[("CT-G-06", "0.1.0")] = envoltura(
     "CT-G-06", "0.1.0", "Propuesta de inversión", "Broker/gestor", "E",
     obj({"cartera": CARTERA,
          "entrada": obj({"limite": POS, "ventana_hasta": FH, "instrumento": ID, "activo_base": ID, "via_acceso": TXT,
@@ -92,10 +93,10 @@ ESQUEMAS["CT-G-06"] = envoltura(
     producer={"enum": ["BROKER", "GESTOR_TRADING", "GESTOR_TACTICA", "GESTOR_LARGO_PLAZO"]}, consumer={"const": "E"})
 
 CONTROL = obj({"regla": ID, "resultado": {"enum": ["OK", "REDUCE", "VETA"]}, "valor": {}, "limite": {}}, required=["regla", "resultado"], extra=True)
-ESQUEMAS["CT-G-08"] = {   # 0.1.0: envoltura parcial (sin data_refs ni payload); la migración a la envoltura completa queda para 0.2.0 (T-47)
+ESQUEMAS[("CT-G-08", "0.1.0")] = {   # 0.1.0 RETIRADA: envoltura parcial (sin data_refs ni payload); se conserva para leer el histórico
     "$schema": "https://json-schema.org/draft/2020-12/schema", "$id": "https://robot-inversor.local/esquemas/ct-g-08/0.1.0",
     "title": "CT-G-08 · Resultado de control de F",
-    "description": "Versión 0.1.0 (provisional, 0.x). F → Orquestador (G, Broker). Envoltura parcial: sin data_refs ni payload (T-47).",
+    "description": "Versión 0.1.0 RETIRADA (T-47). F → Orquestador (G, Broker). Envoltura parcial: sin data_refs ni payload. Solo para leer el histórico.",
     "type": "object",
     "properties": {"event_id": ID, "correlation_id": ID, "expediente_id": ID, "producer": {"const": "F"}, "consumer": {"const": "ORQUESTADOR"},
                    "tipo_mensaje": {"const": "CT-G-08"}, "version_esquema": {"const": "0.1.0"}, "emitido_en": FH, "valid_until": FH,
@@ -107,7 +108,7 @@ ESQUEMAS["CT-G-08"] = {   # 0.1.0: envoltura parcial (sin data_refs ni payload);
                  "valid_until", "version_reglas", "propuesta_ref", "entradas", "resultado", "cantidad_aprobada", "controles"],
     "additionalProperties": False}
 
-ESQUEMAS["CT-G-09"] = envoltura(
+ESQUEMAS[("CT-G-09", "0.1.0")] = envoltura(
     "CT-G-09", "0.1.0", "Orden con su protección", "Orquestador (tras E/F y la autorización)", "G",
     obj({"cartera": CARTERA, "instrumento": ID, "activo_base": ID, "via_acceso": TXT, "lado": {"enum": ["COMPRA", "VENTA"]},
          "tipo": {"const": "LIMITE"}, "cantidad": POS, "precio_limite": POS, "valida_hasta": FH,
@@ -115,17 +116,17 @@ ESQUEMAS["CT-G-09"] = envoltura(
          "control_f_ref": obj({"event_id": ID, "hash": HASH}), "autorizada_por": {"enum": ["OPERADOR", "MATRIZ_AUTONOMIA"]}}),
     producer={"const": "ORQUESTADOR"}, consumer={"const": "G"})
 
-ESQUEMAS["CT-G-10"] = envoltura(
+ESQUEMAS[("CT-G-10", "0.1.0")] = envoltura(
     "CT-G-10", "0.1.0", "Alerta o petición de revisión de posición", "H", "Broker/gestor",
     obj({"posicion_id": ID, "cartera": CARTERA, "estado_posicion": {"enum": ["ABIERTA", "EN_REVISION", "REDUCIENDO", "CERRANDO", "CERRADA"]},
          "tipo": {"enum": ["CIERRE_PREPARADO", "REDUCCION_PREPARADA", "REVISION", "OTRA"]}, "texto": TXT}),
     producer={"const": "H"}, consumer={"enum": ["GESTOR_TRADING", "GESTOR_TACTICA", "GESTOR_LARGO_PLAZO", "OPERADOR"]})
 
-ESQUEMAS["CT-G-14"] = {   # 0.1.0: tal como lo valida manual_g (sus nombres «contrato»/«version» no son los de la envoltura común, T-47)
+ESQUEMAS[("CT-G-14", "0.1.0")] = {   # 0.1.0 RETIRADA: envoltura propia (contrato/version); se conserva para leer el histórico
     "$schema": "https://json-schema.org/draft/2020-12/schema", "$id": "https://robot-inversor.local/esquemas/ct-g-14/0.1.0",
     "title": "CT-G-14 · Registro de ejecución manual",
     "description": "Versión 0.1.0 (provisional, 0.x). Operador → G. Las reglas RM-01 a RM-10 las aplica validador/manual_g.py. "
-                   "Envoltura propia (contrato/version): migración a la común en 0.2.0 (T-47).",
+                   "Versión RETIRADA (T-47): envoltura propia (contrato/version). Solo para leer el histórico.",
     "type": "object",
     "properties": {"contrato": {"const": "CT-G-14"}, "version": {"const": "0.1.0"}, "event_id": ID, "producer": {"const": "OPERADOR"},
                    "emitido_en": FH, "ejecutado_en": FH, "cartera": CARTERA, "instrumento": ID, "activo_base": ID,
@@ -138,7 +139,7 @@ ESQUEMAS["CT-G-14"] = {   # 0.1.0: tal como lo valida manual_g (sus nombres «co
                  "lado", "cantidad", "precio", "ref_intermediario", "motivo", "vinculo"],
     "additionalProperties": False}
 
-ESQUEMAS["CT-G-16"] = envoltura(
+ESQUEMAS[("CT-G-16", "0.1.0")] = envoltura(
     "CT-G-16", "0.1.0", "Aviso al operador", "Orquestador", "Operador",
     obj({"aviso_id": ID, "codigo": {"type": "string", "pattern": r"^O-\d{2}\Z"}, "prioridad": {"enum": ["ALTA", "MEDIA"]},
          "motivo": TXT, "ref": {"anyOf": [{"type": "string"}, {"type": "null"}]},
@@ -146,6 +147,37 @@ ESQUEMAS["CT-G-16"] = envoltura(
          "canal": {"type": "string", "minLength": 1}, "acuse": {"anyOf": [obj({"actor": ID, "ahora": FH}), {"type": "null"}]},
          "reiteraciones": {"type": "integer", "minimum": 0}, "escalado": BOOL}),
     producer={"const": "ORQUESTADOR"}, consumer={"const": "OPERADOR"}, con_expediente=False, con_vigencia=False)
+
+ESQUEMAS[("CT-G-08", "0.2.0")] = envoltura(
+    "CT-G-08", "0.2.0", "Resultado de control de F", "F", "Orquestador (G, Broker)",
+    obj({"propuesta_ref": obj({"expediente_id": ID, "hash": HASH}),
+         "entradas": obj({"solicitud": {"type": "object"}, "cartera": {"type": "object"}, "politica": {"type": "object"}}),
+         "cantidad_aprobada": NUM0}),
+    producer={"const": "F"}, consumer={"const": "ORQUESTADOR"},
+    data_refs={"type": "array", "maxItems": 0},   # F no usa evidencia externa: lo que usa va en payload.entradas
+    politica=obj({"version_politica": ID, "resultado": {"enum": ["APROBADO", "REDUCIDO", "VETADO"]}, "motivo": TXT,
+                  "controles": {"type": "array", "items": CONTROL}}))
+
+ESQUEMAS[("CT-G-14", "0.2.0")] = {
+    **envoltura(
+        "CT-G-14", "0.2.0", "Registro de ejecución manual", "Operador", "G",
+        obj({"ejecutado_en": FH, "cartera": CARTERA, "instrumento": ID, "activo_base": ID,
+             "lado": {"enum": ["COMPRA", "VENTA"]}, "cantidad": POS, "precio": POS, "ref_intermediario": ID,
+             "motivo": {"type": "string", "maxLength": 500, "pattern": r"\S[\s\S]*\S[\s\S]*\S"},   # = manual_g.motivo_ok
+             "vinculo": {"oneOf": [obj({"tipo": {"enum": ["EXPEDIENTE", "POSICION"]}, "id": ID}),
+                                   obj({"tipo": {"const": "LIBRE"}, "id": {"type": "null"}})]},
+             "proteccion_ref": ID, "comision_eur": NUM0, "via_acceso": TXT},
+            required=["ejecutado_en", "cartera", "instrumento", "activo_base", "lado", "cantidad", "precio", "ref_intermediario", "motivo", "vinculo"]),
+        producer={"const": "OPERADOR"}, consumer={"const": "G"}, con_expediente=False, sin_vigencia=True,
+        data_refs={"type": "array", "minItems": 1, "maxItems": 2, "uniqueItems": True, "items": ID}),
+    # una operación LIBRE no identifica caso; una vinculada, sí (RM-11 comprueba además que es el del vínculo)
+    "if": {"properties": {"payload": {"properties": {"vinculo": {"properties": {"tipo": {"const": "LIBRE"}}}}}}},
+    "then": {"properties": {"expediente_id": {"type": "null"}, "correlation_id": {"type": "null"}}},
+    "else": {"properties": {"expediente_id": ID, "correlation_id": ID}}}
+ESQUEMAS[("CT-G-14", "0.2.0")]["description"] += " Las reglas RM-01 a RM-11 las aplica validador/manual_g.py; data_refs = las órdenes del payload."
+
+# Versiones retiradas: su esquema se conserva para leer el histórico (contratos.validar(..., historico=True)); ningún consumidor las acepta
+RETIRADAS = {"CT-G-08": [("0.1.0", "ct-g-08_0.1.0.schema.json", "PARCIAL")], "CT-G-14": [("0.1.0", "ct-g-14_0.1.0.schema.json", "PROPIA")]}
 
 REGISTRO = [
     ("CT-G-01", "Encargo de análisis", "Broker/gestor → C", "ESQUEMA", "0.1.0", "ct-g-01_0.1.0.schema.json", "COMPLETA"),
@@ -155,24 +187,29 @@ REGISTRO = [
     ("CT-G-05", "Comparativa", "D → Broker/gestor", "ESQUEMA", "0.1.0", "ct-g-05_0.1.0.schema.json", "COMPLETA"),
     ("CT-G-06", "Propuesta de inversión", "Broker/gestor → E", "ESQUEMA", "0.1.0", "ct-g-06_0.1.0.schema.json", "COMPLETA"),
     ("CT-G-07", "Plan de cartera por libro", "E → F", "PENDIENTE", None, None, "E solo dimensiona una propuesta; el plan por libro es de Fase 2"),
-    ("CT-G-08", "Resultado de control", "F → G, Broker", "ESQUEMA", "0.1.0", "ct-g-08_0.1.0.schema.json", "PARCIAL"),
+    ("CT-G-08", "Resultado de control", "F → G, Broker", "ESQUEMA", "0.2.0", "ct-g-08_0.2.0.schema.json", "COMPLETA"),
     ("CT-G-09", "Orden con su protección", "E/F → G", "ESQUEMA", "0.1.0", "ct-g-09_0.1.0.schema.json", "COMPLETA"),
     ("CT-G-10", "Alerta o petición de revisión de posición", "H → Broker/gestor", "ESQUEMA", "0.1.0", "ct-g-10_0.1.0.schema.json", "COMPLETA"),
     ("CT-G-11", "Consulta al Broker o al operador", "Cualquiera → Broker", "PENDIENTE", None, None, "sin bloque que la emita en Fase 1"),
     ("CT-G-12", "Seguimiento de encargo", "Bloque → Orquestador", "PENDIENTE", None, None, "hoy el gasto se registra con registrar_gasto, sin mensaje"),
     ("CT-G-13", "Propuesta de cambio y veredicto de validación", "I → J → operador", "PENDIENTE", None, None, "bloques I y J no construidos"),
-    ("CT-G-14", "Registro de ejecución manual", "Operador → G", "ESQUEMA", "0.1.0", "ct-g-14_0.1.0.schema.json", "PROPIA"),
+    ("CT-G-14", "Registro de ejecución manual", "Operador → G", "ESQUEMA", "0.2.0", "ct-g-14_0.2.0.schema.json", "COMPLETA"),
     ("CT-G-15", "Estrategia validada y universo admitido", "J → E, F", "PENDIENTE", None, None, "bloque J no construido"),
     ("CT-G-16", "Aviso al operador", "Orquestador → operador", "ESQUEMA", "0.1.0", "ct-g-16_0.1.0.schema.json", "COMPLETA"),
 ]
 
 
 def main():
-    for tipo, esq in ESQUEMAS.items():
-        (AQUI / f"{tipo.lower()}_0.1.0.schema.json").write_text(json.dumps(esq, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
-    reg = [{"tipo": t, "nombre": n, "de_a": d, "estado": e, "version": v, "esquema": f, "envoltura" if e == "ESQUEMA" else "motivo": x}
-           for t, n, d, e, v, f, x in REGISTRO]
-    (AQUI / "registro_contratos.json").write_text(json.dumps({"version_registro": "REG-0.1.0", "contratos": reg}, ensure_ascii=False, indent=2) + "\n",
+    for (tipo, version), esq in ESQUEMAS.items():
+        (AQUI / f"{tipo.lower()}_{version}.schema.json").write_text(json.dumps(esq, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+    reg = []
+    for t, n, d, e, v, f, x in REGISTRO:
+        c = {"tipo": t, "nombre": n, "de_a": d, "estado": e, "version": v, "esquema": f, "envoltura" if e == "ESQUEMA" else "motivo": x}
+        if e == "ESQUEMA":
+            c["versiones"] = [{"version": v, "esquema": f, "envoltura": x, "estado": "VIGENTE"}] + \
+                             [{"version": rv, "esquema": rf, "envoltura": rx, "estado": "RETIRADA"} for rv, rf, rx in RETIRADAS.get(t, [])]
+        reg.append(c)
+    (AQUI / "registro_contratos.json").write_text(json.dumps({"version_registro": "REG-0.2.0", "contratos": reg}, ensure_ascii=False, indent=2) + "\n",
                                                   encoding="utf-8")
     print(f"{len(ESQUEMAS)} esquemas y el registro de {len(REGISTRO)} contratos")
 

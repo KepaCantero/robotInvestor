@@ -9,7 +9,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "validador"))
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 
 from ejecucion_g import BrokerSimulado, conciliar, declarar_manual, ejecutar  # noqa: E402
-from manual_g import validar_manual  # noqa: E402
+from manual_g import envolver_manual, validar_manual  # noqa: E402
 from vigilancia import vigilar  # noqa: E402
 from pruebas_ejecucion_g import autorizado, broker  # noqa: E402
 from pruebas_orquestador import autorizar_op, AHORA, Arnes, hasta, nuevo  # noqa: E402
@@ -34,22 +34,54 @@ class NoCancela(BrokerSimulado):
             self.pos[o["instrumento"]] = cur
 
 
+ENV = ("event_id", "correlation_id", "expediente_id", "producer", "consumer", "tipo_mensaje", "version_esquema", "emitido_en", "valid_until", "data_refs")
+
+
+def ct14(campos):
+    """CT-G-14 0.2.0 a partir de los campos planos de una prueba. La identidad del caso se deduce del vínculo como lo haría la
+    consola (EXP-n -> COR-n; POS-EXP-n -> EXP-n); un campo de la envoltura dado en `campos` la sustituye tal cual."""
+    f = dict(campos)
+    v = f.get("vinculo")
+    vid = v.get("id") if isinstance(v, dict) else None
+    eid = (vid[4:] if vid.startswith("POS-") else vid) if isinstance(vid, str) else None
+    cid = "COR-" + eid.split("-")[-1] if eid else None
+    env = {k: f.pop(k) for k in ENV if k in f}
+    m = envolver_manual(f, env.pop("event_id", "EV-MAN-0001"), env.pop("emitido_en", T1), expediente_id=eid, correlation_id=cid)
+    m.update(env)
+    return m
+
+
+def plano(m):
+    """Campos planos de un CT-G-14 de prueba (para derivar variantes)."""
+    return {**{k: m[k] for k in ENV if k in m and k not in ("data_refs", "tipo_mensaje", "version_esquema", "consumer", "valid_until",
+                                                             "correlation_id", "expediente_id")}, **m["payload"]}
+
+
+def cambia(m, **kw):
+    """El mismo registro con otros campos (re-envuelto: data_refs e identidad se recalculan salvo que se den)."""
+    return ct14({**plano(m), **kw})
+
+
+def sin(m, *claves):
+    return ct14({k: v for k, v in plano(m).items() if k not in claves})
+
+
 def reg(**kw):
-    r = {"contrato": "CT-G-14", "version": "0.1.0", "event_id": "EV-MAN-0001", "producer": "OPERADOR",
+    r = {"event_id": "EV-MAN-0001", "producer": "OPERADOR",
          "emitido_en": T1, "ejecutado_en": AHORA, "cartera": "TACTICA", "instrumento": "EURUSD", "activo_base": "EUR",
          "lado": "COMPRA", "cantidad": 100.0, "precio": 1.10, "ref_intermediario": "MAN-ORD-1",
          "motivo": "ejecutado a mano en la plataforma", "vinculo": {"tipo": "EXPEDIENTE", "id": "EXP-0001"}, "proteccion_ref": "MAN-STOP-1",
          "via_acceso": VIA}
     r.update(kw)
-    return r
+    return ct14(r)
 
 
 def libre(**kw):
-    r = reg(vinculo={"tipo": "LIBRE", "id": None}, instrumento="GBPUSD", activo_base="GBP", cantidad=50.0, precio=1.30,
-            event_id="EV-MAN-0010", ref_intermediario="MAN-GBP-1")
+    r = plano(reg(vinculo={"tipo": "LIBRE", "id": None}, instrumento="GBPUSD", activo_base="GBP", cantidad=50.0, precio=1.30,
+                  event_id="EV-MAN-0010", ref_intermediario="MAN-GBP-1"))
     r.pop("proteccion_ref")
     r.update(kw)
-    return r
+    return ct14(r)
 
 
 def a_mano(b, ins, lado, q, oid, stop=None, via=None):
@@ -77,10 +109,10 @@ def main():
         h.chk(nombre, {x["regla"] for x in f} == {esperada}, f)
     regla("no_objeto_RM01", "x", "RM-01")
     regla("campo_de_mas_RM01", {**libre(), "extra": 1}, "RM-01")
-    falta = libre(); falta.pop("motivo")
+    falta = libre(); falta["payload"].pop("motivo")
     regla("campo_de_menos_RM01", falta, "RM-01")
-    regla("contrato_otro_RM01", libre(contrato="CT-G-08"), "RM-01")
-    regla("version_otra_RM01", libre(version="0.2.0"), "RM-01")
+    regla("contrato_otro_RM01", libre(tipo_mensaje="CT-G-08"), "RM-01")
+    regla("version_retirada_RM01", libre(version_esquema="0.1.0"), "RM-01")
     regla("lado_invalido_RM01", libre(lado="LARGO"), "RM-01")
     regla("cantidad_cero_RM01", libre(cantidad=0), "RM-01")
     regla("cantidad_nan_RM01", libre(cantidad=float("nan")), "RM-01")
@@ -133,7 +165,7 @@ def main():
     rechazo("expediente_otro_instrumento_RM05", reg(instrumento="GBPUSD"), "RM-05")
     rechazo("expediente_otra_cartera_RM05", reg(cartera="TRADING"), "RM-05")
     rechazo("expediente_mas_de_lo_aprobado_RM06", reg(cantidad=1e6), "RM-06")
-    sin_prot = reg(); sin_prot.pop("proteccion_ref")
+    sin_prot = sin(reg(), "proteccion_ref")
     rechazo("expediente_sin_proteccion_RM07", sin_prot, "RM-07")
     rechazo("expediente_precio_lejos_RM09", reg(precio=1.30), "RM-09")
     rechazo("expediente_inexistente_RM04", reg(vinculo={"tipo": "EXPEDIENTE", "id": "EXP-9999"}), "RM-04")
@@ -158,19 +190,19 @@ def main():
     o, b = autorizado(o=nuevo(L1)); ejecutar(o, "EXP-0001", b, AHORA)
     a_mano(b, "EURUSD", "VENTA", 100.0, "MAN-CIERRE-1")
     cierre = reg(event_id="EV-MAN-0002", vinculo={"tipo": "POSICION", "id": PID}, lado="VENTA", ref_intermediario="MAN-CIERRE-1")
-    cierre.pop("proteccion_ref")
+    cierre = sin(cierre, "proteccion_ref")
     r = o.registrar_manual(cierre, T1)
     h.chk("posicion_manual_se_cierra", r["ok"] and o.posiciones[PID]["estado"] == "CERRADA" and o.posiciones[PID]["cantidad"] == 0
           and [x["hasta"] for x in o.posiciones[PID]["historial"]][-2:] == ["CERRANDO", "CERRADA"], r)
     c = conciliar(o, b, T1)
     h.chk("cierre_manual_concilia_limpio", c["ok"], c)
-    h.chk("posicion_cerrada_no_admite_otro_cierre_RM04", "RM-04" in o.registrar_manual({**cierre, "event_id": "EV-MAN-0003", "ref_intermediario": "MAN-CIERRE-2"}, T1).get("reglas", []))
+    h.chk("posicion_cerrada_no_admite_otro_cierre_RM04", "RM-04" in o.registrar_manual(cambia(cierre, event_id="EV-MAN-0003", ref_intermediario="MAN-CIERRE-2"), T1).get("reglas", []))
     o, b = autorizado(o=nuevo(L1)); ejecutar(o, "EXP-0001", b, AHORA)
     antes = estado(o)
-    h.chk("cierre_parcial_RM06", "RM-06" in o.registrar_manual({**cierre, "cantidad": 40.0}, T1).get("reglas", []) and estado(o) == antes)
-    h.chk("cierre_en_el_mismo_sentido_RM05", "RM-05" in o.registrar_manual({**cierre, "lado": "COMPRA"}, T1).get("reglas", []))
-    h.chk("cierre_de_posicion_inexistente_RM04", "RM-04" in o.registrar_manual({**cierre, "vinculo": {"tipo": "POSICION", "id": "POS-X"}}, T1).get("reglas", []))
-    h.chk("cierre_con_orden_usada_por_G_O03", o.registrar_manual({**cierre, "ref_intermediario": "ORD-EXP-0001-S-1"}, T1)["codigo"] == "O-03")
+    h.chk("cierre_parcial_RM06", "RM-06" in o.registrar_manual(cambia(cierre, cantidad=40.0), T1).get("reglas", []) and estado(o) == antes)
+    h.chk("cierre_en_el_mismo_sentido_RM05", "RM-05" in o.registrar_manual(cambia(cierre, lado="COMPRA"), T1).get("reglas", []))
+    h.chk("cierre_de_posicion_inexistente_RM04", "RM-04" in o.registrar_manual(cambia(cierre, vinculo={"tipo": "POSICION", "id": "POS-X"}), T1).get("reglas", []))
+    h.chk("cierre_con_orden_usada_por_G_O03", o.registrar_manual(cambia(cierre, ref_intermediario="ORD-EXP-0001-S-1"), T1)["codigo"] == "O-03")
 
     # ---------------------------------------------------------------- operaciones LIBRES y diferencias explicadas
     o, b = abierta_l1({"nivel_autonomia": {"TACTICA": "L2"}})
@@ -231,7 +263,7 @@ def main():
     r = o.registrar_manual(reg(ejecutado_en="2026-11-06T03:00:00+00:00"), T1)
     h.chk("ejecucion_anterior_a_la_autorizacion_RM03", "RM-03" in r.get("reglas", []), r)
     o, b = abierta_l1()
-    r = o.registrar_manual({**cierre, "event_id": "EV-MAN-0030", "ejecutado_en": "2026-11-06T08:00:00+00:00"}, T1)
+    r = o.registrar_manual(cambia(cierre, event_id="EV-MAN-0030", ejecutado_en="2026-11-06T08:00:00+00:00"), T1)
     h.chk("cierre_anterior_a_la_apertura_RM03", "RM-03" in r.get("reglas", []), r)
     o, b = nuevo({"tolerancia_conciliacion_rel": 0.01}), broker()
     b.pos["GBPUSD"] = {"cantidad": 0.45, "activo_base": "GBP"}
@@ -269,11 +301,12 @@ def main():
           and o.posiciones[PID]["estado"] == "CERRADA" and conciliar(o, b, T1)["ok"], r)
     o, b = abierta_l1()
     b.mover_precio("EURUSD", 1.04, T1)
-    r = declarar_manual(o, {**cierre, "ref_intermediario": "ORD-EXP-0001-S-1", "precio": 1.04}, b, T1)
-    h.chk("G_stop_ya_ejecutado_no_es_cierre_manual_G10", r["codigo"] == "G-10" and o.posiciones[PID]["estado"] == "ABIERTA", r)
+    r = declarar_manual(o, cambia(cierre, ref_intermediario="ORD-EXP-0001-S-1", precio=1.04), b, T1)
+    # desde T-47 el Orquestador lo rechaza antes de consultar al intermediario: el stop es una orden ya registrada (O-03)
+    h.chk("G_stop_ya_ejecutado_no_es_cierre_manual_O03", r["codigo"] == "O-03" and o.posiciones[PID]["estado"] == "ABIERTA", r)
     o, b = abierta_l1()
     a_mano(b, "EURUSD", "VENTA", 40.0, "MAN-CIERRE-1")
-    r = declarar_manual(o, {**cierre, "cantidad": 40.0}, b, T1)
+    r = declarar_manual(o, cambia(cierre, cantidad=40.0), b, T1)
     h.chk("G_cierre_que_no_deja_plano_G10", r["codigo"] in ("G-10", "O-01") and o.posiciones[PID]["estado"] == "ABIERTA", r)
     h.chk("G_registro_no_objeto_G10", declarar_manual(o, None, b, T1)["codigo"] == "G-10")
 

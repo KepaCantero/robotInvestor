@@ -70,7 +70,7 @@ def flujo(h, nombre, precios_finales, esperado_regla, esperado_estado="CERRADA")
     h.chk(nombre + ": el Orquestador acepta la propuesta con la cantidad de E", o.proponer(ganador, ent, SALIDA, "GESTOR_TACTICA", AHORA,
                                                                                          dim(o, ganador, ent, SALIDA, cartera=foto))["ok"])
     inf = informe_f(o, ganador, n=int(ganador[-4:]), cartera=foto)
-    h.chk(nombre + ": F aprueba exactamente lo que propuso E", inf["resultado"] == "APROBADO" and inf["cantidad_aprobada"] == e["cantidad"], inf["resultado"])
+    h.chk(nombre + ": F aprueba exactamente lo que propuso E", inf["resultado_politica"]["resultado"] == "APROBADO" and inf["payload"]["cantidad_aprobada"] == e["cantidad"], inf["resultado_politica"])
     h.chk(nombre + ": el operador autoriza", autorizar_op(o, ganador, inf, AHORA)["ok"])
     r = ejecutar(o, ganador, b, AHORA)
     pid = "POS-" + ganador
@@ -137,7 +137,7 @@ def main():
                                                                                      dim(o, entrada={**ap2, "apalancamiento": 2.5}, cartera=cartera_para_f(b)))["codigo"] == "O-21")
     h.chk("apalancamiento: con permiso la propuesta se acepta", o.proponer("EXP-0001", ap2, SALIDA, "GESTOR_TACTICA", AHORA, dim(o, entrada=ap2, cartera=cartera_para_f(b)))["ok"])
     inf = informe_f(o, "EXP-0001", 1, cartera=cartera_para_f(b))
-    h.chk("apalancamiento: F lo aprueba dentro de su máximo", inf["resultado"] in ("APROBADO", "REDUCIDO"), inf["resultado"])
+    h.chk("apalancamiento: F lo aprueba dentro de su máximo", inf["resultado_politica"]["resultado"] in ("APROBADO", "REDUCIDO"), inf["resultado_politica"])
     h.chk("apalancamiento: se autoriza y se ejecuta", autorizar_op(o, "EXP-0001", inf, AHORA)["ok"] and ejecutar(o, "EXP-0001", b, AHORA)["ok"])
     o2 = nuevo({"apalancamiento_permitido": True, "politica_f": {**POLITICA_DEFECTO, "apalancamiento_max": 3.0}}); candidatos(o2, apal=5)
     assert o2.comparar(["EXP-0001", "EXP-0002"], "D", AHORA)["ok"]

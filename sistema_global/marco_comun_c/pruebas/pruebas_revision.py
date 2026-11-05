@@ -146,7 +146,7 @@ def main():
     # ------------------------------------------------------------ revisión independiente (regresiones)
     from ejecucion_g import BrokerSimulado, declarar_manual
     from pruebas_ejecucion_g import HORA_DATOS, broker
-    from pruebas_manual import a_mano, reg as reg_manual
+    from pruebas_manual import a_mano, cambia, sin, reg as reg_manual
     from pruebas_orquestador import anotar_entrada, autorizar_op
     T1M = "2026-11-06T09:05:00+00:00"
     CONTADO = "Contado (spot) en intermediario"
@@ -158,7 +158,7 @@ def main():
     r = declarar_manual(o, reg_manual(via_acceso=CONTADO), b, T1M)
     h.chk("1_manual_declarado_por_otra_via_RM05", r["codigo"] == "O-01" and "RM-05" in r.get("reglas", []) and not o.posiciones, r)
     sin_via = reg_manual()
-    sin_via.pop("via_acceso")
+    sin_via = sin(sin_via, "via_acceso")
     r = o.registrar_manual(sin_via, T1M)
     h.chk("1_manual_sin_via_RM05", "RM-05" in r.get("reglas", []), r)
     o, b = autorizado()
@@ -166,7 +166,7 @@ def main():
     r = declarar_manual(o, reg_manual(), b, T1M)
     h.chk("1_manual_por_la_via_analizada_abre", r["ok"] and o.posiciones[PID]["via_acceso"] == VIA, r)
     cierre = reg_manual(event_id="EV-MAN-0002", vinculo={"tipo": "POSICION", "id": PID}, lado="VENTA", ref_intermediario="MAN-CIERRE-1", via_acceso=CONTADO)
-    cierre.pop("proteccion_ref")
+    cierre = sin(cierre, "proteccion_ref")
     h.chk("1_cerrar_a_mano_por_otra_via_RM05", "RM-05" in o.registrar_manual(cierre, "2026-11-06T09:10:00+00:00").get("reglas", []))
     # 2. CT-G-14 sobre un expediente alterado: O-13 y kill-switch
     o, b = autorizado(b=broker(precio=1.12))
