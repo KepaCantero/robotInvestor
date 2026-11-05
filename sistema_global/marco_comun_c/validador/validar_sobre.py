@@ -127,7 +127,16 @@ def proporcion_real(payload):
     return {k: (v / total if total else 0.0) for k, v in cuenta.items()}
 
 
-def validar(sobre, ctx: dict) -> list[dict]:
+def validar(sobre, ctx) -> list[dict]:
+    """Nunca lanza excepciones: una entrada o un contexto mal formados se rechazan con V-01."""
+    try:
+        return _validar(sobre, ctx)
+    except (KeyError, TypeError, AttributeError, ValueError, IndexError) as e:
+        return [{"regla": "V-01", "ruta": "(interno)",
+                 "mensaje": f"entrada o contexto mal formado: {type(e).__name__}: {e}"}]
+
+
+def _validar(sobre, ctx) -> list[dict]:
     """ctx: ahora (ISO con zona), fecha_corte_encargo (YYYY-MM-DD), perfiles_activos,
     clases_ratificadas {perfil: Q|S|K}, apalancamiento_permitido (bool)."""
     fallos: list[dict] = []

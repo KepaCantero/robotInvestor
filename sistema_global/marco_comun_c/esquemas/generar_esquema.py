@@ -26,8 +26,8 @@ def obj(props, required=None, extra=False):
 
 
 cifra_ids = {"type": "string", "minLength": 1}
-FECHA = {"type": "string", "pattern": r"^\d{4}-\d{2}-\d{2}$"}
-FECHAHORA = {"type": "string", "pattern": r"^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(\.\d+)?(Z|[+-]\d{2}:\d{2})$"}
+FECHA = {"type": "string", "pattern": r"^\d{4}-\d{2}-\d{2}\Z"}
+FECHAHORA = {"type": "string", "pattern": r"^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(\.\d+)?(Z|[+-]\d{2}:\d{2})\Z"}
 TXT = {"type": "string", "pattern": r"\S"}
 defs = {
     "Cifra": obj({
@@ -165,7 +165,7 @@ schema = {
         "producer": {"enum": PERFILES},
         "consumer": {"enum": ["D", "BROKER", "VERIFICACION"]},
         "tipo_mensaje": {"const": "CT-G-02"},
-        "version_esquema": {"type": "string", "pattern": r"^\d+\.\d+\.\d+$"},
+        "version_esquema": {"type": "string", "pattern": r"^\d+\.\d+\.\d+\Z"},
         "emitido_en": FECHAHORA,
         "valid_until": FECHAHORA,
         "data_refs": {"type": "array", "minItems": 1, "uniqueItems": True, "items": {"type": "string", "minLength": 1}},

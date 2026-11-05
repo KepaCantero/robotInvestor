@@ -1,0 +1,59 @@
+{
+  "ctx_extra": {},
+  "mensaje": {
+    "event_id": "EV-ENC-0001",
+    "correlation_id": "COR-0001",
+    "expediente_id": "EXP-0001",
+    "producer": "GESTOR_TACTICA",
+    "consumer": "C-DIV",
+    "tipo_mensaje": "CT-G-01",
+    "version_esquema": "0.1.0",
+    "emitido_en": "2026-11-05T12:00:00+00:00",
+    "valid_until": "2026-11-08T12:00:00+00:00",
+    "data_refs": [
+      "PAQ-B-0001",
+      "K-SELLO-2026-11-05"
+    ],
+    "payload": {
+      "pregunta": "¿Conviene una posición larga en EUR/USD a 3 meses?",
+      "decision_informada": "ABRIR_POSICION",
+      "cartera_destino": "TACTICA",
+      "candidato": {
+        "perfil": "C-DIV",
+        "instrumento": "EUR/USD",
+        "via_acceso": "Futuro de divisas, vencimiento trimestral",
+        "paquete_b_ref": "PAQ-B-0001"
+      },
+      "nivel_analisis": "N3",
+      "fecha_corte": "2026-11-05",
+      "sello_corte_ref": "K-SELLO-2026-11-05",
+      "mandato": {
+        "benchmark_ref": "BENCH-EFECTIVO",
+        "horizonte_dias": {
+          "min": 14,
+          "max": 90
+        },
+        "apalancamiento_max": 5,
+        "tamano_max_pct_cartera": 5,
+        "instrumentos_permitidos": [
+          "EUR/USD",
+          "GBP/USD"
+        ],
+        "exclusiones": []
+      },
+      "presupuesto": {
+        "coste_max_eur": 5.0,
+        "tiempo_max_min": 30,
+        "entrega_antes_de": "2026-11-05T20:00:00+00:00"
+      },
+      "prioridad": "NORMAL"
+    },
+    "resultado_politica": {
+      "controles": [
+        "SC-6"
+      ],
+      "resultado": "APROBADO",
+      "version_politica": "POL-0.1"
+    }
+  }
+}

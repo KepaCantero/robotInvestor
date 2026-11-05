@@ -1,0 +1,55 @@
+{
+  "event_id": "EV-ENC-0002",
+  "correlation_id": "COR-0002",
+  "expediente_id": "EXP-0002",
+  "producer": "BROKER",
+  "consumer": "C-RV",
+  "tipo_mensaje": "CT-G-01",
+  "version_esquema": "0.1.0",
+  "emitido_en": "2026-11-05T12:00:00+00:00",
+  "valid_until": "2026-11-08T12:00:00+00:00",
+  "data_refs": [
+    "PAQ-B-0002",
+    "K-SELLO-2026-11-05"
+  ],
+  "payload": {
+    "pregunta": "¿Encaja un ETF de acciones europeas en la cartera de largo plazo?",
+    "decision_informada": "ABRIR_POSICION",
+    "cartera_destino": "LARGO_PLAZO",
+    "candidato": {
+      "perfil": "C-RV",
+      "instrumento": "ETF acciones Europa",
+      "via_acceso": "ETF cotizado en bolsa europea",
+      "paquete_b_ref": "PAQ-B-0002"
+    },
+    "nivel_analisis": "N2",
+    "fecha_corte": "2026-11-05",
+    "sello_corte_ref": "K-SELLO-2026-11-05",
+    "mandato": {
+      "benchmark_ref": "BENCH-EFECTIVO",
+      "horizonte_dias": {
+        "min": 1095,
+        "max": 3650
+      },
+      "apalancamiento_max": 0,
+      "tamano_max_pct_cartera": 8,
+      "instrumentos_permitidos": [
+        "ETF acciones Europa"
+      ],
+      "exclusiones": []
+    },
+    "presupuesto": {
+      "coste_max_eur": 5.0,
+      "tiempo_max_min": 30,
+      "entrega_antes_de": "2026-11-05T20:00:00+00:00"
+    },
+    "prioridad": "NORMAL"
+  },
+  "resultado_politica": {
+    "controles": [
+      "SC-6"
+    ],
+    "resultado": "APROBADO",
+    "version_politica": "POL-0.1"
+  }
+}
