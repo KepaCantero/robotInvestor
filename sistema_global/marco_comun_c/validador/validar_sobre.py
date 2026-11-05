@@ -21,7 +21,8 @@ EPISODIOS_ESTANDAR = ["EP-2008-LEHMAN", "EP-2011-EUROZONA", "EP-2015-SNB",
                       "EP-2018-Q4", "EP-2020-COVID", "EP-2022-TIPOS"]
 FACTORES_ESTANDAR = ["TIPOS", "RV", "USD", "CREDITO", "INFLACION",
                      "MATERIAS_PRIMAS", "VOLATILIDAD", "LIQUIDEZ"]
-TOPE_POR_CLASE = {"Q": 0.80, "S": 0.60, "K": 0.40}   # valores de partida [PROPUESTO]
+from parametros import PARAMETROS as _P   # noqa: E402  (una sola fuente con D, T-25)
+TOPE_POR_CLASE = dict(_P["d_tope_confianza_clase"])   # valores de partida [PROPUESTO]
 FACTOR_DISCREPANCIA = 0.75                            # [PROPUESTO]
 VIGENCIA_MAX = timedelta(days=30)                     # [PROPUESTO]
 MAX_NO_ESTIMABLE_N2 = 0.50                            # [PROPUESTO]

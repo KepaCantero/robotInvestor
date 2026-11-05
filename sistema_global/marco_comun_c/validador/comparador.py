@@ -24,15 +24,17 @@ from collections import Counter
 
 from validar_sobre import _dt
 
-PESO_EVIDENCIA = {"VERIFICADO": 1.0, "ESTIMADO": 0.5, "SUPUESTO": 0.25}   # [PROPUESTO]
-MARGEN_AJUSTADO = 0.05   # [PROPUESTO] diferencia relativa por debajo de la cual no se declara un claro ganador
-RIESGO_MIN_PCT = 1.0     # [PROPUESTO] suelo del denominador, para no premiar escenarios casi sin pérdida
+from parametros import PARAMETROS as _P   # noqa: E402  (valores [PROPUESTO] versionados, T-25)
+
+PESO_EVIDENCIA = dict(_P["d_peso_evidencia"])   # [PROPUESTO]
+MARGEN_AJUSTADO = _P["d_margen_ajustado"]   # [PROPUESTO] diferencia relativa por debajo de la cual no se declara un claro ganador
+RIESGO_MIN_PCT = _P["d_riesgo_min_pct"]     # [PROPUESTO] suelo del denominador, para no premiar escenarios casi sin pérdida
 TOL = 1e-6
 ID = re.compile(r"^[A-Za-z0-9._:/-]{1,64}\Z")
 FH = re.compile(r"^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(\.\d+)?(Z|[+-]\d{2}:\d{2})\Z")
 CLASES = ("Q", "S", "K")
-TOPE_CLASE = {"Q": 0.80, "S": 0.60, "K": 0.40}   # [PROPUESTO] topes de confianza por clase (D-03 del operador)
-EXCESO_MIN_PCT = 0.10    # [PROPUESTO] exceso mínimo sobre la referencia, en puntos porcentuales, para no abstenerse
+TOPE_CLASE = dict(_P["d_tope_confianza_clase"])   # [PROPUESTO] topes de confianza por clase (D-03 del operador)
+EXCESO_MIN_PCT = _P["d_exceso_min_pct"]    # [PROPUESTO] exceso mínimo sobre la referencia, en puntos porcentuales, para no abstenerse
 REFERENCIA_EFECTIVO = {"benchmark_ref": "BENCH-EFECTIVO", "rentabilidad_anual_pct": 0.0}   # [PROPUESTO] valor de partida
 
 
@@ -40,13 +42,14 @@ def _num(x):
     return isinstance(x, (int, float)) and not isinstance(x, bool) and math.isfinite(x)
 
 
-RENT_MIN, RENT_MAX = -100.0, 500.0   # [PROPUESTO] rentabilidad neta plausible en %; fuera de ahí el dato es sospechoso
+RENT_MIN, RENT_MAX = _P["d_rentabilidad_plausible_pct"]   # [PROPUESTO] rentabilidad neta plausible en %; fuera de ahí el dato es sospechoso
+REF_MIN, REF_MAX = _P["d_referencia_rango_pct"]   # [PROPUESTO] rentabilidad anual admisible de una referencia
 EXCL = {"sanciones", "invertibilidad", "acceso"}
 
 
 def _referencia_ok(r):
     return (isinstance(r, dict) and set(r) == {"benchmark_ref", "rentabilidad_anual_pct"} and isinstance(r["benchmark_ref"], str)
-            and ID.match(r["benchmark_ref"]) is not None and _num(r["rentabilidad_anual_pct"]) and -5 <= r["rentabilidad_anual_pct"] <= 50)
+            and ID.match(r["benchmark_ref"]) is not None and _num(r["rentabilidad_anual_pct"]) and REF_MIN <= r["rentabilidad_anual_pct"] <= REF_MAX)
 
 
 def _leer(c, ahora, ref=REFERENCIA_EFECTIVO):
@@ -145,7 +148,7 @@ def _comparar(candidatos, ahora, ref):
     if not (isinstance(candidatos, list) and len(candidatos) >= 1):
         return _no("se necesita al menos un candidato con expediente_id y sobre")
     if not _referencia_ok(ref):
-        return _no("referencia inválida: benchmark_ref y rentabilidad_anual_pct entre -50 y 50")
+        return _no(f"referencia inválida: benchmark_ref y rentabilidad_anual_pct entre {REF_MIN} y {REF_MAX}")
     for c in candidatos:
         try:
             ok = isinstance(c, dict) and set(c) == {"expediente_id", "sobre"}

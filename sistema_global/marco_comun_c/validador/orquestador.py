@@ -27,6 +27,9 @@ from manual_g import neto_libre, validar_manual, via_norm  # noqa: E402
 from comparador import MARGEN_AJUSTADO, REFERENCIA_EFECTIVO, _referencia_ok, comparar_candidatos  # noqa: E402
 from dimensionado import dimensionar  # noqa: E402
 from validar_contradictor import validar_informe  # noqa: E402
+from parametros import PARAMETROS, VERSION_PARAMETROS, como_dict  # noqa: E402
+from k_calidad import VERSION_REGLAS as VERSION_REGLAS_K  # noqa: E402
+from control_f import VERSION_REGLAS as VERSION_REGLAS_F  # noqa: E402
 from control_f import POLITICA_DEFECTO, controlar, divisa_cotizada, par_divisas, politica_valida, tipo_cambio, validar_informe_f  # noqa: E402
 
 VERSION_REGLAS = "ORQ-0.1.0"
@@ -73,6 +76,7 @@ OPERADORES = {"<": lambda v, u: v < u, "<=": lambda v, u: v <= u, ">": lambda v,
               ">=": lambda v, u: v >= u, "==": lambda v, u: v == u}
 
 CONFIG_DEFECTO = {"max_reintentos": 3, "umbral_corte_comun_dias_habiles": 0,
+                  "version_config": "CFG-0.1.0",
                   "dia_coste_max_eur": 50.0, "revision_max_dias": 90, "observacion_max_dias": 30, "max_reaperturas": 2, "dia_tiempo_max_min": 600, "tolerancia_precio_entrada": 0.05,
                   "exige_contradictor_en": [], "matriz_autonomia": {}, "politica_f": POLITICA_DEFECTO,
                   "nivel_autonomia": {}, "tolerancia_conciliacion_rel": 0.0, "instrumentos_permitidos": None,
@@ -107,7 +111,7 @@ def _ins(x):
     return re.sub(r"[^A-Z0-9]", "", x.upper()) if isinstance(x, str) else None
 
 
-MAX_EDAD_DIMENSIONADO_MIN = 60   # [PROPUESTO] el cálculo de E no puede ser más viejo que esto al proponer
+MAX_EDAD_DIMENSIONADO_MIN = PARAMETROS["e_max_edad_dimensionado_min"]   # [PROPUESTO] el cálculo de E no puede ser más viejo que esto al proponer
 
 
 _HM = re.compile(r"^([01]\d|2[0-3]):[0-5]\d\Z")
@@ -144,8 +148,15 @@ class RelojRetrocede(Exception):
     pass
 
 
+CONFIG_OBLIGATORIA = {"perfiles_activos", "clases_ratificadas", "apalancamiento_permitido"}   # sin valor por defecto: las fija el operador
+
+
 def _valida_config(c):
     """La configuración se valida al construir: una configuración mala no arranca el Orquestador."""
+    if set(c) - set(CONFIG_DEFECTO) - CONFIG_OBLIGATORIA:   # una errata no se ignora en silencio (T-25)
+        raise ValueError(f"configuración del Orquestador inválida: claves desconocidas {sorted(set(c) - set(CONFIG_DEFECTO) - CONFIG_OBLIGATORIA)[:3]}")
+    if CONFIG_OBLIGATORIA - set(c):
+        raise ValueError(f"configuración del Orquestador inválida: faltan {sorted(CONFIG_OBLIGATORIA - set(c))}")
     ok = (politica_valida(c["politica_f"])
           and all(isinstance(x, str) and x in ("N0", "N1", "N2", "N3") for x in c["exige_contradictor_en"])
           and isinstance(c.get("perfiles_activos"), list) and c["perfiles_activos"] and all(isinstance(x, str) for x in c["perfiles_activos"])
@@ -166,6 +177,7 @@ def _valida_config(c):
           and all(isinstance(k, str) and re.fullmatch(r"[A-Z]{3}", k) and isinstance(v, list) and len(v) == 2 and all(_num(x) and x > 0 for x in v)
                   and v[0] < v[1] for k, v in c["rangos_tipo_cambio_eur"].items())
           and _num(c["tolerancia_tipo_par_pct"]) and 0 < c["tolerancia_tipo_par_pct"] <= 50
+          and isinstance(c["version_config"], str) and re.fullmatch(r"CFG-\d+\.\d+\.\d+", c["version_config"]) is not None
           and isinstance(c["revision_max_dias"], int) and not isinstance(c["revision_max_dias"], bool) and 1 <= c["revision_max_dias"] <= 366
           and isinstance(c["observacion_max_dias"], int) and not isinstance(c["observacion_max_dias"], bool) and 1 <= c["observacion_max_dias"] <= 366
           and isinstance(c["max_reaperturas"], int) and not isinstance(c["max_reaperturas"], bool) and 0 <= c["max_reaperturas"] <= 20
@@ -222,6 +234,19 @@ def _identidad(e):
 VIVOS = ("VALIDADA", "COMPARADA", "PROPUESTA", "AUTORIZADA")   # candidato con análisis, en juego
 
 
+def _canon(x):
+    """Forma canónica para la huella: un entero y el mismo valor real cuentan igual (50 y 50.0)."""
+    if isinstance(x, dict):
+        return {str(k): _canon(v) for k, v in x.items()}
+    if isinstance(x, (list, tuple)):
+        return [_canon(v) for v in x]
+    if isinstance(x, (set, frozenset)):
+        raise TypeError("un conjunto no es serializable de forma estable")
+    if isinstance(x, int) and not isinstance(x, bool):
+        return float(x)
+    return x
+
+
 def _hash(x) -> str:
     return hashlib.sha256(json.dumps(x, sort_keys=True, separators=(",", ":"), ensure_ascii=False).encode()).hexdigest()
 
@@ -261,6 +286,12 @@ class Orquestador:
         self.ultimo_ahora, self.ordenes_usadas = None, []
         self.cal_def = calendario
         Calendario(calendario)   # falla pronto si no es válido
+        # T-25: la configuración entera (la del Orquestador, la política de F, los parámetros de K, D, H y CT-G-14 y las versiones
+        # de reglas) tiene una huella; cada anotación del historial la lleva, así que se sabe con qué se decidió cada cosa
+        try:
+            self.huella_config = _hash(_canon(self._configuracion_completa()))
+        except (TypeError, ValueError) as ex:
+            raise ValueError(f"configuración del Orquestador inválida: {type(ex).__name__}") from ex
         self.sellos, self.eventos, self.encargos = {}, {}, {}
         self.expedientes, self.posiciones, self.gasto_dia, self.avisos = {}, {}, {}, []
         self.ultima_comparacion = {}   # cartera -> id de la comparación vigente
@@ -620,17 +651,39 @@ class Orquestador:
 
     def _rota(self):
         """Primer expediente cuya integridad no cuadra (cualquier cartera), o None."""
+        if not self.config_integra():
+            return "CONFIG"
         return next((k for k, x in sorted(self.expedientes.items()) if not self._todo_ok(x)), None)
 
     def integridad(self):
         """Lista de expedientes (EXP:) y posiciones (POS:) cuyo historial, sobre, comparación o propuesta no cuadra."""
         return sorted(["EXP:" + k for k, v in self.expedientes.items() if not self._todo_ok(v)]
-                      + ["POS:" + k for k, v in self.posiciones.items() if not self._posicion_ok(v)])
+                      + ["POS:" + k for k, v in self.posiciones.items() if not self._posicion_ok(v)]
+                      + ([] if self.config_integra() else ["CONFIG"]))
+
+    def _configuracion_completa(self):
+        """Todo lo que decide: la configuración del Orquestador (con la política de F), los parámetros versionados de K, D, H, E y
+        CT-G-14, el calendario, las constantes de política del Orquestador y las versiones de reglas."""
+        return {"version_config": self.cfg["version_config"], "orquestador": self.cfg, "version_parametros": VERSION_PARAMETROS,
+                "parametros": como_dict(PARAMETROS), "calendario": self.cal_def,
+                "constantes": {"prioridad_aviso": PRIORIDAD_AVISO, "tipos_kill": sorted(TIPOS_KILL)},
+                "reglas": {"orquestador": VERSION_REGLAS, "f": VERSION_REGLAS_F, "k": VERSION_REGLAS_K}}
+
+    def config_integra(self):
+        """La configuración en uso es la de la huella (nadie la cambió en caliente)."""
+        try:
+            return _hash(_canon(self._configuracion_completa())) == self.huella_config
+        except (TypeError, ValueError):
+            return False
+
+    def configuracion(self):
+        """La configuración en vigor y su huella (la misma que llevan las anotaciones)."""
+        return {"huella": self.huella_config, "integra": self.config_integra(), **copy.deepcopy(self._configuracion_completa())}
 
     def _anota(self, ent, desde, hasta, actor, ahora, motivo, ref=None, datos=None):
         prev = ent["historial"][-1]["hash"] if ent["historial"] else "0" * 64
         h = {"n": len(ent["historial"]), "desde": desde, "hasta": hasta, "actor": actor, "ahora": ahora,
-             "motivo": motivo, "ref": ref, "datos": datos, "version_reglas": VERSION_REGLAS, "hash_prev": prev}
+             "motivo": motivo, "ref": ref, "datos": datos, "version_reglas": VERSION_REGLAS, "config": self.huella_config, "hash_prev": prev}
         h["hash"] = _hash(h)
         ent["historial"].append(h)
         ent["estado"] = hasta
@@ -830,6 +883,7 @@ class Orquestador:
                 self._marcar_cumplida(expediente_id, e, pendiente, "ORQUESTADOR", ahora)
             if previo and previo["estado"] == "EN_CURSO":   # el encargo que quedó en curso al observar ya no se espera
                 previo["estado"] = "ANULADO"
+            e["propuesta"], e["comparacion"] = None, None   # un análisis nuevo: la propuesta y la comparación anteriores ya no valen
         e["encargo_actual"] = eid
         e["sin_avance"] += 1
         self._anota(e, e["estado"], "EN_ANALISIS", actor, ahora, "encargo emitido", eid)
@@ -1660,7 +1714,7 @@ class Orquestador:
         ult = [h for h in e["historial"] if h["hasta"] == "EN_OBSERVACION"]
         return bool(ult) and isinstance(e.get("reapertura"), dict) and ult[-1]["datos"] == _hash(e["reapertura"])
 
-    def _cumple(self, e, cond, datos, a, max_edad_min=15):
+    def _cumple(self, e, cond, datos, a, max_edad_min=PARAMETROS["h_max_edad_dato_min"]):
         """Valor con el que se cumple la condición, o None. PRECIO: dato fresco (15 min) del instrumento; FECHA: llegó;
         SELLO_NUEVO: hay un sello vigente con corte posterior al del análisis (o al día de la observación)."""
         if cond["tipo"] == "FECHA":
@@ -1679,7 +1733,7 @@ class Orquestador:
             fresco = False
         return d["precio"] if fresco and OPERADORES[cond["operador"]](d["precio"], cond["umbral"]) else None
 
-    def _primera_cumplida(self, e, datos, a, max_edad_min=15):
+    def _primera_cumplida(self, e, datos, a, max_edad_min=PARAMETROS["h_max_edad_dato_min"]):
         """(índice, valor) de la primera condición que se cumple, sin tocar nada; None si ninguna o si la observación venció."""
         if a.astimezone(timezone.utc).date() > date.fromisoformat(e["reapertura"]["vence"]):
             return None
@@ -1713,7 +1767,7 @@ class Orquestador:
             txt = f"{eid}: se cumplió su condición de reapertura ({c['tipo']}: {v}); se puede re-encargar hasta {e['reapertura']['vence']}"
         self._aviso("O-31", txt, ahora, eid, carteras={e["cartera_destino"]})
 
-    def _revisar_reapertura(self, eid, e, datos, actor, a, ahora, max_edad_min=15):
+    def _revisar_reapertura(self, eid, e, datos, actor, a, ahora, max_edad_min=PARAMETROS["h_max_edad_dato_min"]):
         """Marca cumplida la primera condición que se cumpla (dentro de plazo) y avisa. Devuelve True si cambió algo."""
         if e["reapertura"]["cumplida"] is not None:
             return False
@@ -1724,11 +1778,13 @@ class Orquestador:
         return True
 
     @_seguro
-    def revisar_reaperturas(self, datos, actor, ahora, max_edad_min=15):
+    def revisar_reaperturas(self, datos, actor, ahora, max_edad_min=PARAMETROS["h_max_edad_dato_min"]):
         """H (en cada pasada, con sus precios) o el Orquestador comprueban las condiciones de los expedientes en observación."""
         a = self._ahora(ahora)
         if actor not in ("H", "ORQUESTADOR"):
             return _no("O-05", "solo H o el Orquestador vigilan las condiciones de reapertura")
+        if not (_num(max_edad_min) and 0 < max_edad_min <= PARAMETROS["h_max_edad_dato_min"]):
+            return _no("O-01", f"la frescura solo puede ser más estricta que {PARAMETROS['h_max_edad_dato_min']} min")
         cumplidas = []
         for eid, e in sorted(self.expedientes.items()):
             if e["estado"] == "EN_OBSERVACION":

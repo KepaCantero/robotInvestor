@@ -1,0 +1,113 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://robot-inversor.local/esquemas/ct-g-10/0.1.0",
+  "title": "CT-G-10 · Alerta o petición de revisión de posición",
+  "description": "Versión 0.1.0 (provisional, 0.x). H → Broker/gestor. Envoltura común de la Constitución.",
+  "type": "object",
+  "properties": {
+    "event_id": {
+      "type": "string",
+      "pattern": "^[A-Za-z0-9._:/-]{1,64}\\Z"
+    },
+    "correlation_id": {
+      "type": "string",
+      "pattern": "^[A-Za-z0-9._:/-]{1,64}\\Z"
+    },
+    "expediente_id": {
+      "type": "string",
+      "pattern": "^[A-Za-z0-9._:/-]{1,64}\\Z"
+    },
+    "producer": {
+      "const": "H"
+    },
+    "consumer": {
+      "enum": [
+        "GESTOR_TRADING",
+        "GESTOR_TACTICA",
+        "GESTOR_LARGO_PLAZO",
+        "OPERADOR"
+      ]
+    },
+    "tipo_mensaje": {
+      "const": "CT-G-10"
+    },
+    "version_esquema": {
+      "const": "0.1.0"
+    },
+    "emitido_en": {
+      "type": "string",
+      "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}(\\.\\d+)?(Z|[+-]\\d{2}:\\d{2})\\Z"
+    },
+    "valid_until": {
+      "type": "string",
+      "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}(\\.\\d+)?(Z|[+-]\\d{2}:\\d{2})\\Z"
+    },
+    "data_refs": {
+      "type": "array",
+      "uniqueItems": true,
+      "items": {
+        "type": "string",
+        "minLength": 1
+      }
+    },
+    "payload": {
+      "type": "object",
+      "properties": {
+        "posicion_id": {
+          "type": "string",
+          "pattern": "^[A-Za-z0-9._:/-]{1,64}\\Z"
+        },
+        "cartera": {
+          "enum": [
+            "TRADING",
+            "TACTICA",
+            "LARGO_PLAZO"
+          ]
+        },
+        "estado_posicion": {
+          "enum": [
+            "ABIERTA",
+            "EN_REVISION",
+            "REDUCIENDO",
+            "CERRANDO",
+            "CERRADA"
+          ]
+        },
+        "tipo": {
+          "enum": [
+            "CIERRE_PREPARADO",
+            "REDUCCION_PREPARADA",
+            "REVISION",
+            "OTRA"
+          ]
+        },
+        "texto": {
+          "type": "string",
+          "pattern": "\\S"
+        }
+      },
+      "required": [
+        "posicion_id",
+        "cartera",
+        "estado_posicion",
+        "tipo",
+        "texto"
+      ],
+      "additionalProperties": false
+    }
+  },
+  "required": [
+    "event_id",
+    "correlation_id",
+    "expediente_id",
+    "producer",
+    "consumer",
+    "tipo_mensaje",
+    "version_esquema",
+    "emitido_en",
+    "valid_until",
+    "data_refs",
+    "payload"
+  ],
+  "additionalProperties": false
+}

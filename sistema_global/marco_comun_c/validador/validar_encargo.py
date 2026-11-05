@@ -22,7 +22,8 @@ VERSIONES_CONOCIDAS = {"0.1.0"}
 VIGENCIA_MAX = timedelta(days=30)
 # Valores de partida por cartera (P-03, P-04, P-11, P-13 del cuestionario) [PROPUESTO]
 HORIZONTE_DIAS = {"TRADING": (1, 28), "TACTICA": (14, 183), "LARGO_PLAZO": (1095, 7300)}
-ANTIGUEDAD_CORTE_DIAS = {"TRADING": 1, "TACTICA": 1, "LARGO_PLAZO": 5}   # días HÁBILES
+from parametros import PARAMETROS as _P   # noqa: E402  (una sola fuente con K, T-25)
+ANTIGUEDAD_CORTE_DIAS = dict(_P["k_tope_antiguedad_dias_habiles"])   # días HÁBILES
 PREFIJOS_REF = ("K-", "SRC-", "EVID-", "PAQ-")
 SELLO_RE = re.compile(r"^K-\d{8}-\d{3}\Z")
 CON_POSICION = {"AUMENTAR", "REDUCIR", "CERRAR", "MANTENER"}
