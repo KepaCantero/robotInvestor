@@ -61,22 +61,29 @@ def main():
 
     # ---------------------------------------------------------------- D (O-22) y elegir
     o = comparada(elegir=False)
-    c = o.expedientes["EXP-0001"]["comparacion"]
-    h.chk("D_lo_calcula_el_orquestador", c["codigo_d"] == "D-03" and c["excluido"] == "SIN_PAR_EN_SU_CLASE"
-          and o.expedientes["EXP-0002"]["comparacion"]["excluido"] == "DUPLICADO", c)
-    prop("sin_ganador_ni_eleccion_O22", "O-22", o=o)
-    h.chk("elegir_solo_el_operador_O05", o.elegir("EXP-0001", "BROKER", "x", AHORA)["codigo"] == "O-05")
-    h.chk("elegir_sin_motivo_O15", o.elegir("EXP-0001", "OPERADOR", " ", AHORA)["codigo"] == "O-15")
-    h.chk("elegir_ok", o.elegir("EXP-0001", "OPERADOR", "me quedo con este", AHORA)["ok"]
-          and o.expedientes["EXP-0001"]["comparacion"]["elegido_por_operador"]["motivo"] == "me quedo con este")
-    h.chk("elegir_otro_de_la_misma_comparacion_O22", o.elegir("EXP-0002", "OPERADOR", "y este", AHORA)["codigo"] == "O-22")
-    h.chk("elegir_deja_rastro_integro", o.integridad() == [] and o.expedientes["EXP-0001"]["historial"][-1]["motivo"].startswith("elegido"))
+    c1, c2 = o.expedientes["EXP-0001"]["comparacion"], o.expedientes["EXP-0002"]["comparacion"]
+    h.chk("D_lo_calcula_el_orquestador", c1["ganador"] and c1["decision"] == "CLARA" and c1["decision_global"] == "INVERTIR"
+          and c2["excluido"] == "DUPLICADO" and not c2["ganador"], (c1, c2))
+    r = o.proponer("EXP-0002", ENTRADA, SALIDA, PROP, AHORA, dim(o, "EXP-0002"))
+    h.chk("el_que_no_gana_no_se_propone_O22", r["codigo"] == "O-22", r)
+    h.chk("elegir_otro_habiendo_ganador_O22", o.elegir("EXP-0002", "OPERADOR", "y este", AHORA)["codigo"] == "O-22")
     o2 = nuevo(); hasta(o2, "VALIDADA")
     h.chk("elegir_no_comparado_O04", o2.elegir("EXP-0001", "OPERADOR", "x", AHORA)["codigo"] == "O-04")
+    # sin ganador (decisión ajustada): elegir
+    o5 = nuevo()
+    validar_con(o5, 1); validar_con(o5, 2, instrumento="GBP/USD")
+    o5.comparar(["EXP-0001", "EXP-0002"], "D", AHORA)
+    prop("ajustada_sin_eleccion_O22", "O-22", o=o5)
+    h.chk("elegir_solo_el_operador_O05", o5.elegir("EXP-0001", "BROKER", "x", AHORA)["codigo"] == "O-05")
+    h.chk("elegir_sin_motivo_O15", o5.elegir("EXP-0001", "OPERADOR", " ", AHORA)["codigo"] == "O-15")
+    h.chk("elegir_ok", o5.elegir("EXP-0001", "OPERADOR", "me quedo con este", AHORA)["ok"]
+          and o5.expedientes["EXP-0001"]["comparacion"]["elegido_por_operador"]["motivo"] == "me quedo con este")
+    h.chk("elegir_otro_de_la_misma_comparacion_O22", o5.elegir("EXP-0002", "OPERADOR", "y este", AHORA)["codigo"] == "O-22")
+    h.chk("elegir_deja_rastro_integro", o5.integridad() == [] and o5.expedientes["EXP-0001"]["historial"][-1]["motivo"].startswith("elegido"))
     # alterar a mano el resultado de D se detecta (está en la cadena de hashes)
     o3 = nuevo(); hasta(o3, "COMPARADA")
-    o3.expedientes["EXP-0001"]["comparacion"]["ganador"] = True
-    h.chk("comparacion_alterada_O13", o3.elegir("EXP-0001", "OPERADOR", "x", AHORA)["codigo"] == "O-13" and o3.integridad() == ["EXP:EXP-0001"])
+    o3.expedientes["EXP-0002"]["comparacion"]["ganador"] = True
+    h.chk("comparacion_alterada_O13", o3.elegir("EXP-0002", "OPERADOR", "x", AHORA)["codigo"] == "O-13" and o3.integridad() == ["EXP:EXP-0002"])
     # exclusión dura real: sin retorno esperado positivo
     o3 = nuevo()
     validar_con(o3, 1, escenarios=(-1.0, -4.0, 1.0)); validar_con(o3, 2, instrumento="GBP/USD")
@@ -158,6 +165,65 @@ def main():
     r = o.comparar(["EXP-0001", "EXP-0002"], "D", AHORA)
     h.chk("ganador_claro_de_D", r["ganador"] == "EXP-0001" and o.expedientes["EXP-0002"]["comparacion"]["ganador"] is False, r)
     prop("ganador_claro_se_propone_sin_eleccion_OK", "OK", o=o)
+    # ---------------------------------------------------------------- T-21 y T-34 en el Orquestador
+    from comparador import REFERENCIA_EFECTIVO
+    def refs(**kw):
+        r = {c: dict(REFERENCIA_EFECTIVO) for c in ("TRADING", "TACTICA", "LARGO_PLAZO")}
+        r["TACTICA"].update(kw)
+        return {"referencias": r}
+    o = nuevo(); validar_con(o, 1)
+    r = o.comparar(["EXP-0001"], "D", AHORA)
+    h.chk("un_solo_candidato_llega_a_COMPARADA_y_gana", r["ok"] and r["ganador"] == "EXP-0001" and r["decision_global"] == "INVERTIR", r)
+    prop("un_solo_candidato_se_propone_sin_eleccion_OK", "OK", o=o)
+    o = nuevo(refs(rentabilidad_anual_pct=50.0)); validar_con(o, 1); validar_con(o, 2, instrumento="GBP/USD")
+    r = o.comparar(["EXP-0001", "EXP-0002"], "D", AHORA)
+    c = o.expedientes["EXP-0001"]["comparacion"]
+    h.chk("referencia_exigente_D_se_abstiene", r["ok"] and r["decision_global"] == "ABSTENERSE" and r["ganador"] is None
+          and c["excluido"] == "NO_SUPERA_REFERENCIA" and c["referencia"]["rentabilidad_anual_pct"] == 50.0, r)
+    h.chk("abstencion_no_se_elige_O22", o.elegir("EXP-0001", "OPERADOR", "quiero invertir igualmente", AHORA)["codigo"] == "O-22")
+    prop("abstencion_no_se_propone_O22", "O-22", o=o)
+    o = nuevo(refs(benchmark_ref="BENCH-OTRO"))
+    from pruebas_orquestador import encargo
+    o.detectar("EXP-0001", "COR-0001", "DISCRECIONAL", "TACTICA", PROP, AHORA)
+    h.chk("mandato_con_otra_referencia_se_rechaza_al_encargar_O24", o.emitir_encargo("EXP-0001", encargo(1), PROP, AHORA)["codigo"] == "O-24")
+    o = nuevo(); validar_con(o, 1); validar_con(o, 2, instrumento="GBP/USD", escenarios=(1.0, -4.0, 4.0))
+    r = o.comparar(["EXP-0001"], "D", AHORA)
+    h.chk("dejar_fuera_un_candidato_O24", r["codigo"] == "O-24" and r["faltan"] == ["EXP-0002"], r)
+    # revisión independiente de T-21/T-34
+    o = nuevo(); o.detectar("EXP-0001", "COR-0001", "DISCRECIONAL", "TACTICA", PROP, AHORA)
+    from pruebas_orquestador import sobre as _sobre
+    o.emitir_encargo("EXP-0001", encargo(1), PROP, AHORA)
+    s1 = _sobre(1)
+    for x in s1["payload"]["capa2"]["escenarios"]:
+        x["horizonte_dias"] = 1   # por debajo del mínimo del mandato (14 días): rebajaría el listón
+    r = o.entregar_sobre("EXP-0001", s1, AHORA)
+    h.chk("horizonte_fuera_del_mandato_R13", r["codigo"] == "O-01" and "R-13" in r["motivo"], r)
+    o = nuevo(); validar_con(o, 1)
+    h.chk("primera_tanda_solo", o.comparar(["EXP-0001"], "D", AHORA)["ganador"] == "EXP-0001")
+    validar_con(o, 2, instrumento="GBP/USD", escenarios=(3.0, -4.0, 6.0))   # llega después y es mejor
+    prop("candidato_nuevo_obliga_a_recomparar_O22", "O-22", o=o)
+    h.chk("la_segunda_tanda_sola_no_vale_O24", o.comparar(["EXP-0002"], "D", AHORA)["codigo"] == "O-24")
+    r = o.comparar(["EXP-0001", "EXP-0002"], "D", AHORA)
+    h.chk("se_vuelve_a_comparar_con_todos", r["ok"] and r["ganador"] == "EXP-0002" and not o.expedientes["EXP-0001"]["comparacion"]["ganador"], r)
+    prop("el_antiguo_ganador_ya_no_se_propone_O22", "O-22", o=o)
+    h.chk("la_comparacion_guarda_el_detalle_de_D", o.expedientes["EXP-0001"]["comparacion"]["detalle_d"]["dominado_por"] == ["EXP-0002"]
+          and o.expedientes["EXP-0002"]["comparacion"]["detalle_d"]["exceso_sobre_referencia_pct"] > 0 and o.integridad() == [])
+    o = nuevo()
+    validar_con(o, 1); validar_con(o, 2, instrumento="GBP/USD"); validar_con(o, 3)   # 3: mismo instrumento que 1, duplicado
+    o.comparar(["EXP-0001", "EXP-0002", "EXP-0003"], "D", AHORA)
+    h.chk("duplicado_no_se_elige_en_ajustada_O22", o.expedientes["EXP-0003"]["comparacion"]["excluido"] == "DUPLICADO"
+          and o.elegir("EXP-0003", "OPERADOR", "x", AHORA)["codigo"] == "O-22")
+    o = nuevo(); validar_con(o, 1); validar_con(o, 2, instrumento="GBP/USD")
+    o.expedientes["EXP-0002"]["sobre"]["valid_until"] = "2026-11-06T08:00:00+00:00"   # simulamos que su sobre ya venció
+    r = o.comparar(["EXP-0001"], "D", AHORA)
+    h.chk("un_candidato_caducado_no_bloquea_a_los_demas", r["ok"] and r["ganador"] == "EXP-0001", r)
+    from orquestador import Orquestador
+    from pruebas_orquestador import CAL, CFG
+    for nombre, cfg in (("referencia_absurda", refs(rentabilidad_anual_pct=500.0)), ("referencia_sin_cartera", {"referencias": {"TACTICA": REFERENCIA_EFECTIVO}})):
+        try:
+            Orquestador({**CFG, **cfg}, CAL); h.chk(f"config_{nombre}_se_rechaza", False)
+        except ValueError:
+            h.chk(f"config_{nombre}_se_rechaza", True)
     print(f"\n{h.n} comprobaciones")
     print("RESULTADO PROPUESTA:", "TODAS LAS PRUEBAS PASAN" if h.ok else "HAY FALLOS")
     return 0 if h.ok else 1

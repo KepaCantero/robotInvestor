@@ -118,7 +118,11 @@ def hasta(o, estado, n=1, ahora=AHORA, entrada=None, salida=None, cartera_e=None
     assert o.detectar(f"EXP-{n + 1:04d}", f"COR-{n + 1:04d}", "DISCRECIONAL", "TACTICA", "GESTOR_TACTICA", ahora)["ok"]
     assert o.emitir_encargo(f"EXP-{n + 1:04d}", encargo(n + 1), "GESTOR_TACTICA", ahora)["ok"]
     assert o.entregar_sobre(f"EXP-{n + 1:04d}", sobre(n + 1), ahora)["ok"]
-    assert o.comparar([f"EXP-{n:04d}", f"EXP-{n + 1:04d}"], "D", ahora)["ok"]
+    for k, x in list(o.expedientes.items()):   # los perdedores de comparaciones anteriores se descartan antes de comparar de nuevo
+        if k not in (f"EXP-{n:04d}", f"EXP-{n + 1:04d}") and x["estado"] in ("VALIDADA", "COMPARADA"):
+            assert o.descartar(k, "descartado antes de la comparación siguiente", "GESTOR_TACTICA", ahora)["ok"]
+    r = o.comparar([f"EXP-{n:04d}", f"EXP-{n + 1:04d}"], "D", ahora)
+    assert r["ok"], r
     if estado == "COMPARADA":
         return
     elegir_si_hace_falta(o, f"EXP-{n:04d}", ahora)
@@ -164,7 +168,7 @@ def main():
     h.chk("feliz_expediente_ejecutado", e["estado"] == "EJECUTADA" and e["posicion_id"] == "POS-EXP-0001")
     h.chk("feliz_posicion_abierta_con_protecciones", o.posiciones["POS-EXP-0001"]["estado"] == "ABIERTA" and o.posiciones["POS-EXP-0001"]["protecciones"])
     h.chk("feliz_historial_completo", [x["hasta"] for x in e["historial"]] ==
-          ["DETECTADA", "EN_ANALISIS", "VALIDADA", "COMPARADA", "COMPARADA", "PROPUESTA", "AUTORIZADA", "EJECUTADA"])   # la segunda: elección del operador
+          ["DETECTADA", "EN_ANALISIS", "VALIDADA", "COMPARADA", "PROPUESTA", "AUTORIZADA", "EJECUTADA"])
     h.chk("feliz_historial_integro", o._historial_ok(e))
     R("terminal_ejecutada_no_se_mueve", o, lambda: o.descartar("EXP-0001", "x", "BROKER", AHORA), "O-14")
 
@@ -333,10 +337,11 @@ def main():
 
     # ---------------------------------------------------------------- comparar
     o = nuevo(); hasta(o, "VALIDADA")
-    R("comparar_uno_solo_O01", o, lambda: o.comparar(["EXP-0001"], "D", AHORA), "O-01")
     o.detectar("EXP-0002", "COR-0002", "DISCRECIONAL", "TACTICA", "GESTOR_TACTICA", AHORA)
     o.emitir_encargo("EXP-0002", encargo(2), "GESTOR_TACTICA", AHORA)
     o.entregar_sobre("EXP-0002", sobre(2), AHORA)
+    R("comparar_dejando_fuera_un_candidato_O24", o, lambda: o.comparar(["EXP-0001"], "D", AHORA), "O-24")
+    R("comparar_lista_vacia_O01", o, lambda: o.comparar([], "D", AHORA), "O-01")
     R("comparar_actor_Broker_O05", o, lambda: o.comparar(["EXP-0001", "EXP-0002"], "BROKER", AHORA), "O-05")
     R("comparar_repetidos_O01", o, lambda: o.comparar(["EXP-0001", "EXP-0001"], "D", AHORA), "O-01")
     R("comparar_inexistente_O12", o, lambda: o.comparar(["EXP-0001", "EXP-0077"], "D", AHORA), "O-12")
