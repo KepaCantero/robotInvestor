@@ -40,7 +40,7 @@ def base(perfil, clase, nivel, instrumento, via):
         "expediente_id": "EXP-0001", "producer": perfil, "consumer": "D",
         "tipo_mensaje": "CT-G-02", "version_esquema": "0.1.0",
         "emitido_en": "2026-11-05T18:00:00+00:00", "valid_until": "2026-11-08T18:00:00+00:00",
-        "data_refs": ["K-SELLO-2026-11-05", "EVID-0001"],
+        "data_refs": ["K-20261105-001", "SRC-EURUSD", "EVID-0001"],
         "payload": {
             "identificacion": {
                 "perfil": perfil, "clase_comparabilidad": clase, "instrumento": instrumento,
@@ -104,7 +104,7 @@ def n3(s, tope, conf, discrepa=False, estimado=False):
     p = s["payload"]
     if estimado:
         p["capa2"] = {"estado": "ESTIMADO", "metodo": "Simulación histórica de bloques",
-                      "base_datos": "Serie K-SELLO-2026-11-05",
+                      "base_datos": "Serie K-20261105-001",
                       "escenarios": [
                           {"nombre": "base", "probabilidad": 0.5, "rentabilidad_neta_pct": 1.5, "horizonte_dias": 90},
                           {"nombre": "adverso", "probabilidad": 0.3, "rentabilidad_neta_pct": -4.0, "horizonte_dias": 90},

@@ -10,7 +10,7 @@
   "valid_until": "2026-11-08T12:00:00+00:00",
   "data_refs": [
     "PAQ-B-0002",
-    "K-SELLO-2026-11-05"
+    "K-20261105-001"
   ],
   "payload": {
     "pregunta": "¿Encaja un ETF de acciones europeas en la cartera de largo plazo?",
@@ -24,7 +24,7 @@
     },
     "nivel_analisis": "N2",
     "fecha_corte": "2026-11-05",
-    "sello_corte_ref": "K-SELLO-2026-11-05",
+    "sello_corte_ref": "K-20261105-001",
     "mandato": {
       "benchmark_ref": "BENCH-EFECTIVO",
       "horizonte_dias": {

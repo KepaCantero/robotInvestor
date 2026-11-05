@@ -12,7 +12,7 @@
     "valid_until": "2026-11-05T13:00:00+00:00",
     "data_refs": [
       "PAQ-B-0001",
-      "K-SELLO-2026-11-05"
+      "K-20261105-001"
     ],
     "payload": {
       "pregunta": "¿Conviene una posición larga en EUR/USD a 3 meses?",
@@ -26,7 +26,7 @@
       },
       "nivel_analisis": "N3",
       "fecha_corte": "2026-11-05",
-      "sello_corte_ref": "K-SELLO-2026-11-05",
+      "sello_corte_ref": "K-20261105-001",
       "mandato": {
         "benchmark_ref": "BENCH-EFECTIVO",
         "horizonte_dias": {

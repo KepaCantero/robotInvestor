@@ -1,0 +1,1310 @@
+{
+  "mercado": "FX",
+  "cartera": "TACTICA",
+  "fecha_corte_solicitada": "2026-11-05",
+  "fuentes": [
+    {
+      "fuente_id": "SRC-EURUSD",
+      "instrumento": "EURUSD",
+      "version_conjunto": "DS-1",
+      "serie": [
+        {
+          "fecha": "2026-09-24",
+          "apertura": 1.1,
+          "maximo": 1.1011,
+          "minimo": 1.0989,
+          "cierre": 1.1,
+          "volumen": 1000
+        },
+        {
+          "fecha": "2026-09-25",
+          "apertura": 1.1,
+          "maximo": 1.102541,
+          "minimo": 1.0989,
+          "cierre": 1.10144,
+          "volumen": 1001
+        },
+        {
+          "fecha": "2026-09-28",
+          "apertura": 1.10144,
+          "maximo": 1.103824,
+          "minimo": 1.100339,
+          "cierre": 1.102721,
+          "volumen": 1002
+        },
+        {
+          "fecha": "2026-09-29",
+          "apertura": 1.102721,
+          "maximo": 1.104806,
+          "minimo": 1.101618,
+          "cierre": 1.103702,
+          "volumen": 1003
+        },
+        {
+          "fecha": "2026-09-30",
+          "apertura": 1.103702,
+          "maximo": 1.105381,
+          "minimo": 1.102598,
+          "cierre": 1.104277,
+          "volumen": 1004
+        },
+        {
+          "fecha": "2026-10-01",
+          "apertura": 1.104277,
+          "maximo": 1.105484,
+          "minimo": 1.103173,
+          "cierre": 1.10438,
+          "volumen": 1005
+        },
+        {
+          "fecha": "2026-10-02",
+          "apertura": 1.10438,
+          "maximo": 1.105484,
+          "minimo": 1.102897,
+          "cierre": 1.104001,
+          "volumen": 1006
+        },
+        {
+          "fecha": "2026-10-05",
+          "apertura": 1.104001,
+          "maximo": 1.105105,
+          "minimo": 1.102079,
+          "cierre": 1.103182,
+          "volumen": 1007
+        },
+        {
+          "fecha": "2026-10-06",
+          "apertura": 1.103182,
+          "maximo": 1.104285,
+          "minimo": 1.10091,
+          "cierre": 1.102012,
+          "volumen": 1008
+        },
+        {
+          "fecha": "2026-10-07",
+          "apertura": 1.102012,
+          "maximo": 1.103114,
+          "minimo": 1.09952,
+          "cierre": 1.100621,
+          "volumen": 1009
+        },
+        {
+          "fecha": "2026-10-08",
+          "apertura": 1.100621,
+          "maximo": 1.101722,
+          "minimo": 1.098063,
+          "cierre": 1.099162,
+          "volumen": 1010
+        },
+        {
+          "fecha": "2026-10-09",
+          "apertura": 1.099162,
+          "maximo": 1.100261,
+          "minimo": 1.096696,
+          "cierre": 1.097794,
+          "volumen": 1011
+        },
+        {
+          "fecha": "2026-10-12",
+          "apertura": 1.097794,
+          "maximo": 1.098892,
+          "minimo": 1.095573,
+          "cierre": 1.09667,
+          "volumen": 1012
+        },
+        {
+          "fecha": "2026-10-13",
+          "apertura": 1.09667,
+          "maximo": 1.097767,
+          "minimo": 1.094816,
+          "cierre": 1.095912,
+          "volumen": 1013
+        },
+        {
+          "fecha": "2026-10-14",
+          "apertura": 1.095912,
+          "maximo": 1.097008,
+          "minimo": 1.094509,
+          "cierre": 1.095605,
+          "volumen": 1014
+        },
+        {
+          "fecha": "2026-10-15",
+          "apertura": 1.095605,
+          "maximo": 1.096877,
+          "minimo": 1.094509,
+          "cierre": 1.095781,
+          "volumen": 1015
+        },
+        {
+          "fecha": "2026-10-16",
+          "apertura": 1.095781,
+          "maximo": 1.097517,
+          "minimo": 1.094685,
+          "cierre": 1.096421,
+          "volumen": 1016
+        },
+        {
+          "fecha": "2026-10-19",
+          "apertura": 1.096421,
+          "maximo": 1.098553,
+          "minimo": 1.095325,
+          "cierre": 1.097456,
+          "volumen": 1017
+        },
+        {
+          "fecha": "2026-10-20",
+          "apertura": 1.097456,
+          "maximo": 1.09987,
+          "minimo": 1.096359,
+          "cierre": 1.098771,
+          "volumen": 1018
+        },
+        {
+          "fecha": "2026-10-21",
+          "apertura": 1.098771,
+          "maximo": 1.101321,
+          "minimo": 1.097672,
+          "cierre": 1.100221,
+          "volumen": 1019
+        },
+        {
+          "fecha": "2026-10-22",
+          "apertura": 1.100221,
+          "maximo": 1.102748,
+          "minimo": 1.099121,
+          "cierre": 1.101646,
+          "volumen": 1020
+        },
+        {
+          "fecha": "2026-10-23",
+          "apertura": 1.101646,
+          "maximo": 1.103994,
+          "minimo": 1.100544,
+          "cierre": 1.102891,
+          "volumen": 1021
+        },
+        {
+          "fecha": "2026-10-26",
+          "apertura": 1.102891,
+          "maximo": 1.104921,
+          "minimo": 1.101788,
+          "cierre": 1.103817,
+          "volumen": 1022
+        },
+        {
+          "fecha": "2026-10-27",
+          "apertura": 1.103817,
+          "maximo": 1.105427,
+          "minimo": 1.102713,
+          "cierre": 1.104323,
+          "volumen": 1023
+        },
+        {
+          "fecha": "2026-10-28",
+          "apertura": 1.104323,
+          "maximo": 1.105457,
+          "minimo": 1.103219,
+          "cierre": 1.104353,
+          "volumen": 1024
+        },
+        {
+          "fecha": "2026-10-29",
+          "apertura": 1.104353,
+          "maximo": 1.105457,
+          "minimo": 1.1028,
+          "cierre": 1.103904,
+          "volumen": 1025
+        },
+        {
+          "fecha": "2026-10-30",
+          "apertura": 1.103904,
+          "maximo": 1.105008,
+          "minimo": 1.101922,
+          "cierre": 1.103025,
+          "volumen": 1026
+        },
+        {
+          "fecha": "2026-11-02",
+          "apertura": 1.103025,
+          "maximo": 1.104128,
+          "minimo": 1.100711,
+          "cierre": 1.101813,
+          "volumen": 1027
+        },
+        {
+          "fecha": "2026-11-03",
+          "apertura": 1.101813,
+          "maximo": 1.102915,
+          "minimo": 1.099302,
+          "cierre": 1.100402,
+          "volumen": 1028
+        },
+        {
+          "fecha": "2026-11-04",
+          "apertura": 1.100402,
+          "maximo": 1.101502,
+          "minimo": 1.097847,
+          "cierre": 1.098946,
+          "volumen": 1029
+        },
+        {
+          "fecha": "2026-11-05",
+          "apertura": 1.098946,
+          "maximo": 1.100045,
+          "minimo": 1.096508,
+          "cierre": 1.097606,
+          "volumen": 1030
+        }
+      ],
+      "critico": true,
+      "contraste": [
+        "SRC-EURUSD-B"
+      ],
+      "hash_declarado": "42feadda6ec13a70e31b4b8723587a7459b8710dee2fd2e89cf91eb76e974663"
+    },
+    {
+      "fuente_id": "SRC-EURUSD-B",
+      "instrumento": "EURUSD-B",
+      "version_conjunto": "DS-1",
+      "serie": [
+        {
+          "fecha": "2026-09-24",
+          "apertura": 1.1,
+          "maximo": 1.1011,
+          "minimo": 1.0989,
+          "cierre": 1.1,
+          "volumen": 1000
+        },
+        {
+          "fecha": "2026-09-25",
+          "apertura": 1.1,
+          "maximo": 1.102541,
+          "minimo": 1.0989,
+          "cierre": 1.10144,
+          "volumen": 1001
+        },
+        {
+          "fecha": "2026-09-28",
+          "apertura": 1.10144,
+          "maximo": 1.103824,
+          "minimo": 1.100339,
+          "cierre": 1.102721,
+          "volumen": 1002
+        },
+        {
+          "fecha": "2026-09-29",
+          "apertura": 1.102721,
+          "maximo": 1.104806,
+          "minimo": 1.101618,
+          "cierre": 1.103702,
+          "volumen": 1003
+        },
+        {
+          "fecha": "2026-09-30",
+          "apertura": 1.103702,
+          "maximo": 1.105381,
+          "minimo": 1.102598,
+          "cierre": 1.104277,
+          "volumen": 1004
+        },
+        {
+          "fecha": "2026-10-01",
+          "apertura": 1.104277,
+          "maximo": 1.105484,
+          "minimo": 1.103173,
+          "cierre": 1.10438,
+          "volumen": 1005
+        },
+        {
+          "fecha": "2026-10-02",
+          "apertura": 1.10438,
+          "maximo": 1.105484,
+          "minimo": 1.102897,
+          "cierre": 1.104001,
+          "volumen": 1006
+        },
+        {
+          "fecha": "2026-10-05",
+          "apertura": 1.104001,
+          "maximo": 1.105105,
+          "minimo": 1.102079,
+          "cierre": 1.103182,
+          "volumen": 1007
+        },
+        {
+          "fecha": "2026-10-06",
+          "apertura": 1.103182,
+          "maximo": 1.104285,
+          "minimo": 1.10091,
+          "cierre": 1.102012,
+          "volumen": 1008
+        },
+        {
+          "fecha": "2026-10-07",
+          "apertura": 1.102012,
+          "maximo": 1.103114,
+          "minimo": 1.09952,
+          "cierre": 1.100621,
+          "volumen": 1009
+        },
+        {
+          "fecha": "2026-10-08",
+          "apertura": 1.100621,
+          "maximo": 1.101722,
+          "minimo": 1.098063,
+          "cierre": 1.099162,
+          "volumen": 1010
+        },
+        {
+          "fecha": "2026-10-09",
+          "apertura": 1.099162,
+          "maximo": 1.100261,
+          "minimo": 1.096696,
+          "cierre": 1.097794,
+          "volumen": 1011
+        },
+        {
+          "fecha": "2026-10-12",
+          "apertura": 1.097794,
+          "maximo": 1.098892,
+          "minimo": 1.095573,
+          "cierre": 1.09667,
+          "volumen": 1012
+        },
+        {
+          "fecha": "2026-10-13",
+          "apertura": 1.09667,
+          "maximo": 1.097767,
+          "minimo": 1.094816,
+          "cierre": 1.095912,
+          "volumen": 1013
+        },
+        {
+          "fecha": "2026-10-14",
+          "apertura": 1.095912,
+          "maximo": 1.097008,
+          "minimo": 1.094509,
+          "cierre": 1.095605,
+          "volumen": 1014
+        },
+        {
+          "fecha": "2026-10-15",
+          "apertura": 1.095605,
+          "maximo": 1.096877,
+          "minimo": 1.094509,
+          "cierre": 1.095781,
+          "volumen": 1015
+        },
+        {
+          "fecha": "2026-10-16",
+          "apertura": 1.095781,
+          "maximo": 1.097517,
+          "minimo": 1.094685,
+          "cierre": 1.096421,
+          "volumen": 1016
+        },
+        {
+          "fecha": "2026-10-19",
+          "apertura": 1.096421,
+          "maximo": 1.098553,
+          "minimo": 1.095325,
+          "cierre": 1.097456,
+          "volumen": 1017
+        },
+        {
+          "fecha": "2026-10-20",
+          "apertura": 1.097456,
+          "maximo": 1.09987,
+          "minimo": 1.096359,
+          "cierre": 1.098771,
+          "volumen": 1018
+        },
+        {
+          "fecha": "2026-10-21",
+          "apertura": 1.098771,
+          "maximo": 1.101321,
+          "minimo": 1.097672,
+          "cierre": 1.100221,
+          "volumen": 1019
+        },
+        {
+          "fecha": "2026-10-22",
+          "apertura": 1.100221,
+          "maximo": 1.102748,
+          "minimo": 1.099121,
+          "cierre": 1.101646,
+          "volumen": 1020
+        },
+        {
+          "fecha": "2026-10-23",
+          "apertura": 1.101646,
+          "maximo": 1.103994,
+          "minimo": 1.100544,
+          "cierre": 1.102891,
+          "volumen": 1021
+        },
+        {
+          "fecha": "2026-10-26",
+          "apertura": 1.102891,
+          "maximo": 1.104921,
+          "minimo": 1.101788,
+          "cierre": 1.103817,
+          "volumen": 1022
+        },
+        {
+          "fecha": "2026-10-27",
+          "apertura": 1.103817,
+          "maximo": 1.105427,
+          "minimo": 1.102713,
+          "cierre": 1.104323,
+          "volumen": 1023
+        },
+        {
+          "fecha": "2026-10-28",
+          "apertura": 1.104323,
+          "maximo": 1.105457,
+          "minimo": 1.103219,
+          "cierre": 1.104353,
+          "volumen": 1024
+        },
+        {
+          "fecha": "2026-10-29",
+          "apertura": 1.104353,
+          "maximo": 1.105457,
+          "minimo": 1.1028,
+          "cierre": 1.103904,
+          "volumen": 1025
+        },
+        {
+          "fecha": "2026-10-30",
+          "apertura": 1.103904,
+          "maximo": 1.105008,
+          "minimo": 1.101922,
+          "cierre": 1.103025,
+          "volumen": 1026
+        },
+        {
+          "fecha": "2026-11-02",
+          "apertura": 1.103025,
+          "maximo": 1.104128,
+          "minimo": 1.100711,
+          "cierre": 1.101813,
+          "volumen": 1027
+        },
+        {
+          "fecha": "2026-11-03",
+          "apertura": 1.101813,
+          "maximo": 1.102915,
+          "minimo": 1.099302,
+          "cierre": 1.100402,
+          "volumen": 1028
+        },
+        {
+          "fecha": "2026-11-04",
+          "apertura": 1.100402,
+          "maximo": 1.101502,
+          "minimo": 1.097847,
+          "cierre": 1.098946,
+          "volumen": 1029
+        },
+        {
+          "fecha": "2026-11-05",
+          "apertura": 1.098946,
+          "maximo": 1.100045,
+          "minimo": 1.096508,
+          "cierre": 1.097606,
+          "volumen": 1030
+        }
+      ],
+      "hash_declarado": "42feadda6ec13a70e31b4b8723587a7459b8710dee2fd2e89cf91eb76e974663"
+    },
+    {
+      "fuente_id": "SRC-USDJPY",
+      "instrumento": "USDJPY",
+      "version_conjunto": "DS-1",
+      "serie": [
+        {
+          "fecha": "2026-09-24",
+          "apertura": 150.504883,
+          "maximo": 150.655388,
+          "minimo": 150.354378,
+          "cierre": 150.504883,
+          "volumen": 1000
+        },
+        {
+          "fecha": "2026-09-25",
+          "apertura": 150.504883,
+          "maximo": 150.733746,
+          "minimo": 150.354378,
+          "cierre": 150.583163,
+          "volumen": 1001
+        },
+        {
+          "fecha": "2026-09-28",
+          "apertura": 150.583163,
+          "maximo": 150.747842,
+          "minimo": 150.43258,
+          "cierre": 150.597245,
+          "volumen": 1002
+        },
+        {
+          "fecha": "2026-09-29",
+          "apertura": 150.597245,
+          "maximo": 150.747842,
+          "minimo": 150.395032,
+          "cierre": 150.545578,
+          "volumen": 1003
+        },
+        {
+          "fecha": "2026-09-30",
+          "apertura": 150.545578,
+          "maximo": 150.696124,
+          "minimo": 150.283418,
+          "cierre": 150.433852,
+          "volumen": 1004
+        },
+        {
+          "fecha": "2026-10-01",
+          "apertura": 150.433852,
+          "maximo": 150.584286,
+          "minimo": 150.12409,
+          "cierre": 150.274364,
+          "volumen": 1005
+        },
+        {
+          "fecha": "2026-10-02",
+          "apertura": 150.274364,
+          "maximo": 150.424638,
+          "minimo": 149.934587,
+          "cierre": 150.084672,
+          "volumen": 1006
+        },
+        {
+          "fecha": "2026-10-05",
+          "apertura": 150.084672,
+          "maximo": 150.234757,
+          "minimo": 149.735773,
+          "cierre": 149.885659,
+          "volumen": 1007
+        },
+        {
+          "fecha": "2026-10-06",
+          "apertura": 149.885659,
+          "maximo": 150.035545,
+          "minimo": 149.549535,
+          "cierre": 149.699234,
+          "volumen": 1008
+        },
+        {
+          "fecha": "2026-10-07",
+          "apertura": 149.699234,
+          "maximo": 149.848933,
+          "minimo": 149.396373,
+          "cierre": 149.545919,
+          "volumen": 1009
+        },
+        {
+          "fecha": "2026-10-08",
+          "apertura": 149.545919,
+          "maximo": 149.695465,
+          "minimo": 149.293148,
+          "cierre": 149.442591,
+          "volumen": 1010
+        },
+        {
+          "fecha": "2026-10-09",
+          "apertura": 149.442591,
+          "maximo": 149.592034,
+          "minimo": 149.251226,
+          "cierre": 149.400627,
+          "volumen": 1011
+        },
+        {
+          "fecha": "2026-10-12",
+          "apertura": 149.400627,
+          "maximo": 149.57407,
+          "minimo": 149.251226,
+          "cierre": 149.424645,
+          "volumen": 1012
+        },
+        {
+          "fecha": "2026-10-13",
+          "apertura": 149.424645,
+          "maximo": 149.661514,
+          "minimo": 149.27522,
+          "cierre": 149.512002,
+          "volumen": 1013
+        },
+        {
+          "fecha": "2026-10-14",
+          "apertura": 149.512002,
+          "maximo": 149.802734,
+          "minimo": 149.36249,
+          "cierre": 149.653081,
+          "volumen": 1014
+        },
+        {
+          "fecha": "2026-10-15",
+          "apertura": 149.653081,
+          "maximo": 149.982183,
+          "minimo": 149.503428,
+          "cierre": 149.832351,
+          "volumen": 1015
+        },
+        {
+          "fecha": "2026-10-16",
+          "apertura": 149.832351,
+          "maximo": 150.180106,
+          "minimo": 149.682519,
+          "cierre": 150.030076,
+          "volumen": 1016
+        },
+        {
+          "fecha": "2026-10-19",
+          "apertura": 150.030076,
+          "maximo": 150.374715,
+          "minimo": 149.880046,
+          "cierre": 150.224491,
+          "volumen": 1017
+        },
+        {
+          "fecha": "2026-10-20",
+          "apertura": 150.224491,
+          "maximo": 150.544586,
+          "minimo": 150.074267,
+          "cierre": 150.394192,
+          "volumen": 1018
+        },
+        {
+          "fecha": "2026-10-21",
+          "apertura": 150.394192,
+          "maximo": 150.671018,
+          "minimo": 150.243798,
+          "cierre": 150.520498,
+          "volumen": 1019
+        },
+        {
+          "fecha": "2026-10-22",
+          "apertura": 150.520498,
+          "maximo": 150.740095,
+          "minimo": 150.369978,
+          "cierre": 150.589505,
+          "volumen": 1020
+        },
+        {
+          "fecha": "2026-10-23",
+          "apertura": 150.589505,
+          "maximo": 150.744209,
+          "minimo": 150.438915,
+          "cierre": 150.593615,
+          "volumen": 1021
+        },
+        {
+          "fecha": "2026-10-26",
+          "apertura": 150.593615,
+          "maximo": 150.744209,
+          "minimo": 150.381844,
+          "cierre": 150.532376,
+          "volumen": 1022
+        },
+        {
+          "fecha": "2026-10-27",
+          "apertura": 150.532376,
+          "maximo": 150.682908,
+          "minimo": 150.262118,
+          "cierre": 150.412531,
+          "volumen": 1023
+        },
+        {
+          "fecha": "2026-10-28",
+          "apertura": 150.412531,
+          "maximo": 150.562944,
+          "minimo": 150.097024,
+          "cierre": 150.247271,
+          "volumen": 1024
+        },
+        {
+          "fecha": "2026-10-29",
+          "apertura": 150.247271,
+          "maximo": 150.397518,
+          "minimo": 149.904735,
+          "cierre": 150.05479,
+          "volumen": 1025
+        },
+        {
+          "fecha": "2026-10-30",
+          "apertura": 150.05479,
+          "maximo": 150.204845,
+          "minimo": 149.706422,
+          "cierre": 149.856278,
+          "volumen": 1026
+        },
+        {
+          "fecha": "2026-11-02",
+          "apertura": 149.856278,
+          "maximo": 150.006134,
+          "minimo": 149.523913,
+          "cierre": 149.673587,
+          "volumen": 1027
+        },
+        {
+          "fecha": "2026-11-03",
+          "apertura": 149.673587,
+          "maximo": 149.823261,
+          "minimo": 149.377303,
+          "cierre": 149.52683,
+          "volumen": 1028
+        },
+        {
+          "fecha": "2026-11-04",
+          "apertura": 149.52683,
+          "maximo": 149.676357,
+          "minimo": 149.282731,
+          "cierre": 149.432163,
+          "volumen": 1029
+        },
+        {
+          "fecha": "2026-11-05",
+          "apertura": 149.432163,
+          "maximo": 149.581595,
+          "minimo": 149.250606,
+          "cierre": 149.400006,
+          "volumen": 1030
+        }
+      ],
+      "hash_declarado": "5ab8710a6fd9ddabb6f64ad2fa052d7f3d5c666ee3c086d0587f05b0ea51a0c9"
+    },
+    {
+      "fuente_id": "SRC-EURJPY",
+      "instrumento": "EURJPY",
+      "version_conjunto": "DS-1",
+      "serie": [
+        {
+          "apertura": 165.555371,
+          "maximo": 165.886648,
+          "minimo": 165.224426,
+          "cierre": 165.555371,
+          "fecha": "2026-09-24",
+          "volumen": 1000
+        },
+        {
+          "apertura": 165.555371,
+          "maximo": 166.190135,
+          "minimo": 165.224426,
+          "cierre": 165.858319,
+          "fecha": "2026-09-25",
+          "volumen": 1001
+        },
+        {
+          "apertura": 165.858319,
+          "maximo": 166.399086,
+          "minimo": 165.526835,
+          "cierre": 166.066745,
+          "fecha": "2026-09-28",
+          "volumen": 1002
+        },
+        {
+          "apertura": 166.066745,
+          "maximo": 166.54712,
+          "minimo": 165.677874,
+          "cierre": 166.157456,
+          "fecha": "2026-09-29",
+          "volumen": 1003
+        },
+        {
+          "apertura": 166.157456,
+          "maximo": 166.576632,
+          "minimo": 165.702196,
+          "cierre": 166.120643,
+          "fecha": "2026-09-30",
+          "volumen": 1004
+        },
+        {
+          "apertura": 166.120643,
+          "maximo": 166.468519,
+          "minimo": 165.612843,
+          "cierre": 165.960002,
+          "fecha": "2026-10-01",
+          "volumen": 1005
+        },
+        {
+          "apertura": 165.960002,
+          "maximo": 166.292031,
+          "minimo": 165.362406,
+          "cierre": 165.693628,
+          "fecha": "2026-10-02",
+          "volumen": 1006
+        },
+        {
+          "apertura": 165.693628,
+          "maximo": 166.025181,
+          "minimo": 165.020651,
+          "cierre": 165.351161,
+          "fecha": "2026-10-05",
+          "volumen": 1007
+        },
+        {
+          "apertura": 165.351161,
+          "maximo": 165.682002,
+          "minimo": 164.640579,
+          "cierre": 164.970352,
+          "fecha": "2026-10-06",
+          "volumen": 1008
+        },
+        {
+          "apertura": 164.970352,
+          "maximo": 165.300456,
+          "minimo": 164.2643,
+          "cierre": 164.593379,
+          "fecha": "2026-10-07",
+          "volumen": 1009
+        },
+        {
+          "apertura": 164.593379,
+          "maximo": 164.922787,
+          "minimo": 163.933282,
+          "cierre": 164.261617,
+          "fecha": "2026-10-08",
+          "volumen": 1010
+        },
+        {
+          "apertura": 164.261617,
+          "maximo": 164.590281,
+          "minimo": 163.683223,
+          "cierre": 164.011112,
+          "fecha": "2026-10-09",
+          "volumen": 1011
+        },
+        {
+          "apertura": 164.011112,
+          "maximo": 164.365749,
+          "minimo": 163.515613,
+          "cierre": 163.869525,
+          "fecha": "2026-10-12",
+          "volumen": 1012
+        },
+        {
+          "apertura": 163.869525,
+          "maximo": 164.293471,
+          "minimo": 163.428899,
+          "cierre": 163.851997,
+          "fecha": "2026-10-13",
+          "volumen": 1013
+        },
+        {
+          "apertura": 163.851997,
+          "maximo": 164.334798,
+          "minimo": 163.47859,
+          "cierre": 163.960664,
+          "fecha": "2026-10-14",
+          "volumen": 1014
+        },
+        {
+          "apertura": 163.960664,
+          "maximo": 164.512007,
+          "minimo": 163.632847,
+          "cierre": 164.183443,
+          "fecha": "2026-10-15",
+          "volumen": 1015
+        },
+        {
+          "apertura": 164.183443,
+          "maximo": 164.825219,
+          "minimo": 163.855208,
+          "cierre": 164.496126,
+          "fecha": "2026-10-16",
+          "volumen": 1016
+        },
+        {
+          "apertura": 164.496126,
+          "maximo": 165.194594,
+          "minimo": 164.167361,
+          "cierre": 164.864769,
+          "fecha": "2026-10-19",
+          "volumen": 1017
+        },
+        {
+          "apertura": 164.864769,
+          "maximo": 165.579474,
+          "minimo": 164.535273,
+          "cierre": 165.248777,
+          "fecha": "2026-10-20",
+          "volumen": 1018
+        },
+        {
+          "apertura": 165.248777,
+          "maximo": 165.937156,
+          "minimo": 164.91841,
+          "cierre": 165.605813,
+          "fecha": "2026-10-21",
+          "volumen": 1019
+        },
+        {
+          "apertura": 165.605813,
+          "maximo": 166.228338,
+          "minimo": 165.274801,
+          "cierre": 165.896326,
+          "fecha": "2026-10-22",
+          "volumen": 1020
+        },
+        {
+          "apertura": 165.896326,
+          "maximo": 166.420702,
+          "minimo": 165.564645,
+          "cierre": 166.088343,
+          "fecha": "2026-10-23",
+          "volumen": 1021
+        },
+        {
+          "apertura": 166.088343,
+          "maximo": 166.560442,
+          "minimo": 165.688911,
+          "cierre": 166.160196,
+          "fecha": "2026-10-26",
+          "volumen": 1022
+        },
+        {
+          "apertura": 166.160196,
+          "maximo": 166.568955,
+          "minimo": 165.695991,
+          "cierre": 166.104017,
+          "fecha": "2026-10-27",
+          "volumen": 1023
+        },
+        {
+          "apertura": 166.104017,
+          "maximo": 166.44086,
+          "minimo": 165.589889,
+          "cierre": 165.926024,
+          "fecha": "2026-10-28",
+          "volumen": 1024
+        },
+        {
+          "apertura": 165.926024,
+          "maximo": 166.257989,
+          "minimo": 165.314942,
+          "cierre": 165.646083,
+          "fecha": "2026-10-29",
+          "volumen": 1025
+        },
+        {
+          "apertura": 165.646083,
+          "maximo": 165.977555,
+          "minimo": 164.9648,
+          "cierre": 165.295221,
+          "fecha": "2026-10-30",
+          "volumen": 1026
+        },
+        {
+          "apertura": 165.295221,
+          "maximo": 165.625973,
+          "minimo": 164.582616,
+          "cierre": 164.912304,
+          "fecha": "2026-11-02",
+          "volumen": 1027
+        },
+        {
+          "apertura": 164.912304,
+          "maximo": 165.242322,
+          "minimo": 164.210768,
+          "cierre": 164.539623,
+          "fecha": "2026-11-03",
+          "volumen": 1028
+        },
+        {
+          "apertura": 164.539623,
+          "maximo": 164.868807,
+          "minimo": 163.889598,
+          "cierre": 164.217878,
+          "fecha": "2026-11-04",
+          "volumen": 1029
+        },
+        {
+          "apertura": 164.217878,
+          "maximo": 164.546486,
+          "minimo": 163.654483,
+          "cierre": 163.982343,
+          "fecha": "2026-11-05",
+          "volumen": 1030
+        }
+      ],
+      "hash_declarado": "a19192ed439c9e3814dabae198490995bb006ec7635079278ebdd4790099fac2"
+    },
+    {
+      "fuente_id": "SRC-GBPUSD",
+      "instrumento": "GBPUSD",
+      "version_conjunto": "DS-1",
+      "serie": [
+        {
+          "fecha": "2026-09-24",
+          "apertura": 1.304728,
+          "maximo": 1.306033,
+          "minimo": 1.303423,
+          "cierre": 1.304728,
+          "volumen": 1000
+        },
+        {
+          "fecha": "2026-09-25",
+          "apertura": 1.304728,
+          "maximo": 1.306033,
+          "minimo": 1.302456,
+          "cierre": 1.30376,
+          "volumen": 1001
+        },
+        {
+          "fecha": "2026-09-28",
+          "apertura": 1.30376,
+          "maximo": 1.305064,
+          "minimo": 1.301076,
+          "cierre": 1.302378,
+          "volumen": 1002
+        },
+        {
+          "fecha": "2026-09-29",
+          "apertura": 1.302378,
+          "maximo": 1.30368,
+          "minimo": 1.299433,
+          "cierre": 1.300734,
+          "volumen": 1003
+        },
+        {
+          "fecha": "2026-09-30",
+          "apertura": 1.300734,
+          "maximo": 1.302035,
+          "minimo": 1.29771,
+          "cierre": 1.299009,
+          "volumen": 1004
+        },
+        {
+          "fecha": "2026-10-01",
+          "apertura": 1.299009,
+          "maximo": 1.300308,
+          "minimo": 1.296096,
+          "cierre": 1.297393,
+          "volumen": 1005
+        },
+        {
+          "fecha": "2026-10-02",
+          "apertura": 1.297393,
+          "maximo": 1.29869,
+          "minimo": 1.294769,
+          "cierre": 1.296065,
+          "volumen": 1006
+        },
+        {
+          "fecha": "2026-10-05",
+          "apertura": 1.296065,
+          "maximo": 1.297361,
+          "minimo": 1.293874,
+          "cierre": 1.295169,
+          "volumen": 1007
+        },
+        {
+          "fecha": "2026-10-06",
+          "apertura": 1.295169,
+          "maximo": 1.296464,
+          "minimo": 1.29351,
+          "cierre": 1.294805,
+          "volumen": 1008
+        },
+        {
+          "fecha": "2026-10-07",
+          "apertura": 1.294805,
+          "maximo": 1.296309,
+          "minimo": 1.29351,
+          "cierre": 1.295014,
+          "volumen": 1009
+        },
+        {
+          "fecha": "2026-10-08",
+          "apertura": 1.295014,
+          "maximo": 1.297067,
+          "minimo": 1.293719,
+          "cierre": 1.295771,
+          "volumen": 1010
+        },
+        {
+          "fecha": "2026-10-09",
+          "apertura": 1.295771,
+          "maximo": 1.29829,
+          "minimo": 1.294475,
+          "cierre": 1.296993,
+          "volumen": 1011
+        },
+        {
+          "fecha": "2026-10-12",
+          "apertura": 1.296993,
+          "maximo": 1.299846,
+          "minimo": 1.295696,
+          "cierre": 1.298547,
+          "volumen": 1012
+        },
+        {
+          "fecha": "2026-10-13",
+          "apertura": 1.298547,
+          "maximo": 1.301561,
+          "minimo": 1.297248,
+          "cierre": 1.300261,
+          "volumen": 1013
+        },
+        {
+          "fecha": "2026-10-14",
+          "apertura": 1.300261,
+          "maximo": 1.303248,
+          "minimo": 1.298961,
+          "cierre": 1.301946,
+          "volumen": 1014
+        },
+        {
+          "fecha": "2026-10-15",
+          "apertura": 2.213308,
+          "maximo": 2.218022,
+          "minimo": 2.211095,
+          "cierre": 2.215807,
+          "volumen": 1015
+        },
+        {
+          "fecha": "2026-10-16",
+          "apertura": 2.215807,
+          "maximo": 2.219887,
+          "minimo": 2.213592,
+          "cierre": 2.217669,
+          "volumen": 1016
+        },
+        {
+          "fecha": "2026-10-19",
+          "apertura": 2.217669,
+          "maximo": 2.220904,
+          "minimo": 2.21545,
+          "cierre": 2.218685,
+          "volumen": 1017
+        },
+        {
+          "fecha": "2026-10-20",
+          "apertura": 2.218685,
+          "maximo": 2.220965,
+          "minimo": 2.216467,
+          "cierre": 2.218746,
+          "volumen": 1018
+        },
+        {
+          "fecha": "2026-10-21",
+          "apertura": 2.218746,
+          "maximo": 2.220965,
+          "minimo": 2.215625,
+          "cierre": 2.217844,
+          "volumen": 1019
+        },
+        {
+          "fecha": "2026-10-22",
+          "apertura": 2.217844,
+          "maximo": 2.220062,
+          "minimo": 2.213861,
+          "cierre": 2.216077,
+          "volumen": 1020
+        },
+        {
+          "fecha": "2026-10-23",
+          "apertura": 2.216077,
+          "maximo": 2.218294,
+          "minimo": 2.21143,
+          "cierre": 2.213643,
+          "volumen": 1021
+        },
+        {
+          "fecha": "2026-10-26",
+          "apertura": 2.213643,
+          "maximo": 2.215856,
+          "minimo": 2.208597,
+          "cierre": 2.210808,
+          "volumen": 1022
+        },
+        {
+          "fecha": "2026-10-27",
+          "apertura": 2.210808,
+          "maximo": 2.213017,
+          "minimo": 2.205674,
+          "cierre": 2.207882,
+          "volumen": 1023
+        },
+        {
+          "fecha": "2026-10-28",
+          "apertura": 2.207882,
+          "maximo": 2.21009,
+          "minimo": 2.202986,
+          "cierre": 2.205191,
+          "volumen": 1024
+        },
+        {
+          "fecha": "2026-10-29",
+          "apertura": 2.205191,
+          "maximo": 2.207396,
+          "minimo": 2.200825,
+          "cierre": 2.203028,
+          "volumen": 1025
+        },
+        {
+          "fecha": "2026-10-30",
+          "apertura": 2.203028,
+          "maximo": 2.205232,
+          "minimo": 2.199433,
+          "cierre": 2.201634,
+          "volumen": 1026
+        },
+        {
+          "fecha": "2026-11-02",
+          "apertura": 2.201634,
+          "maximo": 2.203836,
+          "minimo": 2.198958,
+          "cierre": 2.20116,
+          "volumen": 1027
+        },
+        {
+          "fecha": "2026-11-03",
+          "apertura": 2.20116,
+          "maximo": 2.203861,
+          "minimo": 2.198958,
+          "cierre": 2.20166,
+          "volumen": 1028
+        },
+        {
+          "fecha": "2026-11-04",
+          "apertura": 2.20166,
+          "maximo": 2.205281,
+          "minimo": 2.199458,
+          "cierre": 2.203078,
+          "volumen": 1029
+        },
+        {
+          "fecha": "2026-11-05",
+          "apertura": 2.203078,
+          "maximo": 2.207462,
+          "minimo": 2.200874,
+          "cierre": 2.205257,
+          "volumen": 1030
+        }
+      ],
+      "hash_declarado": "17c07a3f7e1b6fa889f67ffc1af310637c330d759c790ff405a7a72ee2975425"
+    }
+  ],
+  "cruces": [
+    {
+      "a": "SRC-EURUSD",
+      "b": "SRC-USDJPY",
+      "c": "SRC-EURJPY"
+    }
+  ],
+  "ajustes": {
+    "version": "AJ-2026.1",
+    "items": [
+      {
+        "fuente_id": "SRC-GBPUSD",
+        "fecha_efectiva": "2026-10-08",
+        "tipo": "SPLIT",
+        "factor": 1.7
+      }
+    ]
+  },
+  "eventos": []
+}

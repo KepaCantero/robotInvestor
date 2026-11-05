@@ -131,7 +131,7 @@ def validar(sobre, ctx) -> list[dict]:
     """Nunca lanza excepciones: una entrada o un contexto mal formados se rechazan con V-01."""
     try:
         return _validar(sobre, ctx)
-    except (KeyError, TypeError, AttributeError, ValueError, IndexError) as e:
+    except (KeyError, TypeError, AttributeError, ValueError, IndexError, OverflowError, RecursionError, MemoryError) as e:
         return [{"regla": "V-01", "ruta": "(interno)",
                  "mensaje": f"entrada o contexto mal formado: {type(e).__name__}: {e}"}]
 
