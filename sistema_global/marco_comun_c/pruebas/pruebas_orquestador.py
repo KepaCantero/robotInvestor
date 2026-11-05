@@ -16,6 +16,7 @@ from orquestador import Orquestador  # noqa: E402
 from pruebas_encargo import encargo_div, SELLOS as SELLOS_ENC  # noqa: E402
 from pruebas_k import CAL, CTX as CTX_K, construir as construir_k  # noqa: E402
 from generar_casos import validos as sobres_validos  # noqa: E402
+from pruebas_contradictor import informe as informe_ctr, obj as obj_ctr  # noqa: E402
 
 CFG = {"perfiles_activos": ["C-DIV", "C-RV", "C-CRI"], "apalancamiento_permitido": False,
        "clases_ratificadas": {"C-DIV": "Q", "C-RV": "Q", "C-CRI": "K", "C-RF": "S"}}
@@ -228,7 +229,46 @@ def main():
     o.detectar("EXP-0001", "COR-0001", "DISCRECIONAL", "TACTICA", "GESTOR_TACTICA", AHORA)
     o.emitir_encargo("EXP-0001", encargo(1), "GESTOR_TACTICA", AHORA)
     R("sobre_N3_sin_contradictor_O06", o, lambda: o.entregar_sobre("EXP-0001", sobre(1), AHORA), "O-06")
-    h.chk("sobre_N3_con_contradictor_ok", o.entregar_sobre("EXP-0001", sobre(1), AHORA, contradictor_ref="CTR-0001")["ok"])
+    R("sobre_N3_informe_invalido_O01", o, lambda: o.entregar_sobre("EXP-0001", sobre(1), AHORA, informe={"event_id": "EV-CTR-0001"}), "O-01")
+    inf = informe_ctr(sobre(1))
+    h.chk("sobre_N3_con_contradictor_ok", o.entregar_sobre("EXP-0001", sobre(1), AHORA, informe=inf)["ok"]
+          and o.expedientes["EXP-0001"]["contradictor"]["veredicto"] == "SIN_OBJECIONES_RELEVANTES")
+    # informe reutilizado en otro expediente
+    o.detectar("EXP-0002", "COR-0002", "DISCRECIONAL", "TACTICA", "GESTOR_TACTICA", AHORA)
+    o.emitir_encargo("EXP-0002", encargo(2), "GESTOR_TACTICA", AHORA)
+    R("informe_reutilizado_en_otro_expediente_O03", o, lambda: o.entregar_sobre("EXP-0002", sobre(2), AHORA, informe=inf), "O-03")
+    # objeción mayor: pasa con aviso; crítica: retiene hasta que el operador la levante
+    o = nuevo({"exige_contradictor_en": ["N3"]}); hasta_enc = o.detectar("EXP-0001", "COR-0001", "DISCRECIONAL", "TACTICA", "GESTOR_TACTICA", AHORA); o.emitir_encargo("EXP-0001", encargo(1), "GESTOR_TACTICA", AHORA)
+    mayor = informe_ctr(sobre(1), veredicto="OBJECION_MAYOR", objeciones=[obj_ctr(1, "MAYOR", ["EVID-0001"])])
+    h.chk("objecion_mayor_pasa_con_aviso", o.entregar_sobre("EXP-0001", sobre(1), AHORA, informe=mayor)["ok"] and any(a["codigo"] == "O-17" for a in o.avisos))
+    o = nuevo({"exige_contradictor_en": ["N3"]}); o.detectar("EXP-0001", "COR-0001", "DISCRECIONAL", "TACTICA", "GESTOR_TACTICA", AHORA); o.emitir_encargo("EXP-0001", encargo(1), "GESTOR_TACTICA", AHORA)
+    crit = informe_ctr(sobre(1), veredicto="OBJECION_CRITICA", objeciones=[obj_ctr(1, "CRITICA", ["SRC-EURUSD"], "LOGICA")])
+    R("objecion_critica_retiene_O17", o, lambda: o.entregar_sobre("EXP-0001", sobre(1), AHORA, informe=crit), "O-17", mutacion_permitida=True)
+    h.chk("critica_deja_expediente_en_analisis", o.expedientes["EXP-0001"]["estado"] == "EN_ANALISIS" and o.expedientes["EXP-0001"]["sobre"] is None)
+    R("critica_reenvio_sigue_rechazado_O17", o, lambda: o.entregar_sobre("EXP-0001", sobre(1), AHORA, informe=crit), "O-17")
+    R("critica_no_se_esquiva_con_observar_O17", o, lambda: o.observar("EXP-0001", ["x"], "m", "BROKER", AHORA), "O-17")
+    R("critica_no_se_esquiva_con_reencargo_O17", o, lambda: o.emitir_encargo("EXP-0001", {**encargo(1), "event_id": "EV-ENC-0101"}, "GESTOR_TACTICA", AHORA), "O-17")
+    R("levantar_critica_actor_ajeno_O05", o, lambda: o.levantar_objecion("EXP-0001", "ok", "C", AHORA), "O-05")
+    R("levantar_critica_sin_motivo_O15", o, lambda: o.levantar_objecion("EXP-0001", " ", "OPERADOR", AHORA), "O-15")
+    R("levantar_sin_critica_pendiente_O04", o, lambda: o.levantar_objecion("EXP-0099", "ok", "OPERADOR", AHORA), "O-12")
+    h.chk("levantar_critica_ok", o.levantar_objecion("EXP-0001", "he revisado la objeción y la asumo", "OPERADOR", AHORA)["ok"]
+          and o.expedientes["EXP-0001"]["estado"] == "VALIDADA" and o.expedientes["EXP-0001"]["contradictor"]["veredicto"] == "OBJECION_CRITICA")
+    R("levantar_dos_veces_O04", o, lambda: o.levantar_objecion("EXP-0001", "otra vez", "OPERADOR", AHORA), "O-04")
+    o = nuevo({"exige_contradictor_en": ["N3"]}); o.detectar("EXP-0001", "COR-0001", "DISCRECIONAL", "TACTICA", "GESTOR_TACTICA", AHORA); o.emitir_encargo("EXP-0001", encargo(1), "GESTOR_TACTICA", AHORA)
+    o.entregar_sobre("EXP-0001", sobre(1), AHORA, informe=crit)
+    R("levantar_con_sobre_vencido_O10", o, lambda: o.levantar_objecion("EXP-0001", "ok", "OPERADOR", "2026-11-09T00:00:00+00:00"), "O-10")
+    # informe caducado antes que el sobre: el sobre vale solo mientras valga el informe
+    o = nuevo({"exige_contradictor_en": ["N3"]}); o.detectar("EXP-0001", "COR-0001", "DISCRECIONAL", "TACTICA", "GESTOR_TACTICA", AHORA); o.emitir_encargo("EXP-0001", encargo(1), "GESTOR_TACTICA", AHORA)
+    o.entregar_sobre("EXP-0001", sobre(1), AHORA, informe=informe_ctr(sobre(1)))
+    r = o.barrer("2026-11-08T12:30:00+00:00")
+    h.chk("informe_vencido_caduca_el_expediente", o.expedientes["EXP-0001"]["estado"] == "CADUCADA", r)
+    for nombre, cfg in (("minuscula", ["n3"]), ("nivel_inexistente", ["N4"]), ("no_texto", [None]), ("anidada", [["N3"]])):
+        try:
+            Orquestador({**CFG, "exige_contradictor_en": cfg}, CAL)
+            h.chk("config_contradictor_invalida_" + nombre, False, "arrancó")
+        except ValueError:
+            h.chk("config_contradictor_invalida_" + nombre, True)
+    h.chk("critica_se_puede_descartar", o.descartar("EXP-0001", "la objeción es válida", "OPERADOR", "2026-11-09T00:00:00+00:00")["ok"])
     # duplicado y conflicto de sobre
     o = nuevo(); hasta(o, "EN_ANALISIS")
     s = sobre(1)
