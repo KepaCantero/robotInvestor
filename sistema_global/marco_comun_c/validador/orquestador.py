@@ -786,9 +786,11 @@ class Orquestador:
                 return _no("O-06", "CERRADA exige restante 0; ABIERTA, restante mayor que 0")
             if p["estado"] == "CERRANDO" and restante != 0:
                 return _no("O-06", "CERRANDO solo termina en CERRADA")
-            if orden["orden_id"] in self.ordenes_usadas:
+            propia = hasta == "CERRADA" and orden["orden_id"] in p["protecciones"]   # el cierre puede ser el propio stop que saltó
+            if orden["orden_id"] in self.ordenes_usadas and not propia:
                 return _no("O-03", "orden ya usada")
-            self.ordenes_usadas.append(orden["orden_id"])
+            if not propia:
+                self.ordenes_usadas.append(orden["orden_id"])
             p["cantidad"] = restante
             ref = orden["orden_id"]
         self._anota(p, p["estado"], hasta, actor, ahora, motivo or "transición de posición", ref)

@@ -30,9 +30,10 @@ def _num(x, minimo=None):
 class BrokerSimulado:
     """Intermediario de pruebas: precios fijos, ejecución completa o parcial, y fallos a demanda."""
 
-    def __init__(self, capital_eur, precios, hora_datos, fraccion_fill=1.0, rechaza_stops=False, caido=False, rechaza_mercado=False):
+    def __init__(self, capital_eur, precios, hora_datos, fraccion_fill=1.0, rechaza_stops=False, caido=False, rechaza_mercado=False, fraccion_mercado=1.0):
         self.capital_eur, self.precios, self.hora_datos = capital_eur, dict(precios), hora_datos
         self.fraccion_fill, self.rechaza_stops, self.caido, self.rechaza_mercado = fraccion_fill, rechaza_stops, caido, rechaza_mercado
+        self.fraccion_mercado = fraccion_mercado
         self.ordenes, self.pos, self.perdida_dia_eur = {}, {}, 0.0
 
     def enviar(self, o):
@@ -61,7 +62,7 @@ class BrokerSimulado:
         else:
             sale = o["tipo"] == "MERCADO" or (o["lado"] == "COMPRA" and p <= o["precio"]) or (o["lado"] == "VENTA" and p >= o["precio"])
             if sale:
-                q = o["cantidad"] * (self.fraccion_fill if o["tipo"] == "LIMITE" else 1.0)   # solo las entradas pueden ejecutarse a medias
+                q = o["cantidad"] * (self.fraccion_fill if o["tipo"] == "LIMITE" else self.fraccion_mercado)
                 self._fill(o, q, p)
                 reg["ejecutada"], reg["precio_medio"] = q, p
                 reg["estado"] = "EJECUTADA" if q >= o["cantidad"] - TOL else "PARCIAL"
@@ -81,6 +82,18 @@ class BrokerSimulado:
                 signo = 1 if x["lado"] == "VENTA" else -1
                 if self.pos.get(x["instrumento"], {"cantidad": 0.0})["cantidad"] * signo + TOL < x["cantidad"]:
                     r["estado"] = "CANCELADA"
+
+    def mover_precio(self, instrumento, precio, hora=None):
+        """Simula el mercado: cambia el precio y dispara los stops cruzados (se ejecutan al precio nuevo, como un salto)."""
+        self.precios[instrumento] = precio
+        if hora:
+            self.hora_datos = hora
+        for r in self.ordenes.values():
+            x = r["orden"]
+            if x["tipo"] == "STOP" and r["estado"] == "ACEPTADA" and x["instrumento"] == instrumento \
+                    and ((x["lado"] == "VENTA" and precio <= x["precio"]) or (x["lado"] == "COMPRA" and precio >= x["precio"])):
+                self._fill(x, x["cantidad"], precio)
+                r["ejecutada"], r["precio_medio"], r["estado"] = x["cantidad"], precio, "EJECUTADA"
 
     @staticmethod
     def _res(reg):
@@ -282,3 +295,105 @@ def conciliar(o, broker, ahora):
         return {"ok": False, "diferencias": [{"tipo": "SIN_CONEXION", "ref": None, "detalle": str(e)}]}
     except Exception as e:   # noqa: BLE001
         return {"ok": False, "diferencias": [{"tipo": "ERROR", "ref": None, "detalle": type(e).__name__}]}
+
+
+def _cierre_previo(broker, base):
+    """Última orden de cierre a mercado ya ejecutada (total o parcial) en un intento anterior."""
+    ult = None
+    for n in range(1, 10):
+        c = broker.consultar(f"{base}-{n}")
+        if c is None:
+            break
+        if c["cantidad_ejecutada"] > 0:
+            ult = c["orden_id"]
+    return ult
+
+
+def _id_cierre(broker, base, lado, cantidad):
+    """Identificador de la siguiente orden de cierre. Se reutiliza el de una orden idéntica que sigue sin ejecutarse
+    (reintento tras un fallo); si ya se ejecutó algo o cambió lo que hay que cerrar, se pasa al siguiente intento."""
+    for n in range(1, 10):
+        oid = f"{base}-{n}"
+        c = broker.consultar(oid)
+        if c is None or (c["estado"] == "ACEPTADA" and c["lado"] == lado and abs(c["cantidad"] - cantidad) <= TOL):
+            return oid
+    raise ValueError("demasiados intentos de cierre")
+
+
+def cerrar(o, posicion_id, broker, ahora, actor="G", condicion=None, motivo=None):
+    """Cierra una posición abierta: pasa a CERRANDO (el Orquestador valida quién y por qué), cierra la posición neta real
+    en el intermediario, retira el stop, comprueba que no queda nada y solo entonces pasa a CERRADA.
+    Si algo falla, la posición queda en CERRANDO y a la vista; repetir la llamada es seguro."""
+    p = o.posiciones.get(posicion_id) if isinstance(posicion_id, str) else None
+    if p is None or p["estado"] not in ("ABIERTA", "EN_REVISION", "CERRANDO", "REDUCIENDO"):
+        return _r(False, "G-06", "la posición no existe o no se puede cerrar en su estado")
+    if o.ultimo_ahora and _dt(ahora) < _dt(o.ultimo_ahora):
+        return _r(False, "G-06", "el instante recibido es anterior al último que vio el Orquestador; no se envía nada")
+    if p["estado"] == "REDUCIENDO":   # solo se termina si el intermediario ya está plano: la reducción en sí no está implementada
+        try:
+            plano = abs({x["instrumento"]: x["cantidad"] for x in broker.posiciones()}.get(p["instrumento"], 0.0)) <= TOL
+        except Exception as ex:   # noqa: BLE001
+            return _r(False, "G-01", f"sin conexión con el intermediario ({type(ex).__name__})")
+        if not plano:
+            return _r(False, "G-06", "la posición está REDUCIENDO y el intermediario aún tiene cantidad: termine la reducción antes")
+    elif p["estado"] != "CERRANDO":
+        t = o.posicion_transicion(posicion_id, "CERRANDO", actor, ahora, condicion=condicion, motivo=motivo)
+        if not t["ok"]:
+            return _r(False, "G-06", f"el Orquestador no admite el cierre ({t['codigo']}): {t['motivo']}")
+    est = {"enviado": False}
+    try:
+        return _cerrar(o, p, posicion_id, broker, ahora, est)
+    except ConexionPerdida as ex:
+        if not est["enviado"]:
+            return _r(False, "G-01", f"sin conexión con el intermediario; la posición sigue CERRANDO y se puede reintentar ({ex})")
+        return _incierto(o, posicion_id, ahora, "ConexionPerdida al cerrar")
+    except Exception as ex:   # noqa: BLE001
+        return _incierto(o, posicion_id, ahora, f"{type(ex).__name__} al cerrar") if est["enviado"] else _incompleto(o, posicion_id, ahora, f"{type(ex).__name__} al preparar el cierre")
+
+
+def _incompleto(o, pid, ahora, causa):
+    reg = _aviso(o, [{"tipo": "CIERRE_INCOMPLETO", "ref": pid, "detalle": causa}], ahora)
+    return _r(False, "G-09", f"cierre no completado ({causa}); la posición sigue CERRANDO.", aviso_registrado=reg)
+
+
+def _neto(broker, ins):
+    return {x["instrumento"]: x["cantidad"] for x in broker.posiciones()}.get(ins, 0.0)
+
+
+def _cerrar(o, p, pid, broker, ahora, est):
+    """Lleva a cero la posición neta REAL del intermediario sobre el instrumento, sea cual sea su sentido o cantidad
+    (si un stop saltó a mitad del cierre, la orden a mercado puede haber abierto la posición contraria: también se cierra)."""
+    ins = p["instrumento"]
+    base = f"ORD-{pid}-C"
+    neto = _neto(broker, ins)
+    if abs(neto) > TOL and ((neto > 0) != (p["direccion"] == "LARGO") or abs(abs(neto) - p["cantidad"]) > TOL):
+        _aviso(o, [{"tipo": "DIFERENCIA_AL_CERRAR", "ref": pid, "detalle": f"el Orquestador tiene {p['cantidad']} y el intermediario {neto}; se cierra lo que hay"}], ahora)
+    for _ in range(4):
+        if abs(neto) <= TOL:
+            break
+        lado, cant = ("VENTA" if neto > 0 else "COMPRA"), abs(neto)
+        id_c = _id_cierre(broker, base, lado, cant)
+        est["enviado"] = True
+        broker.enviar({"orden_id": id_c, "instrumento": ins, "activo_base": p["activo_base"], "tipo": "MERCADO", "lado": lado, "cantidad": cant})
+        neto = _neto(broker, ins)
+    if abs(neto) > TOL:
+        return _incompleto(o, pid, ahora, f"tras varios intentos el intermediario aún tiene {neto} sobre {ins}")
+    orden_id = _cierre_previo(broker, base)
+    if orden_id is None:
+        ejec = [x for x in p["protecciones"] if (c := broker.consultar(x)) and c["estado"] in ("EJECUTADA", "PARCIAL")]
+        if not ejec:
+            return _incompleto(o, pid, ahora, "la posición ya no está en el intermediario y ninguna orden la explica")
+        orden_id = ejec[0]
+    est["enviado"] = True
+    for _ in range(3):
+        for x in p["protecciones"]:
+            broker.cancelar(x)
+        vivos = [x for x in p["protecciones"] if (c := broker.consultar(x)) and c["estado"] == "ACEPTADA"]
+        if not vivos:
+            break
+    if vivos:
+        return _incompleto(o, pid, ahora, f"no se pudo retirar el stop {vivos[0]}")
+    t = o.posicion_transicion(pid, "CERRADA", "G", ahora, restante=0, orden={"orden_id": orden_id, "conciliada": True})
+    if not t["ok"]:
+        return _incompleto(o, pid, ahora, f"el Orquestador rechazó el cierre ({t['codigo']})")
+    return _r(True, "OK", "posición cerrada y conciliada", orden_id=orden_id)
