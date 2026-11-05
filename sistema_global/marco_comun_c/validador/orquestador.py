@@ -70,7 +70,7 @@ CONFIG_DEFECTO = {"max_reintentos": 3, "umbral_corte_comun_dias_habiles": 0,
                   "exige_contradictor_en": [], "matriz_autonomia": {}, "politica_f": POLITICA_DEFECTO}
 # Prioridad de cada aviso para el operador [PROPUESTO]
 PRIORIDAD_AVISO = {"O-18": "ALTA", "O-03": "ALTA", "O-08": "ALTA", "O-09": "ALTA", "O-13": "ALTA", "O-17": "ALTA"}
-ACTORES_PROPUESTA = {"H", "F", "D", "OPERADOR"} | EMISORES
+ACTORES_PROPUESTA = set(EMISORES)   # quien propone no aprueba ni controla: F, D y H no proponen (Constitución §2, P1)
 
 
 def _num(x):

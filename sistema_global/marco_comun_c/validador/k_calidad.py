@@ -1,5 +1,5 @@
 """K · Datos de corte y calendario — reglas de calidad Q-01 a Q-13, emisión del sello y
-validación del sello (S-01 a S-11). Versión 0.1.0.
+validación del sello (S-01 a S-13). Versión 0.1.0.
 
 Determinista: sin LLM, sin red, sin reloj propio (la hora se pasa en ctx["ahora"]).
 Falla cerrado: ante cualquier entrada defectuosa devuelve BLOQUEO (K-00) y no emite sello.
@@ -432,7 +432,7 @@ def _esquema():
 
 
 def validar_sello(sello, ctx=None) -> list[dict]:
-    """Reglas S-01 a S-11 sobre un sello ya emitido. Nunca lanza excepciones.
+    """Reglas S-01 a S-13 sobre un sello ya emitido. Nunca lanza excepciones.
     ctx opcional: {"calendario": {...}} para recomprobar días hábiles y antigüedad (S-10)."""
     try:
         return _validar_sello(sello, ctx or {})
