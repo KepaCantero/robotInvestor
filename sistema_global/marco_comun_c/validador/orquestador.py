@@ -393,7 +393,7 @@ class Orquestador:
         _valida_config(cfg)
         self.cfg = cfg
         self.ultimo_ahora, self.ordenes_usadas = None, []
-        self.cal_def = calendario
+        self.cal_def = copy.deepcopy(calendario)   # V0.44 (revisión, hallazgo 4): el Orquestador no comparte el calendario con quien lo crea
         Calendario(calendario)   # falla pronto si no es válido
         # T-25: la configuración entera (la del Orquestador, la política de F, los parámetros de K, D, H y CT-G-14 y las versiones
         # de reglas) tiene una huella; cada anotación del historial la lleva, así que se sabe con qué se decidió cada cosa
@@ -1474,6 +1474,9 @@ class Orquestador:
             return _no("O-12", "encargo inexistente")
         if not (_num(coste_eur) and _num(tiempo_min) and coste_eur >= 0 and tiempo_min >= 0):
             return _no("O-01", "coste o tiempo inválidos")
+        g0 = self.gasto_dia.get(str(a.astimezone(timezone.utc).date()), {"coste": 0.0, "tiempo": 0.0})
+        if not all(math.isfinite(x) for x in (en["coste"] + coste_eur, en["tiempo"] + tiempo_min, g0["coste"] + coste_eur, g0["tiempo"] + tiempo_min)):
+            return _no("O-01", "el gasto acumulado dejaría de ser un número finito")   # V0.44 (revisión, hallazgo 8)
         en["coste"] += coste_eur
         en["tiempo"] += tiempo_min
         fecha = str(a.astimezone(timezone.utc).date())

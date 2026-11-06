@@ -21,8 +21,9 @@ Códigos (fallan cerrado):
   DI-05 no se puede escribir en el diario: la operación no se aplica (la línea a medias se quita) y el diario deja de aceptar
   operaciones hasta reabrirlo.
 Una operación que lanza una excepción no recogida por @_seguro se anota con la marca de la excepción (O-00) y se reproduce igual.
-Lo privado del Orquestador no se expone a través del diario (salvo PRIVADOS_DE_LECTURA) y los datos se devuelven copiados: el estado
-solo cambia con los métodos anotados. Pasado un cuarto de MAX_BYTES, el diario hace solo un punto de control.
+Lo privado del Orquestador no se expone a través del diario (salvo PRIVADOS_DE_LECTURA). Los datos se leen vivos (G y H lo necesitan):
+un cambio hecho por fuera de los métodos se detecta en la operación o el punto siguientes (DI-06: no se aplica, el diario se bloquea
+y al reabrir se vuelve al estado anotado). Pasado un cuarto de MAX_BYTES, el diario hace solo un punto de control.
 Más los de la persistencia (PE-01 a PE-05, O-13) al cargar el estado.
 
 Una última línea a medias (corte durante la escritura) no es un fallo: se ignora y se informa (linea_incompleta). Una OP sin su
@@ -48,6 +49,8 @@ import persistencia as pe
 CERO = "0" * 64
 # métodos privados que solo leen y que G, la consola y contratos usan (revisión, hallazgo 3); el resto de lo privado no se expone
 PRIVADOS_DE_LECTURA = frozenset({"_sello_anulado", "_testigos", "_tope_dia"})
+# motivos de bloqueo que no son fallos de escritura: tras ellos se sigue respondiendo DI-06 (revisión de V0.44, hallazgo 10)
+ROTOS_DI06 = ("el estado cambió sin pasar por el diario", "el estado tiene valores que el diario no puede guardar")
 
 
 def _limite_diario():
@@ -62,6 +65,19 @@ def _codificar(x):
         if not pe._solo_json(x):
             return None
         return json.dumps(x, ensure_ascii=True, separators=(",", ":"), allow_nan=False)
+    except (ValueError, TypeError, RecursionError):
+        return None
+
+
+def _huella_viva(o):
+    """Huella del estado vivo que también ve el orden de los diccionarios (el Orquestador lo usa) y los tipos que JSON
+    confundiría (una tupla en lugar de una lista): revisión de V0.44, hallazgos 6 y 7. None si no se puede calcular (NaN,
+    infinitos, tipos no guardables), que el diario trata como estado que no puede anotar."""
+    try:
+        estado = vars(o)
+        if not pe._solo_json(estado):
+            return None
+        return hashlib.sha256(pe._texto(estado).encode("ascii")).hexdigest()
     except (ValueError, TypeError, RecursionError):
         return None
 
@@ -137,12 +153,15 @@ class Diario:
         object.__setattr__(self, "_n", n)               # número de la última línea
         object.__setattr__(self, "_mutantes", mutantes(o))
         object.__setattr__(self, "_roto", None)         # motivo si una escritura falló: no se aceptan más operaciones
+        object.__setattr__(self, "_huella", _huella_viva(o))   # el estado tras la última operación anotada (None si no se puede)
 
     # --------------------------------------------------------------- lo que pasa, y cómo
     def __getattr__(self, nombre):
-        """Métodos que cambian el estado: anotados. Métodos que leen: tal cual. Datos: una copia (cambiarla no toca el estado, que
-        solo cambia con sus métodos y queda en el diario). Lo privado no se expone, salvo unos pocos métodos de lectura."""
-        if nombre.startswith("__") or nombre in ("_o", "_ruta_estado", "_ruta_diario", "_ultimo", "_n", "_mutantes", "_roto"):
+        """Métodos que cambian el estado: anotados. Métodos que leen y datos: tal cual (G y H leen el estado vivo, por ejemplo una
+        posición antes y después de una transición; una copia los rompería). Un cambio hecho por fuera de los métodos no queda en el
+        diario: la operación siguiente lo detecta (DI-06) y al reabrir se vuelve al estado anotado. Lo privado no se expone, salvo
+        unos pocos métodos de lectura."""
+        if nombre.startswith("__") or nombre in ("_o", "_ruta_estado", "_ruta_diario", "_ultimo", "_n", "_mutantes", "_roto", "_huella"):
             raise AttributeError(nombre)   # sin esto, copy/pickle de un Diario a medio construir entran en recursión (hallazgo 8)
         if nombre.startswith("_") and nombre not in PRIVADOS_DE_LECTURA:
             raise AttributeError(f"{nombre}: lo privado del Orquestador no se usa a través del diario (no quedaría anotado)")
@@ -152,9 +171,7 @@ class Diario:
                 return self._operar(nombre, list(args), dict(kwargs))
             anotada.__name__ = nombre
             return anotada
-        if callable(a):
-            return a
-        return copy.deepcopy(a)
+        return a
 
     def __deepcopy__(self, memo):
         """Una copia no lleva diario: es una copia del Orquestador (que nadie anota)."""
@@ -198,10 +215,13 @@ class Diario:
 
     def _operar(self, metodo, args, kwargs):
         if self._roto:
-            return _r(False, "DI-05", f"el diario no acepta operaciones tras un fallo de escritura ({self._roto}): reábrelo")
+            return _r(False, "DI-06" if self._roto in ROTOS_DI06 else "DI-05", f"el diario está bloqueado ({self._roto}): reábrelo")
         ca, ck = _codificar(args), _codificar(kwargs)
         if ca is None or ck is None:
             return _r(False, "DI-01", f"{metodo}: argumentos que el diario no guarda tal cual; no se aplica")
+        err = self._sin_cambios_por_fuera()
+        if err:
+            return err
         args, kwargs = json.loads(ca), json.loads(ck)   # se aplica exactamente lo anotado, como al reabrir
         try:
             n = self._anotar({"tipo": "OP", "metodo": metodo, "args": args, "kwargs": kwargs})
@@ -210,7 +230,12 @@ class Diario:
             if not isinstance(ex, Exception):
                 raise
             return _r(False, "DI-05", f"no se pudo anotar la operación en el diario: no se aplica ({type(ex).__name__}); reábrelo")
-        r = _aplicar(self._o, metodo, args, kwargs)
+        try:
+            r = _aplicar(self._o, metodo, args, kwargs)
+        except BaseException as ex:   # una interrupción a mitad: el diario se bloquea; al reabrir se vuelve a lo anotado (hallazgo 9)
+            object.__setattr__(self, "_roto", f"operación interrumpida ({type(ex).__name__})")
+            raise
+        object.__setattr__(self, "_huella", _huella_viva(self._o))
         try:
             self._anotar({"tipo": "RES", "op": n, "resultado": _resultado(r)})
         except BaseException as ex:   # noqa: BLE001 — aplicada pero sin RES: al reabrir se vuelve a aplicar desde el estado guardado
@@ -222,10 +247,24 @@ class Diario:
             self.punto(self._o.ultimo_ahora)   # el diario no crece sin límite (hallazgo 12); si falla, queda bloqueado
         return r
 
+    def _sin_cambios_por_fuera(self):
+        """DI-06 si el estado no es el de la última operación anotada: alguien lo cambió sin pasar por el diario. No se aplica
+        nada más ni se guarda; el diario se bloquea y al reabrir se vuelve al estado anotado."""
+        actual = _huella_viva(self._o)
+        if actual is not None and actual == self._huella:
+            return None
+        motivo = ("el estado tiene valores que el diario no puede guardar" if actual is None or self._huella is None
+                  else "el estado cambió sin pasar por el diario")
+        object.__setattr__(self, "_roto", motivo)
+        return _r(False, "DI-06", f"{motivo}: no se aplica nada más; reábrelo para volver al estado anotado")
+
     def punto(self, ahora) -> dict:
         """Punto de control: PUNTO en el diario, estado guardado y diario reducido a ese PUNTO. Nunca lanza."""
         if self._roto:
-            return _r(False, "DI-05", "el diario no acepta operaciones tras un fallo de escritura: reábrelo")
+            return _r(False, "DI-06" if self._roto in ROTOS_DI06 else "DI-05", f"el diario está bloqueado ({self._roto}): reábrelo")
+        err = self._sin_cambios_por_fuera()
+        if err:
+            return err
         try:
             texto = pe.volcar(self._o, ahora)
         except (ValueError, TypeError) as ex:

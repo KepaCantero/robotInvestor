@@ -228,9 +228,14 @@ def main():
         h.chk("r02_si_falla_el_fsync_de_la_OP_tampoco_se_aplica_al_reabrir", r["codigo"] == "DI-05" and a["ok"] and a["diario"].cotizaciones == {}, (r, a["codigo"]))
         re_, rd = rutas("r03")
         d = di.crear(nuevo(), re_, rd, T)["diario"]
-        copia = d.cotizaciones
-        copia["EURUSD"] = [{"valor": 9.9}]
-        h.chk("r03_los_datos_se_dan_copiados", d.cotizaciones == {} and d.orquestador.cotizaciones == {})
+        anotado = pe.volcar(d.orquestador, T)
+        d.cotizaciones["EURUSD"] = [{"valor": 9.9, "fecha_hora": AHORA, "registrada_en": AHORA}]   # cambio por fuera de los métodos
+        r = d.barrer(AHORA)
+        h.chk("r03_un_cambio_por_fuera_lo_para_la_operacion_siguiente_DI06", r["codigo"] == "DI-06" and d.barrer(AHORA)["codigo"] == "DI-06"
+              and d.punto(T)["codigo"] == "DI-06", r)
+        a = di.abrir(re_, rd)
+        h.chk("r03_y_al_reabrir_se_vuelve_al_estado_anotado", a["ok"] and pe.volcar(a["diario"].orquestador, T) == anotado)
+        d = a["diario"]
         try:
             d._activar_kill("por fuera", "OPERADOR", AHORA)
             h.chk("r03_lo_privado_no_se_expone", False)
@@ -274,6 +279,52 @@ def main():
         finally:
             os.fsync = real
         h.chk("r11_se_hace_fsync_de_la_carpeta", any(llamadas_fsync), llamadas_fsync)
+        # regresiones de la revisión de V0.44 (lectura viva y DI-06)
+        re_, rd = rutas("v06")
+        d = di.crear(nuevo(), re_, rd, T)["diario"]
+        hasta(d, "EN_ANALISIS", n=2); hasta(d, "EN_ANALISIS", n=1)
+        exps = d.expedientes
+        x = exps.pop("EXP-0002"); exps["EXP-0002"] = x   # solo cambia el orden
+        h.chk("v06_reordenar_por_fuera_DI06", d.barrer(AHORA)["codigo"] == "DI-06")
+        re_, rd = rutas("v07")
+        d = di.crear(nuevo(), re_, rd, T)["diario"]
+        hasta(d, "PROPUESTA")
+        d.expedientes["EXP-0001"]["historial"] = tuple(d.expedientes["EXP-0001"]["historial"])
+        h.chk("v07_una_tupla_por_fuera_DI06", d.barrer(AHORA)["codigo"] == "DI-06")
+        re_, rd = rutas("v08")
+        d = di.crear(nuevo(), re_, rd, T)["diario"]
+        hasta(d, "EN_ANALISIS")
+        enc = next(iter(d.encargos))
+        r1 = d.registrar_gasto(enc, 1e308, 0, AHORA)
+        r2 = d.registrar_gasto(enc, 1e308, 0, AHORA)
+        a = di.abrir(re_, rd)
+        h.chk("v08_un_gasto_que_desborda_se_rechaza_y_el_diario_se_abre", r1["ok"] and r2["codigo"] == "O-01" and a["ok"], (r1, r2, a["codigo"]))
+        re_, rd = rutas("v09")
+        d = di.crear(nuevo(), re_, rd, T)["diario"]
+        real = d.orquestador.__class__.barrer
+        def interrumpe(self, *a, **k):
+            raise KeyboardInterrupt()
+        d.orquestador.__class__.barrer = interrumpe
+        try:
+            try:
+                d.barrer(AHORA)
+            except KeyboardInterrupt:
+                pass
+        finally:
+            d.orquestador.__class__.barrer = real
+        r = d.registrar_cotizacion({"instrumento": "EURUSD", "valor": 1.1, "fecha_hora": AHORA}, "G", AHORA)
+        a = di.abrir(re_, rd)
+        h.chk("v09_una_interrupcion_bloquea_el_diario_y_se_reabre", r["codigo"] == "DI-05" and "interrumpida" in r["motivo"] and a["ok"], (r, a["codigo"]))
+        re_, rd = rutas("v10")
+        d = di.crear(nuevo(), re_, rd, T)["diario"]
+        d.cotizaciones["X"] = []
+        d.barrer(AHORA)
+        h.chk("v10_tras_DI06_el_motivo_no_habla_de_un_fallo_de_escritura", "cambió sin pasar por el diario" in d.punto(T)["motivo"])
+        from orquestador import Orquestador
+        cal = __import__("copy").deepcopy(CAL)
+        o1 = Orquestador(CFG, cal)
+        h.chk("v04_el_orquestador_no_comparte_el_calendario", o1.cal_def is not cal and o1.cal_def == cal)
+
         viejo = pe.MAX_BYTES
         try:
             re_, rd = rutas("r12")
