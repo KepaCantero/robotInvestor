@@ -1664,7 +1664,10 @@ class Orquestador:
                                 "excluido": excl.get(eid), "elegido_por_operador": None,
                                 "testigos": [x["expediente_id"] for x in testigos], "apartado_mejor": apartado_mejor,
                                 "detalle_d": {k: fila[k] for k in ("puntuacion", "exceso_sobre_referencia_pct", "horizonte_dias", "peor_escenario_pct",
-                                                                   "confianza_normalizada", "factor_evidencia", "dominado_por")} if fila else None}
+                                                                   "confianza_normalizada", "factor_evidencia", "dominado_por",
+                                                                   # T-17: lo que D verificó y cambió respecto a lo declarado
+                                                                   "riesgo_pct", "exceso_anual_pct", "riesgo_anual_pct",
+                                                                   "coste_descontado_pct", "confianza_verificada", "ajustes")} if fila else None}
             self._anota(e, e["estado"], "COMPARADA", actor, ahora, "comparada con " + ",".join(expediente_ids), cid, datos=_hash(e["comparacion"]))
         ganador = next((x["expediente_id"] for x in exps if x["comparacion"]["ganador"]), None)
         self.ultima_comparacion[cartera] = cid

@@ -8,7 +8,7 @@ from __future__ import annotations
 
 from types import MappingProxyType
 
-VERSION_PARAMETROS = "PAR-0.2.0"   # 0.2.0 (T-26): licencias admitidas por K
+VERSION_PARAMETROS = "PAR-0.3.0"   # 0.2.0 (T-26): licencias admitidas por K. 0.3.0 (T-17): costes y confianza en D
 
 _VALORES = {
     # K — calidad y antigüedad de los datos de corte
@@ -29,6 +29,10 @@ _VALORES = {
     "d_exceso_min_pct": 0.10,
     "d_rentabilidad_plausible_pct": (-100.0, 500.0),
     "d_referencia_rango_pct": (-5.0, 50.0),
+    "d_coste_suelo_ida_vuelta_pb": {"Q": 2.0, "S": 10.0, "K": 30.0},   # T-17: coste mínimo de entrar y salir que D descuenta si el sobre declara menos [PROPUESTO, D-30]
+    "d_coste_suelo_mant_anual_pb": {"Q": 0.0, "S": 0.0, "K": 0.0},     # T-17: coste anual mínimo de mantener [PROPUESTO, D-30]
+    "d_factor_tope_sin_doble_analisis": 0.75,                         # T-17: sin doble análisis que la confirme (no hecho o discrepante), la confianza no pasa de esta fracción del tope de la clase, como en V-14 [PROPUESTO, D-30]
+    "d_riesgo_sin_stop_largo_pct": 100.0,                             # T-17: sin stop legible, un LARGO sin apalancar puede perderlo todo [PROPUESTO, D-30]
     # H — vigilancia
     "h_max_edad_dato_min": 15,
     "h_salto_max_horas": 72,

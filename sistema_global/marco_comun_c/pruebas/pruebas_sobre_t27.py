@@ -42,7 +42,7 @@ def comparada_con(mod=None, salida=None):
     r = o.entregar_sobre("EXP-0001", s1, AHORA)
     assert r["ok"], r
     en_analisis(o, 2)
-    assert o.entregar_sobre("EXP-0002", sobre(2), AHORA)["ok"]
+    assert o.entregar_sobre("EXP-0002", sobre_para(2, salida), AHORA)["ok"]   # T-17: el rival con el mismo stop y límite
     assert o.comparar(["EXP-0001", "EXP-0002"], "D", AHORA)["ok"]
     elegir_si_hace_falta(o, "EXP-0001", AHORA)
     return o
@@ -144,7 +144,8 @@ def main():
     b["payload"]["entrada_salida"]["entrada"]["descripcion"] = "otra descripción"
     ra = comparar_candidatos([{"expediente_id": "EXP-0001", "sobre": a}], AHORA)
     rb = comparar_candidatos([{"expediente_id": "EXP-0001", "sobre": b}], AHORA)
-    h.chk("D_misma_puntuacion", ra["grupos"] == rb["grupos"] and ra["decision_global"] == rb["decision_global"], (ra, rb))
+    pa, pb = ra["grupos"]["Q"]["ranking"][0], rb["grupos"]["Q"]["ranking"][0]   # T-17: D ya no ignora el p05 declarado
+    h.chk("D_usa_el_p05_declarado", pb["riesgo_pct"] == 10.0 and "RIESGO_P05" in pb["ajustes"] and pb["puntuacion"] < pa["puntuacion"], (pa, pb))
 
     # ---------------------------------------------------------------- versión retirada
     viejo = sobre(1)
