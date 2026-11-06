@@ -118,9 +118,9 @@ def main():
         h.chk("vigilar_sin_conexion_no_lanza_ni_da_nada_por_cerrado", False, type(ex).__name__)
     # --- métrica no soportada
     o, b = abierta()
-    # la invalidez del sobre (precio_cierre) no es una métrica que H sepa vigilar: se informa (alterar las condiciones de una posición ya se detecta, H-13)
+    # la invalidez del sobre (precio_cierre) es una señal (T-49): sin su dato no se evalúa y se informa (H-18); con él, H-16
     r = vigilar(o, b, datos(1.10), T1)
-    h.chk("H06_metrica_no_soportada_se_informa", r["no_evaluadas"] and r["no_evaluadas"][0]["regla"] == "H-06" and r["no_evaluadas"][0]["condicion"] == "INV-1", r)
+    h.chk("H18_invalidez_sin_dato_se_informa", r["no_evaluadas"] and r["no_evaluadas"][0]["regla"] == "H-18" and r["no_evaluadas"][0]["senal"] == "INVALIDEZ:INV-1", r)
     # --- revisión independiente
     # 1. el stop salta entre la lectura y el cierre: la orden a mercado abre la posición contraria
     class SaltaAlCerrar(BrokerSimulado):

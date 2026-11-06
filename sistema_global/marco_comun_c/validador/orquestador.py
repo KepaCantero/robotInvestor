@@ -76,8 +76,9 @@ OPERADORES = {"<": lambda v, u: v < u, "<=": lambda v, u: v <= u, ">": lambda v,
               ">=": lambda v, u: v >= u, "==": lambda v, u: v == u}
 
 CONFIG_DEFECTO = {"max_reintentos": 3, "umbral_corte_comun_dias_habiles": 0,
-                  "version_config": "CFG-0.2.0",   # 0.2.0 (T-48): Contradictor exigido en N2 y N3 por defecto; autoria_c
+                  "version_config": "CFG-0.3.0",   # 0.2.0 (T-48): Contradictor exigido en N2 y N3; autoria_c. 0.3.0 (T-49): alerta_perdida_pct
                   "dia_coste_max_eur": 50.0, "revision_max_dias": 90, "observacion_max_dias": 30, "max_reaperturas": 2, "dia_tiempo_max_min": 600, "tolerancia_precio_entrada": 0.05,
+                  "alerta_perdida_pct": -5.0,   # T-49: H pide revisar al perder esto (y cada múltiplo) [PROPUESTO]
                   "exige_contradictor_en": ["N2", "N3"], "contradictor_desactivado_motivo": None, "autoria_c": {}, "autoria_contradictor": None,
                   "matriz_autonomia": {},   # T-48: Contradictor exigido por defecto donde se compara y propone [PROPUESTO]
                   "politica_f": POLITICA_DEFECTO,
@@ -147,7 +148,60 @@ def _autoria_ok(v):
 
 
 def _num(x):
-    return isinstance(x, (int, float)) and not isinstance(x, bool) and math.isfinite(x)
+    try:   # un entero enorme (JSON sin límite) desborda math.isfinite: no es un número utilizable (revisión T-49, R-01)
+        return isinstance(x, (int, float)) and not isinstance(x, bool) and math.isfinite(x)
+    except OverflowError:
+        return False
+
+
+METRICAS_PRECIO = ("precio", "precio_cierre")   # T-49: métricas de precio; su unidad es la divisa de cotización del instrumento
+_METRICA = re.compile(r"^[a-z][a-z0-9_]{0,63}\Z")   # grafía canónica de una métrica: H compara exactamente, sin normalizar
+ALERTA_PERDIDA_RANGO = (-50.0, -0.5)   # T-49: límites de alerta_perdida_pct (revisión, R-06)
+
+
+def senal_mal_formada(metrica, unidad, divisa):
+    """T-49: una señal (escenario de fallo o invalidez) que H no podría evaluar bien: métrica sin grafía canónica, o métrica de
+    precio en una unidad que no es la divisa de cotización (un % o otra divisa nunca se cumpliría o se cumpliría ya)."""
+    if not (isinstance(metrica, str) and _METRICA.match(metrica)):
+        return f"métrica {metrica!r} sin grafía canónica (minúsculas, cifras y _)"
+    if metrica in METRICAS_PRECIO and unidad != divisa:
+        return f"la métrica {metrica} va en la divisa de cotización del instrumento ({divisa}), no en {unidad!r}"
+    if unidad is not None and not (isinstance(unidad, str) and _ID.match(unidad)):
+        return "unidad mal formada"
+    return None
+
+
+def _senales_de(e):
+    """T-49: lo que H vigila además de las condiciones de salida: los escenarios de fallo del Contradictor y las invalidez de la
+    propuesta cuya métrica no es el precio. Ninguna vende: piden revisión."""
+    out = []
+    for x in (e.get("contradictor") or {}).get("escenarios_fallo", []):
+        out.append({"clave": "CONTRADICTOR:" + x["id"], "id": x["id"], "origen": "CONTRADICTOR", "texto": str(x["descripcion"]), "metrica": x["disparador"]["metrica"],
+                    "operador": x["disparador"]["operador"], "umbral": x["disparador"]["umbral"], "unidad": x["disparador"]["unidad"]})
+    for c in e["propuesta"]["salida"]["condiciones"]:
+        if c["tipo"] == "INVALIDEZ" and c["metrica"] != "precio":
+            out.append({"clave": "INVALIDEZ:" + c["id"], "id": c["id"], "origen": "INVALIDEZ",   # la clave separa los dos espacios de ids (R-02)
+                        "texto": str(c.get("descripcion") or f"{c['metrica']} {c['operador']} {c['umbral']}"),
+                        "metrica": c["metrica"], "operador": c["operador"], "umbral": c["umbral"], "unidad": c.get("unidad")})
+    return out
+
+
+def perdida_pct(p, precio):
+    """Pérdida (negativa) o ganancia no realizada de una posición, en % del precio de entrada, según su dirección."""
+    r = (precio - p["precio_entrada"]) / p["precio_entrada"] * 100.0
+    return r if p["direccion"] == "LARGO" else -r
+
+
+def nivel_perdida(p, precio, umbral):
+    """T-49: (pérdida en %, nivel) con el precio actual: el nivel es cuántas veces se ha perdido el umbral (0 si no llega).
+    H y el Orquestador usan esta misma cuenta (revisión, R-07). None si no se puede calcular con esos datos."""
+    if not (_num(precio) and precio > 0 and _num(p.get("precio_entrada")) and p["precio_entrada"] > 0 and _num(umbral) and umbral < 0):
+        return None
+    pp = perdida_pct(p, precio)
+    q = pp / umbral
+    if not (math.isfinite(pp) and math.isfinite(q)):
+        return None
+    return pp, (int(math.floor(q + 1e-9)) if pp < 0 else 0)
 
 
 def _motivo_bloqueo(bl):
@@ -174,6 +228,7 @@ def _valida_config(c):
     if CONFIG_OBLIGATORIA - set(c):
         raise ValueError(f"configuración del Orquestador inválida: faltan {sorted(CONFIG_OBLIGATORIA - set(c))}")
     ok = (politica_valida(c["politica_f"])
+          and _num(c["alerta_perdida_pct"]) and ALERTA_PERDIDA_RANGO[0] <= c["alerta_perdida_pct"] <= ALERTA_PERDIDA_RANGO[1]
           and isinstance(c["exige_contradictor_en"], list)
           and all(isinstance(x, str) and x in ("N0", "N1", "N2", "N3") for x in c["exige_contradictor_en"])
           and isinstance(c.get("perfiles_activos"), list) and c["perfiles_activos"] and all(isinstance(x, str) for x in c["perfiles_activos"])
@@ -221,7 +276,9 @@ def _valida_config(c):
 TOL_Q = 1e-6   # tolerancia de cantidades (la misma que G)
 # Lo que define el control de una posición: va en la cadena de su historial (cada anotación lleva su hash)
 CAMPOS_POS = ("posicion_id", "expediente_id", "estado", "cantidad", "cantidad_inicial", "cartera", "direccion", "instrumento", "activo_base",
-              "stop_precio", "condiciones_salida", "via_acceso", "fecha_revision", "protecciones", "protecciones_anteriores", "reduccion", "reducciones", "condiciones_consumidas")
+              "stop_precio", "condiciones_salida", "via_acceso", "fecha_revision", "protecciones", "protecciones_anteriores", "reduccion", "reducciones", "condiciones_consumidas",
+              "precio_entrada", "senales", "senales_disparadas", "perdida_alertada",   # T-49: lo que H vigila además de las salidas
+              "propuestas")   # T-49 (revisión, R-04): las propuestas y alertas a la posición también van en la cadena
 
 
 def _estado_pos(p):
@@ -1011,11 +1068,17 @@ class Orquestador:
                                                "autoria_contradictor": self.cfg["autoria_contradictor"]})
             if fallos:
                 return _no("O-01", f"informe del Contradictor no válido: {fallos[0]['regla']}: {fallos[0]['mensaje'][:80]}", reglas=sorted({x['regla'] for x in fallos}))
+            div_c = self.divisa(sobre["payload"]["identificacion"]["instrumento"])
+            for x in informe["payload"]["escenarios_fallo"]:   # T-49: H tiene que poder evaluar cada disparador (revisión, R-03)
+                mal = senal_mal_formada(x["disparador"]["metrica"], x["disparador"]["unidad"], div_c)
+                if mal:
+                    return _no("O-01", f"informe del Contradictor: el escenario {x['id']} no se puede vigilar: {mal}")
             self.eventos[informe["event_id"]] = {"hash": ih, "expediente_id": expediente_id}
             contr = {"event_id": informe["event_id"], "veredicto": informe["payload"]["veredicto"], "hash": ih,
                      "valid_until": informe["valid_until"]}
             div = diversidad(informe["payload"]["autoria"], autoria_c) or informe["payload"]["autoria"]["diversidad"]
             contr["autoria"] = copy.deepcopy(informe["payload"]["autoria"])   # entra en la huella del sobre: queda auditado
+            contr["escenarios_fallo"] = copy.deepcopy(informe["payload"]["escenarios_fallo"])   # T-49: viajan a la posición para que H los vigile
             contr["diversidad"] = div if autoria_c is not None else "NO_COMPROBABLE"
             if autoria_c is None or div == "MISMO_MODELO":   # T-48: sin diversidad de modelo, o sin poder comprobarla, el operador lo sabe
                 self._aviso("O-33", f"{expediente_id}: " + ("el Contradictor es del mismo modelo que C" if autoria_c is not None and div == "MISMO_MODELO"
@@ -1311,6 +1374,12 @@ class Orquestador:
             return _no("O-01", "condiciones_salida: ids repetidos")
         if not all(c.get("tipo") in ("STOP", "OBJETIVO", "INVALIDEZ") for c in conds):
             return _no("O-01", "condiciones_salida: cada condición debe ser STOP, OBJETIVO o INVALIDEZ")
+        if not all(isinstance(c.get(k, ""), str) for c in conds for k in ("descripcion", "unidad")):   # T-49 (revisión, R-05)
+            return _no("O-01", "condiciones_salida: la descripción y la unidad de una condición son texto")
+        for c_ in conds:   # T-49: H tiene que poder evaluar cada invalidez (revisión, R-03)
+            mal = c_["tipo"] == "INVALIDEZ" and senal_mal_formada(c_["metrica"], c_.get("unidad"), self.divisa(ce["instrumento"]))
+            if mal:
+                return _no("O-21", f"condiciones_salida: la invalidez {c_['id']} no se puede vigilar: {mal}")
         for c_ in conds:   # T-12: un OBJETIVO puede declarar la fracción de la posición inicial que se reduce al cumplirse
             if "fraccion" in c_ and not (c_["tipo"] == "OBJETIVO" and _num(c_["fraccion"]) and 0 < c_["fraccion"] < 1):
                 return _no("O-01", "condiciones_salida: solo un OBJETIVO declara fracción, y debe estar entre 0 y 1 (sin incluirlos)")
@@ -1686,7 +1755,8 @@ class Orquestador:
                                 "origen": "MANUAL" if manual else "G", "ejecutada_en": orden.get("ejecutada_en") or ahora,
                                 "cantidad_inicial": orden["cantidad"], "protecciones_anteriores": [], "reduccion": None, "reducciones": [],
                                 "condiciones_consumidas": [], "via_acceso": e["propuesta"]["entrada"]["via_acceso"],
-                                "fecha_revision": e["propuesta"]["salida"]["fecha"]}
+                                "fecha_revision": e["propuesta"]["salida"]["fecha"], "precio_entrada": orden["precio"],
+                                "senales": _senales_de(e), "senales_disparadas": [], "perdida_alertada": 0}
         self.ordenes_usadas += [orden["orden_id"], *prot]
         self._anota_pos(self.posiciones[pid], None, "ABIERTA", actor if manual else "G", ahora,
                     "ejecución manual declarada (CT-G-14)" if manual else "orden conciliada", orden["orden_id"])
@@ -2040,6 +2110,51 @@ class Orquestador:
         return p, None
 
     @_seguro
+    def registrar_senal(self, posicion_id, tipo, ref, valor, actor, ahora):
+        """T-49: H registra una señal cumplida sobre una posición: un escenario de fallo o una invalidez por otra métrica (H-16)
+        o una pérdida no realizada que pasa el umbral (H-17). Nunca vende: pide revisión (ABIERTA -> EN_REVISION) y deja la
+        propuesta. Cada señal se registra una vez; la pérdida, una vez por cada múltiplo del umbral."""
+        self._ahora(ahora)
+        p, err = self._pos(posicion_id)
+        if err:
+            return err
+        if actor not in ("H", "ORQUESTADOR"):
+            return _no("O-05", "solo H registra señales de vigilancia")
+        if p["estado"] not in ("ABIERTA", "EN_REVISION"):
+            return _no("O-04", f"la posición está {p['estado']}: las señales solo se registran en una posición abierta o en revisión")
+        if not self._posicion_ok(p):
+            return _no("O-13", "la posición no es íntegra")
+        if not _num(valor):
+            return _no("O-01", "valor no numérico")
+        if tipo == "SENAL":
+            s_ = next((x for x in p["senales"] if x["clave"] == ref), None)   # por clave (origen:id): los ids pueden coincidir (R-02)
+            if s_ is None:
+                return _no("O-01", "señal desconocida en esta posición")
+            if ref in p["senales_disparadas"]:
+                return _no("O-02", "esa señal ya se registró")
+            if not OPERADORES[s_["operador"]](valor, s_["umbral"]):
+                return _no("O-01", "la señal no se cumple con ese valor")
+            pref = "ESCENARIO DE FALLO" if s_["origen"] == "CONTRADICTOR" else "INVALIDEZ"
+            texto = f"{pref}: {s_['id']} se cumple ({s_['metrica']} {valor} {s_['operador']} {s_['umbral']}): {s_['texto'][:160]}; revise la tesis"
+            p["senales_disparadas"].append(ref)
+        elif tipo == "PERDIDA":   # valor: el precio actual; la pérdida la calcula el Orquestador con su precio de entrada (R-07)
+            um = self.cfg["alerta_perdida_pct"]
+            nv = nivel_perdida(p, valor, um)
+            if nv is None:
+                return _no("O-01", "no se puede calcular la pérdida con ese precio")
+            pp, k = nv
+            if k <= p["perdida_alertada"]:
+                return _no("O-02", "esa pérdida no llega a un nivel nuevo (o ya se alertó)")
+            texto = f"ALERTA DE PÉRDIDA: {pp:.2f} % no realizada al precio {valor} (umbral {um} %, nivel {k}); revise la tesis o cierre"
+            p["perdida_alertada"] = k
+        else:
+            return _no("O-01", "tipo de señal desconocido (SENAL o PERDIDA)")
+        p["propuestas"].append({"actor": "H", "texto": texto, "ahora": ahora})
+        desde = p["estado"]
+        self._anota_pos(p, desde, "EN_REVISION", "H", ahora, texto[:200], ref if tipo == "SENAL" else "PERDIDA")
+        return _r(True, "OK", texto)
+
+    @_seguro
     def proponer_sobre_posicion(self, posicion_id, texto, actor, ahora):
         """H (o quien sea) propone; una invalidez cualitativa nunca vende."""
         self._ahora(ahora)
@@ -2048,7 +2163,10 @@ class Orquestador:
             return err
         if not (isinstance(texto, str) and texto.strip()):
             return _no("O-15", "la propuesta exige texto")
+        if not (isinstance(actor, str) and _ID.match(actor)):
+            return _no("O-05", "actor mal formado")
         p["propuestas"].append({"actor": actor, "texto": texto, "ahora": ahora})
+        self._anota_pos(p, p["estado"], p["estado"], actor, ahora, "propuesta: " + texto[:180])   # en la cadena (T-49, R-04)
         return _r(True, "OK", "propuesta registrada; no cambia el estado de la posición")
 
     @_seguro

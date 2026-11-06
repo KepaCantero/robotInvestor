@@ -120,7 +120,7 @@ def main():
     # --- posición corta
     corto_sal = {"condiciones": [{"id": "STOP-1", "tipo": "STOP", "metrica": "precio", "operador": ">=", "umbral": 1.15, "unidad": "USD"},
                                  {"id": "OBJ-1", "tipo": "OBJETIVO", "metrica": "precio", "operador": "<=", "umbral": 1.00, "unidad": "USD"},
-                                 {"id": "INV-1", "tipo": "INVALIDEZ", "metrica": "precio_cierre", "operador": ">", "umbral": 1.15, "unidad": "EUR"}], "fecha": "2026-12-05"}
+                                 {"id": "INV-1", "tipo": "INVALIDEZ", "metrica": "precio_cierre", "operador": ">", "umbral": 1.15, "unidad": "USD"}], "fecha": "2026-12-05"}
     o, b = autorizado(salida=corto_sal)
     r = ejecutar(o, "EXP-0001", b, AHORA)
     h.chk("corto_ejecuta_y_concilia", r["ok"] and b.posiciones()[0]["cantidad"] == -100.0 and conciliar(o, b, AHORA)["ok"], r)

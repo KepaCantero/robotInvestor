@@ -96,9 +96,9 @@ def _fechas_imposibles(x, ruta):
 
 
 # ------------------------------------------------------------------ mensajes a partir del estado del Orquestador
-def _env(tipo, producer, consumer, emitido_en, payload, correlation_id=None, expediente_id=None, valid_until=None, data_refs=()):
+def _env(tipo, producer, consumer, emitido_en, payload, correlation_id=None, expediente_id=None, valid_until=None, data_refs=(), version="0.1.0"):
     m = {"event_id": None, "correlation_id": correlation_id, "expediente_id": expediente_id, "producer": producer, "consumer": consumer,
-         "tipo_mensaje": tipo, "version_esquema": "0.1.0", "emitido_en": emitido_en, "valid_until": valid_until,
+         "tipo_mensaje": tipo, "version_esquema": version, "emitido_en": emitido_en, "valid_until": valid_until,
          "data_refs": list(data_refs), "payload": payload}
     m["event_id"] = f"{tipo}-{_hash(m)[:16]}"   # determinista: el mismo contenido da el mismo id
     return m
@@ -170,6 +170,10 @@ def orden(o, expediente_id):
                 correlation_id=e["correlation_id"], expediente_id=expediente_id, valid_until=hasta, data_refs=[cf["event_id"]])
 
 
+PREFIJOS_ALERTA = (("CIERRE PREPARADO", "CIERRE_PREPARADO"), ("REDUCCIÓN PREPARADA", "REDUCCION_PREPARADA"), ("REVISIÓN", "REVISION"),
+                   ("ESCENARIO DE FALLO", "ESCENARIO_FALLO"), ("INVALIDEZ", "INVALIDEZ"), ("ALERTA DE PÉRDIDA", "PERDIDA"))   # T-49
+
+
 def alertas_posicion(o, posicion_id):
     """CT-G-10: las alertas que H dejó sobre una posición (cierre o reducción preparados, revisión)."""
     p = o.posiciones[posicion_id]
@@ -179,11 +183,10 @@ def alertas_posicion(o, posicion_id):
         if x["actor"] != "H":
             continue   # CT-G-10 es de H; lo que proponga otro no se presenta como alerta de H
         t = x["texto"]
-        tipo = ("CIERRE_PREPARADO" if t.startswith("CIERRE PREPARADO") else "REDUCCION_PREPARADA" if t.startswith("REDUCCIÓN PREPARADA")
-                else "REVISION" if t.startswith("REVISIÓN") else "OTRA")
+        tipo = next((v for k, v in PREFIJOS_ALERTA if t.startswith(k)), "OTRA")
         out.append(_env("CT-G-10", "H", f"GESTOR_{p['cartera']}", x["ahora"],
                         {"posicion_id": posicion_id, "cartera": p["cartera"], "estado_posicion": p["estado"], "tipo": tipo, "texto": t},
-                        correlation_id=e.get("correlation_id"), expediente_id=p["expediente_id"], valid_until=x["ahora"]))
+                        correlation_id=e.get("correlation_id"), expediente_id=p["expediente_id"], valid_until=x["ahora"], version="0.2.0"))
     return out
 
 
