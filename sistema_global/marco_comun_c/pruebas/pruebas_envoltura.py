@@ -23,7 +23,16 @@ def a_010_f(inf):
     """El mismo informe en la forma plana retirada (0.1.0)."""
     p = aplanar_informe(inf)
     p.pop("motivo")
+    p["entradas"] = {k: v for k, v in p["entradas"].items() if k != "contexto"}   # la 0.1.0 no llevaba contexto (T-22)
     return {**p, "version_esquema": "0.1.0"}
+
+
+def a_020_f(inf):
+    """El mismo informe en la 0.2.0 retirada en T-22: la envoltura común, sin el contexto del Orquestador."""
+    i = copy.deepcopy(inf)
+    i["version_esquema"] = "0.2.0"
+    i["payload"]["entradas"].pop("contexto")
+    return i
 
 
 def a_010_m(m):
@@ -53,17 +62,18 @@ def main():
     def vfm(o, inf, e="EXP-0001"):
         x = o.expedientes[e]
         return validar_informe_f(inf, {"ahora": AHORA, "expediente_id": e, "correlation_id": x["correlation_id"], "divisa_cotizacion": "USD",
-                                       "propuesta": x["propuesta"], "cartera_destino": x["cartera_destino"], "politica": o.cfg["politica_f"]})
+                                       "propuesta": x["propuesta"], "cartera_destino": x["cartera_destino"], "politica": o.cfg["politica_f"],
+                                       "contexto": o._contexto_de_informe(e, inf)})
 
     def vf(o, inf, e="EXP-0001"):
         return sorted({f["regla"] for f in vfm(o, inf, e)})
 
-    # ================================================================ CT-G-08 0.2.0
+    # ================================================================ CT-G-08 0.3.0 (T-22; la 0.2.0 de T-47 sin contexto queda retirada)
     o = nuevo(); hasta(o, "PROPUESTA")
     inf = informe_f(o)
     h.chk("f_envoltura_comun", set(inf) == {"event_id", "correlation_id", "expediente_id", "producer", "consumer", "tipo_mensaje", "version_esquema",
                                             "emitido_en", "valid_until", "data_refs", "payload", "resultado_politica"}
-          and inf["version_esquema"] == "0.2.0" and inf["data_refs"] == [], sorted(inf))
+          and inf["version_esquema"] == "0.3.0" and inf["data_refs"] == [], sorted(inf))
     h.chk("f_valida_en_contratos_y_en_F", ct.validar(inf) == [] and vf(o, inf) == [], (ct.validar(inf), vf(o, inf)))
     h.chk("f_payload_y_politica", set(inf["payload"]) == {"propuesta_ref", "entradas", "cantidad_aprobada"}
           and set(inf["resultado_politica"]) == {"version_politica", "resultado", "motivo", "controles"})
@@ -74,7 +84,7 @@ def main():
         o2 = nuevo(); hasta(o2, "PROPUESTA", entrada={**ENTRADA, "cantidad": 9090.0})
         i = informe_f(o2, cartera=cart)
         en = i["payload"]["entradas"]
-        r = controlar(en["solicitud"], en["cartera"], en["politica"], i["emitido_en"])
+        r = controlar(en["solicitud"], en["cartera"], en["politica"], i["emitido_en"], en["contexto"])
         p = aplanar_informe(i)
         h.chk(f"f_mismo_resultado_{nombre}", r["resultado"] == esperado and (p["resultado"], p["cantidad_aprobada"], p["controles"])
               == (r["resultado"], r["cantidad_aprobada"], r["controles"]) and p["motivo"] == motivo_de(r["resultado"], r["controles"]), (r, p))
@@ -106,7 +116,11 @@ def main():
     h.chk("f_010_CF01_version", vf(o, viejo) == ["CF-01"] and "versión" in vfm(o, viejo)[0]["mensaje"], vfm(o, viejo))
     h.chk("f_010_contratos_CT02_retirada", ct.validar(viejo)[0]["regla"] == "CT-02" and "retirada" in ct.validar(viejo)[0]["mensaje"])
     h.chk("f_010_se_lee_como_historico", ct.validar(viejo, historico=True) == [], ct.validar(viejo, historico=True))
-    h.chk("f_020_tambien_en_historico", ct.validar(inf, historico=True) == [])
+    h.chk("f_030_tambien_en_historico", ct.validar(inf, historico=True) == [])
+    v020 = a_020_f(inf)   # T-22: la 0.2.0 (sin contexto) queda retirada
+    h.chk("f_020_retirada_CF01_y_CT02", vf(o, v020) == ["CF-01"] and ct.validar(v020)[0]["regla"] == "CT-02" and ct.validar(v020, historico=True) == [],
+          (vf(o, v020), ct.validar(v020), ct.validar(v020, historico=True)))
+    h.rechaza("f_autorizar_con_020_O01", o, lambda: autorizar_op(o, "EXP-0001", v020, AHORA), "O-01")
     h.rechaza("f_autorizar_con_010_O01", o, lambda: autorizar_op(o, "EXP-0001", viejo, AHORA), "O-01")
     h.rechaza("f_pantalla_con_010_O01", o, lambda: o.pantalla_aprobacion("EXP-0001", viejo, AHORA), "O-01")
     # el hash es del mensaje completo: una pantalla de otro mensaje con el mismo event_id no vale
@@ -288,8 +302,10 @@ def main():
     h.chk("registro_todos_con_envoltura_completa", all(c["envoltura"] == "COMPLETA" for c in con), {c["tipo"]: c["envoltura"] for c in con})
     h.chk("registro_una_vigente_por_contrato", all(sum(v["estado"] == "VIGENTE" for v in c["versiones"]) == 1
                                                    and next(v for v in c["versiones"] if v["estado"] == "VIGENTE")["version"] == c["version"] for c in con))
-    h.chk("registro_08_y_14_en_020_con_la_010_retirada", all(reg_c[t]["version"] == "0.2.0" and [v["estado"] for v in reg_c[t]["versiones"]] == ["VIGENTE", "RETIRADA"]
-                                                              for t in ("CT-G-08", "CT-G-14")))
+    h.chk("registro_14_en_020_con_la_010_retirada", reg_c["CT-G-14"]["version"] == "0.2.0"
+          and [v["estado"] for v in reg_c["CT-G-14"]["versiones"]] == ["VIGENTE", "RETIRADA"])
+    h.chk("registro_08_en_030_con_la_020_y_la_010_retiradas", reg_c["CT-G-08"]["version"] == "0.3.0"
+          and [(v["version"], v["estado"]) for v in reg_c["CT-G-08"]["versiones"]] == [("0.3.0", "VIGENTE"), ("0.2.0", "RETIRADA"), ("0.1.0", "RETIRADA")])
     h.chk("registro_version_REG030", ct.registro()["version_registro"] >= "REG-0.3.0")   # T-48 cambió CT-G-03
 
     print(f"\n{h.n} comprobaciones")

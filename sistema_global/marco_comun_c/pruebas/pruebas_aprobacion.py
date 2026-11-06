@@ -52,6 +52,7 @@ def main():
     h.chk("pantalla_solo_la_pide_el_operador_O05", o.pantalla_aprobacion(EID, F, AHORA, actor="BROKER")["codigo"] == "O-05")
     F2 = informe_f(o, n=7)
     h.chk("pantalla_de_otro_informe_O27", o.autorizar(EID, "OPERADOR", F2, AHORA, aprob(p))["codigo"] == "O-27")
+    o = propuesta(); F = informe_f(o); p = o.pantalla_aprobacion(EID, F, AHORA)["pantalla"]   # T-22: sin la foto con pérdida de Fb (cambia el contexto de F)
     o.pantallas[EID]["importe"] = 1.0   # alguien toca la pantalla guardada
     h.chk("pantalla_alterada_O27", o.autorizar(EID, "OPERADOR", F, AHORA, aprob(p, importe_tecleado=1.0))["codigo"] == "O-27")
     o = propuesta(); F = informe_f(o); p = o.pantalla_aprobacion(EID, F, AHORA)["pantalla"]

@@ -82,6 +82,7 @@ def main():
     assert o.orden_entrada(EID, "ORD-PERDIDA", "ENVIADA", 0.0, "G", AHORA)["ok"]   # se anotó y el envío se perdió
     r = revisar_entrada(o, EID, b, T1)
     h.chk("orden_que_nunca_llego_se_anota_RECHAZADA", r["codigo"] == "G-02" and o.expedientes[EID]["orden_entrada"]["estado"] == "RECHAZADA", r)
+    b.avanzar_reloj(T1)   # T-22: el precio que G da a F al reenviar es el del intermediario a esa hora
     h.chk("tras_rechazo_se_puede_reintentar", ejecutar(o, EID, b, T1)["codigo"] == "G-11"
           and o.expedientes[EID]["orden_entrada"]["anteriores"][0]["orden_id"] == "ORD-PERDIDA")
     o, b = viva()
@@ -152,6 +153,7 @@ def main():
     h.chk("envio_perdido_G08", ejecutar(o, EID, b, AHORA)["codigo"] == "G-08")
     h.chk("envio_perdido_se_anota_rechazado", revisar_entrada(o, EID, b, T1)["codigo"] == "G-02" and o.expedientes[EID]["orden_entrada"]["estado"] == "RECHAZADA")
     BrokerSimulado.enviar(b, b.perdido)   # la orden perdida llega tarde al intermediario
+    b.avanzar_reloj(T1)
     r = ejecutar(o, EID, b, T1)
     h.chk("el_reintento_usa_otro_id_y_cancela_el_perdido", r["codigo"] == "G-11" and b.consultar(OID)["estado"] == "CANCELADA"
           and o.expedientes[EID]["orden_entrada"]["orden_id"] == "ORD-EXP-0001-E-2", r)

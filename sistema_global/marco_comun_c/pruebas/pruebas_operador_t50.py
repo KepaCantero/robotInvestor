@@ -248,6 +248,7 @@ def main():
     inf = vetado(o)
     assert anular(o, inf)["ok"]
     b = broker()
+    b.avanzar_reloj(T_ESPERA)   # T-22: al enviar, F mira el precio del intermediario a esa hora
     r = ejecutar(o, "EXP-0001", b, T_ESPERA)
     h.chk("R_G1_la_anulacion_se_ejecuta", r["ok"] and o.posiciones["POS-EXP-0001"]["cantidad"] == 100.0 and o.integridad() == [], r)
     h.chk("R_G1_sin_deshacer_en_el_intermediario", all(x["orden"]["tipo"] != "MERCADO" for x in b.ordenes.values()))

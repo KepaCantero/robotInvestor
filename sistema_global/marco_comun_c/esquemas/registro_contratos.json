@@ -1,5 +1,5 @@
 {
-  "version_registro": "REG-0.5.0",
+  "version_registro": "REG-0.6.0",
   "contratos": [
     {
       "tipo": "CT-G-01",
@@ -135,15 +135,21 @@
       "nombre": "Resultado de control",
       "de_a": "F → G, Broker",
       "estado": "ESQUEMA",
-      "version": "0.2.0",
-      "esquema": "ct-g-08_0.2.0.schema.json",
+      "version": "0.3.0",
+      "esquema": "ct-g-08_0.3.0.schema.json",
       "envoltura": "COMPLETA",
       "versiones": [
+        {
+          "version": "0.3.0",
+          "esquema": "ct-g-08_0.3.0.schema.json",
+          "envoltura": "COMPLETA",
+          "estado": "VIGENTE"
+        },
         {
           "version": "0.2.0",
           "esquema": "ct-g-08_0.2.0.schema.json",
           "envoltura": "COMPLETA",
-          "estado": "VIGENTE"
+          "estado": "RETIRADA"
         },
         {
           "version": "0.1.0",

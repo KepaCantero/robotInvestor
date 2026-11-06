@@ -33,7 +33,7 @@ from k_calidad import eventos_entre, hash_del_sello  # noqa: E402
 from control_f import VERSION_REGLAS as VERSION_REGLAS_F  # noqa: E402
 import mandatos as sc1  # noqa: E402  T-51: SC-1, el mandato de cada cartera
 import motor as sc3  # noqa: E402  T-26: SC-3, registro del Motor numérico
-from control_f import POLITICA_DEFECTO, aplanar_informe, controlar, divisa_cotizada, par_divisas, politica_valida, tipo_cambio, validar_informe_f  # noqa: E402
+from control_f import POLITICA_DEFECTO, aplanar_informe, controlar, controles_de_contexto, divisa_cotizada, par_divisas, politica_valida, tipo_cambio, validar_informe_f  # noqa: E402
 
 VERSION_REGLAS = "ORQ-0.1.0"
 _FH = re.compile(r"^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(\.\d+)?(Z|[+-]\d{2}:\d{2})\Z")
@@ -79,7 +79,7 @@ OPERADORES = {"<": lambda v, u: v < u, "<=": lambda v, u: v <= u, ">": lambda v,
               ">=": lambda v, u: v >= u, "==": lambda v, u: v == u}
 
 CONFIG_DEFECTO = {"max_reintentos": 3, "umbral_corte_comun_dias_habiles": 0,
-                  "version_config": "CFG-0.6.0",   # 0.2.0 (T-48): Contradictor exigido en N2 y N3; autoria_c. 0.3.0 (T-49): alerta_perdida_pct. 0.4.0 (T-50): anulaciones_veto_mes. 0.5.0 (T-51): mandatos (SC-1) en lugar de instrumentos_permitidos. 0.6.0 (T-26/T-42): tolerancia_tipo_k_rel
+                  "version_config": "CFG-0.7.0",   # 0.2.0 (T-48): Contradictor exigido en N2 y N3; autoria_c. 0.3.0 (T-49): alerta_perdida_pct. 0.4.0 (T-50): anulaciones_veto_mes. 0.5.0 (T-51): mandatos (SC-1) en lugar de instrumentos_permitidos. 0.6.0 (T-26/T-42): tolerancia_tipo_k_rel. 0.7.0 (T-22): politica_f con importes en euros y controles de la §8
                   "dia_coste_max_eur": 50.0, "revision_max_dias": 90, "observacion_max_dias": 30, "max_reaperturas": 2, "dia_tiempo_max_min": 600, "tolerancia_precio_entrada": 0.05,
                   "alerta_perdida_pct": -5.0,   # T-49: H pide revisar al perder esto (y cada múltiplo) [PROPUESTO]
                   "anulaciones_veto_mes": 2,
@@ -109,7 +109,7 @@ TIPOS_KILL = {"POSICION_DESCONOCIDA", "CANTIDAD", "SENTIDO_O_ACTIVO", "PROTECCIO
 # forma o cálculo (F-01), lado del stop (F-02), apalancamiento (F-05), pérdida del día (F-08), cartera vieja (F-10) ni tipo de cambio (F-12),
 # y la anulación nunca pasa de los topes de cantidad de F (F-03, F-04, F-06 y F-07)
 VETOS_ANULABLES = ("F-09", "F-11")
-TOPES_F = ("F-03", "F-04", "F-06", "F-07")
+TOPES_F = ("F-03", "F-04", "F-06", "F-07", "F-13", "F-14", "F-15")   # T-22: también los importes en euros acotan una anulación
 LIMITE_PERDIDA = "perdida_dia_max_pct"   # T-50 (§6.3): el límite de pérdida de la política de F que el operador puede ajustar
 MOTIVO_MIN = 15   # caracteres mínimos del motivo de una anulación de veto o de un cambio de límite
 
@@ -415,6 +415,8 @@ class Orquestador:
         self.rearmes = []              # rehabilitaciones tras el kill-switch
         self.ultima_conciliacion = None   # {"ahora", "limpia"}: la anota G cada vez que concilia
         self.fotos = {}                   # hash -> foto de cartera tomada por G del intermediario (T-11), para auditoría
+        self.cotizaciones = {}            # T-22: instrumento normalizado -> últimas cotizaciones del intermediario que registró G
+        self.perdidas_dia = {}            # T-22: fecha UTC -> mayor pérdida del día que dieron las fotos de G (pérdida de la semana de F-16)
         self.ultima_foto = None           # la única que vale: la más reciente
         self.manuales = []     # registros CT-G-14 aceptados (lo que el operador hizo fuera del sistema)
         self.degradadas = {}   # cartera -> motivo: bajada automática a L1 hasta que el operador la restablezca
@@ -589,6 +591,10 @@ class Orquestador:
             return _no("O-10", "la foto es anterior a la última registrada")
         h = _hash(foto)
         self.fotos[h] = {"ahora": ahora, "fecha_hora": foto["fecha_hora"]}
+        d = t.astimezone(timezone.utc).date().isoformat()   # T-22: la mayor pérdida de cada día, para la de la semana (no se poda con las fotos)
+        self.perdidas_dia[d] = max(self.perdidas_dia.get(d, 0.0), foto["perdida_dia_eur"])
+        for k in [k for k in self.perdidas_dia if date.fromisoformat(k) < t.astimezone(timezone.utc).date() - timedelta(days=14)]:
+            del self.perdidas_dia[k]
         self.ultima_foto = copy.deepcopy(foto)
         self._anota_alcance(foto, h, ahora)   # T-50: el día en que se alcanza el límite de pérdida no se puede subir
         if len(self.fotos) > 200:   # solo hacen falta las recientes
@@ -613,6 +619,115 @@ class Orquestador:
                 c["posiciones"].append({"instrumento": en["instrumento"], "activo_base": en["activo_base"],
                                         "valor_eur": e["control_f"]["cantidad_aprobada"] * en["limite"] * fx})
         return c
+
+    @_seguro
+    def registrar_cotizacion(self, cotizacion, actor, ahora):
+        """T-22 (§8, segunda fuente): G registra el precio que da el intermediario para un instrumento. F lo usa para la deriva
+        del límite respecto al mercado y su frescura. Solo G; nunca del futuro ni anterior a la última de ese instrumento."""
+        a = self._ahora(ahora)
+        if actor != "G":
+            return _no("O-05", "solo G registra cotizaciones del intermediario")
+        if not (isinstance(cotizacion, dict) and set(cotizacion) == {"instrumento", "valor", "fecha_hora"} and isinstance(cotizacion["instrumento"], str)
+                and sc1.norm(cotizacion["instrumento"]) and _num(cotizacion["valor"]) and cotizacion["valor"] > 0
+                and isinstance(cotizacion["fecha_hora"], str) and _FH.match(cotizacion["fecha_hora"])):
+            return _no("O-01", "cotización mal formada: instrumento, valor y fecha_hora")
+        t = _dt(cotizacion["fecha_hora"])
+        if t > a:
+            return _no("O-10", "la cotización es del futuro")
+        k = sc1.norm(cotizacion["instrumento"])
+        hist = self.cotizaciones.get(k, [])
+        if hist and t < _dt(hist[-1]["fecha_hora"]):
+            return _no("O-10", "la cotización es anterior a la última registrada de ese instrumento")
+        self.cotizaciones[k] = (hist + [{"valor": cotizacion["valor"], "fecha_hora": cotizacion["fecha_hora"], "registrada_en": ahora}])[-50:]
+        return _r(True, "OK", "cotización registrada")
+
+    def _cotizacion_en(self, instrumento, a):
+        """La última cotización de G para el instrumento que ya estaba registrada en el instante `a` (así el contexto de un informe se
+        puede rehacer después: una cotización que llega más tarde no lo cambia)."""
+        return next(({"valor": x["valor"], "fecha_hora": x["fecha_hora"]} for x in reversed(self.cotizaciones.get(sc1.norm(instrumento), []))
+                     if _dt(x["registrada_en"]) <= a), None)
+
+    def _contexto_de_informe(self, expediente_id, control_f):
+        """El contexto que el Orquestador habría dado a F en el instante de emisión del informe (CF-09). None si no se puede."""
+        try:
+            return self.contexto_f(expediente_id, control_f["emitido_en"])
+        except Exception:   # noqa: BLE001
+            return None
+
+    def _actividad(self, excluido, a):
+        """Lo que F necesita de la actividad reciente (T-22), sacado de los historiales: el importe autorizado hoy (UTC) por los demás
+        expedientes; las órdenes de la última hora: los envíos de órdenes de entrada (reintentos incluidos, también los del propio
+        expediente) más las autorizaciones de los demás que aún no se han enviado; y la pérdida de la semana: la suma, por día de los
+        últimos siete, de la mayor pérdida del día que dieron las fotos de G."""
+        hoy = a.astimezone(timezone.utc).date()
+        importe, ordenes = 0.0, 0
+        for k in sorted(self.expedientes):
+            e = self.expedientes[k]
+            if not e.get("control_f"):
+                continue
+            for x in e["historial"]:
+                t = _dt(x["ahora"])
+                if t > a:
+                    continue
+                if x["hasta"] == "AUTORIZADA" and x["desde"] == "AUTORIZADA" and x["motivo"] == "orden de entrada ENVIADA" and a - t <= timedelta(hours=1):
+                    ordenes += 1
+            if k == excluido:
+                continue
+            cf = e["control_f"]
+            en = e["propuesta"]["entrada"]
+            fx = tipo_cambio(cf["entradas"]["solicitud"]["divisa_cotizacion"], cf["entradas"]["cartera"]) or 0.0
+            for x in e["historial"]:
+                if x["hasta"] == "AUTORIZADA" and x["desde"] != "AUTORIZADA":
+                    t = _dt(x["ahora"])
+                    if t.astimezone(timezone.utc).date() == hoy and t <= a:
+                        importe += cf["cantidad_aprobada"] * en["limite"] * fx
+                    if timedelta(0) <= a - t <= timedelta(hours=1) and not any(
+                            y["motivo"] == "orden de entrada ENVIADA" and _dt(y["ahora"]) >= t for y in e["historial"]):
+                        ordenes += 1   # autorizada y aún sin enviar: su orden saldrá
+        semana = math.fsum(v for d, v in self.perdidas_dia.items() if timedelta(0) <= hoy - date.fromisoformat(d) < timedelta(days=7))
+        return {"importe_dia_eur": importe, "ordenes_ultima_hora": ordenes, "perdida_semana_eur": semana}
+
+    def _f_al_enviar(self, e, expediente_id, ahora):
+        """T-22 (revisión H4): al enviar la orden de entrada, F vuelve a comprobar lo que depende del momento (fin de semana, eventos,
+        precio del intermediario, evidencia vigente, mandato, pérdidas y órdenes por hora) con el contexto de ese instante."""
+        cf = e["control_f"]
+        ctx = self.contexto_f(expediente_id, ahora)
+        sol = {**cf["entradas"]["solicitud"], "cantidad": cf["cantidad_aprobada"]}
+        vetos = [c for c in controles_de_contexto(sol, cf["entradas"]["politica"], ahora, ctx) if c["resultado"] == "VETA"]
+        if vetos:
+            return _no("O-06", f"F no aprobaría el envío ahora: {vetos[0]['regla']}: {vetos[0]['motivo'][:80]}", reglas=sorted({c['regla'] for c in vetos}))
+        return None
+
+    def contexto_f(self, expediente_id, ahora):
+        """T-22: lo que F necesita además de la solicitud, la cartera y la política para los controles previos de la §8, sacado de
+        los registros del Orquestador y no de quien propone. None si el expediente no tiene propuesta o el instante es ilegible.
+        El informe de F debe llevar exactamente este contexto, calculado al instante de su emisión (CF-09)."""
+        e = self.expedientes.get(expediente_id)
+        if not isinstance(e, dict) or not e.get("propuesta"):
+            return None
+        try:
+            a = _dt(ahora)
+        except Exception:   # noqa: BLE001
+            return None
+        m = self._mandato_efectivo(e)
+        en = e["propuesta"]["entrada"]
+        p = e["sobre"]["documento"]["payload"]
+        hoy = a.astimezone(timezone.utc).date()
+        sello_e = self.sellos.get((self.encargos.get(e.get("encargo_actual")) or {}).get("sello_ref")) or {}
+        ev = eventos_entre(sello_e, hoy.isoformat(), (hoy + timedelta(days=self.cfg["politica_f"]["ventana_eventos_dias"])).isoformat(), en["instrumento"])
+        cot = self._cotizacion_en(en["instrumento"], a)
+        return {"mandato": {"version": m["version"], "instrumentos_permitidos": copy.deepcopy(m["instrumentos_permitidos"]),
+                            "exclusiones": list(m["exclusiones"]), "apalancamiento_max": m["apalancamiento_max"],
+                            "horizonte_max_dias": m["horizonte_dias"]["max"]},
+                "fecha_revision": e["propuesta"]["salida"]["fecha"],
+                "exclusiones_duras": copy.deepcopy(p["exclusiones_duras"]),
+                "evidencia": {"proporcion_verificado": p["evidencia"]["proporcion"]["VERIFICADO"],
+                              "fecha_corte": p["identificacion"]["fecha_corte"], "valid_until": e["sobre"]["valid_until"]},
+                "eventos": None if ev is None else [{"fecha": x["fecha"], "tipo": x["tipo"]} for x in ev],
+                # el nivel configurado (la degradación la vigilan la matriz y G; F-22 solo exige un nivel conocido y sin kill-switch)
+                "autonomia": {"nivel": self.cfg["nivel_autonomia"].get(e["cartera_destino"], "L1"), "kill_switch": self.kill is not None},
+                "actividad": self._actividad(expediente_id, a),
+                "precio_intermediario": cot}
 
     def _foto_de_g(self, cart, instrumento=None, limite=None):
         cf = self.cartera_f()
@@ -1914,10 +2029,18 @@ class Orquestador:
         fallos = validar_informe_f(control_f, {"ahora": ahora, "expediente_id": expediente_id, "correlation_id": e["correlation_id"],
                                                "divisa_cotizacion": self.divisa(e["propuesta"]["entrada"]["instrumento"]),
                                                "propuesta": e["propuesta"], "cartera_destino": e["cartera_destino"], "politica": self.cfg["politica_f"],
-                                               "compromisos": self._compromisos(expediente_id, e["cartera_destino"])})
+                                               "compromisos": self._compromisos(expediente_id, e["cartera_destino"]),
+                                               "contexto": self._contexto_de_informe(expediente_id, control_f)})
         if fallos:
             return _no("O-01", f"informe de F no válido: {fallos[0]['regla']}: {fallos[0]['mensaje'][:80]}", reglas=sorted({x['regla'] for x in fallos}))
         cf = aplanar_informe(control_f)   # T-47: CT-G-08 0.2.0 llega envuelto; dentro se usa la forma plana
+        em = _dt(cf["emitido_en"])   # T-22 (revisión H2): F debe haber visto todo lo autorizado antes, y el día del informe es el de autorizar
+        if em.astimezone(timezone.utc).date() != a.astimezone(timezone.utc).date():
+            return _no("O-10", "el informe de F es de otro día (UTC): el importe del día no sería el suyo; pide otro informe")
+        posterior = next((k for k, x in self.expedientes.items() if k != expediente_id for h in x["historial"]
+                          if h["hasta"] == "AUTORIZADA" and h["desde"] != "AUTORIZADA" and em < _dt(h["ahora"]) <= a), None)
+        if posterior:
+            return _no("O-10", f"después de emitirse el informe de F se autorizó {posterior}: F no lo contó; pide otro informe")
         err = self._foto_de_g(cf["entradas"]["cartera"], e["propuesta"]["entrada"]["instrumento"], e["propuesta"]["entrada"]["limite"])
         if err:
             return err
@@ -2115,6 +2238,10 @@ class Orquestador:
         if estado == "ENVIADA" and not self.autorizacion_vigente(e):
             return _no("O-05", "la autorización ya no vale (automática con la cartera fuera de L2, o anterior a una bajada del límite de pérdida): "
                                "vuelve a pasar por F y por el operador")
+        if estado == "ENVIADA":
+            err = self._f_al_enviar(e, expediente_id, ahora)
+            if err:
+                return err
         e["orden_entrada"] = {"orden_id": orden_id, "estado": estado, "cantidad_ejecutada": cantidad_ejecutada, "anteriores": anteriores,
                               "historial": hist + [{"estado": estado, "ahora": ahora, "cantidad_ejecutada": cantidad_ejecutada}]}
         self._anota(e, "AUTORIZADA", "AUTORIZADA", actor, ahora, f"orden de entrada {estado}", orden_id, datos=_hash(e["orden_entrada"]))
@@ -2165,7 +2292,7 @@ class Orquestador:
         if orden["cantidad"] > cf["cantidad_aprobada"]:
             return _no("O-06", "la orden supera la cantidad que F aprobó")
         real = controlar({**cf["entradas"]["solicitud"], "cantidad": orden["cantidad"], "precio_entrada": orden["precio"]},
-                         cf["entradas"]["cartera"], cf["entradas"]["politica"], cf["emitido_en"])
+                         cf["entradas"]["cartera"], cf["entradas"]["politica"], cf["emitido_en"], cf["entradas"]["contexto"])
         anul = cf.get("anulacion")
         vetan = {c["regla"] for c in real["controles"] if c["resultado"] == "VETA"}
         ok_anulado = (anul is not None and real["resultado"] == "VETADO" and vetan and vetan <= set(anul["vetos"])
