@@ -29,8 +29,10 @@ from dimensionado import dimensionar  # noqa: E402
 from validar_contradictor import diversidad, validar_informe  # noqa: E402
 from parametros import PARAMETROS, VERSION_PARAMETROS, como_dict  # noqa: E402
 from k_calidad import VERSION_REGLAS as VERSION_REGLAS_K  # noqa: E402
+from k_calidad import hash_del_sello  # noqa: E402
 from control_f import VERSION_REGLAS as VERSION_REGLAS_F  # noqa: E402
 import mandatos as sc1  # noqa: E402  T-51: SC-1, el mandato de cada cartera
+import motor as sc3  # noqa: E402  T-26: SC-3, registro del Motor numérico
 from control_f import POLITICA_DEFECTO, aplanar_informe, controlar, divisa_cotizada, par_divisas, politica_valida, tipo_cambio, validar_informe_f  # noqa: E402
 
 VERSION_REGLAS = "ORQ-0.1.0"
@@ -123,7 +125,7 @@ def _dia(t):
     return t.astimezone(timezone.utc).date().isoformat()
 
 
-PRIORIDAD_AVISO = {"O-35": "ALTA", "O-34": "ALTA", "O-33": "MEDIA", "O-32": "MEDIA", "O-31": "MEDIA", "O-20": "MEDIA", "O-30": "ALTA", "O-25": "ALTA", "O-26": "ALTA", "O-19": "ALTA", "O-18": "ALTA", "O-03": "ALTA", "O-08": "ALTA", "O-09": "ALTA", "O-13": "ALTA", "O-17": "ALTA"}
+PRIORIDAD_AVISO = {"O-36": "MEDIA", "O-35": "ALTA", "O-34": "ALTA", "O-33": "MEDIA", "O-32": "MEDIA", "O-31": "MEDIA", "O-20": "MEDIA", "O-30": "ALTA", "O-25": "ALTA", "O-26": "ALTA", "O-19": "ALTA", "O-18": "ALTA", "O-03": "ALTA", "O-08": "ALTA", "O-09": "ALTA", "O-13": "ALTA", "O-17": "ALTA"}
 ACTORES_PROPUESTA = set(EMISORES)   # quien propone no aprueba ni controla: F, D y H no proponen (Constitución §2, P1)
 
 
@@ -402,6 +404,8 @@ class Orquestador:
         self._anota_limite({"tipo": "INICIO", LIMITE_PERDIDA: cfg["politica_f"][LIMITE_PERDIDA], "huella_config": self.huella_config},
                            "ORQUESTADOR", None, "límite de pérdida inicial")
         self.sellos, self.eventos, self.encargos = {}, {}, {}
+        self.modelos, self.artefactos = {}, {}   # T-26: registro del Motor SC-3 (modelos declarados y artefactos de cálculo)
+        self.sc3 = {"historial": [], "estado": "VIGENTE", "entradas": []}   # T-26 (R-M1): cadena de solo añadir del registro
         self.expedientes, self.posiciones, self.gasto_dia, self.avisos = {}, {}, {}, []
         self.ultima_comparacion = {}   # cartera -> id de la comparación vigente
         self.pantallas = {}            # expediente -> pantalla de aprobación con las cifras de F (§6)
@@ -687,7 +691,8 @@ class Orquestador:
         """Hash de cabeza de cada historial, para anclarlo fuera del Orquestador (registro de solo añadir)."""
         return {**{"EXP:" + k: v["historial"][-1]["hash"] for k, v in self.expedientes.items()},
                 **{"POS:" + k: v["historial"][-1]["hash"] for k, v in self.posiciones.items()},
-                "LIM": self.limites["historial"][-1]["hash"]}
+                "LIM": self.limites["historial"][-1]["hash"],
+                **({"SC3": self.sc3["historial"][-1]["hash"]} if self.sc3["historial"] else {})}
 
     def _propuesta_ok(self, e):
         if not e["propuesta"]:
@@ -781,13 +786,18 @@ class Orquestador:
         """Primer expediente cuya integridad no cuadra (cualquier cartera), o None."""
         if not self.config_integra():
             return "CONFIG"
+        if not self.motor_ok():   # T-26: el registro del Motor alterado es como un expediente roto
+            return "MOTOR"
+        if not self.sellos_ok():   # T-26 (R-M2): un sello de K retocado (p. ej. sin su advertencia)
+            return "SELLOS"
         return next((k for k, x in sorted(self.expedientes.items()) if not self._todo_ok(x)), None)
 
     def integridad(self):
         """Lista de expedientes (EXP:) y posiciones (POS:) cuyo historial, sobre, comparación o propuesta no cuadra."""
         return sorted(["EXP:" + k for k, v in self.expedientes.items() if not self._todo_ok(v)]
                       + ["POS:" + k for k, v in self.posiciones.items() if not self._posicion_ok(v)]
-                      + ([] if self.config_integra() else ["CONFIG"]))
+                      + ([] if self.config_integra() else ["CONFIG"]) + ([] if self.motor_ok() else ["MOTOR"])
+                      + ([] if self.sellos_ok() else ["SELLOS"]))
 
     def _configuracion_completa(self):
         """Todo lo que decide: la configuración del Orquestador (con la política de F), los parámetros versionados de K, D, H, E y
@@ -1082,6 +1092,9 @@ class Orquestador:
         if viejo is not None and viejo not in self.sellos:
             return _no("O-12", "reemplaza un sello desconocido")
         self.sellos[sid] = copy.deepcopy(sello)
+        adv = self.advertencias_k(sid)
+        if adv:   # T-26 (hallazgo 13): las advertencias de K llegan al Orquestador y al operador
+            self._aviso("O-36", f"sello {sid} con advertencias de K: " + "; ".join(f"{x['regla']} {x.get('detalle', '')}"[:120] for x in adv), ahora, sid)
         if viejo is not None:
             self.sellos[viejo]["estado"] = "ANULADO"
             for eid, en in self.encargos.items():
@@ -1094,6 +1107,105 @@ class Orquestador:
                     self._anota(x, x["estado"], "CADUCADA", "ORQUESTADOR", ahora, f"su sello {viejo} fue reemplazado")
                     self._aviso("O-06", f"expediente {xid} caducado: su sello {viejo} fue reemplazado", ahora, xid)
         return _r(True, "OK", "sello registrado")
+
+    def _advertencias_de(self, e):
+        """Las advertencias de K del sello con el que se analizó el expediente (encargo vigente)."""
+        en = self.encargos.get(e.get("encargo_actual")) or {}
+        return self.advertencias_k(en.get("sello_ref"))
+
+    def advertencias_k(self, sello_id):
+        """T-26 (hallazgo 13): las reglas de K que no dieron OK en ese sello (p. ej. Q-10, dato crítico de una sola fuente)."""
+        s = self.sellos.get(sello_id) if isinstance(sello_id, str) else None
+        return [copy.deepcopy(x) for x in (s or {}).get("resultado_reglas", []) if isinstance(x, dict) and x.get("resultado") != "OK"]
+
+    # ------------------------------------------------------------ T-26: Motor numérico SC-3
+    @_seguro
+    def registrar_modelo(self, modelo, actor, ahora):
+        """Un módulo del Motor declara su modelo y sus límites de validez (una entrada por modelo y versión)."""
+        self._ahora(ahora)
+        if actor != "MOTOR":
+            return _no("O-05", "solo el Motor (SC-3) declara modelos")
+        mal = sc3.modelo_fallo(modelo)
+        if mal:
+            return _no("O-01", f"modelo no válido: {mal}")
+        k = f"{modelo['modelo_ref']}@{modelo['version']}"
+        if k in self.modelos:
+            if self.modelos[k]["hash"] == sc3.huella(modelo):
+                return _r(True, "O-02", "modelo ya declarado", duplicado=True)
+            return _no("O-03", "mismo modelo y versión con otra declaración")
+        self.modelos[k] = {"modelo": copy.deepcopy(modelo), "hash": sc3.huella(modelo), "ahora": ahora}
+        self._anota_sc3({"tipo": "MODELO", "clave": k, "hash": sc3.huella(modelo)}, ahora)
+        return _r(True, "OK", "modelo declarado")
+
+    @_seguro
+    def registrar_artefacto(self, artefacto, actor, ahora):
+        """El Motor registra un cálculo reproducible: modelo declarado, sello de K (fecha de corte), semilla y hashes."""
+        self._ahora(ahora)
+        if actor != "MOTOR":
+            return _no("O-05", "solo el Motor (SC-3) registra artefactos")
+        mal = sc3.artefacto_fallo(artefacto)
+        if mal:
+            return _no("O-01", f"artefacto no válido: {mal}")
+        aid = artefacto["artefacto_id"]
+        if aid in self.artefactos:
+            if self.artefactos[aid]["hash"] == sc3.huella(artefacto):
+                return _r(True, "O-02", "artefacto ya registrado", duplicado=True)
+            return _no("O-03", "mismo artefacto_id con otro contenido")
+        mod = self.modelos.get(f"{artefacto['modelo_ref']}@{artefacto['version_modelo']}")
+        if mod is None or mod["hash"] != sc3.huella(mod["modelo"]):
+            return _no("O-12", "el artefacto es de un modelo no declarado (o alterado) en el Motor")
+        sel = self.sellos.get(artefacto["sello_ref"])
+        if sel is None or sel["estado"] != "VIGENTE":
+            return _no("O-12", "el artefacto cita un sello de K no registrado o no vigente")
+        self.artefactos[aid] = {"artefacto": copy.deepcopy(artefacto), "hash": sc3.huella(artefacto),
+                                "fecha_corte": sel["fecha_corte"], "ahora": ahora}
+        self._anota_sc3({"tipo": "ARTEFACTO", "clave": aid, "hash": sc3.huella(artefacto), "fecha_corte": sel["fecha_corte"]}, ahora)
+        return _r(True, "OK", "artefacto registrado")
+
+    def _anota_sc3(self, entrada, ahora):
+        L = self.sc3
+        L["entradas"].append(entrada)
+        self._anota(L, "VIGENTE" if L["historial"] else None, "VIGENTE", "MOTOR", ahora, f"{entrada['tipo']} {entrada['clave']}",
+                    entrada["tipo"], datos=_hash(entrada))
+
+    def motor_ok(self):
+        """El registro SC-3 es íntegro: su cadena cuadra, los índices de modelos y artefactos son exactamente los de la cadena
+        (nada borrado ni añadido por fuera, R-M1), ninguna entrada cambió y los artefactos que cita un sobre aceptado siguen ahí."""
+        try:
+            L = self.sc3
+            if not (self._historial_ok(L) and len(L["historial"]) == len(L["entradas"])
+                    and all(h["datos"] == _hash(x) for h, x in zip(L["historial"], L["entradas"]))):
+                return False
+            mods = {x["clave"]: x for x in L["entradas"] if x["tipo"] == "MODELO"}
+            arts = {x["clave"]: x for x in L["entradas"] if x["tipo"] == "ARTEFACTO"}
+            if set(mods) != set(self.modelos) or set(arts) != set(self.artefactos):
+                return False
+            if not all(v["hash"] == sc3.huella(v["modelo"]) == mods[k]["hash"] for k, v in self.modelos.items()):
+                return False
+            for k, v in self.artefactos.items():
+                a_ = v["artefacto"]
+                if not (v["hash"] == sc3.huella(a_) == arts[k]["hash"] and v["fecha_corte"] == arts[k]["fecha_corte"]
+                        and f"{a_['modelo_ref']}@{a_['version_modelo']}" in self.modelos
+                        and self.sellos.get(a_["sello_ref"], {}).get("fecha_corte") == v["fecha_corte"]):
+                    return False
+            for e in self.expedientes.values():   # lo que un sobre aceptado cita sigue registrado
+                for aid in (((e.get("sobre") or {}).get("documento") or {}).get("payload", {}).get("referencias") or {}).get("artefactos_motor") or []:
+                    if aid not in self.artefactos:
+                        return False
+            return True
+        except (KeyError, TypeError, AttributeError, ValueError):
+            return False
+
+    def sellos_ok(self):
+        """T-26 (R-M2): cada sello guardado sigue teniendo el hash con el que K lo emitió (sus advertencias incluidas)."""
+        try:
+            return all(hash_del_sello(s_) == s_["hash_sello"] for s_ in self.sellos.values())
+        except (KeyError, TypeError, AttributeError, ValueError):
+            return False
+
+    def _vista_sc3(self):
+        return {k: {"modelo_ref": v["artefacto"]["modelo_ref"], "fecha_corte": v["fecha_corte"], "sello_ref": v["artefacto"]["sello_ref"]}
+                for k, v in self.artefactos.items()}
 
     # ------------------------------------------------------------ expedientes
     @_seguro
@@ -1252,9 +1364,14 @@ class Orquestador:
         if self.sellos.get(en["sello_ref"], {}).get("estado") != "VIGENTE":
             en["estado"] = "ANULADO"
             return _no("O-06", "el sello del encargo ya no está vigente")
+        rota = "MOTOR" if not self.motor_ok() else ("SELLOS" if not self.sellos_ok() else None)
+        if rota:   # T-26 (R-M3): como en el resto de puntos de decisión, kill-switch
+            self._activar_kill(f"integridad rota en {rota}", "ORQUESTADOR", self.ultimo_ahora or "1970-01-01T00:00:00+00:00")
+            return _no("O-13", f"el registro {rota} está alterado: no se aceptan sobres")
         ctx_enc = self._ctx_encargo(en["ahora_emision"], en["fecha_vigente_emision"])
         ctx_sob = {"ahora": ahora, "fecha_corte_encargo": en["fecha_corte"], "perfiles_activos": self.cfg["perfiles_activos"],
-                   "clases_ratificadas": self.cfg["clases_ratificadas"], "apalancamiento_permitido": self.cfg["apalancamiento_permitido"]}
+                   "clases_ratificadas": self.cfg["clases_ratificadas"], "apalancamiento_permitido": self.cfg["apalancamiento_permitido"],
+                   "sc3": self._vista_sc3(), "sello_encargo": en["sello_ref"]}   # T-26: V-26, las cifras citan artefactos del Motor
         # el sobre se valida con su propio reloj; el encargo, con el de su emisión
         fallos = sobre_responde_a_encargo(en["msg"], sobre, ctx_enc, ctx_sob)
         if fallos:
@@ -1585,6 +1702,9 @@ class Orquestador:
             return _no("O-01", "condiciones_entrada.resto_parcial: solo se admite CANCELAR (mantener vivo el resto exige redimensionar el stop, T-12)")
         if ce["apalancamiento"] > 1 and not self.cfg["apalancamiento_permitido"]:
             return _no("O-06", "el apalancamiento no está permitido")
+        dec = ((self.encargos.get(e.get("encargo_actual")) or {}).get("msg") or {}).get("payload", {}).get("decision_informada")
+        if dec not in ("ABRIR_POSICION", "AUMENTAR"):   # T-26 (revisión): un encargo EXPLORAR o DESCARTAR no lleva a una orden
+            return _no("O-06", f"el encargo informa la decisión {dec!r}: no se propone una entrada con él")
         ap_m = self._mandato_efectivo(e)["apalancamiento_max"]
         if ce["apalancamiento"] > ap_m:   # T-51 (H3): el mandato de SC-1 manda, diga lo que diga el sobre
             return _no("O-06", f"el apalancamiento supera el máximo del mandato de la cartera ({ap_m})")
@@ -1733,6 +1853,8 @@ class Orquestador:
         if actor == "MATRIZ_AUTONOMIA" and not self._sello_vigente_para(e, a):   # T-29: sin datos vigentes no hay decisión automática
             self._degradar(e["cartera_destino"], "la matriz iba a autorizar con un sello que ya no está vigente", ahora)
             return _no("O-10", "el sello del análisis ya no está vigente para la cartera: autoriza el operador")
+        if actor == "MATRIZ_AUTONOMIA" and self._advertencias_de(e):   # T-26 (hallazgo 13): con advertencias de K decide el operador
+            return _no("O-36", "el análisis usa un sello de K con advertencias (p. ej. dato de una sola fuente): autoriza el operador")
         if not isinstance(control_f, dict) or not isinstance(control_f.get("event_id"), str):
             return _no("O-01", "falta el informe de control de F (CT-G-08)")
         err = self._comprobar_testigos(e, a)   # T-36: nadie apartó a un rival después de comparar
@@ -1805,14 +1927,16 @@ class Orquestador:
              "divisa_cotizacion": cf["entradas"]["solicitud"]["divisa_cotizacion"], "tipo_cambio_eur": fx,
              "apalancamiento": en["apalancamiento"], "cartera": e["cartera_destino"], "valid_until_f": cf["valid_until"],
              "generada_en": ahora, "caduca_en": (a + espera + timedelta(minutes=cfg["caduca_min"])).isoformat(),
-             "enfriamiento_hasta": (a + espera).isoformat(), "motivos_enfriamiento": motivos_espera, "anulacion": anulacion}
+             "enfriamiento_hasta": (a + espera).isoformat(), "motivos_enfriamiento": motivos_espera, "anulacion": anulacion,
+             "advertencias_k": self._advertencias_de(e)}   # T-26: el operador ve (y acepta) las advertencias de K
         p["hash"] = _hash(p)
         self.pantallas[expediente_id] = {**p, "usada": False}
         return _r(True, "OK", "pantalla de aprobación lista", pantalla=copy.deepcopy(p))
 
     def _comprobar_aprobacion(self, expediente_id, control_f, aprobacion, a):
         p = self.pantallas.get(expediente_id)
-        if not (isinstance(aprobacion, dict) and set(aprobacion) == {"pantalla_hash", "importe_tecleado", "canal", "segundo_factor"}):
+        base = {"pantalla_hash", "importe_tecleado", "canal", "segundo_factor"}
+        if not (isinstance(aprobacion, dict) and set(aprobacion) in (base, base | {"acepta_advertencias_k"})):
             return _no("O-27", "la autorización del operador exige su aprobación: pantalla_hash, importe_tecleado, canal y segundo_factor")
         if p is None or _hash({k: v for k, v in p.items() if k not in ("hash", "usada")}) != p["hash"] or aprobacion["pantalla_hash"] != p["hash"]:
             return _no("O-27", "la aprobación no corresponde a la pantalla con las cifras de F")
@@ -1832,6 +1956,10 @@ class Orquestador:
             return _no("O-27", "el importe tecleado no coincide con el de la pantalla")
         if aprobacion["canal"] not in self.cfg["aprobacion"]["canales"] or aprobacion["segundo_factor"] is not True:
             return _no("O-05", "una acción que aumenta riesgo exige un canal de aprobación admitido (no el chat) y segundo factor")
+        if bool(p.get("advertencias_k")) != (aprobacion.get("acepta_advertencias_k") is True) or (
+                "acepta_advertencias_k" in aprobacion and aprobacion["acepta_advertencias_k"] is not True):
+            return _no("O-36", "la pantalla muestra advertencias de K: la aprobación debe aceptarlas expresamente (acepta_advertencias_k)"
+                       if p.get("advertencias_k") else "no hay advertencias de K que aceptar en esta pantalla")
         return None
 
     @_seguro
@@ -1898,6 +2026,11 @@ class Orquestador:
             return _no("O-05", "solo G anota el estado de las órdenes")
         if e["estado"] != "AUTORIZADA":
             return _no("O-04", "solo un expediente AUTORIZADA tiene orden de entrada")
+        if estado == "ENVIADA":   # T-26 (R-M3): antes de enviar nada, todo íntegro (configuración, Motor, sellos y expedientes)
+            rota = self._rota()
+            if rota:
+                self._activar_kill(f"integridad rota en {rota}", "ORQUESTADOR", self.ultimo_ahora or "1970-01-01T00:00:00+00:00")
+                return _no("O-13", f"{rota} no es íntegro: no se envía la orden")
         if not (isinstance(orden_id, str) and _ID.match(orden_id) and _num(cantidad_ejecutada) and cantidad_ejecutada >= 0):
             return _no("O-01", "orden_id y cantidad_ejecutada (>= 0) obligatorios")
         oe = e.get("orden_entrada")

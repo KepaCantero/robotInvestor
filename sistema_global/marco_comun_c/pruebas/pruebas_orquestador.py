@@ -5,6 +5,8 @@ registran a propósito: avisos y estado de encargos caducados/anulados).
 Uso: python3 pruebas/pruebas_orquestador.py
 """
 import copy
+import json
+import hashlib
 import sys
 from datetime import date
 from pathlib import Path
@@ -76,10 +78,58 @@ def elegir_si_hace_falta(o, eid, ahora=AHORA):
         assert r["ok"], r
 
 
+def _motor_base():
+    """Los artefactos del Motor que citan los sobres de prueba (motor_id -> modelo_ref), sacados de los casos válidos."""
+    import glob
+    m = {}
+
+    def walk(x):
+        if isinstance(x, dict):
+            if x.get("motor_id") and x.get("modelo_ref"):
+                m[x["motor_id"]] = x["modelo_ref"]
+            for v in x.values():
+                walk(v)
+        elif isinstance(x, list):
+            for v in x:
+                walk(v)
+    for f in sorted(glob.glob(str(AQUI / "validos" / "*.json"))):
+        walk(json.loads(Path(f).read_text(encoding="utf-8")))
+    return m
+
+
+MOTOR_BASE = _motor_base()
+
+
+def modelo_sim(ref):
+    return {"modelo_ref": ref, "version": "1.0.0", "descripcion": f"modelo simulado {ref} de las pruebas",
+            "limites_validez": "datos simulados; sin validez fuera de las pruebas"}
+
+
+def artefacto_sim(aid, ref, sello="K-20261105-001"):
+    h = hashlib.sha256(aid.encode()).hexdigest()
+    return {"artefacto_id": aid, "modelo_ref": ref, "version_modelo": "1.0.0", "sello_ref": sello, "semilla": 7,
+            "entradas_hash": h, "resultado_hash": hashlib.sha256(h.encode()).hexdigest()}
+
+
+def _pref(sello):
+    """Prefijo de los artefactos de prueba calculados con otro sello que el base (el mismo cálculo, otro corte)."""
+    return "" if sello == "K-20261105-001" else sello[2:10] + "-"
+
+
+def registrar_motor(o, sello="K-20261105-001", ahora=AHORA):
+    """T-26: el Motor (SC-3) declara los modelos y registra los artefactos que citan los sobres de prueba (con ese sello)."""
+    for ref in sorted(set(MOTOR_BASE.values())):
+        assert o.registrar_modelo(modelo_sim(ref), "MOTOR", ahora)["ok"]
+    for aid, ref in sorted(MOTOR_BASE.items()):
+        assert o.registrar_artefacto(artefacto_sim(_pref(sello) + aid, ref, sello), "MOTOR", ahora)["ok"]
+
+
 def nuevo(cfg=None, sellos=(S1,)):
     o = Orquestador({**CFG, **(cfg or {})}, CAL)
     for s in sellos:
         assert o.registrar_sello(s, AHORA)["ok"], "sello base"
+    if sellos:   # T-26: el Motor registra sus artefactos con el primer sello
+        registrar_motor(o, sellos[0]["sello_id"])
     return o
 
 
@@ -103,6 +153,8 @@ def sobre(n=1, corte="2026-11-05", sello="K-20261105-001"):
     if corte == "2026-11-06":
         s["emitido_en"] = "2026-11-06T10:00:00+00:00"; s["valid_until"] = "2026-11-09T18:00:00+00:00"
         s["payload"]["entrada_salida"]["entrada"]["ventana_hasta"] = s["valid_until"]
+    if sello != "K-20261105-001":   # T-26: las cifras citan artefactos calculados con el sello de este sobre
+        s = json.loads(json.dumps(s).replace('"MOTOR-RUN-', f'"{_pref(sello)}MOTOR-RUN-'))
     return s
 
 
@@ -378,6 +430,7 @@ def main():
     # corte distinto
     o = nuevo(sellos=(S1,)); hasta(o, "VALIDADA")
     assert o.registrar_sello(S2, AHORA)["ok"]
+    registrar_motor(o, "K-20261106-001")
     o.detectar("EXP-0002", "COR-0002", "DISCRECIONAL", "TACTICA", "GESTOR_TACTICA", AHORA)
     r = o.emitir_encargo("EXP-0002", encargo(2, corte="2026-11-06", sello="K-20261106-001"), "GESTOR_TACTICA", AHORA)
     assert r["ok"], r
@@ -391,6 +444,7 @@ def main():
     h.chk("configuracion_cambiada_en_caliente_O13", r["codigo"] == "O-13" and o_caliente.kill is not None and "CONFIG" in o_caliente.integridad(), r)
     o = nuevo({"umbral_corte_comun_dias_habiles": 1}, sellos=(S1,)); hasta(o, "VALIDADA")
     assert o.registrar_sello(S2, AHORA)["ok"]
+    registrar_motor(o, "K-20261106-001")
     o.detectar("EXP-0002", "COR-0002", "DISCRECIONAL", "TACTICA", "GESTOR_TACTICA", AHORA)
     assert o.emitir_encargo("EXP-0002", encargo(2, corte="2026-11-06", sello="K-20261106-001"), "GESTOR_TACTICA", AHORA)["ok"]
     assert o.entregar_sobre("EXP-0002", sobre(2, corte="2026-11-06", sello="K-20261106-001"), "2026-11-06T10:30:00+00:00")["ok"]
