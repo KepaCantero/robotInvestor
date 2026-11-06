@@ -8,7 +8,7 @@ from __future__ import annotations
 
 from types import MappingProxyType
 
-VERSION_PARAMETROS = "PAR-0.1.0"
+VERSION_PARAMETROS = "PAR-0.2.0"   # 0.2.0 (T-26): licencias admitidas por K
 
 _VALORES = {
     # K — calidad y antigüedad de los datos de corte
@@ -20,6 +20,7 @@ _VALORES = {
     "k_cruce_adv_bloq": (0.001, 0.01),         # Q-09
     "k_ventana_acumulado_obs": 5,              # Q-04
     "k_ajuste_tol_rel": 0.10,                  # tolerancia entre el factor de un ajuste y el salto observado
+    "k_licencias_admitidas": ("PROPIA", "INTERMEDIARIO-USO-INTERNO", "CC-BY-4.0", "DOMINIO-PUBLICO"),   # Q-14 (T-26) [PROPUESTO, D-29]
     # D — comparación de candidatos
     "d_peso_evidencia": {"VERIFICADO": 1.0, "ESTIMADO": 0.5, "SUPUESTO": 0.25},
     "d_margen_ajustado": 0.05,

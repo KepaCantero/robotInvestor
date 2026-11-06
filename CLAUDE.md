@@ -12,7 +12,7 @@ el protocolo de trabajo común.
 
 Por encima de los bloques, `sistema_global/` contiene la Constitución global del Robot Investor
 (`sistema_global/constitucion/Constitucion_Global.md`, fuente de verdad de todo el sistema), el código
-de referencia de la Fase 1 (`sistema_global/marco_comun_c/`, V0.33, 31 suites propias fuera de los gates
+de referencia de la Fase 1 (`sistema_global/marco_comun_c/`, V0.34, 32 suites propias fuera de los gates
 de los bloques), un Documento 0 por pieza y la deuda técnica y el briefing de arranque
 (`sistema_global/README.md` es su índice). No forma parte del corpus congelado.
 

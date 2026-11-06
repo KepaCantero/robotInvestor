@@ -2,9 +2,9 @@
   "ctx_extra": {
     "sellos": {
       "K-20261105-001": {
-        "hash_sello": "6eb951622657063db0f6551d99533b6cf631b4ac53671a105ddaa296ab6fdc79",
+        "hash_sello": "85e8e33a7be1b603a411ff883b279f956b40d2bd11765f673153a37d26a6ca66",
         "sello_id": "K-20261106-001",
-        "version_esquema": "0.1.0",
+        "version_esquema": "0.2.0",
         "fecha_corte": "2026-11-06",
         "fecha_solicitada": "2026-11-06",
         "emitido_en": "2026-11-06T08:00:00+00:00",
@@ -19,46 +19,86 @@
           {
             "fuente_id": "SRC-EURUSD",
             "estado": "DISPONIBLE",
+            "instrumento": "EURUSD",
             "version_conjunto": "DS-1",
-            "ultima_observacion": "2026-11-06",
-            "antiguedad_dias_habiles": 0,
-            "hash": "7fd6d70e78d718b6ad1c8c3e5034e9c750a8aca97c1bf151f1971385cacf500a"
+            "ultima_observacion": "2026-11-05",
+            "antiguedad_dias_habiles": 1,
+            "hash": "42feadda6ec13a70e31b4b8723587a7459b8710dee2fd2e89cf91eb76e974663",
+            "ultimo_cierre": 1.097606,
+            "procedencia": {
+              "licencia": "INTERMEDIARIO-USO-INTERNO",
+              "obtenido_en": "2026-11-05T22:30:00+00:00",
+              "proveedor": "PROV-SIM",
+              "referencia": "conjunto simulado SRC-EURUSD"
+            }
           },
           {
             "fuente_id": "SRC-EURUSD-B",
             "estado": "DISPONIBLE",
+            "instrumento": "EURUSD-B",
             "version_conjunto": "DS-1",
-            "ultima_observacion": "2026-11-06",
-            "antiguedad_dias_habiles": 0,
-            "hash": "7fd6d70e78d718b6ad1c8c3e5034e9c750a8aca97c1bf151f1971385cacf500a"
+            "ultima_observacion": "2026-11-05",
+            "antiguedad_dias_habiles": 1,
+            "hash": "42feadda6ec13a70e31b4b8723587a7459b8710dee2fd2e89cf91eb76e974663",
+            "ultimo_cierre": 1.097606,
+            "procedencia": {
+              "licencia": "INTERMEDIARIO-USO-INTERNO",
+              "obtenido_en": "2026-11-05T22:30:00+00:00",
+              "proveedor": "PROV-SIM",
+              "referencia": "conjunto simulado SRC-EURUSD-B"
+            }
           },
           {
             "fuente_id": "SRC-USDJPY",
             "estado": "DISPONIBLE",
+            "instrumento": "USDJPY",
             "version_conjunto": "DS-1",
-            "ultima_observacion": "2026-11-06",
-            "antiguedad_dias_habiles": 0,
-            "hash": "d6093bb79de58d22fde22a103152bd7c2bcc5779c3622c68f56bc0dd301f8a70"
+            "ultima_observacion": "2026-11-05",
+            "antiguedad_dias_habiles": 1,
+            "hash": "5ab8710a6fd9ddabb6f64ad2fa052d7f3d5c666ee3c086d0587f05b0ea51a0c9",
+            "ultimo_cierre": 149.400006,
+            "procedencia": {
+              "licencia": "INTERMEDIARIO-USO-INTERNO",
+              "obtenido_en": "2026-11-05T22:30:00+00:00",
+              "proveedor": "PROV-SIM",
+              "referencia": "conjunto simulado SRC-USDJPY"
+            }
           },
           {
             "fuente_id": "SRC-EURJPY",
             "estado": "DISPONIBLE",
+            "instrumento": "EURJPY",
             "version_conjunto": "DS-1",
-            "ultima_observacion": "2026-11-06",
-            "antiguedad_dias_habiles": 0,
-            "hash": "78564b4df4a1b565c31308ff791eef5c65b17f1bf9749fdba139042b7d6f4490"
+            "ultima_observacion": "2026-11-05",
+            "antiguedad_dias_habiles": 1,
+            "hash": "a19192ed439c9e3814dabae198490995bb006ec7635079278ebdd4790099fac2",
+            "ultimo_cierre": 163.982343,
+            "procedencia": {
+              "licencia": "INTERMEDIARIO-USO-INTERNO",
+              "obtenido_en": "2026-11-05T22:30:00+00:00",
+              "proveedor": "PROV-SIM",
+              "referencia": "conjunto simulado SRC-EURJPY"
+            }
           },
           {
             "fuente_id": "SRC-GBPUSD",
             "estado": "DISPONIBLE",
+            "instrumento": "GBPUSD",
             "version_conjunto": "DS-1",
-            "ultima_observacion": "2026-11-06",
-            "antiguedad_dias_habiles": 0,
-            "hash": "a68b04a2aed0c33d62e9a40d6f147b380fbfbf58a842c6677404673b69bfcad6"
+            "ultima_observacion": "2026-11-05",
+            "antiguedad_dias_habiles": 1,
+            "hash": "a81b777a6079417dccd9018309f022716585db6b2c795852479828afc85ab7fb",
+            "ultimo_cierre": 1.29721,
+            "procedencia": {
+              "licencia": "INTERMEDIARIO-USO-INTERNO",
+              "obtenido_en": "2026-11-05T22:30:00+00:00",
+              "proveedor": "PROV-SIM",
+              "referencia": "conjunto simulado SRC-GBPUSD"
+            }
           }
         ],
         "version_ajustes": "AJ-2026.1",
-        "version_reglas": "Q-0.1.0",
+        "version_reglas": "Q-0.2.0",
         "resultado_reglas": [
           {
             "regla": "Q-01",
@@ -111,9 +151,18 @@
           {
             "regla": "Q-13",
             "resultado": "OK"
+          },
+          {
+            "regla": "Q-14",
+            "resultado": "OK"
+          },
+          {
+            "regla": "Q-15",
+            "resultado": "OK"
           }
         ],
         "resultado_global": "OK",
+        "eventos": [],
         "estado": "VIGENTE"
       }
     }

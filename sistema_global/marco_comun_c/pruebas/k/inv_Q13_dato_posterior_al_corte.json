@@ -257,6 +257,12 @@
           "volumen": 1030
         }
       ],
+      "procedencia": {
+        "proveedor": "PROV-SIM",
+        "licencia": "INTERMEDIARIO-USO-INTERNO",
+        "obtenido_en": "2026-11-05T22:30:00+00:00",
+        "referencia": "conjunto simulado SRC-EURUSD"
+      },
       "critico": true,
       "contraste": [
         "SRC-EURUSD-B"
@@ -517,6 +523,12 @@
           "volumen": 1030
         }
       ],
+      "procedencia": {
+        "proveedor": "PROV-SIM",
+        "licencia": "INTERMEDIARIO-USO-INTERNO",
+        "obtenido_en": "2026-11-05T22:30:00+00:00",
+        "referencia": "conjunto simulado SRC-EURUSD-B"
+      },
       "hash_declarado": "42feadda6ec13a70e31b4b8723587a7459b8710dee2fd2e89cf91eb76e974663"
     },
     {
@@ -773,6 +785,12 @@
           "volumen": 1030
         }
       ],
+      "procedencia": {
+        "proveedor": "PROV-SIM",
+        "licencia": "INTERMEDIARIO-USO-INTERNO",
+        "obtenido_en": "2026-11-05T22:30:00+00:00",
+        "referencia": "conjunto simulado SRC-USDJPY"
+      },
       "hash_declarado": "5ab8710a6fd9ddabb6f64ad2fa052d7f3d5c666ee3c086d0587f05b0ea51a0c9"
     },
     {
@@ -1029,6 +1047,12 @@
           "volumen": 1030
         }
       ],
+      "procedencia": {
+        "proveedor": "PROV-SIM",
+        "licencia": "INTERMEDIARIO-USO-INTERNO",
+        "obtenido_en": "2026-11-05T22:30:00+00:00",
+        "referencia": "conjunto simulado SRC-EURJPY"
+      },
       "hash_declarado": "a19192ed439c9e3814dabae198490995bb006ec7635079278ebdd4790099fac2"
     },
     {
@@ -1293,6 +1317,12 @@
           "volumen": 1030
         }
       ],
+      "procedencia": {
+        "proveedor": "PROV-SIM",
+        "licencia": "INTERMEDIARIO-USO-INTERNO",
+        "obtenido_en": "2026-11-05T22:30:00+00:00",
+        "referencia": "conjunto simulado SRC-GBPUSD"
+      },
       "hash_declarado": "10bc9757dc63caa44ccaa57482686d5562d57864e84dd91bc4273f20a2b248d2"
     }
   ],

@@ -29,7 +29,7 @@ from dimensionado import dimensionar  # noqa: E402
 from validar_contradictor import diversidad, validar_informe  # noqa: E402
 from parametros import PARAMETROS, VERSION_PARAMETROS, como_dict  # noqa: E402
 from k_calidad import VERSION_REGLAS as VERSION_REGLAS_K  # noqa: E402
-from k_calidad import hash_del_sello  # noqa: E402
+from k_calidad import eventos_entre, hash_del_sello  # noqa: E402
 from control_f import VERSION_REGLAS as VERSION_REGLAS_F  # noqa: E402
 import mandatos as sc1  # noqa: E402  T-51: SC-1, el mandato de cada cartera
 import motor as sc3  # noqa: E402  T-26: SC-3, registro del Motor numérico
@@ -79,10 +79,11 @@ OPERADORES = {"<": lambda v, u: v < u, "<=": lambda v, u: v <= u, ">": lambda v,
               ">=": lambda v, u: v >= u, "==": lambda v, u: v == u}
 
 CONFIG_DEFECTO = {"max_reintentos": 3, "umbral_corte_comun_dias_habiles": 0,
-                  "version_config": "CFG-0.5.0",   # 0.2.0 (T-48): Contradictor exigido en N2 y N3; autoria_c. 0.3.0 (T-49): alerta_perdida_pct. 0.4.0 (T-50): anulaciones_veto_mes. 0.5.0 (T-51): mandatos (SC-1) en lugar de instrumentos_permitidos
+                  "version_config": "CFG-0.6.0",   # 0.2.0 (T-48): Contradictor exigido en N2 y N3; autoria_c. 0.3.0 (T-49): alerta_perdida_pct. 0.4.0 (T-50): anulaciones_veto_mes. 0.5.0 (T-51): mandatos (SC-1) en lugar de instrumentos_permitidos. 0.6.0 (T-26/T-42): tolerancia_tipo_k_rel
                   "dia_coste_max_eur": 50.0, "revision_max_dias": 90, "observacion_max_dias": 30, "max_reaperturas": 2, "dia_tiempo_max_min": 600, "tolerancia_precio_entrada": 0.05,
                   "alerta_perdida_pct": -5.0,   # T-49: H pide revisar al perder esto (y cada múltiplo) [PROPUESTO]
-                  "anulaciones_veto_mes": 2,   # T-50 (§6.2): anulaciones de veto de F que el operador puede hacer en un mes natural (UTC) [PROPUESTO]
+                  "anulaciones_veto_mes": 2,
+                  "tolerancia_tipo_k_rel": 0.03,   # T-42: desviación máxima entre el tipo de cambio de G y el último cierre de K [PROPUESTO, D-29]   # T-50 (§6.2): anulaciones de veto de F que el operador puede hacer en un mes natural (UTC) [PROPUESTO]
                   "exige_contradictor_en": ["N2", "N3"], "contradictor_desactivado_motivo": None, "autoria_c": {}, "autoria_contradictor": None,
                   "matriz_autonomia": {},   # T-48: Contradictor exigido por defecto donde se compara y propone [PROPUESTO]
                   "politica_f": POLITICA_DEFECTO,
@@ -285,6 +286,7 @@ def _valida_config(c):
           and isinstance(c["revision_max_dias"], int) and not isinstance(c["revision_max_dias"], bool) and 1 <= c["revision_max_dias"] <= 366
           and isinstance(c["observacion_max_dias"], int) and not isinstance(c["observacion_max_dias"], bool) and 1 <= c["observacion_max_dias"] <= 366
           and isinstance(c["max_reaperturas"], int) and not isinstance(c["max_reaperturas"], bool) and 0 <= c["max_reaperturas"] <= 20
+          and _num(c["tolerancia_tipo_k_rel"]) and 0 < c["tolerancia_tipo_k_rel"] <= 0.5
           and isinstance(c["anulaciones_veto_mes"], int) and not isinstance(c["anulaciones_veto_mes"], bool) and 0 <= c["anulaciones_veto_mes"] <= 10
           and isinstance(c["cuenta_intermediario"], str) and _ID.match(c["cuenta_intermediario"])
           and isinstance(c["divisas_cotizacion"], dict)
@@ -577,6 +579,9 @@ class Orquestador:
         fuera = sorted(k for k, v in foto["tipos_cambio_eur"].items() if k not in rangos or not rangos[k][0] <= v <= rangos[k][1])
         if fuera:
             return _no("O-29", f"tipo de cambio sin rango de referencia o fuera de él: {', '.join(fuera)}")
+        malos = self._contraste_tipos_k(foto["tipos_cambio_eur"])   # T-42: segunda fuente, K
+        if malos:
+            return _no("O-29", "tipo de cambio que no cuadra con el último cierre de K: " + "; ".join(malos))
         t = _dt(foto["fecha_hora"])
         if t > a or (a - t).total_seconds() > self.cfg["politica_f"]["frescura_max_min"] * 60:
             return _no("O-10", "la foto de cartera es del futuro o más vieja que la frescura que admite F")
@@ -1112,6 +1117,43 @@ class Orquestador:
         """Las advertencias de K del sello con el que se analizó el expediente (encargo vigente)."""
         en = self.encargos.get(e.get("encargo_actual")) or {}
         return self.advertencias_k(en.get("sello_ref"))
+
+    def _contraste_tipos_k(self, tipos):
+        """T-42: cada tipo de cambio de G (EUR por unidad de divisa) frente al último cierre de K. Para cada divisa se busca,
+        del más reciente al más antiguo (por fecha de corte y emisión, como instantes), el primer sello aún vigente (estado_sello)
+        con una fuente DISPONIBLE de su par con el euro (en cualquier grafía: par_divisas). Una desviación mayor que la tolerancia,
+        o una cuenta no finita, es discrepancia. Sin sello que cubra la divisa no hay contraste (quedan los rangos de referencia)."""
+        hoy = (self.ultimo_ahora and _dt(self.ultimo_ahora) or datetime.now(timezone.utc)).astimezone(timezone.utc).date().isoformat()
+        vig = []
+        for x in self.sellos.values():
+            try:
+                if x.get("estado") == "VIGENTE" and estado_sello(x, hoy, x["cartera"], self.cal_def) == "VIGENTE":
+                    vig.append(x)
+            except (KeyError, TypeError, ValueError):
+                continue
+        vig.sort(key=lambda x: (x["fecha_corte"], _dt(x["emitido_en"]), x["sello_id"]), reverse=True)
+        tol = self.cfg["tolerancia_tipo_k_rel"]
+        out = []
+        for div, v in sorted(tipos.items()):
+            for s_ in vig:
+                refs = []
+                for fu in s_.get("fuentes", []):
+                    ins, ci = fu.get("instrumento"), fu.get("ultimo_cierre")
+                    par = par_divisas(ins) if isinstance(ins, str) else None
+                    if fu.get("estado") != "DISPONIBLE" or not par or not _num(ci) or ci <= 0:
+                        continue
+                    if par == ("EUR", div):
+                        refs.append((ins, abs(v * ci - 1)))   # EUR por divisa = 1/cierre: v / (1/ci) - 1
+                    elif par == (div, "EUR"):
+                        refs.append((ins, abs(v / ci - 1)))
+                if not refs:
+                    continue
+                for ins, dev in refs:
+                    if not math.isfinite(dev) or dev > tol:
+                        out.append(f"{div} {v}: desviación {dev:.2%} del último cierre de K ({ins}, sello {s_['sello_id']}, tolerancia {tol:.0%})"
+                                   if math.isfinite(dev) else f"{div} {v}: no se puede contrastar con K ({ins}, sello {s_['sello_id']})")
+                break
+        return out
 
     def advertencias_k(self, sello_id):
         """T-26 (hallazgo 13): las reglas de K que no dieron OK en ese sello (p. ej. Q-10, dato crítico de una sola fuente)."""
@@ -1917,6 +1959,10 @@ class Orquestador:
         cfg = self.cfg["aprobacion"]
         perdida = cf["entradas"]["cartera"].get("perdida_dia_eur", 0.0)
         fuera = not _en_horario(a, cfg["horario_utc"])
+        sello_e = self.sellos.get((self.encargos.get(e.get("encargo_actual")) or {}).get("sello_ref")) or {}
+        ev_k = eventos_entre(sello_e, a.astimezone(timezone.utc).date().isoformat(), e["propuesta"]["salida"]["fecha"], en["instrumento"])
+        if ev_k is None:   # T-26 (R-M2): un calendario ilegible no se presenta como «sin eventos»
+            return _no("O-01", "el calendario de eventos del sello no se puede leer: no se presenta la pantalla")
         motivos_espera = ((["pérdida en el día"] if perdida > cfg["enfriamiento_tras_perdida_dia_eur"] else []) + (["fuera de horario"] if fuera else [])
                           + (["anulación de veto"] if anulacion else []))   # T-50: anular un veto siempre espera
         espera = timedelta(minutes=cfg["enfriamiento_min"]) if motivos_espera else timedelta(0)
@@ -1928,7 +1974,8 @@ class Orquestador:
              "apalancamiento": en["apalancamiento"], "cartera": e["cartera_destino"], "valid_until_f": cf["valid_until"],
              "generada_en": ahora, "caduca_en": (a + espera + timedelta(minutes=cfg["caduca_min"])).isoformat(),
              "enfriamiento_hasta": (a + espera).isoformat(), "motivos_enfriamiento": motivos_espera, "anulacion": anulacion,
-             "advertencias_k": self._advertencias_de(e)}   # T-26: el operador ve (y acepta) las advertencias de K
+             "advertencias_k": self._advertencias_de(e),   # T-26: el operador ve (y acepta) las advertencias de K
+             "eventos_k": ev_k}   # T-26: calendario
         p["hash"] = _hash(p)
         self.pantallas[expediente_id] = {**p, "usada": False}
         return _r(True, "OK", "pantalla de aprobación lista", pantalla=copy.deepcopy(p))
