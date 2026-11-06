@@ -76,9 +76,10 @@ OPERADORES = {"<": lambda v, u: v < u, "<=": lambda v, u: v <= u, ">": lambda v,
               ">=": lambda v, u: v >= u, "==": lambda v, u: v == u}
 
 CONFIG_DEFECTO = {"max_reintentos": 3, "umbral_corte_comun_dias_habiles": 0,
-                  "version_config": "CFG-0.3.0",   # 0.2.0 (T-48): Contradictor exigido en N2 y N3; autoria_c. 0.3.0 (T-49): alerta_perdida_pct
+                  "version_config": "CFG-0.4.0",   # 0.2.0 (T-48): Contradictor exigido en N2 y N3; autoria_c. 0.3.0 (T-49): alerta_perdida_pct. 0.4.0 (T-50): anulaciones_veto_mes
                   "dia_coste_max_eur": 50.0, "revision_max_dias": 90, "observacion_max_dias": 30, "max_reaperturas": 2, "dia_tiempo_max_min": 600, "tolerancia_precio_entrada": 0.05,
                   "alerta_perdida_pct": -5.0,   # T-49: H pide revisar al perder esto (y cada múltiplo) [PROPUESTO]
+                  "anulaciones_veto_mes": 2,   # T-50 (§6.2): anulaciones de veto de F que el operador puede hacer en un mes natural (UTC) [PROPUESTO]
                   "exige_contradictor_en": ["N2", "N3"], "contradictor_desactivado_motivo": None, "autoria_c": {}, "autoria_contradictor": None,
                   "matriz_autonomia": {},   # T-48: Contradictor exigido por defecto donde se compara y propone [PROPUESTO]
                   "politica_f": POLITICA_DEFECTO,
@@ -99,7 +100,28 @@ NIVELES = {"L0": 0, "L1": 1, "L2": 2}
 # Prioridad de cada aviso para el operador [PROPUESTO]
 TIPOS_KILL = {"POSICION_DESCONOCIDA", "CANTIDAD", "SENTIDO_O_ACTIVO", "PROTECCION", "PROTECCION_HUERFANA", "ENTRADA_HUERFANA",
               "MANUAL_NO_CUADRA", "POSICION_SIN_PROTEGER", "INTEGRIDAD"}   # lo que G sabe explicar (cierres propios, conexión, estado incierto, dato viejo) no
-PRIORIDAD_AVISO = {"O-33": "MEDIA", "O-32": "MEDIA", "O-31": "MEDIA", "O-20": "MEDIA", "O-30": "ALTA", "O-25": "ALTA", "O-26": "ALTA", "O-19": "ALTA", "O-18": "ALTA", "O-03": "ALTA", "O-08": "ALTA", "O-09": "ALTA", "O-13": "ALTA", "O-17": "ALTA"}
+# T-50: vetos de F que el operador puede anular (con motivo y dentro del límite mensual) [PROPUESTO, D-27]. No se anulan los de
+# forma o cálculo (F-01), lado del stop (F-02), apalancamiento (F-05), pérdida del día (F-08), cartera vieja (F-10) ni tipo de cambio (F-12),
+# y la anulación nunca pasa de los topes de cantidad de F (F-03, F-04, F-06 y F-07)
+VETOS_ANULABLES = ("F-09", "F-11")
+TOPES_F = ("F-03", "F-04", "F-06", "F-07")
+LIMITE_PERDIDA = "perdida_dia_max_pct"   # T-50 (§6.3): el límite de pérdida de la política de F que el operador puede ajustar
+MOTIVO_MIN = 15   # caracteres mínimos del motivo de una anulación de veto o de un cambio de límite
+
+
+def _motivo_ok(m):
+    return isinstance(m, str) and len(m.strip()) >= MOTIVO_MIN and len(m) <= 500
+
+
+def _mes(t):
+    return t.astimezone(timezone.utc).strftime("%Y-%m")
+
+
+def _dia(t):
+    return t.astimezone(timezone.utc).date().isoformat()
+
+
+PRIORIDAD_AVISO = {"O-35": "ALTA", "O-34": "ALTA", "O-33": "MEDIA", "O-32": "MEDIA", "O-31": "MEDIA", "O-20": "MEDIA", "O-30": "ALTA", "O-25": "ALTA", "O-26": "ALTA", "O-19": "ALTA", "O-18": "ALTA", "O-03": "ALTA", "O-08": "ALTA", "O-09": "ALTA", "O-13": "ALTA", "O-17": "ALTA"}
 ACTORES_PROPUESTA = set(EMISORES)   # quien propone no aprueba ni controla: F, D y H no proponen (Constitución §2, P1)
 
 
@@ -259,6 +281,7 @@ def _valida_config(c):
           and isinstance(c["revision_max_dias"], int) and not isinstance(c["revision_max_dias"], bool) and 1 <= c["revision_max_dias"] <= 366
           and isinstance(c["observacion_max_dias"], int) and not isinstance(c["observacion_max_dias"], bool) and 1 <= c["observacion_max_dias"] <= 366
           and isinstance(c["max_reaperturas"], int) and not isinstance(c["max_reaperturas"], bool) and 0 <= c["max_reaperturas"] <= 20
+          and isinstance(c["anulaciones_veto_mes"], int) and not isinstance(c["anulaciones_veto_mes"], bool) and 0 <= c["anulaciones_veto_mes"] <= 10
           and isinstance(c["cuenta_intermediario"], str) and _ID.match(c["cuenta_intermediario"])
           and isinstance(c["divisas_cotizacion"], dict)
           and all(isinstance(k, str) and isinstance(v, str) and re.fullmatch(r"[A-Z]{3}", v) for k, v in c["divisas_cotizacion"].items())
@@ -372,6 +395,10 @@ class Orquestador:
             self.huella_config = _hash(_canon(self._configuracion_completa()))
         except (TypeError, ValueError) as ex:
             raise ValueError(f"configuración del Orquestador inválida: {type(ex).__name__}") from ex
+        # T-50: registro encadenado del límite de pérdida: su valor inicial, cada vez que se alcanza y cada cambio del operador
+        self.limites = {"historial": [], "estado": "VIGENTE", "entradas": []}
+        self._anota_limite({"tipo": "INICIO", LIMITE_PERDIDA: cfg["politica_f"][LIMITE_PERDIDA], "huella_config": self.huella_config},
+                           "ORQUESTADOR", None, "límite de pérdida inicial")
         self.sellos, self.eventos, self.encargos = {}, {}, {}
         self.expedientes, self.posiciones, self.gasto_dia, self.avisos = {}, {}, {}, []
         self.ultima_comparacion = {}   # cartera -> id de la comparación vigente
@@ -552,6 +579,7 @@ class Orquestador:
         h = _hash(foto)
         self.fotos[h] = {"ahora": ahora, "fecha_hora": foto["fecha_hora"]}
         self.ultima_foto = copy.deepcopy(foto)
+        self._anota_alcance(foto, h, ahora)   # T-50: el día en que se alcanza el límite de pérdida no se puede subir
         if len(self.fotos) > 200:   # solo hacen falta las recientes
             for k in sorted(self.fotos, key=lambda k: _dt(self.fotos[k]["ahora"]))[:len(self.fotos) - 200]:
                 del self.fotos[k]
@@ -656,7 +684,8 @@ class Orquestador:
     def cabezas(self):
         """Hash de cabeza de cada historial, para anclarlo fuera del Orquestador (registro de solo añadir)."""
         return {**{"EXP:" + k: v["historial"][-1]["hash"] for k, v in self.expedientes.items()},
-                **{"POS:" + k: v["historial"][-1]["hash"] for k, v in self.posiciones.items()}}
+                **{"POS:" + k: v["historial"][-1]["hash"] for k, v in self.posiciones.items()},
+                "LIM": self.limites["historial"][-1]["hash"]}
 
     def _propuesta_ok(self, e):
         if not e["propuesta"]:
@@ -699,8 +728,14 @@ class Orquestador:
         return next((x["actor"] for x in reversed(e["historial"]) if x["hasta"] == "AUTORIZADA" and x["desde"] != "AUTORIZADA"), None)
 
     def autorizacion_vigente(self, e):
-        """Una autorización automática deja de valer si la cartera bajó de nivel."""
-        return not (self.autorizada_por(e) == "MATRIZ_AUTONOMIA" and NIVELES[self.nivel(e["cartera_destino"])] < 2)
+        """Una autorización automática deja de valer si la cartera bajó de nivel; cualquier autorización deja de valer si después se
+        bajó el límite de pérdida del día (T-50, revisión R-M3: F la aprobó con la política anterior). G no envía la entrada y H la
+        cancela si está viva."""
+        if self.autorizada_por(e) == "MATRIZ_AUTONOMIA" and NIVELES[self.nivel(e["cartera_destino"])] < 2:
+            return False
+        aut = next((x["ahora"] for x in reversed(e["historial"]) if x["hasta"] == "AUTORIZADA" and x["desde"] != "AUTORIZADA"), None)
+        return aut is None or not any(x["tipo"] == "CAMBIO" and x[LIMITE_PERDIDA] < x["antes"] and _dt(h["ahora"]) >= _dt(aut)
+                                      for h, x in zip(self.limites["historial"], self.limites["entradas"]))
 
     @staticmethod
     def _entrada_viva(e):
@@ -757,15 +792,171 @@ class Orquestador:
         CT-G-14, el calendario, las constantes de política del Orquestador y las versiones de reglas."""
         return {"version_config": self.cfg["version_config"], "orquestador": self.cfg, "version_parametros": VERSION_PARAMETROS,
                 "parametros": como_dict(PARAMETROS), "calendario": self.cal_def,
-                "constantes": {"prioridad_aviso": PRIORIDAD_AVISO, "tipos_kill": sorted(TIPOS_KILL)},
+                "constantes": {"prioridad_aviso": PRIORIDAD_AVISO, "tipos_kill": sorted(TIPOS_KILL), "vetos_anulables": list(VETOS_ANULABLES),
+                               "topes_f": list(TOPES_F), "limite_perdida": LIMITE_PERDIDA, "motivo_min": MOTIVO_MIN},
                 "reglas": {"orquestador": VERSION_REGLAS, "f": VERSION_REGLAS_F, "k": VERSION_REGLAS_K}}
 
     def config_integra(self):
-        """La configuración en uso es la de la huella (nadie la cambió en caliente)."""
+        """La configuración en uso es la de la huella (nadie la cambió en caliente) y la huella es la del último cambio anotado
+        en el registro de límites (T-50: solo `ajustar_limite_perdida` la cambia)."""
         try:
-            return _hash(_canon(self._configuracion_completa())) == self.huella_config
-        except (TypeError, ValueError):
+            return _hash(_canon(self._configuracion_completa())) == self.huella_config and self._limites_ok()
+        except (TypeError, ValueError, KeyError, IndexError, AttributeError):   # un registro mal formado tampoco es íntegro (R-m4)
             return False
+
+    # ------------------------------------------------------------ T-50: controles sobre el operador (§6)
+    def _anota_limite(self, entrada, actor, ahora, motivo):
+        L = self.limites
+        L["entradas"].append(entrada)
+        self._anota(L, "VIGENTE" if L["historial"] else None, "VIGENTE", actor, ahora, motivo, entrada["tipo"], datos=_hash(entrada))
+
+    def _limites_ok(self):
+        L = self.limites
+        if not (self._historial_ok(L) and len(L["historial"]) == len(L["entradas"])
+                and all(h["datos"] == _hash(x) and h["ref"] == x["tipo"] for h, x in zip(L["historial"], L["entradas"]))):
+            return False
+        ult = [x for x in L["entradas"] if x["tipo"] in ("INICIO", "CAMBIO")]
+        return (bool(ult) and L["entradas"][0]["tipo"] == "INICIO" and ult[-1]["huella_config"] == self.huella_config
+                and self.cfg["politica_f"][LIMITE_PERDIDA] == ult[-1][LIMITE_PERDIDA])
+
+    def _limite_en(self, t):
+        """Valor del límite de pérdida del día vigente en el instante t (el INICIO vale desde siempre)."""
+        v = None
+        for h, x in zip(self.limites["historial"], self.limites["entradas"]):
+            if x["tipo"] == "INICIO" or (x["tipo"] == "CAMBIO" and _dt(h["ahora"]) <= t):
+                v = x[LIMITE_PERDIDA]
+        return v
+
+    def _limite_min(self, t0, t1):
+        """El límite de pérdida más bajo que rigió entre t0 y t1: con él se juzga si una foto alcanzó el límite (revisión, R-M2)."""
+        vs = [self._limite_en(t0)] + [x[LIMITE_PERDIDA] for h, x in zip(self.limites["historial"], self.limites["entradas"])
+                                      if x["tipo"] == "CAMBIO" and t0 < _dt(h["ahora"]) <= t1]
+        return min(vs)
+
+    def _alcanzado_reciente(self, a):
+        """§6.3: el límite de pérdida se alcanzó en las últimas 24 horas (cubre el «mismo día» en cualquier zona horaria): una entrada
+        ALCANZADO o la última foto, juzgada con el límite más bajo que rigió desde que se tomó."""
+        if any(x["tipo"] == "ALCANZADO" and timedelta(0) <= a - _dt(x["fecha_hora"]) < timedelta(hours=24) for x in self.limites["entradas"]):
+            return True
+        f = self.ultima_foto
+        if not f or a - _dt(f["fecha_hora"]) >= timedelta(hours=24):
+            return False
+        return f["perdida_dia_eur"] >= self._limite_min(_dt(f["fecha_hora"]), a) / 100 * f["capital_eur"]
+
+    def _anota_alcance(self, foto, h, ahora, fecha_hora=None, limite_pct=None):
+        """La pérdida del día de la foto está en el límite o más allá (el más bajo que rigió desde la foto; o el que se acaba de
+        fijar al bajarlo): se anota una vez por día (UTC de la foto) y se avisa."""
+        t = _dt(foto["fecha_hora"])
+        pct = limite_pct if limite_pct is not None else self._limite_min(t, _dt(ahora))
+        lim = pct / 100 * foto["capital_eur"]
+        cuando = fecha_hora or foto["fecha_hora"]
+        dia = _dia(_dt(cuando))
+        if foto["perdida_dia_eur"] < lim or any(x["tipo"] == "ALCANZADO" and x["dia"] == dia and x["limite_pct"] <= pct for x in self.limites["entradas"]):
+            return
+        self._anota_limite({"tipo": "ALCANZADO", "dia": dia, "fecha_hora": cuando, "perdida_dia_eur": foto["perdida_dia_eur"],
+                            "limite_pct": pct, "limite_eur": lim, "foto": h}, "ORQUESTADOR", ahora,
+                           f"límite de pérdida del día alcanzado ({foto['perdida_dia_eur']:.2f} EUR, límite {lim:.2f} EUR)")
+        self._aviso("O-35", f"límite de pérdida del día alcanzado el {dia}: no se puede subir en 24 horas", ahora, "LIMITE_PERDIDA")
+
+    def version_politica(self):
+        """Versión de la política de F: POL-0 la inicial y una más por cada cambio anotado."""
+        return f"POL-{sum(1 for x in self.limites['entradas'] if x['tipo'] == 'CAMBIO')}"
+
+    def _subida_pendiente(self):
+        """La última solicitud de subida del límite, si no la siguió ningún cambio."""
+        for x in reversed(self.limites["entradas"]):
+            if x["tipo"] == "CAMBIO":
+                return None
+            if x["tipo"] == "SOLICITUD":
+                return x
+        return None
+
+    @_seguro
+    def ajustar_limite_perdida(self, nuevo_pct, actor, motivo, ahora, aprobacion=None):
+        """§6.3: el operador ajusta el límite de pérdida del día de la política de F; cada cambio crea una versión nueva de la
+        política (POL-n) y de la huella de configuración. Bajarlo vale siempre (si la pérdida ya pasa del nuevo límite, queda
+        anotado como alcanzado). Subirlo se hace en dos pasos con la misma llamada: la primera la solicita y la segunda, pasado el
+        enfriamiento (§6.1) y antes de que caduque, la aplica. Para subir hace falta canal admitido y segundo factor, sin kill-switch,
+        con una foto de cartera reciente, sin haber alcanzado el límite en las últimas 24 horas y sin pasar del límite inicial
+        (más arriba exige la validación de J, §8.3, que aún no existe). Todo queda en el registro encadenado de límites."""
+        a = self._ahora(ahora)
+        if actor != "OPERADOR":
+            return _no("O-05", "solo el operador ajusta un límite de pérdida")
+        if not _motivo_ok(motivo):
+            return _no("O-15", f"un cambio de límite exige motivo (al menos {MOTIVO_MIN} caracteres)")
+        if not self.config_integra():
+            return _no("O-13", "la configuración o el registro de límites no son íntegros")
+        actual = self.cfg["politica_f"][LIMITE_PERDIDA]
+        pol = {**self.cfg["politica_f"], LIMITE_PERDIDA: nuevo_pct}
+        if not (_num(nuevo_pct) and nuevo_pct > 0 and politica_valida(pol)):
+            return _no("O-01", "el límite de pérdida debe ser un número mayor que 0 y no mayor que 100")
+        if nuevo_pct == actual:
+            return _no("O-02", "el límite ya tiene ese valor")
+        sube = nuevo_pct > actual
+        canal = None
+        if sube:
+            if self.kill is not None:
+                return _no("O-26", "kill-switch activo: no se sube ningún límite")
+            if not (isinstance(aprobacion, dict) and set(aprobacion) == {"canal", "segundo_factor"}
+                    and aprobacion["canal"] in self.cfg["aprobacion"]["canales"] and aprobacion["segundo_factor"] is True):
+                return _no("O-05", "subir un límite de pérdida exige un canal de aprobación admitido (no el chat) y segundo factor")
+            if nuevo_pct > self.limites["entradas"][0][LIMITE_PERDIDA]:
+                return _no("O-35", "por encima del límite inicial hace falta la validación de J (§8.3): no se sube desde aquí")
+            f = self.ultima_foto
+            if not f or not timedelta(0) <= a - _dt(f["fecha_hora"]) <= timedelta(minutes=self.cfg["politica_f"]["frescura_max_min"]):
+                return _no("O-35", "sin una foto de cartera reciente no se sabe si el límite se alcanzó: no se sube")
+            if self._alcanzado_reciente(a):
+                return _no("O-35", "el límite de pérdida se alcanzó en las últimas 24 horas: no se puede subir (Constitución §6)")
+            canal = aprobacion["canal"]
+            pend = self._subida_pendiente()
+            cad = timedelta(minutes=self.cfg["aprobacion"]["caduca_min"])
+            if not (pend and pend[LIMITE_PERDIDA] == nuevo_pct and pend["motivo"] == motivo and a <= _dt(pend["hasta"]) + cad):
+                hasta = a + timedelta(minutes=self.cfg["aprobacion"]["enfriamiento_min"])
+                self._anota_limite({"tipo": "SOLICITUD", "antes": actual, LIMITE_PERDIDA: nuevo_pct, "motivo": motivo, "canal": canal,
+                                    "hasta": hasta.isoformat()}, "OPERADOR", ahora, f"solicitud de subir el límite de pérdida a {nuevo_pct} %")
+                return _r(True, "O-28", f"subida solicitada: confírmela con la misma llamada desde {hasta.isoformat()} "
+                                        f"y antes de {(hasta + cad).isoformat()}", aplicado=False, confirmar_desde=hasta.isoformat())
+            if a < _dt(pend["hasta"]):
+                return _no("O-28", f"enfriamiento hasta {pend['hasta']}: la subida aún no se puede confirmar")
+        self.cfg["politica_f"] = pol
+        self.huella_config = _hash(_canon(self._configuracion_completa()))
+        n = sum(1 for x in self.limites["entradas"] if x["tipo"] == "CAMBIO") + 1
+        self._anota_limite({"tipo": "CAMBIO", "antes": actual, LIMITE_PERDIDA: nuevo_pct, "huella_config": self.huella_config,
+                            "motivo": motivo, "canal": canal, "version_politica": f"POL-{n}"}, "OPERADOR", ahora,
+                           f"límite de pérdida del día {'subido' if sube else 'bajado'} de {actual} % a {nuevo_pct} %: {motivo[:120]}")
+        f = self.ultima_foto
+        if not sube and f and a - _dt(f["fecha_hora"]) < timedelta(hours=24):   # bajarlo por debajo de la pérdida es alcanzarlo (R-M1)
+            self._anota_alcance(f, _hash(f), ahora, fecha_hora=ahora, limite_pct=nuevo_pct)
+        self._aviso("O-35", f"límite de pérdida del día {'subido' if sube else 'bajado'} de {actual} % a {nuevo_pct} % (POL-{n})", ahora, "LIMITE_PERDIDA")
+        return _r(True, "OK", f"límite de pérdida del día: {actual} % -> {nuevo_pct} % (POL-{n}); los informes de F anteriores ya no valen"
+                  + ("; las autorizaciones anteriores tampoco" if not sube else ""), aplicado=True, version_politica=f"POL-{n}")
+
+    def anulaciones_mes(self, ahora):
+        """Anulaciones de veto autorizadas en el mes natural (UTC) de ese instante, contadas en las cadenas de los expedientes."""
+        m = _mes(_dt(ahora))
+        return sum(1 for e in self.expedientes.values() for h in e["historial"]
+                   if h["hasta"] == "AUTORIZADA" and h["desde"] != "AUTORIZADA" and isinstance(h["motivo"], str)
+                   and h["motivo"].startswith("ANULACIÓN DE VETO") and _mes(_dt(h["ahora"])) == m)
+
+    def _comprobar_anulacion(self, cf, anular_veto, a):
+        """§6.2 y §8: la anulación de un veto de F. Devuelve (cantidad, vetos, error). La cantidad es la que F habría aprobado sin el
+        veto: la solicitada recortada por sus topes; nunca más."""
+        if not (isinstance(anular_veto, dict) and set(anular_veto) == {"motivo"} and _motivo_ok(anular_veto["motivo"])):
+            return None, None, _no("O-15", f"anular un veto exige motivo (al menos {MOTIVO_MIN} caracteres)")
+        vetos = sorted({c["regla"] for c in cf["controles"] if c["resultado"] == "VETA"})
+        no = [v for v in vetos if v not in VETOS_ANULABLES]
+        if not vetos or no:
+            return None, None, _no("O-34", f"veto no anulable ({', '.join(no) or 'sin veto'}): solo se anulan {', '.join(VETOS_ANULABLES)}")
+        if self.anulaciones_mes(a.isoformat()) >= self.cfg["anulaciones_veto_mes"]:
+            return None, None, _no("O-34", f"límite mensual de anulaciones de veto agotado ({self.cfg['anulaciones_veto_mes']})")
+        topes = [c["limite"] for c in cf["controles"] if c["regla"] in TOPES_F]
+        q = cf["entradas"]["solicitud"]["cantidad"]
+        if len(topes) != len(TOPES_F) or not all(_num(t) for t in topes + [q]):
+            return None, None, _no("O-34", "el informe de F no trae sus topes de cantidad: no hay con qué acotar la anulación")
+        q = math.floor(min([q] + topes) * 1e6) / 1e6
+        if q <= 0:
+            return None, None, _no("O-34", "los topes de F no dejan cantidad que autorizar")
+        return q, vetos, None
 
     def configuracion(self):
         """La configuración en vigor y su huella (la misma que llevan las anotaciones)."""
@@ -1531,7 +1722,7 @@ class Orquestador:
         return None
 
     @_seguro
-    def pantalla_aprobacion(self, expediente_id, control_f, ahora, actor="OPERADOR"):
+    def pantalla_aprobacion(self, expediente_id, control_f, ahora, actor="OPERADOR", anular_veto=None):
         """Pantalla de la cola de aprobaciones (§6): solo cifras calculadas por F, sin texto de un LLM. El operador la aprueba
         citando su hash y tecleando el importe. Vale una sola vez y caduca; con pérdida del día o fuera de horario, hay enfriamiento."""
         a = self._ahora(ahora)
@@ -1547,17 +1738,27 @@ class Orquestador:
         if control_f["event_id"] in self.eventos:
             self._duplicado(control_f["event_id"], _hash(control_f), expediente_id, ahora)
             return _no("O-03", "el informe de F ya se usó")
-        if cf["resultado"] == "VETADO":   # el veto queda registrado: ese informe no se puede volver a usar
+        anulacion = None
+        if anular_veto is not None and cf["resultado"] != "VETADO":
+            return _no("O-01", "no hay veto que anular: F no vetó la propuesta")
+        if cf["resultado"] == "VETADO" and anular_veto is not None:   # T-50: el operador pide anular el veto, con motivo y límite mensual
+            q, vetos, err = self._comprobar_anulacion(cf, anular_veto, a)
+            if err:
+                return err
+            anulacion = {"motivo": anular_veto["motivo"], "vetos": vetos}
+        elif cf["resultado"] == "VETADO":   # el veto queda registrado: ese informe no se puede volver a usar
             self.eventos[control_f["event_id"]] = {"hash": _hash(control_f), "expediente_id": expediente_id}
             return _no("O-06", "F vetó la propuesta: no hay nada que aprobar")
+        else:
+            q = cf["cantidad_aprobada"]
         en = e["propuesta"]["entrada"]
         st = [c for c in e["propuesta"]["salida"]["condiciones"] if c["tipo"] == "STOP"][0]
-        q = cf["cantidad_aprobada"]
         fx = tipo_cambio(cf["entradas"]["solicitud"]["divisa_cotizacion"], cf["entradas"]["cartera"])
         cfg = self.cfg["aprobacion"]
         perdida = cf["entradas"]["cartera"].get("perdida_dia_eur", 0.0)
         fuera = not _en_horario(a, cfg["horario_utc"])
-        motivos_espera = (["pérdida en el día"] if perdida > cfg["enfriamiento_tras_perdida_dia_eur"] else []) + (["fuera de horario"] if fuera else [])
+        motivos_espera = ((["pérdida en el día"] if perdida > cfg["enfriamiento_tras_perdida_dia_eur"] else []) + (["fuera de horario"] if fuera else [])
+                          + (["anulación de veto"] if anulacion else []))   # T-50: anular un veto siempre espera
         espera = timedelta(minutes=cfg["enfriamiento_min"]) if motivos_espera else timedelta(0)
         p = {"expediente_id": expediente_id, "informe_f": control_f["event_id"], "informe_f_hash": _hash(control_f), "resultado_f": cf["resultado"],
              "instrumento": en["instrumento"], "via_acceso": en["via_acceso"], "direccion": "LARGO" if st["operador"] in ("<", "<=") else "CORTO",
@@ -1566,7 +1767,7 @@ class Orquestador:
              "divisa_cotizacion": cf["entradas"]["solicitud"]["divisa_cotizacion"], "tipo_cambio_eur": fx,
              "apalancamiento": en["apalancamiento"], "cartera": e["cartera_destino"], "valid_until_f": cf["valid_until"],
              "generada_en": ahora, "caduca_en": (a + espera + timedelta(minutes=cfg["caduca_min"])).isoformat(),
-             "enfriamiento_hasta": (a + espera).isoformat(), "motivos_enfriamiento": motivos_espera}
+             "enfriamiento_hasta": (a + espera).isoformat(), "motivos_enfriamiento": motivos_espera, "anulacion": anulacion}
         p["hash"] = _hash(p)
         self.pantallas[expediente_id] = {**p, "usada": False}
         return _r(True, "OK", "pantalla de aprobación lista", pantalla=copy.deepcopy(p))
@@ -1609,20 +1810,40 @@ class Orquestador:
         dup = self._duplicado(control_f["event_id"], ih, expediente_id, ahora)
         if dup:
             return _no("O-03", "el informe de F ya se usó")
-        if actor == "OPERADOR" and cf["resultado"] != "VETADO":
+        anul, cantidad = None, cf["cantidad_aprobada"]
+        pant = self.pantallas.get(expediente_id) or {}
+        if actor == "OPERADOR" and cf["resultado"] == "VETADO" and pant.get("anulacion") and aprobacion is not None:
+            # T-50: anulación del veto por el operador: la pantalla de anulación, con su motivo, y el límite mensual de nuevo
             err = self._comprobar_aprobacion(expediente_id, control_f, aprobacion, a)
             if err:
                 return err
+            q, _, err = self._comprobar_anulacion(cf, {"motivo": pant["anulacion"]["motivo"]}, a)
+            if err:
+                return err
+            if abs(q - pant["cantidad"]) > 1e-9:
+                return _no("O-27", "la cantidad de la anulación ya no es la de la pantalla")
+            self.pantallas[expediente_id]["usada"] = True
+            anul, cantidad = copy.deepcopy(pant["anulacion"]), pant["cantidad"]
+        elif actor == "OPERADOR" and cf["resultado"] != "VETADO":
+            err = self._comprobar_aprobacion(expediente_id, control_f, aprobacion, a)
+            if err:
+                return err
+            if pant.get("anulacion"):
+                return _no("O-27", "esa pantalla es de una anulación de veto, no de este informe")
             self.pantallas[expediente_id]["usada"] = True
         self.eventos[control_f["event_id"]] = {"hash": ih, "expediente_id": expediente_id}
-        if cf["resultado"] == "VETADO":
+        if cf["resultado"] == "VETADO" and anul is None:
             return _no("O-06", "F vetó la propuesta")
-        e["control_f"] = {"resultado": cf["resultado"], "cantidad_aprobada": cf["cantidad_aprobada"], "event_id": cf["event_id"],
+        e["control_f"] = {"resultado": cf["resultado"], "cantidad_aprobada": cantidad, "event_id": cf["event_id"], "anulacion": anul,
                           "emitido_en": cf["emitido_en"], "valid_until": cf["valid_until"], "entradas": copy.deepcopy(cf["entradas"]),
                           "aprobacion": ({k: v for k, v in self.pantallas[expediente_id].items() if k != "usada"} if actor == "OPERADOR" else None)}
-        self._anota(e, e["estado"], "AUTORIZADA", actor, ahora, f"control F: {cf['resultado']} ({cf['cantidad_aprobada']})", cf["event_id"],
-                    datos=_hash(e["control_f"]))
-        return _r(True, "OK", "autorizada")
+        motivo = (f"ANULACIÓN DE VETO ({', '.join(anul['vetos'])}; {cantidad}): {anul['motivo'][:150]}" if anul
+                  else f"control F: {cf['resultado']} ({cf['cantidad_aprobada']})")
+        self._anota(e, e["estado"], "AUTORIZADA", actor, ahora, motivo, cf["event_id"], datos=_hash(e["control_f"]))
+        if anul:
+            self._aviso("O-34", f"{expediente_id}: el operador anuló el veto de F ({', '.join(anul['vetos'])}); "
+                        f"{self.anulaciones_mes(ahora)} de {self.cfg['anulaciones_veto_mes']} este mes", ahora, expediente_id, carteras={e["cartera_destino"]})
+        return _r(True, "OK", "autorizada con el veto de F anulado por el operador" if anul else "autorizada")
 
     TRANS_ORDEN = {None: {"ENVIADA"}, "ENVIADA": {"PARCIAL", "EJECUTADA", "RECHAZADA", "CANCELADA"},
                    "PARCIAL": {"DESHECHA"}, "EJECUTADA": {"DESHECHA"}}
@@ -1671,7 +1892,8 @@ class Orquestador:
         if estado == "ENVIADA" and aut and any(_dt(r["kill"]["ahora"]) >= _dt(aut) for r in self.rearmes):
             return _no("O-26", "la autorización es anterior a un kill-switch: hay que volver a aprobar")
         if estado == "ENVIADA" and not self.autorizacion_vigente(e):
-            return _no("O-05", f"la autorización fue automática y la cartera está ahora en {self.nivel(e['cartera_destino'])}: la confirma el operador")
+            return _no("O-05", "la autorización ya no vale (automática con la cartera fuera de L2, o anterior a una bajada del límite de pérdida): "
+                               "vuelve a pasar por F y por el operador")
         e["orden_entrada"] = {"orden_id": orden_id, "estado": estado, "cantidad_ejecutada": cantidad_ejecutada, "anteriores": anteriores,
                               "historial": hist + [{"estado": estado, "ahora": ahora, "cantidad_ejecutada": cantidad_ejecutada}]}
         self._anota(e, "AUTORIZADA", "AUTORIZADA", actor, ahora, f"orden de entrada {estado}", orden_id, datos=_hash(e["orden_entrada"]))
@@ -1723,7 +1945,11 @@ class Orquestador:
             return _no("O-06", "la orden supera la cantidad que F aprobó")
         real = controlar({**cf["entradas"]["solicitud"], "cantidad": orden["cantidad"], "precio_entrada": orden["precio"]},
                          cf["entradas"]["cartera"], cf["entradas"]["politica"], cf["emitido_en"])
-        if real["resultado"] != "APROBADO":
+        anul = cf.get("anulacion")
+        vetan = {c["regla"] for c in real["controles"] if c["resultado"] == "VETA"}
+        ok_anulado = (anul is not None and real["resultado"] == "VETADO" and vetan and vetan <= set(anul["vetos"])
+                      and all(c["resultado"] in ("OK", "VETA") for c in real["controles"]))   # T-50 (R-G1): solo vuelven a vetar los anulados
+        if real["resultado"] != "APROBADO" and not ok_anulado:
             return _no("O-06", "con el precio y la cantidad reales F no aprobaría la orden (stop, riesgo o tamaño)")
         lim = e["propuesta"]["entrada"]["limite"]
         if abs(orden["precio"] - lim) > self.cfg["tolerancia_precio_entrada"] * abs(lim):
