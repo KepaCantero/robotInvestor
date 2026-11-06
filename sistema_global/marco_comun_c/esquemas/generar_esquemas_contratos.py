@@ -165,6 +165,32 @@ ESQUEMAS[("CT-G-08", "0.2.0")] = envoltura(
     politica=obj({"version_politica": ID, "resultado": {"enum": ["APROBADO", "REDUCIDO", "VETADO"]}, "motivo": TXT,
                   "controles": {"type": "array", "items": CONTROL}}))
 
+# T-22: F recibe además el contexto del Orquestador (mandato, evidencia, eventos, autonomía, actividad, precio del intermediario)
+ESQUEMAS[("CT-G-08", "0.3.0")] = envoltura(
+    "CT-G-08", "0.3.0", "Resultado de control de F", "F", "Orquestador (G, Broker)",
+    obj({"propuesta_ref": obj({"expediente_id": ID, "hash": HASH}),
+         "entradas": obj({"solicitud": {"type": "object"}, "cartera": {"type": "object"}, "politica": {"type": "object"},
+                          "contexto": obj({
+                              "mandato": obj({"version": TXT, "instrumentos_permitidos": {"anyOf": [{"type": "array", "items": {"type": "string"}}, {"type": "null"}]},
+                                              "exclusiones": {"type": "array", "items": {"type": "string"}},
+                                              "apalancamiento_max": {"type": "number", "minimum": 1},
+                                              "horizonte_max_dias": {"type": "integer", "minimum": 1}}),
+                              "fecha_revision": FECHA,
+                              "exclusiones_duras": obj({"sanciones": {"type": "string"}, "invertibilidad": {"type": "string"}, "acceso": {"type": "string"}}),
+                              "evidencia": obj({"proporcion_verificado": {"type": "number", "minimum": 0, "maximum": 1}, "fecha_corte": FECHA,
+                                                "valid_until": FH}),
+                              "eventos": {"anyOf": [{"type": "array", "items": obj({"fecha": FECHA, "tipo": {"type": "string"}})}, {"type": "null"}]},
+                              "autonomia": obj({"nivel": {"type": "string"}, "kill_switch": BOOL}),
+                              "actividad": obj({"importe_dia_eur": NUM0, "ordenes_ultima_hora": {"type": "integer", "minimum": 0},
+                                                "perdida_semana_eur": NUM0}),
+                              "precio_intermediario": {"anyOf": [obj({"valor": POS, "fecha_hora": FH}), {"type": "null"}]}})}),
+         "cantidad_aprobada": NUM0}),
+    producer={"const": "F"}, consumer={"const": "ORQUESTADOR"},
+    data_refs={"type": "array", "maxItems": 0},
+    politica=obj({"version_politica": ID, "resultado": {"enum": ["APROBADO", "REDUCIDO", "VETADO"]}, "motivo": TXT,
+                  "controles": {"type": "array", "items": CONTROL}}))
+ESQUEMAS[("CT-G-08", "0.3.0")]["description"] += " Las reglas F-01 a F-23 y CF-01 a CF-09 las aplica validador/control_f.py; el contexto lo da el Orquestador (contexto_f)."
+
 ESQUEMAS[("CT-G-14", "0.2.0")] = {
     **envoltura(
         "CT-G-14", "0.2.0", "Registro de ejecución manual", "Operador", "G",
@@ -184,7 +210,7 @@ ESQUEMAS[("CT-G-14", "0.2.0")] = {
 ESQUEMAS[("CT-G-14", "0.2.0")]["description"] += " Las reglas RM-01 a RM-11 las aplica validador/manual_g.py; data_refs = las órdenes del payload."
 
 # Versiones retiradas: su esquema se conserva para leer el histórico (contratos.validar(..., historico=True)); ningún consumidor las acepta
-RETIRADAS = {"CT-G-01": [("0.1.0", "ct-g-01_0.1.0.schema.json", "COMPLETA")], "CT-G-10": [("0.1.0", "ct-g-10_0.1.0.schema.json", "COMPLETA")], "CT-G-02": [("0.1.0", "ct-g-02_0.1.0.schema.json", "COMPLETA")], "CT-G-03": [("0.1.0", "ct-g-03_0.1.0.schema.json", "COMPLETA")], "CT-G-08": [("0.1.0", "ct-g-08_0.1.0.schema.json", "PARCIAL")], "CT-G-14": [("0.1.0", "ct-g-14_0.1.0.schema.json", "PROPIA")]}
+RETIRADAS = {"CT-G-01": [("0.1.0", "ct-g-01_0.1.0.schema.json", "COMPLETA")], "CT-G-10": [("0.1.0", "ct-g-10_0.1.0.schema.json", "COMPLETA")], "CT-G-02": [("0.1.0", "ct-g-02_0.1.0.schema.json", "COMPLETA")], "CT-G-03": [("0.1.0", "ct-g-03_0.1.0.schema.json", "COMPLETA")], "CT-G-08": [("0.2.0", "ct-g-08_0.2.0.schema.json", "COMPLETA"), ("0.1.0", "ct-g-08_0.1.0.schema.json", "PARCIAL")], "CT-G-14": [("0.1.0", "ct-g-14_0.1.0.schema.json", "PROPIA")]}
 
 REGISTRO = [
     ("CT-G-01", "Encargo de análisis", "Broker/gestor → C", "ESQUEMA", "0.2.0", "ct-g-01_0.2.0.schema.json", "COMPLETA"),
@@ -194,7 +220,7 @@ REGISTRO = [
     ("CT-G-05", "Comparativa", "D → Broker/gestor", "ESQUEMA", "0.1.0", "ct-g-05_0.1.0.schema.json", "COMPLETA"),
     ("CT-G-06", "Propuesta de inversión", "Broker/gestor → E", "ESQUEMA", "0.1.0", "ct-g-06_0.1.0.schema.json", "COMPLETA"),
     ("CT-G-07", "Plan de cartera por libro", "E → F", "PENDIENTE", None, None, "E solo dimensiona una propuesta; el plan por libro es de Fase 2"),
-    ("CT-G-08", "Resultado de control", "F → G, Broker", "ESQUEMA", "0.2.0", "ct-g-08_0.2.0.schema.json", "COMPLETA"),
+    ("CT-G-08", "Resultado de control", "F → G, Broker", "ESQUEMA", "0.3.0", "ct-g-08_0.3.0.schema.json", "COMPLETA"),
     ("CT-G-09", "Orden con su protección", "E/F → G", "ESQUEMA", "0.1.0", "ct-g-09_0.1.0.schema.json", "COMPLETA"),
     ("CT-G-10", "Alerta o petición de revisión de posición", "H → Broker/gestor", "ESQUEMA", "0.2.0", "ct-g-10_0.2.0.schema.json", "COMPLETA"),
     ("CT-G-11", "Consulta al Broker o al operador", "Cualquiera → Broker", "PENDIENTE", None, None, "sin bloque que la emita en Fase 1"),
@@ -216,7 +242,7 @@ def main():
             c["versiones"] = [{"version": v, "esquema": f, "envoltura": x, "estado": "VIGENTE"}] + \
                              [{"version": rv, "esquema": rf, "envoltura": rx, "estado": "RETIRADA"} for rv, rf, rx in RETIRADAS.get(t, [])]
         reg.append(c)
-    (AQUI / "registro_contratos.json").write_text(json.dumps({"version_registro": "REG-0.5.0", "contratos": reg}, ensure_ascii=False, indent=2) + "\n",
+    (AQUI / "registro_contratos.json").write_text(json.dumps({"version_registro": "REG-0.6.0", "contratos": reg}, ensure_ascii=False, indent=2) + "\n",
                                                   encoding="utf-8")
     print(f"{len(ESQUEMAS)} esquemas y el registro de {len(REGISTRO)} contratos")
 

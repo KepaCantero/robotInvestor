@@ -76,7 +76,7 @@ def main():
     r = dimensionar({**SOL, "precio_entrada": 1e-8, "stop_precio": 0.99e-8}, CART, POLITICA_DEFECTO, AHORA, paso=1.0)
     h.chk("precio_muy_bajo_no_da_E04_espurio", r["ok"] and r["limitada_por"] in ("F-04", "RIESGO_OBJETIVO", "F-03"), r)
     r = dimensionar({**SOL, "stop_precio": 0.99}, {**CART, "capital_eur": 1e14}, POLITICA_DEFECTO, AHORA, paso=1.0)
-    h.chk("capital_muy_alto_no_da_E04_espurio", r["ok"] and r["cantidad"] > 1e12, r)
+    h.chk("capital_muy_alto_no_da_E04_espurio_y_manda_el_importe_en_euros", r["ok"] and r["limitada_por"] == "F-13" and r["cantidad"] == 18181.0, r)   # T-22: 20.000 € por orden
     r = dimensionar(SOL, CART, POLITICA_DEFECTO, AHORA, paso=1e-12)
     h.chk("paso_finisimo_o_ok_o_falla_cerrado", (r["ok"] and r["riesgo_pct"] <= 1.0 + 1e-9) or (not r["ok"] and r["cantidad"] == 0.0), r)
     for nombre, c in (("fecha_imposible", {**CART, "fecha_hora": "2026-02-30T08:50:00+00:00"}), ("posiciones_tupla", {**CART, "posiciones": ()})):

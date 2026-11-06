@@ -33,8 +33,25 @@ def informe_f(o, expediente_id="EXP-0001", n=1, cartera=None, sol=None, pol=None
                   direccion="LARGO" if st["operador"] in ("<", "<=") else "CORTO")
     s.update(sol or {})
     cart = registrar_foto(o, {**CART, **(cartera or {})})
+    cotizar(o, en["instrumento"], en["limite"], min(emitido_en, cart["fecha_hora"], key=lambda x: (x or "")))
     return construir_informe(f"EV-F-{n:04d}", expediente_id, e["correlation_id"], e["propuesta"], s,
-                             cart, pol or o.cfg["politica_f"], emitido_en, valid_until)
+                             cart, pol or o.cfg["politica_f"], emitido_en, valid_until, contexto=contexto_de(o, expediente_id, emitido_en))
+
+
+def cotizar(o, instrumento, precio, fecha_hora):
+    """Lo que hace G (T-22): registrar el precio del intermediario. Si ya hay una cotización de ese instante o posterior, no hace nada."""
+    if not hasattr(o, "registrar_cotizacion"):
+        return
+    hist = o.cotizaciones.get(__import__("mandatos").norm(instrumento), [])
+    if hist and hist[-1]["fecha_hora"] >= fecha_hora:
+        return
+    t = max([fecha_hora, o.ultimo_ahora] if o.ultimo_ahora else [fecha_hora], key=lambda x: x or "")
+    o.registrar_cotizacion({"instrumento": instrumento, "valor": precio, "fecha_hora": fecha_hora}, "G", t)
+
+
+def contexto_de(o, expediente_id, emitido_en):
+    """El contexto que el Orquestador entrega a F (T-22)."""
+    return o.contexto_f(expediente_id, emitido_en) if hasattr(o, "contexto_f") else None
 
 
 def pon(i, **kw):
@@ -85,7 +102,7 @@ def main():
     chk("aprobado_dentro_de_limites", r["resultado"] == "APROBADO" and r["cantidad_aprobada"] == 100.0, r)
     r = ctl(sol={"cantidad": 50000.0})
     chk("reduce_a_la_cantidad_mas_restrictiva", r["resultado"] == "REDUCIDO" and abs(r["cantidad_aprobada"] - 9090.909090) < 1e-4
-        and reglas(r, "REDUCE") == ["F-03", "F-04", "F-07"], r)
+        and reglas(r, "REDUCE") == ["F-03", "F-04", "F-07", "F-13", "F-15"], r)
     r = ctl(sol={"cantidad": 15000.0, "stop_precio": 1.0})   # riesgo 0.10/ud -> 10000 uds (< tamaño 9090? no): tope 9090.9
     chk("reduce_por_tamano", r["resultado"] == "REDUCIDO" and "F-04" in reglas(r, "REDUCE"), r)
     r = ctl(sol={"cantidad": 15000.0, "stop_precio": 0.80})   # riesgo 0.30/ud -> 3333.3 uds
@@ -137,7 +154,8 @@ def main():
     def vf(o, inf, ahora=AHORA, e="EXP-0001"):
         x = o.expedientes[e]
         return sorted({f["regla"] for f in validar_informe_f(inf, {"ahora": ahora, "expediente_id": e, "correlation_id": x["correlation_id"], "divisa_cotizacion": "USD",
-                                                                    "propuesta": x["propuesta"], "cartera_destino": x["cartera_destino"], "politica": o.cfg["politica_f"]})})
+                                                                    "propuesta": x["propuesta"], "cartera_destino": x["cartera_destino"], "politica": o.cfg["politica_f"],
+                                                                    "contexto": o._contexto_de_informe(e, inf)})})
 
     o = nuevo(); hasta(o, "PROPUESTA")
     base = informe_f(o)

@@ -211,6 +211,19 @@ def foto_cartera(o, broker, ahora):
     return f if o.registrar_cartera(f, "G", _instante(o, ahora), cuenta=getattr(broker, "cuenta", None))["ok"] else None
 
 
+def cotizar(o, broker, instrumento, ahora):
+    """T-22: G toma del intermediario el precio del instrumento y lo registra en el Orquestador (segunda fuente de F, §8).
+    Devuelve el resultado del Orquestador, o O-01 si el intermediario no da precio."""
+    try:
+        if broker.caido:
+            raise ConexionPerdida("sin conexión con el intermediario")
+        precio = broker.precios[instrumento]
+        t = _instante(o, ahora)
+    except (ConexionPerdida, KeyError, TypeError, ValueError, AttributeError):
+        return _r(False, "O-01", "el intermediario no da precio para el instrumento o el instante es ilegible")
+    return o.registrar_cotizacion({"instrumento": instrumento, "valor": precio, "fecha_hora": broker.hora_datos}, "G", t)
+
+
 def _r(ok, codigo, motivo, **extra):
     return {"ok": ok, "codigo": codigo, "motivo": motivo, **extra}
 
@@ -307,6 +320,7 @@ def _ejecutar(o, eid, broker, ahora, est):
     id_e = _id_nuevo(broker, f"ORD-{eid}-E", {x["orden_id"] for x in previos})
     st = [c for c in e["propuesta"]["salida"]["condiciones"] if c["tipo"] == "STOP"][0]
     lado_e = "COMPRA" if st["operador"] in ("<", "<=") else "VENTA"
+    cotizar(o, broker, en["instrumento"], ahora)   # T-22: F vuelve a mirar el precio del intermediario al enviar (F-23)
     # se anota ENVIADA antes de enviar: si el envío se pierde, la revisión la marcará como rechazada; nunca hay una orden viva desconocida
     t = o.orden_entrada(eid, id_e, "ENVIADA", 0.0, "G", _instante(o, ahora))
     if not t["ok"]:

@@ -114,7 +114,11 @@ def main():
     c = conciliar(o, b, AHORA)
     h.chk("la_posicion_huerfana_aparece_en_conciliacion", not c["ok"] and c["diferencias"][0]["tipo"] == "POSICION_DESCONOCIDA", c)
     # el Orquestador rechaza lo ejecutado (precio sobre el stop): se cierra
-    o, b = autorizado(b=broker(precio=1.05))
+    o, b = autorizado(b=broker(precio=1.05))   # T-22: el mercado está a un 4,5 % del límite: F (F-23) no deja enviar
+    r = ejecutar(o, "EXP-0001", b, AHORA)
+    h.chk("mercado_lejos_del_limite_no_se_envia_F23", r["codigo"] == "G-06" and "F-23" in r["motivo"] and b.ordenes == {}, r)
+    from control_f import POLITICA_DEFECTO
+    o, b = autorizado(b=broker(precio=1.05), o=nuevo({"politica_f": {**POLITICA_DEFECTO, "deriva_precio_max_pct": 10.0}}))
     r = ejecutar(o, "EXP-0001", b, AHORA)
     h.chk("orquestador_rechaza_lo_ejecutado_G05_y_se_cierra", r["codigo"] in ("G-03", "G-05") and r.get("cerrada") is True and not b.posiciones() and not o.posiciones, r)
     # --- posición corta

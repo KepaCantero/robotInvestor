@@ -28,6 +28,14 @@ def tope(r, regla):
     return next(x["limite"] for x in r["controles"] if x["regla"] == regla)
 
 
+def cx(o):
+    """T-22: G cotiza el instrumento y el Orquestador da a F su contexto."""
+    from pruebas_control_f import contexto_de, cotizar
+    e_ = o.expedientes[EID]
+    cotizar(o, e_["propuesta"]["entrada"]["instrumento"], e_["propuesta"]["entrada"]["limite"], "2026-11-06T08:50:00+00:00")
+    return contexto_de(o, EID, AHORA)
+
+
 def main():
     h = Arnes()
     # ---------------------------------------------------------------- T-10: F valora en euros
@@ -90,7 +98,7 @@ def main():
     sol = {**solicitud(), "cantidad": e_["propuesta"]["entrada"]["cantidad"]}
     c55 = cart(tipos_cambio_eur={"USD": 1.0}, fecha_hora="2026-11-06T08:55:00+00:00")   # foto que G no ha registrado
     inf = construir_informe("EV-F-0009", EID, e_["correlation_id"], e_["propuesta"], sol, c55,
-                            o.cfg["politica_f"], AHORA, "2026-11-07T09:00:00+00:00")
+                            o.cfg["politica_f"], AHORA, "2026-11-07T09:00:00+00:00", contexto=cx(o))
     r = autorizar_op(o, EID, inf)
     h.chk("F_con_cartera_no_registrada_O29", r["codigo"] == "O-29", r)
     o.registrar_cartera(c55, "G", AHORA, cuenta="SIM-1")
@@ -99,7 +107,7 @@ def main():
     o = nuevo(); hasta(o, "PROPUESTA")
     e_ = o.expedientes[EID]
     inf = construir_informe("EV-F-0010", EID, e_["correlation_id"], e_["propuesta"], {**sol, "divisa_cotizacion": "EUR"},
-                            cart(tipos_cambio_eur={"USD": 1.0}), o.cfg["politica_f"], AHORA, "2026-11-07T09:00:00+00:00")
+                            cart(tipos_cambio_eur={"USD": 1.0}), o.cfg["politica_f"], AHORA, "2026-11-07T09:00:00+00:00", contexto=cx(o))
     o.registrar_cartera(cart(tipos_cambio_eur={"USD": 1.0}), "G", AHORA, cuenta="SIM-1")
     r = autorizar_op(o, EID, inf)
     h.chk("informe_con_otra_divisa_CF05", r["codigo"] == "O-01" and "CF-05" in r.get("reglas", []), r)
@@ -108,7 +116,7 @@ def main():
     e_ = o.expedientes[EID]
     cr = cart()
     inf = construir_informe("EV-F-0011", EID, e_["correlation_id"], e_["propuesta"], {**sol, "cantidad": e_["propuesta"]["entrada"]["cantidad"]}, cr,
-                            o.cfg["politica_f"], AHORA, "2026-11-07T09:00:00+00:00")
+                            o.cfg["politica_f"], AHORA, "2026-11-07T09:00:00+00:00", contexto=cx(o))
     o.registrar_cartera(cr, "G", AHORA, cuenta="SIM-1")
     # E se calculó con tipo neutro y F con tipo real: capitales iguales, así que se acepta; la pantalla muestra euros
     p = o.pantalla_aprobacion(EID, inf, AHORA)
@@ -140,7 +148,7 @@ def main():
     vieja = cart(tipos_cambio_eur={"USD": 1.0}, fecha_hora="2026-11-06T08:52:00+00:00")
     nueva = cart(tipos_cambio_eur={"USD": 1.0}, fecha_hora="2026-11-06T08:58:00+00:00", perdida_dia_eur=5000.0)
     o.registrar_cartera(vieja, "G", AHORA, cuenta="SIM-1"); o.registrar_cartera(nueva, "G", AHORA, cuenta="SIM-1")
-    inf = construir_informe("EV-F-0030", EID, e_["correlation_id"], e_["propuesta"], sol, vieja, o.cfg["politica_f"], AHORA, "2026-11-07T09:00:00+00:00")
+    inf = construir_informe("EV-F-0030", EID, e_["correlation_id"], e_["propuesta"], sol, vieja, o.cfg["politica_f"], AHORA, "2026-11-07T09:00:00+00:00", contexto=cx(o))
     h.chk("una_foto_que_no_es_la_ultima_O29", autorizar_op(o, EID, inf)["codigo"] == "O-29")
     # el tipo de un par con el euro debe cuadrar con su precio
     o = nuevo(); hasta(o, "COMPARADA")
@@ -165,7 +173,7 @@ def main():
     e_ = o.expedientes[EID]
     o.registrar_cartera(cr, "G", AHORA, cuenta="SIM-1")
     inf = construir_informe("EV-F-0031", EID, e_["correlation_id"], e_["propuesta"], {**sol, "cantidad": e_["propuesta"]["entrada"]["cantidad"]}, cr,
-                            o.cfg["politica_f"], AHORA, "2026-11-07T09:00:00+00:00")
+                            o.cfg["politica_f"], AHORA, "2026-11-07T09:00:00+00:00", contexto=cx(o))
     p = o.pantalla_aprobacion(EID, inf, AHORA)["pantalla"]
     h.chk("pantalla_riesgo_en_euros", abs(p["riesgo"] - round(100.0 * 0.05 / 1.10, 2)) < 1e-9, p)
     print(f"\n{h.n} comprobaciones")

@@ -467,6 +467,7 @@ def main():
     R("autorizar_vetado_por_F_O06", o, lambda: autorizar_op(o, "EXP-0001", informe_f(o, n=2, cartera={"perdida_dia_eur": 5000.0}), AHORA), "O-06", mutacion_permitida=True)
     R("autorizar_propuesta_caducada_O10", o, lambda: autorizar_op(o, "EXP-0001", F, "2026-11-08T13:00:00+00:00"), "O-10")
     o = nuevo({"matriz_autonomia": {"TACTICA": True}}); hasta(o, "PROPUESTA")
+    F = informe_f(o)   # T-22: el informe de F lleva el contexto de este Orquestador (su cotización)
     h.chk("autorizar_matriz_con_permiso_ok", o.autorizar("EXP-0001", "MATRIZ_AUTONOMIA", F, AHORA)["ok"])
     o = nuevo(); hasta(o, "AUTORIZADA")
     ORD = {"orden_id": "ORD-1", "cantidad": 100.0, "precio": 1.1, "conciliada": True, "proteccion_orden_ids": ["ORD-1-STOP"]}
