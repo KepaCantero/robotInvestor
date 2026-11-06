@@ -24,6 +24,8 @@ C_DIV = {"modelo": "modelo-analista-1", "proveedor": "proveedor-a"}
 def orq(**extra):
     o = Orquestador({**DEFECTO, **extra}, CAL)
     assert o.registrar_sello(S1, AHORA)["ok"]
+    from pruebas_orquestador import registrar_motor   # T-26: los sobres citan artefactos del Motor
+    registrar_motor(o)
     return o
 
 

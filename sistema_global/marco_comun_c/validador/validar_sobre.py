@@ -1,4 +1,6 @@
-"""Validador determinista del sobre CT-G-02 0.2.0 (reglas V-01 a V-25).
+"""Validador determinista del sobre CT-G-02 0.2.0 (reglas V-01 a V-26).
+V-26 (T-26): con el registro del Motor SC-3 en el contexto (ctx["sc3"]), cada artefacto citado existe, es del modelo que dice
+la cifra y no usa datos posteriores al corte del sobre.
 
 0.2.0 (T-27): entrada numérica (V-24), capa 2 con horizonte común y distribución (V-25), capa 2 SUPUESTO con escenarios
 (V-13), V-23 solo en las clases Q y S, un candidato BLOQUEADO es un sobre válido que no compite (V-16; ver `bloqueos`) y
@@ -154,7 +156,8 @@ def validar(sobre, ctx) -> list[dict]:
 
 def _validar(sobre, ctx) -> list[dict]:
     """ctx: ahora (ISO con zona), fecha_corte_encargo (YYYY-MM-DD), perfiles_activos,
-    clases_ratificadas {perfil: Q|S|K}, apalancamiento_permitido (bool)."""
+    clases_ratificadas {perfil: Q|S|K}, apalancamiento_permitido (bool) y, opcionales, sc3 {artefacto_id: {modelo_ref,
+    fecha_corte, sello_ref}} (el registro del Motor) y sello_encargo (el sello de K del encargo); el Orquestador siempre los pasa."""
     fallos: list[dict] = []
 
     def f(regla, ruta, msg):
@@ -255,6 +258,16 @@ def _validar(sobre, ctx) -> list[dict]:
                 f("V-20", ruta, f"motor_id {c['motor_id']} no figura en referencias.artefactos_motor")
         elif c.get("modelo_ref") or c.get("motor_id"):
             f("V-20", ruta, f"{est} no puede declarar modelo_ref ni motor_id")
+
+    # V-26 (T-26) las cifras citan artefactos registrados en el Motor SC-3, de su modelo y sin datos posteriores al corte
+    if ctx.get("sc3") is not None:
+        import motor   # noqa: PLC0415
+        sello = ctx.get("sello_encargo")
+        if not motor.vista_ok(ctx["sc3"]) or not (sello is None or isinstance(sello, str)):
+            f("V-01", "contexto", "registro del Motor (sc3) o sello del encargo mal formados")
+        else:
+            for ruta, m in motor.fallos_sobre(sobre, ctx["sc3"], ident["fecha_corte"], cifras, sello):
+                f("V-26", ruta, m)
 
     # V-09 invalidez medible
     ci = p.get("tesis", {}).get("condiciones_invalidez")
