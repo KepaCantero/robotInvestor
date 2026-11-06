@@ -114,6 +114,11 @@ LIMITE_PERDIDA = "perdida_dia_max_pct"   # T-50 (§6.3): el límite de pérdida 
 MOTIVO_MIN = 15   # caracteres mínimos del motivo de una anulación de veto o de un cambio de límite
 
 
+def _migracion_que_cambia(x):
+    """V0.46: una entrada MIGRACION del registro de límites que cambió la huella de la configuración completa (otro código)."""
+    return x["tipo"] == "MIGRACION" and x.get("huella_antes") != x.get("huella_config")
+
+
 def _motivo_ok(m):
     return isinstance(m, str) and len(m.strip()) >= MOTIVO_MIN and len(m) <= 500
 
@@ -861,7 +866,8 @@ class Orquestador:
         if self.autorizada_por(e) == "MATRIZ_AUTONOMIA" and NIVELES[self.nivel(e["cartera_destino"])] < 2:
             return False
         aut = next((x["ahora"] for x in reversed(e["historial"]) if x["hasta"] == "AUTORIZADA" and x["desde"] != "AUTORIZADA"), None)
-        return aut is None or not any(x["tipo"] == "CAMBIO" and x[LIMITE_PERDIDA] < x["antes"] and _dt(h["ahora"]) >= _dt(aut)
+        # V0.46: una migración a un código que cambia la configuración completa también la deja sin valor (se decidió con otro)
+        return aut is None or not any(((x["tipo"] == "CAMBIO" and x[LIMITE_PERDIDA] < x["antes"]) or _migracion_que_cambia(x)) and _dt(h["ahora"]) >= _dt(aut)
                                       for h, x in zip(self.limites["historial"], self.limites["entradas"]))
 
     @staticmethod
@@ -947,7 +953,7 @@ class Orquestador:
         if not (self._historial_ok(L) and len(L["historial"]) == len(L["entradas"])
                 and all(h["datos"] == _hash(x) and h["ref"] == x["tipo"] for h, x in zip(L["historial"], L["entradas"]))):
             return False
-        ult = [x for x in L["entradas"] if x["tipo"] in ("INICIO", "CAMBIO")]
+        ult = [x for x in L["entradas"] if x["tipo"] in ("INICIO", "CAMBIO", "MIGRACION")]   # V0.46: la migración fija la huella nueva
         return (bool(ult) and L["entradas"][0]["tipo"] == "INICIO" and ult[-1]["huella_config"] == self.huella_config
                 and self.cfg["politica_f"][LIMITE_PERDIDA] == ult[-1][LIMITE_PERDIDA])
 
@@ -997,7 +1003,7 @@ class Orquestador:
     def _subida_pendiente(self):
         """La última solicitud de subida del límite, si no la siguió ningún cambio."""
         for x in reversed(self.limites["entradas"]):
-            if x["tipo"] == "CAMBIO":
+            if x["tipo"] == "CAMBIO" or _migracion_que_cambia(x):   # V0.46: una migración a otro código anula la solicitud pendiente
                 return None
             if x["tipo"] == "SOLICITUD":
                 return x
