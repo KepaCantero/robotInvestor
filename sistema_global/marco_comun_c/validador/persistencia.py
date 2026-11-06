@@ -99,6 +99,15 @@ def volcar(o, guardado_en) -> str:
     return _texto(doc)
 
 
+def fsync_carpeta(carpeta):
+    """Tras os.replace, el cambio de nombre solo es duradero cuando la carpeta llega al disco (revisión del diario, hallazgo 11)."""
+    fd = os.open(carpeta, os.O_RDONLY)
+    try:
+        os.fsync(fd)
+    finally:
+        os.close(fd)
+
+
 def guardar(o, ruta, guardado_en) -> dict:
     """Escribe el estado en `ruta` de forma atómica. Nunca lanza: devuelve {ok, codigo, motivo, ruta, huella}."""
     try:
@@ -115,6 +124,7 @@ def guardar(o, ruta, guardado_en) -> dict:
             os.fsync(f.fileno())
         os.replace(tmp, ruta)
         tmp = None
+        fsync_carpeta(carpeta)
     except (OSError, ValueError, TypeError) as ex:   # ruta None o con un carácter nulo también (hallazgo 6)
         return _r(False, "PE-05", f"no se pudo escribir el estado: {type(ex).__name__}")
     finally:
