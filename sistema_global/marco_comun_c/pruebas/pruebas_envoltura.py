@@ -120,7 +120,7 @@ def main():
     r = o3.autorizar("EXP-0001", "OPERADOR", a, AHORA, {"pantalla_hash": p["hash"], "importe_tecleado": p["importe"], "canal": "CONSOLA", "segundo_factor": True})
     cf = o3.expedientes["EXP-0001"]["control_f"]
     h.chk("f_autoriza_y_guarda_la_forma_interna", r["ok"] and set(cf) == {"resultado", "cantidad_aprobada", "event_id", "emitido_en", "valid_until",
-                                                                       "entradas", "aprobacion"}
+                                                                       "entradas", "aprobacion", "anulacion"}
           and cf["cantidad_aprobada"] == a["payload"]["cantidad_aprobada"] and o3.integridad() == [], (r, sorted(cf)))
     h.chk("f_mismo_event_id_otra_envoltura_O03", autorizar_op(o3, "EXP-0001", b, AHORA)["codigo"] in ("O-03", "O-04"))
     h.chk("f_orden_CT_G_09_valida", ct.validar(ct.orden(o3, "EXP-0001")) == [])

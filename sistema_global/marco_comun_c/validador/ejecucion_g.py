@@ -290,7 +290,8 @@ def _ejecutar(o, eid, broker, ahora, est):
     if _dt(ahora) > _limite_entrada(o, e) or o._sello_anulado(e):
         return _r(False, "G-06", "la ventana de entrada, el sobre, el informe de F o el sello ya no valen; no se envía nada")
     if not o.autorizacion_vigente(e):
-        return _r(False, "G-06", "la autorización fue automática y la cartera ya no está en L2: la confirma el operador; no se envía nada")
+        return _r(False, "G-06", "la autorización ya no vale (fue automática y la cartera ya no está en L2, o después se bajó el límite de "
+                                 "pérdida): vuelve a pasar por F y por el operador; no se envía nada")
     if any(p["instrumento"] == en["instrumento"] and p["estado"] != "CERRADA" for p in o.posiciones.values()) \
             or any(p["instrumento"] == en["instrumento"] for p in broker.posiciones()):
         return _r(False, "G-06", "ya hay una posición sobre ese instrumento; en esta versión solo se admite una por instrumento")
