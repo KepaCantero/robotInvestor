@@ -1,8 +1,10 @@
-"""Validador determinista del encargo CT-G-01 0.1.0 (reglas E-01 a E-16) y
+"""Validador determinista del encargo CT-G-01 0.2.0 (reglas E-01 a E-17; E-06 retirada en 0.2.0) y
 comprobación de que un sobre CT-G-02 responde a su encargo (reglas R-00 a R-14).
 
 Sin LLM, sin red, sin reloj propio. Nunca lanza excepciones por un mensaje mal formado.
 Todos los límites numéricos son valores de partida [PROPUESTO] y se pasan en el contexto.
+0.2.0 (T-51): el mandato se lee de SC-1 (ctx["mandatos"], mandatos.py); el encargo lo cita por versión y huella (E-17) y solo
+puede estrecharlo con `restricciones` (E-05, E-07, E-10). La 0.1.0, con el mandato dentro, queda RETIRADA.
 """
 from __future__ import annotations
 
@@ -18,10 +20,10 @@ from validar_sobre import _dt, _numeros_no_finitos, cargar_json
 from k_calidad import Calendario, TOPE_ANTIGUEDAD, estado_sello, validar_sello
 
 AQUI = Path(__file__).resolve().parent
-VERSIONES_CONOCIDAS = {"0.1.0"}
+VERSIONES_CONOCIDAS = {"0.2.0"}
+RETIRADAS = {"0.1.0"}   # T-51: llevaba el mandato dentro; ningún consumidor la acepta
 VIGENCIA_MAX = timedelta(days=30)
-# Valores de partida por cartera (P-03, P-04, P-11, P-13 del cuestionario) [PROPUESTO]
-HORIZONTE_DIAS = {"TRADING": (1, 28), "TACTICA": (14, 183), "LARGO_PLAZO": (1095, 7300)}
+import mandatos as sc1   # noqa: E402  T-51: el mandato vive en SC-1
 from parametros import PARAMETROS as _P   # noqa: E402  (una sola fuente con K, T-25)
 ANTIGUEDAD_CORTE_DIAS = dict(_P["k_tope_antiguedad_dias_habiles"])   # días HÁBILES
 PREFIJOS_REF = ("K-", "SRC-", "EVID-", "PAQ-")
@@ -39,9 +41,7 @@ def _dias_habiles(desde, hasta):
     return n
 
 
-def _norm(t):
-    return t.strip().upper()
-TAMANO_MAX_PCT = {"TRADING": 10.0, "TACTICA": 10.0, "LARGO_PLAZO": 10.0}
+_norm = sc1.norm
 NIVEL_ORDEN = {"N0": 0, "N1": 1, "N2": 2, "N3": 3}
 NIVEL_MIN_POR_DECISION = {"ABRIR_POSICION": "N2", "AUMENTAR": "N2"}
 NIVEL_MAX_POR_DECISION = {"DESCARTAR": "N1", "EXPLORAR": "N1"}
@@ -50,7 +50,7 @@ PRODUCTOR_POR_CARTERA = {"TRADING": "GESTOR_TRADING", "TACTICA": "GESTOR_TACTICA
 
 
 def _esquema():
-    ruta = AQUI.parent / "esquemas" / "ct-g-01_0.1.0.schema.json"
+    ruta = AQUI.parent / "esquemas" / "ct-g-01_0.2.0.schema.json"
     return json.loads(ruta.read_text(encoding="utf-8"))
 
 
@@ -65,8 +65,8 @@ def validar_encargo(msg, ctx) -> list[dict]:
 def _validar_encargo(msg, ctx) -> list[dict]:
     """ctx: ahora (ISO con zona), fecha_corte_vigente (la de K), perfiles_activos,
     apalancamiento_permitido, sellos {sello_id: sello emitido por K}, y opcionales: calendario (para
-    recomprobar la caducidad del sello; None = no recomprobar), horizonte_dias, antiguedad_corte_dias,
-    tamano_max_pct, presupuesto_minimo {nivel: {coste_eur, tiempo_min}}, coste_max_eur."""
+    recomprobar la caducidad del sello; None = no recomprobar), mandatos {cartera: mandato de SC-1} (T-51), y opcionales:
+    antiguedad_corte_dias, presupuesto_minimo {nivel: {coste_eur, tiempo_min}}, coste_max_eur."""
     fallos: list[dict] = []
 
     def f(regla, ruta, m):
@@ -82,13 +82,17 @@ def _validar_encargo(msg, ctx) -> list[dict]:
         calendario = ctx["calendario"]
         if not isinstance(calendario, dict):
             raise TypeError("calendario es obligatorio: sin él no se puede comprobar la caducidad del sello")
+        mands = ctx["mandatos"]
+        if not (isinstance(mands, dict) and set(mands) == set(sc1.CARTERAS)
+                and all(sc1.mandato_ok(c, m, ctx.get("apalancamiento_permitido") is True) is None for c, m in mands.items())):
+            raise TypeError("mandatos de SC-1 ausentes o mal formados (uno válido por cartera)")
     except (KeyError, ValueError, TypeError) as e:
         f("E-01", "contexto", f"contexto de validación inválido: {e}")
         return fallos
 
     ver = msg.get("version_esquema") if isinstance(msg, dict) else None
     if not isinstance(ver, str) or ver not in VERSIONES_CONOCIDAS:
-        f("E-01", "version_esquema", f"versión desconocida: {ver!r}")
+        f("E-01", "version_esquema", f"versión retirada (llevaba el mandato dentro): {ver!r}" if ver in RETIRADAS else f"versión desconocida: {ver!r}")
         return fallos
     for ruta in _numeros_no_finitos(msg):
         f("E-01", ruta, "número no finito (NaN o infinito)")
@@ -101,8 +105,13 @@ def _validar_encargo(msg, ctx) -> list[dict]:
         return fallos
 
     p = msg["payload"]
-    cand, man, pre = p["candidato"], p["mandato"], p["presupuesto"]
+    cand, pre = p["candidato"], p["presupuesto"]
     cartera, nivel, decision = p["cartera_destino"], p["nivel_analisis"], p["decision_informada"]
+    m_sc1 = mands[cartera]
+
+    # E-17 el encargo cita el mandato vigente de SC-1 para su cartera (versión y huella): C trabaja con el mandato de SC-1
+    if p["mandato_ref"] != sc1.referencia(m_sc1):
+        f("E-17", "payload.mandato_ref", f"no es el mandato vigente de SC-1 para {cartera} ({m_sc1['version']}): pida el mandato a SC-1")
 
     # E-02 destinatario: perfil activo y coincidente con el candidato
     if msg["consumer"] != cand["perfil"]:
@@ -147,22 +156,11 @@ def _validar_encargo(msg, ctx) -> list[dict]:
     except (ValueError, KeyError):
         f("E-04", "payload.fecha_corte", "fecha no interpretable")
 
-    # E-05 horizonte coherente y dentro del rango de la cartera
-    h = man["horizonte_dias"]
-    lo, hi = ctx.get("horizonte_dias", HORIZONTE_DIAS)[cartera]
-    if h["min"] > h["max"]:
-        f("E-05", "payload.mandato.horizonte_dias", "min mayor que max")
-    elif h["min"] < lo or h["max"] > hi:
-        f("E-05", "payload.mandato.horizonte_dias", f"fuera del rango {lo}–{hi} días de {cartera}")
-
-    # E-06 apalancamiento
-    if man["apalancamiento_max"] != 1 and ctx.get("apalancamiento_permitido") is not True:
-        f("E-06", "payload.mandato.apalancamiento_max", "apalancamiento no habilitado: debe ser 1 (ratio de exposición sobre capital; 1 = sin apalancar)")
-
-    # E-07 tamaño máximo respecto al tope nominal de la cartera
-    tope_t = ctx.get("tamano_max_pct", TAMANO_MAX_PCT)[cartera]
-    if man["tamano_max_pct_cartera"] > tope_t:
-        f("E-07", "payload.mandato.tamano_max_pct_cartera", f"supera el límite nominal de {tope_t} %")
+    # E-05 y E-07: las restricciones del encargo solo estrechan el mandato (horizonte y tamaño); E-06 retirada en 0.2.0
+    # (el apalancamiento es del mandato y lo valida SC-1)
+    for regla, ruta, m in sc1.restricciones_fallos(m_sc1, p.get("restricciones")):
+        f(regla, ruta, m)
+    efectivo = sc1.efectivo(m_sc1, p.get("restricciones"))   # la forma ya la garantiza el esquema
 
     # E-08 presupuesto y plazo
     try:
@@ -185,12 +183,10 @@ def _validar_encargo(msg, ctx) -> list[dict]:
     if decision in NIVEL_MAX_POR_DECISION and NIVEL_ORDEN[nivel] > NIVEL_ORDEN[NIVEL_MAX_POR_DECISION[decision]]:
         f("E-09", "payload.nivel_analisis", f"{decision} no justifica más de {NIVEL_MAX_POR_DECISION[decision]}")
 
-    # E-10 el instrumento está permitido por el mandato
-    permitidos = {_norm(x) for x in man["instrumentos_permitidos"]}
-    if _norm(cand["instrumento"]) not in permitidos:
-        f("E-10", "payload.candidato.instrumento", "no figura entre los instrumentos permitidos del mandato")
-    if _norm(cand["instrumento"]) in {_norm(x) for x in man.get("exclusiones", [])}:
-        f("E-10", "payload.candidato.instrumento", "figura en las exclusiones del mandato")
+    # E-10 el instrumento está permitido por el mandato de SC-1 y no está excluido (por el mandato o por el encargo)
+    mot = sc1.instrumento_fallo(efectivo, cand["instrumento"])
+    if mot:
+        f("E-10", "payload.candidato.instrumento", mot)
 
     # E-11 emisor coherente con la cartera
     if msg["producer"] != "BROKER" and msg["producer"] != PRODUCTOR_POR_CARTERA[cartera]:
@@ -250,12 +246,14 @@ def sobre_responde_a_encargo(encargo, sobre, ctx_encargo, ctx_sobre) -> list[dic
     if previos:
         return previos
     try:
-        return _cruzar(encargo, sobre, ctx_encargo["sellos"][encargo["payload"]["sello_corte_ref"]])
+        pe = encargo["payload"]
+        mandato = sc1.efectivo(ctx_encargo["mandatos"][pe["cartera_destino"]], pe.get("restricciones"))   # el de SC-1, estrechado
+        return _cruzar(encargo, sobre, ctx_encargo["sellos"][pe["sello_corte_ref"]], mandato)
     except (KeyError, TypeError, AttributeError, ValueError, IndexError, OverflowError, RecursionError, MemoryError) as e:
         return [{"regla": "R-00", "ruta": "(interno)", "mensaje": f"{type(e).__name__}: {e}"}]
 
 
-def _cruzar(encargo: dict, sobre: dict, sello: dict) -> list[dict]:
+def _cruzar(encargo: dict, sobre: dict, sello: dict, mandato: dict) -> list[dict]:
     fallos: list[dict] = []
 
     def f(regla, ruta, m):
@@ -281,7 +279,7 @@ def _cruzar(encargo: dict, sobre: dict, sello: dict) -> list[dict]:
     except ValueError:
         f("R-07", "emitido_en", "fecha-hora inválida")
     cap = ps.get("capital", {}).get("apalancamiento")
-    if cap and isinstance(cap.get("valor"), (int, float)) and cap["valor"] > pe["mandato"]["apalancamiento_max"]:
+    if cap and isinstance(cap.get("valor"), (int, float)) and cap["valor"] > mandato["apalancamiento_max"]:
         f("R-08", "payload.capital.apalancamiento", "supera el apalancamiento máximo del mandato")
     if _norm(ident["instrumento"]) != _norm(pe["candidato"]["instrumento"]):
         f("R-09", "payload.identificacion.instrumento", "instrumento distinto del encargado")
@@ -312,7 +310,7 @@ def _cruzar(encargo: dict, sobre: dict, sello: dict) -> list[dict]:
         elif not r.startswith(PREFIJOS_REF):
             f("R-12", "data_refs", f"referencia de tipo desconocido: {r!r}")
     # R-13 el horizonte de cada escenario está dentro del del mandato (D mide la referencia con él)
-    hz = pe["mandato"]["horizonte_dias"]
+    hz = mandato["horizonte_dias"]
     for i, x in enumerate((sobre["payload"].get("capa2") or {}).get("escenarios") or []):   # N0/N1 no traen capa 2
         if isinstance(x, dict) and not (hz["min"] <= x.get("horizonte_dias", -1) <= hz["max"]):
             f("R-13", f"payload.capa2.escenarios[{i}].horizonte_dias", "horizonte fuera del que fija el mandato")

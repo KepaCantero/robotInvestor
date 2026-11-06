@@ -30,6 +30,7 @@ from validar_contradictor import diversidad, validar_informe  # noqa: E402
 from parametros import PARAMETROS, VERSION_PARAMETROS, como_dict  # noqa: E402
 from k_calidad import VERSION_REGLAS as VERSION_REGLAS_K  # noqa: E402
 from control_f import VERSION_REGLAS as VERSION_REGLAS_F  # noqa: E402
+import mandatos as sc1  # noqa: E402  T-51: SC-1, el mandato de cada cartera
 from control_f import POLITICA_DEFECTO, aplanar_informe, controlar, divisa_cotizada, par_divisas, politica_valida, tipo_cambio, validar_informe_f  # noqa: E402
 
 VERSION_REGLAS = "ORQ-0.1.0"
@@ -76,14 +77,15 @@ OPERADORES = {"<": lambda v, u: v < u, "<=": lambda v, u: v <= u, ">": lambda v,
               ">=": lambda v, u: v >= u, "==": lambda v, u: v == u}
 
 CONFIG_DEFECTO = {"max_reintentos": 3, "umbral_corte_comun_dias_habiles": 0,
-                  "version_config": "CFG-0.4.0",   # 0.2.0 (T-48): Contradictor exigido en N2 y N3; autoria_c. 0.3.0 (T-49): alerta_perdida_pct. 0.4.0 (T-50): anulaciones_veto_mes
+                  "version_config": "CFG-0.5.0",   # 0.2.0 (T-48): Contradictor exigido en N2 y N3; autoria_c. 0.3.0 (T-49): alerta_perdida_pct. 0.4.0 (T-50): anulaciones_veto_mes. 0.5.0 (T-51): mandatos (SC-1) en lugar de instrumentos_permitidos
                   "dia_coste_max_eur": 50.0, "revision_max_dias": 90, "observacion_max_dias": 30, "max_reaperturas": 2, "dia_tiempo_max_min": 600, "tolerancia_precio_entrada": 0.05,
                   "alerta_perdida_pct": -5.0,   # T-49: H pide revisar al perder esto (y cada múltiplo) [PROPUESTO]
                   "anulaciones_veto_mes": 2,   # T-50 (§6.2): anulaciones de veto de F que el operador puede hacer en un mes natural (UTC) [PROPUESTO]
                   "exige_contradictor_en": ["N2", "N3"], "contradictor_desactivado_motivo": None, "autoria_c": {}, "autoria_contradictor": None,
                   "matriz_autonomia": {},   # T-48: Contradictor exigido por defecto donde se compara y propone [PROPUESTO]
                   "politica_f": POLITICA_DEFECTO,
-                  "nivel_autonomia": {}, "tolerancia_conciliacion_rel": 0.0, "instrumentos_permitidos": None,
+                  "nivel_autonomia": {}, "tolerancia_conciliacion_rel": 0.0,
+                  "mandatos": sc1.MANDATOS_DEFECTO,   # T-51: SC-1, fuente única del mandato de cada cartera [PROPUESTO, P-03, D-28]
                   "referencias": {c: dict(REFERENCIA_EFECTIVO) for c in ("TRADING", "TACTICA", "LARGO_PLAZO")},   # benchmark de cada cartera [PROPUESTO]
                   # [PROPUESTO] controles sobre el operador (§6) y avisos (§11); los canales reales los fija el operador (D-07, P-08)
                   "aprobacion": {"caduca_min": 15, "canales": ["CONSOLA"], "enfriamiento_min": 30, "enfriamiento_tras_perdida_dia_eur": 0.0,
@@ -132,8 +134,8 @@ _FECHA = re.compile(r"^\d{4}-\d{2}-\d{2}\Z")
 
 
 def _ins(x):
-    """Identidad de un instrumento: «EUR/USD» y «EURUSD» son el mismo."""
-    return re.sub(r"[^A-Z0-9]", "", x.upper()) if isinstance(x, str) else None
+    """Identidad de un instrumento: «EUR/USD» y «EURUSD» son el mismo (T-51: la misma función que SC-1, con NFKC)."""
+    return sc1.norm(x)
 
 
 MAX_EDAD_DIMENSIONADO_MIN = PARAMETROS["e_max_edad_dimensionado_min"]   # [PROPUESTO] el cálculo de E no puede ser más viejo que esto al proponer
@@ -287,9 +289,9 @@ def _valida_config(c):
           and all(isinstance(k, str) and isinstance(v, str) and re.fullmatch(r"[A-Z]{3}", v) for k, v in c["divisas_cotizacion"].items())
           and isinstance(c["referencias"], dict) and set(c["referencias"]) == {"TRADING", "TACTICA", "LARGO_PLAZO"}
           and all(_referencia_ok(v) for v in c["referencias"].values())
-          and (c["instrumentos_permitidos"] is None or isinstance(c["instrumentos_permitidos"], dict)
-               and all(k in ("TRADING", "TACTICA", "LARGO_PLAZO") and isinstance(v, list) and all(isinstance(x, str) for x in v)
-                       for k, v in c["instrumentos_permitidos"].items())))
+          and isinstance(c["mandatos"], dict) and set(c["mandatos"]) == set(sc1.CARTERAS)
+          and all(sc1.mandato_ok(k, v, c["apalancamiento_permitido"] is True) is None
+                  and v["benchmark_ref"] == c["referencias"][k]["benchmark_ref"] for k, v in c["mandatos"].items()))
     if ok and not c["apalancamiento_permitido"] and c["politica_f"]["apalancamiento_max"] > 1:
         ok = False   # la política de F no puede permitir lo que el sistema prohíbe
     if not ok:
@@ -958,6 +960,25 @@ class Orquestador:
             return None, None, _no("O-34", "los topes de F no dejan cantidad que autorizar")
         return q, vetos, None
 
+    def _config_rota(self):
+        """T-51 (H5): una configuración alterada en caliente (mandatos incluidos) detiene la operación y activa el kill-switch."""
+        if self.config_integra():
+            return None
+        self._activar_kill("configuración alterada en caliente", "ORQUESTADOR", self.ultimo_ahora or "1970-01-01T00:00:00+00:00")
+        return _no("O-13", "la configuración (o un mandato de SC-1) no es la de su huella: no se sigue")
+
+    def _mandato_efectivo(self, e):
+        """El mandato de SC-1 de la cartera del expediente, estrechado por las restricciones de su encargo vigente."""
+        en = self.encargos.get(e.get("encargo_actual")) or {}
+        return sc1.efectivo(self.cfg["mandatos"][e["cartera_destino"]], ((en.get("msg") or {}).get("payload") or {}).get("restricciones"))
+
+    def mandato(self, cartera):
+        """SC-1 (T-51): el mandato vigente de una cartera y la referencia (versión y huella) que debe citar el encargo."""
+        m = self.cfg["mandatos"].get(cartera) if isinstance(cartera, str) else None
+        if m is None:
+            return None
+        return {"cartera": cartera, "version_sc1": sc1.VERSION_SC1, "mandato": copy.deepcopy(m), "referencia": sc1.referencia(m)}
+
     def configuracion(self):
         """La configuración en vigor y su huella (la misma que llevan las anotaciones)."""
         return {"huella": self.huella_config, "integra": self.config_integra(), **copy.deepcopy(self._configuracion_completa())}
@@ -1030,7 +1051,7 @@ class Orquestador:
         return {"ahora": ahora_iso, "fecha_corte_vigente": fecha_vigente,
                 "perfiles_activos": self.cfg["perfiles_activos"],
                 "apalancamiento_permitido": self.cfg["apalancamiento_permitido"],
-                "sellos": copy.deepcopy(self.sellos), "calendario": self.cal_def}
+                "sellos": copy.deepcopy(self.sellos), "calendario": self.cal_def, "mandatos": copy.deepcopy(self.cfg["mandatos"])}
 
     def _tope_dia(self, fecha):
         g = self.gasto_dia.get(fecha, {"coste": 0.0, "tiempo": 0.0})
@@ -1132,9 +1153,11 @@ class Orquestador:
             return _no("O-05", "el emisor del encargo no es quien lo pide")
         if encargo["payload"].get("cartera_destino") != e["cartera_destino"] if isinstance(encargo.get("payload"), dict) else True:
             return _no("O-12", "la cartera del encargo no es la del expediente")
-        mand = encargo["payload"].get("mandato")
-        if not (isinstance(mand, dict) and mand.get("benchmark_ref") == self.cfg["referencias"][e["cartera_destino"]]["benchmark_ref"]):
-            return _no("O-24", "el mandato del encargo no cita la referencia configurada para la cartera")
+        err = self._config_rota()   # T-51 (H5): con la configuración alterada no se encarga nada
+        if err:
+            return err
+        if encargo["payload"].get("mandato_ref") != sc1.referencia(self.cfg["mandatos"][e["cartera_destino"]]):   # T-51
+            return _no("O-24", "el encargo no cita el mandato vigente de SC-1 para la cartera (versión y huella): pídalo con mandato()")
         ctx = self._ctx_encargo(ahora)
         if ctx is None:
             return _no("O-06", "no hay ningún sello de K registrado")
@@ -1200,6 +1223,9 @@ class Orquestador:
     def entregar_sobre(self, expediente_id, sobre, ahora, informe=None):
         a = self._ahora(ahora)
         e, err = self._exp(expediente_id)
+        if err:
+            return err
+        err = self._config_rota()   # T-51 (H5)
         if err:
             return err
         if not isinstance(sobre, dict) or not isinstance(sobre.get("event_id"), str):
@@ -1425,9 +1451,13 @@ class Orquestador:
         if faltan:   # T-34: quien llama no elige contra quién se compara
             return _no("O-24", f"hay que comparar con todos los candidatos vigentes de la cartera; faltan {', '.join(faltan[:5])}", faltan=faltan)
         ref = self.cfg["referencias"][cartera]
-        otra = [x["expediente_id"] for x in exps if self.encargos[x["encargo_actual"]]["msg"]["payload"]["mandato"]["benchmark_ref"] != ref["benchmark_ref"]]
+        err = self._config_rota()   # T-51 (H5): antes que O-24, una configuración alterada es un incidente
+        if err:
+            return err
+        vigente = sc1.referencia(self.cfg["mandatos"][cartera])   # T-51: D mide contra el benchmark del mandato vigente de SC-1
+        otra = [x["expediente_id"] for x in exps if self.encargos[x["encargo_actual"]]["msg"]["payload"].get("mandato_ref") != vigente]
         if otra:
-            return _no("O-24", f"el mandato del encargo cita otra referencia que la configurada para la cartera: {', '.join(otra)}")
+            return _no("O-24", f"el encargo no cita el mandato vigente de SC-1 para la cartera: {', '.join(otra)}")
         from datetime import date
         cortes = sorted(date.fromisoformat(x["sobre"]["fecha_corte"]) for x in exps)
         cal = Calendario(self.cal_def)
@@ -1555,6 +1585,9 @@ class Orquestador:
             return _no("O-01", "condiciones_entrada.resto_parcial: solo se admite CANCELAR (mantener vivo el resto exige redimensionar el stop, T-12)")
         if ce["apalancamiento"] > 1 and not self.cfg["apalancamiento_permitido"]:
             return _no("O-06", "el apalancamiento no está permitido")
+        ap_m = self._mandato_efectivo(e)["apalancamiento_max"]
+        if ce["apalancamiento"] > ap_m:   # T-51 (H3): el mandato de SC-1 manda, diga lo que diga el sobre
+            return _no("O-06", f"el apalancamiento supera el máximo del mandato de la cartera ({ap_m})")
         if _dt(ce["ventana_hasta"]) <= a:
             return _no("O-10", "la ventana de entrada ya venció")
         conds = cs.get("condiciones") if isinstance(cs, dict) else None
@@ -1680,6 +1713,11 @@ class Orquestador:
             return None, _no("O-23", f"E no da una cantidad viable ({r['codigo']}): {r['motivo'][:80]}")
         if ce["cantidad"] > r["cantidad"] * (1 + 1e-12):
             return None, _no("O-23", f"la cantidad propuesta supera la que calcula E ({r['cantidad']})")
+        # T-51 (H2): el tamaño máximo del mandato de SC-1 (estrechado por el encargo) también limita, además de la política de F
+        tam = self._mandato_efectivo(e)["tamano_max_pct_cartera"]
+        fx = tipo_cambio(self.divisa(ce["instrumento"]), dim["cartera"])
+        if not (_num(fx) and fx > 0) or ce["cantidad"] * ce["limite"] * fx > tam / 100 * dim["cartera"]["capital_eur"] * (1 + 1e-9):
+            return None, _no("O-23", f"la propuesta pasa del tamaño máximo del mandato ({tam} % de la cartera)")
         return r["cantidad"], None
 
     def _comprobar_autorizacion(self, e, expediente_id, actor, control_f, a, ahora):
@@ -2000,6 +2038,9 @@ class Orquestador:
         a = self._ahora(ahora)
         if not isinstance(registro, dict) or not isinstance(registro.get("event_id"), str):
             return _no("O-01", "registro CT-G-14 sin event_id")
+        err = self._config_rota()   # T-51 (H5): las exclusiones y listas del mandato deben ser las de su huella
+        if err:
+            return err
         plano = aplanar_manual(registro)   # T-47: CT-G-14 0.2.0 llega envuelto; dentro se usa la forma plana
         if plano is None:
             fallos = validar_manual(registro, {"ahora": ahora})
@@ -2053,7 +2094,9 @@ class Orquestador:
         elif p is not None:
             desde = p["historial"][0]["ahora"]
         fallos = validar_manual(registro, {"ahora": ahora, "expediente": e, "posicion": p, "tolerancia_precio": self.cfg["tolerancia_precio_entrada"],
-                                           "instrumentos_permitidos": self.cfg["instrumentos_permitidos"],
+                                           "instrumentos_permitidos": {k: v["instrumentos_permitidos"] for k, v in self.cfg["mandatos"].items()
+                                                                       if v["instrumentos_permitidos"] is not None},   # T-51: del mandato de SC-1
+                                           "instrumentos_excluidos": {k: v["exclusiones"] for k, v in self.cfg["mandatos"].items()},
                                            "instrumento_ocupado": ocupado, "no_antes_de": desde, "identidad": self._identidad_manual(e, p)})
         if fallos:
             return _no("O-01", f"registro CT-G-14 no válido: {fallos[0]['regla']}: {fallos[0]['mensaje'][:80]}", reglas=sorted({x['regla'] for x in fallos}))
@@ -2073,6 +2116,8 @@ class Orquestador:
                 return _no("O-00", "instante inválido o anterior al último")
             if not isinstance(registro, dict) or not isinstance(registro.get("event_id"), str):
                 return _no("O-01", "registro CT-G-14 sin event_id")
+            if not self.config_integra():   # T-51 (H5); sin efectos: registrar_manual activará el kill-switch
+                return _no("O-13", "la configuración (o un mandato de SC-1) no es la de su huella")
             plano = aplanar_manual(registro)
             if plano is None:
                 fallos = validar_manual(registro, {"ahora": ahora})

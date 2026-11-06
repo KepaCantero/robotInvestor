@@ -1,7 +1,44 @@
 {
   "ctx_extra": {
-    "horizonte_dias": {
-      "TACTICA": 5
+    "mandatos": {
+      "TRADING": {
+        "version": "MAN-0.1.0",
+        "benchmark_ref": "BENCH-EFECTIVO",
+        "horizonte_dias": {
+          "min": 1,
+          "max": 28
+        },
+        "apalancamiento_max": 1,
+        "tamano_max_pct_cartera": 10.0,
+        "instrumentos_permitidos": null,
+        "exclusiones": []
+      },
+      "TACTICA": {
+        "version": "MAN-0.1.0",
+        "benchmark_ref": "BENCH-EFECTIVO",
+        "horizonte_dias": {
+          "min": 14,
+          "max": 183
+        },
+        "apalancamiento_max": 1,
+        "tamano_max_pct_cartera": 10.0,
+        "instrumentos_permitidos": [
+          "GBP/USD"
+        ],
+        "exclusiones": []
+      },
+      "LARGO_PLAZO": {
+        "version": "MAN-0.1.0",
+        "benchmark_ref": "BENCH-EFECTIVO",
+        "horizonte_dias": {
+          "min": 1095,
+          "max": 7300
+        },
+        "apalancamiento_max": 1,
+        "tamano_max_pct_cartera": 10.0,
+        "instrumentos_permitidos": null,
+        "exclusiones": []
+      }
     }
   },
   "mensaje": {
@@ -11,7 +48,7 @@
     "producer": "GESTOR_TACTICA",
     "consumer": "C-DIV",
     "tipo_mensaje": "CT-G-01",
-    "version_esquema": "0.1.0",
+    "version_esquema": "0.2.0",
     "emitido_en": "2026-11-05T12:00:00+00:00",
     "valid_until": "2026-11-08T12:00:00+00:00",
     "data_refs": [
@@ -31,26 +68,21 @@
       "nivel_analisis": "N3",
       "fecha_corte": "2026-11-05",
       "sello_corte_ref": "K-20261105-001",
-      "mandato": {
-        "benchmark_ref": "BENCH-EFECTIVO",
+      "mandato_ref": {
+        "version": "MAN-0.1.0",
+        "huella": "f3165d09372951223ec736ffe08552e01a3f1a63d04cd03d540878b16f63d9a0"
+      },
+      "restricciones": {
         "horizonte_dias": {
           "min": 14,
           "max": 90
-        },
-        "apalancamiento_max": 1,
-        "tamano_max_pct_cartera": 5,
-        "instrumentos_permitidos": [
-          "EUR/USD",
-          "GBP/USD"
-        ],
-        "exclusiones": []
+        }
       },
       "presupuesto": {
         "coste_max_eur": 5.0,
         "tiempo_max_min": 30,
         "entrega_antes_de": "2026-11-05T20:00:00+00:00"
-      },
-      "prioridad": "NORMAL"
+      }
     },
     "resultado_politica": {
       "controles": [

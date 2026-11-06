@@ -11,7 +11,7 @@ RM-04 vínculo inexistente o en un estado que no admite el registro.
 RM-05 no coincide con lo que vincula (cartera, instrumento, activo base, sentido o vía de acceso).
 RM-06 cantidad: supera lo aprobado por F (expediente) o no es la de la posición (cierre total).
 RM-07 un registro que abre posición exige su orden de protección declarada.
-RM-08 instrumento no admitido en esa cartera (lista de la configuración, si la hay).
+RM-08 instrumento no admitido en esa cartera (instrumentos permitidos y exclusiones del mandato de SC-1).
 RM-09 precio de una entrada fuera de la tolerancia del límite autorizado.
 RM-10 operación LIBRE en un instrumento con posición abierta o expediente AUTORIZADA: debe vincularse a ellos.
 RM-11 la identidad de la envoltura (expediente_id, correlation_id) no es la del vínculo (T-47).
@@ -28,6 +28,7 @@ import re
 from datetime import timedelta
 
 from validar_sobre import _dt
+from mandatos import norm as _norm_ins   # T-51: identidad única de instrumento
 
 CONTRATO, VERSION = "CT-G-14", "0.2.0"
 ID = re.compile(r"^[A-Za-z0-9._:/-]{1,64}\Z")
@@ -118,7 +119,7 @@ def validar_manual(reg, ctx):
 
 def _validar_manual(reg, ctx):
     """reg: el mensaje CT-G-14 0.2.0. ctx: {"ahora", "expediente": dict|None, "posicion": dict|None, "tolerancia_precio": número,
-    "instrumentos_permitidos": {cartera: [..]} opcional, "identidad": (expediente_id, correlation_id) que corresponde al vínculo}.
+    "instrumentos_permitidos": {cartera: [..]} y "instrumentos_excluidos": {cartera: [..]} opcionales (del mandato de SC-1), "identidad": (expediente_id, correlation_id) que corresponde al vínculo}.
     Devuelve la lista de fallos (vacía = válido)."""
     if not isinstance(reg, dict):
         return [_f("RM-01", "el registro no es un objeto")]
@@ -166,8 +167,10 @@ def _validar_plano(reg, ctx):
     if reg.get("proteccion_ref") == reg["ref_intermediario"]:
         fallos.append(_f("RM-01", "la orden ejecutada y la de protección no pueden ser la misma"))
     perm = (ctx.get("instrumentos_permitidos") or {}).get(reg["cartera"])
-    if perm is not None and reg["instrumento"] not in perm:
-        fallos.append(_f("RM-08", "instrumento no admitido en esa cartera"))
+    excl = (ctx.get("instrumentos_excluidos") or {}).get(reg["cartera"]) or []
+    ins = _norm_ins(reg["instrumento"])   # T-51 (H1, H4, H7): la identidad única de instrumento de SC-1
+    if (perm is not None and ins not in {_norm_ins(x) for x in perm}) or ins in {_norm_ins(x) for x in excl}:
+        fallos.append(_f("RM-08", "instrumento no admitido en esa cartera (lista o exclusiones del mandato)"))
     if v["tipo"] == "EXPEDIENTE":
         e = ctx.get("expediente")
         if e is None or e.get("estado") != "AUTORIZADA":

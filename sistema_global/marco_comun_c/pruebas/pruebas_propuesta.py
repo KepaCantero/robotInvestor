@@ -18,7 +18,6 @@ def validar_con(o, n, instrumento="EUR/USD", escenarios=None, mod=None, valid_un
     from pruebas_orquestador import encargo, sobre
     eid = f"EXP-{n:04d}"
     enc, sob = encargo(n), sobre(n)
-    enc["payload"]["mandato"]["instrumentos_permitidos"] = ["EUR/USD", "GBP/USD", "USD/JPY"]
     enc["payload"]["candidato"]["instrumento"] = instrumento
     sob["payload"]["identificacion"]["instrumento"] = instrumento
     if escenarios:
@@ -123,7 +122,7 @@ def main():
     prop("invalidez_con_otro_umbral_O21", "O-21", salida={**SALIDA, "condiciones": [STOP, OBJ, {**INV, "umbral": 1.00}]})
     prop("ventana_mas_alla_del_sobre_O21", "O-21", entrada={**ENTRADA, "ventana_hasta": "2026-11-09T12:00:00+00:00"})
     o = comparada({"apalancamiento_permitido": True})
-    prop("apalancamiento_mayor_que_el_del_sobre_O21", "O-21", entrada={**ENTRADA, "apalancamiento": 2.0}, o=o)
+    prop("apalancamiento_mayor_que_el_del_mandato_O06", "O-06", entrada={**ENTRADA, "apalancamiento": 2.0}, o=o)   # T-51: el mandato (1) manda
     prop("activo_base_distinto_de_la_divisa_base_O01", "O-01", entrada={**ENTRADA, "activo_base": "ZZZ"})
     prop("condicion_de_tipo_desconocido_O01", "O-01", salida={**SALIDA, "condiciones": [STOP, INV, {**OBJ, "tipo": "TP", "umbral": 9.0}]})
     sin_tipo = {k: v for k, v in OBJ.items() if k != "tipo"}
@@ -193,7 +192,8 @@ def main():
           and c["excluido"] == "NO_SUPERA_REFERENCIA" and c["referencia"]["rentabilidad_anual_pct"] == 50.0, r)
     h.chk("abstencion_no_se_elige_O22", o.elegir("EXP-0001", "OPERADOR", "quiero invertir igualmente", AHORA)["codigo"] == "O-22")
     prop("abstencion_no_se_propone_O22", "O-22", o=o)
-    o = nuevo(refs(benchmark_ref="BENCH-OTRO"))
+    import mandatos as sc1   # T-51: el benchmark es del mandato de SC-1; un encargo que cita otro mandato se rechaza
+    o = nuevo({**refs(benchmark_ref="BENCH-OTRO"), "mandatos": {**sc1.MANDATOS_DEFECTO, "TACTICA": {**sc1.MANDATOS_DEFECTO["TACTICA"], "benchmark_ref": "BENCH-OTRO"}}})
     from pruebas_orquestador import encargo
     o.detectar("EXP-0001", "COR-0001", "DISCRECIONAL", "TACTICA", PROP, AHORA)
     h.chk("mandato_con_otra_referencia_se_rechaza_al_encargar_O24", o.emitir_encargo("EXP-0001", encargo(1), PROP, AHORA)["codigo"] == "O-24")
@@ -230,7 +230,8 @@ def main():
     h.chk("un_candidato_caducado_no_bloquea_a_los_demas", r["ok"] and r["ganador"] == "EXP-0001", r)
     from orquestador import Orquestador
     from pruebas_orquestador import CAL, CFG
-    for nombre, cfg in (("referencia_absurda", refs(rentabilidad_anual_pct=500.0)), ("referencia_sin_cartera", {"referencias": {"TACTICA": REFERENCIA_EFECTIVO}})):
+    for nombre, cfg in (("referencia_absurda", refs(rentabilidad_anual_pct=500.0)), ("referencia_sin_cartera", {"referencias": {"TACTICA": REFERENCIA_EFECTIVO}}),
+                        ("referencia_distinta_del_benchmark_del_mandato", refs(benchmark_ref="BENCH-OTRO"))):
         try:
             Orquestador({**CFG, **cfg}, CAL); h.chk(f"config_{nombre}_se_rechaza", False)
         except ValueError:

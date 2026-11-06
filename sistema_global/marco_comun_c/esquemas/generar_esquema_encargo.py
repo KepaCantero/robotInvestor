@@ -1,6 +1,10 @@
-"""Genera el esquema JSON de CT-G-01 (encargo de análisis en profundidad) versión 0.1.0.
+"""Genera el esquema JSON de CT-G-01 (encargo de análisis en profundidad) versión 0.2.0.
 
-Uso: python3 generar_esquema_encargo.py > ct-g-01_0.1.0.schema.json
+0.2.0 (T-51): el mandato ya no viaja en el encargo; se cita en SC-1 por versión y huella (`mandato_ref`) y el encargo solo
+puede estrecharlo (`restricciones`). Sale `prioridad`, que la Constitución no pide y nada usaba. La 0.1.0 queda RETIRADA
+(su esquema se conserva para leer el histórico).
+
+Uso: python3 generar_esquema_encargo.py > ct-g-01_0.2.0.schema.json
 Comprueba la FORMA. Las reglas que cruzan campos las aplica validador/validar_encargo.py.
 """
 import json
@@ -37,30 +41,29 @@ payload = obj({
     "nivel_analisis": {"enum": ["N0", "N1", "N2", "N3"]},
     "fecha_corte": FECHA,
     "sello_corte_ref": ID,
-    "mandato": obj({
-        "benchmark_ref": ID,
+    "mandato_ref": obj({
+        "version": {"type": "string", "pattern": r"^MAN-\d+\.\d+\.\d+\Z"},
+        "huella": {"type": "string", "pattern": r"^[0-9a-f]{64}\Z"},
+    }),
+    "restricciones": {**obj({
         "horizonte_dias": obj({"min": {"type": "integer", "minimum": 1},
                                "max": {"type": "integer", "minimum": 1}}),
-        "apalancamiento_max": {"type": "number", "minimum": 1, "maximum": 10},
         "tamano_max_pct_cartera": {"type": "number", "exclusiveMinimum": 0, "maximum": 100},
-        "instrumentos_permitidos": {"type": "array", "minItems": 1, "uniqueItems": True,
-                                    "items": TXT},
-        "exclusiones": {"type": "array", "uniqueItems": True, "items": TXT},
-    }),
+        "exclusiones": {"type": "array", "minItems": 1, "uniqueItems": True, "items": TXT},
+    }, required=[]), "minProperties": 1},
     "presupuesto": obj({
         "coste_max_eur": {"type": "number", "exclusiveMinimum": 0, "maximum": 1000},
         "tiempo_max_min": {"type": "number", "exclusiveMinimum": 0, "maximum": 1440},
         "entrega_antes_de": FECHAHORA,
     }),
-    "prioridad": {"enum": ["NORMAL", "ALTA"]},
 }, required=["pregunta", "decision_informada", "cartera_destino", "candidato", "nivel_analisis",
-             "fecha_corte", "sello_corte_ref", "mandato", "presupuesto", "prioridad"])
+             "fecha_corte", "sello_corte_ref", "mandato_ref", "presupuesto"])
 
 schema = {
     "$schema": "https://json-schema.org/draft/2020-12/schema",
-    "$id": "https://robot-inversor.local/esquemas/ct-g-01/0.1.0",
+    "$id": "https://robot-inversor.local/esquemas/ct-g-01/0.2.0",
     "title": "CT-G-01 · Encargo de análisis en profundidad",
-    "description": "Versión 0.1.0 (provisional, 0.x). Lo emite el Broker o el gestor de cartera y lo recibe C.",
+    "description": "Versión 0.2.0 (provisional, 0.x). Lo emite el Broker o el gestor de cartera y lo recibe C. El mandato se lee de SC-1 (mandato_ref).",
     "type": "object",
     "properties": {
         "event_id": ID,
@@ -69,7 +72,7 @@ schema = {
         "producer": {"enum": ["BROKER", "GESTOR_TRADING", "GESTOR_TACTICA", "GESTOR_LARGO_PLAZO"]},
         "consumer": {"enum": PERFILES},
         "tipo_mensaje": {"const": "CT-G-01"},
-        "version_esquema": {"type": "string", "pattern": r"^\d+\.\d+\.\d+\Z"},
+        "version_esquema": {"const": "0.2.0"},
         "emitido_en": FECHAHORA,
         "valid_until": FECHAHORA,
         "data_refs": {"type": "array", "minItems": 1, "uniqueItems": True, "items": ID},

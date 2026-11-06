@@ -141,7 +141,6 @@ def main():
         assert o.reabrir("EXP-0001", "que lo actualice", "OPERADOR", AHORA)["ok"]   # reabrir no es ratificar el apartado
         enc = encargo(1, corte="2026-11-05")
         enc["event_id"] = "EV-ENC-0101"
-        enc["payload"]["mandato"]["instrumentos_permitidos"] = ["EUR/USD", "GBP/USD", "USD/JPY"]
         r0 = o.emitir_encargo("EXP-0001", enc, "GESTOR_TACTICA", AHORA)
         if despues:
             despues(o)
