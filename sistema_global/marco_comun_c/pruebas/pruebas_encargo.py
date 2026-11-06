@@ -18,6 +18,9 @@ from validar_sobre import validar, cargar_json  # noqa: E402
 from pruebas_k import construir as construir_sello_k, CAL  # noqa: E402
 from k_calidad import hash_del_sello  # noqa: E402
 from datetime import date  # noqa: E402
+import mandatos as sc1  # noqa: E402
+
+MANDATOS = sc1.MANDATOS_DEFECTO   # SC-1 de partida
 
 _s1 = construir_sello_k()[1]["sello"]                                              # corte 2026-11-05
 _s2 = construir_sello_k(hasta=date(2026, 11, 6), solicitada="2026-11-06")[1]["sello"]   # corte 2026-11-06
@@ -37,6 +40,7 @@ CTX = {
     "apalancamiento_permitido": False,
     "sellos": SELLOS,
     "calendario": CAL,
+    "mandatos": MANDATOS,
 }
 
 
@@ -44,7 +48,7 @@ def encargo_div():
     return {
         "event_id": "EV-ENC-0001", "correlation_id": "COR-0001", "expediente_id": "EXP-0001",
         "producer": "GESTOR_TACTICA", "consumer": "C-DIV", "tipo_mensaje": "CT-G-01",
-        "version_esquema": "0.1.0",
+        "version_esquema": "0.2.0",
         "emitido_en": "2026-11-05T12:00:00+00:00", "valid_until": "2026-11-08T12:00:00+00:00",
         "data_refs": ["PAQ-B-0001", "K-20261105-001"],
         "payload": {
@@ -54,12 +58,10 @@ def encargo_div():
                           "via_acceso": "Futuro de divisas, vencimiento trimestral",
                           "paquete_b_ref": "PAQ-B-0001"},
             "nivel_analisis": "N3", "fecha_corte": "2026-11-05", "sello_corte_ref": "K-20261105-001",
-            "mandato": {"benchmark_ref": "BENCH-EFECTIVO", "horizonte_dias": {"min": 14, "max": 90},
-                        "apalancamiento_max": 1, "tamano_max_pct_cartera": 5,
-                        "instrumentos_permitidos": ["EUR/USD", "GBP/USD"], "exclusiones": []},
+            "mandato_ref": sc1.referencia(MANDATOS["TACTICA"]),
+            "restricciones": {"horizonte_dias": {"min": 14, "max": 90}},
             "presupuesto": {"coste_max_eur": 5.0, "tiempo_max_min": 30,
-                            "entrega_antes_de": "2026-11-05T20:00:00+00:00"},
-            "prioridad": "NORMAL"},
+                            "entrega_antes_de": "2026-11-05T20:00:00+00:00"}},
         "resultado_politica": {"controles": ["SC-6"], "resultado": "APROBADO", "version_politica": "POL-0.1"},
     }
 
@@ -74,8 +76,8 @@ def encargo_rv():
     p["candidato"].update(perfil="C-RV", instrumento="ETF acciones Europa",
                           via_acceso="ETF cotizado en bolsa europea", paquete_b_ref="PAQ-B-0002")
     p["nivel_analisis"] = "N2"
-    p["mandato"].update(horizonte_dias={"min": 1095, "max": 3650},
-                        instrumentos_permitidos=["ETF acciones Europa"], tamano_max_pct_cartera=8)
+    p["mandato_ref"] = sc1.referencia(MANDATOS["LARGO_PLAZO"])
+    p["restricciones"] = {"horizonte_dias": {"min": 1095, "max": 3650}, "tamano_max_pct_cartera": 8}
     e["data_refs"] = ["PAQ-B-0002", "K-20261105-001"]
     return e
 
@@ -92,7 +94,17 @@ def invalidos():
     caso("inv_E01_sin_zona", lambda e: e.update(emitido_en="2026-11-05T12:00:00"))
     caso("inv_E01_falta_campo", lambda e: P(e).pop("pregunta"))
     caso("inv_E01_producer_desconocido", lambda e: e.update(producer="CUALQUIERA"))
-    caso("inv_E01_tamano_cero", lambda e: P(e)["mandato"].update(tamano_max_pct_cartera=0))
+    caso("inv_E01_tamano_cero", lambda e: P(e)["restricciones"].update(tamano_max_pct_cartera=0))
+    caso("inv_E01_version_retirada_010", lambda e: e.update(version_esquema="0.1.0"))
+    caso("inv_E01_mandato_dentro_como_en_010", lambda e: P(e).update(mandato={"benchmark_ref": "BENCH-EFECTIVO"}))
+    caso("inv_E01_restricciones_vacias", lambda e: P(e).update(restricciones={}))
+    caso("inv_E01_restriccion_desconocida", lambda e: P(e)["restricciones"].update(apalancamiento_max=1))
+    caso("inv_E01_contexto_sin_mandatos", lambda e: None, ctx={"mandatos": None})
+    caso("inv_E01_contexto_mandato_mal_formado", lambda e: None, ctx={"mandatos": {**MANDATOS, "TACTICA": {**MANDATOS["TACTICA"], "apalancamiento_max": 5}}})
+    caso("inv_E17_otra_version_del_mandato", lambda e: P(e)["mandato_ref"].update(version="MAN-0.2.0"))
+    caso("inv_E17_huella_de_otro_mandato", lambda e: P(e).update(mandato_ref=sc1.referencia(MANDATOS["TRADING"])))
+    caso("inv_E17_mandato_cambiado_en_sc1", lambda e: None,
+         ctx={"mandatos": {**MANDATOS, "TACTICA": {**MANDATOS["TACTICA"], "tamano_max_pct_cartera": 8.0}}})
     caso("inv_E02_destinatario_distinto", lambda e: e.update(consumer="C-RV"))
     caso("inv_E02_perfil_no_construido", lambda e: (e.update(consumer="C-MP"), P(e)["candidato"].update(perfil="C-MP")))
     caso("inv_E03_caducado", lambda e: (e.update(valid_until="2026-11-05T13:00:00+00:00"),
@@ -104,10 +116,9 @@ def invalidos():
     caso("inv_E04_corte_antiguo", lambda e: (P(e).update(fecha_corte="2026-11-03", sello_corte_ref="K-20261103-001"),
                                        e.update(data_refs=["PAQ-B-0001", "K-20261103-001"])),
          ctx={"fecha_corte_vigente": "2026-11-03"})
-    caso("inv_E05_horizonte_invertido", lambda e: P(e)["mandato"].update(horizonte_dias={"min": 90, "max": 20}))
-    caso("inv_E05_fuera_de_rango_cartera", lambda e: P(e)["mandato"].update(horizonte_dias={"min": 2, "max": 90}))
-    caso("inv_E06_apalancamiento", lambda e: P(e)["mandato"].update(apalancamiento_max=5))
-    caso("inv_E07_tamano_excesivo", lambda e: P(e)["mandato"].update(tamano_max_pct_cartera=50))
+    caso("inv_E05_horizonte_invertido", lambda e: P(e)["restricciones"].update(horizonte_dias={"min": 90, "max": 20}))
+    caso("inv_E05_mas_amplio_que_el_mandato", lambda e: P(e)["restricciones"].update(horizonte_dias={"min": 2, "max": 90}))
+    caso("inv_E07_tamano_mayor_que_el_mandato", lambda e: P(e)["restricciones"].update(tamano_max_pct_cartera=50))
     caso("inv_E08_entrega_antes_de_emitir", lambda e: P(e)["presupuesto"].update(entrega_antes_de="2026-11-05T11:00:00+00:00"))
     caso("inv_E08_entrega_tras_vigencia", lambda e: P(e)["presupuesto"].update(entrega_antes_de="2026-11-20T12:00:00+00:00"))
     caso("inv_E08_presupuesto_insuficiente", lambda e: None,
@@ -115,12 +126,16 @@ def invalidos():
     caso("inv_E08_supera_tope_encargo", lambda e: None, ctx={"coste_max_eur": 1.0})
     caso("inv_E09_abrir_con_n1", lambda e: P(e).update(nivel_analisis="N1"))
     caso("inv_E09_descartar_con_n3", lambda e: P(e).update(decision_informada="DESCARTAR"))
-    caso("inv_E10_instrumento_no_permitido", lambda e: P(e)["mandato"].update(instrumentos_permitidos=["GBP/USD"]))
-    caso("inv_E10_instrumento_excluido", lambda e: P(e)["mandato"].update(exclusiones=["EUR/USD"]))
+    MT = MANDATOS["TACTICA"]
+    for nombre, cambio in (("no_permitido", {"instrumentos_permitidos": ["GBP/USD"]}), ("excluido", {"exclusiones": ["EUR/USD"]}),
+                           ("exclusion_en_minusculas", {"exclusiones": ["eur/usd"]})):
+        mt = {**MT, **cambio}
+        caso(f"inv_E10_mandato_{nombre}", lambda e, mt=mt: P(e).update(mandato_ref=sc1.referencia(mt)),
+             ctx={"mandatos": {**MANDATOS, "TACTICA": mt}})
+    caso("inv_E10_excluido_por_el_encargo", lambda e: P(e)["restricciones"].update(exclusiones=["eur/usd"]))
     caso("inv_E11_gestor_ajeno", lambda e: e.update(producer="GESTOR_TRADING"))
     caso("inv_E12_falta_paquete_b", lambda e: e.update(data_refs=["K-20261105-001"]))
     caso("inv_E12_falta_sello", lambda e: e.update(data_refs=["PAQ-B-0001"]))
-    caso("inv_E10_exclusion_en_minusculas", lambda e: P(e)["mandato"].update(exclusiones=["eur/usd"]))
     caso("inv_E12_misma_referencia", lambda e: (P(e)["candidato"].update(paquete_b_ref="K-20261105-001"),
          e.update(data_refs=["K-20261105-001"])))
     caso("inv_E16_sello_inexistente", lambda e: None, ctx={"sellos": {}})
@@ -138,10 +153,10 @@ def invalidos():
     caso("inv_E13_abrir_con_posicion", lambda e: P(e).update(posicion_id="POS-0001"))
     caso("inv_E14_politica_rechazada", lambda e: e["resultado_politica"].update(resultado="RECHAZADO"))
     caso("inv_E15_tiempo_no_cabe", lambda e: P(e)["presupuesto"].update(tiempo_max_min=600))
-    caso("inv_E06_permiso_como_texto", lambda e: P(e)["mandato"].update(apalancamiento_max=5),
-         ctx={"apalancamiento_permitido": "false"})
+    caso("inv_E01_permiso_como_texto_no_habilita_apalancamiento", lambda e: None,
+         ctx={"apalancamiento_permitido": "false", "mandatos": {**MANDATOS, "TACTICA": {**MANDATOS["TACTICA"], "apalancamiento_max": 5}}})
     caso("inv_E01_contexto_ahora_numerico", lambda e: None, ctx={"ahora": 123})
-    caso("inv_E01_contexto_horizonte_parcial", lambda e: None, ctx={"horizonte_dias": {"TACTICA": 5}})
+    caso("inv_E01_contexto_mandatos_parcial", lambda e: None, ctx={"mandatos": {"TACTICA": MANDATOS["TACTICA"]}})
     caso("inv_E01_coste_demasiado_grande", lambda e: P(e)["presupuesto"].update(coste_max_eur=1e300))
     return out
 

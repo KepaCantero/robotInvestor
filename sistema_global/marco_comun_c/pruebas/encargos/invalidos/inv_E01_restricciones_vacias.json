@@ -7,7 +7,7 @@
     "producer": "GESTOR_TACTICA",
     "consumer": "C-DIV",
     "tipo_mensaje": "CT-G-01",
-    "version_esquema": "0.1.0",
+    "version_esquema": "0.2.0",
     "emitido_en": "2026-11-05T12:00:00+00:00",
     "valid_until": "2026-11-08T12:00:00+00:00",
     "data_refs": [
@@ -27,26 +27,16 @@
       "nivel_analisis": "N3",
       "fecha_corte": "2026-11-05",
       "sello_corte_ref": "K-20261105-001",
-      "mandato": {
-        "benchmark_ref": "BENCH-EFECTIVO",
-        "horizonte_dias": {
-          "min": 2,
-          "max": 90
-        },
-        "apalancamiento_max": 1,
-        "tamano_max_pct_cartera": 5,
-        "instrumentos_permitidos": [
-          "EUR/USD",
-          "GBP/USD"
-        ],
-        "exclusiones": []
+      "mandato_ref": {
+        "version": "MAN-0.1.0",
+        "huella": "8be7017bb5a61dd9ed780b2da641b03f04144ac8c6ee4ed3579381669c2c0b75"
       },
+      "restricciones": {},
       "presupuesto": {
         "coste_max_eur": 5.0,
         "tiempo_max_min": 30,
         "entrega_antes_de": "2026-11-05T20:00:00+00:00"
-      },
-      "prioridad": "NORMAL"
+      }
     },
     "resultado_politica": {
       "controles": [

@@ -5,7 +5,7 @@
   "producer": "BROKER",
   "consumer": "C-RV",
   "tipo_mensaje": "CT-G-01",
-  "version_esquema": "0.1.0",
+  "version_esquema": "0.2.0",
   "emitido_en": "2026-11-05T12:00:00+00:00",
   "valid_until": "2026-11-08T12:00:00+00:00",
   "data_refs": [
@@ -25,25 +25,22 @@
     "nivel_analisis": "N2",
     "fecha_corte": "2026-11-05",
     "sello_corte_ref": "K-20261105-001",
-    "mandato": {
-      "benchmark_ref": "BENCH-EFECTIVO",
+    "mandato_ref": {
+      "version": "MAN-0.1.0",
+      "huella": "6124c642973362c699c60e17976003f4f17eee8934aaed44cb83c28dc5981176"
+    },
+    "restricciones": {
       "horizonte_dias": {
         "min": 1095,
         "max": 3650
       },
-      "apalancamiento_max": 1,
-      "tamano_max_pct_cartera": 8,
-      "instrumentos_permitidos": [
-        "ETF acciones Europa"
-      ],
-      "exclusiones": []
+      "tamano_max_pct_cartera": 8
     },
     "presupuesto": {
       "coste_max_eur": 5.0,
       "tiempo_max_min": 30,
       "entrega_antes_de": "2026-11-05T20:00:00+00:00"
-    },
-    "prioridad": "NORMAL"
+    }
   },
   "resultado_politica": {
     "controles": [

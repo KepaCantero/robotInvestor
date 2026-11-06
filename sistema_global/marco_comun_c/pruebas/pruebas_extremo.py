@@ -22,6 +22,12 @@ T1 = "2026-11-06T09:05:00+00:00"
 HORA_DATOS = "2026-11-06T08:50:00+00:00"
 
 
+def man_apal(apal):
+    """SC-1 con la cartera TACTICA autorizada a apalancarse hasta `apal` (T-51: es el mandato, no el encargo, quien lo fija)."""
+    import mandatos as sc1
+    return {**sc1.MANDATOS_DEFECTO, "TACTICA": {**sc1.MANDATOS_DEFECTO["TACTICA"], "apalancamiento_max": apal}}
+
+
 def candidatos(o, ns=(1, 2), apal=1):
     """Lleva dos expedientes hasta VALIDADA: EXP-0001 en EUR/USD y EXP-0002 en GBP/USD con peores escenarios,
     para que D (que ahora ejecuta el propio Orquestador) dé un ganador claro."""
@@ -29,7 +35,7 @@ def candidatos(o, ns=(1, 2), apal=1):
         eid = f"EXP-{n:04d}"
         enc, sob = encargo(n), sobre(n)
         if apal != 1:
-            enc["payload"]["mandato"]["apalancamiento_max"] = apal
+            enc["payload"]["mandato_ref"] = o.mandato("TACTICA")["referencia"]   # T-51: el mandato de SC-1 lo permite
             sob["payload"]["capital"]["apalancamiento"]["valor"] = apal
         if n == 2:
             enc["payload"]["candidato"]["instrumento"] = "GBP/USD"
@@ -129,7 +135,7 @@ def main():
     r = o.proponer("EXP-0001", {**ENTRADA, "apalancamiento": 2.0}, SALIDA, "GESTOR_TACTICA", AHORA, dim(o, entrada={**ENTRADA, "apalancamiento": 2.0}))
     h.chk("apalancamiento: sin permiso la propuesta se rechaza", not r["ok"] and r["codigo"] == "O-06", r)
     from control_f import POLITICA_DEFECTO
-    o = nuevo({"apalancamiento_permitido": True, "politica_f": {**POLITICA_DEFECTO, "apalancamiento_max": 3.0}}); candidatos(o, apal=2)
+    o = nuevo({"apalancamiento_permitido": True, "politica_f": {**POLITICA_DEFECTO, "apalancamiento_max": 3.0}, "mandatos": man_apal(3)}); candidatos(o, apal=2)
     assert o.comparar(["EXP-0001", "EXP-0002"], "D", AHORA)["ok"]
     b = BrokerSimulado(100000.0, {"EURUSD": 1.10}, HORA_DATOS)
     ap2 = {**ENTRADA, "apalancamiento": 2.0}
@@ -139,7 +145,7 @@ def main():
     inf = informe_f(o, "EXP-0001", 1, cartera=cartera_para_f(b))
     h.chk("apalancamiento: F lo aprueba dentro de su máximo", inf["resultado_politica"]["resultado"] in ("APROBADO", "REDUCIDO"), inf["resultado_politica"])
     h.chk("apalancamiento: se autoriza y se ejecuta", autorizar_op(o, "EXP-0001", inf, AHORA)["ok"] and ejecutar(o, "EXP-0001", b, AHORA)["ok"])
-    o2 = nuevo({"apalancamiento_permitido": True, "politica_f": {**POLITICA_DEFECTO, "apalancamiento_max": 3.0}}); candidatos(o2, apal=5)
+    o2 = nuevo({"apalancamiento_permitido": True, "politica_f": {**POLITICA_DEFECTO, "apalancamiento_max": 3.0}, "mandatos": man_apal(5)}); candidatos(o2, apal=5)
     assert o2.comparar(["EXP-0001", "EXP-0002"], "D", AHORA)["ok"]
     ap5 = {**ENTRADA, "apalancamiento": 5.0}
     r = o2.proponer("EXP-0001", ap5, SALIDA, "GESTOR_TACTICA", AHORA, dim(o2, entrada=ap5, cartera=cartera_para_f(b)))
