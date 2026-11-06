@@ -16,19 +16,29 @@ retrocede), el kill-switch y los registros de K, SC-3, F y G. Este módulo lo gu
   si algo no cuadra (historiales, posiciones, configuración, motor o sellos), se devuelve montado pero con el kill-switch activado
   (O-13), para que el operador vea qué pasó; nunca se sigue operando con un estado que no cuadra.
 
+V0.45 (T-03, tercera parte): con una clave secreta (`clave=` en volcar, guardar, cargar y cargar_de; `nueva_clave`,
+`escribir_clave` y `leer_clave` con un fichero 0600 como bóveda de la Fase 1) el documento lleva clave_id y una firma
+HMAC-SHA256 de su cabecera y de la huella del estado: PE-06 si falta la firma o la clave, si es de otra clave o si no es válida;
+PE-07 si la clave no vale (menos de 32 bytes, fichero legible por otros, no hexadecimal). Sin la clave ya no se puede rehacer
+nada, tampoco lo que no está encadenado. Sin clave todo sigue como en V0.42.
+
 Lo que no hace (T-03 sigue abierta para ello): la huella sin clave detecta un fichero roto o tocado a mano, no a quien la rehace;
-lo que está encadenado lo detecta integridad(), pero avisos, fotos, cotizaciones, manuales o pantallas no van en ninguna cadena.
-Una firma con clave (HMAC con la clave en la bóveda, Fase 3), el reloj real del sistema y las migraciones entre versiones quedan
-pendientes.
+lo que está encadenado lo detecta integridad(), pero avisos, fotos, cotizaciones, manuales o pantallas no van en ninguna cadena
+(desde V0.45, con clave, la firma lo cubre todo). Ni la firma ni las huellas impiden volver a un estado y un diario firmados más
+antiguos, ni recortar el final del diario: para eso hace falta un ancla monótona fuera del alcance de quien toca los ficheros
+(la bóveda real, Fase 3). La rotación de claves, el reloj real del sistema y las migraciones entre versiones quedan pendientes.
 """
 from __future__ import annotations
 
 import copy
 import hashlib
+import hmac
 import json
 import math
 import os
 import re
+import secrets
+import stat
 import tempfile
 from datetime import datetime
 
@@ -36,6 +46,8 @@ from orquestador import CONFIG_DEFECTO, Orquestador
 
 FORMATO = "ESTADO-ORQUESTADOR-0.1.0"
 CLAVES = {"formato", "version_config", "guardado_en", "atributos", "estado", "huella"}
+CLAVES_FIRMADO = CLAVES | {"clave_id", "firma"}   # V0.45: con una clave secreta, el documento va firmado (HMAC-SHA256)
+CLAVE_MIN_BYTES = 32
 FH = re.compile(r"^[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}(\.[0-9]+)?(Z|[+-][0-9]{2}:[0-9]{2})\Z")
 MAX_BYTES = 256 * 1024 * 1024   # un estado más grande no se lee: PE-05 (revisión, hallazgo 7)
 HEX64 = re.compile(r"^[0-9a-f]{64}\Z")
@@ -67,6 +79,76 @@ def _huella(estado) -> str:
     return hashlib.sha256(_canon(estado).encode("utf-8")).hexdigest()
 
 
+def clave_valida(clave) -> bool:
+    """Al menos 32 bytes y no trivial: una clave con menos de 8 valores de byte distintos (por ejemplo, todo ceros) no vale
+    (revisión de V0.45, hallazgo 5). Una clave de nueva_clave() siempre los tiene."""
+    return isinstance(clave, (bytes, bytearray)) and len(clave) >= CLAVE_MIN_BYTES and len(set(bytes(clave))) >= 8
+
+
+def clave_id(clave) -> str:
+    """Identificador público de una clave (no la revela): permite decir «firmado con otra clave» en lugar de «firma rota»."""
+    return hashlib.sha256(b"robot-investor/clave-id/" + bytes(clave)).hexdigest()[:16]
+
+
+def firmar(clave, mensaje: str) -> str:
+    return hmac.new(bytes(clave), mensaje.encode("ascii"), hashlib.sha256).hexdigest()
+
+
+def _firma_doc(clave, doc) -> str:
+    """La firma cubre la cabecera entera y el estado tal como está escrito, en su orden: la huella canónica ordena las claves y
+    el Orquestador recorre expedientes, encargos y sellos en orden de inserción (revisión de V0.45, hallazgo 1). Lleva un prefijo
+    de dominio distinto del de las líneas del diario."""
+    orden = hashlib.sha256(_texto(doc["estado"]).encode("ascii")).hexdigest()
+    cabecera = _canon({k: doc[k] for k in ("formato", "version_config", "guardado_en", "atributos", "huella", "clave_id")})
+    return firmar(clave, "robot-investor/estado/" + cabecera + "|" + orden)
+
+
+def nueva_clave() -> bytes:
+    return secrets.token_bytes(CLAVE_MIN_BYTES)
+
+
+def escribir_clave(ruta, clave) -> dict:
+    """Guarda una clave en un fichero nuevo legible solo por su dueño (0600). En la Fase 1 hace de bóveda; nunca pisa uno existente."""
+    if not clave_valida(clave):
+        return _r(False, "PE-07", f"la clave debe tener al menos {CLAVE_MIN_BYTES} bytes")
+    try:
+        fd = os.open(ruta, os.O_WRONLY | os.O_CREAT | os.O_EXCL, 0o600)
+        with os.fdopen(fd, "w", encoding="ascii") as f:
+            f.write(bytes(clave).hex() + "\n")
+            f.flush()
+            os.fsync(f.fileno())
+    except (OSError, ValueError, TypeError) as ex:
+        return _r(False, "PE-07", f"no se pudo escribir la clave: {type(ex).__name__}")
+    return _r(True, "OK", "clave guardada", clave_id=clave_id(clave))
+
+
+def leer_clave(ruta) -> dict:
+    """Lee una clave escrita con `escribir_clave`. Falla cerrado (PE-07) si no existe, si otros pueden leerla (permisos de grupo u
+    otros), si no es hexadecimal o si es corta. Devuelve {ok, codigo, motivo, clave}."""
+    # se abre una vez, sin seguir enlaces y sin bloquearse (un FIFO), y se comprueba lo abierto, no la ruta: así lo comprobado y lo
+    # leído son lo mismo (revisión de V0.45, hallazgos 5 a 7)
+    fd = None
+    try:
+        fd = os.open(ruta, os.O_RDONLY | getattr(os, "O_NOFOLLOW", 0) | getattr(os, "O_NONBLOCK", 0))
+        st = os.fstat(fd)
+        if not stat.S_ISREG(st.st_mode):
+            return _r(False, "PE-07", "la clave no es un fichero normal", clave=None)
+        if hasattr(os, "geteuid") and st.st_uid != os.geteuid():
+            return _r(False, "PE-07", "el fichero de la clave es de otro usuario", clave=None)
+        if st.st_mode & 0o077:
+            return _r(False, "PE-07", "el fichero de la clave lo pueden leer otros: debe ser 0600", clave=None)
+        texto = os.read(fd, 4096).decode("ascii").strip()
+        clave = bytes.fromhex(texto)
+    except (OSError, ValueError, TypeError, UnicodeDecodeError) as ex:
+        return _r(False, "PE-07", f"no se pudo leer la clave: {type(ex).__name__}", clave=None)
+    finally:
+        if fd is not None:
+            os.close(fd)
+    if not clave_valida(clave):
+        return _r(False, "PE-07", f"la clave debe tener al menos {CLAVE_MIN_BYTES} bytes y no ser trivial", clave=None)
+    return _r(True, "OK", "clave leída", clave=clave)
+
+
 def _r(ok, codigo, motivo, **extra):
     return {"ok": ok, "codigo": codigo, "motivo": motivo, **extra}
 
@@ -85,17 +167,23 @@ def _solo_json(x) -> bool:
     return False
 
 
-def volcar(o, guardado_en) -> str:
-    """El estado entero del Orquestador como texto JSON canónico. Lanza ValueError si el instante es ilegible o el estado tiene
-    algo que JSON no guarda tal cual (así un error de programación no deja un fichero que luego cargaría distinto)."""
+def volcar(o, guardado_en, clave=None) -> str:
+    """El estado entero del Orquestador como texto JSON canónico. Lanza ValueError si el instante es ilegible, la clave no vale o
+    el estado tiene algo que JSON no guarda tal cual (así un error de programación no deja un fichero que luego cargaría distinto).
+    Con clave, el documento va firmado (clave_id y firma HMAC-SHA256)."""
     if not _instante_ok(guardado_en):
         raise ValueError("instante de guardado ilegible")
+    if clave is not None and not clave_valida(clave):
+        raise ValueError(f"la clave debe tener al menos {CLAVE_MIN_BYTES} bytes")
     estado = {k: v for k, v in vars(o).items()}
     if not _solo_json(estado):
         malos = sorted(k for k, v in estado.items() if not _solo_json(v))
         raise ValueError(f"el estado tiene valores que JSON no guarda tal cual: {malos[:5]}")
     doc = {"formato": FORMATO, "version_config": o.cfg["version_config"], "guardado_en": guardado_en,
            "atributos": sorted(estado), "estado": estado, "huella": _huella(estado)}
+    if clave is not None:
+        doc["clave_id"] = clave_id(clave)
+        doc["firma"] = _firma_doc(clave, doc)
     return _texto(doc)
 
 
@@ -108,12 +196,12 @@ def fsync_carpeta(carpeta):
         os.close(fd)
 
 
-def guardar(o, ruta, guardado_en) -> dict:
+def guardar(o, ruta, guardado_en, clave=None) -> dict:
     """Escribe el estado en `ruta` de forma atómica. Nunca lanza: devuelve {ok, codigo, motivo, ruta, huella}."""
     try:
-        texto = volcar(o, guardado_en)
+        texto = volcar(o, guardado_en, clave)
     except (ValueError, TypeError, RecursionError) as ex:
-        return _r(False, "PE-01", f"no se puede volcar el estado: {str(ex)[:160]}")
+        return _r(False, "PE-07" if "clave" in str(ex) else "PE-01", f"no se puede volcar el estado: {str(ex)[:160]}")
     tmp = None
     try:
         carpeta = os.path.dirname(os.path.abspath(ruta)) or "."
@@ -141,7 +229,7 @@ def _atributos_de_este_codigo(estado):
     return set(vars(Orquestador(estado["cfg"], estado["cal_def"])))
 
 
-def cargar(texto) -> dict:
+def cargar(texto, clave=None) -> dict:
     """Vuelve a montar un Orquestador desde el texto de `volcar`. Nunca lanza. Devuelve {ok, codigo, motivo, orquestador}:
     orquestador es None si no se pudo montar (PE-01 a PE-04) y el Orquestador montado si se montó (OK, o O-13 con el
     kill-switch activado si integridad() no está vacía)."""
@@ -149,10 +237,29 @@ def cargar(texto) -> dict:
         doc = json.loads(texto, parse_constant=lambda c: (_ for _ in ()).throw(ValueError(c)))
     except (ValueError, TypeError, RecursionError):
         return _r(False, "PE-01", "el texto no es JSON legible (o trae NaN o infinitos)", orquestador=None)
-    if not (isinstance(doc, dict) and set(doc) == CLAVES and isinstance(doc["estado"], dict) and isinstance(doc["atributos"], list)
+    if clave is not None and not clave_valida(clave):
+        return _r(False, "PE-07", f"la clave debe tener al menos {CLAVE_MIN_BYTES} bytes", orquestador=None)
+    if not (isinstance(doc, dict) and set(doc) in (CLAVES, CLAVES_FIRMADO) and isinstance(doc["estado"], dict) and isinstance(doc["atributos"], list)
             and isinstance(doc["huella"], str) and HEX64.match(doc["huella"]) and _instante_ok(doc["guardado_en"])
             and isinstance(doc["formato"], str) and isinstance(doc["version_config"], str)):
         return _r(False, "PE-01", "el documento no tiene la forma de un estado guardado", orquestador=None)
+    # V0.45: la firma va antes que nada más; sin la clave no se puede comprobar, y un documento sin firma no vale si hay clave
+    firmado = set(doc) == CLAVES_FIRMADO
+    if firmado and clave is None:
+        return _r(False, "PE-06", "el estado está firmado: hace falta la clave para comprobarlo", orquestador=None)
+    if not firmado and clave is not None:
+        return _r(False, "PE-06", "el estado no está firmado y se esperaba firmado con la clave", orquestador=None)
+    if firmado:
+        if not (isinstance(doc["clave_id"], str) and isinstance(doc["firma"], str) and HEX64.match(doc["firma"])):
+            return _r(False, "PE-01", "firma o identificador de clave mal formados", orquestador=None)
+        if doc["clave_id"] != clave_id(clave):
+            return _r(False, "PE-06", "el estado está firmado con otra clave", orquestador=None)
+        try:
+            buena = hmac.compare_digest(_firma_doc(clave, doc), doc["firma"])
+        except (ValueError, TypeError, RecursionError):
+            buena = False
+        if not buena:
+            return _r(False, "PE-06", "la firma del estado no es válida: se tocó con la clave o sin ella", orquestador=None)
     try:
         if _huella(doc["estado"]) != doc["huella"]:
             return _r(False, "PE-02", "la huella del estado no cuadra: el fichero está roto o se tocó a mano", orquestador=None)
@@ -194,7 +301,7 @@ def cargar(texto) -> dict:
     return _r(True, "OK", "estado cargado", orquestador=o, guardado_en=doc["guardado_en"])
 
 
-def cargar_de(ruta) -> dict:
+def cargar_de(ruta, clave=None) -> dict:
     """Lee el fichero y llama a `cargar`. Nunca lanza: un fichero que no se puede leer es PE-05."""
     try:
         with open(ruta, "rb") as f:
@@ -204,4 +311,4 @@ def cargar_de(ruta) -> dict:
         texto = datos.decode("utf-8")
     except (OSError, UnicodeDecodeError, ValueError, TypeError, MemoryError) as ex:   # hallazgos 6 y 7
         return _r(False, "PE-05", f"no se pudo leer el estado: {type(ex).__name__}", orquestador=None)
-    return cargar(texto)
+    return cargar(texto, clave)
