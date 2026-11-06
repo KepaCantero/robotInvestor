@@ -31,7 +31,7 @@ S1 = SELLOS_ENC["K-20261105-001"]
 S2 = SELLOS_ENC["K-20261106-001"]
 STOP = {"id": "STOP-1", "tipo": "STOP", "metrica": "precio", "operador": "<=", "umbral": 1.05, "unidad": "USD"}
 OBJ = {"id": "OBJ-1", "tipo": "OBJETIVO", "metrica": "precio", "operador": ">=", "umbral": 1.14, "unidad": "USD"}
-INV = {"id": "INV-1", "tipo": "INVALIDEZ", "metrica": "precio_cierre", "operador": "<", "umbral": 1.05, "unidad": "EUR"}   # la del sobre
+INV = {"id": "INV-1", "tipo": "INVALIDEZ", "metrica": "precio_cierre", "operador": "<", "umbral": 1.05, "unidad": "USD"}   # la del sobre
 ENTRADA = {"limite": 1.10, "ventana_hasta": "2026-11-08T12:00:00+00:00", "instrumento": "EURUSD", "activo_base": "EUR",
            "via_acceso": "Futuro de divisas, vencimiento trimestral",
            "apalancamiento": 1.0, "cantidad": 100.0}

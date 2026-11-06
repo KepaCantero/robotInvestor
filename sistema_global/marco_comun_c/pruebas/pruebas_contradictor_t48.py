@@ -109,7 +109,7 @@ def main():
                                                                       {**informe(S), "payload": {**informe(S)["payload"], "escenarios_fallo": None}})))
 
     # ---------------------------------------------------------------- Orquestador con la configuración por defecto
-    h.chk("por_defecto_exige_n2_y_n3", CONFIG_DEFECTO["exige_contradictor_en"] == ["N2", "N3"] and CONFIG_DEFECTO["version_config"] == "CFG-0.2.0")
+    h.chk("por_defecto_exige_n2_y_n3", CONFIG_DEFECTO["exige_contradictor_en"] == ["N2", "N3"] and CONFIG_DEFECTO["version_config"] >= "CFG-0.2.0")
     o = orq()
     eid = en_analisis(o)
     antes = estado(o)
@@ -236,7 +236,7 @@ def main():
     leeme = (AQUI.parent / "LEEME.md").read_text(encoding="utf-8")
     h.chk("R9_leeme_no_sobrescribe_el_esquema_retirado", "generar_esquema_contradictor.py > esquemas/ct-g-03_0.1.0.schema.json" not in leeme
           and "generar_esquema_contradictor.py > esquemas/ct-g-03_0.2.0.schema.json" in leeme)
-    h.chk("R8_registro_REG030", ct.registro()["version_registro"] == "REG-0.3.0")
+    h.chk("R8_registro_REG030", ct.registro()["version_registro"] >= "REG-0.3.0")
     # extremo a extremo con la configuración por defecto: dos candidatos con informe, comparación y propuesta
     o = orq(autoria_c={"C-DIV": C_DIV})
     for n in (1, 2):

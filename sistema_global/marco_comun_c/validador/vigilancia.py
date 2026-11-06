@@ -10,7 +10,11 @@ H-09 instante sospechoso (no se hace nada); H-10 salida preparada para el operad
 H-12 reducción parcial por una condición OBJETIVO que declara su fracción (una sola vez; si ya no cabe, se informa y se sigue);
 H-13 posición con el estado de control alterado (no se envía nada por ella);
 H-14 llegó la fecha de revisión de la tesis: la posición pasa a EN_REVISION y la confirma (con fecha nueva) o la cierra el operador;
-H-15 se cumplió la condición de reapertura de un expediente en observación (aviso O-31; se puede re-encargar).
+H-15 se cumplió la condición de reapertura de un expediente en observación (aviso O-31; se puede re-encargar);
+H-16 se cumple un escenario de fallo del Contradictor o una invalidez por una métrica que no es el precio: pide revisión y propone,
+nunca vende (T-49); H-17 la pérdida no realizada pasa el umbral configurado (y otra vez por cada múltiplo): pide revisión;
+H-18 falta el dato de una señal (o llega sin unidad, en otra unidad o no numérico): no se evalúa;
+H-19 fallo inesperado al vigilar una posición: se informa (degrada su cartera) y se sigue con las demás.
 """
 from __future__ import annotations
 
@@ -41,7 +45,27 @@ def _valor_cumplido(c, pm):
 
 
 def _num(x):
-    return isinstance(x, (int, float)) and not isinstance(x, bool) and math.isfinite(x)
+    try:   # un entero enorme desborda math.isfinite (revisión T-49, R-01)
+        return isinstance(x, (int, float)) and not isinstance(x, bool) and math.isfinite(x)
+    except OverflowError:
+        return False
+
+
+def _dato_senal(x, d, metricas):
+    """T-49: el valor con el que se evalúa una señal, o (None, motivo). El precio sale del dato fresco de la pasada; otra métrica
+    llega como {"valor", "unidad"} y su unidad debe ser la de la señal (revisión, R-03)."""
+    if x["metrica"] == "precio":
+        return d["precio"], None
+    m = metricas.get(x["metrica"])
+    if m is None:
+        return None, f"sin dato de {x['metrica']}"
+    if not (isinstance(m, dict) and set(m) == {"valor", "unidad"}):
+        return None, f"el dato de {x['metrica']} debe ser {{valor, unidad}}"
+    if m["unidad"] != x["unidad"]:
+        return None, f"el dato de {x['metrica']} llega en {str(m['unidad'])[:12]!r} y la señal está en {x['unidad']!r}"
+    if not _num(m["valor"]):
+        return None, f"el dato de {x['metrica']} no es numérico"
+    return m["valor"], None
 
 
 def _dato_fresco(d, ahora, max_edad_min):
@@ -54,8 +78,35 @@ def _dato_fresco(d, ahora, max_edad_min):
         return False
 
 
+def _senales(o, pid, d, ahora, acciones, no_eval):
+    """T-49: escenarios de fallo, invalidez por otras métricas y pérdida no realizada. Solo piden revisión: nada va al
+    intermediario. Se evalúan con el dato fresco de la pasada (d) sobre una posición abierta o en revisión."""
+    from orquestador import nivel_perdida
+    p = o.posiciones[pid]
+    if p["estado"] not in ("ABIERTA", "EN_REVISION") or not o.posicion_integra(pid):
+        return
+    metricas = d.get("metricas") if isinstance(d.get("metricas"), dict) else {}
+    for x in p.get("senales") or []:
+        if x["clave"] in p["senales_disparadas"]:
+            continue
+        v, motivo = _dato_senal(x, d, metricas)
+        if motivo:
+            no_eval.append({"posicion": pid, "senal": x["clave"], "regla": "H-18", "motivo": motivo})
+            continue
+        if OPERADORES[x["operador"]](v, x["umbral"]):
+            r = o.registrar_senal(pid, "SENAL", x["clave"], v, "H", _instante(o, ahora))
+            acciones.append({"posicion": pid, "regla": "H-16", "senal": x["clave"], "ok": r["ok"], "codigo": r["codigo"]})
+    nv = nivel_perdida(p, d.get("precio"), o.cfg["alerta_perdida_pct"])   # la misma cuenta que el Orquestador (R-07)
+    if nv is None:
+        no_eval.append({"posicion": pid, "senal": "PERDIDA", "regla": "H-18", "motivo": "no se puede calcular la pérdida"})
+    elif nv[1] > p["perdida_alertada"]:
+        r = o.registrar_senal(pid, "PERDIDA", None, d["precio"], "H", _instante(o, ahora))
+        acciones.append({"posicion": pid, "regla": "H-17", "perdida_pct": round(nv[0], 4), "nivel": nv[1], "ok": r["ok"], "codigo": r["codigo"]})
+
+
 def vigilar(o, broker, datos, ahora, max_edad_min=MAX_EDAD_MIN):
-    """datos: {instrumento: {"precio": número, "hora": ISO con zona}}. Devuelve las acciones y avisos de esta pasada.
+    """datos: {instrumento: {"precio": número, "hora": ISO con zona, "metricas": {métrica: {"valor": número, "unidad": texto}}}}
+    ("metricas" es opcional: solo lo usan las señales de T-49). Devuelve las acciones y avisos de esta pasada.
     max_edad_min solo puede ser más estricto que el parámetro (T-25): otro valor se ignora."""
     if not (_num(max_edad_min) and 0 < max_edad_min <= MAX_EDAD_MIN):
         max_edad_min = MAX_EDAD_MIN
@@ -107,10 +158,11 @@ def vigilar(o, broker, datos, ahora, max_edad_min=MAX_EDAD_MIN):
             hechos.add(pid)
     # Conciliar antes de cualquier decisión: una diferencia degrada la cartera y el cierre automático ya no se hace
     conc = conciliar(o, broker, ahora)
-    for pid in sorted(o.posiciones):
+
+    def _una(pid):
         p = o.posiciones[pid]
         if p["estado"] == "CERRADA" or pid in hechos:
-            continue
+            return
         if p["estado"] == "ABIERTA" and p.get("fecha_revision") and date.fromisoformat(p["fecha_revision"]) <= _dt(ahora).astimezone(timezone.utc).date():
             r = o.posicion_transicion(pid, "EN_REVISION", "H", _instante(o, ahora), motivo=f"llegó la fecha de revisión {p['fecha_revision']}")
             if r["ok"]:
@@ -122,10 +174,12 @@ def vigilar(o, broker, datos, ahora, max_edad_min=MAX_EDAD_MIN):
             o.degradar(p["cartera"], f"sin precio fresco de {p['instrumento']}", "H", _instante(o, ahora))
             reg = _aviso(o, [{"tipo": "DATO_VIEJO", "ref": pid, "detalle": f"sin precio fresco de {p['instrumento']}; no se vigila la posición"}], ahora)
             acciones.append({"posicion": pid, "regla": "H-03", "ok": False, "codigo": "H-03", "aviso_registrado": reg})
-            continue
+            return
+        n_acc = len(acciones)
         for c in p["condiciones_salida"]["condiciones"]:
             if c["metrica"] != "precio":
-                no_eval.append({"posicion": pid, "condicion": c["id"], "regla": "H-06"})
+                if c["tipo"] != "INVALIDEZ":   # una invalidez con otra métrica es una señal (H-16): pide revisión, no vende
+                    no_eval.append({"posicion": pid, "condicion": c["id"], "regla": "H-06"})
                 continue
             if c["id"] in p.get("condiciones_consumidas", []):   # una toma parcial ya hecha no se repite
                 continue
@@ -150,6 +204,14 @@ def vigilar(o, broker, datos, ahora, max_edad_min=MAX_EDAD_MIN):
                 acciones.append({"posicion": pid, "regla": "H-05" if c["tipo"] == "STOP" else "H-02", "condicion": c["id"],
                                  "ok": r["ok"], "codigo": r["codigo"]})
                 break
+        if not any(x.get("posicion") == pid and x["regla"] in ("H-02", "H-05", "H-10", "H-12") for x in acciones[n_acc:]):
+            _senales(o, pid, d, ahora, acciones, no_eval)   # si esta pasada ya actuó por una salida declarada, no se añade ruido
+    for pid in sorted(o.posiciones):   # un fallo inesperado en una posición se informa y no deja sin vigilar a las demás (R-01)
+        try:
+            _una(pid)
+        except Exception as ex:   # noqa: BLE001
+            reg = _aviso(o, [{"tipo": "VIGILANCIA_FALLIDA", "ref": pid, "detalle": f"{type(ex).__name__}: no se vigiló la posición en esta pasada"}], ahora)
+            acciones.append({"posicion": pid, "regla": "H-19", "ok": False, "codigo": "H-19", "aviso_registrado": reg})
     rr = o.revisar_reaperturas(datos if isinstance(datos, dict) else {}, "H", ahora, max_edad_min)   # T-46: con la misma frescura que H
     for eid in rr.get("cumplidas", []):
         acciones.append({"expediente": eid, "posicion": None, "regla": "H-15", "ok": True, "codigo": "H-15"})

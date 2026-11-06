@@ -41,7 +41,7 @@
           "metrica": "precio_cierre",
           "operador": "<",
           "umbral": 1.05,
-          "unidad": "EUR"
+          "unidad": "USD"
         }
       ]
     },

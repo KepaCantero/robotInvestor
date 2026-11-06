@@ -1,5 +1,5 @@
 {
-  "version_registro": "REG-0.3.0",
+  "version_registro": "REG-0.4.0",
   "contratos": [
     {
       "tipo": "CT-G-01",
@@ -169,15 +169,21 @@
       "nombre": "Alerta o petición de revisión de posición",
       "de_a": "H → Broker/gestor",
       "estado": "ESQUEMA",
-      "version": "0.1.0",
-      "esquema": "ct-g-10_0.1.0.schema.json",
+      "version": "0.2.0",
+      "esquema": "ct-g-10_0.2.0.schema.json",
       "envoltura": "COMPLETA",
       "versiones": [
+        {
+          "version": "0.2.0",
+          "esquema": "ct-g-10_0.2.0.schema.json",
+          "envoltura": "COMPLETA",
+          "estado": "VIGENTE"
+        },
         {
           "version": "0.1.0",
           "esquema": "ct-g-10_0.1.0.schema.json",
           "envoltura": "COMPLETA",
-          "estado": "VIGENTE"
+          "estado": "RETIRADA"
         }
       ]
     },

@@ -122,6 +122,13 @@ ESQUEMAS[("CT-G-10", "0.1.0")] = envoltura(
          "tipo": {"enum": ["CIERRE_PREPARADO", "REDUCCION_PREPARADA", "REVISION", "OTRA"]}, "texto": TXT}),
     producer={"const": "H"}, consumer={"enum": ["GESTOR_TRADING", "GESTOR_TACTICA", "GESTOR_LARGO_PLAZO", "OPERADOR"]})
 
+ESQUEMAS[("CT-G-10", "0.2.0")] = envoltura(   # T-49: alertas de escenario de fallo, invalidez por otra métrica y pérdida
+    "CT-G-10", "0.2.0", "Alerta o petición de revisión de posición", "H", "Broker/gestor",
+    obj({"posicion_id": ID, "cartera": CARTERA, "estado_posicion": {"enum": ["ABIERTA", "EN_REVISION", "REDUCIENDO", "CERRANDO", "CERRADA"]},
+         "tipo": {"enum": ["CIERRE_PREPARADO", "REDUCCION_PREPARADA", "REVISION", "ESCENARIO_FALLO", "INVALIDEZ", "PERDIDA", "OTRA"]},
+         "texto": TXT}),
+    producer={"const": "H"}, consumer={"enum": ["GESTOR_TRADING", "GESTOR_TACTICA", "GESTOR_LARGO_PLAZO", "OPERADOR"]})
+
 ESQUEMAS[("CT-G-14", "0.1.0")] = {   # 0.1.0 RETIRADA: envoltura propia (contrato/version); se conserva para leer el histórico
     "$schema": "https://json-schema.org/draft/2020-12/schema", "$id": "https://robot-inversor.local/esquemas/ct-g-14/0.1.0",
     "title": "CT-G-14 · Registro de ejecución manual",
@@ -177,7 +184,7 @@ ESQUEMAS[("CT-G-14", "0.2.0")] = {
 ESQUEMAS[("CT-G-14", "0.2.0")]["description"] += " Las reglas RM-01 a RM-11 las aplica validador/manual_g.py; data_refs = las órdenes del payload."
 
 # Versiones retiradas: su esquema se conserva para leer el histórico (contratos.validar(..., historico=True)); ningún consumidor las acepta
-RETIRADAS = {"CT-G-02": [("0.1.0", "ct-g-02_0.1.0.schema.json", "COMPLETA")], "CT-G-03": [("0.1.0", "ct-g-03_0.1.0.schema.json", "COMPLETA")], "CT-G-08": [("0.1.0", "ct-g-08_0.1.0.schema.json", "PARCIAL")], "CT-G-14": [("0.1.0", "ct-g-14_0.1.0.schema.json", "PROPIA")]}
+RETIRADAS = {"CT-G-10": [("0.1.0", "ct-g-10_0.1.0.schema.json", "COMPLETA")], "CT-G-02": [("0.1.0", "ct-g-02_0.1.0.schema.json", "COMPLETA")], "CT-G-03": [("0.1.0", "ct-g-03_0.1.0.schema.json", "COMPLETA")], "CT-G-08": [("0.1.0", "ct-g-08_0.1.0.schema.json", "PARCIAL")], "CT-G-14": [("0.1.0", "ct-g-14_0.1.0.schema.json", "PROPIA")]}
 
 REGISTRO = [
     ("CT-G-01", "Encargo de análisis", "Broker/gestor → C", "ESQUEMA", "0.1.0", "ct-g-01_0.1.0.schema.json", "COMPLETA"),
@@ -189,7 +196,7 @@ REGISTRO = [
     ("CT-G-07", "Plan de cartera por libro", "E → F", "PENDIENTE", None, None, "E solo dimensiona una propuesta; el plan por libro es de Fase 2"),
     ("CT-G-08", "Resultado de control", "F → G, Broker", "ESQUEMA", "0.2.0", "ct-g-08_0.2.0.schema.json", "COMPLETA"),
     ("CT-G-09", "Orden con su protección", "E/F → G", "ESQUEMA", "0.1.0", "ct-g-09_0.1.0.schema.json", "COMPLETA"),
-    ("CT-G-10", "Alerta o petición de revisión de posición", "H → Broker/gestor", "ESQUEMA", "0.1.0", "ct-g-10_0.1.0.schema.json", "COMPLETA"),
+    ("CT-G-10", "Alerta o petición de revisión de posición", "H → Broker/gestor", "ESQUEMA", "0.2.0", "ct-g-10_0.2.0.schema.json", "COMPLETA"),
     ("CT-G-11", "Consulta al Broker o al operador", "Cualquiera → Broker", "PENDIENTE", None, None, "sin bloque que la emita en Fase 1"),
     ("CT-G-12", "Seguimiento de encargo", "Bloque → Orquestador", "PENDIENTE", None, None, "hoy el gasto se registra con registrar_gasto, sin mensaje"),
     ("CT-G-13", "Propuesta de cambio y veredicto de validación", "I → J → operador", "PENDIENTE", None, None, "bloques I y J no construidos"),
@@ -209,7 +216,7 @@ def main():
             c["versiones"] = [{"version": v, "esquema": f, "envoltura": x, "estado": "VIGENTE"}] + \
                              [{"version": rv, "esquema": rf, "envoltura": rx, "estado": "RETIRADA"} for rv, rf, rx in RETIRADAS.get(t, [])]
         reg.append(c)
-    (AQUI / "registro_contratos.json").write_text(json.dumps({"version_registro": "REG-0.3.0", "contratos": reg}, ensure_ascii=False, indent=2) + "\n",
+    (AQUI / "registro_contratos.json").write_text(json.dumps({"version_registro": "REG-0.4.0", "contratos": reg}, ensure_ascii=False, indent=2) + "\n",
                                                   encoding="utf-8")
     print(f"{len(ESQUEMAS)} esquemas y el registro de {len(REGISTRO)} contratos")
 

@@ -51,7 +51,7 @@ def base(perfil, clase, nivel, instrumento, via):
                 "supuestos": ["Supuesto A de ejemplo"],
                 "condiciones_invalidez": [{
                     "id": "INV-1", "descripcion": "Cierre por debajo del nivel de invalidez",
-                    "metrica": "precio_cierre", "operador": "<", "umbral": 1.05, "unidad": "EUR"}]},
+                    "metrica": "precio_cierre", "operador": "<", "umbral": 1.05, "unidad": "USD"}]},
             "entrada_salida": {
                 "entrada": {"limite": cifra(1.12, "USD", n=30), "ventana_hasta": "2026-11-08T18:00:00+00:00",
                             "descripcion": "Compra limitada mientras dure la vigencia del sobre"},
