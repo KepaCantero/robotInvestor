@@ -145,9 +145,13 @@ def main():
     # el tipo de un par con el euro debe cuadrar con su precio
     o = nuevo(); hasta(o, "COMPARADA")
     d = dim(o)
-    o.registrar_cartera(cart(tipos_cambio_eur={"USD": 1.35}, fecha_hora="2026-11-06T08:55:00+00:00"), "G", AHORA, cuenta="SIM-1")   # en rango, pero 1,35 x 1,10 = 1,49
-    d = {**d, "cartera": o.cartera_f()}
-    h.chk("tipo_que_no_cuadra_con_el_par_O29", o.proponer(EID, ENTRADA, SALIDA, "GESTOR_TACTICA", AHORA, d)["codigo"] == "O-29")
+    r = o.registrar_cartera(cart(tipos_cambio_eur={"USD": 1.35}, fecha_hora="2026-11-06T08:55:00+00:00"), "G", AHORA, cuenta="SIM-1")   # en rango, pero 1,35 x 1,10 = 1,49
+    h.chk("tipo_que_no_cuadra_con_K_no_se_registra_O29", r["codigo"] == "O-29" and "K" in r["motivo"], r)   # T-42: ya al registrar la foto
+    o2 = nuevo({"tolerancia_tipo_k_rel": 0.5}); hasta(o2, "COMPARADA")   # sin el contraste de K, lo para la propuesta
+    d2 = dim(o2)
+    assert o2.registrar_cartera(cart(tipos_cambio_eur={"USD": 1.35}, fecha_hora="2026-11-06T08:55:00+00:00"), "G", AHORA, cuenta="SIM-1")["ok"]
+    d2 = {**d2, "cartera": o2.cartera_f()}
+    h.chk("tipo_que_no_cuadra_con_el_par_O29", o2.proponer(EID, ENTRADA, SALIDA, "GESTOR_TACTICA", AHORA, d2)["codigo"] == "O-29")
     h.chk("seis_letras_que_no_son_un_par", divisa_cotizada("ABCJPY") is None and divisa_cotizada("EUREKA") is None and divisa_cotizada("EUR-USD") == "USD")
     # conversión en cada tope (que las pruebas con tipo neutro no veían)
     c5 = cart(tipos_cambio_eur={"USD": 0.5}, posiciones=[{"instrumento": "EURGBP", "activo_base": "EUR", "valor_eur": 15000.0}])

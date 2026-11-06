@@ -1,10 +1,10 @@
 {
-  "hash_sello": "27d5822ebbc8c2dc0314007424e40aa69ad6456538c32a058fed4cc6998daa38",
+  "hash_sello": "8c83a40bb5181251bec5b7b561943a85cd8d81878bed292ee810653a63034689",
   "sello_id": "K-20261106-001",
-  "version_esquema": "0.1.0",
+  "version_esquema": "0.2.0",
   "fecha_corte": "2026-11-06",
   "fecha_solicitada": "2026-11-07",
-  "emitido_en": "2026-11-06T08:00:00+00:00",
+  "emitido_en": "2026-11-07T08:00:00+00:00",
   "cartera": "TACTICA",
   "mercados": [
     {
@@ -16,46 +16,86 @@
     {
       "fuente_id": "SRC-EURUSD",
       "estado": "DISPONIBLE",
+      "instrumento": "EURUSD",
       "version_conjunto": "DS-1",
       "ultima_observacion": "2026-11-06",
       "antiguedad_dias_habiles": 0,
-      "hash": "7fd6d70e78d718b6ad1c8c3e5034e9c750a8aca97c1bf151f1971385cacf500a"
+      "hash": "7fd6d70e78d718b6ad1c8c3e5034e9c750a8aca97c1bf151f1971385cacf500a",
+      "ultimo_cierre": 1.09653,
+      "procedencia": {
+        "licencia": "INTERMEDIARIO-USO-INTERNO",
+        "obtenido_en": "2026-11-06T22:30:00+00:00",
+        "proveedor": "PROV-SIM",
+        "referencia": "conjunto simulado SRC-EURUSD"
+      }
     },
     {
       "fuente_id": "SRC-EURUSD-B",
       "estado": "DISPONIBLE",
+      "instrumento": "EURUSD-B",
       "version_conjunto": "DS-1",
       "ultima_observacion": "2026-11-06",
       "antiguedad_dias_habiles": 0,
-      "hash": "7fd6d70e78d718b6ad1c8c3e5034e9c750a8aca97c1bf151f1971385cacf500a"
+      "hash": "7fd6d70e78d718b6ad1c8c3e5034e9c750a8aca97c1bf151f1971385cacf500a",
+      "ultimo_cierre": 1.09653,
+      "procedencia": {
+        "licencia": "INTERMEDIARIO-USO-INTERNO",
+        "obtenido_en": "2026-11-06T22:30:00+00:00",
+        "proveedor": "PROV-SIM",
+        "referencia": "conjunto simulado SRC-EURUSD-B"
+      }
     },
     {
       "fuente_id": "SRC-USDJPY",
       "estado": "DISPONIBLE",
+      "instrumento": "USDJPY",
       "version_conjunto": "DS-1",
       "ultima_observacion": "2026-11-06",
       "antiguedad_dias_habiles": 0,
-      "hash": "d6093bb79de58d22fde22a103152bd7c2bcc5779c3622c68f56bc0dd301f8a70"
+      "hash": "d6093bb79de58d22fde22a103152bd7c2bcc5779c3622c68f56bc0dd301f8a70",
+      "ultimo_cierre": 149.4339,
+      "procedencia": {
+        "licencia": "INTERMEDIARIO-USO-INTERNO",
+        "obtenido_en": "2026-11-06T22:30:00+00:00",
+        "proveedor": "PROV-SIM",
+        "referencia": "conjunto simulado SRC-USDJPY"
+      }
     },
     {
       "fuente_id": "SRC-EURJPY",
       "estado": "DISPONIBLE",
+      "instrumento": "EURJPY",
       "version_conjunto": "DS-1",
       "ultima_observacion": "2026-11-06",
       "antiguedad_dias_habiles": 0,
-      "hash": "78564b4df4a1b565c31308ff791eef5c65b17f1bf9749fdba139042b7d6f4490"
+      "hash": "78564b4df4a1b565c31308ff791eef5c65b17f1bf9749fdba139042b7d6f4490",
+      "ultimo_cierre": 163.858754,
+      "procedencia": {
+        "licencia": "INTERMEDIARIO-USO-INTERNO",
+        "obtenido_en": "2026-11-06T22:30:00+00:00",
+        "proveedor": "PROV-SIM",
+        "referencia": "conjunto simulado SRC-EURJPY"
+      }
     },
     {
       "fuente_id": "SRC-GBPUSD",
       "estado": "DISPONIBLE",
+      "instrumento": "GBPUSD",
       "version_conjunto": "DS-1",
       "ultima_observacion": "2026-11-06",
       "antiguedad_dias_habiles": 0,
-      "hash": "a68b04a2aed0c33d62e9a40d6f147b380fbfbf58a842c6677404673b69bfcad6"
+      "hash": "a68b04a2aed0c33d62e9a40d6f147b380fbfbf58a842c6677404673b69bfcad6",
+      "ultimo_cierre": 1.298799,
+      "procedencia": {
+        "licencia": "INTERMEDIARIO-USO-INTERNO",
+        "obtenido_en": "2026-11-06T22:30:00+00:00",
+        "proveedor": "PROV-SIM",
+        "referencia": "conjunto simulado SRC-GBPUSD"
+      }
     }
   ],
   "version_ajustes": "AJ-2026.1",
-  "version_reglas": "Q-0.1.0",
+  "version_reglas": "Q-0.2.0",
   "resultado_reglas": [
     {
       "regla": "Q-01",
@@ -109,8 +149,17 @@
     {
       "regla": "Q-13",
       "resultado": "OK"
+    },
+    {
+      "regla": "Q-14",
+      "resultado": "OK"
+    },
+    {
+      "regla": "Q-15",
+      "resultado": "OK"
     }
   ],
   "resultado_global": "ADVERTENCIA",
+  "eventos": [],
   "estado": "VIGENTE"
 }

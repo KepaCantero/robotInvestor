@@ -1,7 +1,7 @@
 {
-  "hash_sello": "c313327423b2e2a76d578f4786028431f1ff700493d49631d8cbc95e962c20e5",
+  "hash_sello": "4c4c5ad3444f341b7f0284fec3031d7de3ed9bc82bc742f9a4a6820579a5ad52",
   "sello_id": "K-20261105-001",
-  "version_esquema": "0.1.0",
+  "version_esquema": "0.2.0",
   "fecha_corte": "2026-11-05",
   "fecha_solicitada": "2026-11-05",
   "emitido_en": "2026-11-06T08:00:00+00:00",
@@ -16,46 +16,86 @@
     {
       "fuente_id": "SRC-EURUSD",
       "estado": "DISPONIBLE",
+      "instrumento": "EURUSD",
       "version_conjunto": "DS-1",
       "ultima_observacion": "2026-11-02",
       "antiguedad_dias_habiles": 3,
-      "hash": "3546226ea4c1cb869cb84ff8bbcf94b0d7e2ad03feac7f12dd029b10307bf705"
+      "hash": "3546226ea4c1cb869cb84ff8bbcf94b0d7e2ad03feac7f12dd029b10307bf705",
+      "ultimo_cierre": 1.101813,
+      "procedencia": {
+        "licencia": "INTERMEDIARIO-USO-INTERNO",
+        "obtenido_en": "2026-11-05T22:30:00+00:00",
+        "proveedor": "PROV-SIM",
+        "referencia": "conjunto simulado SRC-EURUSD"
+      }
     },
     {
       "fuente_id": "SRC-EURUSD-B",
       "estado": "DISPONIBLE",
+      "instrumento": "EURUSD-B",
       "version_conjunto": "DS-1",
       "ultima_observacion": "2026-11-02",
       "antiguedad_dias_habiles": 3,
-      "hash": "3546226ea4c1cb869cb84ff8bbcf94b0d7e2ad03feac7f12dd029b10307bf705"
+      "hash": "3546226ea4c1cb869cb84ff8bbcf94b0d7e2ad03feac7f12dd029b10307bf705",
+      "ultimo_cierre": 1.101813,
+      "procedencia": {
+        "licencia": "INTERMEDIARIO-USO-INTERNO",
+        "obtenido_en": "2026-11-05T22:30:00+00:00",
+        "proveedor": "PROV-SIM",
+        "referencia": "conjunto simulado SRC-EURUSD-B"
+      }
     },
     {
       "fuente_id": "SRC-USDJPY",
       "estado": "DISPONIBLE",
+      "instrumento": "USDJPY",
       "version_conjunto": "DS-1",
       "ultima_observacion": "2026-11-02",
       "antiguedad_dias_habiles": 3,
-      "hash": "3364b71779d987f65ab0e8825b927dc39e6bb99ad2e654b985c2c7f9305e65ae"
+      "hash": "3364b71779d987f65ab0e8825b927dc39e6bb99ad2e654b985c2c7f9305e65ae",
+      "ultimo_cierre": 149.673587,
+      "procedencia": {
+        "licencia": "INTERMEDIARIO-USO-INTERNO",
+        "obtenido_en": "2026-11-05T22:30:00+00:00",
+        "proveedor": "PROV-SIM",
+        "referencia": "conjunto simulado SRC-USDJPY"
+      }
     },
     {
       "fuente_id": "SRC-EURJPY",
       "estado": "DISPONIBLE",
+      "instrumento": "EURJPY",
       "version_conjunto": "DS-1",
       "ultima_observacion": "2026-11-02",
       "antiguedad_dias_habiles": 3,
-      "hash": "5e68ee1e5a32337207edbbbd25a27599c569e2694e53b807c56d79f90e9d051a"
+      "hash": "5e68ee1e5a32337207edbbbd25a27599c569e2694e53b807c56d79f90e9d051a",
+      "ultimo_cierre": 164.912304,
+      "procedencia": {
+        "licencia": "INTERMEDIARIO-USO-INTERNO",
+        "obtenido_en": "2026-11-05T22:30:00+00:00",
+        "proveedor": "PROV-SIM",
+        "referencia": "conjunto simulado SRC-EURJPY"
+      }
     },
     {
       "fuente_id": "SRC-GBPUSD",
       "estado": "DISPONIBLE",
+      "instrumento": "GBPUSD",
       "version_conjunto": "DS-1",
       "ultima_observacion": "2026-11-02",
       "antiguedad_dias_habiles": 3,
-      "hash": "f0ff06efe0b49506cde710e6b1ccdc0b5552f8f95849f2967a237c587fbd0b91"
+      "hash": "f0ff06efe0b49506cde710e6b1ccdc0b5552f8f95849f2967a237c587fbd0b91",
+      "ultimo_cierre": 1.2948,
+      "procedencia": {
+        "licencia": "INTERMEDIARIO-USO-INTERNO",
+        "obtenido_en": "2026-11-05T22:30:00+00:00",
+        "proveedor": "PROV-SIM",
+        "referencia": "conjunto simulado SRC-GBPUSD"
+      }
     }
   ],
   "version_ajustes": "AJ-2026.1",
-  "version_reglas": "Q-0.1.0",
+  "version_reglas": "Q-0.2.0",
   "resultado_reglas": [
     {
       "regla": "Q-01",
@@ -108,8 +148,17 @@
     {
       "regla": "Q-13",
       "resultado": "OK"
+    },
+    {
+      "regla": "Q-14",
+      "resultado": "OK"
+    },
+    {
+      "regla": "Q-15",
+      "resultado": "OK"
     }
   ],
   "resultado_global": "OK",
+  "eventos": [],
   "estado": "VIGENTE"
 }

@@ -23,7 +23,8 @@ import mandatos as sc1  # noqa: E402
 MANDATOS = sc1.MANDATOS_DEFECTO   # SC-1 de partida
 
 _s1 = construir_sello_k()[1]["sello"]                                              # corte 2026-11-05
-_s2 = construir_sello_k(hasta=date(2026, 11, 6), solicitada="2026-11-06")[1]["sello"]   # corte 2026-11-06
+_s2 = construir_sello_k(hasta=date(2026, 11, 5), solicitada="2026-11-06")[1]["sello"]   # corte 2026-11-06 con el cierre del día 5:
+# a las 08:00 del día 6 aún no existe el cierre del 6 (T-26: K no admite datos posteriores a cuando se obtuvieron)
 assert _s1["sello_id"] == "K-20261105-001" and _s2["sello_id"] == "K-20261106-001"
 _s0 = construir_sello_k(hasta=date(2026, 11, 4), solicitada="2026-11-04")[1]["sello"]   # corte 2026-11-04
 _s3 = construir_sello_k(hasta=date(2026, 11, 3), solicitada="2026-11-03")[1]["sello"]   # corte 2026-11-03
@@ -232,7 +233,7 @@ def main():
     caida = {**_s1, "fuentes": [dict(x, estado="NO_DISPONIBLE") if x["fuente_id"] == "SRC-EURUSD" else x for x in _s1["fuentes"]]}
     for x in caida["fuentes"]:
         if x["estado"] == "NO_DISPONIBLE":
-            for k in ("version_conjunto", "ultima_observacion", "antiguedad_dias_habiles", "hash"):
+            for k in ("version_conjunto", "ultima_observacion", "antiguedad_dias_habiles", "hash", "instrumento", "ultimo_cierre", "procedencia"):
                 x.pop(k, None)
     caida["hash_sello"] = hash_del_sello(caida)
     obt = {x["regla"] for x in sobre_responde_a_encargo(encargo_div(), sobre, {**CTX, "sellos": {**SELLOS, "K-20261105-001": caida}}, sctx)}

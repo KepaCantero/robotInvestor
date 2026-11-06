@@ -257,6 +257,12 @@
           "volumen": 1030
         }
       ],
+      "procedencia": {
+        "proveedor": "PROV-SIM",
+        "licencia": "INTERMEDIARIO-USO-INTERNO",
+        "obtenido_en": "2026-11-05T22:30:00+00:00",
+        "referencia": "conjunto simulado SRC-EURUSD"
+      },
       "critico": true,
       "contraste": [
         "SRC-EURUSD-B"
@@ -515,7 +521,13 @@
           "cierre": 1.097606,
           "volumen": 1030
         }
-      ]
+      ],
+      "procedencia": {
+        "proveedor": "PROV-SIM",
+        "licencia": "INTERMEDIARIO-USO-INTERNO",
+        "obtenido_en": "2026-11-05T22:30:00+00:00",
+        "referencia": "conjunto simulado SRC-EURUSD-B"
+      }
     },
     {
       "fuente_id": "SRC-USDJPY",
@@ -771,6 +783,12 @@
           "volumen": 1030
         }
       ],
+      "procedencia": {
+        "proveedor": "PROV-SIM",
+        "licencia": "INTERMEDIARIO-USO-INTERNO",
+        "obtenido_en": "2026-11-05T22:30:00+00:00",
+        "referencia": "conjunto simulado SRC-USDJPY"
+      },
       "hash_declarado": "0000000000000000000000000000000000000000000000000000000000000000"
     },
     {
@@ -1026,7 +1044,13 @@
           "fecha": "2026-11-05",
           "volumen": 1030
         }
-      ]
+      ],
+      "procedencia": {
+        "proveedor": "PROV-SIM",
+        "licencia": "INTERMEDIARIO-USO-INTERNO",
+        "obtenido_en": "2026-11-05T22:30:00+00:00",
+        "referencia": "conjunto simulado SRC-EURJPY"
+      }
     },
     {
       "fuente_id": "SRC-GBPUSD",
@@ -1281,7 +1305,13 @@
           "cierre": 1.29721,
           "volumen": 1030
         }
-      ]
+      ],
+      "procedencia": {
+        "proveedor": "PROV-SIM",
+        "licencia": "INTERMEDIARIO-USO-INTERNO",
+        "obtenido_en": "2026-11-05T22:30:00+00:00",
+        "referencia": "conjunto simulado SRC-GBPUSD"
+      }
     }
   ],
   "cruces": [

@@ -15,7 +15,8 @@ sys.path.insert(0, str(AQUI.parent / "validador"))
 from k_calidad import construir_sello, validar_sello, estado_sello, hash_serie, hash_del_sello  # noqa: E402
 
 CAL = {"version": "CAL-2026.1",
-       "mercados": {"FX": {"anios": [2026, 2027], "festivos": ["2026-12-25", "2027-01-01"]}}}
+       "mercados": {"FX": {"anios": [2026, 2027], "festivos": ["2026-12-25", "2027-01-01"],
+                           "hora_cierre_utc": "22:00"}}}   # T-26: el cierre diario de FX (17:00 de Nueva York)
 CTX = {"ahora": "2026-11-06T08:00:00+00:00", "secuencia": 1}
 
 
@@ -49,11 +50,20 @@ def cruce(a, b):
     return out
 
 
+def PROC(fid, obtenido="2026-11-05T22:00:00+00:00", licencia="INTERMEDIARIO-USO-INTERNO"):
+    """Procedencia simulada de una fuente (T-26): proveedor, licencia, cuándo se obtuvo y referencia."""
+    return {"proveedor": "PROV-SIM", "licencia": licencia, "obtenido_en": obtenido, "referencia": f"conjunto simulado {fid}"}
+
+
+def EVENTO(fecha, instrumentos, tipo="DATO_MACRO", descripcion="dato macro simulado", anunciado_en="2026-10-01T08:00:00+00:00"):
+    return {"fecha": fecha, "tipo": tipo, "instrumentos": instrumentos, "descripcion": descripcion, "anunciado_en": anunciado_en}
+
+
 def entrada_base(hasta=date(2026, 11, 5), solicitada="2026-11-05", cartera="TACTICA"):
     d0 = date(2026, 9, 24)
     eur = serie(1.10, 0.004, d0, hasta)
     usd = serie(150.0, 0.004, d0, hasta, 1.0)
-    fu = lambda i, s, **k: {"fuente_id": i, "instrumento": i[4:], "version_conjunto": "DS-1", "serie": s, **k}
+    fu = lambda i, s, **k: {"fuente_id": i, "instrumento": i[4:], "version_conjunto": "DS-1", "serie": s, "procedencia": PROC(i, f"{hasta}T22:30:00+00:00"), **k}
     return {
         "mercado": "FX", "cartera": cartera, "fecha_corte_solicitada": solicitada,
         "fuentes": [
@@ -117,7 +127,7 @@ def m_salto_ajustado(e):
 
 def m_salto_evento(e):
     s = gbp(e)["serie"]; escalar_desde(s, 15, 1.25); gbp(e)["instrumento"] = "GBPUSD"
-    e["eventos"].append({"evento_id": "EV-1", "fecha": s[15]["fecha"], "instrumentos": ["GBPUSD"]})
+    e["eventos"].append(EVENTO(s[15]["fecha"], ["GBPUSD"], descripcion="dato de empleo simulado que explica el salto"))
 
 
 def m_salto_ajuste_otro_dia(e):
@@ -239,7 +249,8 @@ def m_largo_plazo(e):
 # ----------------------------------------------------------------- casos
 VALIDOS = [
     ("valido_base", {}, {}, {}),
-    ("valido_fin_de_semana", {"hasta": date(2026, 11, 6), "solicitada": "2026-11-07"}, m_fin_de_semana, {"Q-01": "ADVERTENCIA"}),
+    ("valido_fin_de_semana", {"hasta": date(2026, 11, 6), "solicitada": "2026-11-07",
+                              "ctx": {"ahora": "2026-11-07T08:00:00+00:00", "secuencia": 1}}, m_fin_de_semana, {"Q-01": "ADVERTENCIA"}),   # T-26: tras el cierre del viernes
     ("valido_fuente_no_disponible", {}, m_no_disp, {}),
     ("valido_salto_explicado_por_ajuste", {}, m_salto_ajustado, {}),
     ("valido_salto_moderado_con_evento_sigue_avisando", {}, m_salto_evento, {"Q-04": "ADVERTENCIA"}),
@@ -269,7 +280,7 @@ INVALIDOS = [
     ("Q07_rango_intradia_absurdo", {}, m_rango, True, {"Q-07": "BLOQUEO"}),
     ("Q09_fx_sin_cruces", {}, m_sin_cruces, True, {"Q-09": "ADVERTENCIA"}),
     ("Q09_fx_cruces_ausentes", {}, m_cruces_ausentes, True, {"Q-09": "ADVERTENCIA"}),
-    ("Q13_corte_en_el_futuro", {"hasta": date(2026, 11, 9), "solicitada": "2026-11-09"}, lambda e: None, True, {"Q-13": "BLOQUEO"}),
+    ("Q13_corte_en_el_futuro", {"hasta": date(2026, 11, 9), "solicitada": "2026-11-09"}, lambda e: None, True, {"Q-13": "BLOQUEO", "Q-14": "BLOQUEO"}),   # T-26: también obtenido en el futuro
     ("Q05_un_hueco", {}, m_quitar(1), True, {"Q-05": "ADVERTENCIA"}),
     ("Q05_cuatro_huecos", {}, m_quitar(4), True, {"Q-05": "BLOQUEO"}),
     ("Q06_fecha_duplicada", {}, m_dup, True, {"Q-06": "BLOQUEO"}),
@@ -289,7 +300,7 @@ INVALIDOS = [
     ("Q12_hash_distinto", {}, lambda e: e["fuentes"][2].update(hash_declarado="0" * 64), False, {"Q-12": "BLOQUEO"}),
     ("Q12_sin_hash", {}, lambda e: e["fuentes"][2].pop("hash_declarado", None), False, {"Q-12": "BLOQUEO"}),
     ("Q12_dato_cambiado_tras_hash", {}, lambda e: (rehash(e), gbp(e)["serie"][3].update(volumen=1)), False, {"Q-12": "BLOQUEO"}),
-    ("Q13_dato_posterior_al_corte", {}, m_post, True, {"Q-13": "BLOQUEO"}),
+    ("Q13_dato_posterior_al_corte", {}, m_post, True, {"Q-13": "BLOQUEO", "Q-14": "BLOQUEO"}),   # T-26: y posterior a su obtención
 ]
 # casos que cortan antes de evaluar el resto: (nombre, cal, mutación, regla)
 CORTES = [
@@ -408,10 +419,10 @@ def main():
     S("S03_bloqueo_en_sello_emitido", cambia(base, lambda s: (s["resultado_reglas"][4].update(resultado="BLOQUEO", detalle="x"), s.update(resultado_global="BLOQUEO"))), "S-03")
     S("S04_regla_repetida", cambia(base, lambda s: s["resultado_reglas"][12].update(regla="Q-01")), "S-04")
     S("S05_fuente_repetida", cambia(base, lambda s: s["fuentes"][1].update(fuente_id=s["fuentes"][0]["fuente_id"])), "S-05")
-    S("S05_observacion_posterior", cambia(base, lambda s: s["fuentes"][0].update(ultima_observacion="2026-11-06")), "S-05", {})
+    S("S05_observacion_posterior", cambia(base, lambda s: s["fuentes"][0].update(ultima_observacion="2026-11-06")), ("S-05", "S-14"), {})   # y posterior a su obtención
     S("S05_antiguedad_sobre_tope", cambia(base, lambda s: s["fuentes"][0].update(antiguedad_dias_habiles=2)), "S-05", {})
     S("S05_ninguna_disponible", cambia(base, lambda s: s.update(fuentes=[{"fuente_id": "SRC-X", "estado": "NO_DISPONIBLE"}])), "S-05")
-    S("S06_emitido_antes_del_corte", cambia(base, lambda s: s.update(emitido_en="2026-11-04T08:00:00+00:00")), "S-06")
+    S("S06_emitido_antes_del_corte", cambia(base, lambda s: s.update(emitido_en="2026-11-04T08:00:00+00:00")), ("S-06", "S-14"))   # y obtenido después
     S("S06_corte_posterior_a_lo_solicitado", cambia(base, lambda s: s.update(fecha_solicitada="2026-11-04")), {"S-06", "S-13"})
     S("S07_se_reemplaza_a_si_mismo", cambia(base, lambda s: s.update(reemplaza_a=s["sello_id"])), "S-07")
     S("S07_reemplaza_corte_posterior", cambia(base, lambda s: s.update(reemplaza_a="K-20261106-001")), "S-07")
@@ -422,9 +433,9 @@ def main():
     S("S10_version_calendario_distinta", cambia(base, lambda s: s["mercados"][0].update(version_calendario="CAL-X")), "S-10")
     S("S10_corte_en_fin_de_semana", cambia(base, lambda s: (s.update(sello_id="K-20261107-001", fecha_corte="2026-11-07", fecha_solicitada="2026-11-07", emitido_en="2026-11-09T08:00:00+00:00"))), "S-10")
     S("S11_version_reglas", cambia(base, lambda s: s.update(version_reglas="Q-9.9")), "S-11")
-    S("S11_version_esquema", cambia(base, lambda s: s.update(version_esquema="0.2.0")), "S-11")
+    S("S11_version_esquema", cambia(base, lambda s: s.update(version_esquema="0.9.0")), "S-01")   # 0.2.0: la versión es constante en el esquema
 
-    S("S06_emitido_antes_del_corte_en_UTC", cambia(base, lambda s: s.update(emitido_en="2026-11-05T00:00:00+14:00")), "S-06")
+    S("S06_emitido_antes_del_corte_en_UTC", cambia(base, lambda s: s.update(emitido_en="2026-11-05T00:00:00+14:00")), ("S-06", "S-14"))
     S("S05_mercado_repetido", cambia(base, lambda s: s["mercados"].append(dict(s["mercados"][0]))), "S-05")
     S("S12_contenido_alterado_sin_rehash", cambia(base, lambda s: s["fuentes"][0].update(version_conjunto="DS-9"), rehash_=False), "S-12")
     S("S12_resultado_reglas_alterado", cambia(base, lambda s: s.update(version_ajustes="AJ-9"), rehash_=False), "S-12")
