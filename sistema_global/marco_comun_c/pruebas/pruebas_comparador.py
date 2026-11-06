@@ -26,6 +26,9 @@ def cand(n, esperado=(10.0, 0.5, -5.0), conf=0.6, instrumento=None, clase="Q", d
     p["capa2"]["escenarios"] = [{"nombre": "base", "probabilidad": 0.5, "rentabilidad_neta_pct": esperado[0], "horizonte_dias": 30},
                                 {"nombre": "neutro", "probabilidad": 0.3, "rentabilidad_neta_pct": esperado[1], "horizonte_dias": 30},
                                 {"nombre": "adverso", "probabilidad": 0.2, "rentabilidad_neta_pct": esperado[2], "horizonte_dias": 30}]
+    p["capa2"]["distribucion"] = {"p05": esperado[2], "p50": esperado[1], "p95": esperado[0]}   # T-17: coherente con los escenarios
+    lim = p["entrada_salida"]["entrada"]["limite"]["valor"]   # T-17: stop a un 1 % del límite, más cerca que el peor escenario
+    p["entrada_salida"]["stop"] = {"valor": lim * (0.99 if direccion == "LARGO" else 1.01), "unidad": "USD", "estado": "SUPUESTO"}
     if exclu:
         p["exclusiones_duras"][exclu[0]] = exclu[1]
     return {"expediente_id": f"EXP-{n:04d}", "sobre": s}
@@ -41,7 +44,9 @@ def main():
     h.chk("el_orden_de_entrada_no_cambia_el_resultado", r == r2)
     h.chk("determinista_y_no_muta", comparar_candidatos([a, b], AHORA) == r and a == cand(1))
     # puntuación a mano: exceso = .5*10 + .3*.5 + .2*-5 - 0 = 4.15 ; riesgo 5 ; conf .6 / tope Q .8 ; ev = .5 + .15 + .05 = .7
-    h.chk("puntuacion_calculada_a_mano", abs(g["ranking"][0]["puntuacion"] - 4.15 / 5 * (0.6 / 0.8) * 0.7) < 1e-12, g["ranking"][0])
+    # T-17: horizonte 30 días: exceso ×365/30 y riesgo ×√(365/30)
+    k = 365 / 30
+    h.chk("puntuacion_calculada_a_mano", abs(g["ranking"][0]["puntuacion"] - (4.15 * k) / (5 * k ** 0.5) * (0.6 / 0.8) * 0.7) < 1e-12, g["ranking"][0])
     # ajustada
     r = comparar_candidatos([cand(1), cand(2, instrumento="OTRO")], AHORA)
     h.chk("candidatos_casi_iguales_AJUSTADA_sin_primero", r["grupos"]["Q"]["decision"] == "AJUSTADA" and r["grupos"]["Q"]["primero"] is None, r)
@@ -146,12 +151,11 @@ def main():
     h.chk("un_solo_candidato_gana_a_no_hacer_nada", r["ok"] and r["decision_global"] == "INVERTIR" and r["grupos"]["Q"]["primero"] == "EXP-0001", r)
     ref10 = {"benchmark_ref": "BENCH-LETRAS", "rentabilidad_anual_pct": 10.0}   # 30 días, compuesto -> 0,786 %
     r = comparar_candidatos([a, b], AHORA, ref10)
-    h.chk("referencia_exigente_deja_fuera_al_flojo", {"expediente_id": "EXP-0002", "motivo": "NO_SUPERA_REFERENCIA"} in r["excluidos"]
-          and r["grupos"]["Q"]["primero"] == "EXP-0001" and abs(r["grupos"]["Q"]["ranking"][0]["exceso_sobre_referencia_pct"] - (4.15 - (1.10 ** (30 / 365) - 1) * 100)) < 1e-12, r)
+    h.chk("referencia_exigente_mide_el_exceso", r["grupos"]["Q"]["primero"] == "EXP-0001" and abs(r["grupos"]["Q"]["ranking"][0]["exceso_sobre_referencia_pct"] - (4.15 - (1.10 ** (30 / 365) - 1) * 100)) < 1e-12, r)
     r = comparar_candidatos([cand(1, esperado=(3.0, 0.5, -4.0)), b], AHORA, {"benchmark_ref": "BENCH-RV", "rentabilidad_anual_pct": 50.0})   # listón 3,39 %
     h.chk("nadie_supera_la_referencia_ABSTENERSE", r["ok"] and r["decision_global"] == "ABSTENERSE" and r["grupos"] == {}
           and {x["motivo"] for x in r["excluidos"]} == {"NO_SUPERA_REFERENCIA"} and r["referencia"]["benchmark_ref"] == "BENCH-RV", r)
-    r = comparar_candidatos([cand(7, esperado=(0.2, 0.0, 0.0))], AHORA)   # exceso 0,10: no supera el margen mínimo
+    r = comparar_candidatos([cand(7, esperado=(0.016, 0.0, 0.0))], AHORA)   # exceso 0,008 en 30 días, 0,0973 al año: no supera el mínimo anual (T-17)
     h.chk("exceso_en_el_margen_no_basta", r["decision_global"] == "ABSTENERSE", r)
     for nombre, ref in (("sin_clave", {"benchmark_ref": "B"}), ("nan", {"benchmark_ref": "B", "rentabilidad_anual_pct": float("nan")}),
                         ("absurda", {"benchmark_ref": "B", "rentabilidad_anual_pct": 100.0}), ("negativa_grande", {"benchmark_ref": "B", "rentabilidad_anual_pct": -20.0}), ("id_malo", {"benchmark_ref": "B C", "rentabilidad_anual_pct": 1.0}),

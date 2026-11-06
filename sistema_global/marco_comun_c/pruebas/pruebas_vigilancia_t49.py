@@ -48,7 +48,7 @@ def preparar(escenarios=None, salida=None):
         eid = f"EXP-{n:04d}"
         assert o.detectar(eid, f"COR-{n:04d}", "DISCRECIONAL", "TACTICA", "GESTOR_TACTICA", AHORA)["ok"]
         assert o.emitir_encargo(eid, encargo(n), "GESTOR_TACTICA", AHORA)["ok"]
-        s = sobre_para(1, salida) if n == 1 else sobre(2)
+        s = sobre_para(n, salida)   # T-17: el rival con el mismo stop y límite (D mide el riesgo hasta el stop)
         inf = informe_ctr(s, n=n, escenarios=escenarios) if n == 1 and escenarios else None
         r = o.entregar_sobre(eid, s, AHORA, inf)
         if not r["ok"]:

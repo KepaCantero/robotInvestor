@@ -135,8 +135,8 @@ def main():
             p["entrada_salida"]["stop"].update(c)
             p["entrada_salida"]["entrada"]["limite"]["unidad"] = p["entrada_salida"]["stop"]["unidad"]   # V-24: el límite va en la unidad del stop
             p["entrada_salida"]["objetivo"]["unidad"] = p["entrada_salida"]["stop"]["unidad"]   # V-22: y el objetivo también
-        validar_con(o, 1, mod=mod); validar_con(o, 2, instrumento="GBP/USD")
-        o.comparar(["EXP-0001", "EXP-0002"], "D", AHORA)
+        validar_con(o, 1, mod=mod)   # T-17: solo; sin stop legible D le cuenta un riesgo del 100 % y un rival le ganaría
+        o.comparar(["EXP-0001"], "D", AHORA)
         elegir_si(o)
         prop(f"sobre_con_{nombre}_O21", "O-21", o=o)
     o = comparada()
