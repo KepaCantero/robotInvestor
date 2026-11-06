@@ -287,6 +287,8 @@ class Diario:
             texto = pe.volcar(self._o, ahora, self._clave)
         except (ValueError, TypeError) as ex:
             return _r(False, "PE-01", f"no se puede volcar el estado: {str(ex)[:120]}")
+        if len(texto) > pe.MAX_BYTES:   # V0.46 (revisión, hallazgo 9): no se guarda lo que luego no se podría leer
+            return _r(False, "PE-05", f"el estado pasa de {pe.MAX_BYTES} bytes: no se hace el punto")
         huella = json.loads(texto)["huella"]
         prueba = pe.cargar(texto, self._clave)   # nunca se guarda (ni se reduce el diario) un estado que no se volvería a cargar (hallazgo 1)
         if not prueba["ok"]:
@@ -314,6 +316,8 @@ def crear(o, ruta_estado, ruta_diario, ahora, clave=None) -> dict:
         if os.path.exists(ruta_estado) or os.path.exists(ruta_diario):
             return _r(False, "DI-03", "ya hay un estado o un diario: ábrelos con abrir(), no se pisan", diario=None)
         texto = pe.volcar(o, ahora, clave)
+        if len(texto) > pe.MAX_BYTES:
+            return _r(False, "PE-05", f"el estado pasa de {pe.MAX_BYTES} bytes: no se guarda", diario=None)
         huella = json.loads(texto)["huella"]
         prueba = pe.cargar(texto, clave)
         if not prueba["ok"]:

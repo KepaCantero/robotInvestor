@@ -22,11 +22,17 @@ HMAC-SHA256 de su cabecera y de la huella del estado: PE-06 si falta la firma o 
 PE-07 si la clave no vale (menos de 32 bytes, fichero legible por otros, no hexadecimal). Sin la clave ya no se puede rehacer
 nada, tampoco lo que no está encadenado. Sin clave todo sigue como en V0.42.
 
+V0.46 (T-03, cuarta parte): el documento pasa al formato ESTADO-ORQUESTADOR-0.2.0 y lleva en la cabecera el "esquema" del
+código que lo escribió (`esquema_actual`: huella de los atributos del Orquestador, la configuración por defecto, los parámetros,
+las constantes y las versiones de reglas; la configuración y el calendario del operador no cuentan). Un documento de otro esquema
+o del formato 0.1.0 (V0.42 a V0.45) no se carga: PE-08, hay que migrarlo con `migraciones.migrar` o `migraciones.migrar_ficheros`.
+La firma cubre toda la cabecera, también el esquema.
+
 Lo que no hace (T-03 sigue abierta para ello): la huella sin clave detecta un fichero roto o tocado a mano, no a quien la rehace;
 lo que está encadenado lo detecta integridad(), pero avisos, fotos, cotizaciones, manuales o pantallas no van en ninguna cadena
 (desde V0.45, con clave, la firma lo cubre todo). Ni la firma ni las huellas impiden volver a un estado y un diario firmados más
 antiguos, ni recortar el final del diario: para eso hace falta un ancla monótona fuera del alcance de quien toca los ficheros
-(la bóveda real, Fase 3). La rotación de claves, el reloj real del sistema y las migraciones entre versiones quedan pendientes.
+(la bóveda real, Fase 3). La rotación de claves y el reloj real del sistema quedan pendientes.
 """
 from __future__ import annotations
 
@@ -44,9 +50,13 @@ from datetime import datetime
 
 from orquestador import CONFIG_DEFECTO, Orquestador
 
-FORMATO = "ESTADO-ORQUESTADOR-0.1.0"
-CLAVES = {"formato", "version_config", "guardado_en", "atributos", "estado", "huella"}
+FORMATO = "ESTADO-ORQUESTADOR-0.2.0"     # V0.46: con "esquema" en la cabecera
+FORMATO_010 = "ESTADO-ORQUESTADOR-0.1.0"  # V0.42 a V0.45: se lee para migrarlo, no se carga
+CLAVES_010 = {"formato", "version_config", "guardado_en", "atributos", "estado", "huella"}
+CLAVES = CLAVES_010 | {"esquema"}
 CLAVES_FIRMADO = CLAVES | {"clave_id", "firma"}   # V0.45: con una clave secreta, el documento va firmado (HMAC-SHA256)
+CLAVES_FIRMADO_010 = CLAVES_010 | {"clave_id", "firma"}
+FORMAS = {FORMATO: (CLAVES, CLAVES_FIRMADO), FORMATO_010: (CLAVES_010, CLAVES_FIRMADO_010)}
 CLAVE_MIN_BYTES = 32
 FH = re.compile(r"^[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}(\.[0-9]+)?(Z|[+-][0-9]{2}:[0-9]{2})\Z")
 MAX_BYTES = 256 * 1024 * 1024   # un estado más grande no se lee: PE-05 (revisión, hallazgo 7)
@@ -99,8 +109,68 @@ def _firma_doc(clave, doc) -> str:
     el Orquestador recorre expedientes, encargos y sellos en orden de inserción (revisión de V0.45, hallazgo 1). Lleva un prefijo
     de dominio distinto del de las líneas del diario."""
     orden = hashlib.sha256(_texto(doc["estado"]).encode("ascii")).hexdigest()
-    cabecera = _canon({k: doc[k] for k in ("formato", "version_config", "guardado_en", "atributos", "huella", "clave_id")})
+    # toda la cabecera salvo la firma (en 0.1.0 son las mismas claves que en V0.45; en 0.2.0, también el esquema)
+    cabecera = _canon({k: doc[k] for k in doc if k not in ("estado", "firma")})
     return firmar(clave, "robot-investor/estado/" + cabecera + "|" + orden)
+
+
+# V0.46: lo que forma el esquema del código. Un Orquestador se crea con una configuración y un calendario sintéticos (no los del
+# operador: así el esquema no depende de ellos y se puede calcular aunque la configuración guardada no valga con este código).
+CFG_ESQUEMA = {"perfiles_activos": ["C-DIV"], "clases_ratificadas": {"C-DIV": "Q"}, "apalancamiento_permitido": False}
+CAL_ESQUEMA = {"version": "ESQUEMA", "mercados": {}}
+# módulos cuyas constantes (nombres en mayúsculas) deciden qué hace el sistema con el estado guardado; persistencia, diario y
+# migraciones no: su forma la da el formato del documento (revisión de V0.46, hallazgo 7)
+MODULOS_ESQUEMA = ("comparador", "consola", "contratos", "control_f", "dimensionado", "ejecucion_g", "k_calidad", "mandatos",
+                   "manual_g", "motor", "orquestador", "parametros", "validar_contradictor", "validar_encargo", "validar_sobre", "vigilancia")
+_MAYUSCULAS = re.compile(r"^[A-Z][A-Z0-9_]*\Z")
+
+
+def _norm(v):
+    """Una constante en forma JSON determinista: conjuntos ordenados, tuplas como listas, expresiones regulares por su patrón,
+    clases y funciones por su nombre, intervalos en segundos. Las rutas no cuentan (dependen de dónde está instalado)."""
+    if v is None or isinstance(v, (str, bool, int)):
+        return v
+    if isinstance(v, float):
+        return v if math.isfinite(v) else repr(v)
+    if isinstance(v, (list, tuple)):
+        return [_norm(x) for x in v]
+    if isinstance(v, (set, frozenset)):
+        return sorted((_norm(x) for x in v), key=_canon)
+    if isinstance(v, dict) or type(v).__name__ == "mappingproxy":
+        return {str(k): _norm(x) for k, x in v.items()}
+    if isinstance(v, re.Pattern):
+        return {"re": v.pattern, "flags": int(v.flags)}
+    if isinstance(v, type):
+        return {"clase": v.__name__}
+    if type(v).__name__ == "timedelta":
+        return {"segundos": v.total_seconds()}
+    return {"tipo": type(v).__name__}
+
+
+def parte_de_codigo() -> dict:
+    """V0.46: todo lo que este código decide por sí mismo, sin datos del operador: los atributos de un Orquestador recién creado,
+    CONFIG_DEFECTO entera, la parte de la configuración completa que no viene de la configuración ni del calendario (parámetros,
+    constantes y versiones de reglas: con ella se rehace la huella de configuración de un estado de este código) y las constantes
+    de los módulos de MODULOS_ESQUEMA. Es JSON puro: se puede guardar en el registro de esquemas de las migraciones."""
+    import importlib
+    f = Orquestador(CFG_ESQUEMA, CAL_ESQUEMA)
+    codigo = {k: v for k, v in f._configuracion_completa().items() if k not in ("orquestador", "calendario", "version_config")}
+    modulos = {}
+    for nombre in MODULOS_ESQUEMA:
+        m = importlib.import_module(nombre)
+        modulos[nombre] = {k: _norm(v) for k, v in sorted(vars(m).items())
+                           if _MAYUSCULAS.match(k) and not isinstance(v, os.PathLike)}
+    return json.loads(_canon({"atributos": sorted(vars(f)), "config_defecto": _norm(CONFIG_DEFECTO), "codigo": _norm(codigo),
+                              "modulos": modulos}))
+
+
+def esquema_de_parte(parte) -> str:
+    return hashlib.sha256(_canon(parte).encode("ascii")).hexdigest()
+
+
+def esquema_actual() -> str:
+    """V0.46: el esquema de este código (huella de `parte_de_codigo`)."""
+    return esquema_de_parte(parte_de_codigo())
 
 
 def nueva_clave() -> bytes:
@@ -179,7 +249,7 @@ def volcar(o, guardado_en, clave=None) -> str:
     if not _solo_json(estado):
         malos = sorted(k for k, v in estado.items() if not _solo_json(v))
         raise ValueError(f"el estado tiene valores que JSON no guarda tal cual: {malos[:5]}")
-    doc = {"formato": FORMATO, "version_config": o.cfg["version_config"], "guardado_en": guardado_en,
+    doc = {"formato": FORMATO, "esquema": esquema_actual(), "version_config": o.cfg["version_config"], "guardado_en": guardado_en,
            "atributos": sorted(estado), "estado": estado, "huella": _huella(estado)}
     if clave is not None:
         doc["clave_id"] = clave_id(clave)
@@ -202,6 +272,8 @@ def guardar(o, ruta, guardado_en, clave=None) -> dict:
         texto = volcar(o, guardado_en, clave)
     except (ValueError, TypeError, RecursionError) as ex:
         return _r(False, "PE-07" if "clave" in str(ex) else "PE-01", f"no se puede volcar el estado: {str(ex)[:160]}")
+    if len(texto) > MAX_BYTES:   # no se escribe lo que luego no se podría leer (revisión de V0.46, hallazgo 9)
+        return _r(False, "PE-05", f"el estado pasa de {MAX_BYTES} bytes: no se guarda")
     tmp = None
     try:
         carpeta = os.path.dirname(os.path.abspath(ruta)) or "."
@@ -229,64 +301,99 @@ def _atributos_de_este_codigo(estado):
     return set(vars(Orquestador(estado["cfg"], estado["cal_def"])))
 
 
-def cargar(texto, clave=None) -> dict:
-    """Vuelve a montar un Orquestador desde el texto de `volcar`. Nunca lanza. Devuelve {ok, codigo, motivo, orquestador}:
-    orquestador es None si no se pudo montar (PE-01 a PE-04) y el Orquestador montado si se montó (OK, o O-13 con el
-    kill-switch activado si integridad() no está vacía)."""
+def verificar(texto, clave=None):
+    """V0.46: la parte de `cargar` que no depende del código: forma del documento (0.1.0 o 0.2.0), firma con la clave y huella.
+    Devuelve (documento, None) o (None, resultado con el código del fallo). Nunca lanza. La usan `cargar` y las migraciones."""
     try:
         doc = json.loads(texto, parse_constant=lambda c: (_ for _ in ()).throw(ValueError(c)))
     except (ValueError, TypeError, RecursionError):
-        return _r(False, "PE-01", "el texto no es JSON legible (o trae NaN o infinitos)", orquestador=None)
+        return None, _r(False, "PE-01", "el texto no es JSON legible (o trae NaN o infinitos)", orquestador=None)
     if clave is not None and not clave_valida(clave):
-        return _r(False, "PE-07", f"la clave debe tener al menos {CLAVE_MIN_BYTES} bytes", orquestador=None)
-    if not (isinstance(doc, dict) and set(doc) in (CLAVES, CLAVES_FIRMADO) and isinstance(doc["estado"], dict) and isinstance(doc["atributos"], list)
+        return None, _r(False, "PE-07", f"la clave debe tener al menos {CLAVE_MIN_BYTES} bytes", orquestador=None)
+    if not (isinstance(doc, dict) and isinstance(doc.get("formato"), str)):
+        return None, _r(False, "PE-01", "el documento no tiene la forma de un estado guardado", orquestador=None)
+    if doc["formato"] not in FORMAS:
+        return None, _r(False, "PE-03", f"formato {doc['formato']!r}; este código lee {FORMATO} (y {FORMATO_010} para migrarlo)", orquestador=None)
+    simple, firmada = FORMAS[doc["formato"]]
+    if not (set(doc) in (simple, firmada) and isinstance(doc["estado"], dict) and isinstance(doc["atributos"], list)
             and isinstance(doc["huella"], str) and HEX64.match(doc["huella"]) and _instante_ok(doc["guardado_en"])
-            and isinstance(doc["formato"], str) and isinstance(doc["version_config"], str)):
-        return _r(False, "PE-01", "el documento no tiene la forma de un estado guardado", orquestador=None)
+            and isinstance(doc["version_config"], str)
+            and ("esquema" not in doc or (isinstance(doc["esquema"], str) and HEX64.match(doc["esquema"])))):
+        return None, _r(False, "PE-01", "el documento no tiene la forma de un estado guardado", orquestador=None)
     # V0.45: la firma va antes que nada más; sin la clave no se puede comprobar, y un documento sin firma no vale si hay clave
-    firmado = set(doc) == CLAVES_FIRMADO
+    firmado = set(doc) == firmada
     if firmado and clave is None:
-        return _r(False, "PE-06", "el estado está firmado: hace falta la clave para comprobarlo", orquestador=None)
+        return None, _r(False, "PE-06", "el estado está firmado: hace falta la clave para comprobarlo", orquestador=None)
     if not firmado and clave is not None:
-        return _r(False, "PE-06", "el estado no está firmado y se esperaba firmado con la clave", orquestador=None)
+        return None, _r(False, "PE-06", "el estado no está firmado y se esperaba firmado con la clave", orquestador=None)
     if firmado:
         if not (isinstance(doc["clave_id"], str) and isinstance(doc["firma"], str) and HEX64.match(doc["firma"])):
-            return _r(False, "PE-01", "firma o identificador de clave mal formados", orquestador=None)
+            return None, _r(False, "PE-01", "firma o identificador de clave mal formados", orquestador=None)
         if doc["clave_id"] != clave_id(clave):
-            return _r(False, "PE-06", "el estado está firmado con otra clave", orquestador=None)
+            return None, _r(False, "PE-06", "el estado está firmado con otra clave", orquestador=None)
         try:
             buena = hmac.compare_digest(_firma_doc(clave, doc), doc["firma"])
         except (ValueError, TypeError, RecursionError):
             buena = False
         if not buena:
-            return _r(False, "PE-06", "la firma del estado no es válida: se tocó con la clave o sin ella", orquestador=None)
+            return None, _r(False, "PE-06", "la firma del estado no es válida: se tocó con la clave o sin ella", orquestador=None)
     try:
         if _huella(doc["estado"]) != doc["huella"]:
-            return _r(False, "PE-02", "la huella del estado no cuadra: el fichero está roto o se tocó a mano", orquestador=None)
+            return None, _r(False, "PE-02", "la huella del estado no cuadra: el fichero está roto o se tocó a mano", orquestador=None)
     except (ValueError, TypeError, RecursionError):
-        return _r(False, "PE-01", "el estado tiene valores que no se pueden poner en forma canónica", orquestador=None)
+        return None, _r(False, "PE-01", "el estado tiene valores que no se pueden poner en forma canónica", orquestador=None)
+    return doc, None
+
+
+def montar(doc):
+    """V0.46: monta un Orquestador con el estado de un documento ya verificado, con las comprobaciones que dependen del código
+    (versión de configuración, atributos, configuración y calendario aceptados), sin llamar a integridad(). Devuelve (o, None) o
+    (None, resultado). Nunca lanza."""
     est = doc["estado"]
-    if doc["formato"] != FORMATO:
-        return _r(False, "PE-03", f"formato {doc['formato']!r}; este código lee {FORMATO}: hace falta una migración", orquestador=None)
     # la versión de configuración es un dato (el operador puede fijar la suya, hallazgo 5): debe ser la de la configuración guardada;
-    # que el código haya cambiado lo dicen los atributos (PE-03), la validación (PE-04) y la huella de la configuración (CONFIG)
+    # que el código haya cambiado lo dicen el esquema (PE-08), los atributos (PE-03), la validación (PE-04) y la huella (CONFIG)
     if not isinstance(est.get("cfg"), dict) or est["cfg"].get("version_config") != doc["version_config"]:
-        return _r(False, "PE-03", "la versión de configuración del documento no es la de la configuración guardada", orquestador=None)
+        return None, _r(False, "PE-03", "la versión de configuración del documento no es la de la configuración guardada", orquestador=None)
     if set(CONFIG_DEFECTO) - set(est["cfg"]):
-        return _r(False, "PE-04", "a la configuración guardada le faltan claves de este código: hace falta una migración", orquestador=None)
+        return None, _r(False, "PE-04", "a la configuración guardada le faltan claves de este código: hace falta una migración", orquestador=None)
     if sorted(est) != doc["atributos"]:
-        return _r(False, "PE-03", "la lista de atributos no es la del estado guardado", orquestador=None)
+        return None, _r(False, "PE-03", "la lista de atributos no es la del estado guardado", orquestador=None)
     try:
         esperados = _atributos_de_este_codigo(est)
     except Exception as ex:   # noqa: BLE001 — ValueError de _valida_config o un calendario inválido
-        return _r(False, "PE-04", f"este código no acepta la configuración o el calendario guardados: {str(ex)[:120]}", orquestador=None)
+        return None, _r(False, "PE-04", f"este código no acepta la configuración o el calendario guardados: {str(ex)[:120]}", orquestador=None)
     if set(est) != esperados:
-        return _r(False, "PE-03", f"atributos distintos de los de este código: sobran {sorted(set(est) - esperados)[:3]}, "
-                                  f"faltan {sorted(esperados - set(est))[:3]}", orquestador=None)
+        return None, _r(False, "PE-03", f"atributos distintos de los de este código: sobran {sorted(set(est) - esperados)[:3]}, "
+                                        f"faltan {sorted(esperados - set(est))[:3]}", orquestador=None)
     try:
         o = Orquestador(est["cfg"], est["cal_def"])
         for k in sorted(est):
             setattr(o, k, copy.deepcopy(est[k]))
+    except Exception as ex:   # noqa: BLE001
+        return None, _r(False, "PE-04", f"el estado no se puede montar con este código: {type(ex).__name__}", orquestador=None)
+    return o, None
+
+
+def cargar(texto, clave=None) -> dict:
+    """Vuelve a montar un Orquestador desde el texto de `volcar`. Nunca lanza. Devuelve {ok, codigo, motivo, orquestador}:
+    orquestador es None si no se pudo montar (PE-01 a PE-08) y el Orquestador montado si se montó (OK, o O-13 con el
+    kill-switch activado si integridad() no está vacía)."""
+    doc, err = verificar(texto, clave)
+    if err:
+        return err
+    if doc["formato"] != FORMATO:
+        return _r(False, "PE-08", f"estado en formato {doc['formato']} (de V0.42 a V0.45): hay que migrarlo (migraciones.migrar)", orquestador=None)
+    try:
+        actual = esquema_actual()
+    except Exception as ex:   # noqa: BLE001 — no debería pasar: el propio código no se puede describir
+        return _r(False, "PE-04", f"no se puede calcular el esquema de este código: {type(ex).__name__}", orquestador=None)
+    if doc["esquema"] != actual:
+        return _r(False, "PE-08", "el estado lo guardó otra versión del código (otro esquema): hay que migrarlo (migraciones.migrar)",
+                  orquestador=None, esquema=doc["esquema"], esquema_actual=actual)
+    o, err = montar(doc)
+    if err:
+        return err
+    try:
         rotos = o.integridad()
         if rotos:
             # siempre deja rastro: aviso O-13 nuevo (ALTA, sin acusar) aunque el kill-switch ya estuviera activo (hallazgo 4)
