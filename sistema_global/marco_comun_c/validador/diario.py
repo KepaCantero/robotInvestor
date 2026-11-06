@@ -34,12 +34,19 @@ aplicada) y se anota su RES.
 diario con solo esa línea (también atómico). Un corte en medio es recuperable: si el estado nuevo no llegó a guardarse, el diario
 aún tiene el punto anterior y las operaciones; si llegó a guardarse, su PUNTO ya está en el diario.
 
-Límites: un solo proceso escribe el diario; las huellas no tienen clave (como en V0.42); el reloj sigue llegando como argumento.
+Desde V0.45, con clave (crear y abrir con clave=), cada línea va firmada (HMAC-SHA256 de su hash, con prefijo de dominio) y el
+estado guardado también: sin la clave no se puede cambiar ni reordenar nada. Pero ni la firma ni la cadena impiden recortar el
+final del diario o volver a un estado y un diario firmados más antiguos: hace falta un ancla monótona fuera del alcance de quien
+toca los ficheros (la bóveda real, Fase 3).
+
+Límites: un solo proceso escribe el diario; el reloj sigue llegando como argumento; sin clave, las huellas no protegen de quien
+las rehace; en un mismo proceso, quien tiene el Diario puede llegar a la clave.
 """
 from __future__ import annotations
 
 import copy
 import hashlib
+import hmac
 import json
 import os
 import tempfile
@@ -88,7 +95,8 @@ def _sha_fichero(ruta):
 
 
 def _h(x) -> str:
-    return hashlib.sha256(pe._canon(x).encode("ascii")).hexdigest()
+    """Hash de una línea tal como se escribe, en su orden (con el orden de claves de los argumentos: revisión de V0.45, hallazgo 2)."""
+    return hashlib.sha256(pe._texto(x).encode("ascii")).hexdigest()
 
 
 def _resultado(r) -> str:
@@ -104,9 +112,12 @@ def _r(ok, codigo, motivo, **extra):
     return {"ok": ok, "codigo": codigo, "motivo": motivo, **extra}
 
 
-def _linea(entrada, prev):
+def _linea(entrada, prev, clave=None):
+    """Una línea encadenada; con clave, además firmada (HMAC-SHA256 de su hash, que cubre su contenido y el de las anteriores)."""
     e = {**entrada, "prev": prev}
     e["hash"] = _h(e)
+    if clave is not None:
+        e["firma"] = pe.firmar(clave, "robot-investor/diario/" + e["hash"])
     return e
 
 
@@ -145,8 +156,12 @@ def _aplicar(o, metodo, args, kwargs):
 class Diario:
     """Un Orquestador con diario. Se obtiene con `crear` o `abrir`, nunca construyéndolo a mano."""
 
-    def __init__(self, o, ruta_estado, ruta_diario, ultimo, n):
+    def __init__(self, o, ruta_estado, ruta_diario, ultimo, n, clave=None):
         object.__setattr__(self, "_o", o)
+        # V0.45: con clave, cada línea y cada estado guardado van firmados. Se guarda una copia (un bytearray que el llamador borre
+        # no la cambia, hallazgo 9). En un mismo proceso no hay aislamiento real: quien tenga el Diario puede llegar a la clave
+        # (hallazgo 8); se impide al menos copiarlo o serializarlo con ella dentro.
+        object.__setattr__(self, "_clave", None if clave is None else bytes(clave))
         object.__setattr__(self, "_ruta_estado", ruta_estado)
         object.__setattr__(self, "_ruta_diario", ruta_diario)
         object.__setattr__(self, "_ultimo", ultimo)     # hash de la última línea
@@ -161,7 +176,7 @@ class Diario:
         posición antes y después de una transición; una copia los rompería). Un cambio hecho por fuera de los métodos no queda en el
         diario: la operación siguiente lo detecta (DI-06) y al reabrir se vuelve al estado anotado. Lo privado no se expone, salvo
         unos pocos métodos de lectura."""
-        if nombre.startswith("__") or nombre in ("_o", "_ruta_estado", "_ruta_diario", "_ultimo", "_n", "_mutantes", "_roto", "_huella"):
+        if nombre.startswith("__") or nombre in ("_o", "_ruta_estado", "_ruta_diario", "_ultimo", "_n", "_mutantes", "_roto", "_huella", "_clave"):
             raise AttributeError(nombre)   # sin esto, copy/pickle de un Diario a medio construir entran en recursión (hallazgo 8)
         if nombre.startswith("_") and nombre not in PRIVADOS_DE_LECTURA:
             raise AttributeError(f"{nombre}: lo privado del Orquestador no se usa a través del diario (no quedaría anotado)")
@@ -172,6 +187,9 @@ class Diario:
             anotada.__name__ = nombre
             return anotada
         return a
+
+    def __reduce_ex__(self, protocolo):
+        raise TypeError("un Diario no se serializa: lleva la clave y escribe en sus ficheros")
 
     def __deepcopy__(self, memo):
         """Una copia no lleva diario: es una copia del Orquestador (que nadie anota)."""
@@ -192,7 +210,7 @@ class Diario:
     def _anotar(self, entrada):
         """Añade una línea y la lleva al disco. Si algo falla, intenta dejar el fichero como estaba (revisión, hallazgo 2): así una
         operación que responde «no se aplica» tampoco se aplicará al reabrir. Lanza OSError si no lo consigue."""
-        e = _linea({"n": self._n + 1, **entrada}, self._ultimo)
+        e = _linea({"n": self._n + 1, **entrada}, self._ultimo, self._clave)
         texto = json.dumps(e, ensure_ascii=True, separators=(",", ":"), allow_nan=False) + "\n"
         tam = os.path.getsize(self._ruta_diario)
         try:
@@ -266,18 +284,18 @@ class Diario:
         if err:
             return err
         try:
-            texto = pe.volcar(self._o, ahora)
+            texto = pe.volcar(self._o, ahora, self._clave)
         except (ValueError, TypeError) as ex:
             return _r(False, "PE-01", f"no se puede volcar el estado: {str(ex)[:120]}")
         huella = json.loads(texto)["huella"]
-        prueba = pe.cargar(texto)   # nunca se guarda (ni se reduce el diario) un estado que no se volvería a cargar (hallazgo 1)
+        prueba = pe.cargar(texto, self._clave)   # nunca se guarda (ni se reduce el diario) un estado que no se volvería a cargar (hallazgo 1)
         if not prueba["ok"]:
             return _r(False, prueba["codigo"], f"el estado no se volvería a cargar: {prueba['motivo']}; no se hace el punto")
         fichero = hashlib.sha256(texto.encode("ascii")).hexdigest()
         try:
             self._anotar({"tipo": "PUNTO", "estado": huella, "fichero": fichero})
             _escribir_atomico(self._ruta_estado, texto)
-            nuevo = _linea({"n": 1, "tipo": "PUNTO", "estado": huella, "fichero": fichero}, CERO)
+            nuevo = _linea({"n": 1, "tipo": "PUNTO", "estado": huella, "fichero": fichero}, CERO, self._clave)
             _escribir_atomico(self._ruta_diario, json.dumps(nuevo, ensure_ascii=True, separators=(",", ":")) + "\n")
         except (OSError, ValueError, TypeError) as ex:
             object.__setattr__(self, "_roto", type(ex).__name__)
@@ -287,25 +305,28 @@ class Diario:
         return _r(True, "OK", "punto de control hecho", huella=huella)
 
 
-def crear(o, ruta_estado, ruta_diario, ahora) -> dict:
-    """Empieza un diario nuevo para `o`: guarda su estado y deja el diario con su PUNTO. No pisa ficheros existentes."""
+def crear(o, ruta_estado, ruta_diario, ahora, clave=None) -> dict:
+    """Empieza un diario nuevo para `o`: guarda su estado y deja el diario con su PUNTO. No pisa ficheros existentes. Con clave
+    (V0.45), el estado y cada línea van firmados y abrir exigirá la misma clave."""
+    if clave is not None and not pe.clave_valida(clave):
+        return _r(False, "PE-07", f"la clave debe tener al menos {pe.CLAVE_MIN_BYTES} bytes", diario=None)
     try:
         if os.path.exists(ruta_estado) or os.path.exists(ruta_diario):
             return _r(False, "DI-03", "ya hay un estado o un diario: ábrelos con abrir(), no se pisan", diario=None)
-        texto = pe.volcar(o, ahora)
+        texto = pe.volcar(o, ahora, clave)
         huella = json.loads(texto)["huella"]
-        prueba = pe.cargar(texto)
+        prueba = pe.cargar(texto, clave)
         if not prueba["ok"]:
             return _r(False, prueba["codigo"], f"el estado no se volvería a cargar: {prueba['motivo']}", diario=None)
-        primera = _linea({"n": 1, "tipo": "PUNTO", "estado": huella, "fichero": hashlib.sha256(texto.encode("ascii")).hexdigest()}, CERO)
+        primera = _linea({"n": 1, "tipo": "PUNTO", "estado": huella, "fichero": hashlib.sha256(texto.encode("ascii")).hexdigest()}, CERO, clave)
         _escribir_atomico(ruta_estado, texto)
         _escribir_atomico(ruta_diario, json.dumps(primera, ensure_ascii=True, separators=(",", ":")) + "\n")
     except (OSError, ValueError, TypeError) as ex:
         return _r(False, "DI-05", f"no se pudo crear el diario: {type(ex).__name__}", diario=None)
-    return _r(True, "OK", "diario creado", diario=Diario(o, ruta_estado, ruta_diario, primera["hash"], 1))
+    return _r(True, "OK", "diario creado", diario=Diario(o, ruta_estado, ruta_diario, primera["hash"], 1, clave))
 
 
-def _leer(ruta_diario):
+def _leer(ruta_diario, clave=None):
     """Las líneas del diario comprobadas (cadena y numeración). Devuelve (lineas, cortada, reescribir, error): cortada si se
     descartó una última línea a medias; reescribir si el fichero no acaba en salto de línea (hay que dejarlo limpio antes de
     seguir añadiendo)."""
@@ -327,13 +348,14 @@ def _leer(ruta_diario):
             e = json.loads(c.decode("ascii"), parse_constant=lambda x: (_ for _ in ()).throw(ValueError(x)))
             ok = (isinstance(e, dict) and isinstance(e.get("hash"), str) and isinstance(e.get("prev"), str) and isinstance(e.get("n"), int)
                   and not isinstance(e.get("n"), bool) and e.get("tipo") in ("PUNTO", "OP", "RES")
-                  and _h({k: v for k, v in e.items() if k != "hash"}) == e["hash"])
+                  and _h({k: v for k, v in e.items() if k not in ("hash", "firma")}) == e["hash"]
+                  and _firma_ok(e, clave))
         except (ValueError, UnicodeDecodeError, TypeError, RecursionError):
             ok = False
         if not ok:
             if ultima and incompleta:
                 return lineas, True, True, None
-            return None, False, False, _r(False, "DI-02", f"línea {i + 1} del diario ilegible o con su hash roto", diario=None)
+            return None, False, False, _r(False, "DI-02", f"línea {i + 1} del diario ilegible, con su hash roto o sin la firma esperada", diario=None)
         if (prev is None and (e["prev"] != CERO or e["n"] != 1)) or (prev is not None and (e["prev"] != prev["hash"] or e["n"] != prev["n"] + 1)):
             return None, False, False, _r(False, "DI-02", f"la cadena del diario se rompe en la línea {i + 1}", diario=None)
         if not _forma_ok(e):
@@ -345,7 +367,15 @@ def _leer(ruta_diario):
     return lineas, False, incompleta, None
 
 
+def _firma_ok(e, clave):
+    """Con clave, cada línea debe traer su firma y ser la buena; sin clave, ninguna puede traerla (no se podría comprobar)."""
+    if clave is None:
+        return "firma" not in e
+    return isinstance(e.get("firma"), str) and hmac.compare_digest(e["firma"], pe.firmar(clave, "robot-investor/diario/" + e["hash"]))
+
+
 def _forma_ok(e):
+    e = {k: v for k, v in e.items() if k != "firma"}
     t = e["tipo"]
     if t == "PUNTO":
         return (set(e) == {"n", "tipo", "estado", "fichero", "prev", "hash"} and all(isinstance(e[k], str) and pe.HEX64.match(e[k]) is not None
@@ -357,10 +387,13 @@ def _forma_ok(e):
             and isinstance(e["resultado"], str) and pe.HEX64.match(e["resultado"]) is not None)
 
 
-def abrir(ruta_estado, ruta_diario) -> dict:
+def abrir(ruta_estado, ruta_diario, clave=None) -> dict:
     """Carga el último estado guardado y vuelve a aplicar lo que el diario tiene después de su punto de control. Nunca lanza.
-    Devuelve {ok, codigo, motivo, diario, aplicadas, linea_incompleta}."""
-    r = pe.cargar_de(ruta_estado)
+    Devuelve {ok, codigo, motivo, diario, aplicadas, linea_incompleta}. Con clave (V0.45), el estado y cada línea deben venir
+    firmados con ella (PE-06 / DI-02)."""
+    if clave is not None and not pe.clave_valida(clave):
+        return _r(False, "PE-07", f"la clave debe tener al menos {pe.CLAVE_MIN_BYTES} bytes", diario=None)
+    r = pe.cargar_de(ruta_estado, clave)
     if not r["ok"]:
         return _r(False, r["codigo"], f"estado: {r['motivo']}", diario=None, orquestador=r.get("orquestador"))
     o = r["orquestador"]
@@ -368,7 +401,7 @@ def abrir(ruta_estado, ruta_diario) -> dict:
         fichero = _sha_fichero(ruta_estado)
     except (OSError, ValueError, TypeError) as ex:
         return _r(False, "PE-05", f"no se pudo releer el estado: {type(ex).__name__}", diario=None)
-    lineas, incompleta, reescribir, err = _leer(ruta_diario)
+    lineas, incompleta, reescribir, err = _leer(ruta_diario, clave)
     if err:
         return err
     # el punto de control es el de ESE fichero (no basta la huella del estado: dos instalaciones pueden tener el mismo, hallazgo 9)
@@ -409,7 +442,7 @@ def abrir(ruta_estado, ruta_diario) -> dict:
             continue
         if sig is not None:   # una OP sin su RES solo puede ser la última
             return _r(False, "DI-02", f"línea {e['n']}: operación sin resultado que no es la última", diario=None)
-        d = Diario(o, ruta_estado, ruta_diario, lineas[-1]["hash"], lineas[-1]["n"])
+        d = Diario(o, ruta_estado, ruta_diario, lineas[-1]["hash"], lineas[-1]["n"], clave)
         try:
             if reescribir:   # se quita la línea cortada (o se cierra la última) antes de seguir escribiendo
                 _reescribir(ruta_diario, lineas)
@@ -417,7 +450,7 @@ def abrir(ruta_estado, ruta_diario) -> dict:
         except (OSError, ValueError, TypeError) as ex:
             return _r(False, "DI-05", f"no se pudo completar el diario: {type(ex).__name__}", diario=None)
         return _r(True, "OK", "estado cargado y diario aplicado", diario=d, aplicadas=aplicadas, linea_incompleta=incompleta)
-    d = Diario(o, ruta_estado, ruta_diario, lineas[-1]["hash"], lineas[-1]["n"])
+    d = Diario(o, ruta_estado, ruta_diario, lineas[-1]["hash"], lineas[-1]["n"], clave)
     if reescribir:
         try:
             _reescribir(ruta_diario, lineas)
