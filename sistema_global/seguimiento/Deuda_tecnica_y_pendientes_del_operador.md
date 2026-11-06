@@ -46,7 +46,7 @@ Todo lo que necesita una decisión o un dato tuyo queda aquí, con lo que bloque
 | --- | --- | --- | --- |
 | T-01 | Autenticar a los actores: hoy el actor es un texto que dice quien llama | Cualquiera podría hacerse pasar por el operador | Antes de conectar un broker real (Fase 3) |
 | T-02 | Anclar fuera los hashes de sellos e historiales y pasar a firma | Alteración detectable pero no demostrable | Con D-08 |
-| T-03 | Persistencia y reloj real: hoy el estado vive en memoria | Se pierde el estado al reiniciar | Fase 1. En parte en V0.42: el estado se guarda y se carga entero con huella, escritura atómica y carga que falla cerrado (PE-01 a PE-05, O-13 con kill-switch); faltan la firma con clave, el reloj real, el diario de operaciones y las migraciones |
+| T-03 | Persistencia y reloj real: hoy el estado vive en memoria | Se pierde el estado al reiniciar | Fase 1. En parte en V0.42: el estado se guarda y se carga entero con huella, escritura atómica y carga que falla cerrado (PE-01 a PE-05, O-13 con kill-switch); y en V0.43 el diario de operaciones (registro previo a la escritura con puntos de control: un corte en cualquier punto se recupera al mismo estado; DI-01 a DI-05); faltan la firma con clave, el reloj real y las migraciones |
 | T-04 | Verificar la independencia del Contradictor desde fuera | La independencia es solo declarada | Con D-06 |
 | T-05 | Verificar de forma independiente el resultado de F y las condiciones de reapertura de un expediente en observación | Se aceptan como entrada | Con F y D |
 | T-06 | Congelar CT-G-01, CT-G-02, CT-G-03 y el sello de K en 1.0.0 | Los esquemas siguen en 0.x y pueden cambiar | Tras dos perfiles reales (D-02 y C-RV) |

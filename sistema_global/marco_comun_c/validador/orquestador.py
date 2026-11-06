@@ -1330,6 +1330,8 @@ class Orquestador:
         (nada borrado ni añadido por fuera, R-M1), ninguna entrada cambió y los artefactos que cita un sobre aceptado siguen ahí."""
         try:
             L = self.sc3
+            if L == {"historial": [], "estado": "VIGENTE", "entradas": []} and not self.modelos and not self.artefactos:
+                return True   # T-03 (revisión del diario, hallazgo 1): un Orquestador recién creado, sin nada registrado, es íntegro
             if not (self._historial_ok(L) and len(L["historial"]) == len(L["entradas"])
                     and all(h["datos"] == _hash(x) for h, x in zip(L["historial"], L["entradas"]))):
                 return False
