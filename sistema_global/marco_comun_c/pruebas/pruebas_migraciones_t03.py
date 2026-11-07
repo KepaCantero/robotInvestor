@@ -129,12 +129,15 @@ def main():
     h.chk("un_formato_desconocido_sigue_siendo_PE03", pe.cargar(otro(texto, cambio=None).replace(pe.FORMATO, "ESTADO-ORQUESTADOR-9.9.9"))["codigo"] == "PE-03")
 
     # ---------------------------------------------------------------------------------------------- migrar un 0.1.0 (MIG-001)
+    # la cadena desde un documento 0.1.0: MIG-001 y las que vengan después (V0.50: MIG-002); antes de V0.50 era solo MIG-001
+    CADENA_010 = [m.id for m in mg.camino(pe.FORMATO_010, mg.ESQUEMA_V0_45, E0)]
+    h.chk("la_cadena_desde_010_empieza_por_MIG001", CADENA_010[:1] == ["MIG-001"], CADENA_010)
     sha010 = hashlib.sha256(t010.encode("ascii")).hexdigest()
     r = mg.migrar(t010, TM, M)
-    h.chk("migrar_010_con_MIG001", r["ok"] and r["migraciones"] == ["MIG-001"], r.get("motivo"))
+    h.chk("migrar_010_con_MIG001", r["ok"] and r["migraciones"] == CADENA_010, r.get("motivo"))
     o2 = r["orquestador"]
     ult = o2.limites["entradas"][-1]
-    h.chk("la_migracion_queda_en_el_registro_de_limites", ult["tipo"] == "MIGRACION" and ult["migraciones"] == ["MIG-001"]
+    h.chk("la_migracion_queda_en_el_registro_de_limites", ult["tipo"] == "MIGRACION" and ult["migraciones"] == CADENA_010
           and ult["fichero_antes"] == sha010 and ult["esquema_antes"] == mg.ESQUEMA_V0_45 and ult["esquema_despues"] == E0
           and o2.limites["historial"][-1]["actor"] == "OPERADOR" and o2.limites["historial"][-1]["ahora"] == TM, ult)
     h.chk("el_estado_migrado_esta_integro_y_se_carga", o2.integridad() == [] and pe.cargar(r["texto"])["ok"]
@@ -359,7 +362,7 @@ def main():
         r = mg.migrar_ficheros(re_, rd, TM, M)
         a = di.abrir(re_, rd)
         ls = di._leer(rd)[0]
-        h.chk("migrar_ficheros_y_abrir", r["ok"] and r["migraciones"] == ["MIG-001"] and not r["completada"] and a["ok"]
+        h.chk("migrar_ficheros_y_abrir", r["ok"] and r["migraciones"] == CADENA_010 and not r["completada"] and a["ok"]
               and len(ls) == 1 and ls[0]["tipo"] == "PUNTO" and a["diario"].limites["entradas"][-1]["tipo"] == "MIGRACION", (r, a["codigo"]))
         h.chk("tras_migrar_el_diario_sigue_funcionando", a["diario"].barrer(TM)["ok"] and di.abrir(re_, rd)["ok"])
         antes = (leer(re_), leer(rd))
@@ -385,7 +388,7 @@ def main():
             f.write(r["texto"])
         h.chk("cortado_entre_estado_y_diario_no_se_abre_DI03", di.abrir(re_, rd)["codigo"] == "DI-03")
         r = mg.migrar_ficheros(re_, rd, TM, M)
-        h.chk("migrar_ficheros_completa_la_migracion_cortada", r["ok"] and r["completada"] and r["migraciones"] == ["MIG-001"]
+        h.chk("migrar_ficheros_completa_la_migracion_cortada", r["ok"] and r["completada"] and r["migraciones"] == CADENA_010
               and di.abrir(re_, rd)["ok"], r)
         # un PUNTO cuyo estado no es el del fichero que cita
         re_, rd, t = ficheros_010(tmp, "huella", o)
