@@ -189,12 +189,28 @@ def main():
             h.chk("no_se_asignan_atributos_por_fuera", False)
         except AttributeError:
             h.chk("no_se_asignan_atributos_por_fuera", True)
-        os.remove(rd)
-        os.mkdir(rd)   # el diario deja de poder escribirse (aquí, porque su ruta pasa a ser una carpeta)
+        # el diario deja de poder escribirse. Hasta V0.48 se simulaba cambiando su ruta por una carpeta; desde V0.49 eso es «el
+        # fichero cambió por fuera» (DI-06, comprobado aparte abajo), así que el fallo de escritura se simula en fsync
         antes = pe.volcar(d.orquestador, T)
-        r = d.barrer("2026-11-06T09:10:00+00:00")
+        real_fsync = di.os.fsync
+
+        def sin_disco(fd):
+            raise OSError("disco lleno (simulado)")
+        di.os.fsync = sin_disco
+        try:
+            r = d.barrer("2026-11-06T09:10:00+00:00")
+        finally:
+            di.os.fsync = real_fsync
         h.chk("DI05_sin_poder_escribir_no_se_aplica_y_se_bloquea", r["codigo"] == "DI-05" and pe.volcar(d.orquestador, T) == antes
               and d.barrer(AHORA)["codigo"] == "DI-05" and d.punto(T)["codigo"] == "DI-05", r)
+        re_c, rd_c = os.path.join(tmp, "carpeta.e"), os.path.join(tmp, "carpeta.d")
+        dc = di.crear(nuevo(), re_c, rd_c, T)["diario"]
+        os.remove(rd_c)
+        os.mkdir(rd_c)   # la ruta del diario pasa a ser una carpeta: cambió por fuera
+        antes = pe.volcar(dc.orquestador, T)
+        r = dc.barrer("2026-11-06T09:10:00+00:00")
+        h.chk("DI06_el_diario_cambiado_por_una_carpeta_no_se_aplica_y_se_bloquea", r["codigo"] == "DI-06"
+              and pe.volcar(dc.orquestador, T) == antes and dc.barrer(AHORA)["codigo"] == "DI-06" and dc.punto(T)["codigo"] == "DI-06", r)
         h.chk("crear_en_carpeta_inexistente_DI05", di.crear(nuevo(), os.path.join(tmp, "no", "e.json"), os.path.join(tmp, "no", "d"), T)["codigo"] == "DI-05")
 
     # ------------------------------------------------------------------ regresiones de la revisión independiente del diario

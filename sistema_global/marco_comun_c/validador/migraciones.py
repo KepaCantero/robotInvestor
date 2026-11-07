@@ -156,8 +156,8 @@ def migrar(texto, ahora, motivo, clave=None, actor="OPERADOR", registro=MIGRACIO
 def _migrar(texto, ahora, motivo, clave, actor, registro, esquemas):
     if not isinstance(texto, str):
         return _no("PE-01", "el estado a migrar debe ser texto")
-    if not pe._instante_ok(ahora):
-        return _no("MG-05", "instante de la migración ilegible")
+    if not pe._instante_ok(ahora) or _dt(ahora).year >= 2100:   # V0.49 (revisión, hallazgo 9): como el reloj, nada desde 2100
+        return _no("MG-05", "instante de la migración ilegible o fuera de lo plausible")
     if not _motivo_ok(motivo):
         return _no("MG-05", "la migración necesita un motivo de 15 a 500 caracteres")
     if actor != "OPERADOR":   # hallazgo 11: solo el operador cambia la huella de la configuración
