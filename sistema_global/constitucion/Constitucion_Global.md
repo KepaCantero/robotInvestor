@@ -44,7 +44,7 @@ Esta V0.4 (7 de noviembre de 2026) **sustituye a la V0.3**: incorpora la **enmie
 | 15 | Las **noticias** pasan a un servicio aislado (SC-11) con salida estructurada y sin texto libre. No se crea un bloque L de contexto | Contenido hostil por una vía común a C, D y E | §3, §12 |
 | 16 | **Criterio de bloque ampliado** (3 de 5) y **tope de bloques activos** (8 en las Fases 1 y 2), con panel de salud en N | Complejidad ingobernable para una persona | §2 |
 
-**Qué cambia de la V0.3 a la V0.4 (enmienda 1).** `[RATIFICADO]` el 7 de noviembre de 2026; los números marcados `[PROPUESTO]` quedan pendientes del operador (P-17 a P-24).
+**Qué cambia de la V0.3 a la V0.4 (enmienda 1).** `[RATIFICADO]` el 7 de noviembre de 2026, también sus números (D-27); solo quedan por elegir las fuentes de noticias de SC-11 (P-24).
 
 | N.º | Cambio | Problema que resuelve | Sección |
 | --- | --- | --- | --- |
@@ -150,7 +150,7 @@ La refactorización de A y B a núcleo + perfil se hace en la **Fase 2** (§14),
 
 El operador llamaba «C.1» al analista de divisas y el Documento 0 de B lo designa C.3. Con los códigos el conflicto desaparece: es `C-DIV`.
 
-**Especializaciones dentro de un perfil.** `[RATIFICADO]` (D-26) `C-RV` incluye una especialización en **small caps cotizadas y situaciones especiales** (spin-offs), y B ya tiene a AG-B24 para detectarlas. Las **startups no cotizadas** son de `C-ALT` (Fase 5), con un tope pequeño de cartera fijado por el operador `[PROPUESTO: 2 %]` (P-23).
+**Especializaciones dentro de un perfil.** `[RATIFICADO]` (D-26) `C-RV` incluye una especialización en **small caps cotizadas y situaciones especiales** (spin-offs), y B ya tiene a AG-B24 para detectarlas. Las **startups no cotizadas** son de `C-ALT` (Fase 5), con un tope pequeño de cartera fijado por el operador `[RATIFICADO: 2 %]` (P-23).
 
 ## 3. Planos, servicios comunes y verificación
 
@@ -394,12 +394,12 @@ Hay **tres carteras** (libros) con capital propio, cada una con su mandato. `[RA
 **Contrapesos de la abstención.** `[RATIFICADO]` (D-22) Para que el control no impida invertir nunca:
 
 1. **Embudo visible.** N muestra cada semana cuántas oportunidades entran, en qué capa cae cada una y por qué.
-2. **Alarma de sequía.** Si en un plazo `[PROPUESTO: 60 días]` (P-17) ninguna oportunidad llega a invertirse habiendo candidatos que pasaron el análisis, se avisa al operador con el embudo del periodo.
+2. **Alarma de sequía.** Si en un plazo `[RATIFICADO: 60 días]` (P-17) ninguna oportunidad llega a invertirse habiendo candidatos que pasaron el análisis, se avisa al operador con el embudo del periodo.
 3. **Seguimiento de lo descartado** (§9): I calcula cómo habrían ido las opciones vetadas o descartadas y propone recalibrar los filtros que descartan de más.
 
 Los controles **nunca se relajan solos**: el sistema propone el ajuste y el operador decide, por la ruta de cambios del §9.
 
-**Freno a la rotación.** `[RATIFICADO]` (D-25) D y E solo proponen cambiar una posición por otra si la mejora esperada supera los costes de salir y entrar (comisiones, diferencial, impuestos) con un margen `[PROPUESTO: el doble de esos costes]` (P-20). Y usan SC-9 al decidir: compensar ganancias con pérdidas cuando convenga, la regla de los dos meses y el efecto del plazo de tenencia.
+**Freno a la rotación.** `[RATIFICADO]` (D-25) D y E solo proponen cambiar una posición por otra si la mejora esperada supera los costes de salir y entrar (comisiones, diferencial, impuestos) con un margen `[RATIFICADO: el doble de esos costes]` (P-20). Y usan SC-9 al decidir: compensar ganancias con pérdidas cuando convenga, la regla de los dos meses y el efecto del plazo de tenencia.
 
 **Supervisión global (en E).**
 
@@ -430,7 +430,7 @@ El Bloque F es código determinista que ningún agente puede modificar, saltarse
 
 1. Mandato: tipo de activo admitido, horizonte, apalancamiento.
 2. Límites de concentración por libro y **globales**, incluida la exposición compartida a una divisa, emisor o factor. Las betas son una ayuda, no el límite: en crisis fallan.
-3. Liquidez del instrumento y liquidez mínima de la cartera: no comprar más de una fracción del volumen medio diario `[PROPUESTO: 5 %]` (P-22) y contar el coste de entrar y salir (D-26).
+3. Liquidez del instrumento y liquidez mínima de la cartera: no comprar más de una fracción del volumen medio diario `[RATIFICADO: 5 %]` (P-22) y contar el coste de entrar y salir (D-26).
 4. Exclusiones duras: sanciones, invertibilidad minorista (ESMA y normativa aplicable), acceso y custodia.
 5. Calidad de la evidencia: sobre válido, no caducado, fecha de corte reciente y proporción mínima de cifras verificadas.
 6. Cordura de la orden: tamaño, **deriva del precio frente a la referencia del análisis** y condiciones de entrada, duplicados (idempotencia).
@@ -470,9 +470,9 @@ Con unas pocas decenas de tesis al año y horizontes de meses, las métricas de 
 6. **Ruta única de cambios.** I propone → J valida (backtest sin *look-ahead* y paper trading) → F y el operador aprueban → despliegue con versión nueva → comparación con la anterior. **Una mejora que no se puede validar con muestra suficiente o fuera de muestra no se despliega.**
 7. Las opciones descartadas se reevalúan automáticamente cuando se cumplen sus condiciones de reapertura.
 8. **Seguimiento de lo descartado** `[RATIFICADO]` (D-22): I calcula cómo habrían ido las opciones vetadas o descartadas para distinguir una abstención acertada de unos filtros demasiado estrictos.
-9. **Cartera sombra pasiva** `[RATIFICADO]` (D-22): desde el primer día corre en simulado un plan pasivo simple (P-18), con los mismos aportes y retiradas que la cartera real. I compara cada mes el robot con la sombra después de costes de análisis (los de los modelos incluidos), comisiones e impuestos. Si tras `[PROPUESTO: 24 meses]` el robot no la supera, propone pasar a gestión pasiva y decide el operador.
+9. **Cartera sombra pasiva** `[RATIFICADO]` (D-22, D-27): desde el primer día corre en simulado un plan pasivo simple (un índice mundial), con los mismos aportes y retiradas que la cartera real. I compara cada mes el robot con la sombra después de costes de análisis (los de los modelos incluidos), comisiones e impuestos. Si tras `[RATIFICADO: 24 meses]` el robot no la supera, propone pasar a gestión pasiva y decide el operador.
 10. **Pronósticos del radar tecnológico** en SC-4, con hitos de 12 meses o menos y la clase de referencia de cuánto tardaron tecnologías parecidas en implantarse.
-11. **Presupuesto de complejidad** `[RATIFICADO]` (D-25): cada bloque, control o registro justifica con datos lo que aporta (decisiones que cambió, pérdidas que evitó, coste que ahorró). I lo revisa cada `[PROPUESTO: 6 meses]` (P-21) y propone simplificar o retirar lo que no aporta.
+11. **Presupuesto de complejidad** `[RATIFICADO]` (D-25): cada bloque, control o registro justifica con datos lo que aporta (decisiones que cambió, pérdidas que evitó, coste que ahorró). I lo revisa cada `[RATIFICADO: 6 meses]` (P-21) y propone simplificar o retirar lo que no aporta.
 
 **Prohibido.** Cambiar límites, estrategias activas, modelos o parámetros de ejecución sin esa ruta; ajustar con el periodo que luego se usa para validar; usar un resultado para recalibrar el pronóstico que lo predijo.
 
@@ -493,7 +493,7 @@ El Bloque I completo se construye al final (§14). Hasta entonces bastan el diar
 
 **Economía del análisis.** `[RATIFICADO]` (D-24)
 
-1. **Tope de coste por oportunidad**, proporcional al importe que se invertiría `[PROPUESTO: 1 % del importe, con mínimo y máximo]` (P-19). La profundidad N0–N3 se elige por lo que está en juego: importe, incertidumbre y cuánto cambiaría la decisión con más información.
+1. **Tope de coste por oportunidad**, proporcional al importe que se invertiría `[RATIFICADO: 1 % del importe, con mínimo y máximo]` (P-19). La profundidad N0–N3 se elige por lo que está en juego: importe, incertidumbre y cuánto cambiaría la decisión con más información.
 2. **Embudo de lo barato a lo caro:** filtros deterministas sobre K sin LLM; después análisis corto con modelos pequeños; solo los supervivientes pasan al análisis profundo con modelos grandes, al Contradictor y a D.
 3. **Análisis incremental:** con el registro de análisis vigentes (§3), lo ya analizado se reutiliza si sus datos no cambiaron o se actualiza solo en la parte afectada.
 4. **Trabajo por eventos:** se analiza y revisa cuando pasa algo relevante (un precio que cruza un umbral, un dato, un evento del calendario de K, un foco geopolítico), con una revisión periódica de seguridad de frecuencia baja.
@@ -625,6 +625,7 @@ El **identificador es la clave de todo almacén**: ningún componente recupera u
 | D-24 | Economía del análisis: tope de coste, embudo, análisis incremental, eventos, caché y lotes | RATIFICADO | 2026-11-07 |
 | D-25 | Calidad de las decisiones: clase de referencia, freno a la rotación, fiscalidad en la decisión, concentración mínima antes de M, presupuesto de complejidad | RATIFICADO | 2026-11-07 |
 | D-26 | Cobertura nueva sin bloques nuevos: geopolítica con SC-11 mínimo en la Fase 1, radar tecnológico en A, small caps y spin-offs en C-RV, startups en C-ALT, posicionamiento de grandes inversores en K | RATIFICADO | 2026-11-07 |
+| D-27 | Números de la enmienda 1: alarma de sequía a 60 días; cartera sombra en un índice mundial juzgada a los 24 meses; tope de coste de análisis del 1 % del importe (con mínimo y máximo); freno a la rotación con margen del doble de los costes; revisión de complejidad cada 6 meses; liquidez máxima del 5 % del volumen medio diario; startups no cotizadas hasta el 2 % de la cartera | RATIFICADO | 2026-11-07 |
 
 **Pendientes del operador.**
 
@@ -646,13 +647,13 @@ El **identificador es la clave de todo almacén**: ningún componente recupera u
 | P-14 | Muestra mínima para calibrar y periodos de las compuertas de las fases | §9, §14 |
 | P-15 | Ratificar la clase de comparabilidad (Q, S, K) de cada tipo de activo | §5 |
 | P-16 | Confirmar la cartera de la Fase 1 (propuesta: táctica). El tipo de activo, divisas, lo confirmó el operador el 7-11-2026 | §14 |
-| P-17 | Plazo de la alarma de sequía (propuesta: 60 días) | §7 |
-| P-18 | Plan pasivo de la cartera sombra y plazo para juzgar al robot (propuesta: índice mundial; 24 meses) | §9 |
-| P-19 | Tope de coste de análisis por oportunidad (propuesta: 1 % del importe, con mínimo y máximo) | §10 |
-| P-20 | Margen del freno a la rotación (propuesta: el doble de los costes de cambiar) | §7 |
-| P-21 | Periodo de la revisión de complejidad (propuesta: 6 meses) | §9 |
-| P-22 | Límite de liquidez (propuesta: 5 % del volumen medio diario) | §8 |
-| P-23 | Tope de startups no cotizadas (propuesta: 2 % de la cartera) | §2, §7 |
+| P-17 | ~~Plazo de la alarma de sequía (propuesta: 60 días)~~ Resuelto: propuesta aceptada (D-27) | §7 |
+| P-18 | ~~Plan pasivo de la cartera sombra y plazo para juzgar al robot (propuesta: índice mundial; 24 meses)~~ Resuelto: propuesta aceptada (D-27) | §9 |
+| P-19 | ~~Tope de coste de análisis por oportunidad (propuesta: 1 % del importe, con mínimo y máximo)~~ Resuelto: propuesta aceptada (D-27) | §10 |
+| P-20 | ~~Margen del freno a la rotación (propuesta: el doble de los costes de cambiar)~~ Resuelto: propuesta aceptada (D-27) | §7 |
+| P-21 | ~~Periodo de la revisión de complejidad (propuesta: 6 meses)~~ Resuelto: propuesta aceptada (D-27) | §9 |
+| P-22 | ~~Límite de liquidez (propuesta: 5 % del volumen medio diario)~~ Resuelto: propuesta aceptada (D-27) | §8 |
+| P-23 | ~~Tope de startups no cotizadas (propuesta: 2 % de la cartera)~~ Resuelto: propuesta aceptada (D-27) | §2, §7 |
 | P-24 | Fuentes de noticias de SC-11 en la Fase 1 | §3 |
 
 **Trazabilidad de la revisión independiente.** Los 13 hallazgos y dónde se atienden en esta versión.
