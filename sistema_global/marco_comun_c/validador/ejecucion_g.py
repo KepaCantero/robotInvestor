@@ -303,7 +303,7 @@ def _ejecutar(o, eid, broker, ahora, est):
     if _dt(ahora) > _limite_entrada(o, e) or o._sello_anulado(e):
         return _r(False, "G-06", "la ventana de entrada, el sobre, el informe de F o el sello ya no valen; no se envía nada")
     if not o.autorizacion_vigente(e):
-        return _r(False, "G-06", "la autorización ya no vale (fue automática y la cartera ya no está en L2, o después se bajó el límite de "
+        return _r(False, "G-06", "la autorización ya no vale (fue automática y la cartera bajó de nivel, se degradó después o ya no la permite el umbral o el horario, o después se bajó el límite de "
                                  "pérdida): vuelve a pasar por F y por el operador; no se envía nada")
     if any(p["instrumento"] == en["instrumento"] and p["estado"] != "CERRADA" for p in o.posiciones.values()) \
             or any(p["instrumento"] == en["instrumento"] for p in broker.posiciones()):
@@ -335,7 +335,9 @@ def _ejecutar(o, eid, broker, ahora, est):
 
 def _limite_entrada(o, e):
     en, cf = e["propuesta"]["entrada"], e["control_f"]
-    return min(_dt(en["ventana_hasta"]), _dt(e["sobre"]["valid_until"]), _dt(cf["valid_until"]))
+    lim = min(_dt(en["ventana_hasta"]), _dt(e["sobre"]["valid_until"]), _dt(cf["valid_until"]))
+    fin = o.fin_horario_l3(e) if hasattr(o, "fin_horario_l3") else None   # V0.50: una entrada de L3 por encima del umbral de L2
+    return min(lim, fin) if fin is not None else lim                       # no vive más allá del horario supervisado
 
 
 def revisar_entrada(o, expediente_id, broker, ahora, forzar_cancelacion=False):
@@ -393,7 +395,7 @@ def _resolver(o, eid, broker, ahora, r, est, forzar=False):
     """Decide qué hacer con la orden de entrada según su estado en el intermediario."""
     e = o.expedientes[eid]
     id_e = r["orden_id"]
-    vencida = forzar or o.kill is not None or _dt(ahora) > _limite_entrada(o, e) or o._sello_anulado(e) or not o.autorizacion_vigente(e)
+    vencida = forzar or o.kill is not None or _dt(ahora) > _limite_entrada(o, e) or o._sello_anulado(e) or not o.autorizacion_vigente(e, _dt(ahora))
     if r["estado"] == "ACEPTADA" and not vencida:
         return _r(False, "G-11", f"orden de entrada viva hasta {_limite_entrada(o, e).isoformat()}", orden_id=id_e, viva=True)
     if r["estado"] in ("ACEPTADA", "PARCIAL"):   # vencida, cancelada a petición, o parcial: se cancela el resto (resto_parcial = CANCELAR)

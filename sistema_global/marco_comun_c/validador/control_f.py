@@ -134,7 +134,7 @@ def _forma(sol, cart, pol, ahora) -> str | None:
 
 
 FECHA = re.compile(r"^\d{4}-\d{2}-\d{2}\Z")
-NIVELES = ("L0", "L1", "L2")
+NIVELES = ("L0", "L1", "L2", "L3")   # V0.50 (T-18): L3, autónomo en horario supervisado
 
 
 def _txt_id(x):

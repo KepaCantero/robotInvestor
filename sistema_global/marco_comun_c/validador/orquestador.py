@@ -79,7 +79,7 @@ OPERADORES = {"<": lambda v, u: v < u, "<=": lambda v, u: v <= u, ">": lambda v,
               ">=": lambda v, u: v >= u, "==": lambda v, u: v == u}
 
 CONFIG_DEFECTO = {"max_reintentos": 3, "umbral_corte_comun_dias_habiles": 0,
-                  "version_config": "CFG-0.7.0",   # 0.2.0 (T-48): Contradictor exigido en N2 y N3; autoria_c. 0.3.0 (T-49): alerta_perdida_pct. 0.4.0 (T-50): anulaciones_veto_mes. 0.5.0 (T-51): mandatos (SC-1) en lugar de instrumentos_permitidos. 0.6.0 (T-26/T-42): tolerancia_tipo_k_rel. 0.7.0 (T-22): politica_f con importes en euros y controles de la §8
+                  "version_config": "CFG-0.9.0",   # 0.9.0 (T-18): L3 y umbral_l2_eur (0.8.0 queda para T-33 de GLM). 0.2.0 (T-48): Contradictor exigido en N2 y N3; autoria_c. 0.3.0 (T-49): alerta_perdida_pct. 0.4.0 (T-50): anulaciones_veto_mes. 0.5.0 (T-51): mandatos (SC-1) en lugar de instrumentos_permitidos. 0.6.0 (T-26/T-42): tolerancia_tipo_k_rel. 0.7.0 (T-22): politica_f con importes en euros y controles de la §8
                   "dia_coste_max_eur": 50.0, "revision_max_dias": 90, "observacion_max_dias": 30, "max_reaperturas": 2, "dia_tiempo_max_min": 600, "tolerancia_precio_entrada": 0.05,
                   "alerta_perdida_pct": -5.0,   # T-49: H pide revisar al perder esto (y cada múltiplo) [PROPUESTO]
                   "anulaciones_veto_mes": 2,
@@ -87,7 +87,10 @@ CONFIG_DEFECTO = {"max_reintentos": 3, "umbral_corte_comun_dias_habiles": 0,
                   "exige_contradictor_en": ["N2", "N3"], "contradictor_desactivado_motivo": None, "autoria_c": {}, "autoria_contradictor": None,
                   "matriz_autonomia": {},   # T-48: Contradictor exigido por defecto donde se compara y propone [PROPUESTO]
                   "politica_f": POLITICA_DEFECTO,
-                  "nivel_autonomia": {}, "tolerancia_conciliacion_rel": 0.0,
+                  "nivel_autonomia": {}, "tolerancia_conciliacion_rel": 0.0,   # cartera -> L0 | L1 | L2 (automático hasta umbral_l2_eur) | L3 (sin umbral, en horario); sin dato = L1
+                  # T-18 (§6): lo que la matriz autoriza sola en L2 no pasa de este importe por orden, en euros; por encima, el operador
+                  # (en L3, dentro del horario supervisado, sin umbral: solo el mandato y F) [PROPUESTO, P-01, D-33]
+                  "umbral_l2_eur": {"TRADING": 5000.0, "TACTICA": 5000.0, "LARGO_PLAZO": 5000.0},
                   "mandatos": sc1.MANDATOS_DEFECTO,   # T-51: SC-1, fuente única del mandato de cada cartera [PROPUESTO, P-03, D-28]
                   "referencias": {c: dict(REFERENCIA_EFECTIVO) for c in ("TRADING", "TACTICA", "LARGO_PLAZO")},   # benchmark de cada cartera [PROPUESTO]
                   # [PROPUESTO] controles sobre el operador (§6) y avisos (§11); los canales reales los fija el operador (D-07, P-08)
@@ -100,8 +103,8 @@ CONFIG_DEFECTO = {"max_reintentos": 3, "umbral_corte_comun_dias_habiles": 0,
                   "rangos_tipo_cambio_eur": {"USD": [0.6, 1.4], "GBP": [0.9, 1.6], "JPY": [0.003, 0.015], "CHF": [0.7, 1.4], "AUD": [0.4, 0.9],
                                              "CAD": [0.45, 0.95], "SEK": [0.06, 0.13], "NOK": [0.06, 0.13], "DKK": [0.12, 0.15]},
                   "tolerancia_tipo_par_pct": 15.0,   # [PROPUESTO] desvío máximo entre el tipo de la foto y el que implica el límite de un par con el euro
-                  "cuenta_intermediario": "SIM-1"}    # la cuenta de la que G toma las fotos (D-21)   # cartera -> L0 (simulado) | L1 (el operador confirma) | L2 (automático con límites); sin dato = L1
-NIVELES = {"L0": 0, "L1": 1, "L2": 2}
+                  "cuenta_intermediario": "SIM-1"}    # la cuenta de la que G toma las fotos (D-21)
+NIVELES = {"L0": 0, "L1": 1, "L2": 2, "L3": 3}   # V0.50 (T-18): L3 autónomo, solo en horario supervisado (fuera, como L2)
 # Prioridad de cada aviso para el operador [PROPUESTO]
 TIPOS_KILL = {"POSICION_DESCONOCIDA", "CANTIDAD", "SENTIDO_O_ACTIVO", "PROTECCION", "PROTECCION_HUERFANA", "ENTRADA_HUERFANA",
               "MANUAL_NO_CUADRA", "POSICION_SIN_PROTEGER", "INTEGRIDAD"}   # lo que G sabe explicar (cierres propios, conexión, estado incierto, dato viejo) no
@@ -162,10 +165,12 @@ def _aprob_ok(a):
 
 
 def _en_horario(a, horario):
-    """Horario supervisado [desde, hasta] en UTC; admite cruzar la medianoche (p. ej. 22:00-06:00)."""
-    hm = a.astimezone(timezone.utc).strftime("%H:%M")
-    d, h = horario
-    return d <= hm <= h if d < h else (hm >= d or hm <= h)
+    """Horario supervisado [desde, hasta) en UTC, al segundo; admite cruzar la medianoche (p. ej. 22:00-06:00). V0.50 (revisión,
+    hallazgo 4): el extremo final ya no cuenta (antes, todo su minuto)."""
+    u = a.astimezone(timezone.utc)
+    t = u.hour * 3600 + u.minute * 60 + u.second + u.microsecond / 1e6
+    d, h = (int(x[:2]) * 3600 + int(x[3:]) * 60 for x in horario)
+    return d <= t < h if d < h else (t >= d or t < h)
 
 
 def _avisos_ok(a):
@@ -277,6 +282,8 @@ def _valida_config(c):
           and (c["contradictor_desactivado_motivo"] is None or (isinstance(c["contradictor_desactivado_motivo"], str)
                                                                 and 3 <= len(c["contradictor_desactivado_motivo"].strip()) <= 200))
           and all(isinstance(v, bool) for v in c["matriz_autonomia"].values())
+          and isinstance(c["umbral_l2_eur"], dict) and set(c["umbral_l2_eur"]) == {"TRADING", "TACTICA", "LARGO_PLAZO"}
+          and all(_num(v) and v >= 0 for v in c["umbral_l2_eur"].values())
           and isinstance(c["nivel_autonomia"], dict)
           and all(k in ("TRADING", "TACTICA", "LARGO_PLAZO") and v in NIVELES for k, v in c["nivel_autonomia"].items())
           and _num(c["tolerancia_conciliacion_rel"]) and 0 <= c["tolerancia_conciliacion_rel"] <= 0.01
@@ -431,6 +438,55 @@ class Orquestador:
         """Nivel efectivo: el configurado, o L1 si la cartera está degradada (nunca sube solo)."""
         base = self.cfg["nivel_autonomia"].get(cartera, "L1")
         return "L1" if cartera in self.degradadas and NIVELES[base] > 1 else base
+
+    def nivel_en(self, cartera, a):
+        """V0.50 (T-18, §6): el nivel que rige en el instante a (datetime): L3 solo dentro del horario supervisado (el de la
+        aprobación, P-12); fuera, L2. Degradada, L1 como siempre."""
+        n = self.nivel(cartera)
+        return "L2" if n == "L3" and not _en_horario(a, self.cfg["aprobacion"]["horario_utc"]) else n
+
+    def _importe_eur(self, e, cantidad, entradas):
+        """Importe en euros de la entrada (cantidad × límite × tipo de cambio de la cartera con la que F decidió), o None."""
+        try:
+            fx = tipo_cambio(entradas["solicitud"]["divisa_cotizacion"], entradas["cartera"])
+            v = cantidad * e["propuesta"]["entrada"]["limite"] * fx
+        except (KeyError, TypeError, ValueError):
+            return None
+        return v if _num(v) and v >= 0 else None
+
+    def _matriz_permite(self, e, cantidad, entradas, a):
+        """V0.50 (T-18): la matriz de autonomía decide sola en L3 dentro del horario supervisado (mandato y F) y en L2 solo hasta el
+        umbral de la cartera (umbral_l2_eur). None si puede; si no, el error (O-05: lo aprueba el operador)."""
+        c = e["cartera_destino"]
+        n = self.nivel_en(c, a)
+        if NIVELES[n] >= 3:
+            return None
+        if NIVELES[n] < 2:
+            return _no("O-05", f"la cartera está en {n}: autoriza el operador")
+        imp = self._importe_eur(e, cantidad, entradas)
+        if imp is None:
+            return _no("O-05", "no se puede valorar la entrada en euros: autoriza el operador")
+        if imp > self.cfg["umbral_l2_eur"][c] * (1 + 1e-12):
+            fuera = " (L3 fuera del horario supervisado: rige L2)" if self.nivel(c) == "L3" else ""
+            return _no("O-05", f"la entrada ({round(imp, 2)} EUR) pasa del umbral de L2 de {c} ({self.cfg['umbral_l2_eur'][c]} EUR){fuera}: "
+                               "autoriza el operador")
+        return None
+
+    def fin_horario_l3(self, e):
+        """V0.50 (revisión, hallazgo 1): si la entrada la autorizó la matriz en L3 por encima del umbral de L2, el instante en que
+        acaba el horario supervisado que empezó con la autorización (la orden no debe vivir más allá: fuera rige L2). None si no."""
+        if self.autorizada_por(e) != "MATRIZ_AUTONOMIA" or self.nivel(e["cartera_destino"]) != "L3" or not e.get("control_f"):
+            return None
+        imp = self._importe_eur(e, e["control_f"]["cantidad_aprobada"], e["control_f"]["entradas"])
+        if imp is not None and imp <= self.cfg["umbral_l2_eur"][e["cartera_destino"]] * (1 + 1e-12):
+            return None
+        aut = next((x["ahora"] for x in reversed(e["historial"]) if x["hasta"] == "AUTORIZADA" and x["desde"] != "AUTORIZADA"), None)
+        if aut is None:
+            return None
+        a = _dt(aut).astimezone(timezone.utc)
+        hh, mm = (int(x) for x in self.cfg["aprobacion"]["horario_utc"][1].split(":"))
+        fin = a.replace(hour=hh, minute=mm, second=0, microsecond=0)
+        return fin if fin > a else fin + timedelta(days=1)
 
     def _degradar(self, cartera, motivo, ahora):
         if cartera in ("TRADING", "TACTICA", "LARGO_PLAZO") and cartera not in self.degradadas and NIVELES[self.nivel(cartera)] > 1:
@@ -859,13 +915,21 @@ class Orquestador:
         """Quién autorizó de verdad (la transición a AUTORIZADA desde otro estado, no las anotaciones de la orden)."""
         return next((x["actor"] for x in reversed(e["historial"]) if x["hasta"] == "AUTORIZADA" and x["desde"] != "AUTORIZADA"), None)
 
-    def autorizacion_vigente(self, e):
-        """Una autorización automática deja de valer si la cartera bajó de nivel; cualquier autorización deja de valer si después se
-        bajó el límite de pérdida del día (T-50, revisión R-M3: F la aprobó con la política anterior). G no envía la entrada y H la
-        cancela si está viva."""
-        if self.autorizada_por(e) == "MATRIZ_AUTONOMIA" and NIVELES[self.nivel(e["cartera_destino"])] < 2:
-            return False
+    def autorizacion_vigente(self, e, a=None):
+        """Una autorización automática deja de valer si la cartera bajó de nivel (V0.50: también si se degradó después de autorizar,
+        aunque luego se restableciera, y, con el instante a, si la matriz ya no podría decidirla: L3 fuera de horario por encima
+        del umbral de L2); cualquier autorización deja de valer si después se bajó el límite de pérdida del día (T-50, revisión
+        R-M3: F la aprobó con la política anterior). G no envía la entrada y H la cancela si está viva."""
         aut = next((x["ahora"] for x in reversed(e["historial"]) if x["hasta"] == "AUTORIZADA" and x["desde"] != "AUTORIZADA"), None)
+        if self.autorizada_por(e) == "MATRIZ_AUTONOMIA":
+            c = e["cartera_destino"]
+            if NIVELES[self.nivel(c)] < 2:
+                return False
+            # revisión de V0.50, hallazgo 2: una degradación posterior (aviso O-19 de la cartera) la anula aunque se restablezca
+            if aut and any(x["codigo"] == "O-19" and c in (x.get("carteras") or []) and _dt(x["ahora"]) >= _dt(aut) for x in self.avisos):
+                return False
+            if a is not None and e.get("control_f") and self._matriz_permite(e, e["control_f"]["cantidad_aprobada"], e["control_f"]["entradas"], a):
+                return False
         # V0.46: una migración a un código que cambia la configuración completa también la deja sin valor (se decidió con otro)
         return aut is None or not any(((x["tipo"] == "CAMBIO" and x[LIMITE_PERDIDA] < x["antes"]) or _migracion_que_cambia(x)) and _dt(h["ahora"]) >= _dt(aut)
                                       for h, x in zip(self.limites["historial"], self.limites["entradas"]))
@@ -2161,6 +2225,10 @@ class Orquestador:
         if dup:
             return _no("O-03", "el informe de F ya se usó")
         anul, cantidad = None, cf["cantidad_aprobada"]
+        if actor == "MATRIZ_AUTONOMIA" and cf["resultado"] != "VETADO":   # T-18: tamaño y horario, antes de cambiar nada
+            err = self._matriz_permite(e, cantidad, cf["entradas"], a)
+            if err:
+                return err
         pant = self.pantallas.get(expediente_id) or {}
         if actor == "OPERADOR" and cf["resultado"] == "VETADO" and pant.get("anulacion") and aprobacion is not None:
             # T-50: anulación del veto por el operador: la pantalla de anulación, con su motivo, y el límite mensual de nuevo
@@ -2247,8 +2315,12 @@ class Orquestador:
         if estado == "ENVIADA" and aut and any(_dt(r["kill"]["ahora"]) >= _dt(aut) for r in self.rearmes):
             return _no("O-26", "la autorización es anterior a un kill-switch: hay que volver a aprobar")
         if estado == "ENVIADA" and not self.autorizacion_vigente(e):
-            return _no("O-05", "la autorización ya no vale (automática con la cartera fuera de L2, o anterior a una bajada del límite de pérdida): "
+            return _no("O-05", "la autorización ya no vale (automática con la cartera por debajo de L2 o degradada después, o anterior a una bajada del límite de pérdida): "
                                "vuelve a pasar por F y por el operador")
+        if estado == "ENVIADA" and self.autorizada_por(e) == "MATRIZ_AUTONOMIA":   # T-18: el umbral y el horario también al enviar
+            err = self._matriz_permite(e, e["control_f"]["cantidad_aprobada"], e["control_f"]["entradas"], _dt(ahora))
+            if err:
+                return _no("O-05", f"al enviar: {err['motivo']}")
         if estado == "ENVIADA":
             err = self._f_al_enviar(e, expediente_id, ahora)
             if err:
@@ -2333,7 +2405,7 @@ class Orquestador:
             return _no("O-03", "la posición ya existe")
         self.posiciones[pid] = {"posicion_id": pid, "expediente_id": e["expediente_id"], "cartera": e["cartera_destino"],
                                 "cantidad": orden["cantidad"], "estado": "ABIERTA", "historial": [],
-                                "nivel": self.nivel(e["cartera_destino"]), "direccion": "LARGO" if [c for c in e["propuesta"]["salida"]["condiciones"] if c["tipo"] == "STOP"][0]["operador"] in ("<", "<=") else "CORTO",
+                                "nivel": self.nivel_en(e["cartera_destino"], t), "direccion": "LARGO" if [c for c in e["propuesta"]["salida"]["condiciones"] if c["tipo"] == "STOP"][0]["operador"] in ("<", "<=") else "CORTO",
                                 "stop_precio": [c for c in e["propuesta"]["salida"]["condiciones"] if c["tipo"] == "STOP"][0]["umbral"],
                                 "instrumento": e["propuesta"]["entrada"]["instrumento"], "activo_base": e["propuesta"]["entrada"]["activo_base"],
                                 "condiciones_salida": copy.deepcopy(e["propuesta"]["salida"]), "protecciones": list(prot), "propuestas": [],
