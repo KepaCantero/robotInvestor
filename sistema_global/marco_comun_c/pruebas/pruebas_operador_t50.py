@@ -285,7 +285,7 @@ def main():
         except ValueError:
             h.chk(f"config_anulaciones_{nombre}_se_rechaza", True)
     c = nuevo().configuracion()
-    h.chk("config_040", c["version_config"] >= "CFG-0.4.0" and c["orquestador"]["anulaciones_veto_mes"] == 2)
+    h.chk("config_040", tuple(map(int, c["version_config"][4:].split("."))) >= (0, 4, 0) and c["orquestador"]["anulaciones_veto_mes"] == 2)
 
     print(f"\n{h.n} comprobaciones")
     print("RESULTADO OPERADOR T-50:", "TODAS LAS PRUEBAS PASAN" if h.ok else "HAY FALLOS")
