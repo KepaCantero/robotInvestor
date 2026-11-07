@@ -26,10 +26,10 @@ Son 16 decisiones que solo puedes tomar tú. Cada una está explicada sin jerga 
 
 | Pregunta | Para qué sirve | Mi respuesta |
 | --- | --- | --- |
-| ¿Cuánto dinero total pondrías en el robot? (en euros) | Convierte los porcentajes de los límites en euros |  |
+| ¿Cuánto dinero total pondrías en el robot? (en euros) | Convierte los porcentajes de los límites en euros | Poco al principio y aportaciones mensuales; importe aún sin decidir (7-11-2026). Los límites van en porcentaje hasta entonces |
 | ¿Qué porcentaje es de tu patrimonio líquido total? | Detecta si el riesgo es excesivo para ti |  |
 | ¿Cuánto podrías perder sin que afecte a tu vida? (euros y porcentaje) | Fija el límite máximo de pérdida |  |
-| ¿Cuándo podrías necesitar ese dinero? (meses o años) | Decide el horizonte de cada cartera |  |
+| ¿Cuándo podrías necesitar ese dinero? (meses o años) | Decide el horizonte de cada cartera | Más de 20 años invertido (7-11-2026) |
 | ¿Experiencia invirtiendo? (ninguna, algo, mucha) | Decide lo prudente que debe ser el arranque |  |
 | ¿Cuánto tiempo puedes dedicar a revisar avisos? (por día o semana) | Fija el nivel de autonomía posible |  |
 | ¿En qué zona horaria estás y en qué horas estás disponible? | Define el horario supervisado |  |
@@ -277,7 +277,7 @@ Las subidas se hacen de una en una y por cartera.
 
 - [ ] Rellenaré la ficha: dame una lista corta de preguntas para comparar los intermediarios que yo elija
 - [ ] Ya tengo un intermediario (rellenado arriba)
-- [ ] Seguir con el simulador hasta decidir
+- [x] Seguir con el simulador hasta decidir (7-11-2026)
 
 ### P-06 · Impuestos y asesor
 
@@ -306,7 +306,7 @@ Las subidas se hacen de una en una y por cartera.
 
 **Mi decisión.**
 
-- [ ] Acepto el valor de partida y fijo las cifras tras medir el coste real
+- [x] Acepto el valor de partida y fijo las cifras tras medir el coste real (7-11-2026)
 - [ ] Ya sé mi tope (rellenado arriba)
 - [ ] No lo sé aún
 
@@ -322,7 +322,7 @@ Las subidas se hacen de una en una y por cartera.
 
 - [ ] Acepto el valor de partida
 - [ ] Prefiero otro canal (cuál):
-- [ ] No lo sé aún
+- [x] No lo sé aún (7-11-2026): se usa el valor de partida (móvil y correo con acuse, segundo factor), provisional
 
 ## Bloque 5 · Nombres y pendientes de Forex
 
