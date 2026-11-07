@@ -786,7 +786,8 @@ def reducir(o, posicion_id, broker, ahora, cantidad=None, actor="G", condicion=N
         if cantidad is not None and not (_num(cantidad) and abs(cantidad - p["reduccion"]["cantidad"]) <= TOL):
             return _r(False, "G-06", "ya hay una reducción en curso de otra cantidad: se termina esa antes")
     else:
-        t = o.posicion_transicion(posicion_id, "REDUCIENDO", actor, ahora, condicion=condicion, motivo=motivo, cantidad=cantidad)
+        cotizar(o, broker, p["instrumento"], ahora)   # T-43: el Orquestador valora lo que queda con una cotización fresca de G
+        t = o.posicion_transicion(posicion_id, "REDUCIENDO", actor, _instante(o, ahora), condicion=condicion, motivo=motivo, cantidad=cantidad)
         if not t["ok"]:
             return _r(False, "G-06", f"el Orquestador no admite la reducción ({t['codigo']}): {t['motivo']}")
     est = {"enviado": False}
@@ -826,7 +827,7 @@ def _reducir(o, p, pid, broker, ahora, est):
     for _ in range(4):
         if neto - objetivo <= TOL or neto <= TOL:
             break
-        falta = neto - objetivo
+        falta = round(neto - objetivo, 12)   # revisión de V0.52, hallazgo 4: la cantidad validada, no su resta en coma flotante
         oid = _id_cierre(broker, base_m, lado, falta)
         est["enviado"] = True
         r = broker.enviar({"orden_id": oid, "instrumento": ins, "activo_base": p["activo_base"], "tipo": "MERCADO", "lado": lado,

@@ -101,6 +101,7 @@ def main():
     c = conciliar(o, b, T1)
     h.chk("concilia_tras_reducir", c["ok"] and c["diferencias"] == [], c)
     h.chk("integridad_tras_reducir", o.integridad() == [])
+    b.mover_precio("EURUSD", b.precios["EURUSD"], T2)   # T-43: G cotiza al reducir; el intermediario da el precio de ahora
     r = red(o, b, 30.0, T2)
     p = o.posiciones[PID]
     h.chk("segunda_reduccion", r["ok"] and p["cantidad"] == 30.0 and neto(b) == 30.0 and p["protecciones"] == ["ORD-POS-EXP-0001-R2-S-1"]

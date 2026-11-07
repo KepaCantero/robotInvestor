@@ -138,6 +138,7 @@ def main():
           and b.posiciones() == [], r)
     o, b = abierta(salida=SAL_PRONTO)
     vigilar(o, b, datos(1.10, D1), D1)
+    b.mover_precio("EURUSD", 1.10, D1B)   # T-43: G cotiza al reducir; el intermediario da el precio de ahora
     r = reducir(o, PID, b, D1B, cantidad=40.0, actor="OPERADOR", motivo="reducir mientras reviso")
     h.chk("reducir_en_revision_no_la_confirma", r["ok"] and o.posiciones[PID]["estado"] == "EN_REVISION", r)
     r = cerrar(o, PID, b, D1B, actor="OPERADOR", motivo="la tesis ya no vale")

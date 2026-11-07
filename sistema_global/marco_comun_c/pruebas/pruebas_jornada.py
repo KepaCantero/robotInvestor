@@ -61,6 +61,7 @@ def pasos():
         return conciliar(o, b, instante(5))
 
     def p_reducir(o, b):
+        b.mover_precio("EURUSD", b.precios["EURUSD"], instante(10))   # T-43: G cotiza al reducir con el precio de ahora
         return reducir(o, "POS-EXP-0001", b, instante(10), cantidad=o.posiciones["POS-EXP-0001"]["cantidad"] / 2, actor="OPERADOR",
                        motivo="Reduzco a la mitad en la jornada simulada")
 

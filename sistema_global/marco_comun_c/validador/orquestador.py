@@ -2974,6 +2974,68 @@ class Orquestador:
         self._anota_pos(p, p["estado"], p["estado"], actor, ahora, "propuesta: " + texto[:180])   # en la cadena (T-49, R-04)
         return _r(True, "OK", "propuesta registrada; no cambia el estado de la posición")
 
+    def _paso_pos(self, p):
+        """V0.52 (T-43): el paso de cantidad del instrumento de la posición: el que usó E al dimensionar su propuesta. None si no se sabe."""
+        e = self.expedientes.get(p.get("expediente_id"))
+        paso = (((e or {}).get("propuesta") or {}).get("dimensionado") or {}).get("paso")
+        return paso if _num(paso) and paso > 0 else None
+
+    def _cantidad_reduccion(self, p, q, a, automatica):
+        """V0.52 (T-43): la cantidad de una reducción y su validez, o (None, error O-06). La de una toma parcial automática (fracción
+        de la cantidad inicial) se redondea hacia abajo al paso del instrumento; la que pide el operador tiene que ser ya un múltiplo
+        del paso (se le dice cuál cabe). Lo que queda tiene que valer al menos el mínimo de F (politica_f.valor_min_eur) con la
+        última cotización fresca de G y el tipo de cambio de la última foto; si no, se cierra entera. Sin paso, cotización fresca o
+        tipo de cambio no se reduce (falla cerrado)."""
+        if not (_num(q) and q > TOL_Q):
+            return None, _no("O-06", "la reducción exige una cantidad positiva y mayor que la tolerancia de cantidades")
+        paso = self._paso_pos(p)
+        if paso is None:
+            return None, _no("O-06", "no se conoce el paso de cantidad del instrumento de la posición: redúzcala a mano o ciérrela")
+        if automatica:
+            q = round(math.floor(q / paso * (1 + 1e-12)) * paso, 12)   # como E: hacia abajo y ajustada a la rejilla del paso
+        else:   # revisión de V0.52, hallazgo 2: tolerancia relativa al paso (no a la cantidad) y la cantidad se ajusta a la rejilla
+            k = round(q / paso)
+            if abs(q / paso - k) > 1e-6:
+                abajo = round(math.floor(q / paso) * paso, 12)
+                return None, _no("O-06", f"la cantidad tiene que ser un múltiplo del paso del instrumento ({paso}); la más próxima por debajo es {abajo}")
+            q = round(k * paso, 12)
+        if not q > TOL_Q:
+            return None, _no("O-06", f"la reducción no llega a un paso del instrumento ({paso})")
+        if q >= p["cantidad"] - TOL_Q:
+            return None, _no("O-06", "la reducción dejaría la posición a cero o al revés: use el cierre (CERRANDO)")
+        cot = self._cotizacion_en(p["instrumento"], a)
+        frescura = timedelta(minutes=self.cfg["politica_f"]["precio_frescura_max_min"])   # la del precio (F-23), no la de la foto (hallazgo 5)
+        if not (cot and timedelta(0) <= a - _dt(cot["fecha_hora"]) <= frescura):
+            return None, _no("O-06", "sin una cotización reciente de G no se sabe si lo que queda vale el mínimo: G cotiza antes de reducir", transitorio=True)
+        fx = tipo_cambio(self.divisa(p["instrumento"]), self.ultima_foto) if self.ultima_foto else None
+        if not (_num(fx) and fx > 0):
+            return None, _no("O-06", "sin el tipo de cambio de la última foto de G no se puede valorar lo que queda", transitorio=True)
+        resto_eur = (p["cantidad"] - q) * cot["valor"] * fx
+        minimo = self.cfg["politica_f"]["valor_min_eur"]
+        if resto_eur < minimo:
+            return None, _no("O-06", f"lo que queda valdría {resto_eur:.2f} EUR, menos que el mínimo de F ({minimo} EUR): ciérrela entera")
+        return q, None
+
+    def cantidad_reduccion(self, posicion_id, ahora, cantidad=None, condicion_id=None):
+        """V0.52 (T-43), sin efectos: la cantidad con la que se reduciría ahora la posición (la del operador, o la de la toma parcial
+        de la condición OBJETIVO con fracción), o el motivo por el que no se puede. H la consulta antes de una toma parcial."""
+        p = self.posiciones.get(posicion_id) if isinstance(posicion_id, str) else None
+        if p is None or p["estado"] not in ("ABIERTA", "EN_REVISION"):
+            return _no("O-12", "la posición no existe o no se puede reducir en su estado")
+        if not (isinstance(ahora, str) and _FH.match(ahora)):   # revisión de V0.52, hallazgo 6: responde, no lanza
+            return _no("O-01", "instante ilegible")
+        a = _dt(ahora)
+        if condicion_id is not None:
+            c = next((x for x in p["condiciones_salida"]["condiciones"] if x["id"] == condicion_id and x.get("fraccion") is not None), None)
+            if c is None:
+                return _no("O-06", "esa condición no declara una toma parcial")
+            if c["id"] in p["condiciones_consumidas"]:
+                return _no("O-06", "esa condición ya redujo la posición una vez")
+            q, err = self._cantidad_reduccion(p, c["fraccion"] * p["cantidad_inicial"], a, automatica=True)
+        else:
+            q, err = self._cantidad_reduccion(p, cantidad, a, automatica=False)
+        return err or _r(True, "OK", f"se reduciría {q}", cantidad=q, restante=p["cantidad"] - q)
+
     @_seguro
     def posicion_transicion(self, posicion_id, hasta, actor, ahora, condicion=None, restante=None, orden=None, motivo=None,
                             cantidad=None, protecciones=None, fecha_revision=None):
@@ -3023,15 +3085,15 @@ class Orquestador:
                 ref, decl = c["id"], c
         if hasta == "REDUCIENDO":
             if decl is not None:
-                q = decl["fraccion"] * p["cantidad_inicial"]
+                q, err = self._cantidad_reduccion(p, decl["fraccion"] * p["cantidad_inicial"], _dt(ahora), automatica=True)
+                if err:
+                    return err
                 if cantidad is not None and not (_num(cantidad) and abs(cantidad - q) <= 1e-9 * max(1.0, q)):
-                    return _no("O-06", "la cantidad no es la que fija la fracción declarada")
+                    return _no("O-06", f"la cantidad no es la que fija la fracción declarada, redondeada al paso ({q})")
             else:
-                q = cantidad
-            if not (_num(q) and q > TOL_Q):
-                return _no("O-06", "la reducción exige una cantidad positiva y mayor que la tolerancia de cantidades")
-            if q >= p["cantidad"] - TOL_Q:
-                return _no("O-06", "la reducción dejaría la posición a cero o al revés: use el cierre (CERRANDO)")
+                q, err = self._cantidad_reduccion(p, cantidad, _dt(ahora), automatica=False)
+                if err:
+                    return err
         if fecha_revision is not None and not (hasta == "ABIERTA" and p["estado"] == "EN_REVISION"):
             return _no("O-01", "la fecha de revisión solo se renueva al confirmar la tesis (EN_REVISION -> ABIERTA)")
         nueva_fr = None
@@ -3089,7 +3151,7 @@ class Orquestador:
         if nueva_fr is not None:
             p["fecha_revision"] = p["condiciones_salida"]["fecha"] = nueva_fr.isoformat()
         if hasta == "REDUCIENDO":
-            p["reduccion"] = {"n": len(p["reducciones"]) + 1, "cantidad": q, "desde": p["cantidad"], "objetivo_restante": p["cantidad"] - q,
+            p["reduccion"] = {"n": len(p["reducciones"]) + 1, "cantidad": q, "desde": p["cantidad"], "objetivo_restante": round(p["cantidad"] - q, 12),
                               "condicion": decl["id"] if decl else None, "actor": actor, "motivo": motivo, "pedida_en": ahora,
                               "vuelve_a": p["estado"]}
         elif p["estado"] == "REDUCIENDO":

@@ -20,12 +20,16 @@ from pruebas_k import CAL, CTX as CTX_K, construir as construir_k  # noqa: E402
 from generar_casos import validos as sobres_validos  # noqa: E402
 from pruebas_contradictor import informe as informe_ctr, obj as obj_ctr  # noqa: E402
 from pruebas_control_f import informe_f  # noqa: E402
+from control_f import POLITICA_DEFECTO  # noqa: E402
 
 CFG = {"perfiles_activos": ["C-DIV", "C-RV", "C-CRI"], "apalancamiento_permitido": False,
        "clases_ratificadas": {"C-DIV": "Q", "C-RV": "Q", "C-CRI": "K", "C-RF": "S"},
        "nivel_autonomia": {"TRADING": "L2", "TACTICA": "L2", "LARGO_PLAZO": "L2"},   # las pruebas de mecánica usan L2; los niveles tienen su propio bloque
        "exige_contradictor_en": [], "contradictor_desactivado_motivo": "pruebas de mecánica sin Contradictor",
-       "tolerancia_tipo_k_rel": 0.2}   # las fotos de mecánica usan el tipo neutro 1 USD = 1 EUR; el contraste con K (T-42) tiene sus pruebas
+       "tolerancia_tipo_k_rel": 0.2,   # las fotos de mecánica usan el tipo neutro 1 USD = 1 EUR; el contraste con K (T-42) tiene sus pruebas
+       # T-43 (V0.52): las posiciones de mecánica son de unos 110 EUR; con el mínimo de F por defecto (100 EUR) ninguna se podría
+       # reducir sin dejar un resto por debajo. F-11 sigue con sus propias pruebas (pruebas_control_f*)
+       "politica_f": {**POLITICA_DEFECTO, "valor_min_eur": 10.0}}
 # la mecánica no pide Contradictor; el valor por defecto (N2 y N3) se prueba en pruebas_contradictor_t48
 AHORA = "2026-11-06T09:00:00+00:00"
 COND_OBS = [{"tipo": "FECHA", "fecha": "2026-11-20"}]   # condición de reapertura comprobable (T-46)
