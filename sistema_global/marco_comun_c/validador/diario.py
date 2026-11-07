@@ -41,6 +41,10 @@ toca los ficheros (la bóveda real, Fase 3).
 
 Límites: un solo proceso escribe el diario; el reloj sigue llegando como argumento; sin clave, las huellas no protegen de quien
 las rehace; en un mismo proceso, quien tiene el Diario puede llegar a la clave.
+
+V0.49: cada Diario recuerda cómo dejó el fichero del diario (dispositivo, inodo y tamaño). Si otro proceso lo reescribe (una
+rotación de clave, una migración, otro Diario sobre los mismos ficheros), la operación o el punto siguientes dan DI-06 y no se
+escribe nada más con ese Diario: hay que volver a abrirlo.
 """
 from __future__ import annotations
 
@@ -57,7 +61,8 @@ CERO = "0" * 64
 # métodos privados que solo leen y que G, la consola y contratos usan (revisión, hallazgo 3); el resto de lo privado no se expone
 PRIVADOS_DE_LECTURA = frozenset({"_sello_anulado", "_testigos", "_tope_dia"})
 # motivos de bloqueo que no son fallos de escritura: tras ellos se sigue respondiendo DI-06 (revisión de V0.44, hallazgo 10)
-ROTOS_DI06 = ("el estado cambió sin pasar por el diario", "el estado tiene valores que el diario no puede guardar")
+FUERA = "el fichero del diario cambió por fuera"   # V0.49: otro proceso (una rotación, una migración) lo reescribió
+ROTOS_DI06 = ("el estado cambió sin pasar por el diario", "el estado tiene valores que el diario no puede guardar", FUERA)
 
 
 def _limite_diario():
@@ -86,6 +91,15 @@ def _huella_viva(o):
             return None
         return hashlib.sha256(pe._texto(estado).encode("ascii")).hexdigest()
     except (ValueError, TypeError, RecursionError):
+        return None
+
+
+def _identidad(ruta):
+    """(dispositivo, inodo, tamaño) del fichero, o None. Si cambia sin que este Diario escribiera, alguien lo reescribió."""
+    try:
+        st = os.stat(ruta)
+        return (st.st_dev, st.st_ino, st.st_size)
+    except (OSError, TypeError, ValueError):
         return None
 
 
@@ -169,6 +183,7 @@ class Diario:
         object.__setattr__(self, "_mutantes", mutantes(o))
         object.__setattr__(self, "_roto", None)         # motivo si una escritura falló: no se aceptan más operaciones
         object.__setattr__(self, "_huella", _huella_viva(o))   # el estado tras la última operación anotada (None si no se puede)
+        object.__setattr__(self, "_fichero", _identidad(ruta_diario))   # V0.49: el fichero tal como lo dejó este Diario
 
     # --------------------------------------------------------------- lo que pasa, y cómo
     def __getattr__(self, nombre):
@@ -229,6 +244,7 @@ class Diario:
             raise
         object.__setattr__(self, "_ultimo", e["hash"])
         object.__setattr__(self, "_n", e["n"])
+        object.__setattr__(self, "_fichero", _identidad(self._ruta_diario))
         return e["n"]
 
     def _operar(self, metodo, args, kwargs):
@@ -267,7 +283,11 @@ class Diario:
 
     def _sin_cambios_por_fuera(self):
         """DI-06 si el estado no es el de la última operación anotada: alguien lo cambió sin pasar por el diario. No se aplica
-        nada más ni se guarda; el diario se bloquea y al reabrir se vuelve al estado anotado."""
+        nada más ni se guarda; el diario se bloquea y al reabrir se vuelve al estado anotado. V0.49: también si el fichero del
+        diario ya no es el que dejó este Diario (otro proceso lo reescribió: una rotación de clave, una migración, otro Diario)."""
+        if _identidad(self._ruta_diario) != self._fichero:
+            object.__setattr__(self, "_roto", FUERA)
+            return _r(False, "DI-06", f"{FUERA}: no se escribe nada más con este Diario; vuelve a abrirlo")
         actual = _huella_viva(self._o)
         if actual is not None and actual == self._huella:
             return None
@@ -304,6 +324,7 @@ class Diario:
             return _r(False, "DI-05", f"no se pudo hacer el punto de control: {type(ex).__name__}; reábrelo")
         object.__setattr__(self, "_ultimo", nuevo["hash"])
         object.__setattr__(self, "_n", 1)
+        object.__setattr__(self, "_fichero", _identidad(self._ruta_diario))
         return _r(True, "OK", "punto de control hecho", huella=huella)
 
 
@@ -458,6 +479,7 @@ def abrir(ruta_estado, ruta_diario, clave=None) -> dict:
     if reescribir:
         try:
             _reescribir(ruta_diario, lineas)
+            object.__setattr__(d, "_fichero", _identidad(ruta_diario))
         except (OSError, ValueError, TypeError) as ex:
             return _r(False, "DI-05", f"no se pudo quitar la línea cortada: {type(ex).__name__}", diario=None)
     return _r(True, "OK", "estado cargado y diario aplicado", diario=d, aplicadas=aplicadas, linea_incompleta=incompleta)
