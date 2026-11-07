@@ -53,7 +53,7 @@ def main():
     h = Arnes()
     # ------------------------------------------------------------------------------------------- configuración
     h.chk("L3_existe_y_F_lo_acepta", NIVELES["L3"] == 3 and "L3" in NIVELES_F)
-    h.chk("version_CFG_090_y_umbral_por_defecto", CONFIG_DEFECTO["version_config"] == "CFG-0.9.0"
+    h.chk("version_CFG_0100_y_umbral_por_defecto", CONFIG_DEFECTO["version_config"] == "CFG-0.10.0"
           and CONFIG_DEFECTO["umbral_l2_eur"] == {"TRADING": 5000.0, "TACTICA": 5000.0, "LARGO_PLAZO": 5000.0})
     for nombre, u in (("falta_cartera", {"TRADING": 1.0, "TACTICA": 1.0}), ("cartera_de_mas", {"TRADING": 1.0, "TACTICA": 1.0, "LARGO_PLAZO": 1.0, "X": 1.0}),
                       ("negativo", {"TRADING": -1.0, "TACTICA": 1.0, "LARGO_PLAZO": 1.0}), ("nan", {"TRADING": float("nan"), "TACTICA": 1.0, "LARGO_PLAZO": 1.0}),
@@ -203,8 +203,9 @@ def main():
     h.chk("con_este_codigo_no_se_carga_PE08", pe.cargar(viejo)["codigo"] == "PE-08")
     r = mg.migrar(viejo, "2026-11-07T10:00:00+00:00", M)
     o2 = r.get("orquestador")
-    h.chk("MIG002_lo_migra", r["ok"] and r["migraciones"] == ["MIG-002"] and o2.cfg["umbral_l2_eur"] == CONFIG_DEFECTO["umbral_l2_eur"]
-          and o2.cfg["version_config"] == "CFG-0.9.0" and o2.integridad() == [], r.get("motivo"))
+    h.chk("MIG002_y_MIG003_lo_migran", r["ok"] and r["migraciones"] == ["MIG-002", "MIG-003"] and o2.cfg["umbral_l2_eur"] == CONFIG_DEFECTO["umbral_l2_eur"]
+          and o2.cfg["promocion_nivel"] == CONFIG_DEFECTO["promocion_nivel"]
+          and o2.cfg["version_config"] == "CFG-0.10.0" and o2.integridad() == [], r.get("motivo"))
     h.chk("la_huella_de_configuracion_cambia_y_queda_anotada", o2.limites["entradas"][-1]["huella_antes"] != o2.huella_config)
     h.chk("y_la_autorizacion_anterior_deja_de_valer", not o2.autorizacion_vigente(o2.expedientes["EXP-0001"]))
     h.chk("el_nivel_de_cada_cartera_no_cambia", o2.cfg["nivel_autonomia"] == d["estado"]["cfg"]["nivel_autonomia"])

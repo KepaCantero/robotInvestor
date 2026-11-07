@@ -79,7 +79,7 @@ OPERADORES = {"<": lambda v, u: v < u, "<=": lambda v, u: v <= u, ">": lambda v,
               ">=": lambda v, u: v >= u, "==": lambda v, u: v == u}
 
 CONFIG_DEFECTO = {"max_reintentos": 3, "umbral_corte_comun_dias_habiles": 0,
-                  "version_config": "CFG-0.9.0",   # 0.9.0 (T-18): L3 y umbral_l2_eur (0.8.0 queda para T-33 de GLM). 0.2.0 (T-48): Contradictor exigido en N2 y N3; autoria_c. 0.3.0 (T-49): alerta_perdida_pct. 0.4.0 (T-50): anulaciones_veto_mes. 0.5.0 (T-51): mandatos (SC-1) en lugar de instrumentos_permitidos. 0.6.0 (T-26/T-42): tolerancia_tipo_k_rel. 0.7.0 (T-22): politica_f con importes en euros y controles de la §8
+                  "version_config": "CFG-0.10.0",   # 0.10.0 (T-18): promocion_nivel. 0.9.0 (T-18): L3 y umbral_l2_eur (0.8.0 queda para T-33 de GLM). 0.2.0 (T-48): Contradictor exigido en N2 y N3; autoria_c. 0.3.0 (T-49): alerta_perdida_pct. 0.4.0 (T-50): anulaciones_veto_mes. 0.5.0 (T-51): mandatos (SC-1) en lugar de instrumentos_permitidos. 0.6.0 (T-26/T-42): tolerancia_tipo_k_rel. 0.7.0 (T-22): politica_f con importes en euros y controles de la §8
                   "dia_coste_max_eur": 50.0, "revision_max_dias": 90, "observacion_max_dias": 30, "max_reaperturas": 2, "dia_tiempo_max_min": 600, "tolerancia_precio_entrada": 0.05,
                   "alerta_perdida_pct": -5.0,   # T-49: H pide revisar al perder esto (y cada múltiplo) [PROPUESTO]
                   "anulaciones_veto_mes": 2,
@@ -91,6 +91,8 @@ CONFIG_DEFECTO = {"max_reintentos": 3, "umbral_corte_comun_dias_habiles": 0,
                   # T-18 (§6): lo que la matriz autoriza sola en L2 no pasa de este importe por orden, en euros; por encima, el operador
                   # (en L3, dentro del horario supervisado, sin umbral: solo el mandato y F) [PROPUESTO, P-01, D-33]
                   "umbral_l2_eur": {"TRADING": 5000.0, "TACTICA": 5000.0, "LARGO_PLAZO": 5000.0},
+                  # T-18 (§6, V0.51): subir de nivel exige este periodo en el nivel actual sin incidentes [PROPUESTO, P-02, D-34]
+                  "promocion_nivel": {"periodo_min_dias": 30},
                   "mandatos": sc1.MANDATOS_DEFECTO,   # T-51: SC-1, fuente única del mandato de cada cartera [PROPUESTO, P-03, D-28]
                   "referencias": {c: dict(REFERENCIA_EFECTIVO) for c in ("TRADING", "TACTICA", "LARGO_PLAZO")},   # benchmark de cada cartera [PROPUESTO]
                   # [PROPUESTO] controles sobre el operador (§6) y avisos (§11); los canales reales los fija el operador (D-07, P-08)
@@ -134,7 +136,9 @@ def _dia(t):
     return t.astimezone(timezone.utc).date().isoformat()
 
 
-PRIORIDAD_AVISO = {"O-36": "MEDIA", "O-35": "ALTA", "O-34": "ALTA", "O-33": "MEDIA", "O-32": "MEDIA", "O-31": "MEDIA", "O-20": "MEDIA", "O-30": "ALTA", "O-25": "ALTA", "O-26": "ALTA", "O-19": "ALTA", "O-18": "ALTA", "O-03": "ALTA", "O-08": "ALTA", "O-09": "ALTA", "O-13": "ALTA", "O-17": "ALTA"}
+# V0.51 (T-18): avisos que, en el periodo de promoción, impiden subir de nivel (además de O-19, ALCANZADO y el kill-switch)
+INCIDENTES_PROMOCION = ("O-03", "O-18", "O-25")
+PRIORIDAD_AVISO = {"O-39": "ALTA", "O-36": "MEDIA", "O-35": "ALTA", "O-34": "ALTA", "O-33": "MEDIA", "O-32": "MEDIA", "O-31": "MEDIA", "O-20": "MEDIA", "O-30": "ALTA", "O-25": "ALTA", "O-26": "ALTA", "O-19": "ALTA", "O-18": "ALTA", "O-03": "ALTA", "O-08": "ALTA", "O-09": "ALTA", "O-13": "ALTA", "O-17": "ALTA"}
 ACTORES_PROPUESTA = set(EMISORES)   # quien propone no aprueba ni controla: F, D y H no proponen (Constitución §2, P1)
 
 
@@ -284,6 +288,8 @@ def _valida_config(c):
           and all(isinstance(v, bool) for v in c["matriz_autonomia"].values())
           and isinstance(c["umbral_l2_eur"], dict) and set(c["umbral_l2_eur"]) == {"TRADING", "TACTICA", "LARGO_PLAZO"}
           and all(_num(v) and v >= 0 for v in c["umbral_l2_eur"].values())
+          and isinstance(c["promocion_nivel"], dict) and set(c["promocion_nivel"]) == {"periodo_min_dias"}
+          and _num(c["promocion_nivel"]["periodo_min_dias"]) and 1 <= c["promocion_nivel"]["periodo_min_dias"] <= 365
           and isinstance(c["nivel_autonomia"], dict)
           and all(k in ("TRADING", "TACTICA", "LARGO_PLAZO") and v in NIVELES for k, v in c["nivel_autonomia"].items())
           and _num(c["tolerancia_conciliacion_rel"]) and 0 <= c["tolerancia_conciliacion_rel"] <= 0.01
@@ -432,6 +438,7 @@ class Orquestador:
         self.ultima_foto = None           # la única que vale: la más reciente
         self.manuales = []     # registros CT-G-14 aceptados (lo que el operador hizo fuera del sistema)
         self.degradadas = {}   # cartera -> motivo: bajada automática a L1 hasta que el operador la restablezca
+        self.ultimas_degradaciones = {}   # V0.51: cartera -> último instante en que se pidió degradarla (también en L0 o L1)
 
     # ------------------------------------------------------------ niveles de autonomía
     def nivel(self, cartera):
@@ -489,6 +496,10 @@ class Orquestador:
         return fin if fin > a else fin + timedelta(days=1)
 
     def _degradar(self, cartera, motivo, ahora):
+        if cartera in ("TRADING", "TACTICA", "LARGO_PLAZO") and isinstance(ahora, str):   # V0.51: queda aunque no baje (L0, L1)
+            prev = self.ultimas_degradaciones.get(cartera)
+            if prev is None or _dt(ahora) > _dt(prev):
+                self.ultimas_degradaciones[cartera] = ahora
         if cartera in ("TRADING", "TACTICA", "LARGO_PLAZO") and cartera not in self.degradadas and NIVELES[self.nivel(cartera)] > 1:
             self.degradadas[cartera] = {"motivo": motivo[:160], "ahora": ahora}
             self._aviso("O-19", f"cartera {cartera} degradada a L1: {motivo[:120]}", ahora, cartera, carteras={cartera})
@@ -928,6 +939,10 @@ class Orquestador:
             # revisión de V0.50, hallazgo 2: una degradación posterior (aviso O-19 de la cartera) la anula aunque se restablezca
             if aut and any(x["codigo"] == "O-19" and c in (x.get("carteras") or []) and _dt(x["ahora"]) >= _dt(aut) for x in self.avisos):
                 return False
+            # V0.51: y también si el operador bajó después el nivel de la cartera (aunque luego lo volviera a subir)
+            if aut and any(x["tipo"] == "NIVEL" and x["cartera"] == c and NIVELES[x["nivel"]] < NIVELES[x["antes"]] and _dt(h["ahora"]) >= _dt(aut)
+                           for h, x in zip(self.limites["historial"], self.limites["entradas"])):
+                return False
             if a is not None and e.get("control_f") and self._matriz_permite(e, e["control_f"]["cantidad_aprobada"], e["control_f"]["entradas"], a):
                 return False
         # V0.46: una migración a un código que cambia la configuración completa también la deja sin valor (se decidió con otro)
@@ -995,7 +1010,8 @@ class Orquestador:
         return {"version_config": self.cfg["version_config"], "orquestador": self.cfg, "version_parametros": VERSION_PARAMETROS,
                 "parametros": como_dict(PARAMETROS), "calendario": self.cal_def,
                 "constantes": {"prioridad_aviso": PRIORIDAD_AVISO, "tipos_kill": sorted(TIPOS_KILL), "vetos_anulables": list(VETOS_ANULABLES),
-                               "topes_f": list(TOPES_F), "limite_perdida": LIMITE_PERDIDA, "motivo_min": MOTIVO_MIN},
+                               "topes_f": list(TOPES_F), "limite_perdida": LIMITE_PERDIDA, "motivo_min": MOTIVO_MIN,
+                               "incidentes_promocion": list(INCIDENTES_PROMOCION)},
                 "reglas": {"orquestador": VERSION_REGLAS, "f": VERSION_REGLAS_F, "k": VERSION_REGLAS_K}}
 
     def config_integra(self):
@@ -1017,7 +1033,7 @@ class Orquestador:
         if not (self._historial_ok(L) and len(L["historial"]) == len(L["entradas"])
                 and all(h["datos"] == _hash(x) and h["ref"] == x["tipo"] for h, x in zip(L["historial"], L["entradas"]))):
             return False
-        ult = [x for x in L["entradas"] if x["tipo"] in ("INICIO", "CAMBIO", "MIGRACION")]   # V0.46: la migración fija la huella nueva
+        ult = [x for x in L["entradas"] if x["tipo"] in ("INICIO", "CAMBIO", "MIGRACION", "NIVEL")]   # V0.46 y V0.51: también fijan la huella
         return (bool(ult) and L["entradas"][0]["tipo"] == "INICIO" and ult[-1]["huella_config"] == self.huella_config
                 and self.cfg["politica_f"][LIMITE_PERDIDA] == ult[-1][LIMITE_PERDIDA])
 
@@ -1117,7 +1133,7 @@ class Orquestador:
                 self._anota_limite({"tipo": "SOLICITUD", "antes": actual, LIMITE_PERDIDA: nuevo_pct, "motivo": motivo, "canal": canal,
                                     "hasta": hasta.isoformat()}, "OPERADOR", ahora, f"solicitud de subir el límite de pérdida a {nuevo_pct} %")
                 return _r(True, "O-28", f"subida solicitada: confírmela con la misma llamada desde {hasta.isoformat()} "
-                                        f"y antes de {(hasta + cad).isoformat()}", aplicado=False, confirmar_desde=hasta.isoformat())
+                                        f"y hasta {(hasta + cad).isoformat()}", aplicado=False, confirmar_desde=hasta.isoformat())
             if a < _dt(pend["hasta"]):
                 return _no("O-28", f"enfriamiento hasta {pend['hasta']}: la subida aún no se puede confirmar")
         self.cfg["politica_f"] = pol
@@ -1132,6 +1148,131 @@ class Orquestador:
         self._aviso("O-35", f"límite de pérdida del día {'subido' if sube else 'bajado'} de {actual} % a {nuevo_pct} % (POL-{n})", ahora, "LIMITE_PERDIDA")
         return _r(True, "OK", f"límite de pérdida del día: {actual} % -> {nuevo_pct} % (POL-{n}); los informes de F anteriores ya no valen"
                   + ("; las autorizaciones anteriores tampoco" if not sube else ""), aplicado=True, version_politica=f"POL-{n}")
+
+    def _nivel_pendiente(self, cartera):
+        """V0.51: la solicitud de subir el nivel de la cartera aún sin confirmar (la última, si no la siguió un cambio de nivel de esa
+        cartera ni una migración a otro código), o None."""
+        for x in reversed(self.limites["entradas"]):
+            if (x["tipo"] == "NIVEL" and x.get("cartera") == cartera) or _migracion_que_cambia(x):
+                return None
+            if x["tipo"] == "SOLICITUD_NIVEL" and x.get("cartera") == cartera:
+                return x
+        return None
+
+    def _primer_instante(self):
+        """El instante más antiguo que el Orquestador tiene anotado (historiales de límites, Motor, expedientes y posiciones, y
+        avisos), o None. El INICIO del registro de límites no lleva instante (se crea antes de la primera llamada), así que el
+        tiempo en el nivel de partida se cuenta desde aquí: nunca es anterior al arranque real, de modo que el periodo medido no
+        puede salir más largo que el verdadero (falla cerrado)."""
+        ts = [h["ahora"] for ent in (self.limites, self.sc3, *self.expedientes.values(), *self.posiciones.values())
+              for h in ent["historial"] if h["ahora"] is not None]
+        ts += [x["ahora"] for x in self.avisos if x["ahora"] is not None]
+        return min((_dt(t) for t in ts), default=None)
+
+    def _desde_ultimo_nivel(self, cartera):
+        """Instante desde el que la cartera está en su nivel: el del último cambio de nivel de esa cartera o, si no lo hubo, el
+        primer instante anotado del sistema (_primer_instante). None si no hay ninguno: sin historial no se promociona."""
+        t = None
+        for h, x in zip(self.limites["historial"], self.limites["entradas"]):
+            if x["tipo"] == "NIVEL" and x.get("cartera") == cartera:
+                t = _dt(h["ahora"])
+        return t if t is not None else self._primer_instante()
+
+    def criterios_promocion(self, cartera, a):
+        """V0.51 (§6, P-02 [PROPUESTO]): lo que impide subir de nivel la cartera en el instante a. Lista vacía si nada.
+        - Llevar promocion_nivel.periodo_min_dias en el nivel actual (desde su último cambio de nivel o el primer instante anotado).
+        - En la ventana de esos mismos días antes de a (revisión de V0.51, hallazgo 5: un incidente antiguo no bloquea para siempre):
+          ninguna degradación de la cartera, tampoco en L0 o L1 (ultimas_degradaciones; hallazgo 1), ni aviso O-19 suyo; ningún
+          kill-switch activado ni rearmado; el límite de pérdida del día no alcanzado ningún día de la ventana (por día, porque se
+          anota una vez al día; hallazgo 3); ningún aviso de INCIDENTES_PROMOCION (O-03, O-18, O-25) de la cartera o sin atribuir.
+        - Ningún aviso de esos sin acusar, sea de cuando sea (hallazgo 4: una discrepancia abierta no se repite en avisos nuevos).
+        - Datos que lo prueben (hallazgo 2): una foto de cartera reciente y una conciliación limpia dentro de la ventana, la última.
+        - Ahora: integridad superada, sin kill-switch y la cartera sin degradar."""
+        desde = self._desde_ultimo_nivel(cartera)
+        dias = self.cfg["promocion_nivel"]["periodo_min_dias"]
+        if desde is None or a - desde < timedelta(days=dias):
+            return [f"periodo mínimo de {dias} días en el nivel actual (desde {desde.isoformat() if desde else '¿?'})"]
+        v = a - timedelta(days=dias)   # inicio de la ventana que tiene que estar limpia
+        falta = []
+        if self.integridad():
+            falta.append(f"integridad no superada: {', '.join(self.integridad())}")
+        if cartera in self.degradadas:
+            falta.append("la cartera está degradada")
+        ud = self.ultimas_degradaciones.get(cartera)
+        if ud is not None and _dt(ud) >= v:
+            falta.append(f"la cartera se degradó en el periodo ({ud})")
+        if self.kill is not None or any(_dt(r["kill"]["ahora"]) >= v or _dt(r["ahora"]) >= v for r in self.rearmes):
+            falta.append("hubo kill-switch en el periodo")
+        for x in self.avisos:
+            suya = x.get("carteras") is None or cartera in x["carteras"]
+            if x["codigo"] == "O-19" and cartera in (x.get("carteras") or []) and (_dt(x["ahora"]) >= v or x["acuse"] is None):
+                falta.append(f"degradación {'sin acusar' if x['acuse'] is None else 'en el periodo'} ({x['id']})")
+            elif x["codigo"] in INCIDENTES_PROMOCION and suya and (_dt(x["ahora"]) >= v or x["acuse"] is None):
+                falta.append(f"incidente {x['codigo']} {'sin acusar' if x['acuse'] is None else 'en el periodo'} ({x['id']})")
+        if any(x["tipo"] == "ALCANZADO" and x["dia"] >= v.date().isoformat() for x in self.limites["entradas"]):
+            falta.append("el límite de pérdida del día se alcanzó en el periodo")
+        f = self.ultima_foto
+        if not f or not timedelta(0) <= a - _dt(f["fecha_hora"]) <= timedelta(minutes=self.cfg["politica_f"]["frescura_max_min"]):
+            falta.append("sin una foto de cartera reciente")
+        uc = self.ultima_conciliacion
+        if not (uc and uc["limpia"] and v <= _dt(uc["ahora"]) <= a):
+            falta.append("sin una conciliación limpia en el periodo (la última)")
+        return falta
+
+    @_seguro
+    def cambiar_nivel(self, cartera, nivel, actor, motivo, ahora, aprobacion=None):
+        """V0.51 (T-18, §6): el operador cambia el nivel de autonomía de una cartera sin reiniciar. Bajar vale siempre y es inmediato.
+        Subir es de un nivel en uno, en dos llamadas iguales como el límite de pérdida (la primera solicita; la segunda, pasado el
+        enfriamiento y antes de que caduque, aplica), con canal admitido, segundo factor, sin kill-switch y cumpliendo los criterios
+        de promoción (criterios_promocion; O-39). Cada cambio es una entrada NIVEL del registro de límites con la huella nueva de la
+        configuración: no es un incidente. Aviso O-39."""
+        a = self._ahora(ahora)
+        if actor != "OPERADOR":
+            return _no("O-05", "solo el operador cambia el nivel de autonomía")
+        if cartera not in ("TRADING", "TACTICA", "LARGO_PLAZO"):
+            return _no("O-01", "cartera desconocida")
+        if not (isinstance(nivel, str) and nivel in NIVELES):
+            return _no("O-01", f"nivel desconocido (válidos: {', '.join(NIVELES)})")
+        if not _motivo_ok(motivo):
+            return _no("O-15", f"un cambio de nivel exige motivo (al menos {MOTIVO_MIN} caracteres)")
+        rota = self._config_rota()   # revisión de V0.51, hallazgo 6: kill-switch y aviso, como en el resto (todo pasa a L1)
+        if rota:
+            return rota
+        actual = self.cfg["nivel_autonomia"].get(cartera, "L1")
+        if nivel == actual:
+            return _no("O-02", f"la cartera ya está configurada en {nivel}")
+        sube = NIVELES[nivel] > NIVELES[actual]
+        canal = None
+        if sube:
+            if NIVELES[nivel] != NIVELES[actual] + 1:
+                return _no("O-39", "se sube de un nivel en uno: cada nivel exige su periodo mínimo")
+            if self.kill is not None:
+                return _no("O-26", "kill-switch activo: no se sube ningún nivel")
+            if not (isinstance(aprobacion, dict) and set(aprobacion) == {"canal", "segundo_factor"}
+                    and aprobacion["canal"] in self.cfg["aprobacion"]["canales"] and aprobacion["segundo_factor"] is True):
+                return _no("O-05", "subir un nivel exige un canal de aprobación admitido (no el chat) y segundo factor")
+            falta = self.criterios_promocion(cartera, a)
+            if falta:
+                return _no("O-39", f"no se cumplen los criterios para subir {cartera} a {nivel}: {'; '.join(falta[:4])}", criterios=falta)
+            canal = aprobacion["canal"]
+            pend = self._nivel_pendiente(cartera)
+            cad = timedelta(minutes=self.cfg["aprobacion"]["caduca_min"])
+            if not (pend and pend["nivel"] == nivel and pend["antes"] == actual and pend["motivo"] == motivo and pend["canal"] == canal
+                    and a <= _dt(pend["hasta"]) + cad):
+                hasta = a + timedelta(minutes=self.cfg["aprobacion"]["enfriamiento_min"])
+                self._anota_limite({"tipo": "SOLICITUD_NIVEL", "cartera": cartera, "antes": actual, "nivel": nivel, "motivo": motivo,
+                                    "canal": canal, "hasta": hasta.isoformat()}, "OPERADOR", ahora, f"solicitud de subir {cartera} a {nivel}")
+                return _r(True, "O-28", f"subida solicitada: confírmela con la misma llamada desde {hasta.isoformat()} "
+                                        f"y hasta {(hasta + cad).isoformat()}", aplicado=False, confirmar_desde=hasta.isoformat())
+            if a < _dt(pend["hasta"]):
+                return _no("O-28", f"enfriamiento hasta {pend['hasta']}: la subida aún no se puede confirmar")
+        self.cfg["nivel_autonomia"] = {**self.cfg["nivel_autonomia"], cartera: nivel}
+        self.huella_config = _hash(_canon(self._configuracion_completa()))
+        self._anota_limite({"tipo": "NIVEL", "cartera": cartera, "antes": actual, "nivel": nivel, LIMITE_PERDIDA: self.cfg["politica_f"][LIMITE_PERDIDA],
+                            "huella_config": self.huella_config, "motivo": motivo, "canal": canal}, "OPERADOR", ahora,
+                           f"nivel de {cartera} {'subido' if sube else 'bajado'} de {actual} a {nivel}: {motivo[:120]}")
+        self._aviso("O-39", f"nivel de autonomía de {cartera} {'subido' if sube else 'bajado'} de {actual} a {nivel}", ahora, cartera, carteras={cartera})
+        return _r(True, "OK", f"{cartera}: {actual} -> {nivel}", aplicado=True)
 
     def anulaciones_mes(self, ahora):
         """Anulaciones de veto autorizadas en el mes natural (UTC) de ese instante, contadas en las cadenas de los expedientes."""

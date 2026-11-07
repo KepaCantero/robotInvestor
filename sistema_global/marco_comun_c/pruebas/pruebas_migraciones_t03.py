@@ -37,10 +37,34 @@ E_F = pe.esquema_de_parte(PARTE_F)
 ESQ = {**mg.ESQUEMAS, E_F: {"version": "prueba", "parte": PARTE_F}}
 
 
+def como_v045(e):
+    """V0.51: rehace la huella de configuración del estado e con la parte de código de V0.45 (la que V0.45 habría calculado) y la
+    cadena del registro de límites que la lleva. Desde V0.51 las constantes de la configuración completa cambiaron (PRIORIDAD_AVISO
+    con O-39), así que un estado de este código ya no pasa por uno de V0.45 sin esto."""
+    viejo = e["huella_config"]
+    nuevo_h = orq._hash(orq._canon({"version_config": e["cfg"]["version_config"], "orquestador": e["cfg"], "calendario": e["cal_def"],
+                                    **mg.ESQUEMAS[mg.ESQUEMA_V0_45]["parte"]["codigo"]}))
+    e["huella_config"] = nuevo_h
+    L = e["limites"]
+    for x in L["entradas"]:
+        if x.get("huella_config") == viejo:
+            x["huella_config"] = nuevo_h
+    prev = "0" * 64
+    for h, x in zip(L["historial"], L["entradas"]):
+        h["datos"], h["hash_prev"] = orq._hash(x), prev
+        h["hash"] = orq._hash({k: v for k, v in h.items() if k != "hash"})
+        prev = h["hash"]
+    return e
+
+
 def a_010(texto, clave=None):
-    """El mismo estado como lo habría guardado V0.45 (formato 0.1.0, sin esquema), firmado si hay clave."""
+    """El mismo estado como lo habría guardado V0.45 (formato 0.1.0, sin esquema, huella de configuración de V0.45), firmado si hay clave."""
     d = json.loads(texto)
     del d["esquema"]
+    if d["estado"]["huella_config"] == orq._hash(orq._canon({"version_config": d["estado"]["cfg"]["version_config"], "orquestador": d["estado"]["cfg"],
+                                                             "calendario": d["estado"]["cal_def"], **pe.parte_de_codigo()["codigo"]})):
+        como_v045(d["estado"])   # solo si la huella es la de este código (no se arregla lo que una prueba tocó a propósito)
+        d["huella"] = pe._huella(d["estado"])
     d.pop("firma", None)
     d["formato"] = pe.FORMATO_010
     if clave is not None:
@@ -142,12 +166,18 @@ def main():
           and o2.limites["historial"][-1]["actor"] == "OPERADOR" and o2.limites["historial"][-1]["ahora"] == TM, ult)
     h.chk("el_estado_migrado_esta_integro_y_se_carga", o2.integridad() == [] and pe.cargar(r["texto"])["ok"]
           and json.loads(r["texto"])["formato"] == pe.FORMATO)
-    h.chk("MIG001_no_cambia_la_configuracion", o2.huella_config == o.huella_config and ult["huella_antes"] == o.huella_config
-          and o2.cfg == o.cfg)
+    # V0.51: la cadena desde 0.1.0 pasa por el código de V0.45 (otra huella de configuración); la configuración en sí no cambia
+    h.chk("la_cadena_no_cambia_la_configuracion_y_anota_la_huella_de_V0_45", o2.huella_config == o.huella_config and o2.cfg == o.cfg
+          and ult["huella_antes"] == json.loads(t010)["estado"]["huella_config"] != o.huella_config)
     h.chk("la_migracion_adelanta_el_reloj", o2.ultimo_ahora == TM)
-    # r12: con el mismo código (misma huella), MIG-001 no toca las autorizaciones ni la subida pendiente
-    h.chk("r12_MIG001_mantiene_las_autorizaciones_y_la_subida_pendiente", o.autorizacion_vigente(o.expedientes["EXP-0001"])
-          and o2.autorizacion_vigente(o2.expedientes["EXP-0001"]) and o2._subida_pendiente() is not None)
+    # r12: con el mismo código (misma huella), una migración no toca las autorizaciones ni la subida pendiente; V0.51: desde 0.1.0
+    # (código de V0.45, otra huella) la cadena sí las anula
+    h.chk("la_cadena_desde_V0_45_anula_las_autorizaciones_y_la_subida_pendiente", o.autorizacion_vigente(o.expedientes["EXP-0001"])
+          and not o2.autorizacion_vigente(o2.expedientes["EXP-0001"]) and o2._subida_pendiente() is None)
+    rf = mg.migrar(otro(texto, E_F), TM, M, esquemas=ESQ, registro=(mig("MIG-F", E_F, E0),))
+    of = rf.get("orquestador")
+    h.chk("r12_con_la_misma_huella_se_mantienen_las_autorizaciones_y_la_subida_pendiente", rf["ok"] and of.huella_config == o.huella_config
+          and of.autorizacion_vigente(of.expedientes["EXP-0001"]) and of._subida_pendiente() is not None, rf.get("motivo"))
     h.chk("lo_demas_del_estado_no_cambia", all(getattr(o2, k) == getattr(o, k) for k in vars(o) if k not in ("limites", "ultimo_ahora")))
     r2 = mg.migrar(r["texto"], TM, M)
     h.chk("migrar_lo_ya_migrado_no_hace_nada", r2["ok"] and r2["migraciones"] == [] and r2["texto"] == r["texto"])

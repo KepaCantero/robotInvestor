@@ -104,7 +104,7 @@ def main():
           and vg.MAX_EDAD_MIN == P["h_max_edad_dato_min"] and vg.SALTO_MAX_H == P["h_salto_max_horas"])
     o = nuevo(); hasta(o, "PROPUESTA")
     c = o.configuracion()
-    h.chk("configuracion_con_version_y_huella", c["version_config"] >= "CFG-0.3.0" and c["version_parametros"] == parametros.VERSION_PARAMETROS
+    h.chk("configuracion_con_version_y_huella", tuple(map(int, c["version_config"][4:].split("."))) >= (0, 3, 0) and c["version_parametros"] == parametros.VERSION_PARAMETROS
           and len(c["huella"]) == 64 and c["reglas"]["f"].startswith("F-"))
     h.chk("cada_anotacion_lleva_la_huella", all(x["config"] == c["huella"] for x in o.expedientes["EXP-0001"]["historial"]))
     o2 = nuevo({"dia_coste_max_eur": 51.0})

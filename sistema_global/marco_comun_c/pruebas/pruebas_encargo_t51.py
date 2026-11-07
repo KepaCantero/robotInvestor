@@ -38,7 +38,7 @@ def main():
     h.chk("mandato_de_SC1", m["mandato"] == MT and m["referencia"] == sc1.referencia(MT) and m["version_sc1"] == sc1.VERSION_SC1)
     h.chk("mandato_es_una_copia", (m["mandato"].update(tamano_max_pct_cartera=99) or True) and o.mandato("TACTICA")["mandato"] == MT)
     h.chk("mandato_de_cartera_desconocida", o.mandato("OTRA") is None and o.mandato(None) is None)
-    h.chk("config_050_con_mandatos", o.configuracion()["version_config"] >= "CFG-0.5.0" and o.configuracion()["orquestador"]["mandatos"] == MANDATOS)
+    h.chk("config_050_con_mandatos", tuple(map(int, o.configuracion()["version_config"][4:].split("."))) >= (0, 5, 0) and o.configuracion()["orquestador"]["mandatos"] == MANDATOS)
     h.chk("los_mandatos_en_la_huella", nuevo().configuracion()["huella"] != nuevo({"mandatos": con(tamano_max_pct_cartera=8.0)}).configuracion()["huella"])
     malos = (("falta_cartera", {k: v for k, v in MANDATOS.items() if k != "TRADING"}),
              ("clave_extra", con(objetivo="crecer")), ("version_mal_formada", con(version="v1")),

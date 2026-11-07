@@ -111,7 +111,7 @@ def main():
                                                                       {**informe(S), "payload": {**informe(S)["payload"], "escenarios_fallo": None}})))
 
     # ---------------------------------------------------------------- Orquestador con la configuración por defecto
-    h.chk("por_defecto_exige_n2_y_n3", CONFIG_DEFECTO["exige_contradictor_en"] == ["N2", "N3"] and CONFIG_DEFECTO["version_config"] >= "CFG-0.2.0")
+    h.chk("por_defecto_exige_n2_y_n3", CONFIG_DEFECTO["exige_contradictor_en"] == ["N2", "N3"] and tuple(map(int, CONFIG_DEFECTO["version_config"][4:].split("."))) >= (0, 2, 0))
     o = orq()
     eid = en_analisis(o)
     antes = estado(o)

@@ -181,7 +181,7 @@ def main():
         except ValueError:
             h.chk(f"config_tolerancia_{nombre}_se_rechaza", True)
     c = Orquestador({k_: v_ for k_, v_ in CFG.items() if k_ != "tolerancia_tipo_k_rel"}, CAL).configuracion()
-    h.chk("config_060_tolerancia_por_defecto", c["version_config"] >= "CFG-0.6.0" and c["orquestador"]["tolerancia_tipo_k_rel"] == 0.03)
+    h.chk("config_060_tolerancia_por_defecto", tuple(map(int, c["version_config"][4:].split("."))) >= (0, 6, 0) and c["orquestador"]["tolerancia_tipo_k_rel"] == 0.03)
 
     print(f"\n{h.n} comprobaciones")
     print("RESULTADO K T-26:", "TODAS LAS PRUEBAS PASAN" if h.ok else "HAY FALLOS")
