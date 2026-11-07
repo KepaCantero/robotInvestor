@@ -24,7 +24,7 @@ from datetime import date, timezone
 import math as _m
 
 from orquestador import NIVELES
-from ejecucion_g import _aviso, _instante, cerrar, conciliar, reducir, revisar_entrada
+from ejecucion_g import _aviso, _instante, cerrar, conciliar, cotizar, reducir, revisar_entrada
 from orquestador import OPERADORES
 from validar_sobre import _dt
 
@@ -189,8 +189,17 @@ def vigilar(o, broker, datos, ahora, max_edad_min=MAX_EDAD_MIN):
                     no_eval.append({"posicion": pid, "condicion": c["id"], "regla": "H-12", "motivo": "la toma parcial ya no cabe en lo que queda"})
                 continue
             if OPERADORES[c["operador"]](d["precio"], c["umbral"]):
+                if parcial:   # T-43: antes de preparar o hacer una toma parcial, si no cabe se propone al operador una sola vez
+                    cotizar(o, broker, p["instrumento"], ahora)
+                    v = o.cantidad_reduccion(pid, _instante(o, ahora), condicion_id=c["id"])
+                    if not v["ok"]:
+                        pref = f"REDUCCIÓN NO VIABLE: {c['id']} "   # revisión de V0.52, hallazgo 1: una vez, aunque cambie el motivo
+                        if not v.get("transitorio") and not any(x["texto"].startswith(pref) for x in p["propuestas"]):   # sin precio: otra pasada
+                            o.proponer_sobre_posicion(pid, f"{pref}(fracción {c['fraccion']}) cumplida, pero {v['motivo']}; decida el operador", "H", _instante(o, ahora))
+                        no_eval.append({"posicion": pid, "condicion": c["id"], "regla": "H-12", "motivo": v["motivo"]})
+                        continue
                 if NIVELES[o.nivel(p["cartera"])] < 2:   # L0/L1: H prepara la salida y la confirma el operador
-                    txt = (f"REDUCCIÓN PREPARADA: {c['id']} ({c['tipo']}, fracción {c['fraccion']}) cumplida; confirme la reducción" if parcial
+                    txt = (f"REDUCCIÓN PREPARADA: {c['id']} ({c['tipo']}, fracción {c['fraccion']}, {v['cantidad']} con el paso) cumplida; confirme la reducción" if parcial
                            else f"CIERRE PREPARADO: {c['id']} ({c['tipo']}) cumplida; confirme el cierre")
                     if not any(x["texto"] == txt for x in p["propuestas"]):
                         o.proponer_sobre_posicion(pid, txt, "H", _instante(o, ahora))

@@ -12,6 +12,7 @@ from ejecucion_g import BrokerSimulado, cartera_para_f, conciliar, ejecutar, rev
 from vigilancia import vigilar  # noqa: E402
 from pruebas_control_f import informe_f  # noqa: E402
 from pruebas_ejecucion_g import autorizado, broker  # noqa: E402
+from control_f import POLITICA_DEFECTO  # noqa: E402
 from pruebas_orquestador import AHORA, ENTRADA, SALIDA, Arnes, dim, hasta, nuevo  # noqa: E402
 
 T1 = "2026-11-06T10:00:00+00:00"
@@ -74,7 +75,7 @@ def main():
     b.mover_precio("EURUSD", 1.09, T1)
     r = revisar_entrada(o, EID, b, T1)
     h.chk("parcial_de_una_orden_viva", r["ok"] and o.posiciones[PID]["cantidad"] == 95.0 and b.consultar(OID)["estado"] == "CANCELADA", r)
-    o, b = autorizado(b=broker(fraccion_fill=0.4))   # 40 x 1,10 = 44 €, por debajo del valor mínimo de F (100 €)
+    o, b = autorizado(b=broker(fraccion_fill=0.4), o=nuevo({"politica_f": POLITICA_DEFECTO}))   # 40 x 1,10 = 44 €, por debajo del valor mínimo de F (100 €, el de por defecto)
     r = ejecutar(o, EID, b, AHORA)
     h.chk("parcial_por_debajo_del_minimo_de_F_se_deshace_G05", r["codigo"] == "G-05" and r.get("cerrada") and b.posiciones() == [] and o.posiciones == {}, r)
     # ---------------------------------------------------------------- otros caminos
@@ -115,7 +116,7 @@ def main():
     h.chk("la_proteccion_se_reanuda_aunque_haya_vencido_el_plazo", v["acciones"][0]["regla"] == "H-11" and v["acciones"][0]["ok"]
           and o.posiciones[PID]["estado"] == "ABIERTA" and b.consultar("ORD-EXP-0001-S-1")["estado"] == "ACEPTADA"
           and o.posiciones[PID]["ejecutada_en"] == T1, v)
-    o, b = autorizado(b=broker(fraccion_fill=0.4))
+    o, b = autorizado(b=broker(fraccion_fill=0.4), o=nuevo({"politica_f": POLITICA_DEFECTO}))
     r1, r2_, r3 = ejecutar(o, EID, b, AHORA), ejecutar(o, EID, b, AHORA), ejecutar(o, EID, b, AHORA)
     h.chk("reintentos_tras_deshacer_nunca_dejan_posicion", [x["codigo"] for x in (r1, r2_, r3)] == ["G-05"] * 3 and b.posiciones() == []
           and [x["estado"] for x in o.expedientes[EID]["orden_entrada"]["anteriores"]] == ["DESHECHA", "DESHECHA"], (r1, r2_, r3))

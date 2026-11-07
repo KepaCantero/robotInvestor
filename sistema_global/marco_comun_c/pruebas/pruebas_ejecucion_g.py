@@ -12,6 +12,7 @@ sys.path.insert(0, str(AQUI))
 from ejecucion_g import BrokerSimulado, ConexionPerdida, _aviso, cartera_para_f, conciliar, ejecutar  # noqa: E402
 from consola import panel  # noqa: E402
 from pruebas_control_f import informe_f  # noqa: E402
+from control_f import POLITICA_DEFECTO  # noqa: E402
 from pruebas_orquestador import autorizar_op, AHORA, ENTRADA, OBJ, STOP, Arnes, hasta, nuevo  # noqa: E402
 
 HORA_DATOS = "2026-11-06T08:50:00+00:00"
@@ -100,7 +101,7 @@ def main():
     h.chk("ejecucion_parcial_protege_lo_ejecutado", r["ok"] and abs(r["cantidad"] - 400.0) < 1e-9 and abs(o.posiciones["POS-EXP-0001"]["cantidad"] - 400.0) < 1e-9
           and abs(b.posiciones()[0]["cantidad"] - 400.0) < 1e-9 and abs(b.consultar("ORD-EXP-0001-S-1")["cantidad_ejecutada"]) == 0.0, r)
     h.chk("parcial_concilia", conciliar(o, b, AHORA)["ok"])
-    o, b = autorizado(b=broker(fraccion_fill=0.4))   # 40 uds valen 44 EUR: por debajo del mínimo de F
+    o, b = autorizado(b=broker(fraccion_fill=0.4), o=nuevo({"politica_f": POLITICA_DEFECTO}))   # 40 uds valen 44 EUR: por debajo del mínimo de F (el de por defecto, 100 EUR)
     r = ejecutar(o, "EXP-0001", b, AHORA)
     h.chk("parcial_demasiado_pequena_se_deshace_G05", r["codigo"] == "G-05" and r.get("cerrada") is True and not b.posiciones() and not o.posiciones, r)
     o, b = autorizado(b=broker(rechaza_stops=True))
@@ -117,7 +118,6 @@ def main():
     o, b = autorizado(b=broker(precio=1.05))   # T-22: el mercado está a un 4,5 % del límite: F (F-23) no deja enviar
     r = ejecutar(o, "EXP-0001", b, AHORA)
     h.chk("mercado_lejos_del_limite_no_se_envia_F23", r["codigo"] == "G-06" and "F-23" in r["motivo"] and b.ordenes == {}, r)
-    from control_f import POLITICA_DEFECTO
     o, b = autorizado(b=broker(precio=1.05), o=nuevo({"politica_f": {**POLITICA_DEFECTO, "deriva_precio_max_pct": 10.0}}))
     r = ejecutar(o, "EXP-0001", b, AHORA)
     h.chk("orquestador_rechaza_lo_ejecutado_G05_y_se_cierra", r["codigo"] in ("G-03", "G-05") and r.get("cerrada") is True and not b.posiciones() and not o.posiciones, r)
