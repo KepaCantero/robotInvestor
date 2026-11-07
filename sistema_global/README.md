@@ -4,7 +4,7 @@ Esta carpeta reúne lo que gobierna el sistema por encima de los bloques A, A Fo
 
 | Carpeta | Contenido |
 | --- | --- |
-| `constitucion/` | `Constitucion_Global.md`: la Constitución global (V0.3 vigente; el historial de git conserva la V0.1). Es la fuente de verdad: si algo de esta carpeta la contradice, vale la Constitución. |
+| `constitucion/` | `Constitucion_Global.md`: la Constitución global (V0.4 vigente desde el 7-11-2026 con la enmienda 1; el historial de git conserva las anteriores). Es la fuente de verdad: si algo de esta carpeta la contradice, vale la Constitución. |
 | `marco_comun_c/` | Código de referencia de la Fase 1 en Python (V0.52; V0.37 a V0.41 las hace GLM en paralelo desde V0.36). Recorrido completo con datos simulados: detección, encargo, sobre, comparación, dimensionado, propuesta, control de riesgo, autorización, ejecución, vigilancia y cierre. Determinista, sin LLM, sin intermediario real. Su `LEEME.md` describe módulos, códigos y pruebas. |
 | `documentos_0/` | Un Documento 0 por pieza, nombrado por la versión del código que la introdujo (problema, diseño, reglas, revisión independiente y límites). |
 | `seguimiento/` | Deuda técnica (D-xx del operador, T-xx técnicas), briefing de arranque para retomar el trabajo en otra conversación y cuestionario de decisiones del operador. |
