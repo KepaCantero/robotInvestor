@@ -11,8 +11,11 @@ import sys
 from pathlib import Path
 
 RAIZ = Path(__file__).resolve().parent.parent
-DOCS_NUESTROS = [RAIZ / "CLAUDE.md"] + sorted((RAIZ / "prompts").glob("*.md")) + sorted((RAIZ / "docs").glob("*.md"))
-RAICES_VALIDAS = ("bloque_a/", "bloque_a_forex/", "bloque_b/", "docs/", "prompts/", "tools/", "sistema_global/")
+DOCS_NUESTROS = ([RAIZ / "CLAUDE.md", RAIZ / "AGENTS.md"] + sorted((RAIZ / "prompts").glob("*.md"))
+                 + sorted((RAIZ / "docs").glob("*.md")) + sorted((RAIZ / "memoria").rglob("*.md"))
+                 + sorted((RAIZ / ".agents" / "skills").rglob("*.md")))
+RAICES_VALIDAS = ("bloque_a/", "bloque_a_forex/", "bloque_b/", "docs/", "prompts/", "tools/", "sistema_global/",
+                  "memoria/", ".agents/", ".claude/", "AGENTS.md", "CLAUDE.md")
 PAT_RUTA = re.compile(r"`([^`\n]+?)`")
 # Entregables FUTUROS citados en prompts de fases (se quitan de aquí al aterrizar
 # la fase que los crea — mismo ratchet que las cuotas).
