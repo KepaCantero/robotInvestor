@@ -66,7 +66,7 @@ Estado a 7 de noviembre de 2026 (Constitución V0.4). El detalle de cada bloque 
 | Bloque | En una frase | Estado |
 | --- | --- | --- |
 | Broker Personal | Bloque en tres papeles (conversacional, Orquestador y gestores de cartera); habla para inexpertos, construye el perfil inversor y recuerda la política de inversión personal | Orquestador en código de referencia; el resto por diseñar |
-| A | Descubre oportunidades por tipo de activo; radar tecnológico continuo | Construido (V5.1); faltan por programar sus fichas de divisas. A Forex quedó fuera (D-20) |
+| A | Descubre oportunidades por tipo de activo; radar tecnológico continuo | Construido (V5.1); ya analiza divisas (Analista de Divisas, 5 de 11 fichas FX programadas; faltan 6). A Forex quedó fuera (D-20) |
 | B | Analiza un ámbito y selecciona candidatos con su vía de acceso | Construido (V2.1). B Forex quedó fuera (D-20) |
 | C (núcleo + 12 perfiles) | Valoración profunda por tipo de activo, con sobre común comparable | Marco común por definir; C-DIV parcial en otro LLM |
 | Contradictor | Ataca la tesis con la evidencia, sin ver el razonamiento | Construido como CT-G-03 con código de referencia (V0.5) |
