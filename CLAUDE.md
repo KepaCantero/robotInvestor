@@ -16,6 +16,12 @@ de referencia de la Fase 1 (`sistema_global/marco_comun_c/`, V0.53, 49 suites pr
 de los bloques), un Documento 0 por pieza y la deuda técnica y el briefing de arranque
 (`sistema_global/README.md` es su índice). No forma parte del corpus congelado.
 
+**Trabajo entre agentes (desde el 9-11-2026).** El repo lo trabajan Claude y Astra (OpenAI), con las
+mismas reglas (Astra entra por `AGENTS.md`). Flujo planificar → implementar → probar → QA con una skill por
+fase en `.agents/skills/` (`.claude/skills` es un enlace a esa carpeta); la QA la hace el agente que no
+implementó (`docs/flujo_de_trabajo.md`). Memoria compartida e indexada en `memoria/`: al empezar se leen
+`memoria/LEEME.md` y los índices; Claude escribe solo en `memoria/claude/` y en `memoria/compartida/`.
+
 Cada bloque mantiene internamente la estructura numerada de la entrega
 (`01_Gobernanza` … `11_Ejecutor` [+ `12_Runbook` en B], `99_Historico…`).
 

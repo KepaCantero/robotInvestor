@@ -59,6 +59,12 @@ El Robot Inversor es un sistema personal de inversión con capital propio que in
 
 **Qué no recuerda una conversación nueva.** Las decisiones tomadas, el diseño de los bloques anteriores y estas reglas. Por eso la Constitución y este briefing son el contexto mínimo. Los bloques ya entregados se adjuntan solo cuando la tarea los necesita (por ejemplo, el Documento 0 de B al construir una variante).
 
+**Memoria y flujo entre agentes (9-11-2026).** Desde esta fecha trabajan en el repositorio dos agentes, Claude y Astra (OpenAI), que usa un compañero del operador. Comparten:
+- un flujo de cuatro fases (planificar → implementar → probar → QA), con una skill por fase en `.agents/skills/` y la QA siempre a cargo del agente que no implementó (`docs/flujo_de_trabajo.md`);
+- una memoria indexada en `memoria/`, con una carpeta compartida y una por agente. Al empezar una conversación con acceso al repositorio, se leen `memoria/LEEME.md` y los índices.
+
+Astra entra por `AGENTS.md`. La memoria no sustituye a la Constitución, a este briefing ni a la deuda técnica: los resume y los enlaza.
+
 ## Mapa de bloques y estado
 
 Estado a 7 de noviembre de 2026 (Constitución V0.4). El detalle de cada bloque está en el §2 de la Constitución.
