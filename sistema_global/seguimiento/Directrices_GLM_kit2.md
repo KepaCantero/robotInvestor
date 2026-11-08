@@ -1,23 +1,19 @@
 # Directrices para GLM — kit 2 (V0.60 a V0.66)
 
-Nov 6, 2026 · @Dani
+Nov 8, 2026 · @Dani
 
 ## 0. Cómo usar este kit
 
 Es el segundo kit de trabajo para GLM, pensado para unos **4 o 5 días**. Sigue el mismo método que el del fin de semana: los mismos pasos que hago yo en cada pieza, salvo lo que GLM no puede hacer (Claude Docs, git y un revisor en segundo plano).
 
-**Kit de partida.** El fichero «Kit 2 para GLM - marco comun de C V0.47 (2026-11-06).zip» contiene:
+**Kit de partida.** El fichero «Kit 2 para GLM - marco comun de C V0.53 (2026-11-08).zip» contiene (sustituye al de V0.47 del 6 de noviembre):
 
-- la carpeta `marcoC` en **V0.47**, con todo lo que he construido hasta hoy: persistencia, diario, firma, migraciones y reloj;
-- `Constitucion_Global.md`;
+- la carpeta `marcoC` en **V0.53**, con todo lo construido hasta hoy: persistencia, diario, firma, migraciones y reloj (T-03), niveles L3 y cambio de nivel (T-18), reducción ajustada al paso (T-43) y las cinco piezas del fin de semana ya integradas y revisadas (robustez, tope de LIBRES, cortacircuito, pantalla de F y reducción parcial a mano);
+- `Constitucion_Global.md` (V0.4, con la enmienda 1);
 - `Deuda_tecnica.md`, al día;
 - este documento en Markdown (`Directrices_GLM_kit2.md`).
 
-**Este kit no depende del del fin de semana.** Son dos cadenas separadas:
-
-- Las piezas V0.37 a V0.41 siguen su cadena, desde el ZIP de V0.36. Si quedan a medias, se terminan en esa cadena.
-- Las piezas de este kit (V0.60 a V0.66) parten **siempre** del ZIP de V0.47 de este kit y luego, cada una, del ZIP de la anterior de este kit. Nunca de un ZIP del fin de semana.
-- Yo integro las dos cadenas. Por eso las piezas de este kit evitan lo que tocan las del fin de semana: el registro manual, el registro de límites, el rearme del kill-switch, la pantalla de aprobación y `declarar_manual`.
+**Una sola cadena.** Las piezas del fin de semana (V0.37 a V0.41) ya están integradas en V0.53, con las correcciones de su revisión (las explica `entrega_glm/` y el Documento 0 de V0.53). Las piezas de este kit (V0.60 a V0.66) parten **siempre** del ZIP de V0.53 de este kit y luego, cada una, del ZIP de la anterior de este kit. Siguen evitando lo que más se ha tocado: el registro manual, el registro de límites, el rearme del kill-switch, la pantalla de aprobación, `declarar_manual` y el cambio de nivel.
 
 **Orden de las piezas y calendario orientativo.**
 
@@ -45,9 +41,9 @@ Una pieza a la vez. La 7 solo si las seis anteriores están en verde.
 for f in pruebas/ejecutar_pruebas.py pruebas/pruebas_*.py; do echo "$(basename $f): $(python3 $f 2>&1 | tail -1)"; done | grep -v "TODAS LAS PRUEBAS PASAN"
 ```
 
-Si no imprime nada, todo pasa. En V0.47 son **40 baterías**. Algunas tardan: la de migraciones, un par de minutos.
+Si no imprime nada, todo pasa. En V0.53 son **49 baterías**. Algunas tardan: la de migraciones, un par de minutos.
 
-**Ficheros completos, nunca diffs.** En `orquestador.py` (unas 2.900 líneas), solo las funciones que cambian, con su nombre y su código completo. Ninguna pieza de este kit debería tocar el Orquestador; si alguna lo necesita, que GLM lo diga antes de hacerlo.
+**Ficheros completos, nunca diffs.** En `orquestador.py` (unas 3.400 líneas), solo las funciones que cambian, con su nombre y su código completo. Ninguna pieza de este kit debería tocar el Orquestador; si alguna lo necesita, que GLM lo diga antes de hacerlo.
 
 **Lo que me devuelves, por cada pieza terminada.** Como en el fin de semana:
 
@@ -65,7 +61,7 @@ Pégalo tal cual al empezar cada conversación de una pieza y, a continuación, 
 ```
 Eres el desarrollador de una pieza del "marco común de C" del proyecto Robot Investor. Es código de referencia en Python (Fase 1 de la Constitución), determinista, sin LLM, con datos simulados. Todo el código, los comentarios, los mensajes de error y los documentos van en español de España.
 
-ESTRUCTURA (carpeta marcoC del ZIP adjunto, versión V0.47 o posterior)
+ESTRUCTURA (carpeta marcoC del ZIP adjunto, versión V0.53 o posterior)
 - validador/: los bloques. orquestador.py (Orquestador: estado, expedientes, posiciones, avisos, kill-switch, registro de límites), control_f.py (F, control de riesgo), ejecucion_g.py (G, ejecución con el intermediario simulado BrokerSimulado), vigilancia.py (H), comparador.py (D), dimensionado.py (E), manual_g.py (CT-G-14), validar_sobre.py (CT-G-02), validar_encargo.py (CT-G-01), validar_contradictor.py (CT-G-03), k_calidad.py (K y su sello), motor.py (SC-3), mandatos.py (SC-1), contratos.py, parametros.py, consola.py (N, solo lectura).
 - Infraestructura de T-03 (V0.42 a V0.47): persistencia.py (guardar y cargar el estado, firma con clave, esquema del código), diario.py (diario de operaciones con puntos de control), migraciones.py (migrar un estado guardado a otra versión del código) con esquemas_codigo.json, y reloj.py (reloj del sistema).
 - pruebas/: una batería por pieza. Cada fichero acaba imprimiendo "RESULTADO ...: TODAS LAS PRUEBAS PASAN" o "HAY FALLOS". Ayudas comunes: pruebas_orquestador.py (nuevo(cfg), hasta(o, estado, n=...), autorizar_op, AHORA, Arnes con chk(nombre, condicion, detalle)); pruebas_control_f.py (informe_f, CART, solicitud); pruebas_jornada.py (pasos() de una jornada completa).
@@ -82,7 +78,7 @@ REGLAS INNEGOCIABLES
 7. No se borra ni se debilita ninguna prueba existente. Si un cambio obliga a cambiar una prueba antigua, se explica en el Documento 0 y se añade una comprobación de lo nuevo.
 8. Determinismo: nada de reloj del sistema (salvo la prueba que use reloj.Reloj() real), azar sin semilla ni orden de diccionarios en lo que se compara. Usa random.Random(semilla), nunca el random global.
 9. Entrega ficheros completos (o funciones completas en ficheros enormes), nunca diffs.
-10. ESQUEMA DEL CÓDIGO: pruebas/pruebas_migraciones_t03.py falla en "esquema_del_codigo_registrado" si cambias algo del esquema del código (constantes en MAYÚSCULAS de los módulos de persistencia.MODULOS_ESQUEMA, CONFIG_DEFECTO o los atributos del Orquestador). Primero intenta no hacerlo (por ejemplo, una constante nueva dentro de una función o en un módulo que no esté en esa lista). Si hace falta: (a) ejecuta "python3 validador/migraciones.py --registrar-esquema V0.6x"; (b) en migraciones.py añade a MIGRACIONES una Migracion("MIG-G6x", pe.FORMATO, <esquema anterior>, <esquema nuevo>, _sin_cambios, frozenset(), "descripción"), donde el esquema anterior es el último de la cadena (en V0.47, ESQUEMA_V0_45); si la pieza añade claves a la configuración, la función las añade con valores literales; (c) explícalo en el Documento 0. Nunca borres entradas de esquemas_codigo.json.
+10. ESQUEMA DEL CÓDIGO: pruebas/pruebas_migraciones_t03.py falla en "esquema_del_codigo_registrado" si cambias algo del esquema del código (constantes en MAYÚSCULAS de los módulos de persistencia.MODULOS_ESQUEMA, CONFIG_DEFECTO o los atributos del Orquestador). Primero intenta no hacerlo (por ejemplo, una constante nueva dentro de una función o en un módulo que no esté en esa lista). Si hace falta: (a) ejecuta "python3 validador/migraciones.py --registrar-esquema V0.6x"; (b) en migraciones.py añade a MIGRACIONES una Migracion("MIG-G6x", pe.FORMATO, <esquema anterior>, <esquema nuevo>, _sin_cambios, frozenset(), "descripción"), donde el esquema anterior es el último de la cadena (en V0.53, ESQUEMA_V0_53); si la pieza añade claves a la configuración, la función las añade con valores literales; (c) explícalo en el Documento 0. Nunca borres entradas de esquemas_codigo.json.
 
 MÉTODO (sigue estos pasos en orden y dime en qué paso estás)
 Paso 1. Lee solo el kit de contexto que indica la pieza. Resume en 5-10 líneas qué vas a hacer y dónde; si algo no cuadra con el código, dilo antes de programar.
@@ -99,7 +95,7 @@ La revisión independiente se hace después, en otra conversación; cuando te pe
 
 ## 2. Pieza 1 (V0.60): robustez de los validadores de sobre, encargo, Contradictor, sello de K, E y H
 
-**Dificultad:** baja. **Parte de:** V0.47. **Tema del ZIP:** «robustez de los validadores».
+**Dificultad:** baja. **Parte de:** V0.53. **Tema del ZIP:** «robustez de los validadores».
 
 **Kit de contexto:**
 
@@ -110,14 +106,13 @@ La revisión independiente se hace después, en otra conversación; cuando te pe
 
 **Batería nueva:** `pruebas/pruebas_robustez_validadores.py`, con al menos **50 comprobaciones agregadas**: una comprobación puede cubrir N casos. Tarda menos de 90 segundos y usa `random.Random(20261110)`.
 
-**El generador de mutaciones** es el de la pieza de robustez del fin de semana, si ya existe (`mutar(obj, rng)` y `caminos(obj)`); si no, escríbelo igual. Una mutación sobre un camino al azar puede:
+**El generador de mutaciones** es el de la pieza de robustez del fin de semana (`mutar(obj, rng)` y `caminos(obj)` en `pruebas/pruebas_robustez.py`): impórtalo o cópialo, sin cambiarlo. Una mutación sobre un camino al azar puede:
 
 - borrar una clave o añadir una extra;
 - cambiar un valor por `None`, `""`, `"x"`, `[]`, `{}`, `True`, `0`, `-1`, `1e308`, `float("nan")`, `float("inf")` o un número como texto;
 - cambiar una fecha por `"2026-13-45"`, `"ayer"` o una fecha sin zona;
 - anidar un valor 500 niveles (`[[[…]]]`).
 
-Si no está en este ZIP (porque el fin de semana va en otra cadena), cópialo dentro de la batería nueva.
 
 **Qué se comprueba, por validador (300 casos cada uno salvo que se diga otra cosa):**
 
@@ -134,7 +129,7 @@ Para `vigilar`, crea el Orquestador y el intermediario de nuevo en cada caso (o 
 
 **Mutaciones «de forma» y «de valor».** Sepáralas, como en la pieza del fin de semana. Si una mutación de forma da otra regla por diseño (por ejemplo, el esquema JSON deja pasar una clave extra en un sitio concreto), no es un defecto: ajústalo y explícalo. No cambies un validador para que encaje en la prueba.
 
-**Aceptación:** pasan las 40 baterías y la nueva, y la nueva es determinista (dos ejecuciones dan la misma salida).
+**Aceptación:** pasan las 49 baterías y la nueva, y la nueva es determinista (dos ejecuciones dan la misma salida).
 
 **LEEME:** añade la fila, la línea de ejecución y un punto «Comprobado en la robustez de los validadores». **Deuda:** ninguna fila nueva, salvo defectos que no se corrijan.
 
