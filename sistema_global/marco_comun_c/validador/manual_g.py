@@ -9,12 +9,15 @@ RM-02 emisor: solo el operador.
 RM-03 instantes: ejecutado_en <= emitido_en <= ahora, y no más antiguo que la ventana de declaración.
 RM-04 vínculo inexistente o en un estado que no admite el registro.
 RM-05 no coincide con lo que vincula (cartera, instrumento, activo base, sentido o vía de acceso).
-RM-06 cantidad: supera lo aprobado por F (expediente) o no es la de la posición (cierre total).
-RM-07 un registro que abre posición exige su orden de protección declarada.
+RM-06 cantidad: supera lo aprobado por F (expediente) o no es la de la posición (un cierre es total y exacto,
+        o una reducción parcial por debajo, T-44; más de lo que hay, o una parcial sin cantidad positiva, no).
+RM-07 un registro que abre posición, o que reduce una posición una parte (T-44), exige su orden de protección declarada.
 RM-08 instrumento no admitido en esa cartera (instrumentos permitidos y exclusiones del mandato de SC-1).
 RM-09 precio de una entrada fuera de la tolerancia del límite autorizado.
 RM-10 operación LIBRE en un instrumento con posición abierta o expediente AUTORIZADA: debe vincularse a ellos.
 RM-11 la identidad de la envoltura (expediente_id, correlation_id) no es la del vínculo (T-47).
+RM-12 una reducción parcial (T-44) no puede dejar un resto por debajo del valor mínimo de F, o sin poder
+      valorarlo en euros: ciérrala entera.
 
 Desde T-47 el mensaje es CT-G-14 0.2.0 con la envoltura común: producer OPERADOR, consumer G, valid_until nulo (un hecho
 declarado no caduca; la ventana la aplica RM-03), data_refs = las órdenes del intermediario que lo prueban, y en payload los
@@ -119,7 +122,8 @@ def validar_manual(reg, ctx):
 
 def _validar_manual(reg, ctx):
     """reg: el mensaje CT-G-14 0.2.0. ctx: {"ahora", "expediente": dict|None, "posicion": dict|None, "tolerancia_precio": número,
-    "instrumentos_permitidos": {cartera: [..]} y "instrumentos_excluidos": {cartera: [..]} opcionales (del mandato de SC-1), "identidad": (expediente_id, correlation_id) que corresponde al vínculo}.
+    "instrumentos_permitidos": {cartera: [..]} y "instrumentos_excluidos": {cartera: [..]} opcionales (del mandato de SC-1), "identidad": (expediente_id, correlation_id) que corresponde al vínculo,
+    y "valor_min_restante_eur" (T-44, opcional): el mínimo de F para el resto de una reducción parcial manual, ya convertido a la divisa de cotización del instrumento (lo calcula el Orquestador).
     Devuelve la lista de fallos (vacía = válido)."""
     if not isinstance(reg, dict):
         return [_f("RM-01", "el registro no es un objeto")]
@@ -138,6 +142,34 @@ def _validar_manual(reg, ctx):
             mal = (plano["expediente_id"], plano["correlation_id"]) != tuple(esperada)
         if mal:
             fallos.append(_f("RM-11", "la envoltura no identifica el caso del vínculo (expediente_id y correlation_id; nulos si es LIBRE)"))
+    return fallos
+
+
+def _parcial_manual(reg, p, ctx):
+    """T-44: reglas de una reducción parcial declarada a mano (posición ABIERTA o EN_REVISION; en REDUCIENDO se
+    sigue cerrando solo lo que queda, como siempre). Patrón de T-12: el operador ya colocó un stop nuevo por lo
+    que queda (RM-07 si no lo declara) y lo que queda no puede valer menos que el mínimo de F (RM-12). El mínimo
+    llega en el ctx convertido a la divisa de cotización del instrumento (valor_min_restante_eur: el
+    valor_min_eur de la política de F entre el último tipo de cambio conocido, lo calcula el Orquestador);
+    si no llega o el resto no se puede valorar, RM-12: ciérrala entera (falla cerrado). El resto se valora con
+    el precio del propio registro, que G contrasta contra el intermediario."""
+    fallos = []
+    if "proteccion_ref" not in reg:
+        fallos.append(_f("RM-07", "una reducción parcial exige declarar el stop nuevo que el operador ya colocó por lo que queda"))
+    if reg["cantidad"] <= 1e-6:
+        fallos.append(_f("RM-06", "una reducción parcial exige una cantidad positiva; para cerrarla entera se declara la cantidad exacta de la posición"))
+    minimo = ctx.get("valor_min_restante_eur") if isinstance(ctx, dict) else None
+    if not _num(minimo, 0, estricto=False):
+        fallos.append(_f("RM-12", "no se puede valorar en euros lo que queda (falta el mínimo de F o su tipo de cambio): ciérrala entera"))
+        return fallos
+    try:   # un producto desbordado (aunque ambos factores sean finitos) no valora nada
+        resto = (p["cantidad"] - reg["cantidad"]) * reg["precio"]
+    except (OverflowError, ValueError):
+        resto = None
+    if resto is None or not math.isfinite(resto):
+        fallos.append(_f("RM-12", "no se puede valorar en euros lo que queda: ciérrala entera"))
+    elif resto < minimo:
+        fallos.append(_f("RM-12", "una reducción parcial no puede dejar un resto por debajo del valor mínimo de F: ciérrala entera"))
     return fallos
 
 
@@ -201,8 +233,12 @@ def _validar_plano(reg, ctx):
         if red:   # a media reducción queda entre lo que la reducción deja y lo que había; G comprueba que el intermediario queda plano
             if not (red["objetivo_restante"] - 1e-6 <= reg["cantidad"] <= p["cantidad"] + 1e-6):
                 fallos.append(_f("RM-06", "a media reducción el cierre manual debe ser de lo que queda en el intermediario"))
-        elif abs(reg["cantidad"] - p["cantidad"]) > 1e-6:
-            fallos.append(_f("RM-06", "el cierre manual debe ser total (una reducción parcial la hace G con reducir; declararla a mano no está implementado)"))
+        elif reg["cantidad"] > p["cantidad"] + 1e-6:   # T-44: más de lo que hay sigue sin caber
+            fallos.append(_f("RM-06", "se declara más cantidad de la que tiene la posición: el cierre total es con la cantidad exacta"))
+        elif p["estado"] != "REDUCIENDO" and reg["cantidad"] < p["cantidad"] - 1e-6:   # T-44: reducción parcial declarada a mano
+            fallos.extend(_parcial_manual(reg, p, ctx))
+        elif abs(reg["cantidad"] - p["cantidad"]) > 1e-6:   # REDUCIENDO sin reducción anotada (no debería ocurrir): solo la cantidad exacta
+            fallos.append(_f("RM-06", "a media reducción el cierre manual debe ser de lo que queda en el intermediario"))
     else:
         if "proteccion_ref" in reg:
             fallos.append(_f("RM-01", "un registro LIBRE no lleva orden de protección"))

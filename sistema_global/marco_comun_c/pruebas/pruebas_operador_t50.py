@@ -12,7 +12,7 @@ sys.path.insert(0, str(AQUI.parent / "validador"))
 sys.path.insert(0, str(AQUI))
 
 import contratos as ct  # noqa: E402
-from control_f import aplanar_informe  # noqa: E402
+from control_f import aplanar_informe, POLITICA_DEFECTO  # noqa: E402
 from orquestador import Orquestador, VETOS_ANULABLES  # noqa: E402
 from pruebas_control_f import CART, informe_f, registrar_foto  # noqa: E402
 from validar_sobre import _dt  # noqa: E402
@@ -100,7 +100,8 @@ def main():
     # vetos que no se anulan
     for nombre, cart, regla in (("perdida_del_dia_F08", {"perdida_dia_eur": 2500.0, "posiciones": []}, "F-08"),
                                 ("F08_y_F09_juntos", {"perdida_dia_eur": 2500.0}, "F-08")):
-        o = nuevo(); hasta(o, "PROPUESTA")
+        o = nuevo({"politica_f": {**POLITICA_DEFECTO, "perdida_dia_max_eur": 50000.0, "perdida_semana_max_eur": 50000.0}})   # T-40: límites en euros altos, para que la foto de pérdida 2.500 que lleva el informe no dispare el cortacircuito y la prueba siga probando lo suyo (el veto no anulable)
+        hasta(o, "PROPUESTA")
         inf = informe_f(o, cartera={"posiciones": POS10, **cart})
         r = o.pantalla_aprobacion("EXP-0001", inf, AHORA, anular_veto={"motivo": MOTIVO})
         h.chk(f"no_anulable_{nombre}_O34", r["codigo"] == "O-34" and regla in r["motivo"], r)
@@ -186,7 +187,7 @@ def main():
           and o.ajustar_limite_perdida(2.0, "OPERADOR", M2, AHORA, OK2F)["codigo"] == "O-35")
 
     # alcanzado: no se sube en 24 horas (cubre el mismo día en cualquier zona horaria)
-    o = nuevo()
+    o = nuevo({"politica_f": {**POLITICA_DEFECTO, "perdida_dia_max_eur": 50000.0, "perdida_semana_max_eur": 50000.0}})   # T-40: límites en euros altos, para que las fotos de pérdida 2.000-2.600 que prueban el límite en % no disparen el cortacircuito
     registrar_foto(o, {**CART, "perdida_dia_eur": 2000.0})   # 2 % de 100.000: el límite justo
     h.chk("alcance_anotado", [x["tipo"] for x in o.limites["entradas"]] == ["INICIO", "ALCANZADO"] and o.limites["entradas"][-1]["dia"] == "2026-11-06"
           and any(a["codigo"] == "O-35" for a in o.avisos) and o.integridad() == [])
@@ -220,7 +221,7 @@ def main():
     h.chk("R_M2_foto_tomada_con_el_limite_bajo", o.limites["entradas"][-1]["tipo"] == "ALCANZADO" and o.limites["entradas"][-1]["limite_pct"] == 1.5,
           o.limites["entradas"][-1])
     # R-m1: el día de la foto en otra zona horaria no abre un hueco: son 24 horas
-    o = nuevo()
+    o = nuevo({"politica_f": {**POLITICA_DEFECTO, "perdida_dia_max_eur": 50000.0, "perdida_semana_max_eur": 50000.0}})   # T-40: límites en euros altos, para que la foto de pérdida 2.500 que prueba el límite en % no dispare el cortacircuito
     o.registrar_cartera({**CART, "fecha_hora": "2026-11-07T00:30:00+01:00", "perdida_dia_eur": 2500.0}, "G", "2026-11-06T23:35:00+00:00",
                         cuenta=o.cfg["cuenta_intermediario"])
     assert o.ajustar_limite_perdida(1.0, "OPERADOR", "Bajo el límite tras la pérdida de anoche", "2026-11-06T23:40:00+00:00")["ok"]

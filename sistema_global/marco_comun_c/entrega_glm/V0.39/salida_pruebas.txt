@@ -1,0 +1,16 @@
+Salida del bucle de la sección 0 (ejecutar_pruebas.py + las 36 baterías de pruebas/pruebas_*.py,
+incluida la nueva): 37 ejecuciones, ninguna línea FALLA y las 37 terminan en «TODAS LAS PRUEBAS PASAN».
+
+Batería nueva pruebas/pruebas_cortacircuito_t40.py (última línea de su ejecución):
+RESULTADO CORTACIRCUITO: TODAS LAS PRUEBAS PASAN (27 comprobaciones)
+
+Determinismo: dos ejecuciones consecutivas de la batería nueva han producido la misma salida (diff vacío).
+
+Revisión independiente: los dos scripts del revisor (hallazgo_t40_1_fsum_semana_desborda.py,
+hallazgo_t40_2_rearme_prefijo_cortacircuito.py) dan OK tras la corrección, y los nueve anteriores
+(hallazgo_1..6 de la V0.37 y hallazgo_t33_1..3 de la V0.38) siguen en OK.
+
+Auto-repaso (paso 6): un defecto del primer diseño corregido antes de la entrega, con su comprobación
+en la batería (`defecto_01_tras_un_rearme_el_cortacircuito_vuelve_a_saltar_el_mismo_dia`): el guard
+«una vez por día» no debe impedir que el kill vuelva a saltar tras un rearme si la pérdida regresa al
+límite el mismo día; solo el aviso O-38 y la fila de `cortacircuitos` quedan una vez por día.

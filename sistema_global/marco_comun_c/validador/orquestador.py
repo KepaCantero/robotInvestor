@@ -79,7 +79,7 @@ OPERADORES = {"<": lambda v, u: v < u, "<=": lambda v, u: v <= u, ">": lambda v,
               ">=": lambda v, u: v >= u, "==": lambda v, u: v == u}
 
 CONFIG_DEFECTO = {"max_reintentos": 3, "umbral_corte_comun_dias_habiles": 0,
-                  "version_config": "CFG-0.10.0",   # 0.10.0 (T-18): promocion_nivel. 0.9.0 (T-18): L3 y umbral_l2_eur (0.8.0 queda para T-33 de GLM). 0.2.0 (T-48): Contradictor exigido en N2 y N3; autoria_c. 0.3.0 (T-49): alerta_perdida_pct. 0.4.0 (T-50): anulaciones_veto_mes. 0.5.0 (T-51): mandatos (SC-1) en lugar de instrumentos_permitidos. 0.6.0 (T-26/T-42): tolerancia_tipo_k_rel. 0.7.0 (T-22): politica_f con importes en euros y controles de la §8
+                  "version_config": "CFG-0.11.0",   # 0.11.0 (V0.53): integra 0.8.0 de GLM (T-33, libres_tope_dia_eur) con 0.10.0. 0.10.0 (T-18): promocion_nivel. 0.9.0 (T-18): L3 y umbral_l2_eur. 0.8.0 (T-33, GLM): libres_tope_dia_eur. 0.2.0 (T-48): Contradictor exigido en N2 y N3; autoria_c. 0.3.0 (T-49): alerta_perdida_pct. 0.4.0 (T-50): anulaciones_veto_mes. 0.5.0 (T-51): mandatos (SC-1) en lugar de instrumentos_permitidos. 0.6.0 (T-26/T-42): tolerancia_tipo_k_rel. 0.7.0 (T-22): politica_f con importes en euros y controles de la §8
                   "dia_coste_max_eur": 50.0, "revision_max_dias": 90, "observacion_max_dias": 30, "max_reaperturas": 2, "dia_tiempo_max_min": 600, "tolerancia_precio_entrada": 0.05,
                   "alerta_perdida_pct": -5.0,   # T-49: H pide revisar al perder esto (y cada múltiplo) [PROPUESTO]
                   "anulaciones_veto_mes": 2,
@@ -93,6 +93,7 @@ CONFIG_DEFECTO = {"max_reintentos": 3, "umbral_corte_comun_dias_habiles": 0,
                   "umbral_l2_eur": {"TRADING": 5000.0, "TACTICA": 5000.0, "LARGO_PLAZO": 5000.0},
                   # T-18 (§6, V0.51): subir de nivel exige este periodo en el nivel actual sin incidentes [PROPUESTO, P-02, D-34]
                   "promocion_nivel": {"periodo_min_dias": 30},
+                  "libres_tope_dia_eur": {c: 2000.0 for c in ("TRADING", "TACTICA", "LARGO_PLAZO")},   # T-33 (§6): tope diario por cartera de las operaciones LIBRES declaradas (CT-G-14) [PROPUESTO, D-32]
                   "mandatos": sc1.MANDATOS_DEFECTO,   # T-51: SC-1, fuente única del mandato de cada cartera [PROPUESTO, P-03, D-28]
                   "referencias": {c: dict(REFERENCIA_EFECTIVO) for c in ("TRADING", "TACTICA", "LARGO_PLAZO")},   # benchmark de cada cartera [PROPUESTO]
                   # [PROPUESTO] controles sobre el operador (§6) y avisos (§11); los canales reales los fija el operador (D-07, P-08)
@@ -124,6 +125,12 @@ def _migracion_que_cambia(x):
     return x["tipo"] == "MIGRACION" and x.get("huella_antes") != x.get("huella_config")
 
 
+def _saturada(x):
+    """V0.53 (revisión de la integración, h04): una suma de pérdidas que desborda se satura al mayor flotante finito. Sigue por
+    encima de cualquier límite (el cortacircuito y F-16 actúan igual) y el estado sigue siendo guardable (PE-01 rechaza infinitos)."""
+    return x if math.isfinite(x) else sys.float_info.max
+
+
 def _motivo_ok(m):
     return isinstance(m, str) and len(m.strip()) >= MOTIVO_MIN and len(m) <= 500
 
@@ -137,8 +144,8 @@ def _dia(t):
 
 
 # V0.51 (T-18): avisos que, en el periodo de promoción, impiden subir de nivel (además de O-19, ALCANZADO y el kill-switch)
-INCIDENTES_PROMOCION = ("O-03", "O-18", "O-25")
-PRIORIDAD_AVISO = {"O-39": "ALTA", "O-36": "MEDIA", "O-35": "ALTA", "O-34": "ALTA", "O-33": "MEDIA", "O-32": "MEDIA", "O-31": "MEDIA", "O-20": "MEDIA", "O-30": "ALTA", "O-25": "ALTA", "O-26": "ALTA", "O-19": "ALTA", "O-18": "ALTA", "O-03": "ALTA", "O-08": "ALTA", "O-09": "ALTA", "O-13": "ALTA", "O-17": "ALTA"}
+INCIDENTES_PROMOCION = ("O-03", "O-18", "O-25", "O-37")   # V0.53: también el tope de LIBRES superado (T-33)
+PRIORIDAD_AVISO = {"O-39": "ALTA", "O-36": "MEDIA", "O-35": "ALTA", "O-34": "ALTA", "O-33": "MEDIA", "O-32": "MEDIA", "O-31": "MEDIA", "O-20": "MEDIA", "O-30": "ALTA", "O-25": "ALTA", "O-26": "ALTA", "O-19": "ALTA", "O-18": "ALTA", "O-03": "ALTA", "O-08": "ALTA", "O-09": "ALTA", "O-13": "ALTA", "O-17": "ALTA", "O-37": "ALTA", "O-38": "ALTA"}   # O-37 (T-33): tope diario de las LIBRES superado, o LIBRES sin poder valorar; O-38 (T-40): cortacircuito global por pérdida
 ACTORES_PROPUESTA = set(EMISORES)   # quien propone no aprueba ni controla: F, D y H no proponen (Constitución §2, P1)
 
 
@@ -306,6 +313,8 @@ def _valida_config(c):
           and isinstance(c["max_reaperturas"], int) and not isinstance(c["max_reaperturas"], bool) and 0 <= c["max_reaperturas"] <= 20
           and _num(c["tolerancia_tipo_k_rel"]) and 0 < c["tolerancia_tipo_k_rel"] <= 0.5
           and isinstance(c["anulaciones_veto_mes"], int) and not isinstance(c["anulaciones_veto_mes"], bool) and 0 <= c["anulaciones_veto_mes"] <= 10
+          and isinstance(c["libres_tope_dia_eur"], dict) and set(c["libres_tope_dia_eur"]) == set(sc1.CARTERAS)   # T-33: exactamente las tres carteras
+          and all(_num(v) and v >= 0 for v in c["libres_tope_dia_eur"].values())   # un tope es un número finito >= 0 (0.0 prohíbe las LIBRES valoradas)
           and isinstance(c["cuenta_intermediario"], str) and _ID.match(c["cuenta_intermediario"])
           and isinstance(c["divisas_cotizacion"], dict)
           and all(isinstance(k, str) and isinstance(v, str) and re.fullmatch(r"[A-Z]{3}", v) for k, v in c["divisas_cotizacion"].items())
@@ -437,6 +446,8 @@ class Orquestador:
         self.perdidas_dia = {}            # T-22: fecha UTC -> mayor pérdida del día que dieron las fotos de G (pérdida de la semana de F-16)
         self.ultima_foto = None           # la única que vale: la más reciente
         self.manuales = []     # registros CT-G-14 aceptados (lo que el operador hizo fuera del sistema)
+        self.libres = []       # T-33: las LIBRES declaradas, una fila por registro, para su tope diario y para F-14
+        self.cortacircuitos = []   # T-40: los días UTC en que el cortacircuito global por pérdida saltó, una fila por día
         self.degradadas = {}   # cartera -> motivo: bajada automática a L1 hasta que el operador la restablezca
         self.ultimas_degradaciones = {}   # V0.51: cartera -> último instante en que se pidió degradarla (también en L0 o L1)
 
@@ -632,6 +643,12 @@ class Orquestador:
         self.ultima_conciliacion = {"ahora": ahora, "limpia": limpia}
         return _r(True, "OK", "conciliación anotada")
 
+    def _perdida_semana_eur(self, hasta):
+        """T-40: la pérdida de la semana que mira F-16, con el criterio de _actividad: la suma plana, por día de los siete que
+        acaban en `hasta` (fecha UTC, incluido), de la mayor pérdida del día que dieron las fotos de G. Suma plana de flotantes
+        (no fsum): un conjunto que desborda da infinito y el cortacircuito salta con él, sin lanzar (r01)."""
+        return _saturada(sum((v for d, v in self.perdidas_dia.items() if timedelta(0) <= hasta - date.fromisoformat(d) < timedelta(days=7)), 0.0))
+
     @_seguro
     def registrar_cartera(self, foto, actor, ahora, cuenta=None):
         """G registra la foto de cartera que ha tomado del intermediario. E y F solo valen con una foto registrada (T-11)."""
@@ -672,7 +689,21 @@ class Orquestador:
         if len(self.fotos) > 200:   # solo hacen falta las recientes
             for k in sorted(self.fotos, key=lambda k: _dt(self.fotos[k]["ahora"]))[:len(self.fotos) - 200]:
                 del self.fotos[k]
-        return _r(True, "OK", "foto de cartera registrada", hash=h)
+        # T-40 (§8 y §11): el cortacircuito global por pérdida salta solo, con el mismo umbral en el que F-16 empieza a vetar.
+        # La foto es buena y el registro se acepta igual; el kill-switch de siempre hace el resto (G cancela las entradas vivas).
+        pol = self.cfg["politica_f"]
+        semana_eur = self._perdida_semana_eur(t.astimezone(timezone.utc).date())
+        salta = foto["perdida_dia_eur"] >= pol["perdida_dia_max_eur"] or semana_eur >= pol["perdida_semana_max_eur"]
+        ya_hoy = any(x["dia"] == d for x in self.cortacircuitos)   # el aviso y la anotación, una vez por día UTC de la foto
+        activa = salta and self.kill is None
+        if activa:   # si ya estaba activo por otra causa, no se pisa el motivo; tras un rearme vuelve a saltar
+            self._activar_kill((f"cortacircuito global: pérdida del día {foto['perdida_dia_eur']:.2f} EUR (límite {pol['perdida_dia_max_eur']:.2f} EUR)" if foto["perdida_dia_eur"] >= pol["perdida_dia_max_eur"] else
+                                f"cortacircuito global: pérdida de la semana {semana_eur:.2f} EUR (límite {pol['perdida_semana_max_eur']:.2f} EUR)"), "ORQUESTADOR", ahora)
+        if salta and (activa or not ya_hoy):   # V0.53 (revisión de GLM, g03): cada vez que activa el kill-switch deja fila y aviso
+            self.cortacircuitos.append({"dia": d, "perdida_dia_eur": foto["perdida_dia_eur"], "perdida_semana_eur": semana_eur, "ahora": ahora})
+            self._aviso("O-38", (f"cortacircuito global por pérdida: día {foto['perdida_dia_eur']:.2f} EUR (límite {pol['perdida_dia_max_eur']:.2f} EUR), "
+                                 f"semana {semana_eur:.2f} EUR (límite {pol['perdida_semana_max_eur']:.2f} EUR)"), ahora, "CORTACIRCUITO")
+        return _r(True, "OK", "foto de cartera registrada", hash=h, cortacircuito=salta)
 
     def cartera_f(self):
         """La única cartera que E y F pueden usar: la última foto de G más las autorizaciones que aún no están en el
@@ -756,7 +787,14 @@ class Orquestador:
                     if timedelta(0) <= a - t <= timedelta(hours=1) and not any(
                             y["motivo"] == "orden de entrada ENVIADA" and _dt(y["ahora"]) >= t for y in e["historial"]):
                         ordenes += 1   # autorizada y aún sin enviar: su orden saldrá
-        semana = math.fsum(v for d, v in self.perdidas_dia.items() if timedelta(0) <= hoy - date.fromisoformat(d) < timedelta(days=7))
+        semana = _saturada(sum((v for d, v in self.perdidas_dia.items() if timedelta(0) <= hoy - date.fromisoformat(d) < timedelta(days=7)), 0.0))   # V0.53: saturada (finita); suma plana (no fsum): un desbordamiento da infinito y F-16 lo cierra, sin lanzar (r01)
+        # T-33: las LIBRES declaradas cuentan en el importe del día de F (límites de la cuenta, no de la cartera), las de este día
+        # UTC y solo las ya registradas en el instante `a`: así el contexto de un informe emitido antes sigue siendo el mismo (CF-09).
+        # Una LIBRE sin importe no se puede valorar: cuenta como el importe máximo del día (sin valor no se sigue operando ese día).
+        # Suma plana de flotantes (no fsum): un importe desbordado da infinito y F-14 lo cierra, sin lanzar (defecto_02).
+        for x in self.libres:
+            if x["dia"] == hoy.isoformat() and _dt(x["registrado_en"]) <= a:
+                importe += x["importe_eur"] if x["importe_eur"] is not None else self.cfg["politica_f"]["importe_max_dia_eur"]
         return {"importe_dia_eur": importe, "ordenes_ultima_hora": ordenes, "perdida_semana_eur": semana}
 
     def _f_al_enviar(self, e, expediente_id, ahora):
@@ -835,6 +873,14 @@ class Orquestador:
         uc = self.ultima_conciliacion
         if not (uc and uc["limpia"] and _dt(uc["ahora"]) >= _dt(self.kill["ahora"])):
             return _no("O-06", "falta una conciliación limpia con el intermediario posterior al kill-switch")
+        if self.kill["actor"] == "ORQUESTADOR" and self.kill["motivo"].startswith("cortacircuito") and self.ultima_foto is not None:   # T-40: no se rearma con la pérdida aún en el límite; el kill VINO del cortacircuito (actor ORQUESTADOR y su prefijo), no uno manual con un motivo parecido (r02)
+            pol = self.cfg["politica_f"]
+            uf = self.ultima_foto
+            if uf["perdida_dia_eur"] >= pol["perdida_dia_max_eur"] or self._perdida_semana_eur(_dt(uf["fecha_hora"]).astimezone(timezone.utc).date()) >= pol["perdida_semana_max_eur"]:
+                return _no("O-35", "la pérdida sigue en el límite: no se rearma hasta que baje o cambie el día")
+        integ = self.integridad()   # T-52 (V0.53): no se rearma con historiales, posiciones, configuración, Motor o sellos que no cuadran
+        if integ:
+            return _no("O-13", f"la integridad no se supera ({', '.join(integ)}): no se rearma hasta corregirlo")
         self.rearmes.append({"kill": self.kill, "lista": dict(lista), "ahora": ahora})
         self.kill = None
         return _r(True, "OK", f"rearmado; las carteras siguen en L1 al menos {self.cfg['kill_switch']['periodo_min_l1_horas']} h")
@@ -2257,6 +2303,9 @@ class Orquestador:
                           if h["hasta"] == "AUTORIZADA" and h["desde"] != "AUTORIZADA" and em < _dt(h["ahora"]) <= a), None)
         if posterior:
             return _no("O-10", f"después de emitirse el informe de F se autorizó {posterior}: F no lo contó; pide otro informe")
+        libre_post = next((x for x in self.libres if em < _dt(x["registrado_en"]) <= a), None)   # T-33: la LIBRE declarada en la ventana informe→autorizar tampoco la vio F (F-14)
+        if libre_post:
+            return _no("O-10", f"después de emitirse el informe de F se declaró la LIBRE {libre_post['event_id']}: F no la contó; pide otro informe")
         err = self._foto_de_g(cf["entradas"]["cartera"], e["propuesta"]["entrada"]["instrumento"], e["propuesta"]["entrada"]["limite"])
         if err:
             return err
@@ -2318,6 +2367,24 @@ class Orquestador:
              "enfriamiento_hasta": (a + espera).isoformat(), "motivos_enfriamiento": motivos_espera, "anulacion": anulacion,
              "advertencias_k": self._advertencias_de(e),   # T-26: el operador ve (y acepta) las advertencias de K
              "eventos_k": ev_k}   # T-26: calendario
+        # V0.40: las cifras de la §8 con las que F decidió, sacadas del propio informe y no del estado actual. El informe ya pasó
+        # validar_informe_f (CF-01..CF-09) en _comprobar_autorizacion: CF-07 fija la política oficial y CF-09 el contexto exacto del
+        # Orquestador al instante de emisión, cuya forma ya validó _forma_contexto (precio {valor, fecha_hora} con valor > 0, actividad
+        # con sus tres cifras, eventos lista o None). Con anulación de veto, q es la cantidad anulada y el importe ya la usa.
+        ctx_f = cf["entradas"]["contexto"]
+        pol_f = cf["entradas"]["politica"]
+        pi = ctx_f.get("precio_intermediario")
+        p["precio_intermediario"] = pi.get("valor") if isinstance(pi, dict) else None
+        p["precio_intermediario_en"] = pi.get("fecha_hora") if isinstance(pi, dict) else None
+        p["deriva_pct"] = (round(abs(en["limite"] / p["precio_intermediario"] - 1) * 100, 4)
+                           if _num(p["precio_intermediario"]) and p["precio_intermediario"] > 0 else None)   # la deriva de F-23
+        p["importe_dia_eur"] = round(ctx_f["actividad"]["importe_dia_eur"] + p["importe"], 2)   # lo que quedaría autorizado hoy
+        p["limite_dia_eur"] = pol_f["importe_max_dia_eur"]   # F-14
+        p["perdida_semana_eur"] = ctx_f["actividad"]["perdida_semana_eur"]   # F-16
+        p["limite_semana_eur"] = pol_f["perdida_semana_max_eur"]
+        p["ordenes_ultima_hora"] = ctx_f["actividad"]["ordenes_ultima_hora"]   # F-17
+        p["limite_ordenes_hora"] = pol_f["ordenes_max_hora"]
+        p["eventos_f"] = copy.deepcopy(ctx_f.get("eventos"))   # F-21: los eventos que vio F, tal cual (pueden ser None)
         p["hash"] = _hash(p)
         self.pantallas[expediente_id] = {**p, "usada": False}
         return _r(True, "OK", "pantalla de aprobación lista", pantalla=copy.deepcopy(p))
@@ -2568,7 +2635,9 @@ class Orquestador:
     @_seguro
     def registrar_manual(self, registro, ahora):
         """CT-G-14: el operador declara lo que hizo fuera del sistema. Vinculado a un expediente AUTORIZADA abre su posición;
-        vinculado a una posición la cierra; LIBRE solo queda registrado y la conciliación lo cuenta como explicado."""
+        vinculado a una posición la cierra; LIBRE solo queda registrado y la conciliación lo cuenta como explicado. Una LIBRE
+        cuenta además para su tope diario por cartera (T-33): se acepta igual y, si el tope se supera o hay importes sin
+        valorar, avisa O-37 y degrada la cartera."""
         a = self._ahora(ahora)
         if not isinstance(registro, dict) or not isinstance(registro.get("event_id"), str):
             return _no("O-01", "registro CT-G-14 sin event_id")
@@ -2594,6 +2663,7 @@ class Orquestador:
         if err:
             return err
         ins = plano.get("instrumento")
+        tope_libres = None   # T-33: solo una LIBRE devuelve tope_libres_superado
         if v["tipo"] == "EXPEDIENTE":
             orden = {"orden_id": plano["ref_intermediario"], "cantidad": plano["cantidad"], "precio": plano["precio"], "conciliada": True,
                      "proteccion_orden_ids": [plano["proteccion_ref"]]}
@@ -2601,20 +2671,70 @@ class Orquestador:
             if not r["ok"]:
                 return r
         elif v["tipo"] == "POSICION":
-            if p.get("reduccion"):   # una reducción a medias termina con el cierre total
-                p["reducciones"].append({**p["reduccion"], "restante": 0, "interrumpida": "cierre manual"})
-                p["reduccion"] = None
-            self._anota_pos(p, p["estado"], "CERRANDO", "OPERADOR", ahora, f"cierre manual declarado (CT-G-14): {plano['motivo'][:120]}")
-            p["cantidad"] = 0
-            self.ordenes_usadas.append(plano["ref_intermediario"])
-            self._anota_pos(p, "CERRANDO", "CERRADA", "OPERADOR", ahora, "cierre manual declarado (CT-G-14)", plano["ref_intermediario"])
+            parcial = p["estado"] != "REDUCIENDO" and plano["cantidad"] < p["cantidad"] - TOL_Q   # T-44: reducción parcial declarada a mano
+            if parcial:
+                # Patrón de T-12: el stop nuevo (proteccion_ref) ya está colocado por el operador; aquí solo se sustituyen los viejos.
+                # El registro declara la VENTA (como el cierre total declara la suya entera): cantidad es lo vendido y
+                # restante es lo que queda, que es la cantidad nueva de la posición.
+                p["protecciones_anteriores"] += [x for x in p["protecciones"] if x not in p["protecciones_anteriores"]]   # sin repetidos
+                p["protecciones"] = [plano["proteccion_ref"]]
+                self.ordenes_usadas += [x for x in (plano["proteccion_ref"], plano["ref_intermediario"]) if x not in self.ordenes_usadas]
+                p["reducciones"].append({"n": len(p["reducciones"]) + 1, "cantidad": plano["cantidad"], "desde": p["cantidad"],
+                                         "restante": p["cantidad"] - plano["cantidad"], "manual": True, "orden_id": plano["ref_intermediario"],
+                                         "terminada_en": ahora, "motivo": plano["motivo"]})
+                p["cantidad"] -= plano["cantidad"]   # se resta lo vendido
+                self._anota_pos(p, p["estado"], p["estado"], "OPERADOR", ahora,
+                                f"reducción parcial manual declarada (CT-G-14): {plano['motivo'][:120]}", plano["ref_intermediario"])
+            else:
+                if p.get("reduccion"):   # una reducción a medias termina con el cierre total
+                    p["reducciones"].append({**p["reduccion"], "restante": 0, "interrumpida": "cierre manual"})
+                    p["reduccion"] = None
+                self._anota_pos(p, p["estado"], "CERRANDO", "OPERADOR", ahora, f"cierre manual declarado (CT-G-14): {plano['motivo'][:120]}")
+                p["cantidad"] = 0
+                self.ordenes_usadas.append(plano["ref_intermediario"])
+                self._anota_pos(p, "CERRANDO", "CERRADA", "OPERADOR", ahora, "cierre manual declarado (CT-G-14)", plano["ref_intermediario"])
         else:   # LIBRE: fuera del control de F; queda a la vista del operador
             self.ordenes_usadas.append(plano["ref_intermediario"])
             self._aviso("O-20", f"operación libre declarada fuera del sistema (sin control de F ni stop): {plano['lado']} {plano['cantidad']} {ins}",
                         ahora, plano["event_id"])
+            tope_libres = self._registrar_libre(plano, ins, ahora)   # T-33: el tope no rechaza (la operación ya ocurrió); avisa y degrada
         self.eventos[plano["event_id"]] = {"hash": h, "expediente_id": ref}
         self.manuales.append(copy.deepcopy(plano))
-        return _r(True, "OK", f"registro manual aceptado ({v['tipo']})", posicion_id=(e or {}).get("posicion_id") or (p or {}).get("posicion_id"))
+        r = _r(True, "OK", f"registro manual aceptado ({v['tipo']})", posicion_id=(e or {}).get("posicion_id") or (p or {}).get("posicion_id"))
+        if tope_libres is not None:   # T-33: solo en una LIBRE
+            r["tope_libres_superado"] = tope_libres
+        return r
+
+    def _registrar_libre(self, plano, ins, ahora):
+        """T-33: el importe en euros de una LIBRE declarada y su tope diario por cartera. Se llama con el registro ya aceptado:
+        el tope no lo rechaza (la operación ya ocurrió; rechazarla sería una discrepancia sin explicar), solo emite el aviso O-37
+        y degrada la cartera. Devuelve True si el tope del día quedó superado (o hay importes sin valorar) y False si no."""
+        fx = tipo_cambio(self.divisa(ins), self.ultima_foto)   # euros por unidad; 1.0 si la divisa es EUR
+        try:
+            importe = plano["cantidad"] * plano["precio"] * fx if fx is not None else None   # defecto_01: dos enteros enormes pasan RM-01 y el producto desborda
+        except OverflowError:
+            importe = None
+        if importe is not None and not math.isfinite(importe):   # un producto desbordado no se puede valorar (falla cerrado)
+            importe = None
+        if importe == 0.0 and fx not in (None, 0) and plano["cantidad"] != 0 and plano["precio"] != 0:
+            importe = None   # un producto que subdesborda a 0.0 tampoco se puede valorar: el valor verdadero es positivo y no cabe en un float (revisión, hallazgo 2)
+        dia = _dt(plano["ejecutado_en"]).astimezone(timezone.utc).date().isoformat()   # el día UTC en que se ejecutó
+        self.libres.append({"cartera": plano["cartera"], "dia": dia, "importe_eur": importe, "registrado_en": ahora,
+                            "event_id": plano["event_id"]})
+        grupo = [x for x in self.libres if x["cartera"] == plano["cartera"] and x["dia"] == dia]
+        tope = self.cfg["libres_tope_dia_eur"][plano["cartera"]]
+        sin_valor = any(x["importe_eur"] is None for x in grupo)
+        suma = 0.0   # defecto_02: suma plana; math.fsum lanzaría OverflowError con dos importes de 1e308 y el registro debe aceptarse igual
+        for x in grupo:
+            if x["importe_eur"] is not None:
+                suma += x["importe_eur"]
+        if not sin_valor and suma <= tope:
+            return False
+        motivo = (f"operaciones libres de {plano['cartera']} el {dia}: {suma} EUR por encima del tope {tope} EUR" if not sin_valor
+                  else f"operaciones libres de {plano['cartera']} el {dia}: sin poder valorarlas en euros")
+        self._aviso("O-37", motivo, ahora, plano["event_id"], carteras={plano["cartera"]})
+        self._degradar(plano["cartera"], motivo, ahora)
+        return True
 
     def _reglas_manual(self, registro, plano, e, p, ahora):
         """Las reglas de CT-G-14 que no tocan nada (RM-01 a RM-11, O-03 orden ya usada, O-25 entrada viva)."""
@@ -2631,7 +2751,8 @@ class Orquestador:
                                            "instrumentos_permitidos": {k: v["instrumentos_permitidos"] for k, v in self.cfg["mandatos"].items()
                                                                        if v["instrumentos_permitidos"] is not None},   # T-51: del mandato de SC-1
                                            "instrumentos_excluidos": {k: v["exclusiones"] for k, v in self.cfg["mandatos"].items()},
-                                           "instrumento_ocupado": ocupado, "no_antes_de": desde, "identidad": self._identidad_manual(e, p)})
+                                           "instrumento_ocupado": ocupado, "no_antes_de": desde, "identidad": self._identidad_manual(e, p),
+                                           "valor_min_restante_eur": self._valor_min_restante(p["instrumento"]) if p is not None else None})   # T-44
         if fallos:
             return _no("O-01", f"registro CT-G-14 no válido: {fallos[0]['regla']}: {fallos[0]['mensaje'][:80]}", reglas=sorted({x['regla'] for x in fallos}))
         if plano["ref_intermediario"] in self.ordenes_usadas or plano.get("proteccion_ref") in self.ordenes_usadas \
@@ -2678,6 +2799,24 @@ class Orquestador:
         if p is not None and p.get("expediente_id") in self.expedientes:
             return (p["expediente_id"], self.expedientes[p["expediente_id"]]["correlation_id"])
         return None
+
+    def _valor_min_restante(self, ins):
+        """T-44: el valor mínimo que debe quedar tras una reducción parcial declarada a mano: el valor_min_eur de la
+        política de F convertido a la divisa de cotización del instrumento con el último tipo de cambio conocido
+        (la misma fuente que T-33 usa para valorar las LIBRES). None si no se puede convertir: manual_g rechaza
+        entonces la reducción parcial con RM-12 (falla cerrado: sin poder valorar el resto, ciérrala entera)."""
+        pol = self.cfg.get("politica_f")
+        vm = pol.get("valor_min_eur") if isinstance(pol, dict) else None
+        if not (_num(vm) and vm >= 0):
+            return None
+        fx = tipo_cambio(self.divisa(ins), self.ultima_foto)   # euros por unidad de la divisa de cotización
+        if not (_num(fx) and fx > 0):
+            return None
+        try:
+            v = vm / fx
+        except (OverflowError, ZeroDivisionError, ValueError):
+            return None
+        return v if _num(v) and v >= 0 else None
 
     @_seguro
     def observar(self, expediente_id, condiciones_reapertura, motivo, actor, ahora):
@@ -3066,7 +3205,7 @@ class Orquestador:
             else:   # automático: solo por una condición numérica declarada de antemano
                 stop_ids = {c["id"] for c in p["condiciones_salida"]["condiciones"] if c["tipo"] == "STOP"}
                 hecho = (hasta == "CERRANDO" and isinstance(condicion, dict) and condicion.get("id") in stop_ids
-                         and condicion.get("stop_ejecutado_orden_id") in p["protecciones"])   # el stop propio ya saltó en el intermediario
+                         and condicion.get("stop_ejecutado_orden_id") in p["protecciones"] + p.get("protecciones_anteriores", []))   # el stop propio ya saltó en el intermediario (V0.53: también uno retirado por una parcial a mano que aún saltó)
                 if not hecho and NIVELES[self.nivel(p["cartera"])] < 2:
                     return _no("O-05", f"la cartera está en {self.nivel(p['cartera'])}: el cierre automático solo desde L2; lo confirma el operador")
                 declaradas = {c["id"]: c for c in p["condiciones_salida"]["condiciones"]}
@@ -3140,7 +3279,7 @@ class Orquestador:
                        for x in protecciones):
                     return _no("O-03", "ese stop ya se usó o es una orden retirada")
                 nuevas = list(protecciones)
-            propia = hasta == "CERRADA" and orden["orden_id"] in p["protecciones"]   # el cierre puede ser el propio stop que saltó
+            propia = hasta == "CERRADA" and orden["orden_id"] in p["protecciones"] + p["protecciones_anteriores"]   # el cierre puede ser el propio stop que saltó (V0.53: o uno retirado que aún saltó)
             if orden["orden_id"] in self.ordenes_usadas and not propia:
                 return _no("O-03", "orden ya usada")
             if not propia:

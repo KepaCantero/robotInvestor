@@ -355,8 +355,9 @@ def main():
     red(o2, b2)                     # quedan 60 con el stop redimensionado
     a_mano(b2, "EURUSD", "VENTA", 30.0, "MAN-CIERRE-1")
     r = declarar_manual(o2, cambia(cierre, cantidad=30.0), b2, T1)
-    # desde T-47 el Orquestador la rechaza (RM-06) antes de que G consulte o toque el intermediario
-    h.chk("M9_declaracion_rechazada_no_quita_el_stop", r["codigo"] == "O-01" and "RM-06" in r.get("reglas", []) and b2.consultar("ORD-POS-EXP-0001-R1-S-1")["estado"] == "ACEPTADA", r)
+    # desde T-47 el Orquestador la rechaza antes de que G consulte o toque el intermediario; desde T-44, una parte
+    # declarada a mano sin el stop nuevo por lo que queda es una reducción parcial mal hecha: RM-07 (antes RM-06)
+    h.chk("M9_declaracion_rechazada_no_quita_el_stop", r["codigo"] == "O-01" and "RM-07" in r.get("reglas", []) and b2.consultar("ORD-POS-EXP-0001-R1-S-1")["estado"] == "ACEPTADA", r)
     # M2: cerrar del todo desde REDUCIENDO sin falsos avisos y con el cierre a medias explicado
     o2, b2 = abierta(b=vigilado(fraccion_mercado=0.5))
     red(o2, b2)

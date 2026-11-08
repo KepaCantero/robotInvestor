@@ -1,0 +1,13 @@
+Salida del bucle de la sección 0 (ejecutar_pruebas.py + las 34 baterías de pruebas/pruebas_*.py,
+incluida la nueva): 35 ejecuciones, ninguna línea FALLA y las 35 terminan en «TODAS LAS PRUEBAS PASAN».
+
+Batería nueva pruebas/pruebas_robustez.py (últimas dos líneas de su ejecución):
+54 comprobaciones
+RESULTADO ROBUSTEZ: TODAS LAS PRUEBAS PASAN
+
+Determinismo: dos ejecuciones consecutivas de la batería nueva han producido la misma salida (diff vacío).
+
+Revisión independiente (sección 7): los seis scripts del revisor (hallazgo_1_...py a hallazgo_6_...py,
+en la raíz de marcoC) daban FALLA contra el código de la primera entrega y dan OK tras los arreglos de
+revision.md. Estabilidad extra: la batería queda en verde también con las semillas 1, 2, 4, 5, 16, 17,
+20, 21, 22, 23 y 42, que es donde el revisor había visto caer los defectos latentes de la batería.

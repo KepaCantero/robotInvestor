@@ -469,7 +469,9 @@ def conciliar(o, broker, ahora):
     """Compara lo que el Orquestador cree con lo que dice el intermediario e informa de las discrepancias.
     Por instrumento, la cantidad esperada (con signo) es la de las posiciones abiertas más las operaciones LIBRES
     declaradas por el operador (CT-G-14). Una diferencia nula con operaciones declaradas, o dentro de la tolerancia
-    configurada, es una diferencia EXPLICADA: se devuelve y no dispara nada. Lo demás es discrepancia y se avisa."""
+    configurada, es una diferencia EXPLICADA: se devuelve y no dispara nada. Lo demás es discrepancia y se avisa.
+    Los stops que una posición ya retiró (p["protecciones_anteriores"], T-44) deben estar cancelados: si alguno
+    sigue vivo o se ejecutó, PROTECCION_HUERFANA — nadie más garantiza su muerte cuando el registro fue directo."""
     dif, expl = [], []
     try:
         tol = o.cfg.get("tolerancia_conciliacion_rel", 0.0)
@@ -478,13 +480,20 @@ def conciliar(o, broker, ahora):
         abiertas = {}
         for pid, p in o.posiciones.items():
             todos = _stops_de(broker, pid, p)
+            for prot in p.get("protecciones_anteriores", []):   # T-44 (revisión): un stop retirado debe estar muerto;
+                c = broker.consultar(prot)                     # si sigue vivo o saltó, nadie lo está controlando
+                if c and c["estado"] == "EJECUTADA" and (prot == _stop_retirado_que_cerro(broker, p) or _cerrada_por(p, prot)):
+                    continue   # V0.53 (revisión de GLM g01; integración h01/h02): cerró él solo lo que quedaba, como su stop; H lo confirma
+                if c and c["estado"] != "CANCELADA":
+                    dif.append({"tipo": "PROTECCION_HUERFANA", "ref": pid, "detalle": f"el stop retirado {prot} no está cancelado ({c['estado']})"})
             if p["estado"] == "CERRADA":
                 for prot in todos:   # un stop vivo de una posición cerrada abriría una posición contraria
                     c = broker.consultar(prot)
                     if c and c["estado"] == "ACEPTADA":
                         dif.append({"tipo": "PROTECCION_HUERFANA", "ref": pid, "detalle": f"la orden {prot} sigue viva con la posición cerrada"})
                 continue
-            saltado = [c for c in (broker.consultar(x) for x in todos) if c and c["estado"] == "EJECUTADA"]
+            ret = _stop_retirado_que_cerro(broker, p)   # V0.53: un stop retirado solo cuenta si él solo cerró lo que quedaba
+            saltado = [c for c in (broker.consultar(x) for x in todos + ([ret] if ret else [])) if c and c["estado"] == "EJECUTADA"]
             if saltado and abs(_neto(broker, p["instrumento"])) <= TOL:   # el stop propio ya cerró la posición; H lo confirmará (H-01)
                 expl.append({"tipo": "STOP_EJECUTADO", "ref": pid, "detalle": f"el stop {saltado[0]['orden_id']} cerró la posición; falta que H lo confirme"})
                 continue
@@ -723,6 +732,9 @@ def _cerrar(o, p, pid, broker, ahora, est):
     orden_id = _cierre_previo(broker, base)
     if orden_id is None:
         ejec = [x for x in stops if (c := broker.consultar(x)) and c["estado"] in ("EJECUTADA", "PARCIAL")]
+        if not ejec:   # V0.53 (revisión de GLM, g01): o un stop que una parcial declarada a mano retiró y que él solo cerró lo que quedaba
+            ret = _stop_retirado_que_cerro(broker, p)
+            ejec = [ret] if ret else []
         if not ejec:
             return _incompleto(o, pid, ahora, "la posición ya no está en el intermediario y ninguna orden la explica")
         orden_id = ejec[0]
@@ -750,6 +762,24 @@ def _ids_reduccion(broker, pid, n, tipo):
             break
         ids.append(oid)
     return ids
+
+
+def _stop_retirado_que_cerro(broker, p):
+    """V0.53 (revisión de GLM g01 y de la integración h01/h02): el stop que una parcial declarada a mano retiró pero aún saltó, solo
+    si explica él solo el cierre: EJECUTADA por exactamente lo que queda de la posición y el instrumento a cero en el intermediario.
+    Si no, None (un stop retirado mayor que lo que queda solo deja el neto a cero si hubo otra operación, y eso no es cierre propio)."""
+    if p["estado"] == "CERRADA" or abs(_neto(broker, p["instrumento"])) > TOL:
+        return None
+    for x in p.get("protecciones_anteriores", []):
+        c = broker.consultar(x)
+        if c and c["estado"] == "EJECUTADA" and abs(c["cantidad_ejecutada"] - p["cantidad"]) <= TOL:
+            return x
+    return None
+
+
+def _cerrada_por(p, oid):
+    """V0.53: la posición está CERRADA y la cerró esa orden (su historial lo dice)."""
+    return p["estado"] == "CERRADA" and any(h.get("hasta") == "CERRADA" and h.get("ref") == oid for h in p["historial"])
 
 
 def _stops_de(broker, pid, p):
@@ -890,6 +920,52 @@ def _cuadra(x, y):
     return _num(x) and _num(y) and abs(x - y) <= 1e-6 * max(1.0, abs(y))
 
 
+def _cuadra_abs(x, y):
+    # T-44 (revisión): la parcial se contrasta en ABSOLUTO. Toda la cadena posterior mide así (TOL_Q del Orquestador,
+    # la conciliación con TOL=1e-6 y tolerancia relativa 0.0, y su control de protección) y el cierre total usa el
+    # mismo control absoluto (G-10): una banda relativa daría por buena una parcial que la conciliación inmediata
+    # reportaría como discrepancia kill-switch. El umbral es el TOL de este módulo, el mismo de conciliar.
+    return _num(x) and _num(y) and abs(x - y) <= TOL
+
+
+def _declarar_parcial(o, registro, plano, p, broker, ahora):
+    """T-44: contrasta con el intermediario una reducción parcial declarada a mano y, si todo cuadra, la registra.
+    El patrón de T-12: primero se comprueba el stop nuevo que el operador ya colocó por lo que queda y que el
+    intermediario queda exactamente en lo que queda; solo entonces se retiran los stops viejos, para que la posición
+    nunca quede sin protección. Si algo falla, G-10 y no se registra nada: los stops viejos solo se cancelan cuando
+    todo lo demás ha cuadrado. Códigos: OK y los del Orquestador; G-10 lo declarado no cuadra con el intermediario.
+    Los contrastes de cantidad (stop nuevo y neto) son ABSOLUTOS con el TOL del módulo, la misma medida que
+    aplican después TOL_Q del Orquestador y la conciliación (revisión T-44: sin banda relativa)."""
+    pid, ins = p["posicion_id"], p["instrumento"]
+    restante = p["cantidad"] - plano["cantidad"]   # lo que queda tras la venta declarada (la que G contrasta aparte)
+    ref = plano.get("proteccion_ref")
+    s = broker.consultar(ref) if isinstance(ref, str) else None
+    lado_s = "VENTA" if p["direccion"] == "LARGO" else "COMPRA"
+    if not (s and s["estado"] == "ACEPTADA" and s["tipo"] == "STOP" and s["lado"] == lado_s and s.get("instrumento") == ins
+            and via_norm(s.get("via_acceso")) == via_norm(p.get("via_acceso"))
+            and _cuadra_abs(s["cantidad"], restante) and s["precio"] == p["stop_precio"]):
+        return _r(False, "G-10", "la orden de protección declarada no es un stop vivo en el intermediario por lo que queda "
+                                 "(lado contrario a la posición, mismo instrumento y vía, cantidad y precio del stop de la posición)")
+    signo = 1 if p["direccion"] == "LARGO" else -1
+    neto = _neto(broker, ins) * signo   # en el sentido de la posición: si el intermediario la giró, no cuadra
+    if not _cuadra_abs(neto, restante):
+        return _r(False, "G-10", f"el intermediario no queda exactamente en lo que queda ({neto * signo} frente a {restante * signo})")
+    viejos = [x for x in _stops_de(broker, pid, p) if x != ref]
+    saltado = next((x for x in viejos if x in p["protecciones"] and (c := broker.consultar(x)) and c["estado"] in ("EJECUTADA", "PARCIAL")), None)
+    if saltado:
+        return _r(False, "G-10", f"el stop {saltado} ya se ejecutó: ese cambio lo concilia H (H-01), no lo explica la venta declarada")
+    for prot in viejos:
+        s2 = broker.consultar(prot)
+        for _ in range(3):
+            if not (s2 and s2["estado"] == "ACEPTADA"):
+                break
+            broker.cancelar(prot)
+            s2 = broker.consultar(prot)   # no se confía en la respuesta: se comprueba que el stop de verdad se fue
+        if s2 and s2["estado"] == "ACEPTADA":
+            return _r(False, "G-10", f"no se pudo cancelar el stop {prot}: la posición sigue como estaba y no se registra nada")
+    return o.registrar_manual(registro, _instante(o, ahora))
+
+
 def declarar_manual(o, registro, broker, ahora):
     """Entrada de CT-G-14: antes de registrar lo que el operador declara, G lo contrasta con el intermediario.
     Códigos: OK y los del Orquestador; G-01 sin conexión; G-10 lo declarado no cuadra con el intermediario."""
@@ -923,6 +999,9 @@ def declarar_manual(o, registro, broker, ahora):
                 return _r(False, "G-10", "la posición no existe")
             if not o.posicion_integra(v["id"]):
                 return _r(False, "G-10", "O-13: el estado de control de la posición no es íntegro")
+            q = plano.get("cantidad")
+            if p["estado"] != "REDUCIENDO" and isinstance(q, (int, float)) and not isinstance(q, bool) and p["cantidad"] - q > TOL:
+                return _declarar_parcial(o, registro, plano, p, broker, ahora)   # T-44: reducción parcial declarada a mano
             stops = _stops_de(broker, v["id"], p)
             for prot in stops:
                 s = broker.consultar(prot)

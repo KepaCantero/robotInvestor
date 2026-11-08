@@ -1,0 +1,25 @@
+Salida del bucle de la sección 0 (ejecutar_pruebas.py + las 37 baterías de pruebas/pruebas_*.py,
+incluida la nueva): 38 ejecuciones, ninguna línea FALLA y las 38 terminan en «TODAS LAS PRUEBAS PASAN».
+
+Batería nueva pruebas/pruebas_pantalla_f.py (última línea de su ejecución):
+RESULTADO PANTALLA F: TODAS LAS PRUEBAS PASAN (28 comprobaciones)
+
+Determinismo: dos ejecuciones consecutivas de la batería nueva han producido la misma salida (diff vacío).
+
+Revisión independiente: ejecutada (sección 7 de las directrices); un hallazgo reproducible, de
+documentación y gravedad baja: el resumen del Documento 0 daba 21 comprobaciones de la batería
+nueva y la batería ejecuta 28 (la cifra que ya daban la sección 4 del propio documento, LEEME.md
+y notas_briefing.md); corregido a 28, su script `hallazgo_v40_1_doc_cuenta_comprobaciones.py` da
+OK y queda en la raíz de `marcoC/` junto a las nueve sondas adversariales del revisor
+(`sondas_revisor_v040.py`), que cierran todas; los dos hallazgos de T-40 de la revisión anterior
+siguen en OK (r01/r02, fuera de esta pieza). Detalle en `revision.md`.
+
+Auto-repaso (paso 6): tres correcciones antes de la entrega, ninguna en validador/ (el método
+`pantalla_aprobacion` no cambió desde el primer diseño): (1) la comprobación de la anulación de veto
+del primer diseño recortaba la cantidad con importe_max_orden_eur (F-13), que E sí ve en su
+recálculo: la propuesta de 100 unidades dejaba de ser viable (E-04/O-23); el recorte pasa a F-14
+(importe_max_dia_eur), que va en el contexto y el recálculo de E va sin él; (2) una expectativa de la
+comprobación la_pantalla_no_recalcula_con_el_estado_actual usaba el precio del flujo de la deriva
+(1,11) en el flujo base (1,10): corregida la expectativa; (3) el Documento 0 decía que la pantalla
+sin precio era alcanzable anulando el veto de F-23: es falso (F-23 no está en VETOS_ANULABLES), la
+lectura a None es defensiva y no alcanzable por flujos públicos; corregido en el Documento 0.
