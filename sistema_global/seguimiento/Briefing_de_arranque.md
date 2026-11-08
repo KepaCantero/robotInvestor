@@ -114,6 +114,12 @@ Estado a 7 de noviembre de 2026 (Constitución V0.4). El detalle de cada bloque 
 
 **Regla de mantenimiento.** Cada vez que se construya o cambie una pieza de la arquitectura hay que actualizar esta sección (versión, módulos, pruebas, enlaces, pendientes, próximo paso) y la tabla de estado de arriba, y no dar la entrega por terminada sin hacerlo.
 
+## Cómo se diseña cada bloque (reglas del operador, 8-11-2026)
+
+1. **Todos los bloques sirven para cualquier tipo de activo.** Se diseñan como núcleo común más perfiles por tipo de activo desde el primer día; la Fase 1 en divisas es solo el primer recorrido completo, no un límite del diseño. Ningún bloque se diseña «para divisas».
+2. **A y B se revisan y se mejoran** antes de conectarlos (T-53): están construidos, pero se repasan con el operador a la luz de la Constitución V0.4 y del marco común.
+3. **Antes de empezar un bloque sin construir hay una conversación de diseño con el operador** (lluvia de ideas): qué hace el bloque, qué agentes tiene, cómo se reparten el trabajo, qué es LLM y qué es código, qué fuentes usa. Solo después se escribe su Documento 0. El operador participa en el diseño; no se le presenta un diseño cerrado.
+
 ## Decisiones del operador: aplazadas hasta completar la arquitectura
 
 **Regla del operador (8-11-2026).** Todo lo que tenga que ver con su perfil o con sus decisiones técnicas (mandatos, límites, umbrales, intermediario, datos, presupuesto, canales, criterios de promoción, fiscalidad y similares) se aplaza hasta completar la arquitectura global. Mientras tanto:
