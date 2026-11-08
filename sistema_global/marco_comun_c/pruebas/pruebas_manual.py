@@ -199,7 +199,10 @@ def main():
     h.chk("posicion_cerrada_no_admite_otro_cierre_RM04", "RM-04" in o.registrar_manual(cambia(cierre, event_id="EV-MAN-0003", ref_intermediario="MAN-CIERRE-2"), T1).get("reglas", []))
     o, b = autorizado(o=nuevo(L1)); ejecutar(o, "EXP-0001", b, AHORA)
     antes = estado(o)
-    h.chk("cierre_parcial_RM06", "RM-06" in o.registrar_manual(cambia(cierre, cantidad=40.0), T1).get("reglas", []) and estado(o) == antes)
+    # T-44: declarar una parte a mano ya no es RM-06: es una reducción parcial y, sin el stop nuevo por lo que queda, RM-07.
+    # La que sigue siendo RM-06 es declarar más cantidad de la que tiene la posición (ver pruebas_manual_t44.py).
+    h.chk("cierre_parcial_sin_stop_RM07", "RM-07" in o.registrar_manual(cambia(cierre, cantidad=40.0), T1).get("reglas", []) and estado(o) == antes)
+    h.chk("cierre_de_mas_sigue_RM06", "RM-06" in o.registrar_manual(cambia(cierre, cantidad=150.0), T1).get("reglas", []) and estado(o) == antes)
     h.chk("cierre_en_el_mismo_sentido_RM05", "RM-05" in o.registrar_manual(cambia(cierre, lado="COMPRA"), T1).get("reglas", []))
     h.chk("cierre_de_posicion_inexistente_RM04", "RM-04" in o.registrar_manual(cambia(cierre, vinculo={"tipo": "POSICION", "id": "POS-X"}), T1).get("reglas", []))
     h.chk("cierre_con_orden_usada_por_G_O03", o.registrar_manual(cambia(cierre, ref_intermediario="ORD-EXP-0001-S-1"), T1)["codigo"] == "O-03")

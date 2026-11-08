@@ -62,9 +62,9 @@ def subir(o, nivel="L2", dia=31, cartera="TACTICA", motivo=MS, ap=AP):
 def main():
     h = Arnes()
     # ------------------------------------------------------------------------------------------- configuración
-    h.chk("config_CFG_0100_y_promocion_por_defecto", CONFIG_DEFECTO["version_config"] == "CFG-0.10.0"
+    h.chk("config_CFG_0100_y_promocion_por_defecto", tuple(map(int, CONFIG_DEFECTO["version_config"][4:].split("."))) >= (0, 10, 0)
           and CONFIG_DEFECTO["promocion_nivel"] == {"periodo_min_dias": 30})
-    h.chk("O39_es_ALTA_e_incidentes_declarados", PRIORIDAD_AVISO["O-39"] == "ALTA" and INCIDENTES_PROMOCION == ("O-03", "O-18", "O-25"))
+    h.chk("O39_es_ALTA_e_incidentes_declarados", PRIORIDAD_AVISO["O-39"] == "ALTA" and INCIDENTES_PROMOCION == ("O-03", "O-18", "O-25", "O-37"))
     for nombre, v in (("negativo", {"periodo_min_dias": -1}), ("mas_de_un_anio", {"periodo_min_dias": 366}), ("texto", {"periodo_min_dias": "30"}),
                       ("bool", {"periodo_min_dias": True}), ("nan", {"periodo_min_dias": float("nan")}), ("clave_de_mas", {"periodo_min_dias": 30, "x": 1}),
                       ("vacio", {}), ("no_dict", 30), ("cero", {"periodo_min_dias": 0})):
@@ -73,7 +73,7 @@ def main():
             h.chk(f"promocion_{nombre}_rechazada", False)
         except ValueError:
             h.chk(f"promocion_{nombre}_rechazada", True)
-    h.chk("esquema_del_codigo_registrado", pe.esquema_actual() == mg.ESQUEMA_V0_51 and mg.ESQUEMA_V0_51 in mg.ESQUEMAS)
+    h.chk("esquema_del_codigo_registrado", pe.esquema_actual() == mg.MIGRACIONES[-1].esquema_hasta and pe.esquema_actual() in mg.ESQUEMAS)
 
     # ------------------------------------------------------------------------------------------- rechazos sin efecto
     o = nuevo(cfg("L2"))
@@ -264,7 +264,7 @@ def main():
     o = nuevo(cfg("L2"))
     registrar_foto(o, {**CART, "fecha_hora": t(10), "perdida_dia_eur": 2000.0})
     cn(o, "TACTICA", "L1", "OPERADOR", MB, t(10, 60))
-    registrar_foto(o, {**CART, "fecha_hora": t(10, 120), "perdida_dia_eur": 3000.0})
+    registrar_foto(o, {**CART, "fecha_hora": t(10, 120), "perdida_dia_eur": 2400.0})   # V0.53: por debajo del cortacircuito (T-40, 2500 EUR)
     r = cn(o, "TACTICA", "L2", "OPERADOR", MS, t(40, 90), AP)
     h.chk("r03_el_alcance_del_mismo_dia_cuenta_aunque_se_anotara_antes", not r["ok"] and r["codigo"] == "O-39" and "límite de pérdida" in r["motivo"], r)
     r = cn(o, "TACTICA", "L2", "OPERADOR", MS, t(42), AP)
@@ -320,8 +320,8 @@ def main():
     h.chk("con_este_codigo_no_se_carga_PE08", pe.cargar(viejo)["codigo"] == "PE-08")
     r = mg.migrar(viejo, "2026-11-07T10:00:00+00:00", "Paso el estado guardado al código de V0.51")
     o2 = r.get("orquestador")
-    h.chk("MIG003_lo_migra", r["ok"] and r["migraciones"] == ["MIG-003"] and o2.cfg["promocion_nivel"] == {"periodo_min_dias": 30}
-          and o2.cfg["version_config"] == "CFG-0.10.0" and o2.integridad() == [] and o2.config_integra(), r.get("motivo"))
+    h.chk("MIG003_lo_migra", r["ok"] and r["migraciones"][:1] == ["MIG-003"] and o2.cfg["promocion_nivel"] == {"periodo_min_dias": 30}
+          and o2.cfg["version_config"] == CONFIG_DEFECTO["version_config"] and o2.integridad() == [] and o2.config_integra(), r.get("motivo"))
     h.chk("MIG003_no_cambia_el_nivel_de_nadie", o2.cfg["nivel_autonomia"] == d["estado"]["cfg"]["nivel_autonomia"])
     h.chk("MIG003_declara_lo_que_cambia", [m for m in mg.MIGRACIONES if m.id == "MIG-003"][0].cambia == frozenset({"cfg.promocion_nivel"}))
     h.chk("y_tras_migrar_se_puede_bajar", cn(o2, "TACTICA", "L0", "OPERADOR", MB, "2026-11-07T10:05:00+00:00")["ok"] and o2.config_integra())

@@ -157,7 +157,8 @@ def main():
                                                                     "propuesta": x["propuesta"], "cartera_destino": x["cartera_destino"], "politica": o.cfg["politica_f"],
                                                                     "contexto": o._contexto_de_informe(e, inf)})})
 
-    o = nuevo(); hasta(o, "PROPUESTA")
+    o = nuevo({"politica_f": {**POLITICA_DEFECTO, "perdida_dia_max_eur": 50000.0, "perdida_semana_max_eur": 50000.0}})   # T-40: límites en euros altos, para que las fotos de pérdida 5.000 que llevan los informes de abajo no disparen el cortacircuito y la prueba siga probando lo suyo (la verificación CF y los códigos de autorizar)
+    hasta(o, "PROPUESTA")
     base = informe_f(o)
     h.chk("informe_valido", vf(o, base) == [], vf(o, base))
 

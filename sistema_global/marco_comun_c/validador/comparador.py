@@ -33,6 +33,7 @@ import re
 from collections import Counter
 
 from validar_sobre import VERSIONES_CONOCIDAS, _dt
+from mandatos import norm   # T-51: la identidad única de un instrumento (la misma que usan F-07/F-15, RM-08 y el Orquestador)
 
 from parametros import PARAMETROS as _P   # noqa: E402  (valores [PROPUESTO] versionados, T-25)
 
@@ -104,13 +105,18 @@ def _leer(c, ahora, ref=REFERENCIA_EFECTIVO):
         ex = p["exclusiones_duras"]
         if not (isinstance(ex, dict) and set(ex) == EXCL):
             return None, "FORMA"
-        rechazado = s.get("resultado_politica", {}).get("resultado") == "RECHAZADO"
+        rp = s.get("resultado_politica")
+        if not (isinstance(rp, dict) and "resultado" in rp):   # falla cerrado: sin el dict o sin su clave no se puede ver un RECHAZADO
+            return None, "FORMA"
+        rechazado = rp["resultado"] == "RECHAZADO"
         if rechazado or any(v != "OK" for v in ex.values()):
             return None, "EXCLUSION_DURA"
         if not (isinstance(ahora, str) and _dt(s["emitido_en"]) <= _dt(ahora) < _dt(s["valid_until"])):
             return None, "CADUCADO"
         ent = (p.get("entrada_salida") or {}).get("entrada")
-        if isinstance(ent, dict) and not _dt(ahora) < _dt(ent["ventana_hasta"]):   # T-27: sin ventana de entrada no hay candidato
+        if not isinstance(ent, dict):   # falla cerrado: sin ventana de entrada no se puede aplicar el control T-27
+            return None, "FORMA"
+        if not _dt(ahora) < _dt(ent["ventana_hasta"]):   # T-27: sin ventana de entrada no hay candidato
             return None, "CADUCADO"
         c2 = p["capa2"]
         esc = c2["escenarios"]
@@ -183,7 +189,9 @@ def _leer(c, ahora, ref=REFERENCIA_EFECTIVO):
         punt = exceso_anual / (max(RIESGO_MIN_PCT, riesgo) * math.sqrt(k_h)) * conf_n * evidencia
         if not (math.isfinite(punt) and math.isfinite(riesgo_anual)):
             return None, "FORMA"
-        return {"expediente_id": c["expediente_id"], "instrumento": inst.strip().upper(), "direccion": ident["direccion"],
+        if not norm(inst):   # V0.53 (revisión de GLM, g02): sin identidad normalizada no se compara (dos así serían «el mismo»)
+            return None, "FORMA"
+        return {"expediente_id": c["expediente_id"], "instrumento": norm(inst), "direccion": ident["direccion"],
                 "clase": ident["clase_comparabilidad"], "retorno_esperado_pct": esperado, "exceso_sobre_referencia_pct": exceso,
                 "horizonte_dias": horizonte, "peor_escenario_pct": peor, "confianza": conf, "confianza_normalizada": conf_n,
                 "factor_evidencia": evidencia, "puntuacion": punt,

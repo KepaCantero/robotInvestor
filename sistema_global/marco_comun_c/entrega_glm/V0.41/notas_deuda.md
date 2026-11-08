@@ -1,0 +1,9 @@
+# Notas de deuda — V0.41 (reducción parcial declarada a mano)
+
+La pieza cierra la deuda T-44 y no abre deuda nueva: no hay valores de configuración nuevos y ningún límite cambia.
+
+- **Tabla T (pendientes de deuda técnica):**
+  - **T-44** — «Declarar a mano (CT-G-14) una reducción parcial hecha por el operador fuera del sistema» — texto nuevo de la fila: **«RESUELTO en V0.41: un CT-G-14 vinculado a una POSICION admite la reducción parcial declarada a mano: el operador coloca antes el stop nuevo por lo que queda y lo declara en `proteccion_ref` (RM-07 si falta); lo que queda no puede valer menos que el `valor_min_eur` de la política de F convertido a la divisa de cotización (RM-12: ciérrala entera); G lo contrasta con el intermediario (`_declarar_parcial`: stop nuevo, neto con el signo de la posición y cancelación verificada de los stops viejos) y la conciliación queda limpia; en REDUCIENDO sigue el cierre del resto»**.
+  - **T-12** — la fila decía «RESUELTO en V0.21: … (quedan T-43 y T-44)»: texto nuevo de la fila: «RESUELTO en V0.21: reducir con stop redimensionado de solo reducción, toma parcial por OBJETIVO con fracción, cierre desde REDUCIENDO (la declaración manual de la parcial, en T-44, quedó resuelta en V0.41; queda T-43)».
+  - Ninguna otra fila cambia (T-40 sigue en parte resuelta por el vigilante con latido, Fase 3, igual que quedó en V0.39; T-43 como estaba).
+- **Tabla D (decisiones del operador):** ninguna fila nueva. El mínimo aplicado al resto de la parcial es el `valor_min_eur` de la política de F (100.0 € [PROPUESTO], fila D-11, ya abierta en V0.36 para ratificarlo): esta pieza no añade ningún valor nuevo que ratificar ni cambia ninguno existente. La batería baja `valor_min_eur` a 20.0 en su propia configuración **solo como valor de prueba**, para que quepa una reducción parcial en la posición de prueba (100 EURUSD a 1,10 = 110 €); el valor oficial no se toca.

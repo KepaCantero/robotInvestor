@@ -45,7 +45,7 @@ CLAVES_MANDATO = {"version", "instrumentos_permitidos", "exclusiones", "apalanca
 CARTERAS = {"TRADING", "TACTICA", "LARGO_PLAZO"}
 ID = re.compile(r"^[A-Za-z0-9._:/-]{1,64}\Z")
 FH = re.compile(r"^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(\.\d+)?(Z|[+-]\d{2}:\d{2})\Z")
-ERRORES = (KeyError, TypeError, AttributeError, ValueError, IndexError, OverflowError, RecursionError, MemoryError)
+ERRORES = (KeyError, TypeError, AttributeError, ValueError, IndexError, OverflowError, ZeroDivisionError, RecursionError, MemoryError)
 ORDEN_SOLICITUD = {"instrumento", "activo_base", "divisa_cotizacion", "direccion", "cantidad", "precio_entrada", "stop_precio", "apalancamiento", "cartera"}
 DIVISA = re.compile(r"^[A-Z]{3}\Z")
 

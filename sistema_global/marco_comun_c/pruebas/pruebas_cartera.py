@@ -143,7 +143,8 @@ def main():
     assert o.registrar_cartera(cart(fecha_hora="2026-11-06T08:59:00+00:00"), "G", AHORA, cuenta="SIM-1")["ok"]
     h.chk("foto_anterior_a_la_ultima_O10", o.registrar_cartera(cart(), "G", AHORA, cuenta="SIM-1")["codigo"] == "O-10")
     # solo vale la última foto: una vieja sin la pérdida del día ya no sirve
-    o = nuevo(); hasta(o, "PROPUESTA")
+    o = nuevo({"politica_f": {**POLITICA_DEFECTO, "perdida_dia_max_eur": 50000.0, "perdida_semana_max_eur": 50000.0}})   # T-40: límites en euros altos, para que la foto nueva de pérdida 5.000 no dispare el cortacircuito y la prueba siga probando lo suyo (la frescura de la foto del informe)
+    hasta(o, "PROPUESTA")
     e_ = o.expedientes[EID]
     vieja = cart(tipos_cambio_eur={"USD": 1.0}, fecha_hora="2026-11-06T08:52:00+00:00")
     nueva = cart(tipos_cambio_eur={"USD": 1.0}, fecha_hora="2026-11-06T08:58:00+00:00", perdida_dia_eur=5000.0)

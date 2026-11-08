@@ -43,7 +43,11 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Callable
 
+import math
+from datetime import timezone
+
 import diario as di
+from control_f import divisa_cotizada, tipo_cambio
 import persistencia as pe
 from orquestador import CONFIG_DEFECTO, LIMITE_PERDIDA, Orquestador, _canon, _dt, _hash, _motivo_ok
 
@@ -54,6 +58,8 @@ ESQUEMA_V0_45 = "04a549790220df9cc4d040ec55e7d9e1968635c3b450aa65495c6aaa5fc6852
 ESQUEMA_V0_50 = "5879fc70d7018821d33e470a71392630f8c5d28b2afad73811ba39ab10712f65"
 # esquema de V0.51 (T-18: promocion_nivel, CFG-0.10.0)
 ESQUEMA_V0_51 = "a52f1c6e72bfcd9590e93258b119547734d5af3b28a01f80fb691eed290d1985"
+# esquema de V0.53 (integración de las piezas de GLM V0.37-V0.41: libres_tope_dia_eur, libres, cortacircuitos; CFG-0.11.0)
+ESQUEMA_V0_53 = "0a18459ec3066ff9ddd17b2e06bda9c41abf40a110191e014aad136cb807eaa2"
 # lo que una migración nunca puede cambiar, aunque lo declare (revisión de V0.46, hallazgos 5 y 10)
 PROHIBIDAS = ("limites", "kill", "rearmes", "ultimo_ahora", "huella_config", f"cfg.politica_f.{LIMITE_PERDIDA}",
               "cfg.nivel_autonomia")   # V0.51 (revisión, duda 2): ninguna migración sube ni baja el nivel de nadie
@@ -96,6 +102,35 @@ def _v051(estado):
     return estado
 
 
+def _v053(estado):
+    """V0.51 → V0.53 (integración de GLM): la configuración guardada recibe libres_tope_dia_eur (T-33) con su valor de partida
+    (literal) y, si llevaba la versión por defecto de V0.51/V0.52, pasa a CFG-0.11.0. El estado recibe la lista de días con
+    cortacircuito (T-40) vacía (antes no saltaba) y la de LIBRES (T-33) reconstruida desde los registros manuales LIBRE que ya
+    guardaba (revisión de la integración, h03: si no, las de hoy dejarían de contar en F-14 y en su tope). Su importe se valora
+    como lo hace el Orquestador, con la última foto de G (None si no se puede: cuenta como el importe máximo del día en F-14), y
+    como instante de registro se toma su emisión, que nunca es posterior (F-14 la cuenta en más contextos, no en menos)."""
+    cfg = estado["cfg"]
+    cfg["libres_tope_dia_eur"] = {"TRADING": 2000.0, "TACTICA": 2000.0, "LARGO_PLAZO": 2000.0}
+    estado["cortacircuitos"] = []
+    libres = []
+    for m in estado.get("manuales", []):
+        if not (isinstance(m, dict) and isinstance(m.get("vinculo"), dict) and m["vinculo"].get("tipo") == "LIBRE"):
+            continue
+        fx = tipo_cambio(divisa_cotizada(m["instrumento"], cfg.get("divisas_cotizacion") or {}), estado.get("ultima_foto"))
+        try:
+            importe = m["cantidad"] * m["precio"] * fx if fx is not None else None
+        except (TypeError, OverflowError):
+            importe = None
+        if importe is not None and not (math.isfinite(importe) and importe > 0):
+            importe = None
+        libres.append({"cartera": m["cartera"], "dia": _dt(m["ejecutado_en"]).astimezone(timezone.utc).date().isoformat(),
+                       "importe_eur": importe, "registrado_en": m["emitido_en"], "event_id": m["event_id"]})
+    estado["libres"] = libres
+    if cfg.get("version_config") == "CFG-0.10.0":
+        cfg["version_config"] = "CFG-0.11.0"
+    return estado
+
+
 MIGRACIONES = (
     Migracion("MIG-001", pe.FORMATO_010, ESQUEMA_V0_45, ESQUEMA_V0_45, _sin_cambios, frozenset(),
               "formato 0.1.0 (V0.42 a V0.45) a 0.2.0: la cabecera lleva el esquema; el estado no cambia"),
@@ -103,6 +138,9 @@ MIGRACIONES = (
               "V0.45 a V0.50 (T-18): umbral_l2_eur con su valor de partida y CFG-0.9.0; L3 nuevo, sin cambiar el nivel de nadie"),
     Migracion("MIG-003", pe.FORMATO, ESQUEMA_V0_50, ESQUEMA_V0_51, _v051, frozenset({"cfg.promocion_nivel"}),
               "V0.50 a V0.51 (T-18): promocion_nivel con su valor de partida y CFG-0.10.0; el nivel de cada cartera no cambia"),
+    Migracion("MIG-004", pe.FORMATO, ESQUEMA_V0_51, ESQUEMA_V0_53, _v053, frozenset({"cfg.libres_tope_dia_eur", "libres"}),
+              "V0.51 a V0.53 (integración de GLM): libres_tope_dia_eur con su valor de partida, listas vacías de LIBRES y "
+              "cortacircuitos, y CFG-0.11.0"),
 )
 
 

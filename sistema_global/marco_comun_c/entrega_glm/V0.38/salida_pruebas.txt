@@ -1,0 +1,12 @@
+Salida del bucle de la sección 0 (ejecutar_pruebas.py + las 35 baterías de pruebas/pruebas_*.py,
+incluida la nueva): 36 ejecuciones, ninguna línea FALLA y las 36 terminan en «TODAS LAS PRUEBAS PASAN».
+
+Batería nueva pruebas/pruebas_libres_t33.py (última línea de su ejecución):
+RESULTADO T-33: TODAS LAS PRUEBAS PASAN (37 comprobaciones)
+
+Determinismo: dos ejecuciones consecutivas de la batería nueva han producido la misma salida (diff vacío).
+
+Revisión independiente: los tres scripts del revisor, en la raíz de marcoC/ y sin retocar
+(hallazgo_t33_1_f14_ventana_informe.py, hallazgo_t33_2_subdesborde_tope_cero.py,
+hallazgo_t33_3_comprobacion_vacia.py), dan OK contra este código; la batería de robustez de la
+V0.37 sigue en verde con las semillas 1, 2, 4, 5, 16, 17, 20, 21, 22, 23 y 42.

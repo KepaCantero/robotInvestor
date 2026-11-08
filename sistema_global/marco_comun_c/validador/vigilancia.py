@@ -24,7 +24,7 @@ from datetime import date, timezone
 import math as _m
 
 from orquestador import NIVELES
-from ejecucion_g import _aviso, _instante, cerrar, conciliar, cotizar, reducir, revisar_entrada
+from ejecucion_g import _aviso, _instante, _stop_retirado_que_cerro, cerrar, conciliar, cotizar, reducir, revisar_entrada
 from orquestador import OPERADORES
 from validar_sobre import _dt
 
@@ -148,6 +148,10 @@ def vigilar(o, broker, datos, ahora, max_edad_min=MAX_EDAD_MIN):
             continue   # si sigue REDUCIENDO, la segunda pasada vigila sus condiciones de cierre
         try:
             ejec = [c for x in p["protecciones"] if (c := broker.consultar(x)) and c["estado"] in ("EJECUTADA", "PARCIAL")]
+            if not ejec:   # V0.53 (revisión de GLM g01; integración h02): un stop retirado por una parcial a mano que aún saltó y
+                # cerró él solo lo que quedaba (ejecutado por esa cantidad, instrumento a cero) se confirma como un stop propio
+                ret = _stop_retirado_que_cerro(broker, p)
+                ejec = [broker.consultar(ret)] if ret else []
         except Exception:   # noqa: BLE001
             ejec = []
         if ejec:   # el intermediario ya ejecutó el stop: solo falta confirmar el cierre

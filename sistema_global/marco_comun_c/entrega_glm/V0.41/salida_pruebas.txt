@@ -1,0 +1,78 @@
+Salida del bucle de la sección 0 (ejecutar_pruebas.py + las 38 baterías de pruebas/pruebas_*.py,
+incluida la nueva): 39 ejecuciones, ninguna línea FALLA y las 39 terminan en «TODAS LAS PRUEBAS PASAN».
+
+Batería nueva pruebas/pruebas_manual_t44.py (última línea de su ejecución):
+RESULTADO MANUAL T-44: TODAS LAS PRUEBAS PASAN (47 comprobaciones)
+
+Determinismo: dos ejecuciones consecutivas de la batería nueva han producido la misma salida (diff vacío).
+
+Auto-repaso (paso 6): una corrección real antes de la entrega, en `validador/ejecucion_g.py`. La sonda de
+la simetría CORTO (una posición corta a la que el operador compra una parte a mano y la declara) destapó
+que `_declarar_parcial` comparaba el neto del intermediario —que es con signo (−60 en un corto de 60)—
+contra lo que queda sin signo (60): toda parcial de un corto habría dado G-10 indebidamente; y una
+comparación en valor absoluto habría sido fail-open (un giro completo de la posición, +60, habría cuadrado).
+Corregido midiendo el neto EN EL SENTIDO DE LA POSICIÓN (`neto * signo`, `signo = +1` LARGO / `−1` CORTO,
+el mismo criterio que `_reducir` usa para sus ventas), de modo que el giro completo tampoco cuadra; el caso
+queda fijado en la batería con tres comprobaciones (`parcial_en_corto_ok`,
+`parcial_en_corto_stop_y_conciliacion`, `parcial_en_corto_resto_minimo_RM12`). Dos ajustes más del repaso,
+en `pruebas/pruebas_manual_t44.py`: el test del «precio cero» esperaba RM-12 y la forma lo rechaza antes
+(RM-01: la forma ya exige precio > 0), se documenta como RM-01 y se añade el caso del precio que desborda
+(1e308 → resto infinito → RM-12 «no se puede valorar»), y la cancelación de los stops viejos pasó a
+reconsultar al intermediario tras cada intento (no se confía en la respuesta de la cancelación, como hace
+`_cerrar`), con un broker falso (`CancelaEnFalso`) que la acepta sin ejecutarla y cierra en G-10 sin
+registrar nada.
+
+Revisión independiente (sección 7 de las directrices, ejecutada en otra conversación con el prompt
+«Prompt para el revisor — V0.41 (copiar y pegar)»): dos hallazgos reproducibles, corregidos (detalle en
+`revision.md`). Hallazgo 1 (media, `hallazgo_t44_1_conciliacion_tras_parcial_con_desfase.py`): los
+contrastes de cantidad de `_declarar_parcial` eran relativos (`_cuadra`) mientras toda la cadena posterior
+mide absoluto (TOL_Q del Orquestador, conciliar con TOL=1e-6 y tolerancia relativa 0.0, control de
+protección); corregido con `_cuadra_abs` (absoluto con el TOL del módulo): el desfase de 3e-5 del revisor
+cae en G-10 y la parcial dentro de la banda (5e-7) sigue cuadrando con la conciliación inmediata. Hallazgo
+2 (alta, `hallazgo_t44_2_stop_viejo_vivo_invisible_a_conciliacion.py`): los stops que la parcial retira
+(`protecciones_anteriores`) eran invisibles para `conciliar`, y por el camino directo del Orquestador (sin
+G) nadie los cancela: un stop viejo vivo quedaba fuera de todo control; corregido con un control nuevo de
+`conciliar` (un stop retirado debe estar CANCELADA; si no, PROTECCION_HUERFANA, kill-switch), colocado
+antes del «continue» de STOP_EJECUTADO. La batería fija ambas correcciones con cinco regresiones (42 → 47).
+
+Detalle de las 39 ejecuciones (todas en verde):
+
+OK  pruebas/ejecutar_pruebas.py
+OK  pruebas/pruebas_apartados.py
+OK  pruebas/pruebas_aprobacion.py
+OK  pruebas/pruebas_cartera.py
+OK  pruebas/pruebas_comparador.py
+OK  pruebas/pruebas_comparador_t17.py
+OK  pruebas/pruebas_consola.py
+OK  pruebas/pruebas_contradictor.py
+OK  pruebas/pruebas_contradictor_t48.py
+OK  pruebas/pruebas_contratos.py
+OK  pruebas/pruebas_control_f.py
+OK  pruebas/pruebas_control_f_t22.py
+OK  pruebas/pruebas_cortacircuito_t40.py
+OK  pruebas/pruebas_degradacion.py
+OK  pruebas/pruebas_dimensionado.py
+OK  pruebas/pruebas_ejecucion_g.py
+OK  pruebas/pruebas_encargo.py
+OK  pruebas/pruebas_encargo_t51.py
+OK  pruebas/pruebas_entrada.py
+OK  pruebas/pruebas_envoltura.py
+OK  pruebas/pruebas_extremo.py
+OK  pruebas/pruebas_k.py
+OK  pruebas/pruebas_k_t26.py
+OK  pruebas/pruebas_libres_t33.py
+OK  pruebas/pruebas_manual.py
+OK  pruebas/pruebas_manual_t44.py
+OK  pruebas/pruebas_motor_t26.py
+OK  pruebas/pruebas_niveles.py
+OK  pruebas/pruebas_operador_t50.py
+OK  pruebas/pruebas_orquestador.py
+OK  pruebas/pruebas_pantalla_f.py
+OK  pruebas/pruebas_propuesta.py
+OK  pruebas/pruebas_reapertura.py
+OK  pruebas/pruebas_reduccion.py
+OK  pruebas/pruebas_revision.py
+OK  pruebas/pruebas_robustez.py
+OK  pruebas/pruebas_sobre_t27.py
+OK  pruebas/pruebas_vigilancia.py
+OK  pruebas/pruebas_vigilancia_t49.py
