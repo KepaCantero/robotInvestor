@@ -67,7 +67,7 @@ Astra entra por `AGENTS.md`. La memoria no sustituye a la Constitución, a este 
 
 ## Mapa de bloques y estado
 
-Estado a 7 de noviembre de 2026 (Constitución V0.4). El detalle de cada bloque está en el §2 de la Constitución.
+Estado a 9 de noviembre de 2026 (Constitución V0.5, con la enmienda 2 aplicada como `[PROPUESTO]` y pendiente de ratificar). El detalle de cada bloque está en el §2 de la Constitución.
 
 | Bloque | En una frase | Estado |
 | --- | --- | --- |
@@ -123,7 +123,7 @@ Estado a 7 de noviembre de 2026 (Constitución V0.4). El detalle de cada bloque 
 ## Cómo se diseña cada bloque (reglas del operador, 8-11-2026)
 
 1. **Todos los bloques sirven para cualquier tipo de activo.** Se diseñan como núcleo común más perfiles por tipo de activo desde el primer día; la Fase 1 en divisas es solo el primer recorrido completo, no un límite del diseño. Ningún bloque se diseña «para divisas».
-2. **A y B se revisan y se mejoran** antes de conectarlos (T-53): están construidos, pero se repasan con el operador a la luz de la Constitución V0.4 y del marco común.
+2. **A y B se revisan y se mejoran** antes de conectarlos (T-53): están construidos, pero se repasan con el operador a la luz de la Constitución V0.5 y del marco común.
 3. **Antes de empezar un bloque sin construir hay una conversación de diseño con el operador** (lluvia de ideas): qué hace el bloque, qué agentes tiene, cómo se reparten el trabajo, qué es LLM y qué es código, qué fuentes usa. Solo después se escribe su Documento 0. El operador participa en el diseño; no se le presenta un diseño cerrado.
 
 ## Decisiones del operador: aplazadas hasta completar la arquitectura
@@ -133,7 +133,19 @@ Estado a 7 de noviembre de 2026 (Constitución V0.4). El detalle de cada bloque 
 1. Se construye todo en simulado (L0) con valores de partida prudentes marcados `[PROPUESTO]` y anotados en la deuda técnica; no se le pregunta por ellos.
 2. Se le pregunta solo lo que cambie la arquitectura y no tenga un valor de partida razonable, y se le avisa si un valor de partida obliga a rehacer trabajo.
 3. Nada opera con dinero real ni pasa una compuerta que exija datos reales (intermediario real en la Fase 3, L1 real) hasta que decida.
-4. Al terminar la arquitectura se le presenta una sola sesión con todas las decisiones pendientes, cada una con su valor de partida y lo que cambia según su respuesta.
+4. Al terminar la arquitectura se le presenta una sola sesión con todas las decisiones pendientes, cada una con su valor de partida y lo que cambia según su respuesta. Según la V0.5, la conduce el asesor de configuración del Broker (D-34); los números de la enmienda 2 son P-25 a P-35.
+
+## Lo que añade la enmienda 2 (Constitución V0.5, 9-11-2026, pendiente de ratificar)
+
+Todo es `[PROPUESTO]`; se construye con ello salvo que el operador diga lo contrario. Lo esencial para cualquier conversación de construcción:
+
+- **Se entra por cualquier bloque; al dinero, solo por F y G** (P20): vía `DIRECTA` y modo `CONSULTA`; el expediente nace en el estado del bloque de entrada.
+- **El peso se gana con pruebas** (P19): toda tesis con probabilidad, plazo y criterio de resolución; torneo de pronósticos; peso por historial; aspirante frente a titular; escalera de verificación (backtesting, paper trading, dinero real en pequeño, escala).
+- **J pasa a ser el laboratorio de estrategias, modelos, instrucciones y agentes:** J entrena, I puntúa, F y el operador aprueban.
+- **SC-3 es el Motor de cálculo avanzado** (servicio con categoría de bloque) con proyecciones del plan; **SC-8 incluye el vigía de régimen**, que solo endurece.
+- **Plan de largo plazo y operador:** rentabilidad mínima exigida (real, comprobada por F en L2 y L3), aportaciones periódicas, vehículo fiscal, camino de riesgo, colchón fuera del robot, revisión anual guiada y modo hibernación.
+- **Enchufabilidad:** ficha de bloque CT-G-17, batería de conformidad, estado por bloque (el marco común se separa antes de la Fase 2) y adaptadores también para modelos de IA.
+- El reparto por fases está en el §14.
 
 ## Reglas de oro y errores a evitar
 
@@ -175,7 +187,7 @@ PENDIENTES QUE NO DEBES DECIDIR: [las de §15 que afecten a esta tarea]
 BLOQUE / PIEZA: Marco común de C y sobre CT-G-02
 FASE: diseño de contratos
 OBJETIVO: Esquema JSON validable del sobre común de valoración y plantilla de los 12 perfiles de C, lista para instanciar C-DIV.
-ADJUNTOS: Constitución V0.4; Documento 0 de B V2.1 (sección del paquete para C).
+ADJUNTOS: Constitución V0.5; Documento 0 de B V2.1 (sección del paquete para C).
 CONTRATOS Y SECCIONES QUE APLICAN: §2, §5 (CT-G-01 y CT-G-02), §9, §10.
 ENTREGABLE: esquemas JSON + documento de diseño + validador con casos de prueba.
 DEFINICIÓN DE TERMINADO: el validador acepta un sobre de ejemplo por cada uno de los 12 tipos y rechaza los incompletos.
