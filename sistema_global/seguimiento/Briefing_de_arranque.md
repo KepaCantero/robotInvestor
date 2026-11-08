@@ -114,6 +114,15 @@ Estado a 7 de noviembre de 2026 (Constitución V0.4). El detalle de cada bloque 
 
 **Regla de mantenimiento.** Cada vez que se construya o cambie una pieza de la arquitectura hay que actualizar esta sección (versión, módulos, pruebas, enlaces, pendientes, próximo paso) y la tabla de estado de arriba, y no dar la entrega por terminada sin hacerlo.
 
+## Decisiones del operador: aplazadas hasta completar la arquitectura
+
+**Regla del operador (8-11-2026).** Todo lo que tenga que ver con su perfil o con sus decisiones técnicas (mandatos, límites, umbrales, intermediario, datos, presupuesto, canales, criterios de promoción, fiscalidad y similares) se aplaza hasta completar la arquitectura global. Mientras tanto:
+
+1. Se construye todo en simulado (L0) con valores de partida prudentes marcados `[PROPUESTO]` y anotados en la deuda técnica; no se le pregunta por ellos.
+2. Se le pregunta solo lo que cambie la arquitectura y no tenga un valor de partida razonable, y se le avisa si un valor de partida obliga a rehacer trabajo.
+3. Nada opera con dinero real ni pasa una compuerta que exija datos reales (intermediario real en la Fase 3, L1 real) hasta que decida.
+4. Al terminar la arquitectura se le presenta una sola sesión con todas las decisiones pendientes, cada una con su valor de partida y lo que cambia según su respuesta.
+
 ## Reglas de oro y errores a evitar
 
 Son lecciones de las construcciones anteriores.
