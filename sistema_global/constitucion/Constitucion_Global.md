@@ -4,7 +4,7 @@ Nov 9, 2026 · @Dani
 
 ## 0. Estado, alcance y modo de uso
 
-Esta V0.5 (9 de noviembre de 2026) **sustituye a la V0.4**: incorpora la **enmienda 2** (los 27 puntos de T-58 en la deuda técnica), aplicada a petición del operador y **ratificada por él el 9 de noviembre de 2026** (tabla «De la V0.4 a la V0.5» abajo y decisiones D-28 a D-41, todas `[RATIFICADO]`). Recoge también las cuatro reglas de diseño y decisión que el operador fijó el 8-11-2026 (cambio 38, D-42), con su encaje con la Fase 2. Ese mismo día el operador ratificó también las decisiones de la V0.1 que seguían propuestas (D-08 a D-16). Sus números quedan aplazados como pendientes del operador (P-25 a P-35), igual que el resto de sus decisiones de perfil y técnicas hasta completar la arquitectura (T-57). Al redactarla se añadió lo que no venía literal en T-58, y el operador lo ratificó con el resto: los principios P19 y P20, que amplían los invariantes; que SC-3 no cuente para el tope de bloques; el destino de las aportaciones durante la hibernación; las exenciones de la rentabilidad mínima; y la preferencia por un revisor de otro proveedor de IA. La V0.4 (7 de noviembre de 2026) incorporó la **enmienda 1**, ratificada por el operador ese día (tabla «De la V0.3 a la V0.4» y decisiones D-20 a D-27). La V0.3 sustituyó a la V0.2 y a la V0.1; nació de una prueba de recorrido con cuatro casos (18 huecos) y de una revisión adversarial independiente (13 hallazgos), y el operador ha autorizado modificar la idea base, incluidos los bloques A y B.
+Esta V0.5 (9 de noviembre de 2026) **sustituye a la V0.4**: incorpora la **enmienda 2** (los 27 puntos de T-58 en la deuda técnica), aplicada a petición del operador y **ratificada por él el 9 de noviembre de 2026** (tabla «De la V0.4 a la V0.5» abajo y decisiones D-28 a D-41, todas `[RATIFICADO]`). Recoge también las cuatro reglas de diseño y decisión que el operador fijó el 8-11-2026 (cambio 38, D-42), con su encaje con la Fase 2. Ese mismo día el operador ratificó también las decisiones de la V0.1 que seguían propuestas (D-08 a D-16) y los apartados que no dependían de ninguna decisión numerada (D-43): **toda la Constitución queda ratificada**, salvo los valores que el operador tiene aplazados (pendientes P-xx, sesión T-57). Sus números quedan aplazados como pendientes del operador (P-25 a P-35), igual que el resto de sus decisiones de perfil y técnicas hasta completar la arquitectura (T-57). Al redactarla se añadió lo que no venía literal en T-58, y el operador lo ratificó con el resto: los principios P19 y P20, que amplían los invariantes; que SC-3 no cuente para el tope de bloques; el destino de las aportaciones durante la hibernación; las exenciones de la rentabilidad mínima; y la preferencia por un revisor de otro proveedor de IA. La V0.4 (7 de noviembre de 2026) incorporó la **enmienda 1**, ratificada por el operador ese día (tabla «De la V0.3 a la V0.4» y decisiones D-20 a D-27). La V0.3 sustituyó a la V0.2 y a la V0.1; nació de una prueba de recorrido con cuatro casos (18 huecos) y de una revisión adversarial independiente (13 hallazgos), y el operador ha autorizado modificar la idea base, incluidos los bloques A y B.
 
 **Alcance.** Sistema personal de inversión con **capital propio únicamente**: investiga, analiza, compara, construye carteras, controla el riesgo, ejecuta bajo autorización y aprende de sus resultados. No presta servicio a terceros; si eso cambiara, habría que revisar la normativa aplicable antes de seguir.
 
@@ -18,7 +18,7 @@ Esta V0.5 (9 de noviembre de 2026) **sustituye a la V0.4**: incorpora la **enmie
 
 **Cómo se usa.** Cada conversación de construcción empieza con esta Constitución, la ficha de interfaz del bloque (§2) y los contratos que le afectan (§5).
 
-**Qué cambia respecto a la V0.1.** `[RATIFICADO]` el 9-11-2026 con D-08 a D-16, salvo los cambios 7 (aprendizaje realista, §9) y 8 (verificación diversa, §3), que siguen `[PROPUESTO]`, igual que el presupuesto duro del cambio 10 (§11).
+**Qué cambia respecto a la V0.1.** `[RATIFICADO]` el 9-11-2026 (D-08 a D-16 y D-43).
 
 | N.º | Cambio | Problema que resuelve | Sección |
 | --- | --- | --- | --- |
@@ -230,7 +230,7 @@ Todo componente pertenece a un solo plano, y cada plano tiene una autoridad dist
 
 El posicionamiento de grandes inversores se usa como contexto y para detectar excesos, nunca para copiar; sus señales pasan por SC-4 antes de pesar en una decisión. Si un foco geopolítico nuevo o agravado afecta a una posición abierta, H propone revisarla (nunca vende por ello, §4.2).
 
-**Verificación diversa.** `[PROPUESTO]` Los agentes del mismo modelo comparten sesgos y evidencia, así que su acuerdo no es verificación independiente. El control real es F (§8). Sobre eso:
+**Verificación diversa.** `[RATIFICADO]` (D-43) Los agentes del mismo modelo comparten sesgos y evidencia, así que su acuerdo no es verificación independiente. El control real es F (§8). Sobre eso:
 
 1. **Primero, comprobaciones deterministas:** coherencia entre fuentes, unidades, precio frente al del intermediario, caducidad.
 2. **Contradictor:** agente que recibe la evidencia pero no el razonamiento del analista y construye los escenarios en que la tesis falla. Siempre que sea posible, de **otro modelo o proveedor**. Su informe forma parte del expediente.
@@ -307,7 +307,7 @@ Los contratos son la arquitectura: un bloque es sustituible mientras cumpla los 
 | `confianza`, `incertidumbre` | Con su tope y sus limitaciones conocidas |
 | `resultado_politica` | Controles aplicados, resultado, motivo y versión de política |
 
-**Catálogo de contratos globales.** `[PROPUESTO]`
+**Catálogo de contratos globales.** `[RATIFICADO]` (D-43)
 
 | ID | Contrato | De → a |
 | --- | --- | --- |
@@ -429,7 +429,7 @@ Los umbrales viven en la configuración y los fija el operador `[ABIERTO]`. La a
 
 ## 7. Carteras, mandatos y ciclo de vida de estrategias
 
-Hay **tres carteras** (libros) con capital propio, cada una con su mandato. `[RATIFICADO]` las tres y que el trading opera en **días y semanas** por ahora; el resto es `[PROPUESTO]`.
+Hay **tres carteras** (libros) con capital propio, cada una con su mandato. `[RATIFICADO]` las tres y que el trading opera en **días y semanas** por ahora; `[RATIFICADO]` (D-43) también el resto de la tabla; sus valores concretos siguen pendientes (P-03, P-04).
 
 |  | TRADING | TÁCTICA | LARGO PLAZO |
 | --- | --- | --- | --- |
@@ -477,7 +477,7 @@ Los controles **nunca se relajan solos**: el sistema propone el ajuste y el oper
 3. Reparte y vigila el efectivo. El **reparto de capital entre carteras lo aprueba el operador**; E solo lo propone.
 4. **Concentración mínima antes de M** `[RATIFICADO]` (D-25): hasta la Fase 3, E comprueba que no se acumulen apuestas que dependen del mismo factor (por ejemplo, varias divisas que en el fondo dependen del dólar). F calcula su propia versión de forma independiente.
 
-**Ciclo de vida de una estrategia (J).** `[PROPUESTO]`
+**Ciclo de vida de una estrategia (J).** `[RATIFICADO]` (D-43)
 
 `CANDIDATA` → `EN_PAPER` (L0) → `ACTIVA` (capital pequeño) → `ACTIVA_PLENA` → `PAUSADA` / `RETIRADA`
 
@@ -542,7 +542,7 @@ El Bloque F es código determinista que ningún agente puede modificar, saltarse
 
 ## 9. Memoria y aprendizaje realista
 
-Con unas pocas decenas de tesis al año y horizontes de meses, las métricas de calibración no se pueden estimar durante mucho tiempo. El sistema aprende, pero no finge que lo hace más rápido de lo que permiten los datos. `[PROPUESTO]`
+Con unas pocas decenas de tesis al año y horizontes de meses, las métricas de calibración no se pueden estimar durante mucho tiempo. El sistema aprende, pero no finge que lo hace más rápido de lo que permiten los datos. `[RATIFICADO]` (D-43)
 
 1. **Diario de pronósticos (SC-4).** Todo pronóstico material se congela antes de conocerse el resultado, con horizonte, condición de resolución y `methodology_version`. También se registran las opciones descartadas con sus condiciones de reapertura. Es un diario fiable, no un oráculo.
 2. **Tesis descompuestas.** Toda tesis con horizonte superior a 12 meses se descompone en **sub-pronósticos medibles de 12 meses o menos** (resultados, márgenes, diferenciales, indicadores macro, hitos). Se evalúan antes y dan señal sin esperar al retorno final.
@@ -592,7 +592,7 @@ El Bloque I completo se construye al final (§14). Hasta entonces bastan el diar
 
 ## 11. Fallos y modos degradados
 
-Cada bloque DEBE declarar en su Documento 0 qué hace ante cada fallo de la tabla. La respuesta por defecto es detenerse, marcar y escalar. Nunca se rellena con estimaciones presentadas como hechos. `[PROPUESTO]`
+Cada bloque DEBE declarar en su Documento 0 qué hace ante cada fallo de la tabla. La respuesta por defecto es detenerse, marcar y escalar. Nunca se rellena con estimaciones presentadas como hechos. `[RATIFICADO]` (D-43)
 
 | Fallo | Respuesta |
 | --- | --- |
@@ -748,6 +748,7 @@ El **identificador es la clave de todo almacén**: ningún componente recupera u
 | D-40 | Cambio de modelo de IA solo tras un conjunto dorado; historial completo exportable en formatos abiertos | RATIFICADO | 2026-11-09 |
 | D-41 | Enchufabilidad: ficha de bloque (CT-G-17) y registro, batería de conformidad, estado por bloque, adaptadores de A y B a `CT-G` y adaptadores de modelos de IA | RATIFICADO | 2026-11-09 |
 | D-42 | Reglas del operador: todo bloque sirve para cualquier tipo de activo (núcleo + perfiles desde el primer día; encaje con la Fase 2 ratificado el 9-11-2026); A y B se revisan con el operador antes de conectarlos; conversación de diseño con el operador antes de cada bloque sin construir; decisiones del operador aplazadas hasta completar la arquitectura, con valores PROPUESTO en simulado y una sesión única (T-57) | RATIFICADO | 2026-11-08 |
+| D-43 | Ratificación de los apartados sin decisión numerada: verificación diversa (§3), catálogo de contratos globales (§5), tabla de las tres carteras (§7), ciclo de vida de una estrategia (§7), memoria y aprendizaje realista (§9) y fallos y modos degradados (§11) | RATIFICADO | 2026-11-09 |
 
 **Pendientes del operador.** `[RATIFICADO]` (D-42) Las decisiones de perfil y técnicas del operador se aplazan hasta completar la arquitectura global. Mientras tanto se construye en simulado (L0) con valores de partida prudentes marcados `[PROPUESTO]`; solo se le pregunta lo que cambie la arquitectura y no tenga un valor de partida razonable; nada opera con dinero real ni pasa una compuerta que exija datos reales hasta que decida; y al final se le presentan todas en una sola sesión, cada una con su valor de partida y lo que cambia según su respuesta (T-57), conducida por el asesor de configuración (§2).
 
