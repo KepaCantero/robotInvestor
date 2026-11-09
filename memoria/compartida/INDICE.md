@@ -11,3 +11,4 @@
 | compartida/2026-11-09_flujo-y-reparto | convencion | Flujo de cuatro fases y QA cruzada entre Claude y Astra | vigente |
 | compartida/2026-11-09_cuestionario-y-multiusuario | regla | Cuestionario guiado para las decisiones, valores por defecto para cualquier usuario y deseo de multiusuario (T-57, T-59) | sustituida en parte por compartida/2026-11-09_una-copia-por-usuario |
 | compartida/2026-11-09_una-copia-por-usuario | decision | Una copia por usuario con su propio dinero (operador y compañeros); nada personal en el repositorio | vigente |
+| compartida/2026-11-09_enmienda-3-ratificada | decision | Constitución V0.6: enmienda 3 ratificada (cuestionario guiado, valores por defecto, cambios por el Broker, una copia por usuario) | vigente |
