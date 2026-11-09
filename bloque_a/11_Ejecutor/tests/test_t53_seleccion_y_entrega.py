@@ -8,13 +8,19 @@ from pathlib import Path
 
 import pandas as pd
 import pytest
-from bloque_a.configuracion import DIR_EJECUTOR, RUTA_UNIVERSO_EJEMPLO, cargar_config
+from bloque_a.configuracion import (
+    DIR_EJECUTOR,
+    RUTA_UNIVERSO_EJEMPLO,
+    aplicabilidad,
+    cargar_config,
+)
 from bloque_a.herramientas.ht01_datos import ProveedorCSV, cargar_universo
 from bloque_a.herramientas.referencia import ht03_puntuaciones as ht03
 from bloque_a.herramientas.referencia import ht09_validador_g3 as ht09
 from bloque_a.llm import MockClient
 from bloque_a.orquestacion import Bloque
 
+from bloque_a import mock_respuestas as mr
 from bloque_a import redaccion, sintesis
 
 DATOS = DIR_EJECUTOR / "ejemplos" / "datos_sinteticos"
@@ -168,3 +174,122 @@ def test_siguiente_paso_sigue_al_prompt_del_analizador(op, esperado):
 def test_esquema_finalista_admite_horizonte_principal_y_justificacion():
     from bloque_a.contratos import FINALISTA
     assert {"horizonte_principal", "justificacion_horizonte"} <= set(FINALISTA["properties"])
+
+
+# ================================================================ T-53 · QA ronda 1 (H-01 a H-05)
+
+
+def _con_simbolo_extra(tmp_path, fechas):
+    datos = tmp_path / "datos"
+    shutil.copytree(DATOS, datos)
+    (datos / "USDNEW=X.csv").write_text("fecha,cierre\n" + "\n".join(f"{d.date()},1.0{i % 9}" for i, d in enumerate(fechas)) + "\n")
+    uni = Path(RUTA_UNIVERSO_EJEMPLO).read_text(encoding="utf-8").rstrip("\n") + \
+        "\nUSDNEW=X,DIV,Dólar frente a nueva divisa,ESTRATEGIA,GLB,G10,USD,SOLO EJEMPLO,Pares,Par nuevo,Otros cruces,USD/NEW,\n"
+    (tmp_path / "u.csv").write_text(uni, encoding="utf-8")
+    return _bloque(tmp_path, datos=datos, universo=tmp_path / "u.csv")
+
+
+# ---------------------------------------------------------------- H-01 · símbolo deslistado antes de la ventana
+def test_h01_simbolo_deslistado_no_vacia_su_tipo(tmp_path):
+    b = _con_simbolo_extra(tmp_path, pd.bdate_range("2020-01-01", "2021-12-31"))
+    r = b.ciclo(AS_OF, alcance={"clases": ["DIV"]})
+    assert r["paquete"]["clases"]["DIV"]["opciones"]          # antes: 0 opciones, fichas del Motor rechazadas
+    assert r["estado"] == "PARCIAL"
+    assert "USDNEW=X" in b._sin_historia[("DIV", r["run_id"])]
+
+
+def test_h01_historia_corta_tambien_queda_declarada(tmp_path):
+    b = _con_simbolo_extra(tmp_path, pd.bdate_range("2026-05-22", "2026-06-05"))
+    r = b.ciclo(AS_OF, alcance={"clases": ["DIV"]})
+    assert r["paquete"]["clases"]["DIV"]["opciones"]
+    rechazadas = b._fichas_rechazadas.get(("DIV", r["run_id"])) or []
+    lagunas = " ".join(r["paquete"]["limitaciones"])
+    assert not rechazadas or "rechazadas" in lagunas          # si el Motor rechaza fichas, se declara
+    assert "clústeres de exposición no calculados" in lagunas  # antes: ML-CLUS-001 rechazado en silencio, run COMPLETO
+    assert r["estado"] == "PARCIAL"
+
+
+# ---------------------------------------------------------------- H-02 / H-03 · horizonte principal del Analista (CS-01, C17)
+def _ciclo_con_parche(tmp_path, monkeypatch, parche):
+    orig = mr._ficha
+
+    def _f(u, msg, ctx, rng, iny):
+        out = orig(u, msg, ctx, rng, iny)
+        parche(out)
+        return out
+    monkeypatch.setattr(mr, "_ficha", _f)
+    b = _bloque(tmp_path)
+    return b.ciclo(AS_OF, alcance={"clases": ["RV"]})
+
+
+def test_h03_se_usan_el_horizonte_y_la_justificacion_del_analista(tmp_path, monkeypatch):
+    r = _ciclo_con_parche(tmp_path, monkeypatch, lambda o: o.update(horizonte_principal="H2", naturaleza_inversion="TACTICA",
+                                                                    justificacion_horizonte="Catalizador trimestral"))
+    ops = r["paquete"]["clases"]["RV"]["opciones"]
+    con_h2 = [o for o in ops if "H2" in o["horizontes"]]
+    assert con_h2                                              # antes: el ejecutor elegía H3 e ignoraba la justificación
+    assert all(o["horizonte_principal"] == "H2" and o["justificacion_horizonte"] == "Catalizador trimestral" for o in con_h2)
+
+
+def test_h02_h5_declarado_sin_naturaleza_no_se_bloquea_por_la_naturaleza_por_defecto(tmp_path, monkeypatch):
+    def parche(o):
+        o["horizonte_principal"] = "H5"
+        o.pop("naturaleza_inversion", None)
+    r = _ciclo_con_parche(tmp_path, monkeypatch, parche)
+    ops = r["paquete"]["clases"]["RV"]["opciones"]
+    assert ops                                                 # antes: CICLICA por defecto, C17 y el tipo vacío
+    assert all(o["horizonte_principal"] == "H5" and o["naturaleza_inversion"] == "ESTRUCTURAL" for o in ops)
+    assert "C17" not in json.dumps(r["g3"].get("bloqueos"), ensure_ascii=False)
+
+
+def test_h02_horizonte_no_ofrecido_se_declara_como_limitacion(tmp_path, monkeypatch):
+    r = _ciclo_con_parche(tmp_path, monkeypatch, lambda o: o.update(horizonte_principal="H1", naturaleza_inversion="TACTICA"))
+    ops = r["paquete"]["clases"]["RV"]["opciones"]
+    assert ops and all("H1" not in o["horizontes"] for o in ops)   # H1 no se ofrece en RV con estos datos
+    assert any("(H1)" in x and "no está entre los ofrecidos" in x for x in r["paquete"]["limitaciones"])   # antes: en silencio
+
+
+@pytest.mark.parametrize("opciones, esperado", [
+    ([_op(72, 70)], "VERDE"),
+    ([_op(65, 80), _op(60, 60)], "AMBAR"),
+    ([], "GRIS"),
+])
+def test_h03_semaforo(opciones, esperado):
+    assert sintesis._semaforo(opciones, UMB) == esperado
+
+
+# ---------------------------------------------------------------- H-04 · festivos de mercado en PS2 de H1
+@pytest.mark.parametrize("as_of, dato, esperado", [
+    ("2026-04-04", "2026-04-02", True),     # sábado tras Viernes Santo, dato del jueves
+    ("2025-12-27", "2025-12-24", True),     # sábado tras Navidad y San Esteban, dato del 24
+    ("2026-06-06", "2026-06-05", True),     # sábado normal, dato del viernes
+    ("2026-06-10", "2026-06-07", False),    # control: más de una sesión
+])
+def test_h04_ps2_h1_descuenta_festivos(tmp_path, as_of, dato, esperado):
+    b = _bloque(tmp_path)
+    assert b._puertas({"senales": {"fecha_dato": dato}}, "N1", as_of, ["H1"])["PS2"] is esperado
+
+
+# ---------------------------------------------------------------- H-05 · la degradación de H5 se aplica en el ciclo siguiente (CS-12)
+def test_h05_degradacion_h5_cambia_la_tabla_del_ciclo_siguiente(tmp_path):
+    b = _bloque(tmp_path)
+    a = b.almacen
+    a.reloj.fijar("2026-06-01")
+    ids = []
+    for i, o in enumerate([1] * 5 + [0] * 15):
+        hid = f"HIT-2025-{i + 1:04d}"
+        ids.append(hid)
+        a.escribir("F4", "AG-10", {"tipo_entrada": "ALTA", "prg_id": hid, "opp_id": "OPP-X", "clase": "RV", "horizonte": "H4",
+                                   "prob_interna": 0.65, "sentido": "POSITIVO", "en_informe": True, "es_hito": True,
+                                   "prg_padre": "PRG-2025-0999", "fecha_emision": "2025-06-05", "fecha_resolucion": "2026-05-29",
+                                   "referencia_ingenua": {"valor_o_prob": 0.5}, "estado": "ABIERTO"})
+        a.escribir("F4", "AG-20", {"tipo_entrada": "RESOLUCION", "prg_id": hid, "estado": "RESUELTO",
+                                   "resolucion": {"resultado_binario": o, "comprobacion_fuga": "SUPERADA", "fecha_resuelto": "2026-05-29"}})
+    a.escribir("F4", "AG-10", {"tipo_entrada": "ALTA", "prg_id": "PRG-2025-0999", "opp_id": "OPP-X", "clase": "RV", "horizonte": "H5",
+                               "prob_interna": None, "hit_ids": ids, "fecha_emision": "2025-06-05", "fecha_resolucion": "2045-06-05",
+                               "estado": "ABIERTO"})
+    antes = aplicabilidad(b.cfg, "RV", "H5")
+    r = b.ciclo("2026-06-05", alcance={"clases": ["RV"]})
+    assert (r["evaluacion"] or {}).get("degradacion_h5")
+    b.ciclo("2026-06-12", alcance={"clases": ["RV"]})
+    assert antes == "SI" and aplicabilidad(b.cfg, "RV", "H5") == "LIMITADO"

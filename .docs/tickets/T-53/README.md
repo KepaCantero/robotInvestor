@@ -2,7 +2,7 @@
 
 | Campo | Valor |
 | --- | --- |
-| Estado | EN CURSO |
+| Estado | EN QA (r01 NO APTO, corregido; pendiente la r02) |
 | Pieza | bloque_a |
 | Planifica · implementa · QA | claude · claude · Astra o un revisor nuevo sin contexto |
 | Aprobación del operador | Encargo del 2026-11-09: «revisa y corrige posibles errores o fallas; evalúa si es posible optimizar la arquitectura o algún agente». Las propuestas de arquitectura las decide él |

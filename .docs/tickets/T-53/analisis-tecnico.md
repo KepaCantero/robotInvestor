@@ -37,7 +37,7 @@ La implementación se repartió en dos grupos de archivos, sin solapes:
 | CS-03 | media | El monitor HT-08 no abría instancias de AG-21 a AG-25 | La lista de agentes sin estado se construye desde la de Analistas | `ht08_monitor.py` |
 | CS-05 | media | Se publicaban 3 bandas verbales en lugar de las 5 del Anexo A y del esquema, con dos tablas incoherentes | Una sola tabla de 5 bandas en la configuración; los huecos van a la banda más cercana a 50 % | `evaluador.py`, YAML |
 | CS-07 | media | La trampa documentada en `CLAUDE.md` era inexacta | Corregida: 17 fichas con código de 60, y las 21 nuevas responden `OPERACION_SIN_FICHA` | `CLAUDE.md` |
-| CS-12 | media | La degradación de H5 se calculaba pero no se aplicaba | Se registra en F6 y F10 («Sí → Limitado»; «Limitado → No» como propuesta de tipo 3, INC-T53-04). **Falta que cambie la tabla que usa el ejecutor** | `evaluador.py`, `almacen.py` |
+| CS-12 | media | La degradación de H5 se calculaba pero no se aplicaba | Se registra en F6 y F10 («Sí → Limitado»; «Limitado → No» como propuesta de tipo 3, INC-T53-04). Tras la QA r01 (H-05), el ejecutor recarga su tabla de horizontes desde F10 al empezar cada ciclo | `evaluador.py`, `almacen.py` |
 | CS-17 | media | El semáforo y el siguiente paso contradecían el prompt del Analizador (por ejemplo, se proponía enviar a B con E de 60 a 69) | Siguen al prompt (6.15.5 y 6.16), con los umbrales en la configuración; la `confianza` se deja (INC-T53-05) | `sintesis.py`, YAML |
 
 **Calidad:**
@@ -59,4 +59,7 @@ La implementación se repartió en dos grupos de archivos, sin solapes:
 | CS-08, CS-11, CS-18, CS-19, CS-23 | Desajustes de recuento, inventario de parámetros y documentación menor | Mejora técnica pendiente |
 | CS-09 | Valor en UC de un cálculo PLAN_STD (0,1 en el YAML; el Anexo A sugiere 1). Cambiarlo altera todos los presupuestos | Decisión del operador, con PA-08 (presupuesto en euros) |
 | CS-10 (resto) | La rotación exploratoria son 2 celdas fijas en lugar del 20 % del presupuesto; el cálculo de evaluación usa 200 réplicas en lugar de 2000 | Mejora técnica pendiente |
-| CS-12 (resto) | `aplicabilidad()` lee `_tabla_horizontes`, no F10 | Mejora técnica pendiente |
+
+## Correcciones de la QA r01
+
+H-01 a H-05 corregidos con su prueba (detalle en `qa.md`). H-06 a H-11, a la deuda técnica (T-63).

@@ -100,6 +100,16 @@ def _siguiente_paso(op: dict, umbrales: dict) -> str:
     return "VIGILAR"
 
 
+def _semaforo(opciones: list, umbrales: dict) -> str:
+    """Prompt del Analizador, 6.15.5: VERDE con ≥ 1 opción de E ≥ E_verde y A ≥ A_verde; ÁMBAR con opciones inciertas o
+    marginales; GRIS sin opciones."""
+    if not opciones:
+        return "GRIS"
+    e_v, a_v = umbrales.get("E_verde", umbrales.get("E_enviar")), umbrales.get("A_verde", umbrales.get("A_profundizar"))
+    solida = any(o["puntuaciones"]["E"] >= e_v and o["puntuaciones"]["A"] >= a_v for o in opciones)
+    return "VERDE" if solida else "AMBAR"
+
+
 def _umbrales_presentacion(cfg: dict) -> tuple[dict, dict]:
     sel = cfg.get("seleccion") or {}
     paso = {"E_enviar": 70, "A_profundizar": 65, **(sel.get("siguiente_paso") or {})}
@@ -110,6 +120,7 @@ def _umbrales_presentacion(cfg: dict) -> tuple[dict, dict]:
 def construir(bloque, run_id, tipo, as_of, clases, nivel, gc0, analisis, seleccion, clusteres, integ, historial, presupuesto) -> tuple[dict, dict]:
     cfg = bloque.cfg
     umbral_paso, umbral_sem = _umbrales_presentacion(cfg)
+    avisos_hp: list[str] = []   # horizontes del Analista sustituidos (8.3): se declaran como limitación
     as_of = pd.Timestamp(as_of)
     certs = {(c["celda"]["clase"], c["celda"]["horizonte"]): c["id"] for c in bloque.evaluador.certificados_vigentes(as_of)}
     prefer = cfg.get("horizonte_principal_preferente") or ["H3", "H2", "H4", "H1", "H5"]
@@ -226,8 +237,13 @@ def construir(bloque, run_id, tipo, as_of, clases, nivel, gc0, analisis, selecci
             nat_ag = f.get("naturaleza_inversion") if f.get("naturaleza_inversion") in NATURALEZAS else None
             hp_ag = f.get("horizonte_principal") if f.get("horizonte_principal") in hz else None
             just = f.get("justificacion_horizonte") or None
+            if f.get("horizonte_principal") and hp_ag is None:
+                avisos_hp.append(f"{f['opp_id']}: el horizonte principal declarado por el Analista "
+                                 f"({f.get('horizonte_principal')}) no está entre los ofrecidos; lo propone el ejecutor (8.3)")
             if hp_ag is not None:
-                nat, hp = nat_ag or NATURALEZA_POR_DEFECTO.get(c, "CICLICA"), hp_ag
+                # Sin naturaleza declarada, el ejecutor propone la coherente con el horizonte del Analista (no inventa
+                # una que haga fallar C17)
+                nat, hp = nat_ag or naturaleza_para(hp_ag), hp_ag
             else:
                 nat = nat_ag or NATURALEZA_POR_DEFECTO.get(c, "CICLICA")
                 hp = next((h for h in prefer if h in hz and naturaleza_coherente(nat, h)), None)
@@ -321,9 +337,7 @@ def construir(bloque, run_id, tipo, as_of, clases, nivel, gc0, analisis, selecci
             if f["opp_id"] not in sel_ids and not f.get("_arrastre") and f["_ht03"]["elegible"]:
                 borradores(f, c, False)
         n = len(opciones)
-        # Prompt del Analizador, 6.15.5: VERDE con ≥ 1 opción de E ≥ 70 y A ≥ 65; ÁMBAR con opciones inciertas o marginales
-        solida = any(o["puntuaciones"]["E"] >= umbral_sem["E_verde"] and o["puntuaciones"]["A"] >= umbral_sem["A_verde"] for o in opciones)
-        sem = "GRIS" if n == 0 else ("VERDE" if solida else "AMBAR")
+        sem = _semaforo(opciones, umbral_sem)
         fins = an["finalistas"]
         clases_out[c] = {"estado_semaforo": sem,
                          "regimen_clase": (an.get("regimen") or "Régimen de la clase no disponible en este ciclo")[:600] if len(an.get("regimen") or "") >= 10 else "Régimen de la clase no disponible en este ciclo",
@@ -356,7 +370,7 @@ def construir(bloque, run_id, tipo, as_of, clases, nivel, gc0, analisis, selecci
             else:
                 x = cerr.get(v["opp_id"], {"motivo_cierre": "SUSTITUCION", "comentario": "Sale del top-3: sustituida o ya no elegible"})
                 seguimiento.append({"opp_id": v["opp_id"], "estado": "CERRADA", "motivo_cierre": x["motivo_cierre"], "comentario": x["comentario"], "decision_broker": dec})
-    limit = [x for x in integ.get("limitaciones", []) if isinstance(x, str) and len(x) >= 5]
+    limit = [x for x in integ.get("limitaciones", []) if isinstance(x, str) and len(x) >= 5] + avisos_hp
     for c in clases:
         if analisis[c].get("estado") == "PARCIAL":
             limit.append(f"{NOMBRE_CLASE[c]}: alcance reducido declarado ({'; '.join(analisis[c].get('lagunas', [])[:2]) or 'salida parcial'})")

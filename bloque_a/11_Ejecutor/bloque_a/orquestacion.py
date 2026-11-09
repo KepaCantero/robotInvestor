@@ -102,6 +102,19 @@ def _semana(fecha) -> str:
     return f"Semana {f.isocalendar()[1]} de {f.isocalendar()[0]}"
 
 
+def _sesiones_entre(desde, hasta, festivos: dict) -> int:
+    """Sesiones hábiles en [desde, hasta) sin los cierres habituales de mercado (`ps2_festivos`, [PROPUESTO]): Viernes
+    Santo y fechas fijas MM-DD. Así el dato de la última sesión real vale en H1 tras un puente o un festivo."""
+    d0, d1 = pd.Timestamp(desde).normalize(), pd.Timestamp(hasta).normalize()
+    if d1 <= d0:
+        return 0
+    cierres = [d for d in pd.date_range(d0, d1) if d.strftime("%m-%d") in set(festivos.get("fijos") or [])]
+    if festivos.get("viernes_santo"):
+        from pandas.tseries.holiday import GoodFriday
+        cierres += list(GoodFriday.dates(d0, d1))
+    return int(np.busday_count(d0.date(), d1.date(), holidays=[d.date() for d in cierres]))
+
+
 class Bloque:
     def __init__(self, cfg: dict, proveedor, universo: pd.DataFrame, cliente: LLMClient, carpeta_estado,
                  carpeta_entregables=None, anonimizar: bool | None = None) -> None:
@@ -109,6 +122,7 @@ class Bloque:
         self.modo = cfg.get("modo", "vivo")
         self.proveedor = proveedor
         self._sin_historia: dict[tuple[str, str], list[str]] = {}   # (clase, run_id) → símbolos sin dato a la fecha as_of
+        self._fichas_rechazadas: dict[tuple[str, str], list[str]] = {}   # (clase, run_id) → fichas del lote rechazadas
         self.universo = universo.copy()
         self.reloj = Reloj(cfg.get("zona_horaria", "Europe/Madrid"))
         self.almacen = Almacen(carpeta_estado, self.reloj)
@@ -244,17 +258,18 @@ class Bloque:
     # Señales deterministas por clase (Motor, PLAN_MIN)
     # ====================================================================================
     def senales_clase(self, clase: str, as_of, run_id: str) -> tuple[dict[str, dict], list[str]]:
+        ini = str((pd.Timestamp(as_of) - pd.DateOffset(years=3, days=30)).date())
         simbolos, sin_historia = [], []
         for f in self._universo_clase(clase, run_id):
-            # Un símbolo sin dato hasta la fecha as_of (p. ej. empieza a cotizar después) no puede tumbar el lote
-            # de fichas del tipo entero: se excluye y se declara como laguna (R14, R16, PS2).
+            # Un símbolo sin datos en la ventana del lote (empieza a cotizar después de as_of o dejó de cotizar antes
+            # de la ventana) no puede tumbar las fichas del tipo entero: se excluye y se declara (R14, R16, PS2).
             try:
-                self.proveedor.valor_en(f["simbolo"], as_of)
+                self.proveedor.cierres(f["simbolo"], ini, as_of)
                 simbolos.append(f["simbolo"])
             except DatosNoDisponibles:
                 sin_historia.append(f["simbolo"])
         self._sin_historia[(clase, run_id)] = sin_historia
-        ini = str((pd.Timestamp(as_of) - pd.DateOffset(years=3, days=30)).date())
+        self._fichas_rechazadas[(clase, run_id)] = []
         datos = [{"serie": s, "inicio": ini} for s in simbolos]
         tabla: dict[str, dict] = {s: {} for s in simbolos}
         calcs: list[str] = []
@@ -262,7 +277,8 @@ class Bloque:
                               ("RISK-DD-001", {}), ("ST-DESC-001", {"posicion_ultimo": True}), ("FIN-CAGR-001", {})):
             r = self.motor.servir({"operacion": ficha, "plan": "PLAN_MIN", "clase": clase, "datos": datos, "parametros": params,
                                    "perfil": ["TRANSVERSAL"], "fecha_corte": str(pd.Timestamp(as_of).date())}, "AG-02", run_id)
-            if r["estado"] == "RECHAZADO":
+            if r["estado"] == "RECHAZADO":   # nunca en silencio: se declara como laguna del tipo
+                self._fichas_rechazadas[(clase, run_id)].append(ficha)
                 continue
             calcs.append(r["calc_id"])
             for s, v in (r["resultado"].get("tabla") or {}).items():
@@ -390,6 +406,8 @@ class Bloque:
         self._informe_aprendizaje(res_eval, as_of, run_id)
 
         f10 = self.f10(as_of)
+        # La aplicabilidad de horizontes vigente es la de F10 (P-31) si el Evaluador la degradó (12.2); si no, la tabla 8.3
+        self.cfg["_tabla_horizontes"] = self.evaluador._matriz_aplicabilidad(as_of)
         activas = list(f10.get("P-02") or CLASES)
         clases = [c for c in ((alcance or {}).get("clases") or activas) if c in activas]
         # V5.1 (7.9): las consultas CT-23 vencidas siguen con su supuesto declarado; una BLOQUEANTE sin respuesta pausa
@@ -456,12 +474,15 @@ class Bloque:
         historial = self.evaluador.historial_aciertos(as_of)
         paquete, extras = sint.construir(self, run_id, tipo, as_of, clases, nivel, gc0, analisis, seleccion, clusteres, integ,
                                          historial, presupuesto)
+        if clusteres.get("rechazo"):
+            limitaciones = limitaciones + [(f"clústeres de exposición no calculados ({clusteres['rechazo']}): la concentración entre "
+                                            "opciones no se ha podido medir en este ciclo")]
         if limitaciones:
             paquete["limitaciones"] = limitaciones + [x for x in paquete["limitaciones"] if not x.startswith("Ninguna limitación")]
         # F6 · G3 (HT-09) + dictamen del Orquestador si no es APTO
         paquete, g3 = self._validar_g3(paquete, extras, as_of, run_id)
         estado_run = "COMPLETO"
-        if presupuesto.cierres or pausadas or any(a.get("estado") == "PARCIAL" for a in analisis.values()):
+        if presupuesto.cierres or pausadas or clusteres.get("rechazo") or any(a.get("estado") == "PARCIAL" for a in analisis.values()):
             estado_run = "PARCIAL"   # un tipo pausado por una consulta BLOQUEANTE deja el run incompleto (7.9)
         resultado = {"run_id": run_id, "as_of": str(as_of.date()), "tipo": tipo, "nivel_por_clase": nivel, "gc0": gc0,
                      "g3": g3, "estado": estado_run, "paquete": paquete, "entregables": None, "evaluacion": res_eval}
@@ -540,8 +561,12 @@ class Bloque:
         excluidos = self._sin_historia.get((clase, run_id)) or []
         if excluidos:
             out["estado"] = "PARCIAL"
-            out["lagunas"].append(f"sin datos HT-01 hasta {pd.Timestamp(as_of).date()} para {', '.join(excluidos)}: "
-                                  "excluidos del cribado de este ciclo (PS2)")
+            out["lagunas"].append(f"sin datos HT-01 en la ventana de 3 años hasta {pd.Timestamp(as_of).date()} para "
+                                  f"{', '.join(excluidos)}: excluidos del cribado de este ciclo (PS2)")
+        rechazadas = self._fichas_rechazadas.get((clase, run_id)) or []
+        if rechazadas:
+            out["estado"] = "PARCIAL"
+            out["lagunas"].append(f"fichas del Motor rechazadas en este ciclo: {', '.join(rechazadas)} (sus señales faltan)")
         if not senales:
             out.update({"estado": "PARCIAL", "lagunas": ["sin datos HT-01 para el universo de la clase (PS2)"]})
             return out
@@ -881,8 +906,9 @@ class Bloque:
                                "parametros": {"umbral_rho": float((self.cfg.get("clusteres") or {}).get("umbral_rho", 0.7)),
                                               "ventana_semanas": int((self.cfg.get("clusteres") or {}).get("ventana_semanas", 104))}, "fecha_corte": str(pd.Timestamp(as_of).date())},
                               "AG-02", run_id)
-        if r["estado"] == "RECHAZADO":
-            return {"asignacion": {p: i + 1 for i, p in enumerate(proxies)}, "calc_id": None, "n_efectivo": len(proxies)}
+        if r["estado"] == "RECHAZADO":   # sin clústeres no se mide la concentración: se declara, no se calla (T-53, QA H-01)
+            return {"asignacion": {p: i + 1 for i, p in enumerate(proxies)}, "calc_id": None, "n_efectivo": len(proxies),
+                    "rechazo": str(r.get("detalle") or r.get("motivo_rechazo") or "ML-CLUS-001 rechazado")}
         return {"asignacion": r["resultado"]["asignacion"], "calc_id": r["calc_id"], "n_efectivo": r["resultado"]["n_efectivo"]}
 
     def _opp_id(self, clase: str, proxy: str, tipo_opcion: str, as_of) -> tuple[str, dict | None]:
@@ -898,7 +924,7 @@ class Bloque:
         if fecha_dato:
             edad = (pd.Timestamp(as_of) - pd.Timestamp(fecha_dato)).days
             # H1 cuenta sesiones hábiles (el dato del viernes vale el lunes); el resto, días naturales (Anexo A)
-            sesiones = int(np.busday_count(pd.Timestamp(fecha_dato).date(), pd.Timestamp(as_of).date()))
+            sesiones = _sesiones_entre(fecha_dato, as_of, self.cfg.get("ps2_festivos") or {})
         else:
             edad = sesiones = 999   # sin fecha del dato no se supera PS2 (falla cerrado)
         ps2 = bool(horizontes_ok) and all((sesiones if h == "H1" else edad) <= lim[h] for h in horizontes_ok)
