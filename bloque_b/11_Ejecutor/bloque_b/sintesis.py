@@ -193,6 +193,10 @@ def _objeciones_candidato(objeciones, cid, *, para_c=False):
                  "respuesta": o.get("respuesta") or ""}
         if not para_c:
             aviso["resuelta"] = o["resuelta"]
+        if "x_evidencia_respuesta" in o:
+            aviso.update(x_evidencia_respuesta=o["x_evidencia_respuesta"], x_resuelta=o["resuelta"])
+            if "x_motivo_abierta" in o:
+                aviso["x_motivo_abierta"] = o["x_motivo_abierta"]
         if "x_eslabon_id" in o:
             aviso.update(x_eslabon_id=o["x_eslabon_id"], x_nombre_eslabon=o["x_nombre_eslabon"],
                          x_resuelta=o["resuelta"], x_argumento=o["argumento"])
@@ -385,10 +389,15 @@ def construir_paquete(c, st: Dict, res: Dict, sint: Dict, riesgo: int) -> Dict:
                 "alternativas": [], "evidencias": [premisas[0]["evidencia"][0]], "calculos": [s_.get("calc_puntuar")],
                 "data_cutoff": corte, "limitaciones": ["Opción añadida por cobertura del eslabón, adicional al top-N del tipo"], "aviso": AVISO_C})
     abiertas_tesis = [o for o in st["refutacion"]["objeciones"] if o["objeto"] == "TESIS" and not o["resuelta"]]
-    if abiertas_tesis:
+    resueltas_fuertes = [o for o in st["refutacion"]["objeciones"] if o["objeto"] == "TESIS"
+                         and o["resuelta"] and o.get("x_evidencia_respuesta")]
+    if abiertas_tesis or resueltas_fuertes:
         for encargos in enc.values():
             for encargo in encargos:
-                encargo["contexto_ambito"]["x_objeciones_tesis_abiertas"] = abiertas_tesis
+                if abiertas_tesis:
+                    encargo["contexto_ambito"]["x_objeciones_tesis_abiertas"] = abiertas_tesis
+                if resueltas_fuertes:
+                    encargo["contexto_ambito"]["x_objeciones_tesis_resueltas"] = resueltas_fuertes
     # Veredicto
     flags = st["flags"]
     disp = [d for d in (sint.get("disparadores") or []) if isinstance(d, dict) and d.get("disparador")]

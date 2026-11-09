@@ -28,7 +28,8 @@ def test_retraso_transformadores(hacer_entorno, rapido, monkeypatch, objeto, eid
         return informe
 
     def director(m, c, r):
-        return {"respuestas": {o["obj_id"]: {"respuesta": "Contraste de plazos.", "resuelta": cerrada}
+        return {"respuestas": {o["obj_id"]: {"respuesta": "Contraste de plazos.", "resuelta": cerrada,
+                                                "evidencia_nueva": list(m["referencias_disponibles"])[:1]}
                                for o in m["objeciones"]}}
 
     monkeypatch.setitem(mr._TAREAS, ("AG-B14", "refutacion"), critico)
@@ -71,6 +72,7 @@ def test_retraso_transformadores(hacer_entorno, rapido, monkeypatch, objeto, eid
                 assert avisos[0]["resumen"] == argumento
                 assert avisos[0]["x_eslabon_id"] == eid
                 assert avisos[0]["x_resuelta"] is cerrada
+                assert avisos[0]["x_evidencia_respuesta"] == obj["x_evidencia_respuesta"]
                 if not cerrada:
                     assert enc["veredicto_candidato"] == "SECUNDARIO"
             vistos.add(bool(avisos))

@@ -24,7 +24,8 @@ def test_objecion_individual_conserva_el_contexto_y_afecta_solo_al_finalista(hac
             assert {c["cand_id"] for c in mensaje["finalistas"]} == objetados
             assert all(c["nombre"] and c["tipo"] for c in mensaje["finalistas"])
             return {"respuestas_objeciones": {
-                o["obj_id"]: {"respuesta": "Contraste simulado del contrato.", "resuelta": resuelta}
+                o["obj_id"]: {"respuesta": "Contraste simulado del contrato.", "resuelta": resuelta,
+                              "evidencia_nueva": list(mensaje["referencias_disponibles"])[:1]}
                 for o in mensaje["objeciones"]
             }}
 
@@ -45,6 +46,8 @@ def test_objecion_individual_conserva_el_contexto_y_afecta_solo_al_finalista(hac
     assert antes.keys() == despues.keys()
     assert antes[objetivo]["puertas"]["PC5"] == "OK"
     assert despues[objetivo]["puertas"]["PC5"] == "LIMITA"
+    caja = next(e for grupo in control["paquete_para_bloque_C"].values() for e in grupo if e["cand_id"] == objetivo)
+    assert any(o.get("x_evidencia_respuesta") and o["x_resuelta"] for o in caja["objeciones_y_respuestas"])
     assert despues[objetivo]["veredicto"] == "SECUNDARIO"
     for cid in antes.keys() - {objetivo}:
         assert despues[cid]["puertas"] == antes[cid]["puertas"]
