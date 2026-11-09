@@ -9,3 +9,4 @@
 | compartida/2026-11-09_constitucion-ratificada | decision | Toda la Constitución V0.5 ratificada (D-43); solo quedan los valores aplazados P-xx | vigente |
 | compartida/2026-11-09_reglas-del-operador | regla | Reglas de trabajo y de diseño fijadas por el operador | vigente |
 | compartida/2026-11-09_flujo-y-reparto | convencion | Flujo de cuatro fases y QA cruzada entre Claude y Astra | vigente |
+| compartida/2026-11-09_cuestionario-y-multiusuario | regla | Cuestionario guiado para las decisiones, valores por defecto para cualquier usuario y deseo de multiusuario (T-57, T-59) | vigente |
