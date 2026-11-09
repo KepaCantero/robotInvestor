@@ -36,7 +36,7 @@ porque cambiarlo toca la herramienta de referencia del corpus y es una regla de 
 **INC-T53-02 · 2026-11-09 · Antigüedad de los datos en H1 (Bloque A, Anexo A, PS2).** El Anexo A dice «H1: 1 día» y
 el código toleraba 3 días naturales. Decisión: H1 se cuenta en sesiones hábiles (el dato del viernes vale el lunes)
 y el resto de horizontes sigue en días naturales, para no relajar H2–H5. Los límites pasan a
-`ps2_antiguedad_maxima_dias` en la configuración.
+`ps2_antiguedad_maxima_dias` en la configuración. Ampliación (QA de T-53, H-04): las sesiones descuentan los cierres habituales de mercado (`ps2_festivos`, [PROPUESTO]: Viernes Santo y 1-1, 24-12, 25-12, 26-12 y 31-12), para que el dato de la última sesión real valga tras un festivo. El calendario por mercado (por ejemplo, el 4 de julio en EE. UU.) queda para el perfil de cada tipo de activo; T-57 fija la lista.
 
 **INC-T53-03 · 2026-11-09 · Umbral de revocación de certificados por calibración (Bloque A).** El código revoca un
 certificado si el ECE llega a 0,12, pero ese número no figura en el Anexo A (que solo fija `ece_max` 0,15 para

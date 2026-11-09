@@ -14,3 +14,4 @@
 | compartida/2026-11-09_enmienda-3-ratificada | decision | Constitución V0.6: enmienda 3 ratificada (cuestionario guiado, valores por defecto, cambios por el Broker, una copia por usuario) | vigente |
 | compartida/2026-11-09_espacio-docs | convencion | Espacio de trabajo .docs (Kepa): tickets T-NN, diario, scripts para no repetir tokens, knowledge; traspasos en handoff.md | vigente |
 | compartida/2026-11-09_bloque-b-objeciones-y-evaluacion | estado | Registro histórico del traslado al ticket T-61. | histórica |
+| compartida/2026-11-09_revision-bloque-a | estado | T-53: Bloque A corregido (CA, CS y QA r01 H-01..H-05); propuestas PA-01..PA-21 a la espera del operador; bajos en T-63 | vigente |

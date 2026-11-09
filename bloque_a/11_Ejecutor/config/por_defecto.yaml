@@ -201,6 +201,8 @@ seleccion:
 
 # T-53 · Antigüedad máxima de los datos de mercado (Anexo A, PS2). H1 se cuenta en sesiones hábiles; el resto, en días naturales
 ps2_antiguedad_maxima_dias: {H1: 1, H2: 3, H3: 7, H4: 30, H5: 90}
+# [PROPUESTO] Cierres habituales de mercado que no cuentan como sesión al medir la antigüedad en H1 (INC-T53-02)
+ps2_festivos: {viernes_santo: true, fijos: ['01-01', '12-24', '12-25', '12-26', '12-31']}
 
 # T-53 · Clústeres de exposición (ML-CLUS-001; Catálogo del Motor): umbral de correlación y ventana
 clusteres: {umbral_rho: 0.7, ventana_semanas: 104}
