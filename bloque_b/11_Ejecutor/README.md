@@ -312,12 +312,25 @@ Al final, la fecha avanza hasta el último dato disponible:
 
 | Archivo | Columnas / contenido |
 |---|---|
-| `rankings.csv` | `fecha_asof, pet_id, cand_id, tipo_activo, simbolo, nombre, S, en_top_n, rango, veredicto` (candidato); `veredicto_ambito, A, E, C` (solo modo completo); `fecha_fin_horizonte, evaluable, rent_fwd` (rentabilidad del instrumento hasta el fin del horizonte); `rent_fwd_universo` (media equiponderada del universo cribado: referencia del ranking, 9.11); `rent_fwd_referencia_ambito` (referencia del ámbito) |
-| `series_ranking.csv` | Por fecha y tipo: `fecha_fin_horizonte, n_universo, n_top, rent_top, rent_universo, exceso_vs_universo, rent_referencia_ambito, exceso_vs_referencia_ambito, ic_rango` (Spearman entre S y la rentabilidad posterior relativa al universo) |
+| `rankings.csv` | `fecha_asof, pet_id, cand_id, tipo_activo, simbolo, nombre, S, en_top_n, rango, veredicto` (candidato); `veredicto_ambito, A, E, C` (solo modo completo); `fecha_fin_horizonte, evaluable, rent_fwd` (rentabilidad del instrumento hasta el fin del horizonte); `fecha_precio_final` (fecha del cierre utilizado) y `dias_desfase_precio_final` (días naturales desde ese cierre hasta el vencimiento: 0 si coinciden, ambos campos vacíos si no se pudo evaluar); `rent_fwd_universo` (media equiponderada del universo cribado: referencia del ranking, 9.11); `rent_fwd_referencia_ambito` (referencia del ámbito) |
+| `series_ranking.csv` | Por fecha y tipo: `n_top_elegidos` (seleccionados originalmente), `n_top_evaluados` (con puntuación y rentabilidad, igual a `n_top`) y `n_top_sin_precios` (sin rentabilidad observable para el periodo). Se muestra el recuento aun cuando no pueda calcularse la comparación. Otras columnas: `fecha_fin_horizonte, n_universo, n_top, rent_top, rent_universo, exceso_vs_universo, rent_referencia_ambito, exceso_vs_referencia_ambito, ic_rango` (Spearman entre S y la rentabilidad posterior relativa al universo) |
 | `pronosticos.csv` | PRG-B de ámbito y de ranking: `prg_id, pet_id, tipo, fecha_emision, fecha_resolucion, tipo_activo, banda, probabilidad_interna, estado, acierto, relativa, exceso, ic_rango, brier` |
 | `consumo.csv` | Por ejecución: llamadas, tokens de entrada, salida, escritura y lectura de caché, búsquedas web y UC |
 | `metricas.json` | Por tipo: `n_rankings`, exceso medio del top-N frente al universo y frente a la referencia del ámbito con IC 90 % (bootstrap), tasa de acierto, IC de rango medio con IC 90 %, `certificable` (n ≥ 30 y ambos IC por encima de 0). También la evaluación de pronósticos (celdas, Brier, BSS), los certificados, el consumo total y las advertencias |
 | `entregables_ultima_fecha/` | Los seis entregables de la última fecha (modo completo) |
+
+Para comparar la selección con el universo evaluable, `metricas.json` muestra dos medias por tipo de activo. Cada periodo pesa lo mismo. Los excesos son diferencias de rentabilidad expresadas como fracción (0,01 equivale a un punto porcentual).
+
+| Periodos incluidos | Número de periodos | Exceso medio frente al universo |
+|---|---|---|
+| Todos los evaluables | `n_rankings` | `exceso_medio_top_n_vs_universo` |
+| Evaluables con todos los elegidos evaluados | `n_rankings_seleccion_completa` | `exceso_medio_top_n_vs_universo_seleccion_completa` |
+
+Si solo hay periodos parciales, la segunda fila tiene recuento 0 y media nula (`null`). Si un tipo carece de periodos evaluables, sus recuentos por fecha se consultan en `series_ranking.csv`. La certificación sigue su criterio de ventanas sin solapamiento.
+
+**Comparación con el azar.** En ambos modos, cada fila de `series_ranking.csv` compara la selección original con grupos del mismo tamaño, fecha y tipo de activo. El sorteo toma los admitidos por HT-03 en aquella fecha, incluidas las alternativas. Conserva sus límites de subclúster, emisor de renta fija, índice replicado y las incompatibilidades por correlación aplicadas al seleccionar. Las rentabilidades se miden en el mismo horizonte, con igual peso por activo. Si falta la rentabilidad de algún admitido se informa `universo_incompleto`: quitarlo después de conocer la historia alteraría el sorteo.
+
+Si las combinaciones caben en `evaluacion.bootstrap_replicas` (1.000 por defecto), se examinan todas. En otro caso se sortean ese número de grupos uniformemente, sin repetir activos dentro de un grupo. La semilla depende del ámbito, fecha, tipo y horizonte. Se descartan los grupos que incumplen las reglas. `azar_metodo`, `azar_estado`, `azar_grupos_examinados` y `azar_grupos_validos` indican cómo se obtuvo la comparación. `azar_pct_superado` es el porcentaje de grupos válidos que rindieron estrictamente menos que el robot. `azar_pct_empate` informa los empates por separado. Si no hay comparación, ambos quedan vacíos. En `metricas.json`, `azar_pct_superado_medio` da el mismo peso a cada periodo comparable y `n_periodos_azar` indica cuántos entran. Es una medida descriptiva, independiente de la certificación.
 
 ### 8.2 Recomendaciones para el backtest
 
