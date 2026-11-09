@@ -899,8 +899,14 @@ def entregar(c, st: Dict) -> None:
     (ent.salida / f"{p['fecha']}_entrega_{p['pet_id']}{'_fase' + str(fase) if fase else ''}.json").write_text(json.dumps(entrega, ensure_ascii=False, indent=1), encoding="utf-8")
     alm.escribir("F1", "AG-B01", {"tipo_entrada": "ENTREGA", "id": alm.nuevo_id("ENT-B"), "pet_id": p["pet_id"], "ct_b_02": entrega,
                                   "tiempos_por_tramo": st["tiempos"], "estimacion_fases": st.get("estimacion_fases"), "uc_por_tramo": st.get("uc_tramos")})
+    universos_azar = {}
+    if ent.modo == "backtest":
+        from .comparacion_azar import universo_azar
+        universos_azar = {t: universo_azar(sel, st["seleccion"][t].get("correlaciones"))
+                          for t, sel in (st["ht03"].get("seleccion") or {}).items()}
     # F3: REC-B y CAND-B (Director); F4: PRG-B (Prospectiva); F6: MKT-B (Director); agenda HT-05 (Coordinador)
-    alm.escribir("F3", "AG-B02", {"tipo_entrada": "REC", "id": p["rec_id"], "pet_id": p["pet_id"], "ambito": p["ambito"], "tipo_objeto": p["ambito"]["tipo_objeto"],
+    alm.escribir("F3", "AG-B02", {"tipo_entrada": "REC", **({"universos_azar": universos_azar} if universos_azar else {}),
+                                  "id": p["rec_id"], "pet_id": p["pet_id"], "ambito": p["ambito"], "tipo_objeto": p["ambito"]["tipo_objeto"],
                                   "veredicto": v["valor"], "A": p["puntuaciones"]["A"], "E": p["puntuaciones"]["E"], "C": p["puntuaciones"]["C"],
                                   "resultado_del_analisis": v["resultado_del_analisis"], "puertas_viabilidad": p["capas"]["puertas_viabilidad"],
                                   "continuacion_forzada": p["capas"]["continuacion_forzada"], "mapa_cadena_valor": p["mapa_cadena_valor"],

@@ -11,6 +11,7 @@ from __future__ import annotations
 import hashlib
 import json
 import math
+from fractions import Fraction
 from typing import Dict, List, Optional, Sequence, Tuple
 
 import numpy as np
@@ -151,7 +152,9 @@ class Motor:
                     e[m] = None if v is None else v + rng.normal(0, ruido * desv[m]) if desv[m] > 0 else v
                 pert_datos.append(e)
             comp_b = ht03.normalizar_universo(pert_datos, tipo)
-            pesos = {k: (None if w is None else max(0.0, w + rng.uniform(-pert, pert))) for k, w in pb["pesos"].items()}
+            # HT-03 usa pesos racionales exactos. Todos los candidatos comparten los de esta réplica.
+            pesos = {k: None if w is None else Fraction(str(max(0.0, w + rng.uniform(-pert, pert))))
+                     for k, w in pb["pesos"].items()}
             Sb = {}
             for c in calc_ids:
                 r = ht03.calcular_S(comp_b[c], tipo, pesos)
@@ -235,12 +238,17 @@ class Motor:
     def rentabilidad(self, simbolo: str, desde, hasta) -> Optional[float]:
         """Rentabilidad entre el último cierre ≤ desde y el último cierre ≤ hasta. Un valor dado de baja antes de
         `hasta` se valora a su último precio (tratamiento de bajas declarado)."""
+        observacion = self.rentabilidad_con_fecha(simbolo, desde, hasta)
+        return observacion[0] if observacion is not None else None
+
+    def rentabilidad_con_fecha(self, simbolo: str, desde, hasta) -> tuple[float, pd.Timestamp] | None:
+        """Rentabilidad y fecha efectiva del cierre final utilizado en el cálculo."""
         try:
             _, v0 = self.prov.valor_en(simbolo, desde)
-            _, v1 = self.prov.valor_en(simbolo, hasta)
+            fecha_final, v1 = self.prov.valor_en(simbolo, hasta)
         except DatosNoDisponibles:
             return None
-        return float(v1 / v0 - 1)
+        return float(v1 / v0 - 1), fecha_final
 
 
 # ---------------------------------------------------------------------- MC-B10 · métricas de evaluación

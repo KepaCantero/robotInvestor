@@ -19,6 +19,7 @@ import numpy as np
 import pandas as pd
 
 from . import evaluador
+from .comparacion_azar import comparar_azar, universo_azar
 from .herramientas import ht03, ht11
 from .herramientas.ht01_datos import DatosNoDisponibles
 from .motor import ic_bootstrap_media, spearman
@@ -33,7 +34,8 @@ def fechas_corte(desde: str, hasta: str, frecuencia: str = "mensual") -> List[st
     return [str(pd.Timestamp(x).date()) for x in d]
 
 
-def seleccion_rapida(ent, clave: str, tipo: str, nivel: str = "N2", horizonte: str = "H3") -> List[Dict]:
+def seleccion_rapida(ent, clave: str, tipo: str, nivel: str = "N2", horizonte: str = "H3",
+                    universos_azar: dict | None = None) -> List[Dict]:
     amb = ent.ambitos[clave]
     u = ht11.construir_universo(tipo, [{"nombre": f"universo_{tipo}", "filas": ent.universos[tipo]}], ent.as_of, clave, horizonte,
                                 ent.cfg.get("marco_invertibilidad"))
@@ -47,6 +49,8 @@ def seleccion_rapida(ent, clave: str, tipo: str, nivel: str = "N2", horizonte: s
               "indice_replicado": f.get("indice_replicado") or None,
               "alertas": [{"senal": a, "critica": True} for a in (f.get("alertas_criticas") or "").split(";") if a]} for f in filas]
     sel = ht03.seleccionar(cands, tipo, nivel, "INVERTIR")
+    if universos_azar is not None:
+        universos_azar[tipo] = universo_azar(sel)
     top = {c["cand_id"]: c for c in sel["top_n"]}
     out = []
     for f in filas:
@@ -83,13 +87,15 @@ def backtest(ent, coord, peticion: Dict, desde: str, hasta: str, frecuencia: str
     corte_modelo = (ent.cfg.get("backtest") or {}).get("fecha_corte_modelo")
     if corte_modelo and desde <= corte_modelo and not solo_seleccion and ent.tipo_cliente == "anthropic":
         advertencias.append(f"El periodo empieza antes de la fecha de corte del modelo ({corte_modelo}): posible fuga por conocimiento del modelo")
+    universos_azar: dict[str, dict] = {}
     ultima_entrega = None
     for f in fechas_corte(desde, hasta, frecuencia):
         ent.fijar_as_of(f)
+        universos_azar[f] = {}
         if solo_seleccion:
             for t in (peticion.get("tipos_activo_admitidos") or amb.get("tipos_activo") or ["RV"]):
                 if t in ent.universos:
-                    for x in seleccion_rapida(ent, clave, t, peticion.get("nivel") if peticion.get("nivel") in ("N1", "N2", "N3") else "N2", horizonte):
+                    for x in seleccion_rapida(ent, clave, t, peticion.get("nivel") if peticion.get("nivel") in ("N1", "N2", "N3") else "N2", horizonte, universos_azar[f]):
                         filas.append({"fecha_asof": f, "pet_id": "", **x})
             continue
         r = coord.recibir(peticion)
@@ -99,8 +105,10 @@ def backtest(ent, coord, peticion: Dict, desde: str, hasta: str, frecuencia: str
             continue
         if r.get("entregables"):
             ultima_entrega = r
-        rec = ent.alm.estado("F3").get(pet_id.replace("PET-B-", "REC-B-")) or {}
-        for k, cnd in ent.alm.estado("F3").items():
+        estado_f3 = ent.alm.estado("F3")
+        rec = estado_f3.get(pet_id.replace("PET-B-", "REC-B-")) or {}
+        universos_azar[f] = rec.get("universos_azar") or {}
+        for k, cnd in estado_f3.items():
             if str(k).startswith("CAND-B-") and cnd.get("pet_id") == pet_id:
                 filas.append({"fecha_asof": f, "pet_id": pet_id, "cand_id": k, "tipo_activo": cnd.get("tipo_activo"), "simbolo": cnd.get("simbolo"),
                               "nombre": cnd.get("nombre"), "S": cnd.get("S"), "en_top_n": cnd.get("en_top_n"), "rango": cnd.get("rango"),
@@ -119,16 +127,22 @@ def backtest(ent, coord, peticion: Dict, desde: str, hasta: str, frecuencia: str
             ultimas_fechas[simbolo] = str(datos.index[-1].date())
     fin_datos = max(ultimas_fechas.values(), default=hasta)
     ent.fijar_as_of(fin_datos)
+    vencimientos = {f: _fin_horizonte(f, H) for f in sorted({x["fecha_asof"] for x in filas})}
     for x in filas:
-        fh = _fin_horizonte(x["fecha_asof"], H)
+        fh = vencimientos[x["fecha_asof"]]
         x["fecha_fin_horizonte"] = fh
         x["rent_fwd"] = None
+        x["fecha_precio_final"] = None
+        x["dias_desfase_precio_final"] = None
         if fh <= fin_datos and x.get("simbolo") in ultimas_fechas:
-            x["rent_fwd"] = ent.motor.rentabilidad(x["simbolo"], x["fecha_asof"], fh)
+            observacion = ent.motor.rentabilidad_con_fecha(x["simbolo"], x["fecha_asof"], fh)
+            if observacion is not None:
+                x["rent_fwd"], fecha_precio = observacion
+                x["fecha_precio_final"] = fecha_precio.date().isoformat()
+                x["dias_desfase_precio_final"] = (pd.Timestamp(fh).date() - fecha_precio.date()).days
         x["evaluable"] = x["rent_fwd"] is not None
     rf_ref = {}
-    for f in sorted({x["fecha_asof"] for x in filas}):
-        fh = _fin_horizonte(f, H)
+    for f, fh in vencimientos.items():
         rf_ref[f] = ent.motor.rentabilidad(ref_simbolo, f, fh) if ref_simbolo and fh <= fin_datos else None
     por = {}
     for x in filas:
@@ -137,6 +151,16 @@ def backtest(ent, coord, peticion: Dict, desde: str, hasta: str, frecuencia: str
     for (f, t), xs in sorted(por.items()):
         ev = [x for x in xs if x.get("rent_fwd") is not None and x.get("S") is not None]
         top = [x for x in ev if x.get("en_top_n")]
+        elegidos = [x for x in xs if x.get("en_top_n")]
+        resumen = {"fecha_asof": f, "fecha_fin_horizonte": xs[0]["fecha_fin_horizonte"], "tipo_activo": t,
+                   "n_universo": len(ev), "n_top": len(top), "rent_top": None, "rent_universo": None,
+                   "exceso_vs_universo": None, "rent_referencia_ambito": rf_ref.get(f),
+                   "exceso_vs_referencia_ambito": None, "ic_rango": None,
+                   "n_top_elegidos": len(elegidos), "n_top_evaluados": len(top),
+                   "n_top_sin_precios": sum(x["rent_fwd"] is None for x in elegidos)}
+        resumen.update(comparar_azar(universos_azar[f].get(t), xs, t, int(ent.cfg["evaluacion"]["bootstrap_replicas"]),
+                                     f"{clave}|{f}|{t}|{horizonte}"))
+        serie.append(resumen)
         if len(ev) < 3 or not top:
             continue
         mu = float(np.mean([x["rent_fwd"] for x in ev]))
@@ -144,21 +168,27 @@ def backtest(ent, coord, peticion: Dict, desde: str, hasta: str, frecuencia: str
         for x in xs:
             x["rent_fwd_universo"] = round(mu, 6)
             x["rent_fwd_referencia_ambito"] = rf_ref.get(f)
-        ic = spearman([x["S"] for x in ev], [x["rent_fwd"] - mu for x in ev])
-        serie.append({"fecha_asof": f, "fecha_fin_horizonte": xs[0]["fecha_fin_horizonte"], "tipo_activo": t, "n_universo": len(ev), "n_top": len(top), "rent_top": mt, "rent_universo": mu,
-                      "exceso_vs_universo": mt - mu, "rent_referencia_ambito": rf_ref.get(f),
-                      "exceso_vs_referencia_ambito": None if rf_ref.get(f) is None else mt - rf_ref[f], "ic_rango": ic})
+        resumen.update(rent_top=mt, rent_universo=mu, exceso_vs_universo=mt - mu,
+                       exceso_vs_referencia_ambito=None if rf_ref.get(f) is None else mt - rf_ref[f],
+                       ic_rango=spearman([x["S"] for x in ev], [x["rent_fwd"] - mu for x in ev]))
     metr = {}
-    for t in sorted({s["tipo_activo"] for s in serie}):
-        ss = [s for s in serie if s["tipo_activo"] == t]
+    comparables = [s for s in serie if s["exceso_vs_universo"] is not None]
+    for t in sorted({s["tipo_activo"] for s in serie if s["exceso_vs_universo"] is not None or s["azar_estado"] == "ok"}):
+        ss = [s for s in comparables if s["tipo_activo"] == t]
+        porcentajes_azar = [s["azar_pct_superado"] for s in serie if s["tipo_activo"] == t and s["azar_estado"] == "ok"]
         ex = [s["exceso_vs_universo"] for s in ss]
+        ex_completos = [s["exceso_vs_universo"] for s in ss if s["n_top_evaluados"] == s["n_top_elegidos"]]
         exr = [s["exceso_vs_referencia_ambito"] for s in ss if s["exceso_vs_referencia_ambito"] is not None]
         ics = [s["ic_rango"] for s in ss if s["ic_rango"] is not None]
         cert = evaluador.certificacion_ranking(
             ((s["fecha_asof"], s["fecha_fin_horizonte"], s["exceso_vs_universo"], s["ic_rango"]) for s in ss),
             ent.cfg.get("evaluacion") or {})
-        metr[t] = {"n_rankings": len(ss), "horizonte": horizonte, "sesiones": H,
+        metr[t] = {"n_periodos_azar": len(porcentajes_azar),
+                   "azar_pct_superado_medio": float(np.mean(porcentajes_azar)) if porcentajes_azar else None,
+                   "n_rankings": len(ss), "horizonte": horizonte, "sesiones": H,
                    "exceso_medio_top_n_vs_universo": round(float(np.mean(ex)), 6) if ex else None, "ic90_exceso": ic_bootstrap_media(ex),
+                   "n_rankings_seleccion_completa": len(ex_completos),
+                   "exceso_medio_top_n_vs_universo_seleccion_completa": round(float(np.mean(ex_completos)), 6) if ex_completos else None,
                    "acierto_top_n_vs_universo": round(float(np.mean([e > 0 for e in ex])), 4) if ex else None,
                    "exceso_medio_top_n_vs_referencia_ambito": round(float(np.mean(exr)), 6) if exr else None, "ic90_exceso_referencia": ic_bootstrap_media(exr),
                    "ic_rango_medio": round(float(np.mean(ics)), 4) if ics else None, "ic90_ic_rango": ic_bootstrap_media(ics),
