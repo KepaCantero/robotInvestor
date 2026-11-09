@@ -67,7 +67,7 @@ Astra entra por `AGENTS.md`. La memoria no sustituye a la Constitución, a este 
 
 ## Mapa de bloques y estado
 
-Estado a 9 de noviembre de 2026 (Constitución V0.5, con la enmienda 2 ratificada). El detalle de cada bloque está en el §2 de la Constitución.
+Estado a 9 de noviembre de 2026 (Constitución V0.6, con las enmiendas 2 y 3 ratificadas). El detalle de cada bloque está en el §2 de la Constitución.
 
 | Bloque | En una frase | Estado |
 | --- | --- | --- |
@@ -125,7 +125,7 @@ Estado a 9 de noviembre de 2026 (Constitución V0.5, con la enmienda 2 ratificad
 Desde la V0.5 estas reglas y las de la sección siguiente están también en la Constitución (cambio 38, D-42, `[RATIFICADO]`).
 
 1. **Todos los bloques sirven para cualquier tipo de activo.** Se diseñan como núcleo común más perfiles por tipo de activo desde el primer día; la Fase 1 en divisas es solo el primer recorrido completo, no un límite del diseño. Ningún bloque se diseña «para divisas».
-2. **A y B se revisan y se mejoran** antes de conectarlos (T-53): están construidos, pero se repasan con el operador a la luz de la Constitución V0.5 y del marco común.
+2. **A y B se revisan y se mejoran** antes de conectarlos (T-53): están construidos, pero se repasan con el operador a la luz de la Constitución V0.6 y del marco común.
 3. **Antes de empezar un bloque sin construir hay una conversación de diseño con el operador** (lluvia de ideas): qué hace el bloque, qué agentes tiene, cómo se reparten el trabajo, qué es LLM y qué es código, qué fuentes usa. Solo después se escribe su Documento 0. El operador participa en el diseño; no se le presenta un diseño cerrado.
 
 ## Decisiones del operador: aplazadas hasta completar la arquitectura
@@ -135,7 +135,7 @@ Desde la V0.5 estas reglas y las de la sección siguiente están también en la 
 1. Se construye todo en simulado (L0) con valores de partida prudentes marcados `[PROPUESTO]` y anotados en la deuda técnica; no se le pregunta por ellos.
 2. Se le pregunta solo lo que cambie la arquitectura y no tenga un valor de partida razonable, y se le avisa si un valor de partida obliga a rehacer trabajo.
 3. Nada opera con dinero real ni pasa una compuerta que exija datos reales (intermediario real en la Fase 3, L1 real) hasta que decida.
-4. Al terminar la arquitectura se le presenta una sola sesión con todas las decisiones pendientes, cada una con su valor de partida y lo que cambia según su respuesta. Según la V0.5, la conduce el asesor de configuración del Broker (D-34); los números de la enmienda 2 son P-25 a P-35. **Formato (operador, 9-11-2026):** cuestionario de opción múltiple guiado por ese asesor, que entiende lo que el operador quiere decir aunque no use lenguaje técnico y confirma cada interpretación; todo tiene un valor por defecto prudente válido para cualquier usuario y se cambia después por el mismo cuestionario con el Broker (T-59, enmienda 3 en preparación). Lo usarán el operador y sus compañeros, **cada uno con su propia copia y su propio dinero**: cada copia es de un solo usuario, D-01 se mantiene por copia y nada personal vive en el repositorio (T-59, punto 4).
+4. Al terminar la arquitectura se le presenta una sola sesión con todas las decisiones pendientes, cada una con su valor de partida y lo que cambia según su respuesta. Según la V0.5, la conduce el asesor de configuración del Broker (D-34); los números de la enmienda 2 son P-25 a P-35. **Formato (operador, 9-11-2026):** cuestionario de opción múltiple guiado por ese asesor, que entiende lo que el operador quiere decir aunque no use lenguaje técnico y confirma cada interpretación; todo tiene un valor por defecto prudente válido para cualquier usuario y se cambia después por el mismo cuestionario con el Broker (T-59, enmienda 3 ratificada en la V0.6, D-44 a D-46). Lo usarán el operador y sus compañeros, **cada uno con su propia copia y su propio dinero**: cada copia es de un solo usuario, D-01 se mantiene por copia y nada personal vive en el repositorio (T-59, punto 4; D-47 en la V0.6).
 
 ## Lo que añade la enmienda 2 (Constitución V0.5, ratificada el 9-11-2026)
 
@@ -148,6 +148,8 @@ Todo está `[RATIFICADO]`; sus números siguen pendientes (P-25 a P-35, sesión 
 - **Plan de largo plazo y operador:** rentabilidad mínima exigida (real, comprobada por F en L2 y L3), aportaciones periódicas, vehículo fiscal, camino de riesgo, colchón fuera del robot, revisión anual guiada y modo hibernación.
 - **Enchufabilidad:** ficha de bloque CT-G-17, batería de conformidad, estado por bloque (el marco común se separa antes de la Fase 2) y adaptadores también para modelos de IA.
 - El reparto por fases está en el §14.
+
+**Enmienda 3 (Constitución V0.6, ratificada el 9-11-2026).** Configuración por **cuestionario guiado** del asesor del Broker (D-44); **valores por defecto prudentes para cualquier usuario**, y todo parámetro nuevo llega con su valor por defecto y su pregunta (D-45); cambios posteriores por el mismo cuestionario, con la asimetría de riesgo y la ruta única de cambios (D-46); **una copia por usuario** con su propio dinero, nada personal en el repositorio y actualizaciones con migraciones (D-47).
 
 ## Reglas de oro y errores a evitar
 
@@ -189,7 +191,7 @@ PENDIENTES QUE NO DEBES DECIDIR: [las de §15 que afecten a esta tarea]
 BLOQUE / PIEZA: Marco común de C y sobre CT-G-02
 FASE: diseño de contratos
 OBJETIVO: Esquema JSON validable del sobre común de valoración y plantilla de los 12 perfiles de C, lista para instanciar C-DIV.
-ADJUNTOS: Constitución V0.5; Documento 0 de B V2.1 (sección del paquete para C).
+ADJUNTOS: Constitución V0.6; Documento 0 de B V2.1 (sección del paquete para C).
 CONTRATOS Y SECCIONES QUE APLICAN: §2, §5 (CT-G-01 y CT-G-02), §9, §10.
 ENTREGABLE: esquemas JSON + documento de diseño + validador con casos de prueba.
 DEFINICIÓN DE TERMINADO: el validador acepta un sobre de ejemplo por cada uno de los 12 tipos y rechaza los incompletos.
