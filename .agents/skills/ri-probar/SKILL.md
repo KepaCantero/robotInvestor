@@ -1,6 +1,6 @@
 ---
 name: ri-probar
-description: Fase 3 de 4 del flujo de trabajo del Robot Investor. Úsala después de implementar, o cuando pidan «prueba», «testea», «ejecuta las suites», para completar y ejecutar las pruebas (nominales, límites, fallo cerrado, regresión, migración, integración), pasar los gates del repo y dejar el informe en docs/tareas/<tarea>/03_pruebas.md.
+description: Fase 3 de 4 del flujo de trabajo del Robot Investor. Úsala después de implementar, o cuando pidan «prueba», «testea», «ejecuta las suites», para completar y ejecutar las pruebas (nominales, límites, fallo cerrado, regresión, migración, integración), pasar los gates del repo y dejar el informe en .docs/tickets/T-NN/pruebas.md.
 ---
 
 # Probar una tarea del Robot Investor
@@ -30,13 +30,13 @@ Nada cuenta como hecho sin pruebas (regla 5 de `CLAUDE.md`). Esta fase la hace q
 
 ## Cómo se ejecuta
 
-- Marco común de C: la lista de comandos de la sección «Cómo se ejecuta» de `sistema_global/marco_comun_c/LEEME.md`, todas.
+- Marco común de C: `.docs/scripts/pruebas_marco.sh`, que ejecuta todas las suites de la sección «Cómo se ejecuta» de `sistema_global/marco_comun_c/LEEME.md` y avisa de las que falten en ella.
 - Bloques: `pytest -q` en el `11_Ejecutor` de cada bloque tocado (ver `CLAUDE.md`).
-- Gate del repo: `./tools/check_all.sh` (todo en verde). `--core` sirve mientras trabajas; el completo, antes de cerrar.
+- Gate del repo: `.docs/scripts/gate.sh` (rápido) mientras trabajas y el mismo con `--completo` antes de cerrar; los dos llaman a `./tools/check_all.sh` y guardan el log.
 
 ## Informe
 
-Escribe `docs/tareas/<tarea>/03_pruebas.md` con:
+Escribe `.docs/tickets/T-NN/pruebas.md` con:
 
 - recuento de pruebas antes y después, por suite;
 - la matriz criterio de aceptación → prueba;
@@ -49,4 +49,9 @@ Escribe `docs/tareas/<tarea>/03_pruebas.md` con:
 - [ ] Todas las suites en verde y recuentos iguales o mayores que antes.
 - [ ] `./tools/check_all.sh` en verde.
 - [ ] Cada criterio de aceptación cubierto por al menos una prueba.
-- [ ] `03_pruebas.md` escrito; si otro agente hará la QA, commit y push con `[pendiente QA]`.
+- [ ] `pruebas.md` escrito; si otro agente hará la QA, commit y push con `[pendiente QA]` y `handoff.md` en el ticket.
+
+## Scripts: lo repetible, automatizado
+
+Antes de hacer algo a mano, mira `.docs/scripts/` (tabla en `.docs/README.md`). Si vas a hacer algo que se repetirá, escríbelo como script, guárdalo ahí y apúntalo en esa tabla: la próxima vez se ejecuta y no se gastan otra vez los mismos tokens. Cómo: `.docs/knowledge/03_scripts-y-ahorro-de-tokens.md`. Los secretos, solo desde `.env` a través de `.docs/scripts/common.sh`.
+

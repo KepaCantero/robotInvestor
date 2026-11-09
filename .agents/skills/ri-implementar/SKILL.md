@@ -1,13 +1,13 @@
 ---
 name: ri-implementar
-description: Fase 2 de 4 del flujo de trabajo del Robot Investor. Úsala para escribir o cambiar código, esquemas JSON, migraciones o configuración a partir de un plan aprobado (docs/tareas/<tarea>/01_plan.md), o cuando pidan «implementa», «programa», «corrige este hallazgo». Aplica las reglas de código del proyecto: determinista, falla cerrado, esquema primero, números de configuración, mock antes que API.
+description: Fase 2 de 4 del flujo de trabajo del Robot Investor. Úsala para escribir o cambiar código, esquemas JSON, migraciones o configuración a partir de un plan aprobado (.docs/tickets/T-NN/README.md), o cuando pidan «implementa», «programa», «corrige este hallazgo». Aplica las reglas de código del proyecto: determinista, falla cerrado, esquema primero, números de configuración, mock antes que API.
 ---
 
 # Implementar una tarea del Robot Investor
 
 Fase 2 de 4. Antes: `ri-planificar`. Después: `ri-probar`.
 
-**Requisito:** existe `docs/tareas/<tarea>/01_plan.md` con su puerta superada. Si no existe, vuelve a `ri-planificar`. Si vienes a corregir hallazgos de QA, el requisito es `04_qa.md` con los hallazgos abiertos.
+**Requisito:** existe `.docs/tickets/T-NN/README.md` con su puerta superada. Si no existe, vuelve a `ri-planificar`. Si vienes a corregir hallazgos de QA, el requisito es `qa.md` con los hallazgos abiertos.
 
 ## Reglas de código (innegociables)
 
@@ -36,7 +36,7 @@ Fase 2 de 4. Antes: `ri-planificar`. Después: `ri-probar`.
 3. Avanza en pasos pequeños y ejecuta las pruebas del módulo tras cada paso.
 4. Si el plan resulta inviable o tienes que desviarte, anótalo. Si la desviación cambia el alcance o una decisión del operador, para y pregunta.
 5. Actualiza el LEEME o README de la pieza (tabla de archivos, códigos de error, comandos).
-6. Escribe `docs/tareas/<tarea>/02_implementacion.md`:
+6. Escribe `.docs/tickets/T-NN/analisis-tecnico.md`:
    - archivos cambiados y por qué;
    - decisiones tomadas y desviaciones del plan;
    - límites conocidos;
@@ -45,5 +45,10 @@ Fase 2 de 4. Antes: `ri-planificar`. Después: `ri-probar`.
 ## Puerta de salida
 
 - [ ] Las pruebas del módulo pasan.
-- [ ] `02_implementacion.md` escrito.
-- [ ] Si otro agente hará la QA: commit en `develop` con mensaje en español, prefijo de área (`motor:`, `contratos:`, `docs:`…) y `[pendiente QA]` al final del título; push; entrada de traspaso en `memoria/compartida/`.
+- [ ] `analisis-tecnico.md` escrito.
+- [ ] Si otro agente hará la QA: commit en `develop` con mensaje en español, prefijo de área (`motor:`, `contratos:`, `docs:`…) y `[pendiente QA]` al final del título (`.docs/scripts/commit.sh` hace gate, commit y push); `handoff.md` en el ticket; estado `EN QA`.
+
+## Scripts: lo repetible, automatizado
+
+Antes de hacer algo a mano, mira `.docs/scripts/` (tabla en `.docs/README.md`). Si vas a hacer algo que se repetirá, escríbelo como script, guárdalo ahí y apúntalo en esa tabla: la próxima vez se ejecuta y no se gastan otra vez los mismos tokens. Cómo: `.docs/knowledge/03_scripts-y-ahorro-de-tokens.md`. Los secretos, solo desde `.env` a través de `.docs/scripts/common.sh`.
+

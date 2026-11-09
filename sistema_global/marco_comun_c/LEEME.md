@@ -160,6 +160,8 @@ python3 pruebas/pruebas_migraciones_t03.py
 python3 pruebas/pruebas_reloj_t03.py
 python3 pruebas/pruebas_rotacion_t03.py
 python3 pruebas/pruebas_niveles_t18.py
+python3 pruebas/pruebas_nivel_cambio_t18.py
+python3 pruebas/pruebas_reduccion_t43.py
 python3 pruebas/pruebas_robustez.py
 python3 pruebas/pruebas_integracion_v053.py
 python3 pruebas/pruebas_extremo.py

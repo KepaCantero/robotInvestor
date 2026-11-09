@@ -12,10 +12,10 @@ from pathlib import Path
 
 RAIZ = Path(__file__).resolve().parent.parent
 DOCS_NUESTROS = ([RAIZ / "CLAUDE.md", RAIZ / "AGENTS.md"] + sorted((RAIZ / "prompts").glob("*.md"))
-                 + sorted((RAIZ / "docs").glob("*.md")) + sorted((RAIZ / "memoria").rglob("*.md"))
+                 + sorted((RAIZ / "docs").glob("*.md")) + sorted((RAIZ / ".docs").rglob("*.md"))
                  + sorted((RAIZ / ".agents" / "skills").rglob("*.md")))
 RAICES_VALIDAS = ("bloque_a/", "bloque_a_forex/", "bloque_b/", "docs/", "prompts/", "tools/", "sistema_global/",
-                  "memoria/", ".agents/", ".claude/", "AGENTS.md", "CLAUDE.md")
+                  ".docs/", ".agents/", ".claude/", "AGENTS.md", "CLAUDE.md")
 PAT_RUTA = re.compile(r"`([^`\n]+?)`")
 # Entregables FUTUROS citados en prompts de fases (se quitan de aquí al aterrizar
 # la fase que los crea — mismo ratchet que las cuotas).
@@ -33,9 +33,9 @@ def main() -> int:
             continue
         for m in PAT_RUTA.finditer(doc.read_text(encoding="utf-8")):
             r = m.group(1).strip().strip("/")
-            # Abreviaturas (…), placeholders (<bloque>) y referencias a símbolos (::)
+            # Abreviaturas (…), placeholders (<bloque>, T-NN, AAAA-MM) y referencias a símbolos (::)
             # no son rutas verificables.
-            if "…" in r or "<" in r or ">" in r or "::" in r:
+            if "…" in r or "<" in r or ">" in r or "::" in r or "T-NN" in r or "AAAA" in r:
                 continue
             if not r.startswith(RAICES_VALIDAS):
                 continue
