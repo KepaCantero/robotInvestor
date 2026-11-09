@@ -51,7 +51,7 @@ def fecha_larga(f) -> str:
     return f"{DIAS[f.weekday()]}, {f.day} de {MESES[f.month - 1]} de {f.year}"
 
 
-def entregable_json(paquete: Dict) -> Dict:
+def entregable_json(paquete: dict) -> dict:
     p = copy.deepcopy(paquete)
     for d in p["clases"].values():
         for o in d["opciones"]:
@@ -69,7 +69,7 @@ def entregable_json(paquete: Dict) -> Dict:
 
 
 class Redaccion:
-    def __init__(self, cfg: Dict) -> None:
+    def __init__(self, cfg: dict) -> None:
         self.cfg = cfg
         base = ruta(cfg, "plantillas")
         # Se localizan por nombre con cualquier sufijo de versión («… - V4.0», «… - V5.0», …): gana la más alta
@@ -79,7 +79,7 @@ class Redaccion:
                              or base / "Esquema JSON - Paquete de oportunidades - V5.0.json")
 
     # ------------------------------------------------------------------------------------
-    def textos_por_defecto(self, paquete: Dict) -> Dict:
+    def textos_por_defecto(self, paquete: dict) -> dict:
         n = sum(len(d["opciones"]) for d in paquete["clases"].values())
         nc = sum(1 for d in paquete["clases"].values() if d["opciones"])
         return {"frases_30s": [f"Esta semana vemos {n} ideas en {nc} tipos de inversión.",
@@ -97,7 +97,7 @@ class Redaccion:
         cab = t[:i] if i > 0 else t[:t.find("<body>") + 6]
         return cab.replace('lang="es-ES"', f'lang="{self.cfg.get("idioma", "es-ES")}"')
 
-    def visual(self, bloque, paquete: Dict, red: Dict, as_of) -> str:
+    def visual(self, bloque, paquete: dict, red: dict, as_of) -> str:
         tarj = {t["opp_id"]: t for t in red.get("tarjetas", [])}
         clases = paquete["clases"]
         n_tot = sum(len(d["opciones"]) for d in clases.values())
@@ -251,7 +251,7 @@ class Redaccion:
         return cab + "\n" + cuerpo
 
     # ------------------------------------------------------------------------------------
-    def tecnico(self, paquete: Dict, extras: Dict, g3: Dict, rutas: Dict, estado_run: str, consumo: Dict) -> str:
+    def tecnico(self, paquete: dict, extras: dict, g3: dict, rutas: dict, estado_run: str, consumo: dict) -> str:
         p = paquete
         L = [f"# Informe técnico del Bloque A — {_semana_o_peticion(p)}", "",
              "**Bloque A · Robot Investor · Versión óptima V5.0** · Documento 0 óptima V5.0 · Generado por el Ejecutor programático V1.1.", "",
@@ -345,7 +345,7 @@ class Redaccion:
         return "\n".join(L)
 
     # ------------------------------------------------------------------------------------
-    def generar(self, bloque, paquete: Dict, extras: Dict, red: Dict, as_of, run_id: str, estado_run: str) -> Tuple[Dict, Dict]:
+    def generar(self, bloque, paquete: dict, extras: dict, red: dict, as_of, run_id: str, estado_run: str) -> tuple[dict, dict]:
         from . import sintesis as sint
         as_of = pd.Timestamp(as_of)
         tarj = {t.get("opp_id"): t for t in red.get("tarjetas", []) if isinstance(t, dict)}
@@ -363,11 +363,14 @@ class Redaccion:
             base = bloque.carpeta_entregables
             dirs = {"informe_tecnico": base / "Informes técnicos Broker", "informe_visual": base / "Informes visuales Usuario",
                     "paquete_json": base / "Paquetes JSON"}
-        for d in dirs.values():
-            d.mkdir(parents=True, exist_ok=True)
-        rutas = {"informe_tecnico": str(dirs["informe_tecnico"] / f"{fecha}_informe-tecnico_{run_id}.md"),
-                 "informe_visual": str(dirs["informe_visual"] / f"{fecha}_informe-visual_{run_id}.html"),
-                 "paquete_json": str(dirs["paquete_json"] / f"{fecha}_paquete-json_{run_id}.json")}
+        # Se genera y valida en una carpeta de borrador; solo lo que no queda BLOQUEADO llega a las carpetas de
+        # entrega (7.3 G3: «BLOQUEADO impide la entrega»). Lo bloqueado se conserva aparte para la auditoría.
+        nombres = {"informe_tecnico": f"{fecha}_informe-tecnico_{run_id}.md",
+                   "informe_visual": f"{fecha}_informe-visual_{run_id}.html",
+                   "paquete_json": f"{fecha}_paquete-json_{run_id}.json"}
+        borrador = base / "_borradores" / run_id
+        borrador.mkdir(parents=True, exist_ok=True)
+        rutas = {k: str(borrador / n) for k, n in nombres.items()}
         Path(rutas["informe_visual"]).write_text(self.visual(bloque, paquete, red, as_of), encoding="utf-8")
         leg = ht07.analizar(Path(rutas["informe_visual"]).read_text(encoding="utf-8"), es_html=True)
         res = sint.ht09_validar(bloque, paquete, extras, rutas["informe_visual"])
@@ -384,13 +387,21 @@ class Redaccion:
         Path(rutas["paquete_json"]).write_text(json.dumps(js, ensure_ascii=False, indent=1), encoding="utf-8")
         g3 = {"dictamen": dictamen, "advertencias": adv}
         cons = bloque.contabilidad.resumen(run_id)
-        Path(rutas["informe_tecnico"]).write_text(self.tecnico(paquete, extras, g3, rutas, estado_run, cons), encoding="utf-8")
+        rutas_entrega = {k: str(dirs[k] / n) for k, n in nombres.items()}   # las que cita el informe: las de entrega
+        Path(rutas["informe_tecnico"]).write_text(self.tecnico(paquete, extras, g3, rutas_entrega, estado_run, cons), encoding="utf-8")
         coh = coherencia(rutas, js)
         if errores:
             bloq.append("ESQUEMA_JSON")
         if coh:
             bloq.append("COHERENCIA_ENTREGABLES")
         dictamen = "BLOQUEADO" if bloq else dictamen
+        if dictamen == "BLOQUEADO":
+            js.pop("estado_g3", None)      # nunca un estado G3 favorable en un entregable bloqueado
+            Path(rutas["paquete_json"]).write_text(json.dumps(js, ensure_ascii=False, indent=1), encoding="utf-8")
+            destino = {k: base / "_bloqueados" / run_id for k in nombres}
+        else:
+            destino = dirs
+        rutas = _publicar(rutas, destino, nombres)
         bloque.almacen.escribir("HA", "AG-18", {"tipo_entrada": "G3V", "id": f"G3V-{run_id[4:]}-F7", "run_id": run_id, "fase": "F7",
                                                 "tipo_control": "SINCRONO_DETERMINISTA", "dictamen_ht09": res["dictamen"], "dictamen_efectivo": dictamen,
                                                 "legibilidad": {"fernandez_huerta": leg["fernandez_huerta"], "pct_frases_mas_de_20": leg["pct_frases_mas_de_20"],
@@ -402,14 +413,30 @@ class Redaccion:
                        "frases_largas": leg["frases_largas"][:10], "errores_esquema": errores, "incoherencias": coh}
 
 
-def _semana_o_peticion(p: Dict) -> str:
+def _publicar(rutas: dict[str, str], destino: dict[str, Path], nombres: dict[str, str]) -> dict[str, str]:
+    """Mueve los entregables del borrador a su carpeta final (entrega o bloqueados) y borra el borrador vacío."""
+    finales = {}
+    for k, origen in rutas.items():
+        destino[k].mkdir(parents=True, exist_ok=True)
+        final = destino[k] / nombres[k]
+        Path(origen).replace(final)
+        finales[k] = str(final)
+    try:
+        Path(next(iter(rutas.values()))).parent.rmdir()
+        Path(next(iter(rutas.values()))).parent.parent.rmdir()
+    except OSError:
+        pass
+    return finales
+
+
+def _semana_o_peticion(p: dict) -> str:
     if p["tipo"] == "PERIODICO":
         f = pd.Timestamp(p["fecha"])
         return f"Semana {f.isocalendar()[1]} de {f.isocalendar()[0]}"
     return f"Informe a petición del {p['fecha']}"
 
 
-def coherencia(rutas: Dict, js: Dict) -> List[str]:
+def coherencia(rutas: dict, js: dict) -> list[str]:
     """Mismas OPP-, orden y RK en el JSON, el informe técnico y el informe visual (G3-ENT-07)."""
     orden_js = [o["opp_id"] for d in js["clases"].values() for o in d["opciones"]]
     rk_js = {o["opp_id"]: o["puntuaciones"]["RK"] for d in js["clases"].values() for o in d["opciones"]}

@@ -388,8 +388,11 @@ def seleccionar_top3(evaluadas: List[Dict], params: Optional[Dict] = None, candi
     for v in [o for o in no_elegibles if o["vigente"]]:
         decisiones.append({"opp_id": v["opp_id"], "decision": "VIGENTE_NO_ELEGIBLE",
                            "motivo": "Deja de ser elegible: " + "; ".join(m["detalle"] for m in v["motivos_no_elegible"])})
+    # Las vigentes protegidas por continuidad van primero. Una vigente que pierde la protección
+    # no pierde la elegibilidad: compite por RK con las nuevas por los puestos que queden libres,
+    # y solo se sustituye si otra mejor ocupa su puesto (9.6.4 y 9.6.5).
     seleccion = list(mantenidas[:maxn])
-    for o in nuevas:
+    for o in [x for x in orden if x not in mantenidas]:
         if len(seleccion) >= maxn:
             break
         seleccion.append(o)

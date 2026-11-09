@@ -195,6 +195,15 @@ seleccion:
   max_finalistas: 5
   umbral_senal_gc1: 0.75
   peticiones_conocimiento_por_clase: 1
+  # T-53 · prompt del Analizador (AG-02), 6.15.5 y 6.16: semáforo y siguiente paso sugerido
+  semaforo: {E_verde: 70, A_verde: 65}            # VERDE con ≥ 1 opción de E ≥ 70 y A ≥ 65
+  siguiente_paso: {E_enviar: 70, A_profundizar: 65}   # ENVIAR_A_BLOQUE_B exige E ≥ 70, sin objeción moderada abierta y catalizador en el horizonte
+
+# T-53 · Antigüedad máxima de los datos de mercado (Anexo A, PS2). H1 se cuenta en sesiones hábiles; el resto, en días naturales
+ps2_antiguedad_maxima_dias: {H1: 1, H2: 3, H3: 7, H4: 30, H5: 90}
+
+# T-53 · Clústeres de exposición (ML-CLUS-001; Catálogo del Motor): umbral de correlación y ventana
+clusteres: {umbral_rho: 0.7, ventana_semanas: 104}
 
 auditoria:
   en_vivo: true
@@ -211,6 +220,19 @@ evaluacion:
   aplicar_recalibracion: false   # false = modo sombra: se registra y se compara, no se aplica
   dias_habiles_no_resoluble: 10
   llm_informe_aprendizaje: true
+  # T-53
+  alfa_holm: 0.10                 # Anexo A, certificado de horizonte (R13): corrección de Holm escalonada; α coherente con el IC 90 %
+  ece_revocacion: 0.12            # revocación de un certificado por calibración; NO figura en el Anexo A (incidencia INC-T53-03)
+  degradacion_h5_tasa_min: 0.50   # Anexo A, degradación automática de H5 (12.2, P-42)
+  degradacion_h5_min_hitos: 20    # ídem
+
+# T-53 · Bandas verbales y probabilidad interna (Anexo A, «Calibrable»); los huecos van a la banda más cercana a 50 %
+bandas_verbales:
+  - {codigo: MUY_PROBABLE, texto: muy probable, min: 0.80, max: 0.95, prob_interna: 0.85}
+  - {codigo: MAS_PROBABLE_QUE_NO, texto: más probable que no, min: 0.60, max: 0.75, prob_interna: 0.65}
+  - {codigo: INCIERTO, texto: incierto, min: 0.45, max: 0.55, prob_interna: 0.50}
+  - {codigo: POCO_PROBABLE, texto: poco probable, min: 0.25, max: 0.40, prob_interna: 0.35}
+  - {codigo: MUY_POCO_PROBABLE, texto: muy poco probable, min: 0.05, max: 0.20, prob_interna: 0.15}
 
 # Paralelismo de agentes sin estado (R25)
 paralelismo:

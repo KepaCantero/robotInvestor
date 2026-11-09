@@ -169,10 +169,10 @@ Las salidas reales del modelo serán más largas que las simuladas; tómelo como
 
 ## 9 bis. Novedades V5.1 (ejecutor V1.2)
 
-- **H5 y horizonte principal.** La tabla 8.3 incluye H5 (décadas). En los tipos con H5 «Sí» (RV, MP, IDX, ALT) el mock ofrece H5 como horizonte secundario. El PRG H5 se congela **sin probabilidad interna** (solo banda) y con **3 hitos HIT-** (a 12, 30 y 54 meses; `h5.meses_hitos`), cada uno un PRG ordinario de horizonte H4 que el Evaluador resuelve en su fecha; `Evaluador.estado_h5` deriva `EN_CURSO_CONFORME`, `DESVIADO` o `INVALIDADO` y la tasa de hitos cumplidos por tipo. Cada opción lleva `naturaleza_inversion` (la del Analista si es válida; si no, por defecto por tipo: MON `LIQUIDEZ`, DER `PRIMA_RIESGO`, ALT `ESTRUCTURAL`, resto `CICLICA`) y un `horizonte_principal` coherente con ella (si ninguno lo es, se ajusta la naturaleza al horizonte); HT-09 lo valida (C17, C18).
+- **H5 y horizonte principal.** La tabla 8.3 incluye H5 (décadas). En los tipos con H5 «Sí» (RV, MP, IDX, ALT) el mock ofrece H5 como horizonte secundario. El PRG H5 se congela **sin probabilidad interna** (solo banda) y con **3 hitos HIT-** (a 12, 30 y 54 meses; `h5.meses_hitos`), cada uno un PRG ordinario de horizonte H4 que el Evaluador resuelve en su fecha; `Evaluador.estado_h5` deriva `EN_CURSO_CONFORME`, `DESVIADO` o `INVALIDADO` y la tasa de hitos cumplidos por tipo. Cada opción lleva `naturaleza_inversion` (la del Analista si es válida; si no, por defecto por tipo: MON `LIQUIDEZ`, DER `PRIMA_RIESGO`, ALT `ESTRUCTURAL`, resto `CICLICA`) y un `horizonte_principal`: el que declara el Analista (con su `justificacion_horizonte`) si está entre los ofrecidos; si no lo declara, el ejecutor propone uno coherente con la naturaleza (y solo si la naturaleza tampoco la declaró el Analista la ajusta al horizonte). HT-09 lo valida (C17, C18) y bloquea lo incoherente sin justificar (T-53, CS-01). Los hitos H5 se excluyen de las métricas, los certificados y el historial de aciertos: se evalúan aparte en `estado_h5` (T-53, CA-08).
 - **Consultas al Broker (CT-23).** `consulta-broker` registra las CNS- en F5 (máx. 3 por RUN-, agrupación automática), vigila plazos y detecta consultas recurrentes (CT-22 `CONSULTA_RECURRENTE`). En el F0 de cada ciclo, las vencidas pasan a `VENCIDA` y una `BLOQUEANTE` sin respuesta **pausa** los tipos de activo afectados (limitación declarada); los supuestos de las pendientes o vencidas viajan en `supuestos_declarados` del paquete y del informe técnico.
 - **Credenciales (CT-25).** `credencial` registra las CRD- en F5 sin valores; la bóveda simulada (`<estado>/boveda/`, `secretos.json` con permisos 0600) solo devuelve alias y estado; una respuesta del Broker que traiga el valor se rechaza íntegra y se pide su depósito y renovación; las denegadas quedan como limitación de servicio en F10.
-- **Seguimiento encargado (CT-24, C6, F11).** `seguimiento` gestiona los encargos en F11 (propietario AG-01) y ejecuta los ciclos vencidos: revisión ligera **determinista** (delta del indicador frente a 1,5 σ semanales, distancia a la invalidación, catalizadores, T/E/A/RK reconstruidos con HT-03 y umbrales de F10, pronósticos e hitos abiertos), una recomendación, informe breve (.md) y JSON en `Informes de seguimiento/`, validados con HT-09 (`validar_seguimiento`) y con el esquema JSON V5.1; RUN- de tipo `SEGUIMIENTO` en F5 (`tipo_entrada: RUN_C6`, para no mezclarse con los RUN de C1–C3). Estado de madurez: implementado sin llamada al Analista de tipo de activo (el CT-06 de fase SEGUIMIENTO queda registrado).
+- **Seguimiento encargado (CT-24, C6, F11).** `seguimiento` gestiona los encargos en F11 (propietario AG-01) y ejecuta los ciclos vencidos: revisión ligera **determinista** (delta del indicador frente a 1,5 σ semanales, distancia a la invalidación, catalizadores, T/E/A/RK reconstruidos con HT-03 y umbrales de F10, pronósticos e hitos abiertos), una recomendación, informe breve (.md) y JSON en `Informes de seguimiento/`, validados con HT-09 (`validar_seguimiento`) y, en ejecución, con el esquema JSON V5.1; un informe bloqueado va a `_bloqueados/<RUN>/` y no a la carpeta de entrega (T-53, CA-03); RUN- de tipo `SEGUIMIENTO` en F5 (`tipo_entrada: RUN_C6`, para no mezclarse con los RUN de C1–C3). Estado de madurez: implementado sin llamada al Analista de tipo de activo (el CT-06 de fase SEGUIMIENTO queda registrado).
 
 ## 10. Decisiones de diseño relevantes
 
@@ -200,3 +200,28 @@ Las salidas reales del modelo serán más largas que las simuladas; tómelo como
   tests/ (pytest: test_unitarias, test_integracion, test_autocritica, test_v5, test_v51; MAPA_PLAN_DE_PRUEBAS.md; RESULTADOS.txt)
   ejemplos/datos_sinteticos/ · ejemplos/peticiones/
 ```
+
+## Correcciones de la revisión T-53 (9-11-2026)
+
+Revisión independiente del ejecutor con 45 pruebas nuevas (de 58 a 103). Detalle en `.docs/tickets/T-53/analisis-tecnico.md` (desde la raíz del repositorio). Lo que cambia para quien lo usa:
+
+- **Entregables.** Se generan en `_borradores/` y se validan. Solo lo que no queda BLOQUEADO llega a las carpetas de entrega; lo bloqueado se guarda en `_bloqueados/<RUN>/`, sin `estado_g3`.
+- **Datos.**
+  - Un cierre no numérico rechaza la serie (`DatosInvalidos`) en lugar de convertirse en un resultado.
+  - Un símbolo sin datos hasta la fecha *as_of* se excluye del ciclo y se declara como laguna; el tipo queda PARCIAL.
+  - En H1, la antigüedad del dato (PS2) se cuenta en sesiones hábiles (`ps2_antiguedad_maxima_dias`).
+- **Selección y presentación.**
+  - Una vigente que pierde la protección de continuidad sigue compitiendo por los puestos libres.
+  - La pieza automática de momentum ya no basta para PS1.
+  - El semáforo y el `siguiente_paso_sugerido` siguen al prompt del Analizador (`seleccion.semaforo`, `seleccion.siguiente_paso`).
+- **Evaluación.**
+  - Holm escalonado (`evaluacion.alfa_holm`).
+  - Cinco bandas verbales (`bandas_verbales`).
+  - Los hitos H5 quedan fuera de las métricas.
+  - La degradación de H5 se registra en F6 y F10.
+  - Un certificado con ECE 0 ya no se revoca (`evaluacion.ece_revocacion`).
+- **Almacén y bóveda.**
+  - F4 rechaza una segunda alta o una segunda resolución (`PronosticoCongelado`).
+  - La bóveda valida la caducidad en ISO antes de escribir, no devuelve credenciales caducadas y crea el archivo de secretos con permisos 0600.
+- **Consultas al Broker.** Una consulta BLOQUEANTE sin tipos pausa todo el alcance; si queda pausado todo, el run es PARCIAL y no analiza nada.
+

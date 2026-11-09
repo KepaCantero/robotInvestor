@@ -15,8 +15,9 @@ import datetime as dt
 import hashlib
 import json
 import threading
+from collections.abc import Callable, Iterable
 from pathlib import Path
-from typing import Any, Callable, Dict, Iterable, List, Optional
+from typing import Any, Dict, List, Optional
 from zoneinfo import ZoneInfo
 
 ARCHIVOS = {
@@ -37,7 +38,8 @@ CLAVES = {"F1": "tnd_id", "F2": "id", "F3": "opp_id", "F4": "prg_id", "F5": "id"
           "RC": "calc_id", "HA": "id"}
 PARAMETROS_SERVICIO = {"P-01", "P-02", "P-03", "P-21", "P-29"}
 PARAMETROS_CALIBRABLES = {"P-05", "P-06", "P-07", "P-08", "P-09", "P-10", "P-11", "P-12", "P-17", "P-20", "P-22",
-                          "P-23", "P-24", "P-25", "P-26", "P-27", "P-30", "P-31"}
+                          "P-23", "P-24", "P-25", "P-26", "P-27", "P-30", "P-31",
+                          "P-42"}   # P-42: degradación automática de H5 (12.2), CALIBRABLE en el esquema F10 V3.0
 CAMPOS_RESOLUCION_F4 = {"prg_id", "tipo_entrada", "resolucion", "estado"}
 
 
@@ -45,12 +47,17 @@ class EscrituraFueraDeReserva(PermissionError):
     pass
 
 
+class PronosticoCongelado(EscrituraFueraDeReserva):
+    """R11: un pronóstico de F4 se congela en su alta y se resuelve una sola vez. Se rechaza una segunda ALTA con un
+    `prg_id` existente, una RESOLUCION de un `prg_id` sin alta y una segunda RESOLUCION del mismo pronóstico."""
+
+
 class Reloj:
     """Reloj controlado: marcas temporales deterministas a partir de la fecha as_of."""
 
     def __init__(self, zona: str = "Europe/Madrid") -> None:
         self.zona = ZoneInfo(zona)
-        self._fecha: Optional[dt.date] = None
+        self._fecha: dt.date | None = None
         self._seg = 0
         self._lock = threading.Lock()
 
@@ -74,31 +81,36 @@ class Reloj:
         return t.isoformat(timespec="seconds")
 
 
-def _hash(prev: str, contenido: Dict) -> str:
+def _hash(prev: str, contenido: dict) -> str:
     h = hashlib.sha256(prev.encode())
     h.update(json.dumps(contenido, sort_keys=True, ensure_ascii=False, default=str).encode("utf-8"))
     return h.hexdigest()
 
 
 class Almacen:
-    def __init__(self, carpeta, reloj: Optional[Reloj] = None) -> None:
+    def __init__(self, carpeta, reloj: Reloj | None = None) -> None:
         self.carpeta = Path(carpeta)
         self.carpeta.mkdir(parents=True, exist_ok=True)
         self.reloj = reloj or Reloj()
         self._lock = threading.RLock()
-        self._entradas: Dict[str, List[Dict]] = {}
+        self._entradas: dict[str, list[dict]] = {}
         for k, nombre in ARCHIVOS.items():
             p = self.carpeta / nombre
             self._entradas[k] = [json.loads(l) for l in p.read_text(encoding="utf-8").splitlines() if l.strip()] \
                 if p.exists() else []
+        # Índice de F4 (prg_id → tipos de entrada ya escritos) para la comprobación de congelación (R11)
+        self._f4_tipos: dict[str, set] = {}
+        for e in self._entradas["F4"]:
+            if e.get("prg_id"):
+                self._f4_tipos.setdefault(e["prg_id"], set()).add(e.get("tipo_entrada"))
         self._ruta_contadores = self.carpeta / "contadores.json"
-        self._contadores: Dict[str, int] = json.loads(self._ruta_contadores.read_text(encoding="utf-8")) \
+        self._contadores: dict[str, int] = json.loads(self._ruta_contadores.read_text(encoding="utf-8")) \
             if self._ruta_contadores.exists() else {}
 
     # ----------------------------------------------------------------------------------------
     # Identificadores
     # ----------------------------------------------------------------------------------------
-    def nuevo_id(self, prefijo: str, anio: Optional[int] = None, ancho: int = 4) -> str:
+    def nuevo_id(self, prefijo: str, anio: int | None = None, ancho: int = 4) -> str:
         anio = anio or self.reloj.fecha.year
         with self._lock:
             k = f"{prefijo}-{anio}"
@@ -109,7 +121,7 @@ class Almacen:
     # ----------------------------------------------------------------------------------------
     # Escritura
     # ----------------------------------------------------------------------------------------
-    def _comprobar_reserva(self, archivo: str, autor: str, entrada: Dict) -> Optional[str]:
+    def _comprobar_reserva(self, archivo: str, autor: str, entrada: dict) -> str | None:
         if archivo not in ARCHIVOS:
             return f"Archivo desconocido {archivo}"
         if autor not in PROPIETARIOS[archivo]:
@@ -132,13 +144,35 @@ class Almacen:
                 return f"AG-20 solo modifica parámetros calibrables (no {pid})"
         return None
 
-    def escribir(self, archivo: str, autor: str, entrada: Dict) -> Dict:
+    def _comprobar_congelacion_f4(self, entrada: dict) -> str | None:
+        """R11 (validar antes de mutar): ALTA solo de un `prg_id` nuevo; RESOLUCION solo de un `prg_id` dado de alta
+        y todavía sin resolver. Se llama con el cerrojo tomado (la comprobación y la escritura son atómicas)."""
+        tipo, pid = entrada.get("tipo_entrada"), entrada.get("prg_id")
+        if not pid:
+            return f"F4: {tipo} sin prg_id"
+        previas = self._f4_tipos.get(pid, set())
+        if tipo == "ALTA":
+            if previas:
+                return f"R11: {pid} ya está dado de alta y congelado en F4 (no se admite una segunda ALTA)"
+        elif tipo == "RESOLUCION":
+            if "ALTA" not in previas:
+                return f"R11: RESOLUCION de {pid}, que no está dado de alta en F4"
+            if "RESOLUCION" in previas:
+                return f"R11: {pid} ya está resuelto en F4 (no se admite una segunda RESOLUCION)"
+        return None
+
+    def escribir(self, archivo: str, autor: str, entrada: dict) -> dict:
         motivo = self._comprobar_reserva(archivo, autor, entrada)
         if motivo:
             if archivo != "HA" or autor != "AG-18":
                 self._incidencia_interna("ACCESO_FUERA_DE_MATRIZ", f"{archivo}: {motivo}", autor)
             raise EscrituraFueraDeReserva(motivo)
         with self._lock:
+            if archivo == "F4":
+                motivo = self._comprobar_congelacion_f4(entrada)
+                if motivo:
+                    self._incidencia_interna("ESCRITURA", motivo, autor)
+                    raise PronosticoCongelado(motivo)
             lista = self._entradas[archivo]
             prev = lista[-1]["_hash"] if lista else "0" * 64
             e = copy.deepcopy(entrada)
@@ -149,6 +183,8 @@ class Almacen:
             e["_hash_prev"] = prev
             e["_hash"] = _hash(prev, {k: v for k, v in e.items() if k != "_hash"})
             lista.append(e)
+            if archivo == "F4" and e.get("prg_id"):
+                self._f4_tipos.setdefault(e["prg_id"], set()).add(e.get("tipo_entrada"))
             with open(self.carpeta / ARCHIVOS[archivo], "a", encoding="utf-8") as fh:
                 fh.write(json.dumps(e, ensure_ascii=False, default=str) + "\n")
             return e
@@ -158,7 +194,7 @@ class Almacen:
                                       "severidad": "Material", "objeto": agente, "detalle": detalle,
                                       "tratamiento": "rechazada y registrada", "escalado_operador": True})
 
-    def incidencia(self, tipo: str, detalle: str, objeto: str = "", severidad: str = "Material", **extra) -> Dict:
+    def incidencia(self, tipo: str, detalle: str, objeto: str = "", severidad: str = "Material", **extra) -> dict:
         return self.escribir("HA", "AG-18", {"tipo_entrada": "INC", "id": self.nuevo_id("INC"), "tipo": tipo,
                                              "severidad": severidad, "objeto": objeto, "detalle": detalle,
                                              "tratamiento": extra.pop("tratamiento", "registrada"), **extra})
@@ -166,7 +202,7 @@ class Almacen:
     # ----------------------------------------------------------------------------------------
     # Lectura
     # ----------------------------------------------------------------------------------------
-    def leer(self, archivo: str, as_of=None, filtro: Optional[Callable[[Dict], bool]] = None) -> List[Dict]:
+    def leer(self, archivo: str, as_of=None, filtro: Callable[[dict], bool] | None = None) -> list[dict]:
         lim = str(as_of)[:10] if as_of is not None else None
         with self._lock:
             out = [e for e in self._entradas[archivo] if lim is None or e["_fecha"] <= lim]
@@ -174,11 +210,11 @@ class Almacen:
             out = [e for e in out if filtro(e)]
         return copy.deepcopy(out)
 
-    def estado(self, archivo: str, as_of=None, clave: Optional[str] = None) -> Dict[str, Dict]:
+    def estado(self, archivo: str, as_of=None, clave: str | None = None) -> dict[str, dict]:
         """Vista consolidada por clave: la última entrada de cada objeto prevalece campo a campo;
         se conserva el historial de entradas (append-only)."""
         clave = clave or CLAVES[archivo]
-        out: Dict[str, Dict] = {}
+        out: dict[str, dict] = {}
         for e in self.leer(archivo, as_of):
             k = e.get(clave)
             if not k:
@@ -197,7 +233,7 @@ class Almacen:
             base["_ultima_fecha"] = e["_fecha"]
         return out
 
-    def verificar_integridad(self, archivo: Optional[str] = None) -> Dict[str, bool]:
+    def verificar_integridad(self, archivo: str | None = None) -> dict[str, bool]:
         res = {}
         for a in ([archivo] if archivo else ARCHIVOS):
             p = self.carpeta / ARCHIVOS[a]

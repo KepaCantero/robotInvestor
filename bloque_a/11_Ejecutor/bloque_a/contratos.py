@@ -36,7 +36,7 @@ def _par(a, b):
     return [(set(a), set(b)), (set(b), set(a))]
 
 
-CANALES: Dict[str, List[Tuple[set, set]]] = {
+CANALES: dict[str, list[tuple[set, set]]] = {
     "CT-01": [({"BROKER"}, {"AG-01"})],
     "CT-02": [({"AG-01"}, {"BROKER"})],
     "CT-03": _par({"BROKER"}, {"AG-01"}),
@@ -122,7 +122,7 @@ class MensajeInvalido(ValueError):
     pass
 
 
-def sanear_contenido_externo(texto: str, origen: str = "") -> Tuple[str, List[Dict]]:
+def sanear_contenido_externo(texto: str, origen: str = "") -> tuple[str, list[dict]]:
     """Neutraliza instrucciones incrustadas (R9). Devuelve el texto saneado y los hallazgos."""
     if not isinstance(texto, str) or not texto:
         return texto, []
@@ -134,9 +134,9 @@ def sanear_contenido_externo(texto: str, origen: str = "") -> Tuple[str, List[Di
     return limpio, hallazgos
 
 
-def sanear_estructura(obj: Any, origen: str = "") -> Tuple[Any, List[Dict]]:
+def sanear_estructura(obj: Any, origen: str = "") -> tuple[Any, list[dict]]:
     """Aplica `sanear_contenido_externo` a todas las cadenas de una estructura JSON."""
-    hallazgos: List[Dict] = []
+    hallazgos: list[dict] = []
     def rec(o, ruta):
         if isinstance(o, str):
             t, h = sanear_contenido_externo(o, f"{origen}{ruta}")
@@ -150,7 +150,7 @@ def sanear_estructura(obj: Any, origen: str = "") -> Tuple[Any, List[Dict]]:
     return rec(copy.deepcopy(obj), ""), hallazgos
 
 
-def contiene_credenciales(obj: Any) -> List[str]:
+def contiene_credenciales(obj: Any) -> list[str]:
     volcado = json.dumps(obj, ensure_ascii=False, default=str)
     return [m.group(0)[:6] + "…" for m in RE_SECRETO.finditer(volcado)]
 
@@ -168,12 +168,12 @@ class Mensajeria:
     def __init__(self, almacen) -> None:
         self.almacen = almacen
         self._lock = threading.Lock()
-        self._procesados: Dict[str, Dict] = {}
-        self.registro: List[Dict] = []   # traza de mensajes (contrato, emisor, receptor, msg_id)
+        self._procesados: dict[str, dict] = {}
+        self.registro: list[dict] = []   # traza de mensajes (contrato, emisor, receptor, msg_id)
 
-    def crear(self, contrato: str, emisor: str, receptor: str, cuerpo: Dict, *, run_id: Optional[str] = None,
-              query_id: Optional[str] = None, presupuesto: Optional[Dict] = None, consumo: Optional[Dict] = None,
-              estado: Optional[str] = None, tipo_mensaje: str = "ENCARGO") -> Dict:
+    def crear(self, contrato: str, emisor: str, receptor: str, cuerpo: dict, *, run_id: str | None = None,
+              query_id: str | None = None, presupuesto: dict | None = None, consumo: dict | None = None,
+              estado: str | None = None, tipo_mensaje: str = "ENCARGO") -> dict:
         msg = {"msg_id": self.almacen.nuevo_id("MSG", ancho=6), "contrato": contrato, "version_contrato": VERSION_CONTRATO,
                "emisor": emisor, "receptor": receptor, "timestamp": self.almacen.reloj.ahora(), "tipo_mensaje": tipo_mensaje}
         if run_id:
@@ -193,7 +193,7 @@ class Mensajeria:
             self.registro.append({k: msg.get(k) for k in ("msg_id", "contrato", "emisor", "receptor", "tipo_mensaje")})
         return msg
 
-    def validar(self, msg: Dict) -> None:
+    def validar(self, msg: dict) -> None:
         for c in ("msg_id", "contrato", "version_contrato", "emisor", "receptor", "timestamp"):
             if not msg.get(c):
                 raise MensajeInvalido(f"Falta el campo común {c}")
@@ -220,7 +220,7 @@ class Mensajeria:
         if tipo != "ENCARGO" and msg.get("estado") not in ESTADOS + ESTADOS_ESPECIFICOS.get(msg["contrato"], ()):
             raise MensajeInvalido(f"Estado de retorno no válido {msg.get('estado')!r}")
 
-    def procesar_una_vez(self, msg: Dict, funcion) -> Tuple[Dict, bool]:
+    def procesar_una_vez(self, msg: dict, funcion) -> tuple[dict, bool]:
         """Idempotencia: devuelve (respuesta, repetido). El mismo msg_id no se reprocesa."""
         with self._lock:
             if msg["msg_id"] in self._procesados:
@@ -230,7 +230,7 @@ class Mensajeria:
             self._procesados[msg["msg_id"]] = copy.deepcopy(r)
         return r, False
 
-    def acuse(self, msg: Dict, asignado: str, **extra) -> Dict:
+    def acuse(self, msg: dict, asignado: str, **extra) -> dict:
         return {"acuse_de": msg["msg_id"], "asignado": asignado, "timestamp": self.almacen.reloj.ahora(), **extra}
 
 
@@ -276,6 +276,9 @@ FINALISTA = {
                                                      "direccion": {"enum": ["por_debajo", "por_encima"]}}}},
         "horizontes_aplicables": {"type": "array", "minItems": 1, "items": {"enum": ["H1", "H2", "H3", "H4", "H5"]}},
         "naturaleza_inversion": {"enum": ["TACTICA", "LIQUIDEZ", "CICLICA", "PRIMA_RIESGO", "VALORACION", "ESTRUCTURAL"]},
+        # V5.1 (8.3): el Analista declara el horizonte principal y, si sale del rango de su naturaleza, lo justifica
+        "horizonte_principal": {"enum": ["H1", "H2", "H3", "H4", "H5"]},
+        "justificacion_horizonte": {"type": ["string", "null"]},
         "dimensiones": {"type": "object", "required": ["T", "E", "M", "A", "P"],
                         "properties": {"T": {"anyOf": [DIMS, {"const": "NA"}]}, "E": DIMS, "M": DIMS, "A": DIMS, "P": DIMS}},
         "segunda_pasada": {"type": "object"},
@@ -301,7 +304,7 @@ REVISION = {"type": "array", "items": {"type": "object", "required": ["opp_id", 
                            "recomendacion": {"enum": ["MANTENER", "REVISAR", "CERRAR"]}}}}
 ESTADO_RET = {"enum": list(ESTADOS)}
 
-ESQUEMAS: Dict[str, Dict] = {
+ESQUEMAS: dict[str, dict] = {
     "INFORME_CLASE": {
         "type": "object",
         "required": ["clase", "estado", "regimen_clase", "revision_vigentes", "cribado", "finalistas", "lagunas", "autoevaluacion"],

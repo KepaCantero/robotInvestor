@@ -6,10 +6,15 @@ import math
 import threading
 import time
 from collections import defaultdict
-from typing import Dict, List
+from typing import Dict, FrozenSet, List
 
-SIN_ESTADO = {"AG-03", "AG-04", "AG-05", "AG-06", "AG-07", "AG-08", "AG-09", "AG-10", "AG-11", "AG-12",
-              "AG-13", "AG-14", "AG-15", "AG-16", "AG-17"}
+from ..contratos import ANALISTAS
+
+# Documento 0 V5.1, 4.5: sin estado (varias instancias) los Analistas de tipo de activo (AG-03 a AG-09 y AG-21 a
+# AG-25, tomados de `contratos.ANALISTAS` para no duplicar la lista), AG-12 a AG-17 y, con altas serializadas,
+# AG-10 y AG-11. Con estado (instancia única con cola): AG-01, AG-02, AG-18, AG-19 y AG-20.
+OTROS_SIN_ESTADO: frozenset[str] = frozenset({"AG-10", "AG-11", "AG-12", "AG-13", "AG-14", "AG-15", "AG-16", "AG-17"})
+SIN_ESTADO: frozenset[str] = frozenset(ANALISTAS) | OTROS_SIN_ESTADO
 
 
 class Monitor:
@@ -17,11 +22,11 @@ class Monitor:
         self.umbral_cola = umbral_cola
         self.instancias_max = instancias_max
         self._lock = threading.Lock()
-        self.cola: Dict[str, int] = defaultdict(int)
-        self.completados: Dict[str, int] = defaultdict(int)
-        self.tiempo_total: Dict[str, float] = defaultdict(float)
-        self.instancias: Dict[str, int] = defaultdict(lambda: 1)
-        self.ordenes: List[Dict] = []
+        self.cola: dict[str, int] = defaultdict(int)
+        self.completados: dict[str, int] = defaultdict(int)
+        self.tiempo_total: dict[str, float] = defaultdict(float)
+        self.instancias: dict[str, int] = defaultdict(lambda: 1)
+        self.ordenes: list[dict] = []
 
     def encolar(self, agente: str, n: int = 1) -> None:
         with self._lock:
@@ -36,7 +41,7 @@ class Monitor:
             self.completados[agente] += 1
             self.tiempo_total[agente] += time.perf_counter() - t0
 
-    def evaluar_instancias(self) -> List[Dict]:
+    def evaluar_instancias(self) -> list[dict]:
         """Devuelve órdenes ORD- (ABRIR) para agentes sin estado con cola > umbral; para agentes con
         estado solo se registra la saturación (CAR-), nunca se abren instancias (PB-19)."""
         nuevas = []
@@ -58,7 +63,7 @@ class Monitor:
             self.ordenes.extend(nuevas)
         return nuevas
 
-    def instantanea(self) -> Dict:
+    def instantanea(self) -> dict:
         with self._lock:
             return {ag: {"cola": self.cola[ag], "completados": self.completados[ag],
                          "W_medio_s": round(self.tiempo_total[ag] / self.completados[ag], 4) if self.completados[ag] else None,

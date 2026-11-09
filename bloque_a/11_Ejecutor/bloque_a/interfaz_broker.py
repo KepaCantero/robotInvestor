@@ -11,7 +11,8 @@ from __future__ import annotations
 
 import copy
 import datetime as dt
-from typing import Dict, Iterable, List, Optional
+from collections.abc import Iterable
+from typing import Dict, List, Optional
 
 import pandas as pd
 
@@ -35,7 +36,7 @@ class ConsultasBroker:
         self.cfg = bloque.cfg.get("consultas_broker") or {}
 
     # ------------------------------------------------------------------------------ utilidades
-    def _todas(self, as_of=None) -> Dict[str, Dict]:
+    def _todas(self, as_of=None) -> dict[str, dict]:
         return {k: v for k, v in self.b.almacen.estado("F5", as_of, clave="cns_id").items() if v.get("tipo_entrada", "").startswith("CNS")}
 
     def _plazo(self, modo: str) -> str:
@@ -44,7 +45,7 @@ class ConsultasBroker:
         return (ahora + dt.timedelta(hours=float(horas))).isoformat(timespec="minutes")
 
     # ------------------------------------------------------------------------------ saliente
-    def enviar(self, consulta: Dict, as_of=None) -> Dict:
+    def enviar(self, consulta: dict, as_of=None) -> dict:
         """Envía al Broker dudas ya filtradas y agrupadas por el Analizador (o de admisión, en F0)."""
         as_of = self.b.fijar_fecha(as_of or pd.Timestamp.today())
         tipo, modo = consulta.get("tipo"), consulta.get("modo", "NO_BLOQUEANTE")
@@ -82,7 +83,7 @@ class ConsultasBroker:
         self._recurrencia(tipo, cuerpo["motivo"], as_of)
         return {"cns_id": cns_id, "estado": "ENVIADA", "plazo_respuesta": cuerpo["plazo_respuesta"], "modo": modo}
 
-    def responder(self, cns_id: str, respuestas: List[Dict], estado: str = "RESPONDIDA", as_of=None) -> Dict:
+    def responder(self, cns_id: str, respuestas: list[dict], estado: str = "RESPONDIDA", as_of=None) -> dict:
         """Respuesta del Broker (CT-23 retorno). Una respuesta tardía que invalida un supuesto ya entregado abre una revisión (C2)."""
         as_of = self.b.fijar_fecha(as_of or pd.Timestamp.today())
         c = self._todas().get(cns_id)
@@ -101,7 +102,7 @@ class ConsultasBroker:
                              "revisión (C2) y se comunica al Broker (7.9.5)")
         return out
 
-    def entrante(self, contenido: str, referencia: Optional[Dict] = None, as_of=None) -> Dict:
+    def entrante(self, contenido: str, referencia: dict | None = None, as_of=None) -> dict:
         """Aportación espontánea del Broker (CT-23 entrante): se registra y se asocia a su RUN-, OPP- o SEG-."""
         as_of = self.b.fijar_fecha(as_of or pd.Timestamp.today())
         cns_id = self.b.almacen.nuevo_id("CNS")
@@ -113,7 +114,7 @@ class ConsultasBroker:
         return {"cns_id": cns_id, "estado": "RECIBIDA"}
 
     # ------------------------------------------------------------------------------ plazos y puntos de control
-    def vencer(self, as_of) -> List[str]:
+    def vencer(self, as_of) -> list[str]:
         """Marca VENCIDA toda consulta ENVIADA cuyo plazo ha pasado; el análisis sigue con el supuesto declarado."""
         as_of = pd.Timestamp(as_of)
         out = []
@@ -125,20 +126,21 @@ class ConsultasBroker:
                 out.append(k)
         return out
 
-    def _afecta(self, c: Dict, clases: Iterable[str]) -> bool:
+    def _afecta(self, c: dict, clases: Iterable[str]) -> bool:
         return not c.get("clases") or bool(set(c["clases"]) & set(clases))
 
-    def clases_pausadas(self, as_of, clases: Iterable[str]) -> Dict[str, str]:
+    def clases_pausadas(self, as_of, clases: Iterable[str]) -> dict[str, str]:
         """Tipos de activo pausados en este punto de control por una consulta BLOQUEANTE sin respuesta ni vencimiento."""
-        out: Dict[str, str] = {}
+        out: dict[str, str] = {}
         for k, c in sorted(self._todas(as_of).items()):
             if c.get("estado") == "ENVIADA" and c.get("modo") == "BLOQUEANTE" and c.get("sentido") == "SALIENTE":
-                for cl in (c.get("clases") or []):
+                # Sin tipos declarados afecta a todo el alcance, igual que en `_afecta` (7.9, R26)
+                for cl in (c.get("clases") or list(clases)):
                     if cl in clases:
                         out.setdefault(cl, k)
         return out
 
-    def supuestos_declarados(self, as_of, clases: Iterable[str]) -> List[Dict]:
+    def supuestos_declarados(self, as_of, clases: Iterable[str]) -> list[dict]:
         """6.2.9: supuestos de las consultas sin respuesta (NO_BLOQUEANTE pendientes o VENCIDAS) que afectan al análisis."""
         out = []
         clases = list(clases)
@@ -178,17 +180,17 @@ class Credenciales:
         self.boveda = Boveda(carpeta_boveda)
         self.cfg = bloque.cfg.get("credenciales") or {}
 
-    def _todas(self, as_of=None) -> Dict[str, Dict]:
+    def _todas(self, as_of=None) -> dict[str, dict]:
         return {k: v for k, v in self.b.almacen.estado("F5", as_of, clave="crd_id").items() if v.get("tipo_entrada") == "CRD"}
 
-    def estado(self, servicio: Optional[str] = None) -> List[Dict]:
+    def estado(self, servicio: str | None = None) -> list[dict]:
         hoy = self.b.reloj.fecha
         if servicio:
             return [self.boveda.estado_servicio(servicio, hoy)]
         return self.boveda.listar(hoy)
 
     def solicitar(self, servicio: str, solicitante: str, uso_previsto: str, impacto_si_falta: str, urgencia: str = "NORMAL",
-                  as_of=None, cambio_circunstancias: bool = False) -> Dict:
+                  as_of=None, cambio_circunstancias: bool = False) -> dict:
         as_of = self.b.fijar_fecha(as_of or pd.Timestamp.today())
         e = self.boveda.estado_servicio(servicio, as_of.date())
         if e["estado"] == "PROVISTA":
@@ -209,7 +211,7 @@ class Credenciales:
                                                  "estado_boveda": e["estado"]})
         return {"estado": "SOLICITADA", "crd_id": crd_id, "modo": "DEGRADADO_DECLARADO"}
 
-    def responder(self, respuesta: Dict, as_of=None) -> Dict:
+    def responder(self, respuesta: dict, as_of=None) -> dict:
         """Respuesta del Broker (CT-25 retorno): solo estado y alias. Si trae el valor, se rechaza íntegra (6.2.5)."""
         as_of = self.b.fijar_fecha(as_of or pd.Timestamp.today())
         crd_id = respuesta.get("crd_id")
@@ -243,7 +245,7 @@ class Credenciales:
                                                       "crd_id": crd_id})
         return {"crd_id": crd_id, "estado": estado, "credencial_ref": ref}
 
-    def depositar(self, crd_id: str, valor: str, caducidad: Optional[str] = None, as_of=None) -> Dict:
+    def depositar(self, crd_id: str, valor: str, caducidad: str | None = None, as_of=None) -> dict:
         """Simula el procedimiento seguro del Broker: deposita en la bóveda (fuera de banda) y responde PROVISTA con el alias."""
         c = self._todas().get(crd_id)
         if not c:
@@ -251,7 +253,7 @@ class Credenciales:
         r = self.boveda.depositar(c["servicio"], valor, caducidad)
         return self.responder({"crd_id": crd_id, "estado": "PROVISTA", "credencial_ref": r["credencial_ref"], "caducidad": caducidad}, as_of)
 
-    def recordatorios(self, as_of) -> List[str]:
+    def recordatorios(self, as_of) -> list[str]:
         as_of = pd.Timestamp(as_of)
         dias, maximo = int(self.cfg.get("recordatorio_dias", 7)), int(self.cfg.get("max_recordatorios", 3))
         out = []

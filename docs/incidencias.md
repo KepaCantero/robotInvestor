@@ -26,3 +26,30 @@ limitación declarada (degradación elegante) y 3 tests fallan porque exigen el 
 Solución de entorno aplicada: `pip install python-docx` en el venv del proyecto
 (documentado en CLAUDE.md). Corregir el pyproject upstream queda pendiente de confirmar
 con el propietario de la entrega.
+
+**INC-T53-01 · 2026-11-09 · Diversidad con tres opciones del mismo clúster (Bloque A, D0 9.6.3).** El D0 dice
+«no más de dos opciones del mismo clúster» y, a continuación, que la tercera cede su puesto a otra de otro clúster
+«si su RK está a ≤ 10 puntos». No dice qué pasa si no hay ninguna a ≤ 10 puntos. HT-03 publica las tres con la
+concentración declarada (`excepcion: True`). Decisión: se deja como está y se pregunta al operador (revisión T-53),
+porque cambiarlo toca la herramienta de referencia del corpus y es una regla de selección.
+
+**INC-T53-02 · 2026-11-09 · Antigüedad de los datos en H1 (Bloque A, Anexo A, PS2).** El Anexo A dice «H1: 1 día» y
+el código toleraba 3 días naturales. Decisión: H1 se cuenta en sesiones hábiles (el dato del viernes vale el lunes)
+y el resto de horizontes sigue en días naturales, para no relajar H2–H5. Los límites pasan a
+`ps2_antiguedad_maxima_dias` en la configuración.
+
+**INC-T53-03 · 2026-11-09 · Umbral de revocación de certificados por calibración (Bloque A).** El código revoca un
+certificado si el ECE llega a 0,12, pero ese número no figura en el Anexo A (que solo fija `ece_max` 0,15 para
+conceder). Decisión: se mantiene 0,12 como `evaluacion.ece_revocacion` y queda para que lo fije el operador (T-57).
+
+**INC-T53-04 · 2026-11-09 · Degradación de H5 de «Limitado» a «No» (Bloque A, D0 12.2 frente al esquema F10).** El
+D0 la describe como automática; el esquema de F10 (P-31) exige un cambio de tipo 3 para cualquier paso hacia «No».
+Decisión (R23, la más restrictiva): «Sí → Limitado» se aplica sola y «Limitado → No» queda como propuesta de tipo 3.
+La degradación se registra en F6 y F10, pero todavía no cambia la tabla que usa el ejecutor (`aplicabilidad` lee
+`_tabla_horizontes`, no F10): pendiente en T-53.
+
+**INC-T53-05 · 2026-11-09 · Siguiente paso, semáforo y confianza (Bloque A).** El código usaba reglas propias,
+distintas de las del prompt del Analizador (6.15.5 y 6.16) y del Redactor. Decisión: el semáforo y el
+`siguiente_paso_sugerido` siguen ya al prompt del Analizador, con los umbrales en la configuración. La `confianza`
+(E ≥ 70 «probable») se deja como está: el prompt del Redactor la usa solo para la barra visual y alinearla cambia el
+esquema del paquete; queda para la revisión con el operador.
