@@ -122,6 +122,8 @@ Estado a 9 de noviembre de 2026 (Constitución V0.5, con la enmienda 2 aplicada 
 
 ## Cómo se diseña cada bloque (reglas del operador, 8-11-2026)
 
+Desde la V0.5 estas reglas y las de la sección siguiente están también en la Constitución (cambio 38, D-42, `[RATIFICADO]`).
+
 1. **Todos los bloques sirven para cualquier tipo de activo.** Se diseñan como núcleo común más perfiles por tipo de activo desde el primer día; la Fase 1 en divisas es solo el primer recorrido completo, no un límite del diseño. Ningún bloque se diseña «para divisas».
 2. **A y B se revisan y se mejoran** antes de conectarlos (T-53): están construidos, pero se repasan con el operador a la luz de la Constitución V0.5 y del marco común.
 3. **Antes de empezar un bloque sin construir hay una conversación de diseño con el operador** (lluvia de ideas): qué hace el bloque, qué agentes tiene, cómo se reparten el trabajo, qué es LLM y qué es código, qué fuentes usa. Solo después se escribe su Documento 0. El operador participa en el diseño; no se le presenta un diseño cerrado.

@@ -4,7 +4,7 @@ Nov 9, 2026 · @Dani
 
 ## 0. Estado, alcance y modo de uso
 
-Esta V0.5 (9 de noviembre de 2026) **sustituye a la V0.4**: incorpora la **enmienda 2** (los 27 puntos de T-58 en la deuda técnica), aplicada a petición del operador y **pendiente de ratificar**: todo lo que añade es `[PROPUESTO]` (tabla «De la V0.4 a la V0.5» abajo y decisiones D-28 a D-41). Sus números quedan aplazados como pendientes del operador (P-25 a P-35), igual que el resto de sus decisiones de perfil y técnicas hasta completar la arquitectura (T-57). Al redactarla se añadió lo que no venía literal en T-58 y conviene que el operador ratifique a sabiendas: los principios P19 y P20, que amplían los invariantes; que SC-3 no cuente para el tope de bloques; el destino de las aportaciones durante la hibernación; las exenciones de la rentabilidad mínima; y la preferencia por un revisor de otro proveedor de IA. La V0.4 (7 de noviembre de 2026) incorporó la **enmienda 1**, ratificada por el operador ese día (tabla «De la V0.3 a la V0.4» y decisiones D-20 a D-27). La V0.3 sustituyó a la V0.2 y a la V0.1; nació de una prueba de recorrido con cuatro casos (18 huecos) y de una revisión adversarial independiente (13 hallazgos), y el operador ha autorizado modificar la idea base, incluidos los bloques A y B.
+Esta V0.5 (9 de noviembre de 2026) **sustituye a la V0.4**: incorpora la **enmienda 2** (los 27 puntos de T-58 en la deuda técnica), aplicada a petición del operador y **pendiente de ratificar**: todo lo que añade es `[PROPUESTO]` (tabla «De la V0.4 a la V0.5» abajo y decisiones D-28 a D-41), salvo las cuatro reglas de diseño y decisión que el operador fijó el 8-11-2026 y aquí solo se escriben (cambio 38, D-42, `[RATIFICADO]`; su encaje con la Fase 2 es `[PROPUESTO]`). Sus números quedan aplazados como pendientes del operador (P-25 a P-35), igual que el resto de sus decisiones de perfil y técnicas hasta completar la arquitectura (T-57). Al redactarla se añadió lo que no venía literal en T-58 y conviene que el operador ratifique a sabiendas: los principios P19 y P20, que amplían los invariantes; que SC-3 no cuente para el tope de bloques; el destino de las aportaciones durante la hibernación; las exenciones de la rentabilidad mínima; y la preferencia por un revisor de otro proveedor de IA. La V0.4 (7 de noviembre de 2026) incorporó la **enmienda 1**, ratificada por el operador ese día (tabla «De la V0.3 a la V0.4» y decisiones D-20 a D-27). La V0.3 sustituyó a la V0.2 y a la V0.1; nació de una prueba de recorrido con cuatro casos (18 huecos) y de una revisión adversarial independiente (13 hallazgos), y el operador ha autorizado modificar la idea base, incluidos los bloques A y B.
 
 **Alcance.** Sistema personal de inversión con **capital propio únicamente**: investiga, analiza, compara, construye carteras, controla el riesgo, ejecuta bajo autorización y aprende de sus resultados. No presta servicio a terceros; si eso cambiara, habría que revisar la normativa aplicable antes de seguir.
 
@@ -74,6 +74,7 @@ Esta V0.5 (9 de noviembre de 2026) **sustituye a la V0.4**: incorpora la **enmie
 | 35 | **Escalera de verificación** y verificaciones externas (23) | Dar por buena una mejora que solo funciona en el pasado | §1, §7, §9 |
 | 36 | **Cambios de modelo de IA con conjunto dorado** e **historial exportable** en formatos abiertos (10, 11) | Cambiar de modelo a ciegas; depender de un proveedor para recuperar la propia historia | §9, §10, §12 |
 | 37 | **Enchufabilidad:** ficha de cada bloque, registro, batería de conformidad, estado por bloque y adaptadores también para modelos de IA (26) | Bloques que no se pueden sustituir sin tocar el resto | §3, §5, §13, §14 |
+| 38 | **Reglas del operador del 8-11-2026**, que solo vivían en el briefing: todo bloque sirve para cualquier tipo de activo y se diseña como núcleo + perfiles desde el primer día; A y B se revisan con el operador antes de conectarlos; conversación de diseño con el operador antes de cada bloque sin construir; decisiones del operador aplazadas hasta completar la arquitectura | Reglas fijadas por el operador que la fuente de verdad no recogía | §2, §14, §15 |
 
 ## 1. Propósito y principios rectores
 
@@ -107,6 +108,8 @@ Los principios siguientes son invariantes. Ningún bloque, prompt ni herramienta
 El sistema tiene **bloques** (A–N), el **Broker Personal** (un bloque con tres papeles) y **servicios comunes** (§3). Cada fila de la tabla es la **ficha de interfaz** mínima: un bloque nuevo DEBE ajustarse a ella.
 
 **Familia por tipo de activo: núcleo común + perfil.** `[PROPUESTO]` A, B y C no se construyen doce veces. Cada uno es un **núcleo** (agentes, contratos, módulos del Motor, validación y ejecutor) más un **perfil por tipo de activo** (vocabularios, playbooks, fuentes, áreas de conocimiento, parámetros e instrumentos). Los prompts de los agentes se componen de una plantilla común y el perfil.
+
+**Todo bloque sirve para cualquier tipo de activo.** `[RATIFICADO]` (D-42, regla del operador del 8-11-2026) Ningún bloque se diseña «para divisas» ni para un solo tipo de activo: todos se diseñan desde el primer día como núcleo común más perfiles, y la Fase 1 en divisas es solo el primer recorrido completo. Hoy solo el perfil `C-DIV` es específico de divisas. `[PROPUESTO]` Encaje con la Fase 2: los bloques **nuevos** nacen ya con núcleo y perfiles; A y B, que ya existen, se reorganizan en la Fase 2, cuando haya un segundo perfil real con que comprobar qué es núcleo y qué es perfil.
 
 La refactorización de A y B a núcleo + perfil se hace en la **Fase 2** (§14), cuando exista un segundo perfil real. Con un solo caso se adivina el núcleo; con dos se deriva. Hasta entonces, A (V5.1) y B (V2.1) se usan tal cual, con adaptadores mínimos. `[RATIFICADO]` A Forex y B Forex fueron pruebas y **no forman parte del sistema** (D-20); las divisas las cubren A y B generales (en A, su Analista de Divisas ya funciona con 5 de sus 11 fichas FX programadas; faltan FX-BEER, FX-BRK, FX-COINT, FX-PPA, FX-REGIME y FX-STL).
 
@@ -658,7 +661,7 @@ El **identificador es la clave de todo almacén**: ningún componente recupera u
 
 | Pieza | Estado |
 | --- | --- |
-| A V5.1 y B V2.1 | Construidos; se usan tal cual con adaptadores hasta la Fase 2. A ya analiza divisas (Analista de Divisas y 5 de 11 fichas FX programadas; faltan 6). A Forex y B Forex quedan fuera (D-20) |
+| A V5.1 y B V2.1 | Construidos; se usan tal cual con adaptadores hasta la Fase 2, pero `[RATIFICADO]` (D-42) antes de conectarlos se revisan y se mejoran con el operador (T-53). A ya analiza divisas (Analista de Divisas y 5 de 11 fichas FX programadas; faltan 6). A Forex y B Forex quedan fuera (D-20) |
 | Sobre CT-G-02 y marco común de C | Código de referencia en curso (V0.53, 8 de noviembre de 2026), con datos simulados: recorre la Fase 1 de punta a punta con versiones mínimas de referencia del Orquestador y de D, E, F, G, H y K, que guardan un único estado |
 | C-DIV | Parcialmente desarrollado por otro LLM; el operador no lo ha compartido todavía |
 | Otros perfiles de C, D, E, F, G, H, I, J | Sin construir como bloques: D, E, F, G y H solo existen como código de referencia mínimo en el marco común; el resto, solo con su ficha de interfaz (§2) |
@@ -694,6 +697,8 @@ El **identificador es la clave de todo almacén**: ningún componente recupera u
 5. **Definición de terminado:** esquemas validan, pruebas pasan, ejecución de extremo a extremo con datos simulados, validación determinista de salidas, referencias verificadas o marcadas, **prueba de recorrido de los casos de la fase** y revisión por un agente independiente `[PROPUESTO]`, preferiblemente de otro proveedor de IA; además, la ficha del bloque (CT-G-17) publicada y su batería de conformidad superada (§5).
 6. **Sin tocar la Constitución:** si un bloque necesita algo que esta no prevé, propone una enmienda en el §15.
 7. **Adaptadores, no reescrituras,** hasta la Fase 2. En la Fase 2 se refactorizan A y B con dos casos reales a la vista.
+8. **Conversación de diseño primero** `[RATIFICADO]` (D-42). Antes de empezar un bloque sin construir hay una conversación de diseño con el operador: qué hace el bloque, qué agentes tiene, cómo se reparten el trabajo, qué es LLM y qué es código y qué fuentes usa. Solo después se escribe su Documento 0. El operador participa en el diseño; no se le presenta un diseño cerrado.
+9. **Revisión de A y B antes de conectarlos** `[RATIFICADO]` (D-42). Se repasan con el operador a la luz de esta Constitución y del marco común (T-53), y se mejoran antes de conectarlos al resto.
 
 ## 15. Registro de decisiones y pendientes
 
@@ -742,8 +747,9 @@ El **identificador es la clave de todo almacén**: ningún componente recupera u
 | D-39 | Escalera de verificación para estrategias, modelos, instrucciones y agentes, con verificaciones externas | PROPUESTO | 2026-11-09 |
 | D-40 | Cambio de modelo de IA solo tras un conjunto dorado; historial completo exportable en formatos abiertos | PROPUESTO | 2026-11-09 |
 | D-41 | Enchufabilidad: ficha de bloque (CT-G-17) y registro, batería de conformidad, estado por bloque, adaptadores de A y B a `CT-G` y adaptadores de modelos de IA | PROPUESTO | 2026-11-09 |
+| D-42 | Reglas del operador: todo bloque sirve para cualquier tipo de activo (núcleo + perfiles desde el primer día; encaje con la Fase 2 PROPUESTO); A y B se revisan con el operador antes de conectarlos; conversación de diseño con el operador antes de cada bloque sin construir; decisiones del operador aplazadas hasta completar la arquitectura, con valores PROPUESTO en simulado y una sesión única (T-57) | RATIFICADO | 2026-11-08 |
 
-**Pendientes del operador.**
+**Pendientes del operador.** `[RATIFICADO]` (D-42) Las decisiones de perfil y técnicas del operador se aplazan hasta completar la arquitectura global. Mientras tanto se construye en simulado (L0) con valores de partida prudentes marcados `[PROPUESTO]`; solo se le pregunta lo que cambie la arquitectura y no tenga un valor de partida razonable; nada opera con dinero real ni pasa una compuerta que exija datos reales hasta que decida; y al final se le presentan todas en una sola sesión, cada una con su valor de partida y lo que cambia según su respuesta (T-57), conducida por el asesor de configuración (§2).
 
 | ID | Pendiente | Afecta a |
 | --- | --- | --- |
