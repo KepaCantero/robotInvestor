@@ -118,7 +118,10 @@ def _sesiones_entre(desde, hasta, festivos: dict) -> int:
 class Bloque:
     def __init__(self, cfg: dict, proveedor, universo: pd.DataFrame, cliente: LLMClient, carpeta_estado,
                  carpeta_entregables=None, anonimizar: bool | None = None) -> None:
-        self.cfg = cfg
+        # Copia propia: la tabla de horizontes vigente (P-31, F10) se escribe en ella en cada ciclo y no debe pasar a
+        # otras instancias que compartan el dict del llamador (T-53, QA r02 H-12)
+        self.cfg = copy.deepcopy(cfg)
+        cfg = self.cfg
         self.modo = cfg.get("modo", "vivo")
         self.proveedor = proveedor
         self._sin_historia: dict[tuple[str, str], list[str]] = {}   # (clase, run_id) → símbolos sin dato a la fecha as_of

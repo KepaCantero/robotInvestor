@@ -127,6 +127,9 @@ class Evaluador:
         self.proveedor = proveedor
         self.motor = motor
         self.cfg = cfg
+        # Tabla 8.3 de partida (la de la configuración o la estática), fijada al crear el Evaluador: si F10 no tiene P-31
+        # vigente, se vuelve a ella y no a la última tabla aplicada en memoria (T-53, QA r02 H-12)
+        self._tabla_base = copy.deepcopy(cfg.get("_tabla_horizontes") or TABLA_HORIZONTES)
         self.universo = universo
         self.ev_cfg = cfg.get("evaluacion") or {}
         # Tabla de bandas verbales de la configuración (None = Anexo A); falla cerrado si es incoherente
@@ -383,7 +386,7 @@ class Evaluador:
     def _matriz_aplicabilidad(self, as_of) -> dict[str, dict[str, str]]:
         """Matriz de aplicabilidad vigente (P-31): la de F10 si AG-20 ya la ajustó; si no, la tabla 8.3 de la configuración."""
         vig = (self.almacen.estado("F10", as_of).get("P-31") or {}).get("valor_vigente")
-        return copy.deepcopy(vig or self.cfg.get("_tabla_horizontes") or TABLA_HORIZONTES)
+        return copy.deepcopy(vig or self._tabla_base)
 
     def aplicar_degradacion_h5(self, as_of, run_id: str | None = None) -> list[dict]:
         """12.2 y Anexo A (P-42): si la tasa de hitos cumplidos de una celda tipo × H5 queda bajo el umbral con muestra

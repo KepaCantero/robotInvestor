@@ -22,7 +22,7 @@
 #                           antídoto contra planes rancios)
 #   6. ruff (cuota)        (código entregado no era ruff-limpio: ratchet)
 #   7-9. mypy (cuota ×3)   (ídem; las cuotas solo bajan)
-#   10-12. pytest ×3       (con línea base: >= 116 / 68 / 141; ver tools/cuotas.txt)
+#   10-12. pytest ×3       (con línea base: >= 117 / 68 / 141; ver tools/cuotas.txt)
 #
 # Retirados conscientemente (y por qué): ruff-format y format-check (reescribiría
 # 3.100 líneas de código entregado antes de tiempo), vulture (falso positivo

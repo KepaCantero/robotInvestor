@@ -9,8 +9,9 @@ vigencia: vigente
 ---
 
 **Estado del Bloque A tras T-53 (9-11-2026).**
-- El ejecutor (`bloque_a/11_Ejecutor/`) está corregido frente a su Documento 0 V5.1. Línea base: 116 pruebas.
-- QA r01: NO APTO. Sus hallazgos medios, H-01 a H-05, están corregidos con pruebas de regresión. Falta la r02 con un revisor que no haya implementado.
+- El ejecutor (`bloque_a/11_Ejecutor/`) está corregido frente a su Documento 0 V5.1. Línea base: 117 pruebas.
+- QA r01: NO APTO; r02: APTO. Las medias, H-01 a H-05 y H-12, están corregidas con pruebas de regresión. El ticket está cerrado.
+- `Bloque` trabaja con una copia propia de la configuración. No vuelvas a escribir en el dict del llamador.
 - Las propuestas PA-01 a PA-21 (`propuestas.md`) **no se han aplicado**. Las decide el operador, y cada una tendrá su ticket.
 - Pendiente técnico: la fila T-63 de la deuda técnica.
 
