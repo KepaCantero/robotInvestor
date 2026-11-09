@@ -169,7 +169,11 @@ class ProveedorCSV(ProveedorDatos):
             ruta = self.carpeta / f"{simbolo}.csv"
             if not ruta.exists():
                 raise DatosNoDisponibles(f"HT-01: no hay archivo {ruta.name}")
-            self._cache[simbolo] = _normalizar_df(pd.read_csv(ruta), ruta.name)
+            try:
+                datos = pd.read_csv(ruta)
+            except pd.errors.EmptyDataError as exc:
+                raise DatosNoDisponibles(f"HT-01: archivo sin precios {ruta.name}") from exc
+            self._cache[simbolo] = _normalizar_df(datos, ruta.name)
         return self._cache[simbolo]
 
 

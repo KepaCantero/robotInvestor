@@ -6,3 +6,7 @@
 - **Encargo:** partir del [plan](README.md) y del código del Bloque B. Comprobar los límites entre objeciones de empresa y de sector, los valores de tipo incorrecto, los archivos de precios ausentes o vacíos y los periodos solapados.
 - **Evidencia:** [pruebas del implementador](pruebas.md). El experimento del crítico usa datos ficticios. La evaluación de modelos reales y los datos del BCE quedan fuera.
 - **Reproducción:** usar `.docs/scripts/gate.sh` con la opción `--completo` y `.docs/scripts/pruebas_marco.sh`. Registrar la revisión propia en [qa.md](qa.md).
+
+## Ampliación · archivo de precios vacío
+
+Revisar también el caso de cero bytes en HT-01 y su prueba de regresión. El cambio se entrega en la rama astra/bloque-b-objeciones-y-evaluacion para revisión de Claude.

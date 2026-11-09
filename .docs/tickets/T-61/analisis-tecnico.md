@@ -27,3 +27,7 @@ python -m pytest -q bloque_b/11_Ejecutor/tests
 ## Límites
 
 Una respuesta bien tipada puede contener una afirmación sin justificar. Los ensayos con respuestas simuladas miden cómo circulan los datos. La eficacia del crítico real sigue abierta. El muestreo estadístico evita volver a usar el mismo intervalo de rentabilidad; periodos disjuntos aún pueden pertenecer al mismo régimen de mercado. Los registros históricos ya emitidos conservan su contenido. Los CSV corruptos con errores de formato quedan fuera del caso de archivo ausente o sin observaciones.
+
+## Ampliación · archivo de precios vacío
+
+Un CSV de cero bytes hace que pandas lance EmptyDataError antes de normalizar las columnas. HT-01 traduce solo esa excepción a DatosNoDisponibles, igual que cuando falta el archivo. Los demás errores de formato mantienen su tratamiento.
