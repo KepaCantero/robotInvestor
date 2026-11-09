@@ -5,7 +5,7 @@ fecha: 2026-11-09
 tipo: regla
 etiquetas: [operador, configuracion, broker, multiusuario, enmienda-3]
 fuente: sistema_global/seguimiento/Deuda_tecnica_y_pendientes_del_operador.md (T-57, T-59)
-vigencia: vigente
+vigencia: sustituida en parte por compartida/2026-11-09_una-copia-por-usuario
 ---
 
 - **La sesión única de decisiones (T-57) será un cuestionario de opción múltiple**, guiado por el asesor de configuración del Broker. El asesor entiende lo que el operador quiere decir aunque no use lenguaje técnico y confirma siempre su interpretación antes de aplicarla.
