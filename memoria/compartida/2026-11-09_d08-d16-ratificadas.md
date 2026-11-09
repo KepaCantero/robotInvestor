@@ -5,7 +5,7 @@ fecha: 2026-11-09
 tipo: decision
 etiquetas: [constitucion, ratificacion]
 fuente: sistema_global/constitucion/Constitucion_Global.md (V0.5, §0 y §15)
-vigencia: vigente
+vigencia: sustituida en parte por compartida/2026-11-09_constitucion-ratificada
 ---
 
 Corrige el tercer punto de `compartida/2026-11-09_enmienda-2-ratificada`.
