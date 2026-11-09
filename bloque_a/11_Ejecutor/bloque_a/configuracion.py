@@ -132,12 +132,27 @@ def cargar_config(ruta_yaml: Optional[str] = None, extra: Optional[Dict] = None)
 
 def modelo_de(cfg: Dict, agente: str) -> str:
     m = cfg.get("modelos") or {}
-    return m.get(agente) or m.get("por_defecto")
+    v = m.get(agente) or m.get("por_defecto")
+    if not v:   # falla cerrado: sin modelo configurado no se llama a ninguno
+        raise ValueError(f"sin modelo configurado para {agente} ni `modelos.por_defecto`")
+    return str(v)
 
 
 def max_tokens_de(cfg: Dict, agente: str) -> int:
     m = cfg.get("max_tokens") or {}
     return int(m.get(agente) or m.get("por_defecto") or 8000)
+
+
+def perfiles_activos(cfg: dict) -> list:
+    """Tipos de activo con perfil activo (PA-01, T-66; `perfiles.activos`, [PROPUESTO]). Falla cerrado: sin la clave, o con
+    un tipo desconocido, no se inventa un alcance."""
+    act = (cfg.get("perfiles") or {}).get("activos")
+    if not act:
+        raise ValueError("configuración sin `perfiles.activos`: declara los tipos de activo con perfil activo")
+    malos = [c for c in act if c not in CLASES]
+    if malos:
+        raise ValueError(f"`perfiles.activos` con tipos desconocidos: {malos}")
+    return [c for c in CLASES if c in act]
 
 
 def aplicabilidad(cfg: Dict, clase: str, horizonte: str) -> str:

@@ -109,6 +109,8 @@ def _ficha(u: Dict, msg: Dict, ctx: Dict, rng: random.Random, inyectado: bool) -
            "invalidacion": [f"Cierre de {sym} por debajo de {precio * 0.85:.2f}"],
            "invalidacion_cuantitativa": [{"simbolo": sym, "umbral": round(precio * 0.85, 4), "direccion": "por_debajo"}],
            "horizontes_aplicables": _horizontes(msg),
+           # PA-21: el simulado da su propia probabilidad, algo más optimista que la señal (anclaje en la tesis)
+           "probabilidades_propias": {h: round(min(0.85, 0.5 + 0.3 * sc), 2) for h in _horizontes(msg) if h != "H5"},
            "dimensiones": dims, "saturacion_narrativa": False,
            "premortem": "Falla si el impulso se agota, si cambia el régimen o si la señal era ruido.",
            "afirmaciones": afirm, "lo_que_no_sabemos": ["Si el impulso reciente persistirá tras el próximo dato relevante"],
@@ -127,8 +129,9 @@ def _analista(msg: Dict, ctx: Dict, rng: random.Random, inyectado: bool) -> Dict
         for o in msg.get("objeciones", []):
             e = o.get("dimensiones_E") or {}
             media = sum(v for v in e.values() if isinstance(v, int)) / max(len(e), 1)
+            resuelta = not (o["fuerza"] == "fuerte" and media < 70)
             res.append({"objecion_id": o["objecion_id"], "respuesta": "Respondida con la evidencia de datos HT-01 y los cálculos CALC- de la clase.",
-                        "resuelta": not (o["fuerza"] == "fuerte" and media < 70)})
+                        "resuelta": resuelta, "evidencia_citada": list(o.get("evidencia_disponible") or [])[:2] if resuelta else []})
         return {"respuestas": res}
     revision = [{"opp_id": v["opp_id"], "invalidacion_activada": bool(v.get("invalidacion_activada")),
                  "recomendacion": "CERRAR" if v.get("invalidacion_activada") else "MANTENER"} for v in msg.get("opciones_vigentes", [])]
@@ -177,13 +180,19 @@ def _prospectiva(msg, ctx, rng):
 
 
 def _contrarias(msg, ctx, rng):
+    if "contrarreplicas" in msg:   # PA-05: confirma la resolución si se citan al menos dos evidencias distintas
+        return {"resultados": [{"objecion_id": x["objecion_id"], "resuelta": len({e["id"] for e in x.get("evidencia_citada", [])}) >= 2,
+                                "motivo": "Evidencia citada suficiente" if len(x.get("evidencia_citada", [])) >= 2 else "Evidencia citada insuficiente"}
+                               for x in msg["contrarreplicas"]]}
     res = []
     for p in msg["peticiones"]:
-        e = (p.get("dimensiones") or {}).get("E") or {}
-        media = sum(v for v in e.values() if isinstance(v, int)) / max(len(e), 1)
+        # PA-05: el simulado ya no ve las dimensiones del Analista; decide con la evidencia recibida (fuentes distintas)
+        # y, a igualdad, con el azar reproducible del encargo
+        fuentes = {e.get("fuente") for e in p.get("evidencias", []) if e.get("fuente")}
         objs = [{"id": f"OBJ-{p['ref']}-01", "tipo": "explicacion_alternativa", "fuerza": "moderada",
                  "argumento": "El impulso puede reflejar un rebote técnico y no un cambio de tendencia.", "evidencia": "historia de reversiones",
                  "que_la_resolveria": "Confirmación del impulso en las próximas cuatro semanas"}]
+        media = 60 if (len(fuentes) < 2 or rng.random() < 0.25) else 80
         if media < 70:
             objs.append({"id": f"OBJ-{p['ref']}-02", "tipo": "evidencia_insuficiente", "fuerza": "fuerte",
                          "argumento": "La evidencia descansa en una sola familia de señales.", "evidencia": "raíces escasas",

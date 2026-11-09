@@ -9,6 +9,7 @@ from pathlib import Path
 import pandas as pd
 import pytest
 from bloque_a.configuracion import (
+    CLASES,
     DIR_EJECUTOR,
     RUTA_UNIVERSO_EJEMPLO,
     aplicabilidad,
@@ -28,7 +29,7 @@ AS_OF = "2026-06-05"
 
 
 def _bloque(tmp_path, modo="backtest", datos=DATOS, universo=RUTA_UNIVERSO_EJEMPLO):
-    return Bloque(cargar_config(extra={"modo": modo}), ProveedorCSV(datos), cargar_universo(universo), MockClient(),
+    return Bloque(cargar_config(extra={"modo": modo, "perfiles": {"activos": list(CLASES)}}), ProveedorCSV(datos), cargar_universo(universo), MockClient(),
                   tmp_path / "estado", tmp_path / "entregables")
 
 
@@ -300,7 +301,7 @@ def test_h05_degradacion_h5_cambia_la_tabla_del_ciclo_siguiente(tmp_path):
 
 # ---------------------------------------------------------------- H-12 · la tabla vigente no pasa entre instancias
 def test_h12_dos_bloques_con_la_misma_configuracion_no_comparten_la_tabla_de_horizontes(tmp_path):
-    cfg = cargar_config(extra={"modo": "backtest"})
+    cfg = cargar_config(extra={"modo": "backtest", "perfiles": {"activos": list(CLASES)}})
     uni = cargar_universo(RUTA_UNIVERSO_EJEMPLO)
     a = Bloque(cfg, ProveedorCSV(DATOS), uni, MockClient(), tmp_path / "ea", tmp_path / "sa")
     b = Bloque(cfg, ProveedorCSV(DATOS), uni, MockClient(), tmp_path / "eb", tmp_path / "sb")

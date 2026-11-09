@@ -100,6 +100,14 @@ def _siguiente_paso(op: dict, umbrales: dict) -> str:
     return "VIGILAR"
 
 
+def _prob_analista(f: dict, h: str) -> float | None:
+    """Probabilidad propia del Analista para el horizonte h (PA-21), si la declaró y está en el rango de AG-10."""
+    v = (f.get("probabilidades_propias") or {}).get(h)
+    if isinstance(v, bool) or not isinstance(v, (int, float)) or not 0.05 <= float(v) <= 0.95:
+        return None
+    return float(v)
+
+
 def _semaforo(opciones: list, umbrales: dict) -> str:
     """Prompt del Analizador, 6.15.5: VERDE con ≥ 1 opción de E ≥ E_verde y A ≥ A_verde; ÁMBAR con opciones inciertas o
     marginales; GRIS sin opciones."""
@@ -170,6 +178,10 @@ def construir(bloque, run_id, tipo, as_of, clases, nivel, gc0, analisis, selecci
                 "prob_publicada": d["prob_interna"] if (c, h) in certs else None, "certificado_ref": certs.get((c, h)),
                 "metodo": d.get("metodo"), "referencia_ingenua": ri, "escenario_asociado": d.get("escenario", "BASE"),
                 "en_informe": en_informe, "estado": "ABIERTO",
+                # PA-09 (T-66): un backtest con un modelo real anterior a su fecha de corte puede «acertar» de memoria
+                "contaminacion_posible": bloque.contaminacion_posible(as_of),
+                # PA-21 (T-66): probabilidad propia del Analista, segunda opinión que el Evaluador mide frente a AG-10
+                "prob_analista": _prob_analista(f, h),
                 "puntuaciones_opcion": {k: f["_ht03"]["puntuaciones"].get(k) for k in ("T", "E", "A", "RK")}})
             if h == "H5":
                 _h5_con_hitos(prg_borradores[-1], f, c, ref, tp, positivo, d)
@@ -187,7 +199,7 @@ def construir(bloque, run_id, tipo, as_of, clases, nivel, gc0, analisis, selecci
             ev = (f"rentabilidad acumulada de {f['proxy']} {'superior' if positivo else 'inferior'} a la de {ref} entre {as_of.date()} y {fh.date()}"
                   if tp == "RELATIVO" else f"rentabilidad acumulada de {f['proxy']} {'positiva' if positivo else 'negativa'} entre {as_of.date()} y {fh.date()}")
             hito = copy.deepcopy({k: v for k, v in b.items() if k not in ("hit_ids", "hitos", "tesis_estructural")})
-            hito.update({"prg_id": hid, "prg_padre": b["prg_id"], "es_hito": True, "necesario": m == meses_hitos[-1], "horizonte": "H4",
+            hito.update({"prg_id": hid, "prg_padre": b["prg_id"], "es_hito": True, "prob_analista": None, "necesario": m == meses_hitos[-1], "horizonte": "H4",
                          "afirmacion": f"Hito de la senda H5: {ev}", "evento": ev, "fecha_resolucion": str(fh.date()),
                          "criterio_resolucion": f"Cierre HT-01 de la última sesión ≤ {fh.date()} frente al cierre de la última sesión ≤ {as_of.date()}; suceso: {ev}",
                          "prob_interna": d["prob_interna"], "banda_verbal": banda_de(d["prob_interna"]), "prob_publicada": None,
@@ -299,6 +311,10 @@ def construir(bloque, run_id, tipo, as_of, clases, nivel, gc0, analisis, selecci
             p = bloque.params_ht03
             motivos = ht09.relevancia_esperada_alta(op, c, op["vigente"], p)
             op["relevancia_decisional"] = "ALTA" if motivos else ("BAJA" if f.get("_arrastre") else "MEDIA")
+            if f.get("_veredicto") == "tesis frágil":
+                # PA-05 (T-66): una tesis frágil según la regla de Contrarias es especulativa. La relevancia sigue la regla
+                # del Anexo A (C10), que no tiene ese disparador (INC-T66-01)
+                op["confianza"] = "especulativo"
             op["siguiente_paso_sugerido"] = _siguiente_paso(op, umbral_paso)
             if pu.get("T") == "NA":
                 op["puntuaciones"]["T"] = "NA"
@@ -350,7 +366,7 @@ def construir(bloque, run_id, tipo, as_of, clases, nivel, gc0, analisis, selecci
         paquete_clases[c] = [{"opp_id": o["opp_id"], "rango": o["rango"], "confianza": o["confianza"]} for o in opciones]
 
     todas = [o for c in clases_out for o in clases_out[c]["opciones"]]
-    clust = {}
+    clust: dict = {}
     for o in todas:
         clust.setdefault(o["cluster_id"], []).append(o["opp_id"])
     fact = {str(x.get("cluster_id")): x.get("factor") for x in integ.get("factores_dominantes", []) if isinstance(x, dict)}

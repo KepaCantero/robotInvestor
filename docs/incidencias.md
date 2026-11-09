@@ -53,3 +53,17 @@ distintas de las del prompt del Analizador (6.15.5 y 6.16) y del Redactor. Decis
 `siguiente_paso_sugerido` siguen ya al prompt del Analizador, con los umbrales en la configuración. La `confianza`
 (E ≥ 70 «probable») se deja como está: el prompt del Redactor la usa solo para la barra visual y alinearla cambia el
 esquema del paquete; queda para la revisión con el operador.
+
+**INC-T66-01 · 2026-11-10 · Efecto de una «tesis frágil» (Bloque A, PA-05).** La propuesta PA-05 de T-53 pedía que
+una tesis frágil, según la regla de Contrarias, pasara a confianza «especulativo» y relevancia ALTA. El Anexo A
+(control C10 de HT-09) no tiene ese disparador de ALTA: forzarla genera una advertencia en cada ciclo. Decisión
+`[PROPUESTO]`: se aplica solo la confianza «especulativo», y la relevancia sigue la regla del Anexo A. Añadir
+«tesis frágil» como disparador de ALTA exige editar el Anexo A y HT-09 (corpus): queda para la revisión de
+documentación con el operador.
+
+**INC-T66-02 · 2026-11-10 · Quién resuelve una objeción fuerte (Bloque A, PA-05).** Antes la declaraba resuelta el
+propio Analista acusado. Decisión `[PROPUESTO]`: queda resuelta solo si se cumplen las dos condiciones:
+- la respuesta del Analista cita evidencia verificable (fuentes de sus piezas, cálculos CALC- o referencias REF- registradas);
+- el Contradictor lo confirma en una contrarréplica (§5 de su prompt, que el ejecutor no implementaba).
+
+Sin contrarréplica, la objeción sigue abierta.

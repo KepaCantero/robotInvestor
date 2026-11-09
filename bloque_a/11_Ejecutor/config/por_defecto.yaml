@@ -6,6 +6,18 @@
 modo: vivo                 # vivo | backtest  (el comando «backtest» fuerza «backtest»)
 zona_horaria: Europe/Madrid
 idioma: es-ES
+
+# [PROPUESTO] PA-01 (T-66). Tipos de activo con perfil activo. En la Fase 1, solo divisas; el resto se activa cuando
+# tenga datos y fichas propias (D-17). Pregunta del cuestionario (T-57): «¿En qué tipos de inversión quieres que el robot
+# busque oportunidades? (Recomendado ahora: solo divisas)». Valores: RV RF DIV MP IDX FON DER INM CRI ALT MON TCV
+perfiles:
+  activos: [DIV]
+
+# [PROPUESTO] PA-05 (T-66). Veredicto de Contrarias por regla (CT-G-03): «frágil» si una objeción fuerte se resolvió en
+# contrarréplica o hay al menos este número de moderadas. Efecto de «frágil»: confianza «especulativo» (INC-T66-01).
+# Técnico, sin pregunta del cuestionario.
+contrarias:
+  moderadas_para_fragil: 2
 methodology_version: "5.1"
 
 rutas:
@@ -248,4 +260,7 @@ backtest:
   # Fecha de corte de conocimiento del modelo (valor orientativo: compruébelo en la
   # documentación de Anthropic). Un periodo anterior genera advertencia de fuga por conocimiento.
   fecha_corte_modelo: "2026-06-30"
-  anonimizar: false
+  # [PROPUESTO] PA-09 (T-66): auto = se anonimiza el backtest con un modelo real; con el simulado no hace falta.
+  # Los pronósticos de un backtest con modelo real anterior a fecha_corte_modelo llevan contaminacion_posible y no
+  # cuentan para certificados ni aprendizaje. Técnico, sin pregunta.
+  anonimizar: auto

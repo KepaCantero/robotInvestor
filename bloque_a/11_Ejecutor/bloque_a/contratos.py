@@ -279,6 +279,8 @@ FINALISTA = {
         # V5.1 (8.3): el Analista declara el horizonte principal y, si sale del rango de su naturaleza, lo justifica
         "horizonte_principal": {"enum": ["H1", "H2", "H3", "H4", "H5"]},
         "justificacion_horizonte": {"type": ["string", "null"]},
+        # PA-21 (T-66): probabilidad propia del Analista por horizonte (opcional; segunda opinión que mide el Evaluador)
+        "probabilidades_propias": {"type": "object", "additionalProperties": {"type": "number", "minimum": 0.05, "maximum": 0.95}},
         "dimensiones": {"type": "object", "required": ["T", "E", "M", "A", "P"],
                         "properties": {"T": {"anyOf": [DIMS, {"const": "NA"}]}, "E": DIMS, "M": DIMS, "A": DIMS, "P": DIMS}},
         "segunda_pasada": {"type": "object"},
@@ -323,7 +325,13 @@ ESQUEMAS: dict[str, dict] = {
     "RESPUESTA_OBJECIONES": {
         "type": "object", "required": ["respuestas"],
         "properties": {"respuestas": {"type": "array", "items": {"type": "object", "required": ["objecion_id", "respuesta", "resuelta"],
-                       "properties": {"objecion_id": TXT, "respuesta": {"type": "string"}, "resuelta": {"type": "boolean"}}}}},
+                       "properties": {"objecion_id": TXT, "respuesta": {"type": "string"}, "resuelta": {"type": "boolean"},
+                                      "evidencia_citada": {"type": "array", "items": {"type": "string"}}}}}},
+    },
+    "CONTRARREPLICA": {   # PA-05 (T-66): el Contradictor confirma o no la resolución de cada objeción fuerte
+        "type": "object", "required": ["resultados"],
+        "properties": {"resultados": {"type": "array", "items": {"type": "object", "required": ["objecion_id", "resuelta"],
+                       "properties": {"objecion_id": TXT, "resuelta": {"type": "boolean"}, "motivo": {"type": "string"}}}}},
     },
     "PROSPECTIVA": {
         "type": "object", "required": ["resultados", "autoevaluacion"],
