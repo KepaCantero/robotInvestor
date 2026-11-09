@@ -105,6 +105,9 @@ def _informe_dimensional(msg, ctx, r):
                   "contiene_cifra": False},
                  {"afirmacion": f"La lectura de {n} admite una explicación alternativa de carácter cíclico.",
                   "etiqueta": "[INTERPRETACIÓN]", "contiene_cifra": False}]
+        if ctx.get("fecha_as_of"):
+            # Medición y publicación del mismo día en este ejemplo sintético.
+            notas[0]["fechas"] = {k: ctx["fecha_as_of"] for k in ("fecha_fenomeno", "fecha_publicacion", "conocible_desde")}
         if d in ("D9", "D12") and calc:
             notas.append({"afirmacion": f"El cálculo {calc[0]} sitúa la rentabilidad relativa mediana del escenario base en su rango histórico.",
                           "etiqueta": "[INTERPRETACIÓN]", "contiene_cifra": True, "clase_cifra": "estimacion_estadistica",

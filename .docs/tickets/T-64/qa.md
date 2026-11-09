@@ -1,3 +1,3 @@
-# T-64 · Revisión independiente pendiente
+# T-64 · Revisión independiente
 
-La evidencia del diagnóstico está en [pruebas.md](pruebas.md). Queda por revisar el diagnóstico y acordar las reglas temporales antes de cambiar el ejecutor.
+Corrección pendiente de revisión por Claude. [Traspaso](handoff.md).
