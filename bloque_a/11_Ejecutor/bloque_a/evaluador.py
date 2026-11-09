@@ -7,19 +7,24 @@
   del nulo y < 0,15); revocación por deterioro.
 - Lecciones LEC- (predictivas, de calibración y de producto) y recalibración de pesos de RK dentro de
   bandas en modo sombra (o propuesta de tipo 3 si se sale de bandas).
+- T-66: PA-09 (los PRG con `contaminacion_posible` se resuelven y registran, pero no cuentan para certificados,
+  recalibración, lecciones, degradación de H5 ni historial publicado); PA-10 (`aprendizaje.solo_endurecer`: el
+  aprendizaje automático solo endurece; certificados PROPUESTO hasta CT-04 y recalibración siempre como propuesta);
+  PA-03 (certificados con muestra efectiva n_eff por conglomerados de fecha); PA-21 (Brier del Analista frente al de
+  Prospectiva, solo informativo).
 """
 from __future__ import annotations
 
 import copy
 import math
-from collections import defaultdict
-from typing import Dict, List, Optional, Tuple
+from collections import Counter, defaultdict
+from functools import lru_cache
 
 import numpy as np
 import pandas as pd
 from scipy import stats
 
-from .configuracion import CLASES, HORIZONTES, TABLA_HORIZONTES
+from .configuracion import CLASES, TABLA_HORIZONTES, cargar_config
 from .herramientas.ht01_datos import DatosNoDisponibles
 from .herramientas.ht05_planificador import dias_habiles_entre
 from .motor import evaluacion as ev
@@ -27,6 +32,33 @@ from .motor import evaluacion as ev
 CADUCIDAD_MESES = {"anecdotica": 3, "recurrente": 6, "estadistica": 12}
 # Escalón inferior de aplicabilidad de un horizonte (12.2): «Sí» → «Limitado» → «No»
 ESCALON_INFERIOR = {"SI": "LIMITADO", "LIMITADO": "NO"}
+
+
+@lru_cache(maxsize=1)
+def _config_por_defecto() -> dict:
+    return cargar_config()
+
+
+def _valor_por_defecto(seccion: str, clave: str):
+    """Valor de `config/por_defecto.yaml` para una clave nueva de T-66 que falte en la configuración recibida (las
+    configuraciones parciales de las pruebas): el número sale siempre de la configuración, nunca del código. Si tampoco
+    está ahí, falla cerrado."""
+    try:
+        return _config_por_defecto()[seccion][clave]
+    except (KeyError, TypeError) as e:
+        raise KeyError(f"falta la clave de configuración {seccion}.{clave}") from e
+
+
+def contaminacion_posible(p: dict) -> bool:
+    """PA-09: el PRG puede estar contaminado por el conocimiento del modelo (backtest con un modelo real antes de su
+    fecha de corte). Sin el campo o con null (registros anteriores a T-66): false. Cualquier otro valor distinto de
+    false cuenta como contaminado (ante la duda, se marca)."""
+    v = p.get("contaminacion_posible")
+    return not (v is None or v is False)
+
+
+def _prob_valida(v) -> bool:
+    return not isinstance(v, bool) and isinstance(v, (int, float)) and math.isfinite(v) and 0.0 <= float(v) <= 1.0
 
 
 def _version_menor_siguiente(v) -> str:
@@ -134,6 +166,44 @@ class Evaluador:
         self.ev_cfg = cfg.get("evaluacion") or {}
         # Tabla de bandas verbales de la configuración (None = Anexo A); falla cerrado si es incoherente
         fijar_bandas(cfg.get("bandas_verbales"))
+        # T-66: claves nuevas validadas al crear el Evaluador (falla cerrado si no son válidas)
+        self.solo_endurecer()
+        self._min_conglomerados()
+
+    def _clave(self, seccion: str, clave: str):
+        sec = self.cfg.get(seccion) or {}
+        return sec[clave] if clave in sec else _valor_por_defecto(seccion, clave)
+
+    def solo_endurecer(self) -> bool:
+        """PA-10 (`aprendizaje.solo_endurecer`, [PROPUESTO]): el aprendizaje automático solo endurece."""
+        v = self._clave("aprendizaje", "solo_endurecer")
+        if not isinstance(v, bool):
+            raise ValueError(f"aprendizaje.solo_endurecer debe ser true o false, no {v!r}")
+        return v
+
+    def _min_conglomerados(self) -> int:
+        v = self._clave("evaluacion", "min_conglomerados_bootstrap")
+        if isinstance(v, bool) or not isinstance(v, int) or v < 2:
+            raise ValueError(f"evaluacion.min_conglomerados_bootstrap debe ser un entero ≥ 2, no {v!r}")
+        return v
+
+    @staticmethod
+    def _fechas_conglomerado(lst: list[dict]) -> list[str] | None:
+        """PA-03: fecha del conglomerado de cada PRG (`fecha_resolucion`; si falta, `fecha_emision`). None si alguna
+        falta o no se puede interpretar: entonces no hay n_eff y la celda no certifica (falla cerrado)."""
+        out = []
+        for x in lst:
+            f = x.get("fecha_resolucion") or x.get("fecha_emision")
+            if not f:
+                return None
+            try:
+                ts = pd.Timestamp(f)
+            except (ValueError, TypeError):
+                return None
+            if pd.isna(ts):
+                return None
+            out.append(str(ts.date()))
+        return out
 
     # ------------------------------------------------------------------------------------
     # Rentabilidades y referencia ingenua
@@ -284,20 +354,48 @@ class Evaluador:
     # ------------------------------------------------------------------------------------
     # Métricas
     # ------------------------------------------------------------------------------------
-    def resueltos(self, as_of=None, solo_informe: bool = False) -> list[dict]:
+    def resueltos(self, as_of=None, solo_informe: bool = False, admisibles: bool = True) -> list[dict]:
         """Pronósticos ordinarios resueltos sin fuga. Excluye los hitos HIT- de los H5 (`es_hito`): no son pronósticos
         independientes de la celda en la que se registran (8.3, 12.1); se evalúan aparte, por tipo × H5, en `estado_h5`.
-        Así no cuentan en métricas, certificados, historial publicado ni recalibración."""
+        Así no cuentan en métricas, certificados, historial publicado ni recalibración.
+        `admisibles` (PA-09): excluye los PRG con `contaminacion_posible`; False los devuelve todos."""
         out = [p for p in self.almacen.estado("F4", as_of).values()
                if p.get("estado") == "RESUELTO" and not p.get("es_hito")
                and (p.get("resolucion") or {}).get("comprobacion_fuga") == "SUPERADA"]
+        if admisibles:
+            out = [p for p in out if not contaminacion_posible(p)]
         return [p for p in out if p.get("en_informe")] if solo_informe else out
 
-    def metricas(self, as_of=None, completas: bool = False, solo_informe: bool = False) -> dict:
-        """Métricas por clase × horizonte. `completas` añade bootstrap del BSS, ECE con nulo y DM-HLN."""
+    def excluidos_contaminacion(self, as_of=None, solo_informe: bool = False) -> dict:
+        """PA-09: cuántos PRG resueltos se excluyen de la evaluación por `contaminacion_posible`, en total y por celda."""
+        ex = [p for p in self.resueltos(as_of, solo_informe, admisibles=False) if contaminacion_posible(p)]
+        por = Counter(f"{p['clase']}|{p['horizonte']}" for p in ex)
+        return {"total": len(ex), "por_celda": dict(sorted(por.items()))}
+
+    @staticmethod
+    def _analista_vs_prospectiva(lst: list[dict]) -> dict | None:
+        """PA-21 (solo informativo): Brier de la probabilidad propia del Analista (`prob_analista`) frente al de
+        Prospectiva (`prob_interna`) sobre los mismos PRG. Un `prob_analista` no numérico o fuera de [0, 1] no entra y
+        se cuenta como inválido."""
+        con = [x for x in lst if x.get("prob_analista") is not None]
+        if not con:
+            return None
+        val = [x for x in con if _prob_valida(x["prob_analista"])]
+        oo = [int(x["resolucion"]["resultado_binario"]) for x in val]
+        b_a = ev.brier([float(x["prob_analista"]) for x in val], oo) if val else None
+        b_p = ev.brier([float(x["prob_interna"]) for x in val], oo) if val else None
+        return {"n": len(val), "brier_analista": b_a, "brier_prospectiva": b_p,
+                "diferencia": None if b_a is None or b_p is None else b_a - b_p, "invalidos": len(con) - len(val),
+                "nota": "PA-21, solo informativo: diferencia < 0, el Analista acierta más que Prospectiva; no cambia ninguna decisión"}
+
+    def metricas(self, as_of=None, completas: bool = False, solo_informe: bool = False, admisibles: bool = True) -> dict:
+        """Métricas por clase × horizonte. `completas` añade bootstrap del BSS, ECE con nulo y DM-HLN.
+        T-66: sin los PRG con `contaminacion_posible` (PA-09; `excluidos_contaminacion` dice cuántos), con la muestra
+        efectiva `n_eff` (PA-03) y, si hay `prob_analista`, el Brier del Analista frente al de Prospectiva (PA-21)."""
         celdas: dict[tuple[str, str], list[dict]] = defaultdict(list)
-        for p in self.resueltos(as_of, solo_informe):
+        for p in self.resueltos(as_of, solo_informe, admisibles):
             celdas[(p["clase"], p["horizonte"])].append(p)
+        excl = self.excluidos_contaminacion(as_of, solo_informe)["por_celda"] if admisibles else {}
         out = {}
         for (c, h), lst in sorted(celdas.items()):
             lst.sort(key=lambda x: (x["fecha_emision"], x["prg_id"]))
@@ -305,13 +403,22 @@ class Evaluador:
             oo = [int(x["resolucion"]["resultado_binario"]) for x in lst]
             pr = [float(x["referencia_ingenua"]["valor_o_prob"]) for x in lst]
             tasa_base = float(np.mean(pr))
+            fechas = self._fechas_conglomerado(lst)
             if completas:
                 m = ev.evaluar_celda(pp, oo, pr, tasa_base, int(self.ev_cfg.get("bootstrap_replicas", 2000)),
-                                     int(self.ev_cfg.get("simulaciones_ece", 2000)), float(self.ev_cfg.get("nivel_ic", 0.9)))
+                                     int(self.ev_cfg.get("simulaciones_ece", 2000)), float(self.ev_cfg.get("nivel_ic", 0.9)),
+                                     fechas=fechas, min_conglomerados=self._min_conglomerados())
             else:
                 m = {"n": len(lst), "brier": ev.brier(pp, oo), "brier_ref": ev.brier(pr, oo),
                      "acierto": ev.acierto_direccional(oo, tasa_base), "calibracion_global": {"p_media": float(np.mean(pp)), "frecuencia": float(np.mean(oo))},
                      "bss": {"valor": (1 - ev.brier(pp, oo) / ev.brier(pr, oo)) if ev.brier(pr, oo) > 0 else None, "ic": [None, None]}}
+                muestra = ev.n_efectiva(fechas, np.asarray(oo, float) - np.asarray(pp, float)) if fechas is not None else None
+                m["n_eff"] = muestra["n_eff"] if muestra else None
+                m["muestra_efectiva"] = muestra
+            m["excluidos_contaminacion"] = int(excl.get(f"{c}|{h}", 0))
+            analista = self._analista_vs_prospectiva(lst)
+            if analista is not None:
+                m["analista_vs_prospectiva"] = analista
             informe = [x for x in lst if x.get("en_informe")]
             rel = [x["resolucion"]["valor_observado"] * (1 if x["sentido"] == "POSITIVO" else -1) for x in informe]
             m["rentabilidad_relativa_media_top3"] = float(np.mean(rel)) if rel else None
@@ -324,8 +431,12 @@ class Evaluador:
         """Historial publicable (R13 · 11): opciones del informe resueltas en la ventana, con tamaño muestral."""
         lim = pd.Timestamp(as_of) - pd.Timedelta(weeks=semanas)
         lst = [p for p in self.resueltos(as_of, solo_informe=True) if pd.Timestamp(p["resolucion"]["fecha_resuelto"]) >= lim]
+        # PA-09: los PRG con contaminación posible no entran en el historial publicado (se declaran en la nota)
+        n_contaminados = sum(1 for p in self.resueltos(as_of, solo_informe=True, admisibles=False)
+                             if contaminacion_posible(p) and pd.Timestamp(p["resolucion"]["fecha_resuelto"]) >= lim)
         no_res = [p for p in self.almacen.estado("F4", as_of).values()
-                  if p.get("estado") == "NO_RESOLUBLE" and p.get("en_informe") and not p.get("es_hito")]
+                  if p.get("estado") == "NO_RESOLUBLE" and p.get("en_informe") and not p.get("es_hito")
+                  and not contaminacion_posible(p)]
         def celda(xs, ref_txt):
             n = len(xs)
             k = sum(int(x["resolucion"]["resultado_binario"]) for x in xs)
@@ -345,6 +456,8 @@ class Evaluador:
         g = celda(lst, "Tasa base sin fuga (RI-TB) de cada pronóstico")
         nota = (f"Ventana de {semanas} semanas; {g['n']} pronósticos de opciones publicadas resueltos"
                 + (f"; {len(no_res)} no resolubles excluidos y declarados" if no_res else "")
+                + (f"; {n_contaminados} con contaminación posible por el conocimiento del modelo excluidos y declarados"
+                   if n_contaminados else "")
                 + ("; muestra pequeña (< 30): la diferencia frente al azar puede deberse a la suerte" if g["n"] < 30 else ""))
         return {"ventana": f"{semanas} semanas", "global": g, "por_clase": por_clase, "nota": nota}
 
@@ -354,11 +467,14 @@ class Evaluador:
     def estado_h5(self, as_of=None) -> dict[str, dict]:
         """V5.1 (12.1): estado de cada PRG H5 a partir de sus hitos resueltos y tasa de hitos cumplidos por celda tipo × H5.
         EN_CURSO_CONFORME: como mucho un hito fallado y no el último; DESVIADO: dos o más fallados o el último fallado;
-        INVALIDADO: falla un hito marcado como necesario."""
+        INVALIDADO: falla un hito marcado como necesario.
+        PA-09: los hitos con `contaminacion_posible` (o los de un H5 que la tenga) cuentan para el estado de su PRG,
+        pero no para la tasa de la celda ni, por tanto, para la degradación."""
         f4 = self.almacen.estado("F4", as_of)
         out: dict[str, dict] = {}
         celdas: dict[str, list[int]] = defaultdict(list)
         ids_celda: dict[str, list[str]] = defaultdict(list)
+        excluidos: dict[str, int] = defaultdict(int)
         # Anexo A, «Degradación automática de H5 (12.2)» (Calibrable, P-42): tasa < 50 % con ≥ 20 hitos resueltos
         tasa_min = float(self.ev_cfg.get("degradacion_h5_tasa_min", 0.50))
         min_hitos = int(self.ev_cfg.get("degradacion_h5_min_hitos", 20))
@@ -376,11 +492,15 @@ class Evaluador:
             else:
                 est = "EN_CURSO_CONFORME"
             out[p["prg_id"]] = {"estado": est, "hitos_resueltos": len(res), "hitos_cumplidos": sum(res), "hitos_totales": len(hitos)}
-            celdas[p["clase"]].extend(res)
-            ids_celda[p["clase"]].extend(h["prg_id"] for h in hitos if h.get("estado") == "RESUELTO" and h.get("resolucion"))
+            resueltos_h = [h for h in hitos if h.get("estado") == "RESUELTO" and h.get("resolucion")]
+            admis = [h for h in resueltos_h if not (contaminacion_posible(p) or contaminacion_posible(h))]
+            celdas[p["clase"]].extend(int(h["resolucion"]["resultado_binario"]) for h in admis)
+            ids_celda[p["clase"]].extend(h["prg_id"] for h in admis)
+            excluidos[p["clase"]] += len(resueltos_h) - len(admis)
         resumen = {c: {"n": len(v), "tasa_cumplidos": round(sum(v) / len(v), 4) if v else None,
                        "degradar": bool(len(v) >= min_hitos and sum(v) / len(v) < tasa_min),
-                       "hitos_resueltos_ids": sorted(ids_celda[c])} for c, v in celdas.items()}
+                       "hitos_resueltos_ids": sorted(ids_celda[c]), "excluidos_contaminacion": excluidos[c]}
+                   for c, v in celdas.items()}
         return {"pronosticos": out, "celdas": resumen, "umbral": {"tasa_min": tasa_min, "min_hitos": min_hitos}}
 
     def _matriz_aplicabilidad(self, as_of) -> dict[str, dict[str, str]]:
@@ -460,22 +580,70 @@ class Evaluador:
         return hechos
 
     def certificados_vigentes(self, as_of=None) -> list[dict]:
+        """Certificados VIGENTE (los únicos que habilitan probabilidades numéricas). Un PROPUESTO (PA-10) no lo es hasta
+        su CERT_APROBACION."""
         return [c for c in self.almacen.estado("F6", as_of, clave="id").values()
-                if c.get("tipo_entrada") in ("CERT", "CERT_REVOCACION") and c.get("estado") == "VIGENTE"]
+                if c.get("tipo_entrada") in ("CERT", "CERT_REVOCACION", "CERT_APROBACION") and c.get("estado") == "VIGENTE"]
+
+    def certificados_propuestos(self, as_of=None) -> list[dict]:
+        """PA-10: certificados que pasan el criterio y esperan la aprobación del operador (CT-04)."""
+        return [c for c in self.almacen.estado("F6", as_of, clave="id").values()
+                if c.get("tipo_entrada") == "CERT" and c.get("estado") == "PROPUESTO"]
+
+    def aprobar_certificados(self, ids, as_of, autor: str = "BROKER") -> list[dict]:
+        """PA-10 (CT-04): el operador aprueba certificados PROPUESTO. Escribe en F6 una entrada CERT_APROBACION por id y
+        el certificado queda VIGENTE. Valida todos los ids antes de escribir nada (falla cerrado: ValueError con el
+        motivo y F6 sin cambios)."""
+        if isinstance(ids, str) or not isinstance(ids, (list, tuple)):
+            raise ValueError("aprobar_certificados: se espera una lista de identificadores CERT-")
+        ids = list(ids)
+        if not ids:
+            raise ValueError("aprobar_certificados: la lista de certificados está vacía")
+        if len(set(ids)) != len(ids):
+            raise ValueError("aprobar_certificados: hay identificadores repetidos")
+        if not isinstance(autor, str) or not autor.strip():
+            raise ValueError("aprobar_certificados: falta el autor de la aprobación")
+        as_of = pd.Timestamp(as_of).normalize()
+        f6 = self.almacen.estado("F6", as_of, clave="id")
+        vigentes = {(c["celda"]["clase"], c["celda"]["horizonte"]) for c in self.certificados_vigentes(as_of) if c.get("celda")}
+        for i in ids:
+            c = f6.get(i)
+            if c is None or not any(h.get("tipo") == "CERT" for h in c.get("_historial", [])):
+                raise ValueError(f"aprobar_certificados: no existe ningún certificado {i!r} en F6")
+            if c.get("estado") != "PROPUESTO":
+                raise ValueError(f"aprobar_certificados: {i} está {c.get('estado')}, no PROPUESTO")
+            celda = c.get("celda") or {}
+            if (celda.get("clase"), celda.get("horizonte")) in vigentes:
+                raise ValueError(f"aprobar_certificados: la celda {celda.get('clase')}|{celda.get('horizonte')} de {i} ya "
+                                 "tiene un certificado VIGENTE")
+        hechos = []
+        for i in ids:
+            e = {"tipo_entrada": "CERT_APROBACION", "id": i, "estado": "VIGENTE", "aprobado_por": autor.strip(),
+                 "contrato": "CT-04", "fecha_aprobacion": str(as_of.date()), "estado_anterior": "PROPUESTO"}
+            self.almacen.escribir("F6", "AG-20", e)
+            hechos.append(e)
+        return hechos
 
     def revisar_certificados(self, as_of, run_id: str | None = None) -> dict:
+        """Certificados de horizonte (Anexo A). T-66: solo con PRG admisibles (PA-09); el mínimo de muestra se exige a
+        n_eff (PA-03); con `aprendizaje.solo_endurecer` el certificado nace PROPUESTO (PA-10). Revocar un VIGENTE y
+        retirar un PROPUESTO que ya no cumple el criterio endurecen: son automáticos."""
         n_cert = int(self.ev_cfg.get("min_certificar", 100))
+        min_cong = self._min_conglomerados()
+        solo_endurecer = self.solo_endurecer()
         celdas = defaultdict(list)
         for p in self.resueltos(as_of):
             celdas[(p["clase"], p["horizonte"])].append(p)
         candidatas = {k: v for k, v in celdas.items() if len(v) >= n_cert}
         vigentes = {(c["celda"]["clase"], c["celda"]["horizonte"]): c for c in self.certificados_vigentes(as_of)}
-        emitidos, revocados, evaluadas = [], [], {}
+        propuestos = {(c["celda"]["clase"], c["celda"]["horizonte"]): c for c in self.certificados_propuestos(as_of)}
+        emitidos, revocados, retirados, evaluadas = [], [], [], {}
         if candidatas:
             metr = {k: ev.evaluar_celda([float(x["prob_interna"]) for x in v], [int(x["resolucion"]["resultado_binario"]) for x in v],
                                         [float(x["referencia_ingenua"]["valor_o_prob"]) for x in v],
                                         float(np.mean([x["referencia_ingenua"]["valor_o_prob"] for x in v])),
-                                        int(self.ev_cfg.get("bootstrap_replicas", 2000)), int(self.ev_cfg.get("simulaciones_ece", 2000)))
+                                        int(self.ev_cfg.get("bootstrap_replicas", 2000)), int(self.ev_cfg.get("simulaciones_ece", 2000)),
+                                        fechas=self._fechas_conglomerado(v), min_conglomerados=min_cong)
                     for k, v in sorted(candidatas.items())}
             # Holm escalonado (Anexo A, certificado R13): en cuanto una celda no supera su umbral, ninguna de las
             # siguientes (de p mayor) lo supera. α: clave evaluacion.alfa_holm (0,10, coherente con el IC 90 % del criterio)
@@ -485,14 +653,28 @@ class Evaluador:
                 crit = ev.criterio_certificado(m, n_cert, float(self.ev_cfg.get("ece_max", 0.15)),
                                                umbrales[f"{k[0]}|{k[1]}"] if len(metr) > 1 else None)
                 evaluadas[f"{k[0]}|{k[1]}"] = crit
-                if crit["certificable"] and k not in vigentes:
-                    cert = {"tipo_entrada": "CERT", "id": self.almacen.nuevo_id("CERT"), "estado": "VIGENTE",
-                            "celda": {"clase": k[0], "horizonte": k[1], "metodo": None}, "n": m["n"],
+                if crit["certificable"] and k not in vigentes and k not in propuestos:
+                    muestra = m.get("muestra_efectiva") or {}
+                    cert = {"tipo_entrada": "CERT", "id": self.almacen.nuevo_id("CERT"),
+                            "estado": "PROPUESTO" if solo_endurecer else "VIGENTE",
+                            "celda": {"clase": k[0], "horizonte": k[1], "metodo": None}, "n": m["n"], "n_eff": m["n_eff"],
+                            "muestra_efectiva": {c: muestra.get(c) for c in ("conglomerados", "m_medio", "rho", "efecto_diseno")},
                             "brier": m["brier"], "brier_ref": m["brier_ref"], "bss": m["bss"]["valor"], "bss_ic90": m["bss"]["ic"],
+                            "bss_ic_metodo": m["bss"].get("metodo"),
                             "holm_superado": True, "ece": m["calibracion"]["ece"], "ece_nulo_q90": m["ece_nulo"]["q90"],
                             "methodology_version": self.cfg.get("methodology_version", "4.0"), "emitido": str(pd.Timestamp(as_of).date())}
+                    if solo_endurecer:
+                        cert["pendiente"] = ("aprobación del operador por CT-04 (aprobar_certificados); hasta entonces no "
+                                             "habilita probabilidades numéricas (PA-10, aprendizaje.solo_endurecer)")
                     self.almacen.escribir("F6", "AG-20", cert)
                     emitidos.append(cert)
+                elif k in propuestos and not crit["certificable"]:
+                    c = propuestos[k]
+                    self.almacen.escribir("F6", "AG-20", {"tipo_entrada": "CERT_REVOCACION", "id": c["id"], "estado": "REVOCADO",
+                                                          "motivo_cambio": "propuesta retirada: la celda ya no cumple el criterio ("
+                                                          + "; ".join(crit["motivos"]) + ")",
+                                                          "fecha": str(pd.Timestamp(as_of).date())})
+                    retirados.append(c["id"])
                 elif k in vigentes:
                     bssv = m["bss"]["valor"]
                     ece_m = m["calibracion"]["ece"]
@@ -506,7 +688,8 @@ class Evaluador:
                                                               "fecha": str(pd.Timestamp(as_of).date())})
                         revocados.append(c["id"])
         no_cert = {f"{k[0]}|{k[1]}": f"n = {len(v)} < {n_cert}" for k, v in celdas.items() if k not in candidatas}
-        return {"emitidos": emitidos, "revocados": revocados, "evaluadas": evaluadas, "insuficientes": no_cert}
+        return {"emitidos": emitidos, "revocados": revocados, "propuestas_retiradas": retirados, "evaluadas": evaluadas,
+                "insuficientes": no_cert, "excluidos_contaminacion": self.excluidos_contaminacion(as_of)}
 
     def lecciones_vigentes(self, as_of, clase: str | None = None, max_n: int = 10) -> list[dict]:
         orden = {"estadistica": 0, "recurrente": 1, "anecdotica": 2}
@@ -609,7 +792,13 @@ class Evaluador:
                "evidencia": {"objetivo": "capacidad ordenadora de RK", "ic_A": ic_a, "ic_E": ic_e, "n": len(res)},
                "methodology_version": {"de": self.cfg.get("methodology_version", "5.1"), "a": _version_menor_siguiente(self.cfg.get("methodology_version", "5.1"))},
                "efecto_desde": str(pd.Timestamp(as_of).date()), "sombra_hasta": str((pd.Timestamp(as_of) + pd.DateOffset(months=3)).date()),
-               "estado": "EN_SOMBRA", "aplicado_en_produccion": bool(self.ev_cfg.get("aplicar_recalibracion", False))}
+               "estado": "EN_SOMBRA", "aplicado_en_produccion": bool(self.ev_cfg.get("aplicar_recalibracion", False)),
+               "propuesta": False}
+        if self.solo_endurecer():
+            # PA-10: la recalibración de pesos nunca pasa sola a producción, aunque evaluacion.aplicar_recalibracion sea true
+            aju.update({"aplicado_en_produccion": False, "propuesta": True,
+                        "nota": "aprendizaje.solo_endurecer: propuesta de recalibración; solo pasa a producción con la "
+                                "aprobación del operador"})
         self.almacen.escribir("F6", "AG-20", aju)
         return aju
 
@@ -623,9 +812,11 @@ class Evaluador:
         """C5: resolución de vencidos, métricas, certificados, lecciones y recalibración (nunca bloquea C1–C3)."""
         resueltos = self.resolver(as_of, run_id)
         metr = self.metricas(as_of)
-        if metr:
+        excl = self.excluidos_contaminacion(as_of)
+        if metr or excl["total"]:
             self.almacen.escribir("F6", "AG-20", {"tipo_entrada": "MET", "id": f"MET-{pd.Timestamp(as_of).date()}",
                                                   "ventana": f"hasta {pd.Timestamp(as_of).date()}", "metricas": metr,
+                                                  "excluidos_contaminacion": excl,
                                                   "comprobacion_fuga": "SUPERADA", "madurez": "implementado"})
         certs = self.revisar_certificados(as_of, run_id)
         lecciones = self.extraer_lecciones(as_of, metr)
@@ -634,4 +825,4 @@ class Evaluador:
         return {"resueltos": len([r for r in resueltos if r["estado"] == "RESUELTO"]),
                 "no_resolubles": len([r for r in resueltos if r["estado"] == "NO_RESOLUBLE"]),
                 "metricas": metr, "certificados": certs, "lecciones_nuevas": lecciones, "ajuste": aju,
-                "degradacion_h5": degradacion_h5}
+                "degradacion_h5": degradacion_h5, "excluidos_contaminacion": excl}
