@@ -67,7 +67,7 @@ Astra entra por `AGENTS.md`. La memoria no sustituye a la Constitución, a este 
 
 ## Mapa de bloques y estado
 
-Estado a 9 de noviembre de 2026 (Constitución V0.5, con la enmienda 2 aplicada como `[PROPUESTO]` y pendiente de ratificar). El detalle de cada bloque está en el §2 de la Constitución.
+Estado a 9 de noviembre de 2026 (Constitución V0.5, con la enmienda 2 ratificada). El detalle de cada bloque está en el §2 de la Constitución.
 
 | Bloque | En una frase | Estado |
 | --- | --- | --- |
@@ -137,9 +137,9 @@ Desde la V0.5 estas reglas y las de la sección siguiente están también en la 
 3. Nada opera con dinero real ni pasa una compuerta que exija datos reales (intermediario real en la Fase 3, L1 real) hasta que decida.
 4. Al terminar la arquitectura se le presenta una sola sesión con todas las decisiones pendientes, cada una con su valor de partida y lo que cambia según su respuesta. Según la V0.5, la conduce el asesor de configuración del Broker (D-34); los números de la enmienda 2 son P-25 a P-35.
 
-## Lo que añade la enmienda 2 (Constitución V0.5, 9-11-2026, pendiente de ratificar)
+## Lo que añade la enmienda 2 (Constitución V0.5, ratificada el 9-11-2026)
 
-Todo es `[PROPUESTO]`; se construye con ello salvo que el operador diga lo contrario. Lo esencial para cualquier conversación de construcción:
+Todo está `[RATIFICADO]`; sus números siguen pendientes (P-25 a P-35, sesión T-57). Lo esencial para cualquier conversación de construcción:
 
 - **Se entra por cualquier bloque; al dinero, solo por F y G** (P20): vía `DIRECTA` y modo `CONSULTA`; el expediente nace en el estado del bloque de entrada.
 - **El peso se gana con pruebas** (P19): toda tesis con probabilidad, plazo y criterio de resolución; torneo de pronósticos; peso por historial; aspirante frente a titular; escalera de verificación (backtesting, paper trading, dinero real en pequeño, escala).
