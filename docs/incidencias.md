@@ -26,3 +26,5 @@ limitación declarada (degradación elegante) y 3 tests fallan porque exigen el 
 Solución de entorno aplicada: `pip install python-docx` en el venv del proyecto
 (documentado en CLAUDE.md). Corregir el pyproject upstream queda pendiente de confirmar
 con el propietario de la entrega.
+
+**T-62 · Ámbito de la refutación por eslabón (CT-B-17).** El Documento 0 y el Director admiten ESLABON con eslabon_id; el crítico también emite TESIS con eslabon_id. El esquema congelado del paquete admite CADENA y propiedades x_. El ejecutor acepta ambas grafías de entrada y emite CADENA con x_eslabon_id y los candidatos expuestos. TESIS sin referencia a un eslabón mantiene su alcance global. Los detalles y la decisión sobre datos inválidos están en [.docs/tickets/T-62](../.docs/tickets/T-62/README.md).
