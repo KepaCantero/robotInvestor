@@ -5,7 +5,7 @@ fecha: 2026-11-09
 tipo: estado
 etiquetas: [estado, constitucion, enmienda-2, marco-c]
 fuente: sistema_global/constitucion/Constitucion_Global.md (V0.5); sistema_global/seguimiento/Briefing_de_arranque.md
-vigencia: vigente
+vigencia: sustituida en parte por compartida/2026-11-09_enmienda-2-ratificada
 ---
 
 Sustituye a `compartida/2026-11-09_estado-del-proyecto`.
