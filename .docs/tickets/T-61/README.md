@@ -38,3 +38,4 @@ Documentos afectados: README del ejecutor, documentos de esta tarea y traspaso a
 - 2026-11-09 · EN QA · Astra adapta la documentación al espacio de trabajo de a6ceb76. Véase [traspaso](handoff.md).
 - 2026-11-09 · CERRADO · claude · QA APTO (r01, 4 hallazgos bajos); rama fusionada en `develop` por avance rápido.
 - 2026-11-09 · CERRADO · claude · QA r02 APTO (cobertura y comparación con el azar, 3 hallazgos bajos); `astra/bloque-b-backtesting-cobertura-y-azar` fusionada en `develop` por avance rápido.
+- 2026-11-09 · CERRADO · claude · tras fusionar, en `develop`: gate completo 12/12 (A 58, A Forex 68, B 141); el marco común de C no se toca en estas ramas, así que no hacía falta `pruebas_marco.sh`.
