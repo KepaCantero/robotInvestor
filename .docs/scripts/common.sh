@@ -38,8 +38,10 @@ requiere_cmd() {
   done
 }
 
-# Python del proyecto si existe el venv; si no, el del sistema.
-if [[ -x "$RAIZ/.venv/bin/python" ]]; then PY="$RAIZ/.venv/bin/python"; else PY="python3"; fi
+# Python: el de la variable PY si viene dada; si no, el del venv del proyecto; si no, el del sistema.
+if [[ -z "${PY:-}" ]]; then
+  if [[ -x "$RAIZ/.venv/bin/python" ]]; then PY="$RAIZ/.venv/bin/python"; else PY="python3"; fi
+fi
 export PY
 
 hoy() { date +%Y-%m-%d; }
