@@ -1252,19 +1252,23 @@ class Coordinador:
                 o["obj_id"] = self.alm.nuevo_id("OBJ-B")
             director_o = [o for o in objs if o["objeto"] in ("TESIS", "CADENA") and o["fuerza"] in ("fuerte", "moderada")]
             cand_o = [o for o in objs if o["objeto"] in validos and o["fuerza"] in ("fuerte", "moderada")]
+            referencias = self._referencias_contraste(st) if any(o["fuerza"] == "fuerte" for o in objs) else {}
+            instruccion = ("Para cerrar una objeción fuerte devuelve evidencia_nueva como lista de identificadores de "
+                           "referencias_disponibles y explica qué demuestra la fuente.")
             if director_o:
-                rd = self.inv.llamar("AG-B02", "CT-B-17", "respuestas_objeciones", {"pet_id": st["pet_id"], "objeciones": director_o},
-                                     "Responde con evidencia cada objeción fuerte o moderada sobre la tesis o el eslabón indicado.", {"respuestas": "object"},
+                rd = self.inv.llamar("AG-B02", "CT-B-17", "respuestas_objeciones", {"pet_id": st["pet_id"], "objeciones": director_o,
+                                     "referencias_disponibles": referencias},
+                                     "Responde con evidencia cada objeción fuerte o moderada sobre la tesis o el eslabón indicado. " + instruccion, {"respuestas": "object"},
                                      self._ctx("AG-B02"), st["run_id"])
-                self._aplicar_respuestas(director_o, rd.get("respuestas") or {})
+                self._aplicar_respuestas(director_o, rd.get("respuestas") or {}, referencias)
             if cand_o:
                 ids_objetados = {o["objeto"] for o in cand_o}
                 rs = self.inv.llamar("AG-B12", "CT-B-17", "respuestas_objeciones",
-                                     {"pet_id": st["pet_id"], "objeciones": cand_o,
+                                     {"pet_id": st["pet_id"], "objeciones": cand_o, "referencias_disponibles": referencias,
                                       "finalistas": [f for f in finalistas if f["cand_id"] in ids_objetados]},
-                                     "Responde cada objeción fuerte o moderada sobre los candidatos.", {"respuestas_objeciones": "object"},
+                                     "Responde cada objeción fuerte o moderada sobre los candidatos. " + instruccion, {"respuestas_objeciones": "object"},
                                      self._ctx("AG-B12"), st["run_id"])
-                self._aplicar_respuestas(cand_o, rs.get("respuestas_objeciones") or {})
+                self._aplicar_respuestas(cand_o, rs.get("respuestas_objeciones") or {}, referencias)
             for o in objs:
                 if o["fuerza"] == "debil":
                     o.update(estado_contraste="aceptada", resuelta=True,
@@ -1279,13 +1283,43 @@ class Coordinador:
             if st.get("refutacion_limitada"):
                 st["limitaciones"].append("Refutación limitada a la autorrefutación por la versión ≤ 30 min (R23: los controles no se recortan)")
 
+    def _referencias_contraste(self, st):
+        """Referencias trazables de esta petición disponibles en la fecha del análisis."""
+        entradas = [e for e in self.alm.estado("F2", as_of=self.ent.as_of).values() if e.get("pet_id") == st["pet_id"]]
+        referencias = {}
+        for e in entradas:
+            if e["tipo_entrada"] == "DAT":
+                referencias[e["id"]] = e["descripcion"]
+            elif e["tipo_entrada"] == "EVD" and e.get("estado") == "VIGENTE":
+                referencias[e["id"]] = e["fuente"]
+        for e in entradas:
+            if e["tipo_entrada"] == "CLM":
+                for ref in e.get("evd") or []:
+                    if ref in referencias:
+                        referencias[ref] = e["afirmacion"]
+
+        calculos = {(st.get("escenarios_motor") or {}).get("calc_id")}
+        calculos.update(grupo.get("calc_puntuar") for grupo in st["seleccion"].values())
+        for e in self.alm.leer("RC", self.ent.as_of, lambda e: e.get("id") in calculos and e.get("estado") == "SERVIDO"):
+            referencias[e["id"]] = e["metodo"]
+        return referencias
+
     @staticmethod
-    def _aplicar_respuestas(objs: List[Dict], resp: Dict) -> None:
+    def _aplicar_respuestas(objs: list[dict], resp: dict, referencias: dict) -> None:
         for o in objs:
             rr = resp.get(o["obj_id"])
-            if isinstance(rr, dict) and rr.get("respuesta"):
+            if isinstance(rr, dict) and isinstance(rr.get("respuesta"), str) and rr["respuesta"].strip():
                 o["respuesta"] = rr["respuesta"]
                 o["resuelta"] = rr.get("resuelta") is True
+                if o["fuerza"] == "fuerte":
+                    citas = rr.get("evidencia_nueva")
+                    if not isinstance(citas, list):
+                        citas = []
+                    validas = [ref for ref in citas if isinstance(ref, str) and ref in referencias]
+                    o["x_evidencia_respuesta"] = list(dict.fromkeys(validas))
+                    if o["resuelta"] and (not validas or len(validas) != len(citas)):
+                        o["resuelta"] = False
+                        o["x_motivo_abierta"] = "Falta una cita verificable o alguna referencia no pertenece al análisis."
             o["estado_contraste"] = "resuelta" if o["resuelta"] else "incertidumbre_abierta"
 
     # =========================================================================================================

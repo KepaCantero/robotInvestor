@@ -394,3 +394,9 @@ Si faltan precios de un símbolo, el backtest lo indica en las advertencias y ev
 ### Alcance de una objeción a un eslabón (T-62)
 
 El crítico recibe los nombres e identificadores del mapa. Una objeción a un eslabón conocido pasa al Director para su contraste. En el paquete figura como CADENA y conserva el identificador del eslabón, su nombre y los identificadores de los candidatos con exposición principal o secundaria registrada. Los encargos a C de esos candidatos incluyen el argumento y el estado de la respuesta. Una objeción fuerte que sigue abierta limita su prioridad; la puerta del sector sigue dependiendo de las objeciones a la tesis global. Una referencia de eslabón ilegible o desconocida detiene la entrega con motivo explícito. El alcance se basa en las asignaciones del Seleccionador.
+
+### Cierre con fuente de objeciones fuertes (T-63)
+
+En la respuesta a CT-B-17, cada agente cita en `evidencia_nueva` una lista de identificadores disponibles en la petición. Para cerrar una objeción fuerte, el ejecutor exige texto, el booleano verdadero y al menos una cita; todas las citas deben pertenecer al catálogo facilitado. Se admiten datos DAT, evidencias EVD vigentes y los cálculos RC de escenarios o puntuación identificados en el estado del análisis. La evidencia citada en la respuesta queda diferenciada de la evidencia de la objeción original.
+
+La caja para C y el informe técnico muestran las referencias del cierre. Una cita desconocida mantiene la objeción abierta. Este control comprueba la trazabilidad: contrastar la fecha de publicación con la del incidente y verificar que el contenido respalda la explicación requiere una evaluación adicional. Los informes históricos conservan el resultado que se emitió en su día.

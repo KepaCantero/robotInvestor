@@ -287,8 +287,8 @@ def test_h5_hitos_y_probabilidades_cualitativas(hacer_entorno, rapido):
 ])
 def test_resolucion_de_objecion_fuerte_exige_booleano(indicador, estado):
     objecion = {"obj_id": "OBJ-1", "fuerza": "fuerte", "resuelta": False}
-    respuesta = {"respuesta": "Resultado del contraste", "resuelta": indicador}
-    Coordinador._aplicar_respuestas([objecion], {"OBJ-1": respuesta})
+    respuesta = {"respuesta": "Resultado del contraste", "resuelta": indicador, "evidencia_nueva": ["EVD-B-2025-0001"]}
+    Coordinador._aplicar_respuestas([objecion], {"OBJ-1": respuesta}, {"EVD-B-2025-0001": "Medición"})
     assert objecion["estado_contraste"] == estado
     assert objecion["resuelta"] is (estado == "resuelta")
 
@@ -308,7 +308,8 @@ def test_objecion_fuerte_sobre_la_tesis_en_la_entrega(
         return informe
 
     def responder(mensaje, contexto, azar):
-        return {"respuestas": {o["obj_id"]: {"respuesta": "Contraste simulado.", "resuelta": indicador}
+        return {"respuestas": {o["obj_id"]: {"respuesta": "Contraste simulado.", "resuelta": indicador,
+                                             "evidencia_nueva": list(mensaje["referencias_disponibles"])[:1]}
                                for o in mensaje["objeciones"]}}
 
     monkeypatch.setitem(mr._TAREAS, ("AG-B14", "refutacion"), refutar)
