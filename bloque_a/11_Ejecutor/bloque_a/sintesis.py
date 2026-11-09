@@ -14,7 +14,15 @@ from typing import Dict, List, Optional, Set, Tuple
 
 import pandas as pd
 
-from .configuracion import CLASES, HORIZONTES, NATURALEZA_POR_DEFECTO, NATURALEZAS, NOMBRE_CLASE, naturaleza_coherente, naturaleza_para
+from .configuracion import (
+    CLASES,
+    HORIZONTES,
+    NATURALEZA_POR_DEFECTO,
+    NATURALEZAS,
+    NOMBRE_CLASE,
+    naturaleza_coherente,
+    naturaleza_para,
+)
 from .contratos import REGIONES
 from .evaluador import banda_de, banda_publicable
 from .herramientas import ht09
@@ -28,7 +36,7 @@ AVISO_LEGAL = ("Este informe describe oportunidades generales de mercado y no co
                "el Broker Personal valora si encaja con el usuario.")
 
 
-def _menos_de_tres_texto(c: str, sel: Dict, n_opc: int) -> Optional[str]:
+def _menos_de_tres_texto(c: str, sel: dict, n_opc: int) -> str | None:
     m = sel["seleccion"].get("menos_de_tres_motivo")
     if n_opc >= 3:
         return None
@@ -46,7 +54,7 @@ TIPOS_INDICADOR = ("INDICE", "SERIE", "CESTA")
 EXCLUYE_POR_DEFECTO = "Activos e instrumentos concretos: su selección corresponde al Bloque B"
 
 
-def _ambito(f: Dict, c: str) -> Dict:
+def _ambito(f: dict, c: str) -> dict:
     a = f.get("ambito") if isinstance(f.get("ambito"), dict) else {}
     inc = str(a.get("incluye") or f.get("nombre") or "").strip()
     exc = str(a.get("excluye") or "").strip()
@@ -56,7 +64,7 @@ def _ambito(f: Dict, c: str) -> Dict:
             "region": reg if len(reg) >= 2 else ", ".join(f.get("regiones") or ["Global"])}
 
 
-def _indicador(f: Dict, fuente: str) -> Dict:
+def _indicador(f: dict, fuente: str) -> dict:
     i = f.get("indicador_seguimiento") if isinstance(f.get("indicador_seguimiento"), dict) else {}
     out = {"nombre": str(i.get("nombre") or f.get("nombre") or f["proxy"])[:200], "simbolo": f["proxy"], "fuente": fuente}
     if str(i.get("tipo", "")).upper() in TIPOS_INDICADOR:
@@ -64,41 +72,57 @@ def _indicador(f: Dict, fuente: str) -> Dict:
     return out
 
 
-def _invertibilidad(f: Dict) -> Dict:
+def _invertibilidad(f: dict) -> dict:
     i = f.get("invertibilidad") if isinstance(f.get("invertibilidad"), dict) else {}
     nota = str(i.get("nota") or "").strip()
     return {"universo_suficiente": True,   # en el top-3 solo hay ámbitos que superan PS3
             "nota": nota if len(nota) >= 5 else "Universo negociable suficiente y accesible según el Analista (PS3 superada)"}
 
 
-def _lista(f: Dict, k: str, defecto: List[str]) -> List[str]:
+def _lista(f: dict, k: str, defecto: list[str]) -> list[str]:
     v = [str(x) for x in (f.get(k) or []) if isinstance(x, str) and len(x.strip()) >= 3]
     return v or defecto
 
 
-def _siguiente_paso(rel: str, E: int, RK: int) -> str:
-    if rel == "ALTA" and E < 70:
-        return "PROFUNDIZAR_EN_A"
-    if RK >= 65:
+def _siguiente_paso(op: dict, umbrales: dict) -> str:
+    """Prompt del Analizador, 6.16: ENVIAR_A_BLOQUE_B solo con tesis madura (E ≥ umbral), sin objeción moderada abierta
+    y con un catalizador dentro del horizonte principal; PROFUNDIZAR_EN_A si es atractiva con incertidumbre reducible;
+    si no, VIGILAR. Los umbrales salen de la configuración (`seleccion.siguiente_paso`)."""
+    pu = op["puntuaciones"]
+    E, A = pu["E"], pu["A"]
+    moderada_abierta = any(o.get("fuerza") == "moderada" and o.get("estado") != "RESPONDIDA" for o in op.get("objeciones") or [])
+    fin = ((op.get("horizontes") or {}).get(op.get("horizonte_principal")) or {}).get("fecha_resolucion")
+    catalizador = bool(fin) and any(str(c.get("fecha", "")) <= str(fin) for c in op.get("catalizadores") or [])
+    if E >= umbrales["E_enviar"] and not moderada_abierta and catalizador:
         return "ENVIAR_A_BLOQUE_B"
+    if E < umbrales["E_enviar"] and (op.get("relevancia_decisional") == "ALTA" or A >= umbrales["A_profundizar"]):
+        return "PROFUNDIZAR_EN_A"
     return "VIGILAR"
 
 
-def construir(bloque, run_id, tipo, as_of, clases, nivel, gc0, analisis, seleccion, clusteres, integ, historial, presupuesto) -> Tuple[Dict, Dict]:
+def _umbrales_presentacion(cfg: dict) -> tuple[dict, dict]:
+    sel = cfg.get("seleccion") or {}
+    paso = {"E_enviar": 70, "A_profundizar": 65, **(sel.get("siguiente_paso") or {})}
+    semaforo = {"E_verde": 70, "A_verde": 65, **(sel.get("semaforo") or {})}
+    return paso, semaforo
+
+
+def construir(bloque, run_id, tipo, as_of, clases, nivel, gc0, analisis, seleccion, clusteres, integ, historial, presupuesto) -> tuple[dict, dict]:
     cfg = bloque.cfg
+    umbral_paso, umbral_sem = _umbrales_presentacion(cfg)
     as_of = pd.Timestamp(as_of)
     certs = {(c["celda"]["clase"], c["celda"]["horizonte"]): c["id"] for c in bloque.evaluador.certificados_vigentes(as_of)}
     prefer = cfg.get("horizonte_principal_preferente") or ["H3", "H2", "H4", "H1", "H5"]
     meses_hitos = (cfg.get("h5") or {}).get("meses_hitos") or [12, 30, 54]
-    prg_borradores: List[Dict] = []
+    prg_borradores: list[dict] = []
     desgloses, paquete_clases, por_opp = {}, {}, {}
-    clases_out: Dict[str, Dict] = {}
-    bloque_b: List[Dict] = []
+    clases_out: dict[str, dict] = {}
+    bloque_b: list[dict] = []
     fechas_dato = []
     f1 = bloque.almacen.estado("F1", as_of)
     tnd_por_nombre = {normalizar(t.get("nombre_canonico", "")): k for k, t in f1.items()}
 
-    def borradores(f: Dict, c: str, en_informe: bool) -> Dict[str, str]:
+    def borradores(f: dict, c: str, en_informe: bool) -> dict[str, str]:
         ids = {}
         for h, d in f["_hz"].items():
             if d.get("prg_existente"):
@@ -140,7 +164,7 @@ def construir(bloque, run_id, tipo, as_of, clases, nivel, gc0, analisis, selecci
                 _h5_con_hitos(prg_borradores[-1], f, c, ref, tp, positivo, d)
         return ids
 
-    def _h5_con_hitos(b: Dict, f: Dict, c: str, ref, tp: str, positivo: bool, d: Dict) -> None:
+    def _h5_con_hitos(b: dict, f: dict, c: str, ref, tp: str, positivo: bool, d: dict) -> None:
         """V5.1 (8.3, R13): el PRG H5 solo registra la banda (sin probabilidad ni certificado) y lleva ≥ 3 hitos HIT-,
         cada uno un pronóstico ordinario de su propio horizonte (H4) que el Evaluador resuelve en su fecha."""
         b.update({"prob_interna": None, "prob_publicada": None, "certificado_r13": False, "certificado_ref": None,
@@ -198,12 +222,22 @@ def construir(bloque, run_id, tipo, as_of, clases, nivel, gc0, analisis, selecci
                     if b5.get("tesis_estructural"):
                         hz[h]["tesis_estructural"] = b5["tesis_estructural"]
             # V5.1 (8.3): naturaleza de la inversión y horizonte principal coherentes
-            nat = f.get("naturaleza_inversion") if f.get("naturaleza_inversion") in NATURALEZAS else NATURALEZA_POR_DEFECTO.get(c, "CICLICA")
-            hp = next((h for h in prefer if h in hz and naturaleza_coherente(nat, h)), None)
-            if hp is None:
-                hp = next((h for h in prefer if h in hz), sorted(hz)[0])
-                nat = naturaleza_para(hp)
-            f["_naturaleza"], f["_hp"] = nat, hp
+            # Lo declara el Analista y HT-09 (C17) dictamina; el ejecutor solo lo propone si el Analista no lo declara.
+            nat_ag = f.get("naturaleza_inversion") if f.get("naturaleza_inversion") in NATURALEZAS else None
+            hp_ag = f.get("horizonte_principal") if f.get("horizonte_principal") in hz else None
+            just = f.get("justificacion_horizonte") or None
+            if hp_ag is not None:
+                nat, hp = nat_ag or NATURALEZA_POR_DEFECTO.get(c, "CICLICA"), hp_ag
+            else:
+                nat = nat_ag or NATURALEZA_POR_DEFECTO.get(c, "CICLICA")
+                hp = next((h for h in prefer if h in hz and naturaleza_coherente(nat, h)), None)
+                if hp is None:
+                    hp = next((h for h in prefer if h in hz), sorted(hz)[0])
+                    if nat_ag is None:
+                        nat = naturaleza_para(hp)   # naturaleza por defecto: se elige la coherente con el horizonte
+                    # con naturaleza declarada por el Analista no se cambia en silencio: HT-09 lo dictamina
+                just = None
+            f["_naturaleza"], f["_hp"], f["_just_hp"] = nat, hp, just
             sen = f["senales"]
             if sen.get("fecha_dato"):
                 fechas_dato.append(sen["fecha_dato"])
@@ -228,7 +262,7 @@ def construir(bloque, run_id, tipo, as_of, clases, nivel, gc0, analisis, selecci
                   "regiones": [r for r in (f.get("regiones") or []) if r in REGIONES] or ["GLB"],
                   "puntuaciones": {"T": pu.get("T"), "E": pu["E"], "M": pu.get("M"), "A": pu["A"], "P": pu.get("P"), "RK": pu["RK"],
                                    "desglose_ref": f"HT03-{run_id[4:]}-{f['opp_id'][4:]}"},
-                  "horizontes": hz, "naturaleza_inversion": nat, "horizonte_principal": hp, "justificacion_horizonte": None,
+                  "horizontes": hz, "naturaleza_inversion": nat, "horizonte_principal": hp, "justificacion_horizonte": f.get("_just_hp"),
                   "valoracion": f.get("valoracion"),
                   "catalizadores": [x for x in (f.get("catalizadores") or []) if RE_FECHA_CAT.match(str(x.get("fecha", "")))],
                   "riesgos": f.get("riesgos") or ["riesgo de mercado"], "riesgo_1a5": int(sen.get("riesgo_1a5") or 3),
@@ -249,7 +283,7 @@ def construir(bloque, run_id, tipo, as_of, clases, nivel, gc0, analisis, selecci
             p = bloque.params_ht03
             motivos = ht09.relevancia_esperada_alta(op, c, op["vigente"], p)
             op["relevancia_decisional"] = "ALTA" if motivos else ("BAJA" if f.get("_arrastre") else "MEDIA")
-            op["siguiente_paso_sugerido"] = _siguiente_paso(op["relevancia_decisional"], pu["E"], pu["RK"])
+            op["siguiente_paso_sugerido"] = _siguiente_paso(op, umbral_paso)
             if pu.get("T") == "NA":
                 op["puntuaciones"]["T"] = "NA"
             if op["puntuaciones"].get("P") is None:
@@ -287,8 +321,9 @@ def construir(bloque, run_id, tipo, as_of, clases, nivel, gc0, analisis, selecci
             if f["opp_id"] not in sel_ids and not f.get("_arrastre") and f["_ht03"]["elegible"]:
                 borradores(f, c, False)
         n = len(opciones)
-        rk_max = max([o["puntuaciones"]["RK"] for o in opciones], default=0)
-        sem = "GRIS" if n == 0 else ("VERDE" if n >= 2 or rk_max >= 70 else "AMBAR")
+        # Prompt del Analizador, 6.15.5: VERDE con ≥ 1 opción de E ≥ 70 y A ≥ 65; ÁMBAR con opciones inciertas o marginales
+        solida = any(o["puntuaciones"]["E"] >= umbral_sem["E_verde"] and o["puntuaciones"]["A"] >= umbral_sem["A_verde"] for o in opciones)
+        sem = "GRIS" if n == 0 else ("VERDE" if solida else "AMBAR")
         fins = an["finalistas"]
         clases_out[c] = {"estado_semaforo": sem,
                          "regimen_clase": (an.get("regimen") or "Régimen de la clase no disponible en este ciclo")[:600] if len(an.get("regimen") or "") >= 10 else "Régimen de la clase no disponible en este ciclo",
@@ -348,7 +383,7 @@ def construir(bloque, run_id, tipo, as_of, clases, nivel, gc0, analisis, selecci
     return paquete, extras
 
 
-def ht09_validar(bloque, paquete: Dict, extras: Dict, informe_visual: Optional[str]) -> Dict:
+def ht09_validar(bloque, paquete: dict, extras: dict, informe_visual: str | None) -> dict:
     certs = [{"clase": c["celda"]["clase"], "horizonte": c["celda"]["horizonte"], "vigente": True, "metodo": None}
              for c in bloque.evaluador.certificados_vigentes(paquete["fecha"])]
     f2 = bloque.almacen.estado("F2", clave="clm_id")
@@ -358,7 +393,7 @@ def ht09_validar(bloque, paquete: Dict, extras: Dict, informe_visual: Optional[s
                         float((bloque.cfg.get("redaccion") or {}).get("umbral_fh", 70.0)))
 
 
-def retirar_opciones(bloque, paquete: Dict, extras: Dict, afectadas: Set[str]) -> Tuple[Dict, Dict]:
+def retirar_opciones(bloque, paquete: dict, extras: dict, afectadas: set[str]) -> tuple[dict, dict]:
     """Retira las opciones con bloqueo G3 (se conservan sus pronósticos con en_informe = false) y reajusta el paquete."""
     p = copy.deepcopy(paquete)
     for c, d in p["clases"].items():
@@ -386,7 +421,7 @@ def retirar_opciones(bloque, paquete: Dict, extras: Dict, afectadas: Set[str]) -
     return p, extras
 
 
-def mensaje_redactor(paquete: Dict) -> Dict:
+def mensaje_redactor(paquete: dict) -> dict:
     return {"run_id": paquete["run_id"], "fecha": paquete["fecha"], "apuestas_independientes": paquete["apuestas_independientes"],
             "historial_aciertos": paquete["historial_aciertos"].get("global"),
             "clases": {c: {"semaforo": d["estado_semaforo"], "n": len(d["opciones"]), "candidatas_analizadas": d["candidatas_analizadas"],

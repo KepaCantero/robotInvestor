@@ -12,7 +12,7 @@ from pathlib import Path
 
 RAIZ = Path(__file__).resolve().parent.parent
 DOCS_NUESTROS = ([RAIZ / "CLAUDE.md", RAIZ / "AGENTS.md"] + sorted((RAIZ / "prompts").glob("*.md"))
-                 + sorted((RAIZ / "docs").glob("*.md")) + sorted(p for p in (RAIZ / ".docs").rglob("*.md") if ".logs" not in p.parts)
+                 + sorted((RAIZ / "docs").glob("*.md")) + sorted(p for p in (RAIZ / ".docs").rglob("*.md") if ".logs" not in p.parts and "revisores" not in p.parts)   # informes de revisión: citas históricas
                  + sorted((RAIZ / ".agents" / "skills").rglob("*.md")))
 RAICES_VALIDAS = ("bloque_a/", "bloque_a_forex/", "bloque_b/", "docs/", "prompts/", "tools/", "sistema_global/",
                   ".docs/", ".agents/", ".claude/", "AGENTS.md", "CLAUDE.md")

@@ -19,27 +19,47 @@ from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Tuple
 
+import numpy as np
 import pandas as pd
 
 from . import sintesis as sint
 from .agentes import Agentes
 from .almacen import Almacen, Reloj
 from .anonimizacion import Anonimizador
-from .configuracion import ANTIGUEDAD_PS2, CLASES, HORIZONTES, NOMBRE_CLASE, aplicabilidad
+from .configuracion import (
+    ANTIGUEDAD_PS2,
+    CLASES,
+    HORIZONTES,
+    NOMBRE_CLASE,
+    aplicabilidad,
+)
 from .consumo import Contabilidad, Presupuesto
-from .contratos import AGENTE_CLASE, ESQUEMAS, Mensajeria, contiene_credenciales, sanear_contenido_externo, sanear_estructura
+from .contratos import (
+    AGENTE_CLASE,
+    ESQUEMAS,
+    Mensajeria,
+    contiene_credenciales,
+    sanear_contenido_externo,
+    sanear_estructura,
+)
 from .evaluador import PROB_DE_BANDA, Evaluador, banda_de, banda_publicable
 from .herramientas import ht03, ht09
 from .herramientas.ht01_datos import DatosNoDisponibles
 from .herramientas.ht05_planificador import fecha_resolucion
-from .herramientas.ht06_indice import CacheResultados, Indice, RE_ID, clave_hash, normalizar
+from .herramientas.ht06_indice import (
+    RE_ID,
+    CacheResultados,
+    Indice,
+    clave_hash,
+    normalizar,
+)
 from .herramientas.ht08_monitor import Monitor
 from .interfaz_broker import ConsultasBroker, Credenciales
-from .seguimiento import Seguimientos
 from .llm import LLMClient, Uso
 from .motor import Motor
 from .redaccion import Redaccion
 from .referencias import Referencias
+from .seguimiento import Seguimientos
 
 INSTR = {
     "CRIBADO_E_INVESTIGACION": (
@@ -68,7 +88,7 @@ INSTR = {
 }
 
 
-def simbolo_seguimiento(x: Dict) -> Optional[str]:
+def simbolo_seguimiento(x: dict) -> str | None:
     """Símbolo HT-01 del indicador de seguimiento de una ficha o de un registro de F3. Compatibilidad: los
     registros y respuestas V4.x usaban «proxy_backtest»."""
     ind = x.get("indicador_seguimiento")
@@ -83,11 +103,12 @@ def _semana(fecha) -> str:
 
 
 class Bloque:
-    def __init__(self, cfg: Dict, proveedor, universo: pd.DataFrame, cliente: LLMClient, carpeta_estado,
-                 carpeta_entregables=None, anonimizar: Optional[bool] = None) -> None:
+    def __init__(self, cfg: dict, proveedor, universo: pd.DataFrame, cliente: LLMClient, carpeta_estado,
+                 carpeta_entregables=None, anonimizar: bool | None = None) -> None:
         self.cfg = cfg
         self.modo = cfg.get("modo", "vivo")
         self.proveedor = proveedor
+        self._sin_historia: dict[tuple[str, str], list[str]] = {}   # (clase, run_id) → símbolos sin dato a la fecha as_of
         self.universo = universo.copy()
         self.reloj = Reloj(cfg.get("zona_horaria", "Europe/Madrid"))
         self.almacen = Almacen(carpeta_estado, self.reloj)
@@ -139,10 +160,10 @@ class Bloque:
             self.almacen.escribir("F10", "OPERADOR", {"tipo_entrada": "PARAMETRO", "param_id": pid, "nombre": nombre,
                                                       "valor_inicial": valor, "valor_vigente": valor, "regimen": reg})
 
-    def f10(self, as_of=None) -> Dict[str, Any]:
+    def f10(self, as_of=None) -> dict[str, Any]:
         return {k: v.get("valor_vigente") for k, v in self.almacen.estado("F10", as_of).items()}
 
-    def _contexto(self, as_of, run_id, clase=None, extra=None) -> Dict:
+    def _contexto(self, as_of, run_id, clase=None, extra=None) -> dict:
         f10 = self.f10(as_of)
         ctx = {"fecha_as_of": str(pd.Timestamp(as_of).date()), "modo": self.modo, "run_id": run_id,
                "methodology_version": f10.get("P-30", "4.0"), "anonimizado": bool(self.anon),
@@ -159,7 +180,7 @@ class Bloque:
         return self.anon.salida(obj) if self.anon else obj
 
     def _invocar(self, agente, contrato, mensaje, esquema, instrucciones, as_of, run_id, clase=None, fase=None,
-                 presupuesto: Optional[Presupuesto] = None, bolsa=None, permitir_web=False, max_uc_estimado=None):
+                 presupuesto: Presupuesto | None = None, bolsa=None, permitir_web=False, max_uc_estimado=None):
         """Llamada a un agente con control de presupuesto (estimación previa) y anonimización."""
         bolsa = bolsa or clase or "COMUN"
         if presupuesto is not None:
@@ -177,12 +198,12 @@ class Bloque:
             r.datos = self._real(r.datos)
         return r
 
-    def _estimar_uc(self, agente: str, mensaje: Dict) -> float:
+    def _estimar_uc(self, agente: str, mensaje: dict) -> float:
         n_user = len(json.dumps(mensaje, ensure_ascii=False, default=str)) / 3.6 + 1500
         n_sys = len(self.agentes.prompts.texto(agente)) / 3.6
         return self.contabilidad.uc_de(Uso(entrada=int(n_user), cache_lectura=int(n_sys), salida=2500))
 
-    def _solicitar_ampliacion(self, presupuesto: Presupuesto, bolsa: str, est: float, run_id: str, fase: Optional[str]) -> bool:
+    def _solicitar_ampliacion(self, presupuesto: Presupuesto, bolsa: str, est: float, run_id: str, fase: str | None) -> bool:
         """Ampliación > 25 % (10.3): el Orquestador decide en el ciclo periódico con la regla de valor de la
         información; tope total configurable (por defecto +50 %)."""
         pu = self.cfg.get("presupuesto_uc") or {}
@@ -200,13 +221,13 @@ class Bloque:
             presupuesto.ampliar(bolsa, falta)
         return autoriza
 
-    def _registrar_r9(self, hallazgos: List[Dict], run_id: Optional[str]) -> None:
+    def _registrar_r9(self, hallazgos: list[dict], run_id: str | None) -> None:
         for h in hallazgos:
             self.almacen.incidencia("MANIPULACION", f"Instrucción incrustada neutralizada en {h['origen']} (R9)", h["origen"],
                                     tratamiento="instrucción retirada; contenido tratado como dato; fuente degradada",
                                     fragmento=h["fragmento"], run_id=run_id)
 
-    def _universo_clase(self, clase: str, run_id: Optional[str]) -> List[Dict]:
+    def _universo_clase(self, clase: str, run_id: str | None) -> list[dict]:
         filas, hallazgos = [], []
         for _, f in self.universo[self.universo["clase"] == clase].iterrows():
             if not self.proveedor.tiene(f["simbolo"]):
@@ -222,12 +243,21 @@ class Bloque:
     # ====================================================================================
     # Señales deterministas por clase (Motor, PLAN_MIN)
     # ====================================================================================
-    def senales_clase(self, clase: str, as_of, run_id: str) -> Tuple[Dict[str, Dict], List[str]]:
-        simbolos = [f["simbolo"] for f in self._universo_clase(clase, run_id)]
+    def senales_clase(self, clase: str, as_of, run_id: str) -> tuple[dict[str, dict], list[str]]:
+        simbolos, sin_historia = [], []
+        for f in self._universo_clase(clase, run_id):
+            # Un símbolo sin dato hasta la fecha as_of (p. ej. empieza a cotizar después) no puede tumbar el lote
+            # de fichas del tipo entero: se excluye y se declara como laguna (R14, R16, PS2).
+            try:
+                self.proveedor.valor_en(f["simbolo"], as_of)
+                simbolos.append(f["simbolo"])
+            except DatosNoDisponibles:
+                sin_historia.append(f["simbolo"])
+        self._sin_historia[(clase, run_id)] = sin_historia
         ini = str((pd.Timestamp(as_of) - pd.DateOffset(years=3, days=30)).date())
         datos = [{"serie": s, "inicio": ini} for s in simbolos]
-        tabla: Dict[str, Dict] = {s: {} for s in simbolos}
-        calcs: List[str] = []
+        tabla: dict[str, dict] = {s: {} for s in simbolos}
+        calcs: list[str] = []
         for ficha, params in (("ACC-MOM-001", {}), ("FX-VOL-001", {"ventana": 20}), ("FX-TREND-001", {"ventana_semanas": 26}),
                               ("RISK-DD-001", {}), ("ST-DESC-001", {"posicion_ultimo": True}), ("FIN-CAGR-001", {})):
             r = self.motor.servir({"operacion": ficha, "plan": "PLAN_MIN", "clase": clase, "datos": datos, "parametros": params,
@@ -278,11 +308,11 @@ class Bloque:
     # ====================================================================================
     # F0 · GC0 (determinista)
     # ====================================================================================
-    def vigentes(self, as_of, clase: Optional[str] = None) -> List[Dict]:
+    def vigentes(self, as_of, clase: str | None = None) -> list[dict]:
         return [o for o in self.almacen.estado("F3", as_of).values()
                 if o.get("estado") in ("PROPUESTA", "VIGENTE") and (clase is None or o.get("clase") == clase)]
 
-    def _referencia(self, clase: str, simbolo: Optional[str] = None) -> Optional[str]:
+    def _referencia(self, clase: str, simbolo: str | None = None) -> str | None:
         """Referencia de comparación del tipo de activo (8.4): símbolo, «CESTA», «SUBYACENTE» (columna «subyacente»
         del universo para el indicador; si falta, CESTA) o «NINGUNA»/vacío (pronóstico absoluto: posición neutra)."""
         ref = (self.cfg.get("indices_referencia") or {}).get(clase, "CESTA")
@@ -294,7 +324,7 @@ class Bloque:
             return sub if sub and self.proveedor.tiene(sub) else "CESTA"
         return ref
 
-    def gc0(self, clase: str, as_of, vigentes: List[Dict]) -> Dict:
+    def gc0(self, clase: str, as_of, vigentes: list[dict]) -> dict:
         g = self.cfg.get("gc0") or {}
         motivos, invalidadas = [], []
         previos = [r for r in self.almacen.leer("F5", as_of) if r.get("tipo_entrada") == "RUN" and clase in (r.get("nivel_por_clase") or {})]
@@ -345,12 +375,12 @@ class Bloque:
     # ====================================================================================
     # Ciclo C1 / C2
     # ====================================================================================
-    def ciclo(self, as_of=None, tipo: str = "PERIODICO", alcance: Optional[Dict] = None, nivel_forzado: Optional[str] = None,
-              horizontes: Optional[List[str]] = None, disparador: Optional[Dict] = None, prioridad: str = "NORMAL",
-              presupuesto_override: Optional[Dict[str, float]] = None) -> Dict:
+    def ciclo(self, as_of=None, tipo: str = "PERIODICO", alcance: dict | None = None, nivel_forzado: str | None = None,
+              horizontes: list[str] | None = None, disparador: dict | None = None, prioridad: str = "NORMAL",
+              presupuesto_override: dict[str, float] | None = None) -> dict:
         as_of = self.fijar_fecha(as_of or pd.Timestamp.today())
         run_id = self.almacen.nuevo_id("RUN")
-        limitaciones: List[str] = []
+        limitaciones: list[str] = []
         # C5 primero (no bloquea): resolución, métricas, certificados, lecciones
         try:
             res_eval = self.evaluador.ciclo(as_of, run_id)
@@ -366,7 +396,7 @@ class Bloque:
         # en este punto de control (F0) los tipos de activo afectados, y el resto del análisis sigue
         self.consultas.vencer(as_of)
         pausadas = self.consultas.clases_pausadas(as_of, clases)
-        if pausadas and len(pausadas) < len(clases):
+        if pausadas:   # también si queda pausado todo el alcance: entonces el run no analiza nada y lo declara
             clases = [c for c in clases if c not in pausadas]
             limitaciones += [f"{NOMBRE_CLASE[c]}: pausado en F0 a la espera de la respuesta del Broker a {k} (consulta BLOQUEANTE, R26)"
                              for c, k in sorted(pausadas.items())]
@@ -431,8 +461,8 @@ class Bloque:
         # F6 · G3 (HT-09) + dictamen del Orquestador si no es APTO
         paquete, g3 = self._validar_g3(paquete, extras, as_of, run_id)
         estado_run = "COMPLETO"
-        if presupuesto.cierres or any(a.get("estado") == "PARCIAL" for a in analisis.values()):
-            estado_run = "PARCIAL"
+        if presupuesto.cierres or pausadas or any(a.get("estado") == "PARCIAL" for a in analisis.values()):
+            estado_run = "PARCIAL"   # un tipo pausado por una consulta BLOQUEANTE deja el run incompleto (7.9)
         resultado = {"run_id": run_id, "as_of": str(as_of.date()), "tipo": tipo, "nivel_por_clase": nivel, "gc0": gc0,
                      "g3": g3, "estado": estado_run, "paquete": paquete, "entregables": None, "evaluacion": res_eval}
         if g3["dictamen"] == "BLOQUEADO":
@@ -465,7 +495,7 @@ class Bloque:
         return resultado
 
     # ------------------------------------------------------------------------------------
-    def _informe_aprendizaje(self, res_eval: Dict, as_of, run_id: str) -> None:
+    def _informe_aprendizaje(self, res_eval: dict, as_of, run_id: str) -> None:
         if not res_eval or not res_eval.get("resueltos") or not (self.cfg.get("evaluacion") or {}).get("llm_informe_aprendizaje", True):
             return
         resumen = {k: {"n": m["n"], "brier": m.get("brier"), "brier_ref": m.get("brier_ref"),
@@ -493,7 +523,7 @@ class Bloque:
     # ====================================================================================
     # F1–F4 por clase
     # ====================================================================================
-    def _analizar_clase(self, clase, nivel, vigentes, gc0, as_of, run_id, presupuesto: Presupuesto, hz_interes, alcance, pre=None) -> Dict:
+    def _analizar_clase(self, clase, nivel, vigentes, gc0, as_of, run_id, presupuesto: Presupuesto, hz_interes, alcance, pre=None) -> dict:
         agente = AGENTE_CLASE[clase]
         sc = self.cfg.get("seleccion") or {}
         out = {"clase": clase, "nivel": nivel, "estado": "COMPLETO", "finalistas": [], "cribado": [], "descartadas": [],
@@ -507,6 +537,11 @@ class Bloque:
             out.update({"estado": "PARCIAL", "lagunas": [f"datos de mercado no disponibles: {e}"]})
             return out
         out["senales"], out["calc_ids"] = senales, calcs
+        excluidos = self._sin_historia.get((clase, run_id)) or []
+        if excluidos:
+            out["estado"] = "PARCIAL"
+            out["lagunas"].append(f"sin datos HT-01 hasta {pd.Timestamp(as_of).date()} para {', '.join(excluidos)}: "
+                                  "excluidos del cribado de este ciclo (PS2)")
         if not senales:
             out.update({"estado": "PARCIAL", "lagunas": ["sin datos HT-01 para el universo de la clase (PS2)"]})
             return out
@@ -566,7 +601,8 @@ class Bloque:
         out["cribado"] = d.get("cribado", [])
         out["descartadas"] = d.get("descartadas_relevantes", [])
         out["lagunas"] += d.get("lagunas", [])
-        out["estado"] = d.get("estado", "COMPLETO") if d.get("estado") in ("COMPLETO", "PARCIAL") else "COMPLETO"
+        estado_agente = d.get("estado", "COMPLETO") if d.get("estado") in ("COMPLETO", "PARCIAL") else "COMPLETO"
+        out["estado"] = "PARCIAL" if out["estado"] == "PARCIAL" else estado_agente   # una laguna previa no se borra
         simbolos_clase = set(senales)
         fins = d.get("finalistas", []) if fase == "CRIBADO_E_INVESTIGACION" else []
         for f in d.get("exploratorias", []) if fase == "REVISION_VIGENTES" else []:
@@ -633,12 +669,12 @@ class Bloque:
                 self._refutacion(clase, finales, nivel, as_of, run_id, presupuesto)
         return out
 
-    def _umbrales_vista(self, inv: List[Dict]) -> List[Dict]:
+    def _umbrales_vista(self, inv: list[dict]) -> list[dict]:
         if not self.anon:
             return inv
         return [{**i, "umbral": round(float(i["umbral"]) * self.anon.factores.get(i["simbolo"], 1.0), 6)} for i in inv]
 
-    def _umbrales_reales(self, inv: List[Dict]) -> List[Dict]:
+    def _umbrales_reales(self, inv: list[dict]) -> list[dict]:
         out = []
         for i in inv:
             try:
@@ -650,7 +686,7 @@ class Bloque:
             out.append({"simbolo": i["simbolo"], "umbral": round(u, 6), "direccion": i.get("direccion", "por_debajo")})
         return out
 
-    def _peticion_conocimiento(self, clase, f, pet, refs, as_of, run_id, presupuesto) -> Optional[Dict]:
+    def _peticion_conocimiento(self, clase, f, pet, refs, as_of, run_id, presupuesto) -> dict | None:
         tipo = pet.get("tipo", "CT-08")
         agente = "AG-16" if tipo == "CT-07" else "AG-14"
         arch = ("F9",) if agente == "AG-16" else ("F7",)
@@ -745,7 +781,7 @@ class Bloque:
     # ====================================================================================
     # Evidencia (F2), clústeres y selección
     # ====================================================================================
-    def _registrar_evidencia_clase(self, an: Dict, as_of, run_id: str) -> None:
+    def _registrar_evidencia_clase(self, an: dict, as_of, run_id: str) -> None:
         clase = an["clase"]
         self._registrar_r9(an.get("hallazgos_r9", []), run_id)
         for p in an.get("peticiones", []):
@@ -814,7 +850,9 @@ class Bloque:
                     evd = dup
                 if evd["evd_id"] not in clm["evidencias"]:
                     clm["evidencias"].append(evd["evd_id"])
-                if evd["direccion"] == "FAVORABLE":
+                # PS1 exige corroborar las afirmaciones centrales del Analista (9.3): la pieza de momentum que añade el
+                # ejecutor es contexto y su «dirección» no depende de la tesis, así que no cuenta como raíz.
+                if evd["direccion"] == "FAVORABLE" and p.get("origen") != "AG-13":
                     f["_raices"][evd.get("_raiz", fuente)] = (evd["nivel_fuente"], evd["tipo_fuente"])
                 if clm["clm_id"] not in f["_evidencias"]:
                     f["_evidencias"].append(clm["clm_id"])
@@ -833,31 +871,37 @@ class Bloque:
                 self.almacen.escribir("F2", "AG-12", {k: v for k, v in clm.items() if not k.startswith("_")})
                 escritos.add(cid)
 
-    def _clusteres(self, analisis: Dict, as_of, run_id: str) -> Dict:
+    def _clusteres(self, analisis: dict, as_of, run_id: str) -> dict:
         proxies = sorted({f["proxy"] for an in analisis.values() for f in an["finalistas"] if f.get("_gc3")}
                          | {simbolo_seguimiento(v) for c in analisis for v in self.vigentes(as_of, c) if simbolo_seguimiento(v)})
         if not proxies:
             return {"asignacion": {}, "calc_id": None, "n_efectivo": 0}
         ini = str((pd.Timestamp(as_of) - pd.DateOffset(years=2, days=14)).date())
         r = self.motor.servir({"operacion": "ML-CLUS-001", "plan": "PLAN_MIN", "datos": [{"serie": p, "inicio": ini} for p in proxies],
-                               "parametros": {"umbral_rho": 0.7, "ventana_semanas": 104}, "fecha_corte": str(pd.Timestamp(as_of).date())},
+                               "parametros": {"umbral_rho": float((self.cfg.get("clusteres") or {}).get("umbral_rho", 0.7)),
+                                              "ventana_semanas": int((self.cfg.get("clusteres") or {}).get("ventana_semanas", 104))}, "fecha_corte": str(pd.Timestamp(as_of).date())},
                               "AG-02", run_id)
         if r["estado"] == "RECHAZADO":
             return {"asignacion": {p: i + 1 for i, p in enumerate(proxies)}, "calc_id": None, "n_efectivo": len(proxies)}
         return {"asignacion": r["resultado"]["asignacion"], "calc_id": r["calc_id"], "n_efectivo": r["resultado"]["n_efectivo"]}
 
-    def _opp_id(self, clase: str, proxy: str, tipo_opcion: str, as_of) -> Tuple[str, Optional[Dict]]:
+    def _opp_id(self, clase: str, proxy: str, tipo_opcion: str, as_of) -> tuple[str, dict | None]:
         for o in self.almacen.estado("F3", as_of).values():
             if o.get("clase") == clase and simbolo_seguimiento(o) == proxy and o.get("tipo_opcion") == tipo_opcion \
                     and o.get("estado") not in ("CERRADA", "DESCARTADA"):
                 return o["opp_id"], o
         return self.almacen.nuevo_id("OPP"), None
 
-    def _puertas(self, f: Dict, nivel: str, as_of, horizontes_ok: List[str]) -> Dict[str, bool]:
+    def _puertas(self, f: dict, nivel: str, as_of, horizontes_ok: list[str]) -> dict[str, bool]:
         fecha_dato = f["senales"].get("fecha_dato")
-        edad = (pd.Timestamp(as_of) - pd.Timestamp(fecha_dato)).days if fecha_dato else 999
-        lim = ANTIGUEDAD_PS2
-        ps2 = bool(horizontes_ok) and all(edad <= lim[h] + (2 if h == "H1" else 0) for h in horizontes_ok)
+        lim = {**ANTIGUEDAD_PS2, **(self.cfg.get("ps2_antiguedad_maxima_dias") or {})}   # Anexo A (PS2)
+        if fecha_dato:
+            edad = (pd.Timestamp(as_of) - pd.Timestamp(fecha_dato)).days
+            # H1 cuenta sesiones hábiles (el dato del viernes vale el lunes); el resto, días naturales (Anexo A)
+            sesiones = int(np.busday_count(pd.Timestamp(fecha_dato).date(), pd.Timestamp(as_of).date()))
+        else:
+            edad = sesiones = 999   # sin fecha del dato no se supera PS2 (falla cerrado)
+        ps2 = bool(horizontes_ok) and all((sesiones if h == "H1" else edad) <= lim[h] for h in horizontes_ok)
         refut = f.get("_refutacion")
         fuertes_abiertas = sum(1 for o in f.get("_objeciones", []) if o["fuerza"] == "fuerte" and not o["resuelta"])
         moderadas_sin = sum(1 for o in f.get("_objeciones", []) if o["fuerza"] == "moderada" and not o.get("respuesta"))
@@ -871,7 +915,7 @@ class Bloque:
                 "PS4": bool(f["senales"].get("riesgo_1a5")), "PS5": ps5, "PS6": not f.get("discrepancia_material", False),
                 "PS7": not f.get("_manipulacion", False), "PS8": True}
 
-    def _horizontes(self, f: Dict, clase: str, hz_interes: List[str]) -> Dict[str, Dict]:
+    def _horizontes(self, f: dict, clase: str, hz_interes: list[str]) -> dict[str, dict]:
         """Pronósticos por horizonte a partir de la prospectiva, filtrados por la tabla 8.3 y F10."""
         out = {}
         pros = f.get("_prospectiva") or {}
@@ -894,7 +938,7 @@ class Bloque:
                       "escenario": p.get("escenario_asociado", "BASE"), "metodo": p.get("metodo") or "PROSPECTIVA-AG10"}
         return out
 
-    def _seleccionar(self, clase: str, an: Dict, clusteres: Dict, as_of, run_id: str, hz_interes: List[str]) -> Dict:
+    def _seleccionar(self, clase: str, an: dict, clusteres: dict, as_of, run_id: str, hz_interes: list[str]) -> dict:
         nivel = an["nivel"]
         candidatos, entradas_ht03 = [], []
         cerradas = []
@@ -959,16 +1003,16 @@ class Bloque:
         return {"candidatos": candidatos, "evaluadas": evaluadas, "seleccion": sel, "cerradas": cerradas, "sombra": sombra,
                 "entradas_ht03": entradas_ht03, "n_cand": max(n_cand, len(evaluadas))}
 
-    def _deduplicar_entre_tipos(self, seleccion: Dict[str, Dict], max_pasadas: int = 4) -> List[Dict]:
+    def _deduplicar_entre_tipos(self, seleccion: dict[str, dict], max_pasadas: int = 4) -> list[dict]:
         """Regla 5 de 2.6 (y C16 de HT-09): si dos top-3 de tipos distintos comparten nombre o ámbito normalizados, se
         conserva la opción de mayor RK (a igual RK, la del tipo anterior en la tabla 2.6) y la otra deja de ser elegible
         en su tipo con el motivo DUPLICADA_EN_OTRO_TIPO; ese tipo vuelve a seleccionar su top-3 con HT-03."""
-        quitadas: List[Dict] = []
+        quitadas: list[dict] = []
         for _ in range(max_pasadas):
             sel = [(c, t) for c in seleccion for t in seleccion[c]["seleccion"]["top3"]]
             sel.sort(key=lambda x: (-x[1]["RK"], CLASES.index(x[0]) if x[0] in CLASES else 99, x[1]["opp_id"]))
-            vistos: Dict[str, Tuple[str, str]] = {}
-            excluir: Dict[str, Dict[str, str]] = {}
+            vistos: dict[str, tuple[str, str]] = {}
+            excluir: dict[str, dict[str, str]] = {}
             for c, t in sel:
                 f = next(x for x in seleccion[c]["candidatos"] if x["opp_id"] == t["opp_id"])
                 claves = {"nombre:" + ht09.normalizar_texto(f.get("nombre"))}
@@ -993,7 +1037,7 @@ class Bloque:
                 s["seleccion"] = ht03.seleccionar_top3(s["evaluadas"], self.params_ht03, s.get("n_cand") or len(s["evaluadas"]))
         return quitadas
 
-    def _desde_f3(self, v: Dict, an: Dict, as_of) -> Optional[Dict]:
+    def _desde_f3(self, v: dict, an: dict, as_of) -> dict | None:
         """Reconstruye una opción vigente desde F3 para el arrastre verificado: datos frescos (PS2), mismas
         dimensiones (reconfirmación con HT-03) y pronósticos abiertos; los vencidos se reemiten (versión nueva)."""
         sym = simbolo_seguimiento(v)
@@ -1026,7 +1070,9 @@ class Bloque:
             p = abiertos.get(d.get("prg_id"))
             if p is None:
                 continue
-            prob = p["prob_interna"] if p.get("prob_interna") is not None else PROB_DE_BANDA.get(p.get("banda_verbal"), 0.5)
+            prob = p["prob_interna"] if p.get("prob_interna") is not None else PROB_DE_BANDA.get(p.get("banda_verbal"))
+            if prob is None:     # sin probabilidad ni banda reconocible no se inventa un 0,5: el horizonte no se arrastra
+                continue
             base = {"vista": d["vista"], "prob_interna": prob, "afirmacion": p["afirmacion"],
                     "escenario": p.get("escenario_asociado", "BASE"), "metodo": p.get("metodo")}
             if p.get("estado") == "ABIERTO":
@@ -1039,7 +1085,7 @@ class Bloque:
     # ====================================================================================
     # Integración, G3, redacción, congelación y registro
     # ====================================================================================
-    def _integrar(self, seleccion, analisis, gc0, nivel, as_of, run_id, presupuesto) -> Dict:
+    def _integrar(self, seleccion, analisis, gc0, nivel, as_of, run_id, presupuesto) -> dict:
         resumen = {}
         for c, s in seleccion.items():
             por_id = {f["opp_id"]: f for f in s["candidatos"]}
@@ -1063,7 +1109,7 @@ class Bloque:
                 "factores_dominantes": [], "lectura_conjunto": "Integración no disponible: alcance reducido declarado.",
                 "preguntas_sugeridas": [], "limitaciones": ["integración del Analizador no disponible"], "cambios_vs_anterior": ""}
 
-    def _validar_g3(self, paquete: Dict, extras: Dict, as_of, run_id: str) -> Tuple[Dict, Dict]:
+    def _validar_g3(self, paquete: dict, extras: dict, as_of, run_id: str) -> tuple[dict, dict]:
         intento = 0
         while True:
             intento += 1
@@ -1108,7 +1154,7 @@ class Bloque:
                 return paquete, {"dictamen": "BLOQUEADO", "bloqueos": [c["id"] for c in bloq], "intentos": intento, "g3v_id": g3v["id"]}
             paquete, extras = sint.retirar_opciones(self, paquete, extras, afectadas)
 
-    def _redactar(self, paquete, extras, as_of, run_id, presupuesto, estado_run) -> Tuple[Dict, Dict, Dict]:
+    def _redactar(self, paquete, extras, as_of, run_id, presupuesto, estado_run) -> tuple[dict, dict, dict]:
         msg = sint.mensaje_redactor(paquete)
         self.mensajeria.crear("CT-15", "AG-02", "AG-17", {"paquete_sintesis": msg}, run_id=run_id, presupuesto={"uc": 2})
         instr = ("Redacta los textos del informe visual para un usuario sin conocimientos financieros: tres frases de «la semana "
@@ -1127,7 +1173,7 @@ class Bloque:
                 entreg, g3b = self.redaccion.generar(self, paquete, extras, r2.datos, as_of, run_id, estado_run)
         return entreg, g3b, red
 
-    def _congelar(self, extras: Dict, as_of, run_id: str) -> List[str]:
+    def _congelar(self, extras: dict, as_of, run_id: str) -> list[str]:
         """F8: alta en F4 (AG-10) de los pronósticos de las opciones del informe y de las finalistas no seleccionadas."""
         ids = []
         for prg in extras["prg_borradores"]:
@@ -1139,7 +1185,7 @@ class Bloque:
 
     def _escribir_f1_f3(self, analisis, seleccion, extras, as_of, run_id) -> None:
         sel_ids = {o["opp_id"]: o for c in extras["paquete_clases"] for o in extras["paquete_clases"][c]}
-        prg_por_opp: Dict[str, Dict] = {}
+        prg_por_opp: dict[str, dict] = {}
         for p in extras["prg_borradores"]:
             if p.get("es_hito"):
                 continue
@@ -1190,7 +1236,7 @@ class Bloque:
                                                           "tesis": f.get("tesis"), "estado": "CANDIDATA", "exploratoria_prometedora": True,
                                                           "run_ids": [run_id]})
 
-    def _tendencia(self, f: Dict, clase: str, as_of, run_id: str) -> str:
+    def _tendencia(self, f: dict, clase: str, as_of, run_id: str) -> str:
         t = f["tendencia"]
         nombre = normalizar(t.get("nombre_canonico", ""))
         for x in self.almacen.estado("F1", as_of).values():
@@ -1248,7 +1294,7 @@ class Bloque:
             self.almacen.escribir("F6", "AG-20", {"tipo_entrada": "SOMBRA", "id": f"SOM-{run_id}", "run_id": run_id, "comparacion": sombras,
                                                   "decisiones_top3_cambiadas": sum(s["cambios"] for s in sombras.values())})
 
-    def _auditar(self, resultado: Dict, tipo: str, nivel: Dict, as_of, run_id: str) -> None:
+    def _auditar(self, resultado: dict, tipo: str, nivel: dict, as_of, run_id: str) -> None:
         au = self.cfg.get("auditoria") or {}
         activa = au.get("en_backtest" if self.modo == "backtest" else "en_vivo", True)
         if not activa:
@@ -1284,7 +1330,7 @@ class Bloque:
     # ====================================================================================
     # C2 · Petición ad hoc (CT-01)
     # ====================================================================================
-    def peticion(self, ct01: Dict, as_of=None) -> Dict:
+    def peticion(self, ct01: dict, as_of=None) -> dict:
         as_of = self.fijar_fecha(as_of or pd.Timestamp.today())
         msg = self.mensajeria.crear("CT-01", "BROKER", "AG-01", ct01)
         def _proc(m):
@@ -1303,8 +1349,8 @@ class Bloque:
     # ====================================================================================
     # C3 · Consulta (CT-03)
     # ====================================================================================
-    def consulta(self, texto: str, contexto: Optional[Dict] = None, as_of=None, urgencia: str = "NORMAL",
-                 ejecutar_escalado: bool = True) -> Dict:
+    def consulta(self, texto: str, contexto: dict | None = None, as_of=None, urgencia: str = "NORMAL",
+                 ejecutar_escalado: bool = True) -> dict:
         as_of = self.fijar_fecha(as_of or pd.Timestamp.today())
         msg = self.mensajeria.crear("CT-03", "BROKER", "AG-01", {"pregunta": texto, "contexto": contexto or {}, "urgencia": urgencia})
         qry_id = self.almacen.nuevo_id("QRY")
@@ -1380,7 +1426,7 @@ class Bloque:
     # ====================================================================================
     # CT-04 · Decisiones y configuración
     # ====================================================================================
-    def decision(self, ct04: Dict, as_of=None) -> Dict:
+    def decision(self, ct04: dict, as_of=None) -> dict:
         as_of = self.fijar_fecha(as_of or pd.Timestamp.today())
         if not any(k in ct04 for k in ("decisiones", "valoracion_informe", "configuracion", "resultado_comunicado")):
             raise ValueError("CT-04 vacío: se espera decisiones, valoracion_informe, configuracion o resultado_comunicado")
@@ -1436,7 +1482,7 @@ class Bloque:
         return {"ret_id": ret_id, "estado": estado, "aplicado": aplicado, "rechazos": rechazos}
 
     # ====================================================================================
-    def estado(self) -> Dict:
+    def estado(self) -> dict:
         runs = [r for r in self.almacen.leer("F5") if r.get("tipo_entrada") == "RUN"]
         f4 = self.almacen.estado("F4")
         return {"ultimos_runs": [{"run_id": r["id"], "fecha": r["_fecha"], "tipo": r["tipo"], "estado": r["estado"],

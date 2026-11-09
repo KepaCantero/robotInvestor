@@ -27,7 +27,7 @@ FRECUENCIAS = ("DIARIA", "SEMANAL", "QUINCENAL", "MENSUAL", "TRIMESTRAL", "PERSO
 ACCIONES = ("ALTA", "MODIFICACION", "PAUSA", "REANUDACION", "CANCELACION")
 
 
-def _simbolo(opp: Dict) -> Optional[str]:
+def _simbolo(opp: dict) -> str | None:
     ind = opp.get("indicador_seguimiento")
     if isinstance(ind, dict) and ind.get("simbolo"):
         return ind["simbolo"]
@@ -40,18 +40,18 @@ class Seguimientos:
         self.cfg = bloque.cfg.get("seguimiento") or {}
 
     # ================================================================================ registro (F11)
-    def encargos(self, as_of=None) -> Dict[str, Dict]:
+    def encargos(self, as_of=None) -> dict[str, dict]:
         return {k: v for k, v in self.b.almacen.estado("F11", as_of).items() if v.get("opp_id")}
 
-    def _dias(self, enc: Dict) -> int:
+    def _dias(self, enc: dict) -> int:
         if enc.get("frecuencia") == "PERSONALIZADA":
             return max(1, int((enc.get("calendario_personalizado") or {}).get("cada_dias", 7)))
         return int((self.cfg.get("frecuencias") or {}).get(enc["frecuencia"], 7))
 
-    def _proximo(self, enc: Dict, desde) -> str:
+    def _proximo(self, enc: dict, desde) -> str:
         return str((pd.Timestamp(desde) + pd.Timedelta(days=self._dias(enc))).date())
 
-    def procesar(self, ct24: Dict, as_of=None) -> Dict:
+    def procesar(self, ct24: dict, as_of=None) -> dict:
         """Entrada única del CT-24 (Broker → Coordinador); devuelve el acuse del mismo contrato."""
         as_of = self.b.fijar_fecha(as_of or pd.Timestamp.today())
         accion = ct24.get("accion")
@@ -67,7 +67,7 @@ class Seguimientos:
                                                  "accion": accion, "msg_id": msg["msg_id"], "acuse": r})
         return r
 
-    def _alta(self, ct24: Dict, as_of) -> Dict:
+    def _alta(self, ct24: dict, as_of) -> dict:
         opp_id = ct24.get("opp_id")
         f3 = self.b.almacen.estado("F3", as_of)
         if opp_id not in f3:
@@ -95,7 +95,7 @@ class Seguimientos:
                                                                      "fecha": str(as_of.date()), "seg_id": seg_id}})
         return {"seg_id": seg_id, "estado": "ACTIVO", "proximo_ciclo": enc["proximo_ciclo"], "aviso": aviso}
 
-    def _cambio(self, ct24: Dict, accion: str, as_of) -> Dict:
+    def _cambio(self, ct24: dict, accion: str, as_of) -> dict:
         seg_id = ct24.get("seg_id")
         enc = self.encargos().get(seg_id)
         if not enc:
@@ -122,7 +122,7 @@ class Seguimientos:
         nuevo = {**enc, **e}
         return {"seg_id": seg_id, "estado": nuevo["estado"], "proximo_ciclo": nuevo.get("proximo_ciclo"), "aviso": None}
 
-    def respuesta_broker(self, seg_id: str, decision: str, run_id: Optional[str] = None, as_of=None) -> Dict:
+    def respuesta_broker(self, seg_id: str, decision: str, run_id: str | None = None, as_of=None) -> dict:
         """Decisión del Broker sobre la recomendación de un ciclo: F11, F5 y CT-22 DECISION_SEGUIMIENTO al Evaluador."""
         as_of = self.b.fijar_fecha(as_of or pd.Timestamp.today())
         enc = self.encargos().get(seg_id)
@@ -138,7 +138,7 @@ class Seguimientos:
         return {"seg_id": seg_id, "decision": decision}
 
     # ================================================================================ ejecución (HT-05)
-    def pendientes(self, as_of) -> List[Dict]:
+    def pendientes(self, as_of) -> list[dict]:
         as_of = pd.Timestamp(as_of)
         out = []
         for k, e in sorted(self.encargos().items()):
@@ -153,7 +153,7 @@ class Seguimientos:
                 out.append(e)
         return out
 
-    def ejecutar(self, as_of=None, seg_id: Optional[str] = None, forzar: bool = False) -> List[Dict]:
+    def ejecutar(self, as_of=None, seg_id: str | None = None, forzar: bool = False) -> list[dict]:
         """Ejecuta los ciclos C6 vencidos (o uno concreto con `forzar`). Prioridad inferior a C1–C3: se llama fuera de ellos."""
         as_of = self.b.fijar_fecha(as_of or pd.Timestamp.today())
         if seg_id:
@@ -168,7 +168,7 @@ class Seguimientos:
         return [self.ciclo_c6(e, as_of) for e in lista]
 
     # ================================================================================ ciclo C6
-    def ciclo_c6(self, enc: Dict, as_of) -> Dict:
+    def ciclo_c6(self, enc: dict, as_of) -> dict:
         b, seg_id, opp_id = self.b, enc["seg_id"], enc["opp_id"]
         opp = b.almacen.estado("F3", as_of).get(opp_id) or {}
         clase = opp.get("clase") or enc.get("clase")
@@ -193,7 +193,12 @@ class Seguimientos:
         informe = self._informe(enc, opp, rev, run_id, n_ciclo, as_of)
         texto = self._texto(informe, opp)
         val = ht09.validar_seguimiento(informe, {"umbrales": b.params_ht03["umbrales"], "pesos_rk": b.params_ht03["pesos_rk"]}, texto)
+        errores_esquema = _errores_esquema_seguimiento(b, informe)
+        if errores_esquema:      # el informe C6 se valida contra su esquema V5.1 antes de entregarse
+            val = dict(val, dictamen="BLOQUEADO", errores_esquema=errores_esquema)
         base = Path(b.carpeta_entregables) / ("Informes de seguimiento" if b.modo != "backtest" else str(as_of.date()))
+        if val["dictamen"] == "BLOQUEADO":   # lo bloqueado no llega a la carpeta de entrega (G3)
+            base = Path(b.carpeta_entregables) / "_bloqueados" / run_id
         base.mkdir(parents=True, exist_ok=True)
         nombre = f"{as_of.date()}_informe-seguimiento_{run_id}"
         rutas = {"informe": str(base / f"{nombre}.md"), "json": str(base / f"{nombre}.json")}
@@ -229,11 +234,11 @@ class Seguimientos:
                 "rutas": rutas, "informe": informe, "validacion": val}
 
     # -------------------------------------------------------------------------------- revisión ligera
-    def _revision(self, enc: Dict, opp: Dict, as_of) -> Dict:
+    def _revision(self, enc: dict, opp: dict, as_of) -> dict:
         b = self.b
         sym = _simbolo(opp)
         desde = pd.Timestamp(enc.get("ultima_fecha") or enc.get("fecha_alta") or as_of)
-        rev: Dict = {"limitaciones": [], "precio": None, "delta": None, "material": False}
+        rev: dict = {"limitaciones": [], "precio": None, "delta": None, "material": False}
         try:
             fd, precio = b.proveedor.valor_en(sym, as_of)
             rev.update({"precio": precio, "fecha_dato": str(fd.date())})
@@ -319,7 +324,7 @@ class Seguimientos:
         rev["sin_novedad_consecutivos"] = (int(enc.get("sin_novedad_consecutivos") or 0) + 1) if rev["sin_novedad"] else 0
         return rev
 
-    def _recomendacion(self, rev: Dict, opp: Dict, as_of) -> (str, str):
+    def _recomendacion(self, rev: dict, opp: dict, as_of) -> (str, str):
         hp_vence = False
         pend_cat = any(c["estado"] == "PENDIENTE" for c in rev["catalizadores"])
         if rev["invalidacion_activada"]:
@@ -336,7 +341,7 @@ class Seguimientos:
             return "PROPONER_CANCELACION", f"{rev['sin_novedad_consecutivos']} ciclos seguidos sin novedad y sin catalizadores pendientes."
         return "MANTENER_VIGILANCIA", "Sin cambio suficiente para proponer el envío al Bloque B; se mantiene la vigilancia."
 
-    def _informe(self, enc: Dict, opp: Dict, rev: Dict, run_id: str, n: int, as_of) -> Dict:
+    def _informe(self, enc: dict, opp: dict, rev: dict, run_id: str, n: int, as_of) -> dict:
         rec, motivo = self._recomendacion(rev, opp, as_of)
         umbral = float(self.cfg.get("umbral_rk_semaforo", 5))
         var = rev["puntuaciones"].get("variacion_RK") or 0
@@ -379,7 +384,7 @@ class Seguimientos:
                 "limitaciones": rev["limitaciones"] + ["Revisión ligera determinista del ejecutor (N1 de seguimiento): puntuaciones reconstruidas "
                                                        "con HT-03 sobre las dimensiones de la última revisión; no se congelan pronósticos nuevos"]}
 
-    def _texto(self, inf: Dict, opp: Dict) -> str:
+    def _texto(self, inf: dict, opp: dict) -> str:
         sem = {"VERDE": "🟢 Verde", "AMBAR": "🟡 Ámbar", "ROJO": "🔴 Rojo"}[inf["semaforo"]]
         lin = [f"# Informe de seguimiento de opción · {inf['seg_id']} · ciclo {inf['ciclo']}", "",
                f"**{opp.get('nombre') or inf['opp_id']}** (`{inf['opp_id']}`, {inf['tipo_activo']}) · {inf['fecha']} · `{inf['run_id']}` · "
@@ -406,3 +411,15 @@ class Seguimientos:
 def b_agente(clase: str) -> str:
     from .contratos import AGENTE_CLASE
     return AGENTE_CLASE.get(clase, "AG-03")
+
+
+def _errores_esquema_seguimiento(b, informe: dict) -> list[str]:
+    """Errores del informe C6 frente al esquema «Informe de seguimiento de opción» (V5.1) de las plantillas."""
+    import jsonschema
+
+    from .configuracion import buscar_versionado, ruta
+    esquema = buscar_versionado(ruta(b.cfg, "plantillas"), "Esquema JSON - Informe de seguimiento de opción", ".json")
+    if esquema is None:
+        return ["no se encuentra el esquema JSON del informe de seguimiento de opción"]
+    validador = jsonschema.Draft202012Validator(json.loads(Path(esquema).read_text(encoding="utf-8")))
+    return [f"{'/'.join(map(str, e.absolute_path))}: {e.message}"[:200] for e in validador.iter_errors(informe)][:10]

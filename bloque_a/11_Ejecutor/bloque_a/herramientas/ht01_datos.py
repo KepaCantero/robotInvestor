@@ -15,8 +15,9 @@ from __future__ import annotations
 import datetime as dt
 import hashlib
 import threading
+from collections.abc import Iterable, Sequence
 from pathlib import Path
-from typing import Dict, Iterable, List, Optional, Sequence, Tuple, Union
+from typing import Dict, List, Optional, Tuple, Union
 
 import numpy as np
 import pandas as pd
@@ -42,7 +43,27 @@ class DatosNoDisponibles(KeyError):
     """El símbolo no existe en el proveedor o no tiene datos en el rango."""
 
 
-def a_fecha(f: Optional[Fecha]) -> Optional[pd.Timestamp]:
+class DatosInvalidos(DatosNoDisponibles):
+    """La serie trae valores que no se pueden interpretar (p. ej., un cierre `-`, `n.d.` o `1.234,5`).
+
+    Falla cerrado: la serie se rechaza entera y se trata como no disponible (nunca se rellena ni se
+    convierte en un valor inventado). Es subclase de `DatosNoDisponibles` para que los llamadores que ya
+    tratan la falta de datos (espera, `NO_RESOLUBLE`, símbolo excluido de una cesta) la traten igual."""
+
+
+def _fechas_publicacion(col: pd.Series) -> tuple[pd.Series, pd.Series]:
+    """Interpreta `fecha_publicacion` en ISO 8601. Devuelve (fechas, inválidas): una celda vacía es «sin
+    retraso de publicación» (NaT, visible); una celda no vacía que no se interpreta (p. ej., `31/06/2026`)
+    es inválida y su fila no debe ser visible nunca."""
+    if pd.api.types.is_datetime64_any_dtype(col):
+        return col.dt.normalize(), pd.Series(False, index=col.index)
+    texto = col.astype("string").str.strip()
+    vacia = (texto.isna() | (texto == "")).fillna(True).astype(bool)
+    fechas = pd.to_datetime(texto.where(~vacia), errors="coerce", format="ISO8601")
+    return fechas.dt.normalize(), (~vacia) & fechas.isna()
+
+
+def a_fecha(f: Fecha | None) -> pd.Timestamp | None:
     if f is None:
         return None
     return pd.Timestamp(f).normalize()
@@ -54,20 +75,20 @@ class ProveedorDatos:
     nombre = "base"
 
     def __init__(self) -> None:
-        self._as_of: Optional[pd.Timestamp] = None
+        self._as_of: pd.Timestamp | None = None
         self._lock = threading.Lock()
-        self.registro_peticiones: List[Dict] = []   # auditoría de lo pedido (pruebas anti-fuga)
+        self.registro_peticiones: list[dict] = []   # auditoría de lo pedido (pruebas anti-fuga)
 
     # -- fecha activa -------------------------------------------------------------------------
     def fijar_as_of(self, fecha: Fecha) -> None:
         self._as_of = a_fecha(fecha)
 
     @property
-    def as_of(self) -> Optional[pd.Timestamp]:
+    def as_of(self) -> pd.Timestamp | None:
         return self._as_of
 
     # -- a implementar ------------------------------------------------------------------------
-    def simbolos(self) -> List[str]:
+    def simbolos(self) -> list[str]:
         raise NotImplementedError
 
     def _serie_completa(self, simbolo: str) -> pd.DataFrame:
@@ -77,7 +98,7 @@ class ProveedorDatos:
     def tiene(self, simbolo: str) -> bool:
         return simbolo in set(self.simbolos())
 
-    def serie(self, simbolo: str, inicio: Optional[Fecha] = None, fin: Optional[Fecha] = None) -> pd.DataFrame:
+    def serie(self, simbolo: str, inicio: Fecha | None = None, fin: Fecha | None = None) -> pd.DataFrame:
         """Observaciones de `simbolo` entre `inicio` y `fin` (inclusive), nunca posteriores a as_of."""
         if self._as_of is None:
             raise RuntimeError("HT-01: fije la fecha as_of (fijar_as_of) antes de pedir datos")
@@ -94,31 +115,32 @@ class ProveedorDatos:
         if ini_ts is not None:
             df = df[df.index >= ini_ts]
         if "fecha_publicacion" in df.columns:
-            pub = pd.to_datetime(df["fecha_publicacion"], errors="coerce")
-            df = df[(pub.isna()) | (pub <= self._as_of)]
+            # Una fecha de publicación no interpretable no se da por publicada (falla cerrado)
+            pub, invalida = _fechas_publicacion(df["fecha_publicacion"])
+            df = df[~invalida & (pub.isna() | (pub <= self._as_of))]
         if len(df) and df.index.max() > self._as_of:  # defensa en profundidad
             raise FugaDeInformacion("HT-01: el proveedor devolvió datos posteriores a as_of")
         return df.copy()
 
-    def cierres(self, simbolo: str, inicio: Optional[Fecha] = None, fin: Optional[Fecha] = None) -> pd.Series:
+    def cierres(self, simbolo: str, inicio: Fecha | None = None, fin: Fecha | None = None) -> pd.Series:
         df = self.serie(simbolo, inicio, fin)
         if df.empty:
             raise DatosNoDisponibles(f"HT-01: sin datos de {simbolo} en el rango")
         return df["cierre"].astype(float)
 
-    def valor_en(self, simbolo: str, fecha: Fecha) -> Tuple[pd.Timestamp, float]:
+    def valor_en(self, simbolo: str, fecha: Fecha) -> tuple[pd.Timestamp, float]:
         """Último cierre con fecha <= `fecha` (que debe ser <= as_of)."""
         s = self.cierres(simbolo, None, fecha)
         return s.index[-1], float(s.iloc[-1])
 
-    def ultima_fecha(self, simbolo: str) -> Optional[pd.Timestamp]:
+    def ultima_fecha(self, simbolo: str) -> pd.Timestamp | None:
         try:
             s = self.cierres(simbolo)
         except DatosNoDisponibles:
             return None
         return s.index[-1]
 
-    def huella(self, simbolo: str, inicio: Optional[Fecha] = None, fin: Optional[Fecha] = None) -> str:
+    def huella(self, simbolo: str, inicio: Fecha | None = None, fin: Fecha | None = None) -> str:
         """Hash de los datos efectivos (linaje del artefacto del Motor)."""
         s = self.cierres(simbolo, inicio, fin)
         h = hashlib.sha256()
@@ -138,28 +160,50 @@ def _normalizar_df(df: pd.DataFrame, origen: str) -> pd.DataFrame:
     if "fecha" not in df.columns or "cierre" not in df.columns:
         raise ValueError(f"{origen}: el CSV necesita al menos las columnas fecha y cierre")
     df["fecha"] = pd.to_datetime(df["fecha"]).dt.normalize()
+    # Conversión a número ANTES de eliminar filas: un cierre no vacío que no es un número finito
+    # (`-`, `n.d.`, `1.234,5`, `inf`) invalida la serie entera; nunca se convierte en NaN silencioso.
+    crudo = df["cierre"]
+    vacio = (crudo.isna() | (crudo.astype("string").str.strip() == "")).fillna(True).astype(bool)
+    num = pd.to_numeric(crudo.where(~vacio), errors="coerce").astype(float)
+    malos = ~vacio & ~np.isfinite(num)          # NaN tras convertir una celda no vacía, o ±inf
+    if malos.any():
+        ej = [f"{f.date()}={v!r}" for f, v in zip(df.loc[malos, "fecha"].head(3), crudo[malos].head(3))]
+        raise DatosInvalidos(f"HT-01 {origen}: {int(malos.sum())} cierres no numéricos o no finitos (p. ej., {', '.join(ej)}); "
+                             "serie rechazada")
+    df["cierre"] = num
+    # Fechas de publicación: las filas con una fecha no interpretable se rechazan (no se dan por publicadas)
+    descartadas: list[str] = []
+    if "fecha_publicacion" in df.columns:
+        pub, invalida = _fechas_publicacion(df["fecha_publicacion"])
+        descartadas += [f"{f.date()}: fecha_publicacion no interpretable" for f in df.loc[invalida, "fecha"]]
+        df["fecha_publicacion"] = pub
+        df = df[~invalida]
+    # Filas sin cierre (celda vacía): se eliminan y se declaran
+    descartadas += [f"{f.date()}: cierre vacío" for f in df.loc[df["cierre"].isna(), "fecha"]]
     df = df.dropna(subset=["cierre"]).sort_values("fecha")
     if df["fecha"].duplicated().any():
         raise ValueError(f"{origen}: fechas duplicadas")
     df = df.set_index("fecha")
-    for c in ("apertura", "maximo", "minimo", "cierre", "volumen"):
+    for c in ("apertura", "maximo", "minimo", "volumen"):
         if c in df.columns:
             df[c] = pd.to_numeric(df[c], errors="coerce")
     keep = [c for c in ("apertura", "maximo", "minimo", "cierre", "volumen", "fecha_publicacion") if c in df.columns]
-    return df[keep]
+    out = df[keep]
+    out.attrs["filas_descartadas"] = descartadas
+    return out
 
 
 class ProveedorCSV(ProveedorDatos):
     nombre = "csv"
 
-    def __init__(self, carpeta: Union[str, Path]) -> None:
+    def __init__(self, carpeta: str | Path) -> None:
         super().__init__()
         self.carpeta = Path(carpeta)
         if not self.carpeta.is_dir():
             raise FileNotFoundError(f"HT-01: no existe la carpeta de datos {self.carpeta}")
-        self._cache: Dict[str, pd.DataFrame] = {}
+        self._cache: dict[str, pd.DataFrame] = {}
 
-    def simbolos(self) -> List[str]:
+    def simbolos(self) -> list[str]:
         return sorted(p.stem for p in self.carpeta.glob("*.csv"))
 
     def _serie_completa(self, simbolo: str) -> pd.DataFrame:
@@ -188,14 +232,14 @@ class ProveedorSintetico(ProveedorDatos):
 
     nombre = "sintetico"
 
-    def __init__(self, simbolos_clase: Dict[str, str], semilla: int = 7, inicio: Fecha = "2021-01-04",
-                 fin: Fecha = "2026-12-31", fijos: Optional[Dict[str, pd.DataFrame]] = None) -> None:
+    def __init__(self, simbolos_clase: dict[str, str], semilla: int = 7, inicio: Fecha = "2021-01-04",
+                 fin: Fecha = "2026-12-31", fijos: dict[str, pd.DataFrame] | None = None) -> None:
         super().__init__()
         self.simbolos_clase = dict(simbolos_clase)
         self.semilla = int(semilla)
         self.fechas = pd.bdate_range(a_fecha(inicio), a_fecha(fin))
-        self._cache: Dict[str, pd.DataFrame] = {}
-        self._factores: Dict[str, np.ndarray] = {}
+        self._cache: dict[str, pd.DataFrame] = {}
+        self._factores: dict[str, np.ndarray] = {}
         self._fijos = fijos or {}
 
     def _rng(self, *clave) -> np.random.Generator:
@@ -217,7 +261,7 @@ class ProveedorSintetico(ProveedorDatos):
             self._factores[clase] = deriva / 252 + rng.standard_normal(n) * vol * 0.7 / np.sqrt(252)
         return self._factores[clase]
 
-    def simbolos(self) -> List[str]:
+    def simbolos(self) -> list[str]:
         return sorted(set(self.simbolos_clase) | set(self._fijos))
 
     def _serie_completa(self, simbolo: str) -> pd.DataFrame:
@@ -244,7 +288,7 @@ class ProveedorSintetico(ProveedorDatos):
             self._cache[simbolo] = df.round(6)
         return self._cache[simbolo]
 
-    def escribir_csv(self, carpeta: Union[str, Path], simbolos: Optional[Iterable[str]] = None) -> List[Path]:
+    def escribir_csv(self, carpeta: str | Path, simbolos: Iterable[str] | None = None) -> list[Path]:
         carpeta = Path(carpeta)
         carpeta.mkdir(parents=True, exist_ok=True)
         out = []
@@ -272,9 +316,9 @@ class ProveedorYahoo(ProveedorDatos):
             raise RuntimeError("ProveedorYahoo requiere el paquete opcional yfinance") from e
         self._lista = list(simbolos)
         self._inicio = inicio
-        self._cache: Dict[str, pd.DataFrame] = {}
+        self._cache: dict[str, pd.DataFrame] = {}
 
-    def simbolos(self) -> List[str]:
+    def simbolos(self) -> list[str]:
         return list(self._lista)
 
     def _serie_completa(self, simbolo: str) -> pd.DataFrame:  # pragma: no cover - requiere red
@@ -294,7 +338,7 @@ COLUMNAS_UNIVERSO = ["simbolo", "clase", "nombre", "tipo_opcion", "region", "sec
 COLUMNAS_UNIVERSO_OPCIONALES = ["subtipo", "ambito_incluye", "ambito_excluye", "indicador", "subyacente"]
 
 
-def cargar_universo(ruta: Union[str, Path]) -> pd.DataFrame:
+def cargar_universo(ruta: str | Path) -> pd.DataFrame:
     """Universo de ámbitos con su indicador de seguimiento (Documento 0 V5.0, 2.4–2.6).
 
     Columnas obligatorias `simbolo,clase,nombre,tipo_opcion,region,sector,divisa,notas` y opcionales

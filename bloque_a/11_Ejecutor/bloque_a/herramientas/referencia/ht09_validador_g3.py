@@ -658,6 +658,13 @@ def _validar_h5(R: Registro, rh: str, hv: Dict, fecha_paquete: Any) -> None:
             if _vacio(hi.get(c)):
                 R.bloqueo("C18", f"{rk}.{c}", "Campo del hito ausente o vacío (fecha, indicador y criterio son obligatorios)")
         fechas.append(hi.get("fecha"))
+    # Los ≥ 3 hitos han de ser distintos e intermedios: ni identificadores repetidos ni fechas repetidas.
+    ids = [str(hi.get("hit_id")) for hi in hitos if isinstance(hi, dict) and hi.get("hit_id")]
+    if len(set(ids)) < len(ids):
+        R.bloqueo("C18", rh, "Hitos H5 con identificadores HIT- repetidos: cada hito cuenta una sola vez (8.3)")
+    distintas = {str(f) for f in fechas if not _vacio(f)}
+    if len(hitos) >= H5_MIN_HITOS and len(distintas) < H5_MIN_HITOS:
+        R.bloqueo("C18", rh, f"Solo {len(distintas)} fecha(s) de hito distintas < {H5_MIN_HITOS}: los hitos H5 deben ser intermedios (Anexo A)")
     fechas_validas = sorted(f for f in fechas if _meses_entre(f, f) is not None)
     if fechas_validas and fecha_paquete:
         m0 = _meses_entre(fecha_paquete, fechas_validas[0])

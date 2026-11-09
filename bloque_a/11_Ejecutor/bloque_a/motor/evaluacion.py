@@ -9,7 +9,8 @@
 from __future__ import annotations
 
 import math
-from typing import Dict, List, Optional, Sequence
+from collections.abc import Sequence
+from typing import Dict, List, Optional
 
 import numpy as np
 from scipy import stats
@@ -36,7 +37,7 @@ def log_score(p, o) -> float:
     return float(-np.mean(o * np.log(pc) + (1 - o) * np.log(1 - pc))) if len(p) else float("nan")
 
 
-def murphy(p, o, bins: Optional[Sequence[float]] = None) -> Dict:
+def murphy(p, o, bins: Sequence[float] | None = None) -> dict:
     """Descomposición de Murphy (1973) agrupando por valores de p (exacta con probabilidades discretas)."""
     p, o = _pares(p, o)
     n = len(p)
@@ -51,7 +52,7 @@ def murphy(p, o, bins: Optional[Sequence[float]] = None) -> Dict:
     return {"fiabilidad": rel / n, "resolucion": res / n, "incertidumbre": obar * (1 - obar)}
 
 
-def wilson(k: int, n: int, nivel: float = 0.90) -> List[Optional[float]]:
+def wilson(k: int, n: int, nivel: float = 0.90) -> list[float | None]:
     if n == 0:
         return [None, None]
     z = stats.norm.ppf(1 - (1 - nivel) / 2)
@@ -62,7 +63,7 @@ def wilson(k: int, n: int, nivel: float = 0.90) -> List[Optional[float]]:
     return [max(0.0, c - m), min(1.0, c + m)]
 
 
-def acierto_direccional(o: Sequence[int], tasa_base: float = 0.5, nivel: float = 0.90) -> Dict:
+def acierto_direccional(o: Sequence[int], tasa_base: float = 0.5, nivel: float = 0.90) -> dict:
     o = np.asarray(o, dtype=int)
     n, k = len(o), int(o.sum())
     if n == 0:
@@ -78,7 +79,7 @@ def _bloques(n: int, b: int, rng: np.random.Generator) -> np.ndarray:
     return np.clip(idx, 0, n - 1)
 
 
-def bss(p, o, p_ref, replicas: int = 2000, nivel: float = 0.90, semilla: int = 12345, bloque: Optional[int] = None) -> Dict:
+def bss(p, o, p_ref, replicas: int = 2000, nivel: float = 0.90, semilla: int = 12345, bloque: int | None = None) -> dict:
     p, o = _pares(p, o)
     p_ref = np.asarray(p_ref, dtype=float)
     n = len(p)
@@ -102,7 +103,7 @@ def bss(p, o, p_ref, replicas: int = 2000, nivel: float = 0.90, semilla: int = 1
             "nivel": nivel, "semilla": semilla}
 
 
-def diebold_mariano_hln(perdida_a: Sequence[float], perdida_b: Sequence[float], h: int = 1) -> Dict:
+def diebold_mariano_hln(perdida_a: Sequence[float], perdida_b: Sequence[float], h: int = 1) -> dict:
     """DM con corrección HLN. d = pérdida_a − pérdida_b; estadístico < 0 ⇒ a mejor que b.
     p-valor unilateral (a mejor que b) y bilateral, con t de Student n−1 g.l."""
     d = np.asarray(perdida_a, float) - np.asarray(perdida_b, float)
@@ -121,7 +122,7 @@ def diebold_mariano_hln(perdida_a: Sequence[float], perdida_b: Sequence[float], 
             "p_bilateral": float(2 * (1 - stats.t.cdf(abs(est), n - 1))), "n": n, "h": h}
 
 
-def _tramos(p: np.ndarray, n_tramos: Optional[int]) -> np.ndarray:
+def _tramos(p: np.ndarray, n_tramos: int | None) -> np.ndarray:
     n = len(p)
     if n_tramos is None:
         n_tramos = 10 if n >= 200 else 5
@@ -135,7 +136,7 @@ def _tramos(p: np.ndarray, n_tramos: Optional[int]) -> np.ndarray:
     return idx
 
 
-def ece(p, o, n_tramos: Optional[int] = None) -> Dict:
+def ece(p, o, n_tramos: int | None = None) -> dict:
     p, o = _pares(p, o)
     n = len(p)
     if n == 0:
@@ -151,7 +152,7 @@ def ece(p, o, n_tramos: Optional[int] = None) -> Dict:
     return {"ece": float(e), "mce": float(mce), "curva": curva, "tramos": len(curva)}
 
 
-def ece_nulo(p, simulaciones: int = 2000, semilla: int = 54321, n_tramos: Optional[int] = None) -> Dict:
+def ece_nulo(p, simulaciones: int = 2000, semilla: int = 54321, n_tramos: int | None = None) -> dict:
     """Distribución del ECE de un pronosticador perfectamente calibrado con las mismas p (o* ~ Bernoulli(p))."""
     p = np.asarray(p, float)
     if len(p) == 0:
@@ -162,7 +163,7 @@ def ece_nulo(p, simulaciones: int = 2000, semilla: int = 54321, n_tramos: Option
 
 
 def evaluar_celda(p, o, p_ref, tasa_base: float = 0.5, replicas: int = 2000, simulaciones: int = 2000,
-                  nivel: float = 0.90, semilla: int = 12345, h: int = 1) -> Dict:
+                  nivel: float = 0.90, semilla: int = 12345, h: int = 1) -> dict:
     """Métricas completas de una celda clase × horizonte (FC-EVAL-001 + FC-CAL-001)."""
     p, o = _pares(p, o)
     p_ref = np.asarray(p_ref, float)
@@ -182,7 +183,7 @@ def evaluar_celda(p, o, p_ref, tasa_base: float = 0.5, replicas: int = 2000, sim
     return out
 
 
-def criterio_certificado(m: Dict, n_min: int = 100, ece_max: float = 0.15, alfa_holm: Optional[float] = None) -> Dict:
+def criterio_certificado(m: dict, n_min: int = 100, ece_max: float = 0.15, alfa_holm: float | None = None) -> dict:
     """Anexo A: n ≥ 100; extremo inferior del IC 90 % del BSS > 0; ECE ≤ q90 del nulo y ECE < 0,15.
     `alfa_holm`: si se evalúan varias celdas, se exige además p_unilateral DM ≤ alfa corregido por Holm."""
     motivos = []
@@ -201,12 +202,40 @@ def criterio_certificado(m: Dict, n_min: int = 100, ece_max: float = 0.15, alfa_
     if alfa_holm is not None:
         pdm = (m.get("dm_hln") or {}).get("p_unilateral")
         if pdm is None or pdm > alfa_holm:
-            motivos.append(f"DM-HLN p = {pdm} > alfa Holm {alfa_holm:.4f}")
+            if alfa_holm <= 0:
+                motivos.append(f"DM-HLN p = {pdm}: el procedimiento de Holm se detuvo en una celda con p menor (no se rechaza)")
+            else:
+                motivos.append(f"DM-HLN p = {pdm} > alfa Holm {alfa_holm:.4f}")
     return {"certificable": not motivos, "motivos": motivos}
 
 
-def holm(p_valores: Dict[str, float], alfa: float = 0.10) -> Dict[str, float]:
-    """Umbral de Holm por celda (orden creciente de p)."""
-    orden = sorted(p_valores.items(), key=lambda kv: kv[1])
+def holm(p_valores: dict[str, float], alfa: float = 0.10) -> dict[str, float]:
+    """Umbral efectivo de Holm (1979) por celda, procedimiento escalonado (step-down).
+
+    Se recorren las p de menor a mayor comparando la i-ésima (i = 0…m−1) con alfa/(m−i). En cuanto una
+    no se rechaza, el procedimiento se detiene y ninguna de las siguientes se rechaza: su umbral efectivo
+    es 0,0. (No hay p ≤ 0 después de la parada: todas son ≥ la p fallida, que es > alfa/(m−i) > 0.)
+    Una celda se rechaza (supera Holm) si y solo si su p ≤ su umbral efectivo. El orden en caso de empate
+    es el alfabético de la clave (determinista)."""
+    def _valida(p) -> bool:
+        return p is not None and math.isfinite(p)
+
+    # una p ausente o no finita cuenta como «no rechazable» (falla cerrado) y se ordena la última
+    orden = sorted(p_valores.items(), key=lambda kv: (kv[1] if _valida(kv[1]) else math.inf, kv[0]))
     m = len(orden)
-    return {k: alfa / (m - i) for i, (k, _) in enumerate(orden)}
+    out: dict[str, float] = {}
+    detenido = False
+    for i, (k, p) in enumerate(orden):
+        if detenido:
+            out[k] = 0.0
+            continue
+        out[k] = alfa / (m - i)          # la celda donde se detiene conserva su umbral nominal (y no lo supera)
+        if not _valida(p) or p > out[k]:
+            detenido = True
+    return out
+
+
+def holm_rechazos(p_valores: dict[str, float], alfa: float = 0.10) -> dict[str, bool]:
+    """Celdas cuya hipótesis nula se rechaza con el procedimiento escalonado de Holm."""
+    u = holm(p_valores, alfa)
+    return {k: (p is not None and math.isfinite(p) and p <= u[k]) for k, p in p_valores.items()}

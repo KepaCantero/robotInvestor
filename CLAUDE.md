@@ -6,7 +6,7 @@ el protocolo de trabajo común.
 
 | Carpeta | Bloque | Entrega | Ejecutor (comando) | Línea base tests |
 |---|---|---|---|---|
-| `bloque_a/` | Buscador de oportunidades (12 tipos de activo) | V5.1 (03-11-2026) | `bloque-a` | 58 |
+| `bloque_a/` | Buscador de oportunidades (12 tipos de activo) | V5.1 (03-11-2026) | `bloque-a` | 103 |
 | `bloque_a_forex/` | Buscador de oportunidades de divisas | V1.1 (03-11-2026) | `bloque-a-forex` | 68 |
 | `bloque_b/` | Selección de activos por mercado (encargos del Bloque A) | V2.1 (03-11-2026) | `bloque-b` | 141 |
 
@@ -57,7 +57,7 @@ H5 décadas con hitos HIT- y `horizonte_principal` obligatorio (HT-09 C17–C19)
    nunca al revés.
 4. **Mock antes que API.** Toda funcionalidad nueva se valida primero con
    `--cliente mock` (coste cero, reproducible). La API real solo en modo sombra.
-5. **Nada cuenta como hecho sin tests.** Líneas base: A 58, A-Forex 68, B 141 (desde T-61, 9-11-2026). Ninguna
+5. **Nada cuenta como hecho sin tests.** Líneas base: A 103 (desde T-53), A-Forex 68, B 141 (desde T-61), 9-11-2026. Ninguna
    fase puede dejar su suite por debajo. Cada contrato/ficha nueva añade sus pruebas.
 6. **F7/F8/F9 (y equivalentes) son almacenes indexados**, no contexto: se accede por
    identificador (RF-xxxx, TM-xx…), nunca se cargan enteros (7.000–11.000 líneas).
@@ -72,9 +72,10 @@ H5 décadas con hitos HIT- y `horizonte_principal` obligatorio (HT-09 C17–C19)
 
 - **Versiones cruzadas en bloque_a:** los prompts MC citan "Catálogo V4.0"; el catálogo
   entregado es V5.0 (81 fichas); el ejecutor implementa las 60 del índice V4.0
-  (`bloque_a/11_Ejecutor/bloque_a/motor/servicio.py`, `CATALOG_VERSION = "4.0"`). Las 21
-  fichas nuevas V5.0 (IDX, FON, DER, MON, TCV) están DOCUMENTADAS sin código y responden
-  `METODO_NO_IMPLEMENTADO` con alternativa. → Fase 0 de bloque_a.
+  (`bloque_a/11_Ejecutor/bloque_a/motor/servicio.py`, `CATALOG_VERSION = "4.0"`); de esos 60
+  identificadores solo 17 tienen código. Las 21 fichas nuevas V5.0 (IDX, FON, DER, MON, TCV)
+  están DOCUMENTADAS sin código y responden `OPERACION_SIN_FICHA`, sin alternativa
+  (comprobado en T-53, CS-07; antes aquí se decía `METODO_NO_IMPLEMENTADO`). → Fase 0 de bloque_a.
 - **Versión sin subir en pyprojects (INC-001/002):** `bloque_a/11_Ejecutor` declara
   1.1.0 (README dice V1.2); `bloque_a_forex/11_Ejecutor` declara 1.0.0 (README dice
   V1.1). El código entregado ES el de la versión del README. No corregir en silencio.
@@ -117,7 +118,7 @@ Flags: `--core` (rápido: corpus+config+tests), `--strict` (corta al primer fall
 | secrets | Repo público: patrones reales con allowlist explícita (`tools/secrets_allowlist.txt`, solo cadadas verificadas a mano). |
 | refs-vivas | Rutas citadas en CLAUDE.md/prompts/docs existen — antídoto contra planes rancios. Entregables futuros: `tools/refs_allowlist.txt` (quitar la línea al aterrizar la fase). |
 | ruff, mypy ×3 | **Cuotas (ratchet): solo bajan.** El código entregado no era limpio (ruff 3490, mypy A 135 / FX 174 / B 160); las cuotas congelan el estado y cada fase debe dejarlas más bajas si toca el paquete. Al llegar a 0, la línea se borra y el gate se vuelve estricto. Andamiaje temporal — política sin-deuda. |
-| pytest ×3 | Líneas base innegociables: A ≥ 58 · FX ≥ 68 · B ≥ 141 (el gate comprueba el NÚMERO, no solo el exit code: quitar tests no pasa). |
+| pytest ×3 | Líneas base innegociables: A ≥ 103 · FX ≥ 68 · B ≥ 141 (el gate comprueba el NÚMERO, no solo el exit code: quitar tests no pasa). |
 
 **Pre-commit** (`.venv/bin/pre-commit install`): check-yaml, merge-conflicts,
 debug-statements, detect-secrets con `.secrets.baseline` (48 hallazgos auditados como
@@ -139,7 +140,7 @@ source .venv/bin/activate
 pip install -e bloque_a/11_Ejecutor -e bloque_a_forex/11_Ejecutor -e bloque_b/11_Ejecutor
 pip install arch openpyxl python-docx         # opcionales que usan los tests (B necesita python-docx para sus entregables .docx)
 
-pytest -q bloque_a/11_Ejecutor        # 58
+pytest -q bloque_a/11_Ejecutor        # 103
 pytest -q bloque_a_forex/11_Ejecutor  # 68 (≈5 min: backtests simulados)
 pytest -q bloque_b/11_Ejecutor        # 141
 
