@@ -143,7 +143,11 @@ def test_metricas_de_pronostico_con_pronosticadores_sinteticos():
     rng = np.random.default_rng(0)
     p = rng.uniform(0.1, 0.9, 400)
     o = (rng.random(400) < p).astype(int)
-    cal = ev.evaluar_celda(p, o, np.full(400, o.mean()), 0.5, 500, 500)
+    # T-66 (PA-03): el certificado exige n_eff; pronósticos independientes = una fecha de resolución distinta cada uno
+    fechas = [str(d.date()) for d in pd.bdate_range("2024-01-01", periods=400)]
+    cal = ev.evaluar_celda(p, o, np.full(400, o.mean()), 0.5, 500, 500, fechas=fechas,
+                           min_conglomerados=config_pruebas()["evaluacion"]["min_conglomerados_bootstrap"])
+    assert cal["n_eff"] == pytest.approx(400)
     assert cal["calibracion"]["ece"] <= cal["ece_nulo"]["q90"]                       # calibrado: no se rechaza
     assert ev.criterio_certificado(cal)["certificable"]
     sobre = np.clip(p + 0.3 * np.sign(p - 0.5), 0.01, 0.99)                          # sobreconfiado
