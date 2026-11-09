@@ -1237,12 +1237,19 @@ class Coordinador:
                 rd = self.inv.llamar("AG-B02", "CT-B-17", "respuestas_objeciones", {"pet_id": st["pet_id"], "objeciones": tesis_o},
                                      "Responde con evidencia cada objeción fuerte o moderada sobre la tesis.", {"respuestas": "object"},
                                      self._ctx("AG-B02"), st["run_id"])
-                self._aplicar_respuestas(objs, rd.get("respuestas") or {})
+                self._aplicar_respuestas(tesis_o, rd.get("respuestas") or {})
             if cand_o:
-                rs = self.inv.llamar("AG-B12", "CT-B-17", "respuestas_objeciones", {"pet_id": st["pet_id"], "objeciones": cand_o, "finalistas": []},
+                ids_objetados = {o["objeto"] for o in cand_o}
+                rs = self.inv.llamar("AG-B12", "CT-B-17", "respuestas_objeciones",
+                                     {"pet_id": st["pet_id"], "objeciones": cand_o,
+                                      "finalistas": [f for f in finalistas if f["cand_id"] in ids_objetados]},
                                      "Responde cada objeción fuerte o moderada sobre los candidatos.", {"respuestas_objeciones": "object"},
                                      self._ctx("AG-B12"), st["run_id"])
-                self._aplicar_respuestas(objs, rs.get("respuestas_objeciones") or {})
+                self._aplicar_respuestas(cand_o, rs.get("respuestas_objeciones") or {})
+            for o in objs:
+                if o["fuerza"] == "debil":
+                    o.update(estado_contraste="aceptada", resuelta=True,
+                             respuesta="Aceptada como matiz; sin efecto en el veredicto.")
             st["refutacion"] = {"realizada_por": "AG-B14", "veredicto_tesis": vt,
                                 "veredicto_candidatos": {k: v for k, v in (r.get("veredicto_candidatos") or {}).items()
                                                          if k in validos and v in ("robusto", "fragil", "descartable")},
@@ -1259,12 +1266,8 @@ class Coordinador:
             rr = resp.get(o["obj_id"])
             if isinstance(rr, dict) and rr.get("respuesta"):
                 o["respuesta"] = rr["respuesta"]
-                o["resuelta"] = bool(rr.get("resuelta"))
-        for o in objs:
-            o["estado_contraste"] = "resuelta" if o["resuelta"] else ("incertidumbre_abierta" if o["fuerza"] != "debil" else "aceptada")
-            if o["fuerza"] == "debil" and not o["respuesta"]:
-                o["respuesta"] = "Aceptada como matiz; sin efecto en el veredicto."
-                o["resuelta"] = True
+                o["resuelta"] = rr.get("resuelta") is True
+            o["estado_contraste"] = "resuelta" if o["resuelta"] else "incertidumbre_abierta"
 
     # =========================================================================================================
     # Puertas de viabilidad PV1–PV3 (7.10), informe de parada (7.11) y continuación forzada

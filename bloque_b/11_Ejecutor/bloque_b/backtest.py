@@ -20,6 +20,7 @@ import pandas as pd
 
 from . import evaluador
 from .herramientas import ht03, ht11
+from .herramientas.ht01_datos import DatosNoDisponibles
 from .motor import ic_bootstrap_media, spearman
 
 
@@ -106,16 +107,25 @@ def backtest(ent, coord, peticion: Dict, desde: str, hasta: str, frecuencia: str
                               "veredicto": cnd.get("veredicto"), "veredicto_ambito": rec.get("veredicto"), "A": rec.get("A"), "E": rec.get("E"),
                               "C": rec.get("C")})
     # Evaluación: se avanza la fecha hasta el final de los datos disponibles
-    try:
-        fin_datos = max(str(ent.prov._serie_completa(s).index[-1].date()) for s in {x["simbolo"] for x in filas if x.get("simbolo")})
-    except Exception:  # noqa: BLE001
-        fin_datos = hasta
+    ultimas_fechas = {}
+    for simbolo in sorted({x["simbolo"] for x in filas if x.get("simbolo")}):
+        try:
+            datos = ent.prov._serie_completa(simbolo)
+        except DatosNoDisponibles:
+            datos = None
+        if datos is None or datos.empty:
+            advertencias.append(f"{simbolo}: sin precios disponibles para evaluar el ranking")
+        else:
+            ultimas_fechas[simbolo] = str(datos.index[-1].date())
+    fin_datos = max(ultimas_fechas.values(), default=hasta)
     ent.fijar_as_of(fin_datos)
     for x in filas:
         fh = _fin_horizonte(x["fecha_asof"], H)
         x["fecha_fin_horizonte"] = fh
-        x["evaluable"] = fh <= fin_datos
-        x["rent_fwd"] = ent.motor.rentabilidad(x["simbolo"], x["fecha_asof"], fh) if x["evaluable"] and x.get("simbolo") else None
+        x["rent_fwd"] = None
+        if fh <= fin_datos and x.get("simbolo") in ultimas_fechas:
+            x["rent_fwd"] = ent.motor.rentabilidad(x["simbolo"], x["fecha_asof"], fh)
+        x["evaluable"] = x["rent_fwd"] is not None
     rf_ref = {}
     for f in sorted({x["fecha_asof"] for x in filas}):
         fh = _fin_horizonte(f, H)
@@ -135,7 +145,7 @@ def backtest(ent, coord, peticion: Dict, desde: str, hasta: str, frecuencia: str
             x["rent_fwd_universo"] = round(mu, 6)
             x["rent_fwd_referencia_ambito"] = rf_ref.get(f)
         ic = spearman([x["S"] for x in ev], [x["rent_fwd"] - mu for x in ev])
-        serie.append({"fecha_asof": f, "tipo_activo": t, "n_universo": len(ev), "n_top": len(top), "rent_top": mt, "rent_universo": mu,
+        serie.append({"fecha_asof": f, "fecha_fin_horizonte": xs[0]["fecha_fin_horizonte"], "tipo_activo": t, "n_universo": len(ev), "n_top": len(top), "rent_top": mt, "rent_universo": mu,
                       "exceso_vs_universo": mt - mu, "rent_referencia_ambito": rf_ref.get(f),
                       "exceso_vs_referencia_ambito": None if rf_ref.get(f) is None else mt - rf_ref[f], "ic_rango": ic})
     metr = {}
@@ -144,13 +154,16 @@ def backtest(ent, coord, peticion: Dict, desde: str, hasta: str, frecuencia: str
         ex = [s["exceso_vs_universo"] for s in ss]
         exr = [s["exceso_vs_referencia_ambito"] for s in ss if s["exceso_vs_referencia_ambito"] is not None]
         ics = [s["ic_rango"] for s in ss if s["ic_rango"] is not None]
+        cert = evaluador.certificacion_ranking(
+            ((s["fecha_asof"], s["fecha_fin_horizonte"], s["exceso_vs_universo"], s["ic_rango"]) for s in ss),
+            ent.cfg.get("evaluacion") or {})
         metr[t] = {"n_rankings": len(ss), "horizonte": horizonte, "sesiones": H,
                    "exceso_medio_top_n_vs_universo": round(float(np.mean(ex)), 6) if ex else None, "ic90_exceso": ic_bootstrap_media(ex),
                    "acierto_top_n_vs_universo": round(float(np.mean([e > 0 for e in ex])), 4) if ex else None,
                    "exceso_medio_top_n_vs_referencia_ambito": round(float(np.mean(exr)), 6) if exr else None, "ic90_exceso_referencia": ic_bootstrap_media(exr),
                    "ic_rango_medio": round(float(np.mean(ics)), 4) if ics else None, "ic90_ic_rango": ic_bootstrap_media(ics),
-                   "certificable": len(ss) >= 30 and (ic_bootstrap_media(ex) or [0])[0] > 0 and (ic_bootstrap_media(ics) or [0])[0] > 0,
-                   "nota": "rankings solapados si el horizonte supera la frecuencia: los IC por bootstrap simple son optimistas"}
+                   "certificable": cert["certificable"], "certificacion_ranking": cert,
+                   "nota": "Las métricas descriptivas usan todos los rankings. La certificación usa ventanas sin solapamiento."}
     # Pronósticos (F4) resueltos con los datos disponibles
     ev_res = evaluador.evaluar(ent, coord) if not solo_seleccion else None
     _csv(salida / "rankings.csv", filas)

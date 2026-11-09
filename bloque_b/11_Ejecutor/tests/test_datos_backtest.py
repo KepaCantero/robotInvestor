@@ -104,6 +104,8 @@ def test_backtest_solo_seleccion(hacer_entorno, tmp_path):
     for t in ("RV", "FON", "RF"):
         m = res["metricas_rankings"][t]
         assert m["n_rankings"] == 12 and m["ic_rango_medio"] is not None
+        assert m["certificacion_ranking"]["n_sin_solapamiento"] == 1
+        assert m["certificable"] is False
     filas = list(csv.DictReader(open(sal / "rankings.csv", encoding="utf-8")))
     assert {"fecha_asof", "cand_id", "S", "en_top_n", "rent_fwd", "rent_fwd_universo", "rent_fwd_referencia_ambito"} <= set(filas[0])
     assert all(f["fecha_fin_horizonte"] > f["fecha_asof"] for f in filas)
@@ -139,3 +141,28 @@ def test_generar_sinteticos(tmp_path, hacer_cfg):
     p.fijar_as_of("2026-10-30")
     a, b = csvp.cierres("SXNP"), p.cierres("SXNP")
     assert len(a) == len(b) and abs(float(a.iloc[-1]) - float(b.iloc[-1])) < 1e-6
+
+
+@pytest.mark.parametrize("archivo_vacio", [False, True], ids=["archivo-ausente", "sin-observaciones"])
+def test_una_serie_sin_precios_no_trunca_los_otros_rankings(hacer_entorno, hacer_cfg, tmp_path, archivo_vacio):
+    datos = tmp_path / "datos"
+    proveedor_sintetico(hacer_cfg()).escribir_csv(datos)
+    simbolo = "RV-ABBN"
+    archivo = datos / f"{simbolo}.csv"
+    if archivo_vacio:
+        archivo.write_text("fecha,cierre\n", encoding="utf-8")
+    else:
+        archivo.unlink()
+    ent = hacer_entorno(proveedor=ProveedorCSV(datos))
+    sal = tmp_path / "evaluacion"
+    res = backtest(ent, Coordinador(ent), peticion_redes(), "2025-01-01", "2025-01-31", solo_seleccion=True, salida=sal)
+    assert res["fin_datos"] == "2026-10-30"
+    assert res["metricas_rankings"]["RV"]["n_rankings"] == 1
+    assert any(simbolo in aviso for aviso in res["advertencias"])
+    with (sal / "rankings.csv").open(encoding="utf-8") as fh:
+        filas = {f["simbolo"]: f for f in csv.DictReader(fh)}
+    assert filas[simbolo]["evaluable"] == "False"
+    assert filas[simbolo]["rent_fwd"] == ""
+    assert filas["RV-ENR"]["evaluable"] == "True"
+    assert float(filas["RV-ENR"]["rent_fwd"]) == pytest.approx(
+        ent.motor.rentabilidad("RV-ENR", "2025-01-31", filas["RV-ENR"]["fecha_fin_horizonte"]))

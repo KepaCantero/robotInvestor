@@ -5,7 +5,6 @@ lecciones y recalibra el modelo de tiempos en modo sombra (dentro de bandas)."""
 from __future__ import annotations
 
 import datetime as dt
-
 import math
 from typing import Dict, List, Optional
 
@@ -62,6 +61,37 @@ def resolver_pendientes(ent) -> List[Dict]:
     return resueltos
 
 
+def certificacion_ranking(ventanas, cfg: dict) -> dict:
+    """Usa periodos de retorno (inicio, fin] con exceso e IC de rango observados."""
+    completas = []
+    for inicio, fin, exceso, ic in ventanas:
+        if exceso is None or ic is None or not (math.isfinite(exceso) and math.isfinite(ic)):
+            continue
+        try:
+            inicio = dt.date.fromisoformat(inicio)
+            fin = dt.date.fromisoformat(fin)
+        except (TypeError, ValueError):
+            continue
+        if inicio < fin:
+            completas.append((inicio, fin, exceso, ic))
+
+    # La ventana que termina primero deja espacio al máximo número de ventanas posteriores.
+    excesos, correlaciones = [], []
+    ultimo_fin = dt.date.min
+    for inicio, fin, exceso, ic in sorted(completas, key=lambda v: (v[1], v[0])):
+        if inicio >= ultimo_fin:
+            excesos.append(exceso)
+            correlaciones.append(ic)
+            ultimo_fin = fin
+    replicas = int(cfg.get("bootstrap_replicas", 1000))
+    intervalo_exceso = ic_bootstrap_media(excesos, replicas)
+    intervalo_ic = ic_bootstrap_media(correlaciones, replicas)
+    minimo = int(cfg.get("certificado_ranking_n", 30))
+    return {"n_sin_solapamiento": len(excesos), "n_minimo": minimo, "ic90_exceso": intervalo_exceso,
+            "ic90_ic_rango": intervalo_ic, "certificable": len(excesos) >= minimo and intervalo_exceso is not None
+            and intervalo_ic is not None and intervalo_exceso[0] > 0 and intervalo_ic[0] > 0}
+
+
 def metricas(ent) -> Dict:
     cfg = ent.cfg.get("evaluacion") or {}
     celdas: Dict[str, Dict[str, List]] = {}
@@ -69,7 +99,9 @@ def metricas(ent) -> Dict:
         if p.get("estado") != "RESUELTO":
             continue
         r = p.get("resolucion") or {}
-        c = celdas.setdefault(f"{p.get('tipo')}|{p.get('celda')}", {"y": [], "q": [], "exceso": [], "ic": []})
+        c = celdas.setdefault(f"{p.get('tipo')}|{p.get('celda')}", {"y": [], "q": [], "exceso": [], "ic": [], "ventanas": []})
+        if p.get("tipo") == "RANKING":
+            c["ventanas"].append((p.get("fecha_emision"), p.get("fecha_resolucion"), r.get("exceso"), r.get("ic_rango")))
         c["y"].append(int(bool(r.get("acierto"))))
         c["q"].append(p.get("probabilidad_interna") or 0.5)
         if r.get("exceso") is not None:
@@ -88,9 +120,11 @@ def metricas(ent) -> Dict:
             m.update({"exceso_medio_top_n": round(float(np.mean(c["exceso"])), 6), "ic90_exceso": ic_bootstrap_media(c["exceso"], int(cfg.get("bootstrap_replicas", 1000)))})
         if c["ic"]:
             m.update({"ic_rango_medio": round(float(np.mean(c["ic"])), 4), "ic90_ic_rango": ic_bootstrap_media(c["ic"], int(cfg.get("bootstrap_replicas", 1000)))})
-        if k.startswith("RANKING") and n >= int(cfg.get("certificado_ranking_n", 30)) and (m.get("ic90_exceso") or [0])[0] > 0 \
-                and (m.get("ic90_ic_rango") or [0])[0] > 0:
-            certificados.append({"tipo": "ranking", "celda": k.split("|", 1)[1], "n": n})
+        if k.startswith("RANKING"):
+            cert = certificacion_ranking(c["ventanas"], cfg)
+            m["certificacion_ranking"] = cert
+            if cert["certificable"]:
+                certificados.append({"tipo": "ranking", "celda": k.split("|", 1)[1], "n": cert["n_sin_solapamiento"]})
         if k.startswith("AMBITO") and n >= int(cfg.get("certificado_probabilidad_n", 100)) and bss is not None and bss > 0:
             m["nota_certificado"] = "candidata: falta IC 90 % del BSS > 0, ECE frente a su nulo y Holm (implementación pendiente)"
         m["muestra_suficiente_recalibrar"] = n >= (int(cfg.get("muestra_minima_recalibrar_rankings", 15)) if k.startswith("RANKING")
