@@ -4,7 +4,7 @@ Nov 9, 2026 · @Dani
 
 ## 0. Estado, alcance y modo de uso
 
-Esta V0.5 (9 de noviembre de 2026) **sustituye a la V0.4**: incorpora la **enmienda 2** (los 27 puntos de T-58 en la deuda técnica), aplicada a petición del operador y **pendiente de ratificar**: todo lo que añade es `[PROPUESTO]` (tabla «De la V0.4 a la V0.5» abajo y decisiones D-28 a D-41). Sus números quedan aplazados como pendientes del operador (P-25 a P-35), igual que el resto de sus decisiones de perfil y técnicas hasta completar la arquitectura (T-57). La V0.4 (7 de noviembre de 2026) incorporó la **enmienda 1**, ratificada por el operador ese día (tabla «De la V0.3 a la V0.4» y decisiones D-20 a D-27). La V0.3 sustituyó a la V0.2 y a la V0.1; nació de una prueba de recorrido con cuatro casos (18 huecos) y de una revisión adversarial independiente (13 hallazgos), y el operador ha autorizado modificar la idea base, incluidos los bloques A y B.
+Esta V0.5 (9 de noviembre de 2026) **sustituye a la V0.4**: incorpora la **enmienda 2** (los 27 puntos de T-58 en la deuda técnica), aplicada a petición del operador y **pendiente de ratificar**: todo lo que añade es `[PROPUESTO]` (tabla «De la V0.4 a la V0.5» abajo y decisiones D-28 a D-41). Sus números quedan aplazados como pendientes del operador (P-25 a P-35), igual que el resto de sus decisiones de perfil y técnicas hasta completar la arquitectura (T-57). Al redactarla se añadió lo que no venía literal en T-58 y conviene que el operador ratifique a sabiendas: los principios P19 y P20, que amplían los invariantes; que SC-3 no cuente para el tope de bloques; el destino de las aportaciones durante la hibernación; las exenciones de la rentabilidad mínima; y la preferencia por un revisor de otro proveedor de IA. La V0.4 (7 de noviembre de 2026) incorporó la **enmienda 1**, ratificada por el operador ese día (tabla «De la V0.3 a la V0.4» y decisiones D-20 a D-27). La V0.3 sustituyó a la V0.2 y a la V0.1; nació de una prueba de recorrido con cuatro casos (18 huecos) y de una revisión adversarial independiente (13 hallazgos), y el operador ha autorizado modificar la idea base, incluidos los bloques A y B.
 
 **Alcance.** Sistema personal de inversión con **capital propio únicamente**: investiga, analiza, compara, construye carteras, controla el riesgo, ejecuta bajo autorización y aprende de sus resultados. No presta servicio a terceros; si eso cambiara, habría que revisar la normativa aplicable antes de seguir.
 
@@ -60,18 +60,18 @@ Esta V0.5 (9 de noviembre de 2026) **sustituye a la V0.4**: incorpora la **enmie
 
 | N.º | Cambio | Problema que resuelve | Sección |
 | --- | --- | --- | --- |
-| 24 | **Entrada por cualquier bloque, salida al dinero solo por F y G:** vía `DIRECTA` y modo `CONSULTA` (25) | El recorrido A→B→C→D obligatorio para una simple comparación | §2, §4.1 |
+| 24 | **Entrada por cualquier bloque, salida al dinero solo por F y G:** vía `DIRECTA` y modo `CONSULTA` (25) | El recorrido A→B→C→D obligatorio para una simple comparación | §1, §2, §4, §4.1 |
 | 25 | **Motor de cálculo avanzado** (SC-3 ampliado, con categoría de bloque) y su **módulo de proyecciones** del plan (1, 13) | Cálculos pesados dispersos; el operador no ve hacia dónde va su plan | §3, §9 |
-| 26 | **Rentabilidad mínima exigida** a cada inversión y **todo medido después de la inflación** (2, 5) | Invertir en lo que no compensa su riesgo; rentabilidades que engañan | §1, §7, §8, §10 |
-| 27 | **Plan de largo plazo:** aportaciones periódicas como ciclo propio, vehículo fiscal en la decisión y camino de riesgo que baja al acercarse el objetivo (3, 4, 6) | Un plan de décadas tratado como operaciones sueltas | §7 |
-| 28 | **Protecciones del operador:** colchón de emergencia fuera del robot, modo hibernación y revisión anual guiada (7, 8, 9) | Invertir el dinero que hará falta; un sistema que sigue solo si el operador desaparece | §2, §6, §11 |
+| 26 | **Rentabilidad mínima exigida** a cada inversión y **todo medido después de la inflación** (2, 5) | Invertir en lo que no compensa su riesgo; rentabilidades que engañan | §1, §7, §8, §9, §10 |
+| 27 | **Plan de largo plazo:** aportaciones mensuales como ciclo propio, vehículo fiscal en la decisión y camino de riesgo que baja al acercarse el objetivo (3, 4, 6) | Un plan de décadas tratado como operaciones sueltas | §4, §7 |
+| 28 | **Protecciones del operador:** colchón de emergencia fuera del robot, modo hibernación y revisión anual guiada (7, 8, 9) | Invertir el dinero que hará falta; un sistema que sigue solo si el operador desaparece | §2, §6, §11, §12 |
 | 29 | **Vigía de régimen económico**, que solo endurece (12) | Llegar a una crisis con los límites de tiempos normales | §3, §8 |
 | 30 | **Parámetros contextuales** y **asesor de configuración** en el Broker Personal (14) | Números fijos que no sirven igual para todo activo y contexto; un operador inexperto ante decenas de parámetros | §2, §10 |
-| 31 | **Varios análisis independientes** por decisión y **probabilidades verificables** (15, 18) | Un único análisis sin medida de su incertidumbre; tesis que no se pueden comprobar | §3, §5, §9 |
+| 31 | **Varios análisis independientes** por decisión y **probabilidades verificables** (15, 18) | Un único análisis sin medida de su incertidumbre; tesis que no se pueden comprobar | §3, §4.1, §5, §9 |
 | 32 | **Los agentes se ganan su peso:** historial verificado, torneo de pronósticos, mínimo de decisiones, aspirante frente a titular y autopsias (16, 19, 20, 21) | Fiarse de un agente sin pruebas; no aprender de los errores | §9 |
 | 33 | **Incentivos por diseño del sistema** y defensas contra la ley de Goodhart (24) | Agentes que optimizan la métrica en lugar del objetivo | §9 |
-| 34 | **J como laboratorio de estrategias, modelos, instrucciones y agentes**; aprendizaje automático solo como aspirante; catálogo de bases de datos y entrenamientos (17, 22, 27) | Nadie se encarga de entrenar; modelos complejos sin referencia con que compararlos | §2, §9, §10 |
-| 35 | **Escalera de verificación** y verificaciones externas (23) | Dar por buena una mejora que solo funciona en el pasado | §7, §9 |
+| 34 | **J como laboratorio de estrategias, modelos, instrucciones y agentes**; aprendizaje automático solo como aspirante; catálogo de bases de datos y entrenamientos (17, 22, 27) | Nadie se encarga de entrenar; modelos complejos sin referencia con que compararlos | §2, §9, §10, §13, §14 |
+| 35 | **Escalera de verificación** y verificaciones externas (23) | Dar por buena una mejora que solo funciona en el pasado | §1, §7, §9 |
 | 36 | **Cambios de modelo de IA con conjunto dorado** e **historial exportable** en formatos abiertos (10, 11) | Cambiar de modelo a ciegas; depender de un proveedor para recuperar la propia historia | §9, §10, §12 |
 | 37 | **Enchufabilidad:** ficha de cada bloque, registro, batería de conformidad, estado por bloque y adaptadores también para modelos de IA (26) | Bloques que no se pueden sustituir sin tocar el resto | §3, §5, §13, §14 |
 
@@ -126,12 +126,12 @@ La refactorización de A y B a núcleo + perfil se hace en la **Fase 2** (§14),
 | **Orquestador** | Código determinista | Mueve los expedientes por sus estados, gestiona colas, plazos, reintentos y **presupuestos de coste y tiempo**, y lanza las rutinas | Juzgar inversiones |
 | **Gestores de cartera** (uno por libro) | Agentes LLM acotados + código | Llevan el flujo cotidiano de su libro dentro del mandato, usando el expediente como memoria | Hablar entre sí (lo hacen por el Orquestador) o salirse del mandato |
 
-**Lo que hace el Broker Personal con el operador.** `[RATIFICADO]`
+**Lo que hace el Broker Personal con el operador.** `[RATIFICADO]` salvo indicación.
 
 1. **Lenguaje para inexpertos.** Todo lo que el Broker y N dicen al operador se explica sin jerga: qué pasa, qué significa para su dinero y qué se le pide decidir, con ejemplos en euros. Un término técnico solo aparece con su explicación al lado.
 2. **Perfil inversor y de riesgo** (vive en SC-1, no en la memoria del chat): conocimientos, experiencia, situación económica, objetivos, horizonte, caída tolerable y reacción ante pérdidas, versionado. El Broker lo completa con preguntas sencillas y con ejemplos a lo largo de las conversaciones; propone cada cambio y el operador lo confirma; una contradicción entre respuestas se pregunta, nunca se resuelve en silencio. Las reglas sobre el riesgo están en el §6.
 3. **Política de inversión personal:** un documento corto que el operador escribe con el Broker en un momento tranquilo (qué hará ante caídas del 10, 20 y 30 %, qué dinero no tocará nunca, para qué invierte). Antes de aceptar una orden del operador que la contradiga durante una caída, el Broker se la recuerda y le pide confirmar. No impide nada; hace consciente la decisión.
-4. **Asesor de configuración** `[PROPUESTO]` (D-34). Dentro del Broker conversacional, propone los parámetros del sistema a partir del perfil del operador (§10): cada propuesta se explica por sus consecuencias en euros («con este límite, en una caída como la de 2020 habrías perdido como mucho…»), con su simulación en el Motor. El operador confirma cada una. Los límites duros de F y el kill-switch nunca los fija un modelo por su cuenta. Conduce la sesión final en que el operador toma las decisiones aplazadas (T-57).
+4. **Asesor de configuración** `[PROPUESTO]` (D-34). Dentro del Broker conversacional, propone los parámetros del sistema a partir del perfil del operador (§10): cada propuesta se explica por sus consecuencias en euros («con este límite, en una caída como la de 2020 habrías perdido como mucho…»), con su simulación en el Motor. La **configuración inicial** (la sesión final en que el operador toma las decisiones aplazadas, T-57, en simulado) la propone el asesor y la confirma el operador, valor a valor. Los **cambios posteriores** siguen la ruta única de cambios (§9): se validan antes de que el operador los confirme. Los límites duros de F y el kill-switch nunca los fija un modelo por su cuenta.
 5. **Colchón de emergencia** `[PROPUESTO]` (D-32). El dinero que el operador pueda necesitar a corto plazo vive **fuera del robot**. El Broker comprueba en el perfil que el colchón existe y cubre los meses fijados por el operador `[ABIERTO]` (P-29) antes de proponer invertir más; no lo comprueba en el banco, lo pregunta y lo registra.
 
 **Intercambio entre bloques.** `[RATIFICADO]` (D-23) Los bloques se pasan información a través del Broker Personal, pero **por su parte determinista** (el Orquestador), con contratos cerrados, sin duplicados y con registro. El Broker conversacional lo consulta todo para explicarlo, pero no transporta datos entre bloques: un error o una manipulación en un LLM no puede alterar lo que un bloque le pasa a otro. Antes de encargar un análisis, el Orquestador consulta el registro de análisis vigentes (§3).
@@ -202,7 +202,7 @@ Todo componente pertenece a un solo plano, y cada plano tiene una autoridad dist
 | --- | --- |
 | **SC-1 Perfil y mandato** | Fuente única de objetivos, horizonte, benchmark, riesgo y límites por cartera; **perfil inversor y de riesgo** del operador y su **política de inversión personal** (§2) |
 | **SC-2 Datos y evidencia** | Pasa a ser el Bloque K (§2): ingesta, procedencia, frescura y consulta «punto en el tiempo». Para precios, posiciones y saldos, la **segunda fuente es el propio intermediario** |
-| **SC-3 Motor de cálculo avanzado** | Cálculo reproducible (hash, semilla, fecha de corte). Cada módulo declara su modelo y sus límites de validez. `[PROPUESTO]` (D-29) Servicio común **con categoría de bloque** (Documento 0 propio, contratos y presupuesto), que parte del Motor de Cálculo Avanzado de A: Montecarlo, escenarios, modelos de factores, optimización, pruebas históricas y **proyecciones** (§9), con cola de trabajos, caché por hash y posibilidad de una máquina más potente. Da distribuciones, no predicciones exactas, y su coste cuenta en la economía del análisis (§10) |
+| **SC-3 Motor de cálculo avanzado** (`[PROPUESTO]` nombre nuevo; antes, Motor numérico) | Cálculo reproducible (hash, semilla, fecha de corte). Cada módulo declara su modelo y sus límites de validez. `[PROPUESTO]` (D-29) Sigue siendo un **servicio común** y no cuenta para el tope de bloques activos, pero se construye y se entrega como un bloque (Documento 0 propio, contratos y presupuesto); solo pasa a ser bloque si cumple el criterio del §2. Parte del Motor de Cálculo Avanzado de A: Montecarlo, escenarios, modelos de factores, optimización, pruebas históricas y **proyecciones** (§9), con cola de trabajos, caché por hash y posibilidad de una máquina más potente. Da distribuciones, no predicciones exactas, y su coste cuenta en la economía del análisis (§10) |
 | **SC-4 Diario de pronósticos** | Registro de pronósticos congelados y de opciones descartadas, con resolución posterior (§9) |
 | **SC-5 Eventos y auditoría** | Registro anexado, con `correlation_id` de extremo a extremo |
 | **SC-6 Validador de contratos** | Comprueba esquema y coherencia de cada paquete antes de pasar al bloque siguiente (generaliza G3) |
@@ -212,7 +212,7 @@ Todo componente pertenece a un solo plano, y cada plano tiene una autoridad dist
 | **SC-10 Adaptadores y simulador** | Puertos independientes del proveedor para intermediario, datos, avisos `[PROPUESTO]` (D-41) **y modelos de IA**; perfil de capacidades de cada proveedor; **simulador propio** de mercado y órdenes para L0 |
 | SC-11 Lectura aislada de noticias | Lee noticias y contenido externo en entorno aislado, sin acceso a cartera, credenciales ni herramientas. Salida con esquema cerrado (listas cerradas, números con fuente y fecha), sin texto libre hacia otros bloques. **Versión mínima en la Fase 1** (pocas fuentes fiables; salida: evento, país, gravedad, divisas y activos afectados) que alimenta el registro de riesgos geopolíticos; la completa, en la Fase 5 |
 
-**Vigía de régimen económico.** `[PROPUESTO]` (D-33) Un semáforo por región (normal, tensión, crisis) a partir de indicadores adelantados **calculados con código** (curva de tipos, diferenciales de crédito, tensión bancaria, apalancamiento, volatilidad, PMI) e interpretados por un agente, con los umbrales del operador `[ABIERTO]` (P-31). Alimenta el registro de riesgos geopolíticos y los parámetros contextuales (§10). **Solo endurece**: reduce la exposición, baja los límites o exige más margen; nunca relaja nada. No promete predecir crisis. Si la experiencia lo justifica, se promueve a bloque por el criterio del §2.
+**Vigía de régimen económico.** `[PROPUESTO]` (D-33) Un semáforo por región (normal, tensión, crisis) a partir de indicadores adelantados **calculados con código** (curva de tipos, diferenciales de crédito, tensión bancaria, apalancamiento, volatilidad, PMI). **El estado lo fija el código** con los umbrales del operador `[ABIERTO]` (P-31), y es el único que usan F y los parámetros contextuales (§10). Un agente lo explica y puede proponer subir de estado, pero esa propuesta solo vale si la aprueba el operador (P2, P15). Alimenta el registro de riesgos geopolíticos. **Solo endurece**: reduce la exposición, baja los límites o exige más margen; nunca relaja nada. Como endurecer también puede impedir invertir, el estado del semáforo aparece en el embudo y en la alarma de sequía (§7). No promete predecir crisis. Si la experiencia lo justifica, se promueve a bloque por el criterio del §2.
 
 **Adaptadores.** `[PROPUESTO]` Ningún bloque conoce a un intermediario, proveedor de datos o modelo de IA concretos: hablan con un puerto de SC-10. Así se puede diseñar y probar todo contra el simulador y cambiar de proveedor sin reabrir los bloques. El operador rellena una **ficha de restricciones reales** (intermediario, tipos de cuenta, API, datos y licencias, presupuesto, jurisdicción fiscal); hasta entonces solo G y SC-2 quedan bloqueados.
 
@@ -238,7 +238,7 @@ El posicionamiento de grandes inversores se usa como contexto y para detectar ex
 
 ## 4. Dos ciclos: oportunidad y posición
 
-Una **oportunidad** (la idea hasta la decisión) y una **posición** (lo que ya se ha comprado) son objetos distintos, con estados y reglas distintos. En la V0.1 iban mezclados y una posición abierta podía volver a «analizarse» como si fuera nueva. Los gestiona la máquina de estados del Orquestador, no un LLM.
+Una **oportunidad** (la idea hasta la decisión) y una **posición** (lo que ya se ha comprado) son objetos distintos, con estados y reglas distintos. En la V0.1 iban mezclados y una posición abierta podía volver a «analizarse» como si fuera nueva. Los gestiona la máquina de estados del Orquestador, no un LLM. `[PROPUESTO]` (D-31) Las aportaciones mensuales tienen además un ciclo propio, que no crea oportunidades sino un plan de reequilibrio (§7).
 
 ### 4.1 Expediente de oportunidad
 
@@ -264,7 +264,7 @@ Una **oportunidad** (la idea hasta la decisión) y una **posición** (lo que ya 
 3. **D exige una fecha de corte común.** Si los análisis comparados difieren en más del umbral de la configuración, el Orquestador pide actualizar los datos antes de comparar.
 4. Una propuesta caducada no se ejecuta: vuelve a `EN_ANÁLISIS` o pasa a `DESCARTADA`, y decide el Broker.
 5. Las opciones descartadas o en observación conservan su motivo y sus condiciones de reapertura en SC-4.
-6. `[PROPUESTO]` (D-28) Con vía `DIRECTA`, el expediente **nace en el estado que corresponde al bloque de entrada** (`EN_ANÁLISIS` si se entra por C, `VALIDADA` si se entra por D con sobres vigentes) y conserva las mismas transiciones hacia delante. Una **consulta** no abre expediente: deja su rastro en SC-5 y, si después se decide invertir, abre uno con vía `DIRECTA` reutilizando los análisis vigentes.
+6. `[PROPUESTO]` (D-28) Con vía `DIRECTA`, el expediente **nace en el estado que corresponde al bloque de entrada** (`EN_ANÁLISIS` si se entra por C, `VALIDADA` si se entra por D con sobres vigentes, `COMPARADA` si se entra por E) y conserva las mismas transiciones hacia delante. Con un candidato único, el Orquestador registra como comparación la que hay frente al benchmark de la cartera (P5) y el motivo de no comparar con más. Una **consulta** no abre expediente: deja su rastro en SC-5 y, si después se decide invertir, abre uno con vía `DIRECTA` reutilizando los análisis vigentes.
 7. `[PROPUESTO]` (D-35) Toda tesis de una sección de C lleva **probabilidad, plazo y criterio de resolución**, y se congela en SC-4 antes de conocerse el resultado (§9).
 
 ### 4.2 Posición
@@ -330,7 +330,7 @@ Los contratos son la arquitectura: un bloque es sustituible mientras cumpla los 
 
 1. **Ficha y registro.** Cada bloque publica su ficha (CT-G-17) y el Orquestador mantiene el registro de bloques: solo encarga trabajo a un bloque registrado, en una versión de contrato que ambos declaran.
 2. **Batería de conformidad.** Cada contrato tiene una batería de casos (válidos e inválidos) que un bloque debe pasar para conectarse o sustituir a otro. Ningún contrato queda sin esquema: los que aún no lo tienen (CT-G-07, 11, 12, 13 y 15) lo reciben antes de que su bloque se construya.
-3. **Estado por bloque.** Cada bloque guarda su propio estado, con su versión de esquema y sus migraciones, de modo que cambiar uno no obliga a migrar los demás. El código de referencia de la Fase 1, que hoy guarda un único estado, se separa antes de la Fase 2.
+3. **Estado por bloque.** Cada bloque guarda su propio estado, con su versión de esquema y sus migraciones, de modo que cambiar uno no obliga a migrar los demás. El código de referencia de la Fase 1, que hoy guarda un único estado, se separa al empezar la Fase 2.
 4. **Adaptadores para A y B.** A y B hablan sus contratos `CT-B`; un adaptador los traduce a `CT-G` hasta su refactorización en la Fase 2.
 5. **Adaptadores externos** (SC-10) con interfaz común para datos, intermediarios y modelos de IA.
 
@@ -356,7 +356,7 @@ Hace comparables los doce perfiles de C sin obligar a nadie a inventar lo que no
 
 **Capa 2 · condicional: escenarios y distribuciones.** Escenarios con probabilidad y rentabilidad neta a un horizonte común, y su distribución resumida. Solo se rellena si el C declara el **método** y la **base de datos** que la sustentan. Si no, el campo vale `NO_ESTIMABLE` o va etiquetado `SUPUESTO`, y D lo trata como opinión, no como dato.
 
-**Capa 3 · confianza.** Un **tope de confianza fijado ex ante** por clase de comparabilidad (abajo), rebajado si el doble análisis discrepa. La calibración histórica solo entra cuando hay muestra suficiente (§9).
+**Capa 3 · confianza.** Un **tope de confianza fijado ex ante** por clase de comparabilidad (abajo), rebajado si los análisis independientes discrepan (§3). La calibración histórica solo entra cuando hay muestra suficiente (§9).
 
 **Clases de comparabilidad.** Cada perfil de C declara la suya y la ratifica el operador. `[PROPUESTO]`
 
@@ -418,7 +418,7 @@ Los umbrales viven en la configuración y los fija el operador `[ABIERTO]`. La a
 3. **Los límites de pérdida no se pueden subir el mismo día** en que se alcanzaron.
 4. **Operaciones manuales declaradas:** todo lo que el operador haga fuera del sistema se declara (CT-G-14). Lo no declarado es una discrepancia.
 5. **Revisión periódica** de los mandatos y de una muestra de expedientes (§3). `[PROPUESTO]` (D-32) Una vez al año, una **revisión guiada con el Broker**: perfil y situación, colchón de emergencia, aportaciones, rentabilidad mínima exigida, camino de riesgo, resultado frente a la cartera sombra y lo que el robot propone cambiar. Cada cambio sigue su ruta normal.
-6. **Modo hibernación** `[PROPUESTO]` (D-32). Si el operador no responde a los avisos durante un plazo `[ABIERTO]` (P-30): no se abren posiciones nuevas ni se aumentan las existentes, se mantienen las órdenes de protección y las reglas numéricas de salida, las aportaciones que lleguen van solo al benchmark de su cartera (P5), y se avisa a una **persona de confianza** designada por el operador `[ABIERTO]` (P-30), que puede consultar pero no operar. Se sale de la hibernación cuando el operador vuelve y lo confirma con segundo factor.
+6. **Modo hibernación** `[PROPUESTO]` (D-32). Si el operador no responde a los avisos durante un plazo `[ABIERTO]` (P-30): no se abren posiciones nuevas ni se aumentan las existentes, se mantienen las órdenes de protección y las reglas numéricas de salida, las aportaciones que lleguen se quedan en efectivo o en el monetario del mandato sin generar órdenes, y se avisa a una **persona de confianza** designada por el operador `[ABIERTO]` (P-30), que nunca opera. Si además puede consultar la cartera o solo recibe el aviso lo decide el operador (P-30). Se sale de la hibernación cuando el operador vuelve y lo confirma con segundo factor.
 
 **Perfil inversor y riesgo.** `[RATIFICADO]` El perfil inversor (§2) orienta los mandatos. Puede **bajar** el riesgo de una cartera al momento; para **subirlo** hace falta la confirmación del operador con segundo factor y un periodo de espera, como el límite de pérdida y el nivel de autonomía.
 
@@ -451,7 +451,10 @@ Los controles **nunca se relajan solos**: el sistema propone el ajuste y el oper
 
 **Rentabilidad mínima exigida.** `[PROPUESTO]` (D-30) Cada cartera tiene una rentabilidad anual mínima **exigida, no garantizada**, en términos reales (después de inflación), fijada por el operador `[ABIERTO]` (P-25).
 
-1. Una inversión solo se propone si supera ese mínimo **después de costes e impuestos** con una probabilidad suficiente `[ABIERTO]` (P-25), calculada por el Motor a partir de la capa 2 del sobre. Si C devuelve `NO_ESTIMABLE`, la inversión no pasa en L2 ni en L3; en L1 el operador la ve marcada como no comprobada.
+1. Una inversión solo se propone si supera ese mínimo **después de costes e impuestos** con una probabilidad suficiente `[ABIERTO]` (P-25). El mínimo es anual y se prorratea al horizonte de cada operación. De dónde sale la comprobación según la vía:
+   - **discrecional y directa:** la calcula el Motor a partir de la capa 2 del sobre. Si C devuelve `NO_ESTIMABLE`, la inversión no pasa en L2 ni en L3 (T-58 decía «en autónomo»; se extiende a L2 por prudencia); en L1 el operador la ve marcada como no comprobada;
+   - **sistemática:** se comprueba una vez, al validar la estrategia (CT-G-15), con su rentabilidad neta esperada; no orden a orden;
+   - **reequilibrio hacia los pesos del mandato con las aportaciones e inversión en el benchmark (P5):** exentos, porque son el propio plan, que ya se contrastó con el mínimo en sus proyecciones (§9).
 2. El Broker comprueba que el mínimo es **compatible con el riesgo tolerado** del perfil: si para alcanzarlo hiciera falta más riesgo del aceptado, lo dice con cifras y el operador elige qué cambia.
 3. **Prohibido aumentar el riesgo para recuperar** una rentabilidad por debajo del mínimo.
 4. Si el operador quiere un **suelo**, una parte de la cartera se asegura en renta fija sin riesgo de crédito a su plazo `[ABIERTO]` (P-35).
@@ -459,7 +462,7 @@ Los controles **nunca se relajan solos**: el sistema propone el ajuste y el oper
 
 **Plan de largo plazo.** `[PROPUESTO]` (D-31)
 
-1. **Aportaciones periódicas como ciclo propio.** Cada aportación del operador `[ABIERTO]` (P-26) entra por su propio ciclo en el Orquestador y se usa para **reequilibrar comprando lo que está por debajo de su peso**, antes que vendiendo lo que está por encima, lo que ahorra costes e impuestos.
+1. **Aportaciones mensuales como ciclo propio.** Cada aportación del operador (importe `[ABIERTO]`, P-26) entra por su propio ciclo en el Orquestador y se usa para **reequilibrar comprando lo que está por debajo de su peso**, antes que vendiendo lo que está por encima, lo que ahorra costes e impuestos. El ciclo genera un plan de reequilibrio de E que pasa por F y G (P20) con el mismo nivel de autonomía que cualquier compra (§6).
 2. **Vehículo fiscal en la decisión.** D y E comparan también el vehículo: en España, los traspasos entre fondos no tributan y los ETF y las acciones sí al vender. Las reglas las codifica SC-9 y las valida un asesor (P-06); los vehículos que se usen los decide el operador `[ABIERTO]` (P-28).
 3. **Camino de riesgo** (*glide path*). La cartera de largo plazo reduce su riesgo de forma gradual al acercarse la fecha de cada objetivo del operador `[ABIERTO]` (P-27), según una senda fijada en el mandato y no por decisión del momento.
 4. **Proyecciones del plan** con el Motor (§9): hacia dónde va el plan con estas aportaciones y este riesgo, siempre en bandas.
@@ -489,7 +492,7 @@ Los controles **nunca se relajan solos**: el sistema propone el ajuste y el oper
 | 3 · Dinero real en pequeño | Una fracción mínima del capital durante un periodo | Muestra pequeña: detecta problemas, no demuestra resultados |
 | 4 · Escala por tramos | Más capital por pasos | Solo si los peldaños anteriores siguen en verde |
 
-**Verificaciones externas**, en todos los peldaños: comparación con la cartera sombra después de costes, impuestos e inflación; conciliación con el intermediario; repetición con un segundo proveedor de datos; **prerregistro sellado** de la hipótesis y del criterio de éxito antes de la prueba; torneos públicos de pronósticos para medir la calibración de los agentes; revisión independiente por quien no participó; y pruebas de fallo (datos cortados, precios retrasados o absurdos).
+**Verificaciones externas** `[PROPUESTO]` (D-39), en todos los peldaños: comparación con la cartera sombra después de costes, impuestos e inflación; conciliación con el intermediario; repetición con un segundo proveedor de datos; **prerregistro sellado** de la hipótesis y del criterio de éxito antes de la prueba; torneos públicos de pronósticos para medir la calibración de los agentes; revisión independiente por quien no participó; y pruebas de fallo (datos cortados, precios retrasados o absurdos).
 
 ## 8. Control, límites nominales, órdenes de protección y kill-switch
 
@@ -511,8 +514,8 @@ El Bloque F es código determinista que ningún agente puede modificar, saltarse
 7. **Ventanas de restricción** por eventos del calendario de SC-8 (decisiones de bancos centrales, resultados) y fines de semana para los instrumentos con riesgo de hueco.
 8. Costes totales, incluida la financiación en divisas y el margen.
 9. Autonomía: el nivel de la cartera permite la acción (§6).
-10. `[PROPUESTO]` (D-33) **Régimen:** si el vigía de régimen (§3) marca tensión o crisis en la región del activo, se aplican los límites endurecidos de ese estado. El vigía nunca relaja un límite.
-11. `[PROPUESTO]` (D-30) **Rentabilidad mínima:** en L2 y L3, una apertura o un aumento llevan la comprobación del Motor de que superan la rentabilidad mínima exigida (§7); si falta o es `NO_ESTIMABLE`, se veta. F comprueba que la cifra existe y es del Motor; no la calcula ni la opina.
+10. `[PROPUESTO]` (D-33) **Régimen:** si el estado del vigía de régimen (§3), fijado por código, es tensión o crisis en la región del activo, se aplican los límites endurecidos de ese estado. F no usa la interpretación de ningún agente, y el vigía nunca relaja un límite.
+11. `[PROPUESTO]` (D-30) **Rentabilidad mínima:** en L2 y L3, una apertura o un aumento por la vía discrecional o directa llevan la comprobación del Motor de que superan la rentabilidad mínima exigida (§7); si falta o es `NO_ESTIMABLE`, se veta. En la vía sistemática basta la de la validación de la estrategia, y el reequilibrio hacia los pesos del mandato y la inversión en el benchmark están exentos (§7). F comprueba que la cifra existe y es del Motor; no la calcula ni la opina.
 
 **Controles posteriores.** Seguimiento continuo de límites y de pérdida acumulada. Los **cortacircuitos** son automáticos y llevan la cartera a L1.
 
@@ -543,18 +546,18 @@ Con unas pocas decenas de tesis al año y horizontes de meses, las métricas de 
 3. **Topes de confianza ex ante.** La confianza máxima la fija la clase de comparabilidad (§5) y es baja para un C sin historial. Solo sube cuando hay **muestra suficiente**, con un mínimo de observaciones fijado en la configuración `[ABIERTO]`. Con menos, el sistema dice «muestra insuficiente» en lugar de concluir.
 4. **Calibración agrupada.** Se mide por perfil de C y por clase, no por activo. Las métricas (puntuación de Brier, comparación con referencias ingenuas) se calculan solo con muestra suficiente. D usa el tope, y la calibración cuando existe.
 5. **Dónde se aprende de verdad.** En trading y táctica, que generan observaciones, y en la deriva de estrategias (§7). En largo plazo se aprenden **procesos** (calidad de datos, cumplimiento de condiciones de invalidez, hitos), no parámetros.
-6. **Ruta única de cambios.** I propone → J valida (backtest sin *look-ahead* y paper trading) → F y el operador aprueban → despliegue con versión nueva → comparación con la anterior. **Una mejora que no se puede validar con muestra suficiente o fuera de muestra no se despliega.** `[PROPUESTO]` (D-38, D-39) J entrena y valida subiendo la escalera de verificación (§7); **I puntúa**, no J; la **reserva sellada** de datos para la prueba final la custodia el código y J no la ve.
+6. **Ruta única de cambios.** I propone → J valida (backtest sin *look-ahead* y paper trading) → F y el operador aprueban → despliegue con versión nueva → comparación con la anterior. **Una mejora que no se puede validar con muestra suficiente o fuera de muestra no se despliega.** `[PROPUESTO]` (D-38, D-39) Para modelos, instrucciones y agentes, los papeles son: **J entrena** y ejecuta las pruebas de la escalera de verificación (§7); **el veredicto lo da código de I** con la **reserva sellada** de datos para la prueba final, que J no ve; **F y el operador aprueban**.
 7. Las opciones descartadas se reevalúan automáticamente cuando se cumplen sus condiciones de reapertura.
 8. **Seguimiento de lo descartado** `[RATIFICADO]` (D-22): I calcula cómo habrían ido las opciones vetadas o descartadas para distinguir una abstención acertada de unos filtros demasiado estrictos.
 9. **Cartera sombra pasiva** `[RATIFICADO]` (D-22, D-27): desde el primer día corre en simulado un plan pasivo simple (un índice mundial), con los mismos aportes y retiradas que la cartera real. I compara cada mes el robot con la sombra después de costes de análisis (los de los modelos incluidos), comisiones e impuestos, y `[PROPUESTO]` (D-30) también en términos reales, después de inflación. Si tras `[RATIFICADO: 24 meses]` el robot no la supera, propone pasar a gestión pasiva y decide el operador.
 10. **Pronósticos del radar tecnológico** en SC-4, con hitos de 12 meses o menos y la clase de referencia de cuánto tardaron tecnologías parecidas en implantarse.
 11. **Presupuesto de complejidad** `[RATIFICADO]` (D-25): cada bloque, control o registro justifica con datos lo que aporta (decisiones que cambió, pérdidas que evitó, coste que ahorró). I lo revisa cada `[RATIFICADO: 6 meses]` (P-21) y propone simplificar o retirar lo que no aporta.
-12. **Proyecciones del plan** `[PROPUESTO]` (D-29). Un módulo del Motor, no un agente: simulación de Montecarlo del plan con las aportaciones, el riesgo y el horizonte del operador, probabilidad de alcanzar cada objetivo y comparación con la cartera sombra. Siempre en bandas, con los supuestos a la vista y en términos reales.
+12. **Proyecciones del plan** `[PROPUESTO]` (D-29). Un módulo del Motor, no un agente: simulación de Montecarlo del plan a décadas vista con las aportaciones, el riesgo y el horizonte del operador, probabilidad de alcanzar cada objetivo y comparación con la cartera sombra. Siempre en bandas, con los supuestos a la vista y en términos reales.
 13. **Probabilidades verificables y torneo de pronósticos** `[PROPUESTO]` (D-35, D-36). Toda tesis lleva probabilidad, plazo y criterio de resolución, y se mide con la puntuación de Brier y su calibración. Un **torneo permanente** de preguntas con fecha de resolución, a las que responden todos los agentes analistas, da muestra mucho antes de que se cierren las inversiones.
 14. **Los agentes se ganan su peso** `[PROPUESTO]` (D-36). El peso de cada analista al combinar análisis (§3) sale de su historial verificado, con contracción hacia pesos iguales mientras haya pocos datos. Ningún modelo ni agente recibe peso o autonomía antes de un **mínimo de decisiones resueltas** `[ABIERTO]` (P-32).
 15. **Aspirante frente a titular y autopsias** `[PROPUESTO]` (D-36). Todo modelo, instrucción o agente nuevo compite como aspirante contra el que está en uso y solo lo sustituye si lo supera en la escalera de verificación (§7); el anterior se guarda para volver atrás. Cada error relevante tiene su **autopsia** en SC-4: qué falló (dato, modelo, juicio, ejecución o azar) y qué se cambia.
 16. **Incentivos por diseño** `[PROPUESTO]` (D-37). A los agentes no se les motiva con trucos en las instrucciones, sino con el sistema: influencia según su puntuación de Brier; más trabajo y presupuesto para el que gana a su aspirante; el Contradictor puntúa por los fallos que encuentra y se confirman; instrucciones que exigen probabilidad, plazo y qué refutaría la tesis, y que ocultan lo que el operador quiere oír. Contra la ley de Goodhart: se premian la calibración y la rentabilidad ajustada al riesgo después de costes, nunca la rentabilidad sola; solo cuentan resultados verificados, puntuados por un juez independiente y con preguntas que el agente no elige; y los límites de F y el kill-switch quedan fuera del alcance de cualquier agente. El aprendizaje por refuerzo solo más adelante y por esta misma ruta.
-17. **Entrenamientos** `[PROPUESTO]` (D-38). J ejecuta el catálogo de entrenamientos (régimen, volatilidad, ranking, meta-etiquetado, calibración y agregación de agentes, instrucciones, costes de ejecución, texto, deriva, robustez y asesor de configuración) sobre las bases de datos del §10, con un protocolo común: validación temporal purgada con embargo, reserva sellada, corrección por número de intentos (Sharpe deflactado y probabilidad de sobreajuste), medida en crisis y referencia simple. El **aprendizaje automático y las redes neuronales** entran solo como aspirantes frente a referencias simples (GARCH, factores lineales) y nunca como decisores únicos. Afinar modelos de IA con datos propios, solo para tareas mecánicas y no al principio. Entrenar es sobre todo código determinista y reproducible: la IA propone y el código puntúa.
+17. **Entrenamientos** `[PROPUESTO]` (D-38). J ejecuta el catálogo de entrenamientos (régimen, volatilidad, ranking, meta-etiquetado, calibración y agregación de agentes, instrucciones, costes de ejecución, texto, deriva, robustez y asesor de configuración) sobre las bases de datos del §10, con un protocolo común: validación temporal purgada con embargo, reserva sellada, corrección por número de intentos (Sharpe deflactado y probabilidad de sobreajuste), medida en crisis, referencia simple, simulado hacia delante y vigilancia de deriva una vez en uso. J tiene **presupuesto propio** para entrenar y siempre se puede volver a la versión anterior. El **aprendizaje automático y las redes neuronales** entran solo como aspirantes frente a referencias simples (GARCH, factores lineales) y nunca como decisores únicos. Afinar modelos de IA con datos propios, solo para tareas mecánicas y no al principio. Entrenar es sobre todo código determinista y reproducible: la IA propone y el código de I puntúa.
 18. **Cambio de modelo de IA** `[PROPUESTO]` (D-40). Un modelo de IA nuevo o una versión nueva de un proveedor solo sustituye al actual después de pasar un **conjunto dorado** de casos resueltos y compararse con el anterior, con el umbral del operador `[ABIERTO]` (P-34).
 
 **Prohibido.** Cambiar límites, estrategias activas, modelos o parámetros de ejecución sin esa ruta; ajustar con el periodo que luego se usa para validar; usar un resultado para recalibrar el pronóstico que lo predijo.
@@ -566,10 +569,10 @@ El Bloque I completo se construye al final (§14). Hasta entonces bastan el diar
 1. **Una sola plataforma de evidencia (SC-2).** Todo dato entra con fuente, fecha de obtención, fecha de vigencia, licencia, hash y etiqueta epistémica: `VERIFICADO`, `ESTIMADO` o `SUPUESTO`. El dato original nunca se sobrescribe; una corrección es un registro nuevo que apunta al anterior.
 2. **Punto en el tiempo.** Toda consulta puede pedir los datos tal como se conocían en una fecha, para evitar *look-ahead* y sesgo de supervivencia.
 3. **Las cifras las calcula el Motor (SC-3), y cada módulo declara su modelo.** Un agente cita el ID del artefacto. Si no existe un modelo defendible para una cifra, el Motor devuelve `NO_ESTIMABLE`; un LLM no rellena ese hueco con una probabilidad. Una cifra sin modelo ni ID se trata como `SUPUESTO` y el validador la marca.
-4. **Los parámetros no se escriben en prompts.** Umbrales, pesos y límites viven en configuración versionada. `[PROPUESTO]` (D-34) Son **contextuales** en lugar de números fijos: pueden variar por tipo de activo, solidez del activo, régimen del mercado (§3) y horizonte, siempre dentro de una tabla de configuración versionada. Los propone el asesor de configuración del Broker (§2) y los confirma el operador; los límites duros de F y el kill-switch no los fija un modelo.
+4. **Los parámetros no se escriben en prompts.** Umbrales, pesos y límites viven en configuración versionada. `[PROPUESTO]` (D-34) Son **contextuales** en lugar de números fijos: pueden variar por tipo de activo, solidez del activo, régimen del mercado (§3) y horizonte, siempre dentro de una tabla de configuración versionada. Los propone el asesor de configuración del Broker (§2) y los confirma el operador; después de la configuración inicial, cada cambio sigue la ruta única del §9. Los límites duros de F y el kill-switch no los fija un modelo.
 5. **Los almacenes grandes se consultan por ID.** Ningún agente carga un almacén entero. Cada fase recibe un kit de contexto cerrado.
 6. **Segunda fuente.** Para precios, posiciones y saldos que F utiliza, la referencia independiente es el intermediario (§8).
-7. **Convenciones fijas.** Divisa base EUR, zona horaria y calendario de cada mercado explícitos, unidades en cada campo y ajustes corporativos documentados. `[PROPUESTO]` (D-30) Toda rentabilidad que se compara con un objetivo, con la rentabilidad mínima o con la cartera sombra se da **también en términos reales**, con la inflación de la zona euro y su fuente.
+7. **Convenciones fijas.** Divisa base EUR, zona horaria y calendario de cada mercado explícitos, unidades en cada campo y ajustes corporativos documentados. `[PROPUESTO]` (D-30) Toda rentabilidad que se compara con un objetivo, con la rentabilidad mínima o con la cartera sombra se da **también en términos reales**, con el índice de inflación que fije el operador (propuesto: el IPCA de la zona euro; P-25) y su fuente.
 8. **Contenido externo = dato.** Lo leen agentes aislados con salida de esquema estricto (§3, §12). Se cita y se contrasta; no se obedece.
 9. **Fiscalidad codificada.** Las reglas fiscales (por ejemplo, la regla de recompra de dos meses, el tratamiento de criptoactivos, las ganancias en divisas y las obligaciones informativas de activos en el extranjero) las codifica y valida un asesor. Un LLM no las genera. Los tratamientos especiales quedan fuera hasta tener regla validada.
 10. **Simulador antes que API real.** Todo conector se desarrolla y se prueba contra el simulador de SC-10 antes de conectar el servicio real.
@@ -630,7 +633,7 @@ Cada bloque DEBE declarar en su Documento 0 qué hace ante cada fallo de la tabl
 7. **Límites que no dependen de agentes.** Los límites nominales (§8) y las claves con tope impiden que un agente comprometido haga un daño ilimitado.
 8. **Registro anexado.** La auditoría (SC-5) no se puede reescribir ni borrar desde los agentes. Los cambios de configuración y de permisos quedan en ella.
 9. **Copias y recuperación.** Copias periódicas de los almacenes (evidencia, diario, libro) y un procedimiento de restauración que se prueba. `[PROPUESTO]` (D-40) La exportación completa en formatos abiertos (§10) se prueba igual que la restauración.
-10. **Persona de confianza** `[PROPUESTO]` (D-32). La que avisa el modo hibernación (§6) tiene acceso de solo lectura, con credenciales propias, y nunca puede operar ni cambiar la configuración.
+10. **Persona de confianza** `[PROPUESTO]` (D-32). La que avisa el modo hibernación (§6) nunca puede operar ni cambiar la configuración. Si el operador le da acceso de lectura (P-30), es con credenciales propias, revocables y registradas en la auditoría.
 
 ## 13. Identificadores, versionado y numeración
 
@@ -644,7 +647,7 @@ Cada bloque DEBE declarar en su Documento 0 qué hace ante cada fallo de la tabl
 | Metodología | Toda salida lleva `methodology_version` (versionado semántico) |
 | Esquemas | Versionado semántico; los esquemas `1.x` congelados no se editan, se versionan; los `0.x` admiten cambios compatibles con aviso en el §15 |
 | Entregables | `Bloque X - Versión óptima Vn.n (fecha)`; esta Constitución sigue el mismo criterio |
-| `[PROPUESTO]` Bases de datos y entrenamientos | `BD-nn` y `E-nn` (§9, §10); cada versión de un modelo entrenado lleva el hash de los datos y de los parámetros |
+| `[PROPUESTO]` Bases de datos y entrenamientos | `BD-nn` y `E-nn` (§9, punto 17; §10, punto 11); cada versión de un modelo entrenado lleva el hash de los datos y de los parámetros |
 | `[PROPUESTO]` Fichas de bloque | Una por bloque y versión (CT-G-17), con los contratos que recibe y entrega |
 
 El **identificador es la clave de todo almacén**: ningún componente recupera un dato por descripción en lenguaje natural.
@@ -676,10 +679,10 @@ El **identificador es la clave de todo almacén**: ningún componente recupera u
 
 | Fase | Entra |
 | --- | --- |
-| 1 | Vía `DIRECTA` y modo `CONSULTA`; probabilidades verificables y torneo de pronósticos; calibración de agentes y prueba de instrucciones a pequeña escala; varios análisis independientes en N3; escalera de verificación hasta el paper trading; fichas de bloque, batería de conformidad y adaptador de A y B a `CT-G`; asesor de configuración con valores `[PROPUESTO]` en simulado; bases de datos del mundo para divisas y las del propio robot |
-| 2 | Estado separado por bloque; rentabilidad mínima, aportaciones periódicas, vehículo fiscal, camino de riesgo y proyecciones con la cartera de largo plazo; parámetros contextuales por tipo de activo; colchón y revisión anual en el Broker |
+| 1 | Vía `DIRECTA` y modo `CONSULTA`; probabilidades verificables y torneo de pronósticos; calibración de agentes y prueba de instrucciones a pequeña escala, hechas por código de SC-4 sin activar J (no cuenta para el tope de bloques); varios análisis independientes en N3; escalera de verificación hasta el paper trading; fichas de bloque, batería de conformidad y adaptador de A y B a `CT-G`; asesor de configuración con valores `[PROPUESTO]` en simulado; bases de datos del mundo para divisas y las del propio robot |
+| 2 | Estado separado por bloque, al empezar la fase; rentabilidad mínima, aportaciones mensuales, vehículo fiscal, camino de riesgo y proyecciones con la cartera de largo plazo; parámetros contextuales por tipo de activo; colchón y revisión anual en el Broker |
 | 3 | Modo hibernación y persona de confianza, con el intermediario real; vigía de régimen; dinero real en pequeño |
-| 4 | J como laboratorio completo (modelos, instrucciones y agentes); aprendizaje automático como aspirante; meta-etiquetado con el historial acumulado; cambio de modelo de IA con conjunto dorado |
+| 4 | J como laboratorio completo (modelos, instrucciones y agentes) y, a la vez, la parte de I que puntúa (veredicto con la reserva sellada), adelantada de la Fase 5; aprendizaje automático como aspirante; meta-etiquetado con el historial acumulado; cambio de modelo de IA con conjunto dorado |
 | 5 | Aprendizaje por refuerzo si lo anterior se queda corto |
 
 **Reglas al construir un bloque.**
@@ -727,15 +730,15 @@ El **identificador es la clave de todo almacén**: ningún componente recupera u
 | D-27 | Números de la enmienda 1: alarma de sequía a 60 días; cartera sombra en un índice mundial juzgada a los 24 meses; tope de coste de análisis del 1 % del importe (con mínimo y máximo); freno a la rotación con margen del doble de los costes; revisión de complejidad cada 6 meses; liquidez máxima del 5 % del volumen medio diario; startups no cotizadas hasta el 2 % de la cartera | RATIFICADO | 2026-11-07 |
 | D-28 | Vía de entrada `DIRECTA` y modo `CONSULTA`: se entra por cualquier bloque y al dinero solo por F y G; el expediente nace en el estado del bloque de entrada | PROPUESTO | 2026-11-09 |
 | D-29 | Motor de cálculo avanzado (SC-3 con categoría de bloque) con módulo de proyecciones del plan | PROPUESTO | 2026-11-09 |
-| D-30 | Rentabilidad mínima exigida, no garantizada, comprobada por el Motor y por F en L2 y L3; todo medido también después de inflación | PROPUESTO | 2026-11-09 |
-| D-31 | Plan de largo plazo: aportaciones periódicas como ciclo propio, vehículo fiscal en la decisión y camino de riesgo | PROPUESTO | 2026-11-09 |
+| D-30 | Rentabilidad mínima exigida, no garantizada, comprobada por el Motor y por F en L2 y L3 según la vía (interpretación: T-58 decía «en autónomo»; se extiende a L2), con reequilibrio y benchmark exentos; todo medido también después de inflación | PROPUESTO | 2026-11-09 |
+| D-31 | Plan de largo plazo: aportaciones mensuales como ciclo propio, vehículo fiscal en la decisión y camino de riesgo | PROPUESTO | 2026-11-09 |
 | D-32 | Protecciones del operador: colchón fuera del robot, revisión anual guiada, modo hibernación y persona de confianza de solo lectura | PROPUESTO | 2026-11-09 |
 | D-33 | Vigía de régimen económico en SC-8, que solo endurece | PROPUESTO | 2026-11-09 |
 | D-34 | Parámetros contextuales y asesor de configuración en el Broker; los límites duros de F y el kill-switch no los fija un modelo | PROPUESTO | 2026-11-09 |
-| D-35 | Varios análisis independientes cuyo desacuerdo cuenta como incertidumbre; toda tesis con probabilidad, plazo y criterio de resolución | PROPUESTO | 2026-11-09 |
+| D-35 | Varios análisis independientes cuyo desacuerdo cuenta como incertidumbre, siempre en N3 y en el resto cuando lo justifique lo que está en juego (recorte deliberado frente a «por decisión» de T-58, por la economía del análisis, D-24); toda tesis con probabilidad, plazo y criterio de resolución | PROPUESTO | 2026-11-09 |
 | D-36 | Peso por historial verificado, torneo de pronósticos, mínimo de decisiones, aspirante frente a titular y autopsias | PROPUESTO | 2026-11-09 |
 | D-37 | Incentivos de los agentes por diseño del sistema y defensas contra la ley de Goodhart | PROPUESTO | 2026-11-09 |
-| D-38 | J como laboratorio de estrategias, modelos, instrucciones y agentes: J entrena, I puntúa, F y el operador aprueban; catálogo de bases de datos y entrenamientos; aprendizaje automático solo como aspirante | PROPUESTO | 2026-11-09 |
+| D-38 | J como laboratorio de estrategias, modelos, instrucciones y agentes: J entrena, código de I da el veredicto con la reserva sellada (adelantado a la Fase 4), F y el operador aprueban; catálogo de bases de datos y entrenamientos; aprendizaje automático solo como aspirante | PROPUESTO | 2026-11-09 |
 | D-39 | Escalera de verificación para estrategias, modelos, instrucciones y agentes, con verificaciones externas | PROPUESTO | 2026-11-09 |
 | D-40 | Cambio de modelo de IA solo tras un conjunto dorado; historial completo exportable en formatos abiertos | PROPUESTO | 2026-11-09 |
 | D-41 | Enchufabilidad: ficha de bloque (CT-G-17) y registro, batería de conformidad, estado por bloque, adaptadores de A y B a `CT-G` y adaptadores de modelos de IA | PROPUESTO | 2026-11-09 |
@@ -768,12 +771,12 @@ El **identificador es la clave de todo almacén**: ningún componente recupera u
 | P-22 | ~~Límite de liquidez (propuesta: 5 % del volumen medio diario)~~ Resuelto: propuesta aceptada (D-27) | §8 |
 | P-23 | ~~Tope de startups no cotizadas (propuesta: 2 % de la cartera)~~ Resuelto: propuesta aceptada (D-27) | §2, §7 |
 | P-24 | Fuentes de noticias de SC-11 en la Fase 1 | §3 |
-| P-25 | Rentabilidad mínima exigida por cartera (real, anual) y probabilidad suficiente para superarla. Aplazado hasta completar la arquitectura (T-57), como P-26 a P-35 | §7, §8 |
-| P-26 | Importe y frecuencia de las aportaciones periódicas | §7 |
+| P-25 | Rentabilidad mínima exigida por cartera (real, anual), probabilidad suficiente para superarla e índice de inflación (propuesto: IPCA de la zona euro). Aplazado hasta completar la arquitectura (T-57), como P-26 a P-35 | §7, §8 |
+| P-26 | Importe de las aportaciones mensuales (el valor vive en SC-1, fuera del repositorio) | §7 |
 | P-27 | Fecha de cada objetivo y senda del camino de riesgo | §7 |
 | P-28 | Vehículos fiscales que se usarán (fondos traspasables, ETF, acciones) | §7, SC-9 |
-| P-29 | Meses de gastos que debe cubrir el colchón de emergencia | §2 |
-| P-30 | Plazo sin respuesta que activa la hibernación y persona de confianza | §6, §12 |
+| P-29 | Meses de gastos que debe cubrir el colchón de emergencia (el valor vive en SC-1, fuera del repositorio) | §2 |
+| P-30 | Plazo sin respuesta que activa la hibernación; persona de confianza y si solo recibe el aviso o también puede consultar la cartera (los datos de la persona viven en SC-1, fuera del repositorio) | §6, §12 |
 | P-31 | Indicadores y umbrales del vigía de régimen y límites endurecidos de cada estado | §3, §8 |
 | P-32 | Mínimo de decisiones resueltas para dar peso o autonomía a un modelo o agente | §9 |
 | P-33 | Duración de cada peldaño de la escalera de verificación y tamaño del capital pequeño | §7 |
@@ -825,7 +828,7 @@ El **identificador es la clave de todo almacén**: ningún componente recupera u
 | **Vigilante** | Proceso independiente que comprueba el latido del plano de control |
 | **Kill-switch** | Cancela entradas, bloquea nuevas órdenes y pasa todo a L1 (§8) |
 | **Contradictor** | Agente que ataca la tesis a partir de la evidencia, preferiblemente de otro modelo |
-| **Motor** | Biblioteca de cálculo reproducible con modelos declarados (SC-3) |
+| **Motor** | Motor de cálculo avanzado (SC-3): cálculo reproducible con modelos declarados, cola de trabajos y caché; da distribuciones, no predicciones exactas |
 | **N0–N3** | Niveles de profundidad de análisis ya definidos en los bloques A y B |
 | **Look-ahead** | Usar en una prueba histórica información que no se conocía en esa fecha |
 | **Idempotencia** | Repetir una orden o mensaje no produce un segundo efecto |
@@ -849,3 +852,10 @@ El **identificador es la clave de todo almacén**: ningún componente recupera u
 | Conjunto dorado | Casos resueltos que todo modelo de IA nuevo debe pasar antes de sustituir al actual (§9) |
 | Reserva sellada | Datos apartados para la prueba final, que quien entrena no puede ver (§9) |
 | Ficha de bloque | Manifiesto de un bloque: contratos, versiones, capacidades y modos de fallo (CT-G-17, §5) |
+| Contracción hacia pesos iguales | Mientras un agente tiene poco historial, su peso se acerca al de los demás en lugar de fiarse de pocos aciertos (§9) |
+| Validación purgada con embargo | Prueba por bloques de tiempo que deja un hueco entre los datos de entrenar y los de probar, para que no se filtre información (§9) |
+| Sharpe deflactado | Rentabilidad ajustada al riesgo corregida por el número de pruebas hechas: con muchas pruebas, alguna sale bien por azar (§9) |
+| Probabilidad de sobreajuste | Probabilidad de que lo mejor en el pasado sea peor que la media fuera de él (§9) |
+| Meta-etiquetado | Modelo que aprende cuáles de las propuestas del propio robot suelen salir bien (§9) |
+| GARCH | Modelo estadístico clásico de volatilidad; sirve de referencia simple (§9) |
+| Ley de Goodhart | Cuando una medida se convierte en objetivo, deja de medir bien: el agente optimiza la medida y no lo que importa (§9) |
