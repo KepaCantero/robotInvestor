@@ -5,7 +5,7 @@ fecha: 2026-11-09
 tipo: estado
 etiquetas: [estado, marco-c, constitucion, enmienda-2]
 fuente: sistema_global/README.md; sistema_global/seguimiento/Briefing_de_arranque.md; commit fb8f048
-vigencia: vigente
+vigencia: sustituida por compartida/2026-11-09_estado-tras-v05
 ---
 
 - **Constitución global V0.4** (enmienda 1 ratificada el 7-11-2026). La **enmienda 2** se va preparando en la deuda técnica como T-58, con 25 puntos; se redactará al completar la arquitectura o cuando el operador la pida.
