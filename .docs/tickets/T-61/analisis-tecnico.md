@@ -20,7 +20,7 @@ Desde la raíz, con el entorno del proyecto activo:
 
 ```sh
 python -m pytest -q bloque_b/11_Ejecutor/tests
-./tools/check_all.sh
+.docs/scripts/gate.sh --completo
 (cd bloque_b/11_Ejecutor && PYTHONPATH=. python ejemplos/comparar_critico.py)
 ```
 

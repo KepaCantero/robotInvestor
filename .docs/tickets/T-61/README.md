@@ -1,4 +1,11 @@
-# Plan · Incorporación de mejoras verificables del Bloque B
+# T-61 · Objeciones y evaluación histórica del Bloque B
+
+| Campo | Valor |
+| --- | --- |
+| Estado | EN QA |
+| Pieza | bloque_b |
+| Planifica e implementa | Astra |
+| Revisión independiente pendiente | Claude |
 
 - Pieza e ID: ejecutor B, 2026-11-09_bloque-b_objeciones-y-evaluacion.
 - Planifica e implementa Astra. Claude realizará la revisión independiente.
@@ -23,4 +30,9 @@ El protocolo maestro de B, §§7, 9 y 12, regula las objeciones y la certificaci
 
 Primero reproducir los fallos sobre el código original con las nuevas pruebas. Después ejecutar las suites y los controles del repositorio. Documentar los resultados y el traspaso a Claude. Riesgos principales: confundir simulación con eficacia del modelo y tratar una muestra reducida como prueba de independencia. Los informes deben declarar ambos límites.
 
-Documentos afectados: README del ejecutor, documentos de esta tarea y entrada de traspaso en memoria compartida.
+Documentos afectados: README del ejecutor, documentos de esta tarea y traspaso a Claude en [handoff.md](handoff.md).
+
+## Registro
+
+- 2026-11-09 · Implementación y pruebas en 4bbc952.
+- 2026-11-09 · EN QA · Astra adapta la documentación al espacio de trabajo de a6ceb76. Véase [traspaso](handoff.md).

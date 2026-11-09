@@ -19,8 +19,12 @@ de los bloques), un Documento 0 por pieza y la deuda técnica y el briefing de a
 **Trabajo entre agentes (desde el 9-11-2026).** El repo lo trabajan Claude y Astra (OpenAI), con las
 mismas reglas (Astra entra por `AGENTS.md`). Flujo planificar → implementar → probar → QA con una skill por
 fase en `.agents/skills/` (`.claude/skills` es un enlace a esa carpeta); la QA la hace el agente que no
-implementó (`docs/flujo_de_trabajo.md`). Memoria compartida e indexada en `memoria/`: al empezar se leen
-`memoria/LEEME.md` y los índices; Claude escribe solo en `memoria/claude/` y en `memoria/compartida/`.
+implementó (`.docs/knowledge/02_flujo-de-trabajo.md`). Espacio de trabajo en `.docs/` (índice y reglas en
+`.docs/README.md`): tickets `.docs/tickets/T-NN/` con el ID de la deuda técnica, diario mensual, scripts,
+conocimiento y memoria indexada. Al empezar se leen `.docs/README.md`, `.docs/memoria/LEEME.md` y los índices;
+Claude escribe solo en `.docs/memoria/claude/` y en `.docs/memoria/compartida/`. **Lo repetible se automatiza:**
+antes de hacer algo a mano se mira `.docs/scripts/`, y lo que se vaya a repetir se guarda ahí como script
+(secretos solo en `.env`, vía `.docs/scripts/common.sh`) para no gastar otra vez los mismos tokens.
 
 Cada bloque mantiene internamente la estructura numerada de la entrega
 (`01_Gobernanza` … `11_Ejecutor` [+ `12_Runbook` en B], `99_Historico…`).

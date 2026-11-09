@@ -19,7 +19,7 @@ Activar el entorno del proyecto en una copia de trabajo. Para reproducir la comp
 ```sh
 python -B -m pytest -p no:cacheprovider -q bloque_b/11_Ejecutor/tests -k 'objecion_fuerte or objecion_individual or seleccionador_no_puede or solo_matiz or trunca or certificado_cuenta or backtest_solo_seleccion' --tb=short
 python -B -m pytest -p no:cacheprovider -q -rs bloque_b/11_Ejecutor/tests
-./tools/check_all.sh
+.docs/scripts/gate.sh --completo
 (cd bloque_b/11_Ejecutor && PYTHONPATH=. python -B ejemplos/comparar_critico.py)
 ```
 
@@ -33,3 +33,7 @@ Para comprobar el marco global se usó una copia temporal de sistema_global/marc
 - Cuotas medidas por el controlador del repositorio: Ruff 3488; mypy A 135, Forex 174, B 159.
 - En los ejemplos se usó solo el cliente simulado, sin credenciales ni consultas externas. No se incluyeron datos BCE.
 - Revisión independiente de Claude pendiente. No se ha emitido el veredicto de QA.
+
+## Revalidación tras incorporar a6ceb76
+
+En una extracción del índice de la rama de revisión se ejecutó el control completo mediante `.docs/scripts/gate.sh` con la opción `--completo`. Pasaron los doce controles, sin fallos ni omisiones. A pasó 58 pruebas, Forex 68 y B 133. En otra copia temporal del mismo marco, `.docs/scripts/pruebas_marco.sh` informó de 50 suites correctas y cero fallos. Se comprobaron también los enlaces del ticket, el diario y el cuaderno. La comparación con 4bbc952 confirmó que el código, las pruebas y los ejemplos de B son idénticos. Estos resultados corresponden a Astra; el veredicto independiente sigue pendiente.

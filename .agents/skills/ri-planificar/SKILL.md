@@ -1,11 +1,11 @@
 ---
 name: ri-planificar
-description: Fase 1 de 4 del flujo de trabajo del Robot Investor (planificar → implementar → probar → QA). Úsala antes de construir o cambiar cualquier bloque, contrato, esquema, versión del marco común de C o documento de arquitectura, o cuando pidan «planifica», «diseña», «cómo lo haríamos». Deja un plan con criterios de aceptación y plan de pruebas en docs/tareas/.
+description: Fase 1 de 4 del flujo de trabajo del Robot Investor (planificar → implementar → probar → QA). Úsala antes de construir o cambiar cualquier bloque, contrato, esquema, versión del marco común de C o documento de arquitectura, o cuando pidan «planifica», «diseña», «cómo lo haríamos». Abre el ticket .docs/tickets/T-NN/ con el plan, los criterios de aceptación y el plan de pruebas.
 ---
 
 # Planificar una tarea del Robot Investor
 
-Fase 1 de 4. Después viene `ri-implementar`. Visión de conjunto: `docs/flujo_de_trabajo.md`.
+Fase 1 de 4. Después viene `ri-implementar`. Visión de conjunto: `.docs/knowledge/02_flujo-de-trabajo.md`.
 
 Esta skill la usan dos agentes (Claude y Astra) sobre el mismo repositorio. Escribe todo en español y deja cada resultado en un archivo del repo, nunca solo en la conversación: el otro agente tiene que poder continuar sin preguntarte.
 
@@ -13,7 +13,7 @@ Esta skill la usan dos agentes (Claude y Astra) sobre el mismo repositorio. Escr
 
 No leas el repositorio entero (regla 1 de `CLAUDE.md`, válida para cualquier agente).
 
-1. Memoria: `memoria/LEEME.md`, el `INDICE.md` de `memoria/compartida/` y el de tu propia carpeta. Abre solo las entradas que toquen la tarea.
+1. El índice de trabajo: `.docs/README.md`. Memoria: `.docs/memoria/LEEME.md`, el `INDICE.md` de `.docs/memoria/compartida/` y el de tu propia carpeta. Abre solo las entradas que toquen la tarea.
 2. Constitución global (`sistema_global/constitucion/Constitucion_Global.md`): solo las secciones afectadas.
 3. El Documento 0 de la pieza (`sistema_global/documentos_0/` o el del bloque).
 4. La deuda técnica (`sistema_global/seguimiento/Deuda_tecnica_y_pendientes_del_operador.md`): busca el ID de la tarea (T-xx) y lo que dependa del operador.
@@ -39,7 +39,7 @@ No leas el repositorio entero (regla 1 de `CLAUDE.md`, válida para cualquier ag
 
 ## 4. Escribe el plan
 
-Crea `docs/tareas/<AAAA-MM-DD>_<pieza>_<tema>/01_plan.md` con la plantilla `plantilla_plan.md` de esta carpeta. Si es una versión nueva del marco, el Documento 0 de esa versión se escribe antes que el código y el plan lo enlaza.
+La tarea necesita su fila `T-NN` en la deuda técnica (si no la tiene, añádela). Abre el ticket con `.docs/scripts/nuevo_ticket.sh T-NN "Título" <pieza>`, que copia la plantilla de `.docs/tickets/_plantilla/`, y escribe el plan en su `README.md`. Si es una versión nueva del marco, el Documento 0 de esa versión se escribe antes que el código y el plan lo enlaza.
 
 Un buen plan permite a otro agente implementar sin preguntar: dice qué cambia, qué no, cómo se sabrá que está bien y qué podría salir mal.
 
@@ -50,4 +50,10 @@ Un buen plan permite a otro agente implementar sin preguntar: dice qué cambia, 
 - [ ] Decisiones del operador marcadas `[PROPUESTO]` y apuntadas en la deuda técnica.
 - [ ] Aprobación del operador anotada en el plan si el tipo de tarea la exige.
 - [ ] Asignados quién implementa y quién hace QA, que deben ser agentes distintos.
-- [ ] Si otro agente implementará: entrada de traspaso en `memoria/compartida/` (tipo `traspaso`).
+- [ ] Si otro agente implementará: `handoff.md` dentro del ticket (plantilla en `.docs/tickets/_plantilla/`).
+- [ ] Estado del ticket en `PLANIFICADO`, con su línea en el registro.
+
+## Scripts: lo repetible, automatizado
+
+Antes de hacer algo a mano, mira `.docs/scripts/` (tabla en `.docs/README.md`). Si vas a hacer algo que se repetirá, escríbelo como script, guárdalo ahí y apúntalo en esa tabla: la próxima vez se ejecuta y no se gastan otra vez los mismos tokens. Cómo: `.docs/knowledge/03_scripts-y-ahorro-de-tokens.md`. Los secretos, solo desde `.env` a través de `.docs/scripts/common.sh`.
+
