@@ -313,7 +313,7 @@ Al final, la fecha avanza hasta el último dato disponible:
 | Archivo | Columnas / contenido |
 |---|---|
 | `rankings.csv` | `fecha_asof, pet_id, cand_id, tipo_activo, simbolo, nombre, S, en_top_n, rango, veredicto` (candidato); `veredicto_ambito, A, E, C` (solo modo completo); `fecha_fin_horizonte, evaluable, rent_fwd` (rentabilidad del instrumento hasta el fin del horizonte); `rent_fwd_universo` (media equiponderada del universo cribado: referencia del ranking, 9.11); `rent_fwd_referencia_ambito` (referencia del ámbito) |
-| `series_ranking.csv` | Por fecha y tipo: `n_universo, n_top, rent_top, rent_universo, exceso_vs_universo, rent_referencia_ambito, exceso_vs_referencia_ambito, ic_rango` (Spearman entre S y la rentabilidad posterior relativa al universo) |
+| `series_ranking.csv` | Por fecha y tipo: `fecha_fin_horizonte, n_universo, n_top, rent_top, rent_universo, exceso_vs_universo, rent_referencia_ambito, exceso_vs_referencia_ambito, ic_rango` (Spearman entre S y la rentabilidad posterior relativa al universo) |
 | `pronosticos.csv` | PRG-B de ámbito y de ranking: `prg_id, pet_id, tipo, fecha_emision, fecha_resolucion, tipo_activo, banda, probabilidad_interna, estado, acierto, relativa, exceso, ic_rango, brier` |
 | `consumo.csv` | Por ejecución: llamadas, tokens de entrada, salida, escritura y lectura de caché, búsquedas web y UC |
 | `metricas.json` | Por tipo: `n_rankings`, exceso medio del top-N frente al universo y frente a la referencia del ámbito con IC 90 % (bootstrap), tasa de acierto, IC de rango medio con IC 90 %, `certificable` (n ≥ 30 y ambos IC por encima de 0). También la evaluación de pronósticos (celdas, Brier, BSS), los certificados, el consumo total y las advertencias |
@@ -321,7 +321,7 @@ Al final, la fecha avanza hasta el último dato disponible:
 
 ### 8.2 Recomendaciones para el backtest
 
-- **Solapamiento.** Use una frecuencia coherente con el horizonte: con H4 (252 sesiones) y frecuencia mensual los rankings se solapan, y los IC por bootstrap simple son optimistas (`metricas.json` lo avisa). Para inferencia, submuestree o use un bootstrap por bloques sobre `series_ranking.csv`.
+- **Solapamiento.** Use una frecuencia coherente con el horizonte: con H4 (252 sesiones) y frecuencia mensual los rankings se solapan, y los IC por bootstrap simple son optimistas (`metricas.json` lo avisa). La certificación submuestrea las ventanas con exceso e IC de rango válidos, por orden de fecha de cierre, y admite ventanas consecutivas que comparten el precio de cierre. `certificacion_ranking` muestra el número retenido, el mínimo configurado y los dos intervalos del 90 % sobre esa muestra. Las medias e intervalos descriptivos siguen usando todas las fechas. El submuestreo evita reutilizar periodos de rentabilidad; puede persistir dependencia entre periodos distintos.
 - **Fuga por conocimiento del modelo.** Con el cliente real, empiece después de `backtest.fecha_corte_modelo`. Si el periodo empieza antes, el resultado lleva una advertencia.
 - **Coste.** Grabe con `--cliente replay --replay-modo grabar` y repita con `reproducir`.
 - **Herramientas por separado.** Compare el modo completo con `--solo-seleccion` para separar lo que aportan los agentes (veredictos, refutación, rasgos) de lo que aporta la selección determinista.
@@ -384,3 +384,9 @@ Al final, la fecha avanza hasta el último dato disponible:
     backtest_simulado/ solo_seleccion/ (24 fechas) y completo/ (3 fechas)
     generar_ejemplos.sh  regenera las dos carpetas anteriores
 ```
+
+### Objeciones y ejemplos de contraste
+
+Una objeción fuerte sobre la tesis que sigue abierta bloquea la recomendación de invertir. Para un candidato, limita su prioridad. Cada respuesta se aplica a los identificadores del encargo de ese agente. El seleccionador recibe las fichas de los candidatos objetados. Un cierre requiere un valor booleano verdadero y una respuesta; los matices débiles se registran como aceptados.
+
+Si faltan precios de un símbolo, el backtest lo indica en las advertencias y evalúa los que tienen precios. Para ensayar la refutación, desde este directorio se puede ejecutar `PYTHONPATH=. python ejemplos/comparar_critico.py`. Los tres casos de lectura manual tienen su guía en [ejemplos/casos_critico/guia.md](ejemplos/casos_critico/guia.md).

@@ -275,3 +275,48 @@ def test_h5_hitos_y_probabilidades_cualitativas(hacer_entorno, rapido):
     hitos = [x for x in p["pronosticos_detalle"] if x["tipo"] == "HITO_H5"]
     assert len(hitos) >= 3 and all(x["probabilidad_publicada"] is None for x in p["pronosticos_detalle"])
     assert p["estrategia"]["profundidad"]["D9"] in ("P2", "P3")
+
+
+
+@pytest.mark.parametrize(("indicador", "estado"), [
+    (True, "resuelta"),
+    (False, "incertidumbre_abierta"),
+    ("false", "incertidumbre_abierta"),
+    ("true", "incertidumbre_abierta"),
+    (1, "incertidumbre_abierta"),
+])
+def test_resolucion_de_objecion_fuerte_exige_booleano(indicador, estado):
+    objecion = {"obj_id": "OBJ-1", "fuerza": "fuerte", "resuelta": False}
+    respuesta = {"respuesta": "Resultado del contraste", "resuelta": indicador}
+    Coordinador._aplicar_respuestas([objecion], {"OBJ-1": respuesta})
+    assert objecion["estado_contraste"] == estado
+    assert objecion["resuelta"] is (estado == "resuelta")
+
+
+@pytest.mark.parametrize(("indicador", "estado", "puerta", "veredicto"), [
+    (True, "resuelta", "OK", "INVERTIR_ESCALONADO"),
+    (False, "incertidumbre_abierta", "BLOQUEA", "VIGILAR"),
+    ("false", "incertidumbre_abierta", "BLOQUEA", "VIGILAR"),
+])
+def test_objecion_fuerte_sobre_la_tesis_en_la_entrega(
+    hacer_entorno, rapido, monkeypatch, indicador, estado, puerta, veredicto
+):
+    def refutar(mensaje, contexto, azar):
+        informe = mr._refutacion(mensaje, contexto, azar)
+        objecion = next(o for o in informe["objeciones"] if o["objeto"] == "TESIS" and o["fuerza"] == "moderada")
+        objecion["fuerza"] = "fuerte"
+        return informe
+
+    def responder(mensaje, contexto, azar):
+        return {"respuestas": {o["obj_id"]: {"respuesta": "Contraste simulado.", "resuelta": indicador}
+                               for o in mensaje["objeciones"]}}
+
+    monkeypatch.setitem(mr._TAREAS, ("AG-B14", "refutacion"), refutar)
+    monkeypatch.setitem(mr._TAREAS, ("AG-B02", "respuestas_objeciones"), responder)
+    res = Coordinador(hacer_entorno(rapido, as_of="2025-01-31")).recibir(peticion_redes())
+    assert res["estado_peticion"] == "ENTREGADA"
+    paquete = _paquete(res)
+    objecion = next(o for o in paquete["refutacion"]["objeciones"] if o["objeto"] == "TESIS" and o["fuerza"] == "fuerte")
+    assert objecion["estado_contraste"] == estado
+    assert paquete["puertas_ambito"]["PA5"] == puerta
+    assert paquete["veredicto"]["valor"] == veredicto
