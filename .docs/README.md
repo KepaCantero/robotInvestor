@@ -24,6 +24,7 @@ Todo lo que Claude, Astra y las personas del equipo necesitan para trabajar en e
 
 | Script | Qué hace |
 | --- | --- |
+| `.docs/scripts/fechas_evidencia_b.sh` | Diagnóstico temporal T-64 del cierre de objeciones. Devuelve 1 si hay discrepancias con los casos esperados. |
 | `.docs/scripts/common.sh` | Base de todos: modo estricto, raíz del repo, carga de `.env`, `requiere_var`, `requiere_cmd`, Python del proyecto |
 | `.docs/scripts/gate.sh` | Gate rápido (`--core`) o completo (`--completo`), con el log en `.docs/scripts/.logs/` |
 | `.docs/scripts/pruebas_marco.sh` | Todas las suites del marco común de C, leídas del LEEME; avisa de las que falten en él |
