@@ -47,6 +47,8 @@ class RespuestaLLM:
 
 class LLMClient:
     nombre = "base"
+    # PA-09 (T-66): ¿el modelo pudo aprender el periodo de un backtest? Por defecto sí (prudente); el simulado, no
+    conocimiento_previo = True
 
     def generar(self, *, agente: str, modelo: str, system: List[Dict], mensajes: List[Dict], max_tokens: int,
                 herramientas: Optional[List[Dict]] = None, esquema: Optional[Dict] = None) -> RespuestaLLM:
@@ -120,6 +122,7 @@ class MockClient(LLMClient):
     prompts se simula: la primera llamada de cada (agente, modelo, system) escribe caché y las demás la leen."""
 
     nombre = "mock"
+    conocimiento_previo = False   # el simulado no sabe nada del periodo: no hay fuga por memoria (PA-09)
 
     def __init__(self, semilla: int = 20261102, fallos: Optional[Dict[str, int]] = None) -> None:
         self.semilla = int(semilla)

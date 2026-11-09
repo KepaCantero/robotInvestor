@@ -32,6 +32,7 @@ from .configuracion import (
     HORIZONTES,
     NOMBRE_CLASE,
     aplicabilidad,
+    perfiles_activos,
 )
 from .consumo import Contabilidad, Presupuesto
 from .contratos import (
@@ -76,7 +77,9 @@ INSTR = {
         "invertibilidad), «segunda_pasada» de las dimensiones decisivas si un total "
         "queda a ≤ 5 puntos de un umbral, horizontes aplicables según la tabla de tu clase, afirmaciones con su fuente "
         "(HT-01:<símbolo>, CALC-… o REF-… de las referencias disponibles), invalidación cualitativa y cuantitativa "
-        "(símbolo, umbral de precio, dirección), pre-mortem y lo que no sabes. Si necesitas conocimiento, usa "
+        "(símbolo, umbral de precio, dirección), pre-mortem y lo que no sabes. Opcional: «probabilidades_propias» "
+        "{{H1..H4: tu probabilidad 0,05–0,95 de que se cumpla la vista}} (se mide tu calibración; no decide nada). "
+        "Si necesitas conocimiento, usa "
         "«peticiones_conocimiento» [{{tipo: CT-07|CT-08, pregunta, para: símbolo del indicador}}] (máximo {max_pet})."),
     "REVISION_VIGENTES": (
         "Nivel N1 · arrastre verificado (GC0 sin cambio material). Solo revisa las opciones vigentes (condiciones de "
@@ -84,7 +87,13 @@ INSTR = {
         "No investigues candidatas nuevas."),
     "RESPUESTA_OBJECIONES": (
         "Responde a cada objeción fuerte o moderada del Analista de hipótesis contrarias con evidencia o declárala sin "
-        "resolver («resuelta»: false). Una objeción fuerte sin resolver excluye la opción del top-3."),
+        "resolver («resuelta»: false). Para dar por resuelta una objeción fuerte, cita en «evidencia_citada» los "
+        "identificadores de la evidencia disponible que la resuelven: el Analista de hipótesis contrarias lo comprobará en "
+        "una contrarréplica. Una objeción fuerte sin resolver excluye la opción del top-3."),
+    "CONTRARREPLICA": (
+        "Contrarréplica (§5 de tu prompt): para cada objeción fuerte, decide si la respuesta del Analista y la evidencia "
+        "citada la resuelven de verdad, a la vista de «qué la resolvería». Responde «resuelta» (true/false) y un motivo "
+        "breve. Ante la duda, no está resuelta."),
 }
 
 
@@ -140,7 +149,9 @@ class Bloque:
         self.mensajeria = Mensajeria(self.almacen)
         self.referencias = Referencias(cfg)
         self.redaccion = Redaccion(cfg)
-        anon = (cfg.get("backtest") or {}).get("anonimizar", False) if anonimizar is None else anonimizar
+        anon = (cfg.get("backtest") or {}).get("anonimizar", "auto") if anonimizar is None else anonimizar
+        if anon == "auto":   # PA-09 (T-66): se anonimiza un backtest con un modelo real; el simulado no sabe nada
+            anon = self.modo == "backtest" and bool(getattr(cliente, "conocimiento_previo", True))
         self.anon = Anonimizador(self.universo) if anon else None
         self.params_ht03 = ht03.fusionar_parametros(cfg.get("_parametros_ht03"))
         self._incidencias_universo_registradas = False
@@ -165,7 +176,7 @@ class Bloque:
             return
         a = self.cfg
         params = [("P-01", "Periodicidad del ciclo C1", "SEMANAL · SAB 06:00 · entrega LUN 07:00", "SERVICIO"),
-                  ("P-02", "Clases de activo activas", list(CLASES), "SERVICIO"),
+                  ("P-02", "Clases de activo activas", perfiles_activos(a), "SERVICIO"),
                   ("P-03", "Horizontes de interés", list(HORIZONTES), "SERVICIO"),
                   ("P-09", "Umbrales de elegibilidad", self.params_ht03["umbrales"], "CALIBRABLE"),
                   ("P-11", "Pesos de RK", self.params_ht03["pesos_rk"], "CALIBRABLE"),
@@ -411,8 +422,14 @@ class Bloque:
         f10 = self.f10(as_of)
         # La aplicabilidad de horizontes vigente es la de F10 (P-31) si el Evaluador la degradó (12.2); si no, la tabla 8.3
         self.cfg["_tabla_horizontes"] = self.evaluador._matriz_aplicabilidad(as_of)
-        activas = list(f10.get("P-02") or CLASES)
-        clases = [c for c in ((alcance or {}).get("clases") or activas) if c in activas]
+        activas = list(f10.get("P-02") or perfiles_activos(self.cfg))
+        pedidas = list((alcance or {}).get("clases") or activas)
+        clases = [c for c in pedidas if c in activas]
+        # PA-01 (T-66): un perfil no activo («no construido» en esta fase) no se analiza; si se pide, responde
+        # NO_ESTIMABLE y se declara (D-17)
+        no_activas = [c for c in pedidas if c in CLASES and c not in activas]
+        limitaciones += [f"{NOMBRE_CLASE[c]}: perfil no activo en esta fase (NO_ESTIMABLE); se activa en `perfiles.activos` o con "
+                         "un cambio CT-04 de clases activas" for c in no_activas]
         # V5.1 (7.9): las consultas CT-23 vencidas siguen con su supuesto declarado; una BLOQUEANTE sin respuesta pausa
         # en este punto de control (F0) los tipos de activo afectados, y el resto del análisis sigue
         self.consultas.vencer(as_of)
@@ -422,6 +439,8 @@ class Bloque:
             limitaciones += [f"{NOMBRE_CLASE[c]}: pausado en F0 a la espera de la respuesta del Broker a {k} (consulta BLOQUEANTE, R26)"
                              for c, k in sorted(pausadas.items())]
         hz_interes = horizontes or list(f10.get("P-03") or HORIZONTES)
+        if not clases:   # nada que analizar (no activas o pausadas): se cierra sin redactar (T-53, QA H-06)
+            return self._run_sin_analisis(run_id, as_of, tipo, limitaciones, res_eval, disparador, alcance, hz_interes, prioridad)
         vigentes = {c: self.vigentes(as_of, c) for c in clases}
         gc0 = {c: self.gc0(c, as_of, vigentes[c]) for c in clases}
         if tipo == "PERIODICO" and not nivel_forzado:
@@ -764,11 +783,34 @@ class Bloque:
         for f in finales:
             f["_prospectiva"] = res.get(f["proxy"])
 
+    @staticmethod
+    def _evidencia_verificable(f: dict) -> list[str]:
+        """Identificadores de evidencia registrada de una finalista: fuentes de sus piezas y cálculos CALC- del Motor."""
+        ids = [str(p.get("fuente")) for p in f.get("_piezas", []) if p.get("fuente")]
+        ids += [str(c) for c in (f.get("senales") or {}).get("calc_ids", []) if c]
+        return list(dict.fromkeys(ids))
+
+    def _veredicto_refutacion(self, f: dict) -> str:
+        """PA-05 (T-66): el veredicto lo calcula una regla a partir de las objeciones (como en CT-G-03), no el modelo.
+        «refutada»: alguna fuerte sin resolver; «frágil»: alguna fuerte resuelta en contrarréplica o al menos
+        `contrarias.moderadas_para_fragil` moderadas; «robusta» en otro caso."""
+        objs = f.get("_objeciones", [])
+        if any(o["fuerza"] == "fuerte" and not o["resuelta"] for o in objs):
+            return "tesis refutada"
+        umbral = int((self.cfg.get("contrarias") or {})["moderadas_para_fragil"])
+        if any(o["fuerza"] == "fuerte" for o in objs) or sum(1 for o in objs if o["fuerza"] == "moderada") >= umbral:
+            return "tesis frágil"
+        return "tesis robusta"
+
     def _refutacion(self, clase, finales, nivel, as_of, run_id, presupuesto) -> None:
-        peticiones = [{"ref": f["proxy"], "opp_id": f.get("opp_id"), "tesis": f["tesis"], "mecanismo": f.get("mecanismo"),
-                       "evidencias_clave": [p["afirmacion"] for p in f["_piezas"]][:6], "calculos": f["senales"].get("calc_ids", []),
-                       "prospectiva": (f.get("_prospectiva") or {}).get("pronosticos", []), "premortem": f.get("premortem"),
-                       "dimensiones": f["dimensiones"]} for f in finales]
+        # PA-05 (T-66; §3.2 de la Constitución): el Contradictor ve la evidencia y la afirmación verificable, no el
+        # razonamiento del Analista (tesis, mecanismo, pre-mortem ni dimensiones)
+        peticiones = [{"ref": f["proxy"], "opp_id": f.get("opp_id"),
+                       "afirmaciones_verificables": [{"horizonte": p.get("horizonte"), "vista": p.get("vista"), "afirmacion": p.get("afirmacion")}
+                                                     for p in (f.get("_prospectiva") or {}).get("pronosticos", [])],
+                       "evidencias": [{"fuente": p.get("fuente"), "afirmacion": p["afirmacion"], "direccion": p.get("direccion")}
+                                      for p in f["_piezas"]][:6],
+                       "calculos": f["senales"].get("calc_ids", [])} for f in finales]
         msg = {"peticiones": peticiones, "nivel": nivel}
         self.mensajeria.crear("CT-13", "AG-02", "AG-11", msg, run_id=run_id, presupuesto={"uc": presupuesto.asignado.get(clase)})
         r = self._invocar("AG-11", "CT-13", msg, "REFUTACION",
@@ -790,7 +832,8 @@ class Bloque:
                                          "que_la_resolveria": o.get("que_la_resolveria"), "respuesta": None, "resuelta": False})
                 if o["fuerza"] in ("fuerte", "moderada"):
                     pendientes.append({"ref": f["proxy"], "objecion_id": o["id"], "fuerza": o["fuerza"], "argumento": o["argumento"],
-                                       "que_la_resolveria": o.get("que_la_resolveria"), "dimensiones_E": f["dimensiones"].get("E")})
+                                       "que_la_resolveria": o.get("que_la_resolveria"), "dimensiones_E": f["dimensiones"].get("E"),
+                                       "evidencia_disponible": self._evidencia_verificable(f)})
         if pendientes:
             agente = AGENTE_CLASE[clase]
             msg2 = {"clase": clase, "fase": "RESPUESTA_OBJECIONES", "nivel": nivel, "opciones_vigentes": [], "lecciones": [],
@@ -799,12 +842,41 @@ class Bloque:
             r2 = self._invocar(agente, "CT-06", msg2, "RESPUESTA_OBJECIONES", INSTR["RESPUESTA_OBJECIONES"], as_of, run_id, clase,
                                "respuesta_objeciones", presupuesto)
             resp = {x["objecion_id"]: x for x in (r2.datos or {}).get("respuestas", [])} if r2 and r2.datos else {}
+            replicas = []
             for f in finales:
+                verificables = set(self._evidencia_verificable(f))
                 for o in f.get("_objeciones", []):
                     x = resp.get(o["objecion_id"])
                     if x and (x.get("respuesta") or "").strip():
                         o["respuesta"] = x["respuesta"]
-                        o["resuelta"] = bool(x.get("resuelta")) if o["fuerza"] == "fuerte" else True
+                        if o["fuerza"] != "fuerte":
+                            o["resuelta"] = True
+                            continue
+                        # PA-05: el Analista acusado no da por resuelta una objeción fuerte. Hace falta evidencia
+                        # verificable citada y la confirmación del Contradictor en una contrarréplica
+                        citada = [str(e) for e in (x.get("evidencia_citada") or [])
+                                  if str(e) in verificables or self.referencias.por_id(str(e))]
+                        o["evidencia_citada"] = citada
+                        if x.get("resuelta") and citada:
+                            replicas.append({"ref": f["proxy"], "objecion_id": o["objecion_id"], "argumento": o["resumen"],
+                                             "que_la_resolveria": o.get("que_la_resolveria"), "respuesta": x["respuesta"],
+                                             "evidencia_citada": [{"id": e, "afirmacion": next((p["afirmacion"] for p in f["_piezas"]
+                                                                                                 if str(p.get("fuente")) == e), None)}
+                                                                  for e in citada]})
+            if replicas:
+                msg3 = {"peticiones": [], "contrarreplicas": replicas, "nivel": nivel}   # CT-13, fase de contrarréplica
+                self.mensajeria.crear("CT-13", "AG-02", "AG-11", msg3, run_id=run_id, presupuesto={"uc": presupuesto.asignado.get(clase)})
+                r3 = self._invocar("AG-11", "CT-13", msg3, "CONTRARREPLICA", INSTR["CONTRARREPLICA"], as_of, run_id, clase,
+                                   "refutacion", presupuesto)
+                conf = {x["objecion_id"]: x for x in (r3.datos or {}).get("resultados", [])} if r3 and r3.datos else {}
+                for f in finales:
+                    for o in f.get("_objeciones", []):
+                        if o["fuerza"] == "fuerte" and o["objecion_id"] in conf:
+                            o["resuelta"] = conf[o["objecion_id"]].get("resuelta") is True
+                            o["contrarreplica"] = str(conf[o["objecion_id"]].get("motivo") or "")[:300]
+        for f in finales:
+            f["_veredicto"] = self._veredicto_refutacion(f)
+            f["_veredicto_contradictor"] = (f.get("_refutacion") or {}).get("veredicto_global")
 
     # ====================================================================================
     # Evidencia (F2), clústeres y selección
@@ -1029,8 +1101,31 @@ class Bloque:
                       "cambios": len({t["opp_id"] for t in sel_s["top3"]} ^ {t["opp_id"] for t in sel["top3"]})}
         for f, e in zip(candidatos, evaluadas):
             f["_ht03"] = e
+        ablacion = self._ablacion(an, candidatos, entradas_ht03, sel, max(n_cand, len(evaluadas)))
         return {"candidatos": candidatos, "evaluadas": evaluadas, "seleccion": sel, "cerradas": cerradas, "sombra": sombra,
-                "entradas_ht03": entradas_ht03, "n_cand": max(n_cand, len(evaluadas))}
+                "entradas_ht03": entradas_ht03, "n_cand": max(n_cand, len(evaluadas)), "ablacion": ablacion}
+
+    def _ablacion(self, an: dict, candidatos: list[dict], entradas: list[dict], sel: dict, n_cand: int) -> dict:
+        """PA-14 (T-66; D-25 y §9.11): qué decisiones cambia cada pieza, sin coste en tokens. Se recalcula el top-3 sin
+        las objeciones del Contradictor y se compara con una referencia simple (las de mayor señal compuesta del Motor)."""
+        real = [t["opp_id"] for t in sel["top3"]]
+        sin_obj = []
+        for e in entradas:
+            x = copy.deepcopy(e)
+            x["puertas"]["G2"] = bool(x["puertas"].get("PS5"))
+            x["objeciones_fuertes_abiertas"] = 0
+            sin_obj.append(x)
+        ev = [ht03.evaluar_opcion(x, self.params_ht03) for x in sin_obj]
+        top_sin = [t["opp_id"] for t in ht03.seleccionar_top3(ev, self.params_ht03, n_cand)["top3"]] if ev else []
+        senales = an.get("senales") or {}
+        simple = sorted((s for s in senales if (senales[s] or {}).get("senal_compuesta") is not None),
+                        key=lambda s: (-float(senales[s]["senal_compuesta"]), s))[:len(real) or 3]
+        proxies = [next((f["proxy"] for f in candidatos if f["opp_id"] == o), None) for o in real]
+        return {"top3": real,
+                "sin_objeciones": {"top3": top_sin, "entrarian": sorted(set(top_sin) - set(real)),
+                                   "saldrian": sorted(set(real) - set(top_sin)), "cambia_decision": set(top_sin) != set(real)},
+                "referencia_simple": {"criterio": "señal compuesta", "simbolos": simple,
+                                      "coinciden": sum(1 for p in proxies if p in simple)}}
 
     def _deduplicar_entre_tipos(self, seleccion: dict[str, dict], max_pasadas: int = 4) -> list[dict]:
         """Regla 5 de 2.6 (y C16 de HT-09): si dos top-3 de tipos distintos comparten nombre o ámbito normalizados, se
@@ -1099,7 +1194,7 @@ class Bloque:
             p = abiertos.get(d.get("prg_id"))
             if p is None:
                 continue
-            prob = p["prob_interna"] if p.get("prob_interna") is not None else PROB_DE_BANDA.get(p.get("banda_verbal"))
+            prob = p["prob_interna"] if p.get("prob_interna") is not None else PROB_DE_BANDA.get(str(p.get("banda_verbal")))
             if prob is None:     # sin probabilidad ni banda reconocible no se inventa un 0,5: el horizonte no se arrastra
                 continue
             base = {"vista": d["vista"], "prob_interna": prob, "afirmacion": p["afirmacion"],
@@ -1243,7 +1338,9 @@ class Bloque:
                      "dimensiones": f["dimensiones"], "segunda_pasada": f.get("segunda_pasada"), "saturacion_narrativa": f.get("saturacion_narrativa", False),
                      "puntuaciones_totales": f["_ht03"]["puntuaciones"], "puertas": f["_puertas"], "elegible": f["_ht03"]["elegible"],
                      "motivos_no_elegible": [m["detalle"] for m in f["_ht03"]["motivos_no_elegible"]],
-                     "objeciones_internas": f.get("_objeciones", []), "premortem": f.get("premortem"), "cluster_id": f.get("_cluster"),
+                     "objeciones_internas": f.get("_objeciones", []), "veredicto_refutacion": f.get("_veredicto"),
+                     "veredicto_contradictor": f.get("_veredicto_contradictor"),
+                     "premortem": f.get("premortem"), "cluster_id": f.get("_cluster"),
                      "ps1": f.get("_ps1"), "evidencias": f.get("_evidencias", []), "tipo_pronostico": f.get("_tipo_pronostico"),
                      "referencia_indice": f.get("_referencia"), "horizontes_prg": prg_por_opp.get(f["opp_id"], {}),
                      "naturaleza_inversion": f.get("_naturaleza"), "horizonte_principal": f.get("_hp"),
@@ -1288,6 +1385,28 @@ class Bloque:
                                    "justificacion": "nivel N2/N3 asignado"}]})
         return tid
 
+    def contaminacion_posible(self, as_of) -> bool:
+        """PA-09 (T-66): un pronóstico de backtest hecho con un modelo real con fecha de corte posterior a as_of puede
+        reflejar memoria del modelo. No cuenta para certificados ni aprendizaje. Sin fecha de corte: falla cerrado (sí)."""
+        if self.modo != "backtest" or not getattr(self.cliente, "conocimiento_previo", True):
+            return False
+        corte = (self.cfg.get("backtest") or {}).get("fecha_corte_modelo")
+        return corte is None or pd.Timestamp(as_of).normalize() <= pd.Timestamp(corte).normalize()
+
+    def _run_sin_analisis(self, run_id, as_of, tipo, limitaciones, res_eval, disparador, alcance, hz, prioridad) -> dict:
+        """Run sin ningún tipo que analizar: PARCIAL, sin paquete que redactar ni validar, con sus limitaciones (7.9)."""
+        lim = limitaciones or ["Ningún tipo de activo del alcance se puede analizar en este ciclo"]
+        paquete = {"run_id": run_id, "fecha_as_of": str(as_of.date()), "clases": {}, "limitaciones": lim}
+        resultado = {"run_id": run_id, "as_of": str(as_of.date()), "tipo": tipo, "nivel_por_clase": {}, "gc0": {},
+                     "g3": {"dictamen": "SIN_RESULTADO", "bloqueos": []}, "estado": "PARCIAL", "entrega": "SIN_RESULTADO",
+                     "paquete": paquete, "entregables": None, "evaluacion": res_eval}
+        self.almacen.escribir("F5", "AG-01", {
+            "tipo_entrada": "RUN", "id": run_id, "tipo": tipo, "disparador": disparador or {"origen": "HT-05"},
+            "fecha_inicio": resultado["as_of"], "fecha_entrega": self.reloj.ahora(), "fecha_objetivo": resultado["as_of"],
+            "alcance": alcance or {"clases": []}, "horizontes": hz, "prioridad": prioridad, "nivel_por_clase": {},
+            "top3_por_clase": {}, "estado": "PARCIAL", "entrega": "SIN_RESULTADO", "limitaciones": lim})
+        return resultado
+
     def _registrar_run(self, resultado, analisis, seleccion, presupuesto, gc0, disparador, alcance, hz, prioridad, prg, entreg) -> None:
         paquete = resultado["paquete"]
         run_id = resultado["run_id"]
@@ -1317,7 +1436,8 @@ class Bloque:
             "apuestas_independientes": paquete.get("apuestas_independientes"), "prg_congelados": prg, "entregables": entreg,
             "g3": resultado.get("g3_entregables") or resultado.get("g3"), "estado": resultado["estado"],
             "entrega": resultado.get("entrega", "ENTREGADA"), "limitaciones": paquete.get("limitaciones", []),
-            "sombra": {c: s["sombra"] for c, s in seleccion.items() if s.get("sombra")}})
+            "sombra": {c: s["sombra"] for c, s in seleccion.items() if s.get("sombra")},
+            "ablacion": {c: s.get("ablacion") for c, s in seleccion.items() if s.get("ablacion")}})
         sombras = {c: s["sombra"] for c, s in seleccion.items() if s.get("sombra")}
         if sombras:
             self.almacen.escribir("F6", "AG-20", {"tipo_entrada": "SOMBRA", "id": f"SOM-{run_id}", "run_id": run_id, "comparacion": sombras,
@@ -1457,8 +1577,9 @@ class Bloque:
     # ====================================================================================
     def decision(self, ct04: dict, as_of=None) -> dict:
         as_of = self.fijar_fecha(as_of or pd.Timestamp.today())
-        if not any(k in ct04 for k in ("decisiones", "valoracion_informe", "configuracion", "resultado_comunicado")):
-            raise ValueError("CT-04 vacío: se espera decisiones, valoracion_informe, configuracion o resultado_comunicado")
+        if not any(k in ct04 for k in ("decisiones", "valoracion_informe", "configuracion", "resultado_comunicado", "aprobar_certificados")):
+            raise ValueError("CT-04 vacío: se espera decisiones, valoracion_informe, configuracion, resultado_comunicado o "
+                             "aprobar_certificados")
         msg = self.mensajeria.crear("CT-04", "BROKER", "AG-01", ct04)
         ret_id = self.almacen.nuevo_id("RET")
         opps = self.almacen.estado("F3", as_of)
@@ -1499,16 +1620,25 @@ class Bloque:
                                                    "valor_vigente": valor, "autor": "AG-01", "origen": ret_id,
                                                    "fecha_efecto": str((as_of + pd.Timedelta(days=1)).date())})
             aplicado[pid] = cfg_id
+        # PA-10 (T-66): un certificado relaja un control (habilita probabilidades numéricas), así que solo entra en vigor
+        # por la ruta única de cambios: lo aprueba el operador a través del Broker
+        certificados = []
+        for cid in ct04.get("aprobar_certificados") or []:
+            try:
+                self.evaluador.aprobar_certificados([str(cid)], as_of, autor="BROKER")
+                certificados.append(str(cid))
+            except ValueError as e:
+                rechazos.append({"parametro": f"certificado:{cid}", "motivo": str(e)})
         aviso = self.mensajeria.crear("CT-22", "AG-01", "AG-20", {"tipo": "DECISIONES_BROKER", "ret_id": ret_id,
                                                                   "decisiones": ct04.get("decisiones") or [],
                                                                   "resultado_comunicado": ct04.get("resultado_comunicado")}, query_id=ret_id)
-        estado = "APLICADA" if not rechazos else ("APLICADA_PARCIALMENTE" if aplicado or ct04.get("decisiones") else "REGISTRADA")
+        estado = "APLICADA" if not rechazos else ("APLICADA_PARCIALMENTE" if aplicado or certificados or ct04.get("decisiones") else "REGISTRADA")
         self.almacen.escribir("F5", "AG-01", {"tipo_entrada": "RET", "id": ret_id, "msg_id": msg["msg_id"], "fecha": str(as_of.date()),
                                               "decisiones": ct04.get("decisiones"), "valoracion_informe": ct04.get("valoracion_informe"),
                                               "configuracion": conf or None, "resultado_comunicado": ct04.get("resultado_comunicado"),
                                               "aplicado_en_f10": {"parametros": aplicado, "rechazos": rechazos}, "aviso_ct22": aviso["msg_id"],
-                                              "estado": estado})
-        return {"ret_id": ret_id, "estado": estado, "aplicado": aplicado, "rechazos": rechazos}
+                                              "certificados_aprobados": certificados, "estado": estado})
+        return {"ret_id": ret_id, "estado": estado, "aplicado": aplicado, "rechazos": rechazos, "certificados_aprobados": certificados}
 
     # ====================================================================================
     def estado(self) -> dict:

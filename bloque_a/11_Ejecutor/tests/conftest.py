@@ -17,7 +17,9 @@ AS_OF = "2026-06-05"
 
 
 def config_pruebas(**extra):
-    base = {"modo": "backtest", "evaluacion": {"bootstrap_replicas": 300, "simulaciones_ece": 300}}
+    # Las pruebas ejercitan los 12 perfiles; el valor por defecto (solo DIV, PA-01) tiene sus pruebas propias
+    base = {"modo": "backtest", "evaluacion": {"bootstrap_replicas": 300, "simulaciones_ece": 300},
+            "perfiles": {"activos": ["RV", "RF", "DIV", "MP", "IDX", "FON", "DER", "INM", "CRI", "ALT", "MON", "TCV"]}}
     from bloque_a.configuracion import fusionar
     return cargar_config(extra=fusionar(base, extra))
 
