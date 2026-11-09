@@ -37,3 +37,7 @@ Para comprobar el marco global se usó una copia temporal de sistema_global/marc
 ## Revalidación tras incorporar a6ceb76
 
 En una extracción del índice de la rama de revisión se ejecutó el control completo mediante `.docs/scripts/gate.sh` con la opción `--completo`. Pasaron los doce controles, sin fallos ni omisiones. A pasó 58 pruebas, Forex 68 y B 133. En otra copia temporal del mismo marco, `.docs/scripts/pruebas_marco.sh` informó de 50 suites correctas y cero fallos. Se comprobaron también los enlaces del ticket, el diario y el cuaderno. La comparación con 4bbc952 confirmó que el código, las pruebas y los ejemplos de B son idénticos. Estos resultados corresponden a Astra; el veredicto independiente sigue pendiente.
+
+## Ampliación · archivo de precios vacío
+
+Se reprodujo el fallo EmptyDataError con RV-ABBN a cero bytes. Tras la corrección pasaron las tres variantes (ausente, solo cabecera y cero bytes). En la tercera se comprueba también que RV-ENR conserva su rentabilidad. Suite de B: 134 pruebas pasadas.

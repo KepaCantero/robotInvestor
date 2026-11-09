@@ -143,13 +143,15 @@ def test_generar_sinteticos(tmp_path, hacer_cfg):
     assert len(a) == len(b) and abs(float(a.iloc[-1]) - float(b.iloc[-1])) < 1e-6
 
 
-@pytest.mark.parametrize("archivo_vacio", [False, True], ids=["archivo-ausente", "sin-observaciones"])
+@pytest.mark.parametrize("archivo_vacio", [False, True, "cero_bytes"], ids=["archivo-ausente", "sin-observaciones", "cero_bytes"])
 def test_una_serie_sin_precios_no_trunca_los_otros_rankings(hacer_entorno, hacer_cfg, tmp_path, archivo_vacio):
     datos = tmp_path / "datos"
     proveedor_sintetico(hacer_cfg()).escribir_csv(datos)
     simbolo = "RV-ABBN"
     archivo = datos / f"{simbolo}.csv"
-    if archivo_vacio:
+    if archivo_vacio == "cero_bytes":
+        archivo.write_bytes(b"")
+    elif archivo_vacio:
         archivo.write_text("fecha,cierre\n", encoding="utf-8")
     else:
         archivo.unlink()
