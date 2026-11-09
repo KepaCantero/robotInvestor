@@ -22,7 +22,7 @@ import time
 from typing import Any, Dict, List, Optional, Tuple
 
 from . import sintesis
-from .configuracion import DIAS_HORIZONTE, FRESCURA_MERCADO_DIAS, HORIZONTES, NOMBRE_TIPO, TIPOS_ACTIVO, TIPOS_OBJETO
+from .configuracion import FRESCURA_MERCADO_DIAS, HORIZONTES, TIPOS_ACTIVO, TIPOS_OBJETO
 from .contratos import RE_CARTERA, MensajeRechazado, comprobar_sensibles, controlado, multiplo10, sanear
 from .herramientas import ht03, ht08, ht09, ht11
 from .referencias import AREAS_DIM
@@ -1217,9 +1217,10 @@ class Coordinador:
                         finalistas.append({"cand_id": cid, "tipo": t, "nombre": c["_fila"].get("nombre"), "S": c["S"], "pureza": c["pureza"],
                                            "eslabon_id": eid, "origen": "MEJORES_POR_ESLABON"})
                         ya.add(cid)
+            mapa = {e["eslabon_id"]: e["nombre"] for e in st.get("desglose") or []}
             r = self.inv.llamar("AG-B14", "CT-B-17", "refutacion",
                                 {"pet_id": st["pet_id"], "tesis": st["integracion"].get("tesis"), "hipotesis": st["plan"]["hipotesis"],
-                                 "escenarios": st["escenarios"], "finalistas": finalistas},
+                                 "escenarios": st["escenarios"], "finalistas": finalistas, "eslabones": mapa},
                                 "Refuta la tesis y los finalistas; gradúa las objeciones (fuerte, moderada, débil).",
                                 {"objeciones": "array", "veredicto_tesis": "string"}, self._ctx("AG-B14"), st["run_id"])
             vt = controlado(r.get("veredicto_tesis"), "veredicto_tesis", "fragil")
@@ -1227,17 +1228,35 @@ class Coordinador:
             for o in r.get("objeciones") or []:
                 if not isinstance(o, dict) or not o.get("argumento"):
                     continue
-                objeto = o.get("objeto") if (o.get("objeto") == "TESIS" or o.get("objeto") in validos) else "TESIS"
-                objs.append({"obj_id": self.alm.nuevo_id("OBJ-B"), "objeto": objeto, "tipo": o.get("tipo") or "objeción",
+                objeto = o.get("objeto")
+                alcance = {}
+                if objeto in ("ESLABON", "CADENA") or (objeto == "TESIS" and "eslabon_id" in o and not o.get("emg_id")):
+                    eid = o.get("eslabon_id")
+                    if not isinstance(eid, str) or eid not in mapa or o.get("emg_id"):
+                        motivo = "CT-B-17: eslabón ambiguo o ausente del mapa"
+                        self._estado_pet(st, "BLOQUEADO_AUDITORIA", motivo=motivo)
+                        st["terminado"] = True
+                        st["resultado"] = {"pet_id": st["pet_id"], "estado_peticion": "BLOQUEADO_AUDITORIA", "motivo": motivo}
+                        return
+                    afectados = sorted(cid for grupo in st["seleccion"].values()
+                                       for cid, cand in (grupo.get("candidatos") or {}).items()
+                                       if eid == cand.get("eslabon_id") or eid in (cand.get("eslabones_secundarios") or []))
+                    alcance = {"x_eslabon_id": eid, "x_nombre_eslabon": mapa[eid], "x_candidatos_afectados": afectados}
+                    objeto = "CADENA"
+                elif not isinstance(objeto, str) or objeto not in validos:
+                    objeto = "TESIS"
+                objs.append({"objeto": objeto, **alcance, "tipo": o.get("tipo") or "objeción",
                              "fuerza": controlado(o.get("fuerza"), "fuerza", "moderada"), "argumento": o["argumento"],
                              "evidencia": [], "que_la_resolveria": o.get("que_la_resolveria") or "", "respuesta": None, "resuelta": False})
-            tesis_o = [o for o in objs if o["objeto"] == "TESIS" and o["fuerza"] in ("fuerte", "moderada")]
-            cand_o = [o for o in objs if o["objeto"] != "TESIS" and o["fuerza"] in ("fuerte", "moderada")]
-            if tesis_o:
-                rd = self.inv.llamar("AG-B02", "CT-B-17", "respuestas_objeciones", {"pet_id": st["pet_id"], "objeciones": tesis_o},
-                                     "Responde con evidencia cada objeción fuerte o moderada sobre la tesis.", {"respuestas": "object"},
+            for o in objs:
+                o["obj_id"] = self.alm.nuevo_id("OBJ-B")
+            director_o = [o for o in objs if o["objeto"] in ("TESIS", "CADENA") and o["fuerza"] in ("fuerte", "moderada")]
+            cand_o = [o for o in objs if o["objeto"] in validos and o["fuerza"] in ("fuerte", "moderada")]
+            if director_o:
+                rd = self.inv.llamar("AG-B02", "CT-B-17", "respuestas_objeciones", {"pet_id": st["pet_id"], "objeciones": director_o},
+                                     "Responde con evidencia cada objeción fuerte o moderada sobre la tesis o el eslabón indicado.", {"respuestas": "object"},
                                      self._ctx("AG-B02"), st["run_id"])
-                self._aplicar_respuestas(tesis_o, rd.get("respuestas") or {})
+                self._aplicar_respuestas(director_o, rd.get("respuestas") or {})
             if cand_o:
                 ids_objetados = {o["objeto"] for o in cand_o}
                 rs = self.inv.llamar("AG-B12", "CT-B-17", "respuestas_objeciones",

@@ -3,7 +3,7 @@
 # heredada de robotTrading): cada fase que toque el paquete debe dejar la cuota
 # más baja que como la encontró, si puede.
 # Líneas pytest_*: líneas base de tests — el gate exige >= (nunca menos).
-ruff=3488
+ruff=3485
 mypy_bloque_a=135
 mypy_bloque_a_forex=174
 mypy_bloque_b=159

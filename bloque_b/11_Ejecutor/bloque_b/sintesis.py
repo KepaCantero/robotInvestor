@@ -11,7 +11,7 @@ import random
 from typing import Dict, List, Optional
 
 from .configuracion import NOMBRE_TIPO, TIPOS_ACTIVO, buscar_versionado, ruta
-from .contratos import controlado, multiplo10
+from .contratos import controlado
 from .herramientas import ht03, ht09
 
 NOMBRE_DIM = {"D1": "Definición y delimitación del mercado", "D2": "Tamaño, crecimiento y demanda", "D3": "Oferta, capacidad y costes",
@@ -97,6 +97,8 @@ def veredicto_y_paquete(c, st: Dict) -> None:
     alm, ent = c.alm, c.ent
     ref = st["refutacion"]
     obj_fuertes = {o["objeto"] for o in ref["objeciones"] if o["fuerza"] == "fuerte" and not o["resuelta"]}
+    expuestos = {cid for o in ref["objeciones"] if o["fuerza"] == "fuerte" and not o["resuelta"]
+                 for cid in o.get("x_candidatos_afectados", [])}
     candidatos_por_tipo_in = {}
     for t in st["tipos_aplicables"]:
         s = st["seleccion"].get(t) or {}
@@ -105,7 +107,7 @@ def veredicto_y_paquete(c, st: Dict) -> None:
         cs = []
         for cid, cd in (s.get("candidatos") or {}).items():
             x = {k: v for k, v in cd.items() if not k.startswith("_")}
-            x["objecion_fuerte_sin_resolver"] = cid in obj_fuertes
+            x["objecion_fuerte_sin_resolver"] = cid in obj_fuertes or cid in expuestos
             x["refutado"] = cid in obj_fuertes and ref["veredicto_candidatos"].get(cid) == "descartable"
             if x.get("S") is not None and x.get("ic90_S"):
                 x["S_segunda_pasada"] = x["S"]   # segunda pasada: recálculo independiente con HT-03 (reproducible)
@@ -182,6 +184,22 @@ def _lista(x, defecto: List) -> List:
     return [i for i in (x or []) if i] or defecto
 
 
+def _objeciones_candidato(objeciones, cid, *, para_c=False):
+    salida = []
+    for o in objeciones:
+        if o["objeto"] != cid and cid not in o.get("x_candidatos_afectados", []):
+            continue
+        aviso = {"obj_id": o["obj_id"], "fuerza": o["fuerza"], "resumen": o["argumento"][:120],
+                 "respuesta": o.get("respuesta") or ""}
+        if not para_c:
+            aviso["resuelta"] = o["resuelta"]
+        if "x_eslabon_id" in o:
+            aviso.update(x_eslabon_id=o["x_eslabon_id"], x_nombre_eslabon=o["x_nombre_eslabon"],
+                         x_resuelta=o["resuelta"], x_argumento=o["argumento"])
+        salida.append(aviso)
+    return salida
+
+
 def construir_paquete(c, st: Dict, res: Dict, sint: Dict, riesgo: int) -> Dict:
     ent = c.ent
     pet_id = st["pet_id"]
@@ -239,8 +257,7 @@ def construir_paquete(c, st: Dict, res: Dict, sint: Dict, riesgo: int) -> Dict:
                                    "fuente": st["dat"].get(f"fundamentales_{t}"), "metodo": f.get("pureza_metodo") if f.get("pureza_metodo") in ("publicado", "estimado") else "estimado"},
                         "alertas": cd.get("alertas") or [], "puertas": x["puertas"], "veredicto": x["veredicto"],
                         "rol_en_tesis": tx.get("rol_en_tesis") or f"Captura la tesis por su exposición al ámbito ({f.get('subcluster') or 'núcleo'}).",
-                        "objeciones": [{"obj_id": o["obj_id"], "fuerza": o["fuerza"], "respuesta": o.get("respuesta") or "", "resuelta": o["resuelta"],
-                                        "resumen": o["argumento"][:120]} for o in st["refutacion"]["objeciones"] if o["objeto"] == x["cand_id"]],
+                        "objeciones": _objeciones_candidato(st["refutacion"]["objeciones"], x["cand_id"]),
                         "exposicion_compartida": None, "eslabon_id": cd.get("eslabon_id") or "ESL-00",
                         "eslabones_secundarios": cd.get("eslabones_secundarios") or [], "pureza_eslabon": cd.get("pureza_eslabon")}
                 if x["veredicto"] == "SECUNDARIO":
@@ -320,7 +337,7 @@ def construir_paquete(c, st: Dict, res: Dict, sint: Dict, riesgo: int) -> Dict:
             "senales_alerta": x["alertas"], "catalizadores": _catalizadores(sint),
             "riesgos_especificos": tx.get("riesgos_especificos") or ["Riesgos específicos por verificar en el Bloque C"],
             "invalidacion_candidato": tx.get("invalidacion") or ["Pérdida de la tesis del ámbito"],
-            "objeciones_y_respuestas": [{"obj_id": o["obj_id"], "fuerza": o["fuerza"], "resumen": o.get("resumen", ""), "respuesta": o.get("respuesta", "")} for o in x["objeciones"]],
+            "objeciones_y_respuestas": _objeciones_candidato(st["refutacion"]["objeciones"], x["cand_id"], para_c=True),
             "preguntas_para_C": tx.get("preguntas_para_C") or ["¿Qué valor individual implica el precio frente a sus fundamentales?"],
             "supuestos_a_verificar": tx.get("supuestos_a_verificar") or [],
             "referencia_comparacion": {"ambito": st["referencia"]["nombre"], "ranking": ht03.PLAYBOOKS[t]["referencia_ranking"]},
@@ -361,13 +378,17 @@ def construir_paquete(c, st: Dict, res: Dict, sint: Dict, riesgo: int) -> Dict:
                 "campos_especificos_playbook": {"subcluster": f.get("subcluster")}, "senales_alerta": cd.get("alertas") or [],
                 "catalizadores": _catalizadores(sint), "riesgos_especificos": tx.get("riesgos_especificos") or ["Riesgos específicos por verificar en el Bloque C"],
                 "invalidacion_candidato": tx.get("invalidacion") or ["Pérdida de la tesis del eslabón"],
-                "objeciones_y_respuestas": [{"obj_id": ob["obj_id"], "fuerza": ob["fuerza"], "resumen": ob["argumento"][:120], "respuesta": ob.get("respuesta") or ""}
-                                            for ob in st["refutacion"]["objeciones"] if ob["objeto"] == o["cand_id"]],
+                "objeciones_y_respuestas": _objeciones_candidato(st["refutacion"]["objeciones"], o["cand_id"], para_c=True),
                 "preguntas_para_C": tx.get("preguntas_para_C") or ["¿Qué valor individual implica el precio frente a sus fundamentales?"],
                 "supuestos_a_verificar": tx.get("supuestos_a_verificar") or [],
                 "referencia_comparacion": {"ambito": st["referencia"]["nombre"], "ranking": ht03.PLAYBOOKS[t]["referencia_ranking"]},
                 "alternativas": [], "evidencias": [premisas[0]["evidencia"][0]], "calculos": [s_.get("calc_puntuar")],
                 "data_cutoff": corte, "limitaciones": ["Opción añadida por cobertura del eslabón, adicional al top-N del tipo"], "aviso": AVISO_C})
+    abiertas_tesis = [o for o in st["refutacion"]["objeciones"] if o["objeto"] == "TESIS" and not o["resuelta"]]
+    if abiertas_tesis:
+        for encargos in enc.values():
+            for encargo in encargos:
+                encargo["contexto_ambito"]["x_objeciones_tesis_abiertas"] = abiertas_tesis
     # Veredicto
     flags = st["flags"]
     disp = [d for d in (sint.get("disparadores") or []) if isinstance(d, dict) and d.get("disparador")]

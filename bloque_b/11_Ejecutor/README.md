@@ -390,3 +390,7 @@ Al final, la fecha avanza hasta el último dato disponible:
 Una objeción fuerte sobre la tesis que sigue abierta bloquea la recomendación de invertir. Para un candidato, limita su prioridad. Cada respuesta se aplica a los identificadores del encargo de ese agente. El seleccionador recibe las fichas de los candidatos objetados. Un cierre requiere un valor booleano verdadero y una respuesta; los matices débiles se registran como aceptados.
 
 Si faltan precios de un símbolo, el backtest lo indica en las advertencias y evalúa los que tienen precios. Para ensayar la refutación, desde este directorio se puede ejecutar `PYTHONPATH=. python ejemplos/comparar_critico.py`. Los tres casos de lectura manual tienen su guía en [ejemplos/casos_critico/guia.md](ejemplos/casos_critico/guia.md).
+
+### Alcance de una objeción a un eslabón (T-62)
+
+El crítico recibe los nombres e identificadores del mapa. Una objeción a un eslabón conocido pasa al Director para su contraste. En el paquete figura como CADENA y conserva el identificador del eslabón, su nombre y los identificadores de los candidatos con exposición principal o secundaria registrada. Los encargos a C de esos candidatos incluyen el argumento y el estado de la respuesta. Una objeción fuerte que sigue abierta limita su prioridad; la puerta del sector sigue dependiendo de las objeciones a la tesis global. Una referencia de eslabón ilegible o desconocida detiene la entrega con motivo explícito. El alcance se basa en las asignaciones del Seleccionador.
