@@ -101,4 +101,91 @@ Hay que corregir de H-01 a H-05 con su prueba de regresión y volver a ejecutar 
   - r05: el ciclo siguiente ya no ofrece H5 (LIMITADO);
   - r11: los cinco casos dan PS2 = True.
 
-Pendiente: ronda r02 de QA por un revisor nuevo.
+## Ronda r02 · APTO (9-11-2026)
+
+- **Revisor:** revisor nuevo sin contexto de la implementación (subagente Claude). Leí la r01, el diff de `e38b6ca` y el código antes de leer `analisis-tecnico.md` y `pruebas.md`. · **Ronda:** r02
+- **Scripts de ataque:** `/tmp/claude-0/-home-claude/d1ab3b3e-4909-5455-a67a-e01975b6ec91/scratchpad/qa_t53_r02/` (`r2_01_…` a `r2_07_…`, con sus salidas `.out` al lado). Copiados a `revisores/scripts_qa/`.
+- **Cómo se ejecutan:** se recrea el worktree con `git worktree add --detach <scratch>/qa_t53_r02/wt e38b6ca` (ya está borrado). Después, desde una carpeta de trabajo: `PYTHONPATH=<wt>/bloque_a/11_Ejecutor /home/claude/repo/.venv/bin/python r2_0X_….py`. `r2_07_…sh` admite `SRC=<wt>/bloque_a`.
+
+### Reproducción desde limpio
+
+- **Suite de A.** Worktree limpio en `e38b6ca`, con `PYTHONPATH` hacia su ejecutor (comprobé que `bloque_a.__file__` sale del worktree): `pytest -q` da **116 passed** (90 s).
+- **Gate completo** (`./tools/check_all.sh` en el worktree, con `.venv` enlazado y `PYTHONPATH` hacia los tres ejecutores del worktree): **12/12** en 4 min 30 s.
+  - ruff 3120/3120;
+  - mypy A 135, FX 174, B 159;
+  - pytest A 116, FX 68, B 141.
+- **Pruebas nuevas contra `8562d1e`.** Las 13 pruebas de la QA r01, copiadas sobre `8562d1e`: fallan 10 y pasan 3, como dice `pruebas.md`.
+- **Scripts de la r01, otra vez, contra `e38b6ca`:**
+  - **r01:** el símbolo deslistado en 2021 (b) y el que empieza después de as_of (control) se excluyen y se declaran: DIV mantiene 2 opciones y el run queda PARCIAL. Con historia corta (a), DIV conserva 2 opciones y ML-CLUS-001 rechazado deja el run PARCIAL.
+  - **r03:**
+    - (b) H5 sin naturaleza pasa a ESTRUCTURAL, C17 da OK y salen 3 opciones;
+    - (c) H1 no ofrecido: el ejecutor propone H2, coherente con TACTICA, y lo declara en `limitaciones` por cada opción.
+  - **r05:** F10 P-31 RV×H5 = LIMITADO y `aplicabilidad(cfg)` también. El ciclo siguiente ya no ofrece H5, así que `aplicado_en_produccion: True` es cierto.
+  - **r11:** los cinco casos dan PS2 = True.
+- **`r08b_mutaciones_ronda2.sh`** con `SRC=<wt>/bloque_a`: las 8 mutaciones hacen fallar su prueba.
+  - Comprobé que fallan por la aserción de la mutación y no por el entorno.
+  - Una copia sin mutar pasa las 13.
+
+### Criterios de aceptación
+
+| Criterio | Cumple | Evidencia |
+| --- | --- | --- |
+| CA-1 · cada defecto corregido tiene una prueba que falla sin la corrección | sí (con un hueco bajo) | `r08b`: 8 de 8 mutaciones detectadas, incluidas las del semáforo y el horizonte del Analista, que eran el motivo del NO APTO de la r01 (H-03). 10 de las 13 pruebas fallan en `8562d1e`. Queda sin prueba la rama defensiva que declara las fichas rechazadas por el Motor (H-14) |
+| CA-2 · suites en verde, línea base subida y gate 12/12 | sí | 116 / 68 / 141; `cuotas.txt` en `pytest_bloque_a=116`; gate completo 12/12; ruff y mypy sin cambios |
+| CA-3 · cada hallazgo no corregido, con su motivo | sí | H-06 a H-11 están en la fila T-63 de `Deuda_tecnica_y_pendientes_del_operador.md`, con su ID y su descripción. Un matiz: T-63 resume H-11 como «excluye `revisores/` en todo `.docs`; debería ser solo en los tickets», pero la r01 decía que se excluyen las carpetas `revisores/` de todos los tickets y pedía limitarlo o documentarlo en `CLAUDE.md` |
+| CA-4 · propuestas priorizadas | sí | Sin cambios respecto de la r01 |
+
+**Invariantes:**
+- **Números escritos a mano:** el código nuevo no introduce ninguno. `ps2_festivos` está marcado `[PROPUESTO]` en el YAML y en INC-T53-02, con T-57 para fijar la lista. Los literales 70/65 de `_umbrales_presentacion` y la ventana de «3 años + 30 días» ya existían. Esa ventana ahora también decide qué símbolos se excluyen; queda dentro de H-08 (T-63).
+- **Falla cerrado:** C17 bloquea una naturaleza y un horizonte incoherentes declarados por el Analista y retira las opciones, declarándolo (r2_02). Con la configuración de festivos ausente, PS2 vuelve al cálculo estricto y no se relaja (r2_03).
+- **Determinismo:** la tabla de horizontes vigente depende del historial del proceso (H-12).
+- **Secretos:** ninguno; el gate `secrets` está en verde.
+
+### Hallazgos
+
+| ID | Gravedad | Cómo reproducirlo | Esperado / obtenido | Corrección sugerida | Estado |
+| --- | --- | --- | --- | --- | --- |
+| H-12 | media | `r2_05_cfg_compartida.py`: dos `Bloque` con el mismo dict de configuración y almacenes distintos. A degrada RV×H5 y B no tiene P-31 en su F10. También `r2_04_degradacion_y_recuperacion.py`, paso 3b | **Esperado:** la aplicabilidad depende solo del F10 de cada instancia y de la fecha as_of; el ciclo no muta la configuración del llamador. **Obtenido:** la corrección de H-05 escribe `self.cfg["_tabla_horizontes"]` en el dict compartido, y `_matriz_aplicabilidad` lo usa de respaldo. B ve RV×H5 = LIMITADO y sus opciones salen sin H5; C, con su propia configuración, ofrece H5 en las 3. El dict del llamador gana la clave `_tabla_horizontes`. Con el mismo almacén y la misma fecha, tras una reversión con `valor_vigente` vacío, la misma instancia da LIMITADO y una instancia nueva da SI. Es latente: la CLI, `ejecutar_backtest` (que usa `fusionar`) y las pruebas crean cada uno su configuración. Pero rompe el determinismo, y heredar una tabla mejorada por un tipo 3 de otra instancia relajaría un control | Guardar la tabla vigente en un atributo de la instancia (o pasarla a `aplicabilidad`). Que `_matriz_aplicabilidad` use de respaldo solo la tabla 8.3 estática (`TABLA_HORIZONTES`). Añadir una prueba con dos instancias que comparten la configuración | abierto |
+| H-13 | baja | `r2_04_degradacion_y_recuperacion.py`, paso 1, y su traza `r2_04b_recuperacion_traza.py` | El AJU registra `efecto_desde` = as_of + 1 y el CFG `fecha_efecto` = as_of + 1, y la corrección dice «se aplica en el ciclo siguiente». **Obtenido:** el mismo ciclo que degrada (C5) ya envía LIMITADO al Analista, porque `estado("F10", as_of)` filtra por la fecha de registro y no por `fecha_efecto`. Vuelve a haber un registro que no cuenta lo que pasó, aunque en el sentido prudente | Escribir `fecha_efecto` = as_of y documentar que se aplica en el mismo ciclo, o hacer que la lectura de F10 respete `fecha_efecto` | abierto |
+| H-14 | baja | `r2_07_mutacion_fichas_rechazadas.sh`: quita `self._fichas_rechazadas[...].append(ficha)` y ejecuta la suite entera | **Obtenido:** pasan las 116. La aserción `assert not rechazadas or "rechazadas" in lagunas` de `test_h01_historia_corta_tambien_queda_declarada` se cumple sin comprobar nada si no se rechaza ninguna ficha. Ningún caso de `r2_01` (8 variantes de historia parcial) ni de `r2_06` (7 de datos anómalos) llega a esa rama | Prueba que fuerce un RECHAZADO del Motor para una ficha (con `monkeypatch` de `motor.servir`) y compruebe la laguna y el estado PARCIAL | abierto |
+| H-15 | baja | `r2_06_fichas_rechazadas.py`, casos «cero» (todos los cierres a 0) y «duplicadas» (una fecha repetida) | **Esperado** (CA-06): el símbolo malo se excluye, se declara y el tipo sigue. **Obtenido:** DIV se queda con 0 opciones y PARCIAL, declarado como «datos de mercado no disponibles». La exclusión de H-01 solo cubre `DatosNoDisponibles`, no los datos inválidos. Con precios negativos (caso «negativo»), el run sale COMPLETO sin ninguna laguna y con avisos de `log` | En `senales_clase`, excluir y declarar el símbolo también ante `DatosInvalidos` o cualquier excepción del proveedor para ese símbolo. Validar en HT-01 que los cierres son > 0. Va con H-10 (c) | abierto |
+| H-16 | baja | `r2_01_historia_parcial.py`, casos (e) «hueco y vuelve» y (g) «dos símbolos cortos» | ML-CLUS-001 se calcula sobre los finalistas de todos los tipos. Un solo finalista con poca historia lo rechaza entero: la concentración no se mide en ningún tipo y el run queda PARCIAL. Ya se declara, que es lo que pedía H-01. Pero el respaldo, un clúster por proxy, desactiva el control de concentración para todos | Excluir de ML-CLUS-001 los proxies con historia insuficiente, declararlos y calcular los clústeres con el resto | abierto |
+| H-17 | baja | `r2_03_festivos_config.py` | Si `ps2_festivos` falta o está vacía, PS2 vuelve en silencio al cálculo anterior a H-04: no se relaja, pero no avisa. Los tipos no se validan: `viernes_santo: "false"` (texto) activa el Viernes Santo; `fijos: "12-25"` (texto) se ignora; `fijos: 1225` lanza `TypeError` en `_puertas`, y con él cae el ciclo. Aparte, el lunes de Pascua no está en la lista `[PROPUESTO]`: un martes con el dato del jueves da PS2 = False. Eso lo decide el operador en T-57 | Validar `ps2_festivos` al cargar la configuración (booleano y lista de «MM-DD») y fallar con un mensaje claro si falta o está mal. Va con H-08 | abierto |
+
+**Sin hallazgo en lo comprobado:**
+- **H-01, historia parcial (r2_01):** ninguno de los 8 casos vacía DIV ni rechaza las fichas del lote. Los casos son:
+  - un único dato en la ventana;
+  - un símbolo deslistado hace un año;
+  - salidas a bolsa de hace 3 y 13 meses;
+  - un hueco de 2021 a 2026;
+  - un dato antiguo más uno futuro;
+  - dos símbolos cortos;
+  - un CSV vacío.
+
+  Los dos últimos con exclusión se excluyen y se declaran.
+- **H-02 y C17 (r2_02):**
+  - TACTICA+H5, VALORACION+H2 y ESTRUCTURAL+H3, declarados por el Analista: C17 bloquea, se retiran las opciones y se declara «Opciones retiradas por bloqueo G3», además del `menos_de_tres_motivo`.
+  - Una naturaleza inválida («FOO») la rechaza el esquema `FINALISTA` y el tipo queda PARCIAL, declarado.
+  - ESTRUCTURAL sin horizonte pasa a H5.
+  - El control CICLICA+H3 da OK.
+- **H-04 (r2_03):** con la configuración por defecto se cumplen Viernes Santo, Navidad, el 29 de diciembre con el dato del 24, un dato con fecha de festivo y Año Nuevo. El control da False. Las fechas con hora y zona y el orden invertido no fallan.
+- **H-05 (r2_04 y r2_04b):** la recuperación con un CFG de tipo 3 que restituye «SI» funciona: el Analista recibe SI y no se vuelve a degradar en el mismo trimestre. Las opciones vigentes conservan sus horizontes por continuidad (fase REVISION_VIGENTES).
+
+### Veredicto
+
+**APTO.** Los motivos:
+- H-01 a H-05 están bien corregidos: los scripts de la r01 (r01, r03, r05 y r11) ya no los reproducen, y las 8 mutaciones de `r08b` se detectan.
+- CA-1, el motivo del NO APTO de la r01, se cumple: los defectos corregidos tienen pruebas de comportamiento que fallan sin la corrección.
+- La suite da 116, el gate 12/12, y H-06 a H-11 están en la deuda (T-63).
+- No hay hallazgos críticos ni altos.
+
+H-12 a H-17 deben pasar a la deuda técnica (fila T-63) con su ID. **Recomiendo corregir H-12 antes de conectar A en la Fase 1.** Es una regresión de la corrección de H-05 que rompe el determinismo cuando varias instancias comparten la configuración. Hoy no le afecta a ningún camino del repo, y arreglarlo son dos líneas y una prueba. Si el operador prefiere no cerrar con una media abierta que introdujo la propia corrección, el veredicto pasaría a NO APTO solo por H-12.
+
+## Correcciones tras la r02 (implementación, Claude)
+
+| ID | Corrección | Prueba |
+| --- | --- | --- |
+| H-12 | `Bloque` trabaja con una copia propia de la configuración (`copy.deepcopy`), y el Evaluador vuelve a la tabla 8.3 fijada al crearlo (`_tabla_base`), no a la última aplicada en memoria | `test_h12_dos_bloques_con_la_misma_configuracion_no_comparten_la_tabla_de_horizontes`; falla al quitar la copia |
+| H-13 a H-17 | A la deuda técnica, fila T-63, con su ID | — |
+
+Con H-12 corregido, el veredicto **APTO** de la r02 queda sin la reserva que hacía el revisor.

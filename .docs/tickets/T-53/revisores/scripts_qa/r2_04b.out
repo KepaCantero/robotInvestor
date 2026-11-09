@@ -1,0 +1,12 @@
+1) degradación: [({'clase': 'RV', 'horizonte': 'H5'}, 'SI', 'LIMITADO', '2026-06-06')]
+      mensajes al Analista (fase, H5): [('CRIBADO_E_INVESTIGACION', 'LIMITADO')]
+   tabla usada en el MISMO ciclo 06-05: LIMITADO | H5 en opciones: ([False, False, False], [None, None, None])
+      mensajes al Analista (fase, H5): []
+2) ciclo 06-12: LIMITADO | H5 en opciones: ([False, False, False], [None, None, None])
+      mensajes al Analista (fase, H5): []
+3a) tras tipo 3 con valor_vigente:  SI | H5 en opciones: ([False, False, False], [None, None, None]) | ¿vuelve a degradar?: []
+      mensajes al Analista (fase, H5): [('REVISION_VIGENTES', 'SI')]
+3b) misma instancia tras reversión (valor_vigente None): LIMITADO | H5: ([False, False], [None, None])
+      mensajes al Analista (fase, H5): [('CRIBADO_E_INVESTIGACION', 'LIMITADO')]
+3b) instancia NUEVA, mismo almacén, mismo as_of:       SI | H5: ([False, False], [None, None])
+      mensajes al Analista (fase, H5): [('REVISION_VIGENTES', 'SI')]

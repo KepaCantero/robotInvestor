@@ -1,0 +1,13 @@
+por_defecto (YAML)               -> True | True | False | True | True | True | False
+clave ausente                    -> False | False | False | False | True | True | False
+vacía {}                         -> False | False | False | False | True | True | False
+None                             -> False | False | False | False | True | True | False
+fijos None                       -> True | False | False | False | True | True | False
+fijos como texto '12-25'         -> True | False | False | False | True | True | False
+fijos con año '2025-12-25'       -> False | False | False | False | True | True | False
+viernes_santo 'false' (texto)    -> True | False | False | False | True | True | False
+fijos entero 1225                -> EXC:TypeError | EXC:TypeError | EXC:TypeError | EXC:TypeError | EXC:TypeError | EXC:TypeError | EXC:TypeError
+casos: ['Viernes Santo: sáb 2026-04-04, dato jue 02', 'Navidad: sáb 2025-12-27, dato 24', 'Lunes de Pascua: mar 2026-04-07, dato jue 02', 'Lunes 2025-12-29, dato 24', 'Dato con fecha del festivo: 2025-12-26, dato 25', 'Año nuevo: vie 2027-01-01 es as_of, dato jue 31-12', 'Control: mié 2026-06-10, dato dom 07']
+_sesiones_entre 2026-04-02 23:59:00+00:00 2026-04-04 00:00:00+00:00 = 1
+_sesiones_entre 2026-04-04 2026-04-02 = 0
+_sesiones_entre 2026-04-02 2026-04-02 = 0

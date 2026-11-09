@@ -1,0 +1,24 @@
+[constante] rechazadas=[] excluidos=[] opciones=3 estado=COMPLETO
+      limitaciones=[]
+  mom = p[fin] / p[ini] - 1
+  r12 = p[-1] / p[ini] - 1
+  rend = np.diff(np.log(p[-253:]))
+  a = op(a[slice1], a[slice2])
+[cero] rechazadas=[] excluidos=[] opciones=0 estado=PARCIAL
+      limitaciones=['Divisas: alcance reducido declarado (datos de mercado no disponibles: cannot convert float NaN to integer)']
+  rend = np.diff(np.log(p[-253:]))
+  rend = np.diff(np.log(p[-253:]))
+  result = getattr(ufunc, method)(*inputs, **kwargs)
+  result = getattr(ufunc, method)(*inputs, **kwargs)
+  result = getattr(ufunc, method)(*inputs, **kwargs)
+  result = getattr(ufunc, method)(*inputs, **kwargs)
+[negativo] rechazadas=[] excluidos=[] opciones=3 estado=COMPLETO
+      limitaciones=[]
+[duplicadas] rechazadas=None excluidos=None opciones=0 estado=PARCIAL
+      limitaciones=['Divisas: alcance reducido declarado (datos de mercado no disponibles: USDNEW=X.csv: fechas duplicadas)']
+[desordenadas] rechazadas=[] excluidos=[] opciones=3 estado=COMPLETO
+      limitaciones=[]
+[no_numerico_final] rechazadas=[] excluidos=['USDNEW=X'] opciones=2 estado=PARCIAL
+      limitaciones=['Divisas: alcance reducido declarado (sin datos HT-01 en la ventana de 3 años hasta 2026-06-05 para USDNEW=X: excluidos del cribado de este ciclo (PS2); Sin datos de flujos ni de posicionamiento en el ']
+[dos_puntos] rechazadas=[] excluidos=[] opciones=1 estado=COMPLETO
+      limitaciones=[]

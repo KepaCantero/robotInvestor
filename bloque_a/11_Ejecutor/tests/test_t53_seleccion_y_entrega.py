@@ -271,9 +271,7 @@ def test_h04_ps2_h1_descuenta_festivos(tmp_path, as_of, dato, esperado):
 
 
 # ---------------------------------------------------------------- H-05 · la degradación de H5 se aplica en el ciclo siguiente (CS-12)
-def test_h05_degradacion_h5_cambia_la_tabla_del_ciclo_siguiente(tmp_path):
-    b = _bloque(tmp_path)
-    a = b.almacen
+def _sembrar_degradacion_h5(a):
     a.reloj.fijar("2026-06-01")
     ids = []
     for i, o in enumerate([1] * 5 + [0] * 15):
@@ -288,8 +286,29 @@ def test_h05_degradacion_h5_cambia_la_tabla_del_ciclo_siguiente(tmp_path):
     a.escribir("F4", "AG-10", {"tipo_entrada": "ALTA", "prg_id": "PRG-2025-0999", "opp_id": "OPP-X", "clase": "RV", "horizonte": "H5",
                                "prob_interna": None, "hit_ids": ids, "fecha_emision": "2025-06-05", "fecha_resolucion": "2045-06-05",
                                "estado": "ABIERTO"})
+
+
+def test_h05_degradacion_h5_cambia_la_tabla_del_ciclo_siguiente(tmp_path):
+    b = _bloque(tmp_path)
+    _sembrar_degradacion_h5(b.almacen)
     antes = aplicabilidad(b.cfg, "RV", "H5")
     r = b.ciclo("2026-06-05", alcance={"clases": ["RV"]})
     assert (r["evaluacion"] or {}).get("degradacion_h5")
     b.ciclo("2026-06-12", alcance={"clases": ["RV"]})
     assert antes == "SI" and aplicabilidad(b.cfg, "RV", "H5") == "LIMITADO"
+
+
+# ---------------------------------------------------------------- H-12 · la tabla vigente no pasa entre instancias
+def test_h12_dos_bloques_con_la_misma_configuracion_no_comparten_la_tabla_de_horizontes(tmp_path):
+    cfg = cargar_config(extra={"modo": "backtest"})
+    uni = cargar_universo(RUTA_UNIVERSO_EJEMPLO)
+    a = Bloque(cfg, ProveedorCSV(DATOS), uni, MockClient(), tmp_path / "ea", tmp_path / "sa")
+    b = Bloque(cfg, ProveedorCSV(DATOS), uni, MockClient(), tmp_path / "eb", tmp_path / "sb")
+    _sembrar_degradacion_h5(a.almacen)
+    a.ciclo("2026-06-05", alcance={"clases": ["RV"]})
+    a.ciclo("2026-06-12", alcance={"clases": ["RV"]})
+    assert aplicabilidad(a.cfg, "RV", "H5") == "LIMITADO"
+    assert "_tabla_horizontes" not in cfg                      # antes: el ciclo escribía en el dict del llamador
+    r = b.ciclo("2026-06-12", alcance={"clases": ["RV"]})
+    assert aplicabilidad(b.cfg, "RV", "H5") == "SI"
+    assert any("H5" in o["horizontes"] for o in r["paquete"]["clases"]["RV"]["opciones"])

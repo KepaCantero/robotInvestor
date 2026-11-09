@@ -1,0 +1,6 @@
+misma configuración en A y B: True | evaluador comparte cfg: True
+tras el ciclo de A: claves nuevas en el dict del llamador: ['_tabla_horizontes'] | cfg['_tabla_horizontes']['RV']['H5'] = LIMITADO
+F10 de B tiene P-31: False
+B (sin degradación propia): aplicabilidad RV×H5 = LIMITADO | H5 en opciones de B: [False, False] | etiquetas: [None, None]
+_matriz_aplicabilidad de B: LIMITADO
+C (cfg propia, sin degradación): SI | H5: [True, True, True]

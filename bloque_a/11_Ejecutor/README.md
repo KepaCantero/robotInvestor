@@ -203,7 +203,7 @@ Las salidas reales del modelo serán más largas que las simuladas; tómelo como
 
 ## Correcciones de la revisión T-53 (9-11-2026)
 
-Revisión independiente del ejecutor con 58 pruebas nuevas (de 58 a 116, con las de la segunda ronda de QA). Detalle en `.docs/tickets/T-53/analisis-tecnico.md` (desde la raíz del repositorio). Lo que cambia para quien lo usa:
+Revisión independiente del ejecutor con 59 pruebas nuevas (de 58 a 117, con las de las dos rondas de QA). Detalle en `.docs/tickets/T-53/analisis-tecnico.md` (desde la raíz del repositorio). Lo que cambia para quien lo usa:
 
 - **Entregables.** Se generan en `_borradores/` y se validan. Solo lo que no queda BLOQUEADO llega a las carpetas de entrega; lo bloqueado se guarda en `_bloqueados/<RUN>/`, sin `estado_g3`.
 - **Datos.**
