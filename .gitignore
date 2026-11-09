@@ -19,3 +19,6 @@ entregables/
 # Secretos
 .env
 *.pem
+
+# Logs de los scripts de .docs
+.docs/scripts/.logs/

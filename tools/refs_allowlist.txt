@@ -3,4 +3,5 @@
 bloque_a/11_Ejecutor/bloque_a/herramientas/verificador_ids.py   # FASE 0
 docs/auditoria_ids_bloque_a.md                                   # FASE 0
 docs/cadena_A_B.md                                               # FASE 6
-memoria/astra                                                    # la crea Astra en su primera sesión (AGENTS.md); al existir, QUITAR
+.docs/memoria/astra                                              # la crea Astra en su primera sesión (AGENTS.md); al existir, QUITAR
+.docs/scripts/.logs                                              # la crea gate.sh al ejecutarse (ignorada por git); no se QUITA

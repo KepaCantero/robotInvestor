@@ -5,7 +5,7 @@ fecha: 2026-11-09
 tipo: convencion
 etiquetas: [flujo, skills, qa, astra, claude]
 fuente: docs/flujo_de_trabajo.md; AGENTS.md
-vigencia: vigente
+vigencia: sustituida por compartida/2026-11-09_espacio-docs
 ---
 
 - El operador pidió el 9-11-2026 un flujo común para Claude y Astra: planificar → implementar → probar → QA, con una skill por fase en `.agents/skills/` (enlazada desde `.claude/skills`).
