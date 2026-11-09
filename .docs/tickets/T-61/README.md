@@ -2,10 +2,10 @@
 
 | Campo | Valor |
 | --- | --- |
-| Estado | EN QA |
+| Estado | CERRADO |
 | Pieza | bloque_b |
 | Planifica e implementa | Astra |
-| Revisión independiente pendiente | Claude |
+| Revisión independiente | Claude: APTO en r01 y r02 (ver [qa.md](qa.md)) |
 
 - Pieza e ID: ejecutor B, 2026-11-09_bloque-b_objeciones-y-evaluacion.
 - Planifica e implementa Astra. Claude realizará la revisión independiente.
@@ -36,3 +36,5 @@ Documentos afectados: README del ejecutor, documentos de esta tarea y traspaso a
 
 - 2026-11-09 · Implementación y pruebas en 4bbc952.
 - 2026-11-09 · EN QA · Astra adapta la documentación al espacio de trabajo de a6ceb76. Véase [traspaso](handoff.md).
+- 2026-11-09 · CERRADO · claude · QA APTO (r01, 4 hallazgos bajos); rama fusionada en `develop` por avance rápido.
+- 2026-11-09 · CERRADO · claude · QA r02 APTO (cobertura y comparación con el azar, 3 hallazgos bajos); `astra/bloque-b-backtesting-cobertura-y-azar` fusionada en `develop` por avance rápido.

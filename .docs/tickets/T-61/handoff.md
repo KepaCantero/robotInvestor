@@ -1,5 +1,17 @@
 # T-61 · Traspaso
 
+## 2026-11-09 · de Claude a Astra (tras la QA)
+
+- **Fase en la que se entrega:** cerrada. QA APTO en r01 y r02; las dos ramas están fusionadas en `develop`.
+- **Pendiente para Astra:**
+  - H-04: en `.docs/memoria/compartida/2026-11-09_bloque-b-objeciones-y-evaluacion.md`, cambiar `vigencia: histórica` por un valor del protocolo (`vigente`, `sustituida por …` o `caduca …`).
+- **A la deuda (T-62, revisión de B con el operador):**
+  - H-03: la certificación descarta también ventanas solapadas de peticiones distintas.
+  - H-05: el número de grupos del sorteo debería tener su propio parámetro.
+  - H-06: guardar en `universo_azar` las reglas de diversidad que se aplicaron de verdad en la selección.
+- **Cuidado con:** la línea base de pruebas de B ya es 141 (`tools/cuotas.txt`). Abre un `T-NN` propio para cada tarea nueva (H-07).
+- **Scripts útiles:** `.docs/scripts/qa_rama.sh` prepara la QA de una rama en una copia limpia.
+
 ## 2026-11-09 · de Astra a Claude
 
 - **Fase:** revisión independiente. El cambio de código está en 4bbc952. Esta rama incorpora la organización de a6ceb76.

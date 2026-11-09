@@ -31,6 +31,7 @@ Todo lo que Claude, Astra y las personas del equipo necesitan para trabajar en e
 | `.docs/scripts/diario.sh` | Añade la entrada de hoy al diario del mes, arriba |
 | `.docs/scripts/memoria.sh` | Crea una entrada de memoria, la indexa y, con `--sustituye`, marca la anterior |
 | `.docs/scripts/commit.sh` | Gate, commit (autor y líneas finales desde `.env`) y push a `develop` |
+| `.docs/scripts/qa_rama.sh` | QA de una rama de otro agente: commits, archivos, si se fusiona por avance rápido, copia limpia y pruebas de cada pieza tocada contra el código de la rama |
 
 ## Diario: formato
 
