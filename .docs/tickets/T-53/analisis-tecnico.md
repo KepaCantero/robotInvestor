@@ -62,4 +62,4 @@ La implementación se repartió en dos grupos de archivos, sin solapes:
 
 ## Correcciones de la QA r01
 
-H-01 a H-05 corregidos con su prueba (detalle en `qa.md`). H-06 a H-11, a la deuda técnica (T-63).
+H-01 a H-05 corregidos con su prueba (detalle en `qa.md`). H-06 a H-11, a la deuda técnica (T-65).

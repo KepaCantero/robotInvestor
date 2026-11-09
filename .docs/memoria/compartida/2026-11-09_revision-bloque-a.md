@@ -13,7 +13,7 @@ vigencia: vigente
 - QA r01: NO APTO; r02: APTO. Las medias, H-01 a H-05 y H-12, están corregidas con pruebas de regresión. El ticket está cerrado.
 - `Bloque` trabaja con una copia propia de la configuración. No vuelvas a escribir en el dict del llamador.
 - Las propuestas PA-01 a PA-21 (`propuestas.md`) **no se han aplicado**. Las decide el operador, y cada una tendrá su ticket.
-- Pendiente técnico: la fila T-63 de la deuda técnica.
+- Pendiente técnico: la fila T-65 de la deuda técnica.
 
 **Cómo aplicarlo:**
 - No conectes A a C ni a B hasta que el operador haya visto las propuestas (D-42).

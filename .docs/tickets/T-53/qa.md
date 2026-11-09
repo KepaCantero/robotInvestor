@@ -90,7 +90,7 @@ Hay que corregir de H-01 a H-05 con su prueba de regresión y volver a ejecutar 
 | H-03 | Pruebas de comportamiento: ciclo con el horizonte y la justificación del Analista; semáforo VERDE, ÁMBAR y GRIS (`sintesis._semaforo`, extraída) | `test_h03_se_usan_el_horizonte_y_la_justificacion_del_analista`, `test_h03_semaforo` |
 | H-04 | Las sesiones de H1 descuentan los cierres habituales (`ps2_festivos`, `[PROPUESTO]`: Viernes Santo y 1-1, 24-12, 25-12, 26-12, 31-12; INC-T53-02 ampliada). El calendario por mercado queda para el perfil de cada tipo | `test_h04_ps2_h1_descuenta_festivos` |
 | H-05 | Al empezar cada ciclo, la tabla de horizontes del ejecutor se recarga desde F10 (`_matriz_aplicabilidad`), así que «aplicado en producción» es cierto | `test_h05_degradacion_h5_cambia_la_tabla_del_ciclo_siguiente` |
-| H-06 a H-11 | A la deuda técnica, fila T-63, con su ID | — |
+| H-06 a H-11 | A la deuda técnica, fila T-65, con su ID | — |
 
 **Comprobación:**
 - Las 13 pruebas nuevas, contra `8562d1e` (antes de estas correcciones): fallan 10; las otras 3 pasan porque comprueban comportamiento ya corregido en `8562d1e`.
@@ -132,11 +132,11 @@ Hay que corregir de H-01 a H-05 con su prueba de regresión y volver a ejecutar 
 | --- | --- | --- |
 | CA-1 · cada defecto corregido tiene una prueba que falla sin la corrección | sí (con un hueco bajo) | `r08b`: 8 de 8 mutaciones detectadas, incluidas las del semáforo y el horizonte del Analista, que eran el motivo del NO APTO de la r01 (H-03). 10 de las 13 pruebas fallan en `8562d1e`. Queda sin prueba la rama defensiva que declara las fichas rechazadas por el Motor (H-14) |
 | CA-2 · suites en verde, línea base subida y gate 12/12 | sí | 116 / 68 / 141; `cuotas.txt` en `pytest_bloque_a=116`; gate completo 12/12; ruff y mypy sin cambios |
-| CA-3 · cada hallazgo no corregido, con su motivo | sí | H-06 a H-11 están en la fila T-63 de `Deuda_tecnica_y_pendientes_del_operador.md`, con su ID y su descripción. Un matiz: T-63 resume H-11 como «excluye `revisores/` en todo `.docs`; debería ser solo en los tickets», pero la r01 decía que se excluyen las carpetas `revisores/` de todos los tickets y pedía limitarlo o documentarlo en `CLAUDE.md` |
+| CA-3 · cada hallazgo no corregido, con su motivo | sí | H-06 a H-11 están en la fila T-65 de `Deuda_tecnica_y_pendientes_del_operador.md`, con su ID y su descripción. Un matiz: T-65 resume H-11 como «excluye `revisores/` en todo `.docs`; debería ser solo en los tickets», pero la r01 decía que se excluyen las carpetas `revisores/` de todos los tickets y pedía limitarlo o documentarlo en `CLAUDE.md` |
 | CA-4 · propuestas priorizadas | sí | Sin cambios respecto de la r01 |
 
 **Invariantes:**
-- **Números escritos a mano:** el código nuevo no introduce ninguno. `ps2_festivos` está marcado `[PROPUESTO]` en el YAML y en INC-T53-02, con T-57 para fijar la lista. Los literales 70/65 de `_umbrales_presentacion` y la ventana de «3 años + 30 días» ya existían. Esa ventana ahora también decide qué símbolos se excluyen; queda dentro de H-08 (T-63).
+- **Números escritos a mano:** el código nuevo no introduce ninguno. `ps2_festivos` está marcado `[PROPUESTO]` en el YAML y en INC-T53-02, con T-57 para fijar la lista. Los literales 70/65 de `_umbrales_presentacion` y la ventana de «3 años + 30 días» ya existían. Esa ventana ahora también decide qué símbolos se excluyen; queda dentro de H-08 (T-65).
 - **Falla cerrado:** C17 bloquea una naturaleza y un horizonte incoherentes declarados por el Analista y retira las opciones, declarándolo (r2_02). Con la configuración de festivos ausente, PS2 vuelve al cálculo estricto y no se relaja (r2_03).
 - **Determinismo:** la tabla de horizontes vigente depende del historial del proceso (H-12).
 - **Secretos:** ninguno; el gate `secrets` está en verde.
@@ -176,16 +176,16 @@ Hay que corregir de H-01 a H-05 con su prueba de regresión y volver a ejecutar 
 **APTO.** Los motivos:
 - H-01 a H-05 están bien corregidos: los scripts de la r01 (r01, r03, r05 y r11) ya no los reproducen, y las 8 mutaciones de `r08b` se detectan.
 - CA-1, el motivo del NO APTO de la r01, se cumple: los defectos corregidos tienen pruebas de comportamiento que fallan sin la corrección.
-- La suite da 116, el gate 12/12, y H-06 a H-11 están en la deuda (T-63).
+- La suite da 116, el gate 12/12, y H-06 a H-11 están en la deuda (T-65).
 - No hay hallazgos críticos ni altos.
 
-H-12 a H-17 deben pasar a la deuda técnica (fila T-63) con su ID. **Recomiendo corregir H-12 antes de conectar A en la Fase 1.** Es una regresión de la corrección de H-05 que rompe el determinismo cuando varias instancias comparten la configuración. Hoy no le afecta a ningún camino del repo, y arreglarlo son dos líneas y una prueba. Si el operador prefiere no cerrar con una media abierta que introdujo la propia corrección, el veredicto pasaría a NO APTO solo por H-12.
+H-12 a H-17 deben pasar a la deuda técnica (fila T-65) con su ID. **Recomiendo corregir H-12 antes de conectar A en la Fase 1.** Es una regresión de la corrección de H-05 que rompe el determinismo cuando varias instancias comparten la configuración. Hoy no le afecta a ningún camino del repo, y arreglarlo son dos líneas y una prueba. Si el operador prefiere no cerrar con una media abierta que introdujo la propia corrección, el veredicto pasaría a NO APTO solo por H-12.
 
 ## Correcciones tras la r02 (implementación, Claude)
 
 | ID | Corrección | Prueba |
 | --- | --- | --- |
 | H-12 | `Bloque` trabaja con una copia propia de la configuración (`copy.deepcopy`), y el Evaluador vuelve a la tabla 8.3 fijada al crearlo (`_tabla_base`), no a la última aplicada en memoria | `test_h12_dos_bloques_con_la_misma_configuracion_no_comparten_la_tabla_de_horizontes`; falla al quitar la copia |
-| H-13 a H-17 | A la deuda técnica, fila T-63, con su ID | — |
+| H-13 a H-17 | A la deuda técnica, fila T-65, con su ID | — |
 
 Con H-12 corregido, el veredicto **APTO** de la r02 queda sin la reserva que hacía el revisor.
