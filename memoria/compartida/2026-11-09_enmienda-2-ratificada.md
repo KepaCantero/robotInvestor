@@ -5,7 +5,7 @@ fecha: 2026-11-09
 tipo: decision
 etiquetas: [constitucion, enmienda-2, ratificacion]
 fuente: sistema_global/constitucion/Constitucion_Global.md (V0.5, §0 y §15)
-vigencia: vigente
+vigencia: sustituida en parte por compartida/2026-11-09_d08-d16-ratificadas
 ---
 
 Sustituye a `compartida/2026-11-09_estado-tras-v05` en lo que dice de la ratificación; el resto de esa entrada sigue valiendo.

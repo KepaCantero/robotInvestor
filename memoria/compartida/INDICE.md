@@ -4,6 +4,7 @@
 | --- | --- | --- | --- |
 | compartida/2026-11-09_estado-del-proyecto | estado | Dónde está el proyecto a 9-11-2026 y qué viene después | sustituida por compartida/2026-11-09_estado-tras-v05 |
 | compartida/2026-11-09_estado-tras-v05 | estado | Estado tras aplicar la enmienda 2 (Constitución V0.5) | sustituida en parte por compartida/2026-11-09_enmienda-2-ratificada |
-| compartida/2026-11-09_enmienda-2-ratificada | decision | El operador ratificó la enmienda 2 (V0.5); números pendientes P-25 a P-35 | vigente |
+| compartida/2026-11-09_enmienda-2-ratificada | decision | El operador ratificó la enmienda 2 (V0.5); números pendientes P-25 a P-35 | sustituida en parte por compartida/2026-11-09_d08-d16-ratificadas |
+| compartida/2026-11-09_d08-d16-ratificadas | decision | También ratificadas D-08 a D-16; seis apartados siguen propuestos | vigente |
 | compartida/2026-11-09_reglas-del-operador | regla | Reglas de trabajo y de diseño fijadas por el operador | vigente |
 | compartida/2026-11-09_flujo-y-reparto | convencion | Flujo de cuatro fases y QA cruzada entre Claude y Astra | vigente |
