@@ -135,7 +135,7 @@ Desde la V0.5 estas reglas y las de la sección siguiente están también en la 
 1. Se construye todo en simulado (L0) con valores de partida prudentes marcados `[PROPUESTO]` y anotados en la deuda técnica; no se le pregunta por ellos.
 2. Se le pregunta solo lo que cambie la arquitectura y no tenga un valor de partida razonable, y se le avisa si un valor de partida obliga a rehacer trabajo.
 3. Nada opera con dinero real ni pasa una compuerta que exija datos reales (intermediario real en la Fase 3, L1 real) hasta que decida.
-4. Al terminar la arquitectura se le presenta una sola sesión con todas las decisiones pendientes, cada una con su valor de partida y lo que cambia según su respuesta. Según la V0.5, la conduce el asesor de configuración del Broker (D-34); los números de la enmienda 2 son P-25 a P-35.
+4. Al terminar la arquitectura se le presenta una sola sesión con todas las decisiones pendientes, cada una con su valor de partida y lo que cambia según su respuesta. Según la V0.5, la conduce el asesor de configuración del Broker (D-34); los números de la enmienda 2 son P-25 a P-35. **Formato (operador, 9-11-2026):** cuestionario de opción múltiple guiado por ese asesor, que entiende lo que el operador quiere decir aunque no use lenguaje técnico y confirma cada interpretación; todo tiene un valor por defecto prudente válido para cualquier usuario y se cambia después por el mismo cuestionario con el Broker (T-59, enmienda 3 en preparación). El operador quiere que en el futuro pueda usarlo cualquier usuario, lo que choca con D-01 y exige consulta legal antes (T-59, punto 4).
 
 ## Lo que añade la enmienda 2 (Constitución V0.5, ratificada el 9-11-2026)
 
