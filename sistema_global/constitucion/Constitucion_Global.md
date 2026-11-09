@@ -4,7 +4,7 @@ Nov 9, 2026 · @Dani
 
 ## 0. Estado, alcance y modo de uso
 
-Esta V0.5 (9 de noviembre de 2026) **sustituye a la V0.4**: incorpora la **enmienda 2** (los 27 puntos de T-58 en la deuda técnica), aplicada a petición del operador y **ratificada por él el 9 de noviembre de 2026** (tabla «De la V0.4 a la V0.5» abajo y decisiones D-28 a D-41, todas `[RATIFICADO]`). Recoge también las cuatro reglas de diseño y decisión que el operador fijó el 8-11-2026 (cambio 38, D-42), con su encaje con la Fase 2. Sus números quedan aplazados como pendientes del operador (P-25 a P-35), igual que el resto de sus decisiones de perfil y técnicas hasta completar la arquitectura (T-57). Al redactarla se añadió lo que no venía literal en T-58, y el operador lo ratificó con el resto: los principios P19 y P20, que amplían los invariantes; que SC-3 no cuente para el tope de bloques; el destino de las aportaciones durante la hibernación; las exenciones de la rentabilidad mínima; y la preferencia por un revisor de otro proveedor de IA. La V0.4 (7 de noviembre de 2026) incorporó la **enmienda 1**, ratificada por el operador ese día (tabla «De la V0.3 a la V0.4» y decisiones D-20 a D-27). La V0.3 sustituyó a la V0.2 y a la V0.1; nació de una prueba de recorrido con cuatro casos (18 huecos) y de una revisión adversarial independiente (13 hallazgos), y el operador ha autorizado modificar la idea base, incluidos los bloques A y B.
+Esta V0.5 (9 de noviembre de 2026) **sustituye a la V0.4**: incorpora la **enmienda 2** (los 27 puntos de T-58 en la deuda técnica), aplicada a petición del operador y **ratificada por él el 9 de noviembre de 2026** (tabla «De la V0.4 a la V0.5» abajo y decisiones D-28 a D-41, todas `[RATIFICADO]`). Recoge también las cuatro reglas de diseño y decisión que el operador fijó el 8-11-2026 (cambio 38, D-42), con su encaje con la Fase 2. Ese mismo día el operador ratificó también las decisiones de la V0.1 que seguían propuestas (D-08 a D-16). Sus números quedan aplazados como pendientes del operador (P-25 a P-35), igual que el resto de sus decisiones de perfil y técnicas hasta completar la arquitectura (T-57). Al redactarla se añadió lo que no venía literal en T-58, y el operador lo ratificó con el resto: los principios P19 y P20, que amplían los invariantes; que SC-3 no cuente para el tope de bloques; el destino de las aportaciones durante la hibernación; las exenciones de la rentabilidad mínima; y la preferencia por un revisor de otro proveedor de IA. La V0.4 (7 de noviembre de 2026) incorporó la **enmienda 1**, ratificada por el operador ese día (tabla «De la V0.3 a la V0.4» y decisiones D-20 a D-27). La V0.3 sustituyó a la V0.2 y a la V0.1; nació de una prueba de recorrido con cuatro casos (18 huecos) y de una revisión adversarial independiente (13 hallazgos), y el operador ha autorizado modificar la idea base, incluidos los bloques A y B.
 
 **Alcance.** Sistema personal de inversión con **capital propio únicamente**: investiga, analiza, compara, construye carteras, controla el riesgo, ejecuta bajo autorización y aprende de sus resultados. No presta servicio a terceros; si eso cambiara, habría que revisar la normativa aplicable antes de seguir.
 
@@ -18,7 +18,7 @@ Esta V0.5 (9 de noviembre de 2026) **sustituye a la V0.4**: incorpora la **enmie
 
 **Cómo se usa.** Cada conversación de construcción empieza con esta Constitución, la ficha de interfaz del bloque (§2) y los contratos que le afectan (§5).
 
-**Qué cambia respecto a la V0.1.** Todos los cambios son `[PROPUESTO]`.
+**Qué cambia respecto a la V0.1.** `[RATIFICADO]` el 9-11-2026 con D-08 a D-16, salvo los cambios 7 (aprendizaje realista, §9) y 8 (verificación diversa, §3), que siguen `[PROPUESTO]`, igual que el presupuesto duro del cambio 10 (§11).
 
 | N.º | Cambio | Problema que resuelve | Sección |
 | --- | --- | --- | --- |
@@ -33,7 +33,7 @@ Esta V0.5 (9 de noviembre de 2026) **sustituye a la V0.4**: incorpora la **enmie
 | 9 | **Capa de adaptadores**, simulador propio y ficha de restricciones reales | Dependencia de broker y datos desconocidos | §3, §14 |
 | 10 | **Controles sobre el operador** y presupuesto duro de coste | Error humano y bucles de coste | §6, §11 |
 
-**Qué cambia de la V0.2 a la V0.3.** Nace de una segunda revisión independiente de la arquitectura y de la decisión del operador de tratar los perfiles de C como piezas de entrega propia. Todos los cambios son `[PROPUESTO]` salvo indicación.
+**Qué cambia de la V0.2 a la V0.3.** Nace de una segunda revisión independiente de la arquitectura y de la decisión del operador de tratar los perfiles de C como piezas de entrega propia. Todos sus cambios están `[RATIFICADO]` desde el 5-11-2026 (D-17 a D-19).
 
 | N.º | Cambio | Problema que resuelve | Sección |
 | --- | --- | --- | --- |
@@ -107,19 +107,19 @@ Los principios siguientes son invariantes. Ningún bloque, prompt ni herramienta
 
 El sistema tiene **bloques** (A–N), el **Broker Personal** (un bloque con tres papeles) y **servicios comunes** (§3). Cada fila de la tabla es la **ficha de interfaz** mínima: un bloque nuevo DEBE ajustarse a ella.
 
-**Familia por tipo de activo: núcleo común + perfil.** `[PROPUESTO]` A, B y C no se construyen doce veces. Cada uno es un **núcleo** (agentes, contratos, módulos del Motor, validación y ejecutor) más un **perfil por tipo de activo** (vocabularios, playbooks, fuentes, áreas de conocimiento, parámetros e instrumentos). Los prompts de los agentes se componen de una plantilla común y el perfil.
+**Familia por tipo de activo: núcleo común + perfil.** `[RATIFICADO]` (D-10) A, B y C no se construyen doce veces. Cada uno es un **núcleo** (agentes, contratos, módulos del Motor, validación y ejecutor) más un **perfil por tipo de activo** (vocabularios, playbooks, fuentes, áreas de conocimiento, parámetros e instrumentos). Los prompts de los agentes se componen de una plantilla común y el perfil.
 
 **Todo bloque sirve para cualquier tipo de activo.** `[RATIFICADO]` (D-42, regla del operador del 8-11-2026) Ningún bloque se diseña «para divisas» ni para un solo tipo de activo: todos se diseñan desde el primer día como núcleo común más perfiles, y la Fase 1 en divisas es solo el primer recorrido completo. Hoy solo el perfil `C-DIV` es específico de divisas. `[RATIFICADO]` Encaje con la Fase 2: los bloques **nuevos** nacen ya con núcleo y perfiles; A y B, que ya existen, se reorganizan en la Fase 2, cuando haya un segundo perfil real con que comprobar qué es núcleo y qué es perfil.
 
 La refactorización de A y B a núcleo + perfil se hace en la **Fase 2** (§14), cuando exista un segundo perfil real. Con un solo caso se adivina el núcleo; con dos se deriva. Hasta entonces, A (V5.1) y B (V2.1) se usan tal cual, con adaptadores mínimos. `[RATIFICADO]` A Forex y B Forex fueron pruebas y **no forman parte del sistema** (D-20); las divisas las cubren A y B generales (en A, su Analista de Divisas ya funciona con 5 de sus 11 fichas FX programadas; faltan FX-BEER, FX-BRK, FX-COINT, FX-PPA, FX-REGIME y FX-STL).
 
-**Perfiles como paquetes de entrega propios.** `[PROPUESTO]` Cada perfil `C-<COD>` es complejo (muchos agentes, fuentes y playbooks) y se construye, prueba y entrega como un **paquete propio**, igual que un bloque. Lo que no tiene propio es el esqueleto: todos cumplen el mismo núcleo y el mismo sobre CT-G-02, y ninguno los modifica por su cuenta (una enmienda se propone en el §15). Cada perfil tiene un estado: `ACTIVO` o `NO_CONSTRUIDO`. Un perfil `NO_CONSTRUIDO` devuelve `NO_ESTIMABLE` y el Broker no lo encarga. Un perfil solo se promueve a bloque independiente si necesita su propia frontera de seguridad o su propio modo de fallo (por ejemplo, `C-DER` o `C-CRI`).
+**Perfiles como paquetes de entrega propios.** `[RATIFICADO]` (D-17) Cada perfil `C-<COD>` es complejo (muchos agentes, fuentes y playbooks) y se construye, prueba y entrega como un **paquete propio**, igual que un bloque. Lo que no tiene propio es el esqueleto: todos cumplen el mismo núcleo y el mismo sobre CT-G-02, y ninguno los modifica por su cuenta (una enmienda se propone en el §15). Cada perfil tiene un estado: `ACTIVO` o `NO_CONSTRUIDO`. Un perfil `NO_CONSTRUIDO` devuelve `NO_ESTIMABLE` y el Broker no lo encarga. Un perfil solo se promueve a bloque independiente si necesita su propia frontera de seguridad o su propio modo de fallo (por ejemplo, `C-DER` o `C-CRI`).
 
-**Criterio para crear un bloque nuevo.** `[PROPUESTO]` Un componente es bloque propio si cumple **al menos tres** de estas cinco condiciones: (1) lo usan dos o más bloques; (2) tiene una frontera de seguridad o un modo de fallo distinto; (3) tiene un ritmo o una naturaleza distinta (determinista frente a LLM); (4) se puede validar por separado; (5) tiene un **dueño que lo valida** y su coste de coordinación (contratos nuevos) es menor que la ganancia.
+**Criterio para crear un bloque nuevo.** `[RATIFICADO]` (D-19) Un componente es bloque propio si cumple **al menos tres** de estas cinco condiciones: (1) lo usan dos o más bloques; (2) tiene una frontera de seguridad o un modo de fallo distinto; (3) tiene un ritmo o una naturaleza distinta (determinista frente a LLM); (4) se puede validar por separado; (5) tiene un **dueño que lo valida** y su coste de coordinación (contratos nuevos) es menor que la ganancia.
 
-**Tope de bloques activos.** `[PROPUESTO]` En las Fases 1 y 2 no hay más de **ocho** bloques activos a la vez (en la Fase 1: A, B, `C-DIV`, D, E, F, G y K, con N mínimo y el Broker Personal). El panel de N muestra el estado de cada uno en verde, ámbar o rojo, y las pruebas automáticas de contrato (SC-6) avisan de la deriva, de modo que el operador no revisa contratos a mano.
+**Tope de bloques activos.** `[RATIFICADO]` (D-19) En las Fases 1 y 2 no hay más de **ocho** bloques activos a la vez (en la Fase 1: A, B, `C-DIV`, D, E, F, G y K, con N mínimo y el Broker Personal). El panel de N muestra el estado de cada uno en verde, ámbar o rojo, y las pruebas automáticas de contrato (SC-6) avisan de la deriva, de modo que el operador no revisa contratos a mano.
 
-**Bloques K, M y N.** `[PROPUESTO]` K es determinista y falla cerrado: si el dato es dudoso, se detiene. M asesora a E con análisis de exposición, correlación y escenarios, pero F **no consume su salida**: calcula la exposición con su propio código y sus datos (P2, P15). N es la única superficie que ve el operador.
+**Bloques K, M y N.** `[RATIFICADO]` (D-18) K es determinista y falla cerrado: si el dato es dudoso, se detiene. M asesora a E con análisis de exposición, correlación y escenarios, pero F **no consume su salida**: calcula la exposición con su propio código y sus datos (P2, P15). N es la única superficie que ve el operador.
 
 **El Broker Personal: un bloque en tres papeles.** `[RATIFICADO]` (D-21) El Broker Personal es un bloque completo, por su implicación en todo el sistema, pero no un solo agente: uno con juicio para todo no escala (contexto, coste, latencia) y mezcla juicio con flujo. Sus tres papeles conservan sus prohibiciones.
 
@@ -199,7 +199,7 @@ Todo componente pertenece a un solo plano, y cada plano tiene una autoridad dist
 | **Control** | Orquestador, F, G, matriz de autonomía, cola de aprobaciones, kill-switch y vigilante | Veta, limita y autoriza. Ningún agente del plano de inteligencia puede anularlo | Código determinista, sin LLM en la ruta de decisión |
 | **Datos y memoria** | Evidencia, diario de pronósticos, auditoría, libro contable, credenciales | Guarda la verdad. Solo anexado: lo histórico no se reescribe | Almacenes indexados con identificador y hash |
 
-**Servicios comunes (SC).** Se construyen una sola vez, a medida que la fase lo exige. `[PROPUESTO]`
+**Servicios comunes (SC).** Se construyen una sola vez, a medida que la fase lo exige. `[RATIFICADO]` (D-08)
 
 | Servicio | Función |
 | --- | --- |
@@ -217,7 +217,7 @@ Todo componente pertenece a un solo plano, y cada plano tiene una autoridad dist
 
 **Vigía de régimen económico.** `[RATIFICADO]` (D-33) Un semáforo por región (normal, tensión, crisis) a partir de indicadores adelantados **calculados con código** (curva de tipos, diferenciales de crédito, tensión bancaria, apalancamiento, volatilidad, PMI). **El estado lo fija el código** con los umbrales del operador `[ABIERTO]` (P-31), y es el único que usan F y los parámetros contextuales (§10). Un agente lo explica y puede proponer subir de estado, pero esa propuesta solo vale si la aprueba el operador (P2, P15). Alimenta el registro de riesgos geopolíticos. **Solo endurece**: reduce la exposición, baja los límites o exige más margen; nunca relaja nada. Como endurecer también puede impedir invertir, el estado del semáforo aparece en el embudo y en la alarma de sequía (§7). No promete predecir crisis. Si la experiencia lo justifica, se promueve a bloque por el criterio del §2.
 
-**Adaptadores.** `[PROPUESTO]` Ningún bloque conoce a un intermediario, proveedor de datos o modelo de IA concretos: hablan con un puerto de SC-10. Así se puede diseñar y probar todo contra el simulador y cambiar de proveedor sin reabrir los bloques. El operador rellena una **ficha de restricciones reales** (intermediario, tipos de cuenta, API, datos y licencias, presupuesto, jurisdicción fiscal); hasta entonces solo G y SC-2 quedan bloqueados.
+**Adaptadores.** `[RATIFICADO]` (D-08) Ningún bloque conoce a un intermediario, proveedor de datos o modelo de IA concretos: hablan con un puerto de SC-10. Así se puede diseñar y probar todo contra el simulador y cambiar de proveedor sin reabrir los bloques. El operador rellena una **ficha de restricciones reales** (intermediario, tipos de cuenta, API, datos y licencias, presupuesto, jurisdicción fiscal); hasta entonces solo G y SC-2 quedan bloqueados.
 
 **Registros comunes.** `[RATIFICADO]` (D-23) Almacenes que cualquier bloque consulta antes de investigar por su cuenta, con procedencia, fecha y consulta «punto en el tiempo». Nadie investiga dos veces lo mismo.
 
@@ -339,7 +339,7 @@ Los contratos son la arquitectura: un bloque es sustituible mientras cumpla los 
 
 ### Sobre común de valoración (CT-G-02), por capas
 
-Hace comparables los doce perfiles de C sin obligar a nadie a inventar lo que no se puede medir. `[PROPUESTO]`
+Hace comparables los doce perfiles de C sin obligar a nadie a inventar lo que no se puede medir. `[RATIFICADO]` (D-12)
 
 **Capa 1 · obligatoria y medible.**
 
@@ -361,7 +361,7 @@ Hace comparables los doce perfiles de C sin obligar a nadie a inventar lo que no
 
 **Capa 3 · confianza.** Un **tope de confianza fijado ex ante** por clase de comparabilidad (abajo), rebajado si los análisis independientes discrepan (§3). La calibración histórica solo entra cuando hay muestra suficiente (§9).
 
-**Clases de comparabilidad.** Cada perfil de C declara la suya y la ratifica el operador. `[PROPUESTO]`
+**Clases de comparabilidad.** Cada perfil de C declara la suya y la ratifica el operador. `[RATIFICADO]` (D-12) el sistema de tres clases; la clase de cada tipo de activo sigue pendiente (P-15).
 
 | Clase | Criterio | Ejemplos orientativos |
 | --- | --- | --- |
@@ -380,7 +380,7 @@ Hace comparables los doce perfiles de C sin obligar a nadie a inventar lo que no
 
 ## 6. Autonomía, aprobaciones y controles sobre el operador
 
-La autonomía se concede por **cartera × tipo de acción × tamaño** y la aplica el plano de control. `[RATIFICADO]` los tres modos (manual, semiautónomo y autónomo); el detalle es `[PROPUESTO]`.
+La autonomía se concede por **cartera × tipo de acción × tamaño** y la aplica el plano de control. `[RATIFICADO]` los tres modos (manual, semiautónomo y autónomo) y, desde el 9-11-2026, el detalle (D-15); los umbrales siguen pendientes.
 
 | Nivel | Modo | Qué puede hacer el robot | Qué exige al operador |
 | --- | --- | --- | --- |
@@ -414,7 +414,7 @@ Los umbrales viven en la configuración y los fija el operador `[ABIERTO]`. La a
 3. Si caduca sin respuesta, la acción por defecto es **no actuar**.
 4. Las acciones que aumentan riesgo exigen segundo factor y un canal distinto del chat de trabajo.
 
-**Controles sobre el operador.** El operador es la última compuerta y también puede equivocarse, estar cansado o reaccionar a una pérdida. `[PROPUESTO]`
+**Controles sobre el operador.** El operador es la última compuerta y también puede equivocarse, estar cansado o reaccionar a una pérdida. `[RATIFICADO]` (D-15)
 
 1. **Espera obligatoria** (enfriamiento) antes de aprobar acciones que aumentan riesgo cuando se dan condiciones configuradas (por ejemplo, tras una pérdida diaria o fuera de horario).
 2. **Límite mensual de anulaciones de veto**, siempre con motivo registrado.
@@ -499,7 +499,7 @@ Los controles **nunca se relajan solos**: el sistema propone el ajuste y el oper
 
 ## 8. Control, límites nominales, órdenes de protección y kill-switch
 
-El Bloque F es código determinista que ningún agente puede modificar, saltarse o convencer. Su resultado es `APROBADO`, `REDUCIDO` (con el tamaño permitido) o `VETADO`, con motivo y versión de política. `[PROPUESTO]`
+El Bloque F es código determinista que ningún agente puede modificar, saltarse o convencer. Su resultado es `APROBADO`, `REDUCIDO` (con el tamaño permitido) o `VETADO`, con motivo y versión de política. `[RATIFICADO]` (D-14)
 
 **F no depende de los modelos del sistema.** Una referencia mala no puede aprobarse a sí misma, así que F se apoya en dos cosas que no vienen de los agentes:
 
@@ -667,7 +667,7 @@ El **identificador es la clave de todo almacén**: ningún componente recupera u
 | Otros perfiles de C, D, E, F, G, H, I, J | Sin construir como bloques: D, E, F, G y H solo existen como código de referencia mínimo en el marco común; el resto, solo con su ficha de interfaz (§2) |
 | Orquestador y servicios comunes | Por definir según la fase |
 
-**Fases con compuertas.** `[PROPUESTO]` No se empieza una fase sin superar la compuerta de la anterior. Una pieza sin demanda real en la fase en curso no se construye.
+**Fases con compuertas.** `[RATIFICADO]` (D-09) No se empieza una fase sin superar la compuerta de la anterior. Una pieza sin demanda real en la fase en curso no se construye.
 
 | Fase | Contenido | Compuerta para pasar a la siguiente |
 | --- | --- | --- |
@@ -713,15 +713,15 @@ El **identificador es la clave de todo almacén**: ningún componente recupera u
 | D-05 | D compara dentro de cada tipo de activo y entre tipos | RATIFICADO | 2026-11-05 |
 | D-06 | Los 12 tipos de activo del Bloque A y códigos `C-<COD>` | RATIFICADO | 2026-11-05 |
 | D-07 | El operador autoriza modificar la idea base, incluidos los bloques A y B | RATIFICADO | 2026-11-05 |
-| D-08 | Mapa de bloques A–N (con J, Laboratorio de estrategias; K, M, N) y servicios SC-1 a SC-11 | PROPUESTO | 2026-11-05 |
-| D-09 | Construcción por fases con compuertas; Fase 1 = divisas, cartera táctica, L0 y L1 | PROPUESTO | 2026-11-05 |
-| D-10 | A, B y C como núcleo común + perfil; refactorización de A y B en la Fase 2 | PROPUESTO | 2026-11-05 |
-| D-11 | Broker en tres papeles (conversacional, Orquestador, gestores de cartera) | PROPUESTO | 2026-11-05 |
-| D-12 | Sobre común por capas, clases Q/S/K y `NO_ESTIMABLE`; congelación diferida a `1.0.0` | PROPUESTO | 2026-11-05 |
-| D-13 | Ciclos separados de oportunidad y posición; ruta determinista sin LLM | PROPUESTO | 2026-11-05 |
-| D-14 | Stops nativos en el intermediario; F con segunda fuente y límites nominales; kill-switch que no cancela protecciones; vigilante con latido | PROPUESTO | 2026-11-05 |
-| D-15 | Niveles L0–L3, matriz de autonomía, controles sobre el operador y L3 solo en horario supervisado | PROPUESTO | 2026-11-05 |
-| D-16 | Apalancamiento, derivados y CFD no habilitados hasta que el operador lo decida, no antes de la Fase 3 | PROPUESTO | 2026-11-05 |
+| D-08 | Mapa de bloques A–N (con J, Laboratorio de estrategias; K, M, N) y servicios SC-1 a SC-11 | RATIFICADO | 2026-11-09 |
+| D-09 | Construcción por fases con compuertas; Fase 1 = divisas, cartera táctica, L0 y L1 | RATIFICADO | 2026-11-09 |
+| D-10 | A, B y C como núcleo común + perfil; refactorización de A y B en la Fase 2 | RATIFICADO | 2026-11-09 |
+| D-11 | Broker en tres papeles (conversacional, Orquestador, gestores de cartera) | RATIFICADO | 2026-11-09 |
+| D-12 | Sobre común por capas, clases Q/S/K y `NO_ESTIMABLE`; congelación diferida a `1.0.0` | RATIFICADO | 2026-11-09 |
+| D-13 | Ciclos separados de oportunidad y posición; ruta determinista sin LLM | RATIFICADO | 2026-11-09 |
+| D-14 | Stops nativos en el intermediario; F con segunda fuente y límites nominales; kill-switch que no cancela protecciones; vigilante con latido | RATIFICADO | 2026-11-09 |
+| D-15 | Niveles L0–L3, matriz de autonomía, controles sobre el operador y L3 solo en horario supervisado | RATIFICADO | 2026-11-09 |
+| D-16 | Apalancamiento, derivados y CFD no habilitados hasta que el operador lo decida, no antes de la Fase 3 | RATIFICADO | 2026-11-09 |
 | D-17 | Perfiles C como paquetes propios bajo un solo núcleo, con estados ACTIVO y NO\_CONSTRUIDO; solo se construye el que una cartera necesite | RATIFICADO | 2026-11-05 |
 | D-18 | Bloques K (datos), N (consola) y M (riesgo de cartera, Fase 3); noticias como servicio aislado SC-11; sin bloque L | RATIFICADO | 2026-11-05 |
 | D-19 | Criterio de bloque nuevo (3 de 5) y tope de 8 bloques activos en las Fases 1 y 2 | RATIFICADO | 2026-11-05 |
