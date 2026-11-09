@@ -24,7 +24,7 @@ Nada cuenta como hecho sin pruebas (regla 5 de `CLAUDE.md`). Esta fase la hace q
 
 ## Reglas
 
-- Las líneas base nunca bajan: A ≥ 117, A-Forex ≥ 68, B ≥ 141 (las de `tools/cuotas.txt`) y todas las suites del marco común de C. Quitar pruebas no es arreglar nada.
+- Las líneas base nunca bajan: A ≥ 172, A-Forex ≥ 68, B ≥ 141 (las de `tools/cuotas.txt`) y todas las suites del marco común de C. Quitar pruebas no es arreglar nada.
 - Sin red y con la hora fija: las pruebas no dependen del momento en que se ejecutan.
 - Cada criterio de aceptación del plan tiene al menos una prueba.
 

@@ -2,7 +2,7 @@
 
 | Campo | Valor |
 | --- | --- |
-| Estado | EN CURSO |
+| Estado | EN QA |
 | Pieza | bloque_a |
 | Planifica · implementa · QA | claude · claude (orquestación) y un segundo agente (evaluación) · un revisor nuevo sin contexto |
 | Aprobación del operador | Aprobada el 2026-11-10: «Quiero que apliques todas las propuestas que consideres oportunas ahora mismo y demos por finalizado el bloque A». Los valores que decide el operador van como `[PROPUESTO]` hasta T-57 |
@@ -88,3 +88,4 @@ Aplicar al ejecutor del Bloque A las propuestas de la revisión T-53 (`.docs/tic
 
 - 2026-11-10 · ABIERTO · creado con nuevo_ticket.sh
 - 2026-11-10 · EN CURSO · plan escrito; reparto de archivos entre claude y un segundo agente
+- 2026-11-10 · EN QA · implementado y juntado (claude + segundo agente); A con 172 pruebas; gate 12/12

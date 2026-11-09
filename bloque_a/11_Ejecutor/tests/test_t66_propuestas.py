@@ -238,3 +238,29 @@ def test_pa21_el_esquema_finalista_admite_la_probabilidad_propia():
 def test_config_de_pruebas_activa_los_doce_perfiles():
     assert perfiles_activos(config_pruebas()) == list(CLASES)
     assert json.dumps(cargar_config()["contrarias"]) == json.dumps({"moderadas_para_fragil": 2})
+
+
+# ---------------------------------------------------------------- PA-10 · un certificado entra en vigor solo por CT-04
+def test_pa10_ct04_aprueba_un_certificado_propuesto_y_rechaza_uno_desconocido(tmp_path):
+    from test_t66_evaluacion import _celda_habil
+    b = _bloque(tmp_path)
+    b.almacen.reloj.fijar(AS_OF)
+    _celda_habil(b.almacen)
+    cid = b.evaluador.revisar_certificados(AS_OF)["emitidos"][0]["id"]
+    assert b.evaluador.certificados_vigentes(AS_OF) == []                        # nace PROPUESTO: no habilita nada
+    r = b.decision({"aprobar_certificados": ["CERT-2099-9999"]}, AS_OF)
+    assert r["certificados_aprobados"] == [] and r["rechazos"] and r["estado"] == "REGISTRADA"
+    r = b.decision({"aprobar_certificados": [cid]}, AS_OF)
+    assert r["certificados_aprobados"] == [cid] and r["estado"] == "APLICADA"
+    assert [c["id"] for c in b.evaluador.certificados_vigentes(AS_OF)] == [cid]
+
+
+# ---------------------------------------------------------------- PA-09 · el informe de backtest separa lo no admisible
+def test_pa09_backtest_con_modelo_real_separa_las_metricas_no_admisibles(tmp_path):
+    from bloque_a.backtest import ejecutar_backtest
+    r = ejecutar_backtest(config_pruebas(), "2026-03-06", "2026-05-22", str(DATOS), str(RUTA_UNIVERSO_EJEMPLO), str(tmp_path / "bt"),
+                          clases=["DIV"], cliente=ClienteConMemoria())
+    m = r["metricas"]
+    assert m["anonimizado"] is True and m["excluidos_contaminacion"]["total"] > 0
+    assert m["por_clase_horizonte_con_no_admisibles"] and any("PA-09" in x for x in m["advertencias"])
+    assert m["certificados"]["emitidos"] == []

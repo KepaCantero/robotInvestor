@@ -108,7 +108,7 @@ def ejecutar_backtest(cfg: Dict, desde: str, hasta: str, datos: str, universo: s
     uni = cargar_universo(universo)
     cli = cliente or crear_cliente(tipo_cliente, cfg, replay, replay_modo)
     bloque = Bloque(cfg, prov, uni, cli, salida_p / "estado", salida_p / "entregables",
-                    anonimizar=bt.get("anonimizar", False) if anonimizar is None else anonimizar)
+                    anonimizar=bt.get("anonimizar", "auto") if anonimizar is None else anonimizar)
     fechas = fechas_ciclo(desde, hasta, frecuencia or bt.get("frecuencia", "semanal"), int(bt.get("dia_semana", 4)))
     senales, consumo, runs = [], [], []
     for f in fechas:
@@ -150,6 +150,13 @@ def ejecutar_backtest(cfg: Dict, desde: str, hasta: str, datos: str, universo: s
     metr_top = bloque.evaluador.metricas(fecha_final, completas=False, solo_informe=True)
     certs = bloque.evaluador.revisar_certificados(fecha_final)
     advert = []
+    # PA-09 (T-66): los PRG con contaminacion_posible no cuentan como evidencia; se muestran aparte, solo descriptivos
+    excl = bloque.evaluador.excluidos_contaminacion(fecha_final)
+    metr_no_admisibles = None
+    if excl.get("total"):
+        metr_no_admisibles = bloque.evaluador.metricas(fecha_final, completas=False, admisibles=False)
+        advert.append(f"{excl['total']} pronósticos hechos con un modelo real antes de su fecha de corte: no cuentan para "
+                      "certificados ni aprendizaje (PA-09). Sus métricas van aparte, solo como descripción.")
     corte = bt.get("fecha_corte_modelo")
     if corte and pd.Timestamp(desde) < pd.Timestamp(corte):
         advert.append(f"FUGA POR CONOCIMIENTO DEL MODELO: el periodo empieza el {desde}, antes de la fecha de corte configurada "
@@ -165,13 +172,19 @@ def ejecutar_backtest(cfg: Dict, desde: str, hasta: str, datos: str, universo: s
                 "pronosticos": {"total": len(pron), "resueltos": n_res, "abiertos": sum(1 for p in pron if p["estado"] == "ABIERTO"),
                                 "no_resolubles": sum(1 for p in pron if p["estado"] == "NO_RESOLUBLE")},
                 "por_clase_horizonte": {k: _resumen_celda(m) for k, m in metr.items()},
+                "excluidos_contaminacion": excl,
+                "por_clase_horizonte_con_no_admisibles": ({k: _resumen_celda(m) for k, m in metr_no_admisibles.items()}
+                                                          if metr_no_admisibles is not None else None),
                 "solo_opciones_publicadas": {k: {"n": m["n"], "acierto": (m.get("acierto") or {}).get("tasa"), "brier": m.get("brier"),
                                                  "bss": (m.get("bss") or {}).get("valor"),
                                                  "rentabilidad_relativa_media_top3_vs_indice": m.get("rentabilidad_relativa_media_top3")}
                                              for k, m in metr_top.items()},
                 "certificados": {"emitidos": [c["id"] for c in certs["emitidos"]] + [c["id"] for c in bloque.evaluador.certificados_vigentes(fecha_final)],
+                                 "propuestos_pendientes_de_aprobacion": [c["id"] for c in bloque.evaluador.certificados_propuestos(fecha_final)],
                                  "celdas_evaluadas": certs["evaluadas"], "celdas_con_muestra_insuficiente": certs["insuficientes"],
-                                 "criterio": "Anexo A: n ≥ 100, IC 90 % del BSS > 0 (Holm), ECE ≤ q90 del nulo y < 0,15"},
+                                 "criterio": "Anexo A: n ≥ 100 efectivas (n_eff por fechas, T-66), IC 90 % del BSS > 0 (Holm), "
+                                             "ECE ≤ q90 del nulo y < 0,15; con aprendizaje.solo_endurecer, nace PROPUESTO "
+                                             "y lo aprueba el operador por CT-04"},
                 "consumo_total": tot, "runs": runs}
     metricas["certificados"]["emitidos"] = sorted(set(metricas["certificados"]["emitidos"]))
     (salida_p / "metricas.json").write_text(json.dumps(metricas, ensure_ascii=False, indent=1, default=str), encoding="utf-8")

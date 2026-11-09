@@ -43,3 +43,25 @@ El Bloque A que se ejecuta ya es, en gran parte, código determinista: selecció
 - **CS-09:** valor en UC de un cálculo PLAN_STD (0,1 en la configuración; el Anexo A sugiere 1). Encaja con PA-08.
 - **INC-T53-05:** la regla de «confianza» del paquete frente a la barra del Redactor.
 - **INC-T53-03:** umbral de revocación de certificados (0,12, sin respaldo en el Anexo A). Para la sesión T-57.
+
+## Estado tras T-66 (10-11-2026)
+
+El operador pidió aplicar las propuestas oportunas y dar por terminado el Bloque A.
+
+**Aplicadas en el ejecutor** (`.docs/tickets/T-66/`):
+- PA-01;
+- PA-03 (muestra efectiva);
+- PA-05 (sin otro proveedor);
+- PA-09;
+- PA-10;
+- PA-14;
+- PA-21.
+
+**Aplazadas, con su destino** (deuda técnica T-67):
+- PA-02 y PA-03 (torneo);
+- PA-04 (con T-54);
+- PA-06 y PA-07 (validación con llamadas reales);
+- PA-08;
+- PA-13 y PA-15 a PA-20.
+
+Lo que decide el operador está en T-57: PA-05 (proveedor), PA-08 (tope), PA-11 y PA-12.

@@ -5,7 +5,7 @@ fecha: 2026-11-09
 tipo: estado
 etiquetas: [bloque_a, T-53, qa]
 fuente: .docs/tickets/T-53/
-vigencia: vigente
+vigencia: sustituida por compartida/2026-11-10_bloque-a-terminado
 ---
 
 **Estado del Bloque A tras T-53 (9-11-2026).**

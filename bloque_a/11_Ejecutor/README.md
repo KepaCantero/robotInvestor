@@ -225,3 +225,34 @@ Revisión independiente del ejecutor con 59 pruebas nuevas (de 58 a 117, con las
   - La bóveda valida la caducidad en ISO antes de escribir, no devuelve credenciales caducadas y crea el archivo de secretos con permisos 0600.
 - **Consultas al Broker.** Una consulta BLOQUEANTE sin tipos pausa todo el alcance; si queda pausado todo, el run es PARCIAL y no analiza nada.
 
+
+## Propuestas de la revisión aplicadas (T-66, 10-11-2026)
+
+De las 21 propuestas de T-53 (`.docs/tickets/T-53/propuestas.md`), se aplican las que no necesitan otro proveedor de IA, K ni llamadas reales a la API. A pasa de 117 a 172 pruebas. Detalle en `.docs/tickets/T-66/`. Lo que cambia para quien lo usa:
+
+- **Perfiles activos (PA-01).**
+  - Por defecto solo se analiza **divisas** (`perfiles.activos: [DIV]`, `[PROPUESTO]`).
+  - Un tipo no activo que se pide responde NO_ESTIMABLE y se declara.
+  - Para activar más tipos, se añaden a `perfiles.activos` o se cambia `clases_activas` por CT-04.
+  - Si no queda nada que analizar, el run se cierra PARCIAL con `entrega: SIN_RESULTADO`, sin redactar.
+- **Contradictor (PA-05, sin otro proveedor).**
+  - AG-11 recibe la afirmación verificable y la evidencia, sin la tesis, el mecanismo, el pre-mortem ni las dimensiones del Analista.
+  - Una objeción fuerte solo queda resuelta si el Analista cita evidencia verificable (`evidencia_citada`) **y** AG-11 lo confirma en una contrarréplica.
+  - El veredicto lo calcula una regla (`contrarias.moderadas_para_fragil`). Una tesis refutada no es elegible y una frágil sale con confianza «especulativo» (INC-T66-01 y INC-T66-02).
+- **Contaminación por memoria del modelo (PA-09).**
+  - `backtest.anonimizar: auto` anonimiza con un modelo real; con el simulado no hace falta.
+  - Los pronósticos de backtest hechos con un modelo real antes de `backtest.fecha_corte_modelo` llevan `contaminacion_posible`. No cuentan para certificados, recalibración, lecciones, degradación de H5 ni historial.
+  - El informe de backtest los muestra aparte, solo como descripción.
+- **Aprendizaje que solo endurece (PA-10).** Con `aprendizaje.solo_endurecer: true` (`[PROPUESTO]`):
+  - un certificado que pasa el criterio nace **PROPUESTO**: el operador lo aprueba por CT-04 (`{"aprobar_certificados": [ids]}`);
+  - la recalibración de pesos nunca pasa sola a producción;
+  - revocar certificados y degradar H5 siguen siendo automáticos.
+- **Muestra efectiva (PA-03, en parte).**
+  - Los certificados exigen `n_eff ≥ min_certificar`. `n_eff` sale del efecto de diseño por conglomerados de fecha.
+  - El intervalo del BSS es un bootstrap por fechas, con al menos `evaluacion.min_conglomerados_bootstrap` fechas.
+- **Ablación (PA-14).** Cada run guarda en F5 (`ablacion`) dos comparaciones, sin coste en tokens:
+  - el top-3 que saldría sin las objeciones del Contradictor;
+  - cuántas opciones coinciden con una referencia simple, el top-3 por señal compuesta.
+- **Probabilidad del Analista (PA-21).**
+  - El Analista puede dar `probabilidades_propias` por horizonte, que se guardan en F4 como `prob_analista`.
+  - Las métricas comparan su Brier con el de Prospectiva. No decide nada.
