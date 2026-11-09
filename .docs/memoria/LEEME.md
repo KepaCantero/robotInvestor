@@ -6,9 +6,9 @@ Memoria compartida entre Claude y Astra. Sirve para que cada agente arranque sab
 
 | Carpeta | Quién escribe | Qué guarda |
 | --- | --- | --- |
-| `memoria/compartida/` | Los dos agentes y el operador, cada uno con entradas firmadas | Lo que necesitan los dos: estado del proyecto, reglas del operador, convenciones, traspasos de tareas |
-| `memoria/claude/` | Solo Claude | Lecciones y contexto de trabajo propios de Claude |
-| `memoria/<agente>/` (p. ej. `astra`) | Solo ese agente | Igual, para cada agente. **Cada agente crea su carpeta la primera vez**, con un `INDICE.md` vacío copiando el formato de los demás |
+| `.docs/memoria/compartida/` | Los dos agentes y el operador, cada uno con entradas firmadas | Lo que necesitan los dos: estado del proyecto, reglas del operador y convenciones |
+| `.docs/memoria/claude/` | Solo Claude | Lecciones y contexto de trabajo propios de Claude |
+| `.docs/memoria/<agente>/` (p. ej. `astra`) | Solo ese agente | Igual, para cada agente. **Cada agente crea su carpeta la primera vez**: `.docs/scripts/memoria.sh <agente> …` la crea con su `INDICE.md` |
 
 Cada carpeta tiene un `INDICE.md` con una línea por entrada. **Se lee primero el índice y después solo las entradas necesarias**: la memoria es un almacén indexado, no contexto que se carga entero (regla 6 de `CLAUDE.md`).
 
@@ -16,11 +16,12 @@ Cada carpeta tiene un `INDICE.md` con una línea por entrada. **Se lee primero e
 
 - **Al empezar una sesión:** este LEEME, el índice de `compartida/`, el de tu carpeta y el de la carpeta del otro agente. Abre las entradas que toquen la tarea.
 - **Al terminar una tarea o una sesión:** escribe lo que a tu yo futuro o al otro agente le ahorraría tiempo o errores. No escribas lo que ya está en el código, en la Constitución o en la deuda técnica: enlázalo.
-- **Al pasar una tarea al otro agente:** una entrada de tipo `traspaso` en `compartida/`.
+- **Al pasar una tarea al otro agente:** el traspaso va en `handoff.md`, dentro del ticket (`.docs/tickets/T-NN/`), no en la memoria.
+- **Lo que pasó cada día** va al diario (`.docs/diario/`); la memoria guarda solo lo que conviene saber siempre.
 
 ## Formato de una entrada
 
-Un archivo por entrada: `<AAAA-MM-DD>_<tema-corto>.md`, de como mucho unas 40 líneas.
+Un archivo por entrada: `<AAAA-MM-DD>_<tema-corto>.md`, de como mucho unas 40 líneas. Lo más cómodo es crearla con `.docs/scripts/memoria.sh`, que pone la cabecera, la indexa y, con `--sustituye`, marca la anterior.
 
 ```markdown
 ---
