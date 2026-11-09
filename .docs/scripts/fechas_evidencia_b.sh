@@ -35,14 +35,15 @@ for caso, hecho, publicado, disponible, alta, esperado in casos:
         ent.fijar_as_of(corte)
         coord = Coordinador(ent)
         catalogo = coord._referencias_contraste({"pet_id": pet, "seleccion": {}})
-        obj = {"obj_id": "OBJ-1", "argumento": f"Retrasos comunicados el {incidente}.",
+        obj = {"obj_id": "OBJ-1", "x_fecha_incidente": incidente, "argumento": f"Retrasos comunicados el {incidente}.",
                "fuerza": "fuerte", "resuelta": False}
         coord._aplicar_respuestas([obj], {"OBJ-1": {"resuelta": True, "respuesta": "Los pedidos se entregan a tiempo.",
                                                    "evidencia_nueva": [ref]}}, catalogo)
         observado = obj["resuelta"]
         visible = "sí" if ref in catalogo else "no"
         print(f"{caso} | {visible} | {'cerrada' if observado else 'abierta'} | {'cerrada' if esperado else 'abierta'}")
-        fallos += observado != esperado
+        visibilidad_esperada = max(alta, publicado, disponible) <= corte
+        fallos += observado != esperado or (ref in catalogo) != visibilidad_esperada
 print(f"{fallos} discrepancias en {len(casos)} casos.")
 raise SystemExit(1 if fallos else 0)
 PY

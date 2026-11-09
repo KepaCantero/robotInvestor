@@ -19,7 +19,7 @@ def test_cierre_fuerte_requiere_fuente_en_la_caja(hacer_entorno, rapido, monkeyp
 
     def critico(m, c, r):
         informe = mr._refutacion(m, c, r)
-        informe["objeciones"] = [{"objeto": "TESIS", "fuerza": "fuerte", "argumento": "Han aumentado los retrasos."}]
+        informe["objeciones"] = [{"objeto": "TESIS", "fuerza": "fuerte", "fecha_incidente": "2025-01-10", "argumento": "Han aumentado los retrasos."}]
         return informe
 
     def director(m, c, r):
@@ -63,9 +63,9 @@ def test_cierre_fuerte_requiere_fuente_en_la_caja(hacer_entorno, rapido, monkeyp
     (["DAT-B-2025-0001", "DAT-B-2025-0001"], "Comprobación documentada.", True),
 ])
 def test_fronteras_de_la_respuesta(citas, texto, cierra):
-    obj = {"obj_id": "OBJ-1", "fuerza": "fuerte", "resuelta": False}
+    obj = {"obj_id": "OBJ-1", "fuerza": "fuerte", "x_fecha_incidente": "2025-01-10", "resuelta": False}
     Coordinador._aplicar_respuestas([obj], {"OBJ-1": {"resuelta": True, "respuesta": texto, "evidencia_nueva": citas}},
-                                   {"DAT-B-2025-0001": "Dato de esta petición"})
+                                   {"DAT-B-2025-0001": {"fecha_fenomeno": "2025-01-14", "fecha_publicacion": "2025-01-15", "conocible_desde": "2025-01-15"}})
     assert obj["resuelta"] is cierra
     if cierra:
         assert obj["x_evidencia_respuesta"] == ["DAT-B-2025-0001"]

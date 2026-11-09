@@ -194,7 +194,8 @@ def _objeciones_candidato(objeciones, cid, *, para_c=False):
         if not para_c:
             aviso["resuelta"] = o["resuelta"]
         if "x_evidencia_respuesta" in o:
-            aviso.update(x_evidencia_respuesta=o["x_evidencia_respuesta"], x_resuelta=o["resuelta"])
+            aviso.update(x_evidencia_respuesta=o["x_evidencia_respuesta"], x_resuelta=o["resuelta"],
+                         x_fecha_incidente=o.get("x_fecha_incidente"), x_fechas_evidencia=o.get("x_fechas_evidencia", {}))
             if "x_motivo_abierta" in o:
                 aviso["x_motivo_abierta"] = o["x_motivo_abierta"]
         if "x_eslabon_id" in o:

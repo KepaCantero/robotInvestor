@@ -13,7 +13,7 @@ def test_objecion_individual_conserva_el_contexto_y_afecta_solo_al_finalista(hac
         informe = mr._refutacion(mensaje, contexto, azar)
         for objecion in informe["objeciones"]:
             if objecion["objeto"] != "TESIS":
-                objecion.update(fuerza="fuerte", argumento="El fabricante perdió un contrato importante.")
+                objecion.update(fuerza="fuerte", fecha_incidente="2025-01-10", argumento="El fabricante perdió un contrato importante.")
         return informe
 
     monkeypatch.setitem(mr._TAREAS, ("AG-B14", "refutacion"), refutar)

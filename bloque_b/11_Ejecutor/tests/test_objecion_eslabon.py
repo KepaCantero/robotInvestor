@@ -21,7 +21,7 @@ def test_retraso_transformadores(hacer_entorno, rapido, monkeypatch, objeto, eid
 
     def critico(m, c, r):
         informe = mr._refutacion(m, c, r)
-        o = {"objeto": objeto, "fuerza": "fuerte", "argumento": argumento}
+        o = {"objeto": objeto, "fuerza": "fuerte", "fecha_incidente": "2025-01-10", "argumento": argumento}
         if eid is not None:
             o["eslabon_id"] = eid
         informe["objeciones"] = [o]

@@ -4,15 +4,14 @@ import json
 from pathlib import Path
 
 import pytest
-
-from bloque_b import mock_respuestas as mr
-from bloque_b import seguimiento as sg
 from bloque_b.broker import decision
 from bloque_b.cli import main as cli_main
 from bloque_b.herramientas import ht09
 from bloque_b.orquestacion import Coordinador
-
 from conftest import peticion_redes
+
+from bloque_b import mock_respuestas as mr
+from bloque_b import seguimiento as sg
 
 
 def _paquete(res):
@@ -286,9 +285,9 @@ def test_h5_hitos_y_probabilidades_cualitativas(hacer_entorno, rapido):
     (1, "incertidumbre_abierta"),
 ])
 def test_resolucion_de_objecion_fuerte_exige_booleano(indicador, estado):
-    objecion = {"obj_id": "OBJ-1", "fuerza": "fuerte", "resuelta": False}
+    objecion = {"obj_id": "OBJ-1", "fuerza": "fuerte", "x_fecha_incidente": "2025-01-10", "resuelta": False}
     respuesta = {"respuesta": "Resultado del contraste", "resuelta": indicador, "evidencia_nueva": ["EVD-B-2025-0001"]}
-    Coordinador._aplicar_respuestas([objecion], {"OBJ-1": respuesta}, {"EVD-B-2025-0001": "Medición"})
+    Coordinador._aplicar_respuestas([objecion], {"OBJ-1": respuesta}, {"EVD-B-2025-0001": {"fecha_fenomeno": "2025-01-14", "fecha_publicacion": "2025-01-15", "conocible_desde": "2025-01-15"}})
     assert objecion["estado_contraste"] == estado
     assert objecion["resuelta"] is (estado == "resuelta")
 
@@ -304,7 +303,7 @@ def test_objecion_fuerte_sobre_la_tesis_en_la_entrega(
     def refutar(mensaje, contexto, azar):
         informe = mr._refutacion(mensaje, contexto, azar)
         objecion = next(o for o in informe["objeciones"] if o["objeto"] == "TESIS" and o["fuerza"] == "moderada")
-        objecion["fuerza"] = "fuerte"
+        objecion.update(fuerza="fuerte", fecha_incidente="2025-01-10")
         return informe
 
     def responder(mensaje, contexto, azar):
