@@ -285,7 +285,9 @@ def test_certificado_emitido_con_muestra_suficiente(tmp_path, universo):
         pid = f"PRG-2026-{i + 1:04d}"
         b.almacen.escribir("F4", "AG-10", {"tipo_entrada": "ALTA", "prg_id": pid, "clase": "RF", "horizonte": "H3", "prob_interna": p,
                                            "referencia_ingenua": {"valor_o_prob": 0.5}, "en_informe": True, "sentido": "POSITIVO",
-                                           "fecha_emision": "2025-01-02", "estado": "ABIERTO"})
+                                           "fecha_emision": "2025-01-02", "estado": "ABIERTO",
+                                           # T-66 (PA-03): pronósticos independientes, cada uno con su fecha de resolución
+                                           "fecha_resolucion": str((pd.Timestamp("2025-07-02") + pd.offsets.BDay(i)).date())})
         b.almacen.escribir("F4", "AG-20", {"tipo_entrada": "RESOLUCION", "prg_id": pid, "estado": "RESUELTO",
                                            "resolucion": {"resultado_binario": o, "valor_observado": 0.01, "comprobacion_fuga": "SUPERADA",
                                                           "fecha_resuelto": "2025-07-02"}})

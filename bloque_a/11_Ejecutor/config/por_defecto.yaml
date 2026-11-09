@@ -227,6 +227,17 @@ evaluacion:
   ece_revocacion: 0.12            # revocación de un certificado por calibración; NO figura en el Anexo A (incidencia INC-T53-03)
   degradacion_h5_tasa_min: 0.50   # Anexo A, degradación automática de H5 (12.2, P-42)
   degradacion_h5_min_hitos: 20    # ídem
+  # T-66 · PA-03, muestra efectiva: los certificados exigen n_eff ≥ min_certificar (efecto de diseño de Kish por
+  # conglomerados de fecha de resolución; si falta, de emisión) y el IC del BSS sale de un bootstrap por fechas
+  min_conglomerados_bootstrap: 10 # fechas distintas mínimas para dar IC del BSS por conglomerados; con menos, sin IC (no certifica)
+
+# T-66 · PA-10 · [PROPUESTO] hasta T-57. Pregunta del cuestionario: «¿Ajustes automáticos solo prudentes?»
+# true = el aprendizaje automático solo endurece: degradar H5 y revocar certificados siguen siendo automáticos; un
+# certificado nuevo (habilita probabilidades numéricas) nace PROPUESTO hasta que el operador lo aprueba por CT-04
+# (aprobar_certificados), y la recalibración de pesos de RK es siempre una propuesta (aplicado_en_produccion: false).
+# false = comportamiento anterior (certificado VIGENTE al emitirse; la recalibración sigue evaluacion.aplicar_recalibracion).
+aprendizaje:
+  solo_endurecer: true
 
 # T-53 · Bandas verbales y probabilidad interna (Anexo A, «Calibrable»); los huecos van a la banda más cercana a 50 %
 bandas_verbales:
