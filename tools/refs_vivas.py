@@ -10,7 +10,8 @@ T-65 (QA de T-53, H-11): los informes de las carpetas `revisores/` de los ticket
 se revisan como los demás documentos (antes quedaban todos fuera). Para que una
 cita correcta no cuente como rota:
 - una orden con argumentos (`.docs/scripts/gate.sh --completo`) se comprueba por
-  su primera palabra, si es un script (.sh o .py);
+  su primera palabra, si es un script (.sh o .py), y por cada argumento que empiece
+  por una raíz conocida (QA r01 de T-65, H-06);
 - el sufijo de líneas (`archivo.py:10-20`) se quita;
 - una ruta del paquete Python de un bloque (`bloque_a/orquestacion.py`, que vive en
   `bloque_a/11_Ejecutor/bloque_a/`) cuenta como viva.
@@ -44,14 +45,22 @@ def planificados(raiz: Path) -> set:
     return {l.split("#")[0].strip() for l in allow.read_text().splitlines() if l.split("#")[0].strip()}
 
 
-def normalizar_cita(cita: str) -> str:
-    """La ruta que nombra una cita, sin sufijo de líneas. Si es una orden con argumentos (la primera palabra es un script
-    .sh o .py), la primera palabra; los nombres de archivo con espacios se conservan enteros."""
+def rutas_de_cita(cita: str) -> list[str]:
+    """Las rutas que nombra una cita, sin sufijo de líneas. Si es una orden con argumentos (la primera palabra es un script
+    .sh o .py), el script y cada argumento con forma de ruta del repo; si no, la cita entera (los nombres de archivo con
+    espacios se conservan enteros)."""
     r = cita.strip()
     partes = r.split()
     if len(partes) > 1 and partes[0].endswith((".sh", ".py")):
-        r = partes[0]
-    return PAT_LINEAS.sub("", r).strip("/")
+        candidatas = [partes[0]] + [a for a in partes[1:] if PAT_LINEAS.sub("", a).strip("/").startswith(RAICES_VALIDAS)]
+    else:
+        candidatas = [r]
+    return [PAT_LINEAS.sub("", c).strip("/") for c in candidatas]
+
+
+def normalizar_cita(cita: str) -> str:
+    """La ruta principal de una cita (la primera de `rutas_de_cita`)."""
+    return rutas_de_cita(cita)[0]
 
 
 def existe(raiz: Path, r: str) -> bool:
@@ -74,13 +83,13 @@ def comprobar(raiz: Path) -> list[str]:
             # no son rutas verificables.
             if "…" in bruta or "<" in bruta or ">" in bruta or "::" in bruta or "T-NN" in bruta or "AAAA" in bruta:
                 continue
-            r = normalizar_cita(bruta)
-            if not r.startswith(RAICES_VALIDAS):
-                continue
-            if r in plan or bruta.strip("/") in plan:
-                continue
-            if not existe(raiz, r):
-                rotas.append(f"{doc.relative_to(raiz)} cita ruta inexistente: {r}")
+            for r in rutas_de_cita(bruta):
+                if not r.startswith(RAICES_VALIDAS):
+                    continue
+                if r in plan or bruta.strip("/") in plan:
+                    continue
+                if not existe(raiz, r):
+                    rotas.append(f"{doc.relative_to(raiz)} cita ruta inexistente: {r}")
     return rotas
 
 

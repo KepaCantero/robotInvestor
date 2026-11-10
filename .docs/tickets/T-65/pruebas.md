@@ -9,6 +9,18 @@
 | mypy `bloque_a` | 123 (cuota 123) | 123 |
 | `bloque_a_forex`, `bloque_b` | 68 y 174 | sin tocar (en el gate) |
 
+### Tras la QA r01
+
+| Suite | b699d4f (r01) | Ahora (r02) |
+| --- | --- | --- |
+| `bloque_a/11_Ejecutor` (pytest) | 265 pasan | **285 pasan** (+20 en `tests/test_t65_qa_r01.py`) |
+| `tests/test_t65_qa_r01.py` con el código de b699d4f | — | 15 fallan y 5 pasan: los 5 son los casos de H-04 que ya se rechazaban y las pruebas de efecto de H-08, que se comprueban con mutaciones |
+| `.docs/scripts/prueba_refs_vivas.py` | 6/6 | 8/8 (con el script de b699d4f, 7/8: falla «argumento roto de una orden falla») |
+| `.docs/tickets/T-65/mutaciones.py` | 39/39 | **50/50** (11 nuevas, con prefijo «r01») |
+| Sondas de la QA `r01_04_cierre_malo_antiguo.py` y `r01_01_datos_raros.py` | con hallazgos: H-01; H-02 y la parte D (H-07) | «HALLAZGOS: 0» en r01_04, y «HALLAZGOS: 0 · INFO: 0» en r01_01: parte D sin rechazo y parte E PARCIAL, sin caer |
+| ruff (tres ejecutores) | 3083 | 3083 |
+| mypy `bloque_a` | 123 | 123 |
+
 ## Criterio de aceptación → prueba
 
 | Criterio | Prueba |
@@ -21,6 +33,22 @@
 | CA-6 · sin tocar lo prohibido ni el corpus | `git status`: solo `bloque_a/11_Ejecutor/`, `.docs/tickets/T-65/`, `.docs/scripts/prueba_refs_vivas.py` y `tools/refs_vivas.py` (ver la nota de H-11). Gate `corpus-integridad` en verde |
 
 ## Regresiones
+
+### Ronda r02 (hallazgos de la QA r01)
+
+Cada prueba falla con el código de b699d4f, en una copia (`git worktree add --detach` en b699d4f más el archivo de pruebas nuevo), o con su mutación en `mutaciones.py` (prefijo «r01»):
+
+| Hallazgo | Prueba | Con b699d4f | Mutación |
+| --- | --- | --- | --- |
+| H-01 | `test_r01_h01_cierre_malo_fuera_de_la_ventana_no_vacia_el_tipo` (0 y −1), `test_r01_h01_valor_en_valida_solo_el_cierre_que_devuelve`, `test_r01_h01_un_precio_invalido_excluye_y_declara_el_simbolo` | fallan las 4 | `valor_en` valida toda la historia · precio inválido en silencio: fallan |
+| H-02 | `test_r01_h02_csv_ilegible_falla_cerrado_por_simbolo` (vacío, binario, UTF-16) | fallan las 3 | lectura sin capturar: falla |
+| H-03 | gate `refs-vivas` en una copia limpia | 11/12 | — |
+| H-04 | `test_r01_h04_festivo_fijo_con_formato_no_estricto_se_rechaza` | fallan `" 1-25"` y `"١٢-٢٥"` (los otros 3 ya se rechazaban) | «MM-DD» laxo: falla |
+| H-05 | `test_r01_h05_frecuencias_y_presupuestos_sin_respaldo_en_el_codigo`, `test_r01_h05_textos_con_los_dias_de_la_configuracion` | fallan | respaldo 7 · «10 días» fijo: fallan |
+| H-06 | `prueba_refs_vivas.py`, «argumento roto de una orden falla» | falla | — |
+| H-07 | `test_r01_h07_dos_proxies_sin_solape_no_tumban_los_clusteres` | falla | sin mirar el solape: falla |
+| H-08 | `test_r01_h08_pregunta_repetida_…`, `test_r01_h08_recalibracion_de_rk_…`, `test_r01_h08_ps1_…` | pasan las dos primeras (b699d4f ya leía la configuración); PS1 falla (no había `_ps1`) | 3 fijo · paso 0,05 fijo · 2 raíces fijas: fallan las tres (con b699d4f, las dos primeras pasaban la suite entera) |
+| H-11 | `test_r01_h11_limitacion_de_la_tasa_base_con_coma_decimal` | falla | punto decimal: falla |
 
 Las comprueba `python3 .docs/tickets/T-65/mutaciones.py`. El script quita cada corrección (sustituye el texto en el archivo), ejecuta su prueba y restaura el archivo comprobando su huella. Resultado: **39/39 FALLA** (todas detectadas).
 
@@ -56,7 +84,9 @@ Las comprueba `python3 .docs/tickets/T-65/mutaciones.py`. El script quita cada c
 
 Comando: `.docs/scripts/gate.sh` con `--completo` (llama a `./tools/check_all.sh`).
 
-**12/12 en verde** (2026-11-10, log `.docs/scripts/.logs/gate_20261110_133352.log`; la carpeta `.logs` no se sube):
+**Ronda r01 (commit b699d4f).** En el árbol de trabajo dio 12/12, pero la QA lo repitió desde una copia limpia y dio 11/12: `refs-vivas` fallaba porque este `pruebas.md` citaba con forma de ruta un log local, que no se sube (H-03). La cita se ha quitado: los logs se nombran solo por su archivo, sin ruta.
+
+**Ronda r02: 12/12 en verde desde una copia limpia** (2026-11-10, log gate_20261110_143201.log, que no se sube). La copia es un `git worktree add --detach` de HEAD (c482bf1, que contiene b699d4f) en el scratchpad, con los archivos de T-65 sin commit y un enlace a `.venv`. Se repitió `tools/refs_vivas.py` en la copia con los documentos finales del ticket, y pasa.
 
 | Gate | Resultado |
 | --- | --- |
@@ -64,15 +94,24 @@ Comando: `.docs/scripts/gate.sh` con `--completo` (llama a `./tools/check_all.sh
 | refs-vivas | ✓ |
 | ruff (hallazgos) | ✓ (3083 ≤ 3109) |
 | mypy bloque_a · bloque_a_forex · bloque_b | ✓ (123 · 174 · 159) |
-| pytest bloque_a | ✓ 265 passed |
+| pytest bloque_a | ✓ 285 passed |
 | pytest bloque_a_forex | ✓ 68 passed |
 | pytest bloque_b | ✓ 174 passed |
-
-Una primera ejecución (`gate_20261110_132654.log`) dio 11/12. Falló `refs-vivas` por dos citas de este mismo ticket (una ruta de ejemplo y un comodín en `analisis-tecnico.md`, ya corregidas) y por una de `.docs/tickets/T-80/qa.md`, de otro agente, que ya no fallaba en la segunda ejecución.
 
 Además: `python3 tools/refs_vivas.py` pasa, y ya no excluye las carpetas `revisores/`. Con el script anterior, el gate `refs-vivas` fallaba por una cita de otro ticket en curso (`.docs/scripts/gate.sh --completo` en `.docs/tickets/T-80/analisis-tecnico.md`); con el arreglo de H-11, esa cita cuenta como viva.
 
 ## Comandos usados
+
+Ronda r02 (además de los de abajo):
+
+```bash
+cd bloque_a/11_Ejecutor && ../../.venv/bin/python -m pytest -q -p no:cacheprovider                         # 285
+../../.venv/bin/python ../../.docs/tickets/T-65/revisores/r01_04_cierre_malo_antiguo.py                       # HALLAZGOS: 0
+../../.venv/bin/python ../../.docs/tickets/T-65/revisores/r01_01_datos_raros.py                              # HALLAZGOS: 0 · INFO: 0
+cd ../.. && python3 .docs/tickets/T-65/mutaciones.py                                                          # 50/50
+python3 .docs/scripts/prueba_refs_vivas.py                                                                    # 8/8
+# copia limpia para el gate: worktree de HEAD + los archivos de T-65 + enlace a .venv; dentro, gate.sh con --completo
+```
 
 ```bash
 cd bloque_a/11_Ejecutor && ../../.venv/bin/python -m pytest -q -p no:cacheprovider      # 201 antes · 265 después

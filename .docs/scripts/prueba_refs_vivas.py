@@ -8,7 +8,8 @@ Copia el script a un repositorio de juguete en una carpeta temporal y lo ejecuta
 3. el sufijo de líneas (`archivo.py:10-20`) y una ruta del paquete Python del bloque (`bloque_a/x.py`, que vive en
    `bloque_a/11_Ejecutor/bloque_a/x.py`) cuentan como vivas;
 4. un nombre de archivo con espacios se comprueba entero;
-5. una ruta rota fuera de `revisores/` sigue haciendo fallar el gate.
+5. una ruta rota fuera de `revisores/` sigue haciendo fallar el gate;
+6. en una orden, cada argumento con forma de ruta del repo se comprueba también (QA r01 de T-65, H-06).
 Uso: python3 .docs/scripts/prueba_refs_vivas.py [ruta del script; por defecto tools/refs_vivas.py]. Sale con 1 si falla.
 """
 import shutil
@@ -54,6 +55,10 @@ CASOS = [
     ("nombre con espacios roto falla", {"docs/x.md": "Lee `bloque_a/01_Gobernanza/Documento 9 - No existe.md`.\n"},
      ["bloque_a/01_Gobernanza/Documento 0 - Protocolo V5.1.md"], 1),
     ("ruta rota fuera de revisores falla", {".docs/tickets/T-99/README.md": "Ver `tools/no_existe.py`.\n"}, [], 1),
+    # QA r01 de T-65, H-06: los argumentos con forma de ruta del repo también se comprueban
+    ("argumento roto de una orden falla", {"docs/x.md": "Ejecuta `tools/a.py bloque_a/no_existe.csv`.\n"}, ["tools/a.py"], 1),
+    ("argumento vivo de una orden pasa", {"docs/x.md": "Ejecuta `tools/a.py bloque_a/datos.csv --rapido`.\n"},
+     ["tools/a.py", "bloque_a/datos.csv"], 0),
 ]
 
 

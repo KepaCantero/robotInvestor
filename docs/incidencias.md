@@ -34,24 +34,25 @@ concentración declarada (`excepcion: True`). Decisión: se deja como está y se
 porque cambiarlo toca la herramienta de referencia del corpus y es una regla de selección.
 
 **INC-T53-02 · 2026-11-09 · Antigüedad de los datos en H1 (Bloque A, Anexo A, PS2).** El Anexo A dice «H1: 1 día» y
-el código toleraba 3 días naturales. Decisión: H1 se cuenta en sesiones hábiles (el dato del viernes vale el lunes)
+el código toleraba 3 días naturales. Decisión `[PROPUESTO]` (hasta T-57): H1 se cuenta en sesiones hábiles (el dato del viernes vale el lunes)
 y el resto de horizontes sigue en días naturales, para no relajar H2–H5. Los límites pasan a
-`ps2_antiguedad_maxima_dias` en la configuración. Ampliación (QA de T-53, H-04): las sesiones descuentan los cierres habituales de mercado (`ps2_festivos`, [PROPUESTO]: Viernes Santo y 1-1, 24-12, 25-12, 26-12 y 31-12), para que el dato de la última sesión real valga tras un festivo. El calendario por mercado (por ejemplo, el 4 de julio en EE. UU.) queda para el perfil de cada tipo de activo; T-57 fija la lista.
+`ps2_antiguedad_maxima_dias` en la configuración. Ampliación (QA de T-53, H-04): las sesiones descuentan los cierres habituales de mercado (`ps2_festivos`, [PROPUESTO]: Viernes Santo y 1-1, 24-12, 25-12, 26-12 y 31-12), para que el dato de la última sesión real valga tras un festivo. El calendario por mercado (por ejemplo, el 4 de julio en EE. UU.) queda para el perfil de cada tipo de activo; T-57 fija la lista. T-65 (QA de T-53, H-17): `ps2_festivos` se valida al crear el bloque (booleanos y «MM-DD» estricto) y gana `lunes_de_pascua` (`[PROPUESTO]`: false, como hasta ahora).
 
 **INC-T53-03 · 2026-11-09 · Umbral de revocación de certificados por calibración (Bloque A).** El código revoca un
 certificado si el ECE llega a 0,12, pero ese número no figura en el Anexo A (que solo fija `ece_max` 0,15 para
-conceder). Decisión: se mantiene 0,12 como `evaluacion.ece_revocacion` y queda para que lo fije el operador (T-57).
+conceder). Decisión `[PROPUESTO]` (hasta T-57): se mantiene 0,12 como `evaluacion.ece_revocacion` y queda para que lo fije el operador (T-57).
 
 **INC-T53-04 · 2026-11-09 · Degradación de H5 de «Limitado» a «No» (Bloque A, D0 12.2 frente al esquema F10).** El
 D0 la describe como automática; el esquema de F10 (P-31) exige un cambio de tipo 3 para cualquier paso hacia «No».
-Decisión (R23, la más restrictiva): «Sí → Limitado» se aplica sola y «Limitado → No» queda como propuesta de tipo 3.
-La degradación se registra en F6 y F10, pero todavía no cambia la tabla que usa el ejecutor (`aplicabilidad` lee
-`_tabla_horizontes`, no F10): pendiente en T-53.
+Decisión `[PROPUESTO]` (hasta T-57; R23, la más restrictiva): «Sí → Limitado» se aplica sola y «Limitado → No» queda como
+propuesta de tipo 3. La degradación se registra en F6 y F10, y el ejecutor lee la tabla vigente de F10 al empezar cada ciclo
+(T-53, QA r01 H-05): el cambio se aplica desde el mismo ciclo que la registra, y `efecto_desde` y `fecha_efecto` lo dicen
+(T-65, QA de T-53, H-13).
 
 **INC-T53-05 · 2026-11-09 · Siguiente paso, semáforo y confianza (Bloque A).** El código usaba reglas propias,
-distintas de las del prompt del Analizador (6.15.5 y 6.16) y del Redactor. Decisión: el semáforo y el
+distintas de las del prompt del Analizador (6.15.5 y 6.16) y del Redactor. Decisión `[PROPUESTO]` (hasta T-57): el semáforo y el
 `siguiente_paso_sugerido` siguen ya al prompt del Analizador, con los umbrales en la configuración. La `confianza`
-(E ≥ 70 «probable») se deja como está: el prompt del Redactor la usa solo para la barra visual y alinearla cambia el
+(E ≥ 70 «probable», ahora `presentacion.confianza_probable_E` desde T-65) se deja como está: el prompt del Redactor la usa solo para la barra visual y alinearla cambia el
 esquema del paquete; queda para la revisión con el operador.
 
 **INC-T66-01 · 2026-11-10 · Efecto de una «tesis frágil» (Bloque A, PA-05).** La propuesta PA-05 de T-53 pedía que

@@ -15,6 +15,7 @@ from typing import Any, Callable, Dict, List, Optional, Tuple, TypeGuard
 import numpy as np
 import pandas as pd
 
+from ..configuracion import parametro
 from ..herramientas.ht01_datos import DatosNoDisponibles, FugaDeInformacion
 from ..herramientas.ht06_indice import clave_hash
 from . import evaluacion as ev
@@ -307,7 +308,7 @@ class Motor:
                 "prioridad": peticion.get("prioridad", "MATERIAL"), "parametros": params,
                 "semilla": peticion.get("semilla"), "as_of": fecha_corte, "fecha_limite_informacion": fecha_corte,
                 "madurez_metodo": "IMPLEMENTADO", "cache_hit": False}
-        uc = float((self.cfg.get("uc") or {}).get("motor_por_plan", {}).get(plan, 0.02))
+        uc = float(parametro(self.cfg, f"uc.motor_por_plan.{plan}"))   # QA r01 de T-65, H-05: sin respaldo 0,02
         # 1) Ficha
         if not servible(ficha):
             motivo = "METODO_NO_IMPLEMENTADO" if ficha in FICHAS_CATALOGO else "OPERACION_SIN_FICHA"

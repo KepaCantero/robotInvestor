@@ -11,7 +11,7 @@ RAIZ = Path(__file__).resolve().parents[3]
 EJ = RAIZ / "bloque_a" / "11_Ejecutor"
 PKG = EJ / "bloque_a"
 PY = str(RAIZ / ".venv" / "bin" / "python")
-H, R = "tests/test_t65_hallazgos.py", "tests/test_t65_resto_t53.py"
+H, R, Q = "tests/test_t65_hallazgos.py", "tests/test_t65_resto_t53.py", "tests/test_t65_qa_r01.py"
 
 # (nombre, archivo, texto actual, texto mutado, prueba)
 MUTACIONES = [
@@ -48,8 +48,8 @@ MUTACIONES = [
     ("H-15 CSV con fechas ilegibles", PKG / "herramientas" / "ht01_datos.py", "    except (ValueError, TypeError) as e:\n        raise DatosInvalidos(f\"HT-01 {origen}: fechas no interpretables",
      "    except KeyboardInterrupt as e:\n        raise DatosInvalidos(f\"HT-01 {origen}: fechas no interpretables",
      f"{H}::test_h15_csv_con_fechas_ilegibles_se_excluye_y_se_declara"),
-    ("H-16 proxies cortos", PKG / "orquestacion.py", "(medibles if n_sem >= int(cl[\"min_semanas_proxy\"]) else cortos)",
-     "(medibles if True else cortos)", f"{H}::test_h16_un_finalista_con_poca_historia_no_desactiva_los_clusteres"),
+    ("H-16 proxies cortos", PKG / "orquestacion.py", "            if len(cand) >= min_sem:\n                medibles.append(px)",
+     "            if True:\n                medibles.append(px)", f"{H}::test_h16_un_finalista_con_poca_historia_no_desactiva_los_clusteres"),
     ("H-17 sin validar", PKG / "orquestacion.py", '    if errores:\n        raise ValueError("ps2_festivos: "',
      '    if False:\n        raise ValueError("ps2_festivos: "', f"{H}::test_h17_ps2_festivos_mal_formado_impide_crear_el_bloque"),
     ("H-17 lunes de Pascua", PKG / "orquestacion.py", '    if festivos["lunes_de_pascua"]:', "    if False:",
@@ -102,6 +102,35 @@ MUTACIONES = [
     ("CS-23 cita antigua", PKG / "herramientas" / "__init__.py",
      "la prueba `test_unitarias.py::test_herramientas_de_referencia_sin_divergencia`", "la prueba `test_herramientas.py`",
      f"{R}::test_cs23_herramientas_cita_una_prueba_que_existe"),
+    # ---- QA r01 de T-65
+    ("r01 H-01 valor_en valida toda la historia", PKG / "herramientas" / "ht01_datos.py",
+     "        s = self._cierres_brutos(simbolo, None, fecha)\n        ult = self._validar_cierres(simbolo, s.iloc[-1:])",
+     "        s = self._cierres_brutos(simbolo, None, fecha)\n        ult = self._validar_cierres(simbolo, s)",
+     f"{Q}::test_r01_h01_cierre_malo_fuera_de_la_ventana_no_vacia_el_tipo"),
+    ("r01 H-01 precio inválido en silencio", PKG / "orquestacion.py",
+     '                invalidos.append((s, f"precio a la fecha as_of no disponible: {type(e).__name__}: {e}"))\n                del tabla[s]\n                continue\n',
+     "                pass\n", f"{Q}::test_r01_h01_un_precio_invalido_excluye_y_declara_el_simbolo"),
+    ("r01 H-02 CSV ilegible sin capturar", PKG / "herramientas" / "ht01_datos.py",
+     "            except Exception as e:  # QA r01 de T-65, H-02", "            except KeyboardInterrupt as e:  # H-02",
+     f"{Q}::test_r01_h02_csv_ilegible_falla_cerrado_por_simbolo"),
+    ("r01 H-04 MM-DD laxo", PKG / "orquestacion.py", "bool(RE_MM_DD.fullmatch(d))", "len(d) == 5 and d[2] == \"-\"",
+     f"{Q}::test_r01_h04_festivo_fijo_con_formato_no_estricto_se_rechaza"),
+    ("r01 H-05 frecuencia con respaldo 7", PKG / "seguimiento.py",
+     'return int(parametro(self.b.cfg, f"seguimiento.frecuencias.{enc[\'frecuencia\']}"))',
+     'return int((self.cfg.get("frecuencias") or {}).get(enc["frecuencia"], 7))',
+     f"{Q}::test_r01_h05_frecuencias_y_presupuestos_sin_respaldo_en_el_codigo"),
+    ("r01 H-05 «10 días hábiles» fijo", PKG / "sintesis.py", "NO_RESOLUBLE tras {dias_nr} días hábiles", "NO_RESOLUBLE tras 10 días hábiles",
+     f"{Q}::test_r01_h05_textos_con_los_dias_de_la_configuracion"),
+    ("r01 H-07 sin mirar el solape", PKG / "orquestacion.py", "            cand = semanas[px] if comunes is None else comunes & semanas[px]",
+     "            cand = semanas[px]", f"{Q}::test_r01_h07_dos_proxies_sin_solape_no_tumban_los_clusteres"),
+    ("r01 H-08 pregunta repetida: 3 fijo", PKG / "orquestacion.py", '>= int(pr_rep["veces"])', ">= 3",
+     f"{Q}::test_r01_h08_pregunta_repetida_con_las_veces_de_la_configuracion"),
+    ("r01 H-08 recalibración: paso 0,05 fijo", PKG / "evaluador.py", 'delta, b_trim, b_tot = float(rr["paso"])', "delta, b_trim, b_tot = 0.05",
+     f"{Q}::test_r01_h08_recalibracion_de_rk_con_el_paso_y_las_bandas_de_la_configuracion"),
+    ("r01 H-08 PS1: 2 raíces fijas", PKG / "orquestacion.py", '>= int(parametro(self.cfg, "ps1.raices_min"))', ">= 2",
+     f"{Q}::test_r01_h08_ps1_con_el_minimo_de_raices_de_la_configuracion"),
+    ("r01 H-11 punto decimal", PKG / "evaluador.py", "tasa base {_coma(tb['sin_historia'])} por defecto", "tasa base {tb['sin_historia']} por defecto",
+     f"{Q}::test_r01_h11_limitacion_de_la_tasa_base_con_coma_decimal"),
 ]
 
 

@@ -43,6 +43,24 @@ Todas las rutas de código son relativas a `bloque_a/11_Ejecutor/`. Las pruebas 
 | CS-19 | El mapa de pruebas estaba desfasado frente al plan V3.0 | Rehecho: título, 67 pruebas, PB-53 a PB-57, versiones de PB-12 y PB-13, PB-33 y PB-64 con sus pruebas, y las pruebas de T-53, T-66 y T-65 | TR `test_cs19_*` |
 | CS-23 | `herramientas/__init__.py` citaba una prueba inexistente | Corregido (`test_unitarias.py::test_herramientas_de_referencia_sin_divergencia`) | TR `test_cs23_*` |
 
+## Correcciones de la QA r01 (NO APTO, `qa.md`)
+
+Pruebas en `bloque_a/11_Ejecutor/tests/test_t65_qa_r01.py` (QR); las de H-01, H-02 y H-03 fallan con b699d4f.
+
+| Hallazgo | Qué se hace (o por qué no, y adónde va) | Prueba |
+| --- | --- | --- |
+| H-01 (media) | `valor_en` valida solo el cierre que devuelve, y `cierres` solo el rango pedido: un cierre malo antiguo, fuera de la ventana, no importa. Si el precio de un símbolo no se puede leer, el símbolo se excluye, se declara y deja una incidencia `DATOS` (antes quedaba sin precio en silencio) | QR `test_r01_h01_*` (3) |
+| H-02 (media) | Cualquier error al leer el CSV (vacío, binario, codificación) es `DatosInvalidos` del símbolo: se excluye y se declara, y el ciclo de los demás tipos sigue | QR `test_r01_h02_*` |
+| H-03 (media) | `pruebas.md` ya no cita el log de `.docs/scripts/.logs/` con forma de ruta | gate `refs-vivas` en una copia limpia (`pruebas.md`) |
+| H-04 | `fijos` exige «MM-DD» con dígitos ASCII y sin espacios (`re.fullmatch`), además de una fecha real | QR `test_r01_h04_*` |
+| H-05 | Pasan a `parametro()`: `seguimiento.frecuencias` y `frecuencia_orientativa_dias`, `uc.motor_por_plan`, `max_tokens.por_defecto`, el texto de GC0, el suelo de la bolsa COMÚN (`presupuesto_uc.fraccion_minima_comun`, nuevo, `[PROPUESTO]` técnico), la tasa base de los hitos H5 y los «10 días hábiles» de `regla_fallback` y de `NO_RESOLUBLE`. Quedan literales algorítmicos (redondeo de la probabilidad de Prospectiva a 0,05, familias de la señal compuesta), anotados en los límites de `analisis-tecnico.md` | QR `test_r01_h05_*` (2) |
+| H-06 | `refs_vivas` comprueba, en una orden, el script y cada argumento con forma de ruta del repo | `.docs/scripts/prueba_refs_vivas.py` (8 casos; con el script de b699d4f, 7/8) |
+| H-07 | Los proxies de ML-CLUS-001 se eligen por solape: en orden determinista (más semanas primero) entran los que mantienen ≥ `min_semanas_proxy` semanas comunes con los ya elegidos; los demás se declaran | QR `test_r01_h07_*` |
+| H-08 | Pruebas de efecto con otro valor en la configuración para la pregunta repetida, la recalibración de RK (paso y bandas) y PS1 (la regla pasa a `Bloque._ps1`) | QR `test_r01_h08_*` (3) |
+| H-09 | `docs/incidencias.md`: INC-T53-02 a 05 marcadas `[PROPUESTO]` (hasta T-57); INC-T53-04 ya no dice «pendiente en T-53» y recoge H-13; INC-T53-02 recoge la validación y `lunes_de_pascua` | lectura |
+| H-10 | **No se hace:** el consumo por tipo de F5 con hilos (`presupuesto.<tipo>.consumido`) no es de T-65 y pide asignar en orden determinista el consumo de las llamadas compartidas entre hilos. **Destino: deuda técnica** (fila nueva o dentro de T-65 restante, la abre el coordinador), antes de conectar A en la Fase 1 | — |
+| H-11 | El texto de la limitación usa coma decimal («tasa base 0,5 por defecto») | QR `test_r01_h11_*` |
+
 ## Diseño
 
 - **Contratos CT-G:** ninguno. Los esquemas internos de A no cambian.
@@ -107,3 +125,6 @@ Todas las rutas de código son relativas a `bloque_a/11_Ejecutor/`. Las pruebas 
 - 2026-11-10 · PLANIFICADO · claude · plan punto por punto; tarea técnica, sin aprobación del operador
 - 2026-11-10 · EN CURSO · claude · implementación en `bloque_a/` y `tools/refs_vivas.py`
 - 2026-11-10 · EN QA · claude · ver `pruebas.md`
+- 2026-11-10 · QA r01 NO APTO (H-01 a H-03 medios; H-04 a H-11 bajos)
+- 2026-11-10 · EN CURSO · claude · correcciones de la r01: H-01 a H-09 y H-11 corregidos con su prueba; H-10 a la deuda técnica
+- 2026-11-10 · EN QA · claude · pendiente de la r02; ver `pruebas.md`

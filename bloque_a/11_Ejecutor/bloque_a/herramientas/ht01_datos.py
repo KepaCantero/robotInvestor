@@ -122,13 +122,16 @@ class ProveedorDatos:
             raise FugaDeInformacion("HT-01: el proveedor devolvió datos posteriores a as_of")
         return df.copy()
 
-    def cierres(self, simbolo: str, inicio: Fecha | None = None, fin: Fecha | None = None) -> pd.Series:
+    def _cierres_brutos(self, simbolo: str, inicio: Fecha | None = None, fin: Fecha | None = None) -> pd.Series:
         df = self.serie(simbolo, inicio, fin)
         if df.empty:
             raise DatosNoDisponibles(f"HT-01: sin datos de {simbolo} en el rango")
-        s = df["cierre"].astype(float)
-        # T-65 (QA de T-53, H-15): las rentabilidades se calculan como cociente de niveles; un cierre ≤ 0 (o no finito)
-        # no es un precio válido y nunca se convierte en una cifra: la serie se rechaza en el rango pedido
+        return df["cierre"].astype(float)
+
+    @staticmethod
+    def _validar_cierres(simbolo: str, s: pd.Series) -> pd.Series:
+        """T-65 (QA de T-53, H-15): las rentabilidades se calculan como cociente de niveles; un cierre ≤ 0 (o no finito)
+        no es un precio válido y nunca se convierte en una cifra. Se valida solo lo que se usa (QA r01 de T-65, H-01)."""
         malos = ~np.isfinite(s.to_numpy()) | (s.to_numpy() <= 0)
         if malos.any():
             ej = [f"{f.date()}={v!r}" for f, v in zip(s.index[malos][:3], s.to_numpy()[malos][:3])]
@@ -136,14 +139,21 @@ class ProveedorDatos:
                                  f"(p. ej., {', '.join(ej)}); serie rechazada")
         return s
 
+    def cierres(self, simbolo: str, inicio: Fecha | None = None, fin: Fecha | None = None) -> pd.Series:
+        """Cierres de [inicio, fin]; la serie se rechaza (`DatosInvalidos`) si algún cierre del rango pedido es ≤ 0 o no
+        finito. Lo que queda fuera del rango no cuenta."""
+        return self._validar_cierres(simbolo, self._cierres_brutos(simbolo, inicio, fin))
+
     def valor_en(self, simbolo: str, fecha: Fecha) -> tuple[pd.Timestamp, float]:
-        """Último cierre con fecha <= `fecha` (que debe ser <= as_of)."""
-        s = self.cierres(simbolo, None, fecha)
-        return s.index[-1], float(s.iloc[-1])
+        """Último cierre con fecha <= `fecha` (que debe ser <= as_of). Se valida solo ese cierre (QA r01 de T-65, H-01):
+        un cierre malo antiguo no deja sin precio a un símbolo sano."""
+        s = self._cierres_brutos(simbolo, None, fecha)
+        ult = self._validar_cierres(simbolo, s.iloc[-1:])
+        return ult.index[-1], float(ult.iloc[-1])
 
     def ultima_fecha(self, simbolo: str) -> pd.Timestamp | None:
         try:
-            s = self.cierres(simbolo)
+            s = self._cierres_brutos(simbolo)
         except DatosNoDisponibles:
             return None
         return s.index[-1]
@@ -225,7 +235,12 @@ class ProveedorCSV(ProveedorDatos):
             ruta = self.carpeta / f"{simbolo}.csv"
             if not ruta.exists():
                 raise DatosNoDisponibles(f"HT-01: no hay archivo {ruta.name}")
-            self._cache[simbolo] = _normalizar_df(pd.read_csv(ruta), ruta.name)
+            try:
+                crudo = pd.read_csv(ruta)
+            except Exception as e:  # QA r01 de T-65, H-02: vacío, binario, codificación o formato ilegibles
+                raise DatosInvalidos(f"HT-01 {ruta.name}: CSV ilegible ({type(e).__name__}: {str(e).splitlines()[0][:120] if str(e) else ''}); "
+                                     "serie rechazada") from e
+            self._cache[simbolo] = _normalizar_df(crudo, ruta.name)
         return self._cache[simbolo]
 
 

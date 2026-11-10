@@ -64,7 +64,7 @@ def test_ca14_tasa_base_con_parametros_de_la_configuracion(tmp_path):
     ri = b.evaluador.tasa_base("SPY", "ACWI", "RV", 5, True, AS_OF, "RUN-2026-0001")
     assert ri["valor_o_prob"] == 0.4                               # antes: 0,5 y 5 ventanas escritos en el código
     rc = next(x for x in b.almacen.leer("RC") if x.get("calc_id") == ri["calc_id"])
-    assert "menos de 10000 ventanas: tasa base 0.4" in rc["limitaciones"][0]
+    assert "menos de 10000 ventanas: tasa base 0,4 por defecto" in rc["limitaciones"][0]
     b2 = _bloque(tmp_path / "b2", cfg=config_pruebas(tasa_base={"recorte": [0.45, 0.55]}))
     b2.fijar_fecha(AS_OF)
     assert 0.45 <= b2.evaluador.tasa_base("SPY", "ACWI", "RV", 5, True, AS_OF, "RUN-2026-0001")["valor_o_prob"] <= 0.55

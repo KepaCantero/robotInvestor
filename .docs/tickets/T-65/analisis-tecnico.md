@@ -85,3 +85,54 @@ python3 .docs/scripts/prueba_refs_vivas.py                  # 6/6
 python3 tools/refs_vivas.py
 .docs/scripts/gate.sh --completo
 ```
+
+## Correcciones de la QA r01 (NO APTO)
+
+**Causa raíz de los medios:**
+
+- **H-01.** La validación de cierres de H-15 se hacía en `cierres()` sobre todo el rango pedido, y `valor_en()` pedía la historia entera. Un cierre malo antiguo, fuera de la ventana del lote, dejaba sin precio a símbolos sanos. Después, el `except DatosNoDisponibles: pass` del precio en `senales_clase` lo tragaba en silencio: PS2 fallaba (edad 999) y el tipo quedaba sin opciones con el run COMPLETO.
+- **H-02.** `pd.read_csv` estaba fuera de `_normalizar_df`. Un CSV vacío o binario lanzaba `EmptyDataError` o `ParserError`, que el cribado sí absorbía, pero la tasa base de la cesta, no.
+- **H-03.** Una cita con forma de ruta a un log que no se sube.
+
+**Cambios** (rutas bajo `bloque_a/11_Ejecutor/`):
+
+| Archivo | Cambio | Hallazgo |
+| --- | --- | --- |
+| `bloque_a/herramientas/ht01_datos.py` | `_cierres_brutos` y `_validar_cierres`. `cierres()` valida el rango pedido; `valor_en()` valida solo el cierre que devuelve; `ultima_fecha()` no valida. La lectura del CSV, en un `try` que convierte cualquier error en `DatosInvalidos` | H-01, H-02 |
+| `bloque_a/orquestacion.py` | En `senales_clase`, un precio ilegible excluye y declara el símbolo, y las incidencias `DATOS` se escriben al final con todos los inválidos. `RE_MM_DD` para «MM-DD» estricto. `_ps1()` extraída. ML-CLUS-001 elige los proxies por solape. Texto de GC0 y suelo de COMÚN desde la configuración | H-01, H-04, H-08, H-07, H-05 |
+| `bloque_a/evaluador.py` | `_coma()` para la limitación de la tasa base; días de `NO_RESOLUBLE` desde la configuración | H-11, H-05 |
+| `bloque_a/sintesis.py` | `regla_fallback` y la tasa base de los hitos H5 desde la configuración | H-05 |
+| `bloque_a/seguimiento.py` | Frecuencias sin respaldo 7 (una frecuencia desconocida falla; una personalizada sin `cada_dias` usa la semanal) | H-05 |
+| `bloque_a/motor/servicio.py` | `uc.motor_por_plan.<plan>` sin respaldo 0,02 | H-05 |
+| `bloque_a/configuracion.py` | `max_tokens.por_defecto` sin respaldo 8000 | H-05 |
+| `config/por_defecto.yaml` | `presupuesto_uc.fraccion_minima_comun: 0.1` (`[PROPUESTO]` técnico) | H-05 |
+| `tests/test_t65_qa_r01.py` | 20 pruebas nuevas | todos |
+| `tools/refs_vivas.py`, `.docs/scripts/prueba_refs_vivas.py` | `rutas_de_cita`: el script y cada argumento con forma de ruta. Dos casos nuevos en la prueba | H-06 |
+| `docs/incidencias.md` | INC-T53-02 a 05 marcadas `[PROPUESTO]`; INC-T53-04 al día | H-09 |
+| `.docs/tickets/T-65/mutaciones.py` | 11 mutaciones más (50 en total), incluidas las tres que la QA encontró sin detectar (pregunta repetida, recalibración de RK y PS1) | H-08 |
+
+**Decisiones:**
+
+- **H-01.** Se tomó la primera opción de la QA. Solo importa lo que se usa: la ventana del lote (en `senales_clase`) y el cierre que se devuelve (en `valor_en`). Sigue fallando cerrado si el cierre que se usa es malo.
+- **H-07.** El orden de elección es determinista (más semanas, luego símbolo). Ante dos proxies sin solape, se queda el que tiene más semanas en común con los ya elegidos.
+
+**Límites que siguen** (H-05):
+
+- el redondeo de la probabilidad de Prospectiva a pasos de 0,05 y su recorte a [0,05; 0,95] (`orquestacion.py`, `_prospectiva`);
+- los pesos de las familias de la señal compuesta y su umbral 0,6;
+- los parámetros de ficha que se pasan al Motor.
+
+Son reglas del algoritmo, no números de la configuración repetidos, y van con la revisión de PA-06 y PA-07.
+
+**A la deuda técnica:**
+
+- **H-10.** El consumo por tipo en F5 con hilos no es determinista, y ya no lo era antes de T-65. La fila la abre el coordinador.
+
+**Comandos** (además de los de arriba):
+
+```bash
+cd bloque_a/11_Ejecutor && ../../.venv/bin/python -m pytest -q -p no:cacheprovider tests/test_t65_qa_r01.py
+../../.venv/bin/python ../../.docs/tickets/T-65/revisores/r01_04_cierre_malo_antiguo.py   # HALLAZGOS: 0
+../../.venv/bin/python ../../.docs/tickets/T-65/revisores/r01_01_datos_raros.py          # HALLAZGOS: 0
+cd ../.. && python3 .docs/tickets/T-65/mutaciones.py r01                                  # 11/11
+```
