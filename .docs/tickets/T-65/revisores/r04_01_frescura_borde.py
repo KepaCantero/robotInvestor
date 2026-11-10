@@ -8,6 +8,8 @@ Partes:
       Esperado (H-16): «nunca resuelve con 0»; una serie sin ningún dato posterior a la emisión no se resuelve.
   E · Emisión: ACWI parada a 7 y a 8 días de la fecha as_of (borde de `referencias.antiguedad_maxima_dias`).
   C · CESTA (DIV): un miembro parado justo en la emisión de un PRG H1.
+  F · De punta a punta: ciclo con horizontes H1 (MP frente a DBC y DIV frente a la CESTA), una serie que deja de
+      publicarse el día de la emisión y el ciclo siguiente, que resuelve.
 """
 import pathlib
 import shutil
@@ -24,7 +26,7 @@ from bloque_a.herramientas.ht01_datos import ProveedorCSV, cargar_universo  # no
 from bloque_a.llm import MockClient  # noqa: E402
 from bloque_a.orquestacion import Bloque  # noqa: E402
 
-PARTES = set(sys.argv[1:]) or {"R", "E", "C"}
+PARTES = set(sys.argv[1:]) or {"R", "E", "C", "F"}
 hall, info = 0, 0
 
 
@@ -122,5 +124,52 @@ if "E" in PARTES:
         niveles = sorted({(p.get("horizonte"), (p.get("nivel_referencia_indice") or {}).get("fecha") if isinstance(p.get("nivel_referencia_indice"), dict) else p.get("nivel_referencia_indice")) for p in prgs})
         print(f"{'OK' if ok else 'HALLAZGO':9} E · ACWI con último cierre {hasta} ({(pd.Timestamp(AS_OF) - pd.Timestamp(hasta)).days} días): "
               f"RV fuera={fuera} estado={r['estado']} PRG frente a ACWI={len(prgs)} {niveles[:4]}")
+
+# ------------------------------------------------------------------ F
+if "F" in PARTES:
+    # De punta a punta: ciclo con horizontes=["H1"] (H1 es «SI» para MP y DIV en la tabla de horizontes) el viernes
+    # 2026-04-17; la referencia de MP (DBC) o un proxy deja de publicarse ese mismo día; ciclo siguiente el 2026-04-27
+    EMI, VUELTA = "2026-04-17", "2026-04-27"
+    for nombre, quien in (("DBC (referencia de MP) parada en la emisión", "DBC"), ("proxy parado en la emisión", "PROXY"),
+                          ("miembro de la CESTA de DIV parado en la emisión", "CESTA")):
+        tmp = pathlib.Path(tempfile.mkdtemp(prefix="r04_01_F_"))
+        datos = tmp / "datos"
+        shutil.copytree(DIR_EJECUTOR / "ejemplos" / "datos_sinteticos", datos)
+        cfg = cargar_config(extra={"modo": "backtest", "perfiles": {"activos": ["MP", "DIV"]}})
+        b1 = Bloque(cfg, ProveedorCSV(datos), cargar_universo(RUTA_UNIVERSO_EJEMPLO), MockClient(), tmp / "e", tmp / "s")
+        r1 = b1.ciclo(EMI, alcance={"clases": ["MP", "DIV"]}, horizontes=["H1"])
+        h1 = [p for p in b1.almacen.estado("F4", EMI).values() if p.get("run_id") == r1["run_id"] and p.get("horizonte") == "H1"
+              and p.get("tipo_pronostico") == "RELATIVO"]
+        clase = "DIV" if quien == "CESTA" else "MP"
+        h1 = [p for p in h1 if p["clase"] == clase]
+        if not h1:
+            info += 1
+            print(f"INFO      F · {nombre}: el ciclo 1 no emitió PRG H1 RELATIVO de {clase}; no aplicable")
+            continue
+        if quien == "DBC":
+            parar("DBC", EMI)(datos)
+        elif quien == "PROXY":
+            for s in sorted({p["variable"]["serie_ht01"] for p in h1}):
+                parar(s, EMI)(datos)
+        else:
+            b1.fijar_fecha(EMI)
+            otros = [s for s in b1.evaluador.simbolos_clase("DIV") if s not in {p["variable"]["serie_ht01"] for p in h1}]
+            parar(otros[0], EMI)(datos)
+        b2 = Bloque(cfg, ProveedorCSV(datos), cargar_universo(RUTA_UNIVERSO_EJEMPLO), MockClient(), tmp / "e", tmp / "s")
+        b2.ciclo(VUELTA, alcance={"clases": ["MP", "DIV"]}, horizontes=["H1"])
+        est = b2.almacen.estado("F4", VUELTA)
+        res = [(p["prg_id"], p["variable"]["serie_ht01"], p["referencia_indice"], (est[p["prg_id"]].get("resolucion") or {}).get("rent_proxy"),
+                (est[p["prg_id"]].get("resolucion") or {}).get("rent_referencia")) for p in h1 if est[p["prg_id"]].get("estado") == "RESUELTO"]
+        cero = [x for x in res if x[3] == 0.0 or x[4] == 0.0]
+        if quien == "CESTA":
+            mal = bool(res)   # la cesta entra con el miembro parado (0) si se resuelve: se mira aparte en la parte C
+            et = "INFO" if mal else "OK"
+            info += 1 if mal else 0
+            print(f"{et:9} F · {nombre}: {len(res)} de {len(h1)} PRG H1 RESUELTOS (la cesta incluye al parado con 0; ver parte C) "
+                  f"{res[:1]}")
+            continue
+        hall += 1 if cero else 0
+        print(f"{'HALLAZGO' if cero else 'OK':9} F · {nombre}: {len(cero)} de {len(h1)} PRG H1 RELATIVO RESUELTOS con una rentabilidad 0 "
+              f"{cero[:1]} · estados={sorted({str(est[p['prg_id']].get('estado')) for p in h1})}")
 
 print(f"HALLAZGOS: {hall} · INFO: {info}")

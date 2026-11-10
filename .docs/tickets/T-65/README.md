@@ -2,7 +2,7 @@
 
 | Campo | Valor |
 | --- | --- |
-| Estado | EN QA |
+| Estado | DETENIDO (QA r04 NO APTO, 10-11-2026; a la espera de que el operador diga cómo seguir) |
 | Pieza | bloque_a |
 | Planifica · implementa · QA | claude · claude · el otro agente (Astra) o un revisor nuevo sin contexto |
 | Aprobación del operador | No necesaria: es una corrección técnica. Los valores que decide el operador van como `[PROPUESTO]` en `bloque_a/11_Ejecutor/config/por_defecto.yaml` y se listan abajo para T-57 |
@@ -166,3 +166,4 @@ Pruebas en `bloque_a/11_Ejecutor/tests/test_t65_qa_r03.py` (QR3). Con 8d74622 fa
 - 2026-11-10 · QA r03 NO APTO (H-16 medio; H-17 a H-23 bajos)
 - 2026-11-10 · EN CURSO · claude · correcciones de la r03: H-16 a H-23 corregidos con su prueba
 - 2026-11-10 · EN QA · claude · pendiente de la r04; ver `pruebas.md`
+- 2026-11-10 · DETENIDO · QA r04 NO APTO: H-24 (media, un pronóstico H1 aún se resuelve con rentabilidad 0 si una serie deja de publicarse el día de la emisión) y H-25 (baja). Por indicación del operador no se abre otra ronda; los pendientes quedan en la fila T-65 de la deuda. El código está en develop (commit `db6ed93`)
