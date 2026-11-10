@@ -1743,6 +1743,16 @@ class Orquestador:
         iv = max((i for i, z in enumerate(h) if z["hasta"] == "VALIDADA" and z["desde"] != "VALIDADA"), default=None)
         if iv is None or any(z["hasta"] == "EN_ANALISIS" and z["motivo"] == "encargo emitido" for z in h[iv + 1:]):
             return None, _no("O-06", f"{x['expediente_id']} se volvió a encargar después de validar el análisis {sid}: ya no es el de su encargo")
+        # QA de T-80, H-13: un expediente DIRECTA que tuvo este análisis y después se volvió a analizar (su propuesta caducó, lo
+        # apartaron o lo bloqueó el análisis nuevo) lo deja sin valor: un análisis superado no vuelve por otra vía
+        for k, y in sorted(self.expedientes.items()):
+            if y.get("via_entrada") != "DIRECTA" or y.get("analisis_ref") != sid:
+                continue
+            hy = y["historial"]
+            t = next((i for i, z in enumerate(hy) if z["actor"] == "ORQUESTADOR" and isinstance(z["motivo"], str)
+                      and z["motivo"].startswith(MOTIVO_REUTILIZA)), None)
+            if t is None or any(z["hasta"] == "EN_ANALISIS" and z["motivo"] == "encargo emitido" for z in hy[t + 1:]):
+                return None, _no("O-06", f"{k}, que tuvo el análisis {sid}, se volvió a analizar: ese análisis ya está superado")
         for k, y in sorted(self.expedientes.items()):
             if (y.get("sobre") or {}).get("event_id") != sid:
                 continue

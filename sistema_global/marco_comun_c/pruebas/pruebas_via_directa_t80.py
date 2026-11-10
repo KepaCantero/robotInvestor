@@ -178,6 +178,19 @@ def main():
       lambda: o.abrir_directa("EXP-DD-07", "COR-DD-07", "TACTICA", "D", "BROKER", AHORA, analisis="EV-SOB-0001"), "O-06")
     h.chk("registro_lo_marca_no_reutilizable_H01", [x["reutilizable"] for x in o.analisis_vigentes(AHORA)] == [False])
 
+    # QA r03, H-13: un DIRECTA que tuvo el análisis y se volvió a analizar lo deja superado, aunque el origen siga en observación
+    o = nuevo()
+    hasta(o, "VALIDADA", 1)
+    assert o.observar("EXP-0001", [{"tipo": "FECHA", "fecha": "2026-11-20"}], "el operador lo aparta", "OPERADOR", AHORA)["ok"]
+    assert o.abrir_directa("EXP-DD-09", "COR-EXP-DD-09", "TACTICA", "D", "BROKER", AHORA, analisis="EV-SOB-0001")["ok"]
+    assert o.observar("EXP-DD-09", [{"tipo": "FECHA", "fecha": "2026-11-20"}], "el operador lo deja para más adelante", "OPERADOR", AHORA)["ok"]
+    assert o.reabrir("EXP-DD-09", "el operador quiere un análisis nuevo", "OPERADOR", AHORA)["ok"]
+    assert o.emitir_encargo("EXP-DD-09", enc_directa("EXP-DD-09", 9), "BROKER", AHORA)["ok"]
+    assert o.entregar_sobre("EXP-DD-09", sobre_directa("EXP-DD-09", 9), AHORA)["ok"]
+    r = R("D_un_analisis_superado_por_el_reanalisis_de_un_DIRECTA_no_vuelve_H13", o,
+          lambda: o.abrir_directa("EXP-DD-10", "COR-DD-10", "TACTICA", "D", "BROKER", AHORA, analisis="EV-SOB-0001"), "O-06")
+    h.chk("D_el_motivo_dice_que_esta_superado_H13", "superado" in r["motivo"], r)
+
     # QA r01, H-03: una propuesta caducada no vuelve por la vía DIRECTA (§4.1, regla 4)
     o = nuevo()
     hasta(o, "PROPUESTA", 1)
