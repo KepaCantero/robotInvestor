@@ -34,6 +34,7 @@ Todo lo que Claude, Astra y las personas del equipo necesitan para trabajar en e
 | `.docs/scripts/diario.sh` | Añade la entrada de hoy al diario del mes, arriba |
 | `.docs/scripts/memoria.sh` | Crea una entrada de memoria, la indexa y, con `--sustituye`, marca la anterior |
 | `.docs/scripts/commit.sh` | Gate, commit (autor y líneas finales desde `.env`) y push a `develop` |
+| `.docs/scripts/commit_limpio.sh` | Commit desde una copia limpia de HEAD con solo las rutas de la tarea (pruebas del marco, su LEEME y gate completo allí), para cuando el árbol tiene cambios a medias de otras tareas; sube las copias probadas |
 | `.docs/scripts/qa_rama.sh` | QA de una rama de otro agente: commits, archivos, si se fusiona por avance rápido, copia limpia y pruebas de cada pieza tocada contra el código de la rama |
 
 ## Diario: formato

@@ -305,6 +305,24 @@ def main():
         h.chk("RL07_con_el_diario_bloqueado", rl.degradar_por_reloj(d3, {"codigo": "RL-01", "motivo": "x"})["codigo"] == "RL-07")
     h.chk("los_incidentes_quedan_en_el_reloj", [x["codigo"] for x in r.incidentes] == ["RL-01"])
 
+    # T-84 (QA de la V0.63, H-07; sonda r04): dos propiedades del reloj que ninguna batería fijaba
+    f, r = nuevo_reloj(contrastar=False)
+    c = r.contrastar(iso(BASE - 3), "INTERMEDIARIO")   # el intermediario va 3 s por detrás del reloj
+    h.chk("t84_contrastar_da_el_mayor_con_el_reloj_por_delante", c["ok"] and c["ahora"] == iso(BASE) and c["desfase_s"] == 3.0, c)
+    f, r = nuevo_reloj(contrastar=False)
+    c = r.contrastar(iso(BASE + 3), "INTERMEDIARIO")   # y 3 s por delante: el instante es el del intermediario
+    h.chk("t84_contrastar_da_el_mayor_con_el_intermediario_por_delante", c["ok"] and c["ahora"] == iso(BASE + 3) and c["desfase_s"] == -3.0, c)
+    f, r = nuevo_reloj()
+    marcha = True
+    for _ in range(24):                               # un día de marcha, una lectura por hora, con contraste
+        f.pasa(3600)
+        marcha &= r.contrastar(iso(f.p), "INTERMEDIARIO")["ok"]
+    tolerada = r.max_salto_s + rl.TASA_MAX * 24 * 3600   # la deriva que ya tolera el ancla tras un día (45 s)
+    f.p += 10                                         # alguien adelanta la hora 10 s (el monótono no)
+    a = r.ahora()
+    h.chk("t84_tras_un_dia_de_marcha_un_salto_de_10_s_se_para_RL01", marcha and 10 < tolerada and a["codigo"] == "RL-01" and a["ahora"] is None
+          and r.bloqueo["codigo"] == "RL-01", (marcha, tolerada, a))
+
     print(f"\n{h.n} comprobaciones")
     print("RESULTADO RELOJ T-03:", "TODAS LAS PRUEBAS PASAN" if h.ok else "HAY FALLOS")
     return 0 if h.ok else 1
