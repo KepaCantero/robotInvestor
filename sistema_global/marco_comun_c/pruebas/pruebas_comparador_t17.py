@@ -146,8 +146,8 @@ def main():
     rk = {x["expediente_id"]: x for x in r["grupos"]["Q"]["ranking"]}
     h.chk("domina_con_el_riesgo_verificado", rk["EXP-0002"]["dominado_por"] == ["EXP-0001"], rk["EXP-0002"]["dominado_por"])
     # V0.67: PAR-0.4.0 añade n_lineas_diario_ambar (consola); los parámetros de D de T-17 no cambian
-    # V0.68: PAR-0.5.0 añade o_max_analisis_consulta (T-80); los de D siguen igual
-    h.chk("parametros_versionados", VERSION_PARAMETROS == "PAR-0.5.0")
+    # V0.68: PAR-0.5.0 añade o_max_analisis_consulta (T-80); V0.70: PAR-0.6.0, sequía y embudo (T-75); los de D siguen igual
+    h.chk("parametros_versionados", VERSION_PARAMETROS == "PAR-0.6.0")
 
     # ---------------------------------------------------------------- regresiones de la revisión independiente de T-17
     con, _ = uno(con_stop(cand(1, esperado=(3.0, 0.5, -2.0)), 1.12, 1.05))

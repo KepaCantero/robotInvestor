@@ -53,6 +53,7 @@ MAX_DESFASE_S = 5.0     # [PROPUESTO] diferencia tolerada con una referencia ext
 MAX_SIN_CONTRASTE_S = 24 * 3600.0   # [PROPUESTO] pasado este tiempo sin contrastar, el reloj pide otro contraste
 TASA_MAX = 0.0005       # deriva máxima del reloj de pared desde el ancla (500 ppm: lo que corrige la sincronización)
 TOPE_SALTO_S, TOPE_DESFASE_S = 60.0, 300.0   # tolerancias mayores desactivarían las comprobaciones
+TOPE_SIN_CONTRASTE_S = 7 * 24 * 3600.0   # T-89 (QA de T-72, H-03): sin tope, un contraste valdría para siempre [PROPUESTO]
 MINIMO = datetime(2026, 1, 1, tzinfo=timezone.utc)   # un instante anterior no es de esta instalación: reloj sin poner en hora
 MAXIMO = datetime(2100, 1, 1, tzinfo=timezone.utc)
 CARTERAS = ("TRADING", "TACTICA", "LARGO_PLAZO")
@@ -104,8 +105,8 @@ class Reloj:
     def __init__(self, pared=None, monotono=None, max_salto_s=MAX_SALTO_S, max_desfase_s=MAX_DESFASE_S,
                  max_sin_contraste_s=MAX_SIN_CONTRASTE_S):
         s, d, c = _float(max_salto_s), _float(max_desfase_s), _float(max_sin_contraste_s)
-        if not (s and 0 < s <= TOPE_SALTO_S and d and 0 < d <= TOPE_DESFASE_S and c and c > 0):
-            raise ValueError(f"tolerancias del reloj imposibles: salto en (0, {TOPE_SALTO_S}], desfase en (0, {TOPE_DESFASE_S}], contraste > 0")
+        if not (s and 0 < s <= TOPE_SALTO_S and d and 0 < d <= TOPE_DESFASE_S and c and 0 < c <= TOPE_SIN_CONTRASTE_S):
+            raise ValueError(f"tolerancias del reloj imposibles: salto en (0, {TOPE_SALTO_S}], desfase en (0, {TOPE_DESFASE_S}], contraste en (0, {TOPE_SIN_CONTRASTE_S}]")
         if (pared is not None and not callable(pared)) or (monotono is not None and not callable(monotono)):
             raise ValueError("las fuentes del reloj deben ser invocables")
         self._pared = pared if pared is not None else time.time
@@ -141,7 +142,7 @@ class Reloj:
 
     @property
     def max_sin_contraste_s(self):
-        return self._tol_i(2, float("inf"))   # sin tope propio desde T-03: va a la deuda (QA de T-72, H-03)
+        return self._tol_i(2, TOPE_SIN_CONTRASTE_S)   # T-89: con su tope, como el salto y el desfase
 
     def _bloquear(self, codigo, motivo, **extra):
         self.bloqueo = {"codigo": codigo, "motivo": motivo}

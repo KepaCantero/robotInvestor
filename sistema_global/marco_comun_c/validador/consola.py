@@ -238,3 +238,17 @@ def _panel(o, ahora, reloj=None, diario=None, lineas_diario_ambar=PARAMETROS["n_
         _add_seguro(add, "diario", lambda: _diario(diario, lineas_diario_ambar))
     _add_seguro(add, "migracion", lambda: _migracion(o))
     return {"nivel": _peor([x["nivel"] for x in c]), "comprobaciones": c}
+
+
+def informe_embudo(o, ahora, dias=PARAMETROS["n_dias_embudo"]):
+    """T-75 (D-22): el embudo visible de N, semanal por defecto: cuántas oportunidades entraron en los últimos `dias`, en qué capa
+    cae cada una y por qué, y si hay sequía (el plazo de D-22). Solo lee y nunca lanza: con algo ilegible, {ok: False, motivo}."""
+    try:
+        a = _dt(ahora)
+        em = o.embudo((a - timedelta(days=dias)).isoformat(), ahora)
+        sq = o.sequia(ahora)
+        if em is None:
+            return {"ok": False, "motivo": "no se puede calcular el embudo"}
+        return {"ok": True, "dias": dias, "embudo": em, "sequia": {k: sq.get(k) for k in ("activa", "dias", "validadas", "invertidas", "motivo")}}
+    except Exception as ex:   # noqa: BLE001
+        return {"ok": False, "motivo": f"no se puede calcular el embudo ({type(ex).__name__})"}
