@@ -9,6 +9,22 @@
 | mypy `bloque_a` | 123 (cuota 123) | 123 |
 | `bloque_a_forex`, `bloque_b` | 68 y 174 | sin tocar (en el gate) |
 
+### Tras la QA r02
+
+| Suite | 052e79a (r02) | Ahora (r03) |
+| --- | --- | --- |
+| `bloque_a/11_Ejecutor` (pytest) | 285 pasan | **300 pasan** (+15 en `tests/test_t65_qa_r02.py`) |
+| `tests/test_t65_qa_r02.py` con el código de 052e79a | — | Fallan las 11 pruebas que había al probar contra ese commit. Pasa solo el control con datos sanos (`test_r02_h12_referencia_sana_no_cambia_nada`). Las 4 de motivo explícito (`test_r02_h13_motivo_explicito_de_cada_forma_rara`) se añadieron después y se comprueban con mutaciones |
+| `.docs/scripts/prueba_refs_vivas.py` | 8/8 | **15/15** (con el script de 052e79a, 11/15) |
+| `.docs/tickets/T-65/mutaciones.py` | 50/50 | **57/57** (7 nuevas, «r02») |
+| Sondas de la QA r02_03 · r02_02 | H-12 y H-13: caía el ciclo · 2 INFO | r02_03: HALLAZGOS: 0 · r02_02: HALLAZGOS: 0 · INFO: 0 (también r02_01: 0 hallazgos y 43 OK; r01_01, r01_04 y r01_06: 0) |
+| ruff (tres ejecutores) · mypy `bloque_a` | 3083 · 123 | 3083 · 123 |
+
+Sobre las mutaciones:
+
+- **Mutantes equivalentes.** Con el envoltorio de H-13, tres mutaciones anteriores pasaban la suite: «H-15 fechas duplicadas», «H-15 CSV con fechas ilegibles» y la nueva «r02 H-13 columnas duplicadas aceptadas». Quitar el control explícito ya no tumba el ciclo, porque el envoltorio convierte el error en `DatosInvalidos`, pero sí cambia el motivo declarado.
+- **Prueba nueva.** `test_r02_h13_motivo_explicito_de_cada_forma_rara` exige el motivo propio de cada forma (no «datos no normalizables»). Las tres mutaciones apuntan ahora a ella y fallan.
+
 ### Tras la QA r01
 
 | Suite | b699d4f (r01) | Ahora (r02) |
@@ -33,6 +49,17 @@
 | CA-6 · sin tocar lo prohibido ni el corpus | `git status`: solo `bloque_a/11_Ejecutor/`, `.docs/tickets/T-65/`, `.docs/scripts/prueba_refs_vivas.py` y `tools/refs_vivas.py` (ver la nota de H-11). Gate `corpus-integridad` en verde |
 
 ## Regresiones
+
+### Ronda r03 (hallazgos de la QA r02)
+
+Las pruebas fallan con el código de 052e79a (copia `git worktree add --detach` de 052e79a más el archivo de pruebas nuevo, ya retirada) o con su mutación, de prefijo «r02»:
+
+| Hallazgo | Prueba | Con 052e79a | Mutación |
+| --- | --- | --- | --- |
+| H-12 | `test_r02_h12_referencia_mala_degrada_solo_los_tipos_que_la_usan` (ACWI con cierre 0, binaria y ausente; ciclo de RV, IDX y DIV) y `test_r02_h12_subyacente_malo_excluye_solo_su_indicador` | Fallan las 4: el ciclo caía y el subyacente no se miraba | Referencia sin validar · sin incidencia · subyacente sin validar: fallan |
+| H-13 | `test_r02_h13_csv_raro_es_dato_invalido_del_simbolo` (Close y Adj Close, fechas con zona, `fecha_publicacion` con zona), `test_r02_h13_cualquier_error_de_la_normalizacion_es_dato_invalido` y `test_r02_h13_motivo_explicito_de_cada_forma_rara` | Fallan las 4 primeras | Columnas duplicadas aceptadas · zona aceptada · normalización sin envolver: fallan |
+| H-14 | `test_r02_h14_cierre_booleano_se_rechaza` (True y False) | Fallan las 2 | Booleanos aceptados: falla |
+| H-15 | `prueba_refs_vivas.py`: comodín que casa, archivo de salida, script roto detrás de un intérprete y argumento roto entre comillas | Fallan esos 4 casos | — |
 
 ### Ronda r02 (hallazgos de la QA r01)
 
@@ -85,6 +112,15 @@ Las comprueba `python3 .docs/tickets/T-65/mutaciones.py`. El script quita cada c
 Comando: `.docs/scripts/gate.sh` con `--completo` (llama a `./tools/check_all.sh`).
 
 **Ronda r01 (commit b699d4f).** En el árbol de trabajo dio 12/12, pero la QA lo repitió desde una copia limpia y dio 11/12: `refs-vivas` fallaba porque este `pruebas.md` citaba con forma de ruta un log local, que no se sube (H-03). La cita se ha quitado: los logs se nombran solo por su archivo, sin ruta.
+
+**Ronda r03: 12/12 en verde desde una copia limpia** (2026-11-10, log gate_20261110_152104.log, que no se sube). La copia es un `git worktree add --detach` de HEAD (bc1ee45, que contiene 052e79a) en el scratchpad, con los archivos de T-65 sin commit y un enlace a `.venv`; después se quitó con `git worktree remove`. `tools/refs_vivas.py` se repitió en la copia con los documentos finales, y pasa.
+
+| Gate | Resultado |
+| --- | --- |
+| corpus-integridad, nombres-nfc, yaml-configs, secrets, refs-vivas | ✓ |
+| ruff (hallazgos) | ✓ (3083 ≤ 3109) |
+| mypy bloque_a · bloque_a_forex · bloque_b | ✓ (123 · 174 · 159) |
+| pytest bloque_a · bloque_a_forex · bloque_b | ✓ 300 · 68 · 174 passed |
 
 **Ronda r02: 12/12 en verde desde una copia limpia** (2026-11-10, log gate_20261110_143201.log, que no se sube). La copia es un `git worktree add --detach` de HEAD (c482bf1, que contiene b699d4f) en el scratchpad, con los archivos de T-65 sin commit y un enlace a `.venv`. Se repitió `tools/refs_vivas.py` en la copia con los documentos finales del ticket, y pasa.
 

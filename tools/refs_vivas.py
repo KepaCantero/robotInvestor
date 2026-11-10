@@ -15,6 +15,15 @@ cita correcta no cuente como rota:
 - el sufijo de líneas (`archivo.py:10-20`) se quita;
 - una ruta del paquete Python de un bloque (`bloque_a/orquestacion.py`, que vive en
   `bloque_a/11_Ejecutor/bloque_a/`) cuenta como viva.
+QA r02 de T-65 (H-15), en una orden:
+- un intérprete delante (`python3`, `bash`, `sh`, `.venv/bin/python`) se salta: se
+  comprueba el script que ejecuta; las comillas de un argumento se quitan;
+- un argumento con comodín (`*`, `?`, `[`) vale si casa con algún archivo (glob), y
+  falla si no casa con ninguno;
+- el argumento que sigue a una opción de salida (`-o`, `--salida`, `--output`, `--out`,
+  también con `=`) es un archivo que la orden va a crear: no se comprueba.
+Cualquier otro archivo que aún no existe y se cita a propósito (una salida futura
+fuera de una orden, un entregable de una fase) va en `tools/refs_allowlist.txt`.
 La prueba está en `.docs/scripts/prueba_refs_vivas.py`.
 """
 import re
@@ -27,6 +36,9 @@ RAICES_VALIDAS = ("bloque_a/", "bloque_a_forex/", "bloque_b/", "docs/", "prompts
 BLOQUES = ("bloque_a", "bloque_a_forex", "bloque_b")
 PAT_RUTA = re.compile(r"`([^`\n]+?)`")
 PAT_LINEAS = re.compile(r":\d+(?:-\d+)?$")
+INTERPRETES = ("python", "python3", "bash", "sh", ".venv/bin/python", "../../.venv/bin/python")
+OPCIONES_SALIDA = ("-o", "--salida", "--output", "--out")
+COMODINES = ("*", "?", "[")
 
 
 def documentos(raiz: Path) -> list[Path]:
@@ -50,9 +62,26 @@ def rutas_de_cita(cita: str) -> list[str]:
     .sh o .py), el script y cada argumento con forma de ruta del repo; si no, la cita entera (los nombres de archivo con
     espacios se conservan enteros)."""
     r = cita.strip()
-    partes = r.split()
-    if len(partes) > 1 and partes[0].endswith((".sh", ".py")):
-        candidatas = [partes[0]] + [a for a in partes[1:] if PAT_LINEAS.sub("", a).strip("/").startswith(RAICES_VALIDAS)]
+    partes = [x.strip("'\"") for x in r.split()]
+    interprete = len(partes) > 1 and partes[0] in INTERPRETES
+    if interprete:
+        partes = partes[1:]
+    if partes and partes[0].endswith((".sh", ".py")) and (len(partes) > 1 or interprete):
+        candidatas = [partes[0]]
+        salida = False
+        for a in partes[1:]:
+            if salida:                       # archivo que la orden va a crear
+                salida = False
+                continue
+            if a in OPCIONES_SALIDA:
+                salida = True
+                continue
+            if "=" in a and a.split("=", 1)[0] in OPCIONES_SALIDA:
+                continue
+            if PAT_LINEAS.sub("", a).strip("/").startswith(RAICES_VALIDAS):
+                candidatas.append(a)
+    elif interprete:
+        candidatas = [partes[0]]
     else:
         candidatas = [r]
     return [PAT_LINEAS.sub("", c).strip("/") for c in candidatas]
@@ -64,6 +93,8 @@ def normalizar_cita(cita: str) -> str:
 
 
 def existe(raiz: Path, r: str) -> bool:
+    if any(c in r for c in COMODINES):   # QA r02 de T-65, H-15: un comodín vale si casa con algún archivo
+        return any(raiz.glob(r)) or (r.split("/", 1)[0] in BLOQUES and any((raiz / r.split("/", 1)[0] / "11_Ejecutor").glob(r)))
     if (raiz / r).exists():
         return True
     # Ruta de un paquete Python de bloque: `bloque_x/…` dentro de `bloque_x/11_Ejecutor/`

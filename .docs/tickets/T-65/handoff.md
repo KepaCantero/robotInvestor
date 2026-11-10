@@ -2,6 +2,19 @@
 
 Solo existe si el trabajo cambia de manos. Una sección por traspaso, la más reciente arriba.
 
+## 2026-11-10 · de claude a la QA r03
+
+- **Fase en la que se entrega:** QA (r03).
+- **Hecho:**
+  - H-12 a H-15 de la QA r02, con sus pruebas en `bloque_a/11_Ejecutor/tests/test_t65_qa_r02.py` y en `.docs/scripts/prueba_refs_vivas.py`.
+  - A tiene 300 pruebas y `mutaciones.py` detecta 57 de 57.
+  - Las sondas r01_01, r01_04, r01_06 y r02_01 a r02_03 dan 0 hallazgos.
+  - Gate completo 12/12 desde una copia limpia.
+- **Falta (coordinador):** el commit de la r03.
+- **Cuidado con:**
+  - Una referencia de comparación mala deja fuera del ciclo los tipos que la usan; no se pasan a pronósticos sin referencia.
+  - `Close` junto a `Adj Close` se rechaza; qué columna debe mandar no se ha decidido.
+
 ## 2026-11-10 · de claude a la QA r02
 
 - **Fase en la que se entrega:** QA (r02).

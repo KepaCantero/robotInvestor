@@ -9,7 +9,8 @@ Copia el script a un repositorio de juguete en una carpeta temporal y lo ejecuta
    `bloque_a/11_Ejecutor/bloque_a/x.py`) cuentan como vivas;
 4. un nombre de archivo con espacios se comprueba entero;
 5. una ruta rota fuera de `revisores/` sigue haciendo fallar el gate;
-6. en una orden, cada argumento con forma de ruta del repo se comprueba también (QA r01 de T-65, H-06).
+6. en una orden, cada argumento con forma de ruta del repo se comprueba también (QA r01 de T-65, H-06);
+7. comodines (valen si casan), archivos de salida (no se comprueban), intérpretes y comillas (QA r02 de T-65, H-15).
 Uso: python3 .docs/scripts/prueba_refs_vivas.py [ruta del script; por defecto tools/refs_vivas.py]. Sale con 1 si falla.
 """
 import shutil
@@ -59,6 +60,18 @@ CASOS = [
     ("argumento roto de una orden falla", {"docs/x.md": "Ejecuta `tools/a.py bloque_a/no_existe.csv`.\n"}, ["tools/a.py"], 1),
     ("argumento vivo de una orden pasa", {"docs/x.md": "Ejecuta `tools/a.py bloque_a/datos.csv --rapido`.\n"},
      ["tools/a.py", "bloque_a/datos.csv"], 0),
+    # QA r02 de T-65, H-15: comodines, archivos de salida, intérpretes y comillas
+    ("comodín que casa pasa", {"docs/x.md": "Ejecuta `tools/a.py bloque_a/tests/test_t65_*.py`.\n"},
+     ["tools/a.py", "bloque_a/tests/test_t65_hallazgos.py"], 0),
+    ("comodín que no casa falla", {"docs/x.md": "Ejecuta `tools/a.py bloque_a/tests/test_t99_*.py`.\n"},
+     ["tools/a.py", "bloque_a/tests/test_t65_hallazgos.py"], 1),
+    ("archivo de salida de una orden pasa", {"docs/x.md": "Ejecuta `tools/a.py --salida docs/nuevo.md` y `tools/a.py -o=docs/otro.md`.\n"},
+     ["tools/a.py"], 0),
+    ("entrada rota junto a una salida falla", {"docs/x.md": "Ejecuta `tools/a.py bloque_a/no_existe.csv --salida docs/nuevo.md`.\n"},
+     ["tools/a.py"], 1),
+    ("script roto detrás de un intérprete falla", {"docs/x.md": "Ejecuta `python3 tools/no_existe.py --rapido`.\n"}, [], 1),
+    ("script vivo detrás de un intérprete pasa", {"docs/x.md": "Ejecuta `python3 tools/a.py`.\n"}, ["tools/a.py"], 0),
+    ("argumento roto entre comillas falla", {"docs/x.md": "Ejecuta `tools/a.py 'bloque_a/no_existe.csv'`.\n"}, ["tools/a.py"], 1),
 ]
 
 

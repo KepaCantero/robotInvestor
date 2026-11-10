@@ -136,3 +136,37 @@ cd bloque_a/11_Ejecutor && ../../.venv/bin/python -m pytest -q -p no:cacheprovid
 ../../.venv/bin/python ../../.docs/tickets/T-65/revisores/r01_01_datos_raros.py          # HALLAZGOS: 0
 cd ../.. && python3 .docs/tickets/T-65/mutaciones.py r01                                  # 11/11
 ```
+
+## Correcciones de la QA r02 (NO APTO)
+
+**Causa raíz:**
+
+- **H-12.** La referencia de comparación de un tipo (por ejemplo, ACWI para RV e IDX) solo se leía tarde, en `Evaluador.tasa_base` y en `sintesis.construir`. Nada la validaba antes y ninguno de los dos puntos atrapaba el error. Desde la validación de cierres de H-15, un cierre ≤ 0 de la referencia tumbaba el ciclo entero; antes de T-65 daba cifras con un precio 0, en silencio. Con el archivo ausente o ilegible ya caía antes.
+- **H-13.** La corrección de H-02 solo envolvía `pd.read_csv`. Dos alias de `cierre` (`Close` y `Adj Close`) daban un `DataFrame` donde se esperaba una serie (`AttributeError`), y las fechas con zona horaria fallaban al compararse con as_of (`TypeError`), fuera de la normalización.
+- **H-14.** `pd.to_numeric` convertía `True` en 1,0.
+
+**Cambios** (rutas bajo `bloque_a/11_Ejecutor/`):
+
+| Archivo | Cambio | Hallazgo |
+| --- | --- | --- |
+| `bloque_a/orquestacion.py` | `_referencia_invalida(ref, desde, as_of)`. En `senales_clase`: se validan la referencia del tipo y las de sus vigentes en la ventana `min(lote, tasa_base)`; si fallan, incidencia `DATOS` y `DatosInvalidos`, que el ciclo convierte en el tipo PARCIAL con su limitación. Con SUBYACENTE, la referencia de cada indicador | H-12 |
+| `bloque_a/herramientas/ht01_datos.py` | `_normalizar_df` envuelve a `_normalizar_df_sin_envolver`: cualquier excepción es `DatosInvalidos`. Se rechazan las columnas duplicadas tras los alias, las fechas y `fecha_publicacion` con zona o de tipo mixto, y los cierres booleanos | H-13, H-14 |
+| `tests/test_t65_qa_r02.py` | 11 pruebas nuevas | H-12 a H-14 |
+| `tools/refs_vivas.py`, `.docs/scripts/prueba_refs_vivas.py` | Intérpretes, comillas, comodines con `glob` y opciones de salida; 7 casos nuevos | H-15 |
+| `.docs/tickets/T-65/mutaciones.py` | 7 mutaciones más (57 en total) | todos |
+
+**Decisiones:**
+
+- **H-12.** Ante una referencia mala, el tipo entero queda fuera del ciclo, en vez de seguir con pronósticos sin referencia (DIRECCIONAL). Es lo más prudente: el tipo de pronóstico de cada opción lo fija la configuración (8.4), y cambiarlo en silencio sería decidir por el operador. Lo malo se declara y los demás tipos siguen.
+- **H-13.** `Close` junto a `Adj Close` se rechaza, no se elige uno. Cuál de los dos manda (precio o precio ajustado) es una convención de datos que no fija el corpus. Si se quiere admitir ese formato, la regla va a T-57 o al perfil de datos de cada tipo.
+- **H-15.** Una salida futura citada fuera de una orden sigue contando como rota, salvo que esté en `tools/refs_allowlist.txt`. Así se conservan los dos lados del gate.
+
+**Comandos:**
+
+```bash
+cd bloque_a/11_Ejecutor && ../../.venv/bin/python -m pytest -q -p no:cacheprovider tests/test_t65_qa_r02.py
+../../.venv/bin/python ../../.docs/tickets/T-65/revisores/r02_03_minimos_h12_h13.py     # HALLAZGOS: 0
+cd ../.. && python3 .docs/tickets/T-65/revisores/r02_02_refs_vivas.py                     # HALLAZGOS: 0 · INFO: 0
+python3 .docs/scripts/prueba_refs_vivas.py                                                # 15/15
+python3 .docs/tickets/T-65/mutaciones.py r02                                              # 7/7
+```

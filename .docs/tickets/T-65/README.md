@@ -61,6 +61,19 @@ Pruebas en `bloque_a/11_Ejecutor/tests/test_t65_qa_r01.py` (QR); las de H-01, H-
 | H-10 | **No se hace:** el consumo por tipo de F5 con hilos (`presupuesto.<tipo>.consumido`) no es de T-65 y pide asignar en orden determinista el consumo de las llamadas compartidas entre hilos. **Destino: deuda técnica** (fila nueva o dentro de T-65 restante, la abre el coordinador), antes de conectar A en la Fase 1 | — |
 | H-11 | El texto de la limitación usa coma decimal («tasa base 0,5 por defecto») | QR `test_r01_h11_*` |
 
+## Correcciones de la QA r02 (NO APTO, «Ronda r02» de `qa.md`)
+
+Pruebas en `bloque_a/11_Ejecutor/tests/test_t65_qa_r02.py` (QR2): 10 de sus 11 fallan con 052e79a; la que pasa es el control con datos sanos.
+
+| Hallazgo | Qué se hace | Prueba |
+| --- | --- | --- |
+| H-12 (media) | Al empezar `senales_clase`, la referencia de comparación del tipo (y la guardada en sus vigentes) se valida una vez, en la ventana de la tasa base y del nivel de referencia (`_referencia_invalida`). Si no vale (cierre ≤ 0, CSV ilegible, archivo ausente u otro error), se escribe una incidencia `DATOS` y el tipo no se analiza: queda PARCIAL con la limitación «referencia de comparación X …». Los tipos que no usan esa referencia siguen. Con SUBYACENTE, la referencia propia de un indicador malo excluye y declara solo ese indicador | QR2 `test_r02_h12_*` (5) |
+| H-13 (media) | Todo el parseo y la normalización de HT-01 están envueltos: cualquier excepción es `DatosInvalidos` del símbolo. Además se rechazan explícitamente las columnas ambiguas tras los alias (`Close` y `Adj Close`: no se elige una en silencio) y las fechas, o `fecha_publicacion`, con zona horaria o de tipo mixto | QR2 `test_r02_h13_*` (4) |
+| H-14 | Una columna `cierre` booleana (o con valores booleanos) se rechaza | QR2 `test_r02_h14_*` (2) |
+| H-15 | `refs_vivas`, en una orden: salta el intérprete (`python3`, `bash`…), quita las comillas, resuelve los comodines con `glob` (valen si casan con algún archivo y fallan si no casa ninguno) y no comprueba el archivo que sigue a una opción de salida (`-o`, `--salida`, `--output`, `--out`, también con `=`). El docstring dice que cualquier otra salida futura va en `tools/refs_allowlist.txt` | `.docs/scripts/prueba_refs_vivas.py` (15 casos; con el script de 052e79a, 11/15) |
+
+Información de la r02 que no se toca: el plan desconocido en `Motor.servir` da `KeyError` (hoy todas las llamadas usan `PLAN_MIN` y el plan no lo elige el LLM), y la elección voraz de proxies de H-07 es determinista y se declara.
+
 ## Diseño
 
 - **Contratos CT-G:** ninguno. Los esquemas internos de A no cambian.
@@ -128,3 +141,6 @@ Pruebas en `bloque_a/11_Ejecutor/tests/test_t65_qa_r01.py` (QR); las de H-01, H-
 - 2026-11-10 · QA r01 NO APTO (H-01 a H-03 medios; H-04 a H-11 bajos)
 - 2026-11-10 · EN CURSO · claude · correcciones de la r01: H-01 a H-09 y H-11 corregidos con su prueba; H-10 a la deuda técnica
 - 2026-11-10 · EN QA · claude · pendiente de la r02; ver `pruebas.md`
+- 2026-11-10 · QA r02 NO APTO (H-12 y H-13 medios; H-14 y H-15 bajos)
+- 2026-11-10 · EN CURSO · claude · correcciones de la r02: H-12 a H-15 corregidos con su prueba
+- 2026-11-10 · EN QA · claude · pendiente de la r03; ver `pruebas.md`
