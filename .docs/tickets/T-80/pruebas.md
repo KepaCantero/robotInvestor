@@ -3,7 +3,7 @@
 | Suite | Antes | Después |
 | --- | --- | --- |
 | Marco común de C (`.docs/scripts/pruebas_marco.sh`) | 56 baterías en verde (V0.67) | 57 baterías en verde (V0.68) |
-| `pruebas/pruebas_via_directa_t80.py` | — | 110 comprobaciones (93 en la r01, más 13 regresiones de la QA r01 y 4 de la r02) |
+| `pruebas/pruebas_via_directa_t80.py` | — | 112 comprobaciones (93 en la r01, más 13 regresiones de la QA r01, 4 de la r02 y 2 de la r03) |
 | `pruebas/pruebas_integracion_v053.py` | 32 | 33: esquema actual V0.68 y cadenas hasta MIG-006; lo de V0.67 sigue comprobado |
 | `pruebas/pruebas_comparador_t17.py` | `PAR-0.4.0` | `PAR-0.5.0` (`o_max_analisis_consulta`) |
 | `entrega_claude/V0.68/scripts/pc3_01_via_directa.py` | — (el de V0.67 daba FALLA) | CUMPLE |
@@ -30,3 +30,5 @@ Gate completo (`.docs/scripts/gate.sh` con la opción `--completo`), lanzado por
 - Correcciones de la r01 y la r02: el resultado queda en el log del gate de su commit (`.docs/scripts/.logs/`). La QA r02 lo pasó sobre una copia limpia de T-80, sin T-65: 11/12, solo `refs-vivas` por las citas a T-65, ya corregidas (H-11).
 
 Regresiones de la r02: `una_propuesta_caducada_y_descartada_por_OPERADOR_no_vuelve_H09` y `..._por_BROKER_...` fallan con el código de la r01 corregida (reutilizan) y pasan con la r02; `el_motivo_dice_que_caduco_H12_*` comprueba el motivo nuevo.
+
+Regresiones de la r03: `D_un_analisis_superado_por_el_reanalisis_de_un_DIRECTA_no_vuelve_H13` y `D_el_motivo_dice_que_esta_superado_H13` fallan con el código del commit `f384bef` y pasan con la corrección. Las sondas `r03_*` dan SIN FALLOS.
