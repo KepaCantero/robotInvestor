@@ -790,6 +790,21 @@ class Bloque:
         ids += [str(c) for c in (f.get("senales") or {}).get("calc_ids", []) if c]
         return list(dict.fromkeys(ids))
 
+    def _contenido_evidencia(self, f: dict, eid: str) -> dict:
+        """Lo que el Contradictor ve de una evidencia citada (T-66, QA r02 H-12): la afirmación de la pieza, el método y
+        los símbolos de un CALC- del Motor, o la afirmación de una REF-; nunca un id sin contenido."""
+        pieza = next((p for p in f.get("_piezas", []) if str(p.get("fuente")) == eid), None)
+        if pieza:
+            return {"id": eid, "tipo": "PIEZA", "afirmacion": pieza.get("afirmacion"), "direccion": pieza.get("direccion")}
+        if eid.startswith("CALC-"):
+            rc = next((x for x in self.almacen.leer("RC") if x.get("calc_id") == eid and x.get("tipo_entrada") != "RECHAZO"), None) or {}
+            op = rc.get("operacion") or {}
+            return {"id": eid, "tipo": "CALCULO", "metodo": op.get("method_id") if isinstance(op, dict) else op,
+                    "simbolo_opcion": f.get("proxy"), "valores_opcion": {k: x for k, x in (f.get("senales") or {}).items()
+                                                                        if isinstance(x, (int, float)) and not isinstance(x, bool)}}
+        ref = self.referencias.por_id(eid) or {}
+        return {"id": eid, "tipo": "REFERENCIA", "afirmacion": ref.get("afirmacion") or ref.get("titulo") or ref.get("resumen")}
+
     def _veredicto_refutacion(self, f: dict) -> str:
         """PA-05 (T-66): el veredicto lo calcula una regla a partir de las objeciones (como en CT-G-03), no el modelo.
         «refutada»: alguna fuerte sin resolver; «frágil»: alguna fuerte resuelta en contrarréplica o al menos
@@ -864,9 +879,7 @@ class Bloque:
                         if x.get("resuelta") and citada:
                             replicas.append({"ref": f["proxy"], "objecion_id": o["objecion_id"], "argumento": o["resumen"],
                                              "que_la_resolveria": o.get("que_la_resolveria"), "respuesta": x["respuesta"],
-                                             "evidencia_citada": [{"id": e, "afirmacion": next((p["afirmacion"] for p in f["_piezas"]
-                                                                                                 if str(p.get("fuente")) == e), None)}
-                                                                  for e in citada]})
+                                             "evidencia_citada": [self._contenido_evidencia(f, e) for e in citada]})
             if replicas:
                 msg3 = {"peticiones": [], "contrarreplicas": replicas, "nivel": nivel}   # CT-13, fase de contrarréplica
                 self.mensajeria.crear("CT-13", "AG-02", "AG-11", msg3, run_id=run_id, presupuesto={"uc": presupuesto.asignado.get(clase)})
@@ -1193,6 +1206,19 @@ class Bloque:
                   "_objeciones": v.get("objeciones_internas", []), "_refutacion": {"arrastre": True},
                   "_tipo_pronostico": v.get("tipo_pronostico", "RELATIVO"), "_referencia": v.get("referencia_indice"),
                   "tnd_id": v.get("tnd_id"), "afirmaciones": [], "_gc3": True})
+        # T-66 (QA r02 H-10): una objeción fuerte de un registro anterior a PA-05 que se dio por resuelta sin evidencia citada
+        # ni contrarréplica vuelve a estar abierta (falla cerrado; INC-T66-02)
+        objs = copy.deepcopy(v.get("objeciones_internas") or [])
+        for o in objs:
+            if o.get("fuerza") == "fuerte" and o.get("resuelta") and (not o.get("evidencia_citada") or "contrarreplica" not in o):
+                o["resuelta"] = False
+                o["reabierta_por"] = "T-66: resuelta sin evidencia citada ni contrarréplica (registro anterior a PA-05)"
+        f["_objeciones"] = objs
+        # T-66 (QA r02 H-09): el veredicto de Contrarias se conserva en el arrastre; si falta, se recalcula por la regla
+        f["_veredicto"] = v.get("veredicto_refutacion") or self._veredicto_refutacion(f)
+        if any(o.get("reabierta_por") for o in objs):
+            f["_veredicto"] = self._veredicto_refutacion(f)
+        f["_veredicto_contradictor"] = v.get("veredicto_contradictor")
         if not f.get("premortem"):
             f["premortem"] = "Arrastre verificado: pre-mortem del ciclo de alta vigente."
         hz = {}

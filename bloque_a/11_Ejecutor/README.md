@@ -228,7 +228,7 @@ Revisión independiente del ejecutor con 59 pruebas nuevas (de 58 a 117, con las
 
 ## Propuestas de la revisión aplicadas (T-66, 10-11-2026)
 
-De las 21 propuestas de T-53 (`.docs/tickets/T-53/propuestas.md`), se aplican las que no necesitan otro proveedor de IA, K ni llamadas reales a la API. A pasa de 117 a 181 pruebas. Detalle en `.docs/tickets/T-66/`. Lo que cambia para quien lo usa:
+De las 21 propuestas de T-53 (`.docs/tickets/T-53/propuestas.md`), se aplican las que no necesitan otro proveedor de IA, K ni llamadas reales a la API. A pasa de 117 a 185 pruebas. Detalle en `.docs/tickets/T-66/`. Lo que cambia para quien lo usa:
 
 - **Perfiles activos (PA-01).**
   - Por defecto solo se analiza **divisas** (`perfiles.activos: [DIV]`, `[PROPUESTO]`).
@@ -238,6 +238,7 @@ De las 21 propuestas de T-53 (`.docs/tickets/T-53/propuestas.md`), se aplican la
 - **Contradictor (PA-05, sin otro proveedor).**
   - AG-11 recibe la afirmación verificable y la evidencia, sin la tesis, el mecanismo, el pre-mortem ni las dimensiones del Analista.
   - Una objeción fuerte solo queda resuelta si el Analista cita evidencia verificable (`evidencia_citada`) **y** AG-11 lo confirma en una contrarréplica.
+  - El `objecion_id` lo asigna el código (`OBJ-<proxy>-nn`) y el del modelo queda en `id_modelo`. En el arrastre se conserva el veredicto, y una objeción fuerte antigua resuelta sin evidencia ni contrarréplica se vuelve a abrir.
   - El veredicto lo calcula una regla (`contrarias.moderadas_para_fragil`). Una tesis refutada no es elegible y una frágil sale con confianza «especulativo» (INC-T66-01 y INC-T66-02).
 - **Contaminación por memoria del modelo (PA-09).**
   - `backtest.anonimizar: auto` anonimiza con un modelo real; con el simulado no hace falta.

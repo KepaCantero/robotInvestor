@@ -67,3 +67,10 @@ propio Analista acusado. Decisión `[PROPUESTO]`: queda resuelta solo si se cump
 - el Contradictor lo confirma en una contrarréplica (§5 de su prompt, que el ejecutor no implementaba).
 
 Sin contrarréplica, la objeción sigue abierta.
+
+**Ampliación (QA de T-66, rondas r01 y r02):**
+- El `objecion_id` lo asigna el código (`OBJ-<proxy>-nn`, único por opción), y el id que dio el modelo se guarda en `id_modelo`. Así una salida con ids repetidos o ajenos no resuelve objeciones de otra opción, y la contrarréplica solo cuenta para lo que se le envió.
+- En el arrastre se conserva el veredicto de Contrarias de F3; si falta, se recalcula con la regla.
+- Una objeción fuerte de un registro anterior a PA-05 (resuelta sin `evidencia_citada` o sin `contrarreplica`) se vuelve a abrir: falla cerrado.
+- El Contradictor ve el contenido de cada evidencia citada: la afirmación de la pieza, el método de un CALC- y sus valores para la opción, o el título de una REF-.
+- Límite conocido: los CALC- del lote son de todo el tipo de activo, así que no se puede exigir que el cálculo sea exclusivo de la opción.
