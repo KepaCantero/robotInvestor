@@ -1,6 +1,6 @@
 # Relevo para Astra · tareas pendientes al 10-11-2026
 
-De: Claude. Para: Astra. Lo pide el operador el 10-11-2026: que Astra ejecute las tareas que han quedado pendientes. Este documento dice **qué hacer, en qué orden, con qué reglas y cuándo parar**. El detalle de cada hallazgo está en el `qa.md` de su ticket; aquí solo se resume.
+De: Claude. Para: Astra. Lo pide el operador el 10-11-2026: **que Astra trabaje hasta completar todas las tareas pendientes y que todas pasen su QA (APTO)**. Este documento dice qué hacer, en qué orden, con qué reglas y cómo se repite cada ronda hasta el APTO. El detalle de cada hallazgo está en el `qa.md` de su ticket; aquí solo se resume.
 
 ## 0. Antes de empezar (obligatorio)
 
@@ -11,10 +11,25 @@ De: Claude. Para: Astra. Lo pide el operador el 10-11-2026: que Astra ejecute la
 
 ## 1. Reglas que no cambian
 
-- **Una ronda por tarea.** Si la QA de una ronda da NO APTO: estado DETENIDO en el `README.md` del ticket, pendientes en la fila de la deuda y en el §5 del Documento 0, entrada en el diario, commit, y **aviso al operador**. No abras otra ronda sin que él lo diga (regla del operador del 10-11-2026: «Si no supera esta ronda no continúes»).
-- **La QA la hace siempre un agente que no implementó.** Si Astra implementa, la QA la hace Claude u otro revisor sin contexto, el que diga el operador. Si implementó Claude, la QA la puede hacer Astra.
+- **Rondas hasta el APTO (sustituye la regla anterior de una sola ronda; operador, 10-11-2026: «Quiero que Astra trabaje hasta completar todas las tareas y que pasen las QAs»).** Cada tarea sigue este ciclo hasta que su QA dé APTO:
+  1. Implementar o corregir los hallazgos de la ronda anterior. Se corrigen todos: críticos, altos, medios y bajos. Solo pasa a la deuda, con su ID, lo que de verdad no se pueda hacer en la tarea, y se explica por qué.
+  2. Probar: baterías, LEEME y gate (§2), y que cada prueba nueva falle con el código anterior.
+  3. Commit de la ronda, con el ticket EN QA (ronda rNN).
+  4. QA independiente de la ronda: veredicto en `qa.md`, en su sección «Ronda rNN».
+  5. Si sale NO APTO: commit del `qa.md` y de las sondas, y vuelta al paso 1 con la ronda siguiente. **No se detiene la tarea ni se espera al operador.**
+  6. Si sale APTO: la tarea se cierra (CERRADO en el ticket, RESUELTO en la deuda) y se pasa a la siguiente.
+- **La QA la hace siempre un revisor que no implementó esa ronda.**
+  - Si Astra implementó o corrigió, la QA la hace un revisor nuevo sin contexto: otra sesión o subagente de Astra que no vio la implementación, o Claude si el operador lo pone.
+  - Cada ronda lleva un revisor nuevo, que reproduce todo desde limpio y no se fía del informe del implementador.
+  - Si implementó Claude, la QA la puede hacer Astra directamente.
+  - Si esa QA da NO APTO y Astra corrige, la ronda siguiente la revisa otro revisor nuevo.
+- **Aviso al operador sin parar.** Si un mismo hallazgo vuelve en tres rondas seguidas, o una corrección rompe algo que ya estaba bien, escribe una nota corta en el diario y en tu mensaje al operador. Después sigue.
 - **Decisiones del operador:** no se le preguntan. Valor por defecto marcado `[PROPUESTO]`, en simulado, y anotado en la fila T-57 de la deuda.
-- **Un cambio de los controles (F, G, kill-switch, niveles de autonomía) o de un contrato CT-G-xx** necesita que el operador apruebe el plan por escrito antes de implementar.
+- **Lo único que sí espera al operador:**
+  - un cambio de los controles (F, G, kill-switch, niveles de autonomía) o de un contrato CT-G-xx, que necesita su aprobación del plan por escrito;
+  - una pieza nueva, que necesita una conversación de diseño con él.
+
+  En esos casos escribe el plan o las preguntas de diseño en el ticket, pídeselo y **sigue con las demás tareas mientras esperas**.
 - **Repositorio público:** nada de secretos ni de datos personales o financieros. Los secretos solo en `.env`, que no se sube.
 - **Nunca se borra nada en `.docs/`:** lo viejo se marca CERRADO o SUSTITUIDO. Escribe memoria solo en `.docs/memoria/astra/` y `compartida/`.
 - **Si el proxy o una política deniega algo:** se informa al operador; no se busca otra vía.
@@ -67,7 +82,9 @@ De: Claude. Para: Astra. Lo pide el operador el 10-11-2026: que Astra ejecute la
 - **Pruebas:**
   - `.docs/tickets/T-83/r02_contra_head.py` debe dar FALLA con HEAD~ (la V0.72 de `dd96e19`) y OK con el árbol, en los seis hallazgos.
   - La sonda `r01_contenido.py` de la r01 lee la pregunta de `aprobacion` como texto. Ahora va campo a campo, así que hay que adaptarla.
-- **Salida:** veredicto APTO o NO APTO en `.docs/tickets/T-83/qa.md`, con el título «Ronda r02». Después, el cierre o la detención según las reglas del §1.
+- **Salida:** veredicto en `.docs/tickets/T-83/qa.md`, con el título «Ronda r02».
+  - Si sale APTO, la tarea se cierra.
+  - Si sale NO APTO, Astra corrige (r03) y la QA de la r03 la hace un revisor nuevo de Astra. Así hasta el APTO (§1).
 
 ### 3.2 T-84 · QA r02 de las correcciones c1 (la hace Astra; implementó Claude)
 
@@ -81,12 +98,13 @@ De: Claude. Para: Astra. Lo pide el operador el 10-11-2026: que Astra ejecute la
 - **Desviaciones declaradas que hay que juzgar:**
   - la de H-01: contrasta en cada paso porque la máquina va por detrás del intermediario;
   - H-04 llevado a la deuda: el Reloj no da instantes hasta un `comprobar_estado` bueno, lo que cambia el contrato de `Reloj`.
-- **Salida:** «Ronda r02» en `qa.md` y estado del ticket.
+- **Salida:** «Ronda r02» en `qa.md`. Si sale NO APTO, sigue el mismo ciclo que T-83 hasta el APTO.
+- **H-04 de la deuda:** el Reloj no da instantes hasta un `comprobar_estado` bueno. Va con T-84 si su QA lo exige; si no, queda en la deuda.
 
 ### 3.3 T-75 · Ronda r03 (implementa Astra; la QA la hace otro agente)
 
 - **Qué es:** el embudo visible y la alarma de sequía, en el marco V0.73.
-- **Cuándo:** solo si el operador lo autoriza. Pídeselo antes de empezar.
+- **Autorizada por el operador** (10-11-2026). Sigue el ciclo del §1 hasta el APTO.
 - **Pendientes** (detalle en `.docs/tickets/T-75/qa.md`, «Ronda r02»):
   - **H-09 (media):** el veto de F solo se anota si el informe que veta llega directo a `autorizar()`. Por `pantalla_aprobacion()`, el camino normal del operador, sale O-06 y no se anota nada.
     - *Sugerencia:* un único punto común que anote el veto, llamado desde las dos rutas.
@@ -108,7 +126,7 @@ De: Claude. Para: Astra. Lo pide el operador el 10-11-2026: que Astra ejecute la
 ### 3.4 T-76 · Ronda r03 (implementa Astra; la QA la hace otro agente)
 
 - **Qué es:** la cartera sombra pasiva, en el marco V0.73.
-- **Cuándo:** solo si el operador lo autoriza.
+- **Autorizada por el operador** (10-11-2026). Sigue el ciclo del §1 hasta el APTO.
 - **Ojo:** toca el mismo `validador/orquestador.py` que T-75. Hazlas una detrás de otra, sin mezclar. Si las dos cambian el esquema, puede ir todo en una sola versión del marco (V0.74, con MIG-010), como se hizo en la V0.73. Cada ticket lleva su propia QA.
 - **Pendientes** (detalle en `.docs/tickets/T-76/qa.md`, «Ronda r02»):
   - **H-10 (media):** el mes se valora en el instante en que se compara, no a su cierre. Entran los movimientos, el coste de la sombra y el `gasto_dia` posteriores al cierre. Ejemplo: una retirada el día 2 con el mes comparado el día 3 da SUPERA a un robot que pierde y calla el O-41.
@@ -139,9 +157,15 @@ De: Claude. Para: Astra. Lo pide el operador el 10-11-2026: que Astra ejecute la
 - **Pendiente:** sus cuatro hallazgos bajos (H-26 a H-29) pasan a la tarea nueva T-91 de la deuda. Ver §3.6.
 - **Ya puedes tocar** `bloque_a/`.
 
-### 3.6 Resto de la deuda técnica que no depende del operador
+### 3.6 Resto de la deuda técnica
 
-Solo cuando lo anterior esté hecho y el operador lo autorice. Una tarea cada vez.
+Cuando estén cerradas las tareas del 3.1 al 3.4, sigue con estas, una cada vez, en el orden de la tabla y con el mismo ciclo hasta el APTO.
+- Para cada una: si no tiene ticket, créalo con `.docs/scripts/nuevo_ticket.sh T-NN "Título" <pieza>`. Escribe el plan con la skill de planificar.
+- Las que necesitan al operador:
+  - escribe en el ticket el plan, o las preguntas de diseño, con valores `[PROPUESTO]`;
+  - pídele su aprobación;
+  - mientras tanto, pasa a la siguiente;
+  - cuando responda, vuelve a esa tarea y sigue el ciclo.
 
 | Tarea | Qué es | Qué hace falta antes |
 | --- | --- | --- |
@@ -152,15 +176,18 @@ Solo cuando lo anterior esté hecho y el operador lo autorice. Una tarea cada ve
 | T-82 | Escalera de verificación y ficha de bloque CT-G-17 | Pieza nueva y contrato nuevo: diseño y aprobación del operador |
 | T-74 | Controles de F que faltan (volumen, liquidez, exposición compartida…) | Cambia F y el contrato CT-G-08: el operador aprueba el plan por escrito |
 | T-73 | Perfil inversor en SC-1 | La estructura se puede planificar; los valores, en T-57 |
-| T-70, T-71 | Choques de los códigos O-00 y O-01 | Fase 2: no ahora |
+| T-70, T-71 | Choques de los códigos O-00 y O-01 | Son de la Fase 2: renombrar exige migrar diarios ya escritos. Haz solo el plan, y pregunta al operador si las adelanta |
 
-## 4. Qué entregar al operador al final de cada tarea
+## 4. Qué entregar al operador
 
-Un mensaje corto en español con:
-- la tarea;
-- el veredicto o el resultado;
-- el commit;
-- lo que queda pendiente y dónde está apuntado;
-- si hace falta una decisión suya.
+- **Al cerrar cada tarea con APTO:** un mensaje corto en español con:
+  - la tarea;
+  - cuántas rondas hicieron falta;
+  - el commit;
+  - lo que se pasó a la deuda y por qué.
+- **Cuando haga falta su aprobación o una conversación de diseño:** un mensaje con lo que necesitas y dónde está el plan.
+- **Al terminar todo:** una tabla con cada tarea, su estado final y su último commit.
+
+La tarea está terminada cuando todas las del §3 tienen QA APTO, o cuando lo único que les falta es la aprobación o el diseño del operador.
 
 Sin recapitular los pasos.
