@@ -134,11 +134,11 @@ class Seguimientos:
         enc = self.encargos().get(seg_id)
         if not enc:
             raise KeyError(f"Encargo desconocido {seg_id}")
-        self.b.almacen.escribir("F11", "AG-01", {"tipo_entrada": "RESPUESTA_BROKER", "seg_id": seg_id, "respuesta_broker":
-                                                  {"run_id": run_id or enc.get("ultimo_run_id"), "decision": decision, "fecha": str(as_of.date())}})
         self.b.mensajeria.crear("CT-22", "AG-01", "AG-20", {"tipo_aviso": "DECISION_SEGUIMIENTO", "seg_id": seg_id, "opp_id": enc["opp_id"],
                                                             "recomendacion": enc.get("ultima_recomendacion"), "decision_seguimiento": decision},
                                 query_id=seg_id)
+        self.b.almacen.escribir("F11", "AG-01", {"tipo_entrada": "RESPUESTA_BROKER", "seg_id": seg_id, "respuesta_broker":
+                                                  {"run_id": run_id or enc.get("ultimo_run_id"), "decision": decision, "fecha": str(as_of.date())}})
         self.b.almacen.escribir("F5", "AG-01", {"tipo_entrada": "AVISO_CT22", "id": self.b.almacen.nuevo_id("F5AV"),
                                                  "tipo_aviso": "DECISION_SEGUIMIENTO", "seg_id": seg_id, "decision": decision})
         return {"seg_id": seg_id, "decision": decision}
@@ -147,7 +147,7 @@ class Seguimientos:
     def pendientes(self, as_of) -> list[dict]:
         as_of = pd.Timestamp(as_of)
         out = []
-        for k, e in sorted(self.encargos().items()):
+        for k, e in sorted(self.encargos(as_of).items()):
             if e["estado"] != "ACTIVO":
                 continue
             if e.get("fecha_fin") and pd.Timestamp(e["fecha_fin"]) < as_of:
@@ -162,15 +162,16 @@ class Seguimientos:
     def ejecutar(self, as_of=None, seg_id: str | None = None, forzar: bool = False) -> list[dict]:
         """Ejecuta los ciclos C6 vencidos (o uno concreto con `forzar`). Prioridad inferior a C1–C3: se llama fuera de ellos."""
         as_of = self.b.fijar_fecha(as_of or pd.Timestamp.today())
+        pendientes = self.pendientes(as_of)
         if seg_id:
-            enc = self.encargos().get(seg_id)
+            enc = self.encargos(as_of).get(seg_id)
             if not enc:
                 raise KeyError(f"Encargo desconocido {seg_id}")
             if enc["estado"] != "ACTIVO":
                 return [{"seg_id": seg_id, "estado": enc["estado"], "ejecutado": False, "motivo": f"Encargo {enc['estado']}"}]
-            lista = [enc] if forzar or seg_id in {e["seg_id"] for e in self.pendientes(as_of)} else []
+            lista = [enc] if forzar or seg_id in {e["seg_id"] for e in pendientes} else []
         else:
-            lista = self.pendientes(as_of)
+            lista = pendientes
         return [self.ciclo_c6(e, as_of) for e in lista]
 
     # ================================================================================ ciclo C6
@@ -233,7 +234,7 @@ class Seguimientos:
         if entregado:
             b.mensajeria.crear("CT-24", "AG-01", "BROKER", {"seg_id": seg_id, "estado": "ACTIVO", "run_id": run_id, "informe": rutas,
                                                             "recomendacion": informe["recomendacion"], "semaforo": informe["semaforo"]},
-                               query_id=seg_id, tipo_mensaje="RETORNO", estado="COMPLETO")
+                               query_id=seg_id, run_id=run_id, tipo_mensaje="RETORNO", estado="COMPLETO")
         return {"seg_id": seg_id, "run_id": run_id, "ejecutado": True, "entregado": entregado, "g3": val["dictamen"],
                 "recomendacion": informe["recomendacion"], "semaforo": informe["semaforo"], "sin_novedad": rev["sin_novedad"],
                 "rutas": rutas, "informe": informe, "validacion": val}

@@ -13,7 +13,7 @@ import jsonschema
 from .configuracion import max_tokens_de, modelo_de, parametro
 from .contratos import ESQUEMAS, contiene_credenciales
 from .herramientas.ht06_indice import CacheResultados, clave_hash
-from .llm import LLMClient, Uso, herramienta_busqueda_web
+from .llm import LLMClient, ReplayClient, Uso, contenido_sensible, herramienta_busqueda_web, respuesta_segura
 from .prompts import NOMBRES, CatalogoPrompts, mensaje_usuario
 
 
@@ -97,10 +97,16 @@ class Agentes:
                                     tratamiento="análisis con el marco común de los Analistas; revisar 02_System_prompts", run_id=run_id)
         texto_u = mensaje_usuario(contrato, mensaje, contexto, instrucciones, esquema)
         herramientas = self.herramientas_para(agente, permitir_web)
-        clave = clave_hash(agente, modelo, texto_u, herramientas) if self.cache else None
-        if clave:
+        if contenido_sensible([mensaje, contexto, system, texto_u]):
+            self.almacen.incidencia("OTRO", "Encargo bloqueado por R8", agente, severidad="Operativa", run_id=run_id)
+            return ResultadoAgente(agente, None, "PARCIAL", errores=["encargo bloqueado por R8"])
+        max_tokens = max_tokens_de(self.cfg, agente)
+        clave = clave_hash(self.cliente.identidad_cache(), agente, modelo, system, texto_u, herramientas,
+                           esquema, max_tokens) if self.cache else None
+        # Replay debe consultar siempre su cinta (o grabar la respuesta de la base).
+        if self.cache is not None and clave and not isinstance(self.cliente, ReplayClient):
             previo = self.cache.obtener(clave)
-            if previo is not None:
+            if previo is not None and not contenido_sensible(previo) and not errores_esquema(previo, esquema):
                 self.contabilidad.registrar(run_id, agente, modelo, Uso(), clase, fase, cache_hit=True)
                 return ResultadoAgente(agente, previo, "COMPLETO", 0.0, 0, [], True)
         mensajes = [{"role": "user", "content": texto_u}]
@@ -114,20 +120,25 @@ class Agentes:
         try:
             for intento in range(reintentos + 1):
                 r = self.cliente.generar(agente=agente, modelo=modelo, system=system, mensajes=mensajes,
-                                         max_tokens=max_tokens_de(self.cfg, agente), herramientas=herramientas, esquema=esquema)
+                                         max_tokens=max_tokens, herramientas=herramientas, esquema=esquema)
+                r = respuesta_segura(r)
                 uso_total.sumar(r.uso)
                 uc_total += self.contabilidad.registrar(run_id, agente, modelo, r.uso, clase, fase)
+                if r.rechazo or r.stop_reason in ("refusal", "pause_turn", "error_proveedor", "contenido_sensible"):
+                    errores = [f"turno no utilizable ({r.stop_reason})"]
+                    break
                 try:
                     datos = extraer_json(r.texto)
                     errores = errores_esquema(datos, esquema)
-                    if r.truncada:
+                    if r.truncada or r.stop_reason == "max_tokens":
                         errores.append("respuesta truncada por max_tokens")
                 except (json.JSONDecodeError, ValueError) as e:
                     datos, errores = None, [f"JSON no válido: {e}"[:200]]
                 if datos is not None and contiene_credenciales(datos):
-                    errores.append("la respuesta contiene un patrón de credencial (R8)")
+                    errores = ["respuesta bloqueada por R8"]
+                    break
                 if not errores:
-                    if clave:
+                    if self.cache is not None and clave:
                         self.cache.guardar(clave, datos)
                     return ResultadoAgente(agente, datos, "COMPLETO", uc_total, intento + 1, [], False, uso_total)
                 if intento < reintentos:
@@ -138,7 +149,7 @@ class Agentes:
         finally:
             if self.monitor:
                 self.monitor.fin(agente, t0)
-        self.almacen.incidencia("OTRO", f"Salida no conforme de {agente} ({NOMBRES[agente]}) tras {reintentos} reparación(es): "
+        self.almacen.incidencia("OTRO", f"Salida no conforme de {agente} ({NOMBRES[agente]}) tras {intento + 1} intento(s): "
                                 + "; ".join(errores)[:500], agente, severidad="Operativa",
                                 tratamiento="estado PARCIAL declarado; la fase continúa con alcance reducido", run_id=run_id)
-        return ResultadoAgente(agente, None, "PARCIAL", uc_total, reintentos + 1, errores, False, uso_total)
+        return ResultadoAgente(agente, None, "PARCIAL", uc_total, intento + 1, errores, False, uso_total)

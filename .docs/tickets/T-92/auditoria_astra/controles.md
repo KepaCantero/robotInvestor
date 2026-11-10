@@ -1,0 +1,16 @@
+# Controles del operador y del almacén
+
+| Hallazgo de la auditoría | Resultado sobre bc90534 y tratamiento |
+| --- | --- |
+| O1. Bloqueo de todas las clases | Ya corregido en T-53/T-66: se retiran las clases pausadas y el ciclo sin alcance no redacta. Conservar `test_h06_todo_pausado_no_redacta_ni_falla_en_el_esquema`. |
+| O2. CT-23 perdía la hora del plazo | Se comparan instantes en la zona del reloj. Se conserva la hora al entrar en ciclo y al calcular el plazo desde el envío. En el instante exacto se registra el vencimiento. |
+| O3. Configuración visible antes del efecto | La vista histórica F10 filtra tanto la fecha de conocimiento como la de efecto. La vista sin fecha conserva todo lo registrado. Para planificar varios ajustes del mismo vencimiento, `efectivo_el` permite consultar lo ya conocido que entrará en vigor entonces. |
+| O4. Permisos F10 | Para autores de servicio se permiten sus parámetros CFG. La excepción de limitaciones de servicio exige AG-01 y el espacio de identificadores SRV-. Un tipo de entrada arbitrario ya no permite cambiar P-32. |
+| O5. Identificadores y cadenas duplicadas | Un bloqueo de archivo serializa a los escritores con el mismo directorio. El contador se lee bajo el bloqueo y se reemplaza de forma atómica; los lectores y el índice F4 se refrescan si otra instancia ha escrito. Pruebas con hilos y procesos distintos. |
+| O6. Alta fantasma al fallar el disco | El JSONL se persiste antes de actualizar memoria e índice F4. Si falla el sello durante una escritura, se restaura el tamaño anterior antes de liberar el cerrojo. Los IDs reservados y no utilizados pueden dejar huecos. |
+| O7. Truncamiento final indetectable | Cada historial tiene un sello de longitud y hash final en `sellos_integridad.json`. Se valida al abrir, al refrescar y en el control de integridad. En un almacén anterior a T-87 se verifica primero la cadena existente y se registra su final sin reescribirla. No se puede inferir si ya faltaba su último registro antes de esa primera apertura. |
+| O8. Caducidad de la bóveda | Corregido antes en T-53. Sin fecha explícita se usa la fecha real, se deniega si caducó y se prueban formatos inválidos. |
+| O9. Seguimiento forzado tras fecha de fin | Pasar por la finalización también cuando se especifica SEG y se fuerza la frecuencia. Se mantiene el último día incluido; al día siguiente, FINALIZADO. |
+| O10. Decisión sensible persistida antes del rechazo | El mensaje CT-22 pasa la validación del canal antes de escribir la decisión en F11/F5. El caso negativo usa un marcador generado localmente y comprueba también el fichero de estado. |
+
+**Operación y recuperación.** Copiar/restaurar la carpeta de estado completa con el ejecutor parado, incluidos contadores, sellos y acuses. El bloqueo coordina procesos de la nueva versión sobre almacenamiento local; parar procesos de versiones anteriores antes de migrar. Un corte abrupto entre el append y el reemplazo del sello puede dejar un desfase que se denuncia al abrir. Preservar la carpeta y recuperar un respaldo coherente antes de reintentar. El sello en el mismo directorio detecta daños accidentales; frente a un atacante capaz de reescribir toda la carpeta se requiere una copia o firma de confianza externa. El bloqueo de archivo protege el registro de cada operación y no promete convertir un ciclo completo en una transacción.

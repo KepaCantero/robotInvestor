@@ -170,6 +170,7 @@ Cuando estén cerradas las tareas del 3.1 al 3.4, sigue con estas, una cada vez,
 | Tarea | Qué es | Qué hace falta antes |
 | --- | --- | --- |
 | T-91 | Bloque A: H-26 a H-29 de la QA r05 de T-65 (festivos de PS2 en la resolución de H1; fechas distintas de proxy y referencia; regla de PS2 sin marcar `[PROPUESTO]` ni registrar en `docs/incidencias.md`; documentación y mutantes vivos) | Ninguna; es técnica. La regla de H-27 se marca `[PROPUESTO]` y va a T-57 |
+| T-93 | Bloque A: hallazgos medios y bajos de la QA r04 de T-92 (integración de tu auditoría; R8 con escapes, falsos positivos con URL de prensa, almacén anterior con la última línea a medias…) | Ninguna; es técnica. Corregir H-32 y H-34 antes del modo sombra con API. Tu rama `astra/bloque-a-integridad-y-evidencia` ya está integrada en develop como T-92 (salvo `preparar-encargo-b`): no la fusiones |
 | T-88 | Bloque A: `presupuesto.consumido` de F5 cambia entre ejecuciones iguales con varios hilos | Ninguna; es técnica |
 | T-87 | SC-5 con su registro de análisis compartido (sale de T-80) | Pieza nueva: diseñarla con el operador antes del plan |
 | T-81 | SC-4 mínimo (tesis congeladas, torneo de pronósticos, calibración) | Pieza nueva: diseñarla con el operador, junto con PA-03 y PA-15 de T-67 |

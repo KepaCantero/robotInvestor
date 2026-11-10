@@ -10,6 +10,7 @@ import pytest
 from bloque_a.configuracion import RUTA_UNIVERSO_EJEMPLO, cargar_config
 from bloque_a.herramientas.ht01_datos import (
     DatosInvalidos,
+    DatosNoDisponibles,
     ProveedorCSV,
     cargar_universo,
 )
@@ -104,11 +105,13 @@ def test_r04_h24_en_la_cesta_no_cuenta_un_miembro_parado_en_la_emision(tmp_path)
     miembros = b0.evaluador.simbolos_clase("DIV")
     b = _bloque(tmp_path / "b", datos=_parado(tmp_path / "b", miembros[0], EMISION))
     b.fijar_fecha("2026-06-05")
-    r_cesta, _ = b.evaluador.rentabilidad("CESTA", "DIV", EMISION, RESOLUCION_H1, "H1")
-    otros = [b.evaluador.rentabilidad(s, "DIV", EMISION, RESOLUCION_H1, "H1")[0] for s in miembros[1:]]
-    assert r_cesta == pytest.approx(sum(otros) / len(otros))         # db6ed93: entraba con 0
-    r_sin_h, _ = b.evaluador.rentabilidad("CESTA", "DIV", EMISION, RESOLUCION_H1)
-    assert r_sin_h == pytest.approx(r_cesta)                          # sin horizonte, tampoco (no tiene dato nuevo)
+    # T-92 (D02): al emitir el miembro aún publicaba (su último dato es el de la emisión), así que entra en la CESTA congelada;
+    # que después no publique es información posterior: la CESTA no sirve y el pronóstico espera. Nunca entra con 0 (db6ed93)
+    assert miembros[0] in b.evaluador.bases_cesta("DIV", EMISION, "H1")
+    with pytest.raises(DatosNoDisponibles):
+        b.evaluador.rentabilidad("CESTA", "DIV", EMISION, RESOLUCION_H1, "H1")
+    with pytest.raises(DatosNoDisponibles):                           # sin horizonte, tampoco (no tiene dato nuevo)
+        b.evaluador.rentabilidad("CESTA", "DIV", EMISION, RESOLUCION_H1)
 
 
 def test_r04_h24_ps2_de_la_emision_mira_tambien_la_referencia(tmp_path):

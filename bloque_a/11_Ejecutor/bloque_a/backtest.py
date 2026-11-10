@@ -104,9 +104,14 @@ def ejecutar_backtest(cfg: Dict, desde: str, hasta: str, datos: str, universo: s
     bt = cfg.get("backtest") or {}
     salida_p = Path(salida)
     salida_p.mkdir(parents=True, exist_ok=True)
+    reservados = ("estado", "entregables", "senales.csv", "pronosticos.csv", "consumo.csv", "metricas.json")
+    if any((salida_p / nombre).exists() for nombre in reservados):
+        raise FileExistsError("La salida ya contiene un backtest; elija otra carpeta para una ejecución independiente.")
     prov = proveedor or ProveedorCSV(datos)
     uni = cargar_universo(universo)
     cli = cliente or crear_cliente(tipo_cliente, cfg, replay, replay_modo)
+    # Reserva atómica frente a dos ejecuciones concurrentes en la misma salida.
+    (salida_p / "estado").mkdir()
     bloque = Bloque(cfg, prov, uni, cli, salida_p / "estado", salida_p / "entregables",
                     anonimizar=bt.get("anonimizar", "auto") if anonimizar is None else anonimizar)
     fechas = fechas_ciclo(desde, hasta, frecuencia or bt.get("frecuencia", "semanal"), int(parametro(cfg, "backtest.dia_semana")))

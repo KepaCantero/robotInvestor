@@ -237,7 +237,7 @@ presentacion: {confianza_probable_E: 70, zona_interes: 0.05}
 
 # T-65 (H-08 de T-53) · Ventana de datos del lote de fichas del Motor por tipo de activo: `ventana_anios` hasta as_of más
 # `margen_dias` (para cubrir la ventana de 3 años de las fichas). Técnico.
-senales: {ventana_anios: 3, margen_dias: 30}
+senales: {ventana_anios: 3, margen_dias: 30, umbral_favorable: 0.5}   # umbral_favorable [PROPUESTO] (T-92, H-09): una observación de HT-01 es favorable si la señal compuesta (0–1) llega a él
 
 # Corroboración mínima (PS1, Anexo A, P-14; régimen Operador): raíces independientes A/B (o una fuente primaria A)
 ps1: {raices_min: 2}

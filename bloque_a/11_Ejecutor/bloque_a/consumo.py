@@ -105,6 +105,21 @@ class Presupuesto:
     def puede(self, clase: str, estimado: float) -> bool:
         return self.disponible(clase) >= estimado
 
+    def autorizar_hasta_tope(self, clase: str, estimado: float, fase_admitida: bool) -> tuple[bool, float]:
+        """T-92 (auditoría de Astra, A6): el máximo incluye tanto el margen automático como lo ya autorizado, y la
+        comprobación y el ajuste comparten el cerrojo. Lectura prudente de «ampliación máxima autorizable» del Anexo A como
+        tope del total (base × (1 + 0,50)), no como un 50 % adicional al margen automático (INC-T92-01, [PROPUESTO])."""
+        sin_aut = float(parametro(self.cfg, "presupuesto_uc.ampliacion_sin_autorizacion"))
+        maximo = float(parametro(self.cfg, "presupuesto_uc.ampliacion_max_autorizable"))
+        with self._lock:
+            base = self.asignado.get(clase, 0.0)
+            actual = base * (1 + sin_aut) + self.ampliado[clase]
+            falta = estimado + self.consumido[clase] - actual
+            concede = fase_admitida and falta > 0 and actual + falta <= base * (1 + maximo) + 1e-9
+            if concede:
+                self.ampliado[clase] += falta
+            return concede, falta
+
     def ampliar(self, clase: str, uc: float) -> None:
         with self._lock:
             self.ampliado[clase] += uc

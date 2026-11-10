@@ -11,3 +11,5 @@ bloque-a --cliente mock --datos ejemplos/datos_sinteticos --universo config/univ
 
 Regenerado el 02/11/2026 con el Ejecutor V1.1 (Documento 0 óptima V5.0): doce tipos de activo, universo de ámbitos con indicador de seguimiento, `senales.csv` con las columnas `tipo_activo`, `subtipo`, `ambito` e `indicador_seguimiento_simbolo` (más el alias obsoleto `proxy_backtest` al final) y paquete JSON con `ambito`, `indicador_seguimiento`, `invertibilidad` y el encargo para el Bloque B, sin vehículos.
 
+
+Migración de formato V5.1: al paquete JSON histórico se le añadió la naturaleza coherente con el horizonte principal mediante la regla del ejecutor. Los valores analíticos y la fecha de la ejecución son los originales.
