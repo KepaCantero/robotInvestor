@@ -62,6 +62,8 @@ ESQUEMA_V0_51 = "a52f1c6e72bfcd9590e93258b119547734d5af3b28a01f80fb691eed290d198
 ESQUEMA_V0_53 = "0a18459ec3066ff9ddd17b2e06bda9c41abf40a110191e014aad136cb807eaa2"
 # esquema de V0.67 (integración del kit 2 de GLM, V0.60-V0.66, más el tope de líneas del diario del panel en parametros.py)
 ESQUEMA_V0_67 = "f3943b0d923b81f423256f435e1db04f352c8ebf6d0962fd2dc5f37b5853086e"
+# esquema de V0.68 (T-80: vía DIRECTA y modo CONSULTA; atributo consultas, el rastro SC-5, y constantes de la vía DIRECTA)
+ESQUEMA_V0_68 = "124145355f7c0eff9febc17c1b7f5553e65a8f8a18a1f01879960427240a4175"
 # lo que una migración nunca puede cambiar, aunque lo declare (revisión de V0.46, hallazgos 5 y 10)
 PROHIBIDAS = ("limites", "kill", "rearmes", "ultimo_ahora", "huella_config", f"cfg.politica_f.{LIMITE_PERDIDA}",
               "cfg.nivel_autonomia")   # V0.51 (revisión, duda 2): ninguna migración sube ni baja el nivel de nadie
@@ -133,6 +135,13 @@ def _v053(estado):
     return estado
 
 
+def _v068(estado):
+    """V0.67 → V0.68 (T-80): el estado recibe el rastro SC-5 de las consultas, vacío (antes no había consultas). Los expedientes
+    no cambian: los de antes no son DIRECTA, y su identidad (y su huella) es la misma."""
+    estado["consultas"] = {"historial": [], "estado": "VIGENTE", "entradas": []}
+    return estado
+
+
 MIGRACIONES = (
     Migracion("MIG-001", pe.FORMATO_010, ESQUEMA_V0_45, ESQUEMA_V0_45, _sin_cambios, frozenset(),
               "formato 0.1.0 (V0.42 a V0.45) a 0.2.0: la cabecera lleva el esquema; el estado no cambia"),
@@ -146,6 +155,8 @@ MIGRACIONES = (
     Migracion("MIG-005", pe.FORMATO, ESQUEMA_V0_53, ESQUEMA_V0_67, _sin_cambios, frozenset(),
               "V0.53 a V0.67 (integración del kit 2 de GLM): solo cambia el código (n_lineas_diario_ambar en parametros.py); "
               "el estado guardado no cambia"),
+    Migracion("MIG-006", pe.FORMATO, ESQUEMA_V0_67, ESQUEMA_V0_68, _v068, frozenset(),
+              "V0.67 a V0.68 (T-80, vía DIRECTA y modo CONSULTA): el rastro SC-5 de las consultas, vacío; los expedientes no cambian"),
 )
 
 
