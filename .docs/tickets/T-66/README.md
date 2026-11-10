@@ -2,7 +2,7 @@
 
 | Campo | Valor |
 | --- | --- |
-| Estado | EN QA (r01, r02 y r03 NO APTO, corregidos; pendiente la r04) |
+| Estado | CERRADO (QA r04 APTO, 10-11-2026) |
 | Pieza | bloque_a |
 | Planifica · implementa · QA | claude · claude (orquestación) y un segundo agente (evaluación) · un revisor nuevo sin contexto |
 | Aprobación del operador | Aprobada el 2026-11-10: «Quiero que apliques todas las propuestas que consideres oportunas ahora mismo y demos por finalizado el bloque A». Los valores que decide el operador van como `[PROPUESTO]` hasta T-57 |
@@ -95,3 +95,4 @@ Aplicar al ejecutor del Bloque A las propuestas de la revisión T-53 (`.docs/tic
 - 2026-11-10 · QA r01 NO APTO (H-01 alta); H-01 a H-08 corregidos o documentados; pendiente la r02
 - 2026-11-10 · QA r02 NO APTO (H-09 alta: veredicto perdido en el arrastre); H-09 a H-13 corregidos; pendiente la r03
 - 2026-11-10 · QA r03 NO APTO (H-14 gate desde limpio, H-15 REF- ajenas citables); H-14 a H-18 corregidos; pendiente la r04
+- 2026-11-10 · CERRADO · QA r04 APTO; H-19 a H-21 a la deuda técnica (T-67)
