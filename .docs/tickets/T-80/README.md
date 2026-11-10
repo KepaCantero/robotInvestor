@@ -33,14 +33,14 @@ Detalle en el Documento 0: `sistema_global/documentos_0/V0.68_Via_directa_y_modo
 - **Contratos CT-G:** no cambian.
 - **Estado persistido:** el Orquestador gana el atributo `consultas`, y los expedientes `DIRECTA` llevan `bloque_entrada`, `analisis_ref` y `consulta_ref`, que van en su identidad. El esquema del código pasa a V0.68, con la migración MIG-006 (el rastro vacío; sin rutas declaradas, porque es un atributo nuevo con su valor inicial).
 - **Números:** ninguno de política.
-  - `MAX_ANALISIS_CONSULTA = 50` es un tope técnico.
-  - «Nivel bajo» sale de `NIVEL_MAX_POR_DECISION["EXPLORAR"]` (N1).
+  - `o_max_analisis_consulta` = 50 en `parametros.py`, tope técnico `[PROPUESTO]` (QA r01, H-08).
+  - «Nivel bajo» sale de `NIVEL_MIN_POR_DECISION["ABRIR_POSICION"]` (N2, `[PROPUESTO]`, QA r01, H-04): el más bajo con el que se puede invertir.
 - **Cómo falla cerrado:**
   - todo se valida antes de crear el expediente: un rechazo no deja nada;
   - un análisis en duda no se reutiliza (en juego, invertido, en reanálisis, apartado sin ratificar o excluido);
   - por E, con más candidatos vigentes, se devuelve a D;
   - un rastro SC-5 tocado da O-13 con kill-switch en el siguiente punto de decisión.
-- **Decisiones del operador usadas como `[PROPUESTO]`:** ninguna. Quién puede entrar (solo el Broker) y los bloques admitidos para una consulta (A a E y K) salen del §2.
+- **Decisiones del operador usadas como `[PROPUESTO]`:** qué es «nivel bajo» (N2) y el tope de análisis por consulta (50), los dos en T-57. Quién puede entrar (solo el Broker) y los bloques admitidos para una consulta (A a E y K) salen del §2.
 
 ## Riesgos
 
@@ -81,3 +81,5 @@ Detalle en el Documento 0: `sistema_global/documentos_0/V0.68_Via_directa_y_modo
 
 - 2026-11-10 · ABIERTO · creado con nuevo_ticket.sh
 - 2026-11-10 · EN QA · V0.68 implementada; batería nueva con 93 comprobaciones; 57 baterías en verde
+- 2026-11-10 · QA r01 NO APTO (H-01 alta; H-02 a H-04 medias; H-05 a H-08 bajas); todos corregidos con su prueba (106 comprobaciones)
+- 2026-11-10 · QA r02 NO APTO (H-09 media: propuesta caducada y descartada; H-10 a H-12 bajas); corregidos (110 comprobaciones); pendiente la r03

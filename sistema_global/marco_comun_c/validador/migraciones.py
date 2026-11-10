@@ -63,7 +63,7 @@ ESQUEMA_V0_53 = "0a18459ec3066ff9ddd17b2e06bda9c41abf40a110191e014aad136cb807eaa
 # esquema de V0.67 (integración del kit 2 de GLM, V0.60-V0.66, más el tope de líneas del diario del panel en parametros.py)
 ESQUEMA_V0_67 = "f3943b0d923b81f423256f435e1db04f352c8ebf6d0962fd2dc5f37b5853086e"
 # esquema de V0.68 (T-80: vía DIRECTA y modo CONSULTA; atributo consultas, el rastro SC-5, y constantes de la vía DIRECTA)
-ESQUEMA_V0_68 = "124145355f7c0eff9febc17c1b7f5553e65a8f8a18a1f01879960427240a4175"
+ESQUEMA_V0_68 = "9eade73e26f0f61f9e9f4e96638b50ea2fa3921c2965ac9ffa01d7b073d94cd8"
 # lo que una migración nunca puede cambiar, aunque lo declare (revisión de V0.46, hallazgos 5 y 10)
 PROHIBIDAS = ("limites", "kill", "rearmes", "ultimo_ahora", "huella_config", f"cfg.politica_f.{LIMITE_PERDIDA}",
               "cfg.nivel_autonomia")   # V0.51 (revisión, duda 2): ninguna migración sube ni baja el nivel de nadie

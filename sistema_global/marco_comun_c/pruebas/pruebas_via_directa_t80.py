@@ -37,7 +37,8 @@ def enc_directa(eid, n, nivel=None):
     e["expediente_id"], e["correlation_id"], e["event_id"] = eid, f"COR-{eid}", f"EV-ENC-{eid}"
     if nivel:
         e["payload"]["nivel_analisis"] = nivel
-        e["payload"]["decision_informada"] = "EXPLORAR"
+        if nivel in ("N0", "N1"):
+            e["payload"]["decision_informada"] = "EXPLORAR"
     return e
 
 
@@ -119,14 +120,19 @@ def main():
     h.chk("D_sigue_a_COMPARADA", r["ok"] and e["estado"] == "COMPARADA", r)
     r = o.proponer("EXP-DD-01", ENTRADA, SALIDA, "BROKER", AHORA, dim(o, "EXP-DD-01"))
     h.chk("D_sigue_a_PROPUESTA", r["ok"] and e["estado"] == "PROPUESTA" and o.integridad() == [], r)
-    R("D_el_mismo_analisis_no_se_reutiliza_dos_veces_en_juego", o,
+    r = autorizar_op(o, "EXP-DD-01", informe_f(o, "EXP-DD-01", 42), AHORA)
+    anotar_entrada(o, "EXP-DD-01", "ORD-DD-1", 100.0, AHORA)
+    r2 = o.ejecutar("EXP-DD-01", {"orden_id": "ORD-DD-1", "cantidad": 100.0, "precio": 1.1, "conciliada": True,
+                                  "proteccion_orden_ids": ["ORD-DD-1-STOP"]}, "G", AHORA)
+    h.chk("D_sigue_a_AUTORIZADA_y_EJECUTADA", r["ok"] and r2["ok"] and e["estado"] == "EJECUTADA" and o.integridad() == [], (r, r2))
+    R("D_el_mismo_analisis_no_se_reutiliza_dos_veces_ni_invertido", o,
       lambda: o.abrir_directa("EXP-DD-02", "COR-DD-02", "TACTICA", "D", "BROKER", AHORA, analisis="EV-SOB-0001"), "O-06")
 
     o = nuevo()
     hasta(o, "VALIDADA", 1)
     r = R("D_un_analisis_en_juego_no_se_reutiliza", o, lambda: o.abrir_directa("EXP-DD-01", "COR-DD-01", "TACTICA", "D", "BROKER", AHORA,
                                                                                 analisis="EV-SOB-0001"), "O-06")
-    h.chk("D_sin_analisis_reutilizable_pide_encargo_de_nivel_bajo", r.get("encargar") == NIVEL_BAJO == "N1", r)
+    h.chk("D_sin_analisis_reutilizable_pide_encargo_de_nivel_bajo", r.get("encargar") == NIVEL_BAJO == "N2", r)
     assert o.observar("EXP-0001", [{"tipo": "FECHA", "fecha": "2026-11-20"}], "el gestor lo deja para más adelante", "GESTOR_TACTICA", AHORA)["ok"]
     R("D_lo_apartado_por_el_gestor_no_vuelve_por_la_via_DIRECTA", o,
       lambda: o.abrir_directa("EXP-DD-01", "COR-DD-01", "TACTICA", "D", "BROKER", AHORA, analisis="EV-SOB-0001"), "O-06")
@@ -146,10 +152,45 @@ def main():
     o = nuevo()
     R("D_lo_que_falta_no_se_encarga_con_nivel_alto", o, lambda: o.abrir_directa("EXP-DD-05", "COR-EXP-DD-05", "TACTICA", "D", "BROKER", AHORA,
                                                                                  encargo=enc_directa("EXP-DD-05", 5)), "O-06")
-    r = o.abrir_directa("EXP-DD-05", "COR-EXP-DD-05", "TACTICA", "D", "BROKER", AHORA, encargo=enc_directa("EXP-DD-05", 5, nivel="N1"))
+    r = o.abrir_directa("EXP-DD-05", "COR-EXP-DD-05", "TACTICA", "D", "BROKER", AHORA, encargo=enc_directa("EXP-DD-05", 5, nivel="N2"))
     e = o.expedientes.get("EXP-DD-05")
     h.chk("D_sin_analisis_con_encargo_de_nivel_bajo_nace_EN_ANALISIS", r["ok"] and r["nace_en"] == "EN_ANALISIS" and e["bloque_entrada"] == "D"
-          and e["analisis_ref"] is None and o.encargos["EV-ENC-EXP-DD-05"]["nivel"] == "N1" and o.integridad() == [], r)
+          and e["analisis_ref"] is None and o.encargos["EV-ENC-EXP-DD-05"]["nivel"] == "N2" and o.integridad() == [], r)
+    s5 = sobre_directa("EXP-DD-05", 5)
+    s5["payload"]["identificacion"]["nivel_analisis"] = "N2"
+    r = o.entregar_sobre("EXP-DD-05", s5, AHORA)
+    r2 = o.comparar(["EXP-DD-05"], "D", AHORA) if r["ok"] else r
+    r3 = o.proponer("EXP-DD-05", ENTRADA, SALIDA, "BROKER", AHORA, dim(o, "EXP-DD-05")) if r2["ok"] else r2
+    h.chk("D_el_nivel_bajo_puede_acabar_en_una_orden_H04", r3["ok"] and e["estado"] == "PROPUESTA", (r, r2, r3))
+    R("D_con_analisis_y_encargo_a_la_vez_no_H06", o, lambda: o.abrir_directa("EXP-DD-06", "COR-EXP-DD-06", "TACTICA", "D", "BROKER", AHORA,
+                                                                              analisis="EV-SOB-0001", encargo=enc_directa("EXP-DD-06", 6, nivel="N2")), "O-01")
+
+    # QA r01, H-01: el origen se volvió a encargar después de validar: su sobre ya no es el de su encargo actual
+    o = nuevo()
+    hasta(o, "VALIDADA", 1)
+    assert o.observar("EXP-0001", [{"tipo": "FECHA", "fecha": "2026-11-20"}], "el operador lo deja para más adelante", "OPERADOR", AHORA)["ok"]
+    assert o.reabrir("EXP-0001", "el operador quiere un análisis nuevo", "OPERADOR", AHORA)["ok"]
+    e2 = encargo(1)
+    e2["event_id"] = "EV-ENC-0001-B"
+    assert o.emitir_encargo("EXP-0001", e2, "GESTOR_TACTICA", AHORA)["ok"]
+    assert o.observar("EXP-0001", [{"tipo": "FECHA", "fecha": "2026-11-20"}], "el operador lo aparta otra vez", "OPERADOR", AHORA)["ok"]
+    R("D_no_reutiliza_un_sobre_cuyo_origen_se_volvio_a_encargar_H01", o,
+      lambda: o.abrir_directa("EXP-DD-07", "COR-DD-07", "TACTICA", "D", "BROKER", AHORA, analisis="EV-SOB-0001"), "O-06")
+    h.chk("registro_lo_marca_no_reutilizable_H01", [x["reutilizable"] for x in o.analisis_vigentes(AHORA)] == [False])
+
+    # QA r01, H-03: una propuesta caducada no vuelve por la vía DIRECTA (§4.1, regla 4)
+    o = nuevo()
+    hasta(o, "PROPUESTA", 1)
+    A2 = "2026-11-08T13:00:00+00:00"   # pasó la ventana de la propuesta (12:00), no la vigencia del sobre (18:00)
+    assert o.barrer(A2)["ok"] and o.expedientes["EXP-0001"]["estado"] == "CADUCADA"
+    R("una_propuesta_caducada_no_vuelve_por_la_via_DIRECTA_H03", o,
+      lambda: o.abrir_directa("EXP-DD-08", "COR-DD-08", "TACTICA", "D", "BROKER", A2, analisis="EV-SOB-0001"), "O-06")
+    for quien in ("OPERADOR", "BROKER"):   # QA r02, H-09: ni pasándola antes a DESCARTADA
+        o2 = copy.deepcopy(o)
+        assert o2.descartar("EXP-0001", "la propuesta caducó y se descarta (regla 4)", quien, A2)["ok"]
+        r = R(f"una_propuesta_caducada_y_descartada_por_{quien}_no_vuelve_H09", o2,
+              lambda o2=o2: o2.abrir_directa("EXP-DD-08", "COR-DD-08", "TACTICA", "D", "BROKER", A2, analisis="EV-SOB-0001"), "O-06")
+        h.chk(f"el_motivo_dice_que_caduco_H12_{quien}", "caducó" in r["motivo"], r)
 
     # ------------------------------------------------------------------ entrada por E
     o = nuevo()
@@ -210,6 +251,10 @@ def main():
     o2 = copy.deepcopy(o)
     o2.expedientes["EXP-DD-01"]["historial"][1]["motivo"] = "otra cosa"
     h.chk("tocar_la_anotacion_de_reutilizacion_se_detecta", "EXP:EXP-DD-01" in o2.integridad())
+    for campo in ("bloque_entrada", "analisis_ref", "consulta_ref"):   # QA r01, H-07: en un expediente que no es DIRECTA
+        o2 = copy.deepcopy(o)
+        o2.expedientes["EXP-0001"][campo] = "D" if campo == "bloque_entrada" else "EV-SOB-0001"
+        h.chk(f"un_{campo}_en_un_expediente_no_DIRECTA_se_detecta_H07", "EXP:EXP-0001" in o2.integridad())
 
     # ------------------------------------------------------------------ modo CONSULTA
     o = nuevo()
@@ -261,6 +306,17 @@ def main():
     o2 = copy.deepcopy(o)
     o2.consultas["entradas"][0]["resultado"] = None
     h.chk("tocar_el_rastro_SC5_se_detecta", "CONSULTAS" in o2.integridad() and not o2.consultas_ok())
+    for nombre, recorte in (("vaciarlo", 0), ("recortar_la_apertura", -1), ("recortar_la_consulta_y_la_apertura", 1)):   # QA r01, H-02
+        o3 = copy.deepcopy(o)
+        L = o3.consultas
+        L["historial"], L["entradas"] = L["historial"][:recorte], L["entradas"][:recorte]
+        if not L["historial"]:
+            L["estado"] = "VIGENTE"
+        h.chk(f"SC5_{nombre}_con_un_expediente_que_lo_cita_se_detecta_H02", "CONSULTAS" in o3.integridad(), L)
+    o3 = copy.deepcopy(o)
+    o3.consultas["entradas"][0]["consulta"]["pregunta"] = "otra pregunta escrita a mano"
+    r = o3.consultar(consulta(analisis=("EV-SOB-0001", "EV-SOB-0003")), "BROKER", AHORA)
+    h.chk("consultar_con_el_rastro_tocado_da_O13_y_kill_H05", r["codigo"] == "O-13" and o3.kill is not None, r)
     r = o2.comparar(["EXP-DQ-01", "EXP-0003"], "D", AHORA)
     h.chk("con_el_rastro_SC5_tocado_no_se_compara_y_salta_el_kill", r["codigo"] == "O-13" and o2.kill is not None, r)
 
