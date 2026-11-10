@@ -344,8 +344,9 @@ def _validar(sobre, ctx) -> list[dict]:
         if nivel == "N3" and not c3["doble_analisis"]["realizado"]:
             f("V-14", "payload.capa3.doble_analisis", "N3 exige doble análisis")
 
-    # V-15 apalancamiento
-    if "capital" in p and not ctx.get("apalancamiento_permitido", False):
+    # V-15 apalancamiento (falla cerrado: solo un bool True habilita; un permiso ausente o ajeno —"x",
+    # NaN, [1]— NO habilita, igual que en el encargo CT-G-01, donde mandato_ok exige `is True`)
+    if "capital" in p and ctx.get("apalancamiento_permitido") is not True:
         a = p["capital"]["apalancamiento"]
         if a["estado"] == "NO_ESTIMABLE" or a["valor"] != 1:
             f("V-15", "payload.capital.apalancamiento", "apalancamiento no habilitado: debe declararse 1 (ratio de exposición sobre capital; 1 = sin apalancar)")

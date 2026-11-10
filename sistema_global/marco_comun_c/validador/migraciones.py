@@ -60,6 +60,8 @@ ESQUEMA_V0_50 = "5879fc70d7018821d33e470a71392630f8c5d28b2afad73811ba39ab10712f6
 ESQUEMA_V0_51 = "a52f1c6e72bfcd9590e93258b119547734d5af3b28a01f80fb691eed290d1985"
 # esquema de V0.53 (integración de las piezas de GLM V0.37-V0.41: libres_tope_dia_eur, libres, cortacircuitos; CFG-0.11.0)
 ESQUEMA_V0_53 = "0a18459ec3066ff9ddd17b2e06bda9c41abf40a110191e014aad136cb807eaa2"
+# esquema de V0.67 (integración del kit 2 de GLM, V0.60-V0.66, más el tope de líneas del diario del panel en parametros.py)
+ESQUEMA_V0_67 = "f3943b0d923b81f423256f435e1db04f352c8ebf6d0962fd2dc5f37b5853086e"
 # lo que una migración nunca puede cambiar, aunque lo declare (revisión de V0.46, hallazgos 5 y 10)
 PROHIBIDAS = ("limites", "kill", "rearmes", "ultimo_ahora", "huella_config", f"cfg.politica_f.{LIMITE_PERDIDA}",
               "cfg.nivel_autonomia")   # V0.51 (revisión, duda 2): ninguna migración sube ni baja el nivel de nadie
@@ -141,6 +143,9 @@ MIGRACIONES = (
     Migracion("MIG-004", pe.FORMATO, ESQUEMA_V0_51, ESQUEMA_V0_53, _v053, frozenset({"cfg.libres_tope_dia_eur", "libres"}),
               "V0.51 a V0.53 (integración de GLM): libres_tope_dia_eur con su valor de partida, listas vacías de LIBRES y "
               "cortacircuitos, y CFG-0.11.0"),
+    Migracion("MIG-005", pe.FORMATO, ESQUEMA_V0_53, ESQUEMA_V0_67, _sin_cambios, frozenset(),
+              "V0.53 a V0.67 (integración del kit 2 de GLM): solo cambia el código (n_lineas_diario_ambar en parametros.py); "
+              "el estado guardado no cambia"),
 )
 
 

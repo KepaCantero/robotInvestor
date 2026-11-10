@@ -16,6 +16,8 @@ módulo da ese instante y falla cerrado ante un reloj dudoso:
   último instante del estado (un retroceso pequeño, dentro de la tolerancia, repite el último).
 - `comprobar_estado(o)` al arrancar: el reloj no puede ir detrás del último instante que vio el Orquestador cargado; ese instante
   pasa a ser el suelo de los que se den.
+- `estado()` (V0.64) da una foto de solo lectura del reloj para la consola: bloqueo, contraste y segundos desde el contraste e
+  incidentes. No cambia nada y no lee las fuentes (salvo el monótono, para los segundos); no sustituye a `ahora()` ni da instantes.
 - `contrastar(referencia, fuente)` devuelve como instante el mayor entre el reloj y la referencia (si están dentro de la
   tolerancia): así los datos del intermediario nunca son «del futuro» para el Orquestador.
 - Ante un incidente el reloj se bloquea: no da más instantes hasta que el operador lo rearma (`rearmar`) y se vuelve a contrastar.
@@ -157,6 +159,26 @@ class Reloj:
         if self._contraste is None or m - self._contraste > self.max_sin_contraste_s:
             return _r(False, "RL-04", "el reloj no se ha contrastado (o hace demasiado): contrástalo con una referencia externa", ahora=None)
         return _r(True, "OK", "instante", ahora=self._dar(p))
+
+    def estado(self) -> dict:
+        """Foto de solo lectura del reloj, para la consola (V0.64): no cambia nada y no lee las fuentes (solo el monótono, para
+        los segundos desde el contraste). {bloqueo: copia o None, contrastado: bool, segundos_desde_contraste: float o None,
+        incidentes: n}. Nunca lanza; ante lo imposible devuelve la foto prudente (sin contraste confirmado), que la consola
+        pinta ámbar. No da instantes ni sustituye a `ahora()`: para operar sigue haciendo falta contrastar y leer el reloj."""
+        try:
+            b = None if self.bloqueo is None else dict(self.bloqueo)
+            contrastado = self._contraste is not None
+            s = None
+            if contrastado:
+                try:
+                    m = _float(self._monotono())
+                except Exception:   # noqa: BLE001 — la foto no lee la pared; si el monótono falla, no se puede confirmar el contraste
+                    m = None
+                if m is not None and m >= self._contraste:   # un monótono por detrás del contraste: no se puede afirmar nada
+                    s = m - self._contraste
+            return {"bloqueo": b, "contrastado": contrastado, "segundos_desde_contraste": s, "incidentes": len(self.incidentes)}
+        except Exception:   # noqa: BLE001 — la foto nunca es más optimista que el reloj: sin contraste confirmado
+            return {"bloqueo": None, "contrastado": False, "segundos_desde_contraste": None, "incidentes": 0}
 
     def comprobar_estado(self, o) -> dict:
         """Al arrancar con un estado cargado: el reloj no puede ir detrás del último instante que vio el Orquestador (RL-02), que

@@ -1,0 +1,396 @@
+[
+  {
+    "estado": {
+      "avisos": [],
+      "expedientes": {
+        "EXP-0001": "VALIDADA",
+        "EXP-0002": "VALIDADA"
+      },
+      "kill": false,
+      "niveles": {
+        "TACTICA": "L2"
+      },
+      "posiciones": {},
+      "rearmes": 0
+    },
+    "paso": "candidatos",
+    "resultado": [
+      "EXP-0001",
+      "EXP-0002"
+    ]
+  },
+  {
+    "estado": {
+      "avisos": [],
+      "expedientes": {
+        "EXP-0001": "COMPARADA",
+        "EXP-0002": "COMPARADA"
+      },
+      "kill": false,
+      "niveles": {
+        "TACTICA": "L2"
+      },
+      "posiciones": {},
+      "rearmes": 0
+    },
+    "paso": "comparar",
+    "resultado": {
+      "codigo": "OK",
+      "codigo_d": "OK",
+      "decision_global": "INVERTIR",
+      "ganador": "EXP-0001",
+      "ok": true
+    }
+  },
+  {
+    "estado": {
+      "avisos": [],
+      "expedientes": {
+        "EXP-0001": "PROPUESTA",
+        "EXP-0002": "COMPARADA"
+      },
+      "kill": false,
+      "niveles": {
+        "TACTICA": "L2"
+      },
+      "posiciones": {},
+      "rearmes": 0
+    },
+    "paso": "proponer",
+    "resultado": {
+      "codigo": "OK",
+      "ok": true
+    }
+  },
+  {
+    "estado": {
+      "avisos": [],
+      "expedientes": {
+        "EXP-0001": "AUTORIZADA",
+        "EXP-0002": "COMPARADA"
+      },
+      "kill": false,
+      "niveles": {
+        "TACTICA": "L2"
+      },
+      "posiciones": {},
+      "rearmes": 0
+    },
+    "paso": "autorizar",
+    "resultado": {
+      "codigo": "OK",
+      "ok": true
+    }
+  },
+  {
+    "estado": {
+      "avisos": [],
+      "expedientes": {
+        "EXP-0001": "EJECUTADA",
+        "EXP-0002": "COMPARADA"
+      },
+      "kill": false,
+      "niveles": {
+        "TACTICA": "L2"
+      },
+      "posiciones": {
+        "POS-EXP-0001": {
+          "cantidad": 100.0,
+          "estado": "ABIERTA"
+        }
+      },
+      "rearmes": 0
+    },
+    "paso": "ejecutar",
+    "resultado": {
+      "cantidad": 100.0,
+      "codigo": "OK",
+      "ok": true,
+      "posicion_id": "POS-EXP-0001",
+      "precio": 1.1
+    }
+  },
+  {
+    "estado": {
+      "avisos": [],
+      "expedientes": {
+        "EXP-0001": "EJECUTADA",
+        "EXP-0002": "COMPARADA"
+      },
+      "kill": false,
+      "niveles": {
+        "TACTICA": "L2"
+      },
+      "posiciones": {
+        "POS-EXP-0001": {
+          "cantidad": 100.0,
+          "estado": "ABIERTA"
+        }
+      },
+      "rearmes": 0
+    },
+    "paso": "conciliar",
+    "resultado": {
+      "diferencias": [],
+      "explicadas": [],
+      "ok": true
+    }
+  },
+  {
+    "estado": {
+      "avisos": [],
+      "expedientes": {
+        "EXP-0001": "EJECUTADA",
+        "EXP-0002": "COMPARADA"
+      },
+      "kill": false,
+      "niveles": {
+        "TACTICA": "L2"
+      },
+      "posiciones": {
+        "POS-EXP-0001": {
+          "cantidad": 50.0,
+          "estado": "ABIERTA"
+        }
+      },
+      "rearmes": 0
+    },
+    "paso": "reducir",
+    "resultado": {
+      "codigo": "OK",
+      "ok": true,
+      "orden_id": "ORD-POS-EXP-0001-R1-M-1",
+      "restante": 50.0,
+      "stop_id": "ORD-POS-EXP-0001-R1-S-1"
+    }
+  },
+  {
+    "estado": {
+      "avisos": [
+        "O-20"
+      ],
+      "expedientes": {
+        "EXP-0001": "EJECUTADA",
+        "EXP-0002": "COMPARADA"
+      },
+      "kill": false,
+      "niveles": {
+        "TACTICA": "L2"
+      },
+      "posiciones": {
+        "POS-EXP-0001": {
+          "cantidad": 50.0,
+          "estado": "ABIERTA"
+        }
+      },
+      "rearmes": 0
+    },
+    "paso": "libre",
+    "resultado": {
+      "codigo": "OK",
+      "ok": true,
+      "posicion_id": null,
+      "tope_libres_superado": false
+    }
+  },
+  {
+    "estado": {
+      "avisos": [
+        "O-19",
+        "O-20"
+      ],
+      "expedientes": {
+        "EXP-0001": "EJECUTADA",
+        "EXP-0002": "COMPARADA"
+      },
+      "kill": false,
+      "niveles": {
+        "TACTICA": "L1"
+      },
+      "posiciones": {
+        "POS-EXP-0001": {
+          "cantidad": 50.0,
+          "estado": "ABIERTA"
+        }
+      },
+      "rearmes": 0
+    },
+    "paso": "degradar",
+    "resultado": {
+      "codigo": "OK",
+      "ok": true
+    }
+  },
+  {
+    "estado": {
+      "avisos": [],
+      "expedientes": {
+        "EXP-0001": "EJECUTADA",
+        "EXP-0002": "COMPARADA"
+      },
+      "kill": false,
+      "niveles": {
+        "TACTICA": "L2"
+      },
+      "posiciones": {
+        "POS-EXP-0001": {
+          "cantidad": 50.0,
+          "estado": "ABIERTA"
+        }
+      },
+      "rearmes": 0
+    },
+    "paso": "restablecer",
+    "resultado": {
+      "codigo": "OK",
+      "ok": true
+    }
+  },
+  {
+    "estado": {
+      "avisos": [
+        "O-19",
+        "O-26"
+      ],
+      "expedientes": {
+        "EXP-0001": "EJECUTADA",
+        "EXP-0002": "COMPARADA"
+      },
+      "kill": true,
+      "niveles": {
+        "TACTICA": "L1"
+      },
+      "posiciones": {
+        "POS-EXP-0001": {
+          "cantidad": 50.0,
+          "estado": "ABIERTA"
+        }
+      },
+      "rearmes": 0
+    },
+    "paso": "kill",
+    "resultado": {
+      "codigo": "OK",
+      "entradas": {},
+      "ok": true
+    }
+  },
+  {
+    "estado": {
+      "avisos": [],
+      "expedientes": {
+        "EXP-0001": "EJECUTADA",
+        "EXP-0002": "COMPARADA"
+      },
+      "kill": false,
+      "niveles": {
+        "TACTICA": "L1"
+      },
+      "posiciones": {
+        "POS-EXP-0001": {
+          "cantidad": 50.0,
+          "estado": "ABIERTA"
+        }
+      },
+      "rearmes": 1
+    },
+    "paso": "rearmar",
+    "resultado": {
+      "codigo": "OK",
+      "ok": true
+    }
+  },
+  {
+    "estado": {
+      "avisos": [],
+      "expedientes": {
+        "EXP-0001": "EJECUTADA",
+        "EXP-0002": "COMPARADA"
+      },
+      "kill": false,
+      "niveles": {
+        "TACTICA": "L1"
+      },
+      "posiciones": {
+        "POS-EXP-0001": {
+          "cantidad": 50.0,
+          "estado": "ABIERTA"
+        }
+      },
+      "rearmes": 1
+    },
+    "paso": "vigilar_objetivo",
+    "resultado": {
+      "acciones": [
+        {
+          "codigo": "H-10",
+          "condicion": "OBJ-1",
+          "expediente": null,
+          "ok": false,
+          "posicion": "POS-EXP-0001",
+          "regla": "H-10"
+        }
+      ],
+      "conciliacion_ok": true,
+      "no_evaluadas": []
+    }
+  },
+  {
+    "estado": {
+      "avisos": [],
+      "expedientes": {
+        "EXP-0001": "EJECUTADA",
+        "EXP-0002": "COMPARADA"
+      },
+      "kill": false,
+      "niveles": {
+        "TACTICA": "L1"
+      },
+      "posiciones": {
+        "POS-EXP-0001": {
+          "cantidad": 0,
+          "estado": "CERRADA"
+        }
+      },
+      "rearmes": 1
+    },
+    "paso": "cerrar_operador",
+    "resultado": {
+      "codigo": "OK",
+      "ok": true,
+      "orden_id": "ORD-POS-EXP-0001-C-1"
+    }
+  },
+  {
+    "estado": {
+      "avisos": [],
+      "expedientes": {
+        "EXP-0001": "EJECUTADA",
+        "EXP-0002": "COMPARADA"
+      },
+      "kill": false,
+      "niveles": {
+        "TACTICA": "L1"
+      },
+      "posiciones": {
+        "POS-EXP-0001": {
+          "cantidad": 0,
+          "estado": "CERRADA"
+        }
+      },
+      "rearmes": 1
+    },
+    "paso": "conciliar_final",
+    "resultado": {
+      "diferencias": [],
+      "explicadas": [
+        {
+          "detalle": "+50.0 declarado por el operador (CT-G-14)",
+          "ref": "GBPUSD",
+          "tipo": "MANUAL_DECLARADA"
+        }
+      ],
+      "ok": true
+    }
+  }
+]
