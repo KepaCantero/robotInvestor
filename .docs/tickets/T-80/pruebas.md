@@ -3,7 +3,7 @@
 | Suite | Antes | Después |
 | --- | --- | --- |
 | Marco común de C (`.docs/scripts/pruebas_marco.sh`) | 56 baterías en verde (V0.67) | 57 baterías en verde (V0.68) |
-| `pruebas/pruebas_via_directa_t80.py` | — | 112 comprobaciones (93 en la r01, más 13 regresiones de la QA r01, 4 de la r02, 2 de la r03 y 3 de la r04) |
+| `pruebas/pruebas_via_directa_t80.py` | — | 116 comprobaciones (93 en la r01, más 13 regresiones de la QA r01, 4 de la r02, 2 de la r03, 3 de la r04 y 1 de la r05) |
 | `pruebas/pruebas_integracion_v053.py` | 32 | 33: esquema actual V0.68 y cadenas hasta MIG-006; lo de V0.67 sigue comprobado |
 | `pruebas/pruebas_comparador_t17.py` | `PAR-0.4.0` | `PAR-0.5.0` (`o_max_analisis_consulta`) |
 | `entrega_claude/V0.68/scripts/pc3_01_via_directa.py` | — (el de V0.67 daba FALLA) | CUMPLE |
@@ -33,4 +33,6 @@ Regresiones de la r02: `una_propuesta_caducada_y_descartada_por_OPERADOR_no_vuel
 
 Regresiones de la r03: `D_un_analisis_superado_por_el_reanalisis_de_un_DIRECTA_no_vuelve_H13` y `D_el_motivo_dice_que_esta_superado_H13` fallan con el código del commit `f384bef` y pasan con la corrección. Las sondas `r03_*` dan SIN FALLOS.
 
-Regresiones de la r04: `el_origen_no_se_reanaliza_con_su_analisis_en_juego_H16` y `y_lo_dice_H16` fallan con el código del commit `c482bf1` y pasan con la corrección; `apartado_el_DIRECTA_el_origen_si_se_reanaliza_H16` comprueba que no cierra de más. Las sondas `r04_01` (variantes a, c y e) y `r04_03` dan FALLA porque esperaban el reencargo, que ahora se rechaza, y H-17 (documentado).
+Regresiones de la r04: `el_origen_no_se_reanaliza_con_su_analisis_en_juego_H16` y `y_lo_dice_H16` fallan con el código del commit `c482bf1` y pasan con la corrección; `apartado_el_DIRECTA_el_origen_si_se_reanaliza_H16` comprueba que no cierra de más. Las sondas `r04_01` (variantes a, c y e) y `r04_03` dan FALLA porque esperaban el reencargo, que ahora se rechaza, y H-17 (documentado). La `r02_02` se para ahora en su caso c), porque el reencargo que intenta es el que rechaza H-16; sus partes de H-01 las repite `r05_01`, y pasan.
+
+Regresión de la r05: `el_gemelo_no_se_reanaliza_con_el_analisis_en_juego_en_otro_H19` falla con el código del commit `c482bf1` y pasa con el actual. La regresión de H-16 ya no permite mutaciones del estado.
