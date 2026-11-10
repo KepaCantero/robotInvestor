@@ -13,6 +13,7 @@ PKG = EJ / "bloque_a"
 PY = str(RAIZ / ".venv" / "bin" / "python")
 H, R, Q = "tests/test_t65_hallazgos.py", "tests/test_t65_resto_t53.py", "tests/test_t65_qa_r01.py"
 Q2 = "tests/test_t65_qa_r02.py"
+Q3 = "tests/test_t65_qa_r03.py"
 
 # (nombre, archivo, texto actual, texto mutado, prueba)
 MUTACIONES = [
@@ -40,8 +41,8 @@ MUTACIONES = [
      "", f"{H}::test_h14_una_ficha_rechazada_por_el_motor_se_declara"),
     ("H-15 cierres ≤ 0 en HT-01", PKG / "herramientas" / "ht01_datos.py", "malos = ~np.isfinite(s.to_numpy()) | (s.to_numpy() <= 0)",
      "malos = ~np.isfinite(s.to_numpy())", f"{H}::test_h15_simbolo_con_datos_invalidos_se_excluye_y_se_declara"),
-    ("H-15 fechas duplicadas", PKG / "herramientas" / "ht01_datos.py", "        raise DatosInvalidos(f\"HT-01 {origen}: fechas duplicadas",
-     "        raise ValueError(f\"HT-01 {origen}: fechas duplicadas", f"{Q2}::test_r02_h13_motivo_explicito_de_cada_forma_rara"),   # desde la r02, el envoltorio evita la caída
+    ("H-15 fechas duplicadas", PKG / "herramientas" / "ht01_datos.py", '        if "_duplicada" in df.columns and df["_duplicada"].any():',
+     "        if False:", f"{Q2}::test_r02_h13_motivo_explicito_de_cada_forma_rara"),   # desde la r03, la comprobación es del rango
     ("H-15 cualquier error del proveedor", PKG / "orquestacion.py",
      "            except Exception as e:  # noqa: BLE001 — error del proveedor para un símbolo: se excluye y se declara\n"
      "                invalidos.append((f[\"simbolo\"], f\"{type(e).__name__}: {e}\"))\n", "",
@@ -105,8 +106,8 @@ MUTACIONES = [
      f"{R}::test_cs23_herramientas_cita_una_prueba_que_existe"),
     # ---- QA r01 de T-65
     ("r01 H-01 valor_en valida toda la historia", PKG / "herramientas" / "ht01_datos.py",
-     "        s = self._cierres_brutos(simbolo, None, fecha)\n        ult = self._validar_cierres(simbolo, s.iloc[-1:])",
-     "        s = self._cierres_brutos(simbolo, None, fecha)\n        ult = self._validar_cierres(simbolo, s)",
+     "        ult = self._validar_cierres(simbolo, df[df.index == df.index.max()])",
+     "        ult = self._validar_cierres(simbolo, df)",
      f"{Q}::test_r01_h01_cierre_malo_fuera_de_la_ventana_no_vacia_el_tipo"),
     ("r01 H-01 precio inválido en silencio", PKG / "orquestacion.py",
      '                invalidos.append((s, f"precio a la fecha as_of no disponible: {type(e).__name__}: {e}"))\n                del tabla[s]\n                continue\n',
@@ -150,8 +151,36 @@ MUTACIONES = [
      "    except Exception as e:  # cualquier otra excepción del parseo", "    except KeyboardInterrupt as e:  # cualquier otra excepción del parseo",
      f"{Q2}::test_r02_h13_cualquier_error_de_la_normalizacion_es_dato_invalido"),
     ("r02 H-14 booleanos aceptados", PKG / "herramientas" / "ht01_datos.py",
-     "    if pd.api.types.is_bool_dtype(crudo) or crudo.map(lambda v: isinstance(v, (bool, np.bool_))).any():", "    if False:",
+     "    if pd.api.types.is_bool_dtype(crudo):\n        raise DatosInvalidos", "    if False:\n        raise DatosInvalidos",
      f"{Q2}::test_r02_h14_cierre_booleano_se_rechaza"),
+    # ---- QA r03 de T-65
+    ("r03 H-16 referencia sin frescura", PKG / "orquestacion.py", "        if edad > max_dias:\n            return f\"último cierre",
+     "        if False:\n            return f\"último cierre", f"{Q3}::test_r03_h16_referencia_parada_deja_fuera_los_tipos_que_la_usan"),
+    ("r03 H-16 resolución con max", PKG / "evaluador.py", "                    d_min = min(d1, d1b)", "                    d_min = max(d1, d1b)",
+     f"{Q3}::test_r03_h16_no_se_resuelve_con_una_serie_parada"),
+    ("r03 H-16 tolerancia fija 7", PKG / "evaluador.py", 'if (f1 - d_min).days > int(parametro(self.cfg, "evaluacion.antiguedad_maxima_dato_resolucion_dias")):',
+     "if (f1 - d_min).days > 30:", f"{Q3}::test_r03_h16_no_se_resuelve_con_una_serie_parada"),
+    ("r03 H-16 miembro parado de la cesta", PKG / "evaluador.py", "                if (pd.Timestamp(f1) - f).days > max_dias:", "                if False:",
+     f"{Q3}::test_r03_h16_un_miembro_parado_de_la_cesta_no_cuenta"),
+    ("r03 H-17 subyacente ausente → CESTA", PKG / "orquestacion.py", '            return sub or "CESTA"',
+     '            return sub if sub and self.proveedor.tiene(sub) else "CESTA"',
+     f"{Q3}::test_r03_h17_subyacente_sin_archivo_se_declara_y_no_se_cambia_por_la_cesta"),
+    ("r03 H-18 vigente SUBYACENTE como referencia del tipo", PKG / "orquestacion.py",
+     "        refs_tipo = {self._referencia(clase)} | (set() if por_indicador else {v.get(\"referencia_indice\") for v in vigentes})",
+     "        refs_tipo = {self._referencia(clase)} | {v.get(\"referencia_indice\") for v in vigentes}",
+     f"{Q3}::test_r03_h18_vigente_con_subyacente_malo_excluye_solo_su_indicador"),
+    ("r03 H-19 sin las referencias de las vigentes", PKG / "orquestacion.py",
+     "        refs_tipo = {self._referencia(clase)} | (set() if por_indicador else {v.get(\"referencia_indice\") for v in vigentes})",
+     "        refs_tipo = {self._referencia(clase)}", f"{Q3}::test_r03_h19_la_referencia_guardada_en_una_vigente_se_valida"),
+    ("r03 H-19 fuga absorbida", PKG / "orquestacion.py",
+     "            fd, _ = self.proveedor.valor_en(ref, as_of)\n        except FugaDeInformacion:\n            raise\n",
+     "            fd, _ = self.proveedor.valor_en(ref, as_of)\n", f"{Q3}::test_r03_h19_una_fuga_de_informacion_en_la_referencia_corta"),
+    ("r03 H-20 cabecera repetida aceptada", PKG / "herramientas" / "ht01_datos.py", "    if repetidas:\n        raise", "    if False:\n        raise",
+     f"{Q3}::test_r03_h20_cabecera_repetida_es_dato_invalido"),
+    ("r03 H-21 validación del archivo entero", PKG / "herramientas" / "ht01_datos.py",
+     "    df[\"cierre\"] = num.where(~malos, np.nan)\n",
+     "    if malos.any():\n        raise DatosInvalidos(f\"HT-01 {origen}: cierres no numéricos o no finitos; serie rechazada\")\n    df[\"cierre\"] = num.where(~malos, np.nan)\n",
+     f"{Q3}::test_r03_h21_un_dato_malo_posterior_a_as_of_no_excluye_el_simbolo"),
 ]
 
 

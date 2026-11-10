@@ -9,6 +9,17 @@
 | mypy `bloque_a` | 123 (cuota 123) | 123 |
 | `bloque_a_forex`, `bloque_b` | 68 y 174 | sin tocar (en el gate) |
 
+### Tras la QA r03
+
+| Suite | 8d74622 (r03) | Ahora (r04) |
+| --- | --- | --- |
+| `bloque_a/11_Ejecutor` (pytest) | 300 pasan | **317 pasan** (+17 en `tests/test_t65_qa_r03.py`) |
+| `tests/test_t65_qa_r03.py` con el código de 8d74622 | — | 12 fallan y 5 pasan: los 3 controles con datos sanos y las 2 de H-19, que cubren partes que ya estaban y se comprueban con su mutación |
+| `.docs/scripts/prueba_refs_vivas.py` | 15/15 | **25/25** (con el script de 8d74622, 19/25) |
+| `.docs/tickets/T-65/mutaciones.py` | 57/57 | **67/67** (10 nuevas, «r03»; se rehicieron las de «H-15 fechas duplicadas», «r01 H-01 valor_en» y «r02 H-14» porque el código que mutaban se movió) |
+| Sondas de la QA | r03_01 a r03_04 con hallazgos | Con 0 hallazgos: r03_01 (0 INFO), r03_02 (5 INFO, todos los que la QA ya daba por correctos), r03_03 (0 INFO), r02_02, r02_03, r01_02, r01_04 y r01_06. r03_04: detecta las 2 mutaciones que aplica; la tercera ya no casa con el código, y la cubre la mutación «r03 H-19 sin las referencias de las vigentes». **Cambios esperados por H-21:** r01_01 marca 2 «hallazgos» (parte C, «dup»: la línea duplicada es la última del archivo, 2026-10-30, posterior a la fecha as_of) y r02_01 marca 1 («B/desordenado_y_duplicado»: la fecha repetida es de 2023-01-05, fuera de todas las ventanas). Las dos sondas se escribieron cuando HT-01 validaba el archivo entero y esperan que se rechace. Con H-21, que pedía la r03, un dato malo que no se usa ya no excluye el símbolo |
+| ruff (tres ejecutores) · mypy `bloque_a` | 3083 · 123 | 3083 · 123 |
+
 ### Tras la QA r02
 
 | Suite | 052e79a (r02) | Ahora (r03) |
@@ -49,6 +60,21 @@ Sobre las mutaciones:
 | CA-6 · sin tocar lo prohibido ni el corpus | `git status`: solo `bloque_a/11_Ejecutor/`, `.docs/tickets/T-65/`, `.docs/scripts/prueba_refs_vivas.py` y `tools/refs_vivas.py` (ver la nota de H-11). Gate `corpus-integridad` en verde |
 
 ## Regresiones
+
+### Ronda r04 (hallazgos de la QA r03)
+
+Las pruebas fallan con el código de 8d74622 (copia `git worktree add --detach` de 8d74622 más el archivo de pruebas nuevo, ya retirada) o con su mutación, de prefijo «r03»:
+
+| Hallazgo | Prueba | Con 8d74622 | Mutación |
+| --- | --- | --- | --- |
+| H-16 | `test_r03_h16_referencia_parada_deja_fuera_los_tipos_que_la_usan`, `…_la_frescura_de_la_referencia_sale_de_la_configuracion`, `…_no_se_resuelve_con_una_serie_parada` (ACWI y SPY), `…_un_miembro_parado_de_la_cesta_no_cuenta` y el control `…_con_las_dos_series_al_dia_se_resuelve` | Fallan las 5 primeras; el control pasa | Sin frescura · `max` en la resolución · tolerancia fija · miembro parado: fallan |
+| H-17 | `test_r03_h17_subyacente_sin_archivo_se_declara_y_no_se_cambia_por_la_cesta` y el control `…_columna_vacia_sigue_siendo_la_cesta` | Falla la primera | Subyacente ausente → CESTA: falla |
+| H-18 | `test_r03_h18_vigente_con_subyacente_malo_excluye_solo_su_indicador` | Falla | Vigente SUBYACENTE como referencia del tipo: falla |
+| H-19 | `test_r03_h19_la_referencia_guardada_en_una_vigente_se_valida`, `…_una_fuga_de_informacion_en_la_referencia_corta` | Pasan (ya estaba) | Sin las referencias de las vigentes · fuga absorbida: fallan |
+| H-20 | `test_r03_h20_cabecera_repetida_es_dato_invalido` (3 cabeceras) | Fallan las 3 | Cabecera repetida aceptada: falla |
+| H-21 | `test_r03_h21_un_dato_malo_posterior_a_as_of_no_excluye_el_simbolo`, `…_un_dato_malo_fuera_de_la_ventana_no_importa` y el control `…_una_fecha_repetida_en_el_rango_sigue_siendo_invalida` | Fallan las 2 primeras | Validación del archivo entero: falla |
+| H-22 | `prueba_refs_vivas.py`: `python3 -I`, `-X utf8`, comillas con espacios, `python3.12`, `pytest`, corchetes literales | Fallan esos 6 casos | — |
+| H-23 | lectura de `docs/incidencias.md` (INC-T65-01) y del README del ejecutor | — | — |
 
 ### Ronda r03 (hallazgos de la QA r02)
 
@@ -112,6 +138,15 @@ Las comprueba `python3 .docs/tickets/T-65/mutaciones.py`. El script quita cada c
 Comando: `.docs/scripts/gate.sh` con `--completo` (llama a `./tools/check_all.sh`).
 
 **Ronda r01 (commit b699d4f).** En el árbol de trabajo dio 12/12, pero la QA lo repitió desde una copia limpia y dio 11/12: `refs-vivas` fallaba porque este `pruebas.md` citaba con forma de ruta un log local, que no se sube (H-03). La cita se ha quitado: los logs se nombran solo por su archivo, sin ruta.
+
+**Ronda r04: 12/12 en verde desde una copia limpia** (2026-11-10, log gate_20261110_163540.log, que no se sube). La copia es un `git worktree add --detach` de HEAD (b7dc4d1, que contiene 8d74622) en el scratchpad, con los archivos de T-65 sin commit y un enlace a `.venv`; después se quitó con `git worktree remove`.
+
+| Gate | Resultado |
+| --- | --- |
+| corpus-integridad, nombres-nfc, yaml-configs, secrets, refs-vivas | ✓ |
+| ruff (hallazgos) | ✓ (3083 ≤ 3109) |
+| mypy bloque_a · bloque_a_forex · bloque_b | ✓ (123 · 174 · 159) |
+| pytest bloque_a · bloque_a_forex · bloque_b | ✓ 317 · 68 · 174 passed |
 
 **Ronda r03: 12/12 en verde desde una copia limpia** (2026-11-10, log gate_20261110_152104.log, que no se sube). La copia es un `git worktree add --detach` de HEAD (bc1ee45, que contiene 052e79a) en el scratchpad, con los archivos de T-65 sin commit y un enlace a `.venv`; después se quitó con `git worktree remove`. `tools/refs_vivas.py` se repitió en la copia con los documentos finales, y pasa.
 

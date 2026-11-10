@@ -55,6 +55,13 @@ distintas de las del prompt del Analizador (6.15.5 y 6.16) y del Redactor. Decis
 (E ≥ 70 «probable», ahora `presentacion.confianza_probable_E` desde T-65) se deja como está: el prompt del Redactor la usa solo para la barra visual y alinearla cambia el
 esquema del paquete; queda para la revisión con el operador.
 
+**INC-T65-01 · 2026-11-10 · `Close` frente a `Adj Close` en un CSV de HT-01 (Bloque A).** El README del ejecutor
+admite `close` y `adj close` como alias de `cierre`, pero no dice cuál manda si llegan los dos, que es el formato más común
+de una exportación de Yahoo. El corpus no fija si las rentabilidades se calculan con el precio o con el precio ajustado.
+Decisión `[PROPUESTO]` (hasta T-57; T-65, QA r02 H-13 y QA r03 H-23): no se elige uno en silencio; un CSV con las dos
+columnas (o con una cabecera repetida) es un dato inválido del símbolo, que se excluye y se declara. Pregunta para T-57:
+«Si un proveedor da el precio y el precio ajustado por dividendos, ¿con cuál se calculan las rentabilidades?».
+
 **INC-T66-01 · 2026-11-10 · Efecto de una «tesis frágil» (Bloque A, PA-05).** La propuesta PA-05 de T-53 pedía que
 una tesis frágil, según la regla de Contrarias, pasara a confianza «especulativo» y relevancia ALTA. El Anexo A
 (control C10 de HT-09) no tiene ese disparador de ALTA: forzarla genera una advertencia en cada ciclo. Decisión

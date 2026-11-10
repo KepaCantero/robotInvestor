@@ -253,6 +253,13 @@ ps2_antiguedad_maxima_dias: {H1: 1, H2: 3, H3: 7, H4: 30, H5: 90}
 # false, como hasta ahora. Pregunta (T-57): «¿Qué días de cierre de mercado no cuentan como sesión?»
 ps2_festivos: {viernes_santo: true, lunes_de_pascua: false, fijos: ['01-01', '12-24', '12-25', '12-26', '12-31']}
 
+# [PROPUESTO] T-65 (QA r03, H-16) hasta T-57. Frescura de la referencia de comparación al emitir: si su último cierre
+# válido tiene más de `antiguedad_maxima_dias` días naturales a la fecha as_of, la referencia no sirve y el tipo (o el
+# indicador, con SUBYACENTE) no se analiza en ese ciclo, declarado. El Anexo A solo fija la antigüedad de PS2 por horizonte;
+# 7 días es la de H3 y la misma tolerancia que ya usaba la resolución. Pregunta (T-57): «¿Con cuántos días de retraso
+# deja de valer el índice con el que se compara una oportunidad?»
+referencias: {antiguedad_maxima_dias: 7}
+
 # T-53 · Clústeres de exposición (ML-CLUS-001; Catálogo del Motor): umbral de correlación y ventana. T-65 (CS-18): la
 # ventana es la del Catálogo (≥ 3 años semanales) y fija también el inicio de los datos. El prompt del Analizador dice
 # ρ ≥ 0,6: contradicción del corpus, para la revisión con el operador. [PROPUESTO] T-65 (H-16): un proxy con menos de
@@ -276,6 +283,10 @@ evaluacion:
   nivel_ic: 0.90
   aplicar_recalibracion: false   # false = modo sombra: se registra y se compara, no se aplica
   dias_habiles_no_resoluble: 10
+  # T-65 (QA r03, H-16): días naturales que puede quedar el último dato de CADA serie del pronóstico (proxy y referencia)
+  # antes de la fecha de resolución para resolverlo; si no, se espera y, pasado el plazo anterior, NO_RESOLUBLE (antes, un
+  # 7 en el código y solo para la serie más reciente)
+  antiguedad_maxima_dato_resolucion_dias: 7
   llm_informe_aprendizaje: true
   # T-53
   alfa_holm: 0.10                 # Anexo A, certificado de horizonte (R13): corrección de Holm escalonada; α coherente con el IC 90 %
