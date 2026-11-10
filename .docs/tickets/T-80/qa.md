@@ -557,3 +557,108 @@ abrir_directa por C rechazada con ahora adelantado: False O-12 | reloj 2026-11-0
 | CA-4 | sí | `r01_05`, `r02_03`, `r02_05` y `r04_02` f) |
 | CA-5 | sí | 57 baterías en verde (árbol de trabajo y copia limpia); diario y persistencia (`r04_02` g); gate de la copia limpia 11/12, con el único fallo (`refs-vivas`) en T-65 |
 | CA-6 | sí | `pc3_01_via_directa.py`: CUMPLE (dentro de la batería) |
+
+---
+
+# Ronda r05
+
+- **Revisor:** Claude, revisor nuevo sin el contexto de la implementación (subagente; plan, Documento 0, Constitución, código, rondas r01 a r04) · **Ronda:** r05 · 10-11-2026
+- **Código revisado:** commit `bc1ee45` (correcciones de la r04). Empecé sobre el árbol de trabajo sin commit; durante la revisión otra sesión hizo ese commit con el mismo código (`orquestador.py` del árbol de trabajo y de `bc1ee45` son iguales). Lo de `bloque_a/`, `tools/` y la carpeta del ticket T-65 es de otra tarea y no se revisa. No he hecho commit ni push.
+- **Sondas nuevas:** `r05_01_h16_variantes.py`, `r05_02_otras_rutas.py` y `r05_03_estado_de_la_r04.py` en `sistema_global/marco_comun_c/entrega_claude/V0.68/qa/`. Se ejecutan con `.venv/bin/python -I -B <sonda>` desde esa carpeta. La 03 necesita como argumento la carpeta `sistema_global/marco_comun_c` de una copia en `c482bf1` (`git worktree add --detach <dir> c482bf1`); sin él, salta.
+
+## Veredicto r05
+
+**APTO.** H-16 está corregido de verdad en todas sus variantes (el DIRECTA en cada estado en juego, la reapertura por condición cumplida sin el operador, los gemelos, el diario y guardar y cargar), el rechazo no deja nada y la regla nueva no cierra de más en los flujos legítimos. No he encontrado otra ruta para que un expediente llegue a una orden con un análisis superado, apartado, caducado o excluido que no exista igual en el flujo normal. H-01 a H-15 siguen corregidos, y H-14 y H-17 documentados es aceptable.
+
+Quedan dos hallazgos bajos (H-19 y H-20), que no bloquean: pasan a la deuda técnica con su ID si no se corrigen. Como pide el encargo de esta ronda, no cierro el ticket ni toco otros documentos: el cierre (estado `CERRADO`, fila T-80 de la deuda con H-19 y H-20, diario y commit) queda para quien lo haga.
+
+## Reproducción
+
+| Qué | Comando | Resultado |
+| --- | --- | --- |
+| Todas las baterías, árbol de trabajo | `.docs/scripts/pruebas_marco.sh` | `Marco común de C: 57 pasan, 0 fallan` |
+| Ídem, copia limpia de `bc1ee45` (`git worktree add`) | `bash .docs/scripts/pruebas_marco.sh` | `57 pasan, 0 fallan` |
+| Batería de T-80 | `python -I pruebas/pruebas_via_directa_t80.py` | `115 comprobaciones` · `TODAS LAS PRUEBAS PASAN` |
+| Batería de T-80 con el `orquestador.py` de `c482bf1` (antes de la corrección) | ídem, en una copia | `HAY FALLOS`: exactamente `el_origen_no_se_reanaliza_con_su_analisis_en_juego_H16` y `y_lo_dice_H16` |
+| LEEME contra disco | `.venv/bin/python -I .docs/scripts/leeme_marco.py sistema_global/marco_comun_c` | `SIN DIFERENCIAS (0)` (árbol de trabajo y copia limpia) |
+| Python 3.11 (H-10) | `ast.parse` con `/usr/bin/python3.11` de `orquestador.py` y las sondas r05 | se leen todos |
+| Gate, copia limpia de `bc1ee45` (`.venv` enlazado, `PYTHONPATH` a los ejecutores de la copia) | `./tools/check_all.sh` | 12/12 (`TODOS LOS GATES PASARON`): corpus, NFC, YAML, secrets, `refs-vivas`, ruff 3083 (cuota 3109), mypy ×3 (123, 174, 159) y pytest (A 285 · FX 68 · B 174) |
+| Sondas r01 a r04 | `r01_0*.py` … `r04_0*.py` | Ver «Los hallazgos anteriores» |
+| Sondas r05 | `r05_01`, `r05_02`, `r05_03` | SIN FALLOS. Con el `orquestador.py` de `c482bf1`, `r05_01` da 9 FALLA (las de H-16) |
+
+## H-16: la corrección y si es lo correcto
+
+La regla nueva está en `_emitir()`, después de validar el encargo y antes del reintento, del presupuesto y de cualquier escritura: si el sobre actual del expediente que se reencarga lo tiene otro expediente en `VIVOS` (`VALIDADA` a `AUTORIZADA`), O-06 «el análisis … está en juego en …: termínelo o apártelo antes de reanalizar». `r05_01`:
+
+| Caso | Resultado |
+| --- | --- |
+| a) DIRECTA en `VALIDADA`, `COMPARADA`, `PROPUESTA` y `AUTORIZADA`; el origen reabierto por el operador y reencargado | O-06 en los cuatro; el estado queda idéntico (sin los avisos ni el reloj) e `integridad()` vacía |
+| c) condición `FECHA` del origen cumplida en `barrer` (sin el operador) y el gestor reencarga | O-06 sin tocar nada; la condición queda marcada una sola vez; el DIRECTA sigue con S1 y se compara. Al descartar el DIRECTA, el reencargo entra y cuenta una sola reapertura |
+| d) gemelos: el primer DIRECTA en observación y el segundo en `PROPUESTA` con S1 | el reencargo del primero y el del origen dan O-06 y nombran al segundo |
+| e) diario y guardar y cargar | el rechazo se mantiene al reabrir desde el diario y tras cargar |
+
+**¿Es lo correcto que el DIRECTA siga con S1?** Sí. Rechazado el reencargo, nadie ha producido un análisis nuevo del candidato, así que S1 no está superado: sigue siendo el sobre vigente, con su sello y su encargo, igual que el de cualquier candidato en juego en el flujo normal (que tampoco se reanaliza en juego: `T` no tiene `VALIDADA` → `EN_ANALISIS`). La alternativa (caducar al DIRECTA cuando llega el sobre nuevo del origen) dejaría el resultado en manos del orden de las llamadas. Si el operador o el gestor quieren el análisis nuevo antes de invertir, apartan el DIRECTA (observar o descartar) y el reencargo entra; si lo aparta alguien distinto del operador, el DIRECTA queda de testigo (T-36), como debe. El mensaje dice qué hacer.
+
+**No cierra de más** (`r05_01` b y c):
+- el origen se reanaliza con el DIRECTA invertido (`EJECUTADA`), caducado, descartado por el operador o por el Broker, o en observación;
+- descartado por el Broker, el DIRECTA queda de testigo en la comparación del origen con su S2, y el origen gana (sin O-30);
+- un DIRECTA caducado se reanaliza aunque su origen esté en reanálisis, y uno en observación, después de su origen;
+- un expediente sin DIRECTA se reanaliza como siempre (y las 57 baterías, que lo hacen muchas veces, pasan).
+
+Un matiz, sin hallazgo: un DIRECTA que sigue en `VALIDADA` con S1 ya vencido porque nadie ha barrido también bloquea el reencargo del origen hasta el siguiente `barrer` (`r05_02` b: O-06; tras `barrer`, el DIRECTA queda `CADUCADA` y el reencargo entra). Falla cerrado, dura hasta el barrido y es lo mismo que hace `_origen_reutilizable` con un expediente en juego.
+
+## Otras rutas (`r05_02`, `r05_03` y lectura del código)
+
+- **No hay otra forma de cambiar el análisis de un expediente.** A `EN_ANALISIS` solo se entra por `_emitir()` (desde `DETECTADA`, `EN_OBSERVACION`, `CADUCADA` o `EN_ANALISIS`) o por la retención de una objeción crítica, que ya está en `EN_ANALISIS`; un sobre nuevo solo llega con `entregar_sobre` o `levantar_objecion`, los dos desde `EN_ANALISIS`. Ninguna transición devuelve a `VIVOS` sin un sobre nuevo. Así que, con H-01, H-13 y H-16, S1 no puede estar a la vez en juego en un expediente y superado por otro.
+- **Linaje sin sobre compartido** (`r05_02` a): el DIRECTA se reanaliza (S2) y queda en juego; el origen, con S1, se reanaliza y sale `BLOQUEADO`; el DIRECTA llega a `PROPUESTA` con S2. Es lo mismo que en el flujo normal con dos expedientes del mismo instrumento (el segundo `BLOQUEADO` no frena al primero, contraste en la misma sonda): las exclusiones duras de T-27 son de cada expediente, no del instrumento. No es de T-80, y S2 es un análisis nuevo, no superado por su propio linaje.
+- **Consultas** (`r05_02` c): una COMPARAR con S1 en juego solo deja rastro; abrir desde ella da O-06 sin estado ni APERTURA.
+- **Reloj** (`r05_02` d): el rechazo de H-16 con un `ahora` adelantado caduca el encargo vencido de otro expediente y no mueve el reloj: es H-17, documentado.
+- **Estados de la r04** (`r05_03`): un diario escrito con el código de `c482bf1` (origen reencargado y `BLOQUEADO` con el DIRECTA en juego) no se reproduce con el código actual: DI-04 en el `emitir_encargo`, falla cerrado. El estado guardado solo, en cambio, se carga (mismo esquema V0.68), con `integridad()` vacía, y el DIRECTA llega a `PROPUESTA` con S1. Es inherente a corregir código sin cambiar el esquema, y no hay estados reales del marco (Documento 0, §5): no lo cuento como hallazgo.
+- **Invariantes:** ninguna ruta nueva llega a una orden sin F y G; no hay LLM; ningún control se relaja (la regla nueva solo añade un rechazo); se valida antes de escribir; ningún número nuevo; los dos `[PROPUESTO]` siguen en T-57; sin secretos.
+
+## Los hallazgos anteriores
+
+| Hallazgo | ¿Sigue corregido? | Evidencia |
+| --- | --- | --- |
+| H-01 (alta) | Sí | `r01_02`; `r04_01` d); `r05_01` f) (la parte d de `r02_02`, que ya no llega a ejecutarse: ver H-20) |
+| H-02, H-05 (media, baja) | Sí | `r01_05`, `r02_03`, `r02_04` |
+| H-03, H-09, H-12 | Sí | `r01_08`, `r02_01` |
+| H-04 (media) | Sí | Batería; `r01_06` (ver abajo) |
+| H-06, H-07 (bajas) | Sí | `r01_09`, `r02_05` |
+| H-10 (baja) | Sí | `ast.parse` con 3.11 |
+| H-13 (media) | Sí | `r03_01` y `r04_02`, SIN FALLOS |
+| H-14, H-17 (bajas) | Documentados; aceptable | Fallan cerrado, no relajan nada, `emitir_encargo()` y `entregar_sobre()` ya lo hacían antes de T-80, el diario anota y reproduce las llamadas rechazadas y `consultar()` no caduca nada (`r04_03`). El Documento 0 (§2) y el LEEME lo dicen; ver H-20 |
+| H-16 (media) | **Sí** | `r05_01`; la batería |
+| H-08, H-11, H-15, H-18 (bajas) | Casi | Ver H-20 |
+
+Sondas que no dan SIN FALLOS, y por qué (todas esperaban el comportamiento anterior a una corrección, salvo `r03_02` a, que muestra H-14):
+- `r01_03` (`KeyError`) y `r01_06` (`AssertionError` por O-03): antes de H-01 y H-04, como ya decía `pruebas.md`;
+- `r02_02`: se para en c) con un `AssertionError`, porque esperaba que el origen se reencargara con el DIRECTA en `VALIDADA`, que ahora da O-06 (H-16). Sus partes d) y e) no llegan a ejecutarse: `r05_01` f) las repite y pasan;
+- `r03_02` a): H-14, documentado;
+- `r04_01` a), c) y e): con la corrección, el reencargo se rechaza y el DIRECTA sigue con S1 no superado hasta `EJECUTADA` o `PROPUESTA`, que es lo correcto (ver arriba); la sonda daba por hecho el reencargo;
+- `r04_03`: H-17, documentado.
+
+## Hallazgos r05
+
+### H-19 · baja · La regresión de H-16 en la batería cubre una sola variante y no comprueba que el rechazo no deje nada
+
+**Qué pasa.** La batería añade tres comprobaciones para H-16, todas con el origen reabierto por el operador (la variante a de `r04_01`). La r04 pedía también las regresiones de c) (la condición cumplida y el gestor, sin el operador) y e) (el gemelo DIRECTA). El código las cubre (la misma regla), pero si alguien la acotara, por ejemplo, a los orígenes no DIRECTA o a la reapertura del operador, la batería seguiría en verde. Además, `el_origen_no_se_reanaliza_con_su_analisis_en_juego_H16` se ejecuta con `mutacion_permitida=True`, que no hace falta: con `False` pasa igual (lo comprobé en una copia), y así comprobaría que el rechazo no deja nada.
+
+**Corrección sugerida:** añadir a la batería las variantes c) y e) (`r05_01` c y d sirven de modelo) y quitar `mutacion_permitida=True`.
+
+### H-20 · baja · Restos de documentación
+
+- `pruebas.md`, primera tabla: «112 comprobaciones (93 en la r01, más 13 … 4 … 2 … y 3 de la r04)»: la suma da 115, y la batería, el README, el Documento 0 y el LEEME dicen 115.
+- `pruebas.md`, «Regresiones de la r04»: no dice que `r02_02` ahora se para en c) por H-16 (y que sus partes d y e ya no se ejecutan), y explica la FALLA de `r04_01` como «esperaban el reencargo»; más exacto: el DIRECTA sigue, con razón, con un análisis que nadie ha superado.
+- Documento 0, §2, fila de C: sigue diciendo «lo que el Orquestador registra a propósito en cualquier operación»; el README del ticket ya dice «en las operaciones que pasan por un encargo, como `emitir_encargo()`», y `consultar()` no caduca nada. Conviene que los dos digan lo mismo.
+
+## Criterios de aceptación (r05)
+
+| Criterio | Cumple | Evidencia |
+| --- | --- | --- |
+| CA-1 | sí | Batería; `r01_01`; `r05_01` a) (el DIRECTA hasta `AUTORIZADA`) y b) (hasta `EJECUTADA`) |
+| CA-2 | sí | Los mínimos y la reutilización al abrir (`r03_01`, `r04_02`) y, ahora, en el otro orden: un DIRECTA en juego no se queda con un análisis que otro reanálisis supere (`r05_01`) |
+| CA-3 | sí | `r02_03`, `r02_04`, `r04_02` e), `r05_02` c) |
+| CA-4 | sí | `r01_05`, `r02_03`, `r02_05`, `r04_02` f) |
+| CA-5 | sí | 57 baterías en verde (árbol de trabajo y copia limpia); diario y persistencia (`r05_01` e, `r05_03`); gate de la copia limpia 12/12 |
+| CA-6 | sí | `pc3_01_via_directa.py`: CUMPLE (dentro de la batería) |

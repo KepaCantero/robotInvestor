@@ -2,7 +2,7 @@
 
 | Campo | Valor |
 | --- | --- |
-| Estado | EN QA |
+| Estado | CERRADO (QA r05 APTO, 10-11-2026) |
 | Pieza | sistema_global/marco_comun_c |
 | Planifica · implementa · QA | claude · claude · un revisor nuevo sin contexto |
 | Aprobación del operador | No necesaria: es una versión del marco que aplica una decisión ya ratificada (D-28, Constitución V0.6). El operador pidió el 2026-11-10: «Continúa con la T-80» |
@@ -84,4 +84,5 @@ Detalle en el Documento 0: `sistema_global/documentos_0/V0.68_Via_directa_y_modo
 - 2026-11-10 · QA r01 NO APTO (H-01 alta; H-02 a H-04 medias; H-05 a H-08 bajas); todos corregidos con su prueba (106 comprobaciones)
 - 2026-11-10 · QA r02 NO APTO (H-09 media: propuesta caducada y descartada; H-10 a H-12 bajas); corregidos (110 comprobaciones)
 - 2026-11-10 · QA r03 NO APTO (H-13 media: análisis superado por el reanálisis de un DIRECTA; H-14 y H-15 bajas); corregidos (112 comprobaciones)
-- 2026-11-10 · QA r04 NO APTO (H-16 media: reencargo del origen con el análisis en juego en un DIRECTA; H-17 y H-18 bajas); corregidos (115 comprobaciones); pendiente la r05
+- 2026-11-10 · QA r04 NO APTO (H-16 media: reencargo del origen con el análisis en juego en un DIRECTA; H-17 y H-18 bajas); corregidos (115 comprobaciones)
+- 2026-11-10 · CERRADO · QA r05 APTO; H-19 y H-20 (bajos) corregidos al cerrar (116 comprobaciones)
