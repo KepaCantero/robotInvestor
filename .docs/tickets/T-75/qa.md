@@ -57,3 +57,68 @@
 - **H-02:** el ticket no tiene ni el análisis técnico ni el informe de pruebas con el gate.
 
 Los bajos (H-03 a H-07) se pueden corregir en la misma pasada o llevarse a la deuda con su ID. En la ronda r02, el revisor vuelve a ejecutar su sonda r01_sondas_embudo_sequia.py: s19 y s17 deben dar OK con las correcciones de H-08 y H-01, y s01, s03, s04, s07 y s10 según lo que se decida en H-03 a H-05.
+
+---
+
+# Ronda r02
+
+- **Revisor:** Claude, subagente revisor nuevo, sin el contexto de la implementación ni de la r01 (solo el ticket, el Documento 0, el código y las sondas) · **Ronda:** r02 · **Fecha:** 2026-11-10
+- **Revisado:** la V0.73 del marco (`orquestador.py`, `consola.py`, `migraciones.py`, `catalogo_codigos.py`, `esquemas_codigo.json`, la batería de T-75 y los documentos). Al empezar estaba sin commit sobre `1a91d28`; durante la revisión se hizo commit en `7b775cc`, con el mismo código de T-75 que se revisó (`git diff HEAD` vacío en `orquestador.py`, `consola.py`, `contratos.py` y el Documento 0). En el mismo árbol hay cambios a medias de T-76, T-83, T-84 y T-65; no se revisan.
+- **Sondas del revisor:** r02_sondas_embudo_sequia.py, en la misma carpeta qa de la entrega V0.70 de Claude (sin commit), con 17 sondas (p01 a p17): 12 OK y 5 que marcan algo. Se ejecutan desde `sistema_global/marco_comun_c` con el Python del proyecto y -I (unos 30 s). Además se vuelve a ejecutar `sistema_global/marco_comun_c/entrega_claude/V0.70/qa/r01_sondas_embudo_sequia.py`.
+
+## Reproducción
+
+- **Baterías:** `.docs/scripts/pruebas_marco.sh` → 61 pasan y 0 fallan, sobre el árbol con los cambios a medias de las otras tareas (ninguna batería ajena falla).
+- **Esquema:** `pe.esquema_actual() == ESQUEMA_V0_73`, registrado en `esquemas_codigo.json`; MIG-009 (`_sin_cambios`) cierra la cadena tras MIG-008 y `pruebas_integracion_v053.py` la recorre.
+- **Gate:** ver el apartado «Gate r02».
+
+## Sondas de la r01, otra vez
+
+17 OK y 3 que marcan, todas explicadas por el diseño nuevo:
+- **s19 (H-08) y s17 (H-01): OK.** Con barridos diarios a las 08:00 salta un O-40; con `autorizar()` directo, el veto queda anotado (`'vetado por F: F-09'`, actor F).
+- **s01, s05, s06, s07, s10 y s12: OK.** Un análisis reutilizado por D cuenta 1; dos semanas seguidas no cuentan dos veces el borde; `barrer()` ya no anuncia un aviso que no añadió; `dias` = 0 o `True` se rechaza.
+- **s04** sigue con dos filas en `salidas` para una oportunidad, pero el diseño añade `salen` = 1 (oportunidades distintas), que es lo que sugería la r01: se da por corregido.
+- **s07b** espera que la sequía se apague 1 µs después del plazo: con la condición nueva (que sigue cierta hasta la siguiente inversión) seguir activa es lo correcto.
+- **s03** (expediente reabierto, encargado de nuevo y validado con otro sobre) sigue dando 2: ver H-13.
+
+## Comprobación de H-01 a H-08
+
+| ID r01 | Estado en r02 | Evidencia |
+| --- | --- | --- |
+| H-08 | **corregido** | p01: un barrido diario a cada una de las 24 horas durante 130 días da 2 O-40 (uno por plazo) en todas. p02: semanal 2, cada 59 días 1, cada 60 días 2, cada 61 días 2, irregular 2 y horario en el borde 1, el primero justo a los 60 días de la inversión. p03: con inversión, 60 d − 1 µs inactiva y 60 d activa. p04: sin inversiones nunca, 130 barridos dan 2. p05: un análisis anterior a la inversión, reutilizado después por la vía DIRECTA, cuenta igual por D y por E. |
+| H-01 | **en parte** (H-09 y H-10) | p07: el veto en la autorización automática (MATRIZ_AUTONOMIA) queda anotado. p09 a p12 y p14: tras el veto, otro informe autoriza y ejecuta, y `_propuesta_ok`, la orden CT-G-09 y `integridad()` cuadran; la anulación de T-50 sigue funcionando y cuenta 1; el mismo informe no se anota dos veces; guardar y cargar, y reabrir el diario, reproducen la anotación; testigos y `_salida_no_operador` no cambian. Pero por la pantalla del operador el veto no se anota (H-09), y la anotación rompe la propuesta CT-G-06 (H-10). |
+| H-02 | corregido | `analisis-tecnico.md` y `pruebas.md` rellenos. A `pruebas.md` le falta el recuento de baterías y el gate de la r02 (H-12). |
+| H-03 | en parte (H-13) | La reutilización por DIRECTA cuenta una vez (s01 y p05). El caso (b), con encargo y sobre nuevos, sigue dando 2, y el docstring dice lo contrario. |
+| H-04 | corregido | p16: (t − 7 d, t] da 1 y (t, t + 7 d] da 0; (t, t] da 0. `salen` cuenta oportunidades. |
+| H-05 | corregido | s10 de la r01: el cambio solo se informa si el aviso se añade. |
+| H-06 | **no corregido** (H-12) | El README lo da por corregido, pero el LEEME sigue igual que en la r01. |
+| H-07 | corregido | p17: 0, −1, `True`, `False`, 2.5, `"7"`, None y NaN dan `ok: False` en `informe_embudo()`; `sequia()` no juzga con un plazo ilegible. |
+
+## Hallazgos nuevos
+
+| ID | Gravedad | Cómo reproducirlo | Esperado / obtenido | Corrección sugerida | Estado |
+| --- | --- | --- | --- | --- | --- |
+| H-09 | **media** | Sonda p06: `hasta(o, "PROPUESTA")` y el informe de F que veta (`vetado()` de `pruebas_operador_t50.py`). Después, lo que hace el operador desde la cola (`cola_aprobaciones` da AUTORIZAR): `pantalla_aprobacion("EXP-0001", inf, AHORA)`. Luego `barrer()` a los 3 días y `embudo()`. | **Esperado** (H-01 de la r01): el embudo dice que F paró la oportunidad, entre por donde entre el veto. **Obtenido:** la pantalla da O-06 «F vetó la propuesta: no hay nada que aprobar» y consume el informe (`self.eventos`) sin anotar nada; un `autorizar()` posterior da O-03. Hay 0 anotaciones de veto; la fila queda con capa PROPUESTA, actor GESTOR_TACTICA, motivo `'propuesta'` y `bloqueo` None; la caducidad sale con `bloqueo_previo` None. La corrección solo cubre `autorizar()` (s17 de la r01, la batería y la matriz), pero el camino normal del operador (`autorizar_op` de las pruebas, `veto_sin_anular_O06` de T-50) pasa por la pantalla, así que en él el embudo sigue sin ver el veto. | Anotar el veto también en la rama VETADO sin anulación de `pantalla_aprobacion()`, con la misma anotación (o con un método común que usen las dos rutas). Prueba de regresión: p06. | abierto |
+| H-10 | **media** | Sonda p08: `hasta(o, "PROPUESTA")`, `ct.propuesta(o, "EXP-0001")`; luego `autorizar(..., "OPERADOR", vetado(o), AHORA + 5 min)` (O-06) y otra vez `ct.propuesta(o, "EXP-0001")`. | **Esperado:** la propuesta en vigor (el expediente sigue en PROPUESTA) es el mismo mensaje CT-G-06 válido, emitido por su gestor. **Obtenido:** `contratos.propuesta()` toma la última anotación que llega a PROPUESTA (`next(x for x in reversed(historial) if x["hasta"] == "PROPUESTA")`), y esa es ahora la del veto. El mensaje sale con `producer` = F y `emitido_en` = la hora del veto, y su `event_id`, que es el hash del contenido, cambia. `ct.validar()` lo rechaza con CT-03 («'F' is not one of [...]»): F no propone (P1). Es una regresión de la propia corrección: falla cerrado, pero una propuesta vetada y aún viva ya no se puede emitir como contrato, y un consumidor la vería como otra propuesta. Ninguna batería lo cubre, porque `pruebas_contratos.py` solo emite CT-G-06 sin veto. | En `contratos.propuesta()`, buscar la última transición a PROPUESTA desde otro estado (`x["desde"] != "PROPUESTA"`), como ya hace `orden()` con AUTORIZADA. Revisar si hay otros lectores de «la última anotación a X». Prueba de regresión: p08 (CT-G-06 válido y con el mismo `event_id` tras el veto). | abierto |
+| H-11 | baja | Sonda p13: la propuesta a las 09:00; `autorizar()` con el informe que veta a las 09:30 (O-06); después `descartar(..., "GESTOR_TACTICA", 09:10)`. | **Esperado:** el historial encadenado no retrocede en el tiempo, y una llamada rechazada no deja nada por delante del reloj del Orquestador. **Obtenido:** `@_seguro` restaura `ultimo_ahora` porque la llamada devuelve `ok: False`, pero la anotación del veto, fechada a las 09:30, se queda. El descarte de las 09:10 se admite y el historial queda con 09:00, 09:30 y 09:10. Hoy no rompe ni la integridad ni el embudo (que filtra por instante), pero el orden de la cadena ya no es el del tiempo. Ya había un precedente (el kill y el aviso O-03 de `_duplicado`), pero esta es la primera anotación en un expediente desde una llamada rechazada. | Adelantar `ultimo_ahora` cuando la llamada rechazada deja anotación (por ejemplo, fijarlo de nuevo tras restaurarlo, o que `_seguro` solo lo restaure si el estado no cambió). Prueba de regresión: p13. | abierto |
+| H-12 | baja | Lectura de los documentos frente al código. | **Esperado:** documentación al día (fase `ri-qa`) y H-06 corregido, como dice el README. **Obtenido:** (a) H-06 sigue igual. En `sistema_global/marco_comun_c/LEEME.md`, la fila de `orquestador.py` dice «O-00 a O-36 y O-39», la de `consola.py` no cita `informe_embudo()`, la de `parametros.py` dice «[PROPUESTO]» y el registro de prefijos dice «O-00 a O-39»; con la V0.73 ya hay hasta O-42. (b) La línea «Comprobado en el embudo…» del LEEME describe la semántica de la V0.70: «con lo validado fuera del plazo, no hay sequía». (c) El §2 del Documento 0 sigue con el diseño de la V0.70: ventana de «los últimos `dias`», validadas «contadas una vez por paso» y «no lo repite si ya hay un O-40 dentro del periodo». El §3 sigue en V0.70 y MIG-007, sin V0.73 ni MIG-009, y el §4 en 24 comprobaciones y 59 baterías. El §5 dice que se corrigen H-01 a H-08 y, justo debajo, sigue con «Pendientes bajos» H-03 a H-07. (d) Los límites declarados en el análisis (los rechazos de `autorizar()` distintos del veto no salen en el embudo; una inversión en cualquier cartera apaga la alarma de todas) no están en la fila T-75 de la deuda. (e) `pruebas.md` no da el resultado de las baterías ni el del gate de la V0.73. | Actualizar el LEEME (tres filas, el registro y la línea de comprobación), el §2 a §5 del Documento 0 (esquema V0.73, MIG-009 y el diseño nuevo), la deuda con los dos límites, y `pruebas.md` con 61/61 y el gate. | abierto |
+| H-13 | baja | Sonda p15 (la s03 de la r01): validada, en observación, reabierta, con encargo nuevo y validada con otro sobre. | **Esperado:** lo que dice el docstring de `embudo()`: «un análisis cuenta una vez: un DIRECTA que reutiliza el de otro no suma, y un expediente revalidado tampoco». **Obtenido:** `validadas` = 2 para una oportunidad, porque la clave es el `event_id` del sobre y el segundo sobre es otro. El análisis técnico dice que la clave es el sobre (y un sobre nuevo es un análisis nuevo, lo que es defendible), pero el docstring dice que no suma. | Elegir uno: o corregir el docstring («un expediente revalidado con otro sobre cuenta como análisis nuevo»), o contar por expediente las validaciones que no reutilizan. Prueba: p15 con el resultado elegido. | abierto |
+| H-14 | baja | Sonda p03: un sistema que arranca en t (sello, Motor y validación a esa hora) y nunca invierte; `sequia(t + 60 d − 1 µs)`. | **Esperado** (Documento 0 y LEEME): «un sistema más joven que el plazo no juzga». **Obtenido:** `activa` = True a 60 d − 1 µs, porque sin inversiones `sequia()` adelanta 1 µs el inicio para que el embudo, abierto por la izquierda, cuente lo del arranque, y la edad se mide desde ese inicio adelantado. Con inversión el borde es exacto: 60 d − 1 µs da False y 60 d da True. No tiene efecto práctico. | Medir la edad desde el primer instante real (`a - primero < plazo`) y usar el inicio adelantado solo para el embudo. | abierto |
+
+### Observaciones (no son hallazgos)
+
+- No se encontró regresión en el resto del marco. La anotación del veto no cambia `_propuesta_ok` (lleva el hash de la propuesta), ni `_salida_no_operador` y los testigos de T-36 (p14), ni `anulaciones_mes` (p10), ni la orden CT-G-09 (p09), ni la integridad, la persistencia o el diario (p12). Tampoco cambia las 61 baterías, doradas y semana incluidas. Los demás lectores de la historia que se revisaron (`autorizada_por`, `_orden_ok`, `_sobre_ok`, `apartado_mejor` en `comparar`) no se ven afectados; el único afectado es el de H-10.
+- La sequía mira la última transición a EJECUTADA de cualquier expediente. Los expedientes solo abren o aumentan posiciones (`NIVEL_MIN_POR_DECISION`) y los cierres van por las posiciones, así que una venta no apaga la alarma.
+- Sigue la observación de la r01: una inversión en una cartera apaga la alarma de las demás. Ahora es un límite declarado, pero no está en la deuda (H-12 d).
+
+## Gate r02
+
+`./tools/check_all.sh` sobre el árbol actual pasa las 12 puertas: corpus, NFC, YAML, secretos, referencias vivas, ruff (3086 de una cuota de 3109), mypy ×3 (123, 174 y 159) y pytest A 326, FX 68 y B 176. El árbol lleva los cambios a medias de T-65 (A) y de las otras tareas, así que el resultado no es solo de T-75. El gate no ejecuta las baterías del marco: esas son las 61 de arriba.
+
+## Veredicto r02
+
+**NO APTO.** H-08, H-02, H-04, H-05 y H-07 quedan corregidos, pero hay dos hallazgos medios abiertos:
+- **H-09:** el veto de F que se ve en la pantalla del operador, que es el camino normal, sigue sin anotarse, así que H-01 solo está corregido en `autorizar()`.
+- **H-10:** la anotación del veto rompe la propuesta CT-G-06: sale con F como emisor, se rechaza con CT-03 y cambia su `event_id`.
+
+Los bajos (H-11 a H-14) se pueden corregir en la misma pasada o llevarse a la deuda con su ID. En la r03, el revisor vuelve a ejecutar r01_sondas_embudo_sequia.py y r02_sondas_embudo_sequia.py: p06 y p08 deben dar OK, y p03, p13 y p15 según lo que se decida.
