@@ -3,6 +3,9 @@
 No cambia nada: calcula el panel, la cola de aprobaciones y los avisos pendientes a partir del estado.
 Las acciones del operador (autorizar, levantar objeción, acusar aviso) se hacen con los métodos del Orquestador.
 Todos los umbrales son [PROPUESTO].
+
+V0.64: el panel acepta un `reloj` y un `diario` opcionales y añade el estado del sistema: kill-switch, autonomía
+(carteras degradadas), reloj del sistema y diario, y avisa de la última migración. Sigue siendo solo lectura.
 """
 from __future__ import annotations
 
@@ -10,6 +13,7 @@ import copy
 from datetime import timedelta, timezone
 
 from k_calidad import ERRORES, estado_sello
+from parametros import PARAMETROS
 from validar_sobre import _dt
 
 HORAS_AMBAR_PROPUESTA = 6      # una propuesta que vence en menos de estas horas pasa a ámbar
@@ -61,15 +65,109 @@ def avisos_pendientes(o):
     return sorted((copy.deepcopy(x) for x in o.avisos if x["acuse"] is None), key=lambda x: (x["prioridad"] != "ALTA", x["id"]))
 
 
-def panel(o, ahora):
-    """Panel verde/ámbar/rojo con el motivo de cada color. Nunca lanza excepciones: si no puede calcular, ROJO."""
+def panel(o, ahora, reloj=None, diario=None, lineas_diario_ambar=PARAMETROS["n_lineas_diario_ambar"]):
+    """Panel verde/ámbar/rojo con el motivo de cada color. Nunca lanza excepciones: si no puede calcular, ROJO.
+    Con `reloj` y `diario` (opcionales) añade sus comprobaciones; sin ellos, las de siempre más kill_switch y autonomia.
+    `lineas_diario_ambar` es el tope de líneas del diario sin punto de control a partir del que avisa; por defecto,
+    `parametros.PARAMETROS["n_lineas_diario_ambar"]` [PROPUESTO] (V0.67). Un tope que no sea un entero positivo (None,
+    texto, bool, NaN o infinito) da ROJO."""
     try:
-        return _panel(o, ahora)
+        return _panel(o, ahora, reloj, diario, lineas_diario_ambar)
     except ERRORES as e:
         return {"nivel": "ROJO", "comprobaciones": [{"que": "panel", "nivel": "ROJO", "motivo": f"no se pudo calcular: {type(e).__name__}"}]}
 
 
-def _panel(o, ahora):
+def _add_seguro(add, que, fn):
+    """Las comprobaciones nuevas no pueden salir del panel: lo que falle es ROJO (falla cerrado) y None no añade línea."""
+    try:
+        r = fn()
+    except Exception as ex:   # noqa: BLE001 — un estado ilegible no se pinta de verde
+        r = ("ROJO", f"no se pudo leer el estado ({type(ex).__name__})")
+    if r is not None:
+        add(que, r[0], r[1])
+
+
+def _kill(o):
+    k = o.kill
+    if k is None:
+        ult = o.rearmes[-1] if o.rearmes else None
+        cuando = ult.get("ahora") if isinstance(ult, dict) else None
+        return "VERDE", "sin kill-switch activo" + (f"; último rearme {cuando}" if cuando else "")
+    if isinstance(k, dict):
+        return "ROJO", f"kill-switch activo ({k.get('actor', '?')}): {k.get('motivo', '?')} desde {k.get('ahora', '?')}"
+    return "ROJO", f"kill-switch activo con un registro ilegible: {k!r}"
+
+
+def _autonomia(o):
+    if not o.degradadas:
+        return "VERDE", "autonomía plena: ninguna cartera degradada"
+    partes = []
+    for c in sorted(o.degradadas):
+        d = o.degradadas[c]
+        if isinstance(d, dict):
+            partes.append(f"{c} en {o.nivel(c)} ({d.get('motivo', '?')} desde {d.get('ahora', '?')})")
+        else:
+            partes.append(f"{c} en {o.nivel(c)} (registro ilegible: {d!r})")
+    return "AMBAR", f"autonomía reducida: {'; '.join(partes)}"
+
+
+def _reloj(reloj):
+    b = reloj.bloqueo
+    if b is not None:
+        if isinstance(b, dict):
+            return "ROJO", f"el reloj está bloqueado ({b.get('codigo', '?')}: {b.get('motivo', '?')}): hay que rearmarlo"
+        return "ROJO", f"el reloj está bloqueado con un registro ilegible: {b!r}"
+    e = reloj.estado()
+    if not isinstance(e, dict):
+        return "ROJO", "el reloj no da su estado"
+    if not e.get("contrastado", False):
+        return "AMBAR", "el reloj aún no se ha contrastado (o lo rearmaron): contrástalo con una referencia externa"
+    s = e.get("segundos_desde_contraste")
+    if s is None:
+        return "AMBAR", "no se puede confirmar el contraste del reloj: contrástalo otra vez"
+    if s > reloj.max_sin_contraste_s:
+        return "AMBAR", f"hace {s:.0f} s que no se contrasta el reloj (tope {reloj.max_sin_contraste_s:.0f} s): contrástalo otra vez"
+    return "VERDE", f"reloj contrastado hace {s:.0f} s"
+
+
+def _diario(diario, tope):
+    """Lee dos privados del Diario (`_roto` y `_n`): la consola es parte del sistema; la deuda T-72 (T-63 en la entrega
+    de GLM) propone un método público para no depender de ellos. El `_n` es el número de la última línea y `punto()` lo
+    deja en 1. V0.67: el tope se valida antes (un NaN, un infinito o un bool daban VERDE: fallaba abierto)."""
+    if isinstance(tope, bool) or not isinstance(tope, int) or tope < 1:
+        return "ROJO", f"el tope de líneas del diario no es un entero positivo ({tope!r}): revisa la configuración"
+    roto = diario._roto
+    if roto:
+        return "ROJO", f"el diario está bloqueado ({roto}): reábrelo y sigue desde el último punto de control"
+    n = diario._n
+    if isinstance(n, bool) or not isinstance(n, int) or n < 1:
+        return "ROJO", f"el diario no da su número de líneas ({n!r})"
+    if n > tope:
+        return "AMBAR", f"el diario lleva {n} líneas desde el último punto de control (tope {tope}): hazle un punto"
+    return "VERDE", f"diario operativo ({n} línea(s) desde el último punto de control)"
+
+
+def _migracion(o):
+    """La línea informativa de la última migración, o None si la última entrada del registro de límites no es una MIGRACION."""
+    try:
+        ent = o.limites["entradas"]
+        ult = ent[-1] if ent else None
+    except Exception:   # noqa: BLE001 — unos límites ilegibles ya los ve «integridad» (ROJO); aquí no hay línea
+        return None
+    if not isinstance(ult, dict) or ult.get("tipo") != "MIGRACION":
+        return None
+    try:
+        cuando = o.limites["historial"][-1]["ahora"]   # pareada con la entrada (lo exige _limites_ok)
+    except Exception:   # noqa: BLE001
+        cuando = None
+    ids = ult.get("migraciones")
+    if (not isinstance(cuando, str) or not cuando or not isinstance(ids, list) or not ids
+            or not all(isinstance(i, str) and i for i in ids)):
+        return "ROJO", "hay una migración anotada pero el registro no la deja leer: revisa el estado"
+    return "VERDE", f"migrado a este código el {cuando} ({', '.join(ids)})"
+
+
+def _panel(o, ahora, reloj=None, diario=None, lineas_diario_ambar=PARAMETROS["n_lineas_diario_ambar"]):
     a = _tiempo(o, ahora)
     c = []
 
@@ -119,4 +217,12 @@ def _panel(o, ahora):
         add("decisiones", "AMBAR", f"esperan al operador, sin plazo: {sorted(sin_plazo)}")
     else:
         add("decisiones", "VERDE", f"{len(cola)} decisión(es) pendiente(s), sin urgencia" if cola else "sin decisiones pendientes")
+    # estado del sistema (V0.64): kill-switch y autonomía siempre; reloj, diario y migración cuando proceda
+    _add_seguro(add, "kill_switch", lambda: _kill(o))
+    _add_seguro(add, "autonomia", lambda: _autonomia(o))
+    if reloj is not None:
+        _add_seguro(add, "reloj", lambda: _reloj(reloj))
+    if diario is not None:
+        _add_seguro(add, "diario", lambda: _diario(diario, lineas_diario_ambar))
+    _add_seguro(add, "migracion", lambda: _migracion(o))
     return {"nivel": _peor([x["nivel"] for x in c]), "comprobaciones": c}

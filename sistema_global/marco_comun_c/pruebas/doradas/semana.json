@@ -1,0 +1,995 @@
+[
+  {
+    "estado": {
+      "avisos": [],
+      "expedientes": {
+        "EXP-0001": "EN_ANALISIS",
+        "EXP-0002": "EN_ANALISIS"
+      },
+      "kill": false,
+      "niveles": {
+        "TACTICA": "L2",
+        "TRADING": "L2"
+      },
+      "posiciones": {},
+      "rearmes": 0
+    },
+    "paso": "lunes_encargos",
+    "resultado": {
+      "EXP-0001": {
+        "codigo": "OK",
+        "encargo": "EV-ENC-0001",
+        "ok": true
+      },
+      "EXP-0002": {
+        "codigo": "OK",
+        "encargo": "EV-ENC-0002",
+        "ok": true
+      }
+    }
+  },
+  {
+    "estado": {
+      "avisos": [],
+      "expedientes": {
+        "EXP-0001": "VALIDADA",
+        "EXP-0002": "VALIDADA"
+      },
+      "kill": false,
+      "niveles": {
+        "TACTICA": "L2",
+        "TRADING": "L2"
+      },
+      "posiciones": {},
+      "rearmes": 0
+    },
+    "paso": "lunes_sobres",
+    "resultado": {
+      "EXP-0001": {
+        "codigo": "OK",
+        "ok": true
+      },
+      "EXP-0002": {
+        "codigo": "OK",
+        "ok": true
+      }
+    }
+  },
+  {
+    "estado": {
+      "avisos": [],
+      "expedientes": {
+        "EXP-0001": "COMPARADA",
+        "EXP-0002": "COMPARADA"
+      },
+      "kill": false,
+      "niveles": {
+        "TACTICA": "L2",
+        "TRADING": "L2"
+      },
+      "posiciones": {},
+      "rearmes": 0
+    },
+    "paso": "lunes_comparar",
+    "resultado": {
+      "codigo": "OK",
+      "codigo_d": "OK",
+      "decision_global": "INVERTIR",
+      "ganador": "EXP-0001",
+      "ok": true
+    }
+  },
+  {
+    "estado": {
+      "avisos": [],
+      "expedientes": {
+        "EXP-0001": "PROPUESTA",
+        "EXP-0002": "COMPARADA"
+      },
+      "kill": false,
+      "niveles": {
+        "TACTICA": "L2",
+        "TRADING": "L2"
+      },
+      "posiciones": {},
+      "rearmes": 0
+    },
+    "paso": "lunes_proponer",
+    "resultado": {
+      "codigo": "OK",
+      "ok": true
+    }
+  },
+  {
+    "estado": {
+      "avisos": [],
+      "expedientes": {
+        "EXP-0001": "AUTORIZADA",
+        "EXP-0002": "COMPARADA"
+      },
+      "kill": false,
+      "niveles": {
+        "TACTICA": "L2",
+        "TRADING": "L2"
+      },
+      "posiciones": {},
+      "rearmes": 0
+    },
+    "paso": "lunes_autorizar",
+    "resultado": {
+      "codigo": "OK",
+      "ok": true
+    }
+  },
+  {
+    "estado": {
+      "avisos": [],
+      "expedientes": {
+        "EXP-0001": "EJECUTADA",
+        "EXP-0002": "COMPARADA"
+      },
+      "kill": false,
+      "niveles": {
+        "TACTICA": "L2",
+        "TRADING": "L2"
+      },
+      "posiciones": {
+        "POS-EXP-0001": {
+          "cantidad": 100.0,
+          "estado": "ABIERTA"
+        }
+      },
+      "rearmes": 0
+    },
+    "paso": "lunes_ejecutar",
+    "resultado": {
+      "cantidad": 100.0,
+      "codigo": "OK",
+      "ok": true,
+      "posicion_id": "POS-EXP-0001",
+      "precio": 1.1
+    }
+  },
+  {
+    "estado": {
+      "avisos": [],
+      "expedientes": {
+        "EXP-0001": "EJECUTADA",
+        "EXP-0002": "COMPARADA"
+      },
+      "kill": false,
+      "niveles": {
+        "TACTICA": "L2",
+        "TRADING": "L2"
+      },
+      "posiciones": {
+        "POS-EXP-0001": {
+          "cantidad": 100.0,
+          "estado": "ABIERTA"
+        }
+      },
+      "rearmes": 0
+    },
+    "paso": "lunes_conciliar",
+    "resultado": {
+      "diferencias": [],
+      "explicadas": [],
+      "ok": true
+    }
+  },
+  {
+    "estado": {
+      "avisos": [],
+      "expedientes": {
+        "EXP-0001": "EJECUTADA",
+        "EXP-0002": "COMPARADA"
+      },
+      "kill": false,
+      "niveles": {
+        "TACTICA": "L2",
+        "TRADING": "L2"
+      },
+      "posiciones": {
+        "POS-EXP-0001": {
+          "cantidad": 100.0,
+          "estado": "ABIERTA"
+        }
+      },
+      "rearmes": 0
+    },
+    "paso": "martes_vigila_09",
+    "resultado": {
+      "acciones": [],
+      "conciliacion_ok": true,
+      "no_evaluadas": [
+        {
+          "posicion": "POS-EXP-0001",
+          "regla": "H-18",
+          "senal": "INVALIDEZ:INV-1"
+        }
+      ]
+    }
+  },
+  {
+    "estado": {
+      "avisos": [],
+      "expedientes": {
+        "EXP-0001": "EJECUTADA",
+        "EXP-0002": "COMPARADA"
+      },
+      "kill": false,
+      "niveles": {
+        "TACTICA": "L2",
+        "TRADING": "L2"
+      },
+      "posiciones": {
+        "POS-EXP-0001": {
+          "cantidad": 100.0,
+          "estado": "ABIERTA"
+        }
+      },
+      "rearmes": 0
+    },
+    "paso": "martes_vigila_10",
+    "resultado": {
+      "acciones": [],
+      "conciliacion_ok": true,
+      "no_evaluadas": [
+        {
+          "posicion": "POS-EXP-0001",
+          "regla": "H-18",
+          "senal": "INVALIDEZ:INV-1"
+        }
+      ]
+    }
+  },
+  {
+    "estado": {
+      "avisos": [],
+      "expedientes": {
+        "EXP-0001": "EJECUTADA",
+        "EXP-0002": "COMPARADA"
+      },
+      "kill": false,
+      "niveles": {
+        "TACTICA": "L2",
+        "TRADING": "L2"
+      },
+      "posiciones": {
+        "POS-EXP-0001": {
+          "cantidad": 50.0,
+          "estado": "ABIERTA"
+        }
+      },
+      "rearmes": 0
+    },
+    "paso": "martes_reducir",
+    "resultado": {
+      "codigo": "OK",
+      "ok": true,
+      "orden_id": "ORD-POS-EXP-0001-R1-M-1",
+      "restante": 50.0,
+      "stop_id": "ORD-POS-EXP-0001-R1-S-1"
+    }
+  },
+  {
+    "estado": {
+      "avisos": [],
+      "expedientes": {
+        "EXP-0001": "EJECUTADA",
+        "EXP-0002": "COMPARADA"
+      },
+      "kill": false,
+      "niveles": {
+        "TACTICA": "L2",
+        "TRADING": "L2"
+      },
+      "posiciones": {
+        "POS-EXP-0001": {
+          "cantidad": 50.0,
+          "estado": "ABIERTA"
+        }
+      },
+      "rearmes": 0
+    },
+    "paso": "martes_vigila_12",
+    "resultado": {
+      "acciones": [],
+      "conciliacion_ok": true,
+      "no_evaluadas": [
+        {
+          "posicion": "POS-EXP-0001",
+          "regla": "H-18",
+          "senal": "INVALIDEZ:INV-1"
+        }
+      ]
+    }
+  },
+  {
+    "estado": {
+      "avisos": [],
+      "expedientes": {
+        "EXP-0001": "EJECUTADA",
+        "EXP-0002": "COMPARADA"
+      },
+      "kill": false,
+      "niveles": {
+        "TACTICA": "L2",
+        "TRADING": "L2"
+      },
+      "posiciones": {
+        "POS-EXP-0001": {
+          "cantidad": 50.0,
+          "estado": "ABIERTA"
+        }
+      },
+      "rearmes": 0
+    },
+    "paso": "martes_vigila_13",
+    "resultado": {
+      "acciones": [],
+      "conciliacion_ok": true,
+      "no_evaluadas": [
+        {
+          "posicion": "POS-EXP-0001",
+          "regla": "H-18",
+          "senal": "INVALIDEZ:INV-1"
+        }
+      ]
+    }
+  },
+  {
+    "estado": {
+      "avisos": [],
+      "expedientes": {
+        "EXP-0001": "EJECUTADA",
+        "EXP-0002": "COMPARADA"
+      },
+      "kill": false,
+      "niveles": {
+        "TACTICA": "L2",
+        "TRADING": "L2"
+      },
+      "posiciones": {
+        "POS-EXP-0001": {
+          "cantidad": 50.0,
+          "estado": "ABIERTA"
+        }
+      },
+      "rearmes": 0
+    },
+    "paso": "martes_vigila_14",
+    "resultado": {
+      "acciones": [],
+      "conciliacion_ok": true,
+      "no_evaluadas": [
+        {
+          "posicion": "POS-EXP-0001",
+          "regla": "H-18",
+          "senal": "INVALIDEZ:INV-1"
+        }
+      ]
+    }
+  },
+  {
+    "estado": {
+      "avisos": [],
+      "expedientes": {
+        "EXP-0001": "EJECUTADA",
+        "EXP-0002": "COMPARADA"
+      },
+      "kill": false,
+      "niveles": {
+        "TACTICA": "L2",
+        "TRADING": "L2"
+      },
+      "posiciones": {
+        "POS-EXP-0001": {
+          "cantidad": 50.0,
+          "estado": "ABIERTA"
+        }
+      },
+      "rearmes": 0
+    },
+    "paso": "miercoles_sello",
+    "resultado": {
+      "motor": null,
+      "sello": {
+        "codigo": "OK",
+        "ok": true
+      }
+    }
+  },
+  {
+    "estado": {
+      "avisos": [],
+      "expedientes": {
+        "EXP-0001": "EJECUTADA",
+        "EXP-0002": "COMPARADA",
+        "EXP-0003": "EN_ANALISIS"
+      },
+      "kill": false,
+      "niveles": {
+        "TACTICA": "L2",
+        "TRADING": "L2"
+      },
+      "posiciones": {
+        "POS-EXP-0001": {
+          "cantidad": 50.0,
+          "estado": "ABIERTA"
+        }
+      },
+      "rearmes": 0
+    },
+    "paso": "miercoles_encargo",
+    "resultado": {
+      "detectar": {
+        "codigo": "OK",
+        "ok": true
+      },
+      "encargo": {
+        "codigo": "OK",
+        "encargo": "EV-ENC-0003",
+        "ok": true
+      }
+    }
+  },
+  {
+    "estado": {
+      "avisos": [],
+      "expedientes": {
+        "EXP-0001": "EJECUTADA",
+        "EXP-0002": "COMPARADA",
+        "EXP-0003": "VALIDADA"
+      },
+      "kill": false,
+      "niveles": {
+        "TACTICA": "L2",
+        "TRADING": "L2"
+      },
+      "posiciones": {
+        "POS-EXP-0001": {
+          "cantidad": 50.0,
+          "estado": "ABIERTA"
+        }
+      },
+      "rearmes": 0
+    },
+    "paso": "miercoles_sobre",
+    "resultado": {
+      "codigo": "OK",
+      "ok": true
+    }
+  },
+  {
+    "estado": {
+      "avisos": [],
+      "expedientes": {
+        "EXP-0001": "EJECUTADA",
+        "EXP-0002": "COMPARADA",
+        "EXP-0003": "COMPARADA"
+      },
+      "kill": false,
+      "niveles": {
+        "TACTICA": "L2",
+        "TRADING": "L2"
+      },
+      "posiciones": {
+        "POS-EXP-0001": {
+          "cantidad": 50.0,
+          "estado": "ABIERTA"
+        }
+      },
+      "rearmes": 0
+    },
+    "paso": "miercoles_comparar",
+    "resultado": {
+      "codigo": "OK",
+      "codigo_d": "OK",
+      "decision_global": "INVERTIR",
+      "ganador": "EXP-0003",
+      "ok": true
+    }
+  },
+  {
+    "estado": {
+      "avisos": [],
+      "expedientes": {
+        "EXP-0001": "EJECUTADA",
+        "EXP-0002": "COMPARADA",
+        "EXP-0003": "PROPUESTA"
+      },
+      "kill": false,
+      "niveles": {
+        "TACTICA": "L2",
+        "TRADING": "L2"
+      },
+      "posiciones": {
+        "POS-EXP-0001": {
+          "cantidad": 50.0,
+          "estado": "ABIERTA"
+        }
+      },
+      "rearmes": 0
+    },
+    "paso": "miercoles_proponer",
+    "resultado": {
+      "codigo": "OK",
+      "ok": true
+    }
+  },
+  {
+    "estado": {
+      "avisos": [],
+      "expedientes": {
+        "EXP-0001": "EJECUTADA",
+        "EXP-0002": "COMPARADA",
+        "EXP-0003": "AUTORIZADA"
+      },
+      "kill": false,
+      "niveles": {
+        "TACTICA": "L2",
+        "TRADING": "L2"
+      },
+      "posiciones": {
+        "POS-EXP-0001": {
+          "cantidad": 50.0,
+          "estado": "ABIERTA"
+        }
+      },
+      "rearmes": 0
+    },
+    "paso": "miercoles_autorizar",
+    "resultado": {
+      "codigo": "OK",
+      "ok": true
+    }
+  },
+  {
+    "estado": {
+      "avisos": [],
+      "expedientes": {
+        "EXP-0001": "EJECUTADA",
+        "EXP-0002": "COMPARADA",
+        "EXP-0003": "EJECUTADA"
+      },
+      "kill": false,
+      "niveles": {
+        "TACTICA": "L2",
+        "TRADING": "L2"
+      },
+      "posiciones": {
+        "POS-EXP-0001": {
+          "cantidad": 50.0,
+          "estado": "ABIERTA"
+        },
+        "POS-EXP-0003": {
+          "cantidad": 50.0,
+          "estado": "ABIERTA"
+        }
+      },
+      "rearmes": 0
+    },
+    "paso": "miercoles_ejecutar",
+    "resultado": {
+      "cantidad": 50.0,
+      "codigo": "OK",
+      "ok": true,
+      "posicion_id": "POS-EXP-0003",
+      "precio": 165.0
+    }
+  },
+  {
+    "estado": {
+      "avisos": [
+        "O-20"
+      ],
+      "expedientes": {
+        "EXP-0001": "EJECUTADA",
+        "EXP-0002": "COMPARADA",
+        "EXP-0003": "EJECUTADA"
+      },
+      "kill": false,
+      "niveles": {
+        "TACTICA": "L2",
+        "TRADING": "L2"
+      },
+      "posiciones": {
+        "POS-EXP-0001": {
+          "cantidad": 50.0,
+          "estado": "ABIERTA"
+        },
+        "POS-EXP-0003": {
+          "cantidad": 50.0,
+          "estado": "ABIERTA"
+        }
+      },
+      "rearmes": 0
+    },
+    "paso": "miercoles_libre",
+    "resultado": {
+      "codigo": "OK",
+      "ok": true,
+      "posicion_id": null,
+      "tope_libres_superado": false
+    }
+  },
+  {
+    "estado": {
+      "avisos": [
+        "O-20"
+      ],
+      "expedientes": {
+        "EXP-0001": "EJECUTADA",
+        "EXP-0002": "COMPARADA",
+        "EXP-0003": "EJECUTADA"
+      },
+      "kill": false,
+      "niveles": {
+        "TACTICA": "L2",
+        "TRADING": "L2"
+      },
+      "posiciones": {
+        "POS-EXP-0001": {
+          "cantidad": 50.0,
+          "estado": "ABIERTA"
+        },
+        "POS-EXP-0003": {
+          "cantidad": 50.0,
+          "estado": "ABIERTA"
+        }
+      },
+      "rearmes": 0
+    },
+    "paso": "miercoles_vigila_tarde",
+    "resultado": {
+      "acciones": [],
+      "conciliacion_ok": true,
+      "no_evaluadas": [
+        {
+          "posicion": "POS-EXP-0001",
+          "regla": "H-18",
+          "senal": "INVALIDEZ:INV-1"
+        },
+        {
+          "posicion": "POS-EXP-0003",
+          "regla": "H-18",
+          "senal": "INVALIDEZ:INV-1"
+        }
+      ]
+    }
+  },
+  {
+    "estado": {
+      "avisos": [
+        "O-20"
+      ],
+      "expedientes": {
+        "EXP-0001": "EJECUTADA",
+        "EXP-0002": "COMPARADA",
+        "EXP-0003": "EJECUTADA"
+      },
+      "kill": false,
+      "niveles": {
+        "TACTICA": "L2",
+        "TRADING": "L2"
+      },
+      "posiciones": {
+        "POS-EXP-0001": {
+          "cantidad": 0,
+          "estado": "CERRADA"
+        },
+        "POS-EXP-0003": {
+          "cantidad": 50.0,
+          "estado": "ABIERTA"
+        }
+      },
+      "rearmes": 0
+    },
+    "paso": "jueves_stop",
+    "resultado": {
+      "acciones": [
+        {
+          "codigo": "OK",
+          "condicion": null,
+          "expediente": null,
+          "ok": true,
+          "posicion": "POS-EXP-0001",
+          "regla": "H-01"
+        }
+      ],
+      "conciliacion_ok": true,
+      "no_evaluadas": [
+        {
+          "posicion": "POS-EXP-0003",
+          "regla": "H-18",
+          "senal": "INVALIDEZ:INV-1"
+        }
+      ]
+    }
+  },
+  {
+    "estado": {
+      "avisos": [
+        "O-20"
+      ],
+      "expedientes": {
+        "EXP-0001": "EJECUTADA",
+        "EXP-0002": "COMPARADA",
+        "EXP-0003": "EJECUTADA"
+      },
+      "kill": false,
+      "niveles": {
+        "TACTICA": "L2",
+        "TRADING": "L2"
+      },
+      "posiciones": {
+        "POS-EXP-0001": {
+          "cantidad": 0,
+          "estado": "CERRADA"
+        },
+        "POS-EXP-0003": {
+          "cantidad": 50.0,
+          "estado": "ABIERTA"
+        }
+      },
+      "rearmes": 0
+    },
+    "paso": "jueves_conciliar",
+    "resultado": {
+      "diferencias": [],
+      "explicadas": [
+        {
+          "detalle": "+50.0 declarado por el operador (CT-G-14)",
+          "ref": "GBPUSD",
+          "tipo": "MANUAL_DECLARADA"
+        }
+      ],
+      "ok": true
+    }
+  },
+  {
+    "estado": {
+      "avisos": [
+        "O-19",
+        "O-20"
+      ],
+      "expedientes": {
+        "EXP-0001": "EJECUTADA",
+        "EXP-0002": "COMPARADA",
+        "EXP-0003": "EJECUTADA"
+      },
+      "kill": false,
+      "niveles": {
+        "TACTICA": "L1",
+        "TRADING": "L2"
+      },
+      "posiciones": {
+        "POS-EXP-0001": {
+          "cantidad": 0,
+          "estado": "CERRADA"
+        },
+        "POS-EXP-0003": {
+          "cantidad": 50.0,
+          "estado": "ABIERTA"
+        }
+      },
+      "rearmes": 0
+    },
+    "paso": "jueves_degradar",
+    "resultado": {
+      "codigo": "OK",
+      "ok": true
+    }
+  },
+  {
+    "estado": {
+      "avisos": [],
+      "expedientes": {
+        "EXP-0001": "EJECUTADA",
+        "EXP-0002": "COMPARADA",
+        "EXP-0003": "EJECUTADA"
+      },
+      "kill": false,
+      "niveles": {
+        "TACTICA": "L2",
+        "TRADING": "L2"
+      },
+      "posiciones": {
+        "POS-EXP-0001": {
+          "cantidad": 0,
+          "estado": "CERRADA"
+        },
+        "POS-EXP-0003": {
+          "cantidad": 50.0,
+          "estado": "ABIERTA"
+        }
+      },
+      "rearmes": 0
+    },
+    "paso": "jueves_restablecer",
+    "resultado": {
+      "codigo": "OK",
+      "ok": true
+    }
+  },
+  {
+    "estado": {
+      "avisos": [
+        "O-19",
+        "O-19",
+        "O-26"
+      ],
+      "expedientes": {
+        "EXP-0001": "EJECUTADA",
+        "EXP-0002": "COMPARADA",
+        "EXP-0003": "EJECUTADA"
+      },
+      "kill": true,
+      "niveles": {
+        "TACTICA": "L1",
+        "TRADING": "L1"
+      },
+      "posiciones": {
+        "POS-EXP-0001": {
+          "cantidad": 0,
+          "estado": "CERRADA"
+        },
+        "POS-EXP-0003": {
+          "cantidad": 50.0,
+          "estado": "ABIERTA"
+        }
+      },
+      "rearmes": 0
+    },
+    "paso": "viernes_kill",
+    "resultado": {
+      "codigo": "OK",
+      "entradas": {},
+      "ok": true
+    }
+  },
+  {
+    "estado": {
+      "avisos": [
+        "O-19",
+        "O-19",
+        "O-26"
+      ],
+      "expedientes": {
+        "EXP-0001": "EJECUTADA",
+        "EXP-0002": "COMPARADA",
+        "EXP-0003": "EJECUTADA"
+      },
+      "kill": true,
+      "niveles": {
+        "TACTICA": "L1",
+        "TRADING": "L1"
+      },
+      "posiciones": {
+        "POS-EXP-0001": {
+          "cantidad": 0,
+          "estado": "CERRADA"
+        },
+        "POS-EXP-0003": {
+          "cantidad": 50.0,
+          "estado": "ABIERTA"
+        }
+      },
+      "rearmes": 0
+    },
+    "paso": "viernes_conciliar",
+    "resultado": {
+      "diferencias": [],
+      "explicadas": [
+        {
+          "detalle": "+50.0 declarado por el operador (CT-G-14)",
+          "ref": "GBPUSD",
+          "tipo": "MANUAL_DECLARADA"
+        }
+      ],
+      "ok": true
+    }
+  },
+  {
+    "estado": {
+      "avisos": [],
+      "expedientes": {
+        "EXP-0001": "EJECUTADA",
+        "EXP-0002": "COMPARADA",
+        "EXP-0003": "EJECUTADA"
+      },
+      "kill": false,
+      "niveles": {
+        "TACTICA": "L1",
+        "TRADING": "L1"
+      },
+      "posiciones": {
+        "POS-EXP-0001": {
+          "cantidad": 0,
+          "estado": "CERRADA"
+        },
+        "POS-EXP-0003": {
+          "cantidad": 50.0,
+          "estado": "ABIERTA"
+        }
+      },
+      "rearmes": 1
+    },
+    "paso": "viernes_rearmar",
+    "resultado": {
+      "codigo": "OK",
+      "ok": true
+    }
+  },
+  {
+    "estado": {
+      "avisos": [],
+      "expedientes": {
+        "EXP-0001": "EJECUTADA",
+        "EXP-0002": "COMPARADA",
+        "EXP-0003": "EJECUTADA"
+      },
+      "kill": false,
+      "niveles": {
+        "TACTICA": "L1",
+        "TRADING": "L1"
+      },
+      "posiciones": {
+        "POS-EXP-0001": {
+          "cantidad": 0,
+          "estado": "CERRADA"
+        },
+        "POS-EXP-0003": {
+          "cantidad": 0,
+          "estado": "CERRADA"
+        }
+      },
+      "rearmes": 1
+    },
+    "paso": "viernes_cerrar",
+    "resultado": {
+      "codigo": "OK",
+      "ok": true,
+      "orden_id": "ORD-POS-EXP-0003-C-1"
+    }
+  },
+  {
+    "estado": {
+      "avisos": [],
+      "expedientes": {
+        "EXP-0001": "EJECUTADA",
+        "EXP-0002": "COMPARADA",
+        "EXP-0003": "EJECUTADA"
+      },
+      "kill": false,
+      "niveles": {
+        "TACTICA": "L1",
+        "TRADING": "L1"
+      },
+      "posiciones": {
+        "POS-EXP-0001": {
+          "cantidad": 0,
+          "estado": "CERRADA"
+        },
+        "POS-EXP-0003": {
+          "cantidad": 0,
+          "estado": "CERRADA"
+        }
+      },
+      "rearmes": 1
+    },
+    "paso": "viernes_conciliar_final",
+    "resultado": {
+      "diferencias": [],
+      "explicadas": [
+        {
+          "detalle": "+50.0 declarado por el operador (CT-G-14)",
+          "ref": "GBPUSD",
+          "tipo": "MANUAL_DECLARADA"
+        }
+      ],
+      "ok": true
+    }
+  }
+]

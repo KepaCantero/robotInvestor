@@ -145,7 +145,8 @@ def main():
     r = comparar_candidatos([a, b], AHORA)
     rk = {x["expediente_id"]: x for x in r["grupos"]["Q"]["ranking"]}
     h.chk("domina_con_el_riesgo_verificado", rk["EXP-0002"]["dominado_por"] == ["EXP-0001"], rk["EXP-0002"]["dominado_por"])
-    h.chk("parametros_versionados", VERSION_PARAMETROS == "PAR-0.3.0")
+    # V0.67: PAR-0.4.0 añade n_lineas_diario_ambar (consola); los parámetros de D de T-17 no cambian
+    h.chk("parametros_versionados", VERSION_PARAMETROS == "PAR-0.4.0")
 
     # ---------------------------------------------------------------- regresiones de la revisión independiente de T-17
     con, _ = uno(con_stop(cand(1, esperado=(3.0, 0.5, -2.0)), 1.12, 1.05))
