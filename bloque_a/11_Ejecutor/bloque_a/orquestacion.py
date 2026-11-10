@@ -790,12 +790,50 @@ class Bloque:
         ids += [str(c) for c in (f.get("senales") or {}).get("calc_ids", []) if c]
         return list(dict.fromkeys(ids))
 
+    @staticmethod
+    def _veredicto_mas_estricto(guardado, regla: str) -> str:
+        orden = ("tesis robusta", "tesis frágil", "tesis refutada")
+        if guardado in orden and orden.index(guardado) > orden.index(regla):
+            return str(guardado)
+        return regla
+
+    @staticmethod
+    def _objeciones_arrastre(objeciones) -> list[dict]:
+        """Objeciones de F3 para el arrastre, fallando cerrado (T-66, QA r02 H-10 y r03 H-17):
+        - una objeción mal formada o con `fuerza` fuera del enum cuenta como fuerte abierta, sin cortar el ciclo;
+        - `resuelta` solo vale si es exactamente True;
+        - una fuerte resuelta sin `evidencia_citada` o sin `contrarreplica` (registro anterior a PA-05) se vuelve a abrir."""
+        out = []
+        for i, o in enumerate(objeciones if isinstance(objeciones, list) else []):
+            if not isinstance(o, dict):
+                out.append({"objecion_id": f"OBJ-ARRASTRE-{i + 1:02d}", "fuerza": "fuerte", "resumen": "Objeción mal formada en F3",
+                            "que_la_resolveria": None, "respuesta": None, "resuelta": False,
+                            "reabierta_por": "T-66: objeción mal formada en F3 (falla cerrado)"})
+                continue
+            o = copy.deepcopy(o)
+            o.setdefault("objecion_id", f"OBJ-ARRASTRE-{i + 1:02d}")
+            o.setdefault("resumen", "")
+            if o.get("fuerza") not in ("fuerte", "moderada", "debil"):
+                o["fuerza"], o["resuelta"] = "fuerte", False
+                o["reabierta_por"] = "T-66: fuerza desconocida en F3 (falla cerrado)"
+            elif o.get("resuelta") is not True:
+                o["resuelta"] = False
+            elif o["fuerza"] == "fuerte" and (not o.get("evidencia_citada") or "contrarreplica" not in o):
+                o["resuelta"] = False
+                o["reabierta_por"] = "T-66: resuelta sin evidencia citada ni contrarréplica (registro anterior a PA-05)"
+            out.append(o)
+        return out
+
     def _contenido_evidencia(self, f: dict, eid: str) -> dict:
         """Lo que el Contradictor ve de una evidencia citada (T-66, QA r02 H-12): la afirmación de la pieza, el método y
         los símbolos de un CALC- del Motor, o la afirmación de una REF-; nunca un id sin contenido."""
+        def _limpio(txt):   # T-66 (QA r03 H-16): el texto externo se sanea antes de llegar a un modelo (R9)
+            t, hall = sanear_contenido_externo(txt, f"contrarreplica:{eid}") if isinstance(txt, str) else (txt, [])
+            self._registrar_r9(hall, None)
+            return t
         pieza = next((p for p in f.get("_piezas", []) if str(p.get("fuente")) == eid), None)
         if pieza:
-            return {"id": eid, "tipo": "PIEZA", "afirmacion": pieza.get("afirmacion"), "direccion": pieza.get("direccion")}
+            return {"id": eid, "tipo": "PIEZA", "afirmacion": _limpio(pieza.get("afirmacion")), "direccion": pieza.get("direccion")}
         if eid.startswith("CALC-"):
             rc = next((x for x in self.almacen.leer("RC") if x.get("calc_id") == eid and x.get("tipo_entrada") != "RECHAZO"), None) or {}
             op = rc.get("operacion") or {}
@@ -803,7 +841,7 @@ class Bloque:
                     "simbolo_opcion": f.get("proxy"), "valores_opcion": {k: x for k, x in (f.get("senales") or {}).items()
                                                                         if isinstance(x, (int, float)) and not isinstance(x, bool)}}
         ref = self.referencias.por_id(eid) or {}
-        return {"id": eid, "tipo": "REFERENCIA", "afirmacion": ref.get("afirmacion") or ref.get("titulo") or ref.get("resumen")}
+        return {"id": eid, "tipo": "REFERENCIA", "afirmacion": _limpio(ref.get("afirmacion") or ref.get("titulo") or ref.get("resumen"))}
 
     def _veredicto_refutacion(self, f: dict) -> str:
         """PA-05 (T-66): el veredicto lo calcula una regla a partir de las objeciones (como en CT-G-03), no el modelo.
@@ -873,8 +911,9 @@ class Bloque:
                             continue
                         # PA-05: el Analista acusado no da por resuelta una objeción fuerte. Hace falta evidencia
                         # verificable citada y la confirmación del Contradictor en una contrarréplica
-                        citada = [str(e) for e in (x.get("evidencia_citada") or [])
-                                  if str(e) in verificables or self.referencias.por_id(str(e))]
+                        # T-66 (QA r03 H-15): solo es citable la evidencia de la propia opción (fuentes de sus piezas y sus
+                        # CALC-); una REF- registrada de otro tema o posterior a as_of no cuenta
+                        citada = [str(e) for e in (x.get("evidencia_citada") or []) if str(e) in verificables]
                         o["evidencia_citada"] = citada
                         if x.get("resuelta") and citada:
                             replicas.append({"ref": f["proxy"], "objecion_id": o["objecion_id"], "argumento": o["resumen"],
@@ -1208,16 +1247,11 @@ class Bloque:
                   "tnd_id": v.get("tnd_id"), "afirmaciones": [], "_gc3": True})
         # T-66 (QA r02 H-10): una objeción fuerte de un registro anterior a PA-05 que se dio por resuelta sin evidencia citada
         # ni contrarréplica vuelve a estar abierta (falla cerrado; INC-T66-02)
-        objs = copy.deepcopy(v.get("objeciones_internas") or [])
-        for o in objs:
-            if o.get("fuerza") == "fuerte" and o.get("resuelta") and (not o.get("evidencia_citada") or "contrarreplica" not in o):
-                o["resuelta"] = False
-                o["reabierta_por"] = "T-66: resuelta sin evidencia citada ni contrarréplica (registro anterior a PA-05)"
+        objs = self._objeciones_arrastre(v.get("objeciones_internas"))
         f["_objeciones"] = objs
-        # T-66 (QA r02 H-09): el veredicto de Contrarias se conserva en el arrastre; si falta, se recalcula por la regla
-        f["_veredicto"] = v.get("veredicto_refutacion") or self._veredicto_refutacion(f)
-        if any(o.get("reabierta_por") for o in objs):
-            f["_veredicto"] = self._veredicto_refutacion(f)
+        # T-66 (QA r02 H-09 y r03 H-17): en el arrastre manda el veredicto más estricto entre el guardado en F3 y el de la
+        # regla sobre las objeciones; un veredicto guardado desconocido no cuenta
+        f["_veredicto"] = self._veredicto_mas_estricto(v.get("veredicto_refutacion"), self._veredicto_refutacion(f))
         f["_veredicto_contradictor"] = v.get("veredicto_contradictor")
         if not f.get("premortem"):
             f["premortem"] = "Arrastre verificado: pre-mortem del ciclo de alta vigente."

@@ -228,7 +228,7 @@ Revisión independiente del ejecutor con 59 pruebas nuevas (de 58 a 117, con las
 
 ## Propuestas de la revisión aplicadas (T-66, 10-11-2026)
 
-De las 21 propuestas de T-53 (`.docs/tickets/T-53/propuestas.md`), se aplican las que no necesitan otro proveedor de IA, K ni llamadas reales a la API. A pasa de 117 a 185 pruebas. Detalle en `.docs/tickets/T-66/`. Lo que cambia para quien lo usa:
+De las 21 propuestas de T-53 (`.docs/tickets/T-53/propuestas.md`), se aplican las que no necesitan otro proveedor de IA, K ni llamadas reales a la API. A pasa de 117 a 201 pruebas. Detalle en `.docs/tickets/T-66/`. Lo que cambia para quien lo usa:
 
 - **Perfiles activos (PA-01).**
   - Por defecto solo se analiza **divisas** (`perfiles.activos: [DIV]`, `[PROPUESTO]`).

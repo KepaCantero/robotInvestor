@@ -142,7 +142,7 @@ Los registros de esta ronda (suite, gate y mutaciones del ticket) están en `/tm
 - **Limpieza:**
   - Worktrees eliminados con `git worktree remove --force`: el de `cb12377` y uno auxiliar de `da3f6cb`, el código anterior a T-66 que usa `r02_02`.
   - `git worktree list` solo muestra el principal y `git status` del repositorio principal sale vacío.
-  - No he creado ningún `.ruff_cache` en `bloque_a/`. El que hay en `bloque_a/11_Ejecutor/.ruff_cache` del repositorio principal es anterior a esta ronda (00:29) y lo ignora su propio `.gitignore`.
+  - No he creado ningún `.ruff_cache` en `bloque_a/`. El que hay en la caché de ruff de la carpeta del ejecutor del repositorio principal es anterior a esta ronda (00:29) y lo ignora su propio `.gitignore`.
 
 ### Comprobación de las correcciones de la r01
 
@@ -234,4 +234,144 @@ Los registros de esta ronda están en `/tmp/claude-0/-home-claude/d1ab3b3e-4909-
 | H-12 | La contrarréplica muestra el contenido de cada evidencia citada: la afirmación de la pieza, el método y los valores de un CALC- o el título de una REF-. El límite de los CALC- de todo el tipo queda en INC-T66-02 | `test_h12_la_contrarreplica_muestra_el_contenido_de_cada_evidencia` (falla con `cb12377`) |
 | H-13 | `objecion_id` e `id_modelo` documentados en el README del ejecutor y en INC-T66-02 | — |
 
-Pendiente: la ronda r03.
+## Ronda r03
+
+- **Revisor:** un revisor nuevo, sin contexto de la implementación ni de las rondas r01 y r02 (subagente Claude).
+- **Fecha:** 2026-11-10.
+- **Commit revisado:** `03b8c3b` (rama `develop`).
+- **Reanudación:** el contenedor se reinició a mitad de la ronda. Conservé lo que ya estaba registrado (la suite de A, los gates 1 a 10 y los scripts r01 y r02) y volví a lanzar, en primer plano, los gates de pytest de FX y B y todas las mutaciones.
+
+### Reproducción desde limpio
+
+- **Worktrees aparte:** `git worktree add --detach …/scratchpad/qa_t66_r03/wt 03b8c3b`, y uno auxiliar de `da3f6cb` para `r02_02`.
+- **Suite de A:**
+  - Con `PYTHONPATH=<wt>/bloque_a/11_Ejecutor` y `/home/claude/repo/.venv/bin/python -m pytest -q -p no:cacheprovider tests`. `bloque_a.__file__` sale del worktree.
+  - Resultado: **185 passed** (113 s).
+- **Gate completo** (`./tools/check_all.sh` en el worktree): **11/12**.
+  - Entorno: `.venv` enlazado temporalmente, `PYTHONPATH` hacia los tres ejecutores del worktree (los tres `__file__` salen del worktree), `RUFF_CACHE_DIR` y `MYPY_CACHE_DIR` fuera del worktree.
+  - corpus-integridad, nombres-nfc, yaml-configs y secrets en verde.
+  - **refs-vivas en rojo:** «`.docs/tickets/T-66/qa.md` cita ruta inexistente: bloque_a/11_Ejecutor/.ruff_cache» (H-14). En el repositorio principal pasa, porque esa carpeta, ignorada por git, existe allí.
+  - Cuotas: ruff 3109/3109, mypy A 123/123, FX 174/174 y B 159/159. Son las mismas que en la r02: no suben.
+  - pytest: A 185, FX 68 y B 141. Los de FX y B se volvieron a ejecutar en primer plano tras el reinicio, con el mismo entorno que el gate.
+- **Scripts de las rondas anteriores**, cada uno con el uso de su cabecera y contra el código del worktree:
+  - `r01_01` a `r01_06` y `r01_08`: **ningún HALLAZGO**. Quedan los INFO conocidos, anteriores a T-66: la excepción del proveedor sube, el F6 manipulado lo sigue leyendo el Evaluador, la grabación de replay anterior necesita `anonimizar: false`, CT-01 repetido con otro msg_id da un run nuevo y un tipo inexistente se declara.
+  - `r02_01`: 12/12 OK.
+  - `r02_02` (con el worktree de `da3f6cb`): 3/3 OK. El F3 de formato anterior ya no se vuelve a publicar, y la tesis frágil sigue «especulativo» y «tesis frágil» tras el arrastre.
+  - `r02_04`: 24 de 25 OK y **1 HALLAZGO que no aplica**. Esa comprobación de H-12 solo busca el campo `afirmacion`, y tras la corrección un CALC- trae su contenido en `metodo` y `valores_opcion`. La repito con el formato nuevo en `r03_02`: 8 de 8 evidencias citadas llegan con contenido, de tipo PIEZA y CALCULO.
+- **Mutaciones:**
+  - `mutaciones_orquestacion.sh`: las **11 fallan**. Comprobé que fallan por la aserción (por ejemplo, `h06`: `AssertionError: 'BLOQUEADA' == 'SIN_RESULTADO'`).
+  - `r01_07_mutaciones_evaluacion.sh`: las **14 fallan**.
+  - `r02_03_mutaciones_correcciones.sh`: 6 de 7 fallan, como en la r02. `h05` da «3 failed, 1 passed», igual que en la r02, porque con 0,5 ya daba ρ = 1.
+    - **`h02_ejecutor` sigue pasando, pero la mutación ya no aplica a su prueba:** el script la ejecuta contra la prueba de H-02, y la regresión de H-11 está en `test_h11_el_ejecutor_lleva_a_tipos_activos_un_escalado_sin_clases`.
+    - Contra esa prueba, la misma mutación **falla** (`['RV'] == ['DIV']`).
+  - Mis mutaciones de las correcciones de la r02 (`r03_03`):
+    - Fallan `h09_veredicto`, `h10_reabrir` y `h12_contenido`.
+    - `h09_solo_regla` pasa, y era lo esperado: es la mutación de control, porque recalcular siempre con la regla da lo mismo.
+    - `h10_y` y `h10_recalculo` pasan: hueco de cobertura (H-18).
+- **Limpieza:**
+  - Enlace `.venv` retirado. Worktrees de `03b8c3b` y `da3f6cb` eliminados con `git worktree remove --force`, y `git worktree prune`.
+  - `git worktree list` solo muestra el principal y `git status` del repositorio principal sale vacío.
+  - No he creado `.ruff_cache` ni `.pytest_cache` en `bloque_a/` del worktree.
+
+### Comprobación de las correcciones de la r02
+
+| ID | Estado en r03 | Evidencia |
+| --- | --- | --- |
+| H-09 | Corregido | **`r02_02`, escenario B:** OK.<br>**`r03_01`, escenario 1:**<br>• Alta frágil y 5 semanas seguidas de arrastre (12-06 y 19-06 en N1, y 26-06 a 10-07 en N2 sin finalistas nuevas).<br>• Las 3 opciones salen «especulativo» cada semana, y cada versión de F3 guarda «tesis frágil».<br>• Hay 3 pronósticos vencidos reemitidos (`version_de`) de esas opciones, que siguen «especulativo».<br>• Ninguna fuerte bien resuelta se reabre por error: 3 publicadas cada semana.<br>**Mutación `h09_veredicto`:** falla |
+| H-10 | Corregido | **`r02_02`, escenario A:** OK.<br>**`r03_01`, escenario 3:**<br>• Un registro de formato anterior, escrito por la vía normal de F3 (la integridad da `true`), se reabre en el arrastre: «tesis refutada», no publicada y CERRADA, con `reabierta_por`.<br>• Cuando después el Analista vuelve a proponer y responde bien (en N2), no revive el `opp_id` cerrado, y nada se publica con una fuerte mal resuelta.<br>**`r03_02`:** evidencia sin la clave `contrarreplica`, contrarréplica sin evidencia y `resuelta: "true"` sin evidencia se reabren.<br>**Mutación `h10_reabrir`:** falla. `h10_y` y `h10_recalculo` no (H-18) |
+| H-11 | Corregido | La mutación `or ["RV"]` hace fallar `test_h11_…` |
+| H-12 | Corregido para PIEZA y CALC-; **queda la parte de las REF-** (H-15 y H-16) | `r03_02`: 8 de 8 evidencias con contenido. Pero una REF- de otro tema o posterior a as_of se acepta como verificable, y su título llega sin sanear |
+| H-13 | Corregido | Línea en la sección T-66 del README del ejecutor (línea 241) y ampliación de INC-T66-02 en `docs/incidencias.md` (`objecion_id`, `id_modelo`, el arrastre y los registros antiguos) |
+
+**Otros caminos para PA-05 (punto 3 del encargo):**
+
+| Camino | Resultado |
+| --- | --- |
+| Arrastre de varias semanas | Sin relajación (`r03_01`, escenario 1) |
+| Opción vigente que vuelve a ser finalista (N2, `r03_01`, escenario 2) | • **Con la refutación nueva del simulado:** el veredicto de F3 es el de la regla sobre las objeciones nuevas; no hereda la fuerte resuelta de la semana anterior, y ninguna frágil sale «probable».<br>• **Con una fuerte nueva que el Analista da por resuelta sin evidencia:** no se publica nada y las 3 quedan CERRADA.<br>• **Con AG-11 sin resultado:** igual, no se publica nada y quedan CERRADA |
+| Reemisión de pronósticos vencidos | Sin relajación (escenario 1) |
+| Fuerte reabierta y luego bien respondida | Sin relajación (escenario 3) |
+| Formato anterior en `objeciones_internas` con campos que faltan (`r03_02`, A) | • Ninguna versión del código ha escrito objeciones sin `fuerza` o sin `resuelta`, ni una `fuerza` fuera del enum: lo comprobé en `78435d0`, `acbcc5d` y `da3f6cb`.<br>• Con registros fuera de esquema hay dos cosas: el veredicto guardado manda sobre la regla, y G2 pasa con `fuerza: "FUERTE"` o `resuelta: "false"`. Además, una clave que falta corta el ciclo (H-17) |
+
+### Criterios de aceptación
+
+| Criterio | Cumple | Evidencia |
+| --- | --- | --- |
+| CA-1 · cada propuesta aplicada tiene una prueba que falla sin ella | sí | 11 + 14 mutaciones fallan por su aserción. Las correcciones de la r01 y la r02 tienen su regresión, con los huecos menores de H-18 |
+| CA-2 · suites y gate en verde, línea base subida | **no** | A 185, FX 68 y B 141, y las cuotas no suben. Pero el gate desde limpio da **11/12**: refs-vivas falla (H-14) |
+| CA-3 · lo no aplicado, con motivo y destino | sí | «No entra» del README de T-66, T-67 y T-57 en la deuda, sin cambios desde la r02 |
+| CA-4 · el Documento 0 no se toca; el comportamiento, en el README del ejecutor y en INC-T66-xx | sí | corpus-integridad en verde. H-13 documentado. La aceptación de cualquier REF- registrada no está documentada como límite (H-15) |
+
+### Hallazgos
+
+| ID | Gravedad | Cómo reproducirlo | Esperado / obtenido | Corrección sugerida | Estado |
+| --- | --- | --- | --- | --- | --- |
+| H-14 | media | `./tools/check_all.sh` en un worktree o clon limpio de `03b8c3b` | **Esperado** (CA-2 y regla 9 de CLAUDE.md): 12/12 en cualquier copia.<br>**Obtenido:** 11/12. refs-vivas falla porque la sección r02 de `qa.md` cita entre comillas invertidas la carpeta .ruff_cache de `bloque_a/11_Ejecutor/`, que git ignora. En el repositorio principal pasa solo porque esa carpeta existe allí. Astra, o cualquier clon nuevo, ve el gate en rojo | Quitar las comillas invertidas de esa cita en `qa.md`, o reformularla, y volver a pasar el gate desde limpio | abierto |
+| H-15 | media | `r03_02`, parte B: backtest a 2024-03-01; el Analista cita `REF-ANA-DOC-0061` (año 2025, tema TA-01) y `REF-ANA-DOC-0039` (tema TA-01, que no es de RV) | **Esperado:** «evidencia verificable» es la de la opción. En backtest no puede ser posterior a as_of (`para_clase` filtra por año, y `_peticion_conocimiento` dice «en backtest solo referencias registradas y anteriores a as_of»).<br>**Obtenido:** `_refutacion` acepta cualquier id que devuelva `referencias.por_id`, de cualquier tema y año. La contrarréplica muestra su título y el simulado confirma. Las **4 fuertes quedan resueltas** con esa evidencia, y se publican 3 opciones.<br>Falla cerrado en la parte (b), porque hace falta la confirmación. Pero la parte (a) de la regla se relaja, y en backtest entra información posterior a as_of.<br>Ya lo señalaba la r02 (H-12: «`referencias.por_id` acepta cualquier referencia del almacén»), y la corrección no lo trata ni lo documenta | • Aceptar como citable solo una REF- que esté en la evidencia de la opción (sus piezas) o que `para_clase` haya ofrecido a la clase en ese as_of y modo.<br>• Añadir una prueba con una REF- futura y otra de otro tema | abierto |
+| H-16 | baja | `r03_02`, última comprobación: título de una ficha F7 de RV cambiado en memoria por un texto con una instrucción incrustada | **Esperado** (R9): el contenido externo se sanea antes de llegar a un modelo, como hace `para_clase` («[INSTRUCCION_INCRUSTADA_RETIRADA] …»).<br>**Obtenido:** `_contenido_evidencia`, nuevo en la corrección de H-12, pasa `titulo` o `afirmacion` de la REF- sin `sanear_contenido_externo`. El Contradictor recibe el texto tal cual. Las fichas salen del corpus congelado, así que hoy el riesgo es bajo | Pasar el texto por `sanear_contenido_externo` en `_contenido_evidencia` y registrar sus hallazgos R9 | abierto |
+| H-17 | baja | `r03_02`, parte A: variantes de una vigente frágil real pasadas por `_desde_f3` y `_puertas` (N1) | **Esperado:** el arrastre falla cerrado y aplica la regla ante cualquier registro.<br>**Obtenido:**<br>• **Veredicto guardado:** «tesis robusta» o «xyz» con una fuerte resuelta en contrarréplica se mantiene, aunque la regla da «tesis frágil». Saldría «probable» en vez de «especulativo», porque `v.get("veredicto_refutacion") or regla` antepone el guardado.<br>• **Valores fuera de esquema:** con `fuerza: "FUERTE"` y `resuelta: "false"`, G2 pasa. En un ciclo completo, el registro con «FUERTE» escrito por la vía normal se vuelve a publicar.<br>• **Campos que faltan:** sin `resuelta` o sin `fuerza`, o con una objeción que no es un dict, salta KeyError o AttributeError y el ciclo entero se corta.<br>Ninguna versión del código ha escrito esos registros, así que solo se llega con un estado manipulado o fuera de esquema. Las claves que faltan ya rompían `_puertas` antes de T-66 | • En el arrastre, recalcular siempre el veredicto con la regla, o tomar el más estricto de los dos. La mutación `h09_solo_regla` muestra que las pruebas lo admiten.<br>• Tratar como fuerte abierta toda objeción con `fuerza` fuera del enum o `resuelta` que no sea `True`.<br>• Rechazar una objeción mal formada (abierta, con su motivo) sin cortar el ciclo | abierto |
+| H-18 | baja | `r03_03_mutaciones_r02.sh`; fila T-66 de `sistema_global/seguimiento/Deuda_tecnica_y_pendientes_del_operador.md` | **Cobertura:** las mutaciones `h10_y` (el `or` pasa a `and`: evidencia sin contrarréplica ya no se reabre) y `h10_recalculo` (no recalcular el veredicto tras reabrir si F3 tiene uno guardado) no hacen fallar ninguna prueba. La corrección funciona (`r03_02`), pero nada la protege.<br>**Documentación:** la fila T-66 de la deuda dice «r01 NO APTO, corregido» y no menciona la r02 | • Dos casos más en `test_h10_…`: evidencia sin `contrarreplica`, y un registro con `veredicto_refutacion: "tesis frágil"` y una fuerte que se reabre (debe dar «tesis refutada»).<br>• Poner al día la fila de la deuda | abierto |
+
+**Observaciones sin hallazgo:**
+- Las dos de H-17 (`r02_03` `h02_ejecutor` y la comprobación de H-12 en `r02_04`) se deben a que el código cambió, no a fallos: ya están explicadas en la reproducción.
+- Siguen igual que en las rondas anteriores, y son anteriores a T-66: la excepción del proveedor corta el ciclo, y el Evaluador lee el F6 manipulado aunque lo detecte `verificar_integridad`.
+- El límite de los CALC- de todo el tipo está documentado en INC-T66-02. `valores_opcion` muestra las señales de la opción junto a un CALC- que puede ser de toda la clase.
+
+### Sin hallazgo en lo comprobado
+
+- **La regla de PA-05 en el tiempo:** no se relaja sola en ningún camino con estado producido por el código.
+  - 5 semanas de arrastre, con N1 y N2 mezclados y pronósticos reemitidos.
+  - Re-finalista con refutación nueva, con una fuerte sin evidencia o sin refutación.
+  - Fuerte reabierta y después bien respondida.
+- **Falla cerrado:**
+  - Una fuerte reabierta deja la opción en «tesis refutada», no publicada y CERRADA.
+  - Una re-finalista sin refutación o con una fuerte abierta queda CERRADA.
+  - La contrarréplica solo cuenta para lo enviado, como comprueba `r02_01`.
+- **Números:** el diff de `03b8c3b` no añade ningún número escrito a mano. Los valores del operador siguen en `por_defecto.yaml` como `[PROPUESTO]`.
+- **Determinismo:** el escenario de 6 semanas, ejecutado en dos carpetas distintas, da las mismas publicaciones, veredictos, objeciones y `prg_id` reemitidos (`r03_01`, escenario 4).
+- **Cuotas:** ruff 3109, mypy A 123, FX 174 y B 159. No suben.
+- **Lo no aplicado:** tiene su motivo y su destino en el README de T-66, en T-67 y en T-57.
+- **No hay LLM en el veredicto ni en G2:** los calcula `_veredicto_refutacion` y `_puertas`, por regla.
+- **Integridad:** los registros escritos por la vía normal en los escenarios dan `verificar_integridad()` en verde en todos los archivos.
+- **Secretos:** el gate secrets está en verde. Los scripts r03 no contienen datos personales.
+
+### Veredicto
+
+**NO APTO.**
+
+H-09 a H-13 están bien corregidos. No he encontrado ningún camino por el que la regla de PA-05 se relaje sola con estado producido por el código: ni en el arrastre de varias semanas, ni en la re-finalista, ni en la reemisión, ni en la fuerte reabierta.
+
+Pero CA-2 no se cumple: desde un clon limpio, el gate da 11/12 (H-14), y una fase no cierra sin el 12/12. Además, H-15 (media) deja abierta la parte (a) de la regla: se acepta como «verificable» cualquier REF- registrada, incluso de otro tema o posterior a as_of en backtest. Ya se señaló en la r02 y no se ha corregido ni documentado.
+
+Siguiente paso: quien implementó corrige H-14 (obligatorio, una línea de `qa.md`) y H-15, y si puede H-16 a H-18, cada uno con su prueba. En la r04, el revisor vuelve a ejecutar `r01_*`, `r02_*` (`r02_03` con la prueba de H-11 para `h02_ejecutor`) y `r03_*`, y el gate desde limpio.
+
+### Scripts del revisor
+
+Están en `/tmp/claude-0/-home-claude/d1ab3b3e-4909-5455-a67a-e01975b6ec91/scratchpad/qa_t66_r03/revisores/`. Copiados a `.docs/tickets/T-66/revisores/`.
+
+- `r03_01_pa05_varias_semanas.py`: arrastre de 5 semanas con reemisión, re-finalista (normal, sin evidencia y sin refutación), fuerte reabierta y luego bien respondida, y determinismo. 25 comprobaciones, 0 HALLAZGO.
+- `r03_02_formato_anterior_y_evidencia.py`: `objeciones_internas` incompletas o fuera de esquema y veredicto guardado (H-17); REF- futura o de otro tema (H-15); contenido de la contrarréplica; saneado R9 (H-16). 16 comprobaciones: 7 HALLAZGO, que corresponden a H-15, H-16 y H-17.
+- `r03_03_mutaciones_r02.sh`: mutaciones de H-09, H-10 y H-12 (H-18).
+
+Para ejecutarlos:
+- **Los `.py`:** `PYTHONPATH=<ejecutor de A>:<revisores r01> /home/claude/repo/.venv/bin/python r03_0N_….py`. Cada uno imprime OK, HALLAZGO o INFO.
+- **El de mutaciones:** `SRC=<raíz de bloque_a> DEST=<carpeta de trabajo> bash r03_03_mutaciones_r02.sh`.
+
+Los registros de esta ronda están en `/tmp/claude-0/-home-claude/d1ab3b3e-4909-5455-a67a-e01975b6ec91/scratchpad/qa_t66_r03/`:
+- suite: `suite_a.log`
+- gate: `gate.log`, que llega hasta pytest A porque el reinicio cortó el resto; FX y B están en `gate_fx.log` y `gate_b.log`
+- scripts r01 y r02: `previos_py.log`
+- mutaciones: `mut_orq.log`, `mut_ev.log`, `mut_r02.log` y `r03_03_mutaciones.log`
+- scripts r03: `r03_01.log` y `r03_02.log`
+
+## Correcciones tras la r03 (implementación, Claude)
+
+| ID | Corrección | Prueba (falla con `03b8c3b`) |
+| --- | --- | --- |
+| H-14 | La cita a la caché de ruff de la r02 ya no va entre comillas invertidas. El gate desde un clon limpio vuelve a dar 12/12 | Gate en un worktree limpio |
+| H-15 | Solo es citable la evidencia de la propia opción, es decir, las fuentes de sus piezas y sus CALC-. Una REF- del corpus ajena a la opción no cuenta (INC-T66-02) | `test_h15_una_ref_registrada_ajena_a_la_opcion_no_es_evidencia_citable` |
+| H-16 | `_contenido_evidencia` sanea el texto (R9) y registra lo que neutraliza | `test_h16_el_contenido_de_la_contrarreplica_se_sanea` |
+| H-17 | `_objeciones_arrastre` falla cerrado: una objeción mal formada, o con `fuerza` fuera del enum, es fuerte abierta, y `resuelta` solo vale si es `True`. En el arrastre manda el veredicto más estricto entre el guardado y el de la regla | `test_h17_h18_objeciones_del_arrastre_fallan_cerrado`, `test_h17_en_el_arrastre_manda_el_veredicto_mas_estricto` |
+| H-18 | Casos de evidencia sin contrarréplica y de una tesis frágil guardada con una fuerte que se reabre (debe quedar «tesis refutada»). La fila T-66 de la deuda, al día | Las de H-17 y `test_h18_fragil_guardada_con_una_fuerte_que_se_reabre_queda_refutada` |
+
+Pendiente: la ronda r04.

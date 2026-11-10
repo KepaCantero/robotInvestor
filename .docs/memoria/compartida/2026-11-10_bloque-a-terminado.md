@@ -10,7 +10,7 @@ vigencia: vigente
 
 Sustituye a `compartida/2026-11-09_revision-bloque-a`.
 
-**Estado del Bloque A tras T-66 (10-11-2026).** El Bloque A se da por terminado en revisión. Tiene 185 pruebas y QA en curso.
+**Estado del Bloque A tras T-66 (10-11-2026).** El Bloque A se da por terminado en revisión. Tiene 201 pruebas y QA en curso.
 
 **Lo que tiene que saber quien trabaje con A:**
 - **Perfiles activos.** Por defecto solo se analiza divisas (`perfiles.activos`). Las pruebas activan los 12 tipos con `config_pruebas()` de `tests/conftest.py`. Una prueba que use `cargar_config()` sin más analiza solo DIV.
