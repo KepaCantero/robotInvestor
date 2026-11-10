@@ -126,7 +126,7 @@ Desde la V0.5 estas reglas y las de la sección siguiente están también en la 
 
 1. **Todos los bloques sirven para cualquier tipo de activo.** Se diseñan como núcleo común más perfiles por tipo de activo desde el primer día; la Fase 1 en divisas es solo el primer recorrido completo, no un límite del diseño. Ningún bloque se diseña «para divisas».
 2. **A y B se revisan y se mejoran** antes de conectarlos: están construidos, pero se repasan con el operador a la luz de la Constitución V0.6 y del marco común.
-   - **A está terminado** (T-53 y T-66, 9 y 10-11-2026), con 181 pruebas. En la Fase 1 solo tiene activo el perfil de divisas (`perfiles.activos`), y el resto de perfiles queda «no construido».
+   - **A está terminado** (T-53 y T-66, 9 y 10-11-2026), con 185 pruebas. En la Fase 1 solo tiene activo el perfil de divisas (`perfiles.activos`), y el resto de perfiles queda «no construido».
    - El Contradictor ve la evidencia, no el razonamiento del Analista, y una objeción fuerte solo la cierra su contrarréplica.
    - El aprendizaje automático solo endurece: un certificado entra en vigor cuando el operador lo aprueba por CT-04.
    - Las propuestas que faltan tienen su destino en la deuda técnica (T-67).

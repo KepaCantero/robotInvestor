@@ -2,9 +2,11 @@
 
 Cada prueba falla sin su cambio (ver `.docs/tickets/T-66/pruebas.md`).
 """
+import copy
 import json
 from pathlib import Path
 
+import pandas as pd
 import pytest
 from conftest import AS_OF, DATOS, config_pruebas
 
@@ -344,3 +346,81 @@ def test_h05_residuos_constantes_dan_rho_1_sea_cual_sea_el_valor(c):
     fechas = [f"2026-01-{1 + i % 10:02d}" for i in range(200)]
     r = ev.n_efectiva(fechas, [c] * 200)
     assert r["rho"] == 1.0 and r["n_eff"] == pytest.approx(10.0)
+
+
+# ================================================================ T-66 · QA r02 (H-09 a H-13)
+def _sin_finalistas_nuevas(monkeypatch):
+    """El Analista no propone finalistas nuevas: las vigentes se arrastran desde F3."""
+    actual = mr._analista
+
+    def analista(msg, ctx, rng, iny):
+        out = actual(msg, ctx, rng, iny)
+        if isinstance(out, dict) and "finalistas" in out:
+            out["finalistas"] = []
+        return out
+    monkeypatch.setattr(mr, "_analista", analista)
+
+
+def test_h09_la_tesis_fragil_sigue_siendo_especulativa_en_el_arrastre(tmp_path, monkeypatch):
+    _forzar_fuerte(monkeypatch, cita=2, confirma=True)
+    b = _bloque(tmp_path)
+    r1 = b.ciclo(AS_OF, alcance={"clases": ["RV"]})
+    assert r1["paquete"]["clases"]["RV"]["opciones"] and all(o["confianza"] == "especulativo" for o in r1["paquete"]["clases"]["RV"]["opciones"])
+    _sin_finalistas_nuevas(monkeypatch)
+    r2 = b.ciclo("2026-06-12", alcance={"clases": ["RV"]})
+    ops = r2["paquete"]["clases"]["RV"]["opciones"]
+    assert ops and all(o["confianza"] == "especulativo" for o in ops)          # antes: «probable» a la semana siguiente
+    vig = [x for x in b.almacen.estado("F3").values() if x["opp_id"] in {o["opp_id"] for o in ops}]
+    assert vig and all(x["veredicto_refutacion"] == "tesis frágil" for x in vig)
+
+
+def test_h10_una_fuerte_antigua_resuelta_sin_evidencia_se_reabre_en_el_arrastre(tmp_path, monkeypatch):
+    b = _bloque(tmp_path)
+    b.ciclo(AS_OF, alcance={"clases": ["RV"]})
+    v = next(x for x in b.almacen.estado("F3").values() if x.get("rango_top3"))
+    antiguo = copy.deepcopy(v)
+    antiguo.pop("veredicto_refutacion", None)
+    antiguo["objeciones_internas"] = [{"objecion_id": "OBJ-XLU-09", "tipo": "evidencia_insuficiente", "fuerza": "fuerte",
+                                       "resumen": "Formato anterior a PA-05", "que_la_resolveria": "-", "respuesta": "Resuelta por el Analista",
+                                       "resuelta": True}]
+    an = {"senales": {}}
+    b.fijar_fecha("2026-06-12")
+    f = b._desde_f3(antiguo, an, pd.Timestamp("2026-06-12"))
+    assert f is not None and f["_objeciones"][0]["resuelta"] is False and f["_veredicto"] == "tesis refutada"
+    bueno = copy.deepcopy(antiguo)
+    bueno["objeciones_internas"][0].update({"evidencia_citada": ["HT-01:XLU"], "contrarreplica": "confirmada"})
+    assert b._desde_f3(bueno, an, pd.Timestamp("2026-06-12"))["_objeciones"][0]["resuelta"] is True
+
+
+def test_h11_el_ejecutor_lleva_a_tipos_activos_un_escalado_sin_clases(tmp_path, monkeypatch):
+    actual = mr._coordinador
+
+    def coordinador(msg, ctx, rng):
+        out = actual(msg, ctx, rng)
+        if isinstance(out.get("escalado"), dict):
+            out["escalado"].pop("clases", None)
+        return out
+    monkeypatch.setattr(mr, "_coordinador", coordinador)
+    b = _bloque(tmp_path, cfg=cargar_config(extra={"modo": "backtest"}))
+    r = b.consulta("Analiza qué conviene hacer ahora", as_of=AS_OF)
+    assert r["escalado"]["clases"] == ["DIV"]
+
+
+def test_h12_la_contrarreplica_muestra_el_contenido_de_cada_evidencia(tmp_path, monkeypatch):
+    _forzar_fuerte(monkeypatch, cita=2, confirma=None)
+    forzado = mr._analista
+
+    def analista(msg, ctx, rng, iny):   # cita los cálculos CALC- del Motor (los últimos de la evidencia disponible)
+        out = forzado(msg, ctx, rng, iny)
+        if msg.get("fase") == "RESPUESTA_OBJECIONES":
+            calc = {o["objecion_id"]: [e for e in o.get("evidencia_disponible") or [] if e.startswith("CALC-")][:2] for o in msg["objeciones"]}
+            for x in out["respuestas"]:
+                x["evidencia_citada"] = calc.get(x["objecion_id"]) or x["evidencia_citada"]
+        return out
+    monkeypatch.setattr(mr, "_analista", analista)
+    b = _bloque(tmp_path)
+    cuerpos = _capturar_ct13(b)
+    b.ciclo(AS_OF, alcance={"clases": ["RV"]})
+    citadas = [e for m in cuerpos if m.get("contrarreplicas") for x in m["contrarreplicas"] for e in x["evidencia_citada"]]
+    assert citadas and any(e["id"].startswith("CALC-") for e in citadas)
+    assert all(e.get("afirmacion") or e.get("metodo") for e in citadas)          # antes: CALC- con afirmación null
