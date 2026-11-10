@@ -2,7 +2,7 @@
 
 | Campo | Valor |
 | --- | --- |
-| Estado | DETENIDO (QA r01 NO APTO, 10-11-2026; a la espera de que el operador diga cómo seguir) |
+| Estado | DETENIDO (ronda r02 implementada, sin QA: el operador pidió el 10-11-2026 seguir solo con T-65) |
 | Pieza | sistema_global/marco_comun_c |
 | Planifica · implementa · QA | claude · claude · el otro agente (Astra) o un revisor nuevo sin contexto |
 | Aprobación del operador | No necesaria: tarea técnica (documentación como datos de valores que ya existen; no cambia ningún valor ni ningún control). Aplica D-45, ratificada el 2026-11-09 |
@@ -17,6 +17,7 @@ Que cada valor por defecto del marco común de C lleve, como datos que un progra
 - **Entra:**
   - módulo nuevo `sistema_global/marco_comun_c/validador/parametros_doc.py` con la tabla de documentación de las 85 claves de hoy: las 31 de `parametros.PARAMETROS`, las 32 de `orquestador.CONFIG_DEFECTO` y las 22 de `control_f.POLITICA_DEFECTO` (la política de F viaja dentro de `CONFIG_DEFECTO["politica_f"]`, así que cada límite de F se documenta por separado);
   - funciones `doc(clave, tabla=None)`, `faltan(tablas=None)`, `por_estado(estado)` y `preguntas_pendientes()`;
+  - desde la r02 (QA r01, H-02 y H-05): una subtabla por cada clave compuesta de la configuración (`aprobacion`, `avisos`, `kill_switch`, `promocion_nivel`, `mandatos` y `referencias`, 20 campos), el valor que justifica cada registro (`valor_documentado`, con `desfasados()`) y `cerrada_por` para un ratificado que la Constitución no deja preguntar todavía;
   - batería nueva `pruebas/pruebas_parametros_doc_t83.py`;
   - LEEME del marco (título, cabecera V0.72, tabla y «Cómo se ejecuta») y Documento 0 `sistema_global/documentos_0/V0.72_Valores_por_defecto_documentados.md`.
 - **No entra:**
@@ -31,8 +32,8 @@ Que cada valor por defecto del marco común de C lleve, como datos que un progra
 - **Contratos CT-G y estado persistido:** no cambian. El módulo nuevo no se añade a `MODULOS_ESQUEMA`: la huella del esquema del código describe lo que el sistema hace y guarda; la justificación y la pregunta son texto para personas y para el asesor, y meterlos en la huella obligaría a una versión de esquema y una migración por cada corrección de redacción, sin cambiar ninguna decisión. La relación con los valores la vigila la batería (cobertura en los dos sentidos), no la huella.
 - **Forma de cada registro:** `estado` (`RATIFICADO`, `PROPUESTO` o `TECNICO`), `fuente` (tupla de identificadores con el documento delante: «Constitución D-45», «Constitución P-17», «Deuda D-29», «Deuda T-75» o «V0.67» para un Documento 0; con prefijo para no confundir las D-xx de la Constitución con las D-xx de la tabla de pendientes de la deuda técnica, que los comentarios del código mezclan, y para que el catálogo de códigos, que busca textos enteros como «D-29», no los tome por códigos), `justificacion` (una o dos frases) y `pregunta` (lenguaje sencillo, de «¿» a «?»; obligatoria salvo en `TECNICO`, donde es None; también en `RATIFICADO`, porque D-45 y D-46 piden pregunta para todo parámetro y los cambios posteriores usan el mismo cuestionario).
 - **Criterio de estado:**
-  - `RATIFICADO` solo si una decisión ratificada de la Constitución fija ese valor (`o_dias_sequia`, `n_dias_embudo`, `i_meses_juicio_sombra`, y el nivel por defecto L1 de `nivel_autonomia`, §6 con D-45);
-  - `TECNICO` solo para claves sin ningún número dentro que no decide el operador (versión de la configuración, tabla de divisas de cotización de instrumentos, motivo de desactivación vacía y el contenedor `politica_f`, documentado clave a clave);
+  - `RATIFICADO` solo si una decisión ratificada de la Constitución fija ese valor (`o_dias_sequia`, `n_dias_embudo`, `i_meses_juicio_sombra`, el nivel por defecto L1 de `nivel_autonomia`, §6 con D-45, y, desde la r02, `apalancamiento_max` de F y del mandato, por D-16, D-45 y el §7, sin pregunta: `cerrada_por` D-16);
+  - `TECNICO` solo para claves sin ningún número dentro que no decide el operador (versión de la configuración, tabla de divisas de cotización de instrumentos, motivo de desactivación vacía y, desde la r02, la versión del mandato y el benchmark de la referencia, que debe ser el del mandato); las claves compuestas (`politica_f` y las seis con subtabla) no llevan pregunta propia y su estado es el de sus campos;
   - todo lo demás `PROPUESTO`: los docstrings de `parametros.py`, `k_calidad.py`, `orquestador.py` y `control_f.py` declaran todos sus umbrales y límites «de partida [PROPUESTO]», y en la duda, `PROPUESTO`.
 - **Números:** ninguno nuevo; no se cambia ningún valor. La batería no escribe valores a mano: compara con las tablas del código.
 - **Cómo falla cerrado:** `doc()` lanza `KeyError` si la clave no está documentada o no existe, y `ValueError` si es ambigua entre tablas o la tabla no existe; `por_estado()` lanza `ValueError` con un estado desconocido; los registros son de solo lectura (`MappingProxyType`) y `doc()`/`preguntas_pendientes()` devuelven copias.
@@ -54,7 +55,8 @@ Que cada valor por defecto del marco común de C lleve, como datos que un progra
 3. CA-3: toda marca `[RATIFICADO]`/`[PROPUESTO]` de los comentarios del código sobre una clave de las tres tablas, o sobre una línea que lee `PARAMETROS[...]`, coincide con su estado documentado.
 4. CA-4: añadir un parámetro sin documentar (en `PARAMETROS`, `CONFIG_DEFECTO` o `POLITICA_DEFECTO`) o cambiar una marca de comentario en una copia del código hace fallar la batería; la copia sin cambios pasa.
 5. CA-5: `doc()`, `faltan()`, `por_estado()` y `preguntas_pendientes()` se comportan como dice el diseño (copias, errores, orden determinista, valores de partida actuales en las preguntas pendientes).
-6. CA-6: no cambia ningún valor ni otro módulo: `VERSION_PARAMETROS`, `version_config`, `MODULOS_ESQUEMA` y la huella del esquema siguen igual; las 61 baterías pasan y `leeme_marco.py` da «SIN DIFERENCIAS».
+6. CA-6: no cambia ningún valor ni otro módulo: `VERSION_PARAMETROS`, `version_config`, `MODULOS_ESQUEMA` y la huella del esquema siguen igual; las 61 baterías pasan y `leeme_marco.py` da «SIN DIFERENCIAS» para esta batería.
+7. CA-7 (ronda r02): cada hallazgo de la QA r01 tiene su prueba, que falla con el módulo de HEAD (`dd96e19`) y pasa con el corregido: H-01 apalancamiento RATIFICADO por D-16 y sin pregunta; H-02 una pregunta por cada campo de las compuestas y un campo nuevo sin documentar hace fallar la batería; H-03 el horario es una espera, no una prohibición; H-04 preguntas y justificación corregidas; H-05 cada justificación atada a su valor; H-06 `preguntas_pendientes()` falla cerrado como `faltan()`.
 
 ## Plan de pruebas
 
@@ -66,12 +68,14 @@ Que cada valor por defecto del marco común de C lleve, como datos que un progra
 | `mutacion_*` (copia del código en una carpeta temporal y la batería en un subproceso) | fallo cerrado | CA-4 |
 | `doc_*`, `por_estado_*`, `preguntas_pendientes_*`, `faltan_detecta_*` | nominal y fallo cerrado | CA-5 |
 | `no_cambia_*`; `.docs/scripts/pruebas_marco.sh` y `leeme_marco.py` | regresión e integración | CA-6 |
+| `apalancamiento_*`, `aprobacion_*`, `mandatos_*`, `faltan_detecta_un_campo_*`, `revision_*`, `rangos_*`, `referencia_*`, `valores_documentados_*`, `desfasados_*`, `preguntas_pendientes_falla_cerrado_*` y seis mutaciones nuevas; `.docs/tickets/T-83/r02_contra_head.py` | regresión | CA-7 |
 
 ## Scripts
 
 - `.docs/scripts/nuevo_ticket.sh` (abrir el ticket).
 - `.docs/scripts/pruebas_marco.sh` (todas las baterías del marco).
 - `.docs/scripts/leeme_marco.py` (LEEME frente al disco).
+- `.docs/tickets/T-83/r02_contra_head.py` (cada hallazgo de la QA r01 contra el módulo de un commit y contra el del árbol).
 
 ## Registro
 
@@ -79,3 +83,5 @@ Que cada valor por defecto del marco común de C lleve, como datos que un progra
 - 2026-11-10 · PLANIFICADO · claude · plan, criterios y plan de pruebas
 - 2026-11-10 · EN QA · claude · V0.72 implementada: `parametros_doc.py` con 85 claves (4 RATIFICADO, 77 PROPUESTO, 4 TECNICO); batería nueva con 62 comprobaciones; 61 baterías en verde; sin commit (por indicación del encargo); traspaso en `handoff.md`
 - 2026-11-10 · DETENIDO · QA r01 NO APTO: H-01 (media, `apalancamiento_max` marcado PROPUESTO cuando D-16 lo ratifica en cero hasta la Fase 3) y H-02 (media, las claves compuestas tienen una sola pregunta que no cubre todos sus valores: `aprobacion`, `mandatos`), más H-03 a H-06 bajos. Por la regla del operador no se abre otra ronda; pendientes en la fila T-83 de la deuda
+- 2026-11-10 · reabierto por el operador · ronda r02 para corregir los hallazgos de la QA r01
+- 2026-11-10 · EN QA · claude · H-01 a H-06 corregidos: 105 registros (6 RATIFICADO, 94 PROPUESTO, 5 TECNICO; 87 preguntas pendientes), subtablas de las compuestas, `valor_documentado` y `desfasados()`, `cerrada_por`; batería con 109 comprobaciones; 61 baterías en verde; sin commit (por indicación del encargo); pendiente la QA r02

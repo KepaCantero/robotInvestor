@@ -3,7 +3,9 @@
 D-45: «todo parámetro tiene un valor por defecto prudente, válido para cualquier usuario y con su justificación escrita […];
 cada parámetro nuevo de cualquier bloque llega con su valor por defecto y su pregunta del cuestionario». Este módulo da, para
 cada clave de `parametros.PARAMETROS`, de `orquestador.CONFIG_DEFECTO` y de `control_f.POLITICA_DEFECTO` (la política de F,
-que viaja dentro de `CONFIG_DEFECTO["politica_f"]`), un registro con:
+que viaja dentro de `CONFIG_DEFECTO["politica_f"]`), y para cada campo de las claves compuestas de la configuración (las
+subtablas de SUBTABLAS: `aprobacion`, `avisos`, `kill_switch`, `promocion_nivel`, y los campos del mandato y de la referencia
+de cada cartera), un registro con:
 
 - `estado`: `RATIFICADO` (una decisión ratificada de la Constitución fija ese valor), `PROPUESTO` (valor de partida que
   decidirá el operador en la sesión T-57) o `TECNICO` (no lo decide el operador y no lleva ningún número dentro);
@@ -12,31 +14,56 @@ que viaja dentro de `CONFIG_DEFECTO["politica_f"]`), un registro con:
   «Deuda D-29» (tabla de pendientes del operador), «Deuda T-75» (deuda técnica) o «V0.67» (Documento 0 de esa versión);
 - `justificacion`: una o dos frases, por qué ese valor;
 - `pregunta`: la pregunta en lenguaje sencillo que hará el cuestionario guiado del asesor de configuración (§2); obligatoria
-  en `PROPUESTO` y en `RATIFICADO` (los cambios posteriores usan el mismo cuestionario, D-46) y None en `TECNICO`.
+  en `PROPUESTO` y en `RATIFICADO` (los cambios posteriores usan el mismo cuestionario, D-46), None en `TECNICO`, en una clave
+  compuesta (sus campos llevan la suya) y en un `RATIFICADO` que la Constitución no deja cambiar todavía (`cerrada_por`);
+- `valor_documentado`: el valor que justifican el texto y la pregunta (forma JSON: listas en lugar de tuplas). Si el código
+  cambia el valor, `desfasados()` lo señala y hay que revisar el texto y actualizar `_VALOR_DOCUMENTADO` (QA r01, H-05);
+- `detalle`: en una clave compuesta, la tabla o subtabla donde se documenta campo a campo (None en las demás);
+- `cerrada_por`: en un `RATIFICADO` sin pregunta, la decisión de la Constitución que impide preguntarla (None en los demás).
 
 Solo datos y consultas: no cambia ningún valor, no decide nada y no forma parte de la huella del esquema del código
 (`persistencia.MODULOS_ESQUEMA`): corregir una redacción no debe exigir versión de esquema ni migración. La correspondencia con
-los valores la vigilan `faltan()` y la batería `pruebas/pruebas_parametros_doc_t83.py`. Falla cerrado: `doc()` lanza KeyError
-ante una clave sin documentar y ValueError ante una tabla desconocida o una clave ambigua; los registros son de solo lectura y
-las funciones devuelven copias.
+los valores la vigilan `faltan()`, `desfasados()` y la batería `pruebas/pruebas_parametros_doc_t83.py`. Falla cerrado: `doc()`
+lanza KeyError ante una clave sin documentar y ValueError ante una tabla desconocida o una clave ambigua; `faltan()` y
+`preguntas_pendientes()` lanzan ValueError si las tablas no son las tres esperadas, y `preguntas_pendientes()` también si la
+documentación y el código no cuadran; los registros son de solo lectura y las funciones devuelven copias.
 """
 from __future__ import annotations
 
 import copy
+import json
 import re
 from types import MappingProxyType
 
-VERSION_DOC = "PDOC-0.1.0"
+VERSION_DOC = "PDOC-0.2.0"   # 0.2.0 (QA r01 de T-83): subtablas de las claves compuestas, valor documentado, cerrada_por
 ESTADOS = ("RATIFICADO", "PROPUESTO", "TECNICO")
 TABLAS = ("PARAMETROS", "CONFIG_DEFECTO", "POLITICA_DEFECTO")
-CAMPOS = ("estado", "fuente", "justificacion", "pregunta")
+# Subtabla -> (tabla, clave compuesta, forma). CAMPOS: un diccionario de campos fijos. POR_CARTERA: un diccionario por cartera,
+# todos con los mismos campos; cada campo se documenta una vez y su valor es {cartera: valor}.
+SUBTABLAS = {
+    "CONFIG_DEFECTO.aprobacion": ("CONFIG_DEFECTO", "aprobacion", "CAMPOS"),
+    "CONFIG_DEFECTO.avisos": ("CONFIG_DEFECTO", "avisos", "CAMPOS"),
+    "CONFIG_DEFECTO.kill_switch": ("CONFIG_DEFECTO", "kill_switch", "CAMPOS"),
+    "CONFIG_DEFECTO.promocion_nivel": ("CONFIG_DEFECTO", "promocion_nivel", "CAMPOS"),
+    "CONFIG_DEFECTO.mandatos": ("CONFIG_DEFECTO", "mandatos", "POR_CARTERA"),
+    "CONFIG_DEFECTO.referencias": ("CONFIG_DEFECTO", "referencias", "POR_CARTERA"),
+}
+TODAS = TABLAS + tuple(SUBTABLAS)
+CAMPOS = ("estado", "fuente", "justificacion", "pregunta", "valor_documentado", "detalle", "cerrada_por")
 RE_FUENTE = re.compile(r"(Constitución [DP]-\d{2}|Deuda [DT]-\d{2}|V0\.\d{2})\Z")
 
 R, P, TEC = "RATIFICADO", "PROPUESTO", "TECNICO"
 
 
-def _r(estado, fuente, justificacion, pregunta=None):
-    return {"estado": estado, "fuente": tuple(fuente), "justificacion": justificacion, "pregunta": pregunta}
+def _r(estado, fuente, justificacion, pregunta=None, cerrada_por=None):
+    return {"estado": estado, "fuente": tuple(fuente), "justificacion": justificacion, "pregunta": pregunta,
+            "detalle": None, "cerrada_por": cerrada_por}
+
+
+def _compuesta(estado, fuente, detalle, justificacion):
+    """Una clave compuesta: sin pregunta propia; sus valores se documentan en `detalle` y su estado es el de ellos (agregado)."""
+    return {"estado": estado, "fuente": tuple(fuente), "justificacion": justificacion, "pregunta": None, "detalle": detalle,
+            "cerrada_por": None}
 
 
 _DOC = {
@@ -190,7 +217,7 @@ _DOC = {
         "revision_max_dias": _r(P, ["Deuda D-22"],
             "Al confirmar una tesis, la nueva fecha de revisión no puede estar a más de 90 días: ninguna posición pasa más de un "
             "trimestre sin que alguien la vuelva a mirar.",
-            "¿Cada cuánto tiempo como mínimo hay que volver a revisar una inversión abierta?"),
+            "¿Cuánto tiempo como máximo puede pasar sin revisar una inversión abierta?"),
         "observacion_max_dias": _r(P, ["Deuda D-23"],
             "Una oportunidad en observación caduca a los 30 días: un mes basta para que se cumpla la condición que se esperaba.",
             "¿Cuánto tiempo como máximo se vigila una oportunidad aparcada antes de olvidarla?"),
@@ -219,7 +246,8 @@ _DOC = {
         "exige_contradictor_en": _r(P, ["Deuda D-25", "Deuda D-06", "Constitución D-35", "Deuda T-48"],
             "La Constitución exige varios análisis independientes siempre en N3; se propone exigir también el Contradictor en N2, "
             "donde ya se compara y se propone.",
-            "¿En qué niveles de análisis quieres que un revisor independiente busque fallos antes de invertir?"),
+            "Además de en N3, donde la Constitución pide siempre varios análisis, ¿quieres que un revisor independiente busque "
+            "fallos en N2?"),
         "contradictor_desactivado_motivo": _r(TEC, ["Deuda T-48"],
             "Solo se rellena, con su motivo, si se deja de exigir el Contradictor en algún nivel; por defecto se exige y queda vacío."),
         "autoria_c": _r(P, ["Deuda D-25", "Deuda T-48"],
@@ -232,7 +260,7 @@ _DOC = {
         "matriz_autonomia": _r(P, ["Deuda D-05", "Constitución P-01"],
             "Vacía: la matriz no autoriza nada sola en ninguna cartera y todo lo autoriza el operador, que es lo prudente en simulado.",
             "¿En qué carteras puede el sistema autorizar inversiones sin preguntarte?"),
-        "politica_f": _r(TEC, ["Deuda T-22"],
+        "politica_f": _compuesta(P, ["Deuda T-22"], "POLITICA_DEFECTO",
             "Contenedor de los límites de F: cada uno se documenta por separado en la tabla de la política de F."),
         "nivel_autonomia": _r(R, ["Constitución D-45", "Deuda D-16"],
             "Sin dato, cada cartera está en L1, donde el sistema propone y el operador decide: es el valor por defecto ratificado "
@@ -244,40 +272,30 @@ _DOC = {
         "umbral_l2_eur": _r(P, ["Deuda D-33", "Constitución P-01", "Deuda T-18"],
             "En L2 la matriz solo abre sola órdenes de hasta 5.000 € por cartera; por encima decide el operador.",
             "¿Hasta qué importe por orden puede el sistema invertir solo en las carteras a las que des autonomía?"),
-        "promocion_nivel": _r(P, ["Deuda D-34", "Constitución P-02", "Deuda T-18"],
-            "Para subir de nivel hacen falta 30 días en el nivel actual sin incidentes: un mes es el mínimo para ver cómo se "
-            "comporta una cartera.",
-            "¿Cuánto tiempo sin incidentes debe pasar antes de dar más autonomía a una cartera?"),
+        "promocion_nivel": _compuesta(P, ["Deuda D-34", "Deuda T-18"], "CONFIG_DEFECTO.promocion_nivel",
+            "Condiciones para subir de nivel de autonomía; cada una se documenta en su subtabla."),
         "libres_tope_dia_eur": _r(P, ["Deuda D-32", "Deuda T-33"],
             "Las operaciones libres declaradas fuera del sistema no pasan de 2.000 € por cartera y día, para que no esquiven los "
             "controles.",
             "¿Cuánto puedes invertir al día por tu cuenta en cada cartera fuera de las propuestas del sistema?"),
-        "mandatos": _r(P, ["Deuda D-28", "Constitución P-03", "Deuda T-51"],
-            "Mandato prudente por cartera: efectivo como referencia, el horizonte de su clase, como mucho un 10 % por posición, sin "
-            "apalancar, cualquier instrumento y sin exclusiones.",
-            "Para cada cartera, ¿qué horizonte, qué tamaño máximo por inversión y qué exclusiones quieres?"),
-        "referencias": _r(P, ["Deuda D-17", "Constitución P-03", "Deuda T-37"],
-            "La referencia de cada cartera es el efectivo al 0 %; es provisional, porque casi todo la supera.",
-            "¿Con qué referencia quieres comparar cada cartera para saber si invertir vale la pena?"),
-        "aprobacion": _r(P, ["Deuda D-18", "Deuda D-19", "Constitución P-08", "Constitución P-12"],
-            "Una aprobación caduca a los 15 minutos, solo desde la consola, de 07:00 a 21:00 UTC y con 30 minutos de espera tras "
-            "cualquier pérdida del día: la prisa y el cansancio llevan a malas decisiones.",
-            "¿Cuánto tiempo tienes para aprobar una operación, en qué horario y cuánto debes esperar tras un día con pérdidas?"),
-        "avisos": _r(P, ["Deuda D-07", "Deuda D-19", "Constitución P-08", "Deuda T-41"],
-            "Los avisos van a la consola, se repiten cada 15 minutos y se escalan tras tres repeticiones sin acuse: un aviso "
-            "importante no se pierde.",
-            "¿Por dónde quieres recibir los avisos y cuándo deben insistir o escalar a otro canal?"),
-        "kill_switch": _r(P, ["Deuda D-19"],
-            "Tras una parada de emergencia la cartera pasa al menos 24 horas en L1 antes de volver a subir: un día para entender qué "
-            "pasó.",
-            "Después de una parada de emergencia, ¿cuánto tiempo debe pasar antes de devolver autonomía al sistema?"),
+        "mandatos": _compuesta(P, ["Deuda D-28", "Constitución P-03", "Deuda T-51"], "CONFIG_DEFECTO.mandatos",
+            "Mandato de cada cartera en SC-1; cada campo (referencia, horizonte, apalancamiento, tamaño, instrumentos y exclusiones) "
+            "se documenta en su subtabla."),
+        "referencias": _compuesta(P, ["Deuda D-17", "Constitución P-03", "Deuda T-37"], "CONFIG_DEFECTO.referencias",
+            "Referencia de cada cartera con la que D compara no hacer nada; sus dos campos se documentan en su subtabla."),
+        "aprobacion": _compuesta(P, ["Deuda D-18", "Deuda D-19", "Constitución P-08", "Constitución P-12"], "CONFIG_DEFECTO.aprobacion",
+            "Condiciones con las que el operador aprueba una operación; cada una se documenta en su subtabla."),
+        "avisos": _compuesta(P, ["Deuda D-07", "Deuda D-19", "Constitución P-08", "Deuda T-41"], "CONFIG_DEFECTO.avisos",
+            "Canales y repeticiones de los avisos; cada valor se documenta en su subtabla."),
+        "kill_switch": _compuesta(P, ["Deuda D-19"], "CONFIG_DEFECTO.kill_switch",
+            "Rehabilitación tras una parada de emergencia; su valor se documenta en su subtabla."),
         "divisas_cotizacion": _r(TEC, ["Deuda T-10"],
             "Tabla de los instrumentos que no son un par de divisas ISO y de la divisa en que cotizan; vacía, porque en la Fase 1 "
             "todo son pares y la divisa sale del nombre."),
         "rangos_tipo_cambio_eur": _r(P, ["Deuda D-21", "Deuda T-10"],
             "Un tipo de cambio fuera de su rango plausible se rechaza: protege de un dato erróneo que cambiaría el tamaño de las "
-            "posiciones.",
-            "¿Qué rango de tipos de cambio se considera plausible para cada divisa?"),
+            "posiciones, y los rangos son anchos para no rechazar datos buenos.",
+            "¿Te vale el rango recomendado de tipos de cambio de cada divisa, que solo sirve para descartar datos erróneos?"),
         "tolerancia_tipo_par_pct": _r(P, ["Deuda D-21"],
             "El tipo de cambio de la cartera y el que implica el precio de un par con el euro no pueden diferir más de un 15 %: "
             "holgado para no rechazar datos buenos y estrecho para ver errores.",
@@ -294,9 +312,10 @@ _DOC = {
         "tamano_max_pct": _r(P, ["Deuda D-01"],
             "Ninguna posición pasa del 10 % del capital: es la diversificación mínima.",
             "¿Qué parte de tu capital puede ir como mucho a una sola inversión?"),
-        "exposicion_max_pct": _r(P, ["Deuda D-01", "Constitución D-45"],
-            "La exposición total no supera el capital, porque por defecto no se invierte con dinero prestado.",
-            "¿Qué parte de tu capital puede estar invertida a la vez?"),
+        "exposicion_max_pct": _r(P, ["Deuda D-01", "Constitución D-16", "Constitución D-45"],
+            "La exposición total no supera el capital, porque la Constitución no deja invertir con dinero prestado hasta la Fase 3; "
+            "el operador puede bajarla, no subirla.",
+            "¿Qué parte de tu capital, como mucho el total, puede estar invertida a la vez?"),
         "concentracion_max_pct": _r(P, ["Deuda D-01"],
             "Lo invertido en un mismo activo, sumando todas sus posiciones, no pasa del 20 % del capital.",
             "¿Cuánto de tu capital puede acumularse en un mismo activo?"),
@@ -306,9 +325,11 @@ _DOC = {
         "max_posiciones": _r(P, ["Deuda D-01"],
             "Como mucho diez posiciones abiertas a la vez: más no se pueden vigilar bien cuando el operador decide cada una.",
             "¿Cuántas inversiones abiertas a la vez quieres como máximo?"),
-        "apalancamiento_max": _r(P, ["Deuda D-01", "Deuda D-12", "Constitución D-45"],
-            "Un 1 significa sin apalancamiento, el valor prudente que la Constitución pide por defecto para cualquier copia.",
-            "¿Quieres permitir invertir con dinero prestado y, si es así, cuánto como máximo?"),
+        "apalancamiento_max": _r(R, ["Constitución D-16", "Constitución D-45", "Deuda D-12"],
+            "Un 1 significa sin apalancamiento: la Constitución no habilita el apalancamiento hasta que el operador lo decida, no "
+            "antes de la Fase 3 (D-16), y lo pone entre los valores por defecto de cualquier copia (D-45, y el §7: «inicialmente "
+            "cero»).",
+            None, cerrada_por="Constitución D-16"),
         "frescura_max_min": _r(P, ["Deuda D-01"],
             "F no decide con una foto de la cartera de más de 60 minutos: el capital y las posiciones pueden haber cambiado.",
             "¿Con qué antigüedad máxima de la información de tu cartera puede decidir el control de riesgo?"),
@@ -356,11 +377,228 @@ _DOC = {
             "El precio del intermediario con el que se comprueba la orden no puede tener más de 15 minutos.",
             "¿Qué antigüedad máxima puede tener el precio de mercado con el que se comprueba la orden?"),
     },
+    # ------------------------------------------------------------------ subtablas de las claves compuestas (QA r01, H-02)
+    "CONFIG_DEFECTO.aprobacion": {
+        "caduca_min": _r(P, ["Deuda D-18"],
+            "Una propuesta caduca 15 minutos después de que se pueda aprobar, tras la espera si la hay: pasado ese tiempo el precio "
+            "ya no es el que se propuso.",
+            "¿Cuánto tiempo tienes para aprobar una operación antes de que caduque?"),
+        "canales": _r(P, ["Deuda D-19", "Constitución P-08"],
+            "Solo vale una aprobación desde la consola y con segundo factor; el chat nunca vale, porque cualquiera podría escribir en "
+            "él.",
+            "¿Desde qué canal quieres aprobar las operaciones, siempre con un segundo factor de confirmación?"),
+        "enfriamiento_min": _r(P, ["Deuda D-18"],
+            "Tras una pérdida en el día o fuera del horario hay que esperar 30 minutos antes de aprobar: la prisa y el cansancio "
+            "llevan a malas decisiones.",
+            "¿Cuánto tiempo debes esperar para aprobar después de una pérdida en el día o fuera de tu horario?"),
+        "enfriamiento_tras_perdida_dia_eur": _r(P, ["Deuda D-18"],
+            "Cualquier pérdida del día, por pequeña que sea, activa la espera antes de aprobar: es el umbral más prudente.",
+            "¿A partir de qué pérdida en el día quieres que se active esa espera antes de aprobar?"),
+        "horario_utc": _r(P, ["Deuda D-18", "Deuda D-33", "Constitución P-12"],
+            "Fuera de 07:00 a 21:00 UTC no se prohíbe aprobar, pero hay que esperar 30 minutos, y una cartera en L3 actúa como en L2: "
+            "fuera de las horas en que atiendes el sistema se decide peor.",
+            "¿En qué horario sueles poder atender el sistema para aprobar sin espera?"),
+    },
+    "CONFIG_DEFECTO.avisos": {
+        "canal_alta": _r(P, ["Deuda D-07", "Deuda D-19", "Constitución P-08"],
+            "Los avisos de prioridad alta van a la consola mientras no haya otro canal fuera del chat.",
+            "¿Por dónde quieres recibir los avisos importantes?"),
+        "canal_escalado": _r(P, ["Deuda D-07", "Deuda D-19", "Constitución P-08"],
+            "Un aviso que no se acusa pasa a un canal distinto del habitual, para que no se pierda si no miras la consola.",
+            "¿A qué otro canal o persona debe pasar un aviso importante que no atiendes?"),
+        "reiterar_min": _r(P, ["Deuda D-07", "Deuda T-41"],
+            "Un aviso sin acusar se repite cada 15 minutos.",
+            "¿Cada cuántos minutos debe repetirse un aviso que no has atendido?"),
+        "escalar_tras": _r(P, ["Deuda D-07", "Deuda T-41"],
+            "Tras tres repeticiones sin acuse el aviso se escala: casi una hora sin respuesta es demasiado para un aviso importante.",
+            "¿Tras cuántas repeticiones sin respuesta debe escalarse un aviso?"),
+    },
+    "CONFIG_DEFECTO.kill_switch": {
+        "periodo_min_l1_horas": _r(P, ["Deuda D-19"],
+            "Tras una parada de emergencia la cartera pasa al menos 24 horas en L1 antes de volver a subir: un día para entender qué "
+            "pasó.",
+            "Después de una parada de emergencia, ¿cuánto tiempo debe pasar antes de devolver autonomía al sistema?"),
+    },
+    "CONFIG_DEFECTO.promocion_nivel": {
+        "periodo_min_dias": _r(P, ["Deuda D-34", "Constitución P-02", "Deuda T-18"],
+            "Para subir de nivel hacen falta 30 días en el nivel actual sin incidentes: un mes es el mínimo para ver cómo se "
+            "comporta una cartera.",
+            "¿Cuánto tiempo sin incidentes debe pasar antes de dar más autonomía a una cartera?"),
+    },
+    "CONFIG_DEFECTO.mandatos": {
+        "version": _r(TEC, ["Deuda T-51"],
+            "Versión del mandato de cada cartera, para la huella de cada decisión; la cambia quien cambia el mandato."),
+        "benchmark_ref": _r(P, ["Deuda D-28", "Deuda D-17", "Constitución P-03"],
+            "El efectivo es un marcador hasta que se fije la referencia de cada cartera (T-37): la Constitución (§7) pide un índice "
+            "o una cesta en la que se invierte de verdad, y efectivo solo si el operador lo elige.",
+            "¿Con qué índice o cesta quieres comparar cada cartera, en la que se invierta de verdad cuando no haya nada mejor?"),
+        "horizonte_dias": _r(P, ["Deuda D-28", "Constitución P-04"],
+            "El plazo de cada cartera es el de su clase: de 1 a 28 días en trading, de 14 a 183 en táctica y de 1.095 a 7.300 "
+            "(de 3 a 20 años) en largo plazo.",
+            "¿Qué plazo quieres para las inversiones de cada cartera?"),
+        "apalancamiento_max": _r(R, ["Constitución D-16", "Constitución D-45", "Deuda D-28"],
+            "Un 1 significa sin apalancamiento en el mandato de cada cartera: la Constitución no lo habilita antes de la Fase 3 "
+            "(D-16) y en el §7 lo deja «inicialmente cero».",
+            None, cerrada_por="Constitución D-16"),
+        "tamano_max_pct_cartera": _r(P, ["Deuda D-28"],
+            "Ninguna posición pasa del 10 % de su cartera: es la diversificación mínima dentro de cada una.",
+            "¿Qué parte de cada cartera puede ir como mucho a una sola inversión?"),
+        "instrumentos_permitidos": _r(P, ["Deuda D-28", "Constitución D-16"],
+            "Sin lista, cada cartera admite cualquier instrumento del universo que el sistema analiza; derivados y CFD siguen "
+            "cerrados por la Constitución hasta la Fase 3, así que una lista solo puede restringir.",
+            "¿Quieres limitar alguna cartera a una lista de instrumentos concretos?"),
+        "exclusiones": _r(P, ["Deuda D-28"],
+            "Sin exclusiones de partida: son preferencias personales del operador y no hay ninguna prudente para cualquier usuario.",
+            "¿Hay activos, sectores o países en los que no quieras invertir nunca?"),
+    },
+    "CONFIG_DEFECTO.referencias": {
+        "benchmark_ref": _r(TEC, ["Deuda D-17", "Deuda T-51"],
+            "Copia del benchmark del mandato de cada cartera: la configuración exige que coincidan, y se pregunta en el mandato."),
+        "rentabilidad_anual_pct": _r(P, ["Deuda D-17", "Deuda T-37"],
+            "No es un valor prudente sino un marcador: con efectivo al 0 % casi todo supera a la referencia y D se abstiene poco, "
+            "por eso T-37 la traerá de los datos y el §7 de la Constitución pide un índice real.",
+            "¿Qué rentabilidad anual quieres suponer a la referencia de cada cartera mientras no se calcule con datos reales?"),
+    },
+}
+
+# El valor que justifica cada registro (forma JSON), para que un valor cambiado no deje un texto falso sin aviso (H-05). Al cambiar
+# un valor del código: revisar su justificación y su pregunta, y actualizarlo aquí. Las claves compuestas no lo llevan: lo
+# llevan sus campos.
+_VALOR_DOCUMENTADO = {
+    "PARAMETROS": {
+        "k_tope_antiguedad_dias_habiles": {"TRADING": 1, "TACTICA": 1, "LARGO_PLAZO": 5},
+        "k_min_observaciones": 20,
+        "k_rango_max_intradia": 1.5,
+        "k_salto_adv_bloq": [0.2, 0.5],
+        "k_hueco_adv_bloq": [0.02, 0.1],
+        "k_cruce_adv_bloq": [0.001, 0.01],
+        "k_ventana_acumulado_obs": 5,
+        "k_ajuste_tol_rel": 0.1,
+        "k_licencias_admitidas": ["PROPIA", "INTERMEDIARIO-USO-INTERNO", "CC-BY-4.0", "DOMINIO-PUBLICO"],
+        "d_peso_evidencia": {"VERIFICADO": 1.0, "ESTIMADO": 0.5, "SUPUESTO": 0.25},
+        "d_margen_ajustado": 0.05,
+        "d_riesgo_min_pct": 1.0,
+        "d_tope_confianza_clase": {"Q": 0.8, "S": 0.6, "K": 0.4},
+        "d_exceso_min_pct": 0.1,
+        "d_rentabilidad_plausible_pct": [-100.0, 500.0],
+        "d_referencia_rango_pct": [-5.0, 50.0],
+        "d_coste_suelo_ida_vuelta_pb": {"Q": 2.0, "S": 10.0, "K": 30.0},
+        "d_coste_suelo_mant_anual_pb": {"Q": 0.0, "S": 0.0, "K": 0.0},
+        "d_factor_tope_sin_doble_analisis": 0.75,
+        "d_riesgo_sin_stop_largo_pct": 100.0,
+        "h_max_edad_dato_min": 15,
+        "h_salto_max_horas": 72,
+        "e_max_edad_dimensionado_min": 60,
+        "manual_ventana_declaracion_horas": 72,
+        "n_lineas_diario_ambar": 1000,
+        "o_max_analisis_consulta": 50,
+        "o_dias_sequia": 60,
+        "n_dias_embudo": 7,
+        "i_meses_juicio_sombra": 24,
+        "i_indice_sombra": "INDICE-MUNDIAL",
+        "i_coste_anual_sombra_pct": 0.2,
+    },
+    "CONFIG_DEFECTO": {
+        "max_reintentos": 3,
+        "umbral_corte_comun_dias_habiles": 0,
+        "version_config": "CFG-0.11.0",
+        "dia_coste_max_eur": 50.0,
+        "revision_max_dias": 90,
+        "observacion_max_dias": 30,
+        "max_reaperturas": 2,
+        "dia_tiempo_max_min": 600,
+        "tolerancia_precio_entrada": 0.05,
+        "alerta_perdida_pct": -5.0,
+        "anulaciones_veto_mes": 2,
+        "tolerancia_tipo_k_rel": 0.03,
+        "exige_contradictor_en": ["N2", "N3"],
+        "contradictor_desactivado_motivo": None,
+        "autoria_c": {},
+        "autoria_contradictor": None,
+        "matriz_autonomia": {},
+        "nivel_autonomia": {},
+        "tolerancia_conciliacion_rel": 0.0,
+        "umbral_l2_eur": {"TRADING": 5000.0, "TACTICA": 5000.0, "LARGO_PLAZO": 5000.0},
+        "libres_tope_dia_eur": {"TRADING": 2000.0, "TACTICA": 2000.0, "LARGO_PLAZO": 2000.0},
+        "divisas_cotizacion": {},
+        "rangos_tipo_cambio_eur": {"USD": [0.6, 1.4], "GBP": [0.9, 1.6], "JPY": [0.003, 0.015], "CHF": [0.7, 1.4], "AUD": [0.4, 0.9],
+                                   "CAD": [0.45, 0.95], "SEK": [0.06, 0.13], "NOK": [0.06, 0.13], "DKK": [0.12, 0.15]},
+        "tolerancia_tipo_par_pct": 15.0,
+        "cuenta_intermediario": "SIM-1",
+    },
+    "POLITICA_DEFECTO": {
+        "riesgo_max_pct": 1.0,
+        "tamano_max_pct": 10.0,
+        "exposicion_max_pct": 100.0,
+        "concentracion_max_pct": 20.0,
+        "perdida_dia_max_pct": 2.0,
+        "max_posiciones": 10,
+        "apalancamiento_max": 1.0,
+        "frescura_max_min": 60.0,
+        "valor_min_eur": 100.0,
+        "vigencia_max_horas": 24.0,
+        "importe_max_orden_eur": 20000.0,
+        "importe_max_dia_eur": 50000.0,
+        "importe_max_activo_eur": 30000.0,
+        "perdida_dia_max_eur": 2500.0,
+        "perdida_semana_max_eur": 5000.0,
+        "ordenes_max_hora": 10,
+        "evidencia_verificada_min": 0.05,
+        "corte_max_dias": 3,
+        "ventana_eventos_dias": 1,
+        "viernes_corte_utc_h": 20,
+        "deriva_precio_max_pct": 2.0,
+        "precio_frescura_max_min": 15.0,
+    },
+    "CONFIG_DEFECTO.aprobacion": {
+        "caduca_min": 15,
+        "canales": ["CONSOLA"],
+        "enfriamiento_min": 30,
+        "enfriamiento_tras_perdida_dia_eur": 0.0,
+        "horario_utc": ["07:00", "21:00"],
+    },
+    "CONFIG_DEFECTO.avisos": {
+        "canal_alta": "CONSOLA",
+        "canal_escalado": "ESCALADO",
+        "reiterar_min": 15,
+        "escalar_tras": 3,
+    },
+    "CONFIG_DEFECTO.kill_switch": {
+        "periodo_min_l1_horas": 24,
+    },
+    "CONFIG_DEFECTO.promocion_nivel": {
+        "periodo_min_dias": 30,
+    },
+    "CONFIG_DEFECTO.mandatos": {
+        "version": {"TRADING": "MAN-0.1.0", "TACTICA": "MAN-0.1.0", "LARGO_PLAZO": "MAN-0.1.0"},
+        "benchmark_ref": {"TRADING": "BENCH-EFECTIVO", "TACTICA": "BENCH-EFECTIVO", "LARGO_PLAZO": "BENCH-EFECTIVO"},
+        "horizonte_dias": {"TRADING": {"min": 1, "max": 28}, "TACTICA": {"min": 14, "max": 183}, "LARGO_PLAZO": {"min": 1095, "max": 7300}},
+        "apalancamiento_max": {"TRADING": 1, "TACTICA": 1, "LARGO_PLAZO": 1},
+        "tamano_max_pct_cartera": {"TRADING": 10.0, "TACTICA": 10.0, "LARGO_PLAZO": 10.0},
+        "instrumentos_permitidos": {"TRADING": None, "TACTICA": None, "LARGO_PLAZO": None},
+        "exclusiones": {"TRADING": [], "TACTICA": [], "LARGO_PLAZO": []},
+    },
+    "CONFIG_DEFECTO.referencias": {
+        "benchmark_ref": {"TRADING": "BENCH-EFECTIVO", "TACTICA": "BENCH-EFECTIVO", "LARGO_PLAZO": "BENCH-EFECTIVO"},
+        "rentabilidad_anual_pct": {"TRADING": 0.0, "TACTICA": 0.0, "LARGO_PLAZO": 0.0},
+    },
 }
 
 
-def _congela(t):
-    return MappingProxyType({tab: MappingProxyType({k: MappingProxyType(dict(v)) for k, v in regs.items()}) for tab, regs in t.items()})
+def _congela(t, valores=None):
+    valores = _VALOR_DOCUMENTADO if valores is None else valores
+    out = {}
+    for tab, regs in t.items():
+        out[tab] = {}
+        for k, v in regs.items():
+            r = dict(v)
+            if r.get("detalle") is None:
+                r["valor_documentado"] = valores.get(tab, {}).get(k)
+            else:
+                r["valor_documentado"] = None
+            out[tab][k] = MappingProxyType(r)
+        out[tab] = MappingProxyType(out[tab])
+    return MappingProxyType(out)
 
 
 # De solo lectura: una corrección de redacción cambia este fichero, no la huella del esquema
@@ -376,16 +614,28 @@ def tablas_del_codigo():
     return {"PARAMETROS": PARAMETROS, "CONFIG_DEFECTO": CONFIG_DEFECTO, "POLITICA_DEFECTO": POLITICA_DEFECTO}
 
 
+def _comprueba_tablas(tablas):
+    tablas = tablas_del_codigo() if tablas is None else tablas
+    if not isinstance(tablas, dict) or set(tablas) != set(TABLAS) or not all(hasattr(tablas[t], "items") for t in TABLAS):
+        raise ValueError(f"se esperan exactamente las tablas {list(TABLAS)}, cada una un diccionario")
+    return tablas
+
+
 def _registro(tabla, clave):
-    return {"tabla": tabla, "clave": clave, **{c: DOC[tabla][clave][c] for c in CAMPOS}}
+    return {"tabla": tabla, "clave": clave, **{c: _copia(DOC[tabla][clave][c]) for c in CAMPOS}}
 
 
 def doc(clave, tabla=None):
-    """El registro de una clave (copia, con `tabla` y `clave`). Sin `tabla`, se busca en las tres: si está en más de una es
-    ValueError (ambigua); si no está documentada, KeyError. Una tabla desconocida es ValueError."""
-    if tabla is not None and tabla not in TABLAS:
+    """El registro de una clave (copia, con `tabla` y `clave`). Sin `tabla`, se busca en todas las tablas y subtablas: si está
+    en más de una es ValueError (ambigua); si no está documentada, KeyError. Un campo de una clave compuesta también se pide
+    como «aprobacion.canales». Una tabla desconocida es ValueError."""
+    if tabla is not None and tabla not in TODAS:
         raise ValueError(f"tabla desconocida: {tabla!r}")
-    donde = [t for t in (TABLAS if tabla is None else (tabla,)) if isinstance(clave, str) and clave in DOC[t]]
+    if tabla is None and isinstance(clave, str) and clave.count(".") == 1:
+        sub = f"CONFIG_DEFECTO.{clave.split('.')[0]}"
+        if sub in SUBTABLAS:
+            tabla, clave = sub, clave.split(".")[1]
+    donde = [t for t in (TODAS if tabla is None else (tabla,)) if isinstance(clave, str) and clave in DOC[t]]
     if not donde:
         raise KeyError(f"sin documentar: {clave!r}")
     if len(donde) > 1:
@@ -393,27 +643,83 @@ def doc(clave, tabla=None):
     return _registro(donde[0], clave)
 
 
+def valor_actual(tabla, clave, tablas=None):
+    """El valor que tiene hoy en el código la clave documentada (tabla o subtabla), sin copiar. KeyError si no existe; en una
+    subtabla POR_CARTERA, {cartera: valor del campo}."""
+    tablas = _comprueba_tablas(tablas)
+    if tabla in TABLAS:
+        return tablas[tabla][clave]
+    if tabla not in SUBTABLAS:
+        raise ValueError(f"tabla desconocida: {tabla!r}")
+    t, k, forma = SUBTABLAS[tabla]
+    padre = tablas[t][k]
+    if forma == "CAMPOS":
+        return padre[clave]
+    return {c: m[clave] for c, m in padre.items()}
+
+
+def _campos_de(tablas, sub):
+    """Los campos que tiene hoy en el código una clave compuesta (lista de conjuntos: uno, o uno por cartera)."""
+    t, k, forma = SUBTABLAS[sub]
+    padre = tablas[t].get(k)
+    if not hasattr(padre, "items"):
+        return None
+    if forma == "CAMPOS":
+        return [set(padre)]
+    return [set(m) if hasattr(m, "items") else set() for m in padre.values()] or [set()]
+
+
 def faltan(tablas=None):
     """Lo que no cuadra entre la documentación y las tablas del código, como lista ordenada de (tabla, clave, motivo):
-    `SIN_DOCUMENTAR` (clave del código sin registro) o `NO_EXISTE` (registro de una clave que el código ya no tiene). Vacía si
-    todo cuadra. `tablas` (por defecto, las del código) permite comprobar otra versión; una tabla que falte o sobre es
-    ValueError."""
-    tablas = tablas_del_codigo() if tablas is None else tablas
-    if not isinstance(tablas, dict) or set(tablas) != set(TABLAS):
-        raise ValueError(f"se esperan exactamente las tablas {list(TABLAS)}")
+    `SIN_DOCUMENTAR` (clave o campo del código sin registro), `NO_EXISTE` (registro de algo que el código ya no tiene) o
+    `NO_ES_COMPUESTA` (una clave documentada campo a campo cuyo valor ya no es un diccionario). Vacía si todo cuadra. `tablas`
+    (por defecto, las del código) permite comprobar otra versión; si no son exactamente las tres tablas, ValueError."""
+    tablas = _comprueba_tablas(tablas)
     out = []
     for t in TABLAS:
         codigo, documentadas = set(tablas[t]), set(DOC[t])
         out += [(t, k, "SIN_DOCUMENTAR") for k in sorted(codigo - documentadas, key=str)]
         out += [(t, k, "NO_EXISTE") for k in sorted(documentadas - codigo)]
+    for sub in SUBTABLAS:
+        campos = _campos_de(tablas, sub)
+        if campos is None:
+            if SUBTABLAS[sub][1] in tablas[SUBTABLAS[sub][0]]:
+                out.append((SUBTABLAS[sub][0], SUBTABLAS[sub][1], "NO_ES_COMPUESTA"))
+            continue
+        documentadas = set(DOC[sub])
+        out += [(sub, k, "SIN_DOCUMENTAR") for k in sorted(set().union(*campos) - documentadas, key=str)]
+        out += [(sub, k, "NO_EXISTE") for k in sorted({k for c in campos for k in documentadas - c})]
+    return out
+
+
+def _canon(v):
+    return json.dumps(_copia(v), sort_keys=True, ensure_ascii=False)
+
+
+def desfasados(tablas=None):
+    """(tabla, clave) de los registros cuyo `valor_documentado` ya no es el valor del código: su justificación y su pregunta
+    hablan de otro valor y hay que revisarlas (H-05). Lo que no existe lo da `faltan()`, no esta función."""
+    tablas = _comprueba_tablas(tablas)
+    out = []
+    for t in TODAS:
+        for k, v in DOC[t].items():
+            if v["detalle"] is not None:
+                continue
+            try:
+                actual = valor_actual(t, k, tablas)
+            except (KeyError, TypeError, AttributeError):
+                continue
+            if _canon(actual) != _canon(v["valor_documentado"]):
+                out.append((t, k))
     return out
 
 
 def por_estado(estado):
-    """(tabla, clave) de los registros con ese estado, en el orden de las tablas y del código. Estado desconocido: ValueError."""
+    """(tabla, clave) de los registros con ese estado, en el orden de las tablas, de las subtablas y del código. Estado
+    desconocido: ValueError."""
     if estado not in ESTADOS:
         raise ValueError(f"estado desconocido: {estado!r}; válidos {list(ESTADOS)}")
-    return [(t, k) for t in TABLAS for k, v in DOC[t].items() if v["estado"] == estado]
+    return [(t, k) for t in TODAS for k, v in DOC[t].items() if v["estado"] == estado]
 
 
 def _copia(v):
@@ -428,21 +734,37 @@ def _copia(v):
 
 def preguntas_pendientes(tablas=None):
     """Las preguntas de los valores PROPUESTO, para la sesión T-57: lista de registros (copias) con además `valor`, el valor de
-    partida actual del código (copia serializable), en el orden de por_estado("PROPUESTO")."""
-    tablas = tablas_del_codigo() if tablas is None else tablas
+    partida actual del código (copia serializable), en el orden de por_estado("PROPUESTO"), sin las claves compuestas (sus
+    campos llevan la pregunta). Falla cerrado como `faltan()`: ValueError si las tablas no son las tres, o si la documentación
+    y el código no cuadran (algo sin documentar, documentado que no existe o con el valor cambiado), porque un cuestionario
+    incompleto o que pregunta por otro valor no se presenta (H-06)."""
+    tablas = _comprueba_tablas(tablas)
+    mal = faltan(tablas)
+    if mal:
+        raise ValueError(f"la documentación no cuadra con el código: {mal[:5]}")
+    viejos = desfasados(tablas)
+    if viejos:
+        raise ValueError(f"valores cambiados sin revisar su justificación: {viejos[:5]}")
     out = []
     for t, k in por_estado("PROPUESTO"):
+        if DOC[t][k]["detalle"] is not None:
+            continue
         r = _registro(t, k)
-        r["valor"] = _copia(tablas[t][k]) if k in tablas[t] else None
+        r["valor"] = _copia(valor_actual(t, k, tablas))
         out.append(r)
     return out
 
 
+def _agregado(tabla):
+    estados = {v["estado"] for v in DOC[tabla].values()}
+    return next(e for e in ("PROPUESTO", "RATIFICADO", "TECNICO") if e in estados) if estados else None
+
+
 def defectos():
-    """Defectos de forma de la propia tabla (lista de textos; vacía si no hay): estado, fuente, justificación y pregunta. La
-    existencia de cada fuente en sus documentos la comprueba la batería."""
+    """Defectos de forma de la propia tabla (lista de textos; vacía si no hay): estado, fuente, justificación, pregunta, valor
+    documentado, detalle y cerrada_por. La existencia de cada fuente en sus documentos la comprueba la batería."""
     out = []
-    for t in TABLAS:
+    for t in TODAS:
         for k, v in DOC[t].items():
             sitio = f"{t}.{k}"
             if set(v) != set(CAMPOS):
@@ -457,10 +779,25 @@ def defectos():
             if not (isinstance(j, str) and 20 <= len(j) <= 400 and j == j.strip() and j.endswith(".")
                     and len(re.findall(r"[.!?](?:\s|$)", j)) <= 2):
                 out.append(f"{sitio}: justificación que no es de una o dos frases")
-            q = v["pregunta"]
-            if v["estado"] == TEC:
+            q, det, cer = v["pregunta"], v["detalle"], v["cerrada_por"]
+            if det is not None:
+                if det not in TODAS or det == t or q is not None or cer is not None or v["estado"] != _agregado(det):
+                    out.append(f"{sitio}: clave compuesta mal descrita (detalle {det!r})")
+                if k in _VALOR_DOCUMENTADO.get(t, {}):
+                    out.append(f"{sitio}: clave compuesta con valor documentado")
+                continue
+            if k not in _VALOR_DOCUMENTADO.get(t, {}):
+                out.append(f"{sitio}: sin valor documentado")
+            if cer is not None:
+                if not (v["estado"] == R and q is None and isinstance(cer, str) and cer.startswith("Constitución D-") and cer in f):
+                    out.append(f"{sitio}: cerrada_por solo en un RATIFICADO sin pregunta, con una decisión de la Constitución de su fuente")
+            elif v["estado"] == TEC:
                 if q is not None:
                     out.append(f"{sitio}: TECNICO con pregunta")
             elif not (isinstance(q, str) and 10 <= len(q) <= 250 and "¿" in q and q.endswith("?") and "_" not in q):   # sin nombres de código
                 out.append(f"{sitio}: pregunta ausente o que no es lenguaje sencillo")
+    for t, regs in _VALOR_DOCUMENTADO.items():
+        for k in regs:
+            if t not in DOC or k not in DOC[t]:
+                out.append(f"{t}.{k}: valor documentado de un registro que no existe")
     return out
