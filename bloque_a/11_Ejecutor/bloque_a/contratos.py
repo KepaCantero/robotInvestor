@@ -12,15 +12,18 @@
 from __future__ import annotations
 
 import copy
+import hashlib
 import json
 import re
+import sqlite3
 import threading
-from typing import Any, Dict, List, Optional, Tuple
+from contextlib import closing
+from typing import Any
 
 VERSION_CONTRATO = "5.1"
 ESTADOS = ("COMPLETO", "PARCIAL", "SIN_RESULTADO", "RECHAZADO")
-# V5.1 (Anexo B): los retornos de CT-23, CT-24 y CT-25 reutilizan «estado» con valores propios del contrato
-# (el Anexo B no distingue estos valores del estado común de retorno de 6.2.6; el ejecutor admite ambos)
+# §6.2.6: normalizar el cuerpo del Anexo B antiguo al crear el sobre.
+CAMPO_ESTADO = {"CT-23": "estado_consulta", "CT-24": "estado_seguimiento", "CT-25": "estado_credencial"}
 ESTADOS_ESPECIFICOS = {"CT-23": ("RESPONDIDA", "PARCIAL", "VENCIDA", "RECIBIDA"),
                        "CT-24": ("ACTIVO", "PAUSADO", "CANCELADO", "FINALIZADO"),
                        "CT-25": ("PROVISTA", "DENEGADA", "APLAZADA")}
@@ -168,13 +171,27 @@ class Mensajeria:
     def __init__(self, almacen) -> None:
         self.almacen = almacen
         self._lock = threading.Lock()
-        self._procesados: dict[str, dict] = {}
+        self._procesar = threading.Lock()
         self.registro: list[dict] = []   # traza de mensajes (contrato, emisor, receptor, msg_id)
 
     def crear(self, contrato: str, emisor: str, receptor: str, cuerpo: dict, *, run_id: str | None = None,
               query_id: str | None = None, presupuesto: dict | None = None, consumo: dict | None = None,
               estado: str | None = None, tipo_mensaje: str = "ENCARGO") -> dict:
-        msg = {"msg_id": self.almacen.nuevo_id("MSG", ancho=6), "contrato": contrato, "version_contrato": VERSION_CONTRATO,
+        cuerpo = copy.deepcopy(cuerpo)
+        # En CT-01 el Broker puede aportar su identificador estable de reintento.
+        externo = cuerpo.pop("msg_id", None) if contrato == "CT-01" and emisor == "BROKER" else None
+        if externo is not None and (not isinstance(externo, str) or not re.fullmatch(r"MSG-[0-9]{4}-[0-9]+", externo)):
+            raise MensajeInvalido("msg_id externo no válido")
+        if tipo_mensaje == "RETORNO" and contrato in CAMPO_ESTADO:
+            campo = CAMPO_ESTADO[contrato]
+            if "estado" in cuerpo:
+                antiguo = cuerpo.pop("estado")
+                if campo in cuerpo and antiguo == (estado or "COMPLETO"):
+                    antiguo = cuerpo[campo]
+                if campo in cuerpo and cuerpo[campo] != antiguo:
+                    raise MensajeInvalido(f"{contrato}: estados de objeto contradictorios")
+                cuerpo[campo] = antiguo
+        msg = {"msg_id": externo or self.almacen.nuevo_id("MSG", ancho=6), "contrato": contrato, "version_contrato": VERSION_CONTRATO,
                "emisor": emisor, "receptor": receptor, "timestamp": self.almacen.reloj.ahora(), "tipo_mensaje": tipo_mensaje}
         if run_id:
             msg["run_id"] = run_id
@@ -187,7 +204,13 @@ class Mensajeria:
             msg["estado"] = estado or "COMPLETO"
             msg.setdefault("limitaciones", [])
             msg.setdefault("autoevaluacion", "")
-        msg.update(copy.deepcopy(cuerpo))
+        reservados = {"msg_id", "contrato", "version_contrato", "emisor", "receptor", "timestamp",
+                      "tipo_mensaje", "run_id", "query_id", "presupuesto", "consumo", "estado"}
+        for campo in reservados & cuerpo.keys():
+            if cuerpo[campo] != msg.get(campo):
+                raise MensajeInvalido(f"No se puede cambiar {campo} desde el cuerpo")
+            cuerpo.pop(campo)
+        msg.update(cuerpo)
         self.validar(msg)
         with self._lock:
             self.registro.append({k: msg.get(k) for k in ("msg_id", "contrato", "emisor", "receptor", "tipo_mensaje")})
@@ -197,6 +220,8 @@ class Mensajeria:
         for c in ("msg_id", "contrato", "version_contrato", "emisor", "receptor", "timestamp"):
             if not msg.get(c):
                 raise MensajeInvalido(f"Falta el campo común {c}")
+        if msg["version_contrato"] != VERSION_CONTRATO or msg.get("tipo_mensaje") not in ("ENCARGO", "RETORNO"):
+            raise MensajeInvalido("Versión o tipo de mensaje no admitido")
         if msg["contrato"] not in CANALES:
             self.almacen.incidencia("CANAL_NO_PREVISTO", f"Contrato inexistente {msg['contrato']}", msg.get("emisor", ""))
             raise CanalNoPrevisto(f"Contrato inexistente {msg['contrato']}")
@@ -214,21 +239,48 @@ class Mensajeria:
             raise MensajeInvalido("Falta run_id o query_id")
         tipo = msg.get("tipo_mensaje", "ENCARGO")
         req = CAMPOS_MINIMOS.get(msg["contrato"], []) if tipo == "ENCARGO" else CAMPOS_RETORNO.get(msg["contrato"], [])
+        if tipo == "RETORNO" and msg["contrato"] in CAMPO_ESTADO:
+            campo = CAMPO_ESTADO[msg["contrato"]]
+            if msg.get(campo) not in ESTADOS_ESPECIFICOS[msg["contrato"]]:
+                raise MensajeInvalido(f"{campo} no válido")
         falta = [c for c in req if c not in msg]
         if falta:
             raise MensajeInvalido(f"{msg['contrato']}: faltan campos mínimos {falta}")
-        if tipo != "ENCARGO" and msg.get("estado") not in ESTADOS + ESTADOS_ESPECIFICOS.get(msg["contrato"], ()):
+        if tipo == "ENCARGO" and msg["contrato"] == "CT-01":
+            if msg["tipo"] not in ("AD_HOC", "PROFUNDIZACION", "PERIODICO") or msg["prioridad"] not in ("ALTA", "NORMAL", "BAJA"):
+                raise MensajeInvalido("CT-01: tipo o prioridad no admitidos")
+            if not isinstance(msg["alcance"], dict) or not isinstance(msg["horizontes"], list) or any(
+                    h not in ("H1", "H2", "H3", "H4", "H5") for h in msg["horizontes"]):
+                raise MensajeInvalido("CT-01: alcance u horizontes no válidos")
+        if tipo == "RETORNO" and msg["contrato"] == "CT-02" and (
+                not isinstance(msg.get("entregables"), dict) or not isinstance(msg.get("resumen"), dict)
+                or msg.get("estado_g3") not in ("APTO", "APTO_CON_ADVERTENCIAS")):
+            raise MensajeInvalido("CT-02: se requiere una entrega G3 aprobada con rutas y resumen")
+        if tipo != "ENCARGO" and msg.get("estado") not in ESTADOS:
             raise MensajeInvalido(f"Estado de retorno no válido {msg.get('estado')!r}")
 
     def procesar_una_vez(self, msg: dict, funcion) -> tuple[dict, bool]:
         """Idempotencia: devuelve (respuesta, repetido). El mismo msg_id no se reprocesa."""
-        with self._lock:
-            if msg["msg_id"] in self._procesados:
-                return copy.deepcopy(self._procesados[msg["msg_id"]]), True
-        r = funcion(msg)
-        with self._lock:
-            self._procesados[msg["msg_id"]] = copy.deepcopy(r)
-        return r, False
+        self.validar(msg)
+        identidad = {k: v for k, v in msg.items() if k not in ("timestamp", "msg_id")}
+        huella = hashlib.sha256(json.dumps(identidad, sort_keys=True, ensure_ascii=False).encode()).hexdigest()
+        # Reservar ANTES de los efectos del ciclo. Una reserva huérfana exige revisión:
+        # no se puede saber si ya produjo efectos antes de la caída.
+        with self._procesar, closing(sqlite3.connect(self.almacen.carpeta / "acuses.sqlite3")) as db:
+            db.execute("CREATE TABLE IF NOT EXISTS acuses (id TEXT PRIMARY KEY, huella TEXT NOT NULL, respuesta TEXT)")
+            with db:
+                insertado = db.execute("INSERT OR IGNORE INTO acuses VALUES (?, ?, NULL)", (msg["msg_id"], huella))
+                if not insertado.rowcount:
+                    anterior, respuesta = db.execute("SELECT huella, respuesta FROM acuses WHERE id=?", (msg["msg_id"],)).fetchone()
+                    if anterior != huella:
+                        raise MensajeInvalido("msg_id reutilizado con contenido distinto")
+                    if respuesta is None:
+                        raise MensajeInvalido("Mensaje en curso o interrumpido; compruebe su estado antes de reintentar")
+                    return json.loads(respuesta), True
+            r = funcion(msg)
+            with db:
+                db.execute("UPDATE acuses SET respuesta=? WHERE id=?", (json.dumps(r, default=str), msg["msg_id"]))
+            return r, False
 
     def acuse(self, msg: dict, asignado: str, **extra) -> dict:
         return {"acuse_de": msg["msg_id"], "asignado": asignado, "timestamp": self.almacen.reloj.ahora(), **extra}

@@ -63,6 +63,10 @@ def main(argv: Optional[List[str]] = None) -> int:
     sub.add_parser("estado", help="Colas, consumo y últimos runs")
     p = sub.add_parser("verificar-enlaces", help="HT-02 sobre F7, F8, F9 y FM")
     p.add_argument("--aplicar", action="store_true", help="Escribe los estados en los archivos (por defecto solo informe)")
+    p = sub.add_parser("preparar-encargo-b", help="Preparar localmente una petición CT-B-01 confirmada por el Broker")
+    p.add_argument("--paquete", required=True, type=Path)
+    p.add_argument("--decision", required=True, type=Path)
+    p.add_argument("--ambitos-b", required=True, type=Path)
     p = sub.add_parser("backtest", help="Backtest sobre fechas as_of")
     p.add_argument("--desde", required=True)
     p.add_argument("--hasta", required=True)
@@ -101,6 +105,19 @@ def main(argv: Optional[List[str]] = None) -> int:
     a = ap.parse_args(argv)
     cfg = cargar_config(a.config)
 
+    if a.cmd == "preparar-encargo-b":
+        import jsonschema
+        import yaml
+
+        from .encargo_b import preparar_encargo_b
+        try:
+            borrador = preparar_encargo_b(json.loads(a.paquete.read_text(encoding="utf-8")),
+                                          json.loads(a.decision.read_text(encoding="utf-8")),
+                                          yaml.safe_load(a.ambitos_b.read_text(encoding="utf-8")))
+        except (OSError, ValueError, KeyError, TypeError, yaml.YAMLError, jsonschema.ValidationError) as error:
+            ap.exit(1, f"No se preparó el encargo: {type(error).__name__}\n")
+        print(json.dumps(borrador, ensure_ascii=False, indent=2))
+        return 0
     if a.cmd == "generar-sinteticos":
         from .herramientas.ht01_datos import ProveedorSintetico, cargar_universo
         u = cargar_universo(a.universo)
@@ -132,7 +149,7 @@ def main(argv: Optional[List[str]] = None) -> int:
             codigo = max(codigo, ht02.main(args) or 0)
         return codigo
     bloque = _bloque(a, cfg)
-    as_of = pd.Timestamp(a.as_of) if a.as_of else pd.Timestamp.today().normalize()
+    as_of = pd.Timestamp(a.as_of) if a.as_of else pd.Timestamp.now(tz=bloque.reloj.zona).tz_localize(None)
     if a.cmd == "ciclo":
         print(json.dumps(_resumen_run(bloque.ciclo(as_of)), ensure_ascii=False, indent=1))
     elif a.cmd == "peticion":

@@ -92,3 +92,13 @@ Pruebas adicionales exigidas por el encargo del ejecutor: guardia de fuga del pr
 | PB-62 Validación, agrupación (máx. 3 por RUN-), recurrencia y aportación espontánea | Automática | `test_consulta_validaciones_agrupacion_y_entrante` | Superada |
 | PB-58, PB-59, PB-60 Credenciales: solicitud, rechazo del valor en un mensaje, depósito en la bóveda, denegación y recordatorio | Automática | `test_credenciales_boveda`, `test_cli_v51` | Superada |
 | PB-67 Recomendación PROPONER_ENVIO_A_B | Parcial (perfil SEGUIMIENTO de HT-09) | `10_Herramientas/tests/test_ht09_validador_g3.py::TestV51::test_seguimiento_envio_a_b` | Superada |
+
+### Trazabilidad explícita PB-53 a PB-57 (T-87)
+
+| Plan | Evidencia del ejecutor | Alcance |
+|---|---|---|
+| PB-53 · R21 | Pruebas de frontera y G3 de T-87; `test_esquema_de_finalista_sin_vehiculos` | Rechazo de recomendaciones individuales explícitas conservando ejemplos permitidos. No constituye un clasificador semántico universal. |
+| PB-54 · encargo a B | Validación del paquete en `test_ciclo_semanal_completo_apto` y preparación de encargo en T-87 | Contraste del productor, la decisión del Broker y el ámbito admitido, usando ejemplos. |
+| PB-55 · cobertura de 12 tipos | `test_doce_tipos_agentes_y_canales`, `test_ciclo_semanal_completo_apto` | Configuración de ensayo con 12 perfiles. T-66 verifica por separado solo DIV por defecto. |
+| PB-56 · duplicados entre tipos | `test_sin_duplicados_entre_tipos` | Comprueba la unicidad en top-3. |
+| PB-57 · estrategia propia por tipo | `test_prompts_de_los_analistas_nuevos_y_modo_degradado`, `test_doce_tipos_agentes_y_canales` | Cobertura parcial: materiales, identidades y horizontes; la calidad de los análisis requiere evaluación independiente de modelos. |

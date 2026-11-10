@@ -98,18 +98,21 @@ class ProveedorDatos:
     def tiene(self, simbolo: str) -> bool:
         return simbolo in set(self.simbolos())
 
-    def serie(self, simbolo: str, inicio: Fecha | None = None, fin: Fecha | None = None) -> pd.DataFrame:
+    def serie(self, simbolo: str, inicio: Fecha | None = None, fin: Fecha | None = None, *, conocido_el: Fecha | None = None) -> pd.DataFrame:
         """Observaciones de `simbolo` entre `inicio` y `fin` (inclusive), nunca posteriores a as_of."""
         if self._as_of is None:
             raise RuntimeError("HT-01: fije la fecha as_of (fijar_as_of) antes de pedir datos")
-        fin_ts = a_fecha(fin) if fin is not None else self._as_of
-        if fin_ts > self._as_of:
+        corte = pd.Timestamp(conocido_el).normalize() if conocido_el is not None else self._as_of
+        if corte > self._as_of:
+            raise FugaDeInformacion("HT-01: la fecha de conocimiento excede as_of")
+        fin_ts = pd.Timestamp(fin).normalize() if fin is not None else corte
+        if fin_ts > corte:
             raise FugaDeInformacion(
-                f"HT-01: se pidió {simbolo} hasta {fin_ts.date()} con as_of {self._as_of.date()} (fuga de información)")
+                f"HT-01: se pidió {simbolo} hasta {fin_ts.date()} con as_of {corte.date()} (fuga de información)")
         ini_ts = a_fecha(inicio)
         with self._lock:
             self.registro_peticiones.append({"simbolo": simbolo, "inicio": None if ini_ts is None else str(ini_ts.date()),
-                                             "fin": str(fin_ts.date()), "as_of": str(self._as_of.date())})
+                                             "fin": str(fin_ts.date()), "as_of": str(corte.date())})
         df = self._serie_completa(simbolo)
         df = df[df.index <= fin_ts]
         if ini_ts is not None:
@@ -117,8 +120,8 @@ class ProveedorDatos:
         if "fecha_publicacion" in df.columns:
             # Una fecha de publicación no interpretable no se da por publicada (falla cerrado)
             pub, invalida = _fechas_publicacion(df["fecha_publicacion"])
-            df = df[~invalida & (pub.isna() | (pub <= self._as_of))]
-        if len(df) and df.index.max() > self._as_of:  # defensa en profundidad
+            df = df[~invalida & (pub.isna() | (pub <= corte))]
+        if len(df) and df.index.max() > corte:  # defensa en profundidad
             raise FugaDeInformacion("HT-01: el proveedor devolvió datos posteriores a as_of")
         return df.copy()
 
@@ -146,7 +149,7 @@ class ProveedorDatos:
         h = hashlib.sha256()
         h.update(simbolo.encode())
         h.update(np.ascontiguousarray(s.values.astype("float64")).tobytes())
-        h.update(",".join(str(d.date()) for d in s.index[[0, -1]]).encode())
+        h.update(s.index.to_numpy(dtype="datetime64[ns]").astype("<i8").tobytes())
         return h.hexdigest()[:16]
 
 
@@ -207,8 +210,12 @@ class ProveedorCSV(ProveedorDatos):
         return sorted(p.stem for p in self.carpeta.glob("*.csv"))
 
     def _serie_completa(self, simbolo: str) -> pd.DataFrame:
+        if not simbolo or Path(simbolo).name != simbolo or "\\" in simbolo:
+            raise DatosNoDisponibles("HT-01: nombre de símbolo no permitido")
         if simbolo not in self._cache:
-            ruta = self.carpeta / f"{simbolo}.csv"
+            ruta = (self.carpeta / f"{simbolo}.csv").resolve()
+            if ruta.parent != self.carpeta.resolve():
+                raise DatosNoDisponibles("HT-01: el archivo de precios sale de la carpeta configurada")
             if not ruta.exists():
                 raise DatosNoDisponibles(f"HT-01: no hay archivo {ruta.name}")
             self._cache[simbolo] = _normalizar_df(pd.read_csv(ruta), ruta.name)
