@@ -2,7 +2,7 @@
 
 | Campo | Valor |
 | --- | --- |
-| Estado | EN QA |
+| Estado | CERRADO (QA r01 APTO, 10-11-2026) |
 | Pieza | sistema_global/marco_comun_c |
 | Planifica · implementa · QA | claude · claude · un revisor nuevo sin contexto |
 | Aprobación del operador | No necesaria: es deuda técnica del marco que no depende de él. El operador pidió el 2026-11-10: «reducir la deuda técnica: todo aquello que no dependa de mis decisiones personales» |
@@ -58,3 +58,4 @@ Detalle en `sistema_global/documentos_0/V0.69_Estado_del_diario_y_tolerancias_de
 
 - 2026-11-10 · ABIERTO · creado con nuevo_ticket.sh
 - 2026-11-10 · EN QA · V0.69 implementada; batería nueva con 24 comprobaciones, que falla con la V0.68; 58 baterías en verde
+- 2026-11-10 · CERRADO · QA r01 APTO (seis hallazgos bajos); H-01, H-02, H-04, H-05 y H-06 corregidos al cerrar (32 comprobaciones); H-03 a la deuda (T-89)

@@ -45,6 +45,9 @@ las rehace; en un mismo proceso, quien tiene el Diario puede llegar a la clave.
 V0.49: cada Diario recuerda cómo dejó el fichero del diario (dispositivo, inodo y tamaño). Si otro proceso lo reescribe (una
 rotación de clave, una migración, otro Diario sobre los mismos ficheros), la operación o el punto siguientes dan DI-06 y no se
 escribe nada más con ese Diario: hay que volver a abrirlo.
+
+V0.69 (T-72): `estado_diario()` da la foto pública de solo lectura del diario (operativo, bloqueo con su código, líneas y si
+está sincronizado con el Orquestador y con su fichero); la consola la usa en lugar de los privados.
 """
 from __future__ import annotations
 

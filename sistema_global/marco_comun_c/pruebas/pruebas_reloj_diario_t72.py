@@ -61,6 +61,25 @@ def main():
     x = r.ahora()
     h.chk("tolerancia_que_no_se_compara_no_da_instantes", not x["ok"], x)
 
+    # QA de T-72, H-01 y H-02: infinitos, enormes y _tol mal formado tampoco desactivan el control ni hacen lanzar
+    for nombre, tol in (("contraste_infinito", lambda t: (t[0], t[1], float("inf"))), ("salto_infinito", lambda t: (float("inf"), t[1], t[2])),
+                        ("desfase_enorme", lambda t: (t[0], 1e308, t[2])), ("salto_entero_enorme", lambda t: (10 ** 400, t[1], t[2])),
+                        ("tol_None", lambda t: None), ("tol_vacio", lambda t: ()), ("tol_corto", lambda t: (t[0],))):
+        f, r = nuevo_reloj()
+        r._tol = tol(r._tol)
+        f.pasa(1.0)
+        try:
+            x = r.ahora()
+            ok = not x["ok"]
+        except Exception as ex:   # noqa: BLE001
+            ok, x = False, repr(ex)
+        h.chk(f"{nombre}_no_da_instantes_ni_lanza_H01_H02", ok, x)
+
+    class FotoContradictoria:
+        def estado_diario(self):
+            return {"operativo": False, "bloqueo": None, "lineas": 2, "sincronizado": True, "motivo_desincronizado": None}
+    h.chk("una_foto_no_operativa_es_ROJO_H04", comp(nuevo(), "diario", diario=FotoContradictoria())["nivel"] == "ROJO")
+
     # ------------------------------------------------------------------ T-72: estado del diario
     with tempfile.TemporaryDirectory() as tmp:
         o = nuevo()
