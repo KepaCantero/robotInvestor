@@ -145,7 +145,7 @@ def _dia(t):
 
 # V0.51 (T-18): avisos que, en el periodo de promoción, impiden subir de nivel (además de O-19, ALCANZADO y el kill-switch)
 INCIDENTES_PROMOCION = ("O-03", "O-18", "O-25", "O-37")   # V0.53: también el tope de LIBRES superado (T-33)
-PRIORIDAD_AVISO = {"O-39": "ALTA", "O-36": "MEDIA", "O-35": "ALTA", "O-34": "ALTA", "O-33": "MEDIA", "O-32": "MEDIA", "O-31": "MEDIA", "O-20": "MEDIA", "O-30": "ALTA", "O-25": "ALTA", "O-26": "ALTA", "O-19": "ALTA", "O-18": "ALTA", "O-03": "ALTA", "O-08": "ALTA", "O-09": "ALTA", "O-13": "ALTA", "O-17": "ALTA", "O-37": "ALTA", "O-38": "ALTA"}   # O-37 (T-33): tope diario de las LIBRES superado, o LIBRES sin poder valorar; O-38 (T-40): cortacircuito global por pérdida
+PRIORIDAD_AVISO = {"O-40": "MEDIA", "O-39": "ALTA", "O-36": "MEDIA", "O-35": "ALTA", "O-34": "ALTA", "O-33": "MEDIA", "O-32": "MEDIA", "O-31": "MEDIA", "O-20": "MEDIA", "O-30": "ALTA", "O-25": "ALTA", "O-26": "ALTA", "O-19": "ALTA", "O-18": "ALTA", "O-03": "ALTA", "O-08": "ALTA", "O-09": "ALTA", "O-13": "ALTA", "O-17": "ALTA", "O-37": "ALTA", "O-38": "ALTA"}   # O-37 (T-33): tope diario de las LIBRES superado, o LIBRES sin poder valorar; O-38 (T-40): cortacircuito global por pérdida
 ACTORES_PROPUESTA = set(EMISORES)   # quien propone no aprueba ni controla: F, D y H no proponen (Constitución §2, P1)
 
 
@@ -3368,11 +3368,75 @@ class Orquestador:
                 s["estado"] = "CADUCADO"
                 self._aviso("O-10", f"el sello {sid} caducó por antigüedad", ahora, sid)
                 cambios.append(("sello", sid, "CADUCADO"))
+        sq = self.sequia(ahora)   # T-75 (D-22): alarma de sequía, una por plazo
+        if sq["activa"] and not any(x["codigo"] == "O-40" and _dt(x["ahora"]) >= _dt(sq["desde"]) for x in self.avisos):
+            em = sq["embudo"]
+            self._aviso("O-40", f"en {sq['dias']} días ninguna oportunidad se invirtió habiendo {sq['validadas']} que pasaron el análisis; "
+                                f"embudo del periodo: entran {em['entran']}, por capa {em['por_capa']}, salidas {len(em['salidas'])}", ahora)
+            cambios.append(("sequia", sq["desde"], sq["validadas"]))
         for c, sid, eid in self._datos_viejos(a):   # T-29: candidatos en juego sobre datos que ya no valen para su cartera
             if c not in self.degradadas and NIVELES[self.nivel(c)] > 1:
                 self._degradar(c, f"el sello {sid} de {eid} ya no está vigente para {c}", ahora)
                 cambios.append(("degradada", c, sid))
         return _r(True, "OK", f"{len(cambios)} cambio(s)", cambios=cambios)
+
+    # ------------------------------------------------------------ T-75 (D-22): contrapesos de la abstención
+    def embudo(self, desde, hasta):
+        """El embudo de un periodo [desde, hasta] (solo lee; ilegible o al revés: None). Cuántas oportunidades entran (nacen en el
+        periodo), en qué capa está cada una al final del periodo y por qué (la última anotación), cuántas pasaron el análisis
+        (llegaron a VALIDADA) y cuántas se invirtieron (EJECUTADA) en el periodo, y cada salida del juego (a DESCARTADA,
+        EN_OBSERVACION o CADUCADA) con quién y por qué."""
+        try:
+            d0, d1 = _dt(desde), _dt(hasta)
+            if d1 < d0:
+                return None
+            oport, salidas, validadas, invertidas = [], [], 0, 0
+            for k, e in sorted(self.expedientes.items()):
+                h = [x for x in e["historial"] if _dt(x["ahora"]) <= d1]
+                if not h:
+                    continue
+                if d0 <= _dt(h[0]["ahora"]):
+                    u = h[-1]
+                    oport.append({"expediente_id": k, "cartera": e["cartera_destino"], "via": e["via_entrada"], "capa": u["hasta"],
+                                  "actor": u["actor"], "motivo": u["motivo"]})
+                for x in h:
+                    if _dt(x["ahora"]) < d0 or x["desde"] == x["hasta"]:
+                        continue
+                    validadas += x["hasta"] == "VALIDADA"
+                    invertidas += x["hasta"] == "EJECUTADA"
+                    if x["hasta"] in ("DESCARTADA", "EN_OBSERVACION", "CADUCADA"):
+                        salidas.append({"expediente_id": k, "desde": x["desde"], "hasta": x["hasta"], "actor": x["actor"],
+                                        "motivo": x["motivo"], "ahora": x["ahora"]})
+            por_capa = {}
+            for x in oport:
+                por_capa[x["capa"]] = por_capa.get(x["capa"], 0) + 1
+            return {"desde": desde, "hasta": hasta, "entran": len(oport), "por_capa": dict(sorted(por_capa.items())),
+                    "validadas": validadas, "invertidas": invertidas, "oportunidades": oport, "salidas": salidas}
+        except Exception:   # noqa: BLE001 — una consulta de solo lectura no rompe nada
+            return None
+
+    def sequia(self, ahora, dias=PARAMETROS["o_dias_sequia"]):
+        """Alarma de sequía (D-22): en los últimos `dias` ninguna oportunidad llegó a invertirse habiendo candidatos que pasaron el
+        análisis. Solo lee. Si el sistema lleva menos del plazo, no hay sequía que juzgar (activa False). {activa, dias, desde,
+        hasta, validadas, invertidas, embudo, motivo}."""
+        try:
+            a = _dt(ahora)
+            ini = a - timedelta(days=dias)
+            desde = ini.isoformat()
+            em = self.embudo(desde, ahora)
+            primero = self._primer_instante()
+            if em is None:
+                return {"activa": False, "dias": dias, "desde": desde, "hasta": ahora, "validadas": 0, "invertidas": 0, "embudo": None,
+                        "motivo": "no se puede calcular el embudo"}
+            if primero is None or primero > ini:
+                return {"activa": False, "dias": dias, "desde": desde, "hasta": ahora, "validadas": em["validadas"], "invertidas": em["invertidas"],
+                        "embudo": em, "motivo": "el sistema lleva menos del plazo"}
+            activa = em["invertidas"] == 0 and em["validadas"] > 0
+            return {"activa": activa, "dias": dias, "desde": desde, "hasta": ahora, "validadas": em["validadas"], "invertidas": em["invertidas"],
+                    "embudo": em, "motivo": "sequía" if activa else ("hubo inversiones" if em["invertidas"] else "ningún candidato pasó el análisis")}
+        except Exception:   # noqa: BLE001
+            return {"activa": False, "dias": dias, "desde": None, "hasta": ahora, "validadas": 0, "invertidas": 0, "embudo": None,
+                    "motivo": "instante ilegible"}
 
     def _sello_vigente_para(self, e, a):
         """El sello del análisis del expediente sigue VIGENTE para su cartera hoy (K: antigüedad por cartera)."""

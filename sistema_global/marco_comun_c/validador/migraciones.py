@@ -64,6 +64,8 @@ ESQUEMA_V0_53 = "0a18459ec3066ff9ddd17b2e06bda9c41abf40a110191e014aad136cb807eaa
 ESQUEMA_V0_67 = "f3943b0d923b81f423256f435e1db04f352c8ebf6d0962fd2dc5f37b5853086e"
 # esquema de V0.68 (T-80: vía DIRECTA y modo CONSULTA; atributo consultas, el rastro SC-5, y constantes de la vía DIRECTA)
 ESQUEMA_V0_68 = "9eade73e26f0f61f9e9f4e96638b50ea2fa3921c2965ac9ffa01d7b073d94cd8"
+# esquema de V0.70 (T-75: alarma de sequía O-40 y parámetros de sequía y embudo, PAR-0.6.0)
+ESQUEMA_V0_70 = "f13adbc3fef1e3a6445531bee830534681e74a32e2674a66a823565673443f86"
 # lo que una migración nunca puede cambiar, aunque lo declare (revisión de V0.46, hallazgos 5 y 10)
 PROHIBIDAS = ("limites", "kill", "rearmes", "ultimo_ahora", "huella_config", f"cfg.politica_f.{LIMITE_PERDIDA}",
               "cfg.nivel_autonomia")   # V0.51 (revisión, duda 2): ninguna migración sube ni baja el nivel de nadie
@@ -157,6 +159,9 @@ MIGRACIONES = (
               "el estado guardado no cambia"),
     Migracion("MIG-006", pe.FORMATO, ESQUEMA_V0_67, ESQUEMA_V0_68, _v068, frozenset(),
               "V0.67 a V0.68 (T-80, vía DIRECTA y modo CONSULTA): el rastro SC-5 de las consultas, vacío; los expedientes no cambian"),
+    Migracion("MIG-007", pe.FORMATO, ESQUEMA_V0_68, ESQUEMA_V0_70, _sin_cambios, frozenset(),
+              "V0.68 a V0.70 (T-75, embudo y alarma de sequía): solo cambia el código (aviso O-40 y parámetros de sequía y embudo); "
+              "el estado guardado no cambia"),
 )
 
 

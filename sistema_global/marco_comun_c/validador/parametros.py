@@ -8,7 +8,7 @@ from __future__ import annotations
 
 from types import MappingProxyType
 
-VERSION_PARAMETROS = "PAR-0.5.0"   # 0.2.0 (T-26): licencias admitidas por K. 0.3.0 (T-17): costes y confianza en D. 0.4.0 (V0.67): tope de líneas del diario en el panel. 0.5.0 (V0.68, T-80): tope de análisis por consulta
+VERSION_PARAMETROS = "PAR-0.6.0"   # 0.2.0 (T-26): licencias admitidas por K. 0.3.0 (T-17): costes y confianza en D. 0.4.0 (V0.67): tope de líneas del diario en el panel. 0.5.0 (V0.68, T-80): tope de análisis por consulta
 
 _VALORES = {
     # K — calidad y antigüedad de los datos de corte
@@ -43,6 +43,8 @@ _VALORES = {
     # N — consola. V0.64 lo dejaba escrito en la firma de panel(); V0.67 lo trae aquí (regla 5 del kit)
     "n_lineas_diario_ambar": 1000,   # líneas del diario sin punto de control a partir de las que el panel avisa en ámbar [PROPUESTO]
     "o_max_analisis_consulta": 50,   # T-80: análisis que puede citar una consulta, para que el rastro SC-5 no crezca sin límite [PROPUESTO]
+    "o_dias_sequia": 60,   # T-75: plazo de la alarma de sequía [RATIFICADO: 60 días] (D-22, D-27, P-17)
+    "n_dias_embudo": 7,    # T-75: el embudo visible en N es semanal [RATIFICADO] (D-22: «N muestra cada semana»)
 }
 
 
