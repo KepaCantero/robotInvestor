@@ -50,7 +50,7 @@
 | AG-14 y AG-16 con web | SC-11, lectura aislada con esquema cerrado (§3, §12.4) | Devuelven texto libre («afirmación») que llega a otros agentes, aunque saneado | En la Fase 1, que el lector sea SC-11 mínimo |
 | AG-01: colas, prioridades, cron y plazos | Orquestador determinista del Broker (§2, D-21/D-23) | Ya es código (HT-05, `ciclo`); el prompt de 26 000 tokens describe lo mismo | AG-01 queda solo como respondedor N0 |
 | AG-18: colas, presupuesto e instancias; dictamen G3 | Orquestador y SC-6 | El dictamen se ignora (`orquestacion.py` 1097–1099) | Retirar el LLM |
-| AG-20 Evaluador | SC-4 mínimo con calibración (Fase 1) e I (Fase 4–5) | El evaluador es código; el LLM solo redacta | Su código pasa a SC-4 común, junto con la certificación de B (T-62) |
+| AG-20 Evaluador | SC-4 mínimo con calibración (Fase 1) e I (Fase 4–5) | El evaluador es código; el LLM solo redacta | Su código pasa a SC-4 común, junto con la certificación de B (T-68) |
 | AG-19 Auditor | Revisión independiente, «preferiblemente de otro proveedor» (§14, regla 5) | Mismo proveedor; los hallazgos van a HA y nadie los consume | Fase 2, con muestreo y con el lazo cerrado |
 | AG-11 Contrarias | Contradictor (§3.2, CT-G-03 con veredicto calculado por regla) | Mismo proveedor, ve el razonamiento y elige su propio veredicto | PA-05 |
 | AG-17: informe visual al usuario | N y Broker conversacional, únicas superficies del operador (§2) | A produce lenguaje llano para el usuario: papel duplicado | PA-13 |
@@ -106,7 +106,7 @@ Inventario de llamadas LLM del ejecutor (`grep _invocar`): AG-0x Analista (1 por
 - AG-01 hace lo mismo que AG-18 y que el Orquestador global en colas y presupuestos.
 - AG-02 y AG-17 hacen narrativa sobre el mismo paquete.
 - AG-14 y AG-16 se solapan con SC-11 y K.
-- AG-20 se solapa con SC-4, con I y con la certificación de rankings de B (T-62).
+- AG-20 se solapa con SC-4, con I y con la certificación de rankings de B (T-68).
 
 ### 2.3 Calidad de los prompts
 
@@ -292,7 +292,7 @@ Leyenda: **[OP]** decide el operador (cambio de diseño, de tipo 3 o enmienda). 
 - **Coste y riesgo.** Bajo.
 
 **PA-15 · Una sola evaluación común (SC-4 y I)** [TEC] · Fase 1–2
-- **Qué cambiar.** Unificar `evaluador.py` y `motor/evaluacion.py` de A, la certificación de rankings de B (T-62) y el diario del marco en un servicio común.
+- **Qué cambiar.** Unificar `evaluador.py` y `motor/evaluacion.py` de A, la certificación de rankings de B (T-68) y el diario del marco en un servicio común.
 - **Por qué.** P12 (especializar sin duplicar) y §9 (I completo al final, SC-4 desde la Fase 1).
 - **Beneficio.** Un único criterio de certificado para todo el sistema.
 - **Coste y riesgo.** Medio, con riesgo de migración. Se hace con estado separado por bloque (§5, enchufabilidad, punto 3).

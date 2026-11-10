@@ -130,7 +130,7 @@ Desde la V0.5 estas reglas y las de la sección siguiente están también en la 
    - El Contradictor ve la evidencia, no el razonamiento del Analista, y una objeción fuerte solo la cierra su contrarréplica.
    - El aprendizaje automático solo endurece: un certificado entra en vigor cuando el operador lo aprueba por CT-04.
    - Las propuestas que faltan tienen su destino en la deuda técnica (T-67).
-   - B, en T-62.
+   - B, en T-68.
 3. **Antes de empezar un bloque sin construir hay una conversación de diseño con el operador** (lluvia de ideas): qué hace el bloque, qué agentes tiene, cómo se reparten el trabajo, qué es LLM y qué es código, qué fuentes usa. Solo después se escribe su Documento 0. El operador participa en el diseño; no se le presenta un diseño cerrado.
 
 ## Decisiones del operador: aplazadas hasta completar la arquitectura

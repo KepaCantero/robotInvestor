@@ -22,8 +22,9 @@ import time
 from typing import Any, Dict, List, Optional, Tuple
 
 from . import sintesis
-from .configuracion import DIAS_HORIZONTE, FRESCURA_MERCADO_DIAS, HORIZONTES, NOMBRE_TIPO, TIPOS_ACTIVO, TIPOS_OBJETO
+from .configuracion import FRESCURA_MERCADO_DIAS, HORIZONTES, TIPOS_ACTIVO, TIPOS_OBJETO
 from .contratos import RE_CARTERA, MensajeRechazado, comprobar_sensibles, controlado, multiplo10, sanear
+from .fechas_evidencia import CAMPOS_FECHA, dia_local, fechas_de_fuente
 from .herramientas import ht03, ht08, ht09, ht11
 from .referencias import AREAS_DIM
 
@@ -181,6 +182,13 @@ class Coordinador:
     # Bucle de ejecución con puerta de tiempo
     # =========================================================================================================
     def ejecutar(self, st: Dict) -> Dict:
+        if st["siguiente"] in ("F7", "F8", "F9", "F10") and any(
+            o.get("fuerza") == "fuerte" and o.get("resuelta") and not o.get("x_fechas_evidencia")
+            for o in (st.get("refutacion") or {}).get("objeciones", [])
+        ):
+            motivo = "Cierre anterior al control temporal: se necesita repetir el análisis."
+            self._estado_pet(st, "BLOQUEADO_AUDITORIA", motivo=motivo)
+            return {"pet_id": st["pet_id"], "estado_peticion": "BLOQUEADO_AUDITORIA", "motivo": motivo}
         st["run_id"] = self.alm.nuevo_run(st["pet_id"])
         st["run_ids"].append(st["run_id"])
         self.alm.escribir("F1", "AG-B01", {"tipo_entrada": "EJECUCION", "id": st["run_id"], "pet_id": st["pet_id"],
@@ -684,7 +692,7 @@ class Coordinador:
                    "frescura_max": frescura, "datos_disponibles": datos, "calculos_disponibles": calc, "indicador": st["indicador"],
                    "metricas_indicador": st["indicador_metricas"], "referencias": self.ent.refs.por_areas(areas, 6, anio),
                    "items_lista_profesional": [i for i, x in sintesis.LISTA_PROFESIONAL.items() if set(x[1]) & set(dims)]}
-            r = self.inv.llamar(ag, "CT-B-09", tarea, msg, "Elabora el informe dimensional de tus dimensiones (CT-B-09).",
+            r = self.inv.llamar(ag, "CT-B-09", tarea, msg, "Elabora el informe dimensional de tus dimensiones (CT-B-09). En notas con fuente fechada, copia en fechas los campos fecha_fenomeno, fecha_publicacion y conocible_desde de la fuente. Omite lo desconocido.",
                                 {"dim_informes": "array"}, self._ctx(ag), st["run_id"])
             return ag, r
 
@@ -719,6 +727,11 @@ class Coordinador:
             for n in inf.get("notas") or []:
                 if not isinstance(n, dict) or not n.get("afirmacion"):
                     continue
+                marcas = {}
+                if "fechas" in n or any(k in n for k in CAMPOS_FECHA):
+                    if not fechas_de_fuente(n, self.ent.as_of, self.ent.reloj.zona):
+                        continue
+                    marcas = {k: n.get("fechas", {}).get(k, n.get(k)) for k in CAMPOS_FECHA}
                 et = controlado(n.get("etiqueta"), "etiqueta", "[INTERPRETACIÓN]")
                 usa_d = [x for x in (n.get("usa_datos") or []) if str(x).startswith("DAT-B-")]
                 usa_c = [x for x in (n.get("usa_calculos") or []) if str(x).startswith("CALC-B-")]
@@ -730,7 +743,7 @@ class Coordinador:
                 evd = self.alm.nuevo_id("EVD-B")
                 self.alm.escribir("F2", "AG-B15", {"tipo_entrada": "EVD", "id": evd, "pet_id": st["pet_id"], "fuente": "HT-01" if usa_d else inf["especialista"],
                                                    "raiz": usa_d[0] if usa_d else evd, "independiente": True, "nivel_fuente": "A" if usa_d else "C provisional",
-                                                   "fechas": {"recuperacion": self.ent.as_of, "conocible_desde": self.ent.as_of}, "estado": "VIGENTE"})
+                                                   "fechas": {"recuperacion": self.ent.as_of, **marcas}, "estado": "VIGENTE"})
                 self.alm.escribir("F2", "AG-B15", {"tipo_entrada": "CLM", "id": clm, "pet_id": st["pet_id"], "dim": d, "afirmacion": n["afirmacion"][:500],
                                                    "etiqueta": et, "clase_cifra": clase, "evd": [evd], "dat": usa_d, "calc": usa_c})
                 nota = {"afirmacion": n["afirmacion"], "etiqueta": et, "evidencias": [clm], "datos": usa_d, "calculos": usa_c,
@@ -1217,35 +1230,60 @@ class Coordinador:
                         finalistas.append({"cand_id": cid, "tipo": t, "nombre": c["_fila"].get("nombre"), "S": c["S"], "pureza": c["pureza"],
                                            "eslabon_id": eid, "origen": "MEJORES_POR_ESLABON"})
                         ya.add(cid)
+            mapa = {e["eslabon_id"]: e["nombre"] for e in st.get("desglose") or []}
             r = self.inv.llamar("AG-B14", "CT-B-17", "refutacion",
                                 {"pet_id": st["pet_id"], "tesis": st["integracion"].get("tesis"), "hipotesis": st["plan"]["hipotesis"],
-                                 "escenarios": st["escenarios"], "finalistas": finalistas},
-                                "Refuta la tesis y los finalistas; gradúa las objeciones (fuerte, moderada, débil).",
+                                 "escenarios": st["escenarios"], "finalistas": finalistas, "eslabones": mapa},
+                                "Refuta la tesis y los finalistas; gradúa las objeciones (fuerte, moderada, débil). Incluye fecha_incidente para cada objeción fuerte cuando esté documentada; omítela si se desconoce.",
                                 {"objeciones": "array", "veredicto_tesis": "string"}, self._ctx("AG-B14"), st["run_id"])
             vt = controlado(r.get("veredicto_tesis"), "veredicto_tesis", "fragil")
             validos = {f["cand_id"] for f in finalistas}
             for o in r.get("objeciones") or []:
                 if not isinstance(o, dict) or not o.get("argumento"):
                     continue
-                objeto = o.get("objeto") if (o.get("objeto") == "TESIS" or o.get("objeto") in validos) else "TESIS"
-                objs.append({"obj_id": self.alm.nuevo_id("OBJ-B"), "objeto": objeto, "tipo": o.get("tipo") or "objeción",
+                objeto = o.get("objeto")
+                alcance = {}
+                if objeto in ("ESLABON", "CADENA") or (objeto == "TESIS" and "eslabon_id" in o and not o.get("emg_id")):
+                    eid = o.get("eslabon_id")
+                    if not isinstance(eid, str) or eid not in mapa or o.get("emg_id"):
+                        motivo = "CT-B-17: eslabón ambiguo o ausente del mapa"
+                        self._estado_pet(st, "BLOQUEADO_AUDITORIA", motivo=motivo)
+                        st["terminado"] = True
+                        st["resultado"] = {"pet_id": st["pet_id"], "estado_peticion": "BLOQUEADO_AUDITORIA", "motivo": motivo}
+                        return
+                    afectados = sorted(cid for grupo in st["seleccion"].values()
+                                       for cid, cand in (grupo.get("candidatos") or {}).items()
+                                       if eid == cand.get("eslabon_id") or eid in (cand.get("eslabones_secundarios") or []))
+                    alcance = {"x_eslabon_id": eid, "x_nombre_eslabon": mapa[eid], "x_candidatos_afectados": afectados}
+                    objeto = "CADENA"
+                elif not isinstance(objeto, str) or objeto not in validos:
+                    objeto = "TESIS"
+                if controlado(o.get("fuerza"), "fuerza", "moderada") == "fuerte":
+                    alcance["x_fecha_incidente"] = dia_local(o.get("fecha_incidente"), self.ent.reloj.zona)
+                objs.append({"objeto": objeto, **alcance, "tipo": o.get("tipo") or "objeción",
                              "fuerza": controlado(o.get("fuerza"), "fuerza", "moderada"), "argumento": o["argumento"],
                              "evidencia": [], "que_la_resolveria": o.get("que_la_resolveria") or "", "respuesta": None, "resuelta": False})
-            tesis_o = [o for o in objs if o["objeto"] == "TESIS" and o["fuerza"] in ("fuerte", "moderada")]
-            cand_o = [o for o in objs if o["objeto"] != "TESIS" and o["fuerza"] in ("fuerte", "moderada")]
-            if tesis_o:
-                rd = self.inv.llamar("AG-B02", "CT-B-17", "respuestas_objeciones", {"pet_id": st["pet_id"], "objeciones": tesis_o},
-                                     "Responde con evidencia cada objeción fuerte o moderada sobre la tesis.", {"respuestas": "object"},
+            for o in objs:
+                o["obj_id"] = self.alm.nuevo_id("OBJ-B")
+            director_o = [o for o in objs if o["objeto"] in ("TESIS", "CADENA") and o["fuerza"] in ("fuerte", "moderada")]
+            cand_o = [o for o in objs if o["objeto"] in validos and o["fuerza"] in ("fuerte", "moderada")]
+            referencias = self._referencias_contraste(st) if any(o["fuerza"] == "fuerte" for o in objs) else {}
+            instruccion = ("Para cerrar una objeción fuerte devuelve evidencia_nueva como lista de identificadores de "
+                           "referencias_disponibles, con fecha del hecho posterior al incidente. Explica qué demuestra la fuente.")
+            if director_o:
+                rd = self.inv.llamar("AG-B02", "CT-B-17", "respuestas_objeciones", {"pet_id": st["pet_id"], "objeciones": director_o,
+                                     "referencias_disponibles": referencias},
+                                     "Responde con evidencia cada objeción fuerte o moderada sobre la tesis o el eslabón indicado. " + instruccion, {"respuestas": "object"},
                                      self._ctx("AG-B02"), st["run_id"])
-                self._aplicar_respuestas(tesis_o, rd.get("respuestas") or {})
+                self._aplicar_respuestas(director_o, rd.get("respuestas") or {}, referencias)
             if cand_o:
                 ids_objetados = {o["objeto"] for o in cand_o}
                 rs = self.inv.llamar("AG-B12", "CT-B-17", "respuestas_objeciones",
-                                     {"pet_id": st["pet_id"], "objeciones": cand_o,
+                                     {"pet_id": st["pet_id"], "objeciones": cand_o, "referencias_disponibles": referencias,
                                       "finalistas": [f for f in finalistas if f["cand_id"] in ids_objetados]},
-                                     "Responde cada objeción fuerte o moderada sobre los candidatos.", {"respuestas_objeciones": "object"},
+                                     "Responde cada objeción fuerte o moderada sobre los candidatos. " + instruccion, {"respuestas_objeciones": "object"},
                                      self._ctx("AG-B12"), st["run_id"])
-                self._aplicar_respuestas(cand_o, rs.get("respuestas_objeciones") or {})
+                self._aplicar_respuestas(cand_o, rs.get("respuestas_objeciones") or {}, referencias)
             for o in objs:
                 if o["fuerza"] == "debil":
                     o.update(estado_contraste="aceptada", resuelta=True,
@@ -1260,13 +1298,62 @@ class Coordinador:
             if st.get("refutacion_limitada"):
                 st["limitaciones"].append("Refutación limitada a la autorrefutación por la versión ≤ 30 min (R23: los controles no se recortan)")
 
+    def _referencias_contraste(self, st):
+        """Referencias trazables de esta petición disponibles en la fecha del análisis."""
+        entradas = [e for e in self.alm.estado("F2", as_of=self.ent.as_of).values() if e.get("pet_id") == st["pet_id"]]
+        referencias = {}
+        for e in entradas:
+            fechas = fechas_de_fuente(e, self.ent.as_of, self.ent.reloj.zona)
+            if fechas is None:
+                continue
+            if e["tipo_entrada"] == "DAT":
+                referencias[e["id"]] = {"descripcion": e["descripcion"], **fechas}
+            elif e["tipo_entrada"] == "EVD" and e.get("estado") == "VIGENTE":
+                referencias[e["id"]] = {"descripcion": e["fuente"], **fechas}
+        for e in entradas:
+            if e["tipo_entrada"] == "CLM":
+                if ("fechas" in e or any(k in e for k in CAMPOS_FECHA)) and not fechas_de_fuente(e, self.ent.as_of, self.ent.reloj.zona):
+                    continue
+                for ref in e.get("evd") or []:
+                    if ref in referencias:
+                        referencias[ref]["descripcion"] = e["afirmacion"]
+
+        calculos = {(st.get("escenarios_motor") or {}).get("calc_id")}
+        calculos.update(grupo.get("calc_puntuar") for grupo in st["seleccion"].values())
+        for e in self.alm.leer("RC", self.ent.as_of, lambda e: e.get("id") in calculos and e.get("estado") == "SERVIDO"):
+            fechas = fechas_de_fuente(e, self.ent.as_of, self.ent.reloj.zona)
+            if fechas:
+                referencias[e["id"]] = {"descripcion": e["metodo"], **fechas}
+        return referencias
+
     @staticmethod
-    def _aplicar_respuestas(objs: List[Dict], resp: Dict) -> None:
+    def _aplicar_respuestas(objs: list[dict], resp: dict, referencias: dict) -> None:
         for o in objs:
+            if o["fuerza"] == "fuerte":
+                o["x_evidencia_respuesta"] = []
             rr = resp.get(o["obj_id"])
-            if isinstance(rr, dict) and rr.get("respuesta"):
+            if isinstance(rr, dict) and isinstance(rr.get("respuesta"), str) and rr["respuesta"].strip():
                 o["respuesta"] = rr["respuesta"]
                 o["resuelta"] = rr.get("resuelta") is True
+                if o["fuerza"] == "fuerte":
+                    citas = rr.get("evidencia_nueva")
+                    if not isinstance(citas, list):
+                        citas = []
+                    validas = [ref for ref in citas if isinstance(ref, str) and ref in referencias]
+                    o["x_evidencia_respuesta"] = list(dict.fromkeys(validas))
+                    o["x_fechas_evidencia"] = {ref: {k: referencias[ref][k] for k in CAMPOS_FECHA} for ref in validas}
+                    if o["resuelta"]:
+                        motivo = None
+                        incidente = o.get("x_fecha_incidente")
+                        if not validas or len(validas) != len(citas):
+                            motivo = "Falta una cita de la petición con fechas verificables y disponible al corte."
+                        elif not incidente:
+                            motivo = "Falta una fecha válida del incidente para contrastar la recuperación."
+                        elif any(referencias[ref]["fecha_fenomeno"] <= incidente for ref in validas):
+                            motivo = "El hecho citado no es de un día posterior al incidente."
+                        if motivo:
+                            o["resuelta"] = False
+                            o["x_motivo_abierta"] = motivo
             o["estado_contraste"] = "resuelta" if o["resuelta"] else "incertidumbre_abierta"
 
     # =========================================================================================================

@@ -5,7 +5,7 @@
 - **Fase en la que se entrega:** cerrada. QA APTO en r01 y r02; las dos ramas están fusionadas en `develop`.
 - **Pendiente para Astra:**
   - H-04: en `.docs/memoria/compartida/2026-11-09_bloque-b-objeciones-y-evaluacion.md`, cambiar `vigencia: histórica` por un valor del protocolo (`vigente`, `sustituida por …` o `caduca …`).
-- **A la deuda (T-62, revisión de B con el operador):**
+- **A la deuda (T-68, revisión de B con el operador):**
   - H-03: la certificación descarta también ventanas solapadas de peticiones distintas.
   - H-05: el número de grupos del sorteo debería tener su propio parámetro.
   - H-06: guardar en `universo_azar` las reglas de diversidad que se aplicaron de verdad en la selección.
