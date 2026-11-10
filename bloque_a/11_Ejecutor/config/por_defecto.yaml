@@ -124,6 +124,8 @@ presupuesto_uc:
     refutacion: 0.20
     respuesta_objeciones: 0.10
   rotacion_exploratoria: 0.20
+  # [PROPUESTO] técnico (QA r01 de T-65, H-05): suelo de la bolsa COMÚN como fracción del ciclo semanal (antes, 0,1 en el código)
+  fraccion_minima_comun: 0.1
 
 uc:
   # 1 UC ≈ 8 000 tokens de entrada y 1 500 de salida (Anexo A). Decisión del ejecutor:

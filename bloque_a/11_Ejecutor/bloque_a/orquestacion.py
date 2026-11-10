@@ -122,6 +122,7 @@ def _semana(fecha) -> str:
 
 
 CLAVES_FESTIVOS_PS2 = {"viernes_santo": bool, "lunes_de_pascua": bool, "fijos": list}
+RE_MM_DD = re.compile(r"[0-9]{2}-[0-9]{2}", re.ASCII)
 
 
 def validar_festivos_ps2(festivos) -> dict:
@@ -139,7 +140,8 @@ def validar_festivos_ps2(festivos) -> dict:
         fijos = festivos.get("fijos")
         for d in fijos if isinstance(fijos, list) else []:
             try:
-                ok = isinstance(d, str) and len(d) == 5 and d[2] == "-" and bool(pd.Timestamp(f"2024-{d}"))   # 2024: admite 02-29
+                # QA r01 de T-65, H-04: «MM-DD» estricto (dígitos ASCII, sin espacios), y además una fecha real (2024: admite 02-29)
+                ok = isinstance(d, str) and bool(RE_MM_DD.fullmatch(d)) and bool(pd.Timestamp(f"2024-{d}"))
             except (ValueError, TypeError):
                 ok = False
             if not ok:
@@ -340,11 +342,6 @@ class Bloque:
             except Exception as e:  # noqa: BLE001 — error del proveedor para un símbolo: se excluye y se declara
                 invalidos.append((f["simbolo"], f"{type(e).__name__}: {e}"))
         self._sin_historia[(clase, run_id)] = sin_historia
-        self._datos_invalidos[(clase, run_id)] = [s for s, _ in invalidos]
-        for s, motivo in invalidos:
-            self.almacen.incidencia("DATOS", f"HT-01: datos inválidos de {s} ({motivo[:200]}); símbolo excluido del cribado",
-                                    s, severidad="Operativa", tratamiento="símbolo excluido y declarado como laguna del tipo",
-                                    run_id=run_id)
         self._fichas_rechazadas[(clase, run_id)] = []
         datos = [{"serie": s, "inicio": ini} for s in simbolos]
         tabla: dict[str, dict] = {s: {} for s in simbolos}
@@ -375,13 +372,17 @@ class Bloque:
                     t.update({"z_precio_3a": pos.get("z"), "pct_precio_3a": pos.get("percentil")})
                 elif ficha == "FIN-CAGR-001":
                     t.update({k: v.get(k) for k in ("rent_1s", "rent_1m", "rent_3m", "rent_12m")})
-        for s, t in tabla.items():
+        for s, t in list(tabla.items()):
             try:
                 fd, precio = self.proveedor.valor_en(s, as_of)
                 t["precio"] = round(precio, 6)
                 t["fecha_dato"] = str(fd.date())
-            except DatosNoDisponibles:
-                pass
+            except FugaDeInformacion:
+                raise
+            except Exception as e:  # noqa: BLE001 — QA r01 de T-65, H-01: sin precio, el símbolo se excluye y se declara
+                invalidos.append((s, f"precio a la fecha as_of no disponible: {type(e).__name__}: {e}"))
+                del tabla[s]
+                continue
             # Señal compuesta (GC1, Anexo A): familias momento, tendencia y valoración relativa
             fam = []
             if t.get("pct_momentum_clase") is not None:
@@ -395,6 +396,12 @@ class Bloque:
             if self.anon and "precio" in t:
                 self.anon.factores[s] = 100.0 / t["precio"] if t["precio"] else 1.0
                 t["precio"] = 100.0
+        # Símbolos con datos inválidos (en la ventana del lote o en su precio): laguna del tipo e incidencia en HA
+        self._datos_invalidos[(clase, run_id)] = [s for s, _ in invalidos]
+        for s, motivo in invalidos:
+            self.almacen.incidencia("DATOS", f"HT-01: datos inválidos de {s} ({motivo[:200]}); símbolo excluido del cribado",
+                                    s, severidad="Operativa", tratamiento="símbolo excluido y declarado como laguna del tipo",
+                                    run_id=run_id)
         return {s: t for s, t in tabla.items() if t}, calcs
 
     # ====================================================================================
@@ -449,7 +456,7 @@ class Bloque:
                     invalidadas.append(v["opp_id"])
                     motivos.append(f"condición de invalidación cumplida en {v['opp_id']}")
                 elif abs(precio - u) / precio < float(parametro(self.cfg, "gc0.invalidacion_cercana")):
-                    motivos.append(f"condición de invalidación a < {g.get('invalidacion_cercana', 0.1):.0%} en {v['opp_id']}")
+                    motivos.append(f"condición de invalidación a < {float(parametro(self.cfg, 'gc0.invalidacion_cercana')):.0%} en {v['opp_id']}")
         for ev in g.get("eventos_calendario") or []:
             f = pd.Timestamp(ev["fecha"])
             if clase in ev.get("clases", []) and pd.Timestamp(as_of) - pd.Timedelta(days=7) < f <= pd.Timestamp(as_of) + pd.Timedelta(days=7):
@@ -514,7 +521,7 @@ class Bloque:
         if tipo != "PERIODICO" and any(nivel[c] == "N3" for c in clases):
             asign = {c: float(parametro(self.cfg, "presupuesto_uc.N3")) / max(len(clases), 1) for c in clases}
         tope_ciclo = float(parametro(self.cfg, "presupuesto_uc.ciclo_semanal_max"))
-        asign["COMUN"] = max(tope_ciclo - sum(asign.values()), 0.1 * tope_ciclo)
+        asign["COMUN"] = max(tope_ciclo - sum(asign.values()), float(parametro(self.cfg, "presupuesto_uc.fraccion_minima_comun")) * tope_ciclo)
         if presupuesto_override:
             asign.update(presupuesto_override)
         presupuesto = Presupuesto(asign, self.cfg)
@@ -561,7 +568,8 @@ class Bloque:
                                          historial, presupuesto)
         if clusteres.get("sin_historia"):
             limitaciones = limitaciones + [(f"clústeres de exposición sin medir para {', '.join(clusteres['sin_historia'])} (menos de "
-                                            f"{parametro(self.cfg, 'clusteres.min_semanas_proxy')} semanas de historia en la ventana): "
+                                            f"{parametro(self.cfg, 'clusteres.min_semanas_proxy')} semanas válidas de historia en la ventana "
+                                            "en común con el resto): "
                                             "cada uno cuenta como un clúster propio; el resto se agrupa con ML-CLUS-001")]
         if clusteres.get("rechazo"):
             limitaciones = limitaciones + [(f"clústeres de exposición no calculados ({clusteres['rechazo']}): la concentración entre "
@@ -1105,8 +1113,7 @@ class Bloque:
                 if clm["clm_id"] not in f["_evidencias"]:
                     f["_evidencias"].append(clm["clm_id"])
             raices = f["_raices"]
-            f["_ps1"] = sum(1 for n, _ in raices.values() if n in ("A", "B")) >= int(parametro(self.cfg, "ps1.raices_min")) \
-                or any(n == "A" and t == "PRIMARIA" for n, t in raices.values())   # Anexo A, P-14
+            f["_ps1"] = self._ps1(raices)
             for cid in f["_evidencias"]:
                 clm = next(c for c in clm_por_texto.values() if c["clm_id"] == cid)
                 clm["raices_independientes"] = len(raices)
@@ -1120,6 +1127,12 @@ class Bloque:
                 self.almacen.escribir("F2", "AG-12", {k: v for k, v in clm.items() if not k.startswith("_")})
                 escritos.add(cid)
 
+    def _ps1(self, raices: dict) -> bool:
+        """PS1 (Anexo A, P-14): al menos `ps1.raices_min` raíces independientes de nivel A o B, o una fuente primaria de nivel
+        A. `raices`: {raíz: (nivel, tipo de fuente)}."""
+        return sum(1 for n, _ in raices.values() if n in ("A", "B")) >= int(parametro(self.cfg, "ps1.raices_min")) \
+            or any(n == "A" and t == "PRIMARIA" for n, t in raices.values())
+
     def _clusteres(self, analisis: dict, as_of, run_id: str) -> dict:
         proxies = sorted({f["proxy"] for an in analisis.values() for f in an["finalistas"] if f.get("_gc3")}
                          | {simbolo_seguimiento(v) for c in analisis for v in self.vigentes(as_of, c) if simbolo_seguimiento(v)})
@@ -1132,14 +1145,27 @@ class Bloque:
         ini = (pd.Timestamp(as_of) - pd.Timedelta(weeks=ventana + 2)).normalize()
         # T-65 (QA de T-53, H-16): un proxy con poca historia no tumba el cálculo de todos. Se excluye, se declara y queda en
         # un clúster propio (su concentración no se ha medido); los demás se agrupan entre sí
+        min_sem = int(cl["min_semanas_proxy"])
         cortos: list = []
-        medibles: list = []
+        semanas: dict = {}
         for px in proxies:
             try:
-                n_sem = int(self.proveedor.cierres(px, ini, as_of).resample("W-FRI").last().pct_change().dropna().shape[0])
-            except DatosNoDisponibles:
-                n_sem = 0
-            (medibles if n_sem >= int(cl["min_semanas_proxy"]) else cortos).append(px)
+                semanas[px] = set(self.proveedor.cierres(px, ini, as_of).resample("W-FRI").last().pct_change().dropna().index)
+            except DatosNoDisponibles:   # también DatosInvalidos: sin semanas válidas
+                semanas[px] = set()
+        # QA r01 de T-65, H-07: no basta la historia de cada proxy; hace falta solape. Se eligen en orden determinista (más
+        # semanas primero) los que mantienen ≥ min_sem semanas comunes con los ya elegidos; los demás, fuera y declarados
+        medibles: list = []
+        comunes: set | None = None
+        for px in sorted(proxies, key=lambda x: (-len(semanas[x]), x)):
+            cand = semanas[px] if comunes is None else comunes & semanas[px]
+            if len(cand) >= min_sem:
+                medibles.append(px)
+                comunes = cand
+            else:
+                cortos.append(px)
+        medibles.sort()
+        cortos.sort()
         out: dict = {"asignacion": {}, "calc_id": None, "n_efectivo": 0}
         if medibles:
             r = self.motor.servir({"operacion": "ML-CLUS-001", "plan": "PLAN_MIN",

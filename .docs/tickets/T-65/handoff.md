@@ -2,6 +2,21 @@
 
 Solo existe si el trabajo cambia de manos. Una sección por traspaso, la más reciente arriba.
 
+## 2026-11-10 · de claude a la QA r02
+
+- **Fase en la que se entrega:** QA (r02).
+- **Hecho:**
+  - H-01 a H-09 y H-11 de la QA r01, con sus pruebas en `bloque_a/11_Ejecutor/tests/test_t65_qa_r01.py`.
+  - A tiene 285 pruebas; `mutaciones.py` detecta 50 de 50; las sondas r01_01 y r01_04 dan 0 hallazgos.
+  - Gate completo en una copia limpia: ver `pruebas.md`.
+- **Falta (coordinador):**
+  - H-10 a la deuda técnica.
+  - Commit de lo de la r02, junto con `qa.md` y `revisores/` de la QA.
+  - Lo anotado en la sección anterior, salvo `docs/incidencias.md`, que ya está hecho (H-09).
+- **Cuidado con:**
+  - `valor_en` valida solo el cierre que devuelve, y `cierres` solo el rango pedido.
+  - ML-CLUS-001 elige los proxies por solape, en orden determinista.
+
 ## 2026-11-10 · de claude a la QA (Astra o un revisor nuevo)
 
 - **Fase en la que se entrega:** QA.

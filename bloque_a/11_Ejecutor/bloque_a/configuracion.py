@@ -202,7 +202,7 @@ def modelo_de(cfg: dict, agente: str) -> str:
 
 def max_tokens_de(cfg: dict, agente: str) -> int:
     m = cfg.get("max_tokens") or {}
-    return int(m.get(agente) or m.get("por_defecto") or 8000)
+    return int(m.get(agente) or parametro(cfg, "max_tokens.por_defecto"))   # QA r01 de T-65, H-05: sin respaldo 8000
 
 
 def perfiles_activos(cfg: dict) -> list:

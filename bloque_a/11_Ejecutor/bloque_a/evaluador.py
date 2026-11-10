@@ -33,6 +33,11 @@ CADUCIDAD_MESES = {"anecdotica": 3, "recurrente": 6, "estadistica": 12}
 ESCALON_INFERIOR = {"SI": "LIMITADO", "LIMITADO": "NO"}
 
 
+def _coma(x) -> str:
+    """Número con coma decimal para los textos en español (QA r01 de T-65, H-11)."""
+    return str(x).replace(".", ",")
+
+
 def contaminacion_posible(p: dict) -> bool:
     """PA-09: el PRG puede estar contaminado por el conocimiento del modelo (backtest con un modelo real antes de su
     fecha de corte). Sin el campo o con null (registros anteriores a T-66): false. Cualquier otro valor distinto de
@@ -261,7 +266,7 @@ class Evaluador:
             "parametros": {"sesiones": sesiones, "sentido_positivo": sentido_positivo, "ventana": f"{tb['ventana_anios']} años, no solapadas"},
             "semilla": None, "resultado": {"forma": "VALOR", "payload": {"tasa_base": p, "n_ventanas": int(len(serie))}},
             "clase_cifra": "ESTADISTICA", "referencia_ingenua": {"tipo": "RI-TB"}, "madurez_metodo": "IMPLEMENTADO",
-            "consumo_uc": 0.0, "limitaciones": ([] if len(serie) >= min_v else [f"menos de {min_v} ventanas: tasa base {tb['sin_historia']} por defecto"])
+            "consumo_uc": 0.0, "limitaciones": ([] if len(serie) >= min_v else [f"menos de {min_v} ventanas: tasa base {_coma(tb['sin_historia'])} por defecto"])
             + ([f"cesta de {clase}: excluidos por falta de datos en la ventana: {', '.join(excluidos_cesta)}"] if excluidos_cesta else [])})
         return {"tipo": "TASA_BASE", "valor_o_prob": round(p, 4), "calc_id": calc_id, "n_ventanas": int(len(serie))}
 
@@ -318,7 +323,7 @@ class Evaluador:
         for p, r in filas:
             if r is None:
                 e = {"prg_id": p["prg_id"], "tipo_entrada": "RESOLUCION", "estado": "NO_RESOLUBLE",
-                     "resolucion": {"fecha_resuelto": str(as_of.date()), "motivo_no_resoluble": "sin dato tras 10 días hábiles",
+                     "resolucion": {"fecha_resuelto": str(as_of.date()), "motivo_no_resoluble": f"sin dato tras {int(parametro(self.cfg, 'evaluacion.dias_habiles_no_resoluble'))} días hábiles",
                                     "comprobacion_fuga": "SUPERADA", "fallback_aplicado": False}}
             else:
                 pi, pr = float(p["prob_interna"]), float(p["referencia_ingenua"]["valor_o_prob"])

@@ -133,6 +133,7 @@ def _umbrales_presentacion(cfg: dict) -> tuple[dict, dict]:
 def construir(bloque, run_id, tipo, as_of, clases, nivel, gc0, analisis, seleccion, clusteres, integ, historial, presupuesto) -> tuple[dict, dict]:
     cfg = bloque.cfg
     umbral_paso, umbral_sem = _umbrales_presentacion(cfg)
+    dias_nr = int(parametro(cfg, "evaluacion.dias_habiles_no_resoluble"))   # QA r01 de T-65, H-05
     pres = parametro(cfg, "presentacion")   # [PROPUESTO] INC-T53-05: confianza y zona de interés (T-65, CA-14)
     avisos_hp: list[str] = []   # horizontes del Analista sustituidos (8.3): se declaran como limitación
     as_of = pd.Timestamp(as_of)
@@ -179,7 +180,7 @@ def construir(bloque, run_id, tipo, as_of, clases, nivel, gc0, analisis, selecci
                 "nivel_referencia_indice": nivel_r, "umbral": 0.0, "fecha_emision": str(as_of.date()), "fecha_congelacion": bloque.reloj.ahora(),
                 "fecha_resolucion": str(fr.date()),
                 "criterio_resolucion": f"Cierre HT-01 de la última sesión ≤ {fr.date()} frente al cierre de la última sesión ≤ {as_of.date()}; suceso: {texto_ev}",
-                "fuente_resolucion": f"HT-01:{bloque.proveedor.nombre}", "regla_fallback": "última sesión disponible ≤ fecha de resolución; NO_RESOLUBLE tras 10 días hábiles sin dato",
+                "fuente_resolucion": f"HT-01:{bloque.proveedor.nombre}", "regla_fallback": f"última sesión disponible ≤ fecha de resolución; NO_RESOLUBLE tras {dias_nr} días hábiles sin dato",
                 "banda_verbal": bloque.evaluador.banda_de(d["prob_interna"]), "prob_interna": d["prob_interna"],
                 "prob_publicada": d["prob_interna"] if (c, h) in certs else None, "certificado_ref": certs.get((c, h)),
                 "metodo": d.get("metodo"), "referencia_ingenua": ri, "escenario_asociado": d.get("escenario", "BASE"),
@@ -209,7 +210,8 @@ def construir(bloque, run_id, tipo, as_of, clases, nivel, gc0, analisis, selecci
                          "afirmacion": f"Hito de la senda H5: {ev}", "evento": ev, "fecha_resolucion": str(fh.date()),
                          "criterio_resolucion": f"Cierre HT-01 de la última sesión ≤ {fh.date()} frente al cierre de la última sesión ≤ {as_of.date()}; suceso: {ev}",
                          "prob_interna": d["prob_interna"], "banda_verbal": bloque.evaluador.banda_de(d["prob_interna"]), "prob_publicada": None,
-                         "referencia_ingenua": {"tipo": "RI-TB", "valor_o_prob": 0.5, "nota": "tasa base neutra (ventana superior a la historia disponible)"}})
+                         "referencia_ingenua": {"tipo": "RI-TB", "valor_o_prob": float(parametro(cfg, "tasa_base.sin_historia")),
+                                                "nota": "tasa base neutra (ventana superior a la historia disponible)"}})
             prg_borradores.append(hito)
             b["hit_ids"].append(hid)
             b["hitos"].append({"hit_id": hid, "fecha": str(fh.date()), "indicador": f"Rentabilidad acumulada de {f['proxy']}"

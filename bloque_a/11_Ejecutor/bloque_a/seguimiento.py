@@ -47,9 +47,12 @@ class Seguimientos:
         return {k: v for k, v in self.b.almacen.estado("F11", as_of).items() if v.get("opp_id")}
 
     def _dias(self, enc: dict) -> int:
+        # QA r01 de T-65, H-05: días de la configuración; una frecuencia desconocida falla (KeyError). Sin `cada_dias`, la
+        # personalizada usa la semanal, la frecuencia por defecto de P-38
         if enc.get("frecuencia") == "PERSONALIZADA":
-            return max(1, int((enc.get("calendario_personalizado") or {}).get("cada_dias", 7)))
-        return int((self.cfg.get("frecuencias") or {}).get(enc["frecuencia"], 7))
+            cada = (enc.get("calendario_personalizado") or {}).get("cada_dias")
+            return max(1, int(cada if cada is not None else parametro(self.b.cfg, "seguimiento.frecuencias.SEMANAL")))
+        return int(parametro(self.b.cfg, f"seguimiento.frecuencias.{enc['frecuencia']}"))
 
     def _proximo(self, enc: dict, desde) -> str:
         return str((pd.Timestamp(desde) + pd.Timedelta(days=self._dias(enc))).date())
@@ -86,7 +89,7 @@ class Seguimientos:
         enc["proximo_ciclo"] = self._proximo(enc, as_of)
         aviso = None
         hp = f3[opp_id].get("horizonte_principal") or "H3"
-        orient = int((self.cfg.get("frecuencia_orientativa_dias") or {}).get(hp, 7))
+        orient = int(parametro(self.b.cfg, f"seguimiento.frecuencia_orientativa_dias.{hp}"))
         if self._dias(enc) < orient:
             aviso = (f"Frecuencia más corta de lo que tiene sentido para el horizonte principal {hp} de la opción: "
                      "se acepta, y los ciclos sin cambio material serán «sin novedad» (7.11.2)")
