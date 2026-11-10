@@ -165,6 +165,7 @@ class Reloj:
         los segundos desde el contraste). {bloqueo: copia o None, contrastado: bool, segundos_desde_contraste: float o None,
         incidentes: n}. Nunca lanza; ante lo imposible devuelve la foto prudente (sin contraste confirmado), que la consola
         pinta ámbar. No da instantes ni sustituye a `ahora()`: para operar sigue haciendo falta contrastar y leer el reloj."""
+        bloqueado = getattr(self, "bloqueo", None) is not None   # V0.67 (QA de T-79, H-04): fuera del try, para no perderlo
         try:
             b = None if self.bloqueo is None else dict(self.bloqueo)
             contrastado = self._contraste is not None
@@ -178,7 +179,8 @@ class Reloj:
                     s = m - self._contraste
             return {"bloqueo": b, "contrastado": contrastado, "segundos_desde_contraste": s, "incidentes": len(self.incidentes)}
         except Exception:   # noqa: BLE001 — la foto nunca es más optimista que el reloj: sin contraste confirmado
-            return {"bloqueo": None, "contrastado": False, "segundos_desde_contraste": None, "incidentes": 0}
+            bloq = {"codigo": "?", "motivo": f"bloqueo ilegible: {self.bloqueo!r}"} if bloqueado else None
+            return {"bloqueo": bloq, "contrastado": False, "segundos_desde_contraste": None, "incidentes": 0}
 
     def comprobar_estado(self, o) -> dict:
         """Al arrancar con un estado cargado: el reloj no puede ir detrás del último instante que vio el Orquestador (RL-02), que

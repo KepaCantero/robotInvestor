@@ -99,6 +99,8 @@ def _kill(o):
 
 
 def _autonomia(o):
+    if not isinstance(o.degradadas, dict):   # V0.67 (QA de T-79, H-03): None, [] o "" no son «autonomía plena»
+        return "ROJO", f"el registro de carteras degradadas es ilegible ({type(o.degradadas).__name__}): revisa el estado"
     if not o.degradadas:
         return "VERDE", "autonomía plena: ninguna cartera degradada"
     partes = []

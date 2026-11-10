@@ -16,3 +16,4 @@
 | compartida/2026-11-09_bloque-b-objeciones-y-evaluacion | estado | Registro histórico del traslado al ticket T-61. | histórica |
 | compartida/2026-11-09_revision-bloque-a | estado | T-53: Bloque A corregido (CA, CS y QA r01 H-01..H-05); propuestas PA-01..PA-21 a la espera del operador; bajos en T-65 | sustituida por compartida/2026-11-10_bloque-a-terminado |
 | compartida/2026-11-10_bloque-a-terminado | estado | Bloque A terminado (T-53 y T-66): solo DIV activo, Contradictor con contrarréplica, aprendizaje que solo endurece; lo aplazado en T-67 | vigente |
+| compartida/2026-11-10_marco-c-v067 | estado | Marco común de C en V0.67: kit 2 de GLM integrado; deuda de GLM renumerada T-69 a T-78; pendientes de la Fase 1 en T-80 a T-86 | vigente |

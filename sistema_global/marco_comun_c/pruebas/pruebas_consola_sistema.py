@@ -243,6 +243,16 @@ def main():
     h.chk("r01_umbral_por_defecto_sale_de_parametros", panel.__defaults__[-1] == __import__("parametros").PARAMETROS["n_lineas_diario_ambar"]
           and comp(o, "diario", diario=d)["nivel"] == "VERDE")
 
+    # V0.67 (QA de T-79, H-03): un registro de degradadas que no es un dict no se pinta como «autonomía plena»
+    malos = []
+    for raro in (None, [], 0, "", set()):
+        ox = nuevo(); ox.degradadas = raro
+        malos.append(comp(ox, "autonomia")["nivel"])
+    h.chk("r02_degradadas_ilegible_es_rojo", malos == ["ROJO"] * 5, malos)
+    # V0.67 (QA de T-79, H-04): la foto del reloj no pierde un bloqueo ilegible
+    _f4, r4 = nuevo_reloj(); r4.bloqueo = "RL-01 escrito a mano"
+    h.chk("r02_estado_del_reloj_conserva_un_bloqueo_ilegible", r4.estado()["bloqueo"] is not None, r4.estado())
+
     class RelojFalso:
         bloqueo = "x"   # bloqueado con un registro que no es un diccionario
     h.chk("bloqueo_ilegible_del_reloj_es_rojo", comp(o, "reloj", reloj=RelojFalso())["nivel"] == "ROJO"

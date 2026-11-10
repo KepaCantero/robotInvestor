@@ -2,7 +2,7 @@
 
 | Campo | Valor |
 | --- | --- |
-| Estado | EN QA |
+| Estado | CERRADO (QA r01 APTO, 10-11-2026) |
 | Pieza | sistema_global/marco_comun_c |
 | Planifica · implementa · QA | claude · GLM (V0.60 a V0.66) y claude (integración y correcciones) · un revisor nuevo sin contexto |
 | Aprobación del operador | 2026-11-10: «tengo los marcos comunes de C desde el V 0.60 hasta el V 0.66 […] Te paso los resultados para que los revises y mejores» |
@@ -41,3 +41,4 @@ Detalle en el Documento 0, `sistema_global/documentos_0/V0.67_Integracion_del_ki
 
 - 2026-11-10 · ABIERTO · creado con nuevo_ticket.sh
 - 2026-11-10 · EN QA · V0.67 integrada (G-01 a G-06 en el Documento 0); 56 baterías en verde
+- 2026-11-10 · CERRADO · QA r01 APTO; H-01 a H-10 corregidos o en la deuda (T-72, T-85)
