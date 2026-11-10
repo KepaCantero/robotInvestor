@@ -170,3 +170,41 @@ cd ../.. && python3 .docs/tickets/T-65/revisores/r02_02_refs_vivas.py           
 python3 .docs/scripts/prueba_refs_vivas.py                                                # 15/15
 python3 .docs/tickets/T-65/mutaciones.py r02                                              # 7/7
 ```
+
+## Correcciones de la QA r03 (NO APTO)
+
+**Causa raíz de H-16:**
+
+- **Al emitir.** La validación de H-12 comprobaba que la referencia tuviera datos válidos en la ventana, pero no que fueran recientes.
+- **Al resolver.** `Evaluador.resolver` tomaba la fecha más reciente de las dos series (`max`) y solo a ella le exigía frescura. Una serie parada daba una rentabilidad 0 y el pronóstico se resolvía con un suceso que no era el suyo. Venía del commit inicial, pero es el caso que H-12 dice cubrir y contradice la Constitución (§11, dato obsoleto).
+
+**Cambios** (rutas bajo `bloque_a/11_Ejecutor/`):
+
+| Archivo | Cambio | Hallazgo |
+| --- | --- | --- |
+| `bloque_a/orquestacion.py` | `_referencia_invalida` exige `referencias.antiguedad_maxima_dias`. `_es_subyacente`: con SUBYACENTE, las referencias guardadas en las vigentes se validan por indicador. `_referencia` distingue la columna vacía o NaN (CESTA) de un subyacente declarado (se valida) | H-16, H-17, H-18 |
+| `bloque_a/evaluador.py` | `resolver` usa `min` de las dos fechas con `evaluacion.antiguedad_maxima_dato_resolucion_dias`; la CESTA de `rentabilidad` deja fuera a los miembros parados | H-16 |
+| `bloque_a/herramientas/ht01_datos.py` | Cabecera repetida (`X` y `X.n`): dato inválido. Las comprobaciones de fila se mueven al rango pedido: las filas malas se marcan (`_invalido`, `_crudo`, `_duplicada`) y `_validar_cierres` las mira solo en el tramo (`_tramo`) | H-20, H-21 |
+| `config/por_defecto.yaml` | `referencias.antiguedad_maxima_dias: 7` (`[PROPUESTO]`, con su pregunta) y `evaluacion.antiguedad_maxima_dato_resolucion_dias: 7` (el 7 que estaba en el código) | H-16 |
+| `README.md` del ejecutor, `docs/incidencias.md` | Aviso del rechazo de `Close`+`Adj Close` e INC-T65-01 | H-23 |
+| `tests/test_t65_qa_r03.py` | 17 pruebas nuevas | H-16 a H-21 |
+| `tools/refs_vivas.py`, `.docs/scripts/prueba_refs_vivas.py` | `shlex`, opciones del intérprete, `-m`, `-c`, `pytest`, `..` y corchetes literales; 10 casos nuevos | H-22 |
+| `.docs/tickets/T-65/mutaciones.py` | 10 mutaciones más (67 en total), y dos rehechas porque el código que mutaban se ha movido | todos |
+
+**Decisiones:**
+
+- **H-16, valor.** 7 días es `[PROPUESTO]`: el Anexo A solo fija PS2 por horizonte. Se toma el de H3 porque es la misma tolerancia que ya usaba la resolución; T-57 lo fija.
+- **H-16, al resolver.** Se espera y, pasado el plazo, NO_RESOLUBLE. No se resuelve con la fecha anterior a la parada de la serie.
+- **H-21.** Lo que es del archivo entero (columnas, tipo de las fechas, columna entera booleana, fechas ilegibles) sigue rechazándose al cargar: es el formato, no una fila.
+
+**Límite:** una fecha ilegible en una sola fila invalida el archivo entero, porque `pd.to_datetime` no puede fechar esa fila para saber si cae en el rango. Se declara; no va a la deuda.
+
+**Comandos:**
+
+```bash
+cd bloque_a/11_Ejecutor && ../../.venv/bin/python -m pytest -q -p no:cacheprovider tests/test_t65_qa_r03.py
+../../.venv/bin/python ../../.docs/tickets/T-65/revisores/r03_01_formas_csv.py          # HALLAZGOS: 0 · INFO: 0
+../../.venv/bin/python ../../.docs/tickets/T-65/revisores/r03_02_referencias_ciclo.py   # HALLAZGOS: 0 (5 INFO esperados)
+cd ../.. && python3 .docs/tickets/T-65/revisores/r03_03_refs_vivas.py                   # HALLAZGOS: 0 · INFO: 0
+python3 .docs/tickets/T-65/mutaciones.py r03                                            # 10/10
+```

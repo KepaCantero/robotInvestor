@@ -328,7 +328,12 @@ class Bloque:
         # la tasa base y el nivel de referencia. Si no vale, el tipo no se analiza en este ciclo (PARCIAL, declarado, con
         # incidencia DATOS) y los demás tipos siguen; nunca cifras con una referencia mala ni la caída del ciclo
         ini_ref = min(pd.Timestamp(ini), pd.Timestamp(as_of) - pd.DateOffset(years=int(parametro(self.cfg, "tasa_base.ventana_anios"))))
-        refs_tipo = {self._referencia(clase)} | {v.get("referencia_indice") for v in self.vigentes(as_of, clase)}
+        # T-65 (QA r03, H-18): con SUBYACENTE, la referencia guardada en una vigente es la de su indicador y se valida con él
+        # (más abajo), no como referencia del tipo
+        por_indicador = self._es_subyacente(clase)
+        vigentes = self.vigentes(as_of, clase)
+        ref_vigente = {simbolo_seguimiento(v): v.get("referencia_indice") for v in vigentes} if por_indicador else {}
+        refs_tipo = {self._referencia(clase)} | (set() if por_indicador else {v.get("referencia_indice") for v in vigentes})
         for ref in sorted(r for r in refs_tipo if r and r not in ("CESTA", "SUBYACENTE")):
             motivo = self._referencia_invalida(ref, ini_ref, as_of)
             if motivo:
@@ -345,8 +350,9 @@ class Bloque:
             # información no se tolera: corta el ciclo.
             try:
                 self.proveedor.cierres(f["simbolo"], ini, as_of)
-                sub = self._referencia(clase, f["simbolo"])   # SUBYACENTE: la referencia propia del indicador
-                if sub and sub not in ("CESTA", f["simbolo"], self._referencia(clase)):
+                # SUBYACENTE: la referencia propia del indicador (la del universo y la guardada en su vigente, si la hay)
+                subs = {self._referencia(clase, f["simbolo"]), ref_vigente.get(f["simbolo"])} if por_indicador else set()
+                for sub in sorted(x for x in subs if x and x not in ("CESTA", f["simbolo"])):
                     motivo_sub = self._referencia_invalida(sub, ini_ref, as_of)
                     if motivo_sub:
                         raise DatosInvalidos(f"referencia {sub} del indicador inválida o ausente ({motivo_sub[:160]})")
@@ -434,23 +440,35 @@ class Bloque:
         proveedor), o None si sirve. La fuga de información no se absorbe."""
         try:
             self.proveedor.cierres(ref, desde, as_of)
-            self.proveedor.valor_en(ref, as_of)
+            fd, _ = self.proveedor.valor_en(ref, as_of)
         except FugaDeInformacion:
             raise
         except Exception as e:  # noqa: BLE001 — cualquier fallo de la referencia se declara
             return f"{type(e).__name__}: {e}"
+        # T-65 (QA r03, H-16): una referencia parada no sirve aunque sus datos sean válidos (Constitución §11: dato obsoleto)
+        max_dias = int(parametro(self.cfg, "referencias.antiguedad_maxima_dias"))
+        edad = (pd.Timestamp(as_of).normalize() - pd.Timestamp(fd).normalize()).days
+        if edad > max_dias:
+            return f"último cierre del {pd.Timestamp(fd).date()}, {edad} días antes de la fecha as_of (máximo {max_dias})"
         return None
+
+    def _es_subyacente(self, clase: str) -> bool:
+        return str((self.cfg.get("indices_referencia") or {}).get(clase, "")).strip().upper() == "SUBYACENTE"
 
     def _referencia(self, clase: str, simbolo: str | None = None) -> str | None:
         """Referencia de comparación del tipo de activo (8.4): símbolo, «CESTA», «SUBYACENTE» (columna «subyacente»
-        del universo para el indicador; si falta, CESTA) o «NINGUNA»/vacío (pronóstico absoluto: posición neutra)."""
+        del universo para el indicador; con la columna vacía, CESTA; un subyacente declarado sin datos se valida y se
+        declara) o «NINGUNA»/vacío (pronóstico absoluto: posición neutra)."""
         ref = (self.cfg.get("indices_referencia") or {}).get(clase, "CESTA")
         if ref is None or str(ref).strip().upper() in ("", "NINGUNA", "NONE"):
             return None
         if str(ref).upper() == "SUBYACENTE":
             fila = self.universo[self.universo["simbolo"] == simbolo] if simbolo else self.universo.iloc[0:0]
-            sub = str(fila["subyacente"].iloc[0]).strip() if len(fila) and "subyacente" in fila else ""
-            return sub if sub and self.proveedor.tiene(sub) else "CESTA"
+            valor = fila["subyacente"].iloc[0] if len(fila) and "subyacente" in fila else None
+            sub = "" if valor is None or pd.isna(valor) else str(valor).strip()
+            # T-65 (QA r03, H-17): con la columna vacía, la CESTA (8.4); con un subyacente declarado, ese subyacente aunque
+            # el proveedor no lo tenga: entonces la validación lo da por inválido y el indicador se excluye y se declara
+            return sub or "CESTA"
         return ref
 
     def gc0(self, clase: str, as_of, vigentes: list[dict]) -> dict:

@@ -2,6 +2,17 @@
 
 Solo existe si el trabajo cambia de manos. Una sección por traspaso, la más reciente arriba.
 
+## 2026-11-10 · de claude a la QA r04
+
+- **Fase en la que se entrega:** QA (r04).
+- **Hecho:** H-16 a H-23 de la QA r03, con sus pruebas en `bloque_a/11_Ejecutor/tests/test_t65_qa_r03.py` y en `.docs/scripts/prueba_refs_vivas.py`. A tiene 317 pruebas, y `mutaciones.py` detecta 67 de 67.
+- **Falta (coordinador):**
+  - el commit de la r04;
+  - en la lista de T-57, `referencias.antiguedad_maxima_dias` (7) e INC-T65-01.
+- **Cuidado con:**
+  - HT-01 marca las filas malas y las valida solo en el rango pedido; las columnas `_invalido`, `_crudo` y `_duplicada` viajan en `serie()`.
+  - La resolución exige la frescura de cada serie.
+
 ## 2026-11-10 · de claude a la QA r03
 
 - **Fase en la que se entrega:** QA (r03).

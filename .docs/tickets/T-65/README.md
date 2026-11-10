@@ -74,6 +74,25 @@ Pruebas en `bloque_a/11_Ejecutor/tests/test_t65_qa_r02.py` (QR2): 10 de sus 11 f
 
 Información de la r02 que no se toca: el plan desconocido en `Motor.servir` da `KeyError` (hoy todas las llamadas usan `PLAN_MIN` y el plan no lo elige el LLM), y la elección voraz de proxies de H-07 es determinista y se declara.
 
+## Correcciones de la QA r03 (NO APTO, «Ronda r03» de `qa.md`)
+
+Pruebas en `bloque_a/11_Ejecutor/tests/test_t65_qa_r03.py` (QR3). Con 8d74622 fallan 12 de 17: las de H-16, H-17, H-18, H-20 y H-21. Las otras 5 son controles con datos sanos o las de H-19, que cubren partes que ya estaban y se comprueban con su mutación.
+
+| Hallazgo | Qué se hace | Prueba |
+| --- | --- | --- |
+| H-16 (media) | **Al emitir:** `_referencia_invalida` exige además que el último cierre de la referencia no tenga más de `referencias.antiguedad_maxima_dias` días (nuevo, `[PROPUESTO]` 7 hasta T-57: es la antigüedad de PS2 de H3 y la tolerancia que ya usaba la resolución). Una referencia parada deja el tipo (o el indicador, con SUBYACENTE) fuera, declarado y con incidencia `DATOS`. **Al resolver:** la frescura se exige a cada serie por separado (`min` de las dos fechas), con `evaluacion.antiguedad_maxima_dato_resolucion_dias` (el 7 que estaba en el código). Si una serie está parada, el pronóstico espera y, pasado `dias_habiles_no_resoluble`, queda NO_RESOLUBLE; nunca se resuelve con una rentabilidad 0. En la CESTA, un miembro parado no cuenta | QR3 `test_r03_h16_*` (6) |
+| H-17 | Un subyacente declarado sin datos ya no se cambia por la CESTA: se valida, y el indicador se excluye y se declara. Con la columna vacía (o NaN), sigue la CESTA | QR3 `test_r03_h17_*` (2) |
+| H-18 | Con SUBYACENTE, la referencia guardada en una vigente se valida con su indicador (que se excluye solo) y no como referencia del tipo | QR3 `test_r03_h18_*` |
+| H-19 | Pruebas de las dos partes de H-12 que no tenían: la referencia guardada en una vigente (tipo no SUBYACENTE) y el corte por `FugaDeInformacion`. Con sus mutaciones en `mutaciones.py` | QR3 `test_r03_h19_*` (2) |
+| H-20 | Una cabecera repetida (`cierre,cierre`, `Close,Close`, `fecha,fecha`), que `read_csv` convierte en `X` y `X.1`, es dato inválido | QR3 `test_r03_h20_*` (3) |
+| H-21 | HT-01 valida al cargar solo lo que es del archivo (columnas, tipo de las fechas, columna entera booleana). Lo que es de una fila (cierre no numérico, no finito o booleano, fecha repetida) se marca y se valida solo si cae en el rango pedido; `valor_en`, solo en la última fecha | QR3 `test_r03_h21_*` (3) |
+| H-22 | `refs_vivas`: la orden se parte con `shlex` (un argumento entre comillas con espacios es uno solo). Se saltan las opciones del intérprete (`-I`, `-u`, `-X valor`…) y se reconocen `python3.12`, `.venv/bin/python3`, `-m` (solo sus argumentos con forma de ruta) y `pytest` (todos sus argumentos). Un comodín que sale del repo falla, y un nombre con corchetes literales que existe pasa | `.docs/scripts/prueba_refs_vivas.py` (25 casos; con el script de 8d74622, 19/25) |
+| H-23 | `docs/incidencias.md`: INC-T65-01, `[PROPUESTO]` hasta T-57 («¿con el precio o con el precio ajustado?»). README del ejecutor (§4, proveedor CSV): un CSV con `Close` y `Adj Close`, o con una cabecera repetida, se rechaza | lectura |
+
+**Para T-57** (además de la lista de arriba):
+- `referencias.antiguedad_maxima_dias` (7);
+- INC-T65-01 (`Close` frente a `Adj Close`).
+
 ## Diseño
 
 - **Contratos CT-G:** ninguno. Los esquemas internos de A no cambian.
@@ -144,3 +163,6 @@ Información de la r02 que no se toca: el plan desconocido en `Motor.servir` da 
 - 2026-11-10 · QA r02 NO APTO (H-12 y H-13 medios; H-14 y H-15 bajos)
 - 2026-11-10 · EN CURSO · claude · correcciones de la r02: H-12 a H-15 corregidos con su prueba
 - 2026-11-10 · EN QA · claude · pendiente de la r03; ver `pruebas.md`
+- 2026-11-10 · QA r03 NO APTO (H-16 medio; H-17 a H-23 bajos)
+- 2026-11-10 · EN CURSO · claude · correcciones de la r03: H-16 a H-23 corregidos con su prueba
+- 2026-11-10 · EN QA · claude · pendiente de la r04; ver `pruebas.md`

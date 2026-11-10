@@ -207,13 +207,16 @@ class Evaluador:
     def rentabilidad(self, simbolo: str, clase: str, f0, f1) -> tuple[float, pd.Timestamp]:
         if simbolo == "CESTA":
             vals, fechas = [], []
+            max_dias = int(parametro(self.cfg, "evaluacion.antiguedad_maxima_dato_resolucion_dias"))
             for s in self.simbolos_clase(clase):
                 try:
                     r, f = self.rentabilidad(s, clase, f0, f1)
-                    vals.append(r)
-                    fechas.append(f)
                 except DatosNoDisponibles:
                     continue
+                if (pd.Timestamp(f1) - f).days > max_dias:   # T-65 (QA r03, H-16): un miembro parado no cuenta como 0
+                    continue
+                vals.append(r)
+                fechas.append(f)
             if not vals:
                 raise DatosNoDisponibles(f"Cesta {clase} sin datos")
             return float(np.mean(vals)), max(fechas)
@@ -286,8 +289,12 @@ class Evaluador:
             try:
                 rp, d1 = self.rentabilidad(p["variable"]["serie_ht01"], p["clase"], f0, f1)
                 rr = None
+                d_min = d1
                 if p["tipo_pronostico"] == "RELATIVO":
                     rr, d1b = self.rentabilidad(p["referencia_indice"], p["clase"], f0, f1)
+                    # T-65 (QA r03, H-16): la frescura se exige a cada serie, no solo a la más reciente (antes, `max`: una
+                    # serie parada daba una rentabilidad 0 y el pronóstico se resolvía con un suceso que no era el suyo)
+                    d_min = min(d1, d1b)
                     d1 = max(d1, d1b)
                 x = rp - rr if rr is not None else rp
                 # Falla cerrado: un valor no finito (cierre NaN, nivel inicial 0…) es un dato no disponible,
@@ -298,7 +305,8 @@ class Evaluador:
                 if dias_habiles_entre(f1, as_of) >= int(parametro(self.cfg, "evaluacion.dias_habiles_no_resoluble")):
                     filas.append((p, None))
                 continue
-            if (f1 - d1).days > 7:   # el último dato es demasiado antiguo: esperar
+            if (f1 - d_min).days > int(parametro(self.cfg, "evaluacion.antiguedad_maxima_dato_resolucion_dias")):
+                # el último dato de alguna serie es demasiado antiguo: esperar y, pasado el plazo, NO_RESOLUBLE
                 if dias_habiles_entre(f1, as_of) >= int(parametro(self.cfg, "evaluacion.dias_habiles_no_resoluble")):
                     filas.append((p, None))
                 continue

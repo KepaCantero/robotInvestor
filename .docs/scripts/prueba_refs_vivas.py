@@ -10,7 +10,8 @@ Copia el script a un repositorio de juguete en una carpeta temporal y lo ejecuta
 4. un nombre de archivo con espacios se comprueba entero;
 5. una ruta rota fuera de `revisores/` sigue haciendo fallar el gate;
 6. en una orden, cada argumento con forma de ruta del repo se comprueba también (QA r01 de T-65, H-06);
-7. comodines (valen si casan), archivos de salida (no se comprueban), intérpretes y comillas (QA r02 de T-65, H-15).
+7. comodines (valen si casan), archivos de salida (no se comprueban), intérpretes y comillas (QA r02 de T-65, H-15);
+8. opciones del intérprete y argumentos entre comillas con espacios (QA r03 de T-65, H-22).
 Uso: python3 .docs/scripts/prueba_refs_vivas.py [ruta del script; por defecto tools/refs_vivas.py]. Sale con 1 si falla.
 """
 import shutil
@@ -72,6 +73,22 @@ CASOS = [
     ("script roto detrás de un intérprete falla", {"docs/x.md": "Ejecuta `python3 tools/no_existe.py --rapido`.\n"}, [], 1),
     ("script vivo detrás de un intérprete pasa", {"docs/x.md": "Ejecuta `python3 tools/a.py`.\n"}, ["tools/a.py"], 0),
     ("argumento roto entre comillas falla", {"docs/x.md": "Ejecuta `tools/a.py 'bloque_a/no_existe.csv'`.\n"}, ["tools/a.py"], 1),
+    # QA r03 de T-65, H-22: opciones del intérprete y argumentos entre comillas con espacios
+    ("script roto tras python3 -I falla", {"docs/x.md": "Ejecuta `python3 -I tools/no_existe.py`.\n"}, [], 1),
+    ("script roto tras .venv/bin/python -X utf8 falla", {"docs/x.md": "Ejecuta `.venv/bin/python -X utf8 .docs/scripts/no.py`.\n"},
+     [], 1),
+    ("script vivo tras python3 -I pasa", {"docs/x.md": "Ejecuta `python3 -I tools/a.py`.\n"}, ["tools/a.py"], 0),
+    ("argumento con espacios entre comillas vivo pasa",
+     {"docs/x.md": "Ejecuta `tools/a.py \"bloque_a/01_Gobernanza/Documento 0 - Protocolo V5.1.md\"`.\n"},
+     ["tools/a.py", "bloque_a/01_Gobernanza/Documento 0 - Protocolo V5.1.md"], 0),
+    ("argumento con espacios entre comillas roto falla",
+     {"docs/x.md": "Ejecuta `tools/a.py \"bloque_a/01_Gobernanza/Documento 9 - No.md\"`.\n"}, ["tools/a.py"], 1),
+    ("módulo con argumento vivo pasa", {"docs/x.md": "Ejecuta `python3 -m pytest -q bloque_a/datos.csv`.\n"},
+     ["bloque_a/datos.csv"], 0),
+    ("python3.12 con script roto falla", {"docs/x.md": "Ejecuta `python3.12 tools/no_existe.py`.\n"}, [], 1),
+    ("pytest con prueba rota falla", {"docs/x.md": "Ejecuta `pytest -q bloque_a/tests/test_no_existe.py`.\n"}, [], 1),
+    ("comodín que sale del repo falla", {"docs/x.md": "Ejecuta `tools/a.py docs/../../*.md`.\n"}, ["tools/a.py"], 1),
+    ("corchete literal en un nombre vivo pasa", {"docs/x.md": "Ver `docs/[PROPUESTO].md`.\n"}, ["docs/[PROPUESTO].md"], 0),
 ]
 
 

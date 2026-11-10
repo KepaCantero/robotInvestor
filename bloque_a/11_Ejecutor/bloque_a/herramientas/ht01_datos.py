@@ -14,6 +14,7 @@ from __future__ import annotations
 
 import datetime as dt
 import hashlib
+import re
 import threading
 from collections.abc import Iterable, Sequence
 from pathlib import Path
@@ -122,16 +123,26 @@ class ProveedorDatos:
             raise FugaDeInformacion("HT-01: el proveedor devolvió datos posteriores a as_of")
         return df.copy()
 
-    def _cierres_brutos(self, simbolo: str, inicio: Fecha | None = None, fin: Fecha | None = None) -> pd.Series:
+    def _tramo(self, simbolo: str, inicio: Fecha | None = None, fin: Fecha | None = None) -> pd.DataFrame:
         df = self.serie(simbolo, inicio, fin)
         if df.empty:
             raise DatosNoDisponibles(f"HT-01: sin datos de {simbolo} en el rango")
-        return df["cierre"].astype(float)
+        return df
 
     @staticmethod
-    def _validar_cierres(simbolo: str, s: pd.Series) -> pd.Series:
-        """T-65 (QA de T-53, H-15): las rentabilidades se calculan como cociente de niveles; un cierre ≤ 0 (o no finito)
-        no es un precio válido y nunca se convierte en una cifra. Se valida solo lo que se usa (QA r01 de T-65, H-01)."""
+    def _validar_cierres(simbolo: str, df: pd.DataFrame) -> pd.Series:
+        """T-65 (QA de T-53, H-15): las rentabilidades se calculan como cociente de niveles; un cierre ≤ 0, no numérico, no
+        finito o booleano no es un precio válido y nunca se convierte en una cifra, y una fecha repetida es ambigua. Se
+        valida solo el tramo que se usa (QA r01 de T-65, H-01; QA r03, H-21)."""
+        if "_invalido" in df.columns and df["_invalido"].any():
+            m = df[df["_invalido"]]
+            ej = [f"{f.date()}={v!r}" for f, v in zip(m.index[:3], m["_crudo"].head(3))]
+            raise DatosInvalidos(f"HT-01: {len(m)} cierres no numéricos o no finitos de {simbolo} (p. ej., {', '.join(ej)}); "
+                                 "serie rechazada")
+        if "_duplicada" in df.columns and df["_duplicada"].any():
+            dup = sorted({str(f.date()) for f in df.index[df["_duplicada"]]})[:3]
+            raise DatosInvalidos(f"HT-01: fechas duplicadas de {simbolo} ({', '.join(dup)}); serie rechazada")
+        s = df["cierre"].astype(float)
         malos = ~np.isfinite(s.to_numpy()) | (s.to_numpy() <= 0)
         if malos.any():
             ej = [f"{f.date()}={v!r}" for f, v in zip(s.index[malos][:3], s.to_numpy()[malos][:3])]
@@ -142,21 +153,21 @@ class ProveedorDatos:
     def cierres(self, simbolo: str, inicio: Fecha | None = None, fin: Fecha | None = None) -> pd.Series:
         """Cierres de [inicio, fin]; la serie se rechaza (`DatosInvalidos`) si algún cierre del rango pedido es ≤ 0 o no
         finito. Lo que queda fuera del rango no cuenta."""
-        return self._validar_cierres(simbolo, self._cierres_brutos(simbolo, inicio, fin))
+        return self._validar_cierres(simbolo, self._tramo(simbolo, inicio, fin))
 
     def valor_en(self, simbolo: str, fecha: Fecha) -> tuple[pd.Timestamp, float]:
         """Último cierre con fecha <= `fecha` (que debe ser <= as_of). Se valida solo ese cierre (QA r01 de T-65, H-01):
         un cierre malo antiguo no deja sin precio a un símbolo sano."""
-        s = self._cierres_brutos(simbolo, None, fecha)
-        ult = self._validar_cierres(simbolo, s.iloc[-1:])
+        df = self._tramo(simbolo, None, fecha)
+        ult = self._validar_cierres(simbolo, df[df.index == df.index.max()])
         return ult.index[-1], float(ult.iloc[-1])
 
     def ultima_fecha(self, simbolo: str) -> pd.Timestamp | None:
         try:
-            s = self._cierres_brutos(simbolo)
+            df = self._tramo(simbolo)
         except DatosNoDisponibles:
             return None
-        return s.index[-1]
+        return df.index.max()
 
     def huella(self, simbolo: str, inicio: Fecha | None = None, fin: Fecha | None = None) -> str:
         """Hash de los datos efectivos (linaje del artefacto del Motor)."""
@@ -181,6 +192,14 @@ def _normalizar_df(df: pd.DataFrame, origen: str) -> pd.DataFrame:
 
 
 def _normalizar_df_sin_envolver(df: pd.DataFrame, origen: str) -> pd.DataFrame:
+    """Lo que es de todo el archivo (columnas, tipo de las fechas) se valida al cargarlo; lo que es de una fila (cierre no
+    numérico, no finito o booleano, fecha repetida) se marca y se valida solo si cae en el rango que se pide (T-65, QA r03,
+    H-21): un dato malo posterior a as_of o fuera de la ventana no excluye el símbolo."""
+    # T-65 (QA r03, H-20): una cabecera repetida (`cierre,cierre`) llega de `read_csv` como `cierre` y `cierre.1`: es ambigua
+    nombres = [str(c) for c in df.columns]
+    repetidas = sorted(c for c in nombres if re.fullmatch(r".+\.\d+", c) and c.rsplit(".", 1)[0] in nombres)
+    if repetidas:
+        raise DatosInvalidos(f"HT-01 {origen}: columnas repetidas en la cabecera ({', '.join(repetidas)}); serie rechazada")
     cols = {}
     for c in df.columns:
         k = ALIAS_COLUMNAS.get(str(c).strip().lower())
@@ -206,19 +225,20 @@ def _normalizar_df_sin_envolver(df: pd.DataFrame, origen: str) -> pd.DataFrame:
         raise DatosInvalidos(f"HT-01 {origen}: fechas con zona horaria o de tipo mixto ({fechas.dtype}); serie rechazada")
     df["fecha"] = fechas.dt.normalize()
     # Conversión a número ANTES de eliminar filas: un cierre no vacío que no es un número finito
-    # (`-`, `n.d.`, `1.234,5`, `inf`) invalida la serie entera; nunca se convierte en NaN silencioso.
+    # (`-`, `n.d.`, `1.234,5`, `inf`) invalida la serie en cualquier rango que lo incluya; nunca se convierte en NaN
+    # silencioso. La fila se conserva marcada (`_invalido`) y la comprobación se hace al pedir el rango.
     crudo = df["cierre"]
-    # T-65 (QA r02, H-14): un booleano no es un precio (antes, True se convertía en 1,0)
-    if pd.api.types.is_bool_dtype(crudo) or crudo.map(lambda v: isinstance(v, (bool, np.bool_))).any():
+    # T-65 (QA r02, H-14): un booleano no es un precio (antes, True se convertía en 1,0). Una columna entera booleana es
+    # del archivo; un valor booleano suelto, de su fila
+    if pd.api.types.is_bool_dtype(crudo):
         raise DatosInvalidos(f"HT-01 {origen}: cierres booleanos; serie rechazada")
-    vacio = (crudo.isna() | (crudo.astype("string").str.strip() == "")).fillna(True).astype(bool)
-    num = pd.to_numeric(crudo.where(~vacio), errors="coerce").astype(float)
-    malos = ~vacio & ~np.isfinite(num)          # NaN tras convertir una celda no vacía, o ±inf
-    if malos.any():
-        ej = [f"{f.date()}={v!r}" for f, v in zip(df.loc[malos, "fecha"].head(3), crudo[malos].head(3))]
-        raise DatosInvalidos(f"HT-01 {origen}: {int(malos.sum())} cierres no numéricos o no finitos (p. ej., {', '.join(ej)}); "
-                             "serie rechazada")
-    df["cierre"] = num
+    booleano = crudo.map(lambda v: isinstance(v, (bool, np.bool_))).astype(bool)
+    vacio = (crudo.isna() | (crudo.astype("string").str.strip() == "")).fillna(True).astype(bool) & ~booleano
+    num = pd.to_numeric(crudo.where(~vacio & ~booleano), errors="coerce").astype(float)
+    malos = (~vacio & ~np.isfinite(num)) | booleano          # NaN tras convertir una celda no vacía, ±inf o booleano
+    df["cierre"] = num.where(~malos, np.nan)
+    df["_invalido"] = malos
+    df["_crudo"] = crudo.astype("string").where(malos)
     # Fechas de publicación: las filas con una fecha no interpretable se rechazan (no se dan por publicadas)
     descartadas: list[str] = []
     if "fecha_publicacion" in df.columns:
@@ -229,16 +249,17 @@ def _normalizar_df_sin_envolver(df: pd.DataFrame, origen: str) -> pd.DataFrame:
         df["fecha_publicacion"] = pub
         df = df[~invalida]
     # Filas sin cierre (celda vacía): se eliminan y se declaran
-    descartadas += [f"{f.date()}: cierre vacío" for f in df.loc[df["cierre"].isna(), "fecha"]]
-    df = df.dropna(subset=["cierre"]).sort_values("fecha")
-    if df["fecha"].duplicated().any():   # T-65 (H-15): dato inválido del símbolo, no un error del ciclo
-        dup = sorted({str(f.date()) for f in df.loc[df["fecha"].duplicated(), "fecha"]})[:3]
-        raise DatosInvalidos(f"HT-01 {origen}: fechas duplicadas ({', '.join(dup)}); serie rechazada")
+    sin_cierre = df["cierre"].isna() & ~df["_invalido"]
+    descartadas += [f"{f.date()}: cierre vacío" for f in df.loc[sin_cierre, "fecha"]]
+    df = df[~sin_cierre].sort_values("fecha", kind="stable")
+    # T-65 (H-15; QA r03, H-21): una fecha repetida es un dato inválido del símbolo en cualquier rango que la incluya
+    df["_duplicada"] = df["fecha"].duplicated(keep=False)
     df = df.set_index("fecha")
     for c in ("apertura", "maximo", "minimo", "volumen"):
         if c in df.columns:
             df[c] = pd.to_numeric(df[c], errors="coerce")
-    keep = [c for c in ("apertura", "maximo", "minimo", "cierre", "volumen", "fecha_publicacion") if c in df.columns]
+    keep = [c for c in ("apertura", "maximo", "minimo", "cierre", "volumen", "fecha_publicacion", "_invalido", "_crudo",
+                        "_duplicada") if c in df.columns]
     out = df[keep]
     out.attrs["filas_descartadas"] = descartadas
     return out
