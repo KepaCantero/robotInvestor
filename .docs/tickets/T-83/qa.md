@@ -1,25 +1,59 @@
 # T-83 · QA independiente
 
-- **Revisor:** <agente que no implementó> · **Ronda:** r01
+- **Revisor:** subagente nuevo de Claude, sin el contexto de la implementación (formó su opinión con el plan y el código antes de leer `analisis-tecnico.md`) · **Ronda:** r01 · 2026-11-10
 
 ## Reproducción desde limpio
 
-<Comandos y resultado.>
+- Árbol de trabajo de `develop`: HEAD `99160b3` más los cambios sin commit de T-83. Durante la QA, el coordinador los subió como `dd96e19` sin cambiar su contenido (las fechas de los ficheros son anteriores a esta revisión, y `validador/` no tiene más cambios que el módulo nuevo). La batería nueva, el módulo, el LEEME y el Documento 0 se copiaron sobre un `git worktree` limpio de HEAD (ya retirado): la batería da 62 comprobaciones, TODAS LAS PRUEBAS PASAN, y `leeme_marco.py`, SIN DIFERENCIAS (0).
+- En el árbol de trabajo: `.docs/scripts/pruebas_marco.sh` da 61 pasan, 0 fallan (2 min 44 s); `.venv/bin/python -I .docs/scripts/leeme_marco.py sistema_global/marco_comun_c` da SIN DIFERENCIAS (0).
+- Sondas propias, en la carpeta entrega_claude/V0.72/qa del marco (prefijo r01_, sin commit):
+  - r01_mutaciones_bateria.py: 28 mutaciones de una copia de `validador/` contra la batería real (`T83_VALIDADOR`). Todas acaban como se esperaba: 23 la matan y 5 viven. Las cinco que viven están fuera de lo que la batería promete: una fuente que existe pero es equivocada (es contenido, que solo ve una persona) y las cuatro de H-02 y H-05.
+  - r01_contenido.py: contenido frente a la Constitución, la deuda y el código. Da 4 HALLAZGO (H-01 a H-03 y H-06). El esquema y los valores son iguales a los de HEAD.
+- Muestreo a mano: las 85 claves. Leí estado, fuente, justificación y pregunta de todas. Contrasté con el código (uso real del valor) las 4 RATIFICADO, las 4 TECNICO y 52 PROPUESTO: las 9 de K, las 12 de D, H, E, CT-G-14, N, O e I, las 16 de `CONFIG_DEFECTO` con lógica propia y los 15 límites de F con regla. Las fuentes «Deuda D-xx» las contrasté todas con su fila de la tabla de pendientes, y las «Constitución D-/P-xx», con el registro del §15.
+
+Gate `./tools/check_all.sh`: 12 de 12 en verde. Las cuotas: ruff 3086 de 3109; mypy A 123, A-Forex 174 y B 159, cada una igual a su cuota. Las líneas base de pytest: A 317, A-Forex 68 y B 176.
 
 ## Criterios de aceptación
 
 | Criterio | Cumple | Evidencia |
 | --- | --- | --- |
-| CA-1 | sí / no | … |
+| CA-1 | sí, a primer nivel | `faltan()` da `[]`: 31 + 32 + 22 = 85 registros. Renombrar o quitar una clave mata la batería (sondas `clave_renombrada_en_config` y `clave_quitada_de_politica`). Una subclave nueva dentro de `aprobacion` o de `promocion_nivel` no se detecta (H-02) |
+| CA-2 | no | La forma se cumple: mueren las 14 mutaciones de forma (de estado, fuente, pregunta y justificación). Pero `apalancamiento_max` es `PROPUESTO` sin citar la D-16 ratificada, y su pregunta ofrece algo que la Constitución no permite en la Fase 1 (H-01). La pregunta de `aprobacion` no deja fijar dos de sus cinco valores (H-02) |
+| CA-3 | sí | Las marcas cambiadas en `CONFIG_DEFECTO` (en la línea y contra un RATIFICADO), en una línea anterior de `POLITICA_DEFECTO` y en las lecturas de `vigilancia.py` y `comparador.py` matan la batería. Quitar un `[RATIFICADO]` también, por la comprobación de no vacuidad |
+| CA-4 | sí | Las 5 mutaciones de la batería y mis 28 se comportan como se espera |
+| CA-5 | sí, con H-06 | `doc()`, `por_estado()` y `faltan()` dan copias, fallan con el error que dicen y van en orden. `preguntas_pendientes(tablas)` no valida `tablas` (H-06) |
+| CA-6 | sí | `persistencia.esquema_actual()` es igual en HEAD y en el árbol (`aa778db7…`), y también `PAR-0.7.0`, `CFG-0.11.0` y la huella de las tres tablas. `parametros_doc` queda fuera de `MODULOS_ESQUEMA`. 61 baterías y LEEME sin diferencias. La comprobación `no_cambia_ningun_valor` compara dentro de la misma ejecución y no contra HEAD (H-05) |
+
+**Sobre dejar `parametros_doc` fuera de `MODULOS_ESQUEMA`.** Me parece razonable. La huella del esquema identifica lo que el código hace y guarda. El texto para personas no cambia ninguna decisión, y meterlo obligaría a una migración por cada corrección de redacción. El precio es que nada ata la justificación al valor (H-05).
 
 ## Hallazgos
 
 | ID | Gravedad | Cómo reproducirlo | Esperado / obtenido | Corrección sugerida | Estado |
 | --- | --- | --- | --- | --- | --- |
-| H-01 | crítica · alta · media · baja | … | … | … | abierto · corregido |
+| H-01 | media | r01_contenido.py, sonda `apalancamiento_max_frente_a_D-16_y_D-45`. En la Constitución, §15 D-16, §9 punto 4 (D-45) y §7 («Mandato de cada cartera») | **Esperado:** «sin apalancamiento» es un valor por defecto que fija una decisión ratificada. D-16 dice: «Apalancamiento, derivados y CFD no habilitados hasta que el operador lo decida, no antes de la Fase 3». D-45 lo pone entre los valores por defecto de cualquier copia («sin apalancamiento»), y el §7 dice «apalancamiento permitido (inicialmente cero)». Con el criterio del propio diseño (RATIFICADO «si una decisión ratificada de la Constitución fija ese valor», el mismo que hace RATIFICADO el L1 de `nivel_autonomia` por D-45), `apalancamiento_max` = 1 debería ser RATIFICADO y citar «Constitución D-16». **Obtenido:** PROPUESTO, con fuentes `Deuda D-01`, `Deuda D-12` y `Constitución D-45`, sin D-16. La pregunta («¿Quieres permitir invertir con dinero prestado y, si es así, cuánto como máximo?») entra en `preguntas_pendientes()` para T-57, en la Fase 1, y ofrece al operador una opción que D-16 cierra hasta la Fase 3. La explicación del análisis técnico («en la duda, PROPUESTO») no tiene en cuenta D-16. El LEEME afirma que los ratificados «son los cuatro que ella fija» | Pasar `apalancamiento_max` a RATIFICADO con fuente «Constitución D-16» (y D-45), actualizar el conjunto fijado en `los_ratificados_son_los_de_la_constitucion`, el recuento (5/76/4) y los documentos. Que la pregunta diga que hasta la Fase 3 no se puede habilitar. Si se prefiere mantener PROPUESTO, que lo decida el operador y quede en la deuda; aun así hay que citar D-16 y corregir la pregunta. Revisar con el mismo criterio `exposicion_max_pct` (100 % se sigue de «sin apalancamiento») | abierto |
+| H-02 | media | r01_contenido.py, sonda `aprobacion_subvalores_sin_pregunta`; r01_mutaciones_bateria.py, sondas `subclave_nueva_en_aprobacion` y `subclave_nueva_en_promocion` (viven) | **Esperado:** D-45 y el objetivo del ticket piden la pregunta con la que el cuestionario fija cada valor. **Obtenido:** las claves compuestas se documentan con una sola pregunta que no los cubre todos. `aprobacion` tiene 5 subvalores, y su pregunta («¿Cuánto tiempo tienes para aprobar una operación, en qué horario y cuánto debes esperar tras un día con pérdidas?») no pregunta por `canales` (canal de aprobación con segundo factor, Deuda D-19 y P-08) ni por `enfriamiento_tras_perdida_dia_eur` (la pérdida que activa la espera, Deuda D-18). Son dos decisiones pendientes del operador que figuran expresamente en la deuda, y con `preguntas_pendientes()` T-57 no las preguntaría. La de `mandatos` tampoco cubre los instrumentos permitidos ni el apalancamiento de la Deuda D-28. Además, una subclave nueva dentro de una clave compuesta no la detecta nada: la batería pasa con `aprobacion.x_t83_tope_eur` o `promocion_nivel.incidentes_max`. Este límite solo figura en `analisis-tecnico.md`; el Documento 0, el LEEME («toda clave … tiene su registro») y la fila T-83 de la deuda no lo recogen | O bien documentar a nivel de subclave las claves compuestas de `CONFIG_DEFECTO` (`aprobacion`, `avisos`, `kill_switch`, `promocion_nivel`), con un `faltan()` que también las recorra; o bien, como mínimo, que la pregunta de cada compuesta nombre todos sus subvalores y que la batería compare el conjunto de subclaves con uno fijado. Llevar el límite al Documento 0, al LEEME y a la deuda | abierto |
+| H-03 | baja | r01_contenido.py, sonda `aprobacion_horario_descrito_como_prohibicion`; `sistema_global/marco_comun_c/validador/orquestador.py`, en la pantalla de aprobación (`motivos_espera`) y en la comprobación de horario al aprobar | **Esperado:** la justificación describe lo que hace el código. **Obtenido:** la de `aprobacion` dice «solo desde la consola, de 07:00 a 21:00 UTC», y la pregunta, «en qué horario», como si fuera de ese horario no se pudiera aprobar. En el código, fuera de horario solo se añade el motivo «fuera de horario» a la espera de `enfriamiento_min` (30 min); después se puede aprobar | Redactarla así: «fuera de 07:00–21:00 UTC, y tras cualquier pérdida del día, hay que esperar 30 minutos» | abierto |
+| H-04 | baja | Lectura de `parametros_doc` | Preguntas o justificaciones que un operador inexperto no puede usar bien. (1) `revision_max_dias`: «¿Cada cuánto tiempo como mínimo hay que volver a revisar…?» para un máximo de 90 días; se presta a responder al revés. (2) `rangos_tipo_cambio_eur`: «¿Qué rango de tipos de cambio se considera plausible para cada divisa?» pide 18 números técnicos; es más un control técnico que una pregunta de perfil. (3) `referencias`: la justificación («es provisional, porque casi todo la supera») no dice por qué el valor es prudente, y no avisa de que el §7 de la Constitución dice «efectivo solo si el operador lo fija así» | (1) «¿Cuánto tiempo como máximo puede pasar sin revisar una inversión abierta?». (2) Plantearla como confirmación («¿Te vale el rango recomendado…?») o justificar por qué la decide el operador. (3) Decir que el efectivo es un marcador hasta T-37/D-17, contra la letra del §7 | abierto |
+| H-05 | baja | r01_mutaciones_bateria.py, sondas `valor_cambiado_justificacion_rancia` (`k_min_observaciones` 20 → 40) y `valor_cambiado_politica_justificacion_rancia` (`max_posiciones` 10 → 25): la batería pasa | **Esperado:** un valor cambiado con su versión y su migración no deja una justificación falsa sin aviso. **Obtenido:** las justificaciones citan los números (20, «diez»), pero nada las ata al valor. `no_cambia_ningun_valor` compara las tablas antes y después de la misma ejecución, no con un valor fijado. Hoy todos los números citados casan con su valor (heurística de r01_contenido.py) | Guardar en cada registro la huella del valor que justifica (o comprobar que los números de la justificación están en el valor), de modo que cambiar un valor obligue a revisar su texto | abierto |
+| H-06 | baja | r01_contenido.py, sonda `preguntas_pendientes_sin_validar_tablas` | **Esperado:** el mismo cierre que `faltan()`. **Obtenido:** `preguntas_pendientes(tablas)` con una clave PROPUESTO ausente la devuelve con `valor` None, sin aviso, y con `{}` lanza KeyError (`faltan({})` lanza ValueError) | Validar `tablas` como `faltan()` y lanzar ValueError si una clave PROPUESTO no está | abierto |
 
-Los scripts de ataque van en `revisores/` dentro de este ticket, numerados por ronda y sin sobrescribir.
+Comprobado sin hallazgo:
+
+- **Los 4 RATIFICADO:**
+  - `o_dias_sequia`: §7, D-27 y P-17;
+  - `n_dias_embudo`: D-22, «N muestra cada semana»;
+  - `i_meses_juicio_sombra`: §9 punto 9, D-27 y P-18;
+  - `nivel_autonomia`: §6, «las tres carteras en L1», D-45; en el código, `nivel()` da L1 sin dato.
+- **Ningún otro PROPUESTO está ratificado, salvo H-01.** D-27 ratifica también el tope de coste del 1 %, la liquidez del 5 % y la revisión cada 6 meses, pero ninguno está en las tres tablas. `i_indice_sombra` es un marcador, y su PROPUESTO es correcto.
+- **Los 4 TECNICO:** no llevan números ni las decide el operador.
+- **Todas las fuentes existen y casan con su fila.** Por ejemplo, la Deuda D-05 da «3 reintentos, 50 € y 600 min, 5 %, 0 días»; la D-30, «2/10/30 pb, 0 pb, 0,75, 100 %»; la D-31, «5 %, 3 días, hoy o mañana, 20:00, 2 %, 15 min». No encontré ninguna inventada.
+- **Las justificaciones de K, D, H, E, F y del Orquestador describen lo que hace el código**, entre otras:
+  - Q-04, Q-05, Q-07 y Q-09;
+  - F-03 a F-17 y F-20 a F-23;
+  - `max_reintentos`, `tolerancia_precio_entrada`, `max_reaperturas`, `avisos` (`reiterar_min` y `escalar_tras`) y `kill_switch` (24 h tras el rearme).
+- **Los comentarios desplazados de `CONFIG_DEFECTO`** que señala el análisis técnico están bien descritos y no producen falsos pasos.
+- **El estado de otros tickets.** El diff de la fila T-83 de la deuda y la corrección de mypy de T-90 los hizo otro (son de las 19:01, posteriores a los ficheros del ticket). El traspaso dice que la deuda no se tocó, y el aviso de mypy 160 > 159 ya no aplica: el gate da 159.
 
 ## Veredicto
 
-**APTO / NO APTO** · motivo.
+**NO APTO** · dos hallazgos medios confirmados. H-01: `apalancamiento_max` figura como PROPUESTO, preguntable en T-57, contra la D-16 ratificada, y no la cita. H-02: la pregunta de `aprobacion` no deja fijar dos decisiones pendientes del operador (canal con segundo factor y pérdida que activa la espera), y las subclaves nuevas no se detectan. Los bajos (H-03 a H-06) pueden corregirse a la vez o pasar a la deuda con su ID. La batería es sólida en lo que promete: de las 28 mutaciones, solo sobreviven las 5 que se esperaba.
