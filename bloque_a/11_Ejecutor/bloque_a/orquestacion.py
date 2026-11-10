@@ -1243,6 +1243,13 @@ class Bloque:
     def _puertas(self, f: dict, nivel: str, as_of, horizontes_ok: list[str]) -> dict[str, bool]:
         fecha_dato = f["senales"].get("fecha_dato")
         lim = parametro(self.cfg, "ps2_antiguedad_maxima_dias")   # Anexo A (PS2, P-13); sin respaldo en el código (T-65, H-08)
+        # T-65 (QA r04, H-24): un pronóstico RELATIVO depende también de su referencia; PS2 mira el dato más antiguo de los dos
+        ref = f.get("_referencia")
+        if fecha_dato and ref and ref != "CESTA" and f.get("_tipo_pronostico", "RELATIVO") == "RELATIVO":
+            try:
+                fecha_dato = str(min(pd.Timestamp(fecha_dato), self.proveedor.valor_en(ref, as_of)[0]).date())
+            except DatosNoDisponibles:
+                fecha_dato = None
         if fecha_dato:
             edad = (pd.Timestamp(as_of) - pd.Timestamp(fecha_dato)).days
             # H1 cuenta sesiones hábiles (el dato del viernes vale el lunes); el resto, días naturales (Anexo A)

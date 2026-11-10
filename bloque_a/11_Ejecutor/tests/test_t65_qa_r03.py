@@ -109,12 +109,12 @@ def test_r03_h16_un_miembro_parado_de_la_cesta_no_cuenta(tmp_path):
     b.fijar_fecha(AS_OF)
     ev = b.evaluador
     todos = ev.simbolos_clase("DIV")
-    r_todos, _ = ev.rentabilidad("CESTA", "DIV", "2026-04-03", "2026-05-01")
+    r_todos, _ = ev.rentabilidad("CESTA", "DIV", "2026-04-03", "2026-05-01", "H2")
     _parar(datos, todos[0], "2026-04-10")
     b2 = _bloque(tmp_path / "b", datos=datos)
     b2.fijar_fecha(AS_OF)
-    r_sin, _ = b2.evaluador.rentabilidad("CESTA", "DIV", "2026-04-03", "2026-05-01")
-    otros = [b2.evaluador.rentabilidad(s, "DIV", "2026-04-03", "2026-05-01")[0] for s in todos[1:]]
+    r_sin, _ = b2.evaluador.rentabilidad("CESTA", "DIV", "2026-04-03", "2026-05-01", "H2")
+    otros = [b2.evaluador.rentabilidad(s, "DIV", "2026-04-03", "2026-05-01", "H2")[0] for s in todos[1:]]
     assert r_sin == pytest.approx(sum(otros) / len(otros)) and r_sin != pytest.approx(r_todos)   # 8d74622: entraba con 0
 
 

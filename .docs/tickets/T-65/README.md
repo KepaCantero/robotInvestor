@@ -2,7 +2,7 @@
 
 | Campo | Valor |
 | --- | --- |
-| Estado | DETENIDO (QA r04 NO APTO, 10-11-2026; a la espera de que el operador diga cómo seguir) |
+| Estado | EN QA (reabierto por el operador tras la QA r04; correcciones de H-24 y H-25, pendiente de la r05) |
 | Pieza | bloque_a |
 | Planifica · implementa · QA | claude · claude · el otro agente (Astra) o un revisor nuevo sin contexto |
 | Aprobación del operador | No necesaria: es una corrección técnica. Los valores que decide el operador van como `[PROPUESTO]` en `bloque_a/11_Ejecutor/config/por_defecto.yaml` y se listan abajo para T-57 |
@@ -80,7 +80,7 @@ Pruebas en `bloque_a/11_Ejecutor/tests/test_t65_qa_r03.py` (QR3). Con 8d74622 fa
 
 | Hallazgo | Qué se hace | Prueba |
 | --- | --- | --- |
-| H-16 (media) | **Al emitir:** `_referencia_invalida` exige además que el último cierre de la referencia no tenga más de `referencias.antiguedad_maxima_dias` días (nuevo, `[PROPUESTO]` 7 hasta T-57: es la antigüedad de PS2 de H3 y la tolerancia que ya usaba la resolución). Una referencia parada deja el tipo (o el indicador, con SUBYACENTE) fuera, declarado y con incidencia `DATOS`. **Al resolver:** la frescura se exige a cada serie por separado (`min` de las dos fechas), con `evaluacion.antiguedad_maxima_dato_resolucion_dias` (el 7 que estaba en el código). Si una serie está parada, el pronóstico espera y, pasado `dias_habiles_no_resoluble`, queda NO_RESOLUBLE; nunca se resuelve con una rentabilidad 0. En la CESTA, un miembro parado no cuenta | QR3 `test_r03_h16_*` (6) |
+| H-16 (media) | **Al emitir:** `_referencia_invalida` exige además que el último cierre de la referencia no tenga más de `referencias.antiguedad_maxima_dias` días (nuevo, `[PROPUESTO]` 7 hasta T-57: es la antigüedad de PS2 de H3 y la tolerancia que ya usaba la resolución). Una referencia parada deja el tipo (o el indicador, con SUBYACENTE) fuera, declarado y con incidencia `DATOS`. **Al resolver:** la frescura se exige a cada serie por separado (`min` de las dos fechas), con `evaluacion.antiguedad_maxima_dato_resolucion_dias` (el 7 que estaba en el código; desde la r04, la antigüedad de PS2 de cada horizonte, H-24). Si una serie está parada, el pronóstico espera y, pasado `dias_habiles_no_resoluble`, queda NO_RESOLUBLE; nunca se resuelve con una rentabilidad 0. En la CESTA, un miembro parado no cuenta | QR3 `test_r03_h16_*` (6) |
 | H-17 | Un subyacente declarado sin datos ya no se cambia por la CESTA: se valida, y el indicador se excluye y se declara. Con la columna vacía (o NaN), sigue la CESTA | QR3 `test_r03_h17_*` (2) |
 | H-18 | Con SUBYACENTE, la referencia guardada en una vigente se valida con su indicador (que se excluye solo) y no como referencia del tipo | QR3 `test_r03_h18_*` |
 | H-19 | Pruebas de las dos partes de H-12 que no tenían: la referencia guardada en una vigente (tipo no SUBYACENTE) y el corte por `FugaDeInformacion`. Con sus mutaciones en `mutaciones.py` | QR3 `test_r03_h19_*` (2) |
@@ -92,6 +92,17 @@ Pruebas en `bloque_a/11_Ejecutor/tests/test_t65_qa_r03.py` (QR3). Con 8d74622 fa
 **Para T-57** (además de la lista de arriba):
 - `referencias.antiguedad_maxima_dias` (7);
 - INC-T65-01 (`Close` frente a `Adj Close`).
+
+## Correcciones de la QA r04 (NO APTO, «Ronda r04» de `qa.md`; ronda reabierta por el operador)
+
+Pruebas en `bloque_a/11_Ejecutor/tests/test_t65_qa_r04.py` (QR4): las 9 fallan con el código de HEAD (1a91d28, que contiene db6ed93).
+
+| Hallazgo | Qué se hace | Prueba |
+| --- | --- | --- |
+| H-24 (media) | **Al resolver**, cada serie del pronóstico (proxy, referencia y cada miembro de la CESTA) necesita:<br>– un dato posterior al de la emisión (`d1 > d0`);<br>– que su último dato no sea más antiguo, a la fecha de resolución, que la antigüedad de PS2 de su horizonte (`ps2_antiguedad_maxima_dias`, Anexo A, P-13; H1 en sesiones hábiles).<br>Si no, el pronóstico espera y, pasado `dias_habiles_no_resoluble`, queda NO_RESOLUBLE. Sin número nuevo: desaparece el 7 común (`evaluacion.antiguedad_maxima_dato_resolucion_dias`, de la r03). La resolución guarda la fecha de cada serie (`fecha_dato_proxy` y `fecha_dato_referencia`). En la CESTA, un miembro que no sirve no cuenta; sin horizonte, tampoco el que no tiene un dato nuevo.<br>**Al emitir**, PS2 mira el dato más antiguo entre el proxy y la referencia de un pronóstico RELATIVO, así que en H1 la referencia también debe tener una sesión | QR4 `test_r04_h24_*` (8) |
+| H-25 | Las fechas repetidas se marcan en `serie()`, entre las filas ya publicadas a la fecha as_of y dentro del rango pedido. Una revisión aún no publicada no cuenta; cuando se publica, las dos filas de la misma fecha vuelven a ser un dato inválido | QR4 `test_r04_h25_*` |
+
+Información de la r04 que no se toca: las formas de `refs-vivas` que el docstring no promete (tuberías, variables de entorno, `cd … &&`; ninguna aparece en el repo), `ultima_fecha()` con una última fila inválida (las lecturas siguientes la rechazan) y los PRG abiertos frente a una ACWI parada al final del backtest (ninguno se resuelve con un dato falso).
 
 ## Diseño
 
@@ -167,3 +178,6 @@ Pruebas en `bloque_a/11_Ejecutor/tests/test_t65_qa_r03.py` (QR3). Con 8d74622 fa
 - 2026-11-10 · EN CURSO · claude · correcciones de la r03: H-16 a H-23 corregidos con su prueba
 - 2026-11-10 · EN QA · claude · pendiente de la r04; ver `pruebas.md`
 - 2026-11-10 · DETENIDO · QA r04 NO APTO: H-24 (media, un pronóstico H1 aún se resuelve con rentabilidad 0 si una serie deja de publicarse el día de la emisión) y H-25 (baja). Por indicación del operador no se abre otra ronda; los pendientes quedan en la fila T-65 de la deuda. El código está en develop (commit `db6ed93`)
+- 2026-11-10 · reabierto por el operador
+- 2026-11-10 · EN CURSO · claude · correcciones de la r04: H-24 y H-25 corregidos con su prueba
+- 2026-11-10 · EN QA · claude · pendiente de la r05; ver `pruebas.md`

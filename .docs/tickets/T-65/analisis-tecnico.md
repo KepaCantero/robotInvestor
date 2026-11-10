@@ -208,3 +208,36 @@ cd bloque_a/11_Ejecutor && ../../.venv/bin/python -m pytest -q -p no:cacheprovid
 cd ../.. && python3 .docs/tickets/T-65/revisores/r03_03_refs_vivas.py                   # HALLAZGOS: 0 · INFO: 0
 python3 .docs/tickets/T-65/mutaciones.py r03                                            # 10/10
 ```
+
+## Correcciones de la QA r04 (NO APTO; ronda reabierta por el operador)
+
+**Causa raíz de H-24.** La corrección de H-16 exigía a cada serie que su último dato no tuviera más de 7 días a la fecha de resolución. En H1 (5 sesiones, 7 días naturales de viernes a viernes), una serie parada el mismo día de la emisión cumplía esa tolerancia: su último dato era el de la emisión, así que su rentabilidad era 0 y el pronóstico se resolvía con un suceso falso. Pasaba lo mismo con un miembro de la CESTA.
+
+**Causa raíz de H-25.** `_duplicada` se calculaba al cargar el archivo entero, incluidas las filas que `serie()` aún ocultaba por su `fecha_publicacion`.
+
+**Cambios** (rutas bajo `bloque_a/11_Ejecutor/`):
+
+| Archivo | Cambio | Hallazgo |
+| --- | --- | --- |
+| `bloque_a/evaluador.py` | `motivo_no_fresca(d0, d1, f1, horizonte)`: exige un dato posterior al de la emisión y una antigüedad, a la fecha de resolución, no mayor que la de PS2 de su horizonte (H1 en sesiones hábiles). `_rentabilidad_serie` devuelve también la fecha de la emisión. `rentabilidad(…, horizonte)` lo aplica a cada serie y a cada miembro de la CESTA. `resolver` pasa el horizonte del PRG y guarda `fecha_dato_proxy` y `fecha_dato_referencia` | H-24 |
+| `bloque_a/orquestacion.py` | `_puertas`: PS2 usa el dato más antiguo entre el proxy y la referencia de un pronóstico RELATIVO | H-24 |
+| `bloque_a/herramientas/ht01_datos.py` | `_duplicada` se marca en `serie()`, después de los filtros de fecha y de publicación | H-25 |
+| `config/por_defecto.yaml` | Sale `evaluacion.antiguedad_maxima_dato_resolucion_dias` (de la r03). La resolución usa `ps2_antiguedad_maxima_dias`, que ya estaba (Anexo A) | H-24 |
+| `tests/test_t65_qa_r04.py` | 9 pruebas nuevas | H-24, H-25 |
+| `tests/test_t65_qa_r03.py` | La prueba de la CESTA pasa el horizonte (H2), que ahora es obligatorio para comprobar la frescura | H-24 |
+| `.docs/tickets/T-65/mutaciones.py` | 7 mutaciones más (74 en total); se rehicieron las tres de H-16 de la r03, porque el código que mutaban se movió | H-24, H-25 |
+
+**Decisiones:**
+
+- **Antigüedad.** Se usa la de PS2 por horizonte en lugar de un número nuevo. Es la regla que el Anexo A ya fija para los datos de mercado, y ata la tolerancia al horizonte, como pedía la QA. En H2 la resolución pasa de 7 días a 3, más estricta. En H4 pasa a 30 y en H5 a 90, más holgadas, pero proporcionales a un horizonte de meses o años.
+- **PS2 al emitir.** Para un pronóstico RELATIVO, PS2 mira también la referencia. Un pronóstico de H1 con una referencia de hace 3 días deja la opción sin superar PS2, igual que un proxy viejo.
+- **Revisiones ya publicadas.** Cuando la revisión ya se ha publicado, las dos filas con la misma fecha siguen siendo ambiguas y se rechazan, declaradas. El formato con revisiones se admite mientras solo se vea una fila por fecha.
+
+**Comandos:**
+
+```bash
+cd bloque_a/11_Ejecutor && ../../.venv/bin/python -m pytest -q -p no:cacheprovider tests/test_t65_qa_r04.py
+../../.venv/bin/python ../../.docs/tickets/T-65/revisores/r04_01_frescura_borde.py   # HALLAZGOS: 0 (1 INFO)
+../../.venv/bin/python ../../.docs/tickets/T-65/revisores/r04_02_filas_en_rango.py   # HALLAZGOS: 0 (1 INFO)
+cd ../.. && python3 .docs/tickets/T-65/mutaciones.py r04                             # 7/7
+```
