@@ -732,7 +732,8 @@ class Coordinador:
                 if "fechas" in n or any(k in n for k in CAMPOS_FECHA):
                     if not fechas_de_fuente(n, self.ent.as_of, self.ent.reloj.zona):
                         # T-90 (QA de T-64, H-01): la nota se excluye (en backtest sería una fuga) y se declara, con su motivo y su recuento
-                        f_ = n.get("fechas") if isinstance(n.get("fechas"), dict) else {}
+                        f_raw = n.get("fechas")
+                        f_: Dict = f_raw if isinstance(f_raw, dict) else {}
                         dias_ = [dia_local(f_.get(k, n.get(k)), self.ent.reloj.zona) for k in CAMPOS_FECHA]
                         fuga = any(x is not None and x > self.ent.as_of for x in dias_)
                         clave = (d, inf["especialista"], "fuga" if fuga else "fechas")

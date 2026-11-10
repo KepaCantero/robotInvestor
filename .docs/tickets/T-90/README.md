@@ -40,3 +40,4 @@ La nota se sigue excluyendo. Ahora, además, se añade a `estados_degradados` de
 - 2026-11-10 · ABIERTO · creado con nuevo_ticket.sh
 - 2026-11-10 · EN QA · corrección y prueba (falla con HEAD: `estados_degradados` vacío)
 - 2026-11-10 · CERRADO · QA r01 APTO. Al cerrar se corrigen H-01 (motivo propio para las fechas incompletas o ilegibles, que ya no se rotulan como fuga) y H-02 (cuántas notas se excluyeron por dimensión y especialista), con una prueba nueva, y H-03 (documentación). La suite de B queda en 176
+- 2026-11-10 · CERRADO · después de cerrar: la corrección de H-01 añadió un error de mypy en B (160, frente a una cuota de 159), visto al pasar el gate de T-83. Se tipa `f_` y la cuenta vuelve a 159
