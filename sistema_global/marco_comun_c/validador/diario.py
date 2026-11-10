@@ -48,6 +48,11 @@ escribe nada más con ese Diario: hay que volver a abrirlo.
 
 V0.69 (T-72): `estado_diario()` da la foto pública de solo lectura del diario (operativo, bloqueo con su código, líneas y si
 está sincronizado con el Orquestador y con su fichero); la consola la usa en lugar de los privados.
+
+T-84 (QA de la V0.63, H-06): un corte entre la escritura del temporal y el `os.replace` deja un `.diario-*.tmp` (o un
+`.estado-*.tmp` de `persistencia.guardar`) que nadie borraba. Cuando `abrir` va bien, borra los de las carpetas del estado y
+del diario (solo ficheros normales con esos nombres exactos, nunca enlaces ni carpetas) y dice cuántos (`temporales_borrados`).
+Si `abrir` falla, no toca nada. Como el diario, supone un solo proceso escribiendo en esas carpetas.
 """
 from __future__ import annotations
 
@@ -56,6 +61,7 @@ import hashlib
 import hmac
 import json
 import os
+import stat
 import tempfile
 
 import persistencia as pe
@@ -432,10 +438,45 @@ def _forma_ok(e):
             and isinstance(e["resultado"], str) and pe.HEX64.match(e["resultado"]) is not None)
 
 
+def _temporales_huerfanos(*rutas):
+    """T-84 (H-06): borra los temporales de escritura atómica (.diario-*.tmp, .estado-*.tmp) que un corte dejó en las carpetas
+    de esas rutas. Solo ficheros normales (lstat: ni enlaces ni carpetas). Nunca lanza; devuelve cuántos borró."""
+    borrados = 0
+    try:
+        carpetas = sorted({os.path.dirname(os.path.abspath(r)) or "." for r in rutas})
+    except (OSError, ValueError, TypeError):
+        return 0
+    for carpeta in carpetas:
+        try:
+            nombres = sorted(os.listdir(carpeta))
+        except (OSError, ValueError, TypeError):
+            continue
+        for nombre in nombres:
+            if not (nombre.endswith(".tmp") and nombre.startswith((".diario-", ".estado-"))):
+                continue
+            ruta = os.path.join(carpeta, nombre)
+            try:
+                if stat.S_ISREG(os.lstat(ruta).st_mode):
+                    os.unlink(ruta)
+                    borrados += 1
+            except OSError:
+                pass
+    return borrados
+
+
 def abrir(ruta_estado, ruta_diario, clave=None) -> dict:
     """Carga el último estado guardado y vuelve a aplicar lo que el diario tiene después de su punto de control. Nunca lanza.
-    Devuelve {ok, codigo, motivo, diario, aplicadas, linea_incompleta}. Con clave (V0.45), el estado y cada línea deben venir
-    firmados con ella (PE-06 / DI-02)."""
+    Devuelve {ok, codigo, motivo, diario, aplicadas, linea_incompleta, temporales_borrados}. Con clave (V0.45), el estado y cada
+    línea deben venir firmados con ella (PE-06 / DI-02). Si va bien, borra los temporales huérfanos de una escritura atómica
+    cortada (T-84, H-06: `temporales_borrados`); si falla, no toca nada."""
+    r = _abrir(ruta_estado, ruta_diario, clave)
+    if r.get("ok"):
+        r["temporales_borrados"] = _temporales_huerfanos(ruta_estado, ruta_diario)
+    return r
+
+
+def _abrir(ruta_estado, ruta_diario, clave=None) -> dict:
+    """El cuerpo de `abrir`, sin la limpieza de los temporales huérfanos."""
     if clave is not None and not pe.clave_valida(clave):
         return _r(False, "PE-07", f"la clave debe tener al menos {pe.CLAVE_MIN_BYTES} bytes", diario=None)
     r = pe.cargar_de(ruta_estado, clave)

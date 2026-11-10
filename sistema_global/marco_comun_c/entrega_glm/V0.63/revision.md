@@ -19,3 +19,12 @@ Sugerencia para el revisor (además de lo que dice el prompt): el corte a medias
 (miércoles); un segundo corte en el diario FIRMADO (jueves o viernes) y un arranque con el reloj por detrás del estado
 son las dos propiedades vecinas que esta batería no ejercita (tienen cobertura parcial en `pruebas_diario_t03.py` y
 `pruebas_reloj_t03.py`).
+
+**Nota del 10 de noviembre de 2026 (T-84):** la renuncia de arriba ya no vale. La revisión independiente de esta pieza
+se hizo en T-84 (`.docs/tickets/T-84/qa.md`, ronda r01: **NO APTO**, H-01 medio y H-02 a H-08 bajos) con las sondas de
+`entrega_claude/V0.63_revision/`. Las dos propiedades que sugería esta nota (un segundo corte en el diario firmado y un
+arranque con el reloj por detrás del estado) fallan cerrado en el producto; la batería no ejercitaba el Reloj. La ronda de
+correcciones de T-84 cambia `pruebas/pruebas_semana.py` (instantes de `Reloj.ahora()` con desfase, arranques contados,
+mañana con el reloj atrasado y cortes en el diario firmado), `pruebas/pruebas_reloj_t03.py` (H-07) y `validador/diario.py`
+(H-06); el detalle, en `.docs/tickets/T-84/analisis-tecnico.md` y `.docs/tickets/T-84/pruebas.md`. Lo de arriba se deja
+como estaba.
