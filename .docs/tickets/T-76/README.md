@@ -2,7 +2,7 @@
 
 | Campo | Valor |
 | --- | --- |
-| Estado | EN QA (ronda r02) |
+| Estado | DETENIDO (QA r02 NO APTO; el operador decide si abre otra ronda) |
 | Pieza | sistema_global/marco_comun_c |
 | Planifica · implementa · QA | claude · claude · un revisor nuevo sin contexto |
 | Aprobación del operador | No necesaria: aplica una decisión ratificada (D-22, D-27, D-30). El operador pidió el 2026-11-10 «sigue con el resto de la deuda que no dependa de mí» |

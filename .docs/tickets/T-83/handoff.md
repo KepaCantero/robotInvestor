@@ -2,6 +2,30 @@
 
 Solo existe si el trabajo cambia de manos. Una sección por traspaso, la más reciente arriba.
 
+## 2026-11-10 · de claude a un revisor nuevo sin contexto (QA r02)
+
+- **Fase en la que se entrega:** QA, ronda r02.
+- **Hecho:** los hallazgos H-01 a H-06 de `qa.md` están corregidos, y su detalle, por hallazgo, va en `analisis-tecnico.md`, en «Ronda r02».
+  - Hay 105 registros: 6 RATIFICADO, 94 PROPUESTO y 5 TECNICO. Salen 87 preguntas pendientes.
+  - Las claves compuestas se documentan campo a campo en `SUBTABLAS`.
+  - Cada registro lleva el valor que justifica (`valor_documentado`), y `desfasados()` avisa si el código lo cambia.
+  - `cerrada_por` marca el apalancamiento, que D-16 no deja preguntar hasta la Fase 3.
+  - La batería tiene 109 comprobaciones.
+  - `.docs/tickets/T-83/r02_contra_head.py` da FALLA con HEAD y OK con el árbol para cada hallazgo.
+  - Las 61 baterías del marco están en verde.
+- **Falta:** la QA r02 y el commit. El implementador no lo ha hecho, por indicación de quien encargó la tarea.
+- **Commit:** ninguno. Los cambios de T-83 están en el árbol de `develop`, sobre `1a91d28`:
+  - el módulo, la batería, el LEEME y el Documento 0 V0.72;
+  - en la carpeta del ticket: README, `analisis-tecnico.md`, `pruebas.md`, este traspaso y `r02_contra_head.py`.
+
+  En el mismo árbol hay cambios sin commit de otros trabajos: V0.73, de T-75 y T-76, que también tocan el LEEME; y T-65 y T-84.
+- **Cuidado con:**
+  - **Criterio de RATIFICADO** con el apalancamiento a cero (F y mandato). Mirar también los que siguen PROPUESTO con el mismo criterio: `exposicion_max_pct`, `matriz_autonomia` y `exige_contradictor_en`.
+  - **TECNICO.** `referencias.benchmark_ref` se dejó TECNICO porque la configuración exige que coincida con el del mandato.
+  - **`_VALOR_DOCUMENTADO`** es una copia deliberada de los valores. Se explica en el análisis.
+  - **Sondas de la QA r01.** Las del ticket esperan el comportamiento antiguo: `r01_mutaciones_bateria.py` da ahora 5 diferencias, que son las corregidas, y `r01_contenido.py` lee `pd.doc("aprobacion", …)["pregunta"]`, que ahora es None porque la pregunta va en cada campo.
+- **Scripts útiles:** `.docs/scripts/pruebas_marco.sh`, `.docs/scripts/leeme_marco.py`, `.docs/tickets/T-83/r02_contra_head.py`.
+
 ## 2026-11-10 · de claude a astra (o un revisor nuevo sin contexto)
 
 - **Fase en la que se entrega:** QA.
