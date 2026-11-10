@@ -9,6 +9,16 @@ De: Claude. Para: Astra. Lo pide el operador el 10-11-2026: **que Astra trabaje 
 3. Para cada tarea, lee **solo** su ticket (`.docs/tickets/T-NN/`) y su fila en `sistema_global/seguimiento/Deuda_tecnica_y_pendientes_del_operador.md`. No leas el repositorio entero.
 4. Antes de cada tarea, `git pull`: Claude puede estar subiendo cosas a la vez.
 
+## 0 bis. Fuera de tu alcance hasta nuevo aviso (operador, 11-11-2026)
+
+El operador va a discutir con Claude la arquitectura del Bloque B y de los demás bloques antes de construir nada más. Hasta que lo dé por cerrado:
+- **No toques `bloque_b/`** ni sus tickets, ni abras tareas nuevas del Bloque B. Claude está evaluándolo; es solo lectura y medición, sin cambios.
+- **No abras las tareas que dependen de esa arquitectura:** T-87 (SC-5), T-81 (SC-4 mínimo), T-82 (escalera de verificación y CT-G-17), T-74 (controles de F) y T-73 (perfil inversor). En el §3.6 quedan marcadas como «en espera».
+- **Sí sigues con:**
+  - las del marco: T-83, T-84, T-75 y T-76;
+  - las del Bloque A: T-93, T-91 y T-88.
+- Si una de las tuyas te obliga a cambiar un contrato con el Bloque B (CT-B-…) o la interfaz de encargos A→B, para y pregúntale al operador.
+
 ## 1. Reglas que no cambian
 
 - **Rondas hasta el APTO (sustituye la regla anterior de una sola ronda; operador, 10-11-2026: «Quiero que Astra trabaje hasta completar todas las tareas y que pasen las QAs»).** Cada tarea sigue este ciclo hasta que su QA dé APTO:
@@ -172,11 +182,11 @@ Cuando estén cerradas las tareas del 3.1 al 3.4, sigue con estas, una cada vez,
 | T-91 | Bloque A: H-26 a H-29 de la QA r05 de T-65 (festivos de PS2 en la resolución de H1; fechas distintas de proxy y referencia; regla de PS2 sin marcar `[PROPUESTO]` ni registrar en `docs/incidencias.md`; documentación y mutantes vivos) | Ninguna; es técnica. La regla de H-27 se marca `[PROPUESTO]` y va a T-57 |
 | T-93 | Bloque A: hallazgos medios y bajos de la QA r04 de T-92 (integración de tu auditoría; R8 con escapes, falsos positivos con URL de prensa, almacén anterior con la última línea a medias…) | Ninguna; es técnica. Corregir H-32 y H-34 antes del modo sombra con API. Tu rama `astra/bloque-a-integridad-y-evidencia` ya está integrada en develop como T-92 (salvo `preparar-encargo-b`): no la fusiones |
 | T-88 | Bloque A: `presupuesto.consumido` de F5 cambia entre ejecuciones iguales con varios hilos | Ninguna; es técnica |
-| T-87 | SC-5 con su registro de análisis compartido (sale de T-80) | Pieza nueva: diseñarla con el operador antes del plan |
-| T-81 | SC-4 mínimo (tesis congeladas, torneo de pronósticos, calibración) | Pieza nueva: diseñarla con el operador, junto con PA-03 y PA-15 de T-67 |
-| T-82 | Escalera de verificación y ficha de bloque CT-G-17 | Pieza nueva y contrato nuevo: diseño y aprobación del operador |
-| T-74 | Controles de F que faltan (volumen, liquidez, exposición compartida…) | Cambia F y el contrato CT-G-08: el operador aprueba el plan por escrito |
-| T-73 | Perfil inversor en SC-1 | La estructura se puede planificar; los valores, en T-57 |
+| T-87 | SC-5 con su registro de análisis compartido (sale de T-80) | Pieza nueva: diseñarla con el operador antes del plan; **en espera** de la discusión de arquitectura (§0 bis) |
+| T-81 | SC-4 mínimo (tesis congeladas, torneo de pronósticos, calibración) | Pieza nueva: diseñarla con el operador, junto con PA-03 y PA-15 de T-67; **en espera** de la discusión de arquitectura (§0 bis) |
+| T-82 | Escalera de verificación y ficha de bloque CT-G-17 | Pieza nueva y contrato nuevo: diseño y aprobación del operador; **en espera** de la discusión de arquitectura (§0 bis) |
+| T-74 | Controles de F que faltan (volumen, liquidez, exposición compartida…) | Cambia F y el contrato CT-G-08: el operador aprueba el plan por escrito; **en espera** de la discusión de arquitectura (§0 bis) |
+| T-73 | Perfil inversor en SC-1 | La estructura se puede planificar; los valores, en T-57; **en espera** de la discusión de arquitectura (§0 bis) |
 | T-70, T-71 | Choques de los códigos O-00 y O-01 | Son de la Fase 2: renombrar exige migrar diarios ya escritos. Haz solo el plan, y pregunta al operador si las adelanta |
 
 ## 4. Qué entregar al operador
