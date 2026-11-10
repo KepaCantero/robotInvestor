@@ -2,7 +2,7 @@
 
 | Suite | Antes | Después |
 | --- | --- | --- |
-| Bloque A (`bloque_a/11_Ejecutor/tests`) | 117 | 185 (`test_t66_propuestas.py`: 46, 13 de la QA · `test_t66_evaluacion.py`: 22) |
+| Bloque A (`bloque_a/11_Ejecutor/tests`) | 117 | 201 (`test_t66_propuestas.py`: 62, 29 de la QA · `test_t66_evaluacion.py`: 22) |
 | Bloque A Forex y Bloque B | 68 · 141 | 68 · 141 (no se tocan) |
 
 ## Criterio de aceptación → prueba
@@ -10,7 +10,7 @@
 | Criterio | Prueba |
 | --- | --- |
 | CA-1: cada propuesta aplicada tiene una prueba que falla sin ella | Orquestación: `revisores/mutaciones_orquestacion.sh` (11 mutaciones, las 11 fallan). Evaluación: el segundo agente revirtió cada cambio en una copia (tabla en su informe, resumida en «Regresiones») |
-| CA-2: suites y gate completo en verde, línea base subida | A 185 / FX 68 / B 141; gate 12/12; cuotas bajadas: ruff 3120 → 3109 y mypy A 135 → 123 |
+| CA-2: suites y gate completo en verde, línea base subida | A 201 / FX 68 / B 141; gate 12/12; cuotas bajadas: ruff 3120 → 3109 y mypy A 135 → 123 |
 | CA-3: lo no aplicado, con motivo y destino | README del ticket («No entra») y deuda técnica T-67 |
 | CA-4: el Documento 0 no se toca | `corpus-integridad` en verde; comportamiento documentado en el README del ejecutor y en INC-T66-01 e INC-T66-02 |
 
