@@ -2,7 +2,7 @@
 
 | Campo | Valor |
 | --- | --- |
-| Estado | EN QA |
+| Estado | DETENIDO (QA r01 NO APTO, 10-11-2026; a la espera de que el operador diga cómo seguir) |
 | Pieza | sistema_global/marco_comun_c |
 | Planifica · implementa · QA | claude · claude · un revisor nuevo sin contexto |
 | Aprobación del operador | No necesaria: aplica una decisión ratificada (D-22, D-27, D-30). El operador pidió el 2026-11-10 «sigue con el resto de la deuda que no dependa de mí» |
@@ -65,3 +65,4 @@ Detalle en `sistema_global/documentos_0/V0.71_Cartera_sombra_pasiva.md`.
 
 - 2026-11-10 · ABIERTO · creado con nuevo_ticket.sh
 - 2026-11-10 · EN QA · V0.71 implementada; batería nueva con 45 comprobaciones; 60 baterías en verde
+- 2026-11-10 · DETENIDO · QA r01 NO APTO: H-01 a H-04 medios (prorrateo del coste de la sombra, juicio antes de tiempo, números enormes que dejan NaN, O-41 silenciable si I no compara) y H-05 a H-09 bajos. Por la regla del operador no se abre otra ronda; pendientes en la fila T-76 de la deuda
