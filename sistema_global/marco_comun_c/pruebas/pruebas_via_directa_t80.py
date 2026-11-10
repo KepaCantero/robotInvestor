@@ -191,6 +191,21 @@ def main():
           lambda: o.abrir_directa("EXP-DD-10", "COR-DD-10", "TACTICA", "D", "BROKER", AHORA, analisis="EV-SOB-0001"), "O-06")
     h.chk("D_el_motivo_dice_que_esta_superado_H13", "superado" in r["motivo"], r)
 
+    # QA r04, H-16: con el análisis en juego en un DIRECTA, el origen no se reanaliza (el DIRECTA quedaría con uno superado)
+    o = nuevo()
+    hasta(o, "VALIDADA", 1)
+    assert o.observar("EXP-0001", [{"tipo": "FECHA", "fecha": "2026-11-20"}], "el operador lo aparta", "OPERADOR", AHORA)["ok"]
+    assert o.abrir_directa("EXP-DD-11", "COR-DD-11", "TACTICA", "D", "BROKER", AHORA, analisis="EV-SOB-0001")["ok"]
+    assert o.reabrir("EXP-0001", "el operador quiere un análisis nuevo", "OPERADOR", AHORA)["ok"]
+    e2 = encargo(1)
+    e2["event_id"] = "EV-ENC-0001-B"
+    r = R("el_origen_no_se_reanaliza_con_su_analisis_en_juego_H16", o, lambda: o.emitir_encargo("EXP-0001", e2, "GESTOR_TACTICA", AHORA), "O-06",
+          mutacion_permitida=True)
+    h.chk("y_lo_dice_H16", "en juego en EXP-DD-11" in r["motivo"] and "EV-ENC-0001-B" not in o.encargos, r)
+    assert o.descartar("EXP-DD-11", "el operador aparta el DIRECTA", "OPERADOR", AHORA)["ok"]
+    r = o.emitir_encargo("EXP-0001", e2, "GESTOR_TACTICA", AHORA)
+    h.chk("apartado_el_DIRECTA_el_origen_si_se_reanaliza_H16", r["ok"], r)
+
     # QA r01, H-03: una propuesta caducada no vuelve por la vía DIRECTA (§4.1, regla 4)
     o = nuevo()
     hasta(o, "PROPUESTA", 1)
