@@ -730,6 +730,9 @@ class Coordinador:
                 marcas = {}
                 if "fechas" in n or any(k in n for k in CAMPOS_FECHA):
                     if not fechas_de_fuente(n, self.ent.as_of, self.ent.reloj.zona):
+                        # T-90 (QA de T-64, H-01): la nota se excluye (en backtest sería una fuga) y se declara
+                        st["estados_degradados"].append(f"{d}: nota de {inf['especialista']} excluida por fechas de fuente posteriores al corte "
+                                                        "o incoherentes (fuga de información)")
                         continue
                     marcas = {k: n.get("fechas", {}).get(k, n.get(k)) for k in CAMPOS_FECHA}
                 et = controlado(n.get("etiqueta"), "etiqueta", "[INTERPRETACIÓN]")
