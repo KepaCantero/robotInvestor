@@ -8,7 +8,7 @@ from __future__ import annotations
 
 from types import MappingProxyType
 
-VERSION_PARAMETROS = "PAR-0.4.0"   # 0.2.0 (T-26): licencias admitidas por K. 0.3.0 (T-17): costes y confianza en D. 0.4.0 (V0.67): tope de líneas del diario en el panel
+VERSION_PARAMETROS = "PAR-0.5.0"   # 0.2.0 (T-26): licencias admitidas por K. 0.3.0 (T-17): costes y confianza en D. 0.4.0 (V0.67): tope de líneas del diario en el panel. 0.5.0 (V0.68, T-80): tope de análisis por consulta
 
 _VALORES = {
     # K — calidad y antigüedad de los datos de corte
@@ -42,6 +42,7 @@ _VALORES = {
     "manual_ventana_declaracion_horas": 72,
     # N — consola. V0.64 lo dejaba escrito en la firma de panel(); V0.67 lo trae aquí (regla 5 del kit)
     "n_lineas_diario_ambar": 1000,   # líneas del diario sin punto de control a partir de las que el panel avisa en ámbar [PROPUESTO]
+    "o_max_analisis_consulta": 50,   # T-80: análisis que puede citar una consulta, para que el rastro SC-5 no crezca sin límite [PROPUESTO]
 }
 
 

@@ -21,7 +21,7 @@ AQUI = Path(__file__).resolve().parent
 sys.path.insert(0, str(AQUI))
 from k_calidad import (Calendario, ERRORES, SinCobertura, estado_sello, hash_serie,  # noqa: E402
                        validar_sello)
-from validar_encargo import NIVEL_MAX_POR_DECISION, NIVEL_ORDEN, sobre_responde_a_encargo, validar_encargo  # noqa: E402
+from validar_encargo import NIVEL_MIN_POR_DECISION, NIVEL_ORDEN, sobre_responde_a_encargo, validar_encargo  # noqa: E402
 from validar_sobre import _dt, bloqueos  # noqa: E402
 from manual_g import aplanar_manual, neto_libre, validar_manual, via_norm  # noqa: E402
 from comparador import MARGEN_AJUSTADO, REFERENCIA_EFECTIVO, _referencia_ok, comparar_candidatos  # noqa: E402
@@ -366,7 +366,7 @@ def _condiciones_reapertura_ok(conds, hoy):
 def _identidad(e):
     d = {k: e.get(k) for k in ("expediente_id", "correlation_id", "via_entrada", "cartera_destino")}
     if e.get("via_entrada") == "DIRECTA":   # T-80: por dónde entró, qué análisis reutiliza y de qué consulta viene, encadenados
-        d.update({k: e.get(k) for k in ("bloque_entrada", "analisis_ref", "consulta_ref")})
+        d.update({k: e.get(k) for k in CAMPOS_DIRECTA})
     return d
 
 
@@ -374,13 +374,15 @@ VIVOS = ("VALIDADA", "COMPARADA", "PROPUESTA", "AUTORIZADA")   # candidato con a
 # T-80 (D-28, §2 y §4.1 regla 6): vía DIRECTA. El Broker entra por C, D o E y el expediente nace en el estado de ese bloque;
 # F y G nunca son punto de entrada. Una consulta no abre expediente: deja su rastro en SC-5
 BLOQUES_DIRECTA = {"C": "EN_ANALISIS", "D": "VALIDADA", "E": "COMPARADA"}
-REUTILIZABLE_DESDE = ("EN_OBSERVACION", "DESCARTADA", "CADUCADA")   # un análisis en juego, invertido o en reanálisis no se reutiliza
+REUTILIZABLE_DESDE = ("EN_OBSERVACION", "DESCARTADA")   # en juego, invertido, en reanálisis o caducado (§4.1, regla 4): no
 MOTIVO_REUTILIZA = "análisis vigente reutilizado"   # la anotación que da a un expediente DIRECTA el sobre validado de otro
-NIVEL_BAJO = NIVEL_MAX_POR_DECISION["EXPLORAR"]   # §2: lo que falte al entrar por D se encarga a C con un análisis de nivel bajo
+# §2: lo que falte al entrar por D se encarga a C con un análisis «de nivel bajo». [PROPUESTO] (QA de T-80, H-04): el más bajo con el
+# que se puede invertir (N2), porque entrar por D es para decidir y con N1 el expediente nunca llegaría a una orden
+NIVEL_BAJO = NIVEL_MIN_POR_DECISION["ABRIR_POSICION"]
 TIPOS_CONSULTA = ("COMPARAR", "ANALIZAR", "PROYECTAR")   # §2: comparar, analizar o proyectar sin intención de invertir
 BLOQUES_CONSULTA = ("A", "B", "C", "D", "E", "K")   # empieza y termina en un bloque de análisis o de datos, nunca en F ni G
 CAMPOS_CONSULTA = ("consulta_id", "correlation_id", "tipo", "bloque", "cartera", "analisis", "pregunta")
-MAX_ANALISIS_CONSULTA = 50   # tope técnico de análisis citados por una consulta (que el rastro no crezca sin límite)
+CAMPOS_DIRECTA = ("bloque_entrada", "analisis_ref", "consulta_ref")   # solo los lleva un expediente DIRECTA (y van en su identidad)
 
 
 def _canon(x):
@@ -1045,6 +1047,8 @@ class Orquestador:
         h = e["historial"]
         if h[0]["datos"] != _hash(_identidad(e)):
             return False
+        if e.get("via_entrada") != "DIRECTA" and any(k in e for k in CAMPOS_DIRECTA):   # QA de T-80, H-07: fuera de la identidad
+            return False
         enc = [x["ref"] for x in h if (x["hasta"] == "EN_ANALISIS" and x["motivo"] == "encargo emitido")
                or (e.get("via_entrada") == "DIRECTA" and x["desde"] == x["hasta"] == "VALIDADA" and x["actor"] == "ORQUESTADOR" and isinstance(x["motivo"], str)
                    and x["motivo"].startswith(MOTIVO_REUTILIZA))]
@@ -1650,11 +1654,31 @@ class Orquestador:
         try:
             L = self.consultas
             if L == {"historial": [], "estado": "VIGENTE", "entradas": []}:
-                return True
-            return (self._historial_ok(L) and len(L["historial"]) == len(L["entradas"])
-                    and all(h["datos"] == _hash(x) for h, x in zip(L["historial"], L["entradas"])))
+                return self._consultas_citadas_ok()
+            if not (self._historial_ok(L) and len(L["historial"]) == len(L["entradas"])
+                    and all(h["datos"] == _hash(x) for h, x in zip(L["historial"], L["entradas"]))):
+                return False
+            return self._consultas_citadas_ok()
         except (KeyError, TypeError, AttributeError, ValueError):
             return False
+
+    def _consultas_citadas_ok(self):
+        """QA de T-80, H-02: lo que los expedientes encadenan del rastro sigue en él. Todo expediente DIRECTA que sale de una consulta
+        tiene en SC-5 esa consulta (con su análisis) y su APERTURA: vaciar o recortar el rastro por el final se ve si recorta algo
+        citado. Lo que nadie cita solo lo protege el ancla externa de la cabeza SC5 (T-02)."""
+        ent = self.consultas["entradas"]
+        cons = {x["consulta_id"]: x for x in ent if x.get("tipo") == "CONSULTA"}
+        aperturas = {(x["consulta_id"], x["expediente_id"]) for x in ent if x.get("tipo") == "APERTURA"}
+        for k, e in self.expedientes.items():
+            c = e.get("consulta_ref") if e.get("via_entrada") == "DIRECTA" else None
+            if c is None:
+                continue
+            if c not in cons or (c, k) not in aperturas:
+                return False
+            if e.get("analisis_ref") is not None and e["analisis_ref"] not in cons[c]["consulta"]["analisis"]:
+                return False
+        return all(x["consulta_id"] in cons and (self.expedientes.get(x["expediente_id"]) or {}).get("consulta_ref") == x["consulta_id"]
+                   for x in ent if x.get("tipo") == "APERTURA")
 
     def _consulta(self, consulta_id):
         L = self.consultas.get("entradas") if isinstance(self.consultas, dict) else None
@@ -1713,6 +1737,12 @@ class Orquestador:
             return None, err
         if x["cartera_destino"] != cartera:
             return None, _no("O-12", f"el análisis {sid} es de la cartera {x['cartera_destino']}, no de {cartera}")
+        # QA de T-80, H-01: el encargo actual del origen tiene que ser aquel al que respondió el sobre (nivel, sello, mandato y
+        # presupuesto salen de él). Si se volvió a encargar después de validarlo, el sobre ya no es el de su encargo: no se reutiliza
+        h = x["historial"]
+        iv = max((i for i, z in enumerate(h) if z["hasta"] == "VALIDADA" and z["desde"] != "VALIDADA"), default=None)
+        if iv is None or any(z["hasta"] == "EN_ANALISIS" and z["motivo"] == "encargo emitido" for z in h[iv + 1:]):
+            return None, _no("O-06", f"{x['expediente_id']} se volvió a encargar después de validar el análisis {sid}: ya no es el de su encargo")
         for k, y in sorted(self.expedientes.items()):
             if (y.get("sobre") or {}).get("event_id") != sid:
                 continue
@@ -1720,6 +1750,11 @@ class Orquestador:
                 return None, _no("O-06", f"el análisis {sid} ya está en juego en {k} ({y['estado']}): compárelo allí")
             if y["estado"] == "EJECUTADA":
                 return None, _no("O-06", f"con el análisis {sid} ya se invirtió en {k}")
+            # QA de T-80, H-09 y H-12: lo que caducó después de validarse no vuelve sin análisis nuevo (§4.1, regla 4), aunque
+            # después se descarte
+            iv_y = max((i for i, z in enumerate(y["historial"]) if z["hasta"] == "VALIDADA" and z["desde"] != "VALIDADA"), default=-1)
+            if y["estado"] == "CADUCADA" or any(z["hasta"] == "CADUCADA" for z in y["historial"][iv_y + 1:]):
+                return None, _no("O-06", f"{k}, que tiene el análisis {sid}, caducó: una propuesta caducada vuelve con un análisis nuevo (§4.1, regla 4)")
             if y["estado"] not in REUTILIZABLE_DESDE:
                 return None, _no("O-06", f"{k}, que tiene el análisis {sid}, se está analizando de nuevo ({y['estado']})")
             if y.get("exclusion") is not None:
@@ -1786,6 +1821,8 @@ class Orquestador:
             return _no("O-06", f"entrar por {bloque} exige un análisis vigente del registro" + (" o un encargo de nivel bajo para C" if bloque == "D" else ""))
         if bloque == "D" and motivo is not None:
             return _no("O-01", "el motivo de no comparar es de la entrada por E")
+        if bloque == "D" and analisis is not None and encargo is not None:   # QA de T-80, H-06: nada se ignora en silencio
+            return _no("O-01", "por D se entra con un análisis vigente o, si no lo hay, con un encargo de nivel bajo: no con los dos")
         if bloque == "E" and not _motivo_ok(motivo):
             return _no("O-15", f"entrar por E con un candidato único exige el motivo de no comparar con más ({MOTIVO_MIN} a 500 caracteres)")
         err = self._config_rota()   # T-51 (H5)
@@ -1807,7 +1844,7 @@ class Orquestador:
         origen, no = (None, None)
         if analisis is not None:
             origen, no = self._origen_reutilizable(analisis, cartera_destino, a)
-            if no and (bloque == "E" or encargo is None):
+            if no:
                 return {**no, "encargar": NIVEL_BAJO} if bloque == "D" else no
         e = {"expediente_id": expediente_id, "correlation_id": correlation_id, "via_entrada": "DIRECTA", "cartera_destino": cartera_destino,
              "bloque_entrada": bloque, "analisis_ref": analisis if origen is not None else None, "consulta_ref": consulta_id,
@@ -1828,15 +1865,20 @@ class Orquestador:
             self._anota(e, "VALIDADA", "VALIDADA", "ORQUESTADOR", ahora, f"{MOTIVO_REUTILIZA} de {origen['expediente_id']}",
                         origen["encargo_actual"], datos=self._huella_sobre(e))
             self.expedientes[expediente_id] = e
+            if cons is not None:   # antes de comparar: el rastro tiene que citar ya la apertura (consultas_ok, H-02)
+                self._anota_sc5({"tipo": "APERTURA", "consulta_id": consulta_id, "expediente_id": expediente_id, "bloque": bloque}, ahora)
             if bloque == "E":
                 r = self._comparar([expediente_id], "D", ahora, a, motivo_unico=motivo)
                 if not r["ok"]:
                     del self.expedientes[expediente_id]
+                    if cons is not None:   # la apertura no llegó a hacerse: se quita del rastro (nadie la ha visto)
+                        self.consultas["historial"].pop()
+                        self.consultas["entradas"].pop()
                     if r.get("faltan"):   # §2: «se devuelve a D»: hay más candidatos vigentes en la cartera y D compara con todos
                         return _no("O-22", f"hay otros candidatos vigentes en la cartera ({', '.join(r['faltan'][:5])}): se devuelve a D; "
                                            "entre por D y compare con todos", devolver_a="D", faltan=r["faltan"])
                     return r
-        if cons is not None:
+        if cons is not None and origen is None:
             self._anota_sc5({"tipo": "APERTURA", "consulta_id": consulta_id, "expediente_id": expediente_id, "bloque": bloque}, ahora)
         extra = {k: v for k, v in (r.items() if bloque == "E" or origen is None else ()) if k not in ("ok", "codigo", "motivo")}
         return _r(True, "OK" if bloque != "E" else r["codigo"], f"expediente abierto por {bloque} (vía DIRECTA): nace {e['estado']}"
@@ -1856,6 +1898,13 @@ class Orquestador:
         c = consulta
         if not all(isinstance(c[k], str) and _ID.match(c[k]) for k in ("consulta_id", "correlation_id")):
             return _no("O-01", "identificadores de la consulta inválidos")
+        err = self._config_rota()
+        if err:
+            return err
+        rota = self._rota()   # QA de T-80, H-05: antes de leer el rastro
+        if rota:
+            self._activar_kill(f"integridad rota en {rota}", "ORQUESTADOR", self.ultimo_ahora or "1970-01-01T00:00:00+00:00")
+            return _no("O-13", f"el registro {rota} no es íntegro: no se consulta")
         previa = self._consulta(c["consulta_id"])
         if previa is not None:
             if _hash(previa) == _hash(c):
@@ -1866,19 +1915,12 @@ class Orquestador:
         if c["cartera"] is not None and c["cartera"] not in GESTOR_DE:
             return _no("O-01", "cartera inválida")
         an = c["analisis"]
-        if not (isinstance(an, list) and len(an) <= MAX_ANALISIS_CONSULTA and all(isinstance(x, str) for x in an) and len(set(an)) == len(an)):
-            return _no("O-01", f"analisis: lista de event_id de sobres, sin repetidos y como mucho {MAX_ANALISIS_CONSULTA}")
+        if not (isinstance(an, list) and len(an) <= PARAMETROS["o_max_analisis_consulta"] and all(isinstance(x, str) for x in an) and len(set(an)) == len(an)):
+            return _no("O-01", f"analisis: lista de event_id de sobres, sin repetidos y como mucho {PARAMETROS['o_max_analisis_consulta']}")
         if not _motivo_ok(c["pregunta"]):
             return _no("O-15", f"una consulta exige su pregunta ({MOTIVO_MIN} a 500 caracteres)")
         if c["tipo"] == "COMPARAR" and (c["bloque"] != "D" or c["cartera"] is None or not an):
             return _no("O-01", "comparar es de D: con la cartera (su benchmark) y al menos un análisis")
-        err = self._config_rota()
-        if err:
-            return err
-        rota = self._rota()
-        if rota:
-            self._activar_kill(f"integridad rota en {rota}", "ORQUESTADOR", self.ultimo_ahora or "1970-01-01T00:00:00+00:00")
-            return _no("O-13", f"el registro {rota} no es íntegro: no se consulta")
         xs = []
         for sid in an:
             x, err = self._analisis_vigente(sid, a)
@@ -2247,7 +2289,7 @@ class Orquestador:
         expediente que lo validó, y la reutilización ya la comprobó y encadenó el Orquestador."""
         doc = copy.deepcopy(x["sobre"]["documento"])
         cid = x["expediente_id"] if cid is None else cid
-        if x.get("analisis_ref") is not None or cid != x["expediente_id"]:
+        if (x.get("via_entrada") == "DIRECTA" and x.get("analisis_ref") is not None) or cid != x["expediente_id"]:
             doc["expediente_id"] = cid
         return {"expediente_id": cid, "sobre": doc}
 
