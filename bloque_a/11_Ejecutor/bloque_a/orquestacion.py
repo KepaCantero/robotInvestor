@@ -827,11 +827,15 @@ class Bloque:
             x = res.get(f["proxy"])
             f["_refutacion"] = x
             f["_objeciones"] = []
-            for o in (x or {}).get("objeciones", []):
-                f["_objeciones"].append({"objecion_id": o["id"], "tipo": o.get("tipo"), "fuerza": o["fuerza"], "resumen": o["argumento"],
-                                         "que_la_resolveria": o.get("que_la_resolveria"), "respuesta": None, "resuelta": False})
+            for nn, o in enumerate((x or {}).get("objeciones", []), start=1):
+                # T-66 (QA H-01): el identificador lo asigna el código, único por opción; el del modelo se guarda aparte,
+                # para que una salida con ids repetidos o ajenos no resuelva objeciones de otra opción
+                oid = f"OBJ-{f['proxy']}-{nn:02d}"
+                f["_objeciones"].append({"objecion_id": oid, "id_modelo": o.get("id"), "tipo": o.get("tipo"), "fuerza": o["fuerza"],
+                                         "resumen": o["argumento"], "que_la_resolveria": o.get("que_la_resolveria"),
+                                         "respuesta": None, "resuelta": False})
                 if o["fuerza"] in ("fuerte", "moderada"):
-                    pendientes.append({"ref": f["proxy"], "objecion_id": o["id"], "fuerza": o["fuerza"], "argumento": o["argumento"],
+                    pendientes.append({"ref": f["proxy"], "objecion_id": oid, "fuerza": o["fuerza"], "argumento": o["argumento"],
                                        "que_la_resolveria": o.get("que_la_resolveria"), "dimensiones_E": f["dimensiones"].get("E"),
                                        "evidencia_disponible": self._evidencia_verificable(f)})
         if pendientes:
@@ -868,7 +872,10 @@ class Bloque:
                 self.mensajeria.crear("CT-13", "AG-02", "AG-11", msg3, run_id=run_id, presupuesto={"uc": presupuesto.asignado.get(clase)})
                 r3 = self._invocar("AG-11", "CT-13", msg3, "CONTRARREPLICA", INSTR["CONTRARREPLICA"], as_of, run_id, clase,
                                    "refutacion", presupuesto)
-                conf = {x["objecion_id"]: x for x in (r3.datos or {}).get("resultados", [])} if r3 and r3.datos else {}
+                enviadas = {x["objecion_id"] for x in replicas}
+                # Solo cuenta la confirmación de una objeción que se envió a la contrarréplica (QA H-01)
+                conf = {x["objecion_id"]: x for x in (r3.datos or {}).get("resultados", [])
+                        if isinstance(x, dict) and x.get("objecion_id") in enviadas} if r3 and r3.datos else {}
                 for f in finales:
                     for o in f.get("_objeciones", []):
                         if o["fuerza"] == "fuerte" and o["objecion_id"] in conf:
@@ -1517,7 +1524,8 @@ class Bloque:
                                                                                         "puntuaciones_totales", "afirmacion", "resultado", "cierre",
                                                                                         "clase", "top3_por_clase") if h["entrada"].get(k) is not None}}
                                          for h in hits]}
-        cuerpo = {"query_id": qry_id, "pregunta": texto, "contexto": contexto or {}, "urgencia": urgencia, "memoria_bloque": memoria}
+        cuerpo = {"query_id": qry_id, "pregunta": texto, "contexto": contexto or {}, "urgencia": urgencia, "memoria_bloque": memoria,
+                  "clases_activas": list(self.f10(as_of).get("P-02") or perfiles_activos(self.cfg))}
         pres = Presupuesto({"N0": float((self.cfg.get("presupuesto_uc") or {}).get("N0", 1))}, self.cfg)
         r = self._invocar("AG-01", "CT-03", cuerpo, "CONSULTA",
                           "Clasifica la consulta (ACLARACION, DATO, METODO, CONTRASTE, PROFUNDIZACION, ESTADO). Si es respondible con la "
@@ -1541,7 +1549,9 @@ class Bloque:
         escalado = None
         if d["ruta"] == "ANALITICA":
             esc = d.get("escalado") or {}
-            clases = [c for c in (esc.get("clases") or (contexto or {}).get("clases") or []) if c in CLASES] or ["RV"]
+            activas = list(self.f10(as_of).get("P-02") or perfiles_activos(self.cfg))
+            # T-66 (QA H-02): sin tipo declarado, el escalado va a los tipos activos, no a uno escrito a mano
+            clases = [c for c in (esc.get("clases") or (contexto or {}).get("clases") or []) if c in CLASES] or activas
             nivel = esc.get("nivel") if esc.get("nivel") in ("N1", "N2", "N3") else ("N3" if d["clase_consulta"] == "PROFUNDIZACION" else "N2")
             escalado = {"nivel": nivel, "clases": clases, "plazo_estimado": "mismo día (ejecución síncrona del ejecutor)",
                         "respuesta_provisional": d["respuesta"], "run_id": None}
@@ -1597,6 +1607,9 @@ class Bloque:
                 rechazos.append({"parametro": k, "motivo": "no es un parámetro de servicio (régimen CALIBRABLE u OPERADOR)"})
                 continue
             if k == "clases_activas":
+                if not isinstance(v, list) or not v:   # T-66 (QA H-03): una lista vacía no apaga el bloque en silencio
+                    rechazos.append({"parametro": k, "motivo": "debe ser una lista no vacía de tipos de activo"})
+                    continue
                 malas = [c for c in v if c not in CLASES]
                 if malas:
                     rechazos.append({"parametro": k, "motivo": f"clases desconocidas {malas}"})
@@ -1622,8 +1635,12 @@ class Bloque:
             aplicado[pid] = cfg_id
         # PA-10 (T-66): un certificado relaja un control (habilita probabilidades numéricas), así que solo entra en vigor
         # por la ruta única de cambios: lo aprueba el operador a través del Broker
-        certificados = []
-        for cid in ct04.get("aprobar_certificados") or []:
+        certificados: list[str] = []
+        pedidos = ct04.get("aprobar_certificados") or []
+        if not isinstance(pedidos, list):   # T-66 (QA H-04): un solo rechazo de formato, no uno por carácter
+            rechazos.append({"parametro": "aprobar_certificados", "motivo": "debe ser una lista de identificadores CERT-"})
+            pedidos = []
+        for cid in pedidos:
             try:
                 self.evaluador.aprobar_certificados([str(cid)], as_of, autor="BROKER")
                 certificados.append(str(cid))

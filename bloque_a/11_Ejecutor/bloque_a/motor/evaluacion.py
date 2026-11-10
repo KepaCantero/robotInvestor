@@ -120,6 +120,9 @@ def _conglomerados(fechas, n: int) -> np.ndarray:
     return np.asarray(inv, dtype=int).reshape(-1)
 
 
+_TOL_VARIANZA = 1e-12   # tolerancia numérica (no es un umbral de decisión): diferencias menores son error de coma flotante
+
+
 def correlacion_intraclase(conglomerado, y) -> dict:
     """ρ intraclase de un ANOVA de un factor (ICC(1)), recortada a [0, 1].
 
@@ -134,6 +137,9 @@ def correlacion_intraclase(conglomerado, y) -> dict:
         return {"rho": 1.0, "nota": "un solo conglomerado: ρ no estimable, se toma 1 (falla cerrado)"}
     if n == k:
         return {"rho": 0.0, "nota": "todos los conglomerados de tamaño 1: el efecto de diseño es 1"}
+    # T-66 (QA H-05): una varianza nula por error de coma flotante no es varianza; tolerancia relativa a la escala
+    if float(np.ptp(y)) <= _TOL_VARIANZA * max(1.0, float(np.max(np.abs(y)))):
+        return {"rho": 1.0, "nota": "residuos sin varianza: ρ no estimable, se toma 1 (falla cerrado)"}
     tam = np.bincount(g, minlength=k).astype(float)
     medias = np.bincount(g, weights=y, minlength=k) / tam
     msb = float(np.sum(tam * (medias - y.mean()) ** 2) / (k - 1))

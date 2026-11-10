@@ -228,7 +228,7 @@ Revisión independiente del ejecutor con 59 pruebas nuevas (de 58 a 117, con las
 
 ## Propuestas de la revisión aplicadas (T-66, 10-11-2026)
 
-De las 21 propuestas de T-53 (`.docs/tickets/T-53/propuestas.md`), se aplican las que no necesitan otro proveedor de IA, K ni llamadas reales a la API. A pasa de 117 a 172 pruebas. Detalle en `.docs/tickets/T-66/`. Lo que cambia para quien lo usa:
+De las 21 propuestas de T-53 (`.docs/tickets/T-53/propuestas.md`), se aplican las que no necesitan otro proveedor de IA, K ni llamadas reales a la API. A pasa de 117 a 181 pruebas. Detalle en `.docs/tickets/T-66/`. Lo que cambia para quien lo usa:
 
 - **Perfiles activos (PA-01).**
   - Por defecto solo se analiza **divisas** (`perfiles.activos: [DIV]`, `[PROPUESTO]`).
@@ -243,6 +243,7 @@ De las 21 propuestas de T-53 (`.docs/tickets/T-53/propuestas.md`), se aplican la
   - `backtest.anonimizar: auto` anonimiza con un modelo real; con el simulado no hace falta.
   - Los pronósticos de backtest hechos con un modelo real antes de `backtest.fecha_corte_modelo` llevan `contaminacion_posible`. No cuentan para certificados, recalibración, lecciones, degradación de H5 ni historial.
   - El informe de backtest los muestra aparte, solo como descripción.
+  - Una grabación de `ReplayClient` hecha antes de T-66 (un backtest sin anonimizar) ya no se reproduce con `auto`, porque cambia la clave de la respuesta (`ReplayFaltante`). Para reproducirla, usa `backtest.anonimizar: false`.
 - **Aprendizaje que solo endurece (PA-10).** Con `aprendizaje.solo_endurecer: true` (`[PROPUESTO]`):
   - un certificado que pasa el criterio nace **PROPUESTO**: el operador lo aprueba por CT-04 (`{"aprobar_certificados": [ids]}`);
   - la recalibración de pesos nunca pasa sola a producción;

@@ -2,7 +2,7 @@
 
 | Campo | Valor |
 | --- | --- |
-| Estado | EN QA |
+| Estado | EN QA (r01 NO APTO, corregido; pendiente la r02) |
 | Pieza | bloque_a |
 | Planifica · implementa · QA | claude · claude (orquestación) y un segundo agente (evaluación) · un revisor nuevo sin contexto |
 | Aprobación del operador | Aprobada el 2026-11-10: «Quiero que apliques todas las propuestas que consideres oportunas ahora mismo y demos por finalizado el bloque A». Los valores que decide el operador van como `[PROPUESTO]` hasta T-57 |
@@ -39,6 +39,9 @@ Aplicar al ejecutor del Bloque A las propuestas de la revisión T-53 (`.docs/tic
 | PA-08 | Hacen falta los precios reales por modelo y el tope en euros del operador | Antes del modo sombra con API; tope en T-57 |
 | PA-11 y PA-12 | Columnas del Anexo A, traslado a SC-1 y referencia con datos de €STR (K) | T-57 y K |
 | PA-13, PA-15 a PA-20 | Fase 1 avanzada o Fase 2 (N, SC-3, SC-4, auditor de otro proveedor, radar, lotes, compartir entre copias) | Su fase |
+| PA-03 (resto) | Bajar los hitos H5 a 12 meses o menos y publicar F4 en SC-4 | Con SC-4 (PA-15) y la revisión del corpus (H5 en el D0) |
+| PA-05 (resto) | Puntuar al Contradictor por las objeciones que después se confirman (D-37) | Con el torneo de PA-03 en SC-4 |
+| PA-14 (resto) | Ablación sin la clasificación de AG-12 y sin la integración de AG-02 (la integración no cambia la selección: su efecto es nulo por diseño) | Con PA-06 (retirar o fusionar esos agentes) |
 
 ## Diseño
 
@@ -88,4 +91,5 @@ Aplicar al ejecutor del Bloque A las propuestas de la revisión T-53 (`.docs/tic
 
 - 2026-11-10 · ABIERTO · creado con nuevo_ticket.sh
 - 2026-11-10 · EN CURSO · plan escrito; reparto de archivos entre claude y un segundo agente
-- 2026-11-10 · EN QA · implementado y juntado (claude + segundo agente); A con 172 pruebas; gate 12/12
+- 2026-11-10 · EN QA · implementado y juntado (claude + segundo agente); A con 181 pruebas; gate 12/12
+- 2026-11-10 · QA r01 NO APTO (H-01 alta); H-01 a H-08 corregidos o documentados; pendiente la r02
