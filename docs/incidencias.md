@@ -79,3 +79,5 @@ Sin contrarréplica, la objeción sigue abierta.
   - Lo que ve el Contradictor se sanea (R9).
   - Límite conocido, ronda r04 (H-19, en T-67): la `fuente` de una afirmación del propio Analista es texto libre, de modo que puede hacer «citable» una REF- de otro tema, posterior a as_of o inventada. Además, AG-14 puede devolver una REF- que no se le ofreció. Sigue haciendo falta la confirmación del Contradictor. Se corrige antes del modo sombra con API.
   - En el arrastre manda el veredicto más estricto entre el guardado y el de la regla. Una objeción mal formada o fuera de esquema cuenta como fuerte abierta, sin cortar el ciclo.
+
+**T-62 · Ámbito de la refutación por eslabón (CT-B-17).** El Documento 0 y el Director admiten ESLABON con eslabon_id; el crítico también emite TESIS con eslabon_id. El esquema congelado del paquete admite CADENA y propiedades x_. El ejecutor acepta ambas grafías de entrada y emite CADENA con x_eslabon_id y los candidatos expuestos. TESIS sin referencia a un eslabón mantiene su alcance global. Los detalles y la decisión sobre datos inválidos están en [.docs/tickets/T-62](../.docs/tickets/T-62/README.md).

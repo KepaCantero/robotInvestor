@@ -41,8 +41,8 @@ Las cuotas de ruff y de mypy de B bajan.
 | ID | Gravedad | Cómo reproducirlo | Esperado / obtenido | Corrección | Estado |
 | --- | --- | --- | --- | --- | --- |
 | H-01 | baja | `tools/cuotas.txt` | La línea base de pruebas de B debería proteger las nuevas; seguía en 118 | Subir `pytest_bloque_b` (a 141 tras la r02, también en `CLAUDE.md` y en `ri-probar`) | corregido por el revisor en la r02 |
-| H-02 | baja | `README.md` de este ticket | La revisión de B con el operador (D-42, regla 9 del §14) no tiene ticket propio; T-61 se presenta como aportación a T-53, que es la revisión de A | Abrir T-62, «Revisión del Bloque B con el operador» | corregido por el revisor (fila en la deuda) |
-| H-03 | baja | `evaluador.metricas` | Dentro de una celda se descartan también las ventanas solapadas de peticiones distintas, que podrían ser independientes. Es conservador: puede retrasar un certificado, nunca adelantarlo | Ninguna ahora; revisarlo con el operador en T-62 si los certificados tardan demasiado | abierto, a la deuda (T-62) |
+| H-02 | baja | `README.md` de este ticket | La revisión de B con el operador (D-42, regla 9 del §14) no tiene ticket propio; T-61 se presenta como aportación a T-53, que es la revisión de A | Abrir T-68, «Revisión del Bloque B con el operador» | corregido por el revisor (fila en la deuda) |
+| H-03 | baja | `evaluador.metricas` | Dentro de una celda se descartan también las ventanas solapadas de peticiones distintas, que podrían ser independientes. Es conservador: puede retrasar un certificado, nunca adelantarlo | Ninguna ahora; revisarlo con el operador en T-68 si los certificados tardan demasiado | abierto, a la deuda (T-68) |
 | H-04 | baja | `.docs/memoria/compartida/2026-11-09_bloque-b-objeciones-y-evaluacion.md` | `vigencia: histórica` no es uno de los valores del protocolo de memoria | Usar `vigente`, `sustituida por …` o `caduca …` | abierto, para Astra (la carpeta y la entrada son suyas) |
 
 ## Veredicto
@@ -89,8 +89,8 @@ Se cumplen todos:
 
 | ID | Gravedad | Cómo reproducirlo | Esperado / obtenido | Corrección | Estado |
 | --- | --- | --- | --- | --- | --- |
-| H-05 | baja | `backtest.py`: `comparar_azar(..., ent.cfg["evaluacion"]["bootstrap_replicas"], ...)` | El número de grupos del sorteo reutiliza el parámetro de réplicas del bootstrap. Está documentado, pero según D-45 cada parámetro nuevo lleva su propio valor por defecto y su pregunta | `evaluacion.grupos_azar`, con 1.000 por defecto | abierto, a la deuda (T-62) |
-| H-06 | baja | `revisores/r02_ataques_azar.py`, punto 8 | `comparacion_azar` lee las reglas de diversidad de `PARAMETROS_POR_DEFECTO` y siempre aplica el límite de subclúster. Coincide con cómo se llama hoy a HT-03 (sin parámetros y sin `ambito_es_subcluster`), pero dejaría de coincidir si la selección se llamara con parámetros propios o con un ámbito que sea un subclúster | Guardar en `universo_azar` las reglas efectivas de la selección | abierto, a la deuda (T-62) |
+| H-05 | baja | `backtest.py`: `comparar_azar(..., ent.cfg["evaluacion"]["bootstrap_replicas"], ...)` | El número de grupos del sorteo reutiliza el parámetro de réplicas del bootstrap. Está documentado, pero según D-45 cada parámetro nuevo lleva su propio valor por defecto y su pregunta | `evaluacion.grupos_azar`, con 1.000 por defecto | abierto, a la deuda (T-68) |
+| H-06 | baja | `revisores/r02_ataques_azar.py`, punto 8 | `comparacion_azar` lee las reglas de diversidad de `PARAMETROS_POR_DEFECTO` y siempre aplica el límite de subclúster. Coincide con cómo se llama hoy a HT-03 (sin parámetros y sin `ambito_es_subcluster`), pero dejaría de coincidir si la selección se llamara con parámetros propios o con un ámbito que sea un subclúster | Guardar en `universo_azar` las reglas efectivas de la selección | abierto, a la deuda (T-68) |
 | H-07 | baja | `handoff.md` de este ticket | Las mejoras de backtesting son una tarea nueva, posterior a T-61, pero no tienen ticket propio | Ninguna ahora (se revisan aquí como r02); en adelante, un `T-NN` por tarea | anotado |
 
 ## Veredicto

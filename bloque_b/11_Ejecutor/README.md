@@ -403,3 +403,19 @@ Si las combinaciones caben en `evaluacion.bootstrap_replicas` (1.000 por defecto
 Una objeción fuerte sobre la tesis que sigue abierta bloquea la recomendación de invertir. Para un candidato, limita su prioridad. Cada respuesta se aplica a los identificadores del encargo de ese agente. El seleccionador recibe las fichas de los candidatos objetados. Un cierre requiere un valor booleano verdadero y una respuesta; los matices débiles se registran como aceptados.
 
 Si faltan precios de un símbolo, el backtest lo indica en las advertencias y evalúa los que tienen precios. Para ensayar la refutación, desde este directorio se puede ejecutar `PYTHONPATH=. python ejemplos/comparar_critico.py`. Los tres casos de lectura manual tienen su guía en [ejemplos/casos_critico/guia.md](ejemplos/casos_critico/guia.md).
+
+### Alcance de una objeción a un eslabón (T-62)
+
+El crítico recibe los nombres e identificadores del mapa. Una objeción a un eslabón conocido pasa al Director para su contraste. En el paquete figura como CADENA y conserva el identificador del eslabón, su nombre y los identificadores de los candidatos con exposición principal o secundaria registrada. Los encargos a C de esos candidatos incluyen el argumento y el estado de la respuesta. Una objeción fuerte que sigue abierta limita su prioridad; la puerta del sector sigue dependiendo de las objeciones a la tesis global. Una referencia de eslabón ilegible o desconocida detiene la entrega con motivo explícito. El alcance se basa en las asignaciones del Seleccionador.
+
+### Cierre con fuente de objeciones fuertes (T-63)
+
+En la respuesta a CT-B-17, cada agente cita en `evidencia_nueva` una lista de identificadores disponibles en la petición. Para cerrar una objeción fuerte, el ejecutor exige texto, el booleano verdadero y al menos una cita; todas las citas deben pertenecer al catálogo facilitado. Se admiten datos DAT, evidencias EVD vigentes y los cálculos RC de escenarios o puntuación identificados en el estado del análisis. La evidencia citada en la respuesta queda diferenciada de la evidencia de la objeción original.
+
+La caja para C y el informe técnico muestran las referencias del cierre. Una cita desconocida mantiene la objeción abierta. Este control comprueba la trazabilidad: contrastar la fecha de publicación con la del incidente y verificar que el contenido respalda la explicación requiere una evaluación adicional. Los informes históricos conservan el resultado que se emitió en su día.
+
+### Cuándo sirve una cita para cerrar una objeción (T-64)
+
+El corte del expediente es el final del día en su zona horaria. Para una objeción fuerte, el crítico indica la fecha documentada del incidente. Las notas respaldadas por una fuente pueden incluir fecha_fenomeno, fecha_publicacion y conocible_desde en fechas. El ejecutor admite fechas ISO e instantes con zona y los compara por día local. Exige que el hecho sea anterior o igual a la publicación, que la disponibilidad sea igual o posterior a la publicación y que todo ello esté dentro del corte. Un embargo puede retrasar la primera disponibilidad.
+
+Todos los hechos citados para cerrar deben ser de un día posterior al incidente. Si ambos sucesos son del mismo día, su orden no queda demostrado a esta resolución. Las cajas conservan los días de las referencias admitidas y explican por qué un cierre no procede. Un dato o cálculo antiguo sin las fechas de la fuente no obtiene esas fechas de su descarga o de su ejecución. Un punto de control antiguo con cierres fuertes sin constancia temporal requiere repetir el análisis antes de entregar. Las entregas ya emitidas permanecen en el histórico.

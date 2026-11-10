@@ -410,8 +410,10 @@ def informe_tecnico(p: Dict, st: Dict, fase: Optional[int] = None) -> str:
     L.append(_tabla(["Tipo no aplicable", "Motivo"], noap) + "\n")
     rf = p["refutacion"]
     L.append(f"## 11. Refutación y registro de contraste adversarial\n\nRealizada por {rf['realizada_por']} · tesis **{rf['veredicto_tesis']}**.\n")
-    L.append(_tabla(["Objeción", "Objeto", "Fuerza", "Argumento", "Respuesta", "Estado"],
-                    [[o["obj_id"], o["objeto"], o["fuerza"], o["argumento"], o.get("respuesta"), o["estado_contraste"]] for o in rf["objeciones"]])
+    L.append(_tabla(["Objeción", "Objeto", "Fuerza", "Argumento", "Respuesta", "Referencias de la respuesta", "Estado"],
+                    [[o["obj_id"], o.get("x_nombre_eslabon") or o["objeto"], o["fuerza"], o["argumento"], o.get("respuesta"),
+                      ", ".join(o.get("x_evidencia_respuesta", [])) or "—",
+                      o.get("x_motivo_abierta") or o["estado_contraste"]] for o in rf["objeciones"]])
              if rf["objeciones"] else "Autorrefutación del Director (no independiente).")
     L.append(f"\n**Pre-mortem:** {rf.get('pre_mortem') or '—'}\n")
     m = p["mapa_cobertura"]

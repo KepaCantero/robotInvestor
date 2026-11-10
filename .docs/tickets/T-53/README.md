@@ -21,7 +21,7 @@ Encargo del operador (9-11-2026): «1) quiero que lo revises y corrijas posibles
 - No entra:
   - cambiar el corpus congelado (prompts, catálogo, esquemas, plantillas) sin decisión expresa: si una corrección lo exige, se propone;
   - implementar las propuestas de arquitectura, que tendrán su ticket cuando el operador decida;
-  - el Bloque B (T-62).
+  - el Bloque B (T-68).
 
 ## Diseño
 
