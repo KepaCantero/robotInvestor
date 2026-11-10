@@ -209,3 +209,81 @@ Información (no son hallazgos):
 - H-16: una referencia de comparación **obsoleta** pasa la validación (RV e IDX COMPLETO con un nivel de referencia de hace 11 meses), y el seguimiento resuelve pronósticos RELATIVO ya emitidos con una de sus dos series congelada (rentabilidad 0), en silencio. La resolución viene de antes de T-65, pero contradice la Constitución (§11) y alimenta la calibración con sucesos falsos.
 
 Para la r04: corregir H-16 con su prueba de regresión (o, si el coordinador decide sacar la parte de `resolver` de T-65, pasarla a la deuda con su ID y corregir la de la emisión aquí), y los bajos H-17 a H-23 o su paso a la deuda con su ID. El revisor volverá a ejecutar r01_01 a r03_04.
+
+---
+
+# Ronda r04
+
+- **Revisor:** revisor nuevo sin contexto de la implementación (Claude, subagente de QA) · **Ronda:** r04 (la última, por indicación del operador) · 2026-11-10 · sobre las correcciones de la r03, sin commit al empezar. Durante la revisión el coordinador las subió en db6ed93. `git diff db6ed93` solo muestra la sonda r04_01 de esta ronda (el commit se llevó una primera versión): el código de producto revisado es el de db6ed93.
+
+## Reproducción desde limpio
+
+- Tres copias con `git worktree add --detach` de b7c3afa, cada una con los cambios de T-65 (`git diff` más la prueba nueva) y un enlace a `.venv`. Se comprobó que importan el paquete de la copia. Se quitaron al terminar con `git worktree remove`.
+- Gate completo (`.docs/scripts/gate.sh --completo`) en la primera copia: **12/12**. corpus-integridad, nombres-nfc, yaml-configs, secrets, refs-vivas, ruff, los tres mypy y las tres suites (A **317**, A-Forex 68, B 174).
+- `pytest -q bloque_a/11_Ejecutor` en el árbol de trabajo: 317 passed.
+- `.docs/tickets/T-65/mutaciones.py` en la segunda copia: **67 de 67** detectadas, y la copia queda como estaba. `r01_07_mutaciones_extra.sh`: las 5 detectadas. `r03_04_mutaciones_extra.sh`: 2 de 2 detectadas. La tercera ya no casa con el código, y la cubre la mutación «r03 H-19 sin las referencias de las vigentes».
+- `.docs/scripts/prueba_refs_vivas.py`: 25/25.
+- Sondas de las rondas anteriores, en el árbol de trabajo:
+  - Sin hallazgos: r01_02, r01_04, r01_06, r02_02, r02_03, r03_01, r03_02 (A a D; las 5 INFO de A son las que ya se daban por correctas) y r03_03.
+  - Con «hallazgos» que el cambio de H-21 explica: r01_01 (2, «C/dup») y r02_01 (1, «B/desordenado_y_duplicado»). Se valoran abajo.
+  - r01_05 no se repitió: la variación de `consumo.uc` (T-88) ya aparece en r01_03.
+- **Determinismo** (r01_03, backtest de 4 semanas con 12 tipos y 4 hilos): dos veces con el árbol de T-65 y una con b7c3afa, cuyo código de A es el de 8d74622, la r03.
+  - Entre las dos ejecuciones de T-65 cambian 6 archivos: las rutas absolutas de los informes técnicos y de F5, y el orden de `cache_resultados.jsonl`.
+  - Frente a la r03 cambian además `consumo.csv` y `metricas.json`, en el cuarto decimal de `uc` (H-10/T-88).
+  - F3, F4, señales y pronósticos son idénticos: con datos sanos, las correcciones no cambian nada.
+- **Corpus y prompts:** sin cambios (corpus-integridad en verde; ningún prompt tocado).
+- **Sondas nuevas** (sin commit, salvo una primera versión de r04_01 que va en db6ed93): r04_01_frescura_borde.py (partes R, C, E y F), r04_02_filas_en_rango.py, r04_03_backtest_referencia_parada.py y r04_04_refs_vivas.py.
+
+## Hallazgos de la r03
+
+| ID | ¿Corregido? | Evidencia del revisor |
+| --- | --- | --- |
+| H-16 (media) | **en parte** | **Al emitir: sí.** r04_01 E: con ACWI a 7 días de la fecha as_of, RV se analiza; a 8 días, queda fuera y declarado (PARCIAL, 0 PRG frente a ACWI). r03_02 A («deja de publicarse en 2025-06»): RV e IDX fuera, con limitación e incidencia. Con SUBYACENTE, por indicador (r03_02 B).<br>**Al resolver: sí para H2 y horizontes más largos.** r03_02 D (las cuatro variantes, también el proxy parado): ABIERTO. r04_01 R: en H2, una serie parada en la emisión o 8 días antes de la resolución espera. r04_03 (backtest semanal con ACWI parada el 2026-03-27 y la resolución final): ninguna emisión con ACWI de más de 7 días, ningún PRG resuelto sin dato de ACWI posterior a su emisión y 27 NO_RESOLUBLE.<br>**Pero en H1 sigue resolviendo con 0:** el proxy, la referencia o un miembro de la CESTA parados justo en la emisión (H-24, abajo) |
+| H-17 | sí | r03_02 B, «SPY sin archivo»: los tres indicadores de DER se excluyen y se declaran, PARCIAL; nunca la CESTA en silencio. Prueba `test_r03_h17_*` y su mutación |
+| H-18 | sí | r03_02 C2: con la vigente que guarda ACWI, solo TAIL queda fuera y DER sigue con 2 opciones (antes, DER entero fuera) |
+| H-19 | sí | Las dos mutaciones «r03 H-19» de `mutaciones.py` las detecta su prueba, y la segunda también r03_04 |
+| H-20 | sí | r03_01 (`cierre,cierre`, `Close,Close`, `fecha,fecha`): se rechazan con «columnas repetidas»; mutación detectada |
+| H-21 | **sí, con un resto** | r04_02: 13 de 15 casos bien. Dentro del rango se rechaza todo: `n.d.`, `inf`, un booleano suelto, una fecha repetida (también con el mismo valor), el primer día de la ventana y la fecha as_of con `valor_en`. Fuera del rango no importa: el día antes de la ventana, el día después de as_of y una fila aún no publicada. **Resto:** una fecha repetida cuya segunda copia aún no está publicada (H-25, abajo) |
+| H-22 | sí | r03_03: 0 hallazgos. r04_04: 38 casos, 0 hallazgos y 5 INFO (abajo). Repo real: 0 citas rotas |
+| H-23 | sí | `docs/incidencias.md` (INC-T65-01, `[PROPUESTO]` con su pregunta), sección 4 del README del ejecutor, lista para T-57 del README del ticket y fila T-57 de la deuda |
+
+Los hallazgos de la r01 y la r02 siguen corregidos: H-01 (r01_04), H-02 y H-13 (r03_01), H-03 (gate 12/12 desde limpio), H-04 (r01_06), H-05 a H-08 (mutaciones y r01_07), H-09 y H-11 (lectura y prueba), H-12 (r02_03 y r03_02), H-14 (r03_01) y H-06 y H-15 (r02_02 y r03_03). H-10 sigue en la deuda (T-88).
+
+## Valoración del cambio de H-21 y de las dos sondas antiguas
+
+- **El comportamiento nuevo es correcto.** Es la misma regla que H-01 (aceptada en la r02, con un cierre 0 de 2019): se valida lo que se usa.
+  - r01_01 «dup»: la fecha repetida es 2026-10-30, posterior a la fecha as_of. Rechazar el símbolo por ella usaría en el backtest un dato que aún no existía, que es la fuga que H-21 quería quitar. En la resolución final del backtest, `valor_en` sí la ve si cae en la fecha que lee (r04_02, «fecha repetida en la fecha as_of»).
+  - r02_01 «desordenado_y_duplicado»: la fecha repetida es 2023-01-05, anterior a la ventana más larga del lote (3 años más 30 días: desde el 2023-05-06). Las lecturas de tasa base, clústeres, GC0, Motor y nivel caen todas dentro de esa ventana.
+  - Lo que esperaban las dos sondas, escritas cuando HT-01 rechazaba el archivo entero, queda obsoleto.
+- **Ningún dato malo dentro de la ventana pasa** (r04_02, 8 casos). `serie()` lo devuelve marcado (`_invalido`, `_crudo`, `_duplicada`), pero hoy nadie la lee fuera de HT-01 (`grep`). Todas las lecturas pasan por `cierres` o `valor_en`.
+- **Emitir y resolver:** la resolución solo lee dos niveles (`valor_en` en la emisión y en la resolución). Un `n.d.` entre las dos fechas no impide resolver, pero excluye el símbolo en la emisión siguiente. Es coherente con «se valida lo que se usa», y falla cerrado en los dos lados.
+
+## Hallazgos nuevos
+
+| ID | Gravedad | Cómo reproducirlo | Esperado / obtenido | Corrección sugerida | Estado |
+| --- | --- | --- | --- | --- | --- |
+| H-24 | media | r04_01_frescura_borde.py, partes R, C y F. F es de punta a punta: ciclo del viernes 2026-04-17 con `horizontes=["H1"]` (H1 es «SI» para MP y DIV en la tabla de horizontes), DBC o el proxy dejan de publicarse ese mismo día, y ciclo siguiente el 2026-04-27 | **Esperado** (H-16 y README del ticket: «nunca se resuelve con una rentabilidad 0»; Constitución §11).<br>**Obtenido:** H1 son 5 sesiones, 7 días naturales del viernes al viernes, y `evaluacion.antiguedad_maxima_dato_resolucion_dias` también es 7. `(f1 − d_min).days > 7` no salta cuando el último dato de una serie es el de la propia emisión.<br>– Parte F: **2 de 2 PRG H1 RELATIVO de MP RESUELTOS** con `rent_referencia` 0,0 (DBC parada) o `rent_proxy` 0,0 (proxy parado).<br>– Parte R: igual con ACWI o SPY escritos en F4 como en `test_r03_h16_*`.<br>– Parte C: en la CESTA, el miembro parado en la emisión entra con 0, porque el filtro de H-16 usa la misma tolerancia.<br>Es el mismo suceso falso de H-16 (Brier, calibración y certificados R13), ahora en H1. El cliente simulado no elige H1 por sí solo, pero el prompt pide H1 a H4 y el modelo real puede emitirlo. Además, en H1:<br>– una serie parada 1 sesión después de la emisión se resuelve con 1 de las 5 sesiones (INFO en R);<br>– en la emisión, la referencia puede tener 7 días, mientras PS2 pide al proxy 1 sesión;<br>– `fecha_dato` guarda la más reciente de las dos fechas y oculta la antigüedad de la otra | Exigir a cada serie (proxy, referencia y miembro de la CESTA) un dato posterior al de la emisión (`d1 > d0`), y atar la tolerancia al horizonte en vez de un 7 común. Por ejemplo, con `ps2_antiguedad_maxima_dias`, que ya existe por horizonte y cuenta sesiones en H1. Guardar la fecha de cada serie en la resolución. Prueba: las partes R, C y F de r04_01 | abierto |
+| H-25 | baja | r04_02_filas_en_rango.py, casos «revisión de 2026-05-29 publicada el 2026-07-01»: una fila con la misma `fecha` y una `fecha_publicacion` posterior a la fecha as_of (una revisión de una serie macro) | **Esperado** (H-21: «un dato malo posterior a as_of … no excluye el símbolo»; README del ejecutor: «una fila mala solo cuenta si cae en el rango que se usa»): a la fecha as_of solo se ve la primera copia, así que el símbolo se lee.<br>**Obtenido:** `_duplicada` se calcula al cargar sobre el archivo entero, también sobre las filas que `serie()` aún oculta por su `fecha_publicacion`. Con la fecha as_of 2026-06-05 (y con `valor_en` del 2026-05-29), el símbolo se rechaza («fechas duplicadas … 2026-05-29»): una fila que aún no se conocía cambia la decisión. Falla cerrado (excluye y declara, nunca da cifras), y antes de la r03 cualquier fecha repetida ya rechazaba el archivo | Marcar las fechas repetidas en `serie()`, después del filtro de publicación (solo entre las filas visibles). O rechazar al cargar los archivos con revisiones como formato no admitido, declarado, y decirlo en el README del ejecutor | abierto |
+
+Información (no son hallazgos):
+- r04_04, formas de `refs-vivas` que el docstring no promete:
+  - rompen en falso una ruta suelta con espacios cuyo primer trozo acaba en `.py`, una ruta con `..` que no sale del repo (deliberado) y una salida tras una tubería (`| tee`);
+  - no se comprueban una variable de entorno delante de la orden ni un `cd … &&`.
+  - Ninguna aparece hoy en el repo.
+- `ultima_fecha()` cuenta también una última fila inválida. Solo fija la fecha de la resolución final del backtest, y las lecturas siguientes la rechazan.
+- r04_03: al final del backtest siguen ABIERTO 48 PRG frente a ACWI. No se ha comprobado uno a uno por qué. Con ACWI parada, ninguno puede resolverse, y ninguno está RESUELTO con un dato falso.
+
+## Veredicto
+
+**NO APTO.** Está bien corregido:
+- la emisión con una referencia obsoleta (H-16, en el borde exacto de los 7 días);
+- la resolución en H2 y horizontes más largos, también en un backtest;
+- H-17 a H-23, con H-21 bien valorado (las dos sondas antiguas cambian por la razón correcta);
+- además: 67 de 67 mutaciones detectadas, gate 12/12 desde una copia limpia, determinismo, corpus y prompts sin cambios, y los hallazgos de la r01 y la r02 siguen cerrados.
+
+Pero hay un hallazgo medio confirmado en el mismo punto de H-16:
+- H-24: en H1 (7 días naturales, la misma cifra que la tolerancia), un pronóstico RELATIVO se sigue resolviendo con una rentabilidad 0 cuando el proxy, la referencia o un miembro de la CESTA dejan de publicarse el día de la emisión. Se reproduce de punta a punta con el ciclo.
+
+H-25 es bajo.
+
+Por indicación del operador no se abre otra ronda: la tarea se detiene aquí. El coordinador debe pasar H-24 y H-25 a la deuda técnica, con su ID y la corrección sugerida.
