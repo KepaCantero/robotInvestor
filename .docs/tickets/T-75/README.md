@@ -2,7 +2,7 @@
 
 | Campo | Valor |
 | --- | --- |
-| Estado | DETENIDO (QA r01 NO APTO, 10-11-2026; a la espera de que el operador diga cómo seguir) |
+| Estado | EN QA (ronda r02) |
 | Pieza | sistema_global/marco_comun_c |
 | Planifica · implementa · QA | claude · claude · un revisor nuevo sin contexto |
 | Aprobación del operador | No necesaria: aplica una decisión ratificada (D-22, D-27) y deuda técnica. El operador pidió el 2026-11-10 «reducir la deuda técnica: todo aquello que no dependa de mis decisiones personales» |
@@ -70,3 +70,5 @@ Detalle en `sistema_global/documentos_0/V0.70_Embudo_y_alarma_de_sequia.md`.
 - 2026-11-10 · ABIERTO · creado con nuevo_ticket.sh
 - 2026-11-10 · EN QA · V0.70 implementada; batería nueva con 24 comprobaciones; 59 baterías en verde
 - 2026-11-10 · DETENIDO · QA r01 NO APTO: H-08, H-01 y H-02 medios; H-03 a H-07 bajos. Por indicación del operador («si no supera esta ronda no continúes»), no se abre otra ronda; los hallazgos quedan en la fila T-75 de la deuda. El código de la V0.70 está en develop (commit `d6fbdb6`)
+- 2026-11-10 · reabierto por el operador («Abre las rondas detenidas»)
+- 2026-11-10 · EN QA · Ronda r02 (V0.73): corregidos H-01 (veto de F anotado y visible en el embudo), H-03 (un análisis cuenta una vez), H-04 (salidas por oportunidad y periodo abierto por la izquierda), H-05 (solo se informa el aviso si se añade), H-07 (días validados) y H-08 (sequía desde la última inversión: con barridos diarios salta); H-02 y H-06 (documentación) también. 34 comprobaciones; pendiente la QA r02

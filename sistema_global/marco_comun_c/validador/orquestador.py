@@ -136,6 +136,11 @@ def _motivo_ok(m):
     return isinstance(m, str) and len(m.strip()) >= MOTIVO_MIN and len(m) <= 500
 
 
+def _mes_utc(t):
+    """AAAA-MM del instante t en UTC (T-76: el mes de la sombra no depende del huso de quien llama)."""
+    return _dt(t).astimezone(timezone.utc).strftime("%Y-%m")
+
+
 def _mes(t):
     return t.astimezone(timezone.utc).strftime("%Y-%m")
 
@@ -146,7 +151,7 @@ def _dia(t):
 
 # V0.51 (T-18): avisos que, en el periodo de promoción, impiden subir de nivel (además de O-19, ALCANZADO y el kill-switch)
 INCIDENTES_PROMOCION = ("O-03", "O-18", "O-25", "O-37")   # V0.53: también el tope de LIBRES superado (T-33)
-PRIORIDAD_AVISO = {"O-41": "ALTA", "O-40": "MEDIA", "O-39": "ALTA", "O-36": "MEDIA", "O-35": "ALTA", "O-34": "ALTA", "O-33": "MEDIA", "O-32": "MEDIA", "O-31": "MEDIA", "O-20": "MEDIA", "O-30": "ALTA", "O-25": "ALTA", "O-26": "ALTA", "O-19": "ALTA", "O-18": "ALTA", "O-03": "ALTA", "O-08": "ALTA", "O-09": "ALTA", "O-13": "ALTA", "O-17": "ALTA", "O-37": "ALTA", "O-38": "ALTA"}   # O-37 (T-33): tope diario de las LIBRES superado, o LIBRES sin poder valorar; O-38 (T-40): cortacircuito global por pérdida
+PRIORIDAD_AVISO = {"O-42": "MEDIA", "O-41": "ALTA", "O-40": "MEDIA", "O-39": "ALTA", "O-36": "MEDIA", "O-35": "ALTA", "O-34": "ALTA", "O-33": "MEDIA", "O-32": "MEDIA", "O-31": "MEDIA", "O-20": "MEDIA", "O-30": "ALTA", "O-25": "ALTA", "O-26": "ALTA", "O-19": "ALTA", "O-18": "ALTA", "O-03": "ALTA", "O-08": "ALTA", "O-09": "ALTA", "O-13": "ALTA", "O-17": "ALTA", "O-37": "ALTA", "O-38": "ALTA"}   # O-37 (T-33): tope diario de las LIBRES superado, o LIBRES sin poder valorar; O-38 (T-40): cortacircuito global por pérdida
 ACTORES_PROPUESTA = set(EMISORES)   # quien propone no aprueba ni controla: F, D y H no proponen (Constitución §2, P1)
 
 
@@ -380,6 +385,7 @@ MOTIVO_REUTILIZA = "análisis vigente reutilizado"   # la anotación que da a un
 # §2: lo que falte al entrar por D se encarga a C con un análisis «de nivel bajo». [PROPUESTO] (QA de T-80, H-04): el más bajo con el
 # que se puede invertir (N2), porque entrar por D es para decidir y con N1 el expediente nunca llegaría a una orden
 NIVEL_BAJO = NIVEL_MIN_POR_DECISION["ABRIR_POSICION"]
+MOTIVO_VETO_F = "vetado por F"   # T-75: la anotación del veto de F en el historial del expediente (el embudo la usa como causa)
 TIPOS_CONSULTA = ("COMPARAR", "ANALIZAR", "PROYECTAR")   # §2: comparar, analizar o proyectar sin intención de invertir
 BLOQUES_CONSULTA = ("A", "B", "C", "D", "E", "K")   # empieza y termina en un bloque de análisis o de datos, nunca en F ni G
 CAMPOS_CONSULTA = ("consulta_id", "correlation_id", "tipo", "bloque", "cartera", "analisis", "pregunta")
@@ -2813,6 +2819,11 @@ class Orquestador:
             self.pantallas[expediente_id]["usada"] = True
         self.eventos[control_f["event_id"]] = {"hash": ih, "expediente_id": expediente_id}
         if cf["resultado"] == "VETADO" and anul is None:
+            # T-75 (QA r01, H-01): el veto queda en el historial (de PROPUESTA a PROPUESTA, de F, con las reglas que vetan), para
+            # que el embudo diga qué control paró la oportunidad (D-22)
+            reglas = sorted({x.get("regla") for x in cf.get("controles") or [] if isinstance(x, dict) and x.get("resultado") == "VETA"} - {None})
+            self._anota(e, "PROPUESTA", "PROPUESTA", "F", ahora, f"{MOTIVO_VETO_F}: {', '.join(reglas) or 'sin regla legible'}",
+                        control_f["event_id"], datos=_hash(e["propuesta"]))
             return _no("O-06", "F vetó la propuesta")
         e["control_f"] = {"resultado": cf["resultado"], "cantidad_aprobada": cantidad, "event_id": cf["event_id"], "anulacion": anul,
                           "emitido_en": cf["emitido_en"], "valid_until": cf["valid_until"], "entradas": copy.deepcopy(cf["entradas"]),
@@ -3374,12 +3385,22 @@ class Orquestador:
                 s["estado"] = "CADUCADO"
                 self._aviso("O-10", f"el sello {sid} caducó por antigüedad", ahora, sid)
                 cambios.append(("sello", sid, "CADUCADO"))
-        sq = self.sequia(ahora)   # T-75 (D-22): alarma de sequía, una por plazo
-        if sq["activa"] and not any(x["codigo"] == "O-40" and _dt(x["ahora"]) >= _dt(sq["desde"]) for x in self.avisos):
+        falta = self.comparacion_sombra_pendiente(ahora)   # T-76 (QA r01, H-04): I no puede silenciar el juicio dejando de comparar
+        if falta:
+            n0 = len(self.avisos)
+            self._aviso("O-42", f"la cartera sombra no se ha comparado con el robot el mes {falta}: I debe hacerlo (sin comparación no hay juicio, P17)", ahora)
+            if len(self.avisos) > n0:
+                cambios.append(("sombra_pendiente", falta, None))
+        sq = self.sequia(ahora)   # T-75 (D-22): alarma de sequía, una por cada plazo que dure
+        tope = max(_dt(sq["desde"]), a - timedelta(days=sq["dias"])) if sq["activa"] else None
+        if sq["activa"] and not any(x["codigo"] == "O-40" and _dt(x["ahora"]) > tope for x in self.avisos):
             em = sq["embudo"]
-            self._aviso("O-40", f"en {sq['dias']} días ninguna oportunidad se invirtió habiendo {sq['validadas']} que pasaron el análisis; "
-                                f"embudo del periodo: entran {em['entran']}, por capa {em['por_capa']}, salidas {len(em['salidas'])}", ahora)
-            cambios.append(("sequia", sq["desde"], sq["validadas"]))
+            dias_sin = (a - _dt(sq["desde"])).days
+            n0 = len(self.avisos)
+            self._aviso("O-40", f"{dias_sin} días sin invertir (plazo {sq['dias']}) habiendo {sq['validadas']} candidato(s) que pasaron el análisis; "
+                                f"embudo desde {sq['desde']}: entran {em['entran']}, por capa {em['por_capa']}, salen {em['salen']}", ahora)
+            if len(self.avisos) > n0:   # QA r01, H-05: solo se informa si el aviso se añadió de verdad
+                cambios.append(("sequia", sq["desde"], sq["validadas"]))
         for c, sid, eid in self._datos_viejos(a):   # T-29: candidatos en juego sobre datos que ya no valen para su cartera
             if c not in self.degradadas and NIVELES[self.nivel(c)] > 1:
                 self._degradar(c, f"el sello {sid} de {eid} ya no está vigente para {c}", ahora)
@@ -3447,7 +3468,7 @@ class Orquestador:
         if err:
             return err
         e = {"tipo": tipo, "importe_eur": float(importe_eur), "precio_indice": float(precio_indice), "ahora": ahora}
-        if sb.estado_sombra(self.sombra["entradas"] + [e], float(precio_indice), 0) is None:
+        if sb.estado_sombra(self.sombra["entradas"] + [e], float(precio_indice), _dt(ahora)) is None:
             return _no("O-06", "la retirada es mayor que lo que tiene la sombra")
         self._anota_sombra(e, actor, ahora)
         return _r(True, "OK", f"{tipo.lower()} replicado en la sombra")
@@ -3460,11 +3481,16 @@ class Orquestador:
     def comparar_sombra(self, mes, robot_valor_eur, precio_indice, inflacion_inicio, inflacion_mes, impuestos_eur, actor, ahora):
         """I compara cada mes el robot con la sombra (§9 punto 9): el valor del robot según G (comisiones incluidas) menos los
         costes de análisis que anotó el Orquestador desde el inicio y los impuestos estimados, frente a la sombra neta de su coste;
-        en nominal y en real (índice de precios del mes frente al del inicio, D-30). Un mes por mes, en orden. Tras el plazo de
-        juicio, si el robot no la supera en real, aviso O-41: se propone gestión pasiva y decide el operador."""
+        en nominal y en real (índice de precios del mes frente al del inicio, D-30). Un mes por mes, en orden, y solo cuando el mes
+        ya terminó (UTC; QA r01, H-02). El índice de precios del inicio lo fija la primera comparación y no cambia (H-07). Tras el
+        plazo de juicio, si el robot no la supera en real, aviso O-41 cuando pasa a no superarla (H-08: no uno por mes); decide
+        el operador. Si I deja de comparar, `barrer()` lo avisa con O-42 (H-04)."""
         a = self._ahora(ahora)
         if actor != "I":
             return _no("O-05", "la comparación con la sombra la hace I")
+        err = self._sombra_precheck()   # QA r01, H-05: la integridad antes de leer el registro
+        if err:
+            return err
         L = self.sombra["entradas"]
         if not L:
             return _no("O-06", "la cartera sombra no está iniciada")
@@ -3472,31 +3498,45 @@ class Orquestador:
                 or not sb.num_pos(robot_valor_eur, cero=True) or not sb.num_pos(impuestos_eur, cero=True):
             return _no("O-01", "mes AAAA-MM; valor del robot e impuestos ≥ 0; precio e índices de precios > 0, todos finitos")
         ini = L[0]
-        mes_ini = ini["ahora"][:7]
-        previos = [x["mes"] for x in L if x["tipo"] == "COMPARACION"]
+        mes_ini = _mes_utc(ini["ahora"])
+        comps = [x for x in L if x["tipo"] == "COMPARACION"]
+        previos = [x["mes"] for x in comps]
         if mes in previos:
             return _no("O-02", f"el mes {mes} ya se comparó", duplicado=True)
-        if (sb.meses_entre(mes_ini, mes) != 1 if not previos else sb.meses_entre(previos[-1], mes) != 1) or mes > a.astimezone(timezone.utc).strftime("%Y-%m"):
-            return _no("O-01", "un mes por mes, en orden, desde el siguiente al del inicio y no del futuro")
-        err = self._sombra_precheck()
-        if err:
-            return err
-        dias = (a - _dt(ini["ahora"])).total_seconds() / 86400.0
-        est = sb.estado_sombra(L, float(precio_indice), dias)
+        if (sb.meses_entre(mes_ini, mes) != 1 if not previos else sb.meses_entre(previos[-1], mes) != 1):
+            return _no("O-01", "un mes por mes, en orden, desde el siguiente al del inicio")
+        if not mes < _mes_utc(ahora):
+            return _no("O-01", f"el mes {mes} aún no ha terminado (UTC): se compara cuando termina")
+        if comps and float(inflacion_inicio) != comps[0]["inflacion_inicio"]:
+            return _no("O-01", f"el índice de precios del inicio es {comps[0]['inflacion_inicio']} (lo fijó la primera comparación)")
+        est = sb.estado_sombra(L, float(precio_indice), a)
         costes = self._costes_analisis_desde(ini["ahora"], a)
         cmp_ = sb.comparar(float(robot_valor_eur), costes, float(impuestos_eur), est, float(inflacion_inicio), float(inflacion_mes)) if est else None
         if cmp_ is None:
-            return _no("O-01", "no se puede comparar con esos datos")
+            return _no("O-01", "no se puede comparar con esos datos (alguno da un resultado que no es un número finito)")
         meses = sb.meses_entre(mes_ini, mes)
         ver = sb.veredicto(meses, cmp_)
         e = {"tipo": "COMPARACION", "mes": mes, "meses": meses, "robot_valor_eur": float(robot_valor_eur), "costes_analisis_eur": costes,
              "impuestos_eur": float(impuestos_eur), "precio_indice": float(precio_indice), "inflacion_inicio": float(inflacion_inicio),
              "inflacion_mes": float(inflacion_mes), "sombra": est, "resultado": cmp_, "veredicto": ver, "ahora": ahora}
         self._anota_sombra(e, actor, ahora)
-        if ver == "PROPONER_PASIVA":
+        if ver == "PROPONER_PASIVA" and (not comps or comps[-1]["veredicto"] != "PROPONER_PASIVA"):
             self._aviso("O-41", f"{mes}: tras {meses} meses el robot ({cmp_['robot_neto_real_eur']:.2f} EUR reales, neto de costes) no supera "
                                 f"a la cartera sombra ({cmp_['sombra_real_eur']:.2f} EUR reales): se propone gestión pasiva; decide el operador", ahora)
         return _r(True, "OK", f"comparación de {mes}: {ver}", veredicto=ver, resultado=copy.deepcopy(cmp_))
+
+    def comparacion_sombra_pendiente(self, ahora):
+        """El primer mes terminado que la sombra aún no ha comparado, o None (sin iniciar, al día o ilegible). Solo lee."""
+        try:
+            L = self.sombra["entradas"]
+            if not L:
+                return None
+            ult = ([x["mes"] for x in L if x["tipo"] == "COMPARACION"] or [_mes_utc(L[0]["ahora"])])[-1]
+            a0, m0 = map(int, ult.split("-"))
+            sig = f"{a0 + m0 // 12:04d}-{m0 % 12 + 1:02d}"
+            return sig if sig < _mes_utc(ahora) else None
+        except Exception:   # noqa: BLE001
+            return None
 
     def informe_sombra(self):
         """Solo lee: el inicio y la última comparación de la sombra, o None si no está iniciada."""
@@ -3507,62 +3547,97 @@ class Orquestador:
         return {"inicio": copy.deepcopy(L[0]), "comparaciones": len(comps), "ultima": copy.deepcopy(comps[-1]) if comps else None}
 
     # ------------------------------------------------------------ T-75 (D-22): contrapesos de la abstención
+    @staticmethod
+    def _dias_ok(dias):
+        return isinstance(dias, int) and not isinstance(dias, bool) and dias >= 1
+
     def embudo(self, desde, hasta):
-        """El embudo de un periodo [desde, hasta] (solo lee; ilegible o al revés: None). Cuántas oportunidades entran (nacen en el
-        periodo), en qué capa está cada una al final del periodo y por qué (la última anotación), cuántas pasaron el análisis
-        (llegaron a VALIDADA) y cuántas se invirtieron (EJECUTADA) en el periodo, y cada salida del juego (a DESCARTADA,
-        EN_OBSERVACION o CADUCADA) con quién y por qué."""
+        """El embudo de un periodo (desde, hasta] — abierto por la izquierda, para que dos informes seguidos no cuenten dos veces lo
+        que cae en el borde (QA r01, H-04) —. Solo lee; ilegible o al revés: None. Da:
+        - las oportunidades que entran (su primera anotación cae en el periodo), cada una con su capa al final del periodo y por qué:
+          la última anotación, y además el último veto de F si lo hubo (QA r01, H-01: el veto se anota de PROPUESTA a PROPUESTA);
+        - cuántos candidatos pasaron el análisis (un análisis cuenta una vez: un DIRECTA que reutiliza el de otro no suma, y un
+          expediente revalidado tampoco; QA r01, H-03) y cuántos se invirtieron, en el periodo;
+        - cada salida del juego (a DESCARTADA, EN_OBSERVACION o CADUCADA) con quién y por qué, y su última causa de bloqueo, y
+          cuántas oportunidades distintas salieron."""
         try:
             d0, d1 = _dt(desde), _dt(hasta)
             if d1 < d0:
                 return None
-            oport, salidas, validadas, invertidas = [], [], 0, 0
+            oport, salidas, validados, invertidos = [], [], set(), set()
             for k, e in sorted(self.expedientes.items()):
                 h = [x for x in e["historial"] if _dt(x["ahora"]) <= d1]
                 if not h:
                     continue
-                if d0 <= _dt(h[0]["ahora"]):
-                    u = h[-1]
-                    oport.append({"expediente_id": k, "cartera": e["cartera_destino"], "via": e["via_entrada"], "capa": u["hasta"],
-                                  "actor": u["actor"], "motivo": u["motivo"]})
+                veto = None
                 for x in h:
-                    if _dt(x["ahora"]) < d0 or x["desde"] == x["hasta"]:
+                    t = _dt(x["ahora"])
+                    if x["desde"] == x["hasta"] == "PROPUESTA" and x["actor"] == "F" and str(x["motivo"]).startswith(MOTIVO_VETO_F):
+                        veto = x["motivo"]
+                    if x["desde"] == x["hasta"] or not d0 < t:
                         continue
-                    validadas += x["hasta"] == "VALIDADA"
-                    invertidas += x["hasta"] == "EJECUTADA"
+                    if x["hasta"] == "VALIDADA":   # la clave es el análisis (el sobre), no el expediente ni el paso
+                        if x["desde"] is None and e.get("analisis_ref"):
+                            clave = e["analisis_ref"]   # DIRECTA que nace reutilizando el análisis de otro
+                        elif str(x["motivo"]).startswith("sobre aceptado") and x["ref"]:
+                            clave = x["ref"]            # entregar_sobre anota el event_id del sobre
+                        else:
+                            clave = (e.get("sobre") or {}).get("event_id") or k
+                        validados.add(clave)
+                    if x["hasta"] == "EJECUTADA":
+                        invertidos.add(k)
                     if x["hasta"] in ("DESCARTADA", "EN_OBSERVACION", "CADUCADA"):
                         salidas.append({"expediente_id": k, "desde": x["desde"], "hasta": x["hasta"], "actor": x["actor"],
-                                        "motivo": x["motivo"], "ahora": x["ahora"]})
+                                        "motivo": x["motivo"], "ahora": x["ahora"], "bloqueo_previo": veto})
+                    if x["hasta"] in ("VALIDADA", "EN_ANALISIS"):   # un análisis nuevo: el veto anterior ya no es la causa
+                        veto = None
+                if d0 < _dt(h[0]["ahora"]):
+                    u = h[-1]
+                    oport.append({"expediente_id": k, "cartera": e["cartera_destino"], "via": e["via_entrada"], "capa": u["hasta"],
+                                  "actor": u["actor"], "motivo": u["motivo"], "bloqueo": veto})
             por_capa = {}
             for x in oport:
                 por_capa[x["capa"]] = por_capa.get(x["capa"], 0) + 1
             return {"desde": desde, "hasta": hasta, "entran": len(oport), "por_capa": dict(sorted(por_capa.items())),
-                    "validadas": validadas, "invertidas": invertidas, "oportunidades": oport, "salidas": salidas}
+                    "validadas": len(validados), "invertidas": len(invertidos), "oportunidades": oport, "salidas": salidas,
+                    "salen": len({x["expediente_id"] for x in salidas})}
         except Exception:   # noqa: BLE001 — una consulta de solo lectura no rompe nada
             return None
 
+    def _ultima_inversion(self, a):
+        """El instante de la última transición a EJECUTADA hasta a, o None."""
+        ts = [_dt(x["ahora"]) for e in self.expedientes.values() for x in e["historial"]
+              if x["hasta"] == "EJECUTADA" and x["desde"] != "EJECUTADA" and _dt(x["ahora"]) <= a]
+        return max(ts, default=None)
+
     def sequia(self, ahora, dias=PARAMETROS["o_dias_sequia"]):
-        """Alarma de sequía (D-22): en los últimos `dias` ninguna oportunidad llegó a invertirse habiendo candidatos que pasaron el
-        análisis. Solo lee. Si el sistema lleva menos del plazo, no hay sequía que juzgar (activa False). {activa, dias, desde,
-        hasta, validadas, invertidas, embudo, motivo}."""
+        """Alarma de sequía (D-22): han pasado `dias` desde la última inversión (o desde el arranque, si no hubo ninguna) y, en ese
+        tiempo, algún candidato pasó el análisis. QA r01, H-08: antes era una ventana deslizante que solo veía la sequía durante un
+        intervalo estrecho, y con barridos diarios podía no saltar nunca; ahora la condición, una vez cierta, sigue cierta hasta la
+        siguiente inversión. Solo lee. {activa, dias, desde (la última inversión o el arranque), hasta, validadas, invertidas,
+        embudo (de desde a hasta), motivo}. Con `dias` que no es un entero ≥ 1 o un instante ilegible, no se juzga."""
+        base = {"activa": False, "dias": dias, "desde": None, "hasta": ahora, "validadas": 0, "invertidas": 0, "embudo": None}
+        if not self._dias_ok(dias):
+            return {**base, "motivo": "plazo ilegible"}
         try:
             a = _dt(ahora)
-            ini = a - timedelta(days=dias)
-            desde = ini.isoformat()
-            em = self.embudo(desde, ahora)
+            ult = self._ultima_inversion(a)
             primero = self._primer_instante()
+            ini = ult or primero
+            if ini is None:
+                return {**base, "motivo": "el sistema no tiene historia"}
+            if ult is None:   # sin inversiones: desde el arranque, sin contar el instante exacto del arranque (embudo abierto)
+                ini = ini - timedelta(microseconds=1)
+            em = self.embudo(ini.isoformat(), ahora)
             if em is None:
-                return {"activa": False, "dias": dias, "desde": desde, "hasta": ahora, "validadas": 0, "invertidas": 0, "embudo": None,
-                        "motivo": "no se puede calcular el embudo"}
-            if primero is None or primero > ini:
-                return {"activa": False, "dias": dias, "desde": desde, "hasta": ahora, "validadas": em["validadas"], "invertidas": em["invertidas"],
-                        "embudo": em, "motivo": "el sistema lleva menos del plazo"}
-            activa = em["invertidas"] == 0 and em["validadas"] > 0
-            return {"activa": activa, "dias": dias, "desde": desde, "hasta": ahora, "validadas": em["validadas"], "invertidas": em["invertidas"],
-                    "embudo": em, "motivo": "sequía" if activa else ("hubo inversiones" if em["invertidas"] else "ningún candidato pasó el análisis")}
+                return {**base, "motivo": "no se puede calcular el embudo"}
+            r = {**base, "desde": ini.isoformat(), "validadas": em["validadas"], "invertidas": em["invertidas"], "embudo": em}
+            if a - ini < timedelta(days=dias):
+                return {**r, "motivo": "el sistema lleva menos del plazo" if ult is None else "no han pasado los días del plazo desde la última inversión"}
+            activa = em["validadas"] > 0
+            return {**r, "activa": activa, "motivo": "sequía" if activa else "ningún candidato pasó el análisis"}
         except Exception:   # noqa: BLE001
-            return {"activa": False, "dias": dias, "desde": None, "hasta": ahora, "validadas": 0, "invertidas": 0, "embudo": None,
-                    "motivo": "instante ilegible"}
+            return {**base, "motivo": "instante ilegible"}
 
     def _sello_vigente_para(self, e, a):
         """El sello del análisis del expediente sigue VIGENTE para su cartera hoy (K: antigüedad por cartera)."""

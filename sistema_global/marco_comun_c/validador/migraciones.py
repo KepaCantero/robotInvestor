@@ -68,6 +68,8 @@ ESQUEMA_V0_68 = "9eade73e26f0f61f9e9f4e96638b50ea2fa3921c2965ac9ffa01d7b073d94cd
 ESQUEMA_V0_70 = "f13adbc3fef1e3a6445531bee830534681e74a32e2674a66a823565673443f86"
 # esquema de V0.71 (T-76: cartera sombra pasiva, atributo sombra, aviso O-41, PAR-0.7.0)
 ESQUEMA_V0_71 = "aa778db76669a1a61e8716010223bbdbd166733b36137028bf3a866830570459"
+# esquema de V0.73 (rondas r02 de T-75 y T-76: veto de F anotado, aviso O-42 de comparación de la sombra pendiente)
+ESQUEMA_V0_73 = "2bcc76b84882b578499ba2ea632dc83b518fe496df3fb2f98740b8f853be6bde"
 # lo que una migración nunca puede cambiar, aunque lo declare (revisión de V0.46, hallazgos 5 y 10)
 PROHIBIDAS = ("limites", "kill", "rearmes", "ultimo_ahora", "huella_config", f"cfg.politica_f.{LIMITE_PERDIDA}",
               "cfg.nivel_autonomia")   # V0.51 (revisión, duda 2): ninguna migración sube ni baja el nivel de nadie
@@ -173,6 +175,9 @@ MIGRACIONES = (
               "el estado guardado no cambia"),
     Migracion("MIG-008", pe.FORMATO, ESQUEMA_V0_70, ESQUEMA_V0_71, _v071, frozenset(),
               "V0.70 a V0.71 (T-76, cartera sombra pasiva): el registro de la sombra, vacío; el resto del estado no cambia"),
+    Migracion("MIG-009", pe.FORMATO, ESQUEMA_V0_71, ESQUEMA_V0_73, _sin_cambios, frozenset(),
+              "V0.71 a V0.73 (rondas r02 de T-75 y T-76): solo cambia el código (veto de F anotado en el historial, aviso O-42); "
+              "el estado guardado no cambia"),
 )
 
 
