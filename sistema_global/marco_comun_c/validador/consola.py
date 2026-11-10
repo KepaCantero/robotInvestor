@@ -127,21 +127,29 @@ def _reloj(reloj):
     s = e.get("segundos_desde_contraste")
     if s is None:
         return "AMBAR", "no se puede confirmar el contraste del reloj: contrástalo otra vez"
-    if s > reloj.max_sin_contraste_s:
+    if not s <= reloj.max_sin_contraste_s:   # T-85: un tope NaN o ilegible no deja pasar a VERDE
         return "AMBAR", f"hace {s:.0f} s que no se contrasta el reloj (tope {reloj.max_sin_contraste_s:.0f} s): contrástalo otra vez"
     return "VERDE", f"reloj contrastado hace {s:.0f} s"
 
 
 def _diario(diario, tope):
-    """Lee dos privados del Diario (`_roto` y `_n`): la consola es parte del sistema; la deuda T-72 (T-63 en la entrega
-    de GLM) propone un método público para no depender de ellos. El `_n` es el número de la última línea y `punto()` lo
-    deja en 1. V0.67: el tope se valida antes (un NaN, un infinito o un bool daban VERDE: fallaba abierto)."""
+    """T-72 (V0.69): lee `Diario.estado_diario()`, la foto pública de solo lectura, y ya no los privados `_roto` y `_n`. Un diario
+    que no está al día con el Orquestador (cambió por fuera, o su fichero lo reescribió otro proceso) es ROJO: la operación
+    siguiente daría DI-06. V0.67: el tope se valida antes (un NaN, un infinito o un bool daban VERDE: fallaba abierto)."""
     if isinstance(tope, bool) or not isinstance(tope, int) or tope < 1:
         return "ROJO", f"el tope de líneas del diario no es un entero positivo ({tope!r}): revisa la configuración"
-    roto = diario._roto
-    if roto:
-        return "ROJO", f"el diario está bloqueado ({roto}): reábrelo y sigue desde el último punto de control"
-    n = diario._n
+    f = getattr(diario, "estado_diario", None)
+    e = f() if callable(f) else None
+    if not isinstance(e, dict):
+        return "ROJO", f"el diario no da su estado ({type(diario).__name__})"
+    b = e.get("bloqueo")
+    if b is not None:
+        det = f"{b.get('codigo', '?')}: {b.get('motivo', '?')}" if isinstance(b, dict) else repr(b)
+        return "ROJO", f"el diario está bloqueado ({det}): reábrelo y sigue desde el último punto de control"
+    if e.get("sincronizado") is not True:
+        return "ROJO", (f"el diario no está al día con el Orquestador ({e.get('motivo_desincronizado') or '?'}): la operación siguiente "
+                        "dará DI-06; reábrelo para volver al estado anotado")
+    n = e.get("lineas")
     if isinstance(n, bool) or not isinstance(n, int) or n < 1:
         return "ROJO", f"el diario no da su número de líneas ({n!r})"
     if n > tope:

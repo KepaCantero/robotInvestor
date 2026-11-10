@@ -227,9 +227,12 @@ def main():
     h.chk("el_umbral_es_el_parametro_y_el_tope_se_cuenta_igual", comp(o, "diario", diario=d, lineas_diario_ambar=2)["nivel"] == "AMBAR"
           and comp(o, "diario", diario=d, lineas_diario_ambar=3)["nivel"] == "VERDE")   # 3 > 2, pero 3 no es > 3
 
-    class DiarioFalso:
+    class DiarioFalso:   # V0.69 (T-72): la consola lee estado_diario(); un número de líneas booleano sigue siendo ROJO
         _roto = None
         _n = True
+
+        def estado_diario(self):
+            return {"operativo": True, "bloqueo": None, "lineas": True, "sincronizado": True, "motivo_desincronizado": None}
     h.chk("diario_ilegible_es_rojo", comp(o, "diario", diario="un texto")["nivel"] == "ROJO"
           and comp(o, "diario", diario=12345)["nivel"] == "ROJO"
           and comp(o, "diario", diario=DiarioFalso())["nivel"] == "ROJO"

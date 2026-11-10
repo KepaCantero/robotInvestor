@@ -70,6 +70,23 @@ def _float(x):
     return v if math.isfinite(v) else None
 
 
+def _dentro(x, tope):
+    """T-85: x <= tope, y False si no se puede decir (NaN, tipos que no se comparan): una tolerancia rota nunca deja pasar."""
+    try:
+        return (x <= tope) is True
+    except Exception:   # noqa: BLE001
+        return False
+
+
+def _num(x):
+    return isinstance(x, (int, float)) and not isinstance(x, bool)
+
+
+def _suma(*xs):
+    """La suma, o NaN si algún término no es un número (y entonces _dentro da False)."""
+    return sum(xs) if all(_num(x) for x in xs) else float("nan")
+
+
 def _instante(segundos):
     return datetime.fromtimestamp(segundos, timezone.utc)
 
@@ -90,7 +107,7 @@ class Reloj:
             raise ValueError("las fuentes del reloj deben ser invocables")
         self._pared = pared if pared is not None else time.time
         self._monotono = monotono if monotono is not None else _monotono_por_defecto()
-        self.max_salto_s, self.max_desfase_s, self.max_sin_contraste_s = s, d, c
+        self._tol = (s, d, c)   # T-85 (V0.69): de solo lectura, a través de las propiedades de abajo
         self._ancla = None         # (pared, monótono) de la primera lectura o del último rearme
         self._ultima = None        # (pared, monótono) de la última lectura buena
         self._suelo = None         # segundos: nunca se da un instante anterior (lo ya dado y el último del estado)
@@ -99,6 +116,21 @@ class Reloj:
         self.incidentes = []       # [{"codigo", "motivo", "suelo"}] y rearmes [{"codigo": "REARME", "actor", ...}]
 
     # ------------------------------------------------------------------------------------------------ incidentes
+    # T-85 (V0.69, QA de T-79, H-06): las tolerancias son de solo lectura. Antes se podía poner max_sin_contraste_s = NaN después
+    # de construir el reloj y ahora() seguía dando instantes sin contrastar. Además, cada comparación con ellas está escrita para
+    # que un NaN (o algo que no se deje comparar) cuente como «fuera de tolerancia»: falla cerrado
+    @property
+    def max_salto_s(self):
+        return self._tol[0]
+
+    @property
+    def max_desfase_s(self):
+        return self._tol[1]
+
+    @property
+    def max_sin_contraste_s(self):
+        return self._tol[2]
+
     def _bloquear(self, codigo, motivo, **extra):
         self.bloqueo = {"codigo": codigo, "motivo": motivo}
         self.incidentes.append({"codigo": codigo, "motivo": motivo, "suelo": self._iso_suelo()})
@@ -126,17 +158,17 @@ class Reloj:
             if m < m0:
                 return None, self._bloquear("RL-01", "el reloj monótono retrocede: la fuente no es de fiar")
             salto = (p - p0) - (m - m0)
-            if abs(salto) > self.max_salto_s:
+            if not _dentro(abs(salto), self.max_salto_s):
                 return None, self._bloquear("RL-01", f"el reloj de pared saltó {salto:+.1f} s respecto al monótono: alguien cambió la "
                                                      "hora o la sincronización dio un salto")
         if self._ancla is not None:   # hallazgo 1: un reloj congelado, acelerado o con muchos saltos pequeños
             pa, ma = self._ancla
             deriva = (p - pa) - (m - ma)
-            if abs(deriva) > self.max_salto_s + TASA_MAX * max(0.0, m - ma):
+            if not _dentro(abs(deriva), _suma(self.max_salto_s, TASA_MAX * max(0.0, m - ma))):
                 return None, self._bloquear("RL-01", f"el reloj de pared se ha separado {deriva:+.1f} s del monótono desde "
                                                      f"{_instante(pa).isoformat()}: va congelado, acelerado o a saltos")
         # el suelo puede ir por delante del reloj hasta max_desfase_s (lo sube un contraste con una referencia adelantada)
-        if self._suelo is not None and p < self._suelo - self.max_salto_s - self.max_desfase_s:
+        if self._suelo is not None and not _dentro(_suma(self._suelo, -self.max_salto_s if _num(self.max_salto_s) else None, -self.max_desfase_s if _num(self.max_desfase_s) else None), p):
             return None, self._bloquear("RL-01", f"el reloj ({t.isoformat()}) va por detrás de un instante ya dado ({self._iso_suelo()})")
         if self._ancla is None:
             self._ancla = (p, m)
@@ -156,7 +188,7 @@ class Reloj:
         if err:
             return err
         p, m = lect
-        if self._contraste is None or m - self._contraste > self.max_sin_contraste_s:
+        if self._contraste is None or not _dentro(m - self._contraste, self.max_sin_contraste_s):
             return _r(False, "RL-04", "el reloj no se ha contrastado (o hace demasiado): contrástalo con una referencia externa", ahora=None)
         return _r(True, "OK", "instante", ahora=self._dar(p))
 
@@ -195,7 +227,7 @@ class Reloj:
             return self._bloquear("RL-02", f"no se puede comparar con el último instante del estado: {type(ex).__name__}")
         if u is not None:   # el último instante del estado es el suelo, también si el reloj va detrás (revisión, hallazgo 4)
             self._suelo = u if self._suelo is None else max(self._suelo, u)
-        if u is not None and lect[0] < u - self.max_desfase_s:   # el estado pudo guardar un instante de una referencia adelantada
+        if u is not None and not _dentro(_suma(u, -self.max_desfase_s if _num(self.max_desfase_s) else None), lect[0]):   # el estado pudo guardar un instante de una referencia adelantada
             return self._bloquear("RL-02", f"el reloj ({_instante(lect[0]).isoformat()}) va detrás del último instante del estado ({ultimo}): "
                                            "el reloj está atrasado o el estado es de otra máquina")
         return _r(True, "OK", "el reloj no va detrás del estado", ahora=None)
@@ -214,7 +246,7 @@ class Reloj:
             return {**err, "desfase_s": None}
         p, m = lect
         desfase = p - ref.timestamp()
-        if abs(desfase) > self.max_desfase_s:
+        if not _dentro(abs(desfase), self.max_desfase_s):
             return self._bloquear("RL-03", f"el reloj difiere {desfase:+.1f} s de {fuente[:40]}", desfase_s=desfase)
         self._contraste = m
         return _r(True, "OK", f"reloj contrastado con {fuente[:40]}", ahora=self._dar(max(p, ref.timestamp())), desfase_s=desfase)

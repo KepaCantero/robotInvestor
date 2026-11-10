@@ -216,6 +216,23 @@ class Diario:
     def __setattr__(self, nombre, valor):
         raise AttributeError("el estado del Orquestador solo cambia con sus métodos: así queda en el diario")
 
+    def estado_diario(self) -> dict:
+        """T-72 (V0.69): foto de solo lectura del diario, para la consola, como `Reloj.estado()`. No escribe ni bloquea nada.
+        {operativo, bloqueo: {codigo, motivo} o None, lineas, sincronizado, motivo_desincronizado}. «Sincronizado» quiere decir
+        que el fichero del diario es el que dejó este Diario y que el estado del Orquestador es el de la última operación anotada:
+        si no, la operación siguiente dará DI-06 (QA de T-79, H-05: antes el panel lo pintaba VERDE). Nunca lanza."""
+        roto = self._roto
+        bloqueo = None if not roto else {"codigo": "DI-06" if roto in ROTOS_DI06 else "DI-05", "motivo": str(roto)}
+        try:
+            fuera = _identidad(self._ruta_diario) != self._fichero
+            viva = None if fuera else _huella_viva(self._o)
+            sinc = not fuera and viva is not None and viva == self._huella
+            motivo = None if sinc else (FUERA if fuera else ROTOS_DI06[1] if viva is None or self._huella is None else ROTOS_DI06[0])
+        except Exception:   # noqa: BLE001 — sin poder comprobarlo, nunca se da por sincronizado
+            sinc, motivo = False, "no se pudo comprobar el diario"
+        return {"operativo": bloqueo is None and sinc, "bloqueo": bloqueo, "lineas": self._n, "sincronizado": sinc,
+                "motivo_desincronizado": motivo}
+
     @property
     def orquestador(self):
         """El Orquestador envuelto, para leerlo (cambiarlo por aquí no queda en el diario)."""

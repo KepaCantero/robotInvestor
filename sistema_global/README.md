@@ -5,7 +5,7 @@ Esta carpeta reúne lo que gobierna el sistema por encima de los bloques A, A Fo
 | Carpeta | Contenido |
 | --- | --- |
 | `constitucion/` | `Constitucion_Global.md`: la Constitución global (V0.6 desde el 9-11-2026, con las enmiendas 2 y 3 ratificadas ese día; la V0.4, con la enmienda 1 ratificada el 7-11-2026, y las anteriores quedan en el historial de git). Es la fuente de verdad: si algo de esta carpeta la contradice, vale la Constitución. |
-| `marco_comun_c/` | Código de referencia de la Fase 1 en Python (V0.68; V0.37 a V0.41 y V0.60 a V0.66 las hizo GLM en paralelo y Claude las integró en V0.53 y V0.67). Recorrido completo con datos simulados: detección (también la vía de entrada `DIRECTA` por C, D o E y el modo `CONSULTA` desde la V0.68), encargo, sobre, comparación, dimensionado, propuesta, control de riesgo, autorización, ejecución, vigilancia y cierre. Determinista, sin LLM, sin intermediario real. Su `LEEME.md` describe módulos, códigos y pruebas. |
+| `marco_comun_c/` | Código de referencia de la Fase 1 en Python (V0.69; V0.37 a V0.41 y V0.60 a V0.66 las hizo GLM en paralelo y Claude las integró en V0.53 y V0.67). Recorrido completo con datos simulados: detección (también la vía de entrada `DIRECTA` por C, D o E y el modo `CONSULTA` desde la V0.68), encargo, sobre, comparación, dimensionado, propuesta, control de riesgo, autorización, ejecución, vigilancia y cierre. Determinista, sin LLM, sin intermediario real. Su `LEEME.md` describe módulos, códigos y pruebas. |
 | `documentos_0/` | Un Documento 0 por pieza, nombrado por la versión del código que la introdujo (problema, diseño, reglas, revisión independiente y límites). |
 | `seguimiento/` | Deuda técnica (D-xx del operador, T-xx técnicas), briefing de arranque para retomar el trabajo en otra conversación y cuestionario de decisiones del operador. |
 
@@ -17,11 +17,11 @@ Requiere Python 3 con `jsonschema`. Desde `sistema_global/marco_comun_c/`:
 for f in pruebas/ejecutar_pruebas.py pruebas/pruebas_*.py; do python3 "$f" | tail -1; done
 ```
 
-Cada una de las 57 suites acaba con «TODAS LAS PRUEBAS PASAN» (`.docs/scripts/pruebas_marco.sh` las ejecuta todas).
+Cada una de las 58 suites acaba con «TODAS LAS PRUEBAS PASAN» (`.docs/scripts/pruebas_marco.sh` las ejecuta todas).
 
 ## Historial
 
-Cada versión del código (V0.1 a V0.36, V0.42 a V0.47, V0.49 a V0.53, V0.67 y V0.68) es un commit propio con la fecha y hora de su entrega, de modo que `git log -- sistema_global/marco_comun_c` muestra cómo se construyó pieza a pieza. Los documentos se editaron en Claude Docs y se exportaron a Markdown el 5 de noviembre de 2026; las fechas y menciones de su cabecera quedan como texto y el diagrama de estados del Orquestador no se exporta.
+Cada versión del código (V0.1 a V0.36, V0.42 a V0.47, V0.49 a V0.53 y V0.67 a V0.69) es un commit propio con la fecha y hora de su entrega, de modo que `git log -- sistema_global/marco_comun_c` muestra cómo se construyó pieza a pieza. Los documentos se editaron en Claude Docs y se exportaron a Markdown el 5 de noviembre de 2026; las fechas y menciones de su cabecera quedan como texto y el diagrama de estados del Orquestador no se exporta.
 
 ## Siguiente paso
 
