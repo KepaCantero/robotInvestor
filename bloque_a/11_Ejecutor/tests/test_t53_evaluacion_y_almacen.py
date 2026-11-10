@@ -20,7 +20,7 @@ from bloque_a.evaluador import (
     Evaluador,
     banda_de,
     banda_publicable,
-    fijar_bandas,
+    validar_bandas,
 )
 from bloque_a.herramientas import ht01_boveda as hb
 from bloque_a.herramientas.ht01_datos import (
@@ -308,18 +308,18 @@ def test_cinco_bandas_publicables_iguales_al_esquema():
 
 
 def test_bandas_desde_configuracion_y_validadas():
-    try:
-        otra = [dict(b) for b in BANDAS_VERBALES_POR_DEFECTO]
-        otra[1].update(min=0.58)                                          # Más probable que no 58–75 %
-        Evaluador(None, None, None, {"bandas_verbales": otra}, None)
-        assert banda_publicable(0.58) == "más probable que no"
-        for mala in ([{**b, "texto": "probable"} if b["codigo"] == "INCIERTO" else b for b in BANDAS_VERBALES_POR_DEFECTO],
-                     [b for b in BANDAS_VERBALES_POR_DEFECTO if b["codigo"] != "INCIERTO"],
-                     [{**b, "min": 0.50} if b["codigo"] == "MAS_PROBABLE_QUE_NO" else b for b in BANDAS_VERBALES_POR_DEFECTO]):
-            with pytest.raises(ValueError):
-                fijar_bandas(mala)
-    finally:
-        fijar_bandas()
+    # T-65 (H-07): la tabla de la configuración es la del Evaluador; las funciones del módulo siguen con la del Anexo A
+    otra = [dict(b) for b in BANDAS_VERBALES_POR_DEFECTO]
+    otra[1].update(min=0.58)                                          # Más probable que no 58–75 %
+    ev = Evaluador(None, None, None, {"bandas_verbales": otra}, None)
+    assert ev.banda_publicable(0.58) == "más probable que no"
+    for mala in ([{**b, "texto": "probable"} if b["codigo"] == "INCIERTO" else b for b in BANDAS_VERBALES_POR_DEFECTO],
+                 [b for b in BANDAS_VERBALES_POR_DEFECTO if b["codigo"] != "INCIERTO"],
+                 [{**b, "min": 0.50} if b["codigo"] == "MAS_PROBABLE_QUE_NO" else b for b in BANDAS_VERBALES_POR_DEFECTO]):
+        with pytest.raises(ValueError):
+            validar_bandas(mala)
+        with pytest.raises(ValueError):
+            Evaluador(None, None, None, {"bandas_verbales": mala}, None)
     assert banda_publicable(0.58) == "incierto"
 
 

@@ -5,44 +5,87 @@ por fases se ponen rancios — aquí un doc que cite algo inexistente falla el g
 
 Solo comprueba rutas con formato de fichero (contienen / y una extensión) que
 empiecen por las raíces conocidas del repo. El corpus canónico no se toca.
+
+T-65 (QA de T-53, H-11): los informes de las carpetas `revisores/` de los tickets
+se revisan como los demás documentos (antes quedaban todos fuera). Para que una
+cita correcta no cuente como rota:
+- una orden con argumentos (`.docs/scripts/gate.sh --completo`) se comprueba por
+  su primera palabra, si es un script (.sh o .py);
+- el sufijo de líneas (`archivo.py:10-20`) se quita;
+- una ruta del paquete Python de un bloque (`bloque_a/orquestacion.py`, que vive en
+  `bloque_a/11_Ejecutor/bloque_a/`) cuenta como viva.
+La prueba está en `.docs/scripts/prueba_refs_vivas.py`.
 """
 import re
 import sys
 from pathlib import Path
 
 RAIZ = Path(__file__).resolve().parent.parent
-DOCS_NUESTROS = ([RAIZ / "CLAUDE.md", RAIZ / "AGENTS.md"] + sorted((RAIZ / "prompts").glob("*.md"))
-                 + sorted((RAIZ / "docs").glob("*.md")) + sorted(p for p in (RAIZ / ".docs").rglob("*.md") if ".logs" not in p.parts and "revisores" not in p.parts)   # informes de revisión: citas históricas
-                 + sorted((RAIZ / ".agents" / "skills").rglob("*.md")))
 RAICES_VALIDAS = ("bloque_a/", "bloque_a_forex/", "bloque_b/", "docs/", "prompts/", "tools/", "sistema_global/",
                   ".docs/", ".agents/", ".claude/", "AGENTS.md", "CLAUDE.md")
+BLOQUES = ("bloque_a", "bloque_a_forex", "bloque_b")
 PAT_RUTA = re.compile(r"`([^`\n]+?)`")
-# Entregables FUTUROS citados en prompts de fases (se quitan de aquí al aterrizar
-# la fase que los crea — mismo ratchet que las cuotas).
-_allow = Path(__file__).parent / "refs_allowlist.txt"
-PLANIFICADOS = set()
-if _allow.exists():
-    PLANIFICADOS = {l.split("#")[0].strip() for l in _allow.read_text().splitlines()
-                    if l.split("#")[0].strip()}
+PAT_LINEAS = re.compile(r":\d+(?:-\d+)?$")
 
 
-def main() -> int:
+def documentos(raiz: Path) -> list[Path]:
+    return ([raiz / "CLAUDE.md", raiz / "AGENTS.md"] + sorted((raiz / "prompts").glob("*.md"))
+            + sorted((raiz / "docs").glob("*.md"))
+            + sorted(p for p in (raiz / ".docs").rglob("*.md") if ".logs" not in p.parts)
+            + sorted((raiz / ".agents" / "skills").rglob("*.md")))
+
+
+def planificados(raiz: Path) -> set:
+    """Entregables FUTUROS citados en prompts de fases (se quitan de la lista al aterrizar la fase que los crea — mismo
+    ratchet que las cuotas)."""
+    allow = raiz / "tools" / "refs_allowlist.txt"
+    if not allow.exists():
+        return set()
+    return {l.split("#")[0].strip() for l in allow.read_text().splitlines() if l.split("#")[0].strip()}
+
+
+def normalizar_cita(cita: str) -> str:
+    """La ruta que nombra una cita, sin sufijo de líneas. Si es una orden con argumentos (la primera palabra es un script
+    .sh o .py), la primera palabra; los nombres de archivo con espacios se conservan enteros."""
+    r = cita.strip()
+    partes = r.split()
+    if len(partes) > 1 and partes[0].endswith((".sh", ".py")):
+        r = partes[0]
+    return PAT_LINEAS.sub("", r).strip("/")
+
+
+def existe(raiz: Path, r: str) -> bool:
+    if (raiz / r).exists():
+        return True
+    # Ruta de un paquete Python de bloque: `bloque_x/…` dentro de `bloque_x/11_Ejecutor/`
+    primero = r.split("/", 1)[0]
+    return primero in BLOQUES and (raiz / primero / "11_Ejecutor" / r).exists()
+
+
+def comprobar(raiz: Path) -> list[str]:
+    plan = planificados(raiz)
     rotas = []
-    for doc in DOCS_NUESTROS:
+    for doc in documentos(raiz):
         if not doc.exists():
             continue
         for m in PAT_RUTA.finditer(doc.read_text(encoding="utf-8")):
-            r = m.group(1).strip().strip("/")
+            bruta = m.group(1).strip()
             # Abreviaturas (…), placeholders (<bloque>, T-NN, AAAA-MM) y referencias a símbolos (::)
             # no son rutas verificables.
-            if "…" in r or "<" in r or ">" in r or "::" in r or "T-NN" in r or "AAAA" in r:
+            if "…" in bruta or "<" in bruta or ">" in bruta or "::" in bruta or "T-NN" in bruta or "AAAA" in bruta:
                 continue
+            r = normalizar_cita(bruta)
             if not r.startswith(RAICES_VALIDAS):
                 continue
-            if r in PLANIFICADOS:
+            if r in plan or bruta.strip("/") in plan:
                 continue
-            if not (RAIZ / r).exists():
-                rotas.append(f"{doc.relative_to(RAIZ)} cita ruta inexistente: {r}")
+            if not existe(raiz, r):
+                rotas.append(f"{doc.relative_to(raiz)} cita ruta inexistente: {r}")
+    return rotas
+
+
+def main() -> int:
+    rotas = comprobar(RAIZ)
     if rotas:
         for r in rotas:
             print(f"  ROTA: {r}")

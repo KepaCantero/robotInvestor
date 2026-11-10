@@ -14,14 +14,17 @@ from __future__ import annotations
 
 import copy
 import json
+import math
 from pathlib import Path
 from typing import Dict, List, Optional
 
 import numpy as np
 import pandas as pd
 
+from .configuracion import parametro
 from .herramientas import ht03, ht09
 from .herramientas.ht01_datos import DatosNoDisponibles
+from .redaccion import carpeta_bloqueados
 
 FRECUENCIAS = ("DIARIA", "SEMANAL", "QUINCENAL", "MENSUAL", "TRIMESTRAL", "PERSONALIZADA")
 ACCIONES = ("ALTA", "MODIFICACION", "PAUSA", "REANUDACION", "CANCELACION")
@@ -179,16 +182,15 @@ class Seguimientos:
             return {"seg_id": seg_id, "ejecutado": False, "motivo": "cubierto en C1"}
         run_id = b.almacen.nuevo_id("RUN")
         n_ciclo = int(enc.get("ciclos") or 0) + 1
-        pres = self.cfg.get("presupuesto_uc") or {}
         b.mensajeria.crear("CT-05", "AG-01", "AG-02", {"tipo": "SEGUIMIENTO", "seg_id": seg_id, "opp_id": opp_id,
                                                        "alcance": {"clases": [clase], "opp_id": opp_id}, "nivel_por_clase": {clase: "N1"},
-                                                       "presupuesto_por_clase": {clase: float(pres.get("normal", 2))},
+                                                       "presupuesto_por_clase": {clase: float(parametro(b.cfg, "seguimiento.presupuesto_uc.normal"))},
                                                        "memoria": {"senales_interes": enc.get("senales_interes", [])}, "delta_gc0": {},
-                                                       "fecha_objetivo": str(as_of.date())}, run_id=run_id, presupuesto={"uc": float(pres.get("normal", 2))})
+                                                       "fecha_objetivo": str(as_of.date())}, run_id=run_id, presupuesto={"uc": float(parametro(b.cfg, "seguimiento.presupuesto_uc.normal"))})
         b.mensajeria.crear("CT-06", "AG-02", b_agente(clase), {"clase": clase, "fase": "SEGUIMIENTO", "nivel": "N1",
                                                                 "opciones_vigentes": [opp_id], "lecciones": [], "seg_id": seg_id,
                                                                 "senales_interes": enc.get("senales_interes", [])},
-                           run_id=run_id, presupuesto={"uc": float(pres.get("normal", 2))})
+                           run_id=run_id, presupuesto={"uc": float(parametro(b.cfg, "seguimiento.presupuesto_uc.normal"))})
         rev = self._revision(enc, opp, as_of)
         informe = self._informe(enc, opp, rev, run_id, n_ciclo, as_of)
         texto = self._texto(informe, opp)
@@ -198,7 +200,7 @@ class Seguimientos:
             val = dict(val, dictamen="BLOQUEADO", errores_esquema=errores_esquema)
         base = Path(b.carpeta_entregables) / ("Informes de seguimiento" if b.modo != "backtest" else str(as_of.date()))
         if val["dictamen"] == "BLOQUEADO":   # lo bloqueado no llega a la carpeta de entrega (G3)
-            base = Path(b.carpeta_entregables) / "_bloqueados" / run_id
+            base = carpeta_bloqueados(b, as_of, run_id)   # la misma que la redacción (T-65, H-10 b)
         base.mkdir(parents=True, exist_ok=True)
         nombre = f"{as_of.date()}_informe-seguimiento_{run_id}"
         rutas = {"informe": str(base / f"{nombre}.md"), "json": str(base / f"{nombre}.json")}
@@ -208,7 +210,7 @@ class Seguimientos:
         b.almacen.escribir("HA", "AG-18", {"tipo_entrada": "G3V", "id": f"G3V-{run_id[4:]}-C6", "run_id": run_id, "fase": "C6",
                                            "tipo_control": "SINCRONO_DETERMINISTA", "dictamen_ht09": val["dictamen"],
                                            "comprobaciones": [{"id": c["id"], "resultado": c["resultado"]} for c in val["comprobaciones"]]})
-        uc = float(pres.get("sin_novedad", 0.5)) if rev["sin_novedad"] else float(pres.get("material" if rev["material"] else "normal", 2))
+        uc = float(parametro(b.cfg, "seguimiento.presupuesto_uc.sin_novedad")) if rev["sin_novedad"] else float(parametro(b.cfg, "seguimiento.presupuesto_uc." + ("material" if rev["material"] else "normal")))
         b.almacen.escribir("F11", "AG-01", {"tipo_entrada": "CICLO", "seg_id": seg_id, "ciclos": n_ciclo, "ultimo_run_id": run_id,
                                              "ultima_fecha": str(as_of.date()), "ultima_recomendacion": informe["recomendacion"],
                                              "ultimo_semaforo": informe["semaforo"], "ultimo_RK": informe["puntuaciones"].get("RK"),
@@ -242,14 +244,22 @@ class Seguimientos:
         try:
             fd, precio = b.proveedor.valor_en(sym, as_of)
             rev.update({"precio": precio, "fecha_dato": str(fd.date())})
-            serie = b.proveedor.cierres(sym, as_of - pd.DateOffset(years=2), as_of)
+            # T-65 (CA-14 de T-53): ventana de σ y mínimo de semanas de la configuración; sin σ estimable, el delta cuenta
+            # como material (revisión completa) y se declara, en lugar de un umbral inventado del 5 %
+            serie = b.proveedor.cierres(sym, as_of - pd.Timedelta(weeks=int(parametro(b.cfg, "gc0.ventana_sigma_semanas"))), as_of)
             semanal = serie.resample("W").last().pct_change().dropna()
-            sd = float(semanal.std()) if len(semanal) > 5 else float("nan")
+            min_sem = int(parametro(b.cfg, "seguimiento.min_semanas_sigma"))
+            sd = float(semanal.std()) if len(semanal) >= min_sem else float("nan")
             previo = enc.get("ultimo_precio") or float(b.proveedor.valor_en(sym, desde)[1])
             delta = precio / previo - 1 if previo else 0.0
             semanas = max((as_of - desde).days / 7, 1)
-            umbral = float((b.cfg.get("gc0") or {}).get("sigma_semanal", 1.5)) * sd * np.sqrt(semanas) if sd == sd else 0.05
-            rev.update({"delta": round(delta, 4), "material": bool(abs(delta) > umbral), "umbral_material": round(umbral, 4)})
+            if math.isfinite(sd):
+                umbral = float(parametro(b.cfg, "gc0.sigma_semanal")) * sd * np.sqrt(semanas)
+                rev.update({"delta": round(delta, 4), "material": bool(abs(delta) > umbral), "umbral_material": round(umbral, 4)})
+            else:
+                rev.update({"delta": round(delta, 4), "material": True, "umbral_material": None})
+                rev["limitaciones"].append(f"σ semanal de {sym} no estimable (menos de {min_sem} semanas): el delta se trata "
+                                           "como material (falla cerrado)")
         except DatosNoDisponibles as e:
             rev["limitaciones"].append(f"HT-01 sin datos de {sym}: revisión degradada y declarada ({e})")
         # Condiciones de invalidación y su distancia
@@ -264,7 +274,7 @@ class Seguimientos:
                     dist = (p_x - float(x["umbral"])) / p_x if x.get("direccion", "por_debajo") == "por_debajo" else (float(x["umbral"]) - p_x) / p_x
                     item.update({"distancia": f"{dist:.1%}", "activada": dist <= 0})
                     activada |= dist <= 0
-                    cercana |= 0 < dist < float((b.cfg.get("gc0") or {}).get("invalidacion_cercana", 0.10))
+                    cercana |= 0 < dist < float(parametro(b.cfg, "gc0.invalidacion_cercana"))
                 except DatosNoDisponibles:
                     pass
             inval.append(item)
@@ -336,14 +346,14 @@ class Seguimientos:
         pu = rev["puntuaciones"]
         if pu.get("elegible") and not rev["objeciones_fuertes_abiertas"] and not rev["sin_novedad"] and pu.get("variacion_RK", 0) >= 0:
             return "PROPONER_ENVIO_A_B", "La opción vuelve a ser elegible con las puntuaciones actualizadas y sin objeciones fuertes abiertas."
-        n = int(self.cfg.get("ciclos_sin_novedad_para_proponer_cancelacion", 4))
+        n = int(parametro(self.b.cfg, "seguimiento.ciclos_sin_novedad_para_proponer_cancelacion"))
         if rev["sin_novedad_consecutivos"] >= n and not pend_cat:
             return "PROPONER_CANCELACION", f"{rev['sin_novedad_consecutivos']} ciclos seguidos sin novedad y sin catalizadores pendientes."
         return "MANTENER_VIGILANCIA", "Sin cambio suficiente para proponer el envío al Bloque B; se mantiene la vigilancia."
 
     def _informe(self, enc: dict, opp: dict, rev: dict, run_id: str, n: int, as_of) -> dict:
         rec, motivo = self._recomendacion(rev, opp, as_of)
-        umbral = float(self.cfg.get("umbral_rk_semaforo", 5))
+        umbral = float(parametro(self.b.cfg, "seguimiento.umbral_rk_semaforo"))
         var = rev["puntuaciones"].get("variacion_RK") or 0
         if rev["invalidacion_activada"] or rev["invalidacion_cercana"] or var <= -umbral:
             sem = "ROJO"

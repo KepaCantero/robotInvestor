@@ -29,6 +29,7 @@ Todo lo que Claude, Astra y las personas del equipo necesitan para trabajar en e
 | `.docs/scripts/gate.sh` | Gate rápido (`--core`) o completo (`--completo`), con el log en `.docs/scripts/.logs/` |
 | `.docs/scripts/pruebas_marco.sh` | Todas las suites del marco común de C, leídas del LEEME; avisa de las que falten en él |
 | `.docs/scripts/leeme_marco.py` | Comprueba que el LEEME del marco común de C coincide con el disco: lista de ejecución y número de comprobaciones de cada batería (se ejecutan todas) |
+| `.docs/scripts/prueba_refs_vivas.py` | Prueba del gate `refs-vivas` (`tools/refs_vivas.py`): revisa las carpetas `revisores/`, entiende citas con argumentos y sufijos de línea (T-65, H-11) |
 | `.docs/scripts/nuevo_ticket.sh` | Crea `.docs/tickets/T-NN/` desde la plantilla |
 | `.docs/scripts/diario.sh` | Añade la entrada de hoy al diario del mes, arriba |
 | `.docs/scripts/memoria.sh` | Crea una entrada de memoria, la indexa y, con `--sustituye`, marca la anterior |

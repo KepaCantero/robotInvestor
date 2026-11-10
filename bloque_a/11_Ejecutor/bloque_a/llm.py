@@ -20,6 +20,8 @@ from dataclasses import asdict, dataclass, field
 from pathlib import Path
 from typing import Any, Dict, List, Optional
 
+from .configuracion import parametro
+
 
 @dataclass
 class Uso:
@@ -213,11 +215,11 @@ class ReplayClient(LLMClient):
 def crear_cliente(tipo: str, cfg: Dict, replay: Optional[str] = None, replay_modo: str = "reproducir") -> LLMClient:
     llm = cfg.get("llm") or {}
     if tipo == "mock":
-        return MockClient(llm.get("semilla_mock", 20261102))
+        return MockClient(parametro(cfg, "llm.semilla_mock"))
     if tipo == "anthropic":
-        return AnthropicClient(max_reintentos=llm.get("max_reintentos_api", 4), timeout_s=llm.get("timeout_s", 600),
+        return AnthropicClient(max_reintentos=parametro(cfg, "llm.max_reintentos_api"), timeout_s=parametro(cfg, "llm.timeout_s"),
                                salida_estructurada=llm.get("salida_estructurada", False),
-                               max_continuaciones=llm.get("max_continuaciones_pause_turn", 3))
+                               max_continuaciones=parametro(cfg, "llm.max_continuaciones_pause_turn"))
     if tipo == "replay":
         if not replay:
             raise ValueError("--replay RUTA es obligatorio con --cliente replay")

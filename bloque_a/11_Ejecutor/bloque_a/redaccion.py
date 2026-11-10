@@ -377,7 +377,11 @@ class Redaccion:
         bloq = [c["id"] for c in res["comprobaciones"] if c["resultado"] == "BLOQUEO"]
         adv = [c["id"] for c in res["comprobaciones"] if c["resultado"] == "ADVERTENCIA"]
         dictamen = "BLOQUEADO" if bloq else ("APTO_CON_ADVERTENCIAS" if adv else "APTO")
-        paquete["estado_g3"] = dictamen if dictamen != "BLOQUEADO" else "APTO_CON_ADVERTENCIAS"
+        # T-65 (QA de T-53, H-10 a): un paquete bloqueado nunca lleva un estado G3 favorable, ni en el entregable ni en memoria
+        if dictamen == "BLOQUEADO":
+            paquete.pop("estado_g3", None)
+        else:
+            paquete["estado_g3"] = dictamen
         js = entregable_json(paquete)
         if dictamen == "BLOQUEADO":
             js.pop("estado_g3", None)
@@ -397,8 +401,9 @@ class Redaccion:
         dictamen = "BLOQUEADO" if bloq else dictamen
         if dictamen == "BLOQUEADO":
             js.pop("estado_g3", None)      # nunca un estado G3 favorable en un entregable bloqueado
+            paquete.pop("estado_g3", None)
             Path(rutas["paquete_json"]).write_text(json.dumps(js, ensure_ascii=False, indent=1), encoding="utf-8")
-            destino = {k: base / "_bloqueados" / run_id for k in nombres}
+            destino = {k: carpeta_bloqueados(bloque, as_of, run_id) for k in nombres}
         else:
             destino = dirs
         rutas = _publicar(rutas, destino, nombres)
@@ -411,6 +416,15 @@ class Redaccion:
                                                                    for c in res["comprobaciones"]]})
         return rutas, {"dictamen": dictamen, "bloqueos": bloq, "advertencias": adv, "legibilidad": leg["fernandez_huerta"],
                        "frases_largas": leg["frases_largas"][:10], "errores_esquema": errores, "incoherencias": coh}
+
+
+def carpeta_bloqueados(bloque, as_of, run_id: str) -> Path:
+    """Carpeta de lo bloqueado (G3), la misma para la redacción y para el C6 (T-65, QA de T-53, H-10 b): en backtest,
+    `<entregables>/<fecha>/_bloqueados/<RUN>/`; en vivo, `<entregables>/_bloqueados/<RUN>/`."""
+    base = Path(bloque.carpeta_entregables)
+    if bloque.modo == "backtest":
+        base = base / str(pd.Timestamp(as_of).date())
+    return base / "_bloqueados" / run_id
 
 
 def _publicar(rutas: dict[str, str], destino: dict[str, Path], nombres: dict[str, str]) -> dict[str, str]:

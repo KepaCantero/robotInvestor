@@ -22,9 +22,10 @@ from .configuracion import (
     NOMBRE_CLASE,
     naturaleza_coherente,
     naturaleza_para,
+    parametro,
+    sesiones_horizonte,
 )
 from .contratos import REGIONES
-from .evaluador import banda_de, banda_publicable
 from .herramientas import ht09
 from .herramientas.ht05_planificador import fecha_resolucion
 from .herramientas.ht06_indice import normalizar
@@ -122,20 +123,22 @@ def _semaforo(opciones: list, umbrales: dict) -> str:
 
 
 def _umbrales_presentacion(cfg: dict) -> tuple[dict, dict]:
-    sel = cfg.get("seleccion") or {}
-    paso = {"E_enviar": 70, "A_profundizar": 65, **(sel.get("siguiente_paso") or {})}
-    semaforo = {"E_verde": 70, "A_verde": 65, **(sel.get("semaforo") or {})}
+    """Umbrales del siguiente paso y del semáforo ([PROPUESTO], INC-T53-05): de la configuración, sin literales de respaldo
+    (T-65, H-08). Si falta uno, falla cerrado."""
+    paso = {k: parametro(cfg, f"seleccion.siguiente_paso.{k}") for k in ("E_enviar", "A_profundizar")}
+    semaforo = {k: parametro(cfg, f"seleccion.semaforo.{k}") for k in ("E_verde", "A_verde")}
     return paso, semaforo
 
 
 def construir(bloque, run_id, tipo, as_of, clases, nivel, gc0, analisis, seleccion, clusteres, integ, historial, presupuesto) -> tuple[dict, dict]:
     cfg = bloque.cfg
     umbral_paso, umbral_sem = _umbrales_presentacion(cfg)
+    pres = parametro(cfg, "presentacion")   # [PROPUESTO] INC-T53-05: confianza y zona de interés (T-65, CA-14)
     avisos_hp: list[str] = []   # horizontes del Analista sustituidos (8.3): se declaran como limitación
     as_of = pd.Timestamp(as_of)
     certs = {(c["celda"]["clase"], c["celda"]["horizonte"]): c["id"] for c in bloque.evaluador.certificados_vigentes(as_of)}
-    prefer = cfg.get("horizonte_principal_preferente") or ["H3", "H2", "H4", "H1", "H5"]
-    meses_hitos = (cfg.get("h5") or {}).get("meses_hitos") or [12, 30, 54]
+    prefer = parametro(cfg, "horizonte_principal_preferente")
+    meses_hitos = parametro(cfg, "h5.meses_hitos")
     prg_borradores: list[dict] = []
     desgloses, paquete_clases, por_opp = {}, {}, {}
     clases_out: dict[str, dict] = {}
@@ -155,7 +158,7 @@ def construir(bloque, run_id, tipo, as_of, clases, nivel, gc0, analisis, selecci
             pid = bloque.almacen.nuevo_id("PRG")
             ids[h] = pid
             positivo = d["vista"] in ("alcista", "relativa_favorable")
-            ses = {"H1": 5, "H2": 20, "H3": 126, "H4": 252, "H5": 2520}[h]
+            ses = sesiones_horizonte(cfg, h)   # T-65 (CA-14 de T-53): de `horizontes` y `calendario`
             ref = f.get("_referencia")
             ri = bloque.evaluador.tasa_base(f["proxy"], ref, c, ses, positivo, as_of, run_id)
             fr = fecha_resolucion(as_of, h, cfg["horizontes"])
@@ -177,7 +180,7 @@ def construir(bloque, run_id, tipo, as_of, clases, nivel, gc0, analisis, selecci
                 "fecha_resolucion": str(fr.date()),
                 "criterio_resolucion": f"Cierre HT-01 de la última sesión ≤ {fr.date()} frente al cierre de la última sesión ≤ {as_of.date()}; suceso: {texto_ev}",
                 "fuente_resolucion": f"HT-01:{bloque.proveedor.nombre}", "regla_fallback": "última sesión disponible ≤ fecha de resolución; NO_RESOLUBLE tras 10 días hábiles sin dato",
-                "banda_verbal": banda_de(d["prob_interna"]), "prob_interna": d["prob_interna"],
+                "banda_verbal": bloque.evaluador.banda_de(d["prob_interna"]), "prob_interna": d["prob_interna"],
                 "prob_publicada": d["prob_interna"] if (c, h) in certs else None, "certificado_ref": certs.get((c, h)),
                 "metodo": d.get("metodo"), "referencia_ingenua": ri, "escenario_asociado": d.get("escenario", "BASE"),
                 "en_informe": en_informe, "estado": "ABIERTO",
@@ -205,13 +208,13 @@ def construir(bloque, run_id, tipo, as_of, clases, nivel, gc0, analisis, selecci
             hito.update({"prg_id": hid, "prg_padre": b["prg_id"], "es_hito": True, "prob_analista": None, "necesario": m == meses_hitos[-1], "horizonte": "H4",
                          "afirmacion": f"Hito de la senda H5: {ev}", "evento": ev, "fecha_resolucion": str(fh.date()),
                          "criterio_resolucion": f"Cierre HT-01 de la última sesión ≤ {fh.date()} frente al cierre de la última sesión ≤ {as_of.date()}; suceso: {ev}",
-                         "prob_interna": d["prob_interna"], "banda_verbal": banda_de(d["prob_interna"]), "prob_publicada": None,
+                         "prob_interna": d["prob_interna"], "banda_verbal": bloque.evaluador.banda_de(d["prob_interna"]), "prob_publicada": None,
                          "referencia_ingenua": {"tipo": "RI-TB", "valor_o_prob": 0.5, "nota": "tasa base neutra (ventana superior a la historia disponible)"}})
             prg_borradores.append(hito)
             b["hit_ids"].append(hid)
             b["hitos"].append({"hit_id": hid, "fecha": str(fh.date()), "indicador": f"Rentabilidad acumulada de {f['proxy']}"
                                + (f" frente a {ref}" if tp == "RELATIVO" else "") + " (HT-01)", "criterio": ev,
-                               "banda": banda_publicable(d["prob_interna"])})
+                               "banda": bloque.evaluador.banda_publicable(d["prob_interna"])})
 
     for c in clases:
         an, sel = analisis[c], seleccion[c]
@@ -229,7 +232,7 @@ def construir(bloque, run_id, tipo, as_of, clases, nivel, gc0, analisis, selecci
             hz = {}
             for h, d in sorted(f["_hz"].items()):
                 cert = (c, h) in certs
-                hz[h] = {"vista": d["vista"], "banda": banda_publicable(d["prob_interna"]), "prob": d["prob_interna"] if cert else None,
+                hz[h] = {"vista": d["vista"], "banda": bloque.evaluador.banda_publicable(d["prob_interna"]), "prob": d["prob_interna"] if cert else None,
                          "certificado_r13": cert, "prg_id": ids[h], "metodo": d.get("metodo")}
                 if not cert:
                     hz[h]["etiqueta"] = ETIQUETA_SIN_CERT
@@ -302,10 +305,10 @@ def construir(bloque, run_id, tipo, as_of, clases, nivel, gc0, analisis, selecci
                   "reversibilidad": liq, "que_cambiaria_la_conclusion": list(f.get("invalidacion") or [])[:2]
                   + [o["que_la_resolveria"] for o in f.get("_objeciones", []) if o.get("que_la_resolveria")][:2],
                   "objeciones": objs, "lo_que_no_sabemos": f.get("lo_que_no_sabemos"),
-                  "confianza": "probable" if pu["E"] >= 70 else "especulativo", "evidencias": list(f.get("_evidencias") or []),
+                  "confianza": "probable" if pu["E"] >= pres["confianza_probable_E"] else "especulativo", "evidencias": list(f.get("_evidencias") or []),
                   "calculos": calcs,
                   "minigrafico": {"tipo": "PRECIO_CON_ZONA", "serie_ref": f"HT01:{f['proxy']}",
-                                  "zona_interes": {"min": round(precio * 0.95, 6), "max": round(precio * 1.05, 6),
+                                  "zona_interes": {"min": round(precio * (1 - pres["zona_interes"]), 6), "max": round(precio * (1 + pres["zona_interes"]), 6),
                                                    "unidad": "nivel del indicador de seguimiento"},
                                   "calc_id": calcs[0]},
                   "x_referencia": f.get("_referencia"),
@@ -423,7 +426,7 @@ def ht09_validar(bloque, paquete: dict, extras: dict, informe_visual: str | None
     trazas = {k: v.get("evidencias", []) for k, v in f2.items() if v.get("tipo_entrada") == "CLM"}
     artef = [e["calc_id"] for e in bloque.almacen.leer("RC") if e.get("estado") in ("SERVED", "SERVED_WITH_LIMITATIONS")]
     return ht09.validar(paquete, certs, informe_visual, extras["desgloses"], bloque.params_ht03, trazas, artef,
-                        float((bloque.cfg.get("redaccion") or {}).get("umbral_fh", 70.0)))
+                        float(parametro(bloque.cfg, "redaccion.umbral_fh")))
 
 
 def retirar_opciones(bloque, paquete: dict, extras: dict, afectadas: set[str]) -> tuple[dict, dict]:

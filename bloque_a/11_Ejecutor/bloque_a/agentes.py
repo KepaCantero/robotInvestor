@@ -10,7 +10,7 @@ from typing import Any, Dict, List, Optional
 
 import jsonschema
 
-from .configuracion import max_tokens_de, modelo_de
+from .configuracion import max_tokens_de, modelo_de, parametro
 from .contratos import ESQUEMAS, contiene_credenciales
 from .herramientas.ht06_indice import CacheResultados, clave_hash
 from .llm import LLMClient, Uso, herramienta_busqueda_web
@@ -80,7 +80,7 @@ class Agentes:
         bw = self.cfg.get("busqueda_web") or {}
         if (permitir_web and self.cfg.get("modo") == "vivo" and bw.get("habilitada_en_vivo")
                 and agente in (bw.get("agentes") or [])):
-            return [herramienta_busqueda_web(bw.get("tipo_herramienta", "web_search_20260318"), bw.get("max_usos_por_llamada", 5))]
+            return [herramienta_busqueda_web(bw.get("tipo_herramienta", "web_search_20260318"), parametro(self.cfg, "busqueda_web.max_usos_por_llamada"))]
         return None
 
     def invocar(self, agente: str, contrato: str, mensaje: Dict, esquema_clave: str, instrucciones: str,
@@ -107,7 +107,7 @@ class Agentes:
         errores: List[str] = []
         uc_total = 0.0
         uso_total = Uso()
-        reintentos = int(llm.get("reintento_reparacion", 1))
+        reintentos = int(parametro(self.cfg, "llm.reintento_reparacion"))
         t0 = self.monitor.inicio(agente) if self.monitor else None
         if self.monitor:
             self.monitor.encolar(agente)

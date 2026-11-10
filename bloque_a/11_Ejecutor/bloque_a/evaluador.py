@@ -18,13 +18,12 @@ from __future__ import annotations
 import copy
 import math
 from collections import Counter, defaultdict
-from functools import lru_cache
 
 import numpy as np
 import pandas as pd
 from scipy import stats
 
-from .configuracion import CLASES, TABLA_HORIZONTES, cargar_config
+from .configuracion import CLASES, TABLA_HORIZONTES, parametro, parametros_ht03
 from .herramientas.ht01_datos import DatosNoDisponibles
 from .herramientas.ht05_planificador import dias_habiles_entre
 from .motor import evaluacion as ev
@@ -32,21 +31,6 @@ from .motor import evaluacion as ev
 CADUCIDAD_MESES = {"anecdotica": 3, "recurrente": 6, "estadistica": 12}
 # Escalón inferior de aplicabilidad de un horizonte (12.2): «Sí» → «Limitado» → «No»
 ESCALON_INFERIOR = {"SI": "LIMITADO", "LIMITADO": "NO"}
-
-
-@lru_cache(maxsize=1)
-def _config_por_defecto() -> dict:
-    return cargar_config()
-
-
-def _valor_por_defecto(seccion: str, clave: str):
-    """Valor de `config/por_defecto.yaml` para una clave nueva de T-66 que falte en la configuración recibida (las
-    configuraciones parciales de las pruebas): el número sale siempre de la configuración, nunca del código. Si tampoco
-    está ahí, falla cerrado."""
-    try:
-        return _config_por_defecto()[seccion][clave]
-    except (KeyError, TypeError) as e:
-        raise KeyError(f"falta la clave de configuración {seccion}.{clave}") from e
 
 
 def contaminacion_posible(p: dict) -> bool:
@@ -74,7 +58,9 @@ def _version_menor_siguiente(v) -> str:
 # interna» (Calibrable): Muy probable 80–95 % (85 %) · Más probable que no 60–75 % (65 %) · Incierto 45–55 % (50 %) ·
 # Poco probable 25–40 % (35 %) · Muy poco probable 5–20 % (15 %). `codigo` es el valor de F4 (`banda_verbal`) y
 # `texto` el del esquema JSON del paquete (`$defs.vista_horizonte.banda`). Se puede sustituir con la clave de
-# configuración `bandas_verbales` (misma estructura); `fijar_bandas` la valida y falla cerrado si no es coherente.
+# configuración `bandas_verbales` (misma estructura); `validar_bandas` la valida y falla cerrado si no es coherente.
+# T-65 (QA de T-53, H-07): la tabla de la configuración vive en cada `Evaluador` (`self.bandas`), no en el módulo: dos
+# instancias con tablas distintas no se pisan. Las funciones del módulo usan siempre la tabla del Anexo A.
 BANDAS_VERBALES_POR_DEFECTO = (
     {"codigo": "MUY_PROBABLE", "texto": "muy probable", "min": 0.80, "max": 0.95, "prob_interna": 0.85},
     {"codigo": "MAS_PROBABLE_QUE_NO", "texto": "más probable que no", "min": 0.60, "max": 0.75, "prob_interna": 0.65},
@@ -83,17 +69,11 @@ BANDAS_VERBALES_POR_DEFECTO = (
     {"codigo": "MUY_POCO_PROBABLE", "texto": "muy poco probable", "min": 0.05, "max": 0.20, "prob_interna": 0.15},
 )
 _CODIGOS_BANDA: dict[str, str] = {str(b["codigo"]): str(b["texto"]) for b in BANDAS_VERBALES_POR_DEFECTO}   # vocabulario fijo (F4 y esquema)
-_BANDAS: list[dict] = []
-
-# Probabilidad representativa de cada banda verbal (Anexo A): solo para uso interno cuando un PRG H5 no
-# registra probabilidad interna (V5.1: en H5 solo se registra la banda). Se mantiene el mismo objeto (lo
-# importan otros módulos) y `fijar_bandas` lo actualiza en el sitio.
-PROB_DE_BANDA: dict[str, float] = {}
 
 
-def fijar_bandas(tabla=None) -> list[dict]:
-    """Valida y fija la tabla de bandas (None = valores del Anexo A). Exige los cinco códigos del vocabulario,
-    intervalos dentro de [0, 1], disjuntos, y probabilidad interna dentro de su intervalo."""
+def validar_bandas(tabla=None) -> list[dict]:
+    """Valida una tabla de bandas (None = valores del Anexo A) y la devuelve ordenada, sin efectos. Exige los cinco códigos
+    del vocabulario, intervalos dentro de [0, 1], disjuntos, y probabilidad interna dentro de su intervalo."""
     filas = [dict(b) for b in (tabla if tabla is not None else BANDAS_VERBALES_POR_DEFECTO)]
     try:
         for b in filas:
@@ -110,47 +90,49 @@ def fijar_bandas(tabla=None) -> list[dict]:
     filas.sort(key=lambda b: b["min"])
     if any(a["max"] >= s["min"] for a, s in zip(filas, filas[1:])):
         raise ValueError("bandas_verbales: los intervalos se solapan")
-    _BANDAS[:] = filas
-    PROB_DE_BANDA.clear()
-    PROB_DE_BANDA.update({b["codigo"]: b["prob_interna"] for b in filas})
     return filas
 
 
-fijar_bandas()
+# Tabla del Anexo A (solo lectura) y probabilidad representativa de cada banda verbal: solo para uso interno cuando un PRG
+# H5 no registra probabilidad interna (V5.1: en H5 solo se registra la banda)
+_BANDAS: tuple = tuple(validar_bandas())
+PROB_DE_BANDA: dict[str, float] = {b["codigo"]: b["prob_interna"] for b in _BANDAS}
 
 
 def _distancia_a_50(b: dict) -> float:
     return 0.0 if b["min"] <= 0.5 <= b["max"] else min(abs(b["min"] - 0.5), abs(b["max"] - 0.5))
 
 
-def _banda(p: float) -> dict:
+def _banda(p: float, bandas=None) -> dict:
     """Banda de una probabilidad interna. Dentro de un intervalo, esa banda; en un hueco entre dos bandas, la más
-    cercana a 50 % (prudencia: prompt de Prospectiva, 6.5); por encima o por debajo de todas, la extrema."""
+    cercana a 50 % (prudencia: prompt de Prospectiva, 6.5); por encima o por debajo de todas, la extrema. `bandas` es una
+    tabla ya validada (la de un Evaluador); None = la del Anexo A."""
+    tabla = _BANDAS if bandas is None else bandas
     try:
         p = float(p)
     except (TypeError, ValueError) as e:
         raise ValueError(f"Probabilidad interna no numérica: {p!r}") from e
     if not math.isfinite(p) or not 0.0 <= p <= 1.0:
         raise ValueError(f"Probabilidad interna fuera de [0, 1]: {p!r}")
-    for b in _BANDAS:
+    for b in tabla:
         if b["min"] <= p <= b["max"]:
             return b
-    if p < _BANDAS[0]["min"]:
-        return _BANDAS[0]
-    if p > _BANDAS[-1]["max"]:
-        return _BANDAS[-1]
-    inf, sup = next((a, s) for a, s in zip(_BANDAS, _BANDAS[1:]) if a["max"] < p < s["min"])
+    if p < tabla[0]["min"]:
+        return tabla[0]
+    if p > tabla[-1]["max"]:
+        return tabla[-1]
+    inf, sup = next((a, s) for a, s in zip(tabla, tabla[1:]) if a["max"] < p < s["min"])
     return min((inf, sup), key=_distancia_a_50)
 
 
-def banda_de(p: float) -> str:
+def banda_de(p: float, bandas=None) -> str:
     """Código de banda verbal (F4, `banda_verbal`) a partir de la probabilidad interna."""
-    return _banda(p)["codigo"]
+    return _banda(p, bandas)["codigo"]
 
 
-def banda_publicable(p: float) -> str:
+def banda_publicable(p: float, bandas=None) -> str:
     """Banda tal como la escribe el esquema JSON del paquete (`vista_horizonte.banda`): cinco valores."""
-    return _banda(p)["texto"]
+    return _banda(p, bandas)["texto"]
 
 
 class Evaluador:
@@ -163,16 +145,22 @@ class Evaluador:
         # vigente, se vuelve a ella y no a la última tabla aplicada en memoria (T-53, QA r02 H-12)
         self._tabla_base = copy.deepcopy(cfg.get("_tabla_horizontes") or TABLA_HORIZONTES)
         self.universo = universo
-        self.ev_cfg = cfg.get("evaluacion") or {}
-        # Tabla de bandas verbales de la configuración (None = Anexo A); falla cerrado si es incoherente
-        fijar_bandas(cfg.get("bandas_verbales"))
+        # Tabla de bandas verbales de la configuración (None = Anexo A), propia de esta instancia (T-65, H-07); falla
+        # cerrado si es incoherente
+        self.bandas = tuple(validar_bandas(cfg.get("bandas_verbales")))
+        self.prob_de_banda = {b["codigo"]: b["prob_interna"] for b in self.bandas}
         # T-66: claves nuevas validadas al crear el Evaluador (falla cerrado si no son válidas)
         self.solo_endurecer()
         self._min_conglomerados()
 
+    def banda_de(self, p: float) -> str:
+        return banda_de(p, self.bandas)
+
+    def banda_publicable(self, p: float) -> str:
+        return banda_publicable(p, self.bandas)
+
     def _clave(self, seccion: str, clave: str):
-        sec = self.cfg.get(seccion) or {}
-        return sec[clave] if clave in sec else _valor_por_defecto(seccion, clave)
+        return parametro(self.cfg, f"{seccion}.{clave}")
 
     def solo_endurecer(self) -> bool:
         """PA-10 (`aprendizaje.solo_endurecer`, [PROPUESTO]): el aprendizaje automático solo endurece."""
@@ -233,7 +221,8 @@ class Evaluador:
     def tasa_base(self, proxy: str, referencia: str | None, clase: str, sesiones: int, sentido_positivo: bool,
                   as_of, run_id: str | None = None) -> dict:
         """RI-TB: frecuencia histórica (ventanas no solapadas de 3 años hasta as_of) del suceso pronosticado."""
-        ini = pd.Timestamp(as_of) - pd.DateOffset(years=3)
+        tb = parametro(self.cfg, "tasa_base")   # T-65 (CA-14 de T-53): ventana, mínimo, valor sin historia y recorte
+        ini = pd.Timestamp(as_of) - pd.DateOffset(years=int(tb["ventana_anios"]))
         s = self.proveedor.cierres(proxy, ini, as_of)
         serie = s.pct_change(sesiones).iloc[sesiones::sesiones] if len(s) > sesiones else pd.Series(dtype=float)
         excluidos_cesta: list[str] = []
@@ -254,11 +243,12 @@ class Evaluador:
                 ref = self.proveedor.cierres(referencia, ini, as_of).pct_change(sesiones)
             serie = (serie - ref.reindex(serie.index)).dropna()
         serie = serie.dropna()
-        if len(serie) < 5:
-            p = 0.5
+        min_v, (lo, hi) = int(tb["min_ventanas"]), (float(x) for x in tb["recorte"])
+        if len(serie) < min_v:
+            p = float(tb["sin_historia"])
         else:
             p = float(np.mean(serie > 0)) if sentido_positivo else float(np.mean(serie < 0))
-        p = min(max(p, 0.05), 0.95)
+        p = min(max(p, lo), hi)
         # Registro en RC (operación de la familia FC-EVAL-001: referencia RI-TB)
         calc_id = self.almacen.nuevo_id("CALC")
         self.almacen.escribir("RC", "AG-13", {
@@ -268,10 +258,10 @@ class Evaluador:
             "plan": "PLAN_MIN", "as_of": str(pd.Timestamp(as_of).date()), "estado": "SERVED",
             "datos": [{"serie_ht01": proxy, "fecha_dato": str(s.index[-1].date()) if len(s) else None, "n": int(len(s))},
                       {"serie_ht01": referencia}],
-            "parametros": {"sesiones": sesiones, "sentido_positivo": sentido_positivo, "ventana": "3 años, no solapadas"},
+            "parametros": {"sesiones": sesiones, "sentido_positivo": sentido_positivo, "ventana": f"{tb['ventana_anios']} años, no solapadas"},
             "semilla": None, "resultado": {"forma": "VALOR", "payload": {"tasa_base": p, "n_ventanas": int(len(serie))}},
             "clase_cifra": "ESTADISTICA", "referencia_ingenua": {"tipo": "RI-TB"}, "madurez_metodo": "IMPLEMENTADO",
-            "consumo_uc": 0.0, "limitaciones": ([] if len(serie) >= 5 else ["menos de 5 ventanas: tasa base 0,5 por defecto"])
+            "consumo_uc": 0.0, "limitaciones": ([] if len(serie) >= min_v else [f"menos de {min_v} ventanas: tasa base {tb['sin_historia']} por defecto"])
             + ([f"cesta de {clase}: excluidos por falta de datos en la ventana: {', '.join(excluidos_cesta)}"] if excluidos_cesta else [])})
         return {"tipo": "TASA_BASE", "valor_o_prob": round(p, 4), "calc_id": calc_id, "n_ventanas": int(len(serie))}
 
@@ -300,11 +290,11 @@ class Evaluador:
                 if not all(math.isfinite(v) for v in (rp, x) + ((rr,) if rr is not None else ())):
                     raise DatosNoDisponibles(f"{p['prg_id']}: rentabilidad no finita con los datos de HT-01")
             except DatosNoDisponibles:
-                if dias_habiles_entre(f1, as_of) >= int(self.ev_cfg.get("dias_habiles_no_resoluble", 10)):
+                if dias_habiles_entre(f1, as_of) >= int(parametro(self.cfg, "evaluacion.dias_habiles_no_resoluble")):
                     filas.append((p, None))
                 continue
             if (f1 - d1).days > 7:   # el último dato es demasiado antiguo: esperar
-                if dias_habiles_entre(f1, as_of) >= int(self.ev_cfg.get("dias_habiles_no_resoluble", 10)):
+                if dias_habiles_entre(f1, as_of) >= int(parametro(self.cfg, "evaluacion.dias_habiles_no_resoluble")):
                     filas.append((p, None))
                 continue
             positivo = p["sentido"] == "POSITIVO"
@@ -320,7 +310,10 @@ class Evaluador:
             res = self.motor.servir({"operacion": "FC-EVAL-001", "plan": "PLAN_MIN", "datos": [{"valores": {
                 "p": [p["prob_interna"] for p, _ in validas], "o": [r["o"] for _, r in validas],
                 "p_ref": [p["referencia_ingenua"]["valor_o_prob"] for p, _ in validas]}}],
-                "parametros": {"replicas": 200, "simulaciones": 200}, "fecha_corte": str(as_of.date())}, "AG-20", run_id)
+                # T-65 (CS-10 de T-53): réplicas y simulaciones de la configuración (antes, 200 escritas aquí)
+                "parametros": {"replicas": int(parametro(self.cfg, "evaluacion.bootstrap_replicas")),
+                               "simulaciones": int(parametro(self.cfg, "evaluacion.simulaciones_ece"))},
+                "fecha_corte": str(as_of.date())}, "AG-20", run_id)
             calc_id = res.get("calc_id")
         for p, r in filas:
             if r is None:
@@ -405,8 +398,8 @@ class Evaluador:
             tasa_base = float(np.mean(pr))
             fechas = self._fechas_conglomerado(lst)
             if completas:
-                m = ev.evaluar_celda(pp, oo, pr, tasa_base, int(self.ev_cfg.get("bootstrap_replicas", 2000)),
-                                     int(self.ev_cfg.get("simulaciones_ece", 2000)), float(self.ev_cfg.get("nivel_ic", 0.9)),
+                m = ev.evaluar_celda(pp, oo, pr, tasa_base, int(parametro(self.cfg, "evaluacion.bootstrap_replicas")),
+                                     int(parametro(self.cfg, "evaluacion.simulaciones_ece")), float(parametro(self.cfg, "evaluacion.nivel_ic")),
                                      fechas=fechas, min_conglomerados=self._min_conglomerados())
             else:
                 m = {"n": len(lst), "brier": ev.brier(pp, oo), "brier_ref": ev.brier(pr, oo),
@@ -476,8 +469,8 @@ class Evaluador:
         ids_celda: dict[str, list[str]] = defaultdict(list)
         excluidos: dict[str, int] = defaultdict(int)
         # Anexo A, «Degradación automática de H5 (12.2)» (Calibrable, P-42): tasa < 50 % con ≥ 20 hitos resueltos
-        tasa_min = float(self.ev_cfg.get("degradacion_h5_tasa_min", 0.50))
-        min_hitos = int(self.ev_cfg.get("degradacion_h5_min_hitos", 20))
+        tasa_min = float(parametro(self.cfg, "evaluacion.degradacion_h5_tasa_min"))
+        min_hitos = int(parametro(self.cfg, "evaluacion.degradacion_h5_min_hitos"))
         for p in f4.values():
             if p.get("horizonte") != "H5" or p.get("es_hito"):
                 continue
@@ -557,16 +550,17 @@ class Evaluador:
                 hechos.append(p3)
                 continue
             f10 = self.almacen.estado("F10", as_of)
-            mv_de = str((f10.get("P-30") or {}).get("valor_vigente") or self.cfg.get("methodology_version", "5.1"))
+            mv_de = str((f10.get("P-30") or {}).get("valor_vigente") or parametro(self.cfg, "methodology_version"))
             mv = {"de": mv_de, "a": _version_menor_siguiente(mv_de)}
             nueva = copy.deepcopy(matriz)
             nueva[clase]["H5"] = nuevo
             aju = {"tipo_entrada": "AJU", "id": self.almacen.nuevo_id("AJU"), "parametro": "P-31", "celda": ambito,
                    "de": actual, "a": nuevo, "trimestre": trimestre,
                    "banda": {"regla": "«Sí» ↔ «Limitado» automático (12.2, P-31); hacia «No», tipo 3"},
-                   "evidencia": evid, "methodology_version": mv, "efecto_desde": str((as_of + pd.Timedelta(days=1)).date()),
+                   "evidencia": evid, "methodology_version": mv, "efecto_desde": str(as_of.date()),
                    "sombra_hasta": None, "estado": "CONFIRMADO", "aplicado_en_produccion": True,
-                   "nota": "degradación automática de 12.2: no se revierte sola (volver a subir exige tipo 3)"}
+                   "nota": "degradación automática de 12.2: se aplica desde este mismo ciclo (la lectura de F10 es por fecha de "
+                           "registro; T-65, H-13) y no se revierte sola (volver a subir exige tipo 3)"}
             self.almacen.escribir("F6", "AG-20", aju)
             comun = {"tipo_entrada": "CFG", "autor": "AG-20", "origen": aju["id"], "methodology_version": mv,
                      "fecha_registro": str(as_of.date()), "fecha_efecto": aju["efecto_desde"], "revierte_a": None}
@@ -628,7 +622,7 @@ class Evaluador:
         """Certificados de horizonte (Anexo A). T-66: solo con PRG admisibles (PA-09); el mínimo de muestra se exige a
         n_eff (PA-03); con `aprendizaje.solo_endurecer` el certificado nace PROPUESTO (PA-10). Revocar un VIGENTE y
         retirar un PROPUESTO que ya no cumple el criterio endurecen: son automáticos."""
-        n_cert = int(self.ev_cfg.get("min_certificar", 100))
+        n_cert = int(parametro(self.cfg, "evaluacion.min_certificar"))
         min_cong = self._min_conglomerados()
         solo_endurecer = self.solo_endurecer()
         celdas = defaultdict(list)
@@ -642,15 +636,15 @@ class Evaluador:
             metr = {k: ev.evaluar_celda([float(x["prob_interna"]) for x in v], [int(x["resolucion"]["resultado_binario"]) for x in v],
                                         [float(x["referencia_ingenua"]["valor_o_prob"]) for x in v],
                                         float(np.mean([x["referencia_ingenua"]["valor_o_prob"] for x in v])),
-                                        int(self.ev_cfg.get("bootstrap_replicas", 2000)), int(self.ev_cfg.get("simulaciones_ece", 2000)),
+                                        int(parametro(self.cfg, "evaluacion.bootstrap_replicas")), int(parametro(self.cfg, "evaluacion.simulaciones_ece")),
                                         fechas=self._fechas_conglomerado(v), min_conglomerados=min_cong)
                     for k, v in sorted(candidatas.items())}
             # Holm escalonado (Anexo A, certificado R13): en cuanto una celda no supera su umbral, ninguna de las
             # siguientes (de p mayor) lo supera. α: clave evaluacion.alfa_holm (0,10, coherente con el IC 90 % del criterio)
             umbrales = ev.holm({f"{k[0]}|{k[1]}": (m["dm_hln"]["p_unilateral"] if m["dm_hln"]["p_unilateral"] is not None else 1.0)
-                                for k, m in metr.items()}, float(self.ev_cfg.get("alfa_holm", 0.10)))
+                                for k, m in metr.items()}, float(parametro(self.cfg, "evaluacion.alfa_holm")))
             for k, m in metr.items():
-                crit = ev.criterio_certificado(m, n_cert, float(self.ev_cfg.get("ece_max", 0.15)),
+                crit = ev.criterio_certificado(m, n_cert, float(parametro(self.cfg, "evaluacion.ece_max")),
                                                umbrales[f"{k[0]}|{k[1]}"] if len(metr) > 1 else None)
                 evaluadas[f"{k[0]}|{k[1]}"] = crit
                 if crit["certificable"] and k not in vigentes and k not in propuestos:
@@ -662,7 +656,7 @@ class Evaluador:
                             "brier": m["brier"], "brier_ref": m["brier_ref"], "bss": m["bss"]["valor"], "bss_ic90": m["bss"]["ic"],
                             "bss_ic_metodo": m["bss"].get("metodo"),
                             "holm_superado": True, "ece": m["calibracion"]["ece"], "ece_nulo_q90": m["ece_nulo"]["q90"],
-                            "methodology_version": self.cfg.get("methodology_version", "4.0"), "emitido": str(pd.Timestamp(as_of).date())}
+                            "methodology_version": parametro(self.cfg, "methodology_version"), "emitido": str(pd.Timestamp(as_of).date())}
                     if solo_endurecer:
                         cert["pendiente"] = ("aprobación del operador por CT-04 (aprobar_certificados); hasta entonces no "
                                              "habilita probabilidades numéricas (PA-10, aprendizaje.solo_endurecer)")
@@ -679,7 +673,7 @@ class Evaluador:
                     bssv = m["bss"]["valor"]
                     ece_m = m["calibracion"]["ece"]
                     # Umbral de revocación por deterioro: clave evaluacion.ece_revocacion (0,12; no figura en el Anexo A)
-                    ece_rev = float(self.ev_cfg.get("ece_revocacion", 0.12))
+                    ece_rev = float(parametro(self.cfg, "evaluacion.ece_revocacion"))
                     # ECE = 0 es calibración perfecta (no revoca); ECE ausente no permite comprobar la calibración: revoca
                     if (bssv is not None and bssv <= 0) or ece_m is None or ece_m >= ece_rev:
                         c = vigentes[k]
@@ -727,7 +721,7 @@ class Evaluador:
             if n < 10:
                 continue
             tasa = (m.get("acierto") or {}).get("tasa")
-            fuerza = "estadistica" if n >= int(self.ev_cfg.get("min_calibrar", 30)) else "recurrente"
+            fuerza = "estadistica" if n >= int(parametro(self.cfg, "evaluacion.min_calibrar")) else "recurrente"
             if tasa is not None and tasa < 0.45:
                 l = self._nueva_leccion(as_of, {"clase": c, "horizonte": h}, "PREDICTIVA",
                                         f"Acierto {tasa:.0%} en {n} pronósticos de {c}×{h}, por debajo de la tasa base.",
@@ -755,7 +749,7 @@ class Evaluador:
         """Propuesta de ajuste de pesos de RK dentro de bandas (modo sombra) a partir de la capacidad
         ordenadora (IC de Spearman) de A y E frente al resultado de las opciones publicadas."""
         res = self.resueltos(as_of, solo_informe=True)
-        n_min = int(self.ev_cfg.get("min_calibrar", 30))
+        n_min = int(parametro(self.cfg, "evaluacion.min_calibrar"))
         if len(res) < n_min:
             return None
         f6 = self.almacen.estado("F6", as_of, clave="id").values()
@@ -768,7 +762,8 @@ class Evaluador:
             return None
         ic_a = float(stats.spearmanr(A, y).statistic)
         ic_e = float(stats.spearmanr(E, y).statistic)
-        if abs(ic_a - ic_e) <= 0.10:
+        rr = parametro(self.cfg, "evaluacion.recalibracion_rk")   # Anexo A, P-11 (T-65, CS-10 de T-53)
+        if abs(ic_a - ic_e) <= float(rr["dif_ic_min"]):
             return None
         sube, baja = ("A", "E") if ic_a > ic_e else ("E", "A")
         trimestre = f"{pd.Timestamp(as_of).year}-T{(pd.Timestamp(as_of).month - 1) // 3 + 1}"
@@ -776,23 +771,23 @@ class Evaluador:
                         and a.get("estado") in ("EN_SOMBRA", "CONFIRMADO"))
         trimestral = sum(abs(a.get("delta", 0)) for a in f6 if a.get("tipo_entrada") == "AJU" and a.get("parametro") == "P-11"
                          and a.get("trimestre") == trimestre)
-        delta = 0.05
-        if trimestral + delta > 0.05 + 1e-9 or acumulado + delta > 0.15 + 1e-9:
+        delta, b_trim, b_tot = float(rr["paso"]), float(rr["banda_trimestral"]), float(rr["banda_total"])
+        if trimestral + delta > b_trim + 1e-9 or acumulado + delta > b_tot + 1e-9:
             p3 = {"tipo_entrada": "P3", "id": self.almacen.nuevo_id("P3-EVAL"), "objeto": "P-11 pesos de RK",
                   "motivo": "fuera de banda", "evidencia": {"ic_A": ic_a, "ic_E": ic_e, "n": len(res)},
                   "impacto_esperado": f"Mayor peso de {sube}", "pruebas_regresion": ["PB-35", "PB-36"], "estado": "ENVIADA"}
             self.almacen.escribir("F6", "AG-20", p3)
             return p3
-        pesos = dict((self.cfg.get("_parametros_ht03") or {}).get("pesos_rk") or {"A": 0.45, "E": 0.35, "T": 0.20})
+        pesos = dict(parametros_ht03(self.cfg)["pesos_rk"])
         nuevos = dict(pesos)
         nuevos[sube] = round(nuevos[sube] + delta, 4)
         nuevos[baja] = round(nuevos[baja] - delta, 4)
         aju = {"tipo_entrada": "AJU", "id": self.almacen.nuevo_id("AJU"), "parametro": "P-11", "de": pesos, "a": nuevos,
-               "delta": delta, "trimestre": trimestre, "banda": {"trimestral": 0.05, "total": 0.15}, "acumulado_vs_inicial": acumulado + delta,
+               "delta": delta, "trimestre": trimestre, "banda": {"trimestral": b_trim, "total": b_tot}, "acumulado_vs_inicial": acumulado + delta,
                "evidencia": {"objetivo": "capacidad ordenadora de RK", "ic_A": ic_a, "ic_E": ic_e, "n": len(res)},
-               "methodology_version": {"de": self.cfg.get("methodology_version", "5.1"), "a": _version_menor_siguiente(self.cfg.get("methodology_version", "5.1"))},
-               "efecto_desde": str(pd.Timestamp(as_of).date()), "sombra_hasta": str((pd.Timestamp(as_of) + pd.DateOffset(months=3)).date()),
-               "estado": "EN_SOMBRA", "aplicado_en_produccion": bool(self.ev_cfg.get("aplicar_recalibracion", False)),
+               "methodology_version": {"de": parametro(self.cfg, "methodology_version"), "a": _version_menor_siguiente(parametro(self.cfg, "methodology_version"))},
+               "efecto_desde": str(pd.Timestamp(as_of).date()), "sombra_hasta": str((pd.Timestamp(as_of) + pd.DateOffset(months=int(rr["meses_sombra"]))).date()),
+               "estado": "EN_SOMBRA", "aplicado_en_produccion": bool(parametro(self.cfg, "evaluacion.aplicar_recalibracion")),
                "propuesta": False}
         if self.solo_endurecer():
             # PA-10: la recalibración de pesos nunca pasa sola a producción, aunque evaluacion.aplicar_recalibracion sea true

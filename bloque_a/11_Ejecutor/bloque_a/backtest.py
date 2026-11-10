@@ -11,7 +11,7 @@ from typing import Dict, List, Optional
 
 import pandas as pd
 
-from .configuracion import fusionar
+from .configuracion import fusionar, parametro
 from .herramientas.ht01_datos import ProveedorCSV, cargar_universo
 from .herramientas.ht05_planificador import fechas_ciclo
 from .llm import LLMClient, crear_cliente
@@ -109,7 +109,7 @@ def ejecutar_backtest(cfg: Dict, desde: str, hasta: str, datos: str, universo: s
     cli = cliente or crear_cliente(tipo_cliente, cfg, replay, replay_modo)
     bloque = Bloque(cfg, prov, uni, cli, salida_p / "estado", salida_p / "entregables",
                     anonimizar=bt.get("anonimizar", "auto") if anonimizar is None else anonimizar)
-    fechas = fechas_ciclo(desde, hasta, frecuencia or bt.get("frecuencia", "semanal"), int(bt.get("dia_semana", 4)))
+    fechas = fechas_ciclo(desde, hasta, frecuencia or bt.get("frecuencia", "semanal"), int(parametro(cfg, "backtest.dia_semana")))
     senales, consumo, runs = [], [], []
     for f in fechas:
         res = bloque.ciclo(f, alcance={"clases": clases} if clases else None)

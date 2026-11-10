@@ -206,7 +206,9 @@ def test_h01_historia_corta_tambien_queda_declarada(tmp_path):
     rechazadas = b._fichas_rechazadas.get(("DIV", r["run_id"])) or []
     lagunas = " ".join(r["paquete"]["limitaciones"])
     assert not rechazadas or "rechazadas" in lagunas          # si el Motor rechaza fichas, se declara
-    assert "clústeres de exposición no calculados" in lagunas  # antes: ML-CLUS-001 rechazado en silencio, run COMPLETO
+    # antes: ML-CLUS-001 rechazado en silencio, run COMPLETO. T-65 (H-16): el proxy corto se excluye y se declara, y el resto
+    # se agrupa (antes de T-65 se declaraba «no calculados» para todos)
+    assert "clústeres de exposición sin medir para USDNEW=X" in lagunas
     assert r["estado"] == "PARCIAL"
 
 
