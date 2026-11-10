@@ -324,6 +324,19 @@ class Bloque:
         ven = parametro(self.cfg, "senales")   # T-65 (H-08): ventana del lote, de la configuración
         ini = str((pd.Timestamp(as_of) - pd.DateOffset(years=int(ven["ventana_anios"]), days=int(ven["margen_dias"]))).date())
         simbolos, sin_historia, invalidos = [], [], []
+        # T-65 (QA r02, H-12): la referencia de comparación del tipo se valida una vez, antes de nada, en la ventana que usan
+        # la tasa base y el nivel de referencia. Si no vale, el tipo no se analiza en este ciclo (PARCIAL, declarado, con
+        # incidencia DATOS) y los demás tipos siguen; nunca cifras con una referencia mala ni la caída del ciclo
+        ini_ref = min(pd.Timestamp(ini), pd.Timestamp(as_of) - pd.DateOffset(years=int(parametro(self.cfg, "tasa_base.ventana_anios"))))
+        refs_tipo = {self._referencia(clase)} | {v.get("referencia_indice") for v in self.vigentes(as_of, clase)}
+        for ref in sorted(r for r in refs_tipo if r and r not in ("CESTA", "SUBYACENTE")):
+            motivo = self._referencia_invalida(ref, ini_ref, as_of)
+            if motivo:
+                self.almacen.incidencia("DATOS", f"HT-01: referencia de comparación {ref} de {clase} inválida ({motivo[:200]}); "
+                                        "tipo no analizado en este ciclo", ref, severidad="Operativa",
+                                        tratamiento="tipo de activo PARCIAL y declarado", run_id=run_id)
+                raise DatosInvalidos(f"referencia de comparación {ref} con datos HT-01 inválidos o ausentes ({motivo[:160]}): "
+                                     "el tipo no se analiza en este ciclo")
         for f in self._universo_clase(clase, run_id):
             # Un símbolo sin datos en la ventana del lote (empieza a cotizar después de as_of o dejó de cotizar antes
             # de la ventana) no puede tumbar las fichas del tipo entero: se excluye y se declara (R14, R16, PS2).
@@ -332,6 +345,11 @@ class Bloque:
             # información no se tolera: corta el ciclo.
             try:
                 self.proveedor.cierres(f["simbolo"], ini, as_of)
+                sub = self._referencia(clase, f["simbolo"])   # SUBYACENTE: la referencia propia del indicador
+                if sub and sub not in ("CESTA", f["simbolo"], self._referencia(clase)):
+                    motivo_sub = self._referencia_invalida(sub, ini_ref, as_of)
+                    if motivo_sub:
+                        raise DatosInvalidos(f"referencia {sub} del indicador inválida o ausente ({motivo_sub[:160]})")
                 simbolos.append(f["simbolo"])
             except FugaDeInformacion:
                 raise
@@ -410,6 +428,18 @@ class Bloque:
     def vigentes(self, as_of, clase: str | None = None) -> list[dict]:
         return [o for o in self.almacen.estado("F3", as_of).values()
                 if o.get("estado") in ("PROPUESTA", "VIGENTE") and (clase is None or o.get("clase") == clase)]
+
+    def _referencia_invalida(self, ref: str, desde, as_of) -> str | None:
+        """Motivo por el que una referencia de comparación no sirve en [desde, as_of] (sin datos, datos inválidos o error del
+        proveedor), o None si sirve. La fuga de información no se absorbe."""
+        try:
+            self.proveedor.cierres(ref, desde, as_of)
+            self.proveedor.valor_en(ref, as_of)
+        except FugaDeInformacion:
+            raise
+        except Exception as e:  # noqa: BLE001 — cualquier fallo de la referencia se declara
+            return f"{type(e).__name__}: {e}"
+        return None
 
     def _referencia(self, clase: str, simbolo: str | None = None) -> str | None:
         """Referencia de comparación del tipo de activo (8.4): símbolo, «CESTA», «SUBYACENTE» (columna «subyacente»

@@ -12,6 +12,7 @@ EJ = RAIZ / "bloque_a" / "11_Ejecutor"
 PKG = EJ / "bloque_a"
 PY = str(RAIZ / ".venv" / "bin" / "python")
 H, R, Q = "tests/test_t65_hallazgos.py", "tests/test_t65_resto_t53.py", "tests/test_t65_qa_r01.py"
+Q2 = "tests/test_t65_qa_r02.py"
 
 # (nombre, archivo, texto actual, texto mutado, prueba)
 MUTACIONES = [
@@ -40,14 +41,14 @@ MUTACIONES = [
     ("H-15 cierres ≤ 0 en HT-01", PKG / "herramientas" / "ht01_datos.py", "malos = ~np.isfinite(s.to_numpy()) | (s.to_numpy() <= 0)",
      "malos = ~np.isfinite(s.to_numpy())", f"{H}::test_h15_simbolo_con_datos_invalidos_se_excluye_y_se_declara"),
     ("H-15 fechas duplicadas", PKG / "herramientas" / "ht01_datos.py", "        raise DatosInvalidos(f\"HT-01 {origen}: fechas duplicadas",
-     "        raise ValueError(f\"HT-01 {origen}: fechas duplicadas", f"{H}::test_h15_simbolo_con_datos_invalidos_se_excluye_y_se_declara"),
+     "        raise ValueError(f\"HT-01 {origen}: fechas duplicadas", f"{Q2}::test_r02_h13_motivo_explicito_de_cada_forma_rara"),   # desde la r02, el envoltorio evita la caída
     ("H-15 cualquier error del proveedor", PKG / "orquestacion.py",
      "            except Exception as e:  # noqa: BLE001 — error del proveedor para un símbolo: se excluye y se declara\n"
      "                invalidos.append((f[\"simbolo\"], f\"{type(e).__name__}: {e}\"))\n", "",
      f"{H}::test_h15_cualquier_error_del_proveedor_para_un_simbolo_se_declara"),
     ("H-15 CSV con fechas ilegibles", PKG / "herramientas" / "ht01_datos.py", "    except (ValueError, TypeError) as e:\n        raise DatosInvalidos(f\"HT-01 {origen}: fechas no interpretables",
      "    except KeyboardInterrupt as e:\n        raise DatosInvalidos(f\"HT-01 {origen}: fechas no interpretables",
-     f"{H}::test_h15_csv_con_fechas_ilegibles_se_excluye_y_se_declara"),
+     f"{Q2}::test_r02_h13_motivo_explicito_de_cada_forma_rara"),
     ("H-16 proxies cortos", PKG / "orquestacion.py", "            if len(cand) >= min_sem:\n                medibles.append(px)",
      "            if True:\n                medibles.append(px)", f"{H}::test_h16_un_finalista_con_poca_historia_no_desactiva_los_clusteres"),
     ("H-17 sin validar", PKG / "orquestacion.py", '    if errores:\n        raise ValueError("ps2_festivos: "',
@@ -131,6 +132,26 @@ MUTACIONES = [
      f"{Q}::test_r01_h08_ps1_con_el_minimo_de_raices_de_la_configuracion"),
     ("r01 H-11 punto decimal", PKG / "evaluador.py", "tasa base {_coma(tb['sin_historia'])} por defecto", "tasa base {tb['sin_historia']} por defecto",
      f"{Q}::test_r01_h11_limitacion_de_la_tasa_base_con_coma_decimal"),
+    # ---- QA r02 de T-65
+    ("r02 H-12 referencia sin validar", PKG / "orquestacion.py", "            motivo = self._referencia_invalida(ref, ini_ref, as_of)\n",
+     "            motivo = None\n", f"{Q2}::test_r02_h12_referencia_mala_degrada_solo_los_tipos_que_la_usan"),
+    ("r02 H-12 sin incidencia de la referencia", PKG / "orquestacion.py",
+     '                self.almacen.incidencia("DATOS", f"HT-01: referencia de comparación {ref}',
+     '                (lambda *a, **k: None)("DATOS", f"HT-01: referencia de comparación {ref}',
+     f"{Q2}::test_r02_h12_referencia_mala_degrada_solo_los_tipos_que_la_usan"),
+    ("r02 H-12 subyacente sin validar", PKG / "orquestacion.py", "                    motivo_sub = self._referencia_invalida(sub, ini_ref, as_of)\n",
+     "                    motivo_sub = None\n", f"{Q2}::test_r02_h12_subyacente_malo_excluye_solo_su_indicador"),
+    ("r02 H-13 columnas duplicadas aceptadas", PKG / "herramientas" / "ht01_datos.py", "    if dup:\n        originales", "    if False:\n        originales",
+     f"{Q2}::test_r02_h13_motivo_explicito_de_cada_forma_rara"),
+    ("r02 H-13 zona horaria aceptada", PKG / "herramientas" / "ht01_datos.py",
+     'if not pd.api.types.is_datetime64_dtype(fechas) or getattr(fechas.dt, "tz", None) is not None:', "if False:",
+     f"{Q2}::test_r02_h13_csv_raro_es_dato_invalido_del_simbolo"),
+    ("r02 H-13 normalización sin envolver", PKG / "herramientas" / "ht01_datos.py",
+     "    except Exception as e:  # cualquier otra excepción del parseo", "    except KeyboardInterrupt as e:  # cualquier otra excepción del parseo",
+     f"{Q2}::test_r02_h13_cualquier_error_de_la_normalizacion_es_dato_invalido"),
+    ("r02 H-14 booleanos aceptados", PKG / "herramientas" / "ht01_datos.py",
+     "    if pd.api.types.is_bool_dtype(crudo) or crudo.map(lambda v: isinstance(v, (bool, np.bool_))).any():", "    if False:",
+     f"{Q2}::test_r02_h14_cierre_booleano_se_rechaza"),
 ]
 
 

@@ -91,3 +91,62 @@ Resultado de `r01_07_mutaciones_extra.sh` sobre la copia limpia (suite entera de
 - H-03: el gate da 11/12 desde limpio por una cita del propio ticket.
 
 El resto del alcance está bien corregido: las 39 mutaciones se detectan, el corpus y los prompts no cambian, y el determinismo de participantes y `msg_id` está resuelto. Para la r02: corregir H-01 a H-03 con su prueba de regresión, y los bajos o su paso a la deuda con su ID. El revisor volverá a ejecutar r01_01 a r01_07.
+
+---
+
+# Ronda r02
+
+- **Revisor:** revisor nuevo sin contexto de la implementación (Claude, subagente de QA) · **Ronda:** r02 · 2026-11-10 · sobre `develop` 052e79a (commit con las correcciones de la r01).
+
+## Reproducción desde limpio
+
+- Copia limpia: `git worktree add --detach` de 052e79a, con un enlace a `.venv` y sin nada más (las correcciones ya están en el commit). Se comprobó que `pytest` importa el paquete de la copia, no el del árbol de trabajo.
+- Gate completo (`.docs/scripts/gate.sh --completo`) en esa copia: **12/12**. corpus-integridad, nombres-nfc, yaml-configs, secrets, refs-vivas, ruff, los tres mypy y las tres suites (A 285, A-Forex 68, B 174). **H-03 corregido.**
+- `pytest -q bloque_a/11_Ejecutor` en el árbol de trabajo: 285 passed.
+- `.docs/tickets/T-65/mutaciones.py` en otra copia: **50 de 50** detectadas. `r01_07_mutaciones_extra.sh`: las 5 detectadas (antes, 2 pasaban la suite). La copia queda intacta tras restaurar.
+- `.docs/scripts/prueba_refs_vivas.py`: 8/8; con el script de b699d4f, 7/8 (falla el caso nuevo de H-06).
+- Sondas de la r01 repetidas: r01_01 (23 casos, 0 hallazgos), r01_02 (0), r01_04 (0: con el cierre malo de 2019, DIV conserva sus 3 opciones), r01_05 (H-10 sigue, ya en la deuda), r01_06 (0), r01_07 (arriba). Sondas nuevas: r02_01 a r02_03.
+
+## Hallazgos de la r01
+
+| ID | ¿Corregido? | Evidencia del revisor |
+| --- | --- | --- |
+| H-01 (media) | **sí** | r01_04 y r02_01 parte D (cierre 0 en 2019 y en 2023-02, fuera de la ventana del lote, en todos los pares DIV): DIV conserva 3 opciones y nada se declara de más. `valor_en` valida solo el cierre que devuelve; las demás lecturas validan solo su rango, y todas caen dentro de la ventana del lote (tasa base 3 años, clústeres 156 semanas, GC0 104 semanas). Un cierre 0 dentro de la ventana excluye y declara el símbolo (r02_01 B). |
+| H-02 (media) | **en parte** | CSV vacío, binario, UTF-16, latin-1, truncado, con punto y coma, con campos de más, desordenado y duplicado: `DatosInvalidos` del símbolo, que se excluye y se declara, y el ciclo de los 12 tipos sigue (r01_01 E, r02_01 A y B). **Pero** otras dos formas de CSV siguen tumbando el ciclo entero (H-13, abajo). |
+| H-03 (media) | **sí** | Gate 12/12 desde la copia limpia. |
+| H-04 | sí | r01_06: 18 de 18; `" 1-25"` y los dígitos no ASCII se rechazan. |
+| H-05 | sí | Los literales citados pasan a `parametro()`; `presupuesto_uc.fraccion_minima_comun` es nuevo y lleva `[PROPUESTO]` técnico. Prueba de efecto con otros valores. Quedan los valores por defecto de los parámetros de las fichas del Motor (`motor/servicio.py`), que no eran del alcance. |
+| H-06 | sí | r02_02: los argumentos rotos de una orden fallan y los vivos pasan; el repo real tiene 0 citas rotas. Restos menores en H-15. |
+| H-07 | sí | r01_01 D: con dos proxies sin solape ya no se rechaza ML-CLUS-001 para todos; el que no solapa se declara. |
+| H-08 | sí | r01_07: las tres mutaciones de CS-10 se detectan ahora por efecto. |
+| H-09 | sí | `docs/incidencias.md`: INC-T53-02 a 05 con `[PROPUESTO]` (hasta T-57), INC-T53-04 al día y con H-13. |
+| H-10 | a la deuda | Fila T-88 de `sistema_global/seguimiento/Deuda_tecnica_y_pendientes_del_operador.md`. r01_05 lo sigue reproduciendo (2 valores de `consumido` en 3 ejecuciones). |
+| H-11 | sí | «tasa base 0,4 por defecto» con coma; prueba en la suite. |
+
+## Regresión y determinismo
+
+- **Backtest simulado de 4 semanas, 12 tipos y 4 hilos** (r01_03), dos veces con 052e79a y una con f384bef (antes de T-65). Entre las dos de 052e79a solo cambian las rutas absolutas de F5 (y con ellas la cadena de huellas) y el orden de `cache_resultados.jsonl`. Frente a f384bef cambian los mismos archivos que en la r01 (ventana de clústeres, `msg_id` por ámbito, redondeo de `uc` en el cuarto decimal): nada nuevo.
+- **Corpus y prompts:** `git diff f384bef 052e79a` solo toca `bloque_a/11_Ejecutor/`, `tools/refs_vivas.py`, `.docs/` y `docs/incidencias.md`; corpus-integridad en verde.
+- **Números:** los nuevos están en `por_defecto.yaml`; los del operador, con `[PROPUESTO]`.
+
+## Hallazgos nuevos
+
+| ID | Gravedad | Cómo reproducirlo | Esperado / obtenido | Corrección sugerida | Estado |
+| --- | --- | --- | --- | --- | --- |
+| H-12 | media | `r02_03_minimos_h12_h13.py` (o `r02_01_datos_raros_ciclo.py C`): ACWI, índice de referencia de RV y de IDX en `indices_referencia`, con **un** cierre 0 el 2026-05-29 (o −5 en 2024, o binario, o sin archivo). Ciclo de RV y DIV, o de los 12 tipos | **Esperado** (H-15: falla cerrado por símbolo, declarado, sin tumbar a los demás tipos): RV e IDX se degradan y lo declaran; el resto sigue.<br>**Obtenido:** **cae el ciclo entero** con `DatosInvalidos`. `Evaluador.tasa_base` lee la referencia con `cierres(referencia, ini, as_of)` (`bloque_a/evaluador.py:248`) sin atrapar nada, y `sintesis.construir` tampoco (`bloque_a/sintesis.py:164`; igual `valor_en(ref, as_of)` en la línea 169). El cribado de RV no lee la referencia, así que nada la valida antes. **Regresión de T-65 para el cierre ≤ 0:** en f384bef el mismo dato daba un run COMPLETO con 3 opciones (cifras con un precio 0, en silencio); ahora no hay paquete para ningún tipo. Con el archivo ausente o binario ya caía antes. Afecta igual a AGG (RF), DBC (MP), REET (INM), BTC-USD (CRI), PSP (ALT) y XEON.DE (MON) | Validar la referencia de cada tipo una vez por ciclo (en `senales_clase` o en `_prospectiva`) con la misma ventana que `tasa_base`; si falla, pronóstico sin referencia (DIRECCIONAL) o tipo PARCIAL, con limitación e incidencia `DATOS`, nunca la caída del ciclo. Prueba: ACWI con un cierre 0 y sin archivo en un ciclo de RV, IDX y DIV → DIV intacto, RV e IDX declarados | abierto |
+| H-13 | media | `r02_03_minimos_h12_h13.py` (o `r02_01_datos_raros_ciclo.py A B`): un par DIV nuevo con la cabecera de exportación más común, `Date,Open,High,Low,Close,Adj Close,Volume`, o con fechas con zona horaria (`2026-06-05 00:00:00-04:00`) | **Esperado** (H-02 de la r01: «cualquier error al leer el CSV … es `DatosInvalidos` del símbolo»; el docstring de HT-01 admite los alias `close` y `adj close`): el símbolo se lee bien o se excluye y se declara.<br>**Obtenido:** `close` y `adj close` se renombran los dos a `cierre`, `df["cierre"]` es un `DataFrame` y `_normalizar_df` lanza `AttributeError`; con zona horaria, `serie()` lanza `TypeError` al comparar fechas con y sin zona. Ninguna de las dos es `DatosNoDisponibles`: el cribado las excluye (`except Exception`), pero `tasa_base` con referencia CESTA vuelve a leer al miembro y **cae el ciclo de los 12 tipos**. No es una regresión (f384bef caía igual), pero la corrección de H-02 solo envolvió `pd.read_csv` | Envolver toda la normalización (`_normalizar_df`, incluida la conversión de fechas) para que cualquier error sea `DatosInvalidos`, y rechazar explícitamente las columnas duplicadas tras los alias y las fechas con zona horaria (o fijar la regla de conversión como incidencia). Prueba con los dos CSV en un ciclo de DIV y RV | abierto |
+| H-14 | baja | `r02_01_datos_raros_ciclo.py A`, caso «cierres_booleanos»: columna `cierre` con `True` en todas las filas | **Esperado:** `DatosInvalidos` (un booleano no es un precio).<br>**Obtenido:** `pd.read_csv` la lee como booleana, `pd.to_numeric` la convierte en 1,0 y la serie se acepta como un precio constante de 1. Con un solo valor no booleano en la columna sí se rechaza | En `_normalizar_df`, rechazar una columna `cierre` de tipo booleano (o leer `cierre` como texto y convertir) | abierto |
+| H-15 | baja | `r02_02_refs_vivas.py`, casos INFO | **Obtenido:** con el cambio de H-06, un argumento con comodín (`tests/test_t65_*.py`) o un archivo de salida que aún no existe (`--salida docs/nuevo.md`) cuentan como rotos, y el gate falla en falso. Siguen sin comprobarse el script detrás de un intérprete (`python3 tools/no.py …`) y un argumento entre comillas; eso ya pasaba antes | Saltar los argumentos con `*` o `?` (o resolverlos con `glob`) y documentar en el docstring que una salida futura va en `tools/refs_allowlist.txt` | abierto |
+
+Información (no son hallazgos):
+- Un cierre `NaN` escrito como texto se trata como celda vacía: la fila se descarta y queda en `filas_descartadas`, como una celda vacía. Es el diseño anterior.
+- `Motor.servir` lee ahora `uc.motor_por_plan.<plan>` antes de comprobar la ficha. Un plan desconocido daría `KeyError` en vez de un rechazo. Hoy todas las llamadas usan `PLAN_MIN`, y ningún camino del LLM elige el plan.
+- La elección de proxies por solape de H-07 es voraz (primero los de más semanas): puede dejar fuera un proxy que otra combinación conservaría, pero es determinista y se declara.
+
+## Veredicto
+
+**NO APTO.** H-01 y H-03 están corregidos, y también los bajos H-04 a H-09 y H-11; H-10 está en la deuda (T-88). Las 50 mutaciones se detectan, el gate da 12/12 desde limpio, y el corpus, los prompts y el determinismo están bien. Pero quedan dos hallazgos medios confirmados en el mismo punto, que un símbolo con datos malos falle solo y declarado:
+- H-12: un índice de referencia con un cierre ≤ 0 (o ilegible, o sin archivo) tumba el ciclo de todos los tipos. Para el cierre ≤ 0 es una regresión de la validación de H-15.
+- H-13: H-02 está corregido solo en parte. Un CSV con `Close` y `Adj Close`, o con fechas con zona horaria, sigue tumbando el ciclo entero.
+
+Para la r03: corregir H-12 y H-13 con su prueba de regresión, y H-14 y H-15, o pasarlos a la deuda con su ID. El revisor volverá a ejecutar r01_01 a r02_03.

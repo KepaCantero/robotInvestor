@@ -169,23 +169,48 @@ class ProveedorDatos:
 
 
 def _normalizar_df(df: pd.DataFrame, origen: str) -> pd.DataFrame:
+    """Normaliza la serie de un símbolo. T-65 (QA r02, H-13): todo el parseo y la normalización fallan cerrado: cualquier
+    forma rara de los datos (no solo la lectura del CSV) es `DatosInvalidos` de ese símbolo, que se excluye y se declara."""
+    try:
+        return _normalizar_df_sin_envolver(df, origen)
+    except DatosNoDisponibles:
+        raise
+    except Exception as e:  # cualquier otra excepción del parseo: dato inválido del símbolo, nunca la caída del ciclo
+        raise DatosInvalidos(f"HT-01 {origen}: datos no normalizables ({type(e).__name__}: "
+                             f"{str(e).splitlines()[0][:120] if str(e) else ''}); serie rechazada") from e
+
+
+def _normalizar_df_sin_envolver(df: pd.DataFrame, origen: str) -> pd.DataFrame:
     cols = {}
     for c in df.columns:
         k = ALIAS_COLUMNAS.get(str(c).strip().lower())
         if k:
             cols[c] = k
     df = df.rename(columns=cols)
+    # T-65 (QA r02, H-13): dos columnas que son el mismo campo tras los alias (p. ej., `Close` y `Adj Close`) son ambiguas:
+    # no se elige una en silencio
+    dup = sorted({str(c) for c in df.columns[df.columns.duplicated()]})
+    if dup:
+        originales = sorted(str(c) for c, k in cols.items() if k in dup)
+        raise DatosInvalidos(f"HT-01 {origen}: columnas ambiguas {originales} (todas son «{', '.join(dup)}»); serie rechazada")
     # T-65 (H-15): un CSV mal formado es un dato inválido del símbolo (DatosInvalidos, que los llamadores tratan como falta
     # de datos: el símbolo se excluye y se declara), no un error que tumbe el ciclo
     if "fecha" not in df.columns or "cierre" not in df.columns:
         raise DatosInvalidos(f"{origen}: el CSV necesita al menos las columnas fecha y cierre")
     try:
-        df["fecha"] = pd.to_datetime(df["fecha"]).dt.normalize()
+        fechas = pd.to_datetime(df["fecha"])
     except (ValueError, TypeError) as e:
         raise DatosInvalidos(f"HT-01 {origen}: fechas no interpretables ({str(e).splitlines()[0][:120]}); serie rechazada") from e
+    # T-65 (QA r02, H-13): fechas con zona horaria (o mezcladas) no se comparan con as_of: se rechazan, no se convierten
+    if not pd.api.types.is_datetime64_dtype(fechas) or getattr(fechas.dt, "tz", None) is not None:
+        raise DatosInvalidos(f"HT-01 {origen}: fechas con zona horaria o de tipo mixto ({fechas.dtype}); serie rechazada")
+    df["fecha"] = fechas.dt.normalize()
     # Conversión a número ANTES de eliminar filas: un cierre no vacío que no es un número finito
     # (`-`, `n.d.`, `1.234,5`, `inf`) invalida la serie entera; nunca se convierte en NaN silencioso.
     crudo = df["cierre"]
+    # T-65 (QA r02, H-14): un booleano no es un precio (antes, True se convertía en 1,0)
+    if pd.api.types.is_bool_dtype(crudo) or crudo.map(lambda v: isinstance(v, (bool, np.bool_))).any():
+        raise DatosInvalidos(f"HT-01 {origen}: cierres booleanos; serie rechazada")
     vacio = (crudo.isna() | (crudo.astype("string").str.strip() == "")).fillna(True).astype(bool)
     num = pd.to_numeric(crudo.where(~vacio), errors="coerce").astype(float)
     malos = ~vacio & ~np.isfinite(num)          # NaN tras convertir una celda no vacía, o ±inf
@@ -198,6 +223,8 @@ def _normalizar_df(df: pd.DataFrame, origen: str) -> pd.DataFrame:
     descartadas: list[str] = []
     if "fecha_publicacion" in df.columns:
         pub, invalida = _fechas_publicacion(df["fecha_publicacion"])
+        if getattr(pub.dt, "tz", None) is not None:   # T-65 (QA r02, H-13): como en `fecha`
+            raise DatosInvalidos(f"HT-01 {origen}: fecha_publicacion con zona horaria; serie rechazada")
         descartadas += [f"{f.date()}: fecha_publicacion no interpretable" for f in df.loc[invalida, "fecha"]]
         df["fecha_publicacion"] = pub
         df = df[~invalida]
