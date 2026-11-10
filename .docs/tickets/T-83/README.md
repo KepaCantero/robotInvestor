@@ -2,7 +2,7 @@
 
 | Campo | Valor |
 | --- | --- |
-| Estado | EN QA |
+| Estado | DETENIDO (QA r01 NO APTO, 10-11-2026; a la espera de que el operador diga cómo seguir) |
 | Pieza | sistema_global/marco_comun_c |
 | Planifica · implementa · QA | claude · claude · el otro agente (Astra) o un revisor nuevo sin contexto |
 | Aprobación del operador | No necesaria: tarea técnica (documentación como datos de valores que ya existen; no cambia ningún valor ni ningún control). Aplica D-45, ratificada el 2026-11-09 |
@@ -78,3 +78,4 @@ Que cada valor por defecto del marco común de C lleve, como datos que un progra
 - 2026-11-10 · ABIERTO · creado con nuevo_ticket.sh
 - 2026-11-10 · PLANIFICADO · claude · plan, criterios y plan de pruebas
 - 2026-11-10 · EN QA · claude · V0.72 implementada: `parametros_doc.py` con 85 claves (4 RATIFICADO, 77 PROPUESTO, 4 TECNICO); batería nueva con 62 comprobaciones; 61 baterías en verde; sin commit (por indicación del encargo); traspaso en `handoff.md`
+- 2026-11-10 · DETENIDO · QA r01 NO APTO: H-01 (media, `apalancamiento_max` marcado PROPUESTO cuando D-16 lo ratifica en cero hasta la Fase 3) y H-02 (media, las claves compuestas tienen una sola pregunta que no cubre todos sus valores: `aprobacion`, `mandatos`), más H-03 a H-06 bajos. Por la regla del operador no se abre otra ronda; pendientes en la fila T-83 de la deuda
