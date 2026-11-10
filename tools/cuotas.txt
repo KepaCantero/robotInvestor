@@ -7,6 +7,6 @@ ruff=3109
 mypy_bloque_a=123
 mypy_bloque_a_forex=174
 mypy_bloque_b=159
-pytest_bloque_a=201
+pytest_bloque_a=326
 pytest_bloque_a_forex=68
 pytest_bloque_b=174

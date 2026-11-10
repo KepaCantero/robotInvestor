@@ -2,7 +2,7 @@
 
 | Campo | Valor |
 | --- | --- |
-| Estado | EN QA (reabierto por el operador tras la QA r04; correcciones de H-24 y H-25, pendiente de la r05) |
+| Estado | CERRADO (QA r05 APTO, 10-11-2026; H-26 a H-29, bajos, en la deuda como T-91) |
 | Pieza | bloque_a |
 | Planifica · implementa · QA | claude · claude · el otro agente (Astra) o un revisor nuevo sin contexto |
 | Aprobación del operador | No necesaria: es una corrección técnica. Los valores que decide el operador van como `[PROPUESTO]` en `bloque_a/11_Ejecutor/config/por_defecto.yaml` y se listan abajo para T-57 |
