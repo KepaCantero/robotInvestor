@@ -264,3 +264,83 @@ def test_pa09_backtest_con_modelo_real_separa_las_metricas_no_admisibles(tmp_pat
     assert m["anonimizado"] is True and m["excluidos_contaminacion"]["total"] > 0
     assert m["por_clase_horizonte_con_no_admisibles"] and any("PA-09" in x for x in m["advertencias"])
     assert m["certificados"]["emitidos"] == []
+
+
+# ================================================================ T-66 · QA r01 (H-01 a H-05 y H-08)
+def _fuertes_y_respuesta(monkeypatch, id_modelo_fijo: bool, solo_primera: bool, contr_extra: bool):
+    """AG-11 pone una fuerte a cada opción (con id repetido si `id_modelo_fijo`). El Analista cita evidencia solo para la
+    primera (si `solo_primera`). En la contrarréplica, AG-11 «confirma» también ids que no se le enviaron (`contr_extra`)."""
+    orig_contr, orig_an = mr._contrarias, mr._analista
+    vistos: dict = {"todas": []}
+
+    def contrarias(msg, ctx, rng):
+        if "contrarreplicas" in msg:
+            ids = [x["objecion_id"] for x in msg["contrarreplicas"]] + (vistos["todas"] if contr_extra else [])
+            return {"resultados": [{"objecion_id": i, "resuelta": True, "motivo": "forzado"} for i in dict.fromkeys(ids)]}
+        out = orig_contr(msg, ctx, rng)
+        for x in out["resultados"]:
+            x["objeciones"] = [o for o in x["objeciones"] if o["fuerza"] != "fuerte"] + [
+                {"id": "OBJ-02" if id_modelo_fijo else f"OBJ-{x['ref']}-09", "tipo": "evidencia_insuficiente", "fuerza": "fuerte",
+                 "argumento": "Forzada", "evidencia": "-", "que_la_resolveria": "Dos fuentes"}]
+        return out
+
+    def analista(msg, ctx, rng, iny):
+        if msg.get("fase") == "RESPUESTA_OBJECIONES":
+            fuertes = [o for o in msg["objeciones"] if o["fuerza"] == "fuerte"]
+            vistos["todas"] = [o["objecion_id"] for o in fuertes]
+            primera = fuertes[0]["objecion_id"] if fuertes else None
+            res = []
+            for o in msg["objeciones"]:
+                cita = (not solo_primera) or o["objecion_id"] == primera or o["fuerza"] != "fuerte"
+                res.append({"objecion_id": o["objecion_id"], "respuesta": "Resuelta con la evidencia citada" if cita else "No la puedo resolver",
+                            "resuelta": cita, "evidencia_citada": list(o.get("evidencia_disponible") or [])[:2] if cita else []})
+            return {"respuestas": res}
+        return orig_an(msg, ctx, rng, iny)
+    monkeypatch.setattr(mr, "_contrarias", contrarias)
+    monkeypatch.setattr(mr, "_analista", analista)
+
+
+def test_h01_la_contrarreplica_no_resuelve_objeciones_que_no_se_le_enviaron(tmp_path, monkeypatch):
+    _fuertes_y_respuesta(monkeypatch, id_modelo_fijo=False, solo_primera=True, contr_extra=True)
+    b = _bloque(tmp_path)
+    r = b.ciclo(AS_OF, alcance={"clases": ["RV"]})
+    fuertes = _fuertes(b)
+    assert len(fuertes) >= 2 and sum(1 for o in fuertes if o["resuelta"]) == 1   # antes: todas resueltas
+    assert len(r["paquete"]["clases"]["RV"]["opciones"]) == 1
+
+
+def test_h01_ids_repetidos_del_modelo_no_cruzan_entre_opciones(tmp_path, monkeypatch):
+    _fuertes_y_respuesta(monkeypatch, id_modelo_fijo=True, solo_primera=True, contr_extra=False)
+    b = _bloque(tmp_path)
+    b.ciclo(AS_OF, alcance={"clases": ["RV"]})
+    fuertes = _fuertes(b)
+    assert len({o["objecion_id"] for o in fuertes}) == len(fuertes)                # el código asigna ids únicos
+    assert all(o["id_modelo"] == "OBJ-02" for o in fuertes)
+    assert sum(1 for o in fuertes if o["resuelta"]) <= 1
+
+
+def test_h02_un_escalado_sin_tipo_va_a_un_tipo_activo(tmp_path):
+    b = _bloque(tmp_path, cfg=cargar_config(extra={"modo": "backtest"}))
+    r = b.consulta("Analiza qué conviene hacer ahora", as_of=AS_OF)
+    assert r["escalado"]["clases"] == ["DIV"]                                    # antes: RV, no activo
+
+
+def test_h03_clases_activas_vacia_se_rechaza(tmp_path):
+    b = _bloque(tmp_path, cfg=cargar_config(extra={"modo": "backtest"}))
+    r = b.decision({"configuracion": {"clases_activas": []}}, AS_OF)
+    assert "P-02" not in r["aplicado"] and r["rechazos"]
+    assert b.f10()["P-02"] == ["DIV"]
+
+
+def test_h04_aprobar_certificados_que_no_es_lista_da_un_solo_rechazo(tmp_path):
+    b = _bloque(tmp_path)
+    r = b.decision({"aprobar_certificados": "CERT-2026-0001"}, AS_OF)
+    assert len(r["rechazos"]) == 1 and r["certificados_aprobados"] == []
+
+
+@pytest.mark.parametrize("c", [0.3, 0.35, 0.5, 0.123456789])
+def test_h05_residuos_constantes_dan_rho_1_sea_cual_sea_el_valor(c):
+    from bloque_a.motor import evaluacion as ev
+    fechas = [f"2026-01-{1 + i % 10:02d}" for i in range(200)]
+    r = ev.n_efectiva(fechas, [c] * 200)
+    assert r["rho"] == 1.0 and r["n_eff"] == pytest.approx(10.0)

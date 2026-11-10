@@ -242,7 +242,7 @@ def _coordinador(msg, ctx, rng):
     mem = msg.get("memoria_bloque") or {}
     tema = " ".join(preg.split())[:60]
     if any(k in preg for k in ("qué opinas", "que opinas", "frente a", "profundiza", "analiza", "compara")):
-        clases = [c for c, ws in PALABRAS_CLASE.items() if any(w in preg for w in ws)] or ["RV"]
+        clases = [c for c, ws in PALABRAS_CLASE.items() if any(w in preg for w in ws)] or list(msg.get("clases_activas") or ["DIV"])[:1]
         return {"clase_consulta": "PROFUNDIZACION" if "profundiza" in preg else "CONTRASTE", "ruta": "ANALITICA",
                 "respuesta": "Respuesta provisional: la memoria del bloque no contiene ese contraste; se abre un análisis.",
                 "referencias": [], "confianza": "especulativo", "tema_normalizado": tema,

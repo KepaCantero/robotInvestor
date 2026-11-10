@@ -10,7 +10,7 @@ from __future__ import annotations
 
 import copy
 import re
-from typing import Dict, List, Optional, Set, Tuple
+from typing import Any, Dict, List, Optional, Set, Tuple
 
 import pandas as pd
 
@@ -102,8 +102,11 @@ def _siguiente_paso(op: dict, umbrales: dict) -> str:
 
 def _prob_analista(f: dict, h: str) -> float | None:
     """Probabilidad propia del Analista para el horizonte h (PA-21), si la declaró y está en el rango de AG-10."""
+    from .contratos import FINALISTA
+    props: Any = FINALISTA["properties"]
+    rango = props["probabilidades_propias"]["additionalProperties"]   # única definición (QA H-08)
     v = (f.get("probabilidades_propias") or {}).get(h)
-    if isinstance(v, bool) or not isinstance(v, (int, float)) or not 0.05 <= float(v) <= 0.95:
+    if isinstance(v, bool) or not isinstance(v, (int, float)) or not rango["minimum"] <= float(v) <= rango["maximum"]:
         return None
     return float(v)
 
