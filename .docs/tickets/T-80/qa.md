@@ -449,3 +449,111 @@ a) C_cartera_del_encargo: False O-12 la cartera del encargo no es la del expedie
 | CA-4 | sí | `r01_05`, `r02_03` y `r02_05` |
 | CA-5 | sí | 57 baterías en verde (árbol de trabajo y copia limpia); diario y persistencia (`r03_02` d); gate 12/12 en la copia limpia |
 | CA-6 | sí | `pc3_01_via_directa.py`: CUMPLE (dentro de la batería) |
+
+---
+
+# Ronda r04
+
+- **Revisor:** Claude, revisor nuevo sin el contexto de la implementación (subagente; plan, Documento 0, Constitución, código, rondas r01 a r03) · **Ronda:** r04 · 10-11-2026
+- **Código revisado:** commit `c482bf1` (correcciones de la r03). Empecé sobre el árbol de trabajo sin commit; durante la revisión otra sesión hizo ese commit con el mismo código de T-80 y metió de paso una primera versión de mi sonda `r04_01` (la buena es la del árbol de trabajo). Los cambios de `bloque_a/`, `tools/`, `.docs/scripts/` y la carpeta del ticket T-65 son de T-65 y no se revisan. No he hecho commit ni push.
+- **Sondas nuevas:** `r04_01_origen_reanalizado.py`, `r04_02_cadenas_y_consultas.py` y `r04_03_h14_reloj_adelantado.py` en `sistema_global/marco_comun_c/entrega_claude/V0.68/qa/`. Se ejecutan con `.venv/bin/python -I -B <sonda>` desde esa carpeta.
+
+## Veredicto r04
+
+**NO APTO.** H-13 está corregido de verdad en sus tres variantes y en cadenas de varios DIRECTA, con consultas y tras guardar y cargar, y no cierra de más. Pero queda el espejo de H-13: si el que se reanaliza es el origen (o el otro gemelo DIRECTA) **mientras** un DIRECTA tiene el análisis en juego, ese DIRECTA sigue con el análisis superado hasta `EJECUTADA`, aunque el reanálisis haya salido `BLOQUEADO` (H-16, media). Además hay dos hallazgos bajos (H-17 y H-18).
+
+## Reproducción
+
+| Qué | Comando | Resultado |
+| --- | --- | --- |
+| Todas las baterías, árbol de trabajo | `.docs/scripts/pruebas_marco.sh` | `Marco común de C: 57 pasan, 0 fallan` |
+| Batería de T-80 | `python -I pruebas/pruebas_via_directa_t80.py` | `112 comprobaciones` · `TODAS LAS PRUEBAS PASAN` |
+| Batería de T-80 con el `orquestador.py` de `ff3e502` (antes de la corrección) | ídem, en una copia | `HAY FALLOS`: exactamente las dos regresiones de H-13 |
+| LEEME contra disco | `.venv/bin/python -I .docs/scripts/leeme_marco.py sistema_global/marco_comun_c` | `SIN DIFERENCIAS (0)` |
+| Python 3.11 (H-10) | `ast.parse` con `/usr/bin/python3.11` de `validador/`, `pruebas/` y las sondas r04 | se leen todos |
+| Sondas r01 a r03 | `r01_0*.py`, `r02_0*.py`, `r03_0*.py` | SIN FALLOS, salvo `r01_03` (`KeyError`) y `r01_06` (ahora `AssertionError` por O-03: la apertura N2 se acepta y el siguiente intento choca con el expediente ya creado), que esperaban el comportamiento de antes de H-01 y H-04, y `r03_02` a), que muestra H-14 (documentado) |
+| Sondas r04 | `r04_01`, `r04_02`, `r04_03` | `r04_02` SIN FALLOS; `r04_01` da H-16; `r04_03` da H-17 |
+| Copia limpia (`git archive HEAD` más los ficheros de T-80 del árbol de trabajo y las sondas r04): baterías y LEEME | `bash .docs/scripts/pruebas_marco.sh` y `leeme_marco.py` | 57 pasan, 0 fallan · `SIN DIFERENCIAS (0)` |
+| Gate en esa copia (`.venv` enlazado, `PYTHONPATH` a los ejecutores de la copia) | `./tools/check_all.sh` | 11/12. Solo falla `refs-vivas`, por una cita del `pruebas.md` de T-65 a un log de `.docs/scripts/.logs/` que no está en git (es de T-65, no de T-80). Pasan corpus, NFC, YAML, secrets, ruff, mypy ×3 (bloque_a_forex 174, bloque_b 159) y pytest (A 265 · FX 68 · B 174) |
+
+## Los hallazgos anteriores
+
+| Hallazgo | ¿Sigue corregido? | Evidencia |
+| --- | --- | --- |
+| H-01 (alta) | Sí | `r01_02`, `r02_02`; `r04_01` d): con el origen ya reencargado, O-06 |
+| H-02 (media) | Sí | `r01_05`, `r02_03`; `r04_02` e): un rechazo con `consulta_id` no deja APERTURA y `consultas_ok()` sigue verdadero |
+| H-03, H-09 (medias) | Sí | `r01_08`, `r02_01` |
+| H-04 (media) | Sí | Batería; `r01_06` acepta N2 |
+| H-05 a H-07 (bajas) | Sí | `r01_05`, `r01_09`, `r02_04`, `r02_05` |
+| H-08, H-11, H-15 (bajas) | Casi | Ver H-18 |
+| H-10 (baja) | Sí | `ast.parse` con 3.11 |
+| H-12 (baja) | Sí | `r02_01` |
+| H-13 (media) | **Sí** | `r03_01` SIN FALLOS en a), b), c) y d). `r04_02`: cadena de tres DIRECTA (el segundo, tras el descarte del operador, propone, caduca y se reanaliza: el tercero da O-06 por D y por E); un DIRECTA reencargado cuyo encargo no llega a dar sobre también deja S1 superado (cerrado, como dice la r03); el análisis nuevo S2 del DIRECTA reanalizado sí se reutiliza y, cuando su propio DIRECTA se reanaliza, queda superado; origen DIRECTA por C; tocar `analisis_ref`, la vía, los campos DIRECTA, la anotación de reutilización o el «encargo emitido» del DIRECTA sale en `integridad()` y `abrir_directa` da O-13; el rechazo se mantiene al reabrir desde el diario y tras guardar y cargar; `analisis_vigentes()` coincide en todos los casos. Pero ver H-16 |
+| H-14 (baja) | Documentado | Aceptable en general: no relaja ningún control, el diario anota también las llamadas rechazadas y las reproduce, `emitir_encargo()` y `entregar_sobre()` ya lo hacían, y la frase del Documento 0 y del README ya no promete «nada cambia». Con un matiz: ver H-17 |
+
+## Qué comprobé y está bien
+
+- **No hay otra ruta de reutilización.** Un sobre solo llega a un expediente por `entregar_sobre`, `levantar_objecion` (ambos tras un «encargo emitido») o la reutilización (que siempre deja `analisis_ref`). `self.eventos[sid]` apunta siempre al origen, así que todo DIRECTA que tuvo `sid` lleva `analisis_ref == sid` y la comprobación nueva los ve a todos. Ninguna transición devuelve a `VALIDADA` sin un sobre nuevo, así que la ventana de `_salida_no_operador` y de H-09 no se puede «reiniciar».
+- **Consultas** (`r04_02` e): una ANALIZAR o COMPARAR puede citar un análisis superado (es vigente) y solo toca el rastro; abrir desde ella con ese análisis da O-06 por D y por E, sin estado ni APERTURA; con el análisis nuevo de la misma COMPARAR, se abre.
+- **Invariantes:** ningún camino nuevo llega a una orden sin F y G (también el de H-16 pasa por F, la autorización y G). No hay LLM. Los dos `[PROPUESTO]` siguen en T-57. Sin secretos (gate `secrets` en verde).
+
+## Hallazgos r04
+
+### H-16 · media · Un DIRECTA con el análisis en juego sigue hasta `EJECUTADA` aunque el origen (o su gemelo) se reanalice después y salga `BLOQUEADO`
+
+**Qué pasa.** H-01 y H-13 impiden **abrir** un DIRECTA con un análisis que su origen o un DIRECTA anterior ya superaron. Nada mira el orden inverso: el DIRECTA se abre de forma legítima (origen en observación por el operador) y **después** el origen se reabre y se vuelve a encargar. `_emitir()` no comprueba si otro expediente tiene en juego el sobre actual del que se reencarga. En el flujo normal esto no puede pasar: `T` no tiene `VALIDADA` → `EN_ANALISIS`, un candidato en juego no se reanaliza. Con la vía DIRECTA, el mismo candidato está a la vez en juego (el DIRECTA) y en reanálisis (el origen), lo que el §3 del Documento 0 prohíbe al abrir («en reanálisis: no»).
+
+Si el reanálisis sale `BLOQUEADO` (exclusión dura T-27, aquí `sanciones`), el origen queda `DESCARTADA` con su `exclusion` (no es testigo ni rival), y el DIRECTA, con el sobre viejo S1 del mismo instrumento, se compara, se propone, se autoriza y G lo ejecuta, con `integridad()` vacía. Variantes:
+- c): sin ninguna reapertura del operador, porque la condición `FECHA` que puso al observar se cumple y el gestor reencarga: llega a `PROPUESTA`;
+- e): el que se reanaliza (y sale `BLOQUEADO`) es el primer DIRECTA, en observación, y el segundo DIRECTA con S1 llega a `PROPUESTA`.
+
+Si el reanálisis sale bien (b), quedan dos expedientes del mismo candidato en juego, y D frena al de S1 como `DUPLICADO`. Pero basta con que el origen vuelva a salir del juego para que el de S1 siga solo con el análisis superado.
+
+**Reproducir:** `python -I -B r04_01_origen_reanalizado.py`.
+
+```
+a) el reanálisis del origen sale BLOQUEADO con el DIRECTA en juego
+   reencargar el origen con el DIRECTA en juego: True OK encargo aceptado
+   sobre nuevo del origen: True O-32 | origen DESCARTADA | exclusion True | DIRECTA VALIDADA EV-SOB-0001
+   proponer el DIRECTA con S1 (a): True OK propuesta registrada
+   autorizar el DIRECTA (a): True OK autorizada | integridad []
+   G ejecuta el DIRECTA (a): True OK ejecutada | integridad []
+c) ... proponer el DIRECTA con S1 (c): True OK propuesta registrada
+e) ... comparar y proponer EXP-DD-02 con S1: True True OK propuesta registrada
+```
+
+**Esperado** (Documento 0, §3; T-27; la misma regla que H-01 y H-13 en el otro orden): el mismo candidato no puede seguir en juego con un análisis que su propio reanálisis ya superó, y menos si lo bloqueó.
+
+**Obtenido:** se invierte con el análisis superado.
+
+**Corrección sugerida.** Lo más simple y cerrado: en `_emitir()`, rechazar (O-06) el reencargo de un expediente si su sobre actual lo tiene en juego (`VIVOS`) otro expediente (un DIRECTA con `analisis_ref` igual a ese sobre, o el origen si el que se reencarga es un DIRECTA): «el análisis está en juego en EXP-…: apártelo antes». Es lo que `T` ya hace con un candidato en juego. Alternativa: al aceptar un sobre nuevo o una exclusión de un expediente, sacar del juego (`CADUCADA` por el Orquestador, motivo «análisis superado») a los que tienen el sobre viejo. Hacen falta las regresiones de `r04_01` a), c) y e), y una frase en el §3 del Documento 0.
+
+### H-17 · baja · Un rechazo con un `ahora` adelantado caduca encargos que, con el reloj del Orquestador, siguen vigentes (matiz de H-14)
+
+**Qué pasa.** `@_seguro` no deja que una llamada rechazada adelante el reloj (`ultimo_ahora` vuelve atrás). Pero `_caducar_encargos()` ya ha caducado los encargos vencidos según el `ahora` de esa llamada. Si el Broker llama a `abrir_directa()` por C con un `ahora` adelantado y se rechaza (O-12), el encargo `EN_CURSO` de otro expediente pasa a `CADUCADO` (con su O-10) aunque, para el reloj del Orquestador, faltan días para su `valid_until`. La entrega legítima en plazo, minutos después, se rechaza con O-10. Falla cerrado (no relaja nada) y `emitir_encargo()` lo hace igual desde antes de T-80; `consultar()` no. Así que la justificación de H-14 («es lo mismo que haría el siguiente `barrer`») no vale en este caso: `barrer` con ese reloj no lo caducaría.
+
+**Reproducir:** `python -I -B r04_03_h14_reloj_adelantado.py`.
+
+```
+abrir_directa por C rechazada con ahora adelantado: False O-12 | reloj 2026-11-06T09:00:00+00:00 | encargo de EXP-0001 (valid_until 2026-11-08T12:00:00+00:00): CADUCADO
+   entrega legítima a las 09:05: False O-10 el encargo caducó antes de la entrega
+```
+
+**Corrección sugerida:** que una llamada rechazada deshaga también lo que caducó (o caducar solo con el reloj aceptado, `max(ultimo_ahora)`), en `_emitir()` y en `entregar_sobre()`. Como también pasa antes de T-80, basta con anotarlo en la deuda técnica y matizar la frase del Documento 0, §2, si no se corrige aquí.
+
+### H-18 · baja · Restos de documentación
+
+- LEEME, párrafo de la V0.68: «La QA independiente r01 dio NO APTO (H-01 a H-08) la r02 (H-09 a H-12) y la r03 (H-13 a H-15) también, en `.docs/tickets/T-80/qa.md`,, todos corregidos con su prueba»: falta una coma, sobra otra, y H-14 no se corrigió (se documentó). En el mismo párrafo, la lista de lo que no se reutiliza («si nadie lo tiene en juego, invertido, caducado, en reanálisis, vuelto a encargar o apartado sin ratificar») sigue sin decir «o lo tuvo y se volvió a analizar», como pedía H-15 (la línea «Comprobado en» sí lo dice).
+- README del ticket, «Cómo falla cerrado»: «salvo lo que el Orquestador registra a propósito en cualquier operación». No es en cualquier operación: `consultar()` y la entrada por D o E con análisis no caducan nada (`r04_03`). Mejor «como en `emitir_encargo()`», como dice el Documento 0.
+- Documento 0, §3: «ningún expediente DIRECTA que lo tuvo se volvió a analizar». El código mira si se volvió a **encargar** (basta un «encargo emitido», aunque no llegue sobre: `r04_02` b). Es más cerrado y está bien, pero el texto debería decirlo así.
+
+## Criterios de aceptación (r04)
+
+| Criterio | Cumple | Evidencia |
+| --- | --- | --- |
+| CA-1 | sí | Batería; `r01_01`; `r02_03` |
+| CA-2 | **no** | Los mínimos y la reutilización al abrir están bien (`r03_01`, `r04_02`), pero un DIRECTA abierto sigue con un análisis que el reanálisis del origen superó o bloqueó (H-16) |
+| CA-3 | sí | `r02_03`, `r02_04`, `r03_02` y `r04_02` e) |
+| CA-4 | sí | `r01_05`, `r02_03`, `r02_05` y `r04_02` f) |
+| CA-5 | sí | 57 baterías en verde (árbol de trabajo y copia limpia); diario y persistencia (`r04_02` g); gate de la copia limpia 11/12, con el único fallo (`refs-vivas`) en T-65 |
+| CA-6 | sí | `pc3_01_via_directa.py`: CUMPLE (dentro de la batería) |

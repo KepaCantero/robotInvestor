@@ -36,7 +36,7 @@ Detalle en el Documento 0: `sistema_global/documentos_0/V0.68_Via_directa_y_modo
   - `o_max_analisis_consulta` = 50 en `parametros.py`, tope técnico `[PROPUESTO]` (QA r01, H-08).
   - «Nivel bajo» sale de `NIVEL_MIN_POR_DECISION["ABRIR_POSICION"]` (N2, `[PROPUESTO]`, QA r01, H-04): el más bajo con el que se puede invertir.
 - **Cómo falla cerrado:**
-  - todo se valida antes de crear el expediente: un rechazo no deja nada, salvo lo que el Orquestador registra a propósito en cualquier operación (encargos vencidos que pasan a `CADUCADO`, con su aviso; QA r03, H-14);
+  - todo se valida antes de crear el expediente: un rechazo no deja nada, salvo lo que el Orquestador registra a propósito en las operaciones que pasan por un encargo, como `emitir_encargo()`: encargos vencidos que pasan a `CADUCADO`, con su aviso (QA r03, H-14, y r04, H-17). `consultar()` no caduca nada;
   - un análisis en duda no se reutiliza (en juego, invertido, en reanálisis, apartado sin ratificar o excluido);
   - por E, con más candidatos vigentes, se devuelve a D;
   - un rastro SC-5 tocado da O-13 con kill-switch en el siguiente punto de decisión.
@@ -83,4 +83,5 @@ Detalle en el Documento 0: `sistema_global/documentos_0/V0.68_Via_directa_y_modo
 - 2026-11-10 · EN QA · V0.68 implementada; batería nueva con 93 comprobaciones; 57 baterías en verde
 - 2026-11-10 · QA r01 NO APTO (H-01 alta; H-02 a H-04 medias; H-05 a H-08 bajas); todos corregidos con su prueba (106 comprobaciones)
 - 2026-11-10 · QA r02 NO APTO (H-09 media: propuesta caducada y descartada; H-10 a H-12 bajas); corregidos (110 comprobaciones)
-- 2026-11-10 · QA r03 NO APTO (H-13 media: análisis superado por el reanálisis de un DIRECTA; H-14 y H-15 bajas); corregidos (112 comprobaciones); pendiente la r04
+- 2026-11-10 · QA r03 NO APTO (H-13 media: análisis superado por el reanálisis de un DIRECTA; H-14 y H-15 bajas); corregidos (112 comprobaciones)
+- 2026-11-10 · QA r04 NO APTO (H-16 media: reencargo del origen con el análisis en juego en un DIRECTA; H-17 y H-18 bajas); corregidos (115 comprobaciones); pendiente la r05

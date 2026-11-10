@@ -2005,6 +2005,13 @@ class Orquestador:
         fallos = validar_encargo(encargo, ctx)
         if fallos:
             return _no("O-01", f"encargo no válido: {fallos[0]['regla']}: {fallos[0]['mensaje'][:80]}", reglas=sorted({x['regla'] for x in fallos}))
+        # QA de T-80, H-16: reanalizar un expediente cuyo análisis tiene en juego otro (un DIRECTA que lo reutilizó, o su origen)
+        # dejaría a ese otro con un análisis superado que nadie revisa: primero se termina o se aparta el que está en juego
+        sid = (e.get("sobre") or {}).get("event_id")
+        en_juego = sorted(k for k, y in self.expedientes.items() if k != expediente_id and sid is not None
+                          and (y.get("sobre") or {}).get("event_id") == sid and y["estado"] in VIVOS)
+        if en_juego:
+            return _no("O-06", f"el análisis {sid} de este expediente está en juego en {', '.join(en_juego[:5])}: termínelo o apártelo antes de reanalizar")
         # reintento: el encargo anterior debe estar cerrado sin éxito
         previo = self.encargos.get(e["encargo_actual"]) if e["encargo_actual"] else None
         if e["estado"] == "EN_ANALISIS" and previo and previo["estado"] in ("EN_CURSO", "ENTREGADO"):
