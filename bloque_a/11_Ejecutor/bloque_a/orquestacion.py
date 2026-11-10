@@ -27,11 +27,12 @@ from .agentes import Agentes
 from .almacen import Almacen, Reloj
 from .anonimizacion import Anonimizador
 from .configuracion import (
-    ANTIGUEDAD_PS2,
     CLASES,
     HORIZONTES,
     NOMBRE_CLASE,
     aplicabilidad,
+    parametro,
+    parametros_ht03,
     perfiles_activos,
 )
 from .consumo import Contabilidad, Presupuesto
@@ -43,9 +44,13 @@ from .contratos import (
     sanear_contenido_externo,
     sanear_estructura,
 )
-from .evaluador import PROB_DE_BANDA, Evaluador, banda_de, banda_publicable
+from .evaluador import Evaluador
 from .herramientas import ht03, ht09
-from .herramientas.ht01_datos import DatosNoDisponibles
+from .herramientas.ht01_datos import (
+    DatosInvalidos,
+    DatosNoDisponibles,
+    FugaDeInformacion,
+)
 from .herramientas.ht05_planificador import fecha_resolucion
 from .herramientas.ht06_indice import (
     RE_ID,
@@ -83,7 +88,7 @@ INSTR = {
         "«peticiones_conocimiento» [{{tipo: CT-07|CT-08, pregunta, para: símbolo del indicador}}] (máximo {max_pet})."),
     "REVISION_VIGENTES": (
         "Nivel N1 · arrastre verificado (GC0 sin cambio material). Solo revisa las opciones vigentes (condiciones de "
-        "invalidación y datos) y, con la rotación exploratoria, como máximo 2 «exploratorias» del universo indicado. "
+        "invalidación y datos) y, con la rotación exploratoria, como máximo {max_expl} «exploratorias» del universo indicado. "
         "No investigues candidatas nuevas."),
     "RESPUESTA_OBJECIONES": (
         "Responde a cada objeción fuerte o moderada del Analista de hipótesis contrarias con evidencia o declárala sin "
@@ -95,6 +100,11 @@ INSTR = {
         "citada la resuelven de verdad, a la vista de «qué la resolvería». Responde «resuelta» (true/false) y un motivo "
         "breve. Ante la duda, no está resuelta."),
 }
+
+
+# T-65 (QA de T-66, H-21): orígenes de pieza cuyo texto no es contenido externo (código y Analistas) o que ya se saneó al
+# entrar (AG-14 y AG-16, con `sanear_estructura`). Cualquier otro origen, o ninguno, se sanea en la contrarréplica.
+ORIGENES_SIN_SANEAR = frozenset({"AG-13", "AG-14", "AG-16"} | set(AGENTE_CLASE.values()))
 
 
 def simbolo_seguimiento(x: dict) -> str | None:
@@ -111,16 +121,51 @@ def _semana(fecha) -> str:
     return f"Semana {f.isocalendar()[1]} de {f.isocalendar()[0]}"
 
 
+CLAVES_FESTIVOS_PS2 = {"viernes_santo": bool, "lunes_de_pascua": bool, "fijos": list}
+
+
+def validar_festivos_ps2(festivos) -> dict:
+    """T-65 (QA de T-53, H-17): `ps2_festivos` se valida al crear el Bloque. Exige las tres claves con su tipo (booleanos
+    de verdad, no el texto «false») y una lista de fechas «MM-DD» válidas; si falta o está mal, ValueError con el motivo
+    (antes, PS2 volvía en silencio al cálculo anterior o el ciclo caía con TypeError)."""
+    errores: list[str] = []
+    if isinstance(festivos, dict):
+        faltan = sorted(set(CLAVES_FESTIVOS_PS2) - set(festivos))
+        sobran = sorted(set(festivos) - set(CLAVES_FESTIVOS_PS2))
+        if faltan or sobran:
+            errores.append(f"faltan {faltan} o sobran {sobran}")
+        errores += [f"{k} debe ser {tipo.__name__}, no {festivos.get(k)!r}" for k, tipo in CLAVES_FESTIVOS_PS2.items()
+                    if k in festivos and not isinstance(festivos[k], tipo)]
+        fijos = festivos.get("fijos")
+        for d in fijos if isinstance(fijos, list) else []:
+            try:
+                ok = isinstance(d, str) and len(d) == 5 and d[2] == "-" and bool(pd.Timestamp(f"2024-{d}"))   # 2024: admite 02-29
+            except (ValueError, TypeError):
+                ok = False
+            if not ok:
+                errores.append(f"fijos: {d!r} no es una fecha «MM-DD»")
+    else:
+        errores.append(f"debe ser un diccionario con {sorted(CLAVES_FESTIVOS_PS2)}, no {festivos!r}")
+    if errores:
+        raise ValueError("ps2_festivos: " + "; ".join(errores))
+    return {"viernes_santo": festivos["viernes_santo"], "lunes_de_pascua": festivos["lunes_de_pascua"],
+            "fijos": sorted(set(festivos["fijos"]))}
+
+
 def _sesiones_entre(desde, hasta, festivos: dict) -> int:
     """Sesiones hábiles en [desde, hasta) sin los cierres habituales de mercado (`ps2_festivos`, [PROPUESTO]): Viernes
-    Santo y fechas fijas MM-DD. Así el dato de la última sesión real vale en H1 tras un puente o un festivo."""
+    Santo, lunes de Pascua y fechas fijas MM-DD. Así el dato de la última sesión real vale en H1 tras un puente o un
+    festivo. `festivos` ya validado con `validar_festivos_ps2`."""
     d0, d1 = pd.Timestamp(desde).normalize(), pd.Timestamp(hasta).normalize()
     if d1 <= d0:
         return 0
-    cierres = [d for d in pd.date_range(d0, d1) if d.strftime("%m-%d") in set(festivos.get("fijos") or [])]
-    if festivos.get("viernes_santo"):
+    cierres = [d for d in pd.date_range(d0, d1) if d.strftime("%m-%d") in set(festivos["fijos"])]
+    if festivos["viernes_santo"]:
         from pandas.tseries.holiday import GoodFriday
         cierres += list(GoodFriday.dates(d0, d1))
+    if festivos["lunes_de_pascua"]:
+        from pandas.tseries.holiday import EasterMonday
+        cierres += list(EasterMonday.dates(d0, d1))
     return int(np.busday_count(d0.date(), d1.date(), holidays=[d.date() for d in cierres]))
 
 
@@ -135,12 +180,14 @@ class Bloque:
         self.proveedor = proveedor
         self._sin_historia: dict[tuple[str, str], list[str]] = {}   # (clase, run_id) → símbolos sin dato a la fecha as_of
         self._fichas_rechazadas: dict[tuple[str, str], list[str]] = {}   # (clase, run_id) → fichas del lote rechazadas
+        self._r9_contrarreplica: set[tuple[str, str | None]] = set()   # (fuente, run) con incidencia R9 ya registrada (T-65)
+        self._datos_invalidos: dict[tuple[str, str], list[str]] = {}   # (clase, run_id) → símbolos con datos inválidos (T-65)
         self.universo = universo.copy()
         self.reloj = Reloj(cfg.get("zona_horaria", "Europe/Madrid"))
         self.almacen = Almacen(carpeta_estado, self.reloj)
         self.carpeta_entregables = Path(carpeta_entregables or (cfg.get("rutas") or {}).get("entregables", "./entregables"))
         self.contabilidad = Contabilidad(cfg)
-        self.monitor = Monitor(int((cfg.get("paralelismo") or {}).get("umbral_cola", 3)))
+        self.monitor = Monitor(int(parametro(cfg, "paralelismo.umbral_cola")))
         self.cache = CacheResultados(Path(carpeta_estado) / "cache_resultados.jsonl")
         self.cliente = cliente
         self.agentes = Agentes(cfg, cliente, self.almacen, self.contabilidad, self.monitor, self.cache)
@@ -153,7 +200,8 @@ class Bloque:
         if anon == "auto":   # PA-09 (T-66): se anonimiza un backtest con un modelo real; el simulado no sabe nada
             anon = self.modo == "backtest" and bool(getattr(cliente, "conocimiento_previo", True))
         self.anon = Anonimizador(self.universo) if anon else None
-        self.params_ht03 = ht03.fusionar_parametros(cfg.get("_parametros_ht03"))
+        self._festivos_ps2 = validar_festivos_ps2(parametro(cfg, "ps2_festivos"))   # T-65 (H-17): falla al crear el Bloque
+        self.params_ht03 = ht03.fusionar_parametros(parametros_ht03(cfg))   # T-65 (CS-11): sección `parametros_ht03` del YAML
         self._incidencias_universo_registradas = False
         self._inicializar_f10()
         # V5.1: comunicación fluida con el Broker (CT-23), credenciales en la bóveda de HT-01 (CT-25) y
@@ -182,7 +230,7 @@ class Bloque:
                   ("P-11", "Pesos de RK", self.params_ht03["pesos_rk"], "CALIBRABLE"),
                   ("P-17", "Presupuesto de referencia (UC)", a.get("presupuesto_uc"), "CALIBRABLE"),
                   ("P-29", "Idioma", a.get("idioma", "es-ES"), "SERVICIO"),
-                  ("P-30", "Versión de metodología", a.get("methodology_version", "4.0"), "CALIBRABLE"),
+                  ("P-30", "Versión de metodología", parametro(a, "methodology_version"), "CALIBRABLE"),
                   ("P-32", "Índices de referencia por clase", a.get("indices_referencia"), "OPERADOR")]
         for pid, nombre, valor, reg in params:
             self.almacen.escribir("F10", "OPERADOR", {"tipo_entrada": "PARAMETRO", "param_id": pid, "nombre": nombre,
@@ -194,7 +242,7 @@ class Bloque:
     def _contexto(self, as_of, run_id, clase=None, extra=None) -> dict:
         f10 = self.f10(as_of)
         ctx = {"fecha_as_of": str(pd.Timestamp(as_of).date()), "modo": self.modo, "run_id": run_id,
-               "methodology_version": f10.get("P-30", "4.0"), "anonimizado": bool(self.anon),
+               "methodology_version": f10.get("P-30") or parametro(self.cfg, "methodology_version"), "anonimizado": bool(self.anon),
                "lecciones": self.evaluador.lecciones_vigentes(as_of, clase),
                "f10": {"umbrales": f10.get("P-09"), "pesos_rk": f10.get("P-11"), "horizontes_interes": f10.get("P-03")}}
         if extra:
@@ -234,9 +282,8 @@ class Bloque:
     def _solicitar_ampliacion(self, presupuesto: Presupuesto, bolsa: str, est: float, run_id: str, fase: str | None) -> bool:
         """Ampliación > 25 % (10.3): el Orquestador decide en el ciclo periódico con la regla de valor de la
         información; tope total configurable (por defecto +50 %)."""
-        pu = self.cfg.get("presupuesto_uc") or {}
         asignado = presupuesto.asignado.get(bolsa, 0.0)
-        tope = asignado * float(pu.get("ampliacion_max_autorizable", 0.5))
+        tope = asignado * float(parametro(self.cfg, "presupuesto_uc.ampliacion_max_autorizable"))
         falta = est - presupuesto.disponible(bolsa)
         ya = presupuesto.ampliado[bolsa]
         autoriza = falta > 0 and ya + falta <= tope + 1e-9 and fase in ("prospectiva", "refutacion", "respuesta_objeciones")
@@ -272,17 +319,32 @@ class Bloque:
     # Señales deterministas por clase (Motor, PLAN_MIN)
     # ====================================================================================
     def senales_clase(self, clase: str, as_of, run_id: str) -> tuple[dict[str, dict], list[str]]:
-        ini = str((pd.Timestamp(as_of) - pd.DateOffset(years=3, days=30)).date())
-        simbolos, sin_historia = [], []
+        ven = parametro(self.cfg, "senales")   # T-65 (H-08): ventana del lote, de la configuración
+        ini = str((pd.Timestamp(as_of) - pd.DateOffset(years=int(ven["ventana_anios"]), days=int(ven["margen_dias"]))).date())
+        simbolos, sin_historia, invalidos = [], [], []
         for f in self._universo_clase(clase, run_id):
             # Un símbolo sin datos en la ventana del lote (empieza a cotizar después de as_of o dejó de cotizar antes
             # de la ventana) no puede tumbar las fichas del tipo entero: se excluye y se declara (R14, R16, PS2).
+            # T-65 (H-10 c y H-15): lo mismo con datos inválidos (cierres no numéricos o ≤ 0, fechas duplicadas) o con
+            # cualquier otro error del proveedor para ese símbolo, con su motivo y una incidencia en HA. La fuga de
+            # información no se tolera: corta el ciclo.
             try:
                 self.proveedor.cierres(f["simbolo"], ini, as_of)
                 simbolos.append(f["simbolo"])
+            except FugaDeInformacion:
+                raise
+            except DatosInvalidos as e:
+                invalidos.append((f["simbolo"], str(e)))
             except DatosNoDisponibles:
                 sin_historia.append(f["simbolo"])
+            except Exception as e:  # noqa: BLE001 — error del proveedor para un símbolo: se excluye y se declara
+                invalidos.append((f["simbolo"], f"{type(e).__name__}: {e}"))
         self._sin_historia[(clase, run_id)] = sin_historia
+        self._datos_invalidos[(clase, run_id)] = [s for s, _ in invalidos]
+        for s, motivo in invalidos:
+            self.almacen.incidencia("DATOS", f"HT-01: datos inválidos de {s} ({motivo[:200]}); símbolo excluido del cribado",
+                                    s, severidad="Operativa", tratamiento="símbolo excluido y declarado como laguna del tipo",
+                                    run_id=run_id)
         self._fichas_rechazadas[(clase, run_id)] = []
         datos = [{"serie": s, "inicio": ini} for s in simbolos]
         tabla: dict[str, dict] = {s: {} for s in simbolos}
@@ -363,15 +425,16 @@ class Bloque:
         ref = self._referencia(clase)
         try:
             sims = [ref] if ref not in (None, "CESTA") else [s for s in self.evaluador.simbolos_clase(clase)]
-            semanas = int(g.get("ventana_sigma_semanas", 104))
+            semanas = int(parametro(self.cfg, "gc0.ventana_sigma_semanas"))
             serie = pd.concat([self.proveedor.cierres(s, pd.Timestamp(as_of) - pd.Timedelta(weeks=semanas + 2), as_of).pct_change()
                                for s in sims], axis=1).mean(axis=1).dropna()
             sem = (1 + serie).resample("W-FRI").prod().dropna() - 1
             if len(sem) > 10:
                 sigma = float(sem.iloc[:-1].std(ddof=1))
                 ult = float(sem.iloc[-1])
-                if abs(ult) > float(g.get("sigma_semanal", 1.5)) * sigma:
-                    motivos.append(f"movimiento semanal de la clase {ult:+.2%} > {g.get('sigma_semanal', 1.5)} σ ({sigma:.2%})")
+                k_sigma = float(parametro(self.cfg, "gc0.sigma_semanal"))
+                if abs(ult) > k_sigma * sigma:
+                    motivos.append(f"movimiento semanal de la clase {ult:+.2%} > {k_sigma} σ ({sigma:.2%})")
         except (DatosNoDisponibles, ValueError):
             motivos.append("datos de la referencia de la clase no disponibles (modo degradado)")
         for v in vigentes:
@@ -385,7 +448,7 @@ class Bloque:
                 if cruzada:
                     invalidadas.append(v["opp_id"])
                     motivos.append(f"condición de invalidación cumplida en {v['opp_id']}")
-                elif abs(precio - u) / precio < float(g.get("invalidacion_cercana", 0.10)):
+                elif abs(precio - u) / precio < float(parametro(self.cfg, "gc0.invalidacion_cercana")):
                     motivos.append(f"condición de invalidación a < {g.get('invalidacion_cercana', 0.1):.0%} en {v['opp_id']}")
         for ev in g.get("eventos_calendario") or []:
             f = pd.Timestamp(ev["fecha"])
@@ -447,11 +510,11 @@ class Bloque:
             nivel = {c: "N2" if gc0[c]["cambio_material"] else "N1" for c in clases}
         else:
             nivel = {c: nivel_forzado or ("N3" if tipo == "PROFUNDIZACION" else "N2") for c in clases}
-        pu = self.cfg.get("presupuesto_uc") or {}
-        asign = {c: float(pu.get(nivel[c], 20)) for c in clases}
+        asign = {c: float(parametro(self.cfg, f"presupuesto_uc.{nivel[c]}")) for c in clases}
         if tipo != "PERIODICO" and any(nivel[c] == "N3" for c in clases):
-            asign = {c: float(pu.get("N3", 50)) / max(len(clases), 1) for c in clases}
-        asign["COMUN"] = max(float(pu.get("ciclo_semanal_max", 160)) - sum(asign.values()), 0.1 * float(pu.get("ciclo_semanal_max", 160)))
+            asign = {c: float(parametro(self.cfg, "presupuesto_uc.N3")) / max(len(clases), 1) for c in clases}
+        tope_ciclo = float(parametro(self.cfg, "presupuesto_uc.ciclo_semanal_max"))
+        asign["COMUN"] = max(tope_ciclo - sum(asign.values()), 0.1 * tope_ciclo)
         if presupuesto_override:
             asign.update(presupuesto_override)
         presupuesto = Presupuesto(asign, self.cfg)
@@ -465,7 +528,7 @@ class Bloque:
                               run_id=run_id, presupuesto={"uc": sum(asign.values())})
 
         # F1–F4 por clase (paralelo, R25); las escrituras se hacen después en orden determinista
-        hilos = int((self.cfg.get("paralelismo") or {}).get("hilos_analistas", 4))
+        hilos = int(parametro(self.cfg, "paralelismo.hilos_analistas"))
         # Señales del Motor en orden determinista (los identificadores CALC- no dependen del paralelismo)
         pre = {}
         for c in clases:
@@ -477,7 +540,7 @@ class Bloque:
         self.agentes.verificar_prompts([AGENTE_CLASE[c] for c in clases], run_id)
         tareas = {c: (c, nivel[c], vigentes[c], gc0[c], as_of, run_id, presupuesto, hz_interes, alcance or {}, pre[c]) for c in clases}
         with ThreadPoolExecutor(max_workers=max(1, hilos)) as ex:
-            futuros = {c: ex.submit(self._analizar_clase, *args) for c, args in tareas.items()}
+            futuros = {c: ex.submit(self._analizar_clase_en_ambito, *args) for c, args in tareas.items()}
             analisis = {c: futuros[c].result() for c in clases}
         for orden in self.monitor.evaluar_instancias():
             self.almacen.escribir("HA", "AG-18", {**orden, "id": self.almacen.nuevo_id(orden["tipo_entrada"]), "run_id": run_id})
@@ -496,6 +559,10 @@ class Bloque:
         historial = self.evaluador.historial_aciertos(as_of)
         paquete, extras = sint.construir(self, run_id, tipo, as_of, clases, nivel, gc0, analisis, seleccion, clusteres, integ,
                                          historial, presupuesto)
+        if clusteres.get("sin_historia"):
+            limitaciones = limitaciones + [(f"clústeres de exposición sin medir para {', '.join(clusteres['sin_historia'])} (menos de "
+                                            f"{parametro(self.cfg, 'clusteres.min_semanas_proxy')} semanas de historia en la ventana): "
+                                            "cada uno cuenta como un clúster propio; el resto se agrupa con ML-CLUS-001")]
         if clusteres.get("rechazo"):
             limitaciones = limitaciones + [(f"clústeres de exposición no calculados ({clusteres['rechazo']}): la concentración entre "
                                             "opciones no se ha podido medir en este ciclo")]
@@ -504,7 +571,7 @@ class Bloque:
         # F6 · G3 (HT-09) + dictamen del Orquestador si no es APTO
         paquete, g3 = self._validar_g3(paquete, extras, as_of, run_id)
         estado_run = "COMPLETO"
-        if presupuesto.cierres or pausadas or clusteres.get("rechazo") or any(a.get("estado") == "PARCIAL" for a in analisis.values()):
+        if presupuesto.cierres or pausadas or clusteres.get("rechazo") or clusteres.get("sin_historia") or any(a.get("estado") == "PARCIAL" for a in analisis.values()):
             estado_run = "PARCIAL"   # un tipo pausado por una consulta BLOQUEANTE deja el run incompleto (7.9)
         resultado = {"run_id": run_id, "as_of": str(as_of.date()), "tipo": tipo, "nivel_por_clase": nivel, "gc0": gc0,
                      "g3": g3, "estado": estado_run, "paquete": paquete, "entregables": None, "evaluacion": res_eval}
@@ -566,9 +633,13 @@ class Bloque:
     # ====================================================================================
     # F1–F4 por clase
     # ====================================================================================
+    def _analizar_clase_en_ambito(self, clase, *args) -> dict:
+        """El análisis de un tipo en su hilo, con los mensajes en el ámbito de ese tipo (T-65, CA-15 de T-53)."""
+        with self.mensajeria.ambito(clase):
+            return self._analizar_clase(clase, *args)
+
     def _analizar_clase(self, clase, nivel, vigentes, gc0, as_of, run_id, presupuesto: Presupuesto, hz_interes, alcance, pre=None) -> dict:
         agente = AGENTE_CLASE[clase]
-        sc = self.cfg.get("seleccion") or {}
         out = {"clase": clase, "nivel": nivel, "estado": "COMPLETO", "finalistas": [], "cribado": [], "descartadas": [],
                "revision_vigentes": [], "regimen": "", "lagunas": [], "calc_ids": [], "piezas": [], "hallazgos_r9": [],
                "exploratorias": [], "peticiones": []}
@@ -585,6 +656,11 @@ class Bloque:
             out["estado"] = "PARCIAL"
             out["lagunas"].append(f"sin datos HT-01 en la ventana de 3 años hasta {pd.Timestamp(as_of).date()} para "
                                   f"{', '.join(excluidos)}: excluidos del cribado de este ciclo (PS2)")
+        invalidos = self._datos_invalidos.get((clase, run_id)) or []
+        if invalidos:
+            out["estado"] = "PARCIAL"
+            out["lagunas"].append(f"datos HT-01 inválidos (cierres no numéricos o no positivos, fechas duplicadas u otro error "
+                                  f"del proveedor) para {', '.join(invalidos)}: excluidos del cribado de este ciclo (PS2)")
         rechazadas = self._fichas_rechazadas.get((clase, run_id)) or []
         if rechazadas:
             out["estado"] = "PARCIAL"
@@ -614,7 +690,7 @@ class Bloque:
         if fase == "REVISION_VIGENTES":
             vistos = {simbolo_seguimiento(v) for v in vigentes}
             rot = sorted([u["simbolo"] for u in universo if u["simbolo"] not in vistos],
-                         key=lambda s: hashlib.sha256(f"{as_of.date()}{s}".encode()).hexdigest())[:2]
+                         key=lambda s: hashlib.sha256(f"{as_of.date()}{s}".encode()).hexdigest())[:int(parametro(self.cfg, "seleccion.rotacion_exploratoria_celdas"))]
             if not vigentes and not rot:
                 out["regimen"] = "Sin cambios materiales; sin opciones vigentes que revisar."
                 return out
@@ -625,10 +701,11 @@ class Bloque:
                "universo": universo if fase == "CRIBADO_E_INVESTIGACION" else [u for u in universo if u["simbolo"] in rot or u["simbolo"] in {simbolo_seguimiento(v) for v in vigentes}],
                "rotacion_exploratoria": rot, "calculos_disponibles": calcs, "referencias_disponibles": refs["referencias"],
                "horizontes_aplicables_clase": {h: aplicabilidad(self.cfg, clase, h) for h in HORIZONTES},
-               "horizontes_interes": hz_interes, "max_candidatas": sc.get("max_candidatas", 8), "max_finalistas": sc.get("max_finalistas", 5),
-               "umbral_senal_gc1": sc.get("umbral_senal_gc1", 0.75), "fecha_limite_informacion": str(as_of.date()) if self.modo == "backtest" else None}
-        instr = INSTR[fase].format(max_cand=sc.get("max_candidatas", 8), max_fin=sc.get("max_finalistas", 5),
-                                   max_pet=sc.get("peticiones_conocimiento_por_clase", 1))
+               "horizontes_interes": hz_interes, "max_candidatas": parametro(self.cfg, "seleccion.max_candidatas"), "max_finalistas": parametro(self.cfg, "seleccion.max_finalistas"),
+               "umbral_senal_gc1": parametro(self.cfg, "seleccion.umbral_senal_gc1"), "fecha_limite_informacion": str(as_of.date()) if self.modo == "backtest" else None}
+        instr = INSTR[fase].format(max_cand=parametro(self.cfg, "seleccion.max_candidatas"), max_fin=parametro(self.cfg, "seleccion.max_finalistas"),
+                                   max_pet=parametro(self.cfg, "seleccion.peticiones_conocimiento_por_clase"),
+                                   max_expl=parametro(self.cfg, "seleccion.rotacion_exploratoria_celdas"))
         pr = self.cfg.get("presupuesto_uc", {}).get("reparto_fases", {})
         self.mensajeria.crear("CT-06", "AG-02", agente, msg, run_id=run_id, presupuesto={"uc": presupuesto.asignado.get(clase)})
         r = self._invocar(agente, "CT-06", msg, "INFORME_CLASE" if fase == "CRIBADO_E_INVESTIGACION" else "REVISION_VIGENTES",
@@ -674,7 +751,7 @@ class Bloque:
             f["senales"] = senales.get(sym, {})
             out["finalistas"].append(f)
         # CT-07 / CT-08: peticiones de conocimiento (máximo configurado, valor de la información)
-        maxp = int(sc.get("peticiones_conocimiento_por_clase", 1))
+        maxp = int(parametro(self.cfg, "seleccion.peticiones_conocimiento_por_clase"))
         for f in out["finalistas"]:
             for pet in (f.get("peticiones_conocimiento") or []):
                 if len(out["peticiones"]) >= maxp:
@@ -705,7 +782,7 @@ class Bloque:
                 and bool(f.get("mecanismo")) and bool(f["senales"])
         pasan = sorted([f for f in out["finalistas"] if f["_gc2"]], key=lambda f: (-f["_prov"].get("RK", 0), f["proxy"]))
         for k, f in enumerate(pasan):
-            f["_gc3"] = k < int(sc.get("max_finalistas", 5))
+            f["_gc3"] = k < int(parametro(self.cfg, "seleccion.max_finalistas"))
         for f in out["finalistas"]:
             f.setdefault("_gc3", False)
         finales = [f for f in out["finalistas"] if f["_gc3"]]
@@ -804,7 +881,12 @@ class Bloque:
         - `resuelta` solo vale si es exactamente True;
         - una fuerte resuelta sin `evidencia_citada` o sin `contrarreplica` (registro anterior a PA-05) se vuelve a abrir."""
         out = []
-        for i, o in enumerate(objeciones if isinstance(objeciones, list) else []):
+        if objeciones is not None and not isinstance(objeciones, list):
+            # T-65 (QA de T-66, H-20): un contenedor que no es una lista no es «sin objeciones»: cuenta como una fuerte abierta
+            return [{"objecion_id": "OBJ-ARRASTRE-01", "fuerza": "fuerte", "resumen": "Contenedor de objeciones mal formado en F3",
+                     "que_la_resolveria": None, "respuesta": None, "resuelta": False,
+                     "reabierta_por": "T-65: contenedor de objeciones mal formado en F3 (falla cerrado)"}]
+        for i, o in enumerate(objeciones or []):
             if not isinstance(o, dict):
                 out.append({"objecion_id": f"OBJ-ARRASTRE-{i + 1:02d}", "fuerza": "fuerte", "resumen": "Objeción mal formada en F3",
                             "que_la_resolveria": None, "respuesta": None, "resuelta": False,
@@ -824,16 +906,23 @@ class Bloque:
             out.append(o)
         return out
 
-    def _contenido_evidencia(self, f: dict, eid: str) -> dict:
+    def _contenido_evidencia(self, f: dict, eid: str, run_id: str | None = None) -> dict:
         """Lo que el Contradictor ve de una evidencia citada (T-66, QA r02 H-12): la afirmación de la pieza, el método y
-        los símbolos de un CALC- del Motor, o la afirmación de una REF-; nunca un id sin contenido."""
+        los símbolos de un CALC- del Motor, o la afirmación de una REF-; nunca un id sin contenido.
+        T-65 (QA de T-66, H-21): se sanea solo lo externo (R9): las REF- del corpus y las piezas de origen desconocido. El
+        texto propio del código (AG-13) y de los Analistas, y las piezas de AG-14 y AG-16 (saneadas al entrar), llegan como
+        están. Las incidencias R9 llevan el `run_id` y se registran una vez por fuente y run."""
         def _limpio(txt):   # T-66 (QA r03 H-16): el texto externo se sanea antes de llegar a un modelo (R9)
             t, hall = sanear_contenido_externo(txt, f"contrarreplica:{eid}") if isinstance(txt, str) else (txt, [])
-            self._registrar_r9(hall, None)
+            if hall and (eid, run_id) not in self._r9_contrarreplica:
+                self._r9_contrarreplica.add((eid, run_id))
+                self._registrar_r9(hall, run_id)
             return t
         pieza = next((p for p in f.get("_piezas", []) if str(p.get("fuente")) == eid), None)
         if pieza:
-            return {"id": eid, "tipo": "PIEZA", "afirmacion": _limpio(pieza.get("afirmacion")), "direccion": pieza.get("direccion")}
+            propio = str(pieza.get("origen") or "") in ORIGENES_SIN_SANEAR
+            texto = pieza.get("afirmacion") if propio else _limpio(pieza.get("afirmacion"))
+            return {"id": eid, "tipo": "PIEZA", "afirmacion": texto, "direccion": pieza.get("direccion")}
         if eid.startswith("CALC-"):
             rc = next((x for x in self.almacen.leer("RC") if x.get("calc_id") == eid and x.get("tipo_entrada") != "RECHAZO"), None) or {}
             op = rc.get("operacion") or {}
@@ -918,7 +1007,7 @@ class Bloque:
                         if x.get("resuelta") and citada:
                             replicas.append({"ref": f["proxy"], "objecion_id": o["objecion_id"], "argumento": o["resumen"],
                                              "que_la_resolveria": o.get("que_la_resolveria"), "respuesta": x["respuesta"],
-                                             "evidencia_citada": [self._contenido_evidencia(f, e) for e in citada]})
+                                             "evidencia_citada": [self._contenido_evidencia(f, e, run_id) for e in citada]})
             if replicas:
                 msg3 = {"peticiones": [], "contrarreplicas": replicas, "nivel": nivel}   # CT-13, fase de contrarréplica
                 self.mensajeria.crear("CT-13", "AG-02", "AG-11", msg3, run_id=run_id, presupuesto={"uc": presupuesto.asignado.get(clase)})
@@ -1016,7 +1105,8 @@ class Bloque:
                 if clm["clm_id"] not in f["_evidencias"]:
                     f["_evidencias"].append(clm["clm_id"])
             raices = f["_raices"]
-            f["_ps1"] = sum(1 for n, _ in raices.values() if n in ("A", "B")) >= 2 or any(n == "A" and t == "PRIMARIA" for n, t in raices.values())
+            f["_ps1"] = sum(1 for n, _ in raices.values() if n in ("A", "B")) >= int(parametro(self.cfg, "ps1.raices_min")) \
+                or any(n == "A" and t == "PRIMARIA" for n, t in raices.values())   # Anexo A, P-14
             for cid in f["_evidencias"]:
                 clm = next(c for c in clm_por_texto.values() if c["clm_id"] == cid)
                 clm["raices_independientes"] = len(raices)
@@ -1035,15 +1125,39 @@ class Bloque:
                          | {simbolo_seguimiento(v) for c in analisis for v in self.vigentes(as_of, c) if simbolo_seguimiento(v)})
         if not proxies:
             return {"asignacion": {}, "calc_id": None, "n_efectivo": 0}
-        ini = str((pd.Timestamp(as_of) - pd.DateOffset(years=2, days=14)).date())
-        r = self.motor.servir({"operacion": "ML-CLUS-001", "plan": "PLAN_MIN", "datos": [{"serie": p, "inicio": ini} for p in proxies],
-                               "parametros": {"umbral_rho": float((self.cfg.get("clusteres") or {}).get("umbral_rho", 0.7)),
-                                              "ventana_semanas": int((self.cfg.get("clusteres") or {}).get("ventana_semanas", 104))}, "fecha_corte": str(pd.Timestamp(as_of).date())},
-                              "AG-02", run_id)
-        if r["estado"] == "RECHAZADO":   # sin clústeres no se mide la concentración: se declara, no se calla (T-53, QA H-01)
-            return {"asignacion": {p: i + 1 for i, p in enumerate(proxies)}, "calc_id": None, "n_efectivo": len(proxies),
-                    "rechazo": str(r.get("detalle") or r.get("motivo_rechazo") or "ML-CLUS-001 rechazado")}
-        return {"asignacion": r["resultado"]["asignacion"], "calc_id": r["calc_id"], "n_efectivo": r["resultado"]["n_efectivo"]}
+        cl = parametro(self.cfg, "clusteres")
+        ventana = int(cl["ventana_semanas"])
+        # T-65 (CS-18): el inicio de los datos sale de la ventana (antes, «2 años + 14 días» escritos aquí); dos semanas más
+        # para que la primera semana de la ventana tenga rendimiento
+        ini = (pd.Timestamp(as_of) - pd.Timedelta(weeks=ventana + 2)).normalize()
+        # T-65 (QA de T-53, H-16): un proxy con poca historia no tumba el cálculo de todos. Se excluye, se declara y queda en
+        # un clúster propio (su concentración no se ha medido); los demás se agrupan entre sí
+        cortos: list = []
+        medibles: list = []
+        for px in proxies:
+            try:
+                n_sem = int(self.proveedor.cierres(px, ini, as_of).resample("W-FRI").last().pct_change().dropna().shape[0])
+            except DatosNoDisponibles:
+                n_sem = 0
+            (medibles if n_sem >= int(cl["min_semanas_proxy"]) else cortos).append(px)
+        out: dict = {"asignacion": {}, "calc_id": None, "n_efectivo": 0}
+        if medibles:
+            r = self.motor.servir({"operacion": "ML-CLUS-001", "plan": "PLAN_MIN",
+                                   "datos": [{"serie": p, "inicio": str(ini.date())} for p in medibles],
+                                   "parametros": {"umbral_rho": float(cl["umbral_rho"]), "ventana_semanas": ventana},
+                                   "fecha_corte": str(pd.Timestamp(as_of).date())}, "AG-02", run_id)
+            if r["estado"] == "RECHAZADO":   # sin clústeres no se mide la concentración: se declara, no se calla (T-53, QA H-01)
+                out = {"asignacion": {p: i + 1 for i, p in enumerate(medibles)}, "calc_id": None, "n_efectivo": len(medibles),
+                       "rechazo": str(r.get("detalle") or r.get("motivo_rechazo") or "ML-CLUS-001 rechazado")}
+            else:
+                out = {"asignacion": dict(r["resultado"]["asignacion"]), "calc_id": r["calc_id"], "n_efectivo": r["resultado"]["n_efectivo"]}
+        siguiente = max(out["asignacion"].values(), default=0)
+        for i, px in enumerate(cortos, start=1):
+            out["asignacion"][px] = siguiente + i
+        if cortos:
+            out["n_efectivo"] = float(out["n_efectivo"]) + len(cortos)
+            out["sin_historia"] = cortos
+        return out
 
     def _opp_id(self, clase: str, proxy: str, tipo_opcion: str, as_of) -> tuple[str, dict | None]:
         for o in self.almacen.estado("F3", as_of).values():
@@ -1054,11 +1168,11 @@ class Bloque:
 
     def _puertas(self, f: dict, nivel: str, as_of, horizontes_ok: list[str]) -> dict[str, bool]:
         fecha_dato = f["senales"].get("fecha_dato")
-        lim = {**ANTIGUEDAD_PS2, **(self.cfg.get("ps2_antiguedad_maxima_dias") or {})}   # Anexo A (PS2)
+        lim = parametro(self.cfg, "ps2_antiguedad_maxima_dias")   # Anexo A (PS2, P-13); sin respaldo en el código (T-65, H-08)
         if fecha_dato:
             edad = (pd.Timestamp(as_of) - pd.Timestamp(fecha_dato)).days
             # H1 cuenta sesiones hábiles (el dato del viernes vale el lunes); el resto, días naturales (Anexo A)
-            sesiones = _sesiones_entre(fecha_dato, as_of, self.cfg.get("ps2_festivos") or {})
+            sesiones = _sesiones_entre(fecha_dato, as_of, self._festivos_ps2)
         else:
             edad = sesiones = 999   # sin fecha del dato no se supera PS2 (falla cerrado)
         ps2 = bool(horizontes_ok) and all((sesiones if h == "H1" else edad) <= lim[h] for h in horizontes_ok)
@@ -1261,7 +1375,7 @@ class Bloque:
             p = abiertos.get(d.get("prg_id"))
             if p is None:
                 continue
-            prob = p["prob_interna"] if p.get("prob_interna") is not None else PROB_DE_BANDA.get(str(p.get("banda_verbal")))
+            prob = p["prob_interna"] if p.get("prob_interna") is not None else self.evaluador.prob_de_banda.get(str(p.get("banda_verbal")))
             if prob is None:     # sin probabilidad ni banda reconocible no se inventa un 0,5: el horizonte no se arrastra
                 continue
             base = {"vista": d["vista"], "prob_interna": prob, "afirmacion": p["afirmacion"],
@@ -1498,7 +1612,8 @@ class Bloque:
             "alcance": alcance or {"clases": list(resultado["nivel_por_clase"])}, "horizontes": hz, "prioridad": prioridad,
             "nivel_por_clase": resultado["nivel_por_clase"], "gc0_por_clase": gc0, "decisiones_puertas": dec,
             "presupuesto": presupuesto.resumen(), "cierres_parciales": presupuesto.cierres, "consumo": {k: cons[k] for k in ("llamadas", "uc", "uc_llm", "uc_motor", "entrada", "salida", "cache_escritura", "cache_lectura")},
-            "participantes": [{"agente": a, "encargos": d["llamadas"]} for a, d in cons["por_agente"].items()],
+            # T-65 (CA-15 de T-53): en orden de agente, no en el de llegada de los hilos
+            "participantes": [{"agente": a, "encargos": d["llamadas"]} for a, d in sorted(cons["por_agente"].items())],
             "methodology_version": paquete.get("methodology_version"), "top3_por_clase": top, "cambios_vs_anterior": cambios,
             "apuestas_independientes": paquete.get("apuestas_independientes"), "prg_congelados": prg, "entregables": entreg,
             "g3": resultado.get("g3_entregables") or resultado.get("g3"), "estado": resultado["estado"],
@@ -1517,7 +1632,7 @@ class Bloque:
             return
         if tipo == "AD_HOC" and not any(v == "N3" for v in nivel.values()):
             h = int(hashlib.sha256(run_id.encode()).hexdigest(), 16) % 100
-            if h >= int(100 * float(au.get("muestreo_ad_hoc", 0.3))):
+            if h >= int(100 * float(parametro(self.cfg, "auditoria.muestreo_ad_hoc"))):
                 return
         paquete = resultado["paquete"]
         self.mensajeria.crear("CT-16", "AG-01", "AG-18", {"paquete_auditoria": {"run_id": run_id, "entregables": resultado["entregables"]}},
@@ -1586,7 +1701,7 @@ class Bloque:
                                          for h in hits]}
         cuerpo = {"query_id": qry_id, "pregunta": texto, "contexto": contexto or {}, "urgencia": urgencia, "memoria_bloque": memoria,
                   "clases_activas": list(self.f10(as_of).get("P-02") or perfiles_activos(self.cfg))}
-        pres = Presupuesto({"N0": float((self.cfg.get("presupuesto_uc") or {}).get("N0", 1))}, self.cfg)
+        pres = Presupuesto({"N0": float(parametro(self.cfg, "presupuesto_uc.N0"))}, self.cfg)
         r = self._invocar("AG-01", "CT-03", cuerpo, "CONSULTA",
                           "Clasifica la consulta (ACLARACION, DATO, METODO, CONTRASTE, PROFUNDIZACION, ESTADO). Si es respondible con la "
                           "memoria del bloque (ruta N0), responde de forma breve y trazable citando solo identificadores presentes en "
@@ -1621,7 +1736,8 @@ class Bloque:
                 escalado["run_id"] = res["run_id"]
                 escalado["estado_run"] = res["estado"]
         tema = normalizar(d.get("tema_normalizado") or texto)[:80].strip()
-        hace4 = str((pd.Timestamp(as_of) - pd.Timedelta(weeks=4)).date())
+        pr_rep = parametro(self.cfg, "pregunta_repetida")   # Anexo A, P-26 (T-65, CS-10 de T-53)
+        hace4 = str((pd.Timestamp(as_of) - pd.Timedelta(weeks=int(pr_rep["semanas"]))).date())
         previas = [q for q in self.almacen.leer("F5", as_of) if q.get("tipo_entrada") == "QRY" and q.get("tema_normalizado") == tema and q["_fecha"] >= hace4]
         repeticion = None
         cons = self.contabilidad.resumen(qry_id)
@@ -1630,7 +1746,7 @@ class Bloque:
                    "ruta": d["ruta"], "respuesta": d["respuesta"], "referencias": refs, "referencias_descartadas": descartadas,
                    "confianza": d["confianza"], "escalado": escalado, "tiempo_respuesta_s": 0, "tema_normalizado": tema,
                    "consumo_uc": cons["uc"], "estado": "RESPONDIDA_N0" if d["ruta"] == "N0" else "RESPONDIDA_ANALITICA"}
-        if len(previas) + 1 >= 3:
+        if len(previas) + 1 >= int(pr_rep["veces"]):
             aviso = self.mensajeria.crear("CT-22", "AG-01", "AG-20", {"tipo": "PREGUNTA_REPETIDA", "tema": tema,
                                                                       "qry_ids": [q["id"] for q in previas] + [qry_id]}, query_id=qry_id)
             lec = self.evaluador.leccion_producto(as_of, tema, [q["id"] for q in previas] + [qry_id])

@@ -36,9 +36,11 @@ PROPIETARIOS = {"F1": {"AG-02"}, "F2": {"AG-12"}, "F3": {"AG-02"}, "F4": {"AG-10
                 "F6": {"AG-20"}, "F10": {"AG-01", "AG-20", "OPERADOR"}, "F11": {"AG-01"}, "RC": {"AG-13"}, "HA": {"AG-18"}}
 CLAVES = {"F1": "tnd_id", "F2": "id", "F3": "opp_id", "F4": "prg_id", "F5": "id", "F6": "id", "F10": "param_id", "F11": "seg_id",
           "RC": "calc_id", "HA": "id"}
-PARAMETROS_SERVICIO = {"P-01", "P-02", "P-03", "P-21", "P-29"}
+# Regímenes del esquema F10 V3.0 (05_Archivos_operativos, «Configuración y parámetros del bloque», tabla de P-01 a P-44).
+# T-65 (CS-11 de T-53): se completan con P-34, P-38 y P-44 (SERVICIO) y P-35, P-36, P-39 y P-40 (CALIBRABLE)
+PARAMETROS_SERVICIO = {"P-01", "P-02", "P-03", "P-21", "P-29", "P-34", "P-38", "P-44"}
 PARAMETROS_CALIBRABLES = {"P-05", "P-06", "P-07", "P-08", "P-09", "P-10", "P-11", "P-12", "P-17", "P-20", "P-22",
-                          "P-23", "P-24", "P-25", "P-26", "P-27", "P-30", "P-31",
+                          "P-23", "P-24", "P-25", "P-26", "P-27", "P-30", "P-31", "P-35", "P-36", "P-39", "P-40",
                           "P-42"}   # P-42: degradación automática de H5 (12.2), CALIBRABLE en el esquema F10 V3.0
 CAMPOS_RESOLUCION_F4 = {"prg_id", "tipo_entrada", "resolucion", "estado"}
 

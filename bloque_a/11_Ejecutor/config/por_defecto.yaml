@@ -153,6 +153,13 @@ horizontes:
   H4: {meses: 12}
   H5: {meses: 120}            # V5.1: décadas (5–30 años); se evalúa por sus hitos HIT-
 horizonte_principal_preferente: [H3, H2, H4, H1, H5]
+# T-65 (CA-14 de T-53) · Conversión de los horizontes a sesiones hábiles (tasa base RI-TB): convención de mercado, técnica.
+# H2 4 semanas = 20 sesiones; H3 6 meses = 126; H4 12 meses = 252; H5 120 meses = 2520 (los mismos valores que antes).
+calendario: {sesiones_por_semana: 5, sesiones_por_mes: 21}
+# T-65 (CA-14 de T-53) · [PROPUESTO] técnico, sin pregunta del cuestionario. Tasa base RI-TB (referencia ingenua de cada
+# pronóstico): ventanas no solapadas en los últimos `ventana_anios`; con menos de `min_ventanas`, la tasa neutra
+# `sin_historia` (declarada como limitación en RC); siempre recortada a [recorte].
+tasa_base: {ventana_anios: 3, min_ventanas: 5, sin_historia: 0.5, recorte: [0.05, 0.95]}
 
 # Pronósticos H5 (Anexo A V5.1): solo banda verbal; ≥ 3 hitos; el primero a ≤ 12 meses; ≤ 24 meses entre hitos
 h5:
@@ -165,6 +172,9 @@ seguimiento:
   presupuesto_uc: {normal: 2, material: 5, sin_novedad: 0.5}
   ciclos_sin_novedad_para_proponer_cancelacion: 4
   umbral_rk_semaforo: 5          # variación de RK que pone el semáforo en VERDE (+) o ROJO (−)
+  # T-65 (CA-14 de T-53): rendimientos semanales mínimos para estimar σ; con menos, el delta cuenta como material y se
+  # declara (antes, un umbral inventado del 5 %). Técnico.
+  min_semanas_sigma: 6
 
 # Consultas del bloque al Broker (CT-23; Anexo A V5.1)
 consultas_broker:
@@ -207,17 +217,48 @@ seleccion:
   max_finalistas: 5
   umbral_senal_gc1: 0.75
   peticiones_conocimiento_por_clase: 1
-  # T-53 · prompt del Analizador (AG-02), 6.15.5 y 6.16: semáforo y siguiente paso sugerido
+  # [PROPUESTO] T-65 (CS-10 de T-53) hasta T-57. Celdas del universo que se ofrecen en la rotación exploratoria de un ciclo
+  # ligero (antes, un 2 en el código). El Anexo A (P-07) habla del 20 % del presupuesto de cribado; traducirlo a celdas
+  # exige un coste por celda que no está en el Anexo A. Pregunta (T-57): «¿Cuánto se dedica a explorar ideas nuevas?»
+  rotacion_exploratoria_celdas: 2
+  # [PROPUESTO] INC-T53-05 (T-53; marcado en T-65, H-08 y H-09) hasta T-57. Prompt del Analizador (AG-02), 6.15.5 y 6.16:
+  # semáforo y siguiente paso sugerido. El prompt solo da «E ≥ 70» para ENVIAR_A_BLOQUE_B; los 65 de A (VERDE y
+  # PROFUNDIZAR_EN_A, «atractiva pero con incertidumbre reducible») no salen ni del prompt ni del Anexo A: los propone el
+  # ejecutor. Pregunta (T-57): «¿Con qué solidez mínima (E) y atractivo mínimo (A) se propone enviar una opción al
+  # Bloque B o seguir estudiándola?»
   semaforo: {E_verde: 70, A_verde: 65}            # VERDE con ≥ 1 opción de E ≥ 70 y A ≥ 65
   siguiente_paso: {E_enviar: 70, A_profundizar: 65}   # ENVIAR_A_BLOQUE_B exige E ≥ 70, sin objeción moderada abierta y catalizador en el horizonte
 
-# T-53 · Antigüedad máxima de los datos de mercado (Anexo A, PS2). H1 se cuenta en sesiones hábiles; el resto, en días naturales
-ps2_antiguedad_maxima_dias: {H1: 1, H2: 3, H3: 7, H4: 30, H5: 90}
-# [PROPUESTO] Cierres habituales de mercado que no cuentan como sesión al medir la antigüedad en H1 (INC-T53-02)
-ps2_festivos: {viernes_santo: true, fijos: ['01-01', '12-24', '12-25', '12-26', '12-31']}
+# [PROPUESTO] INC-T53-05 (T-65, CA-14 de T-53) hasta T-57. Presentación de cada opción: confianza «probable» con E ≥
+# `confianza_probable_E` (si no, «especulativo») y zona de interés del minigráfico a ± `zona_interes` del precio.
+presentacion: {confianza_probable_E: 70, zona_interes: 0.05}
 
-# T-53 · Clústeres de exposición (ML-CLUS-001; Catálogo del Motor): umbral de correlación y ventana
-clusteres: {umbral_rho: 0.7, ventana_semanas: 104}
+# T-65 (H-08 de T-53) · Ventana de datos del lote de fichas del Motor por tipo de activo: `ventana_anios` hasta as_of más
+# `margen_dias` (para cubrir la ventana de 3 años de las fichas). Técnico.
+senales: {ventana_anios: 3, margen_dias: 30}
+
+# Corroboración mínima (PS1, Anexo A, P-14; régimen Operador): raíces independientes A/B (o una fuente primaria A)
+ps1: {raices_min: 2}
+
+# Pregunta repetida (lección de producto, Anexo A, P-26; Calibrable): veces en las últimas semanas
+pregunta_repetida: {veces: 3, semanas: 4}
+
+# T-53 · Antigüedad máxima de los datos de mercado (Anexo A, PS2, P-13). [PROPUESTO] INC-T53-02 hasta T-57: H1 se cuenta en
+# sesiones hábiles (el dato del viernes vale el lunes); el resto, en días naturales
+ps2_antiguedad_maxima_dias: {H1: 1, H2: 3, H3: 7, H4: 30, H5: 90}
+# [PROPUESTO] INC-T53-02 hasta T-57. Cierres habituales de mercado que no cuentan como sesión al medir la antigüedad en H1.
+# Se validan al crear el Bloque (T-65, H-17): booleanos y lista de «MM-DD». `lunes_de_pascua` (nuevo en T-65) queda en
+# false, como hasta ahora. Pregunta (T-57): «¿Qué días de cierre de mercado no cuentan como sesión?»
+ps2_festivos: {viernes_santo: true, lunes_de_pascua: false, fijos: ['01-01', '12-24', '12-25', '12-26', '12-31']}
+
+# T-53 · Clústeres de exposición (ML-CLUS-001; Catálogo del Motor): umbral de correlación y ventana. T-65 (CS-18): la
+# ventana es la del Catálogo (≥ 3 años semanales) y fija también el inicio de los datos. El prompt del Analizador dice
+# ρ ≥ 0,6: contradicción del corpus, para la revisión con el operador. [PROPUESTO] T-65 (H-16): un proxy con menos de
+# `min_semanas_proxy` rendimientos semanales en la ventana se excluye del cálculo y se declara (clúster propio).
+clusteres: {umbral_rho: 0.7, ventana_semanas: 156, min_semanas_proxy: 52}
+
+# Legibilidad mínima del informe visual (Fernández-Huerta; control C12 de HT-09, Anexo A)
+redaccion: {umbral_fh: 70}
 
 auditoria:
   en_vivo: true
@@ -236,9 +277,15 @@ evaluacion:
   llm_informe_aprendizaje: true
   # T-53
   alfa_holm: 0.10                 # Anexo A, certificado de horizonte (R13): corrección de Holm escalonada; α coherente con el IC 90 %
-  ece_revocacion: 0.12            # revocación de un certificado por calibración; NO figura en el Anexo A (incidencia INC-T53-03)
-  degradacion_h5_tasa_min: 0.50   # Anexo A, degradación automática de H5 (12.2, P-42)
-  degradacion_h5_min_hitos: 20    # ídem
+  ece_revocacion: 0.12            # [PROPUESTO] INC-T53-03 hasta T-57: revocación de un certificado por calibración; NO figura en el Anexo A
+  # Anexo A, degradación automática de H5 (12.2, P-42). [PROPUESTO] INC-T53-04 hasta T-57: «Sí → Limitado» se aplica sola
+  # y en el mismo ciclo (T-65, H-13); «Limitado → No» queda como propuesta de tipo 3 (R23, la regla más restrictiva)
+  degradacion_h5_tasa_min: 0.50
+  degradacion_h5_min_hitos: 20
+  # Recalibración de los pesos de RK (Anexo A, P-11): paso por propuesta y bandas ±0,05 por trimestre y ±0,15 en total
+  # (T-65, CS-10 de T-53). `dif_ic_min`: diferencia mínima de capacidad ordenadora (IC de Spearman) entre A y E para
+  # proponer un ajuste, y `meses_sombra`: duración de la sombra; ninguno figura en el Anexo A ([PROPUESTO], técnico)
+  recalibracion_rk: {paso: 0.05, banda_trimestral: 0.05, banda_total: 0.15, dif_ic_min: 0.10, meses_sombra: 3}
   # T-66 · PA-03, muestra efectiva: los certificados exigen n_eff ≥ min_certificar (efecto de diseño de Kish por
   # conglomerados de fecha de resolución; si falta, de emisión) y el IC del BSS sale de un bootstrap por fechas
   min_conglomerados_bootstrap: 10 # fechas distintas mínimas para dar IC del BSS por conglomerados; con menos, sin IC (no certifica)
@@ -275,3 +322,29 @@ backtest:
   # Los pronósticos de un backtest con modelo real anterior a fecha_corte_modelo llevan contaminacion_posible y no
   # cuentan para certificados ni aprendizaje. Técnico, sin pregunta.
   anonimizar: auto
+
+# T-65 (CS-11 de T-53) · Parámetros de HT-03 (puntuaciones, elegibilidad y selección; Documento 0, Anexo A y tablas 4.4 del
+# esquema F10: P-09 a P-12). Antes solo se podían cambiar con la clave oculta `_parametros_ht03`. Son los mismos valores que
+# `herramientas/referencia/ht03_puntuaciones.py` (corpus): una prueba exige que coincidan. Los cambios en producción los
+# hace AG-20 en F10 (P-09, P-11), no este archivo.
+parametros_ht03:
+  pesos:
+    T: {magnitud: 20, alcance: 15, velocidad: 15, duracion: 10, difusion: 10, posicion_cadena_valor: 10, capacidad_transformadora: 10, claridad_causal: 10}
+    E: {calidad_raices: 25, cobertura_variables: 15, calidad_metodologica: 15, trazabilidad: 15, actualidad: 10, discrepancias_resueltas: 10, objeciones_respondidas: 10}
+    M: {adopcion: 20, escalado: 15, indicadores_disponibles: 15, persistencia: 15, estabilidad_impulsores: 15, hitos_claros: 20}
+    P: {T: 40, novedad: 20, incertidumbre_reducible: 20, coste_eficiencia: 20}
+    A: {asimetria: 30, valoracion: 25, catalizadores: 15, momento: 15, invertibilidad: 15}
+  pesos_rk: {A: 0.45, E: 0.35, T: 0.20}
+  umbrales: {E: 60, A: 55, T: 50, A_si_T_NA: 65, GC2_E: 50}
+  banda_marginal: 5
+  cambio_material: 15
+  tope_valoracion_saturacion: 40
+  max_na_ne: 2
+  max_opciones_por_clase: 3
+  # [PROPUESTO] INC-T53-01 hasta T-57: con tres opciones del mismo clúster y ninguna alternativa a ≤ 10 puntos de RK, HT-03
+  # publica las tres con la concentración declarada. Pregunta (T-57): «Si las tres mejores ideas son en el fondo la misma
+  # apuesta, ¿se publican igual (avisando) o se deja un hueco?»
+  max_por_cluster: 2
+  diversidad_margen_rk: 10
+  continuidad_margen_rk: 10
+  empate_rk: 2

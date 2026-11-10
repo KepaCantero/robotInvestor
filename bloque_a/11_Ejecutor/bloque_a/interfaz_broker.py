@@ -16,6 +16,7 @@ from typing import Dict, List, Optional
 
 import pandas as pd
 
+from .configuracion import parametro
 from .contratos import DatosSensibles, contiene_credenciales
 from .herramientas.ht01_boveda import Boveda, alias_de
 from .herramientas.ht06_indice import normalizar
@@ -63,7 +64,7 @@ class ConsultasBroker:
             self.b.almacen.incidencia("SEGURIDAD", "Consulta CT-23 con datos protegidos rechazada (R8)", "AG-01")
             raise DatosSensibles("La consulta contiene datos protegidos")
         run_id = consulta.get("run_id")
-        maximo = int(self.cfg.get("max_mensajes_por_run", 3))
+        maximo = int(parametro(self.b.cfg, "consultas_broker.max_mensajes_por_run"))
         previas = [c for c in self._todas().values() if run_id and c.get("run_id") == run_id and c.get("sentido") == "SALIENTE"]
         if run_id and len(previas) >= maximo:
             # Agrupación: el Coordinador no supera el máximo de mensajes por análisis (Anexo A); añade las preguntas al último
@@ -156,8 +157,7 @@ class ConsultasBroker:
         return out
 
     def _recurrencia(self, tipo: str, motivo: str, as_of) -> None:
-        rec = self.cfg.get("recurrente") or {}
-        n, semanas = int(rec.get("repeticiones", 3)), int(rec.get("semanas", 8))
+        n, semanas = int(parametro(self.b.cfg, "consultas_broker.recurrente.repeticiones")), int(parametro(self.b.cfg, "consultas_broker.recurrente.semanas"))
         desde = pd.Timestamp(as_of) - pd.Timedelta(weeks=semanas)
         iguales = [c for c in self.b.almacen.leer("F5", as_of) if c.get("tipo_entrada") == "CNS" and c.get("sentido") == "SALIENTE"
                    and c.get("tipo") == tipo and c.get("motivo") == motivo and pd.Timestamp(c["_fecha"]) >= desde]
@@ -255,7 +255,7 @@ class Credenciales:
 
     def recordatorios(self, as_of) -> list[str]:
         as_of = pd.Timestamp(as_of)
-        dias, maximo = int(self.cfg.get("recordatorio_dias", 7)), int(self.cfg.get("max_recordatorios", 3))
+        dias, maximo = int(parametro(self.b.cfg, "credenciales.recordatorio_dias")), int(parametro(self.b.cfg, "credenciales.max_recordatorios"))
         out = []
         for k, c in self._todas(as_of).items():
             if c.get("estado") != "SOLICITADA" or int(c.get("recordatorios", 0)) >= maximo:

@@ -6,6 +6,7 @@ from collections import defaultdict
 from dataclasses import asdict
 from typing import Dict, List, Optional
 
+from .configuracion import parametro
 from .llm import Uso
 
 
@@ -17,10 +18,9 @@ class Contabilidad:
         self.motor: Dict[str, float] = defaultdict(float)
 
     def uc_de(self, uso: Uso) -> float:
-        u = self.cfg.get("uc") or {}
-        ent_eq = uso.entrada + uso.cache_escritura + float(u.get("factor_lectura_cache", 0.1)) * uso.cache_lectura
-        return round(0.5 * ent_eq / float(u.get("tokens_entrada_por_uc", 8000))
-                     + 0.5 * uso.salida / float(u.get("tokens_salida_por_uc", 1500)), 4)
+        ent_eq = uso.entrada + uso.cache_escritura + float(parametro(self.cfg, "uc.factor_lectura_cache")) * uso.cache_lectura
+        return round(0.5 * ent_eq / float(parametro(self.cfg, "uc.tokens_entrada_por_uc"))
+                     + 0.5 * uso.salida / float(parametro(self.cfg, "uc.tokens_salida_por_uc")), 4)
 
     def coste_de(self, modelo: str, uso: Uso) -> Optional[float]:
         precios = (self.cfg.get("precios_por_millon") or {}).get(modelo) or {}
@@ -95,7 +95,7 @@ class Presupuesto:
 
     def disponible(self, clase: str) -> float:
         with self._lock:
-            return self.asignado.get(clase, 0.0) * (1 + float((self.cfg.get("presupuesto_uc") or {}).get("ampliacion_sin_autorizacion", 0.25))) \
+            return self.asignado.get(clase, 0.0) * (1 + float(parametro(self.cfg, "presupuesto_uc.ampliacion_sin_autorizacion"))) \
                 + self.ampliado[clase] - self.consumido[clase]
 
     def cargar(self, clase: str, uc: float) -> None:

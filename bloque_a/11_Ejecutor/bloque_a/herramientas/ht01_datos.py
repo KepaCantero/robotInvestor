@@ -126,7 +126,15 @@ class ProveedorDatos:
         df = self.serie(simbolo, inicio, fin)
         if df.empty:
             raise DatosNoDisponibles(f"HT-01: sin datos de {simbolo} en el rango")
-        return df["cierre"].astype(float)
+        s = df["cierre"].astype(float)
+        # T-65 (QA de T-53, H-15): las rentabilidades se calculan como cociente de niveles; un cierre ≤ 0 (o no finito)
+        # no es un precio válido y nunca se convierte en una cifra: la serie se rechaza en el rango pedido
+        malos = ~np.isfinite(s.to_numpy()) | (s.to_numpy() <= 0)
+        if malos.any():
+            ej = [f"{f.date()}={v!r}" for f, v in zip(s.index[malos][:3], s.to_numpy()[malos][:3])]
+            raise DatosInvalidos(f"HT-01: {int(malos.sum())} cierres no positivos o no finitos de {simbolo} "
+                                 f"(p. ej., {', '.join(ej)}); serie rechazada")
+        return s
 
     def valor_en(self, simbolo: str, fecha: Fecha) -> tuple[pd.Timestamp, float]:
         """Último cierre con fecha <= `fecha` (que debe ser <= as_of)."""
@@ -157,9 +165,14 @@ def _normalizar_df(df: pd.DataFrame, origen: str) -> pd.DataFrame:
         if k:
             cols[c] = k
     df = df.rename(columns=cols)
+    # T-65 (H-15): un CSV mal formado es un dato inválido del símbolo (DatosInvalidos, que los llamadores tratan como falta
+    # de datos: el símbolo se excluye y se declara), no un error que tumbe el ciclo
     if "fecha" not in df.columns or "cierre" not in df.columns:
-        raise ValueError(f"{origen}: el CSV necesita al menos las columnas fecha y cierre")
-    df["fecha"] = pd.to_datetime(df["fecha"]).dt.normalize()
+        raise DatosInvalidos(f"{origen}: el CSV necesita al menos las columnas fecha y cierre")
+    try:
+        df["fecha"] = pd.to_datetime(df["fecha"]).dt.normalize()
+    except (ValueError, TypeError) as e:
+        raise DatosInvalidos(f"HT-01 {origen}: fechas no interpretables ({str(e).splitlines()[0][:120]}); serie rechazada") from e
     # Conversión a número ANTES de eliminar filas: un cierre no vacío que no es un número finito
     # (`-`, `n.d.`, `1.234,5`, `inf`) invalida la serie entera; nunca se convierte en NaN silencioso.
     crudo = df["cierre"]
@@ -181,8 +194,9 @@ def _normalizar_df(df: pd.DataFrame, origen: str) -> pd.DataFrame:
     # Filas sin cierre (celda vacía): se eliminan y se declaran
     descartadas += [f"{f.date()}: cierre vacío" for f in df.loc[df["cierre"].isna(), "fecha"]]
     df = df.dropna(subset=["cierre"]).sort_values("fecha")
-    if df["fecha"].duplicated().any():
-        raise ValueError(f"{origen}: fechas duplicadas")
+    if df["fecha"].duplicated().any():   # T-65 (H-15): dato inválido del símbolo, no un error del ciclo
+        dup = sorted({str(f.date()) for f in df.loc[df["fecha"].duplicated(), "fecha"]})[:3]
+        raise DatosInvalidos(f"HT-01 {origen}: fechas duplicadas ({', '.join(dup)}); serie rechazada")
     df = df.set_index("fecha")
     for c in ("apertura", "maximo", "minimo", "volumen"):
         if c in df.columns:

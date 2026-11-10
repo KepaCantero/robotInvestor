@@ -11,6 +11,7 @@
 """
 from __future__ import annotations
 
+import contextlib
 import copy
 import json
 import re
@@ -170,11 +171,24 @@ class Mensajeria:
         self._lock = threading.Lock()
         self._procesados: dict[str, dict] = {}
         self.registro: list[dict] = []   # traza de mensajes (contrato, emisor, receptor, msg_id)
+        self._local = threading.local()
+
+    @contextlib.contextmanager
+    def ambito(self, nombre: str):
+        """T-65 (CA-15 de T-53): los mensajes creados dentro de un ámbito (el análisis de un tipo de activo en su hilo) llevan
+        un contador propio, `MSG-<ámbito>-AAAA-nnnnnn`. Así sus `msg_id` no dependen del orden en que se intercalan los hilos."""
+        previo = getattr(self._local, "ambito", None)
+        self._local.ambito = str(nombre)
+        try:
+            yield
+        finally:
+            self._local.ambito = previo
 
     def crear(self, contrato: str, emisor: str, receptor: str, cuerpo: dict, *, run_id: str | None = None,
               query_id: str | None = None, presupuesto: dict | None = None, consumo: dict | None = None,
               estado: str | None = None, tipo_mensaje: str = "ENCARGO") -> dict:
-        msg = {"msg_id": self.almacen.nuevo_id("MSG", ancho=6), "contrato": contrato, "version_contrato": VERSION_CONTRATO,
+        amb = getattr(self._local, "ambito", None)
+        msg = {"msg_id": self.almacen.nuevo_id(f"MSG-{amb}" if amb else "MSG", ancho=6), "contrato": contrato, "version_contrato": VERSION_CONTRATO,
                "emisor": emisor, "receptor": receptor, "timestamp": self.almacen.reloj.ahora(), "tipo_mensaje": tipo_mensaje}
         if run_id:
             msg["run_id"] = run_id

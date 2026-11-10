@@ -4,7 +4,7 @@ from __future__ import annotations
 import copy
 import os
 from pathlib import Path
-from typing import Any, Dict, Optional
+from typing import Any
 
 import yaml
 
@@ -49,8 +49,8 @@ NATURALEZAS = {"TACTICA": ("H1", "H2"), "LIQUIDEZ": ("H1", "H3"), "CICLICA": ("H
                "PRIMA_RIESGO": ("H2", "H4"), "VALORACION": ("H3", "H4"), "ESTRUCTURAL": ("H4", "H5")}
 # Naturaleza por defecto de cada tipo de activo cuando el Analista no la declara (decisión del ejecutor)
 NATURALEZA_POR_DEFECTO = {"MON": "LIQUIDEZ", "DER": "PRIMA_RIESGO", "ALT": "ESTRUCTURAL"}
-# Antigüedad máxima de los datos de mercado por horizonte (PS2, Anexo A), en días
-ANTIGUEDAD_PS2 = {"H1": 1, "H2": 3, "H3": 7, "H4": 30, "H5": 90}
+# La antigüedad máxima de los datos de mercado por horizonte (PS2, Anexo A) está en `ps2_antiguedad_maxima_dias` de la
+# configuración (T-65: ya no se repite aquí).
 
 
 def naturaleza_coherente(naturaleza: str, horizonte: str) -> bool:
@@ -63,7 +63,7 @@ def naturaleza_para(horizonte: str) -> str:
     return {"H1": "TACTICA", "H2": "TACTICA", "H3": "CICLICA", "H4": "CICLICA", "H5": "ESTRUCTURAL"}[horizonte]
 
 
-def fusionar(base: Dict, extra: Optional[Dict]) -> Dict:
+def fusionar(base: dict, extra: dict | None) -> dict:
     """Fusión recursiva (extra prevalece)."""
     out = copy.deepcopy(base)
     for k, v in (extra or {}).items():
@@ -74,19 +74,19 @@ def fusionar(base: Dict, extra: Optional[Dict]) -> Dict:
     return out
 
 
-def raiz_paquete(cfg: Dict) -> Path:
+def raiz_paquete(cfg: dict) -> Path:
     r = (cfg.get("rutas") or {}).get("raiz_paquete") or os.environ.get("BLOQUE_A_RAIZ")
     return Path(r).resolve() if r else DIR_EJECUTOR.parent
 
 
-def ruta(cfg: Dict, clave: str) -> Path:
+def ruta(cfg: dict, clave: str) -> Path:
     """Ruta de una carpeta del paquete (prompts, plantillas, archivos_operativos)."""
     valor = (cfg.get("rutas") or {}).get(clave)
     p = Path(valor)
     return p if p.is_absolute() else raiz_paquete(cfg) / p
 
 
-def buscar_versionado(carpeta: Path, bases, extension: str = ".md") -> Optional[Path]:
+def buscar_versionado(carpeta: Path, bases, extension: str = ".md") -> Path | None:
     """Busca «<base> - … V<x.y><ext>» (o «<base> - V<x.y><ext>», o «<base><ext>») con cualquier sufijo de versión.
 
     `bases` puede ser un texto o una lista de nombres alternativos (p. ej., el nombre V5.0 de un agente y su
@@ -119,7 +119,7 @@ def buscar_versionado(carpeta: Path, bases, extension: str = ".md") -> Optional[
     return max(candidatos, key=lambda x: x[:3])[3]
 
 
-def cargar_config(ruta_yaml: Optional[str] = None, extra: Optional[Dict] = None) -> Dict:
+def cargar_config(ruta_yaml: str | None = None, extra: dict | None = None) -> dict:
     with open(RUTA_CONFIG_POR_DEFECTO, encoding="utf-8") as fh:
         cfg = yaml.safe_load(fh)
     if ruta_yaml:
@@ -130,7 +130,69 @@ def cargar_config(ruta_yaml: Optional[str] = None, extra: Optional[Dict] = None)
     return cfg
 
 
-def modelo_de(cfg: Dict, agente: str) -> str:
+_SIN_VALOR = object()
+_CONFIG_POR_DEFECTO: dict | None = None
+
+
+def config_por_defecto() -> dict:
+    """`config/por_defecto.yaml` leído una vez (solo lectura: se devuelve el mismo objeto; no se modifica)."""
+    global _CONFIG_POR_DEFECTO
+    if _CONFIG_POR_DEFECTO is None:
+        with open(RUTA_CONFIG_POR_DEFECTO, encoding="utf-8") as fh:
+            _CONFIG_POR_DEFECTO = yaml.safe_load(fh)
+    return _CONFIG_POR_DEFECTO
+
+
+def _buscar(cfg: Any, partes: list) -> Any:
+    v = cfg
+    for p in partes:
+        if not isinstance(v, dict) or p not in v:
+            return _SIN_VALOR
+        v = v[p]
+    return v
+
+
+def parametro(cfg: dict | None, ruta_clave: str) -> Any:
+    """Valor de un parámetro de configuración por su ruta («seccion.clave»). T-65 (QA de T-53, H-08): el número sale
+    siempre de la configuración recibida o, si una configuración parcial no lo trae, de `config/por_defecto.yaml`; nunca
+    de un literal del código. Si tampoco está en `por_defecto.yaml`, falla cerrado con `KeyError`."""
+    partes = ruta_clave.split(".")
+    v = _buscar(cfg or {}, partes)
+    if v is _SIN_VALOR:
+        v = _buscar(config_por_defecto(), partes)
+    if v is _SIN_VALOR or v is None:   # una clave presente pero nula tampoco vale (falla cerrado)
+        raise KeyError(f"falta el parámetro de configuración `{ruta_clave}` (ni en la configuración ni en por_defecto.yaml)")
+    return copy.deepcopy(v) if isinstance(v, (dict, list)) else v
+
+
+def parametros_ht03(cfg: dict | None) -> dict:
+    """Parámetros de HT-03 de la configuración (T-65, CS-11 de T-53): la sección `parametros_ht03` del YAML (o de
+    `por_defecto.yaml`) con, encima, la clave interna `_parametros_ht03` que usan algunas pruebas para forzar un caso."""
+    p = parametro(cfg, "parametros_ht03")
+    # Misma regla de fusión que `ht03.fusionar_parametros`: un juego de pesos se sustituye entero
+    for k, v in ((cfg or {}).get("_parametros_ht03") or {}).items():
+        if isinstance(v, dict) and isinstance(p.get(k), dict):
+            for k2, v2 in v.items():
+                p[k][k2] = dict(v2) if isinstance(v2, dict) and isinstance(p[k].get(k2), dict) else v2
+        else:
+            p[k] = copy.deepcopy(v)
+    return p
+
+
+def sesiones_horizonte(cfg: dict | None, horizonte: str) -> int:
+    """Sesiones hábiles de un horizonte (CA-14 de T-53): salen de `horizontes` y de `calendario` (sesiones por semana y por
+    mes), no de una tabla repetida en el código."""
+    h = parametro(cfg, f"horizontes.{horizonte}")
+    if "sesiones" in h:
+        return int(h["sesiones"])
+    if "semanas" in h:
+        return int(h["semanas"]) * int(parametro(cfg, "calendario.sesiones_por_semana"))
+    if "meses" in h:
+        return int(h["meses"]) * int(parametro(cfg, "calendario.sesiones_por_mes"))
+    raise ValueError(f"horizonte {horizonte} mal configurado: {h!r}")
+
+
+def modelo_de(cfg: dict, agente: str) -> str:
     m = cfg.get("modelos") or {}
     v = m.get(agente) or m.get("por_defecto")
     if not v:   # falla cerrado: sin modelo configurado no se llama a ninguno
@@ -138,7 +200,7 @@ def modelo_de(cfg: Dict, agente: str) -> str:
     return str(v)
 
 
-def max_tokens_de(cfg: Dict, agente: str) -> int:
+def max_tokens_de(cfg: dict, agente: str) -> int:
     m = cfg.get("max_tokens") or {}
     return int(m.get(agente) or m.get("por_defecto") or 8000)
 
@@ -155,6 +217,6 @@ def perfiles_activos(cfg: dict) -> list:
     return [c for c in CLASES if c in act]
 
 
-def aplicabilidad(cfg: Dict, clase: str, horizonte: str) -> str:
+def aplicabilidad(cfg: dict, clase: str, horizonte: str) -> str:
     tabla = cfg.get("_tabla_horizontes") or TABLA_HORIZONTES
     return tabla[clase][horizonte]

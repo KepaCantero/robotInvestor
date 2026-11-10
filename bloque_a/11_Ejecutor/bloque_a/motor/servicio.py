@@ -10,7 +10,7 @@ from __future__ import annotations
 import inspect
 import math
 import threading
-from typing import Any, Callable, Dict, List, Optional, Tuple
+from typing import Any, Callable, Dict, List, Optional, Tuple, TypeGuard
 
 import numpy as np
 import pandas as pd
@@ -224,6 +224,17 @@ IMPLEMENTADAS: Dict[str, Dict[str, Any]] = {
 }
 
 
+# T-65 (CS-08 de T-53): fichas con código en el ejecutor que el Catálogo da por «Documentado» (versión simple, sin la
+# prueba que exige la promoción). Manda el Catálogo: un método DOCUMENTADO no entrega cifras citables, así que se rechazan
+# con METODO_NO_IMPLEMENTADO. Promoverlas exige cambiar el Catálogo (revisión del corpus con el operador).
+DOCUMENTADAS_CON_CODIGO = frozenset({"ACC-ERP-001", "FX-MOM-001", "REI-CAP-001"})
+
+
+def servible(ficha: object) -> TypeGuard[str]:
+    """La ficha tiene código y el Catálogo la da por IMPLEMENTADO (y su dependencia opcional está instalada)."""
+    return ficha in IMPLEMENTADAS and ficha not in DOCUMENTADAS_CON_CODIGO and (ficha != "VOL-GARCH-001" or garch_disponible())
+
+
 def garch_disponible() -> bool:
     try:
         import arch  # noqa: F401
@@ -298,11 +309,13 @@ class Motor:
                 "madurez_metodo": "IMPLEMENTADO", "cache_hit": False}
         uc = float((self.cfg.get("uc") or {}).get("motor_por_plan", {}).get(plan, 0.02))
         # 1) Ficha
-        if ficha not in IMPLEMENTADAS or (ficha == "VOL-GARCH-001" and not garch_disponible()):
+        if not servible(ficha):
             motivo = "METODO_NO_IMPLEMENTADO" if ficha in FICHAS_CATALOGO else "OPERACION_SIN_FICHA"
-            return self._rechazo(base, motivo, f"Ficha {ficha} no implementada en el ejecutor V1.0"
-                                 + (f"; alternativa: {ALTERNATIVAS[ficha]}" if ficha in ALTERNATIVAS else ""),
-                                 alternativa=ALTERNATIVAS.get(ficha), uc=uc)
+            alt = ALTERNATIVAS.get(ficha)
+            alt = alt if alt and servible(alt) else None   # nunca se ofrece como alternativa una ficha que tampoco se sirve
+            detalle = (f"Ficha {ficha} con código pero «Documentado» en el Catálogo: no entrega cifras citables"
+                       if ficha in DOCUMENTADAS_CON_CODIGO else f"Ficha {ficha} no implementada en el ejecutor V1.0")
+            return self._rechazo(base, motivo, detalle + (f"; alternativa: {alt}" if alt else ""), alternativa=alt, uc=uc)
         meta = IMPLEMENTADAS[ficha]
         base["operacion"]["ficha_version"] = meta["version"]
         base["modulos"] = [meta["modulo"]]
