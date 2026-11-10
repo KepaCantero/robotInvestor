@@ -52,7 +52,7 @@ def main():
           and CONFIG_DEFECTO["promocion_nivel"] == {"periodo_min_dias": 30} and "umbral_l2_eur" in CONFIG_DEFECTO)
     # V0.67: el esquema del código pasa a V0.67 (MIG-005, sin cambios en el estado); V0.53 sigue registrado y MIG-004 en la cadena
     mig004 = next((m for m in mg.MIGRACIONES if m.id == "MIG-004"), None)
-    h.chk("esquema_V0_53_registrado_y_es_el_del_codigo", mg.ESQUEMA_V0_53 in mg.ESQUEMAS and mig004 is not None
+    h.chk("esquema_V0_53_registrado_y_MIG004_en_la_cadena", mg.ESQUEMA_V0_53 in mg.ESQUEMAS and mig004 is not None
           and mig004.esquema_desde == mg.ESQUEMA_V0_51 and mig004.esquema_hasta == mg.ESQUEMA_V0_53)
     h.chk("v067_esquema_actual_y_MIG005_sin_cambios", pe.esquema_actual() == mg.ESQUEMA_V0_67 and mg.ESQUEMA_V0_67 in mg.ESQUEMAS
           and mg.MIGRACIONES[-1].id == "MIG-005" and mg.MIGRACIONES[-1].esquema_desde == mg.ESQUEMA_V0_53
@@ -74,7 +74,7 @@ def main():
     h.chk("MIG004_declara_lo_que_cambia", [m for m in mg.MIGRACIONES if m.id == "MIG-004"][0].cambia == frozenset({"cfg.libres_tope_dia_eur", "libres"}))
     v50 = (AQUI / "estados" / "estado_V0_50.json").read_text(encoding="ascii")
     r = mg.migrar(v50, "2026-11-08T10:00:00+00:00", "Paso el estado guardado al código de V0.53")
-    h.chk("desde_V0_50_la_cadena_es_MIG003_y_MIG004", r["ok"] and r["migraciones"] == ["MIG-003", "MIG-004", "MIG-005"] and r["orquestador"].integridad() == [], r.get("motivo"))
+    h.chk("desde_V0_50_la_cadena_es_MIG003_MIG004_y_MIG005", r["ok"] and r["migraciones"] == ["MIG-003", "MIG-004", "MIG-005"] and r["orquestador"].integridad() == [], r.get("motivo"))
     d2 = json.loads(viejo)
     d2["estado"]["cfg"]["version_config"] = "CFG-7.7.7"
     h.chk("una_version_de_configuracion_propia_no_se_pisa", mg._v053(d2["estado"])["cfg"]["version_config"] == "CFG-7.7.7")
