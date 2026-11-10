@@ -59,7 +59,7 @@ from .interfaz_broker import ConsultasBroker, Credenciales
 from .llm import LLMClient, Uso
 from .motor import Motor
 from .redaccion import Redaccion
-from .referencias import Referencias
+from .referencias import Referencias, conocible_desde
 from .seguimiento import Seguimientos
 
 INSTR = {
@@ -234,19 +234,14 @@ class Bloque:
     def _solicitar_ampliacion(self, presupuesto: Presupuesto, bolsa: str, est: float, run_id: str, fase: str | None) -> bool:
         """Ampliación > 25 % (10.3): el Orquestador decide en el ciclo periódico con la regla de valor de la
         información; tope total configurable (por defecto +50 %)."""
-        pu = self.cfg.get("presupuesto_uc") or {}
         asignado = presupuesto.asignado.get(bolsa, 0.0)
-        tope = asignado * float(pu.get("ampliacion_max_autorizable", 0.5))
-        falta = est - presupuesto.disponible(bolsa)
-        ya = presupuesto.ampliado[bolsa]
-        autoriza = falta > 0 and ya + falta <= tope + 1e-9 and fase in ("prospectiva", "refutacion", "respuesta_objeciones")
+        autoriza, falta = presupuesto.autorizar_hasta_tope(
+            bolsa, est, fase in ("prospectiva", "refutacion", "respuesta_objeciones"))
         self.almacen.escribir("HA", "AG-18", {"tipo_entrada": "AUT", "id": self.almacen.nuevo_id("AUT"), "run_id": run_id,
                                               "solicitante": "AG-02", "bolsa": bolsa, "presupuesto_base": asignado,
                                               "ampliacion_uc": round(falta, 4), "valor_informacion": f"fase {fase}: puede cambiar el top-3",
                                               "decision": "AUTORIZADA" if autoriza else "DENEGADA",
                                               "motivo": "dentro del tope de ampliación" if autoriza else "supera el tope o la fase no cambia la decisión"})
-        if autoriza:
-            presupuesto.ampliar(bolsa, falta)
         return autoriza
 
     def _registrar_r9(self, hallazgos: list[dict], run_id: str | None) -> None:
@@ -408,7 +403,10 @@ class Bloque:
     def ciclo(self, as_of=None, tipo: str = "PERIODICO", alcance: dict | None = None, nivel_forzado: str | None = None,
               horizontes: list[str] | None = None, disparador: dict | None = None, prioridad: str = "NORMAL",
               presupuesto_override: dict[str, float] | None = None) -> dict:
-        as_of = self.fijar_fecha(as_of or pd.Timestamp.today())
+        instante = pd.Timestamp(as_of) if as_of is not None else pd.Timestamp.now(tz=self.reloj.zona)
+        if instante.tzinfo is not None:
+            instante = instante.tz_convert(self.reloj.zona).tz_localize(None)
+        as_of = self.fijar_fecha(instante)
         run_id = self.almacen.nuevo_id("RUN")
         limitaciones: list[str] = []
         # C5 primero (no bloquea): resolución, métricas, certificados, lecciones
@@ -432,7 +430,7 @@ class Bloque:
                          "un cambio CT-04 de clases activas" for c in no_activas]
         # V5.1 (7.9): las consultas CT-23 vencidas siguen con su supuesto declarado; una BLOQUEANTE sin respuesta pausa
         # en este punto de control (F0) los tipos de activo afectados, y el resto del análisis sigue
-        self.consultas.vencer(as_of)
+        self.consultas.vencer(instante)
         pausadas = self.consultas.clases_pausadas(as_of, clases)
         if pausadas:   # también si queda pausado todo el alcance: entonces el run no analiza nada y lo declara
             clases = [c for c in clases if c not in pausadas]
@@ -599,6 +597,7 @@ class Bloque:
                                  "sector": f["sector"], "divisa": f["divisa"], "notas": f["notas"],
                                  "subtipo": f.get("subtipo", ""), "ambito_incluye": f.get("ambito_incluye", ""),
                                  "ambito_excluye": f.get("ambito_excluye", ""), "indicador": f.get("indicador", ""),
+                                 "observacion_ht01": self._observacion_ht01(f["simbolo"], senales[f["simbolo"]]),
                                  "senales": {k: (round(v, 6) if isinstance(v, float) else v) for k, v in senales[f["simbolo"]].items() if k != "calc_ids"}})
         refs = self.referencias.para_clase(clase, as_of, self.modo)
         out["hallazgos_r9"] += refs["hallazgos_r9"]
@@ -683,6 +682,7 @@ class Bloque:
         # Piezas de evidencia (CT-11): afirmaciones del Analista + dato HT-01/CALC de la señal (fuente primaria)
         for i, f in enumerate(out["finalistas"]):
             s = f["senales"]
+            f["_refs_ofrecidas"] = {r["ref_id"] for r in refs["referencias"] if r.get("anio") is not None}
             f["_piezas"] = []
             for a in f.get("afirmaciones", []):
                 f["_piezas"].append({"afirmacion": a["afirmacion"], "fuente": a["fuente"], "direccion": a["direccion"],
@@ -695,6 +695,8 @@ class Bloque:
             for pr_ in out["peticiones"]:
                 if pr_ and pr_.get("para") == f["proxy"]:
                     f["_piezas"] += pr_.get("piezas", [])
+                    f["_refs_ofrecidas"].update(pr_.get("refs_ofrecidas", []))
+            f["_refs_ofrecidas"] = sorted(f["_refs_ofrecidas"])
         # GC2 (E provisional ≥ 50, mecanismo y exposición con datos) y GC3 (top por RK provisional)
         for f in out["finalistas"]:
             ev = ht03.evaluar_opcion({"opp_id": "PROV", "clase": clase, "dimensiones": f["dimensiones"],
@@ -751,16 +753,18 @@ class Bloque:
             return {"para": f["proxy"], "piezas": [], "estado": "SIN_RESULTADO"}
         datos, hall = sanear_estructura(r.datos, f"{agente}:{run_id}")
         piezas = []
+        ofrecidas = {x["ref_id"] for x in cand["referencias"] if x.get("anio") is not None}
         for ref in datos.get("referencias", [])[:3]:
-            if not self.referencias.por_id(str(ref.get("ref_id", ""))) and self.modo == "backtest":
+            if self.modo == "backtest" and str(ref.get("ref_id")) not in ofrecidas:
                 continue   # en backtest solo referencias registradas y anteriores a as_of
             piezas.append({"afirmacion": ref.get("afirmacion") or datos.get("sintesis", "")[:200], "fuente": ref["ref_id"],
                            "direccion": ref.get("direccion", "neutra"), "extracto": (ref.get("extracto") or ref.get("motivo") or "")[:160],
                            "origen": agente, "incidencia": bool(hall)})
-        return {"para": f["proxy"], "piezas": piezas, "hallazgos_r9": hall, "estado": "COMPLETO"}
+        return {"para": f["proxy"], "piezas": piezas, "refs_ofrecidas": sorted(ofrecidas), "hallazgos_r9": hall,
+                "estado": "COMPLETO" if piezas else "SIN_RESULTADO"}
 
     def _prospectiva(self, clase, finales, as_of, run_id, presupuesto, hz_interes) -> None:
-        certs = {(c["celda"]["clase"], c["celda"]["horizonte"]) for c in self.evaluador.certificados_vigentes(as_of)}
+        certs = [c["celda"] for c in self.evaluador.certificados_vigentes(as_of) if c["celda"].get("metodo")]
         encargos = []
         for f in finales:
             ref = self._referencia(clase, f["proxy"])
@@ -771,7 +775,9 @@ class Bloque:
                              "referencia_indice": f["_referencia"], "tipo_pronostico": tipo_p, "horizontes": hs,
                              "datos": {k: v for k, v in f["senales"].items() if k != "calc_ids"},
                              "catalizadores_conocidos": f.get("catalizadores", []), "invalidacion_propuesta": f.get("invalidacion", []),
-                             "certificado_r13": {h: (clase, h) in certs for h in hs}})
+                             "certificado_r13": {h: False for h in hs},
+                             "metodos_certificados_por_horizonte": {h: sorted(c["metodo"] for c in certs if c["clase"] == clase
+                                                                             and c["horizonte"] == h) for h in hs}})
         msg = {"encargos": encargos, "fecha_limite_informacion": str(as_of.date())}
         self.mensajeria.crear("CT-12", "AG-02", "AG-10", msg, run_id=run_id, presupuesto={"uc": presupuesto.asignado.get(clase)})
         r = self._invocar("AG-10", "CT-12", msg, "PROSPECTIVA",
@@ -786,7 +792,7 @@ class Bloque:
     @staticmethod
     def _evidencia_verificable(f: dict) -> list[str]:
         """Identificadores de evidencia registrada de una finalista: fuentes de sus piezas y cálculos CALC- del Motor."""
-        ids = [str(p.get("fuente")) for p in f.get("_piezas", []) if p.get("fuente")]
+        ids = [str(p["fuente"]) for p in f.get("_piezas", []) if p.get("fuente") and not p.get("_sin_contraste")]
         ids += [str(c) for c in (f.get("senales") or {}).get("calc_ids", []) if c]
         return list(dict.fromkeys(ids))
 
@@ -831,7 +837,7 @@ class Bloque:
             t, hall = sanear_contenido_externo(txt, f"contrarreplica:{eid}") if isinstance(txt, str) else (txt, [])
             self._registrar_r9(hall, None)
             return t
-        pieza = next((p for p in f.get("_piezas", []) if str(p.get("fuente")) == eid), None)
+        pieza = next((p for p in f.get("_piezas", []) if str(p.get("fuente")) == eid and not p.get("_sin_contraste")), None)
         if pieza:
             return {"id": eid, "tipo": "PIEZA", "afirmacion": _limpio(pieza.get("afirmacion")), "direccion": pieza.get("direccion")}
         if eid.startswith("CALC-"):
@@ -855,7 +861,54 @@ class Bloque:
             return "tesis frágil"
         return "tesis robusta"
 
+    @staticmethod
+    def _observacion_ht01(proxy, senales):
+        senal = senales.get("senal_compuesta")
+        if senal is None:
+            return None
+        tendencia = senales.get("tendencia_26s", "sin dato")
+        return {"afirmacion": f"La señal compuesta de {proxy} es {senal:.2f} con tendencia «{tendencia}» a 26 semanas",
+                "fuente": f"HT-01:{proxy}", "direccion": "favorable" if senal >= 0.5 else "contraria"}
+
+    def _filtrar_evidencia(self, finales, as_of):
+        """Conserva solo identificadores verificables para esa opción y ese corte."""
+        rc = {r["calc_id"]: r for r in self.almacen.leer("RC", as_of)
+              if r.get("tipo_entrada") == "SERVICIO" and r.get("estado") in ("SERVED", "SERVED_WITH_LIMITATIONS")}
+        for f in finales:
+            proxy, senales = f["proxy"], f.get("senales") or {}
+            calcs = {cid for cid in senales.get("calc_ids", []) if cid in rc
+                     and rc[cid].get("as_of") == str(as_of.date())
+                     and proxy in ((rc[cid].get("resultado") or {}).get("payload") or {}).get("tabla", {})}
+            if "calc_ids" in senales:
+                senales["calc_ids"] = [cid for cid in senales["calc_ids"] if cid in calcs]
+            aceptadas = []
+            for pieza in f["_piezas"]:
+                origen = pieza.get("fuente")
+                if not isinstance(origen, str):
+                    continue
+                if origen.startswith("CALC-") and origen not in calcs:
+                    continue
+                if origen.startswith("HT-01:") and (origen != f"HT-01:{proxy}" or not senales.get("fecha_dato")
+                                                   or senales["fecha_dato"] > str(as_of.date()) or "precio" not in senales):
+                    continue
+                if self.modo == "backtest" and not origen.startswith(("HT-01:", "CALC-", "REF-")):
+                    continue
+                if self.modo == "backtest" and origen.startswith("REF-"):
+                    ref = self.referencias.por_id(origen)
+                    if not ref or (conocible_desde(ref) or "9999") > str(as_of.date()) or origen not in f.get("_refs_ofrecidas", []):
+                        continue
+                # Una cita válida acredita el origen, no el contenido libre que se le atribuye.
+                # Ofrecemos al Analista una observación normalizada que puede citar literalmente.
+                if origen.startswith(("CALC-", "HT-01:")) and pieza.get("origen") != "AG-13":
+                    soporte = self._observacion_ht01(proxy, senales)
+                    pieza["_sin_contraste"] = not (origen == f"HT-01:{proxy}" and soporte
+                                                   and pieza.get("afirmacion") == soporte["afirmacion"]
+                                                   and pieza.get("direccion") == soporte["direccion"])
+                aceptadas.append(pieza)
+            f["_piezas"] = aceptadas
+
     def _refutacion(self, clase, finales, nivel, as_of, run_id, presupuesto) -> None:
+        self._filtrar_evidencia(finales, as_of)
         # PA-05 (T-66; §3.2 de la Constitución): el Contradictor ve la evidencia y la afirmación verificable, no el
         # razonamiento del Analista (tesis, mecanismo, pre-mortem ni dimensiones)
         peticiones = [{"ref": f["proxy"], "opp_id": f.get("opp_id"),
@@ -949,6 +1002,7 @@ class Bloque:
         finales = [f for f in an["finalistas"]]
         if not finales:
             return
+        self._filtrar_evidencia(finales, as_of)
         # Curación LLM (N2/N3): tipo de afirmación, confianza y alertas; la deduplicación y las raíces son deterministas
         clasif = {}
         if an["nivel"] in ("N2", "N3"):
@@ -975,13 +1029,16 @@ class Bloque:
                 i += 1
                 fuente = p["fuente"]
                 ref = self.referencias.por_id(fuente) if fuente.startswith("REF-") else None
-                if fuente.startswith("HT-01:") or fuente.startswith("CALC-"):
+                if p.get("_sin_contraste"):
+                    nivel_f, tipo_f, raiz = "C", "SECUNDARIA", fuente
+                elif fuente.startswith("HT-01:") or fuente.startswith("CALC-"):
                     nivel_f, tipo_f, raiz = "A", "PRIMARIA", fuente if fuente.startswith("HT-01:") else f"HT-01:{f['proxy']}"
                 elif ref:
                     nivel_f, tipo_f, raiz = ref["nivel"] or "C", "PRIMARIA" if "primaria" in (ref.get("tipologia") or "").lower() else "SECUNDARIA", fuente
                 else:
                     nivel_f, tipo_f, raiz = "C", "SECUNDARIA", fuente   # «C provisional»
-                h = clave_hash(normalizar(p.get("extracto", "")), fuente)[:32]
+                h = clave_hash(normalizar(p.get("extracto", "")), fuente, p["afirmacion"], p["direccion"],
+                               nivel_f, tipo_f, str(as_of.date()) if fuente.startswith(("HT-01:", "CALC-")) else None)[:32]
                 clave_clm = normalizar(p["afirmacion"])
                 clm = clm_por_texto.get(clave_clm)
                 if clm is None:
@@ -998,7 +1055,10 @@ class Bloque:
                            "grado_independencia": "RAIZ", "raiz_evd_id": None, "url_canonica": None, "identificador_documental": fuente,
                            "extracto": p.get("extracto", "")[:200], "hash_contenido": h, "estado_verificacion": "VERIFICADA" if nivel_f == "A" else "PENDIENTE",
                            "limitaciones": "dato de mercado HT-01" if fuente.startswith(("HT-01", "CALC")) else "fuente registrada; extracto mínimo",
-                           "fecha_publicacion": str(as_of.date()), "fecha_recuperacion": self.reloj.ahora(), "conocible_desde": str(as_of.date()),
+                           "fecha_publicacion": None, "fecha_dato": (f.get("senales") or {}).get("fecha_dato")
+                           if fuente.startswith(("HT-01:", "CALC-")) else None,
+                           "anio_publicacion": ref["anio"] if ref else None, "fecha_recuperacion": self.reloj.ahora(),
+                           "conocible_desde": conocible_desde(ref) if ref else str(as_of.date()),
                            "alertas": cl.get("alertas", []), "_raiz": raiz}
                     if p.get("incidencia"):
                         evd["incidencia_manipulacion"] = {"tipo": "INSTRUCCION_INCRUSTADA", "detalle": "neutralizada por el ejecutor"}
@@ -1011,7 +1071,7 @@ class Bloque:
                     clm["evidencias"].append(evd["evd_id"])
                 # PS1 exige corroborar las afirmaciones centrales del Analista (9.3): la pieza de momentum que añade el
                 # ejecutor es contexto y su «dirección» no depende de la tesis, así que no cuenta como raíz.
-                if evd["direccion"] == "FAVORABLE" and p.get("origen") != "AG-13":
+                if evd["direccion"] == "FAVORABLE" and p.get("origen") != "AG-13" and not p.get("_sin_contraste"):
                     f["_raices"][evd.get("_raiz", fuente)] = (evd["nivel_fuente"], evd["tipo_fuente"])
                 if clm["clm_id"] not in f["_evidencias"]:
                     f["_evidencias"].append(clm["clm_id"])
@@ -1662,10 +1722,26 @@ class Bloque:
         conf = ct04.get("configuracion") or {}
         mapa = {"periodicidad": "P-01", "dia_hora_entrega": "P-01", "clases_activas": "P-02", "horizontes": "P-03", "idioma_usuario": "P-29"}
         f10 = self.f10(as_of)
+        # Las dos partes de P-01 pueden llegar por separado, incluso en dos CT-04 del mismo día.
+        # Al preparar el cambio de mañana se conserva el último P-01 ya programado hasta hoy.
+        calendario = next((e["valor_vigente"] for e in reversed(self.almacen.leer("F10", as_of))
+                           if e.get("param_id") == "P-01" and e.get("valor_vigente")), None)
+        if calendario is None:
+            calendario = "SEMANAL · SAB 06:00 · entrega LUN 07:00"
+        partes = calendario.split(" · ")
+        periodicidad = conf.get("periodicidad", partes[0])
+        horario = conf.get("dia_hora_entrega", partes[-1].removeprefix("entrega "))
         for k, v in conf.items():
             if k not in mapa:
                 rechazos.append({"parametro": k, "motivo": "no es un parámetro de servicio (régimen CALIBRABLE u OPERADOR)"})
                 continue
+            if mapa[k] == "P-01":
+                if periodicidad not in ("DIARIA", "SEMANAL", "QUINCENAL", "MENSUAL"):
+                    rechazos.append({"parametro": k, "motivo": "periodicidad no programable por HT-05"})
+                    continue
+                if not isinstance(horario, str) or not re.fullmatch(r"(LUN|MAR|MIE|MIÉ|JUE|VIE|SAB|SÁB|DOM) (?:[01]\d|2[0-3]):[0-5]\d", horario):
+                    rechazos.append({"parametro": k, "motivo": "se espera día de la semana y hora HH:MM"})
+                    continue
             if k == "clases_activas":
                 if not isinstance(v, list) or not v:   # T-66 (QA H-03): una lista vacía no apaga el bloque en silencio
                     rechazos.append({"parametro": k, "motivo": "debe ser una lista no vacía de tipos de activo"})
@@ -1685,7 +1761,7 @@ class Bloque:
                         if aplicabilidad(self.cfg, c, h) == "NO":
                             rechazos.append({"parametro": f"horizontes:{c}:{h}", "motivo": f"{h} es «No» para {c} en la tabla 8.3 (no se activa para esa clase)"})
             pid = mapa[k]
-            valor = v if pid != "P-01" else f"{conf.get('periodicidad', 'SEMANAL')} · {conf.get('dia_hora_entrega', 'SAB 06:00')}"
+            valor = v if pid != "P-01" else f"{periodicidad} · {horario}"
             if pid in aplicado:
                 continue
             cfg_id = self.almacen.nuevo_id("CFG")
