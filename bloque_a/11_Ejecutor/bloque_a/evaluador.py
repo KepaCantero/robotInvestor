@@ -140,6 +140,12 @@ def banda_publicable(p: float, bandas=None) -> str:
     return _banda(p, bandas)["texto"]
 
 
+def etiqueta_celda(clave):
+    """Conserva el identificador de los informes antiguos para el grupo sin método."""
+    clase, horizonte, metodo = clave
+    return f"{clase}|{horizonte}|{metodo}" if metodo else f"{clase}|{horizonte}"
+
+
 class Evaluador:
     def __init__(self, almacen, proveedor, motor, cfg: dict, universo: pd.DataFrame) -> None:
         self.almacen = almacen
@@ -219,34 +225,76 @@ class Evaluador:
             return f"último dato del {d1.date()}, {edad} {unidad} antes de la resolución (máximo {lim} en {horizonte})"
         return None
 
-    def _rentabilidad_serie(self, simbolo: str, f0, f1) -> tuple[float, pd.Timestamp, pd.Timestamp]:
-        d0, v0 = self.proveedor.valor_en(simbolo, f0)
+    def _base_conocida(self, simbolo, fecha):
+        """T-92 (auditoría de Astra, D01): el nivel inicial es el que se conocía al emitir (corte de conocimiento de HT-01),
+        no el que el proveedor publica después (una revisión posterior no mueve la base)."""
+        serie = self.proveedor.serie(simbolo, fin=fecha, conocido_el=fecha)
+        if serie.empty:
+            raise DatosNoDisponibles(f"{simbolo}: falta el dato conocido al emitir")
+        # T-92 (QA r01, H-06): el cierre de la base pasa la misma validación que cualquier cierre de HT-01 (no positivo, no
+        # finito, booleano o fecha repetida → `DatosInvalidos`, que es un `DatosNoDisponibles`)
+        ult = self.proveedor._validar_cierres(simbolo, serie[serie.index == serie.index.max()])
+        return {"valor": float(ult.iloc[-1]), "fecha": str(ult.index[-1].date())}
+
+    def bases_cesta(self, clase, fecha, horizonte: str | None = None):
+        """T-92 (D02): los miembros de la CESTA observables al emitir, con su nivel inicial. Se congelan en F4 al emitir; para
+        pronósticos antiguos sin ellos se reconstruyen con el corte de conocimiento de la emisión. Con `horizonte`, queda fuera
+        el miembro cuyo último dato ya era, al emitir, más antiguo que la antigüedad de PS2 de ese horizonte (T-65, H-24):
+        eso se sabía al emitir, así que no es información posterior."""
+        bases = {}
+        lim = int(parametro(self.cfg, "ps2_antiguedad_maxima_dias")[horizonte]) if horizonte else None
+        for simbolo in self.simbolos_clase(clase):
+            try:
+                base = self._base_conocida(simbolo, fecha)
+            except DatosNoDisponibles:
+                continue
+            if lim is not None:
+                d, f = pd.Timestamp(base["fecha"]), pd.Timestamp(fecha)
+                if (dias_habiles_entre(d, f) if horizonte == "H1" else (f - d).days) > lim:
+                    continue
+            bases[simbolo] = base
+        return bases
+
+    def _rentabilidad_serie(self, simbolo: str, f0, f1, base=None) -> tuple[float, pd.Timestamp, pd.Timestamp]:
+        """Rentabilidad entre la base (la congelada en F4 si la hay; si no, la conocida al emitir) y el cierre en f1, con la
+        fecha de la base y la del cierre. Falla cerrado con una base no numérica, nula, no finita o posterior a la emisión."""
+        if base is None:
+            base = self._base_conocida(simbolo, f0)
+        try:
+            if isinstance(base, dict):
+                v0 = base.get("valor")
+                d0 = pd.Timestamp(base["fecha"]) if base.get("fecha") else self.proveedor.valor_en(simbolo, f0)[0]
+            else:   # registros antiguos con el nivel como número suelto
+                v0, d0 = base, self.proveedor.valor_en(simbolo, f0)[0]
+        except (ValueError, TypeError, OverflowError) as e:   # T-92 (QA r01, H-14): una fecha ilegible no tumba C5
+            raise DatosNoDisponibles(f"{simbolo}: fecha de la base ilegible ({type(e).__name__})") from None
+        if pd.isna(d0) or d0 > pd.Timestamp(f0):
+            raise DatosNoDisponibles(f"{simbolo}: base posterior a la emisión")
         d1, v1 = self.proveedor.valor_en(simbolo, f1)
-        if not (math.isfinite(v0) and math.isfinite(v1)) or v0 == 0:
-            raise DatosNoDisponibles(f"HT-01: cierre no válido de {simbolo} ({d0.date()}: {v0}; {d1.date()}: {v1})")
+        # T-92 (QA r01, H-06): una base no positiva tampoco vale (los cierres de HT-01 son precios > 0)
+        if (isinstance(v0, bool) or not isinstance(v0, (float, int)) or not math.isfinite(v0) or v0 <= 0
+                or not math.isfinite(v1)):
+            raise DatosNoDisponibles(f"HT-01: base o cierre no válido de {simbolo}")
         return v1 / v0 - 1, d0, d1
 
-    def rentabilidad(self, simbolo: str, clase: str, f0, f1, horizonte: str | None = None) -> tuple[float, pd.Timestamp]:
+    def rentabilidad(self, simbolo: str, clase: str, f0, f1, horizonte: str | None = None, *,
+                     base=None) -> tuple[float, pd.Timestamp]:
         """Rentabilidad de `simbolo` entre f0 y f1 y la fecha de su último dato. Con `horizonte` (la resolución lo pasa
-        siempre), falla (`DatosNoDisponibles`) si la serie no sirve para ese horizonte (`motivo_no_fresca`). En la CESTA, un
-        miembro que no sirve no cuenta (nunca entra con 0; sin `horizonte`, el que no tiene un dato posterior al de f0) y la
-        fecha devuelta es la más antigua de los que cuentan."""
+        siempre), falla (`DatosNoDisponibles`) si la serie no sirve para ese horizonte (`motivo_no_fresca`); sin él, si no
+        tiene un dato posterior a la base. En la CESTA cuentan los mismos miembros que al emitir (`base`, los congelados en
+        F4): T-92 (D02) sustituye la regla de T-65 de dejar fuera al miembro que no sirve, porque saber al resolver que un
+        miembro dejó de publicarse es información posterior a la emisión (sesgo de supervivencia). Si un miembro no sirve,
+        la CESTA entera no sirve (el pronóstico espera y, pasado el plazo, queda NO_RESOLUBLE). Nunca entra un 0. La fecha
+        devuelta es la más antigua de los miembros."""
         if simbolo == "CESTA":
-            vals, fechas = [], []
-            for s in self.simbolos_clase(clase):
-                try:
-                    r, d0, f = self._rentabilidad_serie(s, f0, f1)
-                except DatosNoDisponibles:
-                    continue
-                if (self.motivo_no_fresca(d0, f, f1, horizonte) if horizonte else (f <= d0 and "sin dato nuevo")):
-                    continue
-                vals.append(r)
-                fechas.append(f)
-            if not vals:
-                raise DatosNoDisponibles(f"Cesta {clase} sin datos válidos y recientes para {horizonte}")
-            return float(np.mean(vals)), min(fechas)
-        r, d0, d1 = self._rentabilidad_serie(simbolo, f0, f1)
-        motivo = self.motivo_no_fresca(d0, d1, f1, horizonte) if horizonte else None
+            bases = self.bases_cesta(clase, f0, horizonte) if base is None else base
+            if not isinstance(bases, dict) or not bases:
+                raise DatosNoDisponibles(f"Cesta {clase} sin niveles iniciales")
+            patas = [self.rentabilidad(s, clase, f0, f1, horizonte, base=b) for s, b in sorted(bases.items())]
+            return float(np.mean([v for v, _ in patas])), min(f for _, f in patas)
+        r, d0, d1 = self._rentabilidad_serie(simbolo, f0, f1, base)
+        motivo = self.motivo_no_fresca(d0, d1, f1, horizonte) if horizonte else (
+            f"sin dato posterior a la emisión (último del {d1.date()})" if d1 <= d0 else None)
         if motivo:
             raise DatosNoDisponibles(f"HT-01: {simbolo} no sirve para resolver: {motivo}")
         return r, d1
@@ -308,18 +356,22 @@ class Evaluador:
         # que son pronósticos ordinarios de su propio horizonte y se resuelven aquí como los demás
         pendientes = [p for p in abiertos if pd.Timestamp(p["fecha_resolucion"]) <= as_of and p.get("prob_interna") is not None]
         resueltos: list[dict] = []
-        filas = []
+        filas: list[tuple[dict, dict | None]] = []
         for p in sorted(pendientes, key=lambda x: x["prg_id"]):
             f0, f1 = pd.Timestamp(p["fecha_emision"]), pd.Timestamp(p["fecha_resolucion"])
             try:
                 # T-65 (QA r03, H-16; QA r04, H-24): cada serie (proxy, referencia y cada miembro de la CESTA) debe tener un
                 # dato posterior al de la emisión y no más antiguo que la antigüedad de PS2 del horizonte; si no, el
-                # pronóstico espera y, pasado el plazo, queda NO_RESOLUBLE. Nunca se resuelve con una rentabilidad 0
+                # pronóstico espera y, pasado el plazo, queda NO_RESOLUBLE. Nunca se resuelve con una rentabilidad 0.
+                # T-92 (D01): la base de cada serie es la congelada en F4 al emitir
                 hz = p["horizonte"]
-                rp, d1 = self.rentabilidad(p["variable"]["serie_ht01"], p["clase"], f0, f1, hz)
+                rp, d1 = self.rentabilidad(p["variable"]["serie_ht01"], p["clase"], f0, f1, hz, base=p.get("nivel_referencia"))
                 rr, d1b = None, None
                 if p["tipo_pronostico"] == "RELATIVO":
-                    rr, d1b = self.rentabilidad(p["referencia_indice"], p["clase"], f0, f1, hz)
+                    base_ref = p.get("bases_cesta") if p["referencia_indice"] == "CESTA" else p.get("nivel_referencia_indice")
+                    if base_ref is not None and not isinstance(base_ref, dict) and p.get("fecha_nivel_referencia_indice"):
+                        base_ref = {"valor": base_ref, "fecha": p["fecha_nivel_referencia_indice"]}
+                    rr, d1b = self.rentabilidad(p["referencia_indice"], p["clase"], f0, f1, hz, base=base_ref)
                 x = rp - rr if rr is not None else rp
                 # Falla cerrado: un valor no finito (cierre NaN, nivel inicial 0…) es un dato no disponible,
                 # nunca un resultado (antes, int(nan > 0) = 0 daba NO_OCURRIDO)
@@ -552,6 +604,8 @@ class Evaluador:
         est = self.estado_h5(as_of)
         trimestre = f"{as_of.year}-T{(as_of.month - 1) // 3 + 1}"
         hechos: list[dict] = []
+        # T-65 (H-13): la degradación se aplica desde este mismo ciclo; T-92 (O3) compone con lo ya registrado para esa fecha
+        fecha_efecto = str(as_of.date())
         for clase, celda in sorted(est["celdas"].items()):
             if not celda["degradar"]:
                 continue
@@ -561,7 +615,9 @@ class Evaluador:
                    and (a.get("trimestre") == trimestre or (a.get("tipo_entrada") == "P3" and a.get("estado") == "ENVIADA"))
                    for a in f6):
                 continue
-            matriz = self._matriz_aplicabilidad(as_of)
+            # Componer con acuerdos ya registrados que entrarán en vigor el mismo día, sin abrir el corte de conocimiento.
+            f10 = self.almacen.estado("F10", as_of, efectivo_el=fecha_efecto)
+            matriz = (f10.get("P-31") or {}).get("valor_vigente") or self._tabla_base
             actual = (matriz.get(clase) or {}).get("H5")
             nuevo = ESCALON_INFERIOR.get(actual) if actual is not None else None
             if nuevo is None:          # ya «No» (o valor desconocido): nada que bajar
@@ -587,7 +643,6 @@ class Evaluador:
                 self.almacen.escribir("F6", "AG-20", p3)
                 hechos.append(p3)
                 continue
-            f10 = self.almacen.estado("F10", as_of)
             mv_de = str((f10.get("P-30") or {}).get("valor_vigente") or parametro(self.cfg, "methodology_version"))
             mv = {"de": mv_de, "a": _version_menor_siguiente(mv_de)}
             nueva = copy.deepcopy(matriz)
@@ -595,7 +650,7 @@ class Evaluador:
             aju = {"tipo_entrada": "AJU", "id": self.almacen.nuevo_id("AJU"), "parametro": "P-31", "celda": ambito,
                    "de": actual, "a": nuevo, "trimestre": trimestre,
                    "banda": {"regla": "«Sí» ↔ «Limitado» automático (12.2, P-31); hacia «No», tipo 3"},
-                   "evidencia": evid, "methodology_version": mv, "efecto_desde": str(as_of.date()),
+                   "evidencia": evid, "methodology_version": mv, "efecto_desde": fecha_efecto,
                    "sombra_hasta": None, "estado": "CONFIRMADO", "aplicado_en_produccion": True,
                    "nota": "degradación automática de 12.2: se aplica desde este mismo ciclo (la lectura de F10 es por fecha de "
                            "registro; T-65, H-13) y no se revierte sola (volver a subir exige tipo 3)"}
@@ -637,7 +692,7 @@ class Evaluador:
             raise ValueError("aprobar_certificados: falta el autor de la aprobación")
         as_of = pd.Timestamp(as_of).normalize()
         f6 = self.almacen.estado("F6", as_of, clave="id")
-        vigentes = {(c["celda"]["clase"], c["celda"]["horizonte"]) for c in self.certificados_vigentes(as_of) if c.get("celda")}
+        vigentes = {(c["celda"]["clase"], c["celda"]["horizonte"], c["celda"].get("metodo")) for c in self.certificados_vigentes(as_of) if c.get("celda")}
         for i in ids:
             c = f6.get(i)
             if c is None or not any(h.get("tipo") == "CERT" for h in c.get("_historial", [])):
@@ -645,9 +700,10 @@ class Evaluador:
             if c.get("estado") != "PROPUESTO":
                 raise ValueError(f"aprobar_certificados: {i} está {c.get('estado')}, no PROPUESTO")
             celda = c.get("celda") or {}
-            if (celda.get("clase"), celda.get("horizonte")) in vigentes:
+            if (celda.get("clase"), celda.get("horizonte"), celda.get("metodo")) in vigentes:
                 raise ValueError(f"aprobar_certificados: la celda {celda.get('clase')}|{celda.get('horizonte')} de {i} ya "
                                  "tiene un certificado VIGENTE")
+            vigentes.add((celda.get("clase"), celda.get("horizonte"), celda.get("metodo")))
         hechos = []
         for i in ids:
             e = {"tipo_entrada": "CERT_APROBACION", "id": i, "estado": "VIGENTE", "aprobado_por": autor.strip(),
@@ -665,10 +721,10 @@ class Evaluador:
         solo_endurecer = self.solo_endurecer()
         celdas = defaultdict(list)
         for p in self.resueltos(as_of):
-            celdas[(p["clase"], p["horizonte"])].append(p)
+            celdas[(p["clase"], p["horizonte"], p.get("metodo"))].append(p)
         candidatas = {k: v for k, v in celdas.items() if len(v) >= n_cert}
-        vigentes = {(c["celda"]["clase"], c["celda"]["horizonte"]): c for c in self.certificados_vigentes(as_of)}
-        propuestos = {(c["celda"]["clase"], c["celda"]["horizonte"]): c for c in self.certificados_propuestos(as_of)}
+        vigentes = {(c["celda"]["clase"], c["celda"]["horizonte"], c["celda"].get("metodo")): c for c in self.certificados_vigentes(as_of)}
+        propuestos = {(c["celda"]["clase"], c["celda"]["horizonte"], c["celda"].get("metodo")): c for c in self.certificados_propuestos(as_of)}
         emitidos, revocados, retirados, evaluadas = [], [], [], {}
         if candidatas:
             metr = {k: ev.evaluar_celda([float(x["prob_interna"]) for x in v], [int(x["resolucion"]["resultado_binario"]) for x in v],
@@ -676,20 +732,20 @@ class Evaluador:
                                         float(np.mean([x["referencia_ingenua"]["valor_o_prob"] for x in v])),
                                         int(parametro(self.cfg, "evaluacion.bootstrap_replicas")), int(parametro(self.cfg, "evaluacion.simulaciones_ece")),
                                         fechas=self._fechas_conglomerado(v), min_conglomerados=min_cong)
-                    for k, v in sorted(candidatas.items())}
+                    for k, v in candidatas.items()}
             # Holm escalonado (Anexo A, certificado R13): en cuanto una celda no supera su umbral, ninguna de las
             # siguientes (de p mayor) lo supera. α: clave evaluacion.alfa_holm (0,10, coherente con el IC 90 % del criterio)
-            umbrales = ev.holm({f"{k[0]}|{k[1]}": (m["dm_hln"]["p_unilateral"] if m["dm_hln"]["p_unilateral"] is not None else 1.0)
+            umbrales = ev.holm({etiqueta_celda(k): (m["dm_hln"]["p_unilateral"] if m["dm_hln"]["p_unilateral"] is not None else 1.0)
                                 for k, m in metr.items()}, float(parametro(self.cfg, "evaluacion.alfa_holm")))
             for k, m in metr.items():
                 crit = ev.criterio_certificado(m, n_cert, float(parametro(self.cfg, "evaluacion.ece_max")),
-                                               umbrales[f"{k[0]}|{k[1]}"] if len(metr) > 1 else None)
-                evaluadas[f"{k[0]}|{k[1]}"] = crit
+                                               umbrales[etiqueta_celda(k)] if len(metr) > 1 else None)
+                evaluadas[etiqueta_celda(k)] = crit
                 if crit["certificable"] and k not in vigentes and k not in propuestos:
                     muestra = m.get("muestra_efectiva") or {}
                     cert = {"tipo_entrada": "CERT", "id": self.almacen.nuevo_id("CERT"),
                             "estado": "PROPUESTO" if solo_endurecer else "VIGENTE",
-                            "celda": {"clase": k[0], "horizonte": k[1], "metodo": None}, "n": m["n"], "n_eff": m["n_eff"],
+                            "celda": {"clase": k[0], "horizonte": k[1], "metodo": k[2]}, "n": m["n"], "n_eff": m["n_eff"],
                             "muestra_efectiva": {c: muestra.get(c) for c in ("conglomerados", "m_medio", "rho", "efecto_diseno")},
                             "brier": m["brier"], "brier_ref": m["brier_ref"], "bss": m["bss"]["valor"], "bss_ic90": m["bss"]["ic"],
                             "bss_ic_metodo": m["bss"].get("metodo"),
@@ -719,7 +775,7 @@ class Evaluador:
                                                               "motivo_cambio": f"deterioro: BSS ≤ 0, ECE no disponible o ECE ≥ {ece_rev}",
                                                               "fecha": str(pd.Timestamp(as_of).date())})
                         revocados.append(c["id"])
-        no_cert = {f"{k[0]}|{k[1]}": f"n = {len(v)} < {n_cert}" for k, v in celdas.items() if k not in candidatas}
+        no_cert = {etiqueta_celda(k): f"n = {len(v)} < {n_cert}" for k, v in celdas.items() if k not in candidatas}
         return {"emitidos": emitidos, "revocados": revocados, "propuestas_retiradas": retirados, "evaluadas": evaluadas,
                 "insuficientes": no_cert, "excluidos_contaminacion": self.excluidos_contaminacion(as_of)}
 

@@ -55,6 +55,8 @@ distintas de las del prompt del Analizador (6.15.5 y 6.16) y del Redactor. Decis
 (E ≥ 70 «probable», ahora `presentacion.confianza_probable_E` desde T-65) se deja como está: el prompt del Redactor la usa solo para la barra visual y alinearla cambia el
 esquema del paquete; queda para la revisión con el operador.
 
+**INC-T92-01 · 2026-11-10 · Qué limita la «ampliación máxima autorizable» del presupuesto (Bloque A, Anexo A).** El Anexo A da +25 % sin autorización y `ampliacion_max_autorizable: 0.50`, y no dice si el 50 % es el tope del total (base × 1,50, con el automático dentro) o un 50 % más sobre el automático (base × 1,75). Develop usaba la segunda lectura y la auditoría de Astra (A6), la primera. Decisión `[PROPUESTO]` (T-92): **tope del total**, la lectura más prudente. A T-57.
+
 **INC-T65-01 · 2026-11-10 · `Close` frente a `Adj Close` en un CSV de HT-01 (Bloque A).** El README del ejecutor
 admite `close` y `adj close` como alias de `cierre`, pero no dice cuál manda si llegan los dos, que es el formato más común
 de una exportación de Yahoo. El corpus no fija si las rentabilidades se calculan con el precio o con el precio ajustado.

@@ -137,7 +137,9 @@ def construir(bloque, run_id, tipo, as_of, clases, nivel, gc0, analisis, selecci
     pres = parametro(cfg, "presentacion")   # [PROPUESTO] INC-T53-05: confianza y zona de interés (T-65, CA-14)
     avisos_hp: list[str] = []   # horizontes del Analista sustituidos (8.3): se declaran como limitación
     as_of = pd.Timestamp(as_of)
-    certs = {(c["celda"]["clase"], c["celda"]["horizonte"]): c["id"] for c in bloque.evaluador.certificados_vigentes(as_of)}
+    # T-92 (auditoría de Astra, D05; R13): el certificado es de la celda clase × horizonte × método
+    certs = {(c["celda"]["clase"], c["celda"]["horizonte"], c["celda"]["metodo"]): c["id"]
+             for c in bloque.evaluador.certificados_vigentes(as_of) if c["celda"].get("metodo")}
     prefer = parametro(cfg, "horizonte_principal_preferente")
     meses_hitos = parametro(cfg, "h5.meses_hitos")
     prg_borradores: list[dict] = []
@@ -163,10 +165,10 @@ def construir(bloque, run_id, tipo, as_of, clases, nivel, gc0, analisis, selecci
             ref = f.get("_referencia")
             ri = bloque.evaluador.tasa_base(f["proxy"], ref, c, ses, positivo, as_of, run_id)
             fr = fecha_resolucion(as_of, h, cfg["horizontes"])
-            _, nivel_p = bloque.proveedor.valor_en(f["proxy"], as_of)
-            nivel_r = None
+            fecha_p, nivel_p = bloque.proveedor.valor_en(f["proxy"], as_of)
+            nivel_r, fecha_r = None, None
             if ref and ref != "CESTA":
-                nivel_r = bloque.proveedor.valor_en(ref, as_of)[1]
+                fecha_r, nivel_r = bloque.proveedor.valor_en(ref, as_of)
             tp = f.get("_tipo_pronostico", "RELATIVO")
             texto_ev = (f"rentabilidad de {f['proxy']} {'superior' if positivo else 'inferior'} a la de {ref} entre {as_of.date()} y {fr.date()}"
                         if tp == "RELATIVO" else f"rentabilidad de {f['proxy']} {'positiva' if positivo else 'negativa'} entre {as_of.date()} y {fr.date()}")
@@ -176,13 +178,14 @@ def construir(bloque, run_id, tipo, as_of, clases, nivel, gc0, analisis, selecci
                 "estrategia": f"{c}-{(f.get('tipo_opcion') or 'MERCADO')}", "tipo_opcion": f.get("tipo_opcion"),
                 "tipo_pronostico": tp, "afirmacion": d["afirmacion"], "evento": texto_ev, "sentido": "POSITIVO" if positivo else "NEGATIVO",
                 "vista": d["vista"], "variable": {"serie_ht01": f["proxy"], "descripcion": f"cierre de {f['proxy']}", "tipo_rentabilidad": "PRECIO", "divisa": None},
-                "referencia_indice": ref if tp == "RELATIVO" else None, "nivel_referencia": {"valor": nivel_p, "fecha": str(as_of.date()), "fuente": f"HT-01:{bloque.proveedor.nombre}"},
-                "nivel_referencia_indice": nivel_r, "umbral": 0.0, "fecha_emision": str(as_of.date()), "fecha_congelacion": bloque.reloj.ahora(),
+                "referencia_indice": ref if tp == "RELATIVO" else None, "nivel_referencia": {"valor": nivel_p, "fecha": str(fecha_p.date()), "fuente": f"HT-01:{bloque.proveedor.nombre}"},
+                "nivel_referencia_indice": nivel_r, "fecha_nivel_referencia_indice": str(fecha_r.date()) if fecha_r is not None else None,
+                **({"bases_cesta": bloque.evaluador.bases_cesta(c, as_of, h)} if ref == "CESTA" else {}), "umbral": 0.0, "fecha_emision": str(as_of.date()), "fecha_congelacion": bloque.reloj.ahora(),
                 "fecha_resolucion": str(fr.date()),
                 "criterio_resolucion": f"Cierre HT-01 de la última sesión ≤ {fr.date()} frente al cierre de la última sesión ≤ {as_of.date()}; suceso: {texto_ev}",
                 "fuente_resolucion": f"HT-01:{bloque.proveedor.nombre}", "regla_fallback": f"última sesión disponible ≤ fecha de resolución; NO_RESOLUBLE tras {dias_nr} días hábiles sin dato",
                 "banda_verbal": bloque.evaluador.banda_de(d["prob_interna"]), "prob_interna": d["prob_interna"],
-                "prob_publicada": d["prob_interna"] if (c, h) in certs else None, "certificado_ref": certs.get((c, h)),
+                "prob_publicada": d["prob_interna"] if (c, h, d.get("metodo")) in certs else None, "certificado_ref": certs.get((c, h, d.get("metodo"))),
                 "metodo": d.get("metodo"), "referencia_ingenua": ri, "escenario_asociado": d.get("escenario", "BASE"),
                 "en_informe": en_informe, "estado": "ABIERTO",
                 # PA-09 (T-66): un backtest con un modelo real anterior a su fecha de corte puede «acertar» de memoria
@@ -233,7 +236,7 @@ def construir(bloque, run_id, tipo, as_of, clases, nivel, gc0, analisis, selecci
             pu = f["_ht03"]["puntuaciones"]
             hz = {}
             for h, d in sorted(f["_hz"].items()):
-                cert = (c, h) in certs
+                cert = (c, h, d.get("metodo")) in certs
                 hz[h] = {"vista": d["vista"], "banda": bloque.evaluador.banda_publicable(d["prob_interna"]), "prob": d["prob_interna"] if cert else None,
                          "certificado_r13": cert, "prg_id": ids[h], "metodo": d.get("metodo")}
                 if not cert:
@@ -421,14 +424,58 @@ def construir(bloque, run_id, tipo, as_of, clases, nivel, gc0, analisis, selecci
     return paquete, extras
 
 
+# R21. El control canónico valida ISIN y estructura; el ejecutor también comprueba
+# propuestas unitarias explícitas en los textos de decisión. Ejemplos e indicadores
+# pueden nombrar un instrumento y deliberadamente no entran en esta comprobación.
+_UNITARIA = re.compile(
+    r"\b(?:solo|solamente|únicamente|exclusivamente)\s+(?:la|una)\s+(?:acción|emisión|participación)\b"
+    r"|\b(?:la acción|el bono|la acción ordinaria|la acción preferente)\s+de\s+"
+    r"|\b(?:comprar|vender|adquirir|seleccionar)\s+(?:acciones|bonos)\s+de\s+\$[a-z]+"
+    r"|\b(?:acciones|bonos)\s+de\s+[^.;,\n]+?\s+(?:corporation|incorporated|inc\b|corp\b|plc\b|ag\b|s\.a\.)",
+    re.IGNORECASE,
+)
+
+
+def _control_unitarias(paquete, res):
+    c15 = next(c for c in res["comprobaciones"] if c["id"] == "C15")
+    opciones = [op for clase in paquete["clases"].values() for op in clase["opciones"]]
+    for op in opciones + paquete.get("paquete_para_bloque_B", []):
+        ambito = op.get("ambito")
+        textos = [op.get("nombre"), op.get("nombre_llano"), op.get("tesis"),
+                  ambito.get("incluye") if isinstance(ambito, dict) else None]
+        if any(isinstance(t, str) and _UNITARIA.search(t) for t in textos):
+            c15["incidencias"].append({"severidad": "BLOQUEO", "ruta": op["opp_id"],
+                                       "detalle": "R21: selección expresa de un instrumento individual"})
+            c15["resultado"] = "BLOQUEO"
+            res["dictamen"] = "BLOQUEADO"
+    return res
+
+
 def ht09_validar(bloque, paquete: dict, extras: dict, informe_visual: str | None) -> dict:
-    certs = [{"clase": c["celda"]["clase"], "horizonte": c["celda"]["horizonte"], "vigente": True, "metodo": None}
-             for c in bloque.evaluador.certificados_vigentes(paquete["fecha"])]
+    certs = [{**c["celda"], "vigente": True} for c in bloque.evaluador.certificados_vigentes(paquete["fecha"])
+             if c["celda"].get("metodo")]
     f2 = bloque.almacen.estado("F2", clave="clm_id")
     trazas = {k: v.get("evidencias", []) for k, v in f2.items() if v.get("tipo_entrada") == "CLM"}
     artef = [e["calc_id"] for e in bloque.almacen.leer("RC") if e.get("estado") in ("SERVED", "SERVED_WITH_LIMITATIONS")]
-    return ht09.validar(paquete, certs, informe_visual, extras["desgloses"], bloque.params_ht03, trazas, artef,
-                        float(parametro(bloque.cfg, "redaccion.umbral_fh")))
+    res = ht09.validar(paquete, certs, informe_visual, extras["desgloses"], bloque.params_ht03, trazas, artef,
+                       float(parametro(bloque.cfg, "redaccion.umbral_fh")))
+    _control_unitarias(paquete, res)
+    # La herramienta de referencia admite método ausente como comodín; R13 exige uno explícito para publicar cifras.
+    c07 = next(c for c in res["comprobaciones"] if c["id"] == "C07")
+    for clase in paquete["clases"].values():
+        for opcion in clase.get("opciones", []):
+            for horizonte, vista in opcion.get("horizontes", {}).items():
+                if vista.get("prob") is not None and not vista.get("metodo"):
+                    c07["incidencias"].append({"severidad": "BLOQUEO", "ruta": f"{opcion['opp_id']}.{horizonte}",
+                                              "detalle": "R13: falta el método del pronóstico con probabilidad numérica"})
+                    c07["resultado"] = "BLOQUEO"
+    bloqueos = [c for c in res["comprobaciones"] if c["resultado"] == "BLOQUEO"]
+    if bloqueos:
+        res["dictamen"] = "BLOQUEADO"
+        res["motivo"] = "; ".join(f"{c['id']} {c['nombre']}" for c in bloqueos)
+        recuentos = [c["resultado"] for c in res["comprobaciones"]]
+        res["resumen"].update(ok=recuentos.count("OK"), advertencias=recuentos.count("ADVERTENCIA"), bloqueos=len(bloqueos))
+    return res
 
 
 def retirar_opciones(bloque, paquete: dict, extras: dict, afectadas: set[str]) -> tuple[dict, dict]:

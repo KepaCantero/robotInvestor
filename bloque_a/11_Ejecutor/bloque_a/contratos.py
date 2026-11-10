@@ -13,15 +13,18 @@ from __future__ import annotations
 
 import contextlib
 import copy
+import hashlib
 import json
 import re
+import sqlite3
 import threading
-from typing import Any, Dict, List, Optional, Tuple
+from contextlib import closing
+from typing import Any
 
 VERSION_CONTRATO = "5.1"
 ESTADOS = ("COMPLETO", "PARCIAL", "SIN_RESULTADO", "RECHAZADO")
-# V5.1 (Anexo B): los retornos de CT-23, CT-24 y CT-25 reutilizan «estado» con valores propios del contrato
-# (el Anexo B no distingue estos valores del estado común de retorno de 6.2.6; el ejecutor admite ambos)
+# §6.2.6: normalizar el cuerpo del Anexo B antiguo al crear el sobre.
+CAMPO_ESTADO = {"CT-23": "estado_consulta", "CT-24": "estado_seguimiento", "CT-25": "estado_credencial"}
 ESTADOS_ESPECIFICOS = {"CT-23": ("RESPONDIDA", "PARCIAL", "VENCIDA", "RECIBIDA"),
                        "CT-24": ("ACTIVO", "PAUSADO", "CANCELADO", "FINALIZADO"),
                        "CT-25": ("PROVISTA", "DENEGADA", "APLAZADA")}
@@ -90,7 +93,7 @@ CAMPOS_RETORNO = {"CT-03": ["clase_consulta", "ruta", "respuesta", "referencias"
 
 RE_SECRETO = re.compile(
     r"(?i)(\"(api[_-]?key|apikey|secret|client_secret|password|passwd|contraseña|access[_-]?token|bearer)\"\s*:\s*\"[^\"]+\")"
-    r"|(sk-[A-Za-z0-9_-]{20,})|(AKIA[0-9A-Z]{16})|(-----BEGIN [A-Z ]*PRIVATE KEY-----)|(Bearer\s+[A-Za-z0-9._-]{20,})"
+    r"|(AKIA[0-9A-Z]{16})|(-----BEGIN [A-Z ]*PRIVATE KEY-----)|(Bearer\s+[A-Za-z0-9._-]{20,})"
     r"|(?-i:(\bES\d{22}\b)|(\b\d{8}-?[A-HJ-NP-TV-Z]\b))")
 
 # R9: patrones de instrucciones incrustadas en contenido externo (español e inglés)
@@ -151,9 +154,60 @@ def sanear_estructura(obj: Any, origen: str = "") -> tuple[Any, list[dict]]:
     return rec(copy.deepcopy(obj), ""), hallazgos
 
 
+# T-92 (QA r01, H-07; QA r02, H-17; QA r03, H-25, H-26 y H-28): las claves «sk-» se buscan en dos pasos. El candidato es
+# lineal: «sk-» (en mayúsculas o minúsculas) que no está dentro de una palabra (sin letra ni cifra pegada delante; «/», «-»,
+# «.», «_» o un espacio sí valen) y 20 caracteres o más de [A-Za-z0-9_-]. Después `_es_clave_sk` lo descarta solo si tiene
+# forma de texto corriente: tramos separados por «-» o «_» que son palabras (minúsculas, con mayúscula inicial o siglas) de
+# hasta 15 letras o números de hasta 4 cifras («risk-…» queda fuera por el límite; «sk-hynix-posts-record-…»,
+# «sk-hynix_annual_report_2023» o «SK-Hynix-Q3-results» son texto). Todo lo demás cuenta como clave.
+RE_CANDIDATO_SK = re.compile(r"(?i)(?<![A-Za-z0-9])sk-([A-Za-z0-9_-]{20,})")
+PREFIJOS_SK = ("ant-", "proj-", "svcacct-", "admin-", "lf-")
+# tramos de texto: palabras, siglas, años y códigos de periodo de los informes («Q4», «FY2023», «3Q24», «2024Q4», «H1»)
+RE_TRAMO_TEXTO = re.compile(r"[a-z]{1,15}|[A-Z][a-z]{0,14}|[A-Z]{1,6}|[0-9]{1,4}|[A-Z]{1,3}[0-9]{1,4}|[0-9][A-Z][0-9]{1,2}"
+                            r"|[0-9]{4}[A-Z][0-9]{1,2}")
+
+
+def _es_clave_sk(cola: str) -> bool:
+    """`cola` es lo que sigue a «sk-». Clave salvo que tenga forma de texto corriente (ver arriba)."""
+    if cola.lower().startswith(PREFIJOS_SK):
+        return True
+    tramos = [t for t in re.split(r"[-_]", cola) if t]
+    return len(tramos) < 2 or not all(RE_TRAMO_TEXTO.fullmatch(t) for t in tramos)
+
+
+def secretos_en_texto(texto) -> list[str]:
+    """Indicios de secretos en un texto: los patrones de `RE_SECRETO` y las claves «sk-». También se mira el texto con los
+    escapes de JSON («\\n», «\\t», «\\r», «\\/») sustituidos, porque la respuesta de un agente es JSON escrito como
+    texto (T-92, QA r03, H-25). Acepta `bytes` (H-26)."""
+    if isinstance(texto, (bytes, bytearray)):
+        texto = bytes(texto).decode("utf-8", errors="replace")
+    hallados: list[str] = []
+    for t in {texto, re.sub(r"\\[ntr/]", " ", texto)}:
+        hallados += [m.group(0) for m in RE_SECRETO.finditer(t)]
+        hallados += [m.group(0) for m in RE_CANDIDATO_SK.finditer(t) if _es_clave_sk(m.group(1))]
+    return list(dict.fromkeys(hallados))
+
+
+def _textos(obj: Any):
+    if isinstance(obj, (str, bytes, bytearray)):
+        yield obj
+    elif isinstance(obj, dict):
+        for k, v in obj.items():
+            yield from _textos(k)
+            yield from _textos(v)
+    elif isinstance(obj, (list, tuple, set)):
+        for v in obj:
+            yield from _textos(v)
+
+
 def contiene_credenciales(obj: Any) -> list[str]:
+    """T-92 (QA r02, H-18): se busca en el volcado JSON (para los pares «"password": "…"») y en cada texto tal cual (en el
+    volcado un salto de línea delante de la clave sale escapado como «\\n» y ocultaría la clave)."""
     volcado = json.dumps(obj, ensure_ascii=False, default=str)
-    return [m.group(0)[:6] + "…" for m in RE_SECRETO.finditer(volcado)]
+    hallados = secretos_en_texto(volcado)
+    for t in _textos(obj):
+        hallados += secretos_en_texto(t)
+    return list(dict.fromkeys(h[:6] + "…" for h in hallados))
 
 
 def canal_permitido(contrato: str, emisor: str, receptor: str) -> bool:
@@ -169,7 +223,7 @@ class Mensajeria:
     def __init__(self, almacen) -> None:
         self.almacen = almacen
         self._lock = threading.Lock()
-        self._procesados: dict[str, dict] = {}
+        self._procesar = threading.Lock()
         self.registro: list[dict] = []   # traza de mensajes (contrato, emisor, receptor, msg_id)
         self._local = threading.local()
 
@@ -187,8 +241,24 @@ class Mensajeria:
     def crear(self, contrato: str, emisor: str, receptor: str, cuerpo: dict, *, run_id: str | None = None,
               query_id: str | None = None, presupuesto: dict | None = None, consumo: dict | None = None,
               estado: str | None = None, tipo_mensaje: str = "ENCARGO") -> dict:
+        cuerpo = copy.deepcopy(cuerpo)
+        # En CT-01 el Broker puede aportar su identificador estable de reintento.
+        externo = cuerpo.pop("msg_id", None) if contrato == "CT-01" and emisor == "BROKER" else None
+        # T-92 (QA r01, H-08): el identificador del Broker tiene su propio espacio (MSG-BRK-…), distinto del que numera el
+        # bloque (MSG-AAAA-… o MSG-<ámbito>-AAAA-…), para que nunca coincidan
+        if externo is not None and (not isinstance(externo, str) or not re.fullmatch(r"MSG-BRK-[0-9]{4}-[0-9]{1,12}", externo)):
+            raise MensajeInvalido("msg_id externo no válido (formato MSG-BRK-AAAA-NNNNNN)")
+        if tipo_mensaje == "RETORNO" and contrato in CAMPO_ESTADO:
+            campo = CAMPO_ESTADO[contrato]
+            if "estado" in cuerpo:
+                antiguo = cuerpo.pop("estado")
+                if campo in cuerpo and antiguo == (estado or "COMPLETO"):
+                    antiguo = cuerpo[campo]
+                if campo in cuerpo and cuerpo[campo] != antiguo:
+                    raise MensajeInvalido(f"{contrato}: estados de objeto contradictorios")
+                cuerpo[campo] = antiguo
         amb = getattr(self._local, "ambito", None)
-        msg = {"msg_id": self.almacen.nuevo_id(f"MSG-{amb}" if amb else "MSG", ancho=6), "contrato": contrato, "version_contrato": VERSION_CONTRATO,
+        msg = {"msg_id": externo or self.almacen.nuevo_id(f"MSG-{amb}" if amb else "MSG", ancho=6), "contrato": contrato, "version_contrato": VERSION_CONTRATO,
                "emisor": emisor, "receptor": receptor, "timestamp": self.almacen.reloj.ahora(), "tipo_mensaje": tipo_mensaje}
         if run_id:
             msg["run_id"] = run_id
@@ -201,7 +271,13 @@ class Mensajeria:
             msg["estado"] = estado or "COMPLETO"
             msg.setdefault("limitaciones", [])
             msg.setdefault("autoevaluacion", "")
-        msg.update(copy.deepcopy(cuerpo))
+        reservados = {"msg_id", "contrato", "version_contrato", "emisor", "receptor", "timestamp",
+                      "tipo_mensaje", "run_id", "query_id", "presupuesto", "consumo", "estado"}
+        for campo in reservados & cuerpo.keys():
+            if cuerpo[campo] != msg.get(campo):
+                raise MensajeInvalido(f"No se puede cambiar {campo} desde el cuerpo")
+            cuerpo.pop(campo)
+        msg.update(cuerpo)
         self.validar(msg)
         with self._lock:
             self.registro.append({k: msg.get(k) for k in ("msg_id", "contrato", "emisor", "receptor", "tipo_mensaje")})
@@ -211,6 +287,8 @@ class Mensajeria:
         for c in ("msg_id", "contrato", "version_contrato", "emisor", "receptor", "timestamp"):
             if not msg.get(c):
                 raise MensajeInvalido(f"Falta el campo común {c}")
+        if msg["version_contrato"] != VERSION_CONTRATO or msg.get("tipo_mensaje") not in ("ENCARGO", "RETORNO"):
+            raise MensajeInvalido("Versión o tipo de mensaje no admitido")
         if msg["contrato"] not in CANALES:
             self.almacen.incidencia("CANAL_NO_PREVISTO", f"Contrato inexistente {msg['contrato']}", msg.get("emisor", ""))
             raise CanalNoPrevisto(f"Contrato inexistente {msg['contrato']}")
@@ -228,21 +306,92 @@ class Mensajeria:
             raise MensajeInvalido("Falta run_id o query_id")
         tipo = msg.get("tipo_mensaje", "ENCARGO")
         req = CAMPOS_MINIMOS.get(msg["contrato"], []) if tipo == "ENCARGO" else CAMPOS_RETORNO.get(msg["contrato"], [])
+        if tipo == "RETORNO" and msg["contrato"] in CAMPO_ESTADO:
+            campo = CAMPO_ESTADO[msg["contrato"]]
+            if msg.get(campo) not in ESTADOS_ESPECIFICOS[msg["contrato"]]:
+                raise MensajeInvalido(f"{campo} no válido")
         falta = [c for c in req if c not in msg]
         if falta:
             raise MensajeInvalido(f"{msg['contrato']}: faltan campos mínimos {falta}")
-        if tipo != "ENCARGO" and msg.get("estado") not in ESTADOS + ESTADOS_ESPECIFICOS.get(msg["contrato"], ()):
+        if tipo == "ENCARGO" and msg["contrato"] == "CT-01":
+            if msg["tipo"] not in ("AD_HOC", "PROFUNDIZACION", "PERIODICO") or msg["prioridad"] not in ("ALTA", "NORMAL", "BAJA"):
+                raise MensajeInvalido("CT-01: tipo o prioridad no admitidos")
+            if not isinstance(msg["alcance"], dict) or not isinstance(msg["horizontes"], list) or any(
+                    h not in ("H1", "H2", "H3", "H4", "H5") for h in msg["horizontes"]):
+                raise MensajeInvalido("CT-01: alcance u horizontes no válidos")
+        if tipo == "RETORNO" and msg["contrato"] == "CT-02" and (
+                not isinstance(msg.get("entregables"), dict) or not isinstance(msg.get("resumen"), dict)
+                or msg.get("estado_g3") not in ("APTO", "APTO_CON_ADVERTENCIAS")):
+            raise MensajeInvalido("CT-02: se requiere una entrega G3 aprobada con rutas y resumen")
+        if tipo != "ENCARGO" and msg.get("estado") not in ESTADOS:
             raise MensajeInvalido(f"Estado de retorno no válido {msg.get('estado')!r}")
 
     def procesar_una_vez(self, msg: dict, funcion) -> tuple[dict, bool]:
         """Idempotencia: devuelve (respuesta, repetido). El mismo msg_id no se reprocesa."""
-        with self._lock:
-            if msg["msg_id"] in self._procesados:
-                return copy.deepcopy(self._procesados[msg["msg_id"]]), True
-        r = funcion(msg)
-        with self._lock:
-            self._procesados[msg["msg_id"]] = copy.deepcopy(r)
-        return r, False
+        self.validar(msg)
+        identidad = {k: v for k, v in msg.items() if k not in ("timestamp", "msg_id")}
+        huella = hashlib.sha256(json.dumps(identidad, sort_keys=True, ensure_ascii=False).encode()).hexdigest()
+        # Reservar ANTES de los efectos del ciclo. Una reserva huérfana exige revisión:
+        # no se puede saber si ya produjo efectos antes de la caída.
+        with self._procesar, closing(self._acuses()) as db:
+            with db:
+                insertado = db.execute("INSERT OR IGNORE INTO acuses (id, huella) VALUES (?, ?)", (msg["msg_id"], huella))
+                if not insertado.rowcount:
+                    anterior, respuesta, error = db.execute("SELECT huella, respuesta, error FROM acuses WHERE id=?",
+                                                            (msg["msg_id"],)).fetchone()
+                    if anterior != huella:
+                        raise MensajeInvalido("msg_id reutilizado con contenido distinto")
+                    if respuesta is None:
+                        estado = f"fallido ({error}) o interrumpido" if error else "en curso o interrumpido"
+                        raise MensajeInvalido(f"Mensaje {estado}: revise F5 y, si no dejó efectos que repetir, libere la "
+                                              "reserva con `bloque-a reconciliar-mensaje` antes de reintentar")
+                    return json.loads(respuesta), True
+            try:
+                r = funcion(msg)
+            except BaseException as e:
+                # T-92: el fallo queda anotado (sin el texto, que podría llevar datos sensibles); la reserva sigue bloqueada
+                # porque pudo haber efectos, pero ya se distingue de una caída y se puede reconciliar
+                with db:
+                    db.execute("UPDATE acuses SET error=? WHERE id=?", (type(e).__name__, msg["msg_id"]))
+                raise
+            # T-92 (QA r01, H-13): la respuesta es la misma la primera vez y al repetirla (la forma guardada)
+            guardada = json.dumps(r, default=str)
+            with db:
+                db.execute("UPDATE acuses SET respuesta=? WHERE id=?", (guardada, msg["msg_id"]))
+            return json.loads(guardada), False
+
+    def _acuses(self):
+        db = sqlite3.connect(self.almacen.carpeta / "acuses.sqlite3")
+        db.execute("CREATE TABLE IF NOT EXISTS acuses (id TEXT PRIMARY KEY, huella TEXT NOT NULL, respuesta TEXT)")
+        if "error" not in {fila[1] for fila in db.execute("PRAGMA table_info(acuses)")}:
+            db.execute("ALTER TABLE acuses ADD COLUMN error TEXT")
+        return db
+
+    def estado_reserva(self, msg_id: str) -> dict:
+        """T-92: COMPLETADO, FALLIDO (con la clase del error), EN_CURSO (o interrumpido) o DESCONOCIDO."""
+        with self._procesar, closing(self._acuses()) as db:
+            fila = db.execute("SELECT respuesta, error FROM acuses WHERE id=?", (msg_id,)).fetchone()
+        if fila is None:
+            return {"msg_id": msg_id, "estado": "DESCONOCIDO"}
+        respuesta, error = fila
+        estado = "COMPLETADO" if respuesta is not None else ("FALLIDO" if error else "EN_CURSO")
+        return {"msg_id": msg_id, "estado": estado, "error": error}
+
+    def reconciliar(self, msg_id: str, motivo: str) -> dict:
+        """T-92 (revisión de la auditoría de Astra): libera la reserva de un mensaje fallido o interrumpido para que el Broker
+        pueda reintentarlo con el mismo msg_id. Solo la usa el operador tras revisar F5; queda una incidencia en HA. Un mensaje
+        COMPLETADO no se libera (su respuesta se recupera tal cual)."""
+        if not isinstance(motivo, str) or not motivo.strip():
+            raise MensajeInvalido("La reconciliación exige un motivo")
+        estado = self.estado_reserva(msg_id)
+        if estado["estado"] not in ("FALLIDO", "EN_CURSO"):
+            raise MensajeInvalido(f"No hay una reserva fallida o interrumpida que reconciliar ({estado['estado']})")
+        # T-92 (QA r01, H-12): primero el rastro en HA; si HA falla, la reserva no se libera
+        self.almacen.incidencia("OTRO", f"Reserva de {msg_id} liberada por el operador ({estado['estado']}): {motivo.strip()}",
+                                "AG-01", severidad="Operativa", tratamiento="reconciliación manual de CT-01")
+        with self._procesar, closing(self._acuses()) as db, db:
+            db.execute("DELETE FROM acuses WHERE id=? AND respuesta IS NULL", (msg_id,))
+        return {**estado, "estado": "LIBERADA"}
 
     def acuse(self, msg: dict, asignado: str, **extra) -> dict:
         return {"acuse_de": msg["msg_id"], "asignado": asignado, "timestamp": self.almacen.reloj.ahora(), **extra}

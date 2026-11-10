@@ -21,8 +21,8 @@ from ..herramientas.ht06_indice import clave_hash
 from . import evaluacion as ev
 from . import operaciones as op
 
-CATALOG_VERSION = "4.0"
-# Las 60 fichas del índice del Catálogo V4.0
+CATALOG_VERSION = "5.0"
+# Índice de fichas documentadas. IMPLEMENTADAS enumera por separado los métodos ejecutables.
 FICHAS_CATALOGO = [
     "FX-TREND-001", "FX-BRK-001", "FX-STL-001", "FX-VOL-001", "FX-REGIME-001", "FX-PPA-001", "FX-CARRY-001",
     "FX-COINT-001", "FX-CORR-001", "ST-DESC-001", "ST-INF-001", "FIN-CAGR-001", "BIB-MET-001", "SIM-MC-001",
@@ -33,6 +33,11 @@ FICHAS_CATALOGO = [
     "FX-BEER-001", "FX-MOM-001", "CMD-CURVE-001", "CMD-INV-001", "CMD-RETDEC-001", "CMD-REAL-001", "REI-NAV-001",
     "REI-CAP-001", "REI-FFO-001", "REI-LEV-001", "CHR-ONCHAIN-001", "CHR-FUND-001", "CHR-FLOW-001",
     "CHR-TOKEN-001", "PRV-PME-001", "PRV-CF-001", "ALT-DESMOOTH-001", "ALT-HF-001", "ALT-AUC-001",
+    "DER-ROLL-001", "DER-SKEW-001", "DER-TERM-001", "DER-VRP-001",
+    "FON-DISC-001", "FON-FLOW-001", "FON-LEV-001", "FON-TD-001",
+    "IDX-CONC-001", "IDX-ERP-001", "IDX-REB-001", "IDX-REL-001",
+    "MON-EXP-001", "MON-FIX-001", "MON-REAL-001", "MON-YLD-001",
+    "TCV-BEI-001", "TCV-CDS-001", "TCV-SLOPE-001", "TCV-TP-001", "TCV-VIXTS-001",
 ]
 ALTERNATIVAS = {"REG-HMM-001": "FX-TREND-001", "FX-REGIME-001": "FX-TREND-001", "RISK-VAR-001": "RISK-DD-001",
                 "SCN-H-001": "FX-VOL-001", "FIR-SPREAD-001": "ST-DESC-001", "FIR-CARRY-001": "FX-CARRY-001",
@@ -302,7 +307,7 @@ class Motor:
         plan = peticion.get("plan", "PLAN_MIN")
         base = {"calc_id": None, "contrato": "CT-09", "msg_id": msg_id, "run_id": run_id, "solicitante": solicitante,
                 "operacion": {"method_id": ficha, "ficha_id": ficha, "ficha_version": None, "catalog_version": CATALOG_VERSION,
-                              "op_sin_ficha": False},
+                              "op_sin_ficha": ficha not in FICHAS_CATALOGO},
                 "perfil": peticion.get("perfil") or ["TRANSVERSAL"], "clase": peticion.get("clase"),
                 "horizonte": peticion.get("horizonte"), "modo": peticion.get("modo", "SYNC_CALC"), "plan": plan,
                 "prioridad": peticion.get("prioridad", "MATERIAL"), "parametros": params,
@@ -375,7 +380,7 @@ class Motor:
     def _rechazo(self, base: Dict, motivo: str, detalle: str, alternativa: Optional[str] = None, uc: float = 0.0) -> Dict:
         calc_id = self.almacen.nuevo_id("CALC")
         e = {**base, "tipo_entrada": "RECHAZO", "calc_id": calc_id, "estado": "REJECTED", "motivo_rechazo": motivo,
-             "detalle": detalle, "alternativa": alternativa, "madurez_metodo": "DOCUMENTADO" if motivo == "METODO_NO_IMPLEMENTADO" else base.get("madurez_metodo"),
+             "detalle": detalle, "alternativa": alternativa, "madurez_metodo": "DOCUMENTADO" if motivo == "METODO_NO_IMPLEMENTADO" else ("DESCONOCIDA" if motivo == "OPERACION_SIN_FICHA" else base.get("madurez_metodo")),
              "consumo_uc": 0.0, "limitaciones": [detalle], "incidencias": []}
         self.almacen.escribir("RC", "AG-13", e)
         return {"estado": "RECHAZADO", "motivo": motivo, "detalle": detalle, "calc_id": calc_id, "alternativa": alternativa}

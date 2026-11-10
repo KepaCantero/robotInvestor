@@ -12,6 +12,7 @@ from bloque_a.almacen import Almacen
 from bloque_a.configuracion import RUTA_UNIVERSO_EJEMPLO, cargar_config
 from bloque_a.herramientas.ht01_datos import (
     DatosInvalidos,
+    DatosNoDisponibles,
     FugaDeInformacion,
     ProveedorCSV,
     cargar_universo,
@@ -113,9 +114,11 @@ def test_r03_h16_un_miembro_parado_de_la_cesta_no_cuenta(tmp_path):
     _parar(datos, todos[0], "2026-04-10")
     b2 = _bloque(tmp_path / "b", datos=datos)
     b2.fijar_fecha(AS_OF)
-    r_sin, _ = b2.evaluador.rentabilidad("CESTA", "DIV", "2026-04-03", "2026-05-01", "H2")
-    otros = [b2.evaluador.rentabilidad(s, "DIV", "2026-04-03", "2026-05-01", "H2")[0] for s in todos[1:]]
-    assert r_sin == pytest.approx(sum(otros) / len(otros)) and r_sin != pytest.approx(r_todos)   # 8d74622: entraba con 0
+    # T-92 (D02): el miembro dejó de publicar DESPUÉS de la emisión, así que no se quita de la CESTA (sería usar información
+    # posterior); la CESTA no sirve y el pronóstico espera. Sigue sin entrar nunca con 0 (8d74622)
+    with pytest.raises(DatosNoDisponibles):
+        b2.evaluador.rentabilidad("CESTA", "DIV", "2026-04-03", "2026-05-01", "H2")
+    assert r_todos is not None
 
 
 # ---------------------------------------------------------------- H-17 · subyacente declarado sin datos

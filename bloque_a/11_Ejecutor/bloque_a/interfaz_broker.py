@@ -11,8 +11,8 @@ from __future__ import annotations
 
 import copy
 import datetime as dt
+import re
 from collections.abc import Iterable
-from typing import Dict, List, Optional
 
 import pandas as pd
 
@@ -29,6 +29,9 @@ ESTADOS_CREDENCIAL = ("PROVISTA", "DENEGADA", "APLAZADA")
 CAMPOS_VALOR = {"valor", "clave", "secreto", "valor_credencial", "password", "token", "api_key", "apikey"}
 
 
+RE_SOLO_FECHA = re.compile(r"\d{4}-\d{2}-\d{2}|\d{8}")
+RE_FECHA_ISO = re.compile(r"(\d{4}-\d{2}-\d{2}|\d{8})([T ]\d{2}:\d{2}(:\d{2}(\.\d{1,9})?)?(Z|[+-]\d{2}:?\d{2})?)?")
+
 class ConsultasBroker:
     """CT-23 · Consulta al Broker (Coordinador ↔ Broker)."""
 
@@ -40,15 +43,35 @@ class ConsultasBroker:
     def _todas(self, as_of=None) -> dict[str, dict]:
         return {k: v for k, v in self.b.almacen.estado("F5", as_of, clave="cns_id").items() if v.get("tipo_entrada", "").startswith("CNS")}
 
-    def _plazo(self, modo: str) -> str:
+    def _instante(self, fecha, *, plazo: bool = False):
+        """Instante en la zona del reloj. Con `plazo`, un plazo que solo trae la fecha vence al terminar ese día, como en la
+        versión anterior (T-92, QA r01, H-15), y no a las 00:00."""
+        # T-92 (QA r03, H-30): solo fechas ISO 8601 («2026-06-08», «20260608», con hora y zona opcionales); «2026», «2026-06»
+        # o «8 June 2026» se rechazan en lugar de interpretarse
+        if isinstance(fecha, str) and not RE_FECHA_ISO.fullmatch(fecha.strip()):
+            raise ValueError(f"Fecha u hora de consulta CT-23 no válida (se espera ISO 8601): {fecha!r}")
+        t = pd.Timestamp(fecha)
+        if pd.isna(t):
+            raise ValueError("Fecha u hora de consulta CT-23 no válida")
+        # T-92 (QA r02, H-22): un plazo con solo fecha vence al terminar ese día en la zona del reloj (medianoche local
+        # siguiente menos 1 µs), también en los cambios de hora; si la medianoche no existe en esa zona, la primera hora válida
+        zona = self.b.reloj.zona
+        if plazo and isinstance(fecha, str) and RE_SOLO_FECHA.fullmatch(fecha.strip()):
+            siguiente = (t + pd.Timedelta(days=1)).normalize().tz_localize(zona, nonexistent="shift_forward", ambiguous=True)
+            return siguiente - pd.Timedelta(microseconds=1)
+        if t.tzinfo is None:
+            return t.tz_localize(zona, nonexistent="shift_forward", ambiguous=True)
+        return t.tz_convert(zona)
+
+    def _plazo(self, modo: str, ahora) -> str:
         horas = (self.cfg.get("plazo_horas") or {}).get(modo, 4 if modo == "BLOQUEANTE" else 24)
-        ahora = dt.datetime.fromisoformat(self.b.reloj.ahora())
         return (ahora + dt.timedelta(hours=float(horas))).isoformat(timespec="minutes")
 
     # ------------------------------------------------------------------------------ saliente
     def enviar(self, consulta: dict, as_of=None) -> dict:
         """Envía al Broker dudas ya filtradas y agrupadas por el Analizador (o de admisión, en F0)."""
-        as_of = self.b.fijar_fecha(as_of or pd.Timestamp.today())
+        ahora = self._instante(as_of if as_of is not None else pd.Timestamp.now(tz=self.b.reloj.zona))
+        as_of = self.b.fijar_fecha(ahora.date())
         tipo, modo = consulta.get("tipo"), consulta.get("modo", "NO_BLOQUEANTE")
         if tipo not in TIPOS_CONSULTA:
             raise ValueError(f"Tipo de consulta no válido {tipo!r} (válidos: {', '.join(TIPOS_CONSULTA)})")
@@ -73,10 +96,11 @@ class ConsultasBroker:
                                                          "cns_id": ult["cns_id"], "preguntas": ult.get("preguntas", []) + preguntas,
                                                          "nota": f"Agrupada: máximo de {maximo} mensajes CT-23 por RUN- alcanzado"})
             return {"cns_id": ult["cns_id"], "estado": "AGRUPADA", "preguntas": len(e["preguntas"])}
+        plazo = self._instante(consulta["plazo_respuesta"], plazo=True).isoformat() if consulta.get("plazo_respuesta") else self._plazo(modo, ahora)
         cns_id = self.b.almacen.nuevo_id("CNS")
         cuerpo = {"cns_id": cns_id, "sentido": "SALIENTE", "run_id": run_id, "seg_id": consulta.get("seg_id"), "tipo": tipo, "modo": modo,
                   "preguntas": copy.deepcopy(preguntas), "clases": list(consulta.get("clases") or []),
-                  "plazo_respuesta": consulta.get("plazo_respuesta") or self._plazo(modo),
+                  "plazo_respuesta": plazo,
                   "punto_control": consulta.get("punto_control") or ("F0 del siguiente análisis de los tipos afectados" if modo == "BLOQUEANTE" else None),
                   "motivo": consulta.get("motivo") or normalizar(preguntas[0]["texto"])[:80]}
         msg = self.b.mensajeria.crear("CT-23", "AG-01", "BROKER", cuerpo, run_id=run_id, query_id=cns_id)
@@ -117,10 +141,11 @@ class ConsultasBroker:
     # ------------------------------------------------------------------------------ plazos y puntos de control
     def vencer(self, as_of) -> list[str]:
         """Marca VENCIDA toda consulta ENVIADA cuyo plazo ha pasado; el análisis sigue con el supuesto declarado."""
-        as_of = pd.Timestamp(as_of)
+        ahora = self._instante(as_of)
+        self.b.fijar_fecha(ahora.date())
         out = []
-        for k, c in self._todas().items():
-            if c.get("estado") == "ENVIADA" and c.get("sentido") == "SALIENTE" and pd.Timestamp(c["plazo_respuesta"][:10]) < as_of.normalize():
+        for k, c in self._todas(ahora.date()).items():
+            if c.get("estado") == "ENVIADA" and c.get("sentido") == "SALIENTE" and self._instante(c["plazo_respuesta"], plazo=True) <= ahora:
                 self.b.almacen.escribir("F5", "AG-01", {"tipo_entrada": "CNS", "id": self.b.almacen.nuevo_id("F5CNS"), "cns_id": k,
                                                          "estado": "VENCIDA", "supuestos_aplicados": [
                                                              {"indice": i, "supuesto": p["supuesto_declarado"]} for i, p in enumerate(c["preguntas"])]})
@@ -215,6 +240,8 @@ class Credenciales:
         """Respuesta del Broker (CT-25 retorno): solo estado y alias. Si trae el valor, se rechaza íntegra (6.2.5)."""
         as_of = self.b.fijar_fecha(as_of or pd.Timestamp.today())
         crd_id = respuesta.get("crd_id")
+        if not isinstance(crd_id, str):
+            raise ValueError("Se requiere el identificador de la solicitud CT-25")
         c = self._todas().get(crd_id)
         if not c:
             raise KeyError(f"Solicitud desconocida {crd_id}")
@@ -230,13 +257,18 @@ class Credenciales:
                                                      "rechazada sin copiarlo; se pide al Broker que la deposite en la bóveda y la renueve"})
             return {"crd_id": crd_id, "estado": "RECHAZADA_CREDENCIAL_EXPUESTA",
                     "accion": "Deposite la credencial en la bóveda de HT-01 y renuévela: ha quedado expuesta en un mensaje (7.10.3)"}
-        estado = respuesta.get("estado")
+        estado = respuesta.get("estado_credencial", respuesta.get("estado"))
         if estado not in ESTADOS_CREDENCIAL:
             raise ValueError(f"Estado no válido {estado!r}")
         ref = respuesta.get("credencial_ref")
-        if estado == "PROVISTA" and self.boveda.estado(ref or alias_de(c["servicio"]), as_of.date())["estado"] != "PROVISTA":
-            return {"crd_id": crd_id, "estado": "INCOHERENTE",
-                    "nota": "El Broker indica PROVISTA pero la bóveda no contiene la credencial: se mantiene la solicitud"}
+        if estado == "PROVISTA":
+            ref = ref or alias_de(c["servicio"])
+            if not isinstance(ref, str):
+                raise ValueError("El alias de credencial debe ser texto")
+            ficha = self.boveda.estado(ref, as_of.date())
+            if ficha["estado"] != "PROVISTA" or ficha.get("servicio") != c["servicio"]:
+                return {"crd_id": crd_id, "estado": "INCOHERENTE",
+                        "nota": "El alias no corresponde a una credencial vigente del servicio solicitado"}
         self.b.almacen.escribir("F5", "AG-01", {"tipo_entrada": "CRD", "id": self.b.almacen.nuevo_id("F5CRD"), "crd_id": crd_id,
                                                  "estado": estado, "credencial_ref": ref, "caducidad": respuesta.get("caducidad")})
         if estado == "DENEGADA":

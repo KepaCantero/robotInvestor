@@ -323,7 +323,8 @@
      "relevancia_decisional": "MEDIA",
      "siguiente_paso_sugerido": "ENVIAR_A_BLOQUE_B",
      "por_que_llano": "Su precio sube más que el de otras ideas parecidas desde hace meses.",
-     "que_puede_salir_mal_llano": "Si el mercado cae, esta idea también puede caer."
+     "que_puede_salir_mal_llano": "Si el mercado cae, esta idea también puede caer.",
+     "naturaleza_inversion": "CICLICA"
     },
     {
      "opp_id": "OPP-2026-0004",
@@ -449,7 +450,8 @@
      "relevancia_decisional": "BAJA",
      "siguiente_paso_sugerido": "ENVIAR_A_BLOQUE_B",
      "por_que_llano": "Su precio sube más que el de otras ideas parecidas desde hace meses.",
-     "que_puede_salir_mal_llano": "Si el mercado cae, esta idea también puede caer."
+     "que_puede_salir_mal_llano": "Si el mercado cae, esta idea también puede caer.",
+     "naturaleza_inversion": "CICLICA"
     },
     {
      "opp_id": "OPP-2026-0032",
@@ -575,7 +577,8 @@
      "relevancia_decisional": "BAJA",
      "siguiente_paso_sugerido": "ENVIAR_A_BLOQUE_B",
      "por_que_llano": "Su precio sube más que el de otras ideas parecidas desde hace meses.",
-     "que_puede_salir_mal_llano": "Si el mercado cae, esta idea también puede caer."
+     "que_puede_salir_mal_llano": "Si el mercado cae, esta idea también puede caer.",
+     "naturaleza_inversion": "CICLICA"
     }
    ],
    "menos_de_tres_motivo": null
@@ -717,7 +720,8 @@
      "relevancia_decisional": "BAJA",
      "siguiente_paso_sugerido": "ENVIAR_A_BLOQUE_B",
      "por_que_llano": "Su precio sube más que el de otras ideas parecidas desde hace meses.",
-     "que_puede_salir_mal_llano": "Si el mercado cae, esta idea también puede caer."
+     "que_puede_salir_mal_llano": "Si el mercado cae, esta idea también puede caer.",
+     "naturaleza_inversion": "CICLICA"
     },
     {
      "opp_id": "OPP-2026-0007",
@@ -843,7 +847,8 @@
      "relevancia_decisional": "BAJA",
      "siguiente_paso_sugerido": "ENVIAR_A_BLOQUE_B",
      "por_que_llano": "Su precio sube más que el de otras ideas parecidas desde hace meses.",
-     "que_puede_salir_mal_llano": "Si el mercado cae, esta idea también puede caer."
+     "que_puede_salir_mal_llano": "Si el mercado cae, esta idea también puede caer.",
+     "naturaleza_inversion": "CICLICA"
     },
     {
      "opp_id": "OPP-2026-0008",
@@ -969,7 +974,8 @@
      "relevancia_decisional": "BAJA",
      "siguiente_paso_sugerido": "ENVIAR_A_BLOQUE_B",
      "por_que_llano": "Su precio sube más que el de otras ideas parecidas desde hace meses.",
-     "que_puede_salir_mal_llano": "Si el mercado cae, esta idea también puede caer."
+     "que_puede_salir_mal_llano": "Si el mercado cae, esta idea también puede caer.",
+     "naturaleza_inversion": "CICLICA"
     }
    ],
    "menos_de_tres_motivo": null
@@ -1111,7 +1117,8 @@
      "relevancia_decisional": "BAJA",
      "siguiente_paso_sugerido": "ENVIAR_A_BLOQUE_B",
      "por_que_llano": "Su precio sube más que el de otras ideas parecidas desde hace meses.",
-     "que_puede_salir_mal_llano": "Si el mercado cae, esta idea también puede caer."
+     "que_puede_salir_mal_llano": "Si el mercado cae, esta idea también puede caer.",
+     "naturaleza_inversion": "CICLICA"
     },
     {
      "opp_id": "OPP-2026-0010",
@@ -1237,7 +1244,8 @@
      "relevancia_decisional": "BAJA",
      "siguiente_paso_sugerido": "ENVIAR_A_BLOQUE_B",
      "por_que_llano": "Su precio sube más que el de otras ideas parecidas desde hace meses.",
-     "que_puede_salir_mal_llano": "Si el mercado cae, esta idea también puede caer."
+     "que_puede_salir_mal_llano": "Si el mercado cae, esta idea también puede caer.",
+     "naturaleza_inversion": "CICLICA"
     },
     {
      "opp_id": "OPP-2026-0012",
@@ -1363,7 +1371,8 @@
      "relevancia_decisional": "BAJA",
      "siguiente_paso_sugerido": "ENVIAR_A_BLOQUE_B",
      "por_que_llano": "Su precio sube más que el de otras ideas parecidas desde hace meses.",
-     "que_puede_salir_mal_llano": "Si el mercado cae, esta idea también puede caer."
+     "que_puede_salir_mal_llano": "Si el mercado cae, esta idea también puede caer.",
+     "naturaleza_inversion": "CICLICA"
     }
    ],
    "menos_de_tres_motivo": null
@@ -1505,7 +1514,8 @@
      "relevancia_decisional": "ALTA",
      "siguiente_paso_sugerido": "ENVIAR_A_BLOQUE_B",
      "por_que_llano": "Su precio sube más que el de otras ideas parecidas desde hace meses.",
-     "que_puede_salir_mal_llano": "Si el mercado cae, esta idea también puede caer."
+     "que_puede_salir_mal_llano": "Si el mercado cae, esta idea también puede caer.",
+     "naturaleza_inversion": "CICLICA"
     },
     {
      "opp_id": "OPP-2026-0013",
@@ -1631,7 +1641,8 @@
      "relevancia_decisional": "BAJA",
      "siguiente_paso_sugerido": "ENVIAR_A_BLOQUE_B",
      "por_que_llano": "Su precio sube más que el de otras ideas parecidas desde hace meses.",
-     "que_puede_salir_mal_llano": "Si el mercado cae, esta idea también puede caer."
+     "que_puede_salir_mal_llano": "Si el mercado cae, esta idea también puede caer.",
+     "naturaleza_inversion": "CICLICA"
     },
     {
      "opp_id": "OPP-2026-0014",
@@ -1757,7 +1768,8 @@
      "relevancia_decisional": "ALTA",
      "siguiente_paso_sugerido": "ENVIAR_A_BLOQUE_B",
      "por_que_llano": "Su precio sube más que el de otras ideas parecidas desde hace meses.",
-     "que_puede_salir_mal_llano": "Si el mercado cae, esta idea también puede caer."
+     "que_puede_salir_mal_llano": "Si el mercado cae, esta idea también puede caer.",
+     "naturaleza_inversion": "CICLICA"
     }
    ],
    "menos_de_tres_motivo": null
@@ -1899,7 +1911,8 @@
      "relevancia_decisional": "BAJA",
      "siguiente_paso_sugerido": "ENVIAR_A_BLOQUE_B",
      "por_que_llano": "Su precio sube más que el de otras ideas parecidas desde hace meses.",
-     "que_puede_salir_mal_llano": "Si el mercado cae, esta idea también puede caer."
+     "que_puede_salir_mal_llano": "Si el mercado cae, esta idea también puede caer.",
+     "naturaleza_inversion": "CICLICA"
     },
     {
      "opp_id": "OPP-2026-0020",
@@ -2025,7 +2038,8 @@
      "relevancia_decisional": "MEDIA",
      "siguiente_paso_sugerido": "ENVIAR_A_BLOQUE_B",
      "por_que_llano": "Su precio sube más que el de otras ideas parecidas desde hace meses.",
-     "que_puede_salir_mal_llano": "Si el mercado cae, esta idea también puede caer."
+     "que_puede_salir_mal_llano": "Si el mercado cae, esta idea también puede caer.",
+     "naturaleza_inversion": "CICLICA"
     },
     {
      "opp_id": "OPP-2026-0041",
@@ -2151,7 +2165,8 @@
      "relevancia_decisional": "ALTA",
      "siguiente_paso_sugerido": "ENVIAR_A_BLOQUE_B",
      "por_que_llano": "Su precio sube más que el de otras ideas parecidas desde hace meses.",
-     "que_puede_salir_mal_llano": "Si el mercado cae, esta idea también puede caer."
+     "que_puede_salir_mal_llano": "Si el mercado cae, esta idea también puede caer.",
+     "naturaleza_inversion": "CICLICA"
     }
    ],
    "menos_de_tres_motivo": null
@@ -2293,7 +2308,8 @@
      "relevancia_decisional": "BAJA",
      "siguiente_paso_sugerido": "ENVIAR_A_BLOQUE_B",
      "por_que_llano": "Su precio sube más que el de otras ideas parecidas desde hace meses.",
-     "que_puede_salir_mal_llano": "Si el mercado cae, esta idea también puede caer."
+     "que_puede_salir_mal_llano": "Si el mercado cae, esta idea también puede caer.",
+     "naturaleza_inversion": "CICLICA"
     }
    ],
    "menos_de_tres_motivo": "Se proponen 1 opción(es) en Fondos y vehículos de inversión colectiva. Se proponen 1 opción(es): de 1 candidatas analizadas, 1 finalistas evaluadas y 1 elegibles (R14)."
@@ -2435,7 +2451,8 @@
      "relevancia_decisional": "BAJA",
      "siguiente_paso_sugerido": "ENVIAR_A_BLOQUE_B",
      "por_que_llano": "Su precio sube más que el de otras ideas parecidas desde hace meses.",
-     "que_puede_salir_mal_llano": "Si el mercado cae, esta idea también puede caer."
+     "que_puede_salir_mal_llano": "Si el mercado cae, esta idea también puede caer.",
+     "naturaleza_inversion": "CICLICA"
     },
     {
      "opp_id": "OPP-2026-0039",
@@ -2561,7 +2578,8 @@
      "relevancia_decisional": "BAJA",
      "siguiente_paso_sugerido": "ENVIAR_A_BLOQUE_B",
      "por_que_llano": "Su precio sube más que el de otras ideas parecidas desde hace meses.",
-     "que_puede_salir_mal_llano": "Si el mercado cae, esta idea también puede caer."
+     "que_puede_salir_mal_llano": "Si el mercado cae, esta idea también puede caer.",
+     "naturaleza_inversion": "CICLICA"
     }
    ],
    "menos_de_tres_motivo": "Se proponen 2 opción(es) en Derivados financieros. Se proponen 2 opción(es): de 2 candidatas analizadas, 2 finalistas evaluadas y 2 elegibles (R14)."
@@ -2703,7 +2721,8 @@
      "relevancia_decisional": "BAJA",
      "siguiente_paso_sugerido": "ENVIAR_A_BLOQUE_B",
      "por_que_llano": "Su precio sube más que el de otras ideas parecidas desde hace meses.",
-     "que_puede_salir_mal_llano": "Si el mercado cae, esta idea también puede caer."
+     "que_puede_salir_mal_llano": "Si el mercado cae, esta idea también puede caer.",
+     "naturaleza_inversion": "CICLICA"
     },
     {
      "opp_id": "OPP-2026-0022",
@@ -2829,7 +2848,8 @@
      "relevancia_decisional": "BAJA",
      "siguiente_paso_sugerido": "ENVIAR_A_BLOQUE_B",
      "por_que_llano": "Su precio sube más que el de otras ideas parecidas desde hace meses.",
-     "que_puede_salir_mal_llano": "Si el mercado cae, esta idea también puede caer."
+     "que_puede_salir_mal_llano": "Si el mercado cae, esta idea también puede caer.",
+     "naturaleza_inversion": "CICLICA"
     }
    ],
    "menos_de_tres_motivo": "Se proponen 2 opción(es) en Activos inmobiliarios cotizados. Se proponen 2 opción(es): de 2 candidatas analizadas, 2 finalistas evaluadas y 2 elegibles (R14)."
@@ -2971,7 +2991,8 @@
      "relevancia_decisional": "ALTA",
      "siguiente_paso_sugerido": "ENVIAR_A_BLOQUE_B",
      "por_que_llano": "Su precio sube más que el de otras ideas parecidas desde hace meses.",
-     "que_puede_salir_mal_llano": "Si el mercado cae, esta idea también puede caer."
+     "que_puede_salir_mal_llano": "Si el mercado cae, esta idea también puede caer.",
+     "naturaleza_inversion": "CICLICA"
     },
     {
      "opp_id": "OPP-2026-0029",
@@ -3097,7 +3118,8 @@
      "relevancia_decisional": "ALTA",
      "siguiente_paso_sugerido": "ENVIAR_A_BLOQUE_B",
      "por_que_llano": "Su precio sube más que el de otras ideas parecidas desde hace meses.",
-     "que_puede_salir_mal_llano": "Si el mercado cae, esta idea también puede caer."
+     "que_puede_salir_mal_llano": "Si el mercado cae, esta idea también puede caer.",
+     "naturaleza_inversion": "CICLICA"
     }
    ],
    "menos_de_tres_motivo": "Se proponen 2 opción(es) en Criptoactivos y activos digitales. Se proponen 2 opción(es): de 3 candidatas analizadas, 3 finalistas evaluadas y 2 elegibles (R14). OPP-2026-0045: A=60 en banda marginal sin segunda pasada independiente → Segunda pasada independiente de A y cálculo verificado."
@@ -3229,7 +3251,8 @@
      "relevancia_decisional": "ALTA",
      "siguiente_paso_sugerido": "ENVIAR_A_BLOQUE_B",
      "por_que_llano": "Su precio sube más que el de otras ideas parecidas desde hace meses.",
-     "que_puede_salir_mal_llano": "Si el mercado cae, esta idea también puede caer."
+     "que_puede_salir_mal_llano": "Si el mercado cae, esta idea también puede caer.",
+     "naturaleza_inversion": "CICLICA"
     }
    ],
    "menos_de_tres_motivo": "Se proponen 1 opción(es) en Capital privado y activos alternativos. Se proponen 1 opción(es): de 1 candidatas analizadas, 1 finalistas evaluadas y 1 elegibles (R14)."
@@ -3386,7 +3409,8 @@
      "relevancia_decisional": "ALTA",
      "siguiente_paso_sugerido": "ENVIAR_A_BLOQUE_B",
      "por_que_llano": "Su precio sube más que el de otras ideas parecidas desde hace meses.",
-     "que_puede_salir_mal_llano": "Si el mercado cae, esta idea también puede caer."
+     "que_puede_salir_mal_llano": "Si el mercado cae, esta idea también puede caer.",
+     "naturaleza_inversion": "CICLICA"
     },
     {
      "opp_id": "OPP-2026-0034",
@@ -3512,7 +3536,8 @@
      "relevancia_decisional": "ALTA",
      "siguiente_paso_sugerido": "ENVIAR_A_BLOQUE_B",
      "por_que_llano": "Su precio sube más que el de otras ideas parecidas desde hace meses.",
-     "que_puede_salir_mal_llano": "Si el mercado cae, esta idea también puede caer."
+     "que_puede_salir_mal_llano": "Si el mercado cae, esta idea también puede caer.",
+     "naturaleza_inversion": "CICLICA"
     }
    ],
    "menos_de_tres_motivo": "Se proponen 2 opción(es) en Tipos de interés, crédito y volatilidad. Se proponen 2 opción(es): de 2 candidatas analizadas, 2 finalistas evaluadas y 2 elegibles (R14)."
@@ -5826,5 +5851,6 @@
  "x_cambios_vs_anterior": "Cambios derivados de la evolución de las señales.",
  "x_n_efectivo": 12.410682316405431,
  "x_estado_run": "COMPLETO",
- "estado_g3": "APTO"
+ "estado_g3": "APTO",
+ "x_migracion_formato": "Ejemplo histórico V5.0. Se añadió naturaleza_inversion derivada de horizonte_principal mediante naturaleza_para; no es una nueva ejecución."
 }

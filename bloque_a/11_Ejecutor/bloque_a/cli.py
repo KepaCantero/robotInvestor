@@ -63,6 +63,9 @@ def main(argv: Optional[List[str]] = None) -> int:
     sub.add_parser("estado", help="Colas, consumo y últimos runs")
     p = sub.add_parser("verificar-enlaces", help="HT-02 sobre F7, F8, F9 y FM")
     p.add_argument("--aplicar", action="store_true", help="Escribe los estados en los archivos (por defecto solo informe)")
+    p = sub.add_parser("reconciliar-mensaje", help="CT-01: liberar la reserva de un mensaje fallido o interrumpido (tras revisar F5)")
+    p.add_argument("--msg-id", required=True)
+    p.add_argument("--motivo", required=True)
     p = sub.add_parser("backtest", help="Backtest sobre fechas as_of")
     p.add_argument("--desde", required=True)
     p.add_argument("--hasta", required=True)
@@ -132,7 +135,7 @@ def main(argv: Optional[List[str]] = None) -> int:
             codigo = max(codigo, ht02.main(args) or 0)
         return codigo
     bloque = _bloque(a, cfg)
-    as_of = pd.Timestamp(a.as_of) if a.as_of else pd.Timestamp.today().normalize()
+    as_of = pd.Timestamp(a.as_of) if a.as_of else pd.Timestamp.now(tz=bloque.reloj.zona).tz_localize(None)
     if a.cmd == "ciclo":
         print(json.dumps(_resumen_run(bloque.ciclo(as_of)), ensure_ascii=False, indent=1))
     elif a.cmd == "peticion":
@@ -151,6 +154,8 @@ def main(argv: Optional[List[str]] = None) -> int:
                           "lecciones_nuevas": [l["id"] for l in r["lecciones_nuevas"]]}, ensure_ascii=False, indent=1))
     elif a.cmd == "estado":
         print(json.dumps(bloque.estado(), ensure_ascii=False, indent=1, default=str))
+    elif a.cmd == "reconciliar-mensaje":
+        print(json.dumps(bloque.mensajeria.reconciliar(a.msg_id, a.motivo), ensure_ascii=False, indent=1))
     elif a.cmd == "seguimiento":
         print(json.dumps(_seguimiento(bloque, a, as_of), ensure_ascii=False, indent=1, default=str))
     elif a.cmd == "consulta-broker":

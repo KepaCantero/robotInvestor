@@ -21,6 +21,7 @@ from pathlib import Path
 from typing import Any, Dict, List, Optional
 
 from .configuracion import parametro
+from .contratos import secretos_en_texto
 
 
 @dataclass
@@ -47,10 +48,34 @@ class RespuestaLLM:
     extra: Dict[str, Any] = field(default_factory=dict)
 
 
+def contenido_sensible(valor) -> bool:
+    """Aplica R8 tanto al JSON estructurado como a texto libre o JSON incompleto."""
+    if isinstance(valor, (bytes, bytearray)):
+        valor = bytes(valor).decode("utf-8", errors="replace")
+    if isinstance(valor, str):
+        # Un valor sensible truncado antes de la comilla final también se descarta.
+        return bool(secretos_en_texto(valor + '"'))
+    if isinstance(valor, dict):
+        return (bool(secretos_en_texto(json.dumps(valor, ensure_ascii=False, default=str)))
+                or any(contenido_sensible(v) for v in valor.values()))
+    if isinstance(valor, (list, tuple)):
+        return any(contenido_sensible(v) for v in valor)
+    return False
+
+
+def respuesta_segura(r: RespuestaLLM) -> RespuestaLLM:
+    if contenido_sensible(r.texto):
+        return RespuestaLLM("", r.uso, r.modelo, stop_reason="contenido_sensible")
+    return r
+
+
 class LLMClient:
     nombre = "base"
     # PA-09 (T-66): ¿el modelo pudo aprender el periodo de un backtest? Por defecto sí (prudente); el simulado, no
     conocimiento_previo = True
+
+    def identidad_cache(self):
+        return [type(self).__module__, type(self).__qualname__, self.nombre]
 
     def generar(self, *, agente: str, modelo: str, system: List[Dict], mensajes: List[Dict], max_tokens: int,
                 herramientas: Optional[List[Dict]] = None, esquema: Optional[Dict] = None) -> RespuestaLLM:
@@ -77,6 +102,9 @@ class AnthropicClient(LLMClient):
         self.salida_estructurada = salida_estructurada
         self.max_continuaciones = max_continuaciones
 
+    def identidad_cache(self):
+        return [super().identidad_cache(), self.salida_estructurada, self.max_continuaciones]
+
     @staticmethod
     def _uso(u: Any) -> Uso:
         if u is None:
@@ -89,6 +117,8 @@ class AnthropicClient(LLMClient):
 
     def generar(self, *, agente: str, modelo: str, system: List[Dict], mensajes: List[Dict], max_tokens: int,
                 herramientas: Optional[List[Dict]] = None, esquema: Optional[Dict] = None) -> RespuestaLLM:
+        if contenido_sensible([system, mensajes]):
+            return RespuestaLLM("", Uso(), modelo, stop_reason="contenido_sensible")
         msgs = list(mensajes)
         kwargs: Dict[str, Any] = {"model": modelo, "max_tokens": int(max_tokens), "system": system, "messages": msgs,
                                   "metadata": {"user_id": f"bloque-a-{agente}"}}
@@ -100,11 +130,18 @@ class AnthropicClient(LLMClient):
         textos: List[str] = []
         stop = None
         for _ in range(self.max_continuaciones + 1):
-            resp = self.sdk.messages.create(**kwargs)
+            try:
+                resp = self.sdk.messages.create(**kwargs)
+            except Exception:
+                # El SDK ya ha agotado sus reintentos. Los mensajes de excepción pueden contener secretos.
+                return RespuestaLLM("", uso, modelo, stop_reason="error_proveedor")
             uso.sumar(self._uso(getattr(resp, "usage", None)))
             stop = getattr(resp, "stop_reason", None)
             contenido = list(getattr(resp, "content", []) or [])
             textos = [getattr(b, "text", "") for b in contenido if getattr(b, "type", None) == "text"]
+            if contenido_sensible("".join(textos)) or any(
+                    contenido_sensible(b.model_dump() if hasattr(b, "model_dump") else vars(b)) for b in contenido):
+                return RespuestaLLM("", uso, modelo, stop_reason="contenido_sensible")
             if stop == "pause_turn":
                 # Turno pausado por una herramienta de servidor: se devuelve el contenido y se continúa.
                 msgs = msgs + [{"role": "assistant", "content": contenido}]
@@ -132,6 +169,9 @@ class MockClient(LLMClient):
         self._lock = threading.Lock()
         self.llamadas: List[Dict] = []
         self.fallos = dict(fallos or {})   # agente -> nº de respuestas inválidas a devolver (pruebas)
+
+    def identidad_cache(self):
+        return [super().identidad_cache(), self.semilla]
 
     def generar(self, *, agente: str, modelo: str, system: List[Dict], mensajes: List[Dict], max_tokens: int,
                 herramientas: Optional[List[Dict]] = None, esquema: Optional[Dict] = None) -> RespuestaLLM:
@@ -186,6 +226,10 @@ class ReplayClient(LLMClient):
         elif modo == "reproducir":
             raise FileNotFoundError(f"No existe la grabación {self.ruta}")
 
+    def identidad_cache(self):
+        return [super().identidad_cache(), str(self.ruta.resolve()), self.modo,
+                self.base.identidad_cache() if self.base else None]
+
     @staticmethod
     def clave(agente: str, modelo: str, system: List[Dict], mensajes: List[Dict], herramientas) -> str:
         h = hashlib.sha256()
@@ -195,15 +239,22 @@ class ReplayClient(LLMClient):
 
     def generar(self, *, agente: str, modelo: str, system: List[Dict], mensajes: List[Dict], max_tokens: int,
                 herramientas: Optional[List[Dict]] = None, esquema: Optional[Dict] = None) -> RespuestaLLM:
-        k = self.clave(agente, modelo, system, mensajes, herramientas)
+        antigua = self.clave(agente, modelo, system, mensajes, herramientas)
+        k = hashlib.sha256(json.dumps([antigua, system, max_tokens, esquema], ensure_ascii=False,
+                                      sort_keys=True).encode()).hexdigest()
         if self.modo == "reproducir":
-            d = self._tabla.get(k)
+            d = self._tabla.get(k) or self._tabla.get(antigua)
             if d is None:
                 raise ReplayFaltante(f"Respuesta no grabada para {agente} (clave {k[:12]}…)")
-            return RespuestaLLM(texto=d["texto"], uso=Uso(**d["uso"]), modelo=d["modelo"], stop_reason=d.get("stop_reason"))
+            stop = d.get("stop_reason")
+            return respuesta_segura(RespuestaLLM(d["texto"], Uso(**d["uso"]), d["modelo"], stop,
+                                                 d.get("truncada", stop == "max_tokens"),
+                                                 d.get("rechazo", stop == "refusal")))
+        assert self.base is not None  # validado al abrir en modo grabar
         r = self.base.generar(agente=agente, modelo=modelo, system=system, mensajes=mensajes, max_tokens=max_tokens,
                               herramientas=herramientas, esquema=esquema)
-        d = {"clave": k, "agente": agente, "modelo": modelo, "texto": r.texto, "uso": asdict(r.uso), "stop_reason": r.stop_reason}
+        r = respuesta_segura(r)
+        d = {"truncada": r.truncada, "rechazo": r.rechazo, "clave": k, "agente": agente, "modelo": modelo, "texto": r.texto, "uso": asdict(r.uso), "stop_reason": r.stop_reason}
         with self._lock:
             self._tabla[k] = d
             self.ruta.parent.mkdir(parents=True, exist_ok=True)
