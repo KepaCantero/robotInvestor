@@ -1,16 +1,16 @@
 # T-90 · QA independiente
 
 - **Revisor:** Claude, revisor nuevo sin el contexto de la implementación (subagente) · **Ronda:** r01 · **Fecha:** 2026-11-10
-- **Objeto:** el cambio sin commit en `bloque_b/11_Ejecutor/bloque_b/orquestacion.py` (bucle de notas de `_f2_dims`) y la prueba nueva test_t90_nota_fuera_de_corte.py de las pruebas del ejecutor de B. Origen: H-01 de `.docs/tickets/T-64/qa.md`.
+- **Objeto:** el cambio en `bloque_b/11_Ejecutor/bloque_b/orquestacion.py` (bucle de notas de `_f2_dims`) y la prueba nueva test_t90_nota_fuera_de_corte.py de las pruebas del ejecutor de B. Origen: H-01 de `.docs/tickets/T-64/qa.md`. Durante la revisión se registró en el commit `f76e3ec` (con un borrador de este qa.md y las sondas); el contenido de B de ese commit es idéntico al revisado.
 
 ## Reproducción desde limpio
 
 | Paso | Comando | Resultado |
 | --- | --- | --- |
-| Prueba nueva con el código anterior (copia limpia de HEAD `c4d0c5a` con `git worktree add --detach`, solo la prueba copiada) | `.venv/bin/pytest -q bloque_b/11_Ejecutor/tests/test_t90_nota_fuera_de_corte.py` | **1 failed**: `AssertionError: []` (`estados_degradados` vacío). La prueba detecta la regresión |
+| Prueba nueva con el código anterior (copia limpia de `c4d0c5a`, anterior al cambio con `git worktree add --detach`, solo la prueba copiada) | `.venv/bin/pytest -q bloque_b/11_Ejecutor/tests/test_t90_nota_fuera_de_corte.py` | **1 failed**: `AssertionError: []` (`estados_degradados` vacío). La prueba detecta la regresión |
 | Sonda S1 con el código anterior (misma copia) | sonda r01 con `RI_EJECUTOR_B` apuntando a la copia | falla solo `S1.declaradas_por_dim` (`[]`): sin la corrección la exclusión no deja rastro |
 | Suite de B en el repo de trabajo | `.venv/bin/pytest -q bloque_b/11_Ejecutor` | **175 passed**, 1 aviso (pandas), 408 s |
-| Gate completo sobre la copia limpia de HEAD + los dos archivos de B (sin los cambios de otros agentes en `sistema_global/`) | `.docs/scripts/gate.sh --completo` | RESULTADO_GATE |
+| Gate completo sobre la copia limpia de `c4d0c5a` + los dos archivos de B (sin los cambios de otros agentes en `sistema_global/`; en B equivale a `f76e3ec`) | `.docs/scripts/gate.sh --completo` | **12/12** (corpus, NFC, YAML, secretos, refs vivas, ruff 3084 ≤ 3109, mypy A 123 · FX 174 · B 159 en cuota; pytest A 317, A-Forex 68, B 175) |
 
 La copia limpia se retiró al terminar con `git worktree remove`.
 
@@ -19,7 +19,7 @@ La copia limpia se retiró al terminar con `git worktree remove`.
 | Criterio | Cumple | Evidencia |
 | --- | --- | --- |
 | CA-1 · la nota fuera de corte no está en F2 ni en el paquete, y `estados_degradados` del paquete la declara | sí | Prueba del implementador (pasa) y sondas S1, S2 y S6: ninguna nota con la marca de la sonda y fechas inválidas aparece entre los CLM de F2 ni en `dimensiones[].notas` del paquete; cada dimensión afectada aparece en `estados_degradados` con su especialista («D2: nota de AG-B04 excluida…»), y la fila «Estados degradados» de la portada del informe técnico la lleva completa |
-| CA-2 · la prueba falla con el código anterior; la suite de B y el gate pasan | sí | Primera fila de la reproducción (falla con HEAD); suite de B 175/175; gate RESULTADO_GATE_CORTO |
+| CA-2 · la prueba falla con el código anterior; la suite de B y el gate pasan | sí | Primera fila de la reproducción (falla con `c4d0c5a`); suite de B 175/175; gate 12/12 |
 
 ## Ataques (sondas en revisores/ de este ticket: r01_comun.py y r01_sondas.py)
 
@@ -52,4 +52,4 @@ Revisión de código (sin script):
 
 ## Veredicto
 
-**APTO** · los dos criterios se cumplen con evidencia propia (la prueba falla con el código anterior; suite de B 175/175; gate RESULTADO_GATE_CORTO sobre copia limpia) y ningún hallazgo crítico, alto ni medio. H-01, H-02 y H-03 son bajos: pasan a la deuda técnica con su ID si no se corrigen. El cierre del ticket (estado, deuda, diario, commit) queda para quien coordina, fuera del alcance de esta revisión.
+**APTO** · los dos criterios se cumplen con evidencia propia (la prueba falla con el código anterior; suite de B 175/175; gate 12/12 sobre copia limpia) y ningún hallazgo crítico, alto ni medio. H-01, H-02 y H-03 son bajos: pasan a la deuda técnica con su ID si no se corrigen. El cierre del ticket (estado, deuda, diario, commit) queda para quien coordina, fuera del alcance de esta revisión.

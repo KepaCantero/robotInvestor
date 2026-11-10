@@ -2,7 +2,7 @@
 
 | Campo | Valor |
 | --- | --- |
-| Estado | EN QA |
+| Estado | CERRADO (QA r01 APTO, 10-11-2026) |
 | Pieza | bloque_b |
 | Planifica · implementa · QA | claude · claude · un revisor nuevo sin contexto |
 | Aprobación del operador | No necesaria: corrección técnica de robustez y trazabilidad. El operador pidió el 2026-11-10 «sigue con el resto de la deuda que no dependa de mí» |
@@ -39,3 +39,4 @@ La nota se sigue excluyendo. Ahora, además, se añade a `estados_degradados` de
 
 - 2026-11-10 · ABIERTO · creado con nuevo_ticket.sh
 - 2026-11-10 · EN QA · corrección y prueba (falla con HEAD: `estados_degradados` vacío)
+- 2026-11-10 · CERRADO · QA r01 APTO. Al cerrar se corrigen H-01 (motivo propio para las fechas incompletas o ilegibles, que ya no se rotulan como fuga) y H-02 (cuántas notas se excluyeron por dimensión y especialista), con una prueba nueva, y H-03 (documentación). La suite de B queda en 176

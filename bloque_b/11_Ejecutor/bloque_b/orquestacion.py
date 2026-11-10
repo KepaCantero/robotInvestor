@@ -719,6 +719,7 @@ class Coordinador:
         # Curador: ingesta, CLM-B/EVD-B y verificación del etiquetado (CT-B-15)
         piezas = []
         dims_out = []
+        excluidas: Dict = {}   # T-90: (dimensión, especialista, motivo) -> notas excluidas por sus fechas de fuente
         for d in ht03.DIMENSIONES:
             if d not in informes:
                 continue
@@ -730,9 +731,12 @@ class Coordinador:
                 marcas = {}
                 if "fechas" in n or any(k in n for k in CAMPOS_FECHA):
                     if not fechas_de_fuente(n, self.ent.as_of, self.ent.reloj.zona):
-                        # T-90 (QA de T-64, H-01): la nota se excluye (en backtest sería una fuga) y se declara
-                        st["estados_degradados"].append(f"{d}: nota de {inf['especialista']} excluida por fechas de fuente posteriores al corte "
-                                                        "o incoherentes (fuga de información)")
+                        # T-90 (QA de T-64, H-01): la nota se excluye (en backtest sería una fuga) y se declara, con su motivo y su recuento
+                        f_ = n.get("fechas") if isinstance(n.get("fechas"), dict) else {}
+                        dias_ = [dia_local(f_.get(k, n.get(k)), self.ent.reloj.zona) for k in CAMPOS_FECHA]
+                        fuga = any(x is not None and x > self.ent.as_of for x in dias_)
+                        clave = (d, inf["especialista"], "fuga" if fuga else "fechas")
+                        excluidas[clave] = excluidas.get(clave, 0) + 1
                         continue
                     marcas = {k: n.get("fechas", {}).get(k, n.get(k)) for k in CAMPOS_FECHA}
                 et = controlado(n.get("etiqueta"), "etiqueta", "[INTERPRETACIÓN]")
@@ -764,6 +768,10 @@ class Coordinador:
                              "confianza": {"nivel": controlado(conf.get("nivel"), "confianza", "media"),
                                            "factores_a_favor": conf.get("factores_a_favor") or [], "factores_en_contra": conf.get("factores_en_contra") or []},
                              "lagunas": inf.get("lagunas") or [], "discrepancias": [], "senales_para_otras_dimensiones": inf.get("senales_para_otras_dimensiones") or []})
+        for (d_, ag_, mot_), n_ in sorted(excluidas.items()):
+            st["estados_degradados"].append(f"{d_}: {n_} nota(s) de {ag_} excluida(s) por "
+                                            + ("fechas de fuente posteriores al corte (fuga de información)" if mot_ == "fuga"
+                                               else "fechas de fuente incompletas, ilegibles o incoherentes"))
         if piezas:
             self.inv.llamar("AG-B15", "CT-B-15", "ingesta", {"pet_id": st["pet_id"], "piezas": piezas[:60]},
                             "Verifica etiquetas, raíces e independencia de las piezas ingeridas.", {"piezas": "array"},
