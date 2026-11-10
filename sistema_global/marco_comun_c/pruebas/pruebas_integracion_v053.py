@@ -64,9 +64,14 @@ def main():
           and mig006.esquema_desde == mg.ESQUEMA_V0_67 and mig006.esquema_hasta == mg.ESQUEMA_V0_68
           and mig006.cambia == frozenset() and mg._v068({})["consultas"] == {"historial": [], "estado": "VIGENTE", "entradas": []})
     # V0.70 (T-75): el esquema del código pasa a V0.70 (MIG-007, sin cambios en el estado: aviso O-40 y parámetros nuevos)
-    h.chk("v070_esquema_actual_y_MIG007_sin_cambios", pe.esquema_actual() == mg.ESQUEMA_V0_70 and mg.ESQUEMA_V0_70 in mg.ESQUEMAS
-          and mg.MIGRACIONES[-1].id == "MIG-007" and mg.MIGRACIONES[-1].esquema_desde == mg.ESQUEMA_V0_68
-          and mg.MIGRACIONES[-1].aplicar is mg._sin_cambios and mg.MIGRACIONES[-1].cambia == frozenset())
+    mig007 = next((m for m in mg.MIGRACIONES if m.id == "MIG-007"), None)
+    h.chk("v070_esquema_registrado_y_MIG007_sin_cambios", mg.ESQUEMA_V0_70 in mg.ESQUEMAS and mig007 is not None
+          and mig007.esquema_desde == mg.ESQUEMA_V0_68 and mig007.esquema_hasta == mg.ESQUEMA_V0_70
+          and mig007.aplicar is mg._sin_cambios and mig007.cambia == frozenset())
+    # V0.71 (T-76): el esquema del código pasa a V0.71 (MIG-008: el registro de la cartera sombra, vacío)
+    h.chk("v071_esquema_actual_y_MIG008_con_la_sombra_vacia", pe.esquema_actual() == mg.ESQUEMA_V0_71 and mg.ESQUEMA_V0_71 in mg.ESQUEMAS
+          and mg.MIGRACIONES[-1].id == "MIG-008" and mg.MIGRACIONES[-1].esquema_desde == mg.ESQUEMA_V0_70
+          and mg.MIGRACIONES[-1].cambia == frozenset() and mg._v071({})["sombra"] == {"historial": [], "estado": "VIGENTE", "entradas": []})
 
     # ------------------------------------------------------------------------------------------- MIG-004
     viejo = (AQUI / "estados" / "estado_V0_52.json").read_text(encoding="ascii")
@@ -76,7 +81,7 @@ def main():
     h.chk("con_este_codigo_no_se_carga_PE08", pe.cargar(viejo)["codigo"] == "PE-08")
     r = mg.migrar(viejo, "2026-11-08T10:00:00+00:00", "Paso el estado guardado al código de V0.53")
     o2 = r.get("orquestador")
-    h.chk("MIG004_lo_migra", r["ok"] and r["migraciones"] == ["MIG-004", "MIG-005", "MIG-006", "MIG-007"] and o2.cfg["libres_tope_dia_eur"] == CONFIG_DEFECTO["libres_tope_dia_eur"]
+    h.chk("MIG004_lo_migra", r["ok"] and r["migraciones"] == ["MIG-004", "MIG-005", "MIG-006", "MIG-007", "MIG-008"] and o2.cfg["libres_tope_dia_eur"] == CONFIG_DEFECTO["libres_tope_dia_eur"]
           and o2.libres == [] and o2.cortacircuitos == [] and o2.cfg["version_config"] == "CFG-0.11.0"
           and o2.integridad() == [] and o2.config_integra(), r.get("motivo"))
     h.chk("MIG004_no_cambia_el_nivel_de_nadie_ni_lo_demas", o2.cfg["nivel_autonomia"] == d["estado"]["cfg"]["nivel_autonomia"]
@@ -84,7 +89,7 @@ def main():
     h.chk("MIG004_declara_lo_que_cambia", [m for m in mg.MIGRACIONES if m.id == "MIG-004"][0].cambia == frozenset({"cfg.libres_tope_dia_eur", "libres"}))
     v50 = (AQUI / "estados" / "estado_V0_50.json").read_text(encoding="ascii")
     r = mg.migrar(v50, "2026-11-08T10:00:00+00:00", "Paso el estado guardado al código de V0.53")
-    h.chk("desde_V0_50_la_cadena_es_MIG003_a_MIG007", r["ok"] and r["migraciones"] == ["MIG-003", "MIG-004", "MIG-005", "MIG-006", "MIG-007"] and r["orquestador"].integridad() == [], r.get("motivo"))
+    h.chk("desde_V0_50_la_cadena_es_MIG003_a_MIG008", r["ok"] and r["migraciones"] == ["MIG-003", "MIG-004", "MIG-005", "MIG-006", "MIG-007", "MIG-008"] and r["orquestador"].integridad() == [], r.get("motivo"))
     d2 = json.loads(viejo)
     d2["estado"]["cfg"]["version_config"] = "CFG-7.7.7"
     h.chk("una_version_de_configuracion_propia_no_se_pisa", mg._v053(d2["estado"])["cfg"]["version_config"] == "CFG-7.7.7")

@@ -245,6 +245,7 @@ CATALOGO = {
     ("orquestador", "O-38"): {"que": "cortacircuito global por pérdida del día o de la semana (T-40)", "efecto": "AVISO", "desde": None, "prioridad": "ALTA"},
     ("orquestador", "O-39"): {"que": "se sube de un nivel en uno: cada nivel exige su periodo mínimo", "efecto": "AVISO", "desde": None, "prioridad": "ALTA"},
     ("orquestador", "O-40"): {"que": "alarma de sequía: en el plazo ninguna oportunidad llegó a invertirse habiendo candidatos que pasaron el análisis (D-22)", "efecto": "AVISO", "desde": None, "prioridad": "MEDIA"},
+    ("orquestador", "O-41"): {"que": "tras el plazo de juicio, el robot no supera a la cartera sombra en términos reales: se propone gestión pasiva y decide el operador (P17)", "efecto": "AVISO", "desde": None, "prioridad": "ALTA"},
     ("persistencia", "O-13"): {"que": "el estado cargado no cuadra : kill-switch activado", "efecto": "AVISO", "desde": None},
     ("persistencia", "PE-01"): {"que": "el estado tiene valores que no se pueden poner en forma canónica", "efecto": "RECHAZA", "desde": None},
     ("persistencia", "PE-02"): {"que": "la huella del estado no cuadra: el fichero está roto o se tocó a mano", "efecto": "RECHAZA", "desde": None},
