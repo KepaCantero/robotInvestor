@@ -33,6 +33,7 @@ from k_calidad import eventos_entre, hash_del_sello  # noqa: E402
 from control_f import VERSION_REGLAS as VERSION_REGLAS_F  # noqa: E402
 import mandatos as sc1  # noqa: E402  T-51: SC-1, el mandato de cada cartera
 import motor as sc3  # noqa: E402  T-26: SC-3, registro del Motor numérico
+import sombra as sb  # noqa: E402  T-76: cartera sombra pasiva (cálculo de I)
 from control_f import POLITICA_DEFECTO, aplanar_informe, controlar, controles_de_contexto, divisa_cotizada, par_divisas, politica_valida, tipo_cambio, validar_informe_f  # noqa: E402
 
 VERSION_REGLAS = "ORQ-0.1.0"
@@ -145,7 +146,7 @@ def _dia(t):
 
 # V0.51 (T-18): avisos que, en el periodo de promoción, impiden subir de nivel (además de O-19, ALCANZADO y el kill-switch)
 INCIDENTES_PROMOCION = ("O-03", "O-18", "O-25", "O-37")   # V0.53: también el tope de LIBRES superado (T-33)
-PRIORIDAD_AVISO = {"O-40": "MEDIA", "O-39": "ALTA", "O-36": "MEDIA", "O-35": "ALTA", "O-34": "ALTA", "O-33": "MEDIA", "O-32": "MEDIA", "O-31": "MEDIA", "O-20": "MEDIA", "O-30": "ALTA", "O-25": "ALTA", "O-26": "ALTA", "O-19": "ALTA", "O-18": "ALTA", "O-03": "ALTA", "O-08": "ALTA", "O-09": "ALTA", "O-13": "ALTA", "O-17": "ALTA", "O-37": "ALTA", "O-38": "ALTA"}   # O-37 (T-33): tope diario de las LIBRES superado, o LIBRES sin poder valorar; O-38 (T-40): cortacircuito global por pérdida
+PRIORIDAD_AVISO = {"O-41": "ALTA", "O-40": "MEDIA", "O-39": "ALTA", "O-36": "MEDIA", "O-35": "ALTA", "O-34": "ALTA", "O-33": "MEDIA", "O-32": "MEDIA", "O-31": "MEDIA", "O-20": "MEDIA", "O-30": "ALTA", "O-25": "ALTA", "O-26": "ALTA", "O-19": "ALTA", "O-18": "ALTA", "O-03": "ALTA", "O-08": "ALTA", "O-09": "ALTA", "O-13": "ALTA", "O-17": "ALTA", "O-37": "ALTA", "O-38": "ALTA"}   # O-37 (T-33): tope diario de las LIBRES superado, o LIBRES sin poder valorar; O-38 (T-40): cortacircuito global por pérdida
 ACTORES_PROPUESTA = set(EMISORES)   # quien propone no aprueba ni controla: F, D y H no proponen (Constitución §2, P1)
 
 
@@ -465,6 +466,7 @@ class Orquestador:
         self.cortacircuitos = []   # T-40: los días UTC en que el cortacircuito global por pérdida saltó, una fila por día
         self.degradadas = {}   # cartera -> motivo: bajada automática a L1 hasta que el operador la restablezca
         self.consultas = {"historial": [], "estado": "VIGENTE", "entradas": []}   # T-80: rastro SC-5 de las consultas, solo añadir
+        self.sombra = {"historial": [], "estado": "VIGENTE", "entradas": []}      # T-76: cartera sombra pasiva, solo añadir
         self.ultimas_degradaciones = {}   # V0.51: cartera -> último instante en que se pidió degradarla (también en L0 o L1)
 
     # ------------------------------------------------------------ niveles de autonomía
@@ -947,7 +949,8 @@ class Orquestador:
                 **{"POS:" + k: v["historial"][-1]["hash"] for k, v in self.posiciones.items()},
                 "LIM": self.limites["historial"][-1]["hash"],
                 **({"SC3": self.sc3["historial"][-1]["hash"]} if self.sc3["historial"] else {}),
-                **({"SC5": self.consultas["historial"][-1]["hash"]} if self.consultas["historial"] else {})}
+                **({"SC5": self.consultas["historial"][-1]["hash"]} if self.consultas["historial"] else {}),
+                **({"SOMBRA": self.sombra["historial"][-1]["hash"]} if self.sombra["historial"] else {})}
 
     def _propuesta_ok(self, e):
         if not e["propuesta"]:
@@ -1064,6 +1067,8 @@ class Orquestador:
             return "SELLOS"
         if not self.consultas_ok():   # T-80: el rastro de las consultas (SC-5) retocado
             return "CONSULTAS"
+        if not self.sombra_ok():   # T-76: el registro de la cartera sombra retocado
+            return "SOMBRA"
         return next((k for k, x in sorted(self.expedientes.items()) if not self._todo_ok(x)), None)
 
     def integridad(self):
@@ -1071,7 +1076,8 @@ class Orquestador:
         return sorted(["EXP:" + k for k, v in self.expedientes.items() if not self._todo_ok(v)]
                       + ["POS:" + k for k, v in self.posiciones.items() if not self._posicion_ok(v)]
                       + ([] if self.config_integra() else ["CONFIG"]) + ([] if self.motor_ok() else ["MOTOR"])
-                      + ([] if self.sellos_ok() else ["SELLOS"]) + ([] if self.consultas_ok() else ["CONSULTAS"]))
+                      + ([] if self.sellos_ok() else ["SELLOS"]) + ([] if self.consultas_ok() else ["CONSULTAS"])
+                      + ([] if self.sombra_ok() else ["SOMBRA"]))
 
     def _configuracion_completa(self):
         """Todo lo que decide: la configuración del Orquestador (con la política de F), los parámetros versionados de K, D, H, E y
@@ -3379,6 +3385,126 @@ class Orquestador:
                 self._degradar(c, f"el sello {sid} de {eid} ya no está vigente para {c}", ahora)
                 cambios.append(("degradada", c, sid))
         return _r(True, "OK", f"{len(cambios)} cambio(s)", cambios=cambios)
+
+    # ------------------------------------------------------------ T-76 (§9 punto 9, D-22, D-27, D-30): cartera sombra pasiva
+    def sombra_ok(self):
+        """El registro de la sombra es íntegro: su cadena cuadra y ninguna entrada cambió (vacío, recién creado, también)."""
+        try:
+            L = self.sombra
+            if L == {"historial": [], "estado": "VIGENTE", "entradas": []}:
+                return True
+            return (self._historial_ok(L) and len(L["historial"]) == len(L["entradas"])
+                    and all(h["datos"] == _hash(x) for h, x in zip(L["historial"], L["entradas"]))
+                    and L["entradas"][0]["tipo"] == "INICIO" and all(x["tipo"] != "INICIO" for x in L["entradas"][1:]))
+        except (KeyError, TypeError, AttributeError, ValueError, IndexError):
+            return False
+
+    def _anota_sombra(self, entrada, actor, ahora):
+        L = self.sombra
+        L["entradas"].append(entrada)
+        self._anota(L, "VIGENTE" if L["historial"] else None, "VIGENTE", actor, ahora, entrada["tipo"], entrada["tipo"], datos=_hash(entrada))
+
+    def _sombra_precheck(self):
+        err = self._config_rota()
+        if err:
+            return err
+        rota = self._rota()
+        if rota:
+            self._activar_kill(f"integridad rota en {rota}", "ORQUESTADOR", self.ultimo_ahora or "1970-01-01T00:00:00+00:00")
+            return _no("O-13", f"el registro {rota} no es íntegro")
+        return None
+
+    @_seguro
+    def iniciar_sombra(self, importe_eur, precio_indice, actor, ahora):
+        """El primer día: la sombra compra el índice (PARAMETROS["i_indice_sombra"]) con el mismo capital que la cartera real.
+        Solo el operador, una vez."""
+        self._ahora(ahora)
+        if actor != "OPERADOR":
+            return _no("O-05", "solo el operador inicia la cartera sombra")
+        if self.sombra["entradas"]:
+            return _no("O-02", "la cartera sombra ya está iniciada", duplicado=True)
+        if not (sb.num_pos(importe_eur) and sb.num_pos(precio_indice)):
+            return _no("O-01", "importe y precio del índice: números finitos positivos")
+        err = self._sombra_precheck()
+        if err:
+            return err
+        self._anota_sombra({"tipo": "INICIO", "indice": PARAMETROS["i_indice_sombra"], "importe_eur": float(importe_eur),
+                            "precio_indice": float(precio_indice), "ahora": ahora}, actor, ahora)
+        return _r(True, "OK", "cartera sombra iniciada", unidades=float(importe_eur) / float(precio_indice))
+
+    @_seguro
+    def movimiento_sombra(self, tipo, importe_eur, precio_indice, actor, ahora):
+        """Un aporte o una retirada de la cartera real se replica en la sombra, al precio del índice de ese momento. La declara el
+        operador (o G, que ve el movimiento en el intermediario). Una retirada no puede dejar la sombra en negativo."""
+        self._ahora(ahora)
+        if actor not in ("OPERADOR", "G"):
+            return _no("O-05", "solo el operador o G registran aportes y retiradas")
+        if not self.sombra["entradas"]:
+            return _no("O-06", "la cartera sombra no está iniciada")
+        if tipo not in sb.TIPOS_MOVIMIENTO or not (sb.num_pos(importe_eur) and sb.num_pos(precio_indice)):
+            return _no("O-01", "tipo APORTE o RETIRADA, importe y precio del índice: números finitos positivos")
+        err = self._sombra_precheck()
+        if err:
+            return err
+        e = {"tipo": tipo, "importe_eur": float(importe_eur), "precio_indice": float(precio_indice), "ahora": ahora}
+        if sb.estado_sombra(self.sombra["entradas"] + [e], float(precio_indice), 0) is None:
+            return _no("O-06", "la retirada es mayor que lo que tiene la sombra")
+        self._anota_sombra(e, actor, ahora)
+        return _r(True, "OK", f"{tipo.lower()} replicado en la sombra")
+
+    def _costes_analisis_desde(self, desde_iso, hasta_dt):
+        d0 = _dt(desde_iso).astimezone(timezone.utc).date()
+        return sum(g["coste"] for f, g in self.gasto_dia.items() if d0 <= date.fromisoformat(f) <= hasta_dt.astimezone(timezone.utc).date())
+
+    @_seguro
+    def comparar_sombra(self, mes, robot_valor_eur, precio_indice, inflacion_inicio, inflacion_mes, impuestos_eur, actor, ahora):
+        """I compara cada mes el robot con la sombra (§9 punto 9): el valor del robot según G (comisiones incluidas) menos los
+        costes de análisis que anotó el Orquestador desde el inicio y los impuestos estimados, frente a la sombra neta de su coste;
+        en nominal y en real (índice de precios del mes frente al del inicio, D-30). Un mes por mes, en orden. Tras el plazo de
+        juicio, si el robot no la supera en real, aviso O-41: se propone gestión pasiva y decide el operador."""
+        a = self._ahora(ahora)
+        if actor != "I":
+            return _no("O-05", "la comparación con la sombra la hace I")
+        L = self.sombra["entradas"]
+        if not L:
+            return _no("O-06", "la cartera sombra no está iniciada")
+        if not (isinstance(mes, str) and sb.MES.match(mes)) or not all(sb.num_pos(x) for x in (precio_indice, inflacion_inicio, inflacion_mes)) \
+                or not sb.num_pos(robot_valor_eur, cero=True) or not sb.num_pos(impuestos_eur, cero=True):
+            return _no("O-01", "mes AAAA-MM; valor del robot e impuestos ≥ 0; precio e índices de precios > 0, todos finitos")
+        ini = L[0]
+        mes_ini = ini["ahora"][:7]
+        previos = [x["mes"] for x in L if x["tipo"] == "COMPARACION"]
+        if mes in previos:
+            return _no("O-02", f"el mes {mes} ya se comparó", duplicado=True)
+        if (sb.meses_entre(mes_ini, mes) != 1 if not previos else sb.meses_entre(previos[-1], mes) != 1) or mes > a.astimezone(timezone.utc).strftime("%Y-%m"):
+            return _no("O-01", "un mes por mes, en orden, desde el siguiente al del inicio y no del futuro")
+        err = self._sombra_precheck()
+        if err:
+            return err
+        dias = (a - _dt(ini["ahora"])).total_seconds() / 86400.0
+        est = sb.estado_sombra(L, float(precio_indice), dias)
+        costes = self._costes_analisis_desde(ini["ahora"], a)
+        cmp_ = sb.comparar(float(robot_valor_eur), costes, float(impuestos_eur), est, float(inflacion_inicio), float(inflacion_mes)) if est else None
+        if cmp_ is None:
+            return _no("O-01", "no se puede comparar con esos datos")
+        meses = sb.meses_entre(mes_ini, mes)
+        ver = sb.veredicto(meses, cmp_)
+        e = {"tipo": "COMPARACION", "mes": mes, "meses": meses, "robot_valor_eur": float(robot_valor_eur), "costes_analisis_eur": costes,
+             "impuestos_eur": float(impuestos_eur), "precio_indice": float(precio_indice), "inflacion_inicio": float(inflacion_inicio),
+             "inflacion_mes": float(inflacion_mes), "sombra": est, "resultado": cmp_, "veredicto": ver, "ahora": ahora}
+        self._anota_sombra(e, actor, ahora)
+        if ver == "PROPONER_PASIVA":
+            self._aviso("O-41", f"{mes}: tras {meses} meses el robot ({cmp_['robot_neto_real_eur']:.2f} EUR reales, neto de costes) no supera "
+                                f"a la cartera sombra ({cmp_['sombra_real_eur']:.2f} EUR reales): se propone gestión pasiva; decide el operador", ahora)
+        return _r(True, "OK", f"comparación de {mes}: {ver}", veredicto=ver, resultado=copy.deepcopy(cmp_))
+
+    def informe_sombra(self):
+        """Solo lee: el inicio y la última comparación de la sombra, o None si no está iniciada."""
+        L = self.sombra.get("entradas") if isinstance(self.sombra, dict) else None
+        if not L:
+            return None
+        comps = [x for x in L if x.get("tipo") == "COMPARACION"]
+        return {"inicio": copy.deepcopy(L[0]), "comparaciones": len(comps), "ultima": copy.deepcopy(comps[-1]) if comps else None}
 
     # ------------------------------------------------------------ T-75 (D-22): contrapesos de la abstención
     def embudo(self, desde, hasta):

@@ -8,7 +8,7 @@ from __future__ import annotations
 
 from types import MappingProxyType
 
-VERSION_PARAMETROS = "PAR-0.6.0"   # 0.2.0 (T-26): licencias admitidas por K. 0.3.0 (T-17): costes y confianza en D. 0.4.0 (V0.67): tope de líneas del diario en el panel. 0.5.0 (V0.68, T-80): tope de análisis por consulta
+VERSION_PARAMETROS = "PAR-0.7.0"   # 0.2.0 (T-26): licencias admitidas por K. 0.3.0 (T-17): costes y confianza en D. 0.4.0 (V0.67): tope de líneas del diario en el panel. 0.5.0 (V0.68, T-80): tope de análisis por consulta
 
 _VALORES = {
     # K — calidad y antigüedad de los datos de corte
@@ -45,6 +45,10 @@ _VALORES = {
     "o_max_analisis_consulta": 50,   # T-80: análisis que puede citar una consulta, para que el rastro SC-5 no crezca sin límite [PROPUESTO]
     "o_dias_sequia": 60,   # T-75: plazo de la alarma de sequía [RATIFICADO: 60 días] (D-22, D-27, P-17)
     "n_dias_embudo": 7,    # T-75: el embudo visible en N es semanal [RATIFICADO] (D-22: «N muestra cada semana»)
+    # I — cartera sombra pasiva (T-76; Constitución §9 punto 9, D-22, D-27, D-30)
+    "i_meses_juicio_sombra": 24,         # [RATIFICADO: 24 meses] (D-27, P-18): tras este plazo, si el robot no supera a la sombra, se propone gestión pasiva
+    "i_indice_sombra": "INDICE-MUNDIAL",  # [PROPUESTO] el plan pasivo es «un índice mundial» (D-27); cuál, lo fija el operador (T-57)
+    "i_coste_anual_sombra_pct": 0.20,    # [PROPUESTO] coste anual del fondo indexado con el que se replica la sombra (T-57)
 }
 
 

@@ -108,7 +108,7 @@ def main():
     avisos = [(k, v.get("prioridad")) for k, v in CATALOGO.items()
               if k[0] == "orquestador" and k[1].startswith("O-")]
     mal_avisos = [k for k, p in avisos if p not in PRIORIDADES]
-    h.chk("los_avisos_del_orquestador_llevan_prioridad_valida", len(avisos) == 41 and not mal_avisos,   # V0.70 (T-75): O-40, sequía
+    h.chk("los_avisos_del_orquestador_llevan_prioridad_valida", len(avisos) == 42 and not mal_avisos,   # V0.70 (T-75): O-40, sequía; V0.71 (T-76): O-41, cartera sombra
           f"{len(avisos)} avisos" if not mal_avisos else mal_avisos[:5])
 
     # ---------------------------------------------------------------- textos y efectos

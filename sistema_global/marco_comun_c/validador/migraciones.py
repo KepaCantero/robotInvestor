@@ -66,6 +66,8 @@ ESQUEMA_V0_67 = "f3943b0d923b81f423256f435e1db04f352c8ebf6d0962fd2dc5f37b5853086
 ESQUEMA_V0_68 = "9eade73e26f0f61f9e9f4e96638b50ea2fa3921c2965ac9ffa01d7b073d94cd8"
 # esquema de V0.70 (T-75: alarma de sequía O-40 y parámetros de sequía y embudo, PAR-0.6.0)
 ESQUEMA_V0_70 = "f13adbc3fef1e3a6445531bee830534681e74a32e2674a66a823565673443f86"
+# esquema de V0.71 (T-76: cartera sombra pasiva, atributo sombra, aviso O-41, PAR-0.7.0)
+ESQUEMA_V0_71 = "aa778db76669a1a61e8716010223bbdbd166733b36137028bf3a866830570459"
 # lo que una migración nunca puede cambiar, aunque lo declare (revisión de V0.46, hallazgos 5 y 10)
 PROHIBIDAS = ("limites", "kill", "rearmes", "ultimo_ahora", "huella_config", f"cfg.politica_f.{LIMITE_PERDIDA}",
               "cfg.nivel_autonomia")   # V0.51 (revisión, duda 2): ninguna migración sube ni baja el nivel de nadie
@@ -137,6 +139,13 @@ def _v053(estado):
     return estado
 
 
+def _v071(estado):
+    """V0.70 → V0.71 (T-76): el estado recibe el registro de la cartera sombra, vacío (se inicia el primer día que lo pida el
+    operador; antes no había sombra)."""
+    estado["sombra"] = {"historial": [], "estado": "VIGENTE", "entradas": []}
+    return estado
+
+
 def _v068(estado):
     """V0.67 → V0.68 (T-80): el estado recibe el rastro SC-5 de las consultas, vacío (antes no había consultas). Los expedientes
     no cambian: los de antes no son DIRECTA, y su identidad (y su huella) es la misma."""
@@ -162,6 +171,8 @@ MIGRACIONES = (
     Migracion("MIG-007", pe.FORMATO, ESQUEMA_V0_68, ESQUEMA_V0_70, _sin_cambios, frozenset(),
               "V0.68 a V0.70 (T-75, embudo y alarma de sequía): solo cambia el código (aviso O-40 y parámetros de sequía y embudo); "
               "el estado guardado no cambia"),
+    Migracion("MIG-008", pe.FORMATO, ESQUEMA_V0_70, ESQUEMA_V0_71, _v071, frozenset(),
+              "V0.70 a V0.71 (T-76, cartera sombra pasiva): el registro de la sombra, vacío; el resto del estado no cambia"),
 )
 
 
