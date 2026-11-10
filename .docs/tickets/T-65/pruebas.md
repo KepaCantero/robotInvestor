@@ -9,7 +9,16 @@
 | mypy `bloque_a` | 123 (cuota 123) | 123 |
 | `bloque_a_forex`, `bloque_b` | 68 y 174 | sin tocar (en el gate) |
 
-### Tras la QA r03
+### Tras la QA r04 (ronda reabierta por el operador)
+
+| Suite | HEAD 1a91d28 (con db6ed93) | Ahora (r05) |
+| --- | --- | --- |
+| `bloque_a/11_Ejecutor` (pytest) | 317 pasan | **326 pasan** (+9 en `tests/test_t65_qa_r04.py`) |
+| `tests/test_t65_qa_r04.py` con el código de HEAD | — | Las 9 fallan, también la de las dos series al día, porque HEAD no guardaba la fecha de cada serie |
+| `.docs/tickets/T-65/mutaciones.py` | 67/67 | **74/74** (7 nuevas, «r04»; las tres de H-16 de la r03 se rehicieron sobre el código nuevo) |
+| Sondas de la QA | r04_01 y r04_02 con hallazgos | 0 hallazgos en r04_01 (1 INFO: la etiqueta de la parte F; la parte C confirma que la cesta ya no cuenta al parado), r04_02 (1 INFO, el de la r04), r04_03 y r04_04 (5 INFO, los de la r04), r03_01 y r03_02 (5 INFO, los ya aceptados) |
+| ruff (tres ejecutores) · mypy `bloque_a` | 3084 · 123 | 3084 · 123 (sin hallazgos nuevos) |
+
 
 | Suite | 8d74622 (r03) | Ahora (r04) |
 | --- | --- | --- |
@@ -61,7 +70,15 @@ Sobre las mutaciones:
 
 ## Regresiones
 
-### Ronda r04 (hallazgos de la QA r03)
+### Ronda r05 (hallazgos de la QA r04)
+
+Las 9 pruebas fallan con el código de HEAD, en una copia (`git worktree add --detach` de HEAD más el archivo de pruebas nuevo, ya retirada). Sus mutaciones, de prefijo «r04», fallan:
+
+| Hallazgo | Prueba | Mutación |
+| --- | --- | --- |
+| H-24 | `test_r04_h24_h1_con_una_serie_parada_en_la_emision_no_se_resuelve` (ACWI y SPY), `…_h1_una_serie_con_una_sola_sesion_nueva_no_basta`, `…_pasado_el_plazo_queda_no_resoluble`, `…_con_las_dos_series_al_dia_se_resuelve_y_guarda_cada_fecha`, `…_la_tolerancia_es_la_de_ps2_del_horizonte`, `…_en_la_cesta_no_cuenta_un_miembro_parado_en_la_emision` y `…_ps2_de_la_emision_mira_tambien_la_referencia` | Tolerancia común de 7 días · H1 en días naturales · sin exigir un dato posterior a la emisión · la cesta sin horizonte cuenta al parado · sin la fecha de cada serie · PS2 sin la referencia: fallan |
+| H-25 | `test_r04_h25_una_revision_aun_no_publicada_no_cuenta_como_fecha_repetida` | Repetidas contadas en todo el archivo: falla |
+
 
 Las pruebas fallan con el código de 8d74622 (copia `git worktree add --detach` de 8d74622 más el archivo de pruebas nuevo, ya retirada) o con su mutación, de prefijo «r03»:
 
@@ -138,6 +155,15 @@ Las comprueba `python3 .docs/tickets/T-65/mutaciones.py`. El script quita cada c
 Comando: `.docs/scripts/gate.sh` con `--completo` (llama a `./tools/check_all.sh`).
 
 **Ronda r01 (commit b699d4f).** En el árbol de trabajo dio 12/12, pero la QA lo repitió desde una copia limpia y dio 11/12: `refs-vivas` fallaba porque este `pruebas.md` citaba con forma de ruta un log local, que no se sube (H-03). La cita se ha quitado: los logs se nombran solo por su archivo, sin ruta.
+
+**Ronda r05: 12/12 en verde desde una copia limpia** (2026-11-10, log gate_20261110_195151.log, que no se sube). La copia es un `git worktree add --detach` de HEAD (1a91d28, que contiene db6ed93) en el scratchpad, con los archivos de T-65 sin commit y un enlace a `.venv`; después se quitó con `git worktree remove`.
+
+| Gate | Resultado |
+| --- | --- |
+| corpus-integridad, nombres-nfc, yaml-configs, secrets, refs-vivas | ✓ |
+| ruff (hallazgos) | ✓ (3086 líneas ≤ 3109, igual que HEAD) |
+| mypy bloque_a · bloque_a_forex · bloque_b | ✓ (123 · 174 · 159) |
+| pytest bloque_a · bloque_a_forex · bloque_b | ✓ 326 · 68 · 176 passed |
 
 **Ronda r04: 12/12 en verde desde una copia limpia** (2026-11-10, log gate_20261110_163540.log, que no se sube). La copia es un `git worktree add --detach` de HEAD (b7dc4d1, que contiene 8d74622) en el scratchpad, con los archivos de T-65 sin commit y un enlace a `.venv`; después se quitó con `git worktree remove`.
 

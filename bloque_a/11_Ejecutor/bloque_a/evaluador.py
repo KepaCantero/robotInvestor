@@ -204,27 +204,52 @@ class Evaluador:
     def simbolos_clase(self, clase: str) -> list[str]:
         return [s for s in self.universo[self.universo["clase"] == clase]["simbolo"] if self.proveedor.tiene(s)]
 
-    def rentabilidad(self, simbolo: str, clase: str, f0, f1) -> tuple[float, pd.Timestamp]:
-        if simbolo == "CESTA":
-            vals, fechas = [], []
-            max_dias = int(parametro(self.cfg, "evaluacion.antiguedad_maxima_dato_resolucion_dias"))
-            for s in self.simbolos_clase(clase):
-                try:
-                    r, f = self.rentabilidad(s, clase, f0, f1)
-                except DatosNoDisponibles:
-                    continue
-                if (pd.Timestamp(f1) - f).days > max_dias:   # T-65 (QA r03, H-16): un miembro parado no cuenta como 0
-                    continue
-                vals.append(r)
-                fechas.append(f)
-            if not vals:
-                raise DatosNoDisponibles(f"Cesta {clase} sin datos")
-            return float(np.mean(vals)), max(fechas)
+    def motivo_no_fresca(self, d0, d1, f1, horizonte: str) -> str | None:
+        """T-65 (QA r03, H-16; QA r04, H-24): una serie sirve para resolver un pronóstico de horizonte `horizonte` solo si
+        tiene un dato posterior al de la emisión (`d1 > d0`) y su último dato no es más antiguo, a la fecha de resolución
+        `f1`, que la antigüedad máxima de PS2 de ese horizonte (Anexo A, P-13: `ps2_antiguedad_maxima_dias`; H1 en sesiones
+        hábiles, el resto en días naturales). Devuelve el motivo, o None si sirve."""
+        d0, d1, f1 = pd.Timestamp(d0), pd.Timestamp(d1), pd.Timestamp(f1)
+        if d1 <= d0:
+            return f"sin dato posterior a la emisión (último del {d1.date()})"
+        lim = int(parametro(self.cfg, "ps2_antiguedad_maxima_dias")[horizonte])
+        edad = dias_habiles_entre(d1, f1) if horizonte == "H1" else (f1 - d1).days
+        if edad > lim:
+            unidad = "sesiones" if horizonte == "H1" else "días"
+            return f"último dato del {d1.date()}, {edad} {unidad} antes de la resolución (máximo {lim} en {horizonte})"
+        return None
+
+    def _rentabilidad_serie(self, simbolo: str, f0, f1) -> tuple[float, pd.Timestamp, pd.Timestamp]:
         d0, v0 = self.proveedor.valor_en(simbolo, f0)
         d1, v1 = self.proveedor.valor_en(simbolo, f1)
         if not (math.isfinite(v0) and math.isfinite(v1)) or v0 == 0:
             raise DatosNoDisponibles(f"HT-01: cierre no válido de {simbolo} ({d0.date()}: {v0}; {d1.date()}: {v1})")
-        return v1 / v0 - 1, d1
+        return v1 / v0 - 1, d0, d1
+
+    def rentabilidad(self, simbolo: str, clase: str, f0, f1, horizonte: str | None = None) -> tuple[float, pd.Timestamp]:
+        """Rentabilidad de `simbolo` entre f0 y f1 y la fecha de su último dato. Con `horizonte` (la resolución lo pasa
+        siempre), falla (`DatosNoDisponibles`) si la serie no sirve para ese horizonte (`motivo_no_fresca`). En la CESTA, un
+        miembro que no sirve no cuenta (nunca entra con 0; sin `horizonte`, el que no tiene un dato posterior al de f0) y la
+        fecha devuelta es la más antigua de los que cuentan."""
+        if simbolo == "CESTA":
+            vals, fechas = [], []
+            for s in self.simbolos_clase(clase):
+                try:
+                    r, d0, f = self._rentabilidad_serie(s, f0, f1)
+                except DatosNoDisponibles:
+                    continue
+                if (self.motivo_no_fresca(d0, f, f1, horizonte) if horizonte else (f <= d0 and "sin dato nuevo")):
+                    continue
+                vals.append(r)
+                fechas.append(f)
+            if not vals:
+                raise DatosNoDisponibles(f"Cesta {clase} sin datos válidos y recientes para {horizonte}")
+            return float(np.mean(vals)), min(fechas)
+        r, d0, d1 = self._rentabilidad_serie(simbolo, f0, f1)
+        motivo = self.motivo_no_fresca(d0, d1, f1, horizonte) if horizonte else None
+        if motivo:
+            raise DatosNoDisponibles(f"HT-01: {simbolo} no sirve para resolver: {motivo}")
+        return r, d1
 
     def tasa_base(self, proxy: str, referencia: str | None, clase: str, sesiones: int, sentido_positivo: bool,
                   as_of, run_id: str | None = None) -> dict:
@@ -287,15 +312,14 @@ class Evaluador:
         for p in sorted(pendientes, key=lambda x: x["prg_id"]):
             f0, f1 = pd.Timestamp(p["fecha_emision"]), pd.Timestamp(p["fecha_resolucion"])
             try:
-                rp, d1 = self.rentabilidad(p["variable"]["serie_ht01"], p["clase"], f0, f1)
-                rr = None
-                d_min = d1
+                # T-65 (QA r03, H-16; QA r04, H-24): cada serie (proxy, referencia y cada miembro de la CESTA) debe tener un
+                # dato posterior al de la emisión y no más antiguo que la antigüedad de PS2 del horizonte; si no, el
+                # pronóstico espera y, pasado el plazo, queda NO_RESOLUBLE. Nunca se resuelve con una rentabilidad 0
+                hz = p["horizonte"]
+                rp, d1 = self.rentabilidad(p["variable"]["serie_ht01"], p["clase"], f0, f1, hz)
+                rr, d1b = None, None
                 if p["tipo_pronostico"] == "RELATIVO":
-                    rr, d1b = self.rentabilidad(p["referencia_indice"], p["clase"], f0, f1)
-                    # T-65 (QA r03, H-16): la frescura se exige a cada serie, no solo a la más reciente (antes, `max`: una
-                    # serie parada daba una rentabilidad 0 y el pronóstico se resolvía con un suceso que no era el suyo)
-                    d_min = min(d1, d1b)
-                    d1 = max(d1, d1b)
+                    rr, d1b = self.rentabilidad(p["referencia_indice"], p["clase"], f0, f1, hz)
                 x = rp - rr if rr is not None else rp
                 # Falla cerrado: un valor no finito (cierre NaN, nivel inicial 0…) es un dato no disponible,
                 # nunca un resultado (antes, int(nan > 0) = 0 daba NO_OCURRIDO)
@@ -305,16 +329,13 @@ class Evaluador:
                 if dias_habiles_entre(f1, as_of) >= int(parametro(self.cfg, "evaluacion.dias_habiles_no_resoluble")):
                     filas.append((p, None))
                 continue
-            if (f1 - d_min).days > int(parametro(self.cfg, "evaluacion.antiguedad_maxima_dato_resolucion_dias")):
-                # el último dato de alguna serie es demasiado antiguo: esperar y, pasado el plazo, NO_RESOLUBLE
-                if dias_habiles_entre(f1, as_of) >= int(parametro(self.cfg, "evaluacion.dias_habiles_no_resoluble")):
-                    filas.append((p, None))
-                continue
             positivo = p["sentido"] == "POSITIVO"
             o = int((x > p.get("umbral", 0.0)) if positivo else (x < -p.get("umbral", 0.0)))
             fuga_ok = (pd.Timestamp(p["nivel_referencia"]["fecha"]) <= f0 and d1 <= as_of and f1 <= as_of)
-            filas.append((p, {"rent_proxy": rp, "rent_referencia": rr, "exceso": x, "o": o, "fecha_dato": d1,
-                              "fuga": "SUPERADA" if fuga_ok else "FALLIDA"}))
+            fuga_ok = fuga_ok and (d1b is None or d1b <= as_of)
+            filas.append((p, {"rent_proxy": rp, "rent_referencia": rr, "exceso": x, "o": o,
+                              "fecha_dato": max(d1, d1b) if d1b is not None else d1, "fecha_dato_proxy": d1,
+                              "fecha_dato_referencia": d1b, "fuga": "SUPERADA" if fuga_ok else "FALLIDA"}))
         if not filas:
             return []
         validas = [(p, r) for p, r in filas if r is not None]
@@ -338,6 +359,10 @@ class Evaluador:
                 o = r["o"]
                 e = {"prg_id": p["prg_id"], "tipo_entrada": "RESOLUCION", "estado": "RESUELTO",
                      "resolucion": {"fecha_resuelto": str(as_of.date()), "fecha_dato": str(r["fecha_dato"].date()),
+                                    # T-65 (QA r04, H-24): la fecha de cada serie, no solo la más reciente
+                                    "fecha_dato_proxy": str(r["fecha_dato_proxy"].date()),
+                                    "fecha_dato_referencia": None if r["fecha_dato_referencia"] is None
+                                    else str(r["fecha_dato_referencia"].date()),
                                     "valor_observado": round(r["exceso"], 8), "rent_proxy": round(r["rent_proxy"], 8),
                                     "rent_referencia": None if r["rent_referencia"] is None else round(r["rent_referencia"], 8),
                                     "unidad": "tanto por uno", "fuente_usada": f"HT-01:{self.proveedor.nombre}",

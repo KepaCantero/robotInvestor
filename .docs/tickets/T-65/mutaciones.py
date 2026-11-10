@@ -14,6 +14,7 @@ PY = str(RAIZ / ".venv" / "bin" / "python")
 H, R, Q = "tests/test_t65_hallazgos.py", "tests/test_t65_resto_t53.py", "tests/test_t65_qa_r01.py"
 Q2 = "tests/test_t65_qa_r02.py"
 Q3 = "tests/test_t65_qa_r03.py"
+Q4 = "tests/test_t65_qa_r04.py"
 
 # (nombre, archivo, texto actual, texto mutado, prueba)
 MUTACIONES = [
@@ -156,12 +157,15 @@ MUTACIONES = [
     # ---- QA r03 de T-65
     ("r03 H-16 referencia sin frescura", PKG / "orquestacion.py", "        if edad > max_dias:\n            return f\"último cierre",
      "        if False:\n            return f\"último cierre", f"{Q3}::test_r03_h16_referencia_parada_deja_fuera_los_tipos_que_la_usan"),
-    ("r03 H-16 resolución con max", PKG / "evaluador.py", "                    d_min = min(d1, d1b)", "                    d_min = max(d1, d1b)",
+    # desde la r04, la frescura de cada serie está en `motivo_no_fresca` y en `rentabilidad`
+    ("r03 H-16 serie sin comprobar su frescura", PKG / "evaluador.py",
+     "        motivo = self.motivo_no_fresca(d0, d1, f1, horizonte) if horizonte else None", "        motivo = None",
      f"{Q3}::test_r03_h16_no_se_resuelve_con_una_serie_parada"),
-    ("r03 H-16 tolerancia fija 7", PKG / "evaluador.py", 'if (f1 - d_min).days > int(parametro(self.cfg, "evaluacion.antiguedad_maxima_dato_resolucion_dias")):',
-     "if (f1 - d_min).days > 30:", f"{Q3}::test_r03_h16_no_se_resuelve_con_una_serie_parada"),
-    ("r03 H-16 miembro parado de la cesta", PKG / "evaluador.py", "                if (pd.Timestamp(f1) - f).days > max_dias:", "                if False:",
-     f"{Q3}::test_r03_h16_un_miembro_parado_de_la_cesta_no_cuenta"),
+    ("r03 H-16 tolerancia fija", PKG / "evaluador.py", '        lim = int(parametro(self.cfg, "ps2_antiguedad_maxima_dias")[horizonte])',
+     "        lim = 30", f"{Q3}::test_r03_h16_no_se_resuelve_con_una_serie_parada"),
+    ("r03 H-16 miembro parado de la cesta", PKG / "evaluador.py",
+     '                if (self.motivo_no_fresca(d0, f, f1, horizonte) if horizonte else (f <= d0 and "sin dato nuevo")):',
+     "                if False:", f"{Q3}::test_r03_h16_un_miembro_parado_de_la_cesta_no_cuenta"),
     ("r03 H-17 subyacente ausente → CESTA", PKG / "orquestacion.py", '            return sub or "CESTA"',
      '            return sub if sub and self.proveedor.tiene(sub) else "CESTA"',
      f"{Q3}::test_r03_h17_subyacente_sin_archivo_se_declara_y_no_se_cambia_por_la_cesta"),
@@ -181,6 +185,27 @@ MUTACIONES = [
      "    df[\"cierre\"] = num.where(~malos, np.nan)\n",
      "    if malos.any():\n        raise DatosInvalidos(f\"HT-01 {origen}: cierres no numéricos o no finitos; serie rechazada\")\n    df[\"cierre\"] = num.where(~malos, np.nan)\n",
      f"{Q3}::test_r03_h21_un_dato_malo_posterior_a_as_of_no_excluye_el_simbolo"),
+    # ---- QA r04 de T-65
+    ("r04 H-24 tolerancia común de 7 días", PKG / "evaluador.py", '        lim = int(parametro(self.cfg, "ps2_antiguedad_maxima_dias")[horizonte])',
+     "        lim = 7", f"{Q4}::test_r04_h24_h1_una_serie_con_una_sola_sesion_nueva_no_basta"),
+    ("r04 H-24 H1 en días naturales", PKG / "evaluador.py", '        edad = dias_habiles_entre(d1, f1) if horizonte == "H1" else (f1 - d1).days',
+     "        edad = (f1 - d1).days", f"{Q4}::test_r04_h24_la_tolerancia_es_la_de_ps2_del_horizonte"),
+    ("r04 H-24 sin exigir un dato posterior a la emisión", PKG / "evaluador.py",
+     '        if d1 <= d0:\n            return f"sin dato posterior', '        if False:\n            return f"sin dato posterior',
+     f"{Q4}::test_r04_h24_la_tolerancia_es_la_de_ps2_del_horizonte"),
+    ("r04 H-24 cesta sin horizonte con el parado", PKG / "evaluador.py", 'else (f <= d0 and "sin dato nuevo")):', "else False):",
+     f"{Q4}::test_r04_h24_en_la_cesta_no_cuenta_un_miembro_parado_en_la_emision"),
+    ("r04 H-24 sin la fecha de cada serie", PKG / "evaluador.py",
+     '                                    "fecha_dato_proxy": str(r["fecha_dato_proxy"].date()),\n', "",
+     f"{Q4}::test_r04_h24_con_las_dos_series_al_dia_se_resuelve_y_guarda_cada_fecha"),
+    ("r04 H-24 PS2 sin la referencia", PKG / "orquestacion.py",
+     '        if fecha_dato and ref and ref != "CESTA" and f.get("_tipo_pronostico", "RELATIVO") == "RELATIVO":',
+     "        if False:", f"{Q4}::test_r04_h24_ps2_de_la_emision_mira_tambien_la_referencia"),
+    ("r04 H-25 repetidas contadas en todo el archivo", PKG / "herramientas" / "ht01_datos.py",
+     '        df = df.copy()\n        df["_duplicada"] = df.index.duplicated(keep=False)',
+     '        completo = self._serie_completa(simbolo)\n        df = df.copy()\n'
+     '        df["_duplicada"] = df.index.isin(completo.index[completo.index.duplicated(keep=False)])',
+     f"{Q4}::test_r04_h25_una_revision_aun_no_publicada_no_cuenta_como_fecha_repetida"),
 ]
 
 

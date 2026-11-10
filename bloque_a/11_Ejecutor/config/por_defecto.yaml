@@ -283,10 +283,10 @@ evaluacion:
   nivel_ic: 0.90
   aplicar_recalibracion: false   # false = modo sombra: se registra y se compara, no se aplica
   dias_habiles_no_resoluble: 10
-  # T-65 (QA r03, H-16): días naturales que puede quedar el último dato de CADA serie del pronóstico (proxy y referencia)
-  # antes de la fecha de resolución para resolverlo; si no, se espera y, pasado el plazo anterior, NO_RESOLUBLE (antes, un
-  # 7 en el código y solo para la serie más reciente)
-  antiguedad_maxima_dato_resolucion_dias: 7
+  # T-65 (QA r03, H-16; QA r04, H-24): para resolver un pronóstico, CADA serie (proxy, referencia y cada miembro de la
+  # CESTA) necesita un dato posterior al de la emisión y no más antiguo, a la fecha de resolución, que la antigüedad de PS2
+  # de su horizonte (`ps2_antiguedad_maxima_dias`, Anexo A; H1 en sesiones). Si no, se espera y, pasado el plazo anterior,
+  # NO_RESOLUBLE. Sin número nuevo: antes, un 7 común en el código (y en la r03, una clave con ese 7)
   llm_informe_aprendizaje: true
   # T-53
   alfa_holm: 0.10                 # Anexo A, certificado de horizonte (R13): corrección de Holm escalonada; α coherente con el IC 90 %

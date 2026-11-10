@@ -2,6 +2,19 @@
 
 Solo existe si el trabajo cambia de manos. Una sección por traspaso, la más reciente arriba.
 
+## 2026-11-10 · de claude a la QA r05 (ronda reabierta por el operador)
+
+- **Fase en la que se entrega:** QA (r05).
+- **Hecho:**
+  - H-24 y H-25 de la QA r04, con sus pruebas en `bloque_a/11_Ejecutor/tests/test_t65_qa_r04.py`.
+  - A tiene 326 pruebas, y `mutaciones.py` detecta 74 de 74.
+  - Las sondas r03 y r04 dan 0 hallazgos.
+- **Falta (coordinador):** el commit de la r05 y actualizar la fila T-65 de la deuda (la ronda ya no está detenida).
+- **Cuidado con:**
+  - La resolución usa la antigüedad de PS2 del horizonte de cada PRG y exige un dato posterior a la emisión a cada serie.
+  - `rentabilidad()` tiene un argumento `horizonte` (opcional; la resolución lo pasa siempre).
+  - PS2 de la emisión mira también la referencia de un pronóstico RELATIVO.
+
 ## 2026-11-10 · de claude a la QA r04
 
 - **Fase en la que se entrega:** QA (r04).

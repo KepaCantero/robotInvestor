@@ -121,7 +121,9 @@ class ProveedorDatos:
             df = df[~invalida & (pub.isna() | (pub <= self._as_of))]
         if len(df) and df.index.max() > self._as_of:  # defensa en profundidad
             raise FugaDeInformacion("HT-01: el proveedor devolvió datos posteriores a as_of")
-        return df.copy()
+        df = df.copy()
+        df["_duplicada"] = df.index.duplicated(keep=False)   # solo entre las filas visibles (QA r04 de T-65, H-25)
+        return df
 
     def _tramo(self, simbolo: str, inicio: Fecha | None = None, fin: Fecha | None = None) -> pd.DataFrame:
         df = self.serie(simbolo, inicio, fin)
@@ -252,14 +254,14 @@ def _normalizar_df_sin_envolver(df: pd.DataFrame, origen: str) -> pd.DataFrame:
     sin_cierre = df["cierre"].isna() & ~df["_invalido"]
     descartadas += [f"{f.date()}: cierre vacío" for f in df.loc[sin_cierre, "fecha"]]
     df = df[~sin_cierre].sort_values("fecha", kind="stable")
-    # T-65 (H-15; QA r03, H-21): una fecha repetida es un dato inválido del símbolo en cualquier rango que la incluya
-    df["_duplicada"] = df["fecha"].duplicated(keep=False)
+    # T-65 (H-15; QA r03, H-21; QA r04, H-25): una fecha repetida es un dato inválido del símbolo en cualquier rango que la
+    # incluya; se marca en `serie()`, entre las filas ya publicadas a la fecha as_of (una revisión aún no publicada no cuenta)
     df = df.set_index("fecha")
     for c in ("apertura", "maximo", "minimo", "volumen"):
         if c in df.columns:
             df[c] = pd.to_numeric(df[c], errors="coerce")
-    keep = [c for c in ("apertura", "maximo", "minimo", "cierre", "volumen", "fecha_publicacion", "_invalido", "_crudo",
-                        "_duplicada") if c in df.columns]
+    keep = [c for c in ("apertura", "maximo", "minimo", "cierre", "volumen", "fecha_publicacion", "_invalido", "_crudo")
+            if c in df.columns]
     out = df[keep]
     out.attrs["filas_descartadas"] = descartadas
     return out
