@@ -243,6 +243,8 @@ def _panel(o, ahora, reloj=None, diario=None, lineas_diario_ambar=PARAMETROS["n_
 def informe_embudo(o, ahora, dias=PARAMETROS["n_dias_embudo"]):
     """T-75 (D-22): el embudo visible de N, semanal por defecto: cuántas oportunidades entraron en los últimos `dias`, en qué capa
     cae cada una y por qué, y si hay sequía (el plazo de D-22). Solo lee y nunca lanza: con algo ilegible, {ok: False, motivo}."""
+    if isinstance(dias, bool) or not isinstance(dias, int) or dias < 1:   # T-75 (QA r01, H-07)
+        return {"ok": False, "motivo": f"el periodo del embudo no es un entero de días positivo ({dias!r})"}
     try:
         a = _dt(ahora)
         em = o.embudo((a - timedelta(days=dias)).isoformat(), ahora)

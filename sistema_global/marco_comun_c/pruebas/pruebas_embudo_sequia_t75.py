@@ -54,7 +54,7 @@ def main():
     r = o.barrer(mas(AHORA, hours=1))
     av = o40(o)
     h.chk("barrer_avisa_al_operador_con_el_embudo", r["ok"] and ("sequia", sq["desde"], 2) in r["cambios"] and len(av) == 1
-          and "60 días" in av[0]["motivo"] and "entran 2" in av[0]["motivo"] and av[0]["prioridad"] == "MEDIA", (r, av))
+          and "(plazo 60)" in av[0]["motivo"] and "entran 2" in av[0]["motivo"] and av[0]["prioridad"] == "MEDIA", (r, av))
     o.barrer(mas(AHORA, hours=2))
     h.chk("una_sola_alarma_por_plazo_aunque_se_acuse", len(o40(o)) == 1)
     assert o.acusar_aviso(av[0]["id"], "OPERADOR", mas(AHORA, hours=3))["ok"]
@@ -74,15 +74,30 @@ def main():
     hasta(o3, "EJECUTADA", 1)
     sq = o3.sequia(mas(AHORA, hours=1))
     o3.barrer(mas(AHORA, hours=1))
-    h.chk("con_una_inversion_en_el_plazo_no_hay_sequia", not sq["activa"] and sq["invertidas"] == 1 and not o40(o3), sq)
+    h.chk("con_una_inversion_en_el_plazo_no_hay_sequia", not sq["activa"] and "desde la última inversión" in sq["motivo"] and not o40(o3), sq)
 
     o4 = antiguo()
     sq = o4.sequia(mas(AHORA, hours=1))
     h.chk("sin_candidatos_que_pasaran_el_analisis_no_hay_sequia", not sq["activa"] and sq["validadas"] == 0
           and sq["motivo"] == "ningún candidato pasó el análisis", sq)
 
-    sq = o.sequia(mas(AHORA, days=61))   # la validación ya cae fuera del plazo
-    h.chk("lo_validado_fuera_del_plazo_no_cuenta", not sq["activa"] and sq["validadas"] == 0, sq)
+    sq = o.sequia(mas(AHORA, days=61))   # QA r01, H-08: la sequía sigue mientras no se invierta (antes la ventana deslizante la perdía)
+    h.chk("la_sequia_sigue_hasta_la_siguiente_inversion_H08", sq["activa"] and sq["validadas"] == 2, sq)
+    sq = o3.sequia(mas(AHORA, days=61))
+    h.chk("lo_validado_antes_de_la_ultima_inversion_no_cuenta", not sq["activa"] and sq["validadas"] == 0, sq)
+
+    # QA r01, H-08: inversión a las 09:00, validación a las 10:00 y barridos diarios a las 08:00 durante 90 días: un aviso
+    o5 = antiguo()
+    hasta(o5, "EJECUTADA", 1)   # se invierte a AHORA (09:00)
+    hasta(o5, "VALIDADA", 5, ahora=mas(AHORA, hours=1))   # un candidato validado a las 10:00, que nadie invierte
+    for d in range(1, 91):
+        o5.barrer(mas(AHORA, days=d, hours=-1))
+    h.chk("con_barridos_diarios_la_alarma_salta_H08", len(o40(o5)) == 1, [x["ahora"] for x in o40(o5)])
+    for d in range(91, 125):
+        o5.barrer(mas(AHORA, days=d, hours=-1))
+    h.chk("y_se_repite_una_vez_por_plazo_mientras_dure", len(o40(o5)) == 2, [x["ahora"] for x in o40(o5)])
+    h.chk("plazo_ilegible_no_juzga_H07", o.sequia(mas(AHORA, days=61), dias=0)["activa"] is False
+          and o.sequia(mas(AHORA, days=61), dias=True)["activa"] is False and o.sequia(mas(AHORA, days=61), dias=2.5)["activa"] is False)
     h.chk("sequia_con_instante_ilegible_no_salta_ni_lanza", o.sequia("ayer")["activa"] is False and o.sequia(None)["activa"] is False)
     antes = copy.deepcopy(o.__dict__)
     o.sequia(mas(AHORA, hours=5))
@@ -107,6 +122,36 @@ def main():
     h.chk("N_muestra_el_embudo_semanal_y_la_sequia", inf["ok"] and inf["dias"] == 7 and inf["embudo"]["entran"] == 2
           and inf["sequia"]["activa"] is True, inf)
     h.chk("informe_ilegible_no_lanza", informe_embudo(o, "ayer")["ok"] is False and informe_embudo(None, AHORA)["ok"] is False)
+    h.chk("informe_con_dias_ilegibles_no_vale_H07", all(informe_embudo(o, AHORA, d)["ok"] is False for d in (0, -1, True, 2.5, "7")))
+
+    # QA r01, H-01: el embudo dice que F paró la oportunidad, también cuando después caduca
+    from pruebas_operador_t50 import vetado
+    o6 = antiguo()
+    hasta(o6, "PROPUESTA", 1)
+    r = o6.autorizar("EXP-0001", "OPERADOR", vetado(o6), AHORA)
+    em = o6.embudo(mas(AHORA, minutes=-1), mas(AHORA, minutes=1))
+    fila = next(x for x in em["oportunidades"] if x["expediente_id"] == "EXP-0001")
+    h.chk("el_veto_de_F_queda_anotado_y_el_embudo_lo_dice_H01", r["codigo"] == "O-06" and fila["capa"] == "PROPUESTA"
+          and fila["actor"] == "F" and "F-09" in fila["motivo"] and fila["bloqueo"] == fila["motivo"] and o6.integridad() == [], (r, fila))
+    o6.barrer(mas(AHORA, days=3))
+    em = o6.embudo(mas(AHORA, minutes=-1), mas(AHORA, days=3))
+    sal = [x for x in em["salidas"] if x["expediente_id"] == "EXP-0001"]
+    h.chk("y_su_caducidad_lleva_el_veto_como_causa_previa_H01", sal and sal[-1]["hasta"] == "CADUCADA" and "F-09" in (sal[-1]["bloqueo_previo"] or ""), sal)
+
+    # QA r01, H-03 y H-04: se cuentan candidatos y oportunidades, no pasos; los bordes no se cuentan dos veces
+    o7 = antiguo()
+    hasta(o7, "VALIDADA", 1)
+    assert o7.observar("EXP-0001", [{"tipo": "FECHA", "fecha": "2026-11-20"}], "el operador lo aparta", "OPERADOR", AHORA)["ok"]
+    assert o7.descartar("EXP-0001", "el operador lo descarta del todo", "OPERADOR", AHORA)["ok"]
+    for k in (1, 2):
+        assert o7.abrir_directa(f"EXP-DD-0{k}", f"COR-DD-0{k}", "TACTICA", "D", "BROKER", AHORA, analisis="EV-SOB-0001")["ok"] if k == 1 else True
+    em = o7.embudo(mas(AHORA, minutes=-1), mas(AHORA, minutes=1))
+    h.chk("un_analisis_reutilizado_cuenta_una_vez_H03", em["validadas"] == 1, em)
+    h.chk("una_oportunidad_que_sale_dos_veces_cuenta_una_H04", em["salen"] == 1 and len(em["salidas"]) == 2, em)
+    w1 = o7.embudo(mas(AHORA, minutes=-1), AHORA)
+    w2 = o7.embudo(AHORA, mas(AHORA, minutes=1))
+    h.chk("dos_periodos_seguidos_no_cuentan_dos_veces_el_borde_H04", w1["entran"] + w2["entran"] == em["entran"]
+          and w1["validadas"] + w2["validadas"] == em["validadas"], (w1["entran"], w2["entran"], em["entran"]))
 
     # ------------------------------------------------------------------ T-89: tope del tiempo sin contrastar
     for c in (rl.TOPE_SIN_CONTRASTE_S * 2, 1e12, 1e308):

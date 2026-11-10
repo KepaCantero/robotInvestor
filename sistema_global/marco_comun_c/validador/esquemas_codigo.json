@@ -4117,6 +4117,2244 @@
   },
   "version": "V0.53"
  },
+ "2bcc76b84882b578499ba2ea632dc83b518fe496df3fb2f98740b8f853be6bde": {
+  "parte": {
+   "atributos": [
+    "artefactos",
+    "avisos",
+    "cal_def",
+    "cfg",
+    "consultas",
+    "cortacircuitos",
+    "cotizaciones",
+    "degradadas",
+    "encargos",
+    "eventos",
+    "expedientes",
+    "fotos",
+    "gasto_dia",
+    "huella_config",
+    "kill",
+    "libres",
+    "limites",
+    "manuales",
+    "modelos",
+    "ordenes_usadas",
+    "pantallas",
+    "perdidas_dia",
+    "posiciones",
+    "rearmes",
+    "sc3",
+    "sellos",
+    "sombra",
+    "ultima_comparacion",
+    "ultima_conciliacion",
+    "ultima_foto",
+    "ultimas_degradaciones",
+    "ultimo_ahora"
+   ],
+   "codigo": {
+    "constantes": {
+     "incidentes_promocion": [
+      "O-03",
+      "O-18",
+      "O-25",
+      "O-37"
+     ],
+     "limite_perdida": "perdida_dia_max_pct",
+     "motivo_min": 15,
+     "prioridad_aviso": {
+      "O-03": "ALTA",
+      "O-08": "ALTA",
+      "O-09": "ALTA",
+      "O-13": "ALTA",
+      "O-17": "ALTA",
+      "O-18": "ALTA",
+      "O-19": "ALTA",
+      "O-20": "MEDIA",
+      "O-25": "ALTA",
+      "O-26": "ALTA",
+      "O-30": "ALTA",
+      "O-31": "MEDIA",
+      "O-32": "MEDIA",
+      "O-33": "MEDIA",
+      "O-34": "ALTA",
+      "O-35": "ALTA",
+      "O-36": "MEDIA",
+      "O-37": "ALTA",
+      "O-38": "ALTA",
+      "O-39": "ALTA",
+      "O-40": "MEDIA",
+      "O-41": "ALTA",
+      "O-42": "MEDIA"
+     },
+     "tipos_kill": [
+      "CANTIDAD",
+      "ENTRADA_HUERFANA",
+      "INTEGRIDAD",
+      "MANUAL_NO_CUADRA",
+      "POSICION_DESCONOCIDA",
+      "POSICION_SIN_PROTEGER",
+      "PROTECCION",
+      "PROTECCION_HUERFANA",
+      "SENTIDO_O_ACTIVO"
+     ],
+     "topes_f": [
+      "F-03",
+      "F-04",
+      "F-06",
+      "F-07",
+      "F-13",
+      "F-14",
+      "F-15"
+     ],
+     "vetos_anulables": [
+      "F-09",
+      "F-11"
+     ]
+    },
+    "parametros": {
+     "d_coste_suelo_ida_vuelta_pb": {
+      "K": 30.0,
+      "Q": 2.0,
+      "S": 10.0
+     },
+     "d_coste_suelo_mant_anual_pb": {
+      "K": 0.0,
+      "Q": 0.0,
+      "S": 0.0
+     },
+     "d_exceso_min_pct": 0.1,
+     "d_factor_tope_sin_doble_analisis": 0.75,
+     "d_margen_ajustado": 0.05,
+     "d_peso_evidencia": {
+      "ESTIMADO": 0.5,
+      "SUPUESTO": 0.25,
+      "VERIFICADO": 1.0
+     },
+     "d_referencia_rango_pct": [
+      -5.0,
+      50.0
+     ],
+     "d_rentabilidad_plausible_pct": [
+      -100.0,
+      500.0
+     ],
+     "d_riesgo_min_pct": 1.0,
+     "d_riesgo_sin_stop_largo_pct": 100.0,
+     "d_tope_confianza_clase": {
+      "K": 0.4,
+      "Q": 0.8,
+      "S": 0.6
+     },
+     "e_max_edad_dimensionado_min": 60,
+     "h_max_edad_dato_min": 15,
+     "h_salto_max_horas": 72,
+     "i_coste_anual_sombra_pct": 0.2,
+     "i_indice_sombra": "INDICE-MUNDIAL",
+     "i_meses_juicio_sombra": 24,
+     "k_ajuste_tol_rel": 0.1,
+     "k_cruce_adv_bloq": [
+      0.001,
+      0.01
+     ],
+     "k_hueco_adv_bloq": [
+      0.02,
+      0.1
+     ],
+     "k_licencias_admitidas": [
+      "PROPIA",
+      "INTERMEDIARIO-USO-INTERNO",
+      "CC-BY-4.0",
+      "DOMINIO-PUBLICO"
+     ],
+     "k_min_observaciones": 20,
+     "k_rango_max_intradia": 1.5,
+     "k_salto_adv_bloq": [
+      0.2,
+      0.5
+     ],
+     "k_tope_antiguedad_dias_habiles": {
+      "LARGO_PLAZO": 5,
+      "TACTICA": 1,
+      "TRADING": 1
+     },
+     "k_ventana_acumulado_obs": 5,
+     "manual_ventana_declaracion_horas": 72,
+     "n_dias_embudo": 7,
+     "n_lineas_diario_ambar": 1000,
+     "o_dias_sequia": 60,
+     "o_max_analisis_consulta": 50
+    },
+    "reglas": {
+     "f": "F-0.3.0",
+     "k": "Q-0.2.0",
+     "orquestador": "ORQ-0.1.0"
+    },
+    "version_parametros": "PAR-0.7.0"
+   },
+   "config_defecto": {
+    "alerta_perdida_pct": -5.0,
+    "anulaciones_veto_mes": 2,
+    "aprobacion": {
+     "caduca_min": 15,
+     "canales": [
+      "CONSOLA"
+     ],
+     "enfriamiento_min": 30,
+     "enfriamiento_tras_perdida_dia_eur": 0.0,
+     "horario_utc": [
+      "07:00",
+      "21:00"
+     ]
+    },
+    "autoria_c": {},
+    "autoria_contradictor": null,
+    "avisos": {
+     "canal_alta": "CONSOLA",
+     "canal_escalado": "ESCALADO",
+     "escalar_tras": 3,
+     "reiterar_min": 15
+    },
+    "contradictor_desactivado_motivo": null,
+    "cuenta_intermediario": "SIM-1",
+    "dia_coste_max_eur": 50.0,
+    "dia_tiempo_max_min": 600,
+    "divisas_cotizacion": {},
+    "exige_contradictor_en": [
+     "N2",
+     "N3"
+    ],
+    "kill_switch": {
+     "periodo_min_l1_horas": 24
+    },
+    "libres_tope_dia_eur": {
+     "LARGO_PLAZO": 2000.0,
+     "TACTICA": 2000.0,
+     "TRADING": 2000.0
+    },
+    "mandatos": {
+     "LARGO_PLAZO": {
+      "apalancamiento_max": 1,
+      "benchmark_ref": "BENCH-EFECTIVO",
+      "exclusiones": [],
+      "horizonte_dias": {
+       "max": 7300,
+       "min": 1095
+      },
+      "instrumentos_permitidos": null,
+      "tamano_max_pct_cartera": 10.0,
+      "version": "MAN-0.1.0"
+     },
+     "TACTICA": {
+      "apalancamiento_max": 1,
+      "benchmark_ref": "BENCH-EFECTIVO",
+      "exclusiones": [],
+      "horizonte_dias": {
+       "max": 183,
+       "min": 14
+      },
+      "instrumentos_permitidos": null,
+      "tamano_max_pct_cartera": 10.0,
+      "version": "MAN-0.1.0"
+     },
+     "TRADING": {
+      "apalancamiento_max": 1,
+      "benchmark_ref": "BENCH-EFECTIVO",
+      "exclusiones": [],
+      "horizonte_dias": {
+       "max": 28,
+       "min": 1
+      },
+      "instrumentos_permitidos": null,
+      "tamano_max_pct_cartera": 10.0,
+      "version": "MAN-0.1.0"
+     }
+    },
+    "matriz_autonomia": {},
+    "max_reaperturas": 2,
+    "max_reintentos": 3,
+    "nivel_autonomia": {},
+    "observacion_max_dias": 30,
+    "politica_f": {
+     "apalancamiento_max": 1.0,
+     "concentracion_max_pct": 20.0,
+     "corte_max_dias": 3,
+     "deriva_precio_max_pct": 2.0,
+     "evidencia_verificada_min": 0.05,
+     "exposicion_max_pct": 100.0,
+     "frescura_max_min": 60.0,
+     "importe_max_activo_eur": 30000.0,
+     "importe_max_dia_eur": 50000.0,
+     "importe_max_orden_eur": 20000.0,
+     "max_posiciones": 10,
+     "ordenes_max_hora": 10,
+     "perdida_dia_max_eur": 2500.0,
+     "perdida_dia_max_pct": 2.0,
+     "perdida_semana_max_eur": 5000.0,
+     "precio_frescura_max_min": 15.0,
+     "riesgo_max_pct": 1.0,
+     "tamano_max_pct": 10.0,
+     "valor_min_eur": 100.0,
+     "ventana_eventos_dias": 1,
+     "viernes_corte_utc_h": 20,
+     "vigencia_max_horas": 24.0
+    },
+    "promocion_nivel": {
+     "periodo_min_dias": 30
+    },
+    "rangos_tipo_cambio_eur": {
+     "AUD": [
+      0.4,
+      0.9
+     ],
+     "CAD": [
+      0.45,
+      0.95
+     ],
+     "CHF": [
+      0.7,
+      1.4
+     ],
+     "DKK": [
+      0.12,
+      0.15
+     ],
+     "GBP": [
+      0.9,
+      1.6
+     ],
+     "JPY": [
+      0.003,
+      0.015
+     ],
+     "NOK": [
+      0.06,
+      0.13
+     ],
+     "SEK": [
+      0.06,
+      0.13
+     ],
+     "USD": [
+      0.6,
+      1.4
+     ]
+    },
+    "referencias": {
+     "LARGO_PLAZO": {
+      "benchmark_ref": "BENCH-EFECTIVO",
+      "rentabilidad_anual_pct": 0.0
+     },
+     "TACTICA": {
+      "benchmark_ref": "BENCH-EFECTIVO",
+      "rentabilidad_anual_pct": 0.0
+     },
+     "TRADING": {
+      "benchmark_ref": "BENCH-EFECTIVO",
+      "rentabilidad_anual_pct": 0.0
+     }
+    },
+    "revision_max_dias": 90,
+    "tolerancia_conciliacion_rel": 0.0,
+    "tolerancia_precio_entrada": 0.05,
+    "tolerancia_tipo_k_rel": 0.03,
+    "tolerancia_tipo_par_pct": 15.0,
+    "umbral_corte_comun_dias_habiles": 0,
+    "umbral_l2_eur": {
+     "LARGO_PLAZO": 5000.0,
+     "TACTICA": 5000.0,
+     "TRADING": 5000.0
+    },
+    "version_config": "CFG-0.11.0"
+   },
+   "modulos": {
+    "comparador": {
+     "CLASES": [
+      "Q",
+      "S",
+      "K"
+     ],
+     "COSTE_SUELO_IV": {
+      "K": 30.0,
+      "Q": 2.0,
+      "S": 10.0
+     },
+     "COSTE_SUELO_MANT": {
+      "K": 0.0,
+      "Q": 0.0,
+      "S": 0.0
+     },
+     "EXCESO_MIN_PCT": 0.1,
+     "EXCL": [
+      "acceso",
+      "invertibilidad",
+      "sanciones"
+     ],
+     "FACTOR_SIN_DOBLE": 0.75,
+     "FH": {
+      "flags": 32,
+      "re": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}(\\.\\d+)?(Z|[+-]\\d{2}:\\d{2})\\Z"
+     },
+     "ID": {
+      "flags": 32,
+      "re": "^[A-Za-z0-9._:/-]{1,64}\\Z"
+     },
+     "MARGEN_AJUSTADO": 0.05,
+     "PESO_EVIDENCIA": {
+      "ESTIMADO": 0.5,
+      "SUPUESTO": 0.25,
+      "VERIFICADO": 1.0
+     },
+     "REFERENCIA_EFECTIVO": {
+      "benchmark_ref": "BENCH-EFECTIVO",
+      "rentabilidad_anual_pct": 0.0
+     },
+     "REF_MAX": 50.0,
+     "REF_MIN": -5.0,
+     "RENT_MAX": 500.0,
+     "RENT_MIN": -100.0,
+     "RIESGO_MIN_PCT": 1.0,
+     "RIESGO_SIN_STOP_LARGO": 100.0,
+     "TOL": 1e-06,
+     "TOPE_CLASE": {
+      "K": 0.4,
+      "Q": 0.8,
+      "S": 0.6
+     },
+     "VERSIONES_CONOCIDAS": [
+      "0.2.0"
+     ]
+    },
+    "consola": {
+     "ERRORES": [
+      {
+       "clase": "KeyError"
+      },
+      {
+       "clase": "TypeError"
+      },
+      {
+       "clase": "AttributeError"
+      },
+      {
+       "clase": "ValueError"
+      },
+      {
+       "clase": "IndexError"
+      },
+      {
+       "clase": "OverflowError"
+      },
+      {
+       "clase": "RecursionError"
+      },
+      {
+       "clase": "MemoryError"
+      }
+     ],
+     "FRACCION_AMBAR_DIA": 0.8,
+     "HORAS_AMBAR_PROPUESTA": 6,
+     "ORDEN": {
+      "AMBAR": 1,
+      "ROJO": 2,
+      "VERDE": 0
+     },
+     "PARAMETROS": {
+      "d_coste_suelo_ida_vuelta_pb": {
+       "K": 30.0,
+       "Q": 2.0,
+       "S": 10.0
+      },
+      "d_coste_suelo_mant_anual_pb": {
+       "K": 0.0,
+       "Q": 0.0,
+       "S": 0.0
+      },
+      "d_exceso_min_pct": 0.1,
+      "d_factor_tope_sin_doble_analisis": 0.75,
+      "d_margen_ajustado": 0.05,
+      "d_peso_evidencia": {
+       "ESTIMADO": 0.5,
+       "SUPUESTO": 0.25,
+       "VERIFICADO": 1.0
+      },
+      "d_referencia_rango_pct": [
+       -5.0,
+       50.0
+      ],
+      "d_rentabilidad_plausible_pct": [
+       -100.0,
+       500.0
+      ],
+      "d_riesgo_min_pct": 1.0,
+      "d_riesgo_sin_stop_largo_pct": 100.0,
+      "d_tope_confianza_clase": {
+       "K": 0.4,
+       "Q": 0.8,
+       "S": 0.6
+      },
+      "e_max_edad_dimensionado_min": 60,
+      "h_max_edad_dato_min": 15,
+      "h_salto_max_horas": 72,
+      "i_coste_anual_sombra_pct": 0.2,
+      "i_indice_sombra": "INDICE-MUNDIAL",
+      "i_meses_juicio_sombra": 24,
+      "k_ajuste_tol_rel": 0.1,
+      "k_cruce_adv_bloq": [
+       0.001,
+       0.01
+      ],
+      "k_hueco_adv_bloq": [
+       0.02,
+       0.1
+      ],
+      "k_licencias_admitidas": [
+       "PROPIA",
+       "INTERMEDIARIO-USO-INTERNO",
+       "CC-BY-4.0",
+       "DOMINIO-PUBLICO"
+      ],
+      "k_min_observaciones": 20,
+      "k_rango_max_intradia": 1.5,
+      "k_salto_adv_bloq": [
+       0.2,
+       0.5
+      ],
+      "k_tope_antiguedad_dias_habiles": {
+       "LARGO_PLAZO": 5,
+       "TACTICA": 1,
+       "TRADING": 1
+      },
+      "k_ventana_acumulado_obs": 5,
+      "manual_ventana_declaracion_horas": 72,
+      "n_dias_embudo": 7,
+      "n_lineas_diario_ambar": 1000,
+      "o_dias_sequia": 60,
+      "o_max_analisis_consulta": 50
+     }
+    },
+    "contratos": {
+     "PREFIJOS_ALERTA": [
+      [
+       "CIERRE PREPARADO",
+       "CIERRE_PREPARADO"
+      ],
+      [
+       "REDUCCI\u00d3N PREPARADA",
+       "REDUCCION_PREPARADA"
+      ],
+      [
+       "REVISI\u00d3N",
+       "REVISION"
+      ],
+      [
+       "ESCENARIO DE FALLO",
+       "ESCENARIO_FALLO"
+      ],
+      [
+       "INVALIDEZ",
+       "INVALIDEZ"
+      ],
+      [
+       "ALERTA DE P\u00c9RDIDA",
+       "PERDIDA"
+      ]
+     ]
+    },
+    "control_f": {
+     "CAMPOS": [
+      "cantidad_aprobada",
+      "consumer",
+      "controles",
+      "correlation_id",
+      "emitido_en",
+      "entradas",
+      "event_id",
+      "expediente_id",
+      "motivo",
+      "producer",
+      "propuesta_ref",
+      "resultado",
+      "tipo_mensaje",
+      "valid_until",
+      "version_esquema",
+      "version_reglas"
+     ],
+     "CAMPOS_PAYLOAD": [
+      "cantidad_aprobada",
+      "entradas",
+      "propuesta_ref"
+     ],
+     "CAMPOS_POLITICA": [
+      "controles",
+      "motivo",
+      "resultado",
+      "version_politica"
+     ],
+     "CARTERAS": [
+      "LARGO_PLAZO",
+      "TACTICA",
+      "TRADING"
+     ],
+     "CLAVES_CONTEXTO": [
+      "actividad",
+      "autonomia",
+      "eventos",
+      "evidencia",
+      "exclusiones_duras",
+      "fecha_revision",
+      "mandato",
+      "precio_intermediario"
+     ],
+     "CLAVES_MANDATO": [
+      "apalancamiento_max",
+      "exclusiones",
+      "horizonte_max_dias",
+      "instrumentos_permitidos",
+      "version"
+     ],
+     "CLAVES_POLITICA": [
+      "apalancamiento_max",
+      "concentracion_max_pct",
+      "corte_max_dias",
+      "deriva_precio_max_pct",
+      "evidencia_verificada_min",
+      "exposicion_max_pct",
+      "frescura_max_min",
+      "importe_max_activo_eur",
+      "importe_max_dia_eur",
+      "importe_max_orden_eur",
+      "max_posiciones",
+      "ordenes_max_hora",
+      "perdida_dia_max_eur",
+      "perdida_dia_max_pct",
+      "perdida_semana_max_eur",
+      "precio_frescura_max_min",
+      "riesgo_max_pct",
+      "tamano_max_pct",
+      "valor_min_eur",
+      "ventana_eventos_dias",
+      "viernes_corte_utc_h",
+      "vigencia_max_horas"
+     ],
+     "DIVISA": {
+      "flags": 32,
+      "re": "^[A-Z]{3}\\Z"
+     },
+     "DIVISAS_ISO": [
+      "AUD",
+      "BRL",
+      "CAD",
+      "CHF",
+      "CNH",
+      "CNY",
+      "CZK",
+      "DKK",
+      "EUR",
+      "GBP",
+      "HKD",
+      "HUF",
+      "INR",
+      "JPY",
+      "KRW",
+      "MXN",
+      "NOK",
+      "NZD",
+      "PLN",
+      "SEK",
+      "SGD",
+      "TRY",
+      "USD",
+      "ZAR"
+     ],
+     "ENTEROS_POLITICA": [
+      "max_posiciones",
+      "ordenes_max_hora",
+      "corte_max_dias",
+      "ventana_eventos_dias",
+      "viernes_corte_utc_h"
+     ],
+     "ENVOLTURA": [
+      "consumer",
+      "correlation_id",
+      "data_refs",
+      "emitido_en",
+      "event_id",
+      "expediente_id",
+      "payload",
+      "producer",
+      "resultado_politica",
+      "tipo_mensaje",
+      "valid_until",
+      "version_esquema"
+     ],
+     "ERRORES": [
+      {
+       "clase": "KeyError"
+      },
+      {
+       "clase": "TypeError"
+      },
+      {
+       "clase": "AttributeError"
+      },
+      {
+       "clase": "ValueError"
+      },
+      {
+       "clase": "IndexError"
+      },
+      {
+       "clase": "OverflowError"
+      },
+      {
+       "clase": "ZeroDivisionError"
+      },
+      {
+       "clase": "RecursionError"
+      },
+      {
+       "clase": "MemoryError"
+      }
+     ],
+     "FECHA": {
+      "flags": 32,
+      "re": "^\\d{4}-\\d{2}-\\d{2}\\Z"
+     },
+     "FH": {
+      "flags": 32,
+      "re": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}(\\.\\d+)?(Z|[+-]\\d{2}:\\d{2})\\Z"
+     },
+     "ID": {
+      "flags": 32,
+      "re": "^[A-Za-z0-9._:/-]{1,64}\\Z"
+     },
+     "NIVELES": [
+      "L0",
+      "L1",
+      "L2",
+      "L3"
+     ],
+     "ORDEN_SOLICITUD": [
+      "activo_base",
+      "apalancamiento",
+      "cantidad",
+      "cartera",
+      "direccion",
+      "divisa_cotizacion",
+      "instrumento",
+      "precio_entrada",
+      "stop_precio"
+     ],
+     "POLITICA_DEFECTO": {
+      "apalancamiento_max": 1.0,
+      "concentracion_max_pct": 20.0,
+      "corte_max_dias": 3,
+      "deriva_precio_max_pct": 2.0,
+      "evidencia_verificada_min": 0.05,
+      "exposicion_max_pct": 100.0,
+      "frescura_max_min": 60.0,
+      "importe_max_activo_eur": 30000.0,
+      "importe_max_dia_eur": 50000.0,
+      "importe_max_orden_eur": 20000.0,
+      "max_posiciones": 10,
+      "ordenes_max_hora": 10,
+      "perdida_dia_max_eur": 2500.0,
+      "perdida_dia_max_pct": 2.0,
+      "perdida_semana_max_eur": 5000.0,
+      "precio_frescura_max_min": 15.0,
+      "riesgo_max_pct": 1.0,
+      "tamano_max_pct": 10.0,
+      "valor_min_eur": 100.0,
+      "ventana_eventos_dias": 1,
+      "viernes_corte_utc_h": 20,
+      "vigencia_max_horas": 24.0
+     },
+     "TIPOS_EVENTO_RESTRINGIDOS": [
+      "BANCO_CENTRAL",
+      "RESULTADOS"
+     ],
+     "VERSION_ESQUEMA": "0.3.0",
+     "VERSION_REGLAS": "F-0.3.0"
+    },
+    "dimensionado": {},
+    "ejecucion_g": {
+     "ERRORES": [
+      {
+       "clase": "KeyError"
+      },
+      {
+       "clase": "TypeError"
+      },
+      {
+       "clase": "AttributeError"
+      },
+      {
+       "clase": "ValueError"
+      },
+      {
+       "clase": "IndexError"
+      },
+      {
+       "clase": "OverflowError"
+      },
+      {
+       "clase": "ZeroDivisionError"
+      },
+      {
+       "clase": "RecursionError"
+      },
+      {
+       "clase": "MemoryError"
+      }
+     ],
+     "ID": {
+      "flags": 32,
+      "re": "^[A-Za-z0-9._:/-]{1,64}\\Z"
+     },
+     "MAX_INTENTOS": 50,
+     "PENDIENTES": [
+      "ENVIADA",
+      "PARCIAL",
+      "EJECUTADA"
+     ],
+     "TOL": 1e-06
+    },
+    "k_calidad": {
+     "AJUSTE_TOL": 0.1,
+     "CLAVES_EVENTO": [
+      "anunciado_en",
+      "descripcion",
+      "fecha",
+      "instrumentos",
+      "tipo"
+     ],
+     "CLAVES_FUENTE": [
+      "contraste",
+      "critico",
+      "disponible",
+      "fuente_id",
+      "hash_declarado",
+      "instrumento",
+      "procedencia",
+      "serie",
+      "version_conjunto"
+     ],
+     "CLAVES_OBS": [
+      "apertura",
+      "cierre",
+      "fecha",
+      "maximo",
+      "minimo",
+      "volumen"
+     ],
+     "CLAVES_PROCEDENCIA": [
+      "licencia",
+      "obtenido_en",
+      "proveedor",
+      "referencia"
+     ],
+     "CRUCE_ADV": 0.001,
+     "CRUCE_BLOQ": 0.01,
+     "ERRORES": [
+      {
+       "clase": "KeyError"
+      },
+      {
+       "clase": "TypeError"
+      },
+      {
+       "clase": "AttributeError"
+      },
+      {
+       "clase": "ValueError"
+      },
+      {
+       "clase": "IndexError"
+      },
+      {
+       "clase": "OverflowError"
+      },
+      {
+       "clase": "RecursionError"
+      },
+      {
+       "clase": "MemoryError"
+      }
+     ],
+     "HUECO_ADV": 0.02,
+     "HUECO_BLOQ": 0.1,
+     "ID_RE": {
+      "flags": 32,
+      "re": "^[A-Za-z0-9._:/-]{1,64}\\Z"
+     },
+     "LICENCIAS": [
+      "PROPIA",
+      "INTERMEDIARIO-USO-INTERNO",
+      "CC-BY-4.0",
+      "DOMINIO-PUBLICO"
+     ],
+     "MAX_FUENTES": 100,
+     "MAX_SERIE": 20000,
+     "MIN_OBS": 20,
+     "ORDEN": {
+      "ADVERTENCIA": 1,
+      "BLOQUEO": 2,
+      "OK": 0
+     },
+     "RANGO_MAX": 1.5,
+     "REGLAS": [
+      "Q-01",
+      "Q-02",
+      "Q-03",
+      "Q-04",
+      "Q-05",
+      "Q-06",
+      "Q-07",
+      "Q-08",
+      "Q-09",
+      "Q-10",
+      "Q-11",
+      "Q-12",
+      "Q-13",
+      "Q-14",
+      "Q-15"
+     ],
+     "SALTO_ADV": 0.2,
+     "SALTO_BLOQ": 0.5,
+     "SELLO_RE": {
+      "flags": 32,
+      "re": "^K-\\d{8}-\\d{3}\\Z"
+     },
+     "TIPOS_AJUSTE": [
+      "DIVIDENDO",
+      "SIMBOLO",
+      "SPLIT"
+     ],
+     "TIPOS_EVENTO": [
+      "BANCO_CENTRAL",
+      "DATO_MACRO",
+      "RESULTADOS",
+      "DIVIDENDO",
+      "SPLIT",
+      "VENCIMIENTO",
+      "FESTIVO_EXTRA",
+      "OTRO"
+     ],
+     "TOPE_ANTIGUEDAD": {
+      "LARGO_PLAZO": 5,
+      "TACTICA": 1,
+      "TRADING": 1
+     },
+     "VENTANA_ACUM": 5,
+     "VERSION_REGLAS": "Q-0.2.0",
+     "VERSION_SELLO": "0.2.0"
+    },
+    "mandatos": {
+     "CARTERAS": [
+      "TRADING",
+      "TACTICA",
+      "LARGO_PLAZO"
+     ],
+     "CLAVES": [
+      "apalancamiento_max",
+      "benchmark_ref",
+      "exclusiones",
+      "horizonte_dias",
+      "instrumentos_permitidos",
+      "tamano_max_pct_cartera",
+      "version"
+     ],
+     "CLAVES_RESTRICCIONES": [
+      "exclusiones",
+      "horizonte_dias",
+      "tamano_max_pct_cartera"
+     ],
+     "HORIZONTE_CARTERA": {
+      "LARGO_PLAZO": [
+       1095,
+       7300
+      ],
+      "TACTICA": [
+       14,
+       183
+      ],
+      "TRADING": [
+       1,
+       28
+      ]
+     },
+     "MANDATOS_DEFECTO": {
+      "LARGO_PLAZO": {
+       "apalancamiento_max": 1,
+       "benchmark_ref": "BENCH-EFECTIVO",
+       "exclusiones": [],
+       "horizonte_dias": {
+        "max": 7300,
+        "min": 1095
+       },
+       "instrumentos_permitidos": null,
+       "tamano_max_pct_cartera": 10.0,
+       "version": "MAN-0.1.0"
+      },
+      "TACTICA": {
+       "apalancamiento_max": 1,
+       "benchmark_ref": "BENCH-EFECTIVO",
+       "exclusiones": [],
+       "horizonte_dias": {
+        "max": 183,
+        "min": 14
+       },
+       "instrumentos_permitidos": null,
+       "tamano_max_pct_cartera": 10.0,
+       "version": "MAN-0.1.0"
+      },
+      "TRADING": {
+       "apalancamiento_max": 1,
+       "benchmark_ref": "BENCH-EFECTIVO",
+       "exclusiones": [],
+       "horizonte_dias": {
+        "max": 28,
+        "min": 1
+       },
+       "instrumentos_permitidos": null,
+       "tamano_max_pct_cartera": 10.0,
+       "version": "MAN-0.1.0"
+      }
+     },
+     "VERSION_SC1": "SC1-0.1.0"
+    },
+    "manual_g": {
+     "CAMPOS": [
+      "activo_base",
+      "cantidad",
+      "cartera",
+      "comision_eur",
+      "consumer",
+      "correlation_id",
+      "ejecutado_en",
+      "emitido_en",
+      "event_id",
+      "expediente_id",
+      "instrumento",
+      "lado",
+      "motivo",
+      "precio",
+      "producer",
+      "proteccion_ref",
+      "ref_intermediario",
+      "tipo_mensaje",
+      "version_esquema",
+      "via_acceso",
+      "vinculo"
+     ],
+     "CARTERAS": [
+      "TRADING",
+      "TACTICA",
+      "LARGO_PLAZO"
+     ],
+     "CONTRATO": "CT-G-14",
+     "ENVOLTURA": [
+      "event_id",
+      "correlation_id",
+      "expediente_id",
+      "producer",
+      "consumer",
+      "tipo_mensaje",
+      "version_esquema",
+      "emitido_en",
+      "valid_until",
+      "data_refs",
+      "payload"
+     ],
+     "FH": {
+      "flags": 32,
+      "re": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}(\\.\\d+)?(Z|[+-]\\d{2}:\\d{2})\\Z"
+     },
+     "ID": {
+      "flags": 32,
+      "re": "^[A-Za-z0-9._:/-]{1,64}\\Z"
+     },
+     "MOTIVO": {
+      "flags": 32,
+      "re": "\\S[\\s\\S]*\\S[\\s\\S]*\\S"
+     },
+     "MOTIVO_MAX": 500,
+     "OBLIGATORIOS": [
+      "activo_base",
+      "cantidad",
+      "cartera",
+      "consumer",
+      "correlation_id",
+      "ejecutado_en",
+      "emitido_en",
+      "event_id",
+      "expediente_id",
+      "instrumento",
+      "lado",
+      "motivo",
+      "precio",
+      "producer",
+      "ref_intermediario",
+      "tipo_mensaje",
+      "version_esquema",
+      "vinculo"
+     ],
+     "PAYLOAD": [
+      "activo_base",
+      "cantidad",
+      "cartera",
+      "comision_eur",
+      "ejecutado_en",
+      "instrumento",
+      "lado",
+      "motivo",
+      "precio",
+      "proteccion_ref",
+      "ref_intermediario",
+      "via_acceso",
+      "vinculo"
+     ],
+     "PAYLOAD_OBLIGATORIOS": [
+      "activo_base",
+      "cantidad",
+      "cartera",
+      "ejecutado_en",
+      "instrumento",
+      "lado",
+      "motivo",
+      "precio",
+      "ref_intermediario",
+      "vinculo"
+     ],
+     "VENTANA_DECLARACION_H": 72,
+     "VERSION": "0.2.0"
+    },
+    "motor": {
+     "CLAVES_ARTEFACTO": [
+      "artefacto_id",
+      "entradas_hash",
+      "modelo_ref",
+      "resultado_hash",
+      "sello_ref",
+      "semilla",
+      "version_modelo"
+     ],
+     "CLAVES_MODELO": [
+      "descripcion",
+      "limites_validez",
+      "modelo_ref",
+      "version"
+     ],
+     "VERSION_SC3": "SC3-0.1.0"
+    },
+    "orquestador": {
+     "ACTORES_PROPUESTA": [
+      "BROKER",
+      "GESTOR_LARGO_PLAZO",
+      "GESTOR_TACTICA",
+      "GESTOR_TRADING"
+     ],
+     "ALERTA_PERDIDA_RANGO": [
+      -50.0,
+      -0.5
+     ],
+     "BLOQUES_CONSULTA": [
+      "A",
+      "B",
+      "C",
+      "D",
+      "E",
+      "K"
+     ],
+     "BLOQUES_DIRECTA": {
+      "C": "EN_ANALISIS",
+      "D": "VALIDADA",
+      "E": "COMPARADA"
+     },
+     "CAMPOS_CONSULTA": [
+      "consulta_id",
+      "correlation_id",
+      "tipo",
+      "bloque",
+      "cartera",
+      "analisis",
+      "pregunta"
+     ],
+     "CAMPOS_DIRECTA": [
+      "bloque_entrada",
+      "analisis_ref",
+      "consulta_ref"
+     ],
+     "CAMPOS_POS": [
+      "posicion_id",
+      "expediente_id",
+      "estado",
+      "cantidad",
+      "cantidad_inicial",
+      "cartera",
+      "direccion",
+      "instrumento",
+      "activo_base",
+      "stop_precio",
+      "condiciones_salida",
+      "via_acceso",
+      "fecha_revision",
+      "protecciones",
+      "protecciones_anteriores",
+      "reduccion",
+      "reducciones",
+      "condiciones_consumidas",
+      "precio_entrada",
+      "senales",
+      "senales_disparadas",
+      "perdida_alertada",
+      "propuestas"
+     ],
+     "CONFIG_DEFECTO": {
+      "alerta_perdida_pct": -5.0,
+      "anulaciones_veto_mes": 2,
+      "aprobacion": {
+       "caduca_min": 15,
+       "canales": [
+        "CONSOLA"
+       ],
+       "enfriamiento_min": 30,
+       "enfriamiento_tras_perdida_dia_eur": 0.0,
+       "horario_utc": [
+        "07:00",
+        "21:00"
+       ]
+      },
+      "autoria_c": {},
+      "autoria_contradictor": null,
+      "avisos": {
+       "canal_alta": "CONSOLA",
+       "canal_escalado": "ESCALADO",
+       "escalar_tras": 3,
+       "reiterar_min": 15
+      },
+      "contradictor_desactivado_motivo": null,
+      "cuenta_intermediario": "SIM-1",
+      "dia_coste_max_eur": 50.0,
+      "dia_tiempo_max_min": 600,
+      "divisas_cotizacion": {},
+      "exige_contradictor_en": [
+       "N2",
+       "N3"
+      ],
+      "kill_switch": {
+       "periodo_min_l1_horas": 24
+      },
+      "libres_tope_dia_eur": {
+       "LARGO_PLAZO": 2000.0,
+       "TACTICA": 2000.0,
+       "TRADING": 2000.0
+      },
+      "mandatos": {
+       "LARGO_PLAZO": {
+        "apalancamiento_max": 1,
+        "benchmark_ref": "BENCH-EFECTIVO",
+        "exclusiones": [],
+        "horizonte_dias": {
+         "max": 7300,
+         "min": 1095
+        },
+        "instrumentos_permitidos": null,
+        "tamano_max_pct_cartera": 10.0,
+        "version": "MAN-0.1.0"
+       },
+       "TACTICA": {
+        "apalancamiento_max": 1,
+        "benchmark_ref": "BENCH-EFECTIVO",
+        "exclusiones": [],
+        "horizonte_dias": {
+         "max": 183,
+         "min": 14
+        },
+        "instrumentos_permitidos": null,
+        "tamano_max_pct_cartera": 10.0,
+        "version": "MAN-0.1.0"
+       },
+       "TRADING": {
+        "apalancamiento_max": 1,
+        "benchmark_ref": "BENCH-EFECTIVO",
+        "exclusiones": [],
+        "horizonte_dias": {
+         "max": 28,
+         "min": 1
+        },
+        "instrumentos_permitidos": null,
+        "tamano_max_pct_cartera": 10.0,
+        "version": "MAN-0.1.0"
+       }
+      },
+      "matriz_autonomia": {},
+      "max_reaperturas": 2,
+      "max_reintentos": 3,
+      "nivel_autonomia": {},
+      "observacion_max_dias": 30,
+      "politica_f": {
+       "apalancamiento_max": 1.0,
+       "concentracion_max_pct": 20.0,
+       "corte_max_dias": 3,
+       "deriva_precio_max_pct": 2.0,
+       "evidencia_verificada_min": 0.05,
+       "exposicion_max_pct": 100.0,
+       "frescura_max_min": 60.0,
+       "importe_max_activo_eur": 30000.0,
+       "importe_max_dia_eur": 50000.0,
+       "importe_max_orden_eur": 20000.0,
+       "max_posiciones": 10,
+       "ordenes_max_hora": 10,
+       "perdida_dia_max_eur": 2500.0,
+       "perdida_dia_max_pct": 2.0,
+       "perdida_semana_max_eur": 5000.0,
+       "precio_frescura_max_min": 15.0,
+       "riesgo_max_pct": 1.0,
+       "tamano_max_pct": 10.0,
+       "valor_min_eur": 100.0,
+       "ventana_eventos_dias": 1,
+       "viernes_corte_utc_h": 20,
+       "vigencia_max_horas": 24.0
+      },
+      "promocion_nivel": {
+       "periodo_min_dias": 30
+      },
+      "rangos_tipo_cambio_eur": {
+       "AUD": [
+        0.4,
+        0.9
+       ],
+       "CAD": [
+        0.45,
+        0.95
+       ],
+       "CHF": [
+        0.7,
+        1.4
+       ],
+       "DKK": [
+        0.12,
+        0.15
+       ],
+       "GBP": [
+        0.9,
+        1.6
+       ],
+       "JPY": [
+        0.003,
+        0.015
+       ],
+       "NOK": [
+        0.06,
+        0.13
+       ],
+       "SEK": [
+        0.06,
+        0.13
+       ],
+       "USD": [
+        0.6,
+        1.4
+       ]
+      },
+      "referencias": {
+       "LARGO_PLAZO": {
+        "benchmark_ref": "BENCH-EFECTIVO",
+        "rentabilidad_anual_pct": 0.0
+       },
+       "TACTICA": {
+        "benchmark_ref": "BENCH-EFECTIVO",
+        "rentabilidad_anual_pct": 0.0
+       },
+       "TRADING": {
+        "benchmark_ref": "BENCH-EFECTIVO",
+        "rentabilidad_anual_pct": 0.0
+       }
+      },
+      "revision_max_dias": 90,
+      "tolerancia_conciliacion_rel": 0.0,
+      "tolerancia_precio_entrada": 0.05,
+      "tolerancia_tipo_k_rel": 0.03,
+      "tolerancia_tipo_par_pct": 15.0,
+      "umbral_corte_comun_dias_habiles": 0,
+      "umbral_l2_eur": {
+       "LARGO_PLAZO": 5000.0,
+       "TACTICA": 5000.0,
+       "TRADING": 5000.0
+      },
+      "version_config": "CFG-0.11.0"
+     },
+     "CONFIG_OBLIGATORIA": [
+      "apalancamiento_permitido",
+      "clases_ratificadas",
+      "perfiles_activos"
+     ],
+     "DECISORES": [
+      "BROKER",
+      "GESTOR_LARGO_PLAZO",
+      "GESTOR_TACTICA",
+      "GESTOR_TRADING",
+      "OPERADOR"
+     ],
+     "EMISORES": [
+      "BROKER",
+      "GESTOR_LARGO_PLAZO",
+      "GESTOR_TACTICA",
+      "GESTOR_TRADING"
+     ],
+     "ERRORES": [
+      {
+       "clase": "KeyError"
+      },
+      {
+       "clase": "TypeError"
+      },
+      {
+       "clase": "AttributeError"
+      },
+      {
+       "clase": "ValueError"
+      },
+      {
+       "clase": "IndexError"
+      },
+      {
+       "clase": "OverflowError"
+      },
+      {
+       "clase": "RecursionError"
+      },
+      {
+       "clase": "MemoryError"
+      }
+     ],
+     "GESTORES": [
+      "GESTOR_LARGO_PLAZO",
+      "GESTOR_TACTICA",
+      "GESTOR_TRADING"
+     ],
+     "GESTOR_DE": {
+      "LARGO_PLAZO": "GESTOR_LARGO_PLAZO",
+      "TACTICA": "GESTOR_TACTICA",
+      "TRADING": "GESTOR_TRADING"
+     },
+     "INCIDENTES_PROMOCION": [
+      "O-03",
+      "O-18",
+      "O-25",
+      "O-37"
+     ],
+     "LIMITE_PERDIDA": "perdida_dia_max_pct",
+     "MARGEN_AJUSTADO": 0.05,
+     "MAX_EDAD_DIMENSIONADO_MIN": 60,
+     "METRICAS_PRECIO": [
+      "precio",
+      "precio_cierre"
+     ],
+     "MOTIVO_MIN": 15,
+     "MOTIVO_REUTILIZA": "an\u00e1lisis vigente reutilizado",
+     "MOTIVO_VETO_F": "vetado por F",
+     "NIVELES": {
+      "L0": 0,
+      "L1": 1,
+      "L2": 2,
+      "L3": 3
+     },
+     "NIVELES_CONTRADICTOR": [
+      "N2",
+      "N3"
+     ],
+     "NIVEL_BAJO": "N2",
+     "NIVEL_MIN_POR_DECISION": {
+      "ABRIR_POSICION": "N2",
+      "AUMENTAR": "N2"
+     },
+     "NIVEL_ORDEN": {
+      "N0": 0,
+      "N1": 1,
+      "N2": 2,
+      "N3": 3
+     },
+     "OPERADORES": {
+      "<": {
+       "tipo": "function"
+      },
+      "<=": {
+       "tipo": "function"
+      },
+      "==": {
+       "tipo": "function"
+      },
+      ">": {
+       "tipo": "function"
+      },
+      ">=": {
+       "tipo": "function"
+      }
+     },
+     "PARAMETROS": {
+      "d_coste_suelo_ida_vuelta_pb": {
+       "K": 30.0,
+       "Q": 2.0,
+       "S": 10.0
+      },
+      "d_coste_suelo_mant_anual_pb": {
+       "K": 0.0,
+       "Q": 0.0,
+       "S": 0.0
+      },
+      "d_exceso_min_pct": 0.1,
+      "d_factor_tope_sin_doble_analisis": 0.75,
+      "d_margen_ajustado": 0.05,
+      "d_peso_evidencia": {
+       "ESTIMADO": 0.5,
+       "SUPUESTO": 0.25,
+       "VERIFICADO": 1.0
+      },
+      "d_referencia_rango_pct": [
+       -5.0,
+       50.0
+      ],
+      "d_rentabilidad_plausible_pct": [
+       -100.0,
+       500.0
+      ],
+      "d_riesgo_min_pct": 1.0,
+      "d_riesgo_sin_stop_largo_pct": 100.0,
+      "d_tope_confianza_clase": {
+       "K": 0.4,
+       "Q": 0.8,
+       "S": 0.6
+      },
+      "e_max_edad_dimensionado_min": 60,
+      "h_max_edad_dato_min": 15,
+      "h_salto_max_horas": 72,
+      "i_coste_anual_sombra_pct": 0.2,
+      "i_indice_sombra": "INDICE-MUNDIAL",
+      "i_meses_juicio_sombra": 24,
+      "k_ajuste_tol_rel": 0.1,
+      "k_cruce_adv_bloq": [
+       0.001,
+       0.01
+      ],
+      "k_hueco_adv_bloq": [
+       0.02,
+       0.1
+      ],
+      "k_licencias_admitidas": [
+       "PROPIA",
+       "INTERMEDIARIO-USO-INTERNO",
+       "CC-BY-4.0",
+       "DOMINIO-PUBLICO"
+      ],
+      "k_min_observaciones": 20,
+      "k_rango_max_intradia": 1.5,
+      "k_salto_adv_bloq": [
+       0.2,
+       0.5
+      ],
+      "k_tope_antiguedad_dias_habiles": {
+       "LARGO_PLAZO": 5,
+       "TACTICA": 1,
+       "TRADING": 1
+      },
+      "k_ventana_acumulado_obs": 5,
+      "manual_ventana_declaracion_horas": 72,
+      "n_dias_embudo": 7,
+      "n_lineas_diario_ambar": 1000,
+      "o_dias_sequia": 60,
+      "o_max_analisis_consulta": 50
+     },
+     "POLITICA_DEFECTO": {
+      "apalancamiento_max": 1.0,
+      "concentracion_max_pct": 20.0,
+      "corte_max_dias": 3,
+      "deriva_precio_max_pct": 2.0,
+      "evidencia_verificada_min": 0.05,
+      "exposicion_max_pct": 100.0,
+      "frescura_max_min": 60.0,
+      "importe_max_activo_eur": 30000.0,
+      "importe_max_dia_eur": 50000.0,
+      "importe_max_orden_eur": 20000.0,
+      "max_posiciones": 10,
+      "ordenes_max_hora": 10,
+      "perdida_dia_max_eur": 2500.0,
+      "perdida_dia_max_pct": 2.0,
+      "perdida_semana_max_eur": 5000.0,
+      "precio_frescura_max_min": 15.0,
+      "riesgo_max_pct": 1.0,
+      "tamano_max_pct": 10.0,
+      "valor_min_eur": 100.0,
+      "ventana_eventos_dias": 1,
+      "viernes_corte_utc_h": 20,
+      "vigencia_max_horas": 24.0
+     },
+     "PRIORIDAD_AVISO": {
+      "O-03": "ALTA",
+      "O-08": "ALTA",
+      "O-09": "ALTA",
+      "O-13": "ALTA",
+      "O-17": "ALTA",
+      "O-18": "ALTA",
+      "O-19": "ALTA",
+      "O-20": "MEDIA",
+      "O-25": "ALTA",
+      "O-26": "ALTA",
+      "O-30": "ALTA",
+      "O-31": "MEDIA",
+      "O-32": "MEDIA",
+      "O-33": "MEDIA",
+      "O-34": "ALTA",
+      "O-35": "ALTA",
+      "O-36": "MEDIA",
+      "O-37": "ALTA",
+      "O-38": "ALTA",
+      "O-39": "ALTA",
+      "O-40": "MEDIA",
+      "O-41": "ALTA",
+      "O-42": "MEDIA"
+     },
+     "REFERENCIA_EFECTIVO": {
+      "benchmark_ref": "BENCH-EFECTIVO",
+      "rentabilidad_anual_pct": 0.0
+     },
+     "REUTILIZABLE_DESDE": [
+      "EN_OBSERVACION",
+      "DESCARTADA"
+     ],
+     "T": {
+      "('AUTORIZADA', 'CADUCADA')": [
+       "ORQUESTADOR"
+      ],
+      "('AUTORIZADA', 'DESCARTADA')": [
+       "BROKER",
+       "GESTOR_LARGO_PLAZO",
+       "GESTOR_TACTICA",
+       "GESTOR_TRADING",
+       "OPERADOR"
+      ],
+      "('AUTORIZADA', 'EJECUTADA')": [
+       "G"
+      ],
+      "('CADUCADA', 'DESCARTADA')": [
+       "BROKER",
+       "GESTOR_LARGO_PLAZO",
+       "GESTOR_TACTICA",
+       "GESTOR_TRADING",
+       "OPERADOR"
+      ],
+      "('CADUCADA', 'EN_ANALISIS')": [
+       "BROKER",
+       "GESTOR_LARGO_PLAZO",
+       "GESTOR_TACTICA",
+       "GESTOR_TRADING"
+      ],
+      "('COMPARADA', 'CADUCADA')": [
+       "ORQUESTADOR"
+      ],
+      "('COMPARADA', 'COMPARADA')": [
+       "D"
+      ],
+      "('COMPARADA', 'DESCARTADA')": [
+       "BROKER",
+       "GESTOR_LARGO_PLAZO",
+       "GESTOR_TACTICA",
+       "GESTOR_TRADING",
+       "OPERADOR"
+      ],
+      "('COMPARADA', 'EN_OBSERVACION')": [
+       "BROKER",
+       "D",
+       "GESTOR_LARGO_PLAZO",
+       "GESTOR_TACTICA",
+       "GESTOR_TRADING",
+       "OPERADOR"
+      ],
+      "('COMPARADA', 'PROPUESTA')": [
+       "BROKER",
+       "GESTOR_LARGO_PLAZO",
+       "GESTOR_TACTICA",
+       "GESTOR_TRADING"
+      ],
+      "('DETECTADA', 'DESCARTADA')": [
+       "BROKER",
+       "GESTOR_LARGO_PLAZO",
+       "GESTOR_TACTICA",
+       "GESTOR_TRADING",
+       "OPERADOR"
+      ],
+      "('DETECTADA', 'EN_ANALISIS')": [
+       "BROKER",
+       "GESTOR_LARGO_PLAZO",
+       "GESTOR_TACTICA",
+       "GESTOR_TRADING"
+      ],
+      "('DETECTADA', 'EN_OBSERVACION')": [
+       "BROKER",
+       "D",
+       "GESTOR_LARGO_PLAZO",
+       "GESTOR_TACTICA",
+       "GESTOR_TRADING",
+       "OPERADOR"
+      ],
+      "('EN_ANALISIS', 'DESCARTADA')": [
+       "BROKER",
+       "GESTOR_LARGO_PLAZO",
+       "GESTOR_TACTICA",
+       "GESTOR_TRADING",
+       "OPERADOR"
+      ],
+      "('EN_ANALISIS', 'EN_ANALISIS')": [
+       "BROKER",
+       "GESTOR_LARGO_PLAZO",
+       "GESTOR_TACTICA",
+       "GESTOR_TRADING"
+      ],
+      "('EN_ANALISIS', 'EN_OBSERVACION')": [
+       "BROKER",
+       "D",
+       "GESTOR_LARGO_PLAZO",
+       "GESTOR_TACTICA",
+       "GESTOR_TRADING",
+       "OPERADOR"
+      ],
+      "('EN_ANALISIS', 'VALIDADA')": [
+       "C"
+      ],
+      "('EN_OBSERVACION', 'DESCARTADA')": [
+       "BROKER",
+       "GESTOR_LARGO_PLAZO",
+       "GESTOR_TACTICA",
+       "GESTOR_TRADING",
+       "OPERADOR"
+      ],
+      "('EN_OBSERVACION', 'EN_ANALISIS')": [
+       "BROKER",
+       "GESTOR_LARGO_PLAZO",
+       "GESTOR_TACTICA",
+       "GESTOR_TRADING"
+      ],
+      "('PROPUESTA', 'AUTORIZADA')": [
+       "MATRIZ_AUTONOMIA",
+       "OPERADOR"
+      ],
+      "('PROPUESTA', 'CADUCADA')": [
+       "ORQUESTADOR"
+      ],
+      "('PROPUESTA', 'DESCARTADA')": [
+       "BROKER",
+       "GESTOR_LARGO_PLAZO",
+       "GESTOR_TACTICA",
+       "GESTOR_TRADING",
+       "OPERADOR"
+      ],
+      "('PROPUESTA', 'EN_OBSERVACION')": [
+       "BROKER",
+       "D",
+       "GESTOR_LARGO_PLAZO",
+       "GESTOR_TACTICA",
+       "GESTOR_TRADING",
+       "OPERADOR"
+      ],
+      "('VALIDADA', 'CADUCADA')": [
+       "ORQUESTADOR"
+      ],
+      "('VALIDADA', 'COMPARADA')": [
+       "D"
+      ],
+      "('VALIDADA', 'DESCARTADA')": [
+       "BROKER",
+       "GESTOR_LARGO_PLAZO",
+       "GESTOR_TACTICA",
+       "GESTOR_TRADING",
+       "OPERADOR"
+      ],
+      "('VALIDADA', 'EN_OBSERVACION')": [
+       "BROKER",
+       "D",
+       "GESTOR_LARGO_PLAZO",
+       "GESTOR_TACTICA",
+       "GESTOR_TRADING",
+       "OPERADOR"
+      ]
+     },
+     "TERMINALES": [
+      "DESCARTADA",
+      "EJECUTADA"
+     ],
+     "TIPOS_CONSULTA": [
+      "COMPARAR",
+      "ANALIZAR",
+      "PROYECTAR"
+     ],
+     "TIPOS_KILL": [
+      "CANTIDAD",
+      "ENTRADA_HUERFANA",
+      "INTEGRIDAD",
+      "MANUAL_NO_CUADRA",
+      "POSICION_DESCONOCIDA",
+      "POSICION_SIN_PROTEGER",
+      "PROTECCION",
+      "PROTECCION_HUERFANA",
+      "SENTIDO_O_ACTIVO"
+     ],
+     "TOL_Q": 1e-06,
+     "TOPES_F": [
+      "F-03",
+      "F-04",
+      "F-06",
+      "F-07",
+      "F-13",
+      "F-14",
+      "F-15"
+     ],
+     "TP": {
+      "('ABIERTA', 'CERRANDO')": [
+       "F",
+       "G",
+       "OPERADOR",
+       "ORQUESTADOR"
+      ],
+      "('ABIERTA', 'EN_REVISION')": [
+       "H",
+       "ORQUESTADOR"
+      ],
+      "('ABIERTA', 'REDUCIENDO')": [
+       "F",
+       "G",
+       "OPERADOR",
+       "ORQUESTADOR"
+      ],
+      "('CERRANDO', 'CERRADA')": [
+       "G"
+      ],
+      "('EN_REVISION', 'ABIERTA')": [
+       "BROKER",
+       "GESTOR_LARGO_PLAZO",
+       "GESTOR_TACTICA",
+       "GESTOR_TRADING",
+       "OPERADOR"
+      ],
+      "('EN_REVISION', 'CERRANDO')": [
+       "F",
+       "G",
+       "OPERADOR",
+       "ORQUESTADOR"
+      ],
+      "('EN_REVISION', 'REDUCIENDO')": [
+       "F",
+       "G",
+       "OPERADOR",
+       "ORQUESTADOR"
+      ],
+      "('REDUCIENDO', 'ABIERTA')": [
+       "G"
+      ],
+      "('REDUCIENDO', 'CERRADA')": [
+       "G"
+      ],
+      "('REDUCIENDO', 'CERRANDO')": [
+       "F",
+       "G",
+       "OPERADOR",
+       "ORQUESTADOR"
+      ],
+      "('REDUCIENDO', 'EN_REVISION')": [
+       "G"
+      ]
+     },
+     "VERSION_PARAMETROS": "PAR-0.7.0",
+     "VERSION_REGLAS": "ORQ-0.1.0",
+     "VERSION_REGLAS_F": "F-0.3.0",
+     "VERSION_REGLAS_K": "Q-0.2.0",
+     "VETOS_ANULABLES": [
+      "F-09",
+      "F-11"
+     ],
+     "VIVOS": [
+      "VALIDADA",
+      "COMPARADA",
+      "PROPUESTA",
+      "AUTORIZADA"
+     ]
+    },
+    "parametros": {
+     "PARAMETROS": {
+      "d_coste_suelo_ida_vuelta_pb": {
+       "K": 30.0,
+       "Q": 2.0,
+       "S": 10.0
+      },
+      "d_coste_suelo_mant_anual_pb": {
+       "K": 0.0,
+       "Q": 0.0,
+       "S": 0.0
+      },
+      "d_exceso_min_pct": 0.1,
+      "d_factor_tope_sin_doble_analisis": 0.75,
+      "d_margen_ajustado": 0.05,
+      "d_peso_evidencia": {
+       "ESTIMADO": 0.5,
+       "SUPUESTO": 0.25,
+       "VERIFICADO": 1.0
+      },
+      "d_referencia_rango_pct": [
+       -5.0,
+       50.0
+      ],
+      "d_rentabilidad_plausible_pct": [
+       -100.0,
+       500.0
+      ],
+      "d_riesgo_min_pct": 1.0,
+      "d_riesgo_sin_stop_largo_pct": 100.0,
+      "d_tope_confianza_clase": {
+       "K": 0.4,
+       "Q": 0.8,
+       "S": 0.6
+      },
+      "e_max_edad_dimensionado_min": 60,
+      "h_max_edad_dato_min": 15,
+      "h_salto_max_horas": 72,
+      "i_coste_anual_sombra_pct": 0.2,
+      "i_indice_sombra": "INDICE-MUNDIAL",
+      "i_meses_juicio_sombra": 24,
+      "k_ajuste_tol_rel": 0.1,
+      "k_cruce_adv_bloq": [
+       0.001,
+       0.01
+      ],
+      "k_hueco_adv_bloq": [
+       0.02,
+       0.1
+      ],
+      "k_licencias_admitidas": [
+       "PROPIA",
+       "INTERMEDIARIO-USO-INTERNO",
+       "CC-BY-4.0",
+       "DOMINIO-PUBLICO"
+      ],
+      "k_min_observaciones": 20,
+      "k_rango_max_intradia": 1.5,
+      "k_salto_adv_bloq": [
+       0.2,
+       0.5
+      ],
+      "k_tope_antiguedad_dias_habiles": {
+       "LARGO_PLAZO": 5,
+       "TACTICA": 1,
+       "TRADING": 1
+      },
+      "k_ventana_acumulado_obs": 5,
+      "manual_ventana_declaracion_horas": 72,
+      "n_dias_embudo": 7,
+      "n_lineas_diario_ambar": 1000,
+      "o_dias_sequia": 60,
+      "o_max_analisis_consulta": 50
+     },
+     "VERSION_PARAMETROS": "PAR-0.7.0"
+    },
+    "validar_contradictor": {
+     "ERRORES": [
+      {
+       "clase": "KeyError"
+      },
+      {
+       "clase": "TypeError"
+      },
+      {
+       "clase": "AttributeError"
+      },
+      {
+       "clase": "ValueError"
+      },
+      {
+       "clase": "IndexError"
+      },
+      {
+       "clase": "OverflowError"
+      },
+      {
+       "clase": "RecursionError"
+      },
+      {
+       "clase": "MemoryError"
+      }
+     ],
+     "ORDEN": {
+      "CRITICA": 2,
+      "MAYOR": 1,
+      "MENOR": 0
+     },
+     "VEREDICTO_DE": {
+      "0": "SIN_OBJECIONES_RELEVANTES",
+      "1": "OBJECION_MAYOR",
+      "2": "OBJECION_CRITICA"
+     },
+     "VERSION": "0.2.0",
+     "VERSIONES_RETIRADAS": [
+      "0.1.0"
+     ]
+    },
+    "validar_encargo": {
+     "ANTIGUEDAD_CORTE_DIAS": {
+      "LARGO_PLAZO": 5,
+      "TACTICA": 1,
+      "TRADING": 1
+     },
+     "CON_POSICION": [
+      "AUMENTAR",
+      "CERRAR",
+      "MANTENER",
+      "REDUCIR"
+     ],
+     "NIVEL_MAX_POR_DECISION": {
+      "DESCARTAR": "N1",
+      "EXPLORAR": "N1"
+     },
+     "NIVEL_MIN_POR_DECISION": {
+      "ABRIR_POSICION": "N2",
+      "AUMENTAR": "N2"
+     },
+     "NIVEL_ORDEN": {
+      "N0": 0,
+      "N1": 1,
+      "N2": 2,
+      "N3": 3
+     },
+     "PREFIJOS_REF": [
+      "K-",
+      "SRC-",
+      "EVID-",
+      "PAQ-"
+     ],
+     "PRODUCTOR_POR_CARTERA": {
+      "LARGO_PLAZO": "GESTOR_LARGO_PLAZO",
+      "TACTICA": "GESTOR_TACTICA",
+      "TRADING": "GESTOR_TRADING"
+     },
+     "RETIRADAS": [
+      "0.1.0"
+     ],
+     "SELLO_RE": {
+      "flags": 32,
+      "re": "^K-\\d{8}-\\d{3}\\Z"
+     },
+     "TOPE_ANTIGUEDAD": {
+      "LARGO_PLAZO": 5,
+      "TACTICA": 1,
+      "TRADING": 1
+     },
+     "VERSIONES_CONOCIDAS": [
+      "0.2.0"
+     ],
+     "VIGENCIA_MAX": {
+      "segundos": 2592000.0
+     }
+    },
+    "validar_sobre": {
+     "CAPA1": [
+      "identificacion",
+      "tesis",
+      "entrada_salida",
+      "liquidez",
+      "costes",
+      "capital",
+      "estres_historico",
+      "factores",
+      "evidencia",
+      "exclusiones_duras",
+      "referencias"
+     ],
+     "CLASES_V23": [
+      "Q",
+      "S"
+     ],
+     "EPISODIOS_ESTANDAR": [
+      "EP-2008-LEHMAN",
+      "EP-2011-EUROZONA",
+      "EP-2015-SNB",
+      "EP-2018-Q4",
+      "EP-2020-COVID",
+      "EP-2022-TIPOS"
+     ],
+     "EXIGIDOS": {
+      "N0": [
+       "identificacion",
+       "exclusiones_duras",
+       "evidencia"
+      ],
+      "N1": [
+       "identificacion",
+       "exclusiones_duras",
+       "evidencia",
+       "tesis",
+       "entrada_salida",
+       "liquidez",
+       "costes",
+       "capital",
+       "referencias"
+      ],
+      "N2": [
+       "identificacion",
+       "tesis",
+       "entrada_salida",
+       "liquidez",
+       "costes",
+       "capital",
+       "estres_historico",
+       "factores",
+       "evidencia",
+       "exclusiones_duras",
+       "referencias",
+       "capa2",
+       "capa3"
+      ],
+      "N3": [
+       "identificacion",
+       "tesis",
+       "entrada_salida",
+       "liquidez",
+       "costes",
+       "capital",
+       "estres_historico",
+       "factores",
+       "evidencia",
+       "exclusiones_duras",
+       "referencias",
+       "capa2",
+       "capa3"
+      ]
+     },
+     "FACTORES_ESTANDAR": [
+      "TIPOS",
+      "RV",
+      "USD",
+      "CREDITO",
+      "INFLACION",
+      "MATERIAS_PRIMAS",
+      "VOLATILIDAD",
+      "LIQUIDEZ"
+     ],
+     "FACTOR_DISCREPANCIA": 0.75,
+     "MAX_NO_ESTIMABLE_N2": 0.5,
+     "TOLERANCIA": 1e-06,
+     "TOPE_POR_CLASE": {
+      "K": 0.4,
+      "Q": 0.8,
+      "S": 0.6
+     },
+     "UNIDADES": {
+      "capital.apalancamiento": [
+       "x",
+       1,
+       null
+      ],
+      "capital.capital_necesario": [
+       "EUR",
+       0,
+       null
+      ],
+      "capital.margen": [
+       "EUR",
+       0,
+       null
+      ],
+      "costes.entrada": [
+       "pb",
+       0,
+       null
+      ],
+      "costes.impacto_fiscal": [
+       "EUR",
+       null,
+       null
+      ],
+      "costes.mantenimiento_anual": [
+       "pb",
+       null,
+       null
+      ],
+      "costes.salida": [
+       "pb",
+       0,
+       null
+      ],
+      "factores.calidad_ajuste": [
+       "R2",
+       0,
+       1
+      ],
+      "liquidez.coste_salida": [
+       "pb",
+       0,
+       null
+      ],
+      "liquidez.tamano_max_sin_impacto": [
+       "EUR",
+       0,
+       null
+      ],
+      "liquidez.tiempo_salida": [
+       "d\u00edas",
+       0,
+       null
+      ]
+     },
+     "UNIDAD_BETA": [
+      "beta",
+      -10,
+      10
+     ],
+     "UNIDAD_ESTRES": [
+      "%",
+      -100,
+      null
+     ],
+     "VERSIONES_CONOCIDAS": [
+      "0.2.0"
+     ],
+     "VERSIONES_RETIRADAS": [
+      "0.1.0"
+     ],
+     "VIGENCIA_MAX": {
+      "segundos": 2592000.0
+     }
+    },
+    "vigilancia": {
+     "MAX_EDAD_MIN": 15,
+     "NIVELES": {
+      "L0": 0,
+      "L1": 1,
+      "L2": 2,
+      "L3": 3
+     },
+     "OPERADORES": {
+      "<": {
+       "tipo": "function"
+      },
+      "<=": {
+       "tipo": "function"
+      },
+      "==": {
+       "tipo": "function"
+      },
+      ">": {
+       "tipo": "function"
+      },
+      ">=": {
+       "tipo": "function"
+      }
+     },
+     "SALTO_MAX_H": 72
+    }
+   }
+  },
+  "version": "V0.73"
+ },
  "5879fc70d7018821d33e470a71392630f8c5d28b2afad73811ba39ab10712f65": {
   "parte": {
    "atributos": [

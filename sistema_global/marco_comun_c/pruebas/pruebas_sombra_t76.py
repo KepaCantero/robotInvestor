@@ -11,6 +11,7 @@ sys.path.insert(0, str(AQUI.parent / "validador"))
 sys.path.insert(0, str(AQUI))
 import persistencia as pe  # noqa: E402
 import sombra as sb  # noqa: E402
+from validar_sobre import _dt  # noqa: E402
 from orquestador import PRIORIDAD_AVISO  # noqa: E402
 from parametros import PARAMETROS  # noqa: E402
 from pruebas_orquestador import AHORA, Arnes, hasta, nuevo  # noqa: E402
@@ -19,10 +20,10 @@ NAN, INF = float("nan"), float("inf")
 
 
 def meses_desde(n):
-    """El mes AAAA-MM que cae n meses después de noviembre de 2026, y un instante dentro de él."""
+    """El mes AAAA-MM que cae n meses después de noviembre de 2026, y un instante del mes siguiente (el mes ya terminó: QA r01, H-02)."""
     a, m = 2026 + (10 + n) // 12, (10 + n) % 12 + 1
-    mes = f"{a:04d}-{m:02d}"
-    return mes, f"{mes}-28T12:00:00+00:00"
+    a2, m2 = 2026 + (11 + n) // 12, (11 + n) % 12 + 1
+    return f"{a:04d}-{m:02d}", f"{a2:04d}-{m2:02d}-01T12:00:00+00:00"
 
 
 def o41(o):
@@ -50,9 +51,9 @@ def main():
           and o.sombra["entradas"][0]["indice"] == PARAMETROS["i_indice_sombra"], r)
     R("una_sola_vez", o, lambda: o.iniciar_sombra(5000.0, 100.0, "OPERADOR", AHORA), "O-02")
     r = o.movimiento_sombra("APORTE", 1100.0, 110.0, "OPERADOR", AHORA)
-    h.chk("un_aporte_se_replica_al_precio_de_ese_momento", r["ok"] and abs(sb.estado_sombra(o.sombra["entradas"], 110.0, 0)["unidades"] - 110.0) < 1e-9, r)
+    h.chk("un_aporte_se_replica_al_precio_de_ese_momento", r["ok"] and abs(sb.estado_sombra(o.sombra["entradas"], 110.0, _dt(AHORA))["unidades"] - 110.0) < 1e-9, r)
     r = o.movimiento_sombra("RETIRADA", 550.0, 110.0, "G", AHORA)
-    h.chk("G_tambien_registra_una_retirada", r["ok"] and abs(sb.estado_sombra(o.sombra["entradas"], 110.0, 0)["unidades"] - 105.0) < 1e-9, r)
+    h.chk("G_tambien_registra_una_retirada", r["ok"] and abs(sb.estado_sombra(o.sombra["entradas"], 110.0, _dt(AHORA))["unidades"] - 105.0) < 1e-9, r)
     R("una_retirada_mayor_que_la_sombra_no", o, lambda: o.movimiento_sombra("RETIRADA", 1e6, 110.0, "OPERADOR", AHORA), "O-06")
     R("tipo_de_movimiento_invalido", o, lambda: o.movimiento_sombra("DIVIDENDO", 10.0, 110.0, "OPERADOR", AHORA), "O-01")
     R("otro_actor_no_registra_movimientos", o, lambda: o.movimiento_sombra("APORTE", 10.0, 110.0, "BROKER", AHORA), "O-05")
@@ -100,6 +101,8 @@ def main():
     r = hasta_el_mes(o2, 24, 9000.0)
     h.chk("a_los_24_si_no_la_supera_propone_gestion_pasiva", r["veredicto"] == "PROPONER_PASIVA" and len(o41(o2)) == 1
           and o41(o2)[0]["prioridad"] == "ALTA" and "decide el operador" in o41(o2)[0]["motivo"], (r, o41(o2)))
+    r = hasta_el_mes(o2, 26, 9000.0)
+    h.chk("O41_una_vez_al_pasar_a_no_superarla_no_cada_mes_H08", r["veredicto"] == "PROPONER_PASIVA" and len(o41(o2)) == 1, o41(o2))
     o3 = copy.deepcopy(o)
     r = hasta_el_mes(o3, 24, 20000.0)
     h.chk("si_la_supera_en_real_no_hay_aviso", r["veredicto"] == "SUPERA" and not o41(o3), r)
@@ -115,8 +118,8 @@ def main():
         h.chk(f"tocar_{nombre}_se_detecta", "SOMBRA" in o4.integridad() and not o4.sombra_ok())
     o4 = copy.deepcopy(o2)
     o4.sombra["entradas"][-1]["veredicto"] = "SUPERA"
-    mes, t = meses_desde(25)
-    r = o4.comparar_sombra(mes, 9000.0, 120.0, 100.0, 110.0, 0.0, "I", t)
+    mes, t = meses_desde(27)
+    r = o4.comparar_sombra(mes, 9000.0, 120.0, 100.0, 110.0, 0.0, "I", "2030-01-01T12:00:00+00:00")
     h.chk("con_el_registro_tocado_no_se_compara_y_salta_el_kill", r["codigo"] == "O-13" and o4.kill is not None, r)
     t_ = pe.volcar(o2, meses_desde(24)[1])
     rc = pe.cargar(t_)
@@ -124,8 +127,41 @@ def main():
           rc.get("motivo"))
 
     # ------------------------------------------------------------------ el cálculo, solo
-    h.chk("estado_ilegible_es_None", sb.estado_sombra([{"tipo": "INICIO"}], 100.0, 0) is None
-          and sb.estado_sombra([{"tipo": "INICIO", "importe_eur": 1.0, "precio_indice": 0.0}], 1.0, 0) is None)
+    h.chk("estado_ilegible_es_None", sb.estado_sombra([{"tipo": "INICIO"}], 100.0, _dt(AHORA)) is None
+          and sb.estado_sombra([{"tipo": "INICIO", "importe_eur": 1.0, "precio_indice": 0.0, "ahora": AHORA}], 1.0, _dt(AHORA)) is None)
+
+    # ------------------------------------------------------------------ regresiones de la QA r01
+    ini = {"tipo": "INICIO", "importe_eur": 10000.0, "precio_indice": 100.0, "ahora": "2026-01-01T00:00:00+00:00"}
+    apo = {"tipo": "APORTE", "importe_eur": 1e6, "precio_indice": 100.0, "ahora": "2026-12-31T00:00:00+00:00"}
+    est = sb.estado_sombra([ini, apo], 100.0, _dt("2027-01-01T00:00:00+00:00"))
+    h.chk("un_aporte_de_la_vispera_paga_un_dia_de_coste_H01", est and est["coste_eur"] < 10000.0 * 0.0021 + 1e6 * 0.002 / 365 * 1.5, est)
+    ret = {"tipo": "RETIRADA", "importe_eur": 5000.0, "precio_indice": 100.0, "ahora": "2026-12-31T00:00:00+00:00"}
+    e1 = sb.estado_sombra([ini], 100.0, _dt("2026-12-31T00:00:00+00:00"))
+    e2 = sb.estado_sombra([ini, ret], 100.0, _dt("2026-12-31T00:00:00+00:00"))
+    h.chk("una_retirada_no_borra_el_coste_devengado_H01", e1 and e2 and abs((e1["valor_eur"] - e2["valor_eur"]) - 5000.0) < 1e-6
+          and e2["coste_eur"] > 0, (e1, e2))
+    h.chk("retirar_mas_de_lo_que_hay_con_precios_enormes_no_H06",
+          sb.estado_sombra([{**ini, "precio_indice": 1e12}, {**ret, "importe_eur": 2e4, "precio_indice": 1e12}], 1e12, _dt("2026-12-31T00:00:00+00:00")) is None)
+    o8 = nuevo()
+    assert o8.iniciar_sombra(1e200, 1e-200, "OPERADOR", AHORA)["ok"] or True
+    m1, t1_ = meses_desde(1)
+    r = o8.comparar_sombra(m1, 1e300, 1e308, 1.0, 1.0, 0.0, "I", t1_) if o8.sombra["entradas"] else {"codigo": "O-01", "ok": False}
+    h.chk("resultados_no_finitos_no_se_anotan_H03", not r["ok"] and pe.volcar(o8, t1_) is not None, r)
+    o9 = nuevo()
+    assert o9.iniciar_sombra(10000.0, 100.0, "OPERADOR", AHORA)["ok"]
+    mes, t = meses_desde(1)
+    R("no_se_compara_un_mes_sin_terminar_H02", o9, lambda: o9.comparar_sombra(mes, 10000.0, 100.0, 100.0, 100.0, 0.0, "I", "2026-12-31T23:00:00+00:00"), "O-01")
+    assert o9.comparar_sombra(mes, 10000.0, 100.0, 100.0, 100.0, 0.0, "I", t)["ok"]
+    mes2, t2 = meses_desde(2)
+    R("el_indice_de_precios_del_inicio_no_cambia_H07", o9, lambda: o9.comparar_sombra(mes2, 10000.0, 100.0, 90.0, 100.0, 0.0, "I", t2), "O-01")
+    r = o9.barrer(meses_desde(3)[1])
+    h.chk("si_I_deja_de_comparar_barrer_lo_avisa_H04", [x for x in o9.avisos if x["codigo"] == "O-42"] and ("sombra_pendiente", mes2, None) in r["cambios"], r)
+    o9.barrer(meses_desde(3)[1])
+    h.chk("y_no_lo_repite_cada_barrido", len([x for x in o9.avisos if x["codigo"] == "O-42"]) == 1)
+    o10 = copy.deepcopy(o9)
+    o10.sombra["entradas"][0]["importe_eur"] = 1.0
+    r = o10.comparar_sombra(mes2, 10000.0, 100.0, 100.0, 100.0, 0.0, "I", meses_desde(4)[1])
+    h.chk("con_el_registro_tocado_comparar_da_O13_antes_de_leerlo_H05", r["codigo"] == "O-13" and o10.kill is not None, r)
     h.chk("comparar_con_inflacion_imposible_es_None", sb.comparar(1.0, 0.0, 0.0, {"valor_eur": 1.0, "aportado_neto_eur": 1.0}, 0.0, 1.0) is None)
     h.chk("veredicto_en_el_borde", sb.veredicto(23, {"supera": False}) == "EN_PLAZO" and sb.veredicto(24, {"supera": False}) == "PROPONER_PASIVA"
           and sb.veredicto(24, {"supera": True}) == "SUPERA")
