@@ -374,4 +374,169 @@ Los registros de esta ronda están en `/tmp/claude-0/-home-claude/d1ab3b3e-4909-
 | H-17 | `_objeciones_arrastre` falla cerrado: una objeción mal formada, o con `fuerza` fuera del enum, es fuerte abierta, y `resuelta` solo vale si es `True`. En el arrastre manda el veredicto más estricto entre el guardado y el de la regla | `test_h17_h18_objeciones_del_arrastre_fallan_cerrado`, `test_h17_en_el_arrastre_manda_el_veredicto_mas_estricto` |
 | H-18 | Casos de evidencia sin contrarréplica y de una tesis frágil guardada con una fuerte que se reabre (debe quedar «tesis refutada»). La fila T-66 de la deuda, al día | Las de H-17 y `test_h18_fragil_guardada_con_una_fuerte_que_se_reabre_queda_refutada` |
 
-Pendiente: la ronda r04.
+## Ronda r04
+
+- **Revisor:** un revisor nuevo, sin contexto de la implementación ni de las rondas r01 a r03 (subagente Claude).
+- **Fecha:** 2026-11-10.
+- **Commit revisado:** `0275b5d` (rama `develop`).
+
+### Reproducción desde limpio
+
+- **Clones aparte:** `git clone /home/claude/repo` y `git checkout 0275b5d` en la carpeta de la ronda. Hice otro clon en `da3f6cb` para `r02_02`. No usé worktrees.
+- **Suite de A:**
+  - Con `PYTHONPATH=<clon>/bloque_a/11_Ejecutor` y `/home/claude/repo/.venv/bin/python -m pytest -q -p no:cacheprovider tests`. `bloque_a.__file__` sale del clon.
+  - Resultado: **201 passed** (148 s).
+- **Gate completo** (`./tools/check_all.sh` en el clon): **12/12**.
+  - Entorno: `.venv` enlazado temporalmente, `PYTHONPATH` hacia los tres ejecutores del clon (los tres `__file__` salen del clon), y `RUFF_CACHE_DIR` y `MYPY_CACHE_DIR` fuera del clon.
+  - corpus-integridad, nombres-nfc, yaml-configs y secrets en verde.
+  - **refs-vivas en verde desde limpio:** H-14 está corregido.
+  - Cuotas: ruff 3109/3109, mypy A 123/123, FX 174/174 y B 159/159. Son las mismas que en la r03: no suben.
+  - pytest: A 201, FX 68 y B 141.
+- **Scripts de las rondas anteriores**, cada uno con el uso de su cabecera y contra el código del clon:
+  - `r01_01` a `r01_06` y `r01_08`: **ningún HALLAZGO** (11, 15, 12, 19, 10, 3 y 4 comprobaciones). Quedan los INFO conocidos, anteriores a T-66:
+    - la excepción del proveedor sube;
+    - sin refutación, el veredicto queda `null`;
+    - CT-01 repetido con otro msg_id da un run nuevo;
+    - un tipo inexistente se declara;
+    - el F6 manipulado lo sigue leyendo el Evaluador;
+    - la grabación de replay anterior necesita `anonimizar: false`.
+  - `r02_01`: 12/12 OK.
+  - `r02_02`, con el clon de `da3f6cb`: 3/3 OK.
+  - `r02_04`: 24 de 25 OK y el mismo HALLAZGO que **no aplica** desde la r03: esa comprobación de H-12 solo mira `afirmacion`, y un CALC- trae `metodo`. Con el formato nuevo lo cubre `r03_02`: 8 de 8 evidencias con contenido.
+  - `r03_01`: 25/25 OK.
+  - `r03_02`: **16/16 OK**. En la r03 daba 7 HALLAZGO (H-15, H-16 y H-17).
+- **Mutaciones:**
+  - `mutaciones_orquestacion.sh`: las **11 fallan**. Comprobé que fallan por la aserción:
+    - `h06`: `'BLOQUEADA' == 'SIN_RESULTADO'`;
+    - `pa09_auto`: `anon` es `None`;
+    - `pa14`: `KeyError: 'RV'`, porque falta la ablación.
+  - `r01_07_mutaciones_evaluacion.sh`: las **14 fallan**.
+  - `r02_03_mutaciones_correcciones.sh`: 6 de 7 fallan, como en la r02 y la r03.
+    - `h05` da «3 failed, 1 passed», como siempre.
+    - `h02_ejecutor` pasa contra la prueba de H-02, pero **falla** contra `test_h11_…`. Esa es la que cubre la corrección (línea `h02_ejecutor_h11` de `r04_04`).
+  - `r03_03_mutaciones_r02.sh`:
+    - Fallan `h10_reabrir` y `h12_contenido`.
+    - **No aplican** `h09_veredicto`, `h09_solo_regla` y `h10_recalculo`. El texto que mutaban ya no existe, porque `_desde_f3` se reescribió con `_objeciones_arrastre` y `_veredicto_mas_estricto`. El parche da AssertionError y la prueba corre sin mutar. Sus equivalentes sobre el código nuevo están en `r04_04`.
+    - `h10_y` sigue pasando contra `test_h10_…`. Su equivalente `h18_y` **falla** contra `test_h17_h18_…`, así que el hueco de H-18 está cerrado.
+  - **Mis mutaciones de las correcciones de la r03 (`r04_04`):** de 13, fallan 11. Las dos que pasan se explican abajo, en las observaciones.
+- **Limpieza:**
+  - Clones de `0275b5d` y `da3f6cb`, copias de mutación y cachés de ruff y mypy borrados.
+  - El enlace `.venv` estaba dentro del clon y se borró con él.
+  - En el repositorio principal, `git status` sale vacío y `git worktree list` solo muestra el principal.
+
+### Comprobación de las correcciones de la r03
+
+| ID | Estado en r04 | Evidencia |
+| --- | --- | --- |
+| H-14 | Corregido | Gate 12/12 desde un clon limpio, con refs-vivas en verde |
+| H-15 | **Corregido para lo que pedía la r03; queda una vía por las piezas (H-19)** | • `r03_02`, B: una REF- futura o de otro tema que no está en las piezas ya no se acepta (0 fuertes resueltas).<br>• `test_h15_…` falla con la mutación `h15_por_id`.<br>• **Sin regresión:** las REF- que aporta AG-14 en sus piezas siguen siendo citables, también anonimizadas (`r04_01`, A y D). La fuerte de la opción que pidió a AG-14 queda resuelta con sus dos REF-, y su contenido llega a la contrarréplica.<br>• **Pero** la misma REF- futura entra si el Analista la pone como `fuente` de una afirmación suya, o si AG-14 la devuelve sin habérsela ofrecido (`r04_01`, B y C) |
+| H-16 | Corregido | • `r03_02`: el título con la instrucción llega saneado.<br>• `r04_02`: las 7 afirmaciones legítimas llegan intactas; el saneado es idempotente; los tipos raros (None, número, lista o dict) no dan excepción; F2 guarda el texto original.<br>• Mutaciones `h16_pieza` y `h16_registro`: fallan.<br>• Queda lo de baja gravedad de H-21 |
+| H-17 | Corregido para objeciones sueltas; **queda el contenedor (H-20)** | • `r03_02`, A: 11/11 OK, y una objeción mal formada ya no corta el ciclo.<br>• `r04_03`:<br>  – las objeciones escritas por el código (fuerte resuelta en contrarréplica, con y sin `motivo`, moderada y débil) pasan el arrastre **sin cambios**, y normalizar dos veces da lo mismo;<br>  – 3 semanas de arrastre (N1, N1 y N2): las frágiles bien resueltas siguen publicadas, «especulativo», y ninguna se reabre;<br>  – **el veredicto «más estricto» no bloquea para siempre:** una vigente frágil que vuelve a ser finalista (N2) y se refuta con éxito pasa a «tesis robusta» y «probable», y sigue robusta en el arrastre siguiente;<br>  – un veredicto guardado raro (lista, dict, número, mayúsculas o un espacio de más) no da excepción y manda la regla.<br>• Fallan las mutaciones `h17_estricto`, `h17_guardado_o_regla`, `h17_resuelta`, `h17_fuerza` y `h17_nodict` |
+| H-18 | Corregido | • `h18_y` y `h18_sin_normalizar` fallan.<br>• `test_h18_…` cubre el caso de una frágil guardada con una fuerte que se reabre: queda «tesis refutada».<br>• La fila T-66 de la deuda está al día (r01 a r03) |
+
+### Criterios de aceptación
+
+| Criterio | Cumple | Evidencia |
+| --- | --- | --- |
+| CA-1 · cada propuesta aplicada tiene una prueba que falla sin ella | sí | • 11 + 14 mutaciones fallan por su aserción.<br>• Las correcciones de la r01 a la r03 tienen su regresión: 11 de 13 en `r04_04`; las 2 que pasan se explican en las observaciones |
+| CA-2 · suites y gate en verde, línea base subida | sí | • A 201, FX 68 y B 141.<br>• Gate 12/12 **desde un clon limpio**.<br>• Línea base de A en 201 en `tools/cuotas.txt`, CLAUDE.md y el gate.<br>• Las cuotas no suben |
+| CA-3 · lo no aplicado, con motivo y destino | sí | «No entra» del README de T-66, T-67 y T-57 en la deuda, sin cambios desde la r02 |
+| CA-4 · el Documento 0 no se toca; el comportamiento, en el README del ejecutor y en INC-T66-xx | sí | • `01_Gobernanza` sin cambios (`git diff da3f6cb 0275b5d`) y corpus-integridad en verde.<br>• La ampliación «Ronda r03» de INC-T66-02 está escrita.<br>• Dos inexactitudes en INC-T66-02, que se corrigen con H-19: la primera viñeta sigue diciendo «o referencias REF- registradas», y la ampliación da por imposible lo que `r04_01` B demuestra |
+
+### Hallazgos
+
+| ID | Gravedad | Cómo reproducirlo | Esperado / obtenido | Corrección sugerida | Estado |
+| --- | --- | --- | --- | --- | --- |
+| H-19 | media | `r04_01_evidencia_citable.py`, partes B y C: backtest a 2024-03-01, tipo RV | **Esperado** (INC-T66-02, r03: «una REF- … que podría ser de otro tema o, en backtest, posterior a as_of» no cuenta; docstring de `_evidencia_verificable`: «evidencia registrada»): solo es citable evidencia verificable de la opción.<br>**Obtenido:** `_evidencia_verificable` toma la `fuente` de **todas** las piezas, y la `fuente` de una afirmación del Analista es texto libre (`FINALISTA.afirmaciones[].fuente`: TXT).<br>• **Parte B:** el Analista añade a cada finalista una afirmación con la fuente X y después cita X y el HT-01 de la opción. Con X = `REF-ANA-DOC-0061` (de 2025, posterior a as_of), `REF-ANA-DOC-0039` (otro tema), `REF-INVENTADA-0001` (no existe) o `HT-01:SPY` (otro símbolo), la evidencia se acepta en **4 de 4 fuertes**, las **4 quedan resueltas** y se publican 3 opciones.<br>• **Parte C:** AG-14 devuelve `REF-ANA-DOC-0061`, que no estaba entre sus candidatas. Entra como pieza y resuelve 1 fuerte. El filtro de backtest de `_peticion_conocimiento` solo exige que la REF- esté registrada, no su año, aunque el comentario diga «y anteriores a as_of». Ese filtro es anterior a T-66.<br>• La contrarréplica muestra `tipo: PIEZA` sin `origen`, así que el Contradictor no distingue la afirmación propia del Analista acusado de un dato de AG-13 o de una REF- de AG-14.<br>Falla cerrado en la parte (b), porque sigue haciendo falta la confirmación. Pero la parte (a) de la regla se relaja, como en H-15 | • Que solo sea verificable:<br>  – `HT-01:<proxy>`;<br>  – los CALC- de la opción;<br>  – las REF- registradas que se ofrecieron en ese ciclo: `referencias_disponibles` del Analista o candidatas de AG-14, ya filtradas por tema y año.<br>• En backtest, que el filtro de AG-14 compruebe el año.<br>• Pasar `origen` en el contenido de la contrarréplica.<br>• Corregir la primera viñeta y la ampliación de INC-T66-02.<br>• Prueba con las 4 variantes de B y con la parte C | abierto |
+| H-20 | baja | `r04_05_arrastre_contenedor_raro.py`: `objeciones_internas` de F3 como dict (con una fuerte abierta dentro) o como cadena, con el veredicto guardado «tesis robusta» | **Esperado** (H-17, «falla cerrado ante cualquier registro»): G2 no pasa.<br>**Obtenido:** `_objeciones_arrastre` trata como lista vacía todo lo que no es una lista, así que G2 pasa con veredicto «tesis robusta». F3 no tiene esquema para ese campo, de modo que `escribir` lo acepta. Solo se llega con un estado manipulado o fuera de esquema | Que un contenedor que no sea lista ni `None` cuente como una fuerte abierta («contenedor mal formado en F3»), con su prueba | abierto |
+| H-21 | baja | `r04_02_saneado_contrarreplica.py`, partes 1 y 5 | **Esperado:** cada incidencia R9 va ligada a su run, y el saneado no marca texto legítimo.<br>**Obtenido:**<br>• `_contenido_evidencia` llama a `_registrar_r9(hall, None)`: las 4 incidencias de RUN-2026-0001 quedan sin `run_id`, una por cada cita de la misma fuente.<br>• R9 se aplica también al texto propio del Analista y del código, que no es contenido externo. Dos frases financieras corrientes («El mercado actúa como si la Fed…», «El BCE modifica los parámetros de su programa…») llegan mutiladas al Contradictor y dan una incidencia «Material». F2 guarda el original | • Pasar `run_id` a `_contenido_evidencia`.<br>• Registrar una sola incidencia por (fuente, run).<br>• Sanear solo lo externo (títulos de REF- y piezas de AG-14, que ya llegan saneadas), o documentar que se acepta | abierto |
+
+**Observaciones sin hallazgo:**
+- **`h16_ref` pasa (`r04_04`), pero no es un hueco efectivo.** Tras H-15, todo id citable es la fuente de una pieza (la rama PIEZA lo atrapa antes) o un CALC-. La rama REF- de `_contenido_evidencia` ya no se alcanza: se puede retirar o probar aparte.
+- **`h17_solo_regla` pasa: es la mutación de control.** Con estado producido por el código, la regla sobre las objeciones arrastradas coincide con el veredicto guardado. Solo difieren si `contrarias.moderadas_para_fragil` cambia entre semanas. La función tiene su prueba, y `h17_guardado_o_regla` falla.
+- **Enum duplicado:** `_objeciones_arrastre` escribe a mano el enum `("fuerte", "moderada", "debil")`, que ya está en el esquema REFUTACION de `contratos.py`. No es un número; podría leerse del esquema, como en H-08.
+- **Siguen igual que en las rondas anteriores**, y son anteriores a T-66: la excepción del proveedor corta el ciclo, y el Evaluador lee el F6 manipulado aunque lo detecte `verificar_integridad`.
+
+### Sin hallazgo en lo comprobado
+
+- **Evidencia de AG-14:** sus REF- llegan a la evidencia disponible de la opción que las pidió y se pueden citar, también con anonimización (`r04_01`, A y D).
+- **Saneado:**
+  - las 7 afirmaciones legítimas llegan intactas, incluido el dato de momentum que genera el código;
+  - un texto ya saneado no se vuelve a marcar;
+  - los tipos raros no dan excepción;
+  - el texto se sanea solo en el mensaje al Contradictor, y F2 guarda el original.
+- **Normalización del arrastre:** no reabre ninguna fuerte bien resuelta, ni siquiera con la contrarréplica sin `motivo` (se guarda `""`). Es idempotente.
+- **Veredicto «más estricto»:** una re-finalista refutada con éxito sale del «frágil». No queda bloqueada.
+- **Falla cerrado:**
+  - `r03_02`, A: 11/11;
+  - la contrarréplica solo cuenta para lo enviado (`r02_01`);
+  - una fuerte reabierta deja la opción en «tesis refutada» (`test_h18_…`).
+- **Números:** el diff de `0275b5d` no añade ningún número escrito a mano. Los valores del operador siguen en `por_defecto.yaml` como `[PROPUESTO]`.
+- **Determinismo:** `r04_01` y `r04_03`, ejecutados dos veces, dan la misma salida. `r03_01` y `r02_01` siguen en verde.
+- **Cuotas:** ruff 3109, mypy A 123, FX 174 y B 159. No suben.
+- **Lo no aplicado:** tiene su motivo y su destino en el README de T-66, en T-67 y en T-57.
+- **No hay LLM en el veredicto ni en G2:** los calculan `_veredicto_refutacion`, `_veredicto_mas_estricto` y `_puertas`, por regla.
+- **Secretos:** el gate secrets está en verde. Los scripts r04 no contienen datos personales.
+
+### Veredicto
+
+**APTO.**
+
+Se cumplen los cuatro criterios de aceptación, incluido CA-2, con el gate 12/12 desde un clon limpio. No hay ningún hallazgo crítico ni alto abierto.
+- H-14 a H-18 están corregidos y protegidos por pruebas.
+- Las correcciones no introducen regresiones:
+  - las REF- de AG-14 siguen siendo citables;
+  - el saneado no altera las afirmaciones legítimas guardadas;
+  - el arrastre no reabre las fuertes bien resueltas;
+  - el «más estricto» no bloquea una opción que se vuelve a refutar con éxito.
+- Ningún script de las rondas anteriores da un HALLAZGO que aplique.
+
+H-19 es media. Relaja la parte (a) de la regla de PA-05: el Analista puede hacer «verificable» su propia fuente, inventada o posterior a as_of. Pero la parte (b) se mantiene: sin la confirmación del Contradictor, la fuerte sigue abierta. H-20 y H-21 son bajas. Según `ri-qa`, los tres pasan a la deuda técnica con su ID. Recomiendo corregir H-19 antes del modo sombra con API, porque un modelo real puede inventar fuentes.
+
+Pendiente del cierre, para quien coordina (en esta ronda no he tocado el repositorio):
+- copiar los scripts r04 a `.docs/tickets/T-66/revisores/`;
+- poner el ticket en CERRADO;
+- anotar H-19 a H-21 en la deuda técnica;
+- escribir la entrada del diario y la memoria;
+- hacer el commit con `--completo`.
+
+### Scripts del revisor
+
+Están en /tmp/claude-0/-home-claude/d1ab3b3e-4909-5455-a67a-e01975b6ec91/scratchpad/qa_t66_r04/revisores/. Copiados a `.docs/tickets/T-66/revisores/`.
+
+- `r04_01_evidencia_citable.py`:
+  - REF- de AG-14 citables, con y sin anonimización;
+  - fuentes libres del Analista (REF- futura, de otro tema, inventada y HT-01 ajeno);
+  - REF- futura devuelta por AG-14.
+
+  9 comprobaciones: 5 HALLAZGO, que corresponden a H-19.
+- `r04_02_saneado_contrarreplica.py`: afirmaciones legítimas, idempotencia, tipos raros, F2 intacto y trazabilidad de la incidencia R9. 18 comprobaciones: 0 HALLAZGO y 3 INFO, que corresponden a H-21.
+- `r04_03_arrastre_y_veredicto.py`:
+  - objeciones del código sin cambios e idempotentes;
+  - 3 semanas de arrastre;
+  - re-finalista refutada con éxito;
+  - veredicto guardado raro.
+
+  14 comprobaciones, 0 HALLAZGO.
+- `r04_04_mutaciones_r03.sh`: 13 mutaciones de H-15 a H-18, más `h02_ejecutor` contra la prueba de H-11. Fallan 11.
+- `r04_05_arrastre_contenedor_raro.py`: `objeciones_internas` que no es una lista. 4 comprobaciones: 2 INFO, que corresponden a H-20.
+
+Para ejecutarlos:
+- **Los `.py`:** `PYTHONPATH=<ejecutor de A>:<revisores r01> /home/claude/repo/.venv/bin/python r04_0N_….py`. Cada uno imprime OK, HALLAZGO o INFO.
+- **El de mutaciones:** `SRC=<raíz de bloque_a> DEST=<carpeta de trabajo> bash r04_04_mutaciones_r03.sh`.
+
+Los registros de esta ronda están en /tmp/claude-0/-home-claude/d1ab3b3e-4909-5455-a67a-e01975b6ec91/scratchpad/qa_t66_r04/:
+- suite: suite_a.log
+- gate: gate.log
+- scripts r01, r02 y r03: previos.log
+- mutaciones: mut_orq.log, mut_ev.log, mut_r02.log, mut_r03.log y mut_r04.log
+- scripts r04: r04_01.log, r04_02.log, r04_03.log y r04_05.log, más las repeticiones de determinismo r04_01_evidencia_citable_bis.log y r04_03_arrastre_y_veredicto_bis.log
+
+## Cierre (Claude)
+
+El veredicto de la r04 es APTO. Los tres hallazgos abiertos pasan a la deuda técnica (fila T-67) con su ID:
+- **H-19, media:** limitar la evidencia citable a HT-01 del proxy, a los CALC- de la opción y a las REF- que se ofrecieron en ese ciclo, comprobar el año en el filtro de AG-14 y pasar `origen` a la contrarréplica. Va antes del modo sombra con API, porque un modelo real puede inventar fuentes.
+- **H-20, baja:** un contenedor de objeciones que no es una lista cuenta como fuerte abierta.
+- **H-21, baja:** `run_id` en las incidencias R9 de la contrarréplica y saneado solo de lo externo.
+
+INC-T66-02 queda corregida: ya no dice «o referencias REF- registradas» y declara el límite de H-19. El ticket queda CERRADO.

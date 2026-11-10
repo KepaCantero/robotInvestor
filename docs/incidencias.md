@@ -63,7 +63,7 @@ documentación con el operador.
 
 **INC-T66-02 · 2026-11-10 · Quién resuelve una objeción fuerte (Bloque A, PA-05).** Antes la declaraba resuelta el
 propio Analista acusado. Decisión `[PROPUESTO]`: queda resuelta solo si se cumplen las dos condiciones:
-- la respuesta del Analista cita evidencia verificable (fuentes de sus piezas, cálculos CALC- o referencias REF- registradas);
+- la respuesta del Analista cita evidencia verificable de la propia opción (las fuentes de sus piezas o sus cálculos CALC-);
 - el Contradictor lo confirma en una contrarréplica (§5 de su prompt, que el ejecutor no implementaba).
 
 Sin contrarréplica, la objeción sigue abierta.
@@ -77,4 +77,5 @@ Sin contrarréplica, la objeción sigue abierta.
 - Ronda r03:
   - Solo es citable la evidencia de la propia opción: las fuentes de sus piezas y sus CALC-. Una REF- registrada en el corpus que no está entre sus piezas no cuenta, porque podría ser de otro tema o, en backtest, posterior a as_of.
   - Lo que ve el Contradictor se sanea (R9).
+  - Límite conocido, ronda r04 (H-19, en T-67): la `fuente` de una afirmación del propio Analista es texto libre, de modo que puede hacer «citable» una REF- de otro tema, posterior a as_of o inventada. Además, AG-14 puede devolver una REF- que no se le ofreció. Sigue haciendo falta la confirmación del Contradictor. Se corrige antes del modo sombra con API.
   - En el arrastre manda el veredicto más estricto entre el guardado y el de la regla. Una objeción mal formada o fuera de esquema cuenta como fuerte abierta, sin cortar el ciclo.
