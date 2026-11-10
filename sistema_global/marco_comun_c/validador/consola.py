@@ -146,6 +146,8 @@ def _diario(diario, tope):
     if b is not None:
         det = f"{b.get('codigo', '?')}: {b.get('motivo', '?')}" if isinstance(b, dict) else repr(b)
         return "ROJO", f"el diario está bloqueado ({det}): reábrelo y sigue desde el último punto de control"
+    if e.get("operativo") is not True and e.get("sincronizado") is True:   # QA de T-72, H-04: la foto se contradice
+        return "ROJO", "el diario dice que no está operativo: reábrelo y sigue desde el último punto de control"
     if e.get("sincronizado") is not True:
         return "ROJO", (f"el diario no está al día con el Orquestador ({e.get('motivo_desincronizado') or '?'}): la operación siguiente "
                         "dará DI-06; reábrelo para volver al estado anotado")

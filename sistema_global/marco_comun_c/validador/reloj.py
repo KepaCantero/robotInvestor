@@ -36,6 +36,9 @@ Códigos (nada lanza; el constructor, ValueError con parámetros imposibles):
 Límites: no sincroniza el reloj (eso es del sistema operativo) ni sabe si la referencia externa es de fiar; un salto menor que la
 tolerancia no se ve; el bloqueo vive en memoria (un reinicio lo quita, pero vuelve a exigir contrastar y `comprobar_estado`); una
 cartera que ya estaba degradada no recibe un aviso nuevo por el reloj (el reloj sigue bloqueado hasta que el operador lo rearme).
+
+V0.69 (T-85): las tolerancias (`max_salto_s`, `max_desfase_s`, `max_sin_contraste_s`) son de solo lectura; cada comparación
+con ellas falla cerrado (fuera de tolerancia) si una no es un número finito dentro de su tope, aunque se toque lo privado.
 """
 from __future__ import annotations
 
@@ -119,17 +122,26 @@ class Reloj:
     # T-85 (V0.69, QA de T-79, H-06): las tolerancias son de solo lectura. Antes se podía poner max_sin_contraste_s = NaN después
     # de construir el reloj y ahora() seguía dando instantes sin contrastar. Además, cada comparación con ellas está escrita para
     # que un NaN (o algo que no se deje comparar) cuente como «fuera de tolerancia»: falla cerrado
+    def _tol_i(self, i, tope):
+        """La tolerancia i si es un número finito en (0, tope], o NaN (que _dentro trata como fuera de tolerancia). Nunca lanza:
+        un _tol tocado por fuera (infinito, enorme, mal formado) no desactiva el control (QA de T-72, H-01 y H-02)."""
+        try:
+            v = _float(self._tol[i])
+        except Exception:   # noqa: BLE001
+            v = None
+        return v if v is not None and 0 < v <= tope else float("nan")
+
     @property
     def max_salto_s(self):
-        return self._tol[0]
+        return self._tol_i(0, TOPE_SALTO_S)
 
     @property
     def max_desfase_s(self):
-        return self._tol[1]
+        return self._tol_i(1, TOPE_DESFASE_S)
 
     @property
     def max_sin_contraste_s(self):
-        return self._tol[2]
+        return self._tol_i(2, float("inf"))   # sin tope propio desde T-03: va a la deuda (QA de T-72, H-03)
 
     def _bloquear(self, codigo, motivo, **extra):
         self.bloqueo = {"codigo": codigo, "motivo": motivo}
