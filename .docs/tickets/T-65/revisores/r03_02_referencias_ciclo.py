@@ -138,24 +138,30 @@ if "A" in PARTES:
             info += 1
 
 # ------------------------------------------------------------------ B
+FB = "2026-05-01"   # fecha en la que DER da opciones con el cliente simulado
 if "B" in PARTES:
+    b0, _ = nuevo("B0")
+    r0 = b0.ciclo(FB, alcance={"clases": ["DER", "DIV"]})
+    print(f"B · control sano: DER ops={len(r0['paquete']['clases']['DER']['opciones'])} referencias de los PRG de DER="
+          f"{sorted({str(p.get('referencia_indice')) for p in prgs(b0, FB, r0['run_id']) if p.get('clase') == 'DER'})}")
     def spy_cero(d):
-        editar(d / "SPY.csv", lambda df: df.assign(cierre=df["cierre"].where(df["fecha"] != "2026-05-29", 0.0)))
+        editar(d / "SPY.csv", lambda df: df.assign(cierre=df["cierre"].where(df["fecha"] != "2026-04-24", 0.0)))
 
     for nombre, estropear in (("SPY con un cierre 0 en la ventana", spy_cero), ("SPY sin archivo", lambda d: (d / "SPY.csv").unlink())):
         b, _ = nuevo("B", estropear)
         try:
-            r = b.ciclo(AS_OF, alcance={"clases": ["DER", "DIV"]})
+            r = b.ciclo(FB, alcance={"clases": ["DER", "DIV"]})
         except Exception as e:  # noqa: BLE001
             hall += 1
             print(f"HALLAZGO  B · {nombre}: el ciclo cae: {type(e).__name__}: {str(e)[:140]}")
             continue
         ops, lim, incs = resumen(b, r, ["DER", "DIV"])
-        refs = sorted({str(p.get("referencia_indice")) for p in prgs(b, AS_OF, r["run_id"]) if p.get("clase") == "DER"})
-        declarado = "SPY" in lim
-        print(f"{'OK' if declarado or ops['DER'] == 0 else 'HALLAZGO':9} B · {nombre}: DER ops={ops['DER']} estado={r['estado']} "
+        refs = sorted({str(p.get("referencia_indice")) for p in prgs(b, FB, r["run_id"]) if p.get("clase") == "DER"})
+        declarado = "SPY" in lim or any("SPY" in str(x.get("descripcion") or x) for x in incs)
+        cambia = refs and refs != ["SPY"]
+        print(f"{'HALLAZGO' if cambia and not declarado else 'OK':9} B · {nombre}: DER ops={ops['DER']} estado={r['estado']} "
               f"referencias de los PRG de DER={refs} · SPY declarado={declarado} · incidencias={[x.get('objeto') for x in incs]}")
-        if not (declarado or ops["DER"] == 0):
+        if cambia and not declarado:
             hall += 1
 
 # ------------------------------------------------------------------ C
@@ -179,44 +185,57 @@ if "C" in PARTES:
         hall += 1
         print(f"HALLAZGO  C1 · ciclo 2 cae: {type(e).__name__}: {str(e)[:140]}")
 
-    # C2 · DER: TAIL con subyacente ACWI (los otros dos siguen con SPY). Ciclo 1 sano; ciclo 2 con ACWI mala
-    def tail_acwi(u):
-        return "\n".join((ln[: ln.rfind(",")] + ",ACWI") if ln.startswith("TAIL,DER,") else ln for ln in u.splitlines()) + "\n"
+    # C2 · DER con un subyacente distinto por indicador (^BXM → SPY, ^PUT → VGK, TAIL → ACWI). Ciclo 1 sano el 2026-05-01;
+    # ciclo 2 el 2026-05-08 con la referencia guardada de la vigente de DER estropeada (cierre 0 el 2026-05-05). README
+    # de T-65 (H-12): «con SUBYACENTE, la referencia propia de un indicador malo excluye y declara solo ese indicador».
+    SUBS = {"^BXM": "SPY", "^PUT": "VGK", "TAIL": "ACWI"}
 
-    def acwi_cero(d):
-        editar(d / "ACWI.csv", lambda df: df.assign(cierre=df["cierre"].where(df["fecha"] != "2026-06-01", 0.0)))
+    def subs_distintos(u):
+        out = []
+        for ln in u.splitlines():
+            s0 = ln.split(",", 1)[0]
+            out.append(ln[: ln.rfind(",")] + "," + SUBS[s0] if s0 in SUBS and ",DER," in ln else ln)
+        return "\n".join(out) + "\n"
 
-    for con_vigente in (False, True):
-        tmp = pathlib.Path(tempfile.mkdtemp(prefix="r03_02_C2_"))
-        if con_vigente:
-            b1, _ = nuevo("C2", cambiar_uni=tail_acwi, tmp=tmp)
-            r1 = b1.ciclo("2026-05-29", alcance={"clases": ["DER"]})
-            vig = b1.vigentes("2026-05-29", "DER")
-            refs = {v.get("proxy") or (v.get("indicador_seguimiento") or {}).get("simbolo"): v.get("referencia_indice") for v in vig}
-            print(f"C2 · ciclo 1 (DER sano): vigentes y su referencia guardada={refs}")
-        b2, _ = nuevo("C2", cambiar_datos=acwi_cero, cambiar_uni=tail_acwi, tmp=tmp)
-        try:
-            r2 = b2.ciclo(AS_OF, alcance={"clases": ["DER"]})
-        except Exception as e:  # noqa: BLE001
-            hall += 1
-            print(f"HALLAZGO  C2 · cae: {type(e).__name__}: {str(e)[:140]}")
-            continue
-        ops, lim, incs = resumen(b2, r2, ["DER"])
-        excl = b2._datos_invalidos.get(("DER", r2["run_id"]))
-        tipo_fuera = "referencia de comparación ACWI" in lim
-        et = "INFO" if tipo_fuera else "OK"
-        info += 1 if tipo_fuera else 0
-        print(f"{et:9} C2 · ACWI mala, {'con' if con_vigente else 'sin'} vigente de TAIL: DER ops={ops['DER']} "
-              f"indicadores excluidos={excl} · tipo entero fuera={tipo_fuera}")
+    tmp = pathlib.Path(tempfile.mkdtemp(prefix="r03_02_C2_"))
+    b1, _ = nuevo("C2", cambiar_uni=subs_distintos, tmp=tmp)
+    b1.ciclo("2026-05-01", alcance={"clases": ["DER"]})
+    vig = {simbolo: v.get("referencia_indice") for v in b1.vigentes("2026-05-01", "DER")
+           for simbolo in [(v.get("indicador_seguimiento") or {}).get("simbolo")]}
+    print(f"C2 · ciclo 1 (DER sano): vigentes de DER y su referencia guardada={vig}")
+    if not vig:
+        info += 1
+        print("INFO      C2 · sin vigentes de DER: parte no aplicable")
+    else:
+        mala = sorted(vig.values())[0]
+
+        def estropea(d):
+            editar(d / f"{mala}.csv", lambda df: df.assign(cierre=df["cierre"].where(df["fecha"] != "2026-05-05", 0.0)))
+        for con_vigente in (False, True):
+            t2 = tmp if con_vigente else pathlib.Path(tempfile.mkdtemp(prefix="r03_02_C2b_"))
+            b2, _ = nuevo("C2", cambiar_datos=estropea, cambiar_uni=subs_distintos, tmp=t2)
+            try:
+                r2 = b2.ciclo("2026-05-08", alcance={"clases": ["DER"]})
+            except Exception as e:  # noqa: BLE001
+                hall += 1
+                print(f"HALLAZGO  C2 · cae: {type(e).__name__}: {str(e)[:140]}")
+                continue
+            ops, lim, incs = resumen(b2, r2, ["DER"])
+            excl = b2._datos_invalidos.get(("DER", r2["run_id"]))
+            tipo_fuera = f"referencia de comparación {mala}" in lim
+            et = "INFO" if tipo_fuera else "OK"
+            info += 1 if tipo_fuera else 0
+            print(f"{et:9} C2 · {mala} mala, {'con' if con_vigente else 'sin'} vigente que la guarda: DER ops={ops['DER']} "
+                  f"indicadores excluidos={excl} · tipo entero fuera={tipo_fuera} · estado={r2['estado']}")
 
 # ------------------------------------------------------------------ D
 if "D" in PARTES:
     EMI = "2026-05-01"
-    VUELTA = "2026-05-15"
+    VUELTA = "2026-06-05"   # H2 emitido el 2026-05-01 se resuelve el 2026-05-29
 
     def estropeos():
-        yield "ACWI con cierre 0 en la resolución H1 (2026-05-08)", lambda d: editar(
-            d / "ACWI.csv", lambda df: df.assign(cierre=df["cierre"].where(df["fecha"] != "2026-05-08", 0.0)))
+        yield "ACWI con cierre 0 en la resolución H2 (2026-05-29)", lambda d: editar(
+            d / "ACWI.csv", lambda df: df.assign(cierre=df["cierre"].where(df["fecha"] != "2026-05-29", 0.0)))
         yield "ACWI deja de publicarse tras la emisión", lambda d: editar(d / "ACWI.csv", lambda df: df[df["fecha"] <= EMI])
         yield "ACWI sin archivo tras la emisión", lambda d: (d / "ACWI.csv").unlink()
         yield "proxy deja de publicarse tras la emisión (ACWI sana)", None
@@ -225,9 +244,9 @@ if "D" in PARTES:
         tmp = pathlib.Path(tempfile.mkdtemp(prefix="r03_02_D_"))
         b1, _ = nuevo("D", tmp=tmp)
         r1 = b1.ciclo(EMI, alcance={"clases": ["RV"]})
-        h1 = [p for p in prgs(b1, EMI, r1["run_id"]) if p.get("horizonte") == "H1" and p.get("tipo_pronostico") == "RELATIVO"]
+        h1 = [p for p in prgs(b1, EMI, r1["run_id"]) if p.get("horizonte") == "H2" and p.get("tipo_pronostico") == "RELATIVO"]
         if not h1:
-            print(f"INFO      D · {nombre}: el ciclo 1 no emitió PRG H1 RELATIVO; parte no aplicable")
+            print(f"INFO      D · {nombre}: el ciclo 1 no emitió PRG H2 RELATIVO; parte no aplicable")
             info += 1
             continue
         if estropear is None:
@@ -254,9 +273,9 @@ if "D" in PARTES:
         estados = sorted({str((est.get(p["prg_id"]) or {}).get("estado")) for p in h1})
         if mal:
             hall += 1
-            print(f"HALLAZGO  D · {nombre}: {len(mal)} de {len(h1)} PRG H1 RELATIVO RESUELTOS sin dato de una de las dos series en "
+            print(f"HALLAZGO  D · {nombre}: {len(mal)} de {len(h1)} PRG H2 RELATIVO RESUELTOS sin dato de una de las dos series en "
                   f"la resolución; p. ej. {json.dumps(mal[0], ensure_ascii=False, default=str)}")
         else:
-            print(f"OK        D · {nombre}: PRG H1 RELATIVO en estado {estados} (no se resuelven sin dato)")
+            print(f"OK        D · {nombre}: PRG H2 RELATIVO en estado {estados} (no se resuelven sin dato)")
 
 print(f"HALLAZGOS: {hall} · INFO: {info}")
