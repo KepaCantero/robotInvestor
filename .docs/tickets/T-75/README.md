@@ -2,7 +2,7 @@
 
 | Campo | Valor |
 | --- | --- |
-| Estado | EN QA |
+| Estado | DETENIDO (QA r01 NO APTO, 10-11-2026; a la espera de que el operador diga cómo seguir) |
 | Pieza | sistema_global/marco_comun_c |
 | Planifica · implementa · QA | claude · claude · un revisor nuevo sin contexto |
 | Aprobación del operador | No necesaria: aplica una decisión ratificada (D-22, D-27) y deuda técnica. El operador pidió el 2026-11-10 «reducir la deuda técnica: todo aquello que no dependa de mis decisiones personales» |
@@ -69,3 +69,4 @@ Detalle en `sistema_global/documentos_0/V0.70_Embudo_y_alarma_de_sequia.md`.
 
 - 2026-11-10 · ABIERTO · creado con nuevo_ticket.sh
 - 2026-11-10 · EN QA · V0.70 implementada; batería nueva con 24 comprobaciones; 59 baterías en verde
+- 2026-11-10 · DETENIDO · QA r01 NO APTO: H-08, H-01 y H-02 medios; H-03 a H-07 bajos. Por indicación del operador («si no supera esta ronda no continúes»), no se abre otra ronda; los hallazgos quedan en la fila T-75 de la deuda. El código de la V0.70 está en develop (commit `d6fbdb6`)
