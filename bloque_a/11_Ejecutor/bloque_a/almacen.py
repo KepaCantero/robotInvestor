@@ -14,10 +14,12 @@ import copy
 import datetime as dt
 import hashlib
 import json
+import os
 import threading
-from collections.abc import Callable, Iterable
+from collections.abc import Callable
+from contextlib import contextmanager
 from pathlib import Path
-from typing import Any, Dict, List, Optional
+from tempfile import NamedTemporaryFile
 from zoneinfo import ZoneInfo
 
 ARCHIVOS = {
@@ -59,7 +61,7 @@ class Reloj:
         self.zona = ZoneInfo(zona)
         self._fecha: dt.date | None = None
         self._seg = 0
-        self._lock = threading.Lock()
+        self._lock = threading.RLock()
 
     def fijar(self, fecha) -> None:
         f = dt.date.fromisoformat(str(fecha)[:10])
@@ -93,30 +95,117 @@ class Almacen:
         self.carpeta.mkdir(parents=True, exist_ok=True)
         self.reloj = reloj or Reloj()
         self._lock = threading.RLock()
+        self._profundidad = 0
         self._entradas: dict[str, list[dict]] = {}
-        for k, nombre in ARCHIVOS.items():
-            p = self.carpeta / nombre
-            self._entradas[k] = [json.loads(l) for l in p.read_text(encoding="utf-8").splitlines() if l.strip()] \
-                if p.exists() else []
-        # Índice de F4 (prg_id → tipos de entrada ya escritos) para la comprobación de congelación (R11)
+        self._firmas: dict[str, tuple] = {}
         self._f4_tipos: dict[str, set] = {}
-        for e in self._entradas["F4"]:
-            if e.get("prg_id"):
-                self._f4_tipos.setdefault(e["prg_id"], set()).add(e.get("tipo_entrada"))
         self._ruta_contadores = self.carpeta / "contadores.json"
-        self._contadores: dict[str, int] = json.loads(self._ruta_contadores.read_text(encoding="utf-8")) \
-            if self._ruta_contadores.exists() else {}
+        self._ruta_sellos = self.carpeta / "sellos_integridad.json"
+        with self._transaccion():
+            legado = not self._ruta_sellos.exists()
+            sellos = {} if legado else self._leer_json(self._ruta_sellos)
+            for archivo in ARCHIVOS:
+                self._actualizar(archivo, sellos, legado=legado)
+            if legado:
+                self._guardar_json(self._ruta_sellos, {a: self._ultimo(es) for a, es in self._entradas.items()})
+
+    @contextmanager
+    def _transaccion(self):
+        """Exclusión entre hilos e instancias, incluso en procesos distintos."""
+        with self._lock:
+            if self._profundidad:
+                yield
+                return
+            with (self.carpeta / ".almacen.lock").open("a+b") as cerrojo:
+                if os.name == "nt":
+                    import msvcrt
+                    cerrojo.seek(0)
+                    msvcrt.locking(cerrojo.fileno(), msvcrt.LK_LOCK, 1)
+                else:
+                    import fcntl
+                    fcntl.flock(cerrojo, fcntl.LOCK_EX)
+                self._profundidad = 1
+                try:
+                    yield
+                finally:
+                    self._profundidad = 0
+                    # El cierre libera el bloqueo también si el proceso termina.
+
+    @staticmethod
+    def _leer_json(ruta):
+        return json.loads(ruta.read_text(encoding="utf-8"))
+
+    @staticmethod
+    def _guardar_json(ruta, datos):
+        with NamedTemporaryFile(mode="w", encoding="utf-8", dir=ruta.parent, delete=False) as f:
+            temporal = Path(f.name)
+            try:
+                json.dump(datos, f, sort_keys=True)
+                f.flush()
+                os.fsync(f.fileno())
+            except BaseException:
+                f.close()
+                temporal.unlink(missing_ok=True)
+                raise
+        try:
+            temporal.replace(ruta)
+        finally:
+            temporal.unlink(missing_ok=True)
+
+    @staticmethod
+    def _ultimo(entradas):
+        return [len(entradas), entradas[-1]["_hash"] if entradas else "0" * 64]
+
+    @staticmethod
+    def _firma(ruta):
+        try:
+            st = ruta.stat()
+            return st.st_ino, st.st_size, st.st_mtime_ns
+        except FileNotFoundError:
+            return (0, 0, 0)
+
+    def _actualizar(self, archivo, sellos=None, *, legado=False, forzar=False):
+        ruta = self.carpeta / ARCHIVOS[archivo]
+        firma = self._firma(ruta)
+        if not forzar and self._firmas.get(archivo) == firma:
+            return
+        entradas = []
+        prev = "0" * 64
+        if firma[0]:
+            for linea in ruta.read_text(encoding="utf-8").splitlines():
+                if not linea.strip():
+                    continue
+                e = json.loads(linea)
+                if (not isinstance(e, dict) or e.get("_seq") != len(entradas) + 1 or e.get("_hash_prev") != prev
+                        or e.get("_hash") != _hash(prev, {k: v for k, v in e.items() if k != "_hash"})):
+                    raise ValueError(f"Fallo de integridad en {archivo}, registro {len(entradas) + 1}")
+                entradas.append(e)
+                prev = e["_hash"]
+        if not legado:
+            if sellos is None:
+                sellos = self._leer_json(self._ruta_sellos)
+            if sellos.get(archivo) != self._ultimo(entradas):
+                raise ValueError(f"Fallo de integridad: el final de {archivo} difiere del sello")
+        self._entradas[archivo] = entradas
+        self._firmas[archivo] = firma
+        if archivo == "F4":
+            self._f4_tipos = {}
+            for e in entradas:
+                if e.get("prg_id"):
+                    self._f4_tipos.setdefault(e["prg_id"], set()).add(e.get("tipo_entrada"))
 
     # ----------------------------------------------------------------------------------------
     # Identificadores
     # ----------------------------------------------------------------------------------------
     def nuevo_id(self, prefijo: str, anio: int | None = None, ancho: int = 4) -> str:
         anio = anio or self.reloj.fecha.year
-        with self._lock:
+        with self._transaccion():
+            contadores = self._leer_json(self._ruta_contadores) if self._ruta_contadores.exists() else {}
             k = f"{prefijo}-{anio}"
-            self._contadores[k] = self._contadores.get(k, 0) + 1
-            self._ruta_contadores.write_text(json.dumps(self._contadores, sort_keys=True), encoding="utf-8")
-            return f"{prefijo}-{anio}-{self._contadores[k]:0{ancho}d}"
+            numero = contadores.get(k, 0) + 1
+            contadores[k] = numero
+            self._guardar_json(self._ruta_contadores, contadores)
+            return f"{prefijo}-{anio}-{numero:0{ancho}d}"
 
     # ----------------------------------------------------------------------------------------
     # Escritura
@@ -136,7 +225,11 @@ class Almacen:
                 extra = set(entrada) - CAMPOS_RESOLUCION_F4
                 if extra:
                     return f"AG-20 intenta escribir campos de alta en F4: {sorted(extra)}"
-        if archivo == "F10" and tipo == "CFG":
+        if archivo == "F10" and autor != "OPERADOR":
+            if tipo == "LIMITACION_SERVICIO" and autor == "AG-01" and str(entrada.get("param_id")).startswith("SRV-"):
+                return None
+            if tipo != "CFG":
+                return f"{autor} no puede registrar {tipo} en F10"
             pid = entrada.get("param_id")
             if autor == "AG-01" and pid not in PARAMETROS_SERVICIO:
                 return f"AG-01 solo modifica parámetros de servicio (no {pid})"
@@ -167,7 +260,11 @@ class Almacen:
             if archivo != "HA" or autor != "AG-18":
                 self._incidencia_interna("ACCESO_FUERA_DE_MATRIZ", f"{archivo}: {motivo}", autor)
             raise EscrituraFueraDeReserva(motivo)
-        with self._lock:
+        with self._transaccion():
+            sellos = self._leer_json(self._ruta_sellos)
+            self._actualizar(archivo, sellos)
+            if sellos.get(archivo) != self._ultimo(self._entradas[archivo]):
+                raise ValueError(f"Fallo de integridad en el sello de {archivo}")
             if archivo == "F4":
                 motivo = self._comprobar_congelacion_f4(entrada)
                 if motivo:
@@ -182,12 +279,23 @@ class Almacen:
             e["_autor"] = autor
             e["_hash_prev"] = prev
             e["_hash"] = _hash(prev, {k: v for k, v in e.items() if k != "_hash"})
+            ruta = self.carpeta / ARCHIVOS[archivo]
+            with open(ruta, "ab") as fh:
+                inicio = fh.tell()
+                try:
+                    fh.write((json.dumps(e, ensure_ascii=False, default=str) + "\n").encode())
+                    fh.flush()
+                    os.fsync(fh.fileno())
+                    sellos[archivo] = [e["_seq"], e["_hash"]]
+                    self._guardar_json(self._ruta_sellos, sellos)
+                except Exception:
+                    fh.truncate(inicio)
+                    raise
             lista.append(e)
+            self._firmas[archivo] = self._firma(ruta)
             if archivo == "F4" and e.get("prg_id"):
                 self._f4_tipos.setdefault(e["prg_id"], set()).add(e.get("tipo_entrada"))
-            with open(self.carpeta / ARCHIVOS[archivo], "a", encoding="utf-8") as fh:
-                fh.write(json.dumps(e, ensure_ascii=False, default=str) + "\n")
-            return e
+            return copy.deepcopy(e)
 
     def _incidencia_interna(self, tipo: str, detalle: str, agente: str) -> None:
         self.escribir("HA", "AG-18", {"tipo_entrada": "INC", "id": self.nuevo_id("INC"), "tipo": tipo,
@@ -204,18 +312,23 @@ class Almacen:
     # ----------------------------------------------------------------------------------------
     def leer(self, archivo: str, as_of=None, filtro: Callable[[dict], bool] | None = None) -> list[dict]:
         lim = str(as_of)[:10] if as_of is not None else None
-        with self._lock:
+        with self._transaccion():
+            self._actualizar(archivo)
             out = [e for e in self._entradas[archivo] if lim is None or e["_fecha"] <= lim]
         if filtro:
             out = [e for e in out if filtro(e)]
         return copy.deepcopy(out)
 
-    def estado(self, archivo: str, as_of=None, clave: str | None = None) -> dict[str, dict]:
+    def estado(self, archivo: str, as_of=None, clave: str | None = None, *, efectivo_el=None) -> dict[str, dict]:
         """Vista consolidada por clave: la última entrada de cada objeto prevalece campo a campo;
         se conserva el historial de entradas (append-only)."""
         clave = clave or CLAVES[archivo]
         out: dict[str, dict] = {}
+        # La planificación de F10 puede proyectar acuerdos ya conocidos a su fecha de efecto.
+        corte = efectivo_el if efectivo_el is not None else as_of
         for e in self.leer(archivo, as_of):
+            if archivo == "F10" and corte is not None and e.get("fecha_efecto") and e["fecha_efecto"] > str(corte)[:10]:
+                continue
             k = e.get(clave)
             if not k:
                 continue
@@ -235,15 +348,11 @@ class Almacen:
 
     def verificar_integridad(self, archivo: str | None = None) -> dict[str, bool]:
         res = {}
-        for a in ([archivo] if archivo else ARCHIVOS):
-            p = self.carpeta / ARCHIVOS[a]
-            lineas = [json.loads(l) for l in p.read_text(encoding="utf-8").splitlines() if l.strip()] if p.exists() else []
-            prev, ok = "0" * 64, True
-            for i, e in enumerate(lineas):
-                if e.get("_hash_prev") != prev or e.get("_seq") != i + 1 or \
-                        _hash(prev, {k: v for k, v in e.items() if k != "_hash"}) != e.get("_hash"):
-                    ok = False
-                    break
-                prev = e["_hash"]
-            res[a] = ok
+        with self._transaccion():
+            for a in ([archivo] if archivo else ARCHIVOS):
+                try:
+                    self._actualizar(a, forzar=True)
+                    res[a] = True
+                except (ValueError, OSError, TypeError, AttributeError):
+                    res[a] = False
         return res

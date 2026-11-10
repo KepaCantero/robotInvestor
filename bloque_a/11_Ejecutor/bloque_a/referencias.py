@@ -1,6 +1,6 @@
 """Lectura de F7, F8, F9 y FM (Markdown de 05_Archivos_operativos) con el lector de fichas de HT-02.
 
-En backtest solo se ofrecen a los agentes referencias cuyo año (campo «Año» o cita) es ≤ año as_of; las
+En backtest solo se ofrecen a los agentes referencias conocibles al corte; cuando solo consta el año se usa el 31 de diciembre; las
 fuentes de F9 sin año (canales institucionales) se ofrecen como catálogo, sin contenido.
 Todo texto pasa por el saneamiento R9 antes de llegar a un agente.
 """
@@ -58,6 +58,12 @@ def _anio(ficha) -> Optional[int]:
     return None
 
 
+def conocible_desde(ref: dict) -> str | None:
+    """Cota superior conservadora: la ficha solo acredita el año, no el día de publicación."""
+    anio = ref.get("anio")
+    return f"{anio:04d}-12-31" if anio is not None else None
+
+
 class Referencias:
     def __init__(self, cfg: Dict, rutas: Optional[Dict[str, Path]] = None) -> None:
         base = ruta(cfg, "archivos_operativos")
@@ -85,13 +91,13 @@ class Referencias:
 
     def para_clase(self, clase: str, as_of, modo: str, max_n: int = 6, archivos=("F7", "F9")) -> Dict:
         """Referencias de la clase ordenadas por Q (desc.), filtradas por año en backtest y saneadas (R9)."""
-        anio_lim = int(str(as_of)[:4])
+        corte = str(as_of)[:10]
         tem = set(TEMATICAS_CLASE.get(clase, []))
         sel, hallazgos = [], []
         for a in archivos:
             cand = [r for r in self.fichas.get(a, []) if r["tematica"] in tem]
             if modo == "backtest":
-                cand = [r for r in cand if (r["anio"] is not None and r["anio"] <= anio_lim) or (a == "F9" and r["anio"] is None)]
+                cand = [r for r in cand if ((conocible_desde(r) or "9999") <= corte) or (a == "F9" and r["anio"] is None)]
             cand.sort(key=lambda r: (-(r["q"] or 0), r["ref_id"]))
             for r in cand[:max_n // len(archivos) + 1]:
                 titulo, h = sanear_contenido_externo(r["titulo"], f"{a}:{r['ref_id']}")

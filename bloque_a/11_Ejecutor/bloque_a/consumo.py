@@ -105,6 +105,18 @@ class Presupuesto:
     def puede(self, clase: str, estimado: float) -> bool:
         return self.disponible(clase) >= estimado
 
+    def autorizar_hasta_tope(self, clase: str, estimado: float, fase_admitida: bool) -> tuple[bool, float]:
+        """El máximo incluye tanto el margen automático como lo ya autorizado."""
+        pu = self.cfg.get("presupuesto_uc") or {}
+        with self._lock:
+            base = self.asignado.get(clase, 0.0)
+            actual = base * (1 + float(pu.get("ampliacion_sin_autorizacion", 0.25))) + self.ampliado[clase]
+            falta = estimado + self.consumido[clase] - actual
+            concede = fase_admitida and falta > 0 and actual + falta <= base * (1 + float(pu.get("ampliacion_max_autorizable", 0.5))) + 1e-9
+            if concede:
+                self.ampliado[clase] += falta
+            return concede, falta
+
     def ampliar(self, clase: str, uc: float) -> None:
         with self._lock:
             self.ampliado[clase] += uc

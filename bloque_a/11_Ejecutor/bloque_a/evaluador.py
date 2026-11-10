@@ -153,6 +153,12 @@ def banda_publicable(p: float) -> str:
     return _banda(p)["texto"]
 
 
+def etiqueta_celda(clave):
+    """Conserva el identificador de los informes antiguos para el grupo sin método."""
+    clase, horizonte, metodo = clave
+    return f"{clase}|{horizonte}|{metodo}" if metodo else f"{clase}|{horizonte}"
+
+
 class Evaluador:
     def __init__(self, almacen, proveedor, motor, cfg: dict, universo: pd.DataFrame) -> None:
         self.almacen = almacen
@@ -211,23 +217,41 @@ class Evaluador:
     def simbolos_clase(self, clase: str) -> list[str]:
         return [s for s in self.universo[self.universo["clase"] == clase]["simbolo"] if self.proveedor.tiene(s)]
 
-    def rentabilidad(self, simbolo: str, clase: str, f0, f1) -> tuple[float, pd.Timestamp]:
+    def _base_conocida(self, simbolo, fecha):
+        serie = self.proveedor.serie(simbolo, fin=fecha, conocido_el=fecha)
+        if serie.empty:
+            raise DatosNoDisponibles(f"{simbolo}: falta el dato conocido al emitir")
+        valor = float(serie["cierre"].iloc[-1])
+        if not math.isfinite(valor) or valor == 0:
+            raise DatosNoDisponibles(f"{simbolo}: base no utilizable para calcular rentabilidad")
+        return {"valor": valor, "fecha": str(serie.index[-1].date())}
+
+    def bases_cesta(self, clase, fecha):
+        """Solo los componentes observables al emitir; también reconstruye cestas antiguas con el corte histórico."""
+        bases = {}
+        for simbolo in self.simbolos_clase(clase):
+            try:
+                bases[simbolo] = self._base_conocida(simbolo, fecha)
+            except DatosNoDisponibles:
+                continue
+        return bases
+
+    def rentabilidad(self, simbolo: str, clase: str, f0, f1, *, base=None) -> tuple[float, pd.Timestamp]:
         if simbolo == "CESTA":
-            vals, fechas = [], []
-            for s in self.simbolos_clase(clase):
-                try:
-                    r, f = self.rentabilidad(s, clase, f0, f1)
-                    vals.append(r)
-                    fechas.append(f)
-                except DatosNoDisponibles:
-                    continue
-            if not vals:
-                raise DatosNoDisponibles(f"Cesta {clase} sin datos")
-            return float(np.mean(vals)), max(fechas)
-        d0, v0 = self.proveedor.valor_en(simbolo, f0)
+            bases = self.bases_cesta(clase, f0) if base is None else base
+            if not isinstance(bases, dict) or not bases:
+                raise DatosNoDisponibles(f"Cesta {clase} sin niveles iniciales")
+            # Mismos miembros y pesos que al emitir; si falta una pata no se cambia la composición retrospectivamente.
+            patas = [self.rentabilidad(s, clase, f0, f1, base=b) for s, b in bases.items()]
+            return float(np.mean([v for v, _ in patas])), min(fecha for _, fecha in patas)
+        if base is None:
+            base = self._base_conocida(simbolo, f0)
+        v0 = base.get("valor") if isinstance(base, dict) else base
+        if isinstance(base, dict) and pd.Timestamp(base.get("fecha")) > pd.Timestamp(f0):
+            raise DatosNoDisponibles(f"{simbolo}: base posterior a la emisión")
         d1, v1 = self.proveedor.valor_en(simbolo, f1)
-        if not (math.isfinite(v0) and math.isfinite(v1)) or v0 == 0:
-            raise DatosNoDisponibles(f"HT-01: cierre no válido de {simbolo} ({d0.date()}: {v0}; {d1.date()}: {v1})")
+        if isinstance(v0, bool) or not isinstance(v0, (float, int)) or not math.isfinite(v0) or v0 == 0 or not math.isfinite(v1):
+            raise DatosNoDisponibles(f"HT-01: base o cierre no válido de {simbolo}")
         return v1 / v0 - 1, d1
 
     def tasa_base(self, proxy: str, referencia: str | None, clase: str, sesiones: int, sentido_positivo: bool,
@@ -285,15 +309,19 @@ class Evaluador:
         # que son pronósticos ordinarios de su propio horizonte y se resuelven aquí como los demás
         pendientes = [p for p in abiertos if pd.Timestamp(p["fecha_resolucion"]) <= as_of and p.get("prob_interna") is not None]
         resueltos: list[dict] = []
-        filas = []
+        filas: list[tuple[dict, dict | None]] = []
         for p in sorted(pendientes, key=lambda x: x["prg_id"]):
             f0, f1 = pd.Timestamp(p["fecha_emision"]), pd.Timestamp(p["fecha_resolucion"])
             try:
-                rp, d1 = self.rentabilidad(p["variable"]["serie_ht01"], p["clase"], f0, f1)
+                rp, d1 = self.rentabilidad(p["variable"]["serie_ht01"], p["clase"], f0, f1, base=p.get("nivel_referencia"))
                 rr = None
                 if p["tipo_pronostico"] == "RELATIVO":
-                    rr, d1b = self.rentabilidad(p["referencia_indice"], p["clase"], f0, f1)
-                    d1 = max(d1, d1b)
+                    base_ref = p.get("bases_cesta") if p["referencia_indice"] == "CESTA" else p.get("nivel_referencia_indice")
+                    if base_ref is not None and p.get("fecha_nivel_referencia_indice"):
+                        base_ref = {"valor": base_ref, "fecha": p["fecha_nivel_referencia_indice"]}
+                    rr, d1b = self.rentabilidad(p["referencia_indice"], p["clase"], f0, f1, base=base_ref)
+                else:
+                    d1b = None
                 x = rp - rr if rr is not None else rp
                 # Falla cerrado: un valor no finito (cierre NaN, nivel inicial 0…) es un dato no disponible,
                 # nunca un resultado (antes, int(nan > 0) = 0 daba NO_OCURRIDO)
@@ -303,14 +331,14 @@ class Evaluador:
                 if dias_habiles_entre(f1, as_of) >= int(self.ev_cfg.get("dias_habiles_no_resoluble", 10)):
                     filas.append((p, None))
                 continue
-            if (f1 - d1).days > 7:   # el último dato es demasiado antiguo: esperar
+            if (f1 - min(d1, d1b if d1b is not None else d1)).days > 7:   # el último dato es demasiado antiguo: esperar
                 if dias_habiles_entre(f1, as_of) >= int(self.ev_cfg.get("dias_habiles_no_resoluble", 10)):
                     filas.append((p, None))
                 continue
             positivo = p["sentido"] == "POSITIVO"
             o = int((x > p.get("umbral", 0.0)) if positivo else (x < -p.get("umbral", 0.0)))
             fuga_ok = (pd.Timestamp(p["nivel_referencia"]["fecha"]) <= f0 and d1 <= as_of and f1 <= as_of)
-            filas.append((p, {"rent_proxy": rp, "rent_referencia": rr, "exceso": x, "o": o, "fecha_dato": d1,
+            filas.append((p, {"rent_proxy": rp, "rent_referencia": rr, "exceso": x, "o": o, "fecha_dato": d1, "fecha_dato_referencia": d1b,
                               "fuga": "SUPERADA" if fuga_ok else "FALLIDA"}))
         if not filas:
             return []
@@ -332,6 +360,7 @@ class Evaluador:
                 o = r["o"]
                 e = {"prg_id": p["prg_id"], "tipo_entrada": "RESOLUCION", "estado": "RESUELTO",
                      "resolucion": {"fecha_resuelto": str(as_of.date()), "fecha_dato": str(r["fecha_dato"].date()),
+                                    "fecha_dato_referencia": str(r["fecha_dato_referencia"].date()) if r["fecha_dato_referencia"] is not None else None,
                                     "valor_observado": round(r["exceso"], 8), "rent_proxy": round(r["rent_proxy"], 8),
                                     "rent_referencia": None if r["rent_referencia"] is None else round(r["rent_referencia"], 8),
                                     "unidad": "tanto por uno", "fuente_usada": f"HT-01:{self.proveedor.nombre}",
@@ -521,6 +550,7 @@ class Evaluador:
         est = self.estado_h5(as_of)
         trimestre = f"{as_of.year}-T{(as_of.month - 1) // 3 + 1}"
         hechos: list[dict] = []
+        fecha_efecto = str((as_of + pd.Timedelta(days=1)).date())
         for clase, celda in sorted(est["celdas"].items()):
             if not celda["degradar"]:
                 continue
@@ -530,7 +560,9 @@ class Evaluador:
                    and (a.get("trimestre") == trimestre or (a.get("tipo_entrada") == "P3" and a.get("estado") == "ENVIADA"))
                    for a in f6):
                 continue
-            matriz = self._matriz_aplicabilidad(as_of)
+            # Componer con acuerdos ya registrados que entrarán en vigor el mismo día, sin abrir el corte de conocimiento.
+            f10 = self.almacen.estado("F10", as_of, efectivo_el=fecha_efecto)
+            matriz = (f10.get("P-31") or {}).get("valor_vigente") or self._tabla_base
             actual = (matriz.get(clase) or {}).get("H5")
             nuevo = ESCALON_INFERIOR.get(actual) if actual is not None else None
             if nuevo is None:          # ya «No» (o valor desconocido): nada que bajar
@@ -556,7 +588,6 @@ class Evaluador:
                 self.almacen.escribir("F6", "AG-20", p3)
                 hechos.append(p3)
                 continue
-            f10 = self.almacen.estado("F10", as_of)
             mv_de = str((f10.get("P-30") or {}).get("valor_vigente") or self.cfg.get("methodology_version", "5.1"))
             mv = {"de": mv_de, "a": _version_menor_siguiente(mv_de)}
             nueva = copy.deepcopy(matriz)
@@ -564,7 +595,7 @@ class Evaluador:
             aju = {"tipo_entrada": "AJU", "id": self.almacen.nuevo_id("AJU"), "parametro": "P-31", "celda": ambito,
                    "de": actual, "a": nuevo, "trimestre": trimestre,
                    "banda": {"regla": "«Sí» ↔ «Limitado» automático (12.2, P-31); hacia «No», tipo 3"},
-                   "evidencia": evid, "methodology_version": mv, "efecto_desde": str((as_of + pd.Timedelta(days=1)).date()),
+                   "evidencia": evid, "methodology_version": mv, "efecto_desde": fecha_efecto,
                    "sombra_hasta": None, "estado": "CONFIRMADO", "aplicado_en_produccion": True,
                    "nota": "degradación automática de 12.2: no se revierte sola (volver a subir exige tipo 3)"}
             self.almacen.escribir("F6", "AG-20", aju)
@@ -605,7 +636,7 @@ class Evaluador:
             raise ValueError("aprobar_certificados: falta el autor de la aprobación")
         as_of = pd.Timestamp(as_of).normalize()
         f6 = self.almacen.estado("F6", as_of, clave="id")
-        vigentes = {(c["celda"]["clase"], c["celda"]["horizonte"]) for c in self.certificados_vigentes(as_of) if c.get("celda")}
+        vigentes = {(c["celda"]["clase"], c["celda"]["horizonte"], c["celda"].get("metodo")) for c in self.certificados_vigentes(as_of) if c.get("celda")}
         for i in ids:
             c = f6.get(i)
             if c is None or not any(h.get("tipo") == "CERT" for h in c.get("_historial", [])):
@@ -613,9 +644,10 @@ class Evaluador:
             if c.get("estado") != "PROPUESTO":
                 raise ValueError(f"aprobar_certificados: {i} está {c.get('estado')}, no PROPUESTO")
             celda = c.get("celda") or {}
-            if (celda.get("clase"), celda.get("horizonte")) in vigentes:
+            if (celda.get("clase"), celda.get("horizonte"), celda.get("metodo")) in vigentes:
                 raise ValueError(f"aprobar_certificados: la celda {celda.get('clase')}|{celda.get('horizonte')} de {i} ya "
                                  "tiene un certificado VIGENTE")
+            vigentes.add((celda.get("clase"), celda.get("horizonte"), celda.get("metodo")))
         hechos = []
         for i in ids:
             e = {"tipo_entrada": "CERT_APROBACION", "id": i, "estado": "VIGENTE", "aprobado_por": autor.strip(),
@@ -633,10 +665,10 @@ class Evaluador:
         solo_endurecer = self.solo_endurecer()
         celdas = defaultdict(list)
         for p in self.resueltos(as_of):
-            celdas[(p["clase"], p["horizonte"])].append(p)
+            celdas[(p["clase"], p["horizonte"], p.get("metodo"))].append(p)
         candidatas = {k: v for k, v in celdas.items() if len(v) >= n_cert}
-        vigentes = {(c["celda"]["clase"], c["celda"]["horizonte"]): c for c in self.certificados_vigentes(as_of)}
-        propuestos = {(c["celda"]["clase"], c["celda"]["horizonte"]): c for c in self.certificados_propuestos(as_of)}
+        vigentes = {(c["celda"]["clase"], c["celda"]["horizonte"], c["celda"].get("metodo")): c for c in self.certificados_vigentes(as_of)}
+        propuestos = {(c["celda"]["clase"], c["celda"]["horizonte"], c["celda"].get("metodo")): c for c in self.certificados_propuestos(as_of)}
         emitidos, revocados, retirados, evaluadas = [], [], [], {}
         if candidatas:
             metr = {k: ev.evaluar_celda([float(x["prob_interna"]) for x in v], [int(x["resolucion"]["resultado_binario"]) for x in v],
@@ -644,20 +676,20 @@ class Evaluador:
                                         float(np.mean([x["referencia_ingenua"]["valor_o_prob"] for x in v])),
                                         int(self.ev_cfg.get("bootstrap_replicas", 2000)), int(self.ev_cfg.get("simulaciones_ece", 2000)),
                                         fechas=self._fechas_conglomerado(v), min_conglomerados=min_cong)
-                    for k, v in sorted(candidatas.items())}
+                    for k, v in candidatas.items()}
             # Holm escalonado (Anexo A, certificado R13): en cuanto una celda no supera su umbral, ninguna de las
             # siguientes (de p mayor) lo supera. α: clave evaluacion.alfa_holm (0,10, coherente con el IC 90 % del criterio)
-            umbrales = ev.holm({f"{k[0]}|{k[1]}": (m["dm_hln"]["p_unilateral"] if m["dm_hln"]["p_unilateral"] is not None else 1.0)
+            umbrales = ev.holm({etiqueta_celda(k): (m["dm_hln"]["p_unilateral"] if m["dm_hln"]["p_unilateral"] is not None else 1.0)
                                 for k, m in metr.items()}, float(self.ev_cfg.get("alfa_holm", 0.10)))
             for k, m in metr.items():
                 crit = ev.criterio_certificado(m, n_cert, float(self.ev_cfg.get("ece_max", 0.15)),
-                                               umbrales[f"{k[0]}|{k[1]}"] if len(metr) > 1 else None)
-                evaluadas[f"{k[0]}|{k[1]}"] = crit
+                                               umbrales[etiqueta_celda(k)] if len(metr) > 1 else None)
+                evaluadas[etiqueta_celda(k)] = crit
                 if crit["certificable"] and k not in vigentes and k not in propuestos:
                     muestra = m.get("muestra_efectiva") or {}
                     cert = {"tipo_entrada": "CERT", "id": self.almacen.nuevo_id("CERT"),
                             "estado": "PROPUESTO" if solo_endurecer else "VIGENTE",
-                            "celda": {"clase": k[0], "horizonte": k[1], "metodo": None}, "n": m["n"], "n_eff": m["n_eff"],
+                            "celda": {"clase": k[0], "horizonte": k[1], "metodo": k[2]}, "n": m["n"], "n_eff": m["n_eff"],
                             "muestra_efectiva": {c: muestra.get(c) for c in ("conglomerados", "m_medio", "rho", "efecto_diseno")},
                             "brier": m["brier"], "brier_ref": m["brier_ref"], "bss": m["bss"]["valor"], "bss_ic90": m["bss"]["ic"],
                             "bss_ic_metodo": m["bss"].get("metodo"),
@@ -687,7 +719,7 @@ class Evaluador:
                                                               "motivo_cambio": f"deterioro: BSS ≤ 0, ECE no disponible o ECE ≥ {ece_rev}",
                                                               "fecha": str(pd.Timestamp(as_of).date())})
                         revocados.append(c["id"])
-        no_cert = {f"{k[0]}|{k[1]}": f"n = {len(v)} < {n_cert}" for k, v in celdas.items() if k not in candidatas}
+        no_cert = {etiqueta_celda(k): f"n = {len(v)} < {n_cert}" for k, v in celdas.items() if k not in candidatas}
         return {"emitidos": emitidos, "revocados": revocados, "propuestas_retiradas": retirados, "evaluadas": evaluadas,
                 "insuficientes": no_cert, "excluidos_contaminacion": self.excluidos_contaminacion(as_of)}
 
