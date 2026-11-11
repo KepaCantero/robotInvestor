@@ -118,6 +118,8 @@ Para su propio dinero, el operador no presta ningún servicio a nadie. Pero la e
 
 Las 110 preguntas se quedan en unas 100 al fusionar las repetidas. No hace falta contestarlas todas a la vez: cada una tiene un valor por defecto [PROPUESTO] en simulado, y la sesión única de decisiones (T-57) puede ir por tandas, en el orden en que bloquean.
 
+**Tanda 1 aceptada por el operador el 11-11-2026** con sus valores por defecto: registro en `.docs/diseno/decisiones_operador.md`.
+
 | Tanda | Cuándo | Decisiones (de dónde salen) |
 | --- | --- | --- |
 | 1. Antes de construir la Fase 1 | Ya | Pauta común de A, B y C con banco de medida (A, B, C, E4-13); segundo proveedor de IA (B, C); adelantar el largo plazo y el tope de bloques (E4-18, §5); asimetría de F, que cambia CT-G-08 (F); registro de experimentos desde la Fase 1 (J); informes con rangos y «todavía no se sabe» (I, N); jurisdicción y asesor fiscal (SC-9); criterios del intermediario y ficha de restricciones (G, SC-10) |
