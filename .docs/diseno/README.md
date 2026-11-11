@@ -9,6 +9,8 @@ Cada bloque tiene su carpeta con:
 
 Astra las revisa en el orden natural de los bloques, de A en adelante; después el Broker y los servicios comunes, la entrada del dinero existente, la enmienda 4 y, al final, la pasada de coherencia (relevo, §0 bis).
 
+Lo que el operador ya ha decidido sobre estas propuestas está en `.docs/diseno/decisiones_operador.md`.
+
 | Bloque | Propuesta | Revisión | Estado |
 | --- | --- | --- | --- |
 | A (buscador de oportunidades) | `.docs/diseno/bloque_a/propuesta_claude.md` (rediseño: de 25 agentes a 6 papeles de IA) | Astra, encargo en `.docs/diseno/bloque_a/encargo_revision_astra.md` | En revisión |
