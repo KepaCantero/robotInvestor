@@ -9,6 +9,7 @@ Todo lo que Claude, Astra y las personas del equipo necesitan para trabajar en e
 | `.docs/diario/` | Diario por mes (`AAAA-MM.md`), la entrada más reciente arriba | Quien trabaja ese día |
 | `.docs/scripts/` | Scripts de trabajo: todo lo que se hace más de una vez | Cualquiera |
 | `.docs/knowledge/` | Documentos de incorporación, estáticos y numerados | Cualquiera, al cambiar el modo de trabajo |
+| `.docs/diseno/` | Propuestas de diseño de cada bloque y sus revisiones independientes, para discutir con el operador antes de construir; no se implementan hasta que él cierra el diseño | El agente que propone y el que revisa |
 | `.docs/memoria/` | Memoria indexada de los agentes: `compartida/` y una carpeta por agente | Cada agente en la suya y en `compartida/` |
 
 ## Reglas
