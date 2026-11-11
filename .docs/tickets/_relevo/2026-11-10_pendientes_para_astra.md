@@ -23,6 +23,7 @@ El operador va a discutir con Claude la arquitectura del Bloque B y de los demá
   6. **F**: `.docs/diseno/bloque_f/encargo_revision_astra.md`. T-74 sigue en espera: la revisión es solo de diseño.
   7. **G**: `.docs/diseno/bloque_g/encargo_revision_astra.md`.
   8. **H**: `.docs/diseno/bloque_h/encargo_revision_astra.md`.
+  9. **Enmienda 4** a la Constitución, al final porque toca los diseños anteriores: `.docs/diseno/enmienda_4/encargo_revision_astra.md`.
 
   Si al revisar un bloque ves algo que cambia tu opinión sobre uno anterior, añádelo como nota al final de la revisión anterior, con fecha, en lugar de reescribirla.
 - [PROPUESTO] hasta que el operador lo decida (pregunta 2 de la propuesta de A): mientras no cierre el diseño de A, en T-93, T-91 y T-88 cambia solo lo que sirve en cualquier diseño (código, contratos y seguridad), sin tocar prompts ni papeles de los agentes.
