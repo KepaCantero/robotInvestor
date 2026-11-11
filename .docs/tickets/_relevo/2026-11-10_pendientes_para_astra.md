@@ -40,7 +40,7 @@ El operador va a discutir con Claude la arquitectura del Bloque B y de los demá
 
   Si Claude añade más propuestas de diseño, van antes de la enmienda 4; la pasada de coherencia queda siempre la última de diseño y la enmienda 5, después.
 
-  Después de las revisiones de diseño: **QA de T-94** (banco de medida, `.docs/tickets/T-94/`), con la skill de QA. Es un script fuera de los bloques; implementó Claude. Junto a ella, si quiere, un vistazo a las plantillas en blanco de `.docs/plantillas_operador/` (solo recogen campos ya propuestos en SC-9, SC-10, SC-7 y la entrada del patrimonio).
+  Después de las revisiones de diseño: **QA de T-94** (banco de medida, `.docs/tickets/T-94/`) y **QA de T-95** (prototipo de la consola N en `dashboard/consola_n/`, `.docs/tickets/T-95/`; `npm install`, `npm test`, `npm run build && npm run e2e`), con la skill de QA. Al revisar el diseño de N puedes usar el prototipo para ver las pantallas. Las dos son de fuera de los bloques; implementó Claude. Junto a ellas, si quiere, un vistazo a las plantillas en blanco de `.docs/plantillas_operador/` (solo recogen campos ya propuestos en SC-9, SC-10, SC-7 y la entrada del patrimonio).
 
   El operador ya aceptó la tanda 1 de decisiones de la pasada de coherencia (11-11-2026; `.docs/diseno/decisiones_operador.md`). Revisa igualmente esos puntos; si discrepas de alguno, dilo en tu revisión para que Claude se lo lleve al operador.
 

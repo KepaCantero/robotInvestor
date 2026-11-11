@@ -25,7 +25,7 @@ Lo que el operador ya ha decidido sobre estas propuestas está en `.docs/diseno/
 | J (laboratorio) | `.docs/diseno/bloque_j/propuesta_claude.md` | Astra, encargo en `.docs/diseno/bloque_j/encargo_revision_astra.md` | En revisión |
 | K (datos y calidad de datos) | `.docs/diseno/bloque_k/propuesta_claude.md` | Astra, encargo en `.docs/diseno/bloque_k/encargo_revision_astra.md` | En revisión |
 | M (riesgo de cartera) | `.docs/diseno/bloque_m/propuesta_claude.md` | Astra, encargo en `.docs/diseno/bloque_m/encargo_revision_astra.md` | En revisión |
-| N (consola del operador) | `.docs/diseno/bloque_n/propuesta_claude.md` | Astra, encargo en `.docs/diseno/bloque_n/encargo_revision_astra.md` | En revisión |
+| N (consola del operador) | `.docs/diseno/bloque_n/propuesta_claude.md`; prototipo navegable con datos de ejemplo en `dashboard/consola_n/` (T-95) | Astra, encargo en `.docs/diseno/bloque_n/encargo_revision_astra.md` | En revisión |
 | Broker Personal (conversacional, Orquestador y gestores de cartera) | `.docs/diseno/broker_personal/propuesta_claude.md` | Astra, encargo en `.docs/diseno/broker_personal/encargo_revision_astra.md` | En revisión |
 | SC-9 (fiscalidad y costes) | `.docs/diseno/sc9_fiscalidad/propuesta_claude.md` | Astra, encargo en `.docs/diseno/sc9_fiscalidad/encargo_revision_astra.md` | En revisión |
 | SC-3 (Motor de cálculo) | `.docs/diseno/sc3_motor/propuesta_claude.md` | Astra, encargo en `.docs/diseno/sc3_motor/encargo_revision_astra.md` | En revisión |

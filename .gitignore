@@ -22,3 +22,9 @@ entregables/
 
 # Logs de los scripts de .docs
 .docs/scripts/.logs/
+
+# Prototipo de la consola N (T-95): dependencias y compilados
+dashboard/consola_n/node_modules/
+dashboard/consola_n/dist-pagina/
+dashboard/consola_n/test-results/
+dashboard/consola_n/playwright-report/

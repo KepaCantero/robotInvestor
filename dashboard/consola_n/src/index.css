@@ -1,0 +1,151 @@
+/* Consola N · prototipo.
+   Disposición: barra superior fija con el estado y el kill-switch; menú de siete pantallas a la izquierda
+   (abajo en el móvil); cada pantalla responde a una sola pregunta, el resumen antes que el detalle.
+   Paleta: piso de mercado de noche, del kit de dashboard/prompts (negro azulado, oro LED); tema claro derivado.
+   Tipos: IBM Plex Sans (texto), JetBrains Mono (cifras), Silkscreen solo en el rótulo de la marca.
+   Tokens en canales RGB para que Tailwind admita opacidad. */
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --fondo: 11 13 18;
+  --panel: 20 22 29;
+  --panel-2: 28 31 41;
+  --linea: 42 46 58;
+  --texto: 232 234 240;
+  --tenue: 139 147 167;
+  --oro: 245 200 96;
+  --sobre-oro: 18 16 10;
+  --bien: 74 222 128;
+  --aviso: 240 160 64;
+  --mal: 248 113 113;
+  --rejilla: 32 36 46;
+  color-scheme: dark;
+}
+@media (prefers-color-scheme: light) {
+  :root:not([data-theme="dark"]) {
+    --fondo: 241 242 246;
+    --panel: 255 255 255;
+    --panel-2: 233 235 241;
+    --linea: 211 215 225;
+    --texto: 18 20 26;
+    --tenue: 86 93 110;
+    --oro: 150 104 8;
+    --sobre-oro: 255 255 255;
+    --bien: 21 128 61;
+    --aviso: 180 83 9;
+    --mal: 185 28 28;
+    --rejilla: 226 229 236;
+    color-scheme: light;
+  }
+}
+:root[data-theme="light"] {
+  --fondo: 241 242 246;
+  --panel: 255 255 255;
+  --panel-2: 233 235 241;
+  --linea: 211 215 225;
+  --texto: 18 20 26;
+  --tenue: 86 93 110;
+  --oro: 150 104 8;
+  --sobre-oro: 255 255 255;
+  --bien: 21 128 61;
+  --aviso: 180 83 9;
+  --mal: 185 28 28;
+  --rejilla: 226 229 236;
+  color-scheme: light;
+}
+
+html,
+body,
+#root {
+  height: 100%;
+}
+body {
+  background: rgb(var(--fondo));
+  color: rgb(var(--texto));
+  font-family: "IBM Plex Sans", system-ui, sans-serif;
+  font-size: 14px;
+  -webkit-font-smoothing: antialiased;
+}
+body::before {
+  content: "";
+  position: fixed;
+  inset: 0 0 auto;
+  height: env(safe-area-inset-top, 0px);
+  z-index: 50;
+  background: rgb(var(--panel));
+}
+h1,
+h2,
+h3 {
+  text-wrap: balance;
+}
+.cifra {
+  font-family: "JetBrains Mono", ui-monospace, monospace;
+  font-variant-numeric: tabular-nums;
+}
+.etiqueta {
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  color: rgb(var(--tenue));
+  font-weight: 600;
+}
+.rotulo-led {
+  font-family: "Silkscreen", "JetBrains Mono", monospace;
+  letter-spacing: 0.14em;
+  border: 1px solid rgb(var(--oro));
+  box-shadow: 0 0 10px rgb(var(--oro) / 0.35), inset 0 0 6px rgb(var(--oro) / 0.15);
+  color: rgb(var(--texto));
+  background: rgb(var(--fondo));
+}
+.punto-vivo {
+  animation: latido 2s ease-in-out infinite;
+}
+@keyframes latido {
+  50% {
+    opacity: 0.35;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .punto-vivo {
+    animation: none;
+  }
+}
+:focus-visible {
+  outline: 2px solid rgb(var(--oro));
+  outline-offset: 2px;
+}
+.canal {
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+}
+
+/* AG Grid con los tokens de la consola */
+.ag-theme-quartz,
+.ag-theme-quartz-dark {
+  --ag-background-color: rgb(var(--panel));
+  --ag-foreground-color: rgb(var(--texto));
+  --ag-header-background-color: rgb(var(--panel-2));
+  --ag-header-foreground-color: rgb(var(--tenue));
+  --ag-border-color: rgb(var(--linea));
+  --ag-row-border-color: rgb(var(--linea));
+  --ag-odd-row-background-color: rgb(var(--panel));
+  --ag-row-hover-color: rgb(var(--panel-2));
+  --ag-selected-row-background-color: rgb(var(--oro) / 0.14);
+  --ag-range-selection-border-color: rgb(var(--oro));
+  --ag-input-focus-border-color: rgb(var(--oro));
+  --ag-font-family: "IBM Plex Sans", system-ui, sans-serif;
+  --ag-font-size: 13px;
+  --ag-wrapper-border-radius: 4px;
+  --ag-border-radius: 3px;
+}
+.ag-theme-quartz .ag-header-cell-text {
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  font-size: 11px;
+}
+.ag-theme-quartz .ag-center-cols-viewport {
+  min-height: 0 !important;
+}
