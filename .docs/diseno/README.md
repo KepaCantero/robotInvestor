@@ -24,4 +24,5 @@ Astra las revisa en el orden natural de los bloques, de A en adelante, y al fina
 | K (datos y calidad de datos) | `.docs/diseno/bloque_k/propuesta_claude.md` | Astra, encargo en `.docs/diseno/bloque_k/encargo_revision_astra.md` | En revisión |
 | M (riesgo de cartera) | `.docs/diseno/bloque_m/propuesta_claude.md` | Astra, encargo en `.docs/diseno/bloque_m/encargo_revision_astra.md` | En revisión |
 | N (consola del operador) | `.docs/diseno/bloque_n/propuesta_claude.md` | Astra, encargo en `.docs/diseno/bloque_n/encargo_revision_astra.md` | En revisión |
+| Broker Personal (conversacional, Orquestador y gestores de cartera) | `.docs/diseno/broker_personal/propuesta_claude.md` | Astra, encargo en `.docs/diseno/broker_personal/encargo_revision_astra.md` | En revisión |
 | Constitución: enmienda 4 (veinte puntos de arquitectura global) | `.docs/diseno/enmienda_4/propuesta_claude.md` | Astra, encargo en `.docs/diseno/enmienda_4/encargo_revision_astra.md` (última de la lista) | En revisión |
