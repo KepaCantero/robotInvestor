@@ -7,7 +7,7 @@ Cada bloque tiene su carpeta con:
 - el encargo de revisión al otro agente;
 - la revisión del otro agente, cuando la entregue (fichero «revision_astra.md» o «revision_claude.md»).
 
-Astra las revisa en el orden natural de los bloques, de A a H, y después la enmienda 4 (relevo, §0 bis).
+Astra las revisa en el orden natural de los bloques, de A en adelante, y al final la enmienda 4 (relevo, §0 bis).
 
 | Bloque | Propuesta | Revisión | Estado |
 | --- | --- | --- | --- |
@@ -19,4 +19,5 @@ Astra las revisa en el orden natural de los bloques, de A a H, y después la enm
 | F (control de riesgo) | `.docs/diseno/bloque_f/propuesta_claude.md` | Astra, encargo en `.docs/diseno/bloque_f/encargo_revision_astra.md` | En revisión |
 | G (ejecución y conciliación) | `.docs/diseno/bloque_g/propuesta_claude.md` | Astra, encargo en `.docs/diseno/bloque_g/encargo_revision_astra.md` | En revisión |
 | H (seguimiento de posiciones) | `.docs/diseno/bloque_h/propuesta_claude.md` | Astra, encargo en `.docs/diseno/bloque_h/encargo_revision_astra.md` | En revisión |
+| I (evaluación y atribución) | `.docs/diseno/bloque_i/propuesta_claude.md` | Astra, encargo en `.docs/diseno/bloque_i/encargo_revision_astra.md` | En revisión |
 | Constitución: enmienda 4 (veinte puntos de arquitectura global) | `.docs/diseno/enmienda_4/propuesta_claude.md` | Astra, encargo en `.docs/diseno/enmienda_4/encargo_revision_astra.md` (última de la lista) | En revisión |
