@@ -446,6 +446,7 @@ El §0 tendría una tabla «Qué cambia de la V0.6 a la V0.7 (enmienda 5, parte 
 11. **La comprobación de cifras del Broker** acepta las del Motor, las de F y las de SC-1 (cambio 70).
 12. **El informe fiscal anual es un borrador**, no una declaración (cambio 75).
 13. **Dueño de los episodios de estrés:** D hasta la Fase 3 y M después (cambio 68), como proponía la pasada de coherencia.
+14. **Papeles de IA del Broker:** el cambio 73 los separa en siete, pero la propuesta del Broker (pregunta 1) dejaba como mucho tres agentes de IA, con el perfilador y el asesor como modos del conversacional. Es una incoherencia de Claude entre las dos propuestas; el cuestionario de la tanda 2 lo pregunta (E6).
 
 ## 10. Huecos para las revisiones de Astra y cómo se adopta
 

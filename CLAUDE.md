@@ -136,10 +136,10 @@ propietario (o una sesión coordinadora) hace commit.
 ## Comandos
 
 ```bash
-# venv único del proyecto (Python 3.12, ~/.local/bin/python3.12)
+# venv único del proyecto (Python 3.12), con las versiones fijadas en tools/requisitos_entorno.txt (T-96):
+.docs/scripts/preparar_entorno.sh             # crea .venv e instala ejecutores, herramientas y opcionales; --comprobar solo compara
 source .venv/bin/activate
-pip install -e bloque_a/11_Ejecutor -e bloque_a_forex/11_Ejecutor -e bloque_b/11_Ejecutor
-pip install arch openpyxl python-docx         # opcionales que usan los tests (B necesita python-docx para sus entregables .docx)
+# Las cuotas de ruff y mypy dependen de esas versiones (arch 9.0.0 suma 2 errores de mypy en A y en A-Forex).
 
 pytest -q bloque_a/11_Ejecutor        # 439
 pytest -q bloque_a_forex/11_Ejecutor  # 68 (≈5 min: backtests simulados)

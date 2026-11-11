@@ -21,4 +21,4 @@ El operador acepta los valores por defecto de la tanda 1 de la pasada de coheren
 
 **Si una revisión de Astra discrepa** de alguna de estas decisiones, lo señala en su revisión y Claude lo lleva al operador antes de incorporarlo a la enmienda 5.
 
-Las tandas 2 a 5 siguen con sus valores por defecto [PROPUESTO], en simulado.
+Las tandas 2 a 5 siguen con sus valores por defecto [PROPUESTO], en simulado. La tanda 2 ya tiene su cuestionario, con las ocho preguntas de la enmienda 5, parte 2: `.docs/diseno/coherencia/cuestionario_tanda_2.md` (11-11-2026).

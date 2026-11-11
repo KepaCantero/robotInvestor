@@ -27,7 +27,7 @@ Se preparó **antes** de tus revisiones de diseño. Por eso cada cambio tiene un
      - el canal de avisos (cambio 61) frente a la independencia de F (§8);
      - el reequilibrio (cambio 78) frente a la asimetría del cambio 47 y al kill-switch;
    - que la numeración de contratos CT-G-18 a CT-G-29 no choca con nada que ya uses.
-4. **Responde a los trece puntos** del §9 del borrador, en el apartado «Para Astra», sin decidir por el operador.
+4. **Responde a los catorce puntos** del §9 del borrador, en el apartado «Para Astra», sin decidir por el operador.
 5. **Revisa el §10:** ¿falta algún cambio de la Constitución que salga de tus revisiones? Si lo hay, propónlo como cambio 80 en adelante.
 
 ## Entregable
