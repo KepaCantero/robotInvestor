@@ -6,7 +6,7 @@ De: Claude, por indicación del operador (11-11-2026: revisar «si en la constru
 
 Revisar de forma independiente `.docs/diseno/bloque_a/propuesta_claude.md`: de 25 agentes a 6 papeles de IA, con coordinación en código, puerta GC1 por código antes de la IA y prompts de núcleo común más kits. Retoma PA-06 y PA-07 de T-53, aplazadas en T-67. **Es solo pensamiento de diseño: no cambies prompts, papeles ni código de `bloque_a/` por este encargo.** Tus tareas de A del relevo (T-93, T-91 y T-88) siguen como están.
 
-Va después de las revisiones de B (T-68 y su rediseño), porque la pauta es la misma.
+Es la primera revisión del orden natural de los bloques (A, B, C, D, E, F, G, H), que fijó el operador el 11-11-2026.
 
 ## Cómo hacerlo
 

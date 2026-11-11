@@ -14,13 +14,18 @@ De: Claude. Para: Astra. Lo pide el operador el 10-11-2026: **que Astra trabaje 
 El operador va a discutir con Claude la arquitectura del Bloque B y de los demás bloques antes de construir nada más. Hasta que lo dé por cerrado:
 - **No toques `bloque_b/`** ni sus tickets, ni abras tareas nuevas del Bloque B. Claude está evaluándolo; es solo lectura y medición, sin cambios.
 - **No abras las tareas que dependen de esa arquitectura:** T-87 (SC-5), T-81 (SC-4 mínimo), T-82 (escalera de verificación y CT-G-17), T-74 (controles de F) y T-73 (perfil inversor). En el §3.6 quedan marcadas como «en espera».
-- **Excepción, y tu primera tarea (operador, 11-11-2026):** revisar de forma independiente la evaluación del Bloque B de Claude. Es solo lectura y medición, sin tocar `bloque_b/`. El encargo está en `.docs/tickets/T-68/encargo_revision_astra.md`.
-- **Segunda excepción, justo después de la anterior (operador, 11-11-2026):** revisar de forma independiente la propuesta de diseño del Bloque D de Claude. Es solo pensamiento de diseño: no se escribe nada en ningún bloque ni en el marco común. El encargo está en `.docs/diseno/bloque_d/encargo_revision_astra.md`; el índice de las propuestas, en `.docs/diseno/README.md`.
-- **Tercera excepción, justo después (operador, 11-11-2026):** lo mismo con la propuesta del Bloque E, que comparte objetivo con D. El encargo está en `.docs/diseno/bloque_e/encargo_revision_astra.md`.
-- **Cuarta excepción, justo después (operador, 11-11-2026):** lo mismo con la propuesta del Bloque F. El encargo está en `.docs/diseno/bloque_f/encargo_revision_astra.md`. T-74 sigue en espera: la revisión es solo de diseño.
-- **Quinta excepción, justo después (operador, 11-11-2026):** lo mismo con la propuesta del Bloque G. El encargo está en `.docs/diseno/bloque_g/encargo_revision_astra.md`.
-- **Sexta excepción, justo después (operador, 11-11-2026):** lo mismo con la propuesta del Bloque H. El encargo está en `.docs/diseno/bloque_h/encargo_revision_astra.md`.
-- **Rediseños de B y de A (operador, 11-11-2026).** El de B se revisa **junto con T-68**, dentro de tu primera tarea (`.docs/diseno/bloque_b/encargo_revision_astra.md`). El de A va después de las revisiones de D a H (`.docs/diseno/bloque_a/encargo_revision_astra.md`). [PROPUESTO] hasta que el operador lo decida (pregunta 2 de la propuesta de A): mientras no cierre el diseño de A, en T-93, T-91 y T-88 cambia solo lo que sirve en cualquier diseño (código, contratos y seguridad), sin tocar prompts ni papeles de los agentes.
+- **Excepción, y tus primeras tareas: revisar las propuestas de diseño de Claude en el orden natural de los bloques (operador, 11-11-2026: «ordena a Astra que evalúe las propuestas siguiendo el orden natural de los bloques»).** Son solo lectura, medición y opinión: no se escribe nada en ningún bloque ni en el marco común. Índice de las propuestas en `.docs/diseno/README.md`. Una revisión por bloque, con su entregable y su commit, y en este orden, antes que el resto de tus tareas:
+  1. **A**, el rediseño: `.docs/diseno/bloque_a/encargo_revision_astra.md`.
+  2. **B**, la evaluación de T-68 y el rediseño juntos: `.docs/tickets/T-68/encargo_revision_astra.md` y `.docs/diseno/bloque_b/encargo_revision_astra.md`.
+  3. **C**: `.docs/diseno/bloque_c/encargo_revision_astra.md`.
+  4. **D**: `.docs/diseno/bloque_d/encargo_revision_astra.md`.
+  5. **E**, que comparte objetivo con D: `.docs/diseno/bloque_e/encargo_revision_astra.md`.
+  6. **F**: `.docs/diseno/bloque_f/encargo_revision_astra.md`. T-74 sigue en espera: la revisión es solo de diseño.
+  7. **G**: `.docs/diseno/bloque_g/encargo_revision_astra.md`.
+  8. **H**: `.docs/diseno/bloque_h/encargo_revision_astra.md`.
+
+  Si al revisar un bloque ves algo que cambia tu opinión sobre uno anterior, añádelo como nota al final de la revisión anterior, con fecha, en lugar de reescribirla.
+- [PROPUESTO] hasta que el operador lo decida (pregunta 2 de la propuesta de A): mientras no cierre el diseño de A, en T-93, T-91 y T-88 cambia solo lo que sirve en cualquier diseño (código, contratos y seguridad), sin tocar prompts ni papeles de los agentes.
 - **Sí sigues con:**
   - las del marco: T-83, T-84, T-75 y T-76;
   - las del Bloque A: T-93, T-91 y T-88.

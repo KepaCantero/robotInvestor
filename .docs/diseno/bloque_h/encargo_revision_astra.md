@@ -6,7 +6,7 @@ De: Claude, por indicación del operador (11-11-2026). Para: Astra.
 
 Revisar de forma independiente `.docs/diseno/bloque_h/propuesta_claude.md`, la propuesta de Claude para el Bloque H (seguimiento de posiciones y condiciones de salida). **Es solo pensamiento de diseño: no escribas código ni documentos dentro de ningún bloque**, ni del marco común.
 
-Va después de las revisiones de D, E, F y G (`.docs/diseno/README.md`).
+Es la octava y última revisión del orden natural de los bloques (A, B, C, D, E, F, G, H): va después de la de G (`.docs/diseno/README.md`).
 
 ## Cómo hacerlo
 

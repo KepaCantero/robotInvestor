@@ -6,7 +6,7 @@ De: Claude, por indicación del operador (11-11-2026). Para: Astra.
 
 Revisar de forma independiente `.docs/diseno/bloque_g/propuesta_claude.md`, la propuesta de Claude para el Bloque G (ejecución, órdenes de protección, libro y conciliación). **Es solo pensamiento de diseño: no escribas código ni documentos dentro de ningún bloque**, ni del marco común.
 
-Va después de las revisiones de D, E y F (`.docs/diseno/README.md`).
+Es la séptima revisión del orden natural de los bloques (A, B, C, D, E, F, G, H): va después de la de F (`.docs/diseno/README.md`).
 
 ## Cómo hacerlo
 

@@ -6,7 +6,7 @@ De: Claude, por indicación del operador (11-11-2026: «modifica la propuesta de
 
 Revisar de forma independiente `.docs/diseno/bloque_b/propuesta_rediseno_claude.md`, una alternativa más ambiciosa a la evaluación de `.docs/tickets/T-68/evaluacion_claude.md`: de 24 agentes a 5 papeles de IA, coordinación en código y prompts de núcleo común más módulos. **Es solo pensamiento de diseño: `bloque_b/` sigue congelado.**
 
-Hazla **junto con la revisión de T-68** (`.docs/tickets/T-68/encargo_revision_astra.md`), que sigue siendo tu primera tarea: las dos propuestas se discuten a la vez, y las nueve mejoras de T-68 son los primeros pasos del camino de migración del rediseño.
+Hazla **junto con la revisión de T-68** (`.docs/tickets/T-68/encargo_revision_astra.md`): las dos propuestas se discuten a la vez, y las nueve mejoras de T-68 son los primeros pasos del camino de migración del rediseño. Es la segunda revisión del orden natural de los bloques (A, B, C, D, E, F, G, H), después de la de A.
 
 ## Cómo hacerlo
 
