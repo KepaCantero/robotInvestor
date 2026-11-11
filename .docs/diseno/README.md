@@ -33,4 +33,5 @@ Lo que el operador ya ha decidido sobre estas propuestas está en `.docs/diseno/
 | SC-7 (seguridad y operación) | `.docs/diseno/sc7_seguridad/propuesta_claude.md` | Astra, encargo en `.docs/diseno/sc7_seguridad/encargo_revision_astra.md` | En revisión |
 | Entrada del dinero existente | `.docs/diseno/entrada_patrimonio/propuesta_claude.md` | Astra, encargo en `.docs/diseno/entrada_patrimonio/encargo_revision_astra.md` | En revisión |
 | Constitución: enmienda 4 (veinte puntos de arquitectura global) | `.docs/diseno/enmienda_4/propuesta_claude.md` | Astra, encargo en `.docs/diseno/enmienda_4/encargo_revision_astra.md` | En revisión |
-| Pasada de coherencia (todas las propuestas juntas) | `.docs/diseno/coherencia/propuesta_claude.md` | Astra, encargo en `.docs/diseno/coherencia/encargo_revision_astra.md` (última de la lista) | En revisión |
+| Pasada de coherencia (todas las propuestas juntas) | `.docs/diseno/coherencia/propuesta_claude.md` | Astra, encargo en `.docs/diseno/coherencia/encargo_revision_astra.md` | En revisión |
+| Constitución: enmienda 5, parte 1 (texto de las decisiones de la tanda 1) | `.docs/diseno/enmienda_5/propuesta_claude.md` (borrador) | Astra, encargo en `.docs/diseno/enmienda_5/encargo_revision_astra.md` (última de la lista) | En revisión |

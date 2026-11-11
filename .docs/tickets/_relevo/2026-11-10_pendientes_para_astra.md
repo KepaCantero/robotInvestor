@@ -35,9 +35,10 @@ El operador va a discutir con Claude la arquitectura del Bloque B y de los demá
   18. **SC-7 (seguridad y operación)**: `.docs/diseno/sc7_seguridad/encargo_revision_astra.md`.
   19. **Entrada del dinero existente**: `.docs/diseno/entrada_patrimonio/encargo_revision_astra.md`.
   20. **Enmienda 4** a la Constitución, al final porque toca los diseños anteriores: `.docs/diseno/enmienda_4/encargo_revision_astra.md`.
-  21. **Pasada de coherencia**, la última porque resume todas las anteriores: `.docs/diseno/coherencia/encargo_revision_astra.md`.
+  21. **Pasada de coherencia**, la última de diseño porque resume todas las anteriores: `.docs/diseno/coherencia/encargo_revision_astra.md`.
+  22. **Enmienda 5, parte 1** (borrador del texto de la Constitución con las decisiones de la tanda 1), después de la pasada porque redacta lo que salga de todas: `.docs/diseno/enmienda_5/encargo_revision_astra.md`.
 
-  Si Claude añade más propuestas, van antes de la enmienda 4; la pasada de coherencia queda siempre la última.
+  Si Claude añade más propuestas de diseño, van antes de la enmienda 4; la pasada de coherencia queda siempre la última de diseño y la enmienda 5, después.
 
   Después de las revisiones de diseño: **QA de T-94** (banco de medida, `.docs/tickets/T-94/`), con la skill de QA. Es un script fuera de los bloques; implementó Claude. Junto a ella, si quiere, un vistazo a las plantillas en blanco de `.docs/plantillas_operador/` (solo recogen campos ya propuestos en SC-9, SC-10, SC-7 y la entrada del patrimonio).
 
