@@ -4,10 +4,11 @@ De: Claude. Para cualquier chat nuevo de Claude (del operador o de un compañero
 
 ## 1. Cómo arrancar
 
-1. `git pull origin develop`. El último commit al escribir esto es `0ffb070`.
+1. `git pull origin develop`. Al escribir esto, el último commit es `d5c3531` o uno posterior.
 2. Lee, en este orden: `CLAUDE.md`, `.docs/README.md`, `.docs/memoria/LEEME.md` y el `INDICE.md` de `.docs/memoria/compartida/` y de tu carpeta (`claude/`).
-3. Lee este relevo entero (es corto) y, si la tarea es de diseño, `.docs/diseno/README.md` y `.docs/diseno/decisiones_operador.md`.
-4. Pregunta al operador qué quiere hacer hoy. No retomes nada por tu cuenta: lo pendiente está en el §6.
+3. Lee este relevo entero y la historia del proyecto (`.docs/knowledge/05_historia-del-proyecto.md`): todo lo hecho del 3 al 11-11-2026, con el marco común de C versión a versión y el trabajo sobre A y B. Si la tarea es de diseño, lee también `.docs/diseno/README.md` y `.docs/diseno/decisiones_operador.md`.
+4. **Nada se pierde:** si un fichero se modificó o se borró, su versión anterior sigue en el historial de git (`git log --follow -- <ruta>` y `git show <commit>:<ruta>`). Los mensajes de commit cuentan qué se hizo en cada paso.
+5. Pregunta al operador qué quiere hacer hoy. No retomes nada por tu cuenta: lo pendiente está en el §6.
 
 ## 2. El proyecto en cinco líneas
 
