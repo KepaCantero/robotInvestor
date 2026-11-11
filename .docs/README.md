@@ -2,6 +2,8 @@
 
 Todo lo que Claude, Astra y las personas del equipo necesitan para trabajar en el repositorio sin depender del historial de una conversación. Estructura propuesta por Kepa el 9-11-2026, adaptada al proyecto (en español y con commit, porque se comparte entre personas y agentes).
 
+**¿Chat nuevo o recién llegado?** Empieza por el relevo más reciente: `.docs/tickets/_relevo/2026-11-11_relevo_nuevo_chat.md` (estado del proyecto, dónde está cada cosa y cómo se trabaja).
+
 | Carpeta | Para qué sirve | Quién escribe |
 | --- | --- | --- |
 | `.docs/README.md` | Este índice y las reglas | Cualquiera, con cuidado |
