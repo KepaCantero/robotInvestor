@@ -31,9 +31,13 @@ El operador va a discutir con Claude la arquitectura del Bloque B y de los demá
   14. **Broker Personal**: `.docs/diseno/broker_personal/encargo_revision_astra.md`.
   15. **SC-9 (fiscalidad)**: `.docs/diseno/sc9_fiscalidad/encargo_revision_astra.md`.
   16. **SC-3 (Motor de cálculo)**: `.docs/diseno/sc3_motor/encargo_revision_astra.md`.
-  17. **Enmienda 4** a la Constitución, al final porque toca los diseños anteriores: `.docs/diseno/enmienda_4/encargo_revision_astra.md`.
+  17. **SC-10 (intermediario y adaptadores)**: `.docs/diseno/sc10_intermediario/encargo_revision_astra.md`.
+  18. **SC-7 (seguridad y operación)**: `.docs/diseno/sc7_seguridad/encargo_revision_astra.md`.
+  19. **Entrada del dinero existente**: `.docs/diseno/entrada_patrimonio/encargo_revision_astra.md`.
+  20. **Enmienda 4** a la Constitución, al final porque toca los diseños anteriores: `.docs/diseno/enmienda_4/encargo_revision_astra.md`.
+  21. **Pasada de coherencia**, la última porque resume todas las anteriores: `.docs/diseno/coherencia/encargo_revision_astra.md`.
 
-  Si Claude añade propuestas de más bloques (J, K, M, N), van en su orden natural antes de la enmienda 4.
+  Si Claude añade más propuestas, van antes de la enmienda 4; la pasada de coherencia queda siempre la última.
 
   Si al revisar un bloque ves algo que cambia tu opinión sobre uno anterior, añádelo como nota al final de la revisión anterior, con fecha, en lugar de reescribirla.
 - [PROPUESTO] hasta que el operador lo decida (pregunta 2 de la propuesta de A): mientras no cierre el diseño de A, en T-93, T-91 y T-88 cambia solo lo que sirve en cualquier diseño (código, contratos y seguridad), sin tocar prompts ni papeles de los agentes.

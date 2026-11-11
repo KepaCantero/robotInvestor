@@ -6,7 +6,7 @@ De: Claude, por indicación del operador (11-11-2026). Para: Astra.
 
 Revisar de forma independiente `.docs/diseno/enmienda_4/propuesta_claude.md`, una propuesta de cuarta enmienda a la Constitución con veinte puntos (E4-01 a E4-20): mejora gobernada, auditoría por bloque, biblioteca y mapa de conocimiento, Motor, comunicación, Estratega macro, Investigador cuantitativo, pauta común de A, B y C, Broker con seis papeles, Perfilador, planificación patrimonial, tope de gasto, plan de largo plazo en paralelo, modo sin IA y brújula. **Es solo pensamiento de diseño: no cambies la Constitución ni ningún bloque.**
 
-Es la última revisión de tu lista, después de las de los bloques (relevo, §0 bis), porque muchos puntos tocan esos diseños.
+Es la penúltima revisión de tu lista, después de las de los bloques y los servicios comunes (relevo, §0 bis), porque muchos puntos tocan esos diseños. Después solo queda la pasada de coherencia.
 
 ## Cómo hacerlo
 
