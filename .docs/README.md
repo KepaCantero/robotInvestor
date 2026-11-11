@@ -10,6 +10,7 @@ Todo lo que Claude, Astra y las personas del equipo necesitan para trabajar en e
 | `.docs/scripts/` | Scripts de trabajo: todo lo que se hace más de una vez | Cualquiera |
 | `.docs/knowledge/` | Documentos de incorporación, estáticos y numerados | Cualquiera, al cambiar el modo de trabajo |
 | `.docs/diseno/` | Propuestas de diseño de cada bloque y sus revisiones independientes, para discutir con el operador antes de construir; no se implementan hasta que él cierra el diseño | El agente que propone y el que revisa |
+| `.docs/plantillas_operador/` | Plantillas en blanco que el operador rellena fuera del repositorio: ficha de restricciones, inventario del patrimonio, preguntas al asesor fiscal y carta de instrucciones. Nunca se suben rellenas | El agente que las propone; el operador las rellena en privado |
 | `.docs/memoria/` | Memoria indexada de los agentes: `compartida/` y una carpeta por agente | Cada agente en la suya y en `compartida/` |
 
 ## Reglas
@@ -37,6 +38,7 @@ Todo lo que Claude, Astra y las personas del equipo necesitan para trabajar en e
 | `.docs/scripts/commit.sh` | Gate, commit (autor y líneas finales desde `.env`) y push a `develop` |
 | `.docs/scripts/medir_consumo_a.py` | Llamadas y tokens de entrada por agente de un ciclo simulado del Bloque A (cliente mock; `--config` para activar más perfiles) |
 | `.docs/scripts/medir_consumo_b.py` | Llamadas y tokens de entrada por agente de un análisis simulado del Bloque B (cliente mock), para comparar variantes de prompts, caché o modelos |
+| `.docs/scripts/banco_medida.py` | Banco de medida (T-94): el titular (hoy, el Bloque A en backtest) frente a azar y momento, con los mismos datos y fechas de corte; prerregistro sellado, exceso frente a la cesta de la clase con rango y veredicto, y coste. Pruebas en `.docs/scripts/pruebas_banco_medida.py` |
 | `.docs/scripts/commit_limpio.sh` | Commit desde una copia limpia de HEAD con solo las rutas de la tarea (pruebas del marco, su LEEME y gate completo allí), para cuando el árbol tiene cambios a medias de otras tareas; sube las copias probadas |
 | `.docs/scripts/qa_rama.sh` | QA de una rama de otro agente: commits, archivos, si se fusiona por avance rápido, copia limpia y pruebas de cada pieza tocada contra el código de la rama |
 
