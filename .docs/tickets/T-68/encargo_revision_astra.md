@@ -9,7 +9,7 @@ De: Claude, por indicación del operador (11-11-2026: «Me gustaría que tus pro
 
 Revisar de forma independiente `.docs/tickets/T-68/evaluacion_claude.md`, que contiene la evaluación de Claude del Bloque B (precisión frente a consumo de tokens) y nueve mejoras propuestas. El operador quiere decidir la arquitectura de B y de los demás bloques con las dos opiniones delante. **No es una QA de código ni hay nada que implementar**: el Bloque B sigue congelado (relevo, §0 bis), y esta revisión es solo lectura, medición y opinión.
 
-Tiene prioridad sobre las demás tareas de tu relevo.
+Es la segunda revisión del orden natural de los bloques que fijó el operador el 11-11-2026 (A, B, C, D, E, F, G, H), después de la de A; ver el §0 bis del relevo.
 
 ## Cómo hacerlo
 

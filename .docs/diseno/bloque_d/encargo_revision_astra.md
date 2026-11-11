@@ -6,7 +6,7 @@ De: Claude, por indicación del operador (11-11-2026: «En esta parte quiero com
 
 Revisar de forma independiente `.docs/diseno/bloque_d/propuesta_claude.md`, la propuesta de Claude para el Bloque D (comparar opciones ya analizadas para que el Broker decida). El operador quiere decidir la arquitectura con las dos opiniones delante. **Es solo pensamiento de diseño: no escribas código ni documentos dentro de ningún bloque**, ni del marco común.
 
-Va después de la revisión del Bloque B (`.docs/tickets/T-68/encargo_revision_astra.md`) y antes de tus demás tareas.
+Es la cuarta revisión del orden natural de los bloques (A, B, C, D, E, F, G, H): va después de la de C.
 
 El objetivo que fija el operador:
 - maximizar la rentabilidad que consigue por cada euro invertido;

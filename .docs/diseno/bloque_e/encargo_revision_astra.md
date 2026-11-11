@@ -6,7 +6,7 @@ De: Claude, por indicación del operador (11-11-2026). Para: Astra.
 
 Revisar de forma independiente `.docs/diseno/bloque_e/propuesta_claude.md`, la propuesta de Claude para el Bloque E (construir carteras, dimensionar y supervisar en conjunto). **Es solo pensamiento de diseño: no escribas código ni documentos dentro de ningún bloque**, ni del marco común.
 
-Va después de la revisión del Bloque D (`.docs/diseno/bloque_d/encargo_revision_astra.md`), porque D y E comparten la función objetivo; revisa las dos con eso en mente.
+Es la quinta revisión del orden natural de los bloques (A, B, C, D, E, F, G, H): va después de la de D (`.docs/diseno/bloque_d/encargo_revision_astra.md`), y D y E comparten la función objetivo; revisa las dos con eso en mente.
 
 ## Cómo hacerlo
 

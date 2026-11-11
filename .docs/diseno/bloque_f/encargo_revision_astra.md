@@ -6,7 +6,7 @@ De: Claude, por indicación del operador (11-11-2026). Para: Astra.
 
 Revisar de forma independiente `.docs/diseno/bloque_f/propuesta_claude.md`, la propuesta de Claude para el Bloque F (control determinista e independiente). **Es solo pensamiento de diseño: no escribas código ni documentos dentro de ningún bloque**, ni del marco común. T-74 (controles de F que faltan) sigue en espera.
 
-Va después de las revisiones de D y E (`.docs/diseno/README.md`).
+Es la sexta revisión del orden natural de los bloques (A, B, C, D, E, F, G, H): va después de la de E (`.docs/diseno/README.md`).
 
 ## Cómo hacerlo
 
