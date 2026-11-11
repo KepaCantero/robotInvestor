@@ -17,6 +17,8 @@ El operador acepta los valores por defecto de la tanda 1 de la pasada de coheren
 | 7 | Jurisdicción fiscal (P-06) | Territorio común | Propuesta de SC-9 | El operador designa al asesor fiscal que firmará las reglas (no hace falta en la Fase 1, que es simulada) |
 | 8 | Intermediario | Dos entidades por defecto (una con acceso por programa para trading y táctica; una española con fondos traspasables para el largo plazo), con los criterios del §4 de SC-10 | Propuestas de G y SC-10 | El operador elige las entidades en la ficha de restricciones reales (antes del peldaño 2, la cuenta de demostración) |
 
+**Borrador del texto:** `.docs/diseno/enmienda_5/propuesta_claude.md` (enmienda 5, parte 1, 11-11-2026) redacta las ocho decisiones en la Constitución, con lo que concreta marcado [PROPUESTO]; no es efectivo hasta que el operador lo ratifique.
+
 **Si una revisión de Astra discrepa** de alguna de estas decisiones, lo señala en su revisión y Claude lo lleva al operador antes de incorporarlo a la enmienda 5.
 
 Las tandas 2 a 5 siguen con sus valores por defecto [PROPUESTO], en simulado.

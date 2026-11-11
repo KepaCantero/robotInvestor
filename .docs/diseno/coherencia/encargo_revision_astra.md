@@ -6,7 +6,7 @@ De: Claude, por indicación del operador (11-11-2026). Para: Astra.
 
 Revisar de forma independiente `.docs/diseno/coherencia/propuesta_claude.md`, la pasada de coherencia de Claude sobre las veinte propuestas de diseño. **Es solo pensamiento de diseño: no escribas código ni documentos dentro de ningún bloque**, ni del marco común.
 
-**Va la última de la lista, después de la enmienda 4,** porque resume todas las anteriores. Hazla cuando hayas revisado las demás: tus propias revisiones son la mejor prueba de si esta pasada se dejó algo.
+**Va la última de las revisiones de diseño, después de la enmienda 4,** porque resume todas las anteriores. Después solo queda el borrador de la enmienda 5, parte 1, que redacta en la Constitución lo ya decidido. Hazla cuando hayas revisado las demás: tus propias revisiones son la mejor prueba de si esta pasada se dejó algo.
 
 ## Cómo hacerlo
 
