@@ -26,7 +26,8 @@ El operador va a discutir con Claude la arquitectura del Bloque B y de los demá
   9. **I**: `.docs/diseno/bloque_i/encargo_revision_astra.md`.
   10. **J**: `.docs/diseno/bloque_j/encargo_revision_astra.md`.
   11. **K**: `.docs/diseno/bloque_k/encargo_revision_astra.md`.
-  12. **Enmienda 4** a la Constitución, al final porque toca los diseños anteriores: `.docs/diseno/enmienda_4/encargo_revision_astra.md`.
+  12. **M**: `.docs/diseno/bloque_m/encargo_revision_astra.md`.
+  13. **Enmienda 4** a la Constitución, al final porque toca los diseños anteriores: `.docs/diseno/enmienda_4/encargo_revision_astra.md`.
 
   Si Claude añade propuestas de más bloques (J, K, M, N), van en su orden natural antes de la enmienda 4.
 
