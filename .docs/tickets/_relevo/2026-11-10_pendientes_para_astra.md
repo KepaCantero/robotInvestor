@@ -15,6 +15,7 @@ El operador va a discutir con Claude la arquitectura del Bloque B y de los demá
 - **No toques `bloque_b/`** ni sus tickets, ni abras tareas nuevas del Bloque B. Claude está evaluándolo; es solo lectura y medición, sin cambios.
 - **No abras las tareas que dependen de esa arquitectura:** T-87 (SC-5), T-81 (SC-4 mínimo), T-82 (escalera de verificación y CT-G-17), T-74 (controles de F) y T-73 (perfil inversor). En el §3.6 quedan marcadas como «en espera».
 - **Excepción, y tu primera tarea (operador, 11-11-2026):** revisar de forma independiente la evaluación del Bloque B de Claude. Es solo lectura y medición, sin tocar `bloque_b/`. El encargo está en `.docs/tickets/T-68/encargo_revision_astra.md`.
+- **Segunda excepción, justo después de la anterior (operador, 11-11-2026):** revisar de forma independiente la propuesta de diseño del Bloque D de Claude. Es solo pensamiento de diseño: no se escribe nada en ningún bloque ni en el marco común. El encargo está en `.docs/diseno/bloque_d/encargo_revision_astra.md`; el índice de las propuestas, en `.docs/diseno/README.md`.
 - **Sí sigues con:**
   - las del marco: T-83, T-84, T-75 y T-76;
   - las del Bloque A: T-93, T-91 y T-88.
