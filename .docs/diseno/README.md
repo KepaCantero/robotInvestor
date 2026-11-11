@@ -14,3 +14,4 @@ Cada bloque tiene su carpeta con:
 | D (comparar opciones) | `.docs/diseno/bloque_d/propuesta_claude.md` | Astra, encargo en `.docs/diseno/bloque_d/encargo_revision_astra.md` | En revisión |
 | E (dimensionar y construir carteras) | `.docs/diseno/bloque_e/propuesta_claude.md` | Astra, encargo en `.docs/diseno/bloque_e/encargo_revision_astra.md` | En revisión |
 | F (control de riesgo) | `.docs/diseno/bloque_f/propuesta_claude.md` | Astra, encargo en `.docs/diseno/bloque_f/encargo_revision_astra.md` | En revisión |
+| G (ejecución y conciliación) | `.docs/diseno/bloque_g/propuesta_claude.md` | Astra, encargo en `.docs/diseno/bloque_g/encargo_revision_astra.md` | En revisión |
