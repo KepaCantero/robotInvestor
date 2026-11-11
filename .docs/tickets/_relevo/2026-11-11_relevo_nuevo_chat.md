@@ -62,6 +62,7 @@ El Robot Investor es un sistema de inversión personal por bloques. A busca opor
 | `sistema_global/marco_comun_c/` (V0.73) | Código de referencia de la Fase 1, 61 suites, todo en simulado |
 | `.docs/scripts/banco_medida.py` (T-94) | Banco de medida: A frente a azar y momento, con prerregistro, rangos y coste. 10 pruebas. EN QA |
 | `dashboard/consola_n/` (T-95) | Prototipo navegable de la consola N con datos de ejemplo (React, TypeScript, Vite, Tailwind, shadcn/ui, TanStack Query, Zustand, Lightweight Charts y AG Grid). 29 pruebas unitarias y 12 de navegador. EN QA. Su README explica cómo arrancarlo |
+| `tools/requisitos_entorno.txt` y `.docs/scripts/preparar_entorno.sh` (T-96) | Versiones fijadas del entorno y script que crea el `.venv` con ellas. EN QA |
 | `dashboard/prompts/` | Kit de un panel anterior al rediseño. Se conserva; no es la consola N |
 
 ### Diseño: 23 propuestas a la espera de Astra
@@ -101,7 +102,7 @@ En blanco en `.docs/plantillas_operador/`: ficha de restricciones, inventario de
 ### Cola de Astra (por orden)
 
 1. Las 22 revisiones de diseño.
-2. La QA de T-94 y de T-95.
+2. La QA de T-94, de T-95 y de T-96.
 3. Las tareas anteriores del relevo del 10-11, que siguen abiertas: T-75 y T-76 están detenidas tras un NO APTO, y T-83 y T-84 están implementadas sin QA. Las que dependen de la arquitectura (T-73, T-74, T-81, T-82 y T-87) siguen en espera.
 
 ## 6. Lo siguiente (a elegir con el operador)
@@ -110,7 +111,7 @@ En blanco en `.docs/plantillas_operador/`: ficha de restricciones, inventario de
 2. **Enmienda 5, parte 2:** borrador hecho; falta rellenar sus casillas con las revisiones de Astra. Después, la ratificación punto por punto y la Constitución V0.7, aplicada en un ticket con el gate.
 3. **Los contratos nuevos** (pasada de coherencia, §6), antes que el código. Luego, la construcción de la Fase 1, con el banco de medida y datos reales de K (T-86) como primer paso.
 4. **Mientras tanto, sin tocar código:**
-   - la tanda 2 de parámetros con valores por defecto;
+   - el operador contesta, cuando quiera, el cuestionario de la tanda 2 (`.docs/diseno/coherencia/cuestionario_tanda_2.md`, hecho el 11-11-2026: 28 preguntas con valor por defecto y seis discrepancias con el marco común);
    - que el operador rellene sus plantillas (la ficha antes de la cuenta de demostración);
    - compartir el prototipo de N con su equipo para recoger opiniones.
 
@@ -141,5 +142,6 @@ En blanco en `.docs/plantillas_operador/`: ficha de restricciones, inventario de
 - Desde la sesión en la nube solo se llega a los registros de paquetes y a GitHub. Para datos de la web se usa la búsqueda web; el registro web de shadcn no responde, así que sus componentes se escriben a mano en `src/componentes/ui/`.
 - El prototipo de N se publica como una página de un solo fichero: `npm run build:pagina` en `dashboard/consola_n/`.
 - En las pruebas de navegador, las fuentes de Google no cargan sin red. Se ignora solo ese error.
+- En un clon nuevo, crea el entorno con `.docs/scripts/preparar_entorno.sh` (T-96): sin las versiones fijadas, `arch` 9.0.0 hace fallar las cuotas de mypy.
 - `commit_limpio.sh` falla si se le pasa una carpeta. Hay que listar los ficheros, por ejemplo con `git ls-files -o --exclude-standard <carpeta>`.
 - Cifras con datos sintéticos y cliente simulado solo prueban la tubería; el informe del banco lo avisa en su primera línea.
