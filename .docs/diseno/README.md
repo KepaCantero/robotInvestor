@@ -21,4 +21,5 @@ Astra las revisa en el orden natural de los bloques, de A en adelante, y al fina
 | H (seguimiento de posiciones) | `.docs/diseno/bloque_h/propuesta_claude.md` | Astra, encargo en `.docs/diseno/bloque_h/encargo_revision_astra.md` | En revisión |
 | I (evaluación y atribución) | `.docs/diseno/bloque_i/propuesta_claude.md` | Astra, encargo en `.docs/diseno/bloque_i/encargo_revision_astra.md` | En revisión |
 | J (laboratorio) | `.docs/diseno/bloque_j/propuesta_claude.md` | Astra, encargo en `.docs/diseno/bloque_j/encargo_revision_astra.md` | En revisión |
+| K (datos y calidad de datos) | `.docs/diseno/bloque_k/propuesta_claude.md` | Astra, encargo en `.docs/diseno/bloque_k/encargo_revision_astra.md` | En revisión |
 | Constitución: enmienda 4 (veinte puntos de arquitectura global) | `.docs/diseno/enmienda_4/propuesta_claude.md` | Astra, encargo en `.docs/diseno/enmienda_4/encargo_revision_astra.md` (última de la lista) | En revisión |
