@@ -20,6 +20,7 @@ El operador va a discutir con Claude la arquitectura del Bloque B y de los demá
 - **Cuarta excepción, justo después (operador, 11-11-2026):** lo mismo con la propuesta del Bloque F. El encargo está en `.docs/diseno/bloque_f/encargo_revision_astra.md`. T-74 sigue en espera: la revisión es solo de diseño.
 - **Quinta excepción, justo después (operador, 11-11-2026):** lo mismo con la propuesta del Bloque G. El encargo está en `.docs/diseno/bloque_g/encargo_revision_astra.md`.
 - **Sexta excepción, justo después (operador, 11-11-2026):** lo mismo con la propuesta del Bloque H. El encargo está en `.docs/diseno/bloque_h/encargo_revision_astra.md`.
+- **Rediseños de B y de A (operador, 11-11-2026).** El de B se revisa **junto con T-68**, dentro de tu primera tarea (`.docs/diseno/bloque_b/encargo_revision_astra.md`). El de A va después de las revisiones de D a H (`.docs/diseno/bloque_a/encargo_revision_astra.md`). [PROPUESTO] hasta que el operador lo decida (pregunta 2 de la propuesta de A): mientras no cierre el diseño de A, en T-93, T-91 y T-88 cambia solo lo que sirve en cualquier diseño (código, contratos y seguridad), sin tocar prompts ni papeles de los agentes.
 - **Sí sigues con:**
   - las del marco: T-83, T-84, T-75 y T-76;
   - las del Bloque A: T-93, T-91 y T-88.

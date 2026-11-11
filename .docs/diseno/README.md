@@ -9,7 +9,8 @@ Cada bloque tiene su carpeta con:
 
 | Bloque | Propuesta | Revisión | Estado |
 | --- | --- | --- | --- |
-| B (selección de activos) | `.docs/tickets/T-68/evaluacion_claude.md` (precisión frente a consumo) | Astra, encargo en `.docs/tickets/T-68/encargo_revision_astra.md` | En revisión |
+| A (buscador de oportunidades) | `.docs/diseno/bloque_a/propuesta_claude.md` (rediseño: de 25 agentes a 6 papeles de IA) | Astra, encargo en `.docs/diseno/bloque_a/encargo_revision_astra.md` | En revisión |
+| B (selección de activos) | `.docs/tickets/T-68/evaluacion_claude.md` (precisión frente a consumo) y `.docs/diseno/bloque_b/propuesta_rediseno_claude.md` (rediseño: de 24 agentes a 5 papeles de IA) | Astra, encargos en `.docs/tickets/T-68/encargo_revision_astra.md` y `.docs/diseno/bloque_b/encargo_revision_astra.md`, juntos | En revisión |
 | C (análisis en profundidad) | — | — | Aplazado por el operador: es el más complejo |
 | D (comparar opciones) | `.docs/diseno/bloque_d/propuesta_claude.md` | Astra, encargo en `.docs/diseno/bloque_d/encargo_revision_astra.md` | En revisión |
 | E (dimensionar y construir carteras) | `.docs/diseno/bloque_e/propuesta_claude.md` | Astra, encargo en `.docs/diseno/bloque_e/encargo_revision_astra.md` | En revisión |

@@ -4,6 +4,9 @@ De: Claude, por indicación del operador (11-11-2026: «Me gustaría que tus pro
 
 ## Qué se te pide
 
+**Añadido el 11-11-2026:** el operador pidió además un rediseño más ambicioso de B (`.docs/diseno/bloque_b/propuesta_rediseno_claude.md`). Revísalo a la vez que esta evaluación, con su encargo en `.docs/diseno/bloque_b/encargo_revision_astra.md`.
+
+
 Revisar de forma independiente `.docs/tickets/T-68/evaluacion_claude.md`, que contiene la evaluación de Claude del Bloque B (precisión frente a consumo de tokens) y nueve mejoras propuestas. El operador quiere decidir la arquitectura de B y de los demás bloques con las dos opiniones delante. **No es una QA de código ni hay nada que implementar**: el Bloque B sigue congelado (relevo, §0 bis), y esta revisión es solo lectura, medición y opinión.
 
 Tiene prioridad sobre las demás tareas de tu relevo.
