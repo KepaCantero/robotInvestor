@@ -26,4 +26,5 @@ Astra las revisa en el orden natural de los bloques, de A en adelante, y al fina
 | N (consola del operador) | `.docs/diseno/bloque_n/propuesta_claude.md` | Astra, encargo en `.docs/diseno/bloque_n/encargo_revision_astra.md` | En revisión |
 | Broker Personal (conversacional, Orquestador y gestores de cartera) | `.docs/diseno/broker_personal/propuesta_claude.md` | Astra, encargo en `.docs/diseno/broker_personal/encargo_revision_astra.md` | En revisión |
 | SC-9 (fiscalidad y costes) | `.docs/diseno/sc9_fiscalidad/propuesta_claude.md` | Astra, encargo en `.docs/diseno/sc9_fiscalidad/encargo_revision_astra.md` | En revisión |
+| SC-3 (Motor de cálculo) | `.docs/diseno/sc3_motor/propuesta_claude.md` | Astra, encargo en `.docs/diseno/sc3_motor/encargo_revision_astra.md` | En revisión |
 | Constitución: enmienda 4 (veinte puntos de arquitectura global) | `.docs/diseno/enmienda_4/propuesta_claude.md` | Astra, encargo en `.docs/diseno/enmienda_4/encargo_revision_astra.md` (última de la lista) | En revisión |

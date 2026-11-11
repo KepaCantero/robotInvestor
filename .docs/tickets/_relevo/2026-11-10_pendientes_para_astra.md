@@ -30,7 +30,8 @@ El operador va a discutir con Claude la arquitectura del Bloque B y de los demá
   13. **N**: `.docs/diseno/bloque_n/encargo_revision_astra.md`.
   14. **Broker Personal**: `.docs/diseno/broker_personal/encargo_revision_astra.md`.
   15. **SC-9 (fiscalidad)**: `.docs/diseno/sc9_fiscalidad/encargo_revision_astra.md`.
-  16. **Enmienda 4** a la Constitución, al final porque toca los diseños anteriores: `.docs/diseno/enmienda_4/encargo_revision_astra.md`.
+  16. **SC-3 (Motor de cálculo)**: `.docs/diseno/sc3_motor/encargo_revision_astra.md`.
+  17. **Enmienda 4** a la Constitución, al final porque toca los diseños anteriores: `.docs/diseno/enmienda_4/encargo_revision_astra.md`.
 
   Si Claude añade propuestas de más bloques (J, K, M, N), van en su orden natural antes de la enmienda 4.
 
