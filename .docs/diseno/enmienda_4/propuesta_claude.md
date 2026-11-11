@@ -111,7 +111,7 @@ Hoy: todo por el Orquestador con contratos cerrados, sin LLM transportando datos
 
 ## 11. Adopción y preguntas
 
-Adopción: revisión de Astra (novena de su lista, después de A a H); ratificación punto por punto con decisión en el §15 y valores en T-57; Constitución V0.7; ajuste de los diseños de bloque afectados y un ticket por punto.
+Adopción: revisión de Astra (la última de su lista, después de las de los bloques); ratificación punto por punto con decisión en el §15 y valores en T-57; Constitución V0.7; ajuste de los diseños de bloque afectados y un ticket por punto.
 
 Orden sugerido: (1) E4-18 y E4-19; (2) E4-17 y E4-20; (3) E4-02 y E4-13; (4) E4-01 mínimo, E4-04 y E4-05 mínima; (5) el resto por fases.
 
