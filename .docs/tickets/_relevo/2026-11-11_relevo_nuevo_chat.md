@@ -40,7 +40,7 @@ El Robot Investor es un sistema de inversión personal por bloques. A busca opor
 
 - **Constitución V0.6** ratificada (`sistema_global/constitucion/Constitucion_Global.md`).
 - **Enmienda 4** propuesta, pendiente de la revisión de Astra: veinte puntos (`.docs/diseno/enmienda_4/`).
-- **Enmienda 5, parte 1:** borrador que redacta en la Constitución las ocho decisiones de la tanda 1 (nueve cambios, D-48 a D-56, numeración provisional), en `.docs/diseno/enmienda_5/`. La parte 2 espera las revisiones de Astra.
+- **Enmienda 5, parte 1:** borrador que redacta en la Constitución las ocho decisiones de la tanda 1 (nueve cambios, D-48 a D-56, numeración provisional), en `.docs/diseno/enmienda_5/`. La parte 2 (veintiocho cambios, 52 a 79, y D-57 a D-84, todo [PROPUESTO]) está en borrador desde el 11-11-2026 (`propuesta_parte2_claude.md`), con una casilla vacía por cambio para lo que digan las revisiones de Astra.
 - **Tanda 1 de decisiones aceptada** el 11-11-2026 (`.docs/diseno/decisiones_operador.md`):
   1. pauta común de A, B y C con banco de medida;
   2. Contradictor de otro proveedor de IA;
@@ -64,7 +64,7 @@ El Robot Investor es un sistema de inversión personal por bloques. A busca opor
 | `dashboard/consola_n/` (T-95) | Prototipo navegable de la consola N con datos de ejemplo (React, TypeScript, Vite, Tailwind, shadcn/ui, TanStack Query, Zustand, Lightweight Charts y AG Grid). 29 pruebas unitarias y 12 de navegador. EN QA. Su README explica cómo arrancarlo |
 | `dashboard/prompts/` | Kit de un panel anterior al rediseño. Se conserva; no es la consola N |
 
-### Diseño: 22 propuestas a la espera de Astra
+### Diseño: 23 propuestas a la espera de Astra
 
 Todas en `.docs/diseno/<carpeta>/propuesta_claude.md`, con su `encargo_revision_astra.md`. El índice es `.docs/diseno/README.md` y el orden de revisión, el §0 bis de `2026-11-10_pendientes_para_astra.md` (en esta carpeta):
 
@@ -90,6 +90,7 @@ Todas en `.docs/diseno/<carpeta>/propuesta_claude.md`, con su `encargo_revision_
 20. Enmienda 4
 21. Pasada de coherencia
 22. Enmienda 5, parte 1
+23. Enmienda 5, parte 2
 
 La pasada de coherencia reúne las doce incoherencias halladas, los servicios pequeños, las fases, los dieciséis contratos nuevos y las tandas de decisiones.
 
@@ -106,7 +107,7 @@ En blanco en `.docs/plantillas_operador/`: ficha de restricciones, inventario de
 ## 6. Lo siguiente (a elegir con el operador)
 
 1. **Esperar las revisiones de Astra.** Llevar al operador cada discrepancia con una decisión ya tomada.
-2. **Enmienda 5, parte 2.** Después, la ratificación punto por punto y la Constitución V0.7, aplicada en un ticket con el gate.
+2. **Enmienda 5, parte 2:** borrador hecho; falta rellenar sus casillas con las revisiones de Astra. Después, la ratificación punto por punto y la Constitución V0.7, aplicada en un ticket con el gate.
 3. **Los contratos nuevos** (pasada de coherencia, §6), antes que el código. Luego, la construcción de la Fase 1, con el banco de medida y datos reales de K (T-86) como primer paso.
 4. **Mientras tanto, sin tocar código:**
    - la tanda 2 de parámetros con valores por defecto;

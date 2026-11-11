@@ -37,6 +37,7 @@ El operador va a discutir con Claude la arquitectura del Bloque B y de los demá
   20. **Enmienda 4** a la Constitución, al final porque toca los diseños anteriores: `.docs/diseno/enmienda_4/encargo_revision_astra.md`.
   21. **Pasada de coherencia**, la última de diseño porque resume todas las anteriores: `.docs/diseno/coherencia/encargo_revision_astra.md`.
   22. **Enmienda 5, parte 1** (borrador del texto de la Constitución con las decisiones de la tanda 1), después de la pasada porque redacta lo que salga de todas: `.docs/diseno/enmienda_5/encargo_revision_astra.md`.
+  23. **Enmienda 5, parte 2** (borrador del resto de la enmienda 4 y de los hallazgos de la pasada que tocan la Constitución), la última de todas: `.docs/diseno/enmienda_5/encargo_revision_astra_parte2.md`.
 
   Si Claude añade más propuestas de diseño, van antes de la enmienda 4; la pasada de coherencia queda siempre la última de diseño y la enmienda 5, después.
 
