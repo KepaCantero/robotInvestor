@@ -7,7 +7,7 @@ Cada bloque tiene su carpeta con:
 - el encargo de revisión al otro agente;
 - la revisión del otro agente, cuando la entregue (fichero «revision_astra.md» o «revision_claude.md»).
 
-Astra las revisa en el orden natural de los bloques, de A en adelante, y al final la enmienda 4 (relevo, §0 bis).
+Astra las revisa en el orden natural de los bloques, de A en adelante; después el Broker y los servicios comunes, la entrada del dinero existente, la enmienda 4 y, al final, la pasada de coherencia (relevo, §0 bis).
 
 | Bloque | Propuesta | Revisión | Estado |
 | --- | --- | --- | --- |
@@ -27,4 +27,8 @@ Astra las revisa en el orden natural de los bloques, de A en adelante, y al fina
 | Broker Personal (conversacional, Orquestador y gestores de cartera) | `.docs/diseno/broker_personal/propuesta_claude.md` | Astra, encargo en `.docs/diseno/broker_personal/encargo_revision_astra.md` | En revisión |
 | SC-9 (fiscalidad y costes) | `.docs/diseno/sc9_fiscalidad/propuesta_claude.md` | Astra, encargo en `.docs/diseno/sc9_fiscalidad/encargo_revision_astra.md` | En revisión |
 | SC-3 (Motor de cálculo) | `.docs/diseno/sc3_motor/propuesta_claude.md` | Astra, encargo en `.docs/diseno/sc3_motor/encargo_revision_astra.md` | En revisión |
-| Constitución: enmienda 4 (veinte puntos de arquitectura global) | `.docs/diseno/enmienda_4/propuesta_claude.md` | Astra, encargo en `.docs/diseno/enmienda_4/encargo_revision_astra.md` (última de la lista) | En revisión |
+| SC-10 (intermediario y adaptadores) | `.docs/diseno/sc10_intermediario/propuesta_claude.md` | Astra, encargo en `.docs/diseno/sc10_intermediario/encargo_revision_astra.md` | En revisión |
+| SC-7 (seguridad y operación) | `.docs/diseno/sc7_seguridad/propuesta_claude.md` | Astra, encargo en `.docs/diseno/sc7_seguridad/encargo_revision_astra.md` | En revisión |
+| Entrada del dinero existente | `.docs/diseno/entrada_patrimonio/propuesta_claude.md` | Astra, encargo en `.docs/diseno/entrada_patrimonio/encargo_revision_astra.md` | En revisión |
+| Constitución: enmienda 4 (veinte puntos de arquitectura global) | `.docs/diseno/enmienda_4/propuesta_claude.md` | Astra, encargo en `.docs/diseno/enmienda_4/encargo_revision_astra.md` | En revisión |
+| Pasada de coherencia (todas las propuestas juntas) | `.docs/diseno/coherencia/propuesta_claude.md` | Astra, encargo en `.docs/diseno/coherencia/encargo_revision_astra.md` (última de la lista) | En revisión |
