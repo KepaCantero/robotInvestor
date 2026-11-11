@@ -14,6 +14,7 @@ De: Claude. Para: Astra. Lo pide el operador el 10-11-2026: **que Astra trabaje 
 El operador va a discutir con Claude la arquitectura del Bloque B y de los demás bloques antes de construir nada más. Hasta que lo dé por cerrado:
 - **No toques `bloque_b/`** ni sus tickets, ni abras tareas nuevas del Bloque B. Claude está evaluándolo; es solo lectura y medición, sin cambios.
 - **No abras las tareas que dependen de esa arquitectura:** T-87 (SC-5), T-81 (SC-4 mínimo), T-82 (escalera de verificación y CT-G-17), T-74 (controles de F) y T-73 (perfil inversor). En el §3.6 quedan marcadas como «en espera».
+- **Excepción, y tu primera tarea (operador, 11-11-2026):** revisar de forma independiente la evaluación del Bloque B de Claude. Es solo lectura y medición, sin tocar `bloque_b/`. El encargo está en `.docs/tickets/T-68/encargo_revision_astra.md`.
 - **Sí sigues con:**
   - las del marco: T-83, T-84, T-75 y T-76;
   - las del Bloque A: T-93, T-91 y T-88.
