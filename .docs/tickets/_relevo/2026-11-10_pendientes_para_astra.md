@@ -19,6 +19,7 @@ El operador va a discutir con Claude la arquitectura del Bloque B y de los demá
 - **Tercera excepción, justo después (operador, 11-11-2026):** lo mismo con la propuesta del Bloque E, que comparte objetivo con D. El encargo está en `.docs/diseno/bloque_e/encargo_revision_astra.md`.
 - **Cuarta excepción, justo después (operador, 11-11-2026):** lo mismo con la propuesta del Bloque F. El encargo está en `.docs/diseno/bloque_f/encargo_revision_astra.md`. T-74 sigue en espera: la revisión es solo de diseño.
 - **Quinta excepción, justo después (operador, 11-11-2026):** lo mismo con la propuesta del Bloque G. El encargo está en `.docs/diseno/bloque_g/encargo_revision_astra.md`.
+- **Sexta excepción, justo después (operador, 11-11-2026):** lo mismo con la propuesta del Bloque H. El encargo está en `.docs/diseno/bloque_h/encargo_revision_astra.md`.
 - **Sí sigues con:**
   - las del marco: T-83, T-84, T-75 y T-76;
   - las del Bloque A: T-93, T-91 y T-88.
