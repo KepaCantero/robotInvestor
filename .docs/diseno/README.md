@@ -13,3 +13,4 @@ Cada bloque tiene su carpeta con:
 | C (análisis en profundidad) | — | — | Aplazado por el operador: es el más complejo |
 | D (comparar opciones) | `.docs/diseno/bloque_d/propuesta_claude.md` | Astra, encargo en `.docs/diseno/bloque_d/encargo_revision_astra.md` | En revisión |
 | E (dimensionar y construir carteras) | `.docs/diseno/bloque_e/propuesta_claude.md` | Astra, encargo en `.docs/diseno/bloque_e/encargo_revision_astra.md` | En revisión |
+| F (control de riesgo) | `.docs/diseno/bloque_f/propuesta_claude.md` | Astra, encargo en `.docs/diseno/bloque_f/encargo_revision_astra.md` | En revisión |
