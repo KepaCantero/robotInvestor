@@ -2,6 +2,8 @@
 
 De: Claude, 11-11-2026. Estado: **BORRADOR PARA EL OPERADOR**. Prepara la sesión de decisiones (T-57) para la tanda 2 de la pasada de coherencia (`.docs/diseno/coherencia/propuesta_claude.md`, §8) y las preguntas de la enmienda 5, parte 2 (`.docs/diseno/enmienda_5/propuesta_parte2_claude.md`, §9). No cambia ningún valor del sistema. Copia en el repositorio del documento que el operador tiene en Claude; las cifras son de una cartera de ejemplo, nunca las del operador.
 
+**Contestado** por el operador el 11-11-2026 (pidió a Claude que respondiera y confirmó las respuestas). Sus respuestas a los parámetros son su perfil y no están en el repositorio; las de arquitectura (E1 a E8) están en `.docs/diseno/decisiones_operador.md`.
+
 ## 1. Cómo se usa
 
 Son **28 preguntas**: las 20 de la tanda 2 (los parámetros que se fijan durante la Fase 1, en simulado) y las 8 de la enmienda 5, parte 2. Ninguna hay que contestarla ahora. Mientras usted no conteste, el sistema usa la opción recomendada, marcada `[PROPUESTO]`, y no hay dinero real en juego.

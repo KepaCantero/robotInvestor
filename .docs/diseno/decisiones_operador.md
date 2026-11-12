@@ -21,4 +21,24 @@ El operador acepta los valores por defecto de la tanda 1 de la pasada de coheren
 
 **Si una revisión de Astra discrepa** de alguna de estas decisiones, lo señala en su revisión y Claude lo lleva al operador antes de incorporarlo a la enmienda 5.
 
-Las tandas 2 a 5 siguen con sus valores por defecto [PROPUESTO], en simulado. La tanda 2 ya tiene su cuestionario, con las ocho preguntas de la enmienda 5, parte 2: `.docs/diseno/coherencia/cuestionario_tanda_2.md` (11-11-2026).
+## Tanda 2: parámetros de la Fase 1 y preguntas de la enmienda 5, parte 2 (11-11-2026)
+
+El operador pidió a Claude que contestara el cuestionario (`.docs/diseno/coherencia/cuestionario_tanda_2.md`) y confirmó sus respuestas: «Confirmo todas».
+
+- **Los parámetros (R1 a R3, F1 a F5, H1 a H5, M1 a M4, A1 a A3)** son su perfil de riesgo y sus límites: viven en su documento privado y, cuando exista, en su copia (SC-1), **no en el repositorio**. Hasta entonces, el sistema sigue con los valores por defecto [PROPUESTO] del marco, en simulado; cambiar los del marco es código y va en un ticket con autorización.
+- **Las decisiones de arquitectura (E1 a E8)** quedan aceptadas como rumbo y entran en la enmienda 5, parte 2, que el operador ratificará punto por punto:
+
+| # | Decisión | Valor aceptado | Cambio de la parte 2 |
+| --- | --- | --- | --- |
+| E1 | Brújula de P17 | Sí; retirada propuesta tras dos revisiones sin aportar; decide el operador | 56 |
+| E2 | Tope anual de gasto en IA y datos | 0,5 % del capital gestionado; al llegar, modo sin IA | 76 |
+| E3 | Cambios menores sin aprobación | No al principio: todos los aprueba el operador | 52 |
+| E4 | Perfilador con las conversaciones | No: solo cuestionarios y comportamiento real | 74 |
+| E5 | Estratega macro | Fase 2, solo informando | 71 |
+| E6 | Papeles del Broker | Siete funciones y como mucho tres agentes de IA; perfilador y asesor como modos del conversacional (se aparta de la opción recomendada del cuestionario) | 73, redactado de nuevo |
+| E7 | SC-12, biblioteca de conocimiento | Sí, mínima en la Fase 1 | 57 |
+| E8 | Comparar entre clases de activo | Se decide antes de la Fase 2; hasta entonces, la regla de hoy | 79 |
+
+Sobre E2, Claude avisó de que con el consumo medido hoy es probable que un uso semanal supere el tope con carteras pequeñas: obliga a los rediseños de A y B a recortar y, si el banco de medida demuestra que no cabe, la decisión será entre subir el tope o gestionar en pasivo.
+
+Las tandas 3 a 5 siguen con sus valores por defecto [PROPUESTO], en simulado.

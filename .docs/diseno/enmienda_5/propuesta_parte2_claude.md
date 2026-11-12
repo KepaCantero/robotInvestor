@@ -44,7 +44,7 @@ Son **28 cambios (52 a 79) y 28 decisiones nuevas (D-57 a D-84)**. La numeració
 | 70 | Coherencia, hallazgo 11 | Ninguna cifra nueva en lo que dice el Broker | §2, §6 | D-75 | 1 |
 | 71 | E4-11 | Estratega macro global | §2, §3 | D-76 | 2 |
 | 72 | E4-12 | Investigador cuantitativo en J | §2 (J) | D-77 | 4 |
-| 73 | E4-14 | Broker con seis papeles más el Orquestador | §2 (D-11, D-21) | D-78 | 1, mínima |
+| 73 | E4-14 | Broker en siete funciones, con tres agentes de IA como mucho | §2 (D-11, D-21) | D-78 | 1, mínima |
 | 74 | E4-15 | Perfilador con salvaguardas | §2, §6 | D-79 | 1 |
 | 75 | E4-16 | Planificación patrimonial: deuda, pensiones e informe fiscal | §2, §7 | D-80 | 2 |
 | 76 | E4-17 | Tope anual de gasto en IA y datos | §11 | D-81 | 1 |
@@ -286,22 +286,24 @@ No es un agente que opere a criterio: eso queda descartado (enmienda 4, §10).
 
 **Revisión de Astra:** pendiente.
 
-### Cambio 73 · El Broker con seis papeles más el Orquestador (§2)
+### Cambio 73 · El Broker en siete funciones, con tres agentes de IA como mucho (§2)
 
-**§2, título del párrafo. Antes:** «**El Broker Personal: un bloque en tres papeles.** `[RATIFICADO]` (D-21) … Sus tres papeles conservan sus prohibiciones.» **Después:** «**El Broker Personal: un bloque en siete papeles.** `[RATIFICADO]` (D-21) … `[PROPUESTO]` (D-78) Se separa en seis papeles más el Orquestador: menos contexto por llamada, y solo se llama al que hace falta. Todos conservan sus prohibiciones.»
+Redactado de nuevo el 11-11-2026 tras la decisión E6 del operador (cuestionario de la tanda 2): siete funciones, pero como mucho tres usan IA, como proponía el diseño del Broker (`.docs/diseno/broker_personal/propuesta_claude.md`, §3).
 
-**§2, tabla del Broker. Después** (las filas nuevas se añaden a las tres que hay):
+**§2, título del párrafo. Antes:** «**El Broker Personal: un bloque en tres papeles.** `[RATIFICADO]` (D-21) … Sus tres papeles conservan sus prohibiciones.» **Después:** «**El Broker Personal: un bloque en siete funciones.** `[RATIFICADO]` (D-21) … `[PROPUESTO]` (D-78) Tiene siete funciones, pero **como mucho tres usan IA**: el conversacional (con el perfilador y el asesor de configuración como modos suyos, cada uno con sus instrucciones y su contexto, más cortos), el planificador patrimonial (Motor; la IA solo redacta) y los gestores de cartera (código; IA solo en excepciones). Todas conservan sus prohibiciones.»
+
+**§2, tabla del Broker.** La fila de los gestores cambia de naturaleza: de «Agentes LLM acotados + código» a «Código; IA solo en excepciones (conflictos, eventos sin regla, peticiones nuevas)». **Filas nuevas:**
 
 > | Papel | Naturaleza | Hace | No hace |
 > | --- | --- | --- | --- |
-> | **Planificador patrimonial** | Motor y poca IA | Plan de largo plazo, aportaciones, camino de riesgo, reparto entre carteras en la revisión anual (D-72) y transición del patrimonio existente | Decidir inversiones concretas (D y E) |
-> | **Asesor de configuración** | IA acotada | El cuestionario guiado (punto 4) | Aplicar nada sin confirmación |
-> | **Perfilador** | IA acotada | Propone valores del perfil (D-79) | Cambiar el perfil por su cuenta |
-> | **Guardián de la política personal** | Casi todo reglas | Recuerda la política antes de una orden que la contradiga (punto 3) | Impedir la orden |
+> | **Planificador patrimonial** | Motor y poca IA (solo redacta) | Plan de largo plazo: aportaciones, colchón, deuda, planes de pensiones, vehículo fiscal, camino de riesgo, reparto entre carteras en la revisión anual (D-72) y transición del patrimonio existente | Elegir activos (D y E) |
+> | **Guardián de la política personal** | Código (reglas) | Recuerda la política antes de una orden que la contradiga (punto 3) | Impedir la orden |
 
-Las decisiones de dinero siguen en D, E y F. En el punto 4, «Dentro del Broker conversacional» pasa a «Papel propio del Broker». Fase 1 mínima: Orquestador, conversacional y asesor de configuración; el planificador entra con la rebanada de largo plazo (D-50).
+**§2, puntos 2 y 4.** El perfilador (D-79) y el asesor de configuración siguen «dentro del Broker conversacional», como **modos** suyos con su propio kit, no como agentes aparte.
 
-**D-11 y D-21 en el §15. Se añade:** «(ampliado a siete papeles por D-78)». **Glosario:** nuevas entradas para cada papel.
+Las decisiones de dinero siguen en D, E y F. Fase 1 mínima: Orquestador, conversacional con el modo asesor y, con la rebanada de largo plazo (D-50), el planificador.
+
+**D-11 y D-21 en el §15. Se añade:** «(siete funciones y como mucho tres agentes de IA, D-78)». **Glosario:** entradas para el planificador, el guardián y los modos del conversacional.
 
 **Revisión de Astra:** pendiente.
 
@@ -406,7 +408,7 @@ El §0 tendría una tabla «Qué cambia de la V0.6 a la V0.7 (enmienda 5, parte 
 | 70 | El Broker podría decir cifras inventadas en el chat | D-75 · Comprobación por código de toda salida del conversacional |
 | 71 | Nadie saca conclusiones de los datos macro | D-76 · Estratega macro global, que nunca sirve a F |
 | 72 | Nadie propone estrategias nuevas | D-77 · Investigador cuantitativo en J, desde la Fase 4 |
-| 73 | Un Broker con todo el contexto en cada llamada | D-78 · Broker en seis papeles más el Orquestador |
+| 73 | Un Broker con todo el contexto en cada llamada | D-78 · Broker en siete funciones, con tres agentes de IA como mucho |
 | 74 | El perfil se construye solo con lo que el operador declara | D-79 · Perfilador con tres fuentes y salvaguardas |
 | 75 | Amortizar deuda o aportar a un plan de pensiones no se comparan | D-80 · Planificación patrimonial en D e informe fiscal anual |
 | 76 | Sin tope frente al capital, la IA se come la rentabilidad | D-81 · Tope anual de gasto en IA y datos (por defecto, 0,5 % del capital) |
@@ -414,7 +416,7 @@ El §0 tendría una tabla «Qué cambia de la V0.6 a la V0.7 (enmienda 5, parte 
 | 78 | F podría frenar el propio plan | D-83 · Reequilibrar hacia el plan solo se controla por forma |
 | 79 | No se puede responder «¿este fondo o esta divisa?» | D-84 · Comparación entre clases con estimación prudente (variante, tanda 3) |
 
-**Otros retoques del §15:** D-11 y D-21 (siete papeles, D-78); P-24 (incluye el BOE, D-71); y el párrafo «Enmiendas», que añade la parte 2 a la frase de la parte 1. **§14:** el reparto por fases recibe cada pieza en su fila. **§16:** entradas nuevas para SC-12, la ficha de rendimiento, el canal de avisos, el modo sin IA, el Estratega macro y los papeles del Broker.
+**Otros retoques del §15:** D-11 y D-21 (siete funciones y tres agentes de IA como mucho, D-78); P-24 (incluye el BOE, D-71); y el párrafo «Enmiendas», que añade la parte 2 a la frase de la parte 1. **§14:** el reparto por fases recibe cada pieza en su fila. **§16:** entradas nuevas para SC-12, la ficha de rendimiento, el canal de avisos, el modo sin IA, el Estratega macro y los papeles del Broker.
 
 ## 9. Lo que el operador tiene que decidir y lo que el borrador fija por su cuenta
 
@@ -427,7 +429,7 @@ El §0 tendría una tabla «Qué cambia de la V0.6 a la V0.7 (enmienda 5, parte 
 | 3 | ¿Autonomía para cambios menores en el circuito de mejora? | No al principio: todos los aprueba el operador | 52 |
 | 4 | ¿El perfilador usa también las conversaciones? | No; solo cuestionarios y comportamiento | 74 |
 | 5 | ¿Cuándo entra el Estratega macro? | Fase 2, solo informando | 71 |
-| 6 | ¿Broker en siete papeles en lugar de tres? | Sí, con la Fase 1 mínima | 73 |
+| 6 | ¿Broker en siete papeles en lugar de tres? | Decidido (E6): siete funciones y como mucho tres agentes de IA | 73 |
 | 7 | ¿Un servicio común nuevo, SC-12, para el conocimiento? | Sí, mínimo en la Fase 1 | 57 |
 | 8 | ¿Comparar entre clases de activo? (tanda 3) | Se decide antes de la Fase 2; hasta entonces, la regla actual | 79 |
 
@@ -446,7 +448,7 @@ El §0 tendría una tabla «Qué cambia de la V0.6 a la V0.7 (enmienda 5, parte 
 11. **La comprobación de cifras del Broker** acepta las del Motor, las de F y las de SC-1 (cambio 70).
 12. **El informe fiscal anual es un borrador**, no una declaración (cambio 75).
 13. **Dueño de los episodios de estrés:** D hasta la Fase 3 y M después (cambio 68), como proponía la pasada de coherencia.
-14. **Papeles de IA del Broker:** el cambio 73 los separa en siete, pero la propuesta del Broker (pregunta 1) dejaba como mucho tres agentes de IA, con el perfilador y el asesor como modos del conversacional. Es una incoherencia de Claude entre las dos propuestas; el cuestionario de la tanda 2 lo pregunta (E6).
+14. **Papeles de IA del Broker:** resuelto por el operador (E6 de la tanda 2): siete funciones y como mucho tres agentes de IA. El cambio 73 se redactó de nuevo así.
 
 ## 10. Huecos para las revisiones de Astra y cómo se adopta
 

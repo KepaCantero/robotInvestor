@@ -22,7 +22,7 @@ Se preparó **antes** de tus revisiones de diseño. Por eso cada cambio tiene un
    - que cada «Antes» cita bien el texto vigente de la V0.6;
    - que el texto recoge lo que dicen tus revisiones de diseño, y que no contradice ninguna decisión ya aceptada en la tanda 1 ni el texto de la parte 1;
    - contradicciones con el resto de la Constitución, sobre todo:
-     - el Broker en siete papeles (cambio 73) frente a D-11 y D-21;
+     - el Broker en siete funciones con tres agentes de IA como mucho (cambio 73, redactado de nuevo tras la decisión E6 del operador) frente a D-11 y D-21;
      - SC-12 (cambio 57) frente al tope de bloques y frente a K;
      - el canal de avisos (cambio 61) frente a la independencia de F (§8);
      - el reequilibrio (cambio 78) frente a la asimetría del cambio 47 y al kill-switch;
