@@ -28,7 +28,7 @@ Las rutas que aún no existen van entre «…» (el gate `refs-vivas` no las exi
 | C-03 | C | REVISION | `.docs/diseno/bloque_c/encargo_revision_astra.md` | «.docs/diseno/bloque_c/revision_astra.md» | HECHA | | |
 | C-04 | D | REVISION | `.docs/diseno/bloque_d/encargo_revision_astra.md` | «.docs/diseno/bloque_d/revision_astra.md» | HECHA | | Solo local; subida pendiente de autorización expresa |
 | C-05 | E | REVISION | `.docs/diseno/bloque_e/encargo_revision_astra.md` | «.docs/diseno/bloque_e/revision_astra.md» | HECHA | | Solo local; subida pendiente de autorización expresa |
-| C-06 | F | REVISION | `.docs/diseno/bloque_f/encargo_revision_astra.md` | «.docs/diseno/bloque_f/revision_astra.md» | PENDIENTE | | Solo diseño; T-74 sigue en espera |
+| C-06 | F | REVISION | `.docs/diseno/bloque_f/encargo_revision_astra.md` | «.docs/diseno/bloque_f/revision_astra.md» | EN CURSO 2026-11-12 | | Solo diseño; T-74 sigue en espera |
 | C-07 | G | REVISION | `.docs/diseno/bloque_g/encargo_revision_astra.md` | «.docs/diseno/bloque_g/revision_astra.md» | PENDIENTE | | |
 | C-08 | H | REVISION | `.docs/diseno/bloque_h/encargo_revision_astra.md` | «.docs/diseno/bloque_h/revision_astra.md» | PENDIENTE | | |
 | C-09 | I | REVISION | `.docs/diseno/bloque_i/encargo_revision_astra.md` | «.docs/diseno/bloque_i/revision_astra.md» | PENDIENTE | | |
