@@ -1,0 +1,492 @@
+{
+ "$id": "https://robot-inversor.local/esquemas/ct-g-08/0.4.0-borrador",
+ "$schema": "https://json-schema.org/draft/2020-12/schema",
+ "additionalProperties": false,
+ "allOf": [
+  {
+   "if": {
+    "properties": {
+     "payload": {
+      "properties": {
+       "tipo_accion": {
+        "enum": [
+         "REDUCIR_O_CERRAR",
+         "PROTEGER"
+        ]
+       }
+      },
+      "required": [
+       "tipo_accion"
+      ]
+     }
+    }
+   },
+   "then": {
+    "properties": {
+     "resultado_politica": {
+      "properties": {
+       "controles": {
+        "items": {
+         "if": {
+          "properties": {
+           "resultado": {
+            "const": "VETA"
+           }
+          },
+          "required": [
+           "resultado"
+          ]
+         },
+         "then": {
+          "properties": {
+           "regla": {
+            "enum": [
+             "F-01",
+             "F-10",
+             "F-12",
+             "F-23",
+             "F-24",
+             "F-25"
+            ]
+           }
+          }
+         }
+        }
+       },
+       "resultado": {
+        "enum": [
+         "APROBADO",
+         "VETADO"
+        ]
+       }
+      }
+     }
+    }
+   }
+  }
+ ],
+ "description": "Borrador de la enmienda 5 (cambios 47 y 78). F deduce el tipo de acción comparando la orden con la posición conciliada de G, no con lo que declare quien la pide. Reducir, cerrar o proteger solo se veta por reglas de forma.",
+ "properties": {
+  "consumer": {
+   "const": "ORQUESTADOR"
+  },
+  "correlation_id": {
+   "pattern": "^[A-Za-z0-9._:/-]{1,64}\\Z",
+   "type": "string"
+  },
+  "data_refs": {
+   "maxItems": 0,
+   "type": "array"
+  },
+  "emitido_en": {
+   "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}(\\.\\d+)?(Z|[+-]\\d{2}:\\d{2})\\Z",
+   "type": "string"
+  },
+  "event_id": {
+   "pattern": "^[A-Za-z0-9._:/-]{1,64}\\Z",
+   "type": "string"
+  },
+  "expediente_id": {
+   "pattern": "^[A-Za-z0-9._:/-]{1,64}\\Z",
+   "type": "string"
+  },
+  "payload": {
+   "additionalProperties": false,
+   "properties": {
+    "cantidad_aprobada": {
+     "minimum": 0,
+     "type": "number"
+    },
+    "deduccion": {
+     "additionalProperties": false,
+     "properties": {
+      "cantidad_solicitada": {
+       "exclusiveMinimum": 0,
+       "type": "number"
+      },
+      "criterio": {
+       "pattern": "\\S",
+       "type": "string"
+      },
+      "posicion_conciliada": {
+       "additionalProperties": false,
+       "properties": {
+        "cantidad": {
+         "minimum": 0,
+         "type": "number"
+        },
+        "direccion": {
+         "enum": [
+          "LARGO",
+          "CORTO",
+          "SIN_POSICION"
+         ]
+        },
+        "foto_ref": {
+         "pattern": "^[0-9a-f]{64}\\Z",
+         "type": "string"
+        }
+       },
+       "required": [
+        "foto_ref",
+        "cantidad",
+        "direccion"
+       ],
+       "type": "object"
+      },
+      "sentido_solicitado": {
+       "enum": [
+        "COMPRA",
+        "VENTA",
+        "STOP"
+       ]
+      }
+     },
+     "required": [
+      "posicion_conciliada",
+      "cantidad_solicitada",
+      "sentido_solicitado",
+      "criterio"
+     ],
+     "type": "object"
+    },
+    "entradas": {
+     "additionalProperties": false,
+     "properties": {
+      "cartera": {
+       "type": "object"
+      },
+      "contexto": {
+       "additionalProperties": false,
+       "properties": {
+        "actividad": {
+         "additionalProperties": false,
+         "properties": {
+          "importe_dia_eur": {
+           "minimum": 0,
+           "type": "number"
+          },
+          "ordenes_ultima_hora": {
+           "minimum": 0,
+           "type": "integer"
+          },
+          "perdida_semana_eur": {
+           "minimum": 0,
+           "type": "number"
+          }
+         },
+         "required": [
+          "importe_dia_eur",
+          "ordenes_ultima_hora",
+          "perdida_semana_eur"
+         ],
+         "type": "object"
+        },
+        "autonomia": {
+         "additionalProperties": false,
+         "properties": {
+          "kill_switch": {
+           "type": "boolean"
+          },
+          "nivel": {
+           "type": "string"
+          }
+         },
+         "required": [
+          "nivel",
+          "kill_switch"
+         ],
+         "type": "object"
+        },
+        "eventos": {
+         "anyOf": [
+          {
+           "items": {
+            "additionalProperties": false,
+            "properties": {
+             "fecha": {
+              "pattern": "^\\d{4}-\\d{2}-\\d{2}\\Z",
+              "type": "string"
+             },
+             "tipo": {
+              "type": "string"
+             }
+            },
+            "required": [
+             "fecha",
+             "tipo"
+            ],
+            "type": "object"
+           },
+           "type": "array"
+          },
+          {
+           "type": "null"
+          }
+         ]
+        },
+        "evidencia": {
+         "additionalProperties": false,
+         "properties": {
+          "fecha_corte": {
+           "pattern": "^\\d{4}-\\d{2}-\\d{2}\\Z",
+           "type": "string"
+          },
+          "proporcion_verificado": {
+           "maximum": 1,
+           "minimum": 0,
+           "type": "number"
+          },
+          "valid_until": {
+           "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}(\\.\\d+)?(Z|[+-]\\d{2}:\\d{2})\\Z",
+           "type": "string"
+          }
+         },
+         "required": [
+          "proporcion_verificado",
+          "fecha_corte",
+          "valid_until"
+         ],
+         "type": "object"
+        },
+        "exclusiones_duras": {
+         "additionalProperties": false,
+         "properties": {
+          "acceso": {
+           "type": "string"
+          },
+          "invertibilidad": {
+           "type": "string"
+          },
+          "sanciones": {
+           "type": "string"
+          }
+         },
+         "required": [
+          "sanciones",
+          "invertibilidad",
+          "acceso"
+         ],
+         "type": "object"
+        },
+        "fecha_revision": {
+         "pattern": "^\\d{4}-\\d{2}-\\d{2}\\Z",
+         "type": "string"
+        },
+        "mandato": {
+         "additionalProperties": false,
+         "properties": {
+          "apalancamiento_max": {
+           "minimum": 1,
+           "type": "number"
+          },
+          "exclusiones": {
+           "items": {
+            "type": "string"
+           },
+           "type": "array"
+          },
+          "horizonte_max_dias": {
+           "minimum": 1,
+           "type": "integer"
+          },
+          "instrumentos_permitidos": {
+           "anyOf": [
+            {
+             "items": {
+              "type": "string"
+             },
+             "type": "array"
+            },
+            {
+             "type": "null"
+            }
+           ]
+          },
+          "version": {
+           "pattern": "\\S",
+           "type": "string"
+          }
+         },
+         "required": [
+          "version",
+          "instrumentos_permitidos",
+          "exclusiones",
+          "apalancamiento_max",
+          "horizonte_max_dias"
+         ],
+         "type": "object"
+        },
+        "precio_intermediario": {
+         "anyOf": [
+          {
+           "additionalProperties": false,
+           "properties": {
+            "fecha_hora": {
+             "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}(\\.\\d+)?(Z|[+-]\\d{2}:\\d{2})\\Z",
+             "type": "string"
+            },
+            "valor": {
+             "exclusiveMinimum": 0,
+             "type": "number"
+            }
+           },
+           "required": [
+            "valor",
+            "fecha_hora"
+           ],
+           "type": "object"
+          },
+          {
+           "type": "null"
+          }
+         ]
+        }
+       },
+       "required": [
+        "mandato",
+        "fecha_revision",
+        "exclusiones_duras",
+        "evidencia",
+        "eventos",
+        "autonomia",
+        "actividad",
+        "precio_intermediario"
+       ],
+       "type": "object"
+      },
+      "politica": {
+       "type": "object"
+      },
+      "solicitud": {
+       "type": "object"
+      }
+     },
+     "required": [
+      "solicitud",
+      "cartera",
+      "politica",
+      "contexto"
+     ],
+     "type": "object"
+    },
+    "propuesta_ref": {
+     "additionalProperties": false,
+     "properties": {
+      "expediente_id": {
+       "pattern": "^[A-Za-z0-9._:/-]{1,64}\\Z",
+       "type": "string"
+      },
+      "hash": {
+       "pattern": "^[0-9a-f]{64}\\Z",
+       "type": "string"
+      }
+     },
+     "required": [
+      "expediente_id",
+      "hash"
+     ],
+     "type": "object"
+    },
+    "tipo_accion": {
+     "enum": [
+      "ABRIR_O_AUMENTAR",
+      "REDUCIR_O_CERRAR",
+      "PROTEGER",
+      "REEQUILIBRAR"
+     ]
+    }
+   },
+   "required": [
+    "cantidad_aprobada",
+    "deduccion",
+    "entradas",
+    "propuesta_ref",
+    "tipo_accion"
+   ],
+   "type": "object"
+  },
+  "producer": {
+   "const": "F"
+  },
+  "resultado_politica": {
+   "additionalProperties": false,
+   "properties": {
+    "controles": {
+     "items": {
+      "additionalProperties": true,
+      "properties": {
+       "limite": {},
+       "regla": {
+        "pattern": "^[A-Za-z0-9._:/-]{1,64}\\Z",
+        "type": "string"
+       },
+       "resultado": {
+        "enum": [
+         "OK",
+         "REDUCE",
+         "VETA"
+        ]
+       },
+       "valor": {}
+      },
+      "required": [
+       "regla",
+       "resultado"
+      ],
+      "type": "object"
+     },
+     "type": "array"
+    },
+    "motivo": {
+     "pattern": "\\S",
+     "type": "string"
+    },
+    "resultado": {
+     "enum": [
+      "APROBADO",
+      "REDUCIDO",
+      "VETADO"
+     ]
+    },
+    "version_politica": {
+     "pattern": "^[A-Za-z0-9._:/-]{1,64}\\Z",
+     "type": "string"
+    }
+   },
+   "required": [
+    "version_politica",
+    "resultado",
+    "motivo",
+    "controles"
+   ],
+   "type": "object"
+  },
+  "tipo_mensaje": {
+   "const": "CT-G-08"
+  },
+  "valid_until": {
+   "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}(\\.\\d+)?(Z|[+-]\\d{2}:\\d{2})\\Z",
+   "type": "string"
+  },
+  "version_esquema": {
+   "const": "0.4.0"
+  }
+ },
+ "required": [
+  "event_id",
+  "correlation_id",
+  "expediente_id",
+  "producer",
+  "consumer",
+  "tipo_mensaje",
+  "version_esquema",
+  "emitido_en",
+  "valid_until",
+  "data_refs",
+  "payload",
+  "resultado_politica"
+ ],
+ "title": "CT-G-08 · Resultado de control de F, con el tipo de acción (BORRADOR 0.4.0, sin ratificar)",
+ "type": "object"
+}

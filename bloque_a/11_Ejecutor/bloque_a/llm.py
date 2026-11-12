@@ -32,7 +32,7 @@ class Uso:
     cache_lectura: int = 0
     busquedas_web: int = 0
 
-    def sumar(self, otro: "Uso") -> None:
+    def sumar(self, otro: Uso) -> None:
         for k in asdict(self):
             setattr(self, k, getattr(self, k) + getattr(otro, k))
 
@@ -42,10 +42,10 @@ class RespuestaLLM:
     texto: str
     uso: Uso
     modelo: str
-    stop_reason: Optional[str] = None
+    stop_reason: str | None = None
     truncada: bool = False
     rechazo: bool = False
-    extra: Dict[str, Any] = field(default_factory=dict)
+    extra: dict[str, Any] = field(default_factory=dict)
 
 
 def contenido_sensible(valor) -> bool:
@@ -58,7 +58,7 @@ def contenido_sensible(valor) -> bool:
     if isinstance(valor, dict):
         return (bool(secretos_en_texto(json.dumps(valor, ensure_ascii=False, default=str)))
                 or any(contenido_sensible(v) for v in valor.values()))
-    if isinstance(valor, (list, tuple)):
+    if isinstance(valor, (list, tuple, set, frozenset)):   # T-93 (H-32): también los conjuntos
         return any(contenido_sensible(v) for v in valor)
     return False
 
@@ -77,12 +77,12 @@ class LLMClient:
     def identidad_cache(self):
         return [type(self).__module__, type(self).__qualname__, self.nombre]
 
-    def generar(self, *, agente: str, modelo: str, system: List[Dict], mensajes: List[Dict], max_tokens: int,
-                herramientas: Optional[List[Dict]] = None, esquema: Optional[Dict] = None) -> RespuestaLLM:
+    def generar(self, *, agente: str, modelo: str, system: list[dict], mensajes: list[dict], max_tokens: int,
+                herramientas: list[dict] | None = None, esquema: dict | None = None) -> RespuestaLLM:
         raise NotImplementedError
 
 
-def herramienta_busqueda_web(tipo: str = "web_search_20260318", max_usos: int = 5) -> Dict:
+def herramienta_busqueda_web(tipo: str = "web_search_20260318", max_usos: int = 5) -> dict:
     """Definición de la herramienta de servidor de búsqueda web (tipos en anthropic.types.WebSearchTool*Param)."""
     return {"type": tipo, "name": "web_search", "max_uses": int(max_usos)}
 
@@ -90,7 +90,7 @@ def herramienta_busqueda_web(tipo: str = "web_search_20260318", max_usos: int = 
 class AnthropicClient(LLMClient):
     nombre = "anthropic"
 
-    def __init__(self, api_key: Optional[str] = None, max_reintentos: int = 4, timeout_s: float = 600,
+    def __init__(self, api_key: str | None = None, max_reintentos: int = 4, timeout_s: float = 600,
                  salida_estructurada: bool = False, max_continuaciones: int = 3, sdk: Any = None) -> None:
         if sdk is None:
             import anthropic
@@ -115,19 +115,19 @@ class AnthropicClient(LLMClient):
                    cache_lectura=int(getattr(u, "cache_read_input_tokens", 0) or 0),
                    busquedas_web=int(getattr(stu, "web_search_requests", 0) or 0) if stu is not None else 0)
 
-    def generar(self, *, agente: str, modelo: str, system: List[Dict], mensajes: List[Dict], max_tokens: int,
-                herramientas: Optional[List[Dict]] = None, esquema: Optional[Dict] = None) -> RespuestaLLM:
+    def generar(self, *, agente: str, modelo: str, system: list[dict], mensajes: list[dict], max_tokens: int,
+                herramientas: list[dict] | None = None, esquema: dict | None = None) -> RespuestaLLM:
         if contenido_sensible([system, mensajes]):
             return RespuestaLLM("", Uso(), modelo, stop_reason="contenido_sensible")
         msgs = list(mensajes)
-        kwargs: Dict[str, Any] = {"model": modelo, "max_tokens": int(max_tokens), "system": system, "messages": msgs,
+        kwargs: dict[str, Any] = {"model": modelo, "max_tokens": int(max_tokens), "system": system, "messages": msgs,
                                   "metadata": {"user_id": f"bloque-a-{agente}"}}
         if herramientas:
             kwargs["tools"] = herramientas
         if esquema is not None and self.salida_estructurada:
             kwargs["output_config"] = {"format": {"type": "json_schema", "schema": esquema}}
         uso = Uso()
-        textos: List[str] = []
+        textos: list[str] = []
         stop = None
         for _ in range(self.max_continuaciones + 1):
             try:
@@ -163,18 +163,18 @@ class MockClient(LLMClient):
     nombre = "mock"
     conocimiento_previo = False   # el simulado no sabe nada del periodo: no hay fuga por memoria (PA-09)
 
-    def __init__(self, semilla: int = 20261102, fallos: Optional[Dict[str, int]] = None) -> None:
+    def __init__(self, semilla: int = 20261102, fallos: dict[str, int] | None = None) -> None:
         self.semilla = int(semilla)
         self._vistos: set = set()
         self._lock = threading.Lock()
-        self.llamadas: List[Dict] = []
+        self.llamadas: list[dict] = []
         self.fallos = dict(fallos or {})   # agente -> nº de respuestas inválidas a devolver (pruebas)
 
     def identidad_cache(self):
         return [super().identidad_cache(), self.semilla]
 
-    def generar(self, *, agente: str, modelo: str, system: List[Dict], mensajes: List[Dict], max_tokens: int,
-                herramientas: Optional[List[Dict]] = None, esquema: Optional[Dict] = None) -> RespuestaLLM:
+    def generar(self, *, agente: str, modelo: str, system: list[dict], mensajes: list[dict], max_tokens: int,
+                herramientas: list[dict] | None = None, esquema: dict | None = None) -> RespuestaLLM:
         from . import mock_respuestas
         sys_txt = "".join(b.get("text", "") for b in system)
         user_txt = "".join(m["content"] if isinstance(m["content"], str) else json.dumps(m["content"], default=str)
@@ -208,7 +208,7 @@ class ReplayClient(LLMClient):
 
     nombre = "replay"
 
-    def __init__(self, ruta, modo: str = "reproducir", base: Optional[LLMClient] = None) -> None:
+    def __init__(self, ruta, modo: str = "reproducir", base: LLMClient | None = None) -> None:
         if modo not in ("grabar", "reproducir"):
             raise ValueError("modo debe ser «grabar» o «reproducir»")
         if modo == "grabar" and base is None:
@@ -217,7 +217,7 @@ class ReplayClient(LLMClient):
         self.modo = modo
         self.base = base
         self._lock = threading.Lock()
-        self._tabla: Dict[str, Dict] = {}
+        self._tabla: dict[str, dict] = {}
         if self.ruta.exists():
             for l in self.ruta.read_text(encoding="utf-8").splitlines():
                 if l.strip():
@@ -231,14 +231,14 @@ class ReplayClient(LLMClient):
                 self.base.identidad_cache() if self.base else None]
 
     @staticmethod
-    def clave(agente: str, modelo: str, system: List[Dict], mensajes: List[Dict], herramientas) -> str:
+    def clave(agente: str, modelo: str, system: list[dict], mensajes: list[dict], herramientas) -> str:
         h = hashlib.sha256()
         h.update(json.dumps([agente, modelo, [b.get("text") for b in system], mensajes, herramientas],
                             ensure_ascii=False, sort_keys=True, default=str).encode())
         return h.hexdigest()
 
-    def generar(self, *, agente: str, modelo: str, system: List[Dict], mensajes: List[Dict], max_tokens: int,
-                herramientas: Optional[List[Dict]] = None, esquema: Optional[Dict] = None) -> RespuestaLLM:
+    def generar(self, *, agente: str, modelo: str, system: list[dict], mensajes: list[dict], max_tokens: int,
+                herramientas: list[dict] | None = None, esquema: dict | None = None) -> RespuestaLLM:
         antigua = self.clave(agente, modelo, system, mensajes, herramientas)
         k = hashlib.sha256(json.dumps([antigua, system, max_tokens, esquema], ensure_ascii=False,
                                       sort_keys=True).encode()).hexdigest()
@@ -263,7 +263,7 @@ class ReplayClient(LLMClient):
         return r
 
 
-def crear_cliente(tipo: str, cfg: Dict, replay: Optional[str] = None, replay_modo: str = "reproducir") -> LLMClient:
+def crear_cliente(tipo: str, cfg: dict, replay: str | None = None, replay_modo: str = "reproducir") -> LLMClient:
     llm = cfg.get("llm") or {}
     if tipo == "mock":
         return MockClient(parametro(cfg, "llm.semilla_mock"))

@@ -19,6 +19,7 @@ import re
 import sqlite3
 import threading
 from contextlib import closing
+from datetime import date
 from typing import Any
 
 VERSION_CONTRATO = "5.1"
@@ -162,9 +163,27 @@ def sanear_estructura(obj: Any, origen: str = "") -> tuple[Any, list[dict]]:
 # «sk-hynix_annual_report_2023» o «SK-Hynix-Q3-results» son texto). Todo lo demás cuenta como clave.
 RE_CANDIDATO_SK = re.compile(r"(?i)(?<![A-Za-z0-9])sk-([A-Za-z0-9_-]{20,})")
 PREFIJOS_SK = ("ant-", "proj-", "svcacct-", "admin-", "lf-")
-# tramos de texto: palabras, siglas, años y códigos de periodo de los informes («Q4», «FY2023», «3Q24», «2024Q4», «H1»)
-RE_TRAMO_TEXTO = re.compile(r"[a-z]{1,15}|[A-Z][a-z]{0,14}|[A-Z]{1,6}|[0-9]{1,4}|[A-Z]{1,3}[0-9]{1,4}|[0-9][A-Z][0-9]{1,2}"
-                            r"|[0-9]{4}[A-Z][0-9]{1,2}")
+# tramos de texto: palabras, siglas, años y códigos de periodo de los informes («Q4», «FY2023», «3Q24», «2024Q4», «H1»).
+# T-93 (QA r04 de T-92, H-33): también como van en las URL de prensa financiera: códigos de periodo en minúsculas («q2»,
+# «fy2023», «1q24», «2024q4»), productos («5g», «hbm3e», «ddr5»), códigos de cotización de 5 a 7 cifras («000660»), siglas
+# de hasta 15 letras («QUARTERLY») y CamelCase («HynixEarnings»). Las fechas de 8 cifras se aceptan si son una fecha válida.
+RE_TRAMO_TEXTO = re.compile(r"[a-z]{1,15}|[A-Z][a-z]{0,14}|[A-Z]{1,15}|[0-9]{1,4}|[A-Z]{1,3}[0-9]{1,4}|[0-9][A-Z][0-9]{1,2}"
+                            r"|[0-9]{4}[A-Z][0-9]{1,2}"
+                            r"|[a-z]{1,2}[0-9]{1,4}|[0-9][a-z][0-9]{0,2}|[0-9]{4}[a-z][0-9]{1,2}|[a-z]{2,4}[0-9][a-z]?|[0-9]{5,7}"
+                            r"|(?:[A-Z][a-z]{1,14}){2,4}")
+RE_FECHA_8 = re.compile(r"(19|20)[0-9]{2}(0[1-9]|1[0-2])(0[1-9]|[12][0-9]|3[01])")
+
+
+def _tramo_texto(t: str) -> bool:
+    if RE_TRAMO_TEXTO.fullmatch(t):
+        return len(t) <= 30
+    if RE_FECHA_8.fullmatch(t):   # T-93 (H-33): una fecha AAAAMMDD que existe
+        try:
+            date(int(t[:4]), int(t[4:6]), int(t[6:]))
+            return True
+        except ValueError:
+            return False
+    return False
 
 
 def _es_clave_sk(cola: str) -> bool:
@@ -172,17 +191,22 @@ def _es_clave_sk(cola: str) -> bool:
     if cola.lower().startswith(PREFIJOS_SK):
         return True
     tramos = [t for t in re.split(r"[-_]", cola) if t]
-    return len(tramos) < 2 or not all(RE_TRAMO_TEXTO.fullmatch(t) for t in tramos)
+    return len(tramos) < 2 or not all(_tramo_texto(t) for t in tramos)
+
+
+# T-93 (H-32): escapes que, delante de una clave, la pegarían a una cifra o una letra y la ocultarían
+RE_ESCAPES = re.compile(r"\\u[0-9a-fA-F]{4}|\\x[0-9a-fA-F]{2}|\\[ntr/bf\"\\]|%[0-9A-Fa-f]{2}")
 
 
 def secretos_en_texto(texto) -> list[str]:
     """Indicios de secretos en un texto: los patrones de `RE_SECRETO` y las claves «sk-». También se mira el texto con los
     escapes de JSON («\\n», «\\t», «\\r», «\\/») sustituidos, porque la respuesta de un agente es JSON escrito como
-    texto (T-92, QA r03, H-25). Acepta `bytes` (H-26)."""
+    texto (T-92, QA r03, H-25), y desde T-93 (H-32) también «\\uXXXX», «\\b», «\\f», «\\"», «\\\\», los «\\xNN» de `repr`
+    y los «%XX» de una URL. Acepta `bytes` (H-26)."""
     if isinstance(texto, (bytes, bytearray)):
         texto = bytes(texto).decode("utf-8", errors="replace")
     hallados: list[str] = []
-    for t in {texto, re.sub(r"\\[ntr/]", " ", texto)}:
+    for t in {texto, RE_ESCAPES.sub(" ", texto)}:
         hallados += [m.group(0) for m in RE_SECRETO.finditer(t)]
         hallados += [m.group(0) for m in RE_CANDIDATO_SK.finditer(t) if _es_clave_sk(m.group(1))]
     return list(dict.fromkeys(hallados))

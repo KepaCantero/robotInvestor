@@ -48,6 +48,13 @@ class ConsultasBroker:
         versión anterior (T-92, QA r01, H-15), y no a las 00:00."""
         # T-92 (QA r03, H-30): solo fechas ISO 8601 («2026-06-08», «20260608», con hora y zona opcionales); «2026», «2026-06»
         # o «8 June 2026» se rechazan en lugar de interpretarse
+        # T-93 (H-37): un número o un booleano no es una fecha (20260608 se leería como nanosegundos de 1970); una `date`
+        # sin hora es su fecha en texto, para que un plazo venza al terminar ese día y no al empezarlo
+        if isinstance(fecha, bool) or (isinstance(fecha, (int, float)) and not isinstance(fecha, dt.datetime)) or (
+                hasattr(fecha, "dtype") and getattr(fecha.dtype, "kind", "") in "biuf"):
+            raise ValueError(f"Fecha u hora de consulta CT-23 no válida (se espera ISO 8601, no un número): {fecha!r}")
+        if isinstance(fecha, dt.date) and not isinstance(fecha, dt.datetime):
+            fecha = fecha.isoformat()
         if isinstance(fecha, str) and not RE_FECHA_ISO.fullmatch(fecha.strip()):
             raise ValueError(f"Fecha u hora de consulta CT-23 no válida (se espera ISO 8601): {fecha!r}")
         t = pd.Timestamp(fecha)
@@ -96,7 +103,8 @@ class ConsultasBroker:
                                                          "cns_id": ult["cns_id"], "preguntas": ult.get("preguntas", []) + preguntas,
                                                          "nota": f"Agrupada: máximo de {maximo} mensajes CT-23 por RUN- alcanzado"})
             return {"cns_id": ult["cns_id"], "estado": "AGRUPADA", "preguntas": len(e["preguntas"])}
-        plazo = self._instante(consulta["plazo_respuesta"], plazo=True).isoformat() if consulta.get("plazo_respuesta") else self._plazo(modo, ahora)
+        dado = consulta.get("plazo_respuesta")   # T-93 (H-37): sin plazo solo es None o «»; False o 0 se rechazan, no se ignoran
+        plazo = self._plazo(modo, ahora) if dado is None or dado == "" else self._instante(dado, plazo=True).isoformat()
         cns_id = self.b.almacen.nuevo_id("CNS")
         cuerpo = {"cns_id": cns_id, "sentido": "SALIENTE", "run_id": run_id, "seg_id": consulta.get("seg_id"), "tipo": tipo, "modo": modo,
                   "preguntas": copy.deepcopy(preguntas), "clases": list(consulta.get("clases") or []),
@@ -145,7 +153,15 @@ class ConsultasBroker:
         self.b.fijar_fecha(ahora.date())
         out = []
         for k, c in self._todas(ahora.date()).items():
-            if c.get("estado") == "ENVIADA" and c.get("sentido") == "SALIENTE" and self._instante(c["plazo_respuesta"], plazo=True) <= ahora:
+            if c.get("estado") != "ENVIADA" or c.get("sentido") != "SALIENTE":
+                continue
+            try:
+                vencida = self._instante(c["plazo_respuesta"], plazo=True) <= ahora
+            except (ValueError, TypeError):   # T-93 (H-38): un plazo guardado por una versión anterior que ya no se lee
+                self.b.almacen.incidencia("DATOS", f"Consulta CT-23 {k} con un plazo que no se puede leer ({str(c.get('plazo_respuesta'))[:40]!r}): "
+                                                   "se da por vencida y el análisis sigue con el supuesto declarado", "AG-01")
+                vencida = True
+            if vencida:
                 self.b.almacen.escribir("F5", "AG-01", {"tipo_entrada": "CNS", "id": self.b.almacen.nuevo_id("F5CNS"), "cns_id": k,
                                                          "estado": "VENCIDA", "supuestos_aplicados": [
                                                              {"indice": i, "supuesto": p["supuesto_declarado"]} for i, p in enumerate(c["preguntas"])]})

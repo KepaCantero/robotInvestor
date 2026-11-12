@@ -5,6 +5,7 @@
 - Gate completo 12/12: A 439 (nueva línea base), A-Forex 68 y B 176; ruff baja a 3072 y mypy de A queda en 115.
 - `test_t92_revision.py` amplía las pruebas con H-25 a H-30. La QA r03 comprobó que, de las 17 pruebas nuevas de la r03, 15 fallan con el código de la r02 (`6f02e11`) y 2 pasan: la de tiempo, porque la r02 ya era lineal, y la del umbral `None`, que ya daba `KeyError`.
 - Sondas: ver el README, «Ronda r04».
+- Recuento contra la rama de Astra (`5a56c9c`), añadido el 12-11-2026 en T-93 por H-39 (b): de las 20 pruebas nuevas de la r04, 16 fallan con ese código, según la QA r04 (`qa.md`, «Ronda r04»).
 
 ## Ronda r03 (10-11-2026)
 

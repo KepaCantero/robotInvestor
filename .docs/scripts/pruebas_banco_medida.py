@@ -1,4 +1,4 @@
-"""Pruebas del banco de medida (T-94). Uso: .venv/bin/python -m pytest -q .docs/scripts/pruebas_banco_medida.py
+"""Pruebas del banco de medida (T-94, y su registro de experimentos desde T-99). Uso: .venv/bin/python -m pytest -q .docs/scripts/pruebas_banco_medida.py
 
 Las unitarias usan precios construidos a mano; la de integración ejecuta el Bloque A con el cliente simulado."""
 import json
@@ -114,10 +114,12 @@ def test_integracion_bloque_a(tmp_path):
     antes = subprocess.run(["git", "status", "--porcelain", "bloque_a", "bloque_b", "sistema_global/marco_comun_c"],
                            cwd=RAIZ, capture_output=True, text=True, check=True).stdout
     salidas = []
+    registro = tmp_path / "registro.jsonl"   # T-99: nunca el registro del repositorio
     for i in range(2):
         out = tmp_path / f"r{i}"
+        extra = ["--experimento", "EXP-" + _anio() + "-0001"] if i else []   # la segunda vez, un intento más del mismo
         r = subprocess.run([str(py), str(RAIZ / ".docs/scripts/banco_medida.py"), "a", "--desde", "2026-03-06",
-                            "--hasta", "2026-04-24", "--salida", str(out), "--remuestreos", "300"],
+                            "--hasta", "2026-04-24", "--salida", str(out), "--remuestreos", "300", "--registro", str(registro), *extra],
                            cwd=RAIZ, capture_output=True, text=True, check=False)
         assert r.returncode == 0, r.stderr
         for f in ("prerregistro.json", "informe.json", "informe.md"):
@@ -128,3 +130,36 @@ def test_integracion_bloque_a(tmp_path):
     despues = subprocess.run(["git", "status", "--porcelain", "bloque_a", "bloque_b", "sistema_global/marco_comun_c"],
                              cwd=RAIZ, capture_output=True, text=True, check=True).stdout
     assert antes == despues
+    import registro_experimentos as rx
+    res = rx.Registro(registro).resumen("EXP-" + _anio() + "-0001")
+    assert res["intentos"] == 2 and res["variantes"] == 1 and res["sin_resultado"] == [] and res["fuera_del_maximo"] == []
+    assert set(res["veredictos"].values()) <= set(rx.VEREDICTOS) and len(res["veredictos"]) == 2
+
+
+def _anio():
+    from datetime import datetime, timezone
+    return str(datetime.now(timezone.utc).year)
+
+
+def test_un_intento_que_falla_tambien_queda_anotado(tmp_path, monkeypatch):
+    """T-99: cada intento cuenta, también el que no llega a dar resultado."""
+    import argparse
+    import registro_experimentos as rx
+
+    def falla(*a, **k):
+        raise bm.BancoError("sin datos para esas fechas")
+    monkeypatch.setattr(bm, "titular_a", falla)
+    ns = argparse.Namespace(desde="2026-03-06", hasta="2026-04-24", salida=str(tmp_path / "s"), cliente="mock", frecuencia=None,
+                            clases=None, semilla=7, remuestreos=10, ventana=63, registro=str(tmp_path / "r.jsonl"),
+                            experimento=None, max_variantes=1)
+    with pytest.raises(bm.BancoError):
+        bm.ejecutar_a(ns)
+    res = rx.Registro(tmp_path / "r.jsonl").resumen("EXP-" + _anio() + "-0001")
+    assert res["intentos"] == 1 and res["veredictos"] == {"1": "fallido"} and not res["adoptable"]
+
+
+def test_veredicto_conjunto():
+    assert bm.veredicto_conjunto({"a": {"veredicto": "mejor"}, "b": {"veredicto": "mejor"}}) == "mejor"
+    assert bm.veredicto_conjunto({"a": {"veredicto": "mejor"}, "b": {"veredicto": "peor"}}) == "peor"
+    assert bm.veredicto_conjunto({"a": {"veredicto": "mejor"}, "b": {"veredicto": "todavía no se sabe"}}) == "todavía no se sabe"
+    assert bm.veredicto_conjunto({"a": {"veredicto": "sin datos"}}) == "todavía no se sabe"

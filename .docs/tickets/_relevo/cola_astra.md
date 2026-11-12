@@ -38,6 +38,7 @@ Las rutas que aún no existen van entre «…» (el gate `refs-vivas` no las exi
 | C-17 | SC-10, intermediario | REVISION | `.docs/diseno/sc10_intermediario/encargo_revision_astra.md` | «.docs/diseno/sc10_intermediario/revision_astra.md» | PENDIENTE | | |
 | C-18 | SC-7, seguridad | REVISION | `.docs/diseno/sc7_seguridad/encargo_revision_astra.md` | «.docs/diseno/sc7_seguridad/revision_astra.md» | PENDIENTE | | |
 | C-19 | Entrada del dinero existente | REVISION | `.docs/diseno/entrada_patrimonio/encargo_revision_astra.md` | «.docs/diseno/entrada_patrimonio/revision_astra.md» | PENDIENTE | | |
+| C-35 | Borradores de contratos CT-G-08 0.4.0 y CT-G-24 0.1.0 | REVISION | `.docs/diseno/contratos/README.md` | «.docs/diseno/contratos/revision_astra.md» | PENDIENTE | | Revisa sobre todo los cuatro puntos `[PROPUESTO]` del README |
 | C-20 | Enmienda 4 | REVISION | `.docs/diseno/enmienda_4/encargo_revision_astra.md` | «.docs/diseno/enmienda_4/revision_astra.md» | PENDIENTE | | |
 | C-21 | Pasada de coherencia | REVISION | `.docs/diseno/coherencia/encargo_revision_astra.md` | «.docs/diseno/coherencia/revision_astra.md» | PENDIENTE | | La última de diseño |
 | C-22 | Enmienda 5, parte 1 | REVISION | `.docs/diseno/enmienda_5/encargo_revision_astra.md` | «.docs/diseno/enmienda_5/revision_astra.md» | PENDIENTE | | |
@@ -50,7 +51,8 @@ Las rutas que aún no existen van entre «…» (el gate `refs-vivas` no las exi
 | C-29 | QA r02 de T-84, correcciones c1 | QA | `.docs/tickets/T-84/` | `.docs/tickets/T-84/qa.md` | PENDIENTE | | |
 | C-30 | T-75, ronda r03 | IMPLEMENTAR | `.docs/tickets/T-75/` | `.docs/tickets/T-75/README.md` | PENDIENTE | | Sobre la V0.74; la QA la hace otro agente |
 | C-31 | T-76, ronda r03 | IMPLEMENTAR | `.docs/tickets/T-76/` | `.docs/tickets/T-76/README.md` | PENDIENTE | | Después de T-75, sin mezclar |
-| C-32 | T-93, Bloque A | IMPLEMENTAR | «.docs/tickets/T-93/» | «.docs/tickets/T-93/README.md» | PENDIENTE | | Solo lo que sirve en cualquier diseño de A |
+| C-32 | QA de T-93, Bloque A (H-32 a H-39) | QA | `.docs/tickets/T-93/` | `.docs/tickets/T-93/qa.md` | PENDIENTE | | Implementó Claude el 12-11-2026 con autorización del operador; los scripts `r04_0x` de T-92 deben dar 0 fallos |
+| C-36 | QA de T-99, registro de experimentos | QA | `.docs/tickets/T-99/` | `.docs/tickets/T-99/qa.md` | PENDIENTE | | Fuera de los bloques; implementó Claude |
 | C-33 | T-91, Bloque A | IMPLEMENTAR | «.docs/tickets/T-91/» | «.docs/tickets/T-91/README.md» | PENDIENTE | | Ídem |
 | C-34 | T-88, Bloque A | IMPLEMENTAR | «.docs/tickets/T-88/» | «.docs/tickets/T-88/README.md» | PENDIENTE | | Ídem |
 
