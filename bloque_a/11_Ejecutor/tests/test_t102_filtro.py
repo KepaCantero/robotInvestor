@@ -119,7 +119,7 @@ def test_sin_codigos_permitidos_un_par_es_sospechoso():
     ("Comprar acciones de Banco Santander S.A. ya. El dólar cae.", "El dólar cae."),
     ("La renta variable de EE. UU. sube. Conviene comprar AAPL. El dólar cae frente al EUR.",
      "La renta variable de EE. UU. sube. El dólar cae frente al EUR."),
-    ("El dólar sube frente al euro… Conviene comprar AAPL.", "El dólar sube frente al euro…"),
+    ("El dólar sube frente al euro… Conviene comprar AAPL.", "El dólar sube frente al euro..."),   # con marcas, NFKC: «…» es «...»
 ])
 def test_se_divide_sin_partir_abreviaturas(perm, texto, esperado):
     assert v6.limpiar(texto, perm, MARCAS)[0] == esperado
@@ -205,6 +205,11 @@ def test_cada_campo_por_el_camino_real(tmp_path, monkeypatch):
     b.redaccion.generar = generar
     res = b.ciclo(AS_OF)
     p, red, m = res["paquete"], capt["red"], capt["marcas"]
+    # r04 (QA r03, H-29): los valores de los marcadores, calculados aparte a partir del paquete (no con `v6.marcadores`)
+    ops = [o for d in p["clases"].values() for o in d["opciones"]]
+    assert m["n_ideas"] == str(len(ops)) and m["n_tipos"] == str(sum(1 for d in p["clases"].values() if d["opciones"]))
+    assert m["candidatas:DIV"] == str(p["clases"]["DIV"]["candidatas_analizadas"])
+    assert m["opp:" + capt["opp"]] == next(o["nombre_llano"] for o in ops if o["opp_id"] == capt["opp"])
     todo = json.dumps([p, red], ensure_ascii=False)
     for x in ("AAPL", "US0378331005", "TSLA", "MSFT", "QQQ", "70 %", "58 %", "{opp:", "{n_", "{candidatas:"):
         assert x not in todo, x
@@ -247,3 +252,88 @@ def test_la_reescritura_declara_solo_lo_que_se_entrega(tmp_path, monkeypatch):
     assert n["k"] == 2
     assert not [x for x in res["paquete"]["limitaciones"] if x.startswith("Frases llanas del Sintetizador quitadas")]
     assert res["paquete"]["limitaciones"]
+
+
+# ================================================================================================== ronda r04 (QA r03 de T-102)
+PROHIBIDAS_R04 = [
+    # H-20: probabilidades en letra o con números Unicode
+    ("CIFRA", "Vemos un setenta por cien de probabilidad de subida."), ("CIFRA", "La probabilidad de subida es de tres entre cuatro."),
+    ("CIFRA", "Con una confianza de dos tercios, el BCE recortará."), ("CIFRA", "La probabilidad de subida es de ⅔."),
+    ("CIFRA", "Vemos un ⁷⁰ % de subida."), ("CIFRA", "Lo vemos en Ⅶ sobre Ⅹ."), ("CIFRA", "Novecientos de cada mil escenarios acaban en subida."),
+    ("CIFRA", "El escenario base pesa la mitad, el alcista un cuarto y el bajista otro cuarto."),
+    # H-23: probabilidades compuestas con marcadores
+    ("MARCADOR", "La probabilidad de subida es del {n:RV}{n:RV} %."), ("MARCADOR", "Lo vemos en {n:RV} sobre {candidatas:RV}."),
+    ("CIFRA", "La probabilidad de subida es alta en {n_ideas} ideas."),
+    # H-21: sufijo con punto o tras coma; un índice seguido del código de un fondo; nombres de fondo
+    ("R21", "Recomendamos Apple Inc."), ("R21", "Comprar Microsoft Corp. cuanto antes."), ("R21", "La opción preferida es Tesla, Inc."),
+    ("R21", "Comprar Apple inc ya."), ("R21", "Recomendamos el ETF MSCI World IWDA."), ("R21", "Comprar el S&P SPY ya."),
+    ("R21", "Recomendamos el Vanguard Global Stock Index Fund."), ("R21", "Recomendamos el Amundi MSCI World UCITS ETF."),
+    # H-22: minúsculas tras un vehículo, homoglifos, códigos pegados, una letra tras un vehículo, «$», mezcla de mayúsculas
+    ("R21", "Recomendamos el ETF qqq."), ("R21", "Recomendamos el fondo qqq."), ("R21", "Comprar ΝVDΑ ya."), ("R21", "Recomendamos el fondo ЅРY."),
+    ("R21", "Comprar renta variable-NVDA."), ("R21", "Comprar acciones.NVDA ya."), ("R21", "Vender el REIT O antes de la subida."),
+    ("R21", "Comprar $tsla ya."), ("R21", "Comprar AApl ya."), ("R21", "Comprar AA ya."),
+    ("MARCADOR", "Vemos ❴total❵ tipos."),
+]
+LEGITIMAS_R04 = [
+    "Las SICAV pierden atractivo fiscal.", "Las opciones de venta encarecen cuando el mercado tiene miedo.",
+    "El crédito AA aguanta mejor que el BBB.", "Los ETFs de renta fija captan flujos.", "Es una tesis para todo el siglo XXI.",
+    "La OTAN eleva el gasto en defensa.", "Invertir en el MSCI ACWI es la forma más sencilla de diversificar.",
+    "El escenario base supone un dólar más débil.", "Es probable que el BCE recorte este verano.",
+]
+
+
+@pytest.mark.parametrize(("regla", "frase"), PROHIBIDAS_R04)
+def test_r04_lo_que_pasaba_en_la_qa_r03_se_quita(perm, regla, frase):
+    assert v6.texto_prohibido(frase, perm, MARCAS) == regla
+
+
+@pytest.mark.parametrize("frase", LEGITIMAS_R04)
+def test_r04_frases_legitimas(perm, frase):
+    assert v6.texto_prohibido(frase, perm, MARCAS) is None
+
+
+def test_r04_llaves_de_ancho_completo_son_marcadores(perm):
+    """H-28: NFKC convierte «｛n_ideas｝» en «{n_ideas}», que se rellena."""
+    assert v6.limpiar("Vemos ｛n_ideas｝ ideas.", perm, MARCAS) == ("Vemos 5 ideas.", [])
+
+
+def test_r04_un_nombre_llano_con_ticker_no_se_rellena(perm):
+    """H-27: el `nombre_llano` lo escribe un Analista; si incumple la regla, el marcador pone «esta idea»."""
+    paquete = {"clases": {"RV": {"opciones": [{"opp_id": "OPP-2026-0001", "nombre_llano": "Comprar AAPL"}], "candidatas_analizadas": 3}}}
+    assert v6.marcadores(paquete, perm)["opp:OPP-2026-0001"] == "esta idea"
+
+
+def test_r04_un_glosario_que_no_es_texto_no_rompe_el_ciclo(tmp_path, monkeypatch):
+    """H-24: una definición que no es texto se quita y se declara (antes, el ciclo entero caía)."""
+    orig = mr._sintetizador
+
+    def sintetizador(msg, ctx, rng):
+        out = orig(msg, ctx, rng)
+        out["glosario"] = [{"termino": "Carry", "definicion": {"x": 1}}, {"termino": "Riesgo", "definicion": "Lo que puedes perder."}]
+        return out
+    monkeypatch.setattr(mr, "_sintetizador", sintetizador)
+    res = _bloque(tmp_path).ciclo(AS_OF)
+    assert any("FORMATO" in x for x in res["paquete"]["limitaciones"])
+
+
+def test_r04_muchos_espacios_en_tiempo_lineal(perm):
+    """H-26: 50.000 espacios o tabuladores seguidos (antes, 11 s)."""
+    t0 = time.perf_counter()
+    for t in (" " * 50_000 + "x", "\t" * 50_000 + "x", "a." + " " * 50_000 + "b"):
+        v6.limpiar(t, perm, MARCAS)
+    assert time.perf_counter() - t0 < 2
+
+
+def test_r04_el_sintetizador_recibe_la_lista_de_siglas(tmp_path):
+    """H-25: la instrucción lleva las siglas que puede usar."""
+    b = _bloque(tmp_path)
+    vistas = []
+    orig = b._invocar
+
+    def invocar(agente, contrato, mensaje, esquema, instrucciones, *a, **k):
+        if agente == "AG-26":
+            vistas.append(instrucciones)
+        return orig(agente, contrato, mensaje, esquema, instrucciones, *a, **k)
+    b._invocar = invocar
+    b.ciclo(AS_OF)
+    assert vistas and all("Siglas que puedes usar:" in x and " OTAN" in x for x in vistas)

@@ -93,12 +93,17 @@ v6:
                        # materias primas, segmentos soberanos y más divisas. BTC y ETH salen (H-09): un token concreto es un
                        # instrumento para R21 hasta que el operador decida otra cosa [PROPUESTO]
                        EEUU, LATAM, EMEA, APAC, ASEAN, BRICS, G7, G10, G20, OCDE, OECD, FMI, FOMC, BOC, RBA, RBNZ, OPEC, NFP,
-                       PER, EPS, TER, NAV, TIR, YTM, ROE, CAPEX, FCF, VAR, ETC, ETN, ETFS, SICAV, SOCIMI, REITS, FMM, IIC, UCITS,
-                       OTC, IA, AI, ESG, TMT, SPX, NDX, CSI, BCOM, TTF, HH, JKM, HSI, TOPIX, KOSPI, NIFTY, SENSEX, VSTOXX, SOFR,
-                       ESTR, EURIBOR, SONIA, UST, BUND, BTP, OAT, GILT, JGB, ILS, SGD, HKD, TWD, THB, IDR, MYR, PHP, CLP, COP,
+                       PER, EPS, TER, NAV, TIR, YTM, ROE, CAPEX, FCF, VAR, ETC, ETFS, SICAV, SOCIMI, REITS, FMM, IIC, UCITS,
+                       OTC, IA, ESG, TMT, SPX, NDX, CSI, BCOM, TTF, HH, JKM, HSI, TOPIX, KOSPI, NIFTY, SENSEX, VSTOXX, SOFR,
+                       ESTR, EURIBOR, SONIA, BUND, BTP, OAT, GILT, JGB, ILS, SGD, HKD, TWD, THB, IDR, MYR, PHP, CLP, COP,
                        PEN, ARS, SAR, AED, ISK, RON,
                        # T-102 r03 (QA r02, H-13): siglas del propio Documento 0 y de los informes de crédito y de activos digitales
-                       CDS, CLO, ABS, MBS, CMBS, CDO, NFT, RWA, ELTIF, HICP, SOFR, BEI, OIS, VRP, ETP, ESMA, CNMV, SEC, FCA]
+                       CDS, CLO, ABS, MBS, CMBS, CDO, NFT, RWA, ELTIF, HICP, SOFR, BEI, OIS, VRP, ETP, ESMA, CNMV, SEC, FCA,
+                       # T-102 r04 (QA r03, H-21 y H-22): nombres de índices tras su familia (ya no se borra lo que sigue a «MSCI»);
+                       # AI, ETN y UST salen de la lista porque también son tickers (en español: IA, nota cotizada, Tesoro)
+                       ACWI, EAFE, EMU, EURO,
+                       # T-102 r04 (QA r03, H-25): siglas corrientes de los informes que no son instrumentos
+                       SOX, SMI, ASX, OTAN, ONU, OMC, COVID, QE, QT, UK, TAM, EBIT, IVA, IRPF, EV, LNG, ADR, ADRS, FX, PYME, PYMES, CAPE]
 
 # ---------------------------------------------------------------------------
 # Modelos por agente. IMPORTANTE: los identificadores deben comprobarse en la

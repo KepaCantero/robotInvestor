@@ -34,3 +34,14 @@ Mutantes (`r02_mutantes.py`, 44, contra `tests/test_t102_filtro.py`): 40 muertos
 | `tests/test_t101_v6.py` | 73 | 73 (bancos de la r03 de T-101 adaptados: las legítimas sin cifras ni tickers y R13 → CIFRA; preguntas de prueba sin números) |
 
 `r02_mutantes.py` ya no aplica: las expresiones que mutaba (verbos, cortes, excepciones de R13) han desaparecido.
+
+## Ronda r04
+
+| Suite | Antes | Después |
+| --- | --- | --- |
+| `tests/test_t102_filtro.py` | 68 | 111 |
+| `tests/test_t101_v6.py` | 73 | 73 |
+| `revisores/r03_01_ataques.py` | R13 25/26 y R21 30/30 pasan; rendimiento 9,6 s | R13 0/26 y R21 4/30 pasan (los límites declarados); rendimiento 0,48 s |
+| `revisores/r03_02_banco_prompt.py` | legítimas quitadas 1/128; prohibidas que pasan 26/45 | legítimas quitadas 1/128; prohibidas que pasan 2/45 (y 2/3 límites) |
+
+Cuotas: ruff 2908 y mypy de A 109, sin cambios. A en total y el gate: los da el commit (`commit_limpio.sh`).
