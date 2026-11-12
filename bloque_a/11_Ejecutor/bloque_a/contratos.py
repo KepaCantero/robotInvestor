@@ -191,11 +191,17 @@ def _es_clave_sk(cola: str) -> bool:
     if cola.lower().startswith(PREFIJOS_SK):
         return True
     tramos = [t for t in re.split(r"[-_]", cola) if t]
+    if len(tramos) >= 4 and all(t.isdigit() for t in tramos):
+        return True   # T-103 (QA r01 de T-93, H-41): una cola de cuatro o más tramos de solo cifras no es texto corriente
     return len(tramos) < 2 or not all(_tramo_texto(t) for t in tramos)
 
 
-# T-93 (H-32): escapes que, delante de una clave, la pegarían a una cifra o una letra y la ocultarían
-RE_ESCAPES = re.compile(r"\\u[0-9a-fA-F]{4}|\\x[0-9a-fA-F]{2}|\\[ntr/bf\"\\]|%[0-9A-Fa-f]{2}")
+# T-93 (H-32): escapes que, delante de una clave, la pegarían a una cifra o una letra y la ocultarían. T-103 (QA r01 de T-93,
+# H-40): el tramo de barras se toma entero (un escape doble, como el de un JSON dentro de otro JSON, o una barra literal de
+# una ruta), porque consumir solo la barra escapada dejaba la «n» pegada a la clave. También los escapes largos de `ascii()`,
+# los octales, el «%uXXXX» de JavaScript y los «%25…» de una URL codificada dos veces
+RE_ESCAPES = re.compile(r"\\+(?:u[0-9a-fA-F]{4}|U[0-9a-fA-F]{8}|x[0-9a-fA-F]{2}|[0-7]{1,3}|[ntrbf/\"])"
+                        r"|%(?:25)*(?:u[0-9A-Fa-f]{4}|[0-9A-Fa-f]{2})")
 
 
 def secretos_en_texto(texto) -> list[str]:
@@ -219,7 +225,7 @@ def _textos(obj: Any):
         for k, v in obj.items():
             yield from _textos(k)
             yield from _textos(v)
-    elif isinstance(obj, (list, tuple, set)):
+    elif isinstance(obj, (list, tuple, set, frozenset)):   # T-103 (H-44): también `frozenset`, como `contenido_sensible`
         for v in obj:
             yield from _textos(v)
 

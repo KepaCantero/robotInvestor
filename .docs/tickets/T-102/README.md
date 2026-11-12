@@ -2,7 +2,7 @@
 
 | Campo | Valor |
 | --- | --- |
-| Estado | EN QA |
+| Estado | NO APTO (QA r01), ronda r02 pendiente |
 | Pieza | `bloque_a/11_Ejecutor` (`bloque_a/diseno_v6.py`) |
 | Planifica · implementa · QA | claude · claude · claude, con un revisor nuevo sin contexto |
 | Aprobación del operador | 2026-11-12: «Corrige el filtro» |
@@ -48,3 +48,4 @@ Que el filtro R13/R21 de los textos del Sintetizador (diseño V6) no estropee in
 
 - 2026-11-12 · ABIERTO · a petición del operador («Corrige el filtro»)
 - 2026-11-12 · EN QA · filtro frase a frase con reglas nuevas; 58 pruebas nuevas (30 fallan con el filtro de T-101); A 607
+- 2026-11-12 · NO APTO · QA r01 (revisor nuevo sin contexto): H-01 alto (R13 deja pasar 10 de 20 probabilidades numéricas), H-02, H-03 y H-10 medios, H-04 a H-09 bajos

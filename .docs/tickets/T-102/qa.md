@@ -1,25 +1,108 @@
 # T-102 · QA independiente
 
-- **Revisor:** <agente que no implementó> · **Ronda:** r01
+## Ronda r01
 
-## Reproducción desde limpio
+- **Revisor:** Claude, revisor nuevo sin el contexto de la implementación · **Ronda:** r01 · 2026-11-12
+- **Objeto:** commit `c688d72` (filtro R13/R21 frase a frase), comparado con `9b4741a` (el filtro de T-101, antes de T-102).
+- **Lectura:** la skill `ri-qa`, `CLAUDE.md`, el ticket, H-23 y H-24 de la ronda r03 de T-101 con sus bancos (`r02_ataques_v6.py` y `r03_ataques_v6.py`), el código (`frase_prohibida`, `texto_prohibido`, `limpiar`, `permitidos_r21`, `_es_instrumento`, `_aplicar_integracion`, `_redaccion_segura` y `sintetizar` de `diseno_v6.py`; `v6.filtro_r21_codigos`; `textos_por_defecto`), las dos baterías, R13 y R21 en el Documento 0 y la descripción para LLM. `analisis-tecnico.md` y `pruebas.md` se leyeron después, para contrastar.
 
-<Comandos y resultado.>
+### Reproducción desde limpio
 
-## Criterios de aceptación
+- **Copias limpias:** `git worktree add --detach` de `c688d72` y de `9b4741a` en la carpeta temporal de la sesión, quitadas al terminar; el código se importa de cada copia, con el `.venv` del proyecto.
+- **Suite del Bloque A** en la copia de `c688d72` (`.venv/bin/python -m pytest -q bloque_a/11_Ejecutor/tests`): **607 pasan**, 0 fallan (9 min 46 s).
+- **Gate:** `./tools/check_all.sh` completo en la copia limpia de `c688d72` (con el `.venv` del proyecto enlazado): **12 pasan, 0 fallan** (corpus íntegro, 695 archivos; A 607, A-Forex 68, B 176; ruff 2986, mypy A 109, FX 174, B 159, iguales a las cuotas).
+- **`tests/test_t102_filtro.py` sobre el código de `9b4741a`:** 30 fallan y 28 pasan, como dice `pruebas.md`.
+- **La V5 no cambia** (`T-101/revisores/r01_v5_sin_cambios.py`, `9b4741a` frente a `c688d72`, doce perfiles, dos semanas): runs, llamadas y paquetes JSON **iguales**. En el estado solo difieren el sello de integridad y, en F5, las rutas temporales de los entregables y el consumo por tipo (±0,0003 UC en el total), que ya varía entre dos ejecuciones del mismo código por el orden de los hilos (lo dice la r01 de T-101). Ningún fichero fuera de `diseno_v6.py` usa el filtro.
+- **Bancos de las QA de T-101, otra vez:**
+  - `r03_ataques_v6.py -k filtro` y `-k sintetizador`: 6 OK y 1 OBS. `filtro_falsos_positivos` 0/19, `filtro_falsos_negativos` 0/12, `filtro_solo_primera_palabra` OK (con artículo o adverbio también se caza), `sintetizador_falso_negativo` OK (no llega al paquete ni al informe técnico) y `sintetizador_lectura_opciones_porcentaje` OK. Nota: `sintetizador_tarjeta_tira_llanos` da OK de forma trivial, porque busca el texto antiguo de la limitación; lo cubre `test_una_tarjeta_mala_no_tira_las_demas` y `r01 vacio_toma_su_defecto`. La OBS: `GLD`, `XLK`, `SPY` y `TLT` se cazan con «comprar»; `BTC-USD` y `ETH-USD` no (son series del universo; ver H-09).
+  - `r02_ataques_v6.py -k filtro` y `-k sintetizador`: los dos `filtro_*` dan FALLO porque llaman a `texto_prohibido(t)` sin los códigos permitidos (lo explica la r03 de T-101); por el camino real, `sintetizador_ejemplo_r01` y `sintetizador_falso_positivo` dan OK.
+  - Los mismos bancos **con los códigos permitidos reales** (`r01_ataques_t102.py -k bancos`): **0 de 28** legítimas quitadas y **25 de 26** prohibidas cazadas con su regla; la que pasa es «Conviene entrar en Tesla antes de resultados», el límite declarado.
+- **Scripts nuevos** (en `revisores/`, prefijo `r01_`; desde la raíz, `.venv/bin/python -I <script> <raíz de la copia>`):
+  - `r01_banco_frases.py`: banco nuevo de 165 frases de informes de los doce tipos y textos generales (107 legítimas y 58 prohibidas), más 5 dudosas que no cuentan. Admite la raíz de `9b4741a` para comparar con el filtro de T-101.
+  - `r01_ataques_t102.py`: 16 comprobaciones (bancos anteriores, regresión frente a T-101, división en frases, vacíos y no texto, texto por defecto elemento a elemento, declaración de lo quitado, segunda pasada de HT-09 con reescritura y rendimiento). Resultado: 8 OK, 6 FALLO y 2 OBS; `-k <filtro>` ejecuta una parte.
+  - `r01_mutantes.py`: 38 mutantes de `diseno_v6.py` contra las 64 pruebas del filtro y del Sintetizador de las dos baterías; los que sobreviven se repiten contra las dos baterías enteras (131 pruebas, opción `todos … completo`). Resultado: **21 muertos y 17 vivos** (H-10).
+
+### Tasas sobre el banco nuevo (`r01_banco_frases.py`)
+
+| Medida | T-102 (`c688d72`) | T-101 (`9b4741a`) |
+| --- | --- | --- |
+| Falsos positivos, todas las legítimas | 20/107 (18,7 %) | 8/107 (7,5 %) |
+| · frases sin sigla tras un verbo (87) | **0/87 (0 %)** | 7/87 (8,0 %) |
+| · frases con un verbo de compra, venta o inversión y una sigla que no está en la lista (20) | **20/20 (100 %)** | 1/20 (5 %) |
+| Falsos negativos, todas las prohibidas | 15/58 (25,9 %) | 27/58 (46,6 %) |
+| · R21 (38) | 5/38 (13,2 %) | 23/38 (60,5 %) |
+| · R13 (20) | **10/20 (50 %)** | 4/20 (20 %) |
+
+El banco carga a propósito el grupo difícil (siglas tras un verbo: 19 % de las legítimas), así que la tasa total de falsos positivos depende de la mezcla; lo útil es la separación por grupos.
+
+**¿Son aceptables para un informe?**
+- **Falsos positivos:** en frases normales, sí (0 de 87). Pero cualquier frase con un verbo de compra, venta o inversión seguido de una sigla que no está en `filtro_r21_codigos` se quita siempre, y eso incluye la notación corriente de los pares en DIV (`EUR/USD`), calificaciones (`BBB`), regiones (`LATAM`), temas (`IA`), reuniones (`FOMC`), ratios (`PER`, `TER`, `NAV`) e índices (`EURO STOXX`, `MSCI ACWI`, `SPX`, `CSI`, `BCOM`). Falla cerrado y se declara, así que es tolerable de forma transitoria, pero no en el informe de divisas (H-03).
+- **Falsos negativos R21:** aceptable como red de seguridad (de 60 % a 13 %, con el límite declarado aparte), salvo los casos evidentes con dos puntos o coma tras el verbo y la regresión del paréntesis (H-02).
+- **Falsos negativos R13:** **no aceptable**. La mitad de las probabilidades numéricas pasan, entre ellas la construcción más natural en español («La probabilidad de que el S&P 500 suba este mes es del 70 %»), que el filtro de T-101 sí cazaba (H-01).
+
+### Criterios de aceptación
 
 | Criterio | Cumple | Evidencia |
 | --- | --- | --- |
-| CA-1 | sí / no | … |
+| CA-1 | sí | Las 28 legítimas de las QA r02 y r03 de T-101, con los códigos permitidos reales: 0 quitadas (`r01_ataques_t102.py -k bancos`; `test_una_frase_legitima_no_se_quita`) |
+| CA-2 | sí | 25 de 26 prohibidas cazadas con su regla; la que pasa es «entrar en Tesla», el límite declarado (ídem; `test_una_frase_prohibida_se_caza_con_su_regla`). Fuera del banco, las tasas de arriba (H-01 y H-02) |
+| CA-3 | sí, con reserva | `r01 vacio_toma_su_defecto`, `division_abreviatura_legitima`, `division_cifras` y `division_interrogacion` OK; `test_una_tarjeta_mala_no_tira_las_demas` y `test_en_la_integracion_se_quita_solo_la_frase` pasan. Cada elemento vacío toma su propio defecto (frase de 30 s, «qué puede salir mal» y ámbito de su tarjeta, historial) y los demás no cambian. Reserva (H-04): un salto de línea sin punto o unos «…» no separan frases, y entonces se quita también lo legítimo; una abreviatura deja un trozo suelto («ya.») |
+| CA-4 | **no** | Lo quitado de la integración y de los textos llanos se declara con su cuenta (`r01 cuenta_de_lo_quitado` OK) y la segunda pasada de HT-09 no bloquea, ni con todo prohibido ni con la reescritura por legibilidad (`r01 segunda_pasada_*`: APTO, legibilidad 80,6 y 81,6, nada llega a los entregables). Pero **una entrada del glosario con una frase prohibida se quita entera sin declararlo ni contarlo** (`r01 glosario_quitado_se_declara`: FALLO; el filtro de T-101 sí lo declaraba), H-05. Además, con la reescritura la limitación sale dos veces (H-06) |
+| CA-5 | sí | La V5 no cambia (arriba); A 607; cuotas sin cambios (ruff 2986, mypy A 109); gate 12/12 en la copia limpia |
 
-## Hallazgos
+### Hallazgos
 
 | ID | Gravedad | Cómo reproducirlo | Esperado / obtenido | Corrección sugerida | Estado |
 | --- | --- | --- | --- | --- | --- |
-| H-01 | crítica · alta · media · baja | … | … | … | abierto · corregido |
+| H-01 | **alta** | `r01_ataques_t102.py -k regresion` y `r01_banco_frases.py` (y la misma orden con la raíz de `9b4741a`) | **Esperado:** README §6 bis, «se quitan las que dan una probabilidad numérica (R13)»; R13 es una regla del Documento 0 cuyo incumplimiento es Material o Crítico; y T-102 no debía empeorar lo que T-101 cazaba. **Obtenido:** el segundo patrón de `_R13` exige el enlace pegado a «probabilidad» (o a «probabilidad de + una palabra»), y `_ENLACE` no tiene «son». Pasan **10 de 20** probabilidades numéricas del banco, frente a 4 de 20 con el filtro de T-101. **Seis de ellas las cazaba el filtro de T-101 (regresión):** «La probabilidad de que el S&P 500 suba este mes es del 70 %», «Las probabilidades de un recorte en marzo son del 60 %», «La probabilidad de que bajen los alquileres es del 40 %», «El escenario alcista tiene una probabilidad estimada del 65 %», «La probabilidad implícita de un movimiento del 5 % es del 18 %» y «La probabilidad de una corrección del 10 % es del 30 %». También pasan «Probabilidad de que el euro caiga: 70 %», «Probabilidad de subida del crudo: 80 %», «La probabilidad de inversión de la curva este año es del 35 %» y «Con un 80 % de seguridad, la renta variable sube». «La probabilidad de que X … es del N %» es la forma más natural de decirlo en español. CA-2 se cumple solo porque el banco no tiene esa construcción. Es alta y no media porque es una regresión que introduce este ticket en una regla constitucional (la QA r03 de T-101 bajó H-24 a media porque no empeoraba nada) | Volver a una ventana dentro de la frase entre la palabra de probabilidad y la cifra, como en T-101 (`[^.;:!?]{0,N}?`), pero exigiendo que la cifra vaya precedida de un enlace («es», «son», «será», «ronda», «del», «de», «:») y no de un nivel («hasta el», «en el», «al», «de un recorte/una subida de»). Añadir «son» a `_ENLACE` y «seguridad» y «certeza» al primer patrón. Llevar estas diez frases y la de T-101 («hasta el 4,25 %») a `test_t102_filtro.py` | abierto |
+| H-02 | media | `r01_banco_frases.py`, `r01_ataques_t102.py -k esconde_compra` y `-k regresion` | **Esperado:** ticket, «tras un verbo de compra o venta, de inversión o de toma de posiciones, cualquier código que sea un instrumento **en lo que queda de la frase**»; objetivo: «cace las compras evidentes». **Obtenido:** la ventana se corta en la primera coma, el primer punto y coma o los primeros dos puntos, y a los 60 caracteres. Pasan: «Comprar: NVDA, AMD y AVGO.», «Para la cobertura, comprar: FXF.» y «Conviene comprar, por valoración, META.». Regresión frente a T-101: «Compra, esta semana, acciones de Apple (AAPL).» (T-101 la cazaba con la regla del código entre paréntesis, que se quitó). Una abreviatura parte la frase y separa el verbo del código: «Conviene comprar acciones de EE. UU. como AAPL esta semana», «Vender bancos de EE. UU. y en concreto JPM» y «Comprar tecnológicas de EE. UU. (AAPL, MSFT)» pasan. Faltan verbos corrientes de inversión («Apostar por NVDA», «Acumular MSFT»). `XEON.DE`, un fondo monetario del universo, cuenta como serie por el punto y vale junto a «invertir en», al revés que GLD o XLK. En el banco, 5 de 38 R21 pasan (13 %; 60 % con T-101) | Mirar el código en toda la frase que sigue al verbo, con «:» y «,» incluidos, y cortar solo en otro verbo; recuperar la regla del paréntesis con verbo en la frase; proteger las abreviaturas antes de dividir (H-04); añadir «apostar por», «acumular», «ponerse largo/corto en» y «exponerse a través de»; contar como serie solo lo que tiene «=», «^», «-», «/» o dígitos (no el sufijo de bolsa «.DE»). Llevar los casos a la prueba | abierto |
+| H-03 | media | `r01_banco_frases.py` (grupo «sigla») | **Esperado:** README, «un código que no está en `filtro_r21_codigos`, **ni es un par de divisas** ni una serie del universo»; objetivo: «no estropee informes normales». **Obtenido:** cualquier sigla fuera de la lista tras un verbo quita la frase: **20 de 20** legítimas del grupo. Entre ellas la notación habitual de los pares en DIV, «Conviene vender EUR/USD si el BCE recorta…» y «El mercado compra USD/JPY…» (el código solo reconoce el par sin barra, y el README no lo dice); «crédito BBB», «Sobreponderar LATAM», «Invertir en IA», «antes de la reunión del FOMC», «PER», «TER», «NAV», «SOCIMI», «EURO STOXX 50», «MSCI ACWI» (ACWI es el código de fondo del universo y también el nombre del índice), «SPX», «CSI 300», «gas TTF», «BCOM», «ILS», «FMM» y «EE.UU.» sin espacio. Falla cerrado y se declara | Aceptar `XXX/YYY` cuando las dos son divisas permitidas; normalizar «EE.UU.»; ampliar la lista con calificaciones (o un patrón `[A-D]{1,3}[+-]?`), regiones, siglas macro y de índices; o exigir que el código sea el complemento del verbo (tras un artículo, «el ETF», «acciones de»…), no cualquier sigla de la ventana. La lista, en K cuando exista | abierto |
+| H-04 | baja | `r01_ataques_t102.py -k division` | **Esperado:** se quita la frase entera y solo ella; el README promete detectar «un sufijo societario». **Obtenido:** (a) `_FRASE` parte por cualquier «. »: «Comprar acciones de Banco Santander S.A. ya. El dólar cae.» deja «ya. El dólar cae.» y «Comprar bonos de EE.UU. a dos años…» deja «a dos años.»; (b) `S\.A\.\b` en `_R21` no puede casar nunca (no hay límite de palabra entre «.» y un espacio o el final), así que «Telefónica S.A. mejora márgenes» no se detecta y «Apple Inc mejora márgenes» sí; (c) un salto de línea sin punto o unos «…» no separan, y se quita también la frase legítima; (d) `limpiar` junta las frases con un espacio, así que un texto sin nada prohibido pierde sus saltos de línea | Proteger las abreviaturas habituales (EE. UU., S.A., p. ej., etc.) antes de dividir; dividir también por «\n» y «…»; `S\.A\.(?!\w)`; conservar los separadores originales al juntar | abierto |
+| H-05 | baja | `r01_ataques_t102.py -k glosario` | **Esperado** (CA-4): lo quitado se declara. **Obtenido:** una entrada del glosario con una frase prohibida se quita entera, pero no entra en `quitadas`, así que no se cuenta ni se declara (el filtro de T-101 la declaraba, porque miraba `_textos(red)` entero). Por esto CA-4 no se cumple | Contar en `quitadas` las entradas del glosario quitadas (y su regla); prueba | abierto |
+| H-06 | baja | `r01_ataques_t102.py -k reescritura` | Con la reescritura por legibilidad, la limitación de la primera respuesta, que se descarta, se queda en el paquete, y la de la segunda se añade detrás: «Frases llanas del Sintetizador quitadas por R21: 1…» sale dos veces. La segunda pasada no bloquea y nada prohibido llega | Antes de añadir la limitación, quitar la de una pasada anterior, o declarar solo lo de la redacción que se entrega | abierto |
+| H-07 | baja | `r01_ataques_t102.py -k rendimiento` | El patrón del sufijo societario (`_R21[0]`) es cuadrático con una cadena larga de palabras en mayúscula sin puntuación: 3.000 caracteres, 0,07 s; 9.000, 0,5 s; 18.000, 2,1 s; 51.000, **14 s**. `sintesis._UNITARIA` tarda 2 s con «acciones de» repetido 2.200 veces. Solo con una salida degenerada del modelo, acotada por `max_tokens` (8.000, unos 30.000 caracteres) | Acotar la cadena (`(?:\s+[A-Z][\w&.-]+){0,6}`), o recortar cada texto a su límite de `sintetizador_limites` antes de filtrarlo (hoy se filtra el texto entero y después se recorta) | abierto |
+| H-08 | baja | `diseno_v6.py`, `frase_prohibida`: `t[m.end():m.end() + 60]` | La ventana de 60 caracteres tras el verbo es un umbral escrito a mano (regla 2 de `CLAUDE.md`; mismo caso que H-21 de T-101, cuyos límites se llevaron a la configuración) | `v6.filtro_r21_ventana` en el YAML, marcado técnico (o quitar la ventana, H-02) | abierto |
+| H-09 | baja | `r01_banco_frases.py` (dudosas); `r03_ataques_v6.py -k universo` | `BTC` y `ETH` entran en `filtro_r21_codigos` («técnico, ampliable»), así que «Comprar BTC ahora» y «Comprar ETH» pasan, pero «Comprar SOL» se caza, aunque `SOL-USD` está igual en el universo de CRI. R21 nombra el «token concreto» como hallazgo Material: decidir si un token del universo es un ámbito es una decisión de R21, tomada sin `[PROPUESTO]` | Llevar la decisión al operador (`[PROPUESTO]` en la deuda) y tratar igual a todos los tokens del universo | abierto |
+| H-10 | media | `r01_mutantes.py <raíz> 4` y, para los vivos, `r01_mutantes.py <raíz> 4 todos completo` | **Esperado:** las baterías vigilan el filtro de cada texto (CA-3 y CA-4). **Obtenido:** sobreviven **17 de 38** mutantes contra las dos baterías enteras. Sin ninguna prueba que lo note se puede dejar sin filtro el glosario (Q19), los motivos llanos (Q20), la frase del historial (Q21), el ámbito llano (Q22), el «qué puede salir mal» (Q23), los factores (Q28), las preguntas (Q29) y las limitaciones del Sintetizador (Q31); también quitar la regla del ISIN sin verbo (Q13), `_UNITARIA` (Q34), «la venta de» (Q35), el «;» como separador (Q24) y el corte en «y + verbo» (Q07), pasar el Sintetizador sin códigos permitidos (Q27, como P03 a P05 en H-29 de T-101) y dejar vacía, sin su defecto, una frase de 30 s (Q37). Q04 y Q15 se cubren el uno al otro con los pares del universo (casi equivalentes; los mataría un par fuera del universo, como «EURGBP»). Solo se vigilan de verdad el «por qué» de la tarjeta, las frases de 30 s, la lectura del conjunto y el régimen | Una prueba por el camino real que ponga una frase prohibida y una legítima en cada campo de texto (los diez) y compruebe que sale la legítima, que el vacío toma su defecto y que se declara; un ISIN sin verbo; «la venta de» con un ticker; una frase separada por «;»; un texto legítimo con un par y una serie del universo por el camino real (Q27); un par fuera del universo | abierto |
 
-Los scripts de ataque van en `revisores/` dentro de este ticket, numerados por ronda y sin sobrescribir.
+**Mutantes** (`r01_mutantes.py`, contra `tests/test_t102_filtro.py` y `tests/test_t101_v6.py`):
 
-## Veredicto
+| Resultado | Mutantes |
+| --- | --- |
+| Muertos (21) | Q01 sin «probabilidad + enlace + cifra» · Q02 sin «posibilidad» · Q03 sin «:» · Q05 las series son instrumentos · Q06 ventana de 12 caracteres · Q08 se quita el texto entero · Q09 el vacío no toma su defecto · Q10 la frase mala toma entero el defecto · Q11 lo llano quitado no se declara · Q12 lo de la integración no se declara · Q14 el ISIN antes que las series · Q16 sin «invertir en» · Q17 sin «tomar posiciones» · Q18 el código sin mayúsculas · Q25 sin «de confianza» · Q26 sin «probable al» · Q30 el régimen sin filtro · Q32 sin sufijo societario · Q33 sin emisión con vencimiento · Q36 «EE.» con punto · Q38 la tarjeta vacía sin su defecto |
+| Vivos (17) | Q04, Q07, Q13, Q15, Q19, Q20, Q21, Q22, Q23, Q24, Q27, Q28, Q29, Q31, Q34, Q35 y Q37 (detalle en H-10) |
 
-**APTO / NO APTO** · motivo.
+**Lo que se intentó y no se rompió:**
+- Los bancos de las QA r02 y r03 de T-101, con los códigos permitidos reales (CA-1 y CA-2).
+- Frase a frase: se conserva lo legítimo alrededor de la frase quitada, también con «EE. UU.» delante, con cifras con punto o coma, con «;», «?» y «!».
+- Texto por defecto por elemento: la frase de 30 s, el «qué puede salir mal» y el ámbito de su tarjeta, y el historial toman el suyo, y los demás no cambian; un motivo llano prohibido desaparece (su defecto está vacío) y el informe usa el suyo; una tarjeta inventada se queda vacía y no llega al informe.
+- Nada de lo prohibido llega al paquete ni a los tres entregables, y la segunda pasada de HT-09 da APTO con todos los textos prohibidos y con la reescritura por legibilidad.
+- Textos vacíos o que no son texto (`None`, números, NaN, booleanos, listas, diccionarios, bytes, espacios): ni un error; sin códigos permitidos, el filtro es estricto (falla cerrado).
+- La V5 no cambia.
+
+### Invariantes
+
+- **R13 y R21:** el Sintetizador sigue sin poder cambiar la selección ni las cifras. El filtro de sus textos es mejor en R21 (de 60 % a 13 % de falsos negativos y 0 % de falsos positivos en frases normales), pero peor en R13 (H-01) y quita las frases con siglas no listadas (H-03). En la V5, AG-02 y AG-17 siguen sin filtro (en la deuda, fila T-101).
+- **Sin LLM en la ruta determinista:** el filtro es código; no llama al modelo.
+- **Falla cerrado:** lo que no se reconoce se quita y se declara; sin códigos permitidos, el filtro es estricto. Excepción: el glosario se quita sin declararlo (H-05).
+- **Números de la configuración y `[PROPUESTO]`:** la lista sale de `v6.filtro_r21_codigos`; la ventana de 60 caracteres está escrita a mano (H-08); `BTC` y `ETH` en la lista son una decisión de R21 sin `[PROPUESTO]` (H-09).
+- **Corpus:** el commit no toca ningún fichero de `01_` a `10_` ni `99_`; el gate lo confirma (695 archivos coinciden con el manifiesto).
+- **Secretos y datos personales:** los bancos usan tickers, ISIN de ejemplo y nombres de sociedades cotizadas; ningún dato personal. Gate `secrets` en verde.
+- **Documentación:** `pruebas.md` se reproduce (58 pruebas, 30 fallan con el filtro de T-101; A 607). El README del ejecutor (§6 bis), el ticket y `analisis-tecnico.md` dicen más de lo que hace el código: «se quitan las que dan una probabilidad numérica» (H-01), «ni es un par de divisas» (con barra, no: H-03), «un sufijo societario» («S.A.», no: H-04), «en lo que queda de la frase» (hasta la coma y 60 caracteres: H-02, aunque `analisis-tecnico.md` sí dice «60 caracteres… hasta la coma») y «las dos lo declaran» (el glosario, no: H-05). La fila T-102 de la deuda es correcta pero solo cita el límite del nombre propio.
+
+### Veredicto r01
+
+**NO APTO** · CA-4 no se cumple (H-05: una entrada del glosario se quita sin declararlo) y hay un hallazgo **alto** abierto (H-01: regresión del filtro R13; la mitad de las probabilidades numéricas pasan, entre ellas «La probabilidad de que X … es del N %», que el filtro de T-101 cazaba). CA-1, CA-2 y CA-5 se cumplen; CA-3, con reserva.
+
+Para volver a QA:
+- Corregir H-01 y H-05 con sus pruebas de regresión (las frases de H-01 al banco de `test_t102_filtro.py`; la prueba de H-05 cubre Q19).
+- Valorar H-02, H-03 y H-10 (medios) ahora, porque tocan las mismas reglas, o pasarlos a la deuda con su ID. Ajustar el README a lo que haga el código.
+- Los bajos (H-04 y H-06 a H-09), a la deuda si no se corrigen.
+
+Lo que está bien:
+- El filtro va frase a frase y cada elemento toma su propio texto por defecto.
+- H-23 queda corregido: «opciones», pares sin barra, siglas como WTI, GNL, MSCI o DXY y series del universo dejan de quitarse.
+- H-24 queda corregido en lo que pedía: artículo o sustantivo entre medias, «invertir en», «tomar posiciones en» y «abrir largos en».
+- La segunda pasada no bloquea, la V5 no cambia y el gate da 12/12.
+
+Cierre: este revisor no cambia el estado del ticket ni hace commit (instrucción de la ronda). Tras la corrección, volverá a ejecutar `r01_banco_frases.py`, `r01_ataques_t102.py` y `r01_mutantes.py` y añadirá la ronda r02.

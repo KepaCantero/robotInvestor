@@ -17,14 +17,19 @@ Antes del cambio: `r04_01` 11 fallos, `r04_02` 2 y `r04_03` 4 (como la QA r04). 
 
 - `bloque_a/contratos.py`: `RE_ESCAPES` (escapes que se sustituyen en la segunda variante); `RE_TRAMO_TEXTO` ampliado; `_tramo_texto` (con `RE_FECHA_8` y la comprobación de que la fecha existe y un tope de 30 caracteres por tramo).
 - `bloque_a/llm.py`: `contenido_sensible` recorre `set` y `frozenset`; anotaciones de tipos modernizadas con `ruff --fix` (UP006, UP045, UP035, UP037), sin cambio de comportamiento.
-- `bloque_a/almacen.py`: lectura en bytes y separación de la última línea antes de decodificar; apartado de la línea parcial también en modo `legado`; el tipo de `RelojSistema.fecha` es `date` (un error de mypy menos).
+- `bloque_a/almacen.py`: lectura en bytes y separación de la última línea antes de decodificar; apartado de la línea parcial también en modo `legado`; el tipo de `Reloj.fecha` es `date` (un error de mypy menos).
 - `bloque_a/interfaz_broker.py`: `_instante` rechaza números y booleanos y convierte un `date` en su texto; `enviar` solo toma «sin plazo» con `None` o «»; `vencer` anota una incidencia DATOS y vence la consulta si su plazo guardado no se lee.
 - `tests/test_t93_hallazgos.py`: 37 pruebas.
 - `tools/cuotas.txt`: ruff 3019 (antes 3072), mypy de A 114 (antes 115), línea base de A 476 (antes 439).
 
 ## Límites (H-36)
 
-R8 sigue sin detectar las colas hechas solo de tramos con forma de texto: el 2,25 % de 5 grupos de 4 mayúsculas y cifras (estilo licencia), el 0,35 % de 4 grupos base32 de 7 en minúsculas y todos los grupos de 8 letras minúsculas. Ningún proveedor conocido usa esas formas; es el precio aceptado de la regla de T-92 (todo candidato es clave salvo que parezca texto corriente). T-93 no lo empeora: `r04_01` caso 1 da las mismas cifras que en la r04.
+R8 sigue sin detectar las colas hechas solo de tramos con forma de texto: el 2,25 % de 5 grupos de 4 mayúsculas y cifras (estilo licencia), el 0,35 % de 4 grupos base32 de 7 en minúsculas y todos los grupos de 8 letras minúsculas. Ningún proveedor conocido usa esas formas; es el precio aceptado de la regla de T-92 (todo candidato es clave salvo que parezca texto corriente). En `r04_01` caso 1, T-93 da las mismas cifras que en la r04.
+
+*Corregido el 12-11-2026 tras la QA r01 (H-41, H-45 y H-46 a; correcciones en T-103):*
+
+- **La ampliación de `RE_TRAMO_TEXTO` (H-33) sí deja de ver formas que antes se veían.** Las colas de 5 grupos de 5 cifras y de 4 grupos de 6 cifras pasaron de 2000/2000 a 0/2000. T-103 las recupera: una cola de cuatro o más tramos de solo cifras cuenta como clave (2000/2000 en `r01_01` caso 5). Siguen sin verse las de 3 grupos de 10 mayúsculas y de 4 grupos de 6 mayúsculas (0/2000), porque tienen forma de siglas. Ningún proveedor conocido usa esas formas; es el mismo precio aceptado que arriba.
+- **Falsos positivos con cifra y unidad (H-45).** Siguen marcando como clave 6 de 10 titulares reales de prensa financiera con una cifra y una unidad pegadas: «lpddr5x», «2nm», «1bn», «16gb», «300mm» y «2tn». Falla cerrado: el resultado de la herramienta sale PARCIAL con una incidencia, y no se pierde ninguna clave.
 
 ## Comandos
 
