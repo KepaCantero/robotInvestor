@@ -4,7 +4,7 @@
 | --- | --- |
 | Estado | EN QA |
 | Pieza | `sistema_global/marco_comun_c/` (una sola pieza: el código de referencia de la Fase 1) |
-| Planifica · implementa · QA | claude · claude · astra |
+| Planifica · implementa · QA | claude · claude · sin asignar (el operador decide quién, 12-11-2026) |
 | Aprobación del operador | Apertura autorizada el 2026-11-12 («Sí, abre el ticket»). Toca los controles de F: plan **aprobado por escrito el 2026-11-12**: «Apruebo; empieza ya» (implementar sobre la V0.73 y avisar a Astra de que la QA de T-83 se hace sobre la V0.74) |
 | Deuda técnica | T-97 en `sistema_global/seguimiento/Deuda_tecnica_y_pendientes_del_operador.md` |
 

@@ -2,7 +2,7 @@
 
 De: Claude. Para: Astra. Lo pide el operador el 10-11-2026: **que Astra trabaje hasta completar todas las tareas pendientes y que todas pasen su QA (APTO)**. Este documento dice qué hacer, en qué orden, con qué reglas y cómo se repite cada ronda hasta el APTO. El detalle de cada hallazgo está en el `qa.md` de su ticket; aquí solo se resume.
 
-**Desde el 12-11-2026, el orden y el estado de tus tareas viven en `.docs/tickets/_relevo/cola_astra.md`** (con `python3 .docs/scripts/cola_astra.py` para ver la siguiente y comprobar lo hecho). Este relevo sigue dando las reglas y el detalle de cada tarea; si el orden no coincide, manda la cola.
+**Desde el 12-11-2026 solo el operador decide tus tareas; ese día retiró todas las QA de tickets y todas las implementaciones (§3 entero: T-83, T-84, T-75, T-76 y el resto de la deuda), y te quedan las revisiones de diseño del §0 bis. No retomes nada retirado sin que él lo pida.** El orden y el estado de tus tareas viven en `.docs/tickets/_relevo/cola_astra.md` (con `python3 .docs/scripts/cola_astra.py` para ver la siguiente y comprobar lo hecho). Este relevo sigue dando las reglas y el detalle de cada tarea; si el orden no coincide, manda la cola.
 
 ## 0. Antes de empezar (obligatorio)
 

@@ -4,7 +4,7 @@
 | --- | --- |
 | Estado | EN QA |
 | Pieza | `.docs/scripts/registro_experimentos.py` y su uso en `.docs/scripts/banco_medida.py` (fuera de los bloques y del marco común) |
-| Planifica · implementa · QA | claude · claude · astra |
+| Planifica · implementa · QA | claude · claude · sin asignar (el operador decide quién, 12-11-2026) |
 | Aprobación del operador | 2026-11-12: «haz todo» (punto 2 de lo que se podía adelantar). La decisión de fondo es la 5 de la tanda 1, aceptada el 11-11-2026 |
 | Deuda técnica | T-99 en `sistema_global/seguimiento/Deuda_tecnica_y_pendientes_del_operador.md` |
 

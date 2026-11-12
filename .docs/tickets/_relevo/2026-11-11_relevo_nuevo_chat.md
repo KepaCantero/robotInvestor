@@ -56,7 +56,7 @@ El Robot Investor es un sistema de inversión personal por bloques. A busca opor
 
 | Pieza | Estado |
 | --- | --- |
-| `bloque_a/` (V5.1) | Corregido y auditado (T-53, T-66, T-92); T-93 implementado por Claude, en QA de Astra. 476 pruebas. Pendientes técnicos: T-88 y T-91 |
+| `bloque_a/` (V5.1) | Corregido y auditado (T-53, T-66, T-92); T-93 implementado por Claude, QA sin asignar. 476 pruebas. Pendientes técnicos: T-88 y T-91 |
 | `bloque_a_forex/` | Fuera del Robot Investor (D-20). 68 pruebas |
 | `bloque_b/` (V2.1) | Congelado. Evaluado en T-68 y con un rediseño propuesto, ambos a la espera de Astra. 176 pruebas |
 | `sistema_global/marco_comun_c/` (V0.74) | Código de referencia de la Fase 1, 62 suites, todo en simulado. La V0.74 (T-97, EN QA) alinea los valores por defecto con la tanda 2 |
@@ -99,14 +99,13 @@ La pasada de coherencia reúne las doce incoherencias halladas, los servicios pe
 
 En blanco en `.docs/plantillas_operador/`: ficha de restricciones, inventario del patrimonio, preguntas al asesor fiscal y carta de instrucciones. Se rellenan **fuera del repositorio**.
 
-### Cola de Astra (por orden)
+### Cola de Astra
 
-Desde el 12-11-2026 la cola con su estado está en `.docs/tickets/_relevo/cola_astra.md` (34 tareas) y se consulta con `python3 .docs/scripts/cola_astra.py`. El operador abre cada sesión de Astra con el mensaje de `.docs/tickets/_relevo/arranque_astra.md`. En resumen:
+**Desde el 12-11-2026 solo el operador decide qué tareas hace Astra** («A partir de ahora yo te diré qué tareas quiero que realice Astra»). La cola con su estado está en `.docs/tickets/_relevo/cola_astra.md` y se consulta con `python3 .docs/scripts/cola_astra.py`; el operador abre cada sesión de Astra con el mensaje de `.docs/tickets/_relevo/arranque_astra.md`.
 
-
-1. Las 22 revisiones de diseño.
-2. La QA de T-94, de T-95, de T-96 y de T-97. **Ojo:** T-97 (marco V0.74) toca `orquestador.py`, `control_f.py`, `migraciones.py` y `parametros_doc.py`, así que la QA de T-83 se hace ya sobre la V0.74.
-3. Las tareas anteriores del relevo del 10-11, que siguen abiertas: T-75 y T-76 están detenidas tras un NO APTO, y T-83 y T-84 están implementadas sin QA. Las que dependen de la arquitectura (T-73, T-74, T-81, T-82 y T-87) siguen en espera.
+- **Le quedan las 23 revisiones de diseño** (C-01 a C-23), en el orden natural de los bloques.
+- **Retiradas por el operador** el 12-11-2026, sin borrarse (estado `RETIRADA`): todas las QA de tickets (T-83, T-84, T-93, T-94, T-95, T-96, T-97 y T-99) y las implementaciones (T-75, T-76, T-91 y T-88). Quién hace esas QA, y si se hacen, lo decide el operador.
+- Claude no añade tareas a la cola sin que el operador lo pida.
 
 ## 6. Lo siguiente (a elegir con el operador)
 

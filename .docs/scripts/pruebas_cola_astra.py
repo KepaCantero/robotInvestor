@@ -101,6 +101,14 @@ def main():
         rc, out = correr(w)
         chk("QA_marcada_con_un_qa_md_anterior_a_la_cola_es_ERROR", rc == 1 and re.search(r"ERROR\s+C-28.*no ha cambiado", out), out)
 
+        poner_estado(w, "C-03", "RETIRADA"); commit(w, "retirada")
+        rc, out = correr(w)
+        chk("RETIRADA_con_entregable_no_avisa", "C-03" not in out.split("Siguiente:")[1], out)
+        poner_estado(w, "C-01", "RETIRADA"); poner_estado(w, "C-02", "RETIRADA"); poner_estado(w, "C-04", "PENDIENTE")
+        poner_estado(w, "C-05", "PENDIENTE"); commit(w, "retiradas")
+        rc, out = correr(w)
+        chk("RETIRADA_no_es_la_siguiente_y_se_cuenta", "Siguiente: C-04" in out and "retiradas" in out, out)
+
         poner_estado(w, "C-06", "LISTA"); commit(w, "estado raro")
         rc, out = correr(w)
         chk("estado_desconocido_es_AVISO", "C-06: estado desconocido" in out, out)

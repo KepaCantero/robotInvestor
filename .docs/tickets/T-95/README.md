@@ -4,7 +4,7 @@
 | --- | --- |
 | Estado | EN QA |
 | Pieza | `dashboard/consola_n/` (fuera de los bloques y del marco común) |
-| Planifica · implementa · QA | claude · claude · astra |
+| Planifica · implementa · QA | claude · claude · sin asignar (el operador decide quién, 12-11-2026) |
 | Aprobación del operador | aprobada el 2026-11-11: elige «Prototipo de la consola N» para el dashboard que le pide su equipo, con el stack que le pasan (React, TypeScript, Vite, Tailwind CSS, shadcn/ui, TanStack Query, Zustand, Lightweight Charts y AG Grid) |
 | Deuda técnica | T-95 en `sistema_global/seguimiento/Deuda_tecnica_y_pendientes_del_operador.md` |
 

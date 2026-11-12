@@ -4,7 +4,7 @@
 | --- | --- |
 | Estado | EN QA |
 | Pieza | `.docs/scripts` (fuera de los bloques): `banco_medida.py` y sus pruebas |
-| Planifica · implementa · QA | claude · claude · astra |
+| Planifica · implementa · QA | claude · claude · sin asignar (el operador decide quién, 12-11-2026) |
 | Aprobación del operador | aprobada el 2026-11-11: «Te autorizo que empieces con el banco de medida y las plantillas» (tras aceptar la tanda 1: pauta común de A, B y C con banco de medida) |
 | Deuda técnica | T-94 en `sistema_global/seguimiento/Deuda_tecnica_y_pendientes_del_operador.md` |
 

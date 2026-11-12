@@ -4,7 +4,7 @@
 | --- | --- |
 | Estado | EN QA |
 | Pieza | `tools/requisitos_entorno.txt` y `.docs/scripts/preparar_entorno.sh` (fuera de los bloques y del marco común) |
-| Planifica · implementa · QA | claude · claude · astra |
+| Planifica · implementa · QA | claude · claude · sin asignar (el operador decide quién, 12-11-2026) |
 | Aprobación del operador | aprobada el 2026-11-11: «haz el punto 1 y 2» (punto 2: fijar las versiones del entorno) |
 | Deuda técnica | T-96 en `sistema_global/seguimiento/Deuda_tecnica_y_pendientes_del_operador.md` |
 
