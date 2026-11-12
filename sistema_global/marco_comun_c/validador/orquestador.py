@@ -80,10 +80,17 @@ OPERADORES = {"<": lambda v, u: v < u, "<=": lambda v, u: v <= u, ">": lambda v,
               ">=": lambda v, u: v >= u, "==": lambda v, u: v == u}
 
 CONFIG_DEFECTO = {"max_reintentos": 3, "umbral_corte_comun_dias_habiles": 0,
-                  "version_config": "CFG-0.11.0",   # 0.11.0 (V0.53): integra 0.8.0 de GLM (T-33, libres_tope_dia_eur) con 0.10.0. 0.10.0 (T-18): promocion_nivel. 0.9.0 (T-18): L3 y umbral_l2_eur. 0.8.0 (T-33, GLM): libres_tope_dia_eur. 0.2.0 (T-48): Contradictor exigido en N2 y N3; autoria_c. 0.3.0 (T-49): alerta_perdida_pct. 0.4.0 (T-50): anulaciones_veto_mes. 0.5.0 (T-51): mandatos (SC-1) en lugar de instrumentos_permitidos. 0.6.0 (T-26/T-42): tolerancia_tipo_k_rel. 0.7.0 (T-22): politica_f con importes en euros y controles de la §8
+                  "version_config": "CFG-0.12.0",   # 0.12.0 (V0.74, T-97): tope anual de gasto y tolerancia del tipo de cambio por divisa. 0.11.0 (V0.53): integra 0.8.0 de GLM (T-33, libres_tope_dia_eur) con 0.10.0. 0.10.0 (T-18): promocion_nivel. 0.9.0 (T-18): L3 y umbral_l2_eur. 0.8.0 (T-33, GLM): libres_tope_dia_eur. 0.2.0 (T-48): Contradictor exigido en N2 y N3; autoria_c. 0.3.0 (T-49): alerta_perdida_pct. 0.4.0 (T-50): anulaciones_veto_mes. 0.5.0 (T-51): mandatos (SC-1) en lugar de instrumentos_permitidos. 0.6.0 (T-26/T-42): tolerancia_tipo_k_rel. 0.7.0 (T-22): politica_f con importes en euros y controles de la §8
                   "dia_coste_max_eur": 50.0, "revision_max_dias": 90, "observacion_max_dias": 30, "max_reaperturas": 2, "dia_tiempo_max_min": 600, "tolerancia_precio_entrada": 0.05,
                   "alerta_perdida_pct": -5.0,   # T-49: H pide revisar al perder esto (y cada múltiplo) [PROPUESTO]
                   "anulaciones_veto_mes": 2,
+                  # T-97 (V0.74, E2 de la tanda 2): tope anual de gasto en IA y datos, en % del capital de la última foto de G [PROPUESTO]
+                  "tope_anual_gasto_pct_capital": 0.5,
+                  # T-97: capital gestionado declarado (SC-1) para el tope anual mientras G no ha dado ninguna foto (L0 sin simulador
+                  # conectado, L1 manual); con foto manda la foto. None: sin foto no se admite ningún encargo con coste
+                  "capital_referencia_eur": None,
+                  # T-97 (V0.74, A3 de la tanda 2): desviación máxima del tipo de cambio en las divisas principales [PROPUESTO]
+                  "tolerancia_tipo_k_rel_principales": 0.005, "divisas_principales": ["USD", "GBP", "JPY", "CHF"],
                   "tolerancia_tipo_k_rel": 0.03,   # T-42: desviación máxima entre el tipo de cambio de G y el último cierre de K [PROPUESTO, D-29]   # T-50 (§6.2): anulaciones de veto de F que el operador puede hacer en un mes natural (UTC) [PROPUESTO]
                   "exige_contradictor_en": ["N2", "N3"], "contradictor_desactivado_motivo": None, "autoria_c": {}, "autoria_contradictor": None,
                   "matriz_autonomia": {},   # T-48: Contradictor exigido por defecto donde se compara y propone [PROPUESTO]
@@ -151,7 +158,7 @@ def _dia(t):
 
 # V0.51 (T-18): avisos que, en el periodo de promoción, impiden subir de nivel (además de O-19, ALCANZADO y el kill-switch)
 INCIDENTES_PROMOCION = ("O-03", "O-18", "O-25", "O-37")   # V0.53: también el tope de LIBRES superado (T-33)
-PRIORIDAD_AVISO = {"O-42": "MEDIA", "O-41": "ALTA", "O-40": "MEDIA", "O-39": "ALTA", "O-36": "MEDIA", "O-35": "ALTA", "O-34": "ALTA", "O-33": "MEDIA", "O-32": "MEDIA", "O-31": "MEDIA", "O-20": "MEDIA", "O-30": "ALTA", "O-25": "ALTA", "O-26": "ALTA", "O-19": "ALTA", "O-18": "ALTA", "O-03": "ALTA", "O-08": "ALTA", "O-09": "ALTA", "O-13": "ALTA", "O-17": "ALTA", "O-37": "ALTA", "O-38": "ALTA"}   # O-37 (T-33): tope diario de las LIBRES superado, o LIBRES sin poder valorar; O-38 (T-40): cortacircuito global por pérdida
+PRIORIDAD_AVISO = {"O-43": "ALTA", "O-42": "MEDIA", "O-41": "ALTA", "O-40": "MEDIA", "O-39": "ALTA", "O-36": "MEDIA", "O-35": "ALTA", "O-34": "ALTA", "O-33": "MEDIA", "O-32": "MEDIA", "O-31": "MEDIA", "O-20": "MEDIA", "O-30": "ALTA", "O-25": "ALTA", "O-26": "ALTA", "O-19": "ALTA", "O-18": "ALTA", "O-03": "ALTA", "O-08": "ALTA", "O-09": "ALTA", "O-13": "ALTA", "O-17": "ALTA", "O-37": "ALTA", "O-38": "ALTA"}   # O-37 (T-33): tope diario de las LIBRES superado, o LIBRES sin poder valorar; O-38 (T-40): cortacircuito global por pérdida
 ACTORES_PROPUESTA = set(EMISORES)   # quien propone no aprueba ni controla: F, D y H no proponen (Constitución §2, P1)
 
 
@@ -258,6 +265,11 @@ def nivel_perdida(p, precio, umbral):
     return pp, (int(math.floor(q + 1e-9)) if pp < 0 else 0)
 
 
+def _pct_tol(t):
+    """T-97: una tolerancia en % sin decimales si es entera (3 %) y con uno si no (0,5 %)."""
+    return f"{t:.0%}" if abs(t * 100 - round(t * 100)) < 1e-9 else f"{t:.1%}"
+
+
 def _motivo_bloqueo(bl):
     return f"exclusión dura BLOQUEADO ({', '.join(bl)}): el candidato no compite"
 
@@ -318,6 +330,12 @@ def _valida_config(c):
           and isinstance(c["observacion_max_dias"], int) and not isinstance(c["observacion_max_dias"], bool) and 1 <= c["observacion_max_dias"] <= 366
           and isinstance(c["max_reaperturas"], int) and not isinstance(c["max_reaperturas"], bool) and 0 <= c["max_reaperturas"] <= 20
           and _num(c["tolerancia_tipo_k_rel"]) and 0 < c["tolerancia_tipo_k_rel"] <= 0.5
+          # T-97: la tolerancia de las principales no puede ser más laxa que la general; divisas ISO sin repetir y sin el euro
+          and _num(c["tolerancia_tipo_k_rel_principales"]) and 0 < c["tolerancia_tipo_k_rel_principales"] <= c["tolerancia_tipo_k_rel"]
+          and isinstance(c["divisas_principales"], list) and len(set(c["divisas_principales"])) == len(c["divisas_principales"]) <= 30
+          and all(isinstance(x, str) and re.fullmatch(r"[A-Z]{3}", x) and x != "EUR" for x in c["divisas_principales"])
+          and _num(c["tope_anual_gasto_pct_capital"]) and 0 < c["tope_anual_gasto_pct_capital"] <= 10
+          and (c["capital_referencia_eur"] is None or (_num(c["capital_referencia_eur"]) and c["capital_referencia_eur"] > 0))
           and isinstance(c["anulaciones_veto_mes"], int) and not isinstance(c["anulaciones_veto_mes"], bool) and 0 <= c["anulaciones_veto_mes"] <= 10
           and isinstance(c["libres_tope_dia_eur"], dict) and set(c["libres_tope_dia_eur"]) == set(sc1.CARTERAS)   # T-33: exactamente las tres carteras
           and all(_num(v) and v >= 0 for v in c["libres_tope_dia_eur"].values())   # un tope es un número finito >= 0 (0.0 prohíbe las LIBRES valoradas)
@@ -827,7 +845,8 @@ class Orquestador:
         cf = e["control_f"]
         ctx = self.contexto_f(expediente_id, ahora)
         sol = {**cf["entradas"]["solicitud"], "cantidad": cf["cantidad_aprobada"]}
-        vetos = [c for c in controles_de_contexto(sol, cf["entradas"]["politica"], ahora, ctx) if c["resultado"] == "VETA"]
+        vetos = [c for c in controles_de_contexto(sol, cf["entradas"]["politica"], ahora, ctx, cf["entradas"]["cartera"]["capital_eur"])
+                 if c["resultado"] == "VETA"]   # T-97: con el capital de la autorización, para el límite semanal en %
         if vetos:
             return _no("O-06", f"F no aprobaría el envío ahora: {vetos[0]['regla']}: {vetos[0]['motivo'][:80]}", reglas=sorted({c['regla'] for c in vetos}))
         return None
@@ -1475,6 +1494,22 @@ class Orquestador:
                 "apalancamiento_permitido": self.cfg["apalancamiento_permitido"],
                 "sellos": copy.deepcopy(self.sellos), "calendario": self.cal_def, "mandatos": copy.deepcopy(self.cfg["mandatos"])}
 
+    def tolerancia_tipo_k(self, divisa):
+        """T-97 (V0.74): desviación máxima admitida entre el tipo de cambio de G y el último cierre de K para esa divisa: la de las
+        divisas principales si lo es; si no (o si la divisa no está clasificada), la general."""
+        return self.cfg["tolerancia_tipo_k_rel_principales"] if divisa in self.cfg["divisas_principales"] else self.cfg["tolerancia_tipo_k_rel"]
+
+    def _gasto_anio(self, a):
+        """T-97 (V0.74): (gasto del año natural UTC del instante a, reservas vivas, tope anual en euros o None si no hay capital con
+        que calcularlo: el de la última foto de G y, si no hay ninguna, el capital declarado en la configuración)."""
+        anio = a.astimezone(timezone.utc).year
+        gasto = sum(g["coste"] for f, g in self.gasto_dia.items() if date.fromisoformat(f).year == anio)
+        reservas = sum(max(0.0, en["coste_max"] - en["coste"]) for en in self.encargos.values() if en["estado"] == "EN_CURSO")
+        f = self.ultima_foto
+        cap = f.get("capital_eur") if isinstance(f, dict) else self.cfg["capital_referencia_eur"]
+        tope = self.cfg["tope_anual_gasto_pct_capital"] / 100 * cap if _num(cap) and cap > 0 else None
+        return gasto, reservas, tope
+
     def _tope_dia(self, fecha):
         g = self.gasto_dia.get(fecha, {"coste": 0.0, "tiempo": 0.0})
         reservas_c = reservas_t = 0.0
@@ -1539,9 +1574,9 @@ class Orquestador:
             except (KeyError, TypeError, ValueError):
                 continue
         vig.sort(key=lambda x: (x["fecha_corte"], _dt(x["emitido_en"]), x["sello_id"]), reverse=True)
-        tol = self.cfg["tolerancia_tipo_k_rel"]
         out = []
         for div, v in sorted(tipos.items()):
+            tol = self.tolerancia_tipo_k(div)   # T-97: más estricta en las divisas principales
             for s_ in vig:
                 refs = []
                 for fu in s_.get("fuentes", []):
@@ -1557,7 +1592,7 @@ class Orquestador:
                     continue
                 for ins, dev in refs:
                     if not math.isfinite(dev) or dev > tol:
-                        out.append(f"{div} {v}: desviación {dev:.2%} del último cierre de K ({ins}, sello {s_['sello_id']}, tolerancia {tol:.0%})"
+                        out.append(f"{div} {v}: desviación {dev:.2%} del último cierre de K ({ins}, sello {s_['sello_id']}, tolerancia {_pct_tol(tol)})"
                                    if math.isfinite(dev) else f"{div} {v}: no se puede contrastar con K ({ins}, sello {s_['sello_id']})")
                 break
         return out
@@ -2036,6 +2071,10 @@ class Orquestador:
         gc, gt, rc, rt = self._tope_dia(fecha)
         if gc + rc + p["coste_max_eur"] > self.cfg["dia_coste_max_eur"] or gt + rt + p["tiempo_max_min"] > self.cfg["dia_tiempo_max_min"]:
             return _no("O-08", "presupuesto diario agotado o comprometido: no se aceptan encargos nuevos")
+        ga, ra, tope_a = self._gasto_anio(a)   # T-97 (V0.74, E2): tope anual en % del capital; sin foto de G no se sabe: no se acepta
+        if p["coste_max_eur"] > 0 and (tope_a is None or ga + ra + p["coste_max_eur"] > tope_a):
+            return _no("O-43", "tope anual de gasto en IA y datos agotado o comprometido: no se aceptan encargos nuevos" if tope_a is not None
+                       else "sin foto de G ni capital declarado no se puede calcular el tope anual de gasto: no se aceptan encargos con coste")
         self.eventos[eid] = {"hash": h, "expediente_id": expediente_id}
         self.encargos[eid] = {"event_id": eid, "expediente_id": expediente_id, "estado": "EN_CURSO",
                               "sello_ref": encargo["payload"]["sello_corte_ref"], "msg": copy.deepcopy(encargo),
@@ -2084,6 +2123,10 @@ class Orquestador:
         if g["coste"] >= self.cfg["dia_coste_max_eur"] or g["tiempo"] >= self.cfg["dia_tiempo_max_min"]:
             alertas.append("O-08")
             self._aviso("O-08", f"presupuesto diario agotado el {fecha}", ahora)
+        ga, _, tope_a = self._gasto_anio(a)   # T-97: el gasto también es un hecho frente al tope anual
+        if tope_a is not None and ga >= tope_a:
+            alertas.append("O-43")
+            self._aviso("O-43", f"tope anual de gasto en IA y datos agotado ({ga:.2f} de {tope_a:.2f} EUR en {a.astimezone(timezone.utc).year}): solo siguen las rutinas sin IA", ahora)
         return _r(True, "OK", "gasto registrado", alertas=alertas)
 
     @_seguro

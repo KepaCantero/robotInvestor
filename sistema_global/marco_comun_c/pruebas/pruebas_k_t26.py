@@ -144,7 +144,7 @@ def main():
     h.chk("pantalla_con_los_eventos_hasta_la_revision", [x["descripcion"] for x in p["eventos_k"]] == ["reunión del BCE"], p["eventos_k"])
 
     # ================================================================ T-42 contraste de tipos de cambio con K
-    o = Orquestador({**CFG, "tolerancia_tipo_k_rel": 0.03}, CAL)
+    o = Orquestador({**CFG, "tolerancia_tipo_k_rel": 0.03, "tolerancia_tipo_k_rel_principales": 0.03}, CAL)
     assert o.registrar_sello(s, AHORA)["ok"]
     k = 1 / f0["ultimo_cierre"]
     r = o.registrar_cartera(foto(1.35), "G", AHORA, cuenta="SIM-1")
@@ -155,12 +155,12 @@ def main():
         e["fuentes"] = [f for f in e["fuentes"] if "EUR" not in f["fuente_id"]]
         e["cruces"] = []
     _, r = construir(sin_eur, hasta=date(2026, 11, 5), solicitada="2026-11-06")
-    o3 = Orquestador({**CFG, "tolerancia_tipo_k_rel": 0.03}, CAL)
+    o3 = Orquestador({**CFG, "tolerancia_tipo_k_rel": 0.03, "tolerancia_tipo_k_rel_principales": 0.03}, CAL)
     assert o3.registrar_sello(s, AHORA)["ok"] and o3.registrar_sello(r["sello"], AHORA)["ok"]
     h.chk("RG1_sello_reciente_sin_el_par_no_apaga_T42", o3.registrar_cartera(foto(1.35), "G", AHORA, cuenta="SIM-1")["codigo"] == "O-29")
     for grafia in ("EUR/USD", "eurusd", "EUR-USD"):
         _, r = construir(lambda e, g=grafia: [f.update(instrumento=g) for f in e["fuentes"] if f["fuente_id"] in ("SRC-EURUSD", "SRC-EURUSD-B")])
-        o4 = Orquestador({**CFG, "tolerancia_tipo_k_rel": 0.03}, CAL)
+        o4 = Orquestador({**CFG, "tolerancia_tipo_k_rel": 0.03, "tolerancia_tipo_k_rel_principales": 0.03}, CAL)
         assert o4.registrar_sello(r["sello"], AHORA)["ok"]
         h.chk(f"RG2_par_escrito_{grafia}_cuenta", o4.registrar_cartera(foto(1.35), "G", AHORA, cuenta="SIM-1")["codigo"] == "O-29")
     # R-m2: un cierre subnormal no anula el contraste
@@ -169,18 +169,18 @@ def main():
         if x.get("instrumento") == "EURUSD":
             x["ultimo_cierre"] = 5e-324
     xs["hash_sello"] = hash_del_sello(xs)
-    o5 = Orquestador({**CFG, "tolerancia_tipo_k_rel": 0.03}, CAL)
+    o5 = Orquestador({**CFG, "tolerancia_tipo_k_rel": 0.03, "tolerancia_tipo_k_rel_principales": 0.03}, CAL)
     assert o5.registrar_sello(xs, AHORA)["ok"]
     h.chk("Rm2_cierre_subnormal_O29", o5.registrar_cartera(foto(1.39), "G", AHORA, cuenta="SIM-1")["codigo"] == "O-29")
-    o2 = Orquestador({**CFG, "tolerancia_tipo_k_rel": 0.03}, CAL)
+    o2 = Orquestador({**CFG, "tolerancia_tipo_k_rel": 0.03, "tolerancia_tipo_k_rel_principales": 0.03}, CAL)
     h.chk("T42_sin_sello_no_hay_contraste", o2.registrar_cartera(foto(1.0), "G", AHORA, cuenta="SIM-1")["ok"])
     for nombre, v in (("cero", 0), ("demasiado", 0.6), ("texto", "0.03"), ("bool", True)):
         try:
-            Orquestador({**CFG, "tolerancia_tipo_k_rel": v}, CAL)
+            Orquestador({**CFG, "tolerancia_tipo_k_rel": v, "tolerancia_tipo_k_rel_principales": v}, CAL)
             h.chk(f"config_tolerancia_{nombre}_se_rechaza", False)
         except ValueError:
             h.chk(f"config_tolerancia_{nombre}_se_rechaza", True)
-    c = Orquestador({k_: v_ for k_, v_ in CFG.items() if k_ != "tolerancia_tipo_k_rel"}, CAL).configuracion()
+    c = Orquestador({k_: v_ for k_, v_ in CFG.items() if k_ not in ("tolerancia_tipo_k_rel", "tolerancia_tipo_k_rel_principales")}, CAL).configuracion()
     h.chk("config_060_tolerancia_por_defecto", tuple(map(int, c["version_config"][4:].split("."))) >= (0, 6, 0) and c["orquestador"]["tolerancia_tipo_k_rel"] == 0.03)
 
     print(f"\n{h.n} comprobaciones")

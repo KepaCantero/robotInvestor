@@ -59,7 +59,7 @@ El Robot Investor es un sistema de inversión personal por bloques. A busca opor
 | `bloque_a/` (V5.1) | Corregido y auditado (T-53, T-66, T-92). 439 pruebas. Pendientes técnicos: T-88, T-91 y T-93 |
 | `bloque_a_forex/` | Fuera del Robot Investor (D-20). 68 pruebas |
 | `bloque_b/` (V2.1) | Congelado. Evaluado en T-68 y con un rediseño propuesto, ambos a la espera de Astra. 176 pruebas |
-| `sistema_global/marco_comun_c/` (V0.73) | Código de referencia de la Fase 1, 61 suites, todo en simulado |
+| `sistema_global/marco_comun_c/` (V0.74) | Código de referencia de la Fase 1, 62 suites, todo en simulado. La V0.74 (T-97, EN QA) alinea los valores por defecto con la tanda 2 |
 | `.docs/scripts/banco_medida.py` (T-94) | Banco de medida: A frente a azar y momento, con prerregistro, rangos y coste. 10 pruebas. EN QA |
 | `dashboard/consola_n/` (T-95) | Prototipo navegable de la consola N con datos de ejemplo (React, TypeScript, Vite, Tailwind, shadcn/ui, TanStack Query, Zustand, Lightweight Charts y AG Grid). 29 pruebas unitarias y 12 de navegador. EN QA. Su README explica cómo arrancarlo |
 | `tools/requisitos_entorno.txt` y `.docs/scripts/preparar_entorno.sh` (T-96) | Versiones fijadas del entorno y script que crea el `.venv` con ellas. EN QA |
@@ -102,7 +102,7 @@ En blanco en `.docs/plantillas_operador/`: ficha de restricciones, inventario de
 ### Cola de Astra (por orden)
 
 1. Las 22 revisiones de diseño.
-2. La QA de T-94, de T-95 y de T-96.
+2. La QA de T-94, de T-95, de T-96 y de T-97. **Ojo:** T-97 (marco V0.74) toca `orquestador.py`, `control_f.py`, `migraciones.py` y `parametros_doc.py`, así que la QA de T-83 se hace ya sobre la V0.74.
 3. Las tareas anteriores del relevo del 10-11, que siguen abiertas: T-75 y T-76 están detenidas tras un NO APTO, y T-83 y T-84 están implementadas sin QA. Las que dependen de la arquitectura (T-73, T-74, T-81, T-82 y T-87) siguen en espera.
 
 ## 6. Lo siguiente (a elegir con el operador)

@@ -27,6 +27,9 @@ CFG = {"perfiles_activos": ["C-DIV", "C-RV", "C-CRI"], "apalancamiento_permitido
        "nivel_autonomia": {"TRADING": "L2", "TACTICA": "L2", "LARGO_PLAZO": "L2"},   # las pruebas de mecánica usan L2; los niveles tienen su propio bloque
        "exige_contradictor_en": [], "contradictor_desactivado_motivo": "pruebas de mecánica sin Contradictor",
        "tolerancia_tipo_k_rel": 0.2,   # las fotos de mecánica usan el tipo neutro 1 USD = 1 EUR; el contraste con K (T-42) tiene sus pruebas
+       "tolerancia_tipo_k_rel_principales": 0.2,   # T-97: lo mismo para las divisas principales; su tolerancia tiene su batería
+       # T-97: el tope anual de gasto tiene su batería; las de mecánica usan el máximo (10 %) y un capital declarado como el de sus fotos
+       "tope_anual_gasto_pct_capital": 10.0, "capital_referencia_eur": 100000.0,
        # T-43 (V0.52): las posiciones de mecánica son de unos 110 EUR; con el mínimo de F por defecto (100 EUR) ninguna se podría
        # reducir sin dejar un resto por debajo. F-11 sigue con sus propias pruebas (pruebas_control_f*)
        "politica_f": {**POLITICA_DEFECTO, "valor_min_eur": 10.0}}

@@ -243,6 +243,21 @@ _DOC = {
             "El tipo de cambio del intermediario no puede desviarse más de un 3 % del último cierre de la fuente de datos: más allá, "
             "uno de los dos está mal.",
             "¿Qué diferencia admites entre el tipo de cambio de tu intermediario y el de la fuente de datos?"),
+        "tolerancia_tipo_k_rel_principales": _r(P, ["Deuda T-97", "V0.74"],
+            "En el euro-dólar, la libra, el yen y el franco suizo la diferencia admitida baja al 0,5 %: son pares muy líquidos y "
+            "un 3 % ahí sería un error grave que pasaría sin aviso.",
+            "¿Qué diferencia admites en las divisas principales entre el tipo de cambio de tu intermediario y el de la fuente de datos?"),
+        "divisas_principales": _r(P, ["Deuda T-97", "V0.74"],
+            "Se tratan como principales el dólar, la libra, el yen y el franco suizo, las divisas más líquidas frente al euro.",
+            "¿Qué divisas quieres tratar como principales, con una tolerancia más estricta?"),
+        "tope_anual_gasto_pct_capital": _r(P, ["Deuda T-97", "V0.74"],
+            "Lo que el robot gasta en IA y datos en un año no pasa del 0,5 % del capital: con 20.000 €, 100 € al año, que tiene "
+            "que recuperar antes de aportar nada frente a la cartera sombra.",
+            "¿Cuánto puede gastar el robot al año en IA y datos, como parte de tu capital?"),
+        "capital_referencia_eur": _r(P, ["Deuda T-97", "V0.74"],
+            "Sin capital declarado, mientras G no dé su primera foto de la cuenta no se admite ningún encargo con coste: sin "
+            "capital no se puede calcular el tope anual.",
+            "Mientras el intermediario no dé el saldo de tu cuenta, ¿con qué capital quieres que se calcule el tope anual de gasto?"),
         "exige_contradictor_en": _r(P, ["Deuda D-25", "Deuda D-06", "Constitución D-35", "Deuda T-48"],
             "La Constitución exige varios análisis independientes siempre en N3; se propone exigir también el Contradictor en N2, "
             "donde ya se compara y se propone.",
@@ -354,6 +369,22 @@ _DOC = {
         "perdida_semana_max_eur": _r(P, ["Deuda D-11", "Constitución P-11", "Deuda T-22"],
             "Con 5.000 € perdidos en la semana no se abren más posiciones: varias malas jornadas seguidas también frenan.",
             "¿Qué pérdida en euros en una semana debe frenar las operaciones nuevas?"),
+        "importe_max_dia_pct": _r(P, ["Deuda T-97", "V0.74"],
+            "Las órdenes de un día no pasan del 25 % del capital, además de los 50.000 €: con carteras pequeñas, el límite en euros "
+            "no frenaría nada.",
+            "¿Qué parte de tu capital puede invertirse como máximo en un mismo día?"),
+        "perdida_semana_max_pct_trading": _r(P, ["Deuda T-97", "V0.74"],
+            "En trading, con un 4 % del capital perdido en la semana no se abren más posiciones: una racha así puede indicar que la "
+            "ventaja se agotó.",
+            "En la cartera de trading, ¿qué pérdida en la semana, como parte de tu capital, debe frenar las operaciones nuevas?"),
+        "perdida_semana_max_pct_tactica": _r(P, ["Deuda T-97", "V0.74"],
+            "En táctica, con un 5 % del capital perdido en la semana no se abren más posiciones: un margen algo mayor que en "
+            "trading, porque sus tesis duran más.",
+            "En la cartera táctica, ¿qué pérdida en la semana, como parte de tu capital, debe frenar las operaciones nuevas?"),
+        "perdida_semana_max_pct_largo_plazo": _r(P, ["Deuda T-97", "V0.74"],
+            "En largo plazo, con un 5 % del capital perdido en la semana no se abren posiciones nuevas: frena las apuestas sobre "
+            "el plan en una caída, no el plan.",
+            "En la cartera de largo plazo, ¿qué pérdida en la semana, como parte de tu capital, debe frenar las operaciones nuevas?"),
         "ordenes_max_hora": _r(P, ["Deuda D-11", "Constitución P-11", "Deuda T-22"],
             "Como mucho diez órdenes por hora: frena un fallo que envíe órdenes en bucle.",
             "¿Cuántas órdenes por hora quieres permitir como máximo?"),
@@ -501,7 +532,7 @@ _VALOR_DOCUMENTADO = {
     "CONFIG_DEFECTO": {
         "max_reintentos": 3,
         "umbral_corte_comun_dias_habiles": 0,
-        "version_config": "CFG-0.11.0",
+        "version_config": "CFG-0.12.0",
         "dia_coste_max_eur": 50.0,
         "revision_max_dias": 90,
         "observacion_max_dias": 30,
@@ -511,6 +542,10 @@ _VALOR_DOCUMENTADO = {
         "alerta_perdida_pct": -5.0,
         "anulaciones_veto_mes": 2,
         "tolerancia_tipo_k_rel": 0.03,
+        "tolerancia_tipo_k_rel_principales": 0.005,
+        "divisas_principales": ["USD", "GBP", "JPY", "CHF"],
+        "tope_anual_gasto_pct_capital": 0.5,
+        "capital_referencia_eur": None,
         "exige_contradictor_en": ["N2", "N3"],
         "contradictor_desactivado_motivo": None,
         "autoria_c": {},
@@ -542,6 +577,10 @@ _VALOR_DOCUMENTADO = {
         "importe_max_activo_eur": 30000.0,
         "perdida_dia_max_eur": 2500.0,
         "perdida_semana_max_eur": 5000.0,
+        "importe_max_dia_pct": 25.0,
+        "perdida_semana_max_pct_trading": 4.0,
+        "perdida_semana_max_pct_tactica": 5.0,
+        "perdida_semana_max_pct_largo_plazo": 5.0,
         "ordenes_max_hora": 10,
         "evidencia_verificada_min": 0.05,
         "corte_max_dias": 3,

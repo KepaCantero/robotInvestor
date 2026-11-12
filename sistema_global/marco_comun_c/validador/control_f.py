@@ -13,6 +13,10 @@ cotización que G tomó del intermediario. Reglas nuevas: F-13 a F-15 importes m
 F-20 evidencia mínima; F-21 ventanas de eventos y fin de semana; F-22 autonomía; F-23 precio del intermediario (frescura y
 deriva respecto al límite). Sin contexto (uso interno de E para dimensionar) solo se aplican las reglas que no dependen de él;
 un informe CT-G-08 siempre lo lleva.
+
+T-97 (V0.74, F1 y F2 de la tanda 2): F-14 y F-16 (semana) toman también un límite en % del capital de la cartera (25 % al día;
+4 %, 5 % y 5 % de pérdida en la semana en trading, táctica y largo plazo) y aplican el más estricto con el de euros: solo endurecen.
+Los demás porcentajes ya estaban (F-04 tamaño, F-07 concentración, F-08 pérdida del día).
 """
 from __future__ import annotations
 
@@ -27,7 +31,7 @@ from datetime import date
 from mandatos import norm
 from validar_sobre import _dt
 
-VERSION_REGLAS = "F-0.3.0"   # 0.2.0: conversión a euros con los tipos de cambio de la cartera (T-10). 0.3.0: controles de la §8 (T-22)
+VERSION_REGLAS = "F-0.4.0"   # 0.4.0: F-14 y F-16 (semana) también en % del capital (T-97). 0.2.0: conversión a euros con los tipos de cambio de la cartera (T-10). 0.3.0: controles de la §8 (T-22)
 POLITICA_DEFECTO = {"riesgo_max_pct": 1.0, "tamano_max_pct": 10.0, "exposicion_max_pct": 100.0,
                     "concentracion_max_pct": 20.0, "perdida_dia_max_pct": 2.0, "max_posiciones": 10,
                     "apalancamiento_max": 1.0, "frescura_max_min": 60.0, "valor_min_eur": 100.0,
@@ -36,7 +40,12 @@ POLITICA_DEFECTO = {"riesgo_max_pct": 1.0, "tamano_max_pct": 10.0, "exposicion_m
                     "importe_max_orden_eur": 20000.0, "importe_max_dia_eur": 50000.0, "importe_max_activo_eur": 30000.0,
                     "perdida_dia_max_eur": 2500.0, "perdida_semana_max_eur": 5000.0, "ordenes_max_hora": 10,
                     "evidencia_verificada_min": 0.05, "corte_max_dias": 3, "ventana_eventos_dias": 1,
-                    "viernes_corte_utc_h": 20, "deriva_precio_max_pct": 2.0, "precio_frescura_max_min": 15.0}
+                    "viernes_corte_utc_h": 20, "deriva_precio_max_pct": 2.0, "precio_frescura_max_min": 15.0,
+                    # T-97 (V0.74): los mismos límites en % del capital de la cartera; manda el más estricto [PROPUESTO, F1 y F2]
+                    "importe_max_dia_pct": 25.0, "perdida_semana_max_pct_trading": 4.0, "perdida_semana_max_pct_tactica": 5.0,
+                    "perdida_semana_max_pct_largo_plazo": 5.0}
+SEMANA_PCT = {"TRADING": "perdida_semana_max_pct_trading", "TACTICA": "perdida_semana_max_pct_tactica",
+              "LARGO_PLAZO": "perdida_semana_max_pct_largo_plazo"}   # T-97: la clave de la política de cada cartera
 CLAVES_POLITICA = set(POLITICA_DEFECTO)
 ENTEROS_POLITICA = ("max_posiciones", "ordenes_max_hora", "corte_max_dias", "ventana_eventos_dias", "viernes_corte_utc_h")
 TIPOS_EVENTO_RESTRINGIDOS = ("BANCO_CENTRAL", "RESULTADOS")   # §8.7 [PROPUESTO]: no se abre en su ventana
@@ -98,7 +107,8 @@ def politica_valida(p) -> bool:
             and p["apalancamiento_max"] >= 1
             and p["evidencia_verificada_min"] <= 1 and p["viernes_corte_utc_h"] <= 24 and p["ventana_eventos_dias"] <= 30
             and p["importe_max_orden_eur"] <= p["importe_max_dia_eur"] and p["perdida_dia_max_eur"] <= p["perdida_semana_max_eur"]
-            and all(p[k] <= 100 for k in ("riesgo_max_pct", "tamano_max_pct", "exposicion_max_pct", "concentracion_max_pct", "perdida_dia_max_pct"))
+            and all(p[k] <= 100 for k in ("riesgo_max_pct", "tamano_max_pct", "exposicion_max_pct", "concentracion_max_pct", "perdida_dia_max_pct",
+                                          "importe_max_dia_pct", *SEMANA_PCT.values()))
             and p["concentracion_max_pct"] <= p["exposicion_max_pct"] and p["tamano_max_pct"] <= p["exposicion_max_pct"]
             and p["max_posiciones"] <= 1000 and p["apalancamiento_max"] <= 100 and p["vigencia_max_horas"] <= 168)
 
@@ -233,7 +243,7 @@ def _controlar(sol, cart, pol, ahora, ctx=None):
     ctl.append(_c("F-16", "OK" if cart["perdida_dia_eur"] < pol["perdida_dia_max_eur"] else "VETA", cart["perdida_dia_eur"], pol["perdida_dia_max_eur"],
                   "" if cart["perdida_dia_eur"] < pol["perdida_dia_max_eur"] else "pérdida del día en euros"))
     if ctx is not None:
-        ctl += _controles_contexto(sol, pol, ahora, ctx)
+        ctl += _controles_contexto(sol, pol, ahora, ctx, cap_total)
     # topes de cantidad (REDUCE si la solicitud los supera)
     expuesto = sum(p["valor_eur"] for p in cart["posiciones"])
     mismo = sum(p["valor_eur"] for p in cart["posiciones"] if norm(p["activo_base"]) == norm(sol["activo_base"]))   # T-22: misma identidad, sea cual sea la grafía
@@ -246,7 +256,8 @@ def _controlar(sol, cart, pol, ahora, ctx=None):
              ("F-13", pol["importe_max_orden_eur"] / ent_eur),   # T-22: importes nominales en euros
              ("F-15", max(0.0, pol["importe_max_activo_eur"] - mismo) / ent_eur)]
     if ctx is not None:
-        topes.append(("F-14", max(0.0, pol["importe_max_dia_eur"] - ctx["actividad"]["importe_dia_eur"]) / ent_eur))
+        tope_dia = min(pol["importe_max_dia_eur"], pol["importe_max_dia_pct"] / 100 * cap_total)   # T-97: el más estricto
+        topes.append(("F-14", max(0.0, tope_dia - ctx["actividad"]["importe_dia_eur"]) / ent_eur))
     for regla, tope in topes:
         ctl.append(_c(regla, "OK" if q <= tope else "REDUCE", q, tope))
     veta = any(x["resultado"] == "VETA" for x in ctl)
@@ -260,17 +271,21 @@ def _controlar(sol, cart, pol, ahora, ctx=None):
     return {"resultado": "REDUCIDO" if aprobada < q else "APROBADO", "cantidad_aprobada": aprobada, "controles": ctl}
 
 
-def controles_de_contexto(sol, pol, ahora, ctx):
+def controles_de_contexto(sol, pol, ahora, ctx, cap=None):
     """F-16 (semana) a F-23 sobre una solicitud, sin las reglas de cantidad: lo que el Orquestador vuelve a comprobar al enviar la
     orden (T-22, revisión H4). Nunca lanza: un contexto mal formado da un único VETA de F-01."""
     try:
         mal = _forma_contexto(ctx)
-        return [_c("F-01", "VETA", motivo=mal)] if mal else _controles_contexto(sol, pol, ahora, ctx)
+        if mal:
+            return [_c("F-01", "VETA", motivo=mal)]
+        if cap is not None and not _num(cap, 0, True):   # T-97: un capital que no es un número positivo no deja aplicar el %
+            return [_c("F-01", "VETA", motivo="capital de la cartera inválido")]
+        return _controles_contexto(sol, pol, ahora, ctx, cap)
     except ERRORES as e:
         return [_c("F-01", "VETA", motivo=f"error de cálculo: {type(e).__name__}")]
 
 
-def _controles_contexto(sol, pol, ahora, ctx):
+def _controles_contexto(sol, pol, ahora, ctx, cap=None):
     """F-16 (semana) a F-23: lo que F comprueba con el contexto del Orquestador (T-22). Solo OK o VETA."""
     out = []
     a = _dt(ahora)
@@ -279,8 +294,11 @@ def _controles_contexto(sol, pol, ahora, ctx):
     def chk(regla, ok, valor, limite, motivo):
         out.append(_c(regla, "OK" if ok else "VETA", valor, limite, "" if ok else motivo))
     ac = ctx["actividad"]
-    chk("F-16", ac["perdida_semana_eur"] < pol["perdida_semana_max_eur"], ac["perdida_semana_eur"], pol["perdida_semana_max_eur"],
-        "pérdida de la semana en euros")
+    lim_sem = pol["perdida_semana_max_eur"]
+    if cap is not None:   # T-97: también en % del capital de la cartera de la solicitud; manda el más estricto
+        lim_sem = min(lim_sem, pol[SEMANA_PCT[sol["cartera"]]] / 100 * cap)
+    chk("F-16", ac["perdida_semana_eur"] < lim_sem, ac["perdida_semana_eur"], lim_sem,
+        "pérdida de la semana")
     chk("F-17", ac["ordenes_ultima_hora"] < pol["ordenes_max_hora"], ac["ordenes_ultima_hora"], pol["ordenes_max_hora"],
         "demasiadas órdenes en la última hora")
     m = ctx["mandato"]

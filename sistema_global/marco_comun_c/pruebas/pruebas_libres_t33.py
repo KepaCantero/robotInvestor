@@ -105,7 +105,7 @@ def main():
           and o.libres[0]["event_id"] == "EV-MAN-0010", o.libres)
     h.chk("registro_aparte_manuales_sigue_igual", len(o.manuales) == 1 and o.manuales[0]["event_id"] == "EV-MAN-0010"
           and "vinculo" in o.manuales[0] and "dia" not in o.manuales[0], o.manuales[0])
-    o2 = nuevo({**L2, "tolerancia_tipo_k_rel": 0.5})   # el cierre de K no lleva este tipo: holgura de contraste para la foto de la prueba
+    o2 = nuevo({**L2, "tolerancia_tipo_k_rel": 0.5, "tolerancia_tipo_k_rel_principales": 0.5})   # el cierre de K no lleva este tipo: holgura de contraste para la foto de la prueba
     registrar_foto(o2, {**CART, "tipos_cambio_eur": {"USD": 1.15}})
     registrar(o2, instrumento="EURUSD", activo_base="EUR", cantidad=100.0, precio=1.10,
               event_id="EV-MAN-0011", ref_intermediario="MAN-USD-1")

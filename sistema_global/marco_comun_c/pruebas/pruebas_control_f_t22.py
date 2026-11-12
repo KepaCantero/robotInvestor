@@ -56,13 +56,13 @@ def main():
     h = Arnes()
     r = f()
     h.chk("base_aprobada_con_todas_las_reglas", r["resultado"] == "APROBADO" and {c["regla"] for c in r["controles"]} >= {f"F-{i:02d}" for i in range(1, 24)}, r)
-    h.chk("version_reglas_F030", VERSION_REGLAS == "F-0.3.0" and VERSION_ESQUEMA == "0.3.0")
+    h.chk("version_reglas_F040", VERSION_REGLAS == "F-0.4.0" and VERSION_ESQUEMA == "0.3.0")   # T-97: F-14 y F-16 también en %; el esquema no cambia
 
     # ------------------------------------------------------------------ límites nominales en euros (F-13 a F-17)
     r = f(sol={"cantidad": 5000.0}, pol={**P, "importe_max_orden_eur": 2200.0})
     h.chk("F13_importe_por_orden_reduce", r["resultado"] == "REDUCIDO" and abs(r["cantidad_aprobada"] - 2000.0) < 1e-5
           and regla(r, "F-13")[0]["resultado"] == "REDUCE", r)
-    r = f(sol={"cantidad": 5000.0}, ctx=cx(actividad__importe_dia_eur=49000.0))
+    r = f(sol={"cantidad": 5000.0}, pol={**P, "importe_max_dia_pct": 100.0}, ctx=cx(actividad__importe_dia_eur=49000.0))   # T-97: aquí se prueba el tope en euros
     h.chk("F14_importe_del_dia_reduce_a_lo_que_queda", r["resultado"] == "REDUCIDO" and abs(r["cantidad_aprobada"] - 1000.0 / 1.10) < 1e-5
           and regla(r, "F-14")[0]["resultado"] == "REDUCE", r)
     r = f(ctx=cx(actividad__importe_dia_eur=50000.0))

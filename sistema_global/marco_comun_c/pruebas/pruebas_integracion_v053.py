@@ -47,7 +47,7 @@ def sube(o, ahora, b=None):
 def main():
     h = Arnes()
     # ------------------------------------------------------------------------------------------- configuración y esquema
-    h.chk("CFG_0110_integra_las_dos_lineas", CONFIG_DEFECTO["version_config"] == "CFG-0.11.0"
+    h.chk("CFG_0110_integra_las_dos_lineas", tuple(map(int, CONFIG_DEFECTO["version_config"][4:].split("."))) >= (0, 11, 0)   # V0.74 (T-97): CFG-0.12.0
           and CONFIG_DEFECTO["libres_tope_dia_eur"] == {"TRADING": 2000.0, "TACTICA": 2000.0, "LARGO_PLAZO": 2000.0}
           and CONFIG_DEFECTO["promocion_nivel"] == {"periodo_min_dias": 30} and "umbral_l2_eur" in CONFIG_DEFECTO)
     # V0.67: el esquema del código pasa a V0.67 (MIG-005, sin cambios en el estado); V0.53 sigue registrado y MIG-004 en la cadena
@@ -74,9 +74,14 @@ def main():
           and mig008.esquema_desde == mg.ESQUEMA_V0_70 and mig008.esquema_hasta == mg.ESQUEMA_V0_71
           and mig008.cambia == frozenset() and mg._v071({})["sombra"] == {"historial": [], "estado": "VIGENTE", "entradas": []})
     # V0.73 (rondas r02 de T-75 y T-76): el esquema del código pasa a V0.73 (MIG-009, sin cambios en el estado)
-    h.chk("v073_esquema_actual_y_MIG009_sin_cambios", pe.esquema_actual() == mg.ESQUEMA_V0_73 and mg.ESQUEMA_V0_73 in mg.ESQUEMAS
-          and mg.MIGRACIONES[-1].id == "MIG-009" and mg.MIGRACIONES[-1].esquema_desde == mg.ESQUEMA_V0_71
-          and mg.MIGRACIONES[-1].aplicar is mg._sin_cambios and mg.MIGRACIONES[-1].cambia == frozenset())
+    mig009 = [m for m in mg.MIGRACIONES if m.id == "MIG-009"][0]
+    h.chk("v073_esquema_registrado_y_MIG009_sin_cambios", mg.ESQUEMA_V0_73 in mg.ESQUEMAS
+          and mig009.esquema_desde == mg.ESQUEMA_V0_71 and mig009.esquema_hasta == mg.ESQUEMA_V0_73
+          and mig009.aplicar is mg._sin_cambios and mig009.cambia == frozenset())
+    # V0.74 (T-97): el esquema del código pasa a V0.74 (MIG-010, claves nuevas de la configuración con su valor de partida)
+    h.chk("v074_esquema_actual_y_MIG010_con_las_claves_nuevas", pe.esquema_actual() == mg.ESQUEMA_V0_74 and mg.ESQUEMA_V0_74 in mg.ESQUEMAS
+          and mg.MIGRACIONES[-1].id == "MIG-010" and mg.MIGRACIONES[-1].esquema_desde == mg.ESQUEMA_V0_73
+          and mg.MIGRACIONES[-1].aplicar is mg._v074 and "cfg.tope_anual_gasto_pct_capital" in mg.MIGRACIONES[-1].cambia)
 
     # ------------------------------------------------------------------------------------------- MIG-004
     viejo = (AQUI / "estados" / "estado_V0_52.json").read_text(encoding="ascii")
@@ -86,15 +91,15 @@ def main():
     h.chk("con_este_codigo_no_se_carga_PE08", pe.cargar(viejo)["codigo"] == "PE-08")
     r = mg.migrar(viejo, "2026-11-08T10:00:00+00:00", "Paso el estado guardado al código de V0.53")
     o2 = r.get("orquestador")
-    h.chk("MIG004_lo_migra", r["ok"] and r["migraciones"] == ["MIG-004", "MIG-005", "MIG-006", "MIG-007", "MIG-008", "MIG-009"] and o2.cfg["libres_tope_dia_eur"] == CONFIG_DEFECTO["libres_tope_dia_eur"]
-          and o2.libres == [] and o2.cortacircuitos == [] and o2.cfg["version_config"] == "CFG-0.11.0"
+    h.chk("MIG004_lo_migra", r["ok"] and r["migraciones"] == ["MIG-004", "MIG-005", "MIG-006", "MIG-007", "MIG-008", "MIG-009", "MIG-010"] and o2.cfg["libres_tope_dia_eur"] == CONFIG_DEFECTO["libres_tope_dia_eur"]
+          and o2.libres == [] and o2.cortacircuitos == [] and o2.cfg["version_config"] == "CFG-0.12.0"
           and o2.integridad() == [] and o2.config_integra(), r.get("motivo"))
     h.chk("MIG004_no_cambia_el_nivel_de_nadie_ni_lo_demas", o2.cfg["nivel_autonomia"] == d["estado"]["cfg"]["nivel_autonomia"]
           and o2.cfg["promocion_nivel"] == d["estado"]["cfg"]["promocion_nivel"] and len(o2.expedientes) == len(d["estado"]["expedientes"]))
     h.chk("MIG004_declara_lo_que_cambia", [m for m in mg.MIGRACIONES if m.id == "MIG-004"][0].cambia == frozenset({"cfg.libres_tope_dia_eur", "libres"}))
     v50 = (AQUI / "estados" / "estado_V0_50.json").read_text(encoding="ascii")
     r = mg.migrar(v50, "2026-11-08T10:00:00+00:00", "Paso el estado guardado al código de V0.53")
-    h.chk("desde_V0_50_la_cadena_es_MIG003_a_MIG009", r["ok"] and r["migraciones"] == ["MIG-003", "MIG-004", "MIG-005", "MIG-006", "MIG-007", "MIG-008", "MIG-009"] and r["orquestador"].integridad() == [], r.get("motivo"))
+    h.chk("desde_V0_50_la_cadena_es_MIG003_a_MIG010", r["ok"] and r["migraciones"] == ["MIG-003", "MIG-004", "MIG-005", "MIG-006", "MIG-007", "MIG-008", "MIG-009", "MIG-010"] and r["orquestador"].integridad() == [], r.get("motivo"))
     d2 = json.loads(viejo)
     d2["estado"]["cfg"]["version_config"] = "CFG-7.7.7"
     h.chk("una_version_de_configuracion_propia_no_se_pisa", mg._v053(d2["estado"])["cfg"]["version_config"] == "CFG-7.7.7")
