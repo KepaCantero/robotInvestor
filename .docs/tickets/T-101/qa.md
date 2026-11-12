@@ -89,3 +89,102 @@ Lo que sí está bien:
 - El gate da 12/12.
 
 H-06 a H-10 son bajos: se corrigen en la misma ronda o pasan a la deuda con su ID. H-09 ya existía en la V5. En la ronda r02, el revisor volverá a ejecutar sus scripts `r01_*` (los ataques, `r01_kits.py`, `r01_ca8_consumo.py`, los mutantes y la comparación de la V5).
+
+## Ronda r02
+
+- **Revisor:** Claude, revisor nuevo sin el contexto de la implementación ni de la ronda r01 · **Ronda:** r02 · 2026-11-12
+- **Objeto:** commit `ad59aed` (correcciones de H-01 a H-11), comparado con `16aa49e` (objeto de la r01) y con `f2db7ad` (antes de T-101).
+- **Lectura:** el ticket (con CA-8 reformulado), la r01 y sus scripts, la decisión de Claude, el diff de `ad59aed` en `bloque_a/` y `diseno_v6.py` completo. `analisis-tecnico.md` y `pruebas.md` se leyeron después, para contrastar.
+
+### Reproducción desde limpio
+
+- **Copias limpias:** `git worktree add --detach` de `ad59aed` y de `f2db7ad` en la carpeta temporal de la sesión, quitadas al terminar; el código se importa de cada copia, con el `.venv` del proyecto.
+- **Suite del Bloque A** en la copia de `ad59aed`: **538 pasan**, 0 fallan (9 min 17 s).
+- **Banco** (`comparar_disenos_a.py <tmp> --semanas 2`): reproduce **exactamente** `pruebas.md` (89 frente a 56 llamadas; 1.969.619 frente a 807.939 tokens de entrada; 1.389.717 frente a 509.414 leídos de caché; 195.317 frente a 153.719 sin caché; la misma selección por tipo). Los cuatro runs, `COMPLETO` y G3 `APTO`.
+- **Gate:** `./tools/check_all.sh` completo en la copia limpia de `ad59aed` (con el `.venv` del proyecto enlazado): **12 pasan, 0 fallan** (A 538, A-Forex 68, B 176; ruff 2986, mypy A 109, FX 174, B 159; corpus íntegro).
+- **Scripts de la r01, otra vez** (sobre la copia de `ad59aed`):
+  - `r01_v5_sin_cambios.py` (`f2db7ad` frente a `ad59aed`): runs, llamadas (89) y paquetes JSON **iguales**; en el estado solo difiere el sello de integridad, como en la r01 (encadena rutas temporales).
+  - `r01_kits.py`: sin fallos de secciones; las mismas notas que en la r01 (cabecera V5.1 fuera y §11/§12 duplicadas, «manda la del kit»).
+  - `r01_ca8_consumo.py`: V6 39 llamadas frente a 70, 540.126 frente a 1.499.144 tokens de entrada con caché y 94.687 frente a 129.088 sin caché (cumple el CA-8 reformulado); sigue leyendo menos caché (55,7 % frente a 65,7 %), que ya no es el criterio.
+  - `r01_plugin_v6.py` con `tests/test_v51.py` (C6, CT-23 y CT-25 con la V6): 13/13.
+  - `r01_ataques_v6.py`: 33 OK, 3 FALLO, 6 OBS y 1 ERROR. Los cuatro no son fallos del código: `at_gc1_negativos` da ERROR porque la configuración negativa ahora se rechaza al crear el Bloque (H-07 corregido); `contradictor_mudo` busca el texto literal «Sin crítica» y la limitación nueva dice «no devolvió la crítica» (se repite bien en `r02_ataques_v6.py -k contradictor_mudo`: OK); `gc1_exploracion_sin_instruccion` mira la instrucción estática y la nota se añade al llamar (se repite bien en `-k nota_gc1`: OK); y `bolsa_v6_agotada` falla de verdad, por la corrección de H-07 (H-18).
+  - `r01_mutantes.py`: **26 de 26 muertos**; M10 no se aplica porque su texto cambió (lo cubre N10 de la r02, abajo).
+- **Scripts nuevos** (en `revisores/`, prefijo `r02_`; desde la raíz, `.venv/bin/python -I <script> <raíz de la copia>`):
+  - `r02_ataques_v6.py`: 28 comprobaciones sobre las correcciones (filtro R13/R21, PARCIAL, validación de `v6`, reintento, filas de cobertura, contrafactual aplazado, nota de GC1 y override). Resultado: 12 OK, 11 FALLO y 5 OBS; `-k <filtro>` ejecuta una parte.
+  - `r02_mutantes.py`: 21 mutantes de las correcciones de la r02 (reutiliza `r01_mutantes.py`). Resultado: 17 muertos y 4 vivos (N06, N13, N18 y N22; H-22).
+
+### Estado de los hallazgos de la r01
+
+| ID | Estado | Evidencia |
+| --- | --- | --- |
+| H-01 | **parcial** | En los ciclos N2, lo que el Analista recibe tiene fila (`r01 cobertura_completa_*`: OK). Pero en un ciclo **N1** (`REVISION_VIGENTES`), lo que el Analista recibe de la rotación exploratoria no tiene fila, ni la «exploratoria» que se da de alta en F3 como `CANDIDATA` (H-13). Las vigentes arrastradas siguen en `elegidas` sin símbolo ni precio, como decía la r01 (H-15). Y la fila nueva `ANALISTA` choca con la de la vigente mantenida (H-14) |
+| H-02 | corregido | CA-8 reformulado en el propio criterio y en el registro; la prueba (`test_v6_hace_menos_llamadas_y_lee_menos_tokens`) comprueba lo nuevo y las cifras se cumplen. No consta en el ticket la conformidad del operador con el criterio nuevo (lo propuso la r01; queda para él). `pruebas.md` aún cita la prueba con su nombre antiguo (H-21) |
+| H-03 | corregido | `r02 contradictor_mudo_declarado`: 8 `sin_respuesta`, todas declaradas en las limitaciones («no devolvió la crítica en dos intentos») y con fila `CRITICA`; nada nuevo entregado; run `PARCIAL` |
+| H-04 | corregido | `r01 reintento_*`: ninguna llamada sale de la caché; `r02 reintento_contradictor_lote_de_uno`: con lotes de uno, la ref omitida va una vez normal y una de reintento, y no más; `r02 reintento_determinista`: igual en dos ejecuciones. `reintento_de_cobertura` no rompe CT-12 ni CT-13 (solo exigen `encargos` y `peticiones`) |
+| H-05 | corregido, con efecto secundario | La nota llega al Analista en el cribado V6 y no en N1, ni con `gc1.por_codigo: false`, ni en la V5 (`r02 nota_gc1`). Pero redefine `paso_gc1` como «tu juicio», y el embudo del paquete y las decisiones de puertas de F5 siguen contando GC1 con ese campo (H-16) |
+| H-06 | corregido | `r01 gc1_nan_orden` y `gc1_bordes_y_tipos`: NaN y ±inf pasan como `SIN_SENAL_MEDIBLE`; el orden es el correcto |
+| H-07 | corregido, con una regresión | Las configuraciones negativas se rechazan al crear el Bloque; las legítimas (fracción 0 o 1 entera, 0 rondas, 0 exploración, 0 muestra, H1 y H5, `completa`, `otro`, límites parciales) se aceptan, y la V5 con una sección `v6` rota funciona (`r02 validacion_*`). El override de un tipo da el mismo total que la V5 (252,0 UC). Regresión: el override de la bolsa `V6_GLOBAL` ya no se respeta (H-18). Huecos de la validación: H-19 |
+| H-08 | corregido en lo principal | Longitudes del Sintetizador en `v6.sintetizador_limites` (marcadas técnicas), CT-15 con la bolsa común, `tope_tokens_system` y `horizonte_contrafactual` con `[PROPUESTO]` y en T-57. Quedan literales en el código V6: `[:900]` en `integracion_determinista`, `[:6]` evidencias y `[:300]` en la contrarréplica (los dos últimos, copiados de la V5); y el recorte de las limitaciones usa la clave `factor` (H-21) |
+| H-09 | corregido en parte | El filtro existe y la prueba pasa, pero deja pasar el propio ejemplo de la r01 («compra acciones de Apple (AAPL)») y tira textos legítimos de divisas y segmentos (H-12) |
+| H-10 | corregido | Sin precios al vencer, se aplaza; con precios, se resuelve una sola vez (`r02 contrafactual_una_vez`: 0, después 1, 0, 0; una entrada CTF-). La documentación ya dice que lo resuelve el ciclo V6 en HA. Sin tope de aplazamiento (H-20) |
+| H-11 | corregido | Los 26 mutantes aplicables de la r01 mueren con la batería nueva (62 pruebas). De los 21 mutantes nuevos de la r02, 17 mueren y 4 viven (H-22), entre ellos N06: el reintento del Contradictor puede volver a salir de la caché sin que ninguna prueba lo vea |
+
+### Criterios de aceptación
+
+| Criterio | Cumple | Evidencia |
+| --- | --- | --- |
+| CA-1 | sí | Entre `f2db7ad` y `ad59aed` solo cambia en `tests/` `test_t101_v6.py`; 538 pasan. `r01_v5_sin_cambios.py`: el mismo comportamiento V5 que antes de T-101. `r02 parcial_v5`: el estado PARCIAL nuevo no toca la V5 |
+| CA-2 | sí | `r01_kits.py`, sin cambios en `prompts.py` desde la r01 |
+| CA-3 | sí | Banco: 3 llamadas a Prospectiva en dos ciclos; `r01 prospectiva_*` OK; el reintento llega al modelo (H-04 corregido) |
+| CA-4 | sí | `r01 cascada_*`, `sin_rondas_de_sustitucion` y `deduplicacion_entre_tipos` OK; `r02 contradictor_mudo_declarado` y `reintento_contradictor_lote_de_uno` OK; M08, M09, M18 y M27 mueren |
+| CA-5 | sí, con reserva | Una llamada después de G3; la selección y las cifras se ignoran (N10 muere); segunda pasada de HT-09. Reserva: el filtro R13/R21 de los textos es débil (H-12) |
+| CA-6 | sí, con reserva | `r01 gc1_*` OK; `max_candidatas` vigilado (M01 muere). Reservas: el Analista puede devolver como finalista un ámbito que GC1 descartó y no le envió (H-17); el embudo del paquete cuenta GC1 con el juicio del Analista (H-16) |
+| CA-7 | **no** | En los ciclos N1, la rotación exploratoria que recibe el Analista (DIV 2 de 5, MON 2 de 3) y la exploratoria que se da de alta en F3 como `CANDIDATA` (MON `XEON.DE`) no tienen fila (H-13). En un N2 en el que el Analista no vuelve a proponer una vigente que sigue en el top-3, su símbolo tiene dos filas contradictorias y puede entrar en la muestra de descartes (H-14). El contrafactual sí se resuelve al vencer y una sola vez |
+| CA-8 (reformulado) | sí | Banco y `r01_ca8_consumo.py`: menos llamadas y menos tokens de entrada, con caché y sin ella; sin afirmar nada de la calidad |
+| CA-9 | sí | Gate completo 12/12 en la copia limpia; A 538 (476 + 62 de T-101); cuotas ruff 2987 → 2986 y mypy de A 109 (no suben); corpus sin cambios entre `f2db7ad` y `ad59aed` |
+
+### Hallazgos nuevos
+
+| ID | Gravedad | Cómo reproducirlo | Esperado / obtenido | Corrección sugerida | Estado |
+| --- | --- | --- | --- | --- | --- |
+| H-12 | **media** | `r02_ataques_v6.py -k filtro` y `-k sintetizador_` | **Esperado** (README del ejecutor: «nunca uno con una probabilidad numérica (R13) o con la compra de un instrumento (R21)»): el filtro caza lo evidente y no tira textos legítimos. **Obtenido.** Pasan 10 de 14 textos prohibidos, entre ellos el ejemplo de la r01, «compra acciones de Apple (AAPL)», que llega a `x_lectura_conjunto` del paquete con la segunda pasada `APTO`. También pasan «Comprar AAPL…» (el verbo solo se busca en minúscula), «la compra de AAPL», «probabilidad de 0,87» y «87 por ciento de probabilidades». Y se descartan 5 de 9 textos legítimos: «vender USD frente al EUR», «comprar RF larga», «vender EM», «vender HY» (cualquier sigla en mayúsculas tras comprar o vender) y «los pronósticos con probabilidad alta acertaron el 62 %». Con DIV, el único perfil activo por defecto, una frase llana corriente («no ve motivos para vender USD») hace que se tiren todos los textos llanos del Sintetizador. Falla cerrado y se declara, pero degrada el informe y no cumple lo que dice la documentación | Verbo sin distinguir mayúsculas; excluir las siglas de divisas ISO y de los tipos y segmentos (desde la configuración o el universo); cubrir «compra de», «por ciento» y probabilidades decimales; una batería de textos legítimos y prohibidos en la prueba; y, en el README, «filtro heurístico» en vez de «nunca». Lo que no se corrija, a la deuda con H-09 | abierto |
+| H-13 | **media** | `r02_ataques_v6.py -k cobertura_n1` | **Esperado** (CA-7; H-01 de la r01, «el conjunto de símbolos del universo enviado al Analista ⊆ símbolos con fila»). **Obtenido:** en un ciclo N1 (`REVISION_VIGENTES`, el ciclo semanal habitual sin cambio material) la rotación exploratoria que recibe el Analista no tiene fila: DIV `AUDUSD=X` y `USDCHF=X`, MON `SHV` y `XEON.DE`. En el banco, MON no tiene ninguna fila en el segundo ciclo. Tampoco tiene fila la exploratoria que el Analista de N1 propone y que se da de alta en F3 como `CANDIDATA` (`exploratoria_prometedora`): MON `XEON.DE`, OPP-2026-0007. La prueba nueva solo mira el cribado N2 | Fila `ANALISTA` (o `ROTACION`) para cada ámbito de `rotacion_exploratoria` enviado, y fila propia para cada exploratoria dada de alta en F3. Prueba con un ciclo N1 | abierto |
+| H-14 | **media** | `r02_ataques_v6.py -k cobertura_vigente_no_propuesta` (ciclo 2 N2 en el que el Analista no vuelve a proponer la vigente `EURUSD=X`, que se mantiene en el top-3 por arrastre) | **Esperado:** una fila por candidata con su fase final y una muestra de descartes sin opciones elegidas. **Obtenido** (regresión de la corrección de H-01): `EURUSD=X` tiene dos filas, `ANALISTA` («el Analista no la propuso») y `SELECCION_FINAL` («vigente mantenida en el top-3»), y entra en la muestra de descartes. El contrafactual compararía como descarte una opción que está en el top-3 | No crear la fila `ANALISTA` para un símbolo que acaba como vigente mantenida o cerrada (o fusionar las filas), y excluir de la muestra todo símbolo del top-3 | abierto |
+| H-15 | baja | `r02_ataques_v6.py -k cobertura_elegidas_sin_simbolo` y `-k contrafactual_solo_vigentes` | **Esperado** (H-01 de la r01: «una fila `SELECCION_FINAL` con símbolo y precio para la vigente arrastrada»). **Obtenido:** la fila tiene símbolo, pero en `elegidas` las vigentes arrastradas siguen con `simbolo` y `precio` nulos: en tres ciclos con cinco tipos, 20 elegidas sin símbolo (ciclos 2 y 3). Un run cuyo top-3 son vigentes arrastradas se resuelve como 0 descartes y 0 elegidas, y la media de las elegidas de un N2 excluye las vigentes | Tomar el símbolo y el precio de la vigente (F3 y HT-01) al construir `elegidas` | abierto |
+| H-16 | **media** | Banco: `paquete-json` de 2026-06-05 frente a la COB-; `orquestacion._registrar_run` y `sintesis` (`embudo.pasan_gc1`) | **Esperado:** con GC1 por código, el embudo del paquete y las decisiones de puertas de F5 reflejan el GC1 que se aplicó. **Obtenido:** salen del `cribado.paso_gc1` del Analista, que la nota de H-05 define ahora como «tu juicio, no la marca del ejecutor». En el banco, RF: GC1 de código deja pasar 0 de 8 y el paquete dice 2 cribadas y 1 que pasa GC1; RV: 2 de 7 frente a 4 de 4. Los descartes de GC1 por código no constan en `decisiones_puertas` de F5 (solo en la COB- de HA) | En la V6, el embudo (`cribadas`, `pasan_gc1`) y `decisiones_puertas` GC1 desde el registro de GC1 por código; el juicio del Analista, aparte | abierto |
+| H-17 | baja | `r02_ataques_v6.py -k gc1_puenteado` | **Esperado:** GC1 por código es una puerta. **Obtenido:** el Analista puede devolver como finalista un ámbito del tipo que GC1 descartó y no le envió (`USDJPY=X`): PS3 lo admite porque comprueba contra el universo completo del tipo, pasa GC2 y GC3 y tiene dos filas, `GC1` y `SELECCION`. En el simulado no llega a entregarse (`-k gc1_puenteado_y`: no pasa a un top-3), pero nada lo impide por diseño | En la V6, rechazar (como PS3) la finalista cuyo símbolo no estaba en el universo filtrado enviado al Analista, y declararlo | abierto |
+| H-18 | baja | `r01_ataques_v6.py -k bolsa` y `r02_ataques_v6.py -k override_de_la_bolsa` | Regresión de la corrección de H-07: al aplicar el override antes de repartir, un override de `V6_GLOBAL` se suma a lo que llega de los tipos (0,001 → 6,301 UC) y el run de la r01 con la bolsa agotada entrega 3 opciones nuevas. El cierre `PARCIAL` con la bolsa vacía sigue funcionando por otra vía (`-k bolsa_vacia`: OK), pero ninguna prueba de la batería lo vigila | Respetar la clave `V6_GLOBAL` del override (aplicarla después del reparto) y una prueba de bolsa agotada | abierto |
+| H-19 | baja | `r02_ataques_v6.py -k validacion_tipos_raros` y `-k gc1_clave_inexistente` | `validar` acepta una clave de señal que el Motor no produce (`senal_compuessta`): GC1 deja pasar los 6 ámbitos como «sin señal medible», sin tope y sin aviso. `v6.gc1: null` da `AttributeError` y `horizonte_contrafactual: null`, `KeyError` (fallan cerrado, pero no con el mensaje de `validar`) | Avisar (o PARCIAL declarado) si ningún ámbito de un tipo tiene la señal configurada; tipos de sección en `validar` | abierto |
+| H-20 | baja | `r02_ataques_v6.py -k contrafactual_` | Sin precios al vencer, el contrafactual se aplaza sin tope (seis ciclos seguidos, ninguna resolución ni estado `NO_RESOLUBLE`). Con dos tipos, si uno no tiene precios y el otro sí, se resuelve y la parte sin precios queda vacía para siempre (`sin_precio: 5`), aunque al ciclo siguiente los hubiera | Tope de aplazamientos en la configuración y cierre `NO_RESOLUBLE`; resolver por tipo | abierto |
+| H-21 | baja | Lectura | Documentación y restos: `pruebas.md` cita `test_v6_hace_menos_llamadas_y_lee_mas_cache`, que ya se llama `…_lee_menos_tokens`; quedan `[:900]`, `[:6]` y `[:300]` en `diseno_v6.py`; las limitaciones del Sintetizador se recortan con la clave `factor`. Observación (sin hallazgo): con la V6, una omisión de Prospectiva de una finalista que no habría entrado en el top-3 deja el run `PARCIAL` (`-k parcial_omision`), como dice `analisis-tecnico.md` | Ajustar `pruebas.md`; llevar los literales a la configuración o declararlos técnicos; una clave propia para las limitaciones | abierto |
+| H-22 | baja | `r02_mutantes.py <raíz>` (21 mutantes; 17 muertos y 4 vivos) | **Esperado:** la batería vigila cada corrección de la r02. **Obtenido:** sobreviven **N06** (el reintento del Contradictor sin `reintento_de_cobertura`: vuelve el `cache_hit` de H-04 en un lote idéntico, y la prueba del Contradictor no lo ve porque su reintento es un lote distinto del primero), **N13** (sin fila `CIERRE` para la vigente cerrada), **N18** (sin tope de preguntas del Sintetizador) y **N22** (CT-15 vuelve a `{"uc": 2}`) | Una prueba del Contradictor con `max_encargos_por_lote: 1` y la ref omitida que exija dos llamadas al modelo (como `r02 reintento_contradictor_lote_de_uno`); un segundo ciclo con una vigente cerrada; el tope de preguntas; el presupuesto del mensaje CT-15 | abierto |
+
+### Invariantes
+
+- **R2 y canales:** los canales V6 siguen cerrados en la V5 (`r01 canales_v5_cerrados`, M13 muere).
+- **R9:** el Lector de evidencia sanea la instrucción incrustada y la referencia inventada (`r01 lector_r9`).
+- **R13 y R21:** el Sintetizador no cambia selección ni cifras (N10 muere), pero el filtro de sus textos es débil (H-12). En la V5, AG-02 sigue sin filtro (en la deuda, T-101).
+- **Sin LLM en la ruta determinista:** GC1, la integración previa a G3, el dictamen G3, la cobertura y el contrafactual no llaman al modelo.
+- **Falla cerrado:** lo no criticado, lo omitido por Prospectiva y lo que el Contradictor no devuelve no se entrega y se declara; el run queda `PARCIAL`. La configuración inválida se rechaza al crear el Bloque (con los huecos de H-19).
+- **Números de la configuración y `[PROPUESTO]`:** los de la V6 están en `por_defecto.yaml`, los de decisión con `[PROPUESTO]` y en T-57; quedan tres literales (H-21).
+- **Corpus:** ningún fichero de `01_` a `10_` ni `99_` cambia entre `f2db7ad` y `ad59aed`.
+- **Secretos y datos personales:** nada nuevo en el repositorio.
+- **Documentación:** el README del ejecutor (§6 bis) dice lo que hace el código, salvo el «nunca» del filtro (H-12) y «hasta qué fase llegó cada candidata», que no se cumple en N1 (H-13).
+
+### Veredicto r02
+
+**NO APTO** · CA-7 no se cumple y quedan abiertos cuatro hallazgos medios nuevos:
+- **CA-7 (H-13):** en los ciclos N1 (los semanales sin cambio material), lo que el Analista recibe de la rotación exploratoria y la exploratoria dada de alta en F3 como `CANDIDATA` no tienen fila en la cobertura. H-01 queda corregido solo para el cribado N2.
+- **H-14:** la corrección de H-01 da dos filas contradictorias a una vigente que el Analista no vuelve a proponer, y esa opción del top-3 puede entrar en la muestra de descartes.
+- **H-12:** el filtro R13/R21 deja pasar el ejemplo de la propia r01 y tira frases legítimas de divisas y segmentos; la documentación dice «nunca».
+- **H-16:** el embudo del paquete y las decisiones de puertas de F5 cuentan GC1 con el juicio del Analista, no con el GC1 de código que se aplicó.
+
+Lo que sí está bien:
+- La V5 no cambia.
+- H-02, H-03, H-04, H-06 y H-10 están corregidos, y H-05, H-07, H-08 y H-11, en lo principal.
+- Los 26 mutantes aplicables de la r01 mueren.
+- Nada sin crítica ni sin pronóstico llega a entregarse.
+- El reintento llega al modelo una sola vez.
+- El gate da 12/12.
+
+H-15 y H-17 a H-22 son bajos: se corrigen en la ronda siguiente o pasan a la deuda con su ID. En la ronda r03, el revisor volverá a ejecutar los scripts `r01_*` y `r02_*`.

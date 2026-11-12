@@ -64,6 +64,8 @@ v6:
     solo_seleccion: true             # A-01: solo la selección provisional y sus sustitutas
     max_rondas_sustitucion: 2        # [PROPUESTO] rondas de crítica de sustitutas; lo que quede sin crítica no se entrega
     proveedor: mismo                 # mismo | otro (decisión 2 de la tanda 1; sin contratar: se usa el mismo y se declara)
+    max_evidencias: 6                # técnico: evidencias por opción que ve el Contradictor (el mismo 6 de la V5)
+    contrarreplica_max: 300          # técnico: caracteres que se guardan del motivo de una contrarréplica (el mismo 300 de la V5)
   sintetizador: true                 # integración y textos en una llamada, después de G3 (sustituye a AG-02 y AG-17)
   lector_evidencia: true             # CT-07 y CT-08 en el ciclo (sustituye a AG-14 y AG-16 en el ciclo)
   respondedor: true                  # consultas N0 de CT-03 (sustituye a la parte de IA de AG-01)
@@ -75,11 +77,17 @@ v6:
     registrar: true                  # A-05 e idea 3: registro del embudo por candidata en HA
     muestra_descartes: 2             # [PROPUESTO] descartes por tipo y run con seguimiento contrafactual (idea 4)
     horizonte_contrafactual: H3      # [PROPUESTO] horizonte con el que se resuelve la muestra
+    dias_max_espera_precio: 30       # [PROPUESTO] días tras el vencimiento que se espera a tener precios; después, NO_RESOLUBLE
   # [PROPUESTO] idea 7: tope de tokens (aproximados) del system prompt por papel; la prueba de T-101 lo vigila
   tope_tokens_system: {analista: 14000, AG-10: 23000, AG-11: 20000, AG-26: 2500, AG-27: 1800, AG-28: 1800}
   # Técnico (QA r01 de T-101, H-08): longitud máxima en caracteres de los textos que se toman del Sintetizador, longitud
   # mínima de un texto útil y cuántas preguntas y limitaciones suyas entran como mucho
-  sintetizador_limites: {regimen: 900, factor: 300, lectura: 1200, texto_minimo: 5, preguntas: 6, limitaciones: 5}
+  sintetizador_limites: {regimen: 900, factor: 300, lectura: 1200, texto_minimo: 5, preguntas: 6, limitaciones: 5, limitacion: 300}
+  # QA r02 de T-101, H-12: códigos en mayúsculas que pueden aparecer junto a «comprar» o «vender» sin ser un instrumento concreto
+  # (R21): divisas, tipos de activo y siglas de segmentos; además valen los símbolos del universo. Técnico, ampliable.
+  filtro_r21_codigos: [USD, EUR, JPY, GBP, CHF, CAD, AUD, NZD, SEK, NOK, DKK, MXN, BRL, CNY, CNH, INR, KRW, ZAR, TRY, PLN, HUF, CZK,
+                       RV, RF, DIV, MP, IDX, FON, DER, INM, CRI, ALT, MON, TCV, EM, HY, IG, ETF, REIT, VIX, MOVE, PIB, IPC, BCE, FED,
+                       OPEP, TIPS, EE, UU, UE]
 
 # ---------------------------------------------------------------------------
 # Modelos por agente. IMPORTANTE: los identificadores deben comprobarse en la

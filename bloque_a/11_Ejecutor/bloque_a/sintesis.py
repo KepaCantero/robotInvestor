@@ -369,8 +369,10 @@ def construir(bloque, run_id, tipo, as_of, clases, nivel, gc0, analisis, selecci
         clases_out[c] = {"estado_semaforo": sem,
                          "regimen_clase": (an.get("regimen") or "Régimen de la clase no disponible en este ciclo")[:600] if len(an.get("regimen") or "") >= 10 else "Régimen de la clase no disponible en este ciclo",
                          "candidatas_analizadas": max(len(an.get("cribado", [])), len(fins), len(sel["candidatos"]), n),
-                         "embudo": {"gc0_delta_material": bool(gc0[c]["cambio_material"]), "cribadas": len(an.get("cribado", [])),
-                                    "pasan_gc1": sum(1 for x in an.get("cribado", []) if x.get("paso_gc1")),
+                         # T-101 (QA r02, H-16): con GC1 por código (V6), el embudo cuenta el GC1 del código
+                         "embudo": {"gc0_delta_material": bool(gc0[c]["cambio_material"]),
+                                    "cribadas": an["gc1"]["universo"] if an.get("gc1") else len(an.get("cribado", [])),
+                                    "pasan_gc1": len(an["gc1"]["pasan"]) if an.get("gc1") else sum(1 for x in an.get("cribado", []) if x.get("paso_gc1")),
                                     "pasan_gc2": sum(1 for f in fins if f.get("_gc2")), "finalistas_gc3": min(sum(1 for f in fins if f.get("_gc3")), 5),
                                     "elegibles": sum(1 for e in sel["evaluadas"] if e["elegible"])},
                          "opciones": opciones, "menos_de_tres_motivo": _menos_de_tres_texto(c, sel, n)}

@@ -2,7 +2,7 @@
 
 | Campo | Valor |
 | --- | --- |
-| Estado | EN QA (ronda r02) |
+| Estado | EN QA (ronda r03) |
 | Pieza | `bloque_a/11_Ejecutor` (código vivo, fuera del corpus congelado) |
 | Planifica · implementa · QA | claude · claude · claude, con un revisor nuevo sin contexto (regla del operador del 12-11-2026) |
 | Aprobación del operador | 2026-11-12: «analiza su revisión y decide si merece la pena tomar en consideración los cambios [...] También aprovecha para sumar alguna idea nueva [...] quiero que empieces a crear (en este caso sería modificar lo que ya existe) e implementar el bloque A completo» |
@@ -93,3 +93,5 @@ Construir en el ejecutor el Bloque A rediseñado: el de la propuesta de Claude (
 - 2026-11-12 · EN QA · V6 implementada (`diseno: v6`, la V5 por defecto): 39 pruebas nuevas, A 515 en verde; ruff 3019 → 2987, mypy de A 114 → 109; banco con el simulador en `pruebas.md` (56 llamadas frente a 89 y 41 % de los tokens de entrada en dos ciclos con los doce perfiles)
 - 2026-11-12 · NO APTO · QA r01 (revisor nuevo sin contexto, commit `16aa49e`): CA-7 y CA-8 sin cumplir; H-01, H-02, H-03, H-04, H-05 y H-11 medios; H-06 a H-10 bajos
 - 2026-11-12 · EN QA · Ronda r02: corregidos H-01 a H-11 (CA-8 reformulado y registrado, H-02); 23 pruebas nuevas (62 en `test_t101_v6.py`, A 538)
+- 2026-11-12 · NO APTO · QA r02 (otro revisor nuevo, commit `ad59aed`): CA-7 sin cumplir; H-12, H-13, H-14 y H-16 medios; H-15 y H-17 a H-22 bajos
+- 2026-11-12 · EN QA · Ronda r03: corregidos H-12 a H-22; 11 pruebas nuevas (73 en `test_t101_v6.py`, A 549)

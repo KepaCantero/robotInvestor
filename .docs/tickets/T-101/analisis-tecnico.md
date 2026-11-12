@@ -52,3 +52,19 @@
 | H-09 | Un texto del Sintetizador con una probabilidad numérica (R13) o con la compra de un instrumento (R21, más `sintesis._UNITARIA`) no se toma y se declara. En los textos llanos, se usan los textos por defecto. En la V5, la integración de AG-02 sigue sin ese filtro, y queda en la deuda |
 | H-10 | Si al vencer no hay ningún precio de lo que se podía medir, el contrafactual espera al ciclo siguiente. Con datos parciales se resuelve y cuenta `sin_precio`. La documentación dice que lo escribe el ciclo V6 en HA |
 | H-11 | 23 pruebas nuevas contra los mutantes vivos: sin rondas de sustitución (M08, M09, M18 y M27), el Contradictor sin respuesta y su reintento (M06 y H-03), la caché en el reintento (H-04), refs no pedidas (M25), OPP- estables (M14), GC1 con más de `max_candidatas` y con NaN (M01 y H-06), falsos negativos (M23), el Evaluador con resueltos (M24), el Auditor en vivo (M26) y el contrafactual la víspera y sin precios (M12 y H-10) |
+
+## Ronda r03 (hallazgos de la QA r02)
+
+| Hallazgo | Corrección |
+| --- | --- |
+| H-12 | El filtro R13/R21 se rehace por patrones. R13: un porcentaje «de probabilidad/posibilidad/opciones», o una de esas palabras seguida de una cifra en la misma frase, salvo «de las veces». R21: un ISIN, un sufijo societario, un bono con año de vencimiento, `sintesis._UNITARIA`, un verbo de compra o venta junto a un código en mayúsculas o un código entre paréntesis que no está en `v6.filtro_r21_codigos` ni en el universo. Lo que no tiene patrón (un nombre propio suelto) queda como límite declarado en el README |
+| H-13 | Los ciclos N1 guardan su rotación exploratoria (`rotacion`), y la cobertura tiene filas ROTACION y EXPLORATORIA_F3 (la que queda en F3 como CANDIDATA) |
+| H-14 | No hay fila ANALISTA para lo que está en el top-3 ni para las vigentes, y la muestra de descartes no incluye nada del top-3 |
+| H-15 | `elegidas` sale de los candidatos del top-3, también las vigentes arrastradas, con su símbolo y su precio |
+| H-16 | Con GC1 por código, el embudo del paquete (`cribadas`, `pasan_gc1`) y las decisiones GC1 de F5 son las del código (`gc1_decisiones`) |
+| H-17 | Con GC1 por código, una finalista cuyo indicador no estaba en el universo enviado al Analista se descarta (PS3) |
+| H-18 | Un `presupuesto_override` de `V6_GLOBAL` se respeta tal cual. Una prueba vigila el cierre PARCIAL con la bolsa vacía |
+| H-19 | `senal_por_perfil` solo admite tipos de activo conocidos y señales del Motor (`SENALES_GC1`); `gc1: null` no rompe |
+| H-20 | Sin precios al vencer, el contrafactual espera como mucho `v6.cobertura.dias_max_espera_precio` días y después se cierra como NO_RESOLUBLE. Cada tipo lleva su estado (RESUELTO, SIN_DATOS o SIN_MUESTRA) |
+| H-21 | `pruebas.md` cita la prueba de CA-8 con su nombre. Los literales que quedaban (régimen, evidencias del Contradictor, motivo de la contrarréplica y longitud de una limitación) salen de la configuración |
+| H-22 | Regresiones para N06 (reintento del Contradictor fuera de la caché), N13 (fila de la vigente cerrada), N18 (tope de preguntas) y N22 (presupuesto del mensaje CT-15) |
