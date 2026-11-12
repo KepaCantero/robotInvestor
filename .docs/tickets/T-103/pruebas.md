@@ -28,3 +28,14 @@ Sin la corrección fallan 11 de los 12 casos de escapes de H-40, la clave de dic
 ## Gate
 
 `./tools/check_all.sh` completo desde `.docs/scripts/commit_limpio.sh` (solo hace el commit con 12/12); ruff de los archivos tocados sin errores nuevos (2 antes y 2 después).
+
+## Ronda r02
+
+| Suite | Antes | Después |
+| --- | --- | --- |
+| `tests/test_t103_r8_y_bajos.py` | 23 | 31 |
+| `test_t92_revision.py`, `test_t93_hallazgos.py` | 107 | 107 |
+| `revisores/r01_01_r8_escapes_y_falsos.py` | 0 fallos | 0 fallos (colas de tres grupos de 6, 7 u 8 cifras y de tres fechas, 500 de 500) |
+| `revisores/r01_03_almacen_cortes.py` | 3 fallos (caso 7) | 0 fallos |
+| `revisores/r01_02_r8_rendimiento.py` | 3 fallos (129 s y 592 s con 99.999 barras) | 0 fallos (0,013 s y 0,037 s) |
+| `r04_01` de T-92 y `r01_01`/`r01_02` de T-93 | 0 fallos | 0 fallos |

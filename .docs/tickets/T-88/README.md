@@ -1,0 +1,52 @@
+# T-88 · Bloque A: consumo por tipo determinista con varios hilos (la prima de escritura de caché)
+
+| Campo | Valor |
+| --- | --- |
+| Estado | EN QA |
+| Pieza | `bloque_a/11_Ejecutor` (`bloque_a/consumo.py`, `bloque_a/orquestacion.py`) |
+| Planifica · implementa · QA | claude · claude · claude, con un revisor nuevo sin contexto (regla del operador del 12-11-2026) |
+| Aprobación del operador | 2026-11-12: está en el orden de tareas obligatorias para evaluar el Bloque A por separado |
+| Deuda técnica | T-88 en `sistema_global/seguimiento/Deuda_tecnica_y_pendientes_del_operador.md` (H-10 de la QA de T-65) |
+
+## Objetivo
+
+Que dos ejecuciones iguales del ciclo con varios hilos dejen en F5 el mismo consumo por tipo de activo (`presupuesto.*.consumido`). Hoy cambia de una ejecución a otra, aunque el total, la selección y los pronósticos no cambian. Hace falta antes del modo sombra con API: un registro de consumo que no se reproduce no sirve para auditar.
+
+## Alcance
+
+- Entra: el reparto entre bolsas (tipos de activo y bolsa común) de lo que cuesta cada llamada, en V5 y en V6.
+- No entra:
+  - la contabilidad de llamadas (`Contabilidad.llamadas`), que sigue con el coste real de cada una;
+  - las estimaciones previas (`_estimar_uc`), que ya suponen el system prompt leído de caché;
+  - las llamadas posteriores al registro de F5 (AG-18, AG-19 y AG-20 en la V5), que ya no se cargaban a ninguna bolsa (unos 3 UC en un ciclo de doce perfiles; declarado).
+
+## Diseño
+
+- **Causa:** la escritura de la caché de un prefijo compartido la paga el tipo cuyo hilo llega primero. Son prefijos compartidos el system prompt de un agente que trabaja para varios tipos (AG-10, AG-11, AG-12 y AG-14 en la V5) y, en la V6, el núcleo común de los analistas y AG-28.
+- **Regla (`[PROPUESTO]`, INC-T88-01):**
+  - durante el ciclo, cada bolsa paga la lectura de lo cacheado más su prima «solo»: la escritura que pagaría si fuera la única del run (la primera llamada de cada agente en esa bolsa escribe su prefijo; las siguientes lo leen). Es determinista y prudente: nunca carga menos que la prima real de esa bolsa;
+  - tras la fase en paralelo y al resumir, `liquidar_primas` cambia esas primas «solo» por su parte de los tokens escritos de verdad, en proporción a las primas «solo». El total cargado vuelve a ser el real;
+  - todo se cuenta en tokens enteros, así que la suma no depende del orden de los hilos.
+- **Estado persistido:** no cambia de forma; solo cambian los valores de `presupuesto` en F5.
+- **Cómo falla cerrado:** durante la fase en paralelo, el control de presupuesto ve la prima «solo», que es igual o mayor que la real.
+
+## Criterios de aceptación (binarios)
+
+1. CA-1: tres ejecuciones iguales con seis hilos dan el mismo `presupuesto` en F5, en V5 y en V6.
+2. CA-2: en la V6, lo cargado a las bolsas es el coste real de las llamadas (±0,01 UC de redondeo).
+3. CA-3: durante la fase, cada bolsa carga su prima «solo»; tras liquidar, la prima real repartida, sin cambiar el total; una segunda liquidación no cambia nada.
+4. CA-4: el gate da 12/12, sin subir cuotas, y A sube con las pruebas nuevas.
+
+## Plan de pruebas
+
+| Prueba | Tipo | Criterio |
+| --- | --- | --- |
+| `tests/test_t88_consumo.py`: tres ciclos iguales con seis hilos, V5 y V6 | Regresión | CA-1 |
+| `tests/test_t88_consumo.py`: total cargado frente a coste real (V6) | Integración | CA-2 |
+| `tests/test_t88_consumo.py`: `Presupuesto` con primas a mano | Unitaria | CA-3 |
+| `./tools/check_all.sh` | Gate | CA-4 |
+
+## Registro
+
+- 2026-11-12 · ABIERTO · creado con nuevo_ticket.sh
+- 2026-11-12 · EN QA · reparto de las primas de caché por liquidación proporcional; 5 pruebas nuevas

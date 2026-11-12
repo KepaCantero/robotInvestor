@@ -19,7 +19,6 @@ from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Tuple
 
-import numpy as np
 import pandas as pd
 
 from . import diseno_v6 as v6
@@ -27,6 +26,14 @@ from . import sintesis as sint
 from .agentes import Agentes
 from .almacen import Almacen, Reloj
 from .anonimizacion import Anonimizador
+
+# T-91 (QA r05 de T-65, H-26): el calendario de PS2 vive en `calendario.py`, para que la resolución cuente igual que PS2
+from .calendario import (  # noqa: F401
+    CLAVES_FESTIVOS_PS2,
+    RE_MM_DD,
+    _sesiones_entre,
+    validar_festivos_ps2,
+)
 from .configuracion import (
     CLASES,
     HORIZONTES,
@@ -120,56 +127,6 @@ def simbolo_seguimiento(x: dict) -> str | None:
 def _semana(fecha) -> str:
     f = pd.Timestamp(fecha)
     return f"Semana {f.isocalendar()[1]} de {f.isocalendar()[0]}"
-
-
-CLAVES_FESTIVOS_PS2 = {"viernes_santo": bool, "lunes_de_pascua": bool, "fijos": list}
-RE_MM_DD = re.compile(r"[0-9]{2}-[0-9]{2}", re.ASCII)
-
-
-def validar_festivos_ps2(festivos) -> dict:
-    """T-65 (QA de T-53, H-17): `ps2_festivos` se valida al crear el Bloque. Exige las tres claves con su tipo (booleanos
-    de verdad, no el texto «false») y una lista de fechas «MM-DD» válidas; si falta o está mal, ValueError con el motivo
-    (antes, PS2 volvía en silencio al cálculo anterior o el ciclo caía con TypeError)."""
-    errores: list[str] = []
-    if isinstance(festivos, dict):
-        faltan = sorted(set(CLAVES_FESTIVOS_PS2) - set(festivos))
-        sobran = sorted(set(festivos) - set(CLAVES_FESTIVOS_PS2))
-        if faltan or sobran:
-            errores.append(f"faltan {faltan} o sobran {sobran}")
-        errores += [f"{k} debe ser {tipo.__name__}, no {festivos.get(k)!r}" for k, tipo in CLAVES_FESTIVOS_PS2.items()
-                    if k in festivos and not isinstance(festivos[k], tipo)]
-        fijos = festivos.get("fijos")
-        for d in fijos if isinstance(fijos, list) else []:
-            try:
-                # QA r01 de T-65, H-04: «MM-DD» estricto (dígitos ASCII, sin espacios), y además una fecha real (2024: admite 02-29)
-                ok = isinstance(d, str) and bool(RE_MM_DD.fullmatch(d)) and bool(pd.Timestamp(f"2024-{d}"))
-            except (ValueError, TypeError):
-                ok = False
-            if not ok:
-                errores.append(f"fijos: {d!r} no es una fecha «MM-DD»")
-    else:
-        errores.append(f"debe ser un diccionario con {sorted(CLAVES_FESTIVOS_PS2)}, no {festivos!r}")
-    if errores:
-        raise ValueError("ps2_festivos: " + "; ".join(errores))
-    return {"viernes_santo": festivos["viernes_santo"], "lunes_de_pascua": festivos["lunes_de_pascua"],
-            "fijos": sorted(set(festivos["fijos"]))}
-
-
-def _sesiones_entre(desde, hasta, festivos: dict) -> int:
-    """Sesiones hábiles en [desde, hasta) sin los cierres habituales de mercado (`ps2_festivos`, [PROPUESTO]): Viernes
-    Santo, lunes de Pascua y fechas fijas MM-DD. Así el dato de la última sesión real vale en H1 tras un puente o un
-    festivo. `festivos` ya validado con `validar_festivos_ps2`."""
-    d0, d1 = pd.Timestamp(desde).normalize(), pd.Timestamp(hasta).normalize()
-    if d1 <= d0:
-        return 0
-    cierres = [d for d in pd.date_range(d0, d1) if d.strftime("%m-%d") in set(festivos["fijos"])]
-    if festivos["viernes_santo"]:
-        from pandas.tseries.holiday import GoodFriday
-        cierres += list(GoodFriday.dates(d0, d1))
-    if festivos["lunes_de_pascua"]:
-        from pandas.tseries.holiday import EasterMonday
-        cierres += list(EasterMonday.dates(d0, d1))
-    return int(np.busday_count(d0.date(), d1.date(), holidays=[d.date() for d in cierres]))
 
 
 class Bloque:
@@ -275,10 +232,27 @@ class Bloque:
         r = self.agentes.invocar(agente, contrato, self._vista(mensaje), esquema, instrucciones, self._vista(ctx), run_id,
                                  clase, fase, permitir_web)
         if presupuesto is not None:
-            presupuesto.cargar(bolsa, r.uc)
+            self._cargar(presupuesto, bolsa, agente, r)
         if r.datos is not None:
             r.datos = self._real(r.datos)
         return r
+
+    def _cargar(self, presupuesto: Presupuesto, bolsa: str, agente: str, r) -> None:
+        """T-88 (QA de T-65, H-10): con varios hilos, la escritura de la caché de un prefijo compartido (el system prompt de un
+        agente que trabaja para varios tipos, o el núcleo común de los analistas V6) la paga el tipo cuyo hilo llega primero,
+        y eso cambia de una ejecución a otra. Cada bolsa paga la lectura de lo cacheado más su prima de escritura «como si
+        fuera la única del run» (la primera llamada de cada agente en la bolsa escribe el prefijo): es determinista y
+        prudente. `Presupuesto.liquidar_primas` cambia después esas primas por su parte de las primas reales (`[PROPUESTO]`,
+        INC-T88-01)."""
+        u = r.uso
+        cacheados = u.cache_lectura + u.cache_escritura
+        if r.cache_hit or not cacheados:
+            presupuesto.cargar(bolsa, r.uc)
+            return
+        leido = self.contabilidad.uc_de(Uso(entrada=u.entrada, salida=u.salida, cache_lectura=cacheados, busquedas_web=u.busquedas_web))
+        prefijo = cacheados // max(1, r.intentos)   # cada intento lee o escribe el mismo prefijo
+        escrito = prefijo if presupuesto.primera_llamada(bolsa, agente) else 0
+        presupuesto.cargar_con_prima(bolsa, leido, escrito, u.cache_escritura)
 
     def _estimar_uc(self, agente: str, mensaje: dict) -> float:
         n_user = len(json.dumps(mensaje, ensure_ascii=False, default=str)) / 3.6 + 1500
@@ -606,6 +580,7 @@ class Bloque:
         with ThreadPoolExecutor(max_workers=max(1, hilos)) as ex:
             futuros = {c: ex.submit(self._analizar_clase_en_ambito, *args) for c, args in tareas.items()}
             analisis = {c: futuros[c].result() for c in clases}
+        presupuesto.liquidar_primas()   # T-88: tras la fase en paralelo, el reparto de las primas de caché ya no depende del orden
         for orden in self.monitor.evaluar_instancias():
             self.almacen.escribir("HA", "AG-18", {**orden, "id": self.almacen.nuevo_id(orden["tipo_entrada"]), "run_id": run_id})
 

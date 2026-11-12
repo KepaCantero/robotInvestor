@@ -23,6 +23,7 @@ import numpy as np
 import pandas as pd
 from scipy import stats
 
+from .calendario import _sesiones_entre, validar_festivos_ps2
 from .configuracion import CLASES, TABLA_HORIZONTES, parametro, parametros_ht03
 from .herramientas.ht01_datos import DatosNoDisponibles
 from .herramientas.ht05_planificador import dias_habiles_entre
@@ -159,6 +160,8 @@ class Evaluador:
         # Tabla de bandas verbales de la configuración (None = Anexo A), propia de esta instancia (T-65, H-07); falla
         # cerrado si es incoherente
         self.bandas = tuple(validar_bandas(cfg.get("bandas_verbales")))
+        # T-91 (QA r05 de T-65, H-26): las sesiones de H1 se cuentan con los mismos festivos que PS2 al emitir
+        self._festivos_ps2 = validar_festivos_ps2(parametro(cfg, "ps2_festivos"))
         self.prob_de_banda = {b["codigo"]: b["prob_interna"] for b in self.bandas}
         # T-66: claves nuevas validadas al crear el Evaluador (falla cerrado si no son válidas)
         self.solo_endurecer()
@@ -210,6 +213,11 @@ class Evaluador:
     def simbolos_clase(self, clase: str) -> list[str]:
         return [s for s in self.universo[self.universo["clase"] == clase]["simbolo"] if self.proveedor.tiene(s)]
 
+    def _edad_ps2(self, desde, hasta, horizonte: str | None) -> int:
+        """Antigüedad de un dato como la mide PS2 (Anexo A, P-13): en H1, sesiones sin los festivos de `ps2_festivos`
+        (T-91, QA r05 de T-65, H-26: antes, sesiones hábiles sin festivos); en el resto, días naturales."""
+        return _sesiones_entre(desde, hasta, self._festivos_ps2) if horizonte == "H1" else (pd.Timestamp(hasta) - pd.Timestamp(desde)).days
+
     def motivo_no_fresca(self, d0, d1, f1, horizonte: str) -> str | None:
         """T-65 (QA r03, H-16; QA r04, H-24): una serie sirve para resolver un pronóstico de horizonte `horizonte` solo si
         tiene un dato posterior al de la emisión (`d1 > d0`) y su último dato no es más antiguo, a la fecha de resolución
@@ -219,7 +227,7 @@ class Evaluador:
         if d1 <= d0:
             return f"sin dato posterior a la emisión (último del {d1.date()})"
         lim = int(parametro(self.cfg, "ps2_antiguedad_maxima_dias")[horizonte])
-        edad = dias_habiles_entre(d1, f1) if horizonte == "H1" else (f1 - d1).days
+        edad = self._edad_ps2(d1, f1, horizonte)
         if edad > lim:
             unidad = "sesiones" if horizonte == "H1" else "días"
             return f"último dato del {d1.date()}, {edad} {unidad} antes de la resolución (máximo {lim} en {horizonte})"
@@ -249,8 +257,7 @@ class Evaluador:
             except DatosNoDisponibles:
                 continue
             if lim is not None:
-                d, f = pd.Timestamp(base["fecha"]), pd.Timestamp(fecha)
-                if (dias_habiles_entre(d, f) if horizonte == "H1" else (f - d).days) > lim:
+                if self._edad_ps2(base["fecha"], fecha, horizonte) > lim:
                     continue
             bases[simbolo] = base
         return bases
@@ -291,6 +298,10 @@ class Evaluador:
             if not isinstance(bases, dict) or not bases:
                 raise DatosNoDisponibles(f"Cesta {clase} sin niveles iniciales")
             patas = [self.rentabilidad(s, clase, f0, f1, horizonte, base=b) for s, b in sorted(bases.items())]
+            corte = min(f for _, f in patas)
+            if any(f != corte for _, f in patas):
+                # T-91 (QA r05 de T-65, H-27): todos los miembros se miden hasta la misma fecha, la más antigua de las que sirven
+                patas = [self.rentabilidad(s, clase, f0, corte, base=b) for s, b in sorted(bases.items())]
             return float(np.mean([v for v, _ in patas])), min(f for _, f in patas)
         r, d0, d1 = self._rentabilidad_serie(simbolo, f0, f1, base)
         motivo = self.motivo_no_fresca(d0, d1, f1, horizonte) if horizonte else (
@@ -337,14 +348,14 @@ class Evaluador:
             "operacion": {"method_id": "RI-TB", "ficha_id": "FC-EVAL-001", "ficha_version": "1.0", "catalog_version": "4.0",
                           "op_sin_ficha": False}, "perfil": ["TRANSVERSAL"], "clase": clase, "modo": "SYNC_CALC",
             "plan": "PLAN_MIN", "as_of": str(pd.Timestamp(as_of).date()), "estado": "SERVED",
-            "datos": [{"serie_ht01": proxy, "fecha_dato": str(s.index[-1].date()) if len(s) else None, "n": int(len(s))},
+            "datos": [{"serie_ht01": proxy, "fecha_dato": str(s.index[-1].date()) if len(s) else None, "n": len(s)},
                       {"serie_ht01": referencia}],
             "parametros": {"sesiones": sesiones, "sentido_positivo": sentido_positivo, "ventana": f"{tb['ventana_anios']} años, no solapadas"},
-            "semilla": None, "resultado": {"forma": "VALOR", "payload": {"tasa_base": p, "n_ventanas": int(len(serie))}},
+            "semilla": None, "resultado": {"forma": "VALOR", "payload": {"tasa_base": p, "n_ventanas": len(serie)}},
             "clase_cifra": "ESTADISTICA", "referencia_ingenua": {"tipo": "RI-TB"}, "madurez_metodo": "IMPLEMENTADO",
             "consumo_uc": 0.0, "limitaciones": ([] if len(serie) >= min_v else [f"menos de {min_v} ventanas: tasa base {_coma(tb['sin_historia'])} por defecto"])
             + ([f"cesta de {clase}: excluidos por falta de datos en la ventana: {', '.join(excluidos_cesta)}"] if excluidos_cesta else [])})
-        return {"tipo": "TASA_BASE", "valor_o_prob": round(p, 4), "calc_id": calc_id, "n_ventanas": int(len(serie))}
+        return {"tipo": "TASA_BASE", "valor_o_prob": round(p, 4), "calc_id": calc_id, "n_ventanas": len(serie)}
 
     # ------------------------------------------------------------------------------------
     # Resolución
@@ -371,7 +382,15 @@ class Evaluador:
                     base_ref = p.get("bases_cesta") if p["referencia_indice"] == "CESTA" else p.get("nivel_referencia_indice")
                     if base_ref is not None and not isinstance(base_ref, dict) and p.get("fecha_nivel_referencia_indice"):
                         base_ref = {"valor": base_ref, "fecha": p["fecha_nivel_referencia_indice"]}
+                    if base_ref is None and p["referencia_indice"] == "CESTA":
+                        base_ref = self.bases_cesta(p["clase"], f0, hz)
                     rr, d1b = self.rentabilidad(p["referencia_indice"], p["clase"], f0, f1, hz, base=base_ref)
+                    if d1b != d1:
+                        # T-91 (QA r05 de T-65, H-27; `[PROPUESTO]`, INC-T91-01): las dos series sirven, pero el suceso
+                        # pronosticado se mide sobre la misma ventana: las dos hasta la fecha más antigua de las dos
+                        corte = min(d1, d1b)
+                        rp, d1 = self.rentabilidad(p["variable"]["serie_ht01"], p["clase"], f0, corte, base=p.get("nivel_referencia"))
+                        rr, d1b = self.rentabilidad(p["referencia_indice"], p["clase"], f0, corte, base=base_ref)
                 x = rp - rr if rr is not None else rp
                 # Falla cerrado: un valor no finito (cierre NaN, nivel inicial 0…) es un dato no disponible,
                 # nunca un resultado (antes, int(nan > 0) = 0 daba NO_OCURRIDO)

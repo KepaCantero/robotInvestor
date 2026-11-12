@@ -4,25 +4,25 @@ from __future__ import annotations
 import threading
 from collections import defaultdict
 from dataclasses import asdict
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 from .configuracion import parametro
 from .llm import Uso
 
 
 class Contabilidad:
-    def __init__(self, cfg: Dict) -> None:
+    def __init__(self, cfg: dict) -> None:
         self.cfg = cfg
         self._lock = threading.Lock()
-        self.llamadas: List[Dict] = []
-        self.motor: Dict[str, float] = defaultdict(float)
+        self.llamadas: list[dict] = []
+        self.motor: dict[str, float] = defaultdict(float)
 
     def uc_de(self, uso: Uso) -> float:
         ent_eq = uso.entrada + uso.cache_escritura + float(parametro(self.cfg, "uc.factor_lectura_cache")) * uso.cache_lectura
         return round(0.5 * ent_eq / float(parametro(self.cfg, "uc.tokens_entrada_por_uc"))
                      + 0.5 * uso.salida / float(parametro(self.cfg, "uc.tokens_salida_por_uc")), 4)
 
-    def coste_de(self, modelo: str, uso: Uso) -> Optional[float]:
+    def coste_de(self, modelo: str, uso: Uso) -> float | None:
         precios = (self.cfg.get("precios_por_millon") or {}).get(modelo) or {}
         claves = ("entrada", "salida", "escritura_cache", "lectura_cache")
         if any(precios.get(k) is None for k in claves):
@@ -36,8 +36,8 @@ class Contabilidad:
             c += uso.busquedas_web * pw / 1000
         return round(c, 6)
 
-    def registrar(self, run_id: Optional[str], agente: str, modelo: str, uso: Uso, clase: Optional[str] = None,
-                  fase: Optional[str] = None, cache_hit: bool = False, intento: int = 1, latencia_s: float = 0.0) -> float:
+    def registrar(self, run_id: str | None, agente: str, modelo: str, uso: Uso, clase: str | None = None,
+                  fase: str | None = None, cache_hit: bool = False, intento: int = 1, latencia_s: float = 0.0) -> float:
         uc = 0.0 if cache_hit else self.uc_de(uso)
         with self._lock:
             # T-101 (idea 6): el intento (1 = primera; 2 o más = reparación) y la latencia de cada llamada
@@ -46,15 +46,15 @@ class Contabilidad:
                                   **asdict(uso)})
         return uc
 
-    def cargar_motor(self, run_id: Optional[str], uc: float) -> None:
+    def cargar_motor(self, run_id: str | None, uc: float) -> None:
         with self._lock:
             self.motor[run_id or "-"] += uc
 
-    def resumen(self, run_id: Optional[str] = None) -> Dict:
+    def resumen(self, run_id: str | None = None) -> dict:
         with self._lock:
             ll = [c for c in self.llamadas if run_id is None or c["run_id"] == run_id]
             motor = sum(v for k, v in self.motor.items() if run_id is None or k == run_id)
-        tot: Dict[str, Any] = {"llamadas": len(ll), "entrada": 0, "salida": 0, "cache_escritura": 0, "cache_lectura": 0, "busquedas_web": 0}
+        tot: dict[str, Any] = {"llamadas": len(ll), "entrada": 0, "salida": 0, "cache_escritura": 0, "cache_lectura": 0, "busquedas_web": 0}
         coste, coste_ok = 0.0, True
         for c in ll:
             for k in ("entrada", "salida", "cache_escritura", "cache_lectura", "busquedas_web"):
@@ -71,7 +71,7 @@ class Contabilidad:
         tot["uc_motor"] = round(motor, 4)
         tot["uc"] = round(tot["uc_llm"] + motor, 4)
         tot["coste_estimado"] = round(coste, 4) if coste_ok and ll else None
-        por_agente: Dict[str, Dict] = defaultdict(lambda: {"llamadas": 0, "uc": 0.0, "entrada": 0, "salida": 0})
+        por_agente: dict[str, dict] = defaultdict(lambda: {"llamadas": 0, "uc": 0.0, "entrada": 0, "salida": 0})
         for c in ll:
             a = por_agente[c["agente"]]
             a["llamadas"] += 1
@@ -89,13 +89,18 @@ class PresupuestoAgotado(RuntimeError):
 class Presupuesto:
     """Presupuesto en UC de un RUN por clase (y una bolsa común para las fases transversales)."""
 
-    def __init__(self, asignado: Dict[str, float], cfg: Dict) -> None:
+    def __init__(self, asignado: dict[str, float], cfg: dict) -> None:
         self.asignado = {k: float(v) for k, v in asignado.items()}
-        self.consumido: Dict[str, float] = defaultdict(float)
-        self.ampliado: Dict[str, float] = defaultdict(float)
+        self.consumido: dict[str, float] = defaultdict(float)
+        self.ampliado: dict[str, float] = defaultdict(float)
         self.cfg = cfg
         self._lock = threading.Lock()
-        self.cierres: List[Dict] = []
+        self.cierres: list[dict] = []
+        # T-88: (bolsa, agente) que ya pagaron la escritura de su prefijo en este run; primas «solo» por bolsa y primas reales
+        # pendientes de liquidar, en tokens (enteros: la suma no depende del orden de los hilos)
+        self._llamados: set = set()
+        self._primas_solo: dict[str, int] = defaultdict(int)
+        self._primas_reales = 0
 
     def disponible(self, clase: str) -> float:
         with self._lock:
@@ -105,6 +110,39 @@ class Presupuesto:
     def cargar(self, clase: str, uc: float) -> None:
         with self._lock:
             self.consumido[clase] += uc
+
+    def primera_llamada(self, bolsa: str, agente: str) -> bool:
+        """True la primera vez que se pregunta por (bolsa, agente) en este presupuesto (un run)."""
+        with self._lock:
+            nuevo = (bolsa, agente) not in self._llamados
+            self._llamados.add((bolsa, agente))
+            return nuevo
+
+    def _uc_prima(self, tokens: float) -> float:
+        """UC de más que cuesta escribir `tokens` en la caché en lugar de leerlos (la parte de entrada de `Contabilidad.uc_de`)."""
+        return 0.5 * tokens * (1 - float(parametro(self.cfg, "uc.factor_lectura_cache"))) / float(parametro(self.cfg, "uc.tokens_entrada_por_uc"))
+
+    def cargar_con_prima(self, bolsa: str, leido: float, tokens_solo: int, tokens_reales: int) -> None:
+        """T-88: carga la lectura de lo cacheado y la prima «solo» (los tokens que la bolsa escribiría si fuera la única); los
+        tokens escritos de verdad quedan pendientes de `liquidar_primas`."""
+        with self._lock:
+            self.consumido[bolsa] += leido + self._uc_prima(tokens_solo)
+            self._primas_solo[bolsa] += int(tokens_solo)
+            self._primas_reales += int(tokens_reales)
+
+    def liquidar_primas(self) -> None:
+        """T-88: cambia las primas «solo» por su parte de las primas reales, en proporción. El total cargado vuelve a ser el
+        real y el reparto no depende del orden en que llegaron los hilos. Sin primas «solo», lo real va a la bolsa común."""
+        with self._lock:
+            total_solo = sum(self._primas_solo.values())
+            for bolsa in sorted(self._primas_solo):
+                solo = self._primas_solo[bolsa]
+                parte = self._primas_reales * solo / total_solo if total_solo else 0.0
+                self.consumido[bolsa] += self._uc_prima(parte) - self._uc_prima(solo)
+            if not total_solo and self._primas_reales:
+                self.consumido["COMUN"] += self._uc_prima(self._primas_reales)
+            self._primas_solo.clear()
+            self._primas_reales = 0
 
     def puede(self, clase: str, estimado: float) -> bool:
         return self.disponible(clase) >= estimado
@@ -132,7 +170,8 @@ class Presupuesto:
         with self._lock:
             self.cierres.append({"clase": clase, "fase": fase, "motivo": motivo})
 
-    def resumen(self) -> Dict:
+    def resumen(self) -> dict:
+        self.liquidar_primas()
         with self._lock:
             return {k: {"asignado": self.asignado.get(k, 0.0), "ampliado": round(self.ampliado[k], 4),
                         "consumido": round(self.consumido[k], 4)} for k in sorted(set(self.asignado) | set(self.consumido))}

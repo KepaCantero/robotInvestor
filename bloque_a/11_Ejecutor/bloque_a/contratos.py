@@ -191,8 +191,10 @@ def _es_clave_sk(cola: str) -> bool:
     if cola.lower().startswith(PREFIJOS_SK):
         return True
     tramos = [t for t in re.split(r"[-_]", cola) if t]
-    if len(tramos) >= 4 and all(t.isdigit() for t in tramos):
-        return True   # T-103 (QA r01 de T-93, H-41): una cola de cuatro o más tramos de solo cifras no es texto corriente
+    if len(tramos) >= 3 and all(t.isdigit() for t in tramos):
+        # T-103 (QA r01 de T-93, H-41; QA r01 de T-103, H-50): una cola de tres o más tramos de solo cifras (20 caracteres o
+        # más) no es texto corriente: los titulares de prensa llevan siempre un tramo de letras
+        return True
     return len(tramos) < 2 or not all(_tramo_texto(t) for t in tramos)
 
 
@@ -200,7 +202,9 @@ def _es_clave_sk(cola: str) -> bool:
 # H-40): el tramo de barras se toma entero (un escape doble, como el de un JSON dentro de otro JSON, o una barra literal de
 # una ruta), porque consumir solo la barra escapada dejaba la «n» pegada a la clave. También los escapes largos de `ascii()`,
 # los octales, el «%uXXXX» de JavaScript y los «%25…» de una URL codificada dos veces
-RE_ESCAPES = re.compile(r"\\+(?:u[0-9a-fA-F]{4}|U[0-9a-fA-F]{8}|x[0-9a-fA-F]{2}|[0-7]{1,3}|[ntrbf/\"])"
+# T-103 r02 (QA r01, H-47): el tramo de barras empieza donde empieza (sin barra delante) y se toma de una vez (posesivo); sin
+# eso, un texto con miles de barras seguidas costaba un tiempo cuadrático
+RE_ESCAPES = re.compile(r"(?<!\\)\\++(?:u[0-9a-fA-F]{4}|U[0-9a-fA-F]{8}|x[0-9a-fA-F]{2}|[0-7]{1,3}|[ntrbf/\"])"
                         r"|%(?:25)*(?:u[0-9A-Fa-f]{4}|[0-9A-Fa-f]{2})")
 
 

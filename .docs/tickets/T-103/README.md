@@ -2,7 +2,7 @@
 
 | Campo | Valor |
 | --- | --- |
-| Estado | EN QA |
+| Estado | EN QA (ronda r02) |
 | Pieza | `bloque_a/11_Ejecutor` (un solo bloque) |
 | Planifica · implementa · QA | claude · claude · claude, con un revisor nuevo sin contexto (regla del operador del 12-11-2026) |
 | Aprobación del operador | 2026-11-12: el orden de tareas obligatorias para evaluar el Bloque A por separado («Cómo quedaría entonces las tareas obligatorias para implementar el bloque A?»); la QA r01 de T-93 pedía H-40 antes del modo sombra con API |
@@ -38,6 +38,13 @@ Corregir la regresión de seguridad que dejó T-93 en R8 (una clave detrás de u
 4. CA-4: las pruebas nuevas fallan sin la corrección y pasan con ella.
 5. CA-5: el gate da 12/12, A ≥ 607 más las nuevas, sin subir cuotas.
 
+### Ronda r02 (QA r01 NO APTO)
+
+6. CA-6 (H-47): R8 es lineal: `contenido_sensible` y `contiene_credenciales` con 100.000 barras tardan menos de 2 s entre los dos, y `r01_02_r8_rendimiento.py` da 0 fallos.
+7. CA-7 (H-48): un registro con U+2028, U+2029 o U+0085 se vuelve a leer en el almacén, la cinta y la caché de resultados; `r01_03_almacen_cortes.py` da 0 fallos.
+8. CA-8 (H-49, H-50): la prueba de `frozenset` falla sin él, y tres tramos de cifras de 20 caracteres o más son clave.
+9. CA-9 (H-50 a H-52): lo que sigue sin verse y los falsos positivos nuevos están en «Límites».
+
 ## Plan de pruebas
 
 | Prueba | Tipo | Criterio |
@@ -50,3 +57,5 @@ Corregir la regresión de seguridad que dejó T-93 en R8 (una clave detrás de u
 
 - 2026-11-12 · ABIERTO · creado con nuevo_ticket.sh, tras la QA r01 APTO de T-93
 - 2026-11-12 · EN QA · H-40 a H-46 corregidos o declarados; 23 pruebas nuevas
+- 2026-11-12 · NO APTO · QA r01 (revisor nuevo sin contexto): H-48 alto (el almacén no vuelve a abrir con U+2028), H-47 medio (R8 cuadrático con muchas barras), H-49 a H-52 bajos
+- 2026-11-12 · EN QA · Ronda r02: H-47 a H-50 corregidos, H-50 a H-52 declarados; 8 pruebas nuevas
