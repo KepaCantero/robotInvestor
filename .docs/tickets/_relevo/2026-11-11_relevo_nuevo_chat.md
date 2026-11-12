@@ -59,7 +59,7 @@ El Robot Investor es un sistema de inversión personal por bloques. A busca opor
 | `bloque_a/` (V5.1) | Corregido y auditado (T-53, T-66, T-92); T-93 implementado por Claude, QA sin asignar. 476 pruebas. Pendientes técnicos: T-88 y T-91 |
 | `bloque_a_forex/` | Fuera del Robot Investor (D-20). 68 pruebas |
 | `bloque_b/` (V2.1) | Congelado. Evaluado en T-68 y con un rediseño propuesto, ambos a la espera de Astra. 176 pruebas |
-| `sistema_global/marco_comun_c/` (V0.74) | Código de referencia de la Fase 1, 62 suites, todo en simulado. La V0.74 (T-97, EN QA) alinea los valores por defecto con la tanda 2 |
+| `sistema_global/marco_comun_c/` (V0.75) | Código de referencia de la Fase 1, 62 suites, todo en simulado. La V0.74 (T-97, EN QA) alinea los valores por defecto con la tanda 2. La V0.75 (12-11-2026) corrige los hallazgos de la QA r02 de T-75 (embudo) y T-76 (cartera sombra): los dos están EN QA, ronda r03 |
 | `.docs/scripts/banco_medida.py` (T-94) | Banco de medida: A frente a azar y momento, con prerregistro, rangos y coste. 10 pruebas. EN QA |
 | `dashboard/consola_n/` (T-95) | Prototipo navegable de la consola N con datos de ejemplo (React, TypeScript, Vite, Tailwind, shadcn/ui, TanStack Query, Zustand, Lightweight Charts y AG Grid). 29 pruebas unitarias y 12 de navegador. EN QA. Su README explica cómo arrancarlo |
 | `tools/requisitos_entorno.txt` y `.docs/scripts/preparar_entorno.sh` (T-96) | Versiones fijadas del entorno y script que crea el `.venv` con ellas. EN QA |
@@ -105,6 +105,7 @@ En blanco en `.docs/plantillas_operador/`: ficha de restricciones, inventario de
 
 - **Le quedan las 23 revisiones de diseño** (C-01 a C-23), en el orden natural de los bloques.
 - **Retiradas por el operador** el 12-11-2026, sin borrarse (estado `RETIRADA`): todas las QA de tickets (T-83, T-84, T-93, T-94, T-95, T-96, T-97 y T-99) y las implementaciones (T-75, T-76, T-91 y T-88). Quién hace esas QA, y si se hacen, lo decide el operador.
+- **Claude puede hacer la QA de cualquier cosa** (el operador, 12-11-2026), también de lo que implementó él. Lo hace con un revisor nuevo sin contexto (un subagente con la skill `ri-qa`) en cada ronda: `.docs/memoria/compartida/2026-11-12_claude-puede-hacer-qa.md`.
 - Claude no añade tareas a la cola sin que el operador lo pida.
 
 ## 6. Lo siguiente (a elegir con el operador)

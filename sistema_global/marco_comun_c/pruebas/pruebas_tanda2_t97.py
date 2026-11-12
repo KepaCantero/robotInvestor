@@ -167,7 +167,7 @@ def main():
     r = mg.migrar(viejo, "2026-11-12T10:00:00+00:00", "Paso el estado guardado al código de V0.74")
     o2 = r.get("orquestador")
     antes = json.loads(viejo)["estado"]["cfg"]
-    h.chk("MIG010_en_la_cadena_desde_un_estado_guardado", r["ok"] and r["migraciones"][-1] == "MIG-010" and o2.integridad() == []
+    h.chk("MIG010_en_la_cadena_desde_un_estado_guardado", r["ok"] and "MIG-010" in r["migraciones"] and o2.integridad() == []
           and o2.cfg["tope_anual_gasto_pct_capital"] == 0.5 and o2.cfg["politica_f"]["importe_max_dia_pct"] == 25.0
           and o2.cfg["nivel_autonomia"] == antes["nivel_autonomia"] and o2.cfg["version_config"] == "CFG-0.12.0", r.get("motivo"))
 

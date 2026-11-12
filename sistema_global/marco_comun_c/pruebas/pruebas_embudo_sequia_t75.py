@@ -153,6 +153,47 @@ def main():
     h.chk("dos_periodos_seguidos_no_cuentan_dos_veces_el_borde_H04", w1["entran"] + w2["entran"] == em["entran"]
           and w1["validadas"] + w2["validadas"] == em["validadas"], (w1["entran"], w2["entran"], em["entran"]))
 
+    # ------------------------------------------------------------------ QA r02 de T-75 (ronda r03)
+    import contratos as ct
+    from pruebas_orquestador import nuevo
+    # H-09: el veto que ve el operador en la pantalla (el camino normal) también se anota
+    o8 = antiguo()
+    hasta(o8, "PROPUESTA", 1)
+    inf8 = vetado(o8)
+    r = o8.pantalla_aprobacion("EXP-0001", inf8, AHORA)
+    em = o8.embudo(mas(AHORA, minutes=-1), mas(AHORA, minutes=1))
+    fila = next(x for x in em["oportunidades"] if x["expediente_id"] == "EXP-0001")
+    h.chk("el_veto_visto_en_la_pantalla_queda_anotado_H09", r["codigo"] == "O-06" and fila["actor"] == "F" and "F-09" in fila["motivo"]
+          and fila["bloqueo"] == fila["motivo"] and o8.integridad() == [], (r, fila))
+    h.chk("y_el_informe_no_se_puede_volver_a_usar_H09", o8.autorizar("EXP-0001", "OPERADOR", inf8, mas(AHORA, minutes=1))["codigo"] == "O-03")
+    o8.barrer(mas(AHORA, days=3))
+    sal = [x for x in o8.embudo(mas(AHORA, minutes=-1), mas(AHORA, days=3))["salidas"] if x["expediente_id"] == "EXP-0001"]
+    h.chk("y_la_caducidad_lleva_el_veto_como_causa_previa_H09", sal and "F-09" in (sal[-1]["bloqueo_previo"] or ""), sal)
+    # H-10: la propuesta CT-G-06 en vigor no cambia por el veto: la emite su gestor y sigue siendo válida
+    o9 = antiguo()
+    hasta(o9, "PROPUESTA", 1)
+    p1 = ct.propuesta(o9, "EXP-0001")
+    r = o9.autorizar("EXP-0001", "OPERADOR", vetado(o9), mas(AHORA, minutes=5))
+    p2 = ct.propuesta(o9, "EXP-0001")
+    h.chk("la_propuesta_tras_el_veto_es_la_misma_y_valida_H10", r["codigo"] == "O-06" and p2 == p1 and p2["producer"] != "F"
+          and ct.validar(p2) == [], (r, p2 and p2["producer"]))
+    # H-11: una llamada rechazada que deja una anotación no deja anotar nada antes de ella
+    o10 = antiguo()
+    hasta(o10, "PROPUESTA", 1)
+    assert o10.autorizar("EXP-0001", "OPERADOR", vetado(o10), mas(AHORA, minutes=30))["codigo"] == "O-06"
+    r = o10.descartar("EXP-0001", "el gestor lo descarta antes del veto", "GESTOR_TACTICA", mas(AHORA, minutes=10))
+    horas = [x["ahora"] for x in o10.expedientes["EXP-0001"]["historial"]]
+    h.chk("tras_el_veto_no_se_anota_nada_anterior_H11", not r["ok"] and r["codigo"] == "O-16"
+          and horas == sorted(horas, key=lambda t: datetime.fromisoformat(t)), (r, horas))
+    h.chk("y_despues_del_veto_si_se_puede_descartar_H11",
+          o10.descartar("EXP-0001", "el gestor lo descarta tras el veto", "GESTOR_TACTICA", mas(AHORA, minutes=31))["ok"])
+    # H-14: un sistema más joven que el plazo no juzga, hasta el microsegundo
+    o11 = nuevo()
+    hasta(o11, "VALIDADA", 1)
+    primero = o11._primer_instante().isoformat()
+    antes, justo = o11.sequia(mas(primero, days=60, microseconds=-1)), o11.sequia(mas(primero, days=60))
+    h.chk("la_edad_se_mide_desde_el_primer_instante_real_H14", antes["activa"] is False and justo["activa"] is True, (antes["motivo"], justo["motivo"]))
+
     # ------------------------------------------------------------------ T-89: tope del tiempo sin contrastar
     for c in (rl.TOPE_SIN_CONTRASTE_S * 2, 1e12, 1e308):
         try:

@@ -158,7 +158,7 @@ def _dia(t):
 
 # V0.51 (T-18): avisos que, en el periodo de promoción, impiden subir de nivel (además de O-19, ALCANZADO y el kill-switch)
 INCIDENTES_PROMOCION = ("O-03", "O-18", "O-25", "O-37")   # V0.53: también el tope de LIBRES superado (T-33)
-PRIORIDAD_AVISO = {"O-43": "ALTA", "O-42": "MEDIA", "O-41": "ALTA", "O-40": "MEDIA", "O-39": "ALTA", "O-36": "MEDIA", "O-35": "ALTA", "O-34": "ALTA", "O-33": "MEDIA", "O-32": "MEDIA", "O-31": "MEDIA", "O-20": "MEDIA", "O-30": "ALTA", "O-25": "ALTA", "O-26": "ALTA", "O-19": "ALTA", "O-18": "ALTA", "O-03": "ALTA", "O-08": "ALTA", "O-09": "ALTA", "O-13": "ALTA", "O-17": "ALTA", "O-37": "ALTA", "O-38": "ALTA"}   # O-37 (T-33): tope diario de las LIBRES superado, o LIBRES sin poder valorar; O-38 (T-40): cortacircuito global por pérdida
+PRIORIDAD_AVISO = {"O-44": "ALTA", "O-43": "ALTA", "O-42": "MEDIA", "O-41": "ALTA", "O-40": "MEDIA", "O-39": "ALTA", "O-36": "MEDIA", "O-35": "ALTA", "O-34": "ALTA", "O-33": "MEDIA", "O-32": "MEDIA", "O-31": "MEDIA", "O-20": "MEDIA", "O-30": "ALTA", "O-25": "ALTA", "O-26": "ALTA", "O-19": "ALTA", "O-18": "ALTA", "O-03": "ALTA", "O-08": "ALTA", "O-09": "ALTA", "O-13": "ALTA", "O-17": "ALTA", "O-37": "ALTA", "O-38": "ALTA"}   # O-37 (T-33): tope diario de las LIBRES superado, o LIBRES sin poder valorar; O-38 (T-40): cortacircuito global por pérdida
 ACTORES_PROPUESTA = set(EMISORES)   # quien propone no aprueba ni controla: F, D y H no proponen (Constitución §2, P1)
 
 
@@ -442,7 +442,9 @@ def _seguro(fn):
         copia = copy.deepcopy(self.__dict__)
         try:
             r = fn(self, *a, **k)
-            if not r["ok"]:   # una llamada rechazada no puede adelantar el reloj del Orquestador
+            # una llamada rechazada no puede adelantar el reloj del Orquestador, salvo que haya dejado una anotación con su instante
+            # (T-75, QA r02, H-11: el veto de F): entonces el reloj se queda en ese instante y nada puede anotarse antes
+            if not r["ok"] and not r.pop("reloj_firme", False):
                 self.ultimo_ahora = copia["ultimo_ahora"]
             return r
         except RelojRetrocede as e:
@@ -2717,6 +2719,13 @@ class Orquestador:
             return _no("O-23", "F controló con un capital distinto del que usó E para dimensionar")
         return None
 
+    def _anotar_veto_f(self, e, cf, control_f, ahora):
+        """T-75 (QA r01, H-01; QA r02, H-09): el veto queda en el historial (de PROPUESTA a PROPUESTA, de F, con las reglas que
+        vetan), para que el embudo diga qué control paró la oportunidad (D-22), entre por `autorizar()` o por la pantalla."""
+        reglas = sorted({x.get("regla") for x in cf.get("controles") or [] if isinstance(x, dict) and x.get("resultado") == "VETA"} - {None})
+        self._anota(e, "PROPUESTA", "PROPUESTA", "F", ahora, f"{MOTIVO_VETO_F}: {', '.join(reglas) or 'sin regla legible'}",
+                    control_f["event_id"], datos=_hash(e["propuesta"]))
+
     @_seguro
     def pantalla_aprobacion(self, expediente_id, control_f, ahora, actor="OPERADOR", anular_veto=None):
         """Pantalla de la cola de aprobaciones (§6): solo cifras calculadas por F, sin texto de un LLM. El operador la aprueba
@@ -2744,7 +2753,8 @@ class Orquestador:
             anulacion = {"motivo": anular_veto["motivo"], "vetos": vetos}
         elif cf["resultado"] == "VETADO":   # el veto queda registrado: ese informe no se puede volver a usar
             self.eventos[control_f["event_id"]] = {"hash": _hash(control_f), "expediente_id": expediente_id}
-            return _no("O-06", "F vetó la propuesta: no hay nada que aprobar")
+            self._anotar_veto_f(e, cf, control_f, ahora)   # T-75 (QA r02, H-09): el camino normal del operador también lo anota
+            return _no("O-06", "F vetó la propuesta: no hay nada que aprobar", reloj_firme=True)
         else:
             q = cf["cantidad_aprobada"]
         en = e["propuesta"]["entrada"]
@@ -2862,12 +2872,8 @@ class Orquestador:
             self.pantallas[expediente_id]["usada"] = True
         self.eventos[control_f["event_id"]] = {"hash": ih, "expediente_id": expediente_id}
         if cf["resultado"] == "VETADO" and anul is None:
-            # T-75 (QA r01, H-01): el veto queda en el historial (de PROPUESTA a PROPUESTA, de F, con las reglas que vetan), para
-            # que el embudo diga qué control paró la oportunidad (D-22)
-            reglas = sorted({x.get("regla") for x in cf.get("controles") or [] if isinstance(x, dict) and x.get("resultado") == "VETA"} - {None})
-            self._anota(e, "PROPUESTA", "PROPUESTA", "F", ahora, f"{MOTIVO_VETO_F}: {', '.join(reglas) or 'sin regla legible'}",
-                        control_f["event_id"], datos=_hash(e["propuesta"]))
-            return _no("O-06", "F vetó la propuesta")
+            self._anotar_veto_f(e, cf, control_f, ahora)
+            return _no("O-06", "F vetó la propuesta", reloj_firme=True)
         e["control_f"] = {"resultado": cf["resultado"], "cantidad_aprobada": cantidad, "event_id": cf["event_id"], "anulacion": anul,
                           "emitido_en": cf["emitido_en"], "valid_until": cf["valid_until"], "entradas": copy.deepcopy(cf["entradas"]),
                           "aprobacion": ({k: v for k, v in self.pantallas[expediente_id].items() if k != "usada"} if actor == "OPERADOR" else None)}
@@ -3428,12 +3434,19 @@ class Orquestador:
                 s["estado"] = "CADUCADO"
                 self._aviso("O-10", f"el sello {sid} caducó por antigüedad", ahora, sid)
                 cambios.append(("sello", sid, "CADUCADO"))
-        falta = self.comparacion_sombra_pendiente(ahora)   # T-76 (QA r01, H-04): I no puede silenciar el juicio dejando de comparar
-        if falta:
+        if not self.sombra_ok():   # T-76 (QA r02, H-12): un registro de la sombra roto se avisa, no se calla
             n0 = len(self.avisos)
-            self._aviso("O-42", f"la cartera sombra no se ha comparado con el robot el mes {falta}: I debe hacerlo (sin comparación no hay juicio, P17)", ahora)
+            self._aviso("O-13", "el registro de la cartera sombra no es íntegro: no se puede comparar ni avisar de lo pendiente", ahora)
             if len(self.avisos) > n0:
-                cambios.append(("sombra_pendiente", falta, None))
+                cambios.append(("sombra_rota", None, None))
+        falta = self.comparaciones_sombra_pendientes(ahora)   # T-76 (QA r01, H-04): I no puede silenciar el juicio dejando de comparar
+        if falta:   # QA r02, H-13: tras el plazo de gracia, con cuántos faltan, y en ALTA (O-44) si falta el mes de juicio o uno posterior
+            n0 = len(self.avisos)
+            cod = "O-44" if falta["juicio"] else "O-42"
+            self._aviso(cod, f"la cartera sombra no se ha comparado con el robot desde el mes {falta['primero']} ({falta['faltan']} mes(es) sin comparar)"
+                             + (", incluido el de juicio" if falta["juicio"] else "") + ": I debe hacerlo (sin comparación no hay juicio, P17)", ahora)
+            if len(self.avisos) > n0:
+                cambios.append(("sombra_pendiente", falta["primero"], falta["faltan"]))
         sq = self.sequia(ahora)   # T-75 (D-22): alarma de sequía, una por cada plazo que dure
         tope = max(_dt(sq["desde"]), a - timedelta(days=sq["dias"])) if sq["activa"] else None
         if sq["activa"] and not any(x["codigo"] == "O-40" and _dt(x["ahora"]) > tope for x in self.avisos):
@@ -3485,13 +3498,15 @@ class Orquestador:
         self._ahora(ahora)
         if actor != "OPERADOR":
             return _no("O-05", "solo el operador inicia la cartera sombra")
+        err = self._sombra_precheck()   # T-76 (QA r02, H-12): la integridad antes de leer el registro
+        if err:
+            return err
         if self.sombra["entradas"]:
             return _no("O-02", "la cartera sombra ya está iniciada", duplicado=True)
         if not (sb.num_pos(importe_eur) and sb.num_pos(precio_indice)):
             return _no("O-01", "importe y precio del índice: números finitos positivos")
-        err = self._sombra_precheck()
-        if err:
-            return err
+        if not sb.num_pos(float(importe_eur) / float(precio_indice)):   # H-11: las unidades también tienen que ser un número finito
+            return _no("O-01", "el importe entre el precio del índice no da un número finito de unidades")
         self._anota_sombra({"tipo": "INICIO", "indice": PARAMETROS["i_indice_sombra"], "importe_eur": float(importe_eur),
                             "precio_indice": float(precio_indice), "ahora": ahora}, actor, ahora)
         return _r(True, "OK", "cartera sombra iniciada", unidades=float(importe_eur) / float(precio_indice))
@@ -3503,13 +3518,15 @@ class Orquestador:
         self._ahora(ahora)
         if actor not in ("OPERADOR", "G"):
             return _no("O-05", "solo el operador o G registran aportes y retiradas")
+        err = self._sombra_precheck()   # T-76 (QA r02, H-12): la integridad antes de leer el registro
+        if err:
+            return err
         if not self.sombra["entradas"]:
             return _no("O-06", "la cartera sombra no está iniciada")
         if tipo not in sb.TIPOS_MOVIMIENTO or not (sb.num_pos(importe_eur) and sb.num_pos(precio_indice)):
             return _no("O-01", "tipo APORTE o RETIRADA, importe y precio del índice: números finitos positivos")
-        err = self._sombra_precheck()
-        if err:
-            return err
+        if not sb.num_pos(float(importe_eur) / float(precio_indice)):   # H-11: «no finito» no es «retirada mayor»
+            return _no("O-01", "el importe entre el precio del índice no da un número finito de unidades")
         e = {"tipo": tipo, "importe_eur": float(importe_eur), "precio_indice": float(precio_indice), "ahora": ahora}
         if sb.estado_sombra(self.sombra["entradas"] + [e], float(precio_indice), _dt(ahora)) is None:
             return _no("O-06", "la retirada es mayor que lo que tiene la sombra")
@@ -3525,7 +3542,10 @@ class Orquestador:
         """I compara cada mes el robot con la sombra (§9 punto 9): el valor del robot según G (comisiones incluidas) menos los
         costes de análisis que anotó el Orquestador desde el inicio y los impuestos estimados, frente a la sombra neta de su coste;
         en nominal y en real (índice de precios del mes frente al del inicio, D-30). Un mes por mes, en orden, y solo cuando el mes
-        ya terminó (UTC; QA r01, H-02). El índice de precios del inicio lo fija la primera comparación y no cambia (H-07). Tras el
+        ya terminó (UTC; QA r01, H-02). QA r02, H-10: el valor del robot, el precio del índice y la inflación son los del CIERRE del
+        mes comparado, y la sombra se valora a ese cierre: solo con los movimientos anotados hasta entonces, su coste devengado
+        hasta ese instante y los costes de análisis hasta el último día del mes; lo que pase después no cambia el juicio de ese mes.
+        El índice de precios del inicio lo fija la primera comparación y no cambia (H-07). Tras el
         plazo de juicio, si el robot no la supera en real, aviso O-41 cuando pasa a no superarla (H-08: no uno por mes); decide
         el operador. Si I deja de comparar, `barrer()` lo avisa con O-42 (H-04)."""
         a = self._ahora(ahora)
@@ -3552,8 +3572,10 @@ class Orquestador:
             return _no("O-01", f"el mes {mes} aún no ha terminado (UTC): se compara cuando termina")
         if comps and float(inflacion_inicio) != comps[0]["inflacion_inicio"]:
             return _no("O-01", f"el índice de precios del inicio es {comps[0]['inflacion_inicio']} (lo fijó la primera comparación)")
-        est = sb.estado_sombra(L, float(precio_indice), a)
-        costes = self._costes_analisis_desde(ini["ahora"], a)
+        a0, m0 = map(int, mes.split("-"))
+        cierre = datetime(a0 + m0 // 12, m0 % 12 + 1, 1, tzinfo=timezone.utc) - timedelta(microseconds=1)   # H-10: fin del mes (UTC)
+        est = sb.estado_sombra([x for x in L if _dt(x["ahora"]) <= cierre], float(precio_indice), cierre)
+        costes = self._costes_analisis_desde(ini["ahora"], cierre)
         cmp_ = sb.comparar(float(robot_valor_eur), costes, float(impuestos_eur), est, float(inflacion_inicio), float(inflacion_mes)) if est else None
         if cmp_ is None:
             return _no("O-01", "no se puede comparar con esos datos (alguno da un resultado que no es un número finito)")
@@ -3568,16 +3590,37 @@ class Orquestador:
                                 f"a la cartera sombra ({cmp_['sombra_real_eur']:.2f} EUR reales): se propone gestión pasiva; decide el operador", ahora)
         return _r(True, "OK", f"comparación de {mes}: {ver}", veredicto=ver, resultado=copy.deepcopy(cmp_))
 
-    def comparacion_sombra_pendiente(self, ahora):
-        """El primer mes terminado que la sombra aún no ha comparado, o None (sin iniciar, al día o ilegible). Solo lee."""
+    def comparacion_sombra_pendiente(self, ahora, gracia_dias=PARAMETROS["i_dias_gracia_comparacion_sombra"]):
+        """El primer mes terminado que la sombra aún no ha comparado y cuyo plazo de gracia tras el cierre ya pasó, o None (sin
+        iniciar, al día, aún en plazo o ilegible). Solo lee. QA r02 de T-76, H-13: `comparaciones_sombra_pendientes()` dice además cuántos faltan."""
+        d = self.comparaciones_sombra_pendientes(ahora, gracia_dias)
+        return d["primero"] if d else None
+
+    def comparaciones_sombra_pendientes(self, ahora, gracia_dias=PARAMETROS["i_dias_gracia_comparacion_sombra"]):
+        """T-76 (QA r02, H-13): {primero, faltan, juicio} de los meses terminados sin comparar, contando solo los que ya pasaron su
+        plazo de gracia tras el cierre; `juicio` dice si entre ellos está el mes de juicio o uno posterior. None si no falta
+        ninguno, la sombra no está iniciada o algo no se lee. Solo lee."""
         try:
             L = self.sombra["entradas"]
             if not L:
                 return None
-            ult = ([x["mes"] for x in L if x["tipo"] == "COMPARACION"] or [_mes_utc(L[0]["ahora"])])[-1]
+            mes_ini = _mes_utc(L[0]["ahora"])
+            ult = ([x["mes"] for x in L if x["tipo"] == "COMPARACION"] or [mes_ini])[-1]
+            a = _dt(ahora)
+            faltan = []
             a0, m0 = map(int, ult.split("-"))
-            sig = f"{a0 + m0 // 12:04d}-{m0 % 12 + 1:02d}"
-            return sig if sig < _mes_utc(ahora) else None
+            while True:
+                a0, m0 = a0 + m0 // 12, m0 % 12 + 1   # el mes siguiente
+                cierre = datetime(a0 + m0 // 12, m0 % 12 + 1, 1, tzinfo=timezone.utc)
+                if a < cierre + timedelta(days=gracia_dias):
+                    break
+                faltan.append(f"{a0:04d}-{m0:02d}")
+                if len(faltan) > 1200:
+                    break
+            if not faltan:
+                return None
+            juicio = sb.meses_entre(mes_ini, faltan[-1]) >= PARAMETROS["i_meses_juicio_sombra"]
+            return {"primero": faltan[0], "faltan": len(faltan), "juicio": juicio}
         except Exception:   # noqa: BLE001
             return None
 
@@ -3599,8 +3642,9 @@ class Orquestador:
         que cae en el borde (QA r01, H-04) —. Solo lee; ilegible o al revés: None. Da:
         - las oportunidades que entran (su primera anotación cae en el periodo), cada una con su capa al final del periodo y por qué:
           la última anotación, y además el último veto de F si lo hubo (QA r01, H-01: el veto se anota de PROPUESTA a PROPUESTA);
-        - cuántos candidatos pasaron el análisis (un análisis cuenta una vez: un DIRECTA que reutiliza el de otro no suma, y un
-          expediente revalidado tampoco; QA r01, H-03) y cuántos se invirtieron, en el periodo;
+        - cuántos candidatos pasaron el análisis (la clave es el sobre: un análisis cuenta una vez, así que un DIRECTA que reutiliza
+          el de otro no suma, QA r01, H-03; un expediente revalidado con otro sobre sí suma, porque es un análisis nuevo, QA r02,
+          H-13) y cuántos se invirtieron, en el periodo;
         - cada salida del juego (a DESCARTADA, EN_OBSERVACION o CADUCADA) con quién y por qué, y su última causa de bloqueo, y
           cuántas oportunidades distintas salieron."""
         try:
@@ -3675,7 +3719,7 @@ class Orquestador:
             if em is None:
                 return {**base, "motivo": "no se puede calcular el embudo"}
             r = {**base, "desde": ini.isoformat(), "validadas": em["validadas"], "invertidas": em["invertidas"], "embudo": em}
-            if a - ini < timedelta(days=dias):
+            if a - (ult or primero) < timedelta(days=dias):   # T-75 (QA r02, H-14): la edad, desde el instante real, no el adelantado
                 return {**r, "motivo": "el sistema lleva menos del plazo" if ult is None else "no han pasado los días del plazo desde la última inversión"}
             activa = em["validadas"] > 0
             return {**r, "activa": activa, "motivo": "sequía" if activa else "ningún candidato pasó el análisis"}

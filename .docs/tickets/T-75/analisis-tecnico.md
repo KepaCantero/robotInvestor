@@ -20,6 +20,16 @@ D-22 de la Constitución V0.6 pide el embudo visible y la alarma de sequía a 60
 - **`consola.py`:** `informe_embudo(o, ahora, dias)` valida los días.
 - **Otros archivos:** `parametros.py` (`o_dias_sequia`, `n_dias_embudo`), `catalogo_codigos.py` (O-40), `reloj.py` (T-89) y `migraciones.py` (MIG-007 y, en la r02, MIG-009).
 
+## Ronda r03 (V0.75)
+
+La QA r02 encontró que la corrección del veto solo cubría `autorizar()` y que rompía la propuesta CT-G-06.
+- **H-09:** `_anotar_veto_f(e, cf, control_f, ahora)` es el método común. Lo llaman la rama de veto sin anulación de `pantalla_aprobacion()` y la de `autorizar()`. El informe se consume igual que antes.
+- **H-10:** `contratos.propuesta()` busca la última transición a PROPUESTA con `desde != "PROPUESTA"`. Así el veto (de PROPUESTA a PROPUESTA) no cambia el emisor, la hora ni el `event_id`. Ningún otro lector de «la última anotación a X» se ve afectado: `orden()` ya filtraba así, y el resto lee por estado.
+- **H-11:** las dos ramas devuelven `_no(..., reloj_firme=True)`. Con esa marca, `@_seguro` no devuelve `ultimo_ahora` a su valor anterior: el reloj se queda en el instante del veto y nada anterior a él se admite después (O-16).
+- **H-12:** LEEME, Documento 0 (V0.70 y V0.75), deuda y `pruebas.md` al día.
+- **H-13:** se mantiene la clave por sobre (un sobre nuevo es un análisis nuevo) y se corrige el docstring.
+- **H-14:** la edad se mide desde el primer instante real (`a - (ult or primero) < plazo`). El inicio adelantado 1 µs solo se usa para el embudo.
+
 **Decisiones:**
 - La causa de bloqueo que se ve es la del veto de F. Los demás rechazos de `autorizar()` son intentos, no controles del análisis, y quedan como límite: por kill-switch, que el panel ya muestra; por nivel de la cartera; por testigos.
 - La sequía se juzga desde la última inversión, la lectura de D-22 que propone la QA.

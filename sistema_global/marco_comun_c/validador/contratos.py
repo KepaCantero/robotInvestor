@@ -143,7 +143,8 @@ def propuesta(o, expediente_id):
     p = e["propuesta"]
     if not p or e["estado"] not in ("PROPUESTA", "AUTORIZADA", "EJECUTADA"):
         return None   # solo una propuesta en vigor
-    h = next(x for x in reversed(e["historial"]) if x["hasta"] == "PROPUESTA")
+    # T-75 (QA r02, H-10): la última LLEGADA a PROPUESTA desde otro estado; el veto de F (de PROPUESTA a PROPUESTA) no la cambia
+    h = next(x for x in reversed(e["historial"]) if x["hasta"] == "PROPUESTA" and x["desde"] != "PROPUESTA")
     return _env("CT-G-06", h["actor"], "E", h["ahora"],
                 {"cartera": e["cartera_destino"], "entrada": copy.deepcopy(p["entrada"]), "salida": copy.deepcopy(p["salida"]),
                  "cantidad_e": p["cantidad_e"], "sobre_ref": {"event_id": e["sobre"]["event_id"], "hash": e["sobre"]["hash"]},
