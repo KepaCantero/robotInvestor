@@ -106,3 +106,119 @@ Lo que está bien:
 - La segunda pasada no bloquea, la V5 no cambia y el gate da 12/12.
 
 Cierre: este revisor no cambia el estado del ticket ni hace commit (instrucción de la ronda). Tras la corrección, volverá a ejecutar `r01_banco_frases.py`, `r01_ataques_t102.py` y `r01_mutantes.py` y añadirá la ronda r02.
+
+## Ronda r02
+
+- **Revisor:** Claude, revisor nuevo sin el contexto de la implementación ni de la r01 · **Ronda:** r02 · 2026-11-12
+- **Objeto:** commit `9297df9` (ronda r02: H-01 a H-10 de la r01), comparado con `c688d72` (r01).
+- **Lectura:** la skill `ri-qa`, `CLAUDE.md`, el README del ticket (CA-1 a CA-10), R13 y R21 del Documento 0 del Bloque A y el código (`diseno_v6.py` desde «Filtro R13/R21» hasta `_redaccion_segura`, `permitidos_r21`, `v6.filtro_r21_codigos`, `sintesis._UNITARIA`). El banco nuevo se escribió **antes** de leer las expresiones del código; `analisis-tecnico.md`, `pruebas.md` y la r01 se leyeron después, para contrastar.
+
+### Reproducción desde limpio
+
+- **Copias limpias:** `git worktree add` de `9297df9` y de `c688d72` en la carpeta temporal de la sesión (con el `.venv` del proyecto enlazado), quitadas al terminar. Se comprobó que `pytest` y los scripts importan el código de la copia y no el del árbol principal (que tiene trabajo en curso de otros).
+- **Gate** (`./tools/check_all.sh` completo en la copia de `9297df9`): **12/12** en 15 min (corpus íntegro; ruff 2986; mypy A 109, FX 174, B 159, iguales a las cuotas; pytest A **714**, A-Forex 68, B 176).
+- **Baterías del ticket** (`tests/test_t102_filtro.py` y `tests/test_t101_v6.py`): 215 pasan (142 + 73).
+- **La V5 no cambia** (`T-101/revisores/r01_v5_sin_cambios.py`, `c688d72` frente a `9297df9`): runs, llamadas y paquetes JSON iguales; solo difiere el sello de integridad, como en la r01. El único cambio fuera de la V6 es el tope de 120 caracteres de `sintesis._UNITARIA`.
+- **Scripts de la r01, otra vez sobre `9297df9`:** `r01_banco_frases.py` da 0/107 falsos positivos y 0/58 falsos negativos, como dice `pruebas.md` (el banco sirvió para ajustar; no mide la generalización). `r01_ataques_t102.py`: 14 OK, 1 OBS y 1 FALLO, el de `division_deja_fragmentos`, que no es un fallo (con la r02 «Comprar bonos de EE.UU. a dos años» es un segmento legítimo).
+- **Mutantes del implementador** (`../r02_mutantes.py`, 44): **44 muertos**.
+- **`develop` avanzó** a `7feb697` (T-88, T-91 y T-103) durante la revisión. Ese commit no toca el filtro (solo el criterio de resolución en `sintesis.py`), y el banco nuevo da las mismas tasas sobre él.
+
+**Scripts nuevos** (en `revisores/`, prefijo `r02_`; desde la raíz, `.venv/bin/python -I <script> <raíz de la copia>`):
+- `r02_banco_nuevo.py`: banco **nuevo** de 275 frases de los doce tipos (187 legítimas y 88 prohibidas, de 15 a 28 por tipo) más 5 dudosas que no cuentan. Solo una frase coincide con los bancos anteriores. Grupos: legítimas «llana» (114), «t13» (32: palabra de probabilidad junto a una cifra que no es una probabilidad) y «t21» (41: verbo seguido de una sigla que no es un instrumento); prohibidas «evidente» (82: lo que el ticket promete cazar) y «dificil» (6: fuera de lo prometido). Con `--detalle` lista cada frase.
+- `r02_ataques_t102.py`: 13 comprobaciones (listas tras el verbo, verbos de R21, horizontes e identificadores, siglas del Documento 0, forma cualitativa de R13, formas de R13 que pasan, series de tokens, emisión con abreviatura, idempotencia y espacios, rendimiento a 30.000 caracteres y su escala, y dos por el camino real). `-k <parte del nombre>` ejecuta una parte.
+- `r02_mutantes_revisor.py`: 36 mutantes nuevos (N01 a N36), distintos de los 44 del implementador.
+
+### Tasas del banco nuevo (`r02_banco_nuevo.py`)
+
+| Medida | r02 (`9297df9`) | r01 (`c688d72`) |
+| --- | --- | --- |
+| Falsos positivos, todas las legítimas | 19/187 (10,2 %): 13 por R13, 6 por R21 | 19/187 (10,2 %): todos por R21 |
+| · llana (114) | 1/114 (0,9 %), un horizonte «H4» | 0/114 |
+| · t13 (32) | **13/32 (40,6 %)** | 0/32 |
+| · t21 (41) | 5/41 (12,2 %) | 19/41 (46,3 %) |
+| Falsos negativos, todas las prohibidas | 14/88 (15,9 %) | 30/88 (34,1 %) |
+| · R13 (36) | 4/36 (11,1 %); evidentes 2/34 (5,9 %) | 18/36 (50 %) |
+| · R21 (52) | 10/52 (19,2 %); evidentes **7/48 (14,6 %)** | 12/52 (23,1 %) |
+| · difíciles (6) | 5/6 | 6/6 |
+
+Por tipo (r02; falsos positivos / legítimas · falsos negativos / prohibidas): RV 2/16 · 3/12; RF 2/17 · 2/9; DIV 0/15 · 2/7; MP 3/16 · 1/8; IDX 1/16 · 1/7; FON 1/16 · 1/7; DER 2/16 · 1/7; INM 1/15 · 1/6; CRI 3/15 · 1/6; ALT 1/15 · 0/6; MON 2/15 · 0/7; TCV 1/15 · 1/6. Ningún tipo concentra los fallos: dependen de la forma de la frase, no del tipo. Ninguna prohibida se caza con otra regla.
+
+**Frente a la r01:** la r02 mejora mucho R13 (de 50 % a 11 % de falsos negativos) y las siglas tras un verbo (de 46 % a 12 % de falsos positivos), y algo R21 (de 23 % a 19 %). A cambio, R13 quita ahora 13 de 32 frases legítimas con una palabra de probabilidad y una cifra (antes 0), y los horizontes se quitan más (11 de 11, antes 9 de 11). De las cinco dudosas: «Comprar BTC y ETH» y «Compramos Telefónica para el horizonte H3» (el límite declarado) se quitan, la segunda por «H3» y no por Telefónica; «probabilidad de impago … 4 %» y «probabilidad del 25 % implícita en las opciones» se quitan; «probabilidad de dos tercios» pasa.
+
+**¿Es razonable el equilibrio?**
+- **«No estropee informes normales».** En frases llanas, sí (0,9 %). Pero el fallo cerrado de R13 es más ancho de lo necesario: quita precisamente la forma que R13 pide sin certificado, una banda cualitativa con la magnitud del movimiento («Es probable que los beneficios crezcan un 8 % en 2027»), y variantes del propio ejemplo del README («un recorte **al** 4,25 %» se quita y «**hasta el** 4,25 %» no). Un prototipo de excepción para la magnitud de un movimiento (fuera del repo) baja los falsos positivos de t13 de 13/32 a 3/32 sin ningún falso negativo nuevo en este banco ni en el de la r01, y las 142 pruebas de `test_t102_filtro.py` siguen en verde (H-14). En R21, la lista abierta deja fuera vocabulario del propio Bloque: los horizontes H1 a H5 que el Sintetizador recibe, los identificadores del paquete y 25 de 25 siglas del Documento 0 probadas (CDS, CLO, ABS, MBS, AT1, ADR, NFT, RWA, ELTIF, HICP…) (H-13). Lo quitado se declara y el texto vacío toma su defecto, así que es tolerable como transitorio, pero no está en un buen punto.
+- **«Cace las compras evidentes».** R13 evidente, sí (94 %). R21 evidente, no del todo: pasa el 14,6 %, casi todo «Recomendamos el ETF X» y «abrir o tomar **una** posición en X» (H-12). Y, lo más grave, una compra en lista con viñetas, numerada o tras «;» o «…» pasa entera, también por el camino real y sin declararse (H-11). Lo que pasa sin verse pesa más que lo que se quita y se declara.
+
+### Criterios de aceptación
+
+| Criterio | Cumple | Evidencia |
+| --- | --- | --- |
+| CA-1 | sí | Las 28 legítimas de las QA r02 y r03 de T-101: 0 quitadas (`r01_ataques_t102.py -k bancos`; `test_una_frase_legitima_no_se_quita`) |
+| CA-2 | sí | 25 de 26 prohibidas con su regla; la que pasa es «entrar en Tesla», el límite declarado (ídem) |
+| CA-3 | sí, con reserva | Frase a frase y defecto por elemento (`r01_ataques_t102.py -k vacio_toma_su_defecto` OK; pruebas del ticket). Reserva: al quitar el primer trozo de una lista quedan sueltos los demás («Comprar: NVDA; AMD; AVGO.» deja «AMD; AVGO.», H-11) |
+| CA-4 | sí | Lo quitado se declara, el glosario incluido, y la reescritura no duplica la limitación (`r01_ataques_t102.py -k glosario`, `-k cuenta`, `-k segunda_pasada`: APTO). Lo que no se detecta, lógicamente, no se declara (H-11) |
+| CA-5 | sí | La V5 no cambia; A 714 (≥ 607); cuotas iguales; gate 12/12 en copia limpia |
+| CA-6 | sí | Las 20 del banco de la r01 y las 18 de `R13_R02` se quitan con R13 (`r01_banco_frases.py`; pruebas). Fuera de esos bancos, H-15 |
+| CA-7 | sí | 38 compras y 107 legítimas del banco de la r01, 22 de `R21_R02` y 33 de `LEGITIMAS_R02` (ídem). Fuera de esos bancos, H-12 y H-13 |
+| CA-8 | sí, con reserva | Las abreviaturas no parten, «…» y el salto sí, un texto limpio sale igual (`r02_ataques_t102.py -k idempotencia`: OK también con `\r\n`, tabuladores, espacios duros y aplicando el filtro dos veces), el glosario se declara y la reescritura no duplica. Reserva: esa misma división es la puerta de H-11 |
+| CA-9 | sí, con reserva | Los textos degenerados de la r01, 0,27 s en total. Reserva: uno nuevo de 30.000 caracteres tarda 2,4 a 2,7 s y crece de forma cuadrática (H-16) |
+| CA-10 | sí, con reserva | `test_r02_h10_cada_campo_por_el_camino_real` existe y los 44 mutantes de `r02_mutantes.py` mueren. Reserva: 23 de 36 mutantes nuevos sobreviven a las dos baterías enteras (H-19) |
+
+### Hallazgos
+
+| ID | Gravedad | Cómo reproducirlo | Esperado / obtenido | Corrección sugerida | Estado |
+| --- | --- | --- | --- | --- | --- |
+| H-11 | **alta** | `r02_ataques_t102.py <raíz> -k lista` y `-k camino_real_lista` | **Esperado:** «cace las compras evidentes»; R13 y R21 se juzgan sobre lo que dice la frase. **Obtenido:** la división del CA-8 separa el verbo de los instrumentos, y cada trozo por sí solo no incumple nada. Pasan **9 de 9**: «Comprar estas tres acciones:\n- NVDA\n- AMD\n- AVGO», «Comprar:\n1. NVDA\n2. AMD», «…para comprar:\n• NVDA\n• AMD», «Comprar: 1. NVDA; 2. AMD.», «Comprar estas acciones; NVDA, AMD y AVGO.», «Vender ahora... META.», «Vender ahora… META.», «Probabilidad de recorte en marzo:\n70 %» y «Probabilidad de que el oro suba en H3:\n- escenario base: 60 %». «Comprar: NVDA; AMD; AVGO.» quita el primer trozo y deja «AMD; AVGO.». **Por el camino real**, con esas formas en el régimen, la lectura, una frase de 30 s, las tarjetas y el historial, NVDA, IBIT, TSLA, VXX y «70 %» llegan al paquete y a los tres entregables, y no se declara nada (sin inyectar, ninguno aparece). Una lista con viñetas es la forma más corriente de un modelo para enumerar | Juzgar juntos el trozo que acaba en «:», «;», «…» o «...» y los trozos de lista que lo siguen (viñeta, número o una línea de solo códigos) hasta la siguiente frase con verbo, y quitar el grupo entero si incumple; o juzgar también cada par de trozos seguidos. Pruebas con cada forma, también por el camino real | abierto |
+| H-12 | **alta** | `r02_banco_nuevo.py <raíz>` (grupo evidente) y `r02_ataques_t102.py <raíz> -k recomendar` | **Esperado:** R21 (Documento 0): «proponer un valor, emisión, fondo, contrato o token concreto como opción es un hallazgo Material»; el ticket promete los verbos «de compra o venta, de inversión o **de toma de posiciones**», y H-24 de T-101 era «con artículo o con un sustantivo entre medias». **Obtenido:** pasan 7 de 48 compras evidentes del banco (14,6 %) y **18 de 18** del ataque: «Recomendamos el ETF IBIT…», «…el ETN VXX…», «…el ETF TBT…», «…el fondo … (VUSA)», «…(FXY)» (falta «recomendar»); «Abrir una posición larga en TSLA…», «Abrir una posición en NVDA», «Abrir posiciones largas en NVDA», «Tomar una posición corta en TSLA», «Abrir un largo en el contrato M6EZ6…» (`_VERBO` exige «posiciones en» pegado: sin artículo ni adjetivo); «Reducir el peso en INTC»; «La opción preferida es NVDA» y «Elegimos NVDA como opción principal» (la forma literal de R21); «Cubrir la cartera con puts sobre QQQ»; «Traspasar el dinero al ETF VWCE»; y, con el código tras «tras» o «según», «Comprar tras los resultados NVDA» | Añadir «recomendar», «proponer», «elegir», «preferir», «traspasar» y «cubrir con … sobre»; admitir artículo y adjetivo en la toma de posiciones (`(?:una?|las?|los)?\s*(?:posici[oó]n(?:es)?|largos?|cortos?)(?:\s+\w+)?\s+en`) y «reducir o aumentar el peso en»; «opción (preferida, principal…) es X». Las frases del ataque, al banco de pruebas | abierto |
+| H-13 | media | `r02_ataques_t102.py <raíz> -k horizontes`, `-k camino_real_horizonte` y `-k siglas` | **Esperado:** «no estropee informes normales»; el Sintetizador recibe `horizontes` y `opp_id` en su mensaje (`sintesis.mensaje_redactor`). **Obtenido:** H1 a H5 y los identificadores del paquete cuentan como instrumentos: se quitan **11 de 11** frases normales («Invertir en RF IG con horizonte principal H3», «Comprar duración en H3 porque la curva se empina», «Comprar RV europea (opción OPP-RV-01)»…; la r01 quitaba 9). Por el camino real, las 3 tarjetas con «…encaja con el horizonte H3» pierden su texto y toman el de por defecto. Además, **25 de 25** siglas de ámbitos y métricas que usa el propio Documento 0 (tablas 2.4 y 8) se quitan tras un verbo: CDS, CDX, CLO, ABS, MBS, AT1, ADR, GDR, CFD, NFT, RWA, ELTIF, FFO, AFFO, CAPE, LTV, MVRV, DPI, PME, FX, HICP, SMI, ASX, GCC y SOX. CDS y los índices CDS son el núcleo de TCV | Tratar como no instrumentos los horizontes y los patrones de identificador del paquete (OPP-, HIT-, CL-…), y añadir a `filtro_r21_codigos` (técnico) las siglas de las tablas del Documento 0; prueba que recorra esas siglas | abierto |
+| H-14 | media | `r02_ataques_t102.py <raíz> -k r13_forma` y `r02_banco_nuevo.py <raíz>` (grupo t13) | **Esperado:** R13: sin certificado, «la previsión se expresa en bandas cualitativas», y el README pone como legítima «la probabilidad de un recorte hasta el 4,25 %». **Obtenido:** se quitan **12 de 12** frases con banda cualitativa y magnitud: «Es probable que los beneficios del sector crezcan un 8 % en 2027», «Es probable que el oro suba un 5 % más», «…que el IPC se modere al 2,1 %», «Es poco probable que el tipo de depósito baje del 1,5 %», «Lo más probable es que el oro consolide tras subir un 25 %», «La probabilidad de un recorte **al** 4,25 % sube» (con «hasta el» pasa), «…de que el tipo baje al 4,25 %», «…de un tipo terminal del 3 %», «…de una subida del BOJ al 0,75 %». En el banco, 13 de 32 (40,6 %); la r01, 0. Falla cerrado y se declara, pero quita justo la redacción que R13 pide | Excepción para la magnitud de un movimiento: la cifra precedida por un verbo o sustantivo de movimiento o de nivel («sube», «crezcan», «baje», «subida», «caída», «tipo terminal», «TIR real»…) y solo palabras de función, con «un», «del», «al», «el» o «entre el». El prototipo del revisor (fuera del repo) baja t13 a 3/32 sin falsos negativos nuevos en los dos bancos y con las 142 pruebas en verde; hoy ninguna prueba vigila el ancho de esa excepción (N06 sobrevive) | abierto |
+| H-15 | media | `r02_ataques_t102.py <raíz> -k r13_formas` | **Esperado:** el ticket promete «N % de … confianza» y «se quitan las que dan una probabilidad numérica». **Obtenido:** pasan **9 de 9**: «Con una confianza del 70 %, el diferencial italiano se estrechará en H3» (orden inverso de «70 % de confianza»), «Confianza: 80 %», «Escenarios para la RV europea: base (55 %), alcista (25 %) y bajista (20 %)», «Escenario alcista (30 %): el oro sube a 3.200 dólares» (la forma más habitual de dar pesos a escenarios, sin la palabra probabilidad), «Las opciones de un empinamiento de la curva son de 3 de cada 4», «probabilidad de 7 sobre 10», «2/3 de probabilidad», «70 por 100» y «P(subida) = 70 %». En el banco, 4 de 36 | «confianza» (y «seguridad», «certeza») como palabra de probabilidad en la regla amplia; «escenario … (N %)» y una enumeración de escenarios con porcentajes; «N sobre M», «N/M» y «por 100» como cifras | abierto |
+| H-16 | baja | `r02_ataques_t102.py <raíz> -k rendimiento` | Al quitar la ventana de 60 caracteres (H-08), cada verbo mira hasta el final de la frase: con muchos verbos sin corte el tiempo es cuadrático. «Comprar oro, » repetido hasta 30.000 caracteres: **2,4 a 2,7 s** (5.000: 0,07 s; 10.000: 0,27 s; 20.000: 1,1 s). En la r01, 0,013 s. Solo con una salida degenerada, acotada por `max_tokens` | Recortar cada texto a su límite antes de filtrarlo, o mirar una vez cada código y buscar hacia atrás un verbo sin corte entre medias (lineal) | abierto |
+| H-17 | baja | `r02_ataques_t102.py <raíz> -k series_de_tokens` | El README del ejecutor dice «Un token concreto (BTC) es un instrumento», y BTC y ETH salieron de la lista (H-09). Pero «Comprar BTC-USD» y «Comprar SOL-USD» pasan, porque son series del universo, mientras que «Comprar BTC» y «Comprar SOL» se quitan. La decisión sigue pendiente en T-57, pero el código trata distinto el mismo token según cómo se escriba | Tratar igual el token y su serie (`X-USD` de CRI como instrumento mientras el operador no decida otra cosa) y decirlo en el README | abierto |
+| H-18 | baja | `r02_ataques_t102.py <raíz> -k emision` | «Comprar bonos del Tesoro de EE.UU.» con vencimiento: con «EEUU» se quita por la emisión con vencimiento y con «EE. UU.» pasa, porque `_EMISION` no admite puntos y la normalización de «EE. UU.» va después. Es un caso dudoso (puede ser un segmento), pero la regla no debe depender de la grafía | Normalizar «EE. UU.» antes de todas las reglas | abierto |
+| H-19 | media | `r02_mutantes_revisor.py <raíz> 3 todos completo` (≈ 20 min) | **Esperado** (CA-10): las baterías vigilan el filtro. **Obtenido:** sobreviven **23 de 36** mutantes nuevos a las dos baterías enteras (215 pruebas). Dos son equivalentes o casi (N33, N35). Sin que ninguna prueba lo note se puede: contar «probablemente» como probabilidad (N01), quitar «chance» de la regla directa (N03), ensanchar el tope a «al» y «del» (N06), quitar «de los casos» (N08), «FI», «FIL» y «SICAV» del sufijo (N10), exigir un ISIN sin letras (N12), dejar el punto final pegado al código (N13: «…frente al USD.» se quitaría), tratar «BB-» como instrumento (N16), partir por «p. ej.», «Inc.» o «Corp.» (N18, N19), dejar sin filtro el término del glosario (N23), quitar los cortes en «según», «tras», «hasta que», «ya que»… (N24, N25), los verbos adquirir, infraponderar, entrar en, reforzar, reducir, cerrar, deshacer, posicionarse en y deshacerse de (N26, N28 a N32), cambiar qué símbolo del universo es una serie (N34) y quitar el mínimo de texto útil de la integración (N36) | Un caso por mutante vivo en `test_t102_filtro.py` (las frases del banco nuevo sirven) | abierto |
+
+**Mutantes del revisor** (`r02_mutantes_revisor.py`, contra `test_t102_filtro.py` y, los vivos, contra las dos baterías):
+
+| Resultado | Mutantes |
+| --- | --- |
+| Muertos (13) | N02 sin «por ciento» · N04 sin «N % de que» · N05 sin «N % de opciones» · N07 el nivel con cualquier palabra · N09 mirada atrás de 15 caracteres · N11 el ISIN de una serie cuenta · N14 ticker de dos letras · N15 sin EURO STOXX · N17 sin «N de cada M» (control) · N20 «!» y «?» no separan · N21 el punto protegido en la salida · N22 la frase con el punto protegido · N27 sin «sobreponderar» |
+| Vivos (23) | N01, N03, N06, N08, N10, N12, N13, N16, N18, N19, N23, N24, N25, N26, N28, N29, N30, N31, N32, N33, N34, N35 y N36 (detalle en H-19) |
+
+**Lo que se intentó y no se rompió:**
+- Los bancos de T-101 y de la r01 y los mutantes del implementador (arriba).
+- Idempotencia: aplicar el filtro dos veces da lo mismo; un texto limpio sale igual con `\r\n`, tabuladores, espacios duros, espacios al principio y al final y párrafos en blanco.
+- Espacios Unicode (U+00A0, U+202F) entre la cifra y «%» o entre el verbo y el código: se cazan.
+- Notaciones del código: «$NVDA», «NVDA.US», «NASDAQ:NVDA», «COMPRAR NVDA», «Compre NVDA», un ISIN de bono del Tesoro y las familias de índices seguidas de un fondo («MSCI World vía IWDA», «S&P 500 a través de SPY»): se cazan.
+- Pares de divisas con y sin barra (EUR/USD, USDJPY, USD/MXN, NOK/SEK, USDCNH), calificaciones (BBB, BB-), segmentos soberanos (Bund, BTP, OAT, JGB), índices de la lista y tramos de curva (2s10s, 5s30s, 2Y-5Y): se conservan.
+- La V5 no cambia y el gate da 12/12.
+
+### Invariantes
+
+- **R13 y R21:** el Sintetizador sigue sin poder cambiar la selección ni las cifras. El filtro de sus textos generaliza mejor que el de la r01 en R13, pero deja pasar las listas (H-11) y la recomendación o la toma de una posición con artículo (H-12). Estos se entregan sin declararse. En la V5, AG-02 y AG-17 siguen sin filtro (fila T-101 de la deuda).
+- **Sin LLM en la ruta determinista:** el filtro es código y no llama al modelo.
+- **Falla cerrado y valida antes de mutar:** lo que no se reconoce se quita y se declara; sin códigos permitidos, el filtro es estricto. Las excepciones de R13 son estrechas (H-14 propone ensancharlas con medida, no relajarlas sin ella).
+- **Números escritos a mano:** la ventana de 60 caracteres de R21 desapareció (H-08). Quedan cotas internas de las expresiones (60 caracteres de mirada atrás en `_r13`, `{0,60}` en `_EMISION`, `{0,6}` en `_SUFIJO`, 120 en `_UNITARIA`). Son constantes técnicas de los patrones, no umbrales del Anexo A, y el revisor no las eleva a hallazgo. Conviene comentarlas como tales.
+- **Decisiones del operador:** el token concreto de CRI está en T-57 como `[PROPUESTO]`; el código no lo aplica igual a su serie (H-17).
+- **Corpus, secretos y datos personales:** el commit no toca de `01_` a `10_` ni `99_`; gate `secrets` en verde. Los bancos usan tickers, ISIN de ejemplo y sociedades cotizadas; ningún dato personal.
+- **Documentación:** README del ejecutor, ticket, `analisis-tecnico.md`, `pruebas.md` y deuda (fila T-102) al día con lo que hace el código, salvo «Un token concreto (BTC) es un instrumento» (H-17). La línea base de A en `CLAUDE.md` (607) está por debajo del recuento real (714); el gate solo exige el mínimo.
+
+### Veredicto r02
+
+**NO APTO** · Los diez criterios se cumplen en su letra (CA-3, CA-8, CA-9 y CA-10, con reserva), pero hay dos hallazgos **altos** abiertos:
+- **H-11:** una compra o una probabilidad en lista, tras «;» o tras «…» pasa entera, también por el camino real y sin declararse.
+- **H-12:** «Recomendamos el ETF X» y «abrir o tomar una posición en X» pasan; son el 14,6 % de las compras evidentes del banco nuevo.
+
+Para volver a QA:
+- Corregir H-11 y H-12 con sus pruebas, también por el camino real.
+- Valorar ahora H-13, H-14, H-15 y H-19 (medios), porque tocan las mismas expresiones, o pasarlos a la deuda con su ID. H-14 tiene una corrección medida.
+- Los bajos (H-16 a H-18), a la deuda si no se corrigen.
+- El banco nuevo no debe usarse para ajustar sin un banco de control posterior; la próxima ronda debería medir con frases que el implementador no haya visto.
+
+Lo que está bien:
+- H-01 a H-10 de la r01 están corregidos en lo que pedían.
+- R13 pasa de 50 % a 11 % de falsos negativos en un banco que el implementador no vio.
+- Las siglas tras un verbo bajan de 46 % a 12 % de falsos positivos.
+- La división conserva el texto, la declaración es completa, la V5 no cambia y el gate da 12/12.
+
+Cierre: este revisor no cambia el estado del ticket ni hace commit (instrucción de la ronda). Tras la corrección, volverá a ejecutar `r02_banco_nuevo.py`, `r02_ataques_t102.py` y `r02_mutantes_revisor.py` (y los de la r01) y añadirá la ronda r03.
