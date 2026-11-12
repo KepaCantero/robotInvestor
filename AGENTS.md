@@ -9,3 +9,4 @@ Este repositorio lo trabajan dos agentes: Claude (Anthropic) y Astra (OpenAI). L
 5. **Fuente de verdad del sistema:** `sistema_global/constitucion/Constitucion_Global.md`. Pendientes y decisiones aplazadas del operador: `sistema_global/seguimiento/Deuda_tecnica_y_pendientes_del_operador.md`.
 6. **Idioma:** español, en documentos, commits y mensajes al operador.
 7. **Repositorio público:** nada de secretos ni de datos personales o financieros del operador.
+8. **Tu cola de trabajo (Astra), desde el 12-11-2026:** `.docs/tickets/_relevo/cola_astra.md`, con su protocolo. Al abrir cada sesión, `git pull origin develop` y `python3 .docs/scripts/cola_astra.py`, que te dice la siguiente tarea y si algo está marcado mal o sin subir. Reclama la tarea antes de empezar, una tarea por commit y nunca dejes trabajo sin subir.

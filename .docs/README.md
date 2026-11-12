@@ -43,6 +43,7 @@ Todo lo que Claude, Astra y las personas del equipo necesitan para trabajar en e
 | `.docs/scripts/banco_medida.py` | Banco de medida (T-94): el titular (hoy, el Bloque A en backtest) frente a azar y momento, con los mismos datos y fechas de corte; prerregistro sellado, exceso frente a la cesta de la clase con rango y veredicto, y coste. Pruebas en `.docs/scripts/pruebas_banco_medida.py` |
 | `.docs/scripts/commit_limpio.sh` | Commit desde una copia limpia de HEAD con solo las rutas de la tarea (pruebas del marco, su LEEME y gate completo allí), para cuando el árbol tiene cambios a medias de otras tareas; sube las copias probadas |
 | `.docs/scripts/preparar_entorno.sh` | Crea `.venv` con Python 3.12 y las versiones fijadas en `tools/requisitos_entorno.txt` (T-96); `--comprobar` compara lo instalado con el fichero y nombra lo que difiere |
+| `.docs/scripts/cola_astra.py` | Cola de Astra (`.docs/tickets/_relevo/cola_astra.md`): la siguiente tarea y lo que se podría perder (marcada HECHA sin entregable, entregable sin marcar, borradores, EN CURSO abandonado, cambios sin subir); `--json` para automatizar. Pruebas en `.docs/scripts/pruebas_cola_astra.py` |
 | `.docs/scripts/qa_rama.sh` | QA de una rama de otro agente: commits, archivos, si se fusiona por avance rápido, copia limpia y pruebas de cada pieza tocada contra el código de la rama |
 
 ## Diario: formato
