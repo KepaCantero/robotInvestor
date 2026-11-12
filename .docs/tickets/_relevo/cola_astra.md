@@ -4,6 +4,8 @@ Fuente única del **orden y del estado** de las tareas de Astra desde el 12-11-2
 
 `python3 .docs/scripts/cola_astra.py` dice cuál es la siguiente tarea y comprueba que lo marcado como hecho está de verdad en el repositorio.
 
+**Quién decide las tareas (operador, 12-11-2026):** «A partir de ahora yo te diré qué tareas quiero que realice Astra». Solo el operador añade tareas a esta cola o las retira; Claude no añade ninguna sin que él lo pida. Ese día retiró todas las QA y las implementaciones de tickets (C-24 a C-34) y las dos que Claude había añadido (C-35 y C-36): quedan como `RETIRADA`, sin borrarse, porque de `.docs/` no se borra nada.
+
 ## Protocolo, para que no se pierda nada
 
 1. **Al abrir una sesión:** `git pull origin develop` y `python3 .docs/scripts/cola_astra.py`. Si hay una tarea `EN CURSO`, se sigue esa; si no, la primera `PENDIENTE`.
@@ -13,7 +15,7 @@ Fuente única del **orden y del estado** de las tareas de Astra desde el 12-11-2
 5. **Si una tarea se bloquea** (necesita una decisión del operador, un contrato con B, un bloque congelado): estado `BLOQUEADA`, el motivo en la Nota y la pregunta en tu entregable. Sigue con la siguiente.
 6. **No cambies el orden ni borres filas.** Si una revisión cambia tu opinión sobre una anterior, añade una nota con fecha al final de la anterior.
 
-Las rutas que aún no existen van entre «…» (el gate `refs-vivas` no las exige); al crearlas, pueden quedarse así. Estados: `PENDIENTE`, `EN CURSO AAAA-MM-DD`, `HECHA`, `BLOQUEADA`. La columna Commit es opcional: el script la busca por el entregable.
+Las rutas que aún no existen van entre «…» (el gate `refs-vivas` no las exige); al crearlas, pueden quedarse así. Estados: `PENDIENTE`, `EN CURSO AAAA-MM-DD`, `HECHA`, `BLOQUEADA` y `RETIRADA` (el operador la quitó; no se hace). La columna Commit es opcional: el script la busca por el entregable.
 
 ## Cola
 
@@ -38,22 +40,22 @@ Las rutas que aún no existen van entre «…» (el gate `refs-vivas` no las exi
 | C-17 | SC-10, intermediario | REVISION | `.docs/diseno/sc10_intermediario/encargo_revision_astra.md` | «.docs/diseno/sc10_intermediario/revision_astra.md» | PENDIENTE | | |
 | C-18 | SC-7, seguridad | REVISION | `.docs/diseno/sc7_seguridad/encargo_revision_astra.md` | «.docs/diseno/sc7_seguridad/revision_astra.md» | PENDIENTE | | |
 | C-19 | Entrada del dinero existente | REVISION | `.docs/diseno/entrada_patrimonio/encargo_revision_astra.md` | «.docs/diseno/entrada_patrimonio/revision_astra.md» | PENDIENTE | | |
-| C-35 | Borradores de contratos CT-G-08 0.4.0 y CT-G-24 0.1.0 | REVISION | `.docs/diseno/contratos/README.md` | «.docs/diseno/contratos/revision_astra.md» | PENDIENTE | | Revisa sobre todo los cuatro puntos `[PROPUESTO]` del README |
+| C-35 | Borradores de contratos CT-G-08 0.4.0 y CT-G-24 0.1.0 | REVISION | `.docs/diseno/contratos/README.md` | «.docs/diseno/contratos/revision_astra.md» | RETIRADA | | Retirada por el operador el 12-11-2026: ya no la hace Astra. Revisa sobre todo los cuatro puntos `[PROPUESTO]` del README |
 | C-20 | Enmienda 4 | REVISION | `.docs/diseno/enmienda_4/encargo_revision_astra.md` | «.docs/diseno/enmienda_4/revision_astra.md» | PENDIENTE | | |
 | C-21 | Pasada de coherencia | REVISION | `.docs/diseno/coherencia/encargo_revision_astra.md` | «.docs/diseno/coherencia/revision_astra.md» | PENDIENTE | | La última de diseño |
 | C-22 | Enmienda 5, parte 1 | REVISION | `.docs/diseno/enmienda_5/encargo_revision_astra.md` | «.docs/diseno/enmienda_5/revision_astra.md» | PENDIENTE | | |
 | C-23 | Enmienda 5, parte 2 | REVISION | `.docs/diseno/enmienda_5/encargo_revision_astra_parte2.md` | «.docs/diseno/enmienda_5/revision_astra_parte2.md» | PENDIENTE | | |
-| C-24 | QA de T-94, banco de medida | QA | `.docs/tickets/T-94/` | `.docs/tickets/T-94/qa.md` | PENDIENTE | | |
-| C-25 | QA de T-95, prototipo de N | QA | `.docs/tickets/T-95/` | `.docs/tickets/T-95/qa.md` | PENDIENTE | | `npm install`, `npm test`, `npm run build && npm run e2e` |
-| C-26 | QA de T-96, entorno reproducible | QA | `.docs/tickets/T-96/` | `.docs/tickets/T-96/qa.md` | PENDIENTE | | |
-| C-27 | QA de T-97, marco V0.74 | QA | `.docs/tickets/T-97/` | `.docs/tickets/T-97/qa.md` | PENDIENTE | | |
-| C-28 | QA r02 de T-83, valores documentados | QA | `.docs/tickets/T-83/` | `.docs/tickets/T-83/qa.md` | PENDIENTE | | Sobre la V0.74 (T-97 toca `parametros_doc.py`) |
-| C-29 | QA r02 de T-84, correcciones c1 | QA | `.docs/tickets/T-84/` | `.docs/tickets/T-84/qa.md` | PENDIENTE | | |
-| C-30 | T-75, ronda r03 | IMPLEMENTAR | `.docs/tickets/T-75/` | `.docs/tickets/T-75/README.md` | PENDIENTE | | Sobre la V0.74; la QA la hace otro agente |
-| C-31 | T-76, ronda r03 | IMPLEMENTAR | `.docs/tickets/T-76/` | `.docs/tickets/T-76/README.md` | PENDIENTE | | Después de T-75, sin mezclar |
-| C-32 | QA de T-93, Bloque A (H-32 a H-39) | QA | `.docs/tickets/T-93/` | `.docs/tickets/T-93/qa.md` | PENDIENTE | | Implementó Claude el 12-11-2026 con autorización del operador; los scripts `r04_0x` de T-92 deben dar 0 fallos |
-| C-36 | QA de T-99, registro de experimentos | QA | `.docs/tickets/T-99/` | `.docs/tickets/T-99/qa.md` | PENDIENTE | | Fuera de los bloques; implementó Claude |
-| C-33 | T-91, Bloque A | IMPLEMENTAR | «.docs/tickets/T-91/» | «.docs/tickets/T-91/README.md» | PENDIENTE | | Ídem |
-| C-34 | T-88, Bloque A | IMPLEMENTAR | «.docs/tickets/T-88/» | «.docs/tickets/T-88/README.md» | PENDIENTE | | Ídem |
+| C-24 | QA de T-94, banco de medida | QA | `.docs/tickets/T-94/` | `.docs/tickets/T-94/qa.md` | RETIRADA | | Retirada por el operador el 12-11-2026: ya no la hace Astra. |
+| C-25 | QA de T-95, prototipo de N | QA | `.docs/tickets/T-95/` | `.docs/tickets/T-95/qa.md` | RETIRADA | | Retirada por el operador el 12-11-2026: ya no la hace Astra. `npm install`, `npm test`, `npm run build && npm run e2e` |
+| C-26 | QA de T-96, entorno reproducible | QA | `.docs/tickets/T-96/` | `.docs/tickets/T-96/qa.md` | RETIRADA | | Retirada por el operador el 12-11-2026: ya no la hace Astra. |
+| C-27 | QA de T-97, marco V0.74 | QA | `.docs/tickets/T-97/` | `.docs/tickets/T-97/qa.md` | RETIRADA | | Retirada por el operador el 12-11-2026: ya no la hace Astra. |
+| C-28 | QA r02 de T-83, valores documentados | QA | `.docs/tickets/T-83/` | `.docs/tickets/T-83/qa.md` | RETIRADA | | Retirada por el operador el 12-11-2026: ya no la hace Astra. Sobre la V0.74 (T-97 toca `parametros_doc.py`) |
+| C-29 | QA r02 de T-84, correcciones c1 | QA | `.docs/tickets/T-84/` | `.docs/tickets/T-84/qa.md` | RETIRADA | | Retirada por el operador el 12-11-2026: ya no la hace Astra. |
+| C-30 | T-75, ronda r03 | IMPLEMENTAR | `.docs/tickets/T-75/` | `.docs/tickets/T-75/README.md` | RETIRADA | | Retirada por el operador el 12-11-2026: ya no la hace Astra. Sobre la V0.74; la QA la hace otro agente |
+| C-31 | T-76, ronda r03 | IMPLEMENTAR | `.docs/tickets/T-76/` | `.docs/tickets/T-76/README.md` | RETIRADA | | Retirada por el operador el 12-11-2026: ya no la hace Astra. Después de T-75, sin mezclar |
+| C-32 | QA de T-93, Bloque A (H-32 a H-39) | QA | `.docs/tickets/T-93/` | `.docs/tickets/T-93/qa.md` | RETIRADA | | Retirada por el operador el 12-11-2026: ya no la hace Astra. Implementó Claude el 12-11-2026 con autorización del operador; los scripts `r04_0x` de T-92 deben dar 0 fallos |
+| C-36 | QA de T-99, registro de experimentos | QA | `.docs/tickets/T-99/` | `.docs/tickets/T-99/qa.md` | RETIRADA | | Retirada por el operador el 12-11-2026: ya no la hace Astra. Fuera de los bloques; implementó Claude |
+| C-33 | T-91, Bloque A | IMPLEMENTAR | «.docs/tickets/T-91/» | «.docs/tickets/T-91/README.md» | RETIRADA | | Retirada por el operador el 12-11-2026: ya no la hace Astra. Ídem |
+| C-34 | T-88, Bloque A | IMPLEMENTAR | «.docs/tickets/T-88/» | «.docs/tickets/T-88/README.md» | RETIRADA | | Retirada por el operador el 12-11-2026: ya no la hace Astra. Ídem |
 
-Si Claude añade una propuesta nueva, la pone antes de C-20 con el siguiente número libre y lo anota en el diario.
+Una tarea nueva solo entra si el operador lo pide: Claude la añade con el siguiente número libre, donde él diga, y lo anota en el diario.

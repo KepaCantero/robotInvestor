@@ -24,7 +24,7 @@ COLA = RAIZ / ".docs/tickets/_relevo/cola_astra.md"
 FECHA_COLA = "2026-11-12"   # lo que cambió antes no cuenta como hecho para QA e IMPLEMENTAR
 DIAS_EN_CURSO = 3
 REQUISITOS = {"C-02": "Rediseño"}   # la revisión de B lleva una sección para el rediseño (encargo de bloque_b)
-ESTADOS = re.compile(r"^(PENDIENTE|HECHA|BLOQUEADA|EN CURSO( \d{4}-\d{2}-\d{2})?)$")
+ESTADOS = re.compile(r"^(PENDIENTE|HECHA|BLOQUEADA|RETIRADA|EN CURSO( \d{4}-\d{2}-\d{2})?)$")   # RETIRADA: el operador la quitó
 
 
 def git(*args):
@@ -102,7 +102,7 @@ def main():
         f["evidencia"], f["motivo"], f["commit_encontrado"] = hecha, motivo, commit
         if f["estado"] == "HECHA" and not hecha:
             errores.append(f"{f['id']} ({f['tarea']}): marcada HECHA pero {motivo}")
-        if hecha and f["estado"] != "HECHA":
+        if hecha and f["estado"] not in ("HECHA", "RETIRADA"):
             avisos.append(f"{f['id']} ({f['tarea']}): el entregable ya está ({commit}) pero la tarea no está marcada HECHA")
         if f["estado"].startswith("EN CURSO"):
             en_curso.append(f["id"])
@@ -118,13 +118,13 @@ def main():
         avisos.append(f"hay {len(en_curso)} tareas EN CURSO a la vez: {', '.join(en_curso)}")
     siguiente = next((f for f in resumen if f["estado"].startswith("EN CURSO")), None) or \
         next((f for f in resumen if f["estado"] == "PENDIENTE"), None)
-    cuenta = {e: sum(1 for f in resumen if f["estado"].startswith(e)) for e in ("HECHA", "EN CURSO", "PENDIENTE", "BLOQUEADA")}
+    cuenta = {e: sum(1 for f in resumen if f["estado"].startswith(e)) for e in ("HECHA", "EN CURSO", "PENDIENTE", "BLOQUEADA", "RETIRADA")}
     if "--json" in sys.argv:
         print(json.dumps({"cuenta": cuenta, "siguiente": siguiente and {k: siguiente[k] for k in ("id", "tarea", "entregable")},
                           "errores": errores, "avisos": avisos}, ensure_ascii=False, indent=1))
     else:
         print(f"Cola de Astra: {cuenta['HECHA']} hechas, {cuenta['EN CURSO']} en curso, {cuenta['PENDIENTE']} pendientes, "
-              f"{cuenta['BLOQUEADA']} bloqueadas (de {len(resumen)})")
+              f"{cuenta['BLOQUEADA']} bloqueadas, {cuenta['RETIRADA']} retiradas (de {len(resumen)})")
         print(f"Siguiente: {siguiente['id']} · {siguiente['tarea']} · entregable {siguiente['entregable']}" if siguiente else "Siguiente: nada pendiente")
         for e in errores:
             print("ERROR ", e)

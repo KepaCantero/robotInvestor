@@ -4,7 +4,7 @@
 | --- | --- |
 | Estado | EN QA |
 | Pieza | `bloque_a/11_Ejecutor` (un solo bloque) |
-| Planifica · implementa · QA | claude · claude · astra |
+| Planifica · implementa · QA | claude · claude · sin asignar (el operador decide quién, 12-11-2026) |
 | Aprobación del operador | Toca código de un bloque: autorizado el 2026-11-12 («haz todo», tras proponer que Claude lo implementara y Astra hiciera la QA). Era la tarea C-32 de la cola de Astra; pasa a ser su QA |
 | Deuda técnica | T-93 en `sistema_global/seguimiento/Deuda_tecnica_y_pendientes_del_operador.md` |
 
