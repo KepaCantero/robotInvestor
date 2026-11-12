@@ -22,7 +22,7 @@ Las rutas que aún no existen van entre «…» (el gate `refs-vivas` no las exi
 | # | Tarea | Tipo | Encargo o ticket | Entregable | Estado | Commit | Nota |
 | --- | --- | --- | --- | --- | --- | --- | --- |
 | C-01 | Rediseño de A | REVISION | `.docs/diseno/bloque_a/encargo_revision_astra.md` | «.docs/diseno/bloque_a/revision_astra.md» | HECHA | | |
-| C-02 | B: evaluación T-68 y rediseño, juntos | REVISION | `.docs/tickets/T-68/encargo_revision_astra.md` y `.docs/diseno/bloque_b/encargo_revision_astra.md` | «.docs/tickets/T-68/revision_astra.md» | PENDIENTE | | Sin tocar `bloque_b/` |
+| C-02 | B: evaluación T-68 y rediseño, juntos | REVISION | `.docs/tickets/T-68/encargo_revision_astra.md` y `.docs/diseno/bloque_b/encargo_revision_astra.md` | «.docs/tickets/T-68/revision_astra.md» | EN CURSO 2026-11-12 | | Sin tocar `bloque_b/` |
 | C-03 | C | REVISION | `.docs/diseno/bloque_c/encargo_revision_astra.md` | «.docs/diseno/bloque_c/revision_astra.md» | PENDIENTE | | |
 | C-04 | D | REVISION | `.docs/diseno/bloque_d/encargo_revision_astra.md` | «.docs/diseno/bloque_d/revision_astra.md» | PENDIENTE | | |
 | C-05 | E | REVISION | `.docs/diseno/bloque_e/encargo_revision_astra.md` | «.docs/diseno/bloque_e/revision_astra.md» | PENDIENTE | | |
