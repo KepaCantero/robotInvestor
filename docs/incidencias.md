@@ -93,14 +93,14 @@ Sin contrarréplica, la objeción sigue abierta.
 **T-62 · Ámbito de la refutación por eslabón (CT-B-17).** El Documento 0 y el Director admiten ESLABON con eslabon_id; el crítico también emite TESIS con eslabon_id. El esquema congelado del paquete admite CADENA y propiedades x_. El ejecutor acepta ambas grafías de entrada y emite CADENA con x_eslabon_id y los candidatos expuestos. TESIS sin referencia a un eslabón mantiene su alcance global. Los detalles y la decisión sobre datos inválidos están en [.docs/tickets/T-62](../.docs/tickets/T-62/README.md).
 
 **INC-T88-01 · 2026-11-12 · Quién paga la escritura de la caché de un prefijo compartido (Bloque A, T-88).** Con varios hilos, la escritura la pagaba el tipo de activo que llegaba primero, y el consumo por tipo de F5 cambiaba entre ejecuciones iguales. Decisión `[PROPUESTO]`:
-- durante el ciclo, cada tipo paga la lectura más la escritura que pagaría si fuera el único del run (prudente);
-- al acabar la fase en paralelo, la escritura real se reparte en proporción a esas primas.
+- durante la fase en paralelo, cada tipo paga la lectura de lo cacheado y la escritura del prompt de su propio analista;
+- al acabar la fase, lo escrito de verdad por los agentes compartidos y por el núcleo V6 se reparte por grupo de prefijos, en proporción a lo que escribiría cada tipo solo.
 
-El total cargado es el coste real; el reparto entre tipos es una convención contable, no un coste que cambie. Detalle en [.docs/tickets/T-88](../.docs/tickets/T-88/README.md).
+El total cargado es el coste real. Efecto declarado: en un presupuesto justo, el tipo que antes pagaba por llegar primero ya no cierra por eso una fase durante el ciclo. Detalle en [.docs/tickets/T-88](../.docs/tickets/T-88/README.md).
 
 **INC-T91-01 · 2026-11-12 · Regla de resolución de un pronóstico (Bloque A, T-65 y T-91).** El Anexo A fija PS2 como puerta de selección; para resolver no había regla. Decisión `[PROPUESTO]`:
 - cada serie (proxy, referencia y cada miembro de la CESTA) necesita un dato posterior a la emisión y no más antiguo, a la fecha de resolución, que la antigüedad de PS2 de su horizonte (H1 en sesiones sin los festivos de `ps2_festivos`);
 - si no lo tiene, el pronóstico espera y, pasado el plazo, queda NO_RESOLUBLE;
-- si las series acaban en fechas distintas, todas se miden hasta la más antigua.
+- si las series acaban en fechas distintas, todas se miden hasta la más antigua, y cada una vuelve a pasar la frescura frente a la fecha de resolución.
 
 Pregunta para T-57: «¿qué antigüedad admite la resolución de un pronóstico, y se alinean las series?». Detalle en [.docs/tickets/T-91](../.docs/tickets/T-91/README.md).

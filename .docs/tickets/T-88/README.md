@@ -2,7 +2,7 @@
 
 | Campo | Valor |
 | --- | --- |
-| Estado | EN QA |
+| Estado | EN QA (ronda r02) |
 | Pieza | `bloque_a/11_Ejecutor` (`bloque_a/consumo.py`, `bloque_a/orquestacion.py`) |
 | Planifica · implementa · QA | claude · claude · claude, con un revisor nuevo sin contexto (regla del operador del 12-11-2026) |
 | Aprobación del operador | 2026-11-12: está en el orden de tareas obligatorias para evaluar el Bloque A por separado |
@@ -37,6 +37,11 @@ Que dos ejecuciones iguales del ciclo con varios hilos dejen en F5 el mismo cons
 3. CA-3: durante la fase, cada bolsa carga su prima «solo»; tras liquidar, la prima real repartida, sin cambiar el total; una segunda liquidación no cambia nada.
 4. CA-4: el gate da 12/12, sin subir cuotas, y A sube con las pruebas nuevas.
 
+### Ronda r02 (QA r01 APTO con H-01 medio, corregido antes de cerrar)
+
+5. CA-5 (H-01): durante la fase en paralelo, cada tipo carga la lectura de lo cacheado y solo la escritura del prompt de su propio analista, que siempre escribe él (como antes de T-88); las escrituras de los agentes compartidos se reparten al liquidar. En la V5 ya no se cierran fases que antes no se cerraban.
+6. CA-6 (H-02): la liquidación reparte por grupo de prefijos (los analistas, que comparten el núcleo V6, y cada agente compartido), sin mezclar el prompt de un analista con otros tipos.
+
 ## Plan de pruebas
 
 | Prueba | Tipo | Criterio |
@@ -50,3 +55,5 @@ Que dos ejecuciones iguales del ciclo con varios hilos dejen en F5 el mismo cons
 
 - 2026-11-12 · ABIERTO · creado con nuevo_ticket.sh
 - 2026-11-12 · EN QA · reparto de las primas de caché por liquidación proporcional; 5 pruebas nuevas
+- 2026-11-12 · APTO · QA r01 (revisor nuevo, commit `7feb697`): CA-1 a CA-4 cumplidos; H-01 medio (la prima «solo» de los agentes compartidos cerraba fases en la V5), H-02 a H-04 bajos
+- 2026-11-12 · EN QA · Ronda r02 por decisión de Claude (H-01 cambiaba la selección en la V5): carga durante la fase solo la prima del analista propio; liquidación por grupo de prefijos (H-02)

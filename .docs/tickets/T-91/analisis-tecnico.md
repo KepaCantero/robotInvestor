@@ -30,3 +30,10 @@
 ```bash
 .venv/bin/pytest -q bloque_a/11_Ejecutor/tests/test_t91_resolucion.py
 ```
+
+## Ronda r02 (QA r01 NO APTO)
+
+- **H-01 (alta):** al medir hasta la fecha común, una serie con un hueco justo antes se medía con un dato más viejo que PS2. Ahora `rentabilidad` tiene `hasta`: mide hasta esa fecha, pero la frescura se comprueba frente a la fecha de resolución, también en cada miembro de la CESTA. Si no pasa, el pronóstico espera (`r01_01_resolucion_ataques.py H`: 4 de 4).
+- **H-02 (baja):** pruebas con un hueco de un día en la fecha común, que distinguen `fecha_dato` (la más reciente de las usadas) de la del proxy, y la fecha de la CESTA (la más antigua). Mueren N1, N2 y N9 de `r01_02_mutantes.py`.
+- **H-03 (baja):** el ejemplo `ejemplos/salida_backtest_simulado/pronosticos.csv` gana las dos columnas, vacías porque se generó antes, y su LEEME lo dice; el comentario de `evaluacion` en `config/por_defecto.yaml` cita INC-T91-01.
+- **H-04 (baja, anterior a T-91):** un PRG con `nivel_referencia` como número suelto ya no lanza `TypeError` en la comprobación de fuga: su base es la última sesión ≤ la emisión.

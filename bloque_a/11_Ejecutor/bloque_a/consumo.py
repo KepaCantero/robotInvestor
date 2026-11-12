@@ -99,8 +99,11 @@ class Presupuesto:
         # T-88: (bolsa, agente) que ya pagaron la escritura de su prefijo en este run; primas «solo» por bolsa y primas reales
         # pendientes de liquidar, en tokens (enteros: la suma no depende del orden de los hilos)
         self._llamados: set = set()
-        self._primas_solo: dict[str, int] = defaultdict(int)
-        self._primas_reales = 0
+        # T-88 r02 (QA r01, H-02): por grupo de prefijos (los analistas, que comparten el núcleo V6, o cada agente compartido),
+        # los pesos «solo» de cada bolsa y los tokens escritos de verdad; aparte, los tokens que ya cargó cada bolsa
+        self._pesos: dict[str, dict[str, int]] = defaultdict(lambda: defaultdict(int))
+        self._reales: dict[str, int] = defaultdict(int)
+        self._cargadas: dict[str, int] = defaultdict(int)
 
     def disponible(self, clase: str) -> float:
         with self._lock:
@@ -122,27 +125,34 @@ class Presupuesto:
         """UC de más que cuesta escribir `tokens` en la caché en lugar de leerlos (la parte de entrada de `Contabilidad.uc_de`)."""
         return 0.5 * tokens * (1 - float(parametro(self.cfg, "uc.factor_lectura_cache"))) / float(parametro(self.cfg, "uc.tokens_entrada_por_uc"))
 
-    def cargar_con_prima(self, bolsa: str, leido: float, tokens_solo: int, tokens_reales: int) -> None:
-        """T-88: carga la lectura de lo cacheado y la prima «solo» (los tokens que la bolsa escribiría si fuera la única); los
-        tokens escritos de verdad quedan pendientes de `liquidar_primas`."""
+    def cargar_con_prima(self, bolsa: str, grupo: str, leido: float, tokens_solo: int, tokens_cargar: int, tokens_reales: int) -> None:
+        """T-88: carga la lectura de lo cacheado y `tokens_cargar` de prima (la del analista propio de la bolsa, que siempre la
+        escribe ella; ver `Bloque._cargar`). La prima «solo» (`tokens_solo`, lo que escribiría la bolsa si fuera la única) es
+        el peso del reparto, y los tokens escritos de verdad quedan pendientes de `liquidar_primas`, por grupo de prefijos."""
         with self._lock:
-            self.consumido[bolsa] += leido + self._uc_prima(tokens_solo)
-            self._primas_solo[bolsa] += int(tokens_solo)
-            self._primas_reales += int(tokens_reales)
+            self.consumido[bolsa] += leido + self._uc_prima(tokens_cargar)
+            self._pesos[grupo][bolsa] += int(tokens_solo)
+            self._reales[grupo] += int(tokens_reales)
+            self._cargadas[bolsa] += int(tokens_cargar)
 
     def liquidar_primas(self) -> None:
-        """T-88: cambia las primas «solo» por su parte de las primas reales, en proporción. El total cargado vuelve a ser el
-        real y el reparto no depende del orden en que llegaron los hilos. Sin primas «solo», lo real va a la bolsa común."""
+        """T-88: en cada grupo de prefijos, reparte los tokens escritos de verdad en proporción a los pesos «solo», y quita lo
+        que ya se cargó durante la fase. El total cargado vuelve a ser el real y el reparto no depende del orden de los hilos.
+        Un grupo sin pesos va a la bolsa común."""
         with self._lock:
-            total_solo = sum(self._primas_solo.values())
-            for bolsa in sorted(self._primas_solo):
-                solo = self._primas_solo[bolsa]
-                parte = self._primas_reales * solo / total_solo if total_solo else 0.0
-                self.consumido[bolsa] += self._uc_prima(parte) - self._uc_prima(solo)
-            if not total_solo and self._primas_reales:
-                self.consumido["COMUN"] += self._uc_prima(self._primas_reales)
-            self._primas_solo.clear()
-            self._primas_reales = 0
+            for grupo in sorted(self._reales):
+                pesos, reales = self._pesos.get(grupo, {}), self._reales[grupo]
+                total = sum(pesos.values())
+                if not total:
+                    self.consumido["COMUN"] += self._uc_prima(reales)
+                    continue
+                for bolsa in sorted(pesos):
+                    self.consumido[bolsa] += self._uc_prima(reales * pesos[bolsa] / total)
+            for bolsa in sorted(self._cargadas):
+                self.consumido[bolsa] -= self._uc_prima(self._cargadas[bolsa])
+            self._pesos.clear()
+            self._reales.clear()
+            self._cargadas.clear()
 
     def puede(self, clase: str, estimado: float) -> bool:
         return self.disponible(clase) >= estimado
