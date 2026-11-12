@@ -29,7 +29,7 @@ COLUMNAS_PRONOSTICOS = ["prg_id", "opp_id", "run_id", "fecha_emision", "clase", 
                         "fecha_resuelto", "rent_proxy", "rent_referencia", "valor_observado", "resultado_binario", "brier",
                         "log_score", "brier_ref", "comprobacion_fuga", "version_de"]
 COLUMNAS_CONSUMO = ["run_id", "fecha_asof", "llamadas", "tokens_entrada", "tokens_salida", "tokens_cache_escritura",
-                    "tokens_cache_lectura", "busquedas_web", "uc_llm", "uc_motor", "uc", "coste_estimado"]
+                    "tokens_cache_lectura", "busquedas_web", "uc_llm", "uc_motor", "uc", "coste_estimado", "reintentos", "latencia_s"]
 
 
 def _direccion(vista: str) -> str:
@@ -125,7 +125,7 @@ def ejecutar_backtest(cfg: Dict, desde: str, hasta: str, datos: str, universo: s
         consumo.append({"run_id": res["run_id"], "fecha_asof": res["as_of"], "llamadas": c["llamadas"], "tokens_entrada": c["entrada"],
                         "tokens_salida": c["salida"], "tokens_cache_escritura": c["cache_escritura"], "tokens_cache_lectura": c["cache_lectura"],
                         "busquedas_web": c["busquedas_web"], "uc_llm": c["uc_llm"], "uc_motor": c["uc_motor"], "uc": c["uc"],
-                        "coste_estimado": c["coste_estimado"]})
+                        "coste_estimado": c["coste_estimado"], "reintentos": c.get("reintentos", 0), "latencia_s": c.get("latencia_s", 0.0)})
         runs.append({"run_id": res["run_id"], "as_of": res["as_of"], "estado": res["estado"], "entrega": res.get("entrega", "ENTREGADA"),
                      "nivel_por_clase": res["nivel_por_clase"], "g3": (res.get("g3_entregables") or res["g3"]).get("dictamen")})
         if progreso:

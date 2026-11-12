@@ -51,7 +51,9 @@ def responder(agente: str, mensajes: List[Dict], semilla: int) -> Dict:
         return _analista(msg, ctx, rng, inyectado)
     return {"AG-10": _prospectiva, "AG-11": _contrarias, "AG-12": _curador, "AG-02": _integracion, "AG-17": _redactor,
             "AG-01": _coordinador, "AG-18": _orquestador, "AG-19": _auditor, "AG-20": _evaluador, "AG-14": _busqueda,
-            "AG-16": _busqueda, "AG-15": _busqueda, "AG-13": _plan_motor}[agente](msg, ctx, rng)
+            "AG-16": _busqueda, "AG-15": _busqueda, "AG-13": _plan_motor,
+            # Diseño V6 (T-101)
+            "AG-26": _sintetizador, "AG-27": _coordinador, "AG-28": _busqueda}[agente](msg, ctx, rng)
 
 
 # ------------------------------------------------------------------------------------------
@@ -235,6 +237,19 @@ def _redactor(msg, ctx, rng):
                          {"termino": "Plazo", "definicion": "El tiempo que damos a la idea para cumplirse."},
                          {"termino": "Zona de interés", "definicion": "Precios en los que la idea nos parece razonable."}],
             "frase_historial": "Con pocos casos, la diferencia puede ser suerte. Aún no sabemos si acertamos más que el azar."}
+
+
+def _sintetizador(msg, ctx, rng):
+    """V6 (T-101): integración y textos en una respuesta, sobre el paquete ya validado."""
+    out = _redactor(msg, ctx, rng)
+    p = msg["paquete_sintesis"]
+    clus = sorted({c for c in (msg.get("clusteres") or [])})
+    out.update({"regimen_macro": f"Régimen sintético a {ctx['fecha_as_of']}: lectura agregada de {len(p['clases'])} tipos de activo.",
+                "factores_dominantes": [{"cluster_id": c, "factor": f"Factor común del clúster {c}"} for c in clus],
+                "lectura_conjunto": "Las opciones dependen sobre todo del impulso de precios; las apuestas comparten riesgo de reversión.",
+                "preguntas_sugeridas": ["¿Qué opciones comparten el mismo factor de riesgo?", "¿Qué haría cambiar el semáforo de cada clase?"],
+                "limitaciones": ["Datos sintéticos o de proveedor sin flujos ni posicionamiento"]})
+    return out
 
 
 def _coordinador(msg, ctx, rng):

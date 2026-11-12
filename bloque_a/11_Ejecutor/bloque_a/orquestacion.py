@@ -22,6 +22,7 @@ from typing import Any, Dict, List, Optional, Tuple
 import numpy as np
 import pandas as pd
 
+from . import diseno_v6 as v6
 from . import sintesis as sint
 from .agentes import Agentes
 from .almacen import Almacen, Reloj
@@ -104,7 +105,7 @@ INSTR = {
 
 # T-65 (QA de T-66, H-21): orígenes de pieza cuyo texto no es contenido externo (código y Analistas) o que ya se saneó al
 # entrar (AG-14 y AG-16, con `sanear_estructura`). Cualquier otro origen, o ninguno, se sanea en la contrarréplica.
-ORIGENES_SIN_SANEAR = frozenset({"AG-13", "AG-14", "AG-16"} | set(AGENTE_CLASE.values()))
+ORIGENES_SIN_SANEAR = frozenset({"AG-13", "AG-14", "AG-16", "AG-28"} | set(AGENTE_CLASE.values()))
 
 
 def simbolo_seguimiento(x: dict) -> str | None:
@@ -173,11 +174,12 @@ def _sesiones_entre(desde, hasta, festivos: dict) -> int:
 
 class Bloque:
     def __init__(self, cfg: dict, proveedor, universo: pd.DataFrame, cliente: LLMClient, carpeta_estado,
-                 carpeta_entregables=None, anonimizar: bool | None = None) -> None:
+                 carpeta_entregables=None, anonimizar: bool | None = None, cliente_contradictor: LLMClient | None = None) -> None:
         # Copia propia: la tabla de horizontes vigente (P-31, F10) se escribe en ella en cada ciclo y no debe pasar a
         # otras instancias que compartan el dict del llamador (T-53, QA r02 H-12)
         self.cfg = copy.deepcopy(cfg)
         cfg = self.cfg
+        self.v6 = v6.validar(cfg)   # T-101: diseño V6 (aspirante) o V5 (referencia)
         self.modo = cfg.get("modo", "vivo")
         self.proveedor = proveedor
         self._sin_historia: dict[tuple[str, str], list[str]] = {}   # (clase, run_id) → símbolos sin dato a la fecha as_of
@@ -193,9 +195,11 @@ class Bloque:
         self.cache = CacheResultados(Path(carpeta_estado) / "cache_resultados.jsonl")
         self.cliente = cliente
         self.agentes = Agentes(cfg, cliente, self.almacen, self.contabilidad, self.monitor, self.cache)
+        if self.v6 and cliente_contradictor is not None:   # idea 8: Contradictor de otro proveedor
+            self.agentes.clientes["AG-11"] = cliente_contradictor
         self.motor = Motor(self.almacen, proveedor, cfg, self.contabilidad)
         self.evaluador = Evaluador(self.almacen, proveedor, self.motor, cfg, self.universo)
-        self.mensajeria = Mensajeria(self.almacen)
+        self.mensajeria = Mensajeria(self.almacen, self.v6)
         self.referencias = Referencias(cfg)
         self.redaccion = Redaccion(cfg)
         anon = (cfg.get("backtest") or {}).get("anonimizar", "auto") if anonimizar is None else anonimizar
@@ -278,7 +282,8 @@ class Bloque:
 
     def _estimar_uc(self, agente: str, mensaje: dict) -> float:
         n_user = len(json.dumps(mensaje, ensure_ascii=False, default=str)) / 3.6 + 1500
-        n_sys = len(self.agentes.prompts.texto(agente)) / 3.6
+        n_sys = (len("".join(b["text"] for b in self.agentes.prompts.system(agente, cache=False))) if self.v6
+                 else len(self.agentes.prompts.texto(agente))) / 3.6
         return self.contabilidad.uc_de(Uso(entrada=int(n_user), cache_lectura=int(n_sys), salida=2500))
 
     def _solicitar_ampliacion(self, presupuesto: Presupuesto, bolsa: str, est: float, run_id: str, fase: str | None) -> bool:
@@ -535,6 +540,8 @@ class Bloque:
             res_eval = {"error": str(e)}
             self.almacen.incidencia("HERRAMIENTA", f"Evaluador no disponible: {e}", "AG-20", severidad="Operativa")
         self._informe_aprendizaje(res_eval, as_of, run_id)
+        if self.v6 and v6.op(self, "cobertura.registrar"):   # T-101 (idea 4): descartes muestreados cuyo horizonte ya venció
+            v6.resolver_contrafactual(self, as_of, run_id)
 
         f10 = self.f10(as_of)
         # La aplicabilidad de horizontes vigente es la de F10 (P-31) si el Evaluador la degradó (12.2); si no, la tabla 8.3
@@ -569,6 +576,8 @@ class Bloque:
             asign = {c: float(parametro(self.cfg, "presupuesto_uc.N3")) / max(len(clases), 1) for c in clases}
         tope_ciclo = float(parametro(self.cfg, "presupuesto_uc.ciclo_semanal_max"))
         asign["COMUN"] = max(tope_ciclo - sum(asign.values()), float(parametro(self.cfg, "presupuesto_uc.fraccion_minima_comun")) * tope_ciclo)
+        if self.v6:   # T-101: la parte de prospectiva y refutación de cada tipo pasa a la bolsa del ciclo (el total no cambia)
+            asign = v6.repartir_presupuesto(self, asign, clases)
         if presupuesto_override:
             asign.update(presupuesto_override)
         presupuesto = Presupuesto(asign, self.cfg)
@@ -599,17 +608,39 @@ class Bloque:
         for orden in self.monitor.evaluar_instancias():
             self.almacen.escribir("HA", "AG-18", {**orden, "id": self.almacen.nuevo_id(orden["tipo_entrada"]), "run_id": run_id})
 
+        # T-101 (V6): Prospectiva una vez por ciclo para las finalistas de todos los tipos, en lotes con control de cobertura
+        global_v6 = self.v6 and v6.op(self, "prospectiva.global")
+        info_prosp = info_critica = None
+        if global_v6:
+            info_prosp = v6.prospectiva_global(self, {c: [f for f in analisis[c]["finalistas"] if f.get("_gc3")] for c in clases},
+                                               as_of, run_id, presupuesto, hz_interes)
         # Registro de evidencia (F2) y asignación de identificadores en orden determinista
         for c in clases:
             self._registrar_evidencia_clase(analisis[c], as_of, run_id)
         # Clústeres de exposición entre todas las finalistas (ML-CLUS-001)
         clusteres = self._clusteres(analisis, as_of, run_id)
-        # F5 · Selección por clase con HT-03
-        seleccion = {c: self._seleccionar(c, analisis[c], clusteres, as_of, run_id, hz_interes) for c in clases}
-        # Regla 5 de 2.6: una misma oportunidad no puede aparecer en dos top-3 distintos
-        self._deduplicar_entre_tipos(seleccion)
-        # Integración del Analizador (CT-05 retorno): régimen, factores, preguntas
-        integ = self._integrar(seleccion, analisis, gc0, nivel, as_of, run_id, presupuesto)
+        if global_v6:
+            # T-101 (A-01): selección provisional → crítica → selección final, con las sustitutas criticadas también
+            seleccion, info_critica = v6.seleccion_con_critica(self, clases, analisis, clusteres, nivel, as_of, run_id, hz_interes, presupuesto)
+        else:
+            # F5 · Selección por clase con HT-03
+            seleccion = {c: self._seleccionar(c, analisis[c], clusteres, as_of, run_id, hz_interes) for c in clases}
+            # Regla 5 de 2.6: una misma oportunidad no puede aparecer en dos top-3 distintos
+            self._deduplicar_entre_tipos(seleccion)
+        if self.v6:   # T-101 (A-05, idea 3): registro de cobertura del embudo y muestra de descartes
+            v6.registrar_cobertura(self, run_id, as_of, clases, analisis, seleccion, info_prosp, info_critica)
+            limitaciones += v6.limitaciones_diseno(self)
+            if info_prosp and info_prosp["omitidos"]:
+                limitaciones.append(f"Prospectiva sin pronóstico para {', '.join(info_prosp['omitidos'])} (no devuelto en dos intentos): "
+                                    "no se entregan y no cuentan como pronóstico negativo")
+            if info_critica and info_critica["sin_critica"]:
+                limitaciones.append("Sin crítica del Contradictor (no se entregan, A-01): "
+                                    + ", ".join(f"{x['clase']}:{x['proxy']}" for x in info_critica["sin_critica"]))
+        # Integración (CT-05 retorno): del Analizador en la V5; determinista en la V6, y el Sintetizador escribe después de G3
+        if self.v6 and v6.op(self, "sintetizador"):
+            integ = v6.integracion_determinista(self, seleccion, analisis, as_of)
+        else:
+            integ = self._integrar(seleccion, analisis, gc0, nivel, as_of, run_id, presupuesto)
         historial = self.evaluador.historial_aciertos(as_of)
         paquete, extras = sint.construir(self, run_id, tipo, as_of, clases, nivel, gc0, analisis, seleccion, clusteres, integ,
                                          historial, presupuesto)
@@ -662,6 +693,8 @@ class Bloque:
     # ------------------------------------------------------------------------------------
     def _informe_aprendizaje(self, res_eval: dict, as_of, run_id: str) -> None:
         if not res_eval or not res_eval.get("resueltos") or not (self.cfg.get("evaluacion") or {}).get("llm_informe_aprendizaje", True):
+            return
+        if self.v6 and not v6.op(self, "informe_aprendizaje_llm"):   # T-101: las lecciones deterministas siguen; sin informe por IA
             return
         resumen = {k: {"n": m["n"], "brier": m.get("brier"), "brier_ref": m.get("brier_ref"),
                        "acierto": (m.get("acierto") or {}).get("tasa"), "calibracion_global": m.get("calibracion_global")}
@@ -750,6 +783,12 @@ class Bloque:
             if not vigentes and not rot:
                 out["regimen"] = "Sin cambios materiales; sin opciones vigentes que revisar."
                 return out
+        if self.v6 and fase == "CRIBADO_E_INVESTIGACION" and v6.op(self, "gc1.por_codigo"):
+            # T-101 (PA-04): GC1 por código antes del Analista, con exploración y sin descartar lo que no tiene señal
+            universo, out["gc1"] = v6.gc1(self, clase, universo, vigentes, as_of)
+            if not universo and not vigentes:
+                out["regimen"] = "Sin ámbitos que pasen GC1 (código) ni opciones vigentes: no se llama al Analista."
+                return out
         msg = {"clase": clase, "tipo_activo": clase, "fase": fase, "nivel": nivel, "presupuesto": {"uc": presupuesto.asignado.get(clase)},
                "opciones_vigentes": vig_msg, "lecciones": [l["id"] for l in self.evaluador.lecciones_vigentes(as_of, clase)],
                "delta_gc0": {k: gc0[k] for k in ("cambio_material", "motivos")},
@@ -806,6 +845,8 @@ class Bloque:
             f["horizontes_aplicables"] = [h for h in f.get("horizontes_aplicables", []) if aplicabilidad(self.cfg, clase, h) != "NO"]
             f["senales"] = senales.get(sym, {})
             out["finalistas"].append(f)
+        if self.v6:
+            v6.gc1_falsos_negativos(out)
         # CT-07 / CT-08: peticiones de conocimiento (máximo configurado, valor de la información)
         maxp = int(parametro(self.cfg, "seleccion.peticiones_conocimiento_por_clase"))
         for f in out["finalistas"]:
@@ -845,8 +886,8 @@ class Bloque:
         for f in out["finalistas"]:
             f.setdefault("_gc3", False)
         finales = [f for f in out["finalistas"] if f["_gc3"]]
-        # F3 · Prospectiva (CT-12) y F4 · Refutación (CT-13), por lotes de la clase
-        if finales:
+        # F3 · Prospectiva (CT-12) y F4 · Refutación (CT-13), por lotes de la clase (en la V6, una vez por ciclo)
+        if finales and not (self.v6 and v6.op(self, "prospectiva.global")):
             self._prospectiva(clase, finales, as_of, run_id, presupuesto, hz_interes)
             if nivel in ("N2", "N3"):
                 self._refutacion(clase, finales, nivel, as_of, run_id, presupuesto)
@@ -872,7 +913,11 @@ class Bloque:
     def _peticion_conocimiento(self, clase, f, pet, refs, as_of, run_id, presupuesto) -> dict | None:
         tipo = pet.get("tipo", "CT-08")
         agente = "AG-16" if tipo == "CT-07" else "AG-14"
-        arch = ("F9",) if agente == "AG-16" else ("F7",)
+        if self.v6 and v6.op(self, "lector_evidencia"):   # T-101: el Lector de evidencia, aislado, atiende CT-07 y CT-08
+            agente_archivo, agente = agente, "AG-28"
+        else:
+            agente_archivo = agente
+        arch = ("F9",) if agente_archivo == "AG-16" else ("F7",)
         cand = self.referencias.para_clase(clase, as_of, self.modo, max_n=8, archivos=arch)
         msg = {"pregunta": pet.get("pregunta", ""), "objetivo": pet.get("objetivo", "confirmar"), "clase": clase,
                "horizonte": (f.get("horizontes_aplicables") or ["H3"])[0], "profundidad": "minima", "max_fuentes": 3,
@@ -1155,7 +1200,7 @@ class Bloque:
         self._filtrar_evidencia(finales, as_of)
         # Curación LLM (N2/N3): tipo de afirmación, confianza y alertas; la deduplicación y las raíces son deterministas
         clasif = {}
-        if an["nivel"] in ("N2", "N3"):
+        if an["nivel"] in ("N2", "N3") and not (self.v6 and not v6.op(self, "curacion_llm")):
             piezas = [{"indice": i, **{k: p.get(k) for k in ("afirmacion", "fuente", "direccion", "extracto")}}
                       for i, p in enumerate(pz for f in finales for pz in f["_piezas"])]
             if piezas:
@@ -1325,7 +1370,8 @@ class Bloque:
         refut = f.get("_refutacion")
         fuertes_abiertas = sum(1 for o in f.get("_objeciones", []) if o["fuerza"] == "fuerte" and not o["resuelta"])
         moderadas_sin = sum(1 for o in f.get("_objeciones", []) if o["fuerza"] == "moderada" and not o.get("respuesta"))
-        ps5 = (refut is not None) if nivel in ("N2", "N3") else bool(f.get("premortem"))
+        # T-101 (V6, A-01): en la selección provisional, una finalista con la crítica pendiente pasa PS5 hasta que se critica
+        ps5 = (refut is not None or bool(f.get("_critica_pendiente"))) if nivel in ("N2", "N3") else bool(f.get("premortem"))
         return {"G1": bool(f.get("_ps1")), "G2": ps5 and fuertes_abiertas == 0 and moderadas_sin == 0, "G3": True,
                 "G4": bool(f.get("lo_que_no_sabemos")) and bool(f.get("invalidacion")) and bool(horizontes_ok),
                 "PS1": bool(f.get("_ps1")), "PS2": ps2,
@@ -1374,10 +1420,13 @@ class Bloque:
         for f in an["finalistas"]:
             if not f.get("_gc3"):
                 continue
-            oid, previa = self._opp_id(clase, f["proxy"], f["tipo_opcion"], as_of)
-            if oid in [c["opp_id"] for c in cerradas]:
-                oid, previa = self.almacen.nuevo_id("OPP"), None
-            f["opp_id"], f["_previa"] = oid, previa
+            if f.get("_opp_fijado"):   # T-101: en la V6 se selecciona varias veces; el identificador no cambia entre rondas
+                oid, previa = f["opp_id"], f["_previa"]
+            else:
+                oid, previa = self._opp_id(clase, f["proxy"], f["tipo_opcion"], as_of)
+                if oid in [c["opp_id"] for c in cerradas]:
+                    oid, previa = self.almacen.nuevo_id("OPP"), None
+            f["opp_id"], f["_previa"], f["_opp_fijado"] = oid, previa, True
             f["_vigente"] = oid in vig
             f["_hz"] = self._horizontes(f, clase, hz_interes)
             candidatos.append(f)
@@ -1582,14 +1631,19 @@ class Bloque:
                    "resultado_ht09": {"dictamen": efectivo, "bloqueos": [{"id": c["id"], "incidencias": c["incidencias"][:5]} for c in bloq],
                                       "advertencias": [{"id": c["id"], "incidencias": c["incidencias"][:5]} for c in advert]}}
             self.mensajeria.crear("CT-14", "AG-02", "AG-18", msg, run_id=run_id, presupuesto={"uc": 1})
-            r = self._invocar("AG-18", "CT-14", msg, "DICTAMEN_G3",
-                              "Dictamina la validación G3: APTO_CON_ADVERTENCIAS solo si no hay bloqueos; si los hay, BLOQUEADO con "
-                              "condiciones para quedar APTO. Nunca APTO por defecto.", as_of, run_id)
+            if self.v6 and not v6.op(self, "dictamen_g3_llm"):   # T-101: el dictamen lo da la regla, sin modelo
+                r = None
+            else:
+                r = self._invocar("AG-18", "CT-14", msg, "DICTAMEN_G3",
+                                  "Dictamina la validación G3: APTO_CON_ADVERTENCIAS solo si no hay bloqueos; si los hay, BLOQUEADO con "
+                                  "condiciones para quedar APTO. Nunca APTO por defecto.", as_of, run_id)
             dict_orq = (r.datos or {}).get("dictamen") if r and r.datos else None
             if bloq:
                 dict_orq = "BLOQUEADO"     # el Orquestador no puede convertir un bloqueo en apto (R16, R17)
             g3v["excepcion"] = {"recibida": True, "dictamen_orquestador": dict_orq or ("BLOQUEADO" if bloq else "APTO_CON_ADVERTENCIAS"),
-                                "motivo": (r.datos or {}).get("motivo") if r and r.datos else "salida del Orquestador no disponible; regla restrictiva"}
+                                "motivo": (r.datos or {}).get("motivo") if r and r.datos else (
+                                    "dictamen determinista (diseño V6): sin bloqueos, apto con advertencias visibles; con bloqueos, bloqueado"
+                                    if self.v6 and not v6.op(self, "dictamen_g3_llm") else "salida del Orquestador no disponible; regla restrictiva")}
             self.almacen.escribir("HA", "AG-18", g3v)
             if not bloq:
                 return paquete, {"dictamen": "APTO_CON_ADVERTENCIAS", "advertencias": [c["id"] for c in advert], "intentos": intento,
@@ -1606,6 +1660,8 @@ class Bloque:
             paquete, extras = sint.retirar_opciones(self, paquete, extras, afectadas)
 
     def _redactar(self, paquete, extras, as_of, run_id, presupuesto, estado_run) -> tuple[dict, dict, dict]:
+        if self.v6 and v6.op(self, "sintetizador"):   # T-101: el Sintetizador, sobre el paquete ya validado por G3
+            return v6.sintetizar(self, paquete, extras, as_of, run_id, presupuesto, estado_run)
         msg = sint.mensaje_redactor(paquete)
         self.mensajeria.crear("CT-15", "AG-02", "AG-17", {"paquete_sintesis": msg}, run_id=run_id, presupuesto={"uc": 2})
         instr = ("Redacta los textos del informe visual para un usuario sin conocimientos financieros: tres frases de «la semana "
@@ -1776,6 +1832,8 @@ class Bloque:
         activa = au.get("en_backtest" if self.modo == "backtest" else "en_vivo", True)
         if not activa:
             return
+        if self.v6 and not v6.auditar_este_run(self, run_id):   # T-101: el Auditor, por muestreo sembrado
+            return
         if tipo == "AD_HOC" and not any(v == "N3" for v in nivel.values()):
             h = int(hashlib.sha256(run_id.encode()).hexdigest(), 16) % 100
             if h >= int(100 * float(parametro(self.cfg, "auditoria.muestreo_ad_hoc"))):
@@ -1848,7 +1906,7 @@ class Bloque:
         cuerpo = {"query_id": qry_id, "pregunta": texto, "contexto": contexto or {}, "urgencia": urgencia, "memoria_bloque": memoria,
                   "clases_activas": list(self.f10(as_of).get("P-02") or perfiles_activos(self.cfg))}
         pres = Presupuesto({"N0": float(parametro(self.cfg, "presupuesto_uc.N0"))}, self.cfg)
-        r = self._invocar("AG-01", "CT-03", cuerpo, "CONSULTA",
+        r = self._invocar("AG-27" if self.v6 and v6.op(self, "respondedor") else "AG-01", "CT-03", cuerpo, "CONSULTA",
                           "Clasifica la consulta (ACLARACION, DATO, METODO, CONTRASTE, PROFUNDIZACION, ESTADO). Si es respondible con la "
                           "memoria del bloque (ruta N0), responde de forma breve y trazable citando solo identificadores presentes en "
                           "«memoria_bloque». Si exige análisis (ruta ANALITICA), da una respuesta provisional con lo que se sabe y propón "

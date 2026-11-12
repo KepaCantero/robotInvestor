@@ -158,7 +158,8 @@ def _tokens_aprox(texto: str) -> int:
 
 class MockClient(LLMClient):
     """Cliente simulado determinista. Los tokens se estiman (≈ 3,6 caracteres por token) y la caché de
-    prompts se simula: la primera llamada de cada (agente, modelo, system) escribe caché y las demás la leen."""
+    prompts se simula por prefijo, como la API (T-101): cada punto `cache_control` guarda el prefijo hasta él; una llamada lee
+    el prefijo guardado más largo y escribe el resto; lo que queda después del último punto, o sin puntos, es entrada."""
 
     nombre = "mock"
     conocimiento_previo = False   # el simulado no sabe nada del periodo: no hay fuga por memoria (PA-09)
@@ -179,10 +180,18 @@ class MockClient(LLMClient):
         sys_txt = "".join(b.get("text", "") for b in system)
         user_txt = "".join(m["content"] if isinstance(m["content"], str) else json.dumps(m["content"], default=str)
                            for m in mensajes if m["role"] == "user")
-        clave_sys = hashlib.sha256((agente + modelo + sys_txt).encode()).hexdigest()
+        # Caché por prefijo, como la API (T-101, idea 2): cada punto de caché guarda el prefijo hasta él (modelo,
+        # herramientas y bloques de system). Se lee el prefijo guardado más largo y se escribe el resto hasta el último punto.
+        puntos, acumulado = [], ""
+        for b in system:
+            acumulado += b.get("text", "")
+            if b.get("cache_control"):
+                puntos.append((hashlib.sha256((modelo + json.dumps(herramientas, default=str) + acumulado).encode()).hexdigest(),
+                               _tokens_aprox(acumulado)))
         with self._lock:
-            primera = clave_sys not in self._vistos
-            self._vistos.add(clave_sys)
+            leido = max((t for k, t in puntos if k in self._vistos), default=0)
+            hasta = puntos[-1][1] if puntos else 0
+            self._vistos.update(k for k, _ in puntos)
             self.llamadas.append({"agente": agente, "modelo": modelo, "herramientas": herramientas})
             falla = self.fallos.get(agente, 0) > 0
             if falla:
@@ -193,8 +202,8 @@ class MockClient(LLMClient):
             datos = mock_respuestas.responder(agente, mensajes, self.semilla)
             datos_txt = json.dumps(datos, ensure_ascii=False)
         t_sys = _tokens_aprox(sys_txt)
-        uso = Uso(entrada=_tokens_aprox(user_txt), salida=_tokens_aprox(datos_txt),
-                  cache_escritura=t_sys if primera else 0, cache_lectura=0 if primera else t_sys,
+        uso = Uso(entrada=_tokens_aprox(user_txt) + max(t_sys - hasta, 0), salida=_tokens_aprox(datos_txt),
+                  cache_escritura=max(hasta - leido, 0), cache_lectura=leido,
                   busquedas_web=1 if herramientas else 0)
         return RespuestaLLM(texto=datos_txt, uso=uso, modelo=modelo, stop_reason="end_turn")
 

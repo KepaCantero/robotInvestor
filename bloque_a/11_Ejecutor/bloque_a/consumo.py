@@ -4,7 +4,7 @@ from __future__ import annotations
 import threading
 from collections import defaultdict
 from dataclasses import asdict
-from typing import Dict, List, Optional
+from typing import Any, Dict, List, Optional
 
 from .configuracion import parametro
 from .llm import Uso
@@ -37,11 +37,13 @@ class Contabilidad:
         return round(c, 6)
 
     def registrar(self, run_id: Optional[str], agente: str, modelo: str, uso: Uso, clase: Optional[str] = None,
-                  fase: Optional[str] = None, cache_hit: bool = False) -> float:
+                  fase: Optional[str] = None, cache_hit: bool = False, intento: int = 1, latencia_s: float = 0.0) -> float:
         uc = 0.0 if cache_hit else self.uc_de(uso)
         with self._lock:
+            # T-101 (idea 6): el intento (1 = primera; 2 o más = reparación) y la latencia de cada llamada
             self.llamadas.append({"run_id": run_id, "agente": agente, "modelo": modelo, "clase": clase, "fase": fase,
-                                  "cache_hit": cache_hit, "uc": uc, **asdict(uso)})
+                                  "cache_hit": cache_hit, "uc": uc, "intento": int(intento), "latencia_s": round(float(latencia_s), 4),
+                                  **asdict(uso)})
         return uc
 
     def cargar_motor(self, run_id: Optional[str], uc: float) -> None:
@@ -52,7 +54,7 @@ class Contabilidad:
         with self._lock:
             ll = [c for c in self.llamadas if run_id is None or c["run_id"] == run_id]
             motor = sum(v for k, v in self.motor.items() if run_id is None or k == run_id)
-        tot = {"llamadas": len(ll), "entrada": 0, "salida": 0, "cache_escritura": 0, "cache_lectura": 0, "busquedas_web": 0}
+        tot: Dict[str, Any] = {"llamadas": len(ll), "entrada": 0, "salida": 0, "cache_escritura": 0, "cache_lectura": 0, "busquedas_web": 0}
         coste, coste_ok = 0.0, True
         for c in ll:
             for k in ("entrada", "salida", "cache_escritura", "cache_lectura", "busquedas_web"):
@@ -63,6 +65,8 @@ class Contabilidad:
                     coste_ok = False
                 else:
                     coste += cc
+        tot["reintentos"] = sum(1 for c in ll if c.get("intento", 1) > 1)
+        tot["latencia_s"] = round(sum(c.get("latencia_s", 0.0) for c in ll), 4)
         tot["uc_llm"] = round(sum(c["uc"] for c in ll), 4)
         tot["uc_motor"] = round(motor, 4)
         tot["uc"] = round(tot["uc_llm"] + motor, 4)
