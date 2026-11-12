@@ -433,7 +433,8 @@ _UNITARIA = re.compile(
     r"\b(?:solo|solamente|únicamente|exclusivamente)\s+(?:la|una)\s+(?:acción|emisión|participación)\b"
     r"|\b(?:la acción|el bono|la acción ordinaria|la acción preferente)\s+de\s+"
     r"|\b(?:comprar|vender|adquirir|seleccionar)\s+(?:acciones|bonos)\s+de\s+\$[a-z]+"
-    r"|\b(?:acciones|bonos)\s+de\s+[^.;,\n]+?\s+(?:corporation|incorporated|inc\b|corp\b|plc\b|ag\b|s\.a\.)",
+    # T-102 r02 (H-07): el nombre se acota a 120 caracteres; sin tope, un texto degenerado con «acciones de» repetido es cuadrático
+    r"|\b(?:acciones|bonos)\s+de\s+[^.;,\n]{1,120}?\s+(?:corporation|incorporated|inc\b|corp\b|plc\b|ag\b|s\.a\.)",
     re.IGNORECASE,
 )
 

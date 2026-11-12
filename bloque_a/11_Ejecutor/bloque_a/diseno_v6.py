@@ -459,56 +459,114 @@ INSTR_SINTESIS = ("Sobre el paquete ya validado: escribe la integración (régim
 _CAMPOS_REDACCION = ("frases_30s", "tarjetas", "motivos_llanos", "glosario", "frase_historial")
 
 
-# Filtro R13/R21 de los textos del Sintetizador (QA r01 de T-101, H-09; r02, H-12; T-102, H-23 y H-24 de la r03). Se aplica
-# FRASE A FRASE: una frase que da una probabilidad numérica (R13) o que compra o vende un instrumento concreto (R21) se quita, y
-# el resto del texto se conserva. Son reglas por patrón; un nombre propio suelto sin código ni sufijo («entrar en Tesla») no se
-# detecta: lo revisa el Auditor por muestreo y es un límite declarado.
+# Filtro R13/R21 de los textos del Sintetizador (QA r01 de T-101, H-09; r02, H-12; T-102, H-23 y H-24 de la r03; ronda r02 de
+# T-102, H-01 a H-10 de su QA r01). Se aplica FRASE A FRASE: una frase que da una probabilidad numérica (R13) o que compra o
+# vende un instrumento concreto (R21) se quita, y el resto del texto se conserva con sus separadores.
+# - R13 falla cerrado: una frase con una palabra de probabilidad («probabilidad», «probable», «posibilidad», «chance») y una
+#   cifra (un porcentaje, un decimal 0,xx o «N de cada M») se quita, salvo que la cifra sea claramente otra cosa: un nivel de un
+#   tipo o una tasa («el depósito en el 2 %»), el tope de un movimiento («un recorte hasta el 4,25 %»), una frecuencia del
+#   historial («el 62 % de las veces») o un peso de la cartera («un 5 % del capital»). También «N % de probabilidad, de
+#   confianza, de seguridad, de opciones, de riesgo de o de que», con o sin palabra de probabilidad.
+# - R21: tras un verbo de compra, venta, inversión o toma de posiciones, cualquier código que sea un instrumento en lo que queda
+#   de la frase, hasta una subordinada («si», «cuando», «antes de»…) u otro verbo coordinado («y esperar»); un ISIN en cualquier
+#   parte; un sufijo societario o de fondo («Inc», «plc», «S.A.», «FI»); una emisión con vencimiento.
+# Son reglas por patrón; un nombre propio suelto sin código ni sufijo («entrar en Tesla») no se detecta: lo revisa el Auditor por
+# muestreo y es un límite declarado. Lo que no se sabe leer se quita (falla cerrado) y se declara.
 _NUM = r"\d{1,3}(?:[.,]\d+)?"
 _PCT = rf"{_NUM}\s*(?:%|por\s+ciento)"
-_PROB = r"(?:probabilidad(?:es)?|posibilidad(?:es)?)"
-_ENLACE = r"(?::|=|\s+(?:es|ser[áa]|ser[íi]a|est[áa]|queda|ronda|alcanza|supera|llega\s+a|sube\s+a|baja\s+a)(?:\s+(?:de|del|en|el|al))?|\s+del?)"
-_R13 = (re.compile(rf"{_PCT}\s+de\s+(?:{_PROB}|confianza|opciones\s+de\s+\w+)", re.IGNORECASE),     # «un 70 % de probabilidad»
-        re.compile(rf"\b{_PROB}(?:\s+de\s+\w+)?{_ENLACE}\s*(?:un\s+|el\s+)?(?:0[.,]\d+|{_PCT})", re.IGNORECASE),  # «probabilidad del 87 %»
-        re.compile(rf"\bprobab\w*\s+(?:al|en\s+un|en\s+el)\s+{_PCT}", re.IGNORECASE))                 # «probable al 80 %»
-_R21 = (re.compile(r"\b[A-Z][\w&.-]+(?:\s+[A-Z][\w&.-]+)*\s+(?:Corp|Corporation|Inc|Incorporated|plc|PLC|AG|NV|SE|S\.A\.)\b"),
-        re.compile(r"\bbonos?\b[^.;]{0,60}?\bvencimiento\s+(?:en\s+)?(?:19|20)\d{2}\b", re.IGNORECASE))  # una emisión concreta
+_PROB = r"(?:probabilidad(?:es)?|posibilidad(?:es)?|chances?)"
+_PALABRA_PROB = re.compile(r"\b(?:(?:im)?probab(?!lemente)\w*|posibilidad(?:es)?|chances?)\b", re.IGNORECASE)
+_R13_DIRECTA = re.compile(rf"{_PCT}\s+de\s+(?:{_PROB}|confianza|seguridad|certeza|opciones|riesgo\s+de|que)\b", re.IGNORECASE)
+_R13_VAR = re.compile(rf"\b(?:C?VaR|ES|intervalo|nivel)\s+(?:al|del|de)\s+{_PCT}\s+de\s+confianza", re.IGNORECASE)
+_CIFRA = re.compile(rf"(?<![\w.,]){_PCT}|(?<![\w.,])0[.,]\d+\b|\b\d+\s+de\s+cada\s+\d+\b", re.IGNORECASE)
+_FUNCION = r"(?:de|del|la|el|los|las|en|al|a|un|una|(?-i:[A-ZÁÉÍÓÚ][\w.&]*))"   # sin IGNORECASE en el nombre propio
+_NIVEL_ANTES = re.compile(r"\b(?:tipos?|tasas?|dep[oó]sito|inter[eé]s|inflaci[oó]n|IPC|paro|desempleo|PIB|rentabilidad|rendimiento|"
+                          r"TIR|cup[oó]n|diferencial|prima|comisi[oó]n|peso|ponderaci[oó]n|correlaci[oó]n|beta|ratio|delta|sharpe|"
+                          rf"coeficiente)(?:\s+{_FUNCION})*\s*$", re.IGNORECASE)
+_TOPE_ANTES = re.compile(rf"\b(?:recortes?|subidas?|bajadas?|alzas?|ca[ií]das?|rebajas?|descensos?|aumentos?)(?:\s+{_FUNCION})*\s+"
+                         r"hasta\s+(?:el\s+|un\s+)?$", re.IGNORECASE)
+_NIVEL_DESPUES = re.compile(r"^\s*(?:de\s+(?:las\s+veces|los\s+casos)|del\s+(?:capital|patrimonio|presupuesto)|de\s+la\s+cartera)\b",
+                            re.IGNORECASE)
+_SUFIJO = re.compile(r"\b[A-Z][\w&.-]*(?:\s+[A-Z][\w&.-]*){0,6}\s+(?:Corp|Corporation|Inc|Incorporated|plc|PLC|AG|NV|SE|S\.A\.|SA|"
+                     r"FI|FIL|SICAV|SOCIMI\s+S\.A\.)(?![\w.]|\.\w)")
+_EMISION = re.compile(r"\bbonos?\b[^.;]{0,60}?\bvencimiento\s+(?:en\s+)?(?:19|20)\d{2}\b", re.IGNORECASE)
 _ISIN = re.compile(r"\b[A-Z]{2}[A-Z0-9]{9}\d\b")
 _VERBO = re.compile(r"\b(?:compr(?:a|ar|e|en|amos|ando)|vend(?:e|er|a|an|emos|iendo)|adquiri(?:r|d)|sobrepond(?:erar|era|ere)|"
-                    r"infrapond(?:erar|era|ere)|invertir\s+en|invierte\s+en|entrar\s+en|tomar\s+posiciones?\s+en|abrir\s+(?:largos|cortos)\s+en|"
-                    r"posicionarse\s+en|la\s+compra\s+de|la\s+venta\s+de)\b", re.IGNORECASE)
+                    r"infrapond(?:erar|era|ere)|invertir\s+en|invierte\s+en|entrar\s+en|"
+                    r"(?:tomar|abrir|reforzar|reducir|cerrar|deshacer)\s+(?:posiciones?|largos|cortos)\s+en|"
+                    r"ponerse\s+(?:largos?|cortos?)\s+en|posicionarse\s+en|apost(?:ar|a|amos|emos)\s+por|"
+                    r"acumul(?:ar|a|amos|e|en)|suscribir|liquidar|deshacerse\s+de|la\s+compra\s+de|la\s+venta\s+de)\b", re.IGNORECASE)
 _CODIGO = re.compile(r"(?<![\w&.^=-])\$?([A-Z][A-Z0-9&.^=/-]{1,14})(?![\w&])")
-_FRASE = re.compile(r"(?<=[.;!?])\s+")
+# Lo que acaba la parte de la frase que depende del verbo: una subordinada o un verbo coordinado («y esperar», «y compra»), no
+# una coma ni unos dos puntos («Comprar: NVDA, AMD y AVGO»). Sin IGNORECASE: «y META» no es un verbo.
+_CORTE = re.compile(r"\b(?:[Ss]i|[Cc]uando|[Mm]ientras|[Pp]orque|[Aa]unque|[Ss]alvo|[Ee]xcepto|[Ss]egún|[Tt]ras|[Aa]ntes\s+de|"
+                    r"[Dd]espués\s+de|hasta\s+que|a\s+menos\s+que|siempre\s+que|dado\s+que|puesto\s+que|ya\s+que)\b"
+                    r"|\b[yeo]\s+(?:ya\s+|no\s+|se\s+)*(?!(?:de|del|la|las|el|los|una|unas|un|unos|en|a|al|con|sobre|también|otras?|"
+                    r"otros?|parte|algo|poco)\b)[a-záéíóúñ]{2,}(?:a|e|an|en|ar|er|ir)\b")
+# Familias de índices: lo que las sigue es el nombre del índice («MSCI ACWI», «S&P 500», «EURO STOXX 50»), no un fondo
+_INDICE = re.compile(r"\b(?:MSCI|FTSE|EURO\s+STOXX|STOXX|S&P|Russell|Bloomberg|CSI|Nikkei|NIKKEI)(?:\s+[A-Z0-9][\w&-]*){0,3}")
+_CALIFICACION = re.compile(r"(?:AAA|AA|A|BBB|BB|B|CCC|CC|C|D)[+-]?")
+# Abreviaturas que llevan punto y no acaban la frase (H-04): se protegen antes de dividir
+_ABREV = re.compile(r"\b(?:EE\.\s?UU|S\.\s?A|S\.\s?L|p\.\s?ej|etc|Inc|Corp|Ltd|Sr|Sra|Dr|núm|aprox|vs|pág)\.(?=\s|$|[,;:)])")
+_PUNTO = "․"
+_SEPARADOR = re.compile(r"((?<=[.;!?…])\s+|\s*\n+\s*)")
 
 
 def _es_instrumento(cod: str, perm) -> bool:
     """Un código en mayúsculas es un instrumento concreto salvo que sea un código permitido (divisa, tipo de activo, sigla de
-    índice, materia prima o segmento), un par de divisas permitidas sin barra («EURUSD») o una serie del universo que no es un
-    ticker de fondo (los símbolos con «=», «^», dígitos o guiones: pares, índices y series)."""
+    índice, región, materia prima o segmento), una calificación crediticia, un par de divisas permitidas con o sin barra
+    («EURUSD», «EUR/USD») o una serie del universo que no es un ticker de fondo (pares, índices y series)."""
     c = cod.lstrip("$").rstrip(".")
-    if c in perm["codigos"] or c in perm["series"]:
+    if c in perm["codigos"] or c in perm["series"] or _CALIFICACION.fullmatch(c):
+        return False
+    partes = c.split("/")
+    if len(partes) == 2 and all(x in perm["codigos"] for x in partes):
         return False
     if len(c) == 6 and c.isalpha() and c[:3] in perm["codigos"] and c[3:] in perm["codigos"]:
         return False
     return any(ch.isupper() for ch in c) and len(c) >= 2
 
 
+def _r13(t: str) -> bool:
+    if _R13_DIRECTA.search(t) and not _R13_VAR.search(t):
+        return True
+    if not _PALABRA_PROB.search(t):
+        return False
+    for m in _CIFRA.finditer(t):
+        antes, despues = t[max(0, m.start() - 60):m.start()], t[m.end():]
+        if not (_NIVEL_ANTES.search(antes) or _TOPE_ANTES.search(antes) or _NIVEL_DESPUES.match(despues)):
+            return True
+    return False
+
+
 def frase_prohibida(t: str, perm) -> str | None:
     """«R13», «R21» o None para UNA frase."""
-    if any(r.search(t) for r in _R13):
+    t = t.replace(_PUNTO, ".")
+    if _r13(t):
         return "R13"
-    if any(r.search(t) for r in _R21) or sint._UNITARIA.search(t):
+    if _SUFIJO.search(t) or _EMISION.search(t) or sint._UNITARIA.search(t):
         return "R21"
     if any(_es_instrumento(m, perm) for m in _ISIN.findall(t)):
         return "R21"
-    for m in _VERBO.finditer(t):   # tras un verbo de compra o venta, hasta el final de la frase o 60 caracteres
-        ventana = re.split(r"[,;:]|\by\s+(?:ya\s+)?(?:no\s+)?(?:se\s+)?\w+[ae]n?\b", t[m.end():m.end() + 60])[0]
+    t = re.sub(r"\bEE\.\s?UU\.", "EEUU", t)
+    for m in _VERBO.finditer(t):   # tras el verbo, hasta una subordinada u otro verbo coordinado (H-02)
+        resto = t[m.end():]
+        corte = _CORTE.search(resto)
+        ventana = _INDICE.sub(" ", resto[:corte.start()] if corte else resto)
         if any(_es_instrumento(c, perm) for c in _CODIGO.findall(ventana)):
             return "R21"
     return None
 
 
+def _trozos(t: str) -> list[str]:
+    """[frase, separador, frase, separador, …]: se divide por «.», «;», «!», «?», «…» y saltos de línea, sin partir las
+    abreviaturas (H-04); los separadores se conservan para volver a juntar el texto tal cual."""
+    protegido = _ABREV.sub(lambda m: m.group(0).replace(".", _PUNTO), t)
+    return _SEPARADOR.split(protegido)
+
+
 def _frases(t: str) -> list[str]:
-    return [x for x in _FRASE.split(t.strip()) if x]
+    return [x for x in _trozos(t.strip())[::2] if x.strip()]
 
 
 def texto_prohibido(t, permitidos=None) -> str | None:
@@ -520,14 +578,22 @@ def texto_prohibido(t, permitidos=None) -> str | None:
 
 
 def limpiar(t, perm) -> tuple[str, list[str]]:
-    """El texto sin las frases que incumplen R13 o R21, y las reglas incumplidas."""
+    """El texto sin las frases que incumplen R13 o R21 (cada una con el separador que la sigue), y las reglas incumplidas. Un
+    texto sin nada prohibido sale igual que entró."""
     if not isinstance(t, str):
         return t, []
+    trozos = _trozos(t)
     quedan, reglas = [], []
-    for f in _frases(t):
-        r = frase_prohibida(f, perm)
-        (reglas.append(r) if r else quedan.append(f))
-    return " ".join(quedan), reglas
+    for k in range(0, len(trozos), 2):
+        f, sep = trozos[k], (trozos[k + 1] if k + 1 < len(trozos) else "")
+        r = frase_prohibida(f, perm) if f.strip() else None
+        if r:
+            reglas.append(r)
+        else:
+            quedan.append(f + sep)
+    if not reglas:
+        return t, []
+    return "".join(quedan).replace(_PUNTO, ".").strip(), reglas
 
 
 def permitidos_r21(bloque) -> dict:
@@ -535,7 +601,8 @@ def permitidos_r21(bloque) -> dict:
     simbolos = set(bloque.universo["simbolo"].astype(str))
     if "subyacente" in bloque.universo:
         simbolos |= {str(x) for x in bloque.universo["subyacente"].dropna()}
-    series = {x for x in simbolos if re.search(r"[=^\-\d/]", x) or len(x) > 5}
+    # T-102 r02 (H-02): un símbolo con sufijo de bolsa («XEON.DE», «ITX.MC») es un fondo o una acción, no una serie
+    series = {x for x in simbolos if (re.search(r"[=^\-\d/]", x) or len(x) > 5) and not re.fullmatch(r"[A-Z0-9]{1,6}\.[A-Z]{1,3}", x)}
     series |= {x.split("=")[0] for x in simbolos if "=" in x}   # «EURUSD=X» también como «EURUSD»
     return {"codigos": frozenset(str(x) for x in op(bloque, "filtro_r21_codigos")), "series": frozenset(series)}
 
@@ -614,12 +681,22 @@ def _redaccion_segura(bloque, paquete, d, permitidos=None) -> dict:
                 x[k] = _uno(x[k], base.get(k, ""))
     red["motivos_llanos"] = {k: v2 for k, v in (red.get("motivos_llanos") or {}).items()
                              if isinstance(v, str) and (v2 := _uno(v, "").strip())}
-    red["glosario"] = [g for g in (red.get("glosario") or []) if isinstance(g, dict)
-                       and not (frase_prohibida(str(g.get("termino", "")), perm) or texto_prohibido(g.get("definicion"), perm))]
+    glosario = []
+    for g in red.get("glosario") or []:
+        if not isinstance(g, dict):
+            continue
+        r = frase_prohibida(str(g.get("termino", "")), perm) or texto_prohibido(g.get("definicion"), perm)
+        (quitadas.append(r) if r else glosario.append(g))   # T-102 r02 (H-05): la entrada quitada se cuenta y se declara
+    red["glosario"] = glosario
     red["frase_historial"] = _uno(red.get("frase_historial"), defecto["frase_historial"])
+    # T-102 r02 (H-06): se declara lo de la redacción que se entrega; la de una respuesta anterior (reescritura) se retira
+    previa = "Frases llanas del Sintetizador quitadas"
+    paquete["limitaciones"] = [x for x in paquete["limitaciones"] if not x.startswith(previa)]
     if quitadas:
         paquete["limitaciones"] = [x for x in paquete["limitaciones"] if not x.startswith("Ninguna limitación")] + [
-            f"Frases llanas del Sintetizador quitadas por {', '.join(sorted(set(quitadas)))}: {len(quitadas)}; el resto de sus textos se conserva"]
+            f"{previa} por {', '.join(sorted(set(quitadas)))}: {len(quitadas)}; el resto de sus textos se conserva"]
+    elif not paquete["limitaciones"]:
+        paquete["limitaciones"] = ["Ninguna limitación adicional a las declaradas por opción"]
     return red
 
 
