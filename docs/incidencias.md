@@ -104,3 +104,24 @@ El total cargado es el coste real. Efecto declarado: en un presupuesto justo, el
 - si las series acaban en fechas distintas, todas se miden hasta la más antigua, y cada una vuelve a pasar la frescura frente a la fecha de resolución.
 
 Pregunta para T-57: «¿qué antigüedad admite la resolución de un pronóstico, y se alinean las series?». Detalle en [.docs/tickets/T-91](../.docs/tickets/T-91/README.md).
+
+**INC-T106-01 · 2026-11-12 · Decisiones de método en las 21 fichas V5.0 del Motor (Bloque A, T-106).** Las fichas dejan huecos que se han cubierto así, `[PROPUESTO]` hasta que el operador o una revisión del Catálogo decidan:
+- **Niveles que la ficha no fija:**
+  - IC del 95 % (de ST-INF-001) y rezagos HAC por la regla de ACC-FACT-001 en TCV-SLOPE-001;
+  - ES al 97,5 % (de RISK-VAR-001) en TCV-VIXTS-001 y DER-VRP-001;
+  - retardos HAR 1, 5 y 22 (Corsi) en DER-VRP-001;
+  - en IDX-REB-001, sin `nivel_ic` no se da el IC (se declara).
+- **«Aclaración» se trata como rechazo** (`ErrorFicha`), porque la interfaz CT-09 no tiene canal de aclaración.
+- **Falla cerrado donde la ficha calla:**
+  - pesos que no suman 1 (IDX-CONC-001) o un índice HY sin recuperación declarada (TCV-CDS-001) se rechazan;
+  - FON-LEV-001 exige L en los datos aunque el parámetro traiga 2;
+  - entre «Entradas mínimas» y «Rechazo», se aplica el mínimo más estricto.
+- **Fuera, como dato de entrada o limitación:**
+  - la simulación SIM-MC-001 de FON-LEV-001;
+  - el modelo afín de TCV-BEI-001;
+  - SCN-H-001 en IDX-ERP-001;
+  - los regresores de TCV-SLOPE-001 (con vintages);
+  - las rentabilidades históricas de VIXTS.
+
+Detalle por ficha en [.docs/tickets/T-106](../.docs/tickets/T-106/analisis-tecnico.md).
+
