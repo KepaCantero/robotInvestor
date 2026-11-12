@@ -1,0 +1,21 @@
+77 llamadas, 20 agentes; entrada: sistema 1495542, encargo 166387
+AG-11    claude-opus-5-5      llamadas  19  sistema   364439  encargo   22150  salida   4766
+AG-10    claude-sonnet-5-5    llamadas  12  sistema   266976  encargo   24122  salida   7398
+AG-12    claude-haiku-5-5     llamadas  12  sistema   136464  encargo   13834  salida   2952
+AG-14    claude-sonnet-5-5    llamadas   6  sistema   122118  encargo    6007  salida    918
+AG-03    claude-sonnet-5-5    llamadas   2  sistema    52322  encargo    7620  salida   4689
+AG-06    claude-sonnet-5-5    llamadas   2  sistema    48444  encargo    6388  salida   1472
+AG-09    claude-sonnet-5-5    llamadas   2  sistema    48338  encargo    5258  salida   2320
+AG-04    claude-sonnet-5-5    llamadas   2  sistema    44762  encargo    8219  salida   4597
+AG-05    claude-sonnet-5-5    llamadas   2  sistema    43542  encargo    7758  salida   4623
+AG-21    claude-sonnet-5-5    llamadas   2  sistema    42064  encargo    7328  salida   3564
+AG-07    claude-sonnet-5-5    llamadas   2  sistema    41824  encargo    5663  salida   3104
+AG-08    claude-sonnet-5-5    llamadas   2  sistema    40890  encargo    5665  salida   2448
+AG-25    claude-sonnet-5-5    llamadas   2  sistema    39138  encargo    7296  salida   4758
+AG-22    claude-sonnet-5-5    llamadas   2  sistema    39322  encargo    5925  salida   2446
+AG-23    claude-sonnet-5-5    llamadas   2  sistema    37282  encargo    5974  salida   3571
+AG-24    claude-sonnet-5-5    llamadas   2  sistema    35886  encargo    5924  salida   3522
+AG-02    claude-opus-5-5      llamadas   1  sistema    34071  encargo    3491  salida    710
+AG-17    claude-sonnet-5-5    llamadas   1  sistema    20453  encargo    7808  salida   2791
+AG-19    claude-sonnet-5-5    llamadas   1  sistema    17061  encargo    9003  salida     25
+AG-18    claude-sonnet-5-5    llamadas   1  sistema    20146  encargo     954  salida     32
