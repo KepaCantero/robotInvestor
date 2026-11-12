@@ -18,6 +18,7 @@ import copy
 import hashlib
 import math
 import re
+import unicodedata
 from typing import Any
 
 import pandas as pd
@@ -477,30 +478,55 @@ _CAMPOS_REDACCION = ("frases_30s", "tarjetas", "motivos_llanos", "glosario", "fr
 # Límite declarado: un nombre propio sin código ni sufijo («Tesla») no se detecta; con los marcadores el Sintetizador no
 # necesita escribir ninguno, y lo revisa el Auditor por muestreo.
 _MARCADOR = re.compile(r"\{(?:(opp|tipo|n|candidatas):([A-Za-z0-9-]{1,40})|(n_ideas|n_tipos|n_apuestas))\}")
+_MARCADOR_NUM = re.compile(r"\{(?:(?:n|candidatas):[A-Za-z0-9-]{1,40}|n_ideas|n_tipos|n_apuestas)\}")
 _LLAVE = re.compile(r"[{}]")
-_DIGITO = re.compile(r"\d")
-_PALABRA_PROB = re.compile(r"\b(?:(?:im)?probab\w*|posibilidad(?:es)?|chances?|opciones\s+de\s+que)\b", re.IGNORECASE)
-_CIFRA_EN_LETRA = re.compile(r"\bpor\s+ciento\b|\bde\s+cada\s+(?:dos|tres|cuatro|cinco|seis|siete|ocho|nueve|diez|cien)\b", re.IGNORECASE)
-_FRACCION = re.compile(r"\b(?:mitad|tercios?|cuartos?|quintos?|d[eé]cimos?)\b", re.IGNORECASE)
-_SUFIJO = re.compile(r"\b[A-Z][\w&.-]*(?:\s+[A-Z][\w&.-]*){0,6}\s+(?:Corp|Corporation|Inc|Incorporated|plc|PLC|AG|NV|SE|S\.A\.|SA|"
-                     r"FI|FIL|SICAV|SOCIMI\s+S\.A\.)(?![\w.]|\.\w)")
+# T-102 r04 (QA r03, H-20): una cifra es cualquier carácter numérico de Unicode (categorías Nd, No y Nl: «⁷», «⅔», «Ⅶ»)
+# r04: «escenario» cuenta como palabra de probabilidad (los pesos de los escenarios son probabilidades)
+_PALABRA_PROB = re.compile(r"\b(?:(?:im)?probab\w*|posibilidad(?:es)?|chances?|opciones\s+de\s+que|confianza|seguridad|certeza|"
+                           r"escenarios?)\b", re.IGNORECASE)
+_NUM_LETRA = (r"(?:cero|uno|dos|tres|cuatro|cinco|seis|siete|ocho|nueve|diez|once|doce|trece|catorce|quince|dieci\w+|veinte|"
+              r"veinti\w+|treinta|cuarenta|cincuenta|sesenta|setenta|ochenta|noventa|cien|ciento|\w*cient[oa]s|quinient[oa]s|"
+              r"setecient[oa]s|novecient[oa]s|mil|millones?|medio|mitad|"
+              r"tercios?|cuartos?|quintos?|d[eé]cimos?)")
+_CIFRA_EN_LETRA = re.compile(rf"\bpor\s+cien(?:to)?\b|[%‰]|\b{_NUM_LETRA}\s+(?:sobre|entre|de\s+cada|en)\s+{_NUM_LETRA}\b", re.IGNORECASE)
+_NUMERO_LETRA = re.compile(rf"\b{_NUM_LETRA}\b", re.IGNORECASE)
+# T-102 r04 (QA r03, H-21): el sufijo también con punto («Apple Inc.»); y no tras un artículo («Las SICAV», H-25)
+_SUFIJO = re.compile(r"\b(?!(?:El|La|Los|Las|Un|Una|Unos|Unas|Estas?|Estos|Esos?|Esas?|Sus?|Varios|Varias|Algunos|Algunas|Muchos|"
+                     r"Muchas|Pocos|Pocas|Otros|Otras|Ambos|Nuestros?|Nuestras?)\b)[A-Z][\w&.-]*(?:\s+[A-Z][\w&.-]*){0,6},?\s+"
+                     r"(?:Corp|Corporation|Inc|Incorporated|Ltd|plc|PLC|AG|NV|SE|S\.A|SA|FI|FIL|SICAV|SOCIMI\s+S\.A|Fund|Trust|"
+                     r"UCITS\s+ETF|ETF|(?i:inc|corp|corporation|incorporated|ltd))\.?(?!\w)")
 _CODIGO = re.compile(r"(?<![\w&.^=-])\$?([A-Z][A-Z0-9&.^=/-]{1,14})(?![\w&])")
-# Familias de índices: lo que las sigue es el nombre del índice («MSCI ACWI», «EURO STOXX»), no un fondo
-_INDICE = re.compile(r"\b(?:MSCI|FTSE|EURO\s+STOXX|STOXX|S&P|Russell|Bloomberg|CSI|Nikkei|NIKKEI)(?:\s+[A-Z][\w&-]*){0,3}")
+# H-22: un código tras «_», «-» o «=» también cuenta (la variante de arriba no lo ve)
+_CODIGO_PEGADO = re.compile(r"(?:[_=]|(?<=[a-záéíóúñ])[-.])([A-Z]{2,6})(?![\w&])|\$([A-Za-z]{1,6})\b")
+# H-22: tras un vehículo, el código puede ir en minúscula o tener una sola letra («el ETF qqq», «el REIT O»)
+_VEHICULO = re.compile(r"\b(?:ETF|ETP|ETN|ETC|REIT|SOCIMI|fondo|ticker|s[ií]mbolo|acci[oó]n(?:es)?\s+de|futuros?\s+(?:de|sobre)|"
+                       r"opci[oó]n(?:es)?\s+(?:de|sobre))\s+([A-Za-z][A-Za-z0-9.]{0,6})(?![\w&])")
+_PALABRA_COMUN = frozenset({"de", "del", "la", "el", "los", "las", "que", "en", "con", "por", "sobre", "más", "mas", "y", "o", "a",
+                            "al", "un", "una", "su", "sus", "este", "esta", "ese", "esa", "como", "para", "sin", "no", "se"})
+# H-22: homoglifos griegos y cirílicos que parecen letras latinas
+_HOMOGLIFOS = str.maketrans("ΑΒΕΖΗΙΚΜΝΟΡΤΥΧАВЕКМНОРСТУХ", "ABEZHIKMNOPTYXABEKMHOPCTYX")
 _CALIFICACION = re.compile(r"(?:AAA|AA|A|BBB|BB|B|CCC|CC|C|D)[+-]?")
+_CONTEXTO_CALIFICACION = re.compile(r"\b(?:cr[eé]dito|calificaci[oó]n|rating|grado|bonos?|deuda|emisor(?:es)?|tramo)\b", re.IGNORECASE)
 # Abreviaturas que llevan punto y no acaban la frase: se protegen antes de dividir
 _ABREV = re.compile(r"\b(?:EE\.\s?UU|S\.\s?A|S\.\s?L|p\.\s?ej|etc|Inc|Corp|Ltd|Sr|Sra|Dr|núm|aprox|vs|pág)\.(?=\s|$|[,;:)])")
 _PUNTO = "․"
-_SEPARADOR = re.compile(r"((?<=[.;!?…])\s+|\s*\n+\s*)")
+# H-26: sin cuantificadores que se solapen (antes, cuadrático con muchos espacios seguidos)
+_SEPARADOR = re.compile(r"((?<=[.;!?…])\s+|(?<![^\S\n])[^\S\n]*+\n\s*+)")
 
 
-def _es_instrumento(cod: str, perm) -> bool:
+def _hay_cifra(t: str) -> bool:
+    return any(unicodedata.category(ch).startswith("N") for ch in t)
+
+
+def _es_instrumento(cod: str, perm, contexto: str = "") -> bool:
     """Un código en mayúsculas es un instrumento concreto salvo que sea un código permitido (divisa, tipo de activo, sigla de
     índice, región, materia prima o segmento), una calificación crediticia, un par de divisas permitidas con o sin barra
     («EURUSD», «EUR/USD») o una serie del universo que no es un ticker de fondo."""
     c = cod.lstrip("$").rstrip(".")
-    if c in perm["codigos"] or c in perm["series"] or _CALIFICACION.fullmatch(c):
+    if c in perm["codigos"] or c in perm["series"] or re.fullmatch(r"X{0,3}(?:IX|IV|V?I{0,3})", c):   # «siglo XXI»
         return False
+    if _CALIFICACION.fullmatch(c):   # H-22: una calificación solo lo es junto a «crédito», «rating», «bonos»…
+        return not _CONTEXTO_CALIFICACION.search(contexto)
     partes = c.split("/")
     if len(partes) == 2 and all(x in perm["codigos"] for x in partes):
         return False
@@ -513,8 +539,9 @@ def _clave(m) -> str:
     return f"{m.group(1)}:{m.group(2)}" if m.group(1) else m.group(3)
 
 
-def marcadores(paquete: dict) -> dict[str, str]:
-    """Lo que vale cada marcador en este paquete (T-102 r03). Las cifras salen del paquete validado, nunca del Sintetizador."""
+def marcadores(paquete: dict, perm=None) -> dict[str, str]:
+    """Lo que vale cada marcador en este paquete (T-102 r03). Las cifras salen del paquete validado, nunca del Sintetizador.
+    Con `perm`, un `nombre_llano` que incumpliría la regla (lo escribe un Analista) se cambia por «esta idea» (r04, H-27)."""
     out: dict[str, str] = {}
     n_ideas = n_tipos = 0
     for c, d in (paquete.get("clases") or {}).items():
@@ -525,27 +552,57 @@ def marcadores(paquete: dict) -> dict[str, str]:
         n_ideas += len(ops)
         n_tipos += 1 if ops else 0
         for o in ops:
-            out[f"opp:{o['opp_id']}"] = str(o.get("nombre_llano") or "esta idea")
+            nombre = str(o.get("nombre_llano") or "esta idea")
+            if perm is not None and frase_prohibida(nombre, perm):
+                nombre = "esta idea"
+            out[f"opp:{o['opp_id']}"] = nombre
     out.update({"n_ideas": str(n_ideas), "n_tipos": str(n_tipos), "n_apuestas": str(paquete.get("apuestas_independientes", n_ideas))})
     return out
 
 
 def frase_prohibida(t: str, perm, marcas: dict | None = None) -> str | None:
-    """«MARCADOR», «CIFRA», «R21» o None para UNA frase. Con `marcas`, un marcador que no está en este paquete también quita
-    la frase; sin ellas (pruebas unitarias), basta con que esté bien formado."""
-    t = t.replace(_PUNTO, ".")
+    """«MARCADOR», «CIFRA», «R21» o None para UNA frase (ya normalizada con NFKC por `limpiar`). Con `marcas`, un marcador que
+    no está en este paquete también quita la frase; sin ellas (pruebas unitarias), basta con que esté bien formado."""
+    crudo = t.replace(_PUNTO, ".")
+    t = unicodedata.normalize("NFKC", crudo)
+    if _hay_cifra(_MARCADOR.sub(" ", crudo)):   # antes de NFKC: «Ⅶ» pasaría a ser «VII», letras
+        return "CIFRA"
     if marcas is not None and any(_clave(m) not in marcas for m in _MARCADOR.finditer(t)):
         return "MARCADOR"
-    libre = _MARCADOR.sub(" ", t)
-    if _LLAVE.search(libre):
+    # H-23: dos marcadores numéricos pegados, o unidos por «sobre», «entre», «de cada» o «/», componen una cifra
+    if re.search(rf"{_MARCADOR_NUM.pattern}\s*(?:sobre|entre|de\s+cada|/|%)?\s*{_MARCADOR_NUM.pattern}|{_MARCADOR_NUM.pattern}\s*%",
+                 t, re.IGNORECASE):
         return "MARCADOR"
-    if _DIGITO.search(libre) or _CIFRA_EN_LETRA.search(libre) or (_PALABRA_PROB.search(libre) and _FRACCION.search(libre)):
+    libre = _MARCADOR.sub(" ", t)
+    if _LLAVE.search(libre) or any("CURLY BRACKET" in unicodedata.name(ch, "") for ch in libre):   # también «❴ ❵»
+        return "MARCADOR"
+    if _hay_cifra(libre) or _CIFRA_EN_LETRA.search(libre):
+        return "CIFRA"
+    if _PALABRA_PROB.search(libre) and (_NUMERO_LETRA.search(libre) or _MARCADOR_NUM.search(t)):   # H-20 y H-23
         return "CIFRA"
     if _SUFIJO.search(libre) or sint._UNITARIA.search(libre):
         return "R21"
-    libre = _INDICE.sub(" ", re.sub(r"\bEE\.\s?UU\.", "EEUU", libre))
-    if any(_es_instrumento(c, perm) for c in _CODIGO.findall(libre)):
+    libre = re.sub(r"\bEE\.\s?UU\.", "EEUU", libre).translate(_HOMOGLIFOS)
+    if any(unicodedata.name(ch, "").startswith(("CYRILLIC", "GREEK")) for ch in libre):
+        return "R21"   # r04 (H-22): letras de otros alfabetos en un texto en español: posible homoglifo, falla cerrado
+    codigos = _CODIGO.findall(libre) + [a or b for a, b in _CODIGO_PEGADO.findall(libre)]
+    if any(m.startswith("$") or _es_instrumento(m, perm, libre) for m in codigos) or any(
+            b for _, b in _CODIGO_PEGADO.findall(libre)):
         return "R21"
+    # r04 (H-22): mayúsculas y minúsculas mezcladas como un código («AApl»); no los plurales de una sigla («ETFs», «REITs»)
+    for m in re.finditer(r"\b([A-Z]{2,})([a-z]+)\b", libre):
+        if not (m.group(2) == "s" and m.group(1) in perm["codigos"]):
+            return "R21"
+    for m in _VEHICULO.finditer(libre):
+        c = m.group(1)
+        if (c.islower() and c in _PALABRA_COMUN) or (c[0].islower() and len(c) > 5):
+            continue
+        # la minúscula solo tras un vehículo que se nombra por su ticker (no tras «opciones de», «acciones de» o «fondo»)
+        ticker = bool(re.match(r"(?:ETF|ETP|ETN|ETC|REIT|SOCIMI|ticker|s[ií]mbolo)\b", m.group(0))) or (
+            m.group(0).lower().startswith("fondo") and len(c) <= 4)
+        if c.upper() not in perm["codigos"] and ((c.islower() and ticker) or (len(c) == 1 and c.isupper())
+                                                 or (not c.islower() and _es_instrumento(c, perm, libre))):
+            return "R21"
     return None
 
 
@@ -588,7 +645,8 @@ def limpiar(t, perm, marcas: dict | None = None) -> tuple[str, list[str]]:
         else:
             quedan.append(f + sep)
     salida = t if not reglas else "".join(quedan).replace(_PUNTO, ".").strip()
-    return (rellenar(salida, marcas) if marcas is not None else salida), reglas
+    # H-28: con marcas, la salida se normaliza con NFKC antes de rellenar («｛n_ideas｝» es «{n_ideas}»)
+    return (rellenar(unicodedata.normalize("NFKC", salida), marcas) if marcas is not None else salida), reglas
 
 
 def permitidos_r21(bloque) -> dict:
@@ -619,7 +677,7 @@ def _aplicar_integracion(paquete: dict, d: dict, lim: dict, permitidos=None) -> 
     longitudes de `v6.sintetizador_limites`; de cada texto se quitan las frases que incumplen la regla y se rellenan los
     marcadores. Devuelve lo quitado."""
     perm = permitidos or {"codigos": frozenset(), "series": frozenset()}
-    marcas = marcadores(paquete)
+    marcas = marcadores(paquete, perm)
     descartados: list[str] = []
 
     def _limpio(campo, t):
@@ -663,7 +721,7 @@ def _redaccion_segura(bloque, paquete, d, permitidos=None) -> dict:
     if not d:
         return defecto
     perm = permitidos or {"codigos": frozenset(), "series": frozenset()}
-    marcas = marcadores(paquete)
+    marcas = marcadores(paquete, perm)
     red = copy.deepcopy({k: d[k] for k in _CAMPOS_REDACCION})
     quitadas: list[str] = []
 
@@ -685,7 +743,11 @@ def _redaccion_segura(bloque, paquete, d, permitidos=None) -> dict:
     for g in red.get("glosario") or []:
         if not isinstance(g, dict):
             continue
-        r = frase_prohibida(str(g.get("termino", "")), perm, marcas) or texto_prohibido(g.get("definicion"), perm, marcas)
+        if not isinstance(g.get("termino"), str) or not isinstance(g.get("definicion"), str):
+            quitadas.append("FORMATO")   # r04 (H-24): una entrada que no es texto se quita, no rompe el ciclo
+            continue
+        g = {**g, "termino": unicodedata.normalize("NFKC", g["termino"]), "definicion": unicodedata.normalize("NFKC", g["definicion"])}
+        r = frase_prohibida(g["termino"], perm, marcas) or texto_prohibido(g["definicion"], perm, marcas)
         if r:   # T-102 r02 (H-05): la entrada quitada se cuenta y se declara
             quitadas.append(r)
         else:
@@ -712,17 +774,19 @@ def sintetizar(bloque, paquete, extras, as_of, run_id, presupuesto, estado_run) 
            "regimenes": paquete.get("regimen_macro"), "cambios_vs_anterior": paquete.get("x_cambios_vs_anterior")}
     bloque.mensajeria.crear("CT-15", "AG-02", "AG-26", {"paquete_sintesis": msg["paquete_sintesis"]}, run_id=run_id,
                             presupuesto={"uc": presupuesto.asignado.get("COMUN")})
-    r = bloque._invocar("AG-26", "CT-15", msg, "SINTESIS", INSTR_SINTESIS, as_of, run_id, None, "redaccion", presupuesto, bolsa="COMUN")
+    perm = permitidos_r21(bloque)
+    # r04 (QA r03, H-25): el Sintetizador recibe la lista de siglas que puede usar; cualquier otra quita la frase
+    instr = INSTR_SINTESIS + " Siglas que puedes usar: " + ", ".join(sorted(perm["codigos"])) + "."
+    r = bloque._invocar("AG-26", "CT-15", msg, "SINTESIS", instr, as_of, run_id, None, "redaccion", presupuesto, bolsa="COMUN")
     d = r.datos if r and r.datos else None
     lim = op(bloque, "sintetizador_limites")
-    perm = permitidos_r21(bloque)
     if d:
         _aplicar_integracion(paquete, d, lim, perm)
     red = _redaccion_segura(bloque, paquete, d, perm)
     entreg, g3b = bloque.redaccion.generar(bloque, paquete, extras, red, as_of, run_id, estado_run)
     if g3b["dictamen"] == "BLOQUEADO" and any(c == "C12" for c in g3b.get("bloqueos", [])):
         msg2 = {**msg, "reescritura": {"fernandez_huerta": g3b.get("legibilidad"), "frases_largas": g3b.get("frases_largas", [])}}
-        r2 = bloque._invocar("AG-26", "CT-15", msg2, "SINTESIS", INSTR_SINTESIS + " Reescribe: el índice no alcanza 70.", as_of, run_id,
+        r2 = bloque._invocar("AG-26", "CT-15", msg2, "SINTESIS", instr + " Reescribe: el índice no alcanza 70.", as_of, run_id,
                              None, "redaccion", presupuesto, bolsa="COMUN")
         if r2 and r2.datos:
             red = _redaccion_segura(bloque, paquete, r2.datos, perm)

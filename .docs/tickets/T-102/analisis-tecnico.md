@@ -72,3 +72,48 @@ El filtro de T-101 trataba cada texto entero con pocas reglas:
 **Coste aceptado.** Una frase legítima con una cifra se quita, porque las cifras las pone el código; también una sigla legítima que falte en la lista. Falla cerrado y se declara. El prompt pide escribir así, así que con el modelo real debería ser raro; se medirá en el banco con la API.
 
 **Límite que queda.** Un nombre propio sin código ni sufijo («Tesla», «Inditex» sin «la acción de»). Con los marcadores, el Sintetizador no necesita escribir ninguno; lo revisa el Auditor por muestreo.
+
+## Ronda r04 (QA r03 NO APTO, mismo diseño de marcadores)
+
+**Causa.** La regla estricta de la r03 tenía huecos de cobertura, no de diseño:
+- «cifra» era `\d`, sin los números Unicode (No, Nl) ni los números en letra (H-20);
+- el sufijo no admitía punto y `_INDICE` borraba el ticker que seguía a la familia del índice (H-21);
+- se colaban minúsculas tras un vehículo, homoglifos, códigos pegados y colisiones con la lista o con calificaciones (H-22);
+- marcadores numéricos compuestos (H-23);
+- además de los bajos H-24 a H-30.
+
+**Implementación (`bloque_a/diseno_v6.py`).**
+- **CIFRA:**
+  - cualquier carácter numérico de Unicode, mirado antes y después de NFKC;
+  - «%», «‰» y «por cien(to)»;
+  - «N sobre / entre / de cada / en M» con números en letra (también «novecientos», «mil»);
+  - una palabra de probabilidad junto a un número en letra o a un marcador numérico. Las palabras de probabilidad son ahora también «confianza», «seguridad», «certeza» y «escenario», porque los pesos de los escenarios son probabilidades.
+- **MARCADOR:**
+  - dos marcadores numéricos pegados o unidos por «sobre», «entre», «de cada», «/» o «%»;
+  - un marcador numérico seguido de «%»;
+  - llaves de cualquier escritura («｛ ｝» pasan a «{ }» con NFKC; «❴ ❵» cuentan como llaves sueltas).
+- **R21:**
+  - el sufijo, también con punto, tras coma o en minúscula (inc, corp, ltd), y los nombres de fondo que acaban en «Fund», «Trust», «ETF» o «UCITS ETF». No tras un artículo o un determinante («Las SICAV», «Varios ETF»);
+  - sin `_INDICE`: los nombres de índice se añaden a la lista (ACWI, EAFE, EMU, EURO);
+  - una calificación solo lo es junto a «crédito», «rating», «bonos», «deuda»…;
+  - cualquier letra griega o cirílica;
+  - «$» seguido de letras, un código pegado tras «_», «=», o tras «-» o «.» después de una minúscula;
+  - mayúsculas y minúsculas mezcladas («AApl»), salvo los plurales de una sigla («ETFs»);
+  - tras un vehículo, una sola letra, o un código en minúscula si el vehículo se nombra por su ticker (ETF, REIT, ticker, «fondo» con ≤ 4 letras).
+- **Lista:** ampliada con siglas corrientes que no son instrumentos (OTAN, ONU, OMC, COVID, QE, QT, UK, IVA, IRPF, PYME, CAPE, EBIT…). Salen AI, ETN y UST, que también son tickers (en español: IA, nota cotizada, Tesoro). Los números romanos no son instrumentos («siglo XXI»).
+- **Bajos:**
+  - el `nombre_llano` que rellena `{opp:…}` pasa la regla y, si la incumple, se pone «esta idea» (H-27);
+  - una entrada del glosario que no es texto se quita como FORMATO (H-24);
+  - `_SEPARADOR` sin solapes, lineal (H-26);
+  - la instrucción del Sintetizador lleva la lista de siglas permitidas (H-25);
+  - la prueba de los marcadores calcula los valores aparte (H-29).
+
+**Medida con los scripts de la QA r03** (ajustados contra ellos, así que no miden la generalización):
+- `r03_01_ataques.py`: R13, 0 de 26 pasan; R21, 4 de 30 pasan (los cuatro límites de abajo); rendimiento, 0,48 s en total.
+- `r03_02_banco_prompt.py`: legítimas quitadas, 1 de 128; prohibidas sin dígitos que pasan sin declararse, 2 de 45, y 2 de 3 límites.
+
+**Límites declarados (R21, los revisa el Auditor por muestreo):**
+- un nombre propio sin código ni sufijo («Tesla», «Inditex»);
+- un ticker escrito en minúscula o como nombre propio sin un vehículo delante («la opción preferida es nvda», «… Nvda»);
+- un ticker que coincide con una sigla legítima de la lista (COP es también el peso colombiano);
+- un ticker de una sola letra sin un vehículo delante («Comprar F ya»).

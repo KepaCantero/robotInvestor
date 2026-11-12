@@ -2,7 +2,7 @@
 
 | Campo | Valor |
 | --- | --- |
-| Estado | EN QA (ronda r03: rediseño con marcadores) |
+| Estado | EN QA (ronda r04) |
 | Pieza | `bloque_a/11_Ejecutor` (`bloque_a/diseno_v6.py`) |
 | Planifica · implementa · QA | claude · claude · claude, con un revisor nuevo sin contexto |
 | Aprobación del operador | 2026-11-12: «Corrige el filtro»; tras la QA r02, «sí cambia el diseño» (opción 1: el Sintetizador escribe con marcadores que rellena el código) |
@@ -68,3 +68,5 @@ Que el filtro R13/R21 de los textos del Sintetizador (diseño V6) no estropee in
 - 2026-11-12 · NO APTO · QA r02 (revisor nuevo, banco nuevo de 275 frases): FP 19/187 (10 %), FN 14/88 (16 %; R13 11 %, R21 19 %), frente a FN 30/88 de la r01. H-11 y H-12 altos (compras y probabilidades en lista con saltos de línea; formas de recomendar sin verbo de compra), H-13 a H-15 y H-19 medios, H-16 a H-18 bajos. Sin más rondas hasta que decida el operador (tercera ronda sin converger)
 - 2026-11-12 · EN CURSO · el operador elige cambiar el diseño (ronda r03): marcadores que rellena el código y una regla estricta sobre el texto libre
 - 2026-11-12 · EN QA · Ronda r03: marcadores y regla estricta (CIFRA, R21, MARCADOR); prompt del Sintetizador §4; `tests/test_t102_filtro.py` reescrito (68 pruebas)
+- 2026-11-12 · NO APTO · QA r03 (revisor nuevo): H-20 y H-21 altos (probabilidades en letra o con números Unicode; sufijo con punto e índice que tapaba el ticker), H-22, H-23, H-24, H-25 y H-29 medios, H-26 a H-28 y H-30 bajos
+- 2026-11-12 · EN QA · Ronda r04: cobertura de la regla (Unicode, NFKC, números en letra, marcadores compuestos, sufijos, homoglifos, vehículos) y los bajos; 43 pruebas nuevas (111 en `test_t102_filtro.py`); límites de R21 declarados
