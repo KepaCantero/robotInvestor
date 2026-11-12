@@ -2,7 +2,7 @@
 
 | Campo | Valor |
 | --- | --- |
-| Estado | EN QA |
+| Estado | EN QA (ronda r02) |
 | Pieza | `bloque_a/11_Ejecutor` (`evaluador.py`, `calendario.py`, `sintesis.py`, `backtest.py`) |
 | Planifica · implementa · QA | claude · claude · claude, con un revisor nuevo sin contexto (regla del operador del 12-11-2026) |
 | Aprobación del operador | 2026-11-12: está en el orden de tareas obligatorias para evaluar el Bloque A por separado |
@@ -51,3 +51,5 @@ Cerrar los cuatro hallazgos bajos de la QA r05 de T-65 (`.docs/tickets/T-65/qa.m
 
 - 2026-11-12 · ABIERTO · creado con nuevo_ticket.sh
 - 2026-11-12 · EN QA · H-26 a H-29 corregidos; 10 pruebas nuevas
+- 2026-11-12 · NO APTO · QA r01 (revisor nuevo, commit `7feb697`): H-01 alto (con un hueco antes de la fecha común se resolvía con datos más viejos que PS2), H-02 a H-04 bajos
+- 2026-11-12 · EN QA · Ronda r02: tras alinear, cada serie vuelve a pasar la frescura frente a la fecha de resolución; pruebas que fijan `fecha_dato` y la fecha de la CESTA con huecos; ejemplo de `pronosticos.csv` y comentario de la configuración al día; un nivel congelado como número suelto ya no rompe la resolución; 3 pruebas nuevas

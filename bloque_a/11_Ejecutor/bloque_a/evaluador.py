@@ -285,7 +285,7 @@ class Evaluador:
         return v1 / v0 - 1, d0, d1
 
     def rentabilidad(self, simbolo: str, clase: str, f0, f1, horizonte: str | None = None, *,
-                     base=None) -> tuple[float, pd.Timestamp]:
+                     base=None, hasta=None) -> tuple[float, pd.Timestamp]:
         """Rentabilidad de `simbolo` entre f0 y f1 y la fecha de su último dato. Con `horizonte` (la resolución lo pasa
         siempre), falla (`DatosNoDisponibles`) si la serie no sirve para ese horizonte (`motivo_no_fresca`); sin él, si no
         tiene un dato posterior a la base. En la CESTA cuentan los mismos miembros que al emitir (`base`, los congelados en
@@ -297,13 +297,15 @@ class Evaluador:
             bases = self.bases_cesta(clase, f0, horizonte) if base is None else base
             if not isinstance(bases, dict) or not bases:
                 raise DatosNoDisponibles(f"Cesta {clase} sin niveles iniciales")
-            patas = [self.rentabilidad(s, clase, f0, f1, horizonte, base=b) for s, b in sorted(bases.items())]
+            patas = [self.rentabilidad(s, clase, f0, f1, horizonte, base=b, hasta=hasta) for s, b in sorted(bases.items())]
             corte = min(f for _, f in patas)
             if any(f != corte for _, f in patas):
-                # T-91 (QA r05 de T-65, H-27): todos los miembros se miden hasta la misma fecha, la más antigua de las que sirven
-                patas = [self.rentabilidad(s, clase, f0, corte, base=b) for s, b in sorted(bases.items())]
+                # T-91 (QA r05 de T-65, H-27): todos los miembros se miden hasta la misma fecha, la más antigua de las que sirven;
+                # cada uno vuelve a pasar la frescura frente a la fecha de resolución (QA r01 de T-91, H-01: con un hueco
+                # justo antes de esa fecha, el dato que queda puede ser más viejo que PS2)
+                patas = [self.rentabilidad(s, clase, f0, f1, horizonte, base=b, hasta=corte) for s, b in sorted(bases.items())]
             return float(np.mean([v for v, _ in patas])), min(f for _, f in patas)
-        r, d0, d1 = self._rentabilidad_serie(simbolo, f0, f1, base)
+        r, d0, d1 = self._rentabilidad_serie(simbolo, f0, f1 if hasta is None else hasta, base)
         motivo = self.motivo_no_fresca(d0, d1, f1, horizonte) if horizonte else (
             f"sin dato posterior a la emisión (último del {d1.date()})" if d1 <= d0 else None)
         if motivo:
@@ -388,9 +390,11 @@ class Evaluador:
                     if d1b != d1:
                         # T-91 (QA r05 de T-65, H-27; `[PROPUESTO]`, INC-T91-01): las dos series sirven, pero el suceso
                         # pronosticado se mide sobre la misma ventana: las dos hasta la fecha más antigua de las dos
+                        # medidas hasta la fecha común; cada una vuelve a pasar la frescura frente a f1 (QA r01 de T-91, H-01)
                         corte = min(d1, d1b)
-                        rp, d1 = self.rentabilidad(p["variable"]["serie_ht01"], p["clase"], f0, corte, base=p.get("nivel_referencia"))
-                        rr, d1b = self.rentabilidad(p["referencia_indice"], p["clase"], f0, corte, base=base_ref)
+                        rp, d1 = self.rentabilidad(p["variable"]["serie_ht01"], p["clase"], f0, f1, hz, base=p.get("nivel_referencia"),
+                                                   hasta=corte)
+                        rr, d1b = self.rentabilidad(p["referencia_indice"], p["clase"], f0, f1, hz, base=base_ref, hasta=corte)
                 x = rp - rr if rr is not None else rp
                 # Falla cerrado: un valor no finito (cierre NaN, nivel inicial 0…) es un dato no disponible,
                 # nunca un resultado (antes, int(nan > 0) = 0 daba NO_OCURRIDO)
@@ -402,7 +406,11 @@ class Evaluador:
                 continue
             positivo = p["sentido"] == "POSITIVO"
             o = int((x > p.get("umbral", 0.0)) if positivo else (x < -p.get("umbral", 0.0)))
-            fuga_ok = (pd.Timestamp(p["nivel_referencia"]["fecha"]) <= f0 and d1 <= as_of and f1 <= as_of)
+            # T-91 (QA r01, H-04): un registro antiguo con el nivel como número suelto no tiene fecha; su base es la última
+            # sesión ≤ la emisión (`_rentabilidad_serie`), así que no puede ser posterior
+            nr = p.get("nivel_referencia")
+            f_base = pd.Timestamp(nr["fecha"]) if isinstance(nr, dict) and nr.get("fecha") else f0
+            fuga_ok = (f_base <= f0 and d1 <= as_of and f1 <= as_of)
             fuga_ok = fuga_ok and (d1b is None or d1b <= as_of)
             filas.append((p, {"rent_proxy": rp, "rent_referencia": rr, "exceso": x, "o": o,
                               "fecha_dato": max(d1, d1b) if d1b is not None else d1, "fecha_dato_proxy": d1,

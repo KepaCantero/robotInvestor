@@ -36,24 +36,27 @@ def test_v6_el_total_cargado_es_el_coste_real(tmp_path):
     assert sum(x["consumido"] for x in f5.values()) == pytest.approx(real, abs=0.01)   # redondeo de 0,0001 por llamada
 
 
-def test_la_prima_solo_es_prudente_y_la_liquidacion_conserva_el_total():
+def test_la_liquidacion_reparte_por_grupo_y_conserva_el_total():
     p = Presupuesto({"RV": 10, "RF": 10, "COMUN": 5}, config_pruebas())
     assert p.primera_llamada("RV", "AG-14") and not p.primera_llamada("RV", "AG-14") and p.primera_llamada("RF", "AG-14")
-    # RF llegó primero y escribió 20.000 tokens de caché; RV los leyó. Cada uno carga su prima «solo» (los 20.000)
     prima = p._uc_prima(20000)
     assert prima > 0
-    p.cargar_con_prima("RV", 0.5, 20000, 0)
-    p.cargar_con_prima("RF", 0.5, 20000, 20000)
-    assert p.consumido["RV"] == pytest.approx(0.5 + prima) and p.consumido["RF"] == pytest.approx(0.5 + prima)   # prudente
+    # AG-14, compartido: RF llegó primero y escribió 20.000 tokens; RV los leyó. Durante la fase ninguno carga prima
+    p.cargar_con_prima("RV", "AG-14", 0.5, 20000, 0, 0)
+    p.cargar_con_prima("RF", "AG-14", 0.5, 20000, 0, 20000)
+    # el analista propio de RV (AG-03) escribe su prompt: se carga ya (QA r01 de T-88, H-01)
+    p.cargar_con_prima("RV", "ANALISTAS", 0.2, 10000, 10000, 10000)
+    assert p.consumido["RV"] == pytest.approx(0.7 + p._uc_prima(10000)) and p.consumido["RF"] == pytest.approx(0.5)
     p.liquidar_primas()
-    assert p.consumido["RV"] == pytest.approx(0.5 + prima / 2) and p.consumido["RF"] == pytest.approx(0.5 + prima / 2)
-    assert p.consumido["RV"] + p.consumido["RF"] == pytest.approx(1.0 + prima)   # el total real
+    # AG-14 a medias; el prompt de RV, entero para RV y nada para RF (H-02: los grupos no se mezclan)
+    assert p.consumido["RV"] == pytest.approx(0.7 + prima / 2 + p._uc_prima(10000))
+    assert p.consumido["RF"] == pytest.approx(0.5 + prima / 2)
     p.liquidar_primas()   # una segunda liquidación no cambia nada
-    assert p.consumido["RV"] == pytest.approx(0.5 + prima / 2)
+    assert p.consumido["RF"] == pytest.approx(0.5 + prima / 2)
 
 
-def test_sin_primas_solo_lo_real_va_a_la_bolsa_comun():
+def test_sin_pesos_lo_real_va_a_la_bolsa_comun():
     p = Presupuesto({"RV": 10, "COMUN": 5}, config_pruebas())
-    p.cargar_con_prima("RV", 0.5, 0, 3000)
+    p.cargar_con_prima("RV", "AG-14", 0.5, 0, 0, 3000)
     p.liquidar_primas()
     assert p.consumido["RV"] == pytest.approx(0.5) and p.consumido["COMUN"] == pytest.approx(p._uc_prima(3000))

@@ -110,3 +110,48 @@ def test_h29_b_la_resolucion_guarda_la_fecha_de_la_serie_mas_antigua(tmp_path):
     r = b.almacen.estado("F4")["PRG-2026-0901"]["resolucion"]
     assert _estado(b) == "RESUELTO" and r["fecha_dato"] == "2026-04-29" and r["fecha_dato_proxy"] == "2026-04-29"
     assert r["fecha_dato_referencia"] is None
+
+
+# ================================================================================================== ronda r02 (QA r01 de T-91)
+def _sin_dia(tmp_path, datos, simbolo: str, dia: str):
+    df = pd.read_csv(datos / f"{simbolo}.csv")
+    df[df["fecha"] != dia].to_csv(datos / f"{simbolo}.csv", index=False)
+
+
+def test_r02_h01_con_un_hueco_antes_de_la_fecha_comun_espera(tmp_path):
+    """La serie que queda con un dato más viejo que PS2 al medirla hasta la fecha común no resuelve: el PRG espera."""
+    datos = _parado(tmp_path, "ACWI", "2026-04-29")
+    df = pd.read_csv(datos / "SPY.csv")
+    df[(df["fecha"] <= "2026-04-20") | (df["fecha"] > "2026-04-29")].to_csv(datos / "SPY.csv", index=False)
+    b = _bloque(tmp_path, datos=datos)
+    _prg(b, "H2", "2026-05-01")
+    b.fijar_fecha("2026-05-04")
+    b.evaluador.resolver("2026-05-04", "RUN-2026-0001")
+    assert _estado(b) == "ABIERTO"                                    # 7feb697: RESUELTO con SPY del 20 de abril
+
+
+def test_r02_h02_b_fecha_dato_es_la_mas_reciente_de_las_usadas(tmp_path):
+    """Con un hueco de un día en la fecha común, el proxy se mide hasta el día anterior y la referencia hasta la fecha común:
+    `fecha_dato` es la más reciente de las dos (mutante: solo la del proxy)."""
+    datos = _parado(tmp_path, "ACWI", "2026-04-29")
+    _sin_dia(tmp_path, datos, "SPY", "2026-04-29")
+    b = _bloque(tmp_path, datos=datos)
+    _prg(b, "H2", "2026-05-01")
+    b.fijar_fecha("2026-05-04")
+    b.evaluador.resolver("2026-05-04", "RUN-2026-0001")
+    r = b.almacen.estado("F4")["PRG-2026-0901"]["resolucion"]
+    assert _estado(b) == "RESUELTO"
+    assert r["fecha_dato_proxy"] == "2026-04-28" and r["fecha_dato_referencia"] == "2026-04-29" and r["fecha_dato"] == "2026-04-29"
+
+
+def test_r02_h02_c_la_cesta_devuelve_la_fecha_mas_antigua(tmp_path):
+    b0 = _bloque(tmp_path / "a")
+    b0.fijar_fecha("2026-06-05")
+    m = b0.evaluador.simbolos_clase("DIV")
+    datos = _parado(tmp_path / "b", m[0], "2026-04-29")
+    _sin_dia(tmp_path, datos, m[1], "2026-04-29")
+    b = _bloque(tmp_path / "b", datos=datos)
+    b.fijar_fecha("2026-06-05")
+    bases = b.evaluador.bases_cesta("DIV", EMISION, "H2")
+    _, fecha = b.evaluador.rentabilidad("CESTA", "DIV", EMISION, "2026-05-01", "H2", base=bases)
+    assert str(fecha.date()) == "2026-04-28"                          # mutante (max): 2026-04-29

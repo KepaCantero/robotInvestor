@@ -239,11 +239,12 @@ class Bloque:
 
     def _cargar(self, presupuesto: Presupuesto, bolsa: str, agente: str, r) -> None:
         """T-88 (QA de T-65, H-10): con varios hilos, la escritura de la caché de un prefijo compartido (el system prompt de un
-        agente que trabaja para varios tipos, o el núcleo común de los analistas V6) la paga el tipo cuyo hilo llega primero,
-        y eso cambia de una ejecución a otra. Cada bolsa paga la lectura de lo cacheado más su prima de escritura «como si
-        fuera la única del run» (la primera llamada de cada agente en la bolsa escribe el prefijo): es determinista y
-        prudente. `Presupuesto.liquidar_primas` cambia después esas primas por su parte de las primas reales (`[PROPUESTO]`,
-        INC-T88-01)."""
+        agente que trabaja para varios tipos, o el núcleo común de los analistas V6) la pagaba el tipo cuyo hilo llegaba
+        primero, y eso cambiaba de una ejecución a otra. Durante el ciclo, cada bolsa paga la lectura de lo cacheado y,
+        en la primera llamada a su propio analista, la escritura de su prompt, que siempre escribe ella (como antes de T-88;
+        QA r01 de T-88, H-01: cargar también la prima «solo» de los agentes compartidos cerraba fases que antes no cerraban).
+        `Presupuesto.liquidar_primas` reparte después lo escrito de verdad, por grupo de prefijos y en proporción a lo que
+        escribiría cada bolsa sola (`[PROPUESTO]`, INC-T88-01)."""
         u = r.uso
         cacheados = u.cache_lectura + u.cache_escritura
         if r.cache_hit or not cacheados:
@@ -251,8 +252,10 @@ class Bloque:
             return
         leido = self.contabilidad.uc_de(Uso(entrada=u.entrada, salida=u.salida, cache_lectura=cacheados, busquedas_web=u.busquedas_web))
         prefijo = cacheados // max(1, r.intentos)   # cada intento lee o escribe el mismo prefijo
-        escrito = prefijo if presupuesto.primera_llamada(bolsa, agente) else 0
-        presupuesto.cargar_con_prima(bolsa, leido, escrito, u.cache_escritura)
+        solo = prefijo if presupuesto.primera_llamada(bolsa, agente) else 0
+        propio = AGENTE_CLASE.get(bolsa) == agente
+        grupo = "ANALISTAS" if agente in set(AGENTE_CLASE.values()) else agente
+        presupuesto.cargar_con_prima(bolsa, grupo, leido, solo, solo if propio else 0, u.cache_escritura)
 
     def _estimar_uc(self, agente: str, mensaje: dict) -> float:
         n_user = len(json.dumps(mensaje, ensure_ascii=False, default=str)) / 3.6 + 1500
