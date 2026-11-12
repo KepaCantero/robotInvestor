@@ -72,9 +72,11 @@ H5 décadas con hitos HIT- y `horizonte_principal` obligatorio (HT-09 C17–C19)
 
 - **Catálogo del Bloque A:** los prompts MC congelados citan "Catálogo V4.0"; el catálogo entregado es V5.0
   (81 fichas). Desde T-92 (auditoría de Astra, C6) el despacho CT-09 reconoce las 81
-  (`bloque_a/11_Ejecutor/bloque_a/motor/servicio.py`, `CATALOG_VERSION = "5.0"`). Hay 17 manejadores, pero
-  solo 14 dan cifras citables: las tres con código que el Catálogo da por «Documentado»
-  (`DOCUMENTADAS_CON_CODIGO`, T-65 CS-08) se rechazan, y VOL-GARCH-001 depende de `arch`. Una ficha conocida sin
+  (`bloque_a/11_Ejecutor/bloque_a/motor/servicio.py`, `CATALOG_VERSION = "5.0"`). Hay 38 manejadores y 35 dan
+  cifras citables: desde T-106 el Motor lee la madurez de la tabla del Catálogo y solo sirve lo que tiene código y está
+  IMPLEMENTADO allí (las 21 fichas V5.0 de IDX, FON, DER, MON y TCV se promovieron con sus casos de control, §20.2). Las
+  tres con código que el Catálogo da por «Documentado» (`DOCUMENTADAS_CON_CODIGO`, T-65 CS-08) se rechazan, y
+  VOL-GARCH-001 depende de `arch`. Una ficha conocida sin
   manejador responde `METODO_NO_IMPLEMENTADO`; una ajena al catálogo, `OPERACION_SIN_FICHA`. Una alternativa
   solo se anuncia si se sirve. → Fase 0 de bloque_a.
 - **Versión sin subir en pyprojects (INC-001/002):** `bloque_a/11_Ejecutor` declara
