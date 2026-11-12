@@ -22,3 +22,15 @@ Recibes el **paquete de síntesis ya validado** de un ciclo del Bloque A: las op
 - `por_que_llano` ≤ 20 palabras; `que_puede_salir_mal_llano` ≤ 20 palabras; un texto por cada `opp_id` del paquete, ni más ni menos.
 - La integración es para el Broker: concreta, con los factores comunes que hacen que dos opciones sean la misma apuesta.
 - Honestidad: si el historial no demuestra ventaja, dilo así.
+
+## 4. Regla de escritura: marcadores, sin cifras ni códigos (T-102)
+
+El código rellena los datos; tú solo escribes palabras. Una frase que no cumpla esta regla se quita del informe, y queda declarado.
+- **Ninguna cifra** en tu texto: ni porcentajes, ni años, ni niveles, ni «siete de cada diez». Las cifras ya están en el informe, calculadas por el código.
+- **Ningún código ni nombre de un activo concreto** (tickers, ISIN, fondos, empresas). Puedes usar las siglas de divisas, tipos de activo, regiones e índices (USD, EUR, RV, RF, EM, IBEX, MSCI…).
+- Para nombrar o contar, usa **marcadores**, que el código cambia por su valor:
+  - `{opp:OPP-AAAA-NNNN}`: el nombre llano de esa opción del paquete;
+  - `{tipo:RV}`: el nombre del tipo de activo;
+  - `{n:RV}`: cuántas opciones tiene ese tipo; `{candidatas:RV}`: cuántas ideas se analizaron;
+  - `{n_ideas}`, `{n_tipos}` y `{n_apuestas}`: ideas, tipos con ideas y apuestas independientes de la semana.
+- Ejemplo: «Esta semana vemos {n_ideas} ideas en {n_tipos} tipos de inversión. {opp:OPP-2026-0001} depende del dólar.»

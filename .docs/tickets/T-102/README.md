@@ -2,10 +2,10 @@
 
 | Campo | Valor |
 | --- | --- |
-| Estado | NO APTO (QA r02); decisión del operador pendiente |
+| Estado | EN QA (ronda r03: rediseño con marcadores) |
 | Pieza | `bloque_a/11_Ejecutor` (`bloque_a/diseno_v6.py`) |
 | Planifica · implementa · QA | claude · claude · claude, con un revisor nuevo sin contexto |
-| Aprobación del operador | 2026-11-12: «Corrige el filtro» |
+| Aprobación del operador | 2026-11-12: «Corrige el filtro»; tras la QA r02, «sí cambia el diseño» (opción 1: el Sintetizador escribe con marcadores que rellena el código) |
 | Deuda técnica | T-102; recoge H-23 y H-24 de la QA r03 de T-101 (fila T-101) |
 
 ## Objetivo
@@ -44,6 +44,13 @@ Que el filtro R13/R21 de los textos del Sintetizador (diseño V6) no estropee in
 9. CA-9 (H-07): los textos degenerados del revisor se filtran en menos de 2 s en total.
 10. CA-10 (H-10): una prueba por el camino real pone una frase prohibida y una legítima en cada texto del Sintetizador; los mutantes de `r02_mutantes.py` mueren.
 
+### Ronda r03 (rediseño con marcadores; sustituye a CA-1, CA-2, CA-6 y CA-7)
+
+11. CA-11: los marcadores se rellenan con datos del paquete después de filtrar; uno desconocido, mal formado o una llave suelta quita la frase.
+12. CA-12: ninguna frase con una cifra (también en letra) ni con un código de un instrumento llega al paquete ni a los entregables, en ninguno de los textos del Sintetizador. Incluye las frases de las QA r01 y r02 que pasaban: listas, «recomendamos el ETF X», «la opción preferida es X» y probabilidades en letra.
+13. CA-13: las frases escritas como pide el prompt (sin cifras, con siglas de la lista y con marcadores) se conservan.
+14. CA-14: CA-3, CA-4, CA-8 y CA-9 siguen cumpliéndose (frase a frase, defectos por elemento, declaración, división y tiempo lineal).
+
 ## Plan de pruebas
 
 | Prueba | Criterio |
@@ -59,3 +66,5 @@ Que el filtro R13/R21 de los textos del Sintetizador (diseño V6) no estropee in
 - 2026-11-12 · NO APTO · QA r01 (revisor nuevo sin contexto): H-01 alto (R13 deja pasar 10 de 20 probabilidades numéricas), H-02, H-03 y H-10 medios, H-04 a H-09 bajos
 - 2026-11-12 · EN QA · Ronda r02: R13 amplio que falla cerrado, R21 en toda la frase tras el verbo, división con abreviaturas; H-01 a H-10 corregidos (H-09, el token de CRI, a T-57 como `[PROPUESTO]`); 84 pruebas nuevas (142 en `test_t102_filtro.py`); 44 de 44 mutantes de `r02_mutantes.py` muertos
 - 2026-11-12 · NO APTO · QA r02 (revisor nuevo, banco nuevo de 275 frases): FP 19/187 (10 %), FN 14/88 (16 %; R13 11 %, R21 19 %), frente a FN 30/88 de la r01. H-11 y H-12 altos (compras y probabilidades en lista con saltos de línea; formas de recomendar sin verbo de compra), H-13 a H-15 y H-19 medios, H-16 a H-18 bajos. Sin más rondas hasta que decida el operador (tercera ronda sin converger)
+- 2026-11-12 · EN CURSO · el operador elige cambiar el diseño (ronda r03): marcadores que rellena el código y una regla estricta sobre el texto libre
+- 2026-11-12 · EN QA · Ronda r03: marcadores y regla estricta (CIFRA, R21, MARCADOR); prompt del Sintetizador §4; `tests/test_t102_filtro.py` reescrito (68 pruebas)
