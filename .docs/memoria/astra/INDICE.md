@@ -9,3 +9,4 @@
 | astra/2026-11-09_cierre-temporal-b | leccion | El catálogo respeta el día de disponibilidad y el cierre compara el hecho con el incidente. | vigente |
 | astra/2026-11-12_revision-diseno-a | leccion | C-01: recortes por perfil y crítica de toda candidata entregada; consumo mock reproducido. | vigente |
 | astra/2026-11-12_solo-local-hasta-autorizacion | leccion | El operador exige mantener todo en local hasta autorización expresa de subida | vigente |
+| astra/2026-11-12_revisiones-diseno-a-e | leccion | Hallazgos de A a E: mediciones, reutilización y comparación de cartera | vigente |
