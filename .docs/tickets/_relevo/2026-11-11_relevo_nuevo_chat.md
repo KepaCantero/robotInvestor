@@ -111,7 +111,7 @@ En blanco en `.docs/plantillas_operador/`: ficha de restricciones, inventario de
 2. **Enmienda 5, parte 2:** borrador hecho; falta rellenar sus casillas con las revisiones de Astra. Después, la ratificación punto por punto y la Constitución V0.7, aplicada en un ticket con el gate.
 3. **Los contratos nuevos** (pasada de coherencia, §6), antes que el código. Luego, la construcción de la Fase 1, con el banco de medida y datos reales de K (T-86) como primer paso.
 4. **Mientras tanto, sin tocar código:**
-   - el operador contesta, cuando quiera, el cuestionario de la tanda 2 (`.docs/diseno/coherencia/cuestionario_tanda_2.md`, hecho el 11-11-2026: 28 preguntas con valor por defecto y seis discrepancias con el marco común);
+   - la tanda 2 está contestada (11-11-2026): las decisiones de arquitectura E1 a E8 están en `.docs/diseno/decisiones_operador.md`; los parámetros son perfil del operador y no están en el repositorio. Quedan seis discrepancias entre los diseños y el marco común (cuestionario, §8), que se corrigen en un ticket con autorización;
    - que el operador rellene sus plantillas (la ficha antes de la cuenta de demostración);
    - compartir el prototipo de N con su equipo para recoger opiniones.
 
