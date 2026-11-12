@@ -56,7 +56,7 @@ El Robot Investor es un sistema de inversión personal por bloques. A busca opor
 
 | Pieza | Estado |
 | --- | --- |
-| `bloque_a/` (V5.1) | Corregido y auditado (T-53, T-66, T-92); T-93 implementado por Claude, QA sin asignar. **T-101 (12-11-2026, CERRADO con la QA r03 APTO; H-23 a H-29 en la deuda): diseño V6 aspirante** (`diseno: v6`): núcleo común y kits, GC1 por código, Prospectiva por ciclo, Contradictor solo de la selección, Sintetizador, Lector de evidencia y Respondedor. La V5 sigue por defecto hasta el banco con la API real. Decisión sobre la revisión C-01 de Astra en `.docs/diseno/bloque_a/decision_claude_c01.md`. 549 pruebas. Pendientes técnicos: T-88 y T-91 |
+| `bloque_a/` (V5.1) | Corregido y auditado (T-53, T-66, T-92); T-93 implementado por Claude, QA sin asignar. **T-101 (12-11-2026, CERRADO con la QA r03 APTO; H-23 a H-29 en la deuda): diseño V6 aspirante** (`diseno: v6`): núcleo común y kits, GC1 por código, Prospectiva por ciclo, Contradictor solo de la selección, Sintetizador, Lector de evidencia y Respondedor. La V5 sigue por defecto hasta el banco con la API real. Decisión sobre la revisión C-01 de Astra en `.docs/diseno/bloque_a/decision_claude_c01.md`. 607 pruebas. Pendientes técnicos: T-88 y T-91 |
 | `bloque_a_forex/` | Fuera del Robot Investor (D-20). 68 pruebas |
 | `bloque_b/` (V2.1) | Congelado. Evaluado en T-68 y con un rediseño propuesto, ambos a la espera de Astra. 176 pruebas |
 | `sistema_global/marco_comun_c/` (V0.76) | Código de referencia de la Fase 1, 62 suites, todo en simulado. La V0.74 (T-97, EN QA) alinea los valores por defecto con la tanda 2. T-75 y T-76 se cerraron el 12-11-2026 (QA r03 APTO), y la V0.76 (T-100, cerrado con la QA r01 APTO; tres bajos en la deuda) corrige sus pendientes: movimientos de la sombra con referencia obligatoria, barrido que para con la sombra rota y veto del embudo |
@@ -107,6 +107,44 @@ En blanco en `.docs/plantillas_operador/`: ficha de restricciones, inventario de
 - **Retiradas por el operador** el 12-11-2026, sin borrarse (estado `RETIRADA`): todas las QA de tickets (T-83, T-84, T-93, T-94, T-95, T-96, T-97 y T-99) y las implementaciones (T-75, T-76, T-91 y T-88). Quién hace esas QA, y si se hacen, lo decide el operador.
 - **Claude puede hacer la QA de cualquier cosa** (el operador, 12-11-2026), también de lo que implementó él. Lo hace con un revisor nuevo sin contexto (un subagente con la skill `ri-qa`) en cada ronda: `.docs/memoria/compartida/2026-11-12_claude-puede-hacer-qa.md`.
 - Claude no añade tareas a la cola sin que el operador lo pida.
+
+### Bloque A: lo que falta para completarlo (lista dada al operador el 12-11-2026)
+
+**Orden del operador (12-11-2026):** «La conexión al Broker Personal se hará al final. Ahora queremos evaluar y poner a prueba el bloque A por separado».
+- **Obligatorio para evaluar A solo:**
+  1. cerrar T-102;
+  2. la Fase 1 del Motor (21 fichas) y la Fase 2 por prioridad;
+  3. la señal y el umbral de GC1 por perfil (propuesta al operador);
+  4. T-91 y T-88;
+  5. datos históricos reales (hay que preguntar la fuente);
+  6. las Fases 3 y 4;
+  7. backtest real con el banco y modo sombra con la API (con la clave y la autorización de gasto del operador);
+  8. la QA de T-93.
+- **Aplazado:** el Broker, CT-23/24/25 en real, A→B, el backtester de robotTrading, el segundo proveedor, el reparto a I/K/Orquestador y la adopción de la V6.
+
+
+1. **Cerrar T-102** (filtro R13/R21 frase a frase): documentación, gate, commit y QA.
+2. **Sin depender del operador:**
+   - los bajos H-25 a H-29 de la QA r03 de T-101;
+   - el Lector de evidencia en un lote por ciclo;
+   - el filtro R13/R21 en HT-09 para los dos diseños (la V5 no tiene);
+   - T-88 y T-91.
+3. **Necesitan una decisión del operador:**
+   - la señal y el umbral de GC1 por perfil (renta fija, liquidez y tipos casi no pasan);
+   - el segundo proveedor del Contradictor (contratarlo, con su clave);
+   - quién hace las QA sin asignar (T-93…);
+   - los `[PROPUESTO]` de T-57.
+4. **Para adoptar la V6:**
+   - el banco con la API real en modo sombra (Fase 5, con la clave y la autorización de gasto del operador);
+   - si gana, la V6 por defecto, el Documento 0 V6.0, la arquitectura y el re-congelado de los prompts nuevos;
+   - sacar de A lo que es de I, K y el Orquestador cuando existan.
+5. **Plan de fases de CLAUDE.md:**
+   - Fase 0, en parte (T-92 ya reconoce las 81 fichas);
+   - Fase 1: las 21 fichas V5.0 de IDX, FON, DER, MON y TCV (hoy hay 17 manejadores para 81 fichas);
+   - Fase 2: el resto de fichas DOCUMENTADO;
+   - Fase 3: goldens de los contratos CT;
+   - Fase 4: el plan de pruebas de A (67 casos) con evidencias;
+   - Fase 6: la cadena A→B real y el backtester de robotTrading.
 
 ## 6. Lo siguiente (a elegir con el operador)
 

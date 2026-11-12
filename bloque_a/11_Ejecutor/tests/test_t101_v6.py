@@ -597,7 +597,7 @@ def test_el_sintetizador_no_cuela_probabilidades_ni_compras(tmp_path, monkeypatc
     texto = json.dumps(r["paquete"], ensure_ascii=False)
     assert "87 %" not in texto and "AAPL" not in texto
     lim = " ".join(r["paquete"]["limitaciones"])
-    assert "descartados por R13 o R21" in lim and "Textos llanos del Sintetizador descartados" in lim
+    assert "Frases del Sintetizador quitadas por R13 o R21" in lim and "Frases llanas del Sintetizador quitadas" in lim   # T-102
 
 
 def test_la_cobertura_tiene_fila_para_todo_lo_que_vio_el_analista_y_para_las_vigentes(tmp_path):
