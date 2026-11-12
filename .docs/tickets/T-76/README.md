@@ -2,7 +2,7 @@
 
 | Campo | Valor |
 | --- | --- |
-| Estado | EN QA (ronda r03, V0.75) |
+| Estado | CERRADO (QA r03 APTO, 12-11-2026) |
 | Pieza | sistema_global/marco_comun_c |
 | Planifica · implementa · QA | claude · claude · claude, con un revisor nuevo sin contexto (el operador lo autorizó el 12-11-2026: «sí que puedes hacer las QAs de cualquier cosa») |
 | Aprobación del operador | No necesaria: aplica una decisión ratificada (D-22, D-27, D-30). El operador pidió el 2026-11-10 «sigue con el resto de la deuda que no dependa de mí» |
@@ -69,3 +69,4 @@ Detalle en `sistema_global/documentos_0/V0.71_Cartera_sombra_pasiva.md`.
 - 2026-11-10 · reabierto por el operador («Abre las rondas detenidas»)
 - 2026-11-10 · EN QA · Ronda r02 (V0.73): corregidos H-01 (coste devengado por tramos), H-02 (solo meses terminados, en UTC), H-03 (resultados no finitos rechazados), H-04 (O-42 si I deja de comparar), H-05 (integridad antes de leer), H-06 (retirada en relativo), H-07 en parte (el índice de precios del inicio no cambia) y H-08 (O-41 al pasar a no superarla; documentación). 55 comprobaciones; pendiente la QA r02
 - 2026-11-12 · EN QA · Ronda r03 (V0.75), retomada por el operador («empieza por T-75 y T-76»): corregidos H-10 (mes valorado a su cierre en UTC), H-11 (unidades no finitas rechazadas), H-12 (integridad antes de leer en `iniciar_sombra` y `movimiento_sombra`; O-13 en `barrer()`), H-13 (gracia de 5 días `[PROPUESTO]`, meses que faltan y O-44 ALTA para el juicio), H-14 (regresiones para los cuatro mutantes), H-15 (documentación y límites en T-86 y T-02) y H-16 (MIG-009 lo declara). 74 comprobaciones; 62 baterías en verde; pendiente la QA r03
+- 2026-11-12 · CERRADO · QA r03 APTO (revisor nuevo sin contexto, commit `89e78e7`): H-10 a H-16 corregidos; se cumplen CA-1 a CA-5. Hallazgos nuevos: H-21 (el plazo de gracia no estaba en T-57) se corrige al cerrar; H-17 (media: `movimiento_sombra` sin identificador ni detección de duplicados; corregir antes de que G registre movimientos reales) y H-18 a H-20 (bajos: 10 mutantes vivos y la regresión de H-03 vacía, `barrer()` con el registro roto sigue calculando lo pendiente y no activa el kill-switch, MIG-011 no declara cómo se conservan las comparaciones de la V0.73 y la V0.74) pasan a la fila T-76 de la deuda
