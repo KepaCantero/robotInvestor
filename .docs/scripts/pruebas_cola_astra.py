@@ -15,7 +15,7 @@ ok = True
 
 
 def sh(cwd, *args):
-    return subprocess.run(list(args), cwd=cwd, capture_output=True, text=True)
+    return subprocess.run(list(args), cwd=cwd, capture_output=True, text=True, check=False)
 
 
 def chk(nombre, cond, detalle=""):

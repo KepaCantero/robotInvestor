@@ -44,6 +44,8 @@ Todo lo que Claude, Astra y las personas del equipo necesitan para trabajar en e
 | `.docs/scripts/commit_limpio.sh` | Commit desde una copia limpia de HEAD con solo las rutas de la tarea (pruebas del marco, su LEEME y gate completo allí), para cuando el árbol tiene cambios a medias de otras tareas; sube las copias probadas |
 | `.docs/scripts/preparar_entorno.sh` | Crea `.venv` con Python 3.12 y las versiones fijadas en `tools/requisitos_entorno.txt` (T-96); `--comprobar` compara lo instalado con el fichero y nombra lo que difiere |
 | `.docs/scripts/cola_astra.py` | Cola de Astra (`.docs/tickets/_relevo/cola_astra.md`): la siguiente tarea y lo que se podría perder (marcada HECHA sin entregable, entregable sin marcar, borradores, EN CURSO abandonado, cambios sin subir); `--json` para automatizar. Pruebas en `.docs/scripts/pruebas_cola_astra.py` |
+| `.docs/scripts/registro_experimentos.py` | Registro de experimentos (T-99): prerregistro sellado, intentos y resultados en un fichero encadenado por huellas (por defecto «.docs/experimentos/registro.jsonl», que nace con el primer experimento); dice si un resultado es adoptable. El banco de medida lo usa. Pruebas en `.docs/scripts/pruebas_registro_experimentos.py` |
+| `.docs/scripts/pruebas_borradores_contratos.py` | Pruebas de los borradores de esquema de `.docs/diseno/contratos/` (CT-G-08 0.4.0 y CT-G-24 0.1.0) |
 | `.docs/scripts/qa_rama.sh` | QA de una rama de otro agente: commits, archivos, si se fusiona por avance rápido, copia limpia y pruebas de cada pieza tocada contra el código de la rama |
 
 ## Diario: formato

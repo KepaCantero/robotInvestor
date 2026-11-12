@@ -75,7 +75,10 @@ class Reloj:
     def fecha(self) -> dt.date:
         if self._fecha is None:
             self.fijar(dt.date.today())
-        return self._fecha
+        fecha = self._fecha
+        if fecha is None:   # T-93: `fijar` siempre la pone; así el tipo es `date` y no `date | None`
+            raise RuntimeError("reloj del almacén sin fecha")
+        return fecha
 
     def ahora(self) -> str:
         with self._lock:
@@ -198,15 +201,19 @@ class Almacen:
         prev = "0" * 64
         parcial = None
         if firma[0]:
-            texto = ruta.read_text(encoding="utf-8")
-            lineas = texto.splitlines()
+            datos = ruta.read_bytes()
             # T-92 (QA r03, H-29): al abrir, una última línea a medio escribir (sin salto de línea final y que no es JSON) es
-            # una escritura cortada: se aparta como las demás no confirmadas
-            if recuperar and lineas and not texto.endswith("\n"):
+            # una escritura cortada: se aparta como las demás no confirmadas. T-93 (H-35): la última línea se separa en bytes
+            # antes de decodificar, para que un corte a mitad de un carácter UTF-8 también cuente como línea cortada
+            if recuperar and datos and not datos.endswith(b"\n"):
+                cabeza, _, ultima = datos.rpartition(b"\n")
                 try:
-                    json.loads(lineas[-1])
-                except ValueError:
-                    parcial = lineas.pop()
+                    json.loads(ultima.decode("utf-8"))
+                except ValueError:   # UnicodeDecodeError es un ValueError
+                    parcial = ultima.decode("utf-8", errors="replace")
+                    datos = cabeza + b"\n" if cabeza else b""
+            texto = datos.decode("utf-8")
+            lineas = texto.splitlines()
             for linea in lineas:
                 if not linea.strip():
                     continue
@@ -216,6 +223,8 @@ class Almacen:
                     raise ValueError(f"Fallo de integridad en {archivo}, registro {len(entradas) + 1}")
                 entradas.append(e)
                 prev = e["_hash"]
+        if legado and parcial is not None:   # T-93 (H-34): en un almacén anterior a los sellos la línea cortada también se aparta
+            self._por_recuperar.append((archivo, ruta, entradas + [{"_linea_parcial": parcial}], len(entradas)))
         if not legado:
             if sellos is None:
                 sellos = self._leer_json(self._ruta_sellos)

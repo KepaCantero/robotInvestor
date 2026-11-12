@@ -56,7 +56,7 @@ El Robot Investor es un sistema de inversión personal por bloques. A busca opor
 
 | Pieza | Estado |
 | --- | --- |
-| `bloque_a/` (V5.1) | Corregido y auditado (T-53, T-66, T-92). 439 pruebas. Pendientes técnicos: T-88, T-91 y T-93 |
+| `bloque_a/` (V5.1) | Corregido y auditado (T-53, T-66, T-92); T-93 implementado por Claude, en QA de Astra. 476 pruebas. Pendientes técnicos: T-88 y T-91 |
 | `bloque_a_forex/` | Fuera del Robot Investor (D-20). 68 pruebas |
 | `bloque_b/` (V2.1) | Congelado. Evaluado en T-68 y con un rediseño propuesto, ambos a la espera de Astra. 176 pruebas |
 | `sistema_global/marco_comun_c/` (V0.74) | Código de referencia de la Fase 1, 62 suites, todo en simulado. La V0.74 (T-97, EN QA) alinea los valores por defecto con la tanda 2 |

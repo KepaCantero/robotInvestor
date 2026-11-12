@@ -28,7 +28,7 @@ ESTADOS = re.compile(r"^(PENDIENTE|HECHA|BLOQUEADA|EN CURSO( \d{4}-\d{2}-\d{2})?
 
 
 def git(*args):
-    r = subprocess.run(["git", "-C", str(RAIZ), *args], capture_output=True, text=True)
+    r = subprocess.run(["git", "-C", str(RAIZ), *args], capture_output=True, text=True, check=False)
     return r.stdout.strip() if r.returncode == 0 else ""
 
 
@@ -49,7 +49,7 @@ def filas():
 
 
 def _ultimo_veredicto(texto):
-    trozos = re.split(r"^#+ .*Veredicto.*$", texto, flags=re.M)
+    trozos = re.split(r"^#+ .*Veredicto.*$", texto, flags=re.MULTILINE)
     if len(trozos) < 2:
         return None
     m = re.search(r"\*\*(NO APTO|APTO)\*\*", trozos[-1])
@@ -79,7 +79,7 @@ def evidencia(f):
         v = _ultimo_veredicto(texto)
         return (True, "", commit) if v else (False, "sin veredicto rellenado", commit)
     if f["tipo"] == "IMPLEMENTAR":
-        m = re.search(r"^\| Estado \| ([^|]+)\|", texto, re.M)
+        m = re.search(r"^\| Estado \| ([^|]+)\|", texto, re.MULTILINE)
         est = m.group(1).strip() if m else ""
         return (True, "", commit) if est.startswith(("EN QA", "CERRADO")) else (False, f"estado del ticket «{est or '?'}»", commit)
     return False, f"tipo desconocido «{f['tipo']}»", commit
@@ -89,7 +89,7 @@ def main():
     hoy = date.today()
     errores, avisos, resumen = [], [], []
     rows = filas()
-    st = subprocess.run(["git", "-C", str(RAIZ), "status", "--porcelain"], capture_output=True, text=True).stdout
+    st = subprocess.run(["git", "-C", str(RAIZ), "status", "--porcelain"], capture_output=True, text=True, check=False).stdout
     sin_subir = {l[3:] for l in st.splitlines() if len(l) > 3}   # sin recortar: la primera columna puede ser un espacio
     en_curso = []
     for f in rows:

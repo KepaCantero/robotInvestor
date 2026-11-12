@@ -9,6 +9,9 @@ Uso (desde la raíz del repositorio):
   .venv/bin/python .docs/scripts/banco_medida.py a --desde 2026-03-06 --hasta 2026-05-29 --salida <carpeta>
       [--cliente mock] [--frecuencia semanal] [--clases DIV,RV] [--semilla 7] [--remuestreos 2000] [--ventana 63]
 
+Desde T-99, cada ejecución desde la línea de órdenes se anota en el registro de experimentos (`.docs/scripts/registro_experimentos.py`):
+un prerregistro nuevo, o un intento más de `--experimento EXP-…`, y su resultado, también si falla. `--registro` elige el fichero.
+
 Deja en <carpeta>: prerregistro.json, informe.json, informe.md y la salida del titular (titular/). Con el cliente
 simulado o los datos de ejemplo, el informe lo avisa en su primera línea: entonces prueba la tubería, no mide a A.
 B y C se conectan como un contendiente más (una función que devuelve selecciones); ver `.docs/tickets/T-94/README.md`.
@@ -31,7 +34,7 @@ from pathlib import Path
 import numpy as np
 import pandas as pd
 
-VERSION = "0.1.0"
+VERSION = "0.2.0"   # 0.2.0 (T-99): cada ejecución se anota en el registro de experimentos
 RAIZ = Path(__file__).resolve().parents[2]
 EJECUTOR_A = RAIZ / "bloque_a" / "11_Ejecutor"
 SIGNO = {"LARGO": 1.0, "CORTO": -1.0}
@@ -331,9 +334,27 @@ def ejecutar_a(a: argparse.Namespace) -> dict:
         "criterio": "mejor si el rango del 90 % de la diferencia de medias queda por encima de cero; peor si queda por debajo; si no, todavía no se sabe",
         "version_banco": VERSION}
     h = huella(prerregistro)
+    reg = intento = None
+    if getattr(a, "registro", None):   # T-99: cada intento cuenta, también los que fallan
+        sys.path.insert(0, str(Path(__file__).resolve().parent))
+        import registro_experimentos as rx
+        reg = rx.Registro(a.registro)
+        exp_id = getattr(a, "experimento", None)
+        if not exp_id:
+            exp_id = reg.prerregistrar({"hipotesis": prerregistro["hipotesis"], "objeto": "BLOQUE", "metrica": prerregistro["metrica"],
+                                        "datos": f"backtest de A con el cliente {a.cliente}; huella del prerregistro del banco {h}",
+                                        "desde": a.desde, "hasta": a.hasta, "semilla": a.semilla, "criterio_exito": prerregistro["criterio"]
+                                        + " (frente al azar y frente al momento a la vez)",
+                                        "max_variantes": getattr(a, "max_variantes", 1)}, autor="banco_medida")["exp_id"]
+        intento = reg.intento(exp_id, variante=h[:16])
     (salida / "prerregistro.json").write_text(json.dumps({**prerregistro, "huella": h}, ensure_ascii=False, indent=2,
                                                           sort_keys=True) + "\n", encoding="utf-8")
-    tit = titular_a(a.desde, a.hasta, salida / "titular", a.cliente, a.frecuencia, a.clases)
+    try:
+        tit = titular_a(a.desde, a.hasta, salida / "titular", a.cliente, a.frecuencia, a.clases)
+    except BancoError as e:
+        if reg is not None:
+            reg.resultado(intento["exp_id"], intento["n"], "fallido", {"motivo": str(e)[:300]})
+        raise
     universo = pd.read_csv(tit["universo"], usecols=["simbolo", "clase"])
     precios = cargar_precios(tit["datos"], universo["simbolo"].tolist())
     plantilla = tit["selecciones"]
@@ -349,7 +370,22 @@ def ejecutar_a(a: argparse.Namespace) -> dict:
     inf = construir_informe(contendientes, tit["consumo"], a.remuestreos, a.semilla, aviso, h)
     (salida / "informe.json").write_text(json.dumps(inf, ensure_ascii=False, indent=2, sort_keys=True) + "\n", encoding="utf-8")
     (salida / "informe.md").write_text(informe_md(inf, f"Banco de medida del Bloque A ({a.desde} a {a.hasta})"), encoding="utf-8")
+    if reg is not None:
+        inf["experimento"] = {"exp_id": intento["exp_id"], "intento": intento["n"]}
+        reg.resultado(intento["exp_id"], intento["n"], veredicto_conjunto(inf["comparaciones"]),
+                      {"comparaciones": {k: v["veredicto"] for k, v in inf["comparaciones"].items()}, "aviso": aviso,
+                       "huella_informe": huella({k: v for k, v in inf.items() if k != "experimento"})})
     return inf
+
+
+def veredicto_conjunto(comparaciones: dict) -> str:
+    """T-99: «mejor» solo si gana a todas las referencias; «peor» si pierde con alguna; si no, «todavía no se sabe»."""
+    vs = [c["veredicto"] for c in comparaciones.values()]
+    if vs and all(v == "mejor" for v in vs):
+        return "mejor"
+    if any(v == "peor" for v in vs):
+        return "peor"
+    return "todavía no se sabe"
 
 
 def main(argv: list[str] | None = None) -> int:
@@ -365,6 +401,10 @@ def main(argv: list[str] | None = None) -> int:
     pa.add_argument("--semilla", type=int, default=7)
     pa.add_argument("--remuestreos", type=int, default=2000)
     pa.add_argument("--ventana", type=int, default=63)
+    # T-99: registro de experimentos (por defecto, el del repositorio); --experimento añade un intento a uno ya prerregistrado
+    pa.add_argument("--registro", default=str(RAIZ / ".docs" / "experimentos" / "registro.jsonl"))
+    pa.add_argument("--experimento")
+    pa.add_argument("--max-variantes", dest="max_variantes", type=int, default=1)
     a = ap.parse_args(argv)
     try:
         inf = ejecutar_a(a)

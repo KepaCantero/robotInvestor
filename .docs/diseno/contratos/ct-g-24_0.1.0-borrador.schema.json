@@ -1,0 +1,230 @@
+{
+ "$id": "https://robot-inversor.local/esquemas/ct-g-24/0.1.0-borrador",
+ "$schema": "https://json-schema.org/draft/2020-12/schema",
+ "description": "Decisión 5 de la tanda 1 (D-53 propuesta). Cada línea del registro es una anotación; la cadena de huellas la comprueba el registro, no el esquema. La envoltura común de los contratos CT-G se decide con el diseño de J.",
+ "oneOf": [
+  {
+   "additionalProperties": false,
+   "properties": {
+    "_hash": {
+     "pattern": "^[0-9a-f]{64}\\Z",
+     "type": "string"
+    },
+    "_hash_prev": {
+     "pattern": "^[0-9a-f]{64}\\Z",
+     "type": "string"
+    },
+    "_seq": {
+     "minimum": 1,
+     "type": "integer"
+    },
+    "autor": {
+     "pattern": "\\S",
+     "type": "string"
+    },
+    "contenido": {
+     "additionalProperties": true,
+     "properties": {
+      "criterio_exito": {
+       "minLength": 10,
+       "type": "string"
+      },
+      "datos": {
+       "type": "string"
+      },
+      "desde": {
+       "pattern": "^\\d{4}-\\d{2}-\\d{2}\\Z",
+       "type": "string"
+      },
+      "hasta": {
+       "pattern": "^\\d{4}-\\d{2}-\\d{2}\\Z",
+       "type": "string"
+      },
+      "hipotesis": {
+       "minLength": 10,
+       "type": "string"
+      },
+      "max_variantes": {
+       "maximum": 1000,
+       "minimum": 1,
+       "type": "integer"
+      },
+      "metrica": {
+       "minLength": 10,
+       "type": "string"
+      },
+      "objeto": {
+       "enum": [
+        "RECORTE",
+        "INSTRUCCION",
+        "MODELO",
+        "ESTRATEGIA",
+        "PARAMETRO",
+        "BLOQUE",
+        "OTRO"
+       ]
+      },
+      "semilla": {
+       "type": "integer"
+      }
+     },
+     "required": [
+      "hipotesis",
+      "objeto",
+      "metrica",
+      "datos",
+      "desde",
+      "hasta",
+      "semilla",
+      "criterio_exito",
+      "max_variantes"
+     ],
+     "type": "object"
+    },
+    "creado_en": {
+     "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}(\\.\\d+)?(Z|[+-]\\d{2}:\\d{2})\\Z",
+     "type": "string"
+    },
+    "exp_id": {
+     "pattern": "^EXP-\\d{4}-\\d{4}\\Z",
+     "type": "string"
+    },
+    "huella_prerregistro": {
+     "pattern": "^[0-9a-f]{64}\\Z",
+     "type": "string"
+    },
+    "tipo": {
+     "const": "PRERREGISTRO"
+    },
+    "version_registro": {
+     "pattern": "^\\d+\\.\\d+\\.\\d+\\Z",
+     "type": "string"
+    }
+   },
+   "required": [
+    "tipo",
+    "exp_id",
+    "autor",
+    "creado_en",
+    "version_registro",
+    "contenido",
+    "huella_prerregistro",
+    "_seq",
+    "_hash_prev",
+    "_hash"
+   ],
+   "type": "object"
+  },
+  {
+   "additionalProperties": false,
+   "properties": {
+    "_hash": {
+     "pattern": "^[0-9a-f]{64}\\Z",
+     "type": "string"
+    },
+    "_hash_prev": {
+     "pattern": "^[0-9a-f]{64}\\Z",
+     "type": "string"
+    },
+    "_seq": {
+     "minimum": 1,
+     "type": "integer"
+    },
+    "dentro_del_maximo": {
+     "type": "boolean"
+    },
+    "exp_id": {
+     "pattern": "^EXP-\\d{4}-\\d{4}\\Z",
+     "type": "string"
+    },
+    "huella_prerregistro": {
+     "pattern": "^[0-9a-f]{64}\\Z",
+     "type": "string"
+    },
+    "inicio": {
+     "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}(\\.\\d+)?(Z|[+-]\\d{2}:\\d{2})\\Z",
+     "type": "string"
+    },
+    "n": {
+     "minimum": 1,
+     "type": "integer"
+    },
+    "tipo": {
+     "const": "INTENTO"
+    },
+    "variante": {
+     "type": "string"
+    }
+   },
+   "required": [
+    "tipo",
+    "exp_id",
+    "n",
+    "variante",
+    "inicio",
+    "huella_prerregistro",
+    "dentro_del_maximo",
+    "_seq",
+    "_hash_prev",
+    "_hash"
+   ],
+   "type": "object"
+  },
+  {
+   "additionalProperties": false,
+   "properties": {
+    "_hash": {
+     "pattern": "^[0-9a-f]{64}\\Z",
+     "type": "string"
+    },
+    "_hash_prev": {
+     "pattern": "^[0-9a-f]{64}\\Z",
+     "type": "string"
+    },
+    "_seq": {
+     "minimum": 1,
+     "type": "integer"
+    },
+    "detalle": {
+     "type": "object"
+    },
+    "exp_id": {
+     "pattern": "^EXP-\\d{4}-\\d{4}\\Z",
+     "type": "string"
+    },
+    "n": {
+     "minimum": 1,
+     "type": "integer"
+    },
+    "registrado_en": {
+     "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}(\\.\\d+)?(Z|[+-]\\d{2}:\\d{2})\\Z",
+     "type": "string"
+    },
+    "tipo": {
+     "const": "RESULTADO"
+    },
+    "veredicto": {
+     "enum": [
+      "mejor",
+      "peor",
+      "todavía no se sabe",
+      "fallido"
+     ]
+    }
+   },
+   "required": [
+    "tipo",
+    "exp_id",
+    "n",
+    "veredicto",
+    "detalle",
+    "registrado_en",
+    "_seq",
+    "_hash_prev",
+    "_hash"
+   ],
+   "type": "object"
+  }
+ ],
+ "title": "CT-G-24 · Anotación del registro de experimentos (BORRADOR 0.1.0, sin ratificar)"
+}
