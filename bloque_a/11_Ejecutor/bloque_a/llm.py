@@ -228,7 +228,7 @@ class ReplayClient(LLMClient):
         self._lock = threading.Lock()
         self._tabla: dict[str, dict] = {}
         if self.ruta.exists():
-            for l in self.ruta.read_text(encoding="utf-8").splitlines():
+            for l in self.ruta.read_text(encoding="utf-8").split("\n"):   # T-103 r02 (H-48): no en U+2028 ni U+0085
                 if l.strip():
                     d = json.loads(l)
                     self._tabla[d["clave"]] = d

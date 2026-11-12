@@ -37,6 +37,16 @@ AVISO_LEGAL = ("Este informe describe oportunidades generales de mercado y no co
                "el Broker Personal valora si encaja con el usuario.")
 
 
+# T-91 (QA r05 de T-65, H-28): el criterio y la regla que se congelan en cada PRG nuevo dicen la regla de resolución vigente
+# (los ya congelados no cambian). INC-T91-01 `[PROPUESTO]`
+CRITERIO_RESOLUCION = ("Cierre HT-01 de la última sesión ≤ {fin} frente al cierre de la última sesión ≤ {inicio}; cada serie (proxy, "
+                       "referencia y cada miembro de la CESTA) necesita un dato posterior a la emisión y no más antiguo, a la fecha "
+                       "de resolución, que la antigüedad de PS2 de su horizonte (H1 en sesiones sin los festivos de PS2); si las "
+                       "series acaban en fechas distintas, todas se miden hasta la más antigua; suceso: {suceso}")
+REGLA_FALLBACK = ("si alguna serie no cumple, el pronóstico espera; NO_RESOLUBLE tras {dias_nr} días hábiles desde la fecha de "
+                  "resolución sin que cumplan")
+
+
 def _menos_de_tres_texto(c: str, sel: dict, n_opc: int) -> str | None:
     m = sel["seleccion"].get("menos_de_tres_motivo")
     if n_opc >= 3:
@@ -182,8 +192,8 @@ def construir(bloque, run_id, tipo, as_of, clases, nivel, gc0, analisis, selecci
                 "nivel_referencia_indice": nivel_r, "fecha_nivel_referencia_indice": str(fecha_r.date()) if fecha_r is not None else None,
                 **({"bases_cesta": bloque.evaluador.bases_cesta(c, as_of, h)} if ref == "CESTA" else {}), "umbral": 0.0, "fecha_emision": str(as_of.date()), "fecha_congelacion": bloque.reloj.ahora(),
                 "fecha_resolucion": str(fr.date()),
-                "criterio_resolucion": f"Cierre HT-01 de la última sesión ≤ {fr.date()} frente al cierre de la última sesión ≤ {as_of.date()}; suceso: {texto_ev}",
-                "fuente_resolucion": f"HT-01:{bloque.proveedor.nombre}", "regla_fallback": f"última sesión disponible ≤ fecha de resolución; NO_RESOLUBLE tras {dias_nr} días hábiles sin dato",
+                "criterio_resolucion": CRITERIO_RESOLUCION.format(fin=fr.date(), inicio=as_of.date(), suceso=texto_ev),
+                "fuente_resolucion": f"HT-01:{bloque.proveedor.nombre}", "regla_fallback": REGLA_FALLBACK.format(dias_nr=dias_nr),
                 "banda_verbal": bloque.evaluador.banda_de(d["prob_interna"]), "prob_interna": d["prob_interna"],
                 "prob_publicada": d["prob_interna"] if (c, h, d.get("metodo")) in certs else None, "certificado_ref": certs.get((c, h, d.get("metodo"))),
                 "metodo": d.get("metodo"), "referencia_ingenua": ri, "escenario_asociado": d.get("escenario", "BASE"),
@@ -211,7 +221,7 @@ def construir(bloque, run_id, tipo, as_of, clases, nivel, gc0, analisis, selecci
             hito = copy.deepcopy({k: v for k, v in b.items() if k not in ("hit_ids", "hitos", "tesis_estructural")})
             hito.update({"prg_id": hid, "prg_padre": b["prg_id"], "es_hito": True, "prob_analista": None, "necesario": m == meses_hitos[-1], "horizonte": "H4",
                          "afirmacion": f"Hito de la senda H5: {ev}", "evento": ev, "fecha_resolucion": str(fh.date()),
-                         "criterio_resolucion": f"Cierre HT-01 de la última sesión ≤ {fh.date()} frente al cierre de la última sesión ≤ {as_of.date()}; suceso: {ev}",
+                         "criterio_resolucion": CRITERIO_RESOLUCION.format(fin=fh.date(), inicio=as_of.date(), suceso=ev),
                          "prob_interna": d["prob_interna"], "banda_verbal": bloque.evaluador.banda_de(d["prob_interna"]), "prob_publicada": None,
                          "referencia_ingenua": {"tipo": "RI-TB", "valor_o_prob": float(parametro(cfg, "tasa_base.sin_historia")),
                                                 "nota": "tasa base neutra (ventana superior a la historia disponible)"}})

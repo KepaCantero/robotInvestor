@@ -33,3 +33,30 @@ W=bloque_a/11_Ejecutor; for f in r01_01_r8_escapes r01_02_almacen_legado r01_03_
 ```bash
 .venv/bin/pytest -q bloque_a/11_Ejecutor/tests/test_t103_r8_y_bajos.py
 ```
+
+## Ronda r02 (QA r01 NO APTO)
+
+**Causa.**
+- **H-47:** la alternativa `\\+(?:…)` volvía a empezar en cada barra de un tramo que no acaba en un escape, así que el coste era cuadrático.
+- **H-48:** `_actualizar`, `ReplayClient` y `CacheResultados` partían el JSONL con `splitlines()`, que también corta en U+2028, U+2029 y U+0085, y `json.dumps(ensure_ascii=False)` no los escapa. Ya pasaba desde la entrega.
+- **H-49:** la prueba de H-44 no dependía de lo que corrige, porque desde H-40 el volcado ya veía la clave.
+- **H-50:** la regla de H-41 empezaba en cuatro tramos.
+
+**Implementación.**
+- `contratos.py`: `RE_ESCAPES` empieza el tramo donde empieza (`(?<!\\)`) y lo toma de una vez (`\\++`, posesivo). Con 99.999 barras, 0,08 s; antes, 129 s. Una cola de tres o más tramos de solo cifras es clave.
+- `almacen.py`, `llm.py` y `herramientas/ht06_indice.py`: los JSONL se parten solo por «\n».
+- `tests/test_t103_r8_y_bajos.py`: 8 pruebas nuevas (H-47, H-48 en los tres lectores, H-49 con el par «"password": …» dentro de un `frozenset` y H-50).
+
+**Límites conocidos (se declaran: H-50 a H-52).**
+- Una cola de menos de 20 caracteres tras «sk-» no es candidata (regla de T-92): tres grupos de cinco cifras (17 caracteres) no se ven. Tres o más grupos de 6, 7 u 8 cifras y tres fechas AAAAMMDD, 500 de 500.
+- **Falsos positivos que falla cerrado (H-51)**, con el resultado PARCIAL y una incidencia, sin perder ninguna clave:
+  - referencias y marcas de tiempo de solo cifras con tres o más grupos y 20 caracteres o más («sk-2024-11-12-10-30-00-123»);
+  - las colas de H-45 detrás de un escape doble (titulares en JSON anidado y rutas de Windows dentro de un JSON).
+- **Formas que siguen sin verse (H-52).** Tampoco se veían antes; no son una regresión:
+  - la barra codificada seguida de «n» (`%5Cn`, `\\u005cn`, `\\x5cn`);
+  - quoted-printable (`=3D`);
+  - `\\a`, `\\v` y `\\e`;
+  - `%U2014` en mayúscula;
+  - la clave en base64, con U+200B o U+00AD dentro, con un `\\u0041` dentro o partida en líneas.
+
+  Cerrar la clase entera pide decodificar por capas en lugar de sustituir por un espacio; queda en la deuda (fila T-103).

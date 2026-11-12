@@ -112,3 +112,45 @@ def test_h43_una_consulta_sin_plazo_vence_con_incidencia(tmp_path, universo):
     assert b.consultas.vencer("2026-06-06T09:00") == ["CNS-2026-9999"]
     assert any("CNS-2026-9999" in str(e.get("detalle")) and e.get("tipo") == "DATOS" for e in b.almacen.leer("HA"))
     assert b.consultas.vencer("2026-06-07T09:00") == []
+
+
+# ================================================================================================== ronda r02 (QA r01 de T-103)
+def test_r02_h47_r8_lineal_con_un_tramo_largo_de_barras():
+    import time
+    t0 = time.perf_counter()
+    contenido_sensible("\\" * 99_999 + "z")
+    contiene_credenciales({"x": "\\" * 100_000})
+    assert time.perf_counter() - t0 < 2   # antes: 129 s y 114 s
+
+
+@pytest.mark.parametrize("sep", [" ", " ", "\u0085"])
+def test_r02_h48_el_almacen_vuelve_a_abrir_con_separadores_unicode(tmp_path, sep):
+    a = Almacen(tmp_path)
+    a.escribir("F5", "AG-01", {"id": "uno", "nota": f"a{sep}b"})
+    a.escribir("F5", "AG-01", {"id": "dos"})
+    b = Almacen(tmp_path)
+    assert list(b.estado("F5")) == ["uno", "dos"] and b.estado("F5")["uno"]["nota"] == f"a{sep}b"
+
+
+def test_r02_h48_la_cinta_y_la_cache_leen_separadores_unicode(tmp_path):
+    from bloque_a.herramientas.ht06_indice import CacheResultados
+    from bloque_a.llm import ReplayClient
+    cinta = tmp_path / "cinta.jsonl"
+    cinta.write_text(json.dumps({"clave": "k", "nota": "a b"}, ensure_ascii=False) + "\n", encoding="utf-8")
+    assert ReplayClient(cinta, "reproducir")._tabla["k"]["nota"] == "a b"
+    cache = tmp_path / "cache.jsonl"
+    cache.write_text(json.dumps({"clave": "k", "valor": "a\u0085b"}, ensure_ascii=False) + "\n", encoding="utf-8")
+    assert CacheResultados(cache).obtener("k") == "a\u0085b"
+
+
+def test_r02_h49_contiene_credenciales_recorre_frozenset_de_verdad():
+    """El par «"password": "…"» solo se ve recorriendo el `frozenset`: en el volcado las comillas salen escapadas."""
+    par = '"pass' + 'word": "' + "x" * 12 + '"'
+    assert contiene_credenciales({"x": frozenset({par})})
+
+
+@pytest.mark.parametrize("n,k", [(6, 3), (7, 3)])   # 3×5 cifras son 17 caracteres: por debajo de los 20 de un candidato
+def test_r02_h50_tres_tramos_de_cifras_tambien_son_clave(n, k):
+    rnd = random.Random(20261113 + n)
+    claves = [SK + "-".join("".join(rnd.choice(string.digits) for _ in range(n)) for _ in range(k)) for _ in range(200)]
+    assert all(contenido_sensible("clave: " + c) for c in claves)
