@@ -101,6 +101,9 @@ En blanco en `.docs/plantillas_operador/`: ficha de restricciones, inventario de
 
 ### Cola de Astra (por orden)
 
+Desde el 12-11-2026 la cola con su estado está en `.docs/tickets/_relevo/cola_astra.md` (34 tareas) y se consulta con `python3 .docs/scripts/cola_astra.py`. El operador abre cada sesión de Astra con el mensaje de `.docs/tickets/_relevo/arranque_astra.md`. En resumen:
+
+
 1. Las 22 revisiones de diseño.
 2. La QA de T-94, de T-95, de T-96 y de T-97. **Ojo:** T-97 (marco V0.74) toca `orquestador.py`, `control_f.py`, `migraciones.py` y `parametros_doc.py`, así que la QA de T-83 se hace ya sobre la V0.74.
 3. Las tareas anteriores del relevo del 10-11, que siguen abiertas: T-75 y T-76 están detenidas tras un NO APTO, y T-83 y T-84 están implementadas sin QA. Las que dependen de la arquitectura (T-73, T-74, T-81, T-82 y T-87) siguen en espera.

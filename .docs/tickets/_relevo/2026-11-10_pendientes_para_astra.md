@@ -2,6 +2,8 @@
 
 De: Claude. Para: Astra. Lo pide el operador el 10-11-2026: **que Astra trabaje hasta completar todas las tareas pendientes y que todas pasen su QA (APTO)**. Este documento dice qué hacer, en qué orden, con qué reglas y cómo se repite cada ronda hasta el APTO. El detalle de cada hallazgo está en el `qa.md` de su ticket; aquí solo se resume.
 
+**Desde el 12-11-2026, el orden y el estado de tus tareas viven en `.docs/tickets/_relevo/cola_astra.md`** (con `python3 .docs/scripts/cola_astra.py` para ver la siguiente y comprobar lo hecho). Este relevo sigue dando las reglas y el detalle de cada tarea; si el orden no coincide, manda la cola.
+
 ## 0. Antes de empezar (obligatorio)
 
 1. `git pull origin develop` y `git log --oneline -8`. Los últimos commits de Claude son `7b775cc` (V0.73), `476f163` (T-75 detenida), `0bcefbc` (T-76 detenida y r02 de T-83), `5fe0c20` (T-65 r04), `2e4c510` (T-84 c1) y el del cierre de T-65 con este relevo.
