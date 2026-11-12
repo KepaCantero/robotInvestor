@@ -8,7 +8,7 @@ from __future__ import annotations
 
 from types import MappingProxyType
 
-VERSION_PARAMETROS = "PAR-0.7.0"   # 0.2.0 (T-26): licencias admitidas por K. 0.3.0 (T-17): costes y confianza en D. 0.4.0 (V0.67): tope de líneas del diario en el panel. 0.5.0 (V0.68, T-80): tope de análisis por consulta
+VERSION_PARAMETROS = "PAR-0.8.0"   # 0.8.0 (V0.75, QA r02 de T-76, H-13): días de gracia antes de avisar de una comparación de la sombra pendiente. 0.2.0 (T-26): licencias admitidas por K. 0.3.0 (T-17): costes y confianza en D. 0.4.0 (V0.67): tope de líneas del diario en el panel. 0.5.0 (V0.68, T-80): tope de análisis por consulta
 
 _VALORES = {
     # K — calidad y antigüedad de los datos de corte
@@ -48,6 +48,7 @@ _VALORES = {
     # I — cartera sombra pasiva (T-76; Constitución §9 punto 9, D-22, D-27, D-30)
     "i_meses_juicio_sombra": 24,         # [RATIFICADO: 24 meses] (D-27, P-18): tras este plazo, si el robot no supera a la sombra, se propone gestión pasiva
     "i_indice_sombra": "INDICE-MUNDIAL",  # [PROPUESTO] el plan pasivo es «un índice mundial» (D-27); cuál, lo fija el operador (T-57)
+    "i_dias_gracia_comparacion_sombra": 5,   # [PROPUESTO] días tras el cierre de un mes antes de avisar (O-42) de que I no lo ha comparado (T-76, QA r02, H-13; T-57)
     "i_coste_anual_sombra_pct": 0.20,    # [PROPUESTO] coste anual del fondo indexado con el que se replica la sombra (T-57)
 }
 

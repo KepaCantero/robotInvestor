@@ -2,9 +2,9 @@
 
 | Campo | Valor |
 | --- | --- |
-| Estado | DETENIDO (QA r02 NO APTO; el operador decide si abre otra ronda) |
+| Estado | EN QA (ronda r03, V0.75) |
 | Pieza | sistema_global/marco_comun_c |
-| Planifica · implementa · QA | claude · claude · un revisor nuevo sin contexto |
+| Planifica · implementa · QA | claude · claude · claude, con un revisor nuevo sin contexto (el operador lo autorizó el 12-11-2026: «sí que puedes hacer las QAs de cualquier cosa») |
 | Aprobación del operador | No necesaria: aplica una decisión ratificada (D-22, D-27) y deuda técnica. El operador pidió el 2026-11-10 «reducir la deuda técnica: todo aquello que no dependa de mis decisiones personales» |
 | Deuda técnica | T-75 y T-89 en `sistema_global/seguimiento/Deuda_tecnica_y_pendientes_del_operador.md` |
 
@@ -49,11 +49,11 @@ Detalle en `sistema_global/documentos_0/V0.70_Embudo_y_alarma_de_sequia.md`.
 
 ## Criterios de aceptación (binarios)
 
-1. CA-1: con candidatos validados y sin inversiones en 60 días, `barrer()` avisa una vez con O-40 y el embudo; con una inversión, sin candidatos o con un sistema más joven, no avisa.
+1. CA-1: con candidatos validados y sin inversiones en 60 días, `barrer()` avisa con O-40 y el embudo, una vez por plazo mientras dure; con una inversión, sin candidatos o con un sistema más joven, no avisa.
 2. CA-2: el embudo da las que entran, la capa de cada una con su motivo, las salidas con quién y por qué, y las validadas e invertidas del periodo; N lo muestra semanal.
 3. CA-3: `embudo()`, `sequia()` e `informe_embudo()` solo leen y no lanzan.
 4. CA-4: el reloj rechaza un tiempo sin contrastar por encima de su tope.
-5. CA-5: las 59 baterías pasan, MIG-007 encadena desde las versiones anteriores y el gate da 12/12.
+5. CA-5: todas las baterías del marco pasan (59 en la V0.70, 62 en la V0.75), MIG-007 encadena desde las versiones anteriores y el gate da 12/12.
 
 ## Plan de pruebas
 
@@ -72,3 +72,4 @@ Detalle en `sistema_global/documentos_0/V0.70_Embudo_y_alarma_de_sequia.md`.
 - 2026-11-10 · DETENIDO · QA r01 NO APTO: H-08, H-01 y H-02 medios; H-03 a H-07 bajos. Por indicación del operador («si no supera esta ronda no continúes»), no se abre otra ronda; los hallazgos quedan en la fila T-75 de la deuda. El código de la V0.70 está en develop (commit `d6fbdb6`)
 - 2026-11-10 · reabierto por el operador («Abre las rondas detenidas»)
 - 2026-11-10 · EN QA · Ronda r02 (V0.73): corregidos H-01 (veto de F anotado y visible en el embudo), H-03 (un análisis cuenta una vez), H-04 (salidas por oportunidad y periodo abierto por la izquierda), H-05 (solo se informa el aviso si se añade), H-07 (días validados) y H-08 (sequía desde la última inversión: con barridos diarios salta); H-02 y H-06 (documentación) también. 34 comprobaciones; pendiente la QA r02
+- 2026-11-12 · EN QA · Ronda r03 (V0.75), retomada por el operador («empieza por T-75 y T-76»): corregidos H-09 (veto anotado también desde la pantalla, con un método común), H-10 (`contratos.propuesta()` toma la última transición a PROPUESTA desde otro estado), H-11 (`reloj_firme`: un rechazo que anota no hace retroceder el reloj), H-12 (LEEME, Documento 0, deuda y `pruebas.md`), H-13 (docstring: cuenta por sobre) y H-14 (edad desde el primer instante real). 41 comprobaciones; 62 baterías en verde; pendiente la QA r03

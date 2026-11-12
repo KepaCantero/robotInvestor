@@ -194,6 +194,10 @@ _DOC = {
             "La Constitución fija un índice mundial como plan pasivo; cuál exactamente lo decide el operador, y aquí solo está su "
             "nombre provisional.",
             "¿Qué índice mundial quieres usar como inversión pasiva con la que comparar al robot?"),
+        "i_dias_gracia_comparacion_sombra": _r(P, ["Deuda T-76", "V0.75"],
+            "Se avisa de un mes de la sombra sin comparar 5 días después de su cierre: antes, I ni siquiera ha tenido tiempo de "
+            "compararlo, y un aviso cada día 1 se acabaría ignorando.",
+            "¿Cuántos días tras el cierre de un mes quieres esperar antes de que te avisen de que el robot no se ha comparado con la cartera pasiva?"),
         "i_coste_anual_sombra_pct": _r(P, ["Deuda T-76"],
             "Un fondo indexado mundial barato cuesta en torno al 0,20 % al año; restarlo a la sombra hace justa la comparación con "
             "el robot.",
@@ -527,6 +531,7 @@ _VALOR_DOCUMENTADO = {
         "n_dias_embudo": 7,
         "i_meses_juicio_sombra": 24,
         "i_indice_sombra": "INDICE-MUNDIAL",
+        "i_dias_gracia_comparacion_sombra": 5,
         "i_coste_anual_sombra_pct": 0.2,
     },
     "CONFIG_DEFECTO": {

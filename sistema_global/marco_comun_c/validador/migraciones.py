@@ -72,6 +72,8 @@ ESQUEMA_V0_71 = "aa778db76669a1a61e8716010223bbdbd166733b36137028bf3a86683057045
 ESQUEMA_V0_73 = "2bcc76b84882b578499ba2ea632dc83b518fe496df3fb2f98740b8f853be6bde"
 # esquema de V0.74 (T-97: tope anual de gasto, tolerancia del tipo de cambio por divisa, F-14 y F-16 también en %; CFG-0.12.0)
 ESQUEMA_V0_74 = "27fc8408abb5fb4ef24e6ca2c50a6898a6e6bfb9b7b29a08558d70cfde1fe0ce"
+# esquema de V0.75 (rondas r03 de T-75 y T-76: plazo de gracia de la sombra, PAR-0.8.0, y aviso O-44)
+ESQUEMA_V0_75 = "0b53d06e26e4079a414e62324d71b9f044ee0496eff798e573c6db4a768f25fc"
 # lo que una migración nunca puede cambiar, aunque lo declare (revisión de V0.46, hallazgos 5 y 10)
 PROHIBIDAS = ("limites", "kill", "rearmes", "ultimo_ahora", "huella_config", f"cfg.politica_f.{LIMITE_PERDIDA}",
               "cfg.nivel_autonomia")   # V0.51 (revisión, duda 2): ninguna migración sube ni baja el nivel de nadie
@@ -200,13 +202,17 @@ MIGRACIONES = (
               "V0.70 a V0.71 (T-76, cartera sombra pasiva): el registro de la sombra, vacío; el resto del estado no cambia"),
     Migracion("MIG-009", pe.FORMATO, ESQUEMA_V0_71, ESQUEMA_V0_73, _sin_cambios, frozenset(),
               "V0.71 a V0.73 (rondas r02 de T-75 y T-76): solo cambia el código (veto de F anotado en el historial, aviso O-42); "
-              "el estado guardado no cambia"),
+              "el estado guardado no cambia. Las comparaciones de la sombra hechas con la V0.71 se conservan como históricas, con "
+              "sus reglas (coste prorrateado, mes de inicio en hora local); las nuevas siguen las de la V0.73 (QA r02 de T-76, H-16)"),
     Migracion("MIG-010", pe.FORMATO, ESQUEMA_V0_73, ESQUEMA_V0_74, _v074,
               frozenset({"cfg.tope_anual_gasto_pct_capital", "cfg.capital_referencia_eur", "cfg.tolerancia_tipo_k_rel_principales",
                          "cfg.divisas_principales", "cfg.politica_f.importe_max_dia_pct", "cfg.politica_f.perdida_semana_max_pct_trading",
                          "cfg.politica_f.perdida_semana_max_pct_tactica", "cfg.politica_f.perdida_semana_max_pct_largo_plazo"}),
               "V0.73 a V0.74 (T-97, valores por defecto de la tanda 2): tope anual de gasto, tolerancia del tipo de cambio de las "
               "divisas principales y límites de F en % del capital, con su valor de partida; ningún valor guardado cambia; CFG-0.12.0"),
+    Migracion("MIG-011", pe.FORMATO, ESQUEMA_V0_74, ESQUEMA_V0_75, _sin_cambios, frozenset(),
+              "V0.74 a V0.75 (rondas r03 de T-75 y T-76): solo cambia el código (veto anotado también desde la pantalla, sombra "
+              "valorada al cierre del mes, plazo de gracia de O-42 y aviso O-44, PAR-0.8.0); el estado guardado no cambia"),
 )
 
 

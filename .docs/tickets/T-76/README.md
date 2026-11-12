@@ -2,9 +2,9 @@
 
 | Campo | Valor |
 | --- | --- |
-| Estado | DETENIDO (QA r02 NO APTO; el operador decide si abre otra ronda) |
+| Estado | EN QA (ronda r03, V0.75) |
 | Pieza | sistema_global/marco_comun_c |
-| Planifica · implementa · QA | claude · claude · un revisor nuevo sin contexto |
+| Planifica · implementa · QA | claude · claude · claude, con un revisor nuevo sin contexto (el operador lo autorizó el 12-11-2026: «sí que puedes hacer las QAs de cualquier cosa») |
 | Aprobación del operador | No necesaria: aplica una decisión ratificada (D-22, D-27, D-30). El operador pidió el 2026-11-10 «sigue con el resto de la deuda que no dependa de mí» |
 | Deuda técnica | T-76 en `sistema_global/seguimiento/Deuda_tecnica_y_pendientes_del_operador.md` |
 
@@ -47,9 +47,9 @@ Detalle en `sistema_global/documentos_0/V0.71_Cartera_sombra_pasiva.md`.
 
 1. CA-1: la sombra nace el primer día con el mismo capital y replica cada aporte y retirada al precio de su momento.
 2. CA-2: cada mes, el robot neto de costes de análisis (los del Orquestador) e impuestos se compara con la sombra neta de su coste, en nominal y en real.
-3. CA-3: antes de 24 meses no se juzga; a los 24, si no la supera en real, O-41 una vez; si la supera, nada.
+3. CA-3: antes de 24 meses no se juzga; a los 24, si no la supera en real, O-41 al pasar a no superarla (no cada mes); si la supera, nada.
 4. CA-4: los rechazos no cambian el estado y el registro tocado se detecta (O-13 con kill-switch).
-5. CA-5: guardar, cargar y MIG-008 funcionan; las 60 baterías pasan y el gate da 12/12.
+5. CA-5: guardar, cargar y MIG-008 funcionan; todas las baterías del marco pasan (60 en la V0.71, 62 en la V0.75) y el gate da 12/12.
 
 ## Plan de pruebas
 
@@ -68,3 +68,4 @@ Detalle en `sistema_global/documentos_0/V0.71_Cartera_sombra_pasiva.md`.
 - 2026-11-10 · DETENIDO · QA r01 NO APTO: H-01 a H-04 medios (prorrateo del coste de la sombra, juicio antes de tiempo, números enormes que dejan NaN, O-41 silenciable si I no compara) y H-05 a H-09 bajos. Por la regla del operador no se abre otra ronda; pendientes en la fila T-76 de la deuda
 - 2026-11-10 · reabierto por el operador («Abre las rondas detenidas»)
 - 2026-11-10 · EN QA · Ronda r02 (V0.73): corregidos H-01 (coste devengado por tramos), H-02 (solo meses terminados, en UTC), H-03 (resultados no finitos rechazados), H-04 (O-42 si I deja de comparar), H-05 (integridad antes de leer), H-06 (retirada en relativo), H-07 en parte (el índice de precios del inicio no cambia) y H-08 (O-41 al pasar a no superarla; documentación). 55 comprobaciones; pendiente la QA r02
+- 2026-11-12 · EN QA · Ronda r03 (V0.75), retomada por el operador («empieza por T-75 y T-76»): corregidos H-10 (mes valorado a su cierre en UTC), H-11 (unidades no finitas rechazadas), H-12 (integridad antes de leer en `iniciar_sombra` y `movimiento_sombra`; O-13 en `barrer()`), H-13 (gracia de 5 días `[PROPUESTO]`, meses que faltan y O-44 ALTA para el juicio), H-14 (regresiones para los cuatro mutantes), H-15 (documentación y límites en T-86 y T-02) y H-16 (MIG-009 lo declara). 74 comprobaciones; 62 baterías en verde; pendiente la QA r03

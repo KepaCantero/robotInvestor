@@ -155,7 +155,7 @@ def main():
     mes2, t2 = meses_desde(2)
     R("el_indice_de_precios_del_inicio_no_cambia_H07", o9, lambda: o9.comparar_sombra(mes2, 10000.0, 100.0, 90.0, 100.0, 0.0, "I", t2), "O-01")
     r = o9.barrer(meses_desde(3)[1])
-    h.chk("si_I_deja_de_comparar_barrer_lo_avisa_H04", [x for x in o9.avisos if x["codigo"] == "O-42"] and ("sombra_pendiente", mes2, None) in r["cambios"], r)
+    h.chk("si_I_deja_de_comparar_barrer_lo_avisa_H04", [x for x in o9.avisos if x["codigo"] == "O-42"] and ("sombra_pendiente", mes2, 1) in r["cambios"], r)   # V0.75 (QA r02, H-13): con cuántos faltan
     o9.barrer(meses_desde(3)[1])
     h.chk("y_no_lo_repite_cada_barrido", len([x for x in o9.avisos if x["codigo"] == "O-42"]) == 1)
     o10 = copy.deepcopy(o9)
@@ -166,6 +166,74 @@ def main():
     h.chk("veredicto_en_el_borde", sb.veredicto(23, {"supera": False}) == "EN_PLAZO" and sb.veredicto(24, {"supera": False}) == "PROPONER_PASIVA"
           and sb.veredicto(24, {"supera": True}) == "SUPERA")
     h.chk("meses_entre", sb.meses_entre("2026-11", "2028-11") == 24 and sb.meses_entre("2026-12", "2027-01") == 1)
+
+    # ------------------------------------------------------------------ QA r02 de T-76 (ronda r03)
+    def veinticuatro(robot_ultimo, mov):
+        """Meses 1 a 23 comparados a tiempo; tras el cierre del 24, un movimiento; después I compara el 24 (sondas J5 y J5c)."""
+        o_ = nuevo()
+        assert o_.iniciar_sombra(100000.0, 100.0, "OPERADOR", AHORA)["ok"]
+        for k in range(1, 24):
+            m_, t_ = meses_desde(k)
+            assert o_.comparar_sombra(m_, 100000.0, 100.0, 100.0, 100.0, 0.0, "I", t_)["ok"], k
+        m24, t24 = meses_desde(24)
+        assert o_.movimiento_sombra(mov, 50000.0, 100.0, "OPERADOR", "2028-12-02T09:00:00+00:00")["ok"]
+        return o_, o_.comparar_sombra(m24, robot_ultimo, 100.0, 100.0, 100.0, 0.0, "I", "2028-12-03T09:00:00+00:00")
+    o_, r = veinticuatro(99000.0, "RETIRADA")
+    h.chk("una_retirada_tras_el_cierre_no_cambia_el_juicio_H10", r["ok"] and r["veredicto"] == "PROPONER_PASIVA" and o41(o_), r)
+    o_, r = veinticuatro(101000.0, "APORTE")
+    h.chk("un_aporte_tras_el_cierre_no_cambia_el_juicio_H10", r["ok"] and r["veredicto"] == "SUPERA" and not o41(o_), r)
+    o12 = nuevo()
+    R("inicio_con_unidades_no_finitas_no_H11", o12, lambda: o12.iniciar_sombra(1e200, 1e-200, "OPERADOR", AHORA), "O-01")
+    assert o12.iniciar_sombra(1000.0, 100.0, "OPERADOR", AHORA)["ok"]
+    r = o12.movimiento_sombra("APORTE", 1e300, 1e-300, "OPERADOR", AHORA)
+    h.chk("un_movimiento_no_finito_no_se_confunde_con_una_retirada_mayor_H11", r["codigo"] == "O-01" and "finito" in r["motivo"], r)
+    for nombre, toque in (("sin_ahora", lambda x: x.sombra["entradas"][0].pop("ahora")), ("entradas_vaciadas", lambda x: x.sombra["entradas"].clear())):
+        for op in ("iniciar", "movimiento"):
+            o13 = nuevo()
+            assert o13.iniciar_sombra(1000.0, 100.0, "OPERADOR", AHORA)["ok"]
+            toque(o13)
+            r = (o13.iniciar_sombra(1000.0, 100.0, "OPERADOR", AHORA) if op == "iniciar"
+                 else o13.movimiento_sombra("APORTE", 10.0, 100.0, "OPERADOR", AHORA))
+            h.chk(f"registro_tocado_{nombre}_{op}_es_O13_H12", r["codigo"] == "O-13" and o13.kill is not None, r)
+    o14 = nuevo()
+    assert o14.iniciar_sombra(1000.0, 100.0, "OPERADOR", AHORA)["ok"]
+    o14.sombra["entradas"][0]["importe_eur"] = 1.0
+    o14.barrer(meses_desde(2)[1])
+    h.chk("barrer_avisa_de_un_registro_de_la_sombra_roto_H12", any(x["codigo"] == "O-13" and "sombra" in x["motivo"] for x in o14.avisos), o14.avisos[-3:])
+    # H-13: plazo de gracia, cuántos faltan y el mes de juicio en ALTA
+    o15 = nuevo()
+    assert o15.iniciar_sombra(1000.0, 100.0, "OPERADOR", AHORA)["ok"]   # el 6-11-2026: el primer mes que se compara es 2026-12
+    gracia = PARAMETROS["i_dias_gracia_comparacion_sombra"]
+    h.chk("antes_del_plazo_de_gracia_no_hay_O42_H13", o15.comparacion_sombra_pendiente("2027-01-01T00:00:00+00:00") is None
+          and o15.comparacion_sombra_pendiente(f"2027-01-{gracia:02d}T23:59:59.999999+00:00") is None)
+    h.chk("y_justo_al_acabar_el_plazo_si_H13", o15.comparacion_sombra_pendiente(f"2027-01-{gracia + 1:02d}T00:00:00+00:00") == "2026-12")
+    d = o15.comparaciones_sombra_pendientes("2027-04-10T00:00:00+00:00")
+    h.chk("dice_cuantos_meses_faltan_H13", d == {"primero": "2026-12", "faltan": 4, "juicio": False}, d)
+    o15.barrer("2027-04-10T00:00:00+00:00")
+    h.chk("y_el_aviso_lo_dice_H13", any(x["codigo"] == "O-42" and "4 mes(es)" in x["motivo"] for x in o15.avisos))
+    o16 = nuevo()
+    assert o16.iniciar_sombra(1000.0, 100.0, "OPERADOR", AHORA)["ok"]
+    for k in range(1, 24):
+        m_, t_ = meses_desde(k)
+        assert o16.comparar_sombra(m_, 1000.0, 100.0, 100.0, 100.0, 0.0, "I", t_)["ok"]
+    o16.barrer("2028-12-10T00:00:00+00:00")
+    h.chk("falta_el_mes_de_juicio_es_O44_en_ALTA_H13", any(x["codigo"] == "O-44" and x["prioridad"] == "ALTA" for x in o16.avisos)
+          and not any(x["codigo"] == "O-42" for x in o16.avisos), [x["codigo"] for x in o16.avisos])
+    # H-14: los cuatro mutantes que sobrevivían
+    o17 = nuevo()
+    assert o17.iniciar_sombra(1000.0, 100.0, "OPERADOR", "2026-12-01T00:30:00+01:00")["ok"]   # en UTC aún es noviembre
+    h.chk("el_mes_de_inicio_es_el_de_UTC_en_el_borde_H14", o17.comparar_sombra("2026-12", 1000.0, 100.0, 100.0, 100.0, 0.0, "I", "2027-01-02T00:00:00+00:00")["ok"])
+    o18 = nuevo()
+    assert o18.iniciar_sombra(1000.0, 100.0, "OPERADOR", "2026-12-01T00:30:00+01:00")["ok"]
+    R("y_no_se_puede_empezar_por_el_mes_siguiente_H14", o18,
+      lambda: o18.comparar_sombra("2027-01", 1000.0, 100.0, 100.0, 100.0, 0.0, "I", "2027-02-02T00:00:00+00:00"), "O-01")
+    h.chk("pendiente_no_salta_el_ultimo_instante_del_mes_H14", o15.comparacion_sombra_pendiente("2026-12-31T23:59:59.999999+00:00") is None)
+    mini = [{"tipo": "INICIO", "importe_eur": 1e-7, "precio_indice": 100.0, "ahora": AHORA}]
+    h.chk("la_tolerancia_es_relativa_con_unidades_diminutas_H14",
+          sb.estado_sombra(mini + [{"tipo": "RETIRADA", "importe_eur": 2e-7, "precio_indice": 100.0, "ahora": AHORA}], 100.0, _dt(AHORA)) is None
+          and sb.estado_sombra(mini + [{"tipo": "RETIRADA", "importe_eur": 1e-7, "precio_indice": 100.0, "ahora": AHORA}], 100.0, _dt(AHORA)) is not None)
+    h.chk("estado_sombra_con_un_resultado_infinito_es_None_H14",
+          sb.estado_sombra([{"tipo": "INICIO", "importe_eur": 1e308, "precio_indice": 1e-10, "ahora": AHORA}], 100.0, _dt(AHORA)) is None)
 
     print(f"\n{h.n} comprobaciones")
     print("RESULTADO SOMBRA T-76:", "TODAS LAS PRUEBAS PASAN" if h.ok else "HAY FALLOS")
