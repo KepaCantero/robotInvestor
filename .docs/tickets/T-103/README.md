@@ -2,7 +2,7 @@
 
 | Campo | Valor |
 | --- | --- |
-| Estado | EN QA (ronda r02) |
+| Estado | CERRADO (QA r02 APTO, 12-11-2026) |
 | Pieza | `bloque_a/11_Ejecutor` (un solo bloque) |
 | Planifica · implementa · QA | claude · claude · claude, con un revisor nuevo sin contexto (regla del operador del 12-11-2026) |
 | Aprobación del operador | 2026-11-12: el orden de tareas obligatorias para evaluar el Bloque A por separado («Cómo quedaría entonces las tareas obligatorias para implementar el bloque A?»); la QA r01 de T-93 pedía H-40 antes del modo sombra con API |
@@ -59,3 +59,4 @@ Corregir la regresión de seguridad que dejó T-93 en R8 (una clave detrás de u
 - 2026-11-12 · EN QA · H-40 a H-46 corregidos o declarados; 23 pruebas nuevas
 - 2026-11-12 · NO APTO · QA r01 (revisor nuevo sin contexto): H-48 alto (el almacén no vuelve a abrir con U+2028), H-47 medio (R8 cuadrático con muchas barras), H-49 a H-52 bajos
 - 2026-11-12 · EN QA · Ronda r02: H-47 a H-50 corregidos, H-50 a H-52 declarados; 8 pruebas nuevas
+- 2026-11-12 · CERRADO · QA r02 APTO (otro revisor nuevo, commit `7feb697`): CA-1 a CA-9 cumplidos, sin críticos ni altos. A la deuda: H-53 (A-Forex y B, fila T-105), H-54 a H-56 (fila T-104)
