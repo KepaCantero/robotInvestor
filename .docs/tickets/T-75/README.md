@@ -2,7 +2,7 @@
 
 | Campo | Valor |
 | --- | --- |
-| Estado | EN QA (ronda r03, V0.75) |
+| Estado | CERRADO (QA r03 APTO, 12-11-2026) |
 | Pieza | sistema_global/marco_comun_c |
 | Planifica · implementa · QA | claude · claude · claude, con un revisor nuevo sin contexto (el operador lo autorizó el 12-11-2026: «sí que puedes hacer las QAs de cualquier cosa») |
 | Aprobación del operador | No necesaria: aplica una decisión ratificada (D-22, D-27) y deuda técnica. El operador pidió el 2026-11-10 «reducir la deuda técnica: todo aquello que no dependa de mis decisiones personales» |
@@ -73,3 +73,4 @@ Detalle en `sistema_global/documentos_0/V0.70_Embudo_y_alarma_de_sequia.md`.
 - 2026-11-10 · reabierto por el operador («Abre las rondas detenidas»)
 - 2026-11-10 · EN QA · Ronda r02 (V0.73): corregidos H-01 (veto de F anotado y visible en el embudo), H-03 (un análisis cuenta una vez), H-04 (salidas por oportunidad y periodo abierto por la izquierda), H-05 (solo se informa el aviso si se añade), H-07 (días validados) y H-08 (sequía desde la última inversión: con barridos diarios salta); H-02 y H-06 (documentación) también. 34 comprobaciones; pendiente la QA r02
 - 2026-11-12 · EN QA · Ronda r03 (V0.75), retomada por el operador («empieza por T-75 y T-76»): corregidos H-09 (veto anotado también desde la pantalla, con un método común), H-10 (`contratos.propuesta()` toma la última transición a PROPUESTA desde otro estado), H-11 (`reloj_firme`: un rechazo que anota no hace retroceder el reloj), H-12 (LEEME, Documento 0, deuda y `pruebas.md`), H-13 (docstring: cuenta por sobre) y H-14 (edad desde el primer instante real). 41 comprobaciones; 62 baterías en verde; pendiente la QA r03
+- 2026-11-12 · CERRADO · QA r03 APTO (revisor nuevo sin contexto, commit `89e78e7`): H-09 a H-14 corregidos; se cumplen CA-1 a CA-5. Tres hallazgos bajos nuevos: H-16 (fila T-89 de la deuda desfasada) se corrige al cerrar; H-15 (un veto anterior al periodo sigue como «por qué» de una salida posterior a un análisis nuevo) y H-17 (dos mutantes vivos) pasan a la fila T-75 de la deuda
