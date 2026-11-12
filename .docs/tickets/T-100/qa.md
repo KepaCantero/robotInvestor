@@ -1,25 +1,87 @@
 # T-100 · QA independiente
 
-- **Revisor:** <agente que no implementó> · **Ronda:** r01
+## Ronda r01
 
-## Reproducción desde limpio
+- **Revisor:** Claude, subagente revisor nuevo, sin el contexto de la implementación (solo la skill, el ticket, los hallazgos de origen, el código y los Documentos 0) · **Ronda:** r01 · **Fecha:** 2026-11-12
+- **Revisado:** commit `3583c52` (marco V0.76), en una extracción limpia (`git worktree add --detach` en el directorio temporal del revisor, con el `.venv` del proyecto enlazado; borrada al terminar). Código: en `validador/orquestador.py`, `movimiento_sombra`, `barrer`, `embudo`, `_duplicado`, `_activar_kill`, `_aviso`, `_seguro` y `_sombra_precheck`; `validador/sombra.py`; `validador/migraciones.py` (MIG-011); `validador/catalogo_codigos.py` (O-02 y O-03); `validador/diario.py` (reaplicación); `validador/persistencia.py` (`esquema_actual`); las baterías `pruebas/pruebas_sombra_t76.py` y `pruebas/pruebas_embudo_sequia_t75.py`. Documentación: LEEME del marco, Documentos 0 V0.70, V0.71 y V0.76, filas T-75, T-76 y T-100 de la deuda y los documentos del ticket.
+- **Scripts del revisor** (en `.docs/tickets/T-100/revisores/`, se ejecutan desde la raíz con `.venv/bin/python -I`, con la ruta del marco como argumento opcional; ninguno toca el repositorio):
+  - `r01_01_sondas_referencia.py`: 27 sondas sobre la referencia (tipos, espacios, mayúsculas, NFC/NFD, invisibles, longitud, APORTE y luego RETIRADA, importes casi iguales, NaN), el orden y el reloj, el O-03 bajo `@_seguro`, la persistencia y el diario, el barrido con el registro roto y el esquema. **17 BIEN, 2 FALLA, 8 OBSERVA.**
+  - `r01_02_sondas_embudo.py`: 7 sondas del embudo con vetos, observaciones y análisis nuevos en distintos órdenes, y con el periodo empezando en cada borde (1 µs antes, en y 1 µs después de cada anotación). **7 BIEN.**
+  - `r01_03_mutantes.py`: 22 mutantes nuevos de las correcciones de la V0.76 contra las dos baterías. **16 muertos, 6 vivos** (5 equivalentes o sin requisito; 1 con efecto: H-03).
+  - `r01_04_estado_y_diario_v075.py`: un estado y dos diarios GENUINOS de la V0.75, escritos por el código de `d7f2095` en su propio proceso, abiertos con la V0.76. **4 BIEN, 1 FALLA** (H-02).
+  - `r01_05_rejecuta_r03.py`: vuelve a ejecutar una sonda r03 de T-76 escrita para la V0.75 poniendo a cada movimiento una referencia determinista sacada de su tipo, importe e instante (la misma para el mismo movimiento), para que las sondas sin `ref` sigan midiendo algo.
 
-<Comandos y resultado.>
+### Reproducción
 
-## Criterios de aceptación
+- **Baterías:** `.docs/scripts/pruebas_marco.sh` en la extracción limpia → **62 pasan, 0 fallan**.
+- **LEEME contra disco:** `.docs/scripts/leeme_marco.py sistema_global/marco_comun_c` → «SIN DIFERENCIAS (0)».
+- **Sondas r03 de T-75:** `r03_sondas_embudo_sequia.py` → **13 OK, 0 HALLAZGO** (la n01, que era H-15, da OK; la n08, que era H-16, también).
+- **Mutantes r03 de T-75:** `r03_mutantes.py` → 5 muertos y 1 «NO APLICA»: el del reinicio del veto (H-01), porque su texto ahora aparece dos veces. Los dos reinicios por separado son N18 y N19 de `r01_03`, y mueren.
+- **Sondas r03 de T-76**, con `r01_05_rejecuta_r03.py`:
+  - `r03_01_cierre_plazos_juicio.py`: **18 BIEN de 18** (A1 a A12).
+  - `r03_02_fallo_cerrado_registro.py`: **17 BIEN, 2 FALLA**. **F2 y F2b dan BIEN** (un aporte declarado tres veces cuenta una; el mes 24 da SUPERA sin O-41). **F3b y F3c dan BIEN** (con el registro roto, `barrer()` da solo O-13 y activa el kill-switch). Las dos FALLA no son defectos: F3d mide el límite declarado T-02 (reescribir el registro con las huellas recalculadas) y F9b reconstruye por su cuenta la prueba H-03 antigua; la batería nueva sí llega a comparar (con un inicio válido, `comparar_sombra(m1, 1e308, 100, 1e10, 1e-300, …)` da O-01 «alguno da un resultado que no es un número finito», y la misma comparación con datos normales da OK).
+- **Mutantes r03 de T-76:** `r03_04_mutantes.py` → **30 muertos, 0 vivos** y M15 «NO APLICA» (su texto cambió con H-19).
+- **Gate:** ver «Gate».
+
+### Criterios de aceptación
 
 | Criterio | Cumple | Evidencia |
 | --- | --- | --- |
-| CA-1 | sí / no | … |
+| CA-1: un aporte declarado dos veces con la misma referencia cuenta una vez (O-02 la segunda), y F2b ya no da PROPONER_PASIVA | sí | Batería (`el_mismo_movimiento_declarado_dos_veces_cuenta_una_H17`, `y_un_aporte_repetido_no_da_la_vuelta_al_juicio_H17`). F2 y F2b de la r03 con `r01_05`: 1 aporte anotado de 3 declaraciones; mes 24 SUPERA, sin O-41. S05: el mismo importe como entero es O-02. S08 y S09: el duplicado se sigue viendo tras volcar y cargar, y el diario lo reproduce |
+| CA-2: la misma referencia con otro tipo o importe da O-03, activa el kill-switch y no anota nada; sin referencia, O-01 | sí | Batería (`la_misma_referencia_con_*_es_O03_con_kill_switch_H17`, `movimiento_*_no_H17`). S04: APORTE y luego RETIRADA con la misma referencia, O-03, O-26 y sin entrada nueva; S07b: repetir el conflicto no multiplica avisos. S01: None, entero, float, bool, bytes, lista, dict, vacía, blancos, tabulador y NBSP dan O-01 sin tocar nada. S05c y S05d: con una referencia ya usada, un importe o un precio NaN, inf, None, texto o bool dan O-01, no O-02 ni O-03. Reservas: H-01 (grafías de la misma referencia) y H-04 (longitud) |
+| CA-3: con el registro roto, `barrer()` da O-13, activa el kill-switch y no da O-42 ni O-44 | sí | Batería (`barrer_con_el_registro_roto_*_H19`); F3b y F3c de la r03. S10: tres barridos seguidos dan un O-13 y un O-26 (los avisos no se multiplican) y ningún O-42 ni O-44. S10b: un kill-switch ya activo no se pisa. S10c: tras acusar el O-13, el barrido siguiente vuelve a avisar. S10e: con la sombra íntegra, lo pendiente se sigue avisando |
+| CA-4: en `embudo()`, la causa previa de una salida es la misma se mire con el periodo que se mire | sí | Batería (`tras_un_analisis_nuevo_el_veto_no_es_la_causa_mire_el_periodo_que_mire_H15`); n01 de la r03 de T-75: OK. `r01_02`, E1 a E6: en cada escenario se prueban todos los inicios de periodo posibles (cada anotación, 1 µs antes y 1 µs después) y cada salida da un único `bloqueo_previo`: el veto en la observación que lo sigue, None tras un análisis nuevo (también con el borde exacto, con dos reanálisis y con el descarte en EN_ANALISIS antes del sobre), y el veto si no hubo análisis nuevo |
+| CA-5: los mutantes de `T-75/revisores/r03_mutantes.py` y los ocho con efecto de `T-76/revisores/r03_04_mutantes.py` mueren con las baterías | sí | T-75: los 5 que se aplican mueren; el sexto (reinicio del veto) ya no se aplica tal cual, y sus dos variantes (N18 y N19) mueren. T-76: con `r03_04_mutantes.py`, 30 muertos, 0 vivos y 1 «NO APLICA» (M15, cuyo texto cambió con H-19; su efecto lo matan N15 y N16 de `r01_03`). Los ocho con efecto (M02, M03, M04, M05, M09, M12, M13 y M22) mueren |
+| CA-6: el esquema sigue siendo el de la V0.75; un estado de la V0.75 se abre sin migración y conserva sus movimientos sin referencia | sí, con reserva | S11 y C01: `esquema_actual()` = `ESQUEMA_V0_75` (`0b53d06e…`), y es el mismo que calcula el código de `d7f2095`. C02 y C03: un estado genuino de la V0.75 con un aporte sin referencia se carga (OK, integridad vacía), conserva el aporte y admite uno nuevo con referencia; uno sin referencia da O-01. C04: un diario de la V0.75 cerrado con `punto()` se abre. Reserva: un diario de la V0.75 con un movimiento de la sombra después del último punto no se abre (H-02) |
+| CA-7: 62 baterías, LEEME = disco, gate 12/12; no cambia ningún bloque ni la Constitución | sí | 62/62 y LEEME sin diferencias en la extracción limpia. `git show --stat 3583c52`: ningún archivo de `bloque_*` ni de `sistema_global/constitucion/`. Gate: ver abajo |
 
-## Hallazgos
+### Estado de los hallazgos de origen
+
+| Origen | Estado | Evidencia |
+| --- | --- | --- |
+| T-76 H-17 (media): un movimiento repetido cuenta dos veces | **corregido** | CA-1 y CA-2; F2 y F2b de la r03, BIEN. Queda el límite declarado de referencias distintas, que H-01 acota |
+| T-76 H-18 (baja): mutantes vivos y regresión de H-03 vacía | **corregido** | Los ocho con efecto mueren; la regresión H-03 reescrita llega a `comparar_sombra` (ver «Reproducción»); hay prueba contra un cálculo de referencia (`referencia()` de la batería, el mismo método que A1/A3 de la r03) y del empate |
+| T-76 H-19 (baja): `barrer()` con el registro roto | **corregido** | CA-3; F3b y F3c, BIEN |
+| T-76 H-20 (baja): MIG-011 no declaraba las comparaciones de la V0.73 y la V0.74 | **corregido** | La descripción de MIG-011 lo dice (S11b); el Documento 0 V0.76 §2 también |
+| T-75 H-15 (baja): veto rancio con un análisis anterior al periodo | **corregido** | CA-4; n01, OK |
+| T-75 H-17 (baja): dos mutantes vivos | **corregido** | El de `reloj_firme` en la pantalla muere con tres pruebas nuevas; el del reinicio, en sus dos variantes (N18 y N19) |
+
+### Hallazgos nuevos
 
 | ID | Gravedad | Cómo reproducirlo | Esperado / obtenido | Corrección sugerida | Estado |
 | --- | --- | --- | --- | --- | --- |
-| H-01 | crítica · alta · media · baja | … | … | … | abierto · corregido |
+| H-01 | baja | `r01_01`, S02, S02b y S01b. G declara `INT-0001`; el operador declara el mismo aporte como `"INT-0001 "`, `" INT-0001"`, `"int-0001"`, o la misma referencia con tildes en NFD | **Esperado:** la referencia es «la misma la declare quien la declare»; el código ya trata los espacios como insignificantes al exigir que no esté en blanco (`ref.strip()`). **Obtenido:** cada grafía cuenta como un movimiento nuevo: 4 aportes de 50 000 EUR por uno real (S02) y 2 con NFC frente a NFD (S02b), que es exactamente el caso de H-17 y le da la vuelta al juicio igual. Además, una referencia hecha solo de un espacio de ancho cero (U+200B) o de un carácter nulo se admite (S01b). El §5 del Documento 0 declara el límite «si dan referencias distintas, cuenta dos veces», pero estas son la misma referencia escrita de otra forma, y quitarlas es barato | Normalizar la referencia antes de buscarla y de guardarla: NFC y sin espacios a los lados (la lección NFC del proyecto); rechazar con O-01 las que tengan caracteres de control o de formato (categorías Cc y Cf de Unicode). Si mayúsculas y minúsculas deben ser la misma referencia depende del intermediario: llevarlo como `[PROPUESTO]` a la deuda. Regresión: S02 y S02b |
+| H-02 | baja | `r01_04`, C05. Con el código de la V0.75: diario nuevo, `iniciar_sombra` y `movimiento_sombra` (sin referencia, como era entonces), sin `punto()`. Se abre con la V0.76 | **Esperado:** el Documento 0 V0.76 §3 dice que «un estado guardado con la V0.75 se abre tal cual» y que no hace falta migración. **Obtenido:** `diario.abrir` da **DI-04** («la operación 4 (movimiento_sombra) no da el resultado anotado al volver a aplicarla»), con kill-switch y O-13: al reaplicar, la llamada sin `ref` da O-01. Falla cerrado, y se arregla abriendo con la V0.75 y haciendo `punto()`, pero nada lo avisa: como no hay cambio de esquema, no pasa por `migraciones.migrar` y su MG-06 («haz punto() antes de migrar») no salta. Con el diario cerrado en un punto (C04) se abre bien. Pesa poco, porque la V0.75 no ha operado | Decir en el Documento 0 V0.76 (§3) y en la nota de la V0.76 del LEEME que, antes de pasar a la V0.76, el diario se cierra con `punto()` en la V0.75 (o se abre con ella y se hace el punto). Opcional: una prueba que lo fije (C05) |
+| H-03 | baja | `r01_03`, N22, y `r01_02`, E5 y E6. Mutante: en `embudo()`, `nuevo_analisis` solo con el paso a VALIDADA (sin EN_ANALISIS) | **Esperado** (CA-5 y la fase `ri-probar`): cada regla de la corrección tiene una regresión. **Obtenido:** las dos baterías pasan con el mutante, aunque cambia el resultado: con un veto, observación, reapertura y encargo nuevo (EN_ANALISIS), un descarte antes del sobre sale con el veto como `bloqueo_previo` (E6), y la fila de la oportunidad lleva el veto entre el encargo y el sobre (E5). El diseño y el docstring dicen «VALIDADA o EN_ANALISIS». La falta es anterior a T-100 (el reinicio viene de la r01 de T-75), pero es la regla que H-15 mueve | Añadir E6 (y, si se quiere, E5) de `r01_02` a `pruebas_embudo_sequia_t75.py` |
+| H-04 | baja | `r01_01`, S03. Un movimiento con una referencia de un millón de caracteres y luego un conflicto con ella | **Esperado:** los textos del exterior que entran en un aviso van recortados, como en el resto del Orquestador (`motivo[:120]`, `detalle[:120]`; el propio `_activar_kill` recorta a 200). **Obtenido:** la referencia se admite sin límite de longitud y el aviso O-03 la copia entera: un motivo de 1 000 078 caracteres, que va a la consola y al canal de los ALTA; el estado volcado pasa de 2 MB con un solo movimiento | Recortar la referencia en el motivo del O-03 y del O-02 como los demás textos, y poner un máximo de longitud a `ref` (O-01 si lo pasa), como parámetro `[PROPUESTO]` y no como número en el código |
+| H-05 | baja | Lectura del Documento 0 V0.76, §4, frente a la salida de los scripts de mutantes de los revisores | **Esperado:** documentación que dice lo que pasa. **Obtenido:** dice que «mueren todos los de los scripts de los revisores», pero dos ya no se aplican porque su texto cambió (M15 de T-76 y el del reinicio del veto de T-75, que ahora aparece dos veces). `pruebas.md` sí lo cuenta bien, y los dos tienen variantes manuales que mueren (N16, N18 y N19 de `r01_03` lo confirman) | Cambiar la frase del §4 por la de `pruebas.md`: mueren todos los que se aplican, y los dos que ya no se aplican se cubren con mutantes equivalentes |
 
-Los scripts de ataque van en `revisores/` dentro de este ticket, numerados por ronda y sin sobrescribir.
+### Observaciones (no son hallazgos)
 
-## Veredicto
+- **El O-03 no fija el reloj** (S07). El aviso O-03 y el kill-switch se anotan con el instante del conflicto, pero, como la llamada se rechaza, `@_seguro` devuelve `ultimo_ahora` al de antes; después se admite un movimiento con un instante entre los dos. Es lo mismo que hace el O-03 de un `event_id` repetido (`_duplicado`, S07d), y no rompe nada: la integridad queda vacía y el rearme pide una conciliación posterior al kill-switch, que falla cerrado. Si se quiere que nada pueda anotarse antes de un incidente, sería `reloj_firme=True` en los dos O-03 (mutante N13: ninguna prueba lo fija ni lo prohíbe).
+- **El reloj se mira antes que la referencia** (S06). Un duplicado o un conflicto con un instante anterior al último da O-16, no O-02 ni O-03, y no activa el kill-switch. No se anota nada, y al repetirlo con la hora actual se ve como lo que es.
+- **La igualdad del importe es exacta** (S05b). Un importe que difiere en el último bit, o en una milésima, es O-03 con kill-switch. Es el diseño («otro importe»); con importes en céntimos del intermediario no debería darse.
+- **Un duplicado de la sombra es O-02 con `ok` verdadero** y adelanta el reloj, como `_duplicado`; el O-02 de `iniciar_sombra` lleva `ok` falso. Ya era así antes de T-100.
+- **Con el kill-switch activo se siguen replicando movimientos** (S07c): son hechos de la cartera real, no órdenes. Bien.
+- **Otros registros rotos** (S10d): con el rastro de consultas tocado, `barrer()` no avisa ni para; lo para el siguiente punto de decisión. H-19 solo trataba la sombra.
+- **Mutantes vivos equivalentes o sin requisito** (`r01_03`): N14 es la corrección de H-01 (debe vivir); N17 (activar el kill-switch del barrido solo si el O-13 es nuevo) no se distingue porque el rearme exige la integridad; N20 y N21 son equivalentes con las transiciones que existen.
+- **Persistencia y diario** (S08, S08b, S08c y S09): con entradas con y sin `ref`, volcar y cargar conservan el registro; tocar, quitar o añadir una referencia guardada lo ve `integridad()` (SOMBRA) y el movimiento siguiente da O-13; el diario reproduce el duplicado, el conflicto y el kill-switch.
+- **Invariantes de la skill:** la sombra no da órdenes, así que F y G no aplican, y ningún camino nuevo llega a una orden; no hay LLM en la ruta; los controles no se relajan (el barrido ahora para y la referencia es obligatoria); todo valida antes de mutar (S01 y S05c: ningún rechazo cambia el estado, y el conflicto no anota la entrada); no hay números nuevos; no hay decisiones del operador tomadas en silencio (la de mayúsculas de H-01 queda propuesta); no hay secretos ni datos personales en lo revisado ni en los scripts (`tools/secrets_scan.py` y `tools/refs_vivas.py` sin hallazgos con los scripts ya escritos).
+- **Documentación:** el LEEME (nota de la V0.76, filas de las dos baterías con 45 y 94 comprobaciones y las líneas «Comprobado en…»), los Documentos 0 V0.70 (§2, el veto borrado aunque caiga antes del periodo) y V0.71 (§2 «vigente en la V0.76», `ref` en `movimiento_sombra` y el barrido que para), la descripción de MIG-011, el texto de O-03 en el catálogo y las filas T-75, T-76 y T-100 de la deuda dicen lo que hace el código, salvo H-02 y H-05. La fila T-57 ya recoge `i_dias_gracia_comparacion_sombra` (T-76 H-21) y la fila T-89 ya no dice DETENIDO (T-75 H-16).
 
-**APTO / NO APTO** · motivo.
+### Gate
+
+- El gate completo (12/12) pasó en el commit `3583c52`, según el registro del ticket y el coordinador. T-100 no toca los bloques, y el gate no ejecuta las baterías del marco: esas son las 62 de arriba, en verde en la extracción limpia.
+- En la extracción limpia se lanzó `./tools/check_all.sh --core`: pasaron corpus, NFC, YAML, secretos y referencias vivas; las tres suites de pytest de los bloques no llegaron a terminar dentro del tiempo de esta ronda, y el proceso se paró al borrar la extracción. No cambia el veredicto: ningún archivo de `bloque_*` cambia en el commit.
+- Con los scripts de esta ronda ya escritos, `tools/refs_vivas.py` y `tools/secrets_scan.py` siguen sin hallazgos en el árbol del repositorio.
+
+### Veredicto r01
+
+**APTO.** Los siete criterios de aceptación se cumplen, y los seis hallazgos de origen (T-76 H-17 a H-20; T-75 H-15 y H-17) quedan corregidos. No hay hallazgos críticos, altos ni medios. Los cinco nuevos son bajos:
+- **H-01:** grafías distintas de la misma referencia (espacios, NFD, invisibles) cuentan como otro movimiento;
+- **H-02:** un diario de la V0.75 con movimientos después del último punto no se abre con la V0.76 (DI-04 con kill-switch), y no está dicho;
+- **H-03:** el reinicio del veto al pasar a EN_ANALISIS no tiene regresión;
+- **H-04:** la referencia no tiene límite de longitud y el aviso O-03 la copia entera;
+- **H-05:** el Documento 0 V0.76 dice que mueren todos los mutantes de los revisores, y dos ya no se aplican.
+
+Si no se corrigen al cerrar, pasan a la fila T-100 de la deuda técnica (o a la T-76 y la T-75, según la pieza) con su ID. El cierre (estado del ticket, deuda, diario y commit) lo hace el coordinador.

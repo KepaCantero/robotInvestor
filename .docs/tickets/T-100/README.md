@@ -2,7 +2,7 @@
 
 | Campo | Valor |
 | --- | --- |
-| Estado | EN QA |
+| Estado | CERRADO (QA r01 APTO, 12-11-2026) |
 | Pieza | sistema_global/marco_comun_c |
 | Planifica · implementa · QA | claude · claude · claude, con un revisor nuevo sin contexto (regla del operador del 12-11-2026) |
 | Aprobación del operador | Aprobada el 2026-11-12: «sí abre el marco y corrige» (respuesta a «¿abro una V0.76 del marco para corregir estos pendientes, empezando por T-76 H-17?») |
@@ -67,3 +67,4 @@ Corregir lo que las QA r03 de T-75 y T-76 dejaron en la deuda al dar APTO. Lo m�
 
 - 2026-11-12 · ABIERTO · creado con nuevo_ticket.sh, a petición del operador («sí abre el marco y corrige»)
 - 2026-11-12 · EN QA · V0.76 implementada: referencia obligatoria de los movimientos de la sombra (O-02 / O-03 con kill-switch), barrido que para con la sombra rota, veto del embudo borrado por un análisis nuevo anterior al periodo, MIG-011 declarada; embudo 45 y sombra 94 comprobaciones; todos los mutantes de los revisores mueren; sin cambio de esquema
+- 2026-11-12 · CERRADO · QA r01 APTO (revisor nuevo sin contexto, commit `3583c52`): CA-1 a CA-7 cumplidos, los seis hallazgos de origen corregidos. Cinco bajos nuevos: H-02 (diario de la V0.75 sin `punto()`) y H-05 (Documento 0 sobre los mutantes) se corrigen al cerrar en el Documento 0; H-01 (referencia sin normalizar), H-03 (mutante vivo del veto al pasar a EN_ANALISIS) y H-04 (referencia sin límite de longitud) pasan a la fila T-100 de la deuda
