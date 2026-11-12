@@ -39,6 +39,46 @@ prompts:
   marco_comun_si_falta: true
 
 # ---------------------------------------------------------------------------
+# T-101 · Diseño del Bloque A. «v5»: los 25 agentes de la entrega V5.1 (referencia, por defecto). «v6»: el rediseño
+# aspirante (.docs/diseno/bloque_a/decision_claude_c01.md): Analista de perfil con núcleo común y kit, GC1 por código,
+# Prospectiva una vez por ciclo, Contradictor solo de la selección provisional y sus sustitutas, Sintetizador, Lector
+# de evidencia, Respondedor de consultas y curación, dictamen G3 e informe de aprendizaje por código. Se cambia a «v6»
+# cuando el banco con la API real (modo sombra, Fase 5) lo respalde; cada pieza tiene su interruptor para medirla sola.
+# Los números marcados [PROPUESTO] van a la sesión de decisiones del operador (T-57).
+# ---------------------------------------------------------------------------
+diseno: v5
+v6:
+  prompts_dir: prompts_v6            # prompts nuevos de la V6 (relativa a 11_Ejecutor; fuera del corpus congelado)
+  analista:
+    nucleo_y_kit: true               # false = el prompt V5.0 íntegro de cada Analista
+    base_conocimientos: ninguna      # ninguna | completa: la §10 del prompt V5.0 entra o no en el kit (la compara el banco)
+  gc1:
+    por_codigo: true                 # el código filtra el universo antes del Analista (PA-04)
+    senal_por_perfil: {}             # tipo de activo -> clave de señal del Motor que manda en GC1 (por defecto senal_compuesta)
+    exploracion_celdas: 2            # [PROPUESTO] ámbitos que no pasan GC1 y llegan igualmente, marcados (falsos negativos)
+  prospectiva:
+    global: true                     # una llamada por ciclo (en lotes) en vez de una por tipo de activo
+    max_encargos_por_lote: 12        # [PROPUESTO] A-02 de la revisión C-01: el lote escala por candidatas
+    lotes_por_perfil: false          # true = un lote por tipo de activo (para que el banco lo compare)
+  contradictor:
+    solo_seleccion: true             # A-01: solo la selección provisional y sus sustitutas
+    max_rondas_sustitucion: 2        # [PROPUESTO] rondas de crítica de sustitutas; lo que quede sin crítica no se entrega
+    proveedor: mismo                 # mismo | otro (decisión 2 de la tanda 1; sin contratar: se usa el mismo y se declara)
+  sintetizador: true                 # integración y textos en una llamada, después de G3 (sustituye a AG-02 y AG-17)
+  lector_evidencia: true             # CT-07 y CT-08 en el ciclo (sustituye a AG-14 y AG-16 en el ciclo)
+  respondedor: true                  # consultas N0 de CT-03 (sustituye a la parte de IA de AG-01)
+  curacion_llm: false                # true = AG-12 clasifica las piezas (ablación PA-14)
+  dictamen_g3_llm: false             # true = AG-18 dictamina las advertencias de HT-09
+  informe_aprendizaje_llm: false     # true = AG-20 redacta el informe CT-19 (las lecciones deterministas siguen)
+  auditoria_fraccion: 0.25           # [PROPUESTO] fracción de runs vivos que audita AG-19 (muestreo sembrado por run)
+  cobertura:
+    registrar: true                  # A-05 e idea 3: registro del embudo por candidata en HA
+    muestra_descartes: 2             # [PROPUESTO] descartes por tipo y run con seguimiento contrafactual (idea 4)
+    horizonte_contrafactual: H3      # horizonte con el que se resuelve la muestra
+  # Idea 7: tope de tokens (aproximados) del system prompt por papel; la prueba de T-101 lo vigila
+  tope_tokens_system: {analista: 14000, AG-10: 23000, AG-11: 20000, AG-26: 2500, AG-27: 1800, AG-28: 1800}
+
+# ---------------------------------------------------------------------------
 # Modelos por agente. IMPORTANTE: los identificadores deben comprobarse en la
 # documentación de Anthropic (página de modelos) antes de usar el cliente real.
 # ---------------------------------------------------------------------------
@@ -69,6 +109,9 @@ modelos:
   AG-23: claude-sonnet-5-5    # Analista de Derivados Financieros (DER)
   AG-24: claude-sonnet-5-5    # Analista de Instrumentos Monetarios y Liquidez (MON)
   AG-25: claude-sonnet-5-5    # Analista de Tipos de Interés, Crédito y Volatilidad (TCV)
+  AG-26: claude-sonnet-5-5    # V6 · Sintetizador (integración y textos)
+  AG-27: claude-haiku-5-5     # V6 · Respondedor de consultas N0
+  AG-28: claude-haiku-5-5     # V6 · Lector de evidencia (aislado)
 
 max_tokens:
   por_defecto: 8000
@@ -104,7 +147,7 @@ busqueda_web:
   habilitada_en_vivo: true       # en backtest siempre desactivada (fuga de información)
   tipo_herramienta: web_search_20260318
   max_usos_por_llamada: 5
-  agentes: [AG-14, AG-15, AG-16]
+  agentes: [AG-14, AG-15, AG-16, AG-28]   # AG-28: Lector de evidencia de la V6 (T-101)
 
 # ---------------------------------------------------------------------------
 # Presupuestos (Anexo A del Documento 0 óptima V5.0) y conversión a UC
