@@ -14,6 +14,7 @@ Las funciones reciben el `Bloque` y reutilizan sus piezas: los contratos, los ar
 """
 from __future__ import annotations
 
+import copy
 import hashlib
 import math
 import re
@@ -458,46 +459,85 @@ INSTR_SINTESIS = ("Sobre el paquete ya validado: escribe la integración (régim
 _CAMPOS_REDACCION = ("frases_30s", "tarjetas", "motivos_llanos", "glosario", "frase_historial")
 
 
-# QA r01 de T-101, H-09, y r02, H-12: un texto del Sintetizador con una probabilidad numérica (R13) o con la compra o venta de un
-# instrumento concreto (R21) no se toma. Son reglas por patrón; un nombre propio sin patrón (p. ej. «entrar en Tesla») no se
-# detecta: lo revisa el Auditor por muestreo y queda declarado como límite.
+# Filtro R13/R21 de los textos del Sintetizador (QA r01 de T-101, H-09; r02, H-12; T-102, H-23 y H-24 de la r03). Se aplica
+# FRASE A FRASE: una frase que da una probabilidad numérica (R13) o que compra o vende un instrumento concreto (R21) se quita, y
+# el resto del texto se conserva. Son reglas por patrón; un nombre propio suelto sin código ni sufijo («entrar en Tesla») no se
+# detecta: lo revisa el Auditor por muestreo y es un límite declarado.
 _NUM = r"\d{1,3}(?:[.,]\d+)?"
-_PROB = r"(?:probabilidad(?:es)?|posibilidad(?:es)?|opciones|chances?)"
-_R13 = (re.compile(rf"{_NUM}\s*(?:%|por\s+ciento)\s+de\s+{_PROB}", re.IGNORECASE),
-        re.compile(rf"\b{_PROB}\b[^.;:!?]{{0,40}}?\b(?:0[.,]\d+|{_NUM}\s*(?:%|por\s+ciento))(?!\s*(?:%\s*)?de\s+las\s+veces)",
-                   re.IGNORECASE))
-_VERBO = r"(?:compr(?:a|ar|e|en|amos)|vend(?:e|er|a|an|emos)|adquiri(?:r|d)|sobrepond(?:erar|era|ere)|infrapond(?:erar|era|ere)|la\s+compra\s+de|la\s+venta\s+de)"
-_R21 = (re.compile(r"\b[A-Z]{2}[A-Z0-9]{9}\d\b"),                                                    # un ISIN
-        re.compile(r"\b[A-Z][\w&.-]+(?:\s+[A-Z][\w&.-]+)*\s+(?:Corp|Corporation|Inc|Incorporated|plc|PLC|AG|NV|SE|S\.A\.)\b"),
+_PCT = rf"{_NUM}\s*(?:%|por\s+ciento)"
+_PROB = r"(?:probabilidad(?:es)?|posibilidad(?:es)?)"
+_ENLACE = r"(?::|=|\s+(?:es|ser[áa]|ser[íi]a|est[áa]|queda|ronda|alcanza|supera|llega\s+a|sube\s+a|baja\s+a)(?:\s+(?:de|del|en|el|al))?|\s+del?)"
+_R13 = (re.compile(rf"{_PCT}\s+de\s+(?:{_PROB}|confianza|opciones\s+de\s+\w+)", re.IGNORECASE),     # «un 70 % de probabilidad»
+        re.compile(rf"\b{_PROB}(?:\s+de\s+\w+)?{_ENLACE}\s*(?:un\s+|el\s+)?(?:0[.,]\d+|{_PCT})", re.IGNORECASE),  # «probabilidad del 87 %»
+        re.compile(rf"\bprobab\w*\s+(?:al|en\s+un|en\s+el)\s+{_PCT}", re.IGNORECASE))                 # «probable al 80 %»
+_R21 = (re.compile(r"\b[A-Z][\w&.-]+(?:\s+[A-Z][\w&.-]+)*\s+(?:Corp|Corporation|Inc|Incorporated|plc|PLC|AG|NV|SE|S\.A\.)\b"),
         re.compile(r"\bbonos?\b[^.;]{0,60}?\bvencimiento\s+(?:en\s+)?(?:19|20)\d{2}\b", re.IGNORECASE))  # una emisión concreta
-_CODIGO_VERBO = re.compile(rf"\b{_VERBO}\b(?:\s+(?:acciones|bonos|participaciones|t[íi]tulos)\s+de)?(?:\s+[\wÁÉÍÓÚáéíóúñ]+){{0,2}}?\s*\(?\$?([A-Z]{{1,5}}(?:\.[A-Z]{{1,3}})?)\)?", re.IGNORECASE)
-_CODIGO_PARENTESIS = re.compile(r"\(\$?([A-Z]{1,5}(?:\.[A-Z]{1,3})?)\)")
+_ISIN = re.compile(r"\b[A-Z]{2}[A-Z0-9]{9}\d\b")
+_VERBO = re.compile(r"\b(?:compr(?:a|ar|e|en|amos|ando)|vend(?:e|er|a|an|emos|iendo)|adquiri(?:r|d)|sobrepond(?:erar|era|ere)|"
+                    r"infrapond(?:erar|era|ere)|invertir\s+en|invierte\s+en|entrar\s+en|tomar\s+posiciones?\s+en|abrir\s+(?:largos|cortos)\s+en|"
+                    r"posicionarse\s+en|la\s+compra\s+de|la\s+venta\s+de)\b", re.IGNORECASE)
+_CODIGO = re.compile(r"(?<![\w&.^=-])\$?([A-Z][A-Z0-9&.^=/-]{1,14})(?![\w&])")
+_FRASE = re.compile(r"(?<=[.;!?])\s+")
 
 
-def texto_prohibido(t, permitidos=frozenset()) -> str | None:
-    """«R13», «R21» o None para un texto del Sintetizador. `permitidos`: códigos que no son instrumentos (divisas, tipos de
-    activo, siglas de segmentos y los símbolos del universo)."""
-    if not isinstance(t, str):
-        return None
+def _es_instrumento(cod: str, perm) -> bool:
+    """Un código en mayúsculas es un instrumento concreto salvo que sea un código permitido (divisa, tipo de activo, sigla de
+    índice, materia prima o segmento), un par de divisas permitidas sin barra («EURUSD») o una serie del universo que no es un
+    ticker de fondo (los símbolos con «=», «^», dígitos o guiones: pares, índices y series)."""
+    c = cod.lstrip("$").rstrip(".")
+    if c in perm["codigos"] or c in perm["series"]:
+        return False
+    if len(c) == 6 and c.isalpha() and c[:3] in perm["codigos"] and c[3:] in perm["codigos"]:
+        return False
+    return any(ch.isupper() for ch in c) and len(c) >= 2
+
+
+def frase_prohibida(t: str, perm) -> str | None:
+    """«R13», «R21» o None para UNA frase."""
     if any(r.search(t) for r in _R13):
         return "R13"
     if any(r.search(t) for r in _R21) or sint._UNITARIA.search(t):
         return "R21"
-    for m in _CODIGO_VERBO.finditer(t):   # «comprar AAPL», «compra acciones de Apple (AAPL)», «la compra de MSFT»
-        cod = m.group(1)
-        if cod.isupper() and cod not in permitidos:
-            return "R21"
-    # con un verbo de compra o venta, un código entre paréntesis ajeno
-    if re.search(rf"\b{_VERBO}\b", t, re.IGNORECASE) and any(c not in permitidos for c in _CODIGO_PARENTESIS.findall(t)):
+    if any(_es_instrumento(m, perm) for m in _ISIN.findall(t)):
         return "R21"
+    for m in _VERBO.finditer(t):   # tras un verbo de compra o venta, hasta el final de la frase o 60 caracteres
+        ventana = re.split(r"[,;:]|\by\s+(?:ya\s+)?(?:no\s+)?(?:se\s+)?\w+[ae]n?\b", t[m.end():m.end() + 60])[0]
+        if any(_es_instrumento(c, perm) for c in _CODIGO.findall(ventana)):
+            return "R21"
     return None
 
 
-def permitidos_r21(bloque) -> frozenset:
+def _frases(t: str) -> list[str]:
+    return [x for x in _FRASE.split(t.strip()) if x]
+
+
+def texto_prohibido(t, permitidos=None) -> str | None:
+    """«R13», «R21» o None para un texto entero (la primera regla que incumple alguna de sus frases)."""
+    if not isinstance(t, str):
+        return None
+    perm = permitidos if isinstance(permitidos, dict) else {"codigos": frozenset(permitidos or ()), "series": frozenset()}
+    return next((r for r in (frase_prohibida(f, perm) for f in _frases(t)) if r), None)
+
+
+def limpiar(t, perm) -> tuple[str, list[str]]:
+    """El texto sin las frases que incumplen R13 o R21, y las reglas incumplidas."""
+    if not isinstance(t, str):
+        return t, []
+    quedan, reglas = [], []
+    for f in _frases(t):
+        r = frase_prohibida(f, perm)
+        (reglas.append(r) if r else quedan.append(f))
+    return " ".join(quedan), reglas
+
+
+def permitidos_r21(bloque) -> dict:
+    """Los códigos de la configuración (`v6.filtro_r21_codigos`) y las series del universo que no son tickers de fondo."""
     simbolos = set(bloque.universo["simbolo"].astype(str))
     if "subyacente" in bloque.universo:
         simbolos |= {str(x) for x in bloque.universo["subyacente"].dropna()}
-    return frozenset(op(bloque, "filtro_r21_codigos")) | simbolos
+    series = {x for x in simbolos if re.search(r"[=^\-\d/]", x) or len(x) > 5}
+    series |= {x.split("=")[0] for x in simbolos if "=" in x}   # «EURUSD=X» también como «EURUSD»
+    return {"codigos": frozenset(str(x) for x in op(bloque, "filtro_r21_codigos")), "series": frozenset(series)}
 
 
 def _textos(x) -> list:
@@ -510,49 +550,76 @@ def _textos(x) -> list:
     return []
 
 
-def _aplicar_integracion(paquete: dict, d: dict, lim: dict, permitidos=frozenset()) -> list[str]:
+def _aplicar_integracion(paquete: dict, d: dict, lim: dict, permitidos=None) -> list[str]:
     """Solo se toman textos (el Sintetizador no puede cambiar la selección, las puntuaciones, las fechas ni las cifras), con las
-    longitudes de `v6.sintetizador_limites`, y nunca uno que incumpla R13 o R21. Devuelve los campos descartados."""
-    descartados = []
+    longitudes de `v6.sintetizador_limites`; de cada texto se quitan las frases que incumplen R13 o R21. Devuelve lo quitado."""
+    perm = permitidos or {"codigos": frozenset(), "series": frozenset()}
+    descartados: list[str] = []
 
-    def _ok(campo, t):
-        if not isinstance(t, str) or len(t.strip()) < lim["texto_minimo"]:
-            return False
-        regla = texto_prohibido(t, permitidos)
-        if regla:
-            descartados.append(f"{campo} ({regla})")
-            return False
-        return True
-    if _ok("regimen_macro", d.get("regimen_macro")):
-        paquete["regimen_macro"] = d["regimen_macro"].strip()[:lim["regimen"]]
-    fact = {str(x.get("cluster_id")): str(x["factor"]).strip() for x in d.get("factores_dominantes") or []
-            if isinstance(x, dict) and _ok("factores_dominantes", x.get("factor"))}
+    def _limpio(campo, t):
+        if not isinstance(t, str):
+            return None
+        t2, reglas = limpiar(t, perm)
+        descartados.extend(f"{campo} ({r})" for r in reglas)
+        return t2.strip() if len(t2.strip()) >= lim["texto_minimo"] else None
+    reg = _limpio("regimen_macro", d.get("regimen_macro"))
+    if reg:
+        paquete["regimen_macro"] = reg[:lim["regimen"]]
+    fact = {}
+    for x in d.get("factores_dominantes") or []:
+        if isinstance(x, dict):
+            t = _limpio("factores_dominantes", x.get("factor"))
+            if t:
+                fact[str(x.get("cluster_id"))] = t
     for c in paquete.get("clusteres_exposicion", []):
         if c["cluster_id"] in fact:
             c["factor_dominante"] = fact[c["cluster_id"]][:lim["factor"]]
-    preg = [x.strip() for x in d.get("preguntas_sugeridas") or [] if _ok("preguntas_sugeridas", x)][:lim["preguntas"]]
+    preg = [t for t in (_limpio("preguntas_sugeridas", x) for x in d.get("preguntas_sugeridas") or []) if t][:lim["preguntas"]]
     if preg:
         paquete["preguntas_sugeridas"] = preg
-    if _ok("lectura_conjunto", d.get("lectura_conjunto")):
-        paquete["x_lectura_conjunto"] = d["lectura_conjunto"].strip()[:lim["lectura"]]
-    nuevas = [f"Sintetizador: {x.strip()}"[:lim["limitacion"]] for x in d.get("limitaciones") or [] if _ok("limitaciones", x)][:lim["limitaciones"]]
+    lec = _limpio("lectura_conjunto", d.get("lectura_conjunto"))
+    if lec:
+        paquete["x_lectura_conjunto"] = lec[:lim["lectura"]]
+    nuevas = [f"Sintetizador: {t}"[:lim["limitacion"]] for t in (_limpio("limitaciones", x) for x in d.get("limitaciones") or []) if t]
+    nuevas = nuevas[:lim["limitaciones"]]
     if descartados:
-        nuevas.append("Textos del Sintetizador descartados por R13 o R21: " + ", ".join(dict.fromkeys(descartados)))
+        nuevas.append(f"Frases del Sintetizador quitadas por R13 o R21: {len(descartados)} ("
+                      + ", ".join(dict.fromkeys(descartados)) + ")")
     if nuevas:
         paquete["limitaciones"] = [x for x in paquete["limitaciones"] if not x.startswith("Ninguna limitación")] + nuevas
     return descartados
 
 
-def _redaccion_segura(bloque, paquete, d, permitidos=frozenset()) -> dict:
-    """Los textos llanos del Sintetizador; si alguno incumple R13 o R21, se usan los textos por defecto y se declara (H-09)."""
+def _redaccion_segura(bloque, paquete, d, permitidos=None) -> dict:
+    """Los textos llanos del Sintetizador, frase a frase: una frase que incumple R13 o R21 se quita; si un texto se queda vacío,
+    toma el texto por defecto de ese mismo elemento (no de todos). Se declara cuántas frases se quitaron (T-102)."""
+    defecto = bloque.redaccion.textos_por_defecto(paquete)
     if not d:
-        return bloque.redaccion.textos_por_defecto(paquete)
-    red = {k: d[k] for k in _CAMPOS_REDACCION}
-    malas = sorted({r for r in (texto_prohibido(t, permitidos) for t in _textos(red)) if r is not None})
-    if malas:
+        return defecto
+    perm = permitidos or {"codigos": frozenset(), "series": frozenset()}
+    red = copy.deepcopy({k: d[k] for k in _CAMPOS_REDACCION})
+    quitadas: list[str] = []
+
+    def _uno(t, por_defecto):
+        t2, reglas = limpiar(t, perm)
+        quitadas.extend(reglas)
+        return t2 if not reglas else (t2.strip() or por_defecto)
+    red["frases_30s"] = [_uno(t, defecto["frases_30s"][i] if i < len(defecto["frases_30s"]) else "")
+                         for i, t in enumerate(red.get("frases_30s") or [])]
+    def_tarj = {x["opp_id"]: x for x in defecto["tarjetas"]}
+    for x in red.get("tarjetas") or []:
+        base = def_tarj.get(x.get("opp_id"), {})
+        for k in ("por_que_llano", "que_puede_salir_mal_llano", "ambito_llano"):
+            if isinstance(x.get(k), str):
+                x[k] = _uno(x[k], base.get(k, ""))
+    red["motivos_llanos"] = {k: v2 for k, v in (red.get("motivos_llanos") or {}).items()
+                             if isinstance(v, str) and (v2 := _uno(v, "").strip())}
+    red["glosario"] = [g for g in (red.get("glosario") or []) if isinstance(g, dict)
+                       and not (frase_prohibida(str(g.get("termino", "")), perm) or texto_prohibido(g.get("definicion"), perm))]
+    red["frase_historial"] = _uno(red.get("frase_historial"), defecto["frase_historial"])
+    if quitadas:
         paquete["limitaciones"] = [x for x in paquete["limitaciones"] if not x.startswith("Ninguna limitación")] + [
-            f"Textos llanos del Sintetizador descartados por {', '.join(malas)}: se usan los textos por defecto"]
-        return bloque.redaccion.textos_por_defecto(paquete)
+            f"Frases llanas del Sintetizador quitadas por {', '.join(sorted(set(quitadas)))}: {len(quitadas)}; el resto de sus textos se conserva"]
     return red
 
 

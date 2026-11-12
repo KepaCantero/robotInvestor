@@ -87,7 +87,8 @@ v6:
   # (R21): divisas, tipos de activo y siglas de segmentos; además valen los símbolos del universo. Técnico, ampliable.
   filtro_r21_codigos: [USD, EUR, JPY, GBP, CHF, CAD, AUD, NZD, SEK, NOK, DKK, MXN, BRL, CNY, CNH, INR, KRW, ZAR, TRY, PLN, HUF, CZK,
                        RV, RF, DIV, MP, IDX, FON, DER, INM, CRI, ALT, MON, TCV, EM, HY, IG, ETF, REIT, VIX, MOVE, PIB, IPC, BCE, FED,
-                       OPEP, TIPS, EE, UU, UE]
+                       OPEP, TIPS, EE, UU, UE, MSCI, DXY, WTI, BRENT, GNL, GLP, ISM, PMI, S&P, NASDAQ, DAX, IBEX, CAC, FTSE,
+                       NIKKEI, STOXX, BTC, ETH, XAU, XAG, LME, CPI, PCE, EBITDA, BPA, OPA, IPO, BCE, BOJ, BOE, SNB, PBOC]
 
 # ---------------------------------------------------------------------------
 # Modelos por agente. IMPORTANTE: los identificadores deben comprobarse en la
