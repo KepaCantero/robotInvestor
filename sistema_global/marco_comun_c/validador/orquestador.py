@@ -3434,12 +3434,16 @@ class Orquestador:
                 s["estado"] = "CADUCADO"
                 self._aviso("O-10", f"el sello {sid} caducó por antigüedad", ahora, sid)
                 cambios.append(("sello", sid, "CADUCADO"))
-        if not self.sombra_ok():   # T-76 (QA r02, H-12): un registro de la sombra roto se avisa, no se calla
+        sombra_rota = not self.sombra_ok()
+        if sombra_rota:   # T-76 (QA r02, H-12): un registro de la sombra roto se avisa, no se calla
             n0 = len(self.avisos)
             self._aviso("O-13", "el registro de la cartera sombra no es íntegro: no se puede comparar ni avisar de lo pendiente", ahora)
+            # T-100 (QA r03 de T-76, H-19): como cualquier punto de decisión que ve un registro roto, para (kill-switch)
+            self._activar_kill("integridad rota en SOMBRA", "ORQUESTADOR", ahora)
             if len(self.avisos) > n0:
                 cambios.append(("sombra_rota", None, None))
-        falta = self.comparaciones_sombra_pendientes(ahora)   # T-76 (QA r01, H-04): I no puede silenciar el juicio dejando de comparar
+        # T-76 (QA r01, H-04): I no puede silenciar el juicio dejando de comparar; T-100 (H-19): con el registro roto no se calcula
+        falta = None if sombra_rota else self.comparaciones_sombra_pendientes(ahora)
         if falta:   # QA r02, H-13: tras el plazo de gracia, con cuántos faltan, y en ALTA (O-44) si falta el mes de juicio o uno posterior
             n0 = len(self.avisos)
             cod = "O-44" if falta["juicio"] else "O-42"
@@ -3512,9 +3516,13 @@ class Orquestador:
         return _r(True, "OK", "cartera sombra iniciada", unidades=float(importe_eur) / float(precio_indice))
 
     @_seguro
-    def movimiento_sombra(self, tipo, importe_eur, precio_indice, actor, ahora):
+    def movimiento_sombra(self, tipo, importe_eur, precio_indice, actor, ahora, ref=None):
         """Un aporte o una retirada de la cartera real se replica en la sombra, al precio del índice de ese momento. La declara el
-        operador (o G, que ve el movimiento en el intermediario). Una retirada no puede dejar la sombra en negativo."""
+        operador (o G, que ve el movimiento en el intermediario). Una retirada no puede dejar la sombra en negativo.
+        T-100 (QA r03 de T-76, H-17): `ref` es obligatoria, la referencia del movimiento en el intermediario, la misma la declare
+        quien la declare. Un movimiento se cuenta una vez: la misma referencia con el mismo tipo e importe se ignora (O-02; vale el
+        precio y el instante de la primera declaración); con otro tipo o importe es un incidente de seguridad (O-03 y kill-switch),
+        como un event_id repetido con otro contenido. Las entradas sin referencia de la V0.75 se conservan y no se comparan."""
         self._ahora(ahora)
         if actor not in ("OPERADOR", "G"):
             return _no("O-05", "solo el operador o G registran aportes y retiradas")
@@ -3527,7 +3535,16 @@ class Orquestador:
             return _no("O-01", "tipo APORTE o RETIRADA, importe y precio del índice: números finitos positivos")
         if not sb.num_pos(float(importe_eur) / float(precio_indice)):   # H-11: «no finito» no es «retirada mayor»
             return _no("O-01", "el importe entre el precio del índice no da un número finito de unidades")
-        e = {"tipo": tipo, "importe_eur": float(importe_eur), "precio_indice": float(precio_indice), "ahora": ahora}
+        if not (isinstance(ref, str) and ref.strip()):
+            return _no("O-01", "falta la referencia del movimiento en el intermediario (ref)")
+        previo = next((x for x in self.sombra["entradas"] if x["tipo"] in sb.TIPOS_MOVIMIENTO and x.get("ref") == ref), None)
+        if previo is not None:
+            if previo["tipo"] == tipo and previo["importe_eur"] == float(importe_eur):
+                return _r(True, "O-02", f"el movimiento {ref} ya está replicado en la sombra: se ignora", duplicado=True)
+            self._aviso("O-03", f"la referencia {ref} de un movimiento de la sombra se repite con otro tipo o importe", ahora)
+            self._activar_kill(f"referencia {ref} de la sombra repetida con otro contenido", "ORQUESTADOR", ahora)
+            return _no("O-03", "la misma referencia de movimiento con otro tipo o importe")
+        e = {"tipo": tipo, "importe_eur": float(importe_eur), "precio_indice": float(precio_indice), "ahora": ahora, "ref": ref}
         if sb.estado_sombra(self.sombra["entradas"] + [e], float(precio_indice), _dt(ahora)) is None:
             return _no("O-06", "la retirada es mayor que lo que tiene la sombra")
         self._anota_sombra(e, actor, ahora)
@@ -3661,7 +3678,12 @@ class Orquestador:
                     t = _dt(x["ahora"])
                     if x["desde"] == x["hasta"] == "PROPUESTA" and x["actor"] == "F" and str(x["motivo"]).startswith(MOTIVO_VETO_F):
                         veto = x["motivo"]
+                    # un análisis nuevo: el veto anterior ya no es la causa, también si fue antes del periodo (T-100, QA r03 de T-75,
+                    # H-15); se borra después de contar esta anotación
+                    nuevo_analisis = x["desde"] != x["hasta"] and x["hasta"] in ("VALIDADA", "EN_ANALISIS")
                     if x["desde"] == x["hasta"] or not d0 < t:
+                        if nuevo_analisis:
+                            veto = None
                         continue
                     if x["hasta"] == "VALIDADA":   # la clave es el análisis (el sobre), no el expediente ni el paso
                         if x["desde"] is None and e.get("analisis_ref"):
@@ -3676,7 +3698,7 @@ class Orquestador:
                     if x["hasta"] in ("DESCARTADA", "EN_OBSERVACION", "CADUCADA"):
                         salidas.append({"expediente_id": k, "desde": x["desde"], "hasta": x["hasta"], "actor": x["actor"],
                                         "motivo": x["motivo"], "ahora": x["ahora"], "bloqueo_previo": veto})
-                    if x["hasta"] in ("VALIDADA", "EN_ANALISIS"):   # un análisis nuevo: el veto anterior ya no es la causa
+                    if nuevo_analisis:
                         veto = None
                 if d0 < _dt(h[0]["ahora"]):
                     u = h[-1]

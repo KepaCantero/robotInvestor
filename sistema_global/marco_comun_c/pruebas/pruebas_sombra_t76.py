@@ -40,7 +40,7 @@ def main():
     o = nuevo()
     hasta(o, "EN_ANALISIS", 1)   # un encargo con su gasto: los costes de análisis que la sombra resta al robot
     assert o.registrar_gasto("EV-ENC-0001", 2.5, 10.0, AHORA)["ok"]
-    R("antes_de_iniciar_no_hay_movimientos", o, lambda: o.movimiento_sombra("APORTE", 1000.0, 110.0, "OPERADOR", AHORA), "O-06")
+    R("antes_de_iniciar_no_hay_movimientos", o, lambda: o.movimiento_sombra("APORTE", 1000.0, 110.0, "OPERADOR", AHORA, ref="MOV-043"), "O-06")
     R("antes_de_iniciar_no_se_compara", o, lambda: o.comparar_sombra("2026-12", 10000.0, 100.0, 100.0, 100.0, 0.0, "I", AHORA), "O-06")
     R("solo_el_operador_la_inicia", o, lambda: o.iniciar_sombra(10000.0, 100.0, "BROKER", AHORA), "O-05")
     for nombre, imp, pr in (("importe_nan", NAN, 100.0), ("importe_cero", 0.0, 100.0), ("importe_negativo", -1.0, 100.0),
@@ -50,13 +50,13 @@ def main():
     h.chk("el_primer_dia_compra_el_indice_con_el_mismo_capital", r["ok"] and r["unidades"] == 100.0
           and o.sombra["entradas"][0]["indice"] == PARAMETROS["i_indice_sombra"], r)
     R("una_sola_vez", o, lambda: o.iniciar_sombra(5000.0, 100.0, "OPERADOR", AHORA), "O-02")
-    r = o.movimiento_sombra("APORTE", 1100.0, 110.0, "OPERADOR", AHORA)
+    r = o.movimiento_sombra("APORTE", 1100.0, 110.0, "OPERADOR", AHORA, ref="MOV-053")
     h.chk("un_aporte_se_replica_al_precio_de_ese_momento", r["ok"] and abs(sb.estado_sombra(o.sombra["entradas"], 110.0, _dt(AHORA))["unidades"] - 110.0) < 1e-9, r)
-    r = o.movimiento_sombra("RETIRADA", 550.0, 110.0, "G", AHORA)
+    r = o.movimiento_sombra("RETIRADA", 550.0, 110.0, "G", AHORA, ref="MOV-055")
     h.chk("G_tambien_registra_una_retirada", r["ok"] and abs(sb.estado_sombra(o.sombra["entradas"], 110.0, _dt(AHORA))["unidades"] - 105.0) < 1e-9, r)
-    R("una_retirada_mayor_que_la_sombra_no", o, lambda: o.movimiento_sombra("RETIRADA", 1e6, 110.0, "OPERADOR", AHORA), "O-06")
-    R("tipo_de_movimiento_invalido", o, lambda: o.movimiento_sombra("DIVIDENDO", 10.0, 110.0, "OPERADOR", AHORA), "O-01")
-    R("otro_actor_no_registra_movimientos", o, lambda: o.movimiento_sombra("APORTE", 10.0, 110.0, "BROKER", AHORA), "O-05")
+    R("una_retirada_mayor_que_la_sombra_no", o, lambda: o.movimiento_sombra("RETIRADA", 1e6, 110.0, "OPERADOR", AHORA, ref="MOV-057"), "O-06")
+    R("tipo_de_movimiento_invalido", o, lambda: o.movimiento_sombra("DIVIDENDO", 10.0, 110.0, "OPERADOR", AHORA, ref="MOV-058"), "O-01")
+    R("otro_actor_no_registra_movimientos", o, lambda: o.movimiento_sombra("APORTE", 10.0, 110.0, "BROKER", AHORA, ref="MOV-059"), "O-05")
     h.chk("registro_integro_y_anclado", o.sombra_ok() and o.integridad() == [] and "SOMBRA" in o.cabezas())
 
     # ------------------------------------------------------------------ la comparación mensual
@@ -142,11 +142,13 @@ def main():
           and e2["coste_eur"] > 0, (e1, e2))
     h.chk("retirar_mas_de_lo_que_hay_con_precios_enormes_no_H06",
           sb.estado_sombra([{**ini, "precio_indice": 1e12}, {**ret, "importe_eur": 2e4, "precio_indice": 1e12}], 1e12, _dt("2026-12-31T00:00:00+00:00")) is None)
-    o8 = nuevo()
-    assert o8.iniciar_sombra(1e200, 1e-200, "OPERADOR", AHORA)["ok"] or True
+    o8 = nuevo()   # T-100 (QA r03, H-18): con un inicio válido, para que la prueba llegue a comparar (el de antes ya lo rechaza H-11)
+    assert o8.iniciar_sombra(1000.0, 100.0, "OPERADOR", AHORA)["ok"]
     m1, t1_ = meses_desde(1)
-    r = o8.comparar_sombra(m1, 1e300, 1e308, 1.0, 1.0, 0.0, "I", t1_) if o8.sombra["entradas"] else {"codigo": "O-01", "ok": False}
-    h.chk("resultados_no_finitos_no_se_anotan_H03", not r["ok"] and pe.volcar(o8, t1_) is not None, r)
+    n8 = len(o8.sombra["entradas"])
+    r = o8.comparar_sombra(m1, 1e308, 100.0, 1e10, 1e-300, 0.0, "I", t1_)
+    h.chk("resultados_no_finitos_no_se_anotan_H03", r["codigo"] == "O-01" and len(o8.sombra["entradas"]) == n8
+          and pe.volcar(o8, t1_) is not None, r)
     o9 = nuevo()
     assert o9.iniciar_sombra(10000.0, 100.0, "OPERADOR", AHORA)["ok"]
     mes, t = meses_desde(1)
@@ -176,7 +178,7 @@ def main():
             m_, t_ = meses_desde(k)
             assert o_.comparar_sombra(m_, 100000.0, 100.0, 100.0, 100.0, 0.0, "I", t_)["ok"], k
         m24, t24 = meses_desde(24)
-        assert o_.movimiento_sombra(mov, 50000.0, 100.0, "OPERADOR", "2028-12-02T09:00:00+00:00")["ok"]
+        assert o_.movimiento_sombra(mov, 50000.0, 100.0, "OPERADOR", "2028-12-02T09:00:00+00:00", ref="MOV-179")["ok"]
         return o_, o_.comparar_sombra(m24, robot_ultimo, 100.0, 100.0, 100.0, 0.0, "I", "2028-12-03T09:00:00+00:00")
     o_, r = veinticuatro(99000.0, "RETIRADA")
     h.chk("una_retirada_tras_el_cierre_no_cambia_el_juicio_H10", r["ok"] and r["veredicto"] == "PROPONER_PASIVA" and o41(o_), r)
@@ -185,7 +187,7 @@ def main():
     o12 = nuevo()
     R("inicio_con_unidades_no_finitas_no_H11", o12, lambda: o12.iniciar_sombra(1e200, 1e-200, "OPERADOR", AHORA), "O-01")
     assert o12.iniciar_sombra(1000.0, 100.0, "OPERADOR", AHORA)["ok"]
-    r = o12.movimiento_sombra("APORTE", 1e300, 1e-300, "OPERADOR", AHORA)
+    r = o12.movimiento_sombra("APORTE", 1e300, 1e-300, "OPERADOR", AHORA, ref="MOV-188")
     h.chk("un_movimiento_no_finito_no_se_confunde_con_una_retirada_mayor_H11", r["codigo"] == "O-01" and "finito" in r["motivo"], r)
     for nombre, toque in (("sin_ahora", lambda x: x.sombra["entradas"][0].pop("ahora")), ("entradas_vaciadas", lambda x: x.sombra["entradas"].clear())):
         for op in ("iniciar", "movimiento"):
@@ -193,7 +195,7 @@ def main():
             assert o13.iniciar_sombra(1000.0, 100.0, "OPERADOR", AHORA)["ok"]
             toque(o13)
             r = (o13.iniciar_sombra(1000.0, 100.0, "OPERADOR", AHORA) if op == "iniciar"
-                 else o13.movimiento_sombra("APORTE", 10.0, 100.0, "OPERADOR", AHORA))
+                 else o13.movimiento_sombra("APORTE", 10.0, 100.0, "OPERADOR", AHORA, ref="MOV-196"))
             h.chk(f"registro_tocado_{nombre}_{op}_es_O13_H12", r["codigo"] == "O-13" and o13.kill is not None, r)
     o14 = nuevo()
     assert o14.iniciar_sombra(1000.0, 100.0, "OPERADOR", AHORA)["ok"]
@@ -234,6 +236,123 @@ def main():
           and sb.estado_sombra(mini + [{"tipo": "RETIRADA", "importe_eur": 1e-7, "precio_indice": 100.0, "ahora": AHORA}], 100.0, _dt(AHORA)) is not None)
     h.chk("estado_sombra_con_un_resultado_infinito_es_None_H14",
           sb.estado_sombra([{"tipo": "INICIO", "importe_eur": 1e308, "precio_indice": 1e-10, "ahora": AHORA}], 100.0, _dt(AHORA)) is None)
+
+    # ------------------------------------------------------------------ QA r03 de T-76 (T-100, marco V0.76)
+    from datetime import datetime, timedelta, timezone
+    coste = PARAMETROS["i_coste_anual_sombra_pct"]
+
+    def cierre(mes):
+        a_, m_ = map(int, mes.split("-"))
+        return datetime(a_ + m_ // 12, m_ % 12 + 1, 1, tzinfo=timezone.utc) - timedelta(microseconds=1)
+
+    def referencia(movs, precio, t_fin):
+        """Cálculo independiente del código: un fondo con valor liquidativo (1 - coste)^(años desde el inicio); cada aporte compra
+        participaciones y cada retirada las vende a ese valor; la sombra vale participaciones · precio · valor liquidativo."""
+        t0 = _dt(movs[0][3])
+        vl = lambda t: (1 - coste / 100.0) ** ((t - t0).total_seconds() / (365 * 86400.0))  # noqa: E731
+        part = sum((-1 if tp == "RETIRADA" else 1) * imp / (pr * vl(_dt(t))) for tp, imp, pr, t in movs)
+        return part * precio * vl(t_fin)
+
+    # H-17: la referencia del movimiento en el intermediario; el mismo movimiento cuenta una vez
+    o20 = nuevo()
+    assert o20.iniciar_sombra(100000.0, 100.0, "OPERADOR", AHORA)["ok"]
+    t_ap = "2026-12-10T10:00:00+00:00"
+    r1 = o20.movimiento_sombra("APORTE", 50000.0, 100.0, "G", t_ap, ref="INT-0001")
+    r2 = o20.movimiento_sombra("APORTE", 50000.0, 101.0, "OPERADOR", "2026-12-10T11:00:00+00:00", ref="INT-0001")
+    r3 = o20.movimiento_sombra("APORTE", 50000.0, 100.0, "G", "2026-12-10T12:00:00+00:00", ref="INT-0001")
+    aportes = [x for x in o20.sombra["entradas"] if x["tipo"] == "APORTE"]
+    h.chk("el_mismo_movimiento_declarado_dos_veces_cuenta_una_H17", r1["codigo"] == "OK" and r2["codigo"] == r3["codigo"] == "O-02"
+          and r2["ok"] and len(aportes) == 1 and aportes[0]["precio_indice"] == 100.0 and aportes[0]["ref"] == "INT-0001",
+          (r1["codigo"], r2["codigo"], r3["codigo"], len(aportes)))
+    for k in range(1, 25):
+        m_, t_ = meses_desde(k)
+        r = o20.comparar_sombra(m_, 150750.0, 100.0, 100.0, 100.0, 0.0, "I", t_)
+    h.chk("y_un_aporte_repetido_no_da_la_vuelta_al_juicio_H17", r["ok"] and r["veredicto"] == "SUPERA" and not o41(o20), r)
+    o21 = nuevo()
+    assert o21.iniciar_sombra(100000.0, 100.0, "OPERADOR", AHORA)["ok"]
+    assert o21.movimiento_sombra("APORTE", 50000.0, 100.0, "G", t_ap, ref="INT-0001")["ok"]
+    for nombre, args in (("otro_importe", ("APORTE", 40000.0)), ("otro_tipo", ("RETIRADA", 50000.0))):
+        o_ = copy.deepcopy(o21)
+        n_ = len(o_.sombra["entradas"])
+        r = o_.movimiento_sombra(*args, 100.0, "OPERADOR", "2026-12-10T11:00:00+00:00", ref="INT-0001")
+        h.chk(f"la_misma_referencia_con_{nombre}_es_O03_con_kill_switch_H17", r["codigo"] == "O-03" and not r["ok"]
+              and o_.kill is not None and len(o_.sombra["entradas"]) == n_ and any(x["codigo"] == "O-03" for x in o_.avisos), r)
+    for nombre, ref in (("sin_referencia", None), ("referencia_vacia", ""), ("referencia_en_blanco", "  "), ("referencia_no_texto", 7)):
+        R(f"movimiento_{nombre}_no_H17", o21, lambda ref=ref: o21.movimiento_sombra("APORTE", 10.0, 100.0, "OPERADOR", t_ap, ref=ref), "O-01")
+    h.chk("otra_referencia_es_otro_movimiento_H17", o21.movimiento_sombra("APORTE", 50000.0, 100.0, "G", t_ap, ref="INT-0002")["ok"]
+          and len([x for x in o21.sombra["entradas"] if x["tipo"] == "APORTE"]) == 2)
+    o22 = nuevo()   # una entrada sin referencia, como las de un estado de la V0.75: se conserva y no se compara con nada
+    assert o22.iniciar_sombra(1000.0, 100.0, "OPERADOR", AHORA)["ok"]
+    o22._anota_sombra({"tipo": "APORTE", "importe_eur": 10.0, "precio_indice": 100.0, "ahora": AHORA}, "OPERADOR", AHORA)
+    h.chk("las_entradas_sin_referencia_de_la_V075_se_conservan_H17", o22.sombra_ok()
+          and o22.movimiento_sombra("APORTE", 10.0, 100.0, "OPERADOR", AHORA, ref="INT-0003")["codigo"] == "OK"
+          and len(o22.sombra["entradas"]) == 3)
+    # H-19: con el registro roto, barrer() para (kill-switch) y no calcula lo pendiente
+    for nombre, toque in (("importe_del_inicio", lambda x: x.sombra["entradas"][0].__setitem__("importe_eur", 1.0)),
+                          ("inicio_retrasado", lambda x: x.sombra["entradas"][0].__setitem__("ahora", "2020-01-01T00:00:00+00:00"))):
+        o_ = nuevo()
+        assert o_.iniciar_sombra(1000.0, 100.0, "OPERADOR", AHORA)["ok"]
+        toque(o_)
+        o_.barrer("2027-03-10T00:00:00+00:00")
+        cods = [x["codigo"] for x in o_.avisos]
+        h.chk(f"barrer_con_el_registro_roto_{nombre}_para_y_no_calcula_lo_pendiente_H19", "O-13" in cods and o_.kill is not None
+              and "O-42" not in cods and "O-44" not in cods, cods)
+    # H-18: regresiones para los mutantes que sobrevivían (sondas A1, A2, A3, A8, A12 y F9 del revisor)
+    o23 = nuevo()   # A1: el último microsegundo del mes entra; el primer instante del siguiente, no; valor contra la referencia
+    assert o23.iniciar_sombra(100000.0, 100.0, "OPERADOR", AHORA)["ok"]
+    movs = [("INICIO", 100000.0, 100.0, AHORA), ("APORTE", 10000.0, 101.0, "2026-12-31T23:59:59.999999+00:00")]
+    assert o23.movimiento_sombra(*movs[1][:3], "OPERADOR", movs[1][3], ref="INT-A1-1")["ok"]
+    assert o23.movimiento_sombra("APORTE", 3000.0, 102.0, "OPERADOR", "2027-01-01T00:00:00+00:00", ref="INT-A1-2")["ok"]
+    assert o23.comparar_sombra("2026-12", 110000.0, 103.0, 100.0, 100.0, 0.0, "I", "2027-01-02T06:00:00+00:00")["ok"]
+    est = o23.sombra["entradas"][-1]["sombra"]
+    h.chk("el_ultimo_microsegundo_del_mes_entra_y_el_primer_instante_del_siguiente_no_H18", est["aportado_neto_eur"] == 110000.0
+          and abs(est["valor_eur"] - referencia(movs, 103.0, cierre("2026-12"))) < 1e-6, est)
+    o24 = nuevo()   # A2: los costes de análisis hasta el cierre del mes, ni un instante después
+    hasta(o24, "EN_ANALISIS", 1)
+    assert o24.registrar_gasto("EV-ENC-0001", 1.0, 1.0, AHORA)["ok"]
+    assert o24.iniciar_sombra(100000.0, 100.0, "OPERADOR", "2026-11-06T12:00:00+00:00")["ok"]
+    assert o24.registrar_gasto("EV-ENC-0001", 3.0, 1.0, "2026-12-31T23:59:59.999999+00:00")["ok"]
+    assert o24.registrar_gasto("EV-ENC-0001", 7.0, 1.0, "2027-01-01T00:00:00+00:00")["ok"]
+    assert o24.comparar_sombra("2026-12", 100000.0, 100.0, 100.0, 100.0, 0.0, "I", "2027-01-03T06:00:00+00:00")["ok"]
+    c12 = o24.sombra["entradas"][-1]["costes_analisis_eur"]
+    assert o24.comparar_sombra("2027-01", 100000.0, 100.0, 100.0, 100.0, 0.0, "I", "2027-02-03T06:00:00+00:00")["ok"]
+    h.chk("los_costes_de_analisis_cuentan_hasta_el_cierre_H18", c12 == 4.0 and o24.sombra["entradas"][-1]["costes_analisis_eur"] == 11.0, c12)
+    o25 = nuevo()   # A3: comparar 29 días tarde no devenga más coste; y el coste es el de la referencia (año de 365 días)
+    assert o25.iniciar_sombra(1e6, 100.0, "OPERADOR", AHORA)["ok"]
+    assert o25.comparar_sombra("2026-12", 1e6, 100.0, 100.0, 100.0, 0.0, "I", "2027-01-30T06:00:00+00:00")["ok"]
+    v25 = o25.sombra["entradas"][-1]["sombra"]["valor_eur"]
+    h.chk("el_coste_se_devenga_hasta_el_cierre_aunque_I_compare_tarde_H18",
+          abs(v25 - referencia([("INICIO", 1e6, 100.0, AHORA)], 100.0, cierre("2026-12"))) < 1e-6, v25)
+    gracia = PARAMETROS["i_dias_gracia_comparacion_sombra"]
+    o26 = nuevo()   # A8: O-44 en cuanto vence la gracia del mes de juicio, aunque falten meses anteriores
+    assert o26.iniciar_sombra(1000.0, 100.0, "OPERADOR", AHORA)["ok"]
+    for k in range(1, 21):
+        m_, t_ = meses_desde(k)
+        assert o26.comparar_sombra(m_, 1000.0, 100.0, 100.0, 100.0, 0.0, "I", t_)["ok"]
+    d_antes = o26.comparaciones_sombra_pendientes(f"2028-12-{gracia:02d}T23:59:59+00:00")
+    d_juicio = o26.comparaciones_sombra_pendientes(f"2028-12-{gracia + 1:02d}T00:00:00+00:00")
+    h.chk("el_juicio_se_mira_en_el_ultimo_mes_pendiente_no_en_el_primero_H18",
+          d_antes == {"primero": "2028-08", "faltan": 3, "juicio": False} and d_juicio == {"primero": "2028-08", "faltan": 4, "juicio": True},
+          (d_antes, d_juicio))
+    o27 = nuevo()   # A12: lo pendiente cuenta desde el mes de inicio en UTC
+    assert o27.iniciar_sombra(1000.0, 100.0, "OPERADOR", "2026-12-01T00:30:00+01:00")["ok"]
+    d = o27.comparaciones_sombra_pendientes(f"2027-01-{gracia + 1:02d}T00:00:00+00:00")
+    h.chk("lo_pendiente_cuenta_desde_el_mes_de_inicio_en_UTC_H18", d == {"primero": "2026-12", "faltan": 1, "juicio": False}, d)
+    o28 = nuevo()   # F9: una comparación que no da números finitos se rechaza sin tocar nada
+    assert o28.iniciar_sombra(1000.0, 100.0, "OPERADOR", AHORA)["ok"]
+    R("comparacion_con_precio_enorme_no_finita_no_H18", o28,
+      lambda: o28.comparar_sombra("2026-12", 1000.0, 1e308, 1.0, 1.0, 0.0, "I", "2027-01-02T00:00:00+00:00"), "O-01")
+    h.chk("comparar_sin_resultado_finito_es_None_H18",
+          sb.comparar(1e308, 0.0, 0.0, {"valor_eur": 1.0, "aportado_neto_eur": 1.0}, 1e10, 1e-300) is None)
+    o29 = nuevo()   # empate en el mes de juicio: no la supera, se propone la gestión pasiva (juicio en real, con «>»)
+    assert o29.iniciar_sombra(1000.0, 100.0, "OPERADOR", AHORA)["ok"]
+    for k in range(1, 24):
+        m_, t_ = meses_desde(k)
+        assert o29.comparar_sombra(m_, 1000.0, 100.0, 100.0, 100.0, 0.0, "I", t_)["ok"]
+    m24, t24 = meses_desde(24)
+    igual = sb.estado_sombra(o29.sombra["entradas"], 100.0, cierre(m24))["valor_eur"]
+    r = o29.comparar_sombra(m24, igual, 100.0, 100.0, 100.0, 0.0, "I", t24)
+    h.chk("con_el_robot_igual_a_la_sombra_se_propone_la_pasiva_H18", r["ok"] and r["veredicto"] == "PROPONER_PASIVA", r)
 
     print(f"\n{h.n} comprobaciones")
     print("RESULTADO SOMBRA T-76:", "TODAS LAS PRUEBAS PASAN" if h.ok else "HAY FALLOS")
