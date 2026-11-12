@@ -156,7 +156,7 @@ def main():
     d = dim(o)
     r = o.registrar_cartera(cart(tipos_cambio_eur={"USD": 1.35}, fecha_hora="2026-11-06T08:55:00+00:00"), "G", AHORA, cuenta="SIM-1")   # en rango, pero 1,35 x 1,10 = 1,49
     h.chk("tipo_que_no_cuadra_con_K_no_se_registra_O29", r["codigo"] == "O-29" and "K" in r["motivo"], r)   # T-42: ya al registrar la foto
-    o2 = nuevo({"tolerancia_tipo_k_rel": 0.5}); hasta(o2, "COMPARADA")   # sin el contraste de K, lo para la propuesta
+    o2 = nuevo({"tolerancia_tipo_k_rel": 0.5, "tolerancia_tipo_k_rel_principales": 0.5}); hasta(o2, "COMPARADA")   # sin el contraste de K, lo para la propuesta
     d2 = dim(o2)
     assert o2.registrar_cartera(cart(tipos_cambio_eur={"USD": 1.35}, fecha_hora="2026-11-06T08:55:00+00:00"), "G", AHORA, cuenta="SIM-1")["ok"]
     d2 = {**d2, "cartera": o2.cartera_f()}

@@ -70,6 +70,8 @@ ESQUEMA_V0_70 = "f13adbc3fef1e3a6445531bee830534681e74a32e2674a66a823565673443f8
 ESQUEMA_V0_71 = "aa778db76669a1a61e8716010223bbdbd166733b36137028bf3a866830570459"
 # esquema de V0.73 (rondas r02 de T-75 y T-76: veto de F anotado, aviso O-42 de comparación de la sombra pendiente)
 ESQUEMA_V0_73 = "2bcc76b84882b578499ba2ea632dc83b518fe496df3fb2f98740b8f853be6bde"
+# esquema de V0.74 (T-97: tope anual de gasto, tolerancia del tipo de cambio por divisa, F-14 y F-16 también en %; CFG-0.12.0)
+ESQUEMA_V0_74 = "27fc8408abb5fb4ef24e6ca2c50a6898a6e6bfb9b7b29a08558d70cfde1fe0ce"
 # lo que una migración nunca puede cambiar, aunque lo declare (revisión de V0.46, hallazgos 5 y 10)
 PROHIBIDAS = ("limites", "kill", "rearmes", "ultimo_ahora", "huella_config", f"cfg.politica_f.{LIMITE_PERDIDA}",
               "cfg.nivel_autonomia")   # V0.51 (revisión, duda 2): ninguna migración sube ni baja el nivel de nadie
@@ -155,6 +157,27 @@ def _v068(estado):
     return estado
 
 
+def _v074(estado):
+    """V0.73 → V0.74 (T-97): la configuración guardada recibe, con su valor de partida (literal), el tope anual de gasto en IA y
+    datos (0,5 % del capital) sin capital declarado, la tolerancia del tipo de cambio de las divisas principales (0,5 %) y su
+    lista, y en la política de F los límites en % del capital: 25 % de importe al día y 4 %, 5 % y 5 % de pérdida en la semana en
+    trading, táctica y largo plazo. Ningún valor que ya tuviera cambia; si llevaba la versión por defecto de V0.53 a V0.73, pasa
+    a CFG-0.12.0. Una política de F guardada sigue siendo la suya: solo gana las claves nuevas, que solo endurecen."""
+    cfg = estado["cfg"]
+    cfg.setdefault("tope_anual_gasto_pct_capital", 0.5)
+    cfg.setdefault("capital_referencia_eur", None)
+    cfg.setdefault("tolerancia_tipo_k_rel_principales", min(0.005, cfg.get("tolerancia_tipo_k_rel", 0.005)))
+    cfg.setdefault("divisas_principales", ["USD", "GBP", "JPY", "CHF"])
+    pol = cfg.get("politica_f")
+    if isinstance(pol, dict):
+        for k, v in (("importe_max_dia_pct", 25.0), ("perdida_semana_max_pct_trading", 4.0),
+                     ("perdida_semana_max_pct_tactica", 5.0), ("perdida_semana_max_pct_largo_plazo", 5.0)):
+            pol.setdefault(k, v)
+    if cfg.get("version_config") == "CFG-0.11.0":
+        cfg["version_config"] = "CFG-0.12.0"
+    return estado
+
+
 MIGRACIONES = (
     Migracion("MIG-001", pe.FORMATO_010, ESQUEMA_V0_45, ESQUEMA_V0_45, _sin_cambios, frozenset(),
               "formato 0.1.0 (V0.42 a V0.45) a 0.2.0: la cabecera lleva el esquema; el estado no cambia"),
@@ -178,6 +201,12 @@ MIGRACIONES = (
     Migracion("MIG-009", pe.FORMATO, ESQUEMA_V0_71, ESQUEMA_V0_73, _sin_cambios, frozenset(),
               "V0.71 a V0.73 (rondas r02 de T-75 y T-76): solo cambia el código (veto de F anotado en el historial, aviso O-42); "
               "el estado guardado no cambia"),
+    Migracion("MIG-010", pe.FORMATO, ESQUEMA_V0_73, ESQUEMA_V0_74, _v074,
+              frozenset({"cfg.tope_anual_gasto_pct_capital", "cfg.capital_referencia_eur", "cfg.tolerancia_tipo_k_rel_principales",
+                         "cfg.divisas_principales", "cfg.politica_f.importe_max_dia_pct", "cfg.politica_f.perdida_semana_max_pct_trading",
+                         "cfg.politica_f.perdida_semana_max_pct_tactica", "cfg.politica_f.perdida_semana_max_pct_largo_plazo"}),
+              "V0.73 a V0.74 (T-97, valores por defecto de la tanda 2): tope anual de gasto, tolerancia del tipo de cambio de las "
+              "divisas principales y límites de F en % del capital, con su valor de partida; ningún valor guardado cambia; CFG-0.12.0"),
 )
 
 

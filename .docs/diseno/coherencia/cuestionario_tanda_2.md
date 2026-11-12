@@ -283,7 +283,7 @@ Al preparar el cuestionario he comparado lo que proponen los diseños con los va
 | # | Parámetro | Hoy en el marco | Lo que proponen los diseños | Pregunta |
 | --- | --- | --- | --- | --- |
 | 1 | Gasto máximo en análisis | 50 € al día (hasta unos 18.000 € al año) | Tope anual del 0,5 % del capital (100 € al año con 20.000 €) | E2 |
-| 2 | Límites de F | En euros fijos: 20.000 € por orden, 50.000 € al día, pérdida de 2.500 € al día | En porcentaje de cada cartera, que también frenan con carteras pequeñas | F1, F2 |
+| 2 | Límites de F | En % del capital el tamaño por orden (10 %), la concentración (20 %) y la pérdida del día (2 %); **solo en euros** el importe del día (50.000 €) y la pérdida de la semana (5.000 €). *Corregido el 12-11-2026: esta fila decía antes que todos eran en euros fijos* | También en % de cada cartera el importe del día y la pérdida de la semana | F1, F2 |
 | 3 | Alerta de pérdida de H | −5 % fijo | Dos veces la oscilación normal | H1 |
 | 4 | Contraste de tipos de cambio | 3 % para todas las divisas | 0,5 % en las principales y 3 % en el resto | A3 |
 | 5 | Benchmark de las tres carteras | Efectivo | Una cesta en la que se invierte de verdad (P5); efectivo solo si usted lo fija | Mandato (P-03) |
@@ -293,7 +293,7 @@ La 1 es la más importante: con el valor de hoy, un mal día de análisis se gas
 
 La 6 es una incoherencia mía entre dos propuestas. Se la señalo a Astra en la revisión de la parte 2.
 
-Cuando usted conteste, cambiar los valores del marco es tocar su código: lo haría en un ticket, con su autorización.
+Cuando usted conteste, cambiar los valores del marco es tocar su código: lo haría en un ticket, con su autorización. **Hecho en T-97 (marco V0.74, 12-11-2026)** para las discrepancias 1, 2 y 4; la 3 (alerta de H) necesita que el Motor calcule la oscilación y va en T-98; la 5 depende del mandato (P-03).
 
 ## 9. Lo que no entra en esta tanda
 

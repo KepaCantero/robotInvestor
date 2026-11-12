@@ -247,6 +247,7 @@ CATALOGO = {
     ("orquestador", "O-40"): {"que": "alarma de sequía: en el plazo ninguna oportunidad llegó a invertirse habiendo candidatos que pasaron el análisis (D-22)", "efecto": "AVISO", "desde": None, "prioridad": "MEDIA"},
     ("orquestador", "O-41"): {"que": "tras el plazo de juicio, el robot no supera a la cartera sombra en términos reales: se propone gestión pasiva y decide el operador (P17)", "efecto": "AVISO", "desde": None, "prioridad": "ALTA"},
     ("orquestador", "O-42"): {"que": "la cartera sombra tiene un mes terminado sin comparar con el robot: I debe compararlo (P17)", "efecto": "AVISO", "desde": None, "prioridad": "MEDIA"},
+    ("orquestador", "O-43"): {"que": "tope anual de gasto en IA y datos agotado o comprometido, o sin foto de G para calcularlo: no se aceptan encargos con coste (T-97, E2)", "efecto": "AVISO", "desde": None, "prioridad": "ALTA"},
     ("persistencia", "O-13"): {"que": "el estado cargado no cuadra : kill-switch activado", "efecto": "AVISO", "desde": None},
     ("persistencia", "PE-01"): {"que": "el estado tiene valores que no se pueden poner en forma canónica", "efecto": "RECHAZA", "desde": None},
     ("persistencia", "PE-02"): {"que": "la huella del estado no cuadra: el fichero está roto o se tocó a mano", "efecto": "RECHAZA", "desde": None},
