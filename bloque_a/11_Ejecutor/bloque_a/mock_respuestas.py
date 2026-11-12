@@ -240,12 +240,20 @@ def _redactor(msg, ctx, rng):
 
 
 def _sintetizador(msg, ctx, rng):
-    """V6 (T-101): integración y textos en una respuesta, sobre el paquete ya validado."""
+    """V6 (T-101): integración y textos en una respuesta, sobre el paquete ya validado. T-102 r03: escribe con marcadores,
+    sin cifras ni códigos de activos (§4 de su prompt)."""
     out = _redactor(msg, ctx, rng)
     p = msg["paquete_sintesis"]
     clus = sorted({c for c in (msg.get("clusteres") or [])})
-    out.update({"regimen_macro": f"Régimen sintético a {ctx['fecha_as_of']}: lectura agregada de {len(p['clases'])} tipos de activo.",
-                "factores_dominantes": [{"cluster_id": c, "factor": f"Factor común del clúster {c}"} for c in clus],
+    n = sum(c["n"] for c in p["clases"].values())
+    out["frases_30s"] = ["Esta semana vemos {n_ideas} ideas en {n_tipos} tipos de inversión.",
+                         ("Varias dependen de lo mismo: en realidad son {n_apuestas} apuestas distintas." if p["apuestas_independientes"] < n
+                          else "Cada idea depende de cosas distintas: no se repiten."),
+                         "Cada idea puede salir mal. Mira su riesgo y su plazo."]
+    out["motivos_llanos"] = {k: f"Miramos {{candidatas:{k}}} ideas. Solo {{n:{k}}} pasaron todos los filtros. Preferimos no rellenar el hueco."
+                             for k, c in p["clases"].items() if c["n"] < 3}
+    out.update({"regimen_macro": "Régimen sintético: lectura agregada de los tipos de activo de la semana.",
+                "factores_dominantes": [{"cluster_id": c, "factor": "Factor común del clúster: el impulso de precios"} for c in clus],
                 "lectura_conjunto": "Las opciones dependen sobre todo del impulso de precios; las apuestas comparten riesgo de reversión.",
                 "preguntas_sugeridas": ["¿Qué opciones comparten el mismo factor de riesgo?", "¿Qué haría cambiar el semáforo de cada clase?"],
                 "limitaciones": ["Datos sintéticos o de proveedor sin flujos ni posicionamiento"]})

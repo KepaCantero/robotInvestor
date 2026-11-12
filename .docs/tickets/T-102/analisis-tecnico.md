@@ -55,3 +55,20 @@ El filtro de T-101 trataba cada texto entero con pocas reglas:
 - R13 quita frases legítimas con una palabra de probabilidad y una cifra que no encaja en las excepciones («la posibilidad de subidas del 0,25 % gana peso»): falla cerrado y se declara.
 - Un código tras una subordinada («Comprar RV si sube AAPL») no cuenta como comprado.
 - La V5 sigue sin filtro en los textos de integración de AG-02 (deuda T-101).
+
+## Ronda r03: rediseño con marcadores (decisión del operador del 12-11-2026)
+
+**Por qué.** Tres rondas de QA con revisores nuevos encontraron, cada una, formas de redactar que el filtro de patrones no veía: listas con saltos de línea, «recomendamos el ETF X», «la opción preferida es X» o probabilidades en letra. Un filtro que enumera formas de un texto libre no converge. El operador eligió cambiar el diseño: el Sintetizador escribe con marcadores y el código los rellena, de modo que la regla sobre el texto libre puede ser estricta y no depende de la redacción.
+
+**Implementación (`bloque_a/diseno_v6.py`).**
+- **Marcadores:** `{opp:OPP-…}` (el `nombre_llano` de la opción), `{tipo:RV}` (`NOMBRE_CLASE`), `{n:RV}`, `{candidatas:RV}`, `{n_ideas}`, `{n_tipos}` y `{n_apuestas}`. `marcadores(paquete)` da sus valores; `rellenar` los sustituye después de filtrar, de modo que lo que pone el código no se filtra.
+- **Regla, frase a frase:**
+  - MARCADOR: un marcador que no es de este paquete, mal formado o una llave suelta;
+  - CIFRA: cualquier dígito, «por ciento», «de cada diez» o una fracción junto a una palabra de probabilidad. Cubre R13 (sin cifras no hay probabilidad numérica) y parte de R21 (ISIN, tickers con números, vencimientos);
+  - R21: un sufijo societario o de fondo, `sintesis._UNITARIA`, o cualquier código en mayúsculas que sea un instrumento, esté donde esté y con o sin verbo. Ya no hay verbos, ventanas ni excepciones.
+- **Qué no es un instrumento:** `v6.filtro_r21_codigos` (ampliada con siglas del Documento 0: CDS, CLO, ABS, NFT, RWA, ELTIF, HICP…), las calificaciones, los pares de divisas y las series del universo. Un token frente a una divisa (BTC-USD, SOL-USD) es un instrumento (H-17).
+- El prompt del Sintetizador (`prompts_v6/`, §4) y `INSTR_SINTESIS` explican la regla y los marcadores; el simulador escribe así.
+
+**Coste aceptado.** Una frase legítima con una cifra se quita, porque las cifras las pone el código; también una sigla legítima que falte en la lista. Falla cerrado y se declara. El prompt pide escribir así, así que con el modelo real debería ser raro; se medirá en el banco con la API.
+
+**Límite que queda.** Un nombre propio sin código ni sufijo («Tesla», «Inditex» sin «la acción de»). Con los marcadores, el Sintetizador no necesita escribir ninguno; lo revisa el Auditor por muestreo.

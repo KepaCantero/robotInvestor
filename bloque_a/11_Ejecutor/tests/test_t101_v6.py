@@ -597,7 +597,7 @@ def test_el_sintetizador_no_cuela_probabilidades_ni_compras(tmp_path, monkeypatc
     texto = json.dumps(r["paquete"], ensure_ascii=False)
     assert "87 %" not in texto and "AAPL" not in texto
     lim = " ".join(r["paquete"]["limitaciones"])
-    assert "Frases del Sintetizador quitadas por R13 o R21" in lim and "Frases llanas del Sintetizador quitadas" in lim   # T-102
+    assert "Frases del Sintetizador quitadas (cifras" in lim and "Frases llanas del Sintetizador quitadas" in lim   # T-102 r03
 
 
 def test_la_cobertura_tiene_fila_para_todo_lo_que_vio_el_analista_y_para_las_vigentes(tmp_path):
@@ -648,20 +648,23 @@ def test_el_auditor_por_muestreo_en_el_ciclo_vivo(tmp_path, fraccion, llamadas):
 
 
 # ================================================================================================ QA r02 de T-101 (ronda r03)
-LEGITIMOS_R21 = ["Un 5 % del capital ya está en opciones del mismo clúster.",
-                 "La probabilidad es baja; aun así, un 5 % del capital comparte el factor de riesgo.",
-                 "Los pronósticos con probabilidad alta acertaron el 62 % de las veces en el historial.",
+# T-102 r03: con marcadores, el texto libre del Sintetizador no lleva cifras ni tickers; las frases legítimas son las escritas
+# así, y lo que antes era R13 se quita ahora por llevar una cifra (CIFRA)
+LEGITIMOS_R21 = ["Varias opciones del mismo clúster comparten el factor de riesgo.",
+                 "La probabilidad es baja; aun así, el capital se concentra en el mismo factor.",
+                 "Los pronósticos con probabilidad alta acertaron a menudo en el historial.",
                  "¿Conviene vender USD frente al EUR si el diferencial de tipos se estrecha?",
                  "El Analista prefiere no comprar RF larga mientras suba la inflación.",
                  "Con el dólar fuerte, puede tener sentido vender EM y esperar.",
-                 "El ETF de referencia (SPY) sigue al índice; no es una recomendación.",
+                 "El fondo de referencia de {opp:OPP-2026-0001} sigue al índice; no es una recomendación.",
                  "Si la curva se empina, el segmento de vender HY pierde atractivo."]
-PROHIBIDOS_R13_R21 = [("R13", "Probabilidad del 87 % de que el dólar suba este trimestre."), ("R13", "Hay un 70 % de probabilidad de subida."),
-                      ("R13", "La probabilidad de subida es de 0,87."), ("R13", "Vemos un 87 por ciento de probabilidades de subida."),
-                      ("R13", "Un 80 % de posibilidades de que el euro baje."), ("R13", "El escenario base tiene un 65 % de opciones de cumplirse."),
+PROHIBIDOS_R13_R21 = [("CIFRA", "Probabilidad del 87 % de que el dólar suba este trimestre."), ("CIFRA", "Hay un 70 % de probabilidad de subida."),
+                      ("CIFRA", "La probabilidad de subida es de 0,87."), ("CIFRA", "Vemos un 87 por ciento de probabilidades de subida."),
+                      ("CIFRA", "Un 80 % de posibilidades de que el euro baje."), ("CIFRA", "El escenario base tiene un 65 % de opciones de cumplirse."),
                       ("R21", "Conviene comprar AAPL cuanto antes."), ("R21", "Compra acciones de Apple (AAPL)."),
                       ("R21", "Recomendamos la compra de AAPL y de MSFT."), ("R21", "Sobreponderar Microsoft Corp frente al índice."),
-                      ("R21", "Comprar el bono del Tesoro a 10 años con vencimiento 2034."), ("R21", "Comprar US0378331005 ya.")]
+                      ("CIFRA", "Comprar el bono del Tesoro a 10 años con vencimiento 2034."), ("CIFRA", "Comprar US0378331005 ya."),
+                      ("R21", "El ETF de referencia (SPY) sigue al índice.")]
 
 
 def test_el_filtro_r13_r21_caza_los_casos_con_patron_y_respeta_los_legitimos(tmp_path):
@@ -809,7 +812,7 @@ def test_el_sintetizador_respeta_el_tope_de_preguntas_y_el_presupuesto_del_mensa
 
     def sintetizador(msg, ctx, rng):
         out = orig(msg, ctx, rng)
-        out["preguntas_sugeridas"] = [f"¿Pregunta de prueba número {i}?" for i in range(20)]
+        out["preguntas_sugeridas"] = [f"¿Pregunta de prueba {chr(97 + i)}?" for i in range(20)]   # sin cifras (T-102 r03)
         return out
     monkeypatch.setattr(mr, "_sintetizador", sintetizador)
     cli = MockClient()

@@ -25,3 +25,12 @@ Cuotas: ruff 2986 y mypy de A 109, sin cambios.
 | `revisores/r01_ataques_t102.py` | — | 14 OK, 1 OBS (saltos y «…», ahora bien separados), 1 FALLO que no lo es: `division_deja_fragmentos` da por prohibida «Comprar bonos de EE.UU. a dos años», que con la r02 es legítima (un segmento), así que el texto sale entero |
 
 Mutantes (`r02_mutantes.py`, 44, contra `tests/test_t102_filtro.py`): 40 muertos en la primera pasada; los 4 vivos (sin `_UNITARIA`, sin el ISIN sin verbo, un texto limpio que pierde sus separadores y sin el corte en «si») señalaban huecos de las pruebas. Con un caso nuevo para cada uno, mueren los 44.
+
+## Ronda r03 (rediseño)
+
+| Suite | Antes | Después |
+| --- | --- | --- |
+| `tests/test_t102_filtro.py` | 142 (bancos y verbos del filtro de patrones) | 68 (24 legítimas, 32 prohibidas con su regla, 12 de comportamiento y del camino real) |
+| `tests/test_t101_v6.py` | 73 | 73 (bancos de la r03 de T-101 adaptados: las legítimas sin cifras ni tickers y R13 → CIFRA; preguntas de prueba sin números) |
+
+`r02_mutantes.py` ya no aplica: las expresiones que mutaba (verbos, cortes, excepciones de R13) han desaparecido.

@@ -96,7 +96,9 @@ v6:
                        PER, EPS, TER, NAV, TIR, YTM, ROE, CAPEX, FCF, VAR, ETC, ETN, ETFS, SICAV, SOCIMI, REITS, FMM, IIC, UCITS,
                        OTC, IA, AI, ESG, TMT, SPX, NDX, CSI, BCOM, TTF, HH, JKM, HSI, TOPIX, KOSPI, NIFTY, SENSEX, VSTOXX, SOFR,
                        ESTR, EURIBOR, SONIA, UST, BUND, BTP, OAT, GILT, JGB, ILS, SGD, HKD, TWD, THB, IDR, MYR, PHP, CLP, COP,
-                       PEN, ARS, SAR, AED, ISK, RON]
+                       PEN, ARS, SAR, AED, ISK, RON,
+                       # T-102 r03 (QA r02, H-13): siglas del propio Documento 0 y de los informes de crédito y de activos digitales
+                       CDS, CLO, ABS, MBS, CMBS, CDO, NFT, RWA, ELTIF, HICP, SOFR, BEI, OIS, VRP, ETP, ESMA, CNMV, SEC, FCA]
 
 # ---------------------------------------------------------------------------
 # Modelos por agente. IMPORTANTE: los identificadores deben comprobarse en la
