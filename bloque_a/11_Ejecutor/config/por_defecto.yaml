@@ -74,9 +74,12 @@ v6:
   cobertura:
     registrar: true                  # A-05 e idea 3: registro del embudo por candidata en HA
     muestra_descartes: 2             # [PROPUESTO] descartes por tipo y run con seguimiento contrafactual (idea 4)
-    horizonte_contrafactual: H3      # horizonte con el que se resuelve la muestra
-  # Idea 7: tope de tokens (aproximados) del system prompt por papel; la prueba de T-101 lo vigila
+    horizonte_contrafactual: H3      # [PROPUESTO] horizonte con el que se resuelve la muestra
+  # [PROPUESTO] idea 7: tope de tokens (aproximados) del system prompt por papel; la prueba de T-101 lo vigila
   tope_tokens_system: {analista: 14000, AG-10: 23000, AG-11: 20000, AG-26: 2500, AG-27: 1800, AG-28: 1800}
+  # Técnico (QA r01 de T-101, H-08): longitud máxima en caracteres de los textos que se toman del Sintetizador, longitud
+  # mínima de un texto útil y cuántas preguntas y limitaciones suyas entran como mucho
+  sintetizador_limites: {regimen: 900, factor: 300, lectura: 1200, texto_minimo: 5, preguntas: 6, limitaciones: 5}
 
 # ---------------------------------------------------------------------------
 # Modelos por agente. IMPORTANTE: los identificadores deben comprobarse en la

@@ -15,6 +15,8 @@ Las funciones reciben el `Bloque` y reutilizan sus piezas: los contratos, los ar
 from __future__ import annotations
 
 import hashlib
+import math
+import re
 from typing import Any
 
 import pandas as pd
@@ -28,12 +30,40 @@ DISENOS = ("v5", "v6")
 BOLSA_GLOBAL = "V6_GLOBAL"   # bolsa de las llamadas de todo el ciclo (Prospectiva, Contradictor y Sintetizador)
 
 
+def _entero(cfg, clave, minimo):
+    v = parametro(cfg, f"v6.{clave}")
+    if isinstance(v, bool) or not isinstance(v, int) or v < minimo:
+        raise ValueError(f"v6.{clave} debe ser un entero ≥ {minimo} (es {v!r})")
+
+
 def validar(cfg: dict) -> bool:
-    """`diseno` debe ser «v5» o «v6» (falla cerrado). Devuelve si el diseño es V6."""
+    """`diseno` debe ser «v5» o «v6» y, con la V6, su sección `v6` debe ser legible (falla cerrado al crear el Bloque; QA r01
+    de T-101, H-07). Devuelve si el diseño es V6."""
     d = cfg.get("diseno", "v5")
     if d not in DISENOS:
         raise ValueError(f"`diseno` desconocido: {d!r} (v5 | v6)")
-    return d == "v6"
+    if d != "v6":
+        return False
+    for clave, minimo in (("gc1.exploracion_celdas", 0), ("prospectiva.max_encargos_por_lote", 1),
+                          ("contradictor.max_rondas_sustitucion", 0), ("cobertura.muestra_descartes", 0)):
+        _entero(cfg, clave, minimo)
+    fr = parametro(cfg, "v6.auditoria_fraccion")
+    if isinstance(fr, bool) or not isinstance(fr, (int, float)) or not 0 <= float(fr) <= 1:
+        raise ValueError(f"v6.auditoria_fraccion debe estar entre 0 y 1 (es {fr!r})")
+    if parametro(cfg, "v6.analista.base_conocimientos") not in ("ninguna", "completa"):
+        raise ValueError("v6.analista.base_conocimientos debe ser «ninguna» o «completa»")
+    if parametro(cfg, "v6.contradictor.proveedor") not in ("mismo", "otro"):
+        raise ValueError("v6.contradictor.proveedor debe ser «mismo» u «otro»")
+    if parametro(cfg, "v6.cobertura.horizonte_contrafactual") not in parametro(cfg, "horizontes"):
+        raise ValueError("v6.cobertura.horizonte_contrafactual debe ser un horizonte de `horizontes`")
+    spp = (cfg.get("v6") or {}).get("gc1", {}).get("senal_por_perfil") or {}
+    if not isinstance(spp, dict) or not all(isinstance(v, str) and v for v in spp.values()):
+        raise ValueError("v6.gc1.senal_por_perfil debe ser {tipo de activo: clave de señal}")
+    lim = parametro(cfg, "v6.sintetizador_limites")
+    for k in ("regimen", "factor", "lectura", "texto_minimo", "preguntas", "limitaciones"):
+        if isinstance(lim.get(k), bool) or not isinstance(lim.get(k), int) or lim[k] < 1:
+            raise ValueError(f"v6.sintetizador_limites.{k} debe ser un entero ≥ 1")
+    return True
 
 
 def op(bloque, clave: str) -> Any:
@@ -68,7 +98,7 @@ def repartir_presupuesto(bloque, asign: dict[str, float], clases: list[str]) -> 
     rep = parametro(bloque.cfg, "presupuesto_uc.reparto_fases")
     fr = float(rep["prospectiva"]) + float(rep["refutacion"])
     out = dict(asign)
-    out[BOLSA_GLOBAL] = 0.0
+    out[BOLSA_GLOBAL] = float(out.get(BOLSA_GLOBAL, 0.0))
     for c in clases:
         parte = round(out[c] * fr, 6)
         out[c] = round(out[c] - parte, 6)
@@ -94,7 +124,9 @@ def gc1(bloque, clase: str, universo: list[dict], vigentes: list[dict], as_of) -
     sin: list[dict] = []
     for u in universo:
         v = (u.get("senales") or {}).get(clave)
-        (con if isinstance(v, (int, float)) and not isinstance(v, bool) else sin).append(u)
+        # H-06 (QA r01): una señal NaN o infinita no es una señal medible: pasa marcada, no ordena ni descarta
+        medible = isinstance(v, (int, float)) and not isinstance(v, bool) and math.isfinite(float(v))
+        (con if medible else sin).append(u)
     orden = sorted(con, key=lambda u: (-float(u["senales"][clave]), u["simbolo"]))
     pasan = [u for u in orden if float(u["senales"][clave]) >= umbral][:maxc]
     ids_pasan = {u["simbolo"] for u in pasan}
@@ -123,6 +155,13 @@ def gc1(bloque, clase: str, universo: list[dict], vigentes: list[dict], as_of) -
            "exploracion": sorted(ids_expl), "sin_senal_medible": sorted(u["simbolo"] for u in sin),
            "vigentes": sorted(s for s, m in marca.items() if m == "VIGENTE"), "descartes": descartes, "falsos_negativos": []}
     return filtrado, reg
+
+
+NOTA_GC1 = (" El ejecutor ya ha aplicado GC1 por código (diseño V6). Cada ámbito del universo lleva la marca `gc1`: PASA (su señal "
+            "llega al umbral), EXPLORACION (no llega, pero se te ofrece para medir lo que el filtro deja escapar), "
+            "SIN_SENAL_MEDIBLE (el Motor no tiene señal para él) o VIGENTE. Evalúa todos con la estrategia de tu tipo de activo: "
+            "no descartes un ámbito EXPLORACION o SIN_SENAL_MEDIBLE solo por su señal; propónlo como finalista si tu análisis lo "
+            "sostiene. En `cribado`, `paso_gc1` es tu juicio sobre el ámbito, no la marca del ejecutor.")
 
 
 def gc1_falsos_negativos(out: dict) -> None:
@@ -173,10 +212,12 @@ def prospectiva_global(bloque, grupos: dict[str, list[dict]], as_of, run_id, pre
     res: dict[str, dict] = {}
     n_lotes = 0
 
-    def _llamar(lote):
+    def _llamar(lote, reintento=False):
         nonlocal n_lotes
         n_lotes += 1
         msg = {"encargos": lote, "fecha_limite_informacion": str(pd.Timestamp(as_of).date())}
+        if reintento:   # QA r01 de T-101, H-04: otro encargo, que no sale de la caché HT-06 con la misma respuesta incompleta
+            msg["reintento_de_cobertura"] = {"motivo": "estos encargos no volvieron en la primera llamada", "refs": [e["ref"] for e in lote]}
         bloque.mensajeria.crear("CT-12", "AG-02", "AG-10", msg, run_id=run_id, presupuesto={"uc": presupuesto.asignado.get(BOLSA_GLOBAL)})
         r = bloque._invocar("AG-10", "CT-12", msg, "PROSPECTIVA", INSTR_PROSPECTIVA, as_of, run_id, None, "prospectiva",
                             presupuesto, bolsa=BOLSA_GLOBAL)
@@ -190,7 +231,7 @@ def prospectiva_global(bloque, grupos: dict[str, list[dict]], as_of, run_id, pre
     faltan = [e for e in encargos if e["ref"] not in res]
     if faltan:   # control de cobertura: una vez más, solo con lo que falta
         for lote in _lotes(faltan, op(bloque, "prospectiva.max_encargos_por_lote")):
-            _llamar(lote)
+            _llamar(lote, reintento=True)
     omitidos = []
     for r, f in por_ref.items():
         f["_prospectiva"] = res.get(r)
@@ -229,8 +270,10 @@ def refutacion_global(bloque, grupos: dict[str, list[dict]], nivel: dict[str, st
     nivel_msg = "N3" if "N3" in nivel.values() else "N2"
     res: dict[str, dict] = {}
 
-    def _llamar(lote):
+    def _llamar(lote, reintento=False):
         msg = {"peticiones": lote, "nivel": nivel_msg}
+        if reintento:   # H-04
+            msg["reintento_de_cobertura"] = {"motivo": "estas peticiones no volvieron en la primera llamada", "refs": [p["ref"] for p in lote]}
         bloque.mensajeria.crear("CT-13", "AG-02", "AG-11", msg, run_id=run_id, presupuesto={"uc": presupuesto.asignado.get(BOLSA_GLOBAL)})
         r = bloque._invocar("AG-11", "CT-13", msg, "REFUTACION", INSTR_REFUTACION, as_of, run_id, None, "refutacion", presupuesto,
                             bolsa=BOLSA_GLOBAL)
@@ -245,7 +288,7 @@ def refutacion_global(bloque, grupos: dict[str, list[dict]], nivel: dict[str, st
     faltan = [p for r, p in peticiones.items() if r not in res]
     if faltan:
         for lote in _lotes(faltan, por_lote):
-            _llamar(lote)
+            _llamar(lote, reintento=True)
     pendientes: dict[str, list] = {}
     sin_respuesta = []
     for clase, f in todas:
@@ -351,11 +394,13 @@ def seleccion_con_critica(bloque, clases, analisis, clusteres, nivel, as_of, run
             if f.get("_critica_pendiente"):
                 f["_critica_pendiente"], f["_sin_critica"] = False, True
                 (sin_critica if f.get("opp_id") in top else no_criticadas).append({"clase": c, "proxy": f["proxy"], "opp_id": f.get("opp_id")})
-            elif f.get("_sin_critica") and f.get("opp_id") in top:   # el Contradictor no la devolvió en dos intentos
-                sin_critica.append({"clase": c, "proxy": f["proxy"], "opp_id": f.get("opp_id")})
+    # QA r01 de T-101, H-03: lo que se envió al Contradictor (estaba en un top-3) y no volvió en dos intentos no se entrega
+    # y se declara, aunque ya no sea elegible
+    sin_respuesta = sorted({r for ronda in rondas for r in ronda.get("sin_respuesta", [])})
     if sin_critica:
         sel = _seleccionar_todo()
-    return sel, {"rondas": rondas, "sin_critica": sin_critica, "no_criticadas_fuera_del_top3": no_criticadas}
+    return sel, {"rondas": rondas, "sin_critica": sin_critica, "sin_respuesta": sin_respuesta,
+                 "no_criticadas_fuera_del_top3": no_criticadas}
 
 
 # ======================================================================================================
@@ -389,23 +434,77 @@ INSTR_SINTESIS = ("Sobre el paquete ya validado: escribe la integración (régim
 _CAMPOS_REDACCION = ("frases_30s", "tarjetas", "motivos_llanos", "glosario", "frase_historial")
 
 
-def _aplicar_integracion(paquete: dict, d: dict) -> None:
-    """Solo se toman textos: el Sintetizador no puede cambiar la selección, las puntuaciones, las fechas ni las cifras."""
-    if isinstance(d.get("regimen_macro"), str) and len(d["regimen_macro"].strip()) >= 10:
-        paquete["regimen_macro"] = d["regimen_macro"].strip()[:900]
-    fact = {str(x.get("cluster_id")): str(x["factor"]) for x in d.get("factores_dominantes") or [] if isinstance(x, dict)
-            and isinstance(x.get("factor"), str) and len(str(x["factor"]).strip()) >= 5}
+# QA r01 de T-101, H-09: un texto del Sintetizador con una probabilidad numérica (R13) o con la compra de un instrumento concreto
+# (R21) no se toma. El de R21 se suma al que ya usa HT-09 para las opciones (`sintesis._UNITARIA`).
+_R13 = re.compile(r"probab\w*\W+(?:\w+\W+){0,4}?\d{1,3}(?:[.,]\d+)?\s*%|\d{1,3}(?:[.,]\d+)?\s*%\s+de\s+(?:probab|posibilidad)", re.IGNORECASE)
+_R21 = re.compile(r"\b(?:compr[ae]r?|vend[ae]r?|adquirir)\s+(?:acciones\s+de\s+|bonos\s+de\s+)?\$?[A-Z]{1,5}\b")
+
+
+def texto_prohibido(t) -> str | None:
+    """«R13», «R21» o None para un texto del Sintetizador."""
+    if not isinstance(t, str):
+        return None
+    if _R13.search(t):
+        return "R13"
+    if _R21.search(t) or sint._UNITARIA.search(t):
+        return "R21"
+    return None
+
+
+def _textos(x) -> list:
+    if isinstance(x, str):
+        return [x]
+    if isinstance(x, dict):
+        return [t for v in x.values() for t in _textos(v)]
+    if isinstance(x, list):
+        return [t for v in x for t in _textos(v)]
+    return []
+
+
+def _aplicar_integracion(paquete: dict, d: dict, lim: dict) -> list[str]:
+    """Solo se toman textos (el Sintetizador no puede cambiar la selección, las puntuaciones, las fechas ni las cifras), con las
+    longitudes de `v6.sintetizador_limites`, y nunca uno que incumpla R13 o R21. Devuelve los campos descartados."""
+    descartados = []
+
+    def _ok(campo, t):
+        if not isinstance(t, str) or len(t.strip()) < lim["texto_minimo"]:
+            return False
+        regla = texto_prohibido(t)
+        if regla:
+            descartados.append(f"{campo} ({regla})")
+            return False
+        return True
+    if _ok("regimen_macro", d.get("regimen_macro")):
+        paquete["regimen_macro"] = d["regimen_macro"].strip()[:lim["regimen"]]
+    fact = {str(x.get("cluster_id")): str(x["factor"]).strip() for x in d.get("factores_dominantes") or []
+            if isinstance(x, dict) and _ok("factores_dominantes", x.get("factor"))}
     for c in paquete.get("clusteres_exposicion", []):
         if c["cluster_id"] in fact:
-            c["factor_dominante"] = fact[c["cluster_id"]].strip()[:300]
-    preg = [x.strip() for x in d.get("preguntas_sugeridas") or [] if isinstance(x, str) and len(x.strip()) >= 5][:6]
+            c["factor_dominante"] = fact[c["cluster_id"]][:lim["factor"]]
+    preg = [x.strip() for x in d.get("preguntas_sugeridas") or [] if _ok("preguntas_sugeridas", x)][:lim["preguntas"]]
     if preg:
         paquete["preguntas_sugeridas"] = preg
-    if isinstance(d.get("lectura_conjunto"), str) and d["lectura_conjunto"].strip():
-        paquete["x_lectura_conjunto"] = d["lectura_conjunto"].strip()[:1200]
-    lim = [f"Sintetizador: {x.strip()}"[:300] for x in d.get("limitaciones") or [] if isinstance(x, str) and len(x.strip()) >= 5][:5]
-    if lim:
-        paquete["limitaciones"] = [x for x in paquete["limitaciones"] if not x.startswith("Ninguna limitación")] + lim
+    if _ok("lectura_conjunto", d.get("lectura_conjunto")):
+        paquete["x_lectura_conjunto"] = d["lectura_conjunto"].strip()[:lim["lectura"]]
+    nuevas = [f"Sintetizador: {x.strip()}"[:lim["factor"]] for x in d.get("limitaciones") or [] if _ok("limitaciones", x)][:lim["limitaciones"]]
+    if descartados:
+        nuevas.append("Textos del Sintetizador descartados por R13 o R21: " + ", ".join(dict.fromkeys(descartados)))
+    if nuevas:
+        paquete["limitaciones"] = [x for x in paquete["limitaciones"] if not x.startswith("Ninguna limitación")] + nuevas
+    return descartados
+
+
+def _redaccion_segura(bloque, paquete, d) -> dict:
+    """Los textos llanos del Sintetizador; si alguno incumple R13 o R21, se usan los textos por defecto y se declara (H-09)."""
+    if not d:
+        return bloque.redaccion.textos_por_defecto(paquete)
+    red = {k: d[k] for k in _CAMPOS_REDACCION}
+    malas = sorted({r for r in (texto_prohibido(t) for t in _textos(red)) if r is not None})
+    if malas:
+        paquete["limitaciones"] = [x for x in paquete["limitaciones"] if not x.startswith("Ninguna limitación")] + [
+            f"Textos llanos del Sintetizador descartados por {', '.join(malas)}: se usan los textos por defecto"]
+        return bloque.redaccion.textos_por_defecto(paquete)
+    return red
 
 
 def sintetizar(bloque, paquete, extras, as_of, run_id, presupuesto, estado_run) -> tuple[dict, dict, dict]:
@@ -414,19 +513,21 @@ def sintetizar(bloque, paquete, extras, as_of, run_id, presupuesto, estado_run) 
     llega, una reescritura, como con el Redactor."""
     msg = {"paquete_sintesis": sint.mensaje_redactor(paquete), "clusteres": [c["cluster_id"] for c in paquete.get("clusteres_exposicion", [])],
            "regimenes": paquete.get("regimen_macro"), "cambios_vs_anterior": paquete.get("x_cambios_vs_anterior")}
-    bloque.mensajeria.crear("CT-15", "AG-02", "AG-26", {"paquete_sintesis": msg["paquete_sintesis"]}, run_id=run_id, presupuesto={"uc": 2})
+    bloque.mensajeria.crear("CT-15", "AG-02", "AG-26", {"paquete_sintesis": msg["paquete_sintesis"]}, run_id=run_id,
+                            presupuesto={"uc": presupuesto.asignado.get("COMUN")})
     r = bloque._invocar("AG-26", "CT-15", msg, "SINTESIS", INSTR_SINTESIS, as_of, run_id, None, "redaccion", presupuesto, bolsa="COMUN")
     d = r.datos if r and r.datos else None
+    lim = op(bloque, "sintetizador_limites")
     if d:
-        _aplicar_integracion(paquete, d)
-    red = {k: d[k] for k in _CAMPOS_REDACCION} if d else bloque.redaccion.textos_por_defecto(paquete)
+        _aplicar_integracion(paquete, d, lim)
+    red = _redaccion_segura(bloque, paquete, d)
     entreg, g3b = bloque.redaccion.generar(bloque, paquete, extras, red, as_of, run_id, estado_run)
     if g3b["dictamen"] == "BLOQUEADO" and any(c == "C12" for c in g3b.get("bloqueos", [])):
         msg2 = {**msg, "reescritura": {"fernandez_huerta": g3b.get("legibilidad"), "frases_largas": g3b.get("frases_largas", [])}}
         r2 = bloque._invocar("AG-26", "CT-15", msg2, "SINTESIS", INSTR_SINTESIS + " Reescribe: el índice no alcanza 70.", as_of, run_id,
                              None, "redaccion", presupuesto, bolsa="COMUN")
         if r2 and r2.datos:
-            red = {k: r2.datos[k] for k in _CAMPOS_REDACCION}
+            red = _redaccion_segura(bloque, paquete, r2.datos)
             entreg, g3b = bloque.redaccion.generar(bloque, paquete, extras, red, as_of, run_id, estado_run)
     return entreg, g3b, red
 
@@ -449,6 +550,7 @@ def registrar_cobertura(bloque, run_id, as_of, clases, analisis, seleccion, info
     n_muestra = int(op(bloque, "cobertura.muestra_descartes"))
     omitidas = set((info_prosp or {}).get("omitidos", []))
     sin_critica = {(x["clase"], x["proxy"]) for x in (info_critica or {}).get("sin_critica", [])}
+    sin_respuesta = set((info_critica or {}).get("sin_respuesta", []))
     por_clase = {}
     for c in clases:
         an, s = analisis[c], seleccion[c]
@@ -464,6 +566,8 @@ def registrar_cobertura(bloque, run_id, as_of, clases, analisis, seleccion, info
                 fase, motivo = "GC3", "fuera de las finalistas con más RK"
             elif _ref(c, f) in omitidas:
                 fase, motivo = "PROSPECTIVA", "sin pronóstico: omitido por Prospectiva dos veces (declarado, no negativo)"
+            elif _ref(c, f) in sin_respuesta:   # QA r01 de T-101, H-03
+                fase, motivo = "CRITICA", "el Contradictor no la devolvió en dos intentos: no se entrega (A-01)"
             elif (c, f["proxy"]) in sin_critica:
                 fase, motivo = "CRITICA", "sin crítica del Contradictor: no se entrega (A-01)"
             elif f.get("opp_id") in top:
@@ -476,7 +580,23 @@ def registrar_cobertura(bloque, run_id, as_of, clases, analisis, seleccion, info
                 fase, motivo = "SELECCION", mot or "no elegida"
             filas.append({"simbolo": f["proxy"], "opp_id": f.get("opp_id"), "fase": fase, "motivo": motivo,
                           "criticada": bool(f.get("_criticada")), "exploracion": f["proxy"] in set((an.get("gc1") or {}).get("exploracion", []))})
-        descartes = [x for x in filas if x["fase"] != "SELECCION_FINAL"]
+        # QA r01 de T-101, H-01: también lo que el Analista recibió y no propuso, y las vigentes (mantenidas o cerradas)
+        g = an.get("gc1") or {}
+        finalistas = {f["proxy"] for f in an["finalistas"]}
+        motivos_an = {str(d.get("nombre")): d.get("motivo") for d in an.get("descartadas", []) if isinstance(d, dict)}
+        for sim in sorted(set(g.get("pasan", [])) | set(g.get("exploracion", [])) | set(g.get("sin_senal_medible", []))):
+            if sim not in finalistas:
+                filas.append({"simbolo": sim, "fase": "ANALISTA", "exploracion": sim in set(g.get("exploracion", [])),
+                              "motivo": f"el Analista no la propuso como finalista ({motivos_an.get(sim) or 'sin motivo declarado'})"})
+        por_opp = {f.get("opp_id") for f in an["finalistas"]}
+        for x in s["candidatos"]:
+            if x.get("opp_id") in top and x.get("opp_id") not in por_opp:
+                filas.append({"simbolo": x.get("proxy"), "opp_id": x["opp_id"], "fase": "SELECCION_FINAL", "vigente": True,
+                              "criticada": bool(x.get("_criticada")), "motivo": "vigente mantenida en el top-3 (arrastre verificado)"})
+        for x in s.get("cerradas", []):
+            filas.append({"opp_id": x["opp_id"], "simbolo": None, "fase": "CIERRE", "vigente": True,
+                          "motivo": f"vigente cerrada: {x.get('motivo_cierre')} ({x.get('comentario')})"})
+        descartes = [x for x in filas if x["fase"] not in ("SELECCION_FINAL", "CIERRE") and x.get("simbolo")]
         muestra = sorted(descartes, key=lambda x: _sembrado(run_id, c, x["simbolo"]))[:n_muestra]
         fecha = str(pd.Timestamp(as_of).date())
         elegidas = [{"opp_id": f.get("opp_id"), "simbolo": f["proxy"], "precio": _precio(bloque, f["proxy"], as_of)}
@@ -514,20 +634,26 @@ def resolver_contrafactual(bloque, as_of, run_id) -> list[dict]:
             continue
         if vence > hoy:
             continue
-        clases = {}
+        clases: dict[str, dict[str, Any]] = {}
         for c, d in e["clases"].items():
             def _rent(x, vence=vence):
                 if not x.get("simbolo") or not x.get("precio"):
                     return None
                 p1 = _precio(bloque, x["simbolo"], vence)
                 return None if p1 is None else round(p1 / x["precio"] - 1, 6)
+            items = list(d.get("muestra_descartes", [])) + list(d.get("elegidas", []))
             rd = [r for r in (_rent(x) for x in d.get("muestra_descartes", [])) if r is not None]
             re_ = [r for r in (_rent(x) for x in d.get("elegidas", [])) if r is not None]
             media_e = sum(re_) / len(re_) if re_ else None
-            clases[c] = {"descartes": len(rd), "elegidas": len(re_),
+            medibles = sum(1 for x in items if x.get("simbolo") and x.get("precio"))
+            clases[c] = {"descartes": len(rd), "elegidas": len(re_), "sin_precio": medibles - len(rd) - len(re_),
                          "rent_media_descartes": round(sum(rd) / len(rd), 6) if rd else None,
                          "rent_media_elegidas": round(media_e, 6) if media_e is not None else None,
                          "descartes_que_superan": sum(1 for r in rd if media_e is not None and r > media_e)}
+        # QA r01 de T-101, H-10: si al vencer no hay ningún precio de lo que se podía medir, se espera al ciclo siguiente
+        # (sin datos no hay conclusión); con datos parciales se resuelve y se cuenta lo que faltó (`sin_precio`)
+        if any(v["sin_precio"] for v in clases.values()) and not any(v["descartes"] + v["elegidas"] for v in clases.values()):
+            continue
         ctf = {"tipo_entrada": "CONTRAFACTUAL", "id": bloque.almacen.nuevo_id("CTF"), "run_id": run_id, "cobertura_id": e["id"],
                "fecha_muestra": e["fecha"], "fecha_resolucion": str(vence.date()), "clases": clases}
         bloque.almacen.escribir("HA", "AG-18", ctf)

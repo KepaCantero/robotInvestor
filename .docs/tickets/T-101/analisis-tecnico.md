@@ -36,3 +36,19 @@
 - **GC1 con la señal compuesta y el umbral 0,75** apenas deja pasar ámbitos de renta fija, liquidez y tipos, porque su señal compuesta es baja por construcción. El Analista simulado de la V5 usa 0,55 y deja pasar más. La exploración de la V6 detecta los falsos negativos (EMB y ^VIX el 2026-06-05). Falta el catálogo de señales por perfil (`v6.gc1.senal_por_perfil`, `[PROPUESTO]`, va con K).
 - **El Lector de evidencia** sigue haciendo una llamada por petición dentro de cada tipo; no hay lote por ciclo.
 - **Con el simulador** solo se miden el flujo y el consumo; la calidad se medirá con la API real (Fase 5).
+
+## Ronda r02 (hallazgos de la QA r01)
+
+| Hallazgo | Corrección |
+| --- | --- |
+| H-01 | La cobertura tiene fila para cada ámbito que recibe el Analista y no propone (fase ANALISTA, con su motivo si lo declara), para cada vigente mantenida en el top-3 (SELECCION_FINAL, `vigente`) y para cada vigente cerrada (CIERRE). La muestra de descartes sale de las filas con símbolo |
+| H-02 | CA-8 se reformula en el README del ticket, con la reformulación registrada: menos llamadas y menos tokens de entrada, con caché y sin ella |
+| H-03 | Lo que el Contradictor no devuelve en dos intentos queda en `sin_respuesta`. Se declara en las limitaciones y en la cobertura (fase CRITICA, «no la devolvió») y deja el run PARCIAL. También lo deja PARCIAL lo que queda sin crítica o sin pronóstico |
+| H-04 | El reintento de Prospectiva y del Contradictor lleva `reintento_de_cobertura` con las refs que faltan. Así es otro encargo y no sale de la caché HT-06 con la misma respuesta incompleta |
+| H-05 | Con GC1 por código, la instrucción del Analista explica las marcas (`NOTA_GC1`): EXPLORACION y SIN_SENAL_MEDIBLE no se descartan por la señal, y `paso_gc1` es el juicio del Analista |
+| H-06 | Una señal NaN o infinita cuenta como no medible: pasa marcada y no ordena ni descarta |
+| H-07 | `diseno_v6.validar` comprueba la sección `v6` al crear el Bloque: enteros y sus mínimos, la fracción del Auditor, los enumerados, el horizonte, el catálogo de señales y los límites del Sintetizador. El `presupuesto_override` se aplica antes de repartir la bolsa del ciclo |
+| H-08 | Las longitudes de los textos del Sintetizador salen de `v6.sintetizador_limites`. El presupuesto del mensaje CT-15 es el de la bolsa común. `tope_tokens_system` y `horizonte_contrafactual` quedan marcados `[PROPUESTO]` y en T-57 |
+| H-09 | Un texto del Sintetizador con una probabilidad numérica (R13) o con la compra de un instrumento (R21, más `sintesis._UNITARIA`) no se toma y se declara. En los textos llanos, se usan los textos por defecto. En la V5, la integración de AG-02 sigue sin ese filtro, y queda en la deuda |
+| H-10 | Si al vencer no hay ningún precio de lo que se podía medir, el contrafactual espera al ciclo siguiente. Con datos parciales se resuelve y cuenta `sin_precio`. La documentación dice que lo escribe el ciclo V6 en HA |
+| H-11 | 23 pruebas nuevas contra los mutantes vivos: sin rondas de sustitución (M08, M09, M18 y M27), el Contradictor sin respuesta y su reintento (M06 y H-03), la caché en el reintento (H-04), refs no pedidas (M25), OPP- estables (M14), GC1 con más de `max_candidatas` y con NaN (M01 y H-06), falsos negativos (M23), el Evaluador con resueltos (M24), el Auditor en vivo (M26) y el contrafactual la víspera y sin precios (M12 y H-10) |

@@ -8,10 +8,6 @@ from pathlib import Path
 
 import pandas as pd
 import pytest
-from conftest import AS_OF, DATOS, config_pruebas
-
-from bloque_a import diseno_v6 as v6
-from bloque_a import mock_respuestas as mr
 from bloque_a.configuracion import RUTA_UNIVERSO_EJEMPLO, cargar_config, parametro
 from bloque_a.contratos import canal_permitido
 from bloque_a.herramientas.ht01_datos import ProveedorCSV, cargar_universo
@@ -24,6 +20,10 @@ from bloque_a.prompts import (
     kit,
     secciones,
 )
+from conftest import AS_OF, DATOS, config_pruebas
+
+from bloque_a import diseno_v6 as v6
+from bloque_a import mock_respuestas as mr
 
 QUITADOS_EN_V6 = {"AG-01", "AG-02", "AG-12", "AG-14", "AG-16", "AG-17", "AG-18", "AG-20"}
 
@@ -248,12 +248,12 @@ def test_registro_de_cobertura_de_cada_candidata(dos_disenos):
         assert len(d["muestra_descartes"]) <= n and all("precio" in x for x in d["muestra_descartes"])
 
 
-def test_v6_hace_menos_llamadas_y_lee_mas_cache(dos_disenos):
-    """CA-8 (con el simulador; no dice nada de la calidad)."""
+def test_v6_hace_menos_llamadas_y_lee_menos_tokens(dos_disenos):
+    """CA-8, reformulado tras H-02 de la QA r01 (con el simulador; no dice nada de la calidad): menos llamadas y menos tokens de
+    entrada que la V5, contando la caché y sin contarla."""
     c5, c6 = dos_disenos["v5"]["r"]["consumo"], dos_disenos["v6"]["r"]["consumo"]
     tot = lambda c: c["entrada"] + c["cache_escritura"] + c["cache_lectura"]
-    assert c6["llamadas"] < c5["llamadas"] and tot(c6) < tot(c5)
-    assert c6["cache_lectura"] / tot(c6) > 0.4
+    assert c6["llamadas"] < c5["llamadas"] and tot(c6) < tot(c5) and c6["entrada"] < c5["entrada"]
 
 
 def test_v6_declara_sus_limitaciones(dos_disenos):
@@ -404,3 +404,244 @@ def test_gc1_no_descarta_lo_que_no_tiene_senal(tmp_path):
     marcas = {u["simbolo"]: u["gc1"] for u in filtrado}
     assert marcas["A"] == "PASA" and marcas["B"] == marcas["D"] == "SIN_SENAL_MEDIBLE" and marcas.get("C") == "EXPLORACION"
     assert reg["descartes"] == []
+
+
+# ================================================================================================ QA r01 de T-101 (ronda r02)
+def _filas(b, clase):
+    return _cobertura(b)[-1]["clases"][clase]["filas"]
+
+
+def _entregadas(r, clase):
+    return {o["indicador_seguimiento"]["simbolo"] for o in r["paquete"]["clases"][clase]["opciones"]}
+
+
+def _hunde(monkeypatch):
+    """El Contradictor simulado: objeción fuerte sin resolver para la primera ref que ve; sin fuertes para el resto."""
+    orig = mr._contrarias
+    estado = {"victimas": set()}
+
+    def contrarias(msg, ctx, rng):
+        if "contrarreplicas" in msg:
+            return {"resultados": [{"objecion_id": x["objecion_id"], "resuelta": False, "motivo": "no basta"} for x in msg["contrarreplicas"]]}
+        out = orig(msg, ctx, rng)
+        if not estado["victimas"]:
+            estado["victimas"].add(msg["peticiones"][0]["ref"])
+        for x in out["resultados"]:
+            x["objeciones"] = [o for o in x["objeciones"] if o["fuerza"] != "fuerte"]
+            if x["ref"] in estado["victimas"]:
+                x["objeciones"].append({"id": "X", "tipo": "evidencia_insuficiente", "fuerza": "fuerte", "argumento": "No se sostiene.",
+                                        "evidencia": "-", "que_la_resolveria": "otra raíz"})
+        return out
+    monkeypatch.setattr(mr, "_contrarias", contrarias)
+    return estado
+
+
+def test_sin_rondas_de_sustitucion_la_que_entra_sin_critica_no_sale(tmp_path, monkeypatch):
+    """H-11 (M08, M09, M18 y M27): con `max_rondas_sustitucion: 0`, la que sustituye a la que cae no se puede criticar: no se
+    entrega, se declara y el run queda PARCIAL; todo lo entregado está criticado."""
+    estado = _hunde(monkeypatch)
+    b = _bloque(tmp_path, _cfg_div(v6={"contradictor": {"max_rondas_sustitucion": 0}}))
+    r = b.ciclo(AS_OF)
+    cob = _cobertura(b)[-1]
+    filas = _filas(b, "DIV")
+    criticadas = {f["simbolo"] for f in filas if f.get("criticada")}
+    assert estado["victimas"] and _entregadas(r, "DIV") <= criticadas
+    sin = cob["critica"]["sin_critica"]
+    assert sin and all(x["proxy"] not in _entregadas(r, "DIV") for x in sin)
+    assert all(next(f for f in filas if f["simbolo"] == x["proxy"] and f["fase"] != "ANALISTA")["fase"] == "CRITICA" for x in sin)
+    assert any(x.startswith("Sin crítica del Contradictor") for x in r["paquete"]["limitaciones"]) and r["estado"] == "PARCIAL"
+
+
+def test_lo_que_el_contradictor_no_devuelve_se_reintenta_se_declara_y_no_sale(tmp_path, monkeypatch):
+    """H-03, H-04 y M06: una ref que el Contradictor no devuelve se pide otra vez y, si sigue sin volver, no se entrega, se
+    declara con su motivo y el run queda PARCIAL."""
+    cli = MockClient()
+    b = _bloque(tmp_path, _cfg_div(), cli)
+    ver = {"llamadas": []}
+    orig = mr._contrarias
+
+    def contrarias(msg, ctx, rng):
+        out = orig(msg, ctx, rng)
+        if "contrarreplicas" in msg:
+            return out
+        ver.setdefault("ref", msg["peticiones"][0]["ref"])
+        ver["llamadas"].append([p["ref"] for p in msg["peticiones"]])
+        out["resultados"] = [x for x in out["resultados"] if x["ref"] != ver["ref"]]
+        return out
+    monkeypatch.setattr(mr, "_contrarias", contrarias)
+    r = b.ciclo(AS_OF)
+    cob = _cobertura(b)[-1]
+    proxy = ver["ref"].split(":")[1]
+    assert ver["ref"] in cob["critica"]["sin_respuesta"] and [ver["ref"]] in ver["llamadas"]   # el reintento, solo con lo que faltó
+    assert proxy not in _entregadas(r, "DIV") and r["estado"] == "PARCIAL"
+    assert any("no devolvió la crítica" in x and ver["ref"] in x for x in r["paquete"]["limitaciones"])
+    fila = next(f for f in _filas(b, "DIV") if f["simbolo"] == proxy and f["fase"] != "ANALISTA")
+    assert fila["fase"] == "CRITICA" and "no la devolvió" in fila["motivo"]
+
+
+def test_el_reintento_no_sale_de_la_cache(tmp_path, monkeypatch):
+    """H-04: si Prospectiva no devuelve nada la primera vez, el reintento es otro encargo y llega al modelo."""
+    orig = mr._prospectiva
+
+    def prospectiva(msg, ctx, rng):
+        out = orig(msg, ctx, rng)
+        if "reintento_de_cobertura" not in msg:
+            out["resultados"] = []
+        return out
+    monkeypatch.setattr(mr, "_prospectiva", prospectiva)
+    cli = MockClient()
+    b = _bloque(tmp_path, _cfg_div(v6={"prospectiva": {"max_encargos_por_lote": 50}}), cli)
+    b.ciclo(AS_OF)
+    cob = _cobertura(b)[-1]["prospectiva"]
+    assert cob["omitidos"] == [] and sum(1 for x in cli.llamadas if x["agente"] == "AG-10") == 2
+
+
+def test_prospectiva_no_acepta_refs_no_pedidas(tmp_path, monkeypatch):
+    """M25: un resultado para una ref que no estaba en el lote no se toma."""
+    orig = mr._prospectiva
+    uni = cargar_universo(RUTA_UNIVERSO_EJEMPLO)
+    simbolos = list(uni.loc[uni["clase"] == "DIV", "simbolo"])
+
+    def prospectiva(msg, ctx, rng):
+        out = orig(msg, ctx, rng)
+        pedidas = {e["ref"] for e in msg["encargos"]}
+        for sym in simbolos:
+            if f"DIV:{sym}" not in pedidas:
+                out["resultados"].append({"ref": f"DIV:{sym}", "escenarios": {}, "hitos": [], "indicadores_adelantados": [], "invalidacion": [],
+                                          "pronosticos": [{"horizonte": "H2", "vista": "alcista", "prob_interna": 0.6, "escenario_asociado": "BASE",
+                                                           "metodo": "ACC-MOM-001", "afirmacion": "PRONOSTICO FALSO"}]})
+        return out
+    monkeypatch.setattr(mr, "_prospectiva", prospectiva)
+    b = _bloque(tmp_path, _cfg_div(v6={"prospectiva": {"max_encargos_por_lote": 1}}))
+    r = b.ciclo(AS_OF)
+    assert "PRONOSTICO FALSO" not in json.dumps(r["paquete"], ensure_ascii=False)
+    assert [e for e in b.almacen.leer("F4") if e.get("tipo_entrada") == "ALTA"]
+    assert "PRONOSTICO FALSO" not in json.dumps(b.almacen.leer("F4"), ensure_ascii=False)   # tampoco se congela en F4
+
+
+def test_el_identificador_opp_no_se_gasta_en_cada_ronda(tmp_path, monkeypatch):
+    """M14: las rondas de crítica no piden identificadores OPP- nuevos: los creados son las finalistas."""
+    _hunde(monkeypatch)
+    b = _bloque(tmp_path, _cfg_div())
+    b.ciclo(AS_OF)
+    assert len(_cobertura(b)[-1]["critica"]["rondas"]) >= 2
+    usados = int(b.almacen.nuevo_id("OPP").rsplit("-", 1)[1]) - 1
+    assert usados == len({f["opp_id"] for f in _filas(b, "DIV") if f.get("opp_id")})
+
+
+def test_gc1_respeta_max_candidatas_y_marca_nan_e_infinito(tmp_path):
+    """M01 y H-06."""
+    b = _bloque(tmp_path, _cfg_div())
+    maxc = parametro(b.cfg, "seleccion.max_candidatas")
+    uni = [{"simbolo": f"S{i:02d}", "senales": {"senal_compuesta": 0.9 - i / 1000}} for i in range(maxc + 4)]
+    uni += [{"simbolo": "NAN", "senales": {"senal_compuesta": float("nan")}}, {"simbolo": "INF", "senales": {"senal_compuesta": float("inf")}},
+            {"simbolo": "TOP", "senales": {"senal_compuesta": 0.95}}]
+    filtrado, reg = v6.gc1(b, "DIV", uni, [], AS_OF)
+    marcas = {u["simbolo"]: u["gc1"] for u in filtrado}
+    assert len(reg["pasan"]) == maxc and marcas["TOP"] == "PASA"
+    assert marcas["NAN"] == marcas["INF"] == "SIN_SENAL_MEDIBLE"
+    assert all(d["simbolo"] != "TOP" for d in reg["descartes"])
+
+
+def test_gc1_cuenta_los_falsos_negativos():
+    """M23."""
+    out = {"gc1": {"exploracion": ["X", "Y"]}, "finalistas": [{"proxy": "X"}, {"proxy": "Z"}]}
+    v6.gc1_falsos_negativos(out)
+    assert out["gc1"]["falsos_negativos"] == ["X"]
+
+
+def test_el_analista_sabe_que_gc1_ya_se_aplico(tmp_path):
+    """H-05: la instrucción explica las marcas de GC1."""
+    cli = MockClient()
+    vistos = []
+    gen = cli.generar
+
+    def _gen(**kw):
+        if kw["agente"] == "AG-05":
+            vistos.append(kw["mensajes"][0]["content"])
+        return gen(**kw)
+    cli.generar = _gen
+    _bloque(tmp_path, _cfg_div(), cli).ciclo(AS_OF)
+    assert any("ya ha aplicado GC1" in t and "EXPLORACION" in t for t in vistos)
+
+
+@pytest.mark.parametrize("extra", [{"gc1": {"exploracion_celdas": -1}}, {"prospectiva": {"max_encargos_por_lote": 0}},
+                                   {"auditoria_fraccion": 1.5}, {"contradictor": {"proveedor": "tercero"}},
+                                   {"cobertura": {"horizonte_contrafactual": "H9"}}, {"analista": {"base_conocimientos": "media"}},
+                                   {"sintetizador_limites": {"regimen": 0}}, {"contradictor": {"max_rondas_sustitucion": True}}])
+def test_la_seccion_v6_se_valida_al_crear_el_bloque(tmp_path, extra):
+    """H-07."""
+    with pytest.raises(ValueError, match="v6"):
+        _bloque(tmp_path, _cfg_div(v6=extra))
+
+
+def test_el_override_de_presupuesto_no_cuenta_dos_veces_la_bolsa_del_ciclo(tmp_path):
+    """H-07: con `presupuesto_override`, el total es el del override (más la bolsa común)."""
+    r = _bloque(tmp_path, _cfg_div()).ciclo(AS_OF, presupuesto_override={"DIV": 10.0})
+    pres = r["presupuesto"]
+    assert math.isclose(sum(v["asignado"] for v in pres.values()), 10.0 + pres["COMUN"]["asignado"])
+
+
+def test_el_sintetizador_no_cuela_probabilidades_ni_compras(tmp_path, monkeypatch):
+    """H-09: un texto con una probabilidad numérica (R13) o con la compra de un instrumento (R21) no se toma y se declara."""
+    orig = mr._sintetizador
+
+    def sintetizador(msg, ctx, rng):
+        out = orig(msg, ctx, rng)
+        out["regimen_macro"] = "Probabilidad del 87 % de que el dólar suba este trimestre."
+        out["lectura_conjunto"] = "Conviene comprar AAPL cuanto antes."
+        out["frases_30s"][0] = "Hay una probabilidad del 90 % de ganar."
+        return out
+    monkeypatch.setattr(mr, "_sintetizador", sintetizador)
+    r = _bloque(tmp_path, _cfg_div()).ciclo(AS_OF)
+    texto = json.dumps(r["paquete"], ensure_ascii=False)
+    assert "87 %" not in texto and "AAPL" not in texto
+    lim = " ".join(r["paquete"]["limitaciones"])
+    assert "descartados por R13 o R21" in lim and "Textos llanos del Sintetizador descartados" in lim
+
+
+def test_la_cobertura_tiene_fila_para_todo_lo_que_vio_el_analista_y_para_las_vigentes(tmp_path):
+    """H-01: cada ámbito que recibe el Analista y cada vigente mantenida en el top-3 tienen su fila."""
+    cli = MockClient()
+    b = _bloque(tmp_path, _cfg_div(), cli)
+    _, cuerpos = _espiar(b, cli)
+    b.ciclo(AS_OF)
+    vistos = {u["simbolo"] for m in cuerpos["CT-06"] if m.get("fase") == "CRIBADO_E_INVESTIGACION" for u in m["universo"]}
+    assert vistos and vistos <= {f["simbolo"] for f in _filas(b, "DIV")}
+    r2 = b.ciclo(str((pd.Timestamp(AS_OF) + pd.Timedelta(days=7)).date()))
+    top2 = {o["opp_id"] for o in r2["paquete"]["clases"]["DIV"]["opciones"]}
+    assert top2 <= {f.get("opp_id") for f in _filas(b, "DIV") if f["fase"] == "SELECCION_FINAL"}
+
+
+def test_el_contrafactual_espera_si_no_hay_precios_y_no_resuelve_antes_de_vencer(tmp_path, monkeypatch):
+    """H-10 y M12: la víspera del vencimiento no resuelve; sin ningún precio al vencer, espera al ciclo siguiente."""
+    b = _bloque(tmp_path, _cfg_div())
+    b.ciclo(AS_OF)
+    cob = _cobertura(b)[0]
+    vence = v6._fecha_vencimiento(b, cob["fecha"], cob["horizonte_contrafactual"])
+    b.fijar_fecha(vence)   # como en el ciclo: la fecha del bloque fija la guardia de fuga
+    assert v6.resolver_contrafactual(b, vence - pd.Timedelta(days=1), "RUN-X") == []   # con los datos ya disponibles: aún no vence
+    orig = v6._precio
+    monkeypatch.setattr(v6, "_precio", lambda bl, sim, fecha: None if pd.Timestamp(fecha) == vence else orig(bl, sim, fecha))
+    assert v6.resolver_contrafactual(b, vence, "RUN-X") == []
+    monkeypatch.setattr(v6, "_precio", orig)
+    assert len(v6.resolver_contrafactual(b, vence, "RUN-Y")) == 1
+
+
+def test_la_v6_no_llama_al_evaluador_aunque_haya_resueltos(tmp_path):
+    """M24: con pronósticos resueltos, la V6 no llama a AG-20 (las lecciones deterministas siguen)."""
+    cli = MockClient()
+    b = _bloque(tmp_path, _cfg_div(), cli)
+    b.ciclo(AS_OF)
+    b.ciclo(str((pd.Timestamp(AS_OF) + pd.Timedelta(days=60)).date()))
+    assert [e for e in b.almacen.leer("F4") if e.get("tipo_entrada") == "RESOLUCION"]
+    assert not any(x["agente"] == "AG-20" for x in cli.llamadas)
+
+
+@pytest.mark.parametrize(("fraccion", "llamadas"), [(0.0, 0), (1.0, 1)])
+def test_el_auditor_por_muestreo_en_el_ciclo_vivo(tmp_path, fraccion, llamadas):
+    """M26."""
+    cli = MockClient()
+    b = _bloque(tmp_path, _cfg_div(modo="vivo", v6={"auditoria_fraccion": fraccion}), cli)
+    b.ciclo(AS_OF)
+    assert sum(1 for x in cli.llamadas if x["agente"] == "AG-19") == llamadas

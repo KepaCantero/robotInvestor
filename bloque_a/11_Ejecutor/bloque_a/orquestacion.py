@@ -576,10 +576,10 @@ class Bloque:
             asign = {c: float(parametro(self.cfg, "presupuesto_uc.N3")) / max(len(clases), 1) for c in clases}
         tope_ciclo = float(parametro(self.cfg, "presupuesto_uc.ciclo_semanal_max"))
         asign["COMUN"] = max(tope_ciclo - sum(asign.values()), float(parametro(self.cfg, "presupuesto_uc.fraccion_minima_comun")) * tope_ciclo)
-        if self.v6:   # T-101: la parte de prospectiva y refutación de cada tipo pasa a la bolsa del ciclo (el total no cambia)
-            asign = v6.repartir_presupuesto(self, asign, clases)
         if presupuesto_override:
             asign.update(presupuesto_override)
+        if self.v6:   # T-101: la parte de prospectiva y refutación de cada tipo pasa a la bolsa del ciclo (el total no cambia;
+            asign = v6.repartir_presupuesto(self, asign, clases)   # después del override: H-07 de la QA r01)
         presupuesto = Presupuesto(asign, self.cfg)
         memoria = {"opp_vigentes": [v["opp_id"] for c in clases for v in vigentes[c]],
                    "tnd_activas": [t["tnd_id"] for t in self.almacen.estado("F1", as_of).values() if t.get("estado") not in ("archivada", "invalidada")][:50],
@@ -636,6 +636,9 @@ class Bloque:
             if info_critica and info_critica["sin_critica"]:
                 limitaciones.append("Sin crítica del Contradictor (no se entregan, A-01): "
                                     + ", ".join(f"{x['clase']}:{x['proxy']}" for x in info_critica["sin_critica"]))
+            if info_critica and info_critica["sin_respuesta"]:   # QA r01 de T-101, H-03
+                limitaciones.append("El Contradictor no devolvió la crítica en dos intentos (no se entregan, A-01): "
+                                    + ", ".join(info_critica["sin_respuesta"]))
         # Integración (CT-05 retorno): del Analizador en la V5; determinista en la V6, y el Sintetizador escribe después de G3
         if self.v6 and v6.op(self, "sintetizador"):
             integ = v6.integracion_determinista(self, seleccion, analisis, as_of)
@@ -657,7 +660,10 @@ class Bloque:
         # F6 · G3 (HT-09) + dictamen del Orquestador si no es APTO
         paquete, g3 = self._validar_g3(paquete, extras, as_of, run_id)
         estado_run = "COMPLETO"
-        if presupuesto.cierres or pausadas or clusteres.get("rechazo") or clusteres.get("sin_historia") or any(a.get("estado") == "PARCIAL" for a in analisis.values()):
+        incompleto_v6 = bool((info_prosp or {}).get("omitidos") or (info_critica or {}).get("sin_respuesta")
+                             or (info_critica or {}).get("sin_critica"))   # QA r01 de T-101, H-03: lo que no se entrega por la V6
+        if presupuesto.cierres or pausadas or clusteres.get("rechazo") or clusteres.get("sin_historia") or incompleto_v6 \
+                or any(a.get("estado") == "PARCIAL" for a in analisis.values()):
             estado_run = "PARCIAL"   # un tipo pausado por una consulta BLOQUEANTE deja el run incompleto (7.9)
         resultado = {"run_id": run_id, "as_of": str(as_of.date()), "tipo": tipo, "nivel_por_clase": nivel, "gc0": gc0,
                      "g3": g3, "estado": estado_run, "paquete": paquete, "entregables": None, "evaluacion": res_eval}
@@ -801,6 +807,8 @@ class Bloque:
         instr = INSTR[fase].format(max_cand=parametro(self.cfg, "seleccion.max_candidatas"), max_fin=parametro(self.cfg, "seleccion.max_finalistas"),
                                    max_pet=parametro(self.cfg, "seleccion.peticiones_conocimiento_por_clase"),
                                    max_expl=parametro(self.cfg, "seleccion.rotacion_exploratoria_celdas"))
+        if out.get("gc1"):   # QA r01 de T-101, H-05: el Analista sabe que GC1 ya se aplicó y qué significa cada marca
+            instr += v6.NOTA_GC1
         pr = self.cfg.get("presupuesto_uc", {}).get("reparto_fases", {})
         self.mensajeria.crear("CT-06", "AG-02", agente, msg, run_id=run_id, presupuesto={"uc": presupuesto.asignado.get(clase)})
         r = self._invocar(agente, "CT-06", msg, "INFORME_CLASE" if fase == "CRIBADO_E_INVESTIGACION" else "REVISION_VIGENTES",
