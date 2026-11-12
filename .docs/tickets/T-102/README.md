@@ -2,7 +2,7 @@
 
 | Campo | Valor |
 | --- | --- |
-| Estado | NO APTO (QA r01), ronda r02 pendiente |
+| Estado | EN QA (ronda r02) |
 | Pieza | `bloque_a/11_Ejecutor` (`bloque_a/diseno_v6.py`) |
 | Planifica · implementa · QA | claude · claude · claude, con un revisor nuevo sin contexto |
 | Aprobación del operador | 2026-11-12: «Corrige el filtro» |
@@ -36,6 +36,14 @@ Que el filtro R13/R21 de los textos del Sintetizador (diseño V6) no estropee in
 4. CA-4: lo quitado se declara en las limitaciones del paquete, y la segunda pasada de HT-09 no bloquea.
 5. CA-5: la V5 no cambia, A pasa a 607 pruebas, las cuotas no suben y el gate da 12/12.
 
+### Ronda r02 (QA r01 NO APTO)
+
+6. CA-6 (H-01): las 20 probabilidades numéricas del banco del revisor y las 18 de `R13_R02` se quitan con R13.
+7. CA-7 (H-02, H-03): las 38 compras del banco del revisor y las 22 de `R21_R02` se cazan con R21; las 107 frases legítimas del banco del revisor y las 33 de `LEGITIMAS_R02` se conservan.
+8. CA-8 (H-04, H-05, H-06): las abreviaturas no parten frases, «…» y el salto de línea sí, un texto limpio sale igual; el glosario quitado se declara y la reescritura no duplica la limitación.
+9. CA-9 (H-07): los textos degenerados del revisor se filtran en menos de 2 s en total.
+10. CA-10 (H-10): una prueba por el camino real pone una frase prohibida y una legítima en cada texto del Sintetizador; los mutantes de `r02_mutantes.py` mueren.
+
 ## Plan de pruebas
 
 | Prueba | Criterio |
@@ -49,3 +57,4 @@ Que el filtro R13/R21 de los textos del Sintetizador (diseño V6) no estropee in
 - 2026-11-12 · ABIERTO · a petición del operador («Corrige el filtro»)
 - 2026-11-12 · EN QA · filtro frase a frase con reglas nuevas; 58 pruebas nuevas (30 fallan con el filtro de T-101); A 607
 - 2026-11-12 · NO APTO · QA r01 (revisor nuevo sin contexto): H-01 alto (R13 deja pasar 10 de 20 probabilidades numéricas), H-02, H-03 y H-10 medios, H-04 a H-09 bajos
+- 2026-11-12 · EN QA · Ronda r02: R13 amplio que falla cerrado, R21 en toda la frase tras el verbo, división con abreviaturas; H-01 a H-10 corregidos (H-09, el token de CRI, a T-57 como `[PROPUESTO]`); 84 pruebas nuevas (142 en `test_t102_filtro.py`); 44 de 44 mutantes de `r02_mutantes.py` muertos
