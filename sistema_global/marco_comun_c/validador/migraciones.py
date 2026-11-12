@@ -212,7 +212,9 @@ MIGRACIONES = (
               "divisas principales y límites de F en % del capital, con su valor de partida; ningún valor guardado cambia; CFG-0.12.0"),
     Migracion("MIG-011", pe.FORMATO, ESQUEMA_V0_74, ESQUEMA_V0_75, _sin_cambios, frozenset(),
               "V0.74 a V0.75 (rondas r03 de T-75 y T-76): solo cambia el código (veto anotado también desde la pantalla, sombra "
-              "valorada al cierre del mes, plazo de gracia de O-42 y aviso O-44, PAR-0.8.0); el estado guardado no cambia"),
+              "valorada al cierre del mes, plazo de gracia de O-42 y aviso O-44, PAR-0.8.0); el estado guardado no cambia. Las "
+              "comparaciones de la sombra hechas con la V0.73 y la V0.74 se conservan como históricas, con sus reglas (valoradas en el "
+              "instante de la comparación); las nuevas se valoran al cierre del mes (QA r03 de T-76, H-20)"),
 )
 
 

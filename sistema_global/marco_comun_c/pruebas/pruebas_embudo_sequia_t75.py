@@ -194,6 +194,34 @@ def main():
     antes, justo = o11.sequia(mas(primero, days=60, microseconds=-1)), o11.sequia(mas(primero, days=60))
     h.chk("la_edad_se_mide_desde_el_primer_instante_real_H14", antes["activa"] is False and justo["activa"] is True, (antes["motivo"], justo["motivo"]))
 
+    # ------------------------------------------------------------------ QA r03 de T-75 (T-100, marco V0.76)
+    from pruebas_orquestador import encargo, sobre_para
+    # H-15 (sonda n01): un análisis nuevo anterior al periodo también borra el veto anterior
+    o12 = antiguo()
+    hasta(o12, "PROPUESTA", 1)
+    assert o12.pantalla_aprobacion("EXP-0001", vetado(o12), AHORA)["codigo"] == "O-06"
+    t1, t2, t3, t4 = (mas(AHORA, minutes=m) for m in (1, 2, 3, 10))
+    assert o12.observar("EXP-0001", [{"tipo": "PRECIO", "instrumento": "EURUSD", "operador": ">=", "umbral": 1.12}], "esperar", "GESTOR_TACTICA", t1)["ok"]
+    assert o12.reabrir("EXP-0001", "cambió el contexto", "OPERADOR", t2)["ok"]
+    enc = encargo(1); enc["event_id"] = "EV-ENC-0101"
+    assert o12.emitir_encargo("EXP-0001", enc, "GESTOR_TACTICA", t2)["ok"]
+    s = sobre_para(1, None); s["event_id"] = "EV-SOB-0001-R"
+    assert o12.entregar_sobre("EXP-0001", s, t3)["ok"]
+    assert o12.descartar("EXP-0001", "el operador lo descarta tras el nuevo análisis", "OPERADOR", t4)["ok"]
+    previo = [[x["bloqueo_previo"] for x in o12.embudo(d, t4)["salidas"] if x["hasta"] == "DESCARTADA"][-1]
+              for d in (mas(AHORA, minutes=-1), mas(AHORA, minutes=5))]
+    h.chk("tras_un_analisis_nuevo_el_veto_no_es_la_causa_mire_el_periodo_que_mire_H15", previo == [None, None], previo)
+    # H-17 (sonda q03): tras el veto visto en la pantalla, nada anterior entra; un rechazo que no anota no adelanta el reloj
+    o13 = antiguo()
+    hasta(o13, "PROPUESTA", 1)
+    r = o13.pantalla_aprobacion("EXP-0001", vetado(o13), mas(AHORA, minutes=30))
+    h.chk("tras_el_veto_de_la_pantalla_el_reloj_se_queda_en_el_veto_H17", r["codigo"] == "O-06" and o13.ultimo_ahora == mas(AHORA, minutes=30), r)
+    R = h.rechaza
+    R("y_nada_anterior_al_veto_de_la_pantalla_entra_H17", o13,
+      lambda: o13.descartar("EXP-0001", "antes del veto", "GESTOR_TACTICA", mas(AHORA, minutes=10)), "O-16")
+    rx = o13.autorizar("EXP-0001", "OPERADOR", {}, mas(AHORA, minutes=50))
+    h.chk("un_rechazo_que_no_anota_sigue_sin_adelantar_el_reloj_H17", rx["codigo"] == "O-01" and o13.ultimo_ahora == mas(AHORA, minutes=30), rx)
+
     # ------------------------------------------------------------------ T-89: tope del tiempo sin contrastar
     for c in (rl.TOPE_SIN_CONTRASTE_S * 2, 1e12, 1e308):
         try:
