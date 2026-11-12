@@ -2,7 +2,7 @@
 
 | Campo | Valor |
 | --- | --- |
-| Estado | EN QA (ronda r03) |
+| Estado | CERRADO (QA r03 APTO, 12-11-2026) |
 | Pieza | `bloque_a/11_Ejecutor` (código vivo, fuera del corpus congelado) |
 | Planifica · implementa · QA | claude · claude · claude, con un revisor nuevo sin contexto (regla del operador del 12-11-2026) |
 | Aprobación del operador | 2026-11-12: «analiza su revisión y decide si merece la pena tomar en consideración los cambios [...] También aprovecha para sumar alguna idea nueva [...] quiero que empieces a crear (en este caso sería modificar lo que ya existe) e implementar el bloque A completo» |
@@ -95,3 +95,4 @@ Construir en el ejecutor el Bloque A rediseñado: el de la propuesta de Claude (
 - 2026-11-12 · EN QA · Ronda r02: corregidos H-01 a H-11 (CA-8 reformulado y registrado, H-02); 23 pruebas nuevas (62 en `test_t101_v6.py`, A 538)
 - 2026-11-12 · NO APTO · QA r02 (otro revisor nuevo, commit `ad59aed`): CA-7 sin cumplir; H-12, H-13, H-14 y H-16 medios; H-15 y H-17 a H-22 bajos
 - 2026-11-12 · EN QA · Ronda r03: corregidos H-12 a H-22; 11 pruebas nuevas (73 en `test_t101_v6.py`, A 549)
+- 2026-11-12 · CERRADO · QA r03 APTO (otro revisor nuevo, commit `260d554`): CA-1 a CA-9 cumplidos (CA-5, CA-6 y CA-7 con reservas), sin críticos ni altos. A la deuda (fila T-101): H-23 y H-24 (medios, el filtro R13/R21 del Sintetizador tira frases normales y deja pasar algunas compras con artículo) y H-25 a H-29 (bajos)
