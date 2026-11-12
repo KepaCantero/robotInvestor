@@ -2,7 +2,7 @@
 
 | Campo | Valor |
 | --- | --- |
-| Estado | EN QA |
+| Estado | EN QA (ronda r02) |
 | Pieza | `bloque_a/11_Ejecutor` (código vivo, fuera del corpus congelado) |
 | Planifica · implementa · QA | claude · claude · claude, con un revisor nuevo sin contexto (regla del operador del 12-11-2026) |
 | Aprobación del operador | 2026-11-12: «analiza su revisión y decide si merece la pena tomar en consideración los cambios [...] También aprovecha para sumar alguna idea nueva [...] quiero que empieces a crear (en este caso sería modificar lo que ya existe) e implementar el bloque A completo» |
@@ -45,7 +45,7 @@ Construir en el ejecutor el Bloque A rediseñado: el de la propuesta de Claude (
 - **Selección del diseño:** clave `diseno` (`v5` por defecto) y sección `v6` en `config/por_defecto.yaml`. Cada pieza tiene su interruptor para comparar un cambio cada vez.
 - **Contratos:** ningún esquema cambia. Los mensajes CT se siguen registrando con los mismos identificadores. Matriz de propietarios en el §5 de `decision_claude_c01.md`.
 - **Estado persistido:**
-  - las entradas nuevas en HA (`COB-`, cobertura y muestra de descartes) y en F6/HA para el contrafactual;
+  - las entradas nuevas en HA: `COB-` (cobertura y muestra de descartes) y `CTF-` (contrafactual);
   - ningún archivo cambia de propietario;
   - los runs anteriores se leen igual.
 - **Números:** todos salen de la configuración y son `[PROPUESTO]`, salvo los ya ratificados:
@@ -72,7 +72,7 @@ Construir en el ejecutor el Bloque A rediseñado: el de la propuesta de Claude (
 5. CA-5: el Sintetizador se llama una vez, después de G3. Si devuelve una selección o unas cifras distintas, se ignoran, y la segunda pasada de HT-09 valida el paquete final.
 6. CA-6: GC1 por código: el analista recibe como mucho `max_candidatas` ámbitos con señal, más la exploración y los ámbitos sin señal medible, todos marcados.
 7. CA-7: el registro de cobertura da, para cada candidata del run, hasta qué fase llegó y por qué se quedó; los descartes muestreados se resuelven en el contrafactual cuando vence su horizonte.
-8. CA-8: un ciclo V6 con los doce perfiles hace menos llamadas y lee más caché que el V5 con el simulador (cifras en `pruebas.md`), sin afirmar nada sobre la calidad.
+8. CA-8: un ciclo V6 con los doce perfiles hace menos llamadas y lee menos tokens de entrada, con caché y sin ella, que el V5 con el simulador (cifras en `pruebas.md`), sin afirmar nada sobre la calidad. *(Reformulado el 12-11-2026 tras la QA r01, H-02: decía «lee más caché», pero la V6 lee menos caché porque envía menos tokens; su proporción de lectura es del 56 % frente al 66 % de la V5.)*
 9. CA-9: el gate da 12/12, con A ≥ 476 más las pruebas nuevas, sin subir las cuotas de ruff ni mypy; no cambia el corpus.
 
 ## Plan de pruebas
@@ -91,3 +91,5 @@ Construir en el ejecutor el Bloque A rediseñado: el de la propuesta de Claude (
 
 - 2026-11-12 · ABIERTO · creado con nuevo_ticket.sh, a petición del operador
 - 2026-11-12 · EN QA · V6 implementada (`diseno: v6`, la V5 por defecto): 39 pruebas nuevas, A 515 en verde; ruff 3019 → 2987, mypy de A 114 → 109; banco con el simulador en `pruebas.md` (56 llamadas frente a 89 y 41 % de los tokens de entrada en dos ciclos con los doce perfiles)
+- 2026-11-12 · NO APTO · QA r01 (revisor nuevo sin contexto, commit `16aa49e`): CA-7 y CA-8 sin cumplir; H-01, H-02, H-03, H-04, H-05 y H-11 medios; H-06 a H-10 bajos
+- 2026-11-12 · EN QA · Ronda r02: corregidos H-01 a H-11 (CA-8 reformulado y registrado, H-02); 23 pruebas nuevas (62 en `test_t101_v6.py`, A 538)

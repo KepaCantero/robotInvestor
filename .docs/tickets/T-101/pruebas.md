@@ -2,8 +2,8 @@
 
 | Suite | Antes | Después |
 | --- | --- | --- |
-| `bloque_a/11_Ejecutor/tests` (A) | 476 | 515 (476 sin cambios en sus expectativas + 39 de `tests/test_t101_v6.py`) |
-| Cuota de ruff (tres ejecutores) | 3019 | 2987 |
+| `bloque_a/11_Ejecutor/tests` (A) | 476 | 515 en la r01 (476 sin cambios en sus expectativas + 39 de `tests/test_t101_v6.py`); 538 en la r02 (+23) |
+| Cuota de ruff (tres ejecutores) | 3019 | 2987 en la r01; 2986 en la r02 |
 | Cuota de mypy de A | 114 | 109 |
 
 ## `tests/test_t101_v6.py` (39)
@@ -27,10 +27,10 @@
 | Métrica | V5 | V6 | V6 / V5 |
 | --- | --- | --- | --- |
 | Llamadas | 89 | 56 | 0,63 |
-| Tokens de entrada (con caché) | 1.969.619 | 805.831 | 0,41 |
+| Tokens de entrada (con caché) | 1.969.619 | 807.939 | 0,41 |
 | Leídos de caché | 1.389.717 | 509.414 | 0,37 |
 | Escritos en caché | 384.585 | 144.806 | 0,38 |
-| Entrada sin caché | 195.317 | 151.611 | 0,78 |
+| Entrada sin caché | 195.317 | 153.719 | 0,79 |
 
 Llamadas por papel en los dos ciclos:
 - **Bajan:**
@@ -51,6 +51,12 @@ Llamadas por papel en los dos ciclos:
   - MON: 0 frente a 1.
 
   El motivo es GC1 por código con el umbral 0,75 de la configuración frente al 0,55 que aplica el Analista simulado de la V5 (límite del análisis técnico). La exploración de GC1 detectó los falsos negativos.
+
+## Ronda r02
+
+- `tests/test_t101_v6.py` pasa de 39 a 62 pruebas, todas en verde. Las regresiones de cada hallazgo están en `analisis-tecnico.md`; CA-8 está reformulado (H-02).
+- **Mutantes del revisor** (`.docs/tickets/T-101/revisores/r01_mutantes.py`): mueren los 27 frente a la batería. M10 no se aplica, porque su texto cambió; lo cubre `test_el_sintetizador_no_puede_cambiar_la_seleccion`. M12 y M25 se mataron endureciendo sus pruebas: la víspera se mira con los datos ya disponibles, y el pronóstico falso no puede llegar a F4.
+- **Banco con el simulador, otra vez:** las mismas llamadas y la misma selección que en la r01. La entrada sin caché sube unos 2.000 tokens por la nota de GC1 al Analista (H-05).
 
 ## Gate
 
