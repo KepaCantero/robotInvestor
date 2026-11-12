@@ -27,6 +27,10 @@ from .contratos import AGENTE_CLASE
 from .herramientas.ht01_datos import DatosNoDisponibles, FugaDeInformacion
 
 DISENOS = ("v5", "v6")
+# Señales numéricas que calcula el Motor para cada ámbito (`Bloque.senales_clase`): las que puede usar GC1 por perfil (H-19)
+SENALES_GC1 = ("senal_compuesta", "momentum_12_1", "pct_momentum_clase", "z_momentum_clase", "senal_tsmom", "vol_20d", "vol_ewma",
+               "p_tendencia", "pendiente_sen_semanal", "riesgo_1a5", "mdd", "drawdown_actual", "z_precio_3a", "pct_precio_3a",
+               "rent_1s", "rent_1m", "rent_3m", "rent_12m", "familias_concordantes")
 BOLSA_GLOBAL = "V6_GLOBAL"   # bolsa de las llamadas de todo el ciclo (Prospectiva, Contradictor y Sintetizador)
 
 
@@ -45,7 +49,9 @@ def validar(cfg: dict) -> bool:
     if d != "v6":
         return False
     for clave, minimo in (("gc1.exploracion_celdas", 0), ("prospectiva.max_encargos_por_lote", 1),
-                          ("contradictor.max_rondas_sustitucion", 0), ("cobertura.muestra_descartes", 0)):
+                          ("contradictor.max_rondas_sustitucion", 0), ("cobertura.muestra_descartes", 0),
+                          ("contradictor.max_evidencias", 1), ("contradictor.contrarreplica_max", 1),
+                          ("cobertura.dias_max_espera_precio", 0)):
         _entero(cfg, clave, minimo)
     fr = parametro(cfg, "v6.auditoria_fraccion")
     if isinstance(fr, bool) or not isinstance(fr, (int, float)) or not 0 <= float(fr) <= 1:
@@ -56,11 +62,12 @@ def validar(cfg: dict) -> bool:
         raise ValueError("v6.contradictor.proveedor debe ser «mismo» u «otro»")
     if parametro(cfg, "v6.cobertura.horizonte_contrafactual") not in parametro(cfg, "horizontes"):
         raise ValueError("v6.cobertura.horizonte_contrafactual debe ser un horizonte de `horizontes`")
-    spp = (cfg.get("v6") or {}).get("gc1", {}).get("senal_por_perfil") or {}
-    if not isinstance(spp, dict) or not all(isinstance(v, str) and v for v in spp.values()):
-        raise ValueError("v6.gc1.senal_por_perfil debe ser {tipo de activo: clave de señal}")
+    from .configuracion import CLASES
+    spp = ((cfg.get("v6") or {}).get("gc1") or {}).get("senal_por_perfil") or {}
+    if not isinstance(spp, dict) or any(k not in CLASES or v not in SENALES_GC1 for k, v in spp.items()):
+        raise ValueError(f"v6.gc1.senal_por_perfil debe ser {{tipo de activo: señal del Motor}}, con señales de {SENALES_GC1}")
     lim = parametro(cfg, "v6.sintetizador_limites")
-    for k in ("regimen", "factor", "lectura", "texto_minimo", "preguntas", "limitaciones"):
+    for k in ("regimen", "factor", "lectura", "texto_minimo", "preguntas", "limitaciones", "limitacion"):
         if isinstance(lim.get(k), bool) or not isinstance(lim.get(k), int) or lim[k] < 1:
             raise ValueError(f"v6.sintetizador_limites.{k} debe ser un entero ≥ 1")
     return True
@@ -90,7 +97,7 @@ def _lotes(items: list, por_lote: int) -> list[list]:
 # ======================================================================================================
 # Presupuesto: las llamadas de todo el ciclo salen de lo que cada tipo reservaba para ellas
 # ======================================================================================================
-def repartir_presupuesto(bloque, asign: dict[str, float], clases: list[str]) -> dict[str, float]:
+def repartir_presupuesto(bloque, asign: dict[str, float], clases: list[str], fija: float | None = None) -> dict[str, float]:
     """Con Prospectiva y Contradictor por ciclo, la parte de `reparto_fases` de prospectiva y refutación de cada tipo pasa
     a una bolsa común del ciclo (`V6_GLOBAL`): el total no cambia (R5)."""
     if not activo(bloque, "prospectiva.global"):
@@ -98,7 +105,10 @@ def repartir_presupuesto(bloque, asign: dict[str, float], clases: list[str]) -> 
     rep = parametro(bloque.cfg, "presupuesto_uc.reparto_fases")
     fr = float(rep["prospectiva"]) + float(rep["refutacion"])
     out = dict(asign)
-    out[BOLSA_GLOBAL] = float(out.get(BOLSA_GLOBAL, 0.0))
+    if fija is not None:   # QA r02, H-18: un `presupuesto_override` de la bolsa del ciclo se respeta tal cual
+        out[BOLSA_GLOBAL] = float(fija)
+        return out
+    out[BOLSA_GLOBAL] = 0.0
     for c in clases:
         parte = round(out[c] * fr, 6)
         out[c] = round(out[c] - parte, 6)
@@ -162,6 +172,19 @@ NOTA_GC1 = (" El ejecutor ya ha aplicado GC1 por código (diseño V6). Cada ámb
             "SIN_SENAL_MEDIBLE (el Motor no tiene señal para él) o VIGENTE. Evalúa todos con la estrategia de tu tipo de activo: "
             "no descartes un ámbito EXPLORACION o SIN_SENAL_MEDIBLE solo por su señal; propónlo como finalista si tu análisis lo "
             "sostiene. En `cribado`, `paso_gc1` es tu juicio sobre el ámbito, no la marca del ejecutor.")
+
+
+def gc1_decisiones(an: dict) -> list[dict] | None:
+    """QA r02, H-16: con GC1 por código, las decisiones de GC1 (embudo del paquete y F5) son las del código, no el `paso_gc1`
+    del Analista. None si el tipo no pasó por GC1 por código."""
+    g = an.get("gc1")
+    if not g:
+        return None
+    out = [{"objeto": x, "resultado": True, "motivo": f"{g['clave_senal']} ≥ {g['umbral']}"} for x in g["pasan"]]
+    out += [{"objeto": x, "resultado": False, "motivo": "no llega al umbral: se ofrece al Analista como exploración"} for x in g["exploracion"]]
+    out += [{"objeto": x, "resultado": False, "motivo": "sin señal medible: se ofrece al Analista sin descartar"} for x in g["sin_senal_medible"]]
+    out += [{"objeto": d["simbolo"], "resultado": False, "motivo": d["motivo"]} for d in g["descartes"]]
+    return out
 
 
 def gc1_falsos_negativos(out: dict) -> None:
@@ -265,7 +288,8 @@ def refutacion_global(bloque, grupos: dict[str, list[dict]], nivel: dict[str, st
             "ref": _ref(clase, f), "opp_id": f.get("opp_id"), "clase": clase, "nivel": nivel.get(clase),
             "afirmaciones_verificables": [{"horizonte": p.get("horizonte"), "vista": p.get("vista"), "afirmacion": p.get("afirmacion")}
                                           for p in (f.get("_prospectiva") or {}).get("pronosticos", [])],
-            "evidencias": [{"fuente": p.get("fuente"), "afirmacion": p["afirmacion"], "direccion": p.get("direccion")} for p in f["_piezas"]][:6],
+            "evidencias": [{"fuente": p.get("fuente"), "afirmacion": p["afirmacion"], "direccion": p.get("direccion")}
+                           for p in f["_piezas"]][:op(bloque, "contradictor.max_evidencias")],
             "calculos": f["senales"].get("calc_ids", [])}
     nivel_msg = "N3" if "N3" in nivel.values() else "N2"
     res: dict[str, dict] = {}
@@ -344,7 +368,7 @@ def refutacion_global(bloque, grupos: dict[str, list[dict]], nivel: dict[str, st
             for o in f.get("_objeciones", []):
                 if o["fuerza"] == "fuerte" and o["objecion_id"] in conf:
                     o["resuelta"] = conf[o["objecion_id"]].get("resuelta") is True
-                    o["contrarreplica"] = str(conf[o["objecion_id"]].get("motivo") or "")[:300]
+                    o["contrarreplica"] = str(conf[o["objecion_id"]].get("motivo") or "")[:op(bloque, "contradictor.contrarreplica_max")]
     for _, f in todas:
         if f.get("_refutacion") is not None:
             f["_veredicto"] = bloque._veredicto_refutacion(f)
@@ -419,7 +443,7 @@ def integracion_determinista(bloque, seleccion, analisis, as_of) -> dict:
         entran, salen = [x for x in ahora_ids if x not in antes], [x for x in antes if x and x not in ahora_ids]
         if entran or salen:
             cambios.append(f"{NOMBRE_CLASE[c]}: entran {', '.join(entran) or 'ninguna'}; salen {', '.join(salen) or 'ninguna'}")
-    return {"regimen_macro": ("; ".join(reg) if reg else "Régimen por tipo no disponible en este ciclo")[:900],
+    return {"regimen_macro": ("; ".join(reg) if reg else "Régimen por tipo no disponible en este ciclo")[:op(bloque, "sintetizador_limites")["regimen"]],
             "factores_dominantes": [], "lectura_conjunto": "Integración determinista (diseño V6): la lectura del conjunto la "
             "escribe el Sintetizador sobre el paquete validado.", "preguntas_sugeridas": [], "limitaciones": [],
             "cambios_vs_anterior": "; ".join(cambios) if cambios else "Sin cambios en los top-3 frente al run anterior."}
@@ -434,21 +458,46 @@ INSTR_SINTESIS = ("Sobre el paquete ya validado: escribe la integración (régim
 _CAMPOS_REDACCION = ("frases_30s", "tarjetas", "motivos_llanos", "glosario", "frase_historial")
 
 
-# QA r01 de T-101, H-09: un texto del Sintetizador con una probabilidad numérica (R13) o con la compra de un instrumento concreto
-# (R21) no se toma. El de R21 se suma al que ya usa HT-09 para las opciones (`sintesis._UNITARIA`).
-_R13 = re.compile(r"probab\w*\W+(?:\w+\W+){0,4}?\d{1,3}(?:[.,]\d+)?\s*%|\d{1,3}(?:[.,]\d+)?\s*%\s+de\s+(?:probab|posibilidad)", re.IGNORECASE)
-_R21 = re.compile(r"\b(?:compr[ae]r?|vend[ae]r?|adquirir)\s+(?:acciones\s+de\s+|bonos\s+de\s+)?\$?[A-Z]{1,5}\b")
+# QA r01 de T-101, H-09, y r02, H-12: un texto del Sintetizador con una probabilidad numérica (R13) o con la compra o venta de un
+# instrumento concreto (R21) no se toma. Son reglas por patrón; un nombre propio sin patrón (p. ej. «entrar en Tesla») no se
+# detecta: lo revisa el Auditor por muestreo y queda declarado como límite.
+_NUM = r"\d{1,3}(?:[.,]\d+)?"
+_PROB = r"(?:probabilidad(?:es)?|posibilidad(?:es)?|opciones|chances?)"
+_R13 = (re.compile(rf"{_NUM}\s*(?:%|por\s+ciento)\s+de\s+{_PROB}", re.IGNORECASE),
+        re.compile(rf"\b{_PROB}\b[^.;:!?]{{0,40}}?\b(?:0[.,]\d+|{_NUM}\s*(?:%|por\s+ciento))(?!\s*(?:%\s*)?de\s+las\s+veces)",
+                   re.IGNORECASE))
+_VERBO = r"(?:compr(?:a|ar|e|en|amos)|vend(?:e|er|a|an|emos)|adquiri(?:r|d)|sobrepond(?:erar|era|ere)|infrapond(?:erar|era|ere)|la\s+compra\s+de|la\s+venta\s+de)"
+_R21 = (re.compile(r"\b[A-Z]{2}[A-Z0-9]{9}\d\b"),                                                    # un ISIN
+        re.compile(r"\b[A-Z][\w&.-]+(?:\s+[A-Z][\w&.-]+)*\s+(?:Corp|Corporation|Inc|Incorporated|plc|PLC|AG|NV|SE|S\.A\.)\b"),
+        re.compile(r"\bbonos?\b[^.;]{0,60}?\bvencimiento\s+(?:en\s+)?(?:19|20)\d{2}\b", re.IGNORECASE))  # una emisión concreta
+_CODIGO_VERBO = re.compile(rf"\b{_VERBO}\b(?:\s+(?:acciones|bonos|participaciones|t[íi]tulos)\s+de)?(?:\s+[\wÁÉÍÓÚáéíóúñ]+){{0,2}}?\s*\(?\$?([A-Z]{{1,5}}(?:\.[A-Z]{{1,3}})?)\)?", re.IGNORECASE)
+_CODIGO_PARENTESIS = re.compile(r"\(\$?([A-Z]{1,5}(?:\.[A-Z]{1,3})?)\)")
 
 
-def texto_prohibido(t) -> str | None:
-    """«R13», «R21» o None para un texto del Sintetizador."""
+def texto_prohibido(t, permitidos=frozenset()) -> str | None:
+    """«R13», «R21» o None para un texto del Sintetizador. `permitidos`: códigos que no son instrumentos (divisas, tipos de
+    activo, siglas de segmentos y los símbolos del universo)."""
     if not isinstance(t, str):
         return None
-    if _R13.search(t):
+    if any(r.search(t) for r in _R13):
         return "R13"
-    if _R21.search(t) or sint._UNITARIA.search(t):
+    if any(r.search(t) for r in _R21) or sint._UNITARIA.search(t):
+        return "R21"
+    for m in _CODIGO_VERBO.finditer(t):   # «comprar AAPL», «compra acciones de Apple (AAPL)», «la compra de MSFT»
+        cod = m.group(1)
+        if cod.isupper() and cod not in permitidos:
+            return "R21"
+    # con un verbo de compra o venta, un código entre paréntesis ajeno
+    if re.search(rf"\b{_VERBO}\b", t, re.IGNORECASE) and any(c not in permitidos for c in _CODIGO_PARENTESIS.findall(t)):
         return "R21"
     return None
+
+
+def permitidos_r21(bloque) -> frozenset:
+    simbolos = set(bloque.universo["simbolo"].astype(str))
+    if "subyacente" in bloque.universo:
+        simbolos |= {str(x) for x in bloque.universo["subyacente"].dropna()}
+    return frozenset(op(bloque, "filtro_r21_codigos")) | simbolos
 
 
 def _textos(x) -> list:
@@ -461,7 +510,7 @@ def _textos(x) -> list:
     return []
 
 
-def _aplicar_integracion(paquete: dict, d: dict, lim: dict) -> list[str]:
+def _aplicar_integracion(paquete: dict, d: dict, lim: dict, permitidos=frozenset()) -> list[str]:
     """Solo se toman textos (el Sintetizador no puede cambiar la selección, las puntuaciones, las fechas ni las cifras), con las
     longitudes de `v6.sintetizador_limites`, y nunca uno que incumpla R13 o R21. Devuelve los campos descartados."""
     descartados = []
@@ -469,7 +518,7 @@ def _aplicar_integracion(paquete: dict, d: dict, lim: dict) -> list[str]:
     def _ok(campo, t):
         if not isinstance(t, str) or len(t.strip()) < lim["texto_minimo"]:
             return False
-        regla = texto_prohibido(t)
+        regla = texto_prohibido(t, permitidos)
         if regla:
             descartados.append(f"{campo} ({regla})")
             return False
@@ -486,7 +535,7 @@ def _aplicar_integracion(paquete: dict, d: dict, lim: dict) -> list[str]:
         paquete["preguntas_sugeridas"] = preg
     if _ok("lectura_conjunto", d.get("lectura_conjunto")):
         paquete["x_lectura_conjunto"] = d["lectura_conjunto"].strip()[:lim["lectura"]]
-    nuevas = [f"Sintetizador: {x.strip()}"[:lim["factor"]] for x in d.get("limitaciones") or [] if _ok("limitaciones", x)][:lim["limitaciones"]]
+    nuevas = [f"Sintetizador: {x.strip()}"[:lim["limitacion"]] for x in d.get("limitaciones") or [] if _ok("limitaciones", x)][:lim["limitaciones"]]
     if descartados:
         nuevas.append("Textos del Sintetizador descartados por R13 o R21: " + ", ".join(dict.fromkeys(descartados)))
     if nuevas:
@@ -494,12 +543,12 @@ def _aplicar_integracion(paquete: dict, d: dict, lim: dict) -> list[str]:
     return descartados
 
 
-def _redaccion_segura(bloque, paquete, d) -> dict:
+def _redaccion_segura(bloque, paquete, d, permitidos=frozenset()) -> dict:
     """Los textos llanos del Sintetizador; si alguno incumple R13 o R21, se usan los textos por defecto y se declara (H-09)."""
     if not d:
         return bloque.redaccion.textos_por_defecto(paquete)
     red = {k: d[k] for k in _CAMPOS_REDACCION}
-    malas = sorted({r for r in (texto_prohibido(t) for t in _textos(red)) if r is not None})
+    malas = sorted({r for r in (texto_prohibido(t, permitidos) for t in _textos(red)) if r is not None})
     if malas:
         paquete["limitaciones"] = [x for x in paquete["limitaciones"] if not x.startswith("Ninguna limitación")] + [
             f"Textos llanos del Sintetizador descartados por {', '.join(malas)}: se usan los textos por defecto"]
@@ -518,16 +567,17 @@ def sintetizar(bloque, paquete, extras, as_of, run_id, presupuesto, estado_run) 
     r = bloque._invocar("AG-26", "CT-15", msg, "SINTESIS", INSTR_SINTESIS, as_of, run_id, None, "redaccion", presupuesto, bolsa="COMUN")
     d = r.datos if r and r.datos else None
     lim = op(bloque, "sintetizador_limites")
+    perm = permitidos_r21(bloque)
     if d:
-        _aplicar_integracion(paquete, d, lim)
-    red = _redaccion_segura(bloque, paquete, d)
+        _aplicar_integracion(paquete, d, lim, perm)
+    red = _redaccion_segura(bloque, paquete, d, perm)
     entreg, g3b = bloque.redaccion.generar(bloque, paquete, extras, red, as_of, run_id, estado_run)
     if g3b["dictamen"] == "BLOQUEADO" and any(c == "C12" for c in g3b.get("bloqueos", [])):
         msg2 = {**msg, "reescritura": {"fernandez_huerta": g3b.get("legibilidad"), "frases_largas": g3b.get("frases_largas", [])}}
         r2 = bloque._invocar("AG-26", "CT-15", msg2, "SINTESIS", INSTR_SINTESIS + " Reescribe: el índice no alcanza 70.", as_of, run_id,
                              None, "redaccion", presupuesto, bolsa="COMUN")
         if r2 and r2.datos:
-            red = _redaccion_segura(bloque, paquete, r2.datos)
+            red = _redaccion_segura(bloque, paquete, r2.datos, perm)
             entreg, g3b = bloque.redaccion.generar(bloque, paquete, extras, red, as_of, run_id, estado_run)
     return entreg, g3b, red
 
@@ -584,8 +634,11 @@ def registrar_cobertura(bloque, run_id, as_of, clases, analisis, seleccion, info
         g = an.get("gc1") or {}
         finalistas = {f["proxy"] for f in an["finalistas"]}
         motivos_an = {str(d.get("nombre")): d.get("motivo") for d in an.get("descartadas", []) if isinstance(d, dict)}
+        en_top = {x.get("proxy") for x in s["candidatos"] if x.get("opp_id") in top}
+        vigentes_sim = set(g.get("vigentes", [])) | {x.get("proxy") for x in s["candidatos"] if x.get("_vigente") or x.get("_arrastre")}
         for sim in sorted(set(g.get("pasan", [])) | set(g.get("exploracion", [])) | set(g.get("sin_senal_medible", []))):
-            if sim not in finalistas:
+            # QA r02, H-14: una vigente que sigue en el top-3 tiene su fila de selección, no la de «no propuesta»
+            if sim not in finalistas and sim not in en_top and sim not in vigentes_sim:
                 filas.append({"simbolo": sim, "fase": "ANALISTA", "exploracion": sim in set(g.get("exploracion", [])),
                               "motivo": f"el Analista no la propuso como finalista ({motivos_an.get(sim) or 'sin motivo declarado'})"})
         por_opp = {f.get("opp_id") for f in an["finalistas"]}
@@ -596,12 +649,22 @@ def registrar_cobertura(bloque, run_id, as_of, clases, analisis, seleccion, info
         for x in s.get("cerradas", []):
             filas.append({"opp_id": x["opp_id"], "simbolo": None, "fase": "CIERRE", "vigente": True,
                           "motivo": f"vigente cerrada: {x.get('motivo_cierre')} ({x.get('comentario')})"})
-        descartes = [x for x in filas if x["fase"] not in ("SELECCION_FINAL", "CIERRE") and x.get("simbolo")]
+        # QA r02, H-13: la rotación exploratoria de un ciclo ligero (N1) y lo que el Analista propone de ella (alta en F3)
+        expl_f3 = {(f.get("indicador_seguimiento") or {}).get("simbolo") for f in an.get("exploratorias", [])}
+        for sim in an.get("rotacion", []):
+            if sim in expl_f3:
+                filas.append({"simbolo": sim, "fase": "EXPLORATORIA_F3", "exploracion": True,
+                              "motivo": "rotación exploratoria del ciclo ligero: el Analista la propone y queda en F3 como CANDIDATA"})
+            elif sim not in en_top:
+                filas.append({"simbolo": sim, "fase": "ROTACION", "exploracion": True,
+                              "motivo": "rotación exploratoria del ciclo ligero: el Analista no la propone"})
+        descartes = [x for x in filas if x["fase"] not in ("SELECCION_FINAL", "CIERRE", "EXPLORATORIA_F3") and x.get("simbolo")
+                     and x["simbolo"] not in en_top]
         muestra = sorted(descartes, key=lambda x: _sembrado(run_id, c, x["simbolo"]))[:n_muestra]
         fecha = str(pd.Timestamp(as_of).date())
-        elegidas = [{"opp_id": f.get("opp_id"), "simbolo": f["proxy"], "precio": _precio(bloque, f["proxy"], as_of)}
-                    for f in an["finalistas"] if f.get("opp_id") in top]
-        elegidas += [{"opp_id": oid, "simbolo": None, "precio": None} for oid in top if oid not in {x["opp_id"] for x in elegidas}]
+        # QA r02, H-15: también las vigentes arrastradas, con su símbolo y su precio
+        elegidas = [{"opp_id": x["opp_id"], "simbolo": x.get("proxy"), "precio": _precio(bloque, x.get("proxy"), as_of) if x.get("proxy") else None}
+                    for x in s["candidatos"] if x.get("opp_id") in top]
         por_clase[c] = {"filas": filas, "gc1": {k: v for k, v in (an.get("gc1") or {}).items() if k != "descartes"},
                         "muestra_descartes": [{"simbolo": x["simbolo"], "fase": x["fase"], "precio": _precio(bloque, x["simbolo"], as_of)}
                                               for x in muestra],
@@ -649,13 +712,19 @@ def resolver_contrafactual(bloque, as_of, run_id) -> list[dict]:
             clases[c] = {"descartes": len(rd), "elegidas": len(re_), "sin_precio": medibles - len(rd) - len(re_),
                          "rent_media_descartes": round(sum(rd) / len(rd), 6) if rd else None,
                          "rent_media_elegidas": round(media_e, 6) if media_e is not None else None,
-                         "descartes_que_superan": sum(1 for r in rd if media_e is not None and r > media_e)}
+                         "descartes_que_superan": sum(1 for r in rd if media_e is not None and r > media_e),
+                         # QA r02, H-20: cada tipo dice si se pudo medir
+                         "estado": "RESUELTO" if rd or re_ else ("SIN_DATOS" if medibles else "SIN_MUESTRA")}
         # QA r01 de T-101, H-10: si al vencer no hay ningún precio de lo que se podía medir, se espera al ciclo siguiente
         # (sin datos no hay conclusión); con datos parciales se resuelve y se cuenta lo que faltó (`sin_precio`)
+        estado = "RESUELTO"
         if any(v["sin_precio"] for v in clases.values()) and not any(v["descartes"] + v["elegidas"] for v in clases.values()):
-            continue
+            # QA r02, H-20: se espera como mucho `dias_max_espera_precio` días; después se cierra como NO_RESOLUBLE
+            if hoy <= vence + pd.Timedelta(days=int(op(bloque, "cobertura.dias_max_espera_precio"))):
+                continue
+            estado = "NO_RESOLUBLE"
         ctf = {"tipo_entrada": "CONTRAFACTUAL", "id": bloque.almacen.nuevo_id("CTF"), "run_id": run_id, "cobertura_id": e["id"],
-               "fecha_muestra": e["fecha"], "fecha_resolucion": str(vence.date()), "clases": clases}
+               "fecha_muestra": e["fecha"], "fecha_resolucion": str(vence.date()), "estado": estado, "clases": clases}
         bloque.almacen.escribir("HA", "AG-18", ctf)
         out.append(ctf)
     return out

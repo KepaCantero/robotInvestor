@@ -120,15 +120,15 @@ Con `diseno: v6` en el YAML, el ciclo usa el rediseño de `.docs/diseno/bloque_a
 | Pieza | V5 | V6 |
 | --- | --- | --- |
 | Analistas de tipo de activo | Prompt V5.0 íntegro (≈ 20.000 tokens) | Núcleo común (el marco común V5.0 sin marcadores, idéntico para los doce: se lee de caché) más el kit del tipo (§6, el ejemplo de la §11 y, con `base_conocimientos: completa`, la §10), derivados al cargar los prompts V5.0, sin escribir contenido nuevo |
-| GC1 | Lo aplica el Analista | El código filtra el universo: hasta `max_candidatas` con señal ≥ `umbral_senal_gc1`, más una exploración sembrada (mide falsos negativos), lo que no tiene señal medible (no se descarta) y las vigentes |
+| GC1 | Lo aplica el Analista | El código filtra el universo (y el embudo del paquete y F5 cuentan su GC1; el Analista solo puede proponer lo que se le envió): hasta `max_candidatas` con señal ≥ `umbral_senal_gc1`, más una exploración sembrada (mide falsos negativos), lo que no tiene señal medible (no se descarta) y las vigentes |
 | Prospectiva (AG-10) | Una llamada por tipo | Una por lote de `max_encargos_por_lote` en todo el ciclo, con control de cobertura: un encargo omitido se repite una vez; si sigue faltando, la finalista no se entrega y se declara |
 | Contradictor (AG-11) | Todas las finalistas de cada tipo | Solo la selección provisional y sus sustitutas (A-01): lo que no se ha podido criticar no se entrega. Admite un cliente propio (`cliente_contradictor`) para el segundo proveedor |
-| Integración y redacción | AG-02 antes de G3 y AG-17 después | Integración determinista antes de G3 y el **Sintetizador (AG-26)** después, sobre el paquete validado: solo se toman sus textos, con las longitudes de `sintetizador_limites`, y nunca uno con una probabilidad numérica (R13) o con la compra de un instrumento (R21) |
+| Integración y redacción | AG-02 antes de G3 y AG-17 después | Integración determinista antes de G3 y el **Sintetizador (AG-26)** después, sobre el paquete validado: solo se toman sus textos, con las longitudes de `sintetizador_limites`, y se descartan los que dan una probabilidad numérica (R13) o compran o venden un instrumento concreto (R21), por patrón: un ticker fuera de `filtro_r21_codigos` y del universo, un ISIN, un sufijo societario o una emisión con vencimiento. Un nombre propio sin patrón («entrar en Tesla») no se detecta: lo revisa el Auditor por muestreo |
 | CT-07 y CT-08 en el ciclo | AG-16 y AG-14 | **Lector de evidencia (AG-28)**, aislado |
 | Consultas N0 (CT-03) | AG-01 | **Respondedor de consultas (AG-27)** |
 | Curación, dictamen G3, informe de aprendizaje | AG-12, AG-18, AG-20 | Código (la IA, opcional por configuración) |
 | Auditor (AG-19) | Cada run vivo | Fracción sembrada `auditoria_fraccion` |
-| Cobertura | — | Entrada `COBERTURA` en HA por run (hasta qué fase llegó cada candidata y por qué) y muestra de descartes; el propio ciclo V6 la resuelve (`CONTRAFACTUAL`, en HA) al vencer `horizonte_contrafactual`, o en el ciclo siguiente si al vencer no hay precios |
+| Cobertura | — | Entrada `COBERTURA` en HA por run (hasta qué fase llegó cada candidata y por qué) y muestra de descartes; el propio ciclo V6 la resuelve (`CONTRAFACTUAL`, en HA) al vencer `horizonte_contrafactual`; si al vencer no hay precios, espera como mucho `dias_max_espera_precio` días y después la cierra como NO_RESOLUBLE |
 
 Los prompts nuevos (AG-26, AG-27 y AG-28) viven en `prompts_v6/`, fuera del corpus congelado. Ningún contrato, archivo ni propietario cambia: la matriz de propietarios está en el §5 de la decisión. `consumo.csv` añade `reintentos` y `latencia_s` en los dos diseños. El simulador cachea por prefijo, como la API.
 

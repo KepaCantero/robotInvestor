@@ -2,7 +2,7 @@
 
 | Suite | Antes | Después |
 | --- | --- | --- |
-| `bloque_a/11_Ejecutor/tests` (A) | 476 | 515 en la r01 (476 sin cambios en sus expectativas + 39 de `tests/test_t101_v6.py`); 538 en la r02 (+23) |
+| `bloque_a/11_Ejecutor/tests` (A) | 476 | 515 en la r01 (476 sin cambios en sus expectativas + 39 de `tests/test_t101_v6.py`); 538 en la r02 (+23); 549 en la r03 (+11) |
 | Cuota de ruff (tres ejecutores) | 3019 | 2987 en la r01; 2986 en la r02 |
 | Cuota de mypy de A | 114 | 109 |
 
@@ -17,7 +17,7 @@
 | CA-5 | `test_el_sintetizador_escribe_una_vez_despues_de_g3`, `test_el_sintetizador_no_puede_cambiar_la_seleccion` |
 | CA-6 | `test_gc1_por_codigo_limita_lo_que_ve_el_analista`, `test_gc1_no_descarta_lo_que_no_tiene_senal` |
 | CA-7 | `test_registro_de_cobertura_de_cada_candidata`, `test_el_contrafactual_resuelve_la_muestra_al_vencer_su_horizonte` |
-| CA-8 | `test_v6_hace_menos_llamadas_y_lee_mas_cache`, `test_el_simulador_lee_el_nucleo_de_la_cache_entre_analistas` |
+| CA-8 | `test_v6_hace_menos_llamadas_y_lee_menos_tokens`, `test_el_simulador_lee_el_nucleo_de_la_cache_entre_analistas` |
 | Otros | `test_diseno_desconocido_falla_cerrado`, `test_canales_de_la_v6_solo_con_la_v6`, `test_la_bolsa_del_ciclo_sale_de_los_tipos_sin_cambiar_el_total`, `test_auditor_por_muestreo_sembrado`, `test_tope_de_tokens_de_los_prompts_por_papel`, `test_v6_no_llama_a_los_papeles_que_pasan_a_codigo`, `test_v6_declara_sus_limitaciones`, `test_las_consultas_n0_las_responde_el_respondedor`, `test_contradictor_de_otro_proveedor`, `test_consumo_registra_intentos_y_latencia`, `test_ciclo_v6_entrega_y_valida` |
 
 ## Banco con el simulador (CA-8)
@@ -57,6 +57,13 @@ Llamadas por papel en los dos ciclos:
 - `tests/test_t101_v6.py` pasa de 39 a 62 pruebas, todas en verde. Las regresiones de cada hallazgo están en `analisis-tecnico.md`; CA-8 está reformulado (H-02).
 - **Mutantes del revisor** (`.docs/tickets/T-101/revisores/r01_mutantes.py`): mueren los 27 frente a la batería. M10 no se aplica, porque su texto cambió; lo cubre `test_el_sintetizador_no_puede_cambiar_la_seleccion`. M12 y M25 se mataron endureciendo sus pruebas: la víspera se mira con los datos ya disponibles, y el pronóstico falso no puede llegar a F4.
 - **Banco con el simulador, otra vez:** las mismas llamadas y la misma selección que en la r01. La entrada sin caché sube unos 2.000 tokens por la nota de GC1 al Analista (H-05).
+
+## Ronda r03
+
+- `tests/test_t101_v6.py` pasa de 62 a 73 pruebas. Siete de las once nuevas fallan con el código de la r02 (commit `ad59aed`). Las otras cuatro protegen los mutantes N06, N13, N18 y N22 de la QA r02, que el código ya cumplía pero ninguna prueba vigilaba.
+- **Filtro R13/R21** con los casos del revisor:
+  - 0 de 9 textos legítimos descartados;
+  - 13 de 14 prohibidos cazados; el que queda, «entrar en Tesla», es un nombre propio sin patrón, límite declarado.
 
 ## Gate
 

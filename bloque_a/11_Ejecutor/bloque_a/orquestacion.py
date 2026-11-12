@@ -579,7 +579,8 @@ class Bloque:
         if presupuesto_override:
             asign.update(presupuesto_override)
         if self.v6:   # T-101: la parte de prospectiva y refutación de cada tipo pasa a la bolsa del ciclo (el total no cambia;
-            asign = v6.repartir_presupuesto(self, asign, clases)   # después del override: H-07 de la QA r01)
+            asign = v6.repartir_presupuesto(self, asign, clases,   # después del override (H-07 de la QA r01) y respetando el de la
+                                            (presupuesto_override or {}).get(v6.BOLSA_GLOBAL))   # bolsa del ciclo (H-18 de la r02)
         presupuesto = Presupuesto(asign, self.cfg)
         memoria = {"opp_vigentes": [v["opp_id"] for c in clases for v in vigentes[c]],
                    "tnd_activas": [t["tnd_id"] for t in self.almacen.estado("F1", as_of).values() if t.get("estado") not in ("archivada", "invalidada")][:50],
@@ -789,6 +790,8 @@ class Bloque:
             if not vigentes and not rot:
                 out["regimen"] = "Sin cambios materiales; sin opciones vigentes que revisar."
                 return out
+            if self.v6:   # QA r02 de T-101, H-13: la rotación exploratoria del ciclo ligero entra en el registro de cobertura
+                out["rotacion"] = list(rot)
         if self.v6 and fase == "CRIBADO_E_INVESTIGACION" and v6.op(self, "gc1.por_codigo"):
             # T-101 (PA-04): GC1 por código antes del Analista, con exploración y sin descartar lo que no tiene señal
             universo, out["gc1"] = v6.gc1(self, clase, universo, vigentes, as_of)
@@ -831,6 +834,8 @@ class Bloque:
         estado_agente = d.get("estado", "COMPLETO") if d.get("estado") in ("COMPLETO", "PARCIAL") else "COMPLETO"
         out["estado"] = "PARCIAL" if out["estado"] == "PARCIAL" else estado_agente   # una laguna previa no se borra
         simbolos_clase = set(senales)
+        if out.get("gc1"):   # QA r02 de T-101, H-17: con GC1 por código, solo vale lo que se envió al Analista
+            simbolos_clase = {u["simbolo"] for u in universo}
         fins = d.get("finalistas", []) if fase == "CRIBADO_E_INVESTIGACION" else []
         for f in d.get("exploratorias", []) if fase == "REVISION_VIGENTES" else []:
             if simbolo_seguimiento(f) in simbolos_clase:
@@ -1809,8 +1814,10 @@ class Bloque:
         cambios["mantenidas"] = sorted({x for v in top.values() for x in v} & {x for v in top_ant.values() for x in v})
         dec = []
         for c, an in analisis.items():
-            for cb in an.get("cribado", []):
-                dec.append({"clase": c, "objeto": cb.get("candidata"), "puerta": "GC1", "resultado": bool(cb.get("paso_gc1")), "motivo": cb.get("motivo")})
+            dec_gc1 = v6.gc1_decisiones(an) if self.v6 else None   # QA r02 de T-101, H-16: GC1 del código, no el juicio del Analista
+            for cb in (dec_gc1 if dec_gc1 is not None else [{"objeto": x.get("candidata"), "resultado": bool(x.get("paso_gc1")),
+                                                              "motivo": x.get("motivo")} for x in an.get("cribado", [])]):
+                dec.append({"clase": c, "objeto": cb["objeto"], "puerta": "GC1", "resultado": cb["resultado"], "motivo": cb["motivo"]})
             for f in an["finalistas"]:
                 dec.append({"clase": c, "objeto": f["proxy"], "puerta": "GC2", "resultado": f["_gc2"], "motivo": f"E provisional {f['_prov'].get('E')}"})
                 if f["_gc2"]:

@@ -645,3 +645,182 @@ def test_el_auditor_por_muestreo_en_el_ciclo_vivo(tmp_path, fraccion, llamadas):
     b = _bloque(tmp_path, _cfg_div(modo="vivo", v6={"auditoria_fraccion": fraccion}), cli)
     b.ciclo(AS_OF)
     assert sum(1 for x in cli.llamadas if x["agente"] == "AG-19") == llamadas
+
+
+# ================================================================================================ QA r02 de T-101 (ronda r03)
+LEGITIMOS_R21 = ["Un 5 % del capital ya está en opciones del mismo clúster.",
+                 "La probabilidad es baja; aun así, un 5 % del capital comparte el factor de riesgo.",
+                 "Los pronósticos con probabilidad alta acertaron el 62 % de las veces en el historial.",
+                 "¿Conviene vender USD frente al EUR si el diferencial de tipos se estrecha?",
+                 "El Analista prefiere no comprar RF larga mientras suba la inflación.",
+                 "Con el dólar fuerte, puede tener sentido vender EM y esperar.",
+                 "El ETF de referencia (SPY) sigue al índice; no es una recomendación.",
+                 "Si la curva se empina, el segmento de vender HY pierde atractivo."]
+PROHIBIDOS_R13_R21 = [("R13", "Probabilidad del 87 % de que el dólar suba este trimestre."), ("R13", "Hay un 70 % de probabilidad de subida."),
+                      ("R13", "La probabilidad de subida es de 0,87."), ("R13", "Vemos un 87 por ciento de probabilidades de subida."),
+                      ("R13", "Un 80 % de posibilidades de que el euro baje."), ("R13", "El escenario base tiene un 65 % de opciones de cumplirse."),
+                      ("R21", "Conviene comprar AAPL cuanto antes."), ("R21", "Compra acciones de Apple (AAPL)."),
+                      ("R21", "Recomendamos la compra de AAPL y de MSFT."), ("R21", "Sobreponderar Microsoft Corp frente al índice."),
+                      ("R21", "Comprar el bono del Tesoro a 10 años con vencimiento 2034."), ("R21", "Comprar US0378331005 ya.")]
+
+
+def test_el_filtro_r13_r21_caza_los_casos_con_patron_y_respeta_los_legitimos(tmp_path):
+    """H-12: con los códigos permitidos de la configuración y del universo, ningún texto legítimo se tira y los prohibidos con
+    patrón se cazan (un nombre propio sin patrón, como «entrar en Tesla», es un límite declarado)."""
+    perm = v6.permitidos_r21(_bloque(tmp_path, _cfg_div()))
+    assert [t for t in LEGITIMOS_R21 if v6.texto_prohibido(t, perm)] == []
+    assert [(r, t) for r, t in PROHIBIDOS_R13_R21 if v6.texto_prohibido(t, perm) != r] == []
+
+
+def test_el_ejemplo_de_la_qa_r01_no_llega_al_paquete(tmp_path, monkeypatch):
+    """H-12: «compra acciones de Apple (AAPL)» en la lectura del conjunto y en una frase llana no llega al paquete ni a los entregables."""
+    orig = mr._sintetizador
+    txt = "Para esta semana, compra acciones de Apple (AAPL) antes de resultados."
+
+    def sintetizador(msg, ctx, rng):
+        out = orig(msg, ctx, rng)
+        out["lectura_conjunto"], out["frases_30s"][1] = txt, txt
+        return out
+    monkeypatch.setattr(mr, "_sintetizador", sintetizador)
+    r = _bloque(tmp_path, _cfg_div()).ciclo(AS_OF)
+    assert "AAPL" not in json.dumps([r["paquete"], r["entregables"]], ensure_ascii=False, default=str)
+
+
+def test_cobertura_en_un_ciclo_ligero_con_rotacion_y_sin_filas_contradictorias(tmp_path):
+    """H-13, H-14 y H-15: en un ciclo N1, la rotación exploratoria tiene fila; ninguna opción tiene a la vez fila de «no
+    propuesta» y de selección; las vigentes del top-3 llevan símbolo y precio en `elegidas`."""
+    b = _bloque(tmp_path, _cfg_div())
+    b.ciclo(AS_OF)
+    r2 = b.ciclo(str((pd.Timestamp(AS_OF) + pd.Timedelta(days=7)).date()))
+    assert r2["nivel_por_clase"]["DIV"] == "N1"
+    d = _cobertura(b)[-1]["clases"]["DIV"]
+    rot = [f for f in d["filas"] if f["fase"] in ("ROTACION", "EXPLORATORIA_F3")]
+    assert rot and len(rot) <= parametro(b.cfg, "seleccion.rotacion_exploratoria_celdas")
+    seleccion = {f["simbolo"] for f in d["filas"] if f["fase"] == "SELECCION_FINAL"}
+    assert not seleccion & {f["simbolo"] for f in d["filas"] if f["fase"] == "ANALISTA"}
+    assert not seleccion & {x["simbolo"] for x in d["muestra_descartes"]}
+    assert d["elegidas"] and all(x["simbolo"] and x["precio"] for x in d["elegidas"])
+
+
+def test_el_embudo_cuenta_el_gc1_del_codigo(tmp_path):
+    """H-16: con GC1 por código, el embudo del paquete y las decisiones de F5 dicen lo que dejó pasar el código (con el umbral de la
+    configuración, 0,75, distinto del 0,55 con el que el Analista simulado marca `paso_gc1`)."""
+    b = _bloque(tmp_path, _cfg_div(seleccion={"umbral_senal_gc1": 0.75}))
+    r = b.ciclo(AS_OF)
+    g = _cobertura(b)[-1]["clases"]["DIV"]["gc1"]
+    emb = r["paquete"]["clases"]["DIV"]["embudo"]
+    assert emb["pasan_gc1"] == len(g["pasan"]) and emb["cribadas"] == g["universo"]
+    run = [e for e in b.almacen.leer("F5") if e.get("tipo_entrada") == "RUN"][-1]
+    gc1 = [x for x in run.get("decisiones_puertas", []) if x["puerta"] == "GC1"]
+    assert {x["objeto"] for x in gc1 if x["resultado"]} == set(g["pasan"])
+
+
+def test_un_finalista_que_gc1_no_envio_no_vale(tmp_path, monkeypatch):
+    """H-17: si el Analista devuelve como finalista un ámbito que GC1 no le envió, se descarta (PS3)."""
+    orig = mr._analista
+    uni = cargar_universo(RUTA_UNIVERSO_EJEMPLO)
+    div = list(uni.loc[uni["clase"] == "DIV", "simbolo"])
+    capt = {}
+
+    def analista(msg, ctx, rng, iny):
+        out = orig(msg, ctx, rng, iny)
+        if msg.get("fase") == "CRIBADO_E_INVESTIGACION" and out.get("finalistas"):
+            enviados = {u["simbolo"] for u in msg["universo"]}
+            fuera = [s for s in div if s not in enviados]
+            if fuera:
+                capt["fuera"] = fuera[0]
+                f = copy.deepcopy(out["finalistas"][0])
+                f["indicador_seguimiento"]["simbolo"], f["nombre"] = fuera[0], f"Ámbito {fuera[0]}"
+                out["finalistas"].append(f)
+        return out
+    monkeypatch.setattr(mr, "_analista", analista)
+    b = _bloque(tmp_path, _cfg_div(seleccion={"umbral_senal_gc1": 0.9}))
+    r = b.ciclo(AS_OF)
+    assert capt.get("fuera") and capt["fuera"] not in _entregadas(r, "DIV")
+    assert capt["fuera"] not in {f["simbolo"] for f in _filas(b, "DIV") if f.get("opp_id")}
+
+
+def test_el_override_de_la_bolsa_del_ciclo_se_respeta_y_vacia_deja_el_run_parcial(tmp_path):
+    """H-18: un `presupuesto_override` de V6_GLOBAL se respeta tal cual; con la bolsa vacía, el ciclo queda PARCIAL y declara el cierre."""
+    r = _bloque(tmp_path, _cfg_div()).ciclo(AS_OF, presupuesto_override={v6.BOLSA_GLOBAL: 0.001})
+    assert math.isclose(r["presupuesto"][v6.BOLSA_GLOBAL]["asignado"], 0.001)
+    assert r["estado"] == "PARCIAL" and any("Presupuesto agotado" in x for x in r["paquete"]["limitaciones"])
+
+
+def test_gc1_con_senal_desconocida_falla_y_gc1_nulo_no_rompe(tmp_path):
+    """H-19."""
+    with pytest.raises(ValueError, match="senal_por_perfil"):
+        _bloque(tmp_path, _cfg_div(v6={"gc1": {"senal_por_perfil": {"DIV": "no_existe"}}}))
+    with pytest.raises(ValueError, match="senal_por_perfil"):
+        _bloque(tmp_path / "b", _cfg_div(v6={"gc1": {"senal_por_perfil": {"XXX": "senal_compuesta"}}}))
+    assert _bloque(tmp_path / "c", _cfg_div(v6={"gc1": {"senal_por_perfil": {"DIV": "momentum_12_1"}}})).v6
+
+
+def test_el_contrafactual_sin_precios_se_cierra_no_resoluble_al_acabar_la_espera(tmp_path, monkeypatch):
+    """H-20: sin precios al vencer se espera `dias_max_espera_precio` días; después se cierra como NO_RESOLUBLE, una vez."""
+    b = _bloque(tmp_path, _cfg_div())
+    b.ciclo(AS_OF)
+    cob = _cobertura(b)[0]
+    vence = v6._fecha_vencimiento(b, cob["fecha"], cob["horizonte_contrafactual"])
+    espera = parametro(b.cfg, "v6.cobertura.dias_max_espera_precio")
+    monkeypatch.setattr(v6, "_precio", lambda bl, sim, fecha: None if pd.Timestamp(fecha) >= vence else 1.0)
+    for dias, n in ((0, 0), (espera, 0), (espera + 1, 1), (espera + 9, 0)):
+        b.fijar_fecha(vence + pd.Timedelta(days=dias))
+        ctf = v6.resolver_contrafactual(b, vence + pd.Timedelta(days=dias), f"RUN-{dias}")
+        assert len(ctf) == n, dias
+        if n:
+            assert ctf[0]["estado"] == "NO_RESOLUBLE" and all(c["estado"] in ("SIN_DATOS", "SIN_MUESTRA") for c in ctf[0]["clases"].values())
+
+
+def test_el_reintento_del_contradictor_no_sale_de_la_cache(tmp_path, monkeypatch):
+    """H-22 (N06): si el Contradictor no devuelve nada la primera vez, el reintento llega al modelo y la opción se critica."""
+    orig = mr._contrarias
+
+    def contrarias(msg, ctx, rng):
+        out = orig(msg, ctx, rng)
+        if "contrarreplicas" not in msg and "reintento_de_cobertura" not in msg:
+            out["resultados"] = []
+        return out
+    monkeypatch.setattr(mr, "_contrarias", contrarias)
+    b = _bloque(tmp_path, _cfg_div(v6={"prospectiva": {"max_encargos_por_lote": 50}}))
+    b.ciclo(AS_OF)
+    assert _cobertura(b)[-1]["critica"]["sin_respuesta"] == []
+
+
+def test_la_vigente_cerrada_tiene_su_fila(tmp_path, monkeypatch):
+    """H-22 (N13): una vigente que el Analista recomienda cerrar tiene su fila CIERRE."""
+    b = _bloque(tmp_path, _cfg_div())
+    b.ciclo(AS_OF)
+    orig = mr._analista
+
+    def analista(msg, ctx, rng, iny):
+        out = orig(msg, ctx, rng, iny)
+        for rv in out.get("revision_vigentes", []):
+            rv["recomendacion"] = "CERRAR"
+        return out
+    monkeypatch.setattr(mr, "_analista", analista)
+    b.ciclo(str((pd.Timestamp(AS_OF) + pd.Timedelta(days=7)).date()))
+    assert [f for f in _filas(b, "DIV") if f["fase"] == "CIERRE"]
+
+
+def test_el_sintetizador_respeta_el_tope_de_preguntas_y_el_presupuesto_del_mensaje(tmp_path, monkeypatch):
+    """H-22 (N18 y N22): como mucho `sintetizador_limites.preguntas` preguntas; el mensaje CT-15 declara la bolsa común."""
+    orig = mr._sintetizador
+
+    def sintetizador(msg, ctx, rng):
+        out = orig(msg, ctx, rng)
+        out["preguntas_sugeridas"] = [f"¿Pregunta de prueba número {i}?" for i in range(20)]
+        return out
+    monkeypatch.setattr(mr, "_sintetizador", sintetizador)
+    cli = MockClient()
+    b = _bloque(tmp_path, _cfg_div(), cli)
+    crear, ct15 = b.mensajeria.crear, []
+
+    def _crear(contrato, emisor, receptor, cuerpo, **k):
+        if contrato == "CT-15":
+            ct15.append(k.get("presupuesto"))
+        return crear(contrato, emisor, receptor, cuerpo, **k)
+    b.mensajeria.crear = _crear
+    r = b.ciclo(AS_OF)
+    assert len(r["paquete"]["preguntas_sugeridas"]) == parametro(b.cfg, "v6.sintetizador_limites")["preguntas"]
+    assert ct15 and ct15[0]["uc"] == r["presupuesto"]["COMUN"]["asignado"]
