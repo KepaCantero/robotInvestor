@@ -106,6 +106,37 @@ El total cargado es el coste real. Efecto declarado: en un presupuesto justo, el
 
 Pregunta para T-57: «¿qué antigüedad admite la resolución de un pronóstico, se alinean las series y qué pasa con las que tienen calendarios distintos?». Detalle en [.docs/tickets/T-91](../.docs/tickets/T-91/README.md).
 
+**INC-T112-01 · 2026-11-13 · Decisiones de método en las 36 fichas de la Fase 2 del Motor (Bloque A, T-112).** Las fichas dejan huecos que se han cubierto así, `[PROPUESTO]` hasta que el operador o una revisión del Catálogo decidan. El detalle, ficha a ficha, está en las notas de cada grupo: `.docs/tickets/T-112/grupo_S.md`, `grupo_R.md`, `grupo_V.md` y `grupo_P.md`. Las que más pesan:
+- **Modelos propios en lugar de bibliotecas que A no declara** (statsmodels, scikit-learn, `arch`):
+  - Markov switching y HMM por EM con numpy;
+  - Johansen y Engle-Granger con las tablas asintóticas de MacKinnon, Haug y Michelis (1999) y MacKinnon (2010), así que `nivel` solo admite 0,01, 0,05 o 0,10;
+  - en SCN-H-001 y en el histórico filtrado de RISK-VAR-001, un GARCH(1,1) por QMLE gaussiana, que no es el GARCH-t de VOL-GARCH-001;
+  - en ML-PRED-001, modelos lineales regularizados, sin árboles.
+- **Semillas y arranques:**
+  - semilla por defecto en las fichas con azar; la de la petición manda;
+  - EM con 20 arranques y un tope de iteraciones; si no converge, se rechaza;
+  - un caso estadístico de BT-PBO-001 (PBO ≈ 0,5 sin habilidad) con una tolerancia de ±0,3.
+- **Datos que la ficha no lista en «Entradas mínimas»:**
+  - ACC-VAL-001 proyecta el FCFF₀ con una tasa aportada con fuente y pide el coste de la deuda;
+  - REI-FFO-001 pide el porcentaje de CAPEX sobre rentas;
+  - FX-MOM-001 pide la dirección de cada par y la historia del diferencial.
+- **Lecturas estrictas de una frase ambigua:**
+  - REI-NAV-001 rechaza un NAV con más de 12 meses («rechazo … sin advertencia»);
+  - ALT-DESMOOTH-001 en GLM rechaza las raíces dentro o sobre el círculo unidad, sin otro margen;
+  - DEC-VOI-001 lee sus umbrales de `parametros_ht03` de la configuración, no de un F10 recalibrado.
+- **Convenciones:**
+  - RISK-VAR-001 al 0,975, con rango 0,90–0,99 y 250 observaciones como mínimo (las mismas que ya usaban TCV y DER);
+  - FIR-PRICE-001 solo con ACT/ACT-ICMA o 30E/360 y bonos «bullet», y con rescates, la duración del precio al peor;
+  - un parámetro no declarado por la ficha se rechaza.
+
+Pregunta para T-57: «¿se aceptan estas decisiones de método y los modelos propios en lugar de las bibliotecas externas?». Detalle en [.docs/tickets/T-112](../.docs/tickets/T-112/README.md).
+
+**INC-T112-02 · 2026-11-13 · La re-ejecución CT-10 (AUD-REX-001): dos documentos del corpus no coinciden (Bloque A, T-112).**
+- **El valor de `coincide`:** el esquema del Registro de cálculos V2.0 escribe `DENTRO_TOLERANCIA`, con las categorías DATOS_DISTINTOS, CONVENCION_DISTINTA, ERROR_ORIGINAL, ERROR_REEJECUCION y NO_DETERMINISMO. El Catálogo y el prompt MC-08 escriben `DENTRO_DE_TOLERANCIA`, con otras categorías.
+- **Decisión `[PROPUESTO]`:** el ejecutor sigue al esquema del Registro, porque es donde escribe. Corrige además la lógica: `DENTRO_TOLERANCIA` quiere decir que hay diferencia y no supera la tolerancia, no que los datos son distintos.
+- **Valores en línea:** desde T-112, el artefacto guarda los valores en línea (campo `valor` de `datos`, que el esquema ya prevé) para poder re-ejecutar los cálculos con datos en línea. Se comprueba su huella. Un artefacto anterior, que solo guardaba «en línea», no se reconstruye: la re-ejecución es imposible.
+- **Pregunta para una revisión del corpus:** unificar los dos vocabularios.
+
 **INC-T102-01 · 2026-11-13 · Umbrales del filtro de los textos del Sintetizador V6 (Bloque A, T-102).** Tras cinco QA NO APTO, el operador decidió: «umbrales y sin cifras libres». Valores `[PROPUESTO]`, para que el operador los fije en T-57:
 - **Prohibidas:** en un banco ciego nuevo de al menos 40, escrito por el revisor sin enseñárselo al implementador, pasan sin declararse como mucho el 5 %. Tolerancia cero para las que llevan un dato (dígitos, un marcador de cuenta o un código en mayúsculas de un instrumento, salvo los límites declarados).
 - **Legítimas:** de un banco ciego de al menos 60, escritas como pide el prompt, se quitan como mucho el 10 %. Las legítimas con un número en letra («los dos bancos centrales», «S&P quinientos») se miden aparte, como coste de la regla estricta.

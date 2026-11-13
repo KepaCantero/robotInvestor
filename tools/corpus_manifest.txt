@@ -123,7 +123,7 @@ e271ea1562d48fc0414e75e2c637e3a782caea3d2ce413ae1f50df85d74f4325  bloque_a/03_Fu
 6479a2c67348fbf859ffd9c2400b133d5067f8f097e489dd274ae78f42d18624  bloque_a/03_Funciones/Funciones, tareas y cometidos – Redactor y Diseñador de Informes – óptima V5.0.docx
 a66dac4888b116bc56cee03bfd64cb661b011c8af17f5fbaa073de818dd0beab  bloque_a/03_Funciones/Funciones, tareas y cometidos – Redactor y Diseñador de Informes – óptima V5.0.md
 bb707078b121b3e380930354a6a4a0397bff05bfd3272a822bf788dc6ddbd209  bloque_a/04_Motor_conocimiento_y_catalogo/Catálogo de cálculos del Motor - V5.0.docx
-4c2e76410d89a2e925c2c6434841f31719fc78f3adc0fd1fb9c9a6e58d943498  bloque_a/04_Motor_conocimiento_y_catalogo/Catálogo de cálculos del Motor - V5.0.md
+d1c2899c19242d8ab4c4e18bb9fa9bf5c42ef18bad37c40107b899cb81f0ac2c  bloque_a/04_Motor_conocimiento_y_catalogo/Catálogo de cálculos del Motor - V5.0.md
 4cad8d66a728e33081f12efe295d2f2ce76db659e23370cb2aed6818d5bcc03c  bloque_a/04_Motor_conocimiento_y_catalogo/Mapa de conocimientos del Motor - V4.0.docx
 e9bbf0c3a17538f1e95ab51473393c1787ceb7ef29c6daecf032db7ffae30315  bloque_a/04_Motor_conocimiento_y_catalogo/Mapa de conocimientos del Motor - V4.0.md
 4e2ff6b21e269f39edb5d090716c16e8c898381f18b7e0c108d9b9052bc666ff  bloque_a/04_Motor_conocimiento_y_catalogo/Perfiles de tipo de activo del Motor - V3.0.docx

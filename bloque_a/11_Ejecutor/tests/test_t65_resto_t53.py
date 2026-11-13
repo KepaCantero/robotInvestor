@@ -137,23 +137,28 @@ def test_ca15_participantes_de_f5_en_orden_de_agente(tmp_path):
 
 # ---------------------------------------------------------------- CS-08 · fichas «Documentado» del Catálogo
 @pytest.mark.parametrize("ficha", ["ACC-ERP-001", "FX-MOM-001", "REI-CAP-001"])
-def test_cs08_fichas_documentadas_no_entregan_cifras(tmp_path, ficha):
+def test_cs08_fichas_documentadas_no_entregan_cifras(tmp_path, ficha, monkeypatch):
+    """T-112: las tres se rehicieron con sus casos de control y se promovieron; el código provisional ya no existe. La regla
+    sigue: una ficha con código provisional (`DOCUMENTADAS_CON_CODIGO`) no entrega cifras aunque el Catálogo la diera por buena."""
+    from bloque_a.motor import servicio
+    assert servicio.citable_segun_catalogo(ficha) and servicio.servible(ficha) and not servicio.DOCUMENTADAS_CON_CODIGO
+    assert servicio.IMPLEMENTADAS[ficha]["fn"].__module__.endswith(("fichas_valoracion", "fichas_reales"))
+    monkeypatch.setattr(servicio, "DOCUMENTADAS_CON_CODIGO", frozenset({ficha}))
     b = _bloque(tmp_path)
     b.fijar_fecha(AS_OF)
-    r = b.motor.servir({"operacion": ficha, "plan": "PLAN_MIN", "datos": [{"serie": "SPY"}],
-                        "valores": {"rent_esperada": 0.06, "rent_libre": 0.02}}, "AG-02", "RUN-2026-0001")
-    assert r["estado"] == "RECHAZADO" and r["motivo"] == "METODO_NO_IMPLEMENTADO"   # antes: SERVED
-    assert "Documentado" in r["detalle"]
+    r = b.motor.servir({"operacion": ficha, "plan": "PLAN_MIN", "datos": [{"serie": "SPY"}]}, "AG-02", "RUN-2026-0001")
+    assert r["estado"] == "RECHAZADO" and r["motivo"] == "METODO_NO_IMPLEMENTADO" and "provisional" in r["detalle"]
 
 
-def test_cs08_no_se_ofrece_como_alternativa_una_ficha_que_no_se_sirve(tmp_path):
+def test_cs08_no_se_ofrece_como_alternativa_una_ficha_que_no_se_sirve(tmp_path, monkeypatch):
+    from bloque_a.motor import servicio
     b = _bloque(tmp_path)
     b.fijar_fecha(AS_OF)
-    for ficha in ("ACC-VAL-001", "REI-NAV-001"):                    # su alternativa era ACC-ERP-001 o REI-CAP-001
-        r = b.motor.servir({"operacion": ficha, "plan": "PLAN_MIN", "datos": []}, "AG-02", "RUN-2026-0001")
-        assert r["estado"] == "RECHAZADO" and not r.get("alternativa") and "alternativa" not in r["detalle"]
-    r = b.motor.servir({"operacion": "RISK-VAR-001", "plan": "PLAN_MIN", "datos": []}, "AG-02", "RUN-2026-0001")
-    assert r.get("alternativa") == "RISK-DD-001"
+    r = b.motor.servir({"operacion": "CHR-ONCHAIN-001", "plan": "PLAN_MIN", "datos": []}, "AG-02", "RUN-2026-0001")
+    assert r.get("alternativa") == "ACC-MOM-001"   # CHR-ONCHAIN-001 (P2) sigue DOCUMENTADO; su alternativa se sirve
+    monkeypatch.setattr(servicio, "DOCUMENTADAS_CON_CODIGO", frozenset({"ACC-MOM-001"}))
+    r = b.motor.servir({"operacion": "CHR-ONCHAIN-001", "plan": "PLAN_MIN", "datos": []}, "AG-02", "RUN-2026-0002")
+    assert r["estado"] == "RECHAZADO" and not r.get("alternativa") and "alternativa" not in r["detalle"]
 
 
 # ---------------------------------------------------------------- CS-10 · resto de números de reglas

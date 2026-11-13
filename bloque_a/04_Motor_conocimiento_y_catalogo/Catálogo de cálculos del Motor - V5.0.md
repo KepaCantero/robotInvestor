@@ -20,7 +20,7 @@ Archivo CC (propietario: operador, por cambio de tipo 3; el Motor propone). Lect
 | IMPLEMENTADO | Disponible en el entorno de ejecución y con casos de control superados | Servicio normal; la entrega declara «implementado, no validado» |
 | VALIDADO | Batería de pruebas de `09_Pruebas` ejecutada con evidencia registrada | Servicio normal sin advertencia de madurez |
 
-Estado actual de las 81 fichas: 35 **IMPLEMENTADO** (14 del ejecutor V1.0 con pruebas unitarias y 21 con casos de control registrados, T-106); 11 heredadas de la línea V3.0 como **Implementado (heredado)**, pendientes de reverificación en el despliegue vigente; 35 **DOCUMENTADO** (35 de la línea V4.0). Ninguna ficha está VALIDADA.
+Estado actual de las 81 fichas: 71 **IMPLEMENTADO** (14 del ejecutor V1.0 con pruebas unitarias y 57 con casos de control registrados, T-106 y T-112); 10 **DOCUMENTADO** (10 de la línea V4.0). Ninguna ficha está VALIDADA.
 
 1.4. **Cambios.** Alta, modificación o deprecación de fichas: propuesta del Motor (evidencia de uso del Registro de cálculos, casos de control, impacto) y aprobación del operador (tipo 3). Las versiones no se sobrescriben: conviven para permitir re-ejecuciones exactas.
 
@@ -91,63 +91,63 @@ Toda ficha contiene, en este orden:
 | ficha_id | Nombre | Módulo | Perfiles | Horizontes | Prioridad | Madurez |
 |---|---|---|---|---|---|---|
 | FX-TREND-001 | Detección y medición de tendencia | MC-02 | TRANSVERSAL | H2–H4 | P0 | IMPLEMENTADO (ejecutor V1.0, pruebas unitarias) |
-| FX-BRK-001 | Rupturas estructurales | MC-02 | TRANSVERSAL | H2–H4 | P0 | Implementado (heredado) |
-| FX-STL-001 | Descomposición tendencia-ciclo-estacionalidad | MC-02 | TRANSVERSAL | H2–H4 | P0 | Implementado (heredado) |
+| FX-BRK-001 | Rupturas estructurales | MC-02 | TRANSVERSAL | H2–H4 | P0 | IMPLEMENTADO (ejecutor, casos de control registrados (T-112)) |
+| FX-STL-001 | Descomposición tendencia-ciclo-estacionalidad | MC-02 | TRANSVERSAL | H2–H4 | P0 | IMPLEMENTADO (ejecutor, casos de control registrados (T-112)) |
 | FX-VOL-001 | Volatilidad realizada e implícita | MC-02 | TRANSVERSAL | H1–H3 | P0 | IMPLEMENTADO (ejecutor V1.0, pruebas unitarias) |
-| FX-REGIME-001 | Regímenes univariantes (Markov switching) | MC-02 | TRANSVERSAL | H2–H4 | P0 | Implementado (heredado) |
-| FX-PPA-001 | Desviación de PPA relativa | MC-03 | PERF-FX | H4 (H3 limitado) | P1 | Implementado (heredado) |
+| FX-REGIME-001 | Regímenes univariantes (Markov switching) | MC-02 | TRANSVERSAL | H2–H4 | P0 | IMPLEMENTADO (ejecutor, casos de control registrados (T-112)) |
+| FX-PPA-001 | Desviación de PPA relativa | MC-03 | PERF-FX | H4 (H3 limitado) | P1 | IMPLEMENTADO (ejecutor, casos de control registrados (T-112)) |
 | FX-CARRY-001 | Diferencial de tipos y carry | MC-03 | PERF-FX, PERF-FIR | H1–H3 | P1 | IMPLEMENTADO (ejecutor V1.0, pruebas unitarias) |
-| FX-COINT-001 | Cointegración y corrección de errores | MC-03 | TRANSVERSAL | H3–H4 | P1 | Implementado (heredado) |
+| FX-COINT-001 | Cointegración y corrección de errores | MC-03 | TRANSVERSAL | H3–H4 | P1 | IMPLEMENTADO (ejecutor, casos de control registrados (T-112)) |
 | FX-CORR-001 | Correlación dinámica y dependencia de cola | MC-03 | TRANSVERSAL | H1–H4 | P0 | IMPLEMENTADO (ejecutor V1.0, pruebas unitarias) |
 | ST-DESC-001 | Estadística descriptiva | MC-01 | TRANSVERSAL | — | P0 | IMPLEMENTADO (ejecutor V1.0, pruebas unitarias) |
-| ST-INF-001 | Contrastes, intervalos y comparaciones múltiples | MC-01 | TRANSVERSAL | — | P0 | Implementado (heredado) |
+| ST-INF-001 | Contrastes, intervalos y comparaciones múltiples | MC-01 | TRANSVERSAL | — | P0 | IMPLEMENTADO (ejecutor, casos de control registrados (T-112)) |
 | FIN-CAGR-001 | Crecimiento, anualización, nominal/real | MC-01 | TRANSVERSAL | — | P0 | IMPLEMENTADO (ejecutor V1.0, pruebas unitarias) |
-| BIB-MET-001 | Bibliometría aplicada a fuentes | MC-01 | TRANSVERSAL | — | P1 | Implementado (heredado) |
-| SIM-MC-001 | Simulación Monte Carlo de trayectorias | MC-05 | TRANSVERSAL | H1–H4 | P0 | Implementado (heredado) |
-| RISK-VAR-001 | VaR y Expected Shortfall | MC-07 | TRANSVERSAL | H1–H3 | P0 | Implementado (heredado) |
-| ML-CAL-001 | Evaluación interna de modelos predictivos | MC-06 | TRANSVERSAL | H1–H4 | P0 | Implementado (heredado) |
-| AUD-REX-001 | Re-ejecución independiente (CT-10) | MC-08 | TRANSVERSAL | — | P0 | Implementado (heredado) |
+| BIB-MET-001 | Bibliometría aplicada a fuentes | MC-01 | TRANSVERSAL | — | P1 | IMPLEMENTADO (ejecutor, casos de control registrados (T-112)) |
+| SIM-MC-001 | Simulación Monte Carlo de trayectorias | MC-05 | TRANSVERSAL | H1–H4 | P0 | IMPLEMENTADO (ejecutor, casos de control registrados (T-112)) |
+| RISK-VAR-001 | VaR y Expected Shortfall | MC-07 | TRANSVERSAL | H1–H3 | P0 | IMPLEMENTADO (ejecutor, casos de control registrados (T-112)) |
+| ML-CAL-001 | Evaluación interna de modelos predictivos | MC-06 | TRANSVERSAL | H1–H4 | P0 | IMPLEMENTADO (ejecutor, casos de control registrados (T-112)) |
+| AUD-REX-001 | Re-ejecución independiente (CT-10) | MC-08 | TRANSVERSAL | — | P0 | IMPLEMENTADO (ejecutor, casos de control registrados (T-112)) |
 | SCORE-RK-001 | Puntuaciones T/E/M/P/A y clave RK (idéntico a HT-03) | MC-01 | TRANSVERSAL | — | P0 | IMPLEMENTADO (ejecutor V1.0, pruebas unitarias) |
 | FC-EVAL-001 | Evaluación de pronósticos: Brier, log-score, CRPS, acierto, DM-HLN | MC-10 | TRANSVERSAL | H1–H4 | P0 | IMPLEMENTADO (ejecutor V1.0, pruebas unitarias) |
 | FC-CAL-001 | Calibración: fiabilidad, ECE con nulo, PIT, cobertura | MC-10 | TRANSVERSAL | H1–H4 | P0 | IMPLEMENTADO (ejecutor V1.0, pruebas unitarias) |
-| BT-DSR-001 | Sharpe probabilístico y Deflated Sharpe | MC-10 | TRANSVERSAL | H2–H4 | P0 | Documentado |
-| BT-PBO-001 | Probabilidad de sobreajuste del backtest (CSCV) | MC-10 | TRANSVERSAL | H2–H4 | P1 | Documentado |
-| BT-VAR-001 | Backtesting de VaR y ES | MC-10 | TRANSVERSAL | H1–H2 | P1 | Documentado |
-| SCN-H-001 | Escenarios por horizonte | MC-05 | TRANSVERSAL | H1–H4 | P0 | Documentado |
+| BT-DSR-001 | Sharpe probabilístico y Deflated Sharpe | MC-10 | TRANSVERSAL | H2–H4 | P0 | IMPLEMENTADO (ejecutor, casos de control registrados (T-112)) |
+| BT-PBO-001 | Probabilidad de sobreajuste del backtest (CSCV) | MC-10 | TRANSVERSAL | H2–H4 | P1 | IMPLEMENTADO (ejecutor, casos de control registrados (T-112)) |
+| BT-VAR-001 | Backtesting de VaR y ES | MC-10 | TRANSVERSAL | H1–H2 | P1 | IMPLEMENTADO (ejecutor, casos de control registrados (T-112)) |
+| SCN-H-001 | Escenarios por horizonte | MC-05 | TRANSVERSAL | H1–H4 | P0 | IMPLEMENTADO (ejecutor, casos de control registrados (T-112)) |
 | VOL-GARCH-001 | Volatilidad condicional GARCH | MC-02 | TRANSVERSAL | H1–H2 (H3 limitado) | P0 | IMPLEMENTADO (ejecutor V1.0, pruebas unitarias) |
-| REG-HMM-001 | Régimen de clase (HMM multivariante) | MC-02 | TRANSVERSAL | H2–H3 | P1 | Documentado |
-| ML-PRED-001 | Modelo predictivo supervisado con walk-forward | MC-06 | TRANSVERSAL | H1–H3 | P1 | Documentado |
+| REG-HMM-001 | Régimen de clase (HMM multivariante) | MC-02 | TRANSVERSAL | H2–H3 | P1 | IMPLEMENTADO (ejecutor, casos de control registrados (T-112)) |
+| ML-PRED-001 | Modelo predictivo supervisado con walk-forward | MC-06 | TRANSVERSAL | H1–H3 | P1 | IMPLEMENTADO (ejecutor, casos de control registrados (T-112)) |
 | ML-CLUS-001 | Clústeres de exposición y apuestas independientes | MC-06 | TRANSVERSAL | — | P0 | IMPLEMENTADO (ejecutor V1.0, pruebas unitarias) |
 | RISK-DD-001 | Drawdown, liquidez y escala de riesgo 1–5 | MC-07 | TRANSVERSAL | H2–H4 | P0 | IMPLEMENTADO (ejecutor V1.0, pruebas unitarias) |
-| DEC-VOI-001 | Valor de la información de un cálculo o búsqueda | MC-07 | TRANSVERSAL | — | P1 | Documentado |
-| DER-OPT-001 | Opciones: BSM, binomial, griegas, volatilidad implícita | MC-09 | PERF-DER (+ PERF-ACC, PERF-IDX, PERF-FIR, PERF-FX, PERF-CMD, PERF-CHR, PERF-TCV) | H1–H3 | P1 | Documentado |
-| TEM-DIFF-001 | Curvas de difusión y adopción | MC-04 | PERF-TEM (capa) | H3–H4 | P1 | Documentado |
-| ACC-VAL-001 | DCF, DCF inverso y múltiplos | MC-09 | PERF-ACC (+ PERF-REI) | H3–H4 | P1 | Documentado |
-| ACC-ERP-001 | Prima de riesgo implícita | MC-09 | PERF-ACC, PERF-IDX | H4 (H3 contexto) | P1 | Documentado |
-| ACC-FACT-001 | Exposición factorial | MC-09 | PERF-ACC (+ PERF-IDX, PERF-ALT, PERF-ETF, PERF-REI) | H2–H4 | P1 | Documentado |
+| DEC-VOI-001 | Valor de la información de un cálculo o búsqueda | MC-07 | TRANSVERSAL | — | P1 | IMPLEMENTADO (ejecutor, casos de control registrados (T-112)) |
+| DER-OPT-001 | Opciones: BSM, binomial, griegas, volatilidad implícita | MC-09 | PERF-DER (+ PERF-ACC, PERF-IDX, PERF-FIR, PERF-FX, PERF-CMD, PERF-CHR, PERF-TCV) | H1–H3 | P1 | IMPLEMENTADO (ejecutor, casos de control registrados (T-112)) |
+| TEM-DIFF-001 | Curvas de difusión y adopción | MC-04 | PERF-TEM (capa) | H3–H4 | P1 | IMPLEMENTADO (ejecutor, casos de control registrados (T-112)) |
+| ACC-VAL-001 | DCF, DCF inverso y múltiplos | MC-09 | PERF-ACC (+ PERF-REI) | H3–H4 | P1 | IMPLEMENTADO (ejecutor, casos de control registrados (T-112)) |
+| ACC-ERP-001 | Prima de riesgo implícita | MC-09 | PERF-ACC, PERF-IDX | H4 (H3 contexto) | P1 | IMPLEMENTADO (ejecutor, casos de control registrados (T-112)) |
+| ACC-FACT-001 | Exposición factorial | MC-09 | PERF-ACC (+ PERF-IDX, PERF-ALT, PERF-ETF, PERF-REI) | H2–H4 | P1 | IMPLEMENTADO (ejecutor, casos de control registrados (T-112)) |
 | ACC-MOM-001 | Momentum 12-1 y de series temporales | MC-09 | PERF-ACC (+ TRANSVERSAL) | H2–H3 | P1 | IMPLEMENTADO (ejecutor V1.0, pruebas unitarias) |
-| FIR-PRICE-001 | Precio, rendimiento, duración y convexidad | MC-09 | PERF-FIR | H1–H4 | P1 | Documentado |
-| FIR-CURVE-001 | Curva Nelson-Siegel-Svensson y valor relativo | MC-09 | PERF-FIR | H2–H4 | P1 | Documentado |
-| FIR-CARRY-001 | Carry y rolldown | MC-09 | PERF-FIR (+ PERF-TCV) | H2–H3 | P1 | Documentado |
-| FIR-SPREAD-001 | Percentil y valor del diferencial de crédito | MC-09 | PERF-FIR | H2–H4 | P1 | Documentado |
+| FIR-PRICE-001 | Precio, rendimiento, duración y convexidad | MC-09 | PERF-FIR | H1–H4 | P1 | IMPLEMENTADO (ejecutor, casos de control registrados (T-112)) |
+| FIR-CURVE-001 | Curva Nelson-Siegel-Svensson y valor relativo | MC-09 | PERF-FIR | H2–H4 | P1 | IMPLEMENTADO (ejecutor, casos de control registrados (T-112)) |
+| FIR-CARRY-001 | Carry y rolldown | MC-09 | PERF-FIR (+ PERF-TCV) | H2–H3 | P1 | IMPLEMENTADO (ejecutor, casos de control registrados (T-112)) |
+| FIR-SPREAD-001 | Percentil y valor del diferencial de crédito | MC-09 | PERF-FIR | H2–H4 | P1 | IMPLEMENTADO (ejecutor, casos de control registrados (T-112)) |
 | FIR-CRED-001 | Merton agregado: distancia al impago y diferencial implícito de un segmento | MC-09 | PERF-FIR (+ PERF-TCV, PERF-ACC) | H3–H4 | P2 | Documentado |
 | FX-BEER-001 | Tipo de cambio real de equilibrio (BEER) | MC-03 | PERF-FX | H4 (H3 limitado) | P2 | Documentado |
-| FX-MOM-001 | Momentum cambiario y carry ajustado por volatilidad | MC-09 | PERF-FX | H1–H3 | P1 | Documentado |
+| FX-MOM-001 | Momentum cambiario y carry ajustado por volatilidad | MC-09 | PERF-FX | H1–H3 | P1 | IMPLEMENTADO (ejecutor, casos de control registrados (T-112)) |
 | CMD-CURVE-001 | Estructura de la curva de futuros y roll yield | MC-09 | PERF-CMD | H1–H3 | P1 | IMPLEMENTADO (ejecutor V1.0, pruebas unitarias) |
-| CMD-INV-001 | Inventarios frente a media estacional | MC-02 | PERF-CMD | H2–H3 | P1 | Documentado |
-| CMD-RETDEC-001 | Descomposición de la rentabilidad de futuros | MC-09 | PERF-CMD | H3–H4 | P1 | Documentado |
+| CMD-INV-001 | Inventarios frente a media estacional | MC-02 | PERF-CMD | H2–H3 | P1 | IMPLEMENTADO (ejecutor, casos de control registrados (T-112)) |
+| CMD-RETDEC-001 | Descomposición de la rentabilidad de futuros | MC-09 | PERF-CMD | H3–H4 | P1 | IMPLEMENTADO (ejecutor, casos de control registrados (T-112)) |
 | CMD-REAL-001 | Precio real y coste marginal | MC-09 | PERF-CMD | H4 (H3 contexto) | P2 | Documentado |
-| REI-NAV-001 | Prima/descuento sobre NAV | MC-09 | PERF-REI | H3–H4 | P1 | Documentado |
-| REI-CAP-001 | Cap rate y diferencial cap rate–bono | MC-09 | PERF-REI (+ PERF-PRV) | H3–H4 | P1 | Documentado |
-| REI-FFO-001 | FFO/AFFO y sostenibilidad del dividendo | MC-09 | PERF-REI | H3 | P1 | Documentado |
+| REI-NAV-001 | Prima/descuento sobre NAV | MC-09 | PERF-REI | H3–H4 | P1 | IMPLEMENTADO (ejecutor, casos de control registrados (T-112)) |
+| REI-CAP-001 | Cap rate y diferencial cap rate–bono | MC-09 | PERF-REI (+ PERF-PRV) | H3–H4 | P1 | IMPLEMENTADO (ejecutor, casos de control registrados (T-112)) |
+| REI-FFO-001 | FFO/AFFO y sostenibilidad del dividendo | MC-09 | PERF-REI | H3 | P1 | IMPLEMENTADO (ejecutor, casos de control registrados (T-112)) |
 | REI-LEV-001 | Apalancamiento y riesgo de refinanciación | MC-09 | PERF-REI | H3–H4 | P2 | Documentado |
 | CHR-ONCHAIN-001 | MVRV y NVT | MC-09 | PERF-CHR | H3 (H2 contexto; H4 limitado) | P2 | Documentado |
-| CHR-FUND-001 | Financiación de perpetuos y base | MC-09 | PERF-CHR | H1–H2 | P1 | Documentado |
-| CHR-FLOW-001 | Flujos de ETF y oferta de stablecoins | MC-02 | PERF-CHR | H1–H2 | P1 | Documentado |
+| CHR-FUND-001 | Financiación de perpetuos y base | MC-09 | PERF-CHR | H1–H2 | P1 | IMPLEMENTADO (ejecutor, casos de control registrados (T-112)) |
+| CHR-FLOW-001 | Flujos de ETF y oferta de stablecoins | MC-02 | PERF-CHR | H1–H2 | P1 | IMPLEMENTADO (ejecutor, casos de control registrados (T-112)) |
 | CHR-TOKEN-001 | Tokenómica y dilución | MC-09 | PERF-CHR | H2–H4 | P2 | Documentado |
 | PRV-PME-001 | Public market equivalent | MC-09 | PERF-PRV | H4 | P2 | Documentado |
 | PRV-CF-001 | TIR, múltiplos, curva J y proyección de flujos | MC-09 | PERF-PRV | H4 | P2 | Documentado |
-| ALT-DESMOOTH-001 | Desuavizado de rentabilidades | MC-09 | PERF-PRV, PERF-ALT (+ PERF-REI, PERF-ETF) | H3–H4 | P1 | Documentado |
+| ALT-DESMOOTH-001 | Desuavizado de rentabilidades | MC-09 | PERF-PRV, PERF-ALT (+ PERF-REI, PERF-ETF) | H3–H4 | P1 | IMPLEMENTADO (ejecutor, casos de control registrados (T-112)) |
 | ALT-HF-001 | Exposición factorial de estrategias hedge | MC-09 | PERF-ALT (+ PERF-ETF) | H3–H4 | P2 | Documentado |
 | ALT-AUC-001 | Índice de transacciones de coleccionables | MC-09 | PERF-ALT | H4 | P2 | Documentado |
 | IDX-ERP-001 | Rentabilidad esperada por índice (Grinold-Kroner) | MC-09 | PERF-IDX (+ PERF-ACC) | H4 (H3 contexto) | P1 | IMPLEMENTADO (ejecutor, casos de control registrados (T-106)) |
@@ -240,7 +240,7 @@ Evaluación transversal de cualquier horizonte: FC-EVAL-001, FC-CAL-001, BT-DSR-
 **Referencia ingenua.** Modelo sin ruptura.
 **Aclaración y rechazo.** Rechazo por debajo del mínimo.
 **Referencias.** Page (1954), *Biometrika*; Bai y Perron (1998), *Econometrica*; Bai y Perron (2003), *Journal of Applied Econometrics* · TM-02, TM-03.
-**Prioridad y madurez.** P0 · Implementado (heredado).
+**Prioridad y madurez.** P0 · IMPLEMENTADO (ejecutor, casos de control registrados (T-112)).
 
 ### FX-STL-001 · Descomposición tendencia-ciclo-estacionalidad
 
@@ -257,7 +257,7 @@ Evaluación transversal de cualquier horizonte: FC-EVAL-001, FC-CAL-001, BT-DSR-
 **Referencia ingenua.** RI-EST.
 **Aclaración y rechazo.** Rechazo con < 2 ciclos.
 **Referencias.** Cleveland, Cleveland, McRae y Terpenning (1990), *Journal of Official Statistics* · TM-02.
-**Prioridad y madurez.** P0 · Implementado (heredado).
+**Prioridad y madurez.** P0 · IMPLEMENTADO (ejecutor, casos de control registrados (T-112)).
 
 ### FX-VOL-001 · Volatilidad realizada e implícita y su brecha
 
@@ -291,7 +291,7 @@ Evaluación transversal de cualquier horizonte: FC-EVAL-001, FC-CAL-001, BT-DSR-
 **Referencia ingenua.** Un solo régimen.
 **Aclaración y rechazo.** Rechazo con < 100 observaciones.
 **Referencias.** Hamilton (1989), *Econometrica*; Kim y Nelson (1999), *State-Space Models with Regime Switching* · TM-03.
-**Prioridad y madurez.** P0 · Implementado (heredado).
+**Prioridad y madurez.** P0 · IMPLEMENTADO (ejecutor, casos de control registrados (T-112)).
 
 ### FX-PPA-001 · Desviación de paridad de poder adquisitivo relativa
 
@@ -308,7 +308,7 @@ Evaluación transversal de cualquier horizonte: FC-EVAL-001, FC-CAL-001, BT-DSR-
 **Referencia ingenua.** RI-PA del tipo de cambio.
 **Aclaración y rechazo.** Rechazo con canastas o periodicidades incompatibles.
 **Referencias.** Rogoff (1996), *JEL*; Taylor y Taylor (2004), «The Purchasing Power Parity Debate», *JEP* · TM-13.
-**Prioridad y madurez.** P1 · Implementado (heredado).
+**Prioridad y madurez.** P1 · IMPLEMENTADO (ejecutor, casos de control registrados (T-112)).
 
 ### FX-CARRY-001 · Diferencial de tipos y carry
 
@@ -342,7 +342,7 @@ Evaluación transversal de cualquier horizonte: FC-EVAL-001, FC-CAL-001, BT-DSR-
 **Referencia ingenua.** RI-PA (sin relación).
 **Aclaración y rechazo.** Rechazo con < 50 observaciones.
 **Referencias.** Engle y Granger (1987), *Econometrica*; Johansen (1991), *Econometrica* · TM-04.
-**Prioridad y madurez.** P1 · Implementado (heredado).
+**Prioridad y madurez.** P1 · IMPLEMENTADO (ejecutor, casos de control registrados (T-112)).
 
 ### FX-CORR-001 · Correlación dinámica y dependencia de cola
 
@@ -393,7 +393,7 @@ Evaluación transversal de cualquier horizonte: FC-EVAL-001, FC-CAL-001, BT-DSR-
 **Referencia ingenua.** RI-NA.
 **Aclaración y rechazo.** Rechazo si los datos no sostienen el contraste.
 **Referencias.** Lehmann y Romano (2005), *Testing Statistical Hypotheses*; Benjamini y Hochberg (1995), *JRSS B*; Holm (1979), *Scandinavian Journal of Statistics* · TM-01.
-**Prioridad y madurez.** P0 · Implementado (heredado).
+**Prioridad y madurez.** P0 · IMPLEMENTADO (ejecutor, casos de control registrados (T-112)).
 
 ### FIN-CAGR-001 · Crecimiento, anualización y nominal/real
 
@@ -427,7 +427,7 @@ Evaluación transversal de cualquier horizonte: FC-EVAL-001, FC-CAL-001, BT-DSR-
 **Referencia ingenua.** RI-NA.
 **Aclaración y rechazo.** Rechazo con conjunto vacío o corrupto.
 **Referencias.** Moed (2005), *Citation Analysis in Research Evaluation* · TM-14.
-**Prioridad y madurez.** P1 · Implementado (heredado).
+**Prioridad y madurez.** P1 · IMPLEMENTADO (ejecutor, casos de control registrados (T-112)).
 
 ### SIM-MC-001 · Simulación Monte Carlo de trayectorias
 
@@ -444,7 +444,7 @@ Evaluación transversal de cualquier horizonte: FC-EVAL-001, FC-CAL-001, BT-DSR-
 **Referencia ingenua.** RI-CLI (bootstrap simple de la historia).
 **Aclaración y rechazo.** Rechazo sin semilla o sin dinámica.
 **Referencias.** Glasserman (2004), *Monte Carlo Methods in Financial Engineering* · TM-09.
-**Prioridad y madurez.** P0 · Implementado (heredado).
+**Prioridad y madurez.** P0 · IMPLEMENTADO (ejecutor, casos de control registrados (T-112)).
 
 ### RISK-VAR-001 · VaR y Expected Shortfall
 
@@ -461,7 +461,7 @@ Evaluación transversal de cualquier horizonte: FC-EVAL-001, FC-CAL-001, BT-DSR-
 **Referencia ingenua.** VaR normal con volatilidad histórica (para backtesting con BT-VAR-001).
 **Aclaración y rechazo.** Rechazo de nivel 99 % empírico con < 500 observaciones.
 **Referencias.** Jorion (2007); McNeil, Frey y Embrechts (2015); Artzner et al. (1999) · TM-08.
-**Prioridad y madurez.** P0 · Implementado (heredado).
+**Prioridad y madurez.** P0 · IMPLEMENTADO (ejecutor, casos de control registrados (T-112)).
 
 ### ML-CAL-001 · Evaluación interna de modelos predictivos
 
@@ -478,7 +478,7 @@ Evaluación transversal de cualquier horizonte: FC-EVAL-001, FC-CAL-001, BT-DSR-
 **Referencia ingenua.** RI-PA, RI-TB o RI-MH según el objetivo.
 **Aclaración y rechazo.** Rechazo si predicciones y realizaciones no alinean.
 **Referencias.** Hyndman y Athanasopoulos (2021); Campbell y Thompson (2008); López de Prado (2018) · TM-10, TM-11.
-**Prioridad y madurez.** P0 · Implementado (heredado).
+**Prioridad y madurez.** P0 · IMPLEMENTADO (ejecutor, casos de control registrados (T-112)).
 
 ### AUD-REX-001 · Re-ejecución independiente (CT-10)
 
@@ -495,7 +495,7 @@ Evaluación transversal de cualquier horizonte: FC-EVAL-001, FC-CAL-001, BT-DSR-
 **Referencia ingenua.** RI-NA.
 **Aclaración y rechazo.** Rechazo sin artefacto, tolerancia o motivo; resultado original presente en el despacho ⇒ incidencia.
 **Referencias.** Peng (2011), *Science*; National Academies (2019), *Reproducibility and Replicability in Science* · TM-14.
-**Prioridad y madurez.** P0 · Implementado (heredado).
+**Prioridad y madurez.** P0 · IMPLEMENTADO (ejecutor, casos de control registrados (T-112)).
 
 ## 7. Fichas nuevas — núcleo transversal
 
@@ -565,7 +565,7 @@ Evaluación transversal de cualquier horizonte: FC-EVAL-001, FC-CAL-001, BT-DSR-
 **Referencia ingenua.** SR = 0 y RI-CM.
 **Aclaración y rechazo.** Aclaración sin N ensayos.
 **Referencias.** Lo (2002); Mertens (2002); Bailey y López de Prado (2012; 2014); Harvey y Liu (2015) · TM-11.
-**Prioridad y madurez.** P0 · DOCUMENTADO.
+**Prioridad y madurez.** P0 · IMPLEMENTADO (ejecutor, casos de control registrados (T-112)).
 
 ### BT-PBO-001 · Probabilidad de sobreajuste del backtest (CSCV)
 
@@ -582,7 +582,7 @@ Evaluación transversal de cualquier horizonte: FC-EVAL-001, FC-CAL-001, BT-DSR-
 **Referencia ingenua.** Selección aleatoria de configuración.
 **Aclaración y rechazo.** Rechazo con N < 2.
 **Referencias.** Bailey, Borwein, López de Prado y Zhu (2017) · TM-11.
-**Prioridad y madurez.** P1 · DOCUMENTADO.
+**Prioridad y madurez.** P1 · IMPLEMENTADO (ejecutor, casos de control registrados (T-112)).
 
 ### BT-VAR-001 · Backtesting de VaR y ES
 
@@ -599,7 +599,7 @@ Evaluación transversal de cualquier horizonte: FC-EVAL-001, FC-CAL-001, BT-DSR-
 **Referencia ingenua.** VaR normal con volatilidad histórica.
 **Aclaración y rechazo.** Rechazo con < 250 observaciones (salvo declaración de baja potencia).
 **Referencias.** Kupiec (1995); Christoffersen (1998); Acerbi y Székely (2014); BCBS (1996), *Supervisory Framework for the Use of «Backtesting»* · TM-08, TM-11.
-**Prioridad y madurez.** P1 · DOCUMENTADO.
+**Prioridad y madurez.** P1 · IMPLEMENTADO (ejecutor, casos de control registrados (T-112)).
 
 ### SCN-H-001 · Escenarios por horizonte
 
@@ -616,7 +616,7 @@ Evaluación transversal de cualquier horizonte: FC-EVAL-001, FC-CAL-001, BT-DSR-
 **Referencia ingenua.** RI-CLI (bootstrap incondicional) y RI-PA.
 **Aclaración y rechazo.** Rechazo sin semilla o en horizonte «No» de 8.3 del Documento 0 para el tipo de activo.
 **Referencias.** Glasserman (2004); Christoffersen (2012), *Elements of Financial Risk Management*; Grinold y Kroner (2002), «The Equity Risk Premium», *Investment Insights*; Ilmanen (2011), *Expected Returns* · TM-09, TM-12.
-**Prioridad y madurez.** P0 · DOCUMENTADO.
+**Prioridad y madurez.** P0 · IMPLEMENTADO (ejecutor, casos de control registrados (T-112)).
 
 ### VOL-GARCH-001 · Volatilidad condicional GARCH
 
@@ -650,7 +650,7 @@ Evaluación transversal de cualquier horizonte: FC-EVAL-001, FC-CAL-001, BT-DSR-
 **Referencia ingenua.** Régimen de la observación anterior; incondicional.
 **Aclaración y rechazo.** Rechazo por debajo del mínimo.
 **Referencias.** Hamilton (1989); Rabiner (1989), *Proceedings of the IEEE*; Ang y Bekaert (2002), *RFS*; Ang y Timmermann (2012), «Regime Changes and Financial Markets», *Annual Review of Financial Economics* · TM-03.
-**Prioridad y madurez.** P1 · DOCUMENTADO.
+**Prioridad y madurez.** P1 · IMPLEMENTADO (ejecutor, casos de control registrados (T-112)).
 
 ### ML-PRED-001 · Modelo predictivo supervisado con walk-forward
 
@@ -667,7 +667,7 @@ Evaluación transversal de cualquier horizonte: FC-EVAL-001, FC-CAL-001, BT-DSR-
 **Referencia ingenua.** RI-TB, RI-PA o RI-MH según objetivo.
 **Aclaración y rechazo.** Rechazo con fuga o sin regla de conocibilidad.
 **Referencias.** Hastie, Tibshirani y Friedman (2009); Gu, Kelly y Xiu (2020); López de Prado (2018) · TM-10.
-**Prioridad y madurez.** P1 · DOCUMENTADO.
+**Prioridad y madurez.** P1 · IMPLEMENTADO (ejecutor, casos de control registrados (T-112)).
 
 ### ML-CLUS-001 · Clústeres de exposición y apuestas independientes
 
@@ -718,7 +718,7 @@ Evaluación transversal de cualquier horizonte: FC-EVAL-001, FC-CAL-001, BT-DSR-
 **Referencia ingenua.** Ejecutar siempre (coste) frente a no ejecutar nunca.
 **Aclaración y rechazo.** Aclaración sin rango plausible.
 **Referencias.** Raiffa y Schlaifer (1961); Howard (1966), «Information Value Theory», *IEEE Transactions on Systems Science and Cybernetics* · TM-08.
-**Prioridad y madurez.** P1 · DOCUMENTADO.
+**Prioridad y madurez.** P1 · IMPLEMENTADO (ejecutor, casos de control registrados (T-112)).
 
 ### DER-OPT-001 · Opciones: BSM, binomial, griegas y volatilidad implícita
 
@@ -735,7 +735,7 @@ Evaluación transversal de cualquier horizonte: FC-EVAL-001, FC-CAL-001, BT-DSR-
 **Referencia ingenua.** Volatilidad realizada histórica como estimador de la implícita (RI-EWMA).
 **Aclaración y rechazo.** Rechazo si el precio viola cotas de no arbitraje o el payoff no está en ficha.
 **Referencias.** Black y Scholes (1973); Merton (1973); Black (1976); Cox, Ross y Rubinstein (1979); Hull (2022); Breeden y Litzenberger (1978); Carr y Wu (2009), «Variance Risk Premiums», *RFS* · TM-06.
-**Prioridad y madurez.** P1 · DOCUMENTADO.
+**Prioridad y madurez.** P1 · IMPLEMENTADO (ejecutor, casos de control registrados (T-112)).
 
 ### TEM-DIFF-001 · Curvas de difusión y adopción
 
@@ -752,7 +752,7 @@ Evaluación transversal de cualquier horizonte: FC-EVAL-001, FC-CAL-001, BT-DSR-
 **Referencia ingenua.** Extrapolación lineal del crecimiento reciente y crecimiento constante (FIN-CAGR-001).
 **Aclaración y rechazo.** Rechazo con < 8 observaciones o sin tramo de aceleración.
 **Referencias.** Bass (1969), «A New Product Growth Model for Consumer Durables», *Management Science*; Griliches (1957), *Econometrica*; Rogers (2003), *Diffusion of Innovations*, 5.ª ed.; Meade e Islam (2006), «Modelling and Forecasting the Diffusion of Innovation – A 25-Year Review», *International Journal of Forecasting* · TM-12.
-**Prioridad y madurez.** P1 · DOCUMENTADO.
+**Prioridad y madurez.** P1 · IMPLEMENTADO (ejecutor, casos de control registrados (T-112)).
 
 ## 8. Fichas nuevas — renta variable (PERF-ACC)
 
@@ -771,7 +771,7 @@ Evaluación transversal de cualquier horizonte: FC-EVAL-001, FC-CAL-001, BT-DSR-
 **Referencia ingenua.** Valor = precio de mercado (la señal se expresa como brecha); para previsión, RI-CM.
 **Aclaración y rechazo.** Rechazo con g ≥ WACC, < 3 ejercicios o monedas inconsistentes; PER no aplicable con beneficio ≤ 0.
 **Referencias.** Damodaran (2012); Koller, Goedhart y Wessels (2020); Campbell y Shiller (1988) · TM-05.
-**Prioridad y madurez.** P1 · DOCUMENTADO.
+**Prioridad y madurez.** P1 · IMPLEMENTADO (ejecutor, casos de control registrados (T-112)).
 
 ### ACC-ERP-001 · Prima de riesgo implícita
 
@@ -788,7 +788,7 @@ Evaluación transversal de cualquier horizonte: FC-EVAL-001, FC-CAL-001, BT-DSR-
 **Referencia ingenua.** RI-MH (PRM media histórica).
 **Aclaración y rechazo.** Rechazo sin r_f de la moneda del índice.
 **Referencias.** Damodaran (actualización anual); Fama y French (2002), «The Equity Premium», *Journal of Finance*; Asness (2003); Campbell y Shiller (1988) · TM-05.
-**Prioridad y madurez.** P1 · DOCUMENTADO.
+**Prioridad y madurez.** P1 · IMPLEMENTADO (ejecutor, casos de control registrados (T-112)).
 
 ### ACC-FACT-001 · Exposición factorial
 
@@ -805,7 +805,7 @@ Evaluación transversal de cualquier horizonte: FC-EVAL-001, FC-CAL-001, BT-DSR-
 **Referencia ingenua.** CAPM con β = 1.
 **Aclaración y rechazo.** Rechazo con < 36 observaciones mensuales.
 **Referencias.** Fama y French (1993; 2015); Carhart (1997); Newey y West (1987), *Econometrica*; Harvey, Liu y Zhu (2016) · TM-07.
-**Prioridad y madurez.** P1 · DOCUMENTADO.
+**Prioridad y madurez.** P1 · IMPLEMENTADO (ejecutor, casos de control registrados (T-112)).
 
 ### ACC-MOM-001 · Momentum 12-1 y de series temporales
 
@@ -841,7 +841,7 @@ Evaluación transversal de cualquier horizonte: FC-EVAL-001, FC-CAL-001, BT-DSR-
 **Referencia ingenua.** RI-NA (cálculo); para previsión de rendimientos, RI-PA.
 **Aclaración y rechazo.** Aclaración sin convención; rechazo de bonos con flujos no modelables en ficha.
 **Referencias.** Fabozzi (2012); Tuckman y Serrat (2011); ICMA, *Primary Market Handbook* y reglas de recuento · TM-05.
-**Prioridad y madurez.** P1 · DOCUMENTADO.
+**Prioridad y madurez.** P1 · IMPLEMENTADO (ejecutor, casos de control registrados (T-112)).
 
 ### FIR-CURVE-001 · Curva Nelson-Siegel-Svensson y valor relativo
 
@@ -858,7 +858,7 @@ Evaluación transversal de cualquier horizonte: FC-EVAL-001, FC-CAL-001, BT-DSR-
 **Referencia ingenua.** Para ajuste, interpolación lineal; para previsión, curva sin cambios (RI-PA).
 **Aclaración y rechazo.** Rechazo con < 6 nodos.
 **Referencias.** Nelson y Siegel (1987); Svensson (1994); Diebold y Li (2006); Gürkaynak, Sack y Wright (2007), «The U.S. Treasury Yield Curve: 1961 to the Present», *Journal of Monetary Economics* · TM-05.
-**Prioridad y madurez.** P1 · DOCUMENTADO.
+**Prioridad y madurez.** P1 · IMPLEMENTADO (ejecutor, casos de control registrados (T-112)).
 
 ### FIR-CARRY-001 · Carry y rolldown
 
@@ -875,7 +875,7 @@ Evaluación transversal de cualquier horizonte: FC-EVAL-001, FC-CAL-001, BT-DSR-
 **Referencia ingenua.** Curva *forward* realizada (hipótesis de expectativas) y RI-PA.
 **Aclaración y rechazo.** Aclaración sin financiación.
 **Referencias.** Koijen, Moskowitz, Pedersen y Vrugt (2018), «Carry», *JFE*; Ilmanen (2011) · TM-05.
-**Prioridad y madurez.** P1 · DOCUMENTADO.
+**Prioridad y madurez.** P1 · IMPLEMENTADO (ejecutor, casos de control registrados (T-112)).
 
 ### FIR-SPREAD-001 · Percentil y valor del diferencial de crédito
 
@@ -892,7 +892,7 @@ Evaluación transversal de cualquier horizonte: FC-EVAL-001, FC-CAL-001, BT-DSR-
 **Referencia ingenua.** RI-PA y RI-MH del diferencial.
 **Aclaración y rechazo.** Rechazo con < 5 años.
 **Referencias.** Elton, Gruber, Agrawal y Mann (2001), *Journal of Finance*; Collin-Dufresne, Goldstein y Martin (2001), *Journal of Finance*; Huang y Huang (2012), *Review of Asset Pricing Studies*; Giesecke, Longstaff, Schaefer y Strebulaev (2011), *JFE* · TM-05.
-**Prioridad y madurez.** P1 · DOCUMENTADO.
+**Prioridad y madurez.** P1 · IMPLEMENTADO (ejecutor, casos de control registrados (T-112)).
 
 ### FIR-CRED-001 · Merton agregado: distancia al impago y diferencial implícito de un segmento
 
@@ -945,7 +945,7 @@ Evaluación transversal de cualquier horizonte: FC-EVAL-001, FC-CAL-001, BT-DSR-
 **Referencia ingenua.** RI-PA.
 **Aclaración y rechazo.** Rechazo sin dirección del par declarada.
 **Referencias.** Menkhoff, Sarno, Schmeling y Schrimpf (2012); Burnside, Eichenbaum y Rebelo (2011); Asness, Moskowitz y Pedersen (2013) · TM-13.
-**Prioridad y madurez.** P1 · DOCUMENTADO.
+**Prioridad y madurez.** P1 · IMPLEMENTADO (ejecutor, casos de control registrados (T-112)).
 
 ## 11. Fichas nuevas — materias primas (PERF-CMD)
 
@@ -981,7 +981,7 @@ Evaluación transversal de cualquier horizonte: FC-EVAL-001, FC-CAL-001, BT-DSR-
 **Referencia ingenua.** RI-EST.
 **Aclaración y rechazo.** Rechazo con < 3 años.
 **Referencias.** Working (1949); Gorton, Hayashi y Rouwenhorst (2013); Pindyck (2001), «The Dynamics of Commodity Spot and Futures Markets: A Primer», *Energy Journal* · TM-13.
-**Prioridad y madurez.** P1 · DOCUMENTADO.
+**Prioridad y madurez.** P1 · IMPLEMENTADO (ejecutor, casos de control registrados (T-112)).
 
 ### CMD-RETDEC-001 · Descomposición de la rentabilidad de futuros
 
@@ -998,7 +998,7 @@ Evaluación transversal de cualquier horizonte: FC-EVAL-001, FC-CAL-001, BT-DSR-
 **Referencia ingenua.** RI-CM (índice amplio de materias primas).
 **Aclaración y rechazo.** Rechazo sin calendario de roll.
 **Referencias.** Erb y Harvey (2006); Gorton y Rouwenhorst (2006); Bhardwaj, Gorton y Rouwenhorst (2015), «Facts and Fantasies about Commodity Futures Ten Years Later» · TM-13.
-**Prioridad y madurez.** P1 · DOCUMENTADO.
+**Prioridad y madurez.** P1 · IMPLEMENTADO (ejecutor, casos de control registrados (T-112)).
 
 ### CMD-REAL-001 · Precio real y coste marginal
 
@@ -1034,7 +1034,7 @@ Evaluación transversal de cualquier horizonte: FC-EVAL-001, FC-CAL-001, BT-DSR-
 **Referencia ingenua.** RI-MH del descuento.
 **Aclaración y rechazo.** Rechazo con NAV de antigüedad > 12 meses sin advertencia.
 **Referencias.** EPRA (2024), *Best Practices Recommendations*; Barkham y Geltner (1995), *Real Estate Economics*; Clayton y MacKinnon (2003), *Journal of Real Estate Finance and Economics* · TM-13.
-**Prioridad y madurez.** P1 · DOCUMENTADO.
+**Prioridad y madurez.** P1 · IMPLEMENTADO (ejecutor, casos de control registrados (T-112)).
 
 ### REI-CAP-001 · Cap rate y diferencial cap rate–bono
 
@@ -1051,7 +1051,7 @@ Evaluación transversal de cualquier horizonte: FC-EVAL-001, FC-CAL-001, BT-DSR-
 **Referencia ingenua.** RI-MH del diferencial.
 **Aclaración y rechazo.** Aclaración si la base del NOI es ambigua.
 **Referencias.** Plazzi, Torous y Valkanov (2010), *RFS*; Chervachidze y Wheaton (2013), *Journal of Real Estate Finance and Economics*; Geltner, Miller, Clayton y Eichholtz (2014), *Commercial Real Estate Analysis and Investments*, 3.ª ed. · TM-13.
-**Prioridad y madurez.** P1 · DOCUMENTADO.
+**Prioridad y madurez.** P1 · IMPLEMENTADO (ejecutor, casos de control registrados (T-112)).
 
 ### REI-FFO-001 · FFO/AFFO y sostenibilidad del dividendo
 
@@ -1068,7 +1068,7 @@ Evaluación transversal de cualquier horizonte: FC-EVAL-001, FC-CAL-001, BT-DSR-
 **Referencia ingenua.** RI-MH del P/FFO del subsector.
 **Aclaración y rechazo.** Rechazo sin amortizaciones desglosadas.
 **Referencias.** Nareit (2018), *Funds from Operations White Paper*; EPRA, *Best Practices Recommendations* · TM-13.
-**Prioridad y madurez.** P1 · DOCUMENTADO.
+**Prioridad y madurez.** P1 · IMPLEMENTADO (ejecutor, casos de control registrados (T-112)).
 
 ### REI-LEV-001 · Apalancamiento y riesgo de refinanciación
 
@@ -1123,7 +1123,7 @@ Datos mínimos del tipo de activo: **no se exigen 5 años de historia**. Cada fi
 **Referencia ingenua.** RI-PA.
 **Aclaración y rechazo.** Rechazo sin al menos dos plataformas.
 **Referencias.** He, Manela, Ross y von Wachter (2022), «Fundamentals of Perpetual Futures»; Schmeling, Schrimpf y Todorov (2023), «Crypto Carry», BIS WP 1087 · TM-13.
-**Prioridad y madurez.** P1 · DOCUMENTADO.
+**Prioridad y madurez.** P1 · IMPLEMENTADO (ejecutor, casos de control registrados (T-112)).
 
 ### CHR-FLOW-001 · Flujos de ETF y oferta de stablecoins
 
@@ -1140,7 +1140,7 @@ Datos mínimos del tipo de activo: **no se exigen 5 años de historia**. Cada fi
 **Referencia ingenua.** Flujo nulo y RI-PA.
 **Aclaración y rechazo.** Rechazo sin fecha de publicación de flujos.
 **Referencias.** Griffin y Shams (2020), «Is Bitcoin Really Untethered?», *Journal of Finance*; Liu y Tsyvinski (2021) · TM-13.
-**Prioridad y madurez.** P1 · DOCUMENTADO.
+**Prioridad y madurez.** P1 · IMPLEMENTADO (ejecutor, casos de control registrados (T-112)).
 
 ### CHR-TOKEN-001 · Tokenómica y dilución
 
@@ -1210,7 +1210,7 @@ Datos mínimos del tipo de activo: **no se exigen 5 años de historia**. Cada fi
 **Referencia ingenua.** Serie observada sin ajuste.
 **Aclaración y rechazo.** Rechazo con < 24 observaciones.
 **Referencias.** Geltner (1993); Getmansky, Lo y Makarov (2004); Dimson (1979), *JFE*; Okunev y White (2003), *Journal of Alternative Investments* · TM-13.
-**Prioridad y madurez.** P1 · DOCUMENTADO.
+**Prioridad y madurez.** P1 · IMPLEMENTADO (ejecutor, casos de control registrados (T-112)).
 
 ### ALT-HF-001 · Exposición factorial de estrategias hedge
 
