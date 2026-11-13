@@ -263,3 +263,88 @@ Lo que la r03 pretendía sí se cumple:
 - CA-1 a CA-5 se cumplen.
 
 Siguiente paso: `ri-implementar` para H-10, con su prueba, y para H-11 a H-13, que son pequeños. Después, el revisor vuelve a ejecutar `r03_01` a `r03_03` (y `r02_01`, `r02_02` y `r02_04`) en una ronda r04. Esta ronda solo escribe este archivo y los scripts `revisores/r03_*`: el estado del ticket queda para el coordinador.
+
+## Ronda r04
+
+- **Revisor:** subagente nuevo de Claude, sin contexto de la implementación ni de las rondas anteriores (solo el plan, el código y los `qa.md`). Opinión formada con el README, el diff de `102aaae` y el código; `analisis-tecnico.md` y `pruebas.md` no tienen sección r04.
+- **Código revisado:** commit `102aaae` de `develop`, en worktrees limpios creados con `git worktree add` en una carpeta temporal y borrados al acabar: HEAD, `0afab6f` (r03), `d1a5a1b` (r02) y `7feb697^` (antes de T-88). Los mutantes, sobre otro worktree completo de `102aaae`. El commit trae también T-91 (texto de `CRITERIO_RESOLUCION`), que cambia F4 y nada del consumo.
+- **Scripts nuevos** (aceptan `--ejecutor RUTA`; se ejecutan con `.venv/bin/python -I`):
+  - `revisores/r04_01_f5_estructura_y_total.py`: forma de todos los almacenes frente a `7feb697^` (rutas de claves anidadas por tipo de entrada), valores del RUN frente a la base y a la r03, y lo cargado frente al coste real de las llamadas hechas hasta el RUN de F5;
+  - `r04_02_hilos_liquidacion_y_cierres.py`: el RUN de F5 entero, F2, F3 y F4 con 1, 2, 5, 6, 6 y 12 hilos y presupuestos justos (V5: 3,0 y 3,6 UC por tipo; V6: 1,4 y 1,7), la liquidación comprobada grupo a grupo, desde qué hilos se carga cada bolsa y, con `--previo`, los cierres de la V5 frente a la r03;
+  - `r04_03_mutantes.py`: mutantes S1 a S7 (el `consumo` del RUN, `estado()`, el orden de `cierres_parciales` y los tokens reales de un grupo), con el motor `r01_mutar.py`.
+
+### Reproducción desde limpio
+
+- Worktree limpio de `102aaae` con `.venv` enlazado y `PYTHONPATH` apuntando a sus tres ejecutores: `./tools/check_all.sh` completo **12/12** en 14 min. A **1288** (1283 + 4 de T-88 + 1 de T-91), A-Forex 68 y B 176; ruff 2908 de 2908; mypy A 109, FX 174 y B 159; corpus, NFC, YAML, secretos y refs vivas en verde. Con los scripts nuevos en el árbol principal, `tools/refs_vivas.py` sigue en verde.
+- `tests/test_t88_consumo.py`: 15 pruebas (11 + 4 de la r04), pasan.
+- Scripts de las rondas anteriores, otra vez contra HEAD:
+  - `r01_01`: **6/6**. V6: 29,3067 UC cargadas frente a 29,3069 reales; V5: 2,9588 UC de diferencia (ver H-14);
+  - `r01_02 --base <7feb697^>`: **10/10**;
+  - `r01_03 --base <7feb697^>`: **57/59**, los dos fallos conocidos de la PROFUNDIZACION N3 de la V5 (RV pide 1 → 2 ampliaciones y cambia la selección), en la dirección declarada;
+  - `r01_04` y `r01_05`: siguen sin servir (firma antigua de `cargar_con_prima`; `r01_05` da `TypeError` en el espía). Los sustituyen `r02_03`, `r02_04` y `r04_02`;
+  - `r02_01`: **9/9**. Con 1, 3, 6 y 12 hilos × 3, el mismo `presupuesto`, los mismos cierres y el mismo consumo por tipo antes y después de la liquidación de la fase, en V5 y en V6; tras liquidar la fase, V5 47,0613 frente a 47,0614 y V6 19,0082 frente a 19,0083;
+  - `r02_02 --base <7feb697^>`: 7/10, los mismos tres fallos que en la r02 y la r03 (DER +0,0001 UC por redondeo en la V5; INM con δ = +0,4 en la V6, H-06 declarado; reparto de los excesos de la V6). CA-5 en la V5: ningún cierre ni AUT nuevos en 8 presupuestos justos;
+  - `r02_03`: 4/6. U y G fallan por la mezcla de kits de la V6 (0,1572 UC por ciclo, peor MON +0,0258 UC), que ahora está en CA-6 e INC-T88-01; P y A, bien;
+  - `r02_04 <copia> --sin-suite`: **mueren los 11 mutantes que se aplican** (P1, P2 y P5 a P13), todos con las pruebas del ticket; P3 y P4 no se aplican;
+  - `r03_01 --control <d1a5a1b>`: **6/6**. El RUN lleva `consumo` en V5 y V6, `estado()` da su `uc` (56,3518 y 30,7669) y las claves de F5 son las mismas que en `d1a5a1b`;
+  - `r03_02`: **12/12**. V5: 17 grupos, ninguno ANALISTAS, cada analista solo en su tipo; con una caché que se pierde, cada tipo paga exactamente las reescrituras de su analista (0 tokens de diferencia). V6: AG-10, AG-11, AG-26, AG-28 y ANALISTAS;
+  - `r03_03 <copia> --sin-suite`: **mueren R1 a R5**, todos con las pruebas del ticket (R1 con `test_r04_h13_en_la_v5_…`, R4 y R5 con `test_r04_h13_los_cierres_parciales_…`).
+
+### Criterios de aceptación
+
+| Criterio | Cumple | Evidencia |
+| --- | --- | --- |
+| CA-1 | sí | `r02_01` (1 a 12 hilos × 3), `r02_02` (presupuestos justos, 1, 6 y 12 hilos) y `r04_02` (1, 2, 5, 6, 6 y 12 hilos, cuatro presupuestos justos con 4 a 15 cierres y 15 a 18 AUT): el mismo `presupuesto` de F5 en V5 y en V6 |
+| CA-2 | sí | `r01_01`, `r02_01` y `r04_01` (V6: 29,3067 frente a 29,3069). `r04_02 T`: con presupuestos justos y cualquier número de hilos, lo cargado es el coste real de las llamadas que pasan por el presupuesto (peor diferencia 0,0002 UC) |
+| CA-3 | sí | `r04_02 L`: en 72 liquidaciones espiadas, cada grupo reparte exactamente sus tokens reales, cada bolsa acaba con lo que tenía + su parte − lo cargado en la fase, la suma cambia en prima(reales) − prima(cargadas) y una segunda liquidación no cambia nada. Mutantes P5, P11, P13 y S6, muertos |
+| CA-4 | sí | Gate 12/12 desde limpio, sin subir cuotas; A sube a 1288 |
+| CA-5 | sí | `r02_02` (V5, 8 presupuestos justos frente a la base) y `r04_02 V` (V5 con 3,0 y 3,6 UC: los mismos cierres, presupuesto y selección que la r03) |
+| CA-6 | sí | Reescrito (H-12). V5: `r03_02 V P`. V6: `r02_03 G` mide 0,1572 UC por ciclo y como mucho 0,0258 UC por tipo, dentro de lo declarado («unos 0,16 UC por ciclo, como mucho unos 0,03 UC por tipo») |
+| CA-7 | sí | `r03_01` 6/6; `r04_01 E`: la misma forma que antes de T-88 en todos los almacenes y tipos de entrada (V5 y V6); `r04_01 P`: el RUN de HEAD es el de la r03 más `consumo`, y nada más cambia; `test_r04_h10_…[v5]` y `[v6]`; mutantes S1, S2, S3 y S7, muertos |
+| CA-8 | sí | `r03_03`: R1, R4 y R5 mueren con las pruebas del ticket. Sobrevive S4 (ordenar sin el motivo), que es equivalente para el determinismo (abajo) |
+
+### Ataques
+
+- **F5 frente a antes de T-88** (`r04_01`, un hilo, doce perfiles):
+  - forma: las mismas rutas de claves en los 10 (V5) y 11 (V6) tipos de entrada de todos los almacenes;
+  - valores: en la V5, `consumo`, `participantes`, selección, `cierres_parciales` y el `asignado` y `ampliado` de cada bolsa, idénticos a `7feb697^`. En la V6, todo igual salvo `consumo`: AG-26 lee 7.482 tokens en lugar de 6.780, y `d1a5a1b` da lo mismo que la base, así que viene de T-102 (después de `d1a5a1b`), no de T-88;
+  - frente a la r03: solo cambia la clave `consumo` del RUN (y F4, por el texto de T-91).
+- **Total cargado:** V6, 29,3067 frente a 29,3069 reales. V5, 51,933 frente a 54,8918: en este ciclo no hay ninguna llamada después del RUN de F5, y la diferencia (2,9588 UC) es entera de AG-12, la curación, que se invoca sin presupuesto (H-14). Sin AG-12, lo cargado es exactamente el coste real.
+- **Determinismo del RUN entero** (`r04_02 D`): con presupuestos justos, F2, F3, F4, `presupuesto`, `cierres_parciales`, `participantes` y selección son idénticos con 1, 2, 5, 6, 6 y 12 hilos, en V5 y en V6; las AUT, como conjunto. Cambian dos claves del RUN: `consumo` (H-15) y `limitaciones` (H-16).
+- **Hilos por bolsa** (`r04_02 H`): durante la fase en paralelo, cada bolsa se carga desde un solo hilo, así que las sumas en coma flotante de `consumido` tienen un orden fijo. Por eso S4 es equivalente: dentro de un tipo, los cierres llegan siempre en el mismo orden.
+- **Mutantes de la r04** (`r04_03 <copia> --sin-suite`): mueren S1 (sin `consumo`), S2 (sin `uc_motor`), S3 (sin `uc`), S5 (orden inverso), S6 (reales = pesos) y S7 (`estado()` sin `uc`); sobrevive S4 (por tipo y fase, sin el motivo), equivalente.
+- **Invariantes:**
+  - no hay LLM en la contabilidad ni en la liquidación;
+  - ningún número nuevo (la r04 solo mueve un comentario y añade pruebas);
+  - INC-T88-01 sigue como `[PROPUESTO]`;
+  - nada de secretos ni datos personales en el código ni en los scripts;
+  - el estado persistido vuelve a tener la forma de antes de T-88;
+  - documentación: H-11 y H-12 corregidos; ver H-14 y H-17.
+
+### Estado de los hallazgos de la r03
+
+| ID | Estado tras la r04 |
+| --- | --- |
+| H-10 (alta) | corregido: `consumo` vuelve al RUN de F5 en V5 y V6 (`r03_01` 6/6, `r04_01 E P`), con prueba (`test_r04_h10_…`) que mata S1, S2, S3 y S7 |
+| H-11 (baja) | corregido: el punto «Regla» del README describe la regla r02/r03, la línea «Qué ve el control» dice «en la V5» y explica la V6, y la fila T-88 de la deuda ya no dice «como si fuera el único» |
+| H-12 (baja) | corregido: CA-6 reescrito con la excepción de la V6 y la magnitud medida |
+| H-13 (baja) | corregido: R1, R4 y R5 mueren con las pruebas del ticket |
+
+### Hallazgos
+
+| ID | Gravedad | Cómo reproducirlo | Esperado / obtenido | Corrección sugerida | Estado |
+| --- | --- | --- | --- | --- | --- |
+| H-14 | baja (anterior a T-88) | `r04_01_f5_estructura_y_total.py --base <7feb697^>` (parte T); `sed -n 1200,1206p bloque_a/11_Ejecutor/bloque_a/orquestacion.py` | **Esperado** (README, «No entra»; `analisis-tecnico.md`, «Límites»; `pruebas.md`, «Regresiones»): los unos 3 UC que no se cargan a ninguna bolsa en la V5 son «las llamadas posteriores al registro de F5 (AG-18, AG-19 y AG-20)».<br>**Obtenido:** en el ciclo de doce perfiles no hay ninguna llamada después del RUN de F5 (70 de 70 antes). Los 2,9588 UC son las llamadas de AG-12 (curación, CT-11), que `_invocar` hace **sin `presupuesto`** (línea 1203), antes de F5. La base da lo mismo (51,933 frente a 54,8918). Así, en la V5 el control de presupuesto no ve la curación (unos 0,25 UC por tipo de media) y F5 no la carga a ningún tipo. Además, el «Diseño» cita AG-12 entre los prefijos compartidos que pagaba el primer tipo, y AG-12 no se ha cargado nunca a ninguna bolsa | Corregir la causa en el README, `analisis-tecnico.md` y `pruebas.md`. Abrir en la deuda técnica, con este ID, la curación de AG-12 fuera del presupuesto (pasarle `presupuesto` y la bolsa del tipo, o declararlo), porque es anterior a T-88 | abierto |
+| H-15 | baja (anterior a T-88) | `r04_02_hilos_liquidacion_y_cierres.py` (parte D, V5 con 3,6 UC); también con los presupuestos por defecto, V5, 1 frente a 12 hilos | **Esperado** (objetivo del ticket: «un registro de consumo que no se reproduce no sirve para auditar»; el `consumo` que recupera H-10 es el consumo real de 10.3).<br>**Obtenido:** con varios hilos, `consumo.uc` y `uc_llm` del RUN cambian entre ejecuciones iguales: 54,8918 o 54,8919 UC con los valores por defecto, y 52,3503, 52,3501 o 52,35 con 3,6 UC por tipo, con los mismos tokens de entrada, salida, escritura y lectura. `Contabilidad.uc_de` redondea cada llamada a 4 decimales, y qué llamada escribe un prefijo compartido depende de los hilos. Lo mismo llega a `estado()` y a `consumo.csv`. Es lo que T-88 ya resolvió para `presupuesto` contando en tokens (`analisis-tecnico.md`, «Tercer intento») | Calcular `uc_llm` del resumen desde los tokens sumados (enteros) y redondear una sola vez, o declarar el límite en INC-T88-01 y en «No entra» (hasta unas 0,0003 UC). Prueba: el RUN entero con 1 y 12 hilos | abierto |
+| H-16 | baja (anterior a T-88) | `r04_02_hilos_liquidacion_y_cierres.py` (parte D, V5 con 3,0 UC y V6 con 1,4 y 1,7); `sed -n 417,418p bloque_a/11_Ejecutor/bloque_a/sintesis.py` | **Esperado** (H-09: los cierres por presupuesto en un orden que no dependa de los hilos).<br>**Obtenido:** la r03 ordena `cierres_parciales` al escribir F5, pero `sintesis.py` recorre `presupuesto.cierres` en el orden de llegada para escribir «Presupuesto agotado en … (fase …)» en `limitaciones`. Esa lista va al RUN de F5, al paquete JSON y a los informes, que cambian de orden entre 1, 2, 5, 6 y 12 hilos | Ordenar `presupuesto.cierres` una sola vez al acabar la fase en paralelo (o dar una vista ordenada que usen F5 y `sintesis.py`). Prueba como `test_r04_h13_los_cierres_parciales_…`, sobre `limitaciones` | abierto |
+| H-17 | baja | `grep -n "Ronda r04" .docs/tickets/T-88/analisis-tecnico.md .docs/tickets/T-88/pruebas.md` (nada); README, CA-3 | **Esperado** (documentación al día; ri-probar deja el informe en `pruebas.md`).<br>**Obtenido:** `analisis-tecnico.md` y `pruebas.md` no tienen sección r04 (la corrección de H-10, las 4 pruebas nuevas y los mutantes que matan); la tabla de suites de `pruebas.md` se queda en 11 pruebas. CA-3 sigue diciendo «durante la fase, cada bolsa carga su prima solo», que sustituyó CA-5 en la r02. Además, la prueba del orden no fija el motivo (S4 sobrevive; equivalente) | Añadir la sección r04 a los dos documentos y ajustar CA-3 («…carga la prima de su analista; tras liquidar…»). Opcional: una llegada con dos motivos en el mismo tipo y fase, en orden inverso, para que S4 muera | abierto |
+
+### Veredicto
+
+**APTO.** Los ocho criterios se cumplen con evidencia propia, y no queda ningún hallazgo crítico ni alto:
+- H-10 corregido: F5 tiene otra vez la misma forma que antes de T-88, y el RUN de la r04 es el de la r03 más `consumo`;
+- H-11 a H-13 corregidos: README, CA-6 y deuda al día; R1, R4 y R5 mueren con las pruebas del ticket;
+- el `presupuesto` de F5 es idéntico con 1 a 12 hilos, también con presupuestos justos con cierres y ampliaciones; la liquidación es exacta grupo a grupo; lo cargado es el coste real de las llamadas que pasan por el presupuesto; en la V5 no aparece ningún cierre nuevo;
+- gate 12/12 desde limpio.
+
+H-14 a H-17 son bajos; H-14 a H-16 vienen de antes de T-88. Si no se corrigen antes de cerrar, pasan a la deuda técnica con su ID. Esta ronda solo escribe este archivo y los scripts `revisores/r04_*`: el cierre del ticket (estado, deuda, diario y commit) queda para el coordinador.

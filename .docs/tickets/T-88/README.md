@@ -2,7 +2,7 @@
 
 | Campo | Valor |
 | --- | --- |
-| Estado | EN QA (ronda r04) |
+| Estado | CERRADO |
 | Pieza | `bloque_a/11_Ejecutor` (`bloque_a/consumo.py`, `bloque_a/orquestacion.py`) |
 | Planifica · implementa · QA | claude · claude · claude, con un revisor nuevo sin contexto (regla del operador del 12-11-2026) |
 | Aprobación del operador | 2026-11-12: está en el orden de tareas obligatorias para evaluar el Bloque A por separado |
@@ -18,7 +18,7 @@ Que dos ejecuciones iguales del ciclo con varios hilos dejen en F5 el mismo cons
 - No entra:
   - la contabilidad de llamadas (`Contabilidad.llamadas`), que sigue con el coste real de cada una;
   - las estimaciones previas (`_estimar_uc`), que ya suponen el system prompt leído de caché;
-  - las llamadas posteriores al registro de F5 (AG-18, AG-19 y AG-20 en la V5), que ya no se cargaban a ninguna bolsa (unos 3 UC en un ciclo de doce perfiles; declarado).
+  - las llamadas de curación de AG-12 (CT-11), que se invocan sin presupuesto y no se cargan a ninguna bolsa: unos 3 UC en un ciclo V5 de doce perfiles. Ya pasaba antes de T-88; corregido el motivo en el cierre (H-14 de la QA r04) y llevado a la deuda (T-107).
 
 ## Diseño
 
@@ -34,7 +34,7 @@ Que dos ejecuciones iguales del ciclo con varios hilos dejen en F5 el mismo cons
 
 1. CA-1: tres ejecuciones iguales con seis hilos dan el mismo `presupuesto` en F5, en V5 y en V6.
 2. CA-2: en la V6, lo cargado a las bolsas es el coste real de las llamadas (±0,01 UC de redondeo).
-3. CA-3: durante la fase, cada bolsa carga su prima «solo»; tras liquidar, la prima real repartida, sin cambiar el total; una segunda liquidación no cambia nada.
+3. CA-3 (texto al día en el cierre, H-17 de la QA r04): durante la fase, cada bolsa carga la lectura y la prima «solo» de su propio analista; tras liquidar, la prima real de cada grupo repartida en proporción a las primas «solo», sin cambiar el total; una segunda liquidación no cambia nada.
 4. CA-4: el gate da 12/12, sin subir cuotas, y A sube con las pruebas nuevas.
 
 ### Ronda r02 (QA r01 APTO con H-01 medio, corregido antes de cerrar)
@@ -66,3 +66,5 @@ Que dos ejecuciones iguales del ciclo con varios hilos dejen en F5 el mismo cons
 - 2026-11-13 · EN QA · Ronda r03: en la V5 cada analista es su propio grupo (la V6 sigue con el grupo común por el núcleo, declarado); `cierres_parciales` en orden fijo; documentación al día; 6 pruebas nuevas que matan los mutantes P
 - 2026-11-13 · NO APTO · QA r03 (revisor nuevo, commit `0afab6f`): H-10 alto (el comentario de H-09 dejó fuera `consumo` del RUN de F5), H-11 a H-13 bajos
 - 2026-11-13 · EN QA · Ronda r04: `consumo` vuelve al RUN de F5; README, CA-6 y deuda al día; 4 pruebas nuevas (claves del RUN en V5 y V6, reescritura de un analista V5, orden de `cierres_parciales`) que matan R1, R4 y R5
+- 2026-11-13 · APTO · QA r04 (revisor nuevo, commit `102aaae`): CA-1 a CA-8 cumplidos; H-14 a H-17 bajos (H-14 a H-16 ya pasaban antes de T-88)
+- 2026-11-13 · CERRADO · H-14 (causa del hueco de unos 3 UC: la curación de AG-12 sin presupuesto) y H-17 (CA-3 y secciones r04 de `analisis-tecnico.md` y `pruebas.md`) corregidos en la documentación. H-14 (la causa), H-15 y H-16, a la deuda en T-107
