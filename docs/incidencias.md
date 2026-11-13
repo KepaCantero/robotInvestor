@@ -106,6 +106,14 @@ El total cargado es el coste real. Efecto declarado: en un presupuesto justo, el
 
 Pregunta para T-57: «¿qué antigüedad admite la resolución de un pronóstico, se alinean las series y qué pasa con las que tienen calendarios distintos?». Detalle en [.docs/tickets/T-91](../.docs/tickets/T-91/README.md).
 
+**INC-T102-01 · 2026-11-13 · Umbrales del filtro de los textos del Sintetizador V6 (Bloque A, T-102).** Tras cinco QA NO APTO, el operador decidió: «umbrales y sin cifras libres». Valores `[PROPUESTO]`, para que el operador los fije en T-57:
+- **Prohibidas:** en un banco ciego nuevo de al menos 40, escrito por el revisor sin enseñárselo al implementador, pasan sin declararse como mucho el 5 %. Tolerancia cero para las que llevan un dato (dígitos, un marcador de cuenta o un código en mayúsculas de un instrumento, salvo los límites declarados).
+- **Legítimas:** de un banco ciego de al menos 60, escritas como pide el prompt, se quitan como mucho el 10 %. Las legítimas con un número en letra («los dos bancos centrales», «S&P quinientos») se miden aparte, como coste de la regla estricta.
+- **Sin cifras libres:** los marcadores de cuenta no valen en el texto libre. Las cuentas las escribe el código: la primera frase de 30 s y el principio de cada motivo llano.
+- **Límites declarados de R21:** un nombre propio sin código ni sufijo; un ticker en minúscula sin vehículo, o tras «la acción», «el valor» o «el título» (T-109); códigos que coinciden con una sigla de la lista (COP); tickers de una letra sin vehículo; y los romanos como cantidad («las VII ideas»).
+
+Pregunta para T-57: «¿qué porcentaje de frases prohibidas puede pasar sin declararse, y qué porcentaje de legítimas se puede perder?». Detalle en [.docs/tickets/T-102](../.docs/tickets/T-102/README.md).
+
 **INC-T106-01 · 2026-11-12 · Decisiones de método en las 21 fichas V5.0 del Motor (Bloque A, T-106).** Las fichas dejan huecos que se han cubierto así, `[PROPUESTO]` hasta que el operador o una revisión del Catálogo decidan:
 - **Niveles que la ficha no fija:**
   - IC del 95 % (de ST-INF-001) y rezagos HAC por la regla de ACC-FACT-001 en TCV-SLOPE-001;
