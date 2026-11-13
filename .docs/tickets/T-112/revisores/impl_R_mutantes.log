@@ -1,0 +1,46 @@
+# impl_R_mutantes.py · 2026-11-13 · 43 mutantes sobre una copia limpia de bloque_a (sin .docx) en el scratchpad
+M01 RISK-VAR-001  CC+T  histórico con el cuantil de la mitad de la cola · CAZADO histórico en rejilla exacta: VaR = −x₍₂₅₎·√4 = 0,095 y ES = −media(x₍₀₎…x₍₂₅₎)·√4 = 0,0975 ≥ VaR | F
+M02 RISK-VAR-001  CC+T  ES histórico sin la observación del cuantil · CAZADO histórico en rejilla exacta: VaR = −x₍₂₅₎·√4 = 0,095 y ES = −media(x₍₀₎…x₍₂₅₎)·√4 = 0,0975 ≥ VaR | FAIL
+M03 RISK-VAR-001  CC+T  ES normal dividido por el nivel, no por la cola · CAZADO normal: VaR = −(μ + σ·Φ⁻¹(1 − nivel)), ES = −μ + σ·φ(Φ⁻¹(nivel))/(1 − nivel), con μ y σ muestrales exac | FAILED 
+M04 RISK-VAR-001  CC+T  t sin reescalar a la varianza · CAZADO t por momentos: VaR y ES de la t de Student con ν = 4 + 6/curtosis en exceso; ES ≥ VaR | FAILED tests/test_fase2_riesgo.py::test_casos_de_control[RISK-VA
+M05 RISK-VAR-001  CC+T  Cornish-Fisher con el término S² sumado · CAZADO Cornish-Fisher: z_cf con asimetría y curtosis; ES > VaR y cuantiles monótonos 0,90 → 0,975 → 0,99 | FAILED tests/test_fase2_riesgo.py::tes
+M06 RISK-VAR-001  CC+T  horizonte por h y no por √h · CAZADO histórico en rejilla exacta: VaR = −x₍₂₅₎·√4 = 0,095 y ES = −media(x₍₀₎…x₍₂₅₎)·√4 = 0,0975 ≥ VaR | FAILED tests/test_fa
+M07 RISK-VAR-001  CC+T  ES de EVT sin −ξu · CAZADO EVT-POT: VaR = u + β/ξ·[((n/Nᵤ)(1 − nivel))^(−ξ) − 1], ES = (VaR + β − ξu)/(1 − ξ) ≥ VaR | FAILED tests/test_fase2_riesgo.py::test_casos_de_cont
+M08 RISK-VAR-001  CC+T  histórico filtrado con la varianza incondicional · CAZADO histórico filtrado: VaR = −(μ + σ_T+1·q(z)) y ES = −(μ + σ_T+1·media(z ≤ q)) con los residuos GARCH | FAILED tests/test_fas
+M09 SIM-MC-001    CC+T  antitéticas iguales, no opuestas · CAZADO paseo aleatorio con antitéticas: media del log-rendimiento = h·μ exacta y cuantiles analíticos (4 EE) | FAILED tests/test_fase2_riesgo.py::test_caso
+M10 SIM-MC-001    CC+T  GARCH con α y β cambiados · CAZADO GARCH(1,1) a dos pasos: curtosis del log-rendimiento analítica (separa α de β) | FAILED tests/test_fase2_riesgo.py::test_casos_de_control[SIM-MC-001:GARCH(
+M11 SIM-MC-001    CC+T  dispersión de saltos con k, no √k · CAZADO saltos de Merton: media h(μ + λm_J) y varianza h(σ² + λ(s_J² + m_J²)) del log-rendimiento (4 EE) | FAILED tests/test_fase2_riesgo.py::test_cas
+M12 SCN-H-001     CC+T  H4 con la media de los bloques · CAZADO cuantiles monótonos, adverso < base < favorable y bandas crecientes H1 → H2 → H3 → H4 | FAILED tests/test_fase2_riesgo.py::test_casos_de_control[SCN
+M13 SCN-H-001     CC+T  favorable y adverso cambiados · CAZADO cuantiles monótonos, adverso < base < favorable y bandas crecientes H1 → H2 → H3 → H4 | FAILED tests/test_fase2_riesgo.py::test_casos_de_control[SCN-
+M14 SCN-H-001     CC+T  ajuste de valoración sumado en log sin ln(1 + a) · CAZADO H3 con un régimen: mediana = e^(126·μ + ln(1 + ajuste de valoración)) − 1 | FAILED tests/test_fase2_riesgo.py::test_casos_de_contr
+M15 SCN-H-001     CC+T  H3 simulado con los pasos de H2 · CAZADO H3 con un régimen: mediana = e^(126·μ + ln(1 + ajuste de valoración)) − 1 | FAILED tests/test_fase2_riesgo.py::test_casos_de_control[SCN-H-001:H3 co
+M16 BT-DSR-001    CC+T  EE de Mertens con la curtosis en exceso · CAZADO caso normal con SR conocido: asimetría 0 y PSR = Φ(SR·√(T − 1)/√(1 + (γ₄ − 1)/4·SR²)); N = 1 ⇒ DSR = PS | FAILED tests/test_fase
+M17 BT-DSR-001    CC+T  SR*₀ con los pesos de γ cambiados · CAZADO SR*₀ esperado del máximo de N = 50 ensayos, DSR = PSR(SR*₀) < PSR(0) y MinTRL con asimetría y curtosis | FAILED tests/test_fase2_riesgo.py::tes
+M18 BT-DSR-001    CC+T  EE con T y no T − 1 · CAZADO caso normal con SR conocido: asimetría 0 y PSR = Φ(SR·√(T − 1)/√(1 + (γ₄ − 1)/4·SR²)); N = 1 ⇒ DSR = PS | FAILED tests/test_fase2_riesgo.py::test_
+M19 BT-DSR-001    CC+T  referencia anual pasada a periodo con q y no √q · CAZADO PSR(SR) = 0,5 (referencia igual al Sharpe observado) | FAILED tests/test_fase2_riesgo.py::test_casos_de_control[BT-DSR-001:PSR(SR) = 0,5
+M20 BT-DSR-001    T     Lo sin el factor 2 · SOBREVIVE | FAILED tests/test_fase2_riesgo.py::test_bt_dsr_oraculo_a_mano - assert 0.7104...
+M21 BT-PBO-001    CC+T  ω = rango/N · CAZADO sin habilidad (ruido iid) ⇒ PBO ≈ 0,5 (±0,3, dos desviaciones entre conjuntos) | FAILED tests/test_fase2_riesgo.py::test_casos_de_control[BT-PBO-001:sin habilidad (ruid
+M22 BT-PBO-001    CC+T  mejor configuración elegida fuera de muestra · CAZADO sin habilidad (ruido iid) ⇒ PBO ≈ 0,5 (±0,3, dos desviaciones entre conjuntos) | FAILED tests/test_fase2_riesgo.py::test_casos_de_contr
+M23 BT-PBO-001    T     PBO con λ < 0 · SOBREVIVE | FAILED tests/test_fase2_riesgo.py::test_bt_pbo_oraculo_cscv_por_fuerza_bruta
+M24 BT-PBO-001    CC+T  fuera de muestra = dentro · CAZADO sin habilidad (ruido iid) ⇒ PBO ≈ 0,5 (±0,3, dos desviaciones entre conjuntos) | FAILED tests/test_fase2_riesgo.py::test_casos_de_control[BT-PBO-001:sin ha
+M25 BT-VAR-001    CC+T  Kupiec sin la proporción observada · CAZADO 250 observaciones, 99 %, 5 excedencias ⇒ LR_uc ≈ 1,96 (zona amarilla) | FAILED tests/test_fase2_riesgo.py::test_casos_de_control[BT-VAR-001:250 ob
+M26 BT-VAR-001    CC+T  excedencia contra +VaR · CAZADO 250 observaciones, 99 %, 5 excedencias ⇒ LR_uc ≈ 1,96 (zona amarilla) | FAILED tests/test_fase2_riesgo.py::test_casos_de_control[BT-VAR-001:250 observaciones, 
+M27 BT-VAR-001    CC+T  Christoffersen con π₀₁ y π₁₁ cambiadas · CAZADO 250 observaciones, 99 %, 5 excedencias ⇒ LR_uc ≈ 1,96 (zona amarilla) | FAILED tests/test_fase2_riesgo.py::test_casos_de_control[BT-V
+M28 BT-VAR-001    CC+T  Z₂ con −1 · CAZADO frecuencia = 1 − nivel y pérdida en la cola = ES ⇒ Z₂ = 0 y LR_uc = 0 | FAILED tests/test_fase2_riesgo.py::test_casos_de_control[BT-VAR-001:frecuencia = 1 \u2212 niv
+M29 BT-VAR-001    T     zona verde con < 4 · SOBREVIVE | FAILED tests/test_fase2_riesgo.py::test_bt_var_zonas_del_semaforo_en_sus_bordes[4-verde]
+M30 ML-CAL-001    CC+T  RMSE sin raíz · CAZADO nivel: MAE, RMSE, sesgo, MASE, R²_OOS y cobertura recomputados a mano | FAILED tests/test_fase2_riesgo.py::test_casos_de_control[ML-CAL-001:nivel: MAE, RMSE, sesgo, MASE,
+M31 ML-CAL-001    CC+T  MASE escalado con |y| · CAZADO nivel: MAE, RMSE, sesgo, MASE, R²_OOS y cobertura recomputados a mano | FAILED tests/test_fase2_riesgo.py::test_casos_de_control[ML-CAL-001:nivel: MAE, RMSE, sesgo
+M32 ML-CAL-001    T     RI-TB con la realización del propio periodo (anticipación) · SOBREVIVE | FAILED tests/test_fase2_riesgo.py::test_ml_cal_oraculo_referencias_ingenuas_a_mano
+M33 ML-CAL-001    CC+T  pinball con el signo de la rama inferior cambiado · CAZADO cuantil: pinball y cobertura; modelo = referencia ⇒ mejora 0, IC [0, 0], sin mejora demostrada | FAILED tests/test_fase2_riesgo.py::te
+M34 ML-CAL-001    T     IC con toda la cola en cada lado · SOBREVIVE | FAILED tests/test_fase2_riesgo.py::test_ml_cal_ic_por_bootstrap_frente_a_la_aproximacion_normal
+M35 ML-PRED-001   CC+T  entrenamiento hasta la víspera de la prueba (sin embargo) · CAZADO particiones walk-forward sin solape con purga y embargo (entrenamiento ≤ inicio − embargo) | FAILED tests/test_fase2_riesgo
+M36 ML-PRED-001   CC+T  RI-TB con etiquetas aún no conocidas · CAZADO métricas fuera de muestra recomputadas desde las predicciones | FAILED tests/test_fase2_riesgo.py::test_casos_de_control[ML-PRED-001:m\xe9tricas fu
+M37 ML-PRED-001   T     estandarización con la ventana de prueba · SOBREVIVE | FAILED tests/test_fase2_riesgo.py::test_ml_pred_oraculo_logistica_y_prediccion_actual
+M38 ML-PRED-001   T     logística que penaliza el intercepto · SOBREVIVE | FAILED tests/test_fase2_riesgo.py::test_ml_pred_oraculo_logistica_y_prediccion_actual
+M39 DEC-VOI-001   CC+T  EVPI uniforme a la mitad · CAZADO información perfecta ⇒ VOI = EVPI = (hi − u)²/(2(hi − lo)) − máx(E[S] − u, 0) | FAILED tests/test_fase2_riesgo.py::test_casos_de_control[DEC-VOI-001
+M40 DEC-VOI-001   CC+T  EVSI con la regla de Bayes invertida · CAZADO señal ruidosa ⇒ EVPI > EVSI > 0 | FAILED tests/test_fase2_riesgo.py::test_casos_de_control[DEC-VOI-001:se\xf1al ruidosa \u21d2 EVPI > EVSI > 0]
+M41 DEC-VOI-001   T     regla simple sin la banda marginal · SOBREVIVE | FAILED tests/test_fase2_riesgo.py::test_dec_voi_top3_y_regla_simple - assert ...
+M42 DEC-VOI-001   CC+T  EVPI sin restar el valor de decidir sin información · CAZADO información perfecta ⇒ VOI = EVPI = (hi − u)²/(2(hi − lo)) − máx(E[S] − u, 0) | FAILED tests/test_fase2_riesgo.py::test_
+M43 DEC-VOI-001   T     media posterior truncada con el signo cambiado · SOBREVIVE | FAILED tests/test_fase2_riesgo.py::test_dec_voi_oraculo_evsi_por_integracion_directa
+
+43 mutantes · vivos: ninguno · sin aplicar: ninguno · cazados por CC y T: 34 · solo por T: 9 (M20 M23 M29 M32 M34 M37 M38 M41 M43)

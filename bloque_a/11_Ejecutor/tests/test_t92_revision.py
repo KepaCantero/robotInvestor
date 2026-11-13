@@ -116,10 +116,14 @@ def test_cinta_de_acuses_anterior_gana_la_columna_de_error(tmp_path):
 
 
 # ---------------------------------------------------------------------------------------------- se conserva T-65
-def test_fichas_documentadas_con_codigo_siguen_sin_cifras_citables(tmp_path, universo):
+def test_fichas_documentadas_con_codigo_siguen_sin_cifras_citables(tmp_path, universo, monkeypatch):
+    """T-112: las tres fichas se promovieron con sus casos de control; la regla se comprueba con el conjunto puesto a mano."""
+    from bloque_a.motor import servicio
     b = nuevo_bloque(tmp_path, universo)
     b.fijar_fecha(AS_OF)
     for ficha in ("ACC-ERP-001", "FX-MOM-001", "REI-CAP-001"):
+        assert servicio.servible(ficha)
+        monkeypatch.setattr(servicio, "DOCUMENTADAS_CON_CODIGO", frozenset({ficha}))
         r = b.motor.servir({"operacion": ficha}, "AG-02")
         assert r["estado"] == "RECHAZADO" and r["motivo"] == "METODO_NO_IMPLEMENTADO", (ficha, r)
 

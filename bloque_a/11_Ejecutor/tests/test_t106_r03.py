@@ -128,8 +128,9 @@ def test_h18_s01_una_ficha_degradada_en_el_catalogo_deja_de_servirse(tmp_path):
     assert _servir(_motor(tmp_path / "b"), "IDX-CONC-001", datos, params)["estado"].startswith("SERVED")
 
 
-def test_h18_s06_las_documentadas_con_codigo_no_se_sirven_aunque_el_catalogo_diga_implementado(tmp_path):
-    f = min(servicio.DOCUMENTADAS_CON_CODIGO)
+def test_h18_s06_las_documentadas_con_codigo_no_se_sirven_aunque_el_catalogo_diga_implementado(tmp_path, monkeypatch):
+    f = "ST-DESC-001"   # T-112: el conjunto quedó vacío; se prueba con una ficha puesta a propósito
+    monkeypatch.setattr(servicio, "DOCUMENTADAS_CON_CODIGO", frozenset({f}))
     raiz = _catalogo_con(tmp_path, f, "IMPLEMENTADO (prueba)")
     assert servicio.citable_segun_catalogo(f, raiz) and not servicio.servible(f, raiz)
 

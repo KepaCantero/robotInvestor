@@ -175,8 +175,8 @@ def test_servicio_del_motor_rc_cache_fuga_y_reejecucion(tmp_path):
     assert r2["cache_hit"] and r2["calc_id"] == r["calc_id"]
     fuga = m.servir({**pet, "datos": [{"serie": "SPY", "fin": "2026-07-01"}]}, "AG-03", "RUN-2026-0001")
     assert fuga["estado"] == "RECHAZADO" and fuga["motivo"] == "FUGA_DE_INFORMACION"
-    no = m.servir({**pet, "operacion": "REG-HMM-001"}, "AG-03", "RUN-2026-0001")
-    assert no["motivo"] == "METODO_NO_IMPLEMENTADO" and no["alternativa"] == "FX-TREND-001"
+    no = m.servir({**pet, "operacion": "CHR-ONCHAIN-001"}, "AG-03", "RUN-2026-0001")   # T-112: P2, sigue DOCUMENTADO
+    assert no["motivo"] == "METODO_NO_IMPLEMENTADO" and no["alternativa"] == "ACC-MOM-001"
     assert m.reejecutar(r["calc_id"], "auditoría")["coincide"] == "SI"
 
 

@@ -8,7 +8,7 @@ from bloque_a.almacen import Almacen
 from bloque_a.configuracion import cargar_config
 from bloque_a.motor import servicio
 
-FASE1 = sorted(servicio.CASOS_CONTROL)
+FASE1 = sorted(servicio.FASE1)   # T-112: las 21 de T-106 (CASOS_CONTROL lleva también las de la Fase 2)
 
 
 class _Proveedor:
@@ -30,6 +30,7 @@ def test_el_motor_sirve_exactamente_lo_que_el_catalogo_da_por_implementado():
     assert len(mad) == 81
     implementadas_catalogo = {f for f, v in mad.items() if v.startswith(("IMPLEMENTADO", "VALIDADO"))}
     servibles = {f for f in servicio.IMPLEMENTADAS if servicio.servible(f)} | ({"VOL-GARCH-001"} if not servicio.garch_disponible() else set())
+    servibles |= servicio.SERVICIOS_CT10   # T-112: AUD-REX-001 se sirve por CT-10 (`Motor.reejecutar`), no por CT-09
     assert servibles == implementadas_catalogo
 
 
@@ -40,9 +41,10 @@ def test_sin_catalogo_legible_no_se_sirve_nada(tmp_path):
 def test_los_casos_de_control_se_superan_y_quedan_en_rc(tmp_path):
     m = _motor(tmp_path)
     res = m.verificar_casos_control(run_id="RUN-PRUEBA")
-    assert set(res) == set(FASE1) and all(r["superados"] for r in res.values()), {f: r for f, r in res.items() if not r["superados"]}
+    todas = set(servicio.CASOS_CONTROL) | servicio.SERVICIOS_CT10   # T-112: la Fase 2 y AUD-REX-001 (CT-10) también
+    assert set(res) == todas and all(r["superados"] for r in res.values()), {f: r for f, r in res.items() if not r["superados"]}
     rc = [e for e in m.almacen.leer("RC") if e.get("tipo_entrada") == "CASOS_CONTROL"]
-    assert len(rc) == 21 and all(e["superados"] and e["casos_control"] for e in rc)
+    assert len(rc) == len(todas) and all(e["superados"] and e["casos_control"] for e in rc)
 
 
 def test_un_caso_que_falla_no_se_supera_y_se_registra(tmp_path, monkeypatch):
