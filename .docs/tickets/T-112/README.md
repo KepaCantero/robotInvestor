@@ -2,7 +2,7 @@
 
 | Campo | Valor |
 | --- | --- |
-| Estado | EN QA (ronda r02; la QA r02, pendiente por indicación del operador) |
+| Estado | CERRADO (QA r02 APTO, 13-11-2026) |
 | Pieza | `bloque_a/11_Ejecutor` (`bloque_a/motor/`) y el Catálogo del Motor (`bloque_a/04_Motor_conocimiento_y_catalogo/`, corpus congelado) |
 | Planifica · implementa · QA | claude · claude con cuatro agentes, uno por grupo de fichas; integración, Claude · un revisor nuevo sin contexto |
 | Aprobación del operador | 2026-11-12: «2) sí, te autorizo» (promover en el Catálogo las fichas que superen sus casos de control, re-congelando el corpus). 2026-11-13: «continuamos con la implementación del bloque A»; es el punto 3 del orden de tareas obligatorias de A («las fichas documentadas que más pesan en la selección, por prioridad, no todas») |
@@ -112,3 +112,4 @@ Todo lo de T-106, más las correcciones de sus tres QA, aplicadas desde el princ
   - pruebas que matan los mutantes de H-08.
 
   El operador pide parar antes de la QA r02 por su límite de consumo semanal.
+- 2026-11-13 · CERRADO · QA r02 APTO (revisor nuevo sin contexto, commit `ab95d41`; orden del operador: «Empieza con el QA de T-112»). Gate 12/12; los ocho hallazgos de la r01 corregidos salvo H-07, corregido en parte; 59 mutantes, vive uno equivalente; 18 926 llamadas hostiles sin caída. Quedan abiertos tres medios (H-09, H-10, H-11) y cuatro bajos (H-12 a H-15), que pasan a la deuda en T-118. Detalle en `qa.md`, «Ronda r02»
