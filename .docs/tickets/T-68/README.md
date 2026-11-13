@@ -2,7 +2,7 @@
 
 | Campo | Valor |
 | --- | --- |
-| Estado | EN REVISIÓN (evaluación de Claude hecha; revisión independiente de Astra pendiente; después, discusión de arquitectura con el operador) |
+| Estado | CERRADO (13-11-2026): evaluación de Claude y revisión C-02 de Astra hechas; diseño V3 establecido en `.docs/diseno/bloque_b/decision_claude_c02.md`, con directrices de implementación para Astra en `.docs/diseno/bloque_b/directrices_astra.md` |
 | Pieza | bloque_b |
 | Planifica · implementa · QA | Claude (evaluación) · nada que implementar todavía · Astra (revisión independiente de la evaluación) |
 | Aprobación del operador | Revisión pedida por el operador; ninguna mejora se implementa sin que él decida la arquitectura |
