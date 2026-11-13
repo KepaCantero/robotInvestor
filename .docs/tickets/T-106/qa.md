@@ -206,3 +206,104 @@ Con la r01 (16 fichas recalculadas), las 21 tienen ya un oráculo independiente;
 **NO APTO.** CA-3 no se cumple y hay un hallazgo alto abierto, H-14: en las 8 fichas MON e IDX, la petición puede bajar los umbrales de rechazo y los rangos que fija la ficha. Los medios (H-15, H-16 y H-18) deberían corregirse en la misma ronda. Los bajos, H-17 y H-19 a H-21, pueden ir a la deuda si no se corrigen.
 
 H-01 a H-13 de la r01 están corregidos; H-09 lo está a falta de declararlo (H-19). CA-1, CA-2, CA-4 y CA-5 se cumplen. Vuelve a `ri-implementar`. Al corregir, el revisor volverá a ejecutar `r02_00` a `r02_04` (y `r01_04`) y añadirá la ronda r03.
+
+## Ronda r03
+
+- **Revisor:** revisor nuevo sin contexto de la implementación (subagente Claude; no implementó T-106) · **Ronda:** r03 · **Fecha:** 2026-11-13
+- **Commit revisado:** `94cc765` (`develop`). Opinión formada con el README del ticket, el diff de la r03 y el código antes de leer las secciones r03 de `analisis-tecnico.md` y `pruebas.md`.
+
+### Reproducción desde limpio
+
+Extracciones limpias con `git worktree add --detach <scratchpad>/wt 94cc765` y `<scratchpad>/wt_padre 4be8ea6` (el commit revisado en la r02), con el `.venv` del proyecto enlazado y `PYTHONPATH` a los tres ejecutores de cada extracción (comprobado que `bloque_a`, `bloque_a_forex` y `bloque_b` se importan de ahí). Las copias de los mutantes son del `bloque_a` entero sin `.docx`, en carpetas temporales. Extracciones y copias borradas al terminar; el árbol principal no se ha tocado salvo este apartado y los scripts `r03_*`.
+
+| Paso | Resultado |
+| --- | --- |
+| `./tools/check_all.sh` en la extracción limpia | **12/12** (15 min): corpus 695 íntegro, NFC, YAML, secretos, refs vivas; ruff 2908 = cuota; mypy A 109 · FX 174 · B 159 (= cuotas); pytest A **1333** · FX 68 · B 176 |
+| Pruebas de T-106 en la copia sin mutar (`test_fase1_*`, `test_t106_motor`, `test_t106_r03` y las del Motor existentes) | 730 en verde |
+| Catálogo y corpus | La r03 no toca el Catálogo, el manifiesto ni ningún `.docx` (`git diff 4be8ea6 94cc765`); `r02_01` confirma §4, líneas de madurez, §1.3 (81 = 35 + 11 + 35) y huella del manifiesto |
+
+### Scripts ejecutados
+
+```bash
+.venv/bin/python -I -B .docs/tickets/T-106/revisores/r02_00_reejecutar_r01.py [RAIZ]           # r01_01, r01_02, r01_03, r01_05, r01_06
+.venv/bin/python -I -B .docs/tickets/T-106/revisores/r01_04_mutantes.py [RAIZ]                 # 41 mutantes de la r01
+.venv/bin/python -I -B .docs/tickets/T-106/revisores/r02_01_catalogo_y_rc.py [RAIZ]
+.venv/bin/python -I -B .docs/tickets/T-106/revisores/r02_02_oraculos.py [RAIZ]
+.venv/bin/python -I -B .docs/tickets/T-106/revisores/r02_03_ataques.py [RAIZ]
+.venv/bin/python -I -B .docs/tickets/T-106/revisores/r03_01_umbrales.py [RAIZ]                 # H-14: escapes del conjunto UMBRALES y ventanas sin rango
+.venv/bin/python -I -B .docs/tickets/T-106/revisores/r03_02_forma.py [RAIZ]                    # H-15: huecos de _error_de_forma
+.venv/bin/python -I -B .docs/tickets/T-106/revisores/r03_03_mon_exp_oraculo.py [RAIZ] [--n 300] # H-16: la limitación nueva frente a un oráculo
+.venv/bin/python -I -B .docs/tickets/T-106/revisores/r03_04_regresion.py RAIZ_ANTES RAIZ_DESPUES # ciclo simulado y fichas, antes y después
+.venv/bin/python -I -B .docs/tickets/T-106/revisores/r03_05_mutantes.py [RAIZ] [--solo-nuevos]  # los 43 de r02_04 frente a TODAS las pruebas + 14 nuevos
+```
+
+`r02_04_mutantes.py` tiene una lista fija de pruebas sin `tests/test_t106_r03.py`; `r03_05` lo lee sin tocarlo, le añade esa suite a cada familia y al Motor, y le suma los mutantes N01–N14 del código de la r03.
+
+| Script | Resultado |
+| --- | --- |
+| `r02_00` (r01_01, r01_02, r01_03, r01_05, r01_06) | 129/129 · 30/30 · 19/21 · 7/7 · 5/5: lo mismo que en la r02. Los dos fallos de `r01_03` son los que la r02 ya explicó como no defectos («ejecutor movido» sin raíz, que `r02_01` comprueba por `Motor.raiz`; limitaciones por datos opcionales que faltan) |
+| `r01_04` | 40 aplicables (M38 no se aplica desde la r02), **0 vivos** frente a los casos de control |
+| `r02_01` | **27/27** |
+| `r02_02` | **40/40**: los oráculos de la r02 siguen coincidiendo |
+| `r02_03` | **27/29**. Los dos «fallos» son lo que pide H-14: subir `nodos_min` (MON-EXP) o `anios_min` (MON-REAL) desde la petición se rechaza («umbrales fijos de la ficha»). Las 8 peticiones mal formadas de H-15 quedan RECHAZADO en RC; el caso de H-16 sale SERVED_WITH_LIMITATIONS («hasta 93,6 puntos») |
+| `r03_01` | **7/9** (H-24) |
+| `r03_02` | **21/31** (H-22) |
+| `r03_03` | **3/4** (H-23; H-27 informativo) |
+| `r03_04` | **11/11** |
+| `r03_05` | 57 mutantes: los 43 de la r02 cazados por las pruebas; de los 14 nuevos, **4 vivos** frente a casos de control y pruebas (N02, N05, N08, N10; H-25) |
+
+### Hallazgos de la r02
+
+| ID | Estado | Evidencia |
+| --- | --- | --- |
+| H-14 | **corregido** | `r03_01`: las 20 claves de `UMBRALES` en la petición, incluso con su valor por defecto, se rechazan («umbrales fijos») y quedan en RC; `UMBRALES` cubre todas las claves con sufijo de umbral de `PARAMETROS_POR_DEFECTO`. Ninguna de 65 variantes (mayúsculas, capitalizada, espacios, homoglifo cirílico, guion, anidada en `parametros.parametros` o `parametros.umbrales`, en `operacion`, en la raíz de la petición, en `clase`, en los datos en línea o en un segundo bloque de datos) convierte en servido un caso que la ficha rechaza por ese umbral, y con el caso de control ninguna cambia la cifra: los manejadores leen la clave exacta de `p`, que la petición ya no puede traer. Las claves que se leen de `p` sin estar en los valores por defecto son solo `nivel_ic` de IDX-REB (opcional, validado en (0, 1)). FON/DER (`MINIMOS`) y TCV (`UMBRALES`) siguen sin poder bajarse. Queda aparte H-24 (ventanas sin rango, que no son umbrales) |
+| H-15 | **parcial** | Las 8 formas de la r02 y otras 8 nuevas (`inicio`, `fin`, `alias` y `rol` de tipos raros, `fecha_corte` con zona horaria frente a un `fin` sin ella, serie desconocida, `fecha_corte` = True o 1e30) quedan RECHAZADO con una entrada en RC, y el almacén sigue íntegro. Pero un `plan` no hashable y las claves de tipos mezclados todavía lanzan la excepción al llamador: H-22 |
+| H-16 | **corregido, con una cota que no lo es en todas las probabilidades** | La limitación aparece si y solo si alguna incertidumbre supera 1e-10 (`r03_03`, 139 sendas servidas) y el caso de la r02 la lleva. `probabilidades_acumuladas` queda siempre dentro de `incertidumbre_probabilidad`. `probabilidades`, la de cada reunión, no: H-23 |
+| H-17 | declarado | INC-T106-01, ronda r03: TCV sirve `None` con limitación y nunca un no finito; el resto rechaza |
+| H-18 | **corregido para los mutantes de la r02** | `r03_05`: los 43 mutantes de `r02_04` los cazan ahora las pruebas (S01, S06, S07, S09, S10, S11, X04, X11, Y01, Y02 e Y04 a Y06, con `test_t106_r03.py`). Los vivos de la r03 son mutantes nuevos: H-25 |
+| H-19 | declarado | INC-T106-01 recoge el «tipo vigente», el rechazo del sistema justo y la precisión implícita; el rechazo por redondeo sugiere declarar `precision_cotizacion` |
+| H-20 | **corregido** | `r03_04`: DER-VRP-001 con `nivel_es` 0,5 o 0,999 pasa de servido a RECHAZADO; con el nivel por defecto, la misma cifra que antes. N14 lo cazan las pruebas |
+| H-21 | parcial | El «§4» está al día; quedan restos menores: H-26 |
+
+### Regresión (`r03_04`)
+
+- Ciclo simulado (`backtest --desde 2024-01-05 --hasta 2024-03-29`) con el ejecutor de `4be8ea6` y con el de `94cc765`: `senales.csv`, `pronosticos.csv` y `metricas.json` **idénticos byte a byte**; las 129 entradas CT-09 de RC coinciden en tipo, ficha, estado, motivo, resultado y limitaciones; ninguna petición del ciclo se rechaza por forma. Las peticiones del ciclo (`orquestacion.py`, `evaluador.py`) se construyen en código con `plan: "PLAN_MIN"`, así que `_error_de_forma` no las cambia.
+- Los 66 casos de control de las 21 fichas por el Motor, antes y después: mismo estado y misma cifra, salvo lo que la r03 cambia a propósito (MON-EXP añade `incertidumbre_probabilidad`; DER-VRP rechaza `nivel_es` fuera de 0,90–0,99). Ninguna excepción.
+- `r03_02`: las formas válidas (operación en texto o en dict con claves de más, sin plan, cada plan configurado, `fecha_corte` como texto, `date` o `Timestamp`, sin `fecha_corte`, `parametros: None`, datos con serie además de los valores) no se rechazan por forma.
+
+### Criterios de aceptación
+
+| Criterio | Cumple | Evidencia |
+| --- | --- | --- |
+| CA-1 | sí | 21 manejadores, 66 casos superados y registrados en RC (`r02_01` 27/27; `r01_04` sin vivos frente a los casos de control) |
+| CA-2 | sí | `r02_01`: servible = código ∩ IMPLEMENTADO (35), una ficha degradada en el §4 se rechaza, sin Catálogo legible ninguna; ahora con prueba (S01 cazado) |
+| CA-3 | sí | H-14 corregido: los umbrales de «Entradas mínimas» y «Aclaración y rechazo» y los rangos de MON e IDX ya no los cambia la petición, de ninguna de las formas probadas (`r03_01`); determinismo de doble pasada en todos los casos. Observación: H-24 (ventanas en 0 o negativas aceptadas; no son umbrales de la ficha) |
+| CA-4 | sí | Catálogo intacto desde la r01; §1.3 = §4; huella del manifiesto correcta; corpus 695 íntegro en el gate |
+| CA-5 | sí | 12/12 en extracción limpia; ruff 2908 y mypy 109 · 174 · 159, sin subir |
+
+### Hallazgos nuevos
+
+| ID | Gravedad | Cómo reproducirlo | Esperado / obtenido | Corrección sugerida | Estado |
+| --- | --- | --- | --- | --- | --- |
+| H-22 | media | `r03_02` | **Quedan peticiones mal formadas que lanzan la excepción al llamador, sin RECHAZADO ni entrada en RC** (resto de H-15), también para una ficha que no se sirve: `plan` = `["PLAN_MIN"]` o `{"PLAN_MIN": 1}` (`TypeError: unhashable type` en `peticion.get("plan") not in planes`, dentro de `_error_de_forma`); `parametros` con claves de tipos mezclados (`{"x": 1, 1: "x"}`, `{"x": 1, None: 1}`) o una clave tupla, y `perfil` o `clase` con claves mezcladas (`TypeError` en `clave_hash` o en el `_hash` del almacén, `json.dumps(..., sort_keys=True)`). El `plan` en lista es una forma que un JSON puede traer; las claves mezcladas o tupla solo llegan desde código Python. Hoy el ciclo fija `plan: "PLAN_MIN"`, por eso no es alta. | En `_error_de_forma`: `plan` texto (`isinstance(..., str)` antes del `in`), claves de `parametros` de texto, `perfil` lista de textos y `clase` texto o `None`; o envolver `clave_hash` y la escritura del rechazo para que cualquier fallo de serialización sea DATOS_INCOHERENTES. Pruebas con los cinco casos | abierto |
+| H-23 | media | `r03_03` (semilla fija; p. ej. la senda t69, 1 pb con precisión declarada) | **`incertidumbre_probabilidad` no acota el error de `probabilidades` (la de cada reunión).** La r03 publica `min(1, cota_k/Δ)` como «cota del cambio de cada probabilidad por ese redondeo», con `cota_k` la cota del tipo del tramo k. Vale para `probabilidades_acumuladas` (tipo del tramo frente al oficial de hoy: 0 fuera de cota, error/cota ≤ 0,73), pero `probabilidades` reparte el movimiento de la reunión, `r_k − r_{k−1}`, que acumula el redondeo de dos tramos. Con la verdad conocida, en 12 reuniones de 139 sendas servidas el error real supera la cota publicada (hasta 1,35 veces; t69: error 0,400 frente a cota 0,333). La cota propia `(cota_k + cota_{k−1})/Δ` es mayor que la publicada en 681 reuniones. La limitación salta igual (tolerancia 1e-10), pero el número que da («hasta X puntos») se queda corto. | Calcular la cota del movimiento de cada reunión con la fila de diferencias del jacobiano, `Σ_j |J_k,j − J_{k−1},j|·precisión_j·…/Δ` (o, conservadora, `(cota_k + cota_{k−1})/Δ`), publicarla aparte (`incertidumbre_probabilidad_reunion`) o tomar la mayor de las dos, y usarla en la limitación. Prueba con un oráculo (senda conocida redondeada), no con la identidad cota/Δ | abierto |
+| H-24 | media | `r03_01`, bloques 4 y 4b | **En MON e IDX, los parámetros de ventana y plazo que siguen en la petición no tienen dominio: 0, negativos o no enteros se sirven.** IDX-REL-001 con `momentum_retro_meses: -20` o `momentum_salto_meses: -3` sale SERVED_WITH_LIMITATIONS con las claves «-20-1» y «12--3» y una cifra calculada con índices desde el principio de la serie (`r[-1 - (-20)]` = `r[19]`); con 0 cambia la cifra. MON-EXP-001 con `diferencial_estable_dias` 0 o −1 se sirve (`h[-0:]` es la historia entera, `h[1:]` toda menos el primer dato) y 2,5 se trunca a 2 sin aviso. IDX-CONC-001 (`media_amplitud`, `ventana_percentil_anios`) e IDX-REB-001 (`sesiones_estimacion`, `ventana_post_sesiones`) aceptan 0 y negativos igual (`s.iloc[-0:]`, `rc[ia - 0:ia]`; el caso de control no ejercita esos bloques, la misma cifra sale porque no se usan). FON, DER y TCV no tienen este hueco: sus ventanas tienen `RANGOS` o validadores (κ = 0 en FON-DISC está en su rango 0–1). No son umbrales de la ficha (por eso CA-3 se da por cumplido), pero la ficha sirve como citable una cifra con una ventana que no existe. | Validar en `_params` (o en cada manejador) que las ventanas y plazos son enteros positivos, y los momentum `salto < retro`; mejor aún, sacar a constantes del método lo que la ficha fija en su «Método» y no en «Parámetros» (momentum 12-1 y 3 meses, cambio acumulado a 6 y 12 meses, diferencial a 3 y 12 meses). Pruebas con 0, −1 y 2,5 en cada uno | abierto |
+| H-25 | media | `r03_05` (`--solo-nuevos`) | **Reglas de la r03 sin red.** Sobreviven a casos de control y a todas las pruebas: N02 (quitar «_recomendados» de `UMBRALES`: una petición vuelve a quitar la limitación «≥ 15 años» de IDX-REL o «≥ 20» de IDX-ERP y MON-REAL; ninguna prueba manda una clave `*_recomendados`), N05 (`incertidumbre_probabilidad` a la mitad: `test_h16_la_incertidumbre_de_cada_probabilidad_es_la_cota_entre_el_incremento` compara con `pytest.approx(..., rel=1e-12)`, cuya tolerancia absoluta por defecto de 1e-12 se traga incertidumbres de 1e-14 del caso de control, y además solo comprueba la identidad, no un oráculo), N10 (el `except (TypeError, ValueError, OverflowError)` nuevo de los datos, quitado: una serie con `fin: [1]` vuelve a lanzar; `r03_02` lo prueba, las pruebas no). N08 es equivalente (unos `valores` no dict los rechaza igual el `except` de N10). | Añadir a `test_h14_…` una clave `*_recomendados` (y `meses_nodos`, `anios_convexidad` por la petición); comparar la incertidumbre con `abs=0` y con un oráculo (ver H-23); prueba de una serie con `inicio`/`fin` de tipo raro por el Motor | abierto |
+| H-26 | baja | Lectura | Restos de documentación: `pruebas.md` dice todavía «Casos de control: 53 en 21 fichas al cerrar la r01» (la r01 fijó que eran 50); la fila T-106 de la deuda técnica sigue en «EN QA, ronda r02». | Corregir al cerrar | abierto |
+| H-27 | baja | `r03_03` (motivos de rechazo) | **Falsos rechazos de MON-EXP con precisión declarada.** De 200 sendas escalonadas exactas redondeadas a 1 pb o 0,1 pb con `precision_cotizacion` igual al medio último dígito (la verdad cumple el redondeo en cada nodo), 60 se rechazan con «la curva no se puede reproducir con un tramo por reunión»: el ajuste por mínimos cuadrados en log del factor puede dejar en un nodo un residuo mayor que la precisión aunque exista una senda que los cumple todos. Falla cerrado (no sirve nada falso), pero rechaza curvas válidas. Sin declarar la precisión, las 100 redondeadas a 0,1 pb se rechazan, como está declarado en INC-T106-01. | Admitir en el contraste un margen que tenga en cuenta la propagación del redondeo al ajuste (p. ej., la cota `|A·pinv(A)·G|·precisión` por nodo) o resolver por mínimo error máximo; o declararlo en INC-T106-01 | abierto |
+
+### Invariantes del sistema
+
+- Ningún camino nuevo llega a una orden: las 21 fichas solo se sirven por CT-09 y el ciclo no las llama; el ciclo simulado sale idéntico.
+- No hay LLM en la ruta determinista ni en los casos de control.
+- Los controles no se relajan solos: los umbrales y rangos de las 21 fichas ya no los cambia la petición (H-14 corregido). Salvedad sin red: N02 (H-25).
+- Falla cerrado en las fichas y en casi toda la entrada del Motor; quedan las formas de H-22 y los dominios de H-24.
+- Ningún número a mano nuevo: la limitación de MON-EXP usa la tolerancia de la ficha (1e-10) y el rango de `nivel_es` sale de RISK-VAR-001 (INC-T106-01).
+- Sin secretos ni datos personales o financieros: solo datos sintéticos; los scripts nuevos no los contienen.
+- Documentación al día salvo H-26.
+
+### Veredicto
+
+**APTO.** Los cinco criterios se cumplen y no queda ningún hallazgo crítico ni alto abierto: H-14, el alto de la r02, está corregido y no se ha podido saltar de ninguna de las formas probadas; H-16, H-18 y H-20 están corregidos, y H-17 y H-19, declarados. Siguen abiertos, como medios, H-22 (resto de H-15), H-23 (la cota de la probabilidad por reunión se queda corta), H-24 (ventanas sin dominio en MON e IDX) y H-25 (cuatro mutantes de la r03 sin prueba), y como bajos H-26 y H-27. Según el procedimiento, los que no se corrijan pasan a la deuda técnica con su ID.
+
+Esta ronda solo escribe este apartado y los scripts `r03_*`: el cierre (estado del ticket, deuda técnica con H-22 a H-27, diario, memoria y commit) queda para quien coordina la tarea.
