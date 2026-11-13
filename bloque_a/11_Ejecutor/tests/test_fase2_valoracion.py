@@ -136,6 +136,10 @@ DOMINIO_MALO = [
     ("FX-PPA-001", "ventana", 23), ("FX-PPA-001", "base", "media"), ("FX-PPA-001", "suavizado", 0),
     ("DER-OPT-001", "modelo", "Heston"), ("DER-OPT-001", "pasos", 1), ("DER-OPT-001", "pasos", 5001),
     ("DER-OPT-001", "tol_iv", 0), ("DER-OPT-001", "tol_iv", 1e-5), ("DER-OPT-001", "densidad", "no"),
+    # QA r01 de T-112, H-01: cotas superiores de los parámetros de tamaño
+    ("ACC-ERP-001", "ventana_percentil", 101), ("ACC-FACT-001", "ventana_movil", 1201), ("FIR-CURVE-001", "arranques", 101),
+    ("FIR-SPREAD-001", "ventana", 101), ("FX-PPA-001", "ventana", 1201), ("FX-PPA-001", "suavizado", 1201),
+    ("DER-OPT-001", "pasos", 1001),
 ]
 
 
@@ -158,6 +162,9 @@ DOMINIO_BUENO: list[tuple[str, dict]] = [
     ("FX-MOM-001", {"retrospecciones": [12, 6, 1], "volatilidad": "realizada"}),
     ("FX-PPA-001", {"ventana": 24, "base": "media_largo_plazo", "suavizado": 3}),
     ("DER-OPT-001", {"modelo": "CRR", "pasos": 50, "tol_iv": 1e-6}), ("DER-OPT-001", {"modelo": "Black-76"}),
+    # QA r01 de T-112, H-01: las cotas superiores se admiten
+    ("ACC-ERP-001", {"ventana_percentil": 100}), ("ACC-FACT-001", {"ventana_movil": 1200}), ("FIR-SPREAD-001", {"ventana": 100}),
+    ("FX-PPA-001", {"ventana": 1200}), ("DER-OPT-001", {"pasos": 1000}), ("DER-OPT-001", {"modelo": "CRR", "pasos": 2}),
 ]
 
 
@@ -373,6 +380,9 @@ def test_fir_curve_oraculo_curva_rmse_y_forward_a_mano():
     fwd = [((t + h) * _nss_a_mano(t + h, b, lam) - (t - h) * _nss_a_mano(t - h, b, lam)) / (2 * h) for t in pl]
     assert r["curva"]["forward_pct"] == pytest.approx(fwd, abs=1e-6)
     assert r["pendientes_pb"]["2s10s"] == pytest.approx((_nss_a_mano(10, b, lam) - _nss_a_mano(2, b, lam)) * 100, abs=1e-10)
+    # QA r01 de T-112, H-08 (QV05): la 3m10y es y(10 años) − y(3 meses), no y(10) − y(6 meses)
+    assert r["pendientes_pb"]["3m10y"] == pytest.approx((_nss_a_mano(10, b, lam) - _nss_a_mano(0.25, b, lam)) * 100, abs=1e-10)
+    assert abs(r["pendientes_pb"]["3m10y"] - (_nss_a_mano(10, b, lam) - _nss_a_mano(0.5, b, lam)) * 100) > 1
     # el ajuste es un mínimo: desde la solución, curve_fit no encuentra un coste menor
     pf, _ = optimize.curve_fit(lambda t, *x: [_nss_a_mano(s, x[:4], x[4:]) for s in t], pl, y, p0=b + lam, maxfev=20000)
     coste = sum((_nss_a_mano(t, pf[:4], pf[4:]) - o) ** 2 for t, o in zip(pl, y))
@@ -794,6 +804,28 @@ def test_acc_val_fcfe_margen_implicito_y_sensibilidad():
     assert s[0][2] > s[1][1] > s[2][0] and len(s) == 3 and all(len(f) == 3 for f in s)
 
 
+def test_acc_val_matriz_de_sensibilidad_a_mano():
+    """QA r01 de T-112, H-08 (QV06): las nueve celdas WACC ±1 pp × g ±0,5 pp («Método (v)»), con un DCF escrito aquí."""
+    r, lim = _correr("ACC-VAL-001", V.sintetico_val())
+    t, ke = 0.25, 3 + 1.1 * 5.5
+    wacc = (1500 * ke + 300 * 4 * (1 - t)) / 1800
+    fcff = 160 * (1 - t) + 40 - 50 - 10
+
+    def valor(w_pct, g_pct):
+        w, g = w_pct / 100, g_pct / 100
+        flujos = [fcff * 1.03 ** k for k in range(1, 6)]
+        ev = sum(f / (1 + w) ** k for k, f in enumerate(flujos, 1)) + flujos[-1] * (1 + g) / (w - g) / (1 + w) ** 5
+        return ev - 300
+    s = r["sensibilidad"]
+    assert s["filas_tasa_pp"] == [-1, 0, 1] and s["columnas_g_pp"] == [-0.5, 0, 0.5]
+    for i, dw in enumerate((-1, 0, 1)):
+        for j, dg in enumerate((-0.5, 0, 0.5)):
+            assert s["valor_agregado"][i][j] == pytest.approx(valor(wacc + dw, 3 + dg), rel=1e-12)
+    assert s["valor_agregado"][0][2] - s["valor_agregado"][0][0] == pytest.approx(valor(wacc - 1, 3.5) - valor(wacc - 1, 2.5),
+                                                                                 rel=1e-12)
+    assert not any("sensibilidad" in x for x in lim)
+
+
 def test_acc_val_advertencia_de_valor_terminal():
     r, _ = _correr("ACC-VAL-001", V.sintetico_val(), {"anios_explicitos": 3})
     assert r["peso_valor_terminal_pct"] > 85 and any("pesa el" in x for x in r["advertencias"])
@@ -925,6 +957,233 @@ def test_der_opt_superficie_con_menos_de_5_strikes():
     _error("DER-OPT-001", {"superficie": {"vencimientos": [{"T": 1, "forward": 100, "r": 3, "strikes": [90, 100, 110, 120],
                                                              "vol_pct": [22, 20, 19, 18]}]}}, {}, "< 5")
     _error("DER-OPT-001", {"contratos": []}, {}, "elementos")
+
+
+# ============================================================================= QA r01 de T-112: cotas de tamaño (H-01)
+def _ejercicios(n):
+    return [{**V.sintetico_val()["ejercicios"][0], "ejercicio": 1925 + i, "fecha_presentacion": f"{1926 + i}-03-31"}
+            for i in range(n)]
+
+
+def _semanas(n, inicio=date(2014, 11, 14)):
+    return [(inicio + pd.Timedelta(weeks=i)).isoformat() for i in range(n)]
+
+
+def _meses(n, inicio="1925-01-31"):
+    return [d.date().isoformat() for d in pd.date_range(inicio, periods=n, freq="ME")]
+
+
+def _curva_nodos(n):
+    pl = [0.25 + 29.75 * i / (n - 1) for i in range(n)]
+    return {"curva": {"fecha": "2026-11-13", "plazos": pl, "rendimientos": [3 + 0.4 * math.log1p(t) for t in pl]}}
+
+
+def _historia_curvas(n):
+    v = _curva_nodos(7)
+    pl = v["curva"]["plazos"]
+    v["historia"] = {"fechas": _semanas(n, date(1990, 1, 5)),
+                     "rendimientos": [[3 + 0.01 * math.sin(i) + 0.4 * math.log1p(t) for t in pl] for i in range(n)]}
+    return v
+
+
+def _semanas_hasta(fin, desde):
+    """Fechas semanales hacia atrás desde `fin` hasta `desde` (incluida si cae en la rejilla), en orden creciente."""
+    f = [fin - pd.Timedelta(weeks=k) for k in range(((fin - desde).days // 7) + 1)]
+    return [x.isoformat() for x in f[::-1]]
+
+
+def _spread_largo(desde):
+    fechas = _semanas_hasta(date(2026, 11, 13), date(1926, 11, 19))
+    if desde is not None:
+        fechas = [desde] + fechas
+    return {**V.sintetico_spread(), "historia": {"fechas": fechas, "diferenciales_pb": [100 + math.sin(i) for i in range(len(fechas))]}}
+
+
+def _ratings(n):
+    return {**V.sintetico_spread(), "impagos": {"fuente": "x", "por_rating": {f"R{i}": {"pd_anual": 0.01, "peso": 1 / n}
+                                                                              for i in range(n)}}}
+
+
+def _fx_con_carry_largo():
+    d = V.sintetico_fx()
+    d["diferencial_pct"] = {"fechas": ["1924-01-02", d["spot"]["fechas"][0]], "valores": [1.0, 2.0]}
+    return d
+
+
+def _americanas(n):
+    return {"contratos": [{**V._OPT_REF, "tipo": "put", "estilo": "americana"} for _ in range(n)]}
+
+
+def _superficie(n_venc, n_strikes):
+    K = [50 + i for i in range(n_strikes)]
+    return {"superficie": {"vencimientos": [{"T": 0.1 * (j + 1), "forward": 100, "r": 3, "strikes": K,
+                                             "vol_pct": [20 + 0.01 * (k - 100) ** 2 for k in K]} for j in range(n_venc)]}}
+
+
+# (ficha, umbral, datos en la cota, datos por encima, parámetros). Cada cota se admite y un elemento más se rechaza.
+COTAS = [
+    ("ACC-VAL-001", "ejercicios_maximos", lambda: V.sintetico_val(ejercicios=_ejercicios(100)),
+     lambda: V.sintetico_val(ejercicios=_ejercicios(101)), {}),
+    ("ACC-VAL-001", "anios_historia_maximos",
+     lambda: V.sintetico_val(historia_multiplos={"ev_ventas": {"fechas": ["1926-11-06", "2026-11-06"], "valores": [1.0, 1.1]}}),
+     lambda: V.sintetico_val(historia_multiplos={"ev_ventas": {"fechas": ["1926-11-05", "2026-11-06"], "valores": [1.0, 1.1]}}),
+     {}),
+    ("ACC-ERP-001", "anios_historia_maximos", lambda: {**V._ERP, "cape": None, "beneficios_reales_10a": [150.0] * 100},
+     lambda: {**V._ERP, "cape": None, "beneficios_reales_10a": [150.0] * 101}, {}),
+    ("ACC-ERP-001", "anios_historia_maximos",
+     lambda: {**V._ERP, "historia": {"fechas": _meses(1201), **{k: [3.0] * 1201 for k in ("prm_pp", "simple_pp", "ecy_pp")}}},
+     lambda: {**V._ERP, "historia": {"fechas": _meses(1202), **{k: [3.0] * 1202 for k in ("prm_pp", "simple_pp", "ecy_pp")}}},
+     {}),
+    ("ACC-FACT-001", "anios_historia_maximos", lambda: {**V.sintetico_factores(n=1201), "fechas": _meses(1201)},
+     lambda: {**V.sintetico_factores(n=1202), "fechas": _meses(1202)}, {"modelo": "CAPM"}),
+    ("FIR-PRICE-001", "plazo_maximo_anios", lambda: V._bono_datos(5.0, 1, "2026-11-13", "2126-11-13", "30E/360", rendimiento=4.0),
+     lambda: V._bono_datos(5.0, 1, "2026-11-13", "2126-11-14", "30E/360", rendimiento=4.0), {}),
+    ("FIR-CURVE-001", "nodos_maximos", lambda: _curva_nodos(100), lambda: _curva_nodos(101), {"modelo": "NS", "lambda": "diebold_li"}),
+    ("FIR-CURVE-001", "historia_maxima", lambda: _historia_curvas(1040), lambda: _historia_curvas(1041),
+     {"modelo": "NS", "lambda": "diebold_li"}),
+    ("FIR-CARRY-001", "nodos_maximos",
+     lambda: {"curva": {"plazos": list(range(100)), "rendimientos": [3.0] * 100}, "tramo": 5, "financiacion": 1.0},
+     lambda: {"curva": {"plazos": list(range(101)), "rendimientos": [3.0] * 101}, "tramo": 5, "financiacion": 1.0}, {}),
+    ("FIR-CARRY-001", "tramos_maximos",
+     lambda: {"curva": {"plazos": [0.25, 30], "rendimientos": [3.0, 4.0]}, "tramo": [1 + 0.2 * i for i in range(100)],
+              "financiacion": 1.0},
+     lambda: {"curva": {"plazos": [0.25, 30], "rendimientos": [3.0, 4.0]}, "tramo": [1 + 0.2 * i for i in range(101)],
+              "financiacion": 1.0}, {}),
+    ("FIR-SPREAD-001", "anios_historia_maximos", lambda: _spread_largo("1926-11-13"), lambda: _spread_largo("1926-11-12"), {}),
+    ("FIR-SPREAD-001", "ratings_maximos", lambda: _ratings(22), lambda: _ratings(23), {}),
+    ("FX-MOM-001", "pares_maximos", lambda: {"pares": {f"P{i}": V.sintetico_fx(fase=i) for i in range(45)}},
+     lambda: {"pares": {f"P{i}": V.sintetico_fx(fase=i) for i in range(46)}}, {"volatilidad": "realizada"}),
+    ("FX-MOM-001", "anios_historia_maximos", lambda: {"pares": {"X": V.sintetico_fx()}},
+     lambda: {"pares": {"X": _fx_con_carry_largo()}}, {}),
+    ("FX-PPA-001", "anios_historia_maximos", lambda: V.sintetico_ppa(1201, 0.001, 0.002),
+     lambda: V.sintetico_ppa(1202, 0.001, 0.002), {}),
+    ("DER-OPT-001", "contratos_maximos", lambda: {"contratos": [{**V._OPT_REF, "tipo": "call"}] * 50},
+     lambda: {"contratos": [{**V._OPT_REF, "tipo": "call"}] * 51}, {"pasos": 2}),
+    ("DER-OPT-001", "contratos_arbol_maximos", lambda: _americanas(10), lambda: _americanas(11), {"pasos": 2}),
+    ("DER-OPT-001", "contratos_arbol_maximos", lambda: {"contratos": [{**V._OPT_REF, "tipo": "call"}] * 10},
+     lambda: {"contratos": [{**V._OPT_REF, "tipo": "call"}] * 11}, {"pasos": 2, "modelo": "CRR"}),
+    ("DER-OPT-001", "vencimientos_maximos", lambda: _superficie(24, 5), lambda: _superficie(25, 5), {}),
+    ("DER-OPT-001", "strikes_maximos", lambda: _superficie(1, 100), lambda: _superficie(1, 101), {}),
+]
+
+
+@pytest.mark.parametrize("ficha,umbral,en_cota,encima,params", COTAS, ids=[f"{c[0]}:{c[1]}:{i}" for i, c in enumerate(COTAS)])
+def test_cada_cota_de_tamano_se_admite_y_un_elemento_mas_se_rechaza(ficha, umbral, en_cota, encima, params):
+    assert umbral in V.UMBRALES[ficha]
+    limpio = {k: x for k, x in en_cota().items() if x is not None}
+    res, _ = _correr(ficha, limpio, params)
+    json.dumps(res, allow_nan=False)
+    _error(ficha, {k: x for k, x in encima().items() if x is not None}, params, "cota de tamaño|más de 100 años")
+
+
+def test_fir_price_un_rescate_repetido_se_rechaza():
+    _error("FIR-PRICE-001", _bono(precio_limpio=101.0, rescates=[{"fecha": "2028-05-15", "precio": 100.0},
+                                                                 {"fecha": "2028-05-15", "precio": 100.0}]), {}, "repetido")
+
+
+def test_las_cotas_estan_en_umbrales_con_los_valores_de_la_nota():
+    U = V.UMBRALES
+    assert U["DER-OPT-001"]["rango_pasos"] == [2, 1000] and U["FIR-CURVE-001"]["arranques_maximos"] == 100
+    assert U["FIR-CARRY-001"]["nodos_maximos"] == U["FIR-CURVE-001"]["nodos_maximos"] == 100   # la de FIR-CURVE-001
+    assert {U[f]["anios_historia_maximos"] for f in ("ACC-VAL-001", "ACC-ERP-001", "ACC-FACT-001", "FIR-SPREAD-001",
+                                                     "FX-MOM-001", "FX-PPA-001")} == {100}
+
+
+# ============================================================================= QA r01 de T-112: conocibilidad (H-07)
+def _con_corte(ficha, valores, corte, params=None):
+    return V.FICHAS[ficha]["fn"]({**_ent(valores), "fecha_corte": corte}, copy.deepcopy(params or {}))
+
+
+def _fuga(ficha, valores, corte, params=None):
+    with pytest.raises(ErrorFicha, match="no conocible"):
+        _con_corte(ficha, valores, corte, params)
+
+
+def test_acc_val_un_ejercicio_presentado_despues_de_la_valoracion_se_rechaza():
+    v = V.sintetico_val()
+    v["ejercicios"][-1]["fecha_presentacion"] = "2027-06-30"   # el caso del revisor (r01_06, bloque 7)
+    _fuga("ACC-VAL-001", v, "2026-11-13")
+    _fuga("ACC-VAL-001", v, None)   # sin fecha de corte, frente a la fecha de la capitalización
+    v["ejercicios"][-1]["fecha_presentacion"] = "2026-11-07"   # un día después de la capitalización (06-11-2026)
+    _fuga("ACC-VAL-001", v, None)
+    v["ejercicios"][-1]["fecha_presentacion"] = v["capitalizacion"]["fecha"]   # el mismo día: conocible
+    a, _ = _con_corte("ACC-VAL-001", v, "2026-11-13")
+    b, _ = _correr("ACC-VAL-001", v)
+    assert a == b
+
+
+def test_acc_val_capitalizacion_e_historia_de_multiplos_posteriores():
+    _fuga("ACC-VAL-001", V.sintetico_val(), "2026-11-05")   # capitalización del 06-11 con corte el 05-11
+    h = {"ev_ventas": {"fechas": [f"{2010 + i}-12-31" for i in range(16)] + ["2026-12-31"], "valores": [1.0] * 17}}
+    _fuga("ACC-VAL-001", V.sintetico_val(historia_multiplos=h), None)
+
+
+@pytest.mark.parametrize("ficha,valores,params", [
+    ("ACC-ERP-001", {**V._ERP, "g5": {"valor": 4.0, "fuente": "x", "fecha": "2026-11-14"}}, {}),
+    ("ACC-ERP-001", {**V._ERP, "historia": {"fechas": _meses(300, "2001-12-31"),
+                                            **{k: [3.0] * 300 for k in ("prm_pp", "simple_pp", "ecy_pp")}}}, {}),
+    ("ACC-FACT-001", {**V.sintetico_factores(n=84), "fechas": _meses(84, "2020-01-31")}, {}),
+    ("FIR-CURVE-001", {"curva": {**_curva_nodos(7)["curva"], "fecha": "2026-11-14"}}, {"modelo": "NS", "lambda": "diebold_li"}),
+    ("FIR-SPREAD-001", V.sintetico_spread(n=13 * 52), {}),
+    ("FX-MOM-001", {"pares": {"X": V.sintetico_fx(inicio="2025-01-02")}}, {"volatilidad": "realizada"}),
+    ("FX-MOM-001", {"pares": {"X": {**V.sintetico_fx(), "diferencial_pct": {"fechas": ["2024-06-03", "2026-11-20"],
+                                                                              "valores": [2.0, 3.0]}}}}, {"volatilidad": "realizada"}),
+    ("FX-PPA-001", V.sintetico_ppa(400, 0.001, 0.002), {}),
+])
+def test_un_dato_posterior_a_la_fecha_de_corte_se_rechaza(ficha, valores, params):
+    _fuga(ficha, valores, "2026-11-13", params)
+
+
+def test_con_un_corte_posterior_a_todos_los_datos_el_resultado_no_cambia():
+    for f in FICHAS:
+        v, p = BASE[f]
+        a, la = _con_corte(f, v, "2200-01-01", p)
+        b, lb = _correr(f, v, p)
+        assert a == b and la == lb, f
+
+
+def test_fx_ppa_vintage_posterior_o_sin_fecha():
+    v = V.sintetico_ppa(36, 0.001, 0.002)   # datos hasta el 31-12-2003, vintage «2026-10-15»
+    _fuga("FX-PPA-001", v, "2026-10-14")
+    _con_corte("FX-PPA-001", v, "2026-10-15")
+    v["indices"]["cotizada"]["vintage"] = "edición de octubre"
+    _, lim = _con_corte("FX-PPA-001", v, "2026-10-15")
+    assert any("vintage" in x for x in lim)
+    _, lim = _correr("FX-PPA-001", v)
+    assert not any("vintage" in x for x in lim)
+
+
+def test_fir_price_liquidacion_posterior_al_corte_se_declara():
+    v = _bono(precio_limpio=98.4)   # liquidación 13-11-2026
+    r, lim = _con_corte("FIR-PRICE-001", v, "2026-11-11")
+    assert any("liquidación" in x and "fecha de corte" in x for x in lim)
+    r2, lim2 = _con_corte("FIR-PRICE-001", v, "2026-11-13")
+    assert r == r2 and not any("liquidación" in x for x in lim2)
+
+
+@pytest.mark.parametrize("corte", [20261113, "13/11/2026", "2026-13-01", True, [2026]])
+def test_una_fecha_de_corte_mal_formada_se_rechaza(corte):
+    v, p = BASE["ACC-VAL-001"]
+    with pytest.raises(ErrorFicha, match="fecha_corte"):
+        _con_corte("ACC-VAL-001", v, corte, p)
+
+
+def test_el_motor_rechaza_un_ejercicio_posterior_a_la_fecha_de_corte(tmp_path):
+    """El caso del revisor (r01_06, bloque 7) por Motor.servir: RECHAZADO con su entrada en RC."""
+    from bloque_a.almacen import Almacen
+    from bloque_a.configuracion import cargar_config
+    from bloque_a.motor import servicio
+
+    class _Proveedor:
+        as_of = None
+        nombre = "pruebas"
+    m = servicio.Motor(Almacen(Path(tmp_path) / "almacen"), _Proveedor(), cargar_config())
+    v = V.sintetico_val()
+    v["ejercicios"][-1]["fecha_presentacion"] = "2027-06-30"
+    r = m.servir({"operacion": "ACC-VAL-001", "datos": [{"valores": v}], "parametros": {}, "fecha_corte": "2026-11-13"}, "AG-21")
+    assert r["estado"] == "RECHAZADO" and "no conocible" in r["detalle"] and "fecha_presentacion" in r["detalle"]
+    rc = [e for e in m.almacen.leer("RC") if e.get("calc_id") == r["calc_id"]]
+    assert len(rc) == 1 and rc[0]["tipo_entrada"] == "RECHAZO"
 
 
 # ============================================================================= integración con el Motor (sin tocar servicio.py)

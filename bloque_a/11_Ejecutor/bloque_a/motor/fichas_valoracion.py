@@ -94,54 +94,75 @@ PARAMETROS_POR_DEFECTO: dict[str, dict[str, Any]] = {
 }
 
 # Umbrales y constantes del método: no son parámetros de la petición (una petición que traiga uno se rechaza).
+# QA r01 de T-112, H-01: todo tamaño de la petición (parámetro o lista de los datos) tiene cota superior. Las que no fija
+# la ficha ni otra ficha citada son [PROPUESTO] (INC-T112-01), entre ellas la regla común «historia ≤ 100 años»: más que
+# cualquier serie de mercado que citan las fichas del grupo (los factores de Fama y French de ACC-FACT-001 empiezan en
+# 1926); con fechas diarias estrictamente crecientes acota además el número de observaciones (≤ 36 525).
 UMBRALES: dict[str, dict[str, Any]] = {
     # ACC-VAL-001 · «Parámetros»: años 3–10, g_terminal tope 4 %, PRM 5 % de respaldo y 3–7 %. «Entradas mínimas»: ≥ 3
     # ejercicios (5 recomendados). «Supuestos»: valor terminal > 85 %. «Método (iv)»: percentil frente a ≥ 10 años;
     # (v): WACC ±1 pp × g ±0,5 pp; (i): β de ACC-FACT-001 o 1. Tope de iteraciones del DCF inverso [PROPUESTO]: 100
-    # (el de scipy.optimize.brentq).
+    # (el de scipy.optimize.brentq). Cotas [PROPUESTO]: ≤ 100 ejercicios (uno por año) e historia de múltiplos ≤ 100 años.
     "ACC-VAL-001": {"rango_anios_explicitos": [3, 10], "g_terminal_tope_pct": 4, "prm_respaldo_pct": 5,
                     "rango_prm_pct": [3, 7], "ejercicios_minimos": 3, "ejercicios_recomendados": 5,
                     "peso_vt_advertencia_pct": 85, "anios_percentil": 10, "sensibilidad_wacc_pp": 1,
-                    "sensibilidad_g_pp": 0.5, "beta_respaldo": 1, "iteraciones_max": 100, "tol_inverso": 1e-6},
+                    "sensibilidad_g_pp": 0.5, "beta_respaldo": 1, "iteraciones_max": 100, "tol_inverso": 1e-6,
+                    "ejercicios_maximos": 100, "anios_historia_maximos": 100},
     # ACC-ERP-001 · «Método (i)»: 5 años de flujo; «Parámetros»: g_L en [r_f − 1 pp, r_f], percentil mínimo 10 años;
     # «Entradas mínimas»: beneficios reales de 10 años para CAPE; «Tolerancias»: 1e-6 (iterativo). Tope [PROPUESTO]: 100.
+    # Cota [PROPUESTO]: 100 años (ventana_percentil, historia y beneficios reales anuales).
     "ACC-ERP-001": {"anios_explicitos": 5, "amplitud_g_L_pp": 1, "anios_percentil_minimo": 10, "anios_cape": 10,
-                    "iteraciones_max": 100, "tol": 1e-6},
+                    "iteraciones_max": 100, "tol": 1e-6, "anios_historia_maximos": 100},
     # ACC-FACT-001 · «Entradas mínimas»: ≥ 36 mensuales o 104 semanales; «Método»: factores de cada modelo y L de
-    # Newey-West; «Supuestos»: t > 3 para afirmar un factor nuevo.
+    # Newey-West; «Supuestos»: t > 3 para afirmar un factor nuevo. Cota [PROPUESTO]: 100 años (fechas y ventana_movil).
     "ACC-FACT-001": {"observaciones_minimas": {"mensual": 36, "semanal": 104},
                      "periodos_por_anio": {"mensual": MESES_POR_ANIO, "semanal": SEMANAS_POR_ANIO},
                      "factores_modelo": {"FF5+UMD": ["MKT", "SMB", "HML", "RMW", "CMA", "UMD"],
                                          "FF3": ["MKT", "SMB", "HML"], "CAPM": ["MKT"]},
-                     "adicionales_admitidos": ["QMJ", "BAB"], "t_factor_nuevo": 3},
+                     "adicionales_admitidos": ["QMJ", "BAB"], "t_factor_nuevo": 3, "anios_historia_maximos": 100},
     # FIR-PRICE-001 · «Parámetros»: delta_y 1–25 pb. «Tolerancias»: 1e-10 precio. Frecuencias y convenciones modelables
-    # [PROPUESTO]: cupón anual, semestral, trimestral o mensual; ACT/ACT ICMA o 30E/360. Tope [PROPUESTO]: 100.
+    # [PROPUESTO]: cupón anual, semestral, trimestral o mensual; ACT/ACT ICMA o 30E/360. Tope [PROPUESTO]: 100. Plazo
+    # máximo [PROPUESTO]: 100 años (los bonos centenarios; con cupón mensual, ≤ 1 200 flujos y otros tantos rescates).
     "FIR-PRICE-001": {"rango_delta_y_pb": [1, 25], "frecuencias": [1, 2, 4, 12],
-                      "convenciones": ["ACT/ACT-ICMA", "30E/360"], "tol_precio": 1e-10, "iteraciones_max": 100},
+                      "convenciones": ["ACT/ACT-ICMA", "30E/360"], "tol_precio": 1e-10, "iteraciones_max": 100,
+                      "plazo_maximo_anios": 100},
     # FIR-CURVE-001 · «Aclaración y rechazo»: < 6 nodos; «Entradas mínimas»: ≥ 8 para Svensson; «Método»: ≥ 20 arranques;
-    # Diebold y Li (2006): λ = 0,0609 por mes. Tope de arranques [PROPUESTO]: 200 (10 × el valor por defecto); tope de
+    # Diebold y Li (2006): λ = 0,0609 por mes. Tope de arranques [PROPUESTO]: 100 (5 × el valor por defecto); tope de
     # evaluaciones [PROPUESTO]: 100 por parámetro (el de scipy.optimize.least_squares). Pendientes 2s10s y 3m10y.
-    "FIR-CURVE-001": {"nodos_minimos": 6, "nodos_minimos_nss": 8, "arranques_minimos": 20, "arranques_maximos": 200,
+    # Cotas [PROPUESTO]: ≤ 100 nodos (un bono por nodo) y ≤ 1 040 curvas en la historia (20 años semanales, la ventana
+    # de FIR-SPREAD-001): con las tres cotas, el ajuste más caro tarda unos segundos.
+    "FIR-CURVE-001": {"nodos_minimos": 6, "nodos_minimos_nss": 8, "arranques_minimos": 20, "arranques_maximos": 100,
                       "lambda_diebold_li_mes": 0.0609, "evaluaciones_por_parametro": 100,
-                      "tramos_pendiente": {"2s10s": [2, 10], "3m10y": [0.25, 10]}},
-    # FIR-CARRY-001 · «Parámetros»: delta_t 1–12 meses (el mismo rango que usa TCV-SLOPE-001).
-    "FIR-CARRY-001": {"rango_delta_t": [1, 12]},
+                      "tramos_pendiente": {"2s10s": [2, 10], "3m10y": [0.25, 10]}, "nodos_maximos": 100,
+                      "historia_maxima": 1040},
+    # FIR-CARRY-001 · «Parámetros»: delta_t 1–12 meses (el mismo rango que usa TCV-SLOPE-001). Cotas: ≤ 100 nodos de
+    # curva (la de FIR-CURVE-001, de la que sale la curva) y ≤ 100 tramos [PROPUESTO] (uno por nodo).
+    "FIR-CARRY-001": {"rango_delta_t": [1, 12], "nodos_maximos": 100, "tramos_maximos": 100},
     # FIR-SPREAD-001 · «Parámetros»: recuperación 0,2–0,6; ventana mínima 10. «Aclaración y rechazo»: < 5 años.
-    # «Entradas mínimas»: ≥ 10 años (15 recomendados); «Método»: ≥ 15 años con una recesión.
+    # «Entradas mínimas»: ≥ 10 años (15 recomendados); «Método»: ≥ 15 años con una recesión. Cotas [PROPUESTO]: 100 años
+    # (ventana e historia) y 22 ratings (la escala de largo plazo de AAA a D).
     "FIR-SPREAD-001": {"rango_recuperacion": [0.2, 0.6], "ventana_minima": 10, "anios_minimos": 5,
-                       "anios_limitacion": 10, "anios_recomendados": 15},
+                       "anios_limitacion": 10, "anios_recomendados": 15, "anios_historia_maximos": 100,
+                       "ratings_maximos": 22},
     # FX-MOM-001 · «Método»: retrospecciones hasta 12 meses y volatilidad implícita a 3 meses (la realizada se mide en la
-    # misma ventana de 3 meses [PROPUESTO]); TSMOM a 12 meses (ACC-MOM-001); «Entradas mínimas»: ≥ 2 años.
-    "FX-MOM-001": {"rango_retrospeccion": [1, 12], "meses_tsmom": 12, "anios_minimos": 2, "meses_vol": 3},
+    # misma ventana de 3 meses [PROPUESTO]); TSMOM a 12 meses (ACC-MOM-001); «Entradas mínimas»: ≥ 2 años. Cotas
+    # [PROPUESTO]: 45 pares (los cruces del G10, el universo mayor que nombra el «Método») e historia ≤ 100 años.
+    "FX-MOM-001": {"rango_retrospeccion": [1, 12], "meses_tsmom": 12, "anios_minimos": 2, "meses_vol": 3,
+                   "pares_maximos": 45, "anios_historia_maximos": 100},
     # FX-PPA-001 · «Entradas mínimas»: ≥ 24 meses (≥ 20 años para la vida media). Periodicidades admitidas [PROPUESTO]:
-    # mensual y trimestral.
-    "FX-PPA-001": {"meses_minimos": 24, "anios_vida_media": 20, "periodicidades": {"mensual": 1, "trimestral": 3}},
+    # mensual y trimestral. Cota [PROPUESTO]: 100 años (fechas, ventana en meses y suavizado en periodos mensuales).
+    "FX-PPA-001": {"meses_minimos": 24, "anios_vida_media": 20, "periodicidades": {"mensual": 1, "trimestral": 3},
+                   "anios_historia_maximos": 100},
     # DER-OPT-001 · «Entradas mínimas»: ≥ 5 precios de ejercicio por vencimiento; «Método»: risk reversal 25Δ.
-    # tol_iv no más laxa que la de estimadores iterativos (3.2: 1e-6). Rango de pasos [PROPUESTO]: 2–5000 (Γ del árbol
-    # necesita 2 pasos; tope de coste 10 × 500).
+    # tol_iv no más laxa que la de estimadores iterativos (3.2: 1e-6). Rango de pasos [PROPUESTO]: 2–1000 (Γ del árbol
+    # necesita 2 pasos; tope de coste 2 × los 500 de la ficha).
     # Variación para vega y ρ en CRR [PROPUESTO]: ±1 punto (la unidad de la salida). Tope [PROPUESTO]: 100.
-    "DER-OPT-001": {"strikes_minimos": 5, "delta_rr": 0.25, "tol_iv_maxima": 1e-6, "rango_pasos": [2, 5000],
-                    "punto": 1, "iteraciones_max": 100},
+    # Cotas de tamaño [PROPUESTO]: 50 contratos por petición, de ellos ≤ 10 valorados con el árbol (americanas o modelo
+    # CRR: con volatilidad implícita, unos 0,5 s cada uno a 1 000 pasos), y una superficie de ≤ 24 vencimientos con
+    # ≤ 100 precios de ejercicio cada uno.
+    "DER-OPT-001": {"strikes_minimos": 5, "delta_rr": 0.25, "tol_iv_maxima": 1e-6, "rango_pasos": [2, 1000],
+                    "punto": 1, "iteraciones_max": 100, "contratos_maximos": 50, "contratos_arbol_maximos": 10,
+                    "vencimientos_maximos": 24, "strikes_maximos": 100},
 }
 
 # «Supuestos y limitaciones» de cada ficha (literales): advertencias obligatorias de entrega.
@@ -285,6 +306,30 @@ def _anios(f0: date, f1: date) -> float:
     return (f1 - f0).days / DIAS_POR_ANIO
 
 
+def _sumar_anios(f: date, anios: int) -> date:
+    """La fecha `anios` años de calendario después (antes, si es negativo)."""
+    return (pd.Timestamp(f) + pd.DateOffset(years=anios)).date()
+
+
+def _tope(n: int, maximo: int, que: str) -> None:
+    """QA r01 de T-112, H-01: cota superior de un tamaño de la petición (umbral fijo de la ficha)."""
+    if n > maximo:
+        raise ErrorFicha(f"{que}: {n} elementos (> {maximo}, cota de tamaño de la ficha)")
+
+
+def _historia_acotada(fechas: list[date], anios: int, que: str) -> None:
+    """QA r01 de T-112, H-01: una historia de más de `anios` años de calendario se rechaza (cota de tamaño)."""
+    if fechas and fechas[0] < _sumar_anios(fechas[-1], -anios):
+        raise ErrorFicha(f"{que}: historia de más de {anios} años ({fechas[0]} a {fechas[-1]}; cota de tamaño de la ficha)")
+
+
+def _conocible(f: date, limite: date | None, que: str, referencia: str) -> None:
+    """QA r01 de T-112, H-07: un dato fechado después de la fecha de corte o de la de valoración no era conocible
+    (Catálogo 3.1, «Conocibilidad»): se rechaza, como hace el servicio con las series de HT-01 (FUGA_DE_INFORMACION)."""
+    if limite is not None and f > limite:
+        raise ErrorFicha(f"{que}: dato del {f} posterior a {referencia} ({limite}): no conocible")
+
+
 def _con_fuente(d: Any, que: str) -> float:
     """Dato externo {'valor', 'fuente'}: sin fuente se rechaza."""
     if not isinstance(d, dict) or not _texto(d.get("fuente")):
@@ -382,7 +427,8 @@ def _validar_parametros(F: str, p: dict[str, Any]) -> None:
         if p["g_L"] is not None:
             p["g_L"] = _num(p["g_L"], f"{F}: g_L")
         p["incluir_recompras"] = _bool(p["incluir_recompras"], f"{F}: incluir_recompras")
-        p["ventana_percentil"] = _rango(p["ventana_percentil"], f"{F}: ventana_percentil", u["anios_percentil_minimo"])
+        p["ventana_percentil"] = _rango(p["ventana_percentil"], f"{F}: ventana_percentil", u["anios_percentil_minimo"],
+                                        u["anios_historia_maximos"])
     elif F == "ACC-FACT-001":
         p["modelo"] = _opcion(p["modelo"], f"{F}: modelo", tuple(u["factores_modelo"]))
         ad = _lista(p["adicionales"], f"{F}: adicionales")
@@ -390,7 +436,8 @@ def _validar_parametros(F: str, p: dict[str, Any]) -> None:
             raise ErrorFicha(f"{F}: adicionales admitidos: {u['adicionales_admitidos']} (sin repetir)")
         p["adicionales"] = [str(a) for a in ad]
         p["frecuencia"] = _opcion(p["frecuencia"], f"{F}: frecuencia", tuple(u["observaciones_minimas"]))
-        p["ventana_movil"] = _entero(p["ventana_movil"], f"{F}: ventana_movil", 1)
+        p["ventana_movil"] = _entero(p["ventana_movil"], f"{F}: ventana_movil", 1,
+                                     u["anios_historia_maximos"] * MESES_POR_ANIO)
     elif F == "FIR-PRICE-001":
         if p["convencion"] is not None:
             p["convencion"] = _opcion(p["convencion"], f"{F}: convencion", tuple(u["convenciones"]))
@@ -403,7 +450,7 @@ def _validar_parametros(F: str, p: dict[str, Any]) -> None:
     elif F == "FIR-CARRY-001":
         p["delta_t"] = _rango(p["delta_t"], f"{F}: delta_t", *u["rango_delta_t"])
     elif F == "FIR-SPREAD-001":
-        p["ventana"] = _rango(p["ventana"], f"{F}: ventana", u["ventana_minima"])
+        p["ventana"] = _rango(p["ventana"], f"{F}: ventana", u["ventana_minima"], u["anios_historia_maximos"])
         p["recuperacion"] = _rango(p["recuperacion"], f"{F}: recuperacion", *u["rango_recuperacion"])
         p["ajuste_composicion"] = _bool(p["ajuste_composicion"], f"{F}: ajuste_composicion")
     elif F == "FX-MOM-001":
@@ -415,10 +462,12 @@ def _validar_parametros(F: str, p: dict[str, Any]) -> None:
         p["volatilidad"] = _opcion(p["volatilidad"], f"{F}: volatilidad", ("implicita_3m", "realizada"))
     elif F == "FX-PPA-001":
         if p["ventana"] is not None:
-            p["ventana"] = _entero(p["ventana"], f"{F}: ventana (meses)", u["meses_minimos"])
+            p["ventana"] = _entero(p["ventana"], f"{F}: ventana (meses)", u["meses_minimos"],
+                                   u["anios_historia_maximos"] * MESES_POR_ANIO)
         p["base"] = _opcion(p["base"], f"{F}: base", ("primer_periodo", "media_largo_plazo"))
         if p["suavizado"] is not None:
-            p["suavizado"] = _entero(p["suavizado"], f"{F}: suavizado (periodos de media móvil)", 1)
+            p["suavizado"] = _entero(p["suavizado"], f"{F}: suavizado (periodos de media móvil)", 1,
+                                     u["anios_historia_maximos"] * MESES_POR_ANIO)
     elif F == "DER-OPT-001":
         p["modelo"] = _opcion(p["modelo"], f"{F}: modelo", ("BSM", "Black-76", "CRR"))
         p["pasos"] = _entero(p["pasos"], f"{F}: pasos", *u["rango_pasos"])
@@ -440,8 +489,11 @@ def _cerrado(F: str) -> Callable[[Manejador], Callable[..., Resultado]]:
                 raise ErrorFicha(f"{F}: «series» y «series_rol» deben ser objetos")
             if params is not None and not isinstance(params, dict):
                 raise ErrorFicha(f"{F}: los parámetros deben ser un objeto")
+            # QA r01 de T-112, H-07: la fecha de corte que pone el servicio (texto AAAA-MM-DD o None) llega a la ficha
+            corte = ent.get("fecha_corte")
             e = {"valores": ent.get("valores") or {}, "series": ent.get("series") or {},
-                 "series_rol": ent.get("series_rol") or {}}
+                 "series_rol": ent.get("series_rol") or {},
+                 "fecha_corte": None if corte is None else _fecha(corte, f"{F}: fecha_corte de la petición")}
             try:
                 with np.errstate(all="ignore"):
                     res, lim = fn(e, params or {})
@@ -599,6 +651,12 @@ def f_fir_price(ent: dict[str, Any], params: dict[str, Any]) -> Resultado:
         raise ErrorFicha(f"{F}: frecuencia {f} no modelable en ficha (admitidas {u['frecuencias']})")
     liq = _fecha(_req(v, "liquidacion", F), f"{F}: liquidacion")
     venc = _fecha(_req(v, "vencimiento", F), f"{F}: vencimiento")
+    if venc > _sumar_anios(liq, u["plazo_maximo_anios"]):   # QA r01 de T-112, H-01: ≤ 1 200 flujos
+        raise ErrorFicha(f"{F}: vencimiento a más de {u['plazo_maximo_anios']} años de la liquidación (cota de tamaño)")
+    corte = ent["fecha_corte"]
+    if corte is not None and liq > corte:   # H-07: la liquidación es un dato del contrato (T + n), no una observación
+        lim.append(f"liquidación ({liq}) posterior a la fecha de corte ({corte}): el precio o el rendimiento aportado debe "
+                   "ser el conocido en la fecha de corte para liquidar en esa fecha")
     fechas = _calendario(liq, venc, f, F)
     b = bono(cupon, f, liq, fechas, conv)
     tiene_p, tiene_y = v.get("precio_limpio") is not None, v.get("rendimiento") is not None
@@ -627,6 +685,8 @@ def f_fir_price(ent: dict[str, Any], params: dict[str, Any]) -> Resultado:
             pr = _rango(_req(r, "precio", F), f"{F}: rescates[{i}].precio", 0, abierto_lo=True)
             if fr not in fechas[1:-1]:
                 raise ErrorFicha(f"{F}: rescate {fr} fuera de una fecha de cupón futura: flujos no modelables en ficha")
+            if any(e["fecha"] == fr for e in escenarios):   # H-01: ≤ un rescate por fecha de cupón
+                raise ErrorFicha(f"{F}: rescate {fr} repetido en el calendario de rescates")
             br = bono(cupon, f, liq, fechas[:fechas.index(fr) + 1], conv, reembolso=pr)
             escenarios.append({"fecha": fr, "bono": br, "rendimiento": rendimiento(br, sucio, u)})
     peor = min(escenarios, key=lambda e: e["rendimiento"])
@@ -779,12 +839,14 @@ def f_fir_curve(ent: dict[str, Any], params: dict[str, Any]) -> Resultado:
     lim: list[str] = []
     curva = _dict(_req(v, "curva", F), f"{F}: curva")
     fecha = _fecha(_req(curva, "fecha", F), f"{F}: curva.fecha")
+    _conocible(fecha, ent["fecha_corte"], f"{F}: curva.fecha", "la fecha de corte")
     tau = _vector(curva.get("plazos"), f"{F}: curva.plazos")
     y = _vector(curva.get("rendimientos"), f"{F}: curva.rendimientos")
     if len(tau) != len(y):
         raise ErrorFicha(f"{F}: plazos y rendimientos de distinta longitud")
     if len(tau) < u["nodos_minimos"]:
         raise ErrorFicha(f"{F}: {len(tau)} nodos (< {u['nodos_minimos']}): rechazo de la ficha")
+    _tope(len(tau), u["nodos_maximos"], f"{F}: curva.plazos")
     if np.any(tau <= 0) or np.any(np.diff(tau) <= 0):
         raise ErrorFicha(f"{F}: los plazos deben ser positivos y estrictamente crecientes")
     modelo = p["modelo"]
@@ -828,6 +890,7 @@ def f_fir_curve(ent: dict[str, Any], params: dict[str, Any]) -> Resultado:
         filas = _lista(hist.get("rendimientos"), f"{F}: historia.rendimientos")
         if len(filas) != len(fh):
             raise ErrorFicha(f"{F}: historia: fechas y filas de distinta longitud")
+        _tope(len(fh), u["historia_maxima"], f"{F}: historia.fechas")
         if fh[-1] >= fecha:
             raise ErrorFicha(f"{F}: la historia debe ser anterior a la fecha de la curva")
         k = len(lam)
@@ -900,6 +963,7 @@ def _curva_funcion(v: dict[str, Any], F: str) -> tuple[Callable[[float], float],
     rd = _vector(c.get("rendimientos"), f"{F}: curva.rendimientos", 2)
     if len(pl) != len(rd) or np.any(pl < 0) or np.any(np.diff(pl) <= 0):
         raise ErrorFicha(f"{F}: curva: plazos no negativos y estrictamente crecientes, uno por rendimiento")
+    _tope(len(pl), UMBRALES[F]["nodos_maximos"], f"{F}: curva.plazos")
 
     def y(t: float) -> float:
         if t < pl[0] or t > pl[-1]:
@@ -940,6 +1004,7 @@ def f_fir_carry(ent: dict[str, Any], params: dict[str, Any]) -> Resultado:
     y, origen = _curva_funcion(v, F)
     tramos = v.get("tramo")
     lista = _lista(tramos, f"{F}: tramo", 1) if isinstance(tramos, (list, tuple)) else [_req(v, "tramo", F)]
+    _tope(len(lista), UMBRALES[F]["tramos_maximos"], f"{F}: tramo")
     dt = p["delta_t"] / MESES_POR_ANIO
     vol = v.get("volatilidad_rendimiento_pb")
     sigma = None if vol is None else _rango(vol, f"{F}: volatilidad_rendimiento_pb", 0, abierto_lo=True) / PB_POR_UNIDAD
@@ -983,6 +1048,8 @@ def f_fir_spread(ent: dict[str, Any], params: dict[str, Any]) -> Resultado:
     lim: list[str] = []
     h = _dict(_req(v, "historia", F), f"{F}: historia")
     fechas = _fechas(h.get("fechas"), f"{F}: historia.fechas")
+    _historia_acotada(fechas, u["anios_historia_maximos"], f"{F}: historia.fechas")
+    _conocible(fechas[-1], ent["fecha_corte"], f"{F}: historia.fechas", "la fecha de corte")
     s = _vector(h.get("diferenciales_pb"), f"{F}: historia.diferenciales_pb", 2)
     if len(s) != len(fechas):
         raise ErrorFicha(f"{F}: historia: fechas y diferenciales de distinta longitud")
@@ -992,6 +1059,7 @@ def f_fir_spread(ent: dict[str, Any], params: dict[str, Any]) -> Resultado:
         filas = _dict(imp["por_rating"], f"{F}: impagos.por_rating")
         if not filas:
             raise ErrorFicha(f"{F}: impagos.por_rating vacío")
+        _tope(len(filas), u["ratings_maximos"], f"{F}: impagos.por_rating")
         pesos = np.array([_rango(_dict(x, f"{F}: {r}").get("peso"), f"{F}: {r}.peso", 0) for r, x in filas.items()])
         pds = np.array([_rango(x.get("pd_anual"), f"{F}: {r}.pd_anual", 0, 1) for r, x in filas.items()])
         if not math.isclose(float(pesos.sum()), 1.0, rel_tol=0, abs_tol=FICHAS_TOL[F]):
@@ -1072,10 +1140,19 @@ def f_fx_ppa(ent: dict[str, Any], params: dict[str, Any]) -> Resultado:
     if not re.fullmatch(r"[A-Z]{3}/[A-Z]{3}", par) or par[:3] == par[4:]:
         raise ErrorFicha(f"{F}: par «{par}» no válido (se espera «BASE/COT»)")
     fechas = _fechas(_req(v, "fechas", F), f"{F}: fechas")
+    _historia_acotada(fechas, u["anios_historia_maximos"], f"{F}: fechas")
+    corte = ent["fecha_corte"]
+    _conocible(fechas[-1], corte, f"{F}: fechas", "la fecha de corte")
     S = _vector(_req(v, "tipo_cambio", F), f"{F}: tipo_cambio", 2)
     ind = _dict(_req(v, "indices", F), f"{F}: indices")
     ib, ic = _indice_precios(_req(ind, "base", F), f"{F}: indices.base"), _indice_precios(
         _req(ind, "cotizada", F), f"{F}: indices.cotizada")
+    for lado, ix in (("base", ib), ("cotizada", ic)):   # H-07: el vintage es la fecha de publicación de los índices
+        if _ISO.match(ix["vintage"]):
+            _conocible(_fecha(ix["vintage"], f"{F}: indices.{lado}.vintage"), corte, f"{F}: indices.{lado}.vintage",
+                       "la fecha de corte")
+        elif corte is not None:
+            lim.append(f"vintage del índice {lado} sin fecha ISO: no se comprueba que fuera conocible en la fecha de corte")
     if ib["canasta"] != ic["canasta"]:
         raise ErrorFicha(f"{F}: canastas incompatibles («{ib['canasta']}» frente a «{ic['canasta']}»)")
     if ib["periodicidad"] != ic["periodicidad"] or ib["periodicidad"] not in u["periodicidades"]:
@@ -1170,6 +1247,8 @@ def f_fx_mom(ent: dict[str, Any], params: dict[str, Any]) -> Resultado:
     pares = _dict(_req(v, "pares", F), f"{F}: pares")
     if not pares:
         raise ErrorFicha(f"{F}: pares vacío")
+    _tope(len(pares), u["pares_maximos"], f"{F}: pares")
+    corte = ent["fecha_corte"]
     horizontes = sorted(set(p["retrospecciones"]) | {u["meses_tsmom"]})
     tabla: dict[str, Any] = {}
     for par, d in pares.items():
@@ -1181,6 +1260,8 @@ def f_fx_mom(ent: dict[str, Any], params: dict[str, Any]) -> Resultado:
         if sp is None:
             raise ErrorFicha(f"{F}: {par}: falta el spot")
         fs, s = _serie(sp, f"{F}: {par}.spot")
+        _historia_acotada(fs, u["anios_historia_maximos"], f"{F}: {par}.spot")
+        _conocible(fs[-1], corte, f"{F}: {par}.spot", "la fecha de corte")
         if np.any(s <= 0):
             raise ErrorFicha(f"{F}: {par}: spot no positivo")
         if d.get("diferencial_pct") is not None:
@@ -1197,6 +1278,8 @@ def f_fx_mom(ent: dict[str, Any], params: dict[str, Any]) -> Resultado:
             fuente_carry = "puntos forward (S/F − 1)/τ [PROPUESTO]"
         else:
             raise ErrorFicha(f"{F}: {par}: faltan los diferenciales o los forwards")
+        _historia_acotada(fd, u["anios_historia_maximos"], f"{F}: {par}.carry")
+        _conocible(fd[-1], corte, f"{F}: {par}.carry (diferencial o forward)", "la fecha de corte")
         keep = [i for i, f in enumerate(fs) if f >= fd[0]]
         fs, s = [fs[i] for i in keep], s[keep]
         if len(fs) < 2 or _anios(fs[0], fs[-1]) < u["anios_minimos"]:
@@ -1291,7 +1374,9 @@ def f_acc_erp(ent: dict[str, Any], params: dict[str, Any]) -> Resultado:
         raise ErrorFicha(f"{F}: flujo al accionista ≤ 0: r implícita no definida")
     g5d = _dict(_req(v, "g5", F), f"{F}: g5")
     g5 = _con_fuente(g5d, f"{F}: g5")
-    _fecha(_req(g5d, "fecha", F, "consenso con fecha"), f"{F}: g5.fecha")
+    corte = ent["fecha_corte"]
+    _conocible(_fecha(_req(g5d, "fecha", F, "consenso con fecha"), f"{F}: g5.fecha"), corte, f"{F}: g5.fecha",
+               "la fecha de corte")
     gL = rf if p["g_L"] is None else p["g_L"]
     if not rf - u["amplitud_g_L_pp"] <= gL <= rf:
         raise ErrorFicha(f"{F}: g_L = {gL:g} % fuera del rango admitido [r_f − {u['amplitud_g_L_pp']} pp, r_f]")
@@ -1314,6 +1399,7 @@ def f_acc_erp(ent: dict[str, Any], params: dict[str, Any]) -> Resultado:
     else:
         br = _vector(_req(v, "beneficios_reales_10a", F, "beneficios reales 10 años para CAPE"),
                      f"{F}: beneficios_reales_10a", u["anios_cape"])
+        _tope(len(br), u["anios_historia_maximos"], f"{F}: beneficios_reales_10a (uno por año)")
         media = float(np.mean(br[-u["anios_cape"]:]))
         if not media > 0:
             raise ErrorFicha(f"{F}: media de beneficios reales ≤ 0: CAPE no definido")
@@ -1326,6 +1412,8 @@ def f_acc_erp(ent: dict[str, Any], params: dict[str, Any]) -> Resultado:
     else:
         hist = _dict(hist, f"{F}: historia")
         fh = _fechas(hist.get("fechas"), f"{F}: historia.fechas")
+        _historia_acotada(fh, u["anios_historia_maximos"], f"{F}: historia.fechas")
+        _conocible(fh[-1], corte, f"{F}: historia.fechas", "la fecha de corte")
         idx = [i for i, f in enumerate(fh) if _anios(f, fh[-1]) <= p["ventana_percentil"]]
         anios = _anios(fh[idx[0]], fh[-1])
         if anios < u["anios_percentil_minimo"]:
@@ -1404,6 +1492,8 @@ def f_acc_fact(ent: dict[str, Any], params: dict[str, Any]) -> Resultado:
     fr = p["frecuencia"]
     _txt(_req(v, "region", F, "región de los factores"), f"{F}: region")
     fechas = _fechas(_req(v, "fechas", F), f"{F}: fechas")
+    _historia_acotada(fechas, u["anios_historia_maximos"], f"{F}: fechas")
+    _conocible(fechas[-1], ent["fecha_corte"], f"{F}: fechas", "la fecha de corte")
     if fr == "mensual" and any(_meses_entre(a, b) != 1 for a, b in pairwise(fechas)):
         raise ErrorFicha(f"{F}: las fechas no son mensuales consecutivas")
     if fr == "semanal" and any((b - a).days != DIAS_POR_SEMANA for a, b in pairwise(fechas)):
@@ -1488,14 +1578,15 @@ def f_acc_val(ent: dict[str, Any], params: dict[str, Any]) -> Resultado:
     ejs = _lista(_req(v, "ejercicios", F), f"{F}: ejercicios")
     if len(ejs) < u["ejercicios_minimos"]:
         raise ErrorFicha(f"{F}: {len(ejs)} ejercicios (< {u['ejercicios_minimos']}): rechazo de la ficha")
+    _tope(len(ejs), u["ejercicios_maximos"], f"{F}: ejercicios")
     if len(ejs) < u["ejercicios_recomendados"]:
         lim.append(f"{len(ejs)} ejercicios (< {u['ejercicios_recomendados']} recomendados)")
-    filas = []
+    filas, presentaciones = [], []
     for i, e in enumerate(ejs):
         e = _dict(e, f"{F}: ejercicios[{i}]")
         if e.get("moneda") != moneda:
             raise ErrorFicha(f"{F}: rechazo: monedas inconsistentes (ejercicio {i} en {e.get('moneda')!r}, agregado en {moneda})")
-        _fecha(_req(e, "fecha_presentacion", F), f"{F}: ejercicios[{i}].fecha_presentacion")
+        presentaciones.append(_fecha(_req(e, "fecha_presentacion", F), f"{F}: ejercicios[{i}].fecha_presentacion"))
         filas.append({k: _num(_req(e, k, F, f"ejercicio {i}"), f"{F}: ejercicios[{i}].{k}")
                       for k in ("ejercicio", "ventas", "ebit", "amortizaciones", "capex", "variacion_circulante")}
                      | {k: _num(e[k], f"{F}: ejercicios[{i}].{k}") for k in ("ebitda", "fondos_propios", "flujo_accionista")
@@ -1509,7 +1600,13 @@ def f_acc_val(ent: dict[str, Any], params: dict[str, Any]) -> Resultado:
     rf = _num(rfd.get("valor"), f"{F}: rf.valor")
     cap_d = _dict(_req(v, "capitalizacion", F), f"{F}: capitalizacion")
     cap = _rango(cap_d.get("valor"), f"{F}: capitalizacion.valor", 0, abierto_lo=True)
-    _fecha(_req(cap_d, "fecha", F, "fecha HT-01"), f"{F}: capitalizacion.fecha")
+    # QA r01 de T-112, H-07: la «fecha de presentación» de la ficha es la del punto en el tiempo. La fecha de valoración es
+    # la de la capitalización (HT-01); ni ella puede ser posterior a la fecha de corte ni un ejercicio presentado después
+    # de ella entra en el cálculo: se rechaza (no se excluye, porque el último ejercicio es la base del flujo).
+    f_val = _fecha(_req(cap_d, "fecha", F, "fecha HT-01"), f"{F}: capitalizacion.fecha")
+    _conocible(f_val, ent["fecha_corte"], f"{F}: capitalizacion.fecha", "la fecha de corte")
+    for i, f_pres in enumerate(presentaciones):
+        _conocible(f_pres, f_val, f"{F}: ejercicios[{i}].fecha_presentacion", "la fecha de valoración (capitalización)")
     deuda = _num(_req(v, "deuda_neta", F), f"{F}: deuda_neta")
     t_imp = p["tasa_impositiva"] if p["tasa_impositiva"] is not None else _rango(
         _req(v, "tasa_impositiva_legal", F, "tasa impositiva legal marginal"), f"{F}: tasa_impositiva_legal", 0, PCT,
@@ -1625,6 +1722,8 @@ def f_acc_val(ent: dict[str, Any], params: dict[str, Any]) -> Resultado:
         if mult[k] is None:
             continue
         fh, vh = _serie(serie, f"{F}: historia_multiplos.{k}")
+        _historia_acotada(fh, u["anios_historia_maximos"], f"{F}: historia_multiplos.{k}")
+        _conocible(fh[-1], f_val, f"{F}: historia_multiplos.{k}", "la fecha de valoración (capitalización)")
         if _anios(fh[0], fh[-1]) < u["anios_percentil"]:
             perc[k] = None
             lim.append(f"historia de {k} < {u['anios_percentil']} años: percentil no calculado")
@@ -1703,7 +1802,7 @@ def crr(S: float, K: float, T: float, r: float, q: float, s: float, call: bool, 
     precios = S * up ** (N - 2 * j)
     ejer = np.maximum(precios - K, 0.0) if call else np.maximum(K - precios, 0.0)
     val = ejer.copy()
-    capas: dict[int, np.ndarray] = {}
+    capas: dict[int, np.ndarray] = {N: val.copy()} if N <= 2 else {}   # r02: con N = 2 la capa 2 es la terminal
     for paso in range(N - 1, -1, -1):
         precios = S * up ** (paso - 2 * np.arange(paso + 1))
         val = disc * (pr * val[:-1] + (1 - pr) * val[1:])
@@ -1840,6 +1939,7 @@ def _vencimiento(d: dict[str, Any], p: dict[str, Any], u: dict[str, Any], lim: l
     vol = _vector(_req(d, "vol_pct", que), f"{que}: vol_pct") / PCT
     if len(K) < u["strikes_minimos"]:
         raise ErrorFicha(f"{que}: {len(K)} precios de ejercicio (< {u['strikes_minimos']}): entradas mínimas de la ficha")
+    _tope(len(K), u["strikes_maximos"], f"{que}: strikes")
     if len(K) != len(vol) or np.any(K <= 0) or np.any(np.diff(K) <= 0) or np.any(vol <= 0):
         raise ErrorFicha(f"{que}: strikes positivos crecientes y una volatilidad positiva por strike")
     atm = _interp_en(Fw, K, vol)
@@ -1885,10 +1985,16 @@ def f_der_opt(ent: dict[str, Any], params: dict[str, Any]) -> Resultado:
         raise ErrorFicha(f"{F}: falta «contratos» o «superficie»")
     contratos = _lista(v["contratos"], f"{F}: contratos", 1) if v.get("contratos") is not None else (
         [v["contrato"]] if v.get("contrato") is not None else [])
+    # QA r01 de T-112, H-01: cotas de tamaño. Lo caro es el árbol (cada contrato con volatilidad implícita lo recalcula
+    # una veintena de veces), así que se acota aparte cuántos contratos se valoran con él.
+    _tope(len(contratos), u["contratos_maximos"], f"{F}: contratos")
+    _tope(sum(1 for c in contratos if p["modelo"] == "CRR" or (isinstance(c, dict) and c.get("estilo") == "americana")),
+          u["contratos_arbol_maximos"], f"{F}: contratos valorados con el árbol CRR (americanas o modelo CRR)")
     tabla = [_contrato(_dict(c, f"{F}: contratos[{i}]"), p, u, lim, f"{F}: contratos[{i}]") for i, c in enumerate(contratos)]
     sup = None
     if v.get("superficie") is not None:
         vs = _lista(_dict(v["superficie"], f"{F}: superficie").get("vencimientos"), f"{F}: superficie.vencimientos", 1)
+        _tope(len(vs), u["vencimientos_maximos"], f"{F}: superficie.vencimientos")
         filas = [_vencimiento(_dict(d, f"{F}: vencimientos[{i}]"), p, u, lim, f"{F}: vencimientos[{i}]")
                  for i, d in enumerate(vs)]
         if any(b["T"] <= a["T"] for a, b in pairwise(filas)):
@@ -2003,7 +2109,7 @@ def _forward_cerrada(t: float, b: list[float], lam: list[float]) -> float:
 
 def sintetico_curva(betas: list[float], lambdas: list[float], plazos: list[float] | None = None) -> dict[str, Any]:
     pl = plazos or _PLAZOS_NSS
-    return {"curva": {"fecha": "2026-11-13", "plazos": list(pl),
+    return {"curva": {"fecha": "2026-11-06", "plazos": list(pl),   # conocible en el corte de las pruebas (H-07)
                       "rendimientos": [_nss_cerrada(float(t), betas, lambdas) for t in pl]}}
 
 
@@ -2162,7 +2268,7 @@ def sintetico_val(crecimiento: float = 3.0, **extra: Any) -> dict[str, Any]:
     ejs = [{"ejercicio": 2021 + i, "fecha_presentacion": f"{2022 + i}-03-31", "moneda": "EUR", "ventas": 1000.0 + 50 * i,
             "ebit": 140.0 + 5 * i, "amortizaciones": 40.0, "capex": 50.0, "variacion_circulante": 10.0,
             "fondos_propios": 800.0 + 20 * i, "flujo_accionista": 70.0 + 2 * i} for i in range(5)]
-    return {"moneda": "EUR", "ejercicios": ejs, "capitalizacion": {"valor": 1500.0, "fecha": "2026-11-13"},
+    return {"moneda": "EUR", "ejercicios": ejs, "capitalizacion": {"valor": 1500.0, "fecha": "2026-11-06"},
             "deuda_neta": 300.0, "rf": {"valor": 3.0, "moneda": "EUR"}, "coste_deuda_pct": 4.0,
             "tasa_impositiva_legal": 25.0, "beta": {"valor": 1.1, "fuente": "ACC-FACT-001 sintética"},
             "prm": {"valor": 5.5, "fuente": "ACC-ERP-001 sintética"},

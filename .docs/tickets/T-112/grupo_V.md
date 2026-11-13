@@ -3,8 +3,8 @@
 | Campo | Valor |
 | --- | --- |
 | Módulo | `bloque_a/11_Ejecutor/bloque_a/motor/fichas_valoracion.py` (exporta `PARAMETROS_POR_DEFECTO`, `UMBRALES`, `ADVERTENCIAS`, `FICHAS`, `CASOS_CONTROL`) |
-| Pruebas | `bloque_a/11_Ejecutor/tests/test_fase2_valoracion.py`: **547 pruebas (61 funciones), todas en verde** (≈ 20 s) |
-| Mutantes | `.docs/tickets/T-112/revisores/impl_V_mutantes.py`: **34 mutantes, 34 muertos ante los casos de control y 34 ante las pruebas** |
+| Pruebas | `bloque_a/11_Ejecutor/tests/test_fase2_valoracion.py`: **620 pruebas (73 funciones), todas en verde** (≈ 21 s); 547 en la r01 |
+| Mutantes | `.docs/tickets/T-112/revisores/impl_V_mutantes.py`: **34 mutantes, 34 muertos ante los casos de control y 34 ante las pruebas**; los 6 del grupo V de `r01_10_mutantes.py`, muertos ante las pruebas (r02) |
 | ruff · mypy | Sin hallazgos en el módulo, las pruebas y el script (`ruff check`, `mypy --ignore-missing-imports`) |
 | Fichas | ACC-VAL-001, ACC-ERP-001, ACC-FACT-001, FIR-PRICE-001, FIR-CURVE-001, FIR-CARRY-001, FIR-SPREAD-001, FX-MOM-001, FX-PPA-001 (heredada, §6) y DER-OPT-001 |
 | Resultado | **Las 10 superan sus casos de control (38 casos)**. Ninguna tiene una «Verificación» que no se pueda comprobar. Las condiciones están en §3 |
@@ -449,3 +449,138 @@ Uso:
 ```bash
 .venv/bin/python -I -B .docs/tickets/T-112/revisores/impl_V_mutantes.py --destino <scratchpad> [--solo FICHA]
 ```
+
+## Ronda r02 · corrección de la QA r01
+
+Hallazgos del grupo V: H-07, H-01 y H-08 (QV05 y QV06). Solo cambian `motor/fichas_valoracion.py`, `tests/test_fase2_valoracion.py` y esta nota.
+
+**Contrato del servicio.** `_cerrado` lee `ent["fecha_corte"]`, la valida como fecha ISO (si no, `ErrorFicha`) y se la pasa al manejador. `ent["configuracion"]` no se usa: ninguna ficha del grupo lee la configuración del Motor.
+
+### H-07 · Datos posteriores a la fecha de corte o a la de valoración
+
+Regla común (`_conocible`): un dato fechado después de la fecha de corte, o de la fecha de valoración de la ficha, se **rechaza** con «no conocible» (Catálogo 3.1, «Conocibilidad»). Es lo mismo que hacen el servicio con las series de HT-01 y REI-NAV-001 con un NAV posterior al precio.
+
+| Ficha | Dato fechado | Regla |
+| --- | --- | --- |
+| ACC-VAL-001 | `capitalizacion.fecha` (la fecha de valoración, HT-01) | ≤ fecha de corte |
+| ACC-VAL-001 | `ejercicios[].fecha_presentacion` | ≤ fecha de la capitalización (y por tanto ≤ corte) |
+| ACC-VAL-001 | `historia_multiplos` | última fecha ≤ fecha de la capitalización |
+| ACC-ERP-001 | `g5.fecha`, `historia.fechas` | ≤ fecha de corte |
+| ACC-FACT-001 | `fechas` | ≤ fecha de corte |
+| FIR-CURVE-001 | `curva.fecha` | ≤ fecha de corte (la historia ya tenía que ser anterior a la curva) |
+| FIR-SPREAD-001 | `historia.fechas` | ≤ fecha de corte |
+| FX-MOM-001 | spot (en línea o de HT-01), `diferencial_pct` o `forward` | ≤ fecha de corte |
+| FX-PPA-001 | `fechas` y `vintage` de cada índice, si es una fecha ISO | ≤ fecha de corte; un vintage sin fecha ISO, con corte, da una limitación (no se puede comprobar) |
+| FIR-PRICE-001 | `liquidacion` | posterior al corte: **limitación**, no rechazo [P] |
+| FIR-CARRY-001, DER-OPT-001 | ninguno (curva y contratos sin fecha; T en años) | — |
+
+Decisiones:
+
+- **ACC-VAL-001 rechaza, no excluye.** La ficha pide la «fecha de presentación» para el punto en el tiempo. El último ejercicio es la base del flujo (FCFF₀), así que excluirlo cambiaría la base en silencio. Con el caso del revisor (`r01_06`, bloque 7: presentado el 2027-06-30, capitalización y corte del 2026-11-13) da RECHAZADO; sin fecha de corte, también, frente a la fecha de la capitalización.
+- **FIR-PRICE-001 [P]:** la liquidación es un dato del contrato (T + n desde la negociación), no una observación. Liquidar después del corte es lo normal, así que se declara como limitación: el precio o el rendimiento aportado debe ser el conocido en el corte.
+- **Datos de control.** La fecha de valoración sintética de ACC-VAL-001 (capitalización) y de FIR-CURVE-001 (curva) pasa del 2026-11-13 al **2026-11-06**. `test_t112_motor.py` sirve el primer caso de cada ficha con corte el 2026-11-12, y con el 13 la nueva regla los rechazaba. Las cifras de los casos no cambian: la fecha no entra en el cálculo.
+
+### H-01 · Cotas de tamaño
+
+Todas están en `UMBRALES` (una petición que traiga una se rechaza) y la prueba las admite en la cota y rechaza un elemento más. [P] = [PROPUESTO], para INC-T112-01.
+
+| Ficha | Tamaño | Cota | Origen |
+| --- | --- | --- | --- |
+| varias | historia de cualquier serie fechada | ≤ 100 años de calendario | [P] regla común: más que cualquier serie de mercado que citan las fichas del grupo (los factores de Fama y French de ACC-FACT-001 empiezan en 1926). Con fechas diarias estrictamente crecientes acota también el número de observaciones (≤ 36 525) |
+| ACC-VAL-001 | `ejercicios` | ≤ 100 | [P] uno por año, la regla de 100 años |
+| ACC-VAL-001 | `historia_multiplos` | ≤ 100 años | [P] regla común |
+| ACC-ERP-001 | `ventana_percentil` | 10–100 años | 10 de la ficha; 100 [P] |
+| ACC-ERP-001 | `historia`; `beneficios_reales_10a` | ≤ 100 años; ≤ 100 valores (uno por año) | [P] regla común |
+| ACC-FACT-001 | `ventana_movil` | 1–1 200 meses | [P] 100 años |
+| ACC-FACT-001 | `fechas` | ≤ 100 años | [P] regla común |
+| FIR-PRICE-001 | vencimiento − liquidación | ≤ 100 años (≤ 1 200 flujos con cupón mensual) | [P] los bonos centenarios |
+| FIR-PRICE-001 | `rescates` | uno por fecha de cupón (se rechazan los repetidos) | de la ficha: rescates en fechas de cupón |
+| FIR-CURVE-001 | `arranques` | 20–**100** (antes 200) | 20 de la ficha; 100 [P] (5 × el valor por defecto) |
+| FIR-CURVE-001 | nodos de la curva | ≤ 100 | [P] un bono por nodo |
+| FIR-CURVE-001 | curvas de la historia | ≤ 1 040 | [P] 20 años semanales, la ventana de FIR-SPREAD-001 |
+| FIR-CARRY-001 | nodos de la curva | ≤ 100 | la de FIR-CURVE-001, de la que sale la curva |
+| FIR-CARRY-001 | `tramo` (lista) | ≤ 100 | [P] uno por nodo |
+| FIR-SPREAD-001 | `ventana` | 10–100 años | 10 de la ficha; 100 [P] |
+| FIR-SPREAD-001 | `historia` | ≤ 100 años | [P] regla común |
+| FIR-SPREAD-001 | `impagos.por_rating` | ≤ 22 ratings | [P] la escala de largo plazo de AAA a D |
+| FX-MOM-001 | `pares` | ≤ 45 | [P] los cruces del G10, el universo mayor que nombra el «Método» |
+| FX-MOM-001 | spot y diferencial o forward | ≤ 100 años | [P] regla común |
+| FX-MOM-001 | `retrospecciones` | 1–12 meses, sin repetir (≤ 12) | de la ficha (ya estaba) |
+| FX-PPA-001 | `ventana` | 24–1 200 meses | 24 de la ficha; 1 200 [P] |
+| FX-PPA-001 | `suavizado` | 1–1 200 periodos | [P] 100 años mensuales |
+| FX-PPA-001 | `fechas` | ≤ 100 años | [P] regla común |
+| DER-OPT-001 | `pasos` | 2–**1 000** (antes 5 000) | [P] 2 × los 500 de la ficha |
+| DER-OPT-001 | `contratos` | ≤ 50 | [P] |
+| DER-OPT-001 | contratos valorados con el árbol (americanas o `modelo: CRR`) | ≤ 10 | [P] lo caro: con volatilidad implícita, unos 0,5 s por contrato a 1 000 pasos |
+| DER-OPT-001 | vencimientos de la superficie | ≤ 24 | [P] |
+| DER-OPT-001 | precios de ejercicio por vencimiento | ≤ 100 | [P] |
+| ACC-VAL-001 | `anios_explicitos`; sensibilidad | 3–10; rejilla fija de 3 × 3 | de la ficha (ya estaba) |
+| todas | iteraciones de TIR, NSS, r implícita, DCF inverso y volatilidad implícita | 100; evaluaciones de NSS 100 por parámetro | `UMBRALES` (ya estaba): no son parámetros de la petición |
+| FIR-PRICE-001, FIR-CARRY-001 | `delta_y`; `delta_t` | 1–25 pb; 1–12 meses | de la ficha (ya estaba) |
+
+**Peor caso, con las cotas al máximo.** Medido con la máquina cargada por los otros tres grupos. Script en `<scratchpad>/r02_V/peor_caso.py`, fuera del repo.
+
+| Ficha | Caso | Tiempo |
+| --- | --- | --- |
+| FIR-CURVE-001 (la más cara) | 100 arranques, 100 nodos NSS e historia de 1 040 curvas | **10,7 s** |
+| DER-OPT-001 | 10 americanas con volatilidad implícita a 1 000 pasos, 40 europeas con volatilidad implícita y una superficie de 24 × 100 con densidad | **6,1 s** |
+| DER-OPT-001 | 10 europeas con volatilidad implícita, `modelo: CRR` | 5,3 s |
+| FIR-PRICE-001 | 100 años, cupón mensual, 1 199 rescates | 0,2 s |
+| ACC-FACT-001 | 100 años semanales | 0,2 s |
+| FX-MOM-001, FX-PPA-001, FIR-SPREAD-001 | en sus cotas | < 0,1 s |
+
+Antes, con 5 000 pasos, un solo contrato con árbol y volatilidad implícita tardaba 5,6 s, y no había tope de contratos. FIR-CURVE-001 con 200 arranques tardaba 12 s sin historia.
+
+**Error encontrado al probar la cota inferior.** `pasos = 2`, el mínimo declarado del dominio, rechazaba por un `KeyError` interno: el árbol no guardaba su capa terminal cuando N ≤ 2. Corregido en `crr`, y probado con `modelo: CRR, pasos: 2`. El árbol con N ≥ 3 no cambia.
+
+### H-08 · Mutantes vivos
+
+- **QV05 (3m10y con el nodo de 6 meses).** La prueba del oráculo de FIR-CURVE-001 recalcula a mano y(10) − y(0,25) con la NSS escrita en la prueba. Comprueba también que se distingue de y(10) − y(0,5) en más de 1 pb.
+- **QV06 (sensibilidad con g ±0,25 pp).** Nueva prueba `test_acc_val_matriz_de_sensibilidad_a_mano`: las nueve celdas WACC ±1 pp × g ±0,5 pp, con un DCF escrito en la prueba (WACC, FCFF₀ y Gordon desde los datos), y las amplitudes de filas y columnas.
+
+### Pruebas
+
+- **`tests/test_fase2_valoracion.py`: 620 pruebas (73 funciones)**, antes 547. Con `tests/test_t112_motor.py`: 679, todas en verde.
+- **Nuevas:**
+  - 7 dominios malos y 6 buenos de las cotas de los parámetros;
+  - 20 cotas de tamaño, cada una admitida en la cota y rechazada con un elemento más;
+  - el rescate repetido y los valores de las cotas;
+  - 18 pruebas de umbral fijo, por las claves nuevas de `UMBRALES`;
+  - conocibilidad, ficha a ficha;
+  - un corte posterior a todos los datos no cambia el resultado (las 10 fichas);
+  - el vintage y la liquidación;
+  - 5 fechas de corte mal formadas;
+  - el caso del revisor por `Motor.servir` (RECHAZADO y una entrada RECHAZO en RC);
+  - las de H-08.
+- `ruff check` (desde la raíz, como el gate): sin hallazgos. `mypy --ignore-missing-imports`: ninguno en el módulo ni en las pruebas.
+
+### Mutantes y scripts del revisor, sobre copias en `<scratchpad>/r02_V/`
+
+| Script | Resultado |
+| --- | --- |
+| `impl_V_mutantes.py` | **34/34 muertos ante CC y 34/34 ante T**; las copias temporales se borran solas |
+| `r01_10_mutantes.py`, QV01 a QV06 | **6/6 muertos** ante las pruebas, QV05 y QV06 incluidos (QV05 33 s; QV06 23 s) |
+| `r01_06_hostiles.py`, parte V | Bloques 1, 2, 3, 5 y 7 sobre las 10 fichas V, con `ulimit -v 6 GB`: 10/11. Bloque 7: RECHAZADO. Ninguna llamada pasa de 30 s y no hay cifras no finitas |
+| `r01_04_oraculos_V.py` | **114/114** con las cotas nuevas (25 europeas en una petición, por debajo de las 50) |
+
+El fallo del bloque 1 de `r01_06` no es del grupo: es de `servicio.py` (ver abajo).
+
+### Para el integrador (fuera de los ficheros del grupo V)
+
+- **`servicio.py`, H-05.** `semillas = {x for x in (params.get("semilla"), peticion.get("semilla")) if x is not None}` lanza `TypeError: unhashable type: 'list'` con `parametros.semilla = []`, antes de llegar a la ficha. Pasa con cualquier ficha: lo da el fuzzer de `r01_06` en FIR-CURVE-001 y se reproduce con ACC-VAL-001. Escapa de `servir` sin RECHAZADO ni RC. Sugerencia: comparar las dos semillas sin un conjunto, por ejemplo `a is not None and b is not None and a != b`.
+- **Caché y H-07.** `clave_idempotencia` no incluye la fecha de corte. Una petición servida con un corte posterior a sus datos se devuelve desde la caché a otra idéntica con un corte anterior, que la ficha rechazaría. Reproducido con FIR-SPREAD-001: corte 2030 y luego 2026-11-13 en el mismo Motor dan SERVED_WITH_LIMITATIONS con `cache_hit: True`; en un Motor nuevo, RECHAZADO. Sugerencia: la fecha de corte en la clave, al menos con datos en línea.
+
+### Decisiones [PROPUESTO] nuevas (para INC-T112-01)
+
+1. Historia de cualquier serie fechada ≤ 100 años de calendario (regla común del grupo).
+2. ACC-VAL-001: ≤ 100 ejercicios.
+3. ACC-ERP-001: `ventana_percentil` ≤ 100 años y ≤ 100 beneficios reales anuales.
+4. ACC-FACT-001: `ventana_movil` ≤ 1 200 meses.
+5. FIR-PRICE-001: plazo ≤ 100 años; liquidación posterior al corte como limitación.
+6. FIR-CURVE-001: arranques ≤ 100 (antes 200), ≤ 100 nodos y ≤ 1 040 curvas en la historia.
+7. FIR-CARRY-001: ≤ 100 tramos.
+8. FIR-SPREAD-001: `ventana` ≤ 100 años y ≤ 22 ratings.
+9. FX-MOM-001: ≤ 45 pares.
+10. FX-PPA-001: `ventana` ≤ 1 200 meses y `suavizado` ≤ 1 200 periodos; un vintage sin fecha ISO, con corte, da una limitación.
+11. DER-OPT-001: pasos 2–1 000 (antes 2–5 000), ≤ 50 contratos, ≤ 10 con árbol, ≤ 24 vencimientos y ≤ 100 precios de ejercicio por vencimiento.
+12. ACC-VAL-001: un ejercicio presentado después de la fecha de la capitalización se rechaza, no se excluye.

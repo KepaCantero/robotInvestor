@@ -16,13 +16,19 @@ Convenciones de este módulo:
   `PARAMETROS_POR_DEFECTO` (solo para el bootstrap del IC). BT-PBO-001 es enumeración completa (semilla null).
 - Falla cerrado: lo que falta o es incoherente lanza ``ErrorFicha`` con el motivo; lo indefinido se entrega como
   ``None`` con su limitación, nunca como un número no finito (la envoltura `_cerrado` rechaza cualquier NaN o inf).
-- Los umbrales de rechazo y de limitación y los rangos admitidos están en `UMBRALES` y no se pueden cambiar desde la
-  petición; cada parámetro de la petición tiene tipo y dominio (`_validar`).
+- Los umbrales de rechazo y de limitación, los rangos admitidos y las cotas de los tamaños (trayectorias, horizonte,
+  réplicas, pliegues, cuantiles…) están en `UMBRALES` y no se pueden cambiar desde la petición; cada parámetro de la
+  petición tiene tipo y dominio (`_validar`), y un parámetro que la ficha no declara se rechaza (QA r01 de T-112, H-01 y
+  H-02).
+- Configuración: los números que salen de la configuración (umbrales de HT-03, réplicas y nivel del bootstrap, sesiones
+  de cada horizonte) se leen en cada llamada de ``ent["configuracion"]``, la del Motor; si el manejador se llama sin
+  ella, de `config/por_defecto.yaml` (QA r01 de T-112, H-04).
 - Las «Supuestos y limitaciones» de cada ficha (`ADVERTENCIAS`) van en ``resultado["advertencias"]``, no en la lista de
   limitaciones: el estado SERVED_WITH_LIMITATIONS solo señala problemas de los datos (diseño de T-112).
 
 Interfaz de cada manejador: ``f(ent, params) -> (resultado, limitaciones)``, con
-``ent = {"valores": {...}, "series": {alias: pd.Series}, "series_rol": {rol: pd.Series}}``.
+``ent = {"valores": {...}, "series": {alias: pd.Series}, "series_rol": {rol: pd.Series}, "configuracion": {...},
+"fecha_corte": "AAAA-MM-DD" | None}`` (las dos últimas las añade el Motor).
 """
 from __future__ import annotations
 
@@ -36,7 +42,13 @@ import numpy as np
 import pandas as pd
 from scipy import integrate, optimize, signal, special, stats
 
-from ..configuracion import CLASES, TABLA_HORIZONTES, parametro, sesiones_horizonte
+from ..configuracion import (
+    CLASES,
+    TABLA_HORIZONTES,
+    parametro,
+    parametros_ht03,
+    sesiones_horizonte,
+)
 from .evaluacion import EPS as EPS_LOG_SCORE
 from .evaluacion import ece as ece_fc_cal
 from .operaciones import ErrorFicha
@@ -75,43 +87,59 @@ PARAMETROS_POR_DEFECTO: dict[str, dict[str, Any]] = {
     "BT-VAR-001": {"nivel": 0.975, "significacion": 0.05, "metodo_var": "historico", "ventana_estimacion": 250,
                    "horizonte": 1, "baja_potencia_declarada": False},
     # ML-CAL-001 · «Parámetros»: esquema (walk_forward_expansivo); horizontes; metricas (todas las aplicables).
-    # Bootstrap del IC de la mejora: réplicas y nivel de la configuración (`evaluacion.bootstrap_replicas`,
-    # `evaluacion.nivel_ic`, los mismos que FC-EVAL-001); semilla del plan o 12345, la de FC-EVAL-001 en el servicio
-    # [PROPUESTO INC-T112-01].
+    # Bootstrap del IC de la mejora: réplicas y nivel; sin valor en la petición, los de la configuración del Motor
+    # (`evaluacion.bootstrap_replicas`, `evaluacion.nivel_ic`, los mismos que FC-EVAL-001), leídos en cada llamada
+    # (None = de la configuración); semilla del plan o 12345, la de FC-EVAL-001 en el servicio [PROPUESTO INC-T112-01].
     "ML-CAL-001": {"esquema": "walk_forward_expansivo", "horizontes": None, "metricas": None,
-                   "replicas": int(parametro(None, "evaluacion.bootstrap_replicas")),
-                   "nivel_ic": float(parametro(None, "evaluacion.nivel_ic")), "semilla": 12345},
+                   "replicas": None, "nivel_ic": None, "semilla": 12345},
     # ML-PRED-001 · «Parámetros»: modelo (logistica_L2); rejilla (≤ 20 en PLAN_STD); embargo (≥ h); calibracion (auto).
     # La rejilla de λ, los pliegues y la fracción inicial no los da la ficha [PROPUESTO INC-T112-01]. IC de la mejora
     # como ML-CAL-001.
     "ML-PRED-001": {"modelo": "logistica_L2", "rejilla": [0.1, 1.0, 10.0], "embargo": None, "calibracion": "auto",
-                    "pliegues": 5, "fraccion_inicial": 0.5,
-                    "replicas": int(parametro(None, "evaluacion.bootstrap_replicas")),
-                    "nivel_ic": float(parametro(None, "evaluacion.nivel_ic")), "semilla": 12345},
+                    "pliegues": 5, "fraccion_inicial": 0.5, "replicas": None, "nivel_ic": None, "semilla": 12345},
     # DEC-VOI-001 · «Parámetros»: umbrales (F10; fijos aquí, ver `UMBRALES`); coste_uc (obligatorio: «Entradas mínimas»).
     "DEC-VOI-001": {"coste_uc": None},
 }
 
-# Umbrales de rechazo y de limitación, rangos admitidos y constantes del método (no son parámetros de la petición).
-_U_HT03 = parametro(None, "parametros_ht03.umbrales")
+# Umbrales de rechazo y de limitación, rangos admitidos, cotas de tamaño y constantes del método (no son parámetros de
+# la petición). Cotas de tamaño (QA r01 de T-112, H-01): todo tamaño de la petición tiene tope; el horizonte máximo es el
+# de H5 en sesiones (`horizontes.H5` y `calendario` de la configuración del Motor, 120 meses = 2 520 sesiones por
+# defecto), que se lee en cada llamada.
+_HORIZONTE_MAXIMO = "H5"
+# Optimizadores (QA r01 de T-112, H-03): Nelder-Mead de la QMLE del GARCH y de la máxima verosimilitud de la GPD con
+# `xatol` = `fatol` = 1e-10, cuatro órdenes por debajo de la tolerancia 1e-6 de RISK-VAR-001 y SCN-H-001, y un tope de
+# 1 000 iteraciones y evaluaciones por parámetro, cinco veces el de scipy (200 por parámetro), porque con esas
+# tolerancias una verosimilitud plana (β del GARCH en el borde) pide hasta ~500 evaluaciones [PROPUESTO INC-T112-01,
+# técnico]. Sin convergencia ⇒ ErrorFicha.
+_TOL_OPTIMIZADOR = 1e-10
+_ITERACIONES_POR_PARAMETRO = 1000
 UMBRALES: dict[str, dict[str, Any]] = {
     # RISK-VAR-001 · «Parámetros»: nivel 0,90–0,99. «Entradas mínimas»: ≥ 250 observaciones (≥ 500 recomendadas);
     # EVT ≥ 50 excedencias. «Aclaración y rechazo»: nivel 99 % empírico con < 500 observaciones. Umbral de EVT-POT en
     # el cuantil 0,90 de las pérdidas [PROPUESTO INC-T112-01]. Histórico filtrado con el GARCH(1,1) de `garch_qmle`
-    # (VOL-GARCH-001 sin `arch`). Tolerancia 1e-6.
+    # (VOL-GARCH-001 sin `arch`). Tolerancia 1e-6. Horizonte de 1 a H5 en sesiones (H-01).
     "RISK-VAR-001": {"rango_nivel": [0.90, 0.99], "observaciones_minimas": 250, "observaciones_recomendadas": 500,
                      "excedencias_minimas_evt": 50, "nivel_empirico_estricto": 0.99,
                      "observaciones_nivel_estricto": 500, "cuantil_umbral_evt": 0.90,
-                     "metodos": ["historico", "normal", "t", "cornish_fisher", "historico_filtrado", "evt_pot"]},
+                     "metodos": ["historico", "normal", "t", "cornish_fisher", "historico_filtrado", "evt_pot"],
+                     "horizonte_maximo": _HORIZONTE_MAXIMO, "tolerancia_optimizador": _TOL_OPTIMIZADOR},
     # SIM-MC-001 · «Parámetros»: n_trayectorias 1 000–1 000 000. Dinámicas de «Método». Tabla de convergencia por
-    # mitades sucesivas de las trayectorias (n, n/2, n/4, n/8) [PROPUESTO INC-T112-01].
+    # mitades sucesivas de las trayectorias (n, n/2, n/4, n/8) [PROPUESTO INC-T112-01]. Cotas (H-01): horizonte de 1 a
+    # H5 en sesiones; presupuesto de trayectorias × pasos = n_trayectorias por defecto × H5 (10 000 × 2 520: con el
+    # máximo de trayectorias se llega a 25 pasos, con las de por defecto a H5) [PROPUESTO INC-T112-01]; como mucho 99
+    # cuantiles y 99 umbrales (la rejilla de percentiles enteros) [PROPUESTO INC-T112-01].
     "SIM-MC-001": {"rango_n_trayectorias": [1000, 1_000_000],
                    "dinamicas": ["paseo_aleatorio", "garch", "bootstrap_filtrado", "saltos"],
-                   "reducciones": ["antiteticas", "ninguna"], "mitades_convergencia": 3},
+                   "reducciones": ["antiteticas", "ninguna"], "mitades_convergencia": 3,
+                   "horizonte_maximo": _HORIZONTE_MAXIMO,
+                   "presupuesto_trayectorias_pasos": "n_trayectorias por defecto × sesiones del horizonte máximo",
+                   "cuantiles_maximos": 99, "umbrales_maximos": 99},
     # SCN-H-001 · «Método»: favorable/adverso = cuantiles 80/20. «Entradas mínimas»: H1–H2 ≥ 2 años diarios.
-    # «Perfiles y horizontes»: H1–H4. n_trayectorias en el rango de SIM-MC-001 (la dinámica que usa).
+    # «Perfiles y horizontes»: H1–H4. n_trayectorias en el rango de SIM-MC-001 (la dinámica que usa), y las cotas de
+    # cuantiles y umbrales de SIM-MC-001 (H-01). Los pasos los fijan los horizontes (≤ H4).
     "SCN-H-001": {"cuantil_favorable": 0.8, "cuantil_adverso": 0.2, "anios_minimos_h12": 2,
-                  "horizontes_ficha": ["H1", "H2", "H3", "H4"], "rango_n_trayectorias": [1000, 1_000_000]},
+                  "horizontes_ficha": ["H1", "H2", "H3", "H4"], "rango_n_trayectorias": [1000, 1_000_000],
+                  "cuantiles_maximos": 99, "umbrales_maximos": 99, "tolerancia_optimizador": _TOL_OPTIMIZADOR},
     # BT-DSR-001 · «Entradas mínimas»: ≥ 24 meses o 250 sesiones.
     "BT-DSR-001": {"sesiones_minimas": 250, "meses_minimos": 24},
     # BT-PBO-001 · «Parámetros»: S 8–20 par. «Entradas mínimas»: N ≥ 2 (≥ 10 útil); T ≥ 4·S. «Supuestos»: PBO ≥ 0,5
@@ -119,24 +147,27 @@ UMBRALES: dict[str, dict[str, Any]] = {
     "BT-PBO-001": {"rango_S": [8, 20], "configuraciones_minimas": 2, "configuraciones_utiles": 10, "factor_T": 4,
                    "pbo_sobreajuste": 0.5, "pbo_sospecha": 0.2, "metricas": ["sharpe"]},
     # BT-VAR-001 · «Entradas mínimas»: ≥ 250 observaciones. «Método»: semáforo de Basilea con 250 días al 99 %; zonas de
-    # BCBS (1996), referencia de la ficha: verde 0–4, amarilla 5–9, roja ≥ 10 excedencias. Rango del nivel: el de
-    # RISK-VAR-001.
+    # BCBS (1996), referencia de la ficha: verde 0–4, amarilla 5–9, roja ≥ 10 excedencias. Rango del nivel y horizonte
+    # máximo: los de RISK-VAR-001.
     "BT-VAR-001": {"observaciones_minimas": 250, "rango_nivel": [0.90, 0.99], "dias_semaforo": 250,
-                   "nivel_semaforo": 0.99, "verde_max": 4, "amarilla_max": 9},
-    # ML-CAL-001 · «Entradas mínimas»: ≥ 30 por horizonte.
-    "ML-CAL-001": {"observaciones_minimas": 30, "tipos": ["nivel", "probabilidad", "cuantil"]},
+                   "nivel_semaforo": 0.99, "verde_max": 4, "amarilla_max": 9, "horizonte_maximo": _HORIZONTE_MAXIMO},
+    # ML-CAL-001 · «Entradas mínimas»: ≥ 30 por horizonte. Réplicas del bootstrap del IC hasta 10 000, el tope de B de
+    # FC-EVAL-001 («B (2 000; 1 000–10 000)»), cuyo bootstrap usa (H-01).
+    "ML-CAL-001": {"observaciones_minimas": 30, "tipos": ["nivel", "probabilidad", "cuantil"], "rango_replicas": [1, 10_000]},
     # ML-PRED-001 · «Entradas mínimas»: ≥ 60 observaciones independientes (≥ 250 para no lineales). «Parámetros»:
     # rejilla ≤ 20. Newton/IRLS de la logística: hasta 100 iteraciones con tolerancia 1e-10 en la log-verosimilitud
-    # relativa [PROPUESTO INC-T112-01].
+    # relativa [PROPUESTO INC-T112-01]. Réplicas como ML-CAL-001; pliegues de 2 a 20, el mismo tope que la ficha da a
+    # la rejilla, de modo que pliegues × rejilla ≤ 400 ajustes [PROPUESTO INC-T112-01] (H-01).
     "ML-PRED-001": {"observaciones_minimas": 60, "observaciones_no_lineal": 250, "rejilla_maxima": 20,
                     "modelos": ["logistica_L2", "ridge"], "calibraciones": ["auto", "platt", "isotonica", "ninguna"],
-                    "iteraciones_maximas": 100, "tolerancia_newton": 1e-10},
-    # DEC-VOI-001 · «Método (iv)»: umbrales E 60, A 55, T 50, GC2 50 (de E); ±5 de banda marginal (los mismos que
-    # `parametros_ht03.umbrales` y `parametros_ht03.banda_marginal` de la configuración, de donde se leen). Búsqueda del corte de la regla de Bayes
-    # del EVSI: hasta 60 ampliaciones del intervalo [PROPUESTO INC-T112-01, técnico].
-    "DEC-VOI-001": {"umbrales": {"E": {"E": _U_HT03["E"], "GC2": _U_HT03["GC2_E"]}, "A": {"A": _U_HT03["A"]},
-                                 "T": {"T": _U_HT03["T"]}},
-                    "banda_marginal": parametro(None, "parametros_ht03.banda_marginal"), "ampliaciones_maximas": 60},
+                    "iteraciones_maximas": 100, "tolerancia_newton": 1e-10, "rango_replicas": [1, 10_000],
+                    "rango_pliegues": [2, 20]},
+    # DEC-VOI-001 · «Método (iv)»: umbrales E 60, A 55, T 50, GC2 50 (de E) y ±5 de banda marginal. Se leen en cada
+    # llamada de `parametros_ht03` de la configuración del Motor (H-04), los mismos con que decide HT-03; aquí, las
+    # claves de `parametros_ht03.umbrales` de cada decisión. Búsqueda del corte de la regla de Bayes del EVSI: hasta 60
+    # ampliaciones del intervalo [PROPUESTO INC-T112-01, técnico].
+    "DEC-VOI-001": {"umbrales": {"E": {"E": "E", "GC2": "GC2_E"}, "A": {"A": "A"}, "T": {"T": "T"}},
+                    "banda_marginal": "parametros_ht03.banda_marginal", "ampliaciones_maximas": 60},
 }
 
 # Advertencias obligatorias de entrega («Supuestos y limitaciones» de cada ficha, literales).
@@ -246,14 +277,36 @@ def _sesiones_anio(clase: Any) -> int:
     return SESIONES_ANIO_CRI if clase == "CRI" else SESIONES_ANIO
 
 
-def _validar(ficha: str, p: dict[str, Any]) -> None:
-    """Tipo y dominio de cada parámetro de la petición (falla cerrado con un motivo claro)."""
+def _configuracion(ent: dict[str, Any]) -> dict[str, Any] | None:
+    """Configuración del Motor que llega en ``ent["configuracion"]``; sin ella (manejador llamado directamente), None, y
+    `parametro` y `sesiones_horizonte` toman entonces la de `config/por_defecto.yaml` (QA r01 de T-112, H-04)."""
+    cfg = ent.get("configuracion")
+    if cfg is not None and not isinstance(cfg, dict):
+        raise ErrorFicha("la configuración del Motor no es un objeto")
+    return cfg
+
+
+def _horizonte_maximo(cfg: dict[str, Any] | None) -> int:
+    """Sesiones del horizonte más largo del Documento 0 (H5), de la configuración: la cota del horizonte (H-01)."""
+    return _entero(sesiones_horizonte(cfg, _HORIZONTE_MAXIMO), f"configuración: sesiones de {_HORIZONTE_MAXIMO}", 1)
+
+
+def _lista_acotada(x: Any, que: str, maximo: int) -> list[Any]:
+    lst = _lista(x, que)
+    if len(lst) > maximo:
+        raise ErrorFicha(f"{que}: {len(lst)} valores (máximo {maximo})")
+    return lst
+
+
+def _validar(ficha: str, p: dict[str, Any], cfg: dict[str, Any] | None = None) -> None:
+    """Tipo y dominio de cada parámetro de la petición (falla cerrado con un motivo claro), con su cota superior si es un
+    tamaño; los valores que faltan y vienen de la configuración se leen de `cfg`, la del Motor."""
     F, u = ficha, UMBRALES[ficha]
     if p.get("clase") is not None and p["clase"] not in CLASES:
         raise ErrorFicha(f"{F}: clase «{str(p['clase'])[:20]}» desconocida (admitidas: {', '.join(CLASES)})")
     if F == "RISK-VAR-001":
         p["nivel"] = _rango(p["nivel"], f"{F}: nivel", *u["rango_nivel"])
-        p["horizonte"] = _entero(p["horizonte"], f"{F}: horizonte", 1)
+        p["horizonte"] = _entero(p["horizonte"], f"{F}: horizonte", 1, _horizonte_maximo(cfg))
         p["metodo"] = _opcion(p["metodo"], f"{F}: metodo", u["metodos"])
         if p["moneda"] is not None and not _texto(p["moneda"]):
             raise ErrorFicha(f"{F}: moneda debe ser un texto")
@@ -261,24 +314,31 @@ def _validar(ficha: str, p: dict[str, Any]) -> None:
         p["n_trayectorias"] = _entero(p["n_trayectorias"], f"{F}: n_trayectorias", *u["rango_n_trayectorias"])
         if p["horizonte"] is None:
             raise ErrorFicha(f"{F}: falta el horizonte (pasos de la dinámica)")
-        p["horizonte"] = _entero(p["horizonte"], f"{F}: horizonte", 1)
-        p["cuantiles"] = _cuantiles(p["cuantiles"], F)
+        h_max = _horizonte_maximo(cfg)
+        p["horizonte"] = _entero(p["horizonte"], f"{F}: horizonte", 1, h_max)
+        presupuesto = PARAMETROS_POR_DEFECTO[F]["n_trayectorias"] * h_max
+        if p["n_trayectorias"] * p["horizonte"] > presupuesto:
+            raise ErrorFicha(f"{F}: {p['n_trayectorias']} trayectorias × {p['horizonte']} pasos superan el presupuesto de "
+                             f"{presupuesto} (n_trayectorias por defecto × sesiones de {_HORIZONTE_MAXIMO})")
+        p["cuantiles"] = _cuantiles(_lista_acotada(p["cuantiles"], f"{F}: cuantiles", u["cuantiles_maximos"]), F)
         if p["semilla"] is None:
             raise ErrorFicha(f"{F}: rechazo sin semilla (semilla obligatoria)")
         p["semilla"] = _semilla(p["semilla"], F)
         p["reduccion_varianza"] = _opcion(p["reduccion_varianza"], f"{F}: reduccion_varianza", u["reducciones"])
         if p["reduccion_varianza"] == "antiteticas" and p["n_trayectorias"] % 2:
             raise ErrorFicha(f"{F}: con antitéticas, n_trayectorias debe ser par")
-        p["umbrales"] = [_num(x, f"{F}: umbrales") for x in _lista(p["umbrales"], f"{F}: umbrales")]
+        p["umbrales"] = [_num(x, f"{F}: umbrales")
+                         for x in _lista_acotada(p["umbrales"], f"{F}: umbrales", u["umbrales_maximos"])]
     elif F == "SCN-H-001":
         p["n_trayectorias"] = _entero(p["n_trayectorias"], f"{F}: n_trayectorias", *u["rango_n_trayectorias"])
         if p["n_trayectorias"] % 2:
             raise ErrorFicha(f"{F}: n_trayectorias debe ser par (antitéticas de SIM-MC-001)")
-        p["cuantiles"] = _cuantiles(p["cuantiles"], F)
+        p["cuantiles"] = _cuantiles(_lista_acotada(p["cuantiles"], f"{F}: cuantiles", u["cuantiles_maximos"]), F)
         if p["semilla"] is None:
             raise ErrorFicha(f"{F}: rechazo sin semilla (semilla obligatoria)")
         p["semilla"] = _semilla(p["semilla"], F)
-        p["umbrales"] = [_num(x, f"{F}: umbrales") for x in _lista(p["umbrales"], f"{F}: umbrales")]
+        p["umbrales"] = [_num(x, f"{F}: umbrales")
+                         for x in _lista_acotada(p["umbrales"], f"{F}: umbrales", u["umbrales_maximos"])]
         if p["clase"] is None:
             raise ErrorFicha(f"{F}: falta la clase (tipo de activo) para comprobar el horizonte en la tabla 8.3")
         if p["horizontes"] is not None:
@@ -305,10 +365,15 @@ def _validar(ficha: str, p: dict[str, Any]) -> None:
         p["metodo_var"] = _opcion(p["metodo_var"], f"{F}: metodo_var", UMBRALES["RISK-VAR-001"]["metodos"])
         p["ventana_estimacion"] = _entero(p["ventana_estimacion"], f"{F}: ventana_estimacion",
                                           UMBRALES["RISK-VAR-001"]["observaciones_minimas"])
-        p["horizonte"] = _entero(p["horizonte"], f"{F}: horizonte", 1)
+        p["horizonte"] = _entero(p["horizonte"], f"{F}: horizonte", 1, _horizonte_maximo(cfg))
         p["baja_potencia_declarada"] = _bool(p["baja_potencia_declarada"], f"{F}: baja_potencia_declarada")
     elif F in ("ML-CAL-001", "ML-PRED-001"):
-        p["replicas"] = _entero(p["replicas"], f"{F}: replicas", 1)
+        # Sin valor en la petición, los de la configuración del Motor (H-04); con la misma cota (H-01)
+        if p["replicas"] is None:
+            p["replicas"] = parametro(cfg, "evaluacion.bootstrap_replicas")
+        if p["nivel_ic"] is None:
+            p["nivel_ic"] = parametro(cfg, "evaluacion.nivel_ic")
+        p["replicas"] = _entero(p["replicas"], f"{F}: replicas", *u["rango_replicas"])
         p["nivel_ic"] = _rango(p["nivel_ic"], f"{F}: nivel_ic", 0, 1, True, True)
         p["semilla"] = _semilla(p["semilla"], F)
         if F == "ML-CAL-001":
@@ -326,7 +391,7 @@ def _validar(ficha: str, p: dict[str, Any]) -> None:
             if p["embargo"] is not None:
                 p["embargo"] = _entero(p["embargo"], f"{F}: embargo", 1)
             p["calibracion"] = _opcion(p["calibracion"], f"{F}: calibracion", u["calibraciones"])
-            p["pliegues"] = _entero(p["pliegues"], f"{F}: pliegues", 2)
+            p["pliegues"] = _entero(p["pliegues"], f"{F}: pliegues", *u["rango_pliegues"])
             p["fraccion_inicial"] = _rango(p["fraccion_inicial"], f"{F}: fraccion_inicial", 0, 1, True, True)
     elif F == "DEC-VOI-001":
         if p["coste_uc"] is None:
@@ -334,17 +399,23 @@ def _validar(ficha: str, p: dict[str, Any]) -> None:
         p["coste_uc"] = _rango(p["coste_uc"], f"{F}: coste_uc", 0)
 
 
-def _parametros(ficha: str, params: dict[str, Any] | None) -> dict[str, Any]:
-    """Parámetros de la petición encima de los de la ficha, validados; los de `UMBRALES` no se cambian."""
+def _parametros(ficha: str, params: dict[str, Any] | None, cfg: dict[str, Any] | None = None) -> dict[str, Any]:
+    """Parámetros de la petición encima de los de la ficha, validados; los de `UMBRALES` no se cambian y uno que la ficha
+    no declara se rechaza (QA r01 de T-112, H-02; INC-T112-01: «un parámetro no declarado por la ficha se rechaza»).
+    `clase` (el tipo de activo, que el Motor añade desde la petición) se admite en todas."""
     params = _dict(params if params is not None else {}, f"{ficha}: parámetros")
     fijos = set(params) & set(UMBRALES[ficha])
     if fijos:
         raise ErrorFicha(f"{ficha}: {sorted(fijos)} son umbrales fijos de la ficha, no parámetros de la petición")
+    desconocidos = set(params) - set(PARAMETROS_POR_DEFECTO[ficha]) - {"clase"}
+    if desconocidos:
+        raise ErrorFicha(f"{ficha}: parámetros no declarados por la ficha {sorted(map(str, desconocidos))[:5]} "
+                         f"(admitidos: {', '.join(sorted(PARAMETROS_POR_DEFECTO[ficha]))})")
     p = dict(PARAMETROS_POR_DEFECTO[ficha])
     if "clase" in params:
         p["clase"] = params["clase"]
     p.update({k: v for k, v in params.items() if v is not None and k in p})
-    _validar(ficha, p)
+    _validar(ficha, p, cfg)
     return p
 
 
@@ -423,7 +494,8 @@ def _rendimientos(ent: dict[str, Any], que: str, clave: str = "rendimientos") ->
 
 
 def _cuantil_dict(x: np.ndarray, cuantiles: list[float]) -> dict[str, float]:
-    return {f"{q:g}": float(np.quantile(x, q)) for q in cuantiles}
+    # Todos los cuantiles en una sola llamada (H-01: coste acotado); mismo valor que uno a uno
+    return {f"{q:g}": float(v) for q, v in zip(cuantiles, np.quantile(x, cuantiles))}
 
 
 # ================================================================== RISK-VAR-001
@@ -437,6 +509,39 @@ def _cf_monotona(S: float, K: float, z_cola: float) -> bool:
     z_min = -c1 / (2 * c2)
     z_eval = min(z_min, z_cola)
     return c2 * z_eval * z_eval + c1 * z_eval + c0 > 0
+
+
+def _nm(fn: Callable[[np.ndarray], float], x0: np.ndarray, que: str, quien: str) -> np.ndarray:
+    """Nelder-Mead con las tolerancias y el tope de iteraciones fijos del módulo (QA r01 de T-112, H-03); sin
+    convergencia, ErrorFicha."""
+    tope = _ITERACIONES_POR_PARAMETRO * len(x0)
+    res = optimize.minimize(fn, x0, method="Nelder-Mead", options={"xatol": _TOL_OPTIMIZADOR, "fatol": _TOL_OPTIMIZADOR,
+                                                                    "maxiter": tope, "maxfev": tope})
+    if not res.success:
+        raise ErrorFicha(f"{que}: {quien} sin convergencia ({res.message})")
+    return np.asarray(res.x)
+
+
+def gpd_mv(y: np.ndarray, que: str = "RISK-VAR-001") -> tuple[float, float]:
+    """Máxima verosimilitud de la GPD(ξ, β) de los excesos `y` > 0 (umbral restado, localización 0), en (ξ, ln β), por
+    Nelder-Mead con tolerancias fijas desde la exponencial (ξ = 0, β = media de los excesos), un arranque fijo que siempre
+    está en el soporte. −ln L = n·ln β + (1 + 1/ξ)·Σ ln(1 + ξ·y/β), y n·ln β + Σy/β con ξ = 0."""
+    n = len(y)
+    if n < 2 or np.ptp(y) == 0:
+        raise ErrorFicha(f"{que}: excesos sin dispersión: GPD no identificada")
+
+    def nlv(th: np.ndarray) -> float:
+        xi, lb = float(th[0]), float(th[1])
+        b = math.exp(lb)
+        z = xi * y / b
+        if np.any(z <= -1):
+            return math.inf                         # fuera del soporte (ξ < 0 y algún exceso ≥ −β/ξ)
+        if xi == 0:
+            return n * lb + float(np.sum(y)) / b
+        return n * lb + (1 + 1 / xi) * float(np.sum(np.log1p(z)))
+
+    th = _nm(nlv, np.array([0.0, math.log(float(np.mean(y)))]), que, "máxima verosimilitud de la GPD")
+    return float(th[0]), float(math.exp(th[1]))
 
 
 def var_es(r: np.ndarray, nivel: float, metodo: str, que: str = "RISK-VAR-001") -> dict[str, Any]:
@@ -492,8 +597,7 @@ def var_es(r: np.ndarray, nivel: float, metodo: str, que: str = "RISK-VAR-001") 
             raise ErrorFicha(f"{que}: EVT-POT con {nu_} excedencias (< {u['excedencias_minimas_evt']})")
         if a >= nu_ / n:
             raise ErrorFicha(f"{que}: el nivel {nivel:g} no queda en la cola por encima del umbral de EVT-POT")
-        xi, _, beta = stats.genpareto.fit(exc, floc=0)
-        xi, beta = float(xi), float(beta)
+        xi, beta = gpd_mv(exc, que)
         if beta <= 0 or xi >= 1:
             raise ErrorFicha(f"{que}: ajuste GPD no válido (ξ = {xi:.3g}, β = {beta:.3g}; el ES exige ξ < 1)")
         ratio = n / nu_ * a
@@ -518,7 +622,7 @@ def _datos_var(ent: dict[str, Any], F: str, lim: list[str]) -> tuple[np.ndarray,
 def f_risk_var(ent: dict[str, Any], params: dict[str, Any]) -> Resultado:
     F = "RISK-VAR-001"
     lim: list[str] = []
-    p, u = _parametros(F, params), UMBRALES[F]
+    p, u = _parametros(F, params, _configuracion(ent)), UMBRALES[F]
     v = ent.get("valores") or {}
     r, origen = _datos_var(ent, F, lim)
     n = len(r)
@@ -672,7 +776,7 @@ def _resumen_mc(y: np.ndarray, cuantiles: list[float], umbrales: list[float], an
 def f_sim_mc(ent: dict[str, Any], params: dict[str, Any]) -> Resultado:
     F = "SIM-MC-001"
     lim: list[str] = []
-    p = _parametros(F, params)
+    p = _parametros(F, params, _configuracion(ent))
     din = _dinamica(ent.get("valores") or {}, F)
     n, h = p["n_trayectorias"], p["horizonte"]
     anti = p["reduccion_varianza"] == "antiteticas"
@@ -742,7 +846,8 @@ def garch_qmle(r: np.ndarray, que: str) -> dict[str, Any]:
     """GARCH(1,1) por cuasi máxima verosimilitud gaussiana con objetivo de varianza (ω = σ̄²(1 − α − β)).
 
     Valores iniciales fijos α = 0,05 y β = 0,90 [PROPUESTO INC-T112-01] (VOL-GARCH-001: «valores iniciales fijos»);
-    Nelder-Mead sobre la persistencia y la cuota de α en logit (siempre 0 < α + β < 1). No converge ⇒ ErrorFicha.
+    Nelder-Mead sobre la persistencia y la cuota de α en logit (siempre 0 < α + β < 1), con las tolerancias fijas de
+    `_nm` (H-03). No converge ⇒ ErrorFicha.
     """
     eps = r - np.mean(r)
     var = float(np.var(eps))
@@ -761,10 +866,7 @@ def garch_qmle(r: np.ndarray, que: str) -> dict[str, Any]:
 
     a0, b0 = 0.05, 0.90
     th0 = np.array([special.logit(a0 + b0), special.logit(a0 / (a0 + b0))])
-    res = optimize.minimize(nlv, th0, method="Nelder-Mead")
-    if not res.success:
-        raise ErrorFicha(f"{que}: GARCH(1,1) sin convergencia ({res.message})")
-    al, be = desplegar(res.x)
+    al, be = desplegar(_nm(nlv, th0, que, "GARCH(1,1)"))
     om = var * (1 - al - be)
     h = varianzas_garch(eps, om, al, be, var)
     return {"omega": om, "alpha": al, "beta": be, "mu": float(np.mean(r)),
@@ -796,7 +898,8 @@ def _con_fuente(d: Any, que: str) -> dict[str, Any]:
 def f_scn_h(ent: dict[str, Any], params: dict[str, Any]) -> Resultado:
     F = "SCN-H-001"
     lim: list[str] = []
-    p, u = _parametros(F, params), UMBRALES[F]
+    cfg = _configuracion(ent)
+    p, u = _parametros(F, params, cfg), UMBRALES[F]
     v = ent.get("valores") or {}
     clase = p["clase"]
     tiene = {"H1": v.get("rendimientos") is not None or len(ent.get("series") or {}) == 1,
@@ -837,7 +940,7 @@ def f_scn_h(ent: dict[str, Any], params: dict[str, Any]) -> Resultado:
             raise ErrorFicha(f"{F}: rendimientos ≤ −100 %")
         g = (_residuos_garch(lr, _dict(v["garch"], f"{F}: garch"), f"{F}: garch") if v.get("garch") is not None
              else garch_qmle(lr, F))
-        pasos = {h: sesiones_horizonte(None, h) for h in h12}
+        pasos = {h: sesiones_horizonte(cfg, h) for h in h12}
         din = {"tipo": "bootstrap_filtrado", "mu": g["mu"], "omega": g["omega"], "alpha": g["alpha"],
                "beta": g["beta"], "sigma2_inicial": g["sigma2_siguiente"], "residuos": g["residuos"]}
         rng = np.random.default_rng(rng_de["H1"])
@@ -860,7 +963,7 @@ def f_scn_h(ent: dict[str, Any], params: dict[str, Any]) -> Resultado:
         pr = np.array([_rango(probs[k], f"{F}: probabilidad de {k}", 0, 1) for k in nombres])
         if not math.isclose(float(pr.sum()), 1.0, rel_tol=0, abs_tol=1e-10):
             raise ErrorFicha(f"{F}: las probabilidades filtradas no suman 1 ({float(pr.sum()):.6g})")
-        pasos3 = sesiones_horizonte(None, "H3")
+        pasos3 = sesiones_horizonte(cfg, "H3")
         rng = np.random.default_rng(rng_de["H3"])
         cuenta = rng.multinomial(n // 2, pr) * 2            # pares antitéticos dentro de cada régimen
         partes = []
@@ -890,7 +993,7 @@ def f_scn_h(ent: dict[str, Any], params: dict[str, Any]) -> Resultado:
             b = _dict(_requerido(bl, nombre, f"{F}: bloques"), f"{F}: bloque {nombre}")
             medias.append(_num(_requerido(b, "valor", f"{F}: {nombre}"), f"{F}: {nombre}.valor"))
             desv.append(_rango(_requerido(b, "incertidumbre", f"{F}: {nombre}"), f"{F}: {nombre}.incertidumbre", 0))
-        anios = sesiones_horizonte(None, "H4") / SESIONES_ANIO
+        anios = sesiones_horizonte(cfg, "H4") / SESIONES_ANIO
         rng = np.random.default_rng(rng_de["H4"])
         z = rng.standard_normal((n // 2, 3))
         z = np.concatenate([z, -z])
@@ -944,7 +1047,7 @@ def _lo_eta(rho: float, q: int) -> float:
 def f_bt_dsr(ent: dict[str, Any], params: dict[str, Any]) -> Resultado:
     F = "BT-DSR-001"
     lim: list[str] = []
-    p, u = _parametros(F, params), UMBRALES[F]
+    p, u = _parametros(F, params, _configuracion(ent)), UMBRALES[F]
     v = ent.get("valores") or {}
     r = _rendimientos(ent, F)
     T = len(r)
@@ -1008,7 +1111,7 @@ def _matriz_pbo(v: dict[str, Any], F: str) -> tuple[list[str], np.ndarray]:
 def f_bt_pbo(ent: dict[str, Any], params: dict[str, Any]) -> Resultado:
     F = "BT-PBO-001"
     lim: list[str] = []
-    p, u = _parametros(F, params), UMBRALES[F]
+    p, u = _parametros(F, params, _configuracion(ent)), UMBRALES[F]
     nombres, M = _matriz_pbo(ent.get("valores") or {}, F)
     N = len(nombres)
     if N < u["configuraciones_minimas"]:
@@ -1028,8 +1131,6 @@ def f_bt_pbo(ent: dict[str, Any], params: dict[str, Any]) -> Resultado:
     bloques = M.reshape(S, b, N)
     s1, s2 = bloques.sum(axis=1), (bloques ** 2).sum(axis=1)
     combos = np.array(list(itertools.combinations(range(S), S // 2)))
-    mask = np.zeros((len(combos), S))
-    mask[np.arange(len(combos))[:, None], combos] = 1.0
     n_med = b * S // 2
 
     def sharpe(t1: np.ndarray, t2: np.ndarray) -> np.ndarray:
@@ -1039,9 +1140,22 @@ def f_bt_pbo(ent: dict[str, Any], params: dict[str, Any]) -> Resultado:
             raise ErrorFicha(f"{F}: una configuración sin dispersión en una mitad: Sharpe indefinido")
         return np.asarray(media / np.sqrt(var))
 
-    is1, is2 = mask @ s1, mask @ s2
-    dentro = sharpe(is1, is2)
-    fuera = sharpe(s1.sum(axis=0) - is1, s2.sum(axis=0) - is2)
+    # Por tandas de combinaciones (H-01): la memoria queda en O(tanda·N) aunque S = 20 dé 184 756 combinaciones
+    tanda = max(1, _ELEMENTOS_TANDA // (S * N))
+    partes: dict[str, list[np.ndarray]] = {"mejor": [], "w": [], "is_m": [], "oos_m": []}
+    empates = 0
+    for i0 in range(0, len(combos), tanda):
+        cb = combos[i0:i0 + tanda]
+        is1, is2 = s1[cb].sum(axis=1), s2[cb].sum(axis=1)   # suma de los S/2 bloques de dentro, igual en cualquier tanda
+        dentro = sharpe(is1, is2)
+        fuera = sharpe(s1.sum(axis=0) - is1, s2.sum(axis=0) - is2)
+        mejor = np.argmax(dentro, axis=1)
+        empates += int(np.sum((dentro == dentro.max(axis=1, keepdims=True)).sum(axis=1) > 1))
+        rangos = stats.rankdata(fuera, axis=1)            # rango medio ante empates, fila a fila (vectorizado)
+        fila = np.arange(len(cb))
+        w = rangos[fila, mejor] / (N + 1)
+        for k, x in (("mejor", mejor), ("w", w), ("is_m", dentro[fila, mejor]), ("oos_m", fuera[fila, mejor])):
+            partes[k].append(x)
     identicas = bool(np.all(M == M[:, :1]))
     out: dict[str, Any] = {"N": N, "T_usado": int(b * S), "S": S, "combinaciones": len(combos), "metrica": p["metrica"]}
     if identicas:
@@ -1049,16 +1163,11 @@ def f_bt_pbo(ent: dict[str, Any], params: dict[str, Any]) -> Resultado:
         out.update({"pbo": None, "indefinido": True, "lambda": None, "pendiente_degradacion": None,
                     "probabilidad_perdida": None, "diagnostico": "indefinido"})
         return out, lim
-    mejor = np.argmax(dentro, axis=1)
-    empates = int(np.sum((dentro == dentro.max(axis=1, keepdims=True)).sum(axis=1) > 1))
     if empates:
         lim.append(f"{empates} combinaciones con empate en la mejor configuración dentro de muestra (se toma la primera)")
-    rangos = np.apply_along_axis(stats.rankdata, 1, fuera)
-    fila = np.arange(len(combos))
-    w = rangos[fila, mejor] / (N + 1)
+    mejor, w, is_m, oos_m = (np.concatenate(partes[k]) for k in ("mejor", "w", "is_m", "oos_m"))
     lam = np.log(w / (1 - w))
     pbo = float(np.mean(lam <= 0))
-    is_m, oos_m = dentro[fila, mejor], fuera[fila, mejor]
     pendiente = float(np.polyfit(is_m, oos_m, 1)[0]) if np.ptp(is_m) > 0 else None
     if pendiente is None:
         lim.append("Sharpe dentro de muestra constante entre combinaciones: pendiente de degradación indefinida")
@@ -1134,7 +1243,7 @@ def _backtest(var_p: np.ndarray, res: np.ndarray, es_p: np.ndarray | None, nivel
 def f_bt_var(ent: dict[str, Any], params: dict[str, Any]) -> Resultado:
     F = "BT-VAR-001"
     lim: list[str] = []
-    p, u = _parametros(F, params), UMBRALES[F]
+    p, u = _parametros(F, params, _configuracion(ent)), UMBRALES[F]
     v = ent.get("valores") or {}
     nivel, sig = p["nivel"], p["significacion"]
     ref = None
@@ -1204,6 +1313,9 @@ def _alinear(pred: Any, real: Any, que: str) -> tuple[np.ndarray, np.ndarray, li
     return p, r, None
 
 
+_ELEMENTOS_TANDA = 2 ** 22   # elementos por tanda del bootstrap (32 MiB en float64) [técnico: no cambia el resultado]
+
+
 def _bloque_bootstrap(n: int) -> int:
     return max(1, round(n ** (1 / 3)))       # longitud de bloque de `evaluacion.bss` (FC-EVAL-001)
 
@@ -1216,8 +1328,11 @@ def mejora_ic(perdida_ref: np.ndarray, perdida_mod: np.ndarray, replicas: int, n
     rng = np.random.default_rng(semilla)
     k = math.ceil(n / b)
     inicios = rng.integers(0, n - b + 1, size=(replicas, k))
-    idx = (inicios[:, :, None] + np.arange(b)[None, None, :]).reshape(replicas, -1)[:, :n]
-    medias = d[idx].mean(axis=1)
+    # Por tandas de réplicas para acotar la memoria (H-01): la media de cada réplica es la misma que con todas a la vez
+    tanda = max(1, _ELEMENTOS_TANDA // (k * b))
+    medias = np.concatenate([
+        d[(inicios[i:i + tanda, :, None] + np.arange(b)[None, None, :]).reshape(len(inicios[i:i + tanda]), -1)[:, :n]]
+        .mean(axis=1) for i in range(0, replicas, tanda)])
     a = (1 - nivel) / 2
     ic = [float(np.quantile(medias, a)), float(np.quantile(medias, 1 - a))]
     demostrada = ic[0] > 0
@@ -1283,7 +1398,7 @@ def _evaluar(tipo: str, p: np.ndarray, y: np.ndarray, ref: np.ndarray | None, cu
 def f_ml_cal(ent: dict[str, Any], params: dict[str, Any]) -> Resultado:
     F = "ML-CAL-001"
     lim: list[str] = []
-    p, u = _parametros(F, params), UMBRALES[F]
+    p, u = _parametros(F, params, _configuracion(ent)), UMBRALES[F]
     v = ent.get("valores") or {}
     ensayos = _entero(_requerido(v, "ensayos", F), f"{F}: ensayos (número obligatorio)", 1)
     hz = _dict(_requerido(v, "horizontes", F), f"{F}: horizontes")
@@ -1538,7 +1653,7 @@ def _particiones_correctas(parts: list[dict[str, Any]], emb: int) -> bool:
 def f_ml_pred(ent: dict[str, Any], params: dict[str, Any]) -> Resultado:
     F = "ML-PRED-001"
     lim: list[str] = []
-    p, u = _parametros(F, params), UMBRALES[F]
+    p, u = _parametros(F, params, _configuracion(ent)), UMBRALES[F]
     v = ent.get("valores") or {}
     fechas = _fechas_iso(_requerido(v, "fechas", F), f"{F}: fechas")
     n = len(fechas)
@@ -1715,10 +1830,21 @@ def _decision(nombre: str, pri: dict[str, Any], u: float, banda: float, sigma: f
             "probabilidad_cambio": (1 - p_sup) if actuar_previo else p_sup}
 
 
+def _umbrales_ht03(cfg: dict[str, Any] | None, dim: str) -> tuple[dict[str, float], float]:
+    """Umbrales de la dimensión y banda marginal de HT-03, de `parametros_ht03` de la configuración del Motor (H-04)."""
+    ht = parametros_ht03(cfg)
+    val = _dict(ht.get("umbrales"), "DEC-VOI-001: parametros_ht03.umbrales de la configuración")
+    umbrales = {k: _num(_requerido(val, c, "DEC-VOI-001: parametros_ht03.umbrales"), f"DEC-VOI-001: umbral {c} de HT-03")
+                for k, c in UMBRALES["DEC-VOI-001"]["umbrales"][dim].items()}
+    banda = _rango(_requerido(ht, "banda_marginal", "DEC-VOI-001: parametros_ht03"), "DEC-VOI-001: banda marginal de HT-03", 0)
+    return umbrales, banda
+
+
 def f_dec_voi(ent: dict[str, Any], params: dict[str, Any]) -> Resultado:
     F = "DEC-VOI-001"
     lim: list[str] = []
-    p, u = _parametros(F, params), UMBRALES[F]
+    cfg = _configuracion(ent)
+    p = _parametros(F, params, cfg)
     v = ent.get("valores") or {}
     punt = _dict(_requerido(v, "puntuacion", F), f"{F}: puntuacion")
     dim = _opcion(_requerido(punt, "dimension", f"{F}: puntuacion"), f"{F}: dimension", ["e", "a", "t"]).upper()
@@ -1730,9 +1856,8 @@ def f_dec_voi(ent: dict[str, Any], params: dict[str, Any]) -> Resultado:
                        f"{F}: verosimilitud.desviacion", 0)
     else:
         lim.append("sin verosimilitud del cálculo: solo EVPI (EVSI no calculado)")
-    banda = u["banda_marginal"]
-    decisiones = [_decision(f"umbral {k} ({dim})", pri, float(x), banda, sigma)
-                  for k, x in sorted(u["umbrales"][dim].items())]
+    umbrales, banda = _umbrales_ht03(cfg, dim)
+    decisiones = [_decision(f"umbral {k} ({dim})", pri, x, banda, sigma) for k, x in sorted(umbrales.items())]
     if v.get("ranking") is not None:
         rk = _dict(v["ranking"], f"{F}: ranking")
         rk_op = _num(_requerido(rk, "rk_opcion", f"{F}: ranking"), f"{F}: rk_opcion")
@@ -1762,6 +1887,7 @@ def f_dec_voi(ent: dict[str, Any], params: dict[str, Any]) -> Resultado:
                                                                              "media": pri["media"], "tipo": pri["tipo"]},
             "decisiones": decisiones, "regla_simple_voi_cero": regla_cero, "voi_puntos": voi, "voi_uc": voi_uc,
             "medida": clave.upper(), "probabilidad_cambio_decision": p_cambio, "coste_uc": p["coste_uc"],
+            "banda_marginal": banda,
             "recomendacion_tecnica": recomendacion, "decision_del_solicitante": True,
             "referencia_ingenua": {"ejecutar_siempre_coste_uc": p["coste_uc"], "no_ejecutar_nunca_voi_perdido": voi}}, lim
 
@@ -1881,20 +2007,55 @@ def _garch_control(n: int, semilla: int) -> list[float]:
 _R_VAR_GARCH = _garch_control(1500, 11212)
 
 
-def _caso_fhs(r: dict[str, Any]) -> bool:
-    d = r["detalle_metodo"]
-    x = np.array(_R_VAR_GARCH)
-    g = d["garch"]
+def _fhs_con(x: np.ndarray, om: float, al: float, be: float, nivel: float) -> tuple[float, float, float]:
+    """VaR, ES y σ_T+1 del histórico filtrado con un GARCH(1,1) dado, con la recursión escrita aquí (bucle)."""
     e = x - x.mean()
     hs = [float(np.var(e))]
     for t in range(1, len(e)):
-        hs.append(g["omega"] + g["alpha"] * e[t - 1] ** 2 + g["beta"] * hs[-1])
+        hs.append(om + al * e[t - 1] ** 2 + be * hs[-1])
     z = e / np.sqrt(hs)
-    sig = math.sqrt(g["omega"] + g["alpha"] * e[-1] ** 2 + g["beta"] * hs[-1])
-    q = float(np.quantile(z, 0.025))
-    return (_cerca(d["sigma_siguiente"], sig, 1e-10) and _cerca(r["var"], -(x.mean() + sig * q), 1e-10)
-            and _cerca(r["es"], -(x.mean() + sig * float(np.mean(z[z <= q]))), 1e-10) and r["es"] >= r["var"]
-            and 0 < g["alpha"] + g["beta"] < 1)
+    sig = math.sqrt(om + al * e[-1] ** 2 + be * hs[-1])
+    q = float(np.quantile(z, 1 - nivel))
+    return -(x.mean() + sig * q), -(x.mean() + sig * float(np.mean(z[z <= q]))), sig
+
+
+@functools.cache
+def _fhs_referencia() -> tuple[float, float, float, float]:
+    """Óptimo de referencia de la QMLE con objetivo de varianza de la serie de control, calculado aparte de `garch_qmle`
+    (QA r01 de T-112, H-08): otro optimizador (Powell, tres arranques) sobre (α, β) sin transformar, con la recursión
+    como filtro lineal propio. Devuelve α, β y el VaR y el ES al 0,975 con ese óptimo."""
+    x = np.array(_R_VAR_GARCH)
+    e = x - x.mean()
+    v = float(np.var(e))
+
+    def nlv(th: np.ndarray) -> float:
+        al, be = float(th[0]), float(th[1])
+        if al <= 0 or be <= 0 or al + be >= 1:
+            return math.inf
+        h = signal.lfilter([1.0], [1.0, -be], np.r_[v, v * (1 - al - be) + al * e[:-1] ** 2], zi=[0.0])[0]
+        return float(0.5 * np.sum(np.log(h) + e * e / h))
+
+    with np.errstate(all="ignore"):                  # fuera de la región admisible, −ln L = ∞ (Powell lo descarta)
+        mejor = min((optimize.minimize(nlv, np.array(x0), method="Powell", options={"xtol": 1e-12, "ftol": 1e-14})
+                     for x0 in ([0.05, 0.9], [0.15, 0.8], [0.02, 0.97])), key=lambda o: float(o.fun))
+    al, be = float(mejor.x[0]), float(mejor.x[1])
+    var, es, _ = _fhs_con(x, v * (1 - al - be), al, be, 0.975)
+    return al, be, var, es
+
+
+def _caso_fhs(r: dict[str, Any]) -> bool:
+    """VaR y ES con los residuos del GARCH publicado; ω = σ̄²(1 − α − β) (objetivo de varianza); y VaR y ES iguales,
+    a la tolerancia de la ficha, a los de un óptimo de referencia calculado aparte (H-08)."""
+    d = r["detalle_metodo"]
+    x = np.array(_R_VAR_GARCH)
+    g = d["garch"]
+    var, es, sig = _fhs_con(x, g["omega"], g["alpha"], g["beta"], 0.975)
+    _, _, var_ref, es_ref = _fhs_referencia()
+    tol = FICHAS_TOL["RISK-VAR-001"]
+    return (_cerca(d["sigma_siguiente"], sig, 1e-10) and _cerca(r["var"], var, 1e-10) and _cerca(r["es"], es, 1e-10)
+            and r["es"] >= r["var"] and 0 < g["alpha"] + g["beta"] < 1
+            and _cerca(g["omega"], float(np.var(x - x.mean())) * (1 - g["alpha"] - g["beta"]), 1e-12)
+            and math.isclose(r["var"], var_ref, rel_tol=tol) and math.isclose(r["es"], es_ref, rel_tol=tol))
 
 
 def _cuantil_mc(r: dict[str, Any], v0: float, mu: float, sigma: float, h: int, n: int) -> bool:
@@ -2218,7 +2379,8 @@ CASOS_CONTROL: dict[str, list[dict[str, Any]]] = {
         {"nombre": "EVT-POT: VaR = u + β/ξ·[((n/Nᵤ)(1 − nivel))^(−ξ) − 1], ES = (VaR + β − ξu)/(1 − ξ) ≥ VaR",
          "datos": [{"valores": {"rendimientos": _R_VAR_COLAS}}], "parametros": {"metodo": "evt_pot"},
          "comprobar": _caso_evt},
-        {"nombre": "histórico filtrado: VaR = −(μ + σ_T+1·q(z)) y ES = −(μ + σ_T+1·media(z ≤ q)) con los residuos GARCH",
+        {"nombre": ("histórico filtrado: VaR = −(μ + σ_T+1·q(z)) y ES = −(μ + σ_T+1·media(z ≤ q)) con los residuos GARCH, "
+                    "ω = σ̄²(1 − α − β) y el VaR del óptimo de referencia (1e-6)"),
          "datos": [{"valores": {"rendimientos": _R_VAR_GARCH}}], "parametros": {"metodo": "historico_filtrado"},
          "comprobar": _caso_fhs},
         {"nombre": "segunda vía: en una muestra normal por cuantiles exactos, histórico y paramétrico coinciden (≤ 1 %)",

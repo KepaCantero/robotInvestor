@@ -260,6 +260,9 @@ SOLICITANTES_FICHA = {"BIB-MET-001": frozenset({"AG-18", "AG-20"})}
 # re-ejecutan un cálculo de la Fase 1 (CASO_AUD_REX) y artefactos alterados a propósito
 SERVICIOS_CT10 = frozenset({"AUD-REX-001"})
 CASO_AUD_REX = "IDX-CONC-001"
+# QA r01 de T-112, H-08 (QX08): un cálculo cuyos parámetros cambian el resultado, para que la re-ejecución sin los parámetros
+# del artefacto no coincida (ficha y número de caso de control de la Fase 1)
+CASO_AUD_REX_PARAMETROS = ("FON-DISC-001", 3)
 
 
 def _raiz(raiz: str | os.PathLike | None = None) -> Path:
@@ -350,6 +353,13 @@ class Motor:
         self._lock = threading.Lock()
 
     # ------------------------------------------------------------------------------------
+    def _contexto(self, ent: dict, fecha_corte) -> dict:
+        """QA r01 de T-112 (H-04 y H-07): la ficha recibe la configuración del Motor (no la de por defecto) y la fecha de corte
+        de la petición, para leer sus umbrales y no usar datos posteriores."""
+        ent["configuracion"] = self.cfg
+        ent["fecha_corte"] = fecha_corte
+        return ent
+
     def _resolver_datos(self, datos: list[dict], fecha_corte) -> tuple[dict, list[dict]]:
         ent = {"series": {}, "series_rol": {}, "valores": {}}
         efectivos = []
@@ -422,7 +432,9 @@ class Motor:
         params = dict(peticion.get("parametros") or {})
         if peticion.get("clase"):
             params.setdefault("clase", peticion["clase"])
-        if ficha in ACEPTA_SEMILLA and peticion.get("semilla") is not None:   # T-112: la semilla de la petición manda
+        semilla_p, semilla_pet = params.get("semilla"), peticion.get("semilla")
+        dos_semillas = semilla_p is not None and semilla_pet is not None and semilla_p != semilla_pet   # sin conjunto: puede no ser hashable
+        if ficha in ACEPTA_SEMILLA and peticion.get("semilla") is not None:   # T-112: la semilla de la petición llega a la ficha
             params.setdefault("semilla", peticion["semilla"])
         fecha_corte = peticion.get("fecha_corte") or (str(self.proveedor.as_of.date()) if self.proveedor.as_of is not None else None)
         plan = peticion.get("plan", "PLAN_MIN")
@@ -432,9 +444,11 @@ class Motor:
                 "perfil": peticion.get("perfil") or ["TRANSVERSAL"], "clase": peticion.get("clase"),
                 "horizonte": peticion.get("horizonte"), "modo": peticion.get("modo", "SYNC_CALC"), "plan": plan,
                 "prioridad": peticion.get("prioridad", "MATERIAL"), "parametros": params,
-                "semilla": peticion.get("semilla"), "as_of": fecha_corte, "fecha_limite_informacion": fecha_corte,
+                "semilla": params.get("semilla", peticion.get("semilla")), "as_of": fecha_corte, "fecha_limite_informacion": fecha_corte,
                 "madurez_metodo": "IMPLEMENTADO", "cache_hit": False}
         uc = float(parametro(self.cfg, f"uc.motor_por_plan.{plan}"))   # QA r01 de T-65, H-05: sin respaldo 0,02
+        if dos_semillas:   # QA r01 de T-112, H-05: el artefacto registra la semilla que se usa; dos distintas no se adivinan
+            return self._rechazo(base, "DATOS_INCOHERENTES", "dos semillas distintas en la petición (`semilla` y `parametros.semilla`)", uc=uc)
         # 1) Ficha
         if not servible(ficha, self.raiz):
             motivo = "METODO_NO_IMPLEMENTADO" if ficha in FICHAS_CATALOGO else "OPERACION_SIN_FICHA"
@@ -452,7 +466,7 @@ class Motor:
             else:
                 detalle = f"Ficha {ficha} no implementada en el ejecutor"
             return self._rechazo(base, motivo, detalle + (f"; alternativa: {alt}" if alt else ""), alternativa=alt, uc=uc)
-        if ficha in SOLICITANTES_FICHA and solicitante not in SOLICITANTES_FICHA[ficha]:
+        if ficha in SOLICITANTES_FICHA and not (isinstance(solicitante, str) and solicitante in SOLICITANTES_FICHA[ficha]):   # H-06
             return self._rechazo(base, "CANAL_NO_AUTORIZADO", f"{ficha} solo la piden {', '.join(sorted(SOLICITANTES_FICHA[ficha]))} "
                                  f"(«Supuestos y limitaciones» de la ficha); {solicitante} no es cliente de esta ficha", uc=uc)
         meta = IMPLEMENTADAS[ficha]
@@ -461,13 +475,16 @@ class Motor:
         # 2) Datos (guardia anti-fuga)
         try:
             ent, efectivos = self._resolver_datos(peticion.get("datos") or [], fecha_corte)
+            self._contexto(ent, fecha_corte)
         except FugaDeInformacion as e:
             return self._rechazo(base, "FUGA_DE_INFORMACION", str(e), uc=uc)
         except (DatosNoDisponibles, KeyError) as e:
             return self._rechazo(base, "DATOS_NO_DISPONIBLES", str(e), uc=uc)
         except (TypeError, ValueError, OverflowError) as e:   # H-15: fechas de una serie ilegibles
             return self._rechazo(base, "DATOS_INCOHERENTES", f"datos mal formados ({type(e).__name__}: {str(e)[:200]})", uc=uc)
-        clave = clave_hash(ficha, meta["version"], efectivos, params, peticion.get("semilla"), base["perfil"])
+        # QA r02 de T-112 (grupo V): la fecha de corte entra en la clave; si no, una petición con un corte anterior se serviría
+        # desde la caché de otra con un corte posterior (H-07)
+        clave = clave_hash(ficha, meta["version"], efectivos, params, base["semilla"], base["perfil"], fecha_corte)
         base["clave_idempotencia"] = clave
         with self._lock:
             previo = self._cache.get(clave)
@@ -487,8 +504,10 @@ class Motor:
             return self._rechazo(base, "DATOS_INSUFICIENTES", str(e), uc=uc)
         except NotImplementedError as e:
             return self._rechazo(base, "METODO_NO_IMPLEMENTADO", str(e), uc=uc)
-        except (ValueError, TypeError, ArithmeticError, KeyError, IndexError, AttributeError, np.linalg.LinAlgError) as e:
-            # QA r01 de T-106, H-02: una entrada que la ficha no valida no tumba el CT-09; se rechaza y queda en RC
+        except (ValueError, TypeError, ArithmeticError, KeyError, IndexError, AttributeError, np.linalg.LinAlgError, MemoryError,
+                RecursionError) as e:
+            # QA r01 de T-106, H-02: una entrada que la ficha no valida no tumba el CT-09; se rechaza y queda en RC. QA r01 de
+            # T-112, H-01: tampoco una que agota la memoria o la pila (las fichas tienen además topes de tamaño)
             return self._rechazo(base, "DATOS_INSUFICIENTES", f"{ficha}: entrada no válida ({type(e).__name__}: {str(e)[:200]})", uc=uc)
         if ficha in ESTRICTAS and (_no_finito(resultado) or _no_finito(resultado2)):
             return self._rechazo(base, "DATOS_INSUFICIENTES", f"{ficha}: el cálculo da cifras no finitas con estos datos", uc=uc)
@@ -586,6 +605,18 @@ class Motor:
                     res.append({"nombre": nombre, "superado": ok, "detalle": None if ok else f"{out['coincide']}/{out['categoria']}"})
                 except Exception as exc:  # noqa: BLE001 — un caso que falla por cualquier motivo no se supera
                     res.append({"nombre": nombre, "superado": False, "detalle": f"{type(exc).__name__}: {exc}"[:300]})
+            f_p, i_p = CASO_AUD_REX_PARAMETROS
+            caso_p = CASOS_CONTROL[f_p][i_p]
+            try:
+                rp = m.servir({"operacion": f_p, "datos": copy.deepcopy(caso_p.get("datos") or []),
+                               "parametros": dict(caso_p.get("parametros") or {}), "fecha_corte": None}, "AG-13")
+                out = m.reejecutar(rp["calc_id"], "casos de control de AUD-REX-001")
+                ok = out["coincide"] == "SI"
+                res.append({"nombre": "re-ejecución con los parámetros del artefacto (no los de por defecto): SI", "superado": ok,
+                            "detalle": None if ok else f"{out['coincide']}/{out['categoria']}"})
+            except Exception as exc:  # noqa: BLE001 — un caso que falla por cualquier motivo no se supera
+                res.append({"nombre": "re-ejecución con los parámetros del artefacto (no los de por defecto): SI", "superado": False,
+                            "detalle": f"{type(exc).__name__}: {exc}"[:300]})
             try:
                 m.reejecutar(r["calc_id"], " ")
                 res.append({"nombre": "CT-10 sin motivo: imposible", "superado": False, "detalle": "se re-ejecutó sin motivo"})
@@ -604,6 +635,7 @@ class Motor:
             for caso in casos:
                 try:
                     ent, _ = self._resolver_datos(caso.get("datos") or [], None)
+                    self._contexto(ent, caso.get("fecha_corte"))
                     params = dict(caso.get("parametros") or {})
                     r1, _ = meta["fn"](ent, dict(params)) if meta else ({}, [])
                     r2, _ = meta["fn"](ent, dict(params)) if meta else ({}, [])
@@ -646,6 +678,7 @@ class Motor:
                 datos.append({"valores": copy.deepcopy(d["valor"])})
                 huellas_en_linea.append(clave_hash(d["valor"])[:16] == d.get("huella"))
         ent, efectivos = self._resolver_datos(datos, orig["as_of"])
+        self._contexto(ent, orig["as_of"])
         nuevo, _ = IMPLEMENTADAS[ficha]["fn"](copy.deepcopy(ent), copy.deepcopy(orig["parametros"]))
         nuevo2, _ = IMPLEMENTADAS[ficha]["fn"](copy.deepcopy(ent), copy.deepcopy(orig["parametros"]))
         nuevo, nuevo2 = _limpio(nuevo), _limpio(nuevo2)

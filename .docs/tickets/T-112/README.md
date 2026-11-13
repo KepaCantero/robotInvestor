@@ -2,7 +2,7 @@
 
 | Campo | Valor |
 | --- | --- |
-| Estado | EN QA (ronda r01) |
+| Estado | EN QA (ronda r02; la QA r02, pendiente por indicación del operador) |
 | Pieza | `bloque_a/11_Ejecutor` (`bloque_a/motor/`) y el Catálogo del Motor (`bloque_a/04_Motor_conocimiento_y_catalogo/`, corpus congelado) |
 | Planifica · implementa · QA | claude · claude con cuatro agentes, uno por grupo de fichas; integración, Claude · un revisor nuevo sin contexto |
 | Aprobación del operador | 2026-11-12: «2) sí, te autorizo» (promover en el Catálogo las fichas que superen sus casos de control, re-congelando el corpus). 2026-11-13: «continuamos con la implementación del bloque A»; es el punto 3 del orden de tareas obligatorias de A («las fichas documentadas que más pesan en la selección, por prioridad, no todas») |
@@ -100,3 +100,15 @@ Todo lo de T-106, más las correcciones de sus tres QA, aplicadas desde el princ
 - 2026-11-13 · ABIERTO · creado con nuevo_ticket.sh
 - 2026-11-13 · PLANIFICADO · 36 fichas en cuatro grupos y AUD-REX; lecciones de las QA de T-106 aplicadas desde el diseño
 - 2026-11-13 · EN QA · 35 fichas en cuatro módulos y AUD-REX-001 (CT-10) en el servicio, todas con sus casos de control superados (140 en la Fase 2 y 5 de AUD-REX); promovidas en el Catálogo (71 IMPLEMENTADO, 10 DOCUMENTADO) y corpus re-congelado; decisiones de método en INC-T112-01 y CT-10 en INC-T112-02; A con 3319 pruebas
+- 2026-11-13 · NO APTO · QA r01 (revisor nuevo, commit `efd1bb3`): H-01 alto (parámetros de tamaño sin cota: una petición agotaba la memoria o colgaba el ejecutor), H-02, H-04, H-07 y H-08 medios, H-03, H-05 y H-06 bajos
+- 2026-11-13 · EN QA · Ronda r02:
+  - cotas de tamaño en `UMBRALES` en los cuatro grupos, y `MemoryError` y `RecursionError` pasan a RECHAZADO;
+  - R y P rechazan los parámetros no declarados;
+  - EVT y GARCH con tolerancias fijadas;
+  - las fichas reciben la configuración del Motor y la fecha de corte, y rechazan los datos posteriores;
+  - semillas: dos distintas se rechazan y el artefacto registra la usada;
+  - la fecha de corte entra en la clave de la caché;
+  - AUD-REX-001 tiene un caso con parámetros;
+  - pruebas que matan los mutantes de H-08.
+
+  El operador pide parar antes de la QA r02 por su límite de consumo semanal.

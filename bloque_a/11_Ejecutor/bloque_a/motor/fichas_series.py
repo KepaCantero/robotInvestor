@@ -47,6 +47,12 @@ EPS = float(np.finfo(float).eps)
 # INC-T112-01 [PROPUESTO]: el EM para cuando el cambio relativo máximo de los parámetros baja de tolerancia × 1e-2, para
 # que la cifra reproduzca la tolerancia de la ficha (1e-6 en parámetros) con convergencia lineal.
 FACTOR_CONVERGENCIA = 1e-2
+SEMILLA_MAXIMA = int(np.iinfo(np.int64).max)   # dominio técnico de la semilla (entero de 64 bits, como en fichas_riesgo)
+# QA r01 de T-112 (H-01) · Cotas superiores de los tamaños de la petición (INC-T112-01 [PROPUESTO] salvo donde se cita otra
+# ficha). La serie más larga que admiten las fichas de series es la de H5 en sesiones: 120 meses = 2 520 sesiones (Anexo A
+# del Documento 0, `horizontes` y `calendario` de la configuración: «H5 120 meses = 2520»). Las fichas iterativas (EM,
+# mínimos cuadrados con bootstrap) tienen una cota menor, para que el caso más caro termine en minutos (grupo_S.md, r02).
+OBS_MAXIMAS_SERIES = 2520
 
 # ====================================================================== parámetros por defecto (campo «Parámetros»)
 PARAMETROS_POR_DEFECTO: dict[str, dict[str, Any]] = {
@@ -77,33 +83,55 @@ PARAMETROS_POR_DEFECTO: dict[str, dict[str, Any]] = {
 UMBRALES: dict[str, dict[str, Any]] = {
     # ST-INF-001 · «Tolerancias»: 1e-8. «Aclaración y rechazo»: los datos no sostienen el contraste (n < 2, dispersión
     # nula). «correccion (auto si m > 1)». Normalidad (supuesto del t) con Shapiro-Wilk, que exige n ≥ 3.
-    "ST-INF-001": {"n_minimo": 2, "n_minimo_normalidad": 3, "m_correccion": 1, "tolerancia": 1e-8},
+    # Cotas (H-01): observaciones por muestra (y `n` de los estadísticos suficientes), 2 520, las de H5 en sesiones; a lo
+    # sumo 1 000 contrastes por familia [PROPUESTO].
+    "ST-INF-001": {"n_minimo": 2, "n_minimo_normalidad": 3, "m_correccion": 1, "tolerancia": 1e-8,
+                   "obs_maximas": OBS_MAXIMAS_SERIES, "contrastes_maximos": 1000},
     # FX-BRK-001 · «Entradas mínimas»: ≥ 30 observaciones para una ruptura, ≥ 50 para dos o más. «Parámetros»:
-    # max_rupturas 1–5. «Tolerancias»: 1e-6.
-    "FX-BRK-001": {"obs_una_ruptura": 30, "obs_varias_rupturas": 50, "rango_max_rupturas": [1, 5], "tolerancia": 1e-6},
+    # max_rupturas 1–5. «Tolerancias»: 1e-6. Cota (H-01): 2 520 observaciones (H5 en sesiones).
+    "FX-BRK-001": {"obs_una_ruptura": 30, "obs_varias_rupturas": 50, "rango_max_rupturas": [1, 5], "tolerancia": 1e-6,
+                   "obs_maximas": OBS_MAXIMAS_SERIES},
     # FX-STL-001 · «Entradas mínimas»: ≥ 2 ciclos completos (≥ 3 recomendados). «Tolerancias»: 1e-6.
     # INC-T112-01: suavizador estacional n_s = 7 y bucles (interno, externo) = (2, 15) robusto o (5, 0) sin robustez.
+    # Cotas (H-01): 2 520 observaciones (H5 en sesiones) y periodo ≤ 52, el mayor de los que la ficha deduce de la
+    # frecuencia (semanal) [PROPUESTO]: una estacionalidad anual de datos diarios se estudia en semanas.
     "FX-STL-001": {"ciclos_minimos": 2, "ciclos_recomendados": 3, "tolerancia": 1e-6, "n_s": 7,
-                   "bucles_robusto": [2, 15], "bucles_simple": [5, 0]},
+                   "bucles_robusto": [2, 15], "bucles_simple": [5, 0], "obs_maximas": OBS_MAXIMAS_SERIES,
+                   "periodo_maximo": 52},
     # FX-REGIME-001 · «Entradas mínimas»: ≥ 100 observaciones (≥ 200 recomendadas). «Parámetros»: n_estados 2–3,
     # umbral 0,3–0,7. «Tolerancias»: 1e-6. Arranques: 20, los de REG-HMM-001. INC-T112-01: tope de 1 000 iteraciones.
+    # Cota (H-01) [PROPUESTO]: 756 observaciones, la ventana de datos de las fichas del lote (`senales.ventana_anios` 3 de
+    # la configuración, T-65) en sesiones (252 por año, Catálogo 3.1).
     "FX-REGIME-001": {"obs_minimas": 100, "obs_recomendadas": 200, "rango_n_estados": [2, 3], "rango_umbral": [0.3, 0.7],
-                      "tolerancia": 1e-6, "arranques": 20, "iteraciones_max": 1000},
+                      "tolerancia": 1e-6, "arranques": 20, "iteraciones_max": 1000, "obs_maximas": 756},
     # REG-HMM-001 · «Entradas mínimas»: ≥ 260 semanales o ≥ 120 mensuales. «Parámetros»: n_estados 2–4; arranques ≥ 20
     # («≥ 20 arranques con semilla»). «Tolerancias»: 1e-6. INC-T112-01: tope de 1 000 iteraciones.
+    # Cotas (H-01) [PROPUESTO]: arranques ≤ 50; 520 observaciones (H5, 120 meses, en semanas: 10 años semanales); a lo sumo
+    # 5 variables, el tope multivariante de FX-COINT-001 (5 series).
     "REG-HMM-001": {"obs_minimas": {"semanal": 260, "mensual": 120}, "rango_n_estados": [2, 4], "arranques_minimos": 20,
-                    "tolerancia": 1e-6, "iteraciones_max": 1000},
+                    "tolerancia": 1e-6, "iteraciones_max": 1000, "arranques_maximos": 50, "obs_maximas": 520,
+                    "variables_maximas": 5},
     # FX-COINT-001 · «Entradas mínimas»: ≥ 50 observaciones comunes. «Tolerancias»: 1e-6. INC-T112-01: valores
     # críticos asintóticos (MacKinnon 2010 para ADF y Engle-Granger; MacKinnon, Haug y Michelis 1999, caso 2 de constante
     # restringida, para la traza de Johansen) a los niveles 0,10, 0,05 y 0,01, hasta 5 series.
-    "FX-COINT-001": {"obs_minimas": 50, "tolerancia": 1e-6, "series_maximas": 5, "niveles": [0.01, 0.05, 0.10]},
+    # Cotas (H-01): 2 520 observaciones (H5 en sesiones) y max_rezagos declarado ≤ 24 [PROPUESTO] (dos años de rezagos
+    # mensuales; la regla de ACC-FACT-001 da 8 con 2 520 observaciones).
+    "FX-COINT-001": {"obs_minimas": 50, "tolerancia": 1e-6, "series_maximas": 5, "niveles": [0.01, 0.05, 0.10],
+                     "obs_maximas": OBS_MAXIMAS_SERIES, "rezagos_maximos": 24},
     # BIB-MET-001 · «Tolerancias»: conteos exactos. Granularidades: mensual (por defecto), trimestral, anual.
-    "BIB-MET-001": {"granularidades": ["mensual", "trimestral", "anual"]},
+    # Cotas (H-01) [PROPUESTO]: 20 000 fichas (por encima de F7–F9, almacenes de 7 000–11 000 líneas), 1 200 periodos
+    # (100 años mensuales) y 100 temáticas (el sistema usa TM-01 a TM-18).
+    "BIB-MET-001": {"granularidades": ["mensual", "trimestral", "anual"], "fichas_maximas": 20000,
+                    "periodos_maximos": 1200, "tematicas_maximas": 100},
     # TEM-DIFF-001 · «Entradas mínimas»: ≥ 8 observaciones con un tramo de aceleración. «Método»: fases introducción
     # < 16 %, crecimiento 16–50 %, madurez > 50 % de m; bandas 10/50/90. «Tolerancias»: 1e-6. Horizonte ≤ 30 años
     # (límite de H5 en el Documento 0).
+    # Cotas (H-01): B ≤ 10 000, el máximo del bootstrap de ML-CAL-001 («B (2 000; 1 000–10 000)»); arranques ≤ 200, la
+    # cota de FIR-CURVE-001 (10 × los 20 de la ficha) [PROPUESTO]; 360 observaciones y puntos de previsión (30 años, el
+    # límite de H5, en meses: «anuales o equivalentes») [PROPUESTO]; 10 escenarios de techo m [PROPUESTO].
     "TEM-DIFF-001": {"obs_minimas": 8, "fases": [0.16, 0.50], "cuantiles_bandas": [0.10, 0.50, 0.90],
-                     "tolerancia": 1e-6, "horizonte_max": 30},
+                     "tolerancia": 1e-6, "horizonte_max": 30, "B_maximo": 10000, "arranques_maximos": 200,
+                     "obs_maximas": 360, "escenarios_maximos": 10},
 }
 
 # Advertencias obligatorias de entrega («Supuestos y limitaciones» de cada ficha).
@@ -161,6 +189,11 @@ def _rango(x: Any, que: str, lo: float | None = None, hi: float | None = None, a
 
 
 def _entero(x: Any, que: str, lo: int | None = None, hi: int | None = None) -> int:
+    if isinstance(x, (int, np.integer)) and not isinstance(x, (bool, np.bool_)) and hi is not None:
+        v = int(x)   # comparación exacta de enteros: 2⁶³ − 1 no se redondea a 2⁶³ al pasar por float
+        if (lo is not None and v < lo) or v > hi:
+            raise ErrorFicha(f"{que}: {v} fuera del dominio ({lo if lo is not None else '−∞'} a {hi})")
+        return v
     f = _rango(x, que, lo, hi)
     if f != math.floor(f):
         raise ErrorFicha(f"{que}: se esperaba un entero ({f:g})")
@@ -194,8 +227,11 @@ def _lista(x: Any, que: str) -> list[Any]:
     return list(x)
 
 
-def _vector(x: Any, que: str, minimo: int = 1) -> np.ndarray:
-    a = np.array([_num(e, que) for e in _lista(x, que)], dtype=float)
+def _vector(x: Any, que: str, minimo: int = 1, maximo: int | None = None) -> np.ndarray:
+    xs = _lista(x, que)
+    if maximo is not None and len(xs) > maximo:   # la cota se mira antes de convertir (H-01)
+        raise ErrorFicha(f"{que}: {len(xs)} valores (> {maximo}, cota de la ficha)")
+    a = np.array([_num(e, que) for e in xs], dtype=float)
     if len(a) < minimo:
         raise ErrorFicha(f"{que}: {len(a)} valores (< {minimo})")
     return a
@@ -220,6 +256,16 @@ def _fecha(x: Any, que: str) -> date:
         return date.fromisoformat(x.strip()[:10])
     except ValueError as e:
         raise ErrorFicha(f"{que}: fecha no válida ({x!r})") from e
+
+
+def _sin_fuga(fechas: list[str] | list[date] | None, corte: date | None, que: str) -> None:
+    """Punto en el tiempo: ningún dato fechado después de la fecha de corte de la petición (no era conocible)."""
+    if fechas is None or corte is None or not len(fechas):
+        return
+    ultima = max(_fecha(f, que) for f in fechas)
+    if ultima > corte:
+        raise ErrorFicha(f"{que}: dato fechado el {ultima.isoformat()}, posterior a la fecha de corte {corte.isoformat()} "
+                         f"(no conocible)")
 
 
 def _fechas(x: Any, n: int, que: str) -> list[str] | None:
@@ -258,7 +304,7 @@ def _validar(F: str, p: dict[str, Any]) -> None:
         if p.get(clave) is not None:
             p[clave] = _opcion(F, clave, p[clave])
     if "semilla" in p:
-        p["semilla"] = _entero(p["semilla"], f"{F}: semilla", 0)
+        p["semilla"] = _entero(p["semilla"], f"{F}: semilla", 0, SEMILLA_MAXIMA)
     if F == "ST-INF-001":
         p["nivel"] = _rango(p["nivel"], f"{F}: nivel", 0, 1, True, True)
         if p["efecto_potencia"] is not None:
@@ -273,7 +319,7 @@ def _validar(F: str, p: dict[str, Any]) -> None:
         p["recorte"] = _rango(p["recorte"], f"{F}: recorte", 0, 1 / (p["max_rupturas"] + 1), True, False)
     elif F == "FX-STL-001":
         if p["periodo"] is not None:
-            p["periodo"] = _entero(p["periodo"], f"{F}: periodo", 2)
+            p["periodo"] = _entero(p["periodo"], f"{F}: periodo", 2, u["periodo_maximo"])
         p["robusto"] = _booleano(p["robusto"], f"{F}: robusto")
     elif F == "FX-REGIME-001":
         p["n_estados"] = _entero(p["n_estados"], f"{F}: n_estados", *u["rango_n_estados"])
@@ -285,10 +331,10 @@ def _validar(F: str, p: dict[str, Any]) -> None:
     elif F == "REG-HMM-001":
         if p["n_estados"] != "BIC":
             p["n_estados"] = _entero(p["n_estados"], f"{F}: n_estados", *u["rango_n_estados"])
-        p["arranques"] = _entero(p["arranques"], f"{F}: arranques", u["arranques_minimos"])
+        p["arranques"] = _entero(p["arranques"], f"{F}: arranques", u["arranques_minimos"], u["arranques_maximos"])
     elif F == "FX-COINT-001":
         if p["max_rezagos"] != "AIC":
-            p["max_rezagos"] = _entero(p["max_rezagos"], f"{F}: max_rezagos", 0)
+            p["max_rezagos"] = _entero(p["max_rezagos"], f"{F}: max_rezagos", 0, u["rezagos_maximos"])
         nivel = _num(p["nivel"], f"{F}: nivel")
         if not any(math.isclose(nivel, x) for x in u["niveles"]):
             raise ErrorFicha(f"{F}: nivel {nivel:g} sin valor crítico tabulado (admitidos: 0,01, 0,05, 0,10)")
@@ -299,18 +345,20 @@ def _validar(F: str, p: dict[str, Any]) -> None:
                              f"({', '.join(u['granularidades'])})")
         if p["categorias"] != "todas":
             cats = _lista(p["categorias"], f"{F}: categorias")
-            if not cats or not all(isinstance(c, str) and c.strip() for c in cats):
-                raise ErrorFicha(f"{F}: categorias debe ser «todas» o una lista de temáticas")
+            if not cats or len(cats) > u["tematicas_maximas"] or not all(isinstance(c, str) and c.strip() for c in cats):
+                raise ErrorFicha(f"{F}: categorias debe ser «todas» o una lista de 1 a {u['tematicas_maximas']} temáticas")
             p["categorias"] = sorted({c.strip() for c in cats})
     elif F == "TEM-DIFF-001":
-        p["arranques"] = _entero(p["arranques"], f"{F}: arranques", 1)
-        p["B"] = _entero(p["B"], f"{F}: B", 1)
+        p["arranques"] = _entero(p["arranques"], f"{F}: arranques", 1, u["arranques_maximos"])
+        p["B"] = _entero(p["B"], f"{F}: B", 1, u["B_maximo"])
         p["horizonte"] = _rango(p["horizonte"], f"{F}: horizonte", 0, u["horizonte_max"], abierto_lo=True)
         m = p["m"]
         if m is not None:
             if isinstance(m, (list, tuple)):
                 if not m:
                     raise ErrorFicha(f"{F}: m: lista de escenarios vacía")
+                if len(m) > u["escenarios_maximos"]:
+                    raise ErrorFicha(f"{F}: m: {len(m)} escenarios (> {u['escenarios_maximos']}, cota de la ficha)")
                 p["m"] = [_rango(x, f"{F}: m (escenario)", 0, abierto_lo=True) for x in m]
             else:
                 p["m"] = _rango(m, f"{F}: m", 0, abierto_lo=True)
@@ -353,8 +401,10 @@ def _cerrado(F: str) -> Callable[[Manejador], Manejador]:
             for clave in ("valores", "series", "series_rol"):
                 if ent.get(clave) is not None and not isinstance(ent[clave], dict):
                     raise ErrorFicha(f"{F}: «{clave}» debe ser un objeto")
+            # QA r01 (H-07 de otros grupos, contrato de servicio.py): la fecha de corte de la petición, si la hay
+            corte = _fecha(ent["fecha_corte"], f"{F}: fecha_corte") if ent.get("fecha_corte") is not None else None
             ent = {"valores": ent.get("valores") or {}, "series": ent.get("series") or {},
-                   "series_rol": ent.get("series_rol") or {}}
+                   "series_rol": ent.get("series_rol") or {}, "fecha_corte": corte}
             try:
                 with np.errstate(all="ignore"):
                     res, lim = fn(ent, _parametros(F, params))
@@ -373,9 +423,11 @@ def _cerrado(F: str) -> Callable[[Manejador], Manejador]:
     return decorar
 
 
-def _serie_ht01(s: Any, que: str) -> tuple[np.ndarray, list[str]]:
+def _serie_ht01(s: Any, que: str, maximo: int | None = None) -> tuple[np.ndarray, list[str]]:
     if not isinstance(s, pd.Series) or not isinstance(s.index, pd.DatetimeIndex):
         raise ErrorFicha(f"{que}: se esperaba una serie con índice de fechas")
+    if maximo is not None and len(s) > maximo:
+        raise ErrorFicha(f"{que}: {len(s)} observaciones (> {maximo}, cota de la ficha)")
     s = s.sort_index()
     if s.index.has_duplicates:
         raise ErrorFicha(f"{que}: fechas repetidas")
@@ -387,13 +439,18 @@ def _serie_ht01(s: Any, que: str) -> tuple[np.ndarray, list[str]]:
 def _univariante(ent: dict[str, Any], F: str, rendimientos: bool = False) -> tuple[np.ndarray, list[str] | None, str]:
     """Serie de `valores["serie"]` (con `valores["fechas"]` opcional) o la única serie de HT-01 de la petición."""
     v = _dict(ent["valores"], f"{F}: valores")
+    maximo = UMBRALES[F]["obs_maximas"]
     if v.get("serie") is not None:
-        y = _vector(v["serie"], f"{F}: serie")
-        return y, _fechas(v.get("fechas"), len(y), f"{F}: fechas"), "valores"
+        y = _vector(v["serie"], f"{F}: serie", maximo=maximo)
+        fechas = _fechas(v.get("fechas"), len(y), f"{F}: fechas")
+        _sin_fuga(fechas, ent["fecha_corte"], f"{F}: fechas")
+        return y, fechas, "valores"
     series = list(ent["series"].values()) + list(ent["series_rol"].values())
     if len(series) != 1:
         raise ErrorFicha(f"{F}: falta «serie» en valores (o exactamente una serie de HT-01)")
-    y, fechas = _serie_ht01(series[0], f"{F}: serie de HT-01")
+    # en rendimientos, n + 1 precios dan n rendimientos: la cota es la de la serie que entra en el cálculo
+    y, fechas = _serie_ht01(series[0], f"{F}: serie de HT-01", maximo + 1 if rendimientos else maximo)
+    _sin_fuga(fechas, ent["fecha_corte"], f"{F}: serie de HT-01")
     if rendimientos:
         if np.any(y[:-1] == 0):
             raise ErrorFicha(f"{F}: precio nulo en la serie de HT-01 (rendimiento indefinido)")
@@ -440,9 +497,9 @@ def _ic_t(centro: float, ee: float, gl: float, nivel: float, alternativa: str) -
 def _estadisticos(x: Any, que: str, u: dict[str, Any]) -> tuple[float, float, int, np.ndarray | None]:
     """(media, desviación, n, muestra o None) a partir de una muestra o de sus estadísticos suficientes."""
     if isinstance(x, dict):
-        n = _entero(x.get("n"), f"{que}: n", u["n_minimo"])
+        n = _entero(x.get("n"), f"{que}: n", u["n_minimo"], u["obs_maximas"])
         return (_num(x.get("media"), f"{que}: media"), _rango(x.get("desviacion"), f"{que}: desviacion", 0), n, None)
-    a = _vector(x, que)
+    a = _vector(x, que, maximo=u["obs_maximas"])
     if len(a) < u["n_minimo"]:
         raise ErrorFicha(f"{que}: {len(a)} observaciones (< {u['n_minimo']}): los datos no sostienen el contraste")
     return float(a.mean()), float(a.std(ddof=1)), len(a), a
@@ -481,16 +538,20 @@ def _potencia(tipo: str, n: int | tuple[int, int], p: dict[str, Any]) -> dict[st
     if objetivo is not None:
         dos = tipo == "t_welch"
         z = stats.norm.ppf(1 - nivel / 2 if alt == "bilateral" else 1 - nivel) + stats.norm.ppf(objetivo)
-        m = max(2, math.ceil((2 if dos else 1) * (z / d) ** 2))
+        tope = p["obs_maximas"]   # H-01: la búsqueda del n mínimo no pasa de la cota de observaciones de la ficha
+        aprox = (2 if dos else 1) * (z / d) * (z / d)   # inf (no OverflowError) con d diminuto
+        m = max(2, math.ceil(aprox)) if aprox <= tope else tope + 1
 
         def pm(k: int) -> float:
             return pot((k, k)) if dos else pot(k)
-        while pm(m) < objetivo:
+        while m <= tope and pm(m) < objetivo:
             m += 1
-        while m > 2 and pm(m - 1) >= objetivo:
+        while 2 < m <= tope and pm(m - 1) >= objetivo:
             m -= 1
-        out["n_minimo"] = m
+        out["n_minimo"] = m if m <= tope else None
         out["n_minimo_es_por_grupo"] = dos
+        if m > tope:
+            out["n_minimo_supera_cota"] = tope
     return out
 
 
@@ -501,8 +562,8 @@ def _un_contraste(c: dict[str, Any], nombre: str, p: dict[str, Any], lim: list[s
     r: dict[str, Any] = {"tipo": tipo, "alternativa": alt, "mu0": mu0}
     if tipo in ("t_una_muestra", "t_pareado"):
         if tipo == "t_pareado":
-            a = _vector(c.get("muestra_a"), f"{que}: muestra_a")
-            b = _vector(c.get("muestra_b"), f"{que}: muestra_b")
+            a = _vector(c.get("muestra_a"), f"{que}: muestra_a", maximo=p["obs_maximas"])
+            b = _vector(c.get("muestra_b"), f"{que}: muestra_b", maximo=p["obs_maximas"])
             if len(a) != len(b):
                 raise ErrorFicha(f"{que}: muestras pareadas de distinta longitud ({len(a)} y {len(b)})")
             x: Any = list(a - b)
@@ -539,13 +600,13 @@ def _un_contraste(c: dict[str, Any], nombre: str, p: dict[str, Any], lim: list[s
                   "potencia": _potencia(tipo, (n1, n2), p)})
     elif tipo == "wilcoxon":
         if c.get("muestra_a") is not None or c.get("muestra_b") is not None:
-            a = _vector(c.get("muestra_a"), f"{que}: muestra_a")
-            b = _vector(c.get("muestra_b"), f"{que}: muestra_b")
+            a = _vector(c.get("muestra_a"), f"{que}: muestra_a", maximo=p["obs_maximas"])
+            b = _vector(c.get("muestra_b"), f"{que}: muestra_b", maximo=p["obs_maximas"])
             if len(a) != len(b):
                 raise ErrorFicha(f"{que}: muestras pareadas de distinta longitud ({len(a)} y {len(b)})")
             dif = a - b - mu0
         else:
-            dif = _vector(c.get("muestra"), f"{que}: muestra") - mu0
+            dif = _vector(c.get("muestra"), f"{que}: muestra", maximo=p["obs_maximas"]) - mu0
         dif = dif[dif != 0]
         if len(dif) < p["n_minimo"]:
             raise ErrorFicha(f"{que}: menos de {p['n_minimo']} diferencias no nulas: los datos no sostienen el contraste")
@@ -556,8 +617,8 @@ def _un_contraste(c: dict[str, Any], nombre: str, p: dict[str, Any], lim: list[s
                   "efecto": {"tipo": "correlacion_biserial_de_rangos", "valor": (w_mas - w_menos) / (w_mas + w_menos)}})
         lim.append(f"«{nombre}»: contraste de rangos sin IC (solo el p-valor)")
     else:   # mann_whitney
-        a = _vector(c.get("muestra_a"), f"{que}: muestra_a", p["n_minimo"]) - mu0
-        b = _vector(c.get("muestra_b"), f"{que}: muestra_b", p["n_minimo"])
+        a = _vector(c.get("muestra_a"), f"{que}: muestra_a", p["n_minimo"], p["obs_maximas"]) - mu0
+        b = _vector(c.get("muestra_b"), f"{que}: muestra_b", p["n_minimo"], p["obs_maximas"])
         if float(np.ptp(np.concatenate([a, b]))) == 0:
             raise ErrorFicha(f"{que}: todas las observaciones empatadas: los datos no sostienen el contraste")
         res = stats.mannwhitneyu(a, b, alternative=_SCIPY_ALT[alt])
@@ -565,6 +626,10 @@ def _un_contraste(c: dict[str, Any], nombre: str, p: dict[str, Any], lim: list[s
         r.update({"n": [len(a), len(b)], "estadistico": u1, "p_valor": float(res.pvalue), "ic": None,
                   "efecto": {"tipo": "correlacion_biserial_de_rangos", "valor": 2 * u1 / (len(a) * len(b)) - 1}})
         lim.append(f"«{nombre}»: contraste de rangos sin IC (solo el p-valor)")
+    potencia = r.get("potencia")
+    if isinstance(potencia, dict) and potencia.get("n_minimo_supera_cota"):
+        lim.append(f"«{nombre}»: el n mínimo supera la cota de {potencia['n_minimo_supera_cota']} observaciones de la "
+                   f"ficha (n_minimo None)")
     if p["efecto_potencia"] is not None and tipo in ("wilcoxon", "mann_whitney"):
         lim.append(f"«{nombre}»: potencia solo para los contrastes t")
     r["rechaza_h0"] = r["p_valor"] < nivel
@@ -603,13 +668,19 @@ def f_st_inf(ent: dict[str, Any], p: dict[str, Any]) -> Resultado:
         raise ErrorFicha(f"{F}: contraste no declarado (tipo_contraste: {', '.join(_OPCIONES[F]['tipo_contraste'])})")
     v = _dict(ent["valores"], f"{F}: valores")
     if v.get("contrastes") is not None:
-        contrastes = [_dict(c, f"{F}: contraste") for c in _lista(v["contrastes"], f"{F}: contrastes")]
+        lista = _lista(v["contrastes"], f"{F}: contrastes")
+        if len(lista) > p["contrastes_maximos"]:
+            raise ErrorFicha(f"{F}: {len(lista)} contrastes (> {p['contrastes_maximos']}, cota de la ficha)")
+        contrastes = [_dict(c, f"{F}: contraste") for c in lista]
     elif ent["series"]:
         if p["tipo_contraste"] not in ("t_una_muestra", "wilcoxon"):
             raise ErrorFicha(f"{F}: con series de HT-01 solo hay contrastes de una muestra (rendimientos frente a 0)")
+        if len(ent["series"]) > p["contrastes_maximos"]:
+            raise ErrorFicha(f"{F}: {len(ent['series'])} series (> {p['contrastes_maximos']} contrastes, cota de la ficha)")
         contrastes = []
         for alias, s in sorted(ent["series"].items()):
-            y, _ = _serie_ht01(s, f"{F}: serie «{alias}»")
+            y, fs = _serie_ht01(s, f"{F}: serie «{alias}»", p["obs_maximas"] + 1)
+            _sin_fuga(fs, ent["fecha_corte"], f"{F}: serie «{alias}»")
             if np.any(y[:-1] == 0):
                 raise ErrorFicha(f"{F}: precio nulo en «{alias}»")
             contrastes.append({"nombre": str(alias), "muestra": list(y[1:] / y[:-1] - 1), "mu0": 0.0})
@@ -646,7 +717,8 @@ def _coste_segmentos(s: np.ndarray, tipo: str, h: int) -> np.ndarray:
     t = np.arange(n, dtype=float) - (n - 1) / 2
     c1 = np.concatenate([[0.0], np.cumsum(s)])
     c2 = np.concatenate([[0.0], np.cumsum(s * s)])
-    i, j = np.meshgrid(np.arange(n + 1), np.arange(n + 1), indexing="ij")
+    # Índices por difusión (fila i, columna j): las mismas cifras que con meshgrid sin dos matrices de enteros n² (H-01)
+    i, j = np.arange(n + 1)[:, None], np.arange(n + 1)[None, :]
     largo = (j - i).astype(float)
     valido = (j - i) >= h
     with np.errstate(all="ignore"):
@@ -828,10 +900,39 @@ def f_fx_brk(ent: dict[str, Any], p: dict[str, Any]) -> Resultado:
 
 
 # ====================================================================== FX-STL-001
+# H-01: el LOESS se calcula por bloques de posiciones x0 y solo sobre la banda de puntos que pueden pesar, para que el coste
+# sea O(n·q) y no O(n²). Elementos por bloque (técnico: unos 8 MB por matriz de trabajo).
+_LOESS_ELEMENTOS_BLOQUE = 1 << 20
+
+
 def _loess(y: np.ndarray, q: int, w_rob: np.ndarray | None, x0: np.ndarray) -> np.ndarray:
-    """LOESS local lineal con pesos tricúbicos (Cleveland 1979) en las posiciones x0 de una serie equiespaciada."""
+    """LOESS local lineal con pesos tricúbicos (Cleveland 1979) en las posiciones x0 de una serie equiespaciada.
+
+    Los q vecinos más próximos de x0 están a distancia ≤ q (hay q puntos enteros en [x0 − q, x0 + q] si q ≤ m), y los
+    pesos son nulos a distancia ≥ h (la q-ésima distancia): basta la banda [mín x0 − q, máx x0 + q] de cada bloque. Con
+    q > m pesan todos los puntos."""
     m = len(y)
-    x = np.arange(m, dtype=float)
+    x0 = np.asarray(x0, dtype=float)
+    if len(x0) == 0:
+        return np.empty(0)
+    ancho = m if q > m else min(m, 2 * q + 1)
+    # bloques de filas del orden del ancho de la banda: cada bloque mira a lo sumo filas + 2q puntos
+    filas = max(16, min(ancho, _LOESS_ELEMENTOS_BLOQUE // (3 * ancho)))
+    out = np.empty(len(x0))
+    for a in range(0, len(x0), filas):
+        xs = x0[a:a + filas]
+        if q > m:
+            lo, hi = 0, m
+        else:
+            lo = max(0, math.floor(float(xs.min())) - q)
+            hi = min(m, math.ceil(float(xs.max())) + q + 1)
+        out[a:a + filas] = _loess_banda(y[lo:hi], q, None if w_rob is None else w_rob[lo:hi], xs, lo, m)
+    return out
+
+
+def _loess_banda(y: np.ndarray, q: int, w_rob: np.ndarray | None, x0: np.ndarray, lo: int, m: int) -> np.ndarray:
+    """LOESS en x0 con los puntos lo, lo + 1, … de la serie (y es su tramo); m es la longitud de la serie entera."""
+    x = np.arange(lo, lo + len(y), dtype=float)
     d = np.abs(x0[:, None] - x[None, :])
     if q <= m:
         h = np.partition(d, q - 1, axis=1)[:, q - 1]
@@ -1268,12 +1369,15 @@ def f_reg_hmm(ent: dict[str, Any], p: dict[str, Any]) -> Resultado:
     variables = _dict(v.get("variables"), f"{F}: «variables» (nombre → lista)") if v.get("variables") is not None else None
     if not variables:
         raise ErrorFicha(f"{F}: faltan «variables» (nombre → serie de datos de entrenamiento)")
+    if len(variables) > p["variables_maximas"]:
+        raise ErrorFicha(f"{F}: {len(variables)} variables (> {p['variables_maximas']}, cota de la ficha)")
     nombres = sorted(variables)
-    cols = [_vector(variables[c], f"{F}: variable «{c}»") for c in nombres]
+    cols = [_vector(variables[c], f"{F}: variable «{c}»", maximo=p["obs_maximas"]) for c in nombres]
     n = len(cols[0])
     if any(len(c) != n for c in cols):
         raise ErrorFicha(f"{F}: las variables tienen longitudes distintas")
     fechas = _fechas(v.get("fechas"), n, f"{F}: fechas")
+    _sin_fuga(fechas, ent["fecha_corte"], f"{F}: fechas")
     frec = v.get("frecuencia")
     if fechas is not None and len(fechas) >= 3:
         inf = _frecuencia(fechas)
@@ -1481,18 +1585,24 @@ def f_fx_coint(ent: dict[str, Any], p: dict[str, Any]) -> Resultado:
         nombres = list(d)
         if len(nombres) < 2:
             raise ErrorFicha(f"{F}: se necesitan al menos dos series")
-        cols = [_vector(d[c], f"{F}: serie «{c}»") for c in nombres]
+        if len(nombres) > p["series_maximas"]:
+            raise ErrorFicha(f"{F}: {len(nombres)} series (> {p['series_maximas']}, límite de las tablas de valores críticos)")
+        cols = [_vector(d[c], f"{F}: serie «{c}»", maximo=p["obs_maximas"]) for c in nombres]
         if len({len(c) for c in cols}) != 1:
             raise ErrorFicha(f"{F}: las series en línea deben tener la misma longitud (observaciones comunes)")
         Y = np.column_stack(cols)
         fechas = _fechas(v.get("fechas"), len(cols[0]), f"{F}: fechas")
+        _sin_fuga(fechas, ent["fecha_corte"], f"{F}: fechas")
     elif ent["series"]:
         nombres = list(ent["series"])
+        if len(nombres) > p["series_maximas"]:
+            raise ErrorFicha(f"{F}: {len(nombres)} series (> {p['series_maximas']}, límite de las tablas de valores críticos)")
         for c in nombres:
             _serie_ht01(ent["series"][c], f"{F}: serie «{c}»")
         df = pd.concat([ent["series"][c].rename(c) for c in nombres], axis=1, join="inner").sort_index()
         Y = df.to_numpy(dtype=float)
         fechas = [i.date().isoformat() for i in df.index]
+        _sin_fuga(fechas, ent["fecha_corte"], f"{F}: series de HT-01")
     else:
         raise ErrorFicha(f"{F}: faltan las «series» (al menos dos)")
     if len(nombres) < 2:
@@ -1502,6 +1612,8 @@ def f_fx_coint(ent: dict[str, Any], p: dict[str, Any]) -> Resultado:
     if len(nombres) > p["series_maximas"]:
         raise ErrorFicha(f"{F}: {len(nombres)} series (> {p['series_maximas']}, límite de las tablas de valores críticos)")
     T_, q = Y.shape
+    if T_ > p["obs_maximas"]:
+        raise ErrorFicha(f"{F}: {T_} observaciones comunes (> {p['obs_maximas']}, cota de la ficha)")
     if T_ < p["obs_minimas"]:
         raise ErrorFicha(f"{F}: {T_} observaciones comunes (< {p['obs_minimas']})")
     if np.any(np.ptp(Y, axis=0) == 0):
@@ -1600,6 +1712,8 @@ def f_bib_met(ent: dict[str, Any], p: dict[str, Any]) -> Resultado:
     fichas = _lista(v.get("fichas"), f"{F}: fichas") if v.get("fichas") is not None else []
     if not fichas:
         raise ErrorFicha(f"{F}: conjunto de fichas vacío")
+    if len(fichas) > p["fichas_maximas"]:
+        raise ErrorFicha(f"{F}: {len(fichas)} fichas (> {p['fichas_maximas']}, cota de la ficha)")
     registros = []
     for i, fi in enumerate(fichas):
         if not isinstance(fi, dict):
@@ -1614,6 +1728,7 @@ def f_bib_met(ent: dict[str, Any], p: dict[str, Any]) -> Resultado:
                           "tematica": fi["tematica"].strip(), "fuente": fi["fuente"].strip(),
                           "titulo": _titulo_normalizado(fi["titulo"]) if fi.get("titulo") else None,
                           "hash": str(fi["hash"]).strip().lower() if fi.get("hash") else None})
+    _sin_fuga([r["fecha"] for r in registros], ent["fecha_corte"], f"{F}: fichas")
     if len({r["id"] for r in registros}) != len(registros):
         raise ErrorFicha(f"{F}: conjunto corrupto (identificadores repetidos)")
     if p["categorias"] != "todas":
@@ -1622,7 +1737,16 @@ def f_bib_met(ent: dict[str, Any], p: dict[str, Any]) -> Resultado:
             raise ErrorFicha(f"{F}: ninguna ficha en las categorías pedidas")
     total = len(registros)
     gran = p["granularidad"]
-    periodos = _periodos_entre(min(r["fecha"] for r in registros), max(r["fecha"] for r in registros), gran)
+    n_tematicas = len({r["tematica"] for r in registros})
+    if n_tematicas > p["tematicas_maximas"]:
+        raise ErrorFicha(f"{F}: {n_tematicas} temáticas (> {p['tematicas_maximas']}, cota de la ficha)")
+    f_ini, f_fin = min(r["fecha"] for r in registros), max(r["fecha"] for r in registros)
+    paso = {"mensual": 1, "trimestral": 3, "anual": 12}[gran]
+    n_periodos = ((f_fin.year - f_ini.year) * 12 + f_fin.month - 1) // paso - (f_ini.month - 1) // paso + 1
+    if n_periodos > p["periodos_maximos"]:
+        raise ErrorFicha(f"{F}: {n_periodos} periodos {gran}es (> {p['periodos_maximos']}, cota de la ficha): "
+                         f"pida una granularidad más gruesa")
+    periodos = _periodos_entre(f_ini, f_fin, gran)
     por_periodo = dict.fromkeys(periodos, 0)
     por_tematica: dict[str, int] = {}
     por_fuente: dict[str, int] = {}
@@ -1667,6 +1791,8 @@ def f_bib_met(ent: dict[str, Any], p: dict[str, Any]) -> Resultado:
     pr = None
     if v.get("referencia") is not None:
         ref = _lista(v["referencia"], f"{F}: referencia")
+        if len(ref) > p["fichas_maximas"]:
+            raise ErrorFicha(f"{F}: referencia con {len(ref)} identificadores (> {p['fichas_maximas']}, cota de la ficha)")
         if not ref or not all(isinstance(x, str) and x for x in ref):
             raise ErrorFicha(f"{F}: referencia: lista de identificadores no vacía")
         G, Rr = set(ref), {r["id"] for r in registros}
@@ -1767,6 +1893,11 @@ def _inicios(modelo: str, t: np.ndarray, y: np.ndarray, origen: float, m_fijo: f
     return out
 
 
+def _anio_decimal(f: date) -> float:
+    """Año decimal de una fecha: año + (día del año − 1)/días del año."""
+    return f.year + (f.timetuple().tm_yday - 1) / (date(f.year + 1, 1, 1) - date(f.year, 1, 1)).days
+
+
 def _fase(cuota: float, umbrales: list[float]) -> str:
     return "introduccion" if cuota < umbrales[0] else ("crecimiento" if cuota <= umbrales[1] else "madurez")
 
@@ -1783,18 +1914,25 @@ def f_tem_diff(ent: dict[str, Any], p: dict[str, Any]) -> Resultado:
     v = _dict(ent["valores"], f"{F}: valores")
     if v.get("adopcion") is None:
         raise ErrorFicha(f"{F}: falta «adopcion» (serie de adopción acumulada)")
-    y = _vector(v["adopcion"], f"{F}: adopcion")
+    y = _vector(v["adopcion"], f"{F}: adopcion", maximo=p["obs_maximas"])
     n = len(y)
     if v.get("anios") is not None:
-        t = _vector(v["anios"], f"{F}: anios")
+        t = _vector(v["anios"], f"{F}: anios", maximo=p["obs_maximas"])
         if len(t) != n:
             raise ErrorFicha(f"{F}: {len(t)} años para {n} observaciones")
+        corte = ent["fecha_corte"]
+        if corte is not None and float(np.max(t)) > _anio_decimal(corte):
+            raise ErrorFicha(f"{F}: anios: observación en {float(np.max(t)):g}, posterior a la fecha de corte "
+                             f"{corte.isoformat()} (no conocible)")
     elif v.get("fechas") is not None:
-        fs = [_fecha(f, f"{F}: fechas") for f in _lista(v["fechas"], f"{F}: fechas")]
+        lf = _lista(v["fechas"], f"{F}: fechas")
+        if len(lf) != n:
+            raise ErrorFicha(f"{F}: {len(lf)} fechas para {n} observaciones")
+        fs = [_fecha(f, f"{F}: fechas") for f in lf]
+        _sin_fuga(fs, ent["fecha_corte"], f"{F}: fechas")
         if len(fs) != n:
             raise ErrorFicha(f"{F}: {len(fs)} fechas para {n} observaciones")
-        t = np.array([f.year + (f.timetuple().tm_yday - 1) / (date(f.year + 1, 1, 1) - date(f.year, 1, 1)).days
-                      for f in fs])
+        t = np.array([_anio_decimal(f) for f in fs])
     else:
         raise ErrorFicha(f"{F}: faltan «anios» o «fechas» de la serie")
     if n < p["obs_minimas"]:
@@ -1807,6 +1945,10 @@ def f_tem_diff(ent: dict[str, Any], p: dict[str, Any]) -> Resultado:
     if not np.any((dy[1:] > dy[:-1]) & (dy[:-1] > 0)):
         raise ErrorFicha(f"{F}: sin tramo de aceleración observado (ningún incremento positivo seguido de otro mayor)")
     paso = float(np.median(np.diff(t)))
+    n_futuro = math.floor(p["horizonte"] / paso + EPS)
+    if n_futuro > p["obs_maximas"]:
+        raise ErrorFicha(f"{F}: {n_futuro} puntos de previsión con paso {paso:g} años (> {p['obs_maximas']}, cota de la "
+                         f"ficha): acorte el horizonte o use una frecuencia más baja")
     origen = _num(v["lanzamiento"], f"{F}: lanzamiento") if v.get("lanzamiento") is not None else float(t[0]) - paso
     if origen >= t[0]:
         raise ErrorFicha(f"{F}: el lanzamiento debe ser anterior a la primera observación")
@@ -1854,7 +1996,7 @@ def f_tem_diff(ent: dict[str, Any], p: dict[str, Any]) -> Resultado:
     out = resumen(elegido, th)
     if out["inflexion_anio"] is None:
         lim.append("Bass con q ≤ p: sin punto de inflexión posterior al lanzamiento")
-    futuro = t[-1] + paso * np.arange(1, math.floor(p["horizonte"] / paso + EPS) + 1)
+    futuro = t[-1] + paso * np.arange(1, n_futuro + 1)
     if len(futuro) == 0:
         futuro = np.array([t[-1] + p["horizonte"]])
     ajustado = _curva(elegido, t, th, origen)
