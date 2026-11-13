@@ -45,3 +45,19 @@ Mutantes (`r02_mutantes.py`, 44, contra `tests/test_t102_filtro.py`): 40 muertos
 | `revisores/r03_02_banco_prompt.py` | legítimas quitadas 1/128; prohibidas que pasan 26/45 | legítimas quitadas 1/128; prohibidas que pasan 2/45 (y 2/3 límites) |
 
 Cuotas: ruff 2908 y mypy de A 109, sin cambios. A en total y el gate: los da el commit (`commit_limpio.sh`).
+
+## Ronda r05
+
+| Suite | r04 | r05 |
+| --- | --- | --- |
+| `test_t102_filtro.py` | 111 | 182 (H-31 a H-33, H-35 a H-39 y una frase por mutante vivo) |
+| `test_t101_v6.py` | 73 | 73 |
+
+Scripts de la QA r04 en el árbol de la r05:
+- `r04_10_banco_control.py . --detalle`: legítimas quitadas 0/55; prohibidas que pasan 3/44, las tres de H-34 (límite declarado, T-109). De las exóticas, pasan 0/5; de las 9 de control, se quitan las 9;
+- `r04_11_camino_real.py .`: `fugas`, llegan 3/3 (las de H-34); `listas`, llegan 0/6; `cli`, sin fallos y sin frases quitadas del simulado;
+- `r04_12_rendimiento.py .`: 0,97 s en total y ningún caso no lineal;
+- `r04_13_mutantes.py <copia> 3 todos`: mueren 31 de 45; sobrevive N45, que la QA r04 ya dio por equivalente (H-38); no aplican 13, cuyas reglas la r05 quitó porque otras más generales las cubren;
+- `r03_03_mutantes.py <copia> 3 todos`: mueren 16 y no sobrevive ninguno; 22 no aplican.
+
+Cuotas: ruff 2908 y mypy de A 109, sin cambios.

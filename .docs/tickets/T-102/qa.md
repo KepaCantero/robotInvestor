@@ -332,3 +332,149 @@ Lo que está bien:
 - Los marcadores se rellenan después de filtrar y fallan cerrado, la declaración es completa, la V5 no cambia y el gate da 12/12.
 
 Cierre: este revisor no cambia el estado del ticket ni hace commit (instrucción de la ronda). Tras la corrección, volverá a ejecutar `r03_01_ataques.py`, `r03_02_banco_prompt.py` y `r03_03_mutantes.py` (y los de las r01 y r02) y añadirá la ronda r04.
+
+## Ronda r04
+
+- **Revisor:** Claude, revisor nuevo sin el contexto de la implementación ni de las rondas anteriores · **Ronda:** r04 (relanzada entera) · 2026-11-13
+- **Objeto:** HEAD de `develop`, `b36176a`. El código de la r04 entró en `5642ed0`, y se compara con su padre `7064f60` (el código de la r03). Entre `5642ed0` y `b36176a` solo hay commits de T-88, T-91 y T-106: no tocan `diseno_v6.py`, `redaccion.py`, el prompt ni `v6.filtro_r21_codigos` (en `sintesis.py` y en la configuración solo cambia el texto del criterio de resolución de T-91).
+- **La QA r04 anterior,** detenida a mitad y sin veredicto, dejó `r04_01` a `r04_06`. No se han usado: esta ronda tiene sus propios scripts (`r04_10` a `r04_14`).
+- **Lectura:** la skill `ri-qa`, `CLAUDE.md`, `.docs/README.md`, el README del ticket (CA-1 a CA-14), la ronda r03 de este `qa.md`, el código (`diseno_v6.py` desde «Filtro de los textos del Sintetizador» hasta `sintetizar`), `v6.filtro_r21_codigos`, §4 del prompt del Sintetizador V6 y la fila T-102 de la deuda. `analisis-tecnico.md` (ronda r04) y `pruebas.md` se leyeron **después** de escribir las primeras sondas, para contrastar.
+
+### Reproducción desde limpio
+
+- **Copias limpias:** `git worktree add --detach` de `b36176a`, `5642ed0` y `7064f60` en la carpeta temporal de la sesión, con el `.venv` del proyecto enlazado. Se quitan al terminar. Los scripts comprueban que importan el código de la copia (`r03_comun.preparar`). La orden `bloque-a` de `r04_11 -k cli` pone la ruta a mano, porque con `-I` el `.venv` importaría el paquete editable del árbol principal.
+- **Gate** (`./tools/check_all.sh` completo en la copia de `b36176a`): **12/12**. Corpus íntegro (695 archivos); ruff 2908; mypy A 109, FX 174 y B 159, iguales a las cuotas; pytest A **1333** ≥ 607, A-Forex 68 y B 176.
+- **La V5 no cambia** (`T-101/revisores/r01_v5_sin_cambios.py`, `7064f60` frente a `5642ed0`, doce perfiles):
+  - runs, multiconjunto de llamadas y paquetes JSON, iguales;
+  - el estado solo difiere en el orden de `cache_resultados.jsonl`, en el sello de F5 y en la cuarta cifra decimal del consumo (54,8918 frente a 54,8919 UC). Es la carrera entre hilos ya conocida: `7064f60` frente a sí mismo, en tres ejecuciones, da las mismas dos diferencias.
+  - Frente a `b36176a` cambian además los `criterio_resolucion` de los paquetes, por T-91, no por T-102.
+- **`test_t102_filtro.py`:** tiene **112** pruebas (`pruebas.md` dice 111) y `test_t101_v6.py` tiene 73.
+
+**Scripts de las rondas anteriores, otra vez sobre `b36176a`** (desde la raíz, `.venv/bin/python -I <script> <copia>`):
+
+| Script | Resultado | Lectura |
+| --- | --- | --- |
+| `r03_01_ataques.py` | 9 OK · 2 FALLO | R13 0/26 pasan. R21: pasan 4/30, los cuatro límites declarados («…es nvda», «…es Nvda», «Comprar COP…», «Comprar F ya»), y llegan a los entregables. Marcadores, `nombre_llano`, glosario que no es texto, campos sin filtrar, reescritura, frase a frase y rendimiento (0,47 s): OK |
+| `r03_02_banco_prompt.py` | legítimas quitadas 1/128 · prohibidas que pasan 1/45 | La legítima es «La curva de los UST se empina con la FED en pausa.»: UST sale de la lista en la r04. La prohibida que pasa es «…es nvda», un límite declarado. Fuera de la lista se quita 1/20 («MUY») |
+| `r03_04_prototipo_cifra.py` | igual que `r03_02`; 3/89 sin dígitos de la r02 quitadas | Ahora es solo informativo |
+| `r03_03_mutantes.py <copia> 3 todos` | 38 mutantes: 20 no aplican (código reescrito), 11 mueren y 7 sobreviven a las dos baterías (Q11, Q18, Q19, Q23, Q24, Q29 y Q36; con «completo», 185 pruebas) | Ver H-29 |
+| `r02_banco_nuevo.py` | FP 101/187 (99 CIFRA con dígitos, 2 R21) · FN 0/88 | Las dos R21: «Sobreponderar ETF de RF a corto plazo…» (H-36) y «…FTSE EPRA Nareit…» (EPRA no está en la lista) |
+| `r02_ataques_t102.py` | 8 OK · 3 FALLO · 2 OBS | Los FALLO son el coste del diseño aceptado en la r03 (horizontes «H3», `opp_id`, magnitudes con cifra) |
+| `r01_banco_frases.py` | FP 42/107 (34 con dígitos y 8 R21, tickers del universo citados como ejemplo) · FN 0/58 | Como en la r03 |
+| `r01_ataques_t102.py` | 8 OK · 7 FALLO · 1 OBS | Como en la r03: frases con cifra que se quitan a propósito, o comparaciones con el texto sin rellenar. Ninguna fuga |
+| `r01_mutantes.py`, `r02_mutantes_revisor.py`, `../r02_mutantes.py` | solo con `test_t102_filtro.py`: `r01_mutantes` 16 mueren, 2 vivos (Q04, Q15) y 20 no aplican; `r02_mutantes_revisor` 2 mueren, 7 vivos y 27 no aplican; `r02_mutantes` 10 mueren, 1 vivo (M22) y 33 no aplican | Mutan expresiones que ya no existen |
+
+**Scripts nuevos** (en `revisores/`, prefijo `r04_1x`; desde la raíz, `.venv/bin/python -I <script> <raíz de la copia>`):
+- `r04_10_banco_control.py`: banco **propio**, escrito sin mirar los bancos anteriores ni las pruebas.
+  - Legítimas escritas como pide el prompt: 22 llanas, 16 con siglas, 6 con marcadores, 6 con expresiones de tiempo o lugar («medio plazo», «segunda mitad», «Oriente Medio») y 5 con regiones tras un vehículo genérico.
+  - Prohibidas sin dígitos: 20 R13 en letra, 4 R13 con marcadores, 10 sufijos, 6 códigos partidos por invisibles y 4 tickers tras un vehículo en español.
+  - Aparte, sin contar: 7 ambiguas, 4 límites declarados y 5 escrituras exóticas.
+  - Con `--lista` saca una línea por frase.
+- `r04_11_camino_real.py`: el ciclo V6 real, con el cliente simulado. Partes:
+  - `fugas`: cada prohibida que pasa la unidad, en todos los textos del Sintetizador;
+  - `listas`: R13 en lista o partido en líneas;
+  - `legitimas`: qué queda en el informe cuando se quita una legítima;
+  - `cli`: la orden `bloque-a --cliente mock … ciclo` con `diseno: v6` y los doce tipos.
+- `r04_12_rendimiento.py`: 22 textos degenerados, a n y 2n caracteres, para ver si el tiempo crece de forma lineal.
+- `r04_13_mutantes.py`: 45 mutantes (N01 a N45) de las piezas de la r04, con el método de las r02 y r03 (copia por mutante en TMPDIR).
+- `r04_14_regresion.py`: el banco de `r04_10` con dos raíces (r03 frente a r04): regresiones, falsos positivos nuevos y mejoras.
+
+### Tasas
+
+| Medida (`r04_10`, `r04_11`, `r04_12`, `r04_14`) | `7064f60` (r03) | `b36176a` (r04) |
+| --- | --- | --- |
+| Legítimas llanas, con siglas y con marcadores quitadas | 0/44 | 0/44 |
+| Legítimas con «medio», «mitad»… o con una región tras un vehículo quitadas | 1/11 | **10/11** |
+| R13 en letra que pasa | 13/20 | **17/20** (5 regresiones) |
+| R13 compuesta con marcadores que pasa | 4/4 | 2/4 |
+| Sufijos societarios que pasan | 8/10 | 6/10 |
+| Códigos partidos por invisibles o combinantes que pasan | 5/6 | 4/6 |
+| Ticker en minúscula tras «acción», «valor» o «título» que pasa | 4/4 | 3/4 (solo se caza «el ETF qqq») |
+| **Prohibidas que pasan, en total** | 34/44 | **32/44 (72,7 %)** |
+| Por el camino real (`r04_11 -k fugas`): llegan al JSON, al HTML y al informe técnico sin declararse | — | **32/32**, con G3 APTO_CON_ADVERTENCIAS |
+| R13 en lista o en líneas (`r04_11 -k listas`) | — | **6/6 llegan**; 4 sin declarar nada, con G3 APTO |
+| `bloque-a --cliente mock … ciclo`, V6, doce tipos (`r04_11 -k cli`) | — | termina con código 0, 3 entregables, el Sintetizador se llama y no se quita ninguna frase del simulado |
+| Rendimiento (`r04_12`, n = 20 000) | — | total 15,9 s; 4 casos no lineales (`_SUFIJO`) |
+
+### Criterios de aceptación
+
+| Criterio | Cumple | Evidencia |
+| --- | --- | --- |
+| CA-11 | sí | Un marcador desconocido, anidado, doble, en mayúsculas o con llave suelta quita la frase (`r03_01 -k marcadores`), y las llaves de ancho completo se rellenan. Los compuestos con «sobre», «de cada» o «%» se quitan (N10 y N12 mueren). Reserva: «〔n_ideas〕» llega como texto (exótico) |
+| CA-12 | **no** | Llegan a los tres entregables sin declararse probabilidades numéricas en letra: «una de cada tres», «siete veces de cada diez», «una cuarta parte de probabilidad», «tres contra uno», «sesenta-cuarenta», también en lista (H-31). También llegan sufijos («Enel SpA», «Toyota Motor Co.», «Rio Tinto Limited», H-32) y códigos partidos por caracteres invisibles, que en pantalla se leen enteros (H-33) |
+| CA-13 | **no** | Se quitan 10 de 11 legítimas sin ninguna cifra: con «medio plazo», «segunda mitad» u «Oriente Medio» junto a «probable», «escenario», «confianza» o «certeza» (H-35), y con «las acciones de Europa», «el fondo Europa del Este» o «Cada ETF…» (H-36). En el banco de la r03, 1/128 (UST) |
+| CA-14 | **no** (por CA-9) | CA-3 sí: una frase quitada no tira la otra del mismo texto, y lo vacío toma su defecto (`r04_11 -k legitimas`, `r03_01 -k frase_a_frase`). CA-4 sí: se declara, también el glosario FORMATO, y G3 no bloquea. CA-8 sí (`r02_ataques -k idempotencia`). **CA-9 no:** 20 000 caracteres de «A.» tardan 4,7 s y 40 000 tardan 18 s; los textos degenerados de `r04_12` suman 15,9 s (H-37) |
+| CA-3, CA-4, CA-8 | sí | Arriba |
+| CA-5 | sí | V5 sin cambios atribuibles a T-102, A 1333 ≥ 607, cuotas iguales y gate 12/12 |
+| CA-9 | **no** | H-37 (los de las r01 a r03 sí: 0,47 s) |
+| CA-10 | sí, con reserva | `test_cada_campo_por_el_camino_real` existe y mata N41, pero sobreviven a las dos baterías 15 de 45 mutantes de la r04 y 7 de la r03 (H-38) |
+
+### Estado de los hallazgos de la r03
+
+| ID | Estado en `b36176a` | Evidencia |
+| --- | --- | --- |
+| H-20 (alta) | **corregido para sus casos, la clase sigue abierta** | Los 26 ataques de `r03_01 -k r13` y los 17 de `r03_02` (`r13_letra`) se quitan. Pero la r04 rehízo la cifra en letra, y con ello deja pasar «una de cada tres» y «N veces de cada M», que en la r03 se quitaban. Además pasan las fracciones en femenino y las cuotas (H-31) |
+| H-21 (alta) | corregido | «Apple Inc.», «Microsoft Corp.», «Tesla, Inc.», «Unilever plc.» y «el ETF MSCI World IWDA» se quitan. Quedan otros sufijos (H-32) |
+| H-22 (media) | corregido, salvo los límites declarados | Minúsculas tras ETF/REIT/fondo, homoglifos griegos y cirílicos, códigos pegados, una letra tras un vehículo y colisiones con una calificación: se quitan. Los límites (minúscula sin vehículo, COP, una letra) están en `analisis-tecnico.md`. Quedan los invisibles (H-33) y los vehículos en español (H-34) |
+| H-23 (media) | corregido para «sobre», «entre», «de cada», «/», «%» y los marcadores pegados | Quedan «{n} veces de cada {m}» y «{n} contra {m}» (en H-31) |
+| H-24 (media) | corregido | Glosario con lista, número u objeto: se quita como FORMATO, se declara y el ciclo sigue (`r03_01 -k glosario_no_texto`; N31 muere) |
+| H-25 (media) | corregido | La instrucción lleva la lista y se añaden las siglas corrientes; «Las SICAV» se conserva. Coste: UST sale de la lista y «La curva de los UST…» se quita. La lista que recibe el modelo incluye G7, G10 y G20, que CIFRA quita siempre (H-39) |
+| H-26 (baja) | corregido | `_SEPARADOR`: 50 000 espacios en 0,03 s (N35 muere). Pero `_SUFIJO` es cuadrático (H-37), y los textos se siguen recortando **después** de filtrar |
+| H-27 (baja) | corregido | Un `nombre_llano` que incumple la regla se cambia por «esta idea» (N30 y N44 mueren) |
+| H-28 (baja) | corregido | «｛n_ideas｝» se rellena y «❴ ❵» quitan la frase (N11 y N32 mueren) |
+| H-29 (media) | **sigue abierto en parte** (pasa a H-38) | `r03_03_mutantes.py <copia> 3 todos` y, los vivos, `completo`. Q25 muere ahora. Q04, Q09, Q12, Q14, Q15, Q22, Q28 y Q38 ya no aplican, y sus equivalentes en la r04 (N43, N37, N36) siguen vivos, salvo N01. Siguen vivos Q18 (par sin barra), Q19 (códigos de dos letras), Q23 y Q24 (valores de `{n_tipos}` y `{n_apuestas}`, que la r04 dice cubrir con valores calculados aparte), Q29 (el término del glosario no se rellena) y Q36 (el historial vacío no toma su defecto). Q11 (sin `_UNITARIA`), que en la r03 moría, ahora sobrevive |
+| H-30 (baja) | **sigue abierto** | La sección r04 de `pruebas.md` sigue sin el total de A ni el gate («los da el commit») y dice 111 pruebas, cuando son 112. El «Plan de pruebas» del README sigue con CA-1, CA-2 y los «54 casos» |
+
+### Hallazgos
+
+| ID | Gravedad | Cómo reproducirlo | Esperado / obtenido | Corrección sugerida | Estado |
+| --- | --- | --- | --- | --- | --- |
+| H-31 | **alta** | `r04_10_banco_control.py <raíz>` (grupos `r13_letra` y `r13_marcador`), `r04_11_camino_real.py <raíz> -k fugas` y `-k listas`, y `r04_14_regresion.py <copia 7064f60> <copia b36176a>` | **Esperado:** CA-12, «ninguna frase con una cifra (también en letra)»; R13; §4 del prompt: «ni «siete de cada diez»». **Obtenido:** pasan 17 de 20 probabilidades o frecuencias en letra y llegan al paquete JSON, al HTML y al informe técnico **sin declararse**. **Hay regresión frente a la r03:** la r03 quitaba cualquier «de cada N» (`\bde\s+cada\s+(dos…cien)`), y la r04 exige un número en letra delante (`{N} de cada {N}`). Por eso vuelven a pasar «Sube una de cada tres veces» («una» no está en `_NUM_LETRA`, «uno» sí), «Una de cada dos semanas…», «Sube siete veces de cada diez», «De cada diez veces, siete…» y «Una vez de cada cuatro…». El README del ejecutor pone «de cada diez» como ejemplo de lo que se quita. Pasan también: fracciones en femenino («una cuarta parte de probabilidad», «una tercera parte de probabilidad», «dos terceras partes de las simulaciones»); cuotas («tres a uno», «tres contra uno», «sesenta-cuarenta», «cincuenta-cincuenta»); «siete de diez», «nueve de diez veces», «tres por mil»; y marcadores con «veces de cada» o «contra», que salen como «3 veces de cada 6» y «3 contra 1». **En lista** (la forma de H-11 de la r02), la palabra de probabilidad va en una línea y el número en otra, y pasa el texto entero: «Probabilidades por escenario:\n- base: la mitad\n- alcista: un cuarto\n- bajista: un cuarto» llega íntegro, con G3 APTO y sin declararse. Con «;» se quita la primera frase y quedan «alcista, un cuarto; bajista, otro cuarto» | Volver a quitar «de cada N» sin nada delante, añadir «una» y las fracciones en femenino («tercera(s)», «cuarta(s)», «quinta(s)», «décima(s)», «parte(s)»), y «N a M», «N contra M», «N-M» y «por mil» con números en letra; y los marcadores con «veces de cada», «contra», « a ». Para las listas: mirar la palabra de probabilidad en todo el **texto** (no en la frase) y quitar las frases del mismo texto que lleven un número en letra. Más sencillo y más fiel al prompt («ninguna cifra»): tratar como cifra **cualquier** número en letra del texto libre, salvo una lista corta de giros («medio plazo», «segunda mitad», «uno de los», «Oriente Medio»), lo que corrige también H-35. Las frases de `r04_10` y `r04_11 -k listas`, a `test_t102_filtro.py`, también por el camino real | abierto |
+| H-32 | media | `r04_10_banco_control.py <raíz>` (grupo `r21_sufijo`) y `r04_11 -k fugas` | **Esperado:** el comentario de la regla y el README del ejecutor dicen que se quita la frase con «un sufijo societario o de fondo». **Obtenido:** llegan a los tres entregables sin declararse «Recomendamos Enel SpA.», «Recomendamos Enel S.p.A. para la cartera.», «Comprar Toyota Motor Co. ya.», «Comprar Rio Tinto Limited.», «Vender Deutsche Bank Aktiengesellschaft.» y «Recomendamos apple inc.». En el último, el sufijo va en minúscula, pero `_SUFIJO` exige que el nombre empiece en mayúscula | Añadir SpA, S.p.A., Co., Limited, LLC, GmbH, KGaA, Aktiengesellschaft, Holdings, Group y S.L. (sin distinguir mayúsculas), y aceptar un nombre en minúscula delante de un sufijo en minúscula. Las frases, a las pruebas | abierto |
+| H-33 | media | `r04_10_banco_control.py <raíz>` (grupo `r21_invisible`) y `r04_11 -k fugas` | **Esperado:** «ningún código en mayúsculas que sea un instrumento, esté donde esté». **Obtenido:** «Comprar N​V​D​A ya.» (espacio de ancho cero), con guion blando (U+00AD), con unión de palabras (U+2060) o con un subrayado combinante (U+0332) entre las letras, pasa y llega a los tres entregables sin declararse. En pantalla se lee «NVDA». NFKC no quita estos caracteres, y con una sola letra entre ellos no queda ningún código de dos o más. Con trozos de dos letras («NV​DA») sí se caza. Aparte (exótico, baja): el cheroqui «ᏚᏢᎩ», las versalitas «ɴᴠᴅᴀ» y los indicadores regionales pasan | Antes de buscar códigos, quitar los caracteres de formato (categoría Cf) y las marcas combinantes (Mn) tras NFKD/NFKC; o quitar la frase si los lleva, falla cerrado. Rechazar cualquier letra que no sea latina (no solo las griegas y cirílicas). Las frases, a las pruebas | abierto |
+| H-34 | baja | `r04_10_banco_control.py <raíz>` (grupo `r21_vehiculo`) | «Comprar la acción nvda.», «Comprar el valor nvda.» y «Comprar el título tsla.» llegan a los entregables. El límite declarado es «minúscula **sin** vehículo», pero `_VEHICULO` solo acepta la minúscula tras ETF, ETP, ETN, ETC, REIT, SOCIMI, «ticker», «símbolo» y «fondo», no tras los vehículos en español | Añadir «acción», «valor», «título», «bono», «cripto» y «token» como vehículos que se nombran por su ticker, o declararlo en el límite | abierto |
+| H-35 | media | `r04_10_banco_control.py <raíz>` (grupo `tiempo`), `r04_11 -k legitimas` y `r04_14_regresion.py` | **Esperado:** CA-13, se conservan las frases escritas como pide el prompt, sin cifras. **Obtenido:** se quitan con CIFRA 6 de 6 frases con expresiones de tiempo o lugar: «Es probable que la renta fija gane a medio plazo», «Es probable que el BCE recorte en la segunda mitad del año», «En el escenario central, el dólar se debilita a medio plazo», «El riesgo en Oriente Medio pesa en los escenarios del crudo», «La confianza empresarial se recupera en la segunda mitad del trimestre» y «Hay poca certeza sobre el medio plazo». En la r03 solo se quitaba una. Pasa porque «medio» y «mitad» están en `_NUM_LETRA`, y porque «escenario», «confianza», «seguridad» y «certeza» cuentan ahora como palabras de probabilidad, aunque son corrientes en un informe («escenario base», «confianza del consumidor», «seguridad jurídica»). Se declara y falla cerrado, pero «a medio plazo» está en casi cualquier informe de inversión | Excluir los giros que no son cantidades («a medio plazo», «medio plazo», «Oriente Medio», «segunda/primera mitad», «medio ambiente») antes de buscar números, y limitar «confianza», «seguridad» y «certeza» a «con una … de», «nivel de …». Frases de control en las pruebas | abierto |
+| H-36 | media | `r04_10_banco_control.py <raíz>` (grupo `region`), `r02_banco_nuevo.py <raíz>` y `r04_14_regresion.py` | **Esperado:** CA-13. **Obtenido:** se quitan con R21, y no en la r03: «Las acciones de Europa ganan peso frente a las de EEUU», «Las opciones sobre Europa encarecen la cobertura» y «El fondo Europa del Este sufre». Tras un vehículo, cualquier palabra con mayúscula cuenta como instrumento (`_es_instrumento` devuelve True si hay una mayúscula). «Las acciones de Japón» pasa porque la «ó» corta la expresión. También «Cada ETF replica un índice distinto» y «Sobreponderar ETF de RF a corto plazo…» (r02): `_SUFIJO` lee una palabra con mayúscula a principio de frase seguida de «ETF» como el nombre de un fondo («Cada» y los verbos no están en la lista de determinantes) | Tras un vehículo, contar como instrumento solo lo que tiene forma de código (todo mayúsculas o minúsculas de hasta seis letras), no una palabra con mayúscula inicial; en `_SUFIJO`, «ETF» solo como sufijo tras dos o más palabras con mayúscula, y añadir «Cada», «Todo(s)», «Cualquier», «Ningún», «Este», «Dicho» y los verbos al principio de la frase. Frases de control en las pruebas | abierto |
+| H-37 | baja | `r04_12_rendimiento.py <raíz> 20000` | **Esperado:** CA-9 (menos de 2 s en total) y CA-14 (tiempo lineal). **Obtenido:** `_SUFIJO` es cuadrático con una palabra con mayúscula larga: `[A-Z][\w&.-]*` se come el texto hasta el final en cada límite de palabra y vuelve atrás. «A.» repetido: 20 000 caracteres tardan 4,7 s y 40 000 tardan 18,1 s; igual con «Ab-» y «Ab&». Total de los 22 casos: 15,9 s. Solo con una salida degenerada, acotada por `max_tokens` (8000, unos 16 000 caracteres: unos 3 s por campo), pero hay unos quince campos y la reescritura los repite | Tope en los cuantificadores (`[\w&.-]{0,40}`) o, como pedía H-26, recortar cada texto a su límite de `sintetizador_limites` (o a un tope técnico) **antes** de filtrar. Una prueba de tiempo con «A.» × 20 000 | abierto |
+| H-38 | media | `r04_13_mutantes.py <raíz> 3 todos` y, los vivos, `... completo` | **Esperado** (CA-10 y CA-14): las baterías vigilan las piezas de la r04. **Obtenido:** sobreviven **15 de 45** a las dos baterías enteras (185 pruebas). Dos son equivalentes: N18 (sin plegar homoglifos, la comprobación de alfabetos ya quita la frase) y N45 («$EUR» lo caza `_CODIGO_PEGADO`). Los otros 13 son comportamiento sin vigilar: N05 (sin cuartos, quintos ni décimos), N06 (sin «mil», «medio» ni «mitad»), N07 (sin «%» ni «‰» en el texto libre), N09 (sin «por cien»), N15 (sin «ETF» como sufijo de fondo), N20 (las letras griegas pasan), N36 (el término del glosario no se filtra), N37 (las series del universo pasan a ser instrumentos), N38 (el par sin barra lo es), N39 (los códigos de dos letras dejan de serlo), N40 (`{n_tipos}` cuenta los tipos sin ideas), N42 (palabras en minúscula de seis o siete letras tras un vehículo se quitan) y N43 (sin «chances» ni «opciones de que»). Mueren 30, entre ellas las de cifras Unicode, NFKC, marcadores compuestos, llaves, sufijo con punto, determinantes, homoglifos cirílicos, códigos pegados, mayúsculas mezcladas, vehículos, calificaciones, romanos, `nombre_llano`, glosario FORMATO, lista de siglas en la instrucción y separador lineal. Con los de la r03 (H-29) quedan 7 más vivos | Un caso por mutante vivo en `test_t102_filtro.py` que aísle cada pieza y de los de la r03. Frases que los matan, comprobadas con `b36176a`: «Vemos un setenta % de subida.» (N07), «La bolsa puede subir un setenta por cien.» (N09), «Hay un cuarto de probabilidad de caída.» (N05), «Hay la mitad de probabilidad de caída.» (N06), «Recomendamos el Amundi Prime Global ETF.» (N15), «Hay setenta chances de subida.» (N43), «Comprar NV ya.» (N39), «El EURUSD cae.» como legítima (N38) y «Los ETF baratos ganan cuota.» como legítima (N42). Para N40, Q23 y Q24, comparar con el paquete (tipos con opciones, `apuestas_independientes`), no con `marcadores()` | abierto |
+| H-39 | baja | Lectura de `pruebas.md`, del README del ejecutor, de la fila T-102 de la deuda y de la instrucción del Sintetizador (`sintetizar`) | (1) H-30 sigue abierto (arriba). (2) El README del ejecutor promete quitar «una cifra (también en letra, «por ciento», «de cada diez»)», y la r04 deja pasar «de cada diez» sin número delante (H-31). Tampoco nombra los límites nuevos de R21 (minúscula sin vehículo, colisiones como COP, una letra), que solo están en `analisis-tecnico.md`. (3) La fila T-102 de la deuda sigue en «EN QA, ronda r03», con un solo límite. (4) La instrucción pasa al modelo, como siglas que puede usar, G7, G10 y G20, que CIFRA quita siempre: «El G7 se reúne…» se quita | Completar `pruebas.md` y el plan de pruebas del README; declarar los límites de R21 en el README del ejecutor y en la deuda, y poner la fila al día; quitar de la instrucción las siglas con dígitos, o sacarlas de la lista | abierto |
+
+**Lo que se intentó y no se rompió:**
+- **Por la línea de órdenes:** `bloque-a --cliente mock --config <diseno: v6, doce tipos> … ciclo` termina con código 0, deja los tres entregables, llama al Sintetizador y no quita ninguna frase del texto simulado.
+- **Frase a frase y defectos:** cuando se quita una legítima, la otra frase del mismo texto se conserva. Lo que queda vacío toma su defecto, se declara («Frases del Sintetizador quitadas…» y «Frases llanas…») y G3 da APTO (`r04_11 -k legitimas`).
+- **Siglas de la lista en los doce tipos:** 16 de 16 se conservan (BCE, Fed, IA, USD, EUR, JPY, HY, IG, VIX, DXY, EM, PMI, S&P, DAX, OPEP, IPC, PIB, TIPS, SOCIMI, MSCI, CDS…), igual que las 22 llanas y las 6 con marcadores bien usados.
+- **Prefijos y formas ya corregidas:** «NASDAQ:NVDA», «Ferrari N.V.», «Novo Nordisk A/S», «Siemens AG», «Infineon Technologies AG.», «Grifols, S.A.», «Sony Group Corporation», «Toyota Motor Co., Ltd.», «ⓃⓋⒹⒶ», «$EUR» y los trozos de dos letras partidos por invisibles: se quitan.
+- **Marcadores:** los compuestos con «sobre», «entre», «de cada», «/», «%» o pegados se quitan, y las llaves de ancho completo se rellenan.
+- **`nombre_llano` y glosario:** un ticker o una cifra en el `nombre_llano` no llega (sale «esta idea»), y un glosario que no es texto no rompe el ciclo.
+- **Rendimiento del resto:** las demás expresiones son lineales: espacios, llaves, marcadores, números en letra, invisibles, combinantes, griegas, cifras Unicode, «$» repetido y vehículos encadenados, cada uno en menos de 0,13 s con 40 000 caracteres.
+
+### Invariantes
+
+- **R13 y R21:** el Sintetizador sigue sin poder cambiar la selección ni las cifras del paquete. Pero sus textos pueden llevar al paquete y a los entregables, **sin declararse** y con G3 APTO:
+  - una probabilidad numérica en letra o en lista (H-31), con una regresión frente a la r03;
+  - un nombre de sociedad con sufijo (H-32);
+  - un ticker partido por caracteres invisibles (H-33).
+- **Sin LLM en la ruta determinista:** el filtro y el relleno son código.
+- **Falla cerrado y valida antes de mutar:** lo que reconoce lo quita y lo declara, y el glosario que no es texto ya no rompe el ciclo. Lo que no reconoce no se declara.
+- **Números escritos a mano:** solo cotas técnicas de las expresiones (`{1,40}`, `{1,14}`, `{0,6}`, `≤ 4` y `> 5` letras tras un vehículo) y la lista de números en letra. Los límites salen de `v6.sintetizador_limites` y la lista, de `v6.filtro_r21_codigos`. Sin hallazgo.
+- **Decisiones del operador:** el diseño está aprobado. La r04 saca AI, ETN y UST de la lista y añade siglas, que es una decisión técnica de la lista («técnico, ampliable», según el comentario de la configuración). El token de CRI sigue en T-57 como `[PROPUESTO]`.
+- **Corpus, secretos y datos personales:** el commit no toca de `01_` a `10_` ni `99_`, y `secrets` y `corpus-integridad` están en verde. Los scripts del revisor usan tickers y nombres de sociedades cotizadas, sin datos personales.
+- **Documentación:** `analisis-tecnico.md` está al día con la r04. `pruebas.md`, el plan de pruebas del README, el README del ejecutor y la fila de la deuda, no (H-30, H-39).
+
+### Veredicto r04
+
+**NO APTO** · CA-12, CA-13 y CA-9 (y con ello CA-14) no se cumplen. Hay un hallazgo **alto** abierto:
+- **H-31:** una probabilidad numérica en letra llega a los tres entregables sin declararse y con G3 APTO. Pasa con las formas más naturales en español: «una de cada tres», «siete veces de cada diez», «una cuarta parte de probabilidad», «tres contra uno», «sesenta-cuarenta». Y pasa en lista: «Probabilidades por escenario: base, la mitad; alcista, un cuarto…». Es una **regresión** frente a la r03, que quitaba cualquier «de cada N»: el ejemplo que da el propio README del ejecutor y el prompt (§4).
+
+Para volver a QA:
+- Corregir H-31 con sus pruebas, también por el camino real y en lista. La opción más sencilla y más fiel al prompt es tratar como cifra cualquier número en letra del texto libre, salvo una lista corta de giros; corrige a la vez H-35.
+- Corregir con él H-35 y H-36 (CA-13) y H-37 (CA-9). Valorar H-32, H-33 y H-38 (medios) o pasarlos a la deuda con su ID.
+- Los bajos (H-30, H-34 y H-39), a la deuda si no se corrigen.
+- Medir con un banco que el implementador no haya visto. `r04_10_banco_control.py` sirve para comprobar la corrección, no para ajustar sin otro banco posterior.
+
+Lo que está bien:
+- H-21, H-24, H-25, H-27 y H-28 quedan corregidos, y H-20, H-22 y H-23 para sus casos.
+- Las legítimas llanas, con siglas y con marcadores se conservan (44/44).
+- La V5 no cambia, el gate da 12/12 con las cuotas iguales, y el ciclo V6 completo por la línea de órdenes funciona.
+
+Cierre: este revisor no cambia el estado del ticket ni hace commit (instrucción de la ronda). Tras la corrección, volverá a ejecutar `r04_10` a `r04_14`, y los de las r01 a r03, y añadirá la ronda r05.

@@ -117,3 +117,34 @@ El filtro de T-101 trataba cada texto entero con pocas reglas:
 - un ticker escrito en minúscula o como nombre propio sin un vehículo delante («la opción preferida es nvda», «… Nvda»);
 - un ticker que coincide con una sigla legítima de la lista (COP es también el peso colombiano);
 - un ticker de una sola letra sin un vehículo delante («Comprar F ya»).
+
+## Ronda r05 (QA r04 NO APTO, mismo diseño de marcadores)
+
+**Causa.** La r04 solo trataba un número en letra como cifra en unas pocas formas («N de cada M») o junto a una palabra de probabilidad. Eso dejaba pasar «una de cada tres», las fracciones y las cuotas (H-31), y a la vez quitaba «a medio plazo es probable» (H-35). Además, un `_SUFIJO` sin tope era cuadrático (H-37) y tomaba por nombre una palabra común delante de «ETF» (H-36).
+
+**Implementación (`bloque_a/diseno_v6.py`).**
+- **CIFRA (H-31 y H-35):**
+  - cualquier número en letra es cifra, en cualquier frase: «dos», «setenta», «mil», «tercio»;
+  - «uno» o «una» solo cuentan en «una de cada…», «uno contra uno» y en las fracciones «un cuarto», «una décima» o «una cuarta parte»;
+  - «medio» solo cuenta en «y medio», «un medio», «medio punto» y «media docena»;
+  - «mitad» cuenta salvo en «primera/segunda mitad» y «mitad del año, ciclo, mes…»;
+  - los ordinales («cuarto trimestre») no cuentan;
+  - también son cifra «el doble» o «el triple», y cualquier signo de porcentaje o de por mil de otra escritura («٪»);
+  - una palabra de probabilidad solo hace falta ya junto a un marcador numérico.
+- **MARCADOR:**
+  - dos marcadores numéricos unidos también por «veces de cada», «contra», «a», «en» o «-»;
+  - un marcador unido a «uno» o «una» («una de cada {n_ideas}»);
+  - el nombre de un marcador fuera de sus llaves («〔n_ideas〕», «[n:RV]»).
+- **R21:**
+  - más sufijos (H-32): «SpA», «S.p.A.», «Co.», «Limited», «GmbH», «LLC», «N.V.» y «Aktiengesellschaft», y en minúscula con punto («apple inc.»);
+  - una palabra común al principio del nombre no es un nombre (H-36): «Cada», «Todos», un infinitivo al abrir la frase («Sobreponderar ETF»). Un nombre que acaba como un infinitivo en mitad de la frase («Comprar Unilever plc») sigue contando;
+  - cada palabra del nombre empieza donde no hay otra letra y tiene un tope de 40 caracteres (H-37): 40 000 caracteres de «A.» en 0,1 s;
+  - antes de mirar, fuera los caracteres de formato y las marcas combinantes (H-33): espacio de ancho cero, guion blando, unión de palabras;
+  - letras de cualquier alfabeto no latino, versalitas e indicadores regionales («ᏚᏢᎩ», «ɴᴠᴅᴀ», «🇳🇻🇩🇦»);
+  - tras un vehículo, una palabra con mayúscula inicial y el resto en minúscula es un nombre, no un código (H-36): «acciones de Europa».
+- **Instrucción (H-39):** no se ofrecen siglas con cifras («G7», «G20»).
+- **Pruebas (H-38):** `test_t102_filtro.py`, ronda r05, con una frase por mutante vivo de las QA r03 y r04. Los valores de los marcadores, el glosario y el historial se comparan con el paquete en una prueba unitaria de `_redaccion_segura`.
+
+**Límites declarados (R21; los revisa el Auditor por muestreo):** los cuatro de la r04, y además (H-34) un ticker en minúscula tras «la acción», «el valor» o «el título» («comprar el valor nvda»). Cazarlo sin quitar «el valor real» o «el valor neto» exige saber qué palabras son españolas, y queda en la deuda (T-109).
+
+**Coste declarado de la regla estricta:** se quitan frases legítimas con un número en letra que no es una probabilidad («Los dos escenarios favorecen al dólar», «en dos de los mercados»). El Sintetizador tiene marcadores para las cuentas y el prompt le pide no escribir cifras.

@@ -2,7 +2,7 @@
 
 | Campo | Valor |
 | --- | --- |
-| Estado | EN PAUSA (QA r04 detenida; espera la orden del operador) |
+| Estado | EN QA (ronda r05) |
 | Pieza | `bloque_a/11_Ejecutor` (`bloque_a/diseno_v6.py`) |
 | Planifica · implementa · QA | claude · claude · claude, con un revisor nuevo sin contexto |
 | Aprobación del operador | 2026-11-12: «Corrige el filtro»; tras la QA r02, «sí cambia el diseño» (opción 1: el Sintetizador escribe con marcadores que rellena el código) |
@@ -71,3 +71,6 @@ Que el filtro R13/R21 de los textos del Sintetizador (diseño V6) no estropee in
 - 2026-11-12 · NO APTO · QA r03 (revisor nuevo): H-20 y H-21 altos (probabilidades en letra o con números Unicode; sufijo con punto e índice que tapaba el ticker), H-22, H-23, H-24, H-25 y H-29 medios, H-26 a H-28 y H-30 bajos
 - 2026-11-12 · EN QA · Ronda r04: cobertura de la regla (Unicode, NFKC, números en letra, marcadores compuestos, sufijos, homoglifos, vehículos) y los bajos; 43 pruebas nuevas (111 en `test_t102_filtro.py`); límites de R21 declarados
 - 2026-11-13 · EN PAUSA · QA r04 detenida a mitad por indicación del operador (trabajo de una en una: antes T-88, T-91 y T-106). Sus scripts parciales `revisores/r04_01` a `r04_06` quedan en el repo, sin veredicto; la QA r04 se relanza entera cuando el operador lo ordene
+- 2026-11-13 · EN QA · el operador ordena continuar; la QA r04 se relanza entera con un revisor nuevo, sobre `b36176a`
+- 2026-11-13 · NO APTO · QA r04 (revisor nuevo, commit `b36176a`): H-31 alto (probabilidades en letra que pasaban, regresión de la r04), H-32, H-33, H-35, H-36 y H-38 medios, H-34, H-37 y H-39 bajos
+- 2026-11-13 · EN QA · Ronda r05: cualquier número en letra es cifra, salvo «medio plazo», ordinales y «segunda mitad»; más sufijos de sociedad; caracteres invisibles y otros alfabetos; palabras comunes y nombres de región no son nombres ni códigos; `_SUFIJO` lineal; sin siglas con cifras en la instrucción; 71 pruebas nuevas; un solo mutante vivo, equivalente; H-34, límite declarado y en la deuda (T-109)

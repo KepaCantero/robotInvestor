@@ -185,7 +185,7 @@ def test_cada_campo_por_el_camino_real(tmp_path, monkeypatch):
         out["preguntas_sugeridas"] = ["¿Marca pregunta sobre el carry? La venta de TSLA es urgente."]
         out["lectura_conjunto"] = f"Marca lectura: {{opp:{opp}}} depende del dólar; " + MALA
         out["limitaciones"] = ["Marca limitación de datos sintéticos. " + MALA]
-        out["frases_30s"][0] = "Marca treinta con {n_ideas} ideas. " + MALA
+        out["frases_30s"][0] = "Marca resumen con {n_ideas} ideas. " + MALA
         out["frases_30s"][1] = "Hay un 70 % de probabilidad de subida."
         for t in out["tarjetas"]:
             t["por_que_llano"] = "Marca por qué. " + MALA
@@ -218,7 +218,7 @@ def test_cada_campo_por_el_camino_real(tmp_path, monkeypatch):
     assert p["preguntas_sugeridas"] == ["¿Marca pregunta sobre el carry?"]
     assert p["x_lectura_conjunto"] == f"Marca lectura: {m['opp:' + capt['opp']]} depende del dólar;"
     assert "Sintetizador: Marca limitación de datos sintéticos." in p["limitaciones"]
-    assert red["frases_30s"][0] == f"Marca treinta con {m['n_ideas']} ideas." and red["frases_30s"][1] == capt["defecto"]["frases_30s"][1]
+    assert red["frases_30s"][0] == f"Marca resumen con {m['n_ideas']} ideas." and red["frases_30s"][1] == capt["defecto"]["frases_30s"][1]
     assert red["tarjetas"] and all(t["por_que_llano"] == "Marca por qué." and t["que_puede_salir_mal_llano"] == "Marca riesgo."
                                    and t["ambito_llano"] == "Marca ámbito." for t in red["tarjetas"])
     assert red["motivos_llanos"] == {"DIV": f"Marca motivo con {m['candidatas:DIV']} ideas."}
@@ -337,3 +337,125 @@ def test_r04_el_sintetizador_recibe_la_lista_de_siglas(tmp_path):
     b._invocar = invocar
     b.ciclo(AS_OF)
     assert vistas and all("Siglas que puedes usar:" in x and " OTAN" in x for x in vistas)
+
+
+# ================================================================================================== ronda r05 (QA r04 de T-102)
+R05_PROHIBIDAS = [
+    # H-31: probabilidades en letra que pasaban
+    ("CIFRA", "Sube una de cada tres veces."), ("CIFRA", "Ocurre siete veces de cada diez."),
+    ("CIFRA", "Hay una cuarta parte de probabilidad de caída."), ("CIFRA", "Las cuotas están tres contra uno."),
+    ("CIFRA", "El reparto es sesenta-cuarenta."), ("CIFRA", "- base: la mitad"), ("CIFRA", "- alcista: un cuarto"),
+    ("CIFRA", "Hay un cuarto de probabilidad de caída."), ("CIFRA", "Sube una décima al mes."),   # N05
+    ("CIFRA", "Hay mil razones para comprar."), ("CIFRA", "Hay la mitad de probabilidad de caída."),   # N06
+    ("CIFRA", "Sube punto y medio."), ("CIFRA", "La mitad de las ideas dependen del dólar."),
+    ("CIFRA", "Sube mucho, un ‰ al día."), ("CIFRA", "Cae en %."),   # N07
+    ("CIFRA", "Puede subir un por ciento."), ("CIFRA", "Puede subir un por cien."),   # N09
+    ("CIFRA", "Hay {n:RV} chances de subida."), ("CIFRA", "Hay {n:RV} opciones de que suba."),   # N43
+    ("MARCADOR", "Sube {n:RV} veces de cada {n_ideas}."), ("MARCADOR", "Las cuotas están {n:RV} contra uno."),
+    ("MARCADOR", "Sube una de cada {n_ideas} veces."), ("MARCADOR", "Entre {n:RV} a {n_ideas} ideas."),
+    # H-32: sufijos de sociedad
+    ("R21", "Enel SpA gana cuota."), ("R21", "Compre Enel S.p.A. ya."), ("R21", "Toyota Motor Co. sube."),
+    ("R21", "Rio Tinto Limited cae."), ("R21", "Conviene apple inc. a corto."), ("R21", "Siemens Aktiengesellschaft cae."),
+    ("R21", "Recomendamos el Amundi Prime Global ETF."),   # N15
+    # H-33: un código partido por caracteres invisibles
+    ("R21", "Compre N\u200bV\u200bD\u200bA ya."), ("R21", "Compre NVD­A ya."), ("R21", "Compre NV⁠DA ya."),
+    ("R21", "Compre N̈VDA ya."),
+    ("R21", "La ψ del mercado sube."),   # N20: letras griegas
+    ("R21", "Comprar NV ya."),   # N39: códigos de dos letras
+    ("R21", "Conviene comprar solo la acción ordinaria."),   # Q11: `_UNITARIA`
+    ("R21", "Comprar Unilever plc."),   # un nombre que acaba como un infinitivo no es un verbo si no abre la frase
+    ("R21", "Comprar ᏚᏢᎩ cuanto antes."), ("R21", "Comprar ɴᴠᴅᴀ ya."), ("R21", "Comprar 🇳🇻🇩🇦 ya."),   # otros alfabetos
+    ("CIFRA", "La subida es del {n:RV} ٪."), ("CIFRA", "Es el doble de probable que suba."),
+    ("MARCADOR", "Vemos 〔n_ideas〕 ideas."), ("MARCADOR", "Vemos [n:RV] ideas."),
+]
+R05_LEGITIMAS = [
+    # H-35: «medio», «mitad» y ordinales que no son cantidades
+    "A medio plazo es probable que suba.", "En la segunda mitad del año es probable una pausa.",
+    "Oriente Medio añade riesgo al escenario base.", "Con certeza, a medio plazo el dólar pesa.",
+    "El cuarto trimestre será probablemente el más débil.", "A mitad de año revisaremos el escenario.",
+    "Uno de los riesgos es la inflación.",
+    # H-36: palabras comunes y nombres de región tras un vehículo o delante de «ETF»
+    "Las acciones de Europa suben con el euro.", "Las opciones sobre Europa encarecen la cobertura.",
+    "El fondo Europa del Este cae.", "Cada ETF replica un índice.", "Sobreponderar ETF de RF tiene sentido.",
+    "Todos los ETF de RV suben.",
+    "Los ETF baratos ganan cuota.",   # N42
+    "El EURUSD cae.",   # N38
+]
+
+
+@pytest.mark.parametrize("regla,frase", R05_PROHIBIDAS)
+def test_r05_lo_que_pasaba_en_la_qa_r04_se_quita(perm, regla, frase):
+    assert v6.frase_prohibida(frase, perm) == regla, frase
+
+
+@pytest.mark.parametrize("frase", R05_LEGITIMAS)
+def test_r05_frases_legitimas(perm, frase):
+    assert v6.frase_prohibida(frase, perm) is None, frase
+
+
+def test_r05_n37_una_serie_del_universo_no_es_un_instrumento():
+    perm = {"codigos": frozenset(), "series": frozenset({"VIXCLS"})}
+    assert v6.frase_prohibida("El VIXCLS sube.", perm) is None
+    assert v6.frase_prohibida("El VIXCLS sube.", {"codigos": frozenset(), "series": frozenset()}) == "R21"
+
+
+def test_r05_h31_una_lista_de_probabilidades_en_letra_no_llega(perm):
+    t = "Probabilidades por escenario:\n- base: la mitad\n- alcista: un cuarto\n- bajista: el resto"
+    limpio, reglas = v6.limpiar(t, perm, MARCAS)
+    assert reglas.count("CIFRA") == 2 and "mitad" not in limpio and "cuarto" not in limpio
+
+
+def test_r05_h37_sufijo_en_tiempo_lineal(perm):
+    t0 = time.perf_counter()
+    for n in (20000, 40000):
+        v6.frase_prohibida("A." * n, perm)
+        v6.frase_prohibida("Abc " * n + "Inc", perm)
+    assert time.perf_counter() - t0 < 2.0
+
+
+def test_r05_h39_las_siglas_con_cifras_no_se_ofrecen(tmp_path):
+    b = _bloque(tmp_path)
+    vistas = []
+    orig = b._invocar
+
+    def invocar(agente, contrato, mensaje, esquema, instrucciones, *a, **k):
+        if agente == "AG-26":
+            vistas.append(instrucciones)
+        return orig(agente, contrato, mensaje, esquema, instrucciones, *a, **k)
+    b._invocar = invocar
+    b.ciclo(AS_OF)
+    assert vistas and not any(s_ in x for x in vistas for s_ in ("G7", "G10", "G20"))
+
+
+class _Redaccion:
+    def textos_por_defecto(self, paquete):
+        return {"frases_30s": ["frase por defecto"], "tarjetas": [], "motivos_llanos": {}, "glosario": [],
+                "frase_historial": "historial por defecto"}
+
+
+def test_r05_marcadores_glosario_e_historial_frente_al_paquete():
+    """N36, N40, Q23, Q24, Q29 y Q36: los valores se comparan con el paquete, no con `marcadores`."""
+    from types import SimpleNamespace
+    paquete = {"clases": {"RV": {"opciones": [{"opp_id": "OPP-1", "nombre_llano": "la renta variable"}], "candidatas_analizadas": 9},
+                          "RF": {"opciones": [], "candidatas_analizadas": 3}},
+               "apuestas_independientes": 7, "limitaciones": []}
+    d = {"frases_30s": ["Hay ideas en {n_tipos} tipos y {n_apuestas} apuestas."], "tarjetas": [], "motivos_llanos": {},
+         "glosario": [{"termino": "{tipo:RV}", "definicion": "Activos de empresas cotizadas."},
+                      {"termino": "Compre AAPL", "definicion": "Una definición."}],
+         "frase_historial": "Compre AAPL ya."}
+    perm = {"codigos": frozenset(), "series": frozenset()}
+    red = v6._redaccion_segura(SimpleNamespace(redaccion=_Redaccion()), paquete, d, perm)
+    assert red["frases_30s"] == ["Hay ideas en 1 tipos y 7 apuestas."]   # un tipo con ideas (RF no tiene); 7 apuestas, no 1 idea
+    assert red["glosario"] == [{"termino": v6.NOMBRE_CLASE["RV"].lower(), "definicion": "Activos de empresas cotizadas."}]
+    assert red["frase_historial"] == "historial por defecto"
+
+
+@pytest.mark.parametrize("frase", ["El escenario base pesa {n:RV}.", "La confianza llega a {n:RV}.", "Hay {n:RV} de seguridad.",
+                                   "Con certeza en {n:RV} casos."])
+def test_r05_n03_n04_palabra_de_probabilidad_con_un_marcador_numerico(perm, frase):
+    assert v6.frase_prohibida(frase, perm) == "CIFRA"
+
+
+def test_r05_n38_q18_un_par_de_divisas_sin_barra_no_es_un_instrumento():
+    perm = {"codigos": frozenset({"EUR", "USD"}), "series": frozenset()}
+    assert v6.frase_prohibida("El EURUSD cae.", perm) is None and v6.frase_prohibida("El EURXYZ cae.", perm) == "R21"
