@@ -1,0 +1,994 @@
+{
+ "CT-01.ENCARGO": {
+  "$comment": "derivado del Anexo B del Documento 0 V5.1. `alcance.pregunta` es «texto libre opcional»",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "properties": {
+   "alcance": {
+    "properties": {
+     "activos_concretos": {},
+     "clases": {},
+     "pregunta": {},
+     "regiones": {},
+     "tematicas": {}
+    },
+    "required": [
+     "clases",
+     "regiones",
+     "tematicas",
+     "activos_concretos"
+    ],
+    "type": "object"
+   },
+   "fecha_objetivo": {},
+   "horizontes": {},
+   "nivel_forzado": {},
+   "prioridad": {
+    "enum": [
+     "ALTA",
+     "NORMAL",
+     "BAJA"
+    ]
+   },
+   "referencia_previa": {},
+   "tipo": {
+    "enum": [
+     "PERIODICO",
+     "AD_HOC",
+     "PROFUNDIZACION"
+    ]
+   }
+  },
+  "required": [
+   "tipo",
+   "alcance",
+   "horizontes",
+   "prioridad",
+   "nivel_forzado",
+   "fecha_objetivo",
+   "referencia_previa"
+  ],
+  "type": "object"
+ },
+ "CT-02.RETORNO": {
+  "$comment": "derivado del Anexo B del Documento 0 V5.1",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "properties": {
+   "entregables": {
+    "properties": {
+     "informe_tecnico": {},
+     "informe_visual": {},
+     "paquete_json": {}
+    },
+    "required": [
+     "informe_tecnico",
+     "informe_visual",
+     "paquete_json"
+    ],
+    "type": "object"
+   },
+   "estado_g3": {
+    "enum": [
+     "APTO",
+     "APTO_CON_ADVERTENCIAS"
+    ]
+   },
+   "resumen": {
+    "properties": {
+     "apuestas_independientes": {},
+     "cambios_vs_anterior": {},
+     "top3_por_clase": {}
+    },
+    "required": [
+     "top3_por_clase",
+     "cambios_vs_anterior",
+     "apuestas_independientes"
+    ],
+    "type": "object"
+   },
+   "run_id": {}
+  },
+  "required": [
+   "run_id",
+   "entregables",
+   "resumen",
+   "estado_g3"
+  ],
+  "type": "object"
+ },
+ "CT-03.ENCARGO": {
+  "$comment": "derivado del Anexo B del Documento 0 V5.1",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "properties": {
+   "contexto": {
+    "properties": {
+     "opp_id": {},
+     "run_id": {}
+    },
+    "required": [
+     "run_id",
+     "opp_id"
+    ],
+    "type": "object"
+   },
+   "pregunta": {},
+   "query_id": {},
+   "urgencia": {
+    "enum": [
+     "INMEDIATA",
+     "NORMAL"
+    ]
+   }
+  },
+  "required": [
+   "query_id",
+   "pregunta",
+   "contexto",
+   "urgencia"
+  ],
+  "type": "object"
+ },
+ "CT-03.RETORNO": {
+  "$comment": "derivado del Anexo B del Documento 0 V5.1",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "properties": {
+   "clase_consulta": {
+    "enum": [
+     "ACLARACION",
+     "DATO",
+     "METODO",
+     "CONTRASTE",
+     "PROFUNDIZACION",
+     "ESTADO"
+    ]
+   },
+   "confianza": {
+    "enum": [
+     "establecido",
+     "probable",
+     "especulativo",
+     "en disputa"
+    ]
+   },
+   "escalado": {
+    "properties": {
+     "plazo_estimado": {},
+     "run_id": {}
+    },
+    "required": [
+     "run_id",
+     "plazo_estimado"
+    ],
+    "type": "object"
+   },
+   "query_id": {},
+   "referencias": {},
+   "respuesta": {},
+   "ruta": {
+    "enum": [
+     "N0",
+     "ANALITICA"
+    ]
+   }
+  },
+  "required": [
+   "query_id",
+   "clase_consulta",
+   "ruta",
+   "respuesta",
+   "referencias",
+   "confianza",
+   "escalado"
+  ],
+  "type": "object"
+ },
+ "CT-04.ENCARGO": {
+  "$comment": "derivado del Anexo B del Documento 0 V5.1. `motivo` de cada decisión y `resultado_comunicado.texto` son «opcional». El Anexo B no dice que los cuatro bloques sean opcionales",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "properties": {
+   "configuracion": {
+    "properties": {
+     "clases_activas": {},
+     "dia_hora_entrega": {},
+     "horizontes": {},
+     "idioma_usuario": {},
+     "periodicidad": {}
+    },
+    "required": [
+     "periodicidad",
+     "dia_hora_entrega",
+     "clases_activas",
+     "horizontes",
+     "idioma_usuario"
+    ],
+    "type": "object"
+   },
+   "decisiones": {
+    "items": {
+     "properties": {
+      "decision": {
+       "enum": [
+        "ENVIADA_A_BLOQUE_B",
+        "EN_SEGUIMIENTO",
+        "DESCARTADA",
+        "APLAZADA"
+       ]
+      },
+      "motivo": {},
+      "opp_id": {}
+     },
+     "required": [
+      "opp_id",
+      "decision"
+     ],
+     "type": "object"
+    },
+    "type": "array"
+   },
+   "resultado_comunicado": {
+    "properties": {
+     "opp_id": {},
+     "texto": {}
+    },
+    "required": [
+     "opp_id"
+    ],
+    "type": "object"
+   },
+   "valoracion_informe": {
+    "properties": {
+     "comentario": {},
+     "run_id": {},
+     "utilidad": {}
+    },
+    "required": [
+     "run_id",
+     "utilidad",
+     "comentario"
+    ],
+    "type": "object"
+   }
+  },
+  "required": [
+   "decisiones",
+   "valoracion_informe",
+   "configuracion",
+   "resultado_comunicado"
+  ],
+  "type": "object"
+ },
+ "CT-05.ENCARGO": {
+  "$comment": "derivado del Anexo B del Documento 0 V5.1. `seg_id` y `opp_id` solo con tipo SEGUIMIENTO",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "if": {
+   "properties": {
+    "tipo": {
+     "const": "SEGUIMIENTO"
+    }
+   },
+   "required": [
+    "tipo"
+   ]
+  },
+  "properties": {
+   "alcance": {},
+   "delta_gc0": {},
+   "fecha_objetivo": {},
+   "memoria": {},
+   "nivel_por_clase": {},
+   "opp_id": {},
+   "presupuesto_por_clase": {},
+   "seg_id": {},
+   "tipo": {
+    "enum": [
+     "PERIODICO",
+     "AD_HOC",
+     "PROFUNDIZACION",
+     "SEGUIMIENTO"
+    ]
+   }
+  },
+  "required": [
+   "tipo",
+   "alcance",
+   "nivel_por_clase",
+   "presupuesto_por_clase",
+   "memoria",
+   "delta_gc0",
+   "fecha_objetivo"
+  ],
+  "then": {
+   "required": [
+    "seg_id",
+    "opp_id"
+   ]
+  },
+  "type": "object"
+ },
+ "CT-05.RETORNO": {
+  "$comment": "derivado del Anexo B del Documento 0 V5.1. El Anexo B solo nombra lo que lleva el retorno parcial, cuando procede; ningún campo es obligatorio",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "properties": {
+   "SOLICITUD_PRESUPUESTO": {},
+   "consultas_broker": {},
+   "solicitudes_credenciales": {}
+  },
+  "required": [],
+  "type": "object"
+ },
+ "CT-06.ENCARGO": {
+  "$comment": "derivado del Anexo B del Documento 0 V5.1. `foco` es «opcional»",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "properties": {
+   "clase": {},
+   "fase": {
+    "enum": [
+     "CRIBADO",
+     "INVESTIGACION",
+     "PROFUNDIZACION",
+     "SEGUIMIENTO"
+    ]
+   },
+   "foco": {},
+   "lecciones": {},
+   "nivel": {},
+   "opciones_vigentes": {},
+   "presupuesto": {}
+  },
+  "required": [
+   "clase",
+   "fase",
+   "nivel",
+   "presupuesto",
+   "opciones_vigentes",
+   "lecciones"
+  ],
+  "type": "object"
+ },
+ "CT-06.RETORNO": {
+  "$comment": "derivado del Anexo B del Documento 0 V5.1. `revision_seguimiento` solo en fase SEGUIMIENTO",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "properties": {
+   "autoevaluacion": {},
+   "consumo": {},
+   "cribado": {},
+   "descartadas_relevantes": {},
+   "finalistas": {},
+   "lagunas": {},
+   "regimen_clase": {},
+   "revision_seguimiento": {},
+   "revision_vigentes": {},
+   "senales_para_otras_clases": {}
+  },
+  "required": [
+   "regimen_clase",
+   "revision_vigentes",
+   "cribado",
+   "finalistas",
+   "descartadas_relevantes",
+   "senales_para_otras_clases",
+   "lagunas",
+   "consumo",
+   "autoevaluacion"
+  ],
+  "type": "object"
+ },
+ "CT-07.ENCARGO": {
+  "$comment": "derivado del Anexo B del Documento 0 V5.1",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "properties": {
+   "clase": {},
+   "fecha_limite_informacion": {},
+   "horizonte": {},
+   "max_fuentes": {},
+   "objetivo": {
+    "enum": [
+     "confirmar",
+     "refutar",
+     "contexto",
+     "dato",
+     "método"
+    ]
+   },
+   "pregunta": {},
+   "profundidad": {}
+  },
+  "required": [
+   "pregunta",
+   "objetivo",
+   "clase",
+   "horizonte",
+   "profundidad",
+   "max_fuentes",
+   "fecha_limite_informacion"
+  ],
+  "type": "object"
+ },
+ "CT-07.RETORNO": {
+  "$comment": "derivado del Anexo B del Documento 0 V5.1",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "properties": {
+   "contradicciones": {},
+   "evidencias_enviadas_a_curador": {},
+   "lagunas": {},
+   "referencias": {},
+   "sintesis": {}
+  },
+  "required": [
+   "referencias",
+   "sintesis",
+   "evidencias_enviadas_a_curador",
+   "contradicciones",
+   "lagunas"
+  ],
+  "type": "object"
+ },
+ "CT-08.ENCARGO": {
+  "$comment": "derivado del Anexo B del Documento 0 V5.1",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "properties": {
+   "clase": {},
+   "fecha_limite_informacion": {},
+   "horizonte": {},
+   "max_fuentes": {},
+   "objetivo": {
+    "enum": [
+     "confirmar",
+     "refutar",
+     "contexto",
+     "dato",
+     "método"
+    ]
+   },
+   "pregunta": {},
+   "profundidad": {}
+  },
+  "required": [
+   "pregunta",
+   "objetivo",
+   "clase",
+   "horizonte",
+   "profundidad",
+   "max_fuentes",
+   "fecha_limite_informacion"
+  ],
+  "type": "object"
+ },
+ "CT-08.RETORNO": {
+  "$comment": "derivado del Anexo B del Documento 0 V5.1",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "properties": {
+   "contradicciones": {},
+   "evidencias_enviadas_a_curador": {},
+   "lagunas": {},
+   "referencias": {},
+   "sintesis": {}
+  },
+  "required": [
+   "referencias",
+   "sintesis",
+   "evidencias_enviadas_a_curador",
+   "contradicciones",
+   "lagunas"
+  ],
+  "type": "object"
+ },
+ "CT-09.ENCARGO": {
+  "$comment": "derivado del Anexo B del Documento 0 V5.1. `fecha_corte` es «obligatoria en evaluaciones y backtesting»: condicional, no obligatoria en general",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "properties": {
+   "datos": {},
+   "fecha_corte": {},
+   "modo": {
+    "enum": [
+     "SYNC_CALC",
+     "ASYNC_CALC"
+    ]
+   },
+   "operacion": {},
+   "parametros": {},
+   "perfil": {},
+   "plan": {
+    "enum": [
+     "PLAN_MIN",
+     "PLAN_STD",
+     "PLAN_EXT"
+    ]
+   },
+   "semilla": {}
+  },
+  "required": [
+   "operacion",
+   "perfil",
+   "modo",
+   "plan",
+   "datos",
+   "parametros",
+   "semilla"
+  ],
+  "type": "object"
+ },
+ "CT-09.RETORNO": {
+  "$comment": "derivado del Anexo B del Documento 0 V5.1. `referencia_ingenua` «cuando aplica»",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "properties": {
+   "artefacto_id": {},
+   "clase_cifra": {
+    "enum": [
+     "determinista",
+     "estadistica"
+    ]
+   },
+   "incertidumbre": {},
+   "informe_calidad_datos": {},
+   "limitaciones": {},
+   "referencia_ingenua": {},
+   "resultado": {}
+  },
+  "required": [
+   "resultado",
+   "clase_cifra",
+   "incertidumbre",
+   "artefacto_id",
+   "informe_calidad_datos",
+   "limitaciones"
+  ],
+  "type": "object"
+ },
+ "CT-10.ENCARGO": {
+  "$comment": "derivado del Anexo B del Documento 0 V5.1",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "properties": {
+   "artefacto_id": {},
+   "motivo": {}
+  },
+  "required": [
+   "artefacto_id",
+   "motivo"
+  ],
+  "type": "object"
+ },
+ "CT-10.RETORNO": {
+  "$comment": "derivado del Anexo B del Documento 0 V5.1. `coincide` es «sí/no/dentro de tolerancia»; el Anexo B no fija su codificación y aquí no se restringe",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "properties": {
+   "coincide": {},
+   "diagnostico": {},
+   "diferencias": {}
+  },
+  "required": [
+   "coincide",
+   "diferencias",
+   "diagnostico"
+  ],
+  "type": "object"
+ },
+ "CT-11.ENCARGO": {
+  "$comment": "derivado del Anexo B del Documento 0 V5.1. `fechas` agrupa fenómeno, publicación, recuperación y conocible_desde; el Anexo B no fija los nombres de sus claves",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "properties": {
+   "afirmacion": {},
+   "direccion": {
+    "enum": [
+     "favorable",
+     "contraria",
+     "neutra",
+     "ambigua"
+    ]
+   },
+   "extracto": {},
+   "fechas": {},
+   "fuente": {},
+   "unidad_divisa": {}
+  },
+  "required": [
+   "fuente",
+   "extracto",
+   "afirmacion",
+   "direccion",
+   "fechas",
+   "unidad_divisa"
+  ],
+  "type": "object"
+ },
+ "CT-11.RETORNO": {
+  "$comment": "derivado del Anexo B del Documento 0 V5.1",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "properties": {
+   "clm_id": {},
+   "duplicado_de": {},
+   "evd_id": {},
+   "independiente": {},
+   "raiz_id": {}
+  },
+  "required": [
+   "evd_id",
+   "clm_id",
+   "duplicado_de",
+   "raiz_id",
+   "independiente"
+  ],
+  "type": "object"
+ },
+ "CT-12.ENCARGO": {
+  "$comment": "derivado del Anexo B del Documento 0 V5.1",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "properties": {
+   "catalizadores_conocidos": {},
+   "datos": {},
+   "horizontes": {},
+   "opp_id": {},
+   "tesis": {}
+  },
+  "required": [
+   "opp_id",
+   "tesis",
+   "horizontes",
+   "datos",
+   "catalizadores_conocidos"
+  ],
+  "type": "object"
+ },
+ "CT-12.RETORNO": {
+  "$comment": "derivado del Anexo B del Documento 0 V5.1",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "properties": {
+   "escenarios": {},
+   "hitos": {},
+   "indicadores_adelantados": {},
+   "invalidacion": {},
+   "pronosticos": {}
+  },
+  "required": [
+   "escenarios",
+   "pronosticos",
+   "hitos",
+   "indicadores_adelantados",
+   "invalidacion"
+  ],
+  "type": "object"
+ },
+ "CT-13.ENCARGO": {
+  "$comment": "derivado del Anexo B del Documento 0 V5.1",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "properties": {
+   "calculos": {},
+   "evidencias_clave": {},
+   "opp_id": {},
+   "prospectiva": {},
+   "tesis": {}
+  },
+  "required": [
+   "opp_id",
+   "tesis",
+   "evidencias_clave",
+   "calculos",
+   "prospectiva"
+  ],
+  "type": "object"
+ },
+ "CT-13.RETORNO": {
+  "$comment": "derivado del Anexo B del Documento 0 V5.1",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "properties": {
+   "objeciones": {
+    "items": {
+     "properties": {
+      "argumento": {},
+      "evidencia": {},
+      "fuerza": {
+       "enum": [
+        "fuerte",
+        "moderada",
+        "debil"
+       ]
+      },
+      "id": {},
+      "que_la_resolveria": {},
+      "tipo": {}
+     },
+     "required": [
+      "id",
+      "tipo",
+      "fuerza",
+      "argumento",
+      "evidencia",
+      "que_la_resolveria"
+     ],
+     "type": "object"
+    },
+    "type": "array"
+   },
+   "veredicto_global": {
+    "enum": [
+     "tesis robusta",
+     "tesis frágil",
+     "tesis refutada"
+    ]
+   }
+  },
+  "required": [
+   "objeciones",
+   "veredicto_global"
+  ],
+  "type": "object"
+ },
+ "CT-14.ENCARGO": {
+  "$comment": "derivado del Anexo B del Documento 0 V5.1",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "properties": {
+   "paquete_sintesis": {},
+   "run_id": {}
+  },
+  "required": [
+   "run_id",
+   "paquete_sintesis"
+  ],
+  "type": "object"
+ },
+ "CT-14.RETORNO": {
+  "$comment": "derivado del Anexo B del Documento 0 V5.1",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "properties": {
+   "comprobaciones": {},
+   "dictamen": {
+    "enum": [
+     "APTO",
+     "APTO_CON_ADVERTENCIAS",
+     "BLOQUEADO"
+    ]
+   },
+   "motivo": {}
+  },
+  "required": [
+   "dictamen",
+   "comprobaciones",
+   "motivo"
+  ],
+  "type": "object"
+ },
+ "CT-15.ENCARGO": {
+  "$comment": "derivado del Anexo B del Documento 0 V5.1. La respuesta («rutas de los tres entregables + métricas de legibilidad») no tiene nombres de campo en el Anexo B: sin esquema de retorno",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "properties": {
+   "paquete_sintesis": {}
+  },
+  "required": [
+   "paquete_sintesis"
+  ],
+  "type": "object"
+ },
+ "CT-23.ENCARGO": {
+  "$comment": "derivado del Anexo B del Documento 0 V5.1. `contenido` «solo en ENTRANTE»",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "properties": {
+   "cns_id": {},
+   "contenido": {},
+   "modo": {
+    "enum": [
+     "BLOQUEANTE",
+     "NO_BLOQUEANTE"
+    ]
+   },
+   "plazo_respuesta": {},
+   "preguntas": {
+    "items": {
+     "properties": {
+      "efecto_si_falso": {},
+      "opciones_sugeridas": {},
+      "origen": {},
+      "por_que_importa": {},
+      "supuesto_declarado": {},
+      "texto": {}
+     },
+     "required": [
+      "texto",
+      "origen",
+      "por_que_importa",
+      "supuesto_declarado",
+      "efecto_si_falso",
+      "opciones_sugeridas"
+     ],
+     "type": "object"
+    },
+    "type": "array"
+   },
+   "punto_control": {},
+   "run_id": {},
+   "seg_id": {},
+   "sentido": {
+    "enum": [
+     "SALIENTE",
+     "ENTRANTE"
+    ]
+   },
+   "tipo": {
+    "enum": [
+     "ACLARACION_ALCANCE",
+     "DATO_O_DOCUMENTO",
+     "PREFERENCIA_O_CRITERIO",
+     "CONFIRMACION_SUPUESTO",
+     "OTRA"
+    ]
+   }
+  },
+  "required": [
+   "cns_id",
+   "sentido",
+   "run_id",
+   "seg_id",
+   "tipo",
+   "modo",
+   "preguntas",
+   "plazo_respuesta",
+   "punto_control"
+  ],
+  "type": "object"
+ },
+ "CT-23.RETORNO": {
+  "$comment": "derivado del Anexo B del Documento 0 V5.1. El §6.2.6 pide además que el estado del objeto vaya en `estado_consulta`",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "properties": {
+   "cns_id": {},
+   "estado": {
+    "enum": [
+     "RESPONDIDA",
+     "PARCIAL",
+     "VENCIDA"
+    ]
+   },
+   "respuestas": {
+    "items": {
+     "properties": {
+      "documentos": {},
+      "indice": {},
+      "texto": {}
+     },
+     "required": [
+      "indice",
+      "texto",
+      "documentos"
+     ],
+     "type": "object"
+    },
+    "type": "array"
+   },
+   "supuestos_aplicados": {
+    "items": {
+     "properties": {
+      "indice": {},
+      "supuesto": {}
+     },
+     "required": [
+      "indice",
+      "supuesto"
+     ],
+     "type": "object"
+    },
+    "type": "array"
+   }
+  },
+  "required": [
+   "cns_id",
+   "estado",
+   "respuestas",
+   "supuestos_aplicados"
+  ],
+  "type": "object"
+ },
+ "CT-24.ENCARGO": {
+  "$comment": "derivado del Anexo B del Documento 0 V5.1",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "properties": {
+   "accion": {
+    "enum": [
+     "ALTA",
+     "MODIFICACION",
+     "PAUSA",
+     "REANUDACION",
+     "CANCELACION"
+    ]
+   },
+   "calendario_personalizado": {},
+   "fecha_fin": {},
+   "frecuencia": {
+    "enum": [
+     "DIARIA",
+     "SEMANAL",
+     "QUINCENAL",
+     "MENSUAL",
+     "TRIMESTRAL",
+     "PERSONALIZADA"
+    ]
+   },
+   "motivo": {},
+   "opp_id": {},
+   "seg_id": {},
+   "senales_interes": {}
+  },
+  "required": [
+   "seg_id",
+   "accion",
+   "opp_id",
+   "frecuencia",
+   "calendario_personalizado",
+   "motivo",
+   "senales_interes",
+   "fecha_fin"
+  ],
+  "type": "object"
+ },
+ "CT-24.RETORNO": {
+  "$comment": "derivado del Anexo B del Documento 0 V5.1. `aviso` es «opcional». El §6.2.6 pide además que el estado del objeto vaya en `estado_seguimiento`",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "properties": {
+   "aviso": {},
+   "estado": {
+    "enum": [
+     "ACTIVO",
+     "PAUSADO",
+     "CANCELADO",
+     "FINALIZADO"
+    ]
+   },
+   "proximo_ciclo": {},
+   "seg_id": {}
+  },
+  "required": [
+   "seg_id",
+   "estado",
+   "proximo_ciclo"
+  ],
+  "type": "object"
+ },
+ "CT-25.ENCARGO": {
+  "$comment": "derivado del Anexo B del Documento 0 V5.1",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "properties": {
+   "crd_id": {},
+   "herramienta": {},
+   "impacto_si_falta": {},
+   "servicio": {},
+   "solicitante": {},
+   "urgencia": {
+    "enum": [
+     "ALTA",
+     "NORMAL"
+    ]
+   },
+   "uso_previsto": {}
+  },
+  "required": [
+   "crd_id",
+   "servicio",
+   "herramienta",
+   "uso_previsto",
+   "solicitante",
+   "impacto_si_falta",
+   "urgencia"
+  ],
+  "type": "object"
+ },
+ "CT-25.RETORNO": {
+  "$comment": "derivado del Anexo B del Documento 0 V5.1. El §6.2.6 pide además que el estado del objeto vaya en `estado_credencial`",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "properties": {
+   "caducidad": {},
+   "crd_id": {},
+   "credencial_ref": {},
+   "estado": {
+    "enum": [
+     "PROVISTA",
+     "DENEGADA",
+     "APLAZADA"
+    ]
+   }
+  },
+  "required": [
+   "crd_id",
+   "estado",
+   "credencial_ref",
+   "caducidad"
+  ],
+  "type": "object"
+ }
+}

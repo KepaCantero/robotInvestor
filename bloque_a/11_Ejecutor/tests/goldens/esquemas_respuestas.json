@@ -1,0 +1,1772 @@
+{
+ "APRENDIZAJE": {
+  "properties": {
+   "lecciones": {
+    "items": {
+     "properties": {
+      "fuerza": {
+       "enum": [
+        "anecdotica",
+        "recurrente",
+        "estadistica"
+       ]
+      }
+     },
+     "required": [
+      "tipo",
+      "observacion",
+      "recomendacion",
+      "fuerza"
+     ],
+     "type": "object"
+    },
+    "type": "array"
+   },
+   "resumen": {
+    "minLength": 1,
+    "type": "string"
+   }
+  },
+  "required": [
+   "resumen",
+   "lecciones"
+  ],
+  "type": "object"
+ },
+ "AUDITORIA": {
+  "properties": {
+   "hallazgos": {
+    "items": {
+     "properties": {
+      "severidad": {
+       "enum": [
+        "Crítica",
+        "Material",
+        "Operativa",
+        "Menor"
+       ]
+      }
+     },
+     "required": [
+      "regla",
+      "descripcion",
+      "severidad"
+     ],
+     "type": "object"
+    },
+    "type": "array"
+   },
+   "resumen": {
+    "minLength": 1,
+    "type": "string"
+   }
+  },
+  "required": [
+   "hallazgos",
+   "resumen"
+  ],
+  "type": "object"
+ },
+ "BUSQUEDA": {
+  "properties": {
+   "contradicciones": {
+    "type": "array"
+   },
+   "lagunas": {
+    "items": {
+     "type": "string"
+    },
+    "type": "array"
+   },
+   "referencias": {
+    "items": {
+     "required": [
+      "ref_id"
+     ],
+     "type": "object"
+    },
+    "type": "array"
+   },
+   "sintesis": {
+    "type": "string"
+   }
+  },
+  "required": [
+   "referencias",
+   "sintesis",
+   "lagunas"
+  ],
+  "type": "object"
+ },
+ "CONSULTA": {
+  "properties": {
+   "clase_consulta": {
+    "enum": [
+     "ACLARACION",
+     "DATO",
+     "METODO",
+     "CONTRASTE",
+     "PROFUNDIZACION",
+     "ESTADO"
+    ]
+   },
+   "confianza": {
+    "enum": [
+     "establecido",
+     "probable",
+     "especulativo",
+     "en disputa"
+    ]
+   },
+   "escalado": {
+    "type": [
+     "object",
+     "null"
+    ]
+   },
+   "referencias": {
+    "items": {
+     "type": "string"
+    },
+    "type": "array"
+   },
+   "respuesta": {
+    "minLength": 1,
+    "type": "string"
+   },
+   "ruta": {
+    "enum": [
+     "N0",
+     "ANALITICA"
+    ]
+   },
+   "tema_normalizado": {
+    "minLength": 1,
+    "type": "string"
+   }
+  },
+  "required": [
+   "clase_consulta",
+   "ruta",
+   "respuesta",
+   "referencias",
+   "confianza",
+   "tema_normalizado"
+  ],
+  "type": "object"
+ },
+ "CONTRARREPLICA": {
+  "properties": {
+   "resultados": {
+    "items": {
+     "properties": {
+      "motivo": {
+       "type": "string"
+      },
+      "objecion_id": {
+       "minLength": 1,
+       "type": "string"
+      },
+      "resuelta": {
+       "type": "boolean"
+      }
+     },
+     "required": [
+      "objecion_id",
+      "resuelta"
+     ],
+     "type": "object"
+    },
+    "type": "array"
+   }
+  },
+  "required": [
+   "resultados"
+  ],
+  "type": "object"
+ },
+ "CURACION": {
+  "properties": {
+   "piezas": {
+    "items": {
+     "properties": {
+      "alertas": {
+       "items": {
+        "type": "string"
+       },
+       "type": "array"
+      },
+      "indice": {
+       "type": "integer"
+      },
+      "nivel_confianza": {
+       "enum": [
+        "establecido",
+        "probable",
+        "especulativo",
+        "en disputa"
+       ]
+      },
+      "tipo_afirmacion": {
+       "enum": [
+        "HECHO",
+        "DATO",
+        "ANALISIS",
+        "OPINION",
+        "PREVISION",
+        "RUMOR",
+        "PRONOSTICO_FUENTE"
+       ]
+      }
+     },
+     "required": [
+      "indice",
+      "tipo_afirmacion",
+      "nivel_confianza"
+     ],
+     "type": "object"
+    },
+    "type": "array"
+   }
+  },
+  "required": [
+   "piezas"
+  ],
+  "type": "object"
+ },
+ "DICTAMEN_G3": {
+  "properties": {
+   "advertencias": {
+    "items": {
+     "type": "string"
+    },
+    "type": "array"
+   },
+   "condiciones_para_apto": {
+    "items": {
+     "type": "string"
+    },
+    "type": "array"
+   },
+   "dictamen": {
+    "enum": [
+     "APTO_CON_ADVERTENCIAS",
+     "BLOQUEADO"
+    ]
+   },
+   "motivo": {
+    "minLength": 1,
+    "type": "string"
+   }
+  },
+  "required": [
+   "dictamen",
+   "motivo"
+  ],
+  "type": "object"
+ },
+ "INFORME_CLASE": {
+  "properties": {
+   "autoevaluacion": {
+    "type": "string"
+   },
+   "clase": {
+    "minLength": 1,
+    "type": "string"
+   },
+   "cribado": {
+    "items": {
+     "required": [
+      "candidata",
+      "paso_gc1",
+      "motivo"
+     ],
+     "type": "object"
+    },
+    "type": "array"
+   },
+   "descartadas_relevantes": {
+    "type": "array"
+   },
+   "estado": {
+    "enum": [
+     "COMPLETO",
+     "PARCIAL",
+     "SIN_RESULTADO",
+     "RECHAZADO"
+    ]
+   },
+   "finalistas": {
+    "items": {
+     "not": {
+      "anyOf": [
+       {
+        "required": [
+         "vehiculos_genericos"
+        ]
+       },
+       {
+        "required": [
+         "accesibilidad_minorista_ue"
+        ]
+       }
+      ]
+     },
+     "properties": {
+      "afirmaciones": {
+       "items": {
+        "properties": {
+         "afirmacion": {
+          "minLength": 1,
+          "type": "string"
+         },
+         "direccion": {
+          "enum": [
+           "favorable",
+           "contraria",
+           "neutra",
+           "ambigua"
+          ]
+         },
+         "fuente": {
+          "minLength": 1,
+          "type": "string"
+         }
+        },
+        "required": [
+         "afirmacion",
+         "fuente",
+         "direccion"
+        ],
+        "type": "object"
+       },
+       "minItems": 1,
+       "type": "array"
+      },
+      "ambito": {
+       "properties": {
+        "excluye": {
+         "minLength": 1,
+         "type": "string"
+        },
+        "incluye": {
+         "minLength": 1,
+         "type": "string"
+        },
+        "region": {
+         "minLength": 1,
+         "type": "string"
+        }
+       },
+       "required": [
+        "incluye",
+        "excluye",
+        "region"
+       ],
+       "type": "object"
+      },
+      "catalizadores": {
+       "items": {
+        "properties": {
+         "evento": {
+          "minLength": 1,
+          "type": "string"
+         },
+         "fecha": {
+          "pattern": "^[0-9]{4}-[0-9]{2}(-[0-9]{2})?$|^[0-9]{4}-T[1-4]$|^[0-9]{4}-S[12]$",
+          "type": "string"
+         }
+        },
+        "required": [
+         "evento",
+         "fecha"
+        ],
+        "type": "object"
+       },
+       "type": "array"
+      },
+      "criterios_seleccion_sugeridos": {
+       "items": {
+        "minLength": 1,
+        "type": "string"
+       },
+       "minItems": 1,
+       "type": "array"
+      },
+      "dimensiones": {
+       "properties": {
+        "A": {
+         "additionalProperties": {
+          "anyOf": [
+           {
+            "maximum": 100,
+            "minimum": 0,
+            "multipleOf": 10,
+            "type": "integer"
+           },
+           {
+            "enum": [
+             "NA",
+             "NE"
+            ]
+           }
+          ]
+         },
+         "type": "object"
+        },
+        "E": {
+         "additionalProperties": {
+          "anyOf": [
+           {
+            "maximum": 100,
+            "minimum": 0,
+            "multipleOf": 10,
+            "type": "integer"
+           },
+           {
+            "enum": [
+             "NA",
+             "NE"
+            ]
+           }
+          ]
+         },
+         "type": "object"
+        },
+        "M": {
+         "additionalProperties": {
+          "anyOf": [
+           {
+            "maximum": 100,
+            "minimum": 0,
+            "multipleOf": 10,
+            "type": "integer"
+           },
+           {
+            "enum": [
+             "NA",
+             "NE"
+            ]
+           }
+          ]
+         },
+         "type": "object"
+        },
+        "P": {
+         "additionalProperties": {
+          "anyOf": [
+           {
+            "maximum": 100,
+            "minimum": 0,
+            "multipleOf": 10,
+            "type": "integer"
+           },
+           {
+            "enum": [
+             "NA",
+             "NE"
+            ]
+           }
+          ]
+         },
+         "type": "object"
+        },
+        "T": {
+         "anyOf": [
+          {
+           "additionalProperties": {
+            "anyOf": [
+             {
+              "maximum": 100,
+              "minimum": 0,
+              "multipleOf": 10,
+              "type": "integer"
+             },
+             {
+              "enum": [
+               "NA",
+               "NE"
+              ]
+             }
+            ]
+           },
+           "type": "object"
+          },
+          {
+           "const": "NA"
+          }
+         ]
+        }
+       },
+       "required": [
+        "T",
+        "E",
+        "M",
+        "A",
+        "P"
+       ],
+       "type": "object"
+      },
+      "discrepancia_material": {
+       "type": "boolean"
+      },
+      "ejemplos_ilustrativos": {
+       "items": {
+        "minLength": 1,
+        "type": "string"
+       },
+       "maxItems": 8,
+       "type": "array"
+      },
+      "horizonte_principal": {
+       "enum": [
+        "H1",
+        "H2",
+        "H3",
+        "H4",
+        "H5"
+       ]
+      },
+      "horizontes_aplicables": {
+       "items": {
+        "enum": [
+         "H1",
+         "H2",
+         "H3",
+         "H4",
+         "H5"
+        ]
+       },
+       "minItems": 1,
+       "type": "array"
+      },
+      "indicador_seguimiento": {
+       "properties": {
+        "fuente": {
+         "type": "string"
+        },
+        "nombre": {
+         "minLength": 1,
+         "type": "string"
+        },
+        "simbolo": {
+         "minLength": 1,
+         "type": "string"
+        },
+        "tipo": {
+         "type": "string"
+        }
+       },
+       "required": [
+        "nombre",
+        "simbolo"
+       ],
+       "type": "object"
+      },
+      "invalidacion": {
+       "items": {
+        "minLength": 1,
+        "type": "string"
+       },
+       "minItems": 1,
+       "type": "array"
+      },
+      "invalidacion_cuantitativa": {
+       "items": {
+        "properties": {
+         "direccion": {
+          "enum": [
+           "por_debajo",
+           "por_encima"
+          ]
+         },
+         "simbolo": {
+          "minLength": 1,
+          "type": "string"
+         },
+         "umbral": {
+          "type": "number"
+         }
+        },
+        "required": [
+         "simbolo",
+         "umbral",
+         "direccion"
+        ],
+        "type": "object"
+       },
+       "type": "array"
+      },
+      "invertibilidad": {
+       "properties": {
+        "nota": {
+         "minLength": 1,
+         "type": "string"
+        },
+        "universo_suficiente": {
+         "type": "boolean"
+        }
+       },
+       "required": [
+        "universo_suficiente",
+        "nota"
+       ],
+       "type": "object"
+      },
+      "justificacion_horizonte": {
+       "type": [
+        "string",
+        "null"
+       ]
+      },
+      "liquidez": {
+       "enum": [
+        "alta",
+        "media",
+        "baja"
+       ]
+      },
+      "lo_que_no_sabemos": {
+       "items": {
+        "minLength": 1,
+        "type": "string"
+       },
+       "minItems": 1,
+       "type": "array"
+      },
+      "mecanismo": {
+       "minLength": 1,
+       "type": "string"
+      },
+      "metricas_clave": {
+       "items": {
+        "minLength": 1,
+        "type": "string"
+       },
+       "minItems": 1,
+       "type": "array"
+      },
+      "naturaleza_inversion": {
+       "enum": [
+        "TACTICA",
+        "LIQUIDEZ",
+        "CICLICA",
+        "PRIMA_RIESGO",
+        "VALORACION",
+        "ESTRUCTURAL"
+       ]
+      },
+      "nombre": {
+       "minLength": 1,
+       "type": "string"
+      },
+      "nombre_llano": {
+       "maxLength": 70,
+       "minLength": 3,
+       "type": "string"
+      },
+      "peticiones_conocimiento": {
+       "type": "array"
+      },
+      "preguntas_para_B": {
+       "items": {
+        "minLength": 1,
+        "type": "string"
+       },
+       "minItems": 1,
+       "type": "array"
+      },
+      "premortem": {
+       "minLength": 1,
+       "type": "string"
+      },
+      "probabilidades_propias": {
+       "additionalProperties": {
+        "maximum": 0.95,
+        "minimum": 0.05,
+        "type": "number"
+       },
+       "type": "object"
+      },
+      "regiones": {
+       "items": {
+        "enum": [
+         "NAM",
+         "LAT",
+         "EUR",
+         "AFR",
+         "ORM",
+         "CHN",
+         "ASE",
+         "JPN",
+         "OCE",
+         "GLB"
+        ]
+       },
+       "minItems": 1,
+       "type": "array"
+      },
+      "riesgos": {
+       "items": {
+        "minLength": 1,
+        "type": "string"
+       },
+       "minItems": 1,
+       "type": "array"
+      },
+      "saturacion_narrativa": {
+       "type": "boolean"
+      },
+      "segunda_pasada": {
+       "type": "object"
+      },
+      "subtipo": {
+       "minLength": 1,
+       "type": "string"
+      },
+      "tendencia": {
+       "required": [
+        "nombre_canonico"
+       ],
+       "type": "object"
+      },
+      "tesis": {
+       "minLength": 1,
+       "type": "string"
+      },
+      "tipo_opcion": {
+       "enum": [
+        "MERCADO",
+        "SECTOR",
+        "SUBSECTOR",
+        "TEMATICA",
+        "SEGMENTO",
+        "FACTOR",
+        "ESTILO",
+        "ESTRATEGIA"
+       ]
+      },
+      "tipos_secundarios": {
+       "items": {
+        "type": "string"
+       },
+       "type": "array"
+      },
+      "valoracion": {
+       "minLength": 1,
+       "type": "string"
+      }
+     },
+     "required": [
+      "nombre",
+      "nombre_llano",
+      "tipo_opcion",
+      "subtipo",
+      "ambito",
+      "indicador_seguimiento",
+      "invertibilidad",
+      "tesis",
+      "mecanismo",
+      "valoracion",
+      "catalizadores",
+      "riesgos",
+      "invalidacion",
+      "horizontes_aplicables",
+      "dimensiones",
+      "premortem",
+      "afirmaciones",
+      "lo_que_no_sabemos",
+      "regiones",
+      "criterios_seleccion_sugeridos",
+      "metricas_clave",
+      "preguntas_para_B"
+     ],
+     "type": "object"
+    },
+    "maxItems": 5,
+    "type": "array"
+   },
+   "lagunas": {
+    "items": {
+     "type": "string"
+    },
+    "type": "array"
+   },
+   "regimen_clase": {
+    "required": [
+     "diagnostico"
+    ],
+    "type": "object"
+   },
+   "revision_vigentes": {
+    "items": {
+     "properties": {
+      "invalidacion_activada": {
+       "type": "boolean"
+      },
+      "opp_id": {
+       "minLength": 1,
+       "type": "string"
+      },
+      "recomendacion": {
+       "enum": [
+        "MANTENER",
+        "REVISAR",
+        "CERRAR"
+       ]
+      }
+     },
+     "required": [
+      "opp_id",
+      "invalidacion_activada",
+      "recomendacion"
+     ],
+     "type": "object"
+    },
+    "type": "array"
+   }
+  },
+  "required": [
+   "clase",
+   "estado",
+   "regimen_clase",
+   "revision_vigentes",
+   "cribado",
+   "finalistas",
+   "lagunas",
+   "autoevaluacion"
+  ],
+  "type": "object"
+ },
+ "INTEGRACION": {
+  "properties": {
+   "cambios_vs_anterior": {
+    "type": "string"
+   },
+   "factores_dominantes": {
+    "type": "array"
+   },
+   "lectura_conjunto": {
+    "minLength": 1,
+    "type": "string"
+   },
+   "limitaciones": {
+    "items": {
+     "type": "string"
+    },
+    "type": "array"
+   },
+   "preguntas_sugeridas": {
+    "items": {
+     "type": "string"
+    },
+    "type": "array"
+   },
+   "regimen_macro": {
+    "minLength": 10,
+    "type": "string"
+   }
+  },
+  "required": [
+   "regimen_macro",
+   "factores_dominantes",
+   "lectura_conjunto",
+   "preguntas_sugeridas",
+   "limitaciones"
+  ],
+  "type": "object"
+ },
+ "PLAN_MOTOR": {
+  "properties": {
+   "ficha_id": {
+    "minLength": 1,
+    "type": "string"
+   },
+   "justificacion": {
+    "minLength": 1,
+    "type": "string"
+   },
+   "parametros": {
+    "type": "object"
+   }
+  },
+  "required": [
+   "ficha_id",
+   "parametros",
+   "justificacion"
+  ],
+  "type": "object"
+ },
+ "PROSPECTIVA": {
+  "properties": {
+   "resultados": {
+    "items": {
+     "properties": {
+      "escenarios": {
+       "type": "object"
+      },
+      "hitos": {
+       "type": "array"
+      },
+      "indicadores_adelantados": {
+       "type": "array"
+      },
+      "invalidacion": {
+       "type": "array"
+      },
+      "pronosticos": {
+       "items": {
+        "properties": {
+         "afirmacion": {
+          "minLength": 1,
+          "type": "string"
+         },
+         "escenario_asociado": {
+          "enum": [
+           "BASE",
+           "FAVORABLE",
+           "ADVERSO"
+          ]
+         },
+         "horizonte": {
+          "enum": [
+           "H1",
+           "H2",
+           "H3",
+           "H4",
+           "H5"
+          ]
+         },
+         "metodo": {
+          "type": "string"
+         },
+         "prob_interna": {
+          "maximum": 0.95,
+          "minimum": 0.05,
+          "type": "number"
+         },
+         "vista": {
+          "enum": [
+           "alcista",
+           "bajista",
+           "lateral",
+           "relativa_favorable",
+           "relativa_desfavorable"
+          ]
+         }
+        },
+        "required": [
+         "horizonte",
+         "vista",
+         "prob_interna",
+         "afirmacion",
+         "escenario_asociado"
+        ],
+        "type": "object"
+       },
+       "type": "array"
+      },
+      "ref": {
+       "minLength": 1,
+       "type": "string"
+      }
+     },
+     "required": [
+      "ref",
+      "pronosticos",
+      "escenarios"
+     ],
+     "type": "object"
+    },
+    "type": "array"
+   }
+  },
+  "required": [
+   "resultados",
+   "autoevaluacion"
+  ],
+  "type": "object"
+ },
+ "REDACCION": {
+  "properties": {
+   "frase_historial": {
+    "minLength": 1,
+    "type": "string"
+   },
+   "frases_30s": {
+    "items": {
+     "minLength": 1,
+     "type": "string"
+    },
+    "maxItems": 3,
+    "minItems": 3,
+    "type": "array"
+   },
+   "glosario": {
+    "items": {
+     "required": [
+      "termino",
+      "definicion"
+     ],
+     "type": "object"
+    },
+    "maxItems": 5,
+    "type": "array"
+   },
+   "motivos_llanos": {
+    "type": "object"
+   },
+   "tarjetas": {
+    "items": {
+     "properties": {
+      "ambito_llano": {
+       "maxLength": 160,
+       "type": "string"
+      },
+      "por_que_llano": {
+       "maxLength": 160,
+       "type": "string"
+      },
+      "que_puede_salir_mal_llano": {
+       "maxLength": 200,
+       "type": "string"
+      }
+     },
+     "required": [
+      "opp_id",
+      "por_que_llano",
+      "que_puede_salir_mal_llano"
+     ],
+     "type": "object"
+    },
+    "type": "array"
+   }
+  },
+  "required": [
+   "frases_30s",
+   "tarjetas",
+   "motivos_llanos",
+   "glosario",
+   "frase_historial"
+  ],
+  "type": "object"
+ },
+ "REFUTACION": {
+  "properties": {
+   "resultados": {
+    "items": {
+     "properties": {
+      "objeciones": {
+       "items": {
+        "properties": {
+         "fuerza": {
+          "enum": [
+           "fuerte",
+           "moderada",
+           "debil"
+          ]
+         }
+        },
+        "required": [
+         "id",
+         "tipo",
+         "fuerza",
+         "argumento",
+         "que_la_resolveria"
+        ],
+        "type": "object"
+       },
+       "type": "array"
+      },
+      "ref": {
+       "minLength": 1,
+       "type": "string"
+      },
+      "veredicto_global": {
+       "enum": [
+        "tesis robusta",
+        "tesis frágil",
+        "tesis refutada"
+       ]
+      }
+     },
+     "required": [
+      "ref",
+      "objeciones",
+      "veredicto_global"
+     ],
+     "type": "object"
+    },
+    "type": "array"
+   }
+  },
+  "required": [
+   "resultados",
+   "autoevaluacion"
+  ],
+  "type": "object"
+ },
+ "RESPUESTA_OBJECIONES": {
+  "properties": {
+   "respuestas": {
+    "items": {
+     "properties": {
+      "evidencia_citada": {
+       "items": {
+        "type": "string"
+       },
+       "type": "array"
+      },
+      "objecion_id": {
+       "minLength": 1,
+       "type": "string"
+      },
+      "respuesta": {
+       "type": "string"
+      },
+      "resuelta": {
+       "type": "boolean"
+      }
+     },
+     "required": [
+      "objecion_id",
+      "respuesta",
+      "resuelta"
+     ],
+     "type": "object"
+    },
+    "type": "array"
+   }
+  },
+  "required": [
+   "respuestas"
+  ],
+  "type": "object"
+ },
+ "REVISION_VIGENTES": {
+  "properties": {
+   "clase": {
+    "minLength": 1,
+    "type": "string"
+   },
+   "estado": {
+    "enum": [
+     "COMPLETO",
+     "PARCIAL",
+     "SIN_RESULTADO",
+     "RECHAZADO"
+    ]
+   },
+   "exploratorias": {
+    "items": {
+     "not": {
+      "anyOf": [
+       {
+        "required": [
+         "vehiculos_genericos"
+        ]
+       },
+       {
+        "required": [
+         "accesibilidad_minorista_ue"
+        ]
+       }
+      ]
+     },
+     "properties": {
+      "afirmaciones": {
+       "items": {
+        "properties": {
+         "afirmacion": {
+          "minLength": 1,
+          "type": "string"
+         },
+         "direccion": {
+          "enum": [
+           "favorable",
+           "contraria",
+           "neutra",
+           "ambigua"
+          ]
+         },
+         "fuente": {
+          "minLength": 1,
+          "type": "string"
+         }
+        },
+        "required": [
+         "afirmacion",
+         "fuente",
+         "direccion"
+        ],
+        "type": "object"
+       },
+       "minItems": 1,
+       "type": "array"
+      },
+      "ambito": {
+       "properties": {
+        "excluye": {
+         "minLength": 1,
+         "type": "string"
+        },
+        "incluye": {
+         "minLength": 1,
+         "type": "string"
+        },
+        "region": {
+         "minLength": 1,
+         "type": "string"
+        }
+       },
+       "required": [
+        "incluye",
+        "excluye",
+        "region"
+       ],
+       "type": "object"
+      },
+      "catalizadores": {
+       "items": {
+        "properties": {
+         "evento": {
+          "minLength": 1,
+          "type": "string"
+         },
+         "fecha": {
+          "pattern": "^[0-9]{4}-[0-9]{2}(-[0-9]{2})?$|^[0-9]{4}-T[1-4]$|^[0-9]{4}-S[12]$",
+          "type": "string"
+         }
+        },
+        "required": [
+         "evento",
+         "fecha"
+        ],
+        "type": "object"
+       },
+       "type": "array"
+      },
+      "criterios_seleccion_sugeridos": {
+       "items": {
+        "minLength": 1,
+        "type": "string"
+       },
+       "minItems": 1,
+       "type": "array"
+      },
+      "dimensiones": {
+       "properties": {
+        "A": {
+         "additionalProperties": {
+          "anyOf": [
+           {
+            "maximum": 100,
+            "minimum": 0,
+            "multipleOf": 10,
+            "type": "integer"
+           },
+           {
+            "enum": [
+             "NA",
+             "NE"
+            ]
+           }
+          ]
+         },
+         "type": "object"
+        },
+        "E": {
+         "additionalProperties": {
+          "anyOf": [
+           {
+            "maximum": 100,
+            "minimum": 0,
+            "multipleOf": 10,
+            "type": "integer"
+           },
+           {
+            "enum": [
+             "NA",
+             "NE"
+            ]
+           }
+          ]
+         },
+         "type": "object"
+        },
+        "M": {
+         "additionalProperties": {
+          "anyOf": [
+           {
+            "maximum": 100,
+            "minimum": 0,
+            "multipleOf": 10,
+            "type": "integer"
+           },
+           {
+            "enum": [
+             "NA",
+             "NE"
+            ]
+           }
+          ]
+         },
+         "type": "object"
+        },
+        "P": {
+         "additionalProperties": {
+          "anyOf": [
+           {
+            "maximum": 100,
+            "minimum": 0,
+            "multipleOf": 10,
+            "type": "integer"
+           },
+           {
+            "enum": [
+             "NA",
+             "NE"
+            ]
+           }
+          ]
+         },
+         "type": "object"
+        },
+        "T": {
+         "anyOf": [
+          {
+           "additionalProperties": {
+            "anyOf": [
+             {
+              "maximum": 100,
+              "minimum": 0,
+              "multipleOf": 10,
+              "type": "integer"
+             },
+             {
+              "enum": [
+               "NA",
+               "NE"
+              ]
+             }
+            ]
+           },
+           "type": "object"
+          },
+          {
+           "const": "NA"
+          }
+         ]
+        }
+       },
+       "required": [
+        "T",
+        "E",
+        "M",
+        "A",
+        "P"
+       ],
+       "type": "object"
+      },
+      "discrepancia_material": {
+       "type": "boolean"
+      },
+      "ejemplos_ilustrativos": {
+       "items": {
+        "minLength": 1,
+        "type": "string"
+       },
+       "maxItems": 8,
+       "type": "array"
+      },
+      "horizonte_principal": {
+       "enum": [
+        "H1",
+        "H2",
+        "H3",
+        "H4",
+        "H5"
+       ]
+      },
+      "horizontes_aplicables": {
+       "items": {
+        "enum": [
+         "H1",
+         "H2",
+         "H3",
+         "H4",
+         "H5"
+        ]
+       },
+       "minItems": 1,
+       "type": "array"
+      },
+      "indicador_seguimiento": {
+       "properties": {
+        "fuente": {
+         "type": "string"
+        },
+        "nombre": {
+         "minLength": 1,
+         "type": "string"
+        },
+        "simbolo": {
+         "minLength": 1,
+         "type": "string"
+        },
+        "tipo": {
+         "type": "string"
+        }
+       },
+       "required": [
+        "nombre",
+        "simbolo"
+       ],
+       "type": "object"
+      },
+      "invalidacion": {
+       "items": {
+        "minLength": 1,
+        "type": "string"
+       },
+       "minItems": 1,
+       "type": "array"
+      },
+      "invalidacion_cuantitativa": {
+       "items": {
+        "properties": {
+         "direccion": {
+          "enum": [
+           "por_debajo",
+           "por_encima"
+          ]
+         },
+         "simbolo": {
+          "minLength": 1,
+          "type": "string"
+         },
+         "umbral": {
+          "type": "number"
+         }
+        },
+        "required": [
+         "simbolo",
+         "umbral",
+         "direccion"
+        ],
+        "type": "object"
+       },
+       "type": "array"
+      },
+      "invertibilidad": {
+       "properties": {
+        "nota": {
+         "minLength": 1,
+         "type": "string"
+        },
+        "universo_suficiente": {
+         "type": "boolean"
+        }
+       },
+       "required": [
+        "universo_suficiente",
+        "nota"
+       ],
+       "type": "object"
+      },
+      "justificacion_horizonte": {
+       "type": [
+        "string",
+        "null"
+       ]
+      },
+      "liquidez": {
+       "enum": [
+        "alta",
+        "media",
+        "baja"
+       ]
+      },
+      "lo_que_no_sabemos": {
+       "items": {
+        "minLength": 1,
+        "type": "string"
+       },
+       "minItems": 1,
+       "type": "array"
+      },
+      "mecanismo": {
+       "minLength": 1,
+       "type": "string"
+      },
+      "metricas_clave": {
+       "items": {
+        "minLength": 1,
+        "type": "string"
+       },
+       "minItems": 1,
+       "type": "array"
+      },
+      "naturaleza_inversion": {
+       "enum": [
+        "TACTICA",
+        "LIQUIDEZ",
+        "CICLICA",
+        "PRIMA_RIESGO",
+        "VALORACION",
+        "ESTRUCTURAL"
+       ]
+      },
+      "nombre": {
+       "minLength": 1,
+       "type": "string"
+      },
+      "nombre_llano": {
+       "maxLength": 70,
+       "minLength": 3,
+       "type": "string"
+      },
+      "peticiones_conocimiento": {
+       "type": "array"
+      },
+      "preguntas_para_B": {
+       "items": {
+        "minLength": 1,
+        "type": "string"
+       },
+       "minItems": 1,
+       "type": "array"
+      },
+      "premortem": {
+       "minLength": 1,
+       "type": "string"
+      },
+      "probabilidades_propias": {
+       "additionalProperties": {
+        "maximum": 0.95,
+        "minimum": 0.05,
+        "type": "number"
+       },
+       "type": "object"
+      },
+      "regiones": {
+       "items": {
+        "enum": [
+         "NAM",
+         "LAT",
+         "EUR",
+         "AFR",
+         "ORM",
+         "CHN",
+         "ASE",
+         "JPN",
+         "OCE",
+         "GLB"
+        ]
+       },
+       "minItems": 1,
+       "type": "array"
+      },
+      "riesgos": {
+       "items": {
+        "minLength": 1,
+        "type": "string"
+       },
+       "minItems": 1,
+       "type": "array"
+      },
+      "saturacion_narrativa": {
+       "type": "boolean"
+      },
+      "segunda_pasada": {
+       "type": "object"
+      },
+      "subtipo": {
+       "minLength": 1,
+       "type": "string"
+      },
+      "tendencia": {
+       "required": [
+        "nombre_canonico"
+       ],
+       "type": "object"
+      },
+      "tesis": {
+       "minLength": 1,
+       "type": "string"
+      },
+      "tipo_opcion": {
+       "enum": [
+        "MERCADO",
+        "SECTOR",
+        "SUBSECTOR",
+        "TEMATICA",
+        "SEGMENTO",
+        "FACTOR",
+        "ESTILO",
+        "ESTRATEGIA"
+       ]
+      },
+      "tipos_secundarios": {
+       "items": {
+        "type": "string"
+       },
+       "type": "array"
+      },
+      "valoracion": {
+       "minLength": 1,
+       "type": "string"
+      }
+     },
+     "required": [
+      "nombre",
+      "nombre_llano",
+      "tipo_opcion",
+      "subtipo",
+      "ambito",
+      "indicador_seguimiento",
+      "invertibilidad",
+      "tesis",
+      "mecanismo",
+      "valoracion",
+      "catalizadores",
+      "riesgos",
+      "invalidacion",
+      "horizontes_aplicables",
+      "dimensiones",
+      "premortem",
+      "afirmaciones",
+      "lo_que_no_sabemos",
+      "regiones",
+      "criterios_seleccion_sugeridos",
+      "metricas_clave",
+      "preguntas_para_B"
+     ],
+     "type": "object"
+    },
+    "maxItems": 2,
+    "type": "array"
+   },
+   "regimen_clase": {
+    "required": [
+     "diagnostico"
+    ],
+    "type": "object"
+   },
+   "revision_vigentes": {
+    "items": {
+     "properties": {
+      "invalidacion_activada": {
+       "type": "boolean"
+      },
+      "opp_id": {
+       "minLength": 1,
+       "type": "string"
+      },
+      "recomendacion": {
+       "enum": [
+        "MANTENER",
+        "REVISAR",
+        "CERRAR"
+       ]
+      }
+     },
+     "required": [
+      "opp_id",
+      "invalidacion_activada",
+      "recomendacion"
+     ],
+     "type": "object"
+    },
+    "type": "array"
+   }
+  },
+  "required": [
+   "clase",
+   "estado",
+   "regimen_clase",
+   "revision_vigentes",
+   "autoevaluacion"
+  ],
+  "type": "object"
+ },
+ "SINTESIS": {
+  "properties": {
+   "factores_dominantes": {
+    "type": "array"
+   },
+   "frase_historial": {
+    "minLength": 1,
+    "type": "string"
+   },
+   "frases_30s": {
+    "items": {
+     "minLength": 1,
+     "type": "string"
+    },
+    "maxItems": 3,
+    "minItems": 1,
+    "type": "array"
+   },
+   "glosario": {
+    "items": {
+     "required": [
+      "termino",
+      "definicion"
+     ],
+     "type": "object"
+    },
+    "maxItems": 5,
+    "type": "array"
+   },
+   "lectura_conjunto": {
+    "type": "string"
+   },
+   "limitaciones": {
+    "type": "array"
+   },
+   "motivos_llanos": {
+    "type": "object"
+   },
+   "preguntas_sugeridas": {
+    "type": "array"
+   },
+   "regimen_macro": {
+    "type": "string"
+   },
+   "tarjetas": {
+    "items": {
+     "properties": {
+      "ambito_llano": {
+       "maxLength": 160,
+       "type": "string"
+      },
+      "por_que_llano": {
+       "maxLength": 160,
+       "type": "string"
+      },
+      "que_puede_salir_mal_llano": {
+       "maxLength": 200,
+       "type": "string"
+      }
+     },
+     "required": [
+      "opp_id",
+      "por_que_llano",
+      "que_puede_salir_mal_llano"
+     ],
+     "type": "object"
+    },
+    "type": "array"
+   }
+  },
+  "required": [
+   "frases_30s",
+   "tarjetas",
+   "motivos_llanos",
+   "glosario",
+   "frase_historial"
+  ],
+  "type": "object"
+ }
+}

@@ -54,7 +54,19 @@ v6:
     base_conocimientos: ninguna      # ninguna | completa: la §10 del prompt V5.0 entra o no en el kit (la compara el banco)
   gc1:
     por_codigo: true                 # el código filtra el universo antes del Analista (PA-04)
-    senal_por_perfil: {}             # tipo de activo -> clave de señal del Motor que manda en GC1 (por defecto senal_compuesta)
+    # T-117 · [PROPUESTO] (decidido por Claude por defecto el 13-11-2026; INC-T117-01). Señal que manda en GC1 en cada tipo de
+    # activo: la señal compuesta del Anexo A en los doce. Es la única de las señales del Motor que va de 0 a 1 y crece con
+    # la oportunidad, que es lo que supone el umbral (H-28 de T-101).
+    senal_por_perfil: {RV: senal_compuesta, RF: senal_compuesta, DIV: senal_compuesta, MP: senal_compuesta, IDX: senal_compuesta,
+                       FON: senal_compuesta, DER: senal_compuesta, INM: senal_compuesta, CRI: senal_compuesta, ALT: senal_compuesta,
+                       MON: senal_compuesta, TCV: senal_compuesta}
+    # Umbral de GC1 por tipo de activo; el que no figura usa `seleccion.umbral_senal_gc1` (0,75, Anexo A). En renta fija,
+    # liquidez y tipos, curvas y volatilidad la familia de tendencia suele quedar neutra y con 0,75 casi nada pasa (medido
+    # con los datos de ejemplo: 0,5 a 0,9 ámbitos por fecha, frente a 1,5 a 1,9 en los demás). Provisional hasta tener
+    # datos reales: se recalibra con los falsos negativos que cuenta la exploración.
+    # Para devolver un tipo al umbral general, póngale 0.75 aquí: la configuración se fusiona y un diccionario vacío no lo borra.
+    umbral_por_perfil: {RF: 0.65, MON: 0.65, TCV: 0.65}
+    familias_min: 2                  # Anexo A: concordancia de al menos dos familias de la señal compuesta (0 = no se exige)
     exploracion_celdas: 2            # [PROPUESTO] ámbitos que no pasan GC1 y llegan igualmente, marcados (falsos negativos)
   prospectiva:
     global: true                     # una llamada por ciclo (en lotes) en vez de una por tipo de activo

@@ -23,3 +23,5 @@
 | compartida/2026-11-11_estado-11-11 | estado | Estado al 11-11-2026: 22 propuestas de diseño a la espera de Astra, tanda 1 aceptada, enmienda 5 en borrador, T-94 y T-95 en QA; relevo para chats nuevos | vigente |
 | compartida/2026-11-12_tareas-de-astra | regla | Desde el 12-11-2026 solo el operador decide qué tareas hace Astra; quedan solo las 23 revisiones de diseño; las QA e implementaciones de tickets están retiradas (RETIRADA en la cola) | vigente |
 | compartida/2026-11-12_claude-puede-hacer-qa | regla | Desde el 12-11-2026 Claude puede hacer la QA de cualquier cosa, también de lo suyo, con un revisor nuevo sin contexto (subagente) en cada ronda; matiza compartida/2026-11-12_tareas-de-astra | vigente |
+| compartida/2026-11-13_codigo-manda-sobre-doc0-a | decision | Bloque A: donde el Documento 0 y el ejecutor difieren, manda el código (operador, 13-11-2026); el Forex es solo una prueba con divisas y no se integra | vigente |
+| compartida/2026-11-13_decide-el-agente-por-defecto | regla | Desde el 13-11-2026 el agente decide por defecto lo que antes esperaba al operador, y lo apunta en el registro de decisiones del Bloque A | vigente |

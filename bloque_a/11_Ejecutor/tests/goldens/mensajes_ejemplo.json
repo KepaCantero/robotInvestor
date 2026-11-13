@@ -1,0 +1,722 @@
+{
+ "CT-01.ENCARGO": {
+  "mensaje": {
+   "alcance": {
+    "activos_concretos": [],
+    "clases": [
+     "RV",
+     "IDX",
+     "TCV"
+    ],
+    "pregunta": "texto libre opcional",
+    "regiones": [
+     "Europa"
+    ],
+    "tematicas": []
+   },
+   "contrato": "CT-01",
+   "emisor": "BROKER",
+   "fecha_objetivo": "2026-06-08T07:00",
+   "horizontes": [
+    "H2",
+    "H3"
+   ],
+   "msg_id": "MSG-2026-000001",
+   "nivel_forzado": null,
+   "presupuesto": {},
+   "prioridad": "NORMAL",
+   "receptor": "AG-01",
+   "referencia_previa": null,
+   "run_id": "RUN-2026-0001",
+   "timestamp": "2026-06-05T06:00:00+02:00",
+   "tipo": "AD_HOC",
+   "tipo_mensaje": "ENCARGO",
+   "version_contrato": "5.1"
+  }
+ },
+ "CT-02.RETORNO": {
+  "mensaje": {
+   "autoevaluacion": "",
+   "consumo": {},
+   "contrato": "CT-02",
+   "emisor": "AG-01",
+   "entregables": {
+    "informe_tecnico": "ruta/informe_tecnico.md",
+    "informe_visual": "ruta/informe_visual.html",
+    "paquete_json": "ruta/paquete.json"
+   },
+   "estado": "COMPLETO",
+   "estado_g3": "APTO",
+   "limitaciones": [],
+   "msg_id": "MSG-2026-000002",
+   "receptor": "BROKER",
+   "resumen": {
+    "apuestas_independientes": 4,
+    "cambios_vs_anterior": "Sin cambios.",
+    "top3_por_clase": {
+     "RF": [],
+     "RV": [
+      "OPP-2026-0007"
+     ]
+    }
+   },
+   "run_id": "RUN-2026-0001",
+   "timestamp": "2026-06-05T06:00:01+02:00",
+   "tipo_mensaje": "RETORNO",
+   "version_contrato": "5.1"
+  }
+ },
+ "CT-03.ENCARGO": {
+  "mensaje": {
+   "contexto": {
+    "opp_id": null,
+    "run_id": null
+   },
+   "contrato": "CT-03",
+   "emisor": "BROKER",
+   "msg_id": "MSG-2026-000003",
+   "pregunta": "¿Por qué bajó la puntuación de la opción?",
+   "presupuesto": {},
+   "query_id": "QRY-2026-0001",
+   "receptor": "AG-01",
+   "timestamp": "2026-06-05T06:00:02+02:00",
+   "tipo_mensaje": "ENCARGO",
+   "urgencia": "NORMAL",
+   "version_contrato": "5.1"
+  }
+ },
+ "CT-03.RETORNO": {
+  "mensaje": {
+   "autoevaluacion": "",
+   "clase_consulta": "ACLARACION",
+   "confianza": "probable",
+   "consumo": {},
+   "contrato": "CT-03",
+   "emisor": "AG-01",
+   "escalado": {
+    "plazo_estimado": null,
+    "run_id": null
+   },
+   "estado": "COMPLETO",
+   "limitaciones": [],
+   "msg_id": "MSG-2026-000004",
+   "query_id": "QRY-2026-0001",
+   "receptor": "BROKER",
+   "referencias": [
+    "OPP-2026-0007",
+    "CLM-2026-0001",
+    "PRG-2026-0001"
+   ],
+   "respuesta": "Bajó por la dimensión de valoración.",
+   "ruta": "N0",
+   "timestamp": "2026-06-05T06:00:03+02:00",
+   "tipo_mensaje": "RETORNO",
+   "version_contrato": "5.1"
+  }
+ },
+ "CT-04.ENCARGO": {
+  "mensaje": {
+   "configuracion": {
+    "clases_activas": [],
+    "dia_hora_entrega": "LUN 07:00",
+    "horizontes": [],
+    "idioma_usuario": "es-ES",
+    "periodicidad": "SEMANAL"
+   },
+   "contrato": "CT-04",
+   "decisiones": [
+    {
+     "decision": "EN_SEGUIMIENTO",
+     "motivo": "opcional",
+     "opp_id": "OPP-2026-0007"
+    }
+   ],
+   "emisor": "BROKER",
+   "msg_id": "MSG-2026-000005",
+   "presupuesto": {},
+   "receptor": "AG-01",
+   "resultado_comunicado": {
+    "opp_id": "OPP-2026-0007",
+    "texto": "opcional"
+   },
+   "run_id": "RUN-2026-0001",
+   "timestamp": "2026-06-05T06:00:04+02:00",
+   "tipo_mensaje": "ENCARGO",
+   "valoracion_informe": {
+    "comentario": "Claro.",
+    "run_id": "RUN-2026-0001",
+    "utilidad": 1
+   },
+   "version_contrato": "5.1"
+  }
+ },
+ "CT-05.ENCARGO": {
+  "mensaje": {
+   "alcance": {
+    "clases": [
+     "RV"
+    ]
+   },
+   "contrato": "CT-05",
+   "delta_gc0": {},
+   "emisor": "AG-01",
+   "fecha_objetivo": "2026-06-08T07:00",
+   "memoria": {
+    "certificados_horizonte": [],
+    "lec_aplicables": [],
+    "opp_vigentes": [],
+    "tnd_activas": []
+   },
+   "msg_id": "MSG-2026-000006",
+   "nivel_por_clase": {
+    "RV": "N2"
+   },
+   "presupuesto": {},
+   "presupuesto_por_clase": {
+    "RV": {
+     "llamadas": 10
+    }
+   },
+   "receptor": "AG-02",
+   "run_id": "RUN-2026-0001",
+   "timestamp": "2026-06-05T06:00:05+02:00",
+   "tipo": "PERIODICO",
+   "tipo_mensaje": "ENCARGO",
+   "version_contrato": "5.1"
+  }
+ },
+ "CT-05.RETORNO": {
+  "mensaje": {
+   "autoevaluacion": "",
+   "consultas_broker": [],
+   "consumo": {},
+   "contrato": "CT-05",
+   "emisor": "AG-02",
+   "estado": "COMPLETO",
+   "limitaciones": [],
+   "msg_id": "MSG-2026-000007",
+   "receptor": "AG-01",
+   "run_id": "RUN-2026-0001",
+   "solicitudes_credenciales": [],
+   "timestamp": "2026-06-05T06:00:06+02:00",
+   "tipo_mensaje": "RETORNO",
+   "version_contrato": "5.1"
+  }
+ },
+ "CT-06.ENCARGO": {
+  "mensaje": {
+   "clase": "RV",
+   "contrato": "CT-06",
+   "emisor": "AG-02",
+   "fase": "CRIBADO",
+   "lecciones": [],
+   "msg_id": "MSG-2026-000008",
+   "nivel": "N2",
+   "opciones_vigentes": [],
+   "presupuesto": {
+    "llamadas": 10
+   },
+   "receptor": "AG-03",
+   "run_id": "RUN-2026-0001",
+   "timestamp": "2026-06-05T06:00:07+02:00",
+   "tipo_mensaje": "ENCARGO",
+   "version_contrato": "5.1"
+  }
+ },
+ "CT-06.RETORNO": {
+  "mensaje": {
+   "autoevaluacion": "Sin incidencias.",
+   "consumo": {
+    "llamadas": 1
+   },
+   "contrato": "CT-06",
+   "cribado": [],
+   "descartadas_relevantes": [],
+   "emisor": "AG-03",
+   "estado": "COMPLETO",
+   "finalistas": [],
+   "lagunas": [],
+   "limitaciones": [],
+   "msg_id": "MSG-2026-000009",
+   "receptor": "AG-02",
+   "regimen_clase": {
+    "diagnostico": "Expansión tardía."
+   },
+   "revision_vigentes": [],
+   "run_id": "RUN-2026-0001",
+   "senales_para_otras_clases": [],
+   "timestamp": "2026-06-05T06:00:08+02:00",
+   "tipo_mensaje": "RETORNO",
+   "version_contrato": "5.1"
+  }
+ },
+ "CT-07.ENCARGO": {
+  "mensaje": {
+   "clase": "DIV",
+   "contrato": "CT-07",
+   "emisor": "AG-02",
+   "fecha_limite_informacion": "2026-06-05",
+   "horizonte": "H3",
+   "max_fuentes": 5,
+   "msg_id": "MSG-2026-000010",
+   "objetivo": "contexto",
+   "pregunta": "¿Qué dice la evidencia reciente sobre el diferencial de tipos?",
+   "presupuesto": {},
+   "profundidad": "normal",
+   "receptor": "AG-16",
+   "run_id": "RUN-2026-0001",
+   "timestamp": "2026-06-05T06:00:09+02:00",
+   "tipo_mensaje": "ENCARGO",
+   "version_contrato": "5.1"
+  }
+ },
+ "CT-07.RETORNO": {
+  "mensaje": {
+   "autoevaluacion": "",
+   "consumo": {},
+   "contradicciones": [],
+   "contrato": "CT-07",
+   "emisor": "AG-16",
+   "estado": "COMPLETO",
+   "evidencias_enviadas_a_curador": [
+    "EVD-2026-0001"
+   ],
+   "lagunas": [],
+   "limitaciones": [],
+   "msg_id": "MSG-2026-000011",
+   "receptor": "AG-02",
+   "referencias": [
+    {
+     "Q": 2,
+     "nivel": "probable",
+     "ref_id": "REF-2026-0001"
+    }
+   ],
+   "run_id": "RUN-2026-0001",
+   "sintesis": "Síntesis de las fuentes.",
+   "timestamp": "2026-06-05T06:00:10+02:00",
+   "tipo_mensaje": "RETORNO",
+   "version_contrato": "5.1"
+  }
+ },
+ "CT-08.ENCARGO": {
+  "mensaje": {
+   "clase": "DIV",
+   "contrato": "CT-08",
+   "emisor": "AG-02",
+   "fecha_limite_informacion": "2026-06-05",
+   "horizonte": "H3",
+   "max_fuentes": 5,
+   "msg_id": "MSG-2026-000012",
+   "objetivo": "contexto",
+   "pregunta": "¿Qué dice la evidencia reciente sobre el diferencial de tipos?",
+   "presupuesto": {},
+   "profundidad": "normal",
+   "receptor": "AG-14",
+   "run_id": "RUN-2026-0001",
+   "timestamp": "2026-06-05T06:00:11+02:00",
+   "tipo_mensaje": "ENCARGO",
+   "version_contrato": "5.1"
+  }
+ },
+ "CT-08.RETORNO": {
+  "mensaje": {
+   "autoevaluacion": "",
+   "consumo": {},
+   "contradicciones": [],
+   "contrato": "CT-08",
+   "emisor": "AG-14",
+   "estado": "COMPLETO",
+   "evidencias_enviadas_a_curador": [
+    "EVD-2026-0001"
+   ],
+   "lagunas": [],
+   "limitaciones": [],
+   "msg_id": "MSG-2026-000013",
+   "receptor": "AG-02",
+   "referencias": [
+    {
+     "Q": 2,
+     "nivel": "probable",
+     "ref_id": "REF-2026-0001"
+    }
+   ],
+   "run_id": "RUN-2026-0001",
+   "sintesis": "Síntesis de las fuentes.",
+   "timestamp": "2026-06-05T06:00:12+02:00",
+   "tipo_mensaje": "RETORNO",
+   "version_contrato": "5.1"
+  }
+ },
+ "CT-09.ENCARGO": {
+  "mensaje": {
+   "contrato": "CT-09",
+   "datos": {
+    "referencia": "HT-01"
+   },
+   "emisor": "AG-02",
+   "fecha_corte": "2026-06-05",
+   "modo": "SYNC_CALC",
+   "msg_id": "MSG-2026-000014",
+   "operacion": "RISK-VAR-001",
+   "parametros": {},
+   "perfil": "PERF-01",
+   "plan": "PLAN_MIN",
+   "presupuesto": {},
+   "receptor": "AG-13",
+   "run_id": "RUN-2026-0001",
+   "semilla": 1,
+   "timestamp": "2026-06-05T06:00:13+02:00",
+   "tipo_mensaje": "ENCARGO",
+   "version_contrato": "5.1"
+  }
+ },
+ "CT-09.RETORNO": {
+  "mensaje": {
+   "artefacto_id": "CALC-2026-0001",
+   "autoevaluacion": "",
+   "clase_cifra": "determinista",
+   "consumo": {},
+   "contrato": "CT-09",
+   "emisor": "AG-13",
+   "estado": "COMPLETO",
+   "incertidumbre": null,
+   "informe_calidad_datos": {},
+   "limitaciones": [],
+   "msg_id": "MSG-2026-000015",
+   "receptor": "AG-02",
+   "resultado": {
+    "valor": 0.1
+   },
+   "run_id": "RUN-2026-0001",
+   "timestamp": "2026-06-05T06:00:14+02:00",
+   "tipo_mensaje": "RETORNO",
+   "version_contrato": "5.1"
+  }
+ },
+ "CT-10.ENCARGO": {
+  "mensaje": {
+   "artefacto_id": "CALC-2026-0001",
+   "contrato": "CT-10",
+   "emisor": "AG-18",
+   "motivo": "Re-ejecución de auditoría.",
+   "msg_id": "MSG-2026-000016",
+   "presupuesto": {},
+   "receptor": "AG-13",
+   "run_id": "RUN-2026-0001",
+   "timestamp": "2026-06-05T06:00:15+02:00",
+   "tipo_mensaje": "ENCARGO",
+   "version_contrato": "5.1"
+  }
+ },
+ "CT-10.RETORNO": {
+  "mensaje": {
+   "autoevaluacion": "",
+   "coincide": "sí",
+   "consumo": {},
+   "contrato": "CT-10",
+   "diagnostico": "Coincide.",
+   "diferencias": [],
+   "emisor": "AG-13",
+   "estado": "COMPLETO",
+   "limitaciones": [],
+   "msg_id": "MSG-2026-000017",
+   "receptor": "AG-18",
+   "run_id": "RUN-2026-0001",
+   "timestamp": "2026-06-05T06:00:16+02:00",
+   "tipo_mensaje": "RETORNO",
+   "version_contrato": "5.1"
+  }
+ },
+ "CT-11.ENCARGO": {
+  "rechazo": {
+   "clase": "MensajeInvalido",
+   "motivo": "CT-11: faltan campos mínimos ['piezas']"
+  }
+ },
+ "CT-11.RETORNO": {
+  "mensaje": {
+   "autoevaluacion": "",
+   "clm_id": "CLM-2026-0001",
+   "consumo": {},
+   "contrato": "CT-11",
+   "duplicado_de": null,
+   "emisor": "AG-12",
+   "estado": "COMPLETO",
+   "evd_id": "EVD-2026-0001",
+   "independiente": "sí",
+   "limitaciones": [],
+   "msg_id": "MSG-2026-000019",
+   "raiz_id": "EVD-2026-0001",
+   "receptor": "AG-03",
+   "run_id": "RUN-2026-0001",
+   "timestamp": "2026-06-05T06:00:18+02:00",
+   "tipo_mensaje": "RETORNO",
+   "version_contrato": "5.1"
+  }
+ },
+ "CT-12.ENCARGO": {
+  "rechazo": {
+   "clase": "MensajeInvalido",
+   "motivo": "CT-12: faltan campos mínimos ['encargos']"
+  }
+ },
+ "CT-12.RETORNO": {
+  "mensaje": {
+   "autoevaluacion": "",
+   "consumo": {},
+   "contrato": "CT-12",
+   "emisor": "AG-10",
+   "escenarios": {
+    "H3": {
+     "adverso": {},
+     "base": {},
+     "favorable": {}
+    }
+   },
+   "estado": "COMPLETO",
+   "hitos": [],
+   "indicadores_adelantados": [],
+   "invalidacion": [],
+   "limitaciones": [],
+   "msg_id": "MSG-2026-000021",
+   "pronosticos": [],
+   "receptor": "AG-02",
+   "run_id": "RUN-2026-0001",
+   "timestamp": "2026-06-05T06:00:20+02:00",
+   "tipo_mensaje": "RETORNO",
+   "version_contrato": "5.1"
+  }
+ },
+ "CT-13.ENCARGO": {
+  "rechazo": {
+   "clase": "MensajeInvalido",
+   "motivo": "CT-13: faltan campos mínimos ['peticiones']"
+  }
+ },
+ "CT-13.RETORNO": {
+  "mensaje": {
+   "autoevaluacion": "",
+   "consumo": {},
+   "contrato": "CT-13",
+   "emisor": "AG-11",
+   "estado": "COMPLETO",
+   "limitaciones": [],
+   "msg_id": "MSG-2026-000023",
+   "objeciones": [
+    {
+     "argumento": "La valoración ya lo descuenta.",
+     "evidencia": "CLM-2026-0002",
+     "fuerza": "moderada",
+     "id": "OBJ-1",
+     "que_la_resolveria": "Un dato de beneficios.",
+     "tipo": "valoracion"
+    }
+   ],
+   "receptor": "AG-02",
+   "run_id": "RUN-2026-0001",
+   "timestamp": "2026-06-05T06:00:22+02:00",
+   "tipo_mensaje": "RETORNO",
+   "veredicto_global": "tesis robusta",
+   "version_contrato": "5.1"
+  }
+ },
+ "CT-14.ENCARGO": {
+  "mensaje": {
+   "contrato": "CT-14",
+   "emisor": "AG-02",
+   "msg_id": "MSG-2026-000024",
+   "paquete_sintesis": {},
+   "presupuesto": {},
+   "receptor": "AG-18",
+   "run_id": "RUN-2026-0001",
+   "timestamp": "2026-06-05T06:00:23+02:00",
+   "tipo_mensaje": "ENCARGO",
+   "version_contrato": "5.1"
+  }
+ },
+ "CT-14.RETORNO": {
+  "mensaje": {
+   "autoevaluacion": "",
+   "comprobaciones": [
+    {
+     "comprobacion": "C1",
+     "resultado": "apto"
+    }
+   ],
+   "consumo": {},
+   "contrato": "CT-14",
+   "dictamen": "APTO",
+   "emisor": "AG-18",
+   "estado": "COMPLETO",
+   "limitaciones": [],
+   "motivo": "Sin advertencias.",
+   "msg_id": "MSG-2026-000025",
+   "receptor": "AG-02",
+   "run_id": "RUN-2026-0001",
+   "timestamp": "2026-06-05T06:00:24+02:00",
+   "tipo_mensaje": "RETORNO",
+   "version_contrato": "5.1"
+  }
+ },
+ "CT-15.ENCARGO": {
+  "mensaje": {
+   "contrato": "CT-15",
+   "emisor": "AG-02",
+   "msg_id": "MSG-2026-000026",
+   "paquete_sintesis": {},
+   "presupuesto": {},
+   "receptor": "AG-17",
+   "run_id": "RUN-2026-0001",
+   "timestamp": "2026-06-05T06:00:25+02:00",
+   "tipo_mensaje": "ENCARGO",
+   "version_contrato": "5.1"
+  }
+ },
+ "CT-23.ENCARGO": {
+  "mensaje": {
+   "cns_id": "CNS-2026-0001",
+   "contrato": "CT-23",
+   "emisor": "AG-01",
+   "modo": "NO_BLOQUEANTE",
+   "msg_id": "MSG-2026-000027",
+   "plazo_respuesta": "2026-06-08T07:00",
+   "preguntas": [
+    {
+     "efecto_si_falso": "Faltarían opciones.",
+     "opciones_sugeridas": [
+      "Sí",
+      "No"
+     ],
+     "origen": "AG-04",
+     "por_que_importa": "Cambia el universo.",
+     "supuesto_declarado": "No la incluye.",
+     "texto": "¿Incluye el alcance la renta fija emergente?"
+    }
+   ],
+   "presupuesto": {},
+   "punto_control": null,
+   "receptor": "BROKER",
+   "run_id": "RUN-2026-0001",
+   "seg_id": null,
+   "sentido": "SALIENTE",
+   "timestamp": "2026-06-05T06:00:26+02:00",
+   "tipo": "ACLARACION_ALCANCE",
+   "tipo_mensaje": "ENCARGO",
+   "version_contrato": "5.1"
+  }
+ },
+ "CT-23.RETORNO": {
+  "mensaje": {
+   "autoevaluacion": "",
+   "cns_id": "CNS-2026-0001",
+   "consumo": {},
+   "contrato": "CT-23",
+   "emisor": "BROKER",
+   "estado": "COMPLETO",
+   "estado_consulta": "RESPONDIDA",
+   "limitaciones": [],
+   "msg_id": "MSG-2026-000028",
+   "receptor": "AG-01",
+   "respuestas": [
+    {
+     "documentos": [],
+     "indice": 0,
+     "texto": "No la incluye."
+    }
+   ],
+   "run_id": "RUN-2026-0001",
+   "supuestos_aplicados": [
+    {
+     "indice": 0,
+     "supuesto": "No la incluye."
+    }
+   ],
+   "timestamp": "2026-06-05T06:00:27+02:00",
+   "tipo_mensaje": "RETORNO",
+   "version_contrato": "5.1"
+  }
+ },
+ "CT-24.ENCARGO": {
+  "mensaje": {
+   "accion": "ALTA",
+   "calendario_personalizado": null,
+   "contrato": "CT-24",
+   "emisor": "BROKER",
+   "fecha_fin": null,
+   "frecuencia": "SEMANAL",
+   "motivo": "Vigilar la opción.",
+   "msg_id": "MSG-2026-000029",
+   "opp_id": "OPP-2026-0007",
+   "presupuesto": {},
+   "receptor": "AG-01",
+   "run_id": "RUN-2026-0001",
+   "seg_id": null,
+   "senales_interes": [
+    "Dato de inflación"
+   ],
+   "timestamp": "2026-06-05T06:00:28+02:00",
+   "tipo_mensaje": "ENCARGO",
+   "version_contrato": "5.1"
+  }
+ },
+ "CT-24.RETORNO": {
+  "mensaje": {
+   "autoevaluacion": "",
+   "consumo": {},
+   "contrato": "CT-24",
+   "emisor": "AG-01",
+   "estado": "COMPLETO",
+   "estado_seguimiento": "ACTIVO",
+   "limitaciones": [],
+   "msg_id": "MSG-2026-000030",
+   "proximo_ciclo": "2026-06-12",
+   "receptor": "BROKER",
+   "run_id": "RUN-2026-0001",
+   "seg_id": "SEG-2026-0001",
+   "timestamp": "2026-06-05T06:00:29+02:00",
+   "tipo_mensaje": "RETORNO",
+   "version_contrato": "5.1"
+  }
+ },
+ "CT-25.ENCARGO": {
+  "mensaje": {
+   "contrato": "CT-25",
+   "crd_id": "CRD-2026-0001",
+   "emisor": "AG-01",
+   "herramienta": "HT-01",
+   "impacto_si_falta": "Sin datos de la clase.",
+   "msg_id": "MSG-2026-000031",
+   "presupuesto": {},
+   "receptor": "BROKER",
+   "run_id": "RUN-2026-0001",
+   "servicio": "proveedor de datos",
+   "solicitante": "AG-16",
+   "timestamp": "2026-06-05T06:00:30+02:00",
+   "tipo_mensaje": "ENCARGO",
+   "urgencia": "NORMAL",
+   "uso_previsto": "Series de precios.",
+   "version_contrato": "5.1"
+  }
+ },
+ "CT-25.RETORNO": {
+  "mensaje": {
+   "autoevaluacion": "",
+   "caducidad": null,
+   "consumo": {},
+   "contrato": "CT-25",
+   "crd_id": "CRD-2026-0001",
+   "credencial_ref": "alias-datos",
+   "emisor": "BROKER",
+   "estado": "COMPLETO",
+   "estado_credencial": "PROVISTA",
+   "limitaciones": [],
+   "msg_id": "MSG-2026-000032",
+   "receptor": "AG-01",
+   "run_id": "RUN-2026-0001",
+   "timestamp": "2026-06-05T06:00:31+02:00",
+   "tipo_mensaje": "RETORNO",
+   "version_contrato": "5.1"
+  }
+ }
+}

@@ -106,6 +106,37 @@ El total cargado es el coste real. Efecto declarado: en un presupuesto justo, el
 
 Pregunta para T-57: «¿qué antigüedad admite la resolución de un pronóstico, se alinean las series y qué pasa con las que tienen calendarios distintos?». Detalle en [.docs/tickets/T-91](../.docs/tickets/T-91/README.md).
 
+**INC-T117-01 · 2026-11-13 · Señal y umbral de GC1 por tipo de activo en el diseño V6 (Bloque A, T-117).** El Anexo A fija un umbral único: señal compuesta de 0,75 o más y concordancia de al menos dos familias de señales. La señal compuesta es la media de tres familias (momento, tendencia y valoración relativa). En renta fija, liquidez y tipos, curvas y volatilidad la tendencia suele salir neutra, y con 0,75 casi nada pasa. Medido con los datos de ejemplo en 17 fechas: pasan 0,8 ámbitos por fecha en RF, 0,5 en MON y 0,9 en TCV, frente a 1,5 a 1,9 en RV, DIV, MP e IDX. Además, el GC1 por código de la V6 no comprobaba la concordancia de familias. `[PROPUESTO]` (decidido por Claude por defecto, regla del 13-11-2026):
+- **Señal:** la señal compuesta en los doce tipos. Es la única señal del Motor que va de 0 a 1 y crece con la oportunidad, que es lo que supone el umbral (H-28 de la QA de T-101).
+- **Umbral:** 0,65 en RF, MON y TCV; 0,75 (Anexo A) en los otros nueve. Con 0,65 pasan 2,1 ámbitos por fecha en RF y en TCV y 1,1 en MON, cerca de los demás tipos. En DER no se baja: tiene tres ámbitos y bajar el umbral apenas cambia nada.
+- **Concordancia:** se exigen dos familias concordantes cuando manda la señal compuesta, como pide el Anexo A. Con las tres familias y 0,75 no cambia nada (una media de 0,75 obliga a que dos lleguen a 0,6); importa con 0,65 y cuando falta una familia. Si el Motor no da el recuento, el ámbito no se descarta por esto.
+- **Límite:** los valores salen de datos sintéticos y de un universo de 2 a 8 ámbitos por tipo. Son provisionales hasta tener datos reales; entonces se recalibran con los falsos negativos que cuenta la exploración de GC1. Solo afectan al diseño V6, que es aspirante: el V5, por defecto, no cambia.
+
+Detalle en [.docs/tickets/T-117](../.docs/tickets/T-117/README.md).
+
+**INC-T116-01 · 2026-11-13 · El Broker no puede pedir un horizonte para un solo tipo de activo (Bloque A, PB-10 del plan de pruebas).** El plan pide en PB-10 «H1 para ALT» y exige que F10 cambie solo en P-02. El CT-04 del ejecutor lleva una lista global de `horizontes`: rechaza cada celda que la tabla 8.3 marca «No» (aquí ALT×H1), que sigue sin aplicarse, pero guarda la lista entera en P-03. `[PROPUESTO]` (decidido por Claude por defecto, regla del 13-11-2026): se deja como está, porque manda el código (decisión del operador del 13-11-2026) y el efecto es el que el plan busca: el horizonte «No» no se activa. PB-10 queda como «Superada en parte». Prueba: `test_pb10_la_configuracion_rechazada_en_parte_no_toca_nada_mas`.
+
+**INC-T116-02 · 2026-11-13 · La autorización de ampliación de presupuesto no registra CPI ni EAC (Bloque A, PB-17).** El plan pide que cada AUT- de HA lleve CPI, EAC y motivo. El ejecutor registra la base, la ampliación en UC, el valor de la información, la decisión y el motivo, pero no esos dos índices. `[PROPUESTO]` (decidido por Claude por defecto): no se añaden ahora; son índices de gestión del valor ganado que el ejecutor no calcula en ningún otro sitio y añadirlos es una función nueva, no una corrección. Queda en la deuda (T-116). PB-17 queda como «Superada en parte».
+
+**INC-T114-01 · 2026-11-13 · El Anexo B y el ejecutor no piden lo mismo en los contratos (Bloque A, Fase 3, T-114).** Al derivar un esquema JSON de cada contrato solo con el Anexo B del Documento 0 V5.1 y compararlo con lo que hace el ejecutor, salen estas diferencias. **Decisión del operador (13-11-2026): manda el código del Bloque A.** El Documento 0 se escribió antes de construir el bloque y habrá que modificarlo: el Anexo B se corrige en la próxima entrega del Documento 0 para que describa lo que hace el ejecutor. Hasta entonces no se cambia ni el Anexo B (corpus congelado) ni el código; las diferencias quedan congeladas en `bloque_a/11_Ejecutor/tests/goldens/divergencias_anexo_b.json`, y una diferencia nueva hace fallar la suite.
+- **Lotes (CT-11, CT-12 y CT-13):** el Anexo B describe una pieza, un encargo o una petición por mensaje. El ejecutor los agrupa en `piezas`, `encargos` y `peticiones`, y rechaza el ejemplo del Anexo B tal cual.
+- **Fases de CT-06:** el Anexo B admite CRIBADO, INVESTIGACION, PROFUNDIZACION y SEGUIMIENTO. El ciclo simulado emite `CRIBADO_E_INVESTIGACION` y `RESPUESTA_OBJECIONES`.
+- **Campos que el ejecutor no exige:** el Anexo B los nombra sin marcarlos como opcionales y `Mensajeria.crear` admite el mensaje sin ellos. Los principales:
+  - CT-01: `fecha_objetivo`, `nivel_forzado`, `referencia_previa`;
+  - CT-03: `contexto`, `urgencia` y, en la respuesta, `escalado`;
+  - CT-04: los cuatro bloques (`decisiones`, `valoracion_informe`, `configuracion`, `resultado_comunicado`), que en la práctica se envían por separado;
+  - CT-23: `preguntas`, `plazo_respuesta`, `punto_control`, `seg_id`;
+  - CT-24: todo menos `accion`;
+  - CT-25: `herramienta`, `urgencia` y, en la respuesta, `credencial_ref` y `caducidad`.
+- **Retornos internos (CT-06 a CT-14):** el ejecutor no valida sus campos en la mensajería. La respuesta de cada agente se valida con los esquemas de `ESQUEMAS` (congelados en `esquemas_respuestas.json`), que no llevan los mismos nombres que el Anexo B.
+- **`fecha_corte` de CT-09:** el Anexo B la hace obligatoria solo en evaluaciones y backtesting; el ejecutor la exige siempre. Es más estricto, no más laxo.
+- **CT-16 a CT-22:** el Anexo B no da sus campos (los remite a los prompts de sistema). Solo se congela su canal.
+- **Lo que el Anexo B deja abierto** y el esquema derivado no restringe: la codificación de `coincide` (CT-10) y de `independiente` (CT-11), y los nombres de las claves de `fechas` (CT-11).
+
+Lista completa en el golden y detalle en [.docs/tickets/T-114](../.docs/tickets/T-114/analisis-tecnico.md).
+
+**INC-T114-02 · 2026-11-13 · Los ejemplos publicados llevan una clave de aviso (Bloque A, T-114).** Los dos ejemplos de `06_Plantillas_entregables` empiezan por `x_aviso_ejemplo` («datos ficticios…»). El esquema del paquete de oportunidades la admite. El del informe de seguimiento de opción (V5.1) tiene `additionalProperties: false` en la raíz y no la declara, así que su propio ejemplo publicado no lo cumple; sin esa clave, lo cumple. `[PROPUESTO]`: no se toca la entrega (corpus congelado); la prueba `test_ca5…` congela el hecho: el único incumplimiento es esa clave. Para una entrega futura: declarar `x_aviso_ejemplo` en el esquema o quitarla del ejemplo.
+
 **INC-T113-01 · 2026-11-13 · Decisiones al cerrar la deuda técnica del Bloque A (T-113).** `[PROPUESTO]`:
 - **Rangos de MON e IDX (H-24):**
   - un horizonte o una ventana de la petición no pasa de H5 de la configuración (120 meses, 2 520 sesiones);
