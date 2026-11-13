@@ -6,16 +6,18 @@ lecciones de F6, extracto de F10, encargo JSON y esquema de respuesta) va en el 
 """
 from __future__ import annotations
 
+import hashlib
 import json
+import re
 import threading
 from pathlib import Path
-from typing import Dict, List, Optional
+from typing import Any
 
-from .configuracion import buscar_versionado, ruta
+from .configuracion import DIR_EJECUTOR, buscar_versionado, ruta
 
 # Nombre del agente en el título de su system prompt («System prompt - <nombre> - Versión óptima Vx.y.md»).
 # El primero es el nombre canónico V5.0; los siguientes, nombres anteriores aceptados mientras dure el renombrado.
-NOMBRES_ALTERNATIVOS: Dict[str, List[str]] = {
+NOMBRES_ALTERNATIVOS: dict[str, list[str]] = {
     "AG-01": ["Coordinador de Peticiones y Consultas"],
     "AG-02": ["Analizador de Tendencias de Inversión"],
     "AG-03": ["Analista de Renta Variable"],
@@ -41,7 +43,12 @@ NOMBRES_ALTERNATIVOS: Dict[str, List[str]] = {
     "AG-23": ["Analista de Derivados Financieros"],
     "AG-24": ["Analista de Instrumentos Monetarios y Liquidez"],
     "AG-25": ["Analista de Tipos de Interés, Crédito y Volatilidad"],
+    # Diseño V6 (T-101): papeles nuevos, con su prompt en `11_Ejecutor/prompts_v6`
+    "AG-26": ["Sintetizador"],
+    "AG-27": ["Respondedor de consultas"],
+    "AG-28": ["Lector de evidencia"],
 }
+AGENTES_V6 = {"AG-26", "AG-27", "AG-28"}
 NOMBRES = {k: v[0] for k, v in NOMBRES_ALTERNATIVOS.items()}
 
 BLOQUE_EJECUTOR = """# Interfaz con el Ejecutor programático del Bloque A (V1.1)
@@ -79,13 +86,99 @@ ANALISTAS_TIPO = {"AG-03", "AG-04", "AG-05", "AG-06", "AG-07", "AG-08", "AG-09",
 MARCO_COMUN_ANALISTAS = ["Marco común de los Analistas de tipo de activo (plantilla)", "Marco común de los Analistas de clase (plantilla)"]
 
 
+_SECCION = re.compile(r"(?m)^## (\d+)\.")
+# El marco común con sus cuatro marcadores neutralizados: el mismo texto para los doce Analistas (T-101, idea 1)
+_NEUTRO = (('"clase":"{{CODIGO}}"', '"clase":"<código de tu tipo de activo>"'),
+           ("**Analista de {{CLASE}}** ({{CODIGO}}, {{AG}})",
+            "**Analista de perfil** del tipo de activo que indica tu kit (al final de este prompt)"),
+           (" ({{CLASE}})", ""), ("{{CLASE}}", "tu tipo de activo"), ("{{PERF}}", "de tu tipo de activo (ver tu kit)"),
+           ("{{CODIGO}}", "(ver tu kit)"), ("{{AG}}", "(ver tu kit)"))
+
+
+def secciones(texto: str) -> tuple[str, dict[str, str]]:
+    """Divide un prompt en su cabecera y sus secciones «## n.» (clave: el número, como texto). Cada sección conserva su
+    título y llega hasta la siguiente sección de primer nivel."""
+    marcas = list(_SECCION.finditer(texto))
+    if not marcas:
+        return texto, {}
+    cab = texto[:marcas[0].start()]
+    out = {}
+    for i, m in enumerate(marcas):
+        fin = marcas[i + 1].start() if i + 1 < len(marcas) else len(texto)
+        out[m.group(1)] = texto[m.start():fin]
+    return cab, out
+
+
+def _sin_comentario(texto: str) -> str:
+    return re.sub(r"^\s*<!--.*?-->\s*", "", texto, count=1, flags=re.DOTALL)
+
+
+def nucleo_comun(marco: str) -> str:
+    """El núcleo común de los Analistas de perfil (V6): el marco común V5.0 sin su comentario de plantilla y con los
+    marcadores neutralizados, idéntico para todos los tipos de activo (para que la caché de prompts se comparta)."""
+    t = _sin_comentario(marco)
+    for a, b in _NEUTRO:
+        t = t.replace(a, b)
+    return ("# System prompt — Analista de perfil (núcleo común, diseño V6)\n\n> Núcleo común de los doce Analistas de "
+            "tipo de activo, derivado del «Marco común de los Analistas de tipo de activo (plantilla) V5.0». Lo propio de "
+            "tu tipo de activo está en tu kit, al final; si una sección del kit repite el número de una del núcleo, manda "
+            "la del kit.\n\n" + t.strip() + "\n")
+
+
+def identidad(especifico: str) -> dict[str, str | None]:
+    m = re.search(r"\*\*Analista de ([^*]+)\*\* \((AC-[A-Z]+), (AG-\d+)\)", especifico)
+    pf = re.search(r"perfil (PERF-[A-Z0-9-]+)", especifico)
+    return {"nombre": m.group(1) if m else None, "codigo": m.group(2) if m else None, "agente": m.group(3) if m else None,
+            "perfil": pf.group(1) if pf else None}
+
+
+def _sustituir(marco: str, ide: dict[str, str | None]) -> str:
+    # en el ejemplo JSON de la §4 la clase va con su código corto («DIV»), no con el del Analista («AC-DIV»)
+    t = marco.replace('"clase":"{{CODIGO}}"', '"clase":"' + str(ide.get("codigo") or "").removeprefix("AC-") + '"')
+    for marca, k in (("{{CLASE}}", "nombre"), ("{{CODIGO}}", "codigo"), ("{{AG}}", "agente"), ("{{PERF}}", "perfil")):
+        t = t.replace(marca, ide.get(k) or "")
+    return t
+
+
+def kit(especifico: str, marco: str, base_conocimientos: str = "ninguna") -> str:
+    """El kit de un tipo de activo (V6), derivado de su prompt V5.0: la identidad, la §6 (estrategia), toda sección del
+    marco que el prompt específico cambia (en la V5.0, el ejemplo de la §11 y algún detalle de la §4) y, si
+    `base_conocimientos` es «completa», la §10. No se inventa nada: es texto del prompt congelado."""
+    if base_conocimientos not in ("ninguna", "completa"):
+        raise ValueError(f"v6.analista.base_conocimientos desconocida: {base_conocimientos!r} (ninguna | completa)")
+    ide = identidad(especifico)
+    _, esp = secciones(especifico)
+    _, mar = secciones(_sustituir(_sin_comentario(marco), ide))
+    partes = [f"# Kit del tipo de activo: {ide['nombre']} ({ide['codigo']}, {ide['agente']}, perfil del Motor {ide['perfil']})\n\n"
+              f"Eres el **Analista de {ide['nombre']}** ({ide['codigo']}, {ide['agente']}). Tu perfil de cálculo en el Motor "
+              f"es {ide['perfil']}. Este kit procede del prompt V5.0 de tu tipo de activo; sus secciones prevalecen sobre las "
+              "del núcleo con el mismo número.\n"]
+    for n, txt in esp.items():
+        if n == "10" and base_conocimientos != "completa":
+            continue
+        if n in ("6", "10") or mar.get(n, "").strip() != txt.strip():
+            partes.append(txt.rstrip() + "\n")
+    return "\n".join(partes)
+
+
+def huella(texto: str) -> str:
+    return hashlib.sha256(texto.encode("utf-8")).hexdigest()[:16]
+
+
 class CatalogoPrompts:
-    def __init__(self, cfg: Dict) -> None:
+    def __init__(self, cfg: dict) -> None:
         self.dir = ruta(cfg, "prompts")
-        self._cache: Dict[str, str] = {}
+        self.cfg = cfg
+        v6 = cfg.get("v6") or {}
+        self.v6 = cfg.get("diseno") == "v6"
+        self.dir_v6 = (DIR_EJECUTOR / str(v6.get("prompts_dir") or "prompts_v6")).resolve()
+        an = v6.get("analista") or {}
+        self.nucleo_y_kit = self.v6 and bool(an.get("nucleo_y_kit", True))
+        self.base_conocimientos = str(an.get("base_conocimientos") or "ninguna")
+        self._cache: dict[str, str] = {}
         self._lock = threading.Lock()
         # Analistas cuyo prompt específico no se encontró y que trabajan con el marco común (modo degradado)
-        self.sustituidos: Dict[str, str] = {}
+        self.sustituidos: dict[str, str] = {}
         self.permitir_marco_comun = bool((cfg.get("prompts") or {}).get("marco_comun_si_falta", True))
 
     def archivo(self, agente: str) -> Path:
@@ -94,6 +187,9 @@ class CatalogoPrompts:
         if agente not in NOMBRES_ALTERNATIVOS:
             raise KeyError(f"Agente desconocido {agente}")
         bases = [f"System prompt - {n}" for n in NOMBRES_ALTERNATIVOS[agente]]
+        if agente in AGENTES_V6:   # papeles nuevos de la V6: sus prompts viven en el ejecutor (fuera del corpus congelado)
+            p = buscar_versionado(self.dir_v6, bases, ".md")
+            return p if p is not None else self.dir_v6 / f"{bases[0]} - V6.0.md"
         p = buscar_versionado(self.dir, bases, ".md")
         return p if p is not None else self.dir / f"{bases[0]} - Versión óptima V5.0.md"
 
@@ -115,18 +211,57 @@ class CatalogoPrompts:
                     self._cache[agente] = p.read_text(encoding="utf-8")
             return self._cache[agente]
 
-    def system(self, agente: str, cache: bool = True, ttl: str = "1h") -> List[Dict]:
-        """Bloques de system: prompt íntegro + interfaz del ejecutor; punto de caché en el último bloque."""
-        bloques = [{"type": "text", "text": self.texto(agente)}, {"type": "text", "text": BLOQUE_EJECUTOR}]
+    def nucleo(self) -> str:
+        with self._lock:
+            if "_nucleo" not in self._cache:
+                marco = buscar_versionado(self.dir, MARCO_COMUN_ANALISTAS, ".md")
+                if marco is None:
+                    raise FileNotFoundError(f"No se encuentra el marco común de los Analistas en {self.dir}")
+                self._cache["_marco"] = marco.read_text(encoding="utf-8")
+                self._cache["_nucleo"] = nucleo_comun(self._cache["_marco"])
+            return self._cache["_nucleo"]
+
+    def kit(self, agente: str) -> str:
+        """Kit V6 del Analista `agente`. Sin prompt específico (modo degradado), el kit solo lleva la identidad mínima."""
+        nucleo = self.nucleo()
+        esp = self.texto(agente)
+        clave = f"_kit_{agente}_{self.base_conocimientos}"
+        with self._lock:
+            if clave not in self._cache:
+                if agente in self.sustituidos:
+                    self._cache[clave] = f"# Kit del tipo de activo ({agente}, {NOMBRES[agente]})\n\nPrompt específico no disponible: trabajas solo con el núcleo (modo degradado declarado).\n"
+                else:
+                    self._cache[clave] = kit(esp, self._cache["_marco"], self.base_conocimientos)
+            del nucleo
+            return self._cache[clave]
+
+    def version(self, agente: str) -> str:
+        """Huella del texto de system que recibe el agente (versión del kit o del prompt, para el registro)."""
+        return huella("".join(b["text"] for b in self.system(agente, cache=False)))
+
+    def system(self, agente: str, cache: bool = True, ttl: str = "1h") -> list[dict]:
+        """Bloques de system: prompt íntegro + interfaz del ejecutor; punto de caché en el último bloque.
+        V6 (T-101): un Analista recibe el núcleo común y la interfaz (primer punto de caché, compartido por los doce) y
+        después su kit (segundo punto de caché)."""
+        cc = None
         if cache:
             cc = {"type": "ephemeral"}
             if ttl and ttl != "5m":
                 cc["ttl"] = ttl
+        if self.nucleo_y_kit and agente in ANALISTAS_TIPO:
+            bloques: list[dict[str, Any]] = [{"type": "text", "text": self.nucleo()}, {"type": "text", "text": BLOQUE_EJECUTOR},
+                                             {"type": "text", "text": self.kit(agente)}]
+            if cc:
+                bloques[1]["cache_control"] = dict(cc)
+                bloques[2]["cache_control"] = dict(cc)
+            return bloques
+        bloques = [{"type": "text", "text": self.texto(agente)}, {"type": "text", "text": BLOQUE_EJECUTOR}]
+        if cc:
             bloques[-1]["cache_control"] = cc
         return bloques
 
 
-def mensaje_usuario(contrato: str, mensaje: Dict, contexto: Dict, instrucciones: str, esquema: Dict) -> str:
+def mensaje_usuario(contrato: str, mensaje: dict, contexto: dict, instrucciones: str, esquema: dict) -> str:
     cuerpo = json.dumps({"contexto": contexto, "mensaje": mensaje}, ensure_ascii=False, indent=1, default=str)
     return (f"# Encargo del ejecutor · {contrato}\n\n"
             f"Fecha as_of: {contexto.get('fecha_as_of')} · modo: {contexto.get('modo')}"
@@ -136,7 +271,7 @@ def mensaje_usuario(contrato: str, mensaje: Dict, contexto: Dict, instrucciones:
             f"(puedes añadir campos de tu contrato):\n```json\n{json.dumps(esquema, ensure_ascii=False)}\n```\n")
 
 
-def extraer_encargo(texto_usuario: str) -> Dict:
+def extraer_encargo(texto_usuario: str) -> dict:
     """Recupera el objeto {"contexto", "mensaje"} de un mensaje de usuario (lo usa MockClient)."""
     ini = texto_usuario.find("```json\n")
     fin = texto_usuario.find("\n```", ini + 8)

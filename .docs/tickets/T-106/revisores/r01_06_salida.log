@@ -1,0 +1,28 @@
+FALLO IDX-REL-001 rechaza una historia que no es mensual · servido con historia DIARIA: momentum {'cubierta': {'12-1': 0.0, '3m': 0.0}, 'no_cubierta': {'12-1': 0.0, '3m': 0.0}} (las «12-1» son 12 sesiones)
+FALLO MON-EXP-001: con un nodo a 365 días (12 meses), el cambio acumulado a 12 meses se calcula · {'6m': 5.204170427930421e-13, '12m': None} · ['curva sin cobertura a 12 meses: cambio acumulado no calculado']
+FALLO MON-YLD-001 rechaza una fecha numérica (no la convierte en epoch) · fecha 20261110 aceptada como 1970-01-01
+FALLO VOL-GARCH-001 sin `arch`: el detalle no dice que el Catálogo la da por «Documentado» · Ficha VOL-GARCH-001 con código pero «Documentado» en el Catálogo: no entrega cifras citables
+      DER-ROLL-001: 0.0 ms por llamada
+      DER-SKEW-001: 0.4 ms por llamada
+      DER-TERM-001: 0.8 ms por llamada
+      DER-VRP-001: 0.7 ms por llamada
+      FON-DISC-001: 2.8 ms por llamada
+      FON-FLOW-001: 2.7 ms por llamada
+      FON-LEV-001: 4.8 ms por llamada
+      FON-TD-001: 2.7 ms por llamada
+      IDX-CONC-001: 0.3 ms por llamada
+      IDX-ERP-001: 2.0 ms por llamada
+      IDX-REB-001: 0.0 ms por llamada
+      IDX-REL-001: 4.4 ms por llamada
+      MON-EXP-001: 0.2 ms por llamada
+      MON-FIX-001: 0.4 ms por llamada
+      MON-REAL-001: 1.8 ms por llamada
+      MON-YLD-001: 0.1 ms por llamada
+      TCV-BEI-001: 0.1 ms por llamada
+      TCV-CDS-001: 0.4 ms por llamada
+      TCV-SLOPE-001: 3.1 ms por llamada
+      TCV-TP-001: 269.2 ms por llamada
+      TCV-VIXTS-001: 0.4 ms por llamada
+OK    cada ficha < 0,5 s por llamada con sus datos nominales
+
+1/5 comprobaciones OK; fallos: ['IDX-REL-001 rechaza una historia que no es mensual', 'MON-EXP-001: con un nodo a 365 días (12 meses), el cambio acumulado a 12 meses se calcula', 'MON-YLD-001 rechaza una fecha numérica (no la convierte en epoch)', 'VOL-GARCH-001 sin `arch`: el detalle no dice que el Catálogo la da por «Documentado»']

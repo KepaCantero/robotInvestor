@@ -213,7 +213,9 @@ class Almacen:
                     parcial = ultima.decode("utf-8", errors="replace")
                     datos = cabeza + b"\n" if cabeza else b""
             texto = datos.decode("utf-8")
-            lineas = texto.splitlines()
+            # T-103 r02 (QA r01, H-48): los registros se separan solo por «\n», que es lo que escribe `escribir`;
+            # `splitlines()` también corta en U+2028, U+2029 o U+0085, que `json.dumps(ensure_ascii=False)` no escapa
+            lineas = texto.split("\n")
             for linea in lineas:
                 if not linea.strip():
                     continue
@@ -361,8 +363,15 @@ class Almacen:
             ruta = self.carpeta / ARCHIVOS[archivo]
             with open(ruta, "ab") as fh:
                 inicio = fh.tell()
+                # T-103 (QA r01 de T-93, H-42): si el último registro (válido) quedó sin el «\n» final, por un corte justo antes
+                # del salto de línea o por la migración, se antepone para no pegar el nuevo a esa línea
+                sep = b""
+                if inicio:
+                    with open(ruta, "rb") as lec:
+                        lec.seek(-1, os.SEEK_END)
+                        sep = b"" if lec.read(1) == b"\n" else b"\n"
                 try:
-                    fh.write((json.dumps(e, ensure_ascii=False, default=str) + "\n").encode())
+                    fh.write(sep + (json.dumps(e, ensure_ascii=False, default=str) + "\n").encode())
                     fh.flush()
                     os.fsync(fh.fileno())
                     sellos[archivo] = [e["_seq"], e["_hash"]]

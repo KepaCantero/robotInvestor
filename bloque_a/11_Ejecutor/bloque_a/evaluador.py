@@ -23,6 +23,7 @@ import numpy as np
 import pandas as pd
 from scipy import stats
 
+from .calendario import _sesiones_entre, validar_festivos_ps2
 from .configuracion import CLASES, TABLA_HORIZONTES, parametro, parametros_ht03
 from .herramientas.ht01_datos import DatosNoDisponibles
 from .herramientas.ht05_planificador import dias_habiles_entre
@@ -159,6 +160,8 @@ class Evaluador:
         # Tabla de bandas verbales de la configuración (None = Anexo A), propia de esta instancia (T-65, H-07); falla
         # cerrado si es incoherente
         self.bandas = tuple(validar_bandas(cfg.get("bandas_verbales")))
+        # T-91 (QA r05 de T-65, H-26): las sesiones de H1 se cuentan con los mismos festivos que PS2 al emitir
+        self._festivos_ps2 = validar_festivos_ps2(parametro(cfg, "ps2_festivos"))
         self.prob_de_banda = {b["codigo"]: b["prob_interna"] for b in self.bandas}
         # T-66: claves nuevas validadas al crear el Evaluador (falla cerrado si no son válidas)
         self.solo_endurecer()
@@ -210,6 +213,11 @@ class Evaluador:
     def simbolos_clase(self, clase: str) -> list[str]:
         return [s for s in self.universo[self.universo["clase"] == clase]["simbolo"] if self.proveedor.tiene(s)]
 
+    def _edad_ps2(self, desde, hasta, horizonte: str | None) -> int:
+        """Antigüedad de un dato como la mide PS2 (Anexo A, P-13): en H1, sesiones sin los festivos de `ps2_festivos`
+        (T-91, QA r05 de T-65, H-26: antes, sesiones hábiles sin festivos); en el resto, días naturales."""
+        return _sesiones_entre(desde, hasta, self._festivos_ps2) if horizonte == "H1" else (pd.Timestamp(hasta) - pd.Timestamp(desde)).days
+
     def motivo_no_fresca(self, d0, d1, f1, horizonte: str) -> str | None:
         """T-65 (QA r03, H-16; QA r04, H-24): una serie sirve para resolver un pronóstico de horizonte `horizonte` solo si
         tiene un dato posterior al de la emisión (`d1 > d0`) y su último dato no es más antiguo, a la fecha de resolución
@@ -219,7 +227,7 @@ class Evaluador:
         if d1 <= d0:
             return f"sin dato posterior a la emisión (último del {d1.date()})"
         lim = int(parametro(self.cfg, "ps2_antiguedad_maxima_dias")[horizonte])
-        edad = dias_habiles_entre(d1, f1) if horizonte == "H1" else (f1 - d1).days
+        edad = self._edad_ps2(d1, f1, horizonte)
         if edad > lim:
             unidad = "sesiones" if horizonte == "H1" else "días"
             return f"último dato del {d1.date()}, {edad} {unidad} antes de la resolución (máximo {lim} en {horizonte})"
@@ -249,8 +257,7 @@ class Evaluador:
             except DatosNoDisponibles:
                 continue
             if lim is not None:
-                d, f = pd.Timestamp(base["fecha"]), pd.Timestamp(fecha)
-                if (dias_habiles_entre(d, f) if horizonte == "H1" else (f - d).days) > lim:
+                if self._edad_ps2(base["fecha"], fecha, horizonte) > lim:
                     continue
             bases[simbolo] = base
         return bases
@@ -278,7 +285,7 @@ class Evaluador:
         return v1 / v0 - 1, d0, d1
 
     def rentabilidad(self, simbolo: str, clase: str, f0, f1, horizonte: str | None = None, *,
-                     base=None) -> tuple[float, pd.Timestamp]:
+                     base=None, hasta=None) -> tuple[float, pd.Timestamp]:
         """Rentabilidad de `simbolo` entre f0 y f1 y la fecha de su último dato. Con `horizonte` (la resolución lo pasa
         siempre), falla (`DatosNoDisponibles`) si la serie no sirve para ese horizonte (`motivo_no_fresca`); sin él, si no
         tiene un dato posterior a la base. En la CESTA cuentan los mismos miembros que al emitir (`base`, los congelados en
@@ -290,9 +297,20 @@ class Evaluador:
             bases = self.bases_cesta(clase, f0, horizonte) if base is None else base
             if not isinstance(bases, dict) or not bases:
                 raise DatosNoDisponibles(f"Cesta {clase} sin niveles iniciales")
-            patas = [self.rentabilidad(s, clase, f0, f1, horizonte, base=b) for s, b in sorted(bases.items())]
+            patas = [self.rentabilidad(s, clase, f0, f1, horizonte, base=b, hasta=hasta) for s, b in sorted(bases.items())]
+            # T-91 (QA r05 de T-65, H-27): todos los miembros se miden hasta la misma fecha, la más antigua de las que sirven;
+            # cada uno vuelve a pasar la frescura frente a la fecha de resolución (QA r01 de T-91, H-01). Se repite hasta que
+            # coinciden (QA r02, H-05): con un hueco en la fecha común, un miembro queda en una fecha anterior. Cada vuelta baja
+            # la fecha común, así que acaba: o coinciden, o un miembro deja de ser fresco y el pronóstico espera
+            previo = None
+            while len({f for _, f in patas}) > 1:
+                corte = min(f for _, f in patas)
+                if previo is not None and corte >= previo:   # la fecha común no baja: no se puede alinear (falla cerrado)
+                    raise DatosNoDisponibles(f"Cesta {clase}: los miembros no se alinean en una fecha común")
+                previo = corte
+                patas = [self.rentabilidad(s, clase, f0, f1, horizonte, base=b, hasta=corte) for s, b in sorted(bases.items())]
             return float(np.mean([v for v, _ in patas])), min(f for _, f in patas)
-        r, d0, d1 = self._rentabilidad_serie(simbolo, f0, f1, base)
+        r, d0, d1 = self._rentabilidad_serie(simbolo, f0, f1 if hasta is None else hasta, base)
         motivo = self.motivo_no_fresca(d0, d1, f1, horizonte) if horizonte else (
             f"sin dato posterior a la emisión (último del {d1.date()})" if d1 <= d0 else None)
         if motivo:
@@ -337,14 +355,14 @@ class Evaluador:
             "operacion": {"method_id": "RI-TB", "ficha_id": "FC-EVAL-001", "ficha_version": "1.0", "catalog_version": "4.0",
                           "op_sin_ficha": False}, "perfil": ["TRANSVERSAL"], "clase": clase, "modo": "SYNC_CALC",
             "plan": "PLAN_MIN", "as_of": str(pd.Timestamp(as_of).date()), "estado": "SERVED",
-            "datos": [{"serie_ht01": proxy, "fecha_dato": str(s.index[-1].date()) if len(s) else None, "n": int(len(s))},
+            "datos": [{"serie_ht01": proxy, "fecha_dato": str(s.index[-1].date()) if len(s) else None, "n": len(s)},
                       {"serie_ht01": referencia}],
             "parametros": {"sesiones": sesiones, "sentido_positivo": sentido_positivo, "ventana": f"{tb['ventana_anios']} años, no solapadas"},
-            "semilla": None, "resultado": {"forma": "VALOR", "payload": {"tasa_base": p, "n_ventanas": int(len(serie))}},
+            "semilla": None, "resultado": {"forma": "VALOR", "payload": {"tasa_base": p, "n_ventanas": len(serie)}},
             "clase_cifra": "ESTADISTICA", "referencia_ingenua": {"tipo": "RI-TB"}, "madurez_metodo": "IMPLEMENTADO",
             "consumo_uc": 0.0, "limitaciones": ([] if len(serie) >= min_v else [f"menos de {min_v} ventanas: tasa base {_coma(tb['sin_historia'])} por defecto"])
             + ([f"cesta de {clase}: excluidos por falta de datos en la ventana: {', '.join(excluidos_cesta)}"] if excluidos_cesta else [])})
-        return {"tipo": "TASA_BASE", "valor_o_prob": round(p, 4), "calc_id": calc_id, "n_ventanas": int(len(serie))}
+        return {"tipo": "TASA_BASE", "valor_o_prob": round(p, 4), "calc_id": calc_id, "n_ventanas": len(serie)}
 
     # ------------------------------------------------------------------------------------
     # Resolución
@@ -371,7 +389,22 @@ class Evaluador:
                     base_ref = p.get("bases_cesta") if p["referencia_indice"] == "CESTA" else p.get("nivel_referencia_indice")
                     if base_ref is not None and not isinstance(base_ref, dict) and p.get("fecha_nivel_referencia_indice"):
                         base_ref = {"valor": base_ref, "fecha": p["fecha_nivel_referencia_indice"]}
+                    if base_ref is None and p["referencia_indice"] == "CESTA":
+                        base_ref = self.bases_cesta(p["clase"], f0, hz)
                     rr, d1b = self.rentabilidad(p["referencia_indice"], p["clase"], f0, f1, hz, base=base_ref)
+                    previo_corte = None
+                    while d1b != d1:
+                        # T-91 (QA r05 de T-65, H-27; `[PROPUESTO]`, INC-T91-01): las dos series sirven, pero el suceso
+                        # pronosticado se mide sobre la misma ventana: las dos hasta la fecha más antigua de las dos, y cada una
+                        # vuelve a pasar la frescura frente a f1 (QA r01 de T-91, H-01). Se repite hasta que coinciden (QA r02,
+                        # H-05: un hueco o un festivo en la fecha común); cada vuelta baja la fecha común, así que acaba
+                        corte = min(d1, d1b)
+                        if previo_corte is not None and corte >= previo_corte:   # no baja: no se alinean (falla cerrado)
+                            raise DatosNoDisponibles(f"{p['prg_id']}: proxy y referencia no se alinean en una fecha común")
+                        previo_corte = corte
+                        rp, d1 = self.rentabilidad(p["variable"]["serie_ht01"], p["clase"], f0, f1, hz, base=p.get("nivel_referencia"),
+                                                   hasta=corte)
+                        rr, d1b = self.rentabilidad(p["referencia_indice"], p["clase"], f0, f1, hz, base=base_ref, hasta=corte)
                 x = rp - rr if rr is not None else rp
                 # Falla cerrado: un valor no finito (cierre NaN, nivel inicial 0…) es un dato no disponible,
                 # nunca un resultado (antes, int(nan > 0) = 0 daba NO_OCURRIDO)
@@ -383,7 +416,11 @@ class Evaluador:
                 continue
             positivo = p["sentido"] == "POSITIVO"
             o = int((x > p.get("umbral", 0.0)) if positivo else (x < -p.get("umbral", 0.0)))
-            fuga_ok = (pd.Timestamp(p["nivel_referencia"]["fecha"]) <= f0 and d1 <= as_of and f1 <= as_of)
+            # T-91 (QA r01, H-04): un registro antiguo con el nivel como número suelto no tiene fecha; su base es la última
+            # sesión ≤ la emisión (`_rentabilidad_serie`), así que no puede ser posterior
+            nr = p.get("nivel_referencia")
+            f_base = pd.Timestamp(nr["fecha"]) if isinstance(nr, dict) and nr.get("fecha") else f0
+            fuga_ok = (f_base <= f0 and d1 <= as_of and f1 <= as_of)
             fuga_ok = fuga_ok and (d1b is None or d1b <= as_of)
             filas.append((p, {"rent_proxy": rp, "rent_referencia": rr, "exceso": x, "o": o,
                               "fecha_dato": max(d1, d1b) if d1b is not None else d1, "fecha_dato_proxy": d1,

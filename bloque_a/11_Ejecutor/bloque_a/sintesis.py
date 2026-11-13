@@ -37,6 +37,17 @@ AVISO_LEGAL = ("Este informe describe oportunidades generales de mercado y no co
                "el Broker Personal valora si encaja con el usuario.")
 
 
+# T-91 (QA r05 de T-65, H-28): el criterio y la regla que se congelan en cada PRG nuevo dicen la regla de resolución vigente
+# (los ya congelados no cambian). INC-T91-01 `[PROPUESTO]`
+CRITERIO_RESOLUCION = ("Cierre HT-01 de la última sesión ≤ {fin} frente al cierre de la última sesión ≤ {inicio}; cada serie (proxy, "
+                       "referencia y cada miembro de la CESTA) necesita un dato posterior a la emisión y no más antiguo, a la fecha "
+                       "de resolución, que la antigüedad de PS2 de su horizonte (H1 en sesiones sin los festivos de PS2); si las "
+                       "series acaban en fechas distintas, todas se miden hasta la fecha más reciente en la que todas tienen "
+                       "cierre, que debe pasar en cada una esa frescura; si no la hay, el pronóstico espera; suceso: {suceso}")
+REGLA_FALLBACK = ("si alguna serie no cumple, el pronóstico espera; NO_RESOLUBLE tras {dias_nr} días hábiles desde la fecha de "
+                  "resolución sin que cumplan")
+
+
 def _menos_de_tres_texto(c: str, sel: dict, n_opc: int) -> str | None:
     m = sel["seleccion"].get("menos_de_tres_motivo")
     if n_opc >= 3:
@@ -182,8 +193,8 @@ def construir(bloque, run_id, tipo, as_of, clases, nivel, gc0, analisis, selecci
                 "nivel_referencia_indice": nivel_r, "fecha_nivel_referencia_indice": str(fecha_r.date()) if fecha_r is not None else None,
                 **({"bases_cesta": bloque.evaluador.bases_cesta(c, as_of, h)} if ref == "CESTA" else {}), "umbral": 0.0, "fecha_emision": str(as_of.date()), "fecha_congelacion": bloque.reloj.ahora(),
                 "fecha_resolucion": str(fr.date()),
-                "criterio_resolucion": f"Cierre HT-01 de la última sesión ≤ {fr.date()} frente al cierre de la última sesión ≤ {as_of.date()}; suceso: {texto_ev}",
-                "fuente_resolucion": f"HT-01:{bloque.proveedor.nombre}", "regla_fallback": f"última sesión disponible ≤ fecha de resolución; NO_RESOLUBLE tras {dias_nr} días hábiles sin dato",
+                "criterio_resolucion": CRITERIO_RESOLUCION.format(fin=fr.date(), inicio=as_of.date(), suceso=texto_ev),
+                "fuente_resolucion": f"HT-01:{bloque.proveedor.nombre}", "regla_fallback": REGLA_FALLBACK.format(dias_nr=dias_nr),
                 "banda_verbal": bloque.evaluador.banda_de(d["prob_interna"]), "prob_interna": d["prob_interna"],
                 "prob_publicada": d["prob_interna"] if (c, h, d.get("metodo")) in certs else None, "certificado_ref": certs.get((c, h, d.get("metodo"))),
                 "metodo": d.get("metodo"), "referencia_ingenua": ri, "escenario_asociado": d.get("escenario", "BASE"),
@@ -211,7 +222,7 @@ def construir(bloque, run_id, tipo, as_of, clases, nivel, gc0, analisis, selecci
             hito = copy.deepcopy({k: v for k, v in b.items() if k not in ("hit_ids", "hitos", "tesis_estructural")})
             hito.update({"prg_id": hid, "prg_padre": b["prg_id"], "es_hito": True, "prob_analista": None, "necesario": m == meses_hitos[-1], "horizonte": "H4",
                          "afirmacion": f"Hito de la senda H5: {ev}", "evento": ev, "fecha_resolucion": str(fh.date()),
-                         "criterio_resolucion": f"Cierre HT-01 de la última sesión ≤ {fh.date()} frente al cierre de la última sesión ≤ {as_of.date()}; suceso: {ev}",
+                         "criterio_resolucion": CRITERIO_RESOLUCION.format(fin=fh.date(), inicio=as_of.date(), suceso=ev),
                          "prob_interna": d["prob_interna"], "banda_verbal": bloque.evaluador.banda_de(d["prob_interna"]), "prob_publicada": None,
                          "referencia_ingenua": {"tipo": "RI-TB", "valor_o_prob": float(parametro(cfg, "tasa_base.sin_historia")),
                                                 "nota": "tasa base neutra (ventana superior a la historia disponible)"}})
@@ -369,8 +380,10 @@ def construir(bloque, run_id, tipo, as_of, clases, nivel, gc0, analisis, selecci
         clases_out[c] = {"estado_semaforo": sem,
                          "regimen_clase": (an.get("regimen") or "Régimen de la clase no disponible en este ciclo")[:600] if len(an.get("regimen") or "") >= 10 else "Régimen de la clase no disponible en este ciclo",
                          "candidatas_analizadas": max(len(an.get("cribado", [])), len(fins), len(sel["candidatos"]), n),
-                         "embudo": {"gc0_delta_material": bool(gc0[c]["cambio_material"]), "cribadas": len(an.get("cribado", [])),
-                                    "pasan_gc1": sum(1 for x in an.get("cribado", []) if x.get("paso_gc1")),
+                         # T-101 (QA r02, H-16): con GC1 por código (V6), el embudo cuenta el GC1 del código
+                         "embudo": {"gc0_delta_material": bool(gc0[c]["cambio_material"]),
+                                    "cribadas": an["gc1"]["universo"] if an.get("gc1") else len(an.get("cribado", [])),
+                                    "pasan_gc1": len(an["gc1"]["pasan"]) if an.get("gc1") else sum(1 for x in an.get("cribado", []) if x.get("paso_gc1")),
                                     "pasan_gc2": sum(1 for f in fins if f.get("_gc2")), "finalistas_gc3": min(sum(1 for f in fins if f.get("_gc3")), 5),
                                     "elegibles": sum(1 for e in sel["evaluadas"] if e["elegible"])},
                          "opciones": opciones, "menos_de_tres_motivo": _menos_de_tres_texto(c, sel, n)}
@@ -431,7 +444,8 @@ _UNITARIA = re.compile(
     r"\b(?:solo|solamente|únicamente|exclusivamente)\s+(?:la|una)\s+(?:acción|emisión|participación)\b"
     r"|\b(?:la acción|el bono|la acción ordinaria|la acción preferente)\s+de\s+"
     r"|\b(?:comprar|vender|adquirir|seleccionar)\s+(?:acciones|bonos)\s+de\s+\$[a-z]+"
-    r"|\b(?:acciones|bonos)\s+de\s+[^.;,\n]+?\s+(?:corporation|incorporated|inc\b|corp\b|plc\b|ag\b|s\.a\.)",
+    # T-102 r02 (H-07): el nombre se acota a 120 caracteres; sin tope, un texto degenerado con «acciones de» repetido es cuadrático
+    r"|\b(?:acciones|bonos)\s+de\s+[^.;,\n]{1,120}?\s+(?:corporation|incorporated|inc\b|corp\b|plc\b|ag\b|s\.a\.)",
     re.IGNORECASE,
 )
 

@@ -40,6 +40,7 @@ Todo lo que Claude, Astra y las personas del equipo necesitan para trabajar en e
 | `.docs/scripts/commit.sh` | Gate, commit (autor y líneas finales desde `.env`) y push a `develop` |
 | `.docs/scripts/medir_consumo_a.py` | Llamadas y tokens de entrada por agente de un ciclo simulado del Bloque A (cliente mock; `--config` para activar más perfiles) |
 | `.docs/scripts/medir_consumo_b.py` | Llamadas y tokens de entrada por agente de un análisis simulado del Bloque B (cliente mock), para comparar variantes de prompts, caché o modelos |
+| `.docs/scripts/comparar_disenos_a.py` | Bloque A V5 frente a V6 (T-101) en los mismos ciclos con el cliente simulado: llamadas y tokens por agente, caché y coincidencia de la selección. Solo flujo y consumo, no calidad |
 | `.docs/scripts/banco_medida.py` | Banco de medida (T-94): el titular (hoy, el Bloque A en backtest) frente a azar y momento, con los mismos datos y fechas de corte; prerregistro sellado, exceso frente a la cesta de la clase con rango y veredicto, y coste. Pruebas en `.docs/scripts/pruebas_banco_medida.py` |
 | `.docs/scripts/commit_limpio.sh` | Commit desde una copia limpia de HEAD con solo las rutas de la tarea (pruebas del marco, su LEEME y gate completo allí), para cuando el árbol tiene cambios a medias de otras tareas; sube las copias probadas |
 | `.docs/scripts/preparar_entorno.sh` | Crea `.venv` con Python 3.12 y las versiones fijadas en `tools/requisitos_entorno.txt` (T-96); `--comprobar` compara lo instalado con el fichero y nombra lo que difiere |

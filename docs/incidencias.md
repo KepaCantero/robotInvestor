@@ -91,3 +91,53 @@ Sin contrarréplica, la objeción sigue abierta.
   - En el arrastre manda el veredicto más estricto entre el guardado y el de la regla. Una objeción mal formada o fuera de esquema cuenta como fuerte abierta, sin cortar el ciclo.
 
 **T-62 · Ámbito de la refutación por eslabón (CT-B-17).** El Documento 0 y el Director admiten ESLABON con eslabon_id; el crítico también emite TESIS con eslabon_id. El esquema congelado del paquete admite CADENA y propiedades x_. El ejecutor acepta ambas grafías de entrada y emite CADENA con x_eslabon_id y los candidatos expuestos. TESIS sin referencia a un eslabón mantiene su alcance global. Los detalles y la decisión sobre datos inválidos están en [.docs/tickets/T-62](../.docs/tickets/T-62/README.md).
+
+**INC-T88-01 · 2026-11-12 · Quién paga la escritura de la caché de un prefijo compartido (Bloque A, T-88).** Con varios hilos, la escritura la pagaba el tipo de activo que llegaba primero, y el consumo por tipo de F5 cambiaba entre ejecuciones iguales. Decisión `[PROPUESTO]`:
+- durante la fase en paralelo, cada tipo paga la lectura de lo cacheado y la escritura del prompt de su propio analista;
+- al acabar la fase, lo escrito de verdad por los agentes compartidos y por el núcleo V6 se reparte por grupo de prefijos, en proporción a lo que escribiría cada tipo solo.
+
+El total cargado es el coste real. Efecto declarado: en un presupuesto justo, el tipo que antes pagaba por llegar primero ya no cierra por eso una fase durante el ciclo. En la V5, cada analista es su propio grupo. En la V6, los analistas comparten grupo por el núcleo común, así que cada kit se reparte con el núcleo (hasta unos 0,03 UC por tipo). Además, en la V6 cada analista carga durante la fase su núcleo y su kit enteros, lo que es prudente. Detalle en [.docs/tickets/T-88](../.docs/tickets/T-88/README.md).
+
+**INC-T91-01 · 2026-11-12 · Regla de resolución de un pronóstico (Bloque A, T-65 y T-91).** El Anexo A fija PS2 como puerta de selección; para resolver no había regla. Decisión `[PROPUESTO]`:
+- cada serie (proxy, referencia y cada miembro de la CESTA) necesita un dato posterior a la emisión y no más antiguo, a la fecha de resolución, que la antigüedad de PS2 de su horizonte (H1 en sesiones sin los festivos de `ps2_festivos`);
+- si no lo tiene, el pronóstico espera y, pasado el plazo, queda NO_RESOLUBLE;
+- si las series acaban en fechas distintas, todas se miden hasta la fecha más reciente en la que todas tienen cierre (r03), que debe pasar en cada una la frescura frente a la fecha de resolución;
+- consecuencia declarada (QA r03, H-07): si las series no comparten ninguna fecha reciente (por ejemplo, una referencia semanal fechada en sábado), el pronóstico espera y acaba NO_RESOLUBLE. Antes de la r03 se resolvía con cada serie en su último dato.
+
+Pregunta para T-57: «¿qué antigüedad admite la resolución de un pronóstico, se alinean las series y qué pasa con las que tienen calendarios distintos?». Detalle en [.docs/tickets/T-91](../.docs/tickets/T-91/README.md).
+
+**INC-T106-01 · 2026-11-12 · Decisiones de método en las 21 fichas V5.0 del Motor (Bloque A, T-106).** Las fichas dejan huecos que se han cubierto así, `[PROPUESTO]` hasta que el operador o una revisión del Catálogo decidan:
+- **Niveles que la ficha no fija:**
+  - IC del 95 % (de ST-INF-001) y rezagos HAC por la regla de ACC-FACT-001 en TCV-SLOPE-001;
+  - ES al 97,5 % (de RISK-VAR-001) en TCV-VIXTS-001 y DER-VRP-001;
+  - retardos HAR 1, 5 y 22 (Corsi) en DER-VRP-001;
+  - en IDX-REB-001, sin `nivel_ic` no se da el IC (se declara).
+- **«Aclaración» se trata como rechazo** (`ErrorFicha`), porque la interfaz CT-09 no tiene canal de aclaración.
+- **Falla cerrado donde la ficha calla:**
+  - pesos que no suman 1 (IDX-CONC-001) o un índice HY sin recuperación declarada (TCV-CDS-001) se rechazan;
+  - FON-LEV-001 exige L en los datos aunque el parámetro traiga 2;
+  - entre «Entradas mínimas» y «Rechazo», se aplica el mínimo más estricto.
+- **Fuera, como dato de entrada o limitación:**
+  - la simulación SIM-MC-001 de FON-LEV-001;
+  - el modelo afín de TCV-BEI-001;
+  - SCN-H-001 en IDX-ERP-001;
+  - los regresores de TCV-SLOPE-001 (con vintages);
+  - las rentabilidades históricas de VIXTS.
+
+**Ronda r02 (QA r01 de T-106):**
+- en MON-EXP-001, solo si el solicitante declara `precision_cotizacion` el desajuste admitido por nodo es esa precisión (si no, la tolerancia de la ficha);
+- en MON-EXP-001, se rechaza la curva cuyo redondeo podría mover un tramo un incremento Δ entero, y una curva cotizada plana en tipos simples (forwards no planos);
+- en TCV, los umbrales de rechazo son fijos (no los baja una petición), y los rangos de los parámetros salen de FIR-CARRY-001 y RISK-VAR-001.
+
+**Ronda r03 (QA r02 de T-106):**
+- en MON e IDX, los umbrales de rechazo y de limitación y los rangos admitidos también son fijos: una petición que los traiga se rechaza (H-14);
+- en DER-VRP-001, `nivel_es` se limita al rango 0,90–0,99 de RISK-VAR-001, de donde se toma el nivel (H-20);
+- en MON-EXP-001 (H-19):
+  - «tipo vigente»: `probabilidades` reparte el movimiento de cada reunión frente al tipo en vigor justo antes de ella, y `probabilidades_acumuladas` aplica la fórmula literal frente al tipo oficial de hoy;
+  - con tantos nodos útiles como tramos y algún tramo sin nodos en sus dos fechas de reunión, la curva se rechaza: la hipótesis escalonada no se puede contrastar;
+  - sin `precision_cotizacion`, cada cotización lleva como precisión el medio último dígito con que viene escrita;
+  - si el redondeo puede mover una probabilidad más que la tolerancia de la ficha, se sirve con una limitación que da la cota (H-16);
+- cifras no finitas (H-17): las fichas MON, IDX, FON y DER y el Motor las rechazan. TCV sirve `None` con una limitación cuando un cociente no está definido (por ejemplo, un VIX3M casi nulo) y nunca entrega un número no finito. Queda así: en TCV el resto del resultado sigue siendo útil.
+
+Detalle por ficha en [.docs/tickets/T-106](../.docs/tickets/T-106/analisis-tecnico.md).
+

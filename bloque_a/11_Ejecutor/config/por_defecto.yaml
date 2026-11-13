@@ -39,6 +39,73 @@ prompts:
   marco_comun_si_falta: true
 
 # ---------------------------------------------------------------------------
+# T-101 · Diseño del Bloque A. «v5»: los 25 agentes de la entrega V5.1 (referencia, por defecto). «v6»: el rediseño
+# aspirante (.docs/diseno/bloque_a/decision_claude_c01.md): Analista de perfil con núcleo común y kit, GC1 por código,
+# Prospectiva una vez por ciclo, Contradictor solo de la selección provisional y sus sustitutas, Sintetizador, Lector
+# de evidencia, Respondedor de consultas y curación, dictamen G3 e informe de aprendizaje por código. Se cambia a «v6»
+# cuando el banco con la API real (modo sombra, Fase 5) lo respalde; cada pieza tiene su interruptor para medirla sola.
+# Los números marcados [PROPUESTO] van a la sesión de decisiones del operador (T-57).
+# ---------------------------------------------------------------------------
+diseno: v5
+v6:
+  prompts_dir: prompts_v6            # prompts nuevos de la V6 (relativa a 11_Ejecutor; fuera del corpus congelado)
+  analista:
+    nucleo_y_kit: true               # false = el prompt V5.0 íntegro de cada Analista
+    base_conocimientos: ninguna      # ninguna | completa: la §10 del prompt V5.0 entra o no en el kit (la compara el banco)
+  gc1:
+    por_codigo: true                 # el código filtra el universo antes del Analista (PA-04)
+    senal_por_perfil: {}             # tipo de activo -> clave de señal del Motor que manda en GC1 (por defecto senal_compuesta)
+    exploracion_celdas: 2            # [PROPUESTO] ámbitos que no pasan GC1 y llegan igualmente, marcados (falsos negativos)
+  prospectiva:
+    global: true                     # una llamada por ciclo (en lotes) en vez de una por tipo de activo
+    max_encargos_por_lote: 12        # [PROPUESTO] A-02 de la revisión C-01: el lote escala por candidatas
+    lotes_por_perfil: false          # true = un lote por tipo de activo (para que el banco lo compare)
+  contradictor:
+    solo_seleccion: true             # A-01: solo la selección provisional y sus sustitutas
+    max_rondas_sustitucion: 2        # [PROPUESTO] rondas de crítica de sustitutas; lo que quede sin crítica no se entrega
+    proveedor: mismo                 # mismo | otro (decisión 2 de la tanda 1; sin contratar: se usa el mismo y se declara)
+    max_evidencias: 6                # técnico: evidencias por opción que ve el Contradictor (el mismo 6 de la V5)
+    contrarreplica_max: 300          # técnico: caracteres que se guardan del motivo de una contrarréplica (el mismo 300 de la V5)
+  sintetizador: true                 # integración y textos en una llamada, después de G3 (sustituye a AG-02 y AG-17)
+  lector_evidencia: true             # CT-07 y CT-08 en el ciclo (sustituye a AG-14 y AG-16 en el ciclo)
+  respondedor: true                  # consultas N0 de CT-03 (sustituye a la parte de IA de AG-01)
+  curacion_llm: false                # true = AG-12 clasifica las piezas (ablación PA-14)
+  dictamen_g3_llm: false             # true = AG-18 dictamina las advertencias de HT-09
+  informe_aprendizaje_llm: false     # true = AG-20 redacta el informe CT-19 (las lecciones deterministas siguen)
+  auditoria_fraccion: 0.25           # [PROPUESTO] fracción de runs vivos que audita AG-19 (muestreo sembrado por run)
+  cobertura:
+    registrar: true                  # A-05 e idea 3: registro del embudo por candidata en HA
+    muestra_descartes: 2             # [PROPUESTO] descartes por tipo y run con seguimiento contrafactual (idea 4)
+    horizonte_contrafactual: H3      # [PROPUESTO] horizonte con el que se resuelve la muestra
+    dias_max_espera_precio: 30       # [PROPUESTO] días tras el vencimiento que se espera a tener precios; después, NO_RESOLUBLE
+  # [PROPUESTO] idea 7: tope de tokens (aproximados) del system prompt por papel; la prueba de T-101 lo vigila
+  tope_tokens_system: {analista: 14000, AG-10: 23000, AG-11: 20000, AG-26: 2500, AG-27: 1800, AG-28: 1800}
+  # Técnico (QA r01 de T-101, H-08): longitud máxima en caracteres de los textos que se toman del Sintetizador, longitud
+  # mínima de un texto útil y cuántas preguntas y limitaciones suyas entran como mucho
+  sintetizador_limites: {regimen: 900, factor: 300, lectura: 1200, texto_minimo: 5, preguntas: 6, limitaciones: 5, limitacion: 300}
+  # QA r02 de T-101, H-12: códigos en mayúsculas que pueden aparecer junto a «comprar» o «vender» sin ser un instrumento concreto
+  # (R21): divisas, tipos de activo y siglas de segmentos; además valen los símbolos del universo. Técnico, ampliable.
+  filtro_r21_codigos: [USD, EUR, JPY, GBP, CHF, CAD, AUD, NZD, SEK, NOK, DKK, MXN, BRL, CNY, CNH, INR, KRW, ZAR, TRY, PLN, HUF, CZK,
+                       RV, RF, DIV, MP, IDX, FON, DER, INM, CRI, ALT, MON, TCV, EM, HY, IG, ETF, REIT, VIX, MOVE, PIB, IPC, BCE, FED,
+                       OPEP, TIPS, EE, UU, UE, MSCI, DXY, WTI, BRENT, GNL, GLP, ISM, PMI, S&P, NASDAQ, DAX, IBEX, CAC, FTSE,
+                       NIKKEI, STOXX, XAU, XAG, LME, CPI, PCE, EBITDA, BPA, OPA, IPO, BOJ, BOE, SNB, PBOC,
+                       # T-102 r02 (H-03): regiones, bancos centrales y siglas macro, ratios, vehículos, temas, índices y
+                       # materias primas, segmentos soberanos y más divisas. BTC y ETH salen (H-09): un token concreto es un
+                       # instrumento para R21 hasta que el operador decida otra cosa [PROPUESTO]
+                       EEUU, LATAM, EMEA, APAC, ASEAN, BRICS, G7, G10, G20, OCDE, OECD, FMI, FOMC, BOC, RBA, RBNZ, OPEC, NFP,
+                       PER, EPS, TER, NAV, TIR, YTM, ROE, CAPEX, FCF, VAR, ETC, ETFS, SICAV, SOCIMI, REITS, FMM, IIC, UCITS,
+                       OTC, IA, ESG, TMT, SPX, NDX, CSI, BCOM, TTF, HH, JKM, HSI, TOPIX, KOSPI, NIFTY, SENSEX, VSTOXX, SOFR,
+                       ESTR, EURIBOR, SONIA, BUND, BTP, OAT, GILT, JGB, ILS, SGD, HKD, TWD, THB, IDR, MYR, PHP, CLP, COP,
+                       PEN, ARS, SAR, AED, ISK, RON,
+                       # T-102 r03 (QA r02, H-13): siglas del propio Documento 0 y de los informes de crédito y de activos digitales
+                       CDS, CLO, ABS, MBS, CMBS, CDO, NFT, RWA, ELTIF, HICP, SOFR, BEI, OIS, VRP, ETP, ESMA, CNMV, SEC, FCA,
+                       # T-102 r04 (QA r03, H-21 y H-22): nombres de índices tras su familia (ya no se borra lo que sigue a «MSCI»);
+                       # AI, ETN y UST salen de la lista porque también son tickers (en español: IA, nota cotizada, Tesoro)
+                       ACWI, EAFE, EMU, EURO,
+                       # T-102 r04 (QA r03, H-25): siglas corrientes de los informes que no son instrumentos
+                       SOX, SMI, ASX, OTAN, ONU, OMC, COVID, QE, QT, UK, TAM, EBIT, IVA, IRPF, EV, LNG, ADR, ADRS, FX, PYME, PYMES, CAPE]
+
+# ---------------------------------------------------------------------------
 # Modelos por agente. IMPORTANTE: los identificadores deben comprobarse en la
 # documentación de Anthropic (página de modelos) antes de usar el cliente real.
 # ---------------------------------------------------------------------------
@@ -69,6 +136,9 @@ modelos:
   AG-23: claude-sonnet-5-5    # Analista de Derivados Financieros (DER)
   AG-24: claude-sonnet-5-5    # Analista de Instrumentos Monetarios y Liquidez (MON)
   AG-25: claude-sonnet-5-5    # Analista de Tipos de Interés, Crédito y Volatilidad (TCV)
+  AG-26: claude-sonnet-5-5    # V6 · Sintetizador (integración y textos)
+  AG-27: claude-haiku-5-5     # V6 · Respondedor de consultas N0
+  AG-28: claude-haiku-5-5     # V6 · Lector de evidencia (aislado)
 
 max_tokens:
   por_defecto: 8000
@@ -104,7 +174,7 @@ busqueda_web:
   habilitada_en_vivo: true       # en backtest siempre desactivada (fuga de información)
   tipo_herramienta: web_search_20260318
   max_usos_por_llamada: 5
-  agentes: [AG-14, AG-15, AG-16]
+  agentes: [AG-14, AG-15, AG-16, AG-28]   # AG-28: Lector de evidencia de la V6 (T-101)
 
 # ---------------------------------------------------------------------------
 # Presupuestos (Anexo A del Documento 0 óptima V5.0) y conversión a UC
@@ -287,6 +357,9 @@ evaluacion:
   # CESTA) necesita un dato posterior al de la emisión y no más antiguo, a la fecha de resolución, que la antigüedad de PS2
   # de su horizonte (`ps2_antiguedad_maxima_dias`, Anexo A; H1 en sesiones). Si no, se espera y, pasado el plazo anterior,
   # NO_RESOLUBLE. Sin número nuevo: antes, un 7 común en el código (y en la r03, una clave con ese 7)
+  # T-91: las sesiones de H1 se cuentan sin los festivos de `ps2_festivos`, y si las series acaban en fechas distintas,
+  # todas se miden hasta la fecha más reciente en la que todas tienen cierre, que debe pasar en cada una la frescura frente a
+  # la fecha de resolución; si no la hay (calendarios que no comparten fechas), el pronóstico espera ([PROPUESTO] INC-T91-01, T-91 r03)
   llm_informe_aprendizaje: true
   # T-53
   alfa_holm: 0.10                 # Anexo A, certificado de horizonte (R13): corrección de Holm escalonada; α coherente con el IC 90 %
