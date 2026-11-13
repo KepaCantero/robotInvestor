@@ -1,0 +1,382 @@
+{
+ "CT-01.ENCARGO": {
+  "alcance": {
+   "activos_concretos": [],
+   "clases": [
+    "RV",
+    "IDX",
+    "TCV"
+   ],
+   "pregunta": "texto libre opcional",
+   "regiones": [
+    "Europa"
+   ],
+   "tematicas": []
+  },
+  "fecha_objetivo": "2026-06-08T07:00",
+  "horizontes": [
+   "H2",
+   "H3"
+  ],
+  "nivel_forzado": null,
+  "prioridad": "NORMAL",
+  "referencia_previa": null,
+  "tipo": "AD_HOC"
+ },
+ "CT-02.RETORNO": {
+  "entregables": {
+   "informe_tecnico": "ruta/informe_tecnico.md",
+   "informe_visual": "ruta/informe_visual.html",
+   "paquete_json": "ruta/paquete.json"
+  },
+  "estado_g3": "APTO",
+  "resumen": {
+   "apuestas_independientes": 4,
+   "cambios_vs_anterior": "Sin cambios.",
+   "top3_por_clase": {
+    "RF": [],
+    "RV": [
+     "OPP-2026-0007"
+    ]
+   }
+  },
+  "run_id": "RUN-2026-0001"
+ },
+ "CT-03.ENCARGO": {
+  "contexto": {
+   "opp_id": null,
+   "run_id": null
+  },
+  "pregunta": "¿Por qué bajó la puntuación de la opción?",
+  "query_id": "QRY-2026-0001",
+  "urgencia": "NORMAL"
+ },
+ "CT-03.RETORNO": {
+  "clase_consulta": "ACLARACION",
+  "confianza": "probable",
+  "escalado": {
+   "plazo_estimado": null,
+   "run_id": null
+  },
+  "query_id": "QRY-2026-0001",
+  "referencias": [
+   "OPP-2026-0007",
+   "CLM-2026-0001",
+   "PRG-2026-0001"
+  ],
+  "respuesta": "Bajó por la dimensión de valoración.",
+  "ruta": "N0"
+ },
+ "CT-04.ENCARGO": {
+  "configuracion": {
+   "clases_activas": [],
+   "dia_hora_entrega": "LUN 07:00",
+   "horizontes": [],
+   "idioma_usuario": "es-ES",
+   "periodicidad": "SEMANAL"
+  },
+  "decisiones": [
+   {
+    "decision": "EN_SEGUIMIENTO",
+    "motivo": "opcional",
+    "opp_id": "OPP-2026-0007"
+   }
+  ],
+  "resultado_comunicado": {
+   "opp_id": "OPP-2026-0007",
+   "texto": "opcional"
+  },
+  "valoracion_informe": {
+   "comentario": "Claro.",
+   "run_id": "RUN-2026-0001",
+   "utilidad": 1
+  }
+ },
+ "CT-05.ENCARGO": {
+  "alcance": {
+   "clases": [
+    "RV"
+   ]
+  },
+  "delta_gc0": {},
+  "fecha_objetivo": "2026-06-08T07:00",
+  "memoria": {
+   "certificados_horizonte": [],
+   "lec_aplicables": [],
+   "opp_vigentes": [],
+   "tnd_activas": []
+  },
+  "nivel_por_clase": {
+   "RV": "N2"
+  },
+  "presupuesto_por_clase": {
+   "RV": {
+    "llamadas": 10
+   }
+  },
+  "tipo": "PERIODICO"
+ },
+ "CT-05.RETORNO": {
+  "consultas_broker": [],
+  "solicitudes_credenciales": []
+ },
+ "CT-06.ENCARGO": {
+  "clase": "RV",
+  "fase": "CRIBADO",
+  "lecciones": [],
+  "nivel": "N2",
+  "opciones_vigentes": [],
+  "presupuesto": {
+   "llamadas": 10
+  }
+ },
+ "CT-06.RETORNO": {
+  "autoevaluacion": "Sin incidencias.",
+  "consumo": {
+   "llamadas": 1
+  },
+  "cribado": [],
+  "descartadas_relevantes": [],
+  "finalistas": [],
+  "lagunas": [],
+  "regimen_clase": {
+   "diagnostico": "Expansión tardía."
+  },
+  "revision_vigentes": [],
+  "senales_para_otras_clases": []
+ },
+ "CT-07.ENCARGO": {
+  "clase": "DIV",
+  "fecha_limite_informacion": "2026-06-05",
+  "horizonte": "H3",
+  "max_fuentes": 5,
+  "objetivo": "contexto",
+  "pregunta": "¿Qué dice la evidencia reciente sobre el diferencial de tipos?",
+  "profundidad": "normal"
+ },
+ "CT-07.RETORNO": {
+  "contradicciones": [],
+  "evidencias_enviadas_a_curador": [
+   "EVD-2026-0001"
+  ],
+  "lagunas": [],
+  "referencias": [
+   {
+    "Q": 2,
+    "nivel": "probable",
+    "ref_id": "REF-2026-0001"
+   }
+  ],
+  "sintesis": "Síntesis de las fuentes."
+ },
+ "CT-08.ENCARGO": {
+  "clase": "DIV",
+  "fecha_limite_informacion": "2026-06-05",
+  "horizonte": "H3",
+  "max_fuentes": 5,
+  "objetivo": "contexto",
+  "pregunta": "¿Qué dice la evidencia reciente sobre el diferencial de tipos?",
+  "profundidad": "normal"
+ },
+ "CT-08.RETORNO": {
+  "contradicciones": [],
+  "evidencias_enviadas_a_curador": [
+   "EVD-2026-0001"
+  ],
+  "lagunas": [],
+  "referencias": [
+   {
+    "Q": 2,
+    "nivel": "probable",
+    "ref_id": "REF-2026-0001"
+   }
+  ],
+  "sintesis": "Síntesis de las fuentes."
+ },
+ "CT-09.ENCARGO": {
+  "datos": {
+   "referencia": "HT-01"
+  },
+  "fecha_corte": "2026-06-05",
+  "modo": "SYNC_CALC",
+  "operacion": "RISK-VAR-001",
+  "parametros": {},
+  "perfil": "PERF-01",
+  "plan": "PLAN_MIN",
+  "semilla": 1
+ },
+ "CT-09.RETORNO": {
+  "artefacto_id": "CALC-2026-0001",
+  "clase_cifra": "determinista",
+  "incertidumbre": null,
+  "informe_calidad_datos": {},
+  "limitaciones": [],
+  "resultado": {
+   "valor": 0.1
+  }
+ },
+ "CT-10.ENCARGO": {
+  "artefacto_id": "CALC-2026-0001",
+  "motivo": "Re-ejecución de auditoría."
+ },
+ "CT-10.RETORNO": {
+  "coincide": "sí",
+  "diagnostico": "Coincide.",
+  "diferencias": []
+ },
+ "CT-11.ENCARGO": {
+  "afirmacion": "El diferencial se amplió.",
+  "direccion": "favorable",
+  "extracto": "Extracto mínimo.",
+  "fechas": {
+   "conocible_desde": "2026-06-01",
+   "fenomeno": "2026-05-29",
+   "publicacion": "2026-06-01",
+   "recuperacion": "2026-06-05"
+  },
+  "fuente": "REF-2026-0001",
+  "unidad_divisa": "puntos básicos"
+ },
+ "CT-11.RETORNO": {
+  "clm_id": "CLM-2026-0001",
+  "duplicado_de": null,
+  "evd_id": "EVD-2026-0001",
+  "independiente": "sí",
+  "raiz_id": "EVD-2026-0001"
+ },
+ "CT-12.ENCARGO": {
+  "catalizadores_conocidos": [],
+  "datos": {},
+  "horizontes": [
+   "H3"
+  ],
+  "opp_id": "OPP-2026-0007",
+  "tesis": "Tesis de la opción."
+ },
+ "CT-12.RETORNO": {
+  "escenarios": {
+   "H3": {
+    "adverso": {},
+    "base": {},
+    "favorable": {}
+   }
+  },
+  "hitos": [],
+  "indicadores_adelantados": [],
+  "invalidacion": [],
+  "pronosticos": []
+ },
+ "CT-13.ENCARGO": {
+  "calculos": [
+   "CALC-2026-0001"
+  ],
+  "evidencias_clave": [
+   "CLM-2026-0001"
+  ],
+  "opp_id": "OPP-2026-0007",
+  "prospectiva": {},
+  "tesis": "Tesis de la opción."
+ },
+ "CT-13.RETORNO": {
+  "objeciones": [
+   {
+    "argumento": "La valoración ya lo descuenta.",
+    "evidencia": "CLM-2026-0002",
+    "fuerza": "moderada",
+    "id": "OBJ-1",
+    "que_la_resolveria": "Un dato de beneficios.",
+    "tipo": "valoracion"
+   }
+  ],
+  "veredicto_global": "tesis robusta"
+ },
+ "CT-14.ENCARGO": {
+  "paquete_sintesis": {},
+  "run_id": "RUN-2026-0001"
+ },
+ "CT-14.RETORNO": {
+  "comprobaciones": [
+   {
+    "comprobacion": "C1",
+    "resultado": "apto"
+   }
+  ],
+  "dictamen": "APTO",
+  "motivo": "Sin advertencias."
+ },
+ "CT-15.ENCARGO": {
+  "paquete_sintesis": {}
+ },
+ "CT-23.ENCARGO": {
+  "cns_id": "CNS-2026-0001",
+  "modo": "NO_BLOQUEANTE",
+  "plazo_respuesta": "2026-06-08T07:00",
+  "preguntas": [
+   {
+    "efecto_si_falso": "Faltarían opciones.",
+    "opciones_sugeridas": [
+     "Sí",
+     "No"
+    ],
+    "origen": "AG-04",
+    "por_que_importa": "Cambia el universo.",
+    "supuesto_declarado": "No la incluye.",
+    "texto": "¿Incluye el alcance la renta fija emergente?"
+   }
+  ],
+  "punto_control": null,
+  "run_id": "RUN-2026-0001",
+  "seg_id": null,
+  "sentido": "SALIENTE",
+  "tipo": "ACLARACION_ALCANCE"
+ },
+ "CT-23.RETORNO": {
+  "cns_id": "CNS-2026-0001",
+  "estado": "RESPONDIDA",
+  "respuestas": [
+   {
+    "documentos": [],
+    "indice": 0,
+    "texto": "No la incluye."
+   }
+  ],
+  "supuestos_aplicados": [
+   {
+    "indice": 0,
+    "supuesto": "No la incluye."
+   }
+  ]
+ },
+ "CT-24.ENCARGO": {
+  "accion": "ALTA",
+  "calendario_personalizado": null,
+  "fecha_fin": null,
+  "frecuencia": "SEMANAL",
+  "motivo": "Vigilar la opción.",
+  "opp_id": "OPP-2026-0007",
+  "seg_id": null,
+  "senales_interes": [
+   "Dato de inflación"
+  ]
+ },
+ "CT-24.RETORNO": {
+  "estado": "ACTIVO",
+  "proximo_ciclo": "2026-06-12",
+  "seg_id": "SEG-2026-0001"
+ },
+ "CT-25.ENCARGO": {
+  "crd_id": "CRD-2026-0001",
+  "herramienta": "HT-01",
+  "impacto_si_falta": "Sin datos de la clase.",
+  "servicio": "proveedor de datos",
+  "solicitante": "AG-16",
+  "urgencia": "NORMAL",
+  "uso_previsto": "Series de precios."
+ },
+ "CT-25.RETORNO": {
+  "caducidad": null,
+  "crd_id": "CRD-2026-0001",
+  "credencial_ref": "alias-datos",
+  "estado": "PROVISTA"
+ }
+}

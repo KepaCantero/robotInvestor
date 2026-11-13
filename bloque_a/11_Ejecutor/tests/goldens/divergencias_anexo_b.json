@@ -1,0 +1,211 @@
+{
+ "contratos_sin_campos_en_el_anexo_b": [
+  "CT-16",
+  "CT-17",
+  "CT-18",
+  "CT-19",
+  "CT-20",
+  "CT-21",
+  "CT-22"
+ ],
+ "mensajes_del_ciclo_simulado_que_no_cumplen_el_anexo_b": {
+  "CT-06.ENCARGO": [
+   "fase: enum ['CRIBADO', 'INVESTIGACION', 'PROFUNDIZACION', 'SEGUIMIENTO']"
+  ],
+  "CT-11.ENCARGO": [
+   "(raíz): 'afirmacion' is a required property",
+   "(raíz): 'direccion' is a required property",
+   "(raíz): 'extracto' is a required property",
+   "(raíz): 'fechas' is a required property",
+   "(raíz): 'fuente' is a required property",
+   "(raíz): 'unidad_divisa' is a required property"
+  ],
+  "CT-12.ENCARGO": [
+   "(raíz): 'catalizadores_conocidos' is a required property",
+   "(raíz): 'datos' is a required property",
+   "(raíz): 'horizontes' is a required property",
+   "(raíz): 'opp_id' is a required property",
+   "(raíz): 'tesis' is a required property"
+  ],
+  "CT-13.ENCARGO": [
+   "(raíz): 'calculos' is a required property",
+   "(raíz): 'evidencias_clave' is a required property",
+   "(raíz): 'opp_id' is a required property",
+   "(raíz): 'prospectiva' is a required property",
+   "(raíz): 'tesis' is a required property"
+  ]
+ },
+ "por_contrato": {
+  "CT-01.ENCARGO": {
+   "el_ejecutor_admite_que_falte": [
+    "fecha_objetivo",
+    "nivel_forzado",
+    "referencia_previa"
+   ]
+  },
+  "CT-03.ENCARGO": {
+   "el_ejecutor_admite_que_falte": [
+    "contexto",
+    "urgencia"
+   ]
+  },
+  "CT-03.RETORNO": {
+   "el_ejecutor_admite_que_falte": [
+    "escalado"
+   ]
+  },
+  "CT-04.ENCARGO": {
+   "el_ejecutor_admite_que_falte": [
+    "configuracion",
+    "decisiones",
+    "resultado_comunicado",
+    "valoracion_informe"
+   ]
+  },
+  "CT-06.RETORNO": {
+   "el_ejecutor_admite_que_falte": [
+    "cribado",
+    "descartadas_relevantes",
+    "finalistas",
+    "lagunas",
+    "regimen_clase",
+    "revision_vigentes",
+    "senales_para_otras_clases"
+   ]
+  },
+  "CT-07.RETORNO": {
+   "el_ejecutor_admite_que_falte": [
+    "contradicciones",
+    "evidencias_enviadas_a_curador",
+    "lagunas",
+    "referencias",
+    "sintesis"
+   ]
+  },
+  "CT-08.RETORNO": {
+   "el_ejecutor_admite_que_falte": [
+    "contradicciones",
+    "evidencias_enviadas_a_curador",
+    "lagunas",
+    "referencias",
+    "sintesis"
+   ]
+  },
+  "CT-09.RETORNO": {
+   "el_ejecutor_admite_que_falte": [
+    "artefacto_id",
+    "clase_cifra",
+    "incertidumbre",
+    "informe_calidad_datos",
+    "resultado"
+   ]
+  },
+  "CT-10.RETORNO": {
+   "el_ejecutor_admite_que_falte": [
+    "coincide",
+    "diagnostico",
+    "diferencias"
+   ]
+  },
+  "CT-11.ENCARGO": {
+   "el_ejecutor_exige_y_el_anexo_b_no_nombra": [
+    "piezas"
+   ],
+   "el_ejecutor_rechaza_el_ejemplo_del_anexo_b": {
+    "clase": "MensajeInvalido",
+    "motivo": "CT-11: faltan campos mínimos ['piezas']"
+   }
+  },
+  "CT-11.RETORNO": {
+   "el_ejecutor_admite_que_falte": [
+    "clm_id",
+    "duplicado_de",
+    "evd_id",
+    "independiente",
+    "raiz_id"
+   ]
+  },
+  "CT-12.ENCARGO": {
+   "el_ejecutor_exige_y_el_anexo_b_no_nombra": [
+    "encargos"
+   ],
+   "el_ejecutor_rechaza_el_ejemplo_del_anexo_b": {
+    "clase": "MensajeInvalido",
+    "motivo": "CT-12: faltan campos mínimos ['encargos']"
+   }
+  },
+  "CT-12.RETORNO": {
+   "el_ejecutor_admite_que_falte": [
+    "escenarios",
+    "hitos",
+    "indicadores_adelantados",
+    "invalidacion",
+    "pronosticos"
+   ]
+  },
+  "CT-13.ENCARGO": {
+   "el_ejecutor_exige_y_el_anexo_b_no_nombra": [
+    "peticiones"
+   ],
+   "el_ejecutor_rechaza_el_ejemplo_del_anexo_b": {
+    "clase": "MensajeInvalido",
+    "motivo": "CT-13: faltan campos mínimos ['peticiones']"
+   }
+  },
+  "CT-13.RETORNO": {
+   "el_ejecutor_admite_que_falte": [
+    "objeciones",
+    "veredicto_global"
+   ]
+  },
+  "CT-14.RETORNO": {
+   "el_ejecutor_admite_que_falte": [
+    "comprobaciones",
+    "dictamen",
+    "motivo"
+   ]
+  },
+  "CT-23.ENCARGO": {
+   "el_ejecutor_admite_que_falte": [
+    "plazo_respuesta",
+    "preguntas",
+    "punto_control",
+    "seg_id"
+   ]
+  },
+  "CT-23.RETORNO": {
+   "el_ejecutor_admite_que_falte": [
+    "respuestas",
+    "supuestos_aplicados"
+   ]
+  },
+  "CT-24.ENCARGO": {
+   "el_ejecutor_admite_que_falte": [
+    "calendario_personalizado",
+    "fecha_fin",
+    "frecuencia",
+    "motivo",
+    "opp_id",
+    "seg_id",
+    "senales_interes"
+   ]
+  },
+  "CT-24.RETORNO": {
+   "el_ejecutor_admite_que_falte": [
+    "proximo_ciclo"
+   ]
+  },
+  "CT-25.ENCARGO": {
+   "el_ejecutor_admite_que_falte": [
+    "herramienta",
+    "urgencia"
+   ]
+  },
+  "CT-25.RETORNO": {
+   "el_ejecutor_admite_que_falte": [
+    "caducidad",
+    "credencial_ref"
+   ]
+  }
+ }
+}

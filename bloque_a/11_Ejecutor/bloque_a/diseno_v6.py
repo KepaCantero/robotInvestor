@@ -33,6 +33,7 @@ DISENOS = ("v5", "v6")
 SENALES_GC1 = ("senal_compuesta", "momentum_12_1", "pct_momentum_clase", "z_momentum_clase", "senal_tsmom", "vol_20d", "vol_ewma",
                "p_tendencia", "pendiente_sen_semanal", "riesgo_1a5", "mdd", "drawdown_actual", "z_precio_3a", "pct_precio_3a",
                "rent_1s", "rent_1m", "rent_3m", "rent_12m", "familias_concordantes")
+FAMILIAS_SENAL_COMPUESTA = 3   # momento, tendencia y valoración relativa (`Bloque.senales_clase`)
 BOLSA_GLOBAL = "V6_GLOBAL"   # bolsa de las llamadas de todo el ciclo (Prospectiva, Contradictor y Sintetizador)
 
 
@@ -68,6 +69,14 @@ def validar(cfg: dict) -> bool:
     spp = ((cfg.get("v6") or {}).get("gc1") or {}).get("senal_por_perfil") or {}
     if not isinstance(spp, dict) or any(k not in CLASES or v not in SENALES_GC1 for k, v in spp.items()):
         raise ValueError(f"v6.gc1.senal_por_perfil debe ser {{tipo de activo: señal del Motor}}, con señales de {SENALES_GC1}")
+    # T-117: umbral de GC1 por tipo de activo y concordancia mínima de familias de la señal compuesta (Anexo A)
+    upp = ((cfg.get("v6") or {}).get("gc1") or {}).get("umbral_por_perfil") or {}
+    if not isinstance(upp, dict) or any(k not in CLASES or isinstance(v, bool) or not isinstance(v, (int, float))
+                                        or not math.isfinite(float(v)) or not 0 < float(v) <= 1 for k, v in upp.items()):
+        raise ValueError("v6.gc1.umbral_por_perfil debe ser {tipo de activo: umbral}, con umbrales mayores que 0 y hasta 1")
+    fmin = ((cfg.get("v6") or {}).get("gc1") or {}).get("familias_min", 0)
+    if isinstance(fmin, bool) or not isinstance(fmin, int) or not 0 <= fmin <= FAMILIAS_SENAL_COMPUESTA:
+        raise ValueError(f"v6.gc1.familias_min debe ser un entero de 0 a {FAMILIAS_SENAL_COMPUESTA}")
     lim = parametro(cfg, "v6.sintetizador_limites")
     for k in ("regimen", "factor", "lectura", "texto_minimo", "preguntas", "limitaciones", "limitacion"):
         if isinstance(lim.get(k), bool) or not isinstance(lim.get(k), int) or lim[k] < 1:
@@ -122,12 +131,15 @@ def repartir_presupuesto(bloque, asign: dict[str, float], clases: list[str], fij
 # GC1 por código (PA-04)
 # ======================================================================================================
 def gc1(bloque, clase: str, universo: list[dict], vigentes: list[dict], as_of) -> tuple[list[dict], dict]:
-    """Filtra el universo que recibe el Analista. Pasan como mucho `seleccion.max_candidatas` ámbitos cuya señal llega a
-    `seleccion.umbral_senal_gc1`; un ámbito sin señal medible no se descarta (pasa marcado: la falta de señal no prueba la
+    """Filtra el universo que recibe el Analista. Pasan como mucho `seleccion.max_candidatas` ámbitos cuya señal llega al
+    umbral de su tipo (`v6.gc1.umbral_por_perfil`; si no lo tiene, `seleccion.umbral_senal_gc1`) y, cuando manda la señal
+    compuesta, con al menos `v6.gc1.familias_min` familias concordantes (Anexo A; T-117); un ámbito sin señal medible no se descarta (pasa marcado: la falta de señal no prueba la
     falta de oportunidad); `v6.gc1.exploracion_celdas` de los que no pasan llegan igualmente, elegidos por una semilla del
     corte, para medir los falsos negativos; las vigentes siempre llegan. Devuelve el universo y el registro de GC1."""
     clave = (op(bloque, "gc1.senal_por_perfil") or {}).get(clase) or "senal_compuesta"
-    umbral = float(parametro(bloque.cfg, "seleccion.umbral_senal_gc1"))
+    propio = (op(bloque, "gc1.umbral_por_perfil") or {}).get(clase)
+    umbral = float(propio if propio is not None else parametro(bloque.cfg, "seleccion.umbral_senal_gc1"))
+    fam_min = int(op(bloque, "gc1.familias_min") or 0) if clave == "senal_compuesta" else 0
     maxc = int(parametro(bloque.cfg, "seleccion.max_candidatas"))
     n_expl = int(op(bloque, "gc1.exploracion_celdas"))
     from .orquestacion import simbolo_seguimiento
@@ -140,7 +152,13 @@ def gc1(bloque, clase: str, universo: list[dict], vigentes: list[dict], as_of) -
         medible = isinstance(v, (int, float)) and not isinstance(v, bool) and math.isfinite(float(v))
         (con if medible else sin).append(u)
     orden = sorted(con, key=lambda u: (-float(u["senales"][clave]), u["simbolo"]))
-    pasan = [u for u in orden if float(u["senales"][clave]) >= umbral][:maxc]
+    def pocas_familias(u) -> bool:
+        """Con la señal compuesta, el Anexo A pide además concordancia de familias. Si el Motor no da el recuento, no se
+        descarta por esto: la falta del dato no prueba la falta de concordancia."""
+        n = (u.get("senales") or {}).get("familias_concordantes")
+        return fam_min > 0 and isinstance(n, int) and not isinstance(n, bool) and n < fam_min
+
+    pasan = [u for u in orden if float(u["senales"][clave]) >= umbral and not pocas_familias(u)][:maxc]
     ids_pasan = {u["simbolo"] for u in pasan}
     resto = [u for u in orden if u["simbolo"] not in ids_pasan]
     expl = sorted(resto, key=lambda u: _sembrado(pd.Timestamp(as_of).date(), clase, u["simbolo"]))[:n_expl]
@@ -161,9 +179,10 @@ def gc1(bloque, clase: str, universo: list[dict], vigentes: list[dict], as_of) -
             filtrado.append({**u, "gc1": marca[u["simbolo"]]})
     descartes = [{"simbolo": u["simbolo"], "senal": round(float(u["senales"][clave]), 4),
                   "motivo": f"{clave} {float(u['senales'][clave]):.2f} < {umbral}" if float(u["senales"][clave]) < umbral
-                  else f"fuera de las {maxc} candidatas con más señal"}
+                  else (f"{u['senales']['familias_concordantes']} familias concordantes < {fam_min}" if pocas_familias(u)
+                        else f"fuera de las {maxc} candidatas con más señal")}
                  for u in resto if u["simbolo"] not in ids_expl and marca.get(u["simbolo"]) != "VIGENTE"]
-    reg = {"clave_senal": clave, "umbral": umbral, "universo": len(universo), "pasan": sorted(ids_pasan),
+    reg = {"clave_senal": clave, "umbral": umbral, "familias_min": fam_min, "universo": len(universo), "pasan": sorted(ids_pasan),
            "exploracion": sorted(ids_expl), "sin_senal_medible": sorted(u["simbolo"] for u in sin),
            "vigentes": sorted(s for s, m in marca.items() if m == "VIGENTE"), "descartes": descartes, "falsos_negativos": []}
     return filtrado, reg

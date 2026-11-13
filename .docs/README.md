@@ -48,6 +48,8 @@ Todo lo que Claude, Astra y las personas del equipo necesitan para trabajar en e
 | `.docs/scripts/registro_experimentos.py` | Registro de experimentos (T-99): prerregistro sellado, intentos y resultados en un fichero encadenado por huellas (por defecto «.docs/experimentos/registro.jsonl», que nace con el primer experimento); dice si un resultado es adoptable. El banco de medida lo usa. Pruebas en `.docs/scripts/pruebas_registro_experimentos.py` |
 | `.docs/scripts/pruebas_borradores_contratos.py` | Pruebas de los borradores de esquema de `.docs/diseno/contratos/` (CT-G-08 0.4.0 y CT-G-24 0.1.0) |
 | `.docs/scripts/qa_rama.sh` | QA de una rama de otro agente: commits, archivos, si se fusiona por avance rápido, copia limpia y pruebas de cada pieza tocada contra el código de la rama |
+| `bloque_a/11_Ejecutor/tests/goldens_ct.py` | Goldens de los contratos CT del Bloque A (T-114): sin opciones comprueba (1 si algo difiere); `--update --motivo "…"` re-congela y lo anota en `tests/goldens/REGISTRO.md`. Se ejecuta desde `bloque_a/11_Ejecutor` |
+| `.docs/scripts/evidencias_plan_a.py` | Plan de pruebas del Bloque A (T-116): sin opciones comprueba el mapa `tests/mapa_plan_pruebas.json` contra el plan y la suite; `--ejecutar` ejecuta las pruebas citadas y regenera `docs/evidencias_pruebas_bloque_a.md`; `--pb PB-NN` repite una fila. Con el Python del `.venv` |
 
 ## Diario: formato
 

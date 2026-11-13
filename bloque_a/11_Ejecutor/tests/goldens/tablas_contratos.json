@@ -1,0 +1,829 @@
+{
+ "campo_estado": {
+  "CT-23": "estado_consulta",
+  "CT-24": "estado_seguimiento",
+  "CT-25": "estado_credencial"
+ },
+ "campos_minimos": {
+  "CT-01": [
+   "tipo",
+   "alcance",
+   "horizontes",
+   "prioridad"
+  ],
+  "CT-02": [
+   "entregables",
+   "resumen",
+   "estado_g3"
+  ],
+  "CT-03": [
+   "pregunta"
+  ],
+  "CT-05": [
+   "tipo",
+   "alcance",
+   "nivel_por_clase",
+   "presupuesto_por_clase",
+   "memoria",
+   "delta_gc0",
+   "fecha_objetivo"
+  ],
+  "CT-06": [
+   "clase",
+   "fase",
+   "nivel",
+   "opciones_vigentes",
+   "lecciones"
+  ],
+  "CT-07": [
+   "pregunta",
+   "objetivo",
+   "clase",
+   "horizonte",
+   "profundidad",
+   "max_fuentes",
+   "fecha_limite_informacion"
+  ],
+  "CT-08": [
+   "pregunta",
+   "objetivo",
+   "clase",
+   "horizonte",
+   "profundidad",
+   "max_fuentes",
+   "fecha_limite_informacion"
+  ],
+  "CT-09": [
+   "operacion",
+   "perfil",
+   "modo",
+   "plan",
+   "datos",
+   "parametros",
+   "semilla",
+   "fecha_corte"
+  ],
+  "CT-10": [
+   "artefacto_id",
+   "motivo"
+  ],
+  "CT-11": [
+   "piezas"
+  ],
+  "CT-12": [
+   "encargos"
+  ],
+  "CT-13": [
+   "peticiones"
+  ],
+  "CT-14": [
+   "paquete_sintesis"
+  ],
+  "CT-15": [
+   "paquete_sintesis"
+  ],
+  "CT-23": [
+   "cns_id",
+   "sentido",
+   "tipo",
+   "modo"
+  ],
+  "CT-24": [
+   "accion"
+  ],
+  "CT-25": [
+   "crd_id",
+   "servicio",
+   "uso_previsto",
+   "solicitante",
+   "impacto_si_falta"
+  ]
+ },
+ "campos_retorno": {
+  "CT-03": [
+   "clase_consulta",
+   "ruta",
+   "respuesta",
+   "referencias",
+   "confianza"
+  ],
+  "CT-23": [
+   "cns_id",
+   "estado"
+  ],
+  "CT-24": [
+   "seg_id",
+   "estado"
+  ],
+  "CT-25": [
+   "crd_id",
+   "estado"
+  ]
+ },
+ "canales": {
+  "CT-01": [
+   {
+    "emisores": [
+     "BROKER"
+    ],
+    "receptores": [
+     "AG-01"
+    ]
+   }
+  ],
+  "CT-02": [
+   {
+    "emisores": [
+     "AG-01"
+    ],
+    "receptores": [
+     "BROKER"
+    ]
+   }
+  ],
+  "CT-03": [
+   {
+    "emisores": [
+     "BROKER"
+    ],
+    "receptores": [
+     "AG-01"
+    ]
+   },
+   {
+    "emisores": [
+     "AG-01"
+    ],
+    "receptores": [
+     "BROKER"
+    ]
+   }
+  ],
+  "CT-04": [
+   {
+    "emisores": [
+     "BROKER"
+    ],
+    "receptores": [
+     "AG-01"
+    ]
+   }
+  ],
+  "CT-05": [
+   {
+    "emisores": [
+     "AG-01"
+    ],
+    "receptores": [
+     "AG-02"
+    ]
+   },
+   {
+    "emisores": [
+     "AG-02"
+    ],
+    "receptores": [
+     "AG-01"
+    ]
+   }
+  ],
+  "CT-06": [
+   {
+    "emisores": [
+     "AG-02"
+    ],
+    "receptores": [
+     "AG-03",
+     "AG-04",
+     "AG-05",
+     "AG-06",
+     "AG-07",
+     "AG-08",
+     "AG-09",
+     "AG-21",
+     "AG-22",
+     "AG-23",
+     "AG-24",
+     "AG-25"
+    ]
+   },
+   {
+    "emisores": [
+     "AG-03",
+     "AG-04",
+     "AG-05",
+     "AG-06",
+     "AG-07",
+     "AG-08",
+     "AG-09",
+     "AG-21",
+     "AG-22",
+     "AG-23",
+     "AG-24",
+     "AG-25"
+    ],
+    "receptores": [
+     "AG-02"
+    ]
+   }
+  ],
+  "CT-07": [
+   {
+    "emisores": [
+     "AG-02",
+     "AG-03",
+     "AG-04",
+     "AG-05",
+     "AG-06",
+     "AG-07",
+     "AG-08",
+     "AG-09",
+     "AG-10",
+     "AG-21",
+     "AG-22",
+     "AG-23",
+     "AG-24",
+     "AG-25"
+    ],
+    "receptores": [
+     "AG-16"
+    ]
+   },
+   {
+    "emisores": [
+     "AG-16"
+    ],
+    "receptores": [
+     "AG-02",
+     "AG-03",
+     "AG-04",
+     "AG-05",
+     "AG-06",
+     "AG-07",
+     "AG-08",
+     "AG-09",
+     "AG-10",
+     "AG-21",
+     "AG-22",
+     "AG-23",
+     "AG-24",
+     "AG-25"
+    ]
+   }
+  ],
+  "CT-08": [
+   {
+    "emisores": [
+     "AG-02",
+     "AG-03",
+     "AG-04",
+     "AG-05",
+     "AG-06",
+     "AG-07",
+     "AG-08",
+     "AG-09",
+     "AG-10",
+     "AG-11",
+     "AG-21",
+     "AG-22",
+     "AG-23",
+     "AG-24",
+     "AG-25"
+    ],
+    "receptores": [
+     "AG-14"
+    ]
+   },
+   {
+    "emisores": [
+     "AG-14"
+    ],
+    "receptores": [
+     "AG-02",
+     "AG-03",
+     "AG-04",
+     "AG-05",
+     "AG-06",
+     "AG-07",
+     "AG-08",
+     "AG-09",
+     "AG-10",
+     "AG-11",
+     "AG-21",
+     "AG-22",
+     "AG-23",
+     "AG-24",
+     "AG-25"
+    ]
+   }
+  ],
+  "CT-09": [
+   {
+    "emisores": [
+     "AG-02",
+     "AG-03",
+     "AG-04",
+     "AG-05",
+     "AG-06",
+     "AG-07",
+     "AG-08",
+     "AG-09",
+     "AG-10",
+     "AG-14",
+     "AG-15",
+     "AG-16",
+     "AG-18",
+     "AG-19",
+     "AG-20",
+     "AG-21",
+     "AG-22",
+     "AG-23",
+     "AG-24",
+     "AG-25"
+    ],
+    "receptores": [
+     "AG-13"
+    ]
+   },
+   {
+    "emisores": [
+     "AG-13"
+    ],
+    "receptores": [
+     "AG-02",
+     "AG-03",
+     "AG-04",
+     "AG-05",
+     "AG-06",
+     "AG-07",
+     "AG-08",
+     "AG-09",
+     "AG-10",
+     "AG-14",
+     "AG-15",
+     "AG-16",
+     "AG-18",
+     "AG-19",
+     "AG-20",
+     "AG-21",
+     "AG-22",
+     "AG-23",
+     "AG-24",
+     "AG-25"
+    ]
+   }
+  ],
+  "CT-10": [
+   {
+    "emisores": [
+     "AG-18",
+     "AG-19",
+     "AG-20"
+    ],
+    "receptores": [
+     "AG-13"
+    ]
+   },
+   {
+    "emisores": [
+     "AG-13"
+    ],
+    "receptores": [
+     "AG-18",
+     "AG-19",
+     "AG-20"
+    ]
+   }
+  ],
+  "CT-11": [
+   {
+    "emisores": [
+     "AG-03",
+     "AG-04",
+     "AG-05",
+     "AG-06",
+     "AG-07",
+     "AG-08",
+     "AG-09",
+     "AG-10",
+     "AG-11",
+     "AG-14",
+     "AG-15",
+     "AG-16",
+     "AG-21",
+     "AG-22",
+     "AG-23",
+     "AG-24",
+     "AG-25"
+    ],
+    "receptores": [
+     "AG-12"
+    ]
+   },
+   {
+    "emisores": [
+     "AG-12"
+    ],
+    "receptores": [
+     "AG-03",
+     "AG-04",
+     "AG-05",
+     "AG-06",
+     "AG-07",
+     "AG-08",
+     "AG-09",
+     "AG-10",
+     "AG-11",
+     "AG-14",
+     "AG-15",
+     "AG-16",
+     "AG-21",
+     "AG-22",
+     "AG-23",
+     "AG-24",
+     "AG-25"
+    ]
+   }
+  ],
+  "CT-12": [
+   {
+    "emisores": [
+     "AG-02"
+    ],
+    "receptores": [
+     "AG-10"
+    ]
+   },
+   {
+    "emisores": [
+     "AG-10"
+    ],
+    "receptores": [
+     "AG-02"
+    ]
+   }
+  ],
+  "CT-13": [
+   {
+    "emisores": [
+     "AG-02"
+    ],
+    "receptores": [
+     "AG-11"
+    ]
+   },
+   {
+    "emisores": [
+     "AG-11"
+    ],
+    "receptores": [
+     "AG-02"
+    ]
+   }
+  ],
+  "CT-14": [
+   {
+    "emisores": [
+     "AG-02"
+    ],
+    "receptores": [
+     "AG-18"
+    ]
+   },
+   {
+    "emisores": [
+     "AG-18"
+    ],
+    "receptores": [
+     "AG-02"
+    ]
+   }
+  ],
+  "CT-15": [
+   {
+    "emisores": [
+     "AG-02"
+    ],
+    "receptores": [
+     "AG-17"
+    ]
+   },
+   {
+    "emisores": [
+     "AG-17"
+    ],
+    "receptores": [
+     "AG-02"
+    ]
+   }
+  ],
+  "CT-16": [
+   {
+    "emisores": [
+     "AG-01"
+    ],
+    "receptores": [
+     "AG-18"
+    ]
+   }
+  ],
+  "CT-17": [
+   {
+    "emisores": [
+     "AG-18"
+    ],
+    "receptores": [
+     "AG-19"
+    ]
+   },
+   {
+    "emisores": [
+     "AG-19"
+    ],
+    "receptores": [
+     "AG-18"
+    ]
+   }
+  ],
+  "CT-18": [
+   {
+    "emisores": [
+     "AG-18"
+    ],
+    "receptores": [
+     "AG-01",
+     "AG-02",
+     "AG-03",
+     "AG-04",
+     "AG-05",
+     "AG-06",
+     "AG-07",
+     "AG-08",
+     "AG-09",
+     "AG-10",
+     "AG-11",
+     "AG-12",
+     "AG-13",
+     "AG-14",
+     "AG-15",
+     "AG-16",
+     "AG-17",
+     "AG-18",
+     "AG-19",
+     "AG-20",
+     "AG-21",
+     "AG-22",
+     "AG-23",
+     "AG-24",
+     "AG-25"
+    ]
+   }
+  ],
+  "CT-19": [
+   {
+    "emisores": [
+     "AG-20"
+    ],
+    "receptores": [
+     "AG-01",
+     "AG-02",
+     "AG-03",
+     "AG-04",
+     "AG-05",
+     "AG-06",
+     "AG-07",
+     "AG-08",
+     "AG-09",
+     "AG-10",
+     "AG-16",
+     "AG-18",
+     "AG-21",
+     "AG-22",
+     "AG-23",
+     "AG-24",
+     "AG-25"
+    ]
+   }
+  ],
+  "CT-20": [
+   {
+    "emisores": [
+     "AG-13"
+    ],
+    "receptores": [
+     "AG-15"
+    ]
+   },
+   {
+    "emisores": [
+     "AG-15"
+    ],
+    "receptores": [
+     "AG-13"
+    ]
+   }
+  ],
+  "CT-21": [
+   {
+    "emisores": [
+     "AG-14",
+     "AG-15",
+     "AG-16"
+    ],
+    "receptores": [
+     "AG-18"
+    ]
+   }
+  ],
+  "CT-22": [
+   {
+    "emisores": [
+     "AG-01"
+    ],
+    "receptores": [
+     "AG-20"
+    ]
+   }
+  ],
+  "CT-23": [
+   {
+    "emisores": [
+     "AG-01"
+    ],
+    "receptores": [
+     "BROKER"
+    ]
+   },
+   {
+    "emisores": [
+     "BROKER"
+    ],
+    "receptores": [
+     "AG-01"
+    ]
+   }
+  ],
+  "CT-24": [
+   {
+    "emisores": [
+     "BROKER"
+    ],
+    "receptores": [
+     "AG-01"
+    ]
+   },
+   {
+    "emisores": [
+     "AG-01"
+    ],
+    "receptores": [
+     "BROKER"
+    ]
+   }
+  ],
+  "CT-25": [
+   {
+    "emisores": [
+     "AG-01"
+    ],
+    "receptores": [
+     "BROKER"
+    ]
+   },
+   {
+    "emisores": [
+     "BROKER"
+    ],
+    "receptores": [
+     "AG-01"
+    ]
+   }
+  ]
+ },
+ "canales_v6": {
+  "CT-07": [
+   {
+    "emisores": [
+     "AG-03",
+     "AG-04",
+     "AG-05",
+     "AG-06",
+     "AG-07",
+     "AG-08",
+     "AG-09",
+     "AG-21",
+     "AG-22",
+     "AG-23",
+     "AG-24",
+     "AG-25"
+    ],
+    "receptores": [
+     "AG-28"
+    ]
+   },
+   {
+    "emisores": [
+     "AG-28"
+    ],
+    "receptores": [
+     "AG-03",
+     "AG-04",
+     "AG-05",
+     "AG-06",
+     "AG-07",
+     "AG-08",
+     "AG-09",
+     "AG-21",
+     "AG-22",
+     "AG-23",
+     "AG-24",
+     "AG-25"
+    ]
+   }
+  ],
+  "CT-08": [
+   {
+    "emisores": [
+     "AG-03",
+     "AG-04",
+     "AG-05",
+     "AG-06",
+     "AG-07",
+     "AG-08",
+     "AG-09",
+     "AG-21",
+     "AG-22",
+     "AG-23",
+     "AG-24",
+     "AG-25"
+    ],
+    "receptores": [
+     "AG-28"
+    ]
+   },
+   {
+    "emisores": [
+     "AG-28"
+    ],
+    "receptores": [
+     "AG-03",
+     "AG-04",
+     "AG-05",
+     "AG-06",
+     "AG-07",
+     "AG-08",
+     "AG-09",
+     "AG-21",
+     "AG-22",
+     "AG-23",
+     "AG-24",
+     "AG-25"
+    ]
+   }
+  ],
+  "CT-15": [
+   {
+    "emisores": [
+     "AG-02"
+    ],
+    "receptores": [
+     "AG-26"
+    ]
+   },
+   {
+    "emisores": [
+     "AG-26"
+    ],
+    "receptores": [
+     "AG-02"
+    ]
+   }
+  ]
+ },
+ "estados": [
+  "COMPLETO",
+  "PARCIAL",
+  "SIN_RESULTADO",
+  "RECHAZADO"
+ ],
+ "estados_especificos": {
+  "CT-23": [
+   "RESPONDIDA",
+   "PARCIAL",
+   "VENCIDA",
+   "RECIBIDA"
+  ],
+  "CT-24": [
+   "ACTIVO",
+   "PAUSADO",
+   "CANCELADO",
+   "FINALIZADO"
+  ],
+  "CT-25": [
+   "PROVISTA",
+   "DENEGADA",
+   "APLAZADA"
+  ]
+ },
+ "version_contrato": "5.1"
+}

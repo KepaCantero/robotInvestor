@@ -2,6 +2,8 @@
 
 **Bloque A · Robot Investor · Ejecutor programático V1.1 · Versión óptima V5.0 · 02/11/2026 · actualizado V5.1 (03/11/2026, ejecutor V1.2)** · Subordinado al Documento 0 óptima V5.1.
 
+> **Aviso (13-11-2026, T-116).** Este mapa es del 3-11-2026 y se conserva como estaba. El mapa vigente y verificado prueba a prueba es `tests/mapa_plan_pruebas.json`, con una regla más estricta (una fila solo es automática si sus pruebas comprueban todo el criterio del plan); el resultado de ejecutarlo está en `docs/evidencias_pruebas_bloque_a.md` (desde la raíz del repositorio), que genera `.docs/scripts/evidencias_plan_a.py --ejecutar`.
+
 Cobertura de las 67 pruebas (PB-01 a PB-67) del `09_Pruebas/Plan de pruebas del Bloque A - V3.0.md` por la batería `pytest` de esta carpeta, ejecutada con `MockClient` (respuestas sintéticas deterministas). Resultado de la última ejecución en `RESULTADOS.txt`. Rehecho contra el plan V3.0 en T-65 (CS-19 de T-53); `test_t65_resto_t53.py::test_cs19_mapa_cubre_las_67_pruebas_del_plan` comprueba que están las 67 y que cada prueba citada existe.
 
 Leyenda de la columna «Cobertura»: **Automática** (la prueba ejecuta el criterio de aprobación del plan con el cliente simulado), **Parcial** (se comprueba la mecánica determinista del ejecutor; el juicio del agente requiere un LLM real), **LLM real** (exige el modelo real, usuarios o el despliegue multiagente completo), **Fuera del ejecutor** (corresponde a otras piezas del paquete).

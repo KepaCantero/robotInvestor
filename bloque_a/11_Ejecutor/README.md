@@ -220,7 +220,8 @@ Las salidas reales del modelo serán más largas que las simuladas; tómelo como
     referencias.py · anonimizacion.py · configuracion.py · interfaz_broker.py (CT-23, CT-25) · seguimiento.py (CT-24, C6, F11)
     motor/ (operaciones.py, evaluacion.py, servicio.py)
     herramientas/ (ht01_datos, ht01_boveda, ht02, ht03, ht04_graficos, ht05_planificador, ht06_indice, ht07, ht08_monitor, ht09, referencia/)
-  tests/ (pytest: test_unitarias, test_integracion, test_autocritica, test_v5, test_v51; MAPA_PLAN_DE_PRUEBAS.md; RESULTADOS.txt)
+  tests/ (pytest: test_unitarias, test_integracion, test_autocritica, test_v5, test_v51; MAPA_PLAN_DE_PRUEBAS.md; RESULTADOS.txt;
+         goldens/ y goldens_ct.py: formatos congelados de los contratos CT, T-114; la regla de re-congelado, en tests/goldens/README.md)
   ejemplos/datos_sinteticos/ · ejemplos/peticiones/
 ```
 
