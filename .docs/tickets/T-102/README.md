@@ -2,10 +2,10 @@
 
 | Campo | Valor |
 | --- | --- |
-| Estado | EN QA (ronda r05) |
+| Estado | EN QA (ronda r06) |
 | Pieza | `bloque_a/11_Ejecutor` (`bloque_a/diseno_v6.py`) |
 | Planifica · implementa · QA | claude · claude · claude, con un revisor nuevo sin contexto |
-| Aprobación del operador | 2026-11-12: «Corrige el filtro»; tras la QA r02, «sí cambia el diseño» (opción 1: el Sintetizador escribe con marcadores que rellena el código) |
+| Aprobación del operador | 2026-11-12: «Corrige el filtro»; tras la QA r02, «sí cambia el diseño» (opción 1: el Sintetizador escribe con marcadores que rellena el código). 2026-11-13, tras la QA r05: «umbrales y sin cifras libres» (las cuentas las escribe el código y CA-12 y CA-13 pasan a umbrales medidos con un banco ciego) |
 | Deuda técnica | T-102; recoge H-23 y H-24 de la QA r03 de T-101 (fila T-101) |
 
 ## Objetivo
@@ -51,11 +51,21 @@ Que el filtro R13/R21 de los textos del Sintetizador (diseño V6) no estropee in
 13. CA-13: las frases escritas como pide el prompt (sin cifras, con siglas de la lista y con marcadores) se conservan.
 14. CA-14: CA-3, CA-4, CA-8 y CA-9 siguen cumpliéndose (frase a frase, defectos por elemento, declaración, división y tiempo lineal).
 
+### Ronda r06 (decisión del operador del 13-11-2026; sustituye a CA-12 y CA-13)
+
+Tras cinco rondas, cada banco nuevo encontraba otra forma que pasaba: un filtro de patrones sobre texto libre no puede garantizar «ninguna». Los umbrales son `[PROPUESTO]` (INC-T102-01) hasta que el operador los fije en T-57.
+
+12. CA-12 (umbral): en un **banco ciego** nuevo de al menos 40 frases prohibidas, escrito por el revisor de la ronda sin enseñárselo antes al implementador, pasan sin declararse como mucho el 5 %. **Tolerancia cero** para las que llevan un dato: dígitos, un marcador de cuenta o un código en mayúsculas de un instrumento, salvo los límites declarados (COP). Los huecos que queden se declaran como límites y van a la deuda.
+13. CA-13 (umbral): del banco ciego de al menos 60 frases legítimas escritas como pide el prompt (sin cifras, también en letra, y sin marcadores de cuenta), se quitan como mucho el 10 %. Las legítimas con un número en letra se miden aparte, como coste declarado de la regla estricta.
+15. CA-15 (H-42): ningún marcador de cuenta en el texto libre llega a los entregables. Las cuentas las escribe el código: la primera frase de 30 segundos y el principio de cada motivo llano, con datos del paquete. El Sintetizador escribe dos frases de 30 segundos (esquema SINTESIS).
+16. CA-16: el banco de la QA r05 (`r05_01_banco.py`) no tiene ninguna prohibida que pase, y los mutantes de las QA r03 a r05 mueren o están explicados como equivalentes.
+
 ## Plan de pruebas
 
 | Prueba | Criterio |
 | --- | --- |
-| `tests/test_t102_filtro.py`: banco de frases legítimas y prohibidas (54 casos) | CA-1, CA-2 |
+| `tests/test_t102_filtro.py`: bancos de las rondas r03 a r06 (legítimas, prohibidas y una frase por mutante) | CA-11, CA-15, CA-16 |
+| Banco ciego del revisor de cada ronda (a partir de la r06) | CA-12, CA-13 |
 | `tests/test_t102_filtro.py`: frase a frase, tarjeta mala y lectura del conjunto | CA-3, CA-4 |
 | `tests/test_t101_v6.py` y la batería completa | CA-5 |
 
@@ -74,3 +84,5 @@ Que el filtro R13/R21 de los textos del Sintetizador (diseño V6) no estropee in
 - 2026-11-13 · EN QA · el operador ordena continuar; la QA r04 se relanza entera con un revisor nuevo, sobre `b36176a`
 - 2026-11-13 · NO APTO · QA r04 (revisor nuevo, commit `b36176a`): H-31 alto (probabilidades en letra que pasaban, regresión de la r04), H-32, H-33, H-35, H-36 y H-38 medios, H-34, H-37 y H-39 bajos
 - 2026-11-13 · EN QA · Ronda r05: cualquier número en letra es cifra, salvo «medio plazo», ordinales y «segunda mitad»; más sufijos de sociedad; caracteres invisibles y otros alfabetos; palabras comunes y nombres de región no son nombres ni códigos; `_SUFIJO` lineal; sin siglas con cifras en la instrucción; 71 pruebas nuevas; un solo mutante vivo, equivalente; H-34, límite declarado y en la deuda (T-109)
+- 2026-11-13 · NO APTO · QA r05 (revisor nuevo, commit `bf7235b`): H-42 alto (dos marcadores de cuenta componían cifras que no están en el paquete), H-40 y H-44 regresiones, H-41, H-43 y H-48 medios, H-45 a H-47 bajos. El revisor plantea una decisión al operador
+- 2026-11-13 · EN QA · Ronda r06, por decisión del operador («umbrales y sin cifras libres»): las cuentas las escribe el código y un marcador de cuenta en el texto libre quita la frase; CA-12 y CA-13 pasan a umbrales con un banco ciego (INC-T102-01 `[PROPUESTO]`); H-40, H-41, H-43, H-44 y H-46 corregidos; 78 pruebas nuevas
