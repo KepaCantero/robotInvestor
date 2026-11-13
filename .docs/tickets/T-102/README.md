@@ -2,7 +2,7 @@
 
 | Campo | Valor |
 | --- | --- |
-| Estado | EN QA (ronda r06) |
+| Estado | CERRADO |
 | Pieza | `bloque_a/11_Ejecutor` (`bloque_a/diseno_v6.py`) |
 | Planifica · implementa · QA | claude · claude · claude, con un revisor nuevo sin contexto |
 | Aprobación del operador | 2026-11-12: «Corrige el filtro»; tras la QA r02, «sí cambia el diseño» (opción 1: el Sintetizador escribe con marcadores que rellena el código). 2026-11-13, tras la QA r05: «umbrales y sin cifras libres» (las cuentas las escribe el código y CA-12 y CA-13 pasan a umbrales medidos con un banco ciego) |
@@ -86,3 +86,5 @@ Tras cinco rondas, cada banco nuevo encontraba otra forma que pasaba: un filtro 
 - 2026-11-13 · EN QA · Ronda r05: cualquier número en letra es cifra, salvo «medio plazo», ordinales y «segunda mitad»; más sufijos de sociedad; caracteres invisibles y otros alfabetos; palabras comunes y nombres de región no son nombres ni códigos; `_SUFIJO` lineal; sin siglas con cifras en la instrucción; 71 pruebas nuevas; un solo mutante vivo, equivalente; H-34, límite declarado y en la deuda (T-109)
 - 2026-11-13 · NO APTO · QA r05 (revisor nuevo, commit `bf7235b`): H-42 alto (dos marcadores de cuenta componían cifras que no están en el paquete), H-40 y H-44 regresiones, H-41, H-43 y H-48 medios, H-45 a H-47 bajos. El revisor plantea una decisión al operador
 - 2026-11-13 · EN QA · Ronda r06, por decisión del operador («umbrales y sin cifras libres»): las cuentas las escribe el código y un marcador de cuenta en el texto libre quita la frase; CA-12 y CA-13 pasan a umbrales con un banco ciego (INC-T102-01 `[PROPUESTO]`); H-40, H-41, H-43, H-44 y H-46 corregidos; 78 pruebas nuevas
+- 2026-11-13 · APTO · QA r06 (revisor nuevo, commit `5e9780d`), con su banco ciego: pasan 0 de 75 prohibidas (0 de 45 con un dato) y se quitan 0 de 72 legítimas; coste aparte, 7 de 11 legítimas con un número en letra. CA-5 y CA-10 a CA-16 cumplidos (CA-10 y CA-16 con reserva por mutantes vivos); H-50 y H-51 medios, H-49 y H-52 a H-54 bajos
+- 2026-11-13 · CERRADO · H-54 (documentación) corregido; H-49 a H-53, a la deuda en T-110
