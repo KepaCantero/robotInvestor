@@ -54,6 +54,13 @@ TRIMESTRES_ANIO = 4    # ALT-DESMOOTH-001: rentabilidades trimestrales → volat
 PERIODOS_ANIO = {"mensual": MESES_ANIO, "trimestral": TRIMESTRES_ANIO, "anual": 1}
 FREQ_PANDAS = {"mensual": "M", "trimestral": "Q", "anual": "Y"}
 
+# ------------------------------------------------------------------ cotas superiores de los tamaños (QA r01, H-01)
+# Ninguna de las ocho fichas fija un máximo para sus ventanas; las cotas salen de los horizontes del Documento 0
+# («Horizontes»: H1 días, 1–10 sesiones; H2 semanas, 2–8 semanas; … H5 décadas, 5–30 años) [PROPUESTO INC-T112-01].
+ANIOS_H5_MAX = 30          # H5 décadas (5–30 años): el horizonte más largo del sistema; tope de toda ventana en años
+SEMANAS_H2_MAX = 8         # H2 semanas (2–8 semanas): el horizonte más largo de CHR-FLOW-001 («Perfiles»: H1–H2)
+SESIONES_SEMANA = 5        # convención de mercado del calendario del ejecutor (`calendario.sesiones_por_semana`, T-65)
+
 # ------------------------------------------------------------------ parámetros por defecto (campo «Parámetros»)
 PARAMETROS_POR_DEFECTO: dict[str, dict[str, Any]] = {
     # REI-CAP-001 · «Parámetros»: base_noi (adelantado); ventana (20 años).
@@ -81,7 +88,8 @@ UMBRALES: dict[str, dict[str, Any]] = {
     # puede bajar de ahí). «Aclaración»: base del NOI ambigua (bases admitidas: adelantado o histórico); «Supuestos»:
     # definición del NOI antes o después de CAPEX, declarada.
     "REI-CAP-001": {"anios_historia_minimos": 15, "bases_noi": ("adelantado", "historico"),
-                    "definiciones_noi": ("antes_capex", "despues_capex")},
+                    "definiciones_noi": ("antes_capex", "despues_capex"),
+                    "ventana_anios_maxima": ANIOS_H5_MAX},           # cota de `ventana` (H-01) [PROPUESTO]
     # REI-FFO-001 · «Entradas mínimas»: ≥ 3 ejercicios. Percentiles de múltiplos con ≥ 5 observaciones
     # (ST-DESC-001, «Entradas mínimas»). «Parámetros»: capex reportado o estimado como % de rentas, en [0, 1).
     "REI-FFO-001": {"ejercicios_minimos": 3, "observaciones_minimas_percentil": 5,
@@ -95,24 +103,32 @@ UMBRALES: dict[str, dict[str, Any]] = {
     # periodo. Correlación con la pendiente de la curva con ≥ 5 observaciones (ST-DESC-001).
     "CMD-INV-001": {"anios_rechazo": 3, "anios_entrada_minima": 5, "anios_recomendados": 10,
                     "rango_anos_estacional": (3, 10), "anios_previos_minimos": 3,
-                    "observaciones_minimas_correlacion": 5, "frecuencias_admitidas": ("semanal", "mensual")},
+                    "observaciones_minimas_correlacion": 5, "frecuencias_admitidas": ("semanal", "mensual"),
+                    # cota de `excluir_anos` (H-01): no más años excluidos que el máximo de anos_estacional (10)
+                    "excluir_anos_maximos": 10},
     # CMD-RETDEC-001 · «Parámetros»: calendario_roll (el del índice, o uno declarado con precios de contratos, según
     # «Entradas mínimas»); frecuencia (mensual; trimestral y anual [PROPUESTO]).
     "CMD-RETDEC-001": {"calendarios_admitidos": ("indice", "declarado"),
                        "frecuencias_admitidas": ("mensual", "trimestral", "anual")},
     # CHR-FLOW-001 · «Entradas mínimas»: ≥ 120 días. «Método»: crecimiento de stablecoins a 30 días. z-score con ≥ 2
     # observaciones (desviación muestral, ST-DESC-001).
-    "CHR-FLOW-001": {"dias_minimos": 120, "dias_crecimiento_stablecoins": 30},
+    "CHR-FLOW-001": {"dias_minimos": 120, "dias_crecimiento_stablecoins": 30,
+                     # cotas (H-01) [PROPUESTO]: ventanas hasta el final de H2 en sesiones; ventana_z hasta el de H5
+                     "ventana_sesiones_maxima": SEMANAS_H2_MAX * SESIONES_SEMANA, "ventana_z_anios_maxima": ANIOS_H5_MAX},
     # CHR-FUND-001 · «Aclaración y rechazo»: < 2 plataformas. «Entradas mínimas»: ≥ 90 días (≥ 1 año = 365 días para
     # percentiles). Ponderaciones: interés abierto (ficha) o igual [PROPUESTO]. Coherencia base–financiación con ≥ 5
     # observaciones para la correlación (ST-DESC-001).
     "CHR-FUND-001": {"plataformas_minimas": 2, "dias_minimos": 90, "dias_percentil_minimos": 365,
-                     "ponderaciones_admitidas": ("interes_abierto", "igual"), "observaciones_minimas_correlacion": 5},
+                     "ponderaciones_admitidas": ("interes_abierto", "igual"), "observaciones_minimas_correlacion": 5,
+                     "ventana_percentil_dias_maxima": ANIOS_H5_MAX * DIAS_ANIO},   # cota (H-01): H5 en días [PROPUESTO]
     # ALT-DESMOOTH-001 · «Aclaración y rechazo»: < 24 observaciones. «Entradas mínimas»: ≥ 40 (24 con limitación).
     # «Parámetros»: k 1–3; metodo Geltner o GLM; phi fijado en [0, 1) [PROPUESTO] (suavizado no negativo, 1 − φ ≠ 0).
     "ALT-DESMOOTH-001": {"observaciones_minimas": 24, "observaciones_entrada_minima": 40, "rango_k": (1, 3),
                          "metodos_admitidos": ("Geltner", "GLM"), "rango_phi": (0.0, 1.0)},
 }
+
+# Claves de los parámetros que añade la capa de servicio y que no son de la ficha (`Motor.servir`: «clase»).
+AJENOS = frozenset({"clase"})
 
 # Advertencias obligatorias de entrega («Supuestos y limitaciones» de cada ficha, literales).
 ADVERTENCIAS: dict[str, list[str]] = {
@@ -227,6 +243,23 @@ def _anios(indice: pd.Index) -> float:
     return float((indice[-1] - indice[0]).days) / DIAS_ANIO
 
 
+def _corte(ent: dict[str, Any]) -> pd.Timestamp | None:
+    """Fecha de corte de la petición (``ent["fecha_corte"]``, que pone `Motor.servir`), o ``None`` si no hay."""
+    fc = ent.get("fecha_corte")
+    return None if fc is None else _fecha(fc, "fecha_corte de la petición")
+
+
+def _hasta_corte(fechas: Any, corte: pd.Timestamp | None, que: str) -> None:
+    """QA r01 de T-112 (H-07): un dato en línea fechado después de la fecha de corte no era conocible; se rechaza, como
+    hace el servicio con las series de HT-01 (FUGA_DE_INFORMACION) y REI-NAV-001 con un NAV posterior al precio."""
+    if corte is None:
+        return
+    posteriores = [f for f in fechas if f > corte]
+    if posteriores:
+        raise ErrorFicha(f"{que}: dato del {max(posteriores).date()} posterior a la fecha de corte {corte.date()} "
+                         f"(no conocible)")
+
+
 def _posicion(valor: float, historia: Any) -> dict[str, Any]:
     """Percentil (proporción ≤ valor), z con desviación muestral y media (RI-MH) del valor frente a su historia."""
     h = np.asarray(historia, dtype=float)
@@ -282,7 +315,7 @@ def _validar_parametros(F: str, p: dict[str, Any]) -> None:
     u = UMBRALES[F]
     if F == "REI-CAP-001":
         p["base_noi"] = _opcion(p["base_noi"], f"{F}: base_noi", u["bases_noi"])
-        p["ventana"] = _entero(p["ventana"], f"{F}: ventana (años)", u["anios_historia_minimos"])
+        p["ventana"] = _entero(p["ventana"], f"{F}: ventana (años)", u["anios_historia_minimos"], u["ventana_anios_maxima"])
     elif F == "REI-FFO-001":
         p["capex_mantenimiento"] = _opcion(p["capex_mantenimiento"], f"{F}: capex_mantenimiento", u["capex_admitidos"])
         if p["capex_pct_rentas"] is not None:
@@ -297,6 +330,8 @@ def _validar_parametros(F: str, p: dict[str, Any]) -> None:
         excl = p["excluir_anos"]
         if not isinstance(excl, list):
             raise ErrorFicha(f"{F}: excluir_anos debe ser una lista de años")
+        if len(excl) > u["excluir_anos_maximos"]:
+            raise ErrorFicha(f"{F}: excluir_anos con {len(excl)} años (máximo {u['excluir_anos_maximos']}, el de anos_estacional)")
         anios = [_entero(a, f"{F}: excluir_anos", 1) for a in excl]
         if len(set(anios)) != len(anios):
             raise ErrorFicha(f"{F}: excluir_anos con años repetidos")
@@ -308,15 +343,17 @@ def _validar_parametros(F: str, p: dict[str, Any]) -> None:
         vent = p["ventanas"]
         if not isinstance(vent, list) or not vent:
             raise ErrorFicha(f"{F}: ventanas debe ser una lista no vacía de días")
-        vs = [_entero(w, f"{F}: ventanas (días)", 1) for w in vent]
+        if len(vent) > u["ventana_sesiones_maxima"]:
+            raise ErrorFicha(f"{F}: ventanas: {len(vent)} ventanas (máximo {u['ventana_sesiones_maxima']}, distintas)")
+        vs = [_entero(w, f"{F}: ventanas (sesiones)", 1, u["ventana_sesiones_maxima"]) for w in vent]
         if len(set(vs)) != len(vs):
             raise ErrorFicha(f"{F}: ventanas repetidas")
         p["ventanas"] = sorted(vs)
-        p["ventana_z"] = _entero(p["ventana_z"], f"{F}: ventana_z (años)", 1)
+        p["ventana_z"] = _entero(p["ventana_z"], f"{F}: ventana_z (años)", 1, u["ventana_z_anios_maxima"])
     elif F == "CHR-FUND-001":
         p["ponderacion"] = _opcion(p["ponderacion"], f"{F}: ponderacion", u["ponderaciones_admitidas"])
         p["ventana_percentil"] = _entero(p["ventana_percentil"], f"{F}: ventana_percentil (días)",
-                                         u["dias_percentil_minimos"])
+                                         u["dias_percentil_minimos"], u["ventana_percentil_dias_maxima"])
     elif F == "ALT-DESMOOTH-001":
         p["metodo"] = _opcion(p["metodo"], f"{F}: metodo", u["metodos_admitidos"])
         p["k"] = _entero(p["k"], f"{F}: k", *u["rango_k"])
@@ -330,13 +367,17 @@ def _validar_parametros(F: str, p: dict[str, Any]) -> None:
 def _parametros(ficha: str, params: dict[str, Any] | None) -> dict[str, Any]:
     """Parámetros de la petición encima de los de la ficha, validados; un umbral de `UMBRALES` en la petición se rechaza.
 
-    Las claves que la ficha no declara se ignoran (la capa de servicio añade, por ejemplo, «clase»)."""
+    Una clave que la ficha no declara también se rechaza (QA r01 de T-112, H-02: una errata no se sirve con el valor por
+    defecto), salvo las que añade la capa de servicio (`AJENOS`: «clase»)."""
     if params is not None and not isinstance(params, dict):
         raise ErrorFicha(f"{ficha}: los parámetros deben ser un dict")
     params = params or {}
     fijos = set(params) & set(UMBRALES[ficha])
     if fijos:
         raise ErrorFicha(f"{ficha}: {sorted(fijos)} son umbrales fijos de la ficha, no parámetros de la petición")
+    desconocidos = set(params) - set(PARAMETROS_POR_DEFECTO[ficha]) - AJENOS
+    if desconocidos:
+        raise ErrorFicha(f"{ficha}: parámetros no declarados en la ficha: {sorted(map(str, desconocidos))[:5]}")
     p = dict(PARAMETROS_POR_DEFECTO[ficha])
     p.update({k: v for k, v in params.items() if v is not None and k in p})
     if isinstance(p.get("excluir_anos"), list):
@@ -360,6 +401,7 @@ def f_rei_cap(ent: dict[str, Any], params: dict[str, Any]) -> Resultado:
     """
     F = "REI-CAP-001"
     p, u, v = _parametros(F, params), UMBRALES[F], ent["valores"]
+    corte = _corte(ent)
     lim: list[str] = []
     moneda = _texto(v.get("moneda"), f"{F}: «moneda» del subsector")
     noi_d = _dict(v.get("noi"), f"{F}: «noi»")
@@ -391,6 +433,7 @@ def f_rei_cap(ent: dict[str, Any], params: dict[str, Any]) -> Resultado:
     if _texto(sob.get("moneda"), f"{F}: moneda del soberano") != moneda:
         raise ErrorFicha(f"{F}: el soberano a 10 años debe ser de la misma moneda que el subsector ({moneda})")
     hist = _tabla(v.get("historia"), {"cap_rate": (0, True), "soberano_10a": (None, False)}, f"{F}: historia")
+    _hasta_corte(hist.index, corte, f"{F}: historia")
     anios = _anios(hist.index)
     if anios < u["anios_historia_minimos"]:
         raise ErrorFicha(f"{F}: historia de {anios:.2f} años < {u['anios_historia_minimos']} años (entradas mínimas)")
@@ -445,6 +488,7 @@ def f_rei_nav(ent: dict[str, Any], params: dict[str, Any]) -> Resultado:
     """
     F = "REI-NAV-001"
     p, u, v = _parametros(F, params), UMBRALES[F], ent["valores"]
+    corte = _corte(ent)
     tol = FICHAS[F]["tol"]
     lim: list[str] = []
     comps = _lista(v.get("componentes"), f"{F}: componentes")
@@ -455,6 +499,7 @@ def f_rei_nav(ent: dict[str, Any], params: dict[str, Any]) -> Resultado:
         cid = _texto(c.get("id"), f"{ctx}.id")
         fp = _fecha(c.get("fecha_precio"), f"{ctx}.fecha_precio")
         fn_ = _fecha(c.get("fecha_nav"), f"{ctx}.fecha_nav")
+        _hasta_corte([fp], corte, f"{ctx}.fecha_precio")                 # el NAV no es posterior al precio (abajo)
         if fn_ > fp:
             raise ErrorFicha(f"{ctx}: NAV con fecha posterior a la del precio (no conocible)")
         if fn_ + pd.DateOffset(months=u["meses_antiguedad_nav_max"]) < fp:
@@ -511,6 +556,10 @@ def f_rei_nav(ent: dict[str, Any], params: dict[str, Any]) -> Resultado:
         lim.append("sin historia de la prima agregada: percentil no calculado")
     else:
         hist = _tabla(v["historia_prima"], {"prima": (-1, True)}, f"{F}: historia_prima")
+        _hasta_corte(hist.index, corte, f"{F}: historia_prima")
+        if hist.index[-1] > filas[0]["fecha"]:                           # H-07: como el NAV, no posterior al precio
+            raise ErrorFicha(f"{F}: historia de la prima hasta {hist.index[-1].date()}, posterior a la fecha de precio "
+                             f"{filas[0]['fecha'].date()} (no conocible)")
         if _anios(hist.index) < u["anios_percentil_minimos"]:
             lim.append(f"historia de la prima < {u['anios_percentil_minimos']} años: percentil no calculado")
         else:
@@ -546,6 +595,8 @@ def f_rei_ffo(ent: dict[str, Any], params: dict[str, Any]) -> Resultado:
     """
     F = "REI-FFO-001"
     p, u, v = _parametros(F, params), UMBRALES[F], ent["valores"]
+    corte = _corte(ent)
+    sin_presentacion: set[int] = set()
     lim: list[str] = []
     moneda = _texto(v.get("moneda"), f"{F}: «moneda»")
     comps = _lista(v.get("componentes"), f"{F}: componentes")
@@ -570,6 +621,17 @@ def f_rei_ffo(ent: dict[str, Any], params: dict[str, Any]) -> Resultado:
             anio = _entero(e.get("ejercicio"), f"{cj}.ejercicio", 1)
             if anio in tabla:
                 raise ErrorFicha(f"{cj}: ejercicio {anio} repetido")
+            # H-07: opcional `fecha_presentacion` [PROPUESTO]; con fecha de corte, el ejercicio tiene que ser conocible
+            if e.get("fecha_presentacion") is not None:
+                fpres = _fecha(e["fecha_presentacion"], f"{cj}.fecha_presentacion")
+                if fpres.year < anio:
+                    raise ErrorFicha(f"{cj}: presentado ({fpres.date()}) antes de su ejercicio {anio}")
+                _hasta_corte([fpres], corte, f"{cj}.fecha_presentacion")
+            elif corte is not None and anio >= corte.year:
+                raise ErrorFicha(f"{cj}: ejercicio {anio} sin cerrar o sin presentar a la fecha de corte {corte.date()} "
+                                 f"(no conocible; sin «fecha_presentacion»)")
+            elif corte is not None and anio == corte.year - 1:
+                sin_presentacion.add(anio)
             if e.get("amortizaciones_inmobiliarias") is None:
                 raise ErrorFicha(f"{cj}: rechazo sin amortizaciones inmobiliarias desglosadas")
             bn = _num(e.get("beneficio_neto"), f"{cj}.beneficio_neto")
@@ -590,6 +652,9 @@ def f_rei_ffo(ent: dict[str, Any], params: dict[str, Any]) -> Resultado:
             errores_affo.append(_error_rel(affo + capex + aj, ffo, abs(ffo) + capex + abs(aj)))
             tabla[anio] = {"bn": bn, "ffo": ffo, "affo": affo, "div": div, "capex": capex}
         por_comp[cid] = tabla
+    if sin_presentacion:
+        lim.append(f"ejercicio(s) {sorted(sin_presentacion)} sin «fecha_presentacion»: no se comprueba que se conocieran "
+                   f"a la fecha de corte")
     if estimado:
         lim.append(f"CAPEX de mantenimiento estimado como {p['capex_pct_rentas'] * PCT:g} % de las rentas en algún ejercicio")
     ids = sorted(por_comp)
@@ -627,6 +692,7 @@ def f_rei_ffo(ent: dict[str, Any], params: dict[str, Any]) -> Resultado:
     else:
         hist = _tabla(v["historia_multiplos"], {"p_ffo": (0, True), "p_affo": (0, True)}, f"{F}: historia_multiplos",
                       opcionales=("p_affo",))
+        _hasta_corte(hist.index, corte, f"{F}: historia_multiplos")
         for col, actual, destino in (("p_ffo", p_ffo, "ffo"), ("p_affo", p_affo, "affo")):
             h = hist[col].dropna().to_numpy()
             if actual is None or h.size < u["observaciones_minimas_percentil"]:
@@ -704,6 +770,7 @@ def f_cmd_inv(ent: dict[str, Any], params: dict[str, Any]) -> Resultado:
     """
     F = "CMD-INV-001"
     p, u, v = _parametros(F, params), UMBRALES[F], ent["valores"]
+    corte = _corte(ent)
     lim: list[str] = []
     inv = _dict(v.get("inventarios"), f"{F}: «inventarios»")
     frec = _opcion(inv.get("frecuencia"), f"{F}: frecuencia", u["frecuencias_admitidas"])
@@ -715,6 +782,7 @@ def f_cmd_inv(ent: dict[str, Any], params: dict[str, Any]) -> Resultado:
         if _fecha(o["fecha_publicacion"], f"{F}: observaciones[{i}].fecha_publicacion") < \
                 _fecha(o.get("fecha"), f"{F}: observaciones[{i}].fecha"):
             raise ErrorFicha(f"{F}: observaciones[{i}] publicada antes de su periodo de referencia")
+        _hasta_corte([_fecha(o["fecha_publicacion"], "fecha_publicacion")], corte, f"{F}: observaciones[{i}].fecha_publicacion")
     t = _tabla(obs, {"valor": (0, False)}, f"{F}: observaciones")
     x, fechas = t["valor"].to_numpy(), t.index
     claves: dict[tuple[int, int], int] = {}
@@ -780,6 +848,7 @@ def f_cmd_inv(ent: dict[str, Any], params: dict[str, Any]) -> Resultado:
         lim.append("sin la pendiente de la curva (CMD-CURVE-001): relación no calculada")
     else:
         pc = _tabla(v["pendiente_curva"], {"pendiente": (None, False)}, f"{F}: pendiente_curva")
+        _hasta_corte(pc.index, corte, f"{F}: pendiente_curva")
         pares = [(s["desviacion_pct"], float(pc.loc[pd.Timestamp(s["fecha"]), "pendiente"])) for s in serie
                  if s["desviacion_pct"] is not None and pd.Timestamp(s["fecha"]) in pc.index]
         a = np.array([q[0] for q in pares])
@@ -936,6 +1005,7 @@ def f_cmd_retdec(ent: dict[str, Any], params: dict[str, Any]) -> Resultado:
                                  f"{fechas[i].date()} (calendario de roll)")
             r_f[i - 1] = b / a - 1
         col = np.empty(n - 1)
+    _hasta_corte(fechas, _corte(ent), f"{F}: fechas")                  # el calendario de roll puede ser futuro
     tipo = _vector(v.get("tipo_colateral"), f"{F}: tipo_colateral", fechas.size)
     dias = np.diff(fechas.values).astype("timedelta64[D]").astype(float)
     col_tipo = tipo[:-1] * dias / DIAS_ANIO                              # rendimiento del colateral, Real/365
@@ -982,6 +1052,7 @@ def f_chr_fund(ent: dict[str, Any], params: dict[str, Any]) -> Resultado:
     """
     F = "CHR-FUND-001"
     p, u, v = _parametros(F, params), UMBRALES[F], ent["valores"]
+    corte = _corte(ent)
     lim: list[str] = []
     plat = _dict(v.get("plataformas"), f"{F}: «plataformas»")
     if len(plat) < u["plataformas_minimas"]:
@@ -993,6 +1064,7 @@ def f_chr_fund(ent: dict[str, Any], params: dict[str, Any]) -> Resultado:
         horas = _rango(d.get("periodo_horas"), f"{F}: plataformas[{nombre}].periodo_horas", 0, HORAS_DIA, abierto_lo=True)
         t = _tabla(d.get("historia"), {"tasa": (None, False), "interes_abierto": (0, True)},
                    f"{F}: plataformas[{nombre}].historia")
+        _hasta_corte(t.index, corte, f"{F}: plataformas[{nombre}].historia")
         anual[str(nombre)] = t["tasa"] * (HORAS_DIA / horas) * DIAS_ANIO   # tasa × periodos por año
         oi[str(nombre)] = t["interes_abierto"]
     nombres = sorted(anual)
@@ -1015,6 +1087,8 @@ def f_chr_fund(ent: dict[str, Any], params: dict[str, Any]) -> Resultado:
                      index=pd.DatetimeIndex([_fecha(e.get("fecha"), f"{F}: futuro[{i}].fecha") for i, e in enumerate(fut)]))
     venc = venc.sort_index()
     ts = _tabla(v.get("spot"), {"precio": (0, True)}, f"{F}: spot")
+    _hasta_corte(tf.index, corte, f"{F}: futuro")                      # el vencimiento sí es futuro
+    _hasta_corte(ts.index, corte, f"{F}: spot")
     fb = tf.index.intersection(ts.index)
     if fb.empty or fb[-1] != comunes[-1]:
         raise ErrorFicha(f"{F}: el futuro y el spot deben cotizar en la última fecha común de financiación")
@@ -1041,6 +1115,7 @@ def f_chr_fund(ent: dict[str, Any], params: dict[str, Any]) -> Resultado:
     else:
         cd = _dict(v["capitalizacion"], f"{F}: «capitalizacion»")
         fc = _fecha(cd.get("fecha"), f"{F}: capitalizacion.fecha")
+        _hasta_corte([fc], corte, f"{F}: capitalizacion")
         if fc != T:
             raise ErrorFicha(f"{F}: la capitalización debe ser de la última fecha común ({T.date()})")
         ratio = oi_total / _rango(cd.get("valor"), f"{F}: capitalizacion.valor", 0, abierto_lo=True) * PCT
@@ -1085,6 +1160,7 @@ def f_chr_flow(ent: dict[str, Any], params: dict[str, Any]) -> Resultado:
     """
     F = "CHR-FLOW-001"
     p, u, v = _parametros(F, params), UMBRALES[F], ent["valores"]
+    corte = _corte(ent)
     lim: list[str] = []
     filas = _lista(v.get("flujos_etf"), f"{F}: flujos_etf")
     for i, f in enumerate(filas):
@@ -1093,6 +1169,7 @@ def f_chr_flow(ent: dict[str, Any], params: dict[str, Any]) -> Resultado:
         if _fecha(f["fecha_publicacion"], f"{F}: flujos_etf[{i}].fecha_publicacion") < \
                 _fecha(f.get("fecha"), f"{F}: flujos_etf[{i}].fecha"):
             raise ErrorFicha(f"{F}: flujos_etf[{i}] publicado antes de su fecha")
+        _hasta_corte([_fecha(f["fecha_publicacion"], "fecha_publicacion")], corte, f"{F}: flujos_etf[{i}].fecha_publicacion")
     t = _tabla(filas, {"flujo": (None, False), "patrimonio": (0, True)}, f"{F}: flujos_etf")
     if _anios(t.index) * DIAS_ANIO < u["dias_minimos"]:
         raise ErrorFicha(f"{F}: flujos de ETF con < {u['dias_minimos']} días (entradas mínimas)")
@@ -1100,6 +1177,7 @@ def f_chr_flow(ent: dict[str, Any], params: dict[str, Any]) -> Resultado:
     so: pd.Series | None = None
     for nombre in sorted(ofertas, key=str):
         s = _tabla(ofertas[nombre], {"oferta": (0, True)}, f"{F}: oferta_stablecoins[{nombre}]")["oferta"]
+        _hasta_corte(s.index, corte, f"{F}: oferta_stablecoins[{nombre}]")
         so = s if so is None else so.loc[so.index.intersection(s.index)] + s.loc[so.index.intersection(s.index)]
     if so is None or so.size < 2 or _anios(so.index) * DIAS_ANIO < u["dias_minimos"]:
         raise ErrorFicha(f"{F}: oferta de stablecoins con < {u['dias_minimos']} días comunes (entradas mínimas)")
@@ -1135,6 +1213,7 @@ def f_chr_flow(ent: dict[str, Any], params: dict[str, Any]) -> Resultado:
         lim.append("sin capitalización total: razón stablecoins/capitalización no calculada")
     else:
         ct = _tabla(v["capitalizacion_total"], {"valor": (0, True)}, f"{F}: capitalizacion_total")
+        _hasta_corte(ct.index, corte, f"{F}: capitalizacion_total")
         if T not in ct.index:
             lim.append(f"sin capitalización total en {T.date()}: razón no calculada")
         else:
@@ -1159,7 +1238,9 @@ def _rentabilidades(ent: dict[str, Any], clave: str, rol: str, que: str) -> pd.S
     """Rentabilidades trimestrales: ``valores[clave]`` (lista de {"fecha", "r"}) o niveles en ``series_rol[rol]``."""
     v = ent["valores"]
     if v.get(clave) is not None:
-        return _tabla(v[clave], {"r": (-1, True)}, que)["r"]
+        r = _tabla(v[clave], {"r": (-1, True)}, que)["r"]
+        _hasta_corte(r.index, _corte(ent), que)
+        return r
     s = (ent.get("series_rol") or {}).get(rol)
     if s is None:
         return None
@@ -1169,6 +1250,7 @@ def _rentabilidades(ent: dict[str, Any], clave: str, rol: str, que: str) -> pd.S
                         index=pd.DatetimeIndex([_fecha(f, f"{que} (fecha)") for f in s.index])).sort_index()
     if niveles.index.has_duplicates:
         raise ErrorFicha(f"{que}: fechas repetidas")
+    _hasta_corte(niveles.index, _corte(ent), que)
     return (niveles / niveles.shift(1) - 1).iloc[1:]
 
 
@@ -1186,19 +1268,22 @@ def _ar1(x: np.ndarray) -> float:
 
 
 def _glm_nll(theta: np.ndarray, x: np.ndarray) -> float:
-    """−log verosimilitud exacta (gaussiana, σ concentrada) del MA(k) de GLM: x_t − μ = Σ θ_j η_{t−j}."""
+    """−log verosimilitud exacta (gaussiana, σ concentrada) del MA(k) de GLM: x_t − μ = Σ θ_j η_{t−j}.
+
+    La matriz de autocovarianzas es de banda k: Cholesky en banda (O(n·k²) en tiempo y O(n·k) en memoria), la misma
+    verosimilitud que la factorización densa sin que el coste crezca con n³ (QA r01 de T-112, H-01)."""
     n, k = x.size, theta.size - 1
-    gam = np.zeros(n)
+    banda = np.zeros((k + 1, n))                                         # forma inferior: banda[i, j] = Γ[j + i, j]
     for j in range(k + 1):
-        gam[j] = float(np.sum(theta[: k + 1 - j] * theta[j:]))
+        banda[j, :] = float(np.sum(theta[: k + 1 - j] * theta[j:]))
     try:
-        c, low = linalg.cho_factor(linalg.toeplitz(gam), lower=True)
+        c = linalg.cholesky_banded(banda, lower=True)
     except (linalg.LinAlgError, ValueError):
         return float(np.finfo(float).max)
-    s2 = float(x @ linalg.cho_solve((c, low), x)) / n
+    s2 = float(x @ linalg.cho_solve_banded((c, True), x)) / n
     if not s2 > 0:
         return float(np.finfo(float).max)
-    return 0.5 * n * math.log(s2) + float(np.sum(np.log(np.diag(c))))
+    return 0.5 * n * math.log(s2) + float(np.sum(np.log(c[0])))
 
 
 def _glm_theta(r: np.ndarray, k: int, tol: float) -> np.ndarray:
@@ -1230,6 +1315,11 @@ def _invertible(theta: np.ndarray) -> np.ndarray:
         coef = np.convolve(coef, [1.0, -1 / rho])                       # ∏ (1 − z/ρ), valor 1 en z = 0
     c = np.zeros(k + 1)
     c[: coef.size] = np.real(coef)
+    c = c / np.sum(c)
+    # Una raíz en z ≈ 0 (θ0 ≈ 0, retardo puro) se refleja hacia ∞ y deja un coeficiente del orden del redondeo cuyo signo
+    # depende del último bit (QA r01 de T-112): por debajo de la tolerancia de la ficha es un cero, no un θ negativo.
+    tol = FICHAS["ALT-DESMOOTH-001"]["tol"]
+    c[(c < 0) & (c >= -tol)] = 0.0
     return c / np.sum(c)
 
 
@@ -1399,7 +1489,7 @@ def _datos_rei_nav(misma_cap: bool) -> dict[str, Any]:
     return {"componentes": [_comp_nav("A", 18.0, 1e8, 20.0, 3.2e9, 1.0e9, 0.2e9, 0.05),
                             _comp_nav("B", 31.5, 5e7, 30.0, 2.4e9, 0.75e9, 0.15e9, 0.05 if misma_cap else 0.045)],
             "historia_prima": [{"fecha": _iso(d), "prima": -0.08 + 0.06 * math.sin(0.9 * i)}
-                               for i, d in enumerate(pd.date_range("2014-12-31", periods=12 * 4 + 1, freq="QE"))]}
+                               for i, d in enumerate(pd.date_range("2014-09-30", periods=12 * 4 + 1, freq="QE"))]}
 
 
 def _caso_rei_nav_metodo(r: dict[str, Any]) -> bool:
@@ -1775,6 +1865,14 @@ _AD_REAL_GLM = np.array([0.02 + 0.12 * ((math.sin(12.9898 * (t + 1)) * 43758.545
 _AD_OBS_GLM = _suavizar_glm(_AD_REAL_GLM, (0.6, 0.3, 0.1))
 
 
+# MDD con caída desde el inicio (QA r01 de T-112, H-08): la serie real cae −10 % y −5 % en los dos primeros trimestres
+# desuavizados (t = 2 y 3) y después solo sube, así que su MDD es 1 − 0,90·0,95 = 14,5 % medido desde la riqueza inicial
+# (sin el punto de partida, el máximo previo sería 0,90 y el MDD saldría 5 %).
+_AD_REAL_CAIDA = np.array([0.01, -0.10, -0.05] + [0.02 + 0.01 * math.sin(t) for t in range(3, _AD_N)])
+_AD_OBS_CAIDA = _suavizar_geltner(_AD_REAL_CAIDA, _AD_PHI)
+_AD_MDD_CAIDA = 1 - (1 - 0.10) * (1 - 0.05)
+
+
 def _datos_alt(serie: np.ndarray) -> dict[str, Any]:
     return {"rentabilidades": [{"fecha": _iso(d), "r": float(x)} for d, x in zip(_AD_FECHAS, serie, strict=True)],
             "mercado": [{"fecha": _iso(d), "r": 0.015 + 0.1 * ((math.sin(78.233 * (t + 1)) * 43758.5453) % 1 - 0.5)}
@@ -1815,6 +1913,23 @@ def _caso_alt_ar1(r: dict[str, Any]) -> bool:
     return (_rel(r["phi"], phi, tol) and not r["phi_fijado"]
             and bool(np.all(np.abs(d - (_AD_OBS[1:] - phi * _AD_OBS[:-1]) / (1 - phi)) <= tol))
             and r["verificacion"]["error_identidad_media"] <= tol)
+
+
+def _mdd_a_mano(r: np.ndarray) -> float:
+    """MDD por recorrido (RISK-DD-001), con la riqueza inicial 1 como primer máximo."""
+    riqueza, maximo, mdd = 1.0, 1.0, 0.0
+    for x in r:
+        riqueza *= 1 + float(x)
+        maximo = max(maximo, riqueza)
+        mdd = max(mdd, 1 - riqueza / maximo)
+    return mdd
+
+
+def _caso_alt_mdd(r: dict[str, Any]) -> bool:
+    tol = FICHAS["ALT-DESMOOTH-001"]["tol"]
+    return (_rel(r["mdd_desuavizado_pct"], _AD_MDD_CAIDA * PCT, tol)
+            and _rel(r["mdd_observado_pct"], _mdd_a_mano(_AD_OBS_CAIDA[1:]) * PCT, tol)
+            and r["mdd_desuavizado_pct"] > r["mdd_observado_pct"])
 
 
 def _caso_alt_glm(r: dict[str, Any]) -> bool:
@@ -1936,6 +2051,9 @@ CASOS_CONTROL: dict[str, list[dict[str, Any]]] = {
         {"nombre": "φ estimado = AR(1) por MCO con constante",
          "datos": [{"valores": _datos_alt(_AD_OBS)}], "parametros": {},
          "comprobar": _caso_alt_ar1},
+        {"nombre": "MDD antes y después (RISK-DD-001) con una caída desde el inicio de la serie, a mano",
+         "datos": [{"valores": _datos_alt(_AD_OBS_CAIDA)}], "parametros": {"phi": _AD_PHI},
+         "comprobar": _caso_alt_mdd},
         {"nombre": "GLM: θ ≥ 0 con Σθ = 1, resuavizar reproduce la observada y media conservada salvo el borde",
          "datos": [{"valores": _datos_alt(_AD_OBS_GLM)}], "parametros": {"metodo": "GLM", "k": 2},
          "comprobar": _caso_alt_glm},

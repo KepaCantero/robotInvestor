@@ -16,7 +16,9 @@ from pathlib import Path
 import numpy as np
 import pandas as pd
 import pytest
-from bloque_a.motor import fichas_fon_der, fichas_tcv
+from bloque_a.almacen import Almacen
+from bloque_a.configuracion import cargar_config, parametro, sesiones_horizonte
+from bloque_a.motor import fichas_fon_der, fichas_tcv, servicio
 from bloque_a.motor import fichas_riesgo as R
 from bloque_a.motor.operaciones import ErrorFicha
 from scipy import integrate, optimize, stats
@@ -946,3 +948,310 @@ def test_dec_voi_top3_y_regla_simple():
     banda = {**base, "rango_plausible": {"inferior": 56.0, "superior": 58.0, "fuente": "s"}}
     r, _ = _correr("DEC-VOI-001", banda, {"coste_uc": 0.0})     # alcanza la banda 50–60 pero no cruza 55 ⇒ EVPI 0
     assert not r["regla_simple_voi_cero"] and r["voi_puntos"] == 0 and r["recomendacion_tecnica"] == "NO_EJECUTAR"
+
+
+# ============================================================================= QA r01 de T-112 (ronda r02)
+H5 = sesiones_horizonte(None, "H5")          # 120 meses × 21 sesiones = 2 520 (la cota del horizonte)
+
+
+class _Proveedor:
+    as_of = None
+    nombre = "pruebas"
+
+
+def _motor(tmp_path, extra=None):
+    return servicio.Motor(Almacen(Path(tmp_path)), _Proveedor(), cargar_config(extra=extra))
+
+
+def _correr_cfg(ficha, valores, params=None, cfg=None):
+    return R.FICHAS[ficha]["fn"]({**_ent(valores), "configuracion": cfg, "fecha_corte": None}, dict(params or {}))
+
+
+# --- H-01: cota superior de cada tamaño de la petición (una prueba por cota)
+COTAS: list[tuple[str, dict, dict]] = [
+    # (ficha, parámetros admitidos en la cota, parámetros que la superan)
+    ("RISK-VAR-001", {"horizonte": H5}, {"horizonte": H5 + 1}),
+    ("BT-VAR-001", {"horizonte": H5}, {"horizonte": H5 + 1}),
+    ("SIM-MC-001", {"horizonte": H5, "n_trayectorias": 10_000, "semilla": 1}, {"horizonte": H5 + 1, "semilla": 1}),
+    ("SIM-MC-001", {"horizonte": 25, "n_trayectorias": 1_000_000, "semilla": 1},
+     {"horizonte": 26, "n_trayectorias": 1_000_000, "semilla": 1}),                      # presupuesto 10 000 × H5
+    ("SIM-MC-001", {"horizonte": 1, "semilla": 1, "cuantiles": [i / 100 for i in range(1, 100)]},
+     {"horizonte": 1, "semilla": 1, "cuantiles": [i / 101 for i in range(1, 101)]}),
+    ("SIM-MC-001", {"horizonte": 1, "semilla": 1, "umbrales": list(range(99))},
+     {"horizonte": 1, "semilla": 1, "umbrales": list(range(100))}),
+    ("SCN-H-001", {"semilla": 1, "clase": "RV", "n_trayectorias": 1_000_000},
+     {"semilla": 1, "clase": "RV", "n_trayectorias": 1_000_002}),
+    ("SCN-H-001", {"semilla": 1, "clase": "RV", "cuantiles": [i / 100 for i in range(1, 100)]},
+     {"semilla": 1, "clase": "RV", "cuantiles": [i / 101 for i in range(1, 101)]}),
+    ("SCN-H-001", {"semilla": 1, "clase": "RV", "umbrales": list(range(99))},
+     {"semilla": 1, "clase": "RV", "umbrales": list(range(100))}),
+    ("BT-PBO-001", {"S": 20}, {"S": 22}),
+    ("ML-CAL-001", {"replicas": 10_000}, {"replicas": 10_001}),
+    ("ML-PRED-001", {"replicas": 10_000}, {"replicas": 10_001}),
+    ("ML-PRED-001", {"pliegues": 20}, {"pliegues": 21}),
+    ("ML-PRED-001", {"rejilla": [float(x) for x in range(1, 21)]}, {"rejilla": [float(x) for x in range(1, 22)]}),
+]
+
+
+@pytest.mark.parametrize("ficha,dentro,fuera", COTAS, ids=[f"{f}:{sorted(d)}" for f, d, _ in COTAS])
+def test_cada_tamano_tiene_cota_superior(ficha, dentro, fuera):
+    """La validación admite el tamaño en su cota y rechaza el siguiente (sin calcular: `_parametros`)."""
+    R._parametros(ficha, dentro)
+    with pytest.raises(ErrorFicha, match="máximo|presupuesto|fuera del rango|rejilla de 1 a"):
+        R._parametros(ficha, fuera)
+
+
+@pytest.mark.parametrize("ficha,clave", [("ML-CAL-001", "replicas"), ("ML-PRED-001", "replicas"),
+                                         ("ML-PRED-001", "pliegues"), ("SIM-MC-001", "horizonte"),
+                                         ("RISK-VAR-001", "horizonte"), ("BT-VAR-001", "horizonte"),
+                                         ("SCN-H-001", "n_trayectorias"), ("SIM-MC-001", "n_trayectorias")])
+@pytest.mark.parametrize("valor", [20261110, 10 ** 12, 1e308])
+def test_tamanos_desmesurados_se_rechazan_sin_calcular(ficha, clave, valor):
+    """El caso de H-01: un número grande en un CT-09 no agota la memoria ni cuelga el proceso."""
+    v, p = BASE[ficha]
+    with pytest.raises(ErrorFicha):
+        _correr(ficha, v, {**p, clave: valor, **({"semilla": 1} if ficha == "SIM-MC-001" else {})})
+
+
+def test_cota_del_horizonte_sale_de_la_configuracion_del_motor():
+    """La cota es H5 en sesiones de la configuración del Motor: con H5 de 60 meses (1 260 sesiones), 1 261 se rechaza."""
+    cfg = cargar_config(extra={"horizontes": {"H5": {"meses": 60}}})
+    tope = sesiones_horizonte(cfg, "H5")
+    v, p = BASE["RISK-VAR-001"]
+    assert tope == 1260 and _correr_cfg("RISK-VAR-001", v, {**p, "horizonte": tope}, cfg)[0]["horizonte"] == tope
+    with pytest.raises(ErrorFicha, match="máximo 1260"):
+        _correr_cfg("RISK-VAR-001", v, {**p, "horizonte": tope + 1}, cfg)
+    assert _correr("RISK-VAR-001", v, {**p, "horizonte": tope + 1})[0]["horizonte"] == tope + 1   # por defecto, 2 520
+
+
+@pytest.mark.parametrize("clave,valor", [("replicas", 20261110), ("horizonte", 20261110), ("pliegues", 10 ** 9)])
+def test_por_el_motor_un_tamano_desmesurado_es_rechazado_y_queda_en_rc(tmp_path, clave, valor):
+    ficha = {"replicas": "ML-CAL-001", "horizonte": "SIM-MC-001", "pliegues": "ML-PRED-001"}[clave]
+    m = _motor(tmp_path)
+    caso = R.CASOS_CONTROL[ficha][0]
+    antes = len(m.almacen.leer("RC"))
+    r = m.servir({"operacion": ficha, "datos": copy.deepcopy(caso["datos"]),
+                  "parametros": {**caso["parametros"], clave: valor}}, "AG-18")
+    assert r["estado"] == "RECHAZADO" and "máximo" in r["detalle"] and len(m.almacen.leer("RC")) == antes + 1
+
+
+def test_bootstrap_por_tandas_da_lo_mismo_que_de_una_vez(monkeypatch):
+    """La memoria del bootstrap se acota por tandas de réplicas sin cambiar el resultado (bit a bit)."""
+    rng = np.random.default_rng(4)
+    a, b = rng.standard_normal(700), rng.standard_normal(700)
+    entero = R.mejora_ic(a, b, 3000, 0.9, 11)
+    monkeypatch.setattr(R, "_ELEMENTOS_TANDA", 500)
+    assert R.mejora_ic(a, b, 3000, 0.9, 11) == entero
+    # y frente a la expresión de una vez, hecha aquí
+    d, n = a - b, 700
+    blq = max(1, round(n ** (1 / 3)))
+    ini = np.random.default_rng(11).integers(0, n - blq + 1, size=(3000, math.ceil(n / blq)))
+    medias = d[(ini[:, :, None] + np.arange(blq)[None, None, :]).reshape(3000, -1)[:, :n]].mean(axis=1)
+    cola = (1 - 0.9) / 2
+    assert entero["ic"] == [float(np.quantile(medias, cola)), float(np.quantile(medias, 1 - cola))]
+
+
+def test_cscv_por_tandas_da_lo_mismo_que_de_una_vez(monkeypatch):
+    v = {"rendimientos": R._pbo_ruido(6, 160, 21)}
+    entero, _ = _correr("BT-PBO-001", v, {"S": 10})
+    for elementos in (37, 5 * 10 * 6):                                  # tandas de 1 y de 5 combinaciones (de 252)
+        monkeypatch.setattr(R, "_ELEMENTOS_TANDA", elementos)
+        assert _correr("BT-PBO-001", v, {"S": 10})[0] == entero
+
+
+def test_la_ficha_mas_cara_en_su_cota_cabe_en_tiempo():
+    """SIM-MC-001 con las trayectorias por defecto hasta H5 (el presupuesto entero) y 99 cuantiles: una pasada en segundos.
+    La medida completa (1e6 × 25, SCN-H con 1e6, BT-PBO con S = 20, bootstrap con 10 000 réplicas) está en grupo_R.md."""
+    import time
+    t0 = time.perf_counter()
+    r, _ = _correr("SIM-MC-001", {"dinamica": {"tipo": "paseo_aleatorio", "mu": 0.0, "sigma": 0.01}},
+                   {"n_trayectorias": 10_000, "horizonte": H5, "semilla": 3, "cuantiles": [i / 100 for i in range(1, 100)]})
+    assert time.perf_counter() - t0 < 30 and len(r["distribucion"]["cuantiles"]) == 99
+
+
+# --- H-02: un parámetro no declarado (errata) se rechaza en las 9 fichas; `clase` se admite en todas
+@pytest.mark.parametrize("ficha", FICHAS)
+def test_parametro_con_errata_se_rechaza(ficha):
+    v, p = BASE[ficha]
+    clave = min(R.PARAMETROS_POR_DEFECTO[ficha])
+    errata = clave.upper() if clave.lower() == clave else clave.lower()
+    with pytest.raises(ErrorFicha, match="no declarados"):
+        _correr(ficha, v, {**p, errata: R.PARAMETROS_POR_DEFECTO[ficha][clave]})
+    with pytest.raises(ErrorFicha, match="no declarados"):
+        _correr(ficha, v, {**p, "parametro_inexistente": 1})
+
+
+@pytest.mark.parametrize("ficha", FICHAS)
+def test_la_clase_de_la_peticion_se_admite_en_todas(ficha):
+    v, p = BASE[ficha]
+    _correr(ficha, v, {**p, "clase": p.get("clase", "RV")})
+
+
+def test_metodo_con_errata_no_se_sirve_con_el_metodo_por_defecto():
+    with pytest.raises(ErrorFicha, match="Metodo"):
+        _correr("RISK-VAR-001", {"rendimientos": R._R_VAR_NORMAL}, {"Metodo": "evt_pot"})
+
+
+# --- H-03: máximos de verosimilitud con la precisión de la ficha, frente a referencias propias
+def _gpd_perfil(y):
+    """MV de la GPD por la verosimilitud perfil de Grimshaw (1993) en θ = ξ/β: ξ(θ) = media(ln(1 + θy)) y
+    −ln L(θ) = n·ln(ξ(θ)/θ) + n·(1 + ξ(θ)), minimizada en una variable (otra vía que la de la ficha)."""
+    n = len(y)
+
+    def menos_l(t):
+        x = np.mean(np.log1p(t * y))
+        return n * math.log(x / t) + n * (1 + x)
+    res = optimize.minimize_scalar(menos_l, bounds=(-(1 - 1e-12) / y.max(), 1e3 / y.mean()), method="bounded",
+                                   options={"xatol": 1e-14, "maxiter": 10_000})
+    xi = float(np.mean(np.log1p(res.x * y)))
+    return xi, xi / res.x
+
+
+def _nll_gpd(xi, b, y):
+    return len(y) * math.log(b) + (1 + 1 / xi) * float(np.sum(np.log1p(xi * y / b)))
+
+
+@pytest.mark.parametrize("datos,nivel", [(R._R_VAR_COLAS, 0.975), ("t3", 0.99), ("t5", 0.975)])
+def test_evt_pot_es_el_maximo_de_verosimilitud_a_la_tolerancia_de_la_ficha(datos, nivel):
+    if isinstance(datos, str):
+        datos = [float(x) for x in 0.01 * np.random.default_rng(int(datos[1])).standard_t(int(datos[1]), 3000)]
+    res, _ = _correr("RISK-VAR-001", {"rendimientos": datos}, {"metodo": "evt_pot", "nivel": nivel})
+    d = res["detalle_metodo"]
+    perd = -np.array(datos)
+    u = float(np.quantile(perd, 0.90))
+    y = perd[perd > u] - u
+    xi, b = _gpd_perfil(y)
+    var = u + b / xi * ((len(perd) / len(y) * (1 - nivel)) ** (-xi) - 1)
+    es = (var + b - xi * u) / (1 - xi)
+    tol = R.FICHAS_TOL["RISK-VAR-001"]
+    assert res["var"] == pytest.approx(var, rel=tol) and res["es"] == pytest.approx(es, rel=tol)
+    assert d["xi"] == pytest.approx(xi, abs=tol) and d["beta"] == pytest.approx(b, rel=tol)
+    assert _nll_gpd(d["xi"], d["beta"], y) <= _nll_gpd(xi, b, y) + 1e-9      # no es peor que la referencia
+    # el ajuste por defecto de scipy (fmin con xtol 1e-4) no llegaba a esa precisión en la primera serie (H-03)
+    if nivel == 0.975 and len(datos) == len(R._R_VAR_COLAS) and datos == R._R_VAR_COLAS:
+        g = stats.genpareto.fit(y, floc=0)
+        assert abs(g[0] - xi) > tol
+
+
+def _garch_referencia(x):
+    """QMLE con objetivo de varianza en (α, β) por Powell desde tres arranques, con la recursión en un bucle propio."""
+    e = np.asarray(x) - np.mean(x)
+    v = float(np.var(e))
+
+    def nll(th):
+        a, b = th
+        if a <= 0 or b <= 0 or a + b >= 1:
+            return 1e12
+        h, tot = v, 0.0
+        for t in range(len(e)):
+            if t:
+                h = v * (1 - a - b) + a * e[t - 1] ** 2 + b * h
+            tot += math.log(h) + e[t] ** 2 / h
+        return 0.5 * tot
+    mejor = min((optimize.minimize(nll, x0, method="Powell", options={"xtol": 1e-10, "ftol": 1e-13})
+                 for x0 in ([0.05, 0.9], [0.15, 0.8], [0.02, 0.97])), key=lambda o: o.fun)
+    return float(mejor.x[0]), float(mejor.x[1]), nll
+
+
+@pytest.mark.parametrize("serie", ["control", "otra"])
+def test_garch_qmle_y_var_filtrado_frente_a_un_optimo_de_referencia(serie):
+    """H-03 y H-08 (QR04): el VaR y el ES publicados del histórico filtrado son los de un óptimo de referencia calculado
+    aparte, a la tolerancia de la ficha, y ω = σ̄²(1 − α − β)."""
+    x = np.array(R._R_VAR_GARCH if serie == "control" else _garch_simulado(5e-6, 0.12, 0.8, 800, 77) + 0.0002)
+    res, _ = _correr("RISK-VAR-001", {"rendimientos": x.tolist()}, {"metodo": "historico_filtrado"})
+    g = res["detalle_metodo"]["garch"]
+    a, b, nll = _garch_referencia(x)
+    assert nll([g["alpha"], g["beta"]]) <= nll([a, b]) + 1e-9 * abs(nll([a, b]))
+    e = x - x.mean()
+    v = float(np.var(e))
+    assert g["omega"] == pytest.approx(v * (1 - g["alpha"] - g["beta"]), rel=1e-12)
+    hs = [v]
+    for t in range(1, len(e)):
+        hs.append(v * (1 - a - b) + a * e[t - 1] ** 2 + b * hs[-1])
+    z = e / np.sqrt(hs)
+    sig = math.sqrt(v * (1 - a - b) + a * e[-1] ** 2 + b * hs[-1])
+    q = float(np.quantile(z, 0.025))
+    tol = R.FICHAS_TOL["RISK-VAR-001"]
+    assert res["var"] == pytest.approx(-(x.mean() + sig * q), rel=tol)
+    assert res["es"] == pytest.approx(-(x.mean() + sig * float(np.mean(z[z <= q]))), rel=tol)
+
+
+def test_caso_fhs_falla_con_omega_sin_objetivo_de_varianza():
+    """Contraejemplo del caso de FHS (mutante QR04 del revisor): ω = σ̄²(1 − α) y σ_T+1 rehecha con ese ω."""
+    caso = R.CASOS_CONTROL["RISK-VAR-001"][5]
+    res, _ = _correr("RISK-VAR-001", _valores_caso(caso), caso["parametros"])
+    assert caso["comprobar"](res)
+    x = np.array(R._R_VAR_GARCH)
+    g = dict(res["detalle_metodo"]["garch"])
+    g["omega"] = float(np.var(x - x.mean())) * (1 - g["alpha"])
+    var, es, sig = R._fhs_con(x, g["omega"], g["alpha"], g["beta"], 0.975)
+    malo = {**res, "var": var, "es": es, "detalle_metodo": {**res["detalle_metodo"], "garch": g, "sigma_siguiente": sig}}
+    assert not caso["comprobar"](malo)
+
+
+@pytest.mark.parametrize("cual", ["gpd", "garch"])
+def test_sin_convergencia_del_optimizador_se_rechaza(monkeypatch, cual):
+    monkeypatch.setattr(R, "_ITERACIONES_POR_PARAMETRO", 1)
+    metodo = "evt_pot" if cual == "gpd" else "historico_filtrado"
+    with pytest.raises(ErrorFicha, match="sin convergencia"):
+        _correr("RISK-VAR-001", {"rendimientos": R._R_VAR_COLAS}, {"metodo": metodo})
+
+
+# --- H-04: la configuración del Motor, leída en cada llamada (no la de por defecto al importar)
+def test_los_numeros_de_configuracion_no_se_fijan_al_importar():
+    for f in ("ML-CAL-001", "ML-PRED-001"):
+        assert R.PARAMETROS_POR_DEFECTO[f]["replicas"] is None and R.PARAMETROS_POR_DEFECTO[f]["nivel_ic"] is None
+    assert all(isinstance(x, str) for d in R.UMBRALES["DEC-VOI-001"]["umbrales"].values() for x in d.values())
+
+
+def test_dec_voi_lee_los_umbrales_y_la_banda_de_ht03_de_la_configuracion():
+    cfg = cargar_config(extra={"parametros_ht03": {"umbrales": {"E": 62}, "banda_marginal": 2}})
+    v = {**R._VOI_U, "verosimilitud": {"desviacion": 0.0}}
+    r, _ = _correr_cfg("DEC-VOI-001", v, {"coste_uc": 0.5}, cfg)
+    d = next(x for x in r["decisiones"] if x["decision"] == "umbral E (E)")
+    assert d["umbral"] == 62 and r["banda_marginal"] == 2
+    assert d["evpi"] == pytest.approx((66 - 62) ** 2 / (2 * 14) - max(59 - 62, 0), abs=1e-12)
+    r0, _ = _correr("DEC-VOI-001", v, {"coste_uc": 0.5})                       # sin configuración: la de por defecto
+    assert next(x for x in r0["decisiones"] if x["decision"] == "umbral E (E)")["umbral"] == parametro(None, "parametros_ht03.umbrales")["E"]
+    # la banda de la configuración decide la regla simple: rango 56–58 con A 55 alcanza ±5 pero no ±0,5
+    rango = {"puntuacion": {"dimension": "A", "actual": 57.0}, "rango_plausible": {"inferior": 56.0, "superior": 58.0, "fuente": "s"}}
+    assert not _correr("DEC-VOI-001", rango, {"coste_uc": 0.0})[0]["regla_simple_voi_cero"]
+    estrecha = cargar_config(extra={"parametros_ht03": {"banda_marginal": 0.5}})
+    assert _correr_cfg("DEC-VOI-001", rango, {"coste_uc": 0.0}, estrecha)[0]["regla_simple_voi_cero"]
+
+
+@pytest.mark.parametrize("ficha,caso", [("ML-CAL-001", 0), ("ML-PRED-001", 1)])
+def test_ml_cal_y_ml_pred_leen_el_bootstrap_de_la_configuracion(ficha, caso):
+    cfg = cargar_config(extra={"evaluacion": {"bootstrap_replicas": 37, "nivel_ic": 0.8}})
+    c = R.CASOS_CONTROL[ficha][caso]
+    r, _ = _correr_cfg(ficha, _valores_caso(c), c["parametros"], cfg)
+    mj = r["mejora_frente_referencia"] if ficha == "ML-PRED-001" else next(iter(r["horizontes"].values()))["mejora_frente_referencia"]
+    assert mj["replicas"] == 37 and mj["nivel"] == 0.8
+    r2, _ = _correr_cfg(ficha, _valores_caso(c), {**c["parametros"], "replicas": 41}, cfg)   # la petición manda
+    mj2 = r2["mejora_frente_referencia"] if ficha == "ML-PRED-001" else next(iter(r2["horizontes"].values()))["mejora_frente_referencia"]
+    assert mj2["replicas"] == 41 and mj2["nivel"] == 0.8
+    r0, _ = _correr(ficha, _valores_caso(c), c["parametros"])
+    mj0 = r0["mejora_frente_referencia"] if ficha == "ML-PRED-001" else next(iter(r0["horizontes"].values()))["mejora_frente_referencia"]
+    assert mj0["replicas"] == parametro(None, "evaluacion.bootstrap_replicas")
+    with pytest.raises(ErrorFicha, match="máximo"):                           # la cota vale también para la configuración
+        _correr_cfg(ficha, _valores_caso(c), c["parametros"], cargar_config(extra={"evaluacion": {"bootstrap_replicas": 10 ** 6}}))
+
+
+def test_scn_h_lee_las_sesiones_de_los_horizontes_de_la_configuracion():
+    cfg = cargar_config(extra={"horizontes": {"H3": {"meses": 3}}})
+    c = R.CASOS_CONTROL["SCN-H-001"][2]
+    r, _ = _correr_cfg("SCN-H-001", _valores_caso(c), c["parametros"], cfg)
+    assert r["horizontes"]["H3"]["pasos_sesiones"] == 3 * parametro(None, "calendario.sesiones_por_mes")
+
+
+def test_por_el_motor_dec_voi_usa_la_configuracion_del_motor(tmp_path):
+    m = _motor(tmp_path, {"parametros_ht03": {"umbrales": {"E": 64}}})
+    c = R.CASOS_CONTROL["DEC-VOI-001"][0]
+    r = m.servir({"operacion": "DEC-VOI-001", "datos": copy.deepcopy(c["datos"]), "parametros": dict(c["parametros"])}, "AG-18")
+    assert r["estado"].startswith("SERVED")
+    assert next(x for x in r["resultado"]["decisiones"] if x["decision"] == "umbral E (E)")["umbral"] == 64
+
+
+def test_configuracion_que_no_es_un_objeto_se_rechaza():
+    with pytest.raises(ErrorFicha, match="configuración"):
+        R.FICHAS["DEC-VOI-001"]["fn"]({**_ent(R._VOI_U), "configuracion": [1]}, {"coste_uc": 1})

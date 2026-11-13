@@ -3,7 +3,7 @@
 | Campo | Valor |
 | --- | --- |
 | Módulo | `bloque_a/11_Ejecutor/bloque_a/motor/fichas_reales.py` |
-| Pruebas | `bloque_a/11_Ejecutor/tests/test_fase2_reales.py`: **505 pruebas, todas en verde** (≈ 19 s) |
+| Pruebas | `bloque_a/11_Ejecutor/tests/test_fase2_reales.py`: **585 pruebas, todas en verde** (≈ 21 s; 505 en r01, §Ronda r02) |
 | Mutantes | `.docs/tickets/T-112/revisores/impl_P_mutantes.py` (resultado en §Mutantes) |
 | Fichas | REI-CAP-001, REI-FFO-001, REI-NAV-001, CMD-INV-001, CMD-RETDEC-001, CHR-FLOW-001, CHR-FUND-001, ALT-DESMOOTH-001 |
 | Fuente | Catálogo V5.0: §2, §3, §11–§14 (cada ficha por su identificador) y §20. Nada de `99_Historico*` |
@@ -27,8 +27,9 @@ la entrada REI-CAP-001 de `IMPLEMENTADAS` se sustituye y la ficha sale de `DOCUM
   - un resultado nunca lleva NaN ni inf;
   - un bloque opcional sin datos se entrega como `None` y se declara en las limitaciones.
 - **Umbrales y parámetros.** Una petición que traiga una clave de `UMBRALES` se rechaza («umbral fijo de la ficha»).
-  Cada parámetro tiene tipo y rango (`_validar_parametros`). Las claves que la ficha no declara se ignoran, porque el
-  servicio añade `clase`.
+  Cada parámetro tiene tipo y rango (`_validar_parametros`), con cota superior en los tamaños. Una clave que la ficha no
+  declara se rechaza, salvo `clase`, que añade el servicio (ronda r02, H-02).
+- **Fecha de corte.** Con `ent["fecha_corte"]`, un dato en línea fechado después se rechaza (ronda r02, H-07).
 - **Advertencias.** Las «Supuestos y limitaciones» de cada ficha van en `resultado["advertencias"]`, no en las
   limitaciones.
 - **Determinismo.** Ninguna ficha usa azar: las ocho declaran semilla `null`. El arranque del estimador GLM es fijo.
@@ -408,3 +409,128 @@ Todas las marcadas `[PROPUESTO]` arriba:
   - identidad exacta de la media con término de borde (sin recentrar);
   - GLM por máxima verosimilitud exacta con la representación invertible y arranque del filtro con la observada;
   - Dimson con L = k.
+
+## Ronda r02 · correcciones de la QA r01
+
+La QA r01 (`qa.md`) dejó al grupo P con H-01, H-02, H-07 (por analogía) y H-08 (mutante QP02). Lo que cambió, por
+hallazgo. El contrato del servicio es el nuevo: `ent["configuracion"]` y `ent["fecha_corte"]`. P solo usa la fecha de
+corte: ninguna de sus ocho fichas lee la configuración.
+
+### H-02 · un parámetro no declarado se rechaza
+
+- `_parametros` rechaza las claves que no están en `PARAMETROS_POR_DEFECTO`, como S y V, con el motivo «parámetros no
+  declarados en la ficha». Se exceptúan las de `AJENOS` = {`clase`}, que añade `Motor.servir`.
+- Las ocho declaran semilla `null`, así que una `semilla` en `parametros` también se rechaza.
+- Pruebas:
+  - una errata por ficha (`Ventana`, `capex_pct_renta`, `cap_objetiv`, `excluir_años`, `calendario roll`, `ventana_Z`,
+    `ponderación` y, en ALT, `metodo ` y `fi`, el ejemplo de la QA), más `semilla`;
+  - `clase` no cambia la cifra, en las ocho (antes solo en REI-CAP).
+
+### H-01 · cota superior para cada tamaño
+
+Ninguna de las ocho fichas fija un máximo para sus ventanas. Las cotas salen de los horizontes del Documento 0
+(«Horizontes»: H2 semanas, 2–8 semanas; H5 décadas, 5–30 años). Son valores fijos en `UMBRALES`, así que la petición no
+los puede cambiar.
+
+| Ficha · parámetro | Cota | Origen |
+| --- | --- | --- |
+| REI-CAP-001 · `ventana` (años) | 15–**30** | `[PROPUESTO]` H5 (5–30 años), el horizonte más largo del sistema |
+| CHR-FLOW-001 · `ventanas` (sesiones) | 1–**40**, y como mucho 40 ventanas distintas | `[PROPUESTO]` final de H2 (8 semanas × 5 sesiones, `calendario.sesiones_por_semana`), el horizonte más largo de la ficha («Perfiles y horizontes»: H1–H2) |
+| CHR-FLOW-001 · `ventana_z` (años) | 1–**30** | `[PROPUESTO]` H5 |
+| CHR-FUND-001 · `ventana_percentil` (días) | 365–**10 950** | `[PROPUESTO]` H5 en días (30 × 365, Real/365) |
+| CMD-INV-001 · `excluir_anos` (número de años) | **10** | máximo de `anos_estacional` (ficha, 3–10): excluir más años de los que puede tener la referencia no tiene sentido |
+| CMD-INV-001 · `anos_estacional` | 3–10 | ficha (ya estaba) |
+| ALT-DESMOOTH-001 · `k` (orden GLM y rezagos de Dimson) | 1–3 | ficha (ya estaba) |
+
+REI-FFO-001, REI-NAV-001 y CMD-RETDEC-001 no tienen parámetros de tamaño.
+
+**Defensa en profundidad: la verosimilitud GLM.** La matriz densa n × n hacía que el coste creciera con n³ en tiempo y
+con n² en memoria. Con una serie larga en la petición, el proceso podía agotar la memoria o tardar sin fin práctico, el
+mismo problema de H-01 por la vía de los datos. Ahora es un Cholesky en banda (`linalg.cholesky_banded`), de coste
+O(n·k²):
+- es la misma verosimilitud: coincide con la densa a 1e-15;
+- n = 10 000 tarda 0,14 s.
+
+Una consecuencia, que también estaba en r01: el arranque «θ iguales» cae en el borde de invertibilidad, porque las raíces
+de 1 + z + … + z^k están en el círculo unidad. En series muy largas (n ≳ 1 000), el optimizador a veces se queda ahí y
+la ficha rechaza («no invertible»). Falla cerrado, y en series de tamaño realista no pasa: 0 rechazos de 20 con n = 120,
+200 y 400. Va a INC-T112-01 como observación.
+
+**Arreglo encontrado al repasar los oráculos de la QA (`r01_05`).** Con los datos 1 del revisor, el óptimo cae en θ0 ≈ 0,
+un retardo puro. Al reflejar la raíz en z ≈ 0, el código dejaba un coeficiente del orden del redondeo, cuyo signo
+dependía del último bit:
+- con la factorización densa salió positivo y se sirvió;
+- con la de banda salió −0,0… y se rechazó por «θ < 0».
+
+`_invertible` pone a 0 un coeficiente negativo dentro de la tolerancia de la ficha (1e-8). Hay prueba de regresión con
+esos datos y con θ0 ∈ {0, ±1e-17}.
+
+### H-07 · ningún dato en línea posterior a la fecha de corte
+
+`_hasta_corte` rechaza, con «posterior a la fecha de corte (no conocible)», todo dato en línea fechado después de
+`ent["fecha_corte"]`. Es lo mismo que hace el servicio con las series de HT-01 (FUGA_DE_INFORMACION) y REI-NAV-001 con un
+NAV posterior al precio. Por ficha:
+
+| Ficha | Fechas que se comprueban | No se comprueban (no son fuga) |
+| --- | --- | --- |
+| REI-CAP-001 | `historia` | — |
+| REI-NAV-001 | `fecha_precio` (el NAV ya no podía ser posterior), `historia_prima`; **regla nueva**: la historia de la prima no puede pasar de la fecha de precio, con o sin corte | — |
+| REI-FFO-001 | `historia_multiplos`; ejercicios, ver abajo | — |
+| CMD-INV-001 | `fecha_publicacion` de cada observación (≥ su periodo), `pendiente_curva` | — |
+| CMD-RETDEC-001 | `fechas` de índices o contratos | `calendario_roll` (un roll programado se conoce antes) |
+| CHR-FUND-001 | historias de cada plataforma, `futuro`, `spot`, `capitalizacion` | `vencimiento` del futuro |
+| CHR-FLOW-001 | `fecha_publicacion` de los flujos, oferta de cada stablecoin, `capitalizacion_total` | — |
+| ALT-DESMOOTH-001 | `rentabilidades` y `mercado`, en línea o por `series_rol` | — |
+
+Decisiones `[PROPUESTO]` nuevas:
+- **REI-FFO-001: los ejercicios.** La ficha no da fecha de presentación. Se admite un campo opcional
+  `fecha_presentacion` por ejercicio:
+  - si llega, no puede ser de un año anterior al ejercicio, y con fecha de corte no puede ser posterior a ella;
+  - si no llega, con fecha de corte se rechaza el ejercicio del año del corte o posterior (sin cerrar o sin presentar);
+  - el del año anterior al corte se sirve, con la limitación «sin `fecha_presentacion`: no se comprueba que se
+    conociera».
+- **Fechas de referencia sin fecha de publicación.** Los índices de tasación (ALT, REI-CAP, REI-NAV) se publican con
+  retraso, pero sus fichas no piden fecha de publicación. Se exige fecha ≤ corte y nada más.
+- **El corte rechaza; no recorta.** Un dato posterior rechaza la petición, sin excluirlo con una limitación. Es la regla
+  de REI-NAV-001 y la del servicio con HT-01.
+- **REI-NAV-001: los datos sintéticos del caso de control.** La historia de la prima llegaba hasta el 2026-12-31, con el
+  precio a 2026-09-30. Ahora termina el 2026-09-30, con los mismos valores y los mismos 12 años. El caso sigue superado.
+
+Pruebas:
+- las siete fichas fechadas, con el corte en la última fecha, dan la misma cifra que sin corte; con el corte un día
+  antes, se rechazan;
+- cada bloque opcional fechado (historia de la prima, pendiente de la curva, capitalización, una plataforma,
+  stablecoins, mercado) también respeta el corte;
+- el vencimiento del futuro y un roll programado después del corte no son fuga;
+- REI-FFO-001, de punta a punta;
+- niveles por `series_rol`;
+- una fecha de corte ilegible se rechaza;
+- integración por `Motor.servir`: el rechazo queda en RC, y una errata en `parametros` se rechaza.
+
+### H-08 · mutante QP02 (MDD sin el punto de partida)
+
+Nuevo caso de control de ALT-DESMOOTH-001: «MDD antes y después (RISK-DD-001) con una caída desde el inicio de la serie,
+a mano»:
+- la serie real cae −10 % y −5 % en los dos primeros trimestres desuavizados y después solo sube, así que su MDD es
+  1 − 0,90 · 0,95 = 14,5 %; sin el punto de partida saldría 5 %;
+- el MDD observado se comprueba con un recorrido propio que arranca en la riqueza 1.
+
+Hay además una prueba con φ = 0 y un oráculo con `cummax`. ALT-DESMOOTH-001 pasa a cinco casos de control; el grupo, a
+26.
+
+### Pruebas y mutantes
+
+- `tests/test_fase2_reales.py`: **585 pruebas** (505 en r01), en verde en unos 21 s.
+- Con `tests/test_t112_motor.py`, 638 en verde. Las 2 que fallan en ese fichero son ACC-VAL-001 y FIR-CURVE-001, del
+  grupo V, que se estaba editando a la vez.
+- ruff y mypy (`--ignore-missing-imports`), sin hallazgos en el módulo ni en las pruebas. ruff se ejecuta desde la raíz,
+  con la configuración del gate.
+- Todo se pasó sobre copias en `<scratchpad>/r02_P/`; el árbol no se tocó.
+
+| Script | Resultado |
+| --- | --- |
+| `revisores/impl_P_mutantes.py` | **65 mutantes, 0 vivos frente a CC y T** (copia sin mutar: 585 en verde). De los 50 de fórmula, los CC cazan 48; P61 (beta sin sumar los rezagos) y P64 (percentil estricto, ensayado con REI-CAP) los cazan las pruebas, como en r01. Los mutantes no cambiaron: siguen aplicándose todos sobre el código nuevo |
+| `revisores/r01_10_mutantes.py --solo QP01…QP04` | Los cuatro mueren. QP01, QP02 y QP04 ya ante los casos de control; QP03, con `test_alt_oraculo_beta_dimson`. Lo comprobé también con `test_fase2_reales.py` solo, porque la T del script incluye `test_t112_motor.py`, que falla por las dos fichas de V |
+| `r01_06_hostiles.py`, parte P (bloques 1, 2, 3 y 5 restringidos a las ocho fichas), con y sin `ulimit -v 6 GB` | **10/10** en las dos: 588 llamadas del fuzzer sin excepciones, una entrada en RC por llamada y nada no finito; ningún parámetro no declarado se sirve; ningún umbral se cambia; determinista en dos Motores |
+| Bloques 4 y 7 de `r01_06` adaptados a P (cotas por `_parametros` con 10¹², y fuga por `Motor.servir` con corte 2000-01-01) | **22/22** |
+| `r01_05_oraculos_P.py` (oráculos de la QA, statsmodels incluido) | **30/30** |

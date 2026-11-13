@@ -137,16 +137,18 @@ def test_ningun_umbral_se_cambia_desde_la_peticion(ficha, umbral):
 
 
 DOMINIO_MALO = [
-    ("REI-CAP-001", "base_noi", ["mixta", 3, True]), ("REI-CAP-001", "ventana", [14, 0, -5, 20.5, "20", True, math.nan]),
+    ("REI-CAP-001", "base_noi", ["mixta", 3, True]),
+    ("REI-CAP-001", "ventana", [14, 0, -5, 20.5, "20", True, math.nan, 31, 20261110, 1e308]),
     ("REI-FFO-001", "capex_mantenimiento", ["calculado", 1]),
     ("REI-FFO-001", "capex_pct_rentas", [-0.01, 1.0, 1.5, "0,1", math.inf]),
     ("REI-NAV-001", "nav_variante", ["IFRS", 1]), ("REI-NAV-001", "cap_objetivo", [0, 1, -0.05, 1.2, "0,05", math.nan]),
     ("CMD-INV-001", "anos_estacional", [2, 11, 4.5, "5", True]),
-    ("CMD-INV-001", "excluir_anos", [2020, [2020, 2020], ["2020"], [2020.5], [0]]),
+    ("CMD-INV-001", "excluir_anos", [2020, [2020, 2020], ["2020"], [2020.5], [0], list(range(1990, 2001))]),
     ("CMD-RETDEC-001", "calendario_roll", ["propio", 1]), ("CMD-RETDEC-001", "frecuencia", ["diaria", "semanal", 12]),
-    ("CHR-FLOW-001", "ventanas", [[], [0], [5, 5], [2.5], 5, ["5"]]), ("CHR-FLOW-001", "ventana_z", [0, 0.5, -1, "1"]),
+    ("CHR-FLOW-001", "ventanas", [[], [0], [5, 5], [2.5], 5, ["5"], [41], [5, 20261110], [1e308], list(range(1, 42))]),
+    ("CHR-FLOW-001", "ventana_z", [0, 0.5, -1, "1", 31, 20261110, 1e308]),
     ("CHR-FUND-001", "ponderacion", ["capitalizacion", 0]),
-    ("CHR-FUND-001", "ventana_percentil", [364, 30, 365.5, "365", math.inf]),
+    ("CHR-FUND-001", "ventana_percentil", [364, 30, 365.5, "365", math.inf, 10951, 20261110, 1e308]),
     ("ALT-DESMOOTH-001", "metodo", ["Okunev", 1]), ("ALT-DESMOOTH-001", "k", [0, 4, 1.5, "2", True]),
     ("ALT-DESMOOTH-001", "phi", [-0.1, 1.0, 1.2, "0,4", math.nan]),
 ]
@@ -160,7 +162,7 @@ def test_dominio_de_cada_parametro(ficha, param, malo):
 
 
 @pytest.mark.parametrize("ficha,params", [
-    ("REI-CAP-001", {"ventana": 15}), ("REI-CAP-001", {"ventana": 40}),
+    ("REI-CAP-001", {"ventana": 15}), ("REI-CAP-001", {"ventana": 30}),
     ("REI-NAV-001", {"cap_objetivo": 0.0451}), ("CMD-INV-001", {"anos_estacional": 3}),
     ("CMD-INV-001", {"anos_estacional": 10}), ("CHR-FLOW-001", {"ventanas": [1, 7, 30], "ventana_z": 2}),
     ("CHR-FUND-001", {"ponderacion": "igual", "ventana_percentil": 500}),
@@ -179,11 +181,61 @@ def test_phi_fijado_solo_con_geltner():
         _correr("ALT-DESMOOTH-001", v, {"metodo": "GLM", "phi": 0.3})
 
 
-def test_claves_desconocidas_de_la_peticion_se_ignoran():
-    v, p = _base("REI-CAP-001")
-    a = _correr("REI-CAP-001", v, p)
-    b = _correr("REI-CAP-001", v, {**p, "clase": "REI"})
+@pytest.mark.parametrize("ficha", FICHAS_P)
+def test_la_clase_que_anade_el_servicio_no_cambia_la_cifra(ficha):
+    v, p = _base(ficha)
+    a = _correr(ficha, v, p)
+    b = _correr(ficha, v, {**p, "clase": "REI"})
     assert json.dumps(a, sort_keys=True) == json.dumps(b, sort_keys=True)
+
+
+# QA r01 de T-112, H-02: una errata en el nombre de un parámetro se rechaza (antes se servía con el valor por defecto)
+ERRATAS = {"REI-CAP-001": {"Ventana": 15}, "REI-FFO-001": {"capex_pct_renta": 0.08}, "REI-NAV-001": {"cap_objetiv": 0.05},
+           "CMD-INV-001": {"excluir_años": [2021]}, "CMD-RETDEC-001": {"calendario roll": "declarado"},
+           "CHR-FLOW-001": {"ventana_Z": 2}, "CHR-FUND-001": {"ponderación": "igual"},
+           "ALT-DESMOOTH-001": {"metodo ": "GLM", "fi": 0.1}}
+
+
+@pytest.mark.parametrize("ficha", FICHAS_P)
+def test_un_parametro_no_declarado_se_rechaza(ficha):
+    v, p = _base(ficha)
+    assert set(ERRATAS[ficha]).isdisjoint(fr.PARAMETROS_POR_DEFECTO[ficha])
+    with pytest.raises(ErrorFicha, match="no declarados en la ficha"):
+        _correr(ficha, v, {**p, **ERRATAS[ficha]})
+    with pytest.raises(ErrorFicha, match="no declarados en la ficha"):
+        _correr(ficha, v, {**p, "semilla": 1})                          # las ocho declaran semilla null
+
+
+# QA r01 de T-112, H-01: cada parámetro de tamaño tiene cota superior; el extremo se admite y el siguiente se rechaza
+COTAS = [("REI-CAP-001", "ventana", "ventana_anios_maxima", lambda x: x, 10 ** 12),
+         ("CMD-INV-001", "excluir_anos", "excluir_anos_maximos", lambda x: list(range(1990 - x, 1990)), None),
+         ("CHR-FLOW-001", "ventanas", "ventana_sesiones_maxima", lambda x: [x], [10 ** 12]),
+         ("CHR-FLOW-001", "ventana_z", "ventana_z_anios_maxima", lambda x: x, 10 ** 12),
+         ("CHR-FUND-001", "ventana_percentil", "ventana_percentil_dias_maxima", lambda x: x, 10 ** 12)]
+
+
+def test_las_cotas_salen_de_los_horizontes_del_documento_0():
+    U = fr.UMBRALES
+    assert fr.ANIOS_H5_MAX == 30 and fr.SEMANAS_H2_MAX == 8 and fr.SESIONES_SEMANA == 5
+    assert U["REI-CAP-001"]["ventana_anios_maxima"] == U["CHR-FLOW-001"]["ventana_z_anios_maxima"] == 30
+    assert U["CHR-FLOW-001"]["ventana_sesiones_maxima"] == 40
+    assert U["CHR-FUND-001"]["ventana_percentil_dias_maxima"] == 30 * 365
+    assert U["CMD-INV-001"]["excluir_anos_maximos"] == U["CMD-INV-001"]["rango_anos_estacional"][1] == 10
+    assert U["ALT-DESMOOTH-001"]["rango_k"] == (1, 3)                    # k ya tiene la cota de la ficha (1–3)
+
+
+@pytest.mark.parametrize("ficha,param,umbral,valor,enorme", COTAS, ids=[f"{c[0]}:{c[1]}" for c in COTAS])
+def test_cota_superior_de_cada_tamano(ficha, param, umbral, valor, enorme):
+    v, p = _base(ficha)
+    cota = fr.UMBRALES[ficha][umbral]
+    assert fr._parametros(ficha, {param: valor(cota)})[param] == valor(cota)
+    res, _ = _correr(ficha, v, {**p, param: valor(cota)})                # el extremo se sirve
+    json.dumps(res, allow_nan=False)
+    with pytest.raises(ErrorFicha, match="máximo"):
+        _correr(ficha, v, {**p, param: valor(cota + 1)})
+    if enorme is not None:
+        with pytest.raises(ErrorFicha, match="máximo"):
+            _correr(ficha, v, {**p, param: enorme})
 
 
 # ============================================================================= entradas hostiles
@@ -345,6 +397,7 @@ def _nav(misma=False):
     (lambda v: v["componentes"][0].update(otros_pasivos=0.25e9), "NAV ≠ GAV"),
     (lambda v: v["componentes"][1].update(fecha_precio="2026-09-29"), "misma fecha de precio"),
     (lambda v: v["componentes"][1].update(id="A"), "repetido"),
+    (lambda v: v["historia_prima"][-1].update(fecha="2026-10-31"), "posterior a la fecha de precio"),
     (lambda v: v["componentes"][0].update(cap_rate_tasacion=0), "cap_rate_tasacion"),
     (lambda v: v.update(componentes=[]), "lista no vacía"),
 ])
@@ -673,8 +726,10 @@ def test_chr_flow_rechazos(cambio, motivo):
 
 def test_chr_flow_ventana_sin_patrimonio_previo_y_opcionales():
     v = _flow()
+    w = copy.deepcopy(v)
+    w["flujos_etf"] = w["flujos_etf"][::8]                              # 38 sesiones en más de 120 días
     with pytest.raises(ErrorFicha, match="sin patrimonio previo"):
-        _correr("CHR-FLOW-001", v, {"ventanas": [300]})
+        _correr("CHR-FLOW-001", w, {"ventanas": [fr.UMBRALES["CHR-FLOW-001"]["ventana_sesiones_maxima"]]})
     v.pop("capitalizacion_total")
     res, lim = _correr("CHR-FLOW-001", v)
     assert res["razon_stablecoins_capitalizacion_pct"] is None and any("capitalización total" in x for x in lim)
@@ -834,3 +889,182 @@ def test_rei_ffo_percentil_cuenta_los_empates():
     h = np.array([a for a, _ in fr._FFO_HIST])
     assert np.sum(h == res["p_ffo"]) == 1 and res["percentil_p_ffo"] == float(np.mean(h <= res["p_ffo"]))
     assert res["percentil_p_ffo"] > float(np.mean(h < res["p_ffo"]))
+
+
+# ============================================================================= fecha de corte (QA r01 de T-112, H-07)
+def _con_corte(valores, corte):
+    return {"valores": copy.deepcopy(valores), "series": {}, "series_rol": {}, "fecha_corte": corte}
+
+
+def _ultima_fecha(ficha, v):
+    """Última fecha de los datos en línea de la ficha (la de publicación donde la hay)."""
+    if ficha == "REI-CAP-001":
+        return v["historia"][-1]["fecha"]
+    if ficha == "REI-NAV-001":
+        return v["componentes"][0]["fecha_precio"]
+    if ficha == "CMD-INV-001":
+        return v["inventarios"]["observaciones"][-1]["fecha_publicacion"]
+    if ficha == "CMD-RETDEC-001":
+        return v["indices"]["fechas"][-1]
+    if ficha == "CHR-FUND-001":
+        return v["spot"][-1]["fecha"]
+    if ficha == "CHR-FLOW-001":
+        return max([f["fecha_publicacion"] for f in v["flujos_etf"]] + [x["fecha"] for s in v["oferta_stablecoins"].values()
+                                                                        for x in s])
+    return v["rentabilidades"][-1]["fecha"]
+
+
+CON_FECHAS = [f for f in FICHAS_P if f != "REI-FFO-001"]
+
+
+@pytest.mark.parametrize("ficha", CON_FECHAS)
+def test_fecha_corte_en_la_ultima_fecha_da_la_misma_cifra(ficha):
+    v, p = _base(ficha)
+    a, _ = fr.FICHAS[ficha]["fn"](_ent(v), dict(p))
+    b, _ = fr.FICHAS[ficha]["fn"](_con_corte(v, _ultima_fecha(ficha, v)), dict(p))
+    assert json.dumps(a, sort_keys=True) == json.dumps(b, sort_keys=True)
+
+
+@pytest.mark.parametrize("ficha", CON_FECHAS)
+def test_dato_posterior_a_la_fecha_de_corte_se_rechaza(ficha):
+    v, p = _base(ficha)
+    corte = (pd.Timestamp(_ultima_fecha(ficha, v)) - pd.Timedelta(days=1)).date().isoformat()
+    with pytest.raises(ErrorFicha, match="posterior a la fecha de corte"):
+        fr.FICHAS[ficha]["fn"](_con_corte(v, corte), dict(p))
+
+
+@pytest.mark.parametrize("ficha,ruta,fecha", [
+    ("REI-NAV-001", ("componentes",), [dict(c, fecha_precio="2026-12-31", fecha_nav="2026-11-30")
+                                        for c in fr._datos_rei_nav(False)["componentes"]]),
+    ("CMD-INV-001", ("pendiente_curva",), [{"fecha": "2024-12-31", "pendiente": 0.1}, {"fecha": "2026-11-30", "pendiente": 0.2}]),
+    ("CHR-FUND-001", ("capitalizacion", "fecha"), "2026-12-01"),
+    ("CHR-FUND-001", ("plataformas", "P2", "historia", 0, "fecha"), "2026-12-01"),
+    ("CHR-FLOW-001", ("oferta_stablecoins", "EURX", -1, "fecha"), "2026-12-01"),
+    ("CHR-FLOW-001", ("capitalizacion_total", 0, "fecha"), "2026-12-01"),
+    ("ALT-DESMOOTH-001", ("mercado", -1, "fecha"), "2026-12-31"),
+])
+def test_cada_bloque_fechado_respeta_la_fecha_de_corte(ficha, ruta, fecha):
+    """El corte se aplica a cada bloque en línea, también a los opcionales (no solo a la serie principal)."""
+    v, p = _base(ficha)
+    _poner(v, ruta, fecha)
+    with pytest.raises(ErrorFicha, match="posterior a la fecha de corte"):
+        fr.FICHAS[ficha]["fn"](_con_corte(v, "2026-11-13"), dict(p))
+
+
+def test_chr_fund_el_vencimiento_del_futuro_puede_ser_posterior_al_corte():
+    v, p = _base("CHR-FUND-001")
+    ultima = v["spot"][-1]["fecha"]
+    assert v["futuro"][-1]["vencimiento"] > ultima
+    res, _ = fr.FICHAS["CHR-FUND-001"]["fn"](_con_corte(v, ultima), dict(p))
+    assert res["dias_vencimiento"] > 0
+
+
+def test_cmd_retdec_un_roll_programado_despues_del_corte_no_es_fuga():
+    v = fr._datos_cmd_retdec_contratos()
+    v["contratos"]["calendario_roll"].append({"desde": "2026-12-31", "contrato": "F3"})
+    res, _ = fr.FICHAS["CMD-RETDEC-001"]["fn"](_con_corte(v, v["contratos"]["fechas"][-1]), {"calendario_roll": "declarado"})
+    assert res["hasta"] == v["contratos"]["fechas"][-1]
+
+
+def test_rei_ffo_ejercicios_y_fecha_de_corte():
+    v, _ = _base("REI-FFO-001")                                          # ejercicios 2023–2025, múltiplos hasta 2025-12-31
+    with pytest.raises(ErrorFicha, match="sin cerrar o sin presentar"):
+        fr.f_rei_ffo(_con_corte(v, "2025-06-30"), {})
+    res, lim = fr.f_rei_ffo(_con_corte(v, "2026-11-13"), {})
+    assert any("[2025] sin «fecha_presentacion»" in x for x in lim)
+    a, _ = fr.f_rei_ffo(_ent(v), {})
+    assert json.dumps(a, sort_keys=True) == json.dumps(res, sort_keys=True)
+    for c in v["componentes"]:
+        for e in c["ejercicios"]:
+            e["fecha_presentacion"] = f"{e['ejercicio'] + 1}-03-15"
+    with pytest.raises(ErrorFicha, match="posterior a la fecha de corte"):
+        fr.f_rei_ffo(_con_corte(v, "2026-03-01"), {})
+    res2, lim2 = fr.f_rei_ffo(_con_corte(v, "2026-04-01"), {})
+    assert not any("fecha_presentacion" in x for x in lim2)
+    assert json.dumps(res2, sort_keys=True) == json.dumps(res, sort_keys=True)
+    v["componentes"][0]["ejercicios"][0]["fecha_presentacion"] = "2022-12-31"
+    with pytest.raises(ErrorFicha, match="antes de su ejercicio"):
+        fr.f_rei_ffo(_ent(v), {})
+    w, _ = _base("REI-FFO-001")
+    w["historia_multiplos"][-1]["fecha"] = "2026-12-31"
+    with pytest.raises(ErrorFicha, match="posterior a la fecha de corte"):
+        fr.f_rei_ffo(_con_corte(w, "2026-11-13"), {})
+
+
+def test_alt_niveles_por_rol_respetan_la_fecha_de_corte():
+    rs = fr._AD_OBS
+    niveles = pd.Series(100 * np.r_[1.0, np.cumprod(1 + rs)], index=pd.date_range("2011-12-31", periods=rs.size + 1, freq="QE"))
+    ent = {"valores": {}, "series": {}, "series_rol": {"indice_suavizado": niveles}, "fecha_corte": "2020-01-01"}
+    with pytest.raises(ErrorFicha, match="posterior a la fecha de corte"):
+        fr.f_alt_desmooth(ent, {"phi": 0.3})
+
+
+@pytest.mark.parametrize("malo", ["2026-13-45", 20261113, [], "x"])
+def test_fecha_de_corte_ilegible_se_rechaza(malo):
+    v, p = _base("CHR-FUND-001")
+    with pytest.raises(ErrorFicha, match="fecha_corte"):
+        fr.f_chr_fund(_con_corte(v, malo), dict(p))
+
+
+def test_el_motor_pasa_la_fecha_de_corte_a_las_fichas_del_grupo(tmp_path):
+    """Integración con el contrato de `Motor.servir` (ent["fecha_corte"]): el dato en línea posterior se rechaza y queda en RC."""
+    from pathlib import Path
+
+    from bloque_a.almacen import Almacen
+    from bloque_a.configuracion import cargar_config
+    from bloque_a.motor import servicio
+
+    class _Proveedor:
+        as_of = None
+        nombre = "pruebas"
+    m = servicio.Motor(Almacen(Path(tmp_path)), _Proveedor(), cargar_config())
+    caso = fr.CASOS_CONTROL["CHR-FUND-001"][1]
+    ultima = caso["datos"][0]["valores"]["spot"][-1]["fecha"]
+    antes = (pd.Timestamp(ultima) - pd.Timedelta(days=1)).date().isoformat()
+    pet = {"operacion": "CHR-FUND-001", "datos": copy.deepcopy(caso["datos"]), "parametros": {}, "fecha_corte": antes}
+    r = m.servir(pet, "AG-18")
+    assert r["estado"] == "RECHAZADO" and "posterior a la fecha de corte" in str(r.get("detalle") or r)
+    assert m.servir({**pet, "fecha_corte": ultima}, "AG-18")["estado"].startswith("SERVED")
+    r = m.servir({**pet, "fecha_corte": ultima, "parametros": {"ponderacion ": "igual"}}, "AG-18")
+    assert r["estado"] == "RECHAZADO" and "no declarados" in str(r.get("detalle") or r)
+
+
+# ============================================================================= MDD desde el inicio (QA r01 de T-112, H-08)
+def test_alt_mdd_con_caida_desde_el_inicio_a_mano():
+    """Mutante QP02: el MDD sin el punto de partida daría 5 % en vez de 1 − 0,9·0,95 = 14,5 %."""
+    serie = [0.0] + [-0.10, -0.05] + [0.01] * 30                         # φ = 0: la desuavizada es la observada sin la 1.ª
+    v = {"rentabilidades": [{"fecha": d.date().isoformat(), "r": x}
+                            for d, x in zip(pd.date_range("2010-03-31", periods=len(serie), freq="QE"), serie, strict=True)]}
+    res, _ = _correr("ALT-DESMOOTH-001", v, {"phi": 0})
+    assert res["mdd_desuavizado_pct"] == pytest.approx(14.5, rel=1e-12)
+    assert res["mdd_observado_pct"] == pytest.approx(14.5, rel=1e-12)
+    riqueza = pd.Series(np.cumprod(np.r_[1.0, 1 + np.array(serie[1:])]))
+    assert res["mdd_desuavizado_pct"] == pytest.approx(float((1 - riqueza / riqueza.cummax()).max()) * 100, rel=1e-12)
+
+
+# ============================================================================= GLM en el borde θ0 ≈ 0 (regresión de la ronda r02)
+@pytest.mark.parametrize("theta0", [0.0, 1e-17, -1e-17])
+def test_alt_invertible_con_un_retardo_puro_no_deja_coeficientes_negativos(theta0):
+    """Una raíz en z ≈ 0 reflejada hacia ∞ deja un coeficiente de redondeo: es un cero, no un θ negativo."""
+    with np.errstate(divide="ignore"):
+        c = fr._invertible(np.array([theta0, 0.74, 0.26]))
+    assert np.all(c >= 0) and c.sum() == pytest.approx(1.0, abs=1e-15)
+    assert c == pytest.approx([0.74, 0.26, 0.0], abs=1e-12)            # la misma autocovarianza, sin el retardo
+    assert np.all(np.abs(np.roots(np.trim_zeros(c[::-1], "f"))) > 1)
+
+
+def test_alt_glm_con_el_optimo_en_el_borde_se_sirve():
+    """Datos 1 del oráculo de la QA r01 (`r01_05`): MA(2) con θ = (0,6, 0,3, 0,1) y n = 120. El óptimo cae en θ0 ≈ 0 y su
+    representación invertible tiene θ2 = 0: se sirve, con Σθ = 1, θ ≥ 0, raíces fuera del círculo y resuavizado exacto."""
+    rng = np.random.default_rng(1)
+    real = 0.02 + 0.06 * rng.standard_normal(122)
+    merc = 0.015 + 0.08 * rng.standard_normal(122)
+    real = real + 0.5 * (merc - 0.015)
+    obs = np.array([0.6 * real[t] + 0.3 * real[t - 1] + 0.1 * real[t - 2] for t in range(2, 122)])
+    fechas = [d.date().isoformat() for d in pd.date_range("1996-03-31", periods=120, freq="QE")]
+    res, _ = _correr("ALT-DESMOOTH-001", {"rentabilidades": [{"fecha": f, "r": float(x)} for f, x in zip(fechas, obs, strict=True)]},
+                     {"metodo": "GLM", "k": 2})
+    th = np.array(res["theta"])
+    assert np.all(th >= 0) and th.sum() == pytest.approx(1.0, abs=1e-12)
+    assert np.all(np.abs(np.roots(np.trim_zeros(th[::-1], "f"))) > 1)
+    assert res["verificacion"]["error_resuavizado_max"] <= fr.FICHAS["ALT-DESMOOTH-001"]["tol"]

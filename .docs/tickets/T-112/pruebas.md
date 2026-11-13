@@ -32,3 +32,21 @@ Siete pruebas anteriores daban por hecho cosas que T-112 cambia:
 ## Gate
 
 Lo pasa `.docs/scripts/commit_limpio.sh` en una copia limpia. Cuotas: ruff baja de 2908 a 2907 (`tools/cuotas.txt`); mypy de A, 109, sin cambios.
+
+## Ronda r02
+
+| Suite | r01 | r02 |
+| --- | --- | --- |
+| `test_fase2_series.py` | 320 | 380 |
+| `test_fase2_riesgo.py` | 415 | 507 |
+| `test_fase2_valoracion.py` | 547 | 620 |
+| `test_fase2_reales.py` | 505 | 585 |
+| `test_t112_motor.py` | 51 | 67 |
+
+- **Casos de control:** las 57 fichas los superan (`verificar_casos_control`).
+- **Mutantes de los grupos** (`impl_*_mutantes.py` y la parte de cada grupo en `r01_10_mutantes.py`): ninguno vivo. En `impl_R_mutantes.py` hubo que cambiar el texto de M15, porque cambió la línea; el mutante es el mismo.
+- **`r01_06_hostiles.py`, por grupo:** sin fallos, con y sin `ulimit -v`. El script del revisor se corta en el bloque 5, porque espera que se sirva una petición con dos semillas distintas, y ahora se rechaza (H-05). Hay que adaptarlo en la QA r02.
+- **Otros scripts del revisor:** `r01_11_config.py`, 6/6; `r01_03_oraculos_R.py`, 54/54; `r01_04_oraculos_V.py`, 114/114; `r01_05_oraculos_P.py`, 30/30.
+- **Cuotas:** ruff 2907 y mypy de A 109; el corpus, íntegro.
+- **Suite completa y gate:** en el commit (`commit_limpio.sh`).
+

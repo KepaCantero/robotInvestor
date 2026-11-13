@@ -387,3 +387,142 @@ Uso:
 ```
 
 Tarda unos 20 minutos con 3 copias.
+
+## Ronda r02 (correcciones de la QA r01)
+
+Hallazgos del grupo S en la QA r01: H-01 (tamaños sin cota) y H-08 (mutantes QS04, QS05 y QS08 vivos). Solo cambian
+`motor/fichas_series.py`, `tests/test_fase2_series.py` y esta nota.
+
+### H-01 · Cotas de los tamaños de la petición
+
+**Qué cambió.**
+- Cada tamaño tiene una cota fija en `UMBRALES` (la petición no la puede cambiar: la regla «umbral fijo» la cubre).
+- Las cotas de datos se comprueban **antes** de convertir o calcular (`_vector(..., maximo=)`, `_serie_ht01(..., maximo)`):
+  lo que pasa de la cota se rechaza en milisegundos.
+- `_entero` compara los enteros sin pasar por float, para que la cota sea exacta (2⁶³ − 1 entra y 2⁶³ no).
+- La búsqueda del n mínimo de potencia de ST-INF-001 no pasa de la cota de observaciones: si la aproximación ya la supera
+  (o con d diminuto, que antes podía desbordar o no acabar), `n_minimo` es None, con `n_minimo_supera_cota` y una limitación.
+- TEM-DIFF-001 rechaza, antes de ajustar, un horizonte que daría más puntos de previsión que la cota (p. ej., datos diarios
+  con 5 años: 1 825 puntos). Antes, un paso de tiempo diminuto pedía un `arange` sin fin práctico.
+- Coste, sin cambiar las cifras de método:
+  - FX-BRK-001: los índices de la matriz de costes van por difusión en vez de `meshgrid`. Mismas cifras, bit a bit, y dos
+    matrices n² de enteros menos (n = 2 520: unos 640 MB en vez de 730 MB, 5 s).
+  - FX-STL-001: el LOESS se calcula por bloques y solo sobre la banda de puntos que pueden pesar (los q vecinos están a
+    distancia ≤ q). Pasa de O(n²) a O(n·q): n = 2 520 con periodo 12, de 156 s a 6 s por llamada. Diferencia con el LOESS
+    anterior ≤ 3e-13 relativa (orden de las sumas) en 126 combinaciones de longitud, q, posiciones y pesos robustos; el
+    oráculo de mínimos cuadrados ponderados de las pruebas sigue igual.
+
+**Cotas y su origen.**
+
+| Ficha | Cota | Valor | Origen |
+| --- | --- | --- | --- |
+| Todas las de series | `obs_maximas` | 2 520 | H5 en sesiones: 120 meses = 2 520 (Anexo A del Documento 0; `horizontes` y `calendario` de la configuración) |
+| ST-INF-001 | `obs_maximas` (por muestra y `n` de los estadísticos) | 2 520 | ídem |
+| ST-INF-001 | `contrastes_maximos` | 1 000 | `[PROPUESTO]` |
+| FX-BRK-001 | `obs_maximas` | 2 520 | H5 en sesiones (max_rupturas ya tenía 1–5, de la ficha) |
+| FX-STL-001 | `obs_maximas` | 2 520 | H5 en sesiones |
+| FX-STL-001 | `periodo_maximo` | 52 | `[PROPUESTO]`: el mayor de la tabla de frecuencias de la ficha (semanal) |
+| FX-REGIME-001 | `obs_maximas` | 756 | `[PROPUESTO]`: la ventana de datos de las fichas del lote, `senales.ventana_anios` 3 (configuración, T-65), × 252 sesiones (Catálogo 3.1). Arranques (20) e iteraciones (1 000) ya eran fijos |
+| REG-HMM-001 | `arranques_maximos` | 50 | `[PROPUESTO]` (la ficha pide ≥ 20) |
+| REG-HMM-001 | `obs_maximas` | 520 | `[PROPUESTO]`: H5 (120 meses) en semanas, 10 años semanales |
+| REG-HMM-001 | `variables_maximas` | 5 | el tope multivariante de FX-COINT-001 (5 series) |
+| FX-COINT-001 | `obs_maximas` | 2 520 | H5 en sesiones (series ya tenía 5) |
+| FX-COINT-001 | `rezagos_maximos` (max_rezagos declarado) | 24 | `[PROPUESTO]`: dos años de rezagos mensuales; la regla de ACC-FACT-001 da 8 con 2 520 observaciones |
+| BIB-MET-001 | `fichas_maximas` (también la referencia) | 20 000 | `[PROPUESTO]`: por encima de F7–F9 (almacenes de 7 000–11 000 líneas) |
+| BIB-MET-001 | `periodos_maximos` | 1 200 | `[PROPUESTO]`: 100 años mensuales; el mensaje pide otra granularidad |
+| BIB-MET-001 | `tematicas_maximas` (datos y `categorias`) | 100 | `[PROPUESTO]`: el sistema usa TM-01 a TM-18 |
+| TEM-DIFF-001 | `B_maximo` | 10 000 | ML-CAL-001: «B (2 000; 1 000–10 000)», el bootstrap del Catálogo |
+| TEM-DIFF-001 | `arranques_maximos` | 200 | la misma regla que FIR-CURVE-001 (10 × los 20 de la ficha), `[PROPUESTO]` allí |
+| TEM-DIFF-001 | `obs_maximas` (y puntos de previsión) | 360 | `[PROPUESTO]`: 30 años (límite de H5, el mismo del horizonte) en meses, «anuales o equivalentes» |
+| TEM-DIFF-001 | `escenarios_maximos` (lista de m) | 10 | `[PROPUESTO]` |
+| FX-REGIME, REG-HMM, TEM-DIFF | semilla | 2⁶³ − 1 | dominio técnico, el mismo de `fichas_riesgo.py` |
+
+**El caso más caro con las cotas máximas** (tiempo de una llamada al manejador; el Motor hace dos pasadas, así que un
+servicio tarda el doble). Medido con los otros tres grupos trabajando a la vez (carga 5–7 en 4 núcleos), así que son cotas
+por arriba:
+
+| Ficha y entrada | Tiempo por llamada | Memoria máxima del proceso |
+| --- | --- | --- |
+| REG-HMM-001: 520 obs., 5 variables, covarianza completa, BIC (2–4 estados), 50 arranques | 110 s | 174 MB |
+| FX-REGIME-001: 756 obs., 3 estados | 76 s | 155 MB |
+| FX-COINT-001: 5 series × 2 520 obs., max_rezagos 24 | 43 s | — |
+| TEM-DIFF-001: 360 obs., auto, 200 arranques, B = 10 000 | 32 s | 160 MB |
+| FX-STL-001: 2 520 obs., periodo 52, auto robusto | 15 s | 155 MB |
+| FX-BRK-001: 2 520 obs., 5 rupturas, auto | 5 s | 635 MB |
+| ST-INF-001: 1 000 contrastes de Welch × 2 520 por muestra, con potencia | 3 s | — |
+| BIB-MET-001: 20 000 fichas, 100 temáticas, 1 200 periodos, referencia de 20 000 | 1 s | — |
+
+El peor servicio (REG-HMM-001 al máximo) queda en unos 4 minutos con la máquina cargada. Es mucho más que un caso normal
+(los casos de control tardan menos de 3 s), pero termina y la memoria queda por debajo de 1 GB en todas. Si el operador quiere
+un tope de tiempo más bajo, la palanca es `arranques_maximos` de REG-HMM-001 (el tiempo crece de forma lineal con él).
+
+### H-08 · Mutantes vivos
+
+- **QS04 (regla de rezagos de Schwert).** `test_fx_coint_rezago_maximo_es_la_regla_de_acc_fact_a_mano`: T = 60 ⇒ 3 y
+  T = 300 ⇒ 5, escritos a mano (Schwert daría 10 y 15); además, ningún ADF pasa de ese tope.
+- **QS05 (ADF por BIC).** `test_fx_coint_adf_elige_los_rezagos_por_aic_frente_a_una_referencia`: una serie I(1) con un
+  término AR en el rezago 3 y un ADF escrito aparte en la prueba (muestra común, AIC y BIC, τ con el rezago elegido). La
+  referencia comprueba que el AIC elige 3 y el BIC 0, así que el caso discrimina; la ficha da 3 rezagos y el τ de la
+  referencia a 1e-9, con AIC y con max_rezagos 6.
+- **QS08 (BH sin monotonía).** `test_st_inf_holm_y_bh_monotonos_con_valores_a_mano`: p = (0,01; 0,04; 0,045; 0,2). En BH,
+  m·p₍ⱼ₎/j = 0,04; 0,08; 0,06; 0,2, y el mínimo acumulado da 0,04; 0,06; 0,06; 0,2 (el mutante deja 0,08). En Holm, el
+  máximo acumulado da 0,12 donde (m − j + 1)·p₍ⱼ₎ = 0,09. Se prueba con `ajuste_bh`/`ajuste_holm` y por la ficha
+  (estadísticos suficientes con el t exacto de cada p-valor), con sus decisiones.
+
+### Fecha de corte (contrato nuevo de `servicio.py`)
+
+`_cerrado` pasa `ent["fecha_corte"]` (ISO o None; si es ilegible, ErrorFicha) y las fichas con datos fechados rechazan un
+dato posterior a ella («no conocible»): FX-BRK, FX-STL y FX-REGIME (`fechas` o serie de HT-01), REG-HMM y FX-COINT
+(`fechas`, o series de HT-01 alineadas), ST-INF (series de HT-01), BIB-MET (fecha de cada ficha) y TEM-DIFF (`fechas`, o
+`anios` frente al año decimal del corte). Con datos hasta el corte el resultado es el mismo que sin corte. Ninguna ficha del
+grupo lee `ent["configuracion"]`.
+
+**Decisión `[PROPUESTO]` nueva:** el dato posterior al corte se rechaza, no se recorta. Con `anios` decimales solo se rechaza
+lo que cae después del corte: un dato anual «2021» (2021,0) pasa con un corte de mediados de 2021, aunque su cifra se publique
+en 2022. Esto se declara aquí y no se intenta resolver.
+
+### Decisiones `[PROPUESTO]` nuevas (para INC-T112-01)
+
+Las cotas marcadas `[PROPUESTO]` en la tabla de arriba. Además:
+- el n mínimo de potencia que supera la cota de observaciones se publica como None;
+- el horizonte de TEM-DIFF-001 que daría más puntos que la cota se rechaza;
+- los datos posteriores a la fecha de corte se rechazan.
+
+### Pruebas
+
+`tests/test_fase2_series.py`: **380 pruebas** (antes 320; 18 de ellas llegan solas por las claves nuevas de `UMBRALES`, en la
+prueba de umbrales fijos). Todas en verde, junto con `tests/test_t112_motor.py`: 439 en total, unos 80 s. Las nuevas son:
+- una por cota de parámetro: la cota se admite, y cota + 1, 20261110, 10¹² y 1e308 se rechazan en menos de 2 s;
+- la semilla;
+- los escenarios y las categorías;
+- las observaciones (9 casos);
+- la serie de HT-01 (3 casos);
+- los contrastes, las variables, las series, las fichas, la referencia y las temáticas;
+- los periodos de BIB-MET;
+- los puntos de previsión;
+- el n mínimo acotado.
+
+Las cotas de observaciones se prueban con cota + 1 (rechazo rápido) y con la cota exacta, con datos que la ficha rechaza por
+otro motivo (constante, sin aceleración…), lo que prueba que la cota es inclusiva sin pagar el cálculo. Hay también cuatro
+pruebas de H-08 (tres funciones) y 13 de la fecha de corte.
+
+`ruff check` (desde la raíz del repositorio, como el gate) y `mypy --ignore-missing-imports` sobre el módulo y las pruebas:
+sin hallazgos nuevos.
+
+### Mutantes y entradas hostiles, otra vez sobre copias (scratchpad, `r02_S/`)
+
+- `r01_10_mutantes.py`, parte S (QS01–QS08) sobre una copia de `bloque_a` sin `*.docx`: **mueren los 8 frente a las pruebas**
+  (QS01–QS03 también frente a los casos de control). QS04, QS05 y QS08, los vivos de la r01, ahora mueren por las pruebas
+  nuevas. QS06 y QS07 siguen vivos frente a los casos de control, pero mueren por las pruebas, como en la r01.
+- `r01_06_hostiles.py`, parte S (las 8 fichas del grupo en los bloques 1 a 6; el bloque 4 con B, arranques, periodo,
+  max_rezagos y semilla de S, y el coste real de TEM-DIFF-001 con B = 1 000, 10 000 y 10 001): **21/21 con `ulimit -v 6 GB`
+  y 21/21 sin él**. Fuzzer: 442 llamadas sin excepciones, ninguna de más de 30 s, ningún no finito. Ningún tamaño sin cota,
+  y TEM-DIFF-001 con B = 10 000 tarda 7 s y con 10 001 se rechaza.
+- `impl_S_mutantes.py` (los 55 de la r01) sobre copias con `-j 3`: la copia sin mutar pasa sus 380 pruebas. **Se aplican
+  los 55** (los cambios de código conservan los textos que mutan, también en el LOESS y en la matriz de costes de FX-BRK) y
+  **ninguno vive a la vez frente a los casos de control y las pruebas**. Frente a los casos de control solos viven 31, como
+  en la r01: reglas de rechazo, dominio y cifras que los casos de control no ejercitan, y que cazan las pruebas.
+
+**Resultado: ningún mutante vivo y ningún fallo del grupo S** en `r01_10` (parte S), `r01_06` (parte S, con y sin
+`ulimit`) ni `impl_S_mutantes.py`. Registros en el scratchpad de la sesión (`r02_S/impl_S.log`, `hostil_ulimit.log` y
+`hostil_sin_ulimit.log`).

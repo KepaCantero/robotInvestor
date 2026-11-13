@@ -3,8 +3,8 @@
 | Campo | Valor |
 | --- | --- |
 | Módulo | `bloque_a/11_Ejecutor/bloque_a/motor/fichas_riesgo.py` |
-| Pruebas | `bloque_a/11_Ejecutor/tests/test_fase2_riesgo.py`: **415 pruebas, todas en verde** (≈ 10 s) |
-| Mutantes | `.docs/tickets/T-112/revisores/impl_R_mutantes.py`, con la salida en `impl_R_mutantes.log`: 43 mutantes, ninguno vivo |
+| Pruebas | `bloque_a/11_Ejecutor/tests/test_fase2_riesgo.py`: **507 pruebas, todas en verde** (≈ 10 s) tras la ronda r02; eran 415 en r01 |
+| Mutantes | `.docs/tickets/T-112/revisores/impl_R_mutantes.py`, con la salida en `impl_R_mutantes.log`: 43 mutantes, ninguno vivo; en r02, además, los 6 QR del revisor y 16 nuevos, ninguno vivo (§Ronda r02) |
 | Fichas | RISK-VAR-001, SIM-MC-001, ML-CAL-001 (heredadas, §6) · SCN-H-001, BT-DSR-001, BT-PBO-001, BT-VAR-001, ML-PRED-001, DEC-VOI-001 (§7) |
 | Fuente | Catálogo V5.0: §2, §3 y §20, y cada ficha por su identificador. Nada de `99_Historico*` |
 | Dependencias | numpy, scipy y pandas. El módulo importa además `configuracion` (`parametro`, `sesiones_horizonte`, `TABLA_HORIZONTES`) y `motor.evaluacion` (`EPS` del log-score y `ece` de FC-CAL-001) |
@@ -34,7 +34,7 @@ El módulo exporta `PARAMETROS_POR_DEFECTO`, `UMBRALES`, `ADVERTENCIAS`, `FICHAS
 - **Unidades.**
   - Rendimientos simples en tanto por uno (§3.1).
   - VaR y ES se entregan como **pérdidas positivas** (fracción del valor), con la misma convención que el ES de TCV-VIXTS-001 y de DER-VRP-001. Una prueba comprueba que coinciden.
-- **Umbrales.** Una clave de `UMBRALES` en la petición se rechaza («umbrales fijos»). Cada parámetro tiene tipo y rango (`_validar`). Las claves que la ficha no declara se ignoran, como en TCV.
+- **Umbrales.** Una clave de `UMBRALES` en la petición se rechaza («umbrales fijos»). Cada parámetro tiene tipo y rango (`_validar`). Desde la ronda r02, una clave que la ficha no declara se rechaza, salvo `clase` (H-02), y todo tamaño tiene cota superior (H-01).
 - **Determinismo.**
   - Con la misma semilla, dos pasadas dan el mismo resultado.
   - SCN-H usa un `SeedSequence.spawn` por horizonte.
@@ -332,7 +332,7 @@ Además:
 - Rango o muestras sin fuente.
 
 **Decisiones:**
-- **Umbrales.** Se leen de `parametros_ht03.umbrales` y `banda_marginal` de la configuración, que coinciden con el método (iv). No se pueden cambiar desde la petición: el F10 vigente no se lee `[PROPUESTO]`.
+- **Umbrales.** Se leen de `parametros_ht03.umbrales` y `banda_marginal` de la configuración del Motor, en cada llamada desde la ronda r02 (H-04), y coinciden con el método (iv). No se pueden cambiar desde la petición: el F10 vigente no se lee `[PROPUESTO]`.
 - **Distribución.** Uniforme en el rango plausible `[PROPUESTO]`.
 - **Decisión previa.** Se toma con E[S] `[PROPUESTO]`.
 - **VOI.** El máximo de las decisiones `[PROPUESTO]`.
@@ -348,7 +348,7 @@ Ninguna falla sus casos de control, así que por CA-1 las nueve son promovibles.
    - Si el operador no acepta esa diferencia en INC-T112-01, se queda con código y DOCUMENTADO, en `DOCUMENTADAS_CON_CODIGO`.
    - Lo mismo vale para el método `historico_filtrado` de RISK-VAR-001. Ese método se puede quitar sin afectar al resto de la ficha.
 2. **BT-PBO-001.** El caso «sin habilidad ⇒ PBO ≈ 0,5» es estadístico: con una sola muestra, el PBO varía ±0,15 de un conjunto a otro. La ficha queda cubierta por los otros tres casos, que son exactos (indefinido, dominante = 0 y permutaciones ≥ 0,5), y por un oráculo de fuerza bruta.
-3. **DEC-VOI-001.** Los umbrales están fijados en los vigentes de la configuración. Si F10 llega a ajustarlos, DEC-VOI no los seguirá hasta que se integre esa lectura.
+3. **DEC-VOI-001.** Los umbrales son los de `parametros_ht03` de la configuración del Motor (desde r02, en cada llamada). Si F10 llega a ajustarlos fuera de esa configuración, DEC-VOI no los seguirá hasta que se integre esa lectura.
 
 ## Pruebas (415, todas en verde)
 
@@ -470,3 +470,145 @@ Para reproducirlo, desde la raíz:
 - regla de recomendación sin UC;
 - tope de ampliaciones;
 - umbrales sin leer F10.
+
+## Ronda r02 · correcciones de la QA r01 (H-01, H-02, H-03, H-04 y H-08)
+
+Solo cambian `motor/fichas_riesgo.py`, `tests/test_fase2_riesgo.py` y esta nota. El contrato nuevo del servicio (`ent["configuracion"]` y `ent["fecha_corte"]`, que añaden `servir`, `verificar_casos_control` y `reejecutar`) se usa tal cual; si el manejador se llama sin ellos, `parametro(None, …)` y `sesiones_horizonte(None, …)` toman `config/por_defecto.yaml`.
+
+### Qué cambió, por hallazgo
+
+**H-01 · cota superior para todo tamaño de la petición.**
+- Las cotas están en `UMBRALES`, así que una petición no puede cambiarlas («umbrales fijos»).
+- La validación las comprueba antes de calcular nada. Un tamaño desmesurado (20 261 110, 10¹² o 1e308) da `ErrorFicha` y el Motor lo registra como RECHAZADO en RC, sin `MemoryError` ni cuelgue.
+- Defensa en profundidad para la memoria, sin cambiar el resultado:
+  - el bootstrap de bloques de ML-CAL y ML-PRED calcula las medias por tandas de réplicas (`_ELEMENTOS_TANDA` = 2²² elementos). El resultado es idéntico bit a bit al cálculo de una vez, y hay una prueba que lo comprueba;
+  - el CSCV de BT-PBO se hace por tandas de combinaciones. Las sumas de dentro de muestra son ahora `s1[cb].sum(axis=1)` en lugar de un producto de matrices, para que no dependan del tamaño de la tanda;
+  - los rangos fuera de muestra se calculan con `stats.rankdata(axis=1)`, vectorizado (idéntico a `apply_along_axis`, y 50 veces más rápido);
+  - todos los cuantiles se piden en una sola llamada a `np.quantile` (mismo valor que uno a uno).
+
+**H-02 · un parámetro no declarado se rechaza.**
+- `_parametros` rechaza en las 9 fichas toda clave que no esté en `PARAMETROS_POR_DEFECTO`, salvo `clase`, igual que S y V. El mensaje es «parámetros no declarados por la ficha […] (admitidos: …)».
+- RISK-VAR-001 con `{"Metodo": "evt_pot"}` ya no se sirve con el método histórico.
+
+**H-03 · tolerancias de los optimizadores.**
+- **EVT-POT.** Ya no usa `genpareto.fit`. `gpd_mv` hace la máxima verosimilitud de la GPD en (ξ, ln β):
+  - con Nelder-Mead y tolerancias fijas, `xatol` = `fatol` = 1e-10;
+  - desde la exponencial (ξ = 0, β = media de los excesos), un arranque fijo que siempre está en el soporte;
+  - sin convergencia, `ErrorFicha`.
+- **GARCH QMLE** (histórico filtrado de RISK-VAR, H1–H2 de SCN-H y la generación de BT-VAR). Usa el mismo Nelder-Mead (`_nm`) con esas tolerancias. El tope es de 1 000 iteraciones y evaluaciones por parámetro: con una verosimilitud plana (β en el borde, rendimientos iid) Nelder-Mead pidió hasta 473 evaluaciones en 2 270 ventanas medidas, por encima de las 400 de scipy.
+- **Efecto:**
+  - el VaR de EVT-POT del caso de control se mueve un 3e-5 relativo y el del histórico filtrado un 5e-6. Ahora los dos están a menos de 1e-7 del óptimo de referencia;
+  - SCN-H no cambia en sus casos, porque su GARCH tiene β en el borde;
+  - un artefacto del RC anterior a r02 con `evt_pot` o `historico_filtrado` ya no coincide en CT-10 a 1e-6. Es la corrección, no una regresión.
+
+**H-04 · configuración del Motor en cada llamada.**
+- **ML-CAL y ML-PRED.** `PARAMETROS_POR_DEFECTO` lleva `replicas` y `nivel_ic` a `None`. Sin valor en la petición, se leen de `evaluacion.bootstrap_replicas` y `evaluacion.nivel_ic` de `ent["configuracion"]`, con la misma cota que si vinieran en la petición.
+- **DEC-VOI.** Lee sus umbrales (E, GC2_E, A y T) y la banda marginal con `parametros_ht03(cfg)` en cada llamada. `UMBRALES["DEC-VOI-001"]` guarda solo las claves de configuración, y el resultado publica la `banda_marginal` usada.
+- **SCN-H.** Lee las sesiones de H1–H4 de la configuración del Motor (`sesiones_horizonte(cfg, …)`). Es el mismo defecto que H-04, en otra ficha.
+- **Las cotas de horizonte** (H5) también se leen de esa configuración.
+- **Resultado:** `r01_11_config.py` da **6/6**.
+
+**H-08 · mutante QR04 (ω sin el objetivo de varianza).** El caso de control del histórico filtrado comprueba ahora otras dos cosas:
+- la identidad ω = σ̄²(1 − α − β);
+- que el VaR y el ES publicados coinciden, a la tolerancia de la ficha (1e-6), con los de un **óptimo de referencia calculado aparte**: `_fhs_referencia` usa Powell sobre (α, β) sin transformar, desde tres arranques, con la recursión como filtro propio, y se cachea.
+
+Hay además una prueba con un oráculo en bucle de Python sobre dos series, y un contraejemplo explícito del caso con el ω de QR04. QR04 muere ahora en los casos de control y en las pruebas.
+
+### Cotas y su origen
+
+| Ficha · parámetro | Cota | Origen |
+| --- | --- | --- |
+| RISK-VAR-001 · `horizonte` | 1 … H5 en sesiones (2 520 por defecto) | Documento 0, H5; configuración `horizontes.H5` (120 meses) × `calendario.sesiones_por_mes` (21), leída de la del Motor |
+| BT-VAR-001 · `horizonte` | 1 … H5 | La de RISK-VAR-001, que es la que genera el VaR |
+| SIM-MC-001 · `horizonte` | 1 … H5 | Ídem |
+| SIM-MC-001 · `n_trayectorias` | 1 000 … 1 000 000 | Ficha SIM-MC-001 («Parámetros»); ya estaba |
+| SIM-MC-001 · trayectorias × pasos | ≤ 10 000 × 2 520 = 25,2 millones | `[PROPUESTO]`: n_trayectorias por defecto de la ficha × H5. Con el máximo de trayectorias se llega a 25 pasos; con las de por defecto, a H5 |
+| SIM-MC-001 y SCN-H-001 · `cuantiles`, `umbrales` | ≤ 99 valores cada lista | `[PROPUESTO]`: la rejilla de percentiles enteros |
+| SCN-H-001 · `n_trayectorias` | 1 000 … 1 000 000 | La de SIM-MC-001, la dinámica que usa; ya estaba. Los pasos los fijan los horizontes, como mucho H3 = 126 sesiones (H4 es analítico por bloques) |
+| ML-CAL-001 y ML-PRED-001 · `replicas` | 1 … 10 000 | FC-EVAL-001, «B (2 000; 1 000–10 000)», cuyo bootstrap usan. Solo se adopta el tope (ver `[PROPUESTO]`) |
+| ML-PRED-001 · `pliegues` | 2 … 20 | `[PROPUESTO]`: el tope de la rejilla de la ficha (≤ 20), así que pliegues × rejilla ≤ 400 ajustes |
+| ML-PRED-001 · `rejilla` | ≤ 20 valores | Ficha ML-PRED-001 («≤ 20 en PLAN_STD»); ya estaba |
+| BT-PBO-001 · `S` | 8 … 20, par | Ficha BT-PBO-001; ya estaba |
+| BT-VAR-001 · `ventana_estimacion` | ≥ 250 y < longitud de la historia | Sin tope propio: una ventana mayor reduce el número de previsiones, y la historia acota la ventana (se rechaza si no la supera) |
+| BT-DSR-001 · `N`; ML-PRED-001 · `embargo` | sin tope | No son tamaños de cálculo: N solo entra en Φ⁻¹(1 − 1/N), y un N enorme da un no finito que la envoltura rechaza; un embargo mayor que la historia deja un pliegue sin entrenamiento, y se rechaza |
+
+**Coste en las cotas máximas.** Medido en este contenedor con otras sesiones en paralelo. Es una sola pasada; el Motor hace dos.
+
+| Caso | Tiempo | Memoria máxima |
+| --- | --- | --- |
+| SIM-MC-001 con saltos de Merton, 1 000 000 × 25, 99 cuantiles, 99 umbrales y RI-CLI con 2 520 rendimientos | 2,7–4,1 s | 557 MB |
+| SIM-MC-001 con saltos, 10 000 × 2 520 | 2,2–3,1 s | 539 MB |
+| SIM-MC-001 con GARCH, 100 000 × 252 | 1,6–1,9 s | 532 MB |
+| SCN-H-001 con 1 000 000 trayectorias en H1–H4, 99 cuantiles y 2 520 rendimientos | 4,0–5,2 s | 488 MB |
+| ML-PRED-001 con 20 pliegues, 20 λ, 10 000 réplicas e isotónica (1 000 observaciones) | 0,7–1,0 s | 223 MB |
+| Bootstrap de ML-CAL con 10 000 réplicas y 100 000 pares | 8,7 s | 373 MB |
+| BT-PBO-001 con S = 20 (184 756 combinaciones) y N = 50 | 1,4 s | 208 MB |
+
+La más cara, con mucho, es SIM-MC-001 con saltos en el presupuesto entero: cabe en unos 4 s por pasada y medio GB. Antes de r02, 1 000 000 × 2 520 habría tardado unos 2,5 min por pasada, y su RI-CLI habría pedido unos 40 GB.
+
+Cuestan en proporción a los **datos**, no a un parámetro:
+- BT-PBO con N = 500 configuraciones tarda 14 s (246 MB);
+- BT-VAR en modo generado con `metodo_var = historico_filtrado` y 2 520 rendimientos tarda 12 s, con 2 270 ajustes GARCH;
+- el bootstrap crece con el número de pares.
+
+Lo declaro sin cota nueva.
+
+### Decisiones `[PROPUESTO]` nuevas (INC-T112-01, para T-57)
+
+1. Presupuesto de SIM-MC-001: trayectorias × pasos ≤ n_trayectorias por defecto × H5 (25,2 millones).
+2. Como mucho 99 cuantiles y 99 umbrales por petición en SIM-MC-001 y SCN-H-001.
+3. Pliegues de ML-PRED-001 de 2 a 20.
+4. Réplicas de ML-CAL y ML-PRED: solo el tope 10 000 de FC-EVAL-001, no su mínimo 1 000. Así no se rechaza una configuración del Motor que lo baje: el revisor prueba con 37. Si T-57 adopta el rango entero, se cambia `rango_replicas`.
+5. Nelder-Mead de la GPD y del GARCH:
+   - `xatol` = `fatol` = 1e-10, cuatro órdenes por debajo de la tolerancia 1e-6 de la ficha;
+   - hasta 1 000 iteraciones y evaluaciones por parámetro, cinco veces el tope de scipy;
+   - la GPD arranca en la exponencial (ξ = 0, β = media de los excesos). Es técnico.
+6. Tandas de 2²² elementos en el bootstrap y en el CSCV. Es técnico y no cambia el resultado.
+
+### Pruebas
+
+`tests/test_fase2_riesgo.py` tiene **507 pruebas** (eran 415), todas en verde en unos 10 s. Las 92 nuevas:
+
+| Hallazgo | Pruebas |
+| --- | --- |
+| H-01 | Una por cota: el valor en la cota se admite y el siguiente se rechaza (14). 24 tamaños desmesurados se rechazan sin calcular. La cota del horizonte sale de la configuración del Motor (con H5 de 60 meses, la cota es 1 260). Por el Motor, tres tamaños desmesurados dan RECHAZADO con su entrada en RC. Bootstrap y CSCV por tandas idénticos al cálculo de una vez. La más cara en su cota, en tiempo |
+| H-02 | Errata y parámetro inexistente en cada una de las 9 fichas. `clase` admitida en las 9. `Metodo` con mayúscula |
+| H-03 | EVT-POT frente a la verosimilitud perfil de Grimshaw (otra vía, en una variable) en tres series: VaR, ES, ξ y β a 1e-6, y una verosimilitud que no es peor que la de referencia (con `genpareto.fit` por defecto no llegaba). GARCH frente a Powell con bucle propio en dos series: verosimilitud, ω y VaR y ES a 1e-6. Sin convergencia, rechazo |
+| H-04 | Nada se fija al importar. DEC-VOI con los umbrales y la banda de la configuración: el EVPI se rehace a mano y la regla simple depende de la banda. ML-CAL y ML-PRED con el bootstrap de la configuración; la petición manda y la cota vale también para la configuración. SCN-H con las sesiones de la configuración. Por el Motor, DEC-VOI con la configuración del Motor. Una configuración que no es un objeto se rechaza |
+| H-08 | Contraejemplo del caso de FHS con el ω de QR04, y el oráculo de GARCH de H-03 |
+
+Con `tests/test_t112_motor.py` dan 570 pruebas en verde al cierre. Durante la ronda fallaron un rato dos de ACC-VAL-001 y FIR-CURVE-001 por los cambios en curso del grupo V; no eran de R. Para los mutantes QR se dejaron fuera esas dos.
+
+ruff y `mypy --ignore-missing-imports` no dan hallazgos en el módulo ni en las pruebas.
+
+### Mutantes (todos sobre copias en el scratchpad, `r02_R/`)
+
+**`revisores/impl_R_mutantes.py`: 43 mutantes, ninguno vivo y ninguno sin aplicar.**
+- Lo pasé sin tocarlo, con una envoltura que solo actualiza el texto de M15. La línea es ahora `pasos3 = sesiones_horizonte(cfg, "H3")` (H-04), y el mutante sigue siendo el mismo: H3 con los pasos de H2.
+- Quien mantenga el script debe cambiar ese texto en M15.
+- Siguen cazándolos solo las pruebas: M20, M23, M29, M32, M34, M37, M38, M41 y M43.
+
+**QR01–QR06 de `r01_10_mutantes.py`: los 6 mueren.**
+- Se pasaron con su texto exacto, frente a los casos de control por el Motor y a `test_fase2_riesgo.py` más `test_t112_motor.py`, sin las dos pruebas de V que fallan hoy.
+- **QR04 muere ahora en los casos de control y en las pruebas.**
+- QR02 lo cazan solo las pruebas, como en r01.
+
+**16 mutantes nuevos de r02 (N01–N16): los 16 mueren.**
+- Cubren:
+  - la regla de H-02 quitada;
+  - las lecturas de la configuración de H-04 cambiadas por las de por defecto (réplicas, nivel, umbrales de HT-03, sesiones de H3);
+  - cada cota de H-01 quitada (horizonte, presupuesto, listas, réplicas, pliegues);
+  - las tandas rotas;
+  - las tolerancias de scipy por defecto (1e-4);
+  - la verosimilitud de la GPD sin el 1;
+  - la GPD y el GARCH sin optimizar.
+- N13 a N16 mueren también en los casos de control.
+- N12 (tandas del CSCV que se saltan una combinación) sobrevivió a la primera pasada. Lo mató la prueba de tandas con 5 combinaciones por tanda.
+
+### Scripts del revisor (sobre una copia del árbol)
+
+| Script | Resultado |
+| --- | --- |
+| `r01_11_config.py` | **6/6** |
+| `r01_03_oraculos_R.py` | **54/54**: EVT-POT coincide ahora con la máxima verosimilitud del revisor a 1e-4 (H-03) |
+| `r01_06_hostiles.py` | Con `ulimit -v` de 6 GB, sobre una copia del árbol tomada durante la ronda, con las 35 fichas. **Nada falla en R.** El fuzzer (2 940 llamadas) no deja escapar ninguna excepción de las fichas R. Los 8 escapes con `semilla` no hashable (lista u objeto) en ML-CAL, ML-PRED, FIR-CURVE y FX-REGIME venían del conjunto de semillas de `servir`, y en el `servicio.py` vivo ya están corregidos: ML-CAL con `semilla = []` da RECHAZADO por la ficha. Bloque 2: las 35 fichas rechazan la errata, y RISK-VAR con `Metodo` queda RECHAZADO. Bloque 3: en verde. Bloque 4: ninguna cota de R aceptada; quedan TEM-DIFF `B`/`arranques` y REG-HMM `arranques`, que son de S. Bloque 5: en verde. El script se corta después en la comprobación de las dos semillas de SIM-MC, porque `servir` ya rechaza esa petición (H-05, servicio) y el script espera un resultado; los bloques 6 y 7 no son de R |

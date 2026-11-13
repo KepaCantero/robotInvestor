@@ -129,7 +129,13 @@ Pregunta para T-57: «¿qué antigüedad admite la resolución de un pronóstico
   - FIR-PRICE-001 solo con ACT/ACT-ICMA o 30E/360 y bonos «bullet», y con rescates, la duración del precio al peor;
   - un parámetro no declarado por la ficha se rechaza.
 
-Pregunta para T-57: «¿se aceptan estas decisiones de método y los modelos propios en lugar de las bibliotecas externas?». Detalle en [.docs/tickets/T-112](../.docs/tickets/T-112/README.md).
+- **Ronda r02 (QA r01):**
+  - cotas de tamaño en cada ficha, sacadas de la ficha, de otra que se cita (FC-EVAL-001, SIM-MC-001, FIR-CURVE-001) o del horizonte H5 en sesiones; las demás, `[PROPUESTO]`. Al máximo, el servicio más caro es REG-HMM-001, unos 4 min;
+  - un dato posterior a la fecha de corte se rechaza, no se recorta;
+  - DEC-VOI-001 lee sus umbrales de la configuración del Motor;
+  - el detalle, en la sección «Ronda r02» de cada nota de grupo.
+
+Pregunta para T-57: «¿se aceptan estas decisiones de método, las cotas de tamaño y los modelos propios en lugar de las bibliotecas externas?». Detalle en [.docs/tickets/T-112](../.docs/tickets/T-112/README.md).
 
 **INC-T112-02 · 2026-11-13 · La re-ejecución CT-10 (AUD-REX-001): dos documentos del corpus no coinciden (Bloque A, T-112).**
 - **El valor de `coincide`:** el esquema del Registro de cálculos V2.0 escribe `DENTRO_TOLERANCIA`, con las categorías DATOS_DISTINTOS, CONVENCION_DISTINTA, ERROR_ORIGINAL, ERROR_REEJECUCION y NO_DETERMINISMO. El Catálogo y el prompt MC-08 escriben `DENTRO_DE_TOLERANCIA`, con otras categorías.

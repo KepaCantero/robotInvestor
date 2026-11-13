@@ -120,7 +120,7 @@ def test_aud_rex_un_manejador_no_determinista_se_detecta(tmp_path, monkeypatch):
 def test_aud_rex_sus_casos_de_control_se_superan_y_quedan_en_rc(tmp_path):
     m = _motor(tmp_path)
     r = m.verificar_casos_control(["AUD-REX-001"])["AUD-REX-001"]
-    assert r["superados"] and len(r["casos"]) == 5
+    assert r["superados"] and len(r["casos"]) == 6
     e = m.almacen.leer("RC")[-1]
     assert e["tipo_entrada"] == "CASOS_CONTROL" and e["operacion"]["ficha_id"] == "AUD-REX-001"
     assert not [x for x in m.almacen.leer("RC") if x.get("tipo_entrada") in ("SERVICIO", "REEJECUCION")]   # Registro aparte
@@ -186,3 +186,87 @@ def test_una_cifra_no_finita_de_la_fase_2_es_un_rechazo(tmp_path, monkeypatch):
 def test_aud_rex_por_ct09_dice_que_se_pide_por_ct10(tmp_path):
     r = _motor(tmp_path).servir({"operacion": "AUD-REX-001", "datos": [], "fecha_corte": "2026-11-12"}, "AG-18")
     assert r["estado"] == "RECHAZADO" and "CT-10" in r["detalle"]
+
+
+# ================================================================================================== ronda r02 (QA r01 de T-112)
+def test_r02_h08_qx08_la_reejecucion_usa_los_parametros_del_artefacto(tmp_path, monkeypatch):
+    """Un cálculo con parámetros que cambian el resultado: si la re-ejecución usara los de por defecto, no coincidiría."""
+    f, i = servicio.CASO_AUD_REX_PARAMETROS
+    caso = servicio.CASOS_CONTROL[f][i]
+    ent = {"valores": {}, "series": {}, "series_rol": {}}
+    for d in caso["datos"]:
+        ent["valores"].update(copy.deepcopy(d.get("valores") or {}))
+    fn = servicio.IMPLEMENTADAS[f]["fn"]
+    assert fn(copy.deepcopy(ent), dict(caso["parametros"]))[0] != fn(copy.deepcopy(ent), {})[0]   # el caso distingue
+    m = _motor(tmp_path)
+    r = m.servir({"operacion": f, "datos": copy.deepcopy(caso["datos"]), "parametros": dict(caso["parametros"]),
+                  "fecha_corte": "2026-11-12"}, "AG-03")
+    assert m.reejecutar(r["calc_id"], "auditoría")["coincide"] == "SI"
+
+
+@pytest.mark.parametrize("error", [MemoryError("sin memoria"), RecursionError("pila")])
+def test_r02_h01_agotar_la_memoria_o_la_pila_es_un_rechazo(tmp_path, monkeypatch, error):
+    f = servicio.CASO_AUD_REX
+
+    def revienta(ent, params):
+        raise error
+    monkeypatch.setitem(servicio.IMPLEMENTADAS, f, {**servicio.IMPLEMENTADAS[f], "fn": revienta})
+    m = _motor(tmp_path)
+    r = m.servir({"operacion": f, "datos": [{"valores": {"x": 1}}], "fecha_corte": "2026-11-12"}, "AG-03")
+    assert r["estado"] == "RECHAZADO" and type(error).__name__ in r["detalle"] and m.almacen.leer("RC")[-1]["tipo_entrada"] == "RECHAZO"
+
+
+def test_r02_h05_dos_semillas_distintas_se_rechazan_y_el_artefacto_lleva_la_usada(tmp_path):
+    f = "SIM-MC-001"
+    caso = servicio.CASOS_CONTROL[f][0]
+    params = {k: v for k, v in (caso.get("parametros") or {}).items() if k != "semilla"}
+    m = _motor(tmp_path)
+    pet = {"operacion": f, "datos": copy.deepcopy(caso.get("datos") or []), "fecha_corte": "2026-11-12"}
+    no = m.servir({**pet, "parametros": {**params, "semilla": 5}, "semilla": 7}, "AG-03")
+    assert no["estado"] == "RECHAZADO" and no["motivo"] == "DATOS_INCOHERENTES" and "semillas" in no["detalle"]
+    si = m.servir({**copy.deepcopy(pet), "parametros": {**params, "semilla": 5}}, "AG-03")
+    assert si["estado"].startswith("SERVED") and m.almacen.estado("RC")[si["calc_id"]]["semilla"] == 5
+
+
+@pytest.mark.parametrize("solicitante", [["AG-18"], None, 18])
+def test_r02_h06_un_solicitante_no_textual_es_un_rechazo(tmp_path, solicitante):
+    caso = servicio.CASOS_CONTROL["BIB-MET-001"][0]
+    r = _motor(tmp_path).servir({"operacion": "BIB-MET-001", "datos": copy.deepcopy(caso.get("datos") or []),
+                                 "parametros": dict(caso.get("parametros") or {}), "fecha_corte": "2026-11-12"}, solicitante)
+    assert r["estado"] == "RECHAZADO" and r["motivo"] == "CANAL_NO_AUTORIZADO"
+
+
+def test_r02_h04_h07_la_ficha_recibe_la_configuracion_y_la_fecha_de_corte(tmp_path, monkeypatch):
+    f = servicio.CASO_AUD_REX
+    vistos = []
+    orig = servicio.IMPLEMENTADAS[f]["fn"]
+
+    def espia(ent, params):
+        vistos.append((ent.get("configuracion"), ent.get("fecha_corte")))
+        return orig(ent, params)
+    monkeypatch.setitem(servicio.IMPLEMENTADAS, f, {**servicio.IMPLEMENTADAS[f], "fn": espia})
+    m = _motor(tmp_path)
+    caso = servicio.CASOS_CONTROL[f][0]
+    m.servir({"operacion": f, "datos": copy.deepcopy(caso["datos"]), "parametros": dict(caso.get("parametros") or {}),
+              "fecha_corte": "2026-11-12"}, "AG-03")
+    assert vistos and all(c is m.cfg and fc == "2026-11-12" for c, fc in vistos)
+
+
+@pytest.mark.parametrize("semilla", [[], {"a": 1}, [1, 2]])
+def test_r02_h05_una_semilla_no_hashable_no_rompe_el_servicio(tmp_path, semilla):
+    caso = servicio.CASOS_CONTROL[servicio.CASO_AUD_REX][0]
+    m = _motor(tmp_path)
+    r = m.servir({"operacion": servicio.CASO_AUD_REX, "datos": copy.deepcopy(caso["datos"]), "semilla": 3,
+                  "parametros": {**dict(caso.get("parametros") or {}), "semilla": semilla}, "fecha_corte": "2026-11-12"}, "AG-03")
+    assert r["estado"] == "RECHAZADO" and m.almacen.leer("RC")[-1]["tipo_entrada"] == "RECHAZO"
+
+
+def test_r02_la_fecha_de_corte_entra_en_la_clave_de_la_cache(tmp_path):
+    caso = servicio.CASOS_CONTROL[servicio.CASO_AUD_REX][0]
+    m = _motor(tmp_path)
+    pet = {"operacion": servicio.CASO_AUD_REX, "datos": copy.deepcopy(caso["datos"]), "parametros": dict(caso.get("parametros") or {})}
+    a = m.servir({**copy.deepcopy(pet), "fecha_corte": "2026-11-12"}, "AG-03")
+    b = m.servir({**copy.deepcopy(pet), "fecha_corte": "2026-11-13"}, "AG-03")
+    c = m.servir({**copy.deepcopy(pet), "fecha_corte": "2026-11-12"}, "AG-03")
+    assert not b["cache_hit"] and c["cache_hit"] and a["calc_id"] != b["calc_id"]
+

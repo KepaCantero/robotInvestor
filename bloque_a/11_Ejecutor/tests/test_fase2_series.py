@@ -8,6 +8,7 @@ import collections
 import copy
 import json
 import math
+import time
 
 import numpy as np
 import pandas as pd
@@ -906,3 +907,293 @@ def test_tem_diff_fases_por_umbral():
     y = [100 / (1 + math.exp(-0.5 * (a - 2022))) for a in S._ANIOS]
     r, _ = _correr("TEM-DIFF-001", {"adopcion": y, "anios": S._ANIOS}, {"B": 20, "modelo": "logistica", "m": 100})
     assert 0.16 < r["cuota_actual"] < 0.5 and r["fase"] == "crecimiento"
+
+
+
+# ============================================================================= QA r01: H-01 (cotas de tamaño)
+def _rapido(ficha, valores, params, texto, ent_extra=None, limite=2.0):
+    """Rechazo por la cota antes de calcular: rápido y con el motivo."""
+    t0 = time.perf_counter()
+    with pytest.raises(ErrorFicha) as e:
+        S.FICHAS[ficha]["fn"]({**_ent(valores), **(ent_extra or {})}, params)
+    assert texto in str(e.value), str(e.value)
+    assert time.perf_counter() - t0 < limite, f"{ficha}: rechazo lento"
+    return str(e.value)
+
+
+COTAS_PARAMETRO = [("REG-HMM-001", "arranques", "arranques_maximos", 50),
+                   ("TEM-DIFF-001", "arranques", "arranques_maximos", 200),
+                   ("TEM-DIFF-001", "B", "B_maximo", 10000),
+                   ("FX-STL-001", "periodo", "periodo_maximo", 52),
+                   ("FX-COINT-001", "max_rezagos", "rezagos_maximos", 24)]
+
+
+@pytest.mark.parametrize("ficha,clave,cota,valor", COTAS_PARAMETRO, ids=[f"{f}:{c}" for f, c, _, _ in COTAS_PARAMETRO])
+def test_cota_de_cada_parametro_de_tamano(ficha, clave, cota, valor):
+    """Cada tamaño de la petición tiene una cota fija (UMBRALES): la cota se admite y lo que pasa de ella se rechaza en la
+    validación, sin calcular (QA r01, H-01). TEM-DIFF-001 · B: el máximo de ML-CAL-001 (1 000–10 000)."""
+    assert S.UMBRALES[ficha][cota] == valor
+    assert S._parametros(ficha, {**BASE[ficha][1], clave: valor})[clave] == valor
+    for malo in (valor + 1, 20261110, 10 ** 12, 1e308):
+        _rapido(ficha, BASE[ficha][0], {**BASE[ficha][1], clave: malo}, "fuera del dominio")
+
+
+@pytest.mark.parametrize("ficha", ["FX-REGIME-001", "REG-HMM-001", "TEM-DIFF-001"])
+def test_cota_de_la_semilla(ficha):
+    """Semilla entera de 64 bits (como en fichas_riesgo), comparada sin pasar por float: 2⁶³ − 1 entra y 2⁶³ no."""
+    assert S.SEMILLA_MAXIMA == 2 ** 63 - 1
+    assert S._parametros(ficha, {**BASE[ficha][1], "semilla": 2 ** 63 - 1})["semilla"] == 2 ** 63 - 1
+    for malo in (2 ** 63, 10 ** 30, 1e308):
+        _rapido(ficha, BASE[ficha][0], {**BASE[ficha][1], "semilla": malo}, "fuera del dominio")
+
+
+def test_cota_de_escenarios_de_techo_y_de_categorias():
+    assert S.UMBRALES["TEM-DIFF-001"]["escenarios_maximos"] == 10
+    assert len(S._parametros("TEM-DIFF-001", {"m": [100.0 + i for i in range(10)]})["m"]) == 10
+    _rapido("TEM-DIFF-001", BASE["TEM-DIFF-001"][0], {"m": [100.0 + i for i in range(11)]}, "11 escenarios")
+    assert S.UMBRALES["BIB-MET-001"]["tematicas_maximas"] == 100
+    assert len(S._parametros("BIB-MET-001", {"categorias": [f"T{i}" for i in range(100)]})["categorias"]) == 100
+    _rapido("BIB-MET-001", BASE["BIB-MET-001"][0], {"categorias": [f"T{i}" for i in range(101)]}, "1 a 100")
+
+
+def _no_constante(n):
+    return [float(i % 7) for i in range(n)]
+
+
+# (ficha, valores con n observaciones, parámetros, valores con la cota exacta que fallan por otro motivo, ese motivo)
+COTAS_DATOS = [
+    ("ST-INF-001", lambda n: {"contrastes": [{"nombre": "a", "muestra": _no_constante(n)}]},
+     {"tipo_contraste": "t_una_muestra"}, lambda n: {"contrastes": [{"nombre": "a", "muestra": [1.0] * n}]}, "dispersión nula"),
+    ("ST-INF-001", lambda n: {"contrastes": [{"nombre": "a", "muestra_a": _no_constante(n), "muestra_b": _no_constante(5)}]},
+     {"tipo_contraste": "mann_whitney"},
+     lambda n: {"contrastes": [{"nombre": "a", "muestra_a": [1.0] * n, "muestra_b": [1.0] * 5}]}, "empatadas"),
+    ("ST-INF-001", lambda n: {"contrastes": [{"nombre": "a", "estadisticos": {"media": 1, "desviacion": 1, "n": n}}]},
+     {"tipo_contraste": "t_una_muestra"},
+     lambda n: {"contrastes": [{"nombre": "a", "estadisticos": {"media": 1, "desviacion": 0, "n": n}}]}, "dispersión nula"),
+    ("FX-BRK-001", lambda n: {"serie": _no_constante(n)}, {}, lambda n: {"serie": [1.0] * n}, "constante"),
+    ("FX-STL-001", lambda n: {"serie": _no_constante(n)}, {"periodo": 12, "esquema": "multiplicativo"},
+     lambda n: {"serie": [-1.0] * n}, "no positivos"),
+    ("FX-REGIME-001", lambda n: {"serie": _no_constante(n)}, {}, lambda n: {"serie": [1.0] * n}, "constante"),
+    ("REG-HMM-001", lambda n: {"variables": {"a": _no_constante(n), "b": _no_constante(n)[::-1]}, "frecuencia": "semanal"},
+     {"n_estados": 2}, lambda n: {"variables": {"a": [1.0] * n, "b": _no_constante(n)}, "frecuencia": "semanal"},
+     "constante"),
+    ("FX-COINT-001", lambda n: {"series": {"y": _no_constante(n), "x": _no_constante(n)[::-1]}}, {},
+     lambda n: {"series": {"y": [1.0] * n, "x": _no_constante(n)}}, "constante"),
+    ("TEM-DIFF-001", lambda n: {"adopcion": _no_constante(n), "anios": [2000 + i / 12 for i in range(n)]}, {"B": 10},
+     lambda n: {"adopcion": [float(i) for i in range(n)], "anios": [2000 + i / 12 for i in range(n)]}, "aceleración"),
+]
+
+
+@pytest.mark.parametrize("ficha,largo,params,en_cota,motivo", COTAS_DATOS,
+                         ids=[f"{c[0]}:{i}" for i, c in enumerate(COTAS_DATOS)])
+def test_cota_de_observaciones(ficha, largo, params, en_cota, motivo):
+    """Las observaciones de la petición tienen cota (`obs_maximas`): una más se rechaza antes de calcular; con la cota
+    exacta la ficha sigue y rechaza por otro motivo (la cota es inclusiva)."""
+    tope = S.UMBRALES[ficha]["obs_maximas"]
+    assert tope == {"FX-REGIME-001": 756, "REG-HMM-001": 520, "TEM-DIFF-001": 360}.get(ficha, 2520)
+    _rapido(ficha, largo(tope + 1), params, str(tope))
+    msg = _rechaza(ficha, en_cota(tope), params, motivo)
+    assert "cota" not in msg
+
+
+@pytest.mark.parametrize("ficha", ["FX-BRK-001", "FX-STL-001", "FX-REGIME-001"])
+def test_cota_de_observaciones_con_serie_de_ht01(ficha):
+    """Con una serie de HT-01 la cota es la de la serie que entra en el cálculo (en FX-REGIME, n + 1 precios dan n
+    rendimientos)."""
+    tope = S.UMBRALES[ficha]["obs_maximas"]
+    extra = 1 if ficha == "FX-REGIME-001" else 0
+    larga = _serie_fechas([1.0 + (i % 7) for i in range(tope + extra + 1)], "2000-01-03", "B")
+    _rapido(ficha, {}, {"periodo": 12} if ficha == "FX-STL-001" else {}, f"> {tope + extra}", {"series": {"X": larga}})
+    if ficha != "FX-STL-001":
+        justa = _serie_fechas([1.0] * (tope + extra), "2000-01-03", "B")
+        assert "cota" not in _rechaza(ficha, {}, {}, "constante", series={"X": justa})
+
+
+def test_cota_de_contrastes_variables_series_y_fichas():
+    _rapido("ST-INF-001", {"contrastes": [{"nombre": f"c{i}", "muestra": [1.0, 2.0]} for i in range(1001)]},
+            {"tipo_contraste": "t_una_muestra"}, "> 1000")
+    _rapido("REG-HMM-001", {"variables": {f"v{i}": _no_constante(300) for i in range(6)}, "frecuencia": "semanal"},
+            {"n_estados": 2}, "> 5")
+    _rapido("FX-COINT-001", {"series": {f"s{i}": _no_constante(60) for i in range(10 ** 4)}}, {}, "> 5")
+    fichas = [{"id": f"F{i}", "fecha": "2025-01-01", "tematica": "TM-01", "fuente": "A"} for i in range(20001)]
+    _rapido("BIB-MET-001", {"fichas": fichas}, {}, "> 20000")
+    _rapido("BIB-MET-001", {"fichas": S._FICHAS_BIB, "referencia": [f"F{i}" for i in range(20001)]}, {}, "> 20000")
+    tem = [{"id": f"F{i}", "fecha": "2025-01-01", "tematica": f"T{i}", "fuente": "A"} for i in range(101)]
+    _rapido("BIB-MET-001", {"fichas": tem}, {}, "101 temáticas")
+    r, _ = _correr("BIB-MET-001", {"fichas": tem[:100]}, {})
+    assert len(r["por_tematica"]) == 100
+
+
+def test_cota_de_periodos_de_bib_met():
+    """1 200 periodos (100 años mensuales): 1900-01 a 1999-12 entra; un mes más se rechaza y se pide otra granularidad."""
+    extremos = [{"id": "a", "fecha": "1900-01-31", "tematica": "TM-01", "fuente": "A"},
+                {"id": "b", "fecha": "1999-12-01", "tematica": "TM-01", "fuente": "A"}]
+    r, _ = _correr("BIB-MET-001", {"fichas": extremos}, {})
+    assert len(r["por_periodo"]) == 1200
+    extremos[1]["fecha"] = "2000-01-01"
+    _rapido("BIB-MET-001", {"fichas": extremos}, {}, "1201 periodos mensuales")
+    for gran, n in (("trimestral", 401), ("anual", 101)):
+        r, _ = _correr("BIB-MET-001", {"fichas": extremos}, {"granularidad": gran})
+        assert len(r["por_periodo"]) == n
+
+
+def test_cota_de_puntos_de_prevision_de_tem_diff():
+    """Datos diarios con 5 años de horizonte darían 1 825 puntos de previsión (> 360): se rechaza antes de ajustar."""
+    anios = [2020 + i / 365 for i in range(12)]
+    _rapido("TEM-DIFF-001", {"adopcion": S._LOG, "anios": anios}, {"B": 10}, "puntos de previsión")
+    _rapido("TEM-DIFF-001", {"adopcion": S._LOG, "anios": [2020 + i * 1e-300 for i in range(12)]}, {"B": 10}, "")
+
+
+def test_st_inf_n_minimo_de_potencia_acotado():
+    """La búsqueda del n mínimo no pasa de la cota de observaciones: d = 0,05 pide ≈ 3 140 (> 2 520) ⇒ None con una
+    limitación; con d diminuto, también None (sin desbordar ni colgarse)."""
+    v = {"contrastes": [{"nombre": "a", "muestra": [0.3, 1.2, -0.4, 0.8, 1.9, 0.1]}]}
+    for d in (0.05, 1e-300):
+        t0 = time.perf_counter()
+        r, lim = _correr("ST-INF-001", v, {"tipo_contraste": "t_una_muestra", "efecto_potencia": d,
+                                           "potencia_objetivo": 0.8})
+        assert time.perf_counter() - t0 < 2
+        assert r["contrastes"]["a"]["potencia"]["n_minimo"] is None
+        assert r["contrastes"]["a"]["potencia"]["n_minimo_supera_cota"] == 2520 and any("supera la cota" in x for x in lim)
+    r, lim = _correr("ST-INF-001", v, {"tipo_contraste": "t_una_muestra", "efecto_potencia": 0.06, "potencia_objetivo": 0.8})
+    n = r["contrastes"]["a"]["potencia"]["n_minimo"]
+    z = stats.norm.ppf(0.975) + stats.norm.ppf(0.8)
+    assert abs(n - (z / 0.06) ** 2) < 5 and n <= 2520 and not any("supera la cota" in x for x in lim)
+
+
+# ============================================================================= QA r01: H-08 (mutantes QS04, QS05, QS08)
+def test_fx_coint_rezago_maximo_es_la_regla_de_acc_fact_a_mano():
+    """max_rezagos AIC busca hasta ⌊4·(T/100)^{2/9}⌋ (ACC-FACT-001): T = 60 ⇒ ⌊3,571⌋ = 3 y T = 300 ⇒ ⌊5,106⌋ = 5. La
+    regla de Schwert, ⌊12·(T/100)^{1/4}⌋, daría 10 y 15 (mutante QS04)."""
+    for T, esperado in ((60, 3), (300, 5)):
+        datos = {k: v[:T] for k, v in S._PAR.items()}
+        r, _ = _correr("FX-COINT-001", {"series": datos}, {})
+        assert r["rezago_maximo"] == esperado == S.rezagos_regla(T)
+        assert all(x[a]["rezagos"] <= esperado for x in r["integracion"].values() for a in ("adf_nivel", "adf_diferencia"))
+        assert r["johansen"]["orden_var"] <= esperado + 1
+
+
+def _adf_a_mano(y, pmax, constante=True):
+    """ADF escrito aparte: rezagos por AIC y por BIC en la muestra común (desde pmax) y τ con el rezago elegido."""
+    dy = np.diff(y)
+    n = len(dy)
+
+    def diseno(p, desde):
+        f = np.arange(desde, n)
+        cols = [y[f]] + [dy[f - i] for i in range(1, p + 1)] + ([np.ones(len(f))] if constante else [])
+        return dy[f], np.column_stack(cols)
+
+    crit = {"aic": {}, "bic": {}}
+    for p in range(pmax + 1):
+        yy, X = diseno(p, pmax)
+        e = yy - X @ np.linalg.solve(X.T @ X, X.T @ yy)
+        N = len(yy)
+        crit["aic"][p] = N * math.log(e @ e / N) + 2 * X.shape[1]
+        crit["bic"][p] = N * math.log(e @ e / N) + math.log(N) * X.shape[1]
+    out = {}
+    for c, val in crit.items():
+        p = min(val, key=lambda k: (val[k], k))
+        yy, X = diseno(p, p)
+        XtX_inv = np.linalg.inv(X.T @ X)
+        b = XtX_inv @ X.T @ yy
+        e = yy - X @ b
+        out[c] = {"rezagos": p, "tau": float(b[0] / math.sqrt(e @ e / (len(yy) - X.shape[1]) * XtX_inv[0, 0])),
+                  "n": len(yy)}
+    return out
+
+
+def _serie_con_rezago_3(T=300, semilla=1):
+    rng = np.random.default_rng(semilla)
+    e = rng.standard_normal(T + 50)
+    u = np.zeros(T + 50)
+    for t in range(3, T + 50):
+        u[t] = 0.12 * u[t - 3] + 0.1 * u[t - 1] + e[t]
+    x = np.cumsum(u[50:])
+    return x, 2 * x + 1 + rng.standard_normal(T)
+
+
+@pytest.mark.parametrize("max_rezagos", ["AIC", 6])
+def test_fx_coint_adf_elige_los_rezagos_por_aic_frente_a_una_referencia(max_rezagos):
+    """Serie I(1) con un término AR en el rezago 3: el AIC elige 3 rezagos y el BIC 0 (lo comprueba la referencia, escrita
+    aparte). La ficha elige los del AIC y su τ es el de la referencia (mutante QS05: ADF por BIC)."""
+    x, y = _serie_con_rezago_3()
+    pmax = S.rezagos_regla(300) if max_rezagos == "AIC" else max_rezagos
+    ref = _adf_a_mano(x, pmax)
+    assert ref["aic"]["rezagos"] == 3 and ref["bic"]["rezagos"] == 0      # el caso discrimina AIC de BIC
+    r, _ = _correr("FX-COINT-001", {"series": {"y": list(y), "x": list(x)}}, {"max_rezagos": max_rezagos})
+    a = r["integracion"]["x"]["adf_nivel"]
+    assert a["rezagos"] == 3 and a["n"] == ref["aic"]["n"]
+    assert math.isclose(a["tau"], ref["aic"]["tau"], rel_tol=1e-9)
+
+
+def test_st_inf_holm_y_bh_monotonos_con_valores_a_mano():
+    """p = (0,01; 0,04; 0,045; 0,2), m = 4. BH: m·p_(j)/j = 0,04; 0,08; 0,06; 0,2 y el mínimo acumulado desde arriba da
+    0,04; 0,06; 0,06; 0,2 (sin él, 0,08 en el segundo: mutante QS08). Holm: (m − j + 1)·p_(j) = 0,04; 0,12; 0,09; 0,2 y
+    el máximo acumulado da 0,04; 0,12; 0,12; 0,2."""
+    pv = [0.045, 0.01, 0.2, 0.04]
+    assert np.allclose(S.ajuste_bh(pv), [0.06, 0.04, 0.2, 0.06], rtol=1e-12)
+    assert np.allclose(S.ajuste_holm(pv), [0.12, 0.04, 0.2, 0.12], rtol=1e-12)
+    # Lo mismo por la ficha: estadísticos suficientes con el t exacto de cada p-valor (n = 10, s = 1)
+    contrastes = [{"nombre": f"c{i}", "estadisticos": {"media": float(stats.t.isf(p / 2, 9)) / math.sqrt(10),
+                                                        "desviacion": 1.0, "n": 10}} for i, p in enumerate(pv)]
+    for correccion, esperado in (("bh", [0.06, 0.04, 0.2, 0.06]), ("holm", [0.12, 0.04, 0.2, 0.12])):
+        r, _ = _correr("ST-INF-001", {"contrastes": contrastes}, {"tipo_contraste": "t_una_muestra",
+                                                                  "correccion": correccion})
+        assert [math.isclose(r["contrastes"][f"c{i}"]["p_valor"], p, rel_tol=1e-9) for i, p in enumerate(pv)] == [True] * 4
+        assert np.allclose([r["contrastes"][f"c{i}"]["p_ajustado"] for i in range(4)], esperado, rtol=1e-9)
+        assert [r["contrastes"][f"c{i}"]["rechaza_h0_ajustado"] for i in range(4)] == [x < 0.05 for x in esperado]
+
+
+# ============================================================================= fecha de corte (contrato de servicio.py)
+def date_from(texto):
+    return pd.Timestamp(texto).date()
+
+
+def _fechas_semanales(n, inicio="2020-01-03"):
+    return [d.date().isoformat() for d in pd.date_range(inicio, periods=n, freq="W-FRI")]
+
+
+FUGA = [
+    ("FX-BRK-001", {"serie": list(S._Y_NIVEL), "fechas": _fechas_semanales(120)}, {}),
+    ("FX-STL-001", {"serie": list(S._Y_STL_RUIDO), "fechas": _fechas_semanales(72)}, {"periodo": 12}),
+    ("FX-REGIME-001", {"serie": list(S._X_REGIME), "fechas": _fechas_semanales(300)}, {}),
+    ("REG-HMM-001", {"variables": S._HMM_VARIABLES, "fechas": S._HMM_FECHAS}, {"n_estados": 2}),
+    ("FX-COINT-001", {"series": S._PAR, "fechas": _fechas_semanales(300)}, {}),
+    ("BIB-MET-001", {"fichas": S._FICHAS_BIB}, {}),
+    ("TEM-DIFF-001", {"adopcion": S._LOG, "fechas": [f"{a}-07-02" for a in S._ANIOS]}, {"B": 10}),
+    ("TEM-DIFF-001", {"adopcion": S._LOG, "anios": S._ANIOS}, {"B": 10}),
+]
+
+
+def _ultima(v):
+    if "fichas" in v:
+        return max(f["fecha"] for f in v["fichas"])
+    if "anios" in v:
+        return f"{int(max(v['anios']))}-01-01"
+    return max(v["fechas"])
+
+
+@pytest.mark.parametrize("ficha,valores,params", FUGA, ids=[f"{f}:{i}" for i, (f, _, _) in enumerate(FUGA)])
+def test_datos_posteriores_a_la_fecha_de_corte_se_rechazan(ficha, valores, params):
+    """Punto en el tiempo: un dato fechado después de `ent["fecha_corte"]` no era conocible y la ficha rechaza."""
+    ultima = date_from(_ultima(valores))
+    antes = (ultima - pd.Timedelta(days=1)).isoformat()
+    _rapido(ficha, valores, params, "posterior a la fecha de corte", {"fecha_corte": antes})
+
+
+@pytest.mark.parametrize("ficha,valores,params", [FUGA[0], FUGA[5], FUGA[6], FUGA[7]],
+                         ids=["FX-BRK-001", "BIB-MET-001", "TEM-DIFF-001:fechas", "TEM-DIFF-001:anios"])
+def test_datos_hasta_la_fecha_de_corte_se_sirven(ficha, valores, params):
+    ultima = _ultima(valores)
+    r1, l1 = S.FICHAS[ficha]["fn"]({**_ent(valores), "fecha_corte": ultima}, params)
+    r2, l2 = S.FICHAS[ficha]["fn"]({**_ent(valores), "fecha_corte": None}, params)
+    assert r1 == r2 and l1 == l2
+
+
+def test_fecha_de_corte_ilegible_y_series_de_ht01_posteriores():
+    _rapido("FX-BRK-001", {"serie": list(S._Y_NIVEL)}, {}, "fecha_corte", {"fecha_corte": "13/11/2026"})
+    _rapido("FX-BRK-001", {"serie": list(S._Y_NIVEL)}, {}, "fecha_corte", {"fecha_corte": 20261113})
+    s = _serie_fechas(100 * np.cumprod(1 + 0.01 + 0.001 * S.ruido_weyl(60)), "2026-01-02", "B")
+    _rapido("ST-INF-001", {}, {"tipo_contraste": "t_una_muestra"}, "posterior a la fecha de corte",
+            {"series": {"X": s}, "fecha_corte": "2026-02-01"})
+    _rapido("FX-BRK-001", {}, {}, "posterior a la fecha de corte", {"series": {"X": s}, "fecha_corte": "2026-02-01"})
