@@ -19,7 +19,11 @@ Convenciones comunes de este módulo:
 """
 from __future__ import annotations
 
+import datetime as dt
 import math
+from collections.abc import Callable
+from decimal import Decimal
+from functools import wraps
 from itertools import pairwise
 from typing import Any
 
@@ -103,6 +107,12 @@ def _req(d: Any, clave: str, ctx: str) -> Any:
     return d[clave]
 
 
+def _dict(x: Any, ctx: str) -> dict:
+    if not isinstance(x, dict) or not x:
+        raise ErrorFicha(f"{ctx}: se espera un dict no vacío")
+    return x
+
+
 def _lista(x: Any, ctx: str) -> list:
     if not isinstance(x, list) or not x:
         raise ErrorFicha(f"{ctx}: se espera una lista no vacía")
@@ -110,6 +120,9 @@ def _lista(x: Any, ctx: str) -> list:
 
 
 def _fecha(x: Any, ctx: str) -> pd.Timestamp:
+    """Solo texto ISO, ``date``/``datetime``, ``Timestamp`` o ``datetime64``; un número no es una fecha (no es epoch)."""
+    if not isinstance(x, (str, dt.date, pd.Timestamp, np.datetime64)):
+        raise ErrorFicha(f"{ctx}: fecha no válida ({x!r}): se espera texto ISO o una fecha")
     try:
         t = pd.Timestamp(x)
     except (TypeError, ValueError):
@@ -165,9 +178,55 @@ def _en_rango(p: dict, clave: str, ficha: str) -> float:
 
 
 def _dias_meses(fecha: pd.Timestamp, meses: float) -> int:
-    if float(meses) != int(meses):
+    m = _f(meses, "plazo en meses")
+    if m != int(m):
         raise ErrorFicha(f"plazo en meses no entero ({meses})")
-    return int((fecha + pd.DateOffset(months=int(meses)) - fecha).days)
+    try:
+        return int((fecha + pd.DateOffset(months=int(m)) - fecha).days)
+    except (OverflowError, ValueError) as e:
+        raise ErrorFicha(f"plazo de {meses} meses fuera del calendario representable") from e
+
+
+def _no_finitos(x: Any, ruta: str = "resultado") -> list[str]:
+    if isinstance(x, dict):
+        return [r for k, val in x.items() for r in _no_finitos(val, f"{ruta}.{k}")]
+    if isinstance(x, (list, tuple)):
+        return [r for i, val in enumerate(x) for r in _no_finitos(val, f"{ruta}[{i}]")]
+    if isinstance(x, (float, np.floating)) and not math.isfinite(float(x)):
+        return [ruta]
+    return []
+
+
+Manejador = Callable[[dict, dict], tuple[dict, list[str]]]
+
+
+def _cerrado(ficha: str) -> Callable[[Manejador], Manejador]:
+    """Falla cerrado en profundidad: entradas mal formadas o fuera de dominio y resultados no finitos → ErrorFicha.
+
+    Cada manejador valida sus entradas con motivo propio; esta envoltura traduce lo que se escape (aritmética fuera
+    de dominio, tipos inesperados, fechas fuera de rango, no convergencia) y rechaza cualquier NaN/inf del resultado:
+    lo indefinido se entrega como ``None``, nunca como un número no finito.
+    """
+    def decorar(fn: Manejador) -> Manejador:
+        @wraps(fn)
+        def envoltura(ent: dict, params: dict) -> tuple[dict, list[str]]:
+            if not isinstance(ent, dict) or not isinstance(ent.get("valores"), dict):
+                raise ErrorFicha(f"{ficha}: los datos en línea («valores») deben ser un dict")
+            if params is not None and not isinstance(params, dict):
+                raise ErrorFicha(f"{ficha}: los parámetros deben ser un dict")
+            try:
+                res, lim = fn(ent, params or {})
+            except ErrorFicha:
+                raise
+            except (ArithmeticError, ValueError, TypeError, AttributeError, KeyError, IndexError,
+                    RuntimeError) as e:
+                raise ErrorFicha(f"{ficha}: entrada mal formada o fuera de dominio ({type(e).__name__}: {e})") from e
+            malos = _no_finitos(res)
+            if malos:
+                raise ErrorFicha(f"{ficha}: resultado no finito en {', '.join(malos[:3])} (entradas fuera de dominio)")
+            return res, lim
+        return envoltura
+    return decorar
 
 
 # ======================================================================= MON-YLD-001
@@ -179,10 +238,11 @@ def _a_precio(conv: str, x: float, t: float) -> float:
         precio = 1 - x * t / BASE_360
     elif conv == "precio":
         precio = x
-    elif conv == "simple_360":
-        precio = 1 / (1 + x * t / BASE_360)
-    elif conv == "simple_365":
-        precio = 1 / (1 + x * t / DIAS_ANIO)
+    elif conv in ("simple_360", "simple_365"):
+        factor = 1 + x * t / (BASE_360 if conv == "simple_360" else DIAS_ANIO)
+        if factor <= 0:
+            raise ErrorFicha(f"MON-YLD-001: factor de capitalización no positivo con {conv}")
+        precio = 1 / factor
     elif conv == "tae":
         if 1 + x <= 0:
             raise ErrorFicha("MON-YLD-001: TAE ≤ −100 %")
@@ -206,6 +266,7 @@ def _desde_precio(conv: str, precio: float, t: float) -> float:
     return float(precio ** (-DIAS_ANIO / t) - 1)   # tae
 
 
+@_cerrado("MON-YLD-001")
 def f_mon_yld(ent: dict, params: dict) -> tuple[dict, list[str]]:
     """MON-YLD-001 · Rentabilidad equivalente y comparación de segmentos monetarios.
 
@@ -342,31 +403,64 @@ def f_mon_yld(ent: dict, params: dict) -> tuple[dict, list[str]]:
 
 
 # ======================================================================= MON-EXP-001
+def _media_unidad(x: Any) -> float:
+    """Error máximo de redondeo de una cotización: medio último dígito decimal con que viene escrita."""
+    texto = x.strip() if isinstance(x, str) else repr(float(x))
+    exponente = Decimal(texto).as_tuple().exponent
+    if not isinstance(exponente, int):
+        raise ErrorFicha(f"cotización no finita ({x!r})")
+    return float(Decimal(1).scaleb(exponente)) / 2
+
+
 def _nodos_ois(v: dict, fecha: pd.Timestamp, base: float, r0: float, p: dict,
-               lim: list[str]) -> list[tuple[int, float, float]]:
-    """Nodos (días, log del factor de capitalización, tipo simple) desde una curva OIS o una tira de futuros."""
+               lim: list[str]) -> tuple[list[tuple[int, float, float]], np.ndarray, np.ndarray, float | None]:
+    """Nodos (días, log del factor de capitalización, tipo simple) desde una curva OIS o una tira de futuros.
+
+    Devuelve también la sensibilidad G = ∂(log factor del nodo)/∂(cotización) (nodos × cotizaciones) y el error de
+    redondeo de cada cotización (``precision_cotizacion`` de ``valores`` si se declara; si no, medio último dígito).
+    """
     ficha = "MON-EXP-001"
-    if v.get("curva") and v.get("futuros"):
+    if v.get("curva") is not None and v.get("futuros") is not None:
         raise ErrorFicha(f"{ficha}: aporte curva OIS o futuros, no ambos")
+    declarada = None
+    if v.get("precision_cotizacion") is not None:
+        declarada = _f(v["precision_cotizacion"], f"{ficha}.precision_cotizacion")
+        if declarada < 0:
+            raise ErrorFicha(f"{ficha}: precision_cotizacion negativa")
     nodos: list[tuple[int, float, float]] = []
-    if v.get("curva"):
-        for i, n in enumerate(_lista(v["curva"], f"{ficha}: curva")):
+    filas: list[list[float]] = []
+    precision: list[float] = []
+    if v.get("curva") is not None:
+        curva = _lista(v["curva"], f"{ficha}: curva")
+        for i, n in enumerate(curva):
             ctx = f"{ficha}: curva[{i}]"
-            if isinstance(n, dict) and n.get("fecha_fin") is not None:
+            if not isinstance(n, dict):
+                raise ErrorFicha(f"{ctx}: se espera un dict {{dias | fecha_fin, tipo}}")
+            if n.get("fecha_fin") is not None:
                 d = int((_fecha(n["fecha_fin"], ctx) - fecha).days)
             else:
-                d = int(_f(_req(n, "dias", ctx), f"{ctx}.dias"))
+                dd = _f(_req(n, "dias", ctx), f"{ctx}.dias")
+                if dd != int(dd):
+                    raise ErrorFicha(f"{ctx}: días no enteros")
+                d = int(dd)
             if d <= 0:
                 raise ErrorFicha(f"{ctx}: nodo no posterior a la fecha de cálculo")
             r = _f(_req(n, "tipo", ctx), f"{ctx}.tipo")
             if r * d / base <= -1:
                 raise ErrorFicha(f"{ctx}: factor de capitalización no positivo")
             nodos.append((d, math.log1p(r * d / base), r))
-    elif v.get("futuros"):
-        futs = sorted(_lista(v["futuros"], f"{ficha}: futuros"),
-                      key=lambda x: _fecha(_req(x, "inicio", ficha), ficha))
+            fila = [0.0] * len(curva)
+            fila[i] = (d / base) / (1 + r * d / base)
+            filas.append(fila)
+            precision.append(declarada if declarada is not None else _media_unidad(n["tipo"]))
+    elif v.get("futuros") is not None:
+        futs = _lista(v["futuros"], f"{ficha}: futuros")
+        if not all(isinstance(x, dict) for x in futs):
+            raise ErrorFicha(f"{ficha}: cada futuro es un dict {{inicio, fin, precio}}")
+        futs = sorted(futs, key=lambda x: _fecha(_req(x, "inicio", ficha), ficha))
         limite = (fecha + pd.DateOffset(years=int(p["anios_convexidad"])) - fecha).days
         acumulado = 0.0   # log del factor de capitalización
+        sens: list[float] = []
         anterior = fecha
         for i, fu in enumerate(futs):
             ctx = f"{ficha}: futuros[{i}]"
@@ -381,7 +475,8 @@ def _nodos_ois(v: dict, fecha: pd.Timestamp, base: float, r0: float, p: dict,
                 raise ErrorFicha(f"{ctx}: el primer contrato empieza antes de la fecha de cálculo")
             elif i > 0 and ini != anterior:
                 raise ErrorFicha(f"{ctx}: la tira de futuros no es contigua (hueco o solape)")
-            tipo = (PRECIO_PAR_FUTURO - _f(_req(fu, "precio", ctx), f"{ctx}.precio")) / PRECIO_PAR_FUTURO
+            precio = _f(_req(fu, "precio", ctx), f"{ctx}.precio")
+            tipo = (PRECIO_PAR_FUTURO - precio) / PRECIO_PAR_FUTURO
             d = int((fin - fecha).days)
             if p["convexidad"] and d > limite:
                 if fu.get("ajuste_convexidad") is None:
@@ -389,32 +484,34 @@ def _nodos_ois(v: dict, fecha: pd.Timestamp, base: float, r0: float, p: dict,
                                "aportado (dato externo con fuente): se trunca la curva")
                     break
                 tipo -= _con_fuente(fu["ajuste_convexidad"], f"{ctx}.ajuste_convexidad")
-            if tipo * (fin - ini).days / base <= -1:
+            n_dias = (fin - ini).days
+            if tipo * n_dias / base <= -1:
                 raise ErrorFicha(f"{ctx}: factor de capitalización no positivo")
-            acumulado += math.log1p(tipo * (fin - ini).days / base)
+            acumulado += math.log1p(tipo * n_dias / base)
+            sens.append((n_dias / base) / (1 + tipo * n_dias / base))
             nodos.append((d, acumulado, math.expm1(acumulado) * base / d))
+            filas.append(sens + [0.0] * (len(futs) - len(sens)))
+            precision.append(declarada if declarada is not None else
+                             _media_unidad(fu["precio"]) / PRECIO_PAR_FUTURO)
             anterior = fin
     else:
         raise ErrorFicha(f"{ficha}: falta la curva OIS o los futuros")
-    nodos.sort()
+    if not nodos:
+        raise ErrorFicha(f"{ficha}: curva vacía tras la validación")
+    orden = sorted(range(len(nodos)), key=lambda i: nodos[i][0])
+    nodos = [nodos[i] for i in orden]
     if len({d for d, _, _ in nodos}) != len(nodos):
         raise ErrorFicha(f"{ficha}: nodos con el mismo plazo")
-    return nodos
+    g = np.array([filas[i][:len(precision)] for i in orden], dtype=float)
+    return nodos, g, np.array(precision, dtype=float), declarada
 
 
-def _crecimiento(tasas: list[float | None], cortes: list[int], hasta: int, base: float) -> float:
-    """Log del factor de capitalización diaria (Act/base, día natural) de la senda escalonada hasta `hasta` días."""
-    total = 0.0
-    for k in range(len(cortes) - 1):
-        a, b = cortes[k], cortes[k + 1]
-        if a >= hasta:
-            break
-        r = tasas[k]
-        assert r is not None
-        total += (min(b, hasta) - a) * math.log1p(r / base)
-    return total
+def _tipo_en(tasas: list[float], cortes: list[int], d: int) -> float:
+    """Tipo de la senda vigente en el día d (la reunión aplica desde su fecha; el último tramo cierra en el nodo)."""
+    return tasas[max(k for k in range(len(tasas)) if cortes[k] <= d)]
 
 
+@_cerrado("MON-EXP-001")
 def f_mon_exp(ent: dict, params: dict) -> tuple[dict, list[str]]:
     """MON-EXP-001 · Expectativas implícitas de tipos a corto.
 
@@ -422,14 +519,34 @@ def f_mon_exp(ent: dict, params: dict) -> tuple[dict, list[str]]:
     tipo}] (tipos OIS simples Act/base) o ``futuros`` [{inicio, fin, precio, ajuste_convexidad?}]; ``reuniones``
     [fechas]; ``tipo_oficial``; ``diferencial_estable`` (tipo oficial − tipo de mercado) o ``historia_diferencial``
     [valores, el último el más reciente]; ``decisiones`` (opcional) [{fecha, tipo_decidido, tipo_esperado}] con el tipo
-    esperado de la senda del día anterior.
+    esperado de la senda del día anterior; ``precision_cotizacion`` (opcional, tanto por uno): error de redondeo de las
+    cotizaciones; si no se declara, el medio último dígito con que viene escrita cada una.
 
-    Senda escalonada: el tipo a un día es constante entre reuniones y se capitaliza a diario (día natural). Antes de la
-    primera reunión vale el tipo de mercado vigente; después, cada nodo fija el tipo de los tramos aún libres que
-    cubre, de modo que la senda reproduce exactamente los nodos que usa. Con este reparto por tramos exactos entre
-    reuniones, el «ajuste por días del periodo» queda implícito.
+    Modelo (un tramo por reunión): el tipo a un día es constante entre reuniones y se capitaliza a diario (día
+    natural, Act/base). Antes de la primera reunión vale el tipo de mercado vigente (tipo oficial − diferencial
+    estable); los tramos posteriores se resuelven a la vez por mínimos cuadrados con TODOS los nodos (en log del factor
+    de capitalización el sistema es lineal). La curva se rechaza:
+      - si los nodos no identifican un tramo por reunión (rango insuficiente);
+      - si la hipótesis escalonada no se puede contrastar: tantos nodos útiles como tramos y algún tramo sin nodos en
+        sus dos extremos (fechas de reunión). Con un sistema justo, cualquier curva se reproduce exactamente, también
+        una que no es escalonada (p. ej., una curva cotizada plana con nodos 10 días tras cada reunión daría ±15
+        movimientos inventados);
+      - si algún nodo, también los que no añaden reunión, no se reproduce dentro de la tolerancia de la ficha
+        (relativa, sobre el tipo del nodo): esa curva no admite una senda escalonada. Solo si el solicitante declara
+        ``precision_cotizacion`` (cotizaciones redondeadas), el desajuste admitido es el mayor de esa precisión y la
+        tolerancia de la ficha: una cotización redondeada no se puede reproducir mejor que su propio redondeo;
+      - si el redondeo de las cotizaciones puede mover el tipo de algún tramo un incremento Δ o más (senda no
+        identificada: nodos que caen pocos días después de una reunión amplifican el ruido de cotización).
+    Cada tramo es exactamente el *forward* entre fechas de reunión de la curva: el «ajuste por días del periodo» queda
+    implícito.
+
+    «Tipo vigente» (paso iii) — decisión declarada (INC-T106-01 [PROPUESTO]): ``probabilidades`` reparte el movimiento
+    de cada reunión frente al tipo en vigor justo antes de ella (el implícito tras la reunión anterior; en la primera
+    reunión coincide con el tipo oficial vigente hoy); ``probabilidades_acumuladas`` aplica la fórmula literal frente
+    al tipo oficial vigente hoy (movimientos acumulados hasta esa reunión).
     """
     ficha = "MON-EXP-001"
+    tol = FICHAS[ficha]["tol"]
     p = _params(ficha, params)
     v = ent["valores"]
     lim: list[str] = []
@@ -442,81 +559,101 @@ def f_mon_exp(ent: dict, params: dict) -> tuple[dict, list[str]]:
         dif = _f(v["diferencial_estable"], f"{ficha}.diferencial_estable")
     elif v.get("historia_diferencial") is not None:
         h = [_f(x, f"{ficha}.historia_diferencial") for x in _lista(v["historia_diferencial"], ficha)]
-        n = int(p["diferencial_estable_dias"])
+        n = int(_f(p["diferencial_estable_dias"], "diferencial_estable_dias"))
         if len(h) < n:
             raise ErrorFicha(f"{ficha}: historia del diferencial con {len(h)} días (< {n})")
         dif = float(np.mean(h[-n:]))
     else:
         raise ErrorFicha(f"{ficha}: falta el diferencial habitual tipo oficial–tipo de mercado")
     r0 = oficial - dif
+    if r0 / base <= -1:
+        raise ErrorFicha(f"{ficha}: tipo de mercado vigente fuera de dominio")
     incremento = _f(p["incremento_pb"], "incremento_pb") / PB
     if incremento <= 0:
         raise ErrorFicha(f"{ficha}: incremento no positivo")
-    nodos = _nodos_ois(v, fecha, base, r0, p, lim)
-    if not nodos:
-        raise ErrorFicha(f"{ficha}: curva vacía tras la validación")
+    nodos, g_sens, precision, declarada = _nodos_ois(v, fecha, base, r0, p, lim)
     d12 = _dias_meses(fecha, p["meses_nodos"])
     if sum(1 for d, _, _ in nodos if d <= d12) < p["nodos_min"]:
         raise ErrorFicha(f"{ficha}: menos de {p['nodos_min']} nodos en {p['meses_nodos']} meses")
-    reuniones_in = v.get("reuniones")
-    if not reuniones_in:
+    if v.get("reuniones") is None:
         raise ErrorFicha(f"{ficha}: falta el calendario de reuniones")
     d_fin = nodos[-1][0]
-    reuniones = sorted({_fecha(x, f"{ficha}.reuniones") for x in reuniones_in})
+    reuniones = sorted({_fecha(x, f"{ficha}.reuniones") for x in _lista(v["reuniones"], f"{ficha}: reuniones")})
     validas = [m for m in reuniones if fecha < m and (m - fecha).days < d_fin]
     fuera = [m for m in reuniones if m > fecha and (m - fecha).days >= d_fin]
     if fuera:
-        lim.append(f"{len(fuera)} reunión(es) después del último nodo: fuera de la senda")
+        lim.append(f"{len(fuera)} reunión(es) en o después del último nodo: fuera de la senda")
     if not validas:
         raise ErrorFicha(f"{ficha}: ninguna reunión dentro del tramo cubierto por la curva")
     cortes = [0] + [int((m - fecha).days) for m in validas] + [d_fin]
-    tasas: list[float | None] = [None] * (len(cortes) - 1)
-    tasas[0] = r0
-    redundantes: list[dict[str, float]] = []
-    err_usados = 0.0
-    for d, lg, r_nodo in nodos:
-        libres = [k for k in range(len(tasas)) if tasas[k] is None and cortes[k] < d]
-        if not libres:
-            modelo = math.expm1(_crecimiento(tasas, cortes, d, base))
-            redundantes.append({"dias": d, "tipo_nodo": r_nodo, "tipo_senda": modelo * base / d})
-            continue
-        if len(libres) > 1:
-            lim.append(f"nodo a {d} días cubre {len(libres)} reuniones sin nodo propio: cambio concentrado "
-                       "en la primera de ellas")
-        conocido = _crecimiento([t if t is not None else 0.0 for t in tasas[:libres[0]]], cortes[:libres[0] + 1],
-                                d, base)
-        n_libres = sum(min(cortes[k + 1], d) - cortes[k] for k in libres)
-        r = math.expm1((lg - conocido) / n_libres) * base
-        for k in libres:
-            tasas[k] = r
-        modelo = math.expm1(_crecimiento(tasas, cortes, d, base))
-        err_usados = max(err_usados, abs(modelo * base / d - r_nodo))
-    if redundantes:
-        lim.append(f"{len(redundantes)} nodo(s) sin reunión nueva: no fijan la senda (se informa su desajuste)")
+    n_tramos = len(validas)
+    l0 = math.log1p(r0 / base)
+    a_mat = np.zeros((len(nodos), n_tramos))
+    y = np.zeros(len(nodos))
+    for i, (d, lg, _) in enumerate(nodos):
+        y[i] = lg - min(d, cortes[1]) * l0
+        for k in range(1, n_tramos + 1):
+            if cortes[k] < d:
+                a_mat[i, k - 1] = min(cortes[k + 1], d) - cortes[k]
+    if int(np.linalg.matrix_rank(a_mat)) < n_tramos:
+        raise ErrorFicha(f"{ficha}: los {len(nodos)} nodos no identifican un tramo por cada una de las {n_tramos} "
+                         "reuniones (hace falta al menos un nodo nuevo entre cada reunión y la siguiente)")
+    # Contraste de la hipótesis escalonada: con tantos nodos útiles como tramos, cualquier curva se «reproduce»
+    # exactamente (la verificación sería tautológica) y un nodo pocos días después de una reunión extrapola su tramo
+    # entero. Se exige o bien redundancia (más nodos útiles que tramos: el ajuste se contrasta) o bien que cada tramo
+    # se lea directamente como forward entre puntos conocidos (fechas de reunión con nodo, o la primera reunión, cuyo
+    # factor da el tipo vigente).
+    utiles = int(np.count_nonzero(a_mat.any(axis=1)))
+    conocidos = {0, cortes[1]} | {d for d, _, _ in nodos}
+    alineada = all(cortes[k] in conocidos and cortes[k + 1] in conocidos for k in range(1, n_tramos + 1))
+    if utiles <= n_tramos and not alineada:
+        raise ErrorFicha(f"{ficha}: la senda escalonada no se puede contrastar: {utiles} nodo(s) útiles para "
+                         f"{n_tramos} tramo(s) y nodos fuera de las fechas de reunión; aporte un nodo más o nodos en "
+                         "las fechas de reunión")
+    x = np.linalg.lstsq(a_mat, y, rcond=None)[0]
+    tasas = [r0] + [math.expm1(float(xk)) * base for xk in x]
+    # Reproducción de TODOS los nodos (Verificación: «la senda reproduce los forwards de entrada»).
+    ajuste = a_mat @ x + np.array([min(d, cortes[1]) * l0 for d, _, _ in nodos])
+    filas_nodos = []
+    err_max = 0.0
+    for (d, _, r_nodo), lg_m in zip(nodos, ajuste):
+        r_senda = math.expm1(float(lg_m)) * base / d
+        err = abs(r_senda - r_nodo)
+        filas_nodos.append({"dias": d, "tipo_nodo": r_nodo, "tipo_senda": r_senda})
+        err_max = max(err_max, err)
+        if err > max(tol * (abs(r_nodo) if r_nodo != 0 else 1.0), declarada or 0.0):
+            raise ErrorFicha(f"{ficha}: la curva no se puede reproducir con un tramo por reunión: el nodo a {d} días "
+                             f"queda a {err * PB:.6g} pb de la mejor senda escalonada")
+    # Identificación frente al redondeo de las cotizaciones: cota de |δ tipo| de cada tramo.
+    jac = np.linalg.pinv(a_mat) @ g_sens
+    cota_x = np.abs(jac) @ precision
+    cota_r = [base * math.exp(float(xk)) * float(c) for xk, c in zip(x, cota_x)]
+    for m, c in zip(validas, cota_r):
+        if not c < incremento:
+            raise ErrorFicha(f"{ficha}: senda no identificada en la reunión {m.date()}: el redondeo de las "
+                             f"cotizaciones puede moverla {c * PB:.4g} pb (≥ incremento de {incremento * PB:g} pb)")
     senda = []
-    previo = r0
     for k, m in enumerate(validas, start=1):
-        rk = tasas[k]
-        assert rk is not None
+        rk, previo = tasas[k], tasas[k - 1]
         en_reunion = (rk - previo) / incremento
+        acumulados = (rk + dif - oficial) / incremento
         senda.append({"fecha_reunion": m.date().isoformat(), "tipo_mercado_implicito": rk,
                       "tipo_oficial_implicito": rk + dif, "cambio_vs_vigente_pb": (rk - r0) * PB,
-                      "movimientos_acumulados": (rk + dif - oficial) / incremento,
-                      "movimientos_en_reunion": en_reunion, "probabilidades": _prob_binaria(en_reunion)})
-        previo = rk
+                      "movimientos_en_reunion": en_reunion, "movimientos_acumulados": acumulados,
+                      "probabilidades": _prob_binaria(en_reunion),
+                      "probabilidades_acumuladas": _prob_binaria(acumulados),
+                      "incertidumbre_redondeo_pb": cota_r[k - 1] * PB})
     cambio: dict[str, float | None] = {}
     for meses in p["meses_cambio_acumulado"]:
         d_h = _dias_meses(fecha, meses)
-        if d_h >= d_fin:
+        if d_h > d_fin:
             cambio[f"{meses}m"] = None
             lim.append(f"curva sin cobertura a {meses} meses: cambio acumulado no calculado")
             continue
-        k = max(i for i in range(len(tasas)) if cortes[i] <= d_h)
-        rk = tasas[k]
-        assert rk is not None
-        cambio[f"{meses}m"] = (rk - r0) * PB
+        cambio[f"{meses}m"] = (_tipo_en(tasas, cortes, d_h) - r0) * PB
     sorpresas = []
-    for i, dec in enumerate(v.get("decisiones") or []):
+    decisiones = v.get("decisiones")
+    for i, dec in enumerate(_lista(decisiones, f"{ficha}: decisiones") if decisiones is not None else []):
         ctx = f"{ficha}: decisiones[{i}]"
         sorpresas.append({"fecha": _fecha(_req(dec, "fecha", ctx), ctx).date().isoformat(),
                           "sorpresa_pb": (_f(_req(dec, "tipo_decidido", ctx), ctx)
@@ -524,12 +661,14 @@ def f_mon_exp(ent: dict, params: dict) -> tuple[dict, list[str]]:
     res = {
         "senda": senda,
         "probabilidades": {s["fecha_reunion"]: s["probabilidades"] for s in senda},
+        "probabilidades_acumuladas": {s["fecha_reunion"]: s["probabilidades_acumuladas"] for s in senda},
         "cambio_acumulado_pb": cambio,
         "sorpresas_pb": sorpresas,
         "tipo_mercado_vigente": r0, "diferencial_estable": dif, "incremento": incremento,
-        "verificacion": {"error_reproduccion_nodos_max": err_usados, "nodos_redundantes": redundantes},
+        "verificacion": {"error_reproduccion_nodos_max": err_max, "nodos": filas_nodos},
         "unidades": {"tipos": "tanto por uno, a un día, capitalización diaria Act/base",
-                     "cambio_acumulado_pb": "pb", "sorpresas_pb": "pb", "movimientos": "múltiplos del incremento"},
+                     "cambio_acumulado_pb": "pb", "sorpresas_pb": "pb", "movimientos": "múltiplos del incremento",
+                     "incertidumbre_redondeo_pb": "pb (cota por el redondeo de las cotizaciones)"},
         "referencia_ingenua": "RI-PA (tipo oficial sin cambios) y senda de encuesta si se aporta",
         "advertencias": ["los tipos implícitos incluyen una prima por plazo pequeña pero no nula",
                          "probabilidades neutrales al riesgo; método binario simplificado",
@@ -548,6 +687,7 @@ def _prob_binaria(x: float) -> dict[str, Any]:
 
 
 # ======================================================================= MON-REAL-001
+@_cerrado("MON-REAL-001")
 def f_mon_real(ent: dict, params: dict) -> tuple[dict, list[str]]:
     """MON-REAL-001 · Rentabilidad real a corto plazo.
 
@@ -569,7 +709,7 @@ def f_mon_real(ent: dict, params: dict) -> tuple[dict, list[str]]:
     plazo = int(p["plazo_meses"])
     tabla: dict[str, dict[str, Any]] = {}
     for cod in sorted(divisas):
-        dv = divisas[cod]
+        dv = _dict(divisas[cod], f"{ficha}[{cod}]")
         ctx = f"{ficha}[{cod}]"
         if dv.get("medida_inflacion") is not None and dv["medida_inflacion"] != p["medida_inflacion"]:
             raise ErrorFicha(f"{ctx}: medida de inflación «{dv['medida_inflacion']}» distinta de la pedida "
@@ -683,6 +823,7 @@ def _tipo_constante(objetivo_log: float, n_dias: list[int], base: float, lo: flo
     return float(optimize.brentq(g, lo, hi))
 
 
+@_cerrado("MON-FIX-001")
 def f_mon_fix(ent: dict, params: dict) -> tuple[dict, list[str]]:
     """MON-FIX-001 · Valor de fijar plazo frente a renovar.
 
@@ -773,7 +914,8 @@ def f_mon_fix(ent: dict, params: dict) -> tuple[dict, list[str]]:
     # (v) Media ponderada si hay pesos
     media = None
     if v.get("pesos_escenarios") is not None:
-        pesos = {k: _f(w, f"{ficha}.pesos_escenarios") for k, w in v["pesos_escenarios"].items()}
+        pesos = {k: _f(w, f"{ficha}.pesos_escenarios")
+                 for k, w in _dict(v["pesos_escenarios"], f"{ficha}.pesos_escenarios").items()}
         if set(pesos) - set(renovar):
             raise ErrorFicha(f"{ficha}: pesos para escenarios inexistentes {sorted(set(pesos) - set(renovar))}")
         if any(w < 0 for w in pesos.values()) or abs(sum(pesos.values()) - 1) > FICHAS[ficha]["tol"]:
@@ -852,7 +994,10 @@ def _erp_indice(ix: dict, p: dict, N: float, lam: float, lim: list[str]) -> dict
     er = sum(bloques[b] for b in _BLOQUES_ERP)
     # (iv) escenarios bajo/alto declarados por bloque
     escen = {"central": er}
-    for nombre_e, sob in sorted((ix.get("escenarios") or {}).items()):
+    escenarios_in = ix.get("escenarios")
+    escenarios_in = {} if escenarios_in is None else _dict(escenarios_in, f"{ctx}.escenarios")
+    for nombre_e, sob in sorted(escenarios_in.items()):
+        sob = _dict(sob, f"{ctx}.escenarios.{nombre_e}")
         desconocidos = set(sob) - set(_BLOQUES_ERP)
         if desconocidos:
             raise ErrorFicha(f"{ctx}: escenario «{nombre_e}» con bloques desconocidos {sorted(desconocidos)}")
@@ -872,6 +1017,7 @@ def _erp_indice(ix: dict, p: dict, N: float, lam: float, lim: list[str]) -> dict
             "supuesto_fx": ix.get("supuesto_fx")}
 
 
+@_cerrado("IDX-ERP-001")
 def f_idx_erp(ent: dict, params: dict) -> tuple[dict, list[str]]:
     """IDX-ERP-001 · Rentabilidad esperada por índice (Grinold-Kroner).
 
@@ -893,6 +1039,8 @@ def f_idx_erp(ent: dict, params: dict) -> tuple[dict, list[str]]:
     if p["cobertura"] not in ("cubierta", "ambas"):
         raise ErrorFicha(f"{ficha}: cobertura «{p['cobertura']}» no admitida (cubierta o ambas)")
     indices = v["indices"] if v.get("indices") is not None else [v]
+    if not isinstance(indices, list) or not all(isinstance(ix, dict) for ix in indices):
+        raise ErrorFicha(f"{ficha}: «indices» debe ser una lista de dicts")
     filas = [_erp_indice(ix, p, N, lam, lim) for ix in _lista(indices, f"{ficha}: indices")]
     if len({f["nombre"] for f in filas}) != len(filas):
         raise ErrorFicha(f"{ficha}: índices con el mismo nombre")
@@ -967,6 +1115,7 @@ def _hhi(pesos: dict[str, float]) -> float:
     return float(sum(w * w for w in pesos.values()))
 
 
+@_cerrado("IDX-CONC-001")
 def f_idx_conc(ent: dict, params: dict) -> tuple[dict, list[str]]:
     """IDX-CONC-001 · Concentración y amplitud de un índice.
 
@@ -996,13 +1145,16 @@ def f_idx_conc(ent: dict, params: dict) -> tuple[dict, list[str]]:
         for k, w in pesos.items():
             por_sector[sectores[k]] = por_sector.get(sectores[k], 0.0) + w
         conc["hhi_sectorial"] = _hhi(por_sector)
+        suma_sectores: float | None = sum(por_sector.values())
     else:
+        suma_sectores = None
         lim.append("sector no informado para todos los componentes: HHI sectorial no calculado")
 
     # (ii) Amplitud
     precios: dict[str, pd.Series] = {}
     if v.get("precios"):
-        precios = {k: _serie(s, "precio", f"{ficha}: precios[{k}]") for k, s in sorted(v["precios"].items())}
+        precios = {k: _serie(s, "precio", f"{ficha}: precios[{k}]")
+                   for k, s in sorted(_dict(v["precios"], f"{ficha}: precios").items())}
     elif ent.get("series"):
         precios = {str(k): s.dropna().sort_index() for k, s in sorted(ent["series"].items())}
     amplitud: dict[str, Any] | None = None
@@ -1080,7 +1232,7 @@ def f_idx_conc(ent: dict, params: dict) -> tuple[dict, list[str]]:
     # (iv) Percentiles frente a ≥ 10 años (ventana 20)
     percentiles: dict[str, Any] | None = None
     if v.get("historia_metricas"):
-        filas = v["historia_metricas"]
+        filas = _lista(v["historia_metricas"], f"{ficha}: historia_metricas")
         percentiles = {}
         for met in ("peso_top_n", "hhi", "n_ef", "hhi_sectorial"):
             if conc.get(met) is None or not all(isinstance(f, dict) and f.get(met) is not None for f in filas):
@@ -1101,7 +1253,7 @@ def f_idx_conc(ent: dict, params: dict) -> tuple[dict, list[str]]:
         "percentiles": percentiles,
         "segunda_via": segunda_via,
         "fecha_composicion": fecha.date().isoformat(),
-        "verificacion": {"suma_pesos": sum(pesos.values())},
+        "verificacion": {"suma_pesos": sum(pesos.values()), "suma_pesos_sectoriales": suma_sectores},
         "unidades": {"pesos": "tanto por uno", "n_ef": "componentes", "diferencial": "tanto por uno (×100 = pp)"},
         "referencia_ingenua": "RI-MH de la concentración; RI-NA para descriptivos",
         "advertencias": ["los componentes son datos de composición, nunca candidatos a selección (1.6)",
@@ -1113,16 +1265,33 @@ def f_idx_conc(ent: dict, params: dict) -> tuple[dict, list[str]]:
 
 # ======================================================================= IDX-REL-001
 def _historia_indice(ix: Any, ctx: str) -> pd.DataFrame:
-    filas = _lista(_req(ix, "historia", ctx), f"{ctx}.historia")
-    df = pd.DataFrame(filas)
-    if "fecha" not in df:
-        raise ErrorFicha(f"{ctx}: historia sin fechas")
-    df.index = pd.DatetimeIndex([_fecha(x, ctx) for x in df.pop("fecha")])
+    """Historia mensual validada: cada fila un dict con ``fecha`` y campos numéricos finitos (o ausentes/None)."""
+    filas = _lista(_req(_dict(ix, ctx), "historia", ctx), f"{ctx}.historia")
+    fechas, limpias = [], []
+    for i, fila in enumerate(filas):
+        c = f"{ctx}.historia[{i}]"
+        if not isinstance(fila, dict):
+            raise ErrorFicha(f"{c}: se espera un dict")
+        fechas.append(_fecha(_req(fila, "fecha", c), c))
+        limpias.append({str(k): (np.nan if x is None else _f(x, f"{c}.{k}")) for k, x in fila.items() if k != "fecha"})
+    df = pd.DataFrame(limpias, index=pd.DatetimeIndex(fechas), dtype=float)
     if df.index.has_duplicates:
         raise ErrorFicha(f"{ctx}: fechas repetidas")
     return df.sort_index()
 
 
+def _comprobar_mensual(indice: pd.DatetimeIndex, ctx: str) -> None:
+    """Cada observación, en el mes siguiente a la anterior (sin huecos ni varias por mes): la ficha pide historias
+    mensuales y el momentum 12-1 y el devengo de la cobertura cuentan meses por filas."""
+    meses = indice.year * MESES_ANIO + indice.month
+    saltos = np.diff(np.asarray(meses))
+    if len(saltos) and not (saltos == 1).all():
+        malo = int(np.argmax(saltos != 1))
+        raise ErrorFicha(f"{ctx}: la historia común no es mensual ({indice[malo].date()} → {indice[malo + 1].date()}); "
+                         "aporte una observación por mes, sin huecos")
+
+
+@_cerrado("IDX-REL-001")
 def f_idx_rel(ent: dict, params: dict) -> tuple[dict, list[str]]:
     """IDX-REL-001 · Valor relativo entre índices.
 
@@ -1144,7 +1313,7 @@ def f_idx_rel(ent: dict, params: dict) -> tuple[dict, list[str]]:
         raise ErrorFicha(f"{ficha}: sin divisa común declarada")
     if p["cobertura"] not in ("cubierta", "no_cubierta", "ambas"):
         raise ErrorFicha(f"{ficha}: cobertura «{p['cobertura']}» no admitida")
-    ia, ib = _req(v, "indice_a", ficha), _req(v, "indice_b", ficha)
+    ia, ib = _dict(_req(v, "indice_a", ficha), ficha), _dict(_req(v, "indice_b", ficha), ficha)
     da, db = _historia_indice(ia, f"{ficha}: indice_a"), _historia_indice(ib, f"{ficha}: indice_b")
     comun = da.index.intersection(db.index)
     if len(comun) < 2:
@@ -1152,6 +1321,7 @@ def f_idx_rel(ent: dict, params: dict) -> tuple[dict, list[str]]:
     fin = comun[-1]
     comun = comun[comun >= fin - pd.DateOffset(years=int(p["ventana_anios"]))]
     da, db = da.loc[comun], db.loc[comun]
+    _comprobar_mensual(comun, ficha)
     anios = _anios(comun)
     if anios < p["anios_min"]:
         raise ErrorFicha(f"{ficha}: historia común de {anios:.2f} años (< {p['anios_min']})")
@@ -1174,14 +1344,16 @@ def f_idx_rel(ent: dict, params: dict) -> tuple[dict, list[str]]:
     # (ii) Ajuste por composición sectorial
     neutral: dict[str, Any] | None = None
     if p["ajuste_sectorial"] and v.get("sectores"):
-        sec = v["sectores"]
-        pesos_a = {k: _f(w, f"{ficha}.sectores.pesos_a") for k, w in _req(sec, "pesos_a", ficha).items()}
+        sec = _dict(v["sectores"], f"{ficha}.sectores")
+        pesos_a = {k: _f(w, f"{ficha}.sectores.pesos_a")
+                   for k, w in _dict(_req(sec, "pesos_a", ficha), f"{ficha}.sectores.pesos_a").items()}
         if abs(sum(pesos_a.values()) - 1) > FICHAS[ficha]["tol"] or any(w < 0 for w in pesos_a.values()):
             raise ErrorFicha(f"{ficha}: los pesos sectoriales de A deben ser no negativos y sumar 1")
         neutral = {}
-        for m, mult_b in sorted(_req(sec, "multiplos_b", ficha).items()):
+        for m, mult_b in sorted(_dict(_req(sec, "multiplos_b", ficha), f"{ficha}.sectores.multiplos_b").items()):
             if m not in brechas:
                 continue
+            mult_b = _dict(mult_b, f"{ficha}.sectores.multiplos_b.{m}")
             faltan = sorted(set(pesos_a) - set(mult_b))
             if faltan:
                 raise ErrorFicha(f"{ficha}: faltan múltiplos sectoriales de B para {faltan}")
@@ -1328,6 +1500,7 @@ def _estudio(cars: list[dict[str, Any]], p: dict, lim: list[str]) -> dict[str, A
     return out
 
 
+@_cerrado("IDX-REB-001")
 def f_idx_reb(ent: dict, params: dict) -> tuple[dict, list[str]]:
     """IDX-REB-001 · Efecto de rebalanceo y cambios de composición.
 
@@ -1383,7 +1556,8 @@ def f_idx_reb(ent: dict, params: dict) -> tuple[dict, list[str]]:
         vol = sum(f["volumen_medio"] for f in sel)
         demanda[nombre] = {"demanda": dem, "dias_volumen_cesta": dem / vol if vol else None, "n": len(sel)}
     # (ii) Estudio de eventos
-    comparables = v.get("eventos_comparables") or []
+    comparables = v.get("eventos_comparables")
+    comparables = [] if comparables is None else _lista(comparables, f"{ficha}: eventos_comparables")
     estudio, segunda = None, None
     if len(comparables) < p["eventos_min"]:
         lim.append(f"{len(comparables)} eventos comparables (< {p['eventos_min']}): solo la demanda estimada, "
@@ -1471,12 +1645,45 @@ def _curva_on(r_on: float, base: float, dias: list[int]) -> list[dict]:
     return [{"dias": d, "tipo": math.expm1(d * math.log1p(r_on / base)) * base / d} for d in dias]
 
 
+def _curva_senda(cortes: list[int], tasas: list[float], dias: list[int], base: float) -> list[dict]:
+    """Curva OIS coherente con una senda escalonada de tipo a un día (tramo k = [cortes[k], cortes[k+1]))."""
+    out = []
+    for d in dias:
+        lg = sum((min(b, d) - a) * math.log1p(r / base)
+                 for a, b, r in zip(cortes, cortes[1:] + [d], tasas, strict=True) if a < d)
+        out.append({"dias": d, "tipo": math.expm1(lg) * base / d})
+    return out
+
+
+# Senda del caso de control: bajada, bajada, pausa, bajada (25 pb); nodos que no caen en reuniones, uno antes de la
+# primera y otro de más en el último tramo (sistema sobredeterminado y coherente).
+_SENDA_EXP: dict[str, Any] = {
+    "fecha": "2026-11-12", "reuniones": ["2026-12-17", "2027-02-04", "2027-04-29", "2027-07-22"],
+    "cortes": [0, 35, 84, 168, 252], "tasas": [0.0192, 0.0167, 0.0142, 0.0142, 0.0117],
+    "dias": [30, 60, 120, 200, 300, 365], "en_reunion": [-1.0, -1.0, 0.0, -1.0], "acumulados": [-1.0, -2.0, -2.0, -3.0]}
+
+
 def _datos_mon_exp(plana: bool) -> dict:
-    curva = (_curva_on(0.0192, BASE_360, [30, 90, 180, 270, 365]) if plana else
-             [{"dias": 30, "tipo": 0.0192}, {"dias": 90, "tipo": 0.0185}, {"dias": 180, "tipo": 0.0172},
-              {"dias": 270, "tipo": 0.0165}, {"dias": 365, "tipo": 0.0160}])
-    return {"fecha": "2026-11-12", "base_curva": BASE_360, "curva": curva, "tipo_oficial": 0.0200,
-            "diferencial_estable": 0.0008, "reuniones": ["2026-12-17", "2027-02-04", "2027-04-29", "2027-07-22"]}
+    e = _SENDA_EXP
+    tasas = [e["tasas"][0]] * len(e["tasas"]) if plana else e["tasas"]
+    return {"fecha": e["fecha"], "base_curva": BASE_360, "curva": _curva_senda(e["cortes"], tasas, e["dias"], BASE_360),
+            "tipo_oficial": 0.0200, "diferencial_estable": 0.0008, "reuniones": list(e["reuniones"])}
+
+
+def _datos_mon_yld_cubierto() -> dict:
+    base = {"plazo_meses": 3, "dias": 91, "fecha": "2026-11-10", "convencion": "simple_360"}
+    return {"segmentos": [{**base, "segmento": "letras_usd", "divisa": "USD", "valor": 0.04},
+                          {**base, "segmento": "letras", "divisa": "EUR", "valor": 0.02}],
+            "cobertura": {"divisa_destino": "EUR",
+                          "segmentos": {"letras_usd · USD · 3m": {"spot": 1.10, "forward": 1.105}}}}
+
+
+def _tae_plana_mon_fix(tipo: float) -> float:
+    """TAE de renovar 4 trimestres al tipo `tipo` (Act/360) desde la fecha del caso de MON-FIX-001."""
+    fecha = pd.Timestamp("2026-11-12")
+    cortes = [_dias_meses(fecha, 3 * k) for k in range(5)]
+    bruto = math.prod(1 + tipo * (b - a) / BASE_360 for a, b in pairwise(cortes))
+    return bruto ** (DIAS_ANIO / cortes[-1]) - 1
 
 
 def _datos_mon_real(pi_cero: bool) -> dict:
@@ -1510,9 +1717,10 @@ def _datos_mon_fix(plana: bool) -> dict:
     return {"fecha": fecha.date().isoformat(), "curva": curva}
 
 
-def _datos_idx_erp(gordon: bool) -> dict:
+def _datos_idx_erp(gordon: bool, mediana: float | None = None) -> dict:
     fechas = _fechas_mensuales(12 * 25)
-    hist = [{"fecha": f, "valor": 20 + 5 * math.sin(i / 17)} for i, f in enumerate(fechas)]
+    hist = [{"fecha": f, "valor": 20 + 5 * math.sin(i / 17) if mediana is None else mediana}
+            for i, f in enumerate(fechas)]
     return {"nombre": "IDX-SINT", "divisa": "EUR", "nivel": 4000, "rentabilidad_dividendo": 0.03,
             "recompras_netas": 0.0 if gordon else 0.01,
             "crecimiento_real_bpa": {"valor": 0.015, "fuente": "sintética", "fecha": "2026-11-01"},
@@ -1581,6 +1789,11 @@ def _cerca(a: Any, b: float, tol: float) -> bool:
     return a is not None and abs(float(a) - b) <= tol
 
 
+def _rel(a: Any, b: float, tol: float) -> bool:
+    """Igualdad con la tolerancia relativa de la ficha (3.2)."""
+    return a is not None and abs(float(a) - b) <= tol * abs(b)
+
+
 # Cada caso: una frase comprobable de «Verificación» de la ficha (o una identidad derivada del «Método»).
 CASOS_CONTROL: dict[str, list[dict[str, Any]]] = {
     "MON-YLD-001": [
@@ -1595,16 +1808,43 @@ CASOS_CONTROL: dict[str, list[dict[str, Any]]] = {
          "comprobar": lambda r: all(_cerca(f["simple_365"], f["tae"], FICHAS["MON-YLD-001"]["tol"])
                                     and _cerca(f["tae"], 0.031, FICHAS["MON-YLD-001"]["tol"])
                                     for f in r["tabla"].values())},
+        {"nombre": "método (i): descuento d → P = 1 − d·t/360 → simple Act/365 y TAE",
+         "datos": [{"valores": {"segmentos": [{"segmento": "letras", "divisa": "EUR", "plazo_meses": 3, "dias": 90,
+                                               "fecha": "2026-11-10", "convencion": "descuento_360",
+                                               "valor": 0.03}]}}],
+         "parametros": {},
+         "comprobar": lambda r: _rel(r["tabla"]["letras · EUR · 3m"]["precio"], 1 - 0.03 * 90 / BASE_360,
+                                     FICHAS["MON-YLD-001"]["tol"])
+         and _rel(r["tabla"]["letras · EUR · 3m"]["simple_365"], (1 / (1 - 0.03 * 90 / BASE_360) - 1) * DIAS_ANIO / 90,
+                  FICHAS["MON-YLD-001"]["tol"])
+         and _rel(r["tabla"]["letras · EUR · 3m"]["tae"], (1 - 0.03 * 90 / BASE_360) ** (-DIAS_ANIO / 90) - 1,
+                  FICHAS["MON-YLD-001"]["tol"])},
+        {"nombre": "método (iii): rendimiento cubierto = (1 + i_ext·t/base_ext)·(S/F) − 1",
+         "datos": [{"valores": _datos_mon_yld_cubierto()}], "parametros": {"cobertura": True},
+         "comprobar": lambda r: _rel(r["rendimiento_cubierto"]["letras_usd · USD · 3m"]["rendimiento_periodo"],
+                                     (1 + 0.04 * 91 / BASE_360) * (1.10 / 1.105) - 1, FICHAS["MON-YLD-001"]["tol"])},
     ],
     "MON-EXP-001": [
         {"nombre": "curva plana al tipo vigente ⇒ probabilidad de movimiento 0",
          "datos": [{"valores": _datos_mon_exp(plana=True)}], "parametros": {},
          "comprobar": lambda r: all(abs(s["movimientos_en_reunion"]) <= FICHAS["MON-EXP-001"]["tol"]
                                     and abs(s["movimientos_acumulados"]) <= FICHAS["MON-EXP-001"]["tol"]
+                                    and _cerca(s["probabilidades"]["movimientos"]["0"], 1.0,
+                                               FICHAS["MON-EXP-001"]["tol"])
                                     for s in r["senda"])},
-        {"nombre": "la senda reproduce los forwards de entrada",
+        {"nombre": "la senda reproduce los forwards de entrada (todos los nodos, también los que no añaden reunión)",
          "datos": [{"valores": _datos_mon_exp(plana=False)}], "parametros": {},
-         "comprobar": lambda r: r["verificacion"]["error_reproduccion_nodos_max"] <= FICHAS["MON-EXP-001"]["tol"]},
+         "comprobar": lambda r: len(r["verificacion"]["nodos"]) == len(_SENDA_EXP["dias"])
+         and all(abs(n["tipo_senda"] - n["tipo_nodo"]) <= FICHAS["MON-EXP-001"]["tol"] * abs(n["tipo_nodo"])
+                 for n in r["verificacion"]["nodos"])},
+        {"nombre": "senda escalonada exacta recuperada; movimiento de cada reunión frente al tipo en vigor antes de ella",
+         "datos": [{"valores": _datos_mon_exp(plana=False)}], "parametros": {},
+         "comprobar": lambda r: all(
+             abs(s["tipo_mercado_implicito"] - t) <= FICHAS["MON-EXP-001"]["tol"] * t
+             and abs(s["movimientos_en_reunion"] - m) <= FICHAS["MON-EXP-001"]["tol"]
+             and abs(s["movimientos_acumulados"] - a) <= FICHAS["MON-EXP-001"]["tol"]
+             for s, t, m, a in zip(r["senda"], _SENDA_EXP["tasas"][1:], _SENDA_EXP["en_reunion"],
+                                   _SENDA_EXP["acumulados"], strict=True))},
     ],
     "MON-REAL-001": [
         {"nombre": "π = 0 ⇒ real = nominal",
@@ -1615,6 +1855,9 @@ CASOS_CONTROL: dict[str, list[dict[str, Any]]] = {
         {"nombre": "coherencia con FIN-CAGR-001 (segunda vía de la renovación compuesta)",
          "datos": [{"valores": _datos_mon_real(pi_cero=False)}], "parametros": {},
          "comprobar": lambda r: r["verificacion"]["error_segunda_via_max"] <= FICHAS["MON-REAL-001"]["tol"]},
+        {"nombre": "método (i): Fisher exacto ex ante (1 + i)/(1 + π^e) − 1",
+         "datos": [{"valores": _datos_mon_real(pi_cero=False)}], "parametros": {},
+         "comprobar": lambda r: _rel(r["real_ex_ante"]["EUR"], 1.021 / 1.019 - 1, FICHAS["MON-REAL-001"]["tol"])},
     ],
     "MON-FIX-001": [
         {"nombre": "renovar con los forwards = fijar (identidad sin arbitraje)",
@@ -1625,6 +1868,11 @@ CASOS_CONTROL: dict[str, list[dict[str, Any]]] = {
          "datos": [{"valores": _datos_mon_fix(plana=True)}], "parametros": {},
          "comprobar": lambda r: abs(r["renovar"]["plana"]["diferencia_vs_fijar_pb"]) <= FICHAS["MON-FIX-001"]["tol"] * PB
          and abs(r["holgura_pb"]["plana"]) <= FICHAS["MON-FIX-001"]["tol"] * PB},
+        {"nombre": "referencia ingenua: renovar al tipo vigente a tau (curva con pendiente)",
+         "datos": [{"valores": _datos_mon_fix(plana=False)}], "parametros": {},
+         "comprobar": lambda r: _rel(r["renovar"]["plana"]["tipo_constante_equivalente"], 0.0200,
+                                     FICHAS["MON-FIX-001"]["tol"])
+         and _rel(r["renovar"]["plana"]["tae"], _tae_plana_mon_fix(0.0200), FICHAS["MON-FIX-001"]["tol"])},
     ],
     "IDX-ERP-001": [
         {"nombre": "sin cambio de múltiplo ni recompras ⇒ E[R] = dividendo + crecimiento nominal (Gordon)",
@@ -1634,14 +1882,27 @@ CASOS_CONTROL: dict[str, list[dict[str, Any]]] = {
          "datos": [{"valores": _datos_idx_erp(gordon=False)}], "parametros": {},
          "comprobar": lambda r: _cerca(sum(r["bloques"]["IDX-SINT"].values()), r["er_nominal"]["IDX-SINT"],
                                        FICHAS["IDX-ERP-001"]["tol"])},
+        {"nombre": "método (i)–(ii): reversión λ compuesta (m_obj/m_act)^{1/N} − 1 y real = nominal − π^e",
+         "datos": [{"valores": _datos_idx_erp(gordon=False, mediana=20.0)}], "parametros": {},
+         "comprobar": lambda r: _rel(r["bloques"]["IDX-SINT"]["cambio_valoracion"], (24 / 28) ** (1 / 10) - 1,
+                                     FICHAS["IDX-ERP-001"]["tol"])
+         and _rel(r["er_real"]["IDX-SINT"], r["er_nominal"]["IDX-SINT"] - 0.02, FICHAS["IDX-ERP-001"]["tol"])
+         and _rel(r["er_nominal"]["IDX-SINT"], 0.03 + 0.01 + 0.015 + 0.02 + (24 / 28) ** (1 / 10) - 1,
+                  FICHAS["IDX-ERP-001"]["tol"])},
     ],
     "IDX-CONC-001": [
-        {"nombre": "pesos suman 1",
-         "datos": [{"valores": {"composicion": _composicion(30, igual=False)}}], "parametros": {},
-         "comprobar": lambda r: _cerca(r["verificacion"]["suma_pesos"], 1.0, FICHAS["IDX-CONC-001"]["tol"])},
+        {"nombre": "pesos suman 1 ⇒ el peso de los n mayores con n = todos es 1 (y los sectoriales también suman 1)",
+         "datos": [{"valores": {"composicion": _composicion(5, igual=False)}}], "parametros": {"top_n": 5},
+         "comprobar": lambda r: _cerca(r["peso_top_n"], 1.0, FICHAS["IDX-CONC-001"]["tol"])
+         and _cerca(r["verificacion"]["suma_pesos_sectoriales"], 1.0, FICHAS["IDX-CONC-001"]["tol"])},
         {"nombre": "índice equiponderado de n componentes ⇒ N_ef = n",
          "datos": [{"valores": {"composicion": _composicion(20, igual=True)}}], "parametros": {},
          "comprobar": lambda r: _cerca(r["n_ef"], 20.0, FICHAS["IDX-CONC-001"]["tol"] * 20)},
+        {"nombre": "método (i): peso de los 10 mayores y HHI a mano con pesos distintos",
+         "datos": [{"valores": {"composicion": _composicion(12, igual=False)}}], "parametros": {},
+         "comprobar": lambda r: _rel(r["peso_top_n"], sum(range(3, 13)) / sum(range(1, 13)),
+                                     FICHAS["IDX-CONC-001"]["tol"])
+         and _rel(r["hhi"], sum(k * k for k in range(1, 13)) / sum(range(1, 13)) ** 2, FICHAS["IDX-CONC-001"]["tol"])},
     ],
     "IDX-REL-001": [
         {"nombre": "un índice frente a sí mismo ⇒ brecha 0 (z indefinido, declarado)",
@@ -1654,6 +1915,12 @@ CASOS_CONTROL: dict[str, list[dict[str, Any]]] = {
          "comprobar": lambda r: all(_cerca(r["brechas"][m]["brecha"], 1.0, FICHAS["IDX-REL-001"]["tol"])
                                     and _cerca(r["brechas"][m]["log_ratio"], math.log(2), FICHAS["IDX-REL-001"]["tol"])
                                     for m in ("per_adelantado", "cape"))},
+        {"nombre": "método (iv): momentum relativo 12-1 y a 3 meses del ratio de rentabilidades totales",
+         "datos": [{"valores": _datos_idx_rel(mismo=False)}], "parametros": {"ajuste_sectorial": False},
+         "comprobar": lambda r: all(
+             _rel(r["momentum_relativo"][modo]["12-1"], (1.006 / 1.0065) ** 11 - 1, FICHAS["IDX-REL-001"]["tol"])
+             and _rel(r["momentum_relativo"][modo]["3m"], (1.006 / 1.0065) ** 3 - 1, FICHAS["IDX-REL-001"]["tol"])
+             for modo in ("cubierta", "no_cubierta"))},
     ],
     "IDX-REB-001": [
         {"nombre": "suma de cambios de peso = 0 ⇒ demanda simétrica",

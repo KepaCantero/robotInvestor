@@ -21,11 +21,12 @@ parámetros de la petición (se aplican encima de ``PARAMETROS_POR_DEFECTO`` de 
 """
 from __future__ import annotations
 
+import functools
 import itertools
 import math
 import re
 from collections.abc import Callable
-from datetime import date
+from datetime import date, datetime
 from typing import Any
 
 import numpy as np
@@ -43,72 +44,72 @@ PCT = 100                 # tanto por uno → %
 MESES_POR_ANIO = 12
 DIAS_POR_ANIO = 365       # Catálogo 3.1: recuento de días Real/365
 
-# ------------------------------------------------------------------ parámetros por defecto (salen de las fichas)
+# ------------------------------------------------------------------ parámetros por defecto (campo «Parámetros»)
+# Solo los parámetros que la ficha declara como tales: la petición puede cambiarlos dentro de su rango (se validan en
+# `_VALIDADORES`). Los umbrales de rechazo y las constantes del método están en `UMBRALES` y no se pueden cambiar.
 PARAMETROS_POR_DEFECTO: dict[str, dict[str, Any]] = {
     # TCV-SLOPE-001 · «Parámetros»: tramos (2s10s); regresores (los indicados); ventana (20 años);
-    # horizonte_carry (3 meses). «Método (iii)»: pendiente forward a 3 y 6 meses. «Aclaración y rechazo»:
-    # < 6 nodos o < 5 años. «Entradas mínimas»: ≥ 10 años. El IC usa el nivel por defecto de ST-INF-001
-    # (nivel 0,05) y, sin `rezagos_hac`, los rezagos HAC siguen la regla de Newey-West que fija ACC-FACT-001.
+    # horizonte_carry (3 meses; rango 1–12 de delta_t en FIR-CARRY-001). El IC usa el nivel por defecto de
+    # ST-INF-001 (nivel 0,05) y, sin `rezagos_hac`, los rezagos HAC siguen la regla de Newey-West de ACC-FACT-001.
     "TCV-SLOPE-001": {
         "tramos": "2s10s",
         "regresores": ["cambio_esperado_tipo_oficial_1a", "brecha_actividad", "inflacion_subyacente", "prima_plazo"],
         "ventana": 20,
         "horizonte_carry": 3,
-        "horizontes_forward": [3, 6],
-        "nodos_minimos": 6,
-        "anios_minimos": 5,
-        "anios_entrada_minima": 10,
         "alfa_ic": 0.05,
         "rezagos_hac": None,
     },
     # TCV-BEI-001 · «Parámetros»: plazos (2, 5, 10 años; 5y5y); ajuste_estacional (true para < 3 años).
-    # «Aclaración y rechazo»: < 3 vencimientos reales. «Método (vi)»: percentil frente a ≥ 10 años.
     "TCV-BEI-001": {
         "plazos": [2, 5, 10],
         "forward": [5, 5],
         "ajuste_estacional": True,
-        "plazo_ajuste_estacional": 3,
-        "vencimientos_reales_minimos": 3,
-        "anios_percentil": 10,
     },
     # TCV-CDS-001 · «Parámetros»: recuperacion (0,40 IG; 0,25–0,40 HY); fuente_impagos (declarada);
-    # ventana (≥ 10 años; 5 con limitación). «Método (vi)»: pendiente 5–10 años. «Salidas»: carry en pb anuales.
+    # ventana (≥ 10 años; 5 con limitación).
     "TCV-CDS-001": {
         "recuperacion": None,
-        "recuperacion_ig": 0.40,
-        "recuperacion_hy": [0.25, 0.40],
         "fuente_impagos": None,
         "ventana": 10,
-        "anios_minimos": 5,
-        "plazos_pendiente": [5, 10],
-        "horizonte_carry_anios": 1,
     },
-    # TCV-VIXTS-001 · «Parámetros»: vencimiento_constante (30 días); ventana_percentil (5 años).
-    # «Entradas mínimas»: ≥ 2 vencimientos, ≥ 3 años. El ES de la exposición corta usa el nivel y el mínimo de
-    # observaciones del método histórico de RISK-VAR-001 (nivel 0,975; ≥ 250 observaciones).
+    # TCV-VIXTS-001 · «Parámetros»: vencimiento_constante (30 días); ventana_percentil (5 años). El ES de la
+    # exposición corta usa el nivel del método histórico de RISK-VAR-001 (nivel 0,975; rango 0,90–0,99).
     "TCV-VIXTS-001": {
         "vencimiento_constante": 30,
         "ventana_percentil": 5,
-        "vencimientos_minimos": 2,
-        "anios_minimos": 3,
         "nivel_es": 0.975,
-        "observaciones_minimas_es": 250,
     },
-    # TCV-TP-001 · «Parámetros»: n_factores (5; 3–5); metodo (ACM; publicado; encuesta); ventana (toda la
-    # disponible). «Método (ii)»: prima a 2, 5 y 10 años. «Entradas mínimas»: ≥ 20 años (≥ 10 con limitación),
-    # vencimientos de 1 a 10 años. «Verificación»: error de ajuste < 5 pb. «Aclaración y rechazo»: < 10 años.
+    # TCV-TP-001 · «Parámetros»: n_factores (5; 3–5); metodo (ACM; publicado; encuesta); ventana (toda la disponible).
     "TCV-TP-001": {
         "n_factores": 5,
-        "rango_n_factores": [3, 5],
         "metodo": "ACM",
         "ventana": None,
-        "plazos_prima": [2, 5, 10],
-        "anios_minimos": 10,
-        "anios_entrada_minima": 20,
-        "plazo_maximo_anios": 10,
-        "error_ajuste_max_pb": 5,
-        "tolerancia": 1e-6,  # «Tolerancias y semilla»: 1e-6 (relativa) · semilla null
     },
+}
+
+# Umbrales y constantes del método (no son parámetros de la petición; cada uno cita su campo de la ficha).
+UMBRALES: dict[str, dict[str, Any]] = {
+    # TCV-SLOPE-001 · «Método (iii)»: forward a 3 y 6 meses. «Aclaración y rechazo»: < 6 nodos o < 5 años.
+    # «Entradas mínimas»: ≥ 10 años. FIR-CARRY-001: delta_t en 1–12 meses.
+    "TCV-SLOPE-001": {"horizontes_forward": [3, 6], "nodos_minimos": 6, "anios_minimos": 5,
+                      "anios_entrada_minima": 10, "rango_horizonte_carry": [1, 12]},
+    # TCV-BEI-001 · «Parámetros»: ajuste estacional para < 3 años. «Aclaración y rechazo»: < 3 vencimientos reales.
+    # «Método (vi)»: percentil frente a ≥ 10 años.
+    "TCV-BEI-001": {"plazo_ajuste_estacional": 3, "vencimientos_reales_minimos": 3, "anios_percentil": 10},
+    # TCV-CDS-001 · «Parámetros»: recuperación 0,40 IG y 0,25–0,40 HY. «Aclaración y rechazo»: < 5 años.
+    # «Método (vi)»: pendiente 5–10 años. «Salidas»: carry en pb anuales (horizonte de 1 año).
+    "TCV-CDS-001": {"recuperacion_ig": 0.40, "recuperacion_hy": [0.25, 0.40], "anios_minimos": 5,
+                    "plazos_pendiente": [5, 10], "horizonte_carry_anios": 1},
+    # TCV-VIXTS-001 · «Aclaración y rechazo»: < 2 vencimientos. «Entradas mínimas»: ≥ 3 años. RISK-VAR-001:
+    # ≥ 250 observaciones para el método histórico y nivel en 0,90–0,99.
+    "TCV-VIXTS-001": {"vencimientos_minimos": 2, "anios_minimos": 3, "observaciones_minimas_es": 250,
+                      "rango_nivel_es": [0.90, 0.99]},
+    # TCV-TP-001 · «Parámetros»: n_factores 3–5. «Método (ii)»: prima a 2, 5 y 10 años. «Entradas mínimas»: curva
+    # mensual ≥ 20 años (≥ 10 con limitación) con vencimientos de 1 a 10 años. «Verificación»: error de ajuste
+    # < 5 pb. «Aclaración y rechazo»: < 10 años. «Tolerancias y semilla»: 1e-6 · semilla null.
+    "TCV-TP-001": {"rango_n_factores": [3, 5], "plazos_prima": [2, 5, 10], "anios_minimos": 10,
+                   "anios_entrada_minima": 20, "plazo_minimo_meses": 1, "plazo_maximo_anios": 10,
+                   "error_ajuste_max_pb": 5, "tolerancia": 1e-6},
 }
 
 # Advertencias obligatorias de entrega («Supuestos y limitaciones» de cada ficha, literales).
@@ -144,9 +145,117 @@ ADVERTENCIAS: dict[str, list[str]] = {
 
 
 # ================================================================== utilidades comunes
+def _num(x: Any, que: str) -> float:
+    if isinstance(x, bool) or not isinstance(x, (int, float, np.integer, np.floating)):
+        raise ErrorFicha(f"{que}: no es un número ({str(x)[:40]!r})")
+    try:
+        f = float(x)
+    except OverflowError as e:
+        raise ErrorFicha(f"{que}: número fuera de rango") from e
+    if not math.isfinite(f):
+        raise ErrorFicha(f"{que}: valor no finito ({x!r})")
+    return f
+
+
+def _rango(x: Any, que: str, lo: float | None = None, hi: float | None = None, abierto_lo: bool = False,
+           abierto_hi: bool = False) -> float:
+    f = _num(x, que)
+    if lo is not None and (f < lo or (abierto_lo and f == lo)):
+        raise ErrorFicha(f"{que}: {f:g} fuera del rango admitido (mínimo {lo:g}{', excluido' if abierto_lo else ''})")
+    if hi is not None and (f > hi or (abierto_hi and f == hi)):
+        raise ErrorFicha(f"{que}: {f:g} fuera del rango admitido (máximo {hi:g}{', excluido' if abierto_hi else ''})")
+    return f
+
+
+def _entero(x: Any, que: str, lo: int | None = None, hi: int | None = None) -> int:
+    f = _rango(x, que, lo, hi)
+    if f != math.floor(f):
+        raise ErrorFicha(f"{que}: se esperaba un entero ({f:g})")
+    return int(f)
+
+
+def _lista(x: Any, que: str) -> list[Any]:
+    if not isinstance(x, (list, tuple)):
+        raise ErrorFicha(f"{que}: se esperaba una lista")
+    return list(x)
+
+
+def _dict(x: Any, que: str) -> dict[str, Any]:
+    if not isinstance(x, dict):
+        raise ErrorFicha(f"{que}: se esperaba un objeto (dict)")
+    return x
+
+
+def _opcional_dict(v: dict[str, Any], clave: str, que: str) -> dict[str, Any] | None:
+    x = v.get(clave)
+    return None if x is None else _dict(x, f"{que}: «{clave}»")
+
+
+def _texto(x: Any) -> bool:
+    return isinstance(x, str) and bool(x.strip())
+
+
+def _textos(x: Any, que: str, vacia: bool = False) -> list[str]:
+    if isinstance(x, str):
+        x = [x]
+    lista = _lista(x, que)
+    if not lista and not vacia:
+        raise ErrorFicha(f"{que}: lista vacía")
+    if not all(_texto(e) for e in lista) or len(set(lista)) != len(lista):
+        raise ErrorFicha(f"{que}: se esperaban textos no vacíos y sin repetir")
+    return lista
+
+
+def _validar_parametros(ficha: str, p: dict[str, Any]) -> None:
+    """Comprueba tipo y rango de cada parámetro de la petición (falla cerrado con un motivo claro)."""
+    F = ficha
+    u = UMBRALES[F]
+    if F == "TCV-SLOPE-001":
+        p["tramos"] = _textos(p["tramos"], f"{F}: tramos")
+        p["regresores"] = _textos(p["regresores"], f"{F}: regresores", vacia=True)
+        p["ventana"] = _rango(p["ventana"], f"{F}: ventana", 0, abierto_lo=True)
+        p["horizonte_carry"] = _rango(p["horizonte_carry"], f"{F}: horizonte_carry", *u["rango_horizonte_carry"])
+        p["alfa_ic"] = _rango(p["alfa_ic"], f"{F}: alfa_ic", 0, 1, True, True)
+        if p["rezagos_hac"] is not None:
+            p["rezagos_hac"] = _entero(p["rezagos_hac"], f"{F}: rezagos_hac", 0)
+    elif F == "TCV-BEI-001":
+        p["plazos"] = [_rango(t, f"{F}: plazos", 0, abierto_lo=True) for t in _lista(p["plazos"], f"{F}: plazos")]
+        if not p["plazos"]:
+            raise ErrorFicha(f"{F}: plazos vacío")
+        fwd = _lista(p["forward"], f"{F}: forward")
+        if len(fwd) != 2:
+            raise ErrorFicha(f"{F}: forward = [inicio, plazo] en años")
+        p["forward"] = [_rango(t, f"{F}: forward", 0, abierto_lo=True) for t in fwd]
+        if not isinstance(p["ajuste_estacional"], bool):
+            raise ErrorFicha(f"{F}: ajuste_estacional debe ser true o false")
+    elif F == "TCV-CDS-001":
+        if p["recuperacion"] is not None:
+            p["recuperacion"] = _rango(p["recuperacion"], f"{F}: recuperacion", 0, 1, abierto_hi=True)
+        if p["fuente_impagos"] is not None and not _texto(p["fuente_impagos"]):
+            raise ErrorFicha(f"{F}: fuente_impagos debe ser un texto")
+        p["ventana"] = _rango(p["ventana"], f"{F}: ventana", u["anios_minimos"])
+    elif F == "TCV-VIXTS-001":
+        p["vencimiento_constante"] = _rango(p["vencimiento_constante"], f"{F}: vencimiento_constante", 0, abierto_lo=True)
+        p["ventana_percentil"] = _rango(p["ventana_percentil"], f"{F}: ventana_percentil", 0, abierto_lo=True)
+        p["nivel_es"] = _rango(p["nivel_es"], f"{F}: nivel_es", *u["rango_nivel_es"])
+    elif F == "TCV-TP-001":
+        p["n_factores"] = _entero(p["n_factores"], f"{F}: n_factores", *u["rango_n_factores"])
+        if not isinstance(p["metodo"], str) or p["metodo"].strip().lower() not in ("acm", "publicado", "encuesta"):
+            raise ErrorFicha(f"{F}: metodo «{str(p['metodo'])[:40]}» no reconocido (ACM, publicado o encuesta)")
+        if p["ventana"] is not None:
+            p["ventana"] = _rango(p["ventana"], f"{F}: ventana", u["anios_minimos"])
+
+
 def _parametros(ficha: str, params: dict[str, Any] | None) -> dict[str, Any]:
+    """Parámetros de la petición encima de los de la ficha, validados; los umbrales de `UMBRALES` no se cambian."""
+    params = _dict(params if params is not None else {}, f"{ficha}: parámetros")
+    fijos = set(params) & set(UMBRALES[ficha])
+    if fijos:
+        raise ErrorFicha(f"{ficha}: {sorted(fijos)} son umbrales fijos de la ficha, no parámetros de la petición")
     p = dict(PARAMETROS_POR_DEFECTO[ficha])
-    p.update({k: v for k, v in (params or {}).items() if v is not None})
+    p.update({k: v for k, v in params.items() if v is not None and k in p})
+    _validar_parametros(ficha, p)
+    p.update(UMBRALES[ficha])
     return p
 
 
@@ -156,51 +265,54 @@ def _requerido(v: dict[str, Any], clave: str, ficha: str, que: str = "") -> Any:
     return v[clave]
 
 
-def _num(x: Any, que: str) -> float:
-    if isinstance(x, bool):
-        raise ErrorFicha(f"{que}: no es un número ({x!r})")
-    try:
-        f = float(x)
-    except (TypeError, ValueError) as e:
-        raise ErrorFicha(f"{que}: no es un número ({x!r})") from e
-    if not math.isfinite(f):
-        raise ErrorFicha(f"{que}: valor no finito ({x!r})")
-    return f
+def _requerido_dict(v: dict[str, Any], clave: str, ficha: str, que: str = "") -> dict[str, Any]:
+    return _dict(_requerido(v, clave, ficha, que), f"{ficha}: «{clave}»")
 
 
 def _vector(x: Any, que: str, minimo: int = 1) -> np.ndarray:
-    if isinstance(x, (str, bytes, dict)) or not hasattr(x, "__len__"):
-        raise ErrorFicha(f"{que}: se esperaba una lista de números")
-    a = np.array([_num(e, que) for e in x], dtype=float)
+    lista = _lista(x, que) if not isinstance(x, np.ndarray) else list(x)
+    a = np.array([_num(e, que) for e in lista], dtype=float)
     if len(a) < minimo:
         raise ErrorFicha(f"{que}: {len(a)} valores (< {minimo})")
     return a
 
 
 def _matriz(filas: Any, n_filas: int, n_cols: int, que: str) -> np.ndarray:
-    if isinstance(filas, (str, bytes, dict)) or not hasattr(filas, "__len__") or len(filas) != n_filas:
+    filas = _lista(filas, que)
+    if len(filas) != n_filas:
         raise ErrorFicha(f"{que}: se esperaban {n_filas} filas")
-    m = np.array([_vector(f, que) for f in filas], dtype=float) if n_filas else np.zeros((0, n_cols))
-    if m.shape != (n_filas, n_cols):
-        raise ErrorFicha(f"{que}: cada fila debe tener {n_cols} valores")
+    m = np.zeros((n_filas, n_cols))
+    for i, f in enumerate(filas):
+        fila = _vector(f, que)
+        if len(fila) != n_cols:
+            raise ErrorFicha(f"{que}: cada fila debe tener {n_cols} valores (fila {i})")
+        m[i] = fila
     return m
 
 
+_ISO = re.compile(r"^\d{4}-\d{2}-\d{2}([T ].*)?$")
+
+
 def _fecha(x: Any, que: str) -> date:
+    """Fecha ISO (texto «AAAA-MM-DD»), `date` o `Timestamp`. Los números se rechazan (H-11: 20261110 no es fecha)."""
     if isinstance(x, pd.Timestamp):
+        if pd.isna(x):
+            raise ErrorFicha(f"{que}: fecha vacía (NaT)")
+        return x.date()
+    if isinstance(x, datetime):
         return x.date()
     if isinstance(x, date):
         return x
+    if not isinstance(x, str) or not _ISO.match(x.strip()):
+        raise ErrorFicha(f"{que}: fecha no válida ({str(x)[:40]!r}); se espera texto ISO «AAAA-MM-DD»")
     try:
-        return date.fromisoformat(str(x)[:10])
+        return date.fromisoformat(x.strip()[:10])
     except ValueError as e:
         raise ErrorFicha(f"{que}: fecha no válida ({x!r})") from e
 
 
 def _fechas(x: Any, que: str, minimo: int = 2) -> list[date]:
-    if isinstance(x, (str, bytes, dict)) or not hasattr(x, "__len__"):
-        raise ErrorFicha(f"{que}: se esperaba una lista de fechas")
-    f = [_fecha(e, que) for e in x]
+    f = [_fecha(e, que) for e in _lista(x, que)]
     if len(f) < minimo:
         raise ErrorFicha(f"{que}: {len(f)} fechas (< {minimo})")
     if any(b <= a for a, b in itertools.pairwise(f)):
@@ -211,10 +323,6 @@ def _fechas(x: Any, que: str, minimo: int = 2) -> list[date]:
 def _anios(f0: date, f1: date) -> float:
     """Años entre dos fechas con recuento Real/365 (Catálogo 3.1)."""
     return (f1 - f0).days / DIAS_POR_ANIO
-
-
-def _texto(x: Any) -> bool:
-    return isinstance(x, str) and bool(x.strip())
 
 
 def _nodos(curva: Any, que: str, clave: str = "rendimientos", minimo: int = 2) -> tuple[np.ndarray, np.ndarray]:
@@ -228,6 +336,13 @@ def _nodos(curva: Any, que: str, clave: str = "rendimientos", minimo: int = 2) -
     if np.any(plazos < 0) or np.any(np.diff(plazos) <= 0):
         raise ErrorFicha(f"{que}: los plazos deben ser no negativos y estrictamente crecientes")
     return plazos, valores
+
+
+def _tipos(valores: np.ndarray, que: str) -> np.ndarray:
+    """Tipos en % anual: deben ser > −100 % para que (1 + y) tenga sentido con capitalización compuesta."""
+    if np.any(valores <= -PCT):
+        raise ErrorFicha(f"{que}: tipos ≤ −100 %")
+    return valores
 
 
 def _interp(plazos: np.ndarray, valores: np.ndarray, x: float, que: str) -> float:
@@ -255,9 +370,56 @@ def _posicion(valor: float, historia: np.ndarray, que: str) -> dict[str, Any]:
             "media": float(np.mean(h)), "n": len(h)}
 
 
-def _serie_a_listas(s: Any) -> tuple[list[date], list[float]]:
+def _serie_a_listas(s: Any, que: str) -> tuple[list[date], list[float]]:
+    """Serie de rol (pd.Series con índice de fechas) → (fechas, valores finitos)."""
+    if not isinstance(s, pd.Series) or not isinstance(s.index, pd.DatetimeIndex):
+        raise ErrorFicha(f"{que}: se esperaba una serie con índice de fechas")
     s = s.dropna()
-    return [pd.Timestamp(i).date() for i in s.index], [float(x) for x in s.to_numpy()]
+    return [i.date() for i in s.index], [float(x) for x in _vector(list(s.to_numpy()), que)]
+
+
+def _finitos(x: Any, ruta: str, malas: list[str]) -> Any:
+    """Copia JSON del resultado con cada número no finito sustituido por None (y su ruta anotada)."""
+    if isinstance(x, dict):
+        return {str(k): _finitos(v, f"{ruta}.{k}", malas) for k, v in x.items()}
+    if isinstance(x, (list, tuple)):
+        return [_finitos(v, f"{ruta}[{i}]", malas) for i, v in enumerate(x)]
+    if isinstance(x, (bool, np.bool_)):
+        return bool(x)
+    if isinstance(x, (int, np.integer)):
+        return int(x)
+    if isinstance(x, (float, np.floating)):
+        if not math.isfinite(float(x)):
+            malas.append(ruta)
+            return None
+        return float(x)
+    return x
+
+
+def _blindar(ficha: str, fn: Callable[[dict[str, Any], dict[str, Any]], Resultado]) -> Callable[..., Resultado]:
+    """Falla cerrado ante cualquier entrada mal formada y nunca sirve números no finitos (H-02 de la QA r01)."""
+
+    @functools.wraps(fn)
+    def blindado(ent: Any, params: Any = None) -> Resultado:
+        ent = _dict(ent, f"{ficha}: entrada")
+        _dict(ent.get("valores") or {}, f"{ficha}: valores")
+        _dict(ent.get("series_rol") or {}, f"{ficha}: series_rol")
+        try:
+            with np.errstate(all="ignore"):
+                res, lim = fn(ent, params)
+        except ErrorFicha:
+            raise
+        except (OverflowError, ZeroDivisionError, FloatingPointError, np.linalg.LinAlgError) as e:
+            raise ErrorFicha(f"{ficha}: cálculo numérico no válido con estos datos ({type(e).__name__}: {e})") from e
+        except (TypeError, ValueError, AttributeError, KeyError, IndexError) as e:
+            raise ErrorFicha(f"{ficha}: entrada mal formada ({type(e).__name__}: {e})") from e
+        malas: list[str] = []
+        limpio = _finitos(res, "resultado", malas)
+        if malas:
+            lim.append(f"cifras no finitas no servidas (None): {', '.join(malas[:5])}")
+        return limpio, lim
+
+    return blindado
 
 
 # ================================================================== TCV-SLOPE-001
@@ -318,7 +480,15 @@ def _carry_tramo(plazos: np.ndarray, curva: np.ndarray, tau: float, dt: float, f
 
 def _forward(y_ini: float, t_ini: float, y_fin: float, t_fin: float) -> float:
     """Tipo forward entre t_ini y t_fin con capitalización anual compuesta (tantos por uno)."""
-    return float(((1 + y_fin) ** t_fin / (1 + y_ini) ** t_ini) ** (1 / (t_fin - t_ini)) - 1)
+    if not (1 + y_ini > 0 and 1 + y_fin > 0 and t_fin > t_ini):
+        raise ErrorFicha("forward: tipos ≤ −100 % o plazos incoherentes")
+    try:
+        f = ((1 + y_fin) ** t_fin / (1 + y_ini) ** t_ini) ** (1 / (t_fin - t_ini)) - 1
+    except OverflowError as e:
+        raise ErrorFicha("forward: desbordamiento numérico (tipos fuera de escala)") from e
+    if not math.isfinite(f):
+        raise ErrorFicha("forward: resultado no finito")
+    return float(f)
 
 
 def _regimen(d_pend: float, d_nivel: float) -> str:
@@ -349,16 +519,15 @@ def f_tcv_slope(ent: dict[str, Any], params: dict[str, Any]) -> Resultado:
     v = ent.get("valores") or {}
     lim = list(ADVERTENCIAS[F])
 
-    hc = _requerido(v, "historia_curva", F, "curva con fechas, plazos y rendimientos")
-    if not isinstance(hc, dict):
-        raise ErrorFicha(f"{F}: «historia_curva» debe ser un objeto con fechas, plazos y rendimientos")
+    hc = _requerido_dict(v, "historia_curva", F, "curva con fechas, plazos y rendimientos")
     fechas = _fechas(hc.get("fechas"), f"{F}: historia_curva.fechas")
     plazos = _vector(hc.get("plazos"), f"{F}: historia_curva.plazos")
     if len(plazos) < int(p["nodos_minimos"]):
         raise ErrorFicha(f"{F}: curva con {len(plazos)} nodos (< {p['nodos_minimos']}): rechazo de la ficha")
     if np.any(plazos <= 0) or np.any(np.diff(plazos) <= 0):
         raise ErrorFicha(f"{F}: los plazos deben ser positivos y estrictamente crecientes")
-    R = _matriz(hc.get("rendimientos"), len(fechas), len(plazos), f"{F}: historia_curva.rendimientos")
+    R = _tipos(_matriz(hc.get("rendimientos"), len(fechas), len(plazos), f"{F}: historia_curva.rendimientos"),
+               f"{F}: historia_curva.rendimientos")
     span = _anios(fechas[0], fechas[-1])
     if span < float(p["anios_minimos"]):
         raise ErrorFicha(f"{F}: historia de {span:.2f} años (< {p['anios_minimos']}): rechazo de la ficha")
@@ -367,7 +536,7 @@ def f_tcv_slope(ent: dict[str, Any], params: dict[str, Any]) -> Resultado:
 
     # Regresores con vintages
     nombres = list(p["regresores"] or [])
-    datos_reg = v.get("regresores") or {}
+    datos_reg = _dict(v.get("regresores") or {}, f"{F}: regresores")
     cols = []
     for nombre in nombres:
         r = datos_reg.get(nombre)
@@ -393,22 +562,17 @@ def f_tcv_slope(ent: dict[str, Any], params: dict[str, Any]) -> Resultado:
     idx_est = np.where(en_ventana)[0][:-1]          # estimación: ventana sin la observación actual
     X_all = np.column_stack([np.ones(len(fechas))] + cols)
     alfa = float(p["alfa_ic"])
-    if not 0 < alfa < 1:
-        raise ErrorFicha(f"{F}: alfa_ic fuera de (0, 1)")
     rezagos = p["rezagos_hac"]
     rezagos = _rezagos_newey_west(len(idx_est)) if rezagos is None else int(rezagos)
-    if rezagos < 0:
-        raise ErrorFicha(f"{F}: rezagos_hac negativo")
+    if rezagos >= len(idx_est):
+        raise ErrorFicha(f"{F}: rezagos_hac ({rezagos}) ≥ observaciones de la ventana ({len(idx_est)})")
 
     tramos = p["tramos"]
-    tramos = [tramos] if isinstance(tramos, str) else list(tramos)
-    dt = _num(p["horizonte_carry"], f"{F}: horizonte_carry") / MESES_POR_ANIO
-    if dt <= 0:
-        raise ErrorFicha(f"{F}: horizonte_carry debe ser positivo")
+    dt = float(p["horizonte_carry"]) / MESES_POR_ANIO
     actual = R[-1]
     fin_dato = v.get("financiacion")
     if fin_dato is not None:
-        fin: float | None = _num(fin_dato, f"{F}: financiacion") / PCT
+        fin: float | None = _rango(fin_dato, f"{F}: financiacion", -PCT, abierto_lo=True) / PCT
     else:
         y_fin = _interp_o_none(plazos, actual, dt, f"{F}: financiación (tipo de la curva a Δt)", lim)
         fin = None if y_fin is None else y_fin / PCT
@@ -421,6 +585,8 @@ def f_tcv_slope(ent: dict[str, Any], params: dict[str, Any]) -> Resultado:
         ya = np.array([np.interp(a, plazos, fila) for fila in R])
         yb = np.array([np.interp(b, plazos, fila) for fila in R])
         pend = (yb - ya) * PB_POR_PUNTO                      # (i) pendiente en pb
+        if not np.all(np.isfinite(pend)):
+            raise ErrorFicha(f"{F}: pendientes no finitas (rendimientos fuera de escala)")
         nivel = (ya + yb) / 2                                # nivel del tramo (media de los dos nodos, %)
 
         # (ii) valor razonable por regresión con errores HAC
@@ -429,6 +595,8 @@ def f_tcv_slope(ent: dict[str, Any], params: dict[str, Any]) -> Resultado:
         razonable = float(x0 @ beta)
         ee = float(math.sqrt(max(float(x0 @ V @ x0), 0.0)))
         q = float(stats.norm.ppf(1 - alfa / 2))
+        if not (math.isfinite(razonable) and math.isfinite(ee) and np.all(np.isfinite(beta))):
+            raise ErrorFicha(f"{F}: valor razonable o su IC no finitos (regresores fuera de escala)")
         residuo = float(pend[-1] - razonable)
         dof = len(idx_est) - X_all.shape[1]
         s = float(math.sqrt(float(e @ e) / dof))
@@ -547,15 +715,20 @@ def f_tcv_bei(ent: dict[str, Any], params: dict[str, Any]) -> Resultado:
     pr = vr = ps = vs = None
     if real is not None:
         pn, vn = _nodos(_requerido(v, "curva_nominal", F), f"{F}: curva_nominal")
-        if not isinstance(real, dict) or len(real.get("plazos") or []) < minimo:
+        _tipos(vn, f"{F}: curva_nominal")
+        real = _dict(real, f"{F}: curva_real")
+        pr, vr = _nodos(real, f"{F}: curva_real", minimo=1)
+        if len(pr) < minimo:
             raise ErrorFicha(f"{F}: curva real con < {minimo} vencimientos: rechazo de la ficha")
-        pr, vr = _nodos(real, f"{F}: curva_real", minimo=minimo)
+        _tipos(vr, f"{F}: curva_real")
         if not _texto(real.get("indice_referencia")):
             raise ErrorFicha(f"{F}: la curva real no declara «indice_referencia»")
     if swaps is not None:
-        if not isinstance(swaps, dict) or len(swaps.get("plazos") or []) < minimo:
+        swaps = _dict(swaps, f"{F}: swaps_inflacion")
+        ps, vs = _nodos(swaps, f"{F}: swaps_inflacion", "tasas", minimo=1)
+        if len(ps) < minimo:
             raise ErrorFicha(f"{F}: swaps de inflación con < {minimo} vencimientos: rechazo de la ficha")
-        ps, vs = _nodos(swaps, f"{F}: swaps_inflacion", "tasas", minimo)
+        _tipos(vs, f"{F}: swaps_inflacion")
         if not _texto(swaps.get("indice_referencia")):
             raise ErrorFicha(f"{F}: los swaps de inflación no declaran «indice_referencia»")
     if real is not None and swaps is not None and real["indice_referencia"] != swaps["indice_referencia"] \
@@ -563,12 +736,12 @@ def f_tcv_bei(ent: dict[str, Any], params: dict[str, Any]) -> Resultado:
         raise ErrorFicha(f"{F}: índices de referencia distintos ({real['indice_referencia']} / "
                          f"{swaps['indice_referencia']}) sin conversión declarada: rechazo de la ficha")
 
-    enc = _requerido(v, "encuestas", F, "inflación esperada por encuestas con fecha y fuente")
-    if not isinstance(enc, dict) or not _texto(enc.get("fuente")) or enc.get("fecha") is None:
+    enc = _requerido_dict(v, "encuestas", F, "inflación esperada por encuestas con fecha y fuente")
+    if not _texto(enc.get("fuente")) or enc.get("fecha") is None:
         raise ErrorFicha(f"{F}: las encuestas necesitan «fecha» y «fuente»")
     _fecha(enc["fecha"], f"{F}: encuestas.fecha")
 
-    est = v.get("estacionalidad")
+    est = _opcional_dict(v, "estacionalidad", F)
     ajustar = bool(p["ajuste_estacional"])
     umbral = float(p["plazo_ajuste_estacional"])
 
@@ -583,10 +756,8 @@ def f_tcv_bei(ent: dict[str, Any], params: dict[str, Any]) -> Resultado:
         fac = _vector(est.get("factores"), f"{F}: estacionalidad.factores")
         if len(fac) != MESES_POR_ANIO or np.any(fac <= 0):
             raise ErrorFicha(f"{F}: estacionalidad.factores debe tener {MESES_POR_ANIO} factores positivos")
-        m_liq = int(_num(est.get("mes_liquidacion"), f"{F}: estacionalidad.mes_liquidacion"))
-        retardo = int(_num(est.get("retardo_indexacion_meses"), f"{F}: estacionalidad.retardo_indexacion_meses"))
-        if not 1 <= m_liq <= MESES_POR_ANIO or retardo < 0:
-            raise ErrorFicha(f"{F}: mes de liquidación o retardo de indexación no válidos")
+        m_liq = _entero(est.get("mes_liquidacion"), f"{F}: estacionalidad.mes_liquidacion", 1, MESES_POR_ANIO)
+        retardo = _entero(est.get("retardo_indexacion_meses"), f"{F}: estacionalidad.retardo_indexacion_meses", 0)
         m0 = (m_liq - 1 - retardo) % MESES_POR_ANIO
         mt = (m_liq - 1 + round(t * MESES_POR_ANIO) - retardo) % MESES_POR_ANIO
         return float((math.log(fac[mt]) - math.log(fac[m0])) / t * PCT)
@@ -660,7 +831,7 @@ def f_tcv_bei(ent: dict[str, Any], params: dict[str, Any]) -> Resultado:
         lim.append("sin curva real y swaps a la vez: base swap−bono (segunda vía) no calculada")
 
     # (iv) brecha frente a encuestas a igual horizonte
-    hor = enc.get("horizontes") or {}
+    hor = _dict(enc.get("horizontes") or {}, f"{F}: encuestas.horizontes")
     brecha: dict[str, float | None] = {}
     for clave, valor in list(bes.items()) + [(clave_fwd, fwd)]:
         if clave in hor and valor is not None:
@@ -671,27 +842,27 @@ def f_tcv_bei(ent: dict[str, Any], params: dict[str, Any]) -> Resultado:
         lim.append("brecha frente a encuestas sin horizonte comparable en algún plazo")
 
     # (v) descomposición afín: solo como dato con fuente
-    afin = v.get("descomposicion_afin")
+    afin = _opcional_dict(v, "descomposicion_afin", F)
     if afin is not None:
-        if not isinstance(afin, dict) or not _texto(afin.get("fuente")):
+        if not _texto(afin.get("fuente")):
             raise ErrorFicha(f"{F}: «descomposicion_afin» necesita fuente")
     else:
         lim.append("sin descomposición en inflación esperada y primas (requiere la salida de un modelo afín aportada con fuente)")
 
     # (vi) percentil y z-score frente a ≥ 10 años; carry de inflación a corto
     posiciones: dict[str, Any] = {}
-    hist = v.get("historia")
+    hist = _opcional_dict(v, "historia", F)
     historias: dict[str, tuple[list[date], np.ndarray]] = {}
-    if isinstance(hist, dict) and hist.get("breakevens"):
+    if hist is not None:
         fh = _fechas(hist.get("fechas"), f"{F}: historia.fechas")
-        for clave, serie in (hist.get("breakevens") or {}).items():
+        for clave, serie in _requerido_dict(hist, "breakevens", F, "historia por plazo").items():
             a = _vector(serie, f"{F}: historia {clave}")
             if len(a) != len(fh):
                 raise ErrorFicha(f"{F}: historia {clave} no alineada con sus fechas")
             historias[str(clave)] = (fh, a)
     for rol, s in (ent.get("series_rol") or {}).items():
         if str(rol).startswith("breakeven_"):
-            f_s, x_s = _serie_a_listas(s)
+            f_s, x_s = _serie_a_listas(s, f"{F}: serie {rol}")
             historias[str(rol)[len("breakeven_"):]] = (f_s, np.array(x_s))
     actuales = dict(bes)
     actuales[clave_fwd] = fwd
@@ -708,12 +879,13 @@ def f_tcv_bei(ent: dict[str, Any], params: dict[str, Any]) -> Resultado:
         lim.append("sin historia de breakevens: percentiles y z no calculados")
 
     carry: float | None = None
-    dev = v.get("inflacion_devengada")
+    dev = _opcional_dict(v, "inflacion_devengada", F)
     validos = [t for t in plazos if bes[_clave_plazo(t)] is not None]
-    if isinstance(dev, dict) and validos:
+    if dev is not None and validos:
         if not _texto(dev.get("fuente")):
             raise ErrorFicha(f"{F}: «inflacion_devengada» necesita fuente")
-        h = _num(dev.get("horizonte_meses"), f"{F}: inflacion_devengada.horizonte_meses") / MESES_POR_ANIO
+        h = _rango(dev.get("horizonte_meses"), f"{F}: inflacion_devengada.horizonte_meses", 0,
+                   abierto_lo=True) / MESES_POR_ANIO
         corto = bes[_clave_plazo(min(validos))]
         assert corto is not None
         carry = (_num(dev.get("tasa"), f"{F}: inflacion_devengada.tasa") - corto) * PB_POR_PUNTO * h
@@ -728,6 +900,13 @@ def f_tcv_bei(ent: dict[str, Any], params: dict[str, Any]) -> Resultado:
 
 
 # ================================================================== TCV-CDS-001
+def _identificador(x: Any, que: str) -> str | int:
+    """Serie o versión del índice: texto no vacío o entero."""
+    if _texto(x):
+        return str(x)
+    return _entero(x, que)
+
+
 def _rpv01(tau: float, lam: float, r: float) -> float:
     """Duración con riesgo (años) con prima continua: (1 − e^{−(r+λ)τ})/(r+λ); r continuo."""
     k = r + lam
@@ -756,16 +935,23 @@ def f_tcv_cds(ent: dict[str, Any], params: dict[str, Any]) -> Resultado:
     ind = v.get("indice")
     if not isinstance(ind, dict) or ind.get("serie") is None or ind.get("version") is None:
         raise ErrorFicha(f"{F}: índice sin serie y versión: rechazo de la ficha")
+    ficha_indice: dict[str, Any] = {"serie": _identificador(ind["serie"], f"{F}: indice.serie"),
+                    "version": _identificador(ind["version"], f"{F}: indice.version")}
+    for clave in ("nombre", "segmento", "cotizacion", "conversion_precio", "enlace_series"):
+        if ind.get(clave) is not None and not _texto(ind[clave]):
+            raise ErrorFicha(f"{F}: indice.{clave} debe ser un texto")
+    seg = str(ind.get("segmento") or "").upper()
+    if seg and seg not in ("IG", "HY"):
+        raise ErrorFicha(f"{F}: segmento «{seg[:20]}» no reconocido (IG o HY)")
+    ficha_indice.update(nombre=ind.get("nombre"), segmento=seg or None)
     if ind.get("cotizacion") == "precio" and not _texto(ind.get("conversion_precio")):
         raise ErrorFicha(f"{F}: índice cotizado en precio sin conversión a diferencial declarada")
 
     if "diferencial_indice" in (ent.get("series_rol") or {}):
-        fh, xs = _serie_a_listas(ent["series_rol"]["diferencial_indice"])
+        fh, xs = _serie_a_listas(ent["series_rol"]["diferencial_indice"], f"{F}: serie diferencial_indice")
         fechas, hist = _fechas(fh, f"{F}: serie diferencial_indice"), np.array(xs)
     else:
-        h = _requerido(v, "historia", F, "diferencial diario del índice con fechas")
-        if not isinstance(h, dict):
-            raise ErrorFicha(f"{F}: «historia» debe tener fechas y diferenciales_pb")
+        h = _requerido_dict(v, "historia", F, "diferencial diario del índice con fechas")
         fechas = _fechas(h.get("fechas"), f"{F}: historia.fechas")
         hist = _vector(h.get("diferenciales_pb"), f"{F}: historia.diferenciales_pb")
         if len(hist) != len(fechas):
@@ -777,12 +963,11 @@ def f_tcv_cds(ent: dict[str, Any], params: dict[str, Any]) -> Resultado:
         lim.append(f"historia de {span:.2f} años (< {p['ventana']}): percentil con limitación")
     if not _texto(ind.get("enlace_series")):
         lim.append("enlace entre series on-the-run no declarado")
+    if np.any(hist < 0):
+        raise ErrorFicha(f"{F}: diferenciales negativos en la historia")
     s = float(hist[-1])
-    if s < 0:
-        raise ErrorFicha(f"{F}: diferencial negativo")
 
     # Recuperación: IG 0,40 por defecto; HY sin valor único en la ficha (rango 0,25–0,40) → debe declararse.
-    seg = str(ind.get("segmento") or "").upper()
     rec = p["recuperacion"] if p["recuperacion"] is not None else v.get("recuperacion")
     if rec is None:
         if seg == "IG":
@@ -792,9 +977,7 @@ def f_tcv_cds(ent: dict[str, Any], params: dict[str, Any]) -> Resultado:
             raise ErrorFicha(f"{F}: índice HY sin «recuperacion» declarada (la ficha da el rango {lo}–{hi}, no un valor)")
         else:
             raise ErrorFicha(f"{F}: segmento del índice no declarado (IG o HY) y sin «recuperacion»")
-    R = _num(rec, f"{F}: recuperacion")
-    if not 0 <= R < 1:
-        raise ErrorFicha(f"{F}: recuperación fuera de [0, 1)")
+    R = _rango(rec, f"{F}: recuperacion (en [0, 1))", 0, 1, abierto_hi=True)
     if seg == "HY":
         lo, hi = p["recuperacion_hy"]
         if not lo <= R <= hi:
@@ -804,19 +987,25 @@ def f_tcv_cds(ent: dict[str, Any], params: dict[str, Any]) -> Resultado:
     lam = s / PB_POR_UNIDAD / (1 - R)
 
     # (ii) pérdida esperada real
-    imp = _requerido(v, "impagos", F, "tasas de impago por rating y año con fuente, o tasa prevista")
-    fuente = (imp.get("fuente") if isinstance(imp, dict) else None) or p["fuente_impagos"]
-    if not isinstance(imp, dict) or not _texto(fuente):
+    imp = _requerido_dict(v, "impagos", F, "tasas de impago por rating y año con fuente, o tasa prevista")
+    fuente = imp.get("fuente") if imp.get("fuente") is not None else p["fuente_impagos"]
+    if not _texto(fuente):
         raise ErrorFicha(f"{F}: tasas de impago sin fuente declarada")
     if imp.get("pd_anual") is not None:
         pd_anual = _num(imp["pd_anual"], f"{F}: impagos.pd_anual")
         origen_pd = "tasa prevista aportada"
     else:
-        rating = imp.get("rating_medio")
-        tabla = (imp.get("tasas_por_rating") or {}).get(rating)
+        rating = str(imp.get("rating_medio") or "")
+        if not _texto(rating):
+            raise ErrorFicha(f"{F}: impagos sin «pd_anual» ni «rating_medio»")
+        tabla = _dict(imp.get("tasas_por_rating") or {}, f"{F}: impagos.tasas_por_rating").get(rating)
         if not isinstance(tabla, dict) or not tabla:
             raise ErrorFicha(f"{F}: faltan tasas de impago por año para el rating medio «{rating}»")
-        anios_sel = [str(a) for a in (imp.get("anios") or tabla.keys())]
+        anios_dados = imp.get("anios")
+        anios_sel = [str(_entero(a, f"{F}: impagos.anios")) for a in _lista(anios_dados, f"{F}: impagos.anios")] \
+            if anios_dados is not None else [str(k) for k in tabla]
+        if not anios_sel:
+            raise ErrorFicha(f"{F}: impagos.anios vacío")
         falta = [a for a in anios_sel if a not in {str(k) for k in tabla}]
         if falta:
             raise ErrorFicha(f"{F}: sin tasa de impago para los años {falta}")
@@ -837,8 +1026,8 @@ def f_tcv_cds(ent: dict[str, Any], params: dict[str, Any]) -> Resultado:
     pos = _posicion(s, hist, f"{F}: historia")
 
     # (v) base CDS–contado
-    cont = _requerido(v, "contado", F, "diferencial al contado comparable (OAS o Z)")
-    if not isinstance(cont, dict) or str(cont.get("medida", "")).upper() not in ("OAS", "Z"):
+    cont = _requerido_dict(v, "contado", F, "diferencial al contado comparable (OAS o Z)")
+    if not isinstance(cont.get("medida"), str) or cont["medida"].upper() not in ("OAS", "Z"):
         raise ErrorFicha(f"{F}: el diferencial al contado debe declarar medida OAS o Z")
     base = s - _num(cont.get("diferencial_pb"), f"{F}: contado.diferencial_pb")
 
@@ -856,8 +1045,8 @@ def f_tcv_cds(ent: dict[str, Any], params: dict[str, Any]) -> Resultado:
     venc = v.get("vencimiento_anios")
     libre = v.get("tipo_libre")
     if venc is not None and libre is not None:
-        T = _num(venc, f"{F}: vencimiento_anios")
-        r = math.log1p(_num(libre, f"{F}: tipo_libre") / PCT)
+        T = _rango(venc, f"{F}: vencimiento_anios", 0, abierto_lo=True)
+        r = math.log1p(_rango(libre, f"{F}: tipo_libre", -PCT, abierto_lo=True) / PCT)
         rpv01 = _rpv01(T, lam, r)
         hz = float(p["horizonte_carry_anios"])
         if curva is not None and T - hz > 0:
@@ -870,7 +1059,7 @@ def f_tcv_cds(ent: dict[str, Any], params: dict[str, Any]) -> Resultado:
     else:
         lim.append("sin vencimiento del índice o tipo libre de riesgo: DV01 y carry no calculados")
 
-    return {"indice": {k: ind.get(k) for k in ("nombre", "serie", "version", "segmento")},
+    return {"indice": ficha_indice,
             "diferencial_pb": s, "recuperacion": R, "lambda_pct_anual": lam * PCT,
             "pd_anual": pd_anual, "origen_pd": origen_pd, "fuente_impagos": fuente,
             "perdida_esperada_pb": el, "prima_pb": prima, "ratio_diferencial_perdida": ratio,
@@ -908,12 +1097,12 @@ def f_tcv_vixts(ent: dict[str, Any], params: dict[str, Any]) -> Resultado:
     v = ent.get("valores") or {}
     lim = list(ADVERTENCIAS[F])
 
-    fut = _requerido(v, "futuros", F, "precios y días al vencimiento")
+    fut = _requerido_dict(v, "futuros", F, "precios y días al vencimiento")
     n_min = int(p["vencimientos_minimos"])
-    if not isinstance(fut, dict) or len(fut.get("precios") or []) < n_min:
+    precios = _vector(fut.get("precios"), f"{F}: futuros.precios", 0)
+    if len(precios) < n_min:
         raise ErrorFicha(f"{F}: < {n_min} vencimientos de futuros: rechazo de la ficha")
     dias = _vector(fut.get("dias"), f"{F}: futuros.dias", n_min)
-    precios = _vector(fut.get("precios"), f"{F}: futuros.precios", n_min)
     if len(dias) != len(precios):
         raise ErrorFicha(f"{F}: días y precios de futuros de distinta longitud")
     if np.any(dias <= 0) or np.any(np.diff(dias) <= 0) or np.any(precios <= 0):
@@ -925,16 +1114,15 @@ def f_tcv_vixts(ent: dict[str, Any], params: dict[str, Any]) -> Resultado:
     # Historia (≥ 3 años)
     roles = ent.get("series_rol") or {}
     if all(k in roles for k in ("indice_spot", "futuro_1", "futuro_2")):
-        df = pd.concat([roles["indice_spot"], roles["futuro_1"], roles["futuro_2"]]
-                       + ([roles["rentabilidad_larga"]] if "rentabilidad_larga" in roles else []),
-                       axis=1, join="inner").dropna()
-        fh = _fechas([pd.Timestamp(i).date() for i in df.index], f"{F}: series_rol")
+        nombres_rol = ["indice_spot", "futuro_1", "futuro_2"] + (["rentabilidad_larga"] if "rentabilidad_larga" in roles else [])
+        for k in nombres_rol:
+            _serie_a_listas(roles[k], f"{F}: serie {k}")      # valida tipo, índice de fechas y valores finitos
+        df = pd.concat([roles[k] for k in nombres_rol], axis=1, join="inner").dropna()
+        fh = _fechas([i.date() for i in df.index], f"{F}: series_rol")
         hs, h1, h2 = (df.iloc[:, i].to_numpy(dtype=float) for i in range(3))
         hr = df.iloc[:, 3].to_numpy(dtype=float) if df.shape[1] > 3 else None
     else:
-        h = _requerido(v, "historia", F, "spot y dos futuros con fechas, ≥ 3 años")
-        if not isinstance(h, dict):
-            raise ErrorFicha(f"{F}: «historia» debe tener fechas, spot, f1 y f2")
+        h = _requerido_dict(v, "historia", F, "spot y dos futuros con fechas, ≥ 3 años")
         fh = _fechas(h.get("fechas"), f"{F}: historia.fechas")
         hs, h1, h2 = (_vector(h.get(k), f"{F}: historia.{k}") for k in ("spot", "f1", "f2"))
         hr = _vector(h["rent_larga"], f"{F}: historia.rent_larga") if h.get("rent_larga") is not None else None
@@ -950,7 +1138,7 @@ def f_tcv_vixts(ent: dict[str, Any], params: dict[str, Any]) -> Resultado:
     estado = _estado([spot, float(precios[0]), float(precios[1])])
     # (ii) ratios de la curva
     ratios: dict[str, float] = {"F1/spot": float(precios[0] / spot), "F2/F1": float(precios[1] / precios[0])}
-    for nombre, x in (v.get("indices_plazo") or {}).items():
+    for nombre, x in _dict(v.get("indices_plazo") or {}, f"{F}: indices_plazo").items():
         val = _num(x, f"{F}: indices_plazo.{nombre}")
         if val <= 0:
             raise ErrorFicha(f"{F}: índice {nombre} no positivo")
@@ -1106,20 +1294,19 @@ def _historia_tp(serie: np.ndarray, fechas: list[date], objetivo: float, lim: li
 
 def _tp_acm(v: dict[str, Any], p: dict[str, Any], lim: list[str]) -> dict[str, Any]:
     F = "TCV-TP-001"
-    k = int(_num(p["n_factores"], f"{F}: n_factores"))
-    lo, hi = (int(x) for x in p["rango_n_factores"])
-    if not lo <= k <= hi:
-        raise ErrorFicha(f"{F}: n_factores = {k} fuera del rango {lo}–{hi}")
-    c = _requerido(v, "curva", F, "curva cupón cero mensual con fechas, plazos_meses y rendimientos")
-    if not isinstance(c, dict):
-        raise ErrorFicha(f"{F}: «curva» debe tener fechas, plazos_meses y rendimientos")
-    fechas = _fechas(c.get("fechas"), f"{F}: curva.fechas")
+    k = int(p["n_factores"])
+    c = _requerido_dict(v, "curva", F, "curva cupón cero mensual con fechas, plazos_meses y rendimientos")
+    # «Entradas mínimas»: vencimientos de 1 a 10 años (en meses: del tipo corto a 1 mes hasta 120 meses, ambos
+    # incluidos). Acotar los plazos acota también el tamaño del panel y de las recursiones.
+    min_m = int(p["plazo_minimo_meses"])
+    max_m = int(p["plazo_maximo_anios"]) * MESES_POR_ANIO
     plazos = _vector(c.get("plazos_meses"), f"{F}: curva.plazos_meses", 2)
-    if np.any(plazos != np.round(plazos)) or np.any(np.diff(plazos) <= 0) or plazos[0] != 1:
-        raise ErrorFicha(f"{F}: plazos en meses enteros, crecientes y empezando en 1 (tipo corto a 1 mes)")
-    max_m = float(p["plazo_maximo_anios"]) * MESES_POR_ANIO
-    if plazos[-1] < max_m:
-        raise ErrorFicha(f"{F}: la curva no llega a {p['plazo_maximo_anios']} años ({max_m:g} meses)")
+    if np.any(plazos != np.round(plazos)) or np.any(np.diff(plazos) <= 0) or plazos[0] != min_m:
+        raise ErrorFicha(f"{F}: plazos en meses enteros, crecientes y empezando en {min_m} (tipo corto a 1 mes)")
+    if plazos[-1] != max_m:
+        raise ErrorFicha(f"{F}: la curva debe llegar a {p['plazo_maximo_anios']} años ({max_m} meses) y no pasar de ahí "
+                         f"(último plazo: {plazos[-1]:g} meses)")
+    fechas = _fechas(c.get("fechas"), f"{F}: curva.fechas")
     Y = _matriz(c.get("rendimientos"), len(fechas), len(plazos), f"{F}: curva.rendimientos")
     meses = [_meses(f) for f in fechas]
     if any(b - a != 1 for a, b in itertools.pairwise(meses)):
@@ -1196,19 +1383,19 @@ def _tp_publicado(ent: dict[str, Any], v: dict[str, Any], p: dict[str, Any], lim
     if roles:
         if not isinstance(sp, dict) or not _texto(sp.get("fuente")):
             raise ErrorFicha(f"{F}: serie publicada sin fuente (declárese «serie_publicada.fuente»)")
-        historias = {clave: _serie_a_listas(s) for clave, s in roles.items()}
+        historias = {clave: _serie_a_listas(s, f"{F}: serie prima_publicada_{clave}") for clave, s in roles.items()}
         rends: dict[str, Any] = {}
     else:
         if not isinstance(sp, dict) or not _texto(sp.get("fuente")) or not sp.get("primas_pb"):
             raise ErrorFicha(f"{F}: metodo publicado necesita «serie_publicada» con fuente, fechas y primas_pb")
         fechas = _fechas(sp.get("fechas"), f"{F}: serie_publicada.fechas")
         historias = {}
-        for clave, xs in sp["primas_pb"].items():
+        for clave, xs in _dict(sp["primas_pb"], f"{F}: serie_publicada.primas_pb").items():
             a = _vector(xs, f"{F}: serie publicada {clave}")
             if len(a) != len(fechas):
                 raise ErrorFicha(f"{F}: serie publicada {clave} no alineada con sus fechas")
             historias[str(clave)] = (fechas, [float(x) for x in a])
-        rends = sp.get("rendimientos_pct") or {}
+        rends = _dict(sp.get("rendimientos_pct") or {}, f"{F}: serie_publicada.rendimientos_pct")
     prima: dict[str, float] = {}
     neutral: dict[str, float | None] = {}
     pos: dict[str, Any] = {}
@@ -1247,7 +1434,7 @@ def _tp_encuesta(v: dict[str, Any], p: dict[str, Any], lim: list[str]) -> dict[s
         raise ErrorFicha(f"{F}: metodo encuesta necesita «encuesta» con fuente, fecha y tipos cortos esperados")
     _fecha(enc["fecha"], f"{F}: encuesta.fecha")
     esperados = _vector(enc.get("tipos_cortos_esperados_pct"), f"{F}: encuesta.tipos_cortos_esperados_pct")
-    rends = _requerido(v, "rendimientos_pct", F, "rendimiento observado por plazo, {\"10\": %}")
+    rends = _requerido_dict(v, "rendimientos_pct", F, "rendimiento observado por plazo, {\"10\": %}")
     prima: dict[str, float | None] = {}
     neutral: dict[str, float | None] = {}
     for t in p["plazos_prima"]:
@@ -1312,15 +1499,15 @@ def f_tcv_tp(ent: dict[str, Any], params: dict[str, Any]) -> Resultado:
 
 # ================================================================== registro de fichas
 FICHAS: dict[str, dict[str, Any]] = {
-    "TCV-SLOPE-001": {"fn": f_tcv_slope, "modulo": "MC-09", "version": "1.0", "cifra": "ESTADISTICA",
+    "TCV-SLOPE-001": {"fn": _blindar("TCV-SLOPE-001", f_tcv_slope), "modulo": "MC-09", "version": "1.0", "cifra": "ESTADISTICA",
                       "ri": "RI-PA de la pendiente y pendiente forward", "tol": 1e-8},
-    "TCV-BEI-001": {"fn": f_tcv_bei, "modulo": "MC-09", "version": "1.0", "cifra": "DETERMINISTA",
+    "TCV-BEI-001": {"fn": _blindar("TCV-BEI-001", f_tcv_bei), "modulo": "MC-09", "version": "1.0", "cifra": "DETERMINISTA",
                     "ri": "Encuesta (inflación esperada) y RI-PA del breakeven", "tol": 1e-10},
-    "TCV-CDS-001": {"fn": f_tcv_cds, "modulo": "MC-09", "version": "1.0", "cifra": "ESTADISTICA",
+    "TCV-CDS-001": {"fn": _blindar("TCV-CDS-001", f_tcv_cds), "modulo": "MC-09", "version": "1.0", "cifra": "ESTADISTICA",
                     "ri": "RI-MH y RI-PA del diferencial", "tol": 1e-8},
-    "TCV-VIXTS-001": {"fn": f_tcv_vixts, "modulo": "MC-09", "version": "1.0", "cifra": "DETERMINISTA",
+    "TCV-VIXTS-001": {"fn": _blindar("TCV-VIXTS-001", f_tcv_vixts), "modulo": "MC-09", "version": "1.0", "cifra": "DETERMINISTA",
                       "ri": "RI-MH de la pendiente y RI-PA del índice", "tol": 1e-10},
-    "TCV-TP-001": {"fn": f_tcv_tp, "modulo": "MC-09", "version": "1.0", "cifra": "ESTADISTICA",
+    "TCV-TP-001": {"fn": _blindar("TCV-TP-001", f_tcv_tp), "modulo": "MC-09", "version": "1.0", "cifra": "ESTADISTICA",
                    "ri": "RI-MH de la prima y RI-PA", "tol": 1e-6},
 }
 
@@ -1449,8 +1636,12 @@ CASOS_CONTROL: dict[str, list[dict[str, Any]]] = {
          "parametros": {"ajuste_estacional": False}, "comprobar": _coherencia_5y5y},
     ],
     "TCV-CDS-001": [
-        {"nombre": "s = PD·(1 − R) ⇒ prima 0", "datos": [{"valores": sintetico_cds([100.0] * 270, 0.0125, 0.2)}],
-         "parametros": {}, "comprobar": lambda r: math.isclose(r["prima_pb"], 0.0, abs_tol=1e-10)},
+        # Con prima 0, la intensidad neutral al riesgo λ = s/(1 − R) coincide con la PD real (λ·(1 − R) = s = PD·(1 − R)).
+        {"nombre": "s = PD·(1 − R) ⇒ prima 0 (y λ neutral al riesgo = PD)",
+         "datos": [{"valores": sintetico_cds([100.0] * 270, 0.0125, 0.2)}],
+         "parametros": {}, "comprobar": lambda r: math.isclose(r["prima_pb"], 0.0, abs_tol=1e-10)
+         and math.isclose(r["lambda_pct_anual"] / PCT, r["pd_anual"], rel_tol=1e-12)
+         and math.isclose(r["ratio_diferencial_perdida"], 1.0, rel_tol=1e-12)},
         {"nombre": "percentil del máximo histórico = 1", "datos": [{"valores": sintetico_cds(_HIST_CDS, 0.01)}],
          "parametros": {}, "comprobar": lambda r: r["percentil"] == 1.0},
     ],
@@ -1464,6 +1655,11 @@ CASOS_CONTROL: dict[str, list[dict[str, Any]]] = {
         {"nombre": "interpolación a 30 días entre los dos contratos (lineal en días)",
          "datos": [{"valores": sintetico_vixts(15.0, [16.0, 18.0], [20, 40])}], "parametros": {},
          "comprobar": lambda r: math.isclose(r["futuro_vencimiento_constante"], 17.0, rel_tol=1e-12)},
+        # Contrapartida no plana del caso «curva plana ⇒ roll 0»: el roll sale de F₁ y del spot, no de F₂.
+        {"nombre": "roll del primer futuro = (F₁ − spot)/días al vencimiento",
+         "datos": [{"valores": sintetico_vixts(15.0, [16.0, 18.0], [20, 40])}], "parametros": {},
+         "comprobar": lambda r: math.isclose(r["roll_puntos_dia"], (16.0 - 15.0) / 20, rel_tol=1e-12)
+         and math.isclose(r["roll_pct_mensual"], (16.0 - 15.0) / 16.0 * 30 / 20 * PCT, rel_tol=1e-12)},
     ],
     "TCV-TP-001": [
         {"nombre": "prima + rendimiento neutral = rendimiento ajustado", "datos": [{"valores": _ACM}],

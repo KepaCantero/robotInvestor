@@ -339,7 +339,7 @@ def test_flow_semanal_un_anio_y_senal_contraria():
     res, lim = _run("FON-FLOW-001", d, {"senal_contraria": True})
     assert res["categorias"]["X"]["senal_contraria"] in ("ENTRADAS_EXTREMAS", "SALIDAS_EXTREMAS", "NINGUNA")
     assert res["verificacion"]["identidad_aum_residuo_max_abs"]["X"] is None
-    assert any("hipótesis" in x for x in lim) and any("ventana_z" in x for x in lim)
+    assert any("hipótesis" in x for x in res["advertencias"]) and any("ventana_z" in x for x in lim)
 
 
 # ------------------------------------------------------------------------------------------- FON-TD-001
@@ -549,4 +549,170 @@ def test_roll_divisa_bono_360_y_rol_spot():
     assert res["carry_implicito_pct"] == pytest.approx(carry * 100, rel=1e-12)
     assert res["carry_teorico_pct"] == pytest.approx(1.0)
     assert res["vencimientos"][0]["repo_implicito_pct"] == pytest.approx((0.04 - carry) * 100, rel=1e-12)
-    assert any("opción de entrega" in x for x in lim)
+    assert any("opción de entrega" in x for x in res["advertencias"]) and not any("opción de entrega" in x for x in lim)
+
+
+# ------------------------------------------------------------------------------------------- QA r01 · H-03
+@pytest.mark.parametrize("ficha", FICHAS_TAREA)
+def test_advertencias_fijas_van_en_el_resultado_no_en_limitaciones(ficha):
+    res, lim = _run(ficha, _base(ficha))
+    assert res["advertencias"][:len(fd.ADVERTENCIAS[ficha])] == fd.ADVERTENCIAS[ficha]
+    assert not set(fd.ADVERTENCIAS[ficha]) & set(lim)
+
+
+def _completos(ficha):
+    """Datos «perfectos» (todas las entradas opcionales y la historia recomendada): sin limitaciones."""
+    if ficha == "FON-DISC-001":
+        d = fd._ctl_disc(iguales=False)
+        n = 5 * 52 + 2
+        d["fechas"] = fd._fechas_semanales(n)
+        t = np.arange(n)
+        for i, mb in enumerate(d["miembros"].values()):
+            nav = 100 + t * 0.1
+            mb.update(nav=list(nav), precio=list(nav * (1 - 0.08 + 0.03 * np.sin(t / 9 + i))), fecha_nav=d["fechas"][-1])
+        d.update(rentabilidad_nav_supuesta=0.02, catalizadores=["recompras"])
+        return d
+    if ficha == "FON-TD-001":
+        d = fd._ctl_td(False)
+        for mb in d["miembros"].values():
+            mb.update(replicacion="fisica", efecto_replicacion=0.0, efecto_caja=-0.0001)
+        return d
+    if ficha == "DER-VRP-001":
+        d = fd._ctl_vrp(1.3)
+        n = 5 * 252 + 30
+        d["precios_subyacente"] = [100 * (1.01 if i % 2 else 1.0) for i in range(n)]
+        d["vol_implicita"] = [d["vol_implicita"][0]] * n
+        d["cesta_opciones"] = dict(fd._CTL_CESTA_RK)
+        return d
+    if ficha == "DER-SKEW-001":
+        d = fd._ctl_skew_svi()
+        d["historia_rr"] = d["historia_rr"] + d["historia_rr"][:10]
+        return d
+    if ficha == "DER-ROLL-001":
+        d = fd._ctl_roll(False)
+        d["historia_carry"] = [0.02] * (5 * 252)
+        d["historia_roll"] = [-0.01] * (5 * 252)
+        return d
+    return _base(ficha)
+
+
+@pytest.mark.parametrize("ficha", ["FON-DISC-001", "FON-FLOW-001", "FON-TD-001", "DER-VRP-001", "DER-SKEW-001",
+                                   "DER-TERM-001", "DER-ROLL-001"])
+def test_datos_completos_sin_limitaciones(ficha):
+    res, lim = _run(ficha, _completos(ficha))
+    assert lim == [], lim
+    assert res["advertencias"]
+
+
+def test_lev_solo_limita_el_paso_no_servido():
+    _, lim = _run("FON-LEV-001", dict(fd._ctl_lev_mano(), rejilla_rendimiento=[-0.05, 0.0, 0.05]))
+    assert len(lim) == 1 and "SIM-MC-001" in lim[0]
+
+
+# ------------------------------------------------------------------------------------------- QA r01 · H-02 y H-11
+RAROS = [None, "x", [], {}, float("nan"), float("inf"), float("-inf"), 0, -1, 1e300, True, -1e-300, [1, 2], {"a": 1}]
+
+
+def _hojas(x, ruta=()):
+    if isinstance(x, dict):
+        for k in sorted(x, key=str):
+            yield ruta + (k,)
+            yield from _hojas(x[k], ruta + (k,))
+    elif isinstance(x, list):
+        for i in sorted({0, len(x) // 2, len(x) - 1}) if len(x) > 3 else range(len(x)):
+            yield ruta + (i,)
+            yield from _hojas(x[i], ruta + (i,))
+
+
+def _poner(x, ruta, valor):
+    y = copy.deepcopy(x)
+    z = y
+    for r in ruta[:-1]:
+        z = z[r]
+    z[ruta[-1]] = valor
+    return y
+
+
+@pytest.mark.parametrize("ficha,caso", CASOS, ids=[f"{f}:{c['nombre']}" for f, c in CASOS])
+def test_fuzzer_entradas_mal_formadas_fallan_cerrado(ficha, caso):
+    """Cada hoja de los datos del caso, mutada a un valor raro: o ErrorFicha o un resultado sin cifras no finitas."""
+    base = {}
+    for dd in caso["datos"]:
+        base.update(copy.deepcopy(dd["valores"]))
+    params = fd._p(ficha, caso.get("parametros"))
+    for ruta in _hojas(base):
+        for raro in RAROS:
+            try:
+                res, _ = _run(ficha, _poner(base, ruta, raro), params)
+            except ErrorFicha:
+                continue
+            assert not fd._no_finitos(res), (ruta, raro)
+            json.dumps(res, allow_nan=False)
+    for k in sorted(params):
+        for raro in RAROS:
+            try:
+                res, _ = _run(ficha, base, {**params, k: raro})
+            except ErrorFicha:
+                continue
+            assert not fd._no_finitos(res), (k, raro)
+
+
+@pytest.mark.parametrize("ficha,mut", [
+    ("FON-DISC-001", lambda d: d["fechas"].__setitem__(0, 20200103)),
+    ("FON-DISC-001", lambda d: d["miembros"]["M1"].update(fecha_nav=20231020)),
+    ("FON-FLOW-001", lambda d: d.update(fechas=[20210131 + i for i in range(len(d["fechas"]))])),
+    ("FON-LEV-001", lambda d: d["fechas"].__setitem__(5, 1e18)),
+    ("DER-TERM-001", lambda d: d.update(calendario_eventos=[{"vencimiento_meses": 3, "sigma_base": 0.2,
+                                                             "fecha": 20261110}])),
+])
+def test_fechas_numericas_rechazadas(ficha, mut):
+    d = _base(ficha)
+    mut(d)
+    with pytest.raises(ErrorFicha, match="fecha"):
+        _run(ficha, d)
+
+
+def test_desbordes_y_tipos_dan_error_ficha():
+    d = fd._ctl_lev(2.0)
+    d["rentabilidades_indice"][0] = 1e300
+    with pytest.raises(ErrorFicha, match="no finit|dominio"):
+        _run("FON-LEV-001", d)
+    d = fd._ctl_term(False)
+    d["calendario_eventos"] = True
+    with pytest.raises(ErrorFicha, match="calendario"):
+        _run("DER-TERM-001", d)
+    d = fd._ctl_flow(False)
+    d["categorias"]["RF_activa"]["gestion"] = float("nan")
+    with pytest.raises(ErrorFicha, match="gestion"):
+        _run("FON-FLOW-001", d)
+    d = fd._ctl_vrp(1.3)
+    d["cesta_opciones"] = dict(fd._CTL_CESTA_RK, forward=1e300)
+    with pytest.raises(ErrorFicha):
+        _run("DER-VRP-001", d)
+    with pytest.raises(ErrorFicha, match="numérico"):
+        _run("DER-ROLL-001", dict(fd._ctl_roll(False), spot="4000"))
+    with pytest.raises(ErrorFicha, match="numérico"):
+        _run("FON-LEV-001", dict(fd._ctl_lev(2.0), L=True))
+
+
+# ------------------------------------------------------------------------------------------- QA r01 · H-08
+def test_svi_con_arbitraje_rechazado_por_metodo_svi():
+    with pytest.raises(ErrorFicha, match="arbitraje de mariposa"):
+        _run("DER-SKEW-001", fd._ctl_skew_arbitraje(), {"metodo": "SVI"})
+    _, lim = _run("DER-SKEW-001", fd._ctl_skew_arbitraje())
+    assert any("arbitraje de mariposa" in x for x in lim)
+
+
+def test_disc_kappa_y_su_complementaria_difieren():
+    r1, _ = _run("FON-DISC-001", fd._ctl_disc_kappa(), {"kappa": 0.25})
+    r2, _ = _run("FON-DISC-001", fd._ctl_disc_kappa(), {"kappa": 0.75})
+    assert r1["rentabilidad_normalizacion_pct"] == pytest.approx(fd._ctl_disc_kappa_esperado(), rel=1e-10)
+    assert r2["rentabilidad_normalizacion_pct"] != pytest.approx(r1["rentabilidad_normalizacion_pct"])
+
+
+def test_roll_descomposicion_frente_a_total_publicado():
+    d = fd._ctl_roll(False)
+    d["periodo"]["total_publicado"] = (4105 / 4010 - 1) + 0.03 * 30 / 365
+    res, _ = _run("DER-ROLL-001", d)
+    assert abs(res["descomposicion"]["suma_componentes_menos_publicado_pp"]) <= 1e-10
+    assert res["descomposicion"]["colateral_pct"] == pytest.approx(0.03 * 30 / 365 * 100)

@@ -123,5 +123,10 @@ Pregunta para T-57: «¿qué antigüedad admite la resolución de un pronóstico
   - los regresores de TCV-SLOPE-001 (con vintages);
   - las rentabilidades históricas de VIXTS.
 
+**Ronda r02 (QA r01 de T-106):**
+- en MON-EXP-001, solo si el solicitante declara `precision_cotizacion` el desajuste admitido por nodo es esa precisión (si no, la tolerancia de la ficha);
+- en MON-EXP-001, se rechaza la curva cuyo redondeo podría mover un tramo un incremento Δ entero, y una curva cotizada plana en tipos simples (forwards no planos);
+- en TCV, los umbrales de rechazo son fijos (no los baja una petición), y los rangos de los parámetros salen de FIR-CARRY-001 y RISK-VAR-001.
+
 Detalle por ficha en [.docs/tickets/T-106](../.docs/tickets/T-106/analisis-tecnico.md).
 

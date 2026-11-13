@@ -19,7 +19,7 @@ from typing import Any, TypeGuard
 import numpy as np
 import pandas as pd
 
-from ..configuracion import DIR_EJECUTOR, parametro
+from ..configuracion import DIR_EJECUTOR, parametro, raiz_paquete
 from ..herramientas.ht01_datos import DatosNoDisponibles, FugaDeInformacion
 from ..herramientas.ht06_indice import clave_hash
 from . import evaluacion as ev
@@ -264,32 +264,61 @@ for _mod in (fichas_mon_idx, fichas_fon_der, fichas_tcv):
 
 RUTA_CATALOGO = ("04_Motor_conocimiento_y_catalogo", "Catálogo de cálculos del Motor - V5.0.md")
 _FILA_CATALOGO = re.compile(r"^\| ([A-Z]+(?:-[A-Z0-9]+)+-\d{3}) \|.*\| (P\d) \| ([^|]+?) \|\s*$", re.MULTILINE)
+FASE1 = frozenset(CASOS_CONTROL)   # las fichas de T-106: resultado estricto (sin cifras no finitas)
 
 
-@functools.lru_cache(maxsize=4)
-def madurez_catalogo(raiz: str | None = None) -> dict[str, str]:
-    """T-106: la madurez de cada ficha según la tabla del Catálogo (§2). Manda el Catálogo (T-65, CS-08): una ficha se sirve
-    solo si tiene código y el Catálogo la da por IMPLEMENTADO o VALIDADO. Sin Catálogo legible, ninguna (falla cerrado)."""
-    base = Path(raiz or os.environ.get("BLOQUE_A_RAIZ") or DIR_EJECUTOR.parent)
+def _raiz(raiz: str | os.PathLike | None = None) -> Path:
+    return Path(raiz or os.environ.get("BLOQUE_A_RAIZ") or DIR_EJECUTOR.parent)
+
+
+@functools.lru_cache(maxsize=8)
+def _madurez(ruta: str, _mtime_ns: int) -> tuple[tuple[str, str], ...]:
     try:
-        texto = base.joinpath(*RUTA_CATALOGO).read_text(encoding="utf-8")
+        texto = Path(ruta).read_text(encoding="utf-8")
+    except (OSError, ValueError):   # QA r01 de T-106, H-05: también bytes que no son UTF-8 (falla cerrado)
+        return ()
+    # H-06: solo la tabla del índice de fichas (§4), no cualquier fila del documento que se le parezca
+    i, j = texto.find("\n## 4."), texto.find("\n## 5.")
+    if i < 0 or j < i:
+        return ()
+    out: dict[str, str] = {}
+    for m in _FILA_CATALOGO.finditer(texto[i:j]):
+        out.setdefault(m.group(1), m.group(3).strip())
+    return tuple(out.items())
+
+
+def madurez_catalogo(raiz: str | os.PathLike | None = None) -> dict[str, str]:
+    """T-106: la madurez de cada ficha según la tabla del índice del Catálogo (§4). Manda el Catálogo (T-65, CS-08): una ficha
+    se sirve solo si tiene código y el Catálogo la da por IMPLEMENTADO o VALIDADO. Sin Catálogo legible, ninguna (falla
+    cerrado). La lectura se cachea por ruta y fecha de modificación (H-06)."""
+    ruta = _raiz(raiz).joinpath(*RUTA_CATALOGO)
+    try:
+        mtime = ruta.stat().st_mtime_ns
     except OSError:
         return {}
-    out: dict[str, str] = {}
-    for m in _FILA_CATALOGO.finditer(texto):
-        out.setdefault(m.group(1), m.group(3).strip())
-    return out
+    return dict(_madurez(str(ruta), mtime))
 
 
-def citable_segun_catalogo(ficha: str) -> bool:
-    estado = madurez_catalogo().get(ficha, "")
+def citable_segun_catalogo(ficha: str, raiz: str | os.PathLike | None = None) -> bool:
+    estado = madurez_catalogo(raiz).get(ficha, "")
     return estado.startswith("IMPLEMENTADO") or estado.startswith("VALIDADO")
 
 
-def servible(ficha: object) -> TypeGuard[str]:
-    """La ficha tiene código, el Catálogo la da por IMPLEMENTADO (o VALIDADO) y su dependencia opcional está instalada."""
+def servible(ficha: object, raiz: str | os.PathLike | None = None) -> TypeGuard[str]:
+    """La ficha tiene código, el Catálogo la da por IMPLEMENTADO (o VALIDADO) y su dependencia opcional está instalada.
+    `raiz` es la del paquete (`rutas.raiz_paquete` de la configuración; H-04)."""
     return (isinstance(ficha, str) and ficha in IMPLEMENTADAS and ficha not in DOCUMENTADAS_CON_CODIGO
-            and citable_segun_catalogo(ficha) and (ficha != "VOL-GARCH-001" or garch_disponible()))
+            and citable_segun_catalogo(ficha, raiz) and (ficha != "VOL-GARCH-001" or garch_disponible()))
+
+
+def _no_finito(x: Any) -> bool:
+    if isinstance(x, dict):
+        return any(_no_finito(v) for v in x.values())
+    if isinstance(x, (list, tuple)):
+        return any(_no_finito(v) for v in x)
+    if isinstance(x, (float, np.floating)):
+        return not math.isfinite(float(x))
+    return False
 
 
 def garch_disponible() -> bool:
@@ -321,6 +350,7 @@ class Motor:
         self.proveedor = proveedor
         self.cfg = cfg
         self.contabilidad = contabilidad
+        self.raiz = raiz_paquete(cfg)   # QA r01 de T-106, H-04: el Catálogo se lee de la raíz configurada
         self._cache: dict[str, dict] = {}
         self._lock = threading.Lock()
 
@@ -366,12 +396,17 @@ class Motor:
                 "madurez_metodo": "IMPLEMENTADO", "cache_hit": False}
         uc = float(parametro(self.cfg, f"uc.motor_por_plan.{plan}"))   # QA r01 de T-65, H-05: sin respaldo 0,02
         # 1) Ficha
-        if not servible(ficha):
+        if not servible(ficha, self.raiz):
             motivo = "METODO_NO_IMPLEMENTADO" if ficha in FICHAS_CATALOGO else "OPERACION_SIN_FICHA"
             alt = ALTERNATIVAS.get(ficha)
-            alt = alt if alt and servible(alt) else None   # nunca se ofrece como alternativa una ficha que tampoco se sirve
-            detalle = (f"Ficha {ficha} con código pero «Documentado» en el Catálogo: no entrega cifras citables"
-                       if ficha in IMPLEMENTADAS else f"Ficha {ficha} no implementada en el ejecutor V1.0")
+            alt = alt if alt and servible(alt, self.raiz) else None   # nunca se ofrece como alternativa una ficha que tampoco se sirve
+            if ficha == "VOL-GARCH-001" and citable_segun_catalogo(ficha, self.raiz) and not garch_disponible():
+                detalle = "Ficha VOL-GARCH-001: falta la dependencia opcional `arch` en el entorno"   # H-12
+            elif ficha in IMPLEMENTADAS:
+                madurez = madurez_catalogo(self.raiz).get(ficha) or "sin Catálogo legible"
+                detalle = f"Ficha {ficha} con código pero «{madurez}» en el Catálogo: no entrega cifras citables"
+            else:
+                detalle = f"Ficha {ficha} no implementada en el ejecutor"
             return self._rechazo(base, motivo, detalle + (f"; alternativa: {alt}" if alt else ""), alternativa=alt, uc=uc)
         meta = IMPLEMENTADAS[ficha]
         base["operacion"]["ficha_version"] = meta["version"]
@@ -403,6 +438,11 @@ class Motor:
             return self._rechazo(base, "DATOS_INSUFICIENTES", str(e), uc=uc)
         except NotImplementedError as e:
             return self._rechazo(base, "METODO_NO_IMPLEMENTADO", str(e), uc=uc)
+        except (ValueError, TypeError, ArithmeticError, KeyError, IndexError, AttributeError, np.linalg.LinAlgError) as e:
+            # QA r01 de T-106, H-02: una entrada que la ficha no valida no tumba el CT-09; se rechaza y queda en RC
+            return self._rechazo(base, "DATOS_INSUFICIENTES", f"{ficha}: entrada no válida ({type(e).__name__}: {str(e)[:200]})", uc=uc)
+        if ficha in FASE1 and (_no_finito(resultado) or _no_finito(resultado2)):
+            return self._rechazo(base, "DATOS_INSUFICIENTES", f"{ficha}: el cálculo da cifras no finitas con estos datos", uc=uc)
         resultado, resultado2 = _limpio(resultado), _limpio(resultado2)
         identico = resultado == resultado2
         calc_id = self.almacen.nuevo_id("CALC")
@@ -460,7 +500,7 @@ class Motor:
                  "solicitante": "AG-13", "estado": "SERVED" if superados else "REJECTED",
                  "operacion": {"method_id": ficha, "ficha_id": ficha, "ficha_version": (meta or {}).get("version"),
                                "catalog_version": CATALOG_VERSION, "op_sin_ficha": ficha not in FICHAS_CATALOGO},
-                 "casos_control": res, "superados": superados, "madurez_catalogo": madurez_catalogo().get(ficha),
+                 "casos_control": res, "superados": superados, "madurez_catalogo": madurez_catalogo(self.raiz).get(ficha),
                  "consumo_uc": 0.0}
             self.almacen.escribir("RC", "AG-13", reg)
             out[ficha] = {"superados": superados, "casos": res, "calc_id": reg["calc_id"]}
