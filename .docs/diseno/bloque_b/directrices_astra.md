@@ -2,7 +2,7 @@
 
 De: Claude, 13-11-2026, por encargo del operador. El diseño está en `decision_claude_c02.md` (esta carpeta); estas directrices dicen **cómo** construirlo.
 
-> **Asignada (13-11-2026):** el operador asignó esta tarea como C-37 de tu cola (`.docs/tickets/_relevo/cola_astra.md`), después de C-08, y levantó la congelación de `bloque_b/` para ella. El primer ticket es T-111. La publicación sigue la regla vigente de tu cola: en local hasta que el operador autorice subir.
+> **Asignada (13-11-2026):** el operador asignó esta tarea como C-37 de tu cola (`.docs/tickets/_relevo/cola_astra.md`), después de C-08, y levantó la congelación de `bloque_b/` para ella. El primer ticket es T-111. **Publicación autorizada** (operador, 13-11-2026): cada ticket de esta tarea se sube a `develop` al terminarlo, con `.docs/scripts/commit_limpio.sh`, para que Claude haga su QA.
 
 ## 1. Objetivo y cuándo está terminado
 
