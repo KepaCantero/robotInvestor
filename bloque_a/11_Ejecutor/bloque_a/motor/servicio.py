@@ -398,6 +398,12 @@ class Motor:
         if peticion.get("parametros") is not None and not isinstance(peticion["parametros"], dict):
             return "«parametros» no es un objeto"
         planes = parametro(self.cfg, "uc.motor_por_plan")
+        if not isinstance(peticion.get("plan", "PLAN_MIN"), str):   # T-113 (H-22 de T-108): una lista no es hashable
+            return "«plan» no es un texto"
+        try:   # T-113 (H-22): lo que entra en la clave de la caché y en el RC tiene que poder serializarse
+            clave_hash(peticion.get("parametros"), peticion.get("perfil"), peticion.get("clase"), peticion.get("semilla"))
+        except (TypeError, ValueError, RecursionError) as exc:
+            return f"«parametros», «perfil», «clase» o «semilla» no serializables ({type(exc).__name__})"
         if peticion.get("plan", "PLAN_MIN") not in planes:
             return f"plan desconocido ({str(peticion.get('plan'))[:40]}); admitidos: {sorted(planes)}"
         if peticion.get("fecha_corte") is not None:

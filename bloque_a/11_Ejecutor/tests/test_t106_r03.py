@@ -83,7 +83,9 @@ def test_h16_la_incertidumbre_de_cada_probabilidad_es_la_cota_entre_el_increment
     ent = {"valores": {k: v for d in datos for k, v in (d.get("valores") or {}).items()}, "series": {}, "series_rol": {}}
     r, _ = servicio.IMPLEMENTADAS["MON-EXP-001"]["fn"](ent, params)
     for s in r["senda"]:
-        assert s["incertidumbre_probabilidad"] == pytest.approx(min(1.0, s["incertidumbre_redondeo_pb"] / 25), rel=1e-12)
+        # T-113 (H-25, N05): sin la tolerancia absoluta de `approx`, que se tragaba valores de 1e-14
+        assert s["incertidumbre_probabilidad_acumulada"] == pytest.approx(min(1.0, s["incertidumbre_redondeo_pb"] / 25), rel=1e-12, abs=0)
+        assert s["incertidumbre_probabilidad"] >= 0
         assert s["incertidumbre_redondeo_pb"] > 0   # X04: sin declarar la precisión, cuenta el medio último dígito
 
 
@@ -92,13 +94,13 @@ def test_h16_con_una_precision_grande_se_sirve_con_la_limitacion_que_lo_dice():
     v = {k: val for d in datos for k, val in (d.get("valores") or {}).items()}
     fn, tol = servicio.IMPLEMENTADAS["MON-EXP-001"]["fn"], servicio.IMPLEMENTADAS["MON-EXP-001"]["tol"]
     vistos = set()
-    for prec in (1e-14, 1e-7, 1e-6, 1e-5, 5e-5):
+    for prec in (0.0, 1e-7, 1e-6, 1e-5, 5e-5):   # T-113: con la cota por reunión, 1e-14 ya supera la tolerancia
         try:
             r, lim = fn({"valores": {**v, "precision_cotizacion": prec}, "series": {}, "series_rol": {}}, params)
         except ErrorFicha as e:
             assert "senda no identificada" in str(e)
             break
-        hay = max(s["incertidumbre_probabilidad"] for s in r["senda"]) > tol
+        hay = max(max(s["incertidumbre_probabilidad"], s["incertidumbre_probabilidad_acumulada"]) for s in r["senda"]) > tol
         assert any("puede mover las probabilidades" in x for x in lim) == hay
         vistos.add(hay)
     assert vistos == {True, False}   # el caso pasa por las dos ramas

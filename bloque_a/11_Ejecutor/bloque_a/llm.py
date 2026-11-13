@@ -18,7 +18,7 @@ import os
 import threading
 from dataclasses import asdict, dataclass, field
 from pathlib import Path
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 from .configuracion import parametro
 from .contratos import secretos_en_texto
@@ -55,11 +55,28 @@ def contenido_sensible(valor) -> bool:
     if isinstance(valor, str):
         # Un valor sensible truncado antes de la comilla final también se descarta.
         return bool(secretos_en_texto(valor + '"'))
-    if isinstance(valor, dict):
-        return (bool(secretos_en_texto(json.dumps(valor, ensure_ascii=False, default=str)))
-                or any(contenido_sensible(v) for v in valor.values()))
-    if isinstance(valor, (list, tuple, set, frozenset)):   # T-93 (H-32): también los conjuntos
-        return any(contenido_sensible(v) for v in valor)
+    if not isinstance(valor, (dict, list, tuple, set, frozenset)):   # T-93 (H-32): también los conjuntos
+        return False
+    # T-113 (H-56 de T-104): antes, cada nivel volvía a serializar todo lo que tenía debajo (profundidad × tamaño). Ahora el
+    # contenedor de arriba se serializa una sola vez (un diccionario anidado aparece igual dentro) y las hojas de texto se
+    # recorren sin recursión, cada una con la comilla final de un valor truncado
+    try:
+        if isinstance(valor, dict) and secretos_en_texto(json.dumps(valor, ensure_ascii=False, default=str)):
+            return True
+    except RecursionError:   # demasiado anidado para serializarlo: no se puede comprobar, así que falla cerrado
+        return True
+    pila: list = [valor]
+    while pila:
+        x = pila.pop()
+        if isinstance(x, (bytes, bytearray)):
+            x = bytes(x).decode("utf-8", errors="replace")
+        if isinstance(x, str):
+            if secretos_en_texto(x + '"'):
+                return True
+        elif isinstance(x, dict):
+            pila.extend(x.values())
+        elif isinstance(x, (list, tuple, set, frozenset)):
+            pila.extend(x)
     return False
 
 
@@ -227,11 +244,15 @@ class ReplayClient(LLMClient):
         self.base = base
         self._lock = threading.Lock()
         self._tabla: dict[str, dict] = {}
+        self.descartadas = 0
         if self.ruta.exists():
-            for l in self.ruta.read_text(encoding="utf-8").split("\n"):   # T-103 r02 (H-48): no en U+2028 ni U+0085
-                if l.strip():
-                    d = json.loads(l)
-                    self._tabla[d["clave"]] = d
+            # T-113 (H-54 de T-104): una última línea cortada se descarta; otra ilegible da el fichero y la línea
+            from .herramientas.ht06_indice import leer_jsonl
+            filas, self.descartadas = leer_jsonl(self.ruta)
+            for d in filas:
+                if not isinstance(d, dict) or "clave" not in d:
+                    raise ValueError(f"{self.ruta}: registro de la grabación sin «clave»")
+                self._tabla[d["clave"]] = d
         elif modo == "reproducir":
             raise FileNotFoundError(f"No existe la grabación {self.ruta}")
 

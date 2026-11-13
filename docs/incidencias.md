@@ -106,6 +106,20 @@ El total cargado es el coste real. Efecto declarado: en un presupuesto justo, el
 
 Pregunta para T-57: «¿qué antigüedad admite la resolución de un pronóstico, se alinean las series y qué pasa con las que tienen calendarios distintos?». Detalle en [.docs/tickets/T-91](../.docs/tickets/T-91/README.md).
 
+**INC-T113-01 · 2026-11-13 · Decisiones al cerrar la deuda técnica del Bloque A (T-113).** `[PROPUESTO]`:
+- **Rangos de MON e IDX (H-24):**
+  - un horizonte o una ventana de la petición no pasa de H5 de la configuración (120 meses, 2 520 sesiones);
+  - una ventana histórica no pasa de 100 años;
+  - `diferencial_estable_dias` no pasa de 252;
+  - `incremento_pb` va de 0 a 100;
+  - una lista no pasa de 12 elementos, y la de escenarios, de 20.
+- **Romanos (T-109):** un número romano detrás de un determinante («las VII ideas») es una cifra; detrás de un nombre propio o de «siglo», no.
+- **Tickers en minúscula (H-34):** solo se cazan los del universo. Uno que no está en el universo sigue siendo un límite declarado.
+- **Frases de 30 s (H-50):** si el Sintetizador escribe una o tres, se toman las dos primeras o se completa con el texto por defecto, y se declara como FORMATO.
+- **Caché de resultados (H-54):** una línea ilegible se descarta y se cuenta. En la cinta de grabación, solo la última línea cortada; cualquier otra línea ilegible da error, con el fichero y la línea.
+
+Detalle en [.docs/tickets/T-113](../.docs/tickets/T-113/README.md).
+
 **INC-T112-01 · 2026-11-13 · Decisiones de método en las 36 fichas de la Fase 2 del Motor (Bloque A, T-112).** Las fichas dejan huecos que se han cubierto así, `[PROPUESTO]` hasta que el operador o una revisión del Catálogo decidan. El detalle, ficha a ficha, está en las notas de cada grupo: `.docs/tickets/T-112/grupo_S.md`, `grupo_R.md`, `grupo_V.md` y `grupo_P.md`. Las que más pesan:
 - **Modelos propios en lugar de bibliotecas que A no declara** (statsmodels, scikit-learn, `arch`):
   - Markov switching y HMM por EM con numpy;

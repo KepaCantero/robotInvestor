@@ -217,7 +217,8 @@ def test_cada_campo_por_el_camino_real(tmp_path, monkeypatch):
     assert p["x_lectura_conjunto"] == f"Marca lectura: {m['opp:' + capt['opp']]} depende del dólar;"
     assert "Sintetizador: Marca limitación de datos sintéticos." in p["limitaciones"]
     # r06: la primera frase (las cuentas) la escribe el código; la del Sintetizador va después
-    assert red["frases_30s"] == [f"Esta semana vemos {len(ops)} ideas en {n_tipos} tipos de inversión.", "Marca resumen de la semana.",
+    ideas, tipos = ("idea" if len(ops) == 1 else "ideas"), ("tipo" if n_tipos == 1 else "tipos")   # T-113 (H-49): singular
+    assert red["frases_30s"] == [f"Esta semana vemos {len(ops)} {ideas} en {n_tipos} {tipos} de inversión.", "Marca resumen de la semana.",
                                  capt["defecto"]["frases_30s"][2]]
     assert red["tarjetas"] and all(t["por_que_llano"] == "Marca por qué." and t["que_puede_salir_mal_llano"] == "Marca riesgo."
                                    and t["ambito_llano"] == "Marca ámbito." for t in red["tarjetas"])
@@ -523,7 +524,8 @@ def test_r06_lo_que_pasaba_en_la_qa_r05_se_quita(perm, regla, frase):
 def test_r06_el_sintetizador_escribe_dos_frases_de_30s():
     from bloque_a.contratos import ESQUEMAS
     f = ESQUEMAS["SINTESIS"]["properties"]["frases_30s"]
-    assert (f["minItems"], f["maxItems"]) == (2, 2) and ESQUEMAS["REDACCION"]["properties"]["frases_30s"]["minItems"] == 3   # la V5 no cambia
+    # T-113 (H-50): de una a tres; `_redaccion_segura` toma las dos primeras o completa y lo declara
+    assert (f["minItems"], f["maxItems"]) == (1, 3) and ESQUEMAS["REDACCION"]["properties"]["frases_30s"]["minItems"] == 3   # la V5 no cambia
 
 
 def test_r06_h45_marcador_y_muchos_espacios_en_tiempo_lineal(perm):
