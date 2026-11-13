@@ -246,12 +246,11 @@ def _sintetizador(msg, ctx, rng):
     p = msg["paquete_sintesis"]
     clus = sorted({c for c in (msg.get("clusteres") or [])})
     n = sum(c["n"] for c in p["clases"].values())
-    out["frases_30s"] = ["Esta semana vemos {n_ideas} ideas en {n_tipos} tipos de inversión.",
-                         ("Varias dependen de lo mismo: en realidad son {n_apuestas} apuestas distintas." if p["apuestas_independientes"] < n
+    # T-102 r06: la primera frase (las cuentas) la escribe el código; el Sintetizador no cuenta
+    out["frases_30s"] = [("Varias dependen de lo mismo: hay menos apuestas distintas que ideas." if p["apuestas_independientes"] < n
                           else "Cada idea depende de cosas distintas: no se repiten."),
                          "Cada idea puede salir mal. Mira su riesgo y su plazo."]
-    out["motivos_llanos"] = {k: f"Miramos {{candidatas:{k}}} ideas. Solo {{n:{k}}} pasaron todos los filtros. Preferimos no rellenar el hueco."
-                             for k, c in p["clases"].items() if c["n"] < 3}
+    out["motivos_llanos"] = {k: "Preferimos no rellenar el hueco con ideas peores." for k, c in p["clases"].items() if c["n"] < 3}
     out.update({"regimen_macro": "Régimen sintético: lectura agregada de los tipos de activo de la semana.",
                 "factores_dominantes": [{"cluster_id": c, "factor": "Factor común del clúster: el impulso de precios"} for c in clus],
                 "lectura_conjunto": "Las opciones dependen sobre todo del impulso de precios; las apuestas comparten riesgo de reversión.",

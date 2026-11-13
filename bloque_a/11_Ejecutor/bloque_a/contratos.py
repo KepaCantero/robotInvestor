@@ -590,7 +590,8 @@ ESQUEMAS: dict[str, dict] = {
     # T-101 (V6): el Sintetizador devuelve los textos del Redactor y, opcionalmente, los de la integración
     "SINTESIS": {
         "type": "object", "required": ["frases_30s", "tarjetas", "motivos_llanos", "glosario", "frase_historial"],
-        "properties": {"frases_30s": {"type": "array", "minItems": 3, "maxItems": 3, "items": TXT},
+        # T-102 r06: el Sintetizador escribe dos frases de 30 s; la primera, con las cuentas, la escribe el código
+        "properties": {"frases_30s": {"type": "array", "minItems": 2, "maxItems": 2, "items": TXT},
                        "tarjetas": {"type": "array", "items": {"type": "object", "required": ["opp_id", "por_que_llano", "que_puede_salir_mal_llano"],
                                     "properties": {"por_que_llano": {"type": "string", "maxLength": 160},
                                                    "que_puede_salir_mal_llano": {"type": "string", "maxLength": 200},
