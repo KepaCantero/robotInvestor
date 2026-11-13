@@ -7,18 +7,23 @@ implementadas se rechazan con `METODO_NO_IMPLEMENTADO` (y la alternativa del nú
 """
 from __future__ import annotations
 
-import inspect
+import functools
 import math
+import os
+import re
 import threading
-from typing import Any, Callable, Dict, List, Optional, Tuple, TypeGuard
+from collections.abc import Callable
+from pathlib import Path
+from typing import Any, TypeGuard
 
 import numpy as np
 import pandas as pd
 
-from ..configuracion import parametro
+from ..configuracion import DIR_EJECUTOR, parametro, raiz_paquete
 from ..herramientas.ht01_datos import DatosNoDisponibles, FugaDeInformacion
 from ..herramientas.ht06_indice import clave_hash
 from . import evaluacion as ev
+from . import fichas_fon_der, fichas_mon_idx, fichas_tcv
 from . import operaciones as op
 
 CATALOG_VERSION = "5.0"
@@ -45,13 +50,13 @@ ALTERNATIVAS = {"REG-HMM-001": "FX-TREND-001", "FX-REGIME-001": "FX-TREND-001", 
                 "CHR-ONCHAIN-001": "ACC-MOM-001", "ALT-DESMOOTH-001": "RISK-DD-001"}
 
 
-def _sesiones_anuales(params: Dict) -> int:
+def _sesiones_anuales(params: dict) -> int:
     return 365 if params.get("clase") == "CRI" else 252
 
 
-def _por_serie(fn: Callable[[pd.Series, Dict], Dict]) -> Callable:
+def _por_serie(fn: Callable[[pd.Series, dict], dict]) -> Callable:
     """Aplica una función a cada serie; los fallos por símbolo se anotan como limitaciones."""
-    def envoltura(ent: Dict, params: Dict) -> Tuple[Dict, List[str]]:
+    def envoltura(ent: dict, params: dict) -> tuple[dict, list[str]]:
         tabla, lim = {}, []
         for s, serie in ent["series"].items():
             try:
@@ -209,7 +214,7 @@ def f_score(ent, params):
     return tot, []
 
 
-IMPLEMENTADAS: Dict[str, Dict[str, Any]] = {
+IMPLEMENTADAS: dict[str, dict[str, Any]] = {
     "ST-DESC-001": {"fn": _por_serie(_f_desc), "modulo": "MC-01", "version": "1.1", "cifra": "DETERMINISTA", "ri": "RI-NA", "tol": 1e-10},
     "FIN-CAGR-001": {"fn": _por_serie(_f_cagr), "modulo": "MC-01", "version": "1.1", "cifra": "DETERMINISTA", "ri": "RI-NA", "tol": 1e-10},
     "ACC-MOM-001": {"fn": f_momentum, "modulo": "MC-09", "version": "1.0", "cifra": "ESTADISTICA", "ri": "RI-CM", "tol": 1e-10},
@@ -236,9 +241,84 @@ IMPLEMENTADAS: Dict[str, Dict[str, Any]] = {
 DOCUMENTADAS_CON_CODIGO = frozenset({"ACC-ERP-001", "FX-MOM-001", "REI-CAP-001"})
 
 
-def servible(ficha: object) -> TypeGuard[str]:
-    """La ficha tiene código y el Catálogo la da por IMPLEMENTADO (y su dependencia opcional está instalada)."""
-    return ficha in IMPLEMENTADAS and ficha not in DOCUMENTADAS_CON_CODIGO and (ficha != "VOL-GARCH-001" or garch_disponible())
+# T-106 (Motor Fase 1): las 21 fichas V5.0 de IDX, FON, DER, MON y TCV, cada familia en su módulo, con sus casos de control
+# (§20 del Catálogo). Las advertencias fijas de una ficha («Supuestos y limitaciones») van en `resultado["advertencias"]`, no
+# como limitaciones del cálculo: así el estado SERVED_WITH_LIMITATIONS solo señala problemas de los datos.
+def _advertencias_aparte(fn: Callable, advertencias: set) -> Callable:
+    def envoltura(ent: dict, params: dict) -> tuple[dict, list[str]]:
+        r, lim = fn(ent, params)
+        adv = [x for x in lim if x in advertencias]
+        if adv:
+            r = {**r, "advertencias": list(r.get("advertencias") or []) + adv}
+        return r, [x for x in lim if x not in advertencias]
+    envoltura.__name__, envoltura.__module__ = fn.__name__, fn.__module__
+    return envoltura
+
+
+CASOS_CONTROL: dict[str, list[dict[str, Any]]] = {}
+for _mod in (fichas_mon_idx, fichas_fon_der, fichas_tcv):
+    _adv = getattr(_mod, "ADVERTENCIAS", {})
+    for _f, _meta in _mod.FICHAS.items():
+        IMPLEMENTADAS[_f] = {**_meta, "fn": _advertencias_aparte(_meta["fn"], set(_adv[_f])) if _f in _adv else _meta["fn"]}
+    CASOS_CONTROL.update(_mod.CASOS_CONTROL)
+
+RUTA_CATALOGO = ("04_Motor_conocimiento_y_catalogo", "Catálogo de cálculos del Motor - V5.0.md")
+_FILA_CATALOGO = re.compile(r"^\| ([A-Z]+(?:-[A-Z0-9]+)+-\d{3}) \|.*\| (P\d) \| ([^|]+?) \|\s*$", re.MULTILINE)
+FASE1 = frozenset(CASOS_CONTROL)   # las fichas de T-106: resultado estricto (sin cifras no finitas)
+
+
+def _raiz(raiz: str | os.PathLike | None = None) -> Path:
+    return Path(raiz or os.environ.get("BLOQUE_A_RAIZ") or DIR_EJECUTOR.parent)
+
+
+@functools.lru_cache(maxsize=8)
+def _madurez(ruta: str, _mtime_ns: int) -> tuple[tuple[str, str], ...]:
+    try:
+        texto = Path(ruta).read_text(encoding="utf-8")
+    except (OSError, ValueError):   # QA r01 de T-106, H-05: también bytes que no son UTF-8 (falla cerrado)
+        return ()
+    # H-06: solo la tabla del índice de fichas (§4), no cualquier fila del documento que se le parezca
+    i, j = texto.find("\n## 4."), texto.find("\n## 5.")
+    if i < 0 or j < i:
+        return ()
+    out: dict[str, str] = {}
+    for m in _FILA_CATALOGO.finditer(texto[i:j]):
+        out.setdefault(m.group(1), m.group(3).strip())
+    return tuple(out.items())
+
+
+def madurez_catalogo(raiz: str | os.PathLike | None = None) -> dict[str, str]:
+    """T-106: la madurez de cada ficha según la tabla del índice del Catálogo (§4). Manda el Catálogo (T-65, CS-08): una ficha
+    se sirve solo si tiene código y el Catálogo la da por IMPLEMENTADO o VALIDADO. Sin Catálogo legible, ninguna (falla
+    cerrado). La lectura se cachea por ruta y fecha de modificación (H-06)."""
+    ruta = _raiz(raiz).joinpath(*RUTA_CATALOGO)
+    try:
+        mtime = ruta.stat().st_mtime_ns
+    except OSError:
+        return {}
+    return dict(_madurez(str(ruta), mtime))
+
+
+def citable_segun_catalogo(ficha: str, raiz: str | os.PathLike | None = None) -> bool:
+    estado = madurez_catalogo(raiz).get(ficha, "")
+    return estado.startswith("IMPLEMENTADO") or estado.startswith("VALIDADO")
+
+
+def servible(ficha: object, raiz: str | os.PathLike | None = None) -> TypeGuard[str]:
+    """La ficha tiene código, el Catálogo la da por IMPLEMENTADO (o VALIDADO) y su dependencia opcional está instalada.
+    `raiz` es la del paquete (`rutas.raiz_paquete` de la configuración; H-04)."""
+    return (isinstance(ficha, str) and ficha in IMPLEMENTADAS and ficha not in DOCUMENTADAS_CON_CODIGO
+            and citable_segun_catalogo(ficha, raiz) and (ficha != "VOL-GARCH-001" or garch_disponible()))
+
+
+def _no_finito(x: Any) -> bool:
+    if isinstance(x, dict):
+        return any(_no_finito(v) for v in x.values())
+    if isinstance(x, (list, tuple)):
+        return any(_no_finito(v) for v in x)
+    if isinstance(x, (float, np.floating)):
+        return not math.isfinite(float(x))
+    return False
 
 
 def garch_disponible() -> bool:
@@ -265,16 +345,17 @@ def _limpio(x: Any) -> Any:
 
 
 class Motor:
-    def __init__(self, almacen, proveedor, cfg: Dict, contabilidad=None) -> None:
+    def __init__(self, almacen, proveedor, cfg: dict, contabilidad=None) -> None:
         self.almacen = almacen
         self.proveedor = proveedor
         self.cfg = cfg
         self.contabilidad = contabilidad
-        self._cache: Dict[str, Dict] = {}
+        self.raiz = raiz_paquete(cfg)   # QA r01 de T-106, H-04: el Catálogo se lee de la raíz configurada
+        self._cache: dict[str, dict] = {}
         self._lock = threading.Lock()
 
     # ------------------------------------------------------------------------------------
-    def _resolver_datos(self, datos: List[Dict], fecha_corte) -> Tuple[Dict, List[Dict]]:
+    def _resolver_datos(self, datos: list[dict], fecha_corte) -> tuple[dict, list[dict]]:
         ent = {"series": {}, "series_rol": {}, "valores": {}}
         efectivos = []
         for d in datos:
@@ -289,7 +370,7 @@ class Motor:
                 else:
                     ent["series"][clave] = s
                 efectivos.append({"serie_ht01": d["serie"], "rol": d.get("rol", "serie"), "inicio": str(s.index[0].date()),
-                                  "fecha_dato": str(s.index[-1].date()), "n": int(len(s)),
+                                  "fecha_dato": str(s.index[-1].date()), "n": len(s),
                                   "huella": self.proveedor.huella(d["serie"], d.get("inicio"), fin),
                                   "fuente": f"HT-01:{self.proveedor.nombre}"})
             elif "valores" in d:
@@ -297,7 +378,47 @@ class Motor:
                 efectivos.append({"valor": "en línea", "claves": sorted(d["valores"]), "huella": clave_hash(d["valores"])[:16]})
         return ent, efectivos
 
-    def servir(self, peticion: Dict, solicitante: str, run_id: Optional[str] = None, msg_id: Optional[str] = None) -> Dict:
+    def _error_de_forma(self, peticion: Any) -> str | None:
+        """QA r02 de T-106, H-15: la forma de la petición se comprueba antes de nada; una petición mal formada se rechaza
+        (DATOS_INCOHERENTES, paso 1 del Motor: esquema) y queda en RC, en vez de lanzar una excepción al llamador."""
+        if not isinstance(peticion, dict):
+            return "la petición no es un objeto"
+        op_ = peticion.get("operacion")
+        ficha = op_.get("ficha_id") if isinstance(op_, dict) else op_
+        if not isinstance(ficha, str):
+            return "la operación no es un identificador de ficha"
+        if peticion.get("parametros") is not None and not isinstance(peticion["parametros"], dict):
+            return "«parametros» no es un objeto"
+        planes = parametro(self.cfg, "uc.motor_por_plan")
+        if peticion.get("plan", "PLAN_MIN") not in planes:
+            return f"plan desconocido ({str(peticion.get('plan'))[:40]}); admitidos: {sorted(planes)}"
+        if peticion.get("fecha_corte") is not None:
+            try:
+                if pd.isna(pd.Timestamp(peticion["fecha_corte"])):
+                    return "«fecha_corte» vacía"
+            except (TypeError, ValueError, OverflowError):
+                return f"«fecha_corte» ilegible ({str(peticion['fecha_corte'])[:40]})"
+        datos = peticion.get("datos")
+        if datos is not None and not (isinstance(datos, list) and all(isinstance(d, dict) for d in datos)):
+            return "«datos» no es una lista de objetos"
+        for d in datos or []:
+            if "serie" in d and not isinstance(d["serie"], str):
+                return "una «serie» de «datos» no es un identificador"
+            if "valores" in d and not isinstance(d["valores"], dict):
+                return "unos «valores» de «datos» no son un objeto"
+        return None
+
+    def servir(self, peticion: dict, solicitante: str, run_id: str | None = None, msg_id: str | None = None) -> dict:
+        forma = self._error_de_forma(peticion)
+        if forma:
+            op_ = peticion.get("operacion") if isinstance(peticion, dict) else None
+            f_ = op_.get("ficha_id") if isinstance(op_, dict) else op_
+            f_ = f_ if isinstance(f_, str) else None
+            base_ = {"calc_id": None, "contrato": "CT-09", "msg_id": msg_id, "run_id": run_id, "solicitante": solicitante,
+                     "operacion": {"method_id": f_, "ficha_id": f_, "ficha_version": None, "catalog_version": CATALOG_VERSION,
+                                   "op_sin_ficha": f_ not in FICHAS_CATALOGO},
+                     "madurez_metodo": "IMPLEMENTADO" if f_ in IMPLEMENTADAS else "DESCONOCIDA", "cache_hit": False}
+            return self._rechazo(base_, "DATOS_INCOHERENTES", f"petición mal formada: {forma}")
         ficha = (peticion.get("operacion") or {}).get("ficha_id") if isinstance(peticion.get("operacion"), dict) \
             else peticion.get("operacion")
         params = dict(peticion.get("parametros") or {})
@@ -315,12 +436,17 @@ class Motor:
                 "madurez_metodo": "IMPLEMENTADO", "cache_hit": False}
         uc = float(parametro(self.cfg, f"uc.motor_por_plan.{plan}"))   # QA r01 de T-65, H-05: sin respaldo 0,02
         # 1) Ficha
-        if not servible(ficha):
+        if not servible(ficha, self.raiz):
             motivo = "METODO_NO_IMPLEMENTADO" if ficha in FICHAS_CATALOGO else "OPERACION_SIN_FICHA"
             alt = ALTERNATIVAS.get(ficha)
-            alt = alt if alt and servible(alt) else None   # nunca se ofrece como alternativa una ficha que tampoco se sirve
-            detalle = (f"Ficha {ficha} con código pero «Documentado» en el Catálogo: no entrega cifras citables"
-                       if ficha in DOCUMENTADAS_CON_CODIGO else f"Ficha {ficha} no implementada en el ejecutor V1.0")
+            alt = alt if alt and servible(alt, self.raiz) else None   # nunca se ofrece como alternativa una ficha que tampoco se sirve
+            if ficha == "VOL-GARCH-001" and citable_segun_catalogo(ficha, self.raiz) and not garch_disponible():
+                detalle = "Ficha VOL-GARCH-001: falta la dependencia opcional `arch` en el entorno"   # H-12
+            elif ficha in IMPLEMENTADAS:
+                madurez = madurez_catalogo(self.raiz).get(ficha) or "sin Catálogo legible"
+                detalle = f"Ficha {ficha} con código pero «{madurez}» en el Catálogo: no entrega cifras citables"
+            else:
+                detalle = f"Ficha {ficha} no implementada en el ejecutor"
             return self._rechazo(base, motivo, detalle + (f"; alternativa: {alt}" if alt else ""), alternativa=alt, uc=uc)
         meta = IMPLEMENTADAS[ficha]
         base["operacion"]["ficha_version"] = meta["version"]
@@ -332,6 +458,8 @@ class Motor:
             return self._rechazo(base, "FUGA_DE_INFORMACION", str(e), uc=uc)
         except (DatosNoDisponibles, KeyError) as e:
             return self._rechazo(base, "DATOS_NO_DISPONIBLES", str(e), uc=uc)
+        except (TypeError, ValueError, OverflowError) as e:   # H-15: fechas de una serie ilegibles
+            return self._rechazo(base, "DATOS_INCOHERENTES", f"datos mal formados ({type(e).__name__}: {str(e)[:200]})", uc=uc)
         clave = clave_hash(ficha, meta["version"], efectivos, params, peticion.get("semilla"), base["perfil"])
         base["clave_idempotencia"] = clave
         with self._lock:
@@ -352,6 +480,11 @@ class Motor:
             return self._rechazo(base, "DATOS_INSUFICIENTES", str(e), uc=uc)
         except NotImplementedError as e:
             return self._rechazo(base, "METODO_NO_IMPLEMENTADO", str(e), uc=uc)
+        except (ValueError, TypeError, ArithmeticError, KeyError, IndexError, AttributeError, np.linalg.LinAlgError) as e:
+            # QA r01 de T-106, H-02: una entrada que la ficha no valida no tumba el CT-09; se rechaza y queda en RC
+            return self._rechazo(base, "DATOS_INSUFICIENTES", f"{ficha}: entrada no válida ({type(e).__name__}: {str(e)[:200]})", uc=uc)
+        if ficha in FASE1 and (_no_finito(resultado) or _no_finito(resultado2)):
+            return self._rechazo(base, "DATOS_INSUFICIENTES", f"{ficha}: el cálculo da cifras no finitas con estos datos", uc=uc)
         resultado, resultado2 = _limpio(resultado), _limpio(resultado2)
         identico = resultado == resultado2
         calc_id = self.almacen.nuevo_id("CALC")
@@ -360,7 +493,7 @@ class Motor:
                    "resultado": {"forma": "TABLA", "payload": resultado}, "clase_cifra": meta["cifra"],
                    "incertidumbre": {"tipo": "IC" if meta["cifra"] == "ESTADISTICA" else None},
                    "referencia_ingenua": {"tipo": meta["ri"]},
-                   "artefacto": {"code_ref": f"bloque_a.motor.operaciones · {meta['fn'].__name__}",
+                   "artefacto": {"code_ref": f"{meta['fn'].__module__} · {meta['fn'].__name__}",
                                  "inputs_effective": efectivos, "transformations": "rendimientos simples salvo ficha",
                                  "rounding_policy": "sin redondeo intermedio; JSON float64"},
                    "verificacion_interna": {"identity_checks": "doble pasada idéntica" if identico else "DIFERENCIA ENTRE PASADAS",
@@ -377,7 +510,7 @@ class Motor:
             self._cache[clave] = out
         return out
 
-    def _rechazo(self, base: Dict, motivo: str, detalle: str, alternativa: Optional[str] = None, uc: float = 0.0) -> Dict:
+    def _rechazo(self, base: dict, motivo: str, detalle: str, alternativa: str | None = None, uc: float = 0.0) -> dict:
         calc_id = self.almacen.nuevo_id("CALC")
         e = {**base, "tipo_entrada": "RECHAZO", "calc_id": calc_id, "estado": "REJECTED", "motivo_rechazo": motivo,
              "detalle": detalle, "alternativa": alternativa, "madurez_metodo": "DOCUMENTADO" if motivo == "METODO_NO_IMPLEMENTADO" else ("DESCONOCIDA" if motivo == "OPERACION_SIN_FICHA" else base.get("madurez_metodo")),
@@ -386,7 +519,37 @@ class Motor:
         return {"estado": "RECHAZADO", "motivo": motivo, "detalle": detalle, "calc_id": calc_id, "alternativa": alternativa}
 
     # ------------------------------------------------------------------------------------
-    def reejecutar(self, calc_id: str, motivo: str, solicitante: str = "AG-18") -> Dict:
+    def verificar_casos_control(self, fichas: list[str] | None = None, run_id: str | None = None) -> dict[str, dict]:
+        """T-106 (§20.2 del Catálogo: «Paso a IMPLEMENTADO: casos de control superados en el entorno de ejecución y registrados
+        en el Registro de cálculos»). Ejecuta los casos de control de cada ficha (dos pasadas, que deben coincidir) y escribe
+        una entrada CASOS_CONTROL en RC por ficha. No depende de la madurez del Catálogo: es lo que permite promoverla."""
+        out: dict[str, dict] = {}
+        for ficha in sorted(fichas or CASOS_CONTROL):
+            meta, casos = IMPLEMENTADAS.get(ficha), CASOS_CONTROL.get(ficha) or []
+            res = []
+            for caso in casos:
+                try:
+                    ent, _ = self._resolver_datos(caso.get("datos") or [], None)
+                    params = dict(caso.get("parametros") or {})
+                    r1, _ = meta["fn"](ent, dict(params)) if meta else ({}, [])
+                    r2, _ = meta["fn"](ent, dict(params)) if meta else ({}, [])
+                    ok, detalle = bool(meta) and bool(caso["comprobar"](r1)) and _limpio(r1) == _limpio(r2), None
+                except Exception as exc:  # noqa: BLE001 — un caso que falla por cualquier motivo no se supera (falla cerrado)
+                    ok, detalle = False, f"{type(exc).__name__}: {exc}"[:300]
+                res.append({"nombre": caso.get("nombre"), "superado": ok, "detalle": detalle})
+            superados = bool(res) and all(x["superado"] for x in res)
+            reg = {"tipo_entrada": "CASOS_CONTROL", "calc_id": self.almacen.nuevo_id("CALC"), "contrato": "CT-10", "run_id": run_id,
+                 "solicitante": "AG-13", "estado": "SERVED" if superados else "REJECTED",
+                 "operacion": {"method_id": ficha, "ficha_id": ficha, "ficha_version": (meta or {}).get("version"),
+                               "catalog_version": CATALOG_VERSION, "op_sin_ficha": ficha not in FICHAS_CATALOGO},
+                 "casos_control": res, "superados": superados, "madurez_catalogo": madurez_catalogo(self.raiz).get(ficha),
+                 "consumo_uc": 0.0}
+            self.almacen.escribir("RC", "AG-13", reg)
+            out[ficha] = {"superados": superados, "casos": res, "calc_id": reg["calc_id"]}
+        return out
+
+    # ------------------------------------------------------------------------------------
+    def reejecutar(self, calc_id: str, motivo: str, solicitante: str = "AG-18") -> dict:
         """CT-10 (MC-08): recalcula con las entradas del artefacto y compara con la tolerancia de la ficha."""
         orig = self.almacen.estado("RC").get(calc_id)
         if not orig or orig.get("tipo_entrada") != "SERVICIO":
@@ -416,7 +579,7 @@ class Motor:
         return {"coincide": coincide, "diferencias": difs, "calc_id": e["calc_id"]}
 
 
-def _comparar(a: Any, b: Any, tol: float, ruta: str = "") -> List[str]:
+def _comparar(a: Any, b: Any, tol: float, ruta: str = "") -> list[str]:
     if isinstance(a, dict) and isinstance(b, dict):
         out = []
         for k in set(a) | set(b):

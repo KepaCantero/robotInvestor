@@ -2,9 +2,9 @@
 
 | Campo | Valor |
 | --- | --- |
-| Estado | EN QA |
+| Estado | CERRADO (QA r01 APTO, 12-11-2026) |
 | Pieza | `bloque_a/11_Ejecutor` (un solo bloque) |
-| Planifica · implementa · QA | claude · claude · sin asignar (el operador decide quién, 12-11-2026) |
+| Planifica · implementa · QA | claude · claude · claude, con un revisor nuevo sin contexto (regla del operador del 12-11-2026) |
 | Aprobación del operador | Toca código de un bloque: autorizado el 2026-11-12 («haz todo», tras proponer que Claude lo implementara y Astra hiciera la QA). Era la tarea C-32 de la cola de Astra; pasa a ser su QA |
 | Deuda técnica | T-93 en `sistema_global/seguimiento/Deuda_tecnica_y_pendientes_del_operador.md` |
 
@@ -47,3 +47,8 @@ Cerrar los hallazgos medios y bajos que dejó la QA r04 de T-92 (`.docs/tickets/
 | `tests/test_t93_hallazgos.py` | Nominal, límites y fallo cerrado | CA-3 |
 | Las pruebas nuevas contra HEAD sin el cambio | Regresión | CA-3 |
 | Suite de A y gate | Regresión | CA-4 |
+
+## Registro
+
+- 2026-11-12 · EN QA · H-32 a H-39 corregidos; 37 pruebas nuevas (A 476)
+- 2026-11-12 · CERRADO · QA r01 APTO (revisor nuevo sin contexto): CA-1 a CA-5 cumplidos (CA-2 con reservas), sin críticos ni altos. H-40 (media, regresión de R8 con escapes dobles) y H-41 a H-46 (bajos) pasan a T-103

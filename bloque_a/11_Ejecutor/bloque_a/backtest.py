@@ -7,7 +7,6 @@ from __future__ import annotations
 import csv
 import json
 from pathlib import Path
-from typing import Dict, List, Optional
 
 import pandas as pd
 
@@ -27,16 +26,16 @@ COLUMNAS_PRONOSTICOS = ["prg_id", "opp_id", "run_id", "fecha_emision", "clase", 
                         "tipo_pronostico", "direccion", "referencia", "umbral", "banda_verbal", "prob_interna", "prob_publicada",
                         "prob_referencia_ingenua", "nivel_referencia", "nivel_referencia_indice", "en_informe", "estado",
                         "fecha_resuelto", "rent_proxy", "rent_referencia", "valor_observado", "resultado_binario", "brier",
-                        "log_score", "brier_ref", "comprobacion_fuga", "version_de"]
+                        "log_score", "brier_ref", "comprobacion_fuga", "version_de", "fecha_dato_proxy", "fecha_dato_referencia"]
 COLUMNAS_CONSUMO = ["run_id", "fecha_asof", "llamadas", "tokens_entrada", "tokens_salida", "tokens_cache_escritura",
-                    "tokens_cache_lectura", "busquedas_web", "uc_llm", "uc_motor", "uc", "coste_estimado"]
+                    "tokens_cache_lectura", "busquedas_web", "uc_llm", "uc_motor", "uc", "coste_estimado", "reintentos", "latencia_s"]
 
 
 def _direccion(vista: str) -> str:
     return {"alcista": "LARGO", "relativa_favorable": "LARGO", "bajista": "CORTO", "relativa_desfavorable": "CORTO"}.get(vista, "NEUTRAL")
 
 
-def _escribir_csv(ruta: Path, columnas: List[str], filas: List[Dict]) -> None:
+def _escribir_csv(ruta: Path, columnas: list[str], filas: list[dict]) -> None:
     with open(ruta, "w", newline="", encoding="utf-8") as fh:
         w = csv.DictWriter(fh, fieldnames=columnas, extrasaction="ignore")
         w.writeheader()
@@ -44,7 +43,7 @@ def _escribir_csv(ruta: Path, columnas: List[str], filas: List[Dict]) -> None:
             w.writerow({k: ("" if f.get(k) is None else f.get(k)) for k in columnas})
 
 
-def filas_senales(res: Dict, f4: Dict) -> List[Dict]:
+def filas_senales(res: dict, f4: dict) -> list[dict]:
     out = []
     for c, d in res["paquete"]["clases"].items():
         for o in d["opciones"]:
@@ -64,7 +63,7 @@ def filas_senales(res: Dict, f4: Dict) -> List[Dict]:
     return out
 
 
-def filas_pronosticos(f4: Dict) -> List[Dict]:
+def filas_pronosticos(f4: dict) -> list[dict]:
     out = []
     for p in sorted(f4.values(), key=lambda x: x["prg_id"]):
         r = p.get("resolucion") or {}
@@ -79,11 +78,13 @@ def filas_pronosticos(f4: Dict) -> List[Dict]:
                     "en_informe": p.get("en_informe"), "estado": p.get("estado"), "fecha_resuelto": r.get("fecha_resuelto"),
                     "rent_proxy": r.get("rent_proxy"), "rent_referencia": r.get("rent_referencia"), "valor_observado": r.get("valor_observado"),
                     "resultado_binario": r.get("resultado_binario"), "brier": pt.get("brier"), "log_score": pt.get("log"),
-                    "brier_ref": pt.get("brier_ref"), "comprobacion_fuga": r.get("comprobacion_fuga"), "version_de": p.get("version_de")})
+                    "brier_ref": pt.get("brier_ref"), "comprobacion_fuga": r.get("comprobacion_fuga"), "version_de": p.get("version_de"),
+                    # T-91 (QA r05 de T-65, H-28): la fecha del último dato de cada serie usado al resolver
+                    "fecha_dato_proxy": r.get("fecha_dato_proxy"), "fecha_dato_referencia": r.get("fecha_dato_referencia")})
     return out
 
 
-def _resumen_celda(m: Dict) -> Dict:
+def _resumen_celda(m: dict) -> dict:
     ac = m.get("acierto") or {}
     return {"n": m["n"], "acierto": {"tasa": ac.get("tasa"), "ic90_wilson": ac.get("ic"), "p_binomial_vs_tasa_base": ac.get("p_binomial"),
                                      "tasa_base": ac.get("tasa_base")},
@@ -96,10 +97,10 @@ def _resumen_celda(m: Dict) -> Dict:
             "referencia": m.get("referencia")}
 
 
-def ejecutar_backtest(cfg: Dict, desde: str, hasta: str, datos: str, universo: str, salida: str, frecuencia: Optional[str] = None,
-                      clases: Optional[List[str]] = None, cliente: Optional[LLMClient] = None, tipo_cliente: str = "mock",
-                      replay: Optional[str] = None, replay_modo: str = "reproducir", anonimizar: Optional[bool] = None,
-                      resolver_al_final: Optional[bool] = None, proveedor=None, progreso=None) -> Dict:
+def ejecutar_backtest(cfg: dict, desde: str, hasta: str, datos: str, universo: str, salida: str, frecuencia: str | None = None,
+                      clases: list[str] | None = None, cliente: LLMClient | None = None, tipo_cliente: str = "mock",
+                      replay: str | None = None, replay_modo: str = "reproducir", anonimizar: bool | None = None,
+                      resolver_al_final: bool | None = None, proveedor=None, progreso=None) -> dict:
     cfg = fusionar(cfg, {"modo": "backtest"})
     bt = cfg.get("backtest") or {}
     salida_p = Path(salida)
@@ -125,7 +126,7 @@ def ejecutar_backtest(cfg: Dict, desde: str, hasta: str, datos: str, universo: s
         consumo.append({"run_id": res["run_id"], "fecha_asof": res["as_of"], "llamadas": c["llamadas"], "tokens_entrada": c["entrada"],
                         "tokens_salida": c["salida"], "tokens_cache_escritura": c["cache_escritura"], "tokens_cache_lectura": c["cache_lectura"],
                         "busquedas_web": c["busquedas_web"], "uc_llm": c["uc_llm"], "uc_motor": c["uc_motor"], "uc": c["uc"],
-                        "coste_estimado": c["coste_estimado"]})
+                        "coste_estimado": c["coste_estimado"], "reintentos": c.get("reintentos", 0), "latencia_s": c.get("latencia_s", 0.0)})
         runs.append({"run_id": res["run_id"], "as_of": res["as_of"], "estado": res["estado"], "entrega": res.get("entrega", "ENTREGADA"),
                      "nivel_por_clase": res["nivel_por_clase"], "g3": (res.get("g3_entregables") or res["g3"]).get("dictamen")})
         if progreso:

@@ -1,0 +1,230 @@
+OK    DER-ROLL-001#0 nominal determinista (0.00 s)
+OK    DER-ROLL-001#1 nominal determinista (0.00 s)
+OK    DER-ROLL-001#2 nominal determinista (0.00 s)
+OK    DER-SKEW-001#0 nominal determinista (0.00 s)
+OK    DER-SKEW-001#1 nominal determinista (0.01 s)
+OK    DER-SKEW-001#2 nominal determinista (0.01 s)
+OK    DER-TERM-001#0 nominal determinista (0.00 s)
+OK    DER-TERM-001#1 nominal determinista (0.00 s)
+OK    DER-VRP-001#0 nominal determinista (0.00 s)
+OK    DER-VRP-001#1 nominal determinista (0.00 s)
+OK    DER-VRP-001#2 nominal determinista (0.00 s)
+OK    FON-DISC-001#0 nominal determinista (0.00 s)
+OK    FON-DISC-001#1 nominal determinista (0.00 s)
+OK    FON-DISC-001#2 nominal determinista (0.00 s)
+OK    FON-FLOW-001#0 nominal determinista (0.00 s)
+OK    FON-FLOW-001#1 nominal determinista (0.00 s)
+OK    FON-LEV-001#0 nominal determinista (0.00 s)
+OK    FON-LEV-001#1 nominal determinista (0.00 s)
+OK    FON-TD-001#0 nominal determinista (0.00 s)
+OK    FON-TD-001#1 nominal determinista (0.00 s)
+OK    IDX-CONC-001#0 nominal determinista (0.00 s)
+OK    IDX-CONC-001#1 nominal determinista (0.00 s)
+OK    IDX-ERP-001#0 nominal determinista (0.00 s)
+OK    IDX-ERP-001#1 nominal determinista (0.00 s)
+OK    IDX-REB-001#0 nominal determinista (0.00 s)
+OK    IDX-REB-001#1 nominal determinista (0.00 s)
+OK    IDX-REB-001#2 nominal determinista (0.03 s)
+OK    IDX-REL-001#0 nominal determinista (0.00 s)
+OK    IDX-REL-001#1 nominal determinista (0.00 s)
+OK    MON-EXP-001#0 nominal determinista (0.00 s)
+OK    MON-EXP-001#1 nominal determinista (0.00 s)
+OK    MON-FIX-001#0 nominal determinista (0.00 s)
+OK    MON-FIX-001#1 nominal determinista (0.00 s)
+OK    MON-REAL-001#0 nominal determinista (0.00 s)
+OK    MON-REAL-001#1 nominal determinista (0.00 s)
+OK    MON-YLD-001#0 nominal determinista (0.00 s)
+OK    MON-YLD-001#1 nominal determinista (0.00 s)
+OK    TCV-BEI-001#0 nominal determinista (0.00 s)
+OK    TCV-BEI-001#1 nominal determinista (0.00 s)
+OK    TCV-CDS-001#0 nominal determinista (0.00 s)
+OK    TCV-CDS-001#1 nominal determinista (0.00 s)
+OK    TCV-SLOPE-001#0 nominal determinista (0.01 s)
+OK    TCV-SLOPE-001#1 nominal determinista (0.00 s)
+OK    TCV-TP-001#0 nominal determinista (0.50 s)
+OK    TCV-TP-001#1 nominal determinista (0.45 s)
+OK    TCV-TP-001#2 nominal determinista (0.41 s)
+OK    TCV-TP-001#3 nominal determinista (0.00 s)
+OK    TCV-VIXTS-001#0 nominal determinista (0.00 s)
+OK    TCV-VIXTS-001#1 nominal determinista (0.00 s)
+OK    TCV-VIXTS-001#2 nominal determinista (0.00 s)
+
+Resultado de las mutaciones: {'ErrorFicha': 9062, 'ok': 2483, 'EXCEPCION': 297, 'TIEMPO': 2}
+
+== EXCEPCIONES que no son ErrorFicha
+  DER-TERM-001: 18 casos; tipos: ["TypeError: 'bool' object is not iterable", "TypeError: 'float' object is not iterable", "TypeError: 'int' object is not iterable", 'ValueError: math domain error']
+     · calendario_eventos = -1e-300 → TypeError: 'float' object is not iterable
+     · vol_atm.2 = 1e+300 → ValueError: math domain error
+     · calendario_eventos = True → TypeError: 'bool' object is not iterable
+     · calendario_eventos = 1e+300 → TypeError: 'float' object is not iterable
+  DER-VRP-001: 2 casos; tipos: ['LinAlgError: SVD did not converge in Linear Least Squares', "OverflowError: (34, 'Numerical result out of range')"]
+     · precios_subyacente.378 = 1e+300 → LinAlgError: SVD did not converge in Linear Least Squares
+     · cesta_opciones.forward = 1e+300 → OverflowError: (34, 'Numerical result out of range')
+  FON-LEV-001: 3 casos; tipos: ["OverflowError: (34, 'Numerical result out of range')"]
+     · rentabilidades_indice.0 = 1e+300 → OverflowError: (34, 'Numerical result out of range')
+     · rentabilidades_indice.251 = 1e+300 → OverflowError: (34, 'Numerical result out of range')
+     · rentabilidades_indice.126 = 1e+300 → OverflowError: (34, 'Numerical result out of range')
+  IDX-ERP-001: 30 casos; tipos: ["AttributeError: 'bool' object has no attribute 'items'", "AttributeError: 'float' object has no attribute 'items'", "AttributeError: 'int' object has no attribute 'items'", "AttributeError: 'list' object has no attribute 'items'", "TypeError: 'NoneType' object is not iterable", "TypeError: 'bool' object is not iterable"]
+     · escenarios.alto = 0 → TypeError: 'int' object is not iterable
+     · escenarios = -1 → AttributeError: 'int' object has no attribute 'items'
+     · escenarios.bajo = -1e-300 → TypeError: 'float' object is not iterable
+     · escenarios.bajo = nan → TypeError: 'float' object is not iterable
+  IDX-REB-001: 3 casos; tipos: ["TypeError: object of type 'float' has no len()", "TypeError: object of type 'int' has no len()"]
+     · eventos_comparables = nan → TypeError: object of type 'float' has no len()
+     · eventos_comparables = -1 → TypeError: object of type 'int' has no len()
+     · eventos_comparables = 1e+300 → TypeError: object of type 'float' has no len()
+  IDX-REL-001: 104 casos; tipos: ["TypeError: 'NoneType' object is not iterable", "TypeError: 'bool' object is not iterable", "TypeError: 'float' object is not iterable", "TypeError: 'int' object is not iterable", 'TypeError: cannot convert dictionary update sequence element #0 to a sequence', "TypeError: float() argument must be a string or a real number, not 'dict'"]
+     · indice_a.historia.191.per_adelantado = x → ValueError: could not convert string to float: 'x'
+     · indice_b.historia.0.per_adelantado = x → ValueError: could not convert string to float: 'x'
+     · indice_a.historia.0.rt = {} → TypeError: float() argument must be a string or a real number, not 'dict'
+     · indice_b.historia.0.per_adelantado = {'a': 1} → TypeError: float() argument must be a string or a real number, not 'dict'
+  MON-EXP-001: 32 casos; tipos: ['OverflowError: math range error', "TypeError: 'bool' object is not iterable", "TypeError: 'float' object is not iterable", "TypeError: 'int' object is not iterable", 'ValueError: math domain error']
+     · reuniones = 1e+300 → TypeError: 'float' object is not iterable
+     · reuniones = inf → TypeError: 'float' object is not iterable
+     · curva.2.dias = 180000000.0 → OverflowError: math range error
+     · reuniones = -1 → TypeError: 'int' object is not iterable
+  MON-FIX-001: 24 casos; tipos: ['OverflowError: Python int too large to convert to C long', 'RuntimeError: Failed to converge after 100 iterations.', 'ValueError: math domain error', 'ValueError: year 1002026 is out of range', 'ValueError: year 252026 is out of range', 'ValueError: year 752026 is out of range']
+     · curva.0.tipo = 20000.0 → ValueError: math domain error
+     · curva.2.tipo = 1e+300 → ValueError: math domain error
+     · curva.3.tipo = 1e+300 → RuntimeError: Failed to converge after 100 iterations.
+     · curva.3.plazo_meses = 1e+300 → OverflowError: Python int too large to convert to C long
+  MON-REAL-001: 19 casos; tipos: ["AttributeError: 'NoneType' object has no attribute 'get'", "AttributeError: 'float' object has no attribute 'get'", "AttributeError: 'int' object has no attribute 'get'", "AttributeError: 'list' object has no attribute 'get'", "OverflowError: (34, 'Numerical result out of range')"]
+     · divisas.EUR.historia.24.tipo_nominal = 1e+300 → OverflowError: (34, 'Numerical result out of range')
+     · divisas.EUR = 1e+300 → AttributeError: 'float' object has no attribute 'get'
+     · divisas.EUR.historia.47.tipo_nominal = 1e+300 → OverflowError: (34, 'Numerical result out of range')
+     · divisas.EUR = 0 → AttributeError: 'int' object has no attribute 'get'
+  MON-YLD-001: 2 casos; tipos: ["OverflowError: (34, 'Numerical result out of range')", 'ZeroDivisionError: float division by zero']
+     · segmentos.2.valor = 1e+300 → OverflowError: (34, 'Numerical result out of range')
+     · segmentos.0.valor = -1 → ZeroDivisionError: float division by zero
+  TCV-BEI-001: 15 casos; tipos: ["OverflowError: (34, 'Numerical result out of range')", "TypeError: argument of type 'bool' is not iterable", "TypeError: argument of type 'float' is not iterable", "TypeError: argument of type 'int' is not iterable", "TypeError: float() argument must be a string or a real number, not 'complex'", "TypeError: object of type 'bool' has no len()"]
+     · encuestas.horizontes = -1e-300 → TypeError: argument of type 'float' is not iterable
+     · encuestas.horizontes = inf → TypeError: argument of type 'float' is not iterable
+     · curva_real.plazos = True → TypeError: object of type 'bool' has no len()
+     · curva_real.rendimientos.2 = 3400000.0 → TypeError: float() argument must be a string or a real number, not 'complex'
+  TCV-SLOPE-001: 11 casos; tipos: ["AttributeError: 'bool' object has no attribute 'get'", "AttributeError: 'float' object has no attribute 'get'", "AttributeError: 'int' object has no attribute 'get'", "AttributeError: 'list' object has no attribute 'get'", "AttributeError: 'str' object has no attribute 'get'", "OverflowError: (34, 'Numerical result out of range')"]
+     · regresores = [1, 2] → AttributeError: 'list' object has no attribute 'get'
+     · historia_curva.rendimientos.0 = [3.0, 3.0, 3.0, 3.0, 3.0, 3.0, 3.0] → ValueError: setting an array element with a sequence. The requested array has an inhomogeneous shape after 1 dimensions. The detecte
+     · historia_curva.rendimientos.0 = [3.0] → ValueError: setting an array element with a sequence. The requested array has an inhomogeneous shape after 1 dimensions. The detecte
+     · regresores = True → AttributeError: 'bool' object has no attribute 'get'
+  TCV-TP-001: 22 casos; tipos: ["TypeError: argument of type 'bool' is not iterable", "TypeError: argument of type 'float' is not iterable", "TypeError: argument of type 'int' is not iterable", 'ValueError: setting an array element with a sequence. The requested array has an inhomogeneous shape after 1 dimensions. The detecte']
+     · curva.rendimientos.0 = [1, 2] → ValueError: setting an array element with a sequence. The requested array has an inhomogeneous shape after 1 dimensions. The detecte
+     · curva.rendimientos.120 = [1, 2] → ValueError: setting an array element with a sequence. The requested array has an inhomogeneous shape after 1 dimensions. The detecte
+     · curva.rendimientos.0 = [3.0454533953516854] → ValueError: setting an array element with a sequence. The requested array has an inhomogeneous shape after 1 dimensions. The detecte
+     · curva.rendimientos.120 = [1, 2] → ValueError: setting an array element with a sequence. The requested array has an inhomogeneous shape after 1 dimensions. The detecte
+  TCV-VIXTS-001: 12 casos; tipos: ["TypeError: object of type 'bool' has no len()", "TypeError: object of type 'float' has no len()", "TypeError: object of type 'int' has no len()"]
+     · futuros.precios = -inf → TypeError: object of type 'float' has no len()
+     · futuros.precios = -1 → TypeError: object of type 'int' has no len()
+     · futuros.precios = nan → TypeError: object of type 'float' has no len()
+     · futuros.precios = -1e-300 → TypeError: object of type 'float' has no len()
+
+== Resultados con números no finitos
+  DER-TERM-001: 2 casos; tipos: ["['r.sigma_por_vencimiento_pct.12', 'r.sigma_fwd[2].sigma_fwd_pct', 'r.verificacion.varianza_total[3]']"]
+     · vol_atm.3 = 1e+300 → ['r.sigma_por_vencimiento_pct.12', 'r.sigma_fwd[2].sigma_fwd_pct', 'r.verificacion.varianza_total[3]']
+     · vol_atm.3 = 1e+300 → ['r.sigma_por_vencimiento_pct.12', 'r.sigma_fwd[2].sigma_fwd_pct', 'r.verificacion.varianza_total[3]']
+  DER-VRP-001: 9 casos; tipos: ["['r.es_venta_varianza_pct', 'r.referencias_ingenuas.RI_MH_vrp_varianza_puntos']", "['r.sigma_real_esperada_pct', 'r.sigma_real_posterior_ultima_pct', 'r.vrp_ex_ante.varianza_puntos']", "['r.sigma_real_posterior_ultima_pct', 'r.vrp_ex_post_ultima.varianza_puntos', 'r.vrp_ex_post_ultima.volatilidad_puntos']", "['r.varianza_imp_puntos', 'r.vrp_ex_ante.varianza_puntos']"]
+     · vol_implicita.756 = 1e+300 → ['r.varianza_imp_puntos', 'r.vrp_ex_ante.varianza_puntos']
+     · precios_subyacente.756 = 1e+300 → ['r.sigma_real_esperada_pct', 'r.sigma_real_posterior_ultima_pct', 'r.vrp_ex_ante.varianza_puntos']
+     · vol_implicita.378 = 1e+300 → ['r.es_venta_varianza_pct', 'r.referencias_ingenuas.RI_MH_vrp_varianza_puntos']
+     · precios_subyacente.378 = 1e+300 → ['r.sigma_real_posterior_ultima_pct', 'r.vrp_ex_post_ultima.varianza_puntos', 'r.vrp_ex_post_ultima.volatilidad_puntos']
+  FON-DISC-001: 6 casos; tipos: ["['r.dispersion_pp.desviacion']"]
+     · miembros.M5.precio.157 = 1e+300 → ['r.dispersion_pp.desviacion']
+     · miembros.M3.precio.157 = 1e+300 → ['r.dispersion_pp.desviacion']
+     · miembros.M5.precio.157 = 1e+300 → ['r.dispersion_pp.desviacion']
+     · miembros.M3.precio.157 = 1e+300 → ['r.dispersion_pp.desviacion']
+  FON-FLOW-001: 17 casos; tipos: ["['r.categorias.MP_indexada.autocorrelaciones.1', 'r.categorias.MP_indexada.autocorrelaciones.2', 'r.categorias.MP_indexada.autocorrelaciones.3']", "['r.categorias.MP_indexada.gestion']", "['r.categorias.RF_activa.autocorrelaciones.1', 'r.categorias.RF_activa.autocorrelaciones.2', 'r.categorias.RF_activa.autocorrelaciones.3']", "['r.categorias.RF_activa.gestion']", "['r.categorias.RV_indexada.autocorrelaciones.1', 'r.categorias.RV_indexada.autocorrelaciones.2', 'r.categorias.RV_indexada.autocorrelaciones.3']", "['r.categorias.RV_indexada.gestion']"]
+     · categorias.RF_activa.gestion = inf → ['r.categorias.RF_activa.gestion']
+     · categorias.MP_indexada.rentabilidad.18 = 1e+300 → ['r.categorias.MP_indexada.autocorrelaciones.1', 'r.categorias.MP_indexada.autocorrelaciones.2', 'r.categorias.MP_indexada.autocorrelaciones.3']
+     · categorias.MP_indexada.rentabilidad.0 = 1e+300 → ['r.categorias.MP_indexada.autocorrelaciones.1', 'r.categorias.MP_indexada.autocorrelaciones.2', 'r.categorias.MP_indexada.autocorrelaciones.3']
+     · categorias.RV_indexada.gestion = nan → ['r.categorias.RV_indexada.gestion']
+  FON-LEV-001: 6 casos; tipos: ["['r.reconstruccion.R_L_exacta_ultima_pct', 'r.reconstruccion.discrepancia_ultima_pp', 'r.reconstruccion.discrepancia_abs_mediana_pp']", "['r.sigma_anual_pct', 'r.arrastre_pct', 'r.R_L_formula_pct']"]
+     · rentabilidades_indice.126 = 1e+300 → ['r.sigma_anual_pct', 'r.arrastre_pct', 'r.R_L_formula_pct']
+     · rentabilidades_indice.0 = 1e+300 → ['r.sigma_anual_pct', 'r.arrastre_pct', 'r.R_L_formula_pct']
+     · rentabilidades_indice.251 = 1e+300 → ['r.sigma_anual_pct', 'r.arrastre_pct', 'r.R_L_formula_pct']
+     · gastos_medios = 1e+300 → ['r.reconstruccion.R_L_exacta_ultima_pct', 'r.reconstruccion.discrepancia_ultima_pp', 'r.reconstruccion.discrepancia_abs_mediana_pp']
+  FON-TD-001: 15 casos; tipos: ["['r.te_cuartiles_pct.q3']", "['r.te_mediano_pct', 'r.te_cuartiles_pct.q1', 'r.te_cuartiles_pct.q3']"]
+     · miembros.V4.rentabilidades.378 = 1e+300 → ['r.te_cuartiles_pct.q3']
+     · miembros.V1.rentabilidades.378 = 1e+300 → ['r.te_cuartiles_pct.q3']
+     · miembros.V4.rentabilidades.0 = 1e+300 → ['r.te_cuartiles_pct.q3']
+     · miembros.V5.rentabilidades.755 = 1e+300 → ['r.te_cuartiles_pct.q3']
+  IDX-REL-001: 8 casos; tipos: ["['r.brechas.cape.ratio', 'r.brechas.cape.brecha', 'r.brechas.cape.log_ratio']", "['r.brechas.per_adelantado.log_ratio']", "['r.brechas.per_adelantado.ratio', 'r.brechas.per_adelantado.brecha', 'r.brechas.per_adelantado.log_ratio']", "['r.momentum_relativo.cubierta.3m', 'r.momentum_relativo.no_cubierta.3m']"]
+     · indice_a.historia.191.per_adelantado = inf → ['r.brechas.per_adelantado.ratio', 'r.brechas.per_adelantado.brecha', 'r.brechas.per_adelantado.log_ratio']
+     · indice_a.historia.191.rt = -inf → ['r.momentum_relativo.cubierta.3m', 'r.momentum_relativo.no_cubierta.3m']
+     · indice_a.historia.191.cape = inf → ['r.brechas.cape.ratio', 'r.brechas.cape.brecha', 'r.brechas.cape.log_ratio']
+     · indice_b.historia.191.per_adelantado = inf → ['r.brechas.per_adelantado.ratio', 'r.brechas.per_adelantado.brecha', 'r.brechas.per_adelantado.log_ratio']
+  TCV-CDS-001: 17 casos; tipos: ["['r.indice.nombre']", "['r.indice.segmento']", "['r.indice.serie']", "['r.indice.version']"]
+     · indice.version = inf → ['r.indice.version']
+     · indice.segmento = -inf → ['r.indice.segmento']
+     · indice.version = -inf → ['r.indice.version']
+     · indice.segmento = nan → ['r.indice.segmento']
+
+== Llamadas lentas
+  TCV-TP-001: 2 casos; tipos: ['5.0 s']
+     · curva.plazos_meses.119 = 120000000.0 → 5.0 s
+     · curva.plazos_meses.119 = 120000000.0 → 5.0 s
+OK    DER-ROLL-001: sin excepciones ajenas a ErrorFicha · 0
+OK    DER-ROLL-001: sin números no finitos en resultados servidos · 0
+OK    DER-ROLL-001: sin llamadas > 5 s · 0
+OK    DER-SKEW-001: sin excepciones ajenas a ErrorFicha · 0
+OK    DER-SKEW-001: sin números no finitos en resultados servidos · 0
+OK    DER-SKEW-001: sin llamadas > 5 s · 0
+FALLO DER-TERM-001: sin excepciones ajenas a ErrorFicha · 18
+FALLO DER-TERM-001: sin números no finitos en resultados servidos · 2
+OK    DER-TERM-001: sin llamadas > 5 s · 0
+FALLO DER-VRP-001: sin excepciones ajenas a ErrorFicha · 2
+FALLO DER-VRP-001: sin números no finitos en resultados servidos · 9
+OK    DER-VRP-001: sin llamadas > 5 s · 0
+OK    FON-DISC-001: sin excepciones ajenas a ErrorFicha · 0
+FALLO FON-DISC-001: sin números no finitos en resultados servidos · 6
+OK    FON-DISC-001: sin llamadas > 5 s · 0
+OK    FON-FLOW-001: sin excepciones ajenas a ErrorFicha · 0
+FALLO FON-FLOW-001: sin números no finitos en resultados servidos · 17
+OK    FON-FLOW-001: sin llamadas > 5 s · 0
+FALLO FON-LEV-001: sin excepciones ajenas a ErrorFicha · 3
+FALLO FON-LEV-001: sin números no finitos en resultados servidos · 6
+OK    FON-LEV-001: sin llamadas > 5 s · 0
+OK    FON-TD-001: sin excepciones ajenas a ErrorFicha · 0
+FALLO FON-TD-001: sin números no finitos en resultados servidos · 15
+OK    FON-TD-001: sin llamadas > 5 s · 0
+OK    IDX-CONC-001: sin excepciones ajenas a ErrorFicha · 0
+OK    IDX-CONC-001: sin números no finitos en resultados servidos · 0
+OK    IDX-CONC-001: sin llamadas > 5 s · 0
+FALLO IDX-ERP-001: sin excepciones ajenas a ErrorFicha · 30
+OK    IDX-ERP-001: sin números no finitos en resultados servidos · 0
+OK    IDX-ERP-001: sin llamadas > 5 s · 0
+FALLO IDX-REB-001: sin excepciones ajenas a ErrorFicha · 3
+OK    IDX-REB-001: sin números no finitos en resultados servidos · 0
+OK    IDX-REB-001: sin llamadas > 5 s · 0
+FALLO IDX-REL-001: sin excepciones ajenas a ErrorFicha · 104
+FALLO IDX-REL-001: sin números no finitos en resultados servidos · 8
+OK    IDX-REL-001: sin llamadas > 5 s · 0
+FALLO MON-EXP-001: sin excepciones ajenas a ErrorFicha · 32
+OK    MON-EXP-001: sin números no finitos en resultados servidos · 0
+OK    MON-EXP-001: sin llamadas > 5 s · 0
+FALLO MON-FIX-001: sin excepciones ajenas a ErrorFicha · 24
+OK    MON-FIX-001: sin números no finitos en resultados servidos · 0
+OK    MON-FIX-001: sin llamadas > 5 s · 0
+FALLO MON-REAL-001: sin excepciones ajenas a ErrorFicha · 19
+OK    MON-REAL-001: sin números no finitos en resultados servidos · 0
+OK    MON-REAL-001: sin llamadas > 5 s · 0
+FALLO MON-YLD-001: sin excepciones ajenas a ErrorFicha · 2
+OK    MON-YLD-001: sin números no finitos en resultados servidos · 0
+OK    MON-YLD-001: sin llamadas > 5 s · 0
+FALLO TCV-BEI-001: sin excepciones ajenas a ErrorFicha · 15
+OK    TCV-BEI-001: sin números no finitos en resultados servidos · 0
+OK    TCV-BEI-001: sin llamadas > 5 s · 0
+OK    TCV-CDS-001: sin excepciones ajenas a ErrorFicha · 0
+FALLO TCV-CDS-001: sin números no finitos en resultados servidos · 17
+OK    TCV-CDS-001: sin llamadas > 5 s · 0
+FALLO TCV-SLOPE-001: sin excepciones ajenas a ErrorFicha · 11
+OK    TCV-SLOPE-001: sin números no finitos en resultados servidos · 0
+OK    TCV-SLOPE-001: sin llamadas > 5 s · 0
+FALLO TCV-TP-001: sin excepciones ajenas a ErrorFicha · 22
+OK    TCV-TP-001: sin números no finitos en resultados servidos · 0
+FALLO TCV-TP-001: sin llamadas > 5 s · 2
+FALLO TCV-VIXTS-001: sin excepciones ajenas a ErrorFicha · 12
+OK    TCV-VIXTS-001: sin números no finitos en resultados servidos · 0
+OK    TCV-VIXTS-001: sin llamadas > 5 s · 0
+
+Tiempo nominal máximo por caso: ('TCV-TP-001#0', 0.5027678299993568)
+
+90/113 comprobaciones OK; fallos: ['DER-TERM-001: sin excepciones ajenas a ErrorFicha', 'DER-TERM-001: sin números no finitos en resultados servidos', 'DER-VRP-001: sin excepciones ajenas a ErrorFicha', 'DER-VRP-001: sin números no finitos en resultados servidos', 'FON-DISC-001: sin números no finitos en resultados servidos', 'FON-FLOW-001: sin números no finitos en resultados servidos', 'FON-LEV-001: sin excepciones ajenas a ErrorFicha', 'FON-LEV-001: sin números no finitos en resultados servidos', 'FON-TD-001: sin números no finitos en resultados servidos', 'IDX-ERP-001: sin excepciones ajenas a ErrorFicha', 'IDX-REB-001: sin excepciones ajenas a ErrorFicha', 'IDX-REL-001: sin excepciones ajenas a ErrorFicha', 'IDX-REL-001: sin números no finitos en resultados servidos', 'MON-EXP-001: sin excepciones ajenas a ErrorFicha', 'MON-FIX-001: sin excepciones ajenas a ErrorFicha', 'MON-REAL-001: sin excepciones ajenas a ErrorFicha', 'MON-YLD-001: sin excepciones ajenas a ErrorFicha', 'TCV-BEI-001: sin excepciones ajenas a ErrorFicha', 'TCV-CDS-001: sin números no finitos en resultados servidos', 'TCV-SLOPE-001: sin excepciones ajenas a ErrorFicha', 'TCV-TP-001: sin excepciones ajenas a ErrorFicha', 'TCV-TP-001: sin llamadas > 5 s', 'TCV-VIXTS-001: sin excepciones ajenas a ErrorFicha']

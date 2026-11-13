@@ -1,0 +1,68 @@
+M01 MON-YLD-001   CC=VIVO   T=cazado · descuento en base 365 (coherente ida y vuelta) · SUPERA []
+M02 MON-YLD-001   CC=cazado T=cazado · TAE con exponente 360/t · CAZADO ['t = 365 en base 365 ⇒ simple = TAE']
+M03 MON-YLD-001   CC=VIVO   T=cazado · cubierto con F/S en vez de S/F · SUPERA []
+M04 MON-EXP-001   CC=cazado T=cazado · diferencial estable con el signo cambiado · CAZADO ['curva plana al tipo vigente ⇒ probabilidad de movi']
+M05 MON-EXP-001   CC=VIVO   T=VIVO   · movimiento de la reunión contra el vigente, no contra la reunión anterior · SUPERA []
+M06 MON-REAL-001  CC=VIVO   T=cazado · Fisher aproximado ex ante · SUPERA []
+M07 MON-REAL-001  CC=cazado T=cazado · Fisher aproximado ex post · CAZADO ['coherencia con FIN-CAGR-001 (segunda vía de la ren']
+M08 MON-FIX-001   CC=VIVO   T=VIVO   · senda plana al último forward · SUPERA []
+M09 MON-FIX-001   CC=cazado T=cazado · forwards anualizados en 365 con curva en 360 · CAZADO ['renovar con los forwards = fijar (identidad sin ar', 'curva y senda planas ⇒ indiferencia']
+M10 IDX-ERP-001   CC=VIVO   T=cazado · cambio de valoración lineal, no compuesto · SUPERA []
+M11 IDX-ERP-001   CC=cazado T=cazado · λ invertida (fracción que queda, no la que se cierra) · CAZADO ['sin cambio de múltiplo ni recompras ⇒ E[R] = divid']
+M12 IDX-ERP-001   CC=VIVO   T=cazado · E[R] real sin restar la inflación · SUPERA []
+M13 IDX-CONC-001  CC=cazado T=cazado · HHI con cubos · CAZADO ['índice equiponderado de n componentes ⇒ N_ef = n']
+M14 IDX-CONC-001  CC=VIVO   T=VIVO   · top-n con n − 1 · SUPERA []
+M15 IDX-REL-001   CC=cazado T=cazado · brecha B/A · CAZADO ['segunda vía: brecha con un múltiplo alternativo (A']
+M16 IDX-REL-001   CC=VIVO   T=cazado · momentum 12-0 en vez de 12-1 · SUPERA []
+M17 IDX-REB-001   CC=cazado T=cazado · demanda con el volumen, no con los activos · CAZADO ['suma de cambios de peso = 0 ⇒ demanda simétrica']
+M18 IDX-REB-001   CC=cazado T=cazado · ventana posterior que incluye el día de efectividad · CAZADO ['segunda vía: modelo normal alternativo (CAR planta']
+M19 FON-DISC-001  CC=cazado T=cazado · descuento NAV/P · CAZADO ['segunda vía: media ponderada frente a mediana (pes']
+M20 FON-DISC-001  CC=VIVO   T=VIVO   · κ complementaria · SUPERA []
+M21 FON-LEV-001   CC=VIVO   T=cazado · arrastre ½(L² − 1) · SUPERA []
+M22 FON-LEV-001   CC=VIVO   T=cazado · fórmula R_L con ½L²σ²T · SUPERA []
+M23 FON-TD-001    CC=VIVO   T=VIVO   · TE anualizado con 252, no √252 · SUPERA []
+M24 DER-VRP-001   CC=cazado T=cazado · réplica con 1/T · CAZADO ['segunda vía: índice publicado frente a réplica (ce']
+M25 DER-VRP-001   CC=VIVO   T=VIVO   · réplica con e^{−rT} · SUPERA []
+M26 DER-VRP-001   CC=VIVO   T=VIVO   · término de corrección de K₀ sumado · SUPERA []
+M27 DER-VRP-001   CC=VIVO   T=VIVO   · VRP ex ante con la implícita de ayer · SUPERA []
+M28 DER-SKEW-001  CC=VIVO   T=VIVO   · delta con N(d2) · SUPERA []
+M29 DER-SKEW-001  CC=VIVO   T=VIVO   · w'' de SVI mal derivada · SUPERA []
+M30 DER-SKEW-001  CC=cazado T=cazado · put y call de 25Δ intercambiadas · CAZADO ['segunda vía: deltas frente a SVI']
+M31 DER-TERM-001  CC=cazado T=cazado · σ_fwd / T₂ · CAZADO ['curva plana ⇒ σ_fwd = σ']
+M32 DER-ROLL-001  CC=cazado T=cazado · carry simple, no logarítmico · CAZADO ['F = S·e^{(r − q)T} ⇒ carry implícito = r − q']
+M33 DER-ROLL-001  CC=VIVO   T=cazado · roll anualizado con días al 2.º · SUPERA []
+M34 DER-ROLL-001  CC=VIVO   T=VIVO   · descomposición: roll sin colateral · SUPERA []
+M35 TCV-CDS-001   CC=VIVO   T=cazado · λ = s/R · SUPERA []
+M36 TCV-CDS-001   CC=cazado T=cazado · pérdida esperada sin (1 − R) · CAZADO ['s = PD·(1 − R) ⇒ prima 0']
+M37 TCV-VIXTS-001 CC=VIVO   T=cazado · roll con el segundo futuro · SUPERA []
+M38 TCV-BEI-001   CC=cazado T=cazado · forward con 1/t_fin · CAZADO ['5y5y coherente con los breakevens al contado']
+M39 TCV-TP-001    CC=cazado T=cazado · ACM sin el ½ de convexidad (generación y estimación comparten la recursión) · CAZADO ['error de ajuste de la curva < 5 pb', 'ACM recupera la prima del modelo afín generador']
+M40 TCV-TP-001    CC=cazado T=cazado · λ₀ sin la corrección de convexidad · CAZADO ['error de ajuste de la curva < 5 pb', 'ACM recupera la prima del modelo afín generador']
+M41 TCV-TP-001    CC=cazado T=cazado · recursión de B con Φ + λ₁ (compartida con el generador sintético) · CAZADO ['prima + rendimiento neutral = rendimiento ajustado', 'error de ajuste de la curva < 5 pb', 'ACM recup
+
+Vivos frente a los casos de control (CC): 22
+   · M01 MON-YLD-001 (descuento en base 365 (coherente ida y vuelta))
+   · M03 MON-YLD-001 (cubierto con F/S en vez de S/F)
+   · M05 MON-EXP-001 (movimiento de la reunión contra el vigente, no contra la reunión anterior)
+   · M06 MON-REAL-001 (Fisher aproximado ex ante)
+   · M08 MON-FIX-001 (senda plana al último forward)
+   · M10 IDX-ERP-001 (cambio de valoración lineal, no compuesto)
+   · M12 IDX-ERP-001 (E[R] real sin restar la inflación)
+   · M14 IDX-CONC-001 (top-n con n − 1)
+   · M16 IDX-REL-001 (momentum 12-0 en vez de 12-1)
+   · M20 FON-DISC-001 (κ complementaria)
+   · M21 FON-LEV-001 (arrastre ½(L² − 1))
+   · M22 FON-LEV-001 (fórmula R_L con ½L²σ²T)
+   · M23 FON-TD-001 (TE anualizado con 252, no √252)
+   · M25 DER-VRP-001 (réplica con e^{−rT})
+   · M26 DER-VRP-001 (término de corrección de K₀ sumado)
+   · M27 DER-VRP-001 (VRP ex ante con la implícita de ayer)
+   · M28 DER-SKEW-001 (delta con N(d2))
+   · M29 DER-SKEW-001 (w'' de SVI mal derivada)
+   · M33 DER-ROLL-001 (roll anualizado con días al 2.º)
+   · M34 DER-ROLL-001 (descomposición: roll sin colateral)
+   · M35 TCV-CDS-001 (λ = s/R)
+   · M37 TCV-VIXTS-001 (roll con el segundo futuro)
+FALLO ningún mutante sobrevive a casos de control y pruebas a la vez · M05 MON-EXP-001 (movimiento de la reunión contra el vigente, no contra la reunión anterior); M08 MON-FIX-001 (senda plana al último forward); M14 IDX-CONC-001 (top-n con n − 1); M20 FON-DISC-001 (κ complementaria); M23 FON-TD-001 (TE anualizado con 252, no √252); M25 DER-VRP-001 (réplica con e^{−rT}); M26 DER-VRP-001 (término de corrección de K₀ sumado); M27 DER-VRP-001 (VRP ex ante con la implícita de ayer); M28 DER-SKEW-001 (delta con N(d2)); M29 DER-SKEW-001 (w'' de SVI mal derivada); M34 DER-ROLL-001 (descomposición: roll sin colateral)
+
+0/1 comprobaciones OK; fallos: ['ningún mutante sobrevive a casos de control y pruebas a la vez']

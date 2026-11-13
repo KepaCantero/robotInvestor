@@ -5,26 +5,34 @@ from __future__ import annotations
 
 import json
 import re
+import time
 from dataclasses import dataclass, field
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 import jsonschema
 
 from .configuracion import max_tokens_de, modelo_de, parametro
 from .contratos import ESQUEMAS, contiene_credenciales
 from .herramientas.ht06_indice import CacheResultados, clave_hash
-from .llm import LLMClient, ReplayClient, Uso, contenido_sensible, herramienta_busqueda_web, respuesta_segura
+from .llm import (
+    LLMClient,
+    ReplayClient,
+    Uso,
+    contenido_sensible,
+    herramienta_busqueda_web,
+    respuesta_segura,
+)
 from .prompts import NOMBRES, CatalogoPrompts, mensaje_usuario
 
 
 @dataclass
 class ResultadoAgente:
     agente: str
-    datos: Optional[Dict]
+    datos: dict | None
     estado: str                       # COMPLETO | PARCIAL
     uc: float = 0.0
     intentos: int = 0
-    errores: List[str] = field(default_factory=list)
+    errores: list[str] = field(default_factory=list)
     cache_hit: bool = False
     uso: Uso = field(default_factory=Uso)
 
@@ -43,7 +51,7 @@ def extraer_json(texto: str) -> Any:
         raise
 
 
-def errores_esquema(datos: Any, esquema: Dict) -> List[str]:
+def errores_esquema(datos: Any, esquema: dict) -> list[str]:
     v = jsonschema.Draft202012Validator(esquema)
     return [f"{'/'.join(map(str, e.absolute_path)) or '(raíz)'}: {e.message}"[:300]
             for e in sorted(v.iter_errors(datos), key=lambda e: list(e.absolute_path))][:15]
@@ -52,9 +60,10 @@ def errores_esquema(datos: Any, esquema: Dict) -> List[str]:
 class Agentes:
     """Fábrica/ejecutor de llamadas a los agentes AG-01..AG-25."""
 
-    def __init__(self, cfg: Dict, cliente: LLMClient, almacen, contabilidad, monitor=None, cache: Optional[CacheResultados] = None) -> None:
+    def __init__(self, cfg: dict, cliente: LLMClient, almacen, contabilidad, monitor=None, cache: CacheResultados | None = None) -> None:
         self.cfg = cfg
         self.cliente = cliente
+        self.clientes: dict[str, LLMClient] = {}   # T-101 (V6, idea 8): cliente propio de un agente (Contradictor de otro proveedor)
         self.almacen = almacen
         self.contabilidad = contabilidad
         self.monitor = monitor
@@ -63,7 +72,7 @@ class Agentes:
         llm = cfg.get("llm") or {}
         self.cache = cache if (cache is not None and llm.get("cache_resultados", True)) else None
 
-    def verificar_prompts(self, agentes, run_id: Optional[str] = None) -> Dict[str, str]:
+    def verificar_prompts(self, agentes, run_id: str | None = None) -> dict[str, str]:
         """Carga (en el hilo principal) los prompts de los agentes indicados y registra una sola vez los que trabajan
         en modo degradado con el marco común. Devuelve {agente: archivo sustituto}."""
         for ag in agentes:
@@ -76,15 +85,15 @@ class Agentes:
                                         run_id=run_id)
         return {ag: self.prompts.sustituidos[ag] for ag in agentes if ag in self.prompts.sustituidos}
 
-    def herramientas_para(self, agente: str, permitir_web: bool) -> Optional[List[Dict]]:
+    def herramientas_para(self, agente: str, permitir_web: bool) -> list[dict] | None:
         bw = self.cfg.get("busqueda_web") or {}
         if (permitir_web and self.cfg.get("modo") == "vivo" and bw.get("habilitada_en_vivo")
                 and agente in (bw.get("agentes") or [])):
             return [herramienta_busqueda_web(bw.get("tipo_herramienta", "web_search_20260318"), parametro(self.cfg, "busqueda_web.max_usos_por_llamada"))]
         return None
 
-    def invocar(self, agente: str, contrato: str, mensaje: Dict, esquema_clave: str, instrucciones: str,
-                contexto: Dict, run_id: Optional[str] = None, clase: Optional[str] = None, fase: Optional[str] = None,
+    def invocar(self, agente: str, contrato: str, mensaje: dict, esquema_clave: str, instrucciones: str,
+                contexto: dict, run_id: str | None = None, clase: str | None = None, fase: str | None = None,
                 permitir_web: bool = False) -> ResultadoAgente:
         esquema = ESQUEMAS[esquema_clave]
         llm = self.cfg.get("llm") or {}
@@ -101,16 +110,17 @@ class Agentes:
             self.almacen.incidencia("OTRO", "Encargo bloqueado por R8", agente, severidad="Operativa", run_id=run_id)
             return ResultadoAgente(agente, None, "PARCIAL", errores=["encargo bloqueado por R8"])
         max_tokens = max_tokens_de(self.cfg, agente)
-        clave = clave_hash(self.cliente.identidad_cache(), agente, modelo, system, texto_u, herramientas,
+        cliente = self.clientes.get(agente, self.cliente)
+        clave = clave_hash(cliente.identidad_cache(), agente, modelo, system, texto_u, herramientas,
                            esquema, max_tokens) if self.cache else None
         # Replay debe consultar siempre su cinta (o grabar la respuesta de la base).
-        if self.cache is not None and clave and not isinstance(self.cliente, ReplayClient):
+        if self.cache is not None and clave and not isinstance(cliente, ReplayClient):
             previo = self.cache.obtener(clave)
             if previo is not None and not contenido_sensible(previo) and not errores_esquema(previo, esquema):
                 self.contabilidad.registrar(run_id, agente, modelo, Uso(), clase, fase, cache_hit=True)
                 return ResultadoAgente(agente, previo, "COMPLETO", 0.0, 0, [], True)
         mensajes = [{"role": "user", "content": texto_u}]
-        errores: List[str] = []
+        errores: list[str] = []
         uc_total = 0.0
         uso_total = Uso()
         reintentos = int(parametro(self.cfg, "llm.reintento_reparacion"))
@@ -119,11 +129,14 @@ class Agentes:
             self.monitor.encolar(agente)
         try:
             for intento in range(reintentos + 1):
-                r = self.cliente.generar(agente=agente, modelo=modelo, system=system, mensajes=mensajes,
-                                         max_tokens=max_tokens, herramientas=herramientas, esquema=esquema)
+                t_llamada = time.perf_counter()
+                r = cliente.generar(agente=agente, modelo=modelo, system=system, mensajes=mensajes,
+                                    max_tokens=max_tokens, herramientas=herramientas, esquema=esquema)
+                latencia = time.perf_counter() - t_llamada
                 r = respuesta_segura(r)
                 uso_total.sumar(r.uso)
-                uc_total += self.contabilidad.registrar(run_id, agente, modelo, r.uso, clase, fase)
+                uc_total += self.contabilidad.registrar(run_id, agente, modelo, r.uso, clase, fase, intento=intento + 1,
+                                                        latencia_s=latencia)
                 if r.rechazo or r.stop_reason in ("refusal", "pause_turn", "error_proveedor", "contenido_sensible"):
                     errores = [f"turno no utilizable ({r.stop_reason})"]
                     break

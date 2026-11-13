@@ -13,3 +13,5 @@ Regenerado el 02/11/2026 con el Ejecutor V1.1 (Documento 0 óptima V5.0): doce t
 
 
 Migración de formato V5.1: al paquete JSON histórico se le añadió la naturaleza coherente con el horizonte principal mediante la regla del ejecutor. Los valores analíticos y la fecha de la ejecución son los originales.
+
+Migración de formato T-91 (12-11-2026): `pronosticos.csv` gana al final las columnas `fecha_dato_proxy` y `fecha_dato_referencia`, vacías en este ejemplo porque se generó antes de que la resolución guardara la fecha de cada serie. El resto de los valores son los originales.

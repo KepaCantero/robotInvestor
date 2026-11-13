@@ -20,7 +20,7 @@ Archivo CC (propietario: operador, por cambio de tipo 3; el Motor propone). Lect
 | IMPLEMENTADO | Disponible en el entorno de ejecución y con casos de control superados | Servicio normal; la entrega declara «implementado, no validado» |
 | VALIDADO | Batería de pruebas de `09_Pruebas` ejecutada con evidencia registrada | Servicio normal sin advertencia de madurez |
 
-Estado actual de las 81 fichas: 14 **IMPLEMENTADO (ejecutor V1.0, pruebas unitarias)**; 11 heredadas de la línea V3.0 como **Implementado (heredado)**, pendientes de reverificación en el despliegue vigente; 56 **DOCUMENTADO** (35 de la línea V4.0 y las 21 fichas de los tipos IDX, FON, DER, MON y TCV incorporadas en V5.0). Ninguna ficha está VALIDADA.
+Estado actual de las 81 fichas: 35 **IMPLEMENTADO** (14 del ejecutor V1.0 con pruebas unitarias y 21 con casos de control registrados, T-106); 11 heredadas de la línea V3.0 como **Implementado (heredado)**, pendientes de reverificación en el despliegue vigente; 35 **DOCUMENTADO** (35 de la línea V4.0). Ninguna ficha está VALIDADA.
 
 1.4. **Cambios.** Alta, modificación o deprecación de fichas: propuesta del Motor (evidencia de uso del Registro de cálculos, casos de control, impacto) y aprobación del operador (tipo 3). Las versiones no se sobrescriben: conviven para permitir re-ejecuciones exactas.
 
@@ -150,27 +150,27 @@ Toda ficha contiene, en este orden:
 | ALT-DESMOOTH-001 | Desuavizado de rentabilidades | MC-09 | PERF-PRV, PERF-ALT (+ PERF-REI, PERF-ETF) | H3–H4 | P1 | Documentado |
 | ALT-HF-001 | Exposición factorial de estrategias hedge | MC-09 | PERF-ALT (+ PERF-ETF) | H3–H4 | P2 | Documentado |
 | ALT-AUC-001 | Índice de transacciones de coleccionables | MC-09 | PERF-ALT | H4 | P2 | Documentado |
-| IDX-ERP-001 | Rentabilidad esperada por índice (Grinold-Kroner) | MC-09 | PERF-IDX (+ PERF-ACC) | H4 (H3 contexto) | P1 | Documentado |
-| IDX-CONC-001 | Concentración y amplitud de un índice | MC-01 | PERF-IDX (+ PERF-ACC) | H2–H4 | P1 | Documentado |
-| IDX-REL-001 | Valor relativo entre índices | MC-09 | PERF-IDX | H2–H4 | P1 | Documentado |
-| IDX-REB-001 | Efecto de rebalanceo y cambios de composición | MC-03 | PERF-IDX | H1 (limitado)–H2 | P2 | Documentado |
-| FON-DISC-001 | Descuento de fondos cerrados frente a su media (z-score) | MC-09 | PERF-ETF (+ PERF-PRV, PERF-REI) | H3–H4 (H2 limitado) | P1 | Documentado |
-| FON-FLOW-001 | Flujos por categoría de vehículos | MC-02 | PERF-ETF (+ todos como señal de demanda) | H2 (limitado)–H3 | P1 | Documentado |
-| FON-TD-001 | Diferencia de seguimiento agregada por categoría | MC-01 | PERF-ETF | H3–H4 | P2 | Documentado |
-| FON-LEV-001 | Decaimiento por volatilidad de vehículos apalancados e inversos | MC-09 | PERF-ETF (+ PERF-DER) | H2 (limitado)–H3 | P2 | Documentado |
-| DER-VRP-001 | Prima de varianza implícita-realizada | MC-09 | PERF-DER (+ PERF-TCV) | H1–H3 | P1 | Documentado |
-| DER-SKEW-001 | Sesgo de la volatilidad implícita | MC-09 | PERF-DER (+ PERF-FX, PERF-TCV) | H1–H3 | P1 | Documentado |
-| DER-TERM-001 | Estructura de plazos de la volatilidad implícita | MC-09 | PERF-DER (+ PERF-TCV, PERF-IDX) | H1–H3 | P1 | Documentado |
-| DER-ROLL-001 | Carry y roll de futuros financieros | MC-09 | PERF-DER (+ PERF-TCV, PERF-FX) | H1–H3 | P1 | Documentado |
-| MON-YLD-001 | Rentabilidad equivalente y comparación de segmentos monetarios | MC-01 | PERF-MON (+ PERF-FX) | H1 (limitado)–H3 | P1 | Documentado |
-| MON-EXP-001 | Expectativas implícitas de tipos a corto | MC-09 | PERF-MON (+ PERF-FIR, PERF-TCV, PERF-FX) | H1 (limitado)–H3 | P1 | Documentado |
-| MON-REAL-001 | Rentabilidad real a corto plazo | MC-01 | PERF-MON (+ PERF-FIR) | H2–H3 | P1 | Documentado |
-| MON-FIX-001 | Valor de fijar plazo frente a renovar | MC-09 | PERF-MON | H2–H3 | P1 | Documentado |
-| TCV-SLOPE-001 | Pendiente de la curva y su valor razonable | MC-09 | PERF-TCV (+ PERF-FIR, PERF-ACC como indicador de ciclo) | H1–H3 (H4 limitado) | P1 | Documentado |
-| TCV-BEI-001 | Inflación implícita frente a esperada | MC-09 | PERF-TCV (+ PERF-FIR, PERF-REI) | H2–H3 (H4 limitado) | P1 | Documentado |
-| TCV-CDS-001 | Diferencial de índice CDS frente a pérdidas esperadas | MC-09 | PERF-TCV (+ PERF-FIR) | H2–H3 (H4 limitado) | P1 | Documentado |
-| TCV-VIXTS-001 | Estructura de plazos del VIX y roll de sus futuros | MC-09 | PERF-TCV (+ PERF-DER) | H1–H3 | P1 | Documentado |
-| TCV-TP-001 | Prima por plazo | MC-09 | PERF-TCV (+ PERF-FIR, PERF-MON) | H3 (H2 contexto; H4 limitado) | P1 | Documentado |
+| IDX-ERP-001 | Rentabilidad esperada por índice (Grinold-Kroner) | MC-09 | PERF-IDX (+ PERF-ACC) | H4 (H3 contexto) | P1 | IMPLEMENTADO (ejecutor, casos de control registrados (T-106)) |
+| IDX-CONC-001 | Concentración y amplitud de un índice | MC-01 | PERF-IDX (+ PERF-ACC) | H2–H4 | P1 | IMPLEMENTADO (ejecutor, casos de control registrados (T-106)) |
+| IDX-REL-001 | Valor relativo entre índices | MC-09 | PERF-IDX | H2–H4 | P1 | IMPLEMENTADO (ejecutor, casos de control registrados (T-106)) |
+| IDX-REB-001 | Efecto de rebalanceo y cambios de composición | MC-03 | PERF-IDX | H1 (limitado)–H2 | P2 | IMPLEMENTADO (ejecutor, casos de control registrados (T-106)) |
+| FON-DISC-001 | Descuento de fondos cerrados frente a su media (z-score) | MC-09 | PERF-ETF (+ PERF-PRV, PERF-REI) | H3–H4 (H2 limitado) | P1 | IMPLEMENTADO (ejecutor, casos de control registrados (T-106)) |
+| FON-FLOW-001 | Flujos por categoría de vehículos | MC-02 | PERF-ETF (+ todos como señal de demanda) | H2 (limitado)–H3 | P1 | IMPLEMENTADO (ejecutor, casos de control registrados (T-106)) |
+| FON-TD-001 | Diferencia de seguimiento agregada por categoría | MC-01 | PERF-ETF | H3–H4 | P2 | IMPLEMENTADO (ejecutor, casos de control registrados (T-106)) |
+| FON-LEV-001 | Decaimiento por volatilidad de vehículos apalancados e inversos | MC-09 | PERF-ETF (+ PERF-DER) | H2 (limitado)–H3 | P2 | IMPLEMENTADO (ejecutor, casos de control registrados (T-106)) |
+| DER-VRP-001 | Prima de varianza implícita-realizada | MC-09 | PERF-DER (+ PERF-TCV) | H1–H3 | P1 | IMPLEMENTADO (ejecutor, casos de control registrados (T-106)) |
+| DER-SKEW-001 | Sesgo de la volatilidad implícita | MC-09 | PERF-DER (+ PERF-FX, PERF-TCV) | H1–H3 | P1 | IMPLEMENTADO (ejecutor, casos de control registrados (T-106)) |
+| DER-TERM-001 | Estructura de plazos de la volatilidad implícita | MC-09 | PERF-DER (+ PERF-TCV, PERF-IDX) | H1–H3 | P1 | IMPLEMENTADO (ejecutor, casos de control registrados (T-106)) |
+| DER-ROLL-001 | Carry y roll de futuros financieros | MC-09 | PERF-DER (+ PERF-TCV, PERF-FX) | H1–H3 | P1 | IMPLEMENTADO (ejecutor, casos de control registrados (T-106)) |
+| MON-YLD-001 | Rentabilidad equivalente y comparación de segmentos monetarios | MC-01 | PERF-MON (+ PERF-FX) | H1 (limitado)–H3 | P1 | IMPLEMENTADO (ejecutor, casos de control registrados (T-106)) |
+| MON-EXP-001 | Expectativas implícitas de tipos a corto | MC-09 | PERF-MON (+ PERF-FIR, PERF-TCV, PERF-FX) | H1 (limitado)–H3 | P1 | IMPLEMENTADO (ejecutor, casos de control registrados (T-106)) |
+| MON-REAL-001 | Rentabilidad real a corto plazo | MC-01 | PERF-MON (+ PERF-FIR) | H2–H3 | P1 | IMPLEMENTADO (ejecutor, casos de control registrados (T-106)) |
+| MON-FIX-001 | Valor de fijar plazo frente a renovar | MC-09 | PERF-MON | H2–H3 | P1 | IMPLEMENTADO (ejecutor, casos de control registrados (T-106)) |
+| TCV-SLOPE-001 | Pendiente de la curva y su valor razonable | MC-09 | PERF-TCV (+ PERF-FIR, PERF-ACC como indicador de ciclo) | H1–H3 (H4 limitado) | P1 | IMPLEMENTADO (ejecutor, casos de control registrados (T-106)) |
+| TCV-BEI-001 | Inflación implícita frente a esperada | MC-09 | PERF-TCV (+ PERF-FIR, PERF-REI) | H2–H3 (H4 limitado) | P1 | IMPLEMENTADO (ejecutor, casos de control registrados (T-106)) |
+| TCV-CDS-001 | Diferencial de índice CDS frente a pérdidas esperadas | MC-09 | PERF-TCV (+ PERF-FIR) | H2–H3 (H4 limitado) | P1 | IMPLEMENTADO (ejecutor, casos de control registrados (T-106)) |
+| TCV-VIXTS-001 | Estructura de plazos del VIX y roll de sus futuros | MC-09 | PERF-TCV (+ PERF-DER) | H1–H3 | P1 | IMPLEMENTADO (ejecutor, casos de control registrados (T-106)) |
+| TCV-TP-001 | Prima por plazo | MC-09 | PERF-TCV (+ PERF-FIR, PERF-MON) | H3 (H2 contexto; H4 limitado) | P1 | IMPLEMENTADO (ejecutor, casos de control registrados (T-106)) |
 
 Total: 81 fichas (17 heredadas de la línea V3.0, 43 de la línea V4.0 y 21 incorporadas en V5.0 para IDX, FON, DER, MON y TCV).
 
@@ -1265,7 +1265,7 @@ Unidad de análisis: el índice como mercado completo, el ratio entre índices o
 **Referencia ingenua.** RI-MH (rentabilidad histórica del índice y prima media histórica).
 **Aclaración y rechazo.** Aclaración sin divisa de comparación; rechazo sin historia del múltiplo ≥ 10 años o sin r_f de la divisa.
 **Referencias.** Grinold y Kroner (2002), «The Equity Risk Premium», *Investment Insights* (Barclays Global Investors); Ilmanen (2011), *Expected Returns*; Campbell y Shiller (1998), «Valuation Ratios and the Long-Run Stock Market Outlook», *JPM*; Arnott y Bernstein (2003), «Earnings Growth: The Two Percent Dilution», *FAJ*; Bogle (1991), «Investing in the 1990s», *JPM* · TM-05, TM-13.
-**Prioridad y madurez.** P1 · DOCUMENTADO.
+**Prioridad y madurez.** P1 · IMPLEMENTADO (ejecutor, casos de control registrados (T-106)).
 
 ### IDX-CONC-001 · Concentración y amplitud de un índice
 
@@ -1282,7 +1282,7 @@ Unidad de análisis: el índice como mercado completo, el ratio entre índices o
 **Referencia ingenua.** RI-MH de la concentración; RI-NA para descriptivos.
 **Aclaración y rechazo.** Rechazo sin composición fechada.
 **Referencias.** Rhoades (1993), «The Herfindahl-Hirschman Index», *Federal Reserve Bulletin*; Gabaix (2011), «The Granular Origins of Aggregate Fluctuations», *Econometrica*; Bessembinder (2018), «Do Stocks Outperform Treasury Bills?», *JFE* · TM-13.
-**Prioridad y madurez.** P1 · DOCUMENTADO.
+**Prioridad y madurez.** P1 · IMPLEMENTADO (ejecutor, casos de control registrados (T-106)).
 
 ### IDX-REL-001 · Valor relativo entre índices
 
@@ -1299,7 +1299,7 @@ Unidad de análisis: el índice como mercado completo, el ratio entre índices o
 **Referencia ingenua.** RI-MH de la brecha y RI-PA del ratio de precios.
 **Aclaración y rechazo.** Rechazo con < 10 años o sin divisa común declarada.
 **Referencias.** Asness, Moskowitz y Pedersen (2013), «Value and Momentum Everywhere», *Journal of Finance*; Asness, Ilmanen, Israel y Moskowitz (2015), «Investing with Style», *Journal of Investment Management*; Campbell y Shiller (1988), *Journal of Finance* · TM-05, TM-13.
-**Prioridad y madurez.** P1 · DOCUMENTADO.
+**Prioridad y madurez.** P1 · IMPLEMENTADO (ejecutor, casos de control registrados (T-106)).
 
 ### IDX-REB-001 · Efecto de rebalanceo y cambios de composición
 
@@ -1316,7 +1316,7 @@ Unidad de análisis: el índice como mercado completo, el ratio entre índices o
 **Referencia ingenua.** CAR nulo; RI-TB para dirección.
 **Aclaración y rechazo.** Con < 20 eventos comparables solo se entrega la demanda estimada, sin estudio de eventos.
 **Referencias.** Shleifer (1986), «Do Demand Curves for Stocks Slope Down?», *Journal of Finance*; Harris y Gurel (1986), *Journal of Finance*; Greenwood (2005), «Short- and Long-Term Demand Curves for Stocks», *JFE*; Petajisto (2011), «The Index Premium and Its Hidden Cost for Index Funds», *Journal of Empirical Finance*; MacKinlay (1997), «Event Studies in Economics and Finance», *JEL*; Boehmer, Musumeci y Poulsen (1991), *JFE* · TM-04, TM-13.
-**Prioridad y madurez.** P2 · DOCUMENTADO.
+**Prioridad y madurez.** P2 · IMPLEMENTADO (ejecutor, casos de control registrados (T-106)).
 
 ## 16. Fichas nuevas V5.0 — fondos y vehículos de inversión colectiva (PERF-ETF)
 
@@ -1337,7 +1337,7 @@ Unidad de análisis: la categoría o segmento de vehículos. Los vehículos indi
 **Referencia ingenua.** RI-MH (media del descuento) y RI-PA (descuento sin cambio).
 **Aclaración y rechazo.** Rechazo con < 5 miembros, sin fecha de NAV o con NAV de antigüedad > 6 meses (> 12 en activos privados) sin ajuste declarado.
 **Referencias.** Lee, Shleifer y Thaler (1991), «Investor Sentiment and the Closed-End Fund Puzzle», *Journal of Finance*; Pontiff (1995), «Closed-End Fund Premia and Returns: Implications for Financial Market Equilibrium», *JFE*; Cherkes, Sagi y Stanton (2009), «A Liquidity-Based Theory of Closed-End Funds», *RFS*; Thompson (1978), «The Information Content of Discounts and Premiums on Closed-End Fund Shares», *JFE* · TM-13.
-**Prioridad y madurez.** P1 · DOCUMENTADO.
+**Prioridad y madurez.** P1 · IMPLEMENTADO (ejecutor, casos de control registrados (T-106)).
 
 ### FON-FLOW-001 · Flujos por categoría de vehículos
 
@@ -1354,7 +1354,7 @@ Unidad de análisis: la categoría o segmento de vehículos. Los vehículos indi
 **Referencia ingenua.** Flujo nulo y RI-PA del flujo relativo.
 **Aclaración y rechazo.** Rechazo sin taxonomía fija o con < 12 meses.
 **Referencias.** Sirri y Tufano (1998), «Costly Search and Mutual Fund Flows», *Journal of Finance*; Coval y Stafford (2007), «Asset Fire Sales (and Purchases) in Equity Markets», *JFE*; Frazzini y Lamont (2008), «Dumb Money: Mutual Fund Flows and the Cross-Section of Stock Returns», *JFE*; Ben-David, Franzoni y Moussawi (2018), «Do ETFs Increase Volatility?», *Journal of Finance* · TM-13.
-**Prioridad y madurez.** P1 · DOCUMENTADO.
+**Prioridad y madurez.** P1 · IMPLEMENTADO (ejecutor, casos de control registrados (T-106)).
 
 ### FON-TD-001 · Diferencia de seguimiento agregada por categoría
 
@@ -1371,7 +1371,7 @@ Unidad de análisis: la categoría o segmento de vehículos. Los vehículos indi
 **Referencia ingenua.** TD = −gastos corrientes medios de la categoría.
 **Aclaración y rechazo.** Aclaración si la variante del índice no se declara; rechazo con < 5 miembros.
 **Referencias.** Pope y Yadav (1994), «Discovering Errors in Tracking Error», *JPM*; Frino y Gallagher (2001), «Tracking S&P 500 Index Funds», *JPM*; Elton, Gruber, Comer y Li (2002), «Spiders: Where Are the Bugs?», *Journal of Business* · TM-13.
-**Prioridad y madurez.** P2 · DOCUMENTADO.
+**Prioridad y madurez.** P2 · IMPLEMENTADO (ejecutor, casos de control registrados (T-106)).
 
 ### FON-LEV-001 · Decaimiento por volatilidad de vehículos apalancados e inversos
 
@@ -1388,7 +1388,7 @@ Unidad de análisis: la categoría o segmento de vehículos. Los vehículos indi
 **Referencia ingenua.** L × rentabilidad del índice.
 **Aclaración y rechazo.** Rechazo sin datos diarios o sin L declarado.
 **Referencias.** Cheng y Madhavan (2009), «The Dynamics of Leveraged and Inverse Exchange-Traded Funds», *Journal of Investment Management*; Avellaneda y Zhang (2010), «Path-Dependence of Leveraged ETF Returns», *SIAM Journal on Financial Mathematics* · TM-06, TM-13.
-**Prioridad y madurez.** P2 · DOCUMENTADO.
+**Prioridad y madurez.** P2 · IMPLEMENTADO (ejecutor, casos de control registrados (T-106)).
 
 ## 17. Fichas nuevas V5.0 — derivados financieros (PERF-DER)
 
@@ -1409,7 +1409,7 @@ Unidad de análisis: el subyacente representativo y sus contratos genéricos (AT
 **Referencia ingenua.** RI-MH de la VRP; RI-EWMA para la realizada esperada.
 **Aclaración y rechazo.** Rechazo con < 2 años o con plazos no alineados.
 **Referencias.** Carr y Wu (2009), «Variance Risk Premiums», *RFS*; Bollerslev, Tauchen y Zhou (2009), «Expected Stock Returns and Variance Risk Premia», *RFS*; Bakshi y Kapadia (2003), «Delta-Hedged Gains and the Negative Market Volatility Risk Premium», *RFS*; Demeterfi, Derman, Kamal y Zou (1999), «More Than You Ever Wanted to Know about Volatility Swaps», Goldman Sachs Quantitative Strategies Research Notes; Corsi (2009), «A Simple Approximate Long-Memory Model of Realized Volatility», *Journal of Financial Econometrics*; Cboe, *VIX White Paper* · TM-06.
-**Prioridad y madurez.** P1 · DOCUMENTADO.
+**Prioridad y madurez.** P1 · IMPLEMENTADO (ejecutor, casos de control registrados (T-106)).
 
 ### DER-SKEW-001 · Sesgo de la volatilidad implícita
 
@@ -1426,7 +1426,7 @@ Unidad de análisis: el subyacente representativo y sus contratos genéricos (AT
 **Referencia ingenua.** RI-MH y RI-PA del sesgo.
 **Aclaración y rechazo.** Rechazo con < 5 precios de ejercicio o con una superficie con arbitraje no corregible.
 **Referencias.** Bakshi, Kapadia y Madan (2003), «Stock Return Characteristics, Skew Laws, and the Differential Pricing of Individual Equity Options», *RFS*; Bollen y Whaley (2004), «Does Net Buying Pressure Affect the Shape of Implied Volatility Functions?», *Journal of Finance*; Gatheral (2006), *The Volatility Surface*; Gatheral y Jacquier (2014), «Arbitrage-Free SVI Volatility Surfaces», *Quantitative Finance*; Kozhan, Neuberger y Schneider (2013), «The Skew Risk Premium in the Equity Index Market», *RFS* · TM-06.
-**Prioridad y madurez.** P1 · DOCUMENTADO.
+**Prioridad y madurez.** P1 · IMPLEMENTADO (ejecutor, casos de control registrados (T-106)).
 
 ### DER-TERM-001 · Estructura de plazos de la volatilidad implícita
 
@@ -1443,7 +1443,7 @@ Unidad de análisis: el subyacente representativo y sus contratos genéricos (AT
 **Referencia ingenua.** RI-MH y RI-PA de la pendiente.
 **Aclaración y rechazo.** Rechazo con < 3 vencimientos.
 **Referencias.** Gatheral (2006); Mixon (2007), «The Implied Volatility Term Structure of Stock Index Options», *Journal of Empirical Finance*; Johnson (2017), «Risk Premia and the VIX Term Structure», *JFQA*; Dubinsky, Johannes, Kaeck y Seeger (2019), «Option Pricing of Earnings Announcement Risks», *RFS* · TM-06.
-**Prioridad y madurez.** P1 · DOCUMENTADO.
+**Prioridad y madurez.** P1 · IMPLEMENTADO (ejecutor, casos de control registrados (T-106)).
 
 ### DER-ROLL-001 · Carry y roll de futuros financieros
 
@@ -1460,7 +1460,7 @@ Unidad de análisis: el subyacente representativo y sus contratos genéricos (AT
 **Referencia ingenua.** RI-MH del carry y carry teórico.
 **Aclaración y rechazo.** Rechazo con < 2 vencimientos o sin tipo de financiación.
 **Referencias.** Koijen, Moskowitz, Pedersen y Vrugt (2018), «Carry», *JFE*; Burghardt, Belton, Lane y Papa (2005), *The Treasury Bond Basis*, 3.ª ed.; van Binsbergen, Brandt y Koijen (2012), «On the Timing and Pricing of Dividends», *AER*; Hull (2022) · TM-06.
-**Prioridad y madurez.** P1 · DOCUMENTADO.
+**Prioridad y madurez.** P1 · IMPLEMENTADO (ejecutor, casos de control registrados (T-106)).
 
 ## 18. Fichas nuevas V5.0 — instrumentos monetarios y liquidez (PERF-MON)
 
@@ -1481,7 +1481,7 @@ Unidad de análisis: el segmento monetario por divisa y plazo. Ninguna ficha com
 **Referencia ingenua.** €STR compuesto (8.4 del Documento 0) o su homólogo de la divisa; RI-PA.
 **Aclaración y rechazo.** Aclaración si falta la convención; rechazo con plazos o divisas no alineables.
 **Referencias.** Stigum y Crescenzi (2007), *Stigum's Money Market*, 4.ª ed.; Choudhry (2004), *The Money Markets Handbook*; Fabozzi (2012) · TM-05, TM-13.
-**Prioridad y madurez.** P1 · DOCUMENTADO.
+**Prioridad y madurez.** P1 · IMPLEMENTADO (ejecutor, casos de control registrados (T-106)).
 
 ### MON-EXP-001 · Expectativas implícitas de tipos a corto
 
@@ -1498,7 +1498,7 @@ Unidad de análisis: el segmento monetario por divisa y plazo. Ninguna ficha com
 **Referencia ingenua.** RI-PA (tipo oficial sin cambios) y senda de encuesta si se aporta.
 **Aclaración y rechazo.** Rechazo sin calendario de reuniones o con < 3 nodos en 12 meses.
 **Referencias.** Kuttner (2001), «Monetary Policy Surprises and Interest Rates: Evidence from the Fed Funds Futures Market», *Journal of Monetary Economics*; Gürkaynak, Sack y Swanson (2005), «Do Actions Speak Louder Than Words? The Response of Asset Prices to Monetary Policy Actions and Statements», *International Journal of Central Banking*; Piazzesi y Swanson (2008), «Futures Prices as Risk-Adjusted Forecasts of Monetary Policy», *Journal of Monetary Economics*; CME Group, *CME FedWatch Tool: Methodology* · TM-05.
-**Prioridad y madurez.** P1 · DOCUMENTADO.
+**Prioridad y madurez.** P1 · IMPLEMENTADO (ejecutor, casos de control registrados (T-106)).
 
 ### MON-REAL-001 · Rentabilidad real a corto plazo
 
@@ -1515,7 +1515,7 @@ Unidad de análisis: el segmento monetario por divisa y plazo. Ninguna ficha com
 **Referencia ingenua.** RI-MH del tipo real y RI-PA.
 **Aclaración y rechazo.** Rechazo con inflación sin fuente o vintages incompatibles.
 **Referencias.** Fisher (1930), *The Theory of Interest*; Laubach y Williams (2003), «Measuring the Natural Rate of Interest», *Review of Economics and Statistics*; Holston, Laubach y Williams (2017), «Measuring the Natural Rate of Interest: International Trends and Determinants», *Journal of International Economics*; Ang, Bekaert y Wei (2007), «Do Macro Variables, Asset Markets, or Surveys Forecast Inflation Better?», *Journal of Monetary Economics* · TM-04, TM-05.
-**Prioridad y madurez.** P1 · DOCUMENTADO.
+**Prioridad y madurez.** P1 · IMPLEMENTADO (ejecutor, casos de control registrados (T-106)).
 
 ### MON-FIX-001 · Valor de fijar plazo frente a renovar
 
@@ -1532,7 +1532,7 @@ Unidad de análisis: el segmento monetario por divisa y plazo. Ninguna ficha com
 **Referencia ingenua.** Renovar al tipo vigente (RI-PA).
 **Aclaración y rechazo.** Rechazo con plazos o convenciones incompatibles.
 **Referencias.** Fama (1984), «The Information in the Term Structure», *JFE*; Campbell y Shiller (1991), «Yield Spreads and Interest Rate Movements: A Bird's Eye View», *Review of Economic Studies*; Cochrane y Piazzesi (2005), «Bond Risk Premia», *AER*; Tuckman y Serrat (2011) · TM-05.
-**Prioridad y madurez.** P1 · DOCUMENTADO.
+**Prioridad y madurez.** P1 · IMPLEMENTADO (ejecutor, casos de control registrados (T-106)).
 
 ## 19. Fichas nuevas V5.0 — tipos de interés, crédito y volatilidad (PERF-TCV)
 
@@ -1553,7 +1553,7 @@ Unidad de análisis: el factor (pendiente, prima por plazo, inflación implícit
 **Referencia ingenua.** RI-PA de la pendiente y pendiente *forward*.
 **Aclaración y rechazo.** Rechazo con < 6 nodos o < 5 años.
 **Referencias.** Litterman y Scheinkman (1991), «Common Factors Affecting Bond Returns», *Journal of Fixed Income*; Estrella y Mishkin (1998), *Review of Economics and Statistics*; Diebold, Rudebusch y Aruoba (2006), «The Macroeconomy and the Yield Curve: A Dynamic Latent Factor Approach», *Journal of Econometrics*; Engstrom y Sharpe (2019), «The Near-Term Forward Yield Spread as a Leading Indicator», *FAJ*; Koijen et al. (2018) · TM-05.
-**Prioridad y madurez.** P1 · DOCUMENTADO.
+**Prioridad y madurez.** P1 · IMPLEMENTADO (ejecutor, casos de control registrados (T-106)).
 
 ### TCV-BEI-001 · Inflación implícita frente a esperada
 
@@ -1570,7 +1570,7 @@ Unidad de análisis: el factor (pendiente, prima por plazo, inflación implícit
 **Referencia ingenua.** Encuesta (inflación esperada) y RI-PA del breakeven.
 **Aclaración y rechazo.** Rechazo con índices de referencia distintos sin conversión o con < 3 vencimientos reales.
 **Referencias.** Gürkaynak, Sack y Wright (2010), «The TIPS Yield Curve and Inflation Compensation», *American Economic Journal: Macroeconomics*; Fleckenstein, Longstaff y Lustig (2014), «The TIPS-Treasury Bond Puzzle», *Journal of Finance*; Abrahams, Adrian, Crump, Moench y Yu (2016), «Decomposing Real and Nominal Yield Curves», *Journal of Monetary Economics*; D'Amico, Kim y Wei (2018), «Tips from TIPS: The Informational Content of Treasury Inflation-Protected Security Prices», *JFQA* · TM-05.
-**Prioridad y madurez.** P1 · DOCUMENTADO.
+**Prioridad y madurez.** P1 · IMPLEMENTADO (ejecutor, casos de control registrados (T-106)).
 
 ### TCV-CDS-001 · Diferencial de índice CDS frente a pérdidas esperadas
 
@@ -1587,7 +1587,7 @@ Unidad de análisis: el factor (pendiente, prima por plazo, inflación implícit
 **Referencia ingenua.** RI-MH y RI-PA del diferencial.
 **Aclaración y rechazo.** Rechazo sin serie y versión del índice o con < 5 años.
 **Referencias.** Elton, Gruber, Agrawal y Mann (2001), *Journal of Finance*; Hull, Predescu y White (2004), «The Relationship between Credit Default Swap Spreads, Bond Yields, and Credit Rating Announcements», *Journal of Banking & Finance*; Longstaff, Mithal y Neis (2005), «Corporate Yield Spreads: Default Risk or Liquidity? New Evidence from the Credit Default Swap Market», *Journal of Finance*; Berndt, Douglas, Duffie y Ferguson (2018), «Corporate Credit Risk Premia», *Review of Finance* · TM-05.
-**Prioridad y madurez.** P1 · DOCUMENTADO.
+**Prioridad y madurez.** P1 · IMPLEMENTADO (ejecutor, casos de control registrados (T-106)).
 
 ### TCV-VIXTS-001 · Estructura de plazos del VIX y roll de sus futuros
 
@@ -1604,7 +1604,7 @@ Unidad de análisis: el factor (pendiente, prima por plazo, inflación implícit
 **Referencia ingenua.** RI-MH de la pendiente y RI-PA del índice.
 **Aclaración y rechazo.** Rechazo con < 2 vencimientos.
 **Referencias.** Whaley (2009), «Understanding the VIX», *JPM*; Simon y Campasano (2014), «The VIX Futures Basis: Evidence and Trading Strategies», *Journal of Derivatives*; Eraker y Wu (2017), «Explaining the Negative Returns to Volatility Claims: An Equilibrium Approach», *JFE*; Johnson (2017), *JFQA*; Cboe, *VIX White Paper* · TM-06.
-**Prioridad y madurez.** P1 · DOCUMENTADO.
+**Prioridad y madurez.** P1 · IMPLEMENTADO (ejecutor, casos de control registrados (T-106)).
 
 ### TCV-TP-001 · Prima por plazo
 
@@ -1621,7 +1621,7 @@ Unidad de análisis: el factor (pendiente, prima por plazo, inflación implícit
 **Referencia ingenua.** RI-MH de la prima y RI-PA.
 **Aclaración y rechazo.** Rechazo con < 10 años de curva mensual.
 **Referencias.** Adrian, Crump y Moench (2013), «Pricing the Term Structure with Linear Regressions», *JFE*; Kim y Wright (2005), «An Arbitrage-Free Three-Factor Term Structure Model and the Recent Behavior of Long-Term Yields and Distant-Horizon Forward Rates», FEDS 2005-33; Cochrane y Piazzesi (2005), *AER*; Gürkaynak, Sack y Wright (2007), *Journal of Monetary Economics*; Bauer, Rudebusch y Wu (2012), «Correcting Estimation Bias in Dynamic Term Structure Models», *JBES* · TM-05.
-**Prioridad y madurez.** P1 · DOCUMENTADO.
+**Prioridad y madurez.** P1 · IMPLEMENTADO (ejecutor, casos de control registrados (T-106)).
 
 ## 20. Pruebas de regresión y casos de control
 

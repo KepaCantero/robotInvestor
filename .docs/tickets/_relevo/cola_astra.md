@@ -2,6 +2,8 @@
 
 > **Instrucción expresa del operador, 12-11-2026: TODO EN LOCAL hasta que autorice subirlo.** Las reglas de push de este documento quedan suspendidas. Reclamar, revisar, registrar y hacer commits solo en local; no escribir en GitHub. Ver `.docs/memoria/astra/2026-11-12_solo-local-hasta-autorizacion.md`.
 
+> **13-11-2026: autorización puntual de publicación.** El operador autoriza subir la entrega local existente (revisiones D–G, diario, memoria y estados C-04 a C-08). Los trabajos posteriores siguen en local hasta nueva autorización. Ver `.docs/memoria/astra/2026-11-13_publicacion-puntual-revisiones.md`.
+
 Fuente única del **orden y del estado** de las tareas de Astra desde el 12-11-2026. El detalle de cada tarea está en su encargo o en su ticket; las reglas, en `.docs/tickets/_relevo/2026-11-10_pendientes_para_astra.md` (§0 bis a §3). Si este fichero y el relevo no coinciden en el orden, manda este.
 
 `python3 .docs/scripts/cola_astra.py` dice cuál es la siguiente tarea y comprueba que lo marcado como hecho está de verdad en el repositorio.
@@ -26,10 +28,10 @@ Las rutas que aún no existen van entre «…» (el gate `refs-vivas` no las exi
 | C-01 | Rediseño de A | REVISION | `.docs/diseno/bloque_a/encargo_revision_astra.md` | «.docs/diseno/bloque_a/revision_astra.md» | HECHA | | |
 | C-02 | B: evaluación T-68 y rediseño, juntos | REVISION | `.docs/tickets/T-68/encargo_revision_astra.md` y `.docs/diseno/bloque_b/encargo_revision_astra.md` | «.docs/tickets/T-68/revision_astra.md» | HECHA | | Sin tocar `bloque_b/` |
 | C-03 | C | REVISION | `.docs/diseno/bloque_c/encargo_revision_astra.md` | «.docs/diseno/bloque_c/revision_astra.md» | HECHA | | |
-| C-04 | D | REVISION | `.docs/diseno/bloque_d/encargo_revision_astra.md` | «.docs/diseno/bloque_d/revision_astra.md» | HECHA | | Solo local; subida pendiente de autorización expresa |
-| C-05 | E | REVISION | `.docs/diseno/bloque_e/encargo_revision_astra.md` | «.docs/diseno/bloque_e/revision_astra.md» | HECHA | | Solo local; subida pendiente de autorización expresa |
-| C-06 | F | REVISION | `.docs/diseno/bloque_f/encargo_revision_astra.md` | «.docs/diseno/bloque_f/revision_astra.md» | HECHA | | Solo local; T-74 sigue en espera; subida pendiente de autorización |
-| C-07 | G | REVISION | `.docs/diseno/bloque_g/encargo_revision_astra.md` | «.docs/diseno/bloque_g/revision_astra.md» | HECHA | | Solo local; subida pendiente de autorización expresa |
+| C-04 | D | REVISION | `.docs/diseno/bloque_d/encargo_revision_astra.md` | «.docs/diseno/bloque_d/revision_astra.md» | HECHA | | Subida autorizada el 13-11-2026 |
+| C-05 | E | REVISION | `.docs/diseno/bloque_e/encargo_revision_astra.md` | «.docs/diseno/bloque_e/revision_astra.md» | HECHA | | Subida autorizada el 13-11-2026 |
+| C-06 | F | REVISION | `.docs/diseno/bloque_f/encargo_revision_astra.md` | «.docs/diseno/bloque_f/revision_astra.md» | HECHA | | Subida autorizada el 13-11-2026; T-74 sigue en espera |
+| C-07 | G | REVISION | `.docs/diseno/bloque_g/encargo_revision_astra.md` | «.docs/diseno/bloque_g/revision_astra.md» | HECHA | | Subida autorizada el 13-11-2026 |
 | C-08 | H | REVISION | `.docs/diseno/bloque_h/encargo_revision_astra.md` | «.docs/diseno/bloque_h/revision_astra.md» | EN CURSO 2026-11-12 | | |
 | C-09 | I | REVISION | `.docs/diseno/bloque_i/encargo_revision_astra.md` | «.docs/diseno/bloque_i/revision_astra.md» | PENDIENTE | | |
 | C-10 | J | REVISION | `.docs/diseno/bloque_j/encargo_revision_astra.md` | «.docs/diseno/bloque_j/revision_astra.md» | PENDIENTE | | |

@@ -156,8 +156,8 @@ class ConsultasBroker:
             if c.get("estado") != "ENVIADA" or c.get("sentido") != "SALIENTE":
                 continue
             try:
-                vencida = self._instante(c["plazo_respuesta"], plazo=True) <= ahora
-            except (ValueError, TypeError):   # T-93 (H-38): un plazo guardado por una versión anterior que ya no se lee
+                vencida = self._instante(c.get("plazo_respuesta"), plazo=True) <= ahora
+            except (ValueError, TypeError):   # T-93 (H-38) y T-103 (H-43): un plazo que ya no se lee o que falta
                 self.b.almacen.incidencia("DATOS", f"Consulta CT-23 {k} con un plazo que no se puede leer ({str(c.get('plazo_respuesta'))[:40]!r}): "
                                                    "se da por vencida y el análisis sigue con el supuesto declarado", "AG-01")
                 vencida = True

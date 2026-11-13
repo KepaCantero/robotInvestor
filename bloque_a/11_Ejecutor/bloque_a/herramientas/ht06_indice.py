@@ -39,7 +39,7 @@ class CacheResultados:
         self._lock = threading.Lock()
         self.aciertos = 0
         if self.ruta and self.ruta.exists():
-            for linea in self.ruta.read_text(encoding="utf-8").splitlines():
+            for linea in self.ruta.read_text(encoding="utf-8").split("\n"):   # T-103 r02 (H-48): no en U+2028 ni U+0085
                 if linea.strip():
                     d = json.loads(linea)
                     self._mem[d["clave"]] = d["valor"]

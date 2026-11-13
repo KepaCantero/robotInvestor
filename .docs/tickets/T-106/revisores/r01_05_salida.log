@@ -1,0 +1,15 @@
+, ✓ interpolación a 30 días entre los dos contratos (lineal en días)
+
+Promovidas: 21 · No superan: []
+§1.3 → Estado actual de las 81 fichas: 35 **IMPLEMENTADO** (14 del ejecutor V1.0 con pruebas unitarias y 21 con casos de control registrados, T-106); 11 heredadas de la línea V3.0 como **Implementado (heredado)**, pendientes de reverificación en el despliegue vigente; 35 **DOCUMENTADO** (35 de la línea V4.0). Ninguna ficha está VALIDADA.
+Escrito bloque_a/04_Motor_conocimiento_y_catalogo/Catálogo de cálculos del Motor - V5.0.md. Falta re-congelar el corpus en el mismo commit (--update-corpus).
+ 
+OK    la promoción desde el Catálogo padre sale con código 0 y promueve 21
+OK    el Catálogo promovido es byte a byte el commiteado · 4c2e76410d89a2e9 vs 4c2e76410d89a2e9
+OK    segunda pasada idempotente (0 promovidas, archivo igual)
+OK    manifiesto padre = huella del Catálogo padre
+OK    manifiesto del commit = huella del Catálogo commiteado
+OK    el manifiesto solo cambia en la línea del Catálogo · 1
+OK    ningún .docx tocado
+
+7/7 comprobaciones OK; fallos: []

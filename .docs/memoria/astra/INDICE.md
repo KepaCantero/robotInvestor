@@ -10,3 +10,4 @@
 | astra/2026-11-12_revision-diseno-a | leccion | C-01: recortes por perfil y crítica de toda candidata entregada; consumo mock reproducido. | vigente |
 | astra/2026-11-12_solo-local-hasta-autorizacion | leccion | El operador exige mantener todo en local hasta autorización expresa de subida | vigente |
 | astra/2026-11-12_revisiones-diseno-a-e | leccion | Hallazgos de A a E: mediciones, reutilización y comparación de cartera | vigente |
+| astra/2026-11-13_publicacion-puntual-revisiones | decision | Subida puntual autorizada de D–G y registros; futuros trabajos siguen locales | vigente |

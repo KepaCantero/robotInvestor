@@ -191,11 +191,21 @@ def _es_clave_sk(cola: str) -> bool:
     if cola.lower().startswith(PREFIJOS_SK):
         return True
     tramos = [t for t in re.split(r"[-_]", cola) if t]
+    if len(tramos) >= 3 and all(t.isdigit() for t in tramos):
+        # T-103 (QA r01 de T-93, H-41; QA r01 de T-103, H-50): una cola de tres o más tramos de solo cifras (20 caracteres o
+        # más) no es texto corriente: los titulares de prensa llevan siempre un tramo de letras
+        return True
     return len(tramos) < 2 or not all(_tramo_texto(t) for t in tramos)
 
 
-# T-93 (H-32): escapes que, delante de una clave, la pegarían a una cifra o una letra y la ocultarían
-RE_ESCAPES = re.compile(r"\\u[0-9a-fA-F]{4}|\\x[0-9a-fA-F]{2}|\\[ntr/bf\"\\]|%[0-9A-Fa-f]{2}")
+# T-93 (H-32): escapes que, delante de una clave, la pegarían a una cifra o una letra y la ocultarían. T-103 (QA r01 de T-93,
+# H-40): el tramo de barras se toma entero (un escape doble, como el de un JSON dentro de otro JSON, o una barra literal de
+# una ruta), porque consumir solo la barra escapada dejaba la «n» pegada a la clave. También los escapes largos de `ascii()`,
+# los octales, el «%uXXXX» de JavaScript y los «%25…» de una URL codificada dos veces
+# T-103 r02 (QA r01, H-47): el tramo de barras empieza donde empieza (sin barra delante) y se toma de una vez (posesivo); sin
+# eso, un texto con miles de barras seguidas costaba un tiempo cuadrático
+RE_ESCAPES = re.compile(r"(?<!\\)\\++(?:u[0-9a-fA-F]{4}|U[0-9a-fA-F]{8}|x[0-9a-fA-F]{2}|[0-7]{1,3}|[ntrbf/\"])"
+                        r"|%(?:25)*(?:u[0-9A-Fa-f]{4}|[0-9A-Fa-f]{2})")
 
 
 def secretos_en_texto(texto) -> list[str]:
@@ -219,7 +229,7 @@ def _textos(obj: Any):
         for k, v in obj.items():
             yield from _textos(k)
             yield from _textos(v)
-    elif isinstance(obj, (list, tuple, set)):
+    elif isinstance(obj, (list, tuple, set, frozenset)):   # T-103 (H-44): también `frozenset`, como `contenido_sensible`
         for v in obj:
             yield from _textos(v)
 
@@ -234,8 +244,18 @@ def contiene_credenciales(obj: Any) -> list[str]:
     return list(dict.fromkeys(h[:6] + "…" for h in hallados))
 
 
-def canal_permitido(contrato: str, emisor: str, receptor: str) -> bool:
-    for em, rc in CANALES.get(contrato, []):
+# T-101 · Canales del diseño V6: solo se abren con `diseno: v6` (en la V5 siguen cerrados, R2). El Lector de evidencia
+# (AG-28) atiende CT-07 y CT-08 en el ciclo y el Sintetizador (AG-26), CT-15. El Respondedor (AG-27) contesta la CT-03 que
+# el Coordinador recibe del Broker: no abre canal propio.
+CANALES_V6: dict[str, list[tuple[set, set]]] = {
+    "CT-07": _par(ANALISTAS, {"AG-28"}),
+    "CT-08": _par(ANALISTAS, {"AG-28"}),
+    "CT-15": _par({"AG-02"}, {"AG-26"}),
+}
+
+
+def canal_permitido(contrato: str, emisor: str, receptor: str, v6: bool = False) -> bool:
+    for em, rc in CANALES.get(contrato, []) + (CANALES_V6.get(contrato, []) if v6 else []):
         if emisor in em and receptor in rc:
             return True
     return False
@@ -244,8 +264,9 @@ def canal_permitido(contrato: str, emisor: str, receptor: str) -> bool:
 class Mensajeria:
     """Crea y valida mensajes; mantiene el registro de msg_id procesados (idempotencia)."""
 
-    def __init__(self, almacen) -> None:
+    def __init__(self, almacen, v6: bool = False) -> None:
         self.almacen = almacen
+        self.v6 = v6   # T-101: abre los canales del diseño V6
         self._lock = threading.Lock()
         self._procesar = threading.Lock()
         self.registro: list[dict] = []   # traza de mensajes (contrato, emisor, receptor, msg_id)
@@ -316,7 +337,7 @@ class Mensajeria:
         if msg["contrato"] not in CANALES:
             self.almacen.incidencia("CANAL_NO_PREVISTO", f"Contrato inexistente {msg['contrato']}", msg.get("emisor", ""))
             raise CanalNoPrevisto(f"Contrato inexistente {msg['contrato']}")
-        if not canal_permitido(msg["contrato"], msg["emisor"], msg["receptor"]):
+        if not canal_permitido(msg["contrato"], msg["emisor"], msg["receptor"], self.v6):
             self.almacen.incidencia("CANAL_NO_PREVISTO",
                                     f"{msg['emisor']} → {msg['receptor']} por {msg['contrato']} no previsto (R2)", msg["emisor"])
             raise CanalNoPrevisto(f"{msg['emisor']} → {msg['receptor']} por {msg['contrato']} no previsto (R2)")
@@ -565,6 +586,19 @@ ESQUEMAS: dict[str, dict] = {
                        "motivos_llanos": {"type": "object"},
                        "glosario": {"type": "array", "maxItems": 5, "items": {"type": "object", "required": ["termino", "definicion"]}},
                        "frase_historial": TXT},
+    },
+    # T-101 (V6): el Sintetizador devuelve los textos del Redactor y, opcionalmente, los de la integración
+    "SINTESIS": {
+        "type": "object", "required": ["frases_30s", "tarjetas", "motivos_llanos", "glosario", "frase_historial"],
+        "properties": {"frases_30s": {"type": "array", "minItems": 3, "maxItems": 3, "items": TXT},
+                       "tarjetas": {"type": "array", "items": {"type": "object", "required": ["opp_id", "por_que_llano", "que_puede_salir_mal_llano"],
+                                    "properties": {"por_que_llano": {"type": "string", "maxLength": 160},
+                                                   "que_puede_salir_mal_llano": {"type": "string", "maxLength": 200},
+                                                   "ambito_llano": {"type": "string", "maxLength": 160}}}},
+                       "motivos_llanos": {"type": "object"},
+                       "glosario": {"type": "array", "maxItems": 5, "items": {"type": "object", "required": ["termino", "definicion"]}},
+                       "frase_historial": TXT, "regimen_macro": {"type": "string"}, "factores_dominantes": {"type": "array"},
+                       "lectura_conjunto": {"type": "string"}, "preguntas_sugeridas": {"type": "array"}, "limitaciones": {"type": "array"}},
     },
     "CONSULTA": {
         "type": "object", "required": ["clase_consulta", "ruta", "respuesta", "referencias", "confianza", "tema_normalizado"],

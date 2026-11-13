@@ -1,0 +1,14 @@
+✓ corpus-integridad
+✓ nombres-nfc
+✓ yaml-configs
+✓ secrets
+✓ refs-vivas
+✓ ruff (hallazgos)
+✓ mypy bloque_a
+✓ mypy bloque_a_forex
+✓ mypy bloque_b
+✓ pytest bloque_a: 1034 passed
+✓ pytest bloque_a_forex: 68 passed
+✓ pytest bloque_b: 176 passed
+Pasaron: 12
+Fallaron: 0
