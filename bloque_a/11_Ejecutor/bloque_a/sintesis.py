@@ -414,7 +414,7 @@ def construir(bloque, run_id, tipo, as_of, clases, nivel, gc0, analisis, selecci
     for c in clases:
         if analisis[c].get("estado") == "PARCIAL":
             limit.append(f"{NOMBRE_CLASE[c]}: alcance reducido declarado ({'; '.join(analisis[c].get('lagunas', [])[:2]) or 'salida parcial'})")
-    for cz in presupuesto.cierres:
+    for cz in sorted(presupuesto.cierres, key=lambda c: (c["clase"], c["fase"], c["motivo"])):   # T-113 (H-16 de T-107)
         limit.append(f"Presupuesto agotado en {cz['clase']} (fase {cz['fase']}): {cz['motivo']}; alcance reducido, controles intactos (R16)")
     if bloque.modo == "backtest":
         limit.append("Backtest: búsqueda web desactivada; evidencia limitada a datos HT-01 y referencias anteriores a la fecha as_of; "

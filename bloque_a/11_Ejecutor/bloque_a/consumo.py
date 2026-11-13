@@ -67,7 +67,10 @@ class Contabilidad:
                     coste += cc
         tot["reintentos"] = sum(1 for c in ll if c.get("intento", 1) > 1)
         tot["latencia_s"] = round(sum(c.get("latencia_s", 0.0) for c in ll), 4)
-        tot["uc_llm"] = round(sum(c["uc"] for c in ll), 4)
+        # T-113 (H-15 de T-107): la UC del total se calcula con los tokens sumados, no sumando cifras ya redondeadas; si no,
+        # depende de qué llamada escribió un prefijo compartido (orden de los hilos) en la cuarta cifra
+        sumados = {k: sum(c[k] for c in ll if not c["cache_hit"]) for k in ("entrada", "salida", "cache_escritura", "cache_lectura")}
+        tot["uc_llm"] = self.uc_de(Uso(**sumados)) if ll else 0.0
         tot["uc_motor"] = round(motor, 4)
         tot["uc"] = round(tot["uc_llm"] + motor, 4)
         tot["coste_estimado"] = round(coste, 4) if coste_ok and ll else None

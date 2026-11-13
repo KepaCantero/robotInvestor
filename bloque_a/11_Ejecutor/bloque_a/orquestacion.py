@@ -598,7 +598,7 @@ class Bloque:
                                                as_of, run_id, presupuesto, hz_interes)
         # Registro de evidencia (F2) y asignación de identificadores en orden determinista
         for c in clases:
-            self._registrar_evidencia_clase(analisis[c], as_of, run_id)
+            self._registrar_evidencia_clase(analisis[c], as_of, run_id, presupuesto)
         # Clústeres de exposición entre todas las finalistas (ML-CLUS-001)
         clusteres = self._clusteres(analisis, as_of, run_id)
         if global_v6:
@@ -1182,7 +1182,7 @@ class Bloque:
     # ====================================================================================
     # Evidencia (F2), clústeres y selección
     # ====================================================================================
-    def _registrar_evidencia_clase(self, an: dict, as_of, run_id: str) -> None:
+    def _registrar_evidencia_clase(self, an: dict, as_of, run_id: str, presupuesto: Presupuesto | None = None) -> None:
         clase = an["clase"]
         self._registrar_r9(an.get("hallazgos_r9", []), run_id)
         for p in an.get("peticiones", []):
@@ -1203,7 +1203,7 @@ class Bloque:
                 r = self._invocar("AG-12", "CT-11", msg, "CURACION",
                                   "Clasifica cada pieza (tipo de afirmación, nivel de confianza) y señala alertas (cuarentena, "
                                   "posible coordinación, fecha dudosa). La deduplicación por hash y el recuento de raíces los hace el ejecutor.",
-                                  as_of, run_id, clase, "investigacion")
+                                  as_of, run_id, clase, "investigacion", presupuesto)   # T-113 (H-14 de T-107): con su bolsa
                 if r and r.datos:
                     clasif = {x["indice"]: x for x in r.datos.get("piezas", [])}
         i = 0

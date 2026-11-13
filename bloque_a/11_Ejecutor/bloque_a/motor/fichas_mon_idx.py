@@ -89,6 +89,46 @@ UMBRALES: dict[str, frozenset[str]] = {
     for f, d in PARAMETROS_POR_DEFECTO.items()}
 
 
+# T-113 (H-24 de T-108): dominio de las ventanas, plazos y listas de la petición, como en FON, DER y TCV. Topes [PROPUESTO]
+# (INC-T112-01): un horizonte no pasa de H5 de la configuración (120 meses = 2520 sesiones; §3 del Catálogo y horizontes
+# del Documento 0); una ventana histórica, de 100 años, la misma cota que usan las fichas de valoración (T-112); las listas,
+# de 12 elementos (los plazos de la curva monetaria: 1 a 12 meses) o 20 escenarios.
+_MESES_H5, _SESIONES_H5, _ANIOS_HISTORIA = 120, 2520, 100
+DOMINIOS: dict[str, dict[str, tuple[str, float, float]]] = {
+    "MON-YLD-001": {"plazos_meses": ("lista_entera", 1, _MESES_H5)},
+    "MON-EXP-001": {"diferencial_estable_dias": ("entero", 1, 252), "incremento_pb": ("real_positivo", 0, 100),
+                    "meses_cambio_acumulado": ("lista_entera", 1, _MESES_H5)},
+    "MON-REAL-001": {"plazo_meses": ("entero", 1, _MESES_H5)},
+    "MON-FIX-001": {"escenarios_pb": ("lista_real", -1000, 1000)},
+    "IDX-CONC-001": {"media_amplitud": ("entero", 1, _SESIONES_H5), "ventana_percentil_anios": ("entero", 1, _ANIOS_HISTORIA),
+                     "meses_diferencial": ("lista_entera", 1, _MESES_H5)},
+    "IDX-REL-001": {"ventana_anios": ("entero", 1, _ANIOS_HISTORIA), "momentum_retro_meses": ("entero", 2, _MESES_H5),
+                    "momentum_salto_meses": ("entero", 0, _MESES_H5 - 1), "momentum_corto_meses": ("entero", 1, _MESES_H5)},
+    "IDX-REB-001": {"ventana_post_sesiones": ("entero", 1, _SESIONES_H5), "sesiones_estimacion": ("entero", 1, _SESIONES_H5)},
+}
+_MAX_LISTA = {"escenarios_pb": 20}
+
+
+def _dominio(ficha: str, p: dict) -> None:
+    for clave, (tipo, lo, hi) in DOMINIOS.get(ficha, {}).items():
+        x = p.get(clave)
+        if tipo.startswith("lista"):
+            if not isinstance(x, (list, tuple)) or not x or len(x) > _MAX_LISTA.get(clave, 12):
+                raise ErrorFicha(f"{ficha}: parámetro {clave} debe ser una lista de 1 a {_MAX_LISTA.get(clave, 12)} elementos")
+            elementos = list(x)
+        else:
+            elementos = [x]
+        for e in elementos:
+            if isinstance(e, bool) or not isinstance(e, (int, float)) or not math.isfinite(float(e)):
+                raise ErrorFicha(f"{ficha}: parámetro {clave} = {e!r} no es un número finito")
+            if tipo in ("entero", "lista_entera") and float(e) != int(e):
+                raise ErrorFicha(f"{ficha}: parámetro {clave} = {e!r} no es entero")
+            if not (lo < float(e) <= hi if tipo == "real_positivo" else lo <= float(e) <= hi):
+                raise ErrorFicha(f"{ficha}: parámetro {clave} = {e!r} fuera del rango admitido [{lo}, {hi}]")
+    if ficha == "IDX-REL-001" and p["momentum_salto_meses"] >= p["momentum_retro_meses"]:
+        raise ErrorFicha(f"{ficha}: momentum_salto_meses debe ser menor que momentum_retro_meses")
+
+
 def _params(ficha: str, params: dict | None) -> dict[str, Any]:
     if params is not None and not isinstance(params, dict):
         raise ErrorFicha(f"{ficha}: los parámetros deben ser un diccionario")
@@ -97,6 +137,7 @@ def _params(ficha: str, params: dict | None) -> dict[str, Any]:
         raise ErrorFicha(f"{ficha}: {sorted(fijos)} son umbrales fijos de la ficha, no parámetros de la petición")
     p = dict(PARAMETROS_POR_DEFECTO[ficha])
     p.update(params or {})
+    _dominio(ficha, p)
     return p
 
 
@@ -628,12 +669,21 @@ def f_mon_exp(ent: dict, params: dict) -> tuple[dict, list[str]]:
     ajuste = a_mat @ x + np.array([min(d, cortes[1]) * l0 for d, _, _ in nodos])
     filas_nodos = []
     err_max = 0.0
-    for (d, _, r_nodo), lg_m in zip(nodos, ajuste):
+    # T-113 (H-27 de T-108): con la precisión declarada, el desajuste que puede dejar el redondeo en cada nodo no es la
+    # precisión de una cotización, sino la del residuo de mínimos cuadrados: |(I − A·A⁺)·G| · precisión, en log del factor,
+    # pasado a tipo. Antes se exigía la precisión sola, y se rechazaban curvas escalonadas exactas que solo estaban redondeadas
+    if declarada is not None:
+        proy = np.eye(len(nodos)) - a_mat @ np.linalg.pinv(a_mat)
+        cota_res_log = np.abs(proy @ g_sens) @ precision
+    else:
+        cota_res_log = np.zeros(len(nodos))
+    for (d, _, r_nodo), lg_m, c_log in zip(nodos, ajuste, cota_res_log):
         r_senda = math.expm1(float(lg_m)) * base / d
         err = abs(r_senda - r_nodo)
         filas_nodos.append({"dias": d, "tipo_nodo": r_nodo, "tipo_senda": r_senda})
         err_max = max(err_max, err)
-        if err > max(tol * (abs(r_nodo) if r_nodo != 0 else 1.0), declarada or 0.0):
+        cota_nodo = math.exp(float(lg_m)) * base / d * float(c_log)
+        if err > max(tol * (abs(r_nodo) if r_nodo != 0 else 1.0), declarada or 0.0, cota_nodo * (1 + 1e-6)):
             raise ErrorFicha(f"{ficha}: la curva no se puede reproducir con un tramo por reunión: el nodo a {d} días "
                              f"queda a {err * PB:.6g} pb de la mejor senda escalonada"
                              + ("" if declarada is not None else "; si las cotizaciones vienen redondeadas, declare "
@@ -642,6 +692,10 @@ def f_mon_exp(ent: dict, params: dict) -> tuple[dict, list[str]]:
     jac = np.linalg.pinv(a_mat) @ g_sens
     cota_x = np.abs(jac) @ precision
     cota_r = [base * math.exp(float(xk)) * float(c) for xk, c in zip(x, cota_x)]
+    # T-113 (H-23 de T-108): la probabilidad de cada reunión depende de r_k − r_{k−1}, que suma el redondeo de dos tramos.
+    # Su cota sale de la diferencia de filas del jacobiano (la primera reunión se compara con el tipo vigente, sin redondeo)
+    d_r = base * np.exp(x)[:, None] * jac   # d r_k / d cotización
+    cota_mov = [float(np.abs(d_r[0]) @ precision)] + [float(np.abs(d_r[k] - d_r[k - 1]) @ precision) for k in range(1, len(x))]
     for m, c in zip(validas, cota_r):
         if not c < incremento:
             raise ErrorFicha(f"{ficha}: senda no identificada en la reunión {m.date()}: el redondeo de las "
@@ -657,14 +711,17 @@ def f_mon_exp(ent: dict, params: dict) -> tuple[dict, list[str]]:
                       "probabilidades": _prob_binaria(en_reunion),
                       "probabilidades_acumuladas": _prob_binaria(acumulados),
                       "incertidumbre_redondeo_pb": cota_r[k - 1] * PB,
-                      "incertidumbre_probabilidad": min(1.0, cota_r[k - 1] / incremento)})
+                      "incertidumbre_probabilidad": min(1.0, cota_mov[k - 1] / incremento),
+                      "incertidumbre_probabilidad_acumulada": min(1.0, cota_r[k - 1] / incremento)})
     # QA r02 de T-106, H-16: por debajo de Δ la senda se identifica, pero el redondeo puede mover cada probabilidad
     # hasta cota/Δ. Si eso supera la tolerancia de la ficha, se sirve con la limitación explícita, no como exacta.
-    peor = max(senda, key=lambda s_: s_["incertidumbre_probabilidad"])
-    if peor["incertidumbre_probabilidad"] > tol:
+    def _peor(s_):
+        return max(s_["incertidumbre_probabilidad"], s_["incertidumbre_probabilidad_acumulada"])
+    peor = max(senda, key=_peor)
+    if _peor(peor) > tol:
         lim.append(f"el redondeo de las cotizaciones puede mover las probabilidades hasta "
-                   f"{peor['incertidumbre_probabilidad'] * 100:.3g} puntos (reunión {peor['fecha_reunion']}; "
-                   f"{peor['incertidumbre_redondeo_pb']:.3g} pb frente a un incremento de {incremento * PB:g} pb)")
+                   f"{_peor(peor) * 100:.3g} puntos (reunión {peor['fecha_reunion']}; "
+                   f"{peor['incertidumbre_redondeo_pb']:.3g} pb en el tipo, frente a un incremento de {incremento * PB:g} pb)")
     cambio: dict[str, float | None] = {}
     for meses in p["meses_cambio_acumulado"]:
         d_h = _dias_meses(fecha, meses)
@@ -691,7 +748,8 @@ def f_mon_exp(ent: dict, params: dict) -> tuple[dict, list[str]]:
         "unidades": {"tipos": "tanto por uno, a un día, capitalización diaria Act/base",
                      "cambio_acumulado_pb": "pb", "sorpresas_pb": "pb", "movimientos": "múltiplos del incremento",
                      "incertidumbre_redondeo_pb": "pb (cota por el redondeo de las cotizaciones)",
-                     "incertidumbre_probabilidad": "tanto por uno (cota del cambio de cada probabilidad por ese redondeo)"},
+                     "incertidumbre_probabilidad": "tanto por uno (cota del cambio de la probabilidad de la reunión por ese redondeo)",
+                     "incertidumbre_probabilidad_acumulada": "tanto por uno (ídem, de la probabilidad acumulada)"},
         "referencia_ingenua": "RI-PA (tipo oficial sin cambios) y senda de encuesta si se aporta",
         "advertencias": ["los tipos implícitos incluyen una prima por plazo pequeña pero no nula",
                          "probabilidades neutrales al riesgo; método binario simplificado",

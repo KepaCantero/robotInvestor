@@ -6,7 +6,7 @@ build-backend = "setuptools.build_meta"
 name = "bloque_a"
 version = "1.1.0"
 description = "Ejecutor programático del Bloque A (Robot Investor) para pruebas y backtesting"
-requires-python = ">=3.10"
+requires-python = ">=3.12"   # T-113 (H-55 de T-104): cuantificadores posesivos (3.11) y `redaccion.py` (3.12)
 dependencies = ["anthropic>=2.0", "jsonschema>=4.18", "numpy>=1.26", "pandas>=2.1", "scipy>=1.11", "PyYAML>=6.0"]
 
 [project.optional-dependencies]

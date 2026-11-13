@@ -82,7 +82,8 @@ class Redaccion:
     def textos_por_defecto(self, paquete: dict) -> dict:
         n = sum(len(d["opciones"]) for d in paquete["clases"].values())
         nc = sum(1 for d in paquete["clases"].values() if d["opciones"])
-        return {"frases_30s": [f"Esta semana vemos {n} ideas en {nc} tipos de inversión.",
+        # T-113 (H-49 de T-110): concordancia en singular
+        return {"frases_30s": [f"Esta semana vemos {n} {'idea' if n == 1 else 'ideas'} en {nc} {'tipo' if nc == 1 else 'tipos'} de inversión.",
                                "Cada idea tiene su riesgo y su plazo.", "Nada de esto es un consejo para ti."],
                 "tarjetas": [{"opp_id": o["opp_id"], "por_que_llano": "El sistema ve señales a favor de esta idea.",
                               "que_puede_salir_mal_llano": "El precio puede bajar más de lo previsto.",

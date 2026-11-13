@@ -453,7 +453,7 @@ def integracion_determinista(bloque, seleccion, analisis, as_of) -> dict:
 
 INSTR_SINTESIS = ("Sobre el paquete ya validado: escribe la integración (régimen macro común, el factor que domina cada clúster, "
                   "la lectura del conjunto, preguntas sugeridas para el Broker y limitaciones) y los textos llanos del informe "
-                  "visual (dos frases de «la semana en 30 segundos»: la primera, con las cuentas, la escribe el código; por cada opción «por qué» y «qué podría salir mal» "
+                  "visual (exactamente dos frases para «la semana en 30 segundos»: el código pone delante una tercera, con las cuentas; por cada opción «por qué» y «qué podría salir mal» "
                   "(≤ 20 palabras, sin jerga o explicada entre paréntesis), motivos llanos de los tipos sin tres opciones, un "
                   "glosario de hasta 5 términos y una frase honesta sobre el historial). Índice Fernández-Huerta ≥ 70. No cambies "
                   "la selección ni las cifras: vienen calculadas y validadas. Regla de escritura (§4 del prompt): NO escribas "
@@ -638,7 +638,7 @@ def frase_prohibida(t: str, perm, marcas: dict | None = None) -> str | None:
                                                           "CIRCLED LATIN", "PARENTHESIZED LATIN")) for ch in libre):
         return "R21"   # r04 (H-22): letras de otros alfabetos en un texto en español: posible homoglifo, falla cerrado
     # r06 (QA r05, H-46): letras sueltas en mayúscula separadas por espacios, «_» o el blanco Braille («N V D A», «N_V_D_A»)
-    if re.search(r"(?<![\w])[A-Z](?:[\s_\u2800][A-Z]){2,}(?![\w])", libre):
+    if re.search(r"(?<![\w])[A-Z](?:[\s_\u2800·‧∙•.\-/][A-Z]){2,}(?![\w])", libre):   # T-113 (H-53): también «N·V·D·A»
         return "R21"
     codigos = _CODIGO.findall(libre) + [a or b for a, b in _CODIGO_PEGADO.findall(libre)]
     if any(m.startswith("$") or _es_instrumento(m, perm, libre) for m in codigos) or any(
@@ -648,6 +648,14 @@ def frase_prohibida(t: str, perm, marcas: dict | None = None) -> str | None:
     for m in re.finditer(r"\b([A-Z]{2,})([a-z]+)\b", libre):
         if not (m.group(2) == "s" and m.group(1) in perm["codigos"]):
             return "R21"
+    for m in re.finditer(r"\b(?:acci[oó]n|valor|t[ií]tulo)\s+([a-z][a-z0-9]{0,5})\b", libre):   # T-113 (H-34)
+        if m.group(1).upper() in perm.get("tickers", ()) and m.group(1) not in _PALABRA_COMUN:
+            return "R21"
+    # T-113 (T-109): un número romano como cantidad («las VII ideas») es una cifra; tras un nombre propio («Basilea III»,
+    # «Solvencia II») o «siglo» sigue siendo un nombre
+    if re.search(r"\b(?:[Ll]os|[Ll]as|[Uu]nos|[Uu]nas|[Ss]us|[Ee]stos|[Ee]stas|[Ee]sos|[Ee]sas)\s+(?=[IVXLC]{2,}\b)(?:X{0,3})(?:IX|IV|V?I{0,3})\b",
+                 libre):
+        return "CIFRA"
     for m in _VEHICULO.finditer(libre):
         c = m.group(1).rstrip(".")   # r06 (H-44): «el fondo vwrl.»
         if not c or (c.islower() and c in _PALABRA_COMUN) or (c[0].islower() and len(c) > 5):
@@ -705,6 +713,8 @@ def limpiar(t, perm, marcas: dict | None = None) -> tuple[str, list[str]]:
         else:
             quedan.append(f + sep)
     salida = t if not reglas else "".join(quedan).replace(_PUNTO, ".").strip()
+    if reglas and salida[:1].islower():   # T-113 (H-49): lo que queda tras quitar la frase de delante empieza en mayúscula
+        salida = salida[0].upper() + salida[1:]
     # H-28: con marcas, la salida se normaliza con NFKC antes de rellenar («｛n_ideas｝» es «{n_ideas}»)
     return (rellenar(unicodedata.normalize("NFKC", salida), marcas) if marcas is not None else salida), reglas
 
@@ -719,7 +729,11 @@ def permitidos_r21(bloque) -> dict:
     series = {x for x in simbolos if (re.search(r"[=^\-\d/]", x) or len(x) > 5) and not re.fullmatch(r"[A-Z0-9]{1,6}\.[A-Z]{1,3}", x)
               and not re.fullmatch(r"[A-Z0-9]{2,10}-(?:USD|EUR|USDT|USDC|BTC)", x)}
     series |= {x.split("=")[0] for x in simbolos if "=" in x}   # «EURUSD=X» también como «EURUSD»
-    return {"codigos": frozenset(str(x) for x in op(bloque, "filtro_r21_codigos")), "series": frozenset(series)}
+    # T-113 (H-34 de T-109): los tickers del universo (sin sufijo de bolsa), para cazarlos en minúscula tras «la acción», «el
+    # valor» o «el título»; uno que no está en el universo sigue siendo un límite declarado
+    tickers = {x.split(".")[0] for x in simbolos if x not in series and re.fullmatch(r"[A-Z0-9]{1,6}(?:\.[A-Z]{1,3})?", x)}
+    return {"codigos": frozenset(str(x) for x in op(bloque, "filtro_r21_codigos")), "series": frozenset(series),
+            "tickers": frozenset(tickers)}
 
 
 def _textos(x) -> list:
@@ -779,7 +793,9 @@ def _cuenta_motivo(paquete: dict, clase: str) -> str:
     d = (paquete.get("clases") or {}).get(clase) or {}
     n, cand = len(d.get("opciones") or []), int(d.get("candidatas_analizadas") or 0)
     tipo = NOMBRE_CLASE.get(clase, clase).lower()
-    return f"De {cand} ideas de {tipo} analizadas, {n} {'pasó' if n == 1 else 'pasaron'} todos los filtros."
+    ideas = "idea" if cand == 1 else "ideas"
+    analizadas = "analizada" if cand == 1 else "analizadas"
+    return f"De {cand} {ideas} de {tipo} {analizadas}, {n} {'pasó' if n == 1 else 'pasaron'} todos los filtros."
 
 
 def _redaccion_segura(bloque, paquete, d, permitidos=None) -> dict:
@@ -799,9 +815,15 @@ def _redaccion_segura(bloque, paquete, d, permitidos=None) -> dict:
         return t2 if not reglas else (t2.strip() or por_defecto)
     # r06 (decisión del operador, H-42): la primera frase de 30 s, con las cuentas, la escribe el código; el Sintetizador
     # escribe las siguientes, sin marcadores numéricos
-    propias = [_uno(t, defecto["frases_30s"][i + 1] if i + 1 < len(defecto["frases_30s"]) else "")
-               for i, t in enumerate(red.get("frases_30s") or [])]
-    red["frases_30s"] = ([defecto["frases_30s"][0]] + [x for x in propias if x.strip()])[:len(defecto["frases_30s"])]
+    # T-113 (H-50 de T-110): el esquema admite de una a tres frases. Las de más se descartan y lo que falta toma su texto por
+    # defecto, y se declara (antes, una o tres frases rechazaban la respuesta entera sin decirlo)
+    escritas = [t for t in (red.get("frases_30s") or []) if isinstance(t, str)]
+    huecos = len(defecto["frases_30s"]) - 1
+    if len(escritas) != huecos:
+        quitadas.append("FORMATO")
+    escritas = (escritas + [""] * huecos)[:huecos]
+    propias = [_uno(t, defecto["frases_30s"][i + 1]) if t.strip() else defecto["frases_30s"][i + 1] for i, t in enumerate(escritas)]
+    red["frases_30s"] = [defecto["frases_30s"][0]] + [x for x in propias if x.strip()]
     def_tarj = {x["opp_id"]: x for x in defecto["tarjetas"]}
     for x in red.get("tarjetas") or []:
         base = def_tarj.get(x.get("opp_id"), {})
@@ -809,8 +831,12 @@ def _redaccion_segura(bloque, paquete, d, permitidos=None) -> dict:
             if isinstance(x.get(k), str):
                 x[k] = _uno(x[k], base.get(k, ""))
     # r06 (H-42): las cuentas del motivo (ideas analizadas y las que pasaron) las escribe el código delante del texto
+    # T-113 (H-49 de T-110): solo para los tipos del paquete; una clave que no lo es se quita y se declara
+    clases_paquete = set(paquete.get("clases") or {})
+    ajenas = [k for k in (red.get("motivos_llanos") or {}) if k not in clases_paquete]
+    quitadas.extend("FORMATO" for _ in ajenas)
     red["motivos_llanos"] = {k: f"{_cuenta_motivo(paquete, k)} {v2}".strip() for k, v in (red.get("motivos_llanos") or {}).items()
-                             if isinstance(v, str) and (v2 := _uno(v, "").strip())}
+                             if k in clases_paquete and isinstance(v, str) and (v2 := _uno(v, "").strip())}
     glosario = []
     for g in red.get("glosario") or []:
         if not isinstance(g, dict):

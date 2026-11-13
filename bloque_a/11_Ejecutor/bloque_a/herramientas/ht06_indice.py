@@ -30,6 +30,28 @@ def clave_hash(*partes: Any) -> str:
     return h.hexdigest()
 
 
+def leer_jsonl(ruta: Path, tolerar_todas: bool = False) -> tuple[list[Any], int]:
+    """T-113 (H-54 de T-104): lee un JSONL separado solo por «\n». Una última línea a medio escribir (sin salto final y que
+    no es JSON o UTF-8 válido) es una escritura cortada y se descarta. Con `tolerar_todas` (una caché, que no es fuente de
+    verdad) también se descarta cualquier otra línea ilegible; si no, el error dice el fichero y la línea."""
+    datos = Path(ruta).read_bytes()
+    trozos = datos.split(b"\n")
+    out: list[Any] = []
+    descartadas = 0
+    for i, trozo in enumerate(trozos):
+        if not trozo.strip():
+            continue
+        try:
+            out.append(json.loads(trozo.decode("utf-8")))
+        except ValueError as exc:   # UnicodeDecodeError y JSONDecodeError son ValueError
+            ultima_cortada = i == len(trozos) - 1 and not datos.endswith(b"\n")
+            if ultima_cortada or tolerar_todas:
+                descartadas += 1
+                continue
+            raise ValueError(f"{ruta}: línea {i + 1} ilegible ({type(exc).__name__}: {str(exc)[:120]})") from exc
+    return out, descartadas
+
+
 class CacheResultados:
     """Caché persistente (JSONL) de respuestas por clave de hash."""
 
@@ -38,11 +60,14 @@ class CacheResultados:
         self._mem: Dict[str, Any] = {}
         self._lock = threading.Lock()
         self.aciertos = 0
+        self.descartadas = 0   # T-113 (H-54): líneas ilegibles o cortadas que no impiden arrancar
         if self.ruta and self.ruta.exists():
-            for linea in self.ruta.read_text(encoding="utf-8").split("\n"):   # T-103 r02 (H-48): no en U+2028 ni U+0085
-                if linea.strip():
-                    d = json.loads(linea)
+            filas, self.descartadas = leer_jsonl(self.ruta, tolerar_todas=True)
+            for d in filas:
+                if isinstance(d, dict) and "clave" in d and "valor" in d:
                     self._mem[d["clave"]] = d["valor"]
+                else:
+                    self.descartadas += 1
 
     def obtener(self, clave: str) -> Optional[Any]:
         with self._lock:
