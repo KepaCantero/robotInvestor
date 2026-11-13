@@ -358,7 +358,8 @@ evaluacion:
   # de su horizonte (`ps2_antiguedad_maxima_dias`, Anexo A; H1 en sesiones). Si no, se espera y, pasado el plazo anterior,
   # NO_RESOLUBLE. Sin número nuevo: antes, un 7 común en el código (y en la r03, una clave con ese 7)
   # T-91: las sesiones de H1 se cuentan sin los festivos de `ps2_festivos`, y si las series acaban en fechas distintas,
-  # todas se miden hasta la más antigua, cada una con su frescura frente a la fecha de resolución ([PROPUESTO] INC-T91-01)
+  # todas se miden hasta la fecha más reciente en la que todas tienen cierre, que debe pasar en cada una la frescura frente a
+  # la fecha de resolución; si no la hay (calendarios que no comparten fechas), el pronóstico espera ([PROPUESTO] INC-T91-01, T-91 r03)
   llm_informe_aprendizaje: true
   # T-53
   alfa_holm: 0.10                 # Anexo A, certificado de horizonte (R13): corrección de Holm escalonada; α coherente con el IC 90 %

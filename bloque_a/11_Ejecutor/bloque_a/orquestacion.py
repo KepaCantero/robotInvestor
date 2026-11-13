@@ -1809,7 +1809,8 @@ class Bloque:
             "fecha_inicio": resultado["as_of"], "fecha_entrega": self.reloj.ahora(), "fecha_objetivo": resultado["as_of"],
             "alcance": alcance or {"clases": list(resultado["nivel_por_clase"])}, "horizontes": hz, "prioridad": prioridad,
             "nivel_por_clase": resultado["nivel_por_clase"], "gc0_por_clase": gc0, "decisiones_puertas": dec,
-            "presupuesto": presupuesto.resumen(), "cierres_parciales": sorted(presupuesto.cierres, key=lambda c: (c["clase"], c["fase"], c["motivo"])),   # H-09 "consumo": {k: cons[k] for k in ("llamadas", "uc", "uc_llm", "uc_motor", "entrada", "salida", "cache_escritura", "cache_lectura")},
+            "presupuesto": presupuesto.resumen(), "cierres_parciales": sorted(presupuesto.cierres, key=lambda c: (c["clase"], c["fase"], c["motivo"])),   # H-09
+            "consumo": {k: cons[k] for k in ("llamadas", "uc", "uc_llm", "uc_motor", "entrada", "salida", "cache_escritura", "cache_lectura")},
             # T-65 (CA-15 de T-53): en orden de agente, no en el de llegada de los hilos
             "participantes": [{"agente": a, "encargos": d["llamadas"]} for a, d in sorted(cons["por_agente"].items())],
             "methodology_version": paquete.get("methodology_version"), "top3_por_clase": top, "cambios_vs_anterior": cambios,

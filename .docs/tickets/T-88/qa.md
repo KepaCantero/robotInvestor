@@ -168,3 +168,98 @@ Por lo demás, la r02 cumple lo que pretendía:
 H-06 a H-09 son bajos. H-06 y H-07 conviene resolverlos con H-05; H-08 pide las pruebas que faltan.
 
 Siguiente paso: `ri-implementar` para H-05 (y H-06 a H-08), o, si se mantiene la convención, cambiar CA-6 y declararla en INC-T88-01. Después, el revisor vuelve a ejecutar `r02_01` a `r02_04` en una ronda r03. Esta ronda solo escribe este archivo y los scripts `revisores/r02_*`: el estado del ticket queda para el coordinador.
+
+## Ronda r03
+
+- **Revisor:** subagente nuevo de Claude, sin contexto de la implementación ni de las rondas anteriores (solo el plan, el código y los `qa.md`). Opinión formada con el README, el diff de `0afab6f` y el código antes de leer «Ronda r03» de `analisis-tecnico.md`.
+- **Código revisado:** commit `0afab6f` de `develop`, en worktrees limpios (HEAD, `d1a5a1b` de la r02 y `7feb697^` de antes de T-88) creados con `git worktree add` en una carpeta temporal y borrados al acabar. Los mutantes, sobre otra copia completa de `0afab6f` (con `02_System_prompts` y el Catálogo).
+- **Scripts nuevos** (aceptan `--ejecutor RUTA`; se ejecutan con `.venv/bin/python -I`):
+  - `revisores/r03_01_f5_consumo_y_claves.py`: claves del registro RUN de F5 frente a un control (`--control`) y `Bloque.estado()`;
+  - `r03_02_grupos_v5_v6.py`: los grupos de prefijos que llegan de verdad a la liquidación, en V5 (también con una caché que se pierde) y en V6. Sustituye a la parte P de `r02_03`, que con la r03 pasa sin comprobar nada (filtra el grupo ANALISTAS, que en la V5 ya no existe);
+  - `r03_03_mutantes.py`: mutantes de la r03 (R1 a R5), con el motor `r01_mutar.py`.
+
+### Reproducción desde limpio
+
+- Worktree limpio de `0afab6f` con `.venv` enlazado y `PYTHONPATH` apuntando a sus tres ejecutores: `./tools/check_all.sh` completo **12/12**. A **1283**, A-Forex 68 y B 176; ruff 2908 de 2908; mypy A 109, FX 174 y B 159; corpus, NFC, YAML, secretos y refs vivas en verde.
+- `tests/test_t88_consumo.py`: 11 pruebas (5 + 6 de la r03), pasan.
+- Scripts de las rondas anteriores, otra vez contra HEAD:
+  - `r01_01`: **6/6**. V6: 29,3067 UC cargadas frente a 29,3069 reales; V5: 2,9588 UC de diferencia (las llamadas posteriores a F5, declarado);
+  - `r01_02 --base <7feb697^>`: **10/10**;
+  - `r01_03 --base <7feb697^>`: **57/59**, los mismos dos fallos de la r02 en la PROFUNDIZACION N3 de la V5, en la dirección declarada;
+  - `r02_01`: **9/9**. Con 1, 3, 6 y 12 hilos × 3, el mismo F5, los mismos cierres y el mismo consumo por tipo antes y después de la liquidación de la fase, en V5 y en V6;
+  - `r02_02 --base <7feb697^>`: 7/10, los mismos tres fallos que en la r02 (el exceso de 0,0001 UC de DER por redondeo en la V5, el cierre nuevo de INM con δ = +0,4 en la V6, ya declarado como H-06, y el reparto de los excesos de la V6). El orden de `cierres_parciales` es ahora el mismo con 1, 6 y 12 hilos en V5 y V6 (en la r02 cambiaba en la V6): H-09 corregido;
+  - `r02_03`: 4/6. U y G siguen fallando: es la mezcla de kits en la V6, ahora declarada (H-12). En la V5, la mezcla de H-05 ha desaparecido (`r03_02`, abajo);
+  - `r02_04 <copia>`: **mueren los 11 mutantes que se aplican** (P1, P2 y P5 a P13), todos con las pruebas del ticket; P3 y P4 ya no se aplican porque la línea del grupo cambió (los sustituyen R1 a R3).
+
+### Criterios de aceptación
+
+| Criterio | Cumple | Evidencia |
+| --- | --- | --- |
+| CA-1 | sí | `r02_01` (10 ejecuciones por diseño con 1 a 12 hilos) y `r02_02` (8 presupuestos justos por diseño, 1, 6 y 12 hilos): el mismo `presupuesto` de F5, los mismos cierres en el mismo orden, las mismas AUT y la misma selección |
+| CA-2 | sí | `r01_01` y `r02_01`: en V6, 29,3067 UC cargadas frente a 29,3069 reales; tras liquidar la fase, V5 47,0613 frente a 47,0613 y V6 19,0082 frente a 19,0083 |
+| CA-3 | sí | `test_la_liquidacion_reparte_por_grupo_y_conserva_el_total` y los mutantes P5, P11 y P13, que mueren |
+| CA-4 | sí | Gate 12/12 desde limpio, sin subir cuotas; A sube (6 pruebas nuevas). El gate no ve H-10 |
+| CA-5 | sí | `r02_02`, V5: ningún tipo cierra una fase ni pide una AUT que la base no cerrase o pidiese, en 8 presupuestos justos |
+| CA-6 | **no, tal como está escrito** | V5, sí: `r03_02 V P` (cada analista es su propio grupo y en él solo pesa su tipo; con una caché que se pierde cada 7 llamadas, cada tipo paga exactamente las reescrituras de su analista, 0 tokens de diferencia). V6, no: `r02_03 U G` siguen mezclando kits (0,157 UC por ciclo de doce tipos; peor, MON +0,0258 UC). La excepción está declarada en INC-T88-01 y en `analisis-tecnico.md`, pero CA-6 no se ha reescrito (H-12) |
+
+### Ataques
+
+- **Determinismo y total** (`r02_01`, `r01_01`, arriba). La r03 no cambia la V6 y en la V5 solo cambia el grupo de los analistas: los resultados coinciden con la r02.
+- **Presupuestos justos frente a `7feb697^`** (`r02_02`, V5 y V6): los mismos mínimos por tipo que en la r02 (V5: RV 6,352 → 4,487 y DIV 5,219 → 4,303, en la dirección de CA-5; V6: suben en 10 de 12 tipos, H-06 declarado).
+- **Grupos de verdad** (`r03_02`): se guardan `_pesos` y `_reales` justo antes de cada liquidación.
+  - V5, doce tipos y seis hilos: 17 grupos (cada analista y cada agente compartido), ninguno «ANALISTAS»; ningún analista se carga a una bolsa ajena;
+  - V6: grupos AG-10, AG-11, AG-26, AG-28 y ANALISTAS, como se declara.
+- **Registro de F5** (`r03_01`, contra un worktree de `d1a5a1b`): **el registro RUN ha perdido la clave `consumo`** en V5 y en V6 (H-10).
+- **Invariantes:**
+  - no hay LLM en la contabilidad;
+  - ningún número nuevo;
+  - INC-T88-01 sigue como `[PROPUESTO]`;
+  - nada de secretos ni datos personales;
+  - el estado persistido **sí cambia de forma**: F5 pierde `consumo` (H-10), en contra de «Estado persistido: no cambia de forma» del README;
+  - documentación: ver H-11.
+
+### Mutantes de la r03 (`r03_03_mutantes.py`, sobre otra copia)
+
+Primero `test_t88_consumo.py`. Si sobrevive, las suites relacionadas (`test_integracion`, `test_t65_qa_r01`, `test_t87_agentes`, `test_t92_revision`, `test_v5`, `test_t101_v6`) y, después, `r03_02`.
+
+| Mutante | Resultado |
+| --- | --- |
+| R1 vuelta a la r02 (H-05): en la V5 los analistas comparten el grupo ANALISTAS | **sobrevive a las suites relacionadas**; solo lo detecta `r03_02` |
+| R2 en la V6 cada analista es su propio grupo | detectado (`test_dos_ejecuciones…[v6]`) |
+| R3 un único grupo para todo | detectado (`test_r03_v5_cada_analista_paga_su_prompt…`) |
+| R4 vuelta atrás de H-09: `cierres_parciales` en el orden de llegada | **sobrevive a todo** |
+| R5 `cierres_parciales` ordenado solo por tipo | **sobrevive a todo** |
+
+R1 sobrevive porque en `test_r03_v5_cada_analista_paga_su_prompt…` ningún analista vuelve a escribir su prompt: sin reescrituras, los pesos «solo» coinciden con lo escrito, y el grupo común reparte lo mismo que un grupo por analista. Las pruebas de la r03 no fijan la corrección de H-05 en la V5.
+
+### Estado de los hallazgos de la r02
+
+| ID | Estado tras la r03 |
+| --- | --- |
+| H-05 (media) | corregido en la V5 (`r03_02 V P`). En la V6 sigue la mezcla de kits, declarada en INC-T88-01; falta reescribir CA-6 (H-12) y una prueba que fije la corrección en la V5 (H-13) |
+| H-06 (baja) | declarado (INC-T88-01, `analisis-tecnico.md` y README). Cerrado |
+| H-07 (baja) | a medias: se añade una línea nueva al «Diseño», pero el resto sigue igual (H-11) |
+| H-08 (baja) | corregido: los once mutantes P que se aplican mueren con las pruebas del ticket. Aparecen R1, R4 y R5 sin prueba (H-13) |
+| H-09 (baja) | corregido en la parte de `cierres_parciales` (`r02_02`: el mismo orden con 1, 6 y 12 hilos). Las AUT de HA siguen en orden de llegada, declarado en `analisis-tecnico.md`. Pero el cambio borra `consumo` de F5 (H-10) |
+
+### Hallazgos
+
+| ID | Gravedad | Cómo reproducirlo | Esperado / obtenido | Corrección sugerida | Estado |
+| --- | --- | --- | --- | --- | --- |
+| H-10 | **alta** | `r03_01_f5_consumo_y_claves.py --control <worktree de d1a5a1b>/bloque_a/11_Ejecutor` (0/6); `grep -n '# H-09 "consumo"' bloque_a/11_Ejecutor/bloque_a/orquestacion.py` (línea 1812) | **Esperado:** el registro RUN de F5 conserva todas sus claves. Documento 0 del Bloque A, F5: «presupuesto **y consumo**», y 10.3: «El consumo real se registra en F5 y alimenta la calibración de presupuestos del Evaluador». También el README del ticket: «Estado persistido: no cambia de forma».<br>**Obtenido:** la corrección de H-09 puso el comentario `# H-09` en medio de la línea, delante de `"consumo": {k: cons[k] …},`, así que esa entrada quedó comentada. En V5 y V6, el RUN de F5 ya no lleva `consumo`; `d1a5a1b` sí lo llevaba. Además, `Bloque.estado()["ultimos_runs"][*]["uc"]` (orden `bloque-a estado`) sale `None`. Ninguna prueba lo detecta: el gate da 12/12 y A pasa entera. Es justo el registro de consumo que T-88 quiere hacer reproducible | Sacar el comentario de la línea (al final o en una línea propia) para que vuelva `"consumo"`. Añadir una prueba que compruebe las claves del RUN de F5 (al menos `presupuesto`, `cierres_parciales` y `consumo`, con su `uc`) y que `estado()` dé el `uc` del último run | abierto |
+| H-11 | baja | `sed -n 25,31p .docs/tickets/T-88/README.md`; fila T-88 (línea 137) de `sistema_global/seguimiento/Deuda_tecnica_y_pendientes_del_operador.md` | **Esperado** (H-07 de la r02; `analisis-tecnico.md`, r03: «H-07: el README ya no promete prudencia en la V5»).<br>**Obtenido:**<br>– el punto «Regla» del README sigue diciendo que, «durante el ciclo, cada bolsa paga la lectura de lo cacheado más su prima solo», y que «es determinista y prudente: nunca carga menos que la prima real de esa bolsa». Contradice la línea nueva que tiene debajo, «Qué ve el control durante la fase»;<br>– esa línea nueva dice «como antes de T-88», y en la V6 no es así (H-06): cada analista carga ahora el núcleo entero;<br>– la fila T-88 de la deuda sigue diciendo «Cada tipo paga su prima "como si fuera el único"» | Reescribir el punto «Regla» con la regla r02/r03: durante la fase, la lectura más la prima del analista propio; al liquidar, lo escrito por los agentes compartidos (y, en la V6, el núcleo y los kits) por grupos. En la línea nueva, decir «en la V5, como antes de T-88». Actualizar la fila de la deuda | abierto |
+| H-12 | baja | `r02_03_grupos_y_mezcla.py U G` (4/6); README, CA-6 | **Esperado** (r02: «si se mantiene la regla, cambiar CA-6 y escribir la convención en INC-T88-01»).<br>**Obtenido:** la convención está en INC-T88-01 y en `analisis-tecnico.md` (hasta unos 0,03 UC por tipo; medido: MON +0,0258 UC, 0,157 UC por ciclo de doce tipos). Pero CA-6 sigue diciendo «sin mezclar el prompt de un analista con otros tipos», y en la V6 no se cumple | Reescribir CA-6: «en la V5, cada analista es su propio grupo; en la V6, los analistas comparten el grupo del núcleo y los kits se reparten con él (INC-T88-01)» | abierto |
+| H-13 | baja | `r03_03_mutantes.py <copia> --suite=…` (tabla de arriba) | **Esperado** («nada cuenta como hecho sin tests»): las dos correcciones de la r03 con una prueba que falle sin ellas.<br>**Obtenido:** sobreviven a las suites relacionadas:<br>– R1: volver al grupo común en la V5, que es lo que corrige H-05. `test_r03_v5_…` no lo distingue porque ningún analista reescribe su prompt;<br>– R4 y R5: deshacer o debilitar el orden de `cierres_parciales` (H-09) | En `test_r03_v5_…`, una segunda llamada de AG-04 en RF con escritura real (reescritura del prompt) y comprobar que RV no paga nada de ella. Una prueba que meta cierres en otro orden en `Presupuesto.cierres` y compruebe el orden en F5 (va con la prueba de claves de H-10) | abierto |
+
+### Veredicto
+
+**NO APTO.** H-10 (alta): la r03 borra `consumo` del registro RUN de F5 al comentar por error esa entrada. Es el consumo real que el Documento 0 manda registrar en F5, y ninguna prueba lo detecta. Además, CA-6 no se cumple tal como está escrito en la V6 (H-12, una excepción declarada que falta llevar al criterio).
+
+Lo que la r03 pretendía sí se cumple:
+- H-05 corregido en la V5: cada tipo paga exactamente lo que escribe su analista, también con una caché que se pierde;
+- H-06 declarado;
+- H-08 corregido: los once mutantes P que se aplican mueren con las pruebas del ticket;
+- H-09 corregido: los cierres salen en el mismo orden con cualquier número de hilos;
+- CA-1 a CA-5 se cumplen.
+
+Siguiente paso: `ri-implementar` para H-10, con su prueba, y para H-11 a H-13, que son pequeños. Después, el revisor vuelve a ejecutar `r03_01` a `r03_03` (y `r02_01`, `r02_02` y `r02_04`) en una ronda r04. Esta ronda solo escribe este archivo y los scripts `revisores/r03_*`: el estado del ticket queda para el coordinador.

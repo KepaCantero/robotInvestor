@@ -2,7 +2,7 @@
 
 | Campo | Valor |
 | --- | --- |
-| Estado | EN QA (ronda r04) |
+| Estado | EN PAUSA (QA r04 detenida; espera la orden del operador) |
 | Pieza | `bloque_a/11_Ejecutor` (`bloque_a/diseno_v6.py`) |
 | Planifica · implementa · QA | claude · claude · claude, con un revisor nuevo sin contexto |
 | Aprobación del operador | 2026-11-12: «Corrige el filtro»; tras la QA r02, «sí cambia el diseño» (opción 1: el Sintetizador escribe con marcadores que rellena el código) |
@@ -70,3 +70,4 @@ Que el filtro R13/R21 de los textos del Sintetizador (diseño V6) no estropee in
 - 2026-11-12 · EN QA · Ronda r03: marcadores y regla estricta (CIFRA, R21, MARCADOR); prompt del Sintetizador §4; `tests/test_t102_filtro.py` reescrito (68 pruebas)
 - 2026-11-12 · NO APTO · QA r03 (revisor nuevo): H-20 y H-21 altos (probabilidades en letra o con números Unicode; sufijo con punto e índice que tapaba el ticker), H-22, H-23, H-24, H-25 y H-29 medios, H-26 a H-28 y H-30 bajos
 - 2026-11-12 · EN QA · Ronda r04: cobertura de la regla (Unicode, NFKC, números en letra, marcadores compuestos, sufijos, homoglifos, vehículos) y los bajos; 43 pruebas nuevas (111 en `test_t102_filtro.py`); límites de R21 declarados
+- 2026-11-13 · EN PAUSA · QA r04 detenida a mitad por indicación del operador (trabajo de una en una: antes T-88, T-91 y T-106). Sus scripts parciales `revisores/r04_01` a `r04_06` quedan en el repo, sin veredicto; la QA r04 se relanza entera cuando el operador lo ordene
