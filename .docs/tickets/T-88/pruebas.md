@@ -29,3 +29,13 @@ Con el código anterior, el determinismo falla en la V5: con los doce perfiles c
 | --- | --- | --- |
 | `tests/test_t88_consumo.py` | 5 | 11 |
 | `r02_04_mutantes.py` (QA r02) | sobreviven P1, P2, P3, P7, P8, P9 y P10 | mueren los 11 que se aplican; P3 y P4 no se aplican (la línea del grupo cambió; los cubren las pruebas de grupos de la V5 y de la V6) |
+
+## Ronda r04
+
+| Suite | r03 | r04 |
+| --- | --- | --- |
+| `tests/test_t88_consumo.py` | 11 | 15 (claves del RUN de F5 en V5 y V6, reescritura de un analista V5, orden de `cierres_parciales`) |
+| `r03_03_mutantes.py` (QA r03) | sobreviven R1, R4 y R5 | mueren R1 a R5 |
+| Gate (`commit_limpio.sh`, commit `102aaae`) | 12/12, A 1283 | 12/12, A 1288 |
+
+La línea de «Regresiones» que atribuía la diferencia entre lo cargado en la V5 (51,933 UC) y el coste real (54,892) a las llamadas posteriores a F5 se corrige: es la curación de AG-12, sin presupuesto (H-14 de la QA r04).

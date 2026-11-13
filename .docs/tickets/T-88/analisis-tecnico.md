@@ -19,7 +19,7 @@ Script de diagnóstico (tres ciclos con los doce perfiles y seis hilos, comparac
 ## Límites
 
 - Con la API real, la caché caduca (TTL). Si un tipo vuelve a escribir un prefijo caducado, su prima «solo» no lo recoge; la liquidación sí reparte lo escrito de verdad.
-- Las llamadas posteriores al registro de F5 (AG-18, AG-19 y AG-20 en la V5) no se cargan a ninguna bolsa: unos 3 UC en un ciclo de doce perfiles. Ya pasaba; en la V6 son código.
+- Unos 3 UC de un ciclo V5 de doce perfiles no se cargan a ninguna bolsa. Son las llamadas de curación de AG-12 (CT-11, `orquestacion.py`, `_invocar` sin presupuesto), no llamadas posteriores a F5 como se decía hasta la r04 (H-14 de la QA r04: en el ciclo no hay llamadas después del RUN de F5). Ya pasaba antes de T-88; va a la deuda en T-107.
 
 ## Comandos
 
@@ -40,3 +40,16 @@ Script de diagnóstico (tres ciclos con los doce perfiles y seis hilos, comparac
 - **H-07:** el README ya no promete prudencia en la V5. Durante la fase, el control no ve las escrituras de los agentes compartidos (unos 3,5 UC por ciclo de doce perfiles); se cargan al liquidar.
 - **H-08:** pruebas unitarias de `Bloque._cargar` (analista propio frente a agente compartido, caché caliente, intentos, segunda llamada, grupos de la V5 y de la V6) y de las dos liquidaciones por ciclo.
 - **H-09:** `cierres_parciales` se guarda en F5 ordenado por tipo, fase y motivo. El orden de las ampliaciones en HA sigue dependiendo de los hilos, pero no cambia su contenido.
+
+## Ronda r04 (QA r03 NO APTO)
+
+- **H-10 (alta):** el comentario de H-09 estaba en mitad de la línea del registro RUN de F5 y dejaba fuera `consumo`. Se separa y una prueba comprueba las claves del RUN en V5 y V6. Lección: un `#` en mitad de un diccionario de varias líneas deja fuera, sin aviso, lo que va detrás.
+- **H-11 y H-12:** la regla del README, CA-6 (con la mezcla de kits de la V6, declarada en INC-T88-01) y la fila de la deuda dicen cómo funciona.
+- **H-13:** pruebas nuevas con un analista V5 que reescribe su prompt (mata R1) y con cierres que llegan en orden inverso (mata R4 y R5).
+
+## Cierre (QA r04 APTO)
+
+- **H-14:** corregida la causa del hueco de unos 3 UC (la curación de AG-12 sin presupuesto). Cargarla a una bolsa cambia los cierres por presupuesto de la V5, así que va a la deuda (T-107).
+- **H-15:** `consumo.uc` del RUN puede variar en 0,0001 UC entre ejecuciones iguales con varios hilos, porque cada llamada se redondea y qué llamada escribe un prefijo compartido depende de los hilos. El `presupuesto` por tipo, que es lo que pide T-88, no cambia. A la deuda (T-107).
+- **H-16:** `limitaciones` recorre `presupuesto.cierres` en el orden de llegada. A la deuda (T-107).
+- **H-17:** CA-3 al día y secciones r04 aquí y en `pruebas.md`. El mutante S4 (ordenar sin el motivo) es equivalente: cada bolsa se carga desde un solo hilo durante la fase.
