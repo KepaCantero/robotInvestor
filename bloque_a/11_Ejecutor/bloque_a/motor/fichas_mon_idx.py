@@ -82,7 +82,19 @@ PARAMETROS_POR_DEFECTO: dict[str, dict[str, Any]] = {
 
 
 # ======================================================================= utilidades comunes
+# T-106 (QA r02, H-14): los umbrales de rechazo y de limitación y los rangos admitidos los fija la ficha; una petición no
+# los puede cambiar (como `UMBRALES` en TCV y `MINIMOS`/`RANGOS` en FON y DER).
+UMBRALES: dict[str, frozenset[str]] = {
+    f: frozenset(k for k in d if k.endswith(("_min", "_rango", "_min_anios", "_recomendados")) or k in ("meses_nodos", "anios_convexidad"))
+    for f, d in PARAMETROS_POR_DEFECTO.items()}
+
+
 def _params(ficha: str, params: dict | None) -> dict[str, Any]:
+    if params is not None and not isinstance(params, dict):
+        raise ErrorFicha(f"{ficha}: los parámetros deben ser un diccionario")
+    fijos = set(params or {}) & UMBRALES[ficha]
+    if fijos:
+        raise ErrorFicha(f"{ficha}: {sorted(fijos)} son umbrales fijos de la ficha, no parámetros de la petición")
     p = dict(PARAMETROS_POR_DEFECTO[ficha])
     p.update(params or {})
     return p
@@ -623,7 +635,9 @@ def f_mon_exp(ent: dict, params: dict) -> tuple[dict, list[str]]:
         err_max = max(err_max, err)
         if err > max(tol * (abs(r_nodo) if r_nodo != 0 else 1.0), declarada or 0.0):
             raise ErrorFicha(f"{ficha}: la curva no se puede reproducir con un tramo por reunión: el nodo a {d} días "
-                             f"queda a {err * PB:.6g} pb de la mejor senda escalonada")
+                             f"queda a {err * PB:.6g} pb de la mejor senda escalonada"
+                             + ("" if declarada is not None else "; si las cotizaciones vienen redondeadas, declare "
+                                "«precision_cotizacion» (QA r02 de T-106, H-19)"))
     # Identificación frente al redondeo de las cotizaciones: cota de |δ tipo| de cada tramo.
     jac = np.linalg.pinv(a_mat) @ g_sens
     cota_x = np.abs(jac) @ precision
@@ -642,7 +656,15 @@ def f_mon_exp(ent: dict, params: dict) -> tuple[dict, list[str]]:
                       "movimientos_en_reunion": en_reunion, "movimientos_acumulados": acumulados,
                       "probabilidades": _prob_binaria(en_reunion),
                       "probabilidades_acumuladas": _prob_binaria(acumulados),
-                      "incertidumbre_redondeo_pb": cota_r[k - 1] * PB})
+                      "incertidumbre_redondeo_pb": cota_r[k - 1] * PB,
+                      "incertidumbre_probabilidad": min(1.0, cota_r[k - 1] / incremento)})
+    # QA r02 de T-106, H-16: por debajo de Δ la senda se identifica, pero el redondeo puede mover cada probabilidad
+    # hasta cota/Δ. Si eso supera la tolerancia de la ficha, se sirve con la limitación explícita, no como exacta.
+    peor = max(senda, key=lambda s_: s_["incertidumbre_probabilidad"])
+    if peor["incertidumbre_probabilidad"] > tol:
+        lim.append(f"el redondeo de las cotizaciones puede mover las probabilidades hasta "
+                   f"{peor['incertidumbre_probabilidad'] * 100:.3g} puntos (reunión {peor['fecha_reunion']}; "
+                   f"{peor['incertidumbre_redondeo_pb']:.3g} pb frente a un incremento de {incremento * PB:g} pb)")
     cambio: dict[str, float | None] = {}
     for meses in p["meses_cambio_acumulado"]:
         d_h = _dias_meses(fecha, meses)
@@ -668,7 +690,8 @@ def f_mon_exp(ent: dict, params: dict) -> tuple[dict, list[str]]:
         "verificacion": {"error_reproduccion_nodos_max": err_max, "nodos": filas_nodos},
         "unidades": {"tipos": "tanto por uno, a un día, capitalización diaria Act/base",
                      "cambio_acumulado_pb": "pb", "sorpresas_pb": "pb", "movimientos": "múltiplos del incremento",
-                     "incertidumbre_redondeo_pb": "pb (cota por el redondeo de las cotizaciones)"},
+                     "incertidumbre_redondeo_pb": "pb (cota por el redondeo de las cotizaciones)",
+                     "incertidumbre_probabilidad": "tanto por uno (cota del cambio de cada probabilidad por ese redondeo)"},
         "referencia_ingenua": "RI-PA (tipo oficial sin cambios) y senda de encuesta si se aporta",
         "advertencias": ["los tipos implícitos incluyen una prima por plazo pequeña pero no nula",
                          "probabilidades neutrales al riesgo; método binario simplificado",

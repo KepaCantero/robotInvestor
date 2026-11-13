@@ -378,7 +378,47 @@ class Motor:
                 efectivos.append({"valor": "en línea", "claves": sorted(d["valores"]), "huella": clave_hash(d["valores"])[:16]})
         return ent, efectivos
 
+    def _error_de_forma(self, peticion: Any) -> str | None:
+        """QA r02 de T-106, H-15: la forma de la petición se comprueba antes de nada; una petición mal formada se rechaza
+        (DATOS_INCOHERENTES, paso 1 del Motor: esquema) y queda en RC, en vez de lanzar una excepción al llamador."""
+        if not isinstance(peticion, dict):
+            return "la petición no es un objeto"
+        op_ = peticion.get("operacion")
+        ficha = op_.get("ficha_id") if isinstance(op_, dict) else op_
+        if not isinstance(ficha, str):
+            return "la operación no es un identificador de ficha"
+        if peticion.get("parametros") is not None and not isinstance(peticion["parametros"], dict):
+            return "«parametros» no es un objeto"
+        planes = parametro(self.cfg, "uc.motor_por_plan")
+        if peticion.get("plan", "PLAN_MIN") not in planes:
+            return f"plan desconocido ({str(peticion.get('plan'))[:40]}); admitidos: {sorted(planes)}"
+        if peticion.get("fecha_corte") is not None:
+            try:
+                if pd.isna(pd.Timestamp(peticion["fecha_corte"])):
+                    return "«fecha_corte» vacía"
+            except (TypeError, ValueError, OverflowError):
+                return f"«fecha_corte» ilegible ({str(peticion['fecha_corte'])[:40]})"
+        datos = peticion.get("datos")
+        if datos is not None and not (isinstance(datos, list) and all(isinstance(d, dict) for d in datos)):
+            return "«datos» no es una lista de objetos"
+        for d in datos or []:
+            if "serie" in d and not isinstance(d["serie"], str):
+                return "una «serie» de «datos» no es un identificador"
+            if "valores" in d and not isinstance(d["valores"], dict):
+                return "unos «valores» de «datos» no son un objeto"
+        return None
+
     def servir(self, peticion: dict, solicitante: str, run_id: str | None = None, msg_id: str | None = None) -> dict:
+        forma = self._error_de_forma(peticion)
+        if forma:
+            op_ = peticion.get("operacion") if isinstance(peticion, dict) else None
+            f_ = op_.get("ficha_id") if isinstance(op_, dict) else op_
+            f_ = f_ if isinstance(f_, str) else None
+            base_ = {"calc_id": None, "contrato": "CT-09", "msg_id": msg_id, "run_id": run_id, "solicitante": solicitante,
+                     "operacion": {"method_id": f_, "ficha_id": f_, "ficha_version": None, "catalog_version": CATALOG_VERSION,
+                                   "op_sin_ficha": f_ not in FICHAS_CATALOGO},
+                     "madurez_metodo": "IMPLEMENTADO" if f_ in IMPLEMENTADAS else "DESCONOCIDA", "cache_hit": False}
+            return self._rechazo(base_, "DATOS_INCOHERENTES", f"petición mal formada: {forma}")
         ficha = (peticion.get("operacion") or {}).get("ficha_id") if isinstance(peticion.get("operacion"), dict) \
             else peticion.get("operacion")
         params = dict(peticion.get("parametros") or {})
@@ -418,6 +458,8 @@ class Motor:
             return self._rechazo(base, "FUGA_DE_INFORMACION", str(e), uc=uc)
         except (DatosNoDisponibles, KeyError) as e:
             return self._rechazo(base, "DATOS_NO_DISPONIBLES", str(e), uc=uc)
+        except (TypeError, ValueError, OverflowError) as e:   # H-15: fechas de una serie ilegibles
+            return self._rechazo(base, "DATOS_INCOHERENTES", f"datos mal formados ({type(e).__name__}: {str(e)[:200]})", uc=uc)
         clave = clave_hash(ficha, meta["version"], efectivos, params, peticion.get("semilla"), base["perfil"])
         base["clave_idempotencia"] = clave
         with self._lock:
