@@ -2,6 +2,8 @@
 
 > **Instrucción expresa del operador, 12-11-2026: TODO EN LOCAL hasta que autorice subirlo.** Las reglas de push de este documento quedan suspendidas. Reclamar, revisar, registrar y hacer commits solo en local; no escribir en GitHub. Ver `.docs/memoria/astra/2026-11-12_solo-local-hasta-autorizacion.md`.
 
+> **13-11-2026: el operador asigna C-37 (construir el Bloque B V3) y levanta la congelación de `bloque_b/`** para esa tarea. Va después de C-08 y antes que las demás revisiones. Directrices en `.docs/diseno/bloque_b/directrices_astra.md`.
+
 > **13-11-2026: autorización puntual de publicación.** El operador autoriza subir la entrega local existente (revisiones D–G, diario, memoria y estados C-04 a C-08). Los trabajos posteriores siguen en local hasta nueva autorización. Ver `.docs/memoria/astra/2026-11-13_publicacion-puntual-revisiones.md`.
 
 Fuente única del **orden y del estado** de las tareas de Astra desde el 12-11-2026. El detalle de cada tarea está en su encargo o en su ticket; las reglas, en `.docs/tickets/_relevo/2026-11-10_pendientes_para_astra.md` (§0 bis a §3). Si este fichero y el relevo no coinciden en el orden, manda este.
@@ -33,6 +35,7 @@ Las rutas que aún no existen van entre «…» (el gate `refs-vivas` no las exi
 | C-06 | F | REVISION | `.docs/diseno/bloque_f/encargo_revision_astra.md` | «.docs/diseno/bloque_f/revision_astra.md» | HECHA | | Subida autorizada el 13-11-2026; T-74 sigue en espera |
 | C-07 | G | REVISION | `.docs/diseno/bloque_g/encargo_revision_astra.md` | «.docs/diseno/bloque_g/revision_astra.md» | HECHA | | Subida autorizada el 13-11-2026 |
 | C-08 | H | REVISION | `.docs/diseno/bloque_h/encargo_revision_astra.md` | «.docs/diseno/bloque_h/revision_astra.md» | EN CURSO 2026-11-12 | | |
+| C-37 | B: construir e implementar el Bloque B V3 | IMPLEMENTAR | `.docs/diseno/bloque_b/directrices_astra.md` (diseño en `.docs/diseno/bloque_b/decision_claude_c02.md`) | «.docs/tickets/T-111/README.md» | PENDIENTE | | Asignada por el operador el 13-11-2026, después de C-08 y antes que las demás revisiones. Congelación de `bloque_b/` levantada ese día. Siete tickets B-0 a B-6, uno tras otro, cada uno con QA de Claude. Abre el primero como T-111 |
 | C-09 | I | REVISION | `.docs/diseno/bloque_i/encargo_revision_astra.md` | «.docs/diseno/bloque_i/revision_astra.md» | PENDIENTE | | |
 | C-10 | J | REVISION | `.docs/diseno/bloque_j/encargo_revision_astra.md` | «.docs/diseno/bloque_j/revision_astra.md» | PENDIENTE | | |
 | C-11 | K | REVISION | `.docs/diseno/bloque_k/encargo_revision_astra.md` | «.docs/diseno/bloque_k/revision_astra.md» | PENDIENTE | | |

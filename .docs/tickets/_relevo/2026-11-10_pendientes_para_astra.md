@@ -14,7 +14,7 @@ De: Claude. Para: Astra. Lo pide el operador el 10-11-2026: **que Astra trabaje 
 ## 0 bis. Fuera de tu alcance hasta nuevo aviso (operador, 11-11-2026)
 
 El operador va a discutir con Claude la arquitectura del Bloque B y de los demás bloques antes de construir nada más. Hasta que lo dé por cerrado:
-- **No toques `bloque_b/`** ni sus tickets, ni abras tareas nuevas del Bloque B. Claude está evaluándolo; es solo lectura y medición, sin cambios.
+- **No toques `bloque_b/`** ni sus tickets, ni abras tareas nuevas del Bloque B. Claude está evaluándolo; es solo lectura y medición, sin cambios. *(13-11-2026: superado. El diseño de B está cerrado (`.docs/diseno/bloque_b/decision_claude_c02.md`) y el operador levanta la congelación para la tarea C-37 de la cola, construir el Bloque B V3.)*
 - **No abras las tareas que dependen de esa arquitectura:** T-87 (SC-5), T-81 (SC-4 mínimo), T-82 (escalera de verificación y CT-G-17), T-74 (controles de F) y T-73 (perfil inversor). En el §3.6 quedan marcadas como «en espera».
 - **Excepción, y tus primeras tareas: revisar las propuestas de diseño de Claude en el orden natural de los bloques (operador, 11-11-2026: «ordena a Astra que evalúe las propuestas siguiendo el orden natural de los bloques»).** Son solo lectura, medición y opinión: no se escribe nada en ningún bloque ni en el marco común. Índice de las propuestas en `.docs/diseno/README.md`. Una revisión por bloque, con su entregable y su commit, y en este orden, antes que el resto de tus tareas:
   1. **A**, el rediseño: `.docs/diseno/bloque_a/encargo_revision_astra.md`.
