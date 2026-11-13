@@ -42,3 +42,9 @@ El operador pidió a Claude que contestara el cuestionario (`.docs/diseno/cohere
 Sobre E2, Claude avisó de que con el consumo medido hoy es probable que un uso semanal supere el tope con carteras pequeñas: obliga a los rediseños de A y B a recortar y, si el banco de medida demuestra que no cabe, la decisión será entre subir el tope o gestionar en pasivo.
 
 Las tandas 3 a 5 siguen con sus valores por defecto [PROPUESTO], en simulado.
+
+## Bloque B: diseño cerrado y construcción (13-11-2026)
+
+- **Diseño:** el operador pidió a Claude que decidiera sobre la revisión C-02 de Astra «al igual que en el bloque A». Resultado: `.docs/diseno/bloque_b/decision_claude_c02.md` (diseño V3 seleccionable, con la V2.1 por defecto).
+- **Construcción:** «Asigna la tarea en su cola y levanta la congelación del bloque B». Se añade C-37 a la cola de Astra, después de C-08, con las directrices `.docs/diseno/bloque_b/directrices_astra.md`. `bloque_b/` deja de estar congelado para esa tarea. El corpus congelado de B (Documento 0, prompts y esquemas) sigue sin tocarse, como dicen las directrices.
+- **Qué falta:** los valores `[PROPUESTO]` del diseño (tope por petición, modelos por papel) van a T-57. La publicación del trabajo de Astra sigue la regla de su cola: en local hasta que el operador autorice subirlo.

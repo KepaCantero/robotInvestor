@@ -27,7 +27,7 @@ El Robot Investor es un sistema de inversión personal por bloques. A busca opor
 
 - **El repositorio es público:** sin secretos (solo en `.env`, cargado por `.docs/scripts/common.sh`) y sin datos personales ni financieros de nadie. El nombre del operador no se escribe en ficheros del repositorio.
 - **Nunca se borra nada de `.docs/`:** lo viejo se marca.
-- **`bloque_b/` está congelado.** Tampoco se toca el código de ningún bloque, del marco común (`sistema_global/marco_comun_c/`) ni de la Constitución sin autorización expresa del operador.
+- **`bloque_b/` está congelado.** *(13-11-2026: el operador levanta la congelación para la tarea C-37 de Astra, construir el Bloque B V3; ver `.docs/diseno/bloque_b/directrices_astra.md`.)* Tampoco se toca el código de ningún bloque, del marco común (`sistema_global/marco_comun_c/`) ni de la Constitución sin autorización expresa del operador.
 - **No autorizados aún:** T-14, T-30 y las dos fechas de K, aunque se propusieron. Construir bloques nuevos tampoco, hasta cerrar su diseño.
 - **Las decisiones del operador** se marcan `[PROPUESTO]` hasta que las ratifica, y van a la deuda técnica.
 - **Flujo de cuatro fases** (planificar, implementar, probar y QA), con la QA hecha por el agente que no implementó: `.docs/knowledge/02_flujo-de-trabajo.md` y las skills `ri-*`.
