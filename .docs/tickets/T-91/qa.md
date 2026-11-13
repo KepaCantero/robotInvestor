@@ -157,3 +157,93 @@ Las pruebas nuevas cubren el caso del proxy con hueco, pero no la frescura frent
 Lo grave de H-01 sí está corregido: en 400 escenarios al azar y en los cuatro casos de la r01, nada se resuelve con un dato más viejo que PS2. El control contra `7feb697` encuentra 32 casos. H-02, H-03 y H-04 de la r01 también están corregidos. CA-1, CA-3, CA-4 y CA-5 se cumplen.
 
 Siguiente paso: `ri-implementar` para H-05, alineando de verdad o declarando la regla y cambiando CA-2, con las pruebas de H-06. Después, el revisor vuelve a ejecutar `r02_01`, `r02_02` y `r02_03` (y `r01_01 H C O`) en una ronda r03. Esta ronda solo escribe este archivo y los scripts `revisores/r02_*`: el estado del ticket queda para el coordinador.
+
+## Ronda r03
+
+- **Revisor:** subagente nuevo de Claude, sin contexto de la implementación ni de las rondas anteriores (solo el plan, el código y los `qa.md`). Opinión formada con el README, el diff de `0afab6f` y el código antes de leer «Ronda r03» de `analisis-tecnico.md`.
+- **Código revisado:** commit `0afab6f` de `develop`, en worktrees limpios (HEAD, `d1a5a1b` de la r02 y `7feb697^`) creados con `git worktree add` en una carpeta temporal y borrados al acabar. Los mutantes, sobre otras copias completas de `0afab6f` (con `02_System_prompts` y el Catálogo).
+- **Scripts nuevos** (aceptan `--ejecutor RUTA`; se ejecutan con `.venv/bin/python -I`):
+  - `revisores/r03_01_oraculo_fecha_comun.py`: 500 escenarios al azar contra un oráculo **cerrado**, que no itera. El PRG se resuelve en g, la fecha más reciente ≤ f1 en la que todas las series tienen cierre, si g pasa la frescura de PS2 y es posterior a la base de cada serie. Si no, espera. Comprueba también que el bucle acaba (alarma de 30 s) y que el número de medidas está acotado;
+  - `r03_02_bucle_y_calendarios.py`: la salvaguarda con un proveedor que ignora `hasta` (G); que con datos bien formados nunca se dispara (S); calendarios sin ninguna fecha común (C); y un caso fijo de la CESTA con dos huecos encadenados (D);
+  - `r03_03_mutantes.py`: mutantes de la r03 (W1 a W3 y G1 a G3) y otra pasada de los que la r03 da por equivalentes (Q2, Q3, Q7, Q10 y Q11), con el motor de `T-88/revisores/r01_mutar.py`.
+
+### Reproducción desde limpio
+
+- Worktree limpio de `0afab6f` con `.venv` enlazado y `PYTHONPATH` apuntando a sus tres ejecutores: `./tools/check_all.sh` completo **12/12** (A **1283**, A-Forex 68, B 176; ruff 2908 de 2908; mypy A 109, FX 174, B 159; corpus, NFC, YAML, secretos y refs vivas en verde).
+- `tests/test_t91_resolucion.py`: 18 pruebas (13 + 5 de la r03), pasan.
+- Scripts de las rondas anteriores, otra vez contra HEAD:
+  - `r01_01` (todas las partes): **22/22**;
+  - `r01_03 --base <7feb697^>`: **4/4**;
+  - `r02_03`: **4/4**. Los cuatro casos de H-05 acaban con todas las series en la misma fecha: SPY y ACWI el 04-28; 05-12; 12-30; y, en la CESTA, SPY y los siete miembros el 06-22;
+  - `r02_01`: comprobación 1 bien: ningún RESUELTO usa un dato más viejo que PS2. La informativa 3 da 0 de 212 RESUELTOS con fechas distintas (8 en la r02). La comprobación 2 falla en 8 escenarios, como debe: su oráculo es la regla r02 (una sola vuelta), y esos 8 son justo los que la r03 alinea;
+  - `r02_02 <copia> --sin-suite`: mueren Q1, Q4, Q5, Q6, Q9 y Q12, como dice `pruebas.md`; Q8 ya no se aplica. Sobreviven Q2, Q3, Q7, Q10 y Q11. El detector `r02_01` los «detecta», pero no sirve: con la r03 falla también sin mutar (su comprobación 2 es la regla r02). Los equivalentes se juzgan con `r03_03` (abajo).
+
+### Criterios de aceptación
+
+| Criterio | Cumple | Evidencia |
+| --- | --- | --- |
+| CA-1 | sí | `r01_01 A` y `test_h26_*`. En `r03_01`, 118 escenarios H1, con y sin los festivos de PS2 en las series, coinciden con el oráculo, que cuenta las sesiones con un calendario propio |
+| CA-2 | sí | `r03_01`: **500 de 500** escenarios iguales que el oráculo cerrado en estado, `fecha_dato`, `fecha_dato_proxy`, `fecha_dato_referencia` y exceso: 224 RESUELTOS y 276 en espera; por horizonte, H1 43/75, H2 47/82, H3 63/79 y H4 71/40. Hay paradas, huecos, días sueltos, calendarios alternos, referencias semanales y festivos de PS2 y de otras bolsas en el proxy, ACWI y los miembros de la CESTA. Todo RESUELTO tiene sus series en la misma fecha. **Control:** contra `d1a5a1b`, 5 de 150 escenarios difieren del oráculo y quedan desalineados. También `r02_03` 4/4 y `test_r02_h02_b` |
+| CA-3 | sí, con H-07 | `r01_01 B` y `r01_03`. El criterio congelado, el README, INC-T91-01 y la configuración dicen «si las series acaban en fechas distintas, todas se miden hasta la más antigua». Admiten la lectura repetida de la r03, pero no la dicen (H-07) |
+| CA-4 | sí | (a), (b) y (c) de H-29, con sus pruebas (r01 y r02). Las pruebas de la r03 matan Q1, Q4, Q5, Q6, Q9 y Q12 |
+| CA-5 | sí | Gate 12/12 desde limpio, sin subir cuotas |
+
+### Ataques
+
+- **Oráculo cerrado** (`r03_01`, semilla 20261113). La regla r03 equivale a medir todas las series en la fecha común más reciente: cada vuelta deja todas las fechas por encima de la fecha común g (todas tienen g), y al parar coinciden. El oráculo lo calcula directamente, sin repetir el algoritmo del código, y coincide en los 500 escenarios.
+- **El bucle acaba** (`r03_01`, comprobaciones 3a y 3b): ninguna resolución pasa de 30 s. Como mucho hay 69 medidas en una resolución (CESTA de siete miembros con huecos), siempre por debajo de la cota de (series) × (fechas de la ventana).
+- **Salvaguarda «la fecha común no baja»:**
+  - con un proveedor defectuoso, que ignora `hasta` (`r03_02 G`), la resolución acaba y espera, con ACWI y con la CESTA como referencia; sin la salvaguarda del bucle de fuera (mutantes G1 y G3), se cuelga;
+  - con datos bien formados no se dispara nunca (`r03_02 S`, 200 resoluciones, 0 disparos): con `valor_en` correcto, la fecha común siempre baja o las series coinciden. Quitarla (G1 a G3) es equivalente con datos de HT-01 válidos. Queda como defensa ante un proveedor defectuoso, y es correcto que falle cerrado.
+- **Calendarios sin fecha común** (`r03_02 C`, informativo): con el proxy diario y una referencia semanal fechada en sábado, el PRG H3 o H4 nunca encuentra una fecha común y queda NO_RESOLUBLE pasado el plazo; `d1a5a1b` lo resolvía al primer día. Es lo que dice la regla «todas hasta la misma fecha», y en los datos de ejemplo no pasa (todas las series cotizan de lunes a viernes). Pero la regla escrita no lo dice (va en H-07).
+- **CESTA con dos huecos encadenados** (`r03_02 D`): el proxy para el 29-04; en la CESTA de RV, un miembro para el 30-04 y otro no tiene ese día. HEAD resuelve con las ocho series en el 29-04 y el exceso del oráculo (−0,06493718). Con una sola vuelta dentro de la CESTA (mutante W2), seis miembros se quedan en el 30-04, la `fecha_dato_referencia` sigue siendo el 29-04 y el exceso cambia (−0,05010213). Ninguna prueba lo detecta (H-08).
+- **Invariantes:**
+  - no hay LLM en la resolución;
+  - ningún número nuevo;
+  - falla cerrado: una serie que deja de ser fresca en cualquier vuelta, o una vuelta que no baja la fecha común, deja el PRG en espera;
+  - INC-T91-01 sigue como `[PROPUESTO]`, con su pregunta para T-57;
+  - nada de secretos ni datos personales.
+
+### Mutantes (`r03_03_mutantes.py`, sobre otra copia)
+
+Primero `test_t91_resolucion.py` y `test_t65_qa_r04.py`. Si sobrevive, las suites relacionadas de la r02 y, después, `r03_01` (200 escenarios) y `r03_02 G`.
+
+| Mutante | Resultado |
+| --- | --- |
+| W1 `resolver`: una sola vuelta de alineación (vuelta a la r02) | detectado (`test_r02_h02_b_…`) |
+| W2 CESTA: una sola vuelta de alineación | **sobrevive a todo** salvo `r03_02 D`: no es equivalente (H-08) |
+| W3 `resolver`: solo se realinea mientras la referencia sea la más antigua (Q8 con `while`) | detectado (`test_r02_h02_b_…`) |
+| G1 `resolver` sin la salvaguarda | sobrevive a las suites y a `r03_01`; lo detecta `r03_02 G` (se cuelga). Equivalente con datos válidos |
+| G2 CESTA sin la salvaguarda | sobrevive a todo. Equivalente con datos válidos. `r03_02 G` no lo alcanza porque la salvaguarda de fuera salta antes |
+| G3 `resolver`: la salvaguarda con `>` | como G1 |
+| Q2, Q3, Q7, Q10, Q11 (equivalentes según `analisis-tecnico.md`) | los cinco sobreviven a todo: a las pruebas del ticket, a las suites relacionadas, a `r03_01` (200 escenarios contra el oráculo cerrado) y a `r03_02 G` |
+
+**¿Son equivalentes de verdad?**
+- **Q2 y Q3** (una serie se vuelve a medir sin horizonte): sí. Sin horizonte, `rentabilidad` sigue exigiendo un dato posterior a la base, y solo deja de mirar la edad. Al acabar, las dos series están en la misma fecha y la otra se mide con horizonte, así que la edad se comprueba igual. Si una serie deja de ser fresca a mitad del bucle, también lo es en la fecha común, que es más antigua, y la otra serie la rechaza allí.
+- **Q7** (la CESTA sin horizonte en las vueltas de dentro): sí en `resolver`, el único que llama a `rentabilidad("CESTA")`. Allí la CESTA siempre llega con bases (congeladas o calculadas con `hz`), y el proxy, con horizonte, acaba en la misma fecha.
+- **Q10 y Q11** (`fecha_dato` del proxy; la CESTA devuelve la fecha más reciente): sí, porque todas las fechas coinciden al salir de cada bucle.
+- **W2 no** está en esa lista, pero tampoco es equivalente: el bucle de fuera solo compara la fecha del proxy con la mínima de la CESTA, así que no corrige una CESTA desalineada si el proxy cae justo en esa mínima (`r03_02 D`).
+
+### Estado de los hallazgos de la r02
+
+| ID | Estado tras la r03 |
+| --- | --- |
+| H-05 (media) | corregido: `r02_03` 4/4, `r03_01` 500/500 frente al oráculo cerrado y 0 RESUELTOS desalineados (8 en la r02) |
+| H-06 (baja) | corregido: mueren Q1, Q4, Q5, Q6, Q9 y Q12; Q2, Q3, Q7, Q10 y Q11 son equivalentes de verdad (arriba). La alineación nueva de la CESTA queda sin prueba (H-08) |
+
+### Hallazgos
+
+| ID | Gravedad | Cómo reproducirlo | Esperado / obtenido | Corrección sugerida | Estado |
+| --- | --- | --- | --- | --- | --- |
+| H-07 | baja | `grep -n "más antigua" docs/incidencias.md bloque_a/11_Ejecutor/bloque_a/sintesis.py bloque_a/11_Ejecutor/config/por_defecto.yaml bloque_a/11_Ejecutor/README.md`; `r03_02_bucle_y_calendarios.py C` (y lo mismo con `--ejecutor <worktree de d1a5a1b>`) | **Esperado** (`analisis-tecnico.md`, r03: «La regla de INC-T91-01 dice ya "todas se miden hasta la misma fecha"»; regla 7 del proyecto).<br>**Obtenido:** INC-T91-01, el `CRITERIO_RESOLUCION` que se congela en cada PRG nuevo, el README del ejecutor y el comentario de `evaluacion` en la configuración dicen «si las series acaban en fechas distintas, todas se miden hasta la más antigua». No dicen «hasta la misma fecha», y la frase de `analisis-tecnico.md` no es cierta. La regla r03 mide hasta la fecha más reciente en la que todas tienen cierre, que puede ser varios días anterior a «la más antigua» (H4 con CESTA en `r02_03`: el 06-22, y SPY tenía el 07-02). Si las series no comparten ninguna fecha, el PRG no se resuelve nunca; `d1a5a1b` lo resolvía. En `r03_02 C`, con una referencia semanal fechada en sábado, queda NO_RESOLUBLE. Ninguno de los textos lo dice | Escribir la regla tal como funciona: «todas las series se miden en la fecha más reciente en la que todas tienen cierre, que debe pasar la frescura de PS2 frente a la fecha de resolución en cada una; si no la hay, el pronóstico espera». Cambiarlo en INC-T91-01 (con la consecuencia para series con calendarios distintos, en la pregunta para T-57), en `CRITERIO_RESOLUCION` para los PRG nuevos, en el README y en el comentario de la configuración, y corregir la frase de `analisis-tecnico.md` | abierto |
+| H-08 | baja | `r03_03_mutantes.py <copia> --solo=W2 --suite=…`; `r03_02_bucle_y_calendarios.py D` contra HEAD (OK) y contra una copia con W2 (FALLO) | **Esperado** («nada cuenta como hecho sin tests»; H-06 de la r02): la alineación repetida dentro de la CESTA, con una prueba que falle sin ella.<br>**Obtenido:** W2 (una sola vuelta dentro de la CESTA) sobrevive a las pruebas del ticket, a las suites relacionadas y a los 200 escenarios de `r03_01`. No es equivalente: en el caso D, seis de los siete miembros se quedan en el 30-04 y el proxy en el 29-04, y el exceso pasa de −0,06493718 a −0,05010213. Además, `fecha_dato_referencia` sigue diciendo 29-04, así que la desalineación no se ve en `pronosticos.csv` | Llevar el caso D a `test_t91_resolucion.py`, con el exceso y con la fecha de cada miembro (por ejemplo, espiando `_rentabilidad_serie`) | abierto |
+
+### Veredicto
+
+**APTO**, criterio por criterio:
+- CA-1, CA-2, CA-4 y CA-5 se cumplen;
+- CA-3 se cumple, con H-07: los textos admiten la lectura de la r03 pero no la explican.
+
+H-05 de la r02 está corregido: en 500 escenarios al azar, la resolución coincide con un oráculo cerrado de «todas las series en la fecha común más reciente», y el bucle siempre acaba. H-06 también: los mutantes vivos de la r02 mueren o son equivalentes de verdad. Quedan H-07 y H-08, los dos bajos. Si no se corrigen antes de cerrar, pasan a la deuda técnica con su ID.
+
+El cierre del ticket (estado CERRADO, deuda técnica, diario, memoria y commit) queda para el coordinador: esta ronda, por indicación expresa, solo escribe este archivo y los scripts `revisores/r03_*`. El commit `0afab6f` también lleva H-10 de T-88 (`consumo` borrado de F5, en `orquestacion.py`), que no toca la resolución de T-91. Pero si los dos tickets se cierran juntos, ese hallazgo sigue abierto.

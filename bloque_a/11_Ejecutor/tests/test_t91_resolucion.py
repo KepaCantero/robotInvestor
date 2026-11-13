@@ -79,7 +79,7 @@ def test_h27_la_cesta_mide_todos_sus_miembros_hasta_la_misma_fecha(tmp_path):
 # ---------------------------------------------------------------- H-28 · criterio congelado y pronosticos.csv
 def test_h28_el_criterio_congelado_dice_la_regla():
     c = CRITERIO_RESOLUCION.format(fin="2026-05-01", inicio="2026-04-17", suceso="x")
-    assert "posterior a la emisión" in c and "PS2" in c and "la más antigua" in c and "festivos" in c
+    assert "posterior a la emisión" in c and "PS2" in c and "todas tienen cierre" in c and "festivos" in c
     assert "espera" in REGLA_FALLBACK.format(dias_nr=10) and "10 días hábiles" in REGLA_FALLBACK.format(dias_nr=10)
 
 
@@ -220,3 +220,30 @@ def test_r03_q9_un_nivel_congelado_como_numero_suelto_se_resuelve(tmp_path):
         "referencia_ingenua": {"valor_o_prob": 0.5}, "en_informe": True})
     e = _resuelto(b, "2026-04-27")
     assert e["estado"] == "RESUELTO" and e["resolucion"]["comprobacion_fuga"] == "SUPERADA"
+
+
+# ================================================================================================== cierre (QA r03 de T-91)
+def test_cierre_h08_la_cesta_se_realinea_hasta_que_todos_sus_miembros_coinciden(tmp_path):
+    """H-08 (mutante W2, una sola vuelta dentro de la CESTA): SPY para el 29; un miembro de RV para el 30 y otro sin el 30.
+    Todas las series se miden en el 29 y el exceso es el del oráculo en esa fecha."""
+    b0 = _bloque(tmp_path / "a")
+    b0.fijar_fecha("2026-06-05")
+    rv = [x for x in sorted(b0.evaluador.simbolos_clase("RV")) if x != "SPY"]
+    datos = _parado(tmp_path / "b", "SPY", "2026-04-29")
+    _sin_dia(tmp_path, datos, rv[1], "2026-04-30")
+    df = pd.read_csv(datos / f"{rv[0]}.csv")
+    df[df["fecha"] <= "2026-04-30"].to_csv(datos / f"{rv[0]}.csv", index=False)
+    b = _bloque(tmp_path / "b", datos=datos)
+    b.fijar_fecha(EMISION)
+    bases = b.evaluador.bases_cesta("RV", EMISION, "H2")
+    nivel = b.evaluador._base_conocida("SPY", EMISION)
+    b.almacen.escribir("F4", "AG-10", {
+        "tipo_entrada": "ALTA", "prg_id": "PRG-2026-0901", "opp_id": "OPP-1", "clase": "RV", "horizonte": "H2",
+        "estado": "ABIERTO", "prob_interna": 0.65, "sentido": "POSITIVO", "umbral": 0.0, "tipo_pronostico": "RELATIVO",
+        "referencia_indice": "CESTA", "bases_cesta": bases, "variable": {"serie_ht01": "SPY"}, "fecha_emision": EMISION,
+        "fecha_resolucion": "2026-05-01", "nivel_referencia": nivel, "referencia_ingenua": {"valor_o_prob": 0.5}, "en_informe": True})
+    e = _resuelto(b, "2026-05-05")
+    assert e["estado"] == "RESUELTO" and e["resolucion"]["fecha_dato_referencia"] == "2026-04-29"
+    cierre = {s: pd.read_csv(datos / f"{s}.csv").set_index("fecha")["cierre"]["2026-04-29"] for s in ["SPY", *bases]}
+    oraculo = (cierre["SPY"] / nivel["valor"] - 1) - sum(cierre[s] / b_["valor"] - 1 for s, b_ in bases.items()) / len(bases)
+    assert e["resolucion"]["valor_observado"] == pytest.approx(oraculo, abs=1e-8)

@@ -101,9 +101,10 @@ El total cargado es el coste real. Efecto declarado: en un presupuesto justo, el
 **INC-T91-01 · 2026-11-12 · Regla de resolución de un pronóstico (Bloque A, T-65 y T-91).** El Anexo A fija PS2 como puerta de selección; para resolver no había regla. Decisión `[PROPUESTO]`:
 - cada serie (proxy, referencia y cada miembro de la CESTA) necesita un dato posterior a la emisión y no más antiguo, a la fecha de resolución, que la antigüedad de PS2 de su horizonte (H1 en sesiones sin los festivos de `ps2_festivos`);
 - si no lo tiene, el pronóstico espera y, pasado el plazo, queda NO_RESOLUBLE;
-- si las series acaban en fechas distintas, todas se miden hasta la más antigua, y cada una vuelve a pasar la frescura frente a la fecha de resolución.
+- si las series acaban en fechas distintas, todas se miden hasta la fecha más reciente en la que todas tienen cierre (r03), que debe pasar en cada una la frescura frente a la fecha de resolución;
+- consecuencia declarada (QA r03, H-07): si las series no comparten ninguna fecha reciente (por ejemplo, una referencia semanal fechada en sábado), el pronóstico espera y acaba NO_RESOLUBLE. Antes de la r03 se resolvía con cada serie en su último dato.
 
-Pregunta para T-57: «¿qué antigüedad admite la resolución de un pronóstico, y se alinean las series?». Detalle en [.docs/tickets/T-91](../.docs/tickets/T-91/README.md).
+Pregunta para T-57: «¿qué antigüedad admite la resolución de un pronóstico, se alinean las series y qué pasa con las que tienen calendarios distintos?». Detalle en [.docs/tickets/T-91](../.docs/tickets/T-91/README.md).
 
 **INC-T106-01 · 2026-11-12 · Decisiones de método en las 21 fichas V5.0 del Motor (Bloque A, T-106).** Las fichas dejan huecos que se han cubierto así, `[PROPUESTO]` hasta que el operador o una revisión del Catálogo decidan:
 - **Niveles que la ficha no fija:**

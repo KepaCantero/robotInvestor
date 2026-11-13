@@ -48,4 +48,4 @@
     - Q2 y Q3 (una serie se vuelve a medir sin horizonte): las dos acaban en la misma fecha, así que la frescura de una cubre la de la otra;
     - Q7 (la CESTA sin horizonte): la cubre la frescura del proxy en la misma fecha;
     - Q10 y Q11 (`fecha_dato` del proxy, o la más reciente de la CESTA): todas las fechas coinciden.
-- **Límite:** `fecha_dato` es la fecha común. La regla de INC-T91-01 dice ya «todas se miden hasta la misma fecha».
+- **Límite:** `fecha_dato` es la fecha común. La regla de INC-T91-01, el criterio congelado, el README y la configuración se pusieron al día en el cierre (H-07 de la QA r03): «todas se miden hasta la fecha más reciente en la que todas tienen cierre»; si no la hay, el pronóstico espera.

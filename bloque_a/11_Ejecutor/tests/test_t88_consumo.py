@@ -147,3 +147,58 @@ def test_r03_se_liquida_al_acabar_la_fase_en_paralelo_y_al_resumir(tmp_path, mon
     monkeypatch.setattr(Presupuesto, "liquidar_primas", lambda self: (llamadas.append(inspect.stack()[1].function), orig(self))[1])
     _consumo(tmp_path, "v5")
     assert "resumen" in llamadas and any(x != "resumen" for x in llamadas), llamadas   # también tras la fase en paralelo
+
+
+# ================================================================================================== ronda r04 (QA r03 de T-88)
+CLAVES_CONSUMO = {"llamadas", "uc", "uc_llm", "uc_motor", "entrada", "salida", "cache_escritura", "cache_lectura"}
+
+
+@pytest.mark.parametrize("diseno", ["v5", "v6"])
+def test_r04_h10_el_run_de_f5_lleva_el_consumo(tmp_path, diseno):
+    """H-10: el Documento 0 manda registrar en F5 el presupuesto y el consumo real del run."""
+    b = Bloque(config_pruebas(diseno=diseno, perfiles={"activos": PERFILES}, paralelismo={"hilos_analistas": 6}), ProveedorCSV(DATOS),
+               cargar_universo(RUTA_UNIVERSO_EJEMPLO), MockClient(), tmp_path / "estado", tmp_path / "ent")
+    b.ciclo(AS_OF)
+    run = [e for e in b.almacen.leer("F5") if e.get("tipo_entrada") == "RUN"][-1]
+    assert {"presupuesto", "cierres_parciales", "consumo", "participantes"} <= set(run)
+    assert set(run["consumo"]) == CLAVES_CONSUMO and run["consumo"]["uc"] > 0 and run["consumo"]["llamadas"] > 0
+    assert all(u["uc"] is not None for u in b.estado()["ultimos_runs"])
+
+
+def test_r04_h13_en_la_v5_cada_tipo_paga_las_reescrituras_de_su_analista():
+    """H-13 (mutante R1): si la caché de AG-03 se pierde y reescribe su prompt, lo paga RV entero; RF solo paga lo suyo."""
+    fake, p = _fake()
+    Bloque._cargar(fake, p, "RV", "AG-03", _r(10000, 0))
+    Bloque._cargar(fake, p, "RF", "AG-04", _r(20000, 0))
+    Bloque._cargar(fake, p, "RV", "AG-03", _r(10000, 0))   # segunda llamada: la caché se perdió y vuelve a escribir
+    base = {"RV": p.consumido["RV"] - p._uc_prima(10000), "RF": p.consumido["RF"] - p._uc_prima(20000)}
+    p.liquidar_primas()
+    assert p.consumido["RV"] == pytest.approx(base["RV"] + p._uc_prima(20000))
+    assert p.consumido["RF"] == pytest.approx(base["RF"] + p._uc_prima(20000))
+
+
+class _AlReves(list):
+    """Lista que guarda cada cierre delante: el orden de llegada queda al revés del ordenado."""
+
+    def append(self, x):
+        self.insert(0, x)
+
+
+def test_r04_h13_los_cierres_parciales_salen_ordenados_por_tipo_fase_y_motivo(tmp_path, monkeypatch):
+    """H-13 (mutantes R4 y R5): F5 no depende del orden en que los hilos cierran fases."""
+    init = Presupuesto.__init__
+    llegada = [{"clase": "RV", "fase": "F1", "motivo": "a"}, {"clase": "RV", "fase": "F2", "motivo": "b"},
+               {"clase": "RV", "fase": "F2", "motivo": "a"}, {"clase": "IDX", "fase": "F1", "motivo": "a"}]
+
+    def con_cierres(self, *a, **k):
+        init(self, *a, **k)
+        self.cierres = _AlReves()
+        for c in llegada:
+            self.cierres.append(dict(c))
+    monkeypatch.setattr(Presupuesto, "__init__", con_cierres)
+    b = Bloque(config_pruebas(perfiles={"activos": PERFILES}), ProveedorCSV(DATOS), cargar_universo(RUTA_UNIVERSO_EJEMPLO),
+               MockClient(), tmp_path / "estado", tmp_path / "ent")
+    b.ciclo(AS_OF)
+    cierres = [e for e in b.almacen.leer("F5") if e.get("tipo_entrada") == "RUN"][-1]["cierres_parciales"]
+    clave = [(c["clase"], c["fase"], c["motivo"]) for c in cierres]
+    assert clave == sorted(clave) and {("RV", "F2", "a"), ("IDX", "F1", "a")} <= set(clave)

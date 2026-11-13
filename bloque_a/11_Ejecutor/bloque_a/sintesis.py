@@ -42,7 +42,8 @@ AVISO_LEGAL = ("Este informe describe oportunidades generales de mercado y no co
 CRITERIO_RESOLUCION = ("Cierre HT-01 de la última sesión ≤ {fin} frente al cierre de la última sesión ≤ {inicio}; cada serie (proxy, "
                        "referencia y cada miembro de la CESTA) necesita un dato posterior a la emisión y no más antiguo, a la fecha "
                        "de resolución, que la antigüedad de PS2 de su horizonte (H1 en sesiones sin los festivos de PS2); si las "
-                       "series acaban en fechas distintas, todas se miden hasta la más antigua; suceso: {suceso}")
+                       "series acaban en fechas distintas, todas se miden hasta la fecha más reciente en la que todas tienen "
+                       "cierre, que debe pasar en cada una esa frescura; si no la hay, el pronóstico espera; suceso: {suceso}")
 REGLA_FALLBACK = ("si alguna serie no cumple, el pronóstico espera; NO_RESOLUBLE tras {dias_nr} días hábiles desde la fecha de "
                   "resolución sin que cumplan")
 
