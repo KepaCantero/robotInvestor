@@ -148,3 +148,32 @@ El filtro de T-101 trataba cada texto entero con pocas reglas:
 **Límites declarados (R21; los revisa el Auditor por muestreo):** los cuatro de la r04, y además (H-34) un ticker en minúscula tras «la acción», «el valor» o «el título» («comprar el valor nvda»). Cazarlo sin quitar «el valor real» o «el valor neto» exige saber qué palabras son españolas, y queda en la deuda (T-109).
 
 **Coste declarado de la regla estricta:** se quitan frases legítimas con un número en letra que no es una probabilidad («Los dos escenarios favorecen al dólar», «en dos de los mercados»). El Sintetizador tiene marcadores para las cuentas y el prompt le pide no escribir cifras.
+
+## Ronda r06 (QA r05 NO APTO; decisión del operador: «umbrales y sin cifras libres»)
+
+**Causa.** Cinco rondas de bancos nuevos encontraban siempre otra forma. Un filtro de patrones sobre texto libre no puede garantizar «ninguna». H-42 era distinto: dos marcadores de cuenta unidos por un signo («{n:RV},{n:RF}») componían una cifra que no está en el paquete, y eso rompía la garantía del diseño de la r03.
+
+**Diseño (decisión del operador del 13-11-2026).**
+- **Sin cifras libres (H-42, CA-15):**
+  - los marcadores de cuenta (`{n:…}`, `{candidatas:…}`, `{n_ideas}`, `{n_tipos}`, `{n_apuestas}`) quitan la frase;
+  - las cuentas las escribe el código: la primera frase de 30 segundos (`textos_por_defecto`) y, delante de cada motivo llano, `_cuenta_motivo` («De N ideas de … analizadas, M pasaron todos los filtros.»);
+  - el Sintetizador escribe dos frases de 30 segundos (esquema SINTESIS; el REDACCION de la V5 sigue con tres);
+  - `marcadores()` solo da los de texto (`{opp:…}`, `{tipo:…}`);
+  - desaparecen los marcadores compuestos y la palabra de probabilidad junto a un marcador, y con ellos el `\s*` cuadrático de H-45.
+- **Umbrales (CA-12 y CA-13):** se miden con un banco ciego del revisor, con los valores `[PROPUESTO]` de INC-T102-01.
+
+**Correcciones.**
+- **H-40 (regresión):** «y medio» no cuenta ante «plazo» ni con «Medio» en mayúscula; «un medio» ya no cuenta; «el doble» solo cuenta delante de «de» o «que» o al final; «mitad» no cuenta tras «en»; «un + ordinal» solo es una fracción delante de «de», «al», «en», «por», «más», «menos» o al final.
+- **H-43:** también son números en letra «milésima», «centésima», «onceavo», «docena», «decena», «centenar», «millar», «uno a uno» y los números en inglés.
+- **H-44 (regresión):**
+  - el infinitivo al abrir la frase solo se exceptúa ante un sufijo de fondo, no de sociedad («Pfizer Inc.»);
+  - la mayúscula inicial solo es un nombre tras un vehículo que no se nombra por su ticker («el ETF Nvda» se quita);
+  - más sufijos: Plc, Sicav, Socimi, KGaA, Oyj, Ltda, Bhd, Group, Holding, ETC y ETP; en minúscula sin punto, «inc», «corporation»…; «el fondo vwrl.» con punto final.
+- **H-41:** una lista de palabras corrientes tras un vehículo («Un ETF es…», «Los ETF suben…», «El fondo va…»); en la V6, `_UNITARIA` no cuenta cuando «la acción de» o «el bono de» sigue con una palabra en minúscula («la acción de los bancos centrales»). La V5 no cambia.
+- **H-46:** se quitan las marcas combinantes también de las letras compuestas («Ṅ», «N̲»), salvo las del español (tilde en vocal, ñ, ü); letras latinas en recuadro o en círculo; letras sueltas separadas por espacios, «_» o el blanco Braille.
+- **H-47:** documentación al día: criterios, INC-T102-01, la fila de T-57 y los límites.
+- **H-48:** una prueba por mutante vivo, con las frases que dejó la QA r05.
+
+**Límites declarados:** los de INC-T102-01 (nombre propio sin código ni sufijo, ticker en minúscula sin vehículo o tras «la acción», «el valor» o «el título», COP, una letra sin vehículo y romanos como cantidad).
+
+**Coste declarado de la regla estricta:** en el banco de la QA r05 se pierden 15 de 18 legítimas con un número en letra («los dos grandes bancos centrales», «S&P quinientos»). El Sintetizador no los necesita: el prompt le pide no escribir números y no contar.

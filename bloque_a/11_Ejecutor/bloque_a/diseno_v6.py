@@ -453,13 +453,13 @@ def integracion_determinista(bloque, seleccion, analisis, as_of) -> dict:
 
 INSTR_SINTESIS = ("Sobre el paquete ya validado: escribe la integración (régimen macro común, el factor que domina cada clúster, "
                   "la lectura del conjunto, preguntas sugeridas para el Broker y limitaciones) y los textos llanos del informe "
-                  "visual (tres frases de «la semana en 30 segundos», por cada opción «por qué» y «qué podría salir mal» "
+                  "visual (dos frases de «la semana en 30 segundos»: la primera, con las cuentas, la escribe el código; por cada opción «por qué» y «qué podría salir mal» "
                   "(≤ 20 palabras, sin jerga o explicada entre paréntesis), motivos llanos de los tipos sin tres opciones, un "
                   "glosario de hasta 5 términos y una frase honesta sobre el historial). Índice Fernández-Huerta ≥ 70. No cambies "
                   "la selección ni las cifras: vienen calculadas y validadas. Regla de escritura (§4 del prompt): NO escribas "
                   "ninguna cifra ni ningún código de un activo concreto; para nombrar una opción usa {opp:OPP-…}, para un tipo "
-                  "{tipo:RV}, y para contar {n:RV}, {candidatas:RV}, {n_ideas}, {n_tipos} o {n_apuestas}: el código los rellena. "
-                  "Una frase con una cifra, un código de un activo o un marcador desconocido se quita.")
+                  "{tipo:RV}: el código los rellena. No cuentes: las cuentas (ideas, tipos, apuestas, candidatas) las escribe el código. "
+                  "Una frase con una cifra, también en letra, un código de un activo o un marcador desconocido o de cuenta se quita.")
 _CAMPOS_REDACCION = ("frases_30s", "tarjetas", "motivos_llanos", "glosario", "frase_historial")
 
 
@@ -481,47 +481,62 @@ _MARCADOR = re.compile(r"\{(?:(opp|tipo|n|candidatas):([A-Za-z0-9-]{1,40})|(n_id
 _MARCADOR_NUM = re.compile(r"\{(?:(?:n|candidatas):[A-Za-z0-9-]{1,40}|n_ideas|n_tipos|n_apuestas)\}")
 _LLAVE = re.compile(r"[{}]")
 # T-102 r04 (QA r03, H-20): una cifra es cualquier carácter numérico de Unicode (categorías Nd, No y Nl: «⁷», «⅔», «Ⅶ»)
-# r04: «escenario» cuenta como palabra de probabilidad (los pesos de los escenarios son probabilidades)
-_PALABRA_PROB = re.compile(r"\b(?:(?:im)?probab\w*|posibilidad(?:es)?|chances?|opciones\s+de\s+que|confianza|seguridad|certeza|"
-                           r"escenarios?)\b", re.IGNORECASE)
-# T-102 r05 (QA r04, H-31 y H-35): un número en letra es una cifra en cualquier frase, no solo junto a una palabra de
-# probabilidad. «uno»/«una», «medio» y los ordinales («cuarto trimestre», «segunda mitad») solo cuentan en las formas que
-# expresan una cantidad: «una de cada», «un cuarto», «una cuarta parte», «y medio», «la mitad de las ideas».
+# T-102 r06 (decisión del operador del 13-11-2026, tras la QA r05): los marcadores numéricos ({n:…}, {candidatas:…},
+# {n_ideas}, {n_tipos}, {n_apuestas}) ya no valen en el texto libre: dos marcadores juntos componían cifras que no están en
+# el paquete («{n:RV},{n:RF}» da «1,3»; H-42). Las cuentas las escribe el código en frases propias (`_frases_del_codigo`).
+# T-102 r05 y r06: un número en letra es una cifra en cualquier frase. «uno»/«una», «medio», «mitad», «doble» y los ordinales
+# solo cuentan en las formas que expresan una cantidad: «una de cada», «un cuarto de», «una cuarta parte», «y medio», «la
+# mitad de las ideas», «el doble de». No cuentan «a corto y medio plazo», «un medio de cobertura», «el doble mandato», «en
+# mitad de la tormenta», «Oriente Próximo y Medio» ni «un quinto mes» (H-40).
 _NUM_LETRA = (r"(?:cero|dos|tres|cuatro|cinco|seis|siete|ocho|nueve|diez|once|doce|trece|catorce|quince|dieci\w+|veinte|"
               r"veinti\w+|treinta|cuarenta|cincuenta|sesenta|setenta|ochenta|noventa|cien|ciento|\w*cient[oa]s|quinient[oa]s|"
-              r"setecient[oa]s|novecient[oa]s|mil|millones?|mill[oó]n|tercios?)")
+              r"setecient[oa]s|novecient[oa]s|mil|millones?|mill[oó]n|millar(?:es)?|tercios?|docenas?|decenas?|centenar(?:es)?|"
+              r"mil[eé]sim[oa]s?|cent[eé]sim[oa]s?|\w+(?:ceav|teav|ntav)[oa]s?|"
+              # r06 (H-43): en inglés, que el Sintetizador no debe usar y que nunca es un giro español
+              r"two|three|four|five|six|seven|eight|nine|ten|twenty|thirty|forty|fifty|sixty|seventy|eighty|ninety|hundred|"
+              r"thousand|percent|fifty-fifty)")
 _UNO = r"(?:un[oa]?)"
+_FIN_CANTIDAD = r"(?=\s+(?:del?|al|en|por|m[aá]s|menos|sobre)\b|\s*[.,;:)]|\s*$)"   # «un cuarto de…», «una décima al mes»; no «un quinto mes»
 _CIFRA_EN_LETRA = re.compile(   # «%», «‰» o «٪» se miran por su nombre Unicode; «por ciento» ya es un número en letra
     rf"\b{_NUM_LETRA}\b"
-    rf"|\b{_UNO}\s+(?:sobre|entre|de\s+cada|contra|en)\s+{_UNO}\b"   # «una de cada una», «uno contra uno»
-    rf"|\b{_UNO}\s+(?:cuart|quint|sext|s[eé]ptim|octav|noven|d[eé]cim)[oa]s?\b"   # fracciones: «un cuarto», «una décima»
+    rf"|\b{_UNO}\s+(?:sobre|entre|de\s+cada|contra|en|a|por\s+cada)\s+{_UNO}\b"   # «una de cada una», «uno a uno»
+    rf"|\b{_UNO}\s+(?:cuart|quint|sext|s[eé]ptim|octav|noven|d[eé]cim)[oa]s?\b{_FIN_CANTIDAD}"   # «un cuarto de», «una décima.»
     r"|\b(?:tercera|cuarta|quinta|sexta|s[eé]ptima|octava|novena|d[eé]cima)s?\s+partes?\b"
-    r"|\b(?:un|y)\s+medio\b|\bmedio\s+punto\b|\bmedia\s+docena\b"
-    r"|(?<!primera\s)(?<!segunda\s)(?<!\ba\s)\bmitad\b(?!\s+del?\s+(?:año|ciclo|mes|semana|trimestre|semestre|camino|periodo|"
-    r"década|sesión|jornada))", re.IGNORECASE)
-# Composición de un número en letra con un marcador numérico («una de cada {n_ideas}», «{n:RV} contra uno»)
-_UNO_Y_MARCADOR = re.compile(r"\b(?:un[oa]?)\s+(?:sobre|entre|(?:veces\s+)?de\s+cada|contra|en)\s*\{|\}\s*(?:sobre|entre|"
-                             r"(?:veces\s+)?de\s+cada|contra|en)\s+(?:un[oa]?)\b", re.IGNORECASE)
+    r"|\by\s+(?-i:medio)\b(?!\s+plazo)|\bmedio\s+punto\b|\bmedia\s+docena\b"
+    r"|\bel\s+(?:doble|triple|cu[aá]druple)\b(?=\s+(?:de|que)\b|\s*[.,;:)]|\s*$)"
+    r"|(?<!primera\s)(?<!segunda\s)(?<!\ba\s)(?<!\ben\s)\bmitad\b(?!\s+del?\s+(?:año|ciclo|mes|semana|trimestre|semestre|"
+    r"camino|periodo|década|sesión|jornada))", re.IGNORECASE)
 # T-102 r04 (QA r03, H-21): el sufijo también con punto («Apple Inc.»); y no tras un artículo («Las SICAV», H-25)
-# r05 (QA r04): H-32, más sufijos de sociedad («SpA», «S.p.A.», «Co.», «Limited», «GmbH», «Aktiengesellschaft», y en minúscula
-# con punto: «apple inc.»); H-36, una palabra común al principio de la frase («Cada ETF», «Sobreponderar ETF», «Todos los
-# ETF») no es un nombre; H-37, cada palabra empieza donde no hay otra letra y tiene un tope de longitud (antes, cuadrático).
-_NO_NOMBRE = (r"(?:El|La|Los|Las|Un|Una|Unos|Unas|Estas?|Estos|Esos?|Esas?|Aquel(?:la|los|las)?|Sus?|Varios|Varias|Algunos|"
-              r"Algunas|Muchos|Muchas|Pocos|Pocas|Otros?|Otras?|Ambos|Ambas|Nuestros?|Nuestras?|Cada|Tod[oa]s?|Cualquier|"
-              r"Ning[uú]n|Ninguna|Ciertos?|Ciertas?|Dichos?|Dichas?|Mismos?|Mismas?|Tal(?:es)?|(?<=\A)[A-Z][a-záéíóú]+(?:ar|er|ir))")   # el infinitivo, solo al empezar
-_SUFIJO = re.compile(r"(?<![\w&.-])(?!" + _NO_NOMBRE + r"\b)[A-Z][\w&.-]{0,40}(?:\s+[A-Z][\w&.-]{0,40}){0,6},?\s+"
-                     r"(?:Corp|Corporation|Inc|Incorporated|Ltd|Limited|plc|PLC|AG|NV|N\.V|SE|S\.A|SA|S\.p\.A|SpA|GmbH|LLC|"
-                     r"Aktiengesellschaft|Co(?=\.)|FI|FIL|SICAV|SOCIMI\s+S\.A|Fund|Trust|UCITS\s+ETF|ETF|"
-                     r"(?i:inc|corp|corporation|incorporated|ltd|limited|spa|gmbh|llc))\.?(?!\w)"
-                     r"|(?<![\w&.-])[a-z][\w&-]{0,40}\s+(?:inc|corp|ltd|plc|co|llc|spa|ag|nv)\.(?!\w)")
+# r05 (QA r04, H-32 y H-37) y r06 (QA r05, H-44): sufijos de sociedad y de fondo, en mayúscula o en minúscula, con o sin
+# punto. Cada palabra del nombre empieza donde no hay otra letra y tiene un tope de longitud (lineal). Un determinante
+# no es un nombre («Cada ETF», «Ningún ETF»); un infinitivo al abrir la frase solo se exceptúa delante de un sufijo de
+# fondo («Sobreponderar ETF»), no de uno de sociedad («Pfizer Inc.», «Schlumberger Ltd.»).
+_DETERMINANTE = (r"(?:El|La|Los|Las|Un|Una|Unos|Unas|Estas?|Estos|Esos?|Esas?|Aquel(?:la|los|las)?|Sus?|Varios|Varias|"
+                 r"Algunos|Algunas|Muchos|Muchas|Pocos|Pocas|Otros?|Otras?|Ambos|Ambas|Nuestros?|Nuestras?|Cada|Tod[oa]s?|"
+                 r"Cualquier|Ning[uú]n|Ninguna|Ciertos?|Ciertas?|Dichos?|Dichas?|Mismos?|Mismas?|Tal(?:es)?)")
+_NOMBRE = r"(?<![\w&.-])[A-Z][\w&.-]{0,40}(?:\s+[A-Z][\w&.-]{0,40}){0,6},?\s+"
+_SUF_SOCIEDAD = (r"(?:Corp|Corporation|Inc|Incorporated|Ltd|Ltda|Limited|plc|PLC|Plc|AG|NV|N\.V|SE|S\.A|SA|S\.p\.A|SpA|GmbH|"
+                 r"LLC|KGaA|Oyj|Bhd|Group|Holdings?|Aktiengesellschaft|Co(?=\.)|FI|FIL|SICAV|Sicav|SOCIMI|Socimi|"
+                 r"(?i:inc|corp|corporation|incorporated|ltd|ltda|limited|spa|gmbh|llc|plc|sicav|socimi|kgaa|oyj|bhd))\.?(?!\w)")
+_SUF_FONDO = r"(?:Fund|Trust|UCITS\s+ETF|ETF|ETC|ETP)\.?(?!\w)"
+_SUFIJO = re.compile(rf"(?!{_DETERMINANTE}\b){_NOMBRE}{_SUF_SOCIEDAD}"
+                     rf"|(?!{_DETERMINANTE}\b)(?!(?<=\A)[A-Z][a-záéíóú]+(?:ar|er|ir)\b){_NOMBRE}{_SUF_FONDO}"
+                     r"|(?<![\w&.-])[a-z][\w&-]{0,40}\s+(?:inc|corp|corporation|incorporated|ltd|ltda|plc|llc|gmbh|"
+                     r"(?:co|spa|ag|nv)(?=\.))\.?(?!\w)")
 _CODIGO = re.compile(r"(?<![\w&.^=-])\$?([A-Z][A-Z0-9&.^=/-]{1,14})(?![\w&])")
 # H-22: un código tras «_», «-» o «=» también cuenta (la variante de arriba no lo ve)
 _CODIGO_PEGADO = re.compile(r"(?:[_=]|(?<=[a-záéíóúñ])[-.])([A-Z]{2,6})(?![\w&])|\$([A-Za-z]{1,6})\b")
 # H-22: tras un vehículo, el código puede ir en minúscula o tener una sola letra («el ETF qqq», «el REIT O»)
 _VEHICULO = re.compile(r"\b(?:ETF|ETP|ETN|ETC|REIT|SOCIMI|fondo|ticker|s[ií]mbolo|acci[oó]n(?:es)?\s+de|futuros?\s+(?:de|sobre)|"
                        r"opci[oó]n(?:es)?\s+(?:de|sobre))\s+([A-Za-z][A-Za-z0-9.]{0,6})(?![\w&])")
+# r06 (QA r05, H-41): palabras corrientes que siguen a «ETF», «fondo» o «REIT» y no son un ticker en minúscula
 _PALABRA_COMUN = frozenset({"de", "del", "la", "el", "los", "las", "que", "en", "con", "por", "sobre", "más", "mas", "y", "o", "a",
-                            "al", "un", "una", "su", "sus", "este", "esta", "ese", "esa", "como", "para", "sin", "no", "se"})
+                            "al", "un", "una", "su", "sus", "este", "esta", "ese", "esa", "como", "para", "sin", "no", "se",
+                            "es", "son", "era", "fue", "va", "van", "ha", "han", "hay", "sube", "suben", "cae", "caen", "gana",
+                            "ganan", "baja", "bajan", "paga", "pagan", "pesa", "pesan", "rinde", "sigue", "muy", "bien",
+                            "mal", "ya", "aún", "solo", "sólo", "tiene", "puede", "debe", "deben", "mejor", "peor", "menos",
+                            "tanto", "otro", "otra", "cada", "todo", "toda", "e", "u", "ni", "pero", "si", "sí", "tras", "hoy",
+                            "nunca", "casi", "algo", "le", "les", "lo", "nos", "cuyo", "cuya"})
 _CALIFICACION = re.compile(r"(?:AAA|AA|A|BBB|BB|B|CCC|CC|C|D)[+-]?")
 _CONTEXTO_CALIFICACION = re.compile(r"\b(?:cr[eé]dito|calificaci[oó]n|rating|grado|bonos?|deuda|emisor(?:es)?|tramo)\b", re.IGNORECASE)
 # Abreviaturas que llevan punto y no acaban la frase: se protegen antes de dividir
@@ -529,6 +544,21 @@ _ABREV = re.compile(r"\b(?:EE\.\s?UU|S\.\s?A|S\.\s?L|p\.\s?ej|etc|Inc|Corp|Ltd|S
 _PUNTO = "․"
 # H-26: sin cuantificadores que se solapen (antes, cuadrático con muchos espacios seguidos)
 _SEPARADOR = re.compile(r"((?<=[.;!?…])\s+|(?<![^\S\n])[^\S\n]*+\n\s*+)")
+
+
+_MARCA_ESPANOLA = {"\u0301": "aeiouAEIOU", "\u0303": "nN", "\u0308": "uU"}   # tilde en vocal, ñ, ü
+
+
+def _sin_marcas(t: str) -> str:
+    """Quita las marcas combinantes, también las de una letra compuesta («Ṅ», «N̲»), salvo las del español (á, ñ, ü)."""
+    out: list[str] = []
+    for ch in unicodedata.normalize("NFKD", t):
+        if unicodedata.category(ch) in ("Mn", "Me"):
+            if out and out[-1] in _MARCA_ESPANOLA.get(ch, ""):
+                out.append(ch)
+            continue
+        out.append(ch)
+    return "".join(out)
 
 
 def _hay_cifra(t: str) -> bool:
@@ -557,61 +587,59 @@ def _clave(m) -> str:
 
 
 def marcadores(paquete: dict, perm=None) -> dict[str, str]:
-    """Lo que vale cada marcador en este paquete (T-102 r03). Las cifras salen del paquete validado, nunca del Sintetizador.
-    Con `perm`, un `nombre_llano` que incumpliría la regla (lo escribe un Analista) se cambia por «esta idea» (r04, H-27)."""
+    """Lo que vale cada marcador de texto en este paquete ({opp:…} y {tipo:…}). Desde la r06 no hay marcadores de cuenta en el
+    texto libre: las cuentas las escribe el código (`_cuenta_motivo` y la primera frase de 30 s). Con `perm`, un
+    `nombre_llano` que incumpliría la regla (lo escribe un Analista) se cambia por «esta idea» (r04, H-27)."""
     out: dict[str, str] = {}
-    n_ideas = n_tipos = 0
     for c, d in (paquete.get("clases") or {}).items():
-        ops = d.get("opciones") or []
         out[f"tipo:{c}"] = NOMBRE_CLASE.get(c, c).lower()
-        out[f"n:{c}"] = str(len(ops))
-        out[f"candidatas:{c}"] = str(d.get("candidatas_analizadas", 0))
-        n_ideas += len(ops)
-        n_tipos += 1 if ops else 0
-        for o in ops:
+        for o in d.get("opciones") or []:
             nombre = str(o.get("nombre_llano") or "esta idea")
             if perm is not None and frase_prohibida(nombre, perm):
                 nombre = "esta idea"
             out[f"opp:{o['opp_id']}"] = nombre
-    out.update({"n_ideas": str(n_ideas), "n_tipos": str(n_tipos), "n_apuestas": str(paquete.get("apuestas_independientes", n_ideas))})
     return out
 
 
 def frase_prohibida(t: str, perm, marcas: dict | None = None) -> str | None:
     """«MARCADOR», «CIFRA», «R21» o None para UNA frase (ya normalizada con NFKC por `limpiar`). Con `marcas`, un marcador que
     no está en este paquete también quita la frase; sin ellas (pruebas unitarias), basta con que esté bien formado."""
-    # r05 (QA r04, H-33): fuera los caracteres de formato (espacio de ancho cero, guion blando, unión de palabras) y las
-    # marcas combinantes, que parten un código sin que se vea («N\u200bV\u200bD\u200bA» se lee «NVDA»)
-    crudo = "".join(ch for ch in t.replace(_PUNTO, ".") if unicodedata.category(ch) not in ("Cf", "Mn", "Me"))
-    t = unicodedata.normalize("NFKC", crudo)
-    if _hay_cifra(_MARCADOR.sub(" ", crudo)):   # antes de NFKC: «Ⅶ» pasaría a ser «VII», letras
+    # r05 (QA r04, H-33): fuera los caracteres de formato (espacio de ancho cero, guion blando, unión de palabras), que parten
+    # un código sin que se vea («N\u200bV\u200bD\u200bA» se lee «NVDA»)
+    orig = "".join(ch for ch in t.replace(_PUNTO, ".") if unicodedata.category(ch) != "Cf")
+    if _hay_cifra(_MARCADOR.sub(" ", orig)):   # antes de normalizar: «Ⅶ» pasaría a ser «VII», letras
         return "CIFRA"
+    # r06 (QA r05, H-46): fuera también las marcas combinantes, también las de una letra compuesta («ṄVDA», «N̲V̲D̲A»)
+    t = unicodedata.normalize("NFKC", _sin_marcas(orig))
     if marcas is not None and any(_clave(m) not in marcas for m in _MARCADOR.finditer(t)):
         return "MARCADOR"
-    # H-23: dos marcadores numéricos pegados, o unidos por «sobre», «entre», «de cada» o «/», componen una cifra
-    if re.search(rf"{_MARCADOR_NUM.pattern}\s*(?:sobre|entre|(?:veces\s+)?de\s+cada|contra|a|en|/|%|-)?\s*{_MARCADOR_NUM.pattern}"
-                 rf"|{_MARCADOR_NUM.pattern}\s*%", t, re.IGNORECASE):   # r05 (H-31): también «veces de cada», «contra», «a»
-        return "MARCADOR"
-    if _MARCADOR_NUM.search(t) and _UNO_Y_MARCADOR.search(_MARCADOR_NUM.sub("{}", t)):
+    if _MARCADOR_NUM.search(t):   # r06 (H-42): las cuentas las escribe el código, no el texto libre
         return "MARCADOR"
     libre = _MARCADOR.sub(" ", t)
     if _LLAVE.search(libre) or any("CURLY BRACKET" in unicodedata.name(ch, "") for ch in libre):   # también «❴ ❵»
         return "MARCADOR"
-    if _hay_cifra(libre) or _CIFRA_EN_LETRA.search(libre) or re.search(r"\bel\s+(?:doble|triple|cu[aá]druple)\b", libre, re.IGNORECASE) \
-            or any(("PERCENT" in unicodedata.name(ch, "") or "PER MILLE" in unicodedata.name(ch, "")) for ch in libre):   # «٪»
-        return "CIFRA"
     if re.search(r"\b(?:n_ideas|n_tipos|n_apuestas)\b|\b(?:opp|tipo|n|candidatas):[A-Za-z0-9-]", libre):   # r05: «〔n_ideas〕»
         return "MARCADOR"
-    if _PALABRA_PROB.search(libre) and _MARCADOR_NUM.search(t):   # H-23 (los números en letra ya son cifra, r05)
+    if _hay_cifra(libre) or _CIFRA_EN_LETRA.search(libre) \
+            or any(("PERCENT" in unicodedata.name(ch, "") or "PER MILLE" in unicodedata.name(ch, "")) for ch in libre):   # «٪»
         return "CIFRA"
-    if _SUFIJO.search(libre.lstrip(" \t-•*")) or sint._UNITARIA.search(libre):
+    if _SUFIJO.search(libre.lstrip(" \t-•*")):
+        return "R21"
+    for m in sint._UNITARIA.finditer(libre):
+        # r06 (QA r05, H-41): «la acción de los bancos centrales» o «el bono de referencia» no nombran un título concreto
+        if m.group(0).rstrip().lower().endswith(" de") and re.match(r"\s*[a-záéíóúñ]", libre[m.end():]):
+            continue
         return "R21"
     libre = re.sub(r"\bEE\.\s?UU\.", "EEUU", libre)
     # r04 (H-22) y r05 (QA r04): una letra de otro alfabeto (griego, cirílico, cheroqui: posibles homoglifos), una versalita o
     # un indicador regional en un texto en español falla cerrado («ΝVDA», «ᏚᏢᎩ», «ɴᴠᴅᴀ», «🇳🇻🇩🇦»)
     if any((unicodedata.category(ch).startswith("L") and "LATIN" not in unicodedata.name(ch, ""))
-           or any(x in unicodedata.name(ch, "") for x in ("SMALL CAPITAL", "REGIONAL INDICATOR", "MODIFIER LETTER")) for ch in libre):
+           or any(x in unicodedata.name(ch, "") for x in ("SMALL CAPITAL", "REGIONAL INDICATOR", "MODIFIER LETTER", "SQUARED LATIN",
+                                                          "CIRCLED LATIN", "PARENTHESIZED LATIN")) for ch in libre):
         return "R21"   # r04 (H-22): letras de otros alfabetos en un texto en español: posible homoglifo, falla cerrado
+    # r06 (QA r05, H-46): letras sueltas en mayúscula separadas por espacios, «_» o el blanco Braille («N V D A», «N_V_D_A»)
+    if re.search(r"(?<![\w])[A-Z](?:[\s_\u2800][A-Z]){2,}(?![\w])", libre):
+        return "R21"
     codigos = _CODIGO.findall(libre) + [a or b for a, b in _CODIGO_PEGADO.findall(libre)]
     if any(m.startswith("$") or _es_instrumento(m, perm, libre) for m in codigos) or any(
             b for _, b in _CODIGO_PEGADO.findall(libre)):
@@ -621,15 +649,18 @@ def frase_prohibida(t: str, perm, marcas: dict | None = None) -> str | None:
         if not (m.group(2) == "s" and m.group(1) in perm["codigos"]):
             return "R21"
     for m in _VEHICULO.finditer(libre):
-        c = m.group(1)
-        if (c.islower() and c in _PALABRA_COMUN) or (c[0].islower() and len(c) > 5):
-            continue
-        if len(c) >= 3 and c[0].isupper() and c[1:].islower():   # r05 (H-36): «acciones de Europa», «fondo Europa del Este»
+        c = m.group(1).rstrip(".")   # r06 (H-44): «el fondo vwrl.»
+        if not c or (c.islower() and c in _PALABRA_COMUN) or (c[0].islower() and len(c) > 5):
             continue
         # la minúscula solo tras un vehículo que se nombra por su ticker (no tras «opciones de», «acciones de» o «fondo»)
-        ticker = bool(re.match(r"(?:ETF|ETP|ETN|ETC|REIT|SOCIMI|ticker|s[ií]mbolo)\b", m.group(0))) or (
-            m.group(0).lower().startswith("fondo") and len(c) <= 4)
+        por_ticker = bool(re.match(r"(?:ETF|ETP|ETN|ETC|REIT|SOCIMI|ticker|s[ií]mbolo)\b", m.group(0)))
+        # r05 (H-36) y r06 (H-44): una palabra con mayúscula inicial es un nombre («acciones de Europa») salvo tras un vehículo
+        # que se nombra por su ticker («el ETF Nvda», «el REIT Realty»)
+        if not por_ticker and len(c) >= 3 and c[0].isupper() and c[1:].islower():
+            continue
+        ticker = por_ticker or (m.group(0).lower().startswith("fondo") and len(c) <= 4)
         if c.upper() not in perm["codigos"] and ((c.islower() and ticker) or (len(c) == 1 and c.isupper())
+                                                 or (por_ticker and c[0].isupper() and c[1:].islower())
                                                  or (not c.islower() and _es_instrumento(c, perm, libre))):
             return "R21"
     return None
@@ -743,6 +774,14 @@ def _aplicar_integracion(paquete: dict, d: dict, lim: dict, permitidos=None) -> 
     return descartados
 
 
+def _cuenta_motivo(paquete: dict, clase: str) -> str:
+    """La frase con las cuentas de un tipo, escrita por el código con datos del paquete (T-102 r06)."""
+    d = (paquete.get("clases") or {}).get(clase) or {}
+    n, cand = len(d.get("opciones") or []), int(d.get("candidatas_analizadas") or 0)
+    tipo = NOMBRE_CLASE.get(clase, clase).lower()
+    return f"De {cand} ideas de {tipo} analizadas, {n} {'pasó' if n == 1 else 'pasaron'} todos los filtros."
+
+
 def _redaccion_segura(bloque, paquete, d, permitidos=None) -> dict:
     """Los textos llanos del Sintetizador, frase a frase: una frase que incumple R13 o R21 se quita; si un texto se queda vacío,
     toma el texto por defecto de ese mismo elemento (no de todos). Se declara cuántas frases se quitaron (T-102)."""
@@ -758,15 +797,19 @@ def _redaccion_segura(bloque, paquete, d, permitidos=None) -> dict:
         t2, reglas = limpiar(t, perm, marcas)
         quitadas.extend(reglas)
         return t2 if not reglas else (t2.strip() or por_defecto)
-    red["frases_30s"] = [_uno(t, defecto["frases_30s"][i] if i < len(defecto["frases_30s"]) else "")
-                         for i, t in enumerate(red.get("frases_30s") or [])]
+    # r06 (decisión del operador, H-42): la primera frase de 30 s, con las cuentas, la escribe el código; el Sintetizador
+    # escribe las siguientes, sin marcadores numéricos
+    propias = [_uno(t, defecto["frases_30s"][i + 1] if i + 1 < len(defecto["frases_30s"]) else "")
+               for i, t in enumerate(red.get("frases_30s") or [])]
+    red["frases_30s"] = ([defecto["frases_30s"][0]] + [x for x in propias if x.strip()])[:len(defecto["frases_30s"])]
     def_tarj = {x["opp_id"]: x for x in defecto["tarjetas"]}
     for x in red.get("tarjetas") or []:
         base = def_tarj.get(x.get("opp_id"), {})
         for k in ("por_que_llano", "que_puede_salir_mal_llano", "ambito_llano"):
             if isinstance(x.get(k), str):
                 x[k] = _uno(x[k], base.get(k, ""))
-    red["motivos_llanos"] = {k: v2 for k, v in (red.get("motivos_llanos") or {}).items()
+    # r06 (H-42): las cuentas del motivo (ideas analizadas y las que pasaron) las escribe el código delante del texto
+    red["motivos_llanos"] = {k: f"{_cuenta_motivo(paquete, k)} {v2}".strip() for k, v in (red.get("motivos_llanos") or {}).items()
                              if isinstance(v, str) and (v2 := _uno(v, "").strip())}
     glosario = []
     for g in red.get("glosario") or []:

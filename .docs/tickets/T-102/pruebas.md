@@ -61,3 +61,21 @@ Scripts de la QA r04 en el árbol de la r05:
 - `r03_03_mutantes.py <copia> 3 todos`: mueren 16 y no sobrevive ninguno; 22 no aplican.
 
 Cuotas: ruff 2908 y mypy de A 109, sin cambios.
+
+## Ronda r06
+
+| Suite | r05 | r06 |
+| --- | --- | --- |
+| `test_t102_filtro.py` | 182 | 260 (H-40 a H-46, una frase por mutante vivo y CA-15; los marcadores de cuenta pasan de legítimos a prohibidos) |
+| `test_t101_v6.py` | 73 | 73 |
+
+Scripts de la QA r05 en el árbol de la r06:
+- `r05_01_banco.py .`: prohibidas que pasan, 0 de 40 (antes 38). Legítimas quitadas, 7 de 68: las 7 llevan marcadores de cuenta, que desde la r06 se quitan por diseño (CA-15). Coste aparte: 15 de 18 legítimas con un número en letra;
+- `r05_02_camino_real.py .`: `listas` llegan 0/4; las 7 legítimas con marcadores de cuenta no llegan y se declaran; `cli` sale con código 0 y tres ficheros;
+- `r05_03_rendimiento.py .`: 0,56 s en total, ningún caso no lineal;
+- mutantes, sobre una copia completa:
+  - `r05_04`: mueren 22 de 48; sobrevive R27, que la QA r05 ya dio por equivalente; no aplican 25, cuyas expresiones cambiaron;
+  - `r04_13`: mueren 23 de 45; sobrevive N45, equivalente;
+  - `r03_03`: mueren 13 y no sobrevive ninguno.
+
+Cuotas: ruff 2908 y mypy de A 109, sin cambios. El banco ciego de CA-12 y CA-13 lo escribe el revisor de la QA r06.
