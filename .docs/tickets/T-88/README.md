@@ -2,7 +2,7 @@
 
 | Campo | Valor |
 | --- | --- |
-| Estado | EN QA (ronda r02) |
+| Estado | EN QA (ronda r03) |
 | Pieza | `bloque_a/11_Ejecutor` (`bloque_a/consumo.py`, `bloque_a/orquestacion.py`) |
 | Planifica · implementa · QA | claude · claude · claude, con un revisor nuevo sin contexto (regla del operador del 12-11-2026) |
 | Aprobación del operador | 2026-11-12: está en el orden de tareas obligatorias para evaluar el Bloque A por separado |
@@ -28,7 +28,7 @@ Que dos ejecuciones iguales del ciclo con varios hilos dejen en F5 el mismo cons
   - tras la fase en paralelo y al resumir, `liquidar_primas` cambia esas primas «solo» por su parte de los tokens escritos de verdad, en proporción a las primas «solo». El total cargado vuelve a ser el real;
   - todo se cuenta en tokens enteros, así que la suma no depende del orden de los hilos.
 - **Estado persistido:** no cambia de forma; solo cambian los valores de `presupuesto` en F5.
-- **Cómo falla cerrado:** durante la fase en paralelo, el control de presupuesto ve la prima «solo», que es igual o mayor que la real.
+- **Qué ve el control durante la fase (r02, corregido en la r03, H-07):** la lectura de lo cacheado y la escritura del prompt del analista propio, como antes de T-88. No ve las escrituras de los agentes compartidos (unos 3,5 UC en un ciclo V5 de doce perfiles), que se cargan al liquidar, al acabar la fase. En la V6 cada analista carga durante la fase su núcleo y su kit enteros (H-06, declarado).
 
 ## Criterios de aceptación (binarios)
 
@@ -57,3 +57,5 @@ Que dos ejecuciones iguales del ciclo con varios hilos dejen en F5 el mismo cons
 - 2026-11-12 · EN QA · reparto de las primas de caché por liquidación proporcional; 5 pruebas nuevas
 - 2026-11-12 · APTO · QA r01 (revisor nuevo, commit `7feb697`): CA-1 a CA-4 cumplidos; H-01 medio (la prima «solo» de los agentes compartidos cerraba fases en la V5), H-02 a H-04 bajos
 - 2026-11-12 · EN QA · Ronda r02 por decisión de Claude (H-01 cambiaba la selección en la V5): carga durante la fase solo la prima del analista propio; liquidación por grupo de prefijos (H-02)
+- 2026-11-13 · NO APTO · QA r02 (revisor nuevo, commit `d1a5a1b`): H-05 medio (el grupo de los analistas reparte el prompt de un tipo entre todos), H-06 a H-09 bajos
+- 2026-11-13 · EN QA · Ronda r03: en la V5 cada analista es su propio grupo (la V6 sigue con el grupo común por el núcleo, declarado); `cierres_parciales` en orden fijo; documentación al día; 6 pruebas nuevas que matan los mutantes P

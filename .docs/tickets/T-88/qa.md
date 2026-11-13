@@ -66,3 +66,105 @@ Observaciones sin hallazgo:
 **APTO.** Los cuatro criterios se cumplen, con evidencia propia: el consumo por tipo es determinista con 1 a 12 hilos y los doce perfiles, en V5 y en V6, también con reintentos y con aciertos de la caché de respuestas; el total cargado es el real en V6; el gate da 12/12 desde limpio. No hay hallazgos críticos ni altos.
 
 H-01 (media) es el más importante. La regla `[PROPUESTO]` arregla el registro, pero en la V5 endurece el control de presupuesto durante el ciclo con un coste que no existe (unos 2,8 UC por tipo). Con presupuestos ajustados, como una PROFUNDIZACION N3 de muchos tipos con los valores por defecto, cierra fases y cambia la selección. Conviene corregirlo antes del modo sombra o, si no, declararlo en INC-T88-01. H-01 a H-04 pasan a la deuda técnica con su ID si no se corrigen. El cierre del ticket (estado, deuda, diario y commit) queda para el coordinador: esta ronda solo escribe este archivo y los scripts de `revisores/`.
+
+## Ronda r02
+
+- **Revisor:** subagente nuevo de Claude, sin contexto de la implementación ni de la r01 (solo el plan, el código y los `qa.md`). Opinión formada con el README, el diff de `d1a5a1b` y el código antes de leer «Ronda r02» de `analisis-tecnico.md`.
+- **Código revisado:** commit `d1a5a1b` de `develop` (la r01 se revisó en `7feb697`).
+  - Comparación con `7feb697^` (antes de T-88) en un worktree aparte.
+  - Otra sesión empezó a modificar el árbol principal durante esta QA (`motor/servicio.py`, T-106, desde las 22:41 UTC). Por eso las ejecuciones posteriores se lanzaron contra un worktree limpio de `d1a5a1b` (`--ejecutor`); las anteriores terminaron antes de esa hora.
+  - Los worktrees se borraron al acabar. Durante la QA, `develop` avanzó hasta `5642ed0` (T-102 y T-106) sin tocar el código, las pruebas ni los documentos de T-88 y T-91.
+- **Scripts nuevos** (todos aceptan `--ejecutor RUTA`; se ejecutan con `.venv/bin/python -I`):
+  - `revisores/r02_01_determinismo_fase_y_total.py`: determinismo, también del consumo antes y después de la liquidación de la fase;
+  - `r02_02_presupuestos_justos.py`: barrido de presupuestos frente a `7feb697^`;
+  - `r02_03_grupos_y_mezcla.py`: CA-6;
+  - `r02_04_mutantes.py`: mutantes de la r02, con el motor `r01_mutar.py`.
+
+### Reproducción desde limpio
+
+- Worktree limpio de `d1a5a1b` con `.venv` enlazado y `PYTHONPATH` apuntando a sus tres ejecutores: `./tools/check_all.sh` completo **12/12**. A **740**, A-Forex 68 y B 176; ruff 2938 de 2938; mypy A 109, FX 174 y B 159; corpus, NFC, YAML, secretos y refs vivas en verde.
+- `tests/test_t88_consumo.py`: las 5 pruebas pasan. La r02 cambia dos de ellas y no añade ninguna.
+- Scripts de la r01, otra vez:
+  - `r01_01`: **6/6**. Con los doce perfiles, 1, 3, 6 y 12 hilos y 3 repeticiones, el mismo F5 en V5 y en V6. En V6, 29,2876 UC cargadas frente a 29,2877 reales. En V5 la diferencia es de 2,9589 UC, las llamadas posteriores a F5, como en la r01;
+  - `r01_02 --base <7feb697^>`: **10/10**. Con los presupuestos por defecto, los mismos cierres y la misma selección que la base en V5 y V6, N1 y N2;
+  - `r01_03 --base <7feb697^>`: **57/59**, como dice `analisis-tecnico.md`. Los dos fallos son de la PROFUNDIZACION N3 de la V5, en RV, y van en la otra dirección. La base cerraba la refutación de RV, que pagaba la caché compartida por llegar primero. HEAD no la cierra y pide dos ampliaciones AUT (autorizadas), así que la selección cambia. En el caso A, RF pide 3 → 0 ampliaciones;
+  - `r01_05` y `r01_04` ya no sirven: espían o mutan `cargar_con_prima` con la firma antigua (`TypeError` en `r01_05`). Los sustituyen `r02_03` (partes U y P) y `r02_04`.
+
+### Criterios de aceptación
+
+| Criterio | Cumple | Evidencia |
+| --- | --- | --- |
+| CA-1 | sí | `r02_01`: con los doce perfiles y 1, 3, 6 y 12 hilos × 3, son idénticos en las 10 ejecuciones de V5 y en las 10 de V6: el `presupuesto` de F5, los cierres y el consumo por tipo justo antes y justo después de la liquidación que sigue a la fase en paralelo. `r02_02`: con presupuestos justos (8 valores de δ por diseño), HEAD da el mismo presupuesto de F5, los mismos cierres y AUT (como conjunto) y la misma selección con 1, 6 y 12 hilos. Ver H-09 para el orden de los cierres |
+| CA-2 | sí | `r02_01` y `r01_01`: en V6, 29,2876 UC cargadas frente a 29,2877 reales. Tras liquidar la fase, lo cargado es el coste real de sus llamadas: V5 47,0613 frente a 47,0612 y V6 19,0082 frente a 19,0083 |
+| CA-3 | sí | `test_la_liquidacion_reparte_por_grupo_y_conserva_el_total`. Una segunda liquidación no cambia nada: el mutante P11 (no vaciar lo cargado) muere. El total tras liquidar es el real (arriba). La primera frase de CA-3 («cada bolsa carga su prima solo») la sustituye CA-5 |
+| CA-4 | sí | Gate 12/12 desde limpio, sin subir cuotas, A 740 (737 + 3 de T-91). La r02 de T-88 no añade pruebas; ver H-08 |
+| CA-5 | sí | `r02_02`, V5 N2 con los doce tipos a la vez en su mínimo de la base + δ (δ de −0,4 a +0,4 UC, 8 valores), un hilo: ningún tipo cierra una fase ni pide una AUT que la base no cerrase o pidiese. Hay 3 cierres menos (RF) y 3 tipos con una selección distinta, todos en la dirección declarada. Con los presupuestos por defecto, todo igual que la base (`r01_02`). En la V6 sí aparece un cierre nuevo, pero CA-5 solo habla de la V5: ver H-06 |
+| CA-6 | **no** | `r02_03`: la liquidación mezcla prompts de analistas de tipos distintos (H-05) |
+
+### Ataques
+
+- **Lo que ve el control durante la fase** (`r02_01`). En V5, antes de liquidar, los doce tipos han cargado 43,586 UC de 47,061 reales: las escrituras de los agentes compartidos (unos 3,5 UC) no las ve ningún control durante la fase, y al liquidar cada tipo recibe de 0,21 a 0,36 UC. En V6 pasa lo contrario: antes de liquidar, 21,85 UC de 19,01 reales, porque cada analista carga entero el núcleo común (H-06).
+- **Bolsas por encima de su límite tras liquidar** (`r02_02`, comprobación 4; el script la marca como FALLO por una diferencia de 0,0001 UC). En V5 hay los mismos casos que en la base: DER con δ de +0,05 a +0,2, por 0,3157 frente a 0,3158 UC; la diferencia es de redondeo y viene de estimaciones previas más bajas que el coste, anteriores a T-88. En V6 el exceso total baja de 3,32 UC (base: sobre todo RV, que pagaba la caché) a 2,21 UC, repartido entre más tipos: 18 casos frente a 19. No es un hallazgo de T-88, pero el control no ve esos excesos (ver H-07).
+- **Agentes y grupos** (`r02_03 A`). En el ciclo V6 hay cinco grupos: AG-10, AG-11, AG-26, AG-28 y ANALISTAS. Ningún analista se carga a una bolsa que no sea la suya, y ningún agente compartido carga prima durante la fase.
+- **Invariantes:**
+  - no hay LLM en la contabilidad;
+  - ningún número nuevo: la prima sale de `uc.factor_lectura_cache` y `uc.tokens_entrada_por_uc`;
+  - el estado persistido no cambia de forma;
+  - INC-T88-01 sigue como `[PROPUESTO]`;
+  - nada de secretos ni datos personales;
+  - documentación: ver H-07.
+
+### Mutantes (`r02_04_mutantes.py`, sobre otra copia)
+
+Primero `test_t88_consumo.py`. Si sobrevive, las suites de presupuesto e integración de la r01 (`test_integracion`, `test_t65_qa_r01`, `test_t87_agentes`, `test_t92_revision`, `test_v5`, `test_t101_v6`) y, después, los detectores propios (`r02_01 --rapido` y `r02_03 A`).
+
+| Mutante | Resultado |
+| --- | --- |
+| P1 durante la fase nadie carga prima, tampoco el analista propio | **sobrevive a todo** (suites relacionadas, `r02_01` y `r02_03 A`) |
+| P2 vuelta a la r01: todos cargan la prima «solo» durante la fase | **sobrevive a las suites relacionadas**; solo lo detecta `r02_03 A` |
+| P3 vuelta a la r01: un único grupo para todos los prefijos | **sobrevive a todo** |
+| P4 un grupo por agente (los analistas por separado) | detectado (`test_dos_ejecuciones…[v6]`) |
+| P5 la liquidación no descuenta lo ya cargado | detectado (`test_v6_el_total_cargado…`) |
+| P6 un grupo sin pesos no va a la bolsa común | detectado (`test_sin_pesos…`) |
+| P7 sin la liquidación tras la fase en paralelo | **sobrevive a las suites relacionadas**; lo detecta `r02_01` |
+| P8 prefijo sin dividir por los intentos (M4 de la r01) | **sobrevive a todo** (en la r01 lo detectaba `r01_05 R`, que ya no corre) |
+| P9 cada llamada tiene prima «solo» (M9 de la r01) | **sobrevive a todo** |
+| P10 el analista propio carga su escritura real en vez de la prima «solo» | **sobrevive a las suites relacionadas**; lo detecta `r02_01` |
+| P11 la liquidación no vacía lo cargado (una segunda liquidación descuenta otra vez) | detectado (`test_v6_el_total_cargado…`) |
+| P12 los pesos son los tokens reales y no la prima «solo» | detectado (`test_dos_ejecuciones…[v5]`) |
+| P13 `resumen()` no liquida | detectado (`test_v6_el_total_cargado…`) |
+
+Las dos correcciones de la r02 (P2 para H-01 y P3 para H-02) no tienen ninguna prueba del ticket que falle sin ellas (H-08).
+
+### Estado de los hallazgos de la r01
+
+| ID | Estado tras la r02 |
+| --- | --- |
+| H-01 (media) | corregido en la V5 (CA-5). En la V6 queda una parte: H-06 |
+| H-02 (baja) | corregido entre agentes compartidos, que ya no se mezclan. Dentro del grupo ANALISTAS sigue la mezcla: H-05 |
+| H-03 (baja) | `analisis-tecnico.md` lo reconoce («ya no se promete prudencia»), pero el README del ticket sigue prometiéndola: H-07 |
+| H-04 (baja) | sigue abierto, ahora con más mutantes vivos: H-08 |
+
+### Hallazgos
+
+| ID | Gravedad | Cómo reproducirlo | Esperado / obtenido | Corrección sugerida | Estado |
+| --- | --- | --- | --- | --- | --- |
+| H-05 | media | `r02_03_grupos_y_mezcla.py` (partes U, G y P; también con `--ejecutor <worktree de d1a5a1b>`) | **Esperado** (CA-6: «sin mezclar el prompt de un analista con otros tipos»; `analisis-tecnico.md`: «en la V5 cada uno escribe el suyo, que vuelve entero a su tipo»): cada tipo paga su propio prompt entero, y solo se reparte lo compartido de verdad (el núcleo V6 y los agentes compartidos).<br>**Obtenido:** los doce analistas forman un solo grupo, y lo escrito por todos se reparte en proporción a las primas «solo». Así un tipo paga parte del prompt de otro:<br>– U, a mano con la forma de la V6: RV y RF comparten un núcleo de 5.000 tokens; el kit de RV mide 10.000 y el de RF 1.000. RF paga 4.571 tokens, y le tocarían 2.428 (su kit más su parte del núcleo) o 3.500 (el núcleo a medias). Paga 2.143 tokens del kit de RV;<br>– G, ciclo V6 real con los doce tipos: núcleo de 4.695 tokens y kits de 6.783 (MON) a 9.244 (RV). Cada tipo paga o cobra kits ajenos: MON +0,0258 UC, CRI +0,0127, RV −0,0253 y ALT −0,0212; en total 0,157 UC mal repartidas por ciclo;<br>– P, V5 con una caché que se pierde cada 7 llamadas (seis tipos): el analista que vuelve a escribir su prompt no lo paga él. RF, DIV, IDX y FON reescriben el suyo y cobran de 0,41 a 0,47 UC cada uno; RV y MP, que no reescriben, pagan +0,92 y +0,85 UC de prompts ajenos. En la V5 el analista propio no comparte nada con otros tipos, así que la mezcla es entera | Separar en el grupo ANALISTAS lo que se comparte de lo que no: el kit (o, en la V5, el prompt entero) de cada analista en un grupo propio (`"ANALISTA:AG-03"`…), que paga su tipo, y en un grupo aparte solo el núcleo V6 (el primer punto de caché, cuyo tamaño se conoce por los bloques de `system`). Pruebas con U y P. Si se mantiene la regla, cambiar CA-6 y escribir la convención en INC-T88-01 | abierto |
+| H-06 | baja | `r02_02_presupuestos_justos.py --base <worktree de 7feb697^>` (V6) y `r01_02` (bolsas en las que HEAD necesita más) | **Esperado** (`analisis-tecnico.md` y docstring de `Bloque._cargar`: el analista propio carga su prompt «como antes de T-88»).<br>**Obtenido:** en la V6, la prima «solo» del analista propio incluye el núcleo común, que antes de T-88 solo escribía el primer analista. Durante la fase, cada tipo carga el núcleo entero: 21,85 UC frente a 19,01 reales (`r02_01`). El mínimo que deja pasar todas las llamadas sube en 10 de los 12 tipos: RF 1,788 → 1,798, IDX 2,739 → 2,795, FON 1,877 → 1,953, INM 1,854 → 1,933 y CRI 1,796 → 1,874. Con presupuestos justos (δ = +0,4), INM cierra la respuesta a objeciones, que la base no cerraba, y cambia su selección. Es el efecto de H-01 de la r01 en la V6, más pequeño. CA-5 solo habla de la V5, pero el efecto no está declarado en INC-T88-01 ni en el README, y la afirmación «como antes de T-88» no es cierta en la V6 | Cargar durante la fase solo el kit del analista propio (lo que escribe aunque el núcleo ya esté guardado) y dejar el núcleo para la liquidación, como los agentes compartidos; va con H-05. O declararlo en INC-T88-01 («en la V6, cada tipo carga el núcleo entero durante la fase; puede cerrar fases con presupuestos justos») | abierto |
+| H-07 | baja | `grep -n "prudente\|igual o mayor" .docs/tickets/T-88/README.md`; la fila T-88 de `sistema_global/seguimiento/Deuda_tecnica_y_pendientes_del_operador.md` | **Esperado** (documentación al día; H-03 de la r01).<br>**Obtenido:**<br>– el «Diseño» del README sigue describiendo la regla de la r01: «cada bolsa paga … su prima solo … Es determinista y prudente: nunca carga menos que la prima real de esa bolsa», y «Cómo falla cerrado: … el control de presupuesto ve la prima solo, que es igual o mayor que la real»;<br>– la deuda técnica dice lo mismo: «Cada tipo paga su prima "como si fuera el único"».<br>Con la r02, en la V5, el control no ve durante la fase unos 3,5 UC de escrituras compartidas: 43,586 cargados frente a 47,061 reales en doce tipos, y de 0,21 a 0,36 UC por tipo. La afirmación de que falla cerrado ya no se cumple. Con los presupuestos probados, ningún tipo acaba por encima de su límite más que en la base (`r02_02`, comprobación 4), pero eso no lo garantiza ningún control | Reescribir «Diseño» y «Cómo falla cerrado» con la regla r02: durante la fase, lectura más la prima del analista propio; lo compartido se ve al liquidar; el control usa la estimación previa, que tampoco incluye escrituras. Actualizar la fila T-88 de la deuda. Si se quiere de verdad fallar cerrado, reservar durante la fase, en cada bolsa, una cota de su parte de lo compartido (por ejemplo, la prima «solo» del agente compartido entre el número de tipos del ciclo) y liquidar como ahora | abierto |
+| H-08 | baja | `r02_04_mutantes.py <copia>` (tabla de arriba) | **Esperado** (H-04 de la r01; «nada cuenta como hecho sin tests»): las dos correcciones de la r02 con una prueba que falle sin ellas.<br>**Obtenido:** la r02 no añade pruebas de ciclo, y sobreviven a las suites relacionadas:<br>– P2: volver a la r01, es decir, cobrar la prima «solo» de los agentes compartidos durante la fase. Es lo que corrige H-01 (CA-5);<br>– P3: volver a un único grupo, lo que corrige H-02 (CA-6), porque la prueba unitaria pasa el grupo a mano;<br>– P1: que el analista propio no cargue nada durante la fase;<br>– P7, P8, P9 y P10.<br>Solo `r02_03 A` detecta P2, y solo `r02_01` detecta P7 y P10 | Una prueba de ciclo V5 que fije el consumo por tipo justo antes de la liquidación de la fase (espiando `liquidar_primas`, como `r02_01`): mata P1, P2, P7 y P9. Otra que fije el grupo que llega a `cargar_con_prima` para un analista y para un agente compartido (mata P3). El caso con reintentos de `r01_05 R`, adaptado a la firma nueva, mata P8 | abierto |
+| H-09 | baja (anterior a T-88) | `r02_02_presupuestos_justos.py --base …` (línea «orden de `cierres_parciales`»); diagnóstico con 1, 6 y 12 hilos en V6 N2, δ = +0,1 | **Esperado** (objetivo del ticket: un registro de F5 que se reproduzca).<br>**Obtenido:** con presupuestos justos en la V6, `cierres_parciales` de F5 trae los mismos cierres pero en un orden que depende de los hilos, en los 8 valores de δ probados. Las AUT de HA también se escriben en el orden de llegada. El `presupuesto` y la selección sí son idénticos | Ordenar `Presupuesto.cierres` (por clase, fase y motivo) al registrar F5, y las AUT de la fase en paralelo, como ya se hace con las escrituras de F2. O llevarlo a la deuda con este ID | abierto |
+
+### Veredicto
+
+**NO APTO.** CA-6 no se cumple: H-05 (media). La liquidación sigue mezclando el prompt de un analista con otros tipos:
+- en la V6, en todos los ciclos (0,157 UC mal repartidas por ciclo de doce tipos);
+- en la V5, en cuanto un analista reescribe su prompt (hasta 0,92 UC por tipo con una caché que se pierde).
+
+Por lo demás, la r02 cumple lo que pretendía:
+- CA-5: en la V5 no se cierra ninguna fase ni se pide ninguna ampliación que la base no cerrase o pidiese, en un barrido de 8 presupuestos justos;
+- CA-1 a CA-4: el consumo por tipo es determinista con 1 a 12 hilos, también antes de la liquidación y con presupuestos justos; el total cargado es el real; el gate da 12/12.
+
+H-06 a H-09 son bajos. H-06 y H-07 conviene resolverlos con H-05; H-08 pide las pruebas que faltan.
+
+Siguiente paso: `ri-implementar` para H-05 (y H-06 a H-08), o, si se mantiene la convención, cambiar CA-6 y declararla en INC-T88-01. Después, el revisor vuelve a ejecutar `r02_01` a `r02_04` en una ronda r03. Esta ronda solo escribe este archivo y los scripts `revisores/r02_*`: el estado del ticket queda para el coordinador.

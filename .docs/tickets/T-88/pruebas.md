@@ -22,3 +22,10 @@ Con el código anterior, el determinismo falla en la V5: con los doce perfiles c
 ## Gate
 
 `./tools/check_all.sh` completo con `commit_limpio.sh`.
+
+## Ronda r03
+
+| Suite | r02 | r03 |
+| --- | --- | --- |
+| `tests/test_t88_consumo.py` | 5 | 11 |
+| `r02_04_mutantes.py` (QA r02) | sobreviven P1, P2, P3, P7, P8, P9 y P10 | mueren los 11 que se aplican; P3 y P4 no se aplican (la línea del grupo cambió; los cubren las pruebas de grupos de la V5 y de la V6) |

@@ -96,7 +96,7 @@ Sin contrarréplica, la objeción sigue abierta.
 - durante la fase en paralelo, cada tipo paga la lectura de lo cacheado y la escritura del prompt de su propio analista;
 - al acabar la fase, lo escrito de verdad por los agentes compartidos y por el núcleo V6 se reparte por grupo de prefijos, en proporción a lo que escribiría cada tipo solo.
 
-El total cargado es el coste real. Efecto declarado: en un presupuesto justo, el tipo que antes pagaba por llegar primero ya no cierra por eso una fase durante el ciclo. Detalle en [.docs/tickets/T-88](../.docs/tickets/T-88/README.md).
+El total cargado es el coste real. Efecto declarado: en un presupuesto justo, el tipo que antes pagaba por llegar primero ya no cierra por eso una fase durante el ciclo. En la V5, cada analista es su propio grupo. En la V6, los analistas comparten grupo por el núcleo común, así que cada kit se reparte con el núcleo (hasta unos 0,03 UC por tipo). Además, en la V6 cada analista carga durante la fase su núcleo y su kit enteros, lo que es prudente. Detalle en [.docs/tickets/T-88](../.docs/tickets/T-88/README.md).
 
 **INC-T91-01 · 2026-11-12 · Regla de resolución de un pronóstico (Bloque A, T-65 y T-91).** El Anexo A fija PS2 como puerta de selección; para resolver no había regla. Decisión `[PROPUESTO]`:
 - cada serie (proxy, referencia y cada miembro de la CESTA) necesita un dato posterior a la emisión y no más antiguo, a la fecha de resolución, que la antigüedad de PS2 de su horizonte (H1 en sesiones sin los festivos de `ps2_festivos`);

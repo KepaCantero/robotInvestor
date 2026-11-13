@@ -60,3 +60,90 @@ def test_sin_pesos_lo_real_va_a_la_bolsa_comun():
     p.cargar_con_prima("RV", "AG-14", 0.5, 0, 0, 3000)
     p.liquidar_primas()
     assert p.consumido["RV"] == pytest.approx(0.5) and p.consumido["COMUN"] == pytest.approx(p._uc_prima(3000))
+
+
+
+# ================================================================================================== ronda r03 (QA r02 de T-88)
+from types import SimpleNamespace
+
+from bloque_a.consumo import Contabilidad
+from bloque_a.llm import Uso
+
+
+def _fake(v6=False):
+    cfg = config_pruebas()
+    return SimpleNamespace(contabilidad=Contabilidad(cfg), v6=v6), Presupuesto({"RV": 50, "RF": 50, "IDX": 50, "FON": 50, "COMUN": 50}, cfg)
+
+
+def _r(escrito, leido, intentos=1, entrada=1000, salida=500):
+    return SimpleNamespace(uso=Uso(entrada=entrada, salida=salida, cache_escritura=escrito, cache_lectura=leido), cache_hit=False,
+                           intentos=intentos, uc=0.0)
+
+
+def _leido(fake, r):
+    u = r.uso
+    return fake.contabilidad.uc_de(Uso(entrada=u.entrada, salida=u.salida, cache_lectura=u.cache_escritura + u.cache_lectura))
+
+
+def test_r03_durante_la_fase_solo_el_analista_propio_carga_su_escritura():
+    """P1 y P2: el analista propio carga la prima de su prompt; un agente compartido, no (solo la lectura)."""
+    fake, p = _fake()
+    propio, compartido = _r(20000, 0), _r(20000, 0)
+    Bloque._cargar(fake, p, "RV", "AG-03", propio)
+    Bloque._cargar(fake, p, "RF", "AG-14", compartido)
+    assert p.consumido["RV"] == pytest.approx(_leido(fake, propio) + p._uc_prima(20000))
+    assert p.consumido["RF"] == pytest.approx(_leido(fake, compartido))
+
+
+def test_r03_el_analista_propio_carga_su_prima_solo_aunque_lea_de_cache():
+    """P10: con la caché ya caliente (escritura real 0), el tipo carga igualmente lo que escribiría solo."""
+    fake, p = _fake()
+    r = _r(0, 20000)
+    Bloque._cargar(fake, p, "RV", "AG-03", r)
+    assert p.consumido["RV"] == pytest.approx(_leido(fake, r) + p._uc_prima(20000))
+
+
+def test_r03_la_prima_solo_se_divide_por_los_intentos_y_solo_en_la_primera_llamada():
+    """P8 y P9."""
+    fake, p = _fake()
+    r1 = _r(20000, 20000, intentos=2)   # un intento escribe y el otro lee el mismo prefijo
+    Bloque._cargar(fake, p, "RV", "AG-03", r1)
+    assert p.consumido["RV"] == pytest.approx(_leido(fake, r1) + p._uc_prima(20000))
+    antes = p.consumido["RV"]
+    r2 = _r(0, 20000)
+    Bloque._cargar(fake, p, "RV", "AG-03", r2)   # segunda llamada del mismo agente en la bolsa: sin prima
+    assert p.consumido["RV"] - antes == pytest.approx(_leido(fake, r2))
+
+
+def test_r03_v5_cada_analista_paga_su_prompt_y_los_compartidos_se_reparten_por_agente():
+    """P3 y H-05: en la V5 no se mezclan los prompts de los analistas ni con los compartidos."""
+    fake, p = _fake()
+    Bloque._cargar(fake, p, "RV", "AG-03", _r(10000, 0))
+    Bloque._cargar(fake, p, "RF", "AG-04", _r(20000, 0))
+    Bloque._cargar(fake, p, "RV", "AG-14", _r(0, 20000))      # AG-14: RF escribe y RV lee
+    Bloque._cargar(fake, p, "RF", "AG-14", _r(20000, 0))
+    base = {b: p.consumido[b] - p._uc_prima(t) for b, t in (("RV", 10000), ("RF", 20000))}
+    p.liquidar_primas()
+    assert p.consumido["RV"] == pytest.approx(base["RV"] + p._uc_prima(10000) + p._uc_prima(10000))
+    assert p.consumido["RF"] == pytest.approx(base["RF"] + p._uc_prima(20000) + p._uc_prima(10000))
+
+
+def test_r03_v6_los_analistas_comparten_grupo_por_el_nucleo():
+    """P4: en la V6 el núcleo común lo escribe el primer analista; el grupo de los analistas lo reparte entre los tipos."""
+    fake, p = _fake(v6=True)
+    Bloque._cargar(fake, p, "IDX", "AG-21", _r(15000, 0))   # escribe núcleo (10.000) y kit (5.000)
+    Bloque._cargar(fake, p, "FON", "AG-22", _r(5000, 10000))   # lee el núcleo y escribe su kit
+    antes = {b: p.consumido[b] - p._uc_prima(15000) for b in ("IDX", "FON")}
+    p.liquidar_primas()
+    assert p.consumido["IDX"] == pytest.approx(antes["IDX"] + p._uc_prima(10000))
+    assert p.consumido["FON"] == pytest.approx(antes["FON"] + p._uc_prima(10000))
+
+
+def test_r03_se_liquida_al_acabar_la_fase_en_paralelo_y_al_resumir(tmp_path, monkeypatch):
+    """P7: dos liquidaciones por ciclo como mínimo (tras la fase en paralelo y en `resumen`)."""
+    import inspect
+    llamadas = []
+    orig = Presupuesto.liquidar_primas
+    monkeypatch.setattr(Presupuesto, "liquidar_primas", lambda self: (llamadas.append(inspect.stack()[1].function), orig(self))[1])
+    _consumo(tmp_path, "v5")
+    assert "resumen" in llamadas and any(x != "resumen" for x in llamadas), llamadas   # también tras la fase en paralelo
