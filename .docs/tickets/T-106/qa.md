@@ -98,3 +98,111 @@ Números a mano (regla 2): no se han encontrado fuera de las fichas. Lo que no f
 - H-02: entradas mal formadas tumban la llamada CT-09 sin RECHAZADO ni registro en RC.
 
 CA-4 (promoción, §1.3 y corpus) y CA-5 (gate 12/12) se cumplen. El ciclo del Bloque A sigue igual. Vuelve a `ri-implementar`. Al corregir, el revisor volverá a ejecutar `r01_01` a `r01_06` y añadirá la ronda r02.
+
+## Ronda r02
+
+- **Revisor:** revisor nuevo sin contexto de la implementación (subagente Claude; no implementó T-106) · **Ronda:** r02 · **Fecha:** 2026-11-13
+- **Commit revisado:** `4be8ea6` (`develop`; el código de la r02 de T-106 entró en `e4d13d3`). Opinión formada con el README del ticket, el código y las fichas del Catálogo (leídas por identificador) antes de leer `analisis-tecnico.md` y `pruebas.md`.
+
+### Reproducción desde limpio
+
+Extracción limpia con `git worktree add --detach <scratchpad>/wt 4be8ea6`, con el `.venv` del proyecto enlazado y `PYTHONPATH` apuntando a los tres ejecutores de la extracción (comprobado que `bloque_a`, `bloque_a_forex` y `bloque_b` se importan de ahí). Las copias para mutantes son del `bloque_a` entero sin `.docx`. Extracción y copias borradas al terminar.
+
+| Paso | Resultado |
+| --- | --- |
+| `./tools/check_all.sh` en la extracción limpia | **12/12**: corpus 695 íntegro, ruff 2908 = cuota, mypy A 109 · FX 174 · B 159 (= cuotas), pytest A **1288** · FX 68 · B 176 |
+| Pruebas de T-106 en la copia sin mutar (`test_fase1_*`, `test_t106_motor`, `test_unitarias`, `test_t65_resto_t53`, `test_t87_contratos`, `test_t92_revision`) | 685 en verde |
+| Catálogo y corpus | El Catálogo no cambia desde `7064f60` (la r02 no lo toca); huella del manifiesto = huella del archivo; ningún `.docx` tocado desde antes de T-106 |
+
+### Scripts ejecutados
+
+```bash
+.venv/bin/python -I -B .docs/tickets/T-106/revisores/r02_00_reejecutar_r01.py [RAIZ] [--mutantes]   # r01_01 a r01_06 (r01_03 y r01_02 adaptados en memoria)
+.venv/bin/python -I -B .docs/tickets/T-106/revisores/r01_04_mutantes.py [RAIZ]                       # los 41 mutantes de la r01
+.venv/bin/python -I -B .docs/tickets/T-106/revisores/r02_01_catalogo_y_rc.py [RAIZ]                  # manda el Catálogo por el Motor, RC, promoción, corpus
+.venv/bin/python -I -B .docs/tickets/T-106/revisores/r02_02_oraculos.py [RAIZ]                       # oráculos de MON-EXP, FON-DISC, FON-FLOW, DER-TERM, TCV-SLOPE, TCV-VIXTS
+.venv/bin/python -I -B .docs/tickets/T-106/revisores/r02_03_ataques.py [RAIZ]                        # entradas hostiles y controles que la petición no debe relajar
+.venv/bin/python -I -B .docs/tickets/T-106/revisores/r02_04_mutantes.py [RAIZ] [--solo ID]           # 43 mutantes nuevos (fichas y servicio.py), ≈ 15 min
+```
+
+| Script | Resultado |
+| --- | --- |
+| `r01_01` (fuzzer de la r01, por defecto) | **129/129**: 15 678 mutaciones (13 465 `ErrorFicha`, 2 213 servidas), sin excepciones ajenas, sin cifras no finitas, ninguna llamada > 5 s |
+| `r01_02` (sin su bloque MON-EXP, que rechaza a propósito el sistema justo que usaba) | **30/30** |
+| `r01_03` (con `_madurez.cache_clear()` y 66 casos) | 19/21. Los dos fallos no son defectos: «ejecutor movido» llama a `servible(f)` sin raíz (la corrección de H-04 va por `Motor.raiz`, comprobada en `r02_01`), y «limitaciones fijas» marca 7 fichas cuyas limitaciones con el primer caso son datos opcionales que faltan (sin superficie, sin historia…), no advertencias fijas: H-03 está corregido |
+| `r01_04` (mutantes de la r01) | 40 aplicables, **40 cazados por los casos de control** (M38 ya no se aplica: cambió `_forward`) |
+| `r01_05` (promoción) | **7/7** |
+| `r01_06` (ataques dirigidos) | **5/5** |
+| `r02_01` | **27/27** |
+| `r02_02` | **40/40** |
+| `r02_03` | **12/29** (H-14, H-15, H-16) |
+| `r02_04` | 43 mutantes: 25 sobreviven a los casos de control y **13 sobreviven también a las pruebas** (H-18) |
+
+### Hallazgos de la r01
+
+| ID | Estado | Evidencia |
+| --- | --- | --- |
+| H-01 | corregido | MON-EXP rehecho: `r02_02` (a)–(f): con nodos en las reuniones los tramos coinciden con los forwards entre reuniones de un oráculo propio a 1e-17; con nodos fuera de ellas (sobredeterminado) recupera la senda; una curva suave no escalonada o redondeada sin precisión declarada se rechaza; con precisión declarada el error real de cada tramo queda dentro de la cota que se publica; tira de futuros correcta. Queda H-16 |
+| H-02 | corregido en las fichas | `r01_01` sin excepciones; 1 224 llamadas por el Motor con parámetros hostiles (NaN, ±inf, bool, texto, None, listas, dicts, 1e308) en cada parámetro de las 21: sin excepciones, una entrada en RC por llamada y sin cifras no finitas. Queda la petición mal formada al Motor (H-15) |
+| H-03 | corregido | Advertencias de FON y DER en `resultado["advertencias"]`; FON-LEV conserva una limitación declarada (simulación no servida) |
+| H-04 | corregido | `r02_01`: ejecutor copiado a otra carpeta con `rutas.raiz_paquete`: el Motor sirve las 35 |
+| H-05 | corregido | `r02_01`: bytes no UTF-8, vacío, ausente o una carpeta: nada servible y RECHAZADO, sin excepción |
+| H-06 | corregido | Solo la tabla del §4 (filas falsas en el §1 o en el §5 no mandan); relectura por fecha de modificación. Informativo: un cambio que conserva `mtime_ns` (p. ej., `cp -p`) no se ve hasta reiniciar |
+| H-07 | corregido | `r01_06` |
+| H-08 | corregido para los mutantes de la r01 | 40/40 cazados por los casos de control. Mutantes nuevos vivos: H-18 |
+| H-09 | parcial | Docstring, prueba y `probabilidades_acumuladas` con la fórmula literal; pero INC-T106-01 no recoge la decisión (H-19) |
+| H-10, H-11 | corregidos | `r01_06` |
+| H-12 | corregido | `r01_06`; sin prueba que lo fije (mutante S11 vivo, H-18) |
+| H-13 | corregido | 66 casos en el ticket y la deuda; `code_ref` anotado; `or` quitado. Restos menores en H-21 |
+
+### Fidelidad a las fichas: oráculos nuevos (`r02_02`)
+
+| Ficha | Comprobado contra un cálculo propio | Resultado |
+| --- | --- | --- |
+| MON-EXP-001 | forwards entre reuniones, movimientos por reunión y acumulados, probabilidades, cambio a 6 y 12 meses, sobredeterminado, redondeo, curva suave, futuros | 13/13 |
+| FON-DISC-001 | mediana de P/NAV − 1, z a 52 semanas, normalización con κ = 0,3, total con NAV supuesto, AR(1) y vida media en meses | 6/6 |
+| FON-FLOW-001 | identidad de AUM, flujo relativo, z a 36 meses, autocorrelaciones 1–3 (`statsmodels.acf`), acumulados, suma, rango | 6/6 |
+| DER-TERM-001 | varianza total lineal en T, pendiente, ratio, estado, σ_fwd, movimiento del evento, frecuencia de inversiones | 5/5 |
+| TCV-SLOPE-001 | pendiente 2s10s, MCO y HAC de Newey-West (`statsmodels`, sin corrección, L = ⌊4(T/100)^(2/9)⌋), IC al 95 %, pendiente forward a 3 y 6 meses, carry y rolldown neutrales en DV01 | 6/6 |
+| TCV-VIXTS-001 | estado, roll, futuro a 30 días y rentabilidad esperada, percentil, frecuencia de contango, ES al 97,5 % | 4/4 |
+
+Con la r01 (16 fichas recalculadas), las 21 tienen ya un oráculo independiente; todas coinciden.
+
+### Criterios de aceptación
+
+| Criterio | Cumple | Evidencia |
+| --- | --- | --- |
+| CA-1 | sí | 21 manejadores, 66 casos superados y registrados en RC: 21 entradas CASOS_CONTROL con todos sus casos, la madurez y `verificar_integridad` en verde; una ficha desconocida o sin casos queda REJECTED; un caso que falla queda marcado (`r02_01`). Observación: H-18 |
+| CA-2 | sí | Por el Motor, servible = código ∩ IMPLEMENTADO (35); una ficha degradada en la tabla del §4 se rechaza con su madurez en el detalle y queda en RC; sin Catálogo legible, ninguna (`r02_01`). Observación: ninguna prueba lo fija (mutante S01 vivo, H-18) |
+| CA-3 | **no** | Determinista y rechaza las entradas mal formadas de sus datos, pero en las 8 fichas MON e IDX los umbrales de rechazo («Entradas mínimas», «Aclaración y rechazo») y los rangos de los parámetros se pueden bajar desde `parametros` de la petición (H-14, alta). Además, una petición mal formada tumba el CT-09 antes de llegar a la ficha (H-15) |
+| CA-4 | sí | §1.3 = tabla del §4: 81 = 35 (14 + 21) + 11 + 35; las 21 en IMPLEMENTADO en su fila y en su ficha; Catálogo intacto desde la r01 y huella del manifiesto correcta (`r02_01`, `r01_05`) |
+| CA-5 | sí | 12/12 en extracción limpia; cuotas sin subir |
+
+### Hallazgos nuevos
+
+| ID | Gravedad | Cómo reproducirlo | Esperado / obtenido | Corrección sugerida | Estado |
+| --- | --- | --- | --- | --- | --- |
+| H-14 | **alta** | `r02_03`, bloque 1 | **En MON e IDX, la petición puede relajar los controles de la ficha.** `_params` (`fichas_mon_idx.py`) mezcla `parametros` de la petición sobre `PARAMETROS_POR_DEFECTO`, y ahí viven también los umbrales de rechazo y los rangos. Por CT-09: IDX-ERP-001 con 2 años de historia del múltiplo (rechazo < 10) pasa de RECHAZADO a SERVED_WITH_LIMITATIONS con `anios_historia_min: 1`; N = 3 con `N_rango: [1, 100]` y λ = 2 con `lambda_reversion_rango: [-9, 9]` se sirven; IDX-REL-001 con 3 años de historia y `anios_min: 1`; IDX-CONC-001 con `top_n: 1` y `top_n_rango: [0, 1e6]`; MON-FIX-001 con dos nodos hasta T y `nodos_min: 1`. MON-EXP-001 (`nodos_min`, `meses_nodos`, `anios_convexidad`), MON-REAL-001 (`anios_min`), MON-YLD-001 (`anios_percentil_min`), IDX-REB-001 (`eventos_min`) e IDX-CONC-001 (`anios_precios_min`, `ventana_percentil_min_anios`) leen sus umbrales del mismo diccionario. TCV ya lo resolvió (`UMBRALES` fijos, la petición que los trae se rechaza) y FON/DER tienen `MINIMOS` y `RANGOS` aparte: comprobado que no se bajan. Un control que la petición puede bajar contradice CA-3 y «los controles nunca se relajan solos». | Sacar de `PARAMETROS_POR_DEFECTO` de MON/IDX los umbrales y rangos a un diccionario fijo (como `UMBRALES` de TCV) y rechazar la petición que los traiga; pruebas de regresión con cada clave de `r02_03`. | abierto |
+| H-15 | media | `r02_03`, bloque 2 | `Motor.servir` lanza la excepción al llamador, sin RECHAZADO ni entrada en RC, con `datos: [5]`, `datos: [{"valores": 5}]`, `datos: [{"valores": [1, 2]}]`, `parametros: "x"` o `[1, 2]`, un `plan` desconocido, una `fecha_corte` ilegible o una `operacion` no textual: el `_resolver_datos`, el `dict(parametros)`, el `parametro(uc…)` y la comparación con `FICHAS_CATALOGO` quedan fuera del `try` de la r02. La validación de `valores` de las envolturas no llega a ejecutarse. Hoy ningún camino del ciclo envía estas fichas al Motor, por eso no es alta. | Validar la forma de la petición al entrar en `servir` (operación texto, `datos` lista de dicts con `valores` dict, `parametros` dict, plan conocido, fechas legibles) y convertir cualquier fallo en RECHAZADO registrado; pruebas con los ocho casos. | abierto |
+| H-16 | media | `r02_03`, bloque 5 (último caso) | MON-EXP-001 con una curva escalonada redondeada a 1 pb y `precision_cotizacion: 5e-5` se sirve como **SERVED, sin limitaciones**, con una incertidumbre de redondeo de hasta 23,4 pb en un tramo (umbral de rechazo: Δ = 25 pb). El error real del último tramo es de 12,8 pb: `movimientos_en_reunion` −0,40 frente a −1 verdadero, así que la probabilidad publicada de esa reunión se aparta 60 puntos de la verdadera. La cota se publica en `incertidumbre_redondeo_pb`, pero nada avisa en `limitaciones`. | Añadir una limitación cuando la incertidumbre de algún tramo sea una fracción relevante de Δ, o un umbral más estricto. El número debe salir de la ficha o de la configuración y quedar declarado `[PROPUESTO]` en INC-T106-01. | abierto |
+| H-17 | baja | `r02_03`, bloque 4 | Las cifras no finitas siguen dos políticas: MON, IDX, FON y DER rechazan el resultado entero, y el Motor también (`FASE1`); TCV las cambia por `None` con una limitación (TCV-VIXTS con VIX3M = 1e-320 sale SERVED_WITH_LIMITATIONS con `spot/VIX3M: None`). `analisis-tecnico.md` dice que en las fichas de T-106 una cifra no finita se rechaza. Es defendible, pero no está escrito. | Unificar la política o declarar la de TCV en el análisis e INC-T106-01. | abierto |
+| H-18 | media | `r02_04` | **Reglas y fórmulas sin red.** 13 de 43 mutantes sobreviven a los casos de control **y** a las pruebas: S01 (`citable_segun_catalogo` → `bool(estado)`: sirve lo «Documentado»; ninguna prueba degrada una ficha en un Catálogo temporal y comprueba que el Motor deja de servirla, solo se mira el texto de `madurez_catalogo`), S09 (una ficha sin casos de control se da por superada), S10 (los casos de control sin comparar las dos pasadas), S07 (excepciones del Motor: hoy equivalente para las 21, sin prueba con un manejador que lance), S11 (H-12 sin prueba), S06 (equivalente con el Catálogo actual); FON-DISC con media en lugar de mediana (Y01) y vida media en meses de 30 días (Y02); FON-FLOW con el acumulado relativo al AUM del último periodo (Y04), el z frente a 72 meses (Y05) y otra autocorrelación (Y06); MON-EXP sin el redondeo implícito de cada cotización (X04); la envoltura MON/IDX sin el rechazo de no finitos (X11, cubierta por el Motor). Las fórmulas actuales son correctas (`r02_02`), pero un cambio que las rompa pasaría el gate. Otros 12 sobreviven a los casos de control y los cazan las pruebas: aceptable donde la «Verificación» de la ficha no cubre el paso. | Pruebas de regresión: Motor con un Catálogo temporal que degrada una ficha (RECHAZADO), `verificar_casos_control` con una ficha sin casos y con un manejador no determinista, un manejador que lanza `ValueError` por el Motor, GARCH sin `arch` simulado; valores a mano de FON-DISC (mediana con miembros asimétricos, vida media) y FON-FLOW (acumulados, z, autocorrelación); MON-EXP con cotizaciones redondeadas sin `precision_cotizacion`. Volver a pasar `r02_04` sin vivos. | abierto |
+| H-19 | baja | Lectura de `docs/incidencias.md` y de `f_mon_exp` | Decisiones de método de MON-EXP-001 que el código da por declaradas y no están en INC-T106-01: la lectura del «tipo vigente» de la r01 (H-09: el docstring dice «INC-T106-01 [PROPUESTO]», pero la incidencia no la recoge), el rechazo del sistema justo con nodos fuera de las reuniones, y la precisión implícita «medio último dígito» de cada cotización (un nodo escrito `0.0` vale ±500 pb y fuerza el rechazo; una curva redondeada sin `precision_cotizacion` se rechaza con «no se puede reproducir con un tramo por reunión», sin sugerir que se declare la precisión). | Añadirlas a INC-T106-01 `[PROPUESTO]` y mejorar el mensaje del rechazo por redondeo. | abierto |
+| H-20 | baja | Lectura de `fichas_fon_der.py` (`f_der_vrp`) | DER-VRP-001 toma `nivel_es` de RISK-VAR-001 (INC-T106-01), pero acepta cualquier nivel en (0, 1), mientras que TCV-VIXTS-001 aplica el rango 0,90–0,99 de esa misma ficha. | Aplicar el rango de RISK-VAR-001 también en DER-VRP-001. | abierto |
+| H-21 | baja | Lectura | Restos de documentación: el apartado «Implementación» de `analisis-tecnico.md` sigue diciendo «la tabla del §2 (81 filas)» (el índice es el §4, como dice la ronda r02) y la primera tabla de `pruebas.md` dice «53 en 21 fichas». | Corregir o marcar como histórico. | abierto |
+
+### Invariantes del sistema
+
+- Ningún camino nuevo llega a una orden: las 21 fichas solo se sirven por CT-09 y el ciclo no las llama.
+- No hay LLM en la ruta determinista ni en los casos de control.
+- Los controles no se relajan solos en TCV, FON y DER, pero en MON e IDX los relaja una petición (H-14).
+- Falla cerrado en las fichas (fuzzer y parámetros hostiles), pero no en la entrada del Motor (H-15).
+- Ningún número a mano nuevo. Lo que la ficha no fija está en INC-T106-01, salvo lo de H-19 y H-20.
+- Sin secretos ni datos personales o financieros: solo datos sintéticos.
+- Documentación al día salvo H-17, H-19 y H-21.
+
+### Veredicto
+
+**NO APTO.** CA-3 no se cumple y hay un hallazgo alto abierto, H-14: en las 8 fichas MON e IDX, la petición puede bajar los umbrales de rechazo y los rangos que fija la ficha. Los medios (H-15, H-16 y H-18) deberían corregirse en la misma ronda. Los bajos, H-17 y H-19 a H-21, pueden ir a la deuda si no se corrigen.
+
+H-01 a H-13 de la r01 están corregidos; H-09 lo está a falta de declararlo (H-19). CA-1, CA-2, CA-4 y CA-5 se cumplen. Vuelve a `ri-implementar`. Al corregir, el revisor volverá a ejecutar `r02_00` a `r02_04` (y `r01_04`) y añadirá la ronda r03.

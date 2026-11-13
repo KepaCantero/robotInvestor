@@ -83,7 +83,8 @@ PARAMETROS_POR_DEFECTO: dict[str, dict[str, Any]] = {
 RANGOS: dict[str, dict[str, tuple[float, float]]] = {
     "FON-DISC-001": {"ventana_media": (26, 260), "ventana_larga": (3, 5), "kappa": (0, 1)},
     "FON-LEV-001": {"L": (-3, 3), "horizonte": (20, 250), "rejilla_sigma": (0.10, 0.80)},
-    "DER-VRP-001": {"plazo": (7, 90)},
+    # nivel_es: rango 0,90–0,99 del método histórico de RISK-VAR-001, de donde se toma el nivel (QA r02 de T-106, H-20)
+    "DER-VRP-001": {"plazo": (7, 90), "nivel_es": (0.90, 0.99)},
     "DER-SKEW-001": {"delta": (10, 25), "vencimiento": (1, 12)},
 }
 
@@ -966,8 +967,9 @@ def f_der_vrp(ent: dict, params: dict) -> tuple[dict, list[str]]:
     _rango(F, "plazo", plazo)
     anios_pct = _pnum(p, "ventana_percentil", F)
     nivel = _pnum(p, "nivel_es", F)
-    if anios_pct <= 0 or not 0 < nivel < 1:
-        raise ErrorFicha(f"{F}: ventana_percentil debe ser positiva y nivel_es estar en (0, 1)")
+    _rango(F, "nivel_es", nivel)
+    if anios_pct <= 0:
+        raise ErrorFicha(f"{F}: ventana_percentil debe ser positiva")
     if not isinstance(p["prevision_rv"], str):
         raise ErrorFicha(f"{F}: prevision_rv debe ser texto (HAR | GARCH | realizada_pasada)")
     sr = ent.get("series_rol") or {}

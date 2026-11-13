@@ -2,7 +2,7 @@
 
 | Campo | Valor |
 | --- | --- |
-| Estado | EN QA (ronda r02) |
+| Estado | EN QA (ronda r03) |
 | Pieza | `bloque_a/11_Ejecutor` (`bloque_a/motor/`) y el Catálogo del Motor (`bloque_a/04_Motor_conocimiento_y_catalogo/`, corpus congelado) |
 | Planifica · implementa · QA | claude · claude con tres agentes por familia (MON+IDX, FON+DER, TCV) · un revisor nuevo sin contexto |
 | Aprobación del operador | 2026-11-12: «2) sí, te autorizo» (promover en el Catálogo las fichas que superen sus casos de control, re-congelando el corpus); datos reales «por decidir aún», así que solo sintéticos |
@@ -49,3 +49,5 @@ Dar cálculos citables del Motor a los analistas de IDX, FON, DER, MON y TCV, qu
 - 2026-11-12 · EN QA · 21 fichas implementadas (tres agentes por familia) e integradas; casos de control de las 21 fichas superados (50 casos); promovidas en el Catálogo y corpus re-congelado; ruff 2938 → 2908
 - 2026-11-12 · NO APTO · QA r01 (revisor nuevo, commit `7064f60`): H-01 alto (MON-EXP-001 servía sendas que no reproducían la curva), H-02 alto (excepciones no previstas y cifras no finitas tumbaban el CT-09), H-03 a H-05, H-07 y H-08 medios, H-06 y H-09 a H-13 bajos
 - 2026-11-12 · EN QA · Ronda r02: el Motor convierte cualquier excepción de una ficha y cualquier cifra no finita en RECHAZADO; Catálogo leído de la raíz configurada, solo en la tabla del §4 y releído si cambia; MON-EXP rehecho (todos los nodos, falla cerrado); validación de entradas y casos de control reforzados en las tres familias (66 casos); 562 pruebas del Motor Fase 1
+- 2026-11-13 · NO APTO · QA r02 (revisor nuevo, commit `4be8ea6`): H-14 alto (una petición bajaba los umbrales de MON e IDX), H-15, H-16 y H-18 medios, H-17 y H-19 a H-21 bajos
+- 2026-11-13 · EN QA · Ronda r03: umbrales fijos en MON e IDX; peticiones mal formadas rechazadas y en RC; incertidumbre de las probabilidades de MON-EXP con limitación; `nivel_es` de DER-VRP en 0,90–0,99; decisiones de MON-EXP y política de no finitos en INC-T106-01; 45 pruebas nuevas, 0 mutantes vivos de la r02

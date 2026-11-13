@@ -129,5 +129,15 @@ Pregunta para T-57: «¿qué antigüedad admite la resolución de un pronóstico
 - en MON-EXP-001, se rechaza la curva cuyo redondeo podría mover un tramo un incremento Δ entero, y una curva cotizada plana en tipos simples (forwards no planos);
 - en TCV, los umbrales de rechazo son fijos (no los baja una petición), y los rangos de los parámetros salen de FIR-CARRY-001 y RISK-VAR-001.
 
+**Ronda r03 (QA r02 de T-106):**
+- en MON e IDX, los umbrales de rechazo y de limitación y los rangos admitidos también son fijos: una petición que los traiga se rechaza (H-14);
+- en DER-VRP-001, `nivel_es` se limita al rango 0,90–0,99 de RISK-VAR-001, de donde se toma el nivel (H-20);
+- en MON-EXP-001 (H-19):
+  - «tipo vigente»: `probabilidades` reparte el movimiento de cada reunión frente al tipo en vigor justo antes de ella, y `probabilidades_acumuladas` aplica la fórmula literal frente al tipo oficial de hoy;
+  - con tantos nodos útiles como tramos y algún tramo sin nodos en sus dos fechas de reunión, la curva se rechaza: la hipótesis escalonada no se puede contrastar;
+  - sin `precision_cotizacion`, cada cotización lleva como precisión el medio último dígito con que viene escrita;
+  - si el redondeo puede mover una probabilidad más que la tolerancia de la ficha, se sirve con una limitación que da la cota (H-16);
+- cifras no finitas (H-17): las fichas MON, IDX, FON y DER y el Motor las rechazan. TCV sirve `None` con una limitación cuando un cociente no está definido (por ejemplo, un VIX3M casi nulo) y nunca entrega un número no finito. Queda así: en TCV el resto del resultado sigue siendo útil.
+
 Detalle por ficha en [.docs/tickets/T-106](../.docs/tickets/T-106/analisis-tecnico.md).
 
