@@ -298,11 +298,16 @@ class Evaluador:
             if not isinstance(bases, dict) or not bases:
                 raise DatosNoDisponibles(f"Cesta {clase} sin niveles iniciales")
             patas = [self.rentabilidad(s, clase, f0, f1, horizonte, base=b, hasta=hasta) for s, b in sorted(bases.items())]
-            corte = min(f for _, f in patas)
-            if any(f != corte for _, f in patas):
-                # T-91 (QA r05 de T-65, H-27): todos los miembros se miden hasta la misma fecha, la más antigua de las que sirven;
-                # cada uno vuelve a pasar la frescura frente a la fecha de resolución (QA r01 de T-91, H-01: con un hueco
-                # justo antes de esa fecha, el dato que queda puede ser más viejo que PS2)
+            # T-91 (QA r05 de T-65, H-27): todos los miembros se miden hasta la misma fecha, la más antigua de las que sirven;
+            # cada uno vuelve a pasar la frescura frente a la fecha de resolución (QA r01 de T-91, H-01). Se repite hasta que
+            # coinciden (QA r02, H-05): con un hueco en la fecha común, un miembro queda en una fecha anterior. Cada vuelta baja
+            # la fecha común, así que acaba: o coinciden, o un miembro deja de ser fresco y el pronóstico espera
+            previo = None
+            while len({f for _, f in patas}) > 1:
+                corte = min(f for _, f in patas)
+                if previo is not None and corte >= previo:   # la fecha común no baja: no se puede alinear (falla cerrado)
+                    raise DatosNoDisponibles(f"Cesta {clase}: los miembros no se alinean en una fecha común")
+                previo = corte
                 patas = [self.rentabilidad(s, clase, f0, f1, horizonte, base=b, hasta=corte) for s, b in sorted(bases.items())]
             return float(np.mean([v for v, _ in patas])), min(f for _, f in patas)
         r, d0, d1 = self._rentabilidad_serie(simbolo, f0, f1 if hasta is None else hasta, base)
@@ -387,11 +392,16 @@ class Evaluador:
                     if base_ref is None and p["referencia_indice"] == "CESTA":
                         base_ref = self.bases_cesta(p["clase"], f0, hz)
                     rr, d1b = self.rentabilidad(p["referencia_indice"], p["clase"], f0, f1, hz, base=base_ref)
-                    if d1b != d1:
+                    previo_corte = None
+                    while d1b != d1:
                         # T-91 (QA r05 de T-65, H-27; `[PROPUESTO]`, INC-T91-01): las dos series sirven, pero el suceso
-                        # pronosticado se mide sobre la misma ventana: las dos hasta la fecha más antigua de las dos
-                        # medidas hasta la fecha común; cada una vuelve a pasar la frescura frente a f1 (QA r01 de T-91, H-01)
+                        # pronosticado se mide sobre la misma ventana: las dos hasta la fecha más antigua de las dos, y cada una
+                        # vuelve a pasar la frescura frente a f1 (QA r01 de T-91, H-01). Se repite hasta que coinciden (QA r02,
+                        # H-05: un hueco o un festivo en la fecha común); cada vuelta baja la fecha común, así que acaba
                         corte = min(d1, d1b)
+                        if previo_corte is not None and corte >= previo_corte:   # no baja: no se alinean (falla cerrado)
+                            raise DatosNoDisponibles(f"{p['prg_id']}: proxy y referencia no se alinean en una fecha común")
+                        previo_corte = corte
                         rp, d1 = self.rentabilidad(p["variable"]["serie_ht01"], p["clase"], f0, f1, hz, base=p.get("nivel_referencia"),
                                                    hasta=corte)
                         rr, d1b = self.rentabilidad(p["referencia_indice"], p["clase"], f0, f1, hz, base=base_ref, hasta=corte)

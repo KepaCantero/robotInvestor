@@ -130,9 +130,8 @@ def test_r02_h01_con_un_hueco_antes_de_la_fecha_comun_espera(tmp_path):
     assert _estado(b) == "ABIERTO"                                    # 7feb697: RESUELTO con SPY del 20 de abril
 
 
-def test_r02_h02_b_fecha_dato_es_la_mas_reciente_de_las_usadas(tmp_path):
-    """Con un hueco de un día en la fecha común, el proxy se mide hasta el día anterior y la referencia hasta la fecha común:
-    `fecha_dato` es la más reciente de las dos (mutante: solo la del proxy)."""
+def test_r02_h02_b_con_un_hueco_en_la_fecha_comun_las_dos_acaban_igual(tmp_path):
+    """Con un hueco de un día en la fecha común, la alineación se repite y las dos series acaban en el día anterior."""
     datos = _parado(tmp_path, "ACWI", "2026-04-29")
     _sin_dia(tmp_path, datos, "SPY", "2026-04-29")
     b = _bloque(tmp_path, datos=datos)
@@ -141,7 +140,8 @@ def test_r02_h02_b_fecha_dato_es_la_mas_reciente_de_las_usadas(tmp_path):
     b.evaluador.resolver("2026-05-04", "RUN-2026-0001")
     r = b.almacen.estado("F4")["PRG-2026-0901"]["resolucion"]
     assert _estado(b) == "RESUELTO"
-    assert r["fecha_dato_proxy"] == "2026-04-28" and r["fecha_dato_referencia"] == "2026-04-29" and r["fecha_dato"] == "2026-04-29"
+    # QA r02, H-05: se repite la alineación hasta que coinciden; las dos, hasta el 28
+    assert r["fecha_dato_proxy"] == "2026-04-28" and r["fecha_dato_referencia"] == "2026-04-28" and r["fecha_dato"] == "2026-04-28"
 
 
 def test_r02_h02_c_la_cesta_devuelve_la_fecha_mas_antigua(tmp_path):
@@ -155,3 +155,68 @@ def test_r02_h02_c_la_cesta_devuelve_la_fecha_mas_antigua(tmp_path):
     bases = b.evaluador.bases_cesta("DIV", EMISION, "H2")
     _, fecha = b.evaluador.rentabilidad("CESTA", "DIV", EMISION, "2026-05-01", "H2", base=bases)
     assert str(fecha.date()) == "2026-04-28"                          # mutante (max): 2026-04-29
+
+
+
+# ================================================================================================== ronda r03 (QA r02 de T-91)
+# Calendario: 2026-04-27 lunes, 28 martes, 29 miércoles, 30 jueves; 2026-05-01 viernes. H2: 3 días naturales.
+def _resuelto(b, fecha="2026-05-04"):
+    b.fijar_fecha(fecha)
+    b.evaluador.resolver(fecha, "RUN-2026-0001")
+    return b.almacen.estado("F4")["PRG-2026-0901"]
+
+
+def test_r03_q1_la_frescura_se_mide_frente_a_la_resolucion_no_frente_a_la_fecha_comun(tmp_path):
+    """ACWI para el 28 (3 días: sirve); SPY no tiene el 28 y se mide el 27: 4 días antes de la resolución, más viejo que PS2
+    aunque solo 1 día antes de la fecha común. El pronóstico espera."""
+    datos = _parado(tmp_path, "ACWI", "2026-04-28")
+    _sin_dia(tmp_path, datos, "SPY", "2026-04-28")
+    b = _bloque(tmp_path, datos=datos)
+    _prg(b, "H2", "2026-05-01")
+    assert _resuelto(b)["estado"] == "ABIERTO"
+
+
+def test_r03_q3_la_referencia_realineada_tambien_pasa_la_frescura(tmp_path):
+    datos = _parado(tmp_path, "SPY", "2026-04-28")
+    _sin_dia(tmp_path, datos, "ACWI", "2026-04-28")
+    b = _bloque(tmp_path, datos=datos)
+    _prg(b, "H2", "2026-05-01")
+    assert _resuelto(b)["estado"] == "ABIERTO"
+
+
+def test_r03_q5_q8_con_el_proxy_mas_antiguo_la_referencia_se_mide_hasta_el(tmp_path):
+    b = _bloque(tmp_path, datos=_parado(tmp_path, "SPY", "2026-04-29"))
+    _prg(b, "H2", "2026-05-01")
+    e = _resuelto(b)
+    assert e["estado"] == "RESUELTO"
+    r = e["resolucion"]
+    assert r["fecha_dato_proxy"] == "2026-04-29" and r["fecha_dato_referencia"] == "2026-04-29" and r["fecha_dato"] == "2026-04-29"
+
+
+def test_r03_q6_la_cesta_como_referencia_se_mide_hasta_la_fecha_del_proxy(tmp_path):
+    """El proxy (SPY, fuera de la CESTA de DIV) para el 29; la CESTA, al día, se mide hasta el 29 (mutante Q6: se cuelga en
+    la alineación y el pronóstico espera)."""
+    b = _bloque(tmp_path, datos=_parado(tmp_path, "SPY", "2026-04-29"))
+    b.fijar_fecha(EMISION)
+    bases = b.evaluador.bases_cesta("DIV", EMISION, "H2")
+    b.almacen.escribir("F4", "AG-10", {
+        "tipo_entrada": "ALTA", "prg_id": "PRG-2026-0901", "opp_id": "OPP-1", "clase": "DIV", "horizonte": "H2",
+        "estado": "ABIERTO", "prob_interna": 0.65, "sentido": "POSITIVO", "umbral": 0.0, "tipo_pronostico": "RELATIVO",
+        "referencia_indice": "CESTA", "bases_cesta": bases, "variable": {"serie_ht01": "SPY"}, "fecha_emision": EMISION,
+        "fecha_resolucion": "2026-05-01", "nivel_referencia": {"valor": 1.0, "fecha": EMISION},
+        "referencia_ingenua": {"valor_o_prob": 0.5}, "en_informe": True})
+    e = _resuelto(b)
+    assert e["estado"] == "RESUELTO" and e["resolucion"]["fecha_dato_referencia"] == "2026-04-29"
+
+
+def test_r03_q9_un_nivel_congelado_como_numero_suelto_se_resuelve(tmp_path):
+    """H-04 de la QA r01: el registro antiguo con el nivel como número no rompe la comprobación de fuga."""
+    b = _bloque(tmp_path)
+    b.fijar_fecha(EMISION)
+    b.almacen.escribir("F4", "AG-10", {
+        "tipo_entrada": "ALTA", "prg_id": "PRG-2026-0901", "opp_id": "OPP-1", "clase": "RV", "horizonte": "H1", "estado": "ABIERTO",
+        "prob_interna": 0.65, "sentido": "POSITIVO", "umbral": 0.0, "tipo_pronostico": "DIRECCIONAL", "referencia_indice": None,
+        "variable": {"serie_ht01": "SPY"}, "fecha_emision": EMISION, "fecha_resolucion": "2026-04-24", "nivel_referencia": 1.0,
+        "referencia_ingenua": {"valor_o_prob": 0.5}, "en_informe": True})
+    e = _resuelto(b, "2026-04-27")
+    assert e["estado"] == "RESUELTO" and e["resolucion"]["comprobacion_fuga"] == "SUPERADA"

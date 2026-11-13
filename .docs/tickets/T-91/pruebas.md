@@ -18,3 +18,11 @@
 ## Gate
 
 `./tools/check_all.sh` completo con `commit_limpio.sh`, en el mismo commit que T-88 y la ronda r02 de T-103 (comparten `orquestacion.py` y el diario).
+
+## Ronda r03
+
+| Suite | r02 | r03 |
+| --- | --- | --- |
+| `tests/test_t91_resolucion.py` | 13 | 18 |
+| `r02_03_desalineacion.py` (QA r02) | 3 casos con fechas distintas | 4/4: todas las series en la misma fecha |
+| `r02_02_mutantes.py` | sobreviven Q1, Q3, Q5, Q6, Q8 y Q9 | mueren Q1, Q4, Q5, Q6, Q9 y Q12; Q8 no se aplica; Q2, Q3, Q7, Q10 y Q11 son equivalentes (ver `analisis-tecnico.md`) |
