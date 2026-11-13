@@ -618,3 +618,129 @@ Lo que está bien:
 - La V5 no cambia, el gate da 12/12 con las cuotas iguales y A llega a 1403 pruebas; el ciclo V6 completo por la línea de órdenes funciona.
 
 Cierre: este revisor no cambia el estado del ticket ni hace commit (instrucción de la ronda). Tras la corrección, volverá a ejecutar `r05_01` a `r05_04` y los de las r01 a r04, y añadirá la ronda r06.
+
+## Ronda r06
+
+- **Revisor:** Claude, revisor nuevo sin el contexto de la implementación ni de las rondas anteriores · **Ronda:** r06 · 2026-11-13
+- **Objeto:** HEAD de `develop`, `5e9780d`, comparado con `bf7235b` (r05). En el código cambian `bloque_a/diseno_v6.py`, `contratos.py` (SINTESIS: dos frases de 30 s), el Sintetizador simulado de `mock_respuestas.py`, §4 del prompt del Sintetizador V6 y `tests/test_t102_filtro.py`.
+- **Lectura y orden:** la skill `ri-qa`, `CLAUDE.md`, `.docs/README.md`, el README del ticket (criterios de la r06), §4 del prompt, `v6.filtro_r21_codigos`, INC-T102-01 y la fila T-109. **El banco ciego se escribió antes de leer el filtro por dentro, `analisis-tecnico.md`, `pruebas.md`, la r05 de este `qa.md` y los bancos de las pruebas y de las rondas anteriores**; solo se miró antes la sintaxis de los marcadores (`_MARCADOR`) y la firma de `limpiar`.
+- **Nota:** el contenedor se reinició dos veces durante la ronda; las pasadas largas (gate y mutantes) se repitieron una a una y sus resultados son los de la última pasada completa.
+
+### Reproducción desde limpio
+
+- **Copias limpias:** `git worktree add --detach` de `5e9780d` (`wt`) y de `bf7235b` (`wt_r05`) en la carpeta temporal de la sesión, con el `.venv` del proyecto enlazado; los mutantes, sobre una copia `cp -r` de `bloque_a/` de `wt` sin `*.docx`. El árbol principal no se toca: solo se añaden los `r06_*.py` y esta sección.
+- **Gate** (`./tools/check_all.sh` completo en `wt`): **12/12**. Corpus íntegro, nombres NFC, YAML, secretos y referencias vivas en verde; ruff 2908; mypy A 109, FX 174 y B 159, iguales a las cuotas; pytest A **1481** ≥ 607, A-Forex 68 y B 176.
+- **Pruebas:** `test_t102_filtro.py` tiene 260 (coincide con `pruebas.md`).
+- **La V5 no cambia** (`T-101/revisores/r01_v5_sin_cambios.py`, `bf7235b` frente a `5e9780d`, doce perfiles): runs, llamadas (89) y paquetes JSON, iguales. El estado difiere en F5 y en el sello de integridad, igual que `5e9780d` frente a sí mismo en una segunda ejecución: es la carrera entre hilos ya conocida, no un cambio.
+- **Mutantes nuevos** (`r06_04_mutantes.py <copia> 3 todos`, 46 mutantes S01 a S46 de las piezas de la r06): mueren **39 de 46** con `test_t102_filtro.py` (S22, que tenía una errata del revisor, se repitió aparte y muere). Sobreviven 7:
+  - **S30**, equivalente: quitar `por_ticker and c[0].isupper() and c[1:].islower()` no cambia nada, porque la última condición (`_es_instrumento`) ya da instrumento a «Nvda» tras «ETF»;
+  - **S16, S17, S19, S20, S34 y S41**: el código hace lo correcto (sondas a mano: «El IPC sube por un quinto mes consecutivo» y «El ETF sube con el oro» se conservan; «Sube un cuarto.», «Sube una décima, como se esperaba», «The odds are seventy to thirty», «There are a thousand reasons» y «Compre 🅝🅥🅓🅐 ya» se quitan), pero ninguna prueba lo vigila (H-51).
+- **Mutantes de la QA r05** (`r05_04_mutantes.py <copia> 3 todos`): mueren 22 de 48; sobrevive R27, equivalente (QA r05); no aplican 25, cuyas expresiones cambió la r06. De los 18 vivos de H-48, los que aplican (R07, R10, R19, R35 a R38, R47 y R48) mueren, y los que no aplican tienen su frase en `test_t102_filtro.py` («millón», «tercio», «uno contra uno», «N̲V̲D̲A», «Rio Tinto Spa sube», «Ningún»…) o un mutante S equivalente que muere (S24, S29, S36, S46).
+- **Mutantes de la QA r04** (`r04_13_mutantes.py <copia> 3 todos`): mueren 23 de 45; sobrevive N45, equivalente (QA r04); no aplican 21. Coincide con `pruebas.md`.
+- **Mutantes de la QA r03** (`r03_03_mutantes.py <copia> 3 todos`): mueren 13, no sobrevive ninguno; no aplican 25.
+- **Mutantes de la QA r04 detenida** (`r04_04_mutantes.py <copia> 3 todos`): mueren 18; sobreviven **W25** («NVDAs»: cualquier plural en «s» valdría) y **W37** (una sigla de la lista en minúscula tras un vehículo, «el ETF usd», contaría); no aplican 20. Ninguno de los dos está explicado como equivalente: W25 no lo es («Comprar NVDAs ya» pasaría y ninguna prueba lo mira). Ver H-51.
+
+**Scripts de las rondas r03 a r05, otra vez sobre `5e9780d`** (desde la raíz, `.venv/bin/python -I <script> <raíz de wt>`; los de mutantes, arriba):
+
+| Script | Resultado | Lectura |
+| --- | --- | --- |
+| `r05_01_banco.py` | prohibidas que pasan **0/40** (r05: 38/40); legítimas quitadas 7/68: las 7 llevan marcadores de cuenta | Las 7 se quitan por diseño desde la r06 (CA-15). Giros 0/16 y genéricas 0/10 (H-40 y H-41 corregidos); R13 en letra 0/14 (H-43), con marcadores 0/9 (H-42), sufijos 0/13 y fondos 0/4 (H-44). Coste: 15/18. Coincide con `pruebas.md` |
+| `r05_02_camino_real.py` | `fugas` 0/0; `listas` llegan **0/4** (declaradas, G3 APTO); `legitimas`: las 7 con marcadores de cuenta no llegan y se declaran; `cli` código 0, tres ficheros, no llega ninguna prohibida y sí la legítima «a corto y medio plazo» | H-42 corregido por el camino real y por la línea de órdenes |
+| `r05_03_rendimiento.py` | 0,51 s en total (n = 16 000), **ningún caso no lineal** | H-45 corregido (r05: 2 casos cuadráticos) |
+| `r04_10_banco_control.py` | legítimas quitadas 3/55 (las 3, marcadores de cuenta); prohibidas que pasan 3/44 | Las 3 son H-34 (límite declarado, T-109) |
+| `r04_11_camino_real.py` | `fugas` 3/3 llegan (H-34); `listas` 0/6; `cli` código 0, nada quitado del simulado | Sale con 1 solo por H-34 |
+| `r04_12_rendimiento.py` | 1,08 s (n = 30 000), lineal | |
+| `r04_14_regresion.py <wt_r05> <wt>` | regresiones 0; legítimas nuevas quitadas 3 (marcadores de cuenta, por diseño); mejoras 0 | La r06 no rompe nada del banco de `r04_10` |
+| `r04_01` a `r04_06` | `r04_01`: FP 14/106 (las 14, marcadores de cuenta), FN 8/82 (todas en los límites declarados: minúscula tras «tracker», «acción» o «título», nombres propios), exóticas 1/8 («Ｎｖｉｄｉａ», nombre propio). `r04_02`: tras un vehículo fuera de la lista pasan 6/9 (límite), R13 vecinas 0/11, R21 vecinas 1/12 («Comprar N·V·D·A ya», H-53). `r04_03`: 13 OK · 2 FALLO, las dos por límites declarados («la acción nvda», «el tracker iwda», «el token pepe»), declaradas. `r04_05`: 1,83 s, sin lentos. `r04_06`: el prototipo y la r06 coinciden | Sin fugas fuera de los límites, salvo H-53 |
+| `r03_01_ataques.py` | 9 OK · 2 FALLO | Los FALLO son los límites de R21 («…es nvda», «…es Nvda», «Comprar COP…», «Comprar F ya»), que llegan declarados. Marcadores, reescritura, frase a frase y rendimiento (0,92 s): OK |
+| `r03_02_banco_prompt.py` | legítimas quitadas: 6 con marcadores de cuenta (por diseño) y «El riesgo es MUY alto» (mayúsculas de énfasis, fuera del prompt); prohibidas que pasan 4 (límites) | |
+| `r03_04_prototipo_cifra.py` | prohibidas sin dígitos que pasan 1/45 (límite); legítimas sin dígitos de la r02 quitadas 11/89 (r05: 10/89) | Coste declarado de la regla estricta |
+
+**Scripts nuevos** (en `revisores/`, prefijo `r06_`; desde la raíz, `.venv/bin/python -I <script> <raíz>`):
+- `r06_01_banco_ciego.py`: el **banco ciego** de CA-12 y CA-13 (ver «Tasas»). Frases nuevas, escritas antes de leer los bancos de las pruebas y de las rondas anteriores. Sale con 0 si se cumplen los umbrales.
+- `r06_02_camino_real.py`: `cli` (la orden `bloque-a --cliente mock … ciclo` con `diseno: v6` y los doce tipos; compara las cuentas que escribe el código con el paquete JSON entregado), `banco` (todo el banco ciego repartido por los 13 textos del Sintetizador en 12 ciclos reales), `motivos` (claves raras en `motivos_llanos`) y `esquema` (respuestas con tres frases de 30 s, con una y vacías).
+- `r06_03_rendimiento.py`: 18 textos degenerados contra las expresiones nuevas de la r06 y un texto realista ×1000.
+- `r06_04_mutantes.py`: 46 mutantes nuevos (S01 a S46); imprime cada resultado al acabar.
+
+### Tasas
+
+Banco ciego (`r06_01_banco_ciego.py`, ciclo real con RV, RF y DIV para las marcas; cada frase por `limpiar` con los permitidos del bloque):
+
+| Medida | Resultado | Umbral (INC-T102-01) |
+| --- | --- | --- |
+| Prohibidas con un dato (dígitos también de otras escrituras, marcadores de cuenta, desconocidos o mal formados, tickers, ISIN, sufijos de bolsa) que pasan | **0/45** | 0 |
+| Prohibidas sin dato (números en letra, fracciones, probabilidades y cuotas en palabras) que pasan | **0/30** | — |
+| Prohibidas que pasan, en total | **0/75 (0,0 %)** | ≤ 5 % |
+| Legítimas escritas como pide el prompt (llanas, con siglas de la lista, con `{opp:…}` y `{tipo:…}`, con giros como «Oriente Medio», «a medio plazo», «cuarto trimestre», «acero», «estrés», «eficiencia», «familia») que se quitan | **0/72 (0,0 %)**; ninguna conservada con llaves sin rellenar | ≤ 10 % |
+| Legítimas con un número en letra (coste declarado, aparte) que se quitan | 7/11 («Los dos bancos centrales…», «Las tres grandes economías…», «Cien días de gobierno…», «El G7…»); se conservan «Medio mundo…», «arma de doble filo», «Uno de los riesgos…» y «Hay una sola idea…» | se mide aparte |
+| Legítimas con siglas institucionales fuera de la lista (informativo) que se quitan | 5/5 (AIE, INE, EPA, TAE, BID), H-52 | — |
+| Límites declarados (informativo) que pasan | 4/4 («acciones de Tesla», «el valor nvda», «las VII ideas», «comprar COP») | se declaran |
+
+Por el camino real (`r06_02 -k banco`): de las 75 prohibidas, **0 llegan** al paquete JSON, al HTML o al informe técnico, y cada ciclo declara lo quitado; las 72 legítimas llegan rellenadas (las del historial, a la redacción: el HTML no muestra el historial sin casos cerrados).
+
+### Criterios de aceptación
+
+| Criterio | Cumple | Evidencia |
+| --- | --- | --- |
+| CA-12 (umbral) | **sí** | Banco ciego: pasan 0 de 75 prohibidas (umbral ≤ 5 %) y 0 de 45 con un dato (tolerancia cero). Por el camino real, 0/75 llegan a los entregables. Los huecos que quedan son los límites declarados de INC-T102-01 (4/4 pasan, como se declara) y H-53 (escritura de mala fe con punto medio, sin dato en mayúsculas contiguas) |
+| CA-13 (umbral) | **sí** | Se quitan 0 de 72 legítimas (umbral ≤ 10 %). Aparte, el coste declarado: 7 de 11 con un número en letra. Las siglas institucionales fuera de la lista (5/5) son un coste no declarado (H-52), fuera del banco principal |
+| CA-15 | **sí** | `r06_02 -k cli`: con los doce tipos, la primera frase de 30 s («Esta semana vemos 17 ideas en 10 tipos de inversión.») y los diez motivos llanos («De 2 ideas de renta variable analizadas, 1 pasó todos los filtros.»…) salen en el HTML con los números del paquete JSON entregado, sin ningún marcador. Un marcador de cuenta en el texto libre quita la frase y se declara (`r05_02 -k legitimas`, `r04_11`, `r06_01`); un motivo quitado entero toma el defecto de la redacción, también con datos del paquete. SINTESIS pide dos frases (`contratos.py`); el REDACCION de la V5 sigue con tres. Matices en H-49 y H-50 |
+| CA-16 | **sí, con reserva** | `r05_01`: 0/40 prohibidas pasan. Mutantes de `r05_04`, `r04_13` y `r03_03`: mueren todos los que aplican salvo R27 y N45, equivalentes. Reserva: W25 y W37 de `r04_04` (la QA r04 detenida) sobreviven sin explicarse (H-51) |
+| CA-11 | sí | Un marcador desconocido, mal formado, de cuenta o fuera de llaves quita la frase (`r06_01`, `r03_01 -k marcadores`, S01, S02 y S44 mueren); los de texto se rellenan después de filtrar |
+| CA-14 (CA-3, CA-4, CA-8, CA-9) | sí | Frase a frase y defectos por elemento (`r03_01 -k frase_a_frase`, `r05_02 -k legitimas`); se declara y G3 da APTO (`r06_02 -k banco`); tiempo lineal: `r06_03` 0,57 s, `r05_03` 0,51 s, `r04_12` 1,08 s, `r03_01` 0,92 s, todos < 2 s y sin casos no lineales. `r01_*` y `r02_*` no se volvieron a ejecutar en esta ronda |
+| CA-5 | sí | V5 sin cambios, A 1481 ≥ 607, cuotas iguales (ruff 2908, mypy A 109) y gate 12/12 |
+| CA-10 | sí, con reserva | La prueba por el camino real existe y mata S05 a S10; quedan mutantes vivos sin prueba (H-51) |
+
+### Estado de los hallazgos de la r05
+
+| ID | Estado en `5e9780d` | Evidencia |
+| --- | --- | --- |
+| H-40 (media) | corregido | `r05_01` giros 0/16; S12 a S15, S45 y S46 mueren. Pero el caso «un quinto mes consecutivo» no tiene prueba (S16 vive, H-51) |
+| H-41 (media) | corregido | `r05_01` genéricas 0/10; S33 y S35 mueren. «El ETF sube» y «El ETF cae» sin prueba (S34 vive, H-51) |
+| H-42 (alta) | **corregido** | Por diseño: los marcadores de cuenta quitan la frase y las cuentas las escribe el código (CA-15). `r05_02 -k listas` 0/4, `r04_03` (`mk_veces_de`, `mk_contra`) no llegan, S01 y S02 mueren |
+| H-43 (media) | corregido | `r05_01` R13 en letra 0/14; S18, S21 a S24 mueren. Los números ingleses, sin prueba que los aísle (S19 y S20 viven, H-51) |
+| H-44 (media) | corregido, también las dos regresiones | `r05_01` sufijos 0/13 y fondos 0/4; S25 a S29, S31 y S32 mueren |
+| H-45 (baja) | corregido | `r05_03`: ningún caso no lineal |
+| H-46 (baja) | corregido; los romanos, declarados | S36 a S40, S42 y S43 mueren; «las VII ideas», en INC-T102-01 y T-109. Queda el punto medio (H-53) |
+| H-47 (baja) | **en parte** | INC-T102-01, la deuda (T-102 y T-109) y el plan de pruebas del README del ticket, al día. Pero `pruebas.md` r06 sigue sin dar el total de A ni el gate (H-30), y el README del ejecutor no nombra los romanos entre los límites (H-54) |
+| H-48 (media) | corregido para sus mutantes | Los vivos de `r05_04` que aplican mueren; los que no aplican tienen su frase en las pruebas. Quedan vivos nuevos de la r06 (H-51) |
+
+### Hallazgos
+
+| ID | Gravedad | Cómo reproducirlo | Esperado / obtenido | Corrección sugerida | Estado |
+| --- | --- | --- | --- | --- | --- |
+| H-49 | baja | `r06_02_camino_real.py <raíz> -k motivos`; `r04_03_camino_real.py <raíz>` (frase de 30 s con un tipo); `r05_02 -k legitimas` (historial) | **Esperado:** las frases que escribe el código, correctas y solo de lo que hay en el paquete. **Obtenido:** (1) la concordancia falla con uno: «Esta semana vemos 3 ideas en 1 tipos de inversión.» (se entrega siempre desde la r06) y «De 1 ideas de … analizadas» si hay una candidata; (2) `_cuenta_motivo` escribe cuentas para claves de `motivos_llanos` que no son tipos del paquete o que tienen tres opciones («De 0 ideas de rv 2027 analizadas, 0 pasaron…», «De 0 ideas de zeta…»): no llegan a los entregables (la redacción solo pinta los tipos con menos de tres), pero quedan en la redacción interna; (3) quitar una frase tras «;» deja un trozo que empieza en minúscula («El historial es corto. el resto no pasa el filtro.») | Singular y plural en las dos frases («1 idea», «1 tipo», «De 1 idea»); en `_redaccion_segura`, tomar solo los motivos de tipos del paquete con menos de tres opciones; poner en mayúscula la primera letra del trozo que queda | abierto |
+| H-50 | media | `r06_02_camino_real.py <raíz> -k esquema`; lectura de `INSTR_SINTESIS` | **Esperado:** CA-15 («el Sintetizador escribe dos frases de 30 s») y que lo quitado se declare (CA-4). **Obtenido:** (1) la instrucción del mensaje dice «dos frases de «la semana en 30 segundos»: la primera, con las cuentas, la escribe el código», que se puede leer como que el modelo escribe una (§4 del prompt sí dice «las dos frases siguientes»); (2) si el Sintetizador devuelve una o tres frases, el esquema SINTESIS rechaza la respuesta entera (tras un reintento) y se entregan los textos por defecto y la integración determinista, con G3 APTO y **sin ninguna limitación que lo diga**. Falla cerrado y no inventa datos, pero un modelo real que siga la costumbre de la V5 (tres frases) pierde todos sus textos en silencio | En `INSTR_SINTESIS`, «escribe dos frases de «la semana en 30 segundos» (la primera del informe, con las cuentas, la pone el código)»; declarar en las limitaciones del paquete que la respuesta del Sintetizador no valió; valorar tomar las dos primeras si llegan tres, en vez de tirar toda la respuesta. Una prueba por el camino real | abierto |
+| H-51 | media | `r06_04_mutantes.py <copia> 3 todos`; `r04_04_mutantes.py <copia> 3 todos` | **Esperado:** CA-10 y CA-16; las baterías vigilan las piezas de la r06, que ya tuvo regresiones (H-40 y H-44). **Obtenido:** sobreviven a `test_t102_filtro.py` S16 (`_FIN_CANTIDAD` vacío: «El IPC sube por un quinto mes consecutivo» se quitaría, el caso de H-40), S17 (sin `\s*[.,;:)]`: «Sube un cuarto.» pasaría), S19 y S20 (cada grupo de números ingleses: «The odds are seventy to thirty», «a thousand reasons»; las pruebas solo usan frases con los dos), S34 («El ETF sube», «El ETF cae», de H-41), S41 («Compre 🅝🅥🅓🅐 ya»), y de la QA r04 detenida W25 («Comprar NVDAs ya») y W37. S30 es equivalente. El código actual hace lo correcto en todos (sondas a mano) | Una frase por mutante vivo en `test_t102_filtro.py`: las de esta celda como legítimas o prohibidas según corresponda, y «el ETF usd» para W37 | abierto |
+| H-52 | baja | `r06_01_banco_ciego.py <raíz>` (grupo `SIGLAS_FUERA` y `LEGITIMAS_LETRA`) | **Esperado:** CA-13 en su espíritu: las siglas corrientes de un informe macro no son instrumentos. **Obtenido:** se quitan con R21 «Según la AIE…», «El INE publica…», «La EPA dirá…», «La TAE de los depósitos…» y «El BID financia…» (5/5); la lista ya trae otras instituciones (OCDE, FMI, ONU, OMC) y el prompt no le dice al modelo que la lista es cerrada. Además, G7, G10 y G20 están en `filtro_r21_codigos` pero CIFRA los quita siempre («El G7 discute aranceles») | Ampliar la lista con las siglas institucionales y estadísticas corrientes (AIE, INE, EPA, TAE, BID, BM, BPI, OMS…) y quitar G7, G10 y G20, o declararlas como coste en INC-T102-01 | abierto |
+| H-53 | baja | `r04_02_sondas.py <raíz>` (grupo `r21_vecinas`); a mano: `v6.frase_prohibida("Comprar N·V·D·A ya.", perm)` | **Esperado:** H-46 («letras sueltas separadas por espacios o signos cuentan como código»). **Obtenido:** pasa con el punto medio (U+00B7) como separador; la r06 cubre espacios, «_» y el blanco Braille. Escritura de mala fe, poco probable en un modelo que sigue el prompt | Aceptar cualquier signo de puntuación no alfanumérico como separador en la regla de letras sueltas, o declararlo como límite | abierto |
+| H-54 | baja | Lectura de `pruebas.md` (r06) y de `bloque_a/11_Ejecutor/README.md` | (1) H-30 sigue abierto: `pruebas.md` r06 no da el total de A (**1481**) ni el gate (**12/12**). (2) El README del ejecutor no nombra entre los límites de R21 los romanos como cantidad, que INC-T102-01 y T-109 sí | Completar las dos cosas | abierto |
+
+**Lo que se intentó y no se rompió:**
+- **Cuentas del código:** con los doce tipos, la frase de 30 s y los diez motivos coinciden con el paquete JSON entregado; con claves ajenas o con cifras en `motivos_llanos`, nada llega a los entregables; con una respuesta de esquema inválido, las cuentas siguen saliendo del paquete.
+- **El banco ciego entero por el camino real:** 75 prohibidas repartidas por los 13 textos (régimen, factor, pregunta, lectura, limitación, las dos frases de 30 s, por qué, qué puede salir mal, ámbito, glosario, historial y motivo): ninguna llega y todas se declaran.
+- **Escrituras de mala fe:** cifras de ancho completo y arábigas, «Ⅶ», marcadores mal formados, desconocidos, de cuenta y fuera de llaves, «N̲V̲D̲A», «N V D A», «N_V_D_A», letras en recuadro y en círculo, caracteres de formato: se quitan.
+- **Rendimiento:** 18 casos nuevos lineales; un texto realista de 942 caracteres se filtra en unos 2 ms.
+
+### Invariantes
+
+- **R13 y R21:** el Sintetizador no cambia la selección ni las cifras, y desde la r06 tampoco cuenta: las únicas cifras de sus textos las pone el código con datos del paquete (CA-15). Ninguna prohibida con dato del banco ciego llega a los entregables. Lo que pasa son los límites declarados (INC-T102-01) y H-53.
+- **Sin LLM en la ruta determinista:** el filtro, el relleno y las frases de cuenta son código.
+- **Falla cerrado y valida antes de mutar:** lo que reconoce lo quita y lo declara; una respuesta de esquema inválido se descarta entera, pero sin declararse (H-50).
+- **Números escritos a mano:** solo las cotas técnicas de las expresiones ya vistas en la r05; `_cuenta_motivo` no lleva números. Los umbrales de CA-12 y CA-13 son `[PROPUESTO]` en INC-T102-01, para T-57. Sin hallazgo.
+- **Decisiones del operador:** la de la r06 («umbrales y sin cifras libres») está aplicada y registrada en el README del ticket, INC-T102-01 y la deuda; el coste de la regla estricta, declarado.
+- **Corpus, secretos y datos personales:** el commit no toca de `01_` a `10_` ni `99_`; `corpus-integridad` y `secrets` en verde. Los scripts del revisor solo usan tickers y nombres de sociedades cotizadas, sin datos personales.
+- **Documentación:** al día salvo H-54.
+
+### Veredicto r06
+
+**APTO** · Se cumplen CA-5, CA-10 a CA-16, con reservas en CA-10 y CA-16 por mutantes vivos sin prueba, y no hay ningún hallazgo crítico ni alto abierto:
+- **CA-12 y CA-13 con los umbrales `[PROPUESTO]` de INC-T102-01:** en el banco ciego pasan 0 de 75 prohibidas (0 de 45 con dato) y se quitan 0 de 72 legítimas. El coste aparte: 7 de 11 legítimas con un número en letra.
+- **H-42, el alto de la r05, queda corregido por diseño:** las cuentas las escribe el código con datos del paquete, comprobado por la línea de órdenes con los doce tipos, y un marcador de cuenta en el texto libre quita la frase.
+- **H-40 y H-44, las regresiones de la r05, corregidas.** La V5 no cambia y el gate da 12/12 con A en 1481 pruebas.
+
+**Pendiente, para corregir o llevar a la deuda con su ID:**
+- medios: H-50 (instrucción ambigua y respuesta descartada sin declararse) y H-51 (mutantes vivos sin prueba);
+- bajos: H-49, H-52, H-53 y H-54.
+
+**Cierre:** por instrucción de la ronda, este revisor no cambia el estado del ticket, no toca la deuda ni hace commit. El cierre (ticket `CERRADO`, H-49 a H-54 a la deuda, diario, memoria y commit) queda para quien coordine la ronda.

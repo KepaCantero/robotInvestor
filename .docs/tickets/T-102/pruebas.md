@@ -78,4 +78,4 @@ Scripts de la QA r05 en el árbol de la r06:
   - `r04_13`: mueren 23 de 45; sobrevive N45, equivalente;
   - `r03_03`: mueren 13 y no sobrevive ninguno.
 
-Cuotas: ruff 2908 y mypy de A 109, sin cambios. El banco ciego de CA-12 y CA-13 lo escribe el revisor de la QA r06.
+Cuotas: ruff 2908 y mypy de A 109, sin cambios. Gate (`commit_limpio.sh`, commit `5e9780d`): 12/12, A con 1481 pruebas, A-Forex 68 y B 176. El banco ciego de CA-12 y CA-13 lo escribió el revisor de la QA r06 (`r06_01_banco_ciego.py`).
