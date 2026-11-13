@@ -14,10 +14,17 @@ y valen ``None`` si la historia no varía (nunca 0 por defecto).
 
 Interfaz de cada manejador: ``f(ent, params) -> (resultado, limitaciones)`` con
 ``ent = {"valores": {...}, "series": {...}, "series_rol": {rol: pd.Series}}``. Todo es determinista (sin
-aleatoriedad) y falla cerrado: entradas insuficientes o incoherentes ⇒ ``ErrorFicha`` con el motivo.
+aleatoriedad) y falla cerrado: entradas insuficientes o incoherentes ⇒ ``ErrorFicha`` con el motivo. Los manejadores
+de ``FICHAS`` van envueltos por ``_blindar``: una excepción ajena (desborde, álgebra lineal, tipo) o una cifra no finita
+en el resultado también es ``ErrorFicha``. Los números no se aceptan como texto ni como booleano, y las fechas no se
+aceptan como número.
+
+Las advertencias fijas de cada ficha («Supuestos y limitaciones», ``ADVERTENCIAS``) van en ``resultado["advertencias"]``;
+la lista de limitaciones solo recoge problemas de los datos o pasos del método que no se sirven.
 """
 from __future__ import annotations
 
+import datetime as _dt
 import itertools
 import math
 from collections.abc import Callable
@@ -102,6 +109,36 @@ MINIMOS: dict[str, dict[str, Any]] = {
 }
 
 
+# Advertencias obligatorias de entrega: el campo «Supuestos y limitaciones» de cada ficha (Catálogo §2, campo 8). Van en
+# ``resultado["advertencias"]``; las ``limitaciones`` quedan para problemas de los datos o pasos no servidos.
+ADVERTENCIAS: dict[str, list[str]] = {
+    "FON-DISC-001": ["NAV retrasados (privados, inmobiliario) sesgan el descuento",
+                     "descuentos persistentes por comisiones, apalancamiento, fiscalidad o iliquidez",
+                     "la reversión no está garantizada y el descuento puede ampliarse en crisis de liquidez"],
+    "FON-FLOW-001": ["los flujos de vehículos cotizados incluyen creaciones y reembolsos de intermediarios y coberturas",
+                     "cambios de taxonomía", "los flujos persiguen rentabilidades pasadas",
+                     "la relación flujo–rentabilidad futura es débil y cambiante"],
+    "FON-TD-001": ["una variante del índice equivocada genera TD espuria",
+                   "diferencias de hora de valoración en índices de otras zonas",
+                   "con pocos miembros el agregado es frágil",
+                   "la salida es la categoría o el segmento, nunca un ranking de vehículos (1.6)"],
+    "FON-LEV-001": ["rebalanceo diario exacto al cierre", "saltos y huecos amplifican el arrastre",
+                    "la fórmula es exacta solo bajo movimiento browniano geométrico",
+                    "describe la estructura de la categoría, no vehículos concretos (1.6)"],
+    "DER-VRP-001": ["VRP positiva en promedio con pérdidas extremas en crisis (asimetría negativa)",
+                    "la realizada posterior usa datos futuros y nunca entra en la señal actual (fuga, M13)",
+                    "los índices publicados tienen metodología propia",
+                    "ES de la venta de varianza sobre ventanas solapadas (observaciones dependientes)"],
+    "DER-SKEW-001": ["el sesgo depende de la convención de delta (aquí forward sin prima)",
+                     "las probabilidades neutrales al riesgo no son reales",
+                     "los cambios de nivel de la volatilidad alteran el sesgo (usar la versión normalizada)"],
+    "DER-TERM-001": ["varianza total decreciente ⇒ arbitraje de calendario (se rechaza)",
+                     "el movimiento del evento depende de la varianza base supuesta"],
+    "DER-ROLL-001": ["opción de entrega en futuros de bonos", "dividendos esperados inciertos",
+                     "márgenes y liquidación diaria", "el carry no es previsión"],
+}
+
+
 # =========================================================================================== utilidades
 def _p(ficha: str, params: dict | None) -> dict[str, Any]:
     """Parámetros efectivos: los de la petición encima de los de la ficha (idempotente si ya vienen fusionados)."""
@@ -116,13 +153,17 @@ def _rango(ficha: str, nombre: str, valor: float) -> None:
         raise ErrorFicha(f"{ficha}: parámetro {nombre}={valor} fuera del rango admitido [{lo}, {hi}]")
 
 
+def _es_numero(x: Any) -> bool:
+    """Número real de Python o NumPy; los booleanos y los textos no son números (no se convierten en silencio)."""
+    return isinstance(x, (int, float, np.integer, np.floating)) and not isinstance(x, (bool, np.bool_))
+
+
 def _num(d: dict, clave: str, ficha: str, *, positivo: bool = False, ctx: str = "") -> float:
     if not isinstance(d, dict) or d.get(clave) is None:
         raise ErrorFicha(f"{ficha}: falta «{clave}»{ctx}")
-    try:
-        x = float(d[clave])
-    except (TypeError, ValueError) as e:
-        raise ErrorFicha(f"{ficha}: «{clave}» no es numérico{ctx}") from e
+    if not _es_numero(d[clave]):
+        raise ErrorFicha(f"{ficha}: «{clave}» no es numérico{ctx}")
+    x = float(d[clave])
     if not math.isfinite(x):
         raise ErrorFicha(f"{ficha}: «{clave}» no es finito{ctx}")
     if positivo and x <= 0:
@@ -130,13 +171,38 @@ def _num(d: dict, clave: str, ficha: str, *, positivo: bool = False, ctx: str = 
     return x
 
 
+def _pnum(p: dict, nombre: str, ficha: str) -> float:
+    """Parámetro numérico de la petición (mismas reglas que un dato)."""
+    return _num(p, nombre, ficha, ctx=" (parámetro)")
+
+
+def _plista(p: dict, nombre: str, ficha: str, *, enteros: bool = False) -> list[float]:
+    """Parámetro lista de números finitos y positivos (ventanas, vencimientos, rejillas…)."""
+    x = p.get(nombre)
+    if not isinstance(x, (list, tuple)) or not x or not all(_es_numero(e) for e in x):
+        raise ErrorFicha(f"{ficha}: parámetro «{nombre}» debe ser una lista no vacía de números")
+    a = [float(e) for e in x]
+    if not all(math.isfinite(e) and e > 0 for e in a) or (enteros and any(e != int(e) for e in a)):
+        raise ErrorFicha(f"{ficha}: parámetro «{nombre}» con valores no válidos {x}")
+    return a
+
+
+def _pbool(p: dict, nombre: str, ficha: str) -> bool:
+    if not isinstance(p.get(nombre), bool):
+        raise ErrorFicha(f"{ficha}: parámetro «{nombre}» debe ser booleano")
+    return bool(p[nombre])
+
+
 def _vector(d: dict, clave: str, ficha: str, *, positivo: bool = False, ctx: str = "") -> np.ndarray:
     if not isinstance(d, dict) or d.get(clave) is None:
         raise ErrorFicha(f"{ficha}: falta «{clave}»{ctx}")
-    try:
-        a = np.asarray(d[clave], dtype=float)
-    except (TypeError, ValueError) as e:
-        raise ErrorFicha(f"{ficha}: «{clave}» no es una lista numérica{ctx}") from e
+    x = d[clave]
+    if isinstance(x, np.ndarray):
+        if x.dtype.kind not in "iuf":
+            raise ErrorFicha(f"{ficha}: «{clave}» no es una lista numérica{ctx}")
+    elif not isinstance(x, (list, tuple)) or not all(_es_numero(e) for e in x):
+        raise ErrorFicha(f"{ficha}: «{clave}» no es una lista numérica{ctx}")
+    a = np.asarray(x, dtype=float)
     if a.ndim != 1 or a.size == 0:
         raise ErrorFicha(f"{ficha}: «{clave}» debe ser una lista no vacía{ctx}")
     if not np.all(np.isfinite(a)):
@@ -146,10 +212,38 @@ def _vector(d: dict, clave: str, ficha: str, *, positivo: bool = False, ctx: str
     return a
 
 
+def _dict(d: dict, clave: str, ficha: str, *, ctx: str = "") -> dict:
+    x = d.get(clave) if isinstance(d, dict) else None
+    if not isinstance(x, dict) or not x:
+        raise ErrorFicha(f"{ficha}: «{clave}» debe ser un diccionario no vacío{ctx}")
+    return x
+
+
+def _texto(d: dict, clave: str, ficha: str, *, opcional: bool = False, ctx: str = "") -> str | None:
+    """Campo de texto: obligatorio salvo ``opcional``; nunca un número, NaN o lista convertidos a texto."""
+    x = d.get(clave) if isinstance(d, dict) else None
+    if x is None and opcional:
+        return None
+    if not isinstance(x, str) or not x.strip():
+        raise ErrorFicha(f"{ficha}: «{clave}» debe ser un texto no vacío{ctx}")
+    return x
+
+
+def _booleano(d: dict, clave: str, ficha: str, defecto: bool, *, ctx: str = "") -> bool:
+    x = d.get(clave, defecto) if isinstance(d, dict) else defecto
+    if not isinstance(x, bool):
+        raise ErrorFicha(f"{ficha}: «{clave}» debe ser booleano{ctx}")
+    return x
+
+
 def _fecha(x: Any, ficha: str, clave: str) -> pd.Timestamp:
+    """Fecha en texto ISO, ``date``/``datetime``, ``Timestamp`` o ``datetime64``; nunca un número (se leería como
+    nanosegundos desde 1970-01-01)."""
+    if isinstance(x, (bool, int, float, np.number)) or not isinstance(x, (str, _dt.date, np.datetime64)):
+        raise ErrorFicha(f"{ficha}: «{clave}» debe ser una fecha (texto ISO o fecha), no {type(x).__name__}")
     try:
         t = pd.Timestamp(x)
-    except (TypeError, ValueError) as e:
+    except (TypeError, ValueError, OverflowError) as e:
         raise ErrorFicha(f"{ficha}: «{clave}» no es una fecha válida") from e
     if t is pd.NaT:
         raise ErrorFicha(f"{ficha}: «{clave}» no es una fecha válida")
@@ -157,15 +251,51 @@ def _fecha(x: Any, ficha: str, clave: str) -> pd.Timestamp:
 
 
 def _fechas(d: dict, clave: str, ficha: str) -> pd.DatetimeIndex:
-    if not isinstance(d, dict) or not d.get(clave):
-        raise ErrorFicha(f"{ficha}: faltan las fechas «{clave}»")
-    try:
-        f = pd.DatetimeIndex(pd.to_datetime(list(d[clave])))
-    except (TypeError, ValueError) as e:
-        raise ErrorFicha(f"{ficha}: «{clave}» contiene fechas no válidas") from e
+    x = d.get(clave) if isinstance(d, dict) else None
+    if not isinstance(x, (list, tuple)) or not x:
+        raise ErrorFicha(f"{ficha}: faltan las fechas «{clave}» (lista)")
+    f = pd.DatetimeIndex([_fecha(e, ficha, clave) for e in x])
     if f.hasnans or not f.is_monotonic_increasing or not f.is_unique:
         raise ErrorFicha(f"{ficha}: «{clave}» debe ser estrictamente creciente y sin huecos de fecha")
     return f
+
+
+def _no_finitos(x: Any, ruta: str = "resultado") -> list[str]:
+    """Rutas de los números no finitos (NaN, ±inf) de un resultado."""
+    if isinstance(x, dict):
+        return [r for k, v in x.items() for r in _no_finitos(v, f"{ruta}.{k}")]
+    if isinstance(x, (list, tuple)):
+        return [r for i, v in enumerate(x) for r in _no_finitos(v, f"{ruta}[{i}]")]
+    if _es_numero(x) and not math.isfinite(float(x)):
+        return [ruta]
+    return []
+
+
+Manejador = Callable[[dict, dict], tuple[dict, list[str]]]
+
+
+def _blindar(ficha: str, fn: Manejador) -> Manejador:
+    """Falla cerrado ante entradas que rompen el cálculo: cualquier excepción que no sea ``ErrorFicha`` (desbordes,
+    álgebra lineal, tipos) y cualquier cifra no finita en el resultado se rechazan con ``ErrorFicha``."""
+    def manejador(ent: dict, params: dict) -> tuple[dict, list[str]]:
+        if not isinstance(ent, dict) or not isinstance(ent.get("valores") or {}, dict) \
+                or not isinstance(params if params is not None else {}, dict):
+            raise ErrorFicha(f"{ficha}: entrada o parámetros mal formados")
+        try:
+            with np.errstate(all="ignore"):
+                res, lim = fn(ent, params or {})
+        except ErrorFicha:
+            raise
+        except (ArithmeticError, ValueError, TypeError, KeyError, IndexError, AttributeError, RuntimeError,
+                np.linalg.LinAlgError) as e:
+            raise ErrorFicha(f"{ficha}: entrada fuera del dominio de cálculo ({type(e).__name__}: {e})") from e
+        malos = _no_finitos(res)
+        if malos:
+            raise ErrorFicha(f"{ficha}: el cálculo da cifras no finitas con estas entradas ({', '.join(malos[:3])}): "
+                             "no se sirve")
+        return res, lim
+    manejador.__name__, manejador.__doc__, manejador.__module__ = fn.__name__, fn.__doc__, fn.__module__
+    return manejador
 
 
 def _posicion(valor: float, historia: np.ndarray, tol: float) -> dict[str, Any]:
@@ -254,12 +384,12 @@ def f_fon_disc(ent: dict, params: dict) -> tuple[dict, list[str]]:
     F = "FON-DISC-001"
     p, m, v = _p(F, params), MINIMOS[F], ent.get("valores") or {}
     for n in ("ventana_media", "ventana_larga", "kappa"):
-        _rango(F, n, float(p[n]))
-    if p["agregacion"] not in ("mediana", "media_ponderada"):
+        _rango(F, n, _pnum(p, n, F))
+    if not isinstance(p["agregacion"], str) or p["agregacion"] not in ("mediana", "media_ponderada"):
         raise ErrorFicha(f"{F}: agregacion «{p['agregacion']}» no admitida (mediana | media_ponderada)")
     fechas = _fechas(v, "fechas", F)
-    miembros = v.get("miembros")
-    if not isinstance(miembros, dict) or len(miembros) < m["miembros"]:
+    miembros = _dict(v, "miembros", F)
+    if len(miembros) < m["miembros"]:
         raise ErrorFicha(f"{F}: rechazo con < {m['miembros']} miembros")
     corte = fechas[-1]
     if fechas[0] > corte - pd.DateOffset(years=m["anios"]):
@@ -267,13 +397,12 @@ def f_fon_disc(ent: dict, params: dict) -> tuple[dict, list[str]]:
     paso = pd.Series(fechas).diff().dropna().median()
     if paso > pd.Timedelta(weeks=m["semanas_nav"]):
         raise ErrorFicha(f"{F}: NAV con frecuencia inferior a la semanal (separación mediana {paso})")
-    lim: list[str] = [("NAV retrasados (privados, inmobiliario) sesgan el descuento; descuentos persistentes por "
-                      "comisiones, apalancamiento, fiscalidad o iliquidez; la reversión no está garantizada y el "
-                      "descuento puede ampliarse en crisis de liquidez")]
+    lim: list[str] = []
     if fechas[0] > corte - pd.DateOffset(years=m["anios_recomendados"]):
         lim.append(f"historia inferior a los {m['anios_recomendados']} años recomendados")
-    nombres = sorted(miembros)
+    nombres = sorted(miembros, key=str)
     filas, pesos, subcat = [], [], []
+    privados_cat = _booleano(v, "activos_privados", F, False)
     for nom in nombres:
         mb, ctx = miembros[nom], f" (miembro {nom})"
         if not isinstance(mb, dict):
@@ -282,29 +411,28 @@ def f_fon_disc(ent: dict, params: dict) -> tuple[dict, list[str]]:
         nav = _vector(mb, "nav", F, positivo=True, ctx=ctx)
         if pr.size != fechas.size or nav.size != fechas.size:
             raise ErrorFicha(f"{F}: precio y NAV deben estar alineados con «fechas»{ctx}")
-        if not mb.get("fecha_nav"):
+        if mb.get("fecha_nav") is None:
             raise ErrorFicha(f"{F}: rechazo sin fecha de NAV{ctx}")
         fnav = _fecha(mb["fecha_nav"], F, "fecha_nav")
         if fnav > corte:
             raise ErrorFicha(f"{F}: fecha de NAV posterior a la fecha de corte{ctx}")
-        privado = bool(mb.get("privado", v.get("activos_privados", False)))
+        privado = _booleano(mb, "privado", F, privados_cat, ctx=ctx)
         meses = m["meses_nav_privados"] if privado else m["meses_nav"]
+        ajuste = _texto(mb, "ajuste_nav_declarado", F, opcional=True, ctx=ctx)
         if fnav < corte - pd.DateOffset(months=meses):
-            if not mb.get("ajuste_nav_declarado"):
+            if ajuste is None:
                 raise ErrorFicha(f"{F}: rechazo con NAV de antigüedad > {meses} meses sin ajuste declarado{ctx}")
-            lim.append(f"miembro {nom}: NAV de {fnav.date()} (> {meses} meses); ajuste declarado: "
-                       f"{mb['ajuste_nav_declarado']}")
+            lim.append(f"miembro {nom}: NAV de {fnav.date()} (> {meses} meses); ajuste declarado: {ajuste}")
         filas.append(pr / nav - 1)
         if mb.get("capitalizacion") is not None:
-            try:
-                c = np.asarray(mb["capitalizacion"], dtype=float)
-            except (TypeError, ValueError) as e:
-                raise ErrorFicha(f"{F}: capitalización no numérica{ctx}") from e
-            c = np.full(fechas.size, float(c)) if c.ndim == 0 else c
-            if c.size != fechas.size or not np.all(np.isfinite(c)) or np.any(c <= 0):
-                raise ErrorFicha(f"{F}: capitalización no válida o no alineada{ctx}")
+            if _es_numero(mb["capitalizacion"]):
+                c = np.full(fechas.size, _num(mb, "capitalizacion", F, positivo=True, ctx=ctx))
+            else:
+                c = _vector(mb, "capitalizacion", F, positivo=True, ctx=ctx)
+            if c.size != fechas.size:
+                raise ErrorFicha(f"{F}: capitalización no alineada con «fechas»{ctx}")
             pesos.append(c)
-        subcat.append(str(mb.get("subcategoria") or "(sin subcategoría)"))
+        subcat.append(_texto(mb, "subcategoria", F, opcional=True, ctx=ctx) or "(sin subcategoría)")
     D = np.vstack(filas)                                   # miembros × fechas
     mediana = np.median(D, axis=0)
     ponderada = None
@@ -348,6 +476,8 @@ def f_fon_disc(ent: dict, params: dict) -> tuple[dict, list[str]]:
         idx = [i for i, x in enumerate(subcat) if x == s]
         desglose[s] = {"n": len(idx), "descuento_mediana_pct": float(np.median(ult[idx])) * A_PCT}
     catal = v.get("catalizadores")
+    if catal is not None and (not isinstance(catal, list) or not all(isinstance(x, str) and x for x in catal)):
+        raise ErrorFicha(f"{F}: «catalizadores» debe ser una lista de textos declarados")
     if catal is None:
         lim.append("catalizadores agregados (paso v) no declarados")
     res = {
@@ -370,6 +500,7 @@ def f_fon_disc(ent: dict, params: dict) -> tuple[dict, list[str]]:
                 (float(ponderada[-1]) - float(mediana[-1])) * A_PCT if ponderada is not None else None},
         "referencias_ingenuas": {"RI_MH_descuento_pct": pos_larga["media"] * A_PCT, "RI_PA_descuento_pct": d * A_PCT},
         "unidades": {"descuento": "%", "dispersion": "pp", "vida_media": "meses", "rentabilidad": "% a H"},
+        "advertencias": list(ADVERTENCIAS[F]),
     }
     return res, lim
 
@@ -386,11 +517,12 @@ def f_fon_flow(ent: dict, params: dict) -> tuple[dict, list[str]]:
     """
     F = "FON-FLOW-001"
     p, m, v = _p(F, params), MINIMOS[F], ent.get("valores") or {}
-    taxonomia = v.get("taxonomia") or p.get("taxonomia")
-    if not taxonomia:
+    if v.get("taxonomia") is None and p.get("taxonomia") is None:
         raise ErrorFicha(f"{F}: rechazo sin taxonomía fija declarada")
+    taxonomia = (_texto(v, "taxonomia", F) if v.get("taxonomia") is not None
+                 else _texto(p, "taxonomia", F, ctx=" (parámetro)"))
     frec = v.get("frecuencia")
-    if frec not in ("mensual", "semanal"):
+    if not isinstance(frec, str) or frec not in ("mensual", "semanal"):
         raise ErrorFicha(f"{F}: «frecuencia» debe declararse como mensual o semanal")
     fechas = _fechas(v, "fechas", F)
     if fechas.size < 2:
@@ -408,21 +540,30 @@ def f_fon_flow(ent: dict, params: dict) -> tuple[dict, list[str]]:
     anios = m["anios_mensual"] if frec == "mensual" else m["anios_semanal"]
     if fechas[0] > corte - pd.DateOffset(years=anios):
         raise ErrorFicha(f"{F}: frecuencia {frec} exige ≥ {anios} años de historia")
-    cats = v.get("categorias")
-    if not isinstance(cats, dict) or not cats:
-        raise ErrorFicha(f"{F}: faltan las categorías")
-    lim: list[str] = [("los flujos de vehículos cotizados incluyen creaciones y reembolsos de intermediarios y "
-                      "coberturas; los flujos persiguen rentabilidades pasadas; la relación flujo–rentabilidad "
-                      "futura es débil y cambiante")]
+    cats = _dict(v, "categorias", F)
+    ventanas = [int(k) for k in _plista(p, "ventanas", F, enteros=True)]
+    ordenes = [int(k) for k in _plista(p, "ordenes_autocorrelacion", F, enteros=True)]
+    vz_f = _pnum(p, "ventana_z", F)
+    if vz_f <= 0 or vz_f != int(vz_f):
+        raise ErrorFicha(f"{F}: parámetro ventana_z debe ser un número entero positivo de meses")
+    vz = int(vz_f)
+    contr = p.get("percentiles_contrarios")
+    if not isinstance(contr, (list, tuple)) or len(contr) != 2 or not all(_es_numero(x) for x in contr) \
+            or not 0 <= float(contr[0]) < float(contr[1]) <= 1:
+        raise ErrorFicha(f"{F}: parámetro percentiles_contrarios debe ser [inferior, superior] dentro de [0, 1]")
+    senal_contraria = _pbool(p, "senal_contraria", F)
+    lim: list[str] = []
+    advertencias = list(ADVERTENCIAS[F])
     if len(cats) < 2:
         lim.append("una sola categoría: el rango entre categorías no es informativo")
     ff = fechas[1:]
-    nombres = sorted(cats)
+    nombres = sorted(cats, key=str)
     flujos: dict[str, np.ndarray] = {}
     aum_prev: dict[str, np.ndarray] = {}
     residuos_aum: dict[str, float | None] = {}
     agregado_via_aum = np.zeros(ff.size)
     todas_con_rent = True
+    gestiones: dict[str, str | None] = {}
     for c in nombres:
         cd, ctx = cats[c], f" (categoría {c})"
         if not isinstance(cd, dict):
@@ -433,6 +574,9 @@ def f_fon_flow(ent: dict, params: dict) -> tuple[dict, list[str]]:
         r = _vector(cd, "rentabilidad", F, ctx=ctx) if cd.get("rentabilidad") is not None else None
         if r is not None and r.size != ff.size:
             raise ErrorFicha(f"{F}: «rentabilidad» debe tener len(fechas) − 1 elementos{ctx}")
+        if r is not None and np.any(r <= -1):
+            raise ErrorFicha(f"{F}: rentabilidad simple ≤ −100 %{ctx}")
+        gestiones[c] = _texto(cd, "gestion", F, opcional=True, ctx=ctx)
         if cd.get("flujo") is not None:
             fl = _vector(cd, "flujo", F, ctx=ctx)
             if fl.size != ff.size:
@@ -450,11 +594,9 @@ def f_fon_flow(ent: dict, params: dict) -> tuple[dict, list[str]]:
         else:
             agregado_via_aum = agregado_via_aum + aum[1:] - aum[:-1] * (1 + r)
         flujos[c], aum_prev[c] = fl, aum[:-1]
-    ventanas = [int(k) for k in p["ventanas"]]
-    vz = int(p["ventana_z"])
     if fechas[0] > corte - pd.DateOffset(months=vz):
         lim.append(f"historia menor que ventana_z ({vz} meses): z-score sobre la historia disponible")
-    lo, hi = (float(x) for x in p["percentiles_contrarios"])
+    lo, hi = float(contr[0]), float(contr[1])
     tabla: dict[str, Any] = {}
     for c in nombres:
         fl, ap = flujos[c], aum_prev[c]
@@ -468,15 +610,15 @@ def f_fon_flow(ent: dict, params: dict) -> tuple[dict, list[str]]:
         mz = ff > corte - pd.DateOffset(months=vz)
         pos = _posicion(float(rel[-1]), rel[mz], FICHAS[F]["tol"])
         senal = None
-        if p["senal_contraria"]:
+        if senal_contraria:
             senal = ("ENTRADAS_EXTREMAS" if pos["percentil"] > hi else
                      "SALIDAS_EXTREMAS" if pos["percentil"] < lo else "NINGUNA")
         tabla[c] = {"flujo_ultimo": float(fl[-1]), "flujo_relativo_ultimo_pct": float(rel[-1]) * A_PCT,
                     "acumulados": acum, "z_score": pos["z"], "percentil": pos["percentil"],
-                    "autocorrelaciones": {str(k): _autocorrelacion(rel, int(k)) for k in p["ordenes_autocorrelacion"]},
-                    "gestion": cats[c].get("gestion"), "senal_contraria": senal}
+                    "autocorrelaciones": {str(k): _autocorrelacion(rel, k) for k in ordenes},
+                    "gestion": gestiones[c], "senal_contraria": senal}
     for k in ventanas:   # paso (iv): rango 1 = mayor flujo relativo acumulado (empates por nombre)
-        orden = sorted(nombres, key=lambda c: (-tabla[c]["acumulados"][str(k)]["pct_aum"], c))
+        orden = sorted(nombres, key=lambda c: (-tabla[c]["acumulados"][str(k)]["pct_aum"], str(c)))
         for i, c in enumerate(orden, start=1):
             tabla[c].setdefault("rango", {})[str(k)] = i
     por_gestion: dict[str, Any] = {}
@@ -500,8 +642,8 @@ def f_fon_flow(ent: dict, params: dict) -> tuple[dict, list[str]]:
     else:
         dif_total = None
         lim.append("sin rentabilidades ni flujo total publicado: la suma por categorías no tiene segunda vía")
-    if p["senal_contraria"]:
-        lim.append("señal contraria (paso v): hipótesis declarada, no regla")
+    if senal_contraria:
+        advertencias.append("señal contraria (paso v): hipótesis declarada, no regla")
     res = {
         "taxonomia": taxonomia, "frecuencia": frec, "fecha_corte": str(corte.date()),
         "categorias": tabla, "fechas_flujo": [str(x.date()) for x in ff],
@@ -512,6 +654,7 @@ def f_fon_flow(ent: dict, params: dict) -> tuple[dict, list[str]]:
         "referencias_ingenuas": {"flujo_nulo": 0.0,
                                  "RI_PA_flujo_relativo_pct": {c: tabla[c]["flujo_relativo_ultimo_pct"] for c in nombres}},
         "unidades": {"flujo": "moneda", "flujo_relativo": "% de AUM", "acumulados": "moneda y % de AUM"},
+        "advertencias": advertencias,
     }
     return res, lim
 
@@ -533,24 +676,26 @@ def f_fon_td(ent: dict, params: dict) -> tuple[dict, list[str]]:
     F = "FON-TD-001"
     p, m, v = _p(F, params), MINIMOS[F], ent.get("valores") or {}
     variante = v.get("variante_indice")
-    if not variante:
+    if not isinstance(variante, str) or not variante.strip():
         raise ErrorFicha(f"{F}: ACLARACION_REQUERIDA: la variante del índice no se declara")
-    if str(variante) != str(p["variante_indice"]):
+    if variante != p["variante_indice"]:
         raise ErrorFicha(f"{F}: variante del índice declarada «{variante}» distinta de la del parámetro "
                          f"«{p['variante_indice']}»: TD espuria")
-    if v.get("frecuencia", "diaria") != p["frecuencia"]:
+    if not isinstance(v.get("frecuencia", "diaria"), str) or v.get("frecuencia", "diaria") != p["frecuencia"]:
         raise ErrorFicha(f"{F}: las rentabilidades deben ser {p['frecuencia']}s")
-    miembros = v.get("miembros")
-    if not isinstance(miembros, dict) or len(miembros) < m["miembros"]:
+    miembros = _dict(v, "miembros", F)
+    if len(miembros) < m["miembros"]:
         raise ErrorFicha(f"{F}: rechazo con < {m['miembros']} miembros")
     ri = _vector(v, "rentabilidades_indice", F)
+    if np.any(ri <= -1):
+        raise ErrorFicha(f"{F}: rentabilidad simple del índice ≤ −100 %")
     n_bloques = ri.size // SESIONES_ANIO
     if n_bloques < m["anios"]:
         raise ErrorFicha(f"{F}: se necesitan ≥ {m['anios']} años ({m['anios'] * SESIONES_ANIO} sesiones) de rentabilidades")
     ini = ri.size - n_bloques * SESIONES_ANIO
-    lim: list[str] = [("una variante del índice equivocada genera TD espuria; diferencias de hora de valoración; "
-                      "con pocos miembros el agregado es frágil; salida por categoría o segmento, nunca ranking")]
-    nombres = sorted(miembros)
+    lim: list[str] = []
+    nombres = sorted(miembros, key=str)
+    etiquetas: dict[str, dict[str, str | None]] = {"replicacion": {}, "domicilio": {}}
     td, te, gastos, bloques = [], [], [], []
     comps: dict[str, list[float]] = {c: [] for c in _COMPONENTES_TD}
     for nom in nombres:
@@ -560,9 +705,13 @@ def f_fon_td(ent: dict, params: dict) -> tuple[dict, list[str]]:
         rv = _vector(mb, "rentabilidades", F, ctx=ctx)
         if rv.size != ri.size:
             raise ErrorFicha(f"{F}: rentabilidades no alineadas con el índice{ctx}")
+        if np.any(rv <= -1):
+            raise ErrorFicha(f"{F}: rentabilidad simple ≤ −100 %{ctx}")
         gastos.append(_num(mb, "gastos_corrientes", F, ctx=ctx))
-        if not mb.get("replicacion"):
-            raise ErrorFicha(f"{F}: falta el método de replicación{ctx}")
+        if not isinstance(mb.get("replicacion"), str) or not mb["replicacion"].strip():
+            raise ErrorFicha(f"{F}: falta el método de replicación (texto){ctx}")
+        etiquetas["replicacion"][nom] = mb["replicacion"]
+        etiquetas["domicilio"][nom] = _texto(mb, "domicilio", F, opcional=True, ctx=ctx)
         tdb = []
         for j in range(n_bloques):
             sl = slice(ini + j * SESIONES_ANIO, ini + (j + 1) * SESIONES_ANIO)
@@ -588,8 +737,9 @@ def f_fon_td(ent: dict, params: dict) -> tuple[dict, list[str]]:
     for attr in ("replicacion", "domicilio"):
         grupos: dict[str, list[int]] = {}
         for i, nom in enumerate(nombres):
-            if miembros[nom].get(attr):
-                grupos.setdefault(str(miembros[nom][attr]), []).append(i)
+            etiqueta = etiquetas[attr][nom]
+            if etiqueta is not None:
+                grupos.setdefault(etiqueta, []).append(i)
         if not grupos:
             continue
         segmentos[attr] = {}
@@ -613,6 +763,7 @@ def f_fon_td(ent: dict, params: dict) -> tuple[dict, list[str]]:
         "referencia_ingenua_td_pb": -float(np.mean(gastos)) * A_PB,
         "verificacion": {"descomposicion_mas_residuo_menos_td_pb": sum(descomp.values()) - td_media},
         "unidades": {"td": "pb anuales", "te": "% anual", "descomposicion": "pb", "tendencia": "pb por año"},
+        "advertencias": list(ADVERTENCIAS[F]),
     }
     return res, lim
 
@@ -623,18 +774,24 @@ def _rend_diarios(ent: dict, F: str, rol: str, clave: str) -> tuple[np.ndarray, 
     v = ent.get("valores") or {}
     s = (ent.get("series_rol") or {}).get(rol)
     if s is not None:
+        if not isinstance(s, pd.Series) or s.dtype.kind not in "iuf":
+            raise ErrorFicha(f"{F}: la serie de rol «{rol}» debe ser una serie numérica de precios")
         s = s.dropna().astype(float)
+        if not np.all(np.isfinite(s.values)):
+            raise ErrorFicha(f"{F}: la serie de rol «{rol}» tiene valores no finitos")
         if not isinstance(s.index, pd.DatetimeIndex) or not _diaria_por_fechas(s.index):
             raise ErrorFicha(f"{F}: rechazo sin datos diarios (serie «{rol}»)")
         if np.any(s.values <= 0):
             raise ErrorFicha(f"{F}: precios no positivos en la serie «{rol}»")
         return np.asarray(s.pct_change().dropna().values, dtype=float), f"serie de rol «{rol}»"
     r = _vector(v, clave, F)
+    if np.any(r <= -1):
+        raise ErrorFicha(f"{F}: rentabilidad simple ≤ −100 % en «{clave}»")
     if v.get("fechas") is not None:
         f = _fechas(v, "fechas", F)
         if f.size != r.size or not _diaria_por_fechas(f):
             raise ErrorFicha(f"{F}: rechazo sin datos diarios (fechas no diarias o no alineadas)")
-    elif v.get("frecuencia") != "diaria":
+    elif not isinstance(v.get("frecuencia"), str) or v.get("frecuencia") != "diaria":
         raise ErrorFicha(f"{F}: rechazo sin datos diarios (declare «fechas» o frecuencia «diaria»)")
     return r, f"valores «{clave}»"
 
@@ -677,16 +834,14 @@ def f_fon_lev(ent: dict, params: dict) -> tuple[dict, list[str]]:
         lim_extra = ["algún día con L·r ≤ −100 %: el vehículo se habría liquidado"]
     else:
         lim_extra = []
-    rejilla_s = [float(x) for x in p["rejilla_sigma"]]
+    rejilla_s = _plista(p, "rejilla_sigma", F)
     for s in rejilla_s:
         _rango(F, "rejilla_sigma", s)
-    lim: list[str] = [("rebalanceo diario exacto al cierre; saltos y huecos amplifican el arrastre; la fórmula es "
-                       "exacta solo bajo movimiento browniano geométrico; describe la estructura de la categoría, "
-                       "no vehículos concretos"),
-                      ("segunda vía por simulación (SIM-MC-001 en régimen VOL-GARCH-001) no servida: requiere el "
+    lim: list[str] = [("segunda vía por simulación (SIM-MC-001 en régimen VOL-GARCH-001) no servida: requiere el "
                        "módulo invitado MC-05 y semilla; percentiles simulados no entregados")] + lim_extra
     if v.get("sigma") is not None:
-        sigma, fuente_s = _num(v, "sigma", F, positivo=True), str(v.get("fuente_sigma") or "declarada")
+        sigma = _num(v, "sigma", F, positivo=True)
+        fuente_s = _texto(v, "fuente_sigma", F, opcional=True) or "declarada"
     else:
         sigma = float(np.std(r, ddof=1)) * math.sqrt(SESIONES_ANIO)
         fuente_s = f"realizada ({r.size} sesiones, {fuente_r})"
@@ -717,7 +872,8 @@ def f_fon_lev(ent: dict, params: dict) -> tuple[dict, list[str]]:
     elif A < 0:
         estado = "CONVEXIDAD_FAVORABLE"
     sigmas = sorted(set(rejilla_s + [sigma]))
-    rs = [float(x) for x in v["rejilla_rendimiento"]] if v.get("rejilla_rendimiento") is not None else [R]
+    rs = ([float(x) for x in _vector(v, "rejilla_rendimiento", F)] if v.get("rejilla_rendimiento") is not None
+          else [R])
     if v.get("rejilla_rendimiento") is None:
         lim.append("rejilla con un solo R del índice (no se declaró «rejilla_rendimiento»)")
     rejilla = []
@@ -760,6 +916,7 @@ def f_fon_lev(ent: dict, params: dict) -> tuple[dict, list[str]]:
         "percentiles_simulados": None,
         "referencia_ingenua_pct": L * R * A_PCT,
         "unidades": {"arrastre": "% a T", "diferencias": "pp", "sigma": "% anual"},
+        "advertencias": list(ADVERTENCIAS[F]),
     }
     return res, lim
 
@@ -805,12 +962,23 @@ def f_der_vrp(ent: dict, params: dict) -> tuple[dict, list[str]]:
     """
     F = "DER-VRP-001"
     p, m, v = _p(F, params), MINIMOS[F], ent.get("valores") or {}
-    plazo = float(p["plazo"])
+    plazo = _pnum(p, "plazo", F)
     _rango(F, "plazo", plazo)
+    anios_pct = _pnum(p, "ventana_percentil", F)
+    nivel = _pnum(p, "nivel_es", F)
+    if anios_pct <= 0 or not 0 < nivel < 1:
+        raise ErrorFicha(f"{F}: ventana_percentil debe ser positiva y nivel_es estar en (0, 1)")
+    if not isinstance(p["prevision_rv"], str):
+        raise ErrorFicha(f"{F}: prevision_rv debe ser texto (HAR | GARCH | realizada_pasada)")
     sr = ent.get("series_rol") or {}
     if sr.get("subyacente") is not None and sr.get("vol_implicita") is not None:
+        for rol in ("subyacente", "vol_implicita"):
+            if not isinstance(sr[rol], pd.Series) or sr[rol].dtype.kind not in "iuf":
+                raise ErrorFicha(f"{F}: la serie de rol «{rol}» debe ser una serie numérica")
         al = pd.concat([sr["subyacente"], sr["vol_implicita"]], axis=1, join="inner").dropna().astype(float)
         precios, iv = al.iloc[:, 0].to_numpy(), al.iloc[:, 1].to_numpy()
+        if precios.size == 0 or not (np.all(np.isfinite(precios)) and np.all(np.isfinite(iv))):
+            raise ErrorFicha(f"{F}: series de rol vacías o con valores no finitos")
     else:
         precios = _vector(v, "precios_subyacente", F, positivo=True)
         iv = _vector(v, "vol_implicita", F, positivo=True)
@@ -829,15 +997,14 @@ def f_der_vrp(ent: dict, params: dict) -> tuple[dict, list[str]]:
     if n < m["anios"] * SESIONES_ANIO:
         raise ErrorFicha(f"{F}: entradas mínimas: ≥ {m['anios']} años de volatilidad implícita diaria")
     h = round(plazo * SESIONES_ANIO / DIAS_ANIO)
-    lim: list[str] = [("VRP positiva en promedio con pérdidas extremas en crisis (asimetría negativa); la realizada "
-                       "posterior usa datos futuros y nunca entra en la señal actual; los índices publicados tienen "
-                       "metodología propia"),
-                      "ES de la venta de varianza sobre ventanas solapadas (observaciones dependientes)"]
+    lim: list[str] = []
     rv_d = r * r * SESIONES_ANIO
     cs = np.concatenate([[0.0], np.cumsum(rv_d)])
     t_hist = np.arange(0, n - h)                         # t con realizada posterior conocida en la fecha de corte
     rv_post = (cs[t_hist + 1 + h] - cs[t_hist + 1]) / h
     var_imp = iv * iv
+    if not (np.all(np.isfinite(rv_d)) and np.all(np.isfinite(var_imp)) and np.all(var_imp > 0)):
+        raise ErrorFicha(f"{F}: precios o volatilidades fuera del dominio numérico")
     vrp_post = var_imp[t_hist] - rv_post
     metodo = p["prevision_rv"]
     if metodo == "HAR":
@@ -864,19 +1031,18 @@ def f_der_vrp(ent: dict, params: dict) -> tuple[dict, list[str]]:
         raise ErrorFicha(f"{F}: prevision_rv «{metodo}» no admitida (HAR | GARCH | realizada_pasada)")
     vrp_var = float(var_imp[-1]) - e_rv
     vrp_vol = float(iv[-1]) - math.sqrt(e_rv)
-    nw = int(float(p["ventana_percentil"]) * SESIONES_ANIO)
+    nw = int(anios_pct * SESIONES_ANIO)
     if n < m["anios_recomendados"] * SESIONES_ANIO:
         lim.append(f"historia inferior a los {m['anios_recomendados']} años recomendados: percentiles orientativos")
     hist_vrp, hist_iv = vrp_post[-nw:], iv[-nw:]
     tol = FICHAS[F]["tol"]
     pos_vrp, pos_iv = _posicion(vrp_var, hist_vrp, tol), _posicion(float(iv[-1]), hist_iv, tol)
     rel = vrp_post[-nw:] / var_imp[t_hist][-nw:]          # rentabilidad de vender varianza por unidad de σ²_imp
-    nivel = float(p["nivel_es"])
     q = _cuantil(rel, 1 - nivel)
     es = -float(np.mean(rel[rel <= q])) * A_PCT
     replica = None
     if v.get("cesta_opciones") is not None:
-        var_rep = _replica_varianza(v["cesta_opciones"], F, m["strikes"], plazo)
+        var_rep = _replica_varianza(_dict(v, "cesta_opciones", F), F, m["strikes"], plazo)
         replica = {"sigma_imp_replica_pct": math.sqrt(var_rep) * A_PCT,
                    "diferencia_replica_menos_publicado_puntos": (math.sqrt(var_rep) - float(iv[-1])) * A_PCT}
     else:
@@ -899,6 +1065,7 @@ def f_der_vrp(ent: dict, params: dict) -> tuple[dict, list[str]]:
         "verificacion": {"signo_coherente_varianza_volatilidad": bool(np.sign(vrp_var) == np.sign(vrp_vol))},
         "unidades": {"sigma": "% anual", "varianza": "puntos (σ·100)²", "vrp_volatilidad": "puntos",
                      "es": "% de σ²_imp (pérdida positiva)"},
+        "advertencias": list(ADVERTENCIAS[F]),
     }
     return res, lim
 
@@ -946,9 +1113,12 @@ def f_der_skew(ent: dict, params: dict) -> tuple[dict, list[str]]:
     """
     F = "DER-SKEW-001"
     p, m, v = _p(F, params), MINIMOS[F], ent.get("valores") or {}
-    _rango(F, "delta", float(p["delta"]))
-    _rango(F, "vencimiento", float(p["vencimiento"]))
-    if p["metodo"] not in ("deltas", "SVI"):
+    _rango(F, "delta", _pnum(p, "delta", F))
+    _rango(F, "vencimiento", _pnum(p, "vencimiento", F))
+    mny, meses_prot = _pnum(p, "proteccion_moneyness", F), _pnum(p, "proteccion_meses", F)
+    if mny <= 0 or meses_prot <= 0:
+        raise ErrorFicha(f"{F}: parámetros de la protección estándar no válidos")
+    if not isinstance(p["metodo"], str) or p["metodo"] not in ("deltas", "SVI"):
         raise ErrorFicha(f"{F}: metodo «{p['metodo']}» no admitido (deltas | SVI)")
     if _num(v, "vencimiento_meses", F, positivo=True) != float(p["vencimiento"]):
         raise ErrorFicha(f"{F}: vencimiento de los datos no declarado o distinto del parámetro ({p['vencimiento']} meses)")
@@ -958,8 +1128,8 @@ def f_der_skew(ent: dict, params: dict) -> tuple[dict, list[str]]:
     hist_rr = _vector(v, "historia_rr", F)
     if hist_rr.size < m["anios"] * SESIONES_ANIO:
         raise ErrorFicha(f"{F}: se necesita historia diaria ≥ {m['anios']} años")
-    lim: list[str] = [("el sesgo depende de la convención de delta (aquí forward sin prima); las probabilidades "
-                      "neutrales al riesgo no son reales; los cambios de nivel alteran el sesgo (use la normalizada)")]
+    lim: list[str] = []
+    advertencias = list(ADVERTENCIAS[F])
     if hist_rr.size < m["anios_percentil"] * SESIONES_ANIO:
         lim.append(f"historia < {m['anios_percentil']} años: percentiles orientativos")
     sup = v.get("superficie")
@@ -967,6 +1137,7 @@ def f_der_skew(ent: dict, params: dict) -> tuple[dict, list[str]]:
     bkm: float | None = None
     coste: float | None = None
     if sup is not None:
+        sup = _dict(v, "superficie", F)
         K = _vector(sup, "strikes", F, positivo=True, ctx=" (superficie)")
         if K.size < m["strikes"]:
             raise ErrorFicha(f"{F}: rechazo con < {m['strikes']} precios de ejercicio")
@@ -1008,8 +1179,9 @@ def f_der_skew(ent: dict, params: dict) -> tuple[dict, list[str]]:
                 if fun(float(k[0])) * fun(float(k[-1])) > 0:
                     raise ErrorFicha(f"{F}: SVI: delta {objetivo:g} fuera del rango cotizado (no se extrapola)")
                 return float(optimize.brentq(fun, float(k[0]), float(k[-1])))
-            sp, sc, sa = _vol_svi(_raiz(1 - delta)), _vol_svi(_raiz(delta)), _vol_svi(0.0)
-            svi.update({"sigma_put_pct": sp * A_PCT, "sigma_call_pct": sc * A_PCT, "sigma_atm_pct": sa * A_PCT,
+            k_put, k_call = _raiz(1 - delta), _raiz(delta)
+            sp, sc, sa = _vol_svi(k_put), _vol_svi(k_call), _vol_svi(0.0)
+            svi.update({"k_put_delta": k_put, "k_call_delta": k_call,"sigma_put_pct": sp * A_PCT, "sigma_call_pct": sc * A_PCT, "sigma_atm_pct": sa * A_PCT,
                         "rr_puntos": (sp - sc) * A_PCT, "bf_puntos": ((sp + sc) / 2 - sa) * A_PCT})
         elif p["metodo"] == "SVI":
             raise ErrorFicha(f"{F}: rechazo: el ajuste SVI presenta arbitraje de mariposa no corregible")
@@ -1030,16 +1202,16 @@ def f_der_skew(ent: dict, params: dict) -> tuple[dict, list[str]]:
         W = _int((6 * lk - 3 * lk ** 2) / K ** 2)
         den = V - mu * mu
         bkm = float((W - 3 * mu * V + 2 * mu ** 3) / den ** 1.5) if den > 0 else None
-        lim.append("asimetría BKM integrada solo sobre los strikes cotizados (truncamiento y discretización)")
+        advertencias.append("asimetría BKM integrada solo sobre los strikes cotizados (truncamiento y discretización)")
         # (iv) Coste de la protección estándar (put al 90 % a 3 meses), en % del nocional.
-        if float(p["vencimiento"]) != float(p["proteccion_meses"]):
+        if float(p["vencimiento"]) != meses_prot:
             lim.append("vencimiento distinto del de la protección estándar: coste de protección no calculado")
         elif sup.get("spot") is None or sup.get("tipo_interes") is None:
             lim.append("sin spot o tipo de interés en la superficie: coste de protección no calculado")
         else:
             S = _num(sup, "spot", F, positivo=True, ctx=" (superficie)")
             rr_ = _num(sup, "tipo_interes", F, ctx=" (superficie)")
-            Kp = float(p["proteccion_moneyness"]) * S
+            Kp = mny * S
             kp = math.log(Kp / fwd)
             if k[0] <= kp <= k[-1]:
                 sp_ = float(np.interp(kp, k, vol))
@@ -1059,6 +1231,8 @@ def f_der_skew(ent: dict, params: dict) -> tuple[dict, list[str]]:
             s_put, s_call = s_atm + bf_q + rr_q / 2, s_atm + bf_q - rr_q / 2
         else:
             raise ErrorFicha(f"{F}: rechazo: ni superficie con ≥ {m['strikes']} precios de ejercicio ni cotizaciones RR/BF")
+        if s_put <= 0 or s_call <= 0:
+            raise ErrorFicha(f"{F}: RR/BF implican volatilidades no positivas")
         lim.append("sin superficie: sin SVI, asimetría neutral al riesgo ni coste de protección calculados")
     rr = s_put - s_call
     bf = (s_put + s_call) / 2 - s_atm
@@ -1078,13 +1252,16 @@ def f_der_skew(ent: dict, params: dict) -> tuple[dict, list[str]]:
         "sigma_put_pct": s_put * A_PCT, "sigma_call_pct": s_call * A_PCT, "sigma_atm_pct": s_atm * A_PCT,
         "rr_puntos": rr * A_PCT, "bf_puntos": bf * A_PCT, "pendiente_normalizada": pend,
         "svi": svi, "segunda_via": segunda,
-        "asimetria_neutral_riesgo": bkm, "asimetria_publicada": v.get("asimetria_publicada"),
+        "asimetria_neutral_riesgo": bkm,
+        "asimetria_publicada": (_num(v, "asimetria_publicada", F) if v.get("asimetria_publicada") is not None
+                                else None),
         "coste_proteccion_pct": coste * A_PCT if coste is not None else None,
         "percentiles": {c: {"percentil": x["percentil"], "z": x["z"], "n": x["n"]} for c, x in percent.items()},
         "referencias_ingenuas": {"RI_MH_rr_puntos": float(np.mean(hist_rr)) * A_PCT,
                                  "RI_PA_rr_puntos": float(hist_rr[-1]) * A_PCT},
         "unidades": {"sigma": "% anual", "rr_bf": "puntos de volatilidad", "pendiente_normalizada": "adimensional",
                      "coste_proteccion": "% del nocional"},
+        "advertencias": advertencias,
     }
     return res, lim
 
@@ -1101,7 +1278,7 @@ def f_der_term(ent: dict, params: dict) -> tuple[dict, list[str]]:
     """
     F = "DER-TERM-001"
     p, m, v = _p(F, params), MINIMOS[F], ent.get("valores") or {}
-    if p["interpolacion"] != "varianza_total":
+    if not isinstance(p["interpolacion"], str) or p["interpolacion"] != "varianza_total":
         raise ErrorFicha(f"{F}: interpolacion «{p['interpolacion']}» no admitida (varianza_total)")
     meses = _vector(v, "vencimientos_meses", F, positivo=True)
     vol = _vector(v, "vol_atm", F, positivo=True)
@@ -1109,8 +1286,12 @@ def f_der_term(ent: dict, params: dict) -> tuple[dict, list[str]]:
         raise ErrorFicha(f"{F}: rechazo con < {m['vencimientos']} vencimientos")
     if vol.size != meses.size or np.any(np.diff(meses) <= 0):
         raise ErrorFicha(f"{F}: vencimientos crecientes y volatilidades alineadas")
-    if v.get("calendario_eventos") is None:
-        raise ErrorFicha(f"{F}: falta el calendario de eventos (lista vacía si no hay)")
+    if not isinstance(v.get("calendario_eventos"), list):
+        raise ErrorFicha(f"{F}: falta el calendario de eventos (lista; vacía si no hay)")
+    grid_param = _plista(p, "vencimientos", F)
+    pm = _plista(p, "pendiente_meses", F)
+    if len(pm) != 2 or pm[0] >= pm[1]:
+        raise ErrorFicha(f"{F}: parámetro pendiente_meses debe ser [corto, largo]")
     h1, h3 = _vector(v, "historia_vol_1m", F, positivo=True), _vector(v, "historia_vol_3m", F, positivo=True)
     if h1.size != h3.size:
         raise ErrorFicha(f"{F}: historias de 1 y 3 meses no alineadas")
@@ -1119,9 +1300,11 @@ def f_der_term(ent: dict, params: dict) -> tuple[dict, list[str]]:
     tol = FICHAS[F]["tol"]
     T = meses / MESES_ANIO
     w = vol * vol * T
+    if not np.all(np.isfinite(w)):
+        raise ErrorFicha(f"{F}: volatilidades fuera del dominio numérico")
     if np.any(np.diff(w) < -tol * w[:-1]):
         raise ErrorFicha(f"{F}: rechazo: varianza total decreciente (arbitraje de calendario); no hay corrección declarada")
-    lim: list[str] = ["el movimiento del evento depende de la varianza base supuesta"]
+    lim: list[str] = []
     if h1.size < m["anios_percentil"] * SESIONES_ANIO:
         lim.append(f"historia < {m['anios_percentil']} años: percentiles orientativos")
 
@@ -1131,12 +1314,12 @@ def f_der_term(ent: dict, params: dict) -> tuple[dict, list[str]]:
             return None
         return math.sqrt(float(np.interp(t, T, w)) / t)
     curva = {}
-    for mes in p["vencimientos"]:
-        s = sigma_en(float(mes))
+    for mes in grid_param:
+        s = sigma_en(mes)
         curva[_clave_mes(mes)] = s * A_PCT if s is not None else None
         if s is None:
             lim.append(f"vencimiento de {mes} meses fuera del rango cotizado: no se extrapola")
-    m1, m3 = (float(x) for x in p["pendiente_meses"])
+    m1, m3 = pm
     s1, s3 = sigma_en(m1), sigma_en(m3)
     if s1 is None or s3 is None:
         raise ErrorFicha(f"{F}: la pendiente exige cotizaciones que cubran {m1:g} y {m3:g} meses (no se extrapola)")
@@ -1144,7 +1327,7 @@ def f_der_term(ent: dict, params: dict) -> tuple[dict, list[str]]:
     ratio = s1 / s3
     estado = "INVERTIDA" if ratio > 1 else "PLANA" if ratio == 1 else "NORMAL"
     fwd = []
-    grid = [float(x) for x in p["vencimientos"] if curva[_clave_mes(x)] is not None]
+    grid = [x for x in grid_param if curva[_clave_mes(x)] is not None]
     for a, b in itertools.pairwise(grid):
         ta, tb = a / MESES_ANIO, b / MESES_ANIO
         sa, sb = sigma_en(a), sigma_en(b)
@@ -1163,10 +1346,13 @@ def f_der_term(ent: dict, params: dict) -> tuple[dict, list[str]]:
         s_con = float(vol[int(np.where(meses == mc)[0][0])])
         tc = mc / MESES_ANIO
         var_e = s_con * s_con * tc - sb_ * sb_ * tc
+        nombre = _texto(e, "nombre", F, opcional=True, ctx=" (evento)")
+        fecha_e = str(_fecha(e["fecha"], F, "fecha").date()) if e.get("fecha") is not None else None
         if var_e < 0:
-            lim.append(f"evento {e.get('nombre')}: varianza del evento negativa con la σ_base declarada")
-        eventos.append({"nombre": e.get("nombre"), "fecha": e.get("fecha"), "vencimiento_meses": mc,
-                        "sigma_base_pct": sb_ * A_PCT, "fuente_sigma_base": e.get("fuente_sigma_base"),
+            lim.append(f"evento {nombre}: varianza del evento negativa con la σ_base declarada")
+        eventos.append({"nombre": nombre, "fecha": fecha_e, "vencimiento_meses": mc,
+                        "sigma_base_pct": sb_ * A_PCT,
+                        "fuente_sigma_base": _texto(e, "fuente_sigma_base", F, opcional=True, ctx=" (evento)"),
                         "varianza_evento": var_e,
                         "movimiento_descontado_pct": math.sqrt(var_e) * A_PCT if var_e >= 0 else None})
     hist_p = h3 - h1
@@ -1195,6 +1381,7 @@ def f_der_term(ent: dict, params: dict) -> tuple[dict, list[str]]:
         "referencias_ingenuas": {"RI_MH_pendiente_puntos": float(np.mean(hist_p)) * A_PCT,
                                  "RI_PA_pendiente_puntos": pend * A_PCT},
         "unidades": {"sigma": "% anual", "pendiente": "puntos de volatilidad", "movimiento": "%"},
+        "advertencias": list(ADVERTENCIAS[F]),
     }
     return res, lim
 
@@ -1213,7 +1400,7 @@ def f_der_roll(ent: dict, params: dict) -> tuple[dict, list[str]]:
     """
     F = "DER-ROLL-001"
     p, m, v = _p(F, params), MINIMOS[F], ent.get("valores") or {}
-    anual = float(p["anualizacion"])
+    anual = _pnum(p, "anualizacion", F)
     if anual not in (float(DIAS_ANIO), 360.0):
         raise ErrorFicha(f"{F}: anualizacion {anual:g} no admitida (365 | 360)")
     if v.get("tipo_financiacion") is None:
@@ -1229,21 +1416,24 @@ def f_der_roll(ent: dict, params: dict) -> tuple[dict, list[str]]:
     if np.any(np.diff(dias) <= 0):
         raise ErrorFicha(f"{F}: vencimientos repetidos")
     tipo = v.get("tipo_activo")
-    lim: list[str] = ["márgenes y liquidación diaria; el carry no es previsión"]
+    if not isinstance(tipo, str) or tipo not in ("indice", "divisa", "bono"):
+        raise ErrorFicha(f"{F}: tipo_activo «{tipo}» no admitido (indice | divisa | bono)")
+    lim: list[str] = []
+    advertencias = list(ADVERTENCIAS[F])
     if tipo == "bono":
         S = (_num(v, "precio_entregable", F, positivo=True) / _num(v, "factor_conversion", F, positivo=True))
         teorico = _num(v, "rendimiento_entregable", F) - r
-        lim.append("bonos: cupón corrido y opción de entrega no modelados (spot efectivo = precio del entregable / factor)")
+        advertencias.append("bonos: cupón corrido y opción de entrega no modelados (spot efectivo = precio del "
+                            "entregable / factor de conversión)")
     else:
         sr = (ent.get("series_rol") or {}).get("spot")
-        S = float(sr.dropna().iloc[-1]) if sr is not None and v.get("spot") is None else _num(v, "spot", F, positivo=True)
-        if tipo == "indice":
-            teorico = r - _num(v, "rendimiento_dividendo", F)
-            lim.append("dividendos esperados inciertos")
-        elif tipo == "divisa":
-            teorico = r - _num(v, "tipo_base", F)
+        if sr is not None and v.get("spot") is None:
+            if not isinstance(sr, pd.Series) or sr.dtype.kind not in "iuf" or sr.dropna().empty:
+                raise ErrorFicha(f"{F}: la serie de rol «spot» debe ser una serie numérica no vacía")
+            S = _num({"spot": float(sr.dropna().iloc[-1])}, "spot", F, positivo=True, ctx=" (serie de rol)")
         else:
-            raise ErrorFicha(f"{F}: tipo_activo «{tipo}» no admitido (indice | divisa | bono)")
+            S = _num(v, "spot", F, positivo=True)
+        teorico = r - (_num(v, "rendimiento_dividendo", F) if tipo == "indice" else _num(v, "tipo_base", F))
     T = dias / anual
     carry = np.log(Fp / S) / T
     tabla = []
@@ -1256,7 +1446,7 @@ def f_der_roll(ent: dict, params: dict) -> tuple[dict, list[str]]:
         elif tipo == "bono":
             fila["repo_implicito_pct"] = float(teorico + r - carry[i]) * A_PCT   # rendimiento del entregable − carry
         tabla.append(fila)
-    pares = [int(x) for x in p["pares"]]
+    pares = [int(x) for x in _plista(p, "pares", F, enteros=True)]
     if len(pares) != 2 or not (1 <= pares[0] < pares[1] <= Fp.size):
         raise ErrorFicha(f"{F}: pares {pares} no válidos para {Fp.size} vencimientos")
     i, j = pares[0] - 1, pares[1] - 1
@@ -1273,14 +1463,20 @@ def f_der_roll(ent: dict, params: dict) -> tuple[dict, list[str]]:
             lim.append(f"sin historia de {clave}: percentil no calculado")
     descomp = None
     if v.get("periodo") is not None:
-        pr = v["periodo"]
+        pr = _dict(v, "periodo", F)
         s0, s1 = _num(pr, "spot_ini", F, positivo=True), _num(pr, "spot_fin", F, positivo=True)
         f0, f1 = _num(pr, "futuro_ini", F, positivo=True), _num(pr, "futuro_fin", F, positivo=True)
         col = _num(pr, "tipo_colateral", F) * _num(pr, "dias", F, positivo=True) / anual
         spot_r, fut_r = s1 / s0 - 1, f1 / f0 - 1
         descomp = {"spot_pct": spot_r * A_PCT, "roll_pct": (fut_r - spot_r) * A_PCT, "colateral_pct": col * A_PCT,
-                   "total_pct": (fut_r + col) * A_PCT,
-                   "suma_componentes_menos_total_pp": ((spot_r + (fut_r - spot_r) + col) - (fut_r + col)) * A_PCT}
+                   "total_pct": (fut_r + col) * A_PCT}
+        # Identidad con los componentes tal como se entregan (no con la expresión que los define).
+        descomp["suma_componentes_menos_total_pp"] = (descomp["spot_pct"] + descomp["roll_pct"]
+                                                      + descomp["colateral_pct"] - descomp["total_pct"])
+        if pr.get("total_publicado") is not None:   # segunda vía: índice de rentabilidad total publicado
+            descomp["suma_componentes_menos_publicado_pp"] = (
+                descomp["spot_pct"] + descomp["roll_pct"] + descomp["colateral_pct"]
+                - _num(pr, "total_publicado", F) * A_PCT)
     else:
         lim.append("sin «periodo»: descomposición spot + roll + colateral no calculada")
     res = {
@@ -1295,27 +1491,28 @@ def f_der_roll(ent: dict, params: dict) -> tuple[dict, list[str]]:
                                  "carry_teorico_pct": teorico * A_PCT},
         "unidades": {"base": "puntos y %", "carry": "% anual", "roll": "% anual", "desviacion": "pb",
                      "descomposicion": "% del periodo"},
+        "advertencias": advertencias,
     }
     return res, lim
 
 
 # =========================================================================================== registro
 FICHAS: dict[str, dict[str, Any]] = {
-    "FON-DISC-001": {"fn": f_fon_disc, "modulo": "MC-09", "version": "1.0", "cifra": "ESTADISTICA",
+    "FON-DISC-001": {"fn": _blindar("FON-DISC-001", f_fon_disc), "modulo": "MC-09", "version": "1.0", "cifra": "ESTADISTICA",
                      "ri": "RI-MH (media del descuento) y RI-PA (descuento sin cambio)", "tol": 1e-10},
-    "FON-FLOW-001": {"fn": f_fon_flow, "modulo": "MC-02", "version": "1.0", "cifra": "ESTADISTICA",
+    "FON-FLOW-001": {"fn": _blindar("FON-FLOW-001", f_fon_flow), "modulo": "MC-02", "version": "1.0", "cifra": "ESTADISTICA",
                      "ri": "Flujo nulo y RI-PA del flujo relativo", "tol": 1e-10},
-    "FON-TD-001": {"fn": f_fon_td, "modulo": "MC-01", "version": "1.0", "cifra": "ESTADISTICA",
+    "FON-TD-001": {"fn": _blindar("FON-TD-001", f_fon_td), "modulo": "MC-01", "version": "1.0", "cifra": "ESTADISTICA",
                    "ri": "TD = −gastos corrientes medios de la categoría", "tol": 1e-10},
-    "FON-LEV-001": {"fn": f_fon_lev, "modulo": "MC-09", "version": "1.0", "cifra": "DETERMINISTA",
+    "FON-LEV-001": {"fn": _blindar("FON-LEV-001", f_fon_lev), "modulo": "MC-09", "version": "1.0", "cifra": "DETERMINISTA",
                     "ri": "L × rentabilidad del índice", "tol": 1e-10},
-    "DER-VRP-001": {"fn": f_der_vrp, "modulo": "MC-09", "version": "1.0", "cifra": "ESTADISTICA",
+    "DER-VRP-001": {"fn": _blindar("DER-VRP-001", f_der_vrp), "modulo": "MC-09", "version": "1.0", "cifra": "ESTADISTICA",
                     "ri": "RI-MH de la VRP; RI-EWMA para la realizada esperada", "tol": 1e-8},
-    "DER-SKEW-001": {"fn": f_der_skew, "modulo": "MC-09", "version": "1.0", "cifra": "ESTADISTICA",
+    "DER-SKEW-001": {"fn": _blindar("DER-SKEW-001", f_der_skew), "modulo": "MC-09", "version": "1.0", "cifra": "ESTADISTICA",
                      "ri": "RI-MH y RI-PA del sesgo", "tol": 1e-8},
-    "DER-TERM-001": {"fn": f_der_term, "modulo": "MC-09", "version": "1.0", "cifra": "DETERMINISTA",
+    "DER-TERM-001": {"fn": _blindar("DER-TERM-001", f_der_term), "modulo": "MC-09", "version": "1.0", "cifra": "DETERMINISTA",
                      "ri": "RI-MH y RI-PA de la pendiente", "tol": 1e-10},
-    "DER-ROLL-001": {"fn": f_der_roll, "modulo": "MC-09", "version": "1.0", "cifra": "DETERMINISTA",
+    "DER-ROLL-001": {"fn": _blindar("DER-ROLL-001", f_der_roll), "modulo": "MC-09", "version": "1.0", "cifra": "DETERMINISTA",
                      "ri": "RI-MH del carry y carry teórico", "tol": 1e-10},
 }
 
@@ -1439,6 +1636,123 @@ def _ctl_roll(plana: bool) -> dict:
                         "tipo_colateral": 0.03, "dias": 30}}
 
 
+# --- casos que no anulan los términos del método (QA r01 de T-106, H-08) ---
+_CTL_KAPPA = 0.25                      # κ ≠ ½: la fracción y su complementaria dan cifras distintas
+_CTL_D_BASE, _CTL_D_ULT = -0.10, -0.20  # descuento constante y descuento de la última semana
+
+
+def _ctl_disc_kappa() -> dict:
+    d = _ctl_disc(iguales=False, constante=True)
+    n = len(d["fechas"])
+    for mb in d["miembros"].values():
+        nav = np.asarray(mb["nav"])
+        dd = np.full(n, _CTL_D_BASE)
+        dd[-1] = _CTL_D_ULT
+        mb["precio"] = [float(x) for x in nav * (1 + dd)]
+    return d
+
+
+def _ctl_disc_kappa_esperado() -> float:
+    """Rentabilidad por normalización a mano: media de 52 semanas = (51·d_base + d_ult)/52."""
+    semanas = PARAMETROS_POR_DEFECTO["FON-DISC-001"]["ventana_media"]
+    media = ((semanas - 1) * _CTL_D_BASE + _CTL_D_ULT) / semanas
+    d_obj = _CTL_D_ULT + _CTL_KAPPA * (media - _CTL_D_ULT)
+    return ((1 + d_obj) / (1 + _CTL_D_ULT) - 1) * A_PCT
+
+
+_CTL_TE_E = 0.0001                      # diferencia diaria alterna ±e entre vehículo e índice
+
+
+def _ctl_td_te() -> dict:
+    d = _ctl_td(True)
+    ri = np.asarray(d["rentabilidades_indice"])
+    signo = np.where(np.arange(ri.size) % 2 == 0, 1.0, -1.0)
+    for mb in d["miembros"].values():
+        mb["rentabilidades"] = [float(x) for x in ri + _CTL_TE_E * signo]
+    return d
+
+
+def _ctl_td_te_esperado() -> float:
+    n = 3 * SESIONES_ANIO                # diferencias ±e con media 0: σ muestral = e·√(n/(n − 1))
+    return _CTL_TE_E * math.sqrt(n / (n - 1)) * math.sqrt(SESIONES_ANIO) * A_PCT
+
+
+_CTL_LEV = {"sigma": 0.20, "rendimiento_indice": 0.05, "horizonte": 126}
+
+
+def _ctl_lev_mano() -> dict:
+    d = _ctl_lev(2.0)
+    d.update(_CTL_LEV)
+    return d
+
+
+def _ctl_lev_esperado() -> tuple[float, float]:
+    """L = 2: ½(L² − L) = 1 ⇒ arrastre = σ²T; R_L = (1 + R)²·e^{−σ²T} − 1 (sin costes)."""
+    T = _CTL_LEV["horizonte"] / SESIONES_ANIO
+    s2t = _CTL_LEV["sigma"] ** 2 * T
+    return s2t * A_PCT, ((1 + _CTL_LEV["rendimiento_indice"]) ** 2 * math.exp(-s2t) - 1) * A_PCT
+
+
+_CTL_CESTA_RK = {"strikes": [90.0, 95.0, 100.0, 105.0, 110.0], "q": [0.5, 1.2, 2.6, 1.4, 0.6],
+                 "forward": 102.5, "tipo_interes": 0.035, "dias": 30}   # r ≠ 0 y K₀ = 100 ≠ F
+
+
+def _vix_a_mano(c: dict) -> float:
+    """Fórmula VIX escrita aparte (bucle explícito) para el caso de control: σ en %."""
+    K, Q, F_, r = c["strikes"], c["q"], c["forward"], c["tipo_interes"]
+    T = c["dias"] / DIAS_ANIO
+    k0 = max(x for x in K if x <= F_)
+    suma = 0.0
+    for i, k in enumerate(K):
+        dk = (K[1] - K[0]) if i == 0 else (K[-1] - K[-2]) if i == len(K) - 1 else (K[i + 1] - K[i - 1]) / 2
+        suma += dk / (k * k) * math.exp(r * T) * Q[i]
+    return math.sqrt(2 / T * suma - (F_ / k0 - 1) ** 2 / T) * A_PCT
+
+
+def _ctl_vrp_variable() -> dict:
+    """Implícita que cambia el último día: la VRP ex ante usa la de la fecha de corte, no la de ayer."""
+    v = _ctl_vrp(1.0)
+    v["vol_implicita"][-1] = v["vol_implicita"][-2] * 1.5
+    v["cesta_opciones"] = dict(_CTL_CESTA_RK)
+    return v
+
+
+def _ctl_vrp_variable_esperado() -> float:
+    a2 = 0.01 ** 2 * SESIONES_ANIO          # realizada pasada de ±1 % alterno
+    iv = 1.5 * math.sqrt(a2)
+    return (iv * iv - a2) * A_PB
+
+
+def _normal_cdf(x: float) -> float:
+    return 0.5 * (1 + math.erf(x / math.sqrt(2)))
+
+
+def _delta_d1(k: float, sigma_pct: float, T: float) -> float:
+    s = sigma_pct / A_PCT * math.sqrt(T)
+    return _normal_cdf((-k + s * s / 2) / s)
+
+
+_CTL_SVI_ARB = (np.array([-0.0410, 0.1331, 0.3060, 0.3586, 0.4153]), [-1.0, -0.4, 0.2, 0.8, 1.4])
+
+
+def _ctl_skew_arbitraje() -> dict:
+    """SVI con arbitraje de mariposa (Gatheral-Jacquier 2014, ejemplo de Vogt) en strikes dispersos: los precios
+    discretos son convexos, pero g(k) < 0 entre nodos."""
+    x, k = _CTL_SVI_ARB
+    ka = np.asarray(k)
+    vol = np.sqrt(_svi(x, ka)[0] / 0.25)
+    return {"vencimiento_meses": 3, "historia_rr": _ctl_skew_hist(),
+            "superficie": {"strikes": [float(z) for z in 100 * np.exp(ka)], "vols": [float(z) for z in vol],
+                           "forward": 100.0}}
+
+
+def _ctl_roll_pendiente() -> dict:
+    d = _ctl_roll(False)
+    d["futuros"] = [{"precio": 4020.0, "dias": 30.0}, {"precio": 4050.0, "dias": 120.0},
+                    {"precio": 4090.0, "dias": 210.0}]
+    return d
+
+
 _Caso = dict[str, Any]
 CASOS_CONTROL: dict[str, list[_Caso]] = {
     "FON-DISC-001": [
@@ -1452,6 +1766,10 @@ CASOS_CONTROL: dict[str, list[_Caso]] = {
          "datos": [{"valores": _ctl_disc(iguales=False, constante=True)}], "parametros": {},
          "comprobar": lambda r: abs(r["verificacion"]["segunda_via_ponderada_menos_mediana_pp"]) <= 1e-10
          and abs(r["descuento_agregado_pct"] + 6.0) <= 1e-10},
+        {"nombre": "normalización con κ ≠ ½ a mano (fracción κ de la brecha frente a la media de 52 semanas)",
+         "datos": [{"valores": _ctl_disc_kappa()}], "parametros": {"kappa": _CTL_KAPPA},
+         "comprobar": lambda r: abs(r["rentabilidad_normalizacion_pct"] - _ctl_disc_kappa_esperado())
+         <= 1e-10 * abs(_ctl_disc_kappa_esperado())},
     ],
     "FON-FLOW-001": [
         {"nombre": "suma de flujos de las categorías = flujo total", "datos": [{"valores": _ctl_flow(False)}],
@@ -1466,6 +1784,9 @@ CASOS_CONTROL: dict[str, list[_Caso]] = {
         {"nombre": "componentes de la descomposición + residuo = TD", "datos": [{"valores": _ctl_td(False)}],
          "parametros": {},
          "comprobar": lambda r: abs(r["verificacion"]["descomposicion_mas_residuo_menos_td_pb"]) <= 1e-10 * max(1.0, abs(r["td_media_pb"]))},
+        {"nombre": "TE = σ(diferencias diarias)·√252 a mano (diferencias alternas ±e)", "datos": [{"valores": _ctl_td_te()}],
+         "parametros": {},
+         "comprobar": lambda r: abs(r["te_mediano_pct"] - _ctl_td_te_esperado()) <= 1e-8 * _ctl_td_te_esperado()},
     ],
     "FON-LEV-001": [
         {"nombre": "L = 1 ⇒ arrastre 0", "datos": [{"valores": _ctl_lev(1.0)}], "parametros": {},
@@ -1474,6 +1795,10 @@ CASOS_CONTROL: dict[str, list[_Caso]] = {
          "datos": [{"valores": _ctl_lev(2.0)}], "parametros": {},
          "comprobar": lambda r: abs(r["reconstruccion"]["discrepancia_ultima_pp"]) < r["arrastre_pct"]
          and r["reconstruccion"]["discrepancia_abs_max_pp"] < r["arrastre_pct"]},
+        {"nombre": "L = 2 ⇒ arrastre = σ²T y R_L de la fórmula a mano", "datos": [{"valores": _ctl_lev_mano()}],
+         "parametros": {},
+         "comprobar": lambda r: abs(r["arrastre_pct"] - _ctl_lev_esperado()[0]) <= 1e-10 * _ctl_lev_esperado()[0]
+         and abs(r["R_L_formula_pct"] - _ctl_lev_esperado()[1]) <= 1e-10 * abs(_ctl_lev_esperado()[1])},
     ],
     "DER-VRP-001": [
         {"nombre": "σ_imp = σ_real ⇒ VRP = 0", "datos": [{"valores": _ctl_vrp(1.0)}],
@@ -1489,6 +1814,11 @@ CASOS_CONTROL: dict[str, list[_Caso]] = {
          # Banda de discretización de la cesta: error relativo de la réplica < paso relativo de los strikes (ΔK/F).
          "comprobar": lambda r: r["replica"] is not None and abs(r["replica"]["diferencia_replica_menos_publicado_puntos"])
          / r["sigma_imp_pct"] < _CTL_CESTA[2] / _CTL_CESTA[3]},
+        {"nombre": "réplica a mano con r ≠ 0 y K₀ ≠ F; VRP ex ante con la implícita de la fecha de corte",
+         "datos": [{"valores": _ctl_vrp_variable()}], "parametros": {"prevision_rv": "realizada_pasada"},
+         "comprobar": lambda r: abs(r["replica"]["sigma_imp_replica_pct"] - _vix_a_mano(_CTL_CESTA_RK))
+         <= 1e-8 * _vix_a_mano(_CTL_CESTA_RK)
+         and abs(r["vrp_ex_ante"]["varianza_puntos"] - _ctl_vrp_variable_esperado()) <= 1e-8 * _ctl_vrp_variable_esperado()},
     ],
     "DER-SKEW-001": [
         {"nombre": "sonrisa simétrica ⇒ RR = 0",
@@ -1500,6 +1830,13 @@ CASOS_CONTROL: dict[str, list[_Caso]] = {
         {"nombre": "segunda vía: deltas frente a SVI", "datos": [{"valores": _ctl_skew_svi()}], "parametros": {},
          "comprobar": lambda r: r["segunda_via"] is not None
          and abs(r["segunda_via"]["rr_deltas_menos_svi_puntos"]) < abs(r["rr_puntos"])},
+        {"nombre": "los strikes 25Δ del SVI tienen delta forward N(d1) = 0,25 (call) y 0,75 (put)",
+         "datos": [{"valores": _ctl_skew_svi()}], "parametros": {},
+         "comprobar": lambda r: abs(_delta_d1(r["svi"]["k_call_delta"], r["svi"]["sigma_call_pct"], 0.25) - 0.25) <= 1e-8
+         and abs(_delta_d1(r["svi"]["k_put_delta"], r["svi"]["sigma_put_pct"], 0.25) - 0.75) <= 1e-8},
+        {"nombre": "SVI con arbitraje de mariposa entre nodos ⇒ se detecta (g(k) < 0)",
+         "datos": [{"valores": _ctl_skew_arbitraje()}], "parametros": {},
+         "comprobar": lambda r: r["svi"]["sin_arbitraje_mariposa"] is False and r["segunda_via"] is None},
     ],
     "DER-TERM-001": [
         {"nombre": "curva plana ⇒ σ_fwd = σ", "datos": [{"valores": _ctl_term(True)}], "parametros": {},
@@ -1515,7 +1852,13 @@ CASOS_CONTROL: dict[str, list[_Caso]] = {
         {"nombre": "curva plana ⇒ roll 0", "datos": [{"valores": _ctl_roll(True)}], "parametros": {},
          "comprobar": lambda r: r["roll_yield_pct"] == 0},
         {"nombre": "suma de componentes = total", "datos": [{"valores": _ctl_roll(False)}], "parametros": {},
-         "comprobar": lambda r: abs(r["descomposicion"]["suma_componentes_menos_total_pp"]) <= 1e-10},
+         "comprobar": lambda r: abs(r["descomposicion"]["spot_pct"] + r["descomposicion"]["roll_pct"]
+                                    + r["descomposicion"]["colateral_pct"] - r["descomposicion"]["total_pct"]) <= 1e-10
+         and abs(r["descomposicion"]["total_pct"] - ((4105 / 4010 - 1) + 0.03 * 30 / DIAS_ANIO) * A_PCT) <= 1e-10},
+        {"nombre": "roll yield a mano con curva con pendiente: (F₁/F₂ − 1)·365/(d₂ − d₁)",
+         "datos": [{"valores": _ctl_roll_pendiente()}], "parametros": {},
+         "comprobar": lambda r: abs(r["roll_yield_pct"] - (4020 / 4050 - 1) * DIAS_ANIO / 90 * A_PCT)
+         <= 1e-10 * abs(r["roll_yield_pct"])},
     ],
 }
 

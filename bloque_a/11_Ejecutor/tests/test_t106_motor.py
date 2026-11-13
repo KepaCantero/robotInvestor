@@ -62,7 +62,7 @@ def test_cada_ficha_se_sirve_por_ct09_con_su_primer_caso(tmp_path, ficha):
                   "fecha_corte": "2026-11-12"}, "AG-21")
     if servicio.citable_segun_catalogo(ficha):
         assert r["estado"] in ("SERVED", "SERVED_WITH_LIMITATIONS"), r
-        assert caso["comprobar"](r["resultado"]) or "advertencias" in r["resultado"]
+        assert caso["comprobar"](r["resultado"])   # QA r01, H-13: sin el «or» que la hacía pasar siempre
     else:
         assert r["estado"] == "RECHAZADO" and r["motivo"] == "METODO_NO_IMPLEMENTADO"
 
@@ -77,3 +77,56 @@ def test_las_advertencias_fijas_de_la_ficha_no_son_limitaciones():
         ent["valores"].update(d.get("valores") or {})
     r, lim = servicio.IMPLEMENTADAS[f]["fn"](ent, dict(caso.get("parametros") or {}))
     assert set(fichas_tcv.ADVERTENCIAS[f]) <= set(r["advertencias"]) and not set(fichas_tcv.ADVERTENCIAS[f]) & set(lim)
+
+
+# ================================================================================================== ronda r02 (QA r01 de T-106)
+def test_r02_h02_cualquier_excepcion_de_una_ficha_es_un_rechazo(tmp_path, monkeypatch):
+    f = FASE1[0]
+
+    def revienta(ent, params):
+        raise ZeroDivisionError("división por cero")
+    monkeypatch.setitem(servicio.IMPLEMENTADAS, f, {**servicio.IMPLEMENTADAS[f], "fn": revienta})
+    m = _motor(tmp_path)
+    r = m.servir({"operacion": f, "datos": [{"valores": {"x": 1}}], "fecha_corte": "2026-11-12"}, "AG-21")
+    assert r["estado"] == "RECHAZADO" and r["motivo"] == "DATOS_INSUFICIENTES" and "ZeroDivisionError" in r["detalle"]
+    assert m.almacen.leer("RC")[-1]["tipo_entrada"] == "RECHAZO"
+
+
+def test_r02_h02_una_cifra_no_finita_es_un_rechazo(tmp_path, monkeypatch):
+    f = FASE1[0]
+    monkeypatch.setitem(servicio.IMPLEMENTADAS, f, {**servicio.IMPLEMENTADAS[f], "fn": lambda ent, params: ({"x": float("inf")}, [])})
+    r = _motor(tmp_path).servir({"operacion": f, "datos": [{"valores": {"x": 1}}], "fecha_corte": "2026-11-12"}, "AG-21")
+    assert r["estado"] == "RECHAZADO" and "no finitas" in r["detalle"]
+
+
+def test_r02_h04_el_catalogo_se_lee_de_la_raiz_configurada(tmp_path):
+    cfg = cargar_config()
+    cfg.setdefault("rutas", {})["raiz_paquete"] = str(tmp_path)   # una raíz sin Catálogo: no se sirve nada
+    m = servicio.Motor(Almacen(tmp_path / "a"), _Proveedor(), cfg)
+    r = m.servir({"operacion": "ST-DESC-001", "datos": [], "fecha_corte": "2026-11-12"}, "AG-03")
+    assert r["estado"] == "RECHAZADO" and "sin Catálogo legible" in r["detalle"]
+    real = Path(servicio.DIR_EJECUTOR.parent)
+    cfg["rutas"]["raiz_paquete"] = str(real)
+    assert servicio.servible("ST-DESC-001", servicio.raiz_paquete(cfg))
+
+
+def test_r02_h05_un_catalogo_con_bytes_no_utf8_no_sirve_nada(tmp_path):
+    destino = tmp_path.joinpath(*servicio.RUTA_CATALOGO)
+    destino.parent.mkdir(parents=True)
+    destino.write_bytes(b"\xff\xfe no es UTF-8")
+    assert servicio.madurez_catalogo(tmp_path) == {}
+
+
+def test_r02_h06_solo_cuenta_la_tabla_del_indice_y_un_cambio_se_relee(tmp_path):
+    real = servicio.DIR_EJECUTOR.parent.joinpath(*servicio.RUTA_CATALOGO).read_text(encoding="utf-8")
+    destino = tmp_path.joinpath(*servicio.RUTA_CATALOGO)
+    destino.parent.mkdir(parents=True)
+    # una fila falsa antes del §4 no cuenta
+    destino.write_text("| MON-EXP-001 | x | MC-09 | P | H | P1 | VALIDADO |\n" + real, encoding="utf-8")
+    assert servicio.madurez_catalogo(tmp_path)["MON-EXP-001"].startswith("IMPLEMENTADO")
+    import os
+    import time
+    destino.write_text(real.replace("| MON-EXP-001 | Expectativas implícitas de tipos a corto | MC-09 | PERF-MON (+ PERF-FIR, PERF-TCV, PERF-FX) | H1 (limitado)–H3 | P1 | IMPLEMENTADO",
+                                    "| MON-EXP-001 | Expectativas implícitas de tipos a corto | MC-09 | PERF-MON (+ PERF-FIR, PERF-TCV, PERF-FX) | H1 (limitado)–H3 | P1 | Documentado (x"), encoding="utf-8")
+    os.utime(destino, ns=(time.time_ns(), time.time_ns() + 10**9))
+    assert servicio.madurez_catalogo(tmp_path)["MON-EXP-001"].startswith("Documentado")

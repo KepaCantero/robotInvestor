@@ -183,11 +183,7 @@ def test_mon_yld_cobertura_sin_forward_se_rechaza():
 # ------------------------------------------------------------------ MON-EXP-001
 def _curva_escalonada(r0, r1, d_reunion, dias, base=360):
     """Curva OIS coherente con un tipo a un día r0 hasta la reunión y r1 después."""
-    out = []
-    for d in dias:
-        lg = min(d, d_reunion) * math.log1p(r0 / base) + max(0, d - d_reunion) * math.log1p(r1 / base)
-        out.append({"dias": d, "tipo": math.expm1(lg) * base / d})
-    return out
+    return fm._curva_senda([0, d_reunion], [r0, r1], dias, base)
 
 
 @pytest.mark.parametrize("r1,mov,probs", [(0.0167, -1.0, {"1": 1.0, "2": 0.0}),
@@ -208,24 +204,141 @@ def test_mon_exp_senda_y_probabilidad_a_mano(r1, mov, probs):
         assert s["probabilidades"]["movimientos"][k] == pytest.approx(p, abs=1e-9)
     assert res["cambio_acumulado_pb"]["6m"] == pytest.approx((r1 - 0.0192) * 1e4, abs=1e-8)
     assert res["sorpresas_pb"][0]["sorpresa_pb"] == pytest.approx(-5.0, abs=1e-9)
-    assert res["verificacion"]["error_reproduccion_nodos_max"] < 1e-12
-    # Los nodos sin reunión nueva se comparan con la senda: aquí coinciden.
-    assert all(abs(n["tipo_nodo"] - n["tipo_senda"]) < 1e-12 for n in res["verificacion"]["nodos_redundantes"])
+    # Todos los nodos (también el de 30 días, anterior a la reunión, y los dos últimos) se reproducen.
+    assert len(res["verificacion"]["nodos"]) == 4
+    assert all(abs(n["tipo_nodo"] - n["tipo_senda"]) < 1e-12 for n in res["verificacion"]["nodos"])
+
+
+def test_mon_exp_tipo_vigente_por_reunion_y_acumulado_h09():
+    """H-09: «probabilidades» mide cada reunión frente al tipo en vigor antes de ella; «probabilidades_acumuladas»,
+    frente al tipo oficial vigente hoy (lectura literal). Con dos bajadas seguidas, ambas lecturas difieren."""
+    res, _ = _ejecutar("MON-EXP-001", fm._datos_mon_exp(plana=False))
+    fechas = list(res["probabilidades"])
+    segunda = res["senda"][1]
+    assert segunda["movimientos_en_reunion"] == pytest.approx(-1.0, abs=1e-10)
+    assert segunda["movimientos_acumulados"] == pytest.approx(-2.0, abs=1e-10)
+    assert res["probabilidades"][fechas[1]]["movimientos"]["1"] == pytest.approx(1.0, abs=1e-10)
+    assert res["probabilidades_acumuladas"][fechas[1]]["movimientos"]["2"] == pytest.approx(1.0, abs=1e-10)
+    tercera = res["senda"][2]   # pausa: 0 en la reunión, −2 acumulados
+    assert tercera["probabilidades"]["sentido"] in ("sin_cambio", "bajada", "subida")
+    assert tercera["probabilidades"]["movimientos"]["0"] == pytest.approx(1.0, abs=1e-10)
+    assert tercera["probabilidades_acumuladas"]["sentido"] == "bajada"
+
+
+def test_mon_exp_cambio_a_12_meses_con_nodo_en_365_dias_h10():
+    res, lim = _ejecutar("MON-EXP-001", fm._datos_mon_exp(plana=False))
+    assert res["cambio_acumulado_pb"]["12m"] == pytest.approx(-75.0, abs=1e-8)
+    assert res["cambio_acumulado_pb"]["6m"] == pytest.approx(-50.0, abs=1e-8)
+    assert not any("sin cobertura" in x for x in lim)
+
+
+def test_mon_exp_curva_suave_sin_senda_escalonada_se_rechaza_h01():
+    """H-01: la curva suave del caso antiguo no admite un tramo por reunión: se rechaza, no se inventa la senda."""
+    v = fm._datos_mon_exp(plana=False)
+    v["curva"] = [{"dias": 30, "tipo": 0.0192}, {"dias": 90, "tipo": 0.0185}, {"dias": 180, "tipo": 0.0172},
+                  {"dias": 270, "tipo": 0.0165}, {"dias": 365, "tipo": 0.0160}]
+    with pytest.raises(ErrorFicha, match="no se puede (reproducir|contrastar)"):
+        _ejecutar("MON-EXP-001", v)
+    v["curva"].append({"dias": 330, "tipo": 0.0158})   # con redundancia: no se reproduce
+    with pytest.raises(ErrorFicha, match="no se puede reproducir con un tramo por reunión"):
+        _ejecutar("MON-EXP-001", v)
+
+
+def _caso_revisor(redondeo=None, alineados=False):
+    fecha = pd.Timestamp("2026-11-12")
+    reun = ["2026-12-17", "2027-02-04", "2027-04-29", "2027-07-22", "2027-10-28"]
+    cortes = [0] + [(pd.Timestamp(m) - fecha).days for m in reun]
+    r0 = 0.0192
+    senda = [r0, r0 - 0.0025, r0 - 0.005, r0 - 0.005, r0 - 0.0075, r0 - 0.0075]
+    dias = (cortes[1:] if alineados else [c + 10 for c in cortes[1:5]]) + [cortes[5] + 30]
+    curva = fm._curva_senda(cortes, senda, dias, 360)
+    if redondeo is not None:
+        curva = [{"dias": n["dias"], "tipo": round(n["tipo"], redondeo)} for n in curva]
+    return {"fecha": "2026-11-12", "base_curva": 360, "curva": curva, "tipo_oficial": 0.02,
+            "diferencial_estable": 0.0008, "reuniones": reun}, senda
+
+
+def test_mon_exp_senda_exacta_con_nodos_poco_despues_de_cada_reunion():
+    v, senda = _caso_revisor()
+    # Sin redundancia ni nodos en las reuniones la hipótesis escalonada no se contrasta: se rechaza.
+    with pytest.raises(ErrorFicha, match="no se puede contrastar"):
+        _ejecutar("MON-EXP-001", copy.deepcopy(v))
+    # Con un nodo más (a mitad del tercer tramo) se contrasta y se recupera la senda exacta.
+    fecha = pd.Timestamp("2026-11-12")
+    cortes = [0] + [(pd.Timestamp(m) - fecha).days for m in v["reuniones"]]
+    extra = fm._curva_senda(cortes, senda, [(cortes[3] + cortes[4]) // 2], 360)
+    v["curva"] = v["curva"] + extra
+    res, _ = _ejecutar("MON-EXP-001", v)
+    assert [s["tipo_mercado_implicito"] for s in res["senda"]] == pytest.approx(senda[1:], abs=1e-12)
+    assert [s["movimientos_en_reunion"] for s in res["senda"]] == pytest.approx([-1, -1, 0, -1, 0], abs=1e-9)
+
+
+def test_mon_exp_curva_cotizada_plana_con_sistema_justo_se_rechaza_h01():
+    """La curva plana COTIZADA (tipos simples iguales al vigente, como en la QA r01) no es una senda escalonada:
+    con un sistema justo daría −15 movimientos; se rechaza (y con un nodo redundante, por no reproducirse)."""
+    v, _ = _caso_revisor()
+    r0 = 0.02 - 0.0008
+    v["curva"] = [{"dias": n["dias"], "tipo": r0} for n in v["curva"]]
+    with pytest.raises(ErrorFicha, match="no se puede contrastar"):
+        _ejecutar("MON-EXP-001", copy.deepcopy(v))
+    v["curva"].append({"dias": 200, "tipo": r0})
+    with pytest.raises(ErrorFicha, match="no se puede reproducir"):
+        _ejecutar("MON-EXP-001", v)
+
+
+def test_mon_exp_senda_no_identificada_por_redondeo_se_rechaza_h01():
+    """Redondeo a 0,1 pb con nodos 10 días tras cada reunión (más uno redundante) y la precisión declarada: el ajuste
+    se reproduce dentro del redondeo, pero el redondeo puede mover algún tramo ≥ 25 pb: se rechaza."""
+    v, senda = _caso_revisor()
+    fecha = pd.Timestamp("2026-11-12")
+    cortes = [0] + [(pd.Timestamp(m) - fecha).days for m in v["reuniones"]]
+    v["curva"] = [{"dias": n["dias"], "tipo": round(n["tipo"], 5)}
+                  for n in v["curva"] + fm._curva_senda(cortes, senda, [(cortes[3] + cortes[4]) // 2], 360)]
+    with pytest.raises(ErrorFicha, match="no se puede reproducir"):
+        _ejecutar("MON-EXP-001", copy.deepcopy(v))     # sin precisión declarada
+    v["precision_cotizacion"] = 1e-5   # 0,1 pb declarado: el ajuste cabe en la precisión
+    with pytest.raises(ErrorFicha, match="senda no identificada"):
+        _ejecutar("MON-EXP-001", v)
+
+
+def test_mon_exp_cotizaciones_redondeadas_y_alineadas_con_precision_declarada():
+    v, senda = _caso_revisor(redondeo=5, alineados=True)
+    with pytest.raises(ErrorFicha, match="no se puede reproducir"):
+        _ejecutar("MON-EXP-001", v)      # sin precisión declarada: tolerancia de la ficha
+    v["precision_cotizacion"] = 0.5e-5   # redondeo a 0,1 pb declarado
+    res, _ = _ejecutar("MON-EXP-001", v)
+    err = max(abs(s["tipo_mercado_implicito"] - t) for s, t in zip(res["senda"], senda[1:]))
+    assert err * 1e4 < 1.0
+    assert all(s["incertidumbre_redondeo_pb"] < 25 for s in res["senda"])
+
+
+def test_mon_exp_dos_reuniones_sin_nodo_entre_ellas_no_se_identifican():
+    v = fm._datos_mon_exp(plana=False)
+    v["curva"] = [n for n in v["curva"] if n["dias"] not in (60, 120)]
+    with pytest.raises(ErrorFicha, match="no identifican"):
+        _ejecutar("MON-EXP-001", v)
+
+
+def _futuros_constantes(fecha, n, r_on, base=360):
+    futs, ini = [], fecha
+    for _ in range(n):
+        fin = ini + pd.DateOffset(months=3)
+        dias = (fin - ini).days
+        tipo = math.expm1(dias * math.log1p(r_on / base)) * base / dias
+        futs.append({"inicio": ini.date().isoformat(), "fin": fin.date().isoformat(), "precio": 100 * (1 - tipo)})
+        ini = fin
+    return futs
 
 
 def test_mon_exp_diferencial_como_media_de_20_dias_y_futuros():
     fecha = pd.Timestamp("2026-11-12")
     hist = [0.0005] * 5 + [0.0008] * 20
-    futs, ini = [], fecha
-    for k in range(4):
-        fin = ini + pd.DateOffset(months=3)
-        futs.append({"inicio": ini.date().isoformat(), "fin": fin.date().isoformat(), "precio": 100 - 1.92})
-        ini = fin
     v = {"fecha": "2026-11-12", "base_curva": 360, "tipo_oficial": 0.02, "historia_diferencial": hist,
-         "futuros": futs, "reuniones": ["2027-02-12"]}
+         "futuros": _futuros_constantes(fecha, 4, 0.0192), "reuniones": ["2027-02-12"]}
     res, _ = _ejecutar("MON-EXP-001", v)
     assert res["diferencial_estable"] == pytest.approx(0.0008, abs=1e-15)
     assert res["verificacion"]["error_reproduccion_nodos_max"] < 1e-12
+    assert res["senda"][0]["movimientos_en_reunion"] == pytest.approx(0.0, abs=1e-9)
 
 
 @pytest.mark.parametrize("mutar,motivo", [
@@ -235,6 +348,8 @@ def test_mon_exp_diferencial_como_media_de_20_dias_y_futuros():
     (lambda v: v.update(historia_diferencial=[0.0008] * 19) or v.pop("diferencial_estable"), "< 20"),
     (lambda v: v.update(reuniones=["2030-01-01"]), "ninguna reunión"),
     (lambda v: v.pop("base_curva"), "base_curva"),
+    (lambda v: v.update(reuniones=1e300), "lista"),
+    (lambda v: v["curva"][2].update(dias=1.8e8), "."),
 ])
 def test_mon_exp_rechazos(mutar, motivo):
     v = fm._datos_mon_exp(plana=False)
@@ -245,13 +360,8 @@ def test_mon_exp_rechazos(mutar, motivo):
 
 def test_mon_exp_futuros_largos_sin_convexidad_se_truncan():
     fecha = pd.Timestamp("2026-11-12")
-    futs, ini = [], fecha
-    for _ in range(6):
-        fin = ini + pd.DateOffset(months=3)
-        futs.append({"inicio": ini.date().isoformat(), "fin": fin.date().isoformat(), "precio": 98.1})
-        ini = fin
     v = {"fecha": "2026-11-12", "base_curva": 360, "tipo_oficial": 0.02, "diferencial_estable": 0.0008,
-         "futuros": futs, "reuniones": ["2027-02-12", "2027-06-12"]}
+         "futuros": _futuros_constantes(fecha, 6, 0.0192), "reuniones": ["2027-02-12", "2027-06-12"]}
     _, lim = _ejecutar("MON-EXP-001", v)
     assert any("convexidad" in x for x in lim)
 
@@ -574,3 +684,136 @@ def test_idx_reb_rechazos(mutar, params, motivo):
     mutar(ev)
     with pytest.raises(ErrorFicha, match=motivo):
         _ejecutar("IDX-REB-001", {"evento": ev}, params)
+
+
+# ------------------------------------------------------------------ H-07: IDX-REL-001 pide historias mensuales
+def _rel_diario():
+    fechas = pd.bdate_range("2010-01-04", "2026-10-30")
+    hist = [{"fecha": f.date().isoformat(), "per_adelantado": 15.0 + (i % 7), "cape": 25.0 + (i % 5),
+             "rt": 100 * 1.0002 ** i} for i, f in enumerate(fechas)]
+    return {"indice_a": {"nombre": "A", "divisa": "EUR", "historia": hist},
+            "indice_b": {"nombre": "B", "divisa": "EUR", "historia": copy.deepcopy(hist)}}
+
+
+def test_idx_rel_historia_diaria_se_rechaza_h07():
+    with pytest.raises(ErrorFicha, match="no es mensual"):
+        _ejecutar("IDX-REL-001", _rel_diario(), {"ajuste_sectorial": False})
+
+
+def test_idx_rel_historia_mensual_con_hueco_se_rechaza_h07():
+    v = fm._datos_idx_rel(mismo=False)
+    v["indice_b"] = copy.deepcopy(v["indice_b"])
+    del v["indice_b"]["historia"][100]
+    with pytest.raises(ErrorFicha, match="no es mensual"):
+        _ejecutar("IDX-REL-001", v, {"ajuste_sectorial": False})
+
+
+def test_idx_rel_valor_no_numerico_en_la_historia_se_rechaza_h02():
+    v = fm._datos_idx_rel(mismo=False)
+    v["indice_a"]["historia"][-1]["per_adelantado"] = "n/d"
+    with pytest.raises(ErrorFicha, match="no es numérico"):
+        _ejecutar("IDX-REL-001", v)
+    v = fm._datos_idx_rel(mismo=False)
+    v["indice_a"]["historia"][-1]["cape"] = float("inf")
+    with pytest.raises(ErrorFicha, match="no es finito"):
+        _ejecutar("IDX-REL-001", v)
+
+
+# ------------------------------------------------------------------ H-11: una fecha numérica no es una fecha
+@pytest.mark.parametrize("ficha,mutar", [
+    ("MON-YLD-001", lambda v: v["segmentos"][0].update(fecha=20261110)),
+    ("MON-EXP-001", lambda v: v.update(fecha=20261112)),
+    ("MON-EXP-001", lambda v: v.update(reuniones=[20261217] + v["reuniones"][1:])),
+    ("MON-REAL-001", lambda v: v["divisas"]["EUR"]["historia"][0].update(fecha_inicio=20140101)),
+    ("MON-FIX-001", lambda v: v.update(fecha=1.7e18)),
+    ("IDX-ERP-001", lambda v: v["historia_multiplo"][0].update(fecha=20050131)),
+    ("IDX-CONC-001", lambda v: v["composicion"].update(fecha=20261031)),
+    ("IDX-REL-001", lambda v: v["indice_a"]["historia"][0].update(fecha=20050131)),
+    ("IDX-REB-001", lambda v: v["evento"].update(fecha_anuncio=20261120)),
+])
+def test_fecha_numerica_se_rechaza_h11(ficha, mutar):
+    v, p = _primer_caso(ficha)
+    mutar(v)
+    with pytest.raises(ErrorFicha, match="fecha no válida"):
+        _ejecutar(ficha, v, p)
+
+
+def test_fechas_iso_date_y_timestamp_se_aceptan():
+    v, p = _primer_caso("IDX-CONC-001")
+    for f in ("2026-10-31", pd.Timestamp("2026-10-31"), pd.Timestamp("2026-10-31").date()):
+        v["composicion"]["fecha"] = f
+        res, _ = _ejecutar("IDX-CONC-001", copy.deepcopy(v), p)
+        assert res["fecha_composicion"] == "2026-10-31"
+
+
+# ------------------------------------------------------------------ H-02: entradas malformadas ⇒ solo ErrorFicha
+RAROS = [None, "x", [], {}, float("nan"), float("inf"), float("-inf"), 0, -1, 1e300, True, -1e-300, [1, 2],
+         {"a": 1}]
+MAX_MUTACIONES = 120   # por caso de control: muestreo determinista (paso fijo) para que la prueba sea rápida
+
+
+def _hojas(x, ruta=()):
+    if isinstance(x, dict):
+        for k in sorted(x, key=str):
+            yield ruta + (k,)
+            yield from _hojas(x[k], ruta + (k,))
+    elif isinstance(x, list):
+        idx = range(len(x)) if len(x) <= 3 else sorted({0, len(x) // 2, len(x) - 1})
+        for i in idx:
+            yield ruta + (i,)
+            yield from _hojas(x[i], ruta + (i,))
+
+
+def _poner(x, ruta, valor):
+    y = copy.deepcopy(x)
+    obj = y
+    for r in ruta[:-1]:
+        obj = obj[r]
+    obj[ruta[-1]] = valor
+    return y
+
+
+def _no_finitos(x):
+    if isinstance(x, dict):
+        return any(_no_finitos(v) for v in x.values())
+    if isinstance(x, (list, tuple)):
+        return any(_no_finitos(v) for v in x)
+    return isinstance(x, float) and not math.isfinite(x)
+
+
+@pytest.mark.parametrize("ficha,caso", CASOS, ids=[f"{f}:{c['nombre']}" for f, c in CASOS])
+def test_mutaciones_de_datos_solo_errorficha_o_resultado_finito_h02(ficha, caso):
+    base = _valores_caso(caso)
+    mutaciones = [(ruta, raro) for ruta in _hojas(base) for raro in RAROS]
+    paso = max(1, len(mutaciones) // MAX_MUTACIONES)
+    for ruta, raro in mutaciones[::paso]:
+        v = _poner(base, ruta, raro)
+        try:
+            res, lim = _ejecutar(ficha, v, dict(caso["parametros"]))
+        except ErrorFicha:
+            continue
+        assert not _no_finitos(res), (ruta, raro)
+        json.dumps(res, allow_nan=False)
+        assert all(isinstance(x, str) for x in lim)
+
+
+@pytest.mark.parametrize("ficha", sorted(fm.FICHAS))
+@pytest.mark.parametrize("valores", [{"x": 1}, {"segmentos": 3, "divisas": [], "curva": "x", "composicion": 1,
+                                                "indice_a": [], "evento": 0, "indices": 7}])
+def test_estructuras_erroneas_dan_errorficha(ficha, valores):
+    with pytest.raises(ErrorFicha):
+        _ejecutar(ficha, valores)
+
+
+@pytest.mark.parametrize("ficha", sorted(fm.FICHAS))
+def test_parametros_que_no_son_dict_dan_errorficha(ficha):
+    v, _ = _primer_caso(ficha)
+    with pytest.raises(ErrorFicha, match="parámetros"):
+        fm.FICHAS[ficha]["fn"]({"valores": v, "series": {}, "series_rol": {}}, [1, 2])
+
+
+def test_parametro_numerico_no_valido_da_errorficha():
+    v, p = _primer_caso("MON-FIX-001")
+    for malo in ("x", float("nan"), 1e300, None):
+        with pytest.raises(ErrorFicha):
+            _ejecutar("MON-FIX-001", copy.deepcopy(v), {**p, "T_meses": malo})

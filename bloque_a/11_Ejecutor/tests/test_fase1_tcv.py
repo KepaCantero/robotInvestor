@@ -391,12 +391,12 @@ def test_vixts_backwardation_y_mixta():
 
 
 def test_vixts_rentabilidades_por_estado_y_es():
-    v = copy.deepcopy(BASE["TCV-VIXTS-001"][0])
+    v = tcv.sintetico_vixts(15.0, [16.0, 18.0], [20, 40], n=300)          # 300 semanas ≥ 250 (RISK-VAR-001)
     n = len(v["historia"]["fechas"])
     r = [math.sin(i * 0.9) * 2 for i in range(n)]
     v["historia"]["rent_larga"] = r
     v["historia"]["fuente_rentabilidades"] = "índice sintético a 30 días"
-    res, _lim = _correr("TCV-VIXTS-001", v, {"observaciones_minimas_es": 100})
+    res, _lim = _correr("TCV-VIXTS-001", v)
     corta = -np.array(r)
     q = np.quantile(corta, 1 - 0.975)
     assert res["es_corta_pct"] == pytest.approx(float(-np.mean(corta[corta <= q])))
@@ -407,7 +407,10 @@ def test_vixts_rentabilidades_por_estado_y_es():
     assert res["rentabilidades_por_estado"]["contango"]["larga_pct"] == pytest.approx(float(np.mean(m)))
     assert res["rentabilidades_por_estado"]["contango"]["n"] == len(m)
     # con menos de 250 observaciones (RISK-VAR-001) el ES no se calcula y se declara
-    res2, lim2 = _correr("TCV-VIXTS-001", v)
+    corto = copy.deepcopy(BASE["TCV-VIXTS-001"][0])
+    corto["historia"]["rent_larga"] = r[:len(corto["historia"]["fechas"])]
+    corto["historia"]["fuente_rentabilidades"] = "índice sintético a 30 días"
+    res2, lim2 = _correr("TCV-VIXTS-001", corto)
     assert res2["es_corta_pct"] is None and any("RISK-VAR-001" in x for x in lim2)
 
 
@@ -534,3 +537,138 @@ def test_tp_publicado_menor_de_10_anios_rechazado():
     v = {"serie_publicada": {"fuente": "ACM", "fechas": fechas, "primas_pb": {"10": [1.0] * 60}}}
     with pytest.raises(ErrorFicha, match="< 10"):
         _correr("TCV-TP-001", v, {"metodo": "publicado"})
+
+
+# ============================================================================= QA r01 (H-02, H-11): falla cerrado
+RAROS = [None, "x", [], {}, float("nan"), float("inf"), float("-inf"), 0, -1, 1e300, True, -1e-300, [1, 2], {"a": 1},
+         1 + 2j, 20261110]
+
+
+def _hojas(x, ruta=()):
+    if isinstance(x, dict):
+        for k in sorted(x, key=str):
+            yield ruta + (k,)
+            yield from _hojas(x[k], ruta + (k,))
+    elif isinstance(x, list):
+        for i in (sorted({0, len(x) // 2, len(x) - 1}) if len(x) > 3 else range(len(x))):
+            yield ruta + (i,)
+            yield from _hojas(x[i], ruta + (i,))
+
+
+def _poner(x, ruta, valor):
+    y = copy.deepcopy(x)
+    d = y
+    for r in ruta[:-1]:
+        d = d[r]
+    d[ruta[-1]] = valor
+    return y
+
+
+def _todos_finitos(x):
+    if isinstance(x, dict):
+        return all(_todos_finitos(v) for v in x.values())
+    if isinstance(x, list):
+        return all(_todos_finitos(v) for v in x)
+    if isinstance(x, float):
+        return math.isfinite(x)
+    return True
+
+
+def _mutaciones(ficha):
+    v, p = BASE[ficha]
+    if ficha == "TCV-TP-001":                       # rejilla gruesa: misma cobertura, mucho más rápida
+        v = tcv.sintetico_acm(plazos=[1, 3, 6, 12, 24, 36, 60, 84, 120])[0]
+    rutas = list(_hojas(v))
+    for i, ruta in enumerate(rutas):
+        for raro in RAROS[i % len(RAROS):] + RAROS[:i % len(RAROS)][:4]:
+            yield ruta, raro, v, p
+    for k in list(tcv.PARAMETROS_POR_DEFECTO[ficha]):
+        for raro in RAROS:
+            yield ("__param__", k), raro, v, p
+
+
+@pytest.mark.parametrize("ficha", sorted(BASE))
+def test_mutaciones_de_datos_solo_dan_error_ficha_y_cifras_finitas(ficha):
+    """Regresión de H-02: ninguna mutación de una hoja o de un parámetro lanza otra excepción ni sirve no finitos."""
+    vistos = 0
+    for ruta, raro, v, p in _mutaciones(ficha):
+        if ruta[0] == "__param__":
+            valores, params = v, {**p, ruta[1]: raro}
+        else:
+            valores, params = _poner(v, ruta, raro), p
+        try:
+            res, _lim = _correr(ficha, valores, params)
+        except ErrorFicha:
+            continue
+        vistos += 1
+        assert _todos_finitos(res), (ruta, raro)
+        json.dumps(res, allow_nan=False)
+    assert vistos > 0
+
+
+@pytest.mark.parametrize("ficha", sorted(BASE))
+@pytest.mark.parametrize("ent", [None, [], "x", {"valores": [1]}, {"valores": {}, "series_rol": [1]}])
+def test_entrada_que_no_es_objeto(ficha, ent):
+    with pytest.raises(ErrorFicha):
+        tcv.FICHAS[ficha]["fn"](ent, {})
+
+
+@pytest.mark.parametrize("ficha", sorted(BASE))
+def test_umbrales_de_la_ficha_no_se_cambian_por_parametro(ficha):
+    clave = next(iter(tcv.UMBRALES[ficha]))
+    v, p = BASE[ficha]
+    with pytest.raises(ErrorFicha, match="umbrales fijos"):
+        _correr(ficha, v, {**p, clave: tcv.UMBRALES[ficha][clave]})
+
+
+@pytest.mark.parametrize("fecha", [20261110, 20261110.0, "20261110", True, "10/11/2026", "2026-13-01"])
+def test_fechas_numericas_o_no_iso_se_rechazan(fecha):
+    v = copy.deepcopy(BASE["TCV-SLOPE-001"][0])
+    v["regresores"]["prima_plazo"]["conocible_desde"][0] = fecha
+    with pytest.raises(ErrorFicha, match="fecha no válida"):
+        _correr("TCV-SLOPE-001", v)
+
+
+def test_serie_de_rol_con_indice_numerico_se_rechaza():
+    v = copy.deepcopy(BASE["TCV-CDS-001"][0])
+    v.pop("historia")
+    s = pd.Series([90.0] * 1600, index=range(20000101, 20001601 + 20000000)[:1600])
+    with pytest.raises(ErrorFicha, match="índice de fechas"):
+        _correr("TCV-CDS-001", v, series_rol={"diferencial_indice": s})
+
+
+@pytest.mark.parametrize("plazos", [[1, 3, 6, 12, 24, 60, 120, 120_000_000], [1, 3, 6, 12, 24, 60, 240],
+                                    [1, 3, 6, 12, 24, 60, 119]])
+def test_tp_plazos_fuera_de_1_a_10_anios_se_rechazan_sin_colgarse(plazos):
+    v = {"curva": {"fechas": tcv._fechas_mensuales(2000, 130), "plazos_meses": plazos,
+                   "rendimientos": [[3.0] * len(plazos)] * 130}}
+    with pytest.raises(ErrorFicha, match="120 meses"):
+        _correr("TCV-TP-001", v, {"n_factores": 3})
+
+
+def test_tp_filas_de_distinta_longitud_se_rechazan():
+    v = copy.deepcopy(BASE["TCV-TP-001"][0])
+    v["curva"]["rendimientos"][7] = v["curva"]["rendimientos"][7][:-1]
+    with pytest.raises(ErrorFicha, match="cada fila"):
+        _correr("TCV-TP-001", v, {"n_factores": 3})
+
+
+def test_cds_eco_del_indice_validado():
+    v = copy.deepcopy(BASE["TCV-CDS-001"][0])
+    v["indice"]["serie"] = float("inf")
+    with pytest.raises(ErrorFicha, match="indice.serie"):
+        _correr("TCV-CDS-001", v)
+    v["indice"]["serie"] = 41
+    v["indice"]["segmento"] = "XX"
+    with pytest.raises(ErrorFicha, match="segmento"):
+        _correr("TCV-CDS-001", v)
+
+
+def test_parametros_fuera_de_rango():
+    v, _ = BASE["TCV-SLOPE-001"]
+    with pytest.raises(ErrorFicha, match="horizonte_carry"):
+        _correr("TCV-SLOPE-001", v, {"horizonte_carry": 13})     # FIR-CARRY-001: delta_t en 1–12 meses
+    with pytest.raises(ErrorFicha, match="nivel_es"):
+        _correr("TCV-VIXTS-001", BASE["TCV-VIXTS-001"][0], {"nivel_es": 0.5})   # RISK-VAR-001: 0,90–0,99
+    with pytest.raises(ErrorFicha, match="ajuste_estacional"):
+        _correr("TCV-BEI-001", BASE["TCV-BEI-001"][0], {"ajuste_estacional": "no"})

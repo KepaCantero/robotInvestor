@@ -1,0 +1,25 @@
+OK    tabla del Catálogo con 81 fichas leídas · 81
+OK    servible = código ∩ IMPLEMENTADO (salvo GARCH sin arch) · 35 servibles, 35 IMPL
+OK    las 21 V5.0 son servibles
+OK    ninguna DOCUMENTADA_CON_CODIGO es servible
+OK    Catálogo ausente: nada servible y sin excepción · 0 servibles
+OK    Catálogo vacío: nada servible y sin excepción · 0 servibles
+FALLO Catálogo bytes no UTF-8: nada servible y sin excepción · UnicodeDecodeError: 'utf-8' codec can't decode byte 0xff in position 2000: invalid start byte
+OK    Catálogo con MON-YLD degradada a Documentado: deja de servirse solo esa
+OK    Catálogo con ACC-ERP subida a IMPLEMENTADO: sigue sin servirse (DOCUMENTADAS_CON_CODIGO)
+FALLO Catálogo con fila falsa de MON-YLD ANTES de la tabla, en Documentado: manda la tabla del §2, no la primera fila que encaja · la fila falsa gana
+      (informativo) Catálogo ausente al primer uso y restaurado después: el proceso sigue sin servir nada (0 → 0 fichas leídas; lru_cache sin invalidación)
+FALLO ejecutor movido con rutas.raiz_paquete (README): el Motor encuentra el Catálogo y sirve lo IMPLEMENTADO · raiz_paquete(cfg) = /tmp/claude-0/-home-user-robotinvestor/a49f1faa-c0e0-5e09-849f-7e2c611ce00b/scratchpad/t106qa/wt/bloque_a | prompts visibles: True | servibles: 0
+      estados CT-09 con los datos nominales: {'SERVED_WITH_LIMITATIONS': 20, 'SERVED': 1}
+FALLO SERVED_WITH_LIMITATIONS solo por problemas de los datos, no por las advertencias fijas de la ficha · solo advertencias fijas como limitaciones en: ['DER-SKEW-001', 'DER-TERM-001', 'FON-FLOW-001', 'FON-LEV-001', 'IDX-CONC-001', 'MON-FIX-001', 'MON-YLD-001', 'TCV-BEI-001', 'TCV-TP-001']
+FALLO CT-09 IDX-REL-001 con un dato mal formado → RECHAZADO registrado en RC · excepción ValueError: could not convert string to float: 'n/d' (sin entrada en RC)
+OK    CT-09 MON-EXP-001 con un dato mal formado → RECHAZADO registrado en RC · RECHAZADO DATOS_INSUFICIENTES
+FALLO CT-09 MON-REAL-001 con un dato mal formado → RECHAZADO registrado en RC · excepción AttributeError: 'str' object has no attribute 'get' (sin entrada en RC)
+FALLO CT-09 IDX-ERP-001 con un dato mal formado → RECHAZADO registrado en RC · excepción TypeError: 'float' object is not iterable (sin entrada en RC)
+FALLO verificar_casos_control: 21 fichas, 53 casos superados, 21 entradas en RC · 50 casos
+OK    §1.3 cuadra con la tabla (81 = 35 + 11 + 35) · ('81', '35', '11', '35') {'impl': 35, 'her': 11, 'doc': 35}
+OK    la madurez de la tabla coincide con la de cada ficha (81)
+OK    las 21 V5.0 en IMPLEMENTADO en su ficha
+OK    manifiesto del corpus con la huella actual del Catálogo · 4c2e76410d89a2e925c2c6434841f31719fc78f3adc0fd1fb9c9a6e58d943498  bloque_a/04_Motor_conocimiento_y_c
+
+13/21 comprobaciones OK; fallos: ['Catálogo bytes no UTF-8: nada servible y sin excepción', 'Catálogo con fila falsa de MON-YLD ANTES de la tabla, en Documentado: manda la tabla del §2, no la primera fila que encaja', 'ejecutor movido con rutas.raiz_paquete (README): el Motor encuentra el Catálogo y sirve lo IMPLEMENTADO', 'SERVED_WITH_LIMITATIONS solo por problemas de los datos, no por las advertencias fijas de la ficha', 'CT-09 IDX-REL-001 con un dato mal formado → RECHAZADO registrado en RC', 'CT-09 MON-REAL-001 con un dato mal formado → RECHAZADO registrado en RC', 'CT-09 IDX-ERP-001 con un dato mal formado → RECHAZADO registrado en RC', 'verificar_casos_control: 21 fichas, 53 casos superados, 21 entradas en RC']
