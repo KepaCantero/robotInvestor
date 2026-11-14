@@ -262,15 +262,17 @@
   "no_comprueba": "Que el informe visual no muestre confianza «alta» sin base."
  },
  "PB-32": {
-  "cobertura": "AUTOMATICA",
+  "cobertura": "PARCIAL",
   "pruebas": [
    "11_Ejecutor/tests/test_integracion.py::test_certificado_emitido_con_muestra_suficiente",
    "11_Ejecutor/tests/test_unitarias.py::test_metricas_de_pronostico_con_pronosticadores_sinteticos",
    "11_Ejecutor/tests/test_t87_datos.py::test_r13_certificado_por_metodo_en_la_entrega",
-   "10_Herramientas/tests/test_ht09_validador_g3.py::TestBloqueos::test_certificado_no_vigente"
+   "10_Herramientas/tests/test_ht09_validador_g3.py::TestBloqueos::test_certificado_no_vigente",
+   "11_Ejecutor/tests/test_fase4_huecos.py::test_pb32_se_certifica_la_celda_con_habilidad_y_no_la_que_no_la_tiene",
+   "11_Ejecutor/tests/test_fase4_huecos.py::test_pb32_cada_condicion_del_certificado_cuenta_por_separado"
   ],
-  "comprueba": "Se emite un certificado con muestra suficiente; la probabilidad solo se publica en la celda certificada y HT-09 la bloquea en las demás.",
-  "no_comprueba": ""
+  "comprueba": "El caso del plan: con una celda con habilidad (RF × H3) y otra sin ella (RV × H3) se emite un solo certificado, el de RF. Cada condición del certificado (muestra efectiva, IC del BSS, calibración frente al nulo y tope de ECE) impide por sí sola certificar. La probabilidad solo se publica en la celda certificada y HT-09 la bloquea en las demás.",
+  "no_comprueba": "La re-ejecución CT-10 coincidente que el plan pide para el certificado."
  },
  "PB-33": {
   "cobertura": "AUTOMATICA",
@@ -411,7 +413,7 @@
   "no_comprueba": "Ninguna prueba cubre el conflicto de normas del plan (segunda pasada, COR- y P3- en HA)."
  },
  "PB-49": {
-  "cobertura": "AUTOMATICA",
+  "cobertura": "PARCIAL",
   "pruebas": [
    "11_Ejecutor/tests/test_unitarias.py::test_almacen_reserva_integridad_y_as_of",
    "11_Ejecutor/tests/test_integracion.py::test_canales_y_matriz_respetados",

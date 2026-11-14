@@ -120,3 +120,102 @@ Sí. 23 de 26 mutantes mueren. Los tres vivos no desmienten a las pruebas: H17 y
 ## Veredicto
 
 **NO APTO** · Queda un hallazgo alto abierto (H-01): el mapa y el documento de evidencias dan por «Superada» cuatro filas (PB-21, PB-23, PB-37 y PB-49) cuyas pruebas citadas no afirman una cláusula determinista del criterio del plan, contra la regla estricta del propio ticket y del prompt de la fase. El resto está bien: el script, el documento y las ocho pruebas nuevas hacen lo que dicen, y los criterios CA-2 a CA-8 se cumplen. La corrección es corta: reclasificar las cuatro filas (o añadir sus pruebas), regenerar el documento, y de paso H-02 y H-04. Después vuelvo a ejecutar `r01_01`, `r01_02` y `r01_03`.
+
+## Ronda r02
+
+- **Revisor:** revisor nuevo sin contexto de la implementación (subagente de Claude; no es el de la r01 ni quien implementó) · 2026-11-14
+- **Qué se revisa:** las correcciones de la r01 (`git diff 94c6193 HEAD`, en una copia propia: `git worktree` con HEAD separado en `08862e8`). Orden de lectura: `README.md` y la r01 de este fichero → código, mapa, pruebas y plan → al final `analisis-tecnico.md` y `pruebas.md`.
+- «Ejecutado» es ejecutado por mí en mi copia; «leído» es deducción de lectura. Máquina compartida con otros trabajos: tiempos orientativos.
+
+### Reproducción
+
+| Qué | Orden | Resultado |
+| --- | --- | --- |
+| Suite del Bloque A, una vez | `cd bloque_a/11_Ejecutor && python -m pytest -q -p no:cacheprovider` | **3957 passed in 1672 s**; el árbol queda limpio |
+| Comprobar el mapa | `.venv/bin/python .docs/scripts/evidencias_plan_a.py` (en la copia desechable, por `r01_02`) | «67 pruebas del plan, 101 pruebas automáticas citadas y todas existen · AUTOMATICA 26, DOCUMENTAL 1, PARCIAL 29, PENDIENTE_API 7, REQUIERE_USUARIOS 1, SIN_PRUEBA 3», código 0 |
+| Gates ligeros, ruff y mypy | `tools/corpus_integridad.py`, `refs_vivas.py`, `secrets_scan.py`, `nfc_check.py`; ruff y mypy de A contados como el gate | los cuatro en verde (695 archivos del corpus); ruff 2902 (cuota 2902) y mypy 109 (cuota 109) |
+
+No ejecuté `tools/check_all.sh` completo ni `evidencias_plan_a.py --ejecutar` (indicación del encargo: máquina compartida). El documento publicado dice «sobre el commit `94c6193`» y `test_h05_el_documento_publicado_coincide_con_el_mapa` (en la suite) lo compara con el mapa.
+
+### Scripts de la r01, vueltos a ejecutar
+
+| Script | r01 | r02 |
+| --- | --- | --- |
+| `r01_01_filas_automaticas_a_mano.py` | el ejecutor cumple PB-21, PB-23 y PB-49 a mano | igual: PB-21 (clave e IBAN: rechazado, cero coincidencias en archivos), PB-23 (tres intentos rechazados, huella de F4 sin cambios, tres incidencias), PB-49 (borrar la del medio o la última: lo detecta). Sigue igual lo de fuera del ticket (un IBAN solo, con espacios, se admite: ahora es T-120 en la deuda) |
+| `r01_02_ataques_script.py` | 20 de 27 fallan cerrado | **prueba saltada: «No ejecutada», código 1; `xfail` que falla: «FALLA», código 1** (H-02); **«### PB-68 - …», «### PB-100 · …» y «PB-2X»: «cabeceras de prueba que no se reconocen», código 1; PB-22 sin criterio: código 1** (H-03). Un `xfail` que pasa sale «Superada» con código 0: con `--runxfail` la marca se ignora y la prueba cuenta como una normal que pasa, lo que es correcto. Siguen dando 0, como límite declarado del diseño: una PARCIAL o una PENDIENTE_API cambiada a AUTOMATICA y una prueba citada vaciada |
+| `r01_03_mutantes_huecos.py` | 23 de 26 muertos; A01 vivo | H01 a H26: igual (23 muertos; H17, H18 y H22 vivos por los motivos de la r01). **A01 sigue «VIVO» en este script porque el script solo lo enfrenta a la prueba antigua** (`test_almacen_reserva_integridad_y_as_of`); contra las dos que el mapa cita ahora para PB-23, **muere** (`r02_02`) |
+
+### Scripts nuevos de la r02 (`revisores/`)
+
+| Script | Qué hace | Resultado |
+| --- | --- | --- |
+| `r02_01_pb32_a_mano_y_mutantes.py` | PB-32 como dice el plan (celda RF × H3 con habilidad y celda RV × H3 sin ella) y cuatro mutantes de `criterio_certificado` contra las tres pruebas del ejecutor que el mapa cita para PB-32 | A mano el ejecutor cumple (un certificado, el de RF). **Tres de los cuatro mutantes viven** (H-06) |
+| `r02_02_mutantes_pruebas_nuevas.py` | A01 de la r01 contra las dos pruebas de PB-23, y cinco mutantes nuevos contra las pruebas de PB-21, PB-23, PB-37 y PB-54 | **6 de 6 muertos** |
+
+```bash
+cd bloque_a/11_Ejecutor && python ../../.docs/tickets/T-116/revisores/r02_01_pb32_a_mano_y_mutantes.py <copia desechable de 11_Ejecutor>
+python .docs/tickets/T-116/revisores/r02_02_mutantes_pruebas_nuevas.py <copia desechable de 11_Ejecutor>
+```
+
+### Estado de los hallazgos de la r01
+
+| ID | Gravedad | Estado | Evidencia |
+| --- | --- | --- | --- |
+| H-01 | alta | **corregido en las cuatro filas que señalaba; queda una de las que la r01 no leyó (H-06)** | PB-21: prueba nueva con el CT-04 del plan, clave e IBAN, búsqueda en todos los archivos y en la mensajería (N05 muere). PB-23: los tres intentos, huella de F4 tras cada uno, tres incidencias (A01, N01 y N02 mueren). PB-37: pasa a PARCIAL con su hueco («ambos en métricas»), y la prueba nueva afirma `version_de`, la entrada original byte a byte y «ambos RESUELTO» (N03 muere). PB-49: el borrado del medio y del final se afirma. El documento publicado dice lo mismo que el mapa |
+| H-02 | media | **corregido** | `r01_02`: saltada y `xfail` que falla dan código 1; `test_h02_…` en la suite |
+| H-03 | baja | **corregido** | `r01_02`: las tres cabeceras mal escritas y el PB sin criterio dan código 1; tres pruebas `test_h03_…` |
+| H-04 | media | **corregido** | `analisis-tecnico.md` relleno (48 líneas); la deuda dice «EN QA, ronda r02»; `docs/AVANCE.md` tiene la fila de la Fase 4 (leído) |
+| H-05 | baja | **corregido** | `test_h05_el_documento_publicado_coincide_con_el_mapa` compara las 67 filas del documento con el mapa |
+
+### Las siete pruebas nuevas contra el criterio del plan (leídas y con mutantes)
+
+| Fila | Cobertura | Juicio | Por qué |
+| --- | --- | --- | --- |
+| PB-21 | AUTOMATICA | bien puesta | El caso del plan tal cual (CT-04, clave API e IBAN en el comentario), incidencia SEGURIDAD con el campo y sin el valor, nada en F5 y cero coincidencias en todos los archivos y en la traza. Nota: el rechazo lo provoca la clave; el IBAN con espacios, solo, no se detecta (T-120) |
+| PB-23 | AUTOMATICA | bien puesta | Los tres intentos del plan, la huella de F4 comparada tras cada uno y tres ACCESO_FUERA_DE_MATRIZ |
+| PB-37 | PARCIAL | bien puesta | Afirma «PRG nuevo con `version_de`», «hash de la entrada original intacto» y «ambos RESUELTO» sobre el Almacén; el hueco («ambos en métricas» y que no hay una operación de corrección en Prospectiva) está declarado |
+| PB-49 | AUTOMATICA | **dudosa (baja, dentro de H-06)** | El borrado ya se afirma. Pero la propia fila declara en «No comprueba» que «no se comparan instantáneas de ocho semanas», que es la preparación del plan y algo que el ejecutor puede hacer con el cliente simulado: con la regla del ticket, una fila AUTOMATICA solo deja fuera lo que es de tiempo real o del modelo real |
+| PB-54 | AUTOMATICA | bien puesta | Los once campos del plan, presentes y no vacíos en cada encargo del ciclo (N04 muere) |
+| PB-64 | AUTOMATICA | aceptable, con nota | 20 hitos al 40 %, degradación (F6 y F10 en las otras pruebas citadas) y ningún CERT de H5. Que no haya certificado de H5 es casi estructural (un PRG de H5 no tiene probabilidad interna): la afirmación es correcta pero difícil de romper |
+| PB-65 | AUTOMATICA | bien puesta | Los tres casos del plan en HT-09; el dictamen del Orquestador (modelo real) está en «No comprueba» |
+
+### Las AUTOMATICA que la r01 dejó sin leer, con la regla estricta (leídas)
+
+| Fila | Juicio | Por qué |
+| --- | --- | --- |
+| **PB-32** | **mal puesta** (H-06) | El plan: 60 PRG de RF × H3 con habilidad y 40 de RV × H3 sin ella ⇒ CERT- para RF (n ≥ 100, IC 90 % del BSS > 0 tras Holm, calibración no rechazada con ECE < 0,15, CT-10 coincidente) y **ninguno para RV**; criterio: «un certificado; G3-CON-10 PASA en RF y bloquearía en RV». Las pruebas citadas certifican una celda con habilidad y rechazan una con muestra insuficiente; **ninguna afirma que una celda sin habilidad o mal calibrada no se certifica**, ni la re-ejecución CT-10 |
+| PB-53 | bien puesta | La propuesta de una empresa se retira antes de entregar, HT-09 bloquea un activo concreto y la ficha de finalista no admite vehículos |
+| PB-55 | bien puesta | Doce tipos, tres opciones como máximo y motivo si hay menos, doce apartados en el HTML |
+| PB-56 | aceptable, con nota | La regla de duplicados se afirma sobre `_deduplicar_entre_tipos` (RF y TCV) y HT-09 bloquea los tres tipos de duplicado; el caso del plan (dos Analistas, RV e IDX, en un C1 entero) no se ejecuta de extremo a extremo |
+| PB-63 | bien puesta | H5 solo con banda y ≥ 3 hitos congelados con su padre; HT-09 bloquea un H5 sin hitos o con probabilidad numérica |
+
+### Criterios de aceptación
+
+| Criterio | Cumple | Evidencia |
+| --- | --- | --- |
+| CA-1 | sí en la forma; **no en el fondo en una fila** (H-06) | 67 filas con sus cuatro campos; PB-32 dice «comprueban todo el criterio» y no es así |
+| CA-2 | sí | 101 citadas, todas existen, código 0 |
+| CA-3 | no repetido en esta ronda | La r01 lo ejecutó; el implementador declara 101 de 101. `test_h05_…` comprueba el documento contra el mapa |
+| CA-4 | sí (por la r01 y `--pb`) | `r01_02`: `--pb PB-22` «Superada», código 0 |
+| CA-5 | sí | Sin cambios respecto de la r01; el mapa sigue con 7 PENDIENTE_API, 1 con usuarios y 1 documental sin pruebas |
+| CA-6 | sí | `r01_02`: los tres casos, código 1; `test_fase4_mapa.py` en la suite |
+| CA-7 | sí | README («Huecos») y fila T-116 de la deuda, ya al día; T-120 recoge lo de fuera del ticket |
+| CA-8 | por partes; el gate entero, pendiente | Ver «Reproducción» |
+
+### Hallazgos nuevos
+
+| ID | Gravedad | Cómo reproducirlo | Esperado / obtenido | Corrección sugerida | Estado |
+| --- | --- | --- | --- | --- | --- |
+| H-06 | **alta** | `cd bloque_a/11_Ejecutor && python ../../.docs/tickets/T-116/revisores/r02_01_pb32_a_mano_y_mutantes.py <copia desechable de 11_Ejecutor>` → P32a, P32b y P32c `VIVO`. Leer el criterio de PB-32 en el plan y las cuatro pruebas que cita el mapa | Esperado (regla estricta del ticket; es el mismo defecto que H-01, en una de las filas que la r01 pidió repasar): AUTOMATICA solo si las pruebas citadas afirman todo el criterio. Obtenido: PB-32 figura AUTOMATICA y el documento la publica «Superada», pero quitar de `criterio_certificado` la condición del IC del BSS (P32a), la de la calibración frente al nulo (P32b) o el tope de ECE (P32c) deja en verde las tres pruebas del ejecutor citadas: nadie afirma «ninguno para RV × H3» (una celda sin habilidad no se certifica). En toda la suite, P32a lo mata una prueba no citada (`test_t66_evaluacion.py::test_pa03_minimo_de_conglomerados_desde_la_configuracion`); **P32b y P32c no los mata ninguna** de `test_t66_evaluacion`, `test_t53_evaluacion_y_almacen`, `test_t65_hallazgos`, `test_t87_datos` ni `test_unitarias` (ejecutado). La certificación es el control de R13 que abre la publicación de probabilidades. A mano, el ejecutor cumple. De paso (baja): PB-49 es AUTOMATICA con un hueco propio del ejecutor declarado en «No comprueba» | Añadir a `test_fase4_huecos.py` la prueba de PB-32 (está casi escrita en `r02_01`: celda con habilidad y celda sin ella en el mismo almacén ⇒ un solo CERT, el de RF; y un caso mal calibrado) y citarla, o pasar PB-32 a PARCIAL con su hueco; pasar PB-49 a PARCIAL o comparar instantáneas en un backtest de ocho semanas; regenerar el documento | abierto |
+
+### Invariantes
+
+Sin cambios respecto de la r01: no cambia código de producción por este ticket ni el corpus; todo con `MockClient`; INC-T116-01 y 02 siguen `[PROPUESTO]`; sin secretos (las claves de las pruebas son ficticias y partidas); documentación al día (H-04 corregido).
+
+## Veredicto (r02)
+
+**NO APTO** · Los cinco hallazgos de la r01 están corregidos en lo que decían, las siete pruebas nuevas afirman lo que dicen (6 mutantes de 6 mueren, A01 incluido) y el script falla cerrado donde antes no. Pero al repasar con la regla estricta las AUTOMATICA que la r01 dejó sin leer aparece otra fila del mismo tipo que H-01: **PB-32** se publica como «Superada» sin que ninguna prueba citada afirme que una celda sin habilidad o mal calibrada no se certifica (H-06, alta por la misma razón que H-01: evidencia que dice más de lo que las pruebas afirman, y aquí sobre el control R13). La corrección es corta: una prueba (o reclasificar PB-32 y PB-49 a PARCIAL) y regenerar el documento. Después basta volver a ejecutar `r02_01` y `r02_02`.
+
+Lo que no comprobé: `--ejecutar` completo y el gate entero; PB-55, PB-56, PB-53 y PB-63 están leídas, no mutadas; las demás AUTOMATICA (las 19 de la r01) no las releí.
+
+Este revisor no cierra el ticket ni toca la deuda, el diario o la memoria.

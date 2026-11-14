@@ -46,3 +46,14 @@ El mapa de cobertura del plan de pruebas (`tests/MAPA_PLAN_DE_PRUEBAS.md`, del 3
 Resultado tras la r02: 26 automáticas, 29 parciales, 7 pendientes de la API, 3 sin prueba, 1 con usuarios y 1 documental; 101 pruebas citadas, las 101 superadas.
 
 Fuera del ticket, a la deuda (T-120): un IBAN escrito con espacios no se detecta como dato sensible, y el máximo de 10 lecciones por encargo está escrito en el código y no en la configuración.
+
+## Ronda r03 (QA r02 NO APTO)
+
+La QA r02 dio por corregidos los cinco hallazgos de la r01 y encontró uno más del mismo tipo al repasar las filas que la r01 no había leído.
+
+| Hallazgo | Corrección | Prueba |
+| --- | --- | --- |
+| H-06 (alta) PB-32 automática sin que ninguna prueba citada afirme que una celda sin habilidad o mal calibrada no se certifica; los mutantes P32b y P32c vivían en toda la suite | Prueba del caso del plan (una celda con habilidad y otra sin ella en el mismo almacén: un solo certificado) y otra que afirma cada condición del certificado por separado. PB-32 queda parcial: falta la re-ejecución CT-10 que el plan pide | `test_pb32_se_certifica_la_celda_con_habilidad_y_no_la_que_no_la_tiene`, `test_pb32_cada_condicion_del_certificado_cuenta_por_separado` (8) |
+| De paso (baja): PB-49 automática con un hueco propio del ejecutor | PB-49 pasa a parcial | — |
+
+Resultado tras la r03: 24 automáticas, 31 parciales, 7 pendientes de la API, 3 sin prueba, 1 con usuarios y 1 documental.

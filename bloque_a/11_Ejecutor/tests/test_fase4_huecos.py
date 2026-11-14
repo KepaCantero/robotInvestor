@@ -314,3 +314,55 @@ def test_pb64_la_revision_de_certificados_no_emite_ninguno_para_h5(tmp_path):
     res = e.revisar_certificados("2027-06-04")
     assert not [c for c in res["emitidos"] if c["celda"]["horizonte"] == "H5"]
     assert not [c for c in a.estado("F6", clave="id").values() if c.get("tipo_entrada") == "CERT" and c["celda"]["horizonte"] == "H5"]
+
+
+# ================================================================================ QA r02 de T-116 (H-06): PB-32
+def _sembrar_celda(b, clase, n, prob_real, desde):
+    """`n` pronósticos resueltos de la celda `clase` × H3; `prob_real(p)` es la frecuencia real de acierto cuando se dijo `p`."""
+    import numpy as np
+    rng = np.random.default_rng(1)
+    for i in range(n):
+        p = float(rng.choice([0.3, 0.7]))
+        o = int(rng.random() < prob_real(p))
+        pid = f"PRG-2026-{desde + i:04d}"
+        b.almacen.escribir("F4", "AG-10", {"tipo_entrada": "ALTA", "prg_id": pid, "clase": clase, "horizonte": "H3", "prob_interna": p,
+                                           "referencia_ingenua": {"valor_o_prob": 0.5}, "en_informe": True, "sentido": "POSITIVO",
+                                           "fecha_emision": "2025-01-02", "estado": "ABIERTO",
+                                           "fecha_resolucion": str((pd.Timestamp("2025-07-02") + pd.offsets.BDay(i)).date())})
+        b.almacen.escribir("F4", "AG-20", {"tipo_entrada": "RESOLUCION", "prg_id": pid, "estado": "RESUELTO",
+                                           "resolucion": {"resultado_binario": o, "valor_observado": 0.01, "comprobacion_fuga": "SUPERADA",
+                                                          "fecha_resuelto": "2025-07-02"}})
+
+
+def test_pb32_se_certifica_la_celda_con_habilidad_y_no_la_que_no_la_tiene(tmp_path, universo):
+    """El caso del plan: RF × H3 con habilidad real y RV × H3 sin ella, en el mismo almacén: un certificado, el de RF."""
+    b = nuevo_bloque(tmp_path, universo)
+    b.reloj.fijar("2026-01-02")
+    _sembrar_celda(b, "RF", 150, lambda p: p, 1)                 # acierta con la frecuencia que dice
+    _sembrar_celda(b, "RV", 150, lambda p: 0.5, 1001)            # acierta a cara o cruz, diga lo que diga
+    res = b.evaluador.revisar_certificados("2026-01-02")
+    assert [c["celda"] for c in res["emitidos"]] == [{"clase": "RF", "horizonte": "H3", "metodo": None}]
+    certs = [c for c in b.almacen.estado("F6", clave="id").values() if c.get("tipo_entrada") == "CERT"]
+    assert [c["celda"]["clase"] for c in certs] == ["RF"]
+    evaluadas = {k: v for k, v in res["evaluadas"].items() if "RV" in k}
+    assert evaluadas and all(not v["certificable"] and v["motivos"] for v in evaluadas.values())
+
+
+BUENA = {"n": 150, "n_eff": 150.0, "bss": {"ic": [0.05, 0.25]}, "calibracion": {"ece": 0.03}, "ece_nulo": {"q90": 0.06}}
+
+
+@pytest.mark.parametrize("cambio, motivo", [
+    ({"bss": {"ic": [0.0, 0.2]}}, "extremo inferior del IC del BSS"),          # sin habilidad demostrada
+    ({"bss": {"ic": [-0.02, 0.2]}}, "extremo inferior del IC del BSS"),
+    ({"bss": {"ic": [None, None]}}, "extremo inferior del IC del BSS"),
+    ({"calibracion": {"ece": 0.07}}, "> q90 nulo"),                             # calibración rechazada frente al nulo
+    ({"calibracion": {"ece": 0.20}, "ece_nulo": {"q90": 0.30}}, "≥ 0.15"),      # ECE por encima del tope, aunque el nulo lo admita
+    ({"calibracion": {"ece": 0.15}, "ece_nulo": {"q90": 0.30}}, "≥ 0.15"),      # el tope es estricto
+    ({"n_eff": 99.9}, "n_eff = 99.9 < 100"),
+    ({"n_eff": None}, "n_eff no disponible"),
+])
+def test_pb32_cada_condicion_del_certificado_cuenta_por_separado(cambio, motivo):
+    from bloque_a.motor.evaluacion import criterio_certificado
+    assert criterio_certificado(BUENA) == {"certificable": True, "motivos": [], "n": 150, "n_eff": 150.0}
+    r = criterio_certificado({**BUENA, **cambio})
+    assert not r["certificable"] and len(r["motivos"]) == 1 and motivo in r["motivos"][0], r["motivos"]

@@ -119,3 +119,80 @@ Ninguno crítico ni alto. H-01 es el que conviene corregir antes de usar la V6 c
 ## Veredicto
 
 **APTO** · Los seis criterios se cumplen (CA-4 con la salvedad de H-03; CA-6 por partes) y no queda ningún hallazgo crítico ni alto. Quedan abiertos uno medio (H-01) y cinco bajos (H-02 a H-06), que se corrigen o pasan a la deuda con su ID. **Condición de cierre:** `./tools/check_all.sh` 12/12 en el commit, que en esta ronda no ha ejecutado nadie.
+
+## Ronda r02
+
+- **Revisor:** revisor nuevo sin contexto de la implementación (subagente de Claude; no es el de la r01 ni quien implementó) · 2026-11-14
+- **Qué se revisa:** las correcciones de los seis hallazgos de la r01 (`git diff 94c6193 HEAD -- bloque_a/11_Ejecutor/bloque_a/diseno_v6.py bloque_a/11_Ejecutor/bloque_a/orquestacion.py bloque_a/11_Ejecutor/config bloque_a/11_Ejecutor/tests/test_t117_gc1.py docs/incidencias.md`), en una copia propia (`git worktree`, HEAD separado en `08862e8`). «Antes» es `94c6193`, extraído con `git archive` a una carpeta desechable.
+- «Ejecutado» es ejecutado por mí; «leído», deducción de lectura. Máquina compartida: tiempos orientativos.
+
+### Reproducción
+
+| Qué | Orden | Resultado |
+| --- | --- | --- |
+| Suite del Bloque A, una vez | `cd bloque_a/11_Ejecutor && python -m pytest -q -p no:cacheprovider` | **3957 passed in 1672 s**; el árbol queda limpio |
+| Corpus, refs, secretos, NFC | `tools/corpus_integridad.py`, `refs_vivas.py`, `secrets_scan.py`, `nfc_check.py` | los cuatro en verde (695 archivos del corpus) |
+| ruff y mypy de A, contados como el gate | — | 2902 (cuota 2902) y 109 (cuota 109) |
+
+No ejecuté `tools/check_all.sh` completo (indicación del encargo). Sigue siendo condición de cierre.
+
+### Scripts de la r01, vueltos a ejecutar
+
+| Script | r01 | r02 |
+| --- | --- | --- |
+| `r01_02_ataques_gc1.py` | H-01 (CT-06 con 0,75 en RF), H-02 (ocho recuentos raros pasan), H-03 (`0`, `""`, `[]`, `False` aceptados), H-06 («0.65 < 0.65») | **Apartado 7: en RF el CT-06 dice 0,65, lo mismo que el registro; en RV, 0,75.** Apartado 3: `1.0`, `0.0`, `1.9`, `numpy.int64(1)`, `numpy.int32(1)` y `numpy.float64(1.0)` descartan; siguen pasando `True`, `False` y `Decimal(1)` (se tratan como «sin recuento», igual que un texto: ver nota de H-02). Apartado 5: los cuatro valores se rechazan al crear el Bloque. Apartado 1: señal 0,64999 ⇒ «senal_compuesta 0.64999 < 0.65» |
+| `r01_03_ciclo_huella.py` y `r01_04_comparar_huellas.py` | V5 idéntico antes y después | **V5:** 14 de 16 ficheros idénticos byte a byte; cambian `RC_registro_calculos.jsonl` y `sellos_integridad.json`, y eso es de T-118 (el campo `artefacto.configuracion_usada`), no de este ticket: con la corrección de H-01 revertida en una copia, los mismos dos y ninguno más. Dos ejecuciones del árbol nuevo: ficheros idénticos (el `uc` por agente baila en la cuarta decimal, ya anotado en la r01). **V6:** dos ejecuciones del árbol nuevo, iguales; frente a `94c6193` cambian 13 ficheros: ver «Efecto de H-01 en el ciclo de ejemplo» |
+| `r01_05_mutantes_gc1.py` | 26 muertos, 4 vivos (G07, G08, G15, G30) | 23 muertos (**G08 muere ahora**), 1 vivo (G15, equivalente, como en la r01) y 6 no aplicados porque sus líneas cambiaron (G02, G03, G05, G06, G07, G30); sus equivalentes están en `r02_01` |
+| `r01_06_registro_decisiones.py` | sin problemas | 31 filas comprobadas, 0 con problema |
+| `r01_01_medida_inc_t117_01.py` | medida de la incidencia | no repetido: el código que mide no cambia en esta ronda; H-04 es de texto y lo he leído |
+
+### Script nuevo de la r02
+
+`python .docs/tickets/T-117/revisores/r02_01_mutantes_r02.py <copia desechable>`: once mutantes sobre el código de la r02 (los equivalentes de los seis que ya no se aplican y los de las correcciones de H-01, H-02, H-03 y H-06). **11 de 11 muertos.**
+
+### Estado de los hallazgos de la r01
+
+| ID | Gravedad | Estado | Evidencia |
+| --- | --- | --- | --- |
+| H-01 | media | **corregido** | `orquestacion.py`: con la V6 y GC1 por código el CT-06 lleva `v6.umbral_gc1(self, clase)`, la misma función que usa `gc1()`; en la V5, el general. `r01_02` apartado 7; `test_h01_…` (dos pruebas); mutantes R01 a R03 muertos |
+| H-02 | baja | **corregido** (con una nota) | Un recuento `numbers.Real` finito y menor que el mínimo descarta, sea `int`, `float` o de numpy; R07 y R09 mueren. Nota: `True`, `False` y `Decimal(1)` siguen tratándose como «sin recuento» (no descartan). Es coherente con la regla del ticket («si el Motor no da el recuento, no se descarta») y hoy `senales_clase` da un `int`; lo dejo anotado, sin hallazgo |
+| H-03 | baja | **corregido** | `validar()` distingue `None` de un valor que no es diccionario; seis casos en `test_h03_…`; R10 muere |
+| H-04 | baja | **corregido** | Leído: el comentario del YAML y INC-T117-01 dicen ahora que la tendencia neutra explica RF y TCV, que en MON la causa es otra (tres ámbitos) y que la comparación es con RV, DIV, MP e IDX; DER, INM, CRI y ALT quedan explicados |
+| H-05 | baja | **corregido** | (a) `test_h05_en_el_diseno_v5_gc1_por_codigo_no_actua` compara lo que recibe el Analista en un ciclo V5 (universo entero, sin marca, umbral 0,75, sin registro COBERTURA); (b) `test_h05_el_tope_de_candidatas_cuenta_despues_del_filtro_de_familias`: G08 muere; (c) `test_h05_el_minimo_de_familias_es_el_de_la_configuracion` con 0, 1, 2 y 3: R08 muere |
+| H-06 | baja | **corregido** (queda un borde sin importancia) | 0,64999 y 0,6499999 se escriben con sus cifras; R11 muere. Con 0,6499999999999999 (un ulp por debajo) el motivo sigue diciendo «0.65 < 0.65», porque ocho cifras significativas no lo distinguen; el campo `senal` del mismo descarte tampoco. No lo abro como hallazgo |
+
+### Lo que pedía el encargo
+
+- **En la V6 el encargo CT-06 lleva el umbral del tipo:** sí. Ejecutado en un ciclo V6 de RF y RV (`r01_02`, apartado 7): RF 0,65 y RV 0,75, iguales a los del registro COBERTURA. `test_h01_el_umbral_del_registro_y_el_del_encargo_son_el_mismo` lo afirma para los doce tipos.
+- **La V5 sigue idéntica:** sí. Estado y entregables de un ciclo V5, byte a byte, salvo el RC y su sello, que cambian por T-118 (comprobado revirtiendo solo la corrección de H-01: mismos dos ficheros). El CT-06 de la V5 lleva 0,75 (prueba y mutante R02).
+
+### Efecto de H-01 en el ciclo de ejemplo (observación, sin hallazgo)
+
+En el ciclo V6 simulado, RF pasa de una opción («Deuda soberana emergente en dólares») a ninguna, con el mismo registro de GC1 (`pasan` igual en los doce tipos). No es un cambio de comportamiento del ejecutor: `MockClient` deriva su semilla del texto del mensaje (`mock_respuestas._rng`, con los primeros 4 000 caracteres del CT-06) y el encargo de RF ahora dice 0,65 donde decía 0,75, así que el Analista simulado sortea otras cifras. Con la corrección revertida en una copia, el top de los doce tipos es idéntico al de `94c6193`. Conviene saberlo al comparar ciclos V6 de antes y de después de este commit.
+
+### Criterios de aceptación
+
+| Criterio | Cumple | Evidencia |
+| --- | --- | --- |
+| CA-1 | sí | G25 a G29 muertos (valores por defecto); V5 idéntica |
+| CA-2 | sí | `r01_02` apartado 1; G01 y R03 muertos |
+| CA-3 | sí | `r01_02` apartado 3; R04 a R09 muertos |
+| CA-4 | sí, ya sin la salvedad de H-03 | `r01_02` apartado 5; G12 a G23 y R10 muertos |
+| CA-5 | sí | registro COBERTURA con el umbral de cada tipo (huella V6: 0,65 en RF, MON y TCV) |
+| CA-6 | sí por partes; gate entero pendiente | suite de A 3957 en verde (incluye T-101, T-102, T-113 y T-88); ruff 2902, mypy 109; cuatro gates ligeros en verde |
+
+### Hallazgos nuevos
+
+Ninguno.
+
+### Invariantes
+
+Sin cambios respecto de la r01: los valores siguen en `por_defecto.yaml` como `[PROPUESTO]` (INC-T117-01); la configuración no válida falla al crear el Bloque; sin secretos; la V5 no cambia.
+
+## Veredicto (r02)
+
+**APTO** · Los seis hallazgos de la r01 están corregidos, cada uno con su prueba y con un mutante que la prueba mata (34 de 35 mutantes entre `r01_05` y `r02_01`; el vivo, G15, es equivalente). Los seis criterios se cumplen y no hay hallazgos nuevos. **Condición de cierre:** `./tools/check_all.sh` 12/12 en el commit, que en esta ronda no he ejecutado entero.
+
+Lo que no comprobé: el gate completo; la medida de INC-T117-01 no la repetí; nada con el modelo real (fuera del alcance).
+
+Este revisor no cierra el ticket ni toca la deuda, el diario o la memoria.

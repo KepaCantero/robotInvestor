@@ -2,7 +2,7 @@
 
 | Campo | Valor |
 | --- | --- |
-| Estado | EN QA |
+| Estado | CERRADO (QA r02 APTO, 14-11-2026) |
 | Pieza | bloque_a (11_Ejecutor, `diseno_v6.py` y configuración) |
 | Planifica · implementa · QA | claude · claude · un revisor nuevo sin contexto |
 | Aprobación del operador | aprobada el 2026-11-13: «Haz ambos puntos. Lo confirmo», y que el agente decida por defecto los valores |
@@ -65,3 +65,4 @@ Ninguno nuevo. La medida de INC-T117-01 se hizo con un script de un solo uso (se
 - 2026-11-13 · EN QA · claude · implementado en una copia aparte: 43 pruebas nuevas en verde y las 399 de los ficheros que usan la V6; ruff 2902 y mypy 109, sin subir. Pendiente el gate completo y la QA
 - 2026-11-14 · APTO · QA r01 (revisor nuevo sin contexto, `2ff0630`): seis criterios cumplidos; la medida de INC-T117-01, reproducida y cierta; V5 idéntico byte a byte. Un hallazgo medio (H-01: el CT-06 comunicaba al Analista el umbral general y no el del tipo) y cinco bajos
 - 2026-11-14 · EN QA · claude · ronda r02, por decisión de Claude (corregir antes de cerrar): H-01 (`umbral_gc1`, el mismo umbral en GC1 y en el encargo), H-02 (recuento de familias decimal o de numpy), H-03 (un `umbral_por_perfil` que no es un diccionario se rechaza), H-04 (texto de la causa en el YAML e INC-T117-01), H-05 (tres pruebas que matan los mutantes vivos) y H-06 (motivo sin redondear hasta el umbral). 68 pruebas
+- 2026-11-14 · CERRADO · QA r02 APTO (revisor nuevo sin contexto): los seis hallazgos de la r01 corregidos, cada uno con su prueba y un mutante que la prueba mata; el encargo CT-06 de la V6 lleva el umbral del tipo y la V5 sigue idéntica
