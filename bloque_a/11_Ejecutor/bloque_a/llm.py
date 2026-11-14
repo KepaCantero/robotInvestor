@@ -57,17 +57,32 @@ def contenido_sensible(valor) -> bool:
         return bool(secretos_en_texto(valor + '"'))
     if not isinstance(valor, (dict, list, tuple, set, frozenset)):   # T-93 (H-32): también los conjuntos
         return False
-    # T-113 (H-56 de T-104): antes, cada nivel volvía a serializar todo lo que tenía debajo (profundidad × tamaño). Ahora el
-    # contenedor de arriba se serializa una sola vez (un diccionario anidado aparece igual dentro) y las hojas de texto se
-    # recorren sin recursión, cada una con la comilla final de un valor truncado
+    # T-113 (H-56 de T-104): antes, cada nivel volvía a serializar todo lo que tenía debajo (profundidad × tamaño). Ahora cada
+    # diccionario que no cuelga de otro se serializa una sola vez (uno anidado aparece igual dentro) y las hojas de texto se
+    # recorren sin recursión, cada una con la comilla final de un valor truncado. r02 (QA r01, H-01): también los
+    # diccionarios que cuelgan de una lista, una tupla o un conjunto (antes de la r02 solo se serializaba el de arriba)
+    sin_serializar: TypeError | None = None
     try:
-        if isinstance(valor, dict) and secretos_en_texto(json.dumps(valor, ensure_ascii=False, default=str)):
-            return True
+        for d in _diccionarios_de_arriba(valor):
+            try:
+                if secretos_en_texto(json.dumps(d, ensure_ascii=False, default=str)):
+                    return True
+            except TypeError as exc:   # claves que no son texto: sigue siendo un error del llamador (si el diccionario
+                if d is valor:         # cuelga de una lista, después de mirar el resto: un secreto hallado pesa más)
+                    raise
+                sin_serializar = sin_serializar or exc
+    except ValueError:   # r02 (H-01): una estructura que se contiene a sí misma no se puede comprobar: falla cerrado
+        return True
     except RecursionError:   # demasiado anidado para serializarlo: no se puede comprobar, así que falla cerrado
         return True
+    vistos: set[int] = set()
     pila: list = [valor]
     while pila:
         x = pila.pop()
+        if isinstance(x, (dict, list, tuple, set, frozenset)):   # r02 (H-01): cada contenedor, una vez (termina siempre)
+            if id(x) in vistos:
+                continue
+            vistos.add(id(x))
         if isinstance(x, (bytes, bytearray)):
             x = bytes(x).decode("utf-8", errors="replace")
         if isinstance(x, str):
@@ -77,7 +92,36 @@ def contenido_sensible(valor) -> bool:
             pila.extend(x.values())
         elif isinstance(x, (list, tuple, set, frozenset)):
             pila.extend(x)
+    if sin_serializar is not None:
+        raise sin_serializar
     return False
+
+
+def _diccionarios_de_arriba(valor) -> list[dict]:
+    """T-113 r02 (H-01): los diccionarios que no cuelgan de otro diccionario, bajando por listas, tuplas y conjuntos sin
+    recursión; cada uno, una vez. Una lista o tupla que se contiene a sí misma es `ValueError` (como el ciclo de un
+    diccionario en `json.dumps`); la misma lista en dos sitios no es un ciclo."""
+    hallados: list[dict] = []
+    vistos: set[int] = set()
+    camino: set[int] = set()
+    pila: list = [(valor, False)]
+    while pila:
+        x, salida = pila.pop()
+        if salida:
+            camino.discard(id(x))
+        elif id(x) in camino:
+            raise ValueError("estructura cíclica")
+        elif id(x) in vistos:
+            continue
+        elif isinstance(x, dict):
+            vistos.add(id(x))
+            hallados.append(x)
+        elif isinstance(x, (list, tuple, set, frozenset)):
+            vistos.add(id(x))
+            camino.add(id(x))
+            pila.append((x, True))
+            pila.extend((v, False) for v in x)
+    return hallados
 
 
 def respuesta_segura(r: RespuestaLLM) -> RespuestaLLM:
@@ -247,12 +291,14 @@ class ReplayClient(LLMClient):
         self.descartadas = 0
         if self.ruta.exists():
             # T-113 (H-54 de T-104): una última línea cortada se descarta; otra ilegible da el fichero y la línea
-            from .herramientas.ht06_indice import leer_jsonl
+            from .herramientas.ht06_indice import acabar_en_salto, leer_jsonl
             filas, self.descartadas = leer_jsonl(self.ruta)
             for d in filas:
-                if not isinstance(d, dict) or "clave" not in d:
-                    raise ValueError(f"{self.ruta}: registro de la grabación sin «clave»")
+                if not isinstance(d, dict) or not isinstance(d.get("clave"), str):   # r02 (H-06): la clave es un texto
+                    raise ValueError(f"{self.ruta}: registro de la grabación sin «clave»")   # noqa: TRY004 — dato, no tipo
                 self._tabla[d["clave"]] = d
+            if modo == "grabar":   # r02 (QA r01, H-02): para seguir escribiendo; al reproducir no se toca
+                acabar_en_salto(self.ruta)
         elif modo == "reproducir":
             raise FileNotFoundError(f"No existe la grabación {self.ruta}")
 

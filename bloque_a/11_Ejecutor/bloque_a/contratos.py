@@ -95,7 +95,9 @@ CAMPOS_RETORNO = {"CT-03": ["clase_consulta", "ruta", "respuesta", "referencias"
 RE_SECRETO = re.compile(
     r"(?i)(\"(api[_-]?key|apikey|secret|client_secret|password|passwd|contraseña|access[_-]?token|bearer)\"\s*:\s*\"[^\"]+\")"
     r"|(AKIA[0-9A-Z]{16})|(-----BEGIN [A-Z ]*PRIVATE KEY-----)|(Bearer\s+[A-Za-z0-9._-]{20,})"
-    r"|(?-i:(\bES\d{22}\b)|(\b\d{8}-?[A-HJ-NP-TV-Z]\b))")
+    # T-120: el IBAN español se escribe casi siempre en grupos de cuatro; también se detecta con un espacio, un punto o un
+    # guion entre grupos (antes, solo todo junto)
+    r"|(?-i:(\bES\d{2}(?:[ .\-]?\d{4}){5}\b)|(\b\d{8}-?[A-HJ-NP-TV-Z]\b))")
 
 # R9: patrones de instrucciones incrustadas en contenido externo (español e inglés)
 PATRONES_INYECCION = [

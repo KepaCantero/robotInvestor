@@ -398,6 +398,7 @@ evaluacion:
 # false = comportamiento anterior (certificado VIGENTE al emitirse; la recalibración sigue evaluacion.aplicar_recalibracion).
 aprendizaje:
   solo_endurecer: true
+  lecciones_por_encargo: 10       # 12.3 del Documento 0: cada encargo carga como máximo 10 lecciones, las de más fuerza (T-120)
 
 # T-53 · Bandas verbales y probabilidad interna (Anexo A, «Calibrable»); los huecos van a la banda más cercana a 50 %
 bandas_verbales:

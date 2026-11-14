@@ -688,9 +688,11 @@ def frase_prohibida(t: str, perm, marcas: dict | None = None) -> str | None:
         if m.group(1).upper() in perm.get("tickers", ()) and m.group(1) not in _PALABRA_COMUN:
             return "R21"
     # T-113 (T-109): un número romano como cantidad («las VII ideas») es una cifra; tras un nombre propio («Basilea III»,
-    # «Solvencia II») o «siglo» sigue siendo un nombre
-    if re.search(r"\b(?:[Ll]os|[Ll]as|[Uu]nos|[Uu]nas|[Ss]us|[Ee]stos|[Ee]stas|[Ee]sos|[Ee]sas)\s+(?=[IVXLC]{2,}\b)(?:X{0,3})(?:IX|IV|V?I{0,3})\b",
-                 libre):
+    # «Solvencia II») o «siglo» sigue siendo un nombre. r02 (QA r01, H-03): la palabra entera tiene que ser un romano bien
+    # formado (la expresión anterior admitía la coincidencia vacía) y una sigla de la lista permitida («IIC») no es una cifra
+    if any(m.group(1) not in perm["codigos"] for m in re.finditer(
+            r"\b(?:[Ll]os|[Ll]as|[Uu]nos|[Uu]nas|[Ss]us|[Ee]stos|[Ee]stas|[Ee]sos|[Ee]sas)\s+"
+            r"(?=[IVX]{2,}\b)(X{1,3}(?:IX|IV|V?I{0,3})|IX|IV|VI{0,3}|I{2,3})\b", libre)):
         return "CIFRA"
     for m in _VEHICULO.finditer(libre):
         c = m.group(1).rstrip(".")   # r06 (H-44): «el fondo vwrl.»
@@ -834,11 +836,17 @@ def _cuenta_motivo(paquete: dict, clase: str) -> str:
     return f"De {cand} {ideas} de {tipo} {analizadas}, {n} {'pasó' if n == 1 else 'pasaron'} todos los filtros."
 
 
+_SIN_SINTESIS = ("El Sintetizador no dio una respuesta válida: la integración y los textos llanos son los que el código escribe por "
+                 "defecto")
+
+
 def _redaccion_segura(bloque, paquete, d, permitidos=None) -> dict:
     """Los textos llanos del Sintetizador, frase a frase: una frase que incumple R13 o R21 se quita; si un texto se queda vacío,
     toma el texto por defecto de ese mismo elemento (no de todos). Se declara cuántas frases se quitaron (T-102)."""
     defecto = bloque.redaccion.textos_por_defecto(paquete)
-    if not d:
+    if not d:   # T-113 r02 (QA r01, H-07): sin una respuesta válida se entregan los textos por defecto, y se dice
+        paquete["limitaciones"] = [x for x in paquete["limitaciones"] if not x.startswith("Ninguna limitación")
+                                   and x != _SIN_SINTESIS] + [_SIN_SINTESIS]
         return defecto
     perm = permitidos or {"codigos": frozenset(), "series": frozenset()}
     marcas = marcadores(paquete, perm)
@@ -891,7 +899,7 @@ def _redaccion_segura(bloque, paquete, d, permitidos=None) -> dict:
     red["frase_historial"] = _uno(red.get("frase_historial"), defecto["frase_historial"])
     # T-102 r02 (H-06): se declara lo de la redacción que se entrega; la de una respuesta anterior (reescritura) se retira
     previa = "Frases llanas del Sintetizador quitadas"
-    paquete["limitaciones"] = [x for x in paquete["limitaciones"] if not x.startswith(previa)]
+    paquete["limitaciones"] = [x for x in paquete["limitaciones"] if not x.startswith(previa) and x != _SIN_SINTESIS]
     if quitadas:
         paquete["limitaciones"] = [x for x in paquete["limitaciones"] if not x.startswith("Ninguna limitación")] + [
             f"{previa} ({', '.join(sorted(set(quitadas)))}): {len(quitadas)}; el resto de sus textos se conserva"]

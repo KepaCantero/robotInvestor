@@ -90,7 +90,7 @@ UMBRALES: dict[str, frozenset[str]] = {
 
 
 # T-113 (H-24 de T-108): dominio de las ventanas, plazos y listas de la petición, como en FON, DER y TCV. Topes [PROPUESTO]
-# (INC-T112-01): un horizonte no pasa de H5 de la configuración (120 meses = 2520 sesiones; §3 del Catálogo y horizontes
+# (INC-T113-01): un horizonte no pasa de H5 de la configuración (120 meses = 2520 sesiones; §3 del Catálogo y horizontes
 # del Documento 0); una ventana histórica, de 100 años, la misma cota que usan las fichas de valoración (T-112); las listas,
 # de 12 elementos (los plazos de la curva monetaria: 1 a 12 meses) o 20 escenarios.
 _MESES_H5, _SESIONES_H5, _ANIOS_HISTORIA = 120, 2520, 100
