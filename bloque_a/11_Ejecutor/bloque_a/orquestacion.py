@@ -167,6 +167,11 @@ class Bloque:
         self.params_ht03 = ht03.fusionar_parametros(parametros_ht03(cfg))   # T-65 (CS-11): sección `parametros_ht03` del YAML
         self._incidencias_universo_registradas = False
         self._inicializar_f10()
+        # T-113 r02 (QA r01, H-02): las líneas cortadas o ilegibles de la caché y de la grabación se declaran
+        for fichero, n in (("cache_resultados.jsonl", self.cache.descartadas), ("grabación del cliente", getattr(cliente, "descartadas", 0))):
+            if n:
+                self.almacen.incidencia("HERRAMIENTA", f"{fichero}: {n} línea(s) cortada(s) o ilegible(s) descartada(s) al arrancar; "
+                                        "esas respuestas se vuelven a pedir", "HT-06", severidad="Operativa")
         # V5.1: comunicación fluida con el Broker (CT-23), credenciales en la bóveda de HT-01 (CT-25) y
         # seguimientos encargados de opción (CT-24, ciclo C6, F11)
         self.consultas = ConsultasBroker(self)

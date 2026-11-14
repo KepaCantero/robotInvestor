@@ -816,7 +816,11 @@ class Evaluador:
         return {"emitidos": emitidos, "revocados": revocados, "propuestas_retiradas": retirados, "evaluadas": evaluadas,
                 "insuficientes": no_cert, "excluidos_contaminacion": self.excluidos_contaminacion(as_of)}
 
-    def lecciones_vigentes(self, as_of, clase: str | None = None, max_n: int = 10) -> list[dict]:
+    def lecciones_vigentes(self, as_of, clase: str | None = None, max_n: int | None = None) -> list[dict]:
+        """Lecciones vigentes del tipo, las de más fuerza primero. T-120: el máximo por encargo (12.3 del Documento 0) sale
+        de la configuración (`aprendizaje.lecciones_por_encargo`), no de un literal."""
+        if max_n is None:
+            max_n = int(parametro(self.cfg, "aprendizaje.lecciones_por_encargo"))
         orden = {"estadistica": 0, "recurrente": 1, "anecdotica": 2}
         lst = []
         for l in self.almacen.estado("F6", as_of, clave="id").values():
