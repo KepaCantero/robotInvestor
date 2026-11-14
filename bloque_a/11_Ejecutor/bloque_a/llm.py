@@ -77,12 +77,14 @@ def contenido_sensible(valor) -> bool:
         return True
     vistos: set[int] = set()
     pila: list = [valor]
+    hay_conjuntos = False
     while pila:
         x = pila.pop()
         if isinstance(x, (dict, list, tuple, set, frozenset)):   # r02 (H-01): cada contenedor, una vez (termina siempre)
             if id(x) in vistos:
                 continue
             vistos.add(id(x))
+            hay_conjuntos = hay_conjuntos or isinstance(x, (set, frozenset))
         if isinstance(x, (bytes, bytearray)):
             x = bytes(x).decode("utf-8", errors="replace")
         if isinstance(x, str):
@@ -92,9 +94,30 @@ def contenido_sensible(valor) -> bool:
             pila.extend(x.values())
         elif isinstance(x, (list, tuple, set, frozenset)):
             pila.extend(x)
+    if hay_conjuntos:
+        # T-122 (QA r02 de T-113, H-10): con `default=str` un conjunto sale como su representación de Python, y un diccionario
+        # dentro de él no casa con los patrones de R8. Se vuelve a mirar con los conjuntos como listas. Solo si hay conjuntos,
+        # y además de la primera pasada (que conserva lo que ya se detectaba: un «"api_key": <conjunto>»)
+        try:
+            for d in _diccionarios_de_arriba(valor):
+                try:
+                    if secretos_en_texto(json.dumps(d, ensure_ascii=False, default=_json_por_defecto)):
+                        return True
+                except TypeError as exc:   # claves que no son texto dentro del conjunto: error del llamador, como antes de T-113
+                    sin_serializar = sin_serializar or exc
+        except (ValueError, RecursionError):
+            return True
     if sin_serializar is not None:
         raise sin_serializar
     return False
+
+
+def _json_por_defecto(o):
+    """T-122 (QA r02 de T-113, H-10): un conjunto se vuelca como lista, para que un diccionario dentro de él salga con sus
+    pares «"clave": "valor"» y no con la representación de Python, que no casa con los patrones de R8."""
+    if isinstance(o, (set, frozenset)):
+        return list(o)
+    return str(o)
 
 
 def _diccionarios_de_arriba(valor) -> list[dict]:

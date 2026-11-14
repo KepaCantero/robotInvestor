@@ -2,7 +2,7 @@
 
 | Campo | Valor |
 | --- | --- |
-| Estado | EN QA (ronda r02, pendiente de lanzar; la r01 fue NO APTO) |
+| Estado | CERRADO (QA r02 APTO, 14-11-2026) |
 | Pieza | `bloque_a/11_Ejecutor` |
 | Planifica · implementa · QA | claude · claude · un revisor nuevo sin contexto |
 | Aprobación del operador | 2026-11-13: «Corrige toda la deuda técnica» (la del Bloque A: T-104, T-107, T-108, T-109 y T-110; T-105 es de A-Forex y B) |
@@ -47,3 +47,4 @@ Cerrar los hallazgos que quedaron en la deuda tras las QA de T-103, T-88, T-106 
 - 2026-11-13 · EN QA · los hallazgos de las cinco filas corregidos; `tests/test_t113_deuda.py` (57); pruebas de T-102 y T-106 adaptadas al cambio buscado. Al editar se vació por error `diseno_v6.py` (un script lo abrió para escribir antes de leerlo); se recuperó de su versión subida y se reaplicaron los cambios
 - 2026-11-13 · NO APTO · QA r01: H-01 (alta, regresión de R8 en `contenido_sensible`), H-02, H-03 y H-09 (medias), H-04 a H-08 (bajas); CA-1 no se cumple y ocho mutantes vivos (`qa.md`)
 - 2026-11-14 · EN QA · ronda r02: H-01, H-02, H-03, H-06, H-07 y H-09 corregidos con sus pruebas (49 nuevas en `tests/test_t113_deuda.py`, 106 en total); H-05, documentación al día; H-08, decisión `[PROPUESTO]` en INC-T113-01 (la curación es alcance); H-04, corregido en T-118 y no duplicado aquí; CA-2 nombra `consumo.uc`. Los 54 mutantes del revisor: 52 muertos y los 2 equivalentes; los 13 scripts `r01_*`, repetidos (`pruebas.md`). Suite de A: 3874. Gate completo sin lanzar
+- 2026-11-14 · CERRADO · QA r02 APTO (revisor nuevo sin contexto): los trece scripts de la r01 repetidos; H-01, H-02, H-03, H-05, H-06, H-07 y H-09 corregidos; H-08 como decisión `[PROPUESTO]`; 51 de 54 mutantes de la r01 muertos (dos equivalentes). H-04 solo en parte: lo que falta es el H-02 de la QA de T-118, ya en T-121. Hallazgos bajos abiertos H-10, H-11 y H-12, a la deuda en T-122

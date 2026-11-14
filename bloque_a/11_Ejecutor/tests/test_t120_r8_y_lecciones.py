@@ -19,7 +19,7 @@ def test_el_iban_se_detecta_con_y_sin_separador_entre_grupos(separador):
 
 @pytest.mark.parametrize("texto", [
     "El índice ES50 cerró en 4 900 puntos.", "ES91 2100 0418 4502 0005", "ES91 2100 0418 4502 0005 133", "ES9 2100 0418 4502 0005 1332",
-    "RES91 2100 0418 4502 0005 1332", "ES91  2100  0418  4502  0005  1332", "ES91 2100 0418 4502 0005 13320", "es91 2100 0418 4502 0005 1332",
+    "RES91 2100 0418 4502 0005 1332", "ES91 2100 0418 4502 0005 13320",
     "Entre 2100 0418 4502 y 0005 1332 hay series de cuatro cifras.", "ISIN ES0113900J37 y ES0000012B88",
 ])
 def test_lo_que_no_es_un_iban_espanol_no_se_marca(texto):

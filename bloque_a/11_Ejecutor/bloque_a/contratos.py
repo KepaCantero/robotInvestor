@@ -96,8 +96,10 @@ RE_SECRETO = re.compile(
     r"(?i)(\"(api[_-]?key|apikey|secret|client_secret|password|passwd|contraseña|access[_-]?token|bearer)\"\s*:\s*\"[^\"]+\")"
     r"|(AKIA[0-9A-Z]{16})|(-----BEGIN [A-Z ]*PRIVATE KEY-----)|(Bearer\s+[A-Za-z0-9._-]{20,})"
     # T-120: el IBAN español se escribe casi siempre en grupos de cuatro; también se detecta con un espacio, un punto o un
-    # guion entre grupos (antes, solo todo junto)
-    r"|(?-i:(\bES\d{2}(?:[ .\-]?\d{4}){5}\b)|(\b\d{8}-?[A-HJ-NP-TV-Z]\b))")
+    # guion entre grupos (antes, solo todo junto). T-122 (QA r01 de T-120, H-01): con cualquier espacio Unicode (el duro de
+    # un IBAN copiado de una web o un PDF), hasta dos separadores seguidos y en cualquier agrupación (la impresa
+    # «ES91 2100 0418 45 0200051332») y también en minúsculas: ES, dos cifras de control y 20 cifras
+    r"|(?-i:(\b[Ee][Ss]\d{2}(?:[\s.\-]{0,2}\d){20}\b)|(\b\d{8}-?[A-HJ-NP-TV-Z]\b))")
 
 # R9: patrones de instrucciones incrustadas en contenido externo (español e inglés)
 PATRONES_INYECCION = [
