@@ -2,7 +2,7 @@
 
 | Campo | Valor |
 | --- | --- |
-| Estado | EN QA |
+| Estado | CERRADO (QA r01 APTO, 14-11-2026) |
 | Pieza | bloque_a (11_Ejecutor: `contratos.py`, `evaluador.py`, configuración) |
 | Planifica · implementa · QA | claude · claude · un revisor nuevo sin contexto |
 | Aprobación del operador | no necesaria (corrección; el agente decide por defecto desde el 13-11-2026) |
@@ -59,3 +59,4 @@ Ninguno.
 
 - 2026-11-14 · ABIERTO · creado con nuevo_ticket.sh
 - 2026-11-14 · EN QA · claude · corregido, con 16 pruebas en `tests/test_t120_r8_y_lecciones.py`
+- 2026-11-14 · CERRADO · QA r01 APTO (revisor nuevo sin contexto): 69 textos sin un fallo, 0 falsos positivos en 200 000 textos al azar, 35 de 35 rechazos por el camino real sin el IBAN en ningún archivo. Abiertos: H-01 medio (espacio duro y formato impreso «ES91 2100 0418 45 0200051332» se admiten) y H-02 bajo (el máximo de lecciones no falla cerrado con valores raros), a la deuda en T-122

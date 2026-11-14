@@ -147,8 +147,22 @@ def etiqueta_celda(clave):
     return f"{clase}|{horizonte}|{metodo}" if metodo else f"{clase}|{horizonte}"
 
 
+def lecciones_por_encargo(cfg: dict | None) -> int:
+    """Máximo de lecciones que carga cada encargo (12.3 del Documento 0: «máximo 10, las de mayor fuerza»). T-122 (QA r01 de
+    T-120, H-02): falla cerrado con un valor que no sea un entero de 1 al máximo del Documento 0; antes, −1 cargaba 13 de
+    14 lecciones y `True`, `2.7` o «4» se aceptaban en silencio. [PROPUESTO] el tope superior es el del Documento 0."""
+    n = parametro(cfg, "aprendizaje.lecciones_por_encargo")
+    if isinstance(n, bool) or not isinstance(n, int) or not 1 <= n <= LECCIONES_POR_ENCARGO_MAX:
+        raise ValueError(f"aprendizaje.lecciones_por_encargo debe ser un entero de 1 a {LECCIONES_POR_ENCARGO_MAX} (es {n!r})")
+    return n
+
+
+LECCIONES_POR_ENCARGO_MAX = 10   # 12.3 del Documento 0 del Bloque A: «máximo 10»
+
+
 class Evaluador:
     def __init__(self, almacen, proveedor, motor, cfg: dict, universo: pd.DataFrame) -> None:
+        lecciones_por_encargo(cfg)   # T-122: una configuración mal formada falla al crear el Evaluador, no a mitad de ciclo
         self.almacen = almacen
         self.proveedor = proveedor
         self.motor = motor
@@ -820,7 +834,7 @@ class Evaluador:
         """Lecciones vigentes del tipo, las de más fuerza primero. T-120: el máximo por encargo (12.3 del Documento 0) sale
         de la configuración (`aprendizaje.lecciones_por_encargo`), no de un literal."""
         if max_n is None:
-            max_n = int(parametro(self.cfg, "aprendizaje.lecciones_por_encargo"))
+            max_n = lecciones_por_encargo(self.cfg)
         orden = {"estadistica": 0, "recurrente": 1, "anecdotica": 2}
         lst = []
         for l in self.almacen.estado("F6", as_of, clave="id").values():

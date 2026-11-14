@@ -133,3 +133,109 @@ Observaciones, sin ID: **O-1** tras el plural («las acciones acwi»), «la acci
 ## Veredicto
 
 **NO APTO.** CA-1 no se cumple (H-09, y tres hallazgos de origen corregidos solo en parte: H-54, H-55 y los romanos) y queda un hallazgo alto abierto (H-01, regresión de R8 introducida por la corrección de H-56). El veredicto no depende de la gravedad que se le dé a H-01: con H-01 en media, CA-1 seguiría sin cumplirse. De los 18 hallazgos de origen, 13 están corregidos, 4 en parte (H-54, H-55, H-56 y romanos) y H-27 está corregido pero sin prueba. Para la r02: H-01, H-02, H-03 y H-09; los bajos, corregidos o a la deuda con su ID.
+
+## Ronda r02
+
+- **Revisor:** un revisor nuevo sin el contexto de la implementación (subagente de Claude). Retoma la sesión de otro revisor que se cortó después de escribir `r02_01` a `r02_05` y antes de escribir aquí; esos scripts se han ejecutado tal cual · 2026-11-14
+
+Orden de lectura: `README.md` y la «Ronda r01» de arriba → el diff de `6b9f916` (`llm.py`, `ht06_indice.py`, `diseno_v6.py`, `orquestacion.py`, `tests/test_t113_deuda.py`) → solo al final `analisis-tecnico.md` y `pruebas.md`. «Ejecutado» quiere decir que la evidencia es una salida mía; «leído», que lo deduzco del código.
+
+### Reproducción desde limpio
+
+Copia propia: un `git worktree` con HEAD separado en `b4601c3` (contiene `6b9f916`, y antes `ebadb7d` de T-118), con `/home/user/robotinvestor/.venv` (Python 3.12). Máquina de 4 núcleos compartida (los mutantes corrían a la vez): los tiempos llevan ese margen.
+
+```
+cd bloque_a/11_Ejecutor
+python -m pytest -q -p no:cacheprovider tests/test_t113_deuda.py tests/test_t120_r8_y_lecciones.py     # 122 passed en 44,6 s (106 de T-113)
+python -m pytest -q -p no:cacheprovider tests/test_t102_filtro.py tests/test_t101_v6.py tests/test_unitarias.py \
+       tests/test_t87_contratos.py tests/test_fase3_goldens.py                                         # 464 passed en 251,7 s
+cd ../..
+python tools/corpus_integridad.py; python tools/refs_vivas.py; python tools/secrets_scan.py; python tools/nfc_check.py   # los cuatro, código 0
+ruff check --output-format=concise bloque_a/11_Ejecutor bloque_a_forex/11_Ejecutor bloque_b/11_Ejecutor | wc -l         # 2902 = cuota
+mypy --ignore-missing-imports --no-error-summary bloque_a/11_Ejecutor/bloque_a | wc -l                                  # 109 = cuota
+```
+
+**No lanzados, por indicación de quien encarga la QA:** el gate completo (pasó 12/12 al subir `6b9f916`) y la suite completa de A (pasó en ese gate).
+
+### Scripts de la r01, repetidos sin cambios
+
+Desde `bloque_a/11_Ejecutor` de la copia, con `QA_TMP=<carpeta> python ../../.docs/tickets/T-113/revisores/<script>`.
+
+| Script | r01 | r02 (ejecutado) |
+| --- | --- | --- |
+| `r01_01_sensible_diferencial.py` | 29 fallos (H-01) | **0 fallos**, 33 s. Dict de 5 000 niveles → True; ciclos → True |
+| `r01_02_jsonl_cortes.py` | 3 fallos (H-02, H-06) | **0 fallos**. Clave no texto y 100 000 niveles: la caché abre (descarta 1); la cinta da «registro de la grabación sin «clave»» o «ilegible» |
+| `r01_03_motor_forma.py` | 7 excepciones (5 de H-04, 2 del proveedor simulado) | **5**: 3 de H-04 (`horizonte`, `modo` y `prioridad` con claves de tipos mezclados: `TypeError`) y las 2 del proveedor. Los cíclicos y muy hondos ya son RECHAZADO (T-118). Ver H-04 |
+| `r01_04_mon_exp_oraculo.py` | 0 fallos | **0 fallos**: 219 sendas, 629 reuniones, peor error/cota 0,847 y 0,822 |
+| `r01_05_dominios_mon_idx.py` | 0 fallos | **0 fallos** |
+| `r01_06_filtro_sintetizador.py` | H-03 y observaciones (11 «FALLO» del banco) | **9**: desaparecen «Las IIC españolas…» y «Los VIX altos…» (H-03). Los 9 que quedan son idénticos en `6b9f916^` (comparado): «Los CLI…», «Sus CV…», «Las CCC…», «Los XL…», «Las LIC…» (siglas fuera de `filtro_r21_codigos`: R21 por la regla estricta), «S.A.», «A/B», «A o B», «E/S». Son la regla de T-102 r03, no de T-113 |
+| `r01_07_filtro_diferencial.py` | 4 legítimas quitadas (H-03) | `3a5fbfe^` frente a ahora: **ninguna diferencia** en las 53 frases. `6b9f916^` frente a ahora: las 4 de H-03 vuelven a pasar |
+| `r01_08_frases_camino_real.py` | 0 excepciones; H-07 | **0 excepciones**, 55 s. Cero, cuatro, un número en la lista, sin el campo, `frases_30s` texto y «la primera vacía» declaran ahora «El Sintetizador no dio una respuesta válida…». Ver O-5 |
+| `r01_09_hilos_consumo_limitaciones.py todo` | 0 fallos | **0 fallos**, 159 s: `consumo`, `limitaciones` y `cierres_parciales` idénticos con 1, 6, 12 y 6 hilos, en V5 y V6 |
+| `r01_10_v5_diferencial.py v5` (`6b9f916^` frente a ahora) | 18 hojas explicadas (frente a `3a5fbfe^`) | 13 136 hojas; **3 distintas**: `/ciclo0/run/_hash`, `/ciclo1/run/_hash` y `/ciclo1/run/_hash_prev`. Ningún dato cambia; los hashes, por la cadena del RUN (leído: la configuración por defecto lleva una clave más de T-120; no lo he aislado) |
+| `r01_11_mutantes.py todos` | 43 + 1 muertos, 2 equivalentes, 8 vivos | ver «Mutantes» |
+| `r01_12_casos_control_t112.py` | 57 de 57 | **67 de 67** superadas (hoy hay más fichas con casos); 80 manejadores, 80 servibles |
+| `r01_13_r8_camino_real.py` | por `AnthropicClient.generar`, no se bloqueaba | **todo bloqueado**: 4 de 4 por `Agentes.invocar` y 3 de 3 por `AnthropicClient.generar` (contenido estructurado incluido), 0 envíos al SDK |
+
+### Scripts de la r02
+
+| Script | Qué ataca | Resultado (ejecutado) |
+| --- | --- | --- |
+| `r02_01_sensible_diferencial.py` (del revisor anterior) | `contenido_sensible` frente al de `3a5fbfe^`: 49 casos dirigidos (dicts en listas, tuplas y conjuntos, anidados y mezclados; claves int, None, tupla y bytes; bytes; objetos con `str` sensible; compartidas y cíclicas; 3 000 niveles) y 20 000 al azar; tiempos | Al azar: **0 regresiones**, 0 excepciones nuevas, todos acaban; 764 más estrictos (ciclos y claves tupla que antes lanzaban) y 4 «antes `TypeError`, ahora False». Dirigidos: **3 regresiones**, las tres con un diccionario dentro de un conjunto que cuelga de otro diccionario: H-10. Tiempos: 400 niveles con 1 MB, 0,26 s; lista de 200 000 dicts pequeños, 2,6 s (antes 2,2); de 10 campos, 23,1 s (antes 21,8); 200 000 veces el mismo dict, 0,09 s (antes 2,3); 16 MB, 4,9 s (antes 5,4) |
+| `r02_02_jsonl_tras_corte.py` (del revisor anterior) | caché cortada en cada byte (413 puntos) y cinta (1 249), abrir para grabar, grabar y reabrir; colas raras (sin salto, espacios, `\r`, CRLF, JSON que no es registro, `null`, UTF-8 partida, ilegible en medio, 100 000 corchetes, vacío); la incidencia | **0 fallos.** Ninguna clave perdida, lo grabado tras el corte se recupera siempre; sin corte el fichero no cambia; al reproducir no se toca. La incidencia HERRAMIENTA se registra. Ver O-6 |
+| `r02_03_romanos.py` (del revisor anterior) | banco de 42 frases legítimas (las IIC, los VIX, IG, HY, ETF, SICAV, TIPS, REIT, OPA, PMI, IPO, BTP, CDS; Felipe VI, siglo XXI, Fase II, Basilea III/IV, Solvencia II, MiFID II, Juan Pablo II, Carlos III, Capítulo XI; palabras que empiezan por letras de romano: vías, mixtos, xilófonos, Índices, Ideas, Vicios…) y 16 romanos como cantidad; 42 observaciones | **0 legítimas quitadas, 0 cantidades que pasan.** Siglas permitidas hechas de letras de romano en el universo de ejemplo: DIV, IDX, IIC, VIX, XLI, XLV. Observaciones: H-11 |
+| `r02_04_mutantes.py todos` (del revisor anterior) | 35 mutantes de las correcciones de la r02 (A, B, C, D, E) y de T-120 (F, G) | ver «Mutantes» |
+| `r02_05_r8_camino_real.py` (del revisor anterior) | `AnthropicClient.generar` con SDK simulado (system y mensajes) y `Agentes.invocar` (mensaje y contexto) con 11 formas sucias y 3 limpias, y el estado de H-04 | **0 fallos de R8**: nada sucio llega al SDK ni al cliente; lo limpio llega. Un ciclo en `Agentes.invocar` sale como `ValueError: Circular reference detected` antes de llamar al cliente (cerrado, aunque como excepción y no como PARCIAL). H-04: 4 de 9 peticiones siguen lanzando `TypeError` |
+| `r02_06_conjunto_bajo_diccionario.py` (mío) | caso mínimo de H-10 y una variante de la corrección sugerida, dentro del propio script | 4 de 4 regresiones con la función actual; con la variante, 0 |
+
+### Mutantes
+
+Ejecutados uno a uno, sin paralelismo, cada uno en su copia desechable (`.../scratchpad/qa4_mut/`, borrada al acabar): `python .docs/tickets/T-113/revisores/r01_11_mutantes.py <copia> <carpeta> todos` y lo mismo con `r02_04_mutantes.py`. Primero las pruebas del ticket; si sobrevive, las vecinas de cada script (`r01_11`: 516 pruebas; `r02_04`: 471 para T-113 y 97 para T-120).
+
+- **`r01_11` (los 54 de la r01):** **51 muertos por `test_t113_deuda.py`**, entre ellos los ocho que sobrevivían en la r01 (M03, M07, M11b, M22, M23, M24, M38, M44: el mutante de H-09 ya no vive ninguno). **M41 y M43** sobreviven al ticket y a las vecinas: son los dos equivalentes de la r01. **N10: no aplica** (el `except` de los datos de `servicio.py` ya no es único tras T-118; en la r01 moría). 
+- **`r02_04` (35 de la r02 y de T-120):** **30 muertos por las pruebas del ticket.** Sobreviven al ticket y a las vecinas cinco: **D6** (la anticipación vuelve a admitir L y C: equivalente, el grupo sigue exigiendo un romano de I, V y X), **F6** (separador también tras «ES»: más estricto, no deshace nada; es de T-120), y tres que **no son equivalentes** y deshacen una parte de las correcciones de la r02 sin que ninguna prueba lo note: **A1b** (no se baja por los conjuntos), **B7** (`acabar_en_salto` vuelve a lanzar `RecursionError` con una cola demasiado anidada: el arranque se rompe) y **C1** (lo descartado de la cinta no se declara; lo de la caché sí lo vigila una prueba). Ver H-12.
+
+### Hallazgos de la r01, uno a uno
+
+| ID | Estado | Evidencia |
+| --- | --- | --- |
+| H-01 (alta) | **corregido** en lo que describía (dicts bajo listas, tuplas y conjuntos; ciclos; la última puerta antes de la API), **con una regresión residual baja** (H-10) | Ejecutado: `r01_01` 0 fallos (antes 29); `r01_13` todo bloqueado; `r02_01` 0 regresiones en 20 000 al azar y 3 en 49 dirigidos, todas de la forma de H-10; `r02_05` 0 fallos por el camino real. Termina siempre (ciclos de lista y de dict → True). Coste: igual que antes de T-113 en lo ancho, y lineal en lo hondo |
+| H-02 (media) | **corregido** | Ejecutado: `r01_02` 0 fallos; `r02_02` 413 cortes de la caché y 1 249 de la cinta, ninguna entrada válida perdida, lo grabado después siempre se recupera, sin corte ni un byte cambia, al reproducir no se toca; la incidencia se registra. O-6 |
+| H-03 (media) | **corregido** | Ejecutado: `r01_07` y `r01_06` (las 4 legítimas de la r01 pasan), `r02_03` 0 de 42 legítimas quitadas y 16 de 16 cantidades cazadas. Límites no declarados: H-11 |
+| H-04 (baja) | **no corregido del todo**; el resto está en la deuda (T-121, H-02 de la QA de T-118) | Ejecutado: `r01_03` y `r02_05`: los cíclicos y muy hondos ya se rechazan con entrada en RC, pero `horizonte`, `modo` y `prioridad` con claves de tipos mezclados (`{1: 2, "x": 3}`) y `horizonte` con clave tupla siguen lanzando `TypeError` al llamador (4 casos). `analisis-tecnico.md` dice «corregido en T-118»: no es exacto. T-118 lo dejó abierto como su H-02 (b), apuntado en T-121. Sigue siendo bajo: solo llega desde código Python |
+| H-05 (baja) | **corregido** | Leído: README del ejecutor «Python ≥ 3.12» y límites de R21 al día; `analisis-tecnico.md` relleno; el comentario de `DOMINIOS` cita INC-T113-01; INC-T113-01 recoge ±1000 pb, el margen `1e-6` y la curación; CA-2 nombra `consumo.uc`. Salvo la frase sobre H-04 (arriba) |
+| H-06 (baja) | **corregido** | Ejecutado: `r01_02` (clave lista, nula, no texto; 100 000 niveles): la caché abre y descarta; la cinta da su error con fichero; `r02_02` «cola de 100 000 corchetes» |
+| H-07 (baja) | **corregido** | Ejecutado: `r01_08`: cero, cuatro, un número, sin el campo, texto en vez de lista, la primera vacía → la limitación nueva; una respuesta posterior válida la retira (leído y mutante E2). O-5 |
+| H-08 (baja) | **resuelto como decisión `[PROPUESTO]`** | Leído: INC-T113-01, «Curación de AG-12 con presupuesto»: alcance, no control, con sus consecuencias |
+| H-09 (media) | **corregido** | Ejecutado (`r01_11`): los ocho supervivientes de la r01 (M03, M07, M11b, M22, M23, M24, M38 y M44) mueren con `test_t113_deuda.py`; M10 (H-15) también |
+
+### Criterios de aceptación
+
+| Criterio | Cumple | Evidencia |
+| --- | --- | --- |
+| CA-1 cada hallazgo, su corrección y una prueba que falla sin ella | **sí** | Cada fila de la tabla tiene su corrección y al menos un mutante suyo que mata `test_t113_deuda.py`: 51 de 54 de la r01 (los 3 restantes, 2 equivalentes y N10 que ya no aplica) y 30 de 35 de la r02. Las tres partes de la r02 sin prueba (A1b, B7, C1) son líneas secundarias de H-01, H-06 y H-02, cuyas correcciones principales sí tienen la suya: H-12, baja |
+| CA-2 la V5 no cambia salvo lo declarado | **sí** | `r01_10` `6b9f916^` frente a ahora: solo los tres hashes del RUN; `r01_09`: consumo y limitaciones estables con hilos |
+| CA-3 gate 12/12 sin subir cuotas | **sí, por partes** | ruff 2902, mypy de A 109, los cuatro gates ligeros en verde, las baterías del ticket y las vecinas en verde (586 pruebas). Gate completo: consta 12/12 al subir el commit; no relanzado |
+
+### Hallazgos nuevos
+
+Órdenes desde `bloque_a/11_Ejecutor` de la copia, con `R=../../.docs/tickets/T-113/revisores`.
+
+| ID | Gravedad | Cómo reproducirlo | Esperado / obtenido | Corrección sugerida | Estado |
+| --- | --- | --- | --- | --- | --- |
+| H-10 | baja | `python $R/r02_06_conjunto_bajo_diccionario.py`; o `python $R/r02_01_sensible_diferencial.py` (las tres «REGRESIÓN» de los dirigidos y los cuatro «OTRO» del azar) | **Esperado:** ningún caso en que antes de T-113 diera True y ahora False. **Obtenido:** un diccionario que solo se alcanza a través de un conjunto o frozenset que cuelga de otro diccionario (`{"a": {DH({"api_key": "…"})}}`, con `DH` una subclase de `dict` con `__hash__`) da False; antes, True. `json.dumps(default=str)` del diccionario de arriba convierte el conjunto con `str` (comillas simples) y `_diccionarios_de_arriba` no baja por los diccionarios. Igual con una clave tupla dentro: antes `TypeError`, ahora False. Baja: un `dict` normal no cabe en un conjunto, y ningún camino del paquete produce esa forma; las hojas de texto (IBAN, AKIA, Bearer) se siguen viendo | `default` que convierta `set`/`frozenset` en lista (en `r02_06`, con eso las 4 dan lo de antes), o bajar también por los conjuntos que cuelgan de un diccionario. Un caso en la prueba diferencial | abierto |
+| H-11 | baja | `QA_TMP=<carpeta> python $R/r02_03_romanos.py` (las observaciones «O») | **Esperado:** lo que la regla no caza, o caza de más, está declarado (el README del ejecutor declara solo «sin determinante delante o mayor que XXXIX»). **Obtenido:** pasan sin declarar «Las V ideas pasan.» y «Los X valores mejores.» (romano de una letra tras determinante, dentro de XXXIX), «Las vii ideas» (minúscula), «Mis/Nuestras/Otras/Dichas/Ambas VII ideas» (determinantes fuera de la lista) y «LAS VII IDEAS» (sale por R21). Y quita, sin declararlo, nombres con ordinal romano tras artículo: «Las II Jornadas de inversión ayudan.», «Los XXV Juegos Olímpicos…», «Los III Premios del sector.», «Los VI Presupuestos.», «Los XXI retos del siglo.» | Declarar en el README los dos lados (una letra, minúsculas, otros determinantes; y los nombres con ordinal tras artículo), o ampliar la regla a V y X sueltas tras determinante | abierto |
+| H-12 | baja | `python .docs/tickets/T-113/revisores/r02_04_mutantes.py <copia> <carpeta> A1b,B7,C1` (desde la raíz de la copia) | **Esperado:** cada línea de la r02 tiene una prueba que falla sin ella. **Obtenido:** tres mutantes no equivalentes sobreviven a `test_t113_deuda.py` y a 471 pruebas vecinas: A1b (`_diccionarios_de_arriba` no baja por `set`/`frozenset`; el caso `[frozenset]` de la prueba no lleva un diccionario dentro), B7 (`acabar_en_salto` sin capturar `RecursionError`: una cola cortada de 100 000 corchetes rompe el arranque; `r02_02` lo ve con el código actual, ninguna prueba del paquete) y C1 (la incidencia de la cinta no se registra) | Tres casos: un `DH` dentro de un `frozenset`; `acabar_en_salto` con la cola anidada; un `ReplayClient` cortado y la incidencia «grabación del cliente» en HA | abierto |
+
+Observaciones, sin ID: **O-5** «dos frases, la segunda en blanco» (`"   "`) pasa el esquema, se sustituye por el texto por defecto y no se declara nada (con `""` sí se declara, porque el esquema rechaza la respuesta). **O-6** una línea ilegible en medio de la caché no se quita del fichero (solo la del final), así que la incidencia HERRAMIENTA se repite en cada arranque (`r02_02`: 2 y 3 tras dos arranques más); y una cinta cortada del cliente del Contradictor no registra incidencia (solo se mira el cliente principal). **O-7** un ciclo en `Agentes.invocar` sale como excepción (`ValueError` de `json.dumps`) y no como PARCIAL con «bloqueado por R8»; no llega al cliente.
+
+### Sin comprobar
+
+- El gate completo y la suite completa de A (no lanzados, por indicación).
+- Los supervivientes de los mutantes contra la suite completa (solo contra el ticket y las vecinas de cada script).
+- La causa exacta de los tres hashes distintos de `r01_10` (deducida, no aislada).
+- La API real: todo con cliente o SDK simulados.
+
+### Veredicto
+
+**APTO.** Los nueve hallazgos de la r01: H-01, H-02, H-03, H-05, H-06, H-07 y H-09 corregidos (ejecutado), H-08 resuelto como decisión `[PROPUESTO]` en INC-T113-01, y H-04 (bajo) corregido solo en parte, con el resto ya en la deuda (T-121, H-02 de la QA de T-118). CA-1 y CA-2 se cumplen; CA-3, por partes (ruff 2902, mypy 109, gates ligeros y 586 pruebas del ticket y vecinas en verde; el gate completo consta 12/12 al subir el commit y no lo he relanzado). No queda ningún hallazgo crítico ni alto: los nuevos (H-10, H-11 y H-12) y H-04 son bajos y pasan a la deuda técnica con su ID. Ojo con H-10: es una regresión de R8, aunque solo con una forma que hoy nada produce (un diccionario con `__hash__` dentro de un conjunto); conviene cerrarla con la primera ocasión que se toque `llm.py`.
