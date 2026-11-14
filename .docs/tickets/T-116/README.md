@@ -109,3 +109,5 @@ Hallazgo al escribir PB-17, sin tocar: con el presupuesto de MP forzado, el cicl
 - 2026-11-13 · EN QA · claude · evidencias generadas: 94 de 94 pruebas citadas superadas (27 filas superadas, 28 en parte); informe de pruebas escrito; pendiente la QA
 - 2026-11-14 · NO APTO · QA r01 (revisor nuevo sin contexto, `2ff0630`): H-01 alto (PB-21, PB-23, PB-37 y PB-49 dadas por automáticas con una cláusula sin afirmar), H-02 y H-04 medios, H-03 y H-05 bajos. El script, el documento y las ocho pruebas de huecos, bien
 - 2026-11-14 · EN QA · claude · ronda r02: siete pruebas nuevas (PB-21, 23, 37, 49, 54 y 64), PB-37 pasa a parcial, `--pb` y `--runxfail`, cabeceras del plan, documento comparado con el mapa, análisis técnico, deuda y avance. 26 superadas y 29 en parte; 101 de 101 pruebas citadas superadas
+- 2026-11-14 · NO APTO · QA r02 (revisor nuevo sin contexto): los cinco hallazgos de la r01, corregidos; uno nuevo del mismo tipo, H-06 alto (PB-32 automática sin prueba de que una celda sin habilidad no se certifica)
+- 2026-11-14 · EN QA · claude · ronda r03: dos pruebas de PB-32 (nueve casos), PB-32 y PB-49 a parcial; 24 superadas y 31 en parte

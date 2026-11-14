@@ -1,6 +1,6 @@
 # Evidencias del Plan de pruebas del Bloque A (Fase 4, T-116)
 
-Generado por `.docs/scripts/evidencias_plan_a.py --ejecutar` el 2026-11-14 sobre el commit `94c6193`, con el cliente simulado (`MockClient`): sin red, sin clave y sin coste. No se edita a mano: se regenera.
+Generado por `.docs/scripts/evidencias_plan_a.py --ejecutar` el 2026-11-14 sobre el commit `6b9f916`, con el cliente simulado (`MockClient`): sin red, sin clave y sin coste. No se edita a mano: se regenera.
 
 Qué significa cada resultado:
 
@@ -17,8 +17,8 @@ Con el cliente simulado se valida la tubería (canales, archivos, puertas, herra
 
 | Resultado | Pruebas del plan |
 | --- | --- |
-| Superada en parte | 29 |
-| Superada | 26 |
+| Superada en parte | 31 |
+| Superada | 24 |
 | Pendiente API | 7 |
 | Sin prueba | 3 |
 | Requiere usuarios | 1 |
@@ -60,7 +60,7 @@ Con el cliente simulado se valida la tubería (canales, archivos, puertas, herra
 | PB-29 Contar raíces, no menciones | Superada en parte | La puerta PS1 cuenta raíces independientes con el mínimo de la configuración. | La comprobación G3 de raíces sobre un paquete real y el recuento del Auditor. |
 | PB-30 Cifra sin artefacto bloqueada por G3 | Superada en parte | HT-09 detecta una opción sin evidencias o sin cálculos. | El caso del plan de extremo a extremo: cifra sin artefacto, dos G3V- en HA y la cifra retirada o con su CALC-. |
 | PB-31 Horizonte no certificado sin probabilidad | Superada en parte | Sin certificado, `prob` es nula y lleva la etiqueta «sin ventaja demostrada todavía»; HT-09 bloquea una probabilidad sin certificado. | Que el informe visual no muestre confianza «alta» sin base. |
-| PB-32 Certificación de un horizonte | Superada | Se emite un certificado con muestra suficiente; la probabilidad solo se publica en la celda certificada y HT-09 la bloquea en las demás. | — |
+| PB-32 Certificación de un horizonte | Superada en parte | El caso del plan: con una celda con habilidad (RF × H3) y otra sin ella (RV × H3) se emite un solo certificado, el de RF. Cada condición del certificado (muestra efectiva, IC del BSS, calibración frente al nulo y tope de ECE) impide por sí sola certificar. La probabilidad solo se publica en la celda certificada y HT-09 la bloquea en las demás. | La re-ejecución CT-10 coincidente que el plan pide para el certificado. |
 | PB-33 Revocación de certificado por deterioro | Superada | Un certificado se revoca por falta de habilidad o por calibración, con el umbral de la configuración; queda REVOCADO con motivo y fecha, antes de esa fecha seguía vigente, los pronósticos congelados no cambian y HT-09 bloquea probabilidades con un certificado no vigente. | — |
 | PB-34 Fuga de información en evaluación detectada | Superada en parte | Ningún dato posterior a la fecha de corte (proveedor, Motor y resolución) y los pronósticos contaminados no cuentan para recalibrar. | La corrección registrada en F6 tras detectar la fuga. |
 | PB-35 Recalibración dentro de bandas con evaluación sombra | Superada en parte | La recalibración respeta el paso y las bandas de la configuración y queda como propuesta. | El registro de la evaluación sombra y la decisión documentada con DM-HLN. |
@@ -77,7 +77,7 @@ Con el cliente simulado se valida la tubería (canales, archivos, puertas, herra
 | PB-46 Fiabilidad de fuentes de opinión | Sin prueba | — | La fiabilidad de fuentes (FUE-) no está implementada en el ejecutor. |
 | PB-47 Estados de madurez | Superada en parte | Una ficha no implementada se rechaza con METODO_NO_IMPLEMENTADO y una con código provisional no da cifras. | Que el entregable final declare «documentado» cuando un método no se pudo usar. |
 | PB-48 Conflicto de normas: la más restrictiva | Sin prueba | — | Ninguna prueba cubre el conflicto de normas del plan (segunda pasada, COR- y P3- en HA). |
-| PB-49 Historial íntegro y supresiones permitidas | Superada | La cadena de huellas detecta una entrada modificada y una borrada (del medio o la última), y todos los archivos siguen íntegros tras un ciclo. | Las supresiones permitidas (borrado de fuentes en F7–F9) las hace HT-02 fuera del ejecutor, y no se comparan instantáneas de ocho semanas. |
+| PB-49 Historial íntegro y supresiones permitidas | Superada en parte | La cadena de huellas detecta una entrada modificada y una borrada (del medio o la última), y todos los archivos siguen íntegros tras un ciclo. | Las supresiones permitidas (borrado de fuentes en F7–F9) las hace HT-02 fuera del ejecutor, y no se comparan instantáneas de ocho semanas. |
 | PB-50 Horizontes según la clase de activo | Superada en parte | La tabla de horizontes por tipo y el bloqueo de HT-09 a un horizonte no aplicable. | El CFG- de P-31 registrado con evidencia DM-HLN. |
 | PB-51 Conocimiento específico en los system prompts | Revisión documental | — | Revisión documental de los prompts de sistema; no es una prueba del ejecutor. |
 | PB-52 Modo degradado: herramienta caída | Superada en parte | Una salida no conforme o un símbolo sin datos dan una entrega PARCIAL con la limitación declarada y sin cifras inventadas. | El caso del plan como tal: una herramienta caída a mitad de ciclo. |
@@ -387,7 +387,7 @@ Criterio de aprobación del plan: Ninguna cifra de probabilidad en entregables; 
 Criterio de aprobación del plan: Un certificado; G3-CON-10 PASA en RF y bloquearía en RV
 
 ```bash
-(cd bloque_a/11_Ejecutor && ../../.venv/bin/python -m pytest -q 'tests/test_integracion.py::test_certificado_emitido_con_muestra_suficiente' 'tests/test_unitarias.py::test_metricas_de_pronostico_con_pronosticadores_sinteticos' 'tests/test_t87_datos.py::test_r13_certificado_por_metodo_en_la_entrega')
+(cd bloque_a/11_Ejecutor && ../../.venv/bin/python -m pytest -q 'tests/test_integracion.py::test_certificado_emitido_con_muestra_suficiente' 'tests/test_unitarias.py::test_metricas_de_pronostico_con_pronosticadores_sinteticos' 'tests/test_t87_datos.py::test_r13_certificado_por_metodo_en_la_entrega' 'tests/test_fase4_huecos.py::test_pb32_se_certifica_la_celda_con_habilidad_y_no_la_que_no_la_tiene' 'tests/test_fase4_huecos.py::test_pb32_cada_condicion_del_certificado_cuenta_por_separado')
 (cd bloque_a/10_Herramientas && ../../.venv/bin/python -m pytest -q 'tests/test_ht09_validador_g3.py::TestBloqueos::test_certificado_no_vigente')
 ```
 
@@ -395,6 +395,8 @@ Criterio de aprobación del plan: Un certificado; G3-CON-10 PASA en RF y bloquea
 - `11_Ejecutor/tests/test_unitarias.py::test_metricas_de_pronostico_con_pronosticadores_sinteticos`: SUPERADA
 - `11_Ejecutor/tests/test_t87_datos.py::test_r13_certificado_por_metodo_en_la_entrega`: SUPERADA
 - `10_Herramientas/tests/test_ht09_validador_g3.py::TestBloqueos::test_certificado_no_vigente`: SUPERADA
+- `11_Ejecutor/tests/test_fase4_huecos.py::test_pb32_se_certifica_la_celda_con_habilidad_y_no_la_que_no_la_tiene`: SUPERADA
+- `11_Ejecutor/tests/test_fase4_huecos.py::test_pb32_cada_condicion_del_certificado_cuenta_por_separado`: SUPERADA
 
 ### PB-33 · Revocación de certificado por deterioro
 

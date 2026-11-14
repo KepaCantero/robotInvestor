@@ -2,7 +2,7 @@
 
 | Campo | Valor |
 | --- | --- |
-| Estado | EN QA |
+| Estado | CERRADO (QA r01 APTO, 14-11-2026) |
 | Pieza | bloque_a (11_Ejecutor, motor) |
 | Planifica · implementa · QA | claude (encargo del operador) · claude (un agente, en una copia de trabajo aparte) · un revisor que no haya implementado |
 | Aprobación del operador | no necesaria: son correcciones de hallazgos de una QA. Las decisiones que la especificación deja abiertas van como `[PROPUESTO]` en INC-T118-01 (el operador pidió que el agente decida por defecto y lo deje apuntado) |
@@ -90,3 +90,4 @@ Ninguno nuevo en `.docs/scripts/`. Usa `nuevo_ticket.sh`. Los scripts de medida 
 
 - 2026-11-13 · ABIERTO · creado con nuevo_ticket.sh
 - 2026-11-13 · EN QA · claude · H-09 a H-15 corregidos en la rama local `t118-trabajo`, cada uno con su prueba de regresión y su mutante. Decisiones en INC-T118-01. Falta la QA de un revisor que no haya implementado
+- 2026-11-14 · CERRADO · QA r01 APTO (revisor nuevo sin contexto): los siete hallazgos corregidos; `r02_01` completo (15 986 llamadas, 0 escapes); CT-10 da SI en las 56 fichas con caso de control; ciclo V5 idéntico salvo el campo nuevo del RC; 72 mutantes, 56 muertos y 11 equivalentes. Quedan abiertos un medio (H-01) y cuatro bajos (H-02, H-03, H-05, H-06), y uno medio fuera de alcance (H-04, de T-106): a la deuda en T-121
