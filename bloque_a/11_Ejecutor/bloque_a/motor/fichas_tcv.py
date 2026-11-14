@@ -320,6 +320,37 @@ def _fechas(x: Any, que: str, minimo: int = 2) -> list[date]:
     return f
 
 
+class _PosteriorAlCorte(ErrorFicha):
+    """Un dato en línea fechado después de la fecha de corte de la petición."""
+
+
+def _corte(ent: dict[str, Any]) -> date | None:
+    """T-121 (QA r01 de T-118, H-04): fecha de corte de la petición (``ent["fecha_corte"]``, que pone `Motor.servir`), o
+    ``None`` si no hay. Se compara por día: el dato del día del corte es conocible. Un número no es una fecha."""
+    fc = ent.get("fecha_corte")
+    if fc is None:
+        return None
+    try:
+        if isinstance(fc, bool) or not isinstance(fc, (str, date, np.datetime64)):
+            raise TypeError(type(fc).__name__)
+        t = pd.Timestamp(fc)
+        if pd.isna(t):
+            raise ValueError("vacía")
+    except (TypeError, ValueError, OverflowError) as e:
+        raise ErrorFicha(f"fecha de corte de la petición ilegible ({str(fc)[:40]})") from e
+    return (t if t.tz is None else t.tz_convert(None)).date()
+
+
+def _hasta_corte(fechas: Any, corte: date | None, que: str) -> None:
+    """H-04: un dato en línea fechado después de la fecha de corte no era conocible; se rechaza, como hace el servicio con
+    las series de HT-01 (FUGA_DE_INFORMACION) y las fichas de la Fase 2 con sus datos en línea."""
+    if corte is None:
+        return
+    posteriores = [f for f in fechas if f > corte]
+    if posteriores:
+        raise _PosteriorAlCorte(f"{que}: dato del {max(posteriores)} posterior a la fecha de corte {corte} (no conocible)")
+
+
 def _anios(f0: date, f1: date) -> float:
     """Años entre dos fechas con recuento Real/365 (Catálogo 3.1)."""
     return (f1 - f0).days / DIAS_POR_ANIO
@@ -521,6 +552,7 @@ def f_tcv_slope(ent: dict[str, Any], params: dict[str, Any]) -> Resultado:
 
     hc = _requerido_dict(v, "historia_curva", F, "curva con fechas, plazos y rendimientos")
     fechas = _fechas(hc.get("fechas"), f"{F}: historia_curva.fechas")
+    _hasta_corte(fechas, _corte(ent), f"{F}: historia_curva.fechas")   # `conocible_desde` no pasa de su fecha (abajo)
     plazos = _vector(hc.get("plazos"), f"{F}: historia_curva.plazos")
     if len(plazos) < int(p["nodos_minimos"]):
         raise ErrorFicha(f"{F}: curva con {len(plazos)} nodos (< {p['nodos_minimos']}): rechazo de la ficha")
@@ -739,7 +771,7 @@ def f_tcv_bei(ent: dict[str, Any], params: dict[str, Any]) -> Resultado:
     enc = _requerido_dict(v, "encuestas", F, "inflación esperada por encuestas con fecha y fuente")
     if not _texto(enc.get("fuente")) or enc.get("fecha") is None:
         raise ErrorFicha(f"{F}: las encuestas necesitan «fecha» y «fuente»")
-    _fecha(enc["fecha"], f"{F}: encuestas.fecha")
+    _hasta_corte([_fecha(enc["fecha"], f"{F}: encuestas.fecha")], _corte(ent), f"{F}: encuestas.fecha")
 
     est = _opcional_dict(v, "estacionalidad", F)
     ajustar = bool(p["ajuste_estacional"])
@@ -855,6 +887,7 @@ def f_tcv_bei(ent: dict[str, Any], params: dict[str, Any]) -> Resultado:
     historias: dict[str, tuple[list[date], np.ndarray]] = {}
     if hist is not None:
         fh = _fechas(hist.get("fechas"), f"{F}: historia.fechas")
+        _hasta_corte(fh, _corte(ent), f"{F}: historia.fechas")
         for clave, serie in _requerido_dict(hist, "breakevens", F, "historia por plazo").items():
             a = _vector(serie, f"{F}: historia {clave}")
             if len(a) != len(fh):
@@ -953,6 +986,7 @@ def f_tcv_cds(ent: dict[str, Any], params: dict[str, Any]) -> Resultado:
     else:
         h = _requerido_dict(v, "historia", F, "diferencial diario del índice con fechas")
         fechas = _fechas(h.get("fechas"), f"{F}: historia.fechas")
+        _hasta_corte(fechas, _corte(ent), f"{F}: historia.fechas")
         hist = _vector(h.get("diferenciales_pb"), f"{F}: historia.diferenciales_pb")
         if len(hist) != len(fechas):
             raise ErrorFicha(f"{F}: historia no alineada con sus fechas")
@@ -1124,6 +1158,7 @@ def f_tcv_vixts(ent: dict[str, Any], params: dict[str, Any]) -> Resultado:
     else:
         h = _requerido_dict(v, "historia", F, "spot y dos futuros con fechas, ≥ 3 años")
         fh = _fechas(h.get("fechas"), f"{F}: historia.fechas")
+        _hasta_corte(fh, _corte(ent), f"{F}: historia.fechas")
         hs, h1, h2 = (_vector(h.get(k), f"{F}: historia.{k}") for k in ("spot", "f1", "f2"))
         hr = _vector(h["rent_larga"], f"{F}: historia.rent_larga") if h.get("rent_larga") is not None else None
         if hr is not None and not _texto(h.get("fuente_rentabilidades")):
@@ -1292,7 +1327,7 @@ def _historia_tp(serie: np.ndarray, fechas: list[date], objetivo: float, lim: li
     return out
 
 
-def _tp_acm(v: dict[str, Any], p: dict[str, Any], lim: list[str]) -> dict[str, Any]:
+def _tp_acm(v: dict[str, Any], p: dict[str, Any], lim: list[str], corte: date | None = None) -> dict[str, Any]:
     F = "TCV-TP-001"
     k = int(p["n_factores"])
     c = _requerido_dict(v, "curva", F, "curva cupón cero mensual con fechas, plazos_meses y rendimientos")
@@ -1307,6 +1342,7 @@ def _tp_acm(v: dict[str, Any], p: dict[str, Any], lim: list[str]) -> dict[str, A
         raise ErrorFicha(f"{F}: la curva debe llegar a {p['plazo_maximo_anios']} años ({max_m} meses) y no pasar de ahí "
                          f"(último plazo: {plazos[-1]:g} meses)")
     fechas = _fechas(c.get("fechas"), f"{F}: curva.fechas")
+    _hasta_corte(fechas, corte, f"{F}: curva.fechas")
     Y = _matriz(c.get("rendimientos"), len(fechas), len(plazos), f"{F}: curva.rendimientos")
     meses = [_meses(f) for f in fechas]
     if any(b - a != 1 for a, b in itertools.pairwise(meses)):
@@ -1389,6 +1425,7 @@ def _tp_publicado(ent: dict[str, Any], v: dict[str, Any], p: dict[str, Any], lim
         if not isinstance(sp, dict) or not _texto(sp.get("fuente")) or not sp.get("primas_pb"):
             raise ErrorFicha(f"{F}: metodo publicado necesita «serie_publicada» con fuente, fechas y primas_pb")
         fechas = _fechas(sp.get("fechas"), f"{F}: serie_publicada.fechas")
+        _hasta_corte(fechas, _corte(ent), f"{F}: serie_publicada.fechas")
         historias = {}
         for clave, xs in _dict(sp["primas_pb"], f"{F}: serie_publicada.primas_pb").items():
             a = _vector(xs, f"{F}: serie publicada {clave}")
@@ -1427,12 +1464,12 @@ def _tp_publicado(ent: dict[str, Any], v: dict[str, Any], p: dict[str, Any], lim
                       for clave, (fh, xs) in historias.items()}}
 
 
-def _tp_encuesta(v: dict[str, Any], p: dict[str, Any], lim: list[str]) -> dict[str, Any]:
+def _tp_encuesta(v: dict[str, Any], p: dict[str, Any], lim: list[str], corte: date | None = None) -> dict[str, Any]:
     F = "TCV-TP-001"
     enc = v.get("encuesta")
     if not isinstance(enc, dict) or not _texto(enc.get("fuente")) or enc.get("fecha") is None:
         raise ErrorFicha(f"{F}: metodo encuesta necesita «encuesta» con fuente, fecha y tipos cortos esperados")
-    _fecha(enc["fecha"], f"{F}: encuesta.fecha")
+    _hasta_corte([_fecha(enc["fecha"], f"{F}: encuesta.fecha")], corte, f"{F}: encuesta.fecha")
     esperados = _vector(enc.get("tipos_cortos_esperados_pct"), f"{F}: encuesta.tipos_cortos_esperados_pct")
     rends = _requerido_dict(v, "rendimientos_pct", F, "rendimiento observado por plazo, {\"10\": %}")
     prima: dict[str, float | None] = {}
@@ -1471,15 +1508,18 @@ def f_tcv_tp(ent: dict[str, Any], params: dict[str, Any]) -> Resultado:
     v = ent.get("valores") or {}
     lim = list(ADVERTENCIAS[F])
     metodo = str(p["metodo"]).strip().lower()
+    corte = _corte(ent)
     if metodo == "acm":
-        res = _tp_acm(v, p, lim)
+        res = _tp_acm(v, p, lim, corte)
         segunda: dict[str, Any] | None = None
         alt = None
         try:
             if v.get("serie_publicada") is not None:
                 alt = _tp_publicado(ent, v, p, [])
             elif v.get("encuesta") is not None:
-                alt = _tp_encuesta(v, p, [])
+                alt = _tp_encuesta(v, p, [], corte)
+        except _PosteriorAlCorte:   # T-121 (H-04): un dato posterior al corte rechaza la petición, también en la segunda vía
+            raise
         except ErrorFicha as e:
             lim.append(f"segunda vía no calculada: {e}")
         if alt is not None:
@@ -1493,7 +1533,7 @@ def f_tcv_tp(ent: dict[str, Any], params: dict[str, Any]) -> Resultado:
     if metodo == "publicado":
         return _tp_publicado(ent, v, p, lim), lim
     if metodo == "encuesta":
-        return _tp_encuesta(v, p, lim), lim
+        return _tp_encuesta(v, p, lim, corte), lim
     raise ErrorFicha(f"{F}: metodo «{p['metodo']}» no reconocido (ACM, publicado o encuesta)")
 
 

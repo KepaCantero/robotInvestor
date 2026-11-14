@@ -125,3 +125,45 @@ cd ../..
 .venv/bin/python -I .docs/scripts/promover_fichas_catalogo.py --etiqueta "ejecutor, casos de control registrados (T-119)"   # sin --aplicar, solo informa
 .venv/bin/python -I -B .docs/tickets/T-119/revisores/impl_p2_mutantes.py <carpeta desechable>
 ```
+
+## Ronda r02 (QA r01: NO APTO)
+
+Corrige los nueve hallazgos de `qa.md` («Ronda r01»). Los que decidían el veredicto son H-01 (frontera con el Bloque B) y H-02 (ocho mutantes no equivalentes vivos). Commit de la ronda: `291887d`; el solicitante (H-07) va con T-121 (H-02), en la misma rama.
+
+### Qué se cambia, por hallazgo
+
+| Hallazgo | Fichero y función | Cambio |
+| --- | --- | --- |
+| H-01 (media) | `fichas_p2.py`: `_sin_clones`, `f_fir_cred`, `f_rei_lev`, `f_chr_token`; `UMBRALES` | Un agregado necesita componentes distintos: dos con los mismos datos del cálculo (aunque lleven otro identificador) se rechazan, sin citar identificadores. REI-LEV-001 rechaza menos de 3 componentes (`componentes_minimos`). CHR-TOKEN-001 con un solo token solo se sirve con `ambito_es_red: true`, y lo dice en las limitaciones (`tokens_minimos_sector` = 2) |
+| H-01 | `fichas_reales.py`: `f_rei_nav`; `UMBRALES` | REI-NAV-001 (T-112) rechaza un solo componente (`componentes_minimos` = 2) |
+| H-02 (media) | `tests/test_t119_p2.py` (pruebas `test_r02_h02_*`) | Pruebas que matan Q12 (dirección y p-valor de la tendencia con Hamed-Rao en una serie autocorrelacionada), Q17 (un componente que incumple un solo *covenant*), Q55, Q58 y Q54 (el corte campo a campo: NAV de PRV-CF, curva de costes de CMD-REAL dentro del último mes, niveles del índice de PRV-PME), Q84 (`rentabilidad_total` con 1, 1.0 y textos), Q86 (φ = ±1) y Q70 (la magnitud de los tipos de numpy). El código no cambia: ya era correcto |
+| H-03 (baja) | `fichas_p2.py`: `_tir`; `UMBRALES` (`rejilla_tir`) | Si los extremos del rango no aíslan una raíz y los flujos cambian de signo más de una vez, se cuentan las soluciones en una rejilla de 1 000 puntos (uniforme en ln(1 + r)); la limitación dice «N soluciones … no se aísla una TIR única», no «sin TIR». Con un solo cambio de signo, el texto de antes. La cifra (`null`) no cambia |
+| H-04 (baja) | `docs/incidencias.md` (INC-T119-01, «Ronda r02») | Los rangos de dominio del código, enumerados |
+| H-05 (baja) | `fichas_p2.py`: `ADVERTENCIAS["PRV-PME-001"]` | «LN-PME (Long-Nickels), que la ficha da por opcional, no se calcula» |
+| H-06 (baja, heredado) | `servicio.py`: `_con_tipo`, `_firma_tipos`, `Motor.servir` (`_cache_marca`) | La caché guarda con cada resultado la firma con tipos de su petición; una petición con otro tipo (un `Decimal`, un `numpy.float32` o un texto con el mismo valor) no sale de la caché. Si no se puede firmar, no se usa la caché |
+| H-07 (baja, heredado) | `servicio.py`: `Motor.servir` | Con T-121 (H-02): `solicitante`, `run_id` y `msg_id` tienen que ser textos escribibles; si no, RECHAZADO (CANAL_NO_AUTORIZADO para el solicitante) con una entrada en RC |
+| H-08 (baja, heredado) | `servicio.py`: `Motor.servir` (`_cache_marca`) | La caché guarda también las secciones de la configuración que leyó la ficha y su huella; si la configuración del Motor ha cambiado en esas secciones, se recalcula |
+| H-09 (baja, heredado) | `fichas_p2.py`: `ADVERTENCIAS["CMD-REAL-001"]` | Se declara en la entrega que el IC de la tendencia (el de FX-TREND-001) no lleva la corrección de Hamed-Rao. No se cambia FX-TREND-001: cambiaría cifras servidas de otra ficha y queda fuera del alcance |
+
+### Decisiones `[PROPUESTO]` (INC-T119-01, «Ronda r02»)
+
+- Mínimos de componentes: REI-LEV-001, 3 (con dos, el mínimo y el máximo de la dispersión son las dos cifras individuales); REI-NAV-001, 2; un sector de CHR-TOKEN-001, 2 tokens.
+- Un clon es un componente con los mismos datos del cálculo; en FIR-CRED-001 no cuenta el rendimiento histórico (μ), que solo mueve la PD real: el clon se reconoce por los datos del modelo de Merton.
+- Rejilla de 1 000 puntos para contar las soluciones de la TIR.
+- La caché solo sirve a una petición con la misma firma de tipos y la misma configuración leída.
+
+### Límites conocidos (añadidos en la r02)
+
+- Un agregado sigue dejando recuperar la cifra de un componente por diferencia entre dos peticiones (con y sin él): es inherente a cualquier agregado, y el revisor lo descartó como hallazgo.
+- Dos componentes casi iguales (que difieren en una millonésima) no son clones: la regla es exacta, no de tolerancia.
+- La rejilla puede no ver dos raíces más próximas entre sí que su paso; en ese caso la limitación dice «sin TIR … (rejilla de 1000 puntos)», con la rejilla declarada.
+
+### Comandos
+
+```bash
+cd bloque_a/11_Ejecutor
+../../.venv/bin/pytest -q tests/test_t119_r02.py tests/test_t119_p2.py tests/test_t119_motor.py
+cd ../..
+.venv/bin/python -I -B .docs/tickets/T-119/revisores/r01_09_mutantes.py <carpeta desechable>
+.venv/bin/python .docs/tickets/T-119/revisores/impl_r02_mutantes.py bloque_a/11_Ejecutor <carpeta desechable>
+```

@@ -261,6 +261,21 @@ def _fechas(d: dict, clave: str, ficha: str) -> pd.DatetimeIndex:
     return f
 
 
+def _hasta_corte_peticion(fechas: pd.DatetimeIndex, ent: dict, ficha: str, clave: str) -> None:
+    """T-121 (QA r01 de T-118, H-04): un dato en línea fechado después de la fecha de corte de la petición
+    (``ent["fecha_corte"]``, que pone `Motor.servir`) no era conocible; se rechaza, como hace el servicio con las series
+    de HT-01 y las fichas de la Fase 2. Se compara por día: el dato del día del corte es conocible. No confundir con la
+    «fecha de corte» de FON-DISC-001 y FON-FLOW-001, que es la última fecha de sus datos."""
+    fc = ent.get("fecha_corte") if isinstance(ent, dict) else None
+    if fc is None:
+        return
+    corte, ultima = ((t if t.tz is None else t.tz_convert(None)).normalize()
+                     for t in (_fecha(fc, ficha, "fecha_corte de la petición"), fechas[-1]))
+    if ultima > corte:
+        raise ErrorFicha(f"{ficha}: «{clave}»: dato del {ultima.date()} posterior a la fecha de corte {corte.date()} "
+                         f"(no conocible)")
+
+
 def _no_finitos(x: Any, ruta: str = "resultado") -> list[str]:
     """Rutas de los números no finitos (NaN, ±inf) de un resultado."""
     if isinstance(x, dict):
@@ -389,6 +404,7 @@ def f_fon_disc(ent: dict, params: dict) -> tuple[dict, list[str]]:
     if not isinstance(p["agregacion"], str) or p["agregacion"] not in ("mediana", "media_ponderada"):
         raise ErrorFicha(f"{F}: agregacion «{p['agregacion']}» no admitida (mediana | media_ponderada)")
     fechas = _fechas(v, "fechas", F)
+    _hasta_corte_peticion(fechas, ent, F, "fechas")   # la fecha de NAV de cada miembro no pasa de la última (abajo)
     miembros = _dict(v, "miembros", F)
     if len(miembros) < m["miembros"]:
         raise ErrorFicha(f"{F}: rechazo con < {m['miembros']} miembros")
@@ -526,6 +542,7 @@ def f_fon_flow(ent: dict, params: dict) -> tuple[dict, list[str]]:
     if not isinstance(frec, str) or frec not in ("mensual", "semanal"):
         raise ErrorFicha(f"{F}: «frecuencia» debe declararse como mensual o semanal")
     fechas = _fechas(v, "fechas", F)
+    _hasta_corte_peticion(fechas, ent, F, "fechas")
     if fechas.size < 2:
         raise ErrorFicha(f"{F}: se necesitan al menos dos cierres")
     if frec == "mensual":
@@ -790,6 +807,7 @@ def _rend_diarios(ent: dict, F: str, rol: str, clave: str) -> tuple[np.ndarray, 
         raise ErrorFicha(f"{F}: rentabilidad simple ≤ −100 % en «{clave}»")
     if v.get("fechas") is not None:
         f = _fechas(v, "fechas", F)
+        _hasta_corte_peticion(f, ent, F, "fechas")
         if f.size != r.size or not _diaria_por_fechas(f):
             raise ErrorFicha(f"{F}: rechazo sin datos diarios (fechas no diarias o no alineadas)")
     elif not isinstance(v.get("frecuencia"), str) or v.get("frecuencia") != "diaria":

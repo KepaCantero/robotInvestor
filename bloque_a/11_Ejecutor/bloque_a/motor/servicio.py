@@ -9,6 +9,8 @@ from __future__ import annotations
 
 import copy
 import functools
+import hashlib
+import json
 import math
 import os
 import re
@@ -290,6 +292,25 @@ def _demasiado_anidado(x: Any, tope: int = PROFUNDIDAD_MAXIMA) -> bool:
     return False
 
 
+# T-121 (QA r01 de T-118, H-02): campos de la petición que acaban en el Registro de cálculos
+CAMPOS_REGISTRO = ("operacion", "datos", "parametros", "perfil", "clase", "horizonte", "modo", "plan", "prioridad", "semilla",
+                   "fecha_corte")
+CAMPOS_TEXTO = ("horizonte", "modo", "prioridad")
+
+
+def _escribible(x: Any, copiar: bool = True) -> bool:
+    """T-121 (H-02): ¿se puede guardar `x` en el Almacén? Es lo que hace `Almacen.escribir`: copiarlo, serializarlo como
+    JSON con las claves ordenadas y codificarlo en UTF-8. Un sustituto Unicode suelto ("\ud800"), una clave que no es de
+    JSON, un generador o una referencia circular no se pueden."""
+    try:
+        if copiar:
+            copy.deepcopy(x)
+        json.dumps(x, sort_keys=True, ensure_ascii=False, default=str).encode("utf-8")
+    except Exception:  # noqa: BLE001 — cualquier fallo quiere decir lo mismo: no se puede escribir
+        return False
+    return True
+
+
 def _distintas(a: Any, b: Any) -> bool:
     """T-118 (H-13): dos semillas son distintas si no se puede afirmar que son iguales (un array no da un booleano)."""
     try:
@@ -332,6 +353,28 @@ def _configuracion_usada(cfg: dict, secciones: Any) -> dict[str, dict[str, Any]]
         if k in cfg:
             out[k]["valor"] = copy.deepcopy(dict.get(cfg, k))
     return out
+
+
+def _cubre(valor: Any, defecto: Any) -> bool:
+    """T-121 (H-01): ¿trae `valor` todas las claves de `defecto` (la sección de `por_defecto.yaml`), a cualquier nivel? Si
+    las trae, `parametro` no toma nada de `por_defecto.yaml` y un cambio en ese fichero no cambia lo que la ficha lee."""
+    if not isinstance(defecto, dict):
+        return True
+    return isinstance(valor, dict) and all(k in valor and _cubre(valor[k], d) for k, d in defecto.items())
+
+
+def _con_tipo(x: Any) -> str:
+    return f"{type(x).__module__}.{type(x).__qualname__}:{x}"
+
+
+def _firma_tipos(*partes: Any) -> str | None:
+    """Ronda r02 de T-119 (QA r01, H-06): `clave_hash` escribe con `str` lo que no es JSON, y un `Decimal("1.5")`, un
+    `numpy.float32(1.5)` y el texto "1.5" dan la misma clave. Esta firma distingue el tipo de lo que no es JSON: la caché
+    solo entrega un resultado a una petición con la misma firma. `None` si no se puede calcular (no se usa la caché)."""
+    try:
+        return hashlib.sha256(json.dumps(partes, sort_keys=True, ensure_ascii=False, default=_con_tipo).encode("utf-8")).hexdigest()
+    except (TypeError, ValueError, RecursionError, UnicodeError):
+        return None
 
 
 def _raiz(raiz: str | os.PathLike | None = None) -> Path:
@@ -419,6 +462,9 @@ class Motor:
         self.contabilidad = contabilidad
         self.raiz = raiz_paquete(cfg)   # QA r01 de T-106, H-04: el Catálogo se lee de la raíz configurada
         self._cache: dict[str, dict] = {}
+        # r02 de T-119 (QA r01, H-06 y H-08): de cada resultado en caché, la firma con tipos de su petición, las secciones
+        # de la configuración que la ficha leyó y la huella de esas secciones entonces
+        self._cache_marca: dict[str, tuple[str | None, tuple[str, ...], str]] = {}
         self._lock = threading.Lock()
 
     # ------------------------------------------------------------------------------------
@@ -463,6 +509,14 @@ class Motor:
             return "la petición no es un objeto"
         if _demasiado_anidado(peticion):   # T-118 (H-13): antes de copiar, serializar o escribir nada de ella
             return f"anidamiento excesivo (más de {PROFUNDIDAD_MAXIMA} niveles)"
+        # T-121 (H-02): antes de citar en un mensaje o de registrar nada de la petición, lo que va al Registro tiene que
+        # poder escribirse (los valores en línea se copian después, al resolver los datos)
+        ilegibles = [c for c in CAMPOS_REGISTRO if c in peticion and not _escribible(peticion[c], copiar=c != "datos")]
+        if ilegibles:
+            return f"campos que no se pueden escribir en el Registro (no son JSON o no son texto UTF-8): {', '.join(ilegibles)}"
+        for campo in CAMPOS_TEXTO:
+            if peticion.get(campo) is not None and not isinstance(peticion[campo], str):
+                return f"«{campo}» no es un texto"
         op_ = peticion.get("operacion")
         ficha = op_.get("ficha_id") if isinstance(op_, dict) else op_
         if not isinstance(ficha, str):
@@ -499,17 +553,29 @@ class Motor:
                 return "unos «valores» de «datos» no son un objeto"
         return None
 
-    def servir(self, peticion: dict, solicitante: str, run_id: str | None = None, msg_id: str | None = None) -> dict:
+    def servir(self, peticion: dict, solicitante: Any, run_id: str | None = None, msg_id: str | None = None) -> dict:
+        # T-121 (H-02; H-07 de la QA r01 de T-119): los tres argumentos van al Registro. Si no son un texto que se pueda
+        # escribir, la petición se rechaza y la entrada los lleva vacíos
+        raros = [n for n, x, opcional in (("solicitante", solicitante, False), ("run_id", run_id, True), ("msg_id", msg_id, True))
+                 if not ((opcional and x is None) or (isinstance(x, str) and _escribible(x)))]
+        if raros:
+            solicitante, run_id, msg_id = (None if n in raros else x for n, x in
+                                           (("solicitante", solicitante), ("run_id", run_id), ("msg_id", msg_id)))
         forma = self._error_de_forma(peticion)
+        motivo_forma = "DATOS_INCOHERENTES"
+        if not forma and raros:
+            forma = f"argumentos de la llamada que no son un texto: {', '.join(raros)}"
+            # T-112 (r02, H-06): un solicitante que no es un texto no es un canal autorizado para ninguna ficha
+            motivo_forma = "CANAL_NO_AUTORIZADO" if "solicitante" in raros else motivo_forma
         if forma:
             op_ = peticion.get("operacion") if isinstance(peticion, dict) else None
             f_ = op_.get("ficha_id") if isinstance(op_, dict) else op_
-            f_ = f_ if isinstance(f_, str) else None
+            f_ = f_ if isinstance(f_, str) and _escribible(f_) else None
             base_ = {"calc_id": None, "contrato": "CT-09", "msg_id": msg_id, "run_id": run_id, "solicitante": solicitante,
                      "operacion": {"method_id": f_, "ficha_id": f_, "ficha_version": None, "catalog_version": CATALOG_VERSION,
                                    "op_sin_ficha": f_ not in FICHAS_CATALOGO},
                      "madurez_metodo": "IMPLEMENTADO" if f_ in IMPLEMENTADAS else "DESCONOCIDA", "cache_hit": False}
-            return self._rechazo(base_, "DATOS_INCOHERENTES", f"petición mal formada: {forma}")
+            return self._rechazo(base_, motivo_forma, f"petición mal formada: {forma}")
         ficha = (peticion.get("operacion") or {}).get("ficha_id") if isinstance(peticion.get("operacion"), dict) \
             else peticion.get("operacion")
         params = dict(peticion.get("parametros") or {})
@@ -572,8 +638,14 @@ class Motor:
         # desde la caché de otra con un corte posterior (H-07)
         clave = clave_hash(ficha, meta["version"], efectivos, params, base["semilla"], base["perfil"], fecha_corte)
         base["clave_idempotencia"] = clave
+        firma = _firma_tipos(efectivos, params, base["semilla"], base["perfil"])
         with self._lock:
-            previo = self._cache.get(clave)
+            previo, marca = self._cache.get(clave), self._cache_marca.get(clave)
+        # r02 de T-119 (QA r01): la caché no entrega el resultado de una petición con otros tipos en sus datos (H-06) ni el
+        # calculado con otra configuración: se compara lo que la ficha leyó entonces con lo vigente (H-08)
+        if previo and (marca is None or firma is None or marca[0] != firma
+                       or clave_hash(_configuracion_usada(self.cfg, marca[1])) != marca[2]):
+            previo = None
         if previo:
             e = self.almacen.escribir("RC", "AG-13", {**base, "tipo_entrada": "CACHE_HIT", "calc_id": self.almacen.nuevo_id("CALC"),
                                                       "calc_original": previo["calc_id"], "cache_hit": True,
@@ -622,6 +694,8 @@ class Motor:
                "informe_calidad_datos": efectivos, "cache_hit": False}
         with self._lock:
             self._cache[clave] = out
+            leidas = tuple(sorted(lectura.leidas))
+            self._cache_marca[clave] = (firma, leidas, clave_hash(_configuracion_usada(self.cfg, leidas)))
         return out
 
     def _rechazo(self, base: dict, motivo: str, detalle: str, alternativa: str | None = None, uc: float = 0.0) -> dict:
@@ -743,6 +817,15 @@ class Motor:
         return out
 
     # ------------------------------------------------------------------------------------
+    def _reejecucion_fallida(self, calc_id: str, orig: dict, motivo: str, solicitante: str, ficha: Any, causa: str) -> dict:
+        """T-121 (QA r01 de T-118, H-03): la re-ejecución que no llega a llamar a la ficha queda en el Registro con
+        `coincide` NO y ERROR_REEJECUCION (la categoría que el esquema del Registro V2.0 ya tiene), con su causa."""
+        diagnostico = f"ERROR_REEJECUCION: {causa}"
+        e = _reejecucion_fallida_entrada(calc_id, orig, motivo, solicitante, ficha, diagnostico, self.almacen.nuevo_id("CALC"))
+        self.almacen.escribir("RC", "AG-13", e)
+        return {"coincide": "NO", "categoria": "ERROR_REEJECUCION", "diferencias": [], "calc_id": e["calc_id"],
+                "diagnostico": diagnostico}
+
     def reejecutar(self, calc_id: str, motivo: str, solicitante: str = "AG-18") -> dict:
         """CT-10 (AUD-REX-001, MC-08): recalcula en aislamiento con las entradas del artefacto y compara con la tolerancia de
         la ficha. T-112: sin motivo o sin artefacto completo es IMPOSIBLE (no se reconstruye por inferencia); los valores en
@@ -753,19 +836,34 @@ class Motor:
         orig = self.almacen.estado("RC").get(calc_id)
         if not orig or orig.get("tipo_entrada") != "SERVICIO":
             raise KeyError(f"{calc_id} no es un servicio del Registro de cálculos")
-        ficha = orig["operacion"]["ficha_id"]
-        if ficha not in IMPLEMENTADAS:
+        op_orig = orig.get("operacion")
+        ficha = op_orig.get("ficha_id") if isinstance(op_orig, dict) else None
+        if isinstance(ficha, str) and ficha not in IMPLEMENTADAS:
             raise KeyError(f"{calc_id}: la ficha {ficha} ya no tiene manejador: re-ejecución imposible")
         datos, huellas_en_linea = [], []
-        for d in orig["datos"]:
-            if "serie_ht01" in d:
-                datos.append({"serie": d["serie_ht01"], "inicio": d["inicio"], "fin": d["fecha_dato"], "rol": d["rol"]})
-            elif "valor" in d:
-                if not isinstance(d["valor"], dict):   # artefactos anteriores a T-112: solo «en línea», sin los valores
-                    raise NotImplementedError("Artefacto sin los valores en línea: re-ejecución imposible")
-                datos.append({"valores": copy.deepcopy(d["valor"])})
-                huellas_en_linea.append(clave_hash(d["valor"])[:16] == d.get("huella"))
-        ent, efectivos = self._resolver_datos(datos, orig["as_of"])
+        # T-121 (QA r01 de T-118, H-03): si los datos del artefacto ya no se pueden resolver (una serie de HT-01 que ya no
+        # está, una fecha posterior al `as_of`) o el artefacto está alterado, la re-ejecución queda registrada como fallida;
+        # no termina en una excepción sin entrada en el Registro
+        try:
+            if not isinstance(ficha, str):
+                raise TypeError("la operación del artefacto no es un identificador de ficha")
+            for d in orig["datos"]:
+                if "serie_ht01" in d:
+                    datos.append({"serie": d["serie_ht01"], "inicio": d["inicio"], "fin": d["fecha_dato"], "rol": d["rol"]})
+                elif "valor" in d:
+                    if not isinstance(d["valor"], dict):   # artefactos anteriores a T-112: solo «en línea», sin los valores
+                        raise NotImplementedError("Artefacto sin los valores en línea: re-ejecución imposible")
+                    datos.append({"valores": copy.deepcopy(d["valor"])})
+                    huellas_en_linea.append(clave_hash(d["valor"])[:16] == d.get("huella"))
+            ent, efectivos = self._resolver_datos(datos, orig["as_of"])
+            if not isinstance(orig["parametros"], dict) or "payload" not in orig["resultado"]:
+                raise TypeError("el artefacto no tiene parámetros o resultado")
+        except (DatosNoDisponibles, FugaDeInformacion) as exc:
+            return self._reejecucion_fallida(calc_id, orig, motivo, solicitante, ficha, "los datos del artefacto ya no se "
+                                             f"pueden resolver ({type(exc).__name__}: {str(exc)[:300]})")
+        except (KeyError, TypeError, ValueError, AttributeError, IndexError, OverflowError, RecursionError, MemoryError) as exc:
+            return self._reejecucion_fallida(calc_id, orig, motivo, solicitante, ficha, "el artefacto está mal formado o "
+                                             f"alterado ({type(exc).__name__}: {str(exc)[:300]})")
         # T-118 (H-11): la ficha se re-ejecuta con las secciones de la configuración que guardó el artefacto (las «entradas
         # del artefacto» incluyen los números de configuración que la ficha usó); lo que el artefacto no guarde, de la vigente
         artefacto = orig.get("artefacto") if isinstance(orig.get("artefacto"), dict) else {}
@@ -799,6 +897,15 @@ class Motor:
         sin_registro = sorted(lectura.leidas - set(registrada or {}))
         vigente = _configuracion_usada(self.cfg, registrada or {})
         cambiadas = sorted(k for k, reg in (registrada or {}).items() if clave_hash(reg) != clave_hash(vigente[k]))
+        # T-121 (QA r01 de T-118, H-01): que la configuración vigente haya cambiado no impide culpar al original, porque la
+        # re-ejecución usa la del artefacto. Lo impide no haber podido reproducir sus condiciones: una sección leída que el
+        # artefacto no guarda (`sin_registro`), o una guardada sin registro legible o cuya parte de `por_defecto.yaml` (de
+        # donde `parametro` toma lo que el valor guardado no traiga) ya no es la de entonces
+        # (si el valor guardado trae todas las claves de esa sección de `por_defecto.yaml`, su cambio no interviene)
+        no_reproducidas = sorted(set(sin_registro) | {k for k, reg in (registrada or {}).items() if not isinstance(reg, dict)
+                                                      or (reg.get("por_defecto") != vigente[k]["por_defecto"]
+                                                          and not ("valor" in reg and _cubre(reg["valor"],
+                                                                                              config_por_defecto().get(k))))})
         cfg_nota = None
         if fallo:
             coincide, categoria = "NO", "ERROR_REEJECUCION"
@@ -806,13 +913,14 @@ class Motor:
             coincide, categoria = "NO", "NO_DETERMINISMO"
         elif not mismas:
             coincide, categoria = "NO", "DATOS_DISTINTOS"
-        elif difs and (sin_registro or cambiadas):
-            # H-11: no se puede culpar al original si la configuración con que se calculó no consta o ya no es la vigente
+        elif difs and no_reproducidas:
+            # H-11 y T-121 (H-01): no se puede culpar al original si la re-ejecución no ha podido usar su configuración
             coincide, categoria = "NO", "CONVENCION_DISTINTA"
-            cfg_nota = ("la configuración con que se calculó no es la vigente o no consta en el artefacto (secciones "
-                        f"{', '.join(sorted(set(sin_registro) | set(cambiadas)))})")
+            cfg_nota = ("la re-ejecución no ha podido usar la configuración con que se calculó: no consta en el artefacto o "
+                        f"su parte de por_defecto.yaml ha cambiado (secciones {', '.join(no_reproducidas)})")
         elif difs:
-            # recálculo determinista con los mismos datos: si la versión de la ficha es la misma, el que difiere es el original
+            # recálculo determinista con los mismos datos y con la configuración del artefacto: si la versión de la ficha es
+            # la misma, el que difiere es el original, aunque la configuración vigente haya cambiado (H-01)
             coincide, categoria = "NO", ("ERROR_ORIGINAL" if version else "CONVENCION_DISTINTA")
         else:
             coincide, categoria = ("SI" if exacto else "DENTRO_TOLERANCIA"), None
@@ -835,6 +943,20 @@ class Motor:
         self.almacen.escribir("RC", "AG-13", e)
         return {"coincide": coincide, "categoria": categoria, "diferencias": difs, "calc_id": e["calc_id"],
                 "diagnostico": diagnostico}
+
+
+def _reejecucion_fallida_entrada(calc_id: str, orig: dict, motivo: str, solicitante: str, ficha: Any, diagnostico: str,
+                                 nuevo_id: str) -> dict:
+    meta = IMPLEMENTADAS.get(ficha) if isinstance(ficha, str) else None
+    return {"tipo_entrada": "REEJECUCION", "calc_id": nuevo_id, "contrato": "CT-10", "solicitante": solicitante,
+            "operacion": orig.get("operacion"), "estado": "SERVED", "as_of": orig.get("as_of"),
+            "reejecucion": {"calc_original": calc_id, "motivo": motivo, "aislamiento": "CONFIRMADO",
+                            "tolerancia": meta["tol"] if meta else None, "coincide": "NO", "diferencias": [],
+                            "categoria": "ERROR_REEJECUCION", "diagnostico": diagnostico, "doble_pasada": False,
+                            "version_ficha": meta["version"] if meta else None,
+                            "configuracion": {"origen": "no se llegó a ejecutar la ficha", "distinta_de_la_vigente": [],
+                                              "sin_registro": []}},
+            "datos": [], "consumo_uc": 0.0, "madurez_metodo": "IMPLEMENTADO"}
 
 
 def _comparar(a: Any, b: Any, tol: float, ruta: str = "") -> list[str]:

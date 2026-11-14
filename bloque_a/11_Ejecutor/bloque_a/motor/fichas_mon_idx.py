@@ -185,6 +185,29 @@ def _fecha(x: Any, ctx: str) -> pd.Timestamp:
     return t
 
 
+def _corte(ent: dict) -> pd.Timestamp | None:
+    """T-121 (QA r01 de T-118, H-04): fecha de corte de la petición (``ent["fecha_corte"]``, que pone `Motor.servir`), o
+    ``None`` si no hay. Se compara por día: el dato del día del corte es conocible."""
+    fc = ent.get("fecha_corte")
+    return None if fc is None else _dia(_fecha(fc, "fecha de corte de la petición"))
+
+
+def _dia(t: pd.Timestamp) -> pd.Timestamp:
+    return (t if t.tz is None else t.tz_convert(None)).normalize()
+
+
+def _hasta_corte(fechas: Any, corte: pd.Timestamp | None, ctx: str) -> None:
+    """H-04: un dato en línea fechado después de la fecha de corte no era conocible; se rechaza, como hace el servicio con
+    las series de HT-01 (FUGA_DE_INFORMACION) y las fichas de la Fase 2 con sus datos en línea. Las fechas futuras por
+    naturaleza (nodos y contratos de una curva, reuniones, efectividad de un evento anunciado) no son observaciones."""
+    if corte is None:
+        return
+    posteriores = [f for f in map(_dia, fechas) if f > corte]
+    if posteriores:
+        raise ErrorFicha(f"{ctx}: dato del {max(posteriores).date()} posterior a la fecha de corte {corte.date()} "
+                         f"(no conocible)")
+
+
 def _con_fuente(d: Any, ctx: str) -> float:
     """Dato externo {'valor', 'fuente'}: sin fuente se rechaza."""
     if not isinstance(d, dict):
@@ -335,6 +358,7 @@ def f_mon_yld(ent: dict, params: dict) -> tuple[dict, list[str]]:
     ficha = "MON-YLD-001"
     p = _params(ficha, params)
     v = ent["valores"]
+    corte = _corte(ent)
     lim: list[str] = []
     base_salida = p["base_salida"]
     if base_salida not in ("TAE", "Act/365"):
@@ -355,6 +379,7 @@ def f_mon_yld(ent: dict, params: dict) -> tuple[dict, list[str]]:
         if t <= 0:
             raise ErrorFicha(f"{ctx}: días no positivos")
         fecha = _fecha(_req(s, "fecha", ctx), ctx)
+        _hasta_corte([fecha], corte, f"{ctx}.fecha")
         x = _f(_req(s, "valor", ctx), f"{ctx}.valor")
         precio = _a_precio(conv, x, t)
         clave = f"{nombre} · {divisa} · {plazo:g}m"
@@ -407,6 +432,7 @@ def f_mon_yld(ent: dict, params: dict) -> tuple[dict, list[str]]:
             percentiles[clave_dif] = None
             continue
         s = _serie(hist[clave_dif], "valor_pb", f"{ficha}: historia {clave_dif}")
+        _hasta_corte(s.index, corte, f"{ficha}: historia {clave_dif}")
         if len(s) < 2 or _anios(s.index) < p["anios_percentil_min"]:
             lim.append(f"{clave_dif}: historia < {p['anios_percentil_min']} años; sin percentil")
             percentiles[clave_dif] = None
@@ -604,6 +630,7 @@ def f_mon_exp(ent: dict, params: dict) -> tuple[dict, list[str]]:
     v = ent["valores"]
     lim: list[str] = []
     fecha = _fecha(_req(v, "fecha", ficha), ficha)
+    _hasta_corte([fecha], _corte(ent), f"{ficha}: fecha")   # los nodos, los contratos y las reuniones son futuros
     base = _f(_req(v, "base_curva", ficha), f"{ficha}.base_curva")
     if base not in (BASE_360, DIAS_ANIO):
         raise ErrorFicha(f"{ficha}: base_curva debe ser {BASE_360} o {DIAS_ANIO}")
@@ -734,6 +761,7 @@ def f_mon_exp(ent: dict, params: dict) -> tuple[dict, list[str]]:
     decisiones = v.get("decisiones")
     for i, dec in enumerate(_lista(decisiones, f"{ficha}: decisiones") if decisiones is not None else []):
         ctx = f"{ficha}: decisiones[{i}]"
+        _hasta_corte([_fecha(_req(dec, "fecha", ctx), ctx)], _corte(ent), f"{ctx}.fecha")   # una decisión ya tomada
         sorpresas.append({"fecha": _fecha(_req(dec, "fecha", ctx), ctx).date().isoformat(),
                           "sorpresa_pb": (_f(_req(dec, "tipo_decidido", ctx), ctx)
                                           - _f(_req(dec, "tipo_esperado", ctx), ctx)) * PB})
@@ -783,6 +811,7 @@ def f_mon_real(ent: dict, params: dict) -> tuple[dict, list[str]]:
     ficha = "MON-REAL-001"
     p = _params(ficha, params)
     v = ent["valores"]
+    corte = _corte(ent)
     lim: list[str] = []
     divisas = _req(v, "divisas", ficha)
     if not isinstance(divisas, dict) or not divisas:
@@ -816,6 +845,7 @@ def f_mon_real(ent: dict, params: dict) -> tuple[dict, list[str]]:
                 raise ErrorFicha(f"{c}: renovaciones no contiguas")
             anterior = fin
             vi, vf = _fecha(_req(h, "vintage_inicio", c), c), _fecha(_req(h, "vintage_fin", c), c)
+            _hasta_corte([fin, vi, vf], corte, c)   # el periodo cerrado y la edición del IPC con que se midió
             if vi != vf:
                 raise ErrorFicha(f"{c}: vintages incompatibles ({vi.date()} ≠ {vf.date()})")
             if vf < fin:
@@ -856,7 +886,9 @@ def f_mon_real(ent: dict, params: dict) -> tuple[dict, list[str]]:
         ex_post = [x["real_anualizado"] for x in periodos]
         pct: dict[str, Any] = {"ex_post": _posicion(ex_post[-1], ex_post)}
         if dv.get("historia_ex_ante"):
-            pct["ex_ante"] = _posicion(ex_ante, _serie(dv["historia_ex_ante"], "valor", ctx).values)
+            h_ea = _serie(dv["historia_ex_ante"], "valor", ctx)
+            _hasta_corte(h_ea.index, corte, f"{ctx}.historia_ex_ante")
+            pct["ex_ante"] = _posicion(ex_ante, h_ea.values)
         else:
             pct["ex_ante"] = None
             lim.append(f"{cod}: sin historia del real ex ante: percentil ex ante no calculado")
@@ -924,6 +956,7 @@ def f_mon_fix(ent: dict, params: dict) -> tuple[dict, list[str]]:
     if T != int(T) or tau != int(tau) or int(T) % int(tau):
         raise ErrorFicha(f"{ficha}: plazos incompatibles (T = {T:g} no es múltiplo entero de tau = {tau:g})")
     fecha = _fecha(_req(v, "fecha", ficha), ficha)
+    _hasta_corte([fecha], _corte(ent), f"{ficha}: fecha")
     bases, nodos = set(), {}
     for i, n in enumerate(_lista(_req(v, "curva", ficha), f"{ficha}: curva")):
         ctx = f"{ficha}: curva[{i}]"
@@ -1025,7 +1058,7 @@ def f_mon_fix(ent: dict, params: dict) -> tuple[dict, list[str]]:
 _BLOQUES_ERP = ("dividendo", "recompras_netas", "crecimiento_real_bpa", "inflacion", "cambio_valoracion")
 
 
-def _erp_indice(ix: dict, p: dict, N: float, lam: float, lim: list[str]) -> dict[str, Any]:
+def _erp_indice(ix: dict, p: dict, N: float, lam: float, lim: list[str], corte: pd.Timestamp | None = None) -> dict[str, Any]:
     ficha = "IDX-ERP-001"
     nombre = str(_req(ix, "nombre", ficha))
     ctx = f"{ficha}[{nombre}]"
@@ -1040,19 +1073,21 @@ def _erp_indice(ix: dict, p: dict, N: float, lam: float, lim: list[str]) -> dict
     # Crecimiento real del BPA: histórico ≥ 20 años (CAGR, FIN-CAGR-001) o consenso con fecha y fuente.
     if ix.get("historia_bpa_real") is not None:
         s = _serie(ix["historia_bpa_real"], "valor", f"{ctx}.historia_bpa_real")
+        _hasta_corte(s.index, corte, f"{ctx}.historia_bpa_real")
         if len(s) < 2 or _anios(s.index) < p["anios_bpa_historico_min"]:
             raise ErrorFicha(f"{ctx}: historia del BPA real < {p['anios_bpa_historico_min']} años")
         g = cagr(float(s.iloc[0]), float(s.iloc[-1]), _anios(s.index))
     else:
         cg = _req(ix, "crecimiento_real_bpa", ctx)
         g = _con_fuente(cg, f"{ctx}.crecimiento_real_bpa")
-        _fecha(_req(cg, "fecha", f"{ctx}.crecimiento_real_bpa"), ctx)
+        _hasta_corte([_fecha(_req(cg, "fecha", f"{ctx}.crecimiento_real_bpa"), ctx)], corte, f"{ctx}.crecimiento_real_bpa")
     pi_e = _con_fuente(_req(ix, "inflacion_esperada", ctx), f"{ctx}.inflacion_esperada")
     tipo_m = ix.get("tipo_multiplo")
     if tipo_m is not None and tipo_m != p["multiplo"]:
         raise ErrorFicha(f"{ctx}: múltiplo «{tipo_m}» distinto del pedido «{p['multiplo']}»")
     m_act = _f(_req(ix, "multiplo_actual", ctx), f"{ctx}.multiplo_actual")
     hist = _serie(_req(ix, "historia_multiplo", ctx), "valor", f"{ctx}.historia_multiplo")
+    _hasta_corte(hist.index, corte, f"{ctx}.historia_multiplo")
     anios_h = _anios(hist.index) if len(hist) > 1 else 0.0
     if anios_h < p["anios_historia_min"]:
         raise ErrorFicha(f"{ctx}: historia del múltiplo de {anios_h:.2f} años (< {p['anios_historia_min']})")
@@ -1122,7 +1157,8 @@ def f_idx_erp(ent: dict, params: dict) -> tuple[dict, list[str]]:
     indices = v["indices"] if v.get("indices") is not None else [v]
     if not isinstance(indices, list) or not all(isinstance(ix, dict) for ix in indices):
         raise ErrorFicha(f"{ficha}: «indices» debe ser una lista de dicts")
-    filas = [_erp_indice(ix, p, N, lam, lim) for ix in _lista(indices, f"{ficha}: indices")]
+    corte = _corte(ent)
+    filas = [_erp_indice(ix, p, N, lam, lim, corte) for ix in _lista(indices, f"{ficha}: indices")]
     if len({f["nombre"] for f in filas}) != len(filas):
         raise ErrorFicha(f"{ficha}: índices con el mismo nombre")
     comparacion: dict[str, Any] | None = None
@@ -1215,6 +1251,8 @@ def f_idx_conc(ent: dict, params: dict) -> tuple[dict, list[str]]:
     if v.get("composicion") is None:
         raise ErrorFicha(f"{ficha}: sin composición fechada")
     fecha, pesos, sectores = _pesos(v["composicion"], f"{ficha}: composicion", tol)
+    corte = _corte(ent)
+    _hasta_corte([fecha], corte, f"{ficha}: composicion.fecha")   # composicion_inicio es anterior a ella (abajo)
     orden = sorted(pesos, key=lambda k: (-pesos[k], k))
     hhi = _hhi(pesos)
     conc: dict[str, Any] = {"peso_top_n": sum(pesos[k] for k in orden[:top_n]), "hhi": hhi, "n_ef": 1 / hhi,
@@ -1236,6 +1274,8 @@ def f_idx_conc(ent: dict, params: dict) -> tuple[dict, list[str]]:
     if v.get("precios"):
         precios = {k: _serie(s, "precio", f"{ficha}: precios[{k}]")
                    for k, s in sorted(_dict(v["precios"], f"{ficha}: precios").items())}
+        for k, s in precios.items():
+            _hasta_corte(s.index, corte, f"{ficha}: precios[{k}]")
     elif ent.get("series"):
         precios = {str(k): s.dropna().sort_index() for k, s in sorted(ent["series"].items())}
     amplitud: dict[str, Any] | None = None
@@ -1261,7 +1301,9 @@ def f_idx_conc(ent: dict, params: dict) -> tuple[dict, list[str]]:
 
     def _idx(rol: str) -> pd.Series | None:
         if v.get(rol) is not None:
-            return _serie(v[rol], "valor", f"{ficha}: {rol}")
+            s_rol = _serie(v[rol], "valor", f"{ficha}: {rol}")
+            _hasta_corte(s_rol.index, corte, f"{ficha}: {rol}")
+            return s_rol
         s = (ent.get("series_rol") or {}).get(rol)
         return None if s is None else s.dropna().sort_index()
 
@@ -1320,6 +1362,7 @@ def f_idx_conc(ent: dict, params: dict) -> tuple[dict, list[str]]:
                 percentiles[met] = None
                 continue
             s = _serie(filas, met, f"{ficha}: historia_metricas")
+            _hasta_corte(s.index, corte, f"{ficha}: historia_metricas")
             s = s[(s.index <= fecha) & (s.index >= fecha - pd.DateOffset(years=int(p["ventana_percentil_anios"])))]
             if len(s) < 2 or _anios(s.index) < p["ventana_percentil_min_anios"]:
                 raise ErrorFicha(f"{ficha}: historia de {met} < {p['ventana_percentil_min_anios']} años")
@@ -1396,6 +1439,8 @@ def f_idx_rel(ent: dict, params: dict) -> tuple[dict, list[str]]:
         raise ErrorFicha(f"{ficha}: cobertura «{p['cobertura']}» no admitida")
     ia, ib = _dict(_req(v, "indice_a", ficha), ficha), _dict(_req(v, "indice_b", ficha), ficha)
     da, db = _historia_indice(ia, f"{ficha}: indice_a"), _historia_indice(ib, f"{ficha}: indice_b")
+    _hasta_corte(da.index, _corte(ent), f"{ficha}: indice_a.historia")
+    _hasta_corte(db.index, _corte(ent), f"{ficha}: indice_b.historia")
     comun = da.index.intersection(db.index)
     if len(comun) < 2:
         raise ErrorFicha(f"{ficha}: historias sin fechas comunes")
@@ -1510,10 +1555,11 @@ def f_idx_rel(ent: dict, params: dict) -> tuple[dict, list[str]]:
 
 
 # ======================================================================= IDX-REB-001
-def _car_evento(ev: dict, p: dict, modelo: str, ctx: str) -> dict[str, Any] | None:
+def _car_evento(ev: dict, p: dict, modelo: str, ctx: str, corte: pd.Timestamp | None = None) -> dict[str, Any] | None:
     """CAR de un evento en las dos ventanas, con su desviación de estimación; None si faltan sesiones."""
     rents = _lista(_req(ev, "rentabilidades", ctx), f"{ctx}.rentabilidades")
     fechas = pd.DatetimeIndex([_fecha(_req(r, "fecha", ctx), ctx) for r in rents])
+    _hasta_corte(fechas, corte, f"{ctx}.rentabilidades")
     rc = np.array([_f(_req(r, "cesta", ctx), f"{ctx}.cesta") for r in rents])
     rm = np.array([_f(_req(r, "indice", ctx), f"{ctx}.indice") for r in rents])
     orden = np.argsort(fechas.values, kind="stable")
@@ -1606,12 +1652,14 @@ def f_idx_reb(ent: dict, params: dict) -> tuple[dict, list[str]]:
         raise ErrorFicha(f"{ficha}: contraste «{p['contraste']}» no implementado (BMP)")
     ev = _req(v, "evento", ficha)
     an = _fecha(_req(ev, "fecha_anuncio", f"{ficha}.evento"), ficha)
+    corte = _corte(ent)
+    _hasta_corte([an], corte, f"{ficha}.evento.fecha_anuncio")   # el anuncio es un hecho; la efectividad puede ser futura
     ef = _fecha(_req(ev, "fecha_efectividad", f"{ficha}.evento"), ficha)
     if ef < an:
         raise ErrorFicha(f"{ficha}: efectividad anterior al anuncio")
     aum_d = _req(ev, "activos_indexados", f"{ficha}.evento")
     aum = _con_fuente(aum_d, f"{ficha}.activos_indexados")
-    _fecha(_req(aum_d, "fecha", f"{ficha}.activos_indexados"), ficha)
+    _hasta_corte([_fecha(_req(aum_d, "fecha", f"{ficha}.activos_indexados"), ficha)], corte, f"{ficha}.activos_indexados.fecha")
     if aum <= 0:
         raise ErrorFicha(f"{ficha}: activos indexados no positivos")
     cambios = _lista(_req(ev, "cambios", f"{ficha}.evento"), f"{ficha}.cambios")
@@ -1648,7 +1696,7 @@ def f_idx_reb(ent: dict, params: dict) -> tuple[dict, list[str]]:
         cars, cars_alt, fuera = [], [], 0
         for i, e in enumerate(comparables):
             ctx = f"{ficha}.eventos_comparables[{i}]"
-            c, ca = _car_evento(e, p, modelo, ctx), _car_evento(e, p, alterno, ctx)
+            c, ca = _car_evento(e, p, modelo, ctx, corte), _car_evento(e, p, alterno, ctx, corte)
             if c is None or ca is None:
                 fuera += 1
                 continue

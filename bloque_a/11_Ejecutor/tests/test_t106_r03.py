@@ -31,7 +31,8 @@ def _caso(ficha):
 
 
 def _servir(m, ficha, datos, params, **extra):
-    return m.servir({"operacion": ficha, "datos": datos, "parametros": params, "fecha_corte": "2026-11-12", **extra}, "AG-21")
+    # T-121 (H-04 de la QA r01 de T-118): el corte, en la última fecha de los datos sintéticos de control (2029-12-31)
+    return m.servir({"operacion": ficha, "datos": datos, "parametros": params, "fecha_corte": "2029-12-31", **extra}, "AG-21")
 
 
 # ================================================================================================== H-14

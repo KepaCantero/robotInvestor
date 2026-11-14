@@ -61,6 +61,29 @@ OBS_MAXIMAS_SERIES = sesiones_horizonte(None, "H5")
 # Fichas cuya cota de observaciones es la de H5 en sesiones, y la de FX-REGIME-001 (`senales.ventana_anios` en sesiones)
 FICHAS_OBS_H5 = frozenset({"ST-INF-001", "FX-BRK-001", "FX-STL-001", "FX-COINT-001"})
 OBS_MAXIMAS_REGIME = int(parametro(None, "senales.ventana_anios")) * SESIONES_POR_ANIO
+# T-121 (QA r01 de T-118, H-05): la cota de REG-HMM-001 es H5 en semanas y tampoco va ya escrita a mano. Calendario
+# (convención, no parámetro): 52 semanas y 12 meses por año, así que 120 meses son 520 semanas
+SEMANAS_POR_ANIO, MESES_POR_ANIO = 52, 12
+
+
+def _semanas_h5(cfg: dict[str, Any] | None) -> int:
+    """H5 de la configuración (`horizontes.H5`, en meses, semanas o sesiones) en semanas."""
+    h = parametro(cfg, "horizontes.H5")
+    if not isinstance(h, dict):
+        raise ErrorFicha("configuración: horizontes.H5 mal formado")
+    for unidad, numerador, denominador in (("meses", SEMANAS_POR_ANIO, MESES_POR_ANIO), ("semanas", 1, 1)):
+        if unidad in h:
+            x = h[unidad]
+            if isinstance(x, bool) or not isinstance(x, int) or x < 1:
+                raise ErrorFicha(f"configuración: horizontes.H5 en {unidad} debe ser un entero positivo")
+            return max(x * numerador // denominador, 1)
+    por_semana = parametro(cfg, "calendario.sesiones_por_semana")
+    if isinstance(por_semana, bool) or not isinstance(por_semana, int) or por_semana < 1:
+        raise ErrorFicha("configuración: calendario.sesiones_por_semana debe ser un entero positivo")
+    return max(sesiones_horizonte(cfg, "H5") // por_semana, 1)
+
+
+OBS_MAXIMAS_HMM = _semanas_h5(None)
 
 # ====================================================================== parámetros por defecto (campo «Parámetros»)
 PARAMETROS_POR_DEFECTO: dict[str, dict[str, Any]] = {
@@ -114,10 +137,10 @@ UMBRALES: dict[str, dict[str, Any]] = {
                       "tolerancia": 1e-6, "arranques": 20, "iteraciones_max": 1000, "obs_maximas": OBS_MAXIMAS_REGIME},
     # REG-HMM-001 · «Entradas mínimas»: ≥ 260 semanales o ≥ 120 mensuales. «Parámetros»: n_estados 2–4; arranques ≥ 20
     # («≥ 20 arranques con semilla»). «Tolerancias»: 1e-6. INC-T112-01: tope de 1 000 iteraciones.
-    # Cotas (H-01) [PROPUESTO]: arranques ≤ 50; 520 observaciones (H5, 120 meses, en semanas: 10 años semanales); a lo sumo
-    # 5 variables, el tope multivariante de FX-COINT-001 (5 series).
+    # Cotas (H-01) [PROPUESTO]: arranques ≤ 50; 520 observaciones (H5, 120 meses, en semanas: 10 años semanales; T-121:
+    # se lee de `horizontes.H5` con `_semanas_h5`); a lo sumo 5 variables, el tope multivariante de FX-COINT-001 (5 series).
     "REG-HMM-001": {"obs_minimas": {"semanal": 260, "mensual": 120}, "rango_n_estados": [2, 4], "arranques_minimos": 20,
-                    "tolerancia": 1e-6, "iteraciones_max": 1000, "arranques_maximos": 50, "obs_maximas": 520,
+                    "tolerancia": 1e-6, "iteraciones_max": 1000, "arranques_maximos": 50, "obs_maximas": OBS_MAXIMAS_HMM,
                     "variables_maximas": 5},
     # FX-COINT-001 · «Entradas mínimas»: ≥ 50 observaciones comunes. «Tolerancias»: 1e-6. INC-T112-01: valores
     # críticos asintóticos (MacKinnon 2010 para ADF y Engle-Granger; MacKinnon, Haug y Michelis 1999, caso 2 de constante
@@ -305,6 +328,8 @@ def _obs_maximas(F: str, cfg: dict[str, Any] | None) -> int:
         return _entero(sesiones_horizonte(cfg, "H5"), "configuración: sesiones de H5", 1)
     if F == "FX-REGIME-001":
         return _entero(parametro(cfg, "senales.ventana_anios"), "configuración: senales.ventana_anios", 1) * SESIONES_POR_ANIO
+    if F == "REG-HMM-001":   # T-121 (H-05): H5 en semanas, con la configuración del Motor
+        return _semanas_h5(cfg)
     return int(UMBRALES[F]["obs_maximas"])
 
 

@@ -101,8 +101,9 @@ UMBRALES: dict[str, dict[str, Any]] = {
     "REI-FFO-001": {"ejercicios_minimos": 3, "observaciones_minimas_percentil": 5,
                     "capex_admitidos": ("reportado", "estimado"), "rango_capex_pct_rentas": (0.0, 1.0)},
     # REI-NAV-001 · «Aclaración y rechazo»: NAV de antigüedad > 12 meses. «Método»: percentil frente a ≥ 10 años.
-    # Variantes de NAV de EPRA (Best Practices Recommendations, referencia de la ficha) [PROPUESTO].
-    "REI-NAV-001": {"meses_antiguedad_nav_max": 12, "anios_percentil_minimos": 10,
+    # Variantes de NAV de EPRA (Best Practices Recommendations, referencia de la ficha) [PROPUESTO]. Mínimo de 2
+    # componentes [PROPUESTO INC-T119-01, r02 de T-119, H-01]: con uno, el agregado es la sociedad (1.6).
+    "REI-NAV-001": {"meses_antiguedad_nav_max": 12, "anios_percentil_minimos": 10, "componentes_minimos": 2,
                     "variantes_nav": ("EPRA NTA", "EPRA NRV", "EPRA NDV")},
     # CMD-INV-001 · «Aclaración y rechazo»: < 3 años. «Entradas mínimas»: ≥ 5 años (10 recomendados).
     # «Parámetros»: anos_estacional 3–10; el mínimo del rango (3) es también el mínimo de años previos con el mismo
@@ -510,6 +511,9 @@ def f_rei_nav(ent: dict[str, Any], params: dict[str, Any]) -> Resultado:
     tol = FICHAS[F]["tol"]
     lim: list[str] = []
     comps = _lista(v.get("componentes"), f"{F}: componentes")
+    if len(comps) < u["componentes_minimos"]:   # r02 de T-119 (QA r01, H-01): un agregado de una sociedad es la sociedad
+        raise ErrorFicha(f"{F}: rechazo: {len(comps)} componente (< {u['componentes_minimos']}): las sociedades "
+                         f"individuales solo entran como componentes del agregado (1.6)")
     filas: list[dict[str, Any]] = []
     for i, c in enumerate(comps):
         ctx = f"{F}: componentes[{i}]"

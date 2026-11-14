@@ -212,6 +212,73 @@ RE_ESCAPES = re.compile(r"(?<!\\)\\++(?:u[0-9a-fA-F]{4}|U[0-9a-fA-F]{8}|x[0-9a-f
                         r"|%(?:25)*(?:u[0-9A-Fa-f]{4}|[0-9A-Fa-f]{2})")
 
 
+# T-123 · R8: IBAN de otros países y números de tarjeta. Un patrón solo daría falsos positivos con cualquier serie de cifras,
+# así que el candidato se valida con su dígito de control: el IBAN con el módulo 97 (ISO 13616) y la longitud de su país, y
+# la tarjeta con el algoritmo de Luhn, la longitud y el prefijo de su red. Longitudes del registro de IBAN de SWIFT (ISO
+# 13616) para los países de la zona SEPA y algunos más; un país que no está en la tabla no se reconoce (límite declarado
+# en INC-T123-01). El IBAN español tiene además su patrón propio en `RE_SECRETO`, sin el control (más estricto).
+LONGITUD_IBAN = {"AD": 24, "AE": 23, "AT": 20, "BE": 16, "BG": 22, "BR": 29, "CH": 21, "CY": 28, "CZ": 24, "DE": 22, "DK": 18,
+                 "EE": 20, "ES": 24, "FI": 18, "FR": 27, "GB": 22, "GI": 23, "GR": 27, "HR": 21, "HU": 28, "IE": 22, "IL": 23,
+                 "IS": 26, "IT": 27, "LI": 21, "LT": 20, "LU": 20, "LV": 21, "MC": 27, "MT": 31, "NL": 18, "NO": 15, "PL": 28,
+                 "PT": 25, "RO": 24, "SA": 24, "SE": 24, "SI": 19, "SK": 24, "SM": 27, "TR": 26, "VA": 22}
+RE_CANDIDATO_IBAN = re.compile(r"(?<![A-Za-z0-9])([A-Za-z]{2}[0-9]{2}(?:[\s.\-]{0,2}[A-Za-z0-9]){10,30})")
+# una serie de cifras pegada a un punto o una coma con cifras es la parte de un número decimal, no una tarjeta
+RE_CANDIDATO_TARJETA = re.compile(r"(?<![0-9.,])((?:[0-9][\s\-]?){12,18}[0-9])(?![0-9]|[.,][0-9])")
+
+
+def _iban_valido(compacto: str) -> bool:
+    """Módulo 97 de ISO 13616: los cuatro primeros caracteres al final, cada letra como 10–35, y el resto da 1."""
+    reordenado = compacto[4:] + compacto[:4]
+    if not reordenado.isalnum() or not reordenado.isascii():
+        return False
+    return int("".join(str(int(c, 36)) for c in reordenado)) % 97 == 1
+
+
+def ibanes_en_texto(texto: str) -> list[str]:
+    """IBAN con su longitud de país y su dígito de control correctos, con o sin separadores entre caracteres."""
+    hallados = []
+    for m in RE_CANDIDATO_IBAN.finditer(texto):
+        compacto = re.sub(r"[\s.\-]", "", m.group(1)).upper()
+        largo = LONGITUD_IBAN.get(compacto[:2])
+        # tras el IBAN puede venir una palabra («… 00 EUR»), pero no una cifra más: eso es otra serie, no un IBAN
+        if largo and len(compacto) >= largo and not compacto[largo:largo + 1].isdigit() and _iban_valido(compacto[:largo]):
+            hallados.append(compacto[:largo])
+    return hallados
+
+
+def _luhn(cifras: str) -> bool:
+    total = 0
+    for i, c in enumerate(reversed(cifras)):
+        d = int(c) * (2 if i % 2 else 1)
+        total += d - 9 if d > 9 else d
+    return total % 10 == 0
+
+
+def _red_de_tarjeta(cifras: str) -> bool:
+    """Prefijo y longitud de las redes de pago corrientes (Visa, Mastercard, American Express, Discover, JCB, UnionPay)."""
+    n = len(cifras)
+    if cifras[0] == "4":
+        return n in (13, 16, 19)
+    if 51 <= int(cifras[:2]) <= 55 or 2221 <= int(cifras[:4]) <= 2720:
+        return n == 16
+    if cifras[:2] in ("34", "37"):
+        return n == 15
+    if cifras[:4] == "6011" or cifras[:2] == "65" or 3528 <= int(cifras[:4]) <= 3589 or cifras[:2] == "62":
+        return 16 <= n <= 19
+    return False
+
+
+def tarjetas_en_texto(texto: str) -> list[str]:
+    """Números de tarjeta: 13 a 19 cifras, con un espacio o un guion opcional entre ellas, de una red conocida y con el
+    dígito de control de Luhn. Se devuelven enmascarados (solo las cuatro últimas cifras)."""
+    hallados = []
+    for m in RE_CANDIDATO_TARJETA.finditer(texto):
+        cifras = re.sub(r"[\s\-]", "", m.group(1))
+        if 13 <= len(cifras) <= 19 and _red_de_tarjeta(cifras) and _luhn(cifras):
+            hallados.append("tarjeta …" + cifras[-4:])
+    return hallados
+
+
 def secretos_en_texto(texto) -> list[str]:
     """Indicios de secretos en un texto: los patrones de `RE_SECRETO` y las claves «sk-». También se mira el texto con los
     escapes de JSON («\\n», «\\t», «\\r», «\\/») sustituidos, porque la respuesta de un agente es JSON escrito como
@@ -223,6 +290,7 @@ def secretos_en_texto(texto) -> list[str]:
     for t in {texto, RE_ESCAPES.sub(" ", texto)}:
         hallados += [m.group(0) for m in RE_SECRETO.finditer(t)]
         hallados += [m.group(0) for m in RE_CANDIDATO_SK.finditer(t) if _es_clave_sk(m.group(1))]
+        hallados += ibanes_en_texto(t) + tarjetas_en_texto(t)   # T-123
     return list(dict.fromkeys(hallados))
 
 

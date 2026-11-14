@@ -69,3 +69,35 @@ cd ../..
 .venv/bin/pytest -q bloque_a/11_Ejecutor
 .venv/bin/python -I -B .docs/tickets/T-119/revisores/impl_p2_mutantes.py <carpeta desechable>
 ```
+
+## Ronda r02 (QA r01: NO APTO)
+
+| Suite | Antes (r01) | Después (r02) |
+| --- | --- | --- |
+| `tests/test_t119_p2.py` | 1171 | 1191 (pruebas `test_r02_h02_*`, que matan los mutantes de H-02) |
+| `tests/test_t119_motor.py` | 130 | 130 |
+| `tests/test_t119_r02.py` (nuevo) | — | 21 |
+| Suite completa de A | 5258 (QA r01, con T-118 integrado) | **5497** en verde, con T-121 (21 min 34 s) |
+
+### Hallazgo → prueba → script del revisor (sin modificar)
+
+| Hallazgo | Prueba | Script: antes → después |
+| --- | --- | --- |
+| H-01 | `test_t119_r02.py::test_h01_*` (mínimos fijos; REI-LEV con 1 y 2 componentes; una petición por emisor; clones con 10, 3 y 2 componentes; un solo clon entre distintos; el clon de FIR-CRED por los datos del modelo; un token solo con `ambito_es_red`; REI-NAV con uno; los casos de control de las cuatro, superados) | `r01_08_frontera_b.py`: 11/15 → el script original se detiene en la línea 83 con `KeyError: 'limitaciones'`: imprime `r['limitaciones']` de la respuesta de CHR-TOKEN-001 con un token, que ahora es un RECHAZO y no lleva ese campo. Con una copia que solo cambia ese acceso por `r.get('limitaciones')` (en la impresión y en la comprobación; ninguna otra línea): **14/14** (REI-LEV con un componente y con una petición por emisor, RECHAZADO; FIR-CRED con 10 copias, RECHAZADO; CHR-TOKEN con un token de sector, RECHAZADO). El bloque 3 (dispersión con dos componentes) ya no tiene nada que comprobar: con dos, REI-LEV rechaza |
+| H-02 | `test_t119_p2.py::test_r02_h02_*` | `r01_09_mutantes.py`: 62 muertos y 12 vivos (8 no equivalentes) → **71 muertos y 4 vivos** (Q50, Q53, Q60 y Q73, los que el revisor dio por equivalentes o redundantes); Q83 ya se aplica y muere; Q28 sigue sin aplicarse (su texto no está en el módulo). Los 8 del hallazgo, muertos |
+| H-03 | `test_h03_dos_tir_no_es_sin_tir`, `test_h03_la_rejilla_es_un_umbral_fijo` | `r01_03_oraculos_b.py`: 102/103 → **103/103** |
+| H-04 | — (documentación) | INC-T119-01, «Ronda r02» |
+| H-05, H-09 | `test_h05_h09_lo_que_no_se_calcula_se_declara_en_la_entrega` | `r01_03` (LN-PME) y `r01_02_oraculos_a.py`: 280/280 → **280/280** |
+| H-06 | `test_h06_la_cache_no_entrega_…`, `test_h06_la_firma_distingue_…` | `r01_04_hostiles.py`: 474 «tipo raro servido», entre ellos el `Decimal` servido desde la caché → **97**, ninguno desde la caché (los que quedan son campos que la ficha no usa con esos parámetros y opcionales con None, como en la r01) |
+| H-07 | `test_t121_hallazgos.py::test_h02_argumentos_de_la_llamada_que_no_son_texto` (solicitante de 3 000 niveles, circular, sustituto Unicode, lista) | `r01_04_hostiles.py`: 70 excepciones escapadas (60 del proveedor de pruebas del script, que no tiene `cierres`, y 10 `RecursionError` con el solicitante anidado) → **60**, todas del proveedor del script (`AttributeError: 'Proveedor' object has no attribute 'cierres'`), ninguna de `servicio.py` ni de las fichas. Resultado del script: 4/5 (la que falla es esa, la misma que el revisor descartó en la r01); 35 659 llamadas, una entrada en RC por llamada, nada no finito, la más lenta 0,4 s |
+| H-08 | `test_h08_un_cambio_de_configuracion_en_caliente_no_sale_de_la_cache` | `r01_06_corte_cotas_config.py`: 113/114 → **114/114** |
+
+Otros scripts de la r01, de nuevo: `r01_01_casos_ct09_ct10.py` **37/37** (los 33 casos servidos, CT-10 = SI, misma huella en dos procesos); `r01_05_catalogo.py --desechable <carpeta>` **29/29** (el Catálogo se reproduce byte a byte); `r01_07_merton_barrido.py` **3/3** (1 657 de 1 800 combinaciones servidas, como en la r01).
+
+### Mutantes de las correcciones de la r02
+
+`.docs/tickets/T-119/revisores/impl_r02_mutantes.py bloque_a/11_Ejecutor <carpeta desechable>`: 13 mutantes (sin rechazo de clones en las tres fichas; sin mínimo o con mínimo 2 en REI-LEV; un token de sector; el clon distinguido por el id; REI-NAV con uno; la TIR con dos soluciones; las dos advertencias; la caché sin firma de tipos y sin configuración) frente a `test_t119_r02.py`, `test_t119_p2.py` y `test_t119_motor.py`: **13 muertos, ninguno vivo**.
+
+### Gate
+
+El mismo que el de T-121 (misma rama y mismo árbol): ver `.docs/tickets/T-121/pruebas.md`, «Gate». ruff 2902 (cuota 2902), mypy 109 (cuota 109), corpus íntegro (695), refs, secretos y NFC en verde, goldens de contratos sin cambios.

@@ -1277,7 +1277,12 @@ def test_tir_multiples_soluciones_fuera_de_rango_y_polinomio():
     # −100, +230, −132: dos raíces (10 % y 20 %), el valor actual neto tiene el mismo signo en los dos extremos del rango:
     # se avisa de las múltiples soluciones y no se entrega ninguna
     assert fp._tir(dias[:3], np.array([-100.0, 230.0, -132.0]), u, lim, "TIR") is None
-    assert "múltiples soluciones" in lim[0] and "sin TIR entre" in lim[1]
+    # r02 (QA r01, H-03): no se afirma que no hay TIR cuando hay dos: se cuentan en la rejilla
+    assert "múltiples soluciones" in lim[0] and "2 soluciones entre -0.99 y 10" in lim[1] and "sin TIR" not in lim[1]
+    lim.clear()
+    # −100, +230, −133: dos cambios de signo y ninguna raíz real: ahí sí se dice «sin TIR»
+    assert fp._tir(dias[:3], np.array([-100.0, 230.0, -133.0]), u, lim, "TIR") is None
+    assert "múltiples soluciones" in lim[0] and "sin TIR entre -0.99 y 10 (rejilla de 1000 puntos)" in lim[1]
     lim.clear()
     # −100, +360, −431, +171,6: tres raíces (10 %, 20 % y 30 %): se avisa y se entrega una de ellas
     tres = fp._tir(dias, np.array([-100.0, 360.0, -431.0, 171.6]), u, lim, "TIR")
@@ -1577,3 +1582,122 @@ def test_alt_auc_periodos_sin_enlace_no_se_identifican():
             tr.append({"id_pieza": f"P{i}", "fecha": f"{2010 + k}-06-15", "precio": 100.0 + i + 3 * k})
     v = {"categoria": "arte", "transacciones": tr}
     _rechaza("ALT-AUC-001", v, {}, "no se identifica")
+
+
+# ============================================================================= ronda r02 (QA r01, H-02): reglas sin red
+# Cada prueba mata un mutante que vivía ante los casos de control y las pruebas de la r01 (`revisores/r01_09_mutantes.py`).
+def _un_dia_despues(fecha):
+    return (pd.Timestamp(fecha) + pd.Timedelta(days=1)).date().isoformat()
+
+
+def test_r02_h02_prv_cf_un_nav_posterior_al_corte_se_rechaza_aunque_los_flujos_no_lo_sean():
+    """Q55: el corte se aplica a los NAV por sí mismos, no solo porque los flujos ya lo cumplan."""
+    v, p = _metodo("PRV-CF-001")
+    corte = v["navs"][-1]["fecha"]
+    assert max(f["fecha"] for f in v["flujos"]) <= corte
+    _correr("PRV-CF-001", v, p, corte=corte)                              # con el corte en el último NAV se sirve
+    v["navs"].append({"fecha": _un_dia_despues(corte), "valor": 39.0})
+    _rechaza("PRV-CF-001", v, p, r"navs: dato del .* posterior a la fecha de corte", corte=corte)
+
+
+def test_r02_h02_prv_pme_un_nivel_del_indice_posterior_al_corte_se_rechaza():
+    """Q54: un nivel del índice que nadie usa (posterior al NAV) también es un dato observado posterior al corte."""
+    v, p = _metodo("PRV-PME-001")
+    corte = v["nav_final"]["fecha"]
+    _correr("PRV-PME-001", v, p, corte=corte)
+    v["indice"]["niveles"].append({"fecha": _un_dia_despues(corte), "nivel": 185.0})
+    _correr("PRV-PME-001", v, p)                                          # sin corte, el nivel de más no estorba
+    _rechaza("PRV-PME-001", v, p, r"indice\.niveles: dato del .* posterior a la fecha de corte", corte=corte)
+
+
+def test_r02_h02_cmd_real_la_curva_de_costes_posterior_al_corte_dentro_del_ultimo_mes_se_rechaza():
+    """Q58: la curva de costes cae en un mes de la serie, pero después del corte (y de la última observación)."""
+    v, p = _metodo("CMD-REAL-001")
+    assert v["serie"][-1]["fecha"] == "2024-12-31"
+    v["serie"][-1]["fecha"] = "2024-12-15"
+    v["curva_costes"]["fecha"] = "2024-12-20"
+    _correr("CMD-REAL-001", v, p, corte="2024-12-20")                     # el día del corte se sirve
+    _rechaza("CMD-REAL-001", v, p, r"curva_costes: «fecha»: dato del 2024-12-20 posterior a la fecha de corte 2024-12-15",
+             corte="2024-12-15")
+
+
+def _hamed_rao_a_mano(x, alpha):
+    """Mann-Kendall con la corrección de Hamed y Rao (1998), escrito aparte: (p-valor corregido, p-valor sin corregir, S)."""
+    n = len(x)
+    s = sum(np.sign(x[j] - x[i]) for i in range(n) for j in range(i + 1, n))
+    var = n * (n - 1) * (2 * n + 5) / 18                                  # sin empates
+    sen = float(np.median([(x[j] - x[i]) / (j - i) for i in range(n) for j in range(i + 1, n)]))
+    rangos = stats.rankdata(x - sen * np.arange(n))
+    rangos = rangos - rangos.mean()
+    z_crit = stats.norm.ppf(1 - alpha / 2)
+    suma = 0.0
+    for k in range(1, n - 1):
+        rho = float(rangos[:-k] @ rangos[k:]) / float(rangos @ rangos)
+        if abs(rho) > z_crit / math.sqrt(n):
+            suma += (n - k) * (n - k - 1) * (n - k - 2) * rho
+    factor = 1 + 2 / (n * (n - 1) * (n - 2)) * suma
+
+    def p_valor(v_):
+        return float(2 * (1 - stats.norm.cdf(abs((s - np.sign(s)) / math.sqrt(v_)))))
+    return p_valor(var * factor), p_valor(var), s
+
+
+def test_r02_h02_cmd_real_la_tendencia_lleva_la_correccion_de_hamed_rao():
+    """Q12: con un precio real autocorrelado, el p-valor y la dirección son los del Mann-Kendall corregido; sin la
+    corrección la misma serie daría «creciente»."""
+    v, p = _metodo("CMD-REAL-001")
+    n = 15 * 12                                                           # el mínimo de la ficha: 180 meses
+    v["serie"] = v["serie"][-n:]
+    for i, fila in enumerate(v["serie"]):                                 # ciclo largo sobre una deriva pequeña, IPC constante
+        fila["ipc"] = 100.0
+        fila["precio"] = 50.0 * math.exp(0.002 * i + 0.3 * math.sin(2 * math.pi * i / 120))
+    v["curva_costes"]["fecha"] = v["serie"][-3]["fecha"]
+    res, _ = _correr("CMD-REAL-001", v, p)
+    alpha = fp.UMBRALES["CMD-REAL-001"]["nivel_tendencia"]
+    real = [f["precio"] * v["serie"][-1]["ipc"] / f["ipc"] for f in v["serie"]]   # moneda constante del último mes
+    corregido, sin_corregir, s = _hamed_rao_a_mano(np.log(real), alpha)
+    assert s > 0 and sin_corregir < alpha < corregido                      # la corrección cambia la conclusión
+    assert res["tendencia_p_valor"] == pytest.approx(corregido, rel=1e-9)
+    assert res["tendencia_direccion"] == "sin tendencia"
+
+
+@pytest.mark.parametrize("covenants", [{"ltv_max": 0.55, "icr_min": 3.0},     # S2: LTV 50 % (cumple) e ICR 2,7 (incumple)
+                                       {"ltv_max": 0.45, "icr_min": 2.5}])    # S2: LTV 50 % (incumple) e ICR 2,7 (cumple)
+def test_r02_h02_rei_lev_incumple_quien_falla_uno_solo_de_los_dos_covenants(covenants):
+    """Q17: «en incumplimiento» es fallar el LTV o el ICR, no los dos a la vez."""
+    v, p = _metodo("REI-LEV-001")
+    v["componentes"][1]["covenants"] = covenants
+    c = _correr("REI-LEV-001", v, p)[0]["covenants"]
+    assert c["n_componentes"] == 2 and c["en_incumplimiento_pct"] == 50.0
+    assert (c["holgura_ltv_pp"]["minimo"] < 0) != (c["holgura_icr_veces"]["minimo"] < 0)   # falla uno solo
+
+
+@pytest.mark.parametrize("valor", [1, 1.0, "no", "true", "sí", [True], {"x": 1}])
+def test_r02_h02_prv_pme_rentabilidad_total_solo_admite_true(valor):
+    """Q84: la declaración es el booleano true; un 1 o un texto (aunque diga «no») no la sustituyen."""
+    v, p = _metodo("PRV-PME-001")
+    v["indice"]["rentabilidad_total"] = valor
+    _rechaza("PRV-PME-001", v, p, "rentabilidad total")
+
+
+@pytest.mark.parametrize("phi", [-1.0, 1.0])
+def test_r02_h02_alt_hf_phi_en_el_borde_se_rechaza(phi):
+    """Q86: φ = ±1 queda fuera de (−1, 1). Con φ = −1 el Geltner no divide por cero y, sin la regla, se serviría."""
+    v, _ = _base("ALT-HF-001", 2)
+    v["serie"] = v["serie"][:47]                                          # 46 pares: las medias de los dos tramos se anulan
+    for i, fila in enumerate(v["serie"]):
+        fila["r"] = (2.0 if i % 2 == 0 else -2.0) if phi < 0 else float(i)
+    assert fp._ar1(np.array([f["r"] for f in v["serie"]])) == phi
+    _rechaza("ALT-HF-001", v, {}, r"φ del AR\(1\) fuera de \(−1, 1\)")
+
+
+def test_r02_h02_la_magnitud_tambien_se_mira_en_los_tipos_de_numpy():
+    """Q70: un real de numpy que no es un `float` de Python (longdouble) por encima de 1e100 se rechaza por su magnitud."""
+    grande = np.longdouble("1e200")
+    assert fp._magnitud_excesiva(grande) and fp._magnitud_excesiva(np.float64(1e101))
+    assert not fp._magnitud_excesiva(np.float32(3e38)) and not fp._magnitud_excesiva(np.int64(2**62))
+    assert not fp._magnitud_excesiva(np.longdouble("1e99")) and not fp._magnitud_excesiva(True)
+    if not isinstance(grande, float):                                     # donde longdouble es más ancho que double
+        v, p = _metodo("FIR-CRED-001")
+        v["diferencial_indice_pb"] = grande
+        _rechaza("FIR-CRED-001", v, p, "magnitud mayor que 1e\\+100")

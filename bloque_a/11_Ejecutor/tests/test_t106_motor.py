@@ -60,8 +60,10 @@ def test_un_caso_que_falla_no_se_supera_y_se_registra(tmp_path, monkeypatch):
 def test_cada_ficha_se_sirve_por_ct09_con_su_primer_caso(tmp_path, ficha):
     caso = servicio.CASOS_CONTROL[ficha][0]
     m = _motor(tmp_path)
+    # T-121 (H-04 de la QA r01 de T-118): los datos sintéticos de control llegan a 2029-12-31 (historia del múltiplo de
+    # IDX-ERP-001); con el corte anterior a ellos la petición se rechaza, así que el corte va en su última fecha
     r = m.servir({"operacion": ficha, "datos": caso.get("datos") or [], "parametros": dict(caso.get("parametros") or {}),
-                  "fecha_corte": "2026-11-12"}, "AG-21")
+                  "fecha_corte": "2029-12-31"}, "AG-21")
     if servicio.citable_segun_catalogo(ficha):
         assert r["estado"] in ("SERVED", "SERVED_WITH_LIMITATIONS"), r
         assert caso["comprobar"](r["resultado"])   # QA r01, H-13: sin el «or» que la hacía pasar siempre
