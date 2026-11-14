@@ -396,6 +396,19 @@ evaluacion:
 # certificado nuevo (habilita probabilidades numéricas) nace PROPUESTO hasta que el operador lo aprueba por CT-04
 # (aprobar_certificados), y la recalibración de pesos de RK es siempre una propuesta (aplicado_en_produccion: false).
 # false = comportamiento anterior (certificado VIGENTE al emitirse; la recalibración sigue evaluacion.aplicar_recalibracion).
+# T-125 · PB-46, fiabilidad de las fuentes de opinión (FUE-, esquema de F6 4.5): el Evaluador resuelve en C5 los pronósticos
+# explícitos de las fuentes (piezas de F2 con `tipo_afirmacion = PRONOSTICO_FUENTE`) y calcula, por fuente y mes, el BSS
+# contraído hacia cero con k = 20 y los puntos de historial (0–20; neutro 10), que comunica al Buscador por CT-19.
+# k, el neutro y el máximo salen del esquema de F6 y del Plan de pruebas (PB-46). Lo demás es [PROPUESTO] (INC-T125-01).
+fiabilidad_fuentes:
+  k_contraccion: 20               # esquema de F6, 4.5 («bss_contraido (k = 20)»)
+  puntos_neutro: 10               # esquema de F6, 4.5 («puntos_historial (0–20; neutro 10)»)
+  puntos_max: 20
+  n_min: 5                        # [PROPUESTO] pronósticos resueltos mínimos de una fuente para calcular su fiabilidad
+  ventana_meses: 24               # [PROPUESTO] pronósticos con fecha objetivo dentro de los últimos 24 meses
+  prob_sin_declarar: 0.7          # [PROPUESTO] probabilidad de un pronóstico explícito que no la da («más probable que no»)
+  referencia: 0.5                 # [PROPUESTO] probabilidad de la referencia ingenua del BSS de una fuente
+
 aprendizaje:
   solo_endurecer: true
   lecciones_por_encargo: 10       # 12.3 del Documento 0: cada encargo carga como máximo 10 lecciones, las de más fuerza (T-120)

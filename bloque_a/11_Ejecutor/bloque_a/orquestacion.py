@@ -525,6 +525,7 @@ class Bloque:
             res_eval = {"error": str(e)}
             self.almacen.incidencia("HERRAMIENTA", f"Evaluador no disponible: {e}", "AG-20", severidad="Operativa")
         self._informe_aprendizaje(res_eval, as_of, run_id)
+        self._comunicar_fiabilidad(res_eval, run_id)
         if self.v6 and v6.op(self, "cobertura.registrar"):   # T-101 (idea 4): descartes muestreados cuyo horizonte ya venció
             v6.resolver_contrafactual(self, as_of, run_id)
 
@@ -684,6 +685,18 @@ class Bloque:
         return resultado
 
     # ------------------------------------------------------------------------------------
+    def _comunicar_fiabilidad(self, res_eval: dict, run_id: str) -> None:
+        """T-125 (PB-46): las FUE- nuevas van al Buscador de Fuentes Avanzadas por CT-19, que recalifica las fuentes en F9; cada
+        FUE- anota el mensaje. Determinista: no hace falta el informe por IA."""
+        fue = res_eval.get("fiabilidad_fuentes") or []
+        if not fue:
+            return
+        msg = self.mensajeria.crear("CT-19", "AG-20", "AG-16", {"tipo": "FIABILIDAD_FUENTES", "fuentes": [
+            {k: f[k] for k in ("fue_id", "ref_id", "periodo", "n", "aciertos", "bss", "bss_contraido", "puntos_historial")} for f in fue]},
+            run_id=run_id, tipo_mensaje="RETORNO", estado="COMPLETO")
+        for f in fue:
+            self.almacen.escribir("F6", "AG-20", {"tipo_entrada": "FUE", "id": f["fue_id"], "comunicado_ct19": msg["msg_id"]})
+
     def _informe_aprendizaje(self, res_eval: dict, as_of, run_id: str) -> None:
         if not res_eval or not res_eval.get("resueltos") or not (self.cfg.get("evaluacion") or {}).get("llm_informe_aprendizaje", True):
             return
@@ -1242,6 +1255,8 @@ class Bloque:
                            "evidencias": [], "raices_independientes": 0, "ps1_cumple": False,
                            "nivel_confianza": cl.get("nivel_confianza", "probable"),
                            "utilizada_por": [{"objeto": f["proxy"], "papel": "tesis"}], "historial": [{"fecha": str(as_of.date()), "cambio": "alta", "run_id": run_id}]}
+                    if clm["tipo_afirmacion"] == "PRONOSTICO_FUENTE" and isinstance(p.get("pronostico_fuente"), dict):
+                        clm["pronostico_fuente"] = dict(p["pronostico_fuente"])   # T-125 (PB-46): lo resuelve el Evaluador
                     clm_por_texto[clave_clm] = clm
                 dup = evd_por_hash.get(h)
                 if dup is None:

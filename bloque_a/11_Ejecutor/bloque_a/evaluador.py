@@ -160,6 +160,15 @@ def lecciones_por_encargo(cfg: dict | None) -> int:
 LECCIONES_POR_ENCARGO_MAX = 10   # 12.3 del Documento 0 del Bloque A: «máximo 10»
 
 
+def _campos_pronostico_fuente(pf: dict) -> tuple | None:
+    """T-125: los campos del bloque `pronostico_fuente` de una pieza de F2, o None si falta alguno o una fecha no se lee."""
+    try:
+        return (pd.Timestamp(pf["fecha_objetivo"]).normalize(), pd.Timestamp(pf["fecha_emision"]).normalize(), pf["ref_id"],
+                pf["serie_ht01"], pf["direccion"], pf["umbral_o_rango"], pf.get("probabilidad"))
+    except (KeyError, TypeError, ValueError):
+        return None
+
+
 class Evaluador:
     def __init__(self, almacen, proveedor, motor, cfg: dict, universo: pd.DataFrame) -> None:
         lecciones_por_encargo(cfg)   # T-122: una configuración mal formada falla al crear el Evaluador, no a mitad de ciclo
@@ -952,6 +961,97 @@ class Evaluador:
                 return a
         return None
 
+    # ------------------------------------------------------------------------------------
+    # T-125 · Fiabilidad de las fuentes de opinión (FUE-, PB-46)
+    def pronosticos_de_fuentes(self, as_of) -> list[dict]:
+        """Pronósticos explícitos de fuentes de opinión registrados en F2 (`tipo_afirmacion = PRONOSTICO_FUENTE` con su
+        bloque `pronostico_fuente`), resueltos con la serie de HT-01 en su fecha objetivo. Solo los vencidos y conocibles en
+        `as_of`, dentro de la ventana; uno mal formado o sin dato se omite (no cuenta, no se inventa)."""
+        par = parametro(self.cfg, "fiabilidad_fuentes")
+        corte = pd.Timestamp(as_of).normalize()
+        desde = corte - pd.DateOffset(months=int(par["ventana_meses"]))
+        salida = []
+        for clm in self.almacen.estado("F2", as_of, clave="clm_id").values():
+            pf = clm.get("pronostico_fuente")
+            if clm.get("tipo_afirmacion") != "PRONOSTICO_FUENTE" or not isinstance(pf, dict):
+                continue
+            campos = _campos_pronostico_fuente(pf)
+            if campos is None:
+                continue
+            objetivo, emision, ref_id, serie, direccion, umbral, prob = campos
+            if not (isinstance(ref_id, str) and isinstance(serie, str) and emision < objetivo <= corte and objetivo >= desde):
+                continue
+            if direccion in ("por_encima", "por_debajo"):
+                if isinstance(umbral, bool) or not isinstance(umbral, (int, float)) or not math.isfinite(umbral):
+                    continue
+            elif direccion in ("dentro", "fuera"):
+                if not (isinstance(umbral, list) and len(umbral) == 2 and all(isinstance(x, (int, float)) and not isinstance(x, bool)
+                                                                            and math.isfinite(x) for x in umbral) and umbral[0] < umbral[1]):
+                    continue
+            else:
+                continue
+            if prob is None:
+                prob = float(par["prob_sin_declarar"])
+            elif isinstance(prob, bool) or not isinstance(prob, (int, float)) or not 0 < prob < 1:
+                continue
+            dato = self._cierre_en(serie, objetivo)
+            if dato is None:
+                continue
+            fecha_dato, valor = dato
+            if pd.Timestamp(fecha_dato) < objetivo - pd.Timedelta(days=int(parametro(self.cfg, "ps2_antiguedad_maxima_dias.H2"))):
+                continue   # el último cierre es demasiado antiguo para la fecha objetivo
+            if direccion == "por_encima":
+                ocurre = valor > umbral
+            elif direccion == "por_debajo":
+                ocurre = valor < umbral
+            elif direccion == "dentro":
+                ocurre = umbral[0] <= valor <= umbral[1]
+            else:
+                ocurre = not umbral[0] <= valor <= umbral[1]
+            salida.append({"clm_id": clm.get("clm_id"), "ref_id": ref_id, "prob": float(prob), "resultado": int(ocurre),
+                           "fecha_objetivo": str(objetivo.date()), "valor": valor})
+        return sorted(salida, key=lambda x: (x["ref_id"], x["fecha_objetivo"], str(x["clm_id"])))
+
+    def _cierre_en(self, serie: str, fecha) -> tuple | None:
+        """Último cierre de HT-01 hasta `fecha`, o None si no hay (el pronóstico de la fuente no se resuelve)."""
+        try:
+            return self.proveedor.valor_en(serie, fecha)
+        except Exception:  # noqa: BLE001 — sin dato de HT-01 en la fecha objetivo no se resuelve
+            return None
+
+    def fiabilidad_fuentes(self, as_of) -> list[dict]:
+        """FUE- por fuente y mes (esquema de F6, 4.5): n, aciertos, BSS frente a la referencia ingenua, BSS contraído con
+        k y puntos de historial = neutro · (1 + BSS contraído), entre 0 y el máximo. Una vez por mes: si ya hay FUE- del mes,
+        no se repite. Solo endurece o suaviza la valoración de la fuente; no toca F9 (la recalifica el Buscador)."""
+        par = parametro(self.cfg, "fiabilidad_fuentes")
+        periodo = str(pd.Timestamp(as_of).date())[:7]
+        if any(e.get("tipo_entrada") == "FUE" and e.get("periodo") == periodo for e in self.almacen.estado("F6", as_of, clave="id").values()):
+            return []
+        por_fuente: dict[str, list[dict]] = defaultdict(list)
+        for p in self.pronosticos_de_fuentes(as_of):
+            por_fuente[p["ref_id"]].append(p)
+        k, neutro, maximo, ref = float(par["k_contraccion"]), float(par["puntos_neutro"]), float(par["puntos_max"]), float(par["referencia"])
+        nuevas = []
+        for ref_id in sorted(por_fuente):
+            ps = por_fuente[ref_id]
+            n = len(ps)
+            if n < int(par["n_min"]):
+                continue
+            brier = sum((p["prob"] - p["resultado"]) ** 2 for p in ps) / n
+            brier_ref = sum((ref - p["resultado"]) ** 2 for p in ps) / n
+            bss = 1 - brier / brier_ref if brier_ref > 0 else None
+            bss_c = None if bss is None else n / (n + k) * bss
+            puntos = neutro if bss_c is None else min(maximo, max(0.0, neutro * (1 + bss_c)))
+            fue_id = self.almacen.nuevo_id("FUE")
+            fue = {"tipo_entrada": "FUE", "id": fue_id, "fue_id": fue_id, "ref_id": ref_id, "periodo": periodo, "n": n,
+                   "aciertos": sum(p["resultado"] for p in ps), "bss": None if bss is None else round(bss, 6),
+                   "bss_contraido": None if bss_c is None else round(bss_c, 6), "puntos_historial": round(puntos, 4),
+                   "calc_id": None, "comunicado_ct19": None, "pronosticos": [p["clm_id"] for p in ps],
+                   "metodo": "Brier frente a la referencia ingenua; contracción n / (n + k)"}
+            self.almacen.escribir("F6", "AG-20", fue)
+            nuevas.append(fue)
+        return nuevas
+
     def ciclo(self, as_of, run_id: str | None = None) -> dict:
         """C5: resolución de vencidos, métricas, certificados, lecciones y recalibración (nunca bloquea C1–C3)."""
         resueltos = self.resolver(as_of, run_id)
@@ -966,7 +1066,8 @@ class Evaluador:
         lecciones = self.extraer_lecciones(as_of, metr)
         aju = self.recalibrar(as_of, run_id)
         degradacion_h5 = self.aplicar_degradacion_h5(as_of, run_id)
-        return {"resueltos": len([r for r in resueltos if r["estado"] == "RESUELTO"]),
+        fiabilidad = self.fiabilidad_fuentes(as_of)   # T-125 (PB-46)
+        return {"fiabilidad_fuentes": fiabilidad, "resueltos": len([r for r in resueltos if r["estado"] == "RESUELTO"]),
                 "no_resolubles": len([r for r in resueltos if r["estado"] == "NO_RESOLUBLE"]),
                 "metricas": metr, "certificados": certs, "lecciones_nuevas": lecciones, "ajuste": aju,
                 "degradacion_h5": degradacion_h5, "excluidos_contaminacion": excl}
