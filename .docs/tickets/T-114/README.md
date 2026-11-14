@@ -2,7 +2,7 @@
 
 | Campo | Valor |
 | --- | --- |
-| Estado | EN QA |
+| Estado | CERRADO (QA r02 APTO, 14-11-2026) |
 | Pieza | bloque_a (11_Ejecutor, solo pruebas) |
 | Planifica · implementa · QA | claude · claude · un revisor nuevo sin contexto (o Astra, si el operador se lo asigna) |
 | Aprobación del operador | aprobada el 2026-11-13: «planifica y ejecuta la fase 3» |
@@ -121,3 +121,4 @@ Regla de re-congelado (va en el `README.md` de los goldens): solo deliberado, co
 - 2026-11-14 · NO APTO · revisor (QA r01) · dos hallazgos altos: H-01 (20 cambios de formato a la vez no hacen fallar ningún golden: las reglas de valor de la mensajería y los cuerpos que el ciclo semanal no emite quedaban sin congelar) y H-02 (falta la diferencia de `tipo` de CT-22 entre el Anexo B y el ejecutor); H-03 media (deuda sin actualizar) y H-04 a H-06 bajas. Detalle en `qa.md`
 - 2026-11-14 · EN QA · claude · ronda r02: batería de aceptaciones y rechazos (golden nuevo), once flujos simulados con rutas anidadas y tipos, CT-22 con su campo del Anexo B y su diferencia medida, `contenido` de CT-23 con condición, prueba «nada inventado» por párrafo, CA-5 reescrito. Detalle en «Ronda r02» de `analisis-tecnico.md`. H-03 (deuda) lo actualiza quien coordina; pendientes el gate 12/12 y la QA r02
 - 2026-11-14 · EN QA · claude · al integrar la r02 con la r02 de T-117 se re-congela `formas_flujos_mock.json` (línea del 14-11 en `REGISTRO.md`): en el ciclo V6 simulado dos Analistas dejan de emitir CT-08; no cambia ningún formato
+- 2026-11-14 · CERRADO · QA r02 APTO (revisor nuevo sin contexto): 39 de 39 y 11 de 11 mutantes del revisor anterior detectados; siete goldens deterministas con cuatro semillas, otra zona horaria y otra configuración regional; CT-22 dice exactamente lo que el Anexo B. Abiertos: H-07 medio (38 mensajes de tres flujos se descartan del golden de formas) y H-08 a H-11 bajos, a la deuda en T-124

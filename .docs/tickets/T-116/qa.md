@@ -219,3 +219,128 @@ Sin cambios respecto de la r01: no cambia código de producción por este ticket
 Lo que no comprobé: `--ejecutar` completo y el gate entero; PB-55, PB-56, PB-53 y PB-63 están leídas, no mutadas; las demás AUTOMATICA (las 19 de la r01) no las releí.
 
 Este revisor no cierra el ticket ni toca la deuda, el diario o la memoria.
+
+## Ronda r03
+
+- **Revisor:** revisor nuevo sin contexto de la implementación (subagente de Claude; no es el de la r01 ni el de la r02, ni quien implementó) · 2026-11-14
+- **Qué se revisa:** la ronda r03 (commit `e880ef4`; el `develop` de la revisión es `00ed8d3`, que solo añade T-114 r02 encima y no toca nada de T-116), en una copia propia (`git worktree` con HEAD separado). Orden de lectura: `README.md` y las rondas r01 y r02 de este fichero → el mapa, `test_fase4_huecos.py`, el plan y el código citado → mis ataques → al final `analisis-tecnico.md` y `pruebas.md`.
+- «Ejecutado» es ejecutado por mí en mi copia o en copias desechables; «leído» es deducción de lectura. Máquina compartida con otro agente (carga 5 a 9): tiempos orientativos. Por indicación del encargo no ejecuté el gate completo, la suite completa ni `--ejecutar`.
+
+### Reproducción
+
+| Qué | Orden | Resultado |
+| --- | --- | --- |
+| Comprobar el mapa | `.venv/bin/python .docs/scripts/evidencias_plan_a.py` | «67 pruebas del plan, 103 pruebas automáticas citadas y todas existen · AUTOMATICA 24, DOCUMENTAL 1, PARCIAL 31, PENDIENTE_API 7, REQUIERE_USUARIOS 1, SIN_PRUEBA 3», código 0 (12 s) |
+| Una fila | `.venv/bin/python .docs/scripts/evidencias_plan_a.py --pb PB-32` | 6 de 6 SUPERADA, «PB-32 Certificación de un horizonte: Superada en parte», código 0 (28 s); el árbol queda limpio |
+| Documento publicado | `docs/evidencias_pruebas_bloque_a.md` | PB-32 y PB-49 salen «Superada en parte» con el hueco del mapa; cabecera «sobre el commit `6b9f916`» (el documento entra en `e880ef4`; `test_h05_…` lo compara con el mapa, como pidió la r01) |
+| Gates ligeros, ruff y mypy | `tools/corpus_integridad.py`, `refs_vivas.py`, `secrets_scan.py`, `nfc_check.py`; ruff y mypy de A contados como el gate | los cuatro con código 0 (695 archivos); ruff 2902 (cuota 2902) y mypy 109 (cuota 109) |
+| No cambia producción | `git show --stat e880ef4 -- bloque_a/11_Ejecutor/bloque_a bloque_a/09_Pruebas bloque_a/10_Herramientas` | vacío |
+
+### Scripts de la r02, vueltos a ejecutar (sin cambiarlos)
+
+| Script | r02 | r03 |
+| --- | --- | --- |
+| `r02_01_pb32_a_mano_y_mutantes.py` | a mano, el ejecutor cumple; P32a, P32b y P32c VIVOS contra las tres pruebas citadas entonces | a mano, igual: un certificado, el de RF × H3. **P32a, P32b y P32c siguen VIVOS en este script, y es lo esperado:** el script tiene escritas a mano las tres pruebas antiguas (`CITADAS`) y no lee el mapa, así que no enfrenta los mutantes a las dos pruebas nuevas. P32d MUERTO, igual que en la r02 |
+| `r02_02_mutantes_pruebas_nuevas.py` | 6 de 6 muertos | **6 de 6 muertos** (A01, N01 a N05) |
+
+```bash
+cd bloque_a/11_Ejecutor && python ../../.docs/tickets/T-116/revisores/r02_01_pb32_a_mano_y_mutantes.py <copia desechable de 11_Ejecutor, con «qa2_mut»>
+python .docs/tickets/T-116/revisores/r02_02_mutantes_pruebas_nuevas.py <copia desechable de 11_Ejecutor, con «qa2_mut»>
+```
+
+### Scripts nuevos de la r03 (`revisores/`)
+
+| Script | Qué hace | Resultado |
+| --- | --- | --- |
+| `r03_01_pb32_y_muestra.py` | Lee del mapa las pruebas del ejecutor citadas para cada fila y les enfrenta: (1) para PB-32, los cuatro mutantes de la r02 y cuatro nuevos; (2) un mutante por fila de una muestra de seis AUTOMATICA ya leídas, más dos de control que deben morir; (3) PB-60 a mano: credencial denegada y un ciclo simulado, y busca la degradación en los tres entregables | PB-32: **P32a, P32b, P32c y P32d MUEREN** con las cinco citadas (H-06 corregido); **P32e, P32f (Holm) y P32h (sin método) VIVEN**. Muestra: **S06, S33, S56 y S60a VIVEN**; los dos de control (S14, S60b) mueren. PB-60 a mano: F10 tiene la limitación, **ningún entregable declara la degradación** |
+| `r03_02_vivos_contra_la_suite.py` | Los vivos de `r03_01`, contra más ficheros de la suite que las citadas (informativo, para la deuda) | P32f MUERE en `test_t53_evaluacion_y_almacen.py` (la prueba de Holm) y P32h en `test_t87_datos.py` (`test_certificados_separan_metodos`), ninguna citada. **Siguen VIVOS:** P32e (`test_t53_evaluacion_y_almacen`, `test_t66_evaluacion`, `test_t65_hallazgos`: 89 passed), S33 (`test_t53_…`, `test_t66_…`, `test_autocritica`: 51 passed), S56 (`test_v5`, `test_t53_seleccion_y_entrega`: 41 passed) y S60a (`test_v51`, `test_fase4_huecos`: 37 passed) |
+
+```bash
+python .docs/tickets/T-116/revisores/r03_01_pb32_y_muestra.py <copia desechable de bloque_a/11_Ejecutor, con «qa2_mut»>
+python .docs/tickets/T-116/revisores/r03_02_vivos_contra_la_suite.py <copia desechable de bloque_a/11_Ejecutor, con «qa2_mut»>
+```
+
+Salida de `r03_01` (ejecutado sobre `00ed8d3`):
+
+| Mutante | Fila | Qué rompe | Citadas | Resultado |
+| --- | --- | --- | --- | --- |
+| P32a | PB-32 | el IC del BSS ya no cuenta | 5 | MUERTO (3 fallan) |
+| P32b | PB-32 | la calibración frente al nulo ya no cuenta | 5 | MUERTO (1) |
+| P32c | PB-32 | el tope de ECE ya no cuenta | 5 | MUERTO (2) |
+| P32d | PB-32 | la muestra mínima ya no cuenta | 5 | MUERTO (2) |
+| **P32e** | PB-32 | **Holm no se aplica** (el Evaluador no pasa a `criterio_certificado` el umbral corregido) | 5 | **VIVO** |
+| **P32f** | PB-32 | **Holm no se aplica** (`criterio_certificado` ignora `alfa_holm`) | 5 | **VIVO** |
+| P32g | PB-32 | el Evaluador emite certificado aunque el criterio diga que no | 5 | MUERTO (1) |
+| **P32h** | PB-32 | **las celdas se agrupan sin el método** (un certificado por clase y horizonte) | 5 | **VIVO** |
+| **S06** | PB-06 | la respuesta N0 lleva una referencia que no existe (`OPP-2099-9999`) | 1 | **VIVO** |
+| S14 | PB-14 | control: el cierre por invalidación se anota con otro motivo | 1 | MUERTO |
+| **S33** | PB-33 | no se genera la lección de sobreconfianza (`extraer_lecciones`, «alerta de sobreconfianza» del plan) | 4 | **VIVO** |
+| **S56** | PB-56 | el ciclo C1 deja de llamar a `_deduplicar_entre_tipos` | 1 | **VIVO** |
+| **S60a** | PB-60 | una credencial denegada no se vuelve a pedir nunca, ni con cambio de circunstancias | 1 | **VIVO** |
+| S60b | PB-60 | control: la denegación ya no deja la limitación en F10 | 1 | MUERTO |
+
+### Estado de los hallazgos de las rondas anteriores
+
+| ID | Gravedad | Estado | Evidencia |
+| --- | --- | --- | --- |
+| H-01 a H-05 | alta, media y baja | corregidos en la r02 (lo comprobó la r02); sin cambios en esta ronda | `r02_02`: 6 de 6 muertos, como en la r02 |
+| H-06 | alta | **corregido en lo que pedía; queda un resto, H-08 (media)** | Las dos pruebas nuevas afirman el caso del plan (celda RF × H3 con habilidad y RV × H3 sin ella en el mismo almacén ⇒ un solo CERT, el de RF, y RV evaluada no certificable con motivo) y cada una de las cuatro condiciones de `criterio_certificado` por separado, con sus bordes (IC 0,0; ECE 0,15 estricto; `n_eff` 99,9 y nulo). P32a a P32d mueren con las cinco citadas (ejecutado). PB-32 pasa a PARCIAL. **Pero su hueco declarado («la re-ejecución CT-10») no es el único: Holm y el método tampoco se afirman (H-08)** |
+| De paso en la r02 (PB-49) | baja | **corregido** | PB-49 en PARCIAL; el hueco («las supresiones de F7–F9 las hace HT-02 fuera del ejecutor, y no se comparan instantáneas de ocho semanas») es el que hay: las citadas afirman modificación y borrado (del medio y del final) y la integridad tras un ciclo; la comparación de instantáneas del plan (AS-08, ocho semanas) no se hace. Bien dicho (leído) |
+
+### Las dos pruebas nuevas de PB-32 contra el plan (leídas y con mutantes)
+
+- `test_pb32_se_certifica_la_celda_con_habilidad_y_no_la_que_no_la_tiene`: es el caso del plan con 150 PRG por celda (el plan dice 60 y 40, que no llegan a su propio n ≥ 100; usar 150 es razonable). Afirma lo que dice. Los PRG no llevan `metodo`, así que el certificado es de la celda sin método, y el plan pide «60 PRG RF × H3 **de un mismo método**» y «CERT- para RF × H3 **× método**».
+- `test_pb32_cada_condicion_del_certificado_cuenta_por_separado`: llama a `criterio_certificado` **sin `alfa_holm`**, así que la condición de Holm («IC 90 % del BSS > 0 **tras Holm**») queda fuera; con dos celdas en el almacén la prueba anterior sí pasa por Holm, pero RF la supera de sobra y RV ya cae por el IC, así que quitarla no cambia nada (P32e y P32f viven).
+
+### AUTOMATICA sin leer y muestra de seis ya leídas (regla estricta)
+
+**Sin leer: ninguna.** Las 24 AUTOMATICA actuales (PB-01, 06, 07, 12, 14, 16, 21, 22, 23, 33, 38, 45, 53 a 56, 58 a 61, 63 a 66) las leyó la r01 (19, entre ellas las que siguen hoy) o la r02 (PB-53 a PB-56 y PB-63 a PB-65). Se aplica el mismo patrón que las dos rondas anteriores aplicaron a PB-23, PB-37, PB-49 y PB-32: cuenta la entrada entera del plan (preparación, resultado esperado y criterio), salvo lo que es de tiempo real o del modelo real.
+
+| Fila | Juicio r03 | Por qué (y mutante de `r03_01`) |
+| --- | --- | --- |
+| **PB-60** Credencial denegada | **mal puesta** | Plan: «Limitación de servicio en F10; no se vuelve a pedir salvo cambio de circunstancias; **los entregables declaran la degradación**»; criterio: «Ninguna nueva CT-25 para ese servicio; **limitación visible**». La única prueba citada (`test_v51.py::test_credenciales_boveda`) afirma F10 y que no se vuelve a pedir. **Ejecutado a mano (`r03_01`, apartado 3): con una credencial denegada y un ciclo simulado, ni el informe técnico, ni el visual, ni el paquete JSON dicen nada de la degradación** (el paquete solo trae sus dos limitaciones de siempre; F10 sí la tiene). Leído: nada en `bloque_a/` lee `LIMITACION_SERVICIO` de F10 ni llama a `Credenciales` desde el ciclo. Es una cláusula determinista que el ejecutor **no cumple**, y el documento la publica «Superada» sin incidencia (el ticket dice que un fallo del plan es una incidencia). Además, «salvo cambio de circunstancias» no lo afirma nadie: S60a (nunca se vuelve a pedir) vive |
+| **PB-33** Revocación por deterioro | **dudosa** | Plan: «Certificado REVOCADO con motivo; Novedades en F6; **alerta de sobreconfianza**; HT-09 deja de aceptar probabilidades; PRG congelados intactos». El ejecutor tiene esa alerta (la lección CALIBRACION «Sobreconfianza en …» de `Evaluador.extraer_lecciones`, con umbral de 0,10 entre la probabilidad media y la frecuencia; leído, no ejecutado, que el caso del plan con ECE 0,13 la dispararía) y ninguna de las cuatro citadas la afirma: S33 vive. «No comprueba» está vacío. La r01 ya la dio «aceptable, con nota» por el «RUN- posterior» |
+| **PB-56** Duplicada entre tipos | **dudosa** | Plan: «Ejecutar C1» con dos Analistas que proponen el mismo ámbito; criterio: «Ninguna oportunidad en dos top-3». La regla se afirma sobre `_deduplicar_entre_tipos` llamada a mano; **si el ciclo deja de llamarla, la prueba citada sigue en verde** (S56 vive). La r02 la dio «aceptable, con nota» por lo mismo; con el patrón de PB-49 (preparación del plan que el ejecutor puede hacer con el simulador) es una cláusula sin afirmar |
+| **PB-06** Consulta N0 | **«comprueba» dice de más** | La fila dice «referencias existentes»; la prueba solo mira que tengan un prefijo válido. Una referencia inventada (`OPP-2099-9999`) añadida a la respuesta deja la prueba en verde (S06 vive). El ejecutor sí filtra las inexistentes (`orquestacion.py`, `refs = [x … if x in conocidos]`), así que es afirmable |
+| PB-14 Arrastre con invalidación | bien puesta | GC0 positivo, CERRADA con motivo INVALIDACION en F3 y en el paquete, PRG abiertos en F4: todo afirmado (S14, de control, muere). «Se explica en cambios frente al ciclo anterior» es texto del modelo |
+| PB-64 H5 por hitos | bien puesta | Releída: lo que dijo la r02 se mantiene (sin mutante propio) |
+
+### Criterios de aceptación
+
+| Criterio | Cumple | Evidencia |
+| --- | --- | --- |
+| CA-1 · 67 filas con cobertura, pruebas, qué comprueban y qué no | sí en la forma; **no en el fondo** (H-07, H-08) | 67 filas con sus cuatro campos. PB-60 se publica «Superada» con una cláusula que el ejecutor no cumple; PB-33, PB-56 y PB-06 con una cláusula sin afirmar o con «comprueba» de más; PB-32 en parte, con el hueco incompleto |
+| CA-2 · toda prueba citada existe | sí | 103 citadas, todas existen, código 0 (ejecutado) |
+| CA-3 · `--ejecutar` genera el documento y termina con 0 | no repetido en esta ronda | Lo ejecutó la r01; `test_h05_…` compara el documento con el mapa y pasa (dentro de `test_fase4_mapa.py`, abajo) |
+| CA-4 · cada fila superada tiene una orden que, copiada, pasa | sí (muestra) | Las dos órdenes de PB-32 copiadas del documento: `12 passed` y `1 passed`; `--pb PB-32`: código 0 |
+| CA-5 · nada que dependa del modelo real, de usuarios o documental figura superado | sí | Sin cambios: 7 PENDIENTE_API, 1 con usuarios y 1 documental, sin pruebas |
+| CA-6 · mapa roto ⇒ el script y `test_fase4_mapa.py` fallan | sí | Sin cambios desde la r02; `test_fase4_mapa.py` y `test_fase4_huecos.py`: **47 passed** (74 s, ejecutado) |
+| CA-7 · huecos en el ticket y en la deuda | sí, con una cifra vieja (H-09) | README («Huecos» y registro) y fila T-116 de la deuda con 24 y 31 |
+| CA-8 · gate 12/12; cuotas; pruebas recogidas | por partes | Gates ligeros en verde, ruff 2902 y mypy 109; el gate entero, según quien coordina, pasó al subir `e880ef4` |
+
+### Hallazgos nuevos
+
+| ID | Gravedad | Cómo reproducirlo | Esperado / obtenido | Corrección sugerida | Estado |
+| --- | --- | --- | --- | --- | --- |
+| H-07 | **alta** | `python .docs/tickets/T-116/revisores/r03_01_pb32_y_muestra.py <copia desechable de 11_Ejecutor con «qa2_mut»>`: apartado 3 («los entregables declaran la degradación: False») y S60a, S33, S56 y S06 «VIVO». Leer en el plan PB-60, PB-33, PB-56 y PB-06 y sus filas del mapa | Esperado (regla estricta del ticket, la misma de H-01 y H-06): AUTOMATICA solo si las citadas afirman la entrada entera del plan, salvo tiempo real y modelo real; y un fallo del plan es una incidencia. Obtenido, en una muestra de seis filas que las rondas anteriores ya habían leído: **PB-60** se publica «Superada» y el ejecutor **no** declara en los entregables la degradación por la credencial denegada (ejecutado), ni hay incidencia; tampoco se afirma «salvo cambio de circunstancias». **PB-33** («alerta de sobreconfianza») y **PB-56** (el C1 del plan; la regla solo se prueba llamando a la función a mano) tienen una cláusula afirmable sin afirmar y «No comprueba» vacío. **PB-06** dice «referencias existentes» y la prueba no lo comprueba. Es la tercera ronda seguida que una muestra encuentra filas de este tipo: el muestreo no converge | (1) PB-60 a PARCIAL con su hueco («los entregables no declaran la degradación; el ciclo no lee F10 ni consulta las credenciales») y una incidencia `INC-T116-03` por el fallo del plan, o una prueba si se decide corregir el ejecutor; prueba de «cambio de circunstancias» (una línea en `test_credenciales_boveda` o en `test_fase4_huecos.py`). (2) PB-33 y PB-56: prueba (la lección CALIBRACION tras la revisión mensual del caso del plan; un C1 con dos Analistas que proponen el mismo ámbito) o PARCIAL con su hueco. (3) PB-06: afirmar que cada referencia existe en F1–F6/F5, o quitar «existentes» del texto. (4) **Repaso sistemático de las 24 AUTOMATICA por quien implementa**, con una tabla cláusula → línea de la prueba que la afirma (preparación, resultado esperado y criterio), en vez de esperar a la siguiente muestra. Regenerar el documento | abierto |
+| H-08 | media | El mismo script: P32e, P32f y P32h «VIVO» contra las cinco citadas de PB-32. `r03_02_vivos_contra_la_suite.py`: P32f lo mata `test_t53_evaluacion_y_almacen.py` (la prueba de Holm), P32h lo mata `test_t87_datos.py::test_certificados_separan_metodos` (no citadas), **P32e no lo mata ninguna de `test_t53_evaluacion_y_almacen`, `test_t66_evaluacion` ni `test_t65_hallazgos` (89 passed)** | Esperado: una fila PARCIAL dice en «No comprueba» todo lo que le falta. Obtenido: el hueco de PB-32 solo nombra la re-ejecución CT-10; el plan pide además «IC 90 % del BSS > 0 **tras Holm**» y «CERT- para RF × H3 **× método**» (PRG «de un mismo método»), y ninguna citada lo afirma: las PRG de las pruebas nuevas no llevan método y `criterio_certificado` se llama sin `alfa_holm`. Que el Evaluador deje de pasar el umbral de Holm a `criterio_certificado` (P32e) no lo ve ninguna prueba que haya ejecutado | Citar `test_certificados_separan_metodos` y la prueba de Holm de `test_t53_…`; añadir un caso con dos celdas hábiles en el que una supere el IC pero no Holm (o sembrar las PRG con `metodo`), o poner Holm y el método en «No comprueba» |
+| H-09 | baja | `grep -n "| T-116 |" sistema_global/seguimiento/Deuda_tecnica_y_pendientes_del_operador.md` | La fila dice «101 pruebas citadas, todas superadas»; el mapa tiene 103 desde la r03 (el script: «103 pruebas automáticas citadas») | Poner la cifra de la r03 (y la de la ronda que corrija H-07) | abierto |
+
+### Invariantes
+
+- No cambia código de producción ni el corpus por este ticket: `e880ef4` no toca `11_Ejecutor/bloque_a`, `09_Pruebas` ni `10_Herramientas` (ejecutado); corpus íntegro (695). ✔
+- Mock antes que API: todo con `MockClient`. ✔
+- Ambigüedad documentada: INC-T116-01 y 02 siguen `[PROPUESTO]`; **el fallo de PB-60 no está registrado** (H-07). ✗
+- Nada cuenta sin pruebas: las dos pruebas nuevas suben la suite. ✔
+- Secretos: `tools/secrets_scan.py` en verde. ✔
+- Documentación: al día salvo la cifra de la deuda (H-09).
+
+### Lo que quedó sin comprobar
+
+- `--ejecutar` completo, el gate entero y la suite completa (indicación del encargo).
+- PB-64 no se mutó en esta ronda; de las 24 AUTOMATICA solo releí seis.
+- Que el caso de PB-33 del plan dispare de verdad la lección de sobreconfianza (leído, no ejecutado).
+
+## Veredicto (r03)
+
+**NO APTO** · H-06 está corregido en lo que pedía (P32a a P32d mueren ahora con las pruebas citadas; PB-32 y PB-49 en PARCIAL) y PB-49 tiene su hueco bien dicho. Pero queda abierto un hallazgo alto nuevo del mismo tipo que H-01 y H-06 (H-07): en una muestra de seis filas AUTOMATICA ya leídas por las rondas anteriores, **PB-60 se publica «Superada» con una cláusula del plan que el ejecutor no cumple** (los entregables no declaran la degradación; ejecutado), sin incidencia, y PB-33, PB-56 y PB-06 tienen cláusulas afirmables sin afirmar. Además, el hueco de PB-32 está incompleto (H-08, media: Holm y el método). Como es la tercera vez que una muestra encuentra filas así, la corrección que propongo es un repaso cláusula a cláusula de las 24 AUTOMATICA por quien implementa, no solo de estas cuatro. Después basta volver a ejecutar `r03_01` y `r03_02`.

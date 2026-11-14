@@ -22,7 +22,9 @@ Convenciones de este módulo:
 - Fecha de corte: un dato observado con fecha posterior a ``ent["fecha_corte"]`` se rechaza (no conocible). Las fechas
   contractuales futuras (vencimientos de deuda, desbloqueos de tokens) no son observaciones: son el dato.
 - Frontera con el Bloque B (1.6): las fichas con componentes (FIR-CRED, REI-LEV, CHR-TOKEN) entregan solo el agregado y su
-  dispersión, nunca una fila por componente: con su salida no se puede ordenar emisores ni tokens.
+  dispersión, nunca una fila por componente: con su salida no se puede ordenar emisores ni tokens. Ronda r02 (QA r01,
+  H-01): el agregado necesita un mínimo de componentes distintos (dos con los mismos datos se rechazan, aunque lleven
+  otro identificador); un solo token solo se admite si el ámbito se declara como la propia red.
 - Determinista: ninguna ficha usa azar (todas declaran semilla ``null``).
 
 Interfaz de cada manejador: ``fn(ent, params) -> (resultado, limitaciones)``.
@@ -132,8 +134,10 @@ UMBRALES: dict[str, dict[str, Any]] = {
                      "rango_percentil_coste": (0.0, 1.0), "nivel_tendencia": 0.05, "tramos_maximos": 1000,
                      "anios_historia_maximos": ANIOS_HISTORIA_MAX},
     # REI-LEV-001 · «Método»: vencimientos a 24 meses; caídas de valor en (−1, 0). Costes y swap en (−1, 1); margen en
-    # [0, 1). Cotas de componentes, vencimientos por componente y caídas [PROPUESTO].
-    "REI-LEV-001": {"meses_vencimientos": 24, "componentes_maximos": COMPONENTES_MAX, "vencimientos_maximos": 100,
+    # [0, 1). Cotas de componentes, vencimientos por componente y caídas [PROPUESTO]. Mínimo de 3 componentes distintos
+    # [PROPUESTO, r02]: la ficha no da mínimo, y con menos el agregado y su dispersión son las cifras de un emisor (1.6).
+    "REI-LEV-001": {"meses_vencimientos": 24, "componentes_minimos": 3, "componentes_maximos": COMPONENTES_MAX,
+                    "vencimientos_maximos": 100,
                     "caidas_maximas": LISTA_PARAMETRO_MAX, "rango_caida": (-1.0, 0.0), "rango_coste": (-1.0, 1.0),
                     "rango_margen": (0.0, 1.0)},
     # CHR-ONCHAIN-001 · «Entradas mínimas»: diarias ≥ 2 años (≥ 4 recomendados; con menos, «pocos ciclos», sección 13).
@@ -141,20 +145,22 @@ UMBRALES: dict[str, dict[str, Any]] = {
     "CHR-ONCHAIN-001": {"dias_minimos": 2 * DIAS_ANIO, "dias_recomendados": 4 * DIAS_ANIO, "rango_media_nvt": (1, DIAS_ANIO),
                         "dias_maximos": ANIOS_H5_MAX * DIAS_ANIO},
     # CHR-TOKEN-001 · «Parámetros»: ventanas de desbloqueo en días, hasta H5 (30 años) y 12 ventanas [PROPUESTO].
-    # Concentración en [0, 1]; rendimiento de staking en (−1, 10).
-    "CHR-TOKEN-001": {"tokens_maximos": COMPONENTES_MAX, "desbloqueos_maximos": 1000, "ventanas_maximas": LISTA_PARAMETRO_MAX,
+    # Concentración en [0, 1]; rendimiento de staking en (−1, 10). «Propósito»: los tokens individuales solo como
+    # componentes o cuando el ámbito es la propia red; un sector necesita al menos 2 tokens distintos [PROPUESTO, r02].
+    "CHR-TOKEN-001": {"tokens_minimos_sector": 2, "tokens_maximos": COMPONENTES_MAX, "desbloqueos_maximos": 1000, "ventanas_maximas": LISTA_PARAMETRO_MAX,
                       "ventana_dias_maxima": ANIOS_H5_MAX * DIAS_ANIO, "rango_staking": (-1.0, 10.0)},
     # PRV-PME-001 · métodos de la ficha. Flujos ≤ 10 000 fechas; TIR buscada en (−0,99, 10) con tolerancia fija
-    # [PROPUESTO] (la ficha da 1e-8 para la re-ejecución).
+    # [PROPUESTO] (la ficha da 1e-8 para la re-ejecución). Rejilla de 1 000 puntos para contar las soluciones cuando la
+    # TIR no queda aislada entre los extremos del rango [PROPUESTO, r02].
     "PRV-PME-001": {"metodos_admitidos": ("KS-PME", "alfa_directo", "PME+"), "flujos_maximos": 10_000,
-                    "rango_tir": (-0.99, 10.0), "tolerancia_raiz": 1e-13, "iteraciones_maximas": 200,
+                    "rango_tir": (-0.99, 10.0), "tolerancia_raiz": 1e-13, "iteraciones_maximas": 200, "rejilla_tir": 1000,
                     "anios_historia_maximos": ANIOS_HISTORIA_MAX},
     # PRV-CF-001 · «Parámetros»: bow 1–5. Tasas de aportación en [0, 1]; crecimiento en (−1, 1); vida ≤ H5 (30 años);
     # rendimiento mínimo de distribución Y = 0 (la ficha no lo nombra) [PROPUESTO].
     "PRV-CF-001": {"rango_bow": (1, 5), "rango_tasa_aportacion": (0.0, 1.0), "rango_crecimiento": (-1.0, 1.0),
                    "vida_maxima_anios": ANIOS_H5_MAX, "rendimiento_minimo": 0.0, "flujos_maximos": 10_000,
                    "navs_maximos": 10_000, "rango_tir": (-0.99, 10.0), "tolerancia_raiz": 1e-13, "iteraciones_maximas": 200,
-                   "anios_historia_maximos": ANIOS_HISTORIA_MAX},
+                   "rejilla_tir": 1000, "anios_historia_maximos": ANIOS_HISTORIA_MAX},
     # ALT-HF-001 · «Entradas mínimas» y «Aclaración y rechazo»: ≥ 36 rentabilidades mensuales. Los siete factores de Fung y
     # Hsieh (2004): mercado, tamaño, bono a 10 años, diferencial de crédito y los tres de tendencia (bonos, divisas y
     # materias primas). Factores declarados ≤ 12.
@@ -179,7 +185,10 @@ ADVERTENCIAS: dict[str, list[str]] = {
                       "(cobertura del segmento declarada)"),
                      "los emisores individuales son solo componentes del agregado; la ficha no ordena emisores (1.6)"],
     "FX-BEER-001": ["equilibrio dependiente de la especificación", "rupturas de régimen cambiario invalidan la muestra"],
-    "CMD-REAL-001": ["las curvas de coste cambian con la tecnología", "superciclos largos con pocas observaciones"],
+    "CMD-REAL-001": ["las curvas de coste cambian con la tecnología", "superciclos largos con pocas observaciones",
+                     # r02 (QA r01, H-09): el intervalo es el de FX-TREND-001 (Gilbert, 1987), con la varianza sin corregir
+                     ("el intervalo de la tendencia no lleva la corrección de autocorrelación (Hamed-Rao) que sí lleva "
+                      "su p-valor: puede excluir el cero sin que la tendencia sea significativa")],
     "REI-LEV-001": ["coste de refinanciación supuesto", "acceso al mercado no garantizado en crisis",
                     "agregado y dispersión de los componentes, sin ordenar emisores (1.6)"],
     "CHR-ONCHAIN-001": ["capitalización realizada solo directa en cadenas UTXO",
@@ -188,7 +197,9 @@ ADVERTENCIAS: dict[str, list[str]] = {
                       "las direcciones de custodios distorsionan la concentración",
                       "los tokens individuales solo como componentes o cuando el ámbito es la propia red (1.6)"],
     "PRV-PME-001": ["NAV final de tasación", "la elección del índice es decisiva (pequeña capitalización para buyout)",
-                    "sin ajuste por apalancamiento salvo declaración"],
+                    "sin ajuste por apalancamiento salvo declaración",
+                    # r02 (QA r01, H-05): la ficha da LN-PME por opcional y no lo lista entre los valores de `metodo`
+                    "LN-PME (Long-Nickels), que la ficha da por opcional, no se calcula"],
     "PRV-CF-001": ["las líneas de suscripción inflan la TIR",
                    "la TIR no es comparable con rentabilidades anuales de índices",
                    "proyección determinista sobre supuestos declarados (tasas de aportación, bow y crecimiento)"],
@@ -267,6 +278,15 @@ def _distribucion(x: np.ndarray) -> dict[str, float]:
 def _ids_unicos(ids: list[str], que: str) -> None:
     if len(set(ids)) != len(ids):
         raise ErrorFicha(f"{que}: identificadores de componente repetidos")
+
+
+def _sin_clones(firmas: list[tuple[Any, ...]], que: str) -> None:
+    """Ronda r02 (QA r01, H-01): dos componentes con los mismos datos son el mismo emisor (o token) con otro identificador;
+    no cuentan como componentes distintos y el agregado se rechaza (el mensaje no cita identificadores)."""
+    repetidos = len(firmas) - len(set(firmas))
+    if repetidos:
+        raise ErrorFicha(f"{que}: rechazo: {repetidos} componentes con los mismos datos que otro: un componente repetido "
+                         f"con otro identificador no cuenta como componente distinto del agregado (1.6)")
 
 
 def _lista_parametro(x: Any, que: str, maximo: int) -> list[Any]:
@@ -451,6 +471,7 @@ def f_fir_cred(ent: dict[str, Any], params: dict[str, Any]) -> Resultado:
     comps = _acotada(comps, f"{F}: componentes", u["componentes_maximos"])
     a_sd, b_sd = u["ingenuo_sigma_deuda"]
     ids: list[str] = []
+    firmas: list[tuple[Any, ...]] = []
     filas: list[dict[str, float]] = []
     deudas: list[float] = []
     error = 0.0
@@ -462,6 +483,7 @@ def f_fir_cred(ent: dict[str, Any], params: dict[str, Any]) -> Resultado:
         sE = _rango(c.get("volatilidad_acciones"), f"{que}.volatilidad_acciones", 0, u["volatilidad_maxima"], abierto_lo=True)
         corto = _rango(c.get("deuda_corto"), f"{que}.deuda_corto", 0)
         largo = _rango(c.get("deuda_largo"), f"{que}.deuda_largo", 0)
+        firmas.append((E, sE, corto, largo))
         D = corto + u["factor_deuda_largo"] * largo                         # punto de impago
         if not D > 0:
             raise ErrorFicha(f"{que}: sin deuda, la distancia al impago no está definida (retírelo del agregado y "
@@ -477,6 +499,7 @@ def f_fir_cred(ent: dict[str, Any], params: dict[str, Any]) -> Resultado:
         filas.append(_merton_medidas(V, sV, D, r, mu, T))
         deudas.append(corto + largo)
     _ids_unicos(ids, F)
+    _sin_clones(firmas, f"{F}: componentes")   # el mínimo de 10 es de componentes distintos
     w = np.array(deudas) / float(np.sum(deudas))
 
     def bloque(dd: np.ndarray, pd_: np.ndarray) -> dict[str, Any]:
@@ -738,8 +761,13 @@ def f_rei_lev(ent: dict[str, Any], params: dict[str, Any]) -> Resultado:
                         abierto_hi=True)
     coste_nuevo = swap + margen
     horizonte = fecha + pd.DateOffset(months=u["meses_vencimientos"])
-    comps = _acotada(v.get("componentes"), f"{F}: componentes", u["componentes_maximos"])
+    comps = v.get("componentes")
+    if isinstance(comps, list) and 0 < len(comps) < u["componentes_minimos"]:
+        raise ErrorFicha(f"{F}: rechazo: {len(comps)} componentes (< {u['componentes_minimos']}): con tan pocos, el "
+                         f"agregado y su dispersión son las cifras de un emisor concreto (1.6)")
+    comps = _acotada(comps, f"{F}: componentes", u["componentes_maximos"])
     ids: list[str] = []
+    firmas: list[tuple[Any, ...]] = []
     col: dict[str, list[float]] = {k: [] for k in ("gav", "deuda", "neta", "ebitda", "gf", "ffo", "venc", "extra")}
     holg_ltv: list[float] = []
     holg_icr: list[float] = []
@@ -756,6 +784,7 @@ def f_rei_lev(ent: dict[str, Any], params: dict[str, Any]) -> Resultado:
         ebitda = _rango(c.get("ebitda"), f"{que}.ebitda", 0, abierto_lo=True)
         gf = _rango(c.get("gastos_financieros"), f"{que}.gastos_financieros", 0, abierto_lo=True)
         ffo = _num(c.get("ffo"), f"{que}.ffo")
+        firmas.append((gav, deuda, caja, ebitda, gf, ffo))
         if not isinstance(c.get("vencimientos"), list) or not c["vencimientos"]:
             raise ErrorFicha(f"{que}: rechazo: sin perfil de vencimientos")
         perfil = _tabla_acotada(c["vencimientos"], {"importe": (0, True), "coste": (lo_c, True)}, f"{que}.vencimientos",
@@ -785,6 +814,7 @@ def f_rei_lev(ent: dict[str, Any], params: dict[str, Any]) -> Resultado:
             caida_rompe.append((ltv_i / lmax - 1) * PCT)                # variación del GAV que lleva el LTV a su máximo
             ltv_max.append(lmax)
     _ids_unicos(ids, F)
+    _sin_clones(firmas, f"{F}: componentes")
     a = {k: np.array(x) for k, x in col.items()}
     tot = {k: float(np.sum(x)) for k, x in a.items()}
     if not tot["ffo"] > 0:
@@ -881,7 +911,8 @@ def f_chr_onchain(ent: dict[str, Any], params: dict[str, Any]) -> Resultado:
 def f_chr_token(ent: dict[str, Any], params: dict[str, Any]) -> Resultado:
     """CHR-TOKEN-001 · Tokenómica y dilución (MC-09).
 
-    ``valores``: ``fecha``; ``fuente``; ``ambito`` (la red o el sector del ecosistema); ``tokens`` = lista de {"id",
+    ``valores``: ``fecha``; ``fuente``; ``ambito`` (la red o el sector del ecosistema); opcional ``ambito_es_red`` (true
+    si el ámbito es la propia red: solo entonces se admite un único token, 1.6); ``tokens`` = lista de {"id",
     "precio" > 0, "oferta_circulante" > 0, "oferta_total", "oferta_maxima" (o null si no tiene tope), "emision_anual" ≥ 0,
     "quema_anual" ≥ 0 (unidades del token), "calendario": {"fuente", "desbloqueos": lista de {"fecha", "cantidad" > 0}},
     opcionales "staking_nominal" (tanto por uno anual) y "concentracion_10_mayores" ∈ [0, 1]}.
@@ -898,8 +929,17 @@ def f_chr_token(ent: dict[str, Any], params: dict[str, Any]) -> Resultado:
     fuente = _texto(v.get("fuente"), f"{F}: «fuente»")
     ambito = _texto(v.get("ambito"), f"{F}: «ambito» (red o sector del ecosistema)")
     tokens = _acotada(v.get("tokens"), f"{F}: tokens", u["tokens_maximos"])
+    es_red = v.get("ambito_es_red")
+    if es_red is not None and not isinstance(es_red, bool):
+        raise ErrorFicha(f"{F}: «ambito_es_red» debe ser true o false")
+    if len(tokens) < u["tokens_minimos_sector"]:
+        if es_red is not True:   # «Propósito»: los tokens individuales, solo cuando el ámbito es la propia red (1.6)
+            raise ErrorFicha(f"{F}: rechazo: {len(tokens)} token (< {u['tokens_minimos_sector']}) y el ámbito no se declara "
+                             f"como la propia red (ambito_es_red: true): el agregado de un sector no es un token (1.6)")
+        lim.append("un solo token: el ámbito declarado es la propia red (1.6); las cifras son las de la red, no un agregado")
     ventanas = p["ventanas_desbloqueo"]
     ids: list[str] = []
+    firmas: list[tuple[Any, ...]] = []
     cm: list[float] = []
     fdv: list[float] = []
     neta: list[float] = []
@@ -920,6 +960,7 @@ def f_chr_token(ent: dict[str, Any], params: dict[str, Any]) -> Resultado:
             raise ErrorFicha(f"{que}: ofertas incoherentes: debe cumplirse circulante ≤ total ≤ máxima")
         emision = _rango(tk.get("emision_anual"), f"{que}.emision_anual", 0)
         quema = _rango(tk.get("quema_anual"), f"{que}.quema_anual", 0)
+        firmas.append((precio, circ, total, maxima, emision, quema))
         cal = tk.get("calendario")
         if not isinstance(cal, dict) or not isinstance(cal.get("fuente"), str) or not cal["fuente"].strip() \
                 or not isinstance(cal.get("desbloqueos"), list):
@@ -955,6 +996,7 @@ def f_chr_token(ent: dict[str, Any], params: dict[str, Any]) -> Resultado:
         if tk.get("concentracion_10_mayores") is not None:
             conc.append((cm_i, _rango(tk["concentracion_10_mayores"], f"{que}.concentracion_10_mayores", 0, 1)))
     _ids_unicos(ids, F)
+    _sin_clones(firmas, f"{F}: tokens")
     if pasados:
         lim.append(f"{pasados} desbloqueos del calendario con fecha no posterior a la de los datos: ya están en la oferta "
                    f"circulante y no cuentan como dilución futura")
@@ -1009,7 +1051,20 @@ def _tir(dias: np.ndarray, flujos: np.ndarray, u: dict[str, Any], lim: list[str]
 
     lo, hi = u["rango_tir"]
     if not van(lo) * van(hi) < 0:
-        lim.append(f"{que}: sin TIR entre {lo:g} y {hi:g}")
+        # Ronda r02 (QA r01, H-03): con un solo cambio de signo en los flujos hay una única TIR, y está fuera del rango.
+        # Con varios puede haber un número par de soluciones dentro: se cuentan los cambios de signo del valor actual
+        # neto en una rejilla (uniforme en ln(1 + r)) para no afirmar que no hay TIR cuando hay dos
+        n = u["rejilla_tir"]
+        soluciones = 0
+        if cambios > 1:
+            vans = np.array([van(float(x)) for x in np.expm1(np.linspace(math.log1p(lo), math.log1p(hi), n))])
+            signo = np.sign(vans[vans != 0])
+            soluciones = int(np.sum(signo[1:] != signo[:-1]))
+        if soluciones:
+            lim.append(f"{que}: {soluciones} soluciones entre {lo:g} y {hi:g} (rejilla de {n} puntos): no se aísla una "
+                       f"TIR única y no se entrega ninguna")
+        else:
+            lim.append(f"{que}: sin TIR entre {lo:g} y {hi:g}" + (f" (rejilla de {n} puntos)" if cambios > 1 else ""))
         return None
     return float(optimize.brentq(van, lo, hi, xtol=u["tolerancia_raiz"], rtol=u["tolerancia_raiz"],
                                  maxiter=u["iteraciones_maximas"]))

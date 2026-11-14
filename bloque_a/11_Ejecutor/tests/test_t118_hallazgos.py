@@ -338,7 +338,9 @@ def _resultado_alterado(e):
     e["resultado"]["payload"]["voi_puntos"] = e["resultado"]["payload"]["voi_puntos"] + 1.0
 
 
-def test_h11_error_original_solo_con_la_configuracion_registrada_y_vigente(tmp_path):
+def test_h11_error_original_con_la_configuracion_registrada_aunque_la_vigente_cambie(tmp_path):
+    """T-121 (H-01 de la QA r01 de T-118): la re-ejecución usa la configuración del artefacto; si aun así difiere, el que
+    difiere es el original, cambie o no la vigente. CONVENCION_DISTINTA queda para el artefacto que no la guarda."""
     m = _motor(tmp_path)
     c = _voi(m)["calc_id"]
     e = copy.deepcopy(m.almacen.estado("RC")[c])
@@ -348,9 +350,11 @@ def test_h11_error_original_solo_con_la_configuracion_registrada_y_vigente(tmp_p
     # misma configuración, mismos datos, misma versión y otra cifra: el original está mal
     out = m.reejecutar(e["calc_id"], "auditoría")
     assert (out["coincide"], out["categoria"]) == ("NO", "ERROR_ORIGINAL"), out
-    # si la configuración ha cambiado desde entonces, o el artefacto no la guarda, no se afirma tanto
+    # T-121 (H-01): también si la configuración vigente ha cambiado desde entonces (la re-ejecución no la usa)
     out = _otro_motor(tmp_path, **UMBRAL_E_68).reejecutar(e["calc_id"], "auditoría")
-    assert (out["coincide"], out["categoria"]) == ("NO", "CONVENCION_DISTINTA"), out
+    assert (out["coincide"], out["categoria"]) == ("NO", "ERROR_ORIGINAL"), out
+    assert m.almacen.leer("RC")[-1]["reejecucion"]["configuracion"]["distinta_de_la_vigente"] == ["parametros_ht03"]
+    # si el artefacto no la guarda, no se afirma tanto
     out = m.reejecutar(_sin_registro(m, c, _resultado_alterado), "auditoría")
     assert (out["coincide"], out["categoria"]) == ("NO", "CONVENCION_DISTINTA"), out
 
@@ -392,9 +396,9 @@ def test_h12_las_cotas_de_s_y_p_salen_de_la_configuracion_por_defecto():
     assert S.OBS_MAXIMAS_REGIME == parametro(None, "senales.ventana_anios") * S.SESIONES_POR_ANIO == 756
     assert S.UMBRALES["FX-REGIME-001"]["obs_maximas"] == S._obs_maximas("FX-REGIME-001", None) == 756
     assert P.SESIONES_SEMANA == parametro(None, "calendario.sesiones_por_semana") == 5
-    # las cotas que no salen de la configuración no cambian con ella
+    # las cotas que no salen de la configuración no cambian con ella (T-121, H-05: la de REG-HMM-001 sí sale de H5)
     cfg = fusionar(cargar_config(), {"horizontes": {"H5": {"meses": 60}}, "senales": {"ventana_anios": 1}})
-    assert S._obs_maximas("REG-HMM-001", cfg) == 520 and S._obs_maximas("TEM-DIFF-001", cfg) == 360
+    assert S._obs_maximas("TEM-DIFF-001", cfg) == 360 == S._obs_maximas("TEM-DIFF-001", None)
 
 
 @pytest.mark.parametrize("ficha", sorted(S.FICHAS_OBS_H5))
@@ -556,3 +560,87 @@ def test_h14_sin_motivo_o_sin_artefacto_sigue_siendo_imposible(tmp_path):
         m.reejecutar(r["calc_id"], " ")
     with pytest.raises(KeyError):
         m.reejecutar("CALC-0000-9999", "auditoría")
+
+
+# ====================================================================================================== T-121 (H-06 de la QA r01)
+# Cinco correcciones de T-118 que no tenían una prueba que las sostuviera (mutantes vivos M05, M38, M50, M68 y M78 de
+# `.docs/tickets/T-118/revisores/r01_07_mutantes.py`). El nombre lleva el hallazgo de origen: el script filtra con `-k`.
+def test_h09_m05_un_dato_con_hora_en_el_dia_del_corte_es_conocible(tmp_path):
+    """M05: el corte se compara por día. Un dato fechado a las 23:59 del día del corte se sirve; el del día siguiente, no."""
+    m = _motor(tmp_path)
+    pet = _peticion("ML-PRED-001", fecha_corte="2020-08-10")
+    assert pet["datos"][0]["valores"]["fechas"][-1] == "2020-08-10"
+    pet["datos"][0]["valores"]["fechas"][-1] = "2020-08-10T23:59:59"
+    r = m.servir(pet, "AG-18")
+    assert r["estado"].startswith("SERVED"), r
+    pet = _peticion("ML-PRED-001", fecha_corte="2020-08-10T08:00:00")      # y un corte con hora no deja fuera su propio día
+    assert m.servir(pet, "AG-18")["estado"].startswith("SERVED")
+    assert R._hasta_corte([pd.Timestamp("2020-08-10T23:59:59")], pd.Timestamp("2020-08-10"), "x") is None
+    with pytest.raises(ErrorFicha, match="posterior a la fecha de corte"):
+        R._hasta_corte([pd.Timestamp("2020-08-11T00:00:00")], pd.Timestamp("2020-08-10T23:00:00"), "x")
+
+
+def test_h10_m38_la_cota_del_vector_se_comprueba_antes_de_leer_sus_elementos():
+    """M38: un vector por encima de la cota con un elemento ilegible se rechaza por la cota, sin recorrerlo."""
+    largo = [0.01] * (H5 + 1)
+    largo[3] = "ilegible"
+    with pytest.raises(ErrorFicha, match=rf"{H5 + 1} valores \(máximo {H5}, cota de la ficha\)"):
+        R._vector(largo, "x", maximo=H5)
+    with pytest.raises(ErrorFicha) as e:                                   # dentro de la cota, el motivo es el elemento
+        R._vector(largo[:H5], "x", maximo=H5)
+    assert "máximo" not in str(e.value) and "x[3]" in str(e.value)
+
+
+def test_h11_m50_una_seccion_registrada_sin_valor_no_se_toma_de_la_vigente(tmp_path):
+    """M50: el artefacto de un Motor cuya configuración no traía la sección (la ficha la tomó de `por_defecto.yaml`) se
+    re-ejecuta sin esa sección, aunque la configuración vigente sí la traiga, y con otro umbral."""
+    parcial = {k: v for k, v in cargar_config().items() if k != "parametros_ht03"}
+    m = servicio.Motor(Almacen(Path(tmp_path)), _Proveedor(), parcial)
+    r = m.servir(_peticion("DEC-VOI-001", 1), "AG-18")
+    assert r["estado"].startswith("SERVED"), r
+    usada = m.almacen.estado("RC")[r["calc_id"]]["artefacto"]["configuracion_usada"]
+    assert "valor" not in usada["parametros_ht03"] and len(usada["parametros_ht03"]["por_defecto"]) == 16
+    m68 = _otro_motor(tmp_path, **UMBRAL_E_68)
+    assert m68.servir(_peticion("DEC-VOI-001", 1), "AG-18")["resultado"] != r["resultado"]
+    out = m68.reejecutar(r["calc_id"], "auditoría con una configuración parcial")
+    assert (out["coincide"], out["categoria"]) == ("SI", None), out
+
+
+def test_h12_m68_cada_ficha_de_series_con_cota_h5_sigue_a_la_configuracion():
+    """M68: la lista de fichas va escrita aquí, no se toma del conjunto que la prueba protege."""
+    cfg = fusionar(cargar_config(), {"horizontes": {"H5": {"meses": 60}}})
+    for ficha in ("ST-INF-001", "FX-BRK-001", "FX-STL-001", "FX-COINT-001"):
+        assert ficha in S.FICHAS_OBS_H5
+        assert S._obs_maximas(ficha, cfg) == 1260 and S._obs_maximas(ficha, None) == 2520, ficha
+    assert len(S.FICHAS_OBS_H5) == 4
+    assert S._parametros("ST-INF-001", {"tipo_contraste": "t_una_muestra"}, cfg)["obs_maximas"] == 1260
+
+
+def _anidada(n):
+    x = []
+    for _ in range(n - 1):
+        x = [x]
+    return x                                                                # una lista con n niveles de contenedor
+
+
+@pytest.mark.parametrize("niveles", [9, 20, 31])
+def test_h13_m78_el_tope_de_anidamiento_no_rechaza_peticiones_de_menos_de_32_niveles(tmp_path, niveles):
+    """M78: el tope es 32 y no puede bajar sin que una petición legítima (los casos de control llegan a 9 niveles) se
+    rechace por su forma."""
+    assert servicio.PROFUNDIDAD_MAXIMA == 32
+    m = _motor(tmp_path)
+    pet = _peticion("REI-CAP-001")
+    pet["datos"][0]["valores"]["_anotacion"] = _anidada(niveles - 3)        # petición → datos → dato → valores → …
+    assert not servicio._demasiado_anidado(pet) and servicio._demasiado_anidado(_anidada(33))
+    r = m.servir(pet, "AG-18")
+    assert r["estado"].startswith("SERVED"), r
+    profundidades = [_profundidad(_peticion(f, i)) for f, casos in servicio.CASOS_CONTROL.items() for i in range(len(casos))]
+    assert 8 < max(profundidades) < servicio.PROFUNDIDAD_MAXIMA            # el caso de control más profundo cabe
+
+
+def _profundidad(x):
+    if isinstance(x, dict):
+        return 1 + max((_profundidad(v) for v in x.values()), default=0)
+    if isinstance(x, (list, tuple)):
+        return 1 + max((_profundidad(v) for v in x), default=0)
+    return 0
