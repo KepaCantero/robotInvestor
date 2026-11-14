@@ -307,6 +307,9 @@
  "CT-15.ENCARGO": {
   "paquete_sintesis": {}
  },
+ "CT-22.ENCARGO": {
+  "tipo": "CONSULTA_RECURRENTE"
+ },
  "CT-23.ENCARGO": {
   "cns_id": "CNS-2026-0001",
   "modo": "NO_BLOQUEANTE",
