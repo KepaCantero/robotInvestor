@@ -137,6 +137,61 @@ Detalle en [.docs/tickets/T-117](../.docs/tickets/T-117/README.md).
 Lista completa en el golden y detalle en [.docs/tickets/T-114](../.docs/tickets/T-114/analisis-tecnico.md).
 
 **INC-T114-02 · 2026-11-13 · Los ejemplos publicados llevan una clave de aviso (Bloque A, T-114).** Los dos ejemplos de `06_Plantillas_entregables` empiezan por `x_aviso_ejemplo` («datos ficticios…»). El esquema del paquete de oportunidades la admite. El del informe de seguimiento de opción (V5.1) tiene `additionalProperties: false` en la raíz y no la declara, así que su propio ejemplo publicado no lo cumple; sin esa clave, lo cumple. `[PROPUESTO]`: no se toca la entrega (corpus congelado); la prueba `test_ca5…` congela el hecho: el único incumplimiento es esa clave. Para una entrega futura: declarar `x_aviso_ejemplo` en el esquema o quitarla del ejemplo.
+**INC-T119-01 · 2026-11-13 · Decisiones de método en las diez fichas P2 del Motor (Bloque A, T-119).** Las fichas dejan huecos que se han cubierto con la opción más prudente, `[PROPUESTO]` hasta que el operador o una revisión del Catálogo decidan (el operador pidió que el agente decida por defecto y lo deje apuntado). El detalle, ficha a ficha, está en `.docs/tickets/T-119/analisis-tecnico.md`.
+- **Comunes a las diez:**
+  - los datos llegan en línea, con su fuente y su fecha; ninguna ficha lee series de HT-01, porque son datos especializados que el ejecutor no tiene;
+  - cotas de tamaño que ninguna ficha fija: historia de 100 años como máximo y listas de parámetros de 12 elementos (las de INC-T113-01); 500 componentes de un agregado; 10 000 fechas de flujos; 50 000 transacciones; 1 000 tramos de una curva de costes; 100 vencimientos por componente; 1 000 desbloqueos por token; plazos y ventanas hasta H5 (30 años);
+  - una cifra de entrada de magnitud mayor que 1e100 se rechaza: por encima, las sumas desbordan y una división por un total infinito daría un cero con apariencia de cifra;
+  - las fechas contractuales futuras (vencimientos de deuda, desbloqueos de tokens) no son observaciones: pueden ser posteriores a la fecha de corte. Todo dato observado posterior al corte se rechaza;
+  - frontera con el Bloque B (1.6 del Catálogo): FIR-CRED-001, REI-LEV-001 y CHR-TOKEN-001 entregan solo el agregado y su dispersión, sin ninguna fila por componente. El rechazo «si se pide para ordenar emisores» no lo puede detectar un cálculo: lo garantiza la forma de la salida, y un parámetro no declarado (por ejemplo, uno que pida un orden) se rechaza.
+- **FIR-CRED-001:**
+  - la volatilidad de las acciones entra ya calculada (anual), no como serie diaria;
+  - `mu` por defecto es el rendimiento histórico, la primera opción de la ficha, y cada componente lo aporta; con `mu: r` no hay bloque «real»;
+  - un componente sin deuda se rechaza (no tiene distancia al impago); el solicitante lo retira y lo declara en la cobertura;
+  - «dominado por emisores sin acciones cotizadas» se lee como cobertura declarada por debajo de 0,5;
+  - el diferencial implícito del segmento es la media de los componentes ponderada por deuda; el triángulo de crédito usa la pérdida en caso de impago del propio modelo;
+  - el sistema se resuelve con dos raíces de Brent anidadas, con tolerancia 1e-13 y 200 iteraciones; si el error supera 1e-6, se rechaza.
+- **FX-BEER-001:**
+  - la constante del equilibrio se fija para que el desalineamiento tenga media nula en toda la muestra («residuo de media nula»);
+  - el intervalo del desalineamiento solo recoge la incertidumbre de los coeficientes (covarianza de Newey-West del DOLS) y usa `evaluacion.nivel_ic` de la configuración;
+  - con Johansen no hay errores estándar ni intervalo: se entregan como `null` y se declara;
+  - los fundamentales son los cuatro de la ficha, en la transformación que declare el solicitante; el tipo real entra en nivel y se toma su logaritmo;
+  - «con vintages» se lee como una fecha de edición de los datos, no anterior a la última observación ni posterior al corte;
+  - retardos de 1 a 4 trimestres; contraste de cointegración al 0,05 con las tablas de FX-COINT-001; sin evidencia, se sirve con la limitación.
+- **CMD-REAL-001:**
+  - moneda constante del último mes de la serie;
+  - la tendencia es la de FX-TREND-001 sobre el logaritmo del precio real mensual, con su nivel por defecto;
+  - el coste marginal es el del tramo en el que la producción acumulada, ordenada por coste, alcanza el percentil; se lleva a moneda constante con el IPC del mes de la curva, que debe estar en la serie.
+- **REI-LEV-001:**
+  - LTV con deuda neta (deuda menos caja), como EPRA;
+  - la suma de vencimientos debe ser la deuda con la tolerancia de la ficha (1e-10); si no, se rechaza por perfil incompleto;
+  - el margen es el de los datos si la petición no lo fija;
+  - la holgura frente a *covenants* se calcula sobre los componentes que los declaran.
+- **CHR-ONCHAIN-001:**
+  - serie diaria sin huecos; σ muestral de toda la ventana; la limitación «pocos ciclos» se pone por debajo de 4 años;
+  - `media_nvt` de 1 a 365 días; la fuente de la petición, si se da, debe ser la de los datos.
+- **CHR-TOKEN-001:**
+  - sin oferta máxima, la valoración totalmente diluida usa la oferta total;
+  - agregado ponderado por capitalización circulante;
+  - los desbloqueos futuros no pueden superar la oferta no circulante; los de fecha no posterior a la de los datos no cuentan y se declaran;
+  - el rendimiento de *staking* y la concentración se agregan sobre los tokens que los declaran, con su cobertura.
+- **PRV-PME-001:**
+  - el índice debe tener nivel en cada fecha de flujo y en la del NAV: no se interpola;
+  - LN-PME no se calcula, porque la ficha no le da parámetro; PME+ solo con `metodo: PME+`;
+  - la TIR se busca entre −0,99 y 10; con varios cambios de signo se avisa, y si no hay raíz en el rango se entrega `null`.
+- **PRV-CF-001:**
+  - las tasas de aportación y el crecimiento no tienen valor por defecto: sin ellos, o sin `vida_anios`, no hay proyección y se declara;
+  - el rendimiento mínimo de distribución del modelo de Takahashi-Alexander es 0, porque la ficha no lo nombra; la tasa del último año declarado se mantiene; la edad son los años completos desde el primer flujo.
+- **ALT-HF-001:**
+  - los siete factores de Fung y Hsieh se llaman MKT, SMB, BONO10A, CREDITO, PTFSBD, PTFSFX y PTFSCOM;
+  - el desuavizado es el Geltner de ALT-DESMOOTH-001 con φ estimado, y se aplica a la rentabilidad antes de restar el tipo sin riesgo; un φ negativo se declara.
+- **ALT-AUC-001:**
+  - índice anual; ventas repetidas por Bailey-Muth-Nourse sin la ponderación de Case-Shiller; los pares de un mismo año se descartan y se cuentan;
+  - la dispersión es la de los residuos de la regresión, en logaritmos;
+  - la rentabilidad neta supone una sola compraventa en toda la ventana del índice; sin comisiones declaradas no se calcula;
+  - no se aplica ningún ajuste de sesgo de selección, y se declara.
+
+Pregunta para T-57: «¿se aceptan estas decisiones de método y estas cotas en las diez fichas P2?». Detalle en [.docs/tickets/T-119](../.docs/tickets/T-119/README.md).
 
 **INC-T113-01 · 2026-11-13 · Decisiones al cerrar la deuda técnica del Bloque A (T-113).** `[PROPUESTO]`:
 - **Rangos de MON e IDX (H-24):**

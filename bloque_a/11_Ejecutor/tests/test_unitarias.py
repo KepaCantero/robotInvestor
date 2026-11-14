@@ -160,7 +160,7 @@ def test_metricas_de_pronostico_con_pronosticadores_sinteticos():
     assert ev.acierto_direccional([1] * 18 + [0] * 2)["p_binomial"] < 0.01
 
 
-def test_servicio_del_motor_rc_cache_fuga_y_reejecucion(tmp_path):
+def test_servicio_del_motor_rc_cache_fuga_y_reejecucion(tmp_path, monkeypatch):
     alm = Almacen(tmp_path)
     p = ProveedorCSV(DATOS)
     p.fijar_as_of(AS_OF)
@@ -175,7 +175,11 @@ def test_servicio_del_motor_rc_cache_fuga_y_reejecucion(tmp_path):
     assert r2["cache_hit"] and r2["calc_id"] == r["calc_id"]
     fuga = m.servir({**pet, "datos": [{"serie": "SPY", "fin": "2026-07-01"}]}, "AG-03", "RUN-2026-0001")
     assert fuga["estado"] == "RECHAZADO" and fuga["motivo"] == "FUGA_DE_INFORMACION"
-    no = m.servir({**pet, "operacion": "CHR-ONCHAIN-001"}, "AG-03", "RUN-2026-0001")   # T-112: P2, sigue DOCUMENTADO
+    # T-119: ya no queda ninguna ficha DOCUMENTADO en el Catálogo; la regla (ficha no servible → METODO_NO_IMPLEMENTADO y su
+    # alternativa del núcleo transversal) se comprueba con una ficha puesta a mano entre las de código provisional
+    from bloque_a.motor import servicio
+    monkeypatch.setattr(servicio, "DOCUMENTADAS_CON_CODIGO", frozenset({"CHR-ONCHAIN-001"}))
+    no = m.servir({**pet, "operacion": "CHR-ONCHAIN-001"}, "AG-03", "RUN-2026-0001")
     assert no["motivo"] == "METODO_NO_IMPLEMENTADO" and no["alternativa"] == "ACC-MOM-001"
     assert m.reejecutar(r["calc_id"], "auditoría")["coincide"] == "SI"
 
