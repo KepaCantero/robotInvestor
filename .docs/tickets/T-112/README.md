@@ -99,7 +99,7 @@ Todo lo de T-106, más las correcciones de sus tres QA, aplicadas desde el princ
 
 - 2026-11-13 · ABIERTO · creado con nuevo_ticket.sh
 - 2026-11-13 · PLANIFICADO · 36 fichas en cuatro grupos y AUD-REX; lecciones de las QA de T-106 aplicadas desde el diseño
-- 2026-11-13 · EN QA · 35 fichas en cuatro módulos y AUD-REX-001 (CT-10) en el servicio, todas con sus casos de control superados (140 en la Fase 2 y 5 de AUD-REX); promovidas en el Catálogo (71 IMPLEMENTADO, 10 DOCUMENTADO) y corpus re-congelado; decisiones de método en INC-T112-01 y CT-10 en INC-T112-02; A con 3319 pruebas
+- 2026-11-13 · EN QA · 35 fichas en cuatro módulos y AUD-REX-001 (CT-10) en el servicio, todas con sus casos de control superados (~~140 en la Fase 2 y 5 de AUD-REX~~ corrección de T-118, H-15 de la QA r02: el recuento era **136 en la Fase 2** —S 36, R 36, V 38, P 26— **y 6 de AUD-REX-001**, el sexto añadido en la ronda r02); promovidas en el Catálogo (71 IMPLEMENTADO, 10 DOCUMENTADO) y corpus re-congelado; decisiones de método en INC-T112-01 y CT-10 en INC-T112-02; A con 3319 pruebas
 - 2026-11-13 · NO APTO · QA r01 (revisor nuevo, commit `efd1bb3`): H-01 alto (parámetros de tamaño sin cota: una petición agotaba la memoria o colgaba el ejecutor), H-02, H-04, H-07 y H-08 medios, H-03, H-05 y H-06 bajos
 - 2026-11-13 · EN QA · Ronda r02:
   - cotas de tamaño en `UMBRALES` en los cuatro grupos, y `MemoryError` y `RecursionError` pasan a RECHAZADO;
@@ -113,3 +113,4 @@ Todo lo de T-106, más las correcciones de sus tres QA, aplicadas desde el princ
 
   El operador pide parar antes de la QA r02 por su límite de consumo semanal.
 - 2026-11-13 · CERRADO · QA r02 APTO (revisor nuevo sin contexto, commit `ab95d41`; orden del operador: «Empieza con el QA de T-112»). Gate 12/12; los ocho hallazgos de la r01 corregidos salvo H-07, corregido en parte; 59 mutantes, vive uno equivalente; 18 926 llamadas hostiles sin caída. Quedan abiertos tres medios (H-09, H-10, H-11) y cuatro bajos (H-12 a H-15), que pasan a la deuda en T-118. Detalle en `qa.md`, «Ronda r02»
+- 2026-11-13 · (nota de T-118) · H-15 de la QA r02: recuento de casos de control corregido en este registro, en `pruebas.md` y en `analisis-tecnico.md` (136 en la Fase 2 y 6 de AUD-REX-001). Los hallazgos H-09 a H-14 se corrigen en `.docs/tickets/T-118/`

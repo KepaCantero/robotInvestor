@@ -787,7 +787,8 @@ class Bloque:
                "rotacion_exploratoria": rot, "calculos_disponibles": calcs, "referencias_disponibles": refs["referencias"],
                "horizontes_aplicables_clase": {h: aplicabilidad(self.cfg, clase, h) for h in HORIZONTES},
                "horizontes_interes": hz_interes, "max_candidatas": parametro(self.cfg, "seleccion.max_candidatas"), "max_finalistas": parametro(self.cfg, "seleccion.max_finalistas"),
-               "umbral_senal_gc1": parametro(self.cfg, "seleccion.umbral_senal_gc1"), "fecha_limite_informacion": str(as_of.date()) if self.modo == "backtest" else None}
+               "umbral_senal_gc1": (v6.umbral_gc1(self, clase) if v6.activo(self, "gc1.por_codigo")
+                                    else parametro(self.cfg, "seleccion.umbral_senal_gc1")), "fecha_limite_informacion": str(as_of.date()) if self.modo == "backtest" else None}
         instr = INSTR[fase].format(max_cand=parametro(self.cfg, "seleccion.max_candidatas"), max_fin=parametro(self.cfg, "seleccion.max_finalistas"),
                                    max_pet=parametro(self.cfg, "seleccion.peticiones_conocimiento_por_clase"),
                                    max_expl=parametro(self.cfg, "seleccion.rotacion_exploratoria_celdas"))

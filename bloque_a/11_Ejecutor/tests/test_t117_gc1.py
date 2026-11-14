@@ -138,3 +138,86 @@ def test_en_un_ciclo_el_registro_de_gc1_lleva_el_umbral_de_cada_tipo(tmp_path):
     for clase in ("RF", "RV"):
         g = cob[clase]["gc1"]
         assert g["clave_senal"] == "senal_compuesta" and g["familias_min"] == 2
+
+
+# ================================================================================ QA r01 de T-117
+def test_h01_el_encargo_al_analista_lleva_el_umbral_que_aplico_gc1(tmp_path):
+    """En la V6 el CT-06 comunica el umbral del tipo (0,65 en RF), no el general; en la V5, el general."""
+    vistos = {}
+    for diseno in ("v6", "v5"):
+        b = _bloque(tmp_path / diseno, config_pruebas(diseno=diseno))
+        crear = b.mensajeria.crear
+
+        def anotar(contrato, emisor, receptor, cuerpo, _crear=crear, _d=diseno, **kw):
+            if contrato == "CT-06" and "umbral_senal_gc1" in cuerpo:
+                vistos.setdefault((_d, cuerpo["clase"]), set()).add(cuerpo["umbral_senal_gc1"])
+            return _crear(contrato, emisor, receptor, cuerpo, **kw)
+        b.mensajeria.crear = anotar
+        b.ciclo(AS_OF, alcance={"clases": ["RF", "RV"]})
+    assert vistos[("v6", "RF")] == {0.65} and vistos[("v6", "RV")] == {0.75}
+    assert vistos[("v5", "RF")] == vistos[("v5", "RV")] == {0.75}
+
+
+def test_h01_el_umbral_del_registro_y_el_del_encargo_son_el_mismo(tmp_path):
+    b = _bloque(tmp_path, _cfg(umbral_por_perfil={"DIV": 0.7}))
+    for clase in CLASES:
+        assert v6.gc1(b, clase, UNIVERSO, [], AS_OF)[1]["umbral"] == v6.umbral_gc1(b, clase)
+    assert v6.umbral_gc1(b, "DIV") == 0.7
+
+
+@pytest.mark.parametrize("recuento, descarta", [(1, True), (1.0, True), (0, True), (2, False), (2.0, False), (3, False),
+                                                (True, False), (None, False), ("1", False), (float("nan"), False)])
+def test_h02_el_recuento_de_familias_vale_como_entero_o_como_decimal(tmp_path, recuento, descarta):
+    import numpy as np
+    b = _bloque(tmp_path, _cfg(exploracion_celdas=0))
+    for valor in ([recuento, np.int64(recuento), np.float64(recuento)] if isinstance(recuento, int) and not isinstance(recuento, bool) else [recuento]):
+        _, reg = _marcas(b, "RV", [_amb("X", 0.9, None, familias_concordantes=valor)])
+        assert (reg["pasan"] == []) is descarta, valor
+
+
+@pytest.mark.parametrize("valor", [0, "", [], False, 0.0, "RF"])
+def test_h03_un_umbral_por_perfil_que_no_es_un_diccionario_se_rechaza(tmp_path, valor):
+    with pytest.raises(ValueError, match="v6.gc1.umbral_por_perfil"):
+        _bloque(tmp_path, _cfg(umbral_por_perfil=valor))
+
+
+def test_h05_el_tope_de_candidatas_cuenta_despues_del_filtro_de_familias(tmp_path):
+    """Con sitio para dos, las dos primeras por señal tienen una sola familia: pasan las dos siguientes, no ninguna."""
+    b = _bloque(tmp_path, config_pruebas(diseno="v6", v6={"gc1": {"exploracion_celdas": 0}}, seleccion={"max_candidatas": 2}))
+    uni = [_amb("A", 0.95, 1), _amb("B", 0.90, 1), _amb("C", 0.85, 2), _amb("D", 0.80, 3), _amb("E", 0.78, 2)]
+    _, reg = _marcas(b, "RV", uni)
+    assert reg["pasan"] == ["C", "D"]
+    motivos = {d["simbolo"]: d["motivo"] for d in reg["descartes"]}
+    assert motivos == {"A": "1 familias concordantes < 2", "B": "1 familias concordantes < 2", "E": "fuera de las 2 candidatas con más señal"}
+
+
+@pytest.mark.parametrize("familias_min, pasan", [(0, ["A", "B", "C"]), (1, ["A", "B"]), (2, ["A"]), (3, [])])
+def test_h05_el_minimo_de_familias_es_el_de_la_configuracion(tmp_path, familias_min, pasan):
+    b = _bloque(tmp_path, _cfg(familias_min=familias_min, exploracion_celdas=0))
+    _, reg = _marcas(b, "RV", [_amb("A", 0.9, 2), _amb("B", 0.9, 1), _amb("C", 0.9, 0)])
+    assert reg["pasan"] == pasan and reg["familias_min"] == familias_min
+
+
+def test_h05_en_el_diseno_v5_gc1_por_codigo_no_actua(tmp_path):
+    """En la V5 el ejecutor no filtra el universo: el Analista lo recibe entero y sin marca, con el umbral general."""
+    b = _bloque(tmp_path, config_pruebas())
+    encargos = []
+    crear = b.mensajeria.crear
+
+    def anotar(contrato, emisor, receptor, cuerpo, **kw):
+        if contrato == "CT-06" and cuerpo.get("universo"):
+            encargos.append(cuerpo)
+        return crear(contrato, emisor, receptor, cuerpo, **kw)
+    b.mensajeria.crear = anotar
+    b.ciclo(AS_OF, alcance={"clases": ["RF"]})
+    assert encargos and all("gc1" not in u for m in encargos for u in m["universo"])
+    assert {m["umbral_senal_gc1"] for m in encargos} == {0.75}
+    assert not [e for e in b.almacen.leer("HA") if e.get("tipo_entrada") == "COBERTURA"]
+
+
+def test_h06_el_motivo_del_descarte_no_redondea_hasta_el_umbral(tmp_path):
+    b = _bloque(tmp_path, _cfg(exploracion_celdas=0))
+    _, reg = _marcas(b, "RF", [_amb("CASI", 0.6499999, 3)])
+    assert reg["descartes"][0]["motivo"] == "senal_compuesta 0.6499999 < 0.65"
+    _, reg = _marcas(b, "RF", [_amb("LEJOS", 0.6, 3)])
+    assert reg["descartes"][0]["motivo"] == "senal_compuesta 0.60 < 0.65"

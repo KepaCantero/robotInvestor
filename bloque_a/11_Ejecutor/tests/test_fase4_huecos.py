@@ -7,10 +7,10 @@ import json
 
 import pandas as pd
 import pytest
-from bloque_a.almacen import Almacen
+from bloque_a.almacen import Almacen, EscrituraFueraDeReserva
 from bloque_a.configuracion import aplicabilidad
 from bloque_a.consumo import Presupuesto
-from bloque_a.contratos import CanalNoPrevisto, Mensajeria
+from bloque_a.contratos import CanalNoPrevisto, DatosSensibles, Mensajeria
 from bloque_a.evaluador import Evaluador
 from conftest import AS_OF, config_pruebas, nuevo_bloque
 
@@ -197,3 +197,120 @@ def test_pb59_la_credencial_expuesta_deja_incidencia_en_ha_sin_copiar_el_valor(t
             assert "clave-filtrada-123" not in p.read_text(encoding="utf-8", errors="ignore"), p
     assert "clave-filtrada-123" not in json.dumps(b.mensajeria.registro)
     assert b.credenciales.solicitar("API de fondos cerrados", "AG-16", "x", "y", as_of=AS_OF)["estado"] == "YA_SOLICITADA"   # sigue pendiente
+
+
+# ================================================================================ QA r01 de T-116 (H-01): cuatro filas que el
+# mapa daba por automáticas sin que ninguna prueba afirmase una cláusula del criterio, y dos más repasadas con la misma regla
+CLAVE_API = "sk-" + "ant-abcdefghijklmnopqrstuvwxyz123456"   # ficticia y partida, para el gate de secretos
+IBAN = "ES91 2100 0418 4502 0005 1332"                         # el IBAN de ejemplo de la documentación bancaria
+
+
+def _en_archivos(carpeta, textos):
+    hallados = {}
+    for p in carpeta.rglob("*"):
+        if p.is_file():
+            cuerpo = p.read_text(encoding="utf-8", errors="ignore")
+            for t in textos:
+                if t in cuerpo:
+                    hallados.setdefault(t, []).append(p.name)
+    return hallados
+
+
+# ---------------------------------------------------------------- PB-21 · CT-04 con una clave y un IBAN: ningún archivo los guarda
+def test_pb21_un_ct04_con_una_clave_y_un_iban_se_rechaza_y_no_queda_en_ningun_archivo(tmp_path, universo):
+    b = nuevo_bloque(tmp_path, universo)
+    b.fijar_fecha(AS_OF)
+    f5_antes = len(b.almacen.leer("F5"))
+    with pytest.raises(DatosSensibles):
+        b.decision({"valoracion_informe": {"run_id": "RUN-2026-0001", "utilidad": 1,
+                                           "comentario": f"mi clave es {CLAVE_API} y mi IBAN {IBAN}"}}, AS_OF)
+    incs = [e for e in b.almacen.leer("HA") if e.get("tipo") == "SEGURIDAD"]
+    assert len(incs) == 1 and incs[0]["tipo_entrada"] == "INC" and incs[0]["campo_afectado"] == ["valoracion_informe"]
+    assert len(b.almacen.leer("F5")) == f5_antes                                     # rechazado íntegro: nada en F5
+    assert _en_archivos(tmp_path, [CLAVE_API, IBAN, IBAN.replace(" ", ""), "2100 0418", CLAVE_API[7:]]) == {}
+    assert CLAVE_API not in json.dumps(b.mensajeria.registro) and IBAN not in json.dumps(b.mensajeria.registro)
+
+
+# ---------------------------------------------------------------- PB-23 · los tres intentos del plan; la huella de F4 no cambia
+def test_pb23_los_tres_intentos_del_plan_se_rechazan_y_f4_no_cambia(tmp_path):
+    alm = Almacen(tmp_path)
+    alm.reloj.fijar("2026-01-02")
+    alm.escribir("F4", "AG-10", {"tipo_entrada": "ALTA", "prg_id": "PRG-2026-0001", "estado": "ABIERTO", "prob_interna": 0.6,
+                                 "afirmacion": "x"})
+    f4 = tmp_path / "F4_registro_pronosticos.jsonl"
+    antes = hashlib.sha256(f4.read_bytes()).hexdigest()
+    intentos = [("AG-02", {"tipo_entrada": "ALTA", "prg_id": "PRG-2026-0002"}),                       # el Analizador escribe en F4
+                ("AG-10", {"tipo_entrada": "RESOLUCION", "prg_id": "PRG-2026-0001", "estado": "RESUELTO",
+                           "resolucion": {"x": 1}}),                                                  # Prospectiva, un campo de resolución
+                ("AG-20", {"tipo_entrada": "RESOLUCION", "prg_id": "PRG-2026-0001", "afirmacion": "otra"})]   # el Evaluador, la afirmación
+    for autor, entrada in intentos:
+        with pytest.raises(EscrituraFueraDeReserva):
+            alm.escribir("F4", autor, entrada)
+        assert hashlib.sha256(f4.read_bytes()).hexdigest() == antes
+    incs = [e for e in alm.leer("HA") if e.get("tipo_entrada") == "INC"]
+    assert [e["tipo"] for e in incs] == ["ACCESO_FUERA_DE_MATRIZ"] * 3
+    assert alm.estado("F4")["PRG-2026-0001"]["afirmacion"] == "x" and alm.verificar_integridad("F4")["F4"]
+
+
+# ---------------------------------------------------------------- PB-37 · un pronóstico corregido es otro pronóstico
+def test_pb37_la_correccion_es_un_prg_nuevo_y_el_original_no_cambia(tmp_path):
+    alm = Almacen(tmp_path)
+    alm.reloj.fijar("2026-01-02")
+    alm.escribir("F4", "AG-10", {"tipo_entrada": "ALTA", "prg_id": "PRG-2026-0001", "estado": "ABIERTO", "prob_interna": 0.6,
+                                 "nivel_referencia": {"valor": 101.0}, "fecha_resolucion": "2026-03-02"})
+    f4 = tmp_path / "F4_registro_pronosticos.jsonl"
+    original = f4.read_bytes()
+    with pytest.raises(EscrituraFueraDeReserva):                                     # el alta congelada no se reescribe
+        alm.escribir("F4", "AG-10", {"tipo_entrada": "ALTA", "prg_id": "PRG-2026-0001", "nivel_referencia": {"valor": 110.0}})
+    assert f4.read_bytes() == original
+    alm.escribir("F4", "AG-10", {"tipo_entrada": "ALTA", "prg_id": "PRG-2026-0002", "version_de": "PRG-2026-0001", "estado": "ABIERTO",
+                                 "prob_interna": 0.6, "nivel_referencia": {"valor": 110.0}, "fecha_resolucion": "2026-03-02"})
+    assert f4.read_bytes().startswith(original)                                      # la entrada original, byte a byte
+    alm.reloj.fijar("2026-03-03")
+    for pid in ("PRG-2026-0001", "PRG-2026-0002"):
+        alm.escribir("F4", "AG-20", {"tipo_entrada": "RESOLUCION", "prg_id": pid, "estado": "RESUELTO", "resolucion": {"resultado_binario": 1}})
+    f4_estado = alm.estado("F4")
+    assert f4_estado["PRG-2026-0001"]["estado"] == f4_estado["PRG-2026-0002"]["estado"] == "RESUELTO"
+    assert f4_estado["PRG-2026-0001"]["nivel_referencia"] == {"valor": 101.0} and f4_estado["PRG-2026-0002"]["version_de"] == "PRG-2026-0001"
+    assert f4.read_bytes().startswith(original) and alm.verificar_integridad("F4")["F4"]
+
+
+# ---------------------------------------------------------------- PB-49 · una entrada borrada también se detecta
+@pytest.mark.parametrize("cual", ["la del medio", "la última"])
+def test_pb49_una_entrada_borrada_rompe_la_integridad(tmp_path, cual):
+    alm = Almacen(tmp_path)
+    alm.reloj.fijar("2026-01-02")
+    for i in range(3):
+        alm.escribir("F4", "AG-10", {"tipo_entrada": "ALTA", "prg_id": f"PRG-2026-000{i + 1}", "estado": "ABIERTO", "prob_interna": 0.6})
+    assert Almacen(tmp_path).verificar_integridad("F4")["F4"]
+    ruta = tmp_path / "F4_registro_pronosticos.jsonl"
+    lineas = ruta.read_text(encoding="utf-8").splitlines(keepends=True)
+    ruta.write_text("".join(lineas[:1] + lineas[2:] if cual == "la del medio" else lineas[:-1]), encoding="utf-8")
+    with pytest.raises(ValueError, match="integridad"):
+        Almacen(tmp_path).verificar_integridad("F4")
+
+
+# ---------------------------------------------------------------- PB-54 · los once campos del encargo, presentes y no vacíos
+def test_pb54_cada_encargo_para_b_lleva_sus_once_campos_no_vacios(ciclo_semanal):
+    _, r, _ = ciclo_semanal
+    encargos = r["paquete"]["paquete_para_bloque_B"]
+    assert encargos
+    campos = ("ambito", "tesis", "horizontes", "pronosticos", "catalizadores", "riesgos", "invalidacion", "indicador_seguimiento",
+              "criterios_seleccion_sugeridos", "metricas_clave", "preguntas_para_B")
+    for e in encargos:
+        vacios = [c for c in campos if not e.get(c)]
+        assert not vacios, (e["opp_id"], vacios)
+        assert all(e["ambito"].get(k) for k in ("incluye", "excluye", "region")) and e["indicador_seguimiento"].get("simbolo")
+
+
+# ---------------------------------------------------------------- PB-64 · ningún certificado para H5
+def test_pb64_la_revision_de_certificados_no_emite_ninguno_para_h5(tmp_path):
+    from test_t53_evaluacion_y_almacen import _h5_con_hitos
+    a = Almacen(tmp_path)
+    a.reloj.fijar("2027-06-04")
+    _h5_con_hitos(a, "MP", "PRG-2026-0901", 8, 12)                                   # 20 hitos resueltos, 40 % cumplidos
+    e = Evaluador(a, None, None, config_pruebas(evaluacion={"bootstrap_replicas": 50, "simulaciones_ece": 50}), None)
+    assert e.estado_h5("2027-06-04")["celdas"]["MP"]["degradar"]
+    res = e.revisar_certificados("2027-06-04")
+    assert not [c for c in res["emitidos"] if c["celda"]["horizonte"] == "H5"]
+    assert not [c for c in a.estado("F6", clave="id").values() if c.get("tipo_entrada") == "CERT" and c["celda"]["horizonte"] == "H5"]

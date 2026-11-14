@@ -37,6 +37,10 @@ def leer_plan() -> dict[str, dict]:
     """PB-xx → título, tipo y criterio de aprobación, tal como están en el plan."""
     texto = PLAN.read_text(encoding="utf-8")
     plan = {}
+    cabeceras = re.findall(r"^#+ *PB-.*$", texto, flags=re.MULTILINE)
+    raras = [c for c in cabeceras if not re.fullmatch(r"### PB-\d\d · \S.*", c)]
+    if raras:   # QA r01 de T-116, H-03: una prueba del plan con otra forma no se pierde en silencio
+        raise SystemExit(f"el plan tiene cabeceras de prueba que no se reconocen: {raras[:5]}")
     for m in re.finditer(r"^### (PB-\d\d) · (.+?)\n(.*?)(?=^##+ |\Z)", texto, flags=re.MULTILINE | re.DOTALL):
         campos = dict(re.findall(r"^\| ([^|]+?) \| (.*?) \|$", m.group(3), flags=re.MULTILINE))
         plan[m.group(1)] = {"titulo": m.group(2).strip(), "tipo": campos.get("Tipo", ""),
@@ -68,6 +72,8 @@ def comprobar(plan: dict, mapa: dict, nodos: set[str]) -> list[str]:
     """Problemas del mapa frente al plan y frente a la suite; lista vacía si está bien."""
     problemas = [f"{pb}: está en el plan y falta en el mapa" for pb in sorted(set(plan) - set(mapa))]
     problemas += [f"{pb}: está en el mapa y no en el plan" for pb in sorted(set(mapa) - set(plan))]
+    problemas += [f"{pb}: el plan no da su título o su criterio de aprobación" for pb, p in sorted(plan.items())
+                  if not p["titulo"].strip() or not p["criterio"].strip()]
     for pb, fila in sorted(mapa.items()):
         if set(fila) != set(CAMPOS):
             problemas.append(f"{pb}: campos {sorted(fila)}; se esperan {sorted(CAMPOS)}")
@@ -96,7 +102,8 @@ def ejecutar(nodos: list[str]) -> dict[str, str]:
             continue
         with tempfile.TemporaryDirectory() as tmp:
             informe = Path(tmp) / "junit.xml"
-            _pytest(carpeta, ["-q", f"--junitxml={informe}", "-o", "junit_family=xunit1", *propios])
+            # QA r01 de T-116, H-02: `--runxfail` hace que una prueba marcada como fallo esperado cuente por lo que hace
+            _pytest(carpeta, ["-q", "--runxfail", f"--junitxml={informe}", "-o", "junit_family=xunit1", *propios])
             casos: dict[str, list[str]] = {}
             if informe.is_file():
                 for caso in ET.parse(informe).getroot().iter("testcase"):
@@ -171,6 +178,16 @@ def documento(plan: dict, mapa: dict, resultados: dict[str, str], fecha: str, co
     return "\n".join(lineas).rstrip("\n") + "\n"
 
 
+def filas_del_documento(texto: str) -> dict[str, tuple[str, str, str]]:
+    """PB-xx → (resultado, comprueba, no comprueba) de la tabla del documento de evidencias."""
+    filas = {}
+    for linea in texto.splitlines():
+        m = re.fullmatch(r"\| (PB-\d\d) .*? \| ([^|]+) \| ([^|]*) \| ([^|]*) \|", linea)
+        if m:
+            filas[m.group(1)] = (m.group(2).strip(), m.group(3).strip(), m.group(4).strip())
+    return filas
+
+
 def main(argv: list[str] | None = None) -> int:
     ap = argparse.ArgumentParser(description="Evidencias del Plan de pruebas del Bloque A (T-116).")
     ap.add_argument("--ejecutar", action="store_true", help="ejecuta las pruebas citadas y escribe el documento de evidencias")
@@ -196,7 +213,8 @@ def main(argv: list[str] | None = None) -> int:
         for n in mapa[args.pb]["pruebas"]:
             print(f"{resultados.get(n, 'NO EJECUTADA'):<13} {n}")
         print(f"{args.pb} {plan[args.pb]['titulo']}: {resultado_fila(mapa[args.pb], resultados)}")
-        return 1 if "FALLA" in resultados.values() else 0
+        superadas = all(resultados.get(n) == "SUPERADA" for n in mapa[args.pb]["pruebas"])
+        return 0 if superadas else 1   # H-02: una prueba citada que falla o no se ejecuta no da un 0
     if args.ejecutar:
         import datetime as dt
         resultados = ejecutar(sorted({n for f in mapa.values() for n in f["pruebas"]}))

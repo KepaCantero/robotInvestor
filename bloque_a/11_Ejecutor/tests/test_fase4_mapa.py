@@ -106,3 +106,57 @@ def test_el_documento_tiene_una_fila_por_prueba_del_plan(ev):
     assert doc.count("### PB-") == sum(bool(f["pruebas"]) for f in mapa.values())
     sin_ejecutar = ev.documento(plan, mapa, {}, "2026-11-13", "abc1234")
     assert "| Superada" not in sin_ejecutar and "| No ejecutada |" in sin_ejecutar
+
+
+# ================================================================================ QA r01 de T-116
+def test_h02_una_prueba_citada_no_superada_nunca_da_un_cero(ev, monkeypatch, capsys):
+    """`--pb` termina con 1 si una prueba citada falla o no se ejecuta, y las pruebas se lanzan con `--runxfail`."""
+    mapa = ev.leer_mapa()
+    monkeypatch.setattr(ev, "recoger", lambda: {n for f in mapa.values() for n in f["pruebas"]})
+    for estado, codigo in (("SUPERADA", 0), ("NO EJECUTADA", 1), ("FALLA", 1)):
+        monkeypatch.setattr(ev, "ejecutar", lambda nodos, e=estado: {n: e for n in nodos})
+        assert ev.main(["--pb", "PB-23"]) == codigo, estado
+    monkeypatch.setattr(ev, "ejecutar", lambda nodos: {})                      # ninguna llegó a ejecutarse
+    assert ev.main(["--pb", "PB-23"]) == 1
+    capsys.readouterr()
+    llamadas = []
+    monkeypatch.undo()
+    monkeypatch.setattr(ev, "_pytest", lambda carpeta, args: llamadas.append(args))
+    ev.ejecutar(["11_Ejecutor/tests/test_unitarias.py::test_saneamiento_r9"])
+    assert llamadas and "--runxfail" in llamadas[0]
+
+
+@pytest.mark.parametrize("cabecera", ["### PB-68 - Con guion", "### PB-100 · Tres cifras", "## PB-68 · Otro nivel", "### PB-68 ·"])
+def test_h03_una_cabecera_de_prueba_que_no_se_reconoce_detiene_el_script(ev, monkeypatch, tmp_path, cabecera):
+    plan = tmp_path / "plan.md"
+    plan.write_text(ev.PLAN.read_text(encoding="utf-8") + f"\n{cabecera}\n\n| Campo | Contenido |\n|---|---|\n| Criterio de aprobación | x |\n",
+                    encoding="utf-8")
+    monkeypatch.setattr(ev, "PLAN", plan)
+    with pytest.raises(SystemExit, match="cabeceras de prueba que no se reconocen"):
+        ev.leer_plan()
+
+
+def test_h03_una_prueba_nueva_del_plan_o_una_sin_criterio_es_un_problema(ev, nodos, monkeypatch, tmp_path):
+    texto = ev.PLAN.read_text(encoding="utf-8")
+    plan = tmp_path / "plan.md"
+    plan.write_text(texto + "\n### PB-68 · Prueba nueva\n\n| Campo | Contenido |\n|---|---|\n| Criterio de aprobación | x |\n", encoding="utf-8")
+    monkeypatch.setattr(ev, "PLAN", plan)
+    assert "PB-68: está en el plan y falta en el mapa" in ev.comprobar(ev.leer_plan(), ev.leer_mapa(), nodos)
+    sin = ev.leer_plan()
+    sin["PB-22"]["criterio"] = " "
+    assert "PB-22: el plan no da su título o su criterio de aprobación" in ev.comprobar(sin, ev.leer_mapa(), nodos)
+
+
+def test_h05_el_documento_publicado_coincide_con_el_mapa(ev):
+    """El documento de evidencias se regenera, no se edita: su tabla tiene que decir lo que dice el mapa."""
+    plan, mapa = ev.leer_plan(), ev.leer_mapa()
+    filas = ev.filas_del_documento(ev.SALIDA.read_text(encoding="utf-8"))
+    assert sorted(filas) == sorted(mapa)
+    todas_pasan = {n: "SUPERADA" for fila in mapa.values() for n in fila["pruebas"]}
+    for pb, fila in mapa.items():
+        assert filas[pb] == (ev.resultado_fila(fila, todas_pasan), fila["comprueba"] or "—", fila["no_comprueba"] or "—"), pb
+    doc = ev.SALIDA.read_text(encoding="utf-8")
+    for pb, fila in mapa.items():
+        for n in fila["pruebas"]:
+            assert f"- `{n}`: SUPERADA" in doc, (pb, n)
+    assert set(plan) == set(filas)

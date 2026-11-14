@@ -37,6 +37,7 @@ import numpy as np
 import pandas as pd
 from scipy import linalg, optimize
 
+from ..configuracion import parametro
 from .operaciones import ErrorFicha
 
 Resultado = tuple[dict[str, Any], list[str]]
@@ -57,9 +58,14 @@ FREQ_PANDAS = {"mensual": "M", "trimestral": "Q", "anual": "Y"}
 # ------------------------------------------------------------------ cotas superiores de los tamaños (QA r01, H-01)
 # Ninguna de las ocho fichas fija un máximo para sus ventanas; las cotas salen de los horizontes del Documento 0
 # («Horizontes»: H1 días, 1–10 sesiones; H2 semanas, 2–8 semanas; … H5 décadas, 5–30 años) [PROPUESTO INC-T112-01].
+# T-118 (QA r02 de T-112, H-12): los extremos de los rangos de H2 y H5 son los del Documento 0 (§2, definición de «Horizontes») y no
+# están en la configuración, que solo trae la duración nominal de cada horizonte (`horizontes.H2` 4 semanas,
+# `horizontes.H5` 120 meses): son dos números distintos, no una discrepancia [PROPUESTO INC-T118-01]. Las sesiones por
+# semana sí están en la configuración y ya no se copian: aquí se leen de `config/por_defecto.yaml` (lo que muestra
+# `UMBRALES`) y, en cada llamada, de la configuración del Motor (`ent["configuracion"]`), como hace el grupo R.
 ANIOS_H5_MAX = 30          # H5 décadas (5–30 años): el horizonte más largo del sistema; tope de toda ventana en años
 SEMANAS_H2_MAX = 8         # H2 semanas (2–8 semanas): el horizonte más largo de CHR-FLOW-001 («Perfiles»: H1–H2)
-SESIONES_SEMANA = 5        # convención de mercado del calendario del ejecutor (`calendario.sesiones_por_semana`, T-65)
+SESIONES_SEMANA = int(parametro(None, "calendario.sesiones_por_semana"))   # convención de mercado del calendario (T-65)
 
 # ------------------------------------------------------------------ parámetros por defecto (campo «Parámetros»)
 PARAMETROS_POR_DEFECTO: dict[str, dict[str, Any]] = {
@@ -310,7 +316,16 @@ def _cerrado(ficha: str) -> Callable[[Manejador], Manejador]:
     return decorar
 
 
-def _validar_parametros(F: str, p: dict[str, Any]) -> None:
+def _configuracion(ent: dict[str, Any]) -> dict[str, Any] | None:
+    """T-118 (H-12): la configuración del Motor que llega en ``ent["configuracion"]``; sin ella (manejador llamado
+    directamente), None, y `parametro` toma la de `config/por_defecto.yaml` (como el grupo R)."""
+    cfg = ent.get("configuracion")
+    if cfg is not None and not isinstance(cfg, dict):
+        raise ErrorFicha("la configuración del Motor no es un objeto")
+    return cfg
+
+
+def _validar_parametros(F: str, p: dict[str, Any], cfg: dict[str, Any] | None = None) -> None:
     """Tipo y rango de cada parámetro de la petición (T-108, H-24)."""
     u = UMBRALES[F]
     if F == "REI-CAP-001":
@@ -343,9 +358,12 @@ def _validar_parametros(F: str, p: dict[str, Any]) -> None:
         vent = p["ventanas"]
         if not isinstance(vent, list) or not vent:
             raise ErrorFicha(f"{F}: ventanas debe ser una lista no vacía de días")
-        if len(vent) > u["ventana_sesiones_maxima"]:
-            raise ErrorFicha(f"{F}: ventanas: {len(vent)} ventanas (máximo {u['ventana_sesiones_maxima']}, distintas)")
-        vs = [_entero(w, f"{F}: ventanas (sesiones)", 1, u["ventana_sesiones_maxima"]) for w in vent]
+        # T-118 (H-12): el final de H2 en sesiones, con las sesiones por semana de la configuración del Motor
+        tope = SEMANAS_H2_MAX * _entero(parametro(cfg, "calendario.sesiones_por_semana"),
+                                        "configuración: calendario.sesiones_por_semana", 1)
+        if len(vent) > tope:
+            raise ErrorFicha(f"{F}: ventanas: {len(vent)} ventanas (máximo {tope}, distintas)")
+        vs = [_entero(w, f"{F}: ventanas (sesiones)", 1, tope) for w in vent]
         if len(set(vs)) != len(vs):
             raise ErrorFicha(f"{F}: ventanas repetidas")
         p["ventanas"] = sorted(vs)
@@ -364,7 +382,7 @@ def _validar_parametros(F: str, p: dict[str, Any]) -> None:
             p["phi"] = _rango(p["phi"], f"{F}: phi", lo, hi, abierto_hi=True)
 
 
-def _parametros(ficha: str, params: dict[str, Any] | None) -> dict[str, Any]:
+def _parametros(ficha: str, params: dict[str, Any] | None, cfg: dict[str, Any] | None = None) -> dict[str, Any]:
     """Parámetros de la petición encima de los de la ficha, validados; un umbral de `UMBRALES` en la petición se rechaza.
 
     Una clave que la ficha no declara también se rechaza (QA r01 de T-112, H-02: una errata no se sirve con el valor por
@@ -384,7 +402,7 @@ def _parametros(ficha: str, params: dict[str, Any] | None) -> dict[str, Any]:
         p["excluir_anos"] = list(p["excluir_anos"])
     if isinstance(p.get("ventanas"), list):
         p["ventanas"] = list(p["ventanas"])
-    _validar_parametros(ficha, p)
+    _validar_parametros(ficha, p, cfg)
     return p
 
 
@@ -1159,7 +1177,7 @@ def f_chr_flow(ent: dict[str, Any], params: dict[str, Any]) -> Resultado:
     año (ventana_z) [PROPUESTO].
     """
     F = "CHR-FLOW-001"
-    p, u, v = _parametros(F, params), UMBRALES[F], ent["valores"]
+    p, u, v = _parametros(F, params, _configuracion(ent)), UMBRALES[F], ent["valores"]
     corte = _corte(ent)
     lim: list[str] = []
     filas = _lista(v.get("flujos_etf"), f"{F}: flujos_etf")

@@ -63,3 +63,5 @@ Ninguno nuevo. La medida de INC-T117-01 se hizo con un script de un solo uso (se
 
 - 2026-11-13 · ABIERTO · creado con nuevo_ticket.sh
 - 2026-11-13 · EN QA · claude · implementado en una copia aparte: 43 pruebas nuevas en verde y las 399 de los ficheros que usan la V6; ruff 2902 y mypy 109, sin subir. Pendiente el gate completo y la QA
+- 2026-11-14 · APTO · QA r01 (revisor nuevo sin contexto, `2ff0630`): seis criterios cumplidos; la medida de INC-T117-01, reproducida y cierta; V5 idéntico byte a byte. Un hallazgo medio (H-01: el CT-06 comunicaba al Analista el umbral general y no el del tipo) y cinco bajos
+- 2026-11-14 · EN QA · claude · ronda r02, por decisión de Claude (corregir antes de cerrar): H-01 (`umbral_gc1`, el mismo umbral en GC1 y en el encargo), H-02 (recuento de familias decimal o de numpy), H-03 (un `umbral_por_perfil` que no es un diccionario se rechaza), H-04 (texto de la causa en el YAML e INC-T117-01), H-05 (tres pruebas que matan los mutantes vivos) y H-06 (motivo sin redondear hasta el umbral). 68 pruebas

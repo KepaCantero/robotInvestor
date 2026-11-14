@@ -174,9 +174,10 @@
   "pruebas": [
    "11_Ejecutor/tests/test_unitarias.py::test_contratos_canales_credenciales_e_idempotencia",
    "11_Ejecutor/tests/test_v51.py::test_credenciales_boveda",
-   "10_Herramientas/tests/test_ht09_validador_g3.py::TestBloqueos::test_credenciales"
+   "10_Herramientas/tests/test_ht09_validador_g3.py::TestBloqueos::test_credenciales",
+   "11_Ejecutor/tests/test_fase4_huecos.py::test_pb21_un_ct04_con_una_clave_y_un_iban_se_rechaza_y_no_queda_en_ningun_archivo"
   ],
-  "comprueba": "El mensaje se rechaza íntegro, queda la incidencia SEGURIDAD y el valor no aparece en HA ni en ningún archivo del estado.",
+  "comprueba": "El CT-04 del plan (una clave API y un IBAN en el comentario) se rechaza íntegro, deja una incidencia SEGURIDAD con el campo y sin el valor, y ni la clave ni el IBAN aparecen en ningún archivo ni mensaje; lo mismo en CT-03 y con las credenciales de CT-25.",
   "no_comprueba": ""
  },
  "PB-22": {
@@ -192,9 +193,10 @@
  "PB-23": {
   "cobertura": "AUTOMATICA",
   "pruebas": [
-   "11_Ejecutor/tests/test_unitarias.py::test_almacen_reserva_integridad_y_as_of"
+   "11_Ejecutor/tests/test_unitarias.py::test_almacen_reserva_integridad_y_as_of",
+   "11_Ejecutor/tests/test_fase4_huecos.py::test_pb23_los_tres_intentos_del_plan_se_rechazan_y_f4_no_cambia"
   ],
-  "comprueba": "Tres escrituras fuera de reserva rechazadas, tres incidencias y la cadena de huellas de F4 intacta.",
+  "comprueba": "Los tres intentos del plan (el Analizador escribe en F4, Prospectiva escribe un campo de resolución y el Evaluador cambia la afirmación) se rechazan, dejan tres incidencias y la huella de F4 no cambia tras ninguno.",
   "no_comprueba": ""
  },
  "PB-24": {
@@ -312,13 +314,14 @@
   "no_comprueba": "Que F10 quede intacto en P-09 y P-05 y que la P3- esté en la cola de HA."
  },
  "PB-37": {
-  "cobertura": "AUTOMATICA",
+  "cobertura": "PARCIAL",
   "pruebas": [
    "11_Ejecutor/tests/test_unitarias.py::test_almacen_reserva_integridad_y_as_of",
-   "11_Ejecutor/tests/test_autocritica.py::test_arrastre_con_invalidacion_activada"
+   "11_Ejecutor/tests/test_autocritica.py::test_arrastre_con_invalidacion_activada",
+   "11_Ejecutor/tests/test_fase4_huecos.py::test_pb37_la_correccion_es_un_prg_nuevo_y_el_original_no_cambia"
   ],
-  "comprueba": "Un pronóstico modificado rompe la cadena de huellas, la resolución no reescribe el alta y los PRG no se anulan.",
-  "no_comprueba": ""
+  "comprueba": "El alta congelada no se puede reescribir; la corrección es un PRG nuevo con `version_de`; la entrada original queda igual byte a byte y los dos se resuelven. Un pronóstico modificado a mano rompe la cadena de huellas.",
+  "no_comprueba": "Que los dos entren en las métricas: la corrección de un nivel mal transcrito no tiene una operación propia en el ejecutor (solo usa `version_de` en el arrastre)."
  },
  "PB-38": {
   "cobertura": "AUTOMATICA",
@@ -411,10 +414,11 @@
   "cobertura": "AUTOMATICA",
   "pruebas": [
    "11_Ejecutor/tests/test_unitarias.py::test_almacen_reserva_integridad_y_as_of",
-   "11_Ejecutor/tests/test_integracion.py::test_canales_y_matriz_respetados"
+   "11_Ejecutor/tests/test_integracion.py::test_canales_y_matriz_respetados",
+   "11_Ejecutor/tests/test_fase4_huecos.py::test_pb49_una_entrada_borrada_rompe_la_integridad"
   ],
-  "comprueba": "La cadena de huellas detecta cualquier entrada modificada y todos los archivos siguen íntegros tras un ciclo.",
-  "no_comprueba": "Las supresiones permitidas (borrado de fuentes) las hace HT-02 fuera del ejecutor."
+  "comprueba": "La cadena de huellas detecta una entrada modificada y una borrada (del medio o la última), y todos los archivos siguen íntegros tras un ciclo.",
+  "no_comprueba": "Las supresiones permitidas (borrado de fuentes en F7–F9) las hace HT-02 fuera del ejecutor, y no se comparan instantáneas de ocho semanas."
  },
  "PB-50": {
   "cobertura": "PARCIAL",
@@ -456,9 +460,10 @@
   "cobertura": "AUTOMATICA",
   "pruebas": [
    "11_Ejecutor/tests/test_integracion.py::test_ciclo_semanal_completo_apto",
-   "10_Herramientas/tests/test_ht09_validador_g3.py::TestV5::test_encargo_para_bloque_b"
+   "10_Herramientas/tests/test_ht09_validador_g3.py::TestV5::test_encargo_para_bloque_b",
+   "11_Ejecutor/tests/test_fase4_huecos.py::test_pb54_cada_encargo_para_b_lleva_sus_once_campos_no_vacios"
   ],
-  "comprueba": "Cada encargo para el Bloque B lleva criterios, métricas, preguntas y pronósticos no vacíos y cumple el esquema.",
+  "comprueba": "Cada encargo para el Bloque B lleva sus once campos presentes y no vacíos (ámbito, tesis, horizontes, pronósticos, catalizadores, riesgos, invalidación, indicador, criterios, métricas y preguntas) y cumple el esquema.",
   "no_comprueba": ""
  },
  "PB-55": {
@@ -549,9 +554,10 @@
    "11_Ejecutor/tests/test_t53_evaluacion_y_almacen.py::test_degradacion_h5_se_aplica_en_f6_y_f10",
    "11_Ejecutor/tests/test_t53_seleccion_y_entrega.py::test_h05_degradacion_h5_cambia_la_tabla_del_ciclo_siguiente",
    "11_Ejecutor/tests/test_t65_hallazgos.py::test_h13_la_degradacion_registra_el_efecto_desde_el_mismo_ciclo",
-   "10_Herramientas/tests/test_ht09_validador_g3.py::TestV51::test_h5_certificado_no_habilita_probabilidad"
+   "10_Herramientas/tests/test_ht09_validador_g3.py::TestV51::test_h5_certificado_no_habilita_probabilidad",
+   "11_Ejecutor/tests/test_fase4_huecos.py::test_pb64_la_revision_de_certificados_no_emite_ninguno_para_h5"
   ],
-  "comprueba": "H5 se evalúa por hitos; la degradación queda en F6 y F10 y cambia la tabla del ciclo siguiente; un certificado no habilita probabilidad en H5.",
+  "comprueba": "H5 se evalúa por hitos; con 20 hitos y el 40 % cumplidos la celda se degrada, queda en F6 y F10 y cambia la tabla del ciclo siguiente; la revisión de certificados no emite ninguno para H5.",
   "no_comprueba": ""
  },
  "PB-65": {
@@ -559,10 +565,11 @@
   "pruebas": [
    "11_Ejecutor/tests/test_v51.py::test_horizonte_principal_y_naturaleza_en_cada_opcion",
    "11_Ejecutor/tests/test_v51.py::test_ht09_bloquea_h5_sin_hitos",
-   "10_Herramientas/tests/test_ht09_validador_g3.py::TestV51::test_fuera_de_rango_sin_y_con_justificacion"
+   "10_Herramientas/tests/test_ht09_validador_g3.py::TestV51::test_fuera_de_rango_sin_y_con_justificacion",
+   "10_Herramientas/tests/test_ht09_validador_g3.py::TestV51::test_principal_en_celda_no"
   ],
-  "comprueba": "Cada opción tiene horizonte principal coherente con su naturaleza o justificado; HT-09 bloquea uno fuera de rango sin justificación.",
-  "no_comprueba": ""
+  "comprueba": "Los tres casos del plan en HT-09: fuera de rango sin justificación, BLOQUEADO; con justificación, APTO_CON_ADVERTENCIAS; principal en una celda «No» (DER con H5), BLOQUEADO. En el ciclo, cada opción es coherente o está justificada.",
+  "no_comprueba": "El dictamen del Orquestador sobre la advertencia (CT-14), que es del modelo real."
  },
  "PB-66": {
   "cobertura": "AUTOMATICA",
