@@ -1,6 +1,6 @@
 """Promueve en el Catálogo del Motor (Bloque A) las fichas que superan sus casos de control (§20.2: «Paso a IMPLEMENTADO»).
 
-T-106, autorizado por el operador el 12-11-2026. El script:
+T-106, autorizado por el operador el 12-11-2026 (T-112 y T-119 lo usan con su etiqueta). El script:
 1. ejecuta `Motor.verificar_casos_control` sobre un almacén temporal (los casos quedan registrados en su RC);
 2. para cada ficha que los supera y que el Catálogo da por «Documentado» o, desde T-112, por «Implementado (heredado)»,
    cambia su fila de la tabla del §4 y su línea «Prioridad y madurez» a IMPLEMENTADO con la etiqueta indicada;
@@ -76,10 +76,13 @@ def main(argv: list[str]) -> int:
     v50 = mad["doc"] - v40
     heredadas = (f"{mad['her']} heredadas de la línea V3.0 como **Implementado (heredado)**, pendientes de reverificación en el "
                  f"despliegue vigente; ") if mad["her"] else ""
+    # T-119: con las fichas P2 promovidas puede no quedar ninguna en DOCUMENTADO
+    documentadas = (f"{mad['doc']} **DOCUMENTADO** ({v40} de la línea V4.0"
+                    + (f" y {v50} de las fichas de los tipos IDX, FON, DER, MON y TCV incorporadas en V5.0" if v50 else "") + ")"
+                    ) if mad["doc"] else "ninguna queda en **DOCUMENTADO**"
     nuevo = (f"Estado actual de las {sum(mad.values())} fichas: {mad['impl']} **IMPLEMENTADO** (14 del ejecutor V1.0 con pruebas "
-             f"unitarias y {mad['impl'] - 14} con casos de control registrados, T-106 y T-112); {heredadas}{mad['doc']} **DOCUMENTADO** "
-             f"({v40} de la línea V4.0" + (f" y {v50} de las fichas de los tipos IDX, FON, DER, MON y TCV incorporadas en V5.0" if v50 else "")
-             + "). Ninguna ficha está VALIDADA.")
+             f"unitarias y {mad['impl'] - 14} con casos de control registrados, T-106, T-112 y T-119); {heredadas}{documentadas}. "
+             "Ninguna ficha está VALIDADA.")
     texto = re.sub(r"^Estado actual de las \d+ fichas:.*$", nuevo, texto, count=1, flags=re.MULTILINE)
     print(f"\nPromovidas: {len(promovidas)} · No superan: {fallidas}\n§1.3 → {nuevo}")
     if aplicar:

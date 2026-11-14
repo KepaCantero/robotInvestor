@@ -20,7 +20,7 @@ Archivo CC (propietario: operador, por cambio de tipo 3; el Motor propone). Lect
 | IMPLEMENTADO | Disponible en el entorno de ejecución y con casos de control superados | Servicio normal; la entrega declara «implementado, no validado» |
 | VALIDADO | Batería de pruebas de `09_Pruebas` ejecutada con evidencia registrada | Servicio normal sin advertencia de madurez |
 
-Estado actual de las 81 fichas: 71 **IMPLEMENTADO** (14 del ejecutor V1.0 con pruebas unitarias y 57 con casos de control registrados, T-106 y T-112); 10 **DOCUMENTADO** (10 de la línea V4.0). Ninguna ficha está VALIDADA.
+Estado actual de las 81 fichas: 81 **IMPLEMENTADO** (14 del ejecutor V1.0 con pruebas unitarias y 67 con casos de control registrados, T-106, T-112 y T-119); ninguna queda en **DOCUMENTADO**. Ninguna ficha está VALIDADA.
 
 1.4. **Cambios.** Alta, modificación o deprecación de fichas: propuesta del Motor (evidencia de uso del Registro de cálculos, casos de control, impacto) y aprobación del operador (tipo 3). Las versiones no se sobrescriben: conviven para permitir re-ejecuciones exactas.
 
@@ -130,26 +130,26 @@ Toda ficha contiene, en este orden:
 | FIR-CURVE-001 | Curva Nelson-Siegel-Svensson y valor relativo | MC-09 | PERF-FIR | H2–H4 | P1 | IMPLEMENTADO (ejecutor, casos de control registrados (T-112)) |
 | FIR-CARRY-001 | Carry y rolldown | MC-09 | PERF-FIR (+ PERF-TCV) | H2–H3 | P1 | IMPLEMENTADO (ejecutor, casos de control registrados (T-112)) |
 | FIR-SPREAD-001 | Percentil y valor del diferencial de crédito | MC-09 | PERF-FIR | H2–H4 | P1 | IMPLEMENTADO (ejecutor, casos de control registrados (T-112)) |
-| FIR-CRED-001 | Merton agregado: distancia al impago y diferencial implícito de un segmento | MC-09 | PERF-FIR (+ PERF-TCV, PERF-ACC) | H3–H4 | P2 | Documentado |
-| FX-BEER-001 | Tipo de cambio real de equilibrio (BEER) | MC-03 | PERF-FX | H4 (H3 limitado) | P2 | Documentado |
+| FIR-CRED-001 | Merton agregado: distancia al impago y diferencial implícito de un segmento | MC-09 | PERF-FIR (+ PERF-TCV, PERF-ACC) | H3–H4 | P2 | IMPLEMENTADO (ejecutor, casos de control registrados (T-119)) |
+| FX-BEER-001 | Tipo de cambio real de equilibrio (BEER) | MC-03 | PERF-FX | H4 (H3 limitado) | P2 | IMPLEMENTADO (ejecutor, casos de control registrados (T-119)) |
 | FX-MOM-001 | Momentum cambiario y carry ajustado por volatilidad | MC-09 | PERF-FX | H1–H3 | P1 | IMPLEMENTADO (ejecutor, casos de control registrados (T-112)) |
 | CMD-CURVE-001 | Estructura de la curva de futuros y roll yield | MC-09 | PERF-CMD | H1–H3 | P1 | IMPLEMENTADO (ejecutor V1.0, pruebas unitarias) |
 | CMD-INV-001 | Inventarios frente a media estacional | MC-02 | PERF-CMD | H2–H3 | P1 | IMPLEMENTADO (ejecutor, casos de control registrados (T-112)) |
 | CMD-RETDEC-001 | Descomposición de la rentabilidad de futuros | MC-09 | PERF-CMD | H3–H4 | P1 | IMPLEMENTADO (ejecutor, casos de control registrados (T-112)) |
-| CMD-REAL-001 | Precio real y coste marginal | MC-09 | PERF-CMD | H4 (H3 contexto) | P2 | Documentado |
+| CMD-REAL-001 | Precio real y coste marginal | MC-09 | PERF-CMD | H4 (H3 contexto) | P2 | IMPLEMENTADO (ejecutor, casos de control registrados (T-119)) |
 | REI-NAV-001 | Prima/descuento sobre NAV | MC-09 | PERF-REI | H3–H4 | P1 | IMPLEMENTADO (ejecutor, casos de control registrados (T-112)) |
 | REI-CAP-001 | Cap rate y diferencial cap rate–bono | MC-09 | PERF-REI (+ PERF-PRV) | H3–H4 | P1 | IMPLEMENTADO (ejecutor, casos de control registrados (T-112)) |
 | REI-FFO-001 | FFO/AFFO y sostenibilidad del dividendo | MC-09 | PERF-REI | H3 | P1 | IMPLEMENTADO (ejecutor, casos de control registrados (T-112)) |
-| REI-LEV-001 | Apalancamiento y riesgo de refinanciación | MC-09 | PERF-REI | H3–H4 | P2 | Documentado |
-| CHR-ONCHAIN-001 | MVRV y NVT | MC-09 | PERF-CHR | H3 (H2 contexto; H4 limitado) | P2 | Documentado |
+| REI-LEV-001 | Apalancamiento y riesgo de refinanciación | MC-09 | PERF-REI | H3–H4 | P2 | IMPLEMENTADO (ejecutor, casos de control registrados (T-119)) |
+| CHR-ONCHAIN-001 | MVRV y NVT | MC-09 | PERF-CHR | H3 (H2 contexto; H4 limitado) | P2 | IMPLEMENTADO (ejecutor, casos de control registrados (T-119)) |
 | CHR-FUND-001 | Financiación de perpetuos y base | MC-09 | PERF-CHR | H1–H2 | P1 | IMPLEMENTADO (ejecutor, casos de control registrados (T-112)) |
 | CHR-FLOW-001 | Flujos de ETF y oferta de stablecoins | MC-02 | PERF-CHR | H1–H2 | P1 | IMPLEMENTADO (ejecutor, casos de control registrados (T-112)) |
-| CHR-TOKEN-001 | Tokenómica y dilución | MC-09 | PERF-CHR | H2–H4 | P2 | Documentado |
-| PRV-PME-001 | Public market equivalent | MC-09 | PERF-PRV | H4 | P2 | Documentado |
-| PRV-CF-001 | TIR, múltiplos, curva J y proyección de flujos | MC-09 | PERF-PRV | H4 | P2 | Documentado |
+| CHR-TOKEN-001 | Tokenómica y dilución | MC-09 | PERF-CHR | H2–H4 | P2 | IMPLEMENTADO (ejecutor, casos de control registrados (T-119)) |
+| PRV-PME-001 | Public market equivalent | MC-09 | PERF-PRV | H4 | P2 | IMPLEMENTADO (ejecutor, casos de control registrados (T-119)) |
+| PRV-CF-001 | TIR, múltiplos, curva J y proyección de flujos | MC-09 | PERF-PRV | H4 | P2 | IMPLEMENTADO (ejecutor, casos de control registrados (T-119)) |
 | ALT-DESMOOTH-001 | Desuavizado de rentabilidades | MC-09 | PERF-PRV, PERF-ALT (+ PERF-REI, PERF-ETF) | H3–H4 | P1 | IMPLEMENTADO (ejecutor, casos de control registrados (T-112)) |
-| ALT-HF-001 | Exposición factorial de estrategias hedge | MC-09 | PERF-ALT (+ PERF-ETF) | H3–H4 | P2 | Documentado |
-| ALT-AUC-001 | Índice de transacciones de coleccionables | MC-09 | PERF-ALT | H4 | P2 | Documentado |
+| ALT-HF-001 | Exposición factorial de estrategias hedge | MC-09 | PERF-ALT (+ PERF-ETF) | H3–H4 | P2 | IMPLEMENTADO (ejecutor, casos de control registrados (T-119)) |
+| ALT-AUC-001 | Índice de transacciones de coleccionables | MC-09 | PERF-ALT | H4 | P2 | IMPLEMENTADO (ejecutor, casos de control registrados (T-119)) |
 | IDX-ERP-001 | Rentabilidad esperada por índice (Grinold-Kroner) | MC-09 | PERF-IDX (+ PERF-ACC) | H4 (H3 contexto) | P1 | IMPLEMENTADO (ejecutor, casos de control registrados (T-106)) |
 | IDX-CONC-001 | Concentración y amplitud de un índice | MC-01 | PERF-IDX (+ PERF-ACC) | H2–H4 | P1 | IMPLEMENTADO (ejecutor, casos de control registrados (T-106)) |
 | IDX-REL-001 | Valor relativo entre índices | MC-09 | PERF-IDX | H2–H4 | P1 | IMPLEMENTADO (ejecutor, casos de control registrados (T-106)) |
@@ -909,7 +909,7 @@ Evaluación transversal de cualquier horizonte: FC-EVAL-001, FC-CAL-001, BT-DSR-
 **Referencia ingenua.** PD histórica por rating.
 **Aclaración y rechazo.** Rechazo para segmentos de bancos y aseguradoras, con < 10 componentes cotizados o si se pide para ordenar emisores (1.6).
 **Referencias.** Merton (1974); Crosbie y Bohn (2003), *Modeling Default Risk* (Moody's KMV); Bharath y Shumway (2008); Vassalou y Xing (2004), *Journal of Finance* · TM-05.
-**Prioridad y madurez.** P2 · DOCUMENTADO.
+**Prioridad y madurez.** P2 · IMPLEMENTADO (ejecutor, casos de control registrados (T-119)).
 
 ## 10. Fichas nuevas — divisas (PERF-FX)
 
@@ -928,7 +928,7 @@ Evaluación transversal de cualquier horizonte: FC-EVAL-001, FC-CAL-001, BT-DSR-
 **Referencia ingenua.** PPA (media histórica del tipo real) y RI-PA.
 **Aclaración y rechazo.** Rechazo con < 15 años.
 **Referencias.** Clark y MacDonald (1998); Phillips et al. (2013), «The External Balance Assessment (EBA) Methodology», IMF WP 13/272 · TM-13.
-**Prioridad y madurez.** P2 · DOCUMENTADO.
+**Prioridad y madurez.** P2 · IMPLEMENTADO (ejecutor, casos de control registrados (T-119)).
 
 ### FX-MOM-001 · Momentum cambiario y carry ajustado por volatilidad
 
@@ -1015,7 +1015,7 @@ Evaluación transversal de cualquier horizonte: FC-EVAL-001, FC-CAL-001, BT-DSR-
 **Referencia ingenua.** RI-MH del precio real y RI-PA.
 **Aclaración y rechazo.** Rechazo con < 15 años.
 **Referencias.** Pindyck (1999), «The Long-Run Evolution of Energy Prices», *Energy Journal*; Erten y Ocampo (2013), «Super Cycles of Commodity Prices since the Mid-Nineteenth Century», *World Development*; Jacks (2019), *Explorations in Economic History* · TM-13.
-**Prioridad y madurez.** P2 · DOCUMENTADO.
+**Prioridad y madurez.** P2 · IMPLEMENTADO (ejecutor, casos de control registrados (T-119)).
 
 ## 12. Fichas nuevas — inmobiliario cotizado (PERF-REI)
 
@@ -1085,7 +1085,7 @@ Evaluación transversal de cualquier horizonte: FC-EVAL-001, FC-CAL-001, BT-DSR-
 **Referencia ingenua.** RI-NA.
 **Aclaración y rechazo.** Rechazo sin perfil de vencimientos.
 **Referencias.** Geltner et al. (2014); Brueggeman y Fisher (2018), *Real Estate Finance and Investments*, 16.ª ed. · TM-13.
-**Prioridad y madurez.** P2 · DOCUMENTADO.
+**Prioridad y madurez.** P2 · IMPLEMENTADO (ejecutor, casos de control registrados (T-119)).
 
 ## 13. Fichas nuevas — criptoactivos (PERF-CHR)
 
@@ -1106,7 +1106,7 @@ Datos mínimos del tipo de activo: **no se exigen 5 años de historia**. Cada fi
 **Referencia ingenua.** RI-PA y RI-CM (índice cripto de gran capitalización).
 **Aclaración y rechazo.** Rechazo sin fuente en cadena verificable.
 **Referencias.** Liu y Tsyvinski (2021), *RFS*; Cong, Li y Wang (2021), «Tokenomics: Dynamic Adoption and Valuation», *RFS*; Makarov y Schoar (2020), *JFE* · TM-13.
-**Prioridad y madurez.** P2 · DOCUMENTADO.
+**Prioridad y madurez.** P2 · IMPLEMENTADO (ejecutor, casos de control registrados (T-119)).
 
 ### CHR-FUND-001 · Financiación de perpetuos y base
 
@@ -1157,7 +1157,7 @@ Datos mínimos del tipo de activo: **no se exigen 5 años de historia**. Cada fi
 **Referencia ingenua.** RI-NA.
 **Aclaración y rechazo.** Rechazo sin calendario verificable.
 **Referencias.** Cong, Li y Wang (2021); Sockin y Xiong (2023), «A Model of Cryptocurrencies», *Management Science* · TM-13.
-**Prioridad y madurez.** P2 · DOCUMENTADO.
+**Prioridad y madurez.** P2 · IMPLEMENTADO (ejecutor, casos de control registrados (T-119)).
 
 ## 14. Fichas nuevas — alternativos y mercados privados (PERF-PRV, PERF-ALT)
 
@@ -1176,7 +1176,7 @@ Datos mínimos del tipo de activo: **no se exigen 5 años de historia**. Cada fi
 **Referencia ingenua.** Índice cotizado (PME = 1).
 **Aclaración y rechazo.** Rechazo sin fechas de flujos.
 **Referencias.** Kaplan y Schoar (2005); Gredil, Griffiths y Stucke (2014); Sørensen y Jagannathan (2015), *FAJ*; Harris, Jenkinson y Kaplan (2014), *Journal of Finance* · TM-13.
-**Prioridad y madurez.** P2 · DOCUMENTADO.
+**Prioridad y madurez.** P2 · IMPLEMENTADO (ejecutor, casos de control registrados (T-119)).
 
 ### PRV-CF-001 · TIR, múltiplos, curva J y proyección de flujos
 
@@ -1193,7 +1193,7 @@ Datos mínimos del tipo de activo: **no se exigen 5 años de historia**. Cada fi
 **Referencia ingenua.** Mediana de la cosecha y estrategia.
 **Aclaración y rechazo.** Rechazo sin flujos fechados.
 **Referencias.** Takahashi y Alexander (2002), «Illiquid Alternative Asset Fund Modeling», *JPM*; Ljungqvist y Richardson (2003), NBER WP 9454 · TM-13.
-**Prioridad y madurez.** P2 · DOCUMENTADO.
+**Prioridad y madurez.** P2 · IMPLEMENTADO (ejecutor, casos de control registrados (T-119)).
 
 ### ALT-DESMOOTH-001 · Desuavizado de rentabilidades
 
@@ -1227,7 +1227,7 @@ Datos mínimos del tipo de activo: **no se exigen 5 años de historia**. Cada fi
 **Referencia ingenua.** Cartera pasiva de factores (o 60/40).
 **Aclaración y rechazo.** Rechazo con < 36 observaciones.
 **Referencias.** Fung y Hsieh (2001; 2004), *RFS*, *FAJ*; Agarwal y Naik (2004), *RFS*; Hasanhodzic y Lo (2007), *Journal of Investment Management* · TM-13.
-**Prioridad y madurez.** P2 · DOCUMENTADO.
+**Prioridad y madurez.** P2 · IMPLEMENTADO (ejecutor, casos de control registrados (T-119)).
 
 ### ALT-AUC-001 · Índice de transacciones de coleccionables
 
@@ -1244,7 +1244,7 @@ Datos mínimos del tipo de activo: **no se exigen 5 años de historia**. Cada fi
 **Referencia ingenua.** IPC (rentabilidad real nula) y RI-CM de renta variable global.
 **Aclaración y rechazo.** Rechazo por debajo del mínimo de transacciones.
 **Referencias.** Bailey, Muth y Nourse (1963), *JASA*; Case y Shiller (1987), *New England Economic Review*; Mei y Moses (2002), *AER*; Korteweg, Kräussl y Verwijmeren (2016), *RFS*; Dimson, Rousseau y Spaenjers (2015), *JFE* · TM-13.
-**Prioridad y madurez.** P2 · DOCUMENTADO.
+**Prioridad y madurez.** P2 · IMPLEMENTADO (ejecutor, casos de control registrados (T-119)).
 
 ## 15. Fichas nuevas V5.0 — índices bursátiles (PERF-IDX)
 

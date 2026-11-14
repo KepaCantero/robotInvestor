@@ -27,6 +27,7 @@ from . import evaluacion as ev
 from . import (
     fichas_fon_der,
     fichas_mon_idx,
+    fichas_p2,
     fichas_reales,
     fichas_riesgo,
     fichas_series,
@@ -239,8 +240,10 @@ CASOS_CONTROL: dict[str, list[dict[str, Any]]] = {}
 # T-112 (Motor Fase 2): las fichas P0 y P1 del Catálogo, en cuatro módulos más; las que llevan azar declaran su `semilla`
 MODULOS_FASE1 = (fichas_mon_idx, fichas_fon_der, fichas_tcv)
 MODULOS_FASE2 = (fichas_series, fichas_riesgo, fichas_valoracion, fichas_reales)
+# T-119: las diez fichas P2 (ampliación), las últimas que el Catálogo daba por DOCUMENTADO; ninguna usa azar
+MODULOS_P2 = (fichas_p2,)
 ACEPTA_SEMILLA: set[str] = set()
-for _mod in MODULOS_FASE1 + MODULOS_FASE2:
+for _mod in MODULOS_FASE1 + MODULOS_FASE2 + MODULOS_P2:
     _adv = getattr(_mod, "ADVERTENCIAS", {})
     for _f, _meta in _mod.FICHAS.items():
         IMPLEMENTADAS[_f] = {**_meta, "fn": _advertencias_aparte(_meta["fn"], set(_adv[_f])) if _f in _adv else _meta["fn"]}
@@ -252,7 +255,8 @@ RUTA_CATALOGO = ("04_Motor_conocimiento_y_catalogo", "Catálogo de cálculos del
 _FILA_CATALOGO = re.compile(r"^\| ([A-Z]+(?:-[A-Z0-9]+)+-\d{3}) \|.*\| (P\d) \| ([^|]+?) \|\s*$", re.MULTILINE)
 FASE1 = frozenset(f for m in MODULOS_FASE1 for f in m.CASOS_CONTROL)   # las fichas de T-106
 FASE2 = frozenset(f for m in MODULOS_FASE2 for f in m.CASOS_CONTROL)   # las de T-112
-ESTRICTAS = FASE1 | FASE2   # resultado estricto: el Motor rechaza cualquier cifra no finita
+P2 = frozenset(f for m in MODULOS_P2 for f in m.CASOS_CONTROL)         # las de T-119
+ESTRICTAS = FASE1 | FASE2 | P2   # resultado estricto: el Motor rechaza cualquier cifra no finita
 # T-112: BIB-MET-001 solo la piden por CT-09 el Orquestador técnico (paquetes CT-21) y el Evaluador («Supuestos y
 # limitaciones» de la ficha); los agentes de conocimiento no son sus clientes
 SOLICITANTES_FICHA = {"BIB-MET-001": frozenset({"AG-18", "AG-20"})}

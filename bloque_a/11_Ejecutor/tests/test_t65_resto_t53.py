@@ -154,9 +154,11 @@ def test_cs08_no_se_ofrece_como_alternativa_una_ficha_que_no_se_sirve(tmp_path, 
     from bloque_a.motor import servicio
     b = _bloque(tmp_path)
     b.fijar_fecha(AS_OF)
+    # T-119: CHR-ONCHAIN-001 (P2) ya se sirve; la regla se comprueba poniéndola a mano entre las de código provisional
+    monkeypatch.setattr(servicio, "DOCUMENTADAS_CON_CODIGO", frozenset({"CHR-ONCHAIN-001"}))
     r = b.motor.servir({"operacion": "CHR-ONCHAIN-001", "plan": "PLAN_MIN", "datos": []}, "AG-02", "RUN-2026-0001")
-    assert r.get("alternativa") == "ACC-MOM-001"   # CHR-ONCHAIN-001 (P2) sigue DOCUMENTADO; su alternativa se sirve
-    monkeypatch.setattr(servicio, "DOCUMENTADAS_CON_CODIGO", frozenset({"ACC-MOM-001"}))
+    assert r["estado"] == "RECHAZADO" and r.get("alternativa") == "ACC-MOM-001"   # su alternativa se sirve
+    monkeypatch.setattr(servicio, "DOCUMENTADAS_CON_CODIGO", frozenset({"CHR-ONCHAIN-001", "ACC-MOM-001"}))
     r = b.motor.servir({"operacion": "CHR-ONCHAIN-001", "plan": "PLAN_MIN", "datos": []}, "AG-02", "RUN-2026-0002")
     assert r["estado"] == "RECHAZADO" and not r.get("alternativa") and "alternativa" not in r["detalle"]
 

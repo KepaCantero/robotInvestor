@@ -132,7 +132,7 @@ FASE2 = sorted(servicio.FASE2)
 
 def test_son_las_35_fichas_de_la_fase_2_y_estan_en_el_catalogo():
     assert len(FASE2) == 35 and all(f in servicio.FICHAS_CATALOGO and f in servicio.IMPLEMENTADAS for f in FASE2)
-    assert not servicio.FASE1 & servicio.FASE2 and servicio.ESTRICTAS == servicio.FASE1 | servicio.FASE2
+    assert not servicio.FASE1 & servicio.FASE2 and servicio.ESTRICTAS == servicio.FASE1 | servicio.FASE2 | servicio.P2   # T-119
     mad = servicio.madurez_catalogo()
     assert all(mad[f].startswith("IMPLEMENTADO") for f in FASE2 + ["AUD-REX-001"])
     assert not servicio.DOCUMENTADAS_CON_CODIGO
