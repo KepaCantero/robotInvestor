@@ -249,7 +249,8 @@ def test_r02_h04_h07_la_ficha_recibe_la_configuracion_y_la_fecha_de_corte(tmp_pa
     caso = servicio.CASOS_CONTROL[f][0]
     m.servir({"operacion": f, "datos": copy.deepcopy(caso["datos"]), "parametros": dict(caso.get("parametros") or {}),
               "fecha_corte": "2026-11-12"}, "AG-03")
-    assert vistos and all(c is m.cfg and fc == "2026-11-12" for c, fc in vistos)
+    # T-118 (H-11): la ficha recibe la configuración del Motor dentro del registro de lo que lee de ella (igual, no idéntica)
+    assert vistos and all(c == m.cfg and c is not None and fc == "2026-11-12" for c, fc in vistos)
 
 
 @pytest.mark.parametrize("semilla", [[], {"a": 1}, [1, 2]])

@@ -17,6 +17,7 @@ from __future__ import annotations
 import copy
 import hashlib
 import math
+import numbers
 import re
 import unicodedata
 from typing import Any
@@ -70,7 +71,8 @@ def validar(cfg: dict) -> bool:
     if not isinstance(spp, dict) or any(k not in CLASES or v not in SENALES_GC1 for k, v in spp.items()):
         raise ValueError(f"v6.gc1.senal_por_perfil debe ser {{tipo de activo: señal del Motor}}, con señales de {SENALES_GC1}")
     # T-117: umbral de GC1 por tipo de activo y concordancia mínima de familias de la señal compuesta (Anexo A)
-    upp = ((cfg.get("v6") or {}).get("gc1") or {}).get("umbral_por_perfil") or {}
+    upp = ((cfg.get("v6") or {}).get("gc1") or {}).get("umbral_por_perfil")
+    upp = {} if upp is None else upp
     if not isinstance(upp, dict) or any(k not in CLASES or isinstance(v, bool) or not isinstance(v, (int, float))
                                         or not math.isfinite(float(v)) or not 0 < float(v) <= 1 for k, v in upp.items()):
         raise ValueError("v6.gc1.umbral_por_perfil debe ser {tipo de activo: umbral}, con umbrales mayores que 0 y hasta 1")
@@ -130,6 +132,20 @@ def repartir_presupuesto(bloque, asign: dict[str, float], clases: list[str], fij
 # ======================================================================================================
 # GC1 por código (PA-04)
 # ======================================================================================================
+def _bajo_umbral(valor: float, umbral: float) -> str:
+    """Una señal que no llega al umbral, con dos decimales; si así redondeada lo alcanzaría, con las cifras que hagan falta
+    para que el motivo no diga «0.65 < 0.65» (QA r01 de T-117, H-06)."""
+    corto = f"{valor:.2f}"
+    return corto if float(corto) < umbral else f"{valor:.8g}"
+
+
+def umbral_gc1(bloque, clase: str) -> float:
+    """Umbral de GC1 del tipo de activo en el diseño V6: el suyo (`v6.gc1.umbral_por_perfil`) o, si no lo tiene, el general.
+    QA r01 de T-117, H-01: es el mismo que el encargo CT-06 le comunica al Analista."""
+    propio = (op(bloque, "gc1.umbral_por_perfil") or {}).get(clase)
+    return float(propio if propio is not None else parametro(bloque.cfg, "seleccion.umbral_senal_gc1"))
+
+
 def gc1(bloque, clase: str, universo: list[dict], vigentes: list[dict], as_of) -> tuple[list[dict], dict]:
     """Filtra el universo que recibe el Analista. Pasan como mucho `seleccion.max_candidatas` ámbitos cuya señal llega al
     umbral de su tipo (`v6.gc1.umbral_por_perfil`; si no lo tiene, `seleccion.umbral_senal_gc1`) y, cuando manda la señal
@@ -137,8 +153,7 @@ def gc1(bloque, clase: str, universo: list[dict], vigentes: list[dict], as_of) -
     falta de oportunidad); `v6.gc1.exploracion_celdas` de los que no pasan llegan igualmente, elegidos por una semilla del
     corte, para medir los falsos negativos; las vigentes siempre llegan. Devuelve el universo y el registro de GC1."""
     clave = (op(bloque, "gc1.senal_por_perfil") or {}).get(clase) or "senal_compuesta"
-    propio = (op(bloque, "gc1.umbral_por_perfil") or {}).get(clase)
-    umbral = float(propio if propio is not None else parametro(bloque.cfg, "seleccion.umbral_senal_gc1"))
+    umbral = umbral_gc1(bloque, clase)
     fam_min = int(op(bloque, "gc1.familias_min") or 0) if clave == "senal_compuesta" else 0
     maxc = int(parametro(bloque.cfg, "seleccion.max_candidatas"))
     n_expl = int(op(bloque, "gc1.exploracion_celdas"))
@@ -156,7 +171,9 @@ def gc1(bloque, clase: str, universo: list[dict], vigentes: list[dict], as_of) -
         """Con la señal compuesta, el Anexo A pide además concordancia de familias. Si el Motor no da el recuento, no se
         descarta por esto: la falta del dato no prueba la falta de concordancia."""
         n = (u.get("senales") or {}).get("familias_concordantes")
-        return fam_min > 0 and isinstance(n, int) and not isinstance(n, bool) and n < fam_min
+        if fam_min <= 0 or isinstance(n, bool) or not isinstance(n, numbers.Real):   # H-02: también float o numpy enteros
+            return False
+        return math.isfinite(float(n)) and float(n) < fam_min
 
     pasan = [u for u in orden if float(u["senales"][clave]) >= umbral and not pocas_familias(u)][:maxc]
     ids_pasan = {u["simbolo"] for u in pasan}
@@ -178,7 +195,7 @@ def gc1(bloque, clase: str, universo: list[dict], vigentes: list[dict], as_of) -
         if u["simbolo"] in marca:
             filtrado.append({**u, "gc1": marca[u["simbolo"]]})
     descartes = [{"simbolo": u["simbolo"], "senal": round(float(u["senales"][clave]), 4),
-                  "motivo": f"{clave} {float(u['senales'][clave]):.2f} < {umbral}" if float(u["senales"][clave]) < umbral
+                  "motivo": f"{clave} {_bajo_umbral(float(u['senales'][clave]), umbral)} < {umbral}" if float(u["senales"][clave]) < umbral
                   else (f"{u['senales']['familias_concordantes']} familias concordantes < {fam_min}" if pocas_familias(u)
                         else f"fuera de las {maxc} candidatas con más señal")}
                  for u in resto if u["simbolo"] not in ids_expl and marca.get(u["simbolo"]) != "VIGENTE"]

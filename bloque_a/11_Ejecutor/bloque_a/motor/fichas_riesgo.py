@@ -20,6 +20,9 @@ Convenciones de este módulo:
   réplicas, pliegues, cuantiles…) están en `UMBRALES` y no se pueden cambiar desde la petición; cada parámetro de la
   petición tiene tipo y dominio (`_validar`), y un parámetro que la ficha no declara se rechaza (QA r01 de T-112, H-01 y
   H-02).
+- Datos (T-118; QA r02 de T-112, H-09 y H-10): todo dato en línea y toda serie de HT-01 tiene cota de tamaño (bloque
+  de cotas de los datos, tras `UMBRALES`), y un dato fechado después de la fecha de corte de la petición se rechaza
+  («no conocible»: ML-PRED-001 y ML-CAL-001, las dos fichas del grupo con datos fechados).
 - Configuración: los números que salen de la configuración (umbrales de HT-03, réplicas y nivel del bootstrap, sesiones
   de cada horizonte) se leen en cada llamada de ``ent["configuracion"]``, la del Motor; si el manejador se llama sin
   ella, de `config/por_defecto.yaml` (QA r01 de T-112, H-04).
@@ -44,6 +47,7 @@ from scipy import integrate, optimize, signal, special, stats
 
 from ..configuracion import (
     CLASES,
+    HORIZONTES,
     TABLA_HORIZONTES,
     parametro,
     parametros_ht03,
@@ -170,6 +174,28 @@ UMBRALES: dict[str, dict[str, Any]] = {
                     "banda_marginal": "parametros_ht03.banda_marginal", "ampliaciones_maximas": 60},
 }
 
+# T-118 (QA r02 de T-112, H-10) · Cotas del tamaño de los DATOS de la petición (las de arriba acotan los parámetros): todo
+# dato en línea, y toda serie de HT-01, tiene tope, comprobado antes de leer sus elementos y de calcular.
+# - Una historia (rendimientos, residuos, pares predicción-realización, fechas, VaR previsto, observaciones de cada
+#   configuración) tiene como mucho las sesiones de H5 de la configuración del Motor (`horizontes.H5` y `calendario`: 2 520
+#   por defecto), la misma cota que el grupo S da a sus series; se lee en cada llamada (`_observaciones_maximas`).
+# - Una muestra simulada (la distribución de MC-05 de RISK-VAR-001 y las muestras de DEC-VOI-001) tiene como mucho el
+#   máximo de trayectorias de SIM-MC-001 («Parámetros»: 1 000–1 000 000), que es quien la produce.
+# - SCN-H-001: los estados del régimen, como mucho los de REG-HMM-001 («Parámetros»: n_estados 2–4), de donde vienen.
+# - ML-CAL-001: como mucho tantos horizontes como tiene el sistema (`HORIZONTES` del Documento 0: H1–H5).
+# - BT-PBO-001: hasta 1 000 configuraciones, la cota de contrastes por familia de ST-INF-001 [PROPUESTO INC-T118-01].
+# - ML-PRED-001: hasta 20 variables, el tope que la ficha da a la rejilla (y aquí a los pliegues) [PROPUESTO INC-T118-01].
+_MUESTRA_SIMULADA_MAXIMA = UMBRALES["SIM-MC-001"]["rango_n_trayectorias"][1]
+UMBRALES["RISK-VAR-001"].update({"observaciones_maximas": _HORIZONTE_MAXIMO, "distribucion_maxima": _MUESTRA_SIMULADA_MAXIMA})
+UMBRALES["SIM-MC-001"].update({"observaciones_maximas": _HORIZONTE_MAXIMO})
+UMBRALES["SCN-H-001"].update({"observaciones_maximas": _HORIZONTE_MAXIMO, "estados_maximos": 4})
+UMBRALES["BT-DSR-001"].update({"observaciones_maximas": _HORIZONTE_MAXIMO})
+UMBRALES["BT-PBO-001"].update({"observaciones_maximas": _HORIZONTE_MAXIMO, "configuraciones_maximas": 1000})
+UMBRALES["BT-VAR-001"].update({"observaciones_maximas": _HORIZONTE_MAXIMO})
+UMBRALES["ML-CAL-001"].update({"observaciones_maximas": _HORIZONTE_MAXIMO, "horizontes_maximos": len(HORIZONTES)})
+UMBRALES["ML-PRED-001"].update({"observaciones_maximas": _HORIZONTE_MAXIMO, "variables_maximas": 20})
+UMBRALES["DEC-VOI-001"].update({"muestras_maximas": _MUESTRA_SIMULADA_MAXIMA})
+
 # Advertencias obligatorias de entrega («Supuestos y limitaciones» de cada ficha, literales).
 ADVERTENCIAS: dict[str, list[str]] = {
     "RISK-VAR-001": ["el VaR no es la pérdida máxima ni describe la cola", "√h solo con iid"],
@@ -247,7 +273,10 @@ def _bool(x: Any, que: str) -> bool:
     return bool(x)
 
 
-def _vector(x: Any, que: str, minimo: int = 1) -> np.ndarray:
+def _vector(x: Any, que: str, minimo: int = 1, maximo: int | None = None) -> np.ndarray:
+    # T-118 (H-10): la cota se comprueba antes de leer los elementos
+    if maximo is not None and isinstance(x, (list, tuple, pd.Series, np.ndarray)) and np.size(x) > maximo:
+        raise ErrorFicha(f"{que}: {np.size(x)} valores (máximo {maximo}, cota de la ficha)")
     if isinstance(x, (pd.Series, np.ndarray)):
         x = list(np.asarray(x).ravel())
     v = np.array([_num(e, f"{que}[{i}]") for i, e in enumerate(_lista(x, que))], dtype=float)
@@ -289,6 +318,40 @@ def _configuracion(ent: dict[str, Any]) -> dict[str, Any] | None:
 def _horizonte_maximo(cfg: dict[str, Any] | None) -> int:
     """Sesiones del horizonte más largo del Documento 0 (H5), de la configuración: la cota del horizonte (H-01)."""
     return _entero(sesiones_horizonte(cfg, _HORIZONTE_MAXIMO), f"configuración: sesiones de {_HORIZONTE_MAXIMO}", 1)
+
+
+def _observaciones_maximas(cfg: dict[str, Any] | None) -> int:
+    """T-118 (H-10): cota de las observaciones de una historia, las sesiones de H5 de la configuración del Motor."""
+    return _horizonte_maximo(cfg)
+
+
+def _acotado(n: int, maximo: int, que: str) -> None:
+    if n > maximo:
+        raise ErrorFicha(f"{que}: {n} (máximo {maximo}, cota de la ficha)")
+
+
+def _corte(ent: dict[str, Any]) -> pd.Timestamp | None:
+    """T-118 (QA r02 de T-112, H-09): fecha de corte de la petición (``ent["fecha_corte"]``, que pone el Motor), o None."""
+    fc = ent.get("fecha_corte")
+    if fc is None:
+        return None
+    try:
+        t = pd.Timestamp(fc)
+    except (TypeError, ValueError, OverflowError) as e:
+        raise ErrorFicha(f"fecha de corte de la petición ilegible ({str(fc)[:40]})") from e
+    if pd.isna(t):
+        raise ErrorFicha("fecha de corte de la petición vacía")
+    return t
+
+
+def _hasta_corte(fechas: list[pd.Timestamp], corte: pd.Timestamp | None, que: str) -> None:
+    """H-09: un dato en línea fechado después de la fecha de corte no era conocible; se rechaza, como en los grupos S, V y
+    P y como hace el servicio con las series de HT-01. Se compara por día: el dato del día del corte sí es conocible."""
+    if corte is None or not fechas:
+        return
+    ultima = max(fechas)
+    if ultima.normalize() > corte.normalize():
+        raise ErrorFicha(f"{que}: dato del {ultima.date()} posterior a la fecha de corte {corte.date()} (no conocible)")
 
 
 def _lista_acotada(x: Any, que: str, maximo: int) -> list[Any]:
@@ -474,16 +537,19 @@ def _cerrado(ficha: str, fn: Callable[[dict[str, Any], dict[str, Any]], Resultad
     return envoltura
 
 
-def _rendimientos(ent: dict[str, Any], que: str, clave: str = "rendimientos") -> np.ndarray:
-    """Rendimientos simples: `valores[clave]` en línea o, si no, la única serie de precios de `ent["series"]`."""
+def _rendimientos(ent: dict[str, Any], que: str, clave: str = "rendimientos", maximo: int | None = None) -> np.ndarray:
+    """Rendimientos simples: `valores[clave]` en línea o, si no, la única serie de precios de `ent["series"]`; como mucho
+    `maximo` rendimientos (T-118, H-10; n + 1 precios dan n rendimientos)."""
     v = ent.get("valores") or {}
     if v.get(clave) is not None:
-        return _vector(v[clave], f"{que}: {clave}")
+        return _vector(v[clave], f"{que}: {clave}", maximo=maximo)
     series = ent.get("series") or {}
     if len(series) == 1:
         s = next(iter(series.values()))
         if not isinstance(s, pd.Series):
             raise ErrorFicha(f"{que}: la serie de precios no es una serie temporal")
+        if maximo is not None:
+            _acotado(len(s) - 1, maximo, f"{que}: rendimientos de la serie de precios")
         precios = _vector(s.dropna().to_numpy(), f"{que}: precios", 2)
         if (precios <= 0).any():
             raise ErrorFicha(f"{que}: precios no positivos")
@@ -614,9 +680,10 @@ def _datos_var(ent: dict[str, Any], F: str, lim: list[str]) -> tuple[np.ndarray,
         if d.get("semilla") is None:
             raise ErrorFicha(f"{F}: una distribución de MC-05 exige su semilla")
         _semilla(d["semilla"], F)
-        r = _vector(_requerido(d, "rendimientos", f"{F}: distribucion"), f"{F}: distribucion.rendimientos")
+        r = _vector(_requerido(d, "rendimientos", f"{F}: distribucion"), f"{F}: distribucion.rendimientos",
+                    maximo=UMBRALES[F]["distribucion_maxima"])
         return r, "distribucion"
-    return _rendimientos(ent, F), "historia"
+    return _rendimientos(ent, F, maximo=_observaciones_maximas(_configuracion(ent))), "historia"
 
 
 def f_risk_var(ent: dict[str, Any], params: dict[str, Any]) -> Resultado:
@@ -688,7 +755,7 @@ def _garch_params(d: dict[str, Any], que: str) -> tuple[float, float, float, flo
     return om, al, be, s2
 
 
-def _dinamica(v: dict[str, Any], F: str) -> dict[str, Any]:
+def _dinamica(v: dict[str, Any], F: str, obs_maximas: int | None = None) -> dict[str, Any]:
     d = _dict(_requerido(v, "dinamica", F), f"{F}: dinamica")
     tipo = _opcion(_requerido(d, "tipo", f"{F}: dinamica"), f"{F}: dinamica.tipo", UMBRALES["SIM-MC-001"]["dinamicas"])
     q = f"{F}: dinamica ({tipo})"
@@ -702,7 +769,7 @@ def _dinamica(v: dict[str, Any], F: str) -> dict[str, Any]:
     if tipo in ("garch", "bootstrap_filtrado"):
         out["omega"], out["alpha"], out["beta"], out["sigma2_inicial"] = _garch_params(d, q)
     if tipo == "bootstrap_filtrado":
-        z = _vector(_requerido(d, "residuos", q), f"{q}: residuos", 2)
+        z = _vector(_requerido(d, "residuos", q), f"{q}: residuos", 2, obs_maximas)
         out["residuos"] = z
     out["valor_inicial"] = (None if d.get("valor_inicial") is None
                             else _rango(d["valor_inicial"], f"{q}: valor_inicial", 0, abierto_lo=True))
@@ -776,8 +843,10 @@ def _resumen_mc(y: np.ndarray, cuantiles: list[float], umbrales: list[float], an
 def f_sim_mc(ent: dict[str, Any], params: dict[str, Any]) -> Resultado:
     F = "SIM-MC-001"
     lim: list[str] = []
-    p = _parametros(F, params, _configuracion(ent))
-    din = _dinamica(ent.get("valores") or {}, F)
+    cfg = _configuracion(ent)
+    p = _parametros(F, params, cfg)
+    obs_maximas = _observaciones_maximas(cfg)   # T-118 (H-10)
+    din = _dinamica(ent.get("valores") or {}, F, obs_maximas)
     n, h = p["n_trayectorias"], p["horizonte"]
     anti = p["reduccion_varianza"] == "antiteticas"
     if anti and din["tipo"] == "bootstrap_filtrado":
@@ -817,7 +886,7 @@ def f_sim_mc(ent: dict[str, Any], params: dict[str, Any]) -> Resultado:
     # Referencia ingenua RI-CLI: bootstrap simple de la historia, si se aporta
     v = ent.get("valores") or {}
     if v.get("historia_rendimientos") is not None:
-        hist = _vector(v["historia_rendimientos"], f"{F}: historia_rendimientos", 2)
+        hist = _vector(v["historia_rendimientos"], f"{F}: historia_rendimientos", 2, obs_maximas)
         lh = np.log1p(hist)
         if not np.isfinite(lh).all():
             raise ErrorFicha(f"{F}: historia_rendimientos con rendimientos ≤ −100 %")
@@ -931,7 +1000,7 @@ def f_scn_h(ent: dict[str, Any], params: dict[str, Any]) -> Resultado:
     # H1–H2: volatilidad condicional GARCH(1,1) y residuos por bootstrap filtrado (SIM-MC-001)
     h12 = [h for h in ("H1", "H2") if h in pedidos]
     if h12:
-        r = _rendimientos(ent, F)
+        r = _rendimientos(ent, F, maximo=_observaciones_maximas(cfg))
         minimo = u["anios_minimos_h12"] * _sesiones_anio(clase)
         if len(r) < minimo:
             raise ErrorFicha(f"{F}: H1–H2 con {len(r)} rendimientos diarios (< {minimo}, 2 años)")
@@ -959,6 +1028,7 @@ def f_scn_h(ent: dict[str, Any], params: dict[str, Any]) -> Resultado:
         estados = _dict(_requerido(reg, "estados", f"{F}: regimen"), f"{F}: regimen.estados")
         if not probs or set(probs) != set(estados):
             raise ErrorFicha(f"{F}: probabilidades filtradas y estados no coinciden")
+        _acotado(len(probs), u["estados_maximos"], f"{F}: estados del régimen")   # T-118 (H-10)
         nombres = sorted(probs)
         pr = np.array([_rango(probs[k], f"{F}: probabilidad de {k}", 0, 1) for k in nombres])
         if not math.isclose(float(pr.sum()), 1.0, rel_tol=0, abs_tol=1e-10):
@@ -1049,7 +1119,7 @@ def f_bt_dsr(ent: dict[str, Any], params: dict[str, Any]) -> Resultado:
     lim: list[str] = []
     p, u = _parametros(F, params, _configuracion(ent)), UMBRALES[F]
     v = ent.get("valores") or {}
-    r = _rendimientos(ent, F)
+    r = _rendimientos(ent, F, maximo=_observaciones_maximas(_configuracion(ent)))
     T = len(r)
     q = MESES_ANIO if p["frecuencia"] == "mensual" else _sesiones_anio(p["clase"])
     minimo = u["meses_minimos"] if p["frecuencia"] == "mensual" else u["sesiones_minimas"]
@@ -1097,12 +1167,13 @@ def f_bt_dsr(ent: dict[str, Any], params: dict[str, Any]) -> Resultado:
 
 
 # ================================================================== BT-PBO-001
-def _matriz_pbo(v: dict[str, Any], F: str) -> tuple[list[str], np.ndarray]:
+def _matriz_pbo(v: dict[str, Any], F: str, obs_maximas: int | None = None) -> tuple[list[str], np.ndarray]:
     m = _dict(_requerido(v, "rendimientos", F), f"{F}: rendimientos (configuración → serie)")
+    _acotado(len(m), UMBRALES[F]["configuraciones_maximas"], f"{F}: configuraciones")   # T-118 (H-10)
     nombres = sorted(str(k) for k in m)
     if len(nombres) != len(m):
         raise ErrorFicha(f"{F}: nombres de configuración repetidos")
-    cols = [_vector(m[k], f"{F}: rendimientos.{k}", 1) for k in sorted(m, key=str)]
+    cols = [_vector(m[k], f"{F}: rendimientos.{k}", 1, obs_maximas) for k in sorted(m, key=str)]
     if len({len(c) for c in cols}) > 1:
         raise ErrorFicha(f"{F}: las configuraciones no tienen la misma longitud T")
     return nombres, np.column_stack(cols) if cols else np.empty((0, 0))
@@ -1112,7 +1183,7 @@ def f_bt_pbo(ent: dict[str, Any], params: dict[str, Any]) -> Resultado:
     F = "BT-PBO-001"
     lim: list[str] = []
     p, u = _parametros(F, params, _configuracion(ent)), UMBRALES[F]
-    nombres, M = _matriz_pbo(ent.get("valores") or {}, F)
+    nombres, M = _matriz_pbo(ent.get("valores") or {}, F, _observaciones_maximas(_configuracion(ent)))
     N = len(nombres)
     if N < u["configuraciones_minimas"]:
         raise ErrorFicha(f"{F}: {N} configuraciones (< {u['configuraciones_minimas']})")
@@ -1247,10 +1318,11 @@ def f_bt_var(ent: dict[str, Any], params: dict[str, Any]) -> Resultado:
     v = ent.get("valores") or {}
     nivel, sig = p["nivel"], p["significacion"]
     ref = None
+    obs_maximas = _observaciones_maximas(_configuracion(ent))   # T-118 (H-10): también la historia del modo generado
     if v.get("var_previsto") is not None:
-        var_p = _vector(v["var_previsto"], f"{F}: var_previsto")
-        res = _vector(_requerido(v, "resultados", F), f"{F}: resultados")
-        es_p = None if v.get("es_previsto") is None else _vector(v["es_previsto"], f"{F}: es_previsto")
+        var_p = _vector(v["var_previsto"], f"{F}: var_previsto", maximo=obs_maximas)
+        res = _vector(_requerido(v, "resultados", F), f"{F}: resultados", maximo=obs_maximas)
+        es_p = None if v.get("es_previsto") is None else _vector(v["es_previsto"], f"{F}: es_previsto", maximo=obs_maximas)
         if len(var_p) != len(res) or (es_p is not None and len(es_p) != len(res)):
             raise ErrorFicha(f"{F}: VaR/ES previstos y resultados no alinean (longitudes distintas)")
         modo = "previsto"
@@ -1258,7 +1330,7 @@ def f_bt_var(ent: dict[str, Any], params: dict[str, Any]) -> Resultado:
     else:
         if p["horizonte"] != 1:
             raise ErrorFicha(f"{F}: la generación del VaR ex ante con RISK-VAR-001 solo admite horizonte 1")
-        hist = _rendimientos(ent, F)
+        hist = _rendimientos(ent, F, maximo=obs_maximas)
         w = p["ventana_estimacion"]
         if len(hist) <= w:
             raise ErrorFicha(f"{F}: historia de {len(hist)} (≤ ventana de estimación {w})")
@@ -1290,9 +1362,13 @@ def f_bt_var(ent: dict[str, Any], params: dict[str, Any]) -> Resultado:
 
 
 # ================================================================== ML-CAL-001
-def _alinear(pred: Any, real: Any, que: str) -> tuple[np.ndarray, np.ndarray, list[Any] | None]:
-    """Predicciones y realizaciones por posición (listas de números) o por fecha (listas de {'fecha', 'valor'})."""
+def _alinear(pred: Any, real: Any, que: str, maximo: int | None = None) -> tuple[np.ndarray, np.ndarray, list[Any] | None]:
+    """Predicciones y realizaciones por posición (listas de números) o por fecha (listas de {'fecha', 'valor'}); como
+    mucho `maximo` de cada una (T-118, H-10)."""
     pl, rl = _lista(pred, f"{que}: predicciones"), _lista(real, f"{que}: realizaciones")
+    if maximo is not None:
+        _acotado(len(pl), maximo, f"{que}: predicciones")
+        _acotado(len(rl), maximo, f"{que}: realizaciones")
     if pl and all(isinstance(e, dict) for e in pl + rl):
         def por_fecha(lst: list[Any], q: str) -> dict[str, float]:
             out: dict[str, float] = {}
@@ -1402,6 +1478,9 @@ def f_ml_cal(ent: dict[str, Any], params: dict[str, Any]) -> Resultado:
     v = ent.get("valores") or {}
     ensayos = _entero(_requerido(v, "ensayos", F), f"{F}: ensayos (número obligatorio)", 1)
     hz = _dict(_requerido(v, "horizontes", F), f"{F}: horizontes")
+    # T-118 (H-10 y H-09): cotas de los datos y fecha de corte de la petición
+    _acotado(len(hz), u["horizontes_maximos"], f"{F}: horizontes")
+    obs_maximas, corte = _observaciones_maximas(_configuracion(ent)), _corte(ent)
     claves = p["horizontes"] or sorted(hz)
     if not claves or any(h not in hz for h in claves):
         raise ErrorFicha(f"{F}: horizontes pedidos sin datos")
@@ -1410,7 +1489,9 @@ def f_ml_cal(ent: dict[str, Any], params: dict[str, Any]) -> Resultado:
         q = f"{F}: horizonte {h}"
         d = _dict(hz[h], q)
         tipo = _opcion(_requerido(d, "tipo", q), f"{q}: tipo", u["tipos"])
-        pr, y, fechas = _alinear(_requerido(d, "predicciones", q), _requerido(d, "realizaciones", q), q)
+        pr, y, fechas = _alinear(_requerido(d, "predicciones", q), _requerido(d, "realizaciones", q), q, obs_maximas)
+        if fechas is not None:
+            _hasta_corte([pd.Timestamp(fechas[-1])], corte, f"{q}: predicciones y realizaciones")
         n = len(y)
         if n < u["observaciones_minimas"]:
             raise ErrorFicha(f"{q}: {n} pares (< {u['observaciones_minimas']})")
@@ -1419,7 +1500,7 @@ def f_ml_cal(ent: dict[str, Any], params: dict[str, Any]) -> Resultado:
         cuantil = (_rango(_requerido(d, "cuantil", q), f"{q}: cuantil", 0, 1, True, True) if tipo == "cuantil" else None)
         # Referencia: la aportada (alineada) o la ingenua de la ficha conocida en t (RI-PA o RI-TB; desde t = 1)
         if d.get("referencia") is not None:
-            ref = _vector(d["referencia"], f"{q}: referencia")
+            ref = _vector(d["referencia"], f"{q}: referencia", maximo=obs_maximas)
             if len(ref) != n:
                 raise ErrorFicha(f"{q}: referencia y realizaciones no alinean")
             sel, ref_tipo = np.arange(n), "aportada"
@@ -1458,7 +1539,8 @@ def f_ml_cal(ent: dict[str, Any], params: dict[str, Any]) -> Resultado:
         m["verificacion"] = {"metricas_recomputadas": True, "diferencia": dif}
         if d.get("intervalos") is not None:
             iv = _dict(d["intervalos"], f"{q}: intervalos")
-            inf, sup = _vector(_requerido(iv, "inferior", q), f"{q}: inferior"), _vector(_requerido(iv, "superior", q), f"{q}: superior")
+            inf = _vector(_requerido(iv, "inferior", q), f"{q}: inferior", maximo=obs_maximas)
+            sup = _vector(_requerido(iv, "superior", q), f"{q}: superior", maximo=obs_maximas)
             niv = _rango(_requerido(iv, "nivel", q), f"{q}: intervalos.nivel", 0, 1, True, True)
             if len(inf) != n or len(sup) != n or (inf > sup).any():
                 raise ErrorFicha(f"{q}: intervalos no alineados o con inferior > superior")
@@ -1655,16 +1737,18 @@ def f_ml_pred(ent: dict[str, Any], params: dict[str, Any]) -> Resultado:
     lim: list[str] = []
     p, u = _parametros(F, params, _configuracion(ent)), UMBRALES[F]
     v = ent.get("valores") or {}
-    fechas = _fechas_iso(_requerido(v, "fechas", F), f"{F}: fechas")
+    obs_maximas, corte = _observaciones_maximas(_configuracion(ent)), _corte(ent)   # T-118 (H-10 y H-09)
+    fechas = _fechas_iso(_lista_acotada(_requerido(v, "fechas", F), f"{F}: fechas", obs_maximas), f"{F}: fechas")
     n = len(fechas)
     if any(b <= a for a, b in itertools.pairwise(fechas)):
         raise ErrorFicha(f"{F}: fechas no estrictamente crecientes")
+    _hasta_corte(fechas, corte, f"{F}: fechas")
     obj = _dict(_requerido(v, "objetivo", F), f"{F}: objetivo")
     if not _texto(obj.get("criterio_resolucion")):
         raise ErrorFicha(f"{F}: objetivo sin criterio de resolución")
     tipo = _opcion(_requerido(obj, "tipo", f"{F}: objetivo"), f"{F}: objetivo.tipo", ["direccion", "nivel"])
     h = _entero(_requerido(obj, "horizonte", f"{F}: objetivo"), f"{F}: objetivo.horizonte", 1)
-    serie = _vector(_requerido(obj, "serie", f"{F}: objetivo"), f"{F}: objetivo.serie")
+    serie = _vector(_requerido(obj, "serie", f"{F}: objetivo"), f"{F}: objetivo.serie", maximo=obs_maximas)
     if len(serie) != n:
         raise ErrorFicha(f"{F}: objetivo y fechas no alinean")
     modelo = p["modelo"]
@@ -1676,16 +1760,18 @@ def f_ml_pred(ent: dict[str, Any], params: dict[str, Any]) -> Resultado:
     variables = _dict(_requerido(v, "variables", F), f"{F}: variables")
     if not variables:
         raise ErrorFicha(f"{F}: sin variables")
+    _acotado(len(variables), u["variables_maximas"], f"{F}: variables")
     cols = []
     for nombre in sorted(variables):
         q = f"{F}: variable {nombre}"
         d = _dict(variables[nombre], q)
         if d.get("conocible_desde") is None:
             raise ErrorFicha(f"{q}: sin regla de conocibilidad (conocible_desde)")
-        x = _vector(_requerido(d, "serie", q), f"{q}: serie")
-        cd = _fechas_iso(d["conocible_desde"], f"{q}: conocible_desde")
+        x = _vector(_requerido(d, "serie", q), f"{q}: serie", maximo=obs_maximas)
+        cd = _fechas_iso(_lista_acotada(d["conocible_desde"], f"{q}: conocible_desde", obs_maximas), f"{q}: conocible_desde")
         if len(x) != n or len(cd) != n:
             raise ErrorFicha(f"{q}: serie o conocibilidad no alinean con las fechas")
+        _hasta_corte(cd, corte, f"{q}: conocible_desde")
         fuga = [i for i in range(n) if cd[i] > fechas[i]]
         if fuga:
             raise ErrorFicha(f"{q}: fuga de información (conocible después de la fecha de uso en {len(fuga)} puntos)")
@@ -1763,7 +1849,7 @@ def _prior(v: dict[str, Any], F: str) -> dict[str, Any]:
         return {"tipo": "uniforme", "lo": lo, "hi": hi, "media": (lo + hi) / 2}
     if v.get("muestras") is not None:
         m = _con_fuente(v["muestras"], f"{F}: muestras")
-        s = _vector(_requerido(m, "valores", f"{F}: muestras"), f"{F}: muestras.valores", 2)
+        s = _vector(_requerido(m, "valores", f"{F}: muestras"), f"{F}: muestras.valores", 2, UMBRALES[F]["muestras_maximas"])
         return {"tipo": "empirica", "s": s, "lo": float(s.min()), "hi": float(s.max()), "media": float(s.mean())}
     raise ErrorFicha(f"{F}: aclaración: falta el rango plausible del efecto del cálculo (rango_plausible o muestras)")
 

@@ -106,10 +106,11 @@ El total cargado es el coste real. Efecto declarado: en un presupuesto justo, el
 
 Pregunta para T-57: «¿qué antigüedad admite la resolución de un pronóstico, se alinean las series y qué pasa con las que tienen calendarios distintos?». Detalle en [.docs/tickets/T-91](../.docs/tickets/T-91/README.md).
 
-**INC-T117-01 · 2026-11-13 · Señal y umbral de GC1 por tipo de activo en el diseño V6 (Bloque A, T-117).** El Anexo A fija un umbral único: señal compuesta de 0,75 o más y concordancia de al menos dos familias de señales. La señal compuesta es la media de tres familias (momento, tendencia y valoración relativa). En renta fija, liquidez y tipos, curvas y volatilidad la tendencia suele salir neutra, y con 0,75 casi nada pasa. Medido con los datos de ejemplo en 17 fechas: pasan 0,8 ámbitos por fecha en RF, 0,5 en MON y 0,9 en TCV, frente a 1,5 a 1,9 en RV, DIV, MP e IDX. Además, el GC1 por código de la V6 no comprobaba la concordancia de familias. `[PROPUESTO]` (decidido por Claude por defecto, regla del 13-11-2026):
+**INC-T117-01 · 2026-11-13 · Señal y umbral de GC1 por tipo de activo en el diseño V6 (Bloque A, T-117).** El Anexo A fija un umbral único: señal compuesta de 0,75 o más y concordancia de al menos dos familias de señales. La señal compuesta es la media de tres familias (momento, tendencia y valoración relativa). En renta fija y en tipos, curvas y volatilidad la tendencia suele salir neutra (en 65 de 136 y en 50 de 102 observaciones), y con 0,75 casi nada pasa; en liquidez pasa poco aunque su tendencia no sea neutra, con solo tres ámbitos. Medido con los datos de ejemplo en 17 fechas: pasan 0,8 ámbitos por fecha en RF, 0,5 en MON y 0,9 en TCV, frente a 1,5 a 1,9 en RV, DIV, MP e IDX. Además, el GC1 por código de la V6 no comprobaba la concordancia de familias. `[PROPUESTO]` (decidido por Claude por defecto, regla del 13-11-2026):
 - **Señal:** la señal compuesta en los doce tipos. Es la única señal del Motor que va de 0 a 1 y crece con la oportunidad, que es lo que supone el umbral (H-28 de la QA de T-101).
 - **Umbral:** 0,65 en RF, MON y TCV; 0,75 (Anexo A) en los otros nueve. Con 0,65 pasan 2,1 ámbitos por fecha en RF y en TCV y 1,1 en MON, cerca de los demás tipos. En DER no se baja: tiene tres ámbitos y bajar el umbral apenas cambia nada.
 - **Concordancia:** se exigen dos familias concordantes cuando manda la señal compuesta, como pide el Anexo A. Con las tres familias y 0,75 no cambia nada (una media de 0,75 obliga a que dos lleguen a 0,6); importa con 0,65 y cuando falta una familia. Si el Motor no da el recuento, el ámbito no se descarta por esto.
+- **Lo que ve el Analista (QA r01, H-01):** en la V6 el encargo CT-06 le comunica el umbral de su tipo, el mismo que aplicó GC1.
 - **Límite:** los valores salen de datos sintéticos y de un universo de 2 a 8 ámbitos por tipo. Son provisionales hasta tener datos reales; entonces se recalibran con los falsos negativos que cuenta la exploración de GC1. Solo afectan al diseño V6, que es aspirante: el V5, por defecto, no cambia.
 
 Detalle en [.docs/tickets/T-117](../.docs/tickets/T-117/README.md).
@@ -187,6 +188,33 @@ Pregunta para T-57: «¿se aceptan estas decisiones de método, las cotas de tam
 - **Decisión `[PROPUESTO]`:** el ejecutor sigue al esquema del Registro, porque es donde escribe. Corrige además la lógica: `DENTRO_TOLERANCIA` quiere decir que hay diferencia y no supera la tolerancia, no que los datos son distintos.
 - **Valores en línea:** desde T-112, el artefacto guarda los valores en línea (campo `valor` de `datos`, que el esquema ya prevé) para poder re-ejecutar los cálculos con datos en línea. Se comprueba su huella. Un artefacto anterior, que solo guardaba «en línea», no se reconstruye: la re-ejecución es imposible.
 - **Pregunta para una revisión del corpus:** unificar los dos vocabularios.
+
+**INC-T118-01 · 2026-11-13 · Decisiones al corregir los hallazgos de la QA r02 de T-112 (Bloque A, T-118).** `[PROPUESTO]` hasta T-57. El operador pidió que el agente decidiera por defecto, con la opción más prudente, y lo dejara apuntado.
+- **Cotas de los datos del grupo R (H-10).** Un dato mayor que su cota se rechaza; no se recorta. Lo mismo una serie de HT-01, como ya hace el grupo S.
+  - Salen de la configuración o de una ficha, sin número nuevo:
+    - una historia tiene como mucho las sesiones de H5 (2 520 por defecto);
+    - una muestra simulada, el máximo de trayectorias de SIM-MC-001 (1 000 000);
+    - los estados de un régimen, los de REG-HMM-001 (4);
+    - los horizontes de ML-CAL-001, los cinco del Documento 0.
+  - Números que no están en ninguna ficha:
+    - **BT-PBO-001 admite hasta 1 000 configuraciones**, la cota de contrastes por familia de ST-INF-001 (INC-T112-01);
+    - **ML-PRED-001 admite hasta 20 variables**, el tope que la ficha da a la rejilla.
+  - Con esas cotas, el servicio más caro del grupo R tarda 52 s por el Motor, con sus dos pasadas, en una máquina compartida. Son dos: BT-VAR-001 generando el VaR con Cornish-Fisher sobre 2 520 rendimientos, y BT-PBO-001 con S = 20 y 1 000 configuraciones.
+- **Profundidad de una petición (H-13).** Una petición con más de **32 niveles** de anidamiento se rechaza por su forma. Los casos de control llegan a 9. Es un número técnico: evita que la copia de la petición agote la pila.
+- **Tipo de `clase` y `perfil` (H-13).** `clase` tiene que ser un texto, y `perfil`, un texto o una lista. Dos semillas que no se pueden comparar cuentan como dos semillas distintas, y la petición se rechaza.
+- **Fecha de corte en el grupo R (H-09).** Se compara por día: el dato del día del corte es conocible. Además de ML-PRED-001, lo aplica ML-CAL-001 cuando sus pares llevan fecha.
+- **Re-ejecución CT-10 y configuración (H-11 y H-14).**
+  - El artefacto guarda, de cada sección de la configuración que la ficha lee, su valor y la huella de esa sección en `por_defecto.yaml`. La re-ejecución usa esos valores, no los vigentes.
+  - Si el resultado no coincide y la configuración guardada ya no es la vigente, o el artefacto no la guarda, la categoría es CONVENCION_DISTINTA. ERROR_ORIGINAL queda para cuando constan todas las entradas y son las vigentes. Es la opción prudente: no se culpa a un cálculo sin poder reproducir sus condiciones. A cambio, un resultado alterado en un artefacto anterior a T-118 sale como CONVENCION_DISTINTA si su ficha lee la configuración.
+  - Si la ficha rechaza las entradas del artefacto, la re-ejecución queda registrada con `coincide` NO y ERROR_REEJECUCION, la categoría que el esquema del Registro ya tenía.
+  - **Campos fuera del esquema:** `artefacto.configuracion_usada` y `reejecucion.configuracion` no están en la lista de campos del esquema del Registro de cálculos V2.0, que es corpus congelado y no se ha tocado. El esquema pide un artefacto reproducible, y sin esos números no lo era. Para una revisión del corpus: añadirlos a la tabla del esquema.
+- **H2 y H5 en el grupo P (H-12).**
+  - No hay discrepancia: son dos números distintos. El Documento 0 (§2, «Horizontes») da el rango de cada horizonte: H2, de 2 a 8 semanas; H5, de 5 a 30 años. La configuración da su duración nominal: `horizontes.H2` 4 semanas y `horizontes.H5` 120 meses.
+  - Las cotas del grupo P usan el extremo del rango. Con la duración nominal no cabría el valor por defecto de la propia ficha: REI-CAP-001 pide una ventana de 20 años, y H5 nominal son 10.
+  - **Decisión:** los dos extremos (8 semanas y 30 años) siguen en el código, citando el Documento 0, porque la configuración no los trae. No se añade una clave a la configuración ni se cambia lo que T-112 dejó aprobado. Lo que sí está en la configuración se lee de ella en cada llamada: las sesiones por semana, H5 en sesiones y la ventana de datos.
+  - Quedan igual, derivadas a mano de esos rangos: las 520 semanas de REG-HMM-001 y los 30 años y 360 meses de TEM-DIFF-001.
+
+Preguntas para T-57: «¿Hasta cuántas variantes de una estrategia quieres poder comparar de una vez al medir el sobreajuste (hoy 1 000), y cuántas variables explicativas admites en un modelo predictivo (hoy 20)?» y «¿Quieres que los rangos de los horizontes del Documento 0 (H2 de 2 a 8 semanas, H5 de 5 a 30 años) estén en la configuración, para poder cambiarlos sin tocar el código?». Detalle en [.docs/tickets/T-118](../.docs/tickets/T-118/README.md).
 
 **INC-T102-01 · 2026-11-13 · Umbrales del filtro de los textos del Sintetizador V6 (Bloque A, T-102).** Tras cinco QA NO APTO, el operador decidió: «umbrales y sin cifras libres». Valores `[PROPUESTO]`, para que el operador los fije en T-57:
 - **Prohibidas:** en un banco ciego nuevo de al menos 40, escrito por el revisor sin enseñárselo al implementador, pasan sin declararse como mucho el 5 %. Tolerancia cero para las que llevan un dato (dígitos, un marcador de cuenta o un código en mayúsculas de un instrumento, salvo los límites declarados).

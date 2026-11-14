@@ -7,8 +7,10 @@
 | S · estadística y series | `motor/fichas_series.py` | ST-INF, FX-BRK, FX-STL, FX-REGIME, REG-HMM, FX-COINT, BIB-MET, TEM-DIFF | 36 | `grupo_S.md` |
 | R · riesgo, simulación, backtest y modelos | `motor/fichas_riesgo.py` | RISK-VAR, SIM-MC, SCN-H, BT-DSR, BT-PBO, BT-VAR, ML-CAL, ML-PRED, DEC-VOI | 36 | `grupo_R.md` |
 | V · valoración de RV, RF, FX y DER | `motor/fichas_valoracion.py` | ACC-ERP, ACC-FACT, ACC-VAL, FIR-PRICE, FIR-CURVE, FIR-CARRY, FIR-SPREAD, FX-MOM, FX-PPA, DER-OPT | 38 | `grupo_V.md` |
-| P · inmobiliario, materias primas, cripto y alternativos | `motor/fichas_reales.py` | REI-CAP, REI-FFO, REI-NAV, CMD-INV, CMD-RETDEC, CHR-FLOW, CHR-FUND, ALT-DESMOOTH | 25 | `grupo_P.md` |
-| Servicio | `motor/servicio.py` | AUD-REX-001 (CT-10) | 5 | Abajo |
+| P · inmobiliario, materias primas, cripto y alternativos | `motor/fichas_reales.py` | REI-CAP, REI-FFO, REI-NAV, CMD-INV, CMD-RETDEC, CHR-FLOW, CHR-FUND, ALT-DESMOOTH | ~~25~~ 26 | `grupo_P.md` |
+| Servicio | `motor/servicio.py` | AUD-REX-001 (CT-10) | ~~5~~ 6 | Abajo |
+
+**Corrección de T-118 (H-15 de la QA r02).** Los recuentos de la tabla no cuadraban con el código: el grupo P tiene 26 casos de control, no 25, y AUD-REX-001 tiene 6, no 5 (el sexto, con parámetros, se añadió en la ronda r02). La Fase 2 suma **136** (S 36, R 36, V 38, P 26), no los 140 que decían el `README.md` y `pruebas.md`. Contado al ejecutar `verificar_casos_control` el 13-11-2026.
 
 Cada módulo sigue el patrón de T-106 y aplica desde el principio las correcciones de sus tres QA:
 - `UMBRALES` fijos: una petición que traiga uno se rechaza;
@@ -63,6 +65,7 @@ El detalle por grupo, con cada cota y su origen, está en la sección «Ronda r0
   - `servir`, `verificar_casos_control` y `reejecutar` añaden a `ent` la configuración del Motor y la fecha de corte;
   - DEC-VOI, ML-CAL, ML-PRED y SCN-H leen la configuración en cada llamada;
   - todas las fichas con datos fechados rechazan uno posterior al corte («no conocible»), y ACC-VAL también uno posterior a la fecha de valoración;
+    - *Corrección de T-118 (H-09 de la QA r02):* no era cierto para el grupo R, que recibía la fecha de corte y no la usaba. ML-PRED-001 y ML-CAL-001 (con pares fechados) servían datos posteriores; lo corrige T-118;
   - la fecha de corte entra en la clave de la caché. Si no entrara, una petición con un corte anterior se serviría desde la caché de otra con un corte posterior.
 - **H-05:** dos semillas distintas (en la petición y en los parámetros) se rechazan, y el artefacto registra la usada. La comparación no usa un conjunto, para que una semilla no hashable no rompa `servir`.
 - **H-06:** un solicitante que no es texto se rechaza con CANAL_NO_AUTORIZADO.

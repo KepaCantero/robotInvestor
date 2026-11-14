@@ -20,7 +20,7 @@ from typing import Any, TypeGuard
 import numpy as np
 import pandas as pd
 
-from ..configuracion import DIR_EJECUTOR, parametro, raiz_paquete
+from ..configuracion import DIR_EJECUTOR, config_por_defecto, parametro, raiz_paquete
 from ..herramientas.ht01_datos import DatosNoDisponibles, FugaDeInformacion
 from ..herramientas.ht06_indice import clave_hash
 from . import evaluacion as ev
@@ -265,6 +265,71 @@ CASO_AUD_REX = "IDX-CONC-001"
 CASO_AUD_REX_PARAMETROS = ("FON-DISC-001", 3)
 
 
+# T-118 (QA r02 de T-112, H-13): una petición con más niveles de anidamiento que estos se rechaza por su forma, antes de
+# copiarla o escribirla (un JSON así se puede leer, pero agota la pila al copiarlo). Los casos de control llegan a 9 niveles
+# contando la petición [PROPUESTO INC-T118-01, técnico].
+PROFUNDIDAD_MAXIMA = 32
+_CONTENEDORES = (dict, list, tuple, set, frozenset)
+
+
+def _demasiado_anidado(x: Any, tope: int = PROFUNDIDAD_MAXIMA) -> bool:
+    """¿Hay un contenedor a `tope` niveles o más por debajo de `x`? Recorrido con pila propia: no agota la de Python."""
+    pila = [(x, 0)]
+    while pila:
+        v, nivel = pila.pop()
+        if not isinstance(v, _CONTENEDORES):
+            continue
+        if nivel >= tope:
+            return True
+        hijos = list(v.keys()) + list(v.values()) if isinstance(v, dict) else v
+        pila.extend((h, nivel + 1) for h in hijos if isinstance(h, _CONTENEDORES))
+    return False
+
+
+def _distintas(a: Any, b: Any) -> bool:
+    """T-118 (H-13): dos semillas son distintas si no se puede afirmar que son iguales (un array no da un booleano)."""
+    try:
+        return bool(a != b)
+    except (TypeError, ValueError):
+        return True
+
+
+class _ConfiguracionLeida(dict):
+    """T-118 (QA r02 de T-112, H-11): la configuración del Motor tal como la recibe una ficha, que apunta en `leidas` las
+    secciones (claves de primer nivel) que la ficha consulta, para guardarlas en el artefacto."""
+
+    def __init__(self, cfg: dict | None) -> None:
+        super().__init__(cfg or {})
+        self.leidas: set[str] = set()
+
+    def __bool__(self) -> bool:   # `parametro` hace `cfg or {}`: una configuración vacía también se registra
+        return True
+
+    def __contains__(self, clave: object) -> bool:
+        self.leidas.add(str(clave))
+        return super().__contains__(clave)
+
+    def __getitem__(self, clave: Any) -> Any:
+        self.leidas.add(str(clave))
+        return super().__getitem__(clave)
+
+    def get(self, clave: Any, defecto: Any = None) -> Any:
+        self.leidas.add(str(clave))
+        return super().get(clave, defecto)
+
+
+def _configuracion_usada(cfg: dict, secciones: Any) -> dict[str, dict[str, Any]]:
+    """H-11: de cada sección de la configuración que la ficha ha leído, su `valor` en la configuración del Motor (sin la
+    clave si no la trae) y la huella de la misma sección en `config/por_defecto.yaml` (`por_defecto`), que es de donde
+    `parametro` toma lo que la del Motor no traiga."""
+    out: dict[str, dict[str, Any]] = {}
+    for k in sorted(map(str, secciones)):
+        out[k] = {"por_defecto": clave_hash(config_por_defecto().get(k))[:16]}
+        if k in cfg:
+            out[k]["valor"] = copy.deepcopy(dict.get(cfg, k))
+    return out
+
+
 def _raiz(raiz: str | os.PathLike | None = None) -> Path:
     return Path(raiz or os.environ.get("BLOQUE_A_RAIZ") or DIR_EJECUTOR.parent)
 
@@ -353,10 +418,11 @@ class Motor:
         self._lock = threading.Lock()
 
     # ------------------------------------------------------------------------------------
-    def _contexto(self, ent: dict, fecha_corte) -> dict:
+    def _contexto(self, ent: dict, fecha_corte, cfg: dict | None = None) -> dict:
         """QA r01 de T-112 (H-04 y H-07): la ficha recibe la configuración del Motor (no la de por defecto) y la fecha de corte
-        de la petición, para leer sus umbrales y no usar datos posteriores."""
-        ent["configuracion"] = self.cfg
+        de la petición, para leer sus umbrales y no usar datos posteriores. T-118 (H-11): `cfg` es esa configuración con el
+        registro de lo que se lee de ella (`_ConfiguracionLeida`) o, en una re-ejecución, la del artefacto."""
+        ent["configuracion"] = self.cfg if cfg is None else cfg
         ent["fecha_corte"] = fecha_corte
         return ent
 
@@ -391,6 +457,8 @@ class Motor:
         (DATOS_INCOHERENTES, paso 1 del Motor: esquema) y queda en RC, en vez de lanzar una excepción al llamador."""
         if not isinstance(peticion, dict):
             return "la petición no es un objeto"
+        if _demasiado_anidado(peticion):   # T-118 (H-13): antes de copiar, serializar o escribir nada de ella
+            return f"anidamiento excesivo (más de {PROFUNDIDAD_MAXIMA} niveles)"
         op_ = peticion.get("operacion")
         ficha = op_.get("ficha_id") if isinstance(op_, dict) else op_
         if not isinstance(ficha, str):
@@ -404,6 +472,11 @@ class Motor:
             clave_hash(peticion.get("parametros"), peticion.get("perfil"), peticion.get("clase"), peticion.get("semilla"))
         except (TypeError, ValueError, RecursionError) as exc:
             return f"«parametros», «perfil», «clase» o «semilla» no serializables ({type(exc).__name__})"
+        # T-118 (H-13): `clase` y `perfil` se evalúan como condición más abajo; un array de numpy no tiene valor de verdad
+        if peticion.get("clase") is not None and not isinstance(peticion["clase"], str):
+            return "«clase» no es un texto"
+        if peticion.get("perfil") is not None and not isinstance(peticion["perfil"], (str, list, tuple)):
+            return "«perfil» no es un texto ni una lista"
         if peticion.get("plan", "PLAN_MIN") not in planes:
             return f"plan desconocido ({str(peticion.get('plan'))[:40]}); admitidos: {sorted(planes)}"
         if peticion.get("fecha_corte") is not None:
@@ -439,7 +512,8 @@ class Motor:
         if peticion.get("clase"):
             params.setdefault("clase", peticion["clase"])
         semilla_p, semilla_pet = params.get("semilla"), peticion.get("semilla")
-        dos_semillas = semilla_p is not None and semilla_pet is not None and semilla_p != semilla_pet   # sin conjunto: puede no ser hashable
+        # sin conjunto: puede no ser hashable; T-118 (H-13): ni comparable (un array de numpy), y entonces son dos
+        dos_semillas = semilla_p is not None and semilla_pet is not None and _distintas(semilla_p, semilla_pet)
         if ficha in ACEPTA_SEMILLA and peticion.get("semilla") is not None:   # T-112: la semilla de la petición llega a la ficha
             params.setdefault("semilla", peticion["semilla"])
         fecha_corte = peticion.get("fecha_corte") or (str(self.proveedor.as_of.date()) if self.proveedor.as_of is not None else None)
@@ -481,12 +555,14 @@ class Motor:
         # 2) Datos (guardia anti-fuga)
         try:
             ent, efectivos = self._resolver_datos(peticion.get("datos") or [], fecha_corte)
-            self._contexto(ent, fecha_corte)
+            lectura = _ConfiguracionLeida(self.cfg)   # T-118 (H-11): lo que la ficha lea de la configuración va al artefacto
+            self._contexto(ent, fecha_corte, lectura)
         except FugaDeInformacion as e:
             return self._rechazo(base, "FUGA_DE_INFORMACION", str(e), uc=uc)
         except (DatosNoDisponibles, KeyError) as e:
             return self._rechazo(base, "DATOS_NO_DISPONIBLES", str(e), uc=uc)
-        except (TypeError, ValueError, OverflowError) as e:   # H-15: fechas de una serie ilegibles
+        except (TypeError, ValueError, OverflowError, RecursionError, MemoryError) as e:
+            # H-15: fechas de una serie ilegibles. T-118 (H-13): tampoco escapa la copia de unos valores que agote la pila
             return self._rechazo(base, "DATOS_INCOHERENTES", f"datos mal formados ({type(e).__name__}: {str(e)[:200]})", uc=uc)
         # QA r02 de T-112 (grupo V): la fecha de corte entra en la clave; si no, una petición con un corte anterior se serviría
         # desde la caché de otra con un corte posterior (H-07)
@@ -527,7 +603,9 @@ class Motor:
                    "referencia_ingenua": {"tipo": meta["ri"]},
                    "artefacto": {"code_ref": f"{meta['fn'].__module__} · {meta['fn'].__name__}",
                                  "inputs_effective": efectivos, "transformations": "rendimientos simples salvo ficha",
-                                 "rounding_policy": "sin redondeo intermedio; JSON float64"},
+                                 "rounding_policy": "sin redondeo intermedio; JSON float64",
+                                 # T-118 (H-11): la re-ejecución (CT-10) usa esta configuración, no la vigente
+                                 "configuracion_usada": _configuracion_usada(self.cfg, lectura.leidas)},
                    "verificacion_interna": {"identity_checks": "doble pasada idéntica" if identico else "DIFERENCIA ENTRE PASADAS",
                                             "second_path": "según ficha (campo segunda_via_* en el resultado)"},
                    "consumo_uc": uc, "limitaciones": limitaciones or ["ninguna conocida (ficha implementada, no validada)"],
@@ -684,34 +762,75 @@ class Motor:
                 datos.append({"valores": copy.deepcopy(d["valor"])})
                 huellas_en_linea.append(clave_hash(d["valor"])[:16] == d.get("huella"))
         ent, efectivos = self._resolver_datos(datos, orig["as_of"])
-        self._contexto(ent, orig["as_of"])
-        nuevo, _ = IMPLEMENTADAS[ficha]["fn"](copy.deepcopy(ent), copy.deepcopy(orig["parametros"]))
-        nuevo2, _ = IMPLEMENTADAS[ficha]["fn"](copy.deepcopy(ent), copy.deepcopy(orig["parametros"]))
-        nuevo, nuevo2 = _limpio(nuevo), _limpio(nuevo2)
+        # T-118 (H-11): la ficha se re-ejecuta con las secciones de la configuración que guardó el artefacto (las «entradas
+        # del artefacto» incluyen los números de configuración que la ficha usó); lo que el artefacto no guarde, de la vigente
+        artefacto = orig.get("artefacto") if isinstance(orig.get("artefacto"), dict) else {}
+        registrada = artefacto.get("configuracion_usada") if isinstance(artefacto.get("configuracion_usada"), dict) else None
+        cfg_artefacto = dict(self.cfg)
+        for k, reg in (registrada or {}).items():
+            if isinstance(reg, dict) and "valor" in reg:
+                cfg_artefacto[k] = copy.deepcopy(reg["valor"])
+            else:
+                cfg_artefacto.pop(k, None)
+        lectura = _ConfiguracionLeida(cfg_artefacto)
+        fallo = None
+        try:
+            nuevo, _ = IMPLEMENTADAS[ficha]["fn"](self._contexto(copy.deepcopy(ent), orig["as_of"], lectura),
+                                                  copy.deepcopy(orig["parametros"]))
+            nuevo2, _ = IMPLEMENTADAS[ficha]["fn"](self._contexto(copy.deepcopy(ent), orig["as_of"], lectura),
+                                                   copy.deepcopy(orig["parametros"]))
+            nuevo, nuevo2 = _limpio(nuevo), _limpio(nuevo2)
+        except (op.ErrorFicha, NotImplementedError, ValueError, TypeError, ArithmeticError, KeyError, IndexError,
+                AttributeError, np.linalg.LinAlgError, MemoryError, RecursionError) as exc:
+            # T-118 (H-14): la ficha rechaza las entradas del artefacto (p. ej. un tamaño servido antes de una cota): la
+            # re-ejecución queda registrada como fallida, no se escapa como excepción
+            fallo = f"{type(exc).__name__}: {str(exc)[:300]}"
+            nuevo = nuevo2 = None
         tol = IMPLEMENTADAS[ficha]["tol"]
-        difs = _comparar(orig["resultado"]["payload"], nuevo, tol)
-        exacto = orig["resultado"]["payload"] == nuevo
+        difs = [] if fallo else _comparar(orig["resultado"]["payload"], nuevo, tol)
+        exacto = not fallo and orig["resultado"]["payload"] == nuevo
         mismas = all(huellas_en_linea) and [a.get("huella") for a in orig["datos"]] == [b.get("huella") for b in efectivos]
         version = IMPLEMENTADAS[ficha]["version"] == orig["operacion"].get("ficha_version")
-        if nuevo != nuevo2:
+        # H-11: secciones que la re-ejecución ha leído y el artefacto no guarda, y secciones guardadas que ya no son las vigentes
+        sin_registro = sorted(lectura.leidas - set(registrada or {}))
+        vigente = _configuracion_usada(self.cfg, registrada or {})
+        cambiadas = sorted(k for k, reg in (registrada or {}).items() if clave_hash(reg) != clave_hash(vigente[k]))
+        cfg_nota = None
+        if fallo:
+            coincide, categoria = "NO", "ERROR_REEJECUCION"
+        elif nuevo != nuevo2:
             coincide, categoria = "NO", "NO_DETERMINISMO"
         elif not mismas:
             coincide, categoria = "NO", "DATOS_DISTINTOS"
+        elif difs and (sin_registro or cambiadas):
+            # H-11: no se puede culpar al original si la configuración con que se calculó no consta o ya no es la vigente
+            coincide, categoria = "NO", "CONVENCION_DISTINTA"
+            cfg_nota = ("la configuración con que se calculó no es la vigente o no consta en el artefacto (secciones "
+                        f"{', '.join(sorted(set(sin_registro) | set(cambiadas)))})")
         elif difs:
             # recálculo determinista con los mismos datos: si la versión de la ficha es la misma, el que difiere es el original
             coincide, categoria = "NO", ("ERROR_ORIGINAL" if version else "CONVENCION_DISTINTA")
         else:
             coincide, categoria = ("SI" if exacto else "DENTRO_TOLERANCIA"), None
+        if fallo:
+            diagnostico = f"ERROR_REEJECUCION: la ficha no admite las entradas del artefacto ({fallo})"
+        elif cfg_nota:
+            diagnostico = f"{categoria}: {cfg_nota}"
+        else:
+            diagnostico = {"SI": "coincidencia exacta", "DENTRO_TOLERANCIA": "diferencias dentro de la tolerancia de la ficha"}.get(
+                coincide, f"{categoria}: ver diferencias")
         e = {"tipo_entrada": "REEJECUCION", "calc_id": self.almacen.nuevo_id("CALC"), "contrato": "CT-10",
              "solicitante": solicitante, "operacion": orig["operacion"], "estado": "SERVED", "as_of": orig["as_of"],
              "reejecucion": {"calc_original": calc_id, "motivo": motivo, "aislamiento": "CONFIRMADO", "tolerancia": tol,
                              "coincide": coincide, "diferencias": difs[:20], "categoria": categoria,
-                             "diagnostico": {"SI": "coincidencia exacta", "DENTRO_TOLERANCIA": "diferencias dentro de la tolerancia de la ficha"}.get(
-                                 coincide, f"{categoria}: ver diferencias"),
-                             "doble_pasada": nuevo == nuevo2, "version_ficha": IMPLEMENTADAS[ficha]["version"]},
+                             "diagnostico": diagnostico,
+                             "doble_pasada": not fallo and nuevo == nuevo2, "version_ficha": IMPLEMENTADAS[ficha]["version"],
+                             "configuracion": {"origen": "artefacto" if registrada is not None else "vigente (el artefacto no la guarda)",
+                                               "distinta_de_la_vigente": cambiadas, "sin_registro": sin_registro}},
              "datos": efectivos, "consumo_uc": 0.0, "madurez_metodo": "IMPLEMENTADO"}
         self.almacen.escribir("RC", "AG-13", e)
-        return {"coincide": coincide, "categoria": categoria, "diferencias": difs, "calc_id": e["calc_id"]}
+        return {"coincide": coincide, "categoria": categoria, "diferencias": difs, "calc_id": e["calc_id"],
+                "diagnostico": diagnostico}
 
 
 def _comparar(a: Any, b: Any, tol: float, ruta: str = "") -> list[str]:

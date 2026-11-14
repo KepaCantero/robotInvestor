@@ -774,7 +774,7 @@ def test_ml_cal_oraculo_referencias_ingenuas_a_mano():
 def test_ml_cal_ic_por_bootstrap_frente_a_la_aproximacion_normal():
     """Con diferencias de pérdida iid, el IC al 90 % del bootstrap de bloques ≈ media ± z₀,₉₅·s/√n (normal)."""
     rng = np.random.default_rng(23)
-    n = 3000
+    n = H5   # T-118 (H-10): la muestra más larga que admite la cota de observaciones (antes 3 000)
     y = [float(x) for x in rng.standard_normal(n)]
     p = [a + 0.8 * float(rng.standard_normal()) for a in y]
     ref = [a + 1.0 * float(rng.standard_normal()) for a in y]
@@ -1114,7 +1114,7 @@ def _nll_gpd(xi, b, y):
 @pytest.mark.parametrize("datos,nivel", [(R._R_VAR_COLAS, 0.975), ("t3", 0.99), ("t5", 0.975)])
 def test_evt_pot_es_el_maximo_de_verosimilitud_a_la_tolerancia_de_la_ficha(datos, nivel):
     if isinstance(datos, str):
-        datos = [float(x) for x in 0.01 * np.random.default_rng(int(datos[1])).standard_t(int(datos[1]), 3000)]
+        datos = [float(x) for x in 0.01 * np.random.default_rng(int(datos[1])).standard_t(int(datos[1]), H5)]   # T-118 (H-10): antes 3 000
     res, _ = _correr("RISK-VAR-001", {"rendimientos": datos}, {"metodo": "evt_pot", "nivel": nivel})
     d = res["detalle_metodo"]
     perd = -np.array(datos)

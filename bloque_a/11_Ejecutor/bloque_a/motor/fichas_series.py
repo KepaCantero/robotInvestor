@@ -37,6 +37,7 @@ import numpy as np
 import pandas as pd
 from scipy import linalg, optimize, stats
 
+from ..configuracion import parametro, sesiones_horizonte
 from .operaciones import ErrorFicha, cagr
 
 Resultado = tuple[dict[str, Any], list[str]]
@@ -52,7 +53,14 @@ SEMILLA_MAXIMA = int(np.iinfo(np.int64).max)   # dominio técnico de la semilla 
 # ficha). La serie más larga que admiten las fichas de series es la de H5 en sesiones: 120 meses = 2 520 sesiones (Anexo A
 # del Documento 0, `horizontes` y `calendario` de la configuración: «H5 120 meses = 2520»). Las fichas iterativas (EM,
 # mínimos cuadrados con bootstrap) tienen una cota menor, para que el caso más caro termine en minutos (grupo_S.md, r02).
-OBS_MAXIMAS_SERIES = 2520
+# T-118 (QA r02 de T-112, H-12): el número ya no está copiado a mano. Se lee de la configuración: aquí, de
+# `config/por_defecto.yaml` (lo que muestra `UMBRALES`), y en cada llamada, de la configuración del Motor
+# (`ent["configuracion"]`, con `_obs_maximas`), como hace el grupo R.
+SESIONES_POR_ANIO = 252      # Catálogo 3.1: anualización con 252 sesiones (convención, no parámetro)
+OBS_MAXIMAS_SERIES = sesiones_horizonte(None, "H5")
+# Fichas cuya cota de observaciones es la de H5 en sesiones, y la de FX-REGIME-001 (`senales.ventana_anios` en sesiones)
+FICHAS_OBS_H5 = frozenset({"ST-INF-001", "FX-BRK-001", "FX-STL-001", "FX-COINT-001"})
+OBS_MAXIMAS_REGIME = int(parametro(None, "senales.ventana_anios")) * SESIONES_POR_ANIO
 
 # ====================================================================== parámetros por defecto (campo «Parámetros»)
 PARAMETROS_POR_DEFECTO: dict[str, dict[str, Any]] = {
@@ -103,7 +111,7 @@ UMBRALES: dict[str, dict[str, Any]] = {
     # Cota (H-01) [PROPUESTO]: 756 observaciones, la ventana de datos de las fichas del lote (`senales.ventana_anios` 3 de
     # la configuración, T-65) en sesiones (252 por año, Catálogo 3.1).
     "FX-REGIME-001": {"obs_minimas": 100, "obs_recomendadas": 200, "rango_n_estados": [2, 3], "rango_umbral": [0.3, 0.7],
-                      "tolerancia": 1e-6, "arranques": 20, "iteraciones_max": 1000, "obs_maximas": 756},
+                      "tolerancia": 1e-6, "arranques": 20, "iteraciones_max": 1000, "obs_maximas": OBS_MAXIMAS_REGIME},
     # REG-HMM-001 · «Entradas mínimas»: ≥ 260 semanales o ≥ 120 mensuales. «Parámetros»: n_estados 2–4; arranques ≥ 20
     # («≥ 20 arranques con semilla»). «Tolerancias»: 1e-6. INC-T112-01: tope de 1 000 iteraciones.
     # Cotas (H-01) [PROPUESTO]: arranques ≤ 50; 520 observaciones (H5, 120 meses, en semanas: 10 años semanales); a lo sumo
@@ -280,7 +288,27 @@ def _fechas(x: Any, n: int, que: str) -> list[str] | None:
     return [f.isoformat() for f in fs]
 
 
-def _parametros(F: str, params: Any) -> dict[str, Any]:
+def _configuracion(ent: dict[str, Any]) -> dict[str, Any] | None:
+    """T-118 (H-12): la configuración del Motor que llega en ``ent["configuracion"]``; sin ella (manejador llamado
+    directamente), None, y `parametro` y `sesiones_horizonte` toman la de `config/por_defecto.yaml` (como el grupo R)."""
+    cfg = ent.get("configuracion")
+    if cfg is not None and not isinstance(cfg, dict):
+        raise ErrorFicha("la configuración del Motor no es un objeto")
+    return cfg
+
+
+def _obs_maximas(F: str, cfg: dict[str, Any] | None) -> int:
+    """T-118 (H-12): cota de observaciones de la ficha con la configuración del Motor: H5 en sesiones (`horizontes.H5` y
+    `calendario`) o, en FX-REGIME-001, `senales.ventana_anios` en sesiones; las demás, la de `UMBRALES` (no sale de la
+    configuración)."""
+    if F in FICHAS_OBS_H5:
+        return _entero(sesiones_horizonte(cfg, "H5"), "configuración: sesiones de H5", 1)
+    if F == "FX-REGIME-001":
+        return _entero(parametro(cfg, "senales.ventana_anios"), "configuración: senales.ventana_anios", 1) * SESIONES_POR_ANIO
+    return int(UMBRALES[F]["obs_maximas"])
+
+
+def _parametros(F: str, params: Any, cfg: dict[str, Any] | None = None) -> dict[str, Any]:
     """Parámetros de la petición encima de los de la ficha, validados; un umbral fijo o un parámetro desconocido se
     rechazan. `clase` la añade el servicio a toda petición y no es un parámetro de estas fichas."""
     params = _dict(params if params is not None else {}, f"{F}: parámetros")
@@ -294,6 +322,8 @@ def _parametros(F: str, params: Any) -> dict[str, Any]:
     p.update({k: v for k, v in params.items() if k in p and v is not None})
     _validar(F, p)
     p.update(UMBRALES[F])
+    if "obs_maximas" in p:   # T-118 (H-12): la cota que sale de la configuración, con la del Motor
+        p["obs_maximas"] = _obs_maximas(F, cfg)
     return p
 
 
@@ -403,11 +433,12 @@ def _cerrado(F: str) -> Callable[[Manejador], Manejador]:
                     raise ErrorFicha(f"{F}: «{clave}» debe ser un objeto")
             # QA r01 (H-07 de otros grupos, contrato de servicio.py): la fecha de corte de la petición, si la hay
             corte = _fecha(ent["fecha_corte"], f"{F}: fecha_corte") if ent.get("fecha_corte") is not None else None
+            cfg = _configuracion(ent)   # T-118 (H-12)
             ent = {"valores": ent.get("valores") or {}, "series": ent.get("series") or {},
-                   "series_rol": ent.get("series_rol") or {}, "fecha_corte": corte}
+                   "series_rol": ent.get("series_rol") or {}, "fecha_corte": corte, "configuracion": cfg}
             try:
                 with np.errstate(all="ignore"):
-                    res, lim = fn(ent, _parametros(F, params))
+                    res, lim = fn(ent, _parametros(F, params, cfg))
             except ErrorFicha:
                 raise
             except (ArithmeticError, ValueError, TypeError, AttributeError, KeyError, IndexError, RuntimeError,
@@ -439,7 +470,7 @@ def _serie_ht01(s: Any, que: str, maximo: int | None = None) -> tuple[np.ndarray
 def _univariante(ent: dict[str, Any], F: str, rendimientos: bool = False) -> tuple[np.ndarray, list[str] | None, str]:
     """Serie de `valores["serie"]` (con `valores["fechas"]` opcional) o la única serie de HT-01 de la petición."""
     v = _dict(ent["valores"], f"{F}: valores")
-    maximo = UMBRALES[F]["obs_maximas"]
+    maximo = _obs_maximas(F, ent.get("configuracion"))
     if v.get("serie") is not None:
         y = _vector(v["serie"], f"{F}: serie", maximo=maximo)
         fechas = _fechas(v.get("fechas"), len(y), f"{F}: fechas")

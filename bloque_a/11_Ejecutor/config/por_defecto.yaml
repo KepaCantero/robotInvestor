@@ -61,8 +61,9 @@ v6:
                        FON: senal_compuesta, DER: senal_compuesta, INM: senal_compuesta, CRI: senal_compuesta, ALT: senal_compuesta,
                        MON: senal_compuesta, TCV: senal_compuesta}
     # Umbral de GC1 por tipo de activo; el que no figura usa `seleccion.umbral_senal_gc1` (0,75, Anexo A). En renta fija,
-    # liquidez y tipos, curvas y volatilidad la familia de tendencia suele quedar neutra y con 0,75 casi nada pasa (medido
-    # con los datos de ejemplo: 0,5 a 0,9 ámbitos por fecha, frente a 1,5 a 1,9 en los demás). Provisional hasta tener
+    # liquidez y tipos, curvas y volatilidad con 0,75 casi nada pasa (medido con los datos de ejemplo: 0,5 a 0,9 ámbitos
+    # por fecha, frente a 1,5 a 1,9 en RV, DIV, MP e IDX; en RF y TCV porque la familia de tendencia suele quedar neutra).
+    # DER, INM, CRI y ALT también pasan poco, pero tienen dos o tres ámbitos y la medida no permite afinar. Provisional hasta tener
     # datos reales: se recalibra con los falsos negativos que cuenta la exploración.
     # Para devolver un tipo al umbral general, póngale 0.75 aquí: la configuración se fusiona y un diccionario vacío no lo borra.
     umbral_por_perfil: {RF: 0.65, MON: 0.65, TCV: 0.65}
