@@ -1,0 +1,3244 @@
+{
+ "$comment": "Batería fija de mensajes válidos e inválidos por contrato (T-114 r02). Escrita a mano; la protege huellas.json. Cada caso parte de un ejemplo del Anexo B (`base`, clave de anexo_b_ejemplos.json) o de un `cuerpo` propio; `pon` y `quita` cambian el cuerpo; `emisor` y `receptor` (por defecto, el primer canal del contrato), `tipo_mensaje`, `run_id`, `query_id`, `estado`, `presupuesto`, `consumo` y `v6` se pasan a `Mensajeria.crear`. Con `via: validar`, el mensaje creado se cambia con `mensaje_pon` y `mensaje_quita` y se pasa a `Mensajeria.validar`. `espera` es lo que quien escribe el caso cree que hace el ejecutor: ADMITIDO o RECHAZADO. El resultado medido va en aceptaciones_rechazos.json",
+ "casos": {
+  "CT-01/alcance_no_valido_lista": {
+   "base": "CT-01.ENCARGO",
+   "espera": "RECHAZADO",
+   "pon": {
+    "alcance": [
+     "RV"
+    ]
+   },
+   "que": "Petición con `alcance` [\"RV\"]"
+  },
+  "CT-01/alcance_no_valido_nulo": {
+   "base": "CT-01.ENCARGO",
+   "espera": "RECHAZADO",
+   "pon": {
+    "alcance": null
+   },
+   "que": "Petición con `alcance` null"
+  },
+  "CT-01/alcance_no_valido_texto": {
+   "base": "CT-01.ENCARGO",
+   "espera": "RECHAZADO",
+   "pon": {
+    "alcance": "RV"
+   },
+   "que": "Petición con `alcance` \"RV\""
+  },
+  "CT-01/alcance_vacio": {
+   "base": "CT-01.ENCARGO",
+   "espera": "ADMITIDO",
+   "pon": {
+    "alcance": {}
+   },
+   "que": "Petición con `alcance` vacío: basta con que sea un objeto"
+  },
+  "CT-01/broker_al_analizador": {
+   "base": "CT-01.ENCARGO",
+   "emisor": "BROKER",
+   "espera": "RECHAZADO",
+   "que": "El Broker pide un análisis al Analizador",
+   "receptor": "AG-02"
+  },
+  "CT-01/canal_en_sentido_contrario": {
+   "base": "CT-01.ENCARGO",
+   "emisor": "AG-01",
+   "espera": "RECHAZADO",
+   "que": "De AG-01 a BROKER: el canal es de un solo sentido",
+   "receptor": "BROKER"
+  },
+  "CT-01/como_retorno": {
+   "base": "CT-01.ENCARGO",
+   "emisor": "BROKER",
+   "espera": "ADMITIDO",
+   "pon": {
+    "tipo": "SEGUIMIENTO"
+   },
+   "que": "CT-01 con tipo de mensaje RETORNO: las listas de la petición no se miran",
+   "receptor": "AG-01",
+   "tipo_mensaje": "RETORNO"
+  },
+  "CT-01/encargo_sin_alcance": {
+   "base": "CT-01.ENCARGO",
+   "espera": "RECHAZADO",
+   "que": "Encargo sin el campo mínimo `alcance`",
+   "quita": [
+    "alcance"
+   ]
+  },
+  "CT-01/encargo_sin_horizontes": {
+   "base": "CT-01.ENCARGO",
+   "espera": "RECHAZADO",
+   "que": "Encargo sin el campo mínimo `horizontes`",
+   "quita": [
+    "horizontes"
+   ]
+  },
+  "CT-01/encargo_sin_prioridad": {
+   "base": "CT-01.ENCARGO",
+   "espera": "RECHAZADO",
+   "que": "Encargo sin el campo mínimo `prioridad`",
+   "quita": [
+    "prioridad"
+   ]
+  },
+  "CT-01/encargo_sin_tipo": {
+   "base": "CT-01.ENCARGO",
+   "espera": "RECHAZADO",
+   "que": "Encargo sin el campo mínimo `tipo`",
+   "quita": [
+    "tipo"
+   ]
+  },
+  "CT-01/horizonte_h1": {
+   "base": "CT-01.ENCARGO",
+   "espera": "ADMITIDO",
+   "pon": {
+    "horizontes": [
+     "H1"
+    ]
+   },
+   "que": "Petición con el horizonte H1"
+  },
+  "CT-01/horizonte_h2": {
+   "base": "CT-01.ENCARGO",
+   "espera": "ADMITIDO",
+   "pon": {
+    "horizontes": [
+     "H2"
+    ]
+   },
+   "que": "Petición con el horizonte H2"
+  },
+  "CT-01/horizonte_h3": {
+   "base": "CT-01.ENCARGO",
+   "espera": "ADMITIDO",
+   "pon": {
+    "horizontes": [
+     "H3"
+    ]
+   },
+   "que": "Petición con el horizonte H3"
+  },
+  "CT-01/horizonte_h4": {
+   "base": "CT-01.ENCARGO",
+   "espera": "ADMITIDO",
+   "pon": {
+    "horizontes": [
+     "H4"
+    ]
+   },
+   "que": "Petición con el horizonte H4"
+  },
+  "CT-01/horizonte_h5": {
+   "base": "CT-01.ENCARGO",
+   "espera": "ADMITIDO",
+   "pon": {
+    "horizontes": [
+     "H5"
+    ]
+   },
+   "que": "Petición con el horizonte H5"
+  },
+  "CT-01/horizontes_lista_vacia": {
+   "base": "CT-01.ENCARGO",
+   "espera": "ADMITIDO",
+   "pon": {
+    "horizontes": []
+   },
+   "que": "Petición con la lista de horizontes vacía: se admite"
+  },
+  "CT-01/horizontes_los_cinco": {
+   "base": "CT-01.ENCARGO",
+   "espera": "ADMITIDO",
+   "pon": {
+    "horizontes": [
+     "H1",
+     "H2",
+     "H3",
+     "H4",
+     "H5"
+    ]
+   },
+   "que": "Petición con los cinco horizontes"
+  },
+  "CT-01/horizontes_no_validos_en_minusculas": {
+   "base": "CT-01.ENCARGO",
+   "espera": "RECHAZADO",
+   "pon": {
+    "horizontes": [
+     "h2"
+    ]
+   },
+   "que": "Petición con `horizontes` [\"h2\"]"
+  },
+  "CT-01/horizontes_no_validos_h0": {
+   "base": "CT-01.ENCARGO",
+   "espera": "RECHAZADO",
+   "pon": {
+    "horizontes": [
+     "H0"
+    ]
+   },
+   "que": "Petición con `horizontes` [\"H0\"]"
+  },
+  "CT-01/horizontes_no_validos_h6": {
+   "base": "CT-01.ENCARGO",
+   "espera": "RECHAZADO",
+   "pon": {
+    "horizontes": [
+     "H6"
+    ]
+   },
+   "que": "Petición con `horizontes` [\"H6\"]"
+  },
+  "CT-01/horizontes_no_validos_lista_dentro_de_lista": {
+   "base": "CT-01.ENCARGO",
+   "espera": "RECHAZADO",
+   "pon": {
+    "horizontes": [
+     [
+      "H2"
+     ]
+    ]
+   },
+   "que": "Petición con `horizontes` [[\"H2\"]]"
+  },
+  "CT-01/horizontes_no_validos_nulo": {
+   "base": "CT-01.ENCARGO",
+   "espera": "RECHAZADO",
+   "pon": {
+    "horizontes": null
+   },
+   "que": "Petición con `horizontes` null"
+  },
+  "CT-01/horizontes_no_validos_numero": {
+   "base": "CT-01.ENCARGO",
+   "espera": "RECHAZADO",
+   "pon": {
+    "horizontes": [
+     2
+    ]
+   },
+   "que": "Petición con `horizontes` [2]"
+  },
+  "CT-01/horizontes_no_validos_objeto": {
+   "base": "CT-01.ENCARGO",
+   "espera": "RECHAZADO",
+   "pon": {
+    "horizontes": {
+     "H2": true
+    }
+   },
+   "que": "Petición con `horizontes` {\"H2\": true}"
+  },
+  "CT-01/horizontes_no_validos_texto_suelto": {
+   "base": "CT-01.ENCARGO",
+   "espera": "RECHAZADO",
+   "pon": {
+    "horizontes": "H2"
+   },
+   "que": "Petición con `horizontes` \"H2\""
+  },
+  "CT-01/horizontes_no_validos_uno_bueno_y_uno_malo": {
+   "base": "CT-01.ENCARGO",
+   "espera": "RECHAZADO",
+   "pon": {
+    "horizontes": [
+     "H2",
+     "H9"
+    ]
+   },
+   "que": "Petición con `horizontes` [\"H2\", \"H9\"]"
+  },
+  "CT-01/horizontes_repetidos": {
+   "base": "CT-01.ENCARGO",
+   "espera": "ADMITIDO",
+   "pon": {
+    "horizontes": [
+     "H2",
+     "H2"
+    ]
+   },
+   "que": "Petición con un horizonte repetido: se admite"
+  },
+  "CT-01/msg_id_del_broker": {
+   "base": "CT-01.ENCARGO",
+   "espera": "ADMITIDO",
+   "pon": {
+    "msg_id": "MSG-BRK-2026-000123"
+   },
+   "que": "El Broker aporta su identificador estable de reintento"
+  },
+  "CT-01/msg_id_del_broker_de_doce_digitos": {
+   "base": "CT-01.ENCARGO",
+   "espera": "ADMITIDO",
+   "pon": {
+    "msg_id": "MSG-BRK-2026-123456789012"
+   },
+   "que": "Identificador del Broker con doce dígitos"
+  },
+  "CT-01/msg_id_del_broker_de_un_digito": {
+   "base": "CT-01.ENCARGO",
+   "espera": "ADMITIDO",
+   "pon": {
+    "msg_id": "MSG-BRK-2026-7"
+   },
+   "que": "Identificador del Broker con un solo dígito"
+  },
+  "CT-01/msg_id_del_broker_no_valido_con_anio_corto": {
+   "base": "CT-01.ENCARGO",
+   "espera": "RECHAZADO",
+   "pon": {
+    "msg_id": "MSG-BRK-26-000123"
+   },
+   "que": "Identificador del Broker \"MSG-BRK-26-000123\""
+  },
+  "CT-01/msg_id_del_broker_no_valido_con_espacio_final": {
+   "base": "CT-01.ENCARGO",
+   "espera": "RECHAZADO",
+   "pon": {
+    "msg_id": "MSG-BRK-2026-000123 "
+   },
+   "que": "Identificador del Broker \"MSG-BRK-2026-000123 \""
+  },
+  "CT-01/msg_id_del_broker_no_valido_con_la_forma_del_bloque": {
+   "base": "CT-01.ENCARGO",
+   "espera": "RECHAZADO",
+   "pon": {
+    "msg_id": "MSG-2026-000123"
+   },
+   "que": "Identificador del Broker \"MSG-2026-000123\""
+  },
+  "CT-01/msg_id_del_broker_no_valido_de_trece_digitos": {
+   "base": "CT-01.ENCARGO",
+   "espera": "RECHAZADO",
+   "pon": {
+    "msg_id": "MSG-BRK-2026-1234567890123"
+   },
+   "que": "Identificador del Broker \"MSG-BRK-2026-1234567890123\""
+  },
+  "CT-01/msg_id_del_broker_no_valido_de_un_ambito": {
+   "base": "CT-01.ENCARGO",
+   "espera": "RECHAZADO",
+   "pon": {
+    "msg_id": "MSG-RV-2026-000123"
+   },
+   "que": "Identificador del Broker \"MSG-RV-2026-000123\""
+  },
+  "CT-01/msg_id_del_broker_no_valido_en_minusculas": {
+   "base": "CT-01.ENCARGO",
+   "espera": "RECHAZADO",
+   "pon": {
+    "msg_id": "msg-brk-2026-000123"
+   },
+   "que": "Identificador del Broker \"msg-brk-2026-000123\""
+  },
+  "CT-01/msg_id_del_broker_no_valido_numero": {
+   "base": "CT-01.ENCARGO",
+   "espera": "RECHAZADO",
+   "pon": {
+    "msg_id": 123
+   },
+   "que": "Identificador del Broker 123"
+  },
+  "CT-01/msg_id_del_broker_no_valido_vacio": {
+   "base": "CT-01.ENCARGO",
+   "espera": "RECHAZADO",
+   "pon": {
+    "msg_id": ""
+   },
+   "que": "Identificador del Broker \"\""
+  },
+  "CT-01/msg_id_del_broker_nulo": {
+   "base": "CT-01.ENCARGO",
+   "espera": "ADMITIDO",
+   "pon": {
+    "msg_id": null
+   },
+   "que": "Identificador del Broker nulo: el bloque pone el suyo"
+  },
+  "CT-01/prioridad_alta": {
+   "base": "CT-01.ENCARGO",
+   "espera": "ADMITIDO",
+   "pon": {
+    "prioridad": "ALTA"
+   },
+   "que": "Petición con prioridad ALTA"
+  },
+  "CT-01/prioridad_baja": {
+   "base": "CT-01.ENCARGO",
+   "espera": "ADMITIDO",
+   "pon": {
+    "prioridad": "BAJA"
+   },
+   "que": "Petición con prioridad BAJA"
+  },
+  "CT-01/prioridad_no_admitida_en_minusculas": {
+   "base": "CT-01.ENCARGO",
+   "espera": "RECHAZADO",
+   "pon": {
+    "prioridad": "alta"
+   },
+   "que": "Petición con `prioridad` \"alta\""
+  },
+  "CT-01/prioridad_no_admitida_numero": {
+   "base": "CT-01.ENCARGO",
+   "espera": "RECHAZADO",
+   "pon": {
+    "prioridad": 1
+   },
+   "que": "Petición con `prioridad` 1"
+  },
+  "CT-01/prioridad_no_admitida_urgente": {
+   "base": "CT-01.ENCARGO",
+   "espera": "RECHAZADO",
+   "pon": {
+    "prioridad": "URGENTE"
+   },
+   "que": "Petición con `prioridad` \"URGENTE\""
+  },
+  "CT-01/prioridad_normal": {
+   "base": "CT-01.ENCARGO",
+   "espera": "ADMITIDO",
+   "pon": {
+    "prioridad": "NORMAL"
+   },
+   "que": "Petición con prioridad NORMAL"
+  },
+  "CT-01/sin_los_campos_que_solo_pide_el_anexo_b": {
+   "base": "CT-01.ENCARGO",
+   "espera": "ADMITIDO",
+   "que": "Sin `nivel_forzado`, `fecha_objetivo` ni `referencia_previa`",
+   "quita": [
+    "nivel_forzado",
+    "fecha_objetivo",
+    "referencia_previa"
+   ]
+  },
+  "CT-01/sin_run_id_ni_query_id": {
+   "base": "CT-01.ENCARGO",
+   "espera": "ADMITIDO",
+   "que": "Sin `run_id` ni `query_id`: este contrato está exento",
+   "query_id": null,
+   "run_id": null
+  },
+  "CT-01/tipo_ad_hoc": {
+   "base": "CT-01.ENCARGO",
+   "espera": "ADMITIDO",
+   "pon": {
+    "tipo": "AD_HOC"
+   },
+   "que": "Petición de tipo AD_HOC"
+  },
+  "CT-01/tipo_no_admitido_en_lista": {
+   "base": "CT-01.ENCARGO",
+   "espera": "RECHAZADO",
+   "pon": {
+    "tipo": [
+     "AD_HOC"
+    ]
+   },
+   "que": "Petición con `tipo` [\"AD_HOC\"]"
+  },
+  "CT-01/tipo_no_admitido_en_minusculas": {
+   "base": "CT-01.ENCARGO",
+   "espera": "RECHAZADO",
+   "pon": {
+    "tipo": "ad_hoc"
+   },
+   "que": "Petición con `tipo` \"ad_hoc\""
+  },
+  "CT-01/tipo_no_admitido_nulo": {
+   "base": "CT-01.ENCARGO",
+   "espera": "RECHAZADO",
+   "pon": {
+    "tipo": null
+   },
+   "que": "Petición con `tipo` null"
+  },
+  "CT-01/tipo_no_admitido_seguimiento": {
+   "base": "CT-01.ENCARGO",
+   "espera": "RECHAZADO",
+   "pon": {
+    "tipo": "SEGUIMIENTO"
+   },
+   "que": "Petición con `tipo` \"SEGUIMIENTO\""
+  },
+  "CT-01/tipo_periodico": {
+   "base": "CT-01.ENCARGO",
+   "espera": "ADMITIDO",
+   "pon": {
+    "tipo": "PERIODICO"
+   },
+   "que": "Petición de tipo PERIODICO"
+  },
+  "CT-01/tipo_profundizacion": {
+   "base": "CT-01.ENCARGO",
+   "espera": "ADMITIDO",
+   "pon": {
+    "tipo": "PROFUNDIZACION"
+   },
+   "que": "Petición de tipo PROFUNDIZACION"
+  },
+  "CT-02/analizador_al_broker": {
+   "base": "CT-02.RETORNO",
+   "emisor": "AG-02",
+   "espera": "RECHAZADO",
+   "que": "El Analizador entrega al Broker",
+   "receptor": "BROKER"
+  },
+  "CT-02/canal_en_sentido_contrario": {
+   "base": "CT-02.RETORNO",
+   "emisor": "BROKER",
+   "espera": "RECHAZADO",
+   "que": "De BROKER a AG-01: el canal es de un solo sentido",
+   "receptor": "AG-01"
+  },
+  "CT-02/como_encargo_con_g3_bloqueado": {
+   "base": "CT-02.RETORNO",
+   "emisor": "AG-01",
+   "espera": "ADMITIDO",
+   "pon": {
+    "estado_g3": "BLOQUEADO"
+   },
+   "que": "CT-02 con tipo de mensaje ENCARGO y G3 BLOQUEADO: la regla de G3 solo se aplica al retorno",
+   "receptor": "BROKER",
+   "tipo_mensaje": "ENCARGO"
+  },
+  "CT-02/encargo_sin_entregables": {
+   "base": "CT-02.RETORNO",
+   "emisor": "AG-01",
+   "espera": "RECHAZADO",
+   "que": "Encargo sin el campo mínimo `entregables`",
+   "quita": [
+    "entregables"
+   ],
+   "receptor": "BROKER",
+   "tipo_mensaje": "ENCARGO"
+  },
+  "CT-02/encargo_sin_estado_g3": {
+   "base": "CT-02.RETORNO",
+   "emisor": "AG-01",
+   "espera": "RECHAZADO",
+   "que": "Encargo sin el campo mínimo `estado_g3`",
+   "quita": [
+    "estado_g3"
+   ],
+   "receptor": "BROKER",
+   "tipo_mensaje": "ENCARGO"
+  },
+  "CT-02/encargo_sin_resumen": {
+   "base": "CT-02.RETORNO",
+   "emisor": "AG-01",
+   "espera": "RECHAZADO",
+   "que": "Encargo sin el campo mínimo `resumen`",
+   "quita": [
+    "resumen"
+   ],
+   "receptor": "BROKER",
+   "tipo_mensaje": "ENCARGO"
+  },
+  "CT-02/entrega_apta": {
+   "base": "CT-02.RETORNO",
+   "espera": "ADMITIDO",
+   "que": "Entrega con G3 APTO"
+  },
+  "CT-02/entrega_apta_con_advertencias": {
+   "base": "CT-02.RETORNO",
+   "espera": "ADMITIDO",
+   "pon": {
+    "estado_g3": "APTO_CON_ADVERTENCIAS"
+   },
+   "que": "Entrega con G3 APTO_CON_ADVERTENCIAS"
+  },
+  "CT-02/entrega_con_entregables_en_lista": {
+   "base": "CT-02.RETORNO",
+   "espera": "RECHAZADO",
+   "pon": {
+    "entregables": [
+     "ruta/informe_tecnico.md"
+    ]
+   },
+   "que": "Entrega con `entregables` como lista"
+  },
+  "CT-02/entrega_con_entregables_vacios": {
+   "base": "CT-02.RETORNO",
+   "espera": "ADMITIDO",
+   "pon": {
+    "entregables": {}
+   },
+   "que": "Entrega con `entregables` vacío: basta con que sea un objeto"
+  },
+  "CT-02/entrega_con_estado_comun_parcial": {
+   "base": "CT-02.RETORNO",
+   "espera": "ADMITIDO",
+   "estado": "PARCIAL",
+   "que": "Entrega con el estado común PARCIAL"
+  },
+  "CT-02/entrega_con_g3_bloqueado": {
+   "base": "CT-02.RETORNO",
+   "espera": "RECHAZADO",
+   "pon": {
+    "estado_g3": "BLOQUEADO"
+   },
+   "que": "Entrega con `estado_g3` \"BLOQUEADO\""
+  },
+  "CT-02/entrega_con_g3_en_minusculas": {
+   "base": "CT-02.RETORNO",
+   "espera": "RECHAZADO",
+   "pon": {
+    "estado_g3": "apto"
+   },
+   "que": "Entrega con `estado_g3` \"apto\""
+  },
+  "CT-02/entrega_con_g3_nulo": {
+   "base": "CT-02.RETORNO",
+   "espera": "RECHAZADO",
+   "pon": {
+    "estado_g3": null
+   },
+   "que": "Entrega con `estado_g3` null"
+  },
+  "CT-02/entrega_con_g3_otro": {
+   "base": "CT-02.RETORNO",
+   "espera": "RECHAZADO",
+   "pon": {
+    "estado_g3": "PENDIENTE"
+   },
+   "que": "Entrega con `estado_g3` \"PENDIENTE\""
+  },
+  "CT-02/entrega_con_resumen_en_texto": {
+   "base": "CT-02.RETORNO",
+   "espera": "RECHAZADO",
+   "pon": {
+    "resumen": "Sin cambios."
+   },
+   "que": "Entrega con `resumen` como texto"
+  },
+  "CT-02/entrega_sin_claves_del_resumen": {
+   "base": "CT-02.RETORNO",
+   "espera": "ADMITIDO",
+   "pon": {
+    "resumen": {}
+   },
+   "que": "Entrega con `resumen` vacío: basta con que sea un objeto"
+  },
+  "CT-02/entrega_sin_entregables": {
+   "base": "CT-02.RETORNO",
+   "espera": "RECHAZADO",
+   "que": "Entrega sin `entregables`",
+   "quita": [
+    "entregables"
+   ]
+  },
+  "CT-02/entrega_sin_estado_g3": {
+   "base": "CT-02.RETORNO",
+   "espera": "RECHAZADO",
+   "que": "Entrega sin `estado_g3`",
+   "quita": [
+    "estado_g3"
+   ]
+  },
+  "CT-02/entrega_sin_resumen": {
+   "base": "CT-02.RETORNO",
+   "espera": "RECHAZADO",
+   "que": "Entrega sin `resumen`",
+   "quita": [
+    "resumen"
+   ]
+  },
+  "CT-02/sin_run_id_ni_query_id": {
+   "base": "CT-02.RETORNO",
+   "espera": "RECHAZADO",
+   "que": "Sin `run_id` ni `query_id`",
+   "query_id": null,
+   "quita": [
+    "run_id"
+   ],
+   "run_id": null
+  },
+  "CT-03/canal_en_sentido_contrario": {
+   "base": "CT-03.ENCARGO",
+   "emisor": "AG-01",
+   "espera": "ADMITIDO",
+   "que": "De AG-01 a BROKER: el canal es de ida y vuelta",
+   "receptor": "BROKER"
+  },
+  "CT-03/consulta_solo_con_pregunta": {
+   "contrato": "CT-03",
+   "cuerpo": {
+    "pregunta": "¿Cuál es el último informe?"
+   },
+   "espera": "ADMITIDO",
+   "que": "Consulta solo con la pregunta",
+   "run_id": null,
+   "tipo_mensaje": "ENCARGO"
+  },
+  "CT-03/encargo_sin_pregunta": {
+   "base": "CT-03.ENCARGO",
+   "espera": "RECHAZADO",
+   "que": "Encargo sin el campo mínimo `pregunta`",
+   "quita": [
+    "pregunta"
+   ]
+  },
+  "CT-03/encargo_urgencia_fuera_de_la_lista_del_anexo_b": {
+   "base": "CT-03.ENCARGO",
+   "espera": "ADMITIDO",
+   "pon": {
+    "urgencia": "FUERA_DE_LISTA"
+   },
+   "que": "`urgencia` con un valor que no está en la lista del Anexo B: la mensajería no la aplica"
+  },
+  "CT-03/respuesta_con_escalado_nulo": {
+   "base": "CT-03.RETORNO",
+   "espera": "ADMITIDO",
+   "pon": {
+    "escalado": null
+   },
+   "que": "Respuesta con `escalado` nulo, como la de una consulta N0"
+  },
+  "CT-03/respuesta_sin_escalado": {
+   "base": "CT-03.RETORNO",
+   "espera": "ADMITIDO",
+   "que": "Respuesta sin `escalado`",
+   "quita": [
+    "escalado"
+   ]
+  },
+  "CT-03/retorno_clase_consulta_fuera_de_la_lista_del_anexo_b": {
+   "base": "CT-03.RETORNO",
+   "espera": "ADMITIDO",
+   "pon": {
+    "clase_consulta": "FUERA_DE_LISTA"
+   },
+   "que": "`clase_consulta` con un valor que no está en la lista del Anexo B: la mensajería no la aplica"
+  },
+  "CT-03/retorno_confianza_fuera_de_la_lista_del_anexo_b": {
+   "base": "CT-03.RETORNO",
+   "espera": "ADMITIDO",
+   "pon": {
+    "confianza": "FUERA_DE_LISTA"
+   },
+   "que": "`confianza` con un valor que no está en la lista del Anexo B: la mensajería no la aplica"
+  },
+  "CT-03/retorno_ruta_fuera_de_la_lista_del_anexo_b": {
+   "base": "CT-03.RETORNO",
+   "espera": "ADMITIDO",
+   "pon": {
+    "ruta": "FUERA_DE_LISTA"
+   },
+   "que": "`ruta` con un valor que no está en la lista del Anexo B: la mensajería no la aplica"
+  },
+  "CT-03/retorno_sin_clase_consulta": {
+   "base": "CT-03.RETORNO",
+   "espera": "RECHAZADO",
+   "que": "Retorno sin el campo de retorno `clase_consulta`",
+   "quita": [
+    "clase_consulta"
+   ]
+  },
+  "CT-03/retorno_sin_confianza": {
+   "base": "CT-03.RETORNO",
+   "espera": "RECHAZADO",
+   "que": "Retorno sin el campo de retorno `confianza`",
+   "quita": [
+    "confianza"
+   ]
+  },
+  "CT-03/retorno_sin_referencias": {
+   "base": "CT-03.RETORNO",
+   "espera": "RECHAZADO",
+   "que": "Retorno sin el campo de retorno `referencias`",
+   "quita": [
+    "referencias"
+   ]
+  },
+  "CT-03/retorno_sin_respuesta": {
+   "base": "CT-03.RETORNO",
+   "espera": "RECHAZADO",
+   "que": "Retorno sin el campo de retorno `respuesta`",
+   "quita": [
+    "respuesta"
+   ]
+  },
+  "CT-03/retorno_sin_ruta": {
+   "base": "CT-03.RETORNO",
+   "espera": "RECHAZADO",
+   "que": "Retorno sin el campo de retorno `ruta`",
+   "quita": [
+    "ruta"
+   ]
+  },
+  "CT-03/sin_run_id_ni_query_id": {
+   "base": "CT-03.ENCARGO",
+   "espera": "ADMITIDO",
+   "que": "Sin `run_id` ni `query_id`: este contrato está exento",
+   "query_id": null,
+   "quita": [
+    "query_id"
+   ],
+   "run_id": null
+  },
+  "CT-04/canal_en_sentido_contrario": {
+   "base": "CT-04.ENCARGO",
+   "emisor": "AG-01",
+   "espera": "RECHAZADO",
+   "que": "De AG-01 a BROKER: el canal es de un solo sentido",
+   "receptor": "BROKER"
+  },
+  "CT-04/cuerpo_vacio": {
+   "contrato": "CT-04",
+   "cuerpo": {},
+   "espera": "ADMITIDO",
+   "que": "Una retroalimentación vacía: la mensajería la admite (la rechaza `Bloque.decision`, antes de crearla)",
+   "run_id": null,
+   "tipo_mensaje": "ENCARGO"
+  },
+  "CT-04/sin_run_id_ni_query_id": {
+   "base": "CT-04.ENCARGO",
+   "espera": "ADMITIDO",
+   "que": "Sin `run_id` ni `query_id`: este contrato está exento",
+   "query_id": null,
+   "run_id": null
+  },
+  "CT-04/solo_decisiones": {
+   "base": "CT-04.ENCARGO",
+   "espera": "ADMITIDO",
+   "que": "Solo el bloque de decisiones",
+   "quita": [
+    "valoracion_informe",
+    "configuracion",
+    "resultado_comunicado"
+   ]
+  },
+  "CT-05/canal_en_sentido_contrario": {
+   "base": "CT-05.ENCARGO",
+   "emisor": "AG-02",
+   "espera": "ADMITIDO",
+   "que": "De AG-02 a AG-01: el canal es de ida y vuelta",
+   "receptor": "AG-01"
+  },
+  "CT-05/encargo_sin_alcance": {
+   "base": "CT-05.ENCARGO",
+   "espera": "RECHAZADO",
+   "que": "Encargo sin el campo mínimo `alcance`",
+   "quita": [
+    "alcance"
+   ]
+  },
+  "CT-05/encargo_sin_delta_gc0": {
+   "base": "CT-05.ENCARGO",
+   "espera": "RECHAZADO",
+   "que": "Encargo sin el campo mínimo `delta_gc0`",
+   "quita": [
+    "delta_gc0"
+   ]
+  },
+  "CT-05/encargo_sin_fecha_objetivo": {
+   "base": "CT-05.ENCARGO",
+   "espera": "RECHAZADO",
+   "que": "Encargo sin el campo mínimo `fecha_objetivo`",
+   "quita": [
+    "fecha_objetivo"
+   ]
+  },
+  "CT-05/encargo_sin_memoria": {
+   "base": "CT-05.ENCARGO",
+   "espera": "RECHAZADO",
+   "que": "Encargo sin el campo mínimo `memoria`",
+   "quita": [
+    "memoria"
+   ]
+  },
+  "CT-05/encargo_sin_nivel_por_clase": {
+   "base": "CT-05.ENCARGO",
+   "espera": "RECHAZADO",
+   "que": "Encargo sin el campo mínimo `nivel_por_clase`",
+   "quita": [
+    "nivel_por_clase"
+   ]
+  },
+  "CT-05/encargo_sin_presupuesto_por_clase": {
+   "base": "CT-05.ENCARGO",
+   "espera": "RECHAZADO",
+   "que": "Encargo sin el campo mínimo `presupuesto_por_clase`",
+   "quita": [
+    "presupuesto_por_clase"
+   ]
+  },
+  "CT-05/encargo_sin_tipo": {
+   "base": "CT-05.ENCARGO",
+   "espera": "RECHAZADO",
+   "que": "Encargo sin el campo mínimo `tipo`",
+   "quita": [
+    "tipo"
+   ]
+  },
+  "CT-05/encargo_tipo_fuera_de_la_lista_del_anexo_b": {
+   "base": "CT-05.ENCARGO",
+   "espera": "ADMITIDO",
+   "pon": {
+    "tipo": "FUERA_DE_LISTA"
+   },
+   "que": "`tipo` con un valor que no está en la lista del Anexo B: la mensajería no la aplica"
+  },
+  "CT-05/run_id_vacio": {
+   "base": "CT-05.ENCARGO",
+   "espera": "RECHAZADO",
+   "que": "Con `run_id` vacío",
+   "query_id": null,
+   "run_id": ""
+  },
+  "CT-05/sin_run_id_ni_query_id": {
+   "base": "CT-05.ENCARGO",
+   "espera": "RECHAZADO",
+   "que": "Sin `run_id` ni `query_id`",
+   "query_id": null,
+   "run_id": null
+  },
+  "CT-05/solo_con_query_id": {
+   "base": "CT-05.ENCARGO",
+   "espera": "ADMITIDO",
+   "que": "Con `query_id` y sin `run_id`",
+   "query_id": "QRY-2026-0001",
+   "run_id": null
+  },
+  "CT-06/analistas_entre_si": {
+   "base": "CT-06.ENCARGO",
+   "emisor": "AG-03",
+   "espera": "RECHAZADO",
+   "que": "Dos analistas de tipo de activo entre sí",
+   "receptor": "AG-04"
+  },
+  "CT-06/canal_en_sentido_contrario": {
+   "base": "CT-06.ENCARGO",
+   "emisor": "AG-03",
+   "espera": "ADMITIDO",
+   "que": "De AG-03 a AG-02: el canal es de ida y vuelta",
+   "receptor": "AG-02"
+  },
+  "CT-06/encargo_con_campo_minimo_nulo": {
+   "base": "CT-06.ENCARGO",
+   "espera": "ADMITIDO",
+   "pon": {
+    "lecciones": null
+   },
+   "que": "Un campo mínimo presente pero nulo: basta con que esté"
+  },
+  "CT-06/encargo_fase_fuera_de_la_lista_del_anexo_b": {
+   "base": "CT-06.ENCARGO",
+   "espera": "ADMITIDO",
+   "pon": {
+    "fase": "FUERA_DE_LISTA"
+   },
+   "que": "`fase` con un valor que no está en la lista del Anexo B: la mensajería no la aplica"
+  },
+  "CT-06/encargo_sin_clase": {
+   "base": "CT-06.ENCARGO",
+   "espera": "RECHAZADO",
+   "que": "Encargo sin el campo mínimo `clase`",
+   "quita": [
+    "clase"
+   ]
+  },
+  "CT-06/encargo_sin_fase": {
+   "base": "CT-06.ENCARGO",
+   "espera": "RECHAZADO",
+   "que": "Encargo sin el campo mínimo `fase`",
+   "quita": [
+    "fase"
+   ]
+  },
+  "CT-06/encargo_sin_lecciones": {
+   "base": "CT-06.ENCARGO",
+   "espera": "RECHAZADO",
+   "que": "Encargo sin el campo mínimo `lecciones`",
+   "quita": [
+    "lecciones"
+   ]
+  },
+  "CT-06/encargo_sin_nivel": {
+   "base": "CT-06.ENCARGO",
+   "espera": "RECHAZADO",
+   "que": "Encargo sin el campo mínimo `nivel`",
+   "quita": [
+    "nivel"
+   ]
+  },
+  "CT-06/encargo_sin_opciones_vigentes": {
+   "base": "CT-06.ENCARGO",
+   "espera": "RECHAZADO",
+   "que": "Encargo sin el campo mínimo `opciones_vigentes`",
+   "quita": [
+    "opciones_vigentes"
+   ]
+  },
+  "CT-06/sin_run_id_ni_query_id": {
+   "base": "CT-06.ENCARGO",
+   "espera": "RECHAZADO",
+   "que": "Sin `run_id` ni `query_id`",
+   "query_id": null,
+   "run_id": null
+  },
+  "CT-07/canal_en_sentido_contrario": {
+   "base": "CT-07.ENCARGO",
+   "emisor": "AG-16",
+   "espera": "ADMITIDO",
+   "que": "De AG-16 a AG-02: el canal es de ida y vuelta",
+   "receptor": "AG-02"
+  },
+  "CT-07/encargo_objetivo_fuera_de_la_lista_del_anexo_b": {
+   "base": "CT-07.ENCARGO",
+   "espera": "ADMITIDO",
+   "pon": {
+    "objetivo": "FUERA_DE_LISTA"
+   },
+   "que": "`objetivo` con un valor que no está en la lista del Anexo B: la mensajería no la aplica"
+  },
+  "CT-07/encargo_sin_clase": {
+   "base": "CT-07.ENCARGO",
+   "espera": "RECHAZADO",
+   "que": "Encargo sin el campo mínimo `clase`",
+   "quita": [
+    "clase"
+   ]
+  },
+  "CT-07/encargo_sin_fecha_limite_informacion": {
+   "base": "CT-07.ENCARGO",
+   "espera": "RECHAZADO",
+   "que": "Encargo sin el campo mínimo `fecha_limite_informacion`",
+   "quita": [
+    "fecha_limite_informacion"
+   ]
+  },
+  "CT-07/encargo_sin_horizonte": {
+   "base": "CT-07.ENCARGO",
+   "espera": "RECHAZADO",
+   "que": "Encargo sin el campo mínimo `horizonte`",
+   "quita": [
+    "horizonte"
+   ]
+  },
+  "CT-07/encargo_sin_max_fuentes": {
+   "base": "CT-07.ENCARGO",
+   "espera": "RECHAZADO",
+   "que": "Encargo sin el campo mínimo `max_fuentes`",
+   "quita": [
+    "max_fuentes"
+   ]
+  },
+  "CT-07/encargo_sin_objetivo": {
+   "base": "CT-07.ENCARGO",
+   "espera": "RECHAZADO",
+   "que": "Encargo sin el campo mínimo `objetivo`",
+   "quita": [
+    "objetivo"
+   ]
+  },
+  "CT-07/encargo_sin_pregunta": {
+   "base": "CT-07.ENCARGO",
+   "espera": "RECHAZADO",
+   "que": "Encargo sin el campo mínimo `pregunta`",
+   "quita": [
+    "pregunta"
+   ]
+  },
+  "CT-07/encargo_sin_profundidad": {
+   "base": "CT-07.ENCARGO",
+   "espera": "RECHAZADO",
+   "que": "Encargo sin el campo mínimo `profundidad`",
+   "quita": [
+    "profundidad"
+   ]
+  },
+  "CT-07/sin_run_id_ni_query_id": {
+   "base": "CT-07.ENCARGO",
+   "espera": "RECHAZADO",
+   "que": "Sin `run_id` ni `query_id`",
+   "query_id": null,
+   "run_id": null
+  },
+  "CT-08/canal_en_sentido_contrario": {
+   "base": "CT-08.ENCARGO",
+   "emisor": "AG-14",
+   "espera": "ADMITIDO",
+   "que": "De AG-14 a AG-02: el canal es de ida y vuelta",
+   "receptor": "AG-02"
+  },
+  "CT-08/encargo_objetivo_fuera_de_la_lista_del_anexo_b": {
+   "base": "CT-08.ENCARGO",
+   "espera": "ADMITIDO",
+   "pon": {
+    "objetivo": "FUERA_DE_LISTA"
+   },
+   "que": "`objetivo` con un valor que no está en la lista del Anexo B: la mensajería no la aplica"
+  },
+  "CT-08/encargo_sin_clase": {
+   "base": "CT-08.ENCARGO",
+   "espera": "RECHAZADO",
+   "que": "Encargo sin el campo mínimo `clase`",
+   "quita": [
+    "clase"
+   ]
+  },
+  "CT-08/encargo_sin_fecha_limite_informacion": {
+   "base": "CT-08.ENCARGO",
+   "espera": "RECHAZADO",
+   "que": "Encargo sin el campo mínimo `fecha_limite_informacion`",
+   "quita": [
+    "fecha_limite_informacion"
+   ]
+  },
+  "CT-08/encargo_sin_horizonte": {
+   "base": "CT-08.ENCARGO",
+   "espera": "RECHAZADO",
+   "que": "Encargo sin el campo mínimo `horizonte`",
+   "quita": [
+    "horizonte"
+   ]
+  },
+  "CT-08/encargo_sin_max_fuentes": {
+   "base": "CT-08.ENCARGO",
+   "espera": "RECHAZADO",
+   "que": "Encargo sin el campo mínimo `max_fuentes`",
+   "quita": [
+    "max_fuentes"
+   ]
+  },
+  "CT-08/encargo_sin_objetivo": {
+   "base": "CT-08.ENCARGO",
+   "espera": "RECHAZADO",
+   "que": "Encargo sin el campo mínimo `objetivo`",
+   "quita": [
+    "objetivo"
+   ]
+  },
+  "CT-08/encargo_sin_pregunta": {
+   "base": "CT-08.ENCARGO",
+   "espera": "RECHAZADO",
+   "que": "Encargo sin el campo mínimo `pregunta`",
+   "quita": [
+    "pregunta"
+   ]
+  },
+  "CT-08/encargo_sin_profundidad": {
+   "base": "CT-08.ENCARGO",
+   "espera": "RECHAZADO",
+   "que": "Encargo sin el campo mínimo `profundidad`",
+   "quita": [
+    "profundidad"
+   ]
+  },
+  "CT-08/sin_run_id_ni_query_id": {
+   "base": "CT-08.ENCARGO",
+   "espera": "RECHAZADO",
+   "que": "Sin `run_id` ni `query_id`",
+   "query_id": null,
+   "run_id": null
+  },
+  "CT-09/canal_en_sentido_contrario": {
+   "base": "CT-09.ENCARGO",
+   "emisor": "AG-13",
+   "espera": "ADMITIDO",
+   "que": "De AG-13 a AG-02: el canal es de ida y vuelta",
+   "receptor": "AG-02"
+  },
+  "CT-09/encargo_modo_fuera_de_la_lista_del_anexo_b": {
+   "base": "CT-09.ENCARGO",
+   "espera": "ADMITIDO",
+   "pon": {
+    "modo": "FUERA_DE_LISTA"
+   },
+   "que": "`modo` con un valor que no está en la lista del Anexo B: la mensajería no la aplica"
+  },
+  "CT-09/encargo_plan_fuera_de_la_lista_del_anexo_b": {
+   "base": "CT-09.ENCARGO",
+   "espera": "ADMITIDO",
+   "pon": {
+    "plan": "FUERA_DE_LISTA"
+   },
+   "que": "`plan` con un valor que no está en la lista del Anexo B: la mensajería no la aplica"
+  },
+  "CT-09/encargo_sin_datos": {
+   "base": "CT-09.ENCARGO",
+   "espera": "RECHAZADO",
+   "que": "Encargo sin el campo mínimo `datos`",
+   "quita": [
+    "datos"
+   ]
+  },
+  "CT-09/encargo_sin_fecha_corte": {
+   "base": "CT-09.ENCARGO",
+   "espera": "RECHAZADO",
+   "que": "Encargo sin el campo mínimo `fecha_corte`",
+   "quita": [
+    "fecha_corte"
+   ]
+  },
+  "CT-09/encargo_sin_modo": {
+   "base": "CT-09.ENCARGO",
+   "espera": "RECHAZADO",
+   "que": "Encargo sin el campo mínimo `modo`",
+   "quita": [
+    "modo"
+   ]
+  },
+  "CT-09/encargo_sin_operacion": {
+   "base": "CT-09.ENCARGO",
+   "espera": "RECHAZADO",
+   "que": "Encargo sin el campo mínimo `operacion`",
+   "quita": [
+    "operacion"
+   ]
+  },
+  "CT-09/encargo_sin_parametros": {
+   "base": "CT-09.ENCARGO",
+   "espera": "RECHAZADO",
+   "que": "Encargo sin el campo mínimo `parametros`",
+   "quita": [
+    "parametros"
+   ]
+  },
+  "CT-09/encargo_sin_perfil": {
+   "base": "CT-09.ENCARGO",
+   "espera": "RECHAZADO",
+   "que": "Encargo sin el campo mínimo `perfil`",
+   "quita": [
+    "perfil"
+   ]
+  },
+  "CT-09/encargo_sin_plan": {
+   "base": "CT-09.ENCARGO",
+   "espera": "RECHAZADO",
+   "que": "Encargo sin el campo mínimo `plan`",
+   "quita": [
+    "plan"
+   ]
+  },
+  "CT-09/encargo_sin_semilla": {
+   "base": "CT-09.ENCARGO",
+   "espera": "RECHAZADO",
+   "que": "Encargo sin el campo mínimo `semilla`",
+   "quita": [
+    "semilla"
+   ]
+  },
+  "CT-09/redactor_al_motor": {
+   "base": "CT-09.ENCARGO",
+   "emisor": "AG-17",
+   "espera": "RECHAZADO",
+   "que": "El Redactor pide un cálculo al Motor",
+   "receptor": "AG-13"
+  },
+  "CT-09/retorno_clase_cifra_fuera_de_la_lista_del_anexo_b": {
+   "base": "CT-09.RETORNO",
+   "espera": "ADMITIDO",
+   "pon": {
+    "clase_cifra": "FUERA_DE_LISTA"
+   },
+   "que": "`clase_cifra` con un valor que no está en la lista del Anexo B: la mensajería no la aplica"
+  },
+  "CT-09/sin_run_id_ni_query_id": {
+   "base": "CT-09.ENCARGO",
+   "espera": "RECHAZADO",
+   "que": "Sin `run_id` ni `query_id`",
+   "query_id": null,
+   "run_id": null
+  },
+  "CT-10/canal_en_sentido_contrario": {
+   "base": "CT-10.ENCARGO",
+   "emisor": "AG-13",
+   "espera": "ADMITIDO",
+   "que": "De AG-13 a AG-18: el canal es de ida y vuelta",
+   "receptor": "AG-18"
+  },
+  "CT-10/encargo_sin_artefacto_id": {
+   "base": "CT-10.ENCARGO",
+   "espera": "RECHAZADO",
+   "que": "Encargo sin el campo mínimo `artefacto_id`",
+   "quita": [
+    "artefacto_id"
+   ]
+  },
+  "CT-10/encargo_sin_motivo": {
+   "base": "CT-10.ENCARGO",
+   "espera": "RECHAZADO",
+   "que": "Encargo sin el campo mínimo `motivo`",
+   "quita": [
+    "motivo"
+   ]
+  },
+  "CT-10/sin_run_id_ni_query_id": {
+   "base": "CT-10.ENCARGO",
+   "espera": "RECHAZADO",
+   "que": "Sin `run_id` ni `query_id`",
+   "query_id": null,
+   "run_id": null
+  },
+  "CT-11/canal_en_sentido_contrario": {
+   "contrato": "CT-11",
+   "cuerpo": {
+    "piezas": [
+     {
+      "afirmacion": "El diferencial se amplió.",
+      "direccion": "favorable",
+      "extracto": "Extracto mínimo.",
+      "fechas": {
+       "conocible_desde": "2026-06-01",
+       "fenomeno": "2026-05-29",
+       "publicacion": "2026-06-01",
+       "recuperacion": "2026-06-05"
+      },
+      "fuente": "REF-2026-0001",
+      "unidad_divisa": "puntos básicos"
+     }
+    ]
+   },
+   "emisor": "AG-12",
+   "espera": "ADMITIDO",
+   "que": "De AG-12 a AG-03: el canal es de ida y vuelta",
+   "receptor": "AG-03",
+   "tipo_mensaje": "ENCARGO"
+  },
+  "CT-11/ejemplo_del_anexo_b_suelto": {
+   "base": "CT-11.ENCARGO",
+   "espera": "RECHAZADO",
+   "que": "El ejemplo del Anexo B tal cual, sin lote"
+  },
+  "CT-11/encargo_sin_piezas": {
+   "contrato": "CT-11",
+   "cuerpo": {},
+   "espera": "RECHAZADO",
+   "que": "Encargo sin el campo mínimo `piezas`",
+   "tipo_mensaje": "ENCARGO"
+  },
+  "CT-11/lote_de_uno": {
+   "contrato": "CT-11",
+   "cuerpo": {
+    "piezas": [
+     {
+      "afirmacion": "El diferencial se amplió.",
+      "direccion": "favorable",
+      "extracto": "Extracto mínimo.",
+      "fechas": {
+       "conocible_desde": "2026-06-01",
+       "fenomeno": "2026-05-29",
+       "publicacion": "2026-06-01",
+       "recuperacion": "2026-06-05"
+      },
+      "fuente": "REF-2026-0001",
+      "unidad_divisa": "puntos básicos"
+     }
+    ]
+   },
+   "espera": "ADMITIDO",
+   "que": "El lote `piezas` con el ejemplo del Anexo B dentro",
+   "tipo_mensaje": "ENCARGO"
+  },
+  "CT-11/lote_que_no_es_lista": {
+   "contrato": "CT-11",
+   "cuerpo": {
+    "piezas": "uno"
+   },
+   "espera": "ADMITIDO",
+   "que": "`piezas` con un texto en vez de una lista: la mensajería no mira el tipo",
+   "tipo_mensaje": "ENCARGO"
+  },
+  "CT-11/sin_run_id_ni_query_id": {
+   "contrato": "CT-11",
+   "cuerpo": {
+    "piezas": [
+     {
+      "afirmacion": "El diferencial se amplió.",
+      "direccion": "favorable",
+      "extracto": "Extracto mínimo.",
+      "fechas": {
+       "conocible_desde": "2026-06-01",
+       "fenomeno": "2026-05-29",
+       "publicacion": "2026-06-01",
+       "recuperacion": "2026-06-05"
+      },
+      "fuente": "REF-2026-0001",
+      "unidad_divisa": "puntos básicos"
+     }
+    ]
+   },
+   "espera": "RECHAZADO",
+   "que": "Sin `run_id` ni `query_id`",
+   "query_id": null,
+   "run_id": null,
+   "tipo_mensaje": "ENCARGO"
+  },
+  "CT-12/canal_en_sentido_contrario": {
+   "contrato": "CT-12",
+   "cuerpo": {
+    "encargos": [
+     {
+      "catalizadores_conocidos": [],
+      "datos": {},
+      "horizontes": [
+       "H3"
+      ],
+      "opp_id": "OPP-2026-0007",
+      "tesis": "Tesis de la opción."
+     }
+    ]
+   },
+   "emisor": "AG-10",
+   "espera": "ADMITIDO",
+   "que": "De AG-10 a AG-02: el canal es de ida y vuelta",
+   "receptor": "AG-02",
+   "tipo_mensaje": "ENCARGO"
+  },
+  "CT-12/ejemplo_del_anexo_b_suelto": {
+   "base": "CT-12.ENCARGO",
+   "espera": "RECHAZADO",
+   "que": "El ejemplo del Anexo B tal cual, sin lote"
+  },
+  "CT-12/encargo_sin_encargos": {
+   "contrato": "CT-12",
+   "cuerpo": {},
+   "espera": "RECHAZADO",
+   "que": "Encargo sin el campo mínimo `encargos`",
+   "tipo_mensaje": "ENCARGO"
+  },
+  "CT-12/lote_de_uno": {
+   "contrato": "CT-12",
+   "cuerpo": {
+    "encargos": [
+     {
+      "catalizadores_conocidos": [],
+      "datos": {},
+      "horizontes": [
+       "H3"
+      ],
+      "opp_id": "OPP-2026-0007",
+      "tesis": "Tesis de la opción."
+     }
+    ]
+   },
+   "espera": "ADMITIDO",
+   "que": "El lote `encargos` con el ejemplo del Anexo B dentro",
+   "tipo_mensaje": "ENCARGO"
+  },
+  "CT-12/lote_que_no_es_lista": {
+   "contrato": "CT-12",
+   "cuerpo": {
+    "encargos": "uno"
+   },
+   "espera": "ADMITIDO",
+   "que": "`encargos` con un texto en vez de una lista: la mensajería no mira el tipo",
+   "tipo_mensaje": "ENCARGO"
+  },
+  "CT-12/sin_run_id_ni_query_id": {
+   "contrato": "CT-12",
+   "cuerpo": {
+    "encargos": [
+     {
+      "catalizadores_conocidos": [],
+      "datos": {},
+      "horizontes": [
+       "H3"
+      ],
+      "opp_id": "OPP-2026-0007",
+      "tesis": "Tesis de la opción."
+     }
+    ]
+   },
+   "espera": "RECHAZADO",
+   "que": "Sin `run_id` ni `query_id`",
+   "query_id": null,
+   "run_id": null,
+   "tipo_mensaje": "ENCARGO"
+  },
+  "CT-13/canal_en_sentido_contrario": {
+   "contrato": "CT-13",
+   "cuerpo": {
+    "peticiones": [
+     {
+      "calculos": [
+       "CALC-2026-0001"
+      ],
+      "evidencias_clave": [
+       "CLM-2026-0001"
+      ],
+      "opp_id": "OPP-2026-0007",
+      "prospectiva": {},
+      "tesis": "Tesis de la opción."
+     }
+    ]
+   },
+   "emisor": "AG-11",
+   "espera": "ADMITIDO",
+   "que": "De AG-11 a AG-02: el canal es de ida y vuelta",
+   "receptor": "AG-02",
+   "tipo_mensaje": "ENCARGO"
+  },
+  "CT-13/contrarias_a_un_analista": {
+   "contrato": "CT-13",
+   "cuerpo": {
+    "peticiones": [
+     {
+      "calculos": [
+       "CALC-2026-0001"
+      ],
+      "evidencias_clave": [
+       "CLM-2026-0001"
+      ],
+      "opp_id": "OPP-2026-0007",
+      "prospectiva": {},
+      "tesis": "Tesis de la opción."
+     }
+    ]
+   },
+   "emisor": "AG-11",
+   "espera": "RECHAZADO",
+   "que": "Contrarias escribe a un analista",
+   "receptor": "AG-03",
+   "tipo_mensaje": "ENCARGO"
+  },
+  "CT-13/ejemplo_del_anexo_b_suelto": {
+   "base": "CT-13.ENCARGO",
+   "espera": "RECHAZADO",
+   "que": "El ejemplo del Anexo B tal cual, sin lote"
+  },
+  "CT-13/encargo_sin_peticiones": {
+   "contrato": "CT-13",
+   "cuerpo": {},
+   "espera": "RECHAZADO",
+   "que": "Encargo sin el campo mínimo `peticiones`",
+   "tipo_mensaje": "ENCARGO"
+  },
+  "CT-13/lote_de_uno": {
+   "contrato": "CT-13",
+   "cuerpo": {
+    "peticiones": [
+     {
+      "calculos": [
+       "CALC-2026-0001"
+      ],
+      "evidencias_clave": [
+       "CLM-2026-0001"
+      ],
+      "opp_id": "OPP-2026-0007",
+      "prospectiva": {},
+      "tesis": "Tesis de la opción."
+     }
+    ]
+   },
+   "espera": "ADMITIDO",
+   "que": "El lote `peticiones` con el ejemplo del Anexo B dentro",
+   "tipo_mensaje": "ENCARGO"
+  },
+  "CT-13/lote_que_no_es_lista": {
+   "contrato": "CT-13",
+   "cuerpo": {
+    "peticiones": "uno"
+   },
+   "espera": "ADMITIDO",
+   "que": "`peticiones` con un texto en vez de una lista: la mensajería no mira el tipo",
+   "tipo_mensaje": "ENCARGO"
+  },
+  "CT-13/sin_run_id_ni_query_id": {
+   "contrato": "CT-13",
+   "cuerpo": {
+    "peticiones": [
+     {
+      "calculos": [
+       "CALC-2026-0001"
+      ],
+      "evidencias_clave": [
+       "CLM-2026-0001"
+      ],
+      "opp_id": "OPP-2026-0007",
+      "prospectiva": {},
+      "tesis": "Tesis de la opción."
+     }
+    ]
+   },
+   "espera": "RECHAZADO",
+   "que": "Sin `run_id` ni `query_id`",
+   "query_id": null,
+   "run_id": null,
+   "tipo_mensaje": "ENCARGO"
+  },
+  "CT-14/canal_en_sentido_contrario": {
+   "base": "CT-14.ENCARGO",
+   "emisor": "AG-18",
+   "espera": "ADMITIDO",
+   "que": "De AG-18 a AG-02: el canal es de ida y vuelta",
+   "receptor": "AG-02"
+  },
+  "CT-14/encargo_sin_paquete_sintesis": {
+   "base": "CT-14.ENCARGO",
+   "espera": "RECHAZADO",
+   "que": "Encargo sin el campo mínimo `paquete_sintesis`",
+   "quita": [
+    "paquete_sintesis"
+   ]
+  },
+  "CT-14/retorno_dictamen_fuera_de_la_lista_del_anexo_b": {
+   "base": "CT-14.RETORNO",
+   "espera": "ADMITIDO",
+   "pon": {
+    "dictamen": "FUERA_DE_LISTA"
+   },
+   "que": "`dictamen` con un valor que no está en la lista del Anexo B: la mensajería no la aplica"
+  },
+  "CT-14/sin_run_id_ni_query_id": {
+   "base": "CT-14.ENCARGO",
+   "espera": "RECHAZADO",
+   "que": "Sin `run_id` ni `query_id`",
+   "query_id": null,
+   "quita": [
+    "run_id"
+   ],
+   "run_id": null
+  },
+  "CT-15/canal_en_sentido_contrario": {
+   "base": "CT-15.ENCARGO",
+   "emisor": "AG-17",
+   "espera": "ADMITIDO",
+   "que": "De AG-17 a AG-02: el canal es de ida y vuelta",
+   "receptor": "AG-02"
+  },
+  "CT-15/encargo_sin_paquete_sintesis": {
+   "base": "CT-15.ENCARGO",
+   "espera": "RECHAZADO",
+   "que": "Encargo sin el campo mínimo `paquete_sintesis`",
+   "quita": [
+    "paquete_sintesis"
+   ]
+  },
+  "CT-15/sin_run_id_ni_query_id": {
+   "base": "CT-15.ENCARGO",
+   "espera": "RECHAZADO",
+   "que": "Sin `run_id` ni `query_id`",
+   "query_id": null,
+   "run_id": null
+  },
+  "CT-16/canal_en_sentido_contrario": {
+   "contrato": "CT-16",
+   "cuerpo": {
+    "paquete_auditoria": {
+     "entregables": {},
+     "run_id": "RUN-2026-0001"
+    }
+   },
+   "emisor": "AG-18",
+   "espera": "RECHAZADO",
+   "que": "De AG-18 a AG-01: el canal es de un solo sentido",
+   "receptor": "AG-01",
+   "tipo_mensaje": "ENCARGO"
+  },
+  "CT-16/con_run_id": {
+   "contrato": "CT-16",
+   "cuerpo": {
+    "paquete_auditoria": {
+     "entregables": {},
+     "run_id": "RUN-2026-0001"
+    }
+   },
+   "espera": "ADMITIDO",
+   "que": "CT-16 con su `run_id`",
+   "tipo_mensaje": "ENCARGO"
+  },
+  "CT-16/sin_run_id_ni_query_id": {
+   "contrato": "CT-16",
+   "cuerpo": {
+    "paquete_auditoria": {
+     "entregables": {},
+     "run_id": "RUN-2026-0001"
+    }
+   },
+   "espera": "RECHAZADO",
+   "que": "Sin `run_id` ni `query_id`",
+   "query_id": null,
+   "run_id": null,
+   "tipo_mensaje": "ENCARGO"
+  },
+  "CT-17/auditor_al_analizador": {
+   "contrato": "CT-17",
+   "cuerpo": {
+    "opciones": []
+   },
+   "emisor": "AG-19",
+   "espera": "RECHAZADO",
+   "que": "El Auditor escribe al Analizador",
+   "receptor": "AG-02",
+   "tipo_mensaje": "ENCARGO"
+  },
+  "CT-17/canal_en_sentido_contrario": {
+   "contrato": "CT-17",
+   "cuerpo": {
+    "opciones": []
+   },
+   "emisor": "AG-19",
+   "espera": "ADMITIDO",
+   "que": "De AG-19 a AG-18: el canal es de ida y vuelta",
+   "receptor": "AG-18",
+   "tipo_mensaje": "ENCARGO"
+  },
+  "CT-17/con_run_id": {
+   "contrato": "CT-17",
+   "cuerpo": {
+    "opciones": []
+   },
+   "espera": "ADMITIDO",
+   "que": "CT-17 con su `run_id`",
+   "tipo_mensaje": "ENCARGO"
+  },
+  "CT-17/sin_run_id_ni_query_id": {
+   "contrato": "CT-17",
+   "cuerpo": {
+    "opciones": []
+   },
+   "espera": "RECHAZADO",
+   "que": "Sin `run_id` ni `query_id`",
+   "query_id": null,
+   "run_id": null,
+   "tipo_mensaje": "ENCARGO"
+  },
+  "CT-18/canal_en_sentido_contrario": {
+   "contrato": "CT-18",
+   "cuerpo": {
+    "guia": "Guía de mejora de tipo 1."
+   },
+   "emisor": "AG-01",
+   "espera": "RECHAZADO",
+   "que": "De AG-01 a AG-18: el canal es de un solo sentido",
+   "receptor": "AG-18",
+   "tipo_mensaje": "ENCARGO"
+  },
+  "CT-18/orquestador_a_si_mismo": {
+   "contrato": "CT-18",
+   "cuerpo": {
+    "guia": "Guía de mejora de tipo 1."
+   },
+   "emisor": "AG-18",
+   "espera": "ADMITIDO",
+   "que": "El Orquestador se envía una guía a sí mismo (el canal va a cualquier agente)",
+   "receptor": "AG-18",
+   "tipo_mensaje": "ENCARGO"
+  },
+  "CT-18/orquestador_al_broker": {
+   "contrato": "CT-18",
+   "cuerpo": {
+    "guia": "Guía de mejora de tipo 1."
+   },
+   "emisor": "AG-18",
+   "espera": "RECHAZADO",
+   "que": "El Orquestador envía una guía al Broker, que no es un agente",
+   "receptor": "BROKER",
+   "tipo_mensaje": "ENCARGO"
+  },
+  "CT-18/sin_run_id_ni_query_id": {
+   "contrato": "CT-18",
+   "cuerpo": {
+    "guia": "Guía de mejora de tipo 1."
+   },
+   "espera": "ADMITIDO",
+   "que": "Sin `run_id` ni `query_id`: este contrato está exento",
+   "query_id": null,
+   "run_id": null,
+   "tipo_mensaje": "ENCARGO"
+  },
+  "CT-19/canal_en_sentido_contrario": {
+   "contrato": "CT-19",
+   "cuerpo": {
+    "informe": "Sin novedades."
+   },
+   "emisor": "AG-01",
+   "espera": "RECHAZADO",
+   "que": "De AG-01 a AG-20: el canal es de un solo sentido",
+   "receptor": "AG-20",
+   "tipo_mensaje": "ENCARGO"
+  },
+  "CT-19/retorno_con_run_id": {
+   "contrato": "CT-19",
+   "cuerpo": {
+    "informe": "Sin novedades."
+   },
+   "emisor": "AG-20",
+   "espera": "ADMITIDO",
+   "que": "CT-19 como lo emite el ejecutor: retorno del Evaluador al Analizador",
+   "receptor": "AG-02",
+   "tipo_mensaje": "RETORNO"
+  },
+  "CT-19/sin_run_id_ni_query_id": {
+   "contrato": "CT-19",
+   "cuerpo": {
+    "informe": "Sin novedades."
+   },
+   "espera": "RECHAZADO",
+   "que": "Sin `run_id` ni `query_id`",
+   "query_id": null,
+   "run_id": null,
+   "tipo_mensaje": "ENCARGO"
+  },
+  "CT-20/canal_en_sentido_contrario": {
+   "contrato": "CT-20",
+   "cuerpo": {
+    "metodo": "RISK-VAR-001"
+   },
+   "emisor": "AG-15",
+   "espera": "ADMITIDO",
+   "que": "De AG-15 a AG-13: el canal es de ida y vuelta",
+   "receptor": "AG-13",
+   "tipo_mensaje": "ENCARGO"
+  },
+  "CT-20/con_run_id": {
+   "contrato": "CT-20",
+   "cuerpo": {
+    "metodo": "RISK-VAR-001"
+   },
+   "espera": "ADMITIDO",
+   "que": "CT-20 con su `run_id`",
+   "tipo_mensaje": "ENCARGO"
+  },
+  "CT-20/sin_run_id_ni_query_id": {
+   "contrato": "CT-20",
+   "cuerpo": {
+    "metodo": "RISK-VAR-001"
+   },
+   "espera": "RECHAZADO",
+   "que": "Sin `run_id` ni `query_id`",
+   "query_id": null,
+   "run_id": null,
+   "tipo_mensaje": "ENCARGO"
+  },
+  "CT-21/canal_en_sentido_contrario": {
+   "contrato": "CT-21",
+   "cuerpo": {
+    "altas": [],
+    "bajas": []
+   },
+   "emisor": "AG-18",
+   "espera": "RECHAZADO",
+   "que": "De AG-18 a AG-14: el canal es de un solo sentido",
+   "receptor": "AG-14",
+   "tipo_mensaje": "ENCARGO"
+  },
+  "CT-21/sin_run_id_ni_query_id": {
+   "contrato": "CT-21",
+   "cuerpo": {
+    "altas": [],
+    "bajas": []
+   },
+   "espera": "ADMITIDO",
+   "que": "Sin `run_id` ni `query_id`: este contrato está exento",
+   "query_id": null,
+   "run_id": null,
+   "tipo_mensaje": "ENCARGO"
+  },
+  "CT-22/canal_en_sentido_contrario": {
+   "contrato": "CT-22",
+   "cuerpo": {
+    "qry_ids": [],
+    "tema": "estado de las opciones",
+    "tipo": "PREGUNTA_REPETIDA"
+   },
+   "emisor": "AG-20",
+   "espera": "RECHAZADO",
+   "que": "De AG-20 a AG-01: el canal es de un solo sentido",
+   "receptor": "AG-01",
+   "tipo_mensaje": "ENCARGO"
+  },
+  "CT-22/con_query_id": {
+   "contrato": "CT-22",
+   "cuerpo": {
+    "qry_ids": [],
+    "tema": "estado de las opciones",
+    "tipo": "PREGUNTA_REPETIDA"
+   },
+   "espera": "ADMITIDO",
+   "que": "CT-22 como lo emite el ejecutor: con `query_id`",
+   "query_id": "QRY-2026-0003",
+   "run_id": null,
+   "tipo_mensaje": "ENCARGO"
+  },
+  "CT-22/sin_run_id_ni_query_id": {
+   "contrato": "CT-22",
+   "cuerpo": {
+    "qry_ids": [],
+    "tema": "estado de las opciones",
+    "tipo": "PREGUNTA_REPETIDA"
+   },
+   "espera": "RECHAZADO",
+   "que": "Sin `run_id` ni `query_id`",
+   "query_id": null,
+   "run_id": null,
+   "tipo_mensaje": "ENCARGO"
+  },
+  "CT-23/analizador_al_broker": {
+   "base": "CT-23.ENCARGO",
+   "emisor": "AG-02",
+   "espera": "RECHAZADO",
+   "que": "El Analizador escribe al Broker sin pasar por el Coordinador",
+   "receptor": "BROKER"
+  },
+  "CT-23/canal_en_sentido_contrario": {
+   "base": "CT-23.ENCARGO",
+   "emisor": "BROKER",
+   "espera": "ADMITIDO",
+   "que": "De BROKER a AG-01: el canal es de ida y vuelta",
+   "receptor": "AG-01"
+  },
+  "CT-23/encargo_con_estado_en_el_cuerpo": {
+   "base": "CT-23.ENCARGO",
+   "espera": "RECHAZADO",
+   "pon": {
+    "estado": "RESPONDIDA"
+   },
+   "que": "Encargo con `estado` en el cuerpo: la normalización es solo del retorno"
+  },
+  "CT-23/encargo_modo_fuera_de_la_lista_del_anexo_b": {
+   "base": "CT-23.ENCARGO",
+   "espera": "ADMITIDO",
+   "pon": {
+    "modo": "FUERA_DE_LISTA"
+   },
+   "que": "`modo` con un valor que no está en la lista del Anexo B: la mensajería no la aplica"
+  },
+  "CT-23/encargo_sentido_fuera_de_la_lista_del_anexo_b": {
+   "base": "CT-23.ENCARGO",
+   "espera": "ADMITIDO",
+   "pon": {
+    "sentido": "FUERA_DE_LISTA"
+   },
+   "que": "`sentido` con un valor que no está en la lista del Anexo B: la mensajería no la aplica"
+  },
+  "CT-23/encargo_sin_cns_id": {
+   "base": "CT-23.ENCARGO",
+   "espera": "RECHAZADO",
+   "que": "Encargo sin el campo mínimo `cns_id`",
+   "quita": [
+    "cns_id"
+   ]
+  },
+  "CT-23/encargo_sin_modo": {
+   "base": "CT-23.ENCARGO",
+   "espera": "RECHAZADO",
+   "que": "Encargo sin el campo mínimo `modo`",
+   "quita": [
+    "modo"
+   ]
+  },
+  "CT-23/encargo_sin_sentido": {
+   "base": "CT-23.ENCARGO",
+   "espera": "RECHAZADO",
+   "que": "Encargo sin el campo mínimo `sentido`",
+   "quita": [
+    "sentido"
+   ]
+  },
+  "CT-23/encargo_sin_tipo": {
+   "base": "CT-23.ENCARGO",
+   "espera": "RECHAZADO",
+   "que": "Encargo sin el campo mínimo `tipo`",
+   "quita": [
+    "tipo"
+   ]
+  },
+  "CT-23/encargo_tipo_fuera_de_la_lista_del_anexo_b": {
+   "base": "CT-23.ENCARGO",
+   "espera": "ADMITIDO",
+   "pon": {
+    "tipo": "FUERA_DE_LISTA"
+   },
+   "que": "`tipo` con un valor que no está en la lista del Anexo B: la mensajería no la aplica"
+  },
+  "CT-23/entrante_con_contenido": {
+   "contrato": "CT-23",
+   "cuerpo": {
+    "cns_id": "CNS-2026-0002",
+    "contenido": "El usuario prefiere excluir tabaco.",
+    "modo": "NO_BLOQUEANTE",
+    "sentido": "ENTRANTE",
+    "tipo": "OTRA"
+   },
+   "emisor": "BROKER",
+   "espera": "ADMITIDO",
+   "que": "Aportación espontánea del Broker (ENTRANTE)",
+   "query_id": "CNS-2026-0002",
+   "receptor": "AG-01",
+   "run_id": null,
+   "tipo_mensaje": "ENCARGO"
+  },
+  "CT-23/entrante_sin_contenido": {
+   "base": "CT-23.ENCARGO",
+   "emisor": "BROKER",
+   "espera": "ADMITIDO",
+   "pon": {
+    "sentido": "ENTRANTE"
+   },
+   "que": "Aportación ENTRANTE sin `contenido`: la mensajería la admite",
+   "receptor": "AG-01"
+  },
+  "CT-23/retorno_con_estado_comun_en_el_cuerpo_y_sin_el_propio": {
+   "base": "CT-23.RETORNO",
+   "espera": "RECHAZADO",
+   "pon": {
+    "estado": "COMPLETO"
+   },
+   "que": "Retorno que trae COMPLETO en `estado` y nada en su campo propio: COMPLETO no es un estado del objeto"
+  },
+  "CT-23/retorno_con_estado_comun_parcial_y_campo_propio": {
+   "base": "CT-23.RETORNO",
+   "espera": "ADMITIDO",
+   "estado": "PARCIAL",
+   "pon": {
+    "estado": "PARCIAL",
+    "estado_consulta": "RESPONDIDA"
+   },
+   "que": "Retorno con PARCIAL por su sitio y en `estado`, y el del objeto en `estado_consulta`"
+  },
+  "CT-23/retorno_con_estado_comun_y_campo_propio": {
+   "base": "CT-23.RETORNO",
+   "espera": "ADMITIDO",
+   "pon": {
+    "estado": "COMPLETO",
+    "estado_consulta": "PARCIAL"
+   },
+   "que": "Retorno con el estado común en `estado` y el del objeto en `estado_consulta`"
+  },
+  "CT-23/retorno_con_los_dos_estados_contradictorios": {
+   "base": "CT-23.RETORNO",
+   "espera": "RECHAZADO",
+   "pon": {
+    "estado": "RESPONDIDA",
+    "estado_consulta": "PARCIAL"
+   },
+   "que": "Retorno con `estado` y `estado_consulta` distintos"
+  },
+  "CT-23/retorno_con_los_dos_estados_iguales": {
+   "base": "CT-23.RETORNO",
+   "espera": "ADMITIDO",
+   "pon": {
+    "estado": "RESPONDIDA",
+    "estado_consulta": "RESPONDIDA"
+   },
+   "que": "Retorno con `estado` y `estado_consulta` iguales"
+  },
+  "CT-23/retorno_estado_propio_de_otro_contrato": {
+   "base": "CT-23.RETORNO",
+   "espera": "RECHAZADO",
+   "pon": {
+    "estado": "ACTIVO"
+   },
+   "que": "Retorno con el estado del objeto de otro contrato"
+  },
+  "CT-23/retorno_estado_propio_en_minusculas": {
+   "base": "CT-23.RETORNO",
+   "espera": "RECHAZADO",
+   "pon": {
+    "estado": "respondida"
+   },
+   "que": "Retorno con el estado del objeto en minúsculas"
+  },
+  "CT-23/retorno_estado_propio_fuera_de_lista": {
+   "base": "CT-23.RETORNO",
+   "espera": "RECHAZADO",
+   "pon": {
+    "estado": "ANULADA"
+   },
+   "que": "Retorno con un estado del objeto que no existe"
+  },
+  "CT-23/retorno_estado_propio_parcial": {
+   "base": "CT-23.RETORNO",
+   "espera": "ADMITIDO",
+   "pon": {
+    "estado": "PARCIAL"
+   },
+   "que": "Retorno con el estado del objeto PARCIAL en `estado`: pasa a `estado_consulta`"
+  },
+  "CT-23/retorno_estado_propio_recibida": {
+   "base": "CT-23.RETORNO",
+   "espera": "ADMITIDO",
+   "pon": {
+    "estado": "RECIBIDA"
+   },
+   "que": "Retorno con el estado del objeto RECIBIDA en `estado`: pasa a `estado_consulta`"
+  },
+  "CT-23/retorno_estado_propio_respondida": {
+   "base": "CT-23.RETORNO",
+   "espera": "ADMITIDO",
+   "pon": {
+    "estado": "RESPONDIDA"
+   },
+   "que": "Retorno con el estado del objeto RESPONDIDA en `estado`: pasa a `estado_consulta`"
+  },
+  "CT-23/retorno_estado_propio_vencida": {
+   "base": "CT-23.RETORNO",
+   "espera": "ADMITIDO",
+   "pon": {
+    "estado": "VENCIDA"
+   },
+   "que": "Retorno con el estado del objeto VENCIDA en `estado`: pasa a `estado_consulta`"
+  },
+  "CT-23/retorno_rechazado_con_estado_propio": {
+   "base": "CT-23.RETORNO",
+   "espera": "ADMITIDO",
+   "estado": "RECHAZADO",
+   "pon": {
+    "estado_consulta": "RESPONDIDA"
+   },
+   "que": "Retorno con el estado común RECHAZADO y el del objeto en su campo",
+   "quita": [
+    "estado"
+   ]
+  },
+  "CT-23/retorno_sin_cns_id": {
+   "base": "CT-23.RETORNO",
+   "espera": "RECHAZADO",
+   "que": "Retorno sin el campo de retorno `cns_id`",
+   "quita": [
+    "cns_id"
+   ]
+  },
+  "CT-23/retorno_sin_estado_propio": {
+   "base": "CT-23.RETORNO",
+   "espera": "RECHAZADO",
+   "que": "Retorno sin estado del objeto",
+   "quita": [
+    "estado"
+   ]
+  },
+  "CT-23/retorno_sin_identificador_y_sin_estado": {
+   "base": "CT-23.RETORNO",
+   "espera": "RECHAZADO",
+   "que": "Retorno sin identificador ni estado: se rechaza por el estado del objeto, que se mira antes",
+   "quita": [
+    "cns_id",
+    "estado"
+   ]
+  },
+  "CT-23/retorno_solo_con_el_campo_propio": {
+   "base": "CT-23.RETORNO",
+   "espera": "ADMITIDO",
+   "pon": {
+    "estado_consulta": "PARCIAL"
+   },
+   "que": "Retorno que ya trae `estado_consulta` y no trae `estado`",
+   "quita": [
+    "estado"
+   ]
+  },
+  "CT-23/saliente_con_contenido": {
+   "base": "CT-23.ENCARGO",
+   "espera": "ADMITIDO",
+   "pon": {
+    "contenido": "Texto."
+   },
+   "que": "Consulta SALIENTE con `contenido`: el Anexo B lo reserva a ENTRANTE y la mensajería lo admite"
+  },
+  "CT-23/sin_run_id_ni_query_id": {
+   "base": "CT-23.ENCARGO",
+   "espera": "ADMITIDO",
+   "que": "Sin `run_id` ni `query_id`: este contrato está exento",
+   "query_id": null,
+   "quita": [
+    "run_id"
+   ],
+   "run_id": null
+  },
+  "CT-23/validar_retorno_sin_campo_propio": {
+   "base": "CT-23.RETORNO",
+   "espera": "RECHAZADO",
+   "mensaje_quita": [
+    "estado_consulta"
+   ],
+   "que": "Un retorno ya creado al que se le quita `estado_consulta`",
+   "via": "validar"
+  },
+  "CT-24/canal_en_sentido_contrario": {
+   "base": "CT-24.ENCARGO",
+   "emisor": "AG-01",
+   "espera": "ADMITIDO",
+   "que": "De AG-01 a BROKER: el canal es de ida y vuelta",
+   "receptor": "BROKER"
+  },
+  "CT-24/encargo_accion_fuera_de_la_lista_del_anexo_b": {
+   "base": "CT-24.ENCARGO",
+   "espera": "ADMITIDO",
+   "pon": {
+    "accion": "FUERA_DE_LISTA"
+   },
+   "que": "`accion` con un valor que no está en la lista del Anexo B: la mensajería no la aplica"
+  },
+  "CT-24/encargo_con_estado_en_el_cuerpo": {
+   "base": "CT-24.ENCARGO",
+   "espera": "RECHAZADO",
+   "pon": {
+    "estado": "ACTIVO"
+   },
+   "que": "Encargo con `estado` en el cuerpo: la normalización es solo del retorno"
+  },
+  "CT-24/encargo_frecuencia_fuera_de_la_lista_del_anexo_b": {
+   "base": "CT-24.ENCARGO",
+   "espera": "ADMITIDO",
+   "pon": {
+    "frecuencia": "FUERA_DE_LISTA"
+   },
+   "que": "`frecuencia` con un valor que no está en la lista del Anexo B: la mensajería no la aplica"
+  },
+  "CT-24/encargo_sin_accion": {
+   "base": "CT-24.ENCARGO",
+   "espera": "RECHAZADO",
+   "que": "Encargo sin el campo mínimo `accion`",
+   "quita": [
+    "accion"
+   ]
+  },
+  "CT-24/retorno_con_estado_comun_en_el_cuerpo_y_sin_el_propio": {
+   "base": "CT-24.RETORNO",
+   "espera": "RECHAZADO",
+   "pon": {
+    "estado": "COMPLETO"
+   },
+   "que": "Retorno que trae COMPLETO en `estado` y nada en su campo propio: COMPLETO no es un estado del objeto"
+  },
+  "CT-24/retorno_con_estado_comun_parcial_y_campo_propio": {
+   "base": "CT-24.RETORNO",
+   "espera": "ADMITIDO",
+   "estado": "PARCIAL",
+   "pon": {
+    "estado": "PARCIAL",
+    "estado_seguimiento": "ACTIVO"
+   },
+   "que": "Retorno con PARCIAL por su sitio y en `estado`, y el del objeto en `estado_seguimiento`"
+  },
+  "CT-24/retorno_con_estado_comun_y_campo_propio": {
+   "base": "CT-24.RETORNO",
+   "espera": "ADMITIDO",
+   "pon": {
+    "estado": "COMPLETO",
+    "estado_seguimiento": "PAUSADO"
+   },
+   "que": "Retorno con el estado común en `estado` y el del objeto en `estado_seguimiento`"
+  },
+  "CT-24/retorno_con_los_dos_estados_contradictorios": {
+   "base": "CT-24.RETORNO",
+   "espera": "RECHAZADO",
+   "pon": {
+    "estado": "ACTIVO",
+    "estado_seguimiento": "PAUSADO"
+   },
+   "que": "Retorno con `estado` y `estado_seguimiento` distintos"
+  },
+  "CT-24/retorno_con_los_dos_estados_iguales": {
+   "base": "CT-24.RETORNO",
+   "espera": "ADMITIDO",
+   "pon": {
+    "estado": "ACTIVO",
+    "estado_seguimiento": "ACTIVO"
+   },
+   "que": "Retorno con `estado` y `estado_seguimiento` iguales"
+  },
+  "CT-24/retorno_estado_propio_activo": {
+   "base": "CT-24.RETORNO",
+   "espera": "ADMITIDO",
+   "pon": {
+    "estado": "ACTIVO"
+   },
+   "que": "Retorno con el estado del objeto ACTIVO en `estado`: pasa a `estado_seguimiento`"
+  },
+  "CT-24/retorno_estado_propio_cancelado": {
+   "base": "CT-24.RETORNO",
+   "espera": "ADMITIDO",
+   "pon": {
+    "estado": "CANCELADO"
+   },
+   "que": "Retorno con el estado del objeto CANCELADO en `estado`: pasa a `estado_seguimiento`"
+  },
+  "CT-24/retorno_estado_propio_de_otro_contrato": {
+   "base": "CT-24.RETORNO",
+   "espera": "RECHAZADO",
+   "pon": {
+    "estado": "PROVISTA"
+   },
+   "que": "Retorno con el estado del objeto de otro contrato"
+  },
+  "CT-24/retorno_estado_propio_en_minusculas": {
+   "base": "CT-24.RETORNO",
+   "espera": "RECHAZADO",
+   "pon": {
+    "estado": "activo"
+   },
+   "que": "Retorno con el estado del objeto en minúsculas"
+  },
+  "CT-24/retorno_estado_propio_finalizado": {
+   "base": "CT-24.RETORNO",
+   "espera": "ADMITIDO",
+   "pon": {
+    "estado": "FINALIZADO"
+   },
+   "que": "Retorno con el estado del objeto FINALIZADO en `estado`: pasa a `estado_seguimiento`"
+  },
+  "CT-24/retorno_estado_propio_fuera_de_lista": {
+   "base": "CT-24.RETORNO",
+   "espera": "RECHAZADO",
+   "pon": {
+    "estado": "ANULADA"
+   },
+   "que": "Retorno con un estado del objeto que no existe"
+  },
+  "CT-24/retorno_estado_propio_pausado": {
+   "base": "CT-24.RETORNO",
+   "espera": "ADMITIDO",
+   "pon": {
+    "estado": "PAUSADO"
+   },
+   "que": "Retorno con el estado del objeto PAUSADO en `estado`: pasa a `estado_seguimiento`"
+  },
+  "CT-24/retorno_rechazado_con_estado_propio": {
+   "base": "CT-24.RETORNO",
+   "espera": "ADMITIDO",
+   "estado": "RECHAZADO",
+   "pon": {
+    "estado_seguimiento": "ACTIVO"
+   },
+   "que": "Retorno con el estado común RECHAZADO y el del objeto en su campo",
+   "quita": [
+    "estado"
+   ]
+  },
+  "CT-24/retorno_sin_estado_propio": {
+   "base": "CT-24.RETORNO",
+   "espera": "RECHAZADO",
+   "que": "Retorno sin estado del objeto",
+   "quita": [
+    "estado"
+   ]
+  },
+  "CT-24/retorno_sin_identificador_y_sin_estado": {
+   "base": "CT-24.RETORNO",
+   "espera": "RECHAZADO",
+   "que": "Retorno sin identificador ni estado: se rechaza por el estado del objeto, que se mira antes",
+   "quita": [
+    "seg_id",
+    "estado"
+   ]
+  },
+  "CT-24/retorno_sin_seg_id": {
+   "base": "CT-24.RETORNO",
+   "espera": "RECHAZADO",
+   "que": "Retorno sin el campo de retorno `seg_id`",
+   "quita": [
+    "seg_id"
+   ]
+  },
+  "CT-24/retorno_solo_con_el_campo_propio": {
+   "base": "CT-24.RETORNO",
+   "espera": "ADMITIDO",
+   "pon": {
+    "estado_seguimiento": "PAUSADO"
+   },
+   "que": "Retorno que ya trae `estado_seguimiento` y no trae `estado`",
+   "quita": [
+    "estado"
+   ]
+  },
+  "CT-24/sin_run_id_ni_query_id": {
+   "base": "CT-24.ENCARGO",
+   "espera": "ADMITIDO",
+   "que": "Sin `run_id` ni `query_id`: este contrato está exento",
+   "query_id": null,
+   "run_id": null
+  },
+  "CT-24/solo_accion": {
+   "contrato": "CT-24",
+   "cuerpo": {
+    "accion": "PAUSA"
+   },
+   "espera": "ADMITIDO",
+   "que": "Solo la acción",
+   "query_id": "SEG-2026-0001",
+   "run_id": null,
+   "tipo_mensaje": "ENCARGO"
+  },
+  "CT-24/validar_retorno_sin_campo_propio": {
+   "base": "CT-24.RETORNO",
+   "espera": "RECHAZADO",
+   "mensaje_quita": [
+    "estado_seguimiento"
+   ],
+   "que": "Un retorno ya creado al que se le quita `estado_seguimiento`",
+   "via": "validar"
+  },
+  "CT-25/buscador_al_broker": {
+   "base": "CT-25.ENCARGO",
+   "emisor": "AG-16",
+   "espera": "RECHAZADO",
+   "que": "El Buscador pide la credencial al Broker directamente",
+   "receptor": "BROKER"
+  },
+  "CT-25/canal_en_sentido_contrario": {
+   "base": "CT-25.ENCARGO",
+   "emisor": "BROKER",
+   "espera": "ADMITIDO",
+   "que": "De BROKER a AG-01: el canal es de ida y vuelta",
+   "receptor": "AG-01"
+  },
+  "CT-25/encargo_con_estado_en_el_cuerpo": {
+   "base": "CT-25.ENCARGO",
+   "espera": "RECHAZADO",
+   "pon": {
+    "estado": "PROVISTA"
+   },
+   "que": "Encargo con `estado` en el cuerpo: la normalización es solo del retorno"
+  },
+  "CT-25/encargo_sin_crd_id": {
+   "base": "CT-25.ENCARGO",
+   "espera": "RECHAZADO",
+   "que": "Encargo sin el campo mínimo `crd_id`",
+   "quita": [
+    "crd_id"
+   ]
+  },
+  "CT-25/encargo_sin_impacto_si_falta": {
+   "base": "CT-25.ENCARGO",
+   "espera": "RECHAZADO",
+   "que": "Encargo sin el campo mínimo `impacto_si_falta`",
+   "quita": [
+    "impacto_si_falta"
+   ]
+  },
+  "CT-25/encargo_sin_servicio": {
+   "base": "CT-25.ENCARGO",
+   "espera": "RECHAZADO",
+   "que": "Encargo sin el campo mínimo `servicio`",
+   "quita": [
+    "servicio"
+   ]
+  },
+  "CT-25/encargo_sin_solicitante": {
+   "base": "CT-25.ENCARGO",
+   "espera": "RECHAZADO",
+   "que": "Encargo sin el campo mínimo `solicitante`",
+   "quita": [
+    "solicitante"
+   ]
+  },
+  "CT-25/encargo_sin_uso_previsto": {
+   "base": "CT-25.ENCARGO",
+   "espera": "RECHAZADO",
+   "que": "Encargo sin el campo mínimo `uso_previsto`",
+   "quita": [
+    "uso_previsto"
+   ]
+  },
+  "CT-25/encargo_urgencia_fuera_de_la_lista_del_anexo_b": {
+   "base": "CT-25.ENCARGO",
+   "espera": "ADMITIDO",
+   "pon": {
+    "urgencia": "FUERA_DE_LISTA"
+   },
+   "que": "`urgencia` con un valor que no está en la lista del Anexo B: la mensajería no la aplica"
+  },
+  "CT-25/recordatorio": {
+   "base": "CT-25.ENCARGO",
+   "espera": "ADMITIDO",
+   "pon": {
+    "recordatorio": true
+   },
+   "que": "Recordatorio de una solicitud, como lo emite el ejecutor: sin `herramienta` ni `urgencia`",
+   "quita": [
+    "herramienta",
+    "urgencia"
+   ]
+  },
+  "CT-25/retorno_con_campo_valor_sin_forma_de_clave": {
+   "base": "CT-25.RETORNO",
+   "espera": "ADMITIDO",
+   "pon": {
+    "valor": "texto sin forma de clave"
+   },
+   "que": "Respuesta con un campo `valor` cuyo texto no tiene forma de clave: la mensajería la admite (la rechaza `Credenciales.responder`, antes de crearla)"
+  },
+  "CT-25/retorno_con_dato_protegido": {
+   "base": "CT-25.RETORNO",
+   "espera": "RECHAZADO",
+   "pon": {
+    "credencial_ref": "Bearer xxxxxxxxxxxxxxxxxxxxxxxx"
+   },
+   "que": "Respuesta con un dato protegido en el alias"
+  },
+  "CT-25/retorno_con_estado_comun_en_el_cuerpo_y_sin_el_propio": {
+   "base": "CT-25.RETORNO",
+   "espera": "RECHAZADO",
+   "pon": {
+    "estado": "COMPLETO"
+   },
+   "que": "Retorno que trae COMPLETO en `estado` y nada en su campo propio: COMPLETO no es un estado del objeto"
+  },
+  "CT-25/retorno_con_estado_comun_parcial_y_campo_propio": {
+   "base": "CT-25.RETORNO",
+   "espera": "ADMITIDO",
+   "estado": "PARCIAL",
+   "pon": {
+    "estado": "PARCIAL",
+    "estado_credencial": "PROVISTA"
+   },
+   "que": "Retorno con PARCIAL por su sitio y en `estado`, y el del objeto en `estado_credencial`"
+  },
+  "CT-25/retorno_con_estado_comun_y_campo_propio": {
+   "base": "CT-25.RETORNO",
+   "espera": "ADMITIDO",
+   "pon": {
+    "estado": "COMPLETO",
+    "estado_credencial": "DENEGADA"
+   },
+   "que": "Retorno con el estado común en `estado` y el del objeto en `estado_credencial`"
+  },
+  "CT-25/retorno_con_los_dos_estados_contradictorios": {
+   "base": "CT-25.RETORNO",
+   "espera": "RECHAZADO",
+   "pon": {
+    "estado": "PROVISTA",
+    "estado_credencial": "DENEGADA"
+   },
+   "que": "Retorno con `estado` y `estado_credencial` distintos"
+  },
+  "CT-25/retorno_con_los_dos_estados_iguales": {
+   "base": "CT-25.RETORNO",
+   "espera": "ADMITIDO",
+   "pon": {
+    "estado": "PROVISTA",
+    "estado_credencial": "PROVISTA"
+   },
+   "que": "Retorno con `estado` y `estado_credencial` iguales"
+  },
+  "CT-25/retorno_estado_propio_aplazada": {
+   "base": "CT-25.RETORNO",
+   "espera": "ADMITIDO",
+   "pon": {
+    "estado": "APLAZADA"
+   },
+   "que": "Retorno con el estado del objeto APLAZADA en `estado`: pasa a `estado_credencial`"
+  },
+  "CT-25/retorno_estado_propio_de_otro_contrato": {
+   "base": "CT-25.RETORNO",
+   "espera": "RECHAZADO",
+   "pon": {
+    "estado": "RESPONDIDA"
+   },
+   "que": "Retorno con el estado del objeto de otro contrato"
+  },
+  "CT-25/retorno_estado_propio_denegada": {
+   "base": "CT-25.RETORNO",
+   "espera": "ADMITIDO",
+   "pon": {
+    "estado": "DENEGADA"
+   },
+   "que": "Retorno con el estado del objeto DENEGADA en `estado`: pasa a `estado_credencial`"
+  },
+  "CT-25/retorno_estado_propio_en_minusculas": {
+   "base": "CT-25.RETORNO",
+   "espera": "RECHAZADO",
+   "pon": {
+    "estado": "provista"
+   },
+   "que": "Retorno con el estado del objeto en minúsculas"
+  },
+  "CT-25/retorno_estado_propio_fuera_de_lista": {
+   "base": "CT-25.RETORNO",
+   "espera": "RECHAZADO",
+   "pon": {
+    "estado": "ANULADA"
+   },
+   "que": "Retorno con un estado del objeto que no existe"
+  },
+  "CT-25/retorno_estado_propio_provista": {
+   "base": "CT-25.RETORNO",
+   "espera": "ADMITIDO",
+   "pon": {
+    "estado": "PROVISTA"
+   },
+   "que": "Retorno con el estado del objeto PROVISTA en `estado`: pasa a `estado_credencial`"
+  },
+  "CT-25/retorno_rechazado_con_estado_propio": {
+   "base": "CT-25.RETORNO",
+   "espera": "ADMITIDO",
+   "estado": "RECHAZADO",
+   "pon": {
+    "estado_credencial": "PROVISTA"
+   },
+   "que": "Retorno con el estado común RECHAZADO y el del objeto en su campo",
+   "quita": [
+    "estado"
+   ]
+  },
+  "CT-25/retorno_sin_crd_id": {
+   "base": "CT-25.RETORNO",
+   "espera": "RECHAZADO",
+   "que": "Retorno sin el campo de retorno `crd_id`",
+   "quita": [
+    "crd_id"
+   ]
+  },
+  "CT-25/retorno_sin_estado_propio": {
+   "base": "CT-25.RETORNO",
+   "espera": "RECHAZADO",
+   "que": "Retorno sin estado del objeto",
+   "quita": [
+    "estado"
+   ]
+  },
+  "CT-25/retorno_sin_identificador_y_sin_estado": {
+   "base": "CT-25.RETORNO",
+   "espera": "RECHAZADO",
+   "que": "Retorno sin identificador ni estado: se rechaza por el estado del objeto, que se mira antes",
+   "quita": [
+    "crd_id",
+    "estado"
+   ]
+  },
+  "CT-25/retorno_solo_con_el_campo_propio": {
+   "base": "CT-25.RETORNO",
+   "espera": "ADMITIDO",
+   "pon": {
+    "estado_credencial": "DENEGADA"
+   },
+   "que": "Retorno que ya trae `estado_credencial` y no trae `estado`",
+   "quita": [
+    "estado"
+   ]
+  },
+  "CT-25/sin_run_id_ni_query_id": {
+   "base": "CT-25.ENCARGO",
+   "espera": "ADMITIDO",
+   "que": "Sin `run_id` ni `query_id`: este contrato está exento",
+   "query_id": null,
+   "run_id": null
+  },
+  "CT-25/solicitud_con_dato_protegido": {
+   "base": "CT-25.ENCARGO",
+   "espera": "RECHAZADO",
+   "pon": {
+    "uso_previsto": "Cuenta ES0000000000000000000000"
+   },
+   "que": "Solicitud con un dato protegido en `uso_previsto`"
+  },
+  "CT-25/validar_retorno_sin_campo_propio": {
+   "base": "CT-25.RETORNO",
+   "espera": "RECHAZADO",
+   "mensaje_quita": [
+    "estado_credencial"
+   ],
+   "que": "Un retorno ya creado al que se le quita `estado_credencial`",
+   "via": "validar"
+  },
+  "sobre/cabecera_de_autorizacion_en_el_cuerpo": {
+   "base": "CT-10.ENCARGO",
+   "espera": "RECHAZADO",
+   "pon": {
+    "notas": "Bearer xxxxxxxxxxxxxxxxxxxxxxxx"
+   },
+   "que": "Una cabecera de autorización en el cuerpo"
+  },
+  "sobre/contrato_inexistente": {
+   "contrato": "CT-26",
+   "cuerpo": {},
+   "emisor": "AG-01",
+   "espera": "RECHAZADO",
+   "que": "Un contrato que no está en vigor",
+   "receptor": "AG-02",
+   "tipo_mensaje": "ENCARGO"
+  },
+  "sobre/contrato_sin_guion": {
+   "contrato": "CT10",
+   "cuerpo": {
+    "artefacto_id": "CALC-2026-0001",
+    "motivo": "Re-ejecución de auditoría."
+   },
+   "emisor": "AG-18",
+   "espera": "RECHAZADO",
+   "que": "El código del contrato escrito de otra forma",
+   "receptor": "AG-13",
+   "tipo_mensaje": "ENCARGO"
+  },
+  "sobre/cuenta_bancaria_anidada": {
+   "base": "CT-10.ENCARGO",
+   "espera": "RECHAZADO",
+   "pon": {
+    "notas": [
+     {
+      "detalle": [
+       "abono en",
+       "ES0000000000000000000000"
+      ]
+     }
+    ]
+   },
+   "que": "Una cuenta bancaria dentro de una lista del cuerpo"
+  },
+  "sobre/cuerpo_cambia_consumo": {
+   "base": "CT-10.ENCARGO",
+   "espera": "RECHAZADO",
+   "pon": {
+    "consumo": {
+     "uc": 1
+    }
+   },
+   "que": "El cuerpo trae el campo reservado `consumo` con otro valor"
+  },
+  "sobre/cuerpo_cambia_contrato": {
+   "base": "CT-10.ENCARGO",
+   "espera": "RECHAZADO",
+   "pon": {
+    "contrato": "CT-09"
+   },
+   "que": "El cuerpo trae el campo reservado `contrato` con otro valor"
+  },
+  "sobre/cuerpo_cambia_emisor": {
+   "base": "CT-10.ENCARGO",
+   "espera": "RECHAZADO",
+   "pon": {
+    "emisor": "AG-19"
+   },
+   "que": "El cuerpo trae el campo reservado `emisor` con otro valor"
+  },
+  "sobre/cuerpo_cambia_estado": {
+   "base": "CT-10.ENCARGO",
+   "espera": "RECHAZADO",
+   "pon": {
+    "estado": "COMPLETO"
+   },
+   "que": "El cuerpo trae el campo reservado `estado` con otro valor"
+  },
+  "sobre/cuerpo_cambia_estado_del_retorno": {
+   "base": "CT-10.RETORNO",
+   "espera": "RECHAZADO",
+   "estado": "COMPLETO",
+   "pon": {
+    "estado": "PARCIAL"
+   },
+   "que": "El cuerpo de un retorno trae un `estado` distinto del que se pasa por su sitio"
+  },
+  "sobre/cuerpo_cambia_msg_id": {
+   "base": "CT-10.ENCARGO",
+   "espera": "RECHAZADO",
+   "pon": {
+    "msg_id": "MSG-2026-999999"
+   },
+   "que": "El cuerpo trae el campo reservado `msg_id` con otro valor"
+  },
+  "sobre/cuerpo_cambia_msg_id_en_ct04": {
+   "base": "CT-04.ENCARGO",
+   "espera": "RECHAZADO",
+   "pon": {
+    "msg_id": "MSG-BRK-2026-000123"
+   },
+   "que": "El Broker trae su `msg_id` en un contrato que no es CT-01"
+  },
+  "sobre/cuerpo_cambia_presupuesto": {
+   "base": "CT-10.ENCARGO",
+   "espera": "RECHAZADO",
+   "pon": {
+    "presupuesto": {
+     "uc": 1
+    }
+   },
+   "presupuesto": {
+    "uc": 2
+   },
+   "que": "El cuerpo trae un `presupuesto` distinto del que se pasa por su sitio"
+  },
+  "sobre/cuerpo_cambia_query_id": {
+   "base": "CT-10.ENCARGO",
+   "espera": "RECHAZADO",
+   "pon": {
+    "query_id": "QRY-2026-0009"
+   },
+   "que": "El cuerpo trae el campo reservado `query_id` con otro valor",
+   "query_id": "QRY-2026-0001"
+  },
+  "sobre/cuerpo_cambia_receptor": {
+   "base": "CT-10.ENCARGO",
+   "espera": "RECHAZADO",
+   "pon": {
+    "receptor": "AG-12"
+   },
+   "que": "El cuerpo trae el campo reservado `receptor` con otro valor"
+  },
+  "sobre/cuerpo_cambia_run_id": {
+   "base": "CT-10.ENCARGO",
+   "espera": "RECHAZADO",
+   "pon": {
+    "run_id": "RUN-2026-0002"
+   },
+   "que": "El cuerpo trae el campo reservado `run_id` con otro valor",
+   "run_id": "RUN-2026-0001"
+  },
+  "sobre/cuerpo_cambia_timestamp": {
+   "base": "CT-10.ENCARGO",
+   "espera": "RECHAZADO",
+   "pon": {
+    "timestamp": "2026-01-01T00:00:00+01:00"
+   },
+   "que": "El cuerpo trae el campo reservado `timestamp` con otro valor"
+  },
+  "sobre/cuerpo_cambia_tipo_mensaje": {
+   "base": "CT-10.ENCARGO",
+   "espera": "RECHAZADO",
+   "pon": {
+    "tipo_mensaje": "RETORNO"
+   },
+   "que": "El cuerpo trae el campo reservado `tipo_mensaje` con otro valor"
+  },
+  "sobre/cuerpo_cambia_version_contrato": {
+   "base": "CT-10.ENCARGO",
+   "espera": "RECHAZADO",
+   "pon": {
+    "version_contrato": "5.0"
+   },
+   "que": "El cuerpo trae el campo reservado `version_contrato` con otro valor"
+  },
+  "sobre/cuerpo_repite_contrato": {
+   "base": "CT-10.ENCARGO",
+   "emisor": "AG-18",
+   "espera": "ADMITIDO",
+   "pon": {
+    "contrato": "CT-10"
+   },
+   "que": "El cuerpo repite el campo reservado `contrato` con su mismo valor: se admite y no se duplica",
+   "receptor": "AG-13"
+  },
+  "sobre/cuerpo_repite_emisor": {
+   "base": "CT-10.ENCARGO",
+   "emisor": "AG-18",
+   "espera": "ADMITIDO",
+   "pon": {
+    "emisor": "AG-18"
+   },
+   "que": "El cuerpo repite el campo reservado `emisor` con su mismo valor: se admite y no se duplica",
+   "receptor": "AG-13"
+  },
+  "sobre/cuerpo_repite_estado_del_retorno": {
+   "base": "CT-10.RETORNO",
+   "espera": "ADMITIDO",
+   "estado": "PARCIAL",
+   "pon": {
+    "estado": "PARCIAL"
+   },
+   "que": "El cuerpo de un retorno trae el mismo `estado`"
+  },
+  "sobre/cuerpo_repite_presupuesto": {
+   "base": "CT-10.ENCARGO",
+   "espera": "ADMITIDO",
+   "pon": {
+    "presupuesto": {
+     "uc": 2
+    }
+   },
+   "presupuesto": {
+    "uc": 2
+   },
+   "que": "El cuerpo trae el mismo `presupuesto` que se pasa por su sitio"
+  },
+  "sobre/cuerpo_repite_receptor": {
+   "base": "CT-10.ENCARGO",
+   "emisor": "AG-18",
+   "espera": "ADMITIDO",
+   "pon": {
+    "receptor": "AG-13"
+   },
+   "que": "El cuerpo repite el campo reservado `receptor` con su mismo valor: se admite y no se duplica",
+   "receptor": "AG-13"
+  },
+  "sobre/cuerpo_repite_run_id": {
+   "base": "CT-10.ENCARGO",
+   "emisor": "AG-18",
+   "espera": "ADMITIDO",
+   "pon": {
+    "run_id": "RUN-2026-0001"
+   },
+   "que": "El cuerpo repite el campo reservado `run_id` con su mismo valor: se admite y no se duplica",
+   "receptor": "AG-13"
+  },
+  "sobre/cuerpo_repite_tipo_mensaje": {
+   "base": "CT-10.ENCARGO",
+   "emisor": "AG-18",
+   "espera": "ADMITIDO",
+   "pon": {
+    "tipo_mensaje": "ENCARGO"
+   },
+   "que": "El cuerpo repite el campo reservado `tipo_mensaje` con su mismo valor: se admite y no se duplica",
+   "receptor": "AG-13"
+  },
+  "sobre/cuerpo_repite_version_contrato": {
+   "base": "CT-10.ENCARGO",
+   "emisor": "AG-18",
+   "espera": "ADMITIDO",
+   "pon": {
+    "version_contrato": "5.1"
+   },
+   "que": "El cuerpo repite el campo reservado `version_contrato` con su mismo valor: se admite y no se duplica",
+   "receptor": "AG-13"
+  },
+  "sobre/dato_personal_como_clave": {
+   "base": "CT-10.ENCARGO",
+   "espera": "RECHAZADO",
+   "pon": {
+    "notas": {
+     "00000000T": "titular"
+    }
+   },
+   "que": "Un documento de identidad como nombre de una clave"
+  },
+  "sobre/dato_personal_en_el_cuerpo": {
+   "base": "CT-10.ENCARGO",
+   "espera": "RECHAZADO",
+   "pon": {
+    "motivo": "Lo pide el titular 00000000T."
+   },
+   "que": "Un documento de identidad en un campo del cuerpo"
+  },
+  "sobre/dato_personal_en_el_run_id": {
+   "base": "CT-10.ENCARGO",
+   "espera": "RECHAZADO",
+   "que": "Un documento de identidad en el `run_id`",
+   "run_id": "RUN-00000000T"
+  },
+  "sobre/emisor_vacio": {
+   "base": "CT-10.ENCARGO",
+   "emisor": "",
+   "espera": "RECHAZADO",
+   "que": "Sin emisor",
+   "receptor": "AG-13"
+  },
+  "sobre/encargo_con_presupuesto": {
+   "base": "CT-10.ENCARGO",
+   "espera": "ADMITIDO",
+   "presupuesto": {
+    "llamadas": 4,
+    "uc": 2
+   },
+   "que": "Un encargo con presupuesto"
+  },
+  "sobre/encargo_sin_presupuesto": {
+   "base": "CT-10.ENCARGO",
+   "espera": "ADMITIDO",
+   "que": "Un encargo sin presupuesto lleva `presupuesto` vacío"
+  },
+  "sobre/retorno_con_consumo_limitaciones_y_autoevaluacion": {
+   "base": "CT-10.RETORNO",
+   "consumo": {
+    "uc": 1.5
+   },
+   "espera": "ADMITIDO",
+   "pon": {
+    "autoevaluacion": "Sin incidencias.",
+    "limitaciones": [
+     "Sin datos de la última semana."
+    ]
+   },
+   "que": "Un retorno que trae su consumo, sus limitaciones y su autoevaluación"
+  },
+  "sobre/retorno_estado_completo": {
+   "base": "CT-10.RETORNO",
+   "espera": "ADMITIDO",
+   "estado": "COMPLETO",
+   "que": "Un retorno con el estado común COMPLETO"
+  },
+  "sobre/retorno_estado_en_minusculas": {
+   "base": "CT-10.RETORNO",
+   "espera": "RECHAZADO",
+   "estado": "completo",
+   "que": "Un retorno con el estado común en minúsculas"
+  },
+  "sobre/retorno_estado_fuera_de_lista": {
+   "base": "CT-10.RETORNO",
+   "espera": "RECHAZADO",
+   "estado": "HECHO",
+   "que": "Un retorno con un estado común que no existe"
+  },
+  "sobre/retorno_estado_parcial": {
+   "base": "CT-10.RETORNO",
+   "espera": "ADMITIDO",
+   "estado": "PARCIAL",
+   "que": "Un retorno con el estado común PARCIAL"
+  },
+  "sobre/retorno_estado_rechazado": {
+   "base": "CT-10.RETORNO",
+   "espera": "ADMITIDO",
+   "estado": "RECHAZADO",
+   "que": "Un retorno con el estado común RECHAZADO"
+  },
+  "sobre/retorno_estado_sin_resultado": {
+   "base": "CT-10.RETORNO",
+   "espera": "ADMITIDO",
+   "estado": "SIN_RESULTADO",
+   "que": "Un retorno con el estado común SIN_RESULTADO"
+  },
+  "sobre/retorno_por_defecto": {
+   "base": "CT-10.RETORNO",
+   "espera": "ADMITIDO",
+   "que": "Un retorno sin más: estado COMPLETO, consumo vacío, limitaciones y autoevaluación vacías"
+  },
+  "sobre/retorno_rechazado_de_ct03_sin_sus_campos": {
+   "contrato": "CT-03",
+   "cuerpo": {
+    "motivo": "Fuera de alcance."
+   },
+   "espera": "RECHAZADO",
+   "estado": "RECHAZADO",
+   "que": "Un retorno RECHAZADO de CT-03 sin sus campos de retorno: el ejecutor los exige igual",
+   "query_id": "QRY-2026-0001",
+   "run_id": null,
+   "tipo_mensaje": "RETORNO"
+  },
+  "sobre/retorno_rechazado_sin_campos_del_contrato": {
+   "contrato": "CT-09",
+   "cuerpo": {
+    "motivo": "ACLARACION_REQUERIDA"
+   },
+   "espera": "ADMITIDO",
+   "estado": "RECHAZADO",
+   "que": "Un retorno RECHAZADO que solo trae el motivo (CT-09 no tiene campos de retorno en el ejecutor)",
+   "tipo_mensaje": "RETORNO"
+  },
+  "sobre/tipo_mensaje_acuse": {
+   "base": "CT-10.ENCARGO",
+   "emisor": "AG-18",
+   "espera": "RECHAZADO",
+   "que": "Un tercer tipo de mensaje",
+   "receptor": "AG-13",
+   "tipo_mensaje": "ACUSE"
+  },
+  "sobre/tipo_mensaje_en_minusculas": {
+   "base": "CT-10.ENCARGO",
+   "emisor": "AG-18",
+   "espera": "RECHAZADO",
+   "que": "El tipo de mensaje en minúsculas",
+   "receptor": "AG-13",
+   "tipo_mensaje": "encargo"
+  },
+  "sobre/validar_encargo_con_estado": {
+   "base": "CT-10.ENCARGO",
+   "espera": "ADMITIDO",
+   "mensaje_pon": {
+    "estado": "HECHO"
+   },
+   "que": "Un encargo con un estado cualquiera: en los encargos no se mira",
+   "via": "validar"
+  },
+  "sobre/validar_retorno_estado_fuera_de_lista": {
+   "base": "CT-10.RETORNO",
+   "espera": "RECHAZADO",
+   "mensaje_pon": {
+    "estado": "HECHO"
+   },
+   "que": "Un retorno con un estado que no es de los cuatro",
+   "via": "validar"
+  },
+  "sobre/validar_retorno_sin_estado": {
+   "base": "CT-10.RETORNO",
+   "espera": "RECHAZADO",
+   "mensaje_quita": [
+    "estado"
+   ],
+   "que": "Un retorno sin estado",
+   "via": "validar"
+  },
+  "sobre/validar_sin_contrato": {
+   "base": "CT-10.ENCARGO",
+   "espera": "RECHAZADO",
+   "mensaje_quita": [
+    "contrato"
+   ],
+   "que": "Un mensaje sin el campo común `contrato`",
+   "via": "validar"
+  },
+  "sobre/validar_sin_emisor": {
+   "base": "CT-10.ENCARGO",
+   "espera": "RECHAZADO",
+   "mensaje_quita": [
+    "emisor"
+   ],
+   "que": "Un mensaje sin el campo común `emisor`",
+   "via": "validar"
+  },
+  "sobre/validar_sin_msg_id": {
+   "base": "CT-10.ENCARGO",
+   "espera": "RECHAZADO",
+   "mensaje_quita": [
+    "msg_id"
+   ],
+   "que": "Un mensaje sin el campo común `msg_id`",
+   "via": "validar"
+  },
+  "sobre/validar_sin_receptor": {
+   "base": "CT-10.ENCARGO",
+   "espera": "RECHAZADO",
+   "mensaje_quita": [
+    "receptor"
+   ],
+   "que": "Un mensaje sin el campo común `receptor`",
+   "via": "validar"
+  },
+  "sobre/validar_sin_timestamp": {
+   "base": "CT-10.ENCARGO",
+   "espera": "RECHAZADO",
+   "mensaje_quita": [
+    "timestamp"
+   ],
+   "que": "Un mensaje sin el campo común `timestamp`",
+   "via": "validar"
+  },
+  "sobre/validar_sin_tipo_mensaje": {
+   "base": "CT-10.ENCARGO",
+   "espera": "RECHAZADO",
+   "mensaje_quita": [
+    "tipo_mensaje"
+   ],
+   "que": "Un mensaje sin tipo de mensaje",
+   "via": "validar"
+  },
+  "sobre/validar_sin_version_contrato": {
+   "base": "CT-10.ENCARGO",
+   "espera": "RECHAZADO",
+   "mensaje_quita": [
+    "version_contrato"
+   ],
+   "que": "Un mensaje sin el campo común `version_contrato`",
+   "via": "validar"
+  },
+  "sobre/validar_tipo_mensaje_desconocido": {
+   "base": "CT-10.ENCARGO",
+   "espera": "RECHAZADO",
+   "mensaje_pon": {
+    "tipo_mensaje": "ACUSE"
+   },
+   "que": "Un mensaje ya creado al que se le cambia el tipo",
+   "via": "validar"
+  },
+  "sobre/version_anterior": {
+   "base": "CT-10.ENCARGO",
+   "espera": "RECHAZADO",
+   "mensaje_pon": {
+    "version_contrato": "5.0"
+   },
+   "que": "La versión de contrato anterior",
+   "via": "validar"
+  },
+  "sobre/version_como_numero": {
+   "base": "CT-10.ENCARGO",
+   "espera": "RECHAZADO",
+   "mensaje_pon": {
+    "version_contrato": 5.1
+   },
+   "que": "La versión de contrato como número",
+   "via": "validar"
+  },
+  "sobre/version_vigente": {
+   "base": "CT-10.ENCARGO",
+   "espera": "ADMITIDO",
+   "que": "Un mensaje creado se valida tal cual",
+   "via": "validar"
+  },
+  "v6/CT-03_respondedor_al_broker_con_v5": {
+   "base": "CT-03.ENCARGO",
+   "emisor": "AG-27",
+   "espera": "RECHAZADO",
+   "que": "El Respondedor (AG-27) contesta al Broker: no abre canal propio, con el diseño V5",
+   "receptor": "BROKER"
+  },
+  "v6/CT-03_respondedor_al_broker_con_v6": {
+   "base": "CT-03.ENCARGO",
+   "emisor": "AG-27",
+   "espera": "RECHAZADO",
+   "que": "El Respondedor (AG-27) contesta al Broker: no abre canal propio, con el diseño V6",
+   "receptor": "BROKER",
+   "v6": true
+  },
+  "v6/CT-07_analista_al_lector_con_v5": {
+   "base": "CT-07.ENCARGO",
+   "emisor": "AG-03",
+   "espera": "RECHAZADO",
+   "que": "Un analista pide una búsqueda al Lector de evidencia (AG-28), con el diseño V5",
+   "receptor": "AG-28"
+  },
+  "v6/CT-07_analista_al_lector_con_v6": {
+   "base": "CT-07.ENCARGO",
+   "emisor": "AG-03",
+   "espera": "ADMITIDO",
+   "que": "Un analista pide una búsqueda al Lector de evidencia (AG-28), con el diseño V6",
+   "receptor": "AG-28",
+   "v6": true
+  },
+  "v6/CT-08_analista_al_lector_con_v5": {
+   "base": "CT-08.ENCARGO",
+   "emisor": "AG-21",
+   "espera": "RECHAZADO",
+   "que": "Un analista pide conocimiento al Lector de evidencia (AG-28), con el diseño V5",
+   "receptor": "AG-28"
+  },
+  "v6/CT-08_analista_al_lector_con_v6": {
+   "base": "CT-08.ENCARGO",
+   "emisor": "AG-21",
+   "espera": "ADMITIDO",
+   "que": "Un analista pide conocimiento al Lector de evidencia (AG-28), con el diseño V6",
+   "receptor": "AG-28",
+   "v6": true
+  },
+  "v6/CT-08_canal_v5_con_v6": {
+   "base": "CT-08.ENCARGO",
+   "emisor": "AG-03",
+   "espera": "ADMITIDO",
+   "que": "El canal V5 de CT-08 sigue abierto con el diseño V6",
+   "receptor": "AG-14",
+   "v6": true
+  },
+  "v6/CT-08_lector_al_analista_con_v5": {
+   "base": "CT-08.ENCARGO",
+   "emisor": "AG-28",
+   "espera": "RECHAZADO",
+   "que": "El Lector de evidencia contesta a un analista, con el diseño V5",
+   "receptor": "AG-21"
+  },
+  "v6/CT-08_lector_al_analista_con_v6": {
+   "base": "CT-08.ENCARGO",
+   "emisor": "AG-28",
+   "espera": "ADMITIDO",
+   "que": "El Lector de evidencia contesta a un analista, con el diseño V6",
+   "receptor": "AG-21",
+   "v6": true
+  },
+  "v6/CT-09_lector_al_motor_con_v5": {
+   "base": "CT-09.ENCARGO",
+   "emisor": "AG-28",
+   "espera": "RECHAZADO",
+   "que": "El Lector de evidencia pide un cálculo al Motor: no hay canal ni en V6, con el diseño V5",
+   "receptor": "AG-13"
+  },
+  "v6/CT-09_lector_al_motor_con_v6": {
+   "base": "CT-09.ENCARGO",
+   "emisor": "AG-28",
+   "espera": "RECHAZADO",
+   "que": "El Lector de evidencia pide un cálculo al Motor: no hay canal ni en V6, con el diseño V6",
+   "receptor": "AG-13",
+   "v6": true
+  },
+  "v6/CT-15_analizador_al_sintetizador_con_v5": {
+   "base": "CT-15.ENCARGO",
+   "emisor": "AG-02",
+   "espera": "RECHAZADO",
+   "que": "El Analizador envía el paquete al Sintetizador (AG-26), con el diseño V5",
+   "receptor": "AG-26"
+  },
+  "v6/CT-15_analizador_al_sintetizador_con_v6": {
+   "base": "CT-15.ENCARGO",
+   "emisor": "AG-02",
+   "espera": "ADMITIDO",
+   "que": "El Analizador envía el paquete al Sintetizador (AG-26), con el diseño V6",
+   "receptor": "AG-26",
+   "v6": true
+  }
+ }
+}

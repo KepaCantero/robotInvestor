@@ -50,7 +50,7 @@
   "type": "object"
  },
  "CT-02.RETORNO": {
-  "$comment": "derivado del Anexo B del Documento 0 V5.1",
+  "$comment": "derivado del Anexo B del Documento 0 V5.1. El Anexo B no dice qué campos lleva un retorno con estado común RECHAZADO o SIN_RESULTADO (el §6.2.6 solo pide el motivo): este esquema describe el retorno con resultado y no sirve para juzgar los otros",
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "properties": {
    "entregables": {
@@ -128,7 +128,7 @@
   "type": "object"
  },
  "CT-03.RETORNO": {
-  "$comment": "derivado del Anexo B del Documento 0 V5.1",
+  "$comment": "derivado del Anexo B del Documento 0 V5.1. El Anexo B no dice qué campos lleva un retorno con estado común RECHAZADO o SIN_RESULTADO (el §6.2.6 solo pide el motivo): este esquema describe el retorno con resultado y no sirve para juzgar los otros",
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "properties": {
    "clase_consulta": {
@@ -305,7 +305,7 @@
   "type": "object"
  },
  "CT-05.RETORNO": {
-  "$comment": "derivado del Anexo B del Documento 0 V5.1. El Anexo B solo nombra lo que lleva el retorno parcial, cuando procede; ningún campo es obligatorio",
+  "$comment": "derivado del Anexo B del Documento 0 V5.1. El Anexo B solo nombra lo que lleva el retorno parcial, cuando procede; ningún campo es obligatorio. El Anexo B no dice qué campos lleva un retorno con estado común RECHAZADO o SIN_RESULTADO (el §6.2.6 solo pide el motivo): este esquema describe el retorno con resultado y no sirve para juzgar los otros",
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "properties": {
    "SOLICITUD_PRESUPUESTO": {},
@@ -345,7 +345,7 @@
   "type": "object"
  },
  "CT-06.RETORNO": {
-  "$comment": "derivado del Anexo B del Documento 0 V5.1. `revision_seguimiento` solo en fase SEGUIMIENTO",
+  "$comment": "derivado del Anexo B del Documento 0 V5.1. `revision_seguimiento` solo en fase SEGUIMIENTO. El Anexo B no dice qué campos lleva un retorno con estado común RECHAZADO o SIN_RESULTADO (el §6.2.6 solo pide el motivo): este esquema describe el retorno con resultado y no sirve para juzgar los otros",
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "properties": {
    "autoevaluacion": {},
@@ -404,7 +404,7 @@
   "type": "object"
  },
  "CT-07.RETORNO": {
-  "$comment": "derivado del Anexo B del Documento 0 V5.1",
+  "$comment": "derivado del Anexo B del Documento 0 V5.1. El Anexo B no dice qué campos lleva un retorno con estado común RECHAZADO o SIN_RESULTADO (el §6.2.6 solo pide el motivo): este esquema describe el retorno con resultado y no sirve para juzgar los otros",
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "properties": {
    "contradicciones": {},
@@ -454,7 +454,7 @@
   "type": "object"
  },
  "CT-08.RETORNO": {
-  "$comment": "derivado del Anexo B del Documento 0 V5.1",
+  "$comment": "derivado del Anexo B del Documento 0 V5.1. El Anexo B no dice qué campos lleva un retorno con estado común RECHAZADO o SIN_RESULTADO (el §6.2.6 solo pide el motivo): este esquema describe el retorno con resultado y no sirve para juzgar los otros",
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "properties": {
    "contradicciones": {},
@@ -508,7 +508,7 @@
   "type": "object"
  },
  "CT-09.RETORNO": {
-  "$comment": "derivado del Anexo B del Documento 0 V5.1. `referencia_ingenua` «cuando aplica»",
+  "$comment": "derivado del Anexo B del Documento 0 V5.1. `referencia_ingenua` «cuando aplica». El Anexo B prevé un retorno `RECHAZADO` con motivo `ACLARACION_REQUERIDA` y no dice qué campos lleva (el §6.2.6 solo pide el motivo en RECHAZADO y SIN_RESULTADO): este esquema describe el retorno con resultado y no sirve para juzgar los otros",
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "properties": {
    "artefacto_id": {},
@@ -548,7 +548,7 @@
   "type": "object"
  },
  "CT-10.RETORNO": {
-  "$comment": "derivado del Anexo B del Documento 0 V5.1. `coincide` es «sí/no/dentro de tolerancia»; el Anexo B no fija su codificación y aquí no se restringe",
+  "$comment": "derivado del Anexo B del Documento 0 V5.1. `coincide` es «sí/no/dentro de tolerancia»; el Anexo B no fija su codificación y aquí no se restringe. El Anexo B no dice qué campos lleva un retorno con estado común RECHAZADO o SIN_RESULTADO (el §6.2.6 solo pide el motivo): este esquema describe el retorno con resultado y no sirve para juzgar los otros",
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "properties": {
    "coincide": {},
@@ -591,7 +591,7 @@
   "type": "object"
  },
  "CT-11.RETORNO": {
-  "$comment": "derivado del Anexo B del Documento 0 V5.1",
+  "$comment": "derivado del Anexo B del Documento 0 V5.1. El Anexo B no dice qué campos lleva un retorno con estado común RECHAZADO o SIN_RESULTADO (el §6.2.6 solo pide el motivo): este esquema describe el retorno con resultado y no sirve para juzgar los otros",
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "properties": {
    "clm_id": {},
@@ -629,7 +629,7 @@
   "type": "object"
  },
  "CT-12.RETORNO": {
-  "$comment": "derivado del Anexo B del Documento 0 V5.1",
+  "$comment": "derivado del Anexo B del Documento 0 V5.1. El Anexo B no dice qué campos lleva un retorno con estado común RECHAZADO o SIN_RESULTADO (el §6.2.6 solo pide el motivo): este esquema describe el retorno con resultado y no sirve para juzgar los otros",
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "properties": {
    "escenarios": {},
@@ -667,7 +667,7 @@
   "type": "object"
  },
  "CT-13.RETORNO": {
-  "$comment": "derivado del Anexo B del Documento 0 V5.1",
+  "$comment": "derivado del Anexo B del Documento 0 V5.1. El Anexo B no dice qué campos lleva un retorno con estado común RECHAZADO o SIN_RESULTADO (el §6.2.6 solo pide el motivo): este esquema describe el retorno con resultado y no sirve para juzgar los otros",
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "properties": {
    "objeciones": {
@@ -726,7 +726,7 @@
   "type": "object"
  },
  "CT-14.RETORNO": {
-  "$comment": "derivado del Anexo B del Documento 0 V5.1",
+  "$comment": "derivado del Anexo B del Documento 0 V5.1. El Anexo B no dice qué campos lleva un retorno con estado común RECHAZADO o SIN_RESULTADO (el §6.2.6 solo pide el motivo): este esquema describe el retorno con resultado y no sirve para juzgar los otros",
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "properties": {
    "comprobaciones": {},
@@ -757,9 +757,42 @@
   ],
   "type": "object"
  },
- "CT-23.ENCARGO": {
-  "$comment": "derivado del Anexo B del Documento 0 V5.1. `contenido` «solo en ENTRANTE»",
+ "CT-22.ENCARGO": {
+  "$comment": "derivado del Anexo B del Documento 0 V5.1. De CT-22 el Anexo B solo dice que `tipo` «admite además» CONSULTA_RECURRENTE y DECISION_SEGUIMIENTO: el campo existe y la lista es abierta (los demás valores y campos, en los prompts de sistema). Los dos valores van en `examples`, que no restringe",
   "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "properties": {
+   "tipo": {
+    "examples": [
+     "CONSULTA_RECURRENTE",
+     "DECISION_SEGUIMIENTO"
+    ]
+   }
+  },
+  "required": [
+   "tipo"
+  ],
+  "type": "object"
+ },
+ "CT-23.ENCARGO": {
+  "$comment": "derivado del Anexo B del Documento 0 V5.1. `contenido` «solo en ENTRANTE»: obligatorio con sentido ENTRANTE y ausente en los demás, con `if`/`then`/`else` (igual que `seg_id` y `opp_id` de CT-05)",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "else": {
+   "not": {
+    "required": [
+     "contenido"
+    ]
+   }
+  },
+  "if": {
+   "properties": {
+    "sentido": {
+     "const": "ENTRANTE"
+    }
+   },
+   "required": [
+    "sentido"
+   ]
+  },
   "properties": {
    "cns_id": {},
    "contenido": {},
@@ -822,10 +855,15 @@
    "plazo_respuesta",
    "punto_control"
   ],
+  "then": {
+   "required": [
+    "contenido"
+   ]
+  },
   "type": "object"
  },
  "CT-23.RETORNO": {
-  "$comment": "derivado del Anexo B del Documento 0 V5.1. El §6.2.6 pide además que el estado del objeto vaya en `estado_consulta`",
+  "$comment": "derivado del Anexo B del Documento 0 V5.1. El §6.2.6 pide además que el estado del objeto vaya en `estado_consulta`. El Anexo B no dice qué campos lleva un retorno con estado común RECHAZADO o SIN_RESULTADO (el §6.2.6 solo pide el motivo): este esquema describe el retorno con resultado y no sirve para juzgar los otros",
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "properties": {
    "cns_id": {},
@@ -918,7 +956,7 @@
   "type": "object"
  },
  "CT-24.RETORNO": {
-  "$comment": "derivado del Anexo B del Documento 0 V5.1. `aviso` es «opcional». El §6.2.6 pide además que el estado del objeto vaya en `estado_seguimiento`",
+  "$comment": "derivado del Anexo B del Documento 0 V5.1. `aviso` es «opcional». El §6.2.6 pide además que el estado del objeto vaya en `estado_seguimiento`. El Anexo B no dice qué campos lleva un retorno con estado común RECHAZADO o SIN_RESULTADO (el §6.2.6 solo pide el motivo): este esquema describe el retorno con resultado y no sirve para juzgar los otros",
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "properties": {
    "aviso": {},
@@ -969,7 +1007,7 @@
   "type": "object"
  },
  "CT-25.RETORNO": {
-  "$comment": "derivado del Anexo B del Documento 0 V5.1. El §6.2.6 pide además que el estado del objeto vaya en `estado_credencial`",
+  "$comment": "derivado del Anexo B del Documento 0 V5.1. El §6.2.6 pide además que el estado del objeto vaya en `estado_credencial`. El Anexo B no dice qué campos lleva un retorno con estado común RECHAZADO o SIN_RESULTADO (el §6.2.6 solo pide el motivo): este esquema describe el retorno con resultado y no sirve para juzgar los otros",
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "properties": {
    "caducidad": {},

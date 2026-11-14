@@ -1,0 +1,2103 @@
+{
+ "contratos_que_ningun_flujo_emite": [
+  "CT-07",
+  "CT-09",
+  "CT-10",
+  "CT-14",
+  "CT-18",
+  "CT-20",
+  "CT-21"
+ ],
+ "contratos_vistos_en_algun_flujo": [
+  "CT-01",
+  "CT-02",
+  "CT-03",
+  "CT-04",
+  "CT-05",
+  "CT-06",
+  "CT-08",
+  "CT-11",
+  "CT-12",
+  "CT-13",
+  "CT-15",
+  "CT-16",
+  "CT-17",
+  "CT-19",
+  "CT-22",
+  "CT-23",
+  "CT-24",
+  "CT-25"
+ ],
+ "flujos": {
+  "ciclo_semanal_v5": {
+   "contratos_que_se_guardan": "todos",
+   "mensajes": {
+    "CT-02.RETORNO": {
+     "combinaciones_de_claves_a_veces": [
+      ""
+     ],
+     "emisores": [
+      "AG-01"
+     ],
+     "receptores": [
+      "BROKER"
+     ],
+     "rutas_a_veces": {
+      "resumen.top3_por_clase.<clase>": "array",
+      "resumen.top3_por_clase.<clase>[]": "string"
+     },
+     "rutas_siempre": {
+      "autoevaluacion": "string",
+      "consumo": "object",
+      "contrato": "string",
+      "emisor": "string",
+      "entregables": "object",
+      "entregables.informe_tecnico": "string",
+      "entregables.informe_visual": "string",
+      "entregables.paquete_json": "string",
+      "estado": "string",
+      "estado_g3": "string",
+      "limitaciones": "array",
+      "msg_id": "string",
+      "receptor": "string",
+      "resumen": "object",
+      "resumen.apuestas_independientes": "integer",
+      "resumen.cambios_vs_anterior": "string",
+      "resumen.top3_por_clase": "object",
+      "run_id": "string",
+      "timestamp": "string",
+      "tipo_mensaje": "string",
+      "version_contrato": "string"
+     },
+     "valores_de_listas_cerradas": {
+      "estado_g3": [
+       "APTO"
+      ]
+     }
+    },
+    "CT-05.ENCARGO": {
+     "combinaciones_de_claves_a_veces": [
+      ""
+     ],
+     "emisores": [
+      "AG-01"
+     ],
+     "receptores": [
+      "AG-02"
+     ],
+     "rutas_a_veces": {
+      "delta_gc0.<clase>": "object",
+      "delta_gc0.<clase>.motivos[]": "string",
+      "memoria.lec_aplicables[]": "string",
+      "memoria.opp_vigentes[]": "string",
+      "memoria.tnd_activas[]": "string",
+      "nivel_por_clase.<clase>": "string",
+      "presupuesto_por_clase.<clase>": "number"
+     },
+     "rutas_siempre": {
+      "alcance": "object",
+      "alcance.clases": "array",
+      "alcance.clases[]": "string",
+      "contrato": "string",
+      "delta_gc0": "object",
+      "delta_gc0.<clase>.arrastre_verificado": "boolean",
+      "delta_gc0.<clase>.cambio_material": "boolean",
+      "delta_gc0.<clase>.invalidadas": "array",
+      "delta_gc0.<clase>.motivos": "array",
+      "emisor": "string",
+      "fecha_objetivo": "string",
+      "horizontes": "array",
+      "horizontes[]": "string",
+      "memoria": "object",
+      "memoria.certificados": "array",
+      "memoria.lec_aplicables": "array",
+      "memoria.opp_vigentes": "array",
+      "memoria.tnd_activas": "array",
+      "msg_id": "string",
+      "nivel_por_clase": "object",
+      "presupuesto": "object",
+      "presupuesto.uc": "number",
+      "presupuesto_por_clase": "object",
+      "presupuesto_por_clase.COMUN": "number",
+      "receptor": "string",
+      "run_id": "string",
+      "timestamp": "string",
+      "tipo": "string",
+      "tipo_mensaje": "string",
+      "version_contrato": "string"
+     },
+     "valores_de_listas_cerradas": {
+      "tipo": [
+       "PERIODICO"
+      ]
+     }
+    },
+    "CT-06.ENCARGO": {
+     "combinaciones_de_claves_a_veces": [
+      "calculos_disponibles delta_gc0 fecha_limite_informacion foco horizontes_aplicables_clase horizontes_interes max_candidatas max_finalistas referencias_disponibles rotacion_exploratoria tipo_activo umbral_senal_gc1 universo",
+      "objeciones"
+     ],
+     "emisores": [
+      "AG-02"
+     ],
+     "receptores": [
+      "AG-03",
+      "AG-04",
+      "AG-05",
+      "AG-06",
+      "AG-07",
+      "AG-08",
+      "AG-09",
+      "AG-21",
+      "AG-22",
+      "AG-23",
+      "AG-24",
+      "AG-25"
+     ],
+     "rutas_a_veces": {
+      "calculos_disponibles": "array",
+      "delta_gc0": "object",
+      "delta_gc0.motivos[]": "string",
+      "fecha_limite_informacion": "string",
+      "foco": "null",
+      "horizontes_aplicables_clase": "object",
+      "horizontes_interes": "array",
+      "lecciones[]": "string",
+      "max_candidatas": "integer",
+      "max_finalistas": "integer",
+      "objeciones": "array",
+      "opciones_vigentes[]": "object",
+      "referencias_disponibles": "array",
+      "rotacion_exploratoria": "array",
+      "rotacion_exploratoria[]": "string",
+      "tipo_activo": "string",
+      "umbral_senal_gc1": "number",
+      "universo": "array"
+     },
+     "rutas_siempre": {
+      "calculos_disponibles[]": "string",
+      "clase": "string",
+      "contrato": "string",
+      "delta_gc0.cambio_material": "boolean",
+      "delta_gc0.motivos": "array",
+      "emisor": "string",
+      "fase": "string",
+      "horizontes_aplicables_clase.H1": "string",
+      "horizontes_aplicables_clase.H2": "string",
+      "horizontes_aplicables_clase.H3": "string",
+      "horizontes_aplicables_clase.H4": "string",
+      "horizontes_aplicables_clase.H5": "string",
+      "horizontes_interes[]": "string",
+      "lecciones": "array",
+      "msg_id": "string",
+      "nivel": "string",
+      "objeciones[]": "object",
+      "objeciones[].argumento": "string",
+      "objeciones[].dimensiones_E": "object",
+      "objeciones[].dimensiones_E.actualidad": "integer",
+      "objeciones[].dimensiones_E.calidad_metodologica": "integer",
+      "objeciones[].dimensiones_E.calidad_raices": "integer",
+      "objeciones[].dimensiones_E.cobertura_variables": "integer",
+      "objeciones[].dimensiones_E.discrepancias_resueltas": "integer",
+      "objeciones[].dimensiones_E.objeciones_respondidas": "integer",
+      "objeciones[].dimensiones_E.trazabilidad": "integer",
+      "objeciones[].evidencia_disponible": "array",
+      "objeciones[].evidencia_disponible[]": "string",
+      "objeciones[].fuerza": "string",
+      "objeciones[].objecion_id": "string",
+      "objeciones[].que_la_resolveria": "string",
+      "objeciones[].ref": "string",
+      "opciones_vigentes": "array",
+      "opciones_vigentes[].ambito": "object",
+      "opciones_vigentes[].ambito.excluye": "string",
+      "opciones_vigentes[].ambito.incluye": "string",
+      "opciones_vigentes[].ambito.region": "string",
+      "opciones_vigentes[].indicador_seguimiento": "object",
+      "opciones_vigentes[].indicador_seguimiento.fuente": "string",
+      "opciones_vigentes[].indicador_seguimiento.nombre": "string",
+      "opciones_vigentes[].indicador_seguimiento.simbolo": "string",
+      "opciones_vigentes[].invalidacion": "array",
+      "opciones_vigentes[].invalidacion[]": "string",
+      "opciones_vigentes[].invalidacion_activada": "boolean",
+      "opciones_vigentes[].invalidacion_cuantitativa": "array",
+      "opciones_vigentes[].invalidacion_cuantitativa[]": "object",
+      "opciones_vigentes[].invalidacion_cuantitativa[].direccion": "string",
+      "opciones_vigentes[].invalidacion_cuantitativa[].simbolo": "string",
+      "opciones_vigentes[].invalidacion_cuantitativa[].umbral": "number",
+      "opciones_vigentes[].nombre": "string",
+      "opciones_vigentes[].opp_id": "string",
+      "opciones_vigentes[].tesis": "string",
+      "presupuesto": "object",
+      "presupuesto.uc": "number",
+      "receptor": "string",
+      "referencias_disponibles[]": "object",
+      "referencias_disponibles[].anio": "integer|null",
+      "referencias_disponibles[].archivo": "string",
+      "referencias_disponibles[].nivel": "string",
+      "referencias_disponibles[].nota": "null|string",
+      "referencias_disponibles[].q": "integer",
+      "referencias_disponibles[].ref_id": "string",
+      "referencias_disponibles[].tematica": "string",
+      "referencias_disponibles[].titulo": "string",
+      "run_id": "string",
+      "timestamp": "string",
+      "tipo_mensaje": "string",
+      "universo[]": "object",
+      "universo[].ambito_excluye": "string",
+      "universo[].ambito_incluye": "string",
+      "universo[].divisa": "string",
+      "universo[].indicador": "string",
+      "universo[].nombre": "string",
+      "universo[].notas": "string",
+      "universo[].observacion_ht01": "object",
+      "universo[].observacion_ht01.afirmacion": "string",
+      "universo[].observacion_ht01.direccion": "string",
+      "universo[].observacion_ht01.fuente": "string",
+      "universo[].region": "string",
+      "universo[].sector": "string",
+      "universo[].senales": "object",
+      "universo[].senales.drawdown_actual": "number",
+      "universo[].senales.familias_concordantes": "integer",
+      "universo[].senales.fecha_dato": "string",
+      "universo[].senales.mdd": "number",
+      "universo[].senales.momentum_12_1": "number",
+      "universo[].senales.p_tendencia": "number",
+      "universo[].senales.pct_momentum_clase": "number",
+      "universo[].senales.pct_precio_3a": "number",
+      "universo[].senales.pendiente_sen_semanal": "number",
+      "universo[].senales.precio": "number",
+      "universo[].senales.rent_12m": "number",
+      "universo[].senales.rent_1m": "number",
+      "universo[].senales.rent_1s": "number",
+      "universo[].senales.rent_3m": "number",
+      "universo[].senales.riesgo_1a5": "integer",
+      "universo[].senales.senal_compuesta": "number",
+      "universo[].senales.senal_tsmom": "integer",
+      "universo[].senales.tendencia_26s": "string",
+      "universo[].senales.vol_20d": "number",
+      "universo[].senales.vol_anual_3a": "number",
+      "universo[].senales.vol_ewma": "number",
+      "universo[].senales.z_momentum_clase": "number",
+      "universo[].senales.z_precio_3a": "number",
+      "universo[].simbolo": "string",
+      "universo[].subtipo": "string",
+      "universo[].tipo_opcion": "string",
+      "version_contrato": "string"
+     },
+     "valores_de_listas_cerradas": {
+      "fase": [
+       "CRIBADO_E_INVESTIGACION",
+       "RESPUESTA_OBJECIONES",
+       "REVISION_VIGENTES"
+      ]
+     }
+    },
+    "CT-08.ENCARGO": {
+     "combinaciones_de_claves_a_veces": [
+      ""
+     ],
+     "emisores": [
+      "AG-05",
+      "AG-06",
+      "AG-07",
+      "AG-08",
+      "AG-09",
+      "AG-21",
+      "AG-22",
+      "AG-24"
+     ],
+     "receptores": [
+      "AG-14"
+     ],
+     "rutas_a_veces": {},
+     "rutas_siempre": {
+      "clase": "string",
+      "contrato": "string",
+      "emisor": "string",
+      "fecha_limite_informacion": "string",
+      "horizonte": "string",
+      "max_fuentes": "integer",
+      "msg_id": "string",
+      "objetivo": "string",
+      "para": "string",
+      "pregunta": "string",
+      "presupuesto": "object",
+      "presupuesto.uc": "integer",
+      "profundidad": "string",
+      "receptor": "string",
+      "referencias_candidatas": "array",
+      "referencias_candidatas[]": "object",
+      "referencias_candidatas[].anio": "integer",
+      "referencias_candidatas[].archivo": "string",
+      "referencias_candidatas[].nivel": "string",
+      "referencias_candidatas[].nota": "null",
+      "referencias_candidatas[].q": "integer",
+      "referencias_candidatas[].ref_id": "string",
+      "referencias_candidatas[].tematica": "string",
+      "referencias_candidatas[].titulo": "string",
+      "run_id": "string",
+      "timestamp": "string",
+      "tipo_mensaje": "string",
+      "version_contrato": "string"
+     },
+     "valores_de_listas_cerradas": {
+      "objetivo": [
+       "confirmar"
+      ]
+     }
+    },
+    "CT-11.ENCARGO": {
+     "combinaciones_de_claves_a_veces": [
+      ""
+     ],
+     "emisores": [
+      "AG-03",
+      "AG-04",
+      "AG-05",
+      "AG-06",
+      "AG-07",
+      "AG-08",
+      "AG-09",
+      "AG-21",
+      "AG-22",
+      "AG-24",
+      "AG-25"
+     ],
+     "receptores": [
+      "AG-12"
+     ],
+     "rutas_a_veces": {},
+     "rutas_siempre": {
+      "clase": "string",
+      "contrato": "string",
+      "emisor": "string",
+      "msg_id": "string",
+      "piezas": "array",
+      "piezas[]": "object",
+      "piezas[].afirmacion": "string",
+      "piezas[].direccion": "string",
+      "piezas[].extracto": "string",
+      "piezas[].fuente": "string",
+      "piezas[].indice": "integer",
+      "presupuesto": "object",
+      "presupuesto.uc": "integer",
+      "receptor": "string",
+      "run_id": "string",
+      "timestamp": "string",
+      "tipo_mensaje": "string",
+      "version_contrato": "string"
+     },
+     "valores_de_listas_cerradas": {
+      "direccion": []
+     }
+    },
+    "CT-12.ENCARGO": {
+     "combinaciones_de_claves_a_veces": [
+      ""
+     ],
+     "emisores": [
+      "AG-02"
+     ],
+     "receptores": [
+      "AG-10"
+     ],
+     "rutas_a_veces": {
+      "encargos[].certificado_r13.H2": "boolean",
+      "encargos[].certificado_r13.H3": "boolean",
+      "encargos[].certificado_r13.H4": "boolean",
+      "encargos[].certificado_r13.H5": "boolean",
+      "encargos[].metodos_certificados_por_horizonte.H2": "array",
+      "encargos[].metodos_certificados_por_horizonte.H3": "array",
+      "encargos[].metodos_certificados_por_horizonte.H4": "array",
+      "encargos[].metodos_certificados_por_horizonte.H5": "array"
+     },
+     "rutas_siempre": {
+      "contrato": "string",
+      "emisor": "string",
+      "encargos": "array",
+      "encargos[]": "object",
+      "encargos[].catalizadores_conocidos": "array",
+      "encargos[].catalizadores_conocidos[]": "object",
+      "encargos[].catalizadores_conocidos[].evento": "string",
+      "encargos[].catalizadores_conocidos[].fecha": "string",
+      "encargos[].certificado_r13": "object",
+      "encargos[].datos": "object",
+      "encargos[].datos.drawdown_actual": "number",
+      "encargos[].datos.familias_concordantes": "integer",
+      "encargos[].datos.fecha_dato": "string",
+      "encargos[].datos.mdd": "number",
+      "encargos[].datos.momentum_12_1": "number",
+      "encargos[].datos.p_tendencia": "number",
+      "encargos[].datos.pct_momentum_clase": "number",
+      "encargos[].datos.pct_precio_3a": "number",
+      "encargos[].datos.pendiente_sen_semanal": "number",
+      "encargos[].datos.precio": "number",
+      "encargos[].datos.rent_12m": "number",
+      "encargos[].datos.rent_1m": "number",
+      "encargos[].datos.rent_1s": "number",
+      "encargos[].datos.rent_3m": "number",
+      "encargos[].datos.riesgo_1a5": "integer",
+      "encargos[].datos.senal_compuesta": "number",
+      "encargos[].datos.senal_tsmom": "integer",
+      "encargos[].datos.tendencia_26s": "string",
+      "encargos[].datos.vol_20d": "number",
+      "encargos[].datos.vol_anual_3a": "number",
+      "encargos[].datos.vol_ewma": "number",
+      "encargos[].datos.z_momentum_clase": "number",
+      "encargos[].datos.z_precio_3a": "number",
+      "encargos[].horizontes": "array",
+      "encargos[].horizontes[]": "string",
+      "encargos[].invalidacion_propuesta": "array",
+      "encargos[].invalidacion_propuesta[]": "string",
+      "encargos[].metodos_certificados_por_horizonte": "object",
+      "encargos[].opp_id": "null",
+      "encargos[].proxy": "string",
+      "encargos[].ref": "string",
+      "encargos[].referencia_indice": "null|string",
+      "encargos[].tesis": "string",
+      "encargos[].tipo_pronostico": "string",
+      "fecha_limite_informacion": "string",
+      "msg_id": "string",
+      "presupuesto": "object",
+      "presupuesto.uc": "number",
+      "receptor": "string",
+      "run_id": "string",
+      "timestamp": "string",
+      "tipo_mensaje": "string",
+      "version_contrato": "string"
+     }
+    },
+    "CT-13.ENCARGO": {
+     "combinaciones_de_claves_a_veces": [
+      "",
+      "contrarreplicas"
+     ],
+     "emisores": [
+      "AG-02"
+     ],
+     "receptores": [
+      "AG-11"
+     ],
+     "rutas_a_veces": {
+      "contrarreplicas": "array",
+      "peticiones[]": "object"
+     },
+     "rutas_siempre": {
+      "contrarreplicas[]": "object",
+      "contrarreplicas[].argumento": "string",
+      "contrarreplicas[].evidencia_citada": "array",
+      "contrarreplicas[].evidencia_citada[]": "object",
+      "contrarreplicas[].evidencia_citada[].afirmacion": "string",
+      "contrarreplicas[].evidencia_citada[].direccion": "string",
+      "contrarreplicas[].evidencia_citada[].id": "string",
+      "contrarreplicas[].evidencia_citada[].tipo": "string",
+      "contrarreplicas[].objecion_id": "string",
+      "contrarreplicas[].que_la_resolveria": "string",
+      "contrarreplicas[].ref": "string",
+      "contrarreplicas[].respuesta": "string",
+      "contrato": "string",
+      "emisor": "string",
+      "msg_id": "string",
+      "nivel": "string",
+      "peticiones": "array",
+      "peticiones[].afirmaciones_verificables": "array",
+      "peticiones[].afirmaciones_verificables[]": "object",
+      "peticiones[].afirmaciones_verificables[].afirmacion": "string",
+      "peticiones[].afirmaciones_verificables[].horizonte": "string",
+      "peticiones[].afirmaciones_verificables[].vista": "string",
+      "peticiones[].calculos": "array",
+      "peticiones[].calculos[]": "string",
+      "peticiones[].evidencias": "array",
+      "peticiones[].evidencias[]": "object",
+      "peticiones[].evidencias[].afirmacion": "string",
+      "peticiones[].evidencias[].direccion": "string",
+      "peticiones[].evidencias[].fuente": "string",
+      "peticiones[].opp_id": "null",
+      "peticiones[].ref": "string",
+      "presupuesto": "object",
+      "presupuesto.uc": "number",
+      "receptor": "string",
+      "run_id": "string",
+      "timestamp": "string",
+      "tipo_mensaje": "string",
+      "version_contrato": "string"
+     }
+    },
+    "CT-15.ENCARGO": {
+     "combinaciones_de_claves_a_veces": [
+      ""
+     ],
+     "emisores": [
+      "AG-02"
+     ],
+     "receptores": [
+      "AG-17"
+     ],
+     "rutas_a_veces": {
+      "paquete_sintesis.clases.<clase>": "object",
+      "paquete_sintesis.clases.<clase>.opciones[]": "object"
+     },
+     "rutas_siempre": {
+      "contrato": "string",
+      "emisor": "string",
+      "msg_id": "string",
+      "paquete_sintesis": "object",
+      "paquete_sintesis.apuestas_independientes": "integer",
+      "paquete_sintesis.clases": "object",
+      "paquete_sintesis.clases.<clase>.candidatas_analizadas": "integer",
+      "paquete_sintesis.clases.<clase>.menos_de_tres_motivo": "null|string",
+      "paquete_sintesis.clases.<clase>.n": "integer",
+      "paquete_sintesis.clases.<clase>.opciones": "array",
+      "paquete_sintesis.clases.<clase>.opciones[].ambito": "object",
+      "paquete_sintesis.clases.<clase>.opciones[].ambito.excluye": "string",
+      "paquete_sintesis.clases.<clase>.opciones[].ambito.incluye": "string",
+      "paquete_sintesis.clases.<clase>.opciones[].ambito.region": "string",
+      "paquete_sintesis.clases.<clase>.opciones[].banda": "string",
+      "paquete_sintesis.clases.<clase>.opciones[].horizontes": "array",
+      "paquete_sintesis.clases.<clase>.opciones[].horizontes[]": "string",
+      "paquete_sintesis.clases.<clase>.opciones[].nombre_llano": "string",
+      "paquete_sintesis.clases.<clase>.opciones[].opp_id": "string",
+      "paquete_sintesis.clases.<clase>.opciones[].riesgo_1a5": "integer",
+      "paquete_sintesis.clases.<clase>.opciones[].riesgos": "array",
+      "paquete_sintesis.clases.<clase>.opciones[].riesgos[]": "string",
+      "paquete_sintesis.clases.<clase>.opciones[].tesis": "string",
+      "paquete_sintesis.clases.<clase>.semaforo": "string",
+      "paquete_sintesis.fecha": "string",
+      "paquete_sintesis.historial_aciertos": "object",
+      "paquete_sintesis.historial_aciertos.aciertos": "integer",
+      "paquete_sintesis.historial_aciertos.n": "integer",
+      "paquete_sintesis.historial_aciertos.por_horizonte": "object",
+      "paquete_sintesis.historial_aciertos.referencia": "string",
+      "paquete_sintesis.historial_aciertos.significativo": "boolean",
+      "paquete_sintesis.historial_aciertos.tasa_acierto": "null",
+      "paquete_sintesis.historial_aciertos.tasa_esperada_azar": "number",
+      "paquete_sintesis.run_id": "string",
+      "presupuesto": "object",
+      "presupuesto.uc": "integer",
+      "receptor": "string",
+      "run_id": "string",
+      "timestamp": "string",
+      "tipo_mensaje": "string",
+      "version_contrato": "string"
+     }
+    },
+    "CT-16.ENCARGO": {
+     "combinaciones_de_claves_a_veces": [
+      ""
+     ],
+     "emisores": [
+      "AG-01"
+     ],
+     "receptores": [
+      "AG-18"
+     ],
+     "rutas_a_veces": {},
+     "rutas_siempre": {
+      "contrato": "string",
+      "emisor": "string",
+      "msg_id": "string",
+      "paquete_auditoria": "object",
+      "paquete_auditoria.entregables": "object",
+      "paquete_auditoria.entregables.informe_tecnico": "string",
+      "paquete_auditoria.entregables.informe_visual": "string",
+      "paquete_auditoria.entregables.paquete_json": "string",
+      "paquete_auditoria.run_id": "string",
+      "presupuesto": "object",
+      "presupuesto.uc": "integer",
+      "receptor": "string",
+      "run_id": "string",
+      "timestamp": "string",
+      "tipo_mensaje": "string",
+      "version_contrato": "string"
+     }
+    },
+    "CT-17.ENCARGO": {
+     "combinaciones_de_claves_a_veces": [
+      ""
+     ],
+     "emisores": [
+      "AG-18"
+     ],
+     "receptores": [
+      "AG-19"
+     ],
+     "rutas_a_veces": {
+      "nivel_por_clase.<clase>": "string"
+     },
+     "rutas_siempre": {
+      "contrato": "string",
+      "emisor": "string",
+      "g3": "object",
+      "g3.advertencias": "array",
+      "g3.bloqueos": "array",
+      "g3.dictamen": "string",
+      "g3.errores_esquema": "array",
+      "g3.frases_largas": "array",
+      "g3.incoherencias": "array",
+      "g3.legibilidad": "number",
+      "limitaciones": "array",
+      "limitaciones[]": "string",
+      "msg_id": "string",
+      "nivel_por_clase": "object",
+      "opciones": "array",
+      "opciones[]": "object",
+      "opciones[].clase": "string",
+      "opciones[].nombre": "string",
+      "opciones[].objeciones": "array",
+      "opciones[].objeciones[]": "object",
+      "opciones[].objeciones[].estado": "string",
+      "opciones[].objeciones[].fuerza": "string",
+      "opciones[].objeciones[].objecion_id": "string",
+      "opciones[].objeciones[].respuesta": "string",
+      "opciones[].objeciones[].resuelta": "boolean",
+      "opciones[].objeciones[].resumen": "string",
+      "opciones[].opp_id": "string",
+      "opciones[].puntuaciones": "object",
+      "opciones[].puntuaciones.A": "integer",
+      "opciones[].puntuaciones.E": "integer",
+      "opciones[].puntuaciones.M": "integer",
+      "opciones[].puntuaciones.P": "integer",
+      "opciones[].puntuaciones.RK": "integer",
+      "opciones[].puntuaciones.T": "integer",
+      "opciones[].puntuaciones.desglose_ref": "string",
+      "opciones[].relevancia_decisional": "string",
+      "opciones[].riesgo_1a5": "integer",
+      "opciones[].tesis": "string",
+      "presupuesto": "object",
+      "presupuesto.uc": "integer",
+      "receptor": "string",
+      "run_id": "string",
+      "timestamp": "string",
+      "tipo": "string",
+      "tipo_mensaje": "string",
+      "version_contrato": "string"
+     }
+    }
+   }
+  },
+  "ciclo_semanal_v6": {
+   "contratos_que_se_guardan": "todos",
+   "mensajes": {
+    "CT-02.RETORNO": {
+     "combinaciones_de_claves_a_veces": [
+      ""
+     ],
+     "emisores": [
+      "AG-01"
+     ],
+     "receptores": [
+      "BROKER"
+     ],
+     "rutas_a_veces": {
+      "resumen.top3_por_clase.<clase>": "array",
+      "resumen.top3_por_clase.<clase>[]": "string"
+     },
+     "rutas_siempre": {
+      "autoevaluacion": "string",
+      "consumo": "object",
+      "contrato": "string",
+      "emisor": "string",
+      "entregables": "object",
+      "entregables.informe_tecnico": "string",
+      "entregables.informe_visual": "string",
+      "entregables.paquete_json": "string",
+      "estado": "string",
+      "estado_g3": "string",
+      "limitaciones": "array",
+      "msg_id": "string",
+      "receptor": "string",
+      "resumen": "object",
+      "resumen.apuestas_independientes": "integer",
+      "resumen.cambios_vs_anterior": "string",
+      "resumen.top3_por_clase": "object",
+      "run_id": "string",
+      "timestamp": "string",
+      "tipo_mensaje": "string",
+      "version_contrato": "string"
+     },
+     "valores_de_listas_cerradas": {
+      "estado_g3": [
+       "APTO_CON_ADVERTENCIAS"
+      ]
+     }
+    },
+    "CT-05.ENCARGO": {
+     "combinaciones_de_claves_a_veces": [
+      ""
+     ],
+     "emisores": [
+      "AG-01"
+     ],
+     "receptores": [
+      "AG-02"
+     ],
+     "rutas_a_veces": {
+      "delta_gc0.<clase>": "object",
+      "nivel_por_clase.<clase>": "string",
+      "presupuesto_por_clase.<clase>": "number"
+     },
+     "rutas_siempre": {
+      "alcance": "object",
+      "alcance.clases": "array",
+      "alcance.clases[]": "string",
+      "contrato": "string",
+      "delta_gc0": "object",
+      "delta_gc0.<clase>.arrastre_verificado": "boolean",
+      "delta_gc0.<clase>.cambio_material": "boolean",
+      "delta_gc0.<clase>.invalidadas": "array",
+      "delta_gc0.<clase>.motivos": "array",
+      "delta_gc0.<clase>.motivos[]": "string",
+      "emisor": "string",
+      "fecha_objetivo": "string",
+      "horizontes": "array",
+      "horizontes[]": "string",
+      "memoria": "object",
+      "memoria.certificados": "array",
+      "memoria.lec_aplicables": "array",
+      "memoria.opp_vigentes": "array",
+      "memoria.tnd_activas": "array",
+      "msg_id": "string",
+      "nivel_por_clase": "object",
+      "presupuesto": "object",
+      "presupuesto.uc": "number",
+      "presupuesto_por_clase": "object",
+      "presupuesto_por_clase.COMUN": "number",
+      "presupuesto_por_clase.V6_GLOBAL": "number",
+      "receptor": "string",
+      "run_id": "string",
+      "timestamp": "string",
+      "tipo": "string",
+      "tipo_mensaje": "string",
+      "version_contrato": "string"
+     },
+     "valores_de_listas_cerradas": {
+      "tipo": [
+       "PERIODICO"
+      ]
+     }
+    },
+    "CT-06.ENCARGO": {
+     "combinaciones_de_claves_a_veces": [
+      "calculos_disponibles delta_gc0 fecha_limite_informacion foco horizontes_aplicables_clase horizontes_interes max_candidatas max_finalistas referencias_disponibles rotacion_exploratoria tipo_activo umbral_senal_gc1 universo",
+      "objeciones"
+     ],
+     "emisores": [
+      "AG-02"
+     ],
+     "receptores": [
+      "AG-03",
+      "AG-04",
+      "AG-05",
+      "AG-06",
+      "AG-07",
+      "AG-08",
+      "AG-09",
+      "AG-21",
+      "AG-22",
+      "AG-23",
+      "AG-24",
+      "AG-25"
+     ],
+     "rutas_a_veces": {
+      "calculos_disponibles": "array",
+      "delta_gc0": "object",
+      "fecha_limite_informacion": "string",
+      "foco": "null",
+      "horizontes_aplicables_clase": "object",
+      "horizontes_interes": "array",
+      "max_candidatas": "integer",
+      "max_finalistas": "integer",
+      "objeciones": "array",
+      "referencias_disponibles": "array",
+      "rotacion_exploratoria": "array",
+      "tipo_activo": "string",
+      "umbral_senal_gc1": "number",
+      "universo": "array"
+     },
+     "rutas_siempre": {
+      "calculos_disponibles[]": "string",
+      "clase": "string",
+      "contrato": "string",
+      "delta_gc0.cambio_material": "boolean",
+      "delta_gc0.motivos": "array",
+      "delta_gc0.motivos[]": "string",
+      "emisor": "string",
+      "fase": "string",
+      "horizontes_aplicables_clase.H1": "string",
+      "horizontes_aplicables_clase.H2": "string",
+      "horizontes_aplicables_clase.H3": "string",
+      "horizontes_aplicables_clase.H4": "string",
+      "horizontes_aplicables_clase.H5": "string",
+      "horizontes_interes[]": "string",
+      "lecciones": "array",
+      "msg_id": "string",
+      "nivel": "string",
+      "objeciones[]": "object",
+      "objeciones[].argumento": "string",
+      "objeciones[].dimensiones_E": "object",
+      "objeciones[].dimensiones_E.actualidad": "integer",
+      "objeciones[].dimensiones_E.calidad_metodologica": "integer",
+      "objeciones[].dimensiones_E.calidad_raices": "integer",
+      "objeciones[].dimensiones_E.cobertura_variables": "integer",
+      "objeciones[].dimensiones_E.discrepancias_resueltas": "integer",
+      "objeciones[].dimensiones_E.objeciones_respondidas": "integer",
+      "objeciones[].dimensiones_E.trazabilidad": "integer",
+      "objeciones[].evidencia_disponible": "array",
+      "objeciones[].evidencia_disponible[]": "string",
+      "objeciones[].fuerza": "string",
+      "objeciones[].objecion_id": "string",
+      "objeciones[].que_la_resolveria": "string",
+      "objeciones[].ref": "string",
+      "opciones_vigentes": "array",
+      "presupuesto": "object",
+      "presupuesto.uc": "number",
+      "receptor": "string",
+      "referencias_disponibles[]": "object",
+      "referencias_disponibles[].anio": "integer|null",
+      "referencias_disponibles[].archivo": "string",
+      "referencias_disponibles[].nivel": "string",
+      "referencias_disponibles[].nota": "null|string",
+      "referencias_disponibles[].q": "integer",
+      "referencias_disponibles[].ref_id": "string",
+      "referencias_disponibles[].tematica": "string",
+      "referencias_disponibles[].titulo": "string",
+      "run_id": "string",
+      "timestamp": "string",
+      "tipo_mensaje": "string",
+      "universo[]": "object",
+      "universo[].ambito_excluye": "string",
+      "universo[].ambito_incluye": "string",
+      "universo[].divisa": "string",
+      "universo[].gc1": "string",
+      "universo[].indicador": "string",
+      "universo[].nombre": "string",
+      "universo[].notas": "string",
+      "universo[].observacion_ht01": "object",
+      "universo[].observacion_ht01.afirmacion": "string",
+      "universo[].observacion_ht01.direccion": "string",
+      "universo[].observacion_ht01.fuente": "string",
+      "universo[].region": "string",
+      "universo[].sector": "string",
+      "universo[].senales": "object",
+      "universo[].senales.drawdown_actual": "number",
+      "universo[].senales.familias_concordantes": "integer",
+      "universo[].senales.fecha_dato": "string",
+      "universo[].senales.mdd": "number",
+      "universo[].senales.momentum_12_1": "number",
+      "universo[].senales.p_tendencia": "number",
+      "universo[].senales.pct_momentum_clase": "number",
+      "universo[].senales.pct_precio_3a": "number",
+      "universo[].senales.pendiente_sen_semanal": "number",
+      "universo[].senales.precio": "number",
+      "universo[].senales.rent_12m": "number",
+      "universo[].senales.rent_1m": "number",
+      "universo[].senales.rent_1s": "number",
+      "universo[].senales.rent_3m": "number",
+      "universo[].senales.riesgo_1a5": "integer",
+      "universo[].senales.senal_compuesta": "number",
+      "universo[].senales.senal_tsmom": "integer",
+      "universo[].senales.tendencia_26s": "string",
+      "universo[].senales.vol_20d": "number",
+      "universo[].senales.vol_anual_3a": "number",
+      "universo[].senales.vol_ewma": "number",
+      "universo[].senales.z_momentum_clase": "number",
+      "universo[].senales.z_precio_3a": "number",
+      "universo[].simbolo": "string",
+      "universo[].subtipo": "string",
+      "universo[].tipo_opcion": "string",
+      "version_contrato": "string"
+     },
+     "valores_de_listas_cerradas": {
+      "fase": [
+       "CRIBADO_E_INVESTIGACION",
+       "RESPUESTA_OBJECIONES"
+      ]
+     }
+    },
+    "CT-08.ENCARGO": {
+     "combinaciones_de_claves_a_veces": [
+      ""
+     ],
+     "emisores": [
+      "AG-05",
+      "AG-06",
+      "AG-07",
+      "AG-08",
+      "AG-09",
+      "AG-21",
+      "AG-22"
+     ],
+     "receptores": [
+      "AG-28"
+     ],
+     "rutas_a_veces": {},
+     "rutas_siempre": {
+      "clase": "string",
+      "contrato": "string",
+      "emisor": "string",
+      "fecha_limite_informacion": "string",
+      "horizonte": "string",
+      "max_fuentes": "integer",
+      "msg_id": "string",
+      "objetivo": "string",
+      "para": "string",
+      "pregunta": "string",
+      "presupuesto": "object",
+      "presupuesto.uc": "integer",
+      "profundidad": "string",
+      "receptor": "string",
+      "referencias_candidatas": "array",
+      "referencias_candidatas[]": "object",
+      "referencias_candidatas[].anio": "integer",
+      "referencias_candidatas[].archivo": "string",
+      "referencias_candidatas[].nivel": "string",
+      "referencias_candidatas[].nota": "null",
+      "referencias_candidatas[].q": "integer",
+      "referencias_candidatas[].ref_id": "string",
+      "referencias_candidatas[].tematica": "string",
+      "referencias_candidatas[].titulo": "string",
+      "run_id": "string",
+      "timestamp": "string",
+      "tipo_mensaje": "string",
+      "version_contrato": "string"
+     },
+     "valores_de_listas_cerradas": {
+      "objetivo": [
+       "confirmar"
+      ]
+     }
+    },
+    "CT-12.ENCARGO": {
+     "combinaciones_de_claves_a_veces": [
+      ""
+     ],
+     "emisores": [
+      "AG-02"
+     ],
+     "receptores": [
+      "AG-10"
+     ],
+     "rutas_a_veces": {
+      "encargos[].certificado_r13.H2": "boolean",
+      "encargos[].certificado_r13.H3": "boolean",
+      "encargos[].certificado_r13.H4": "boolean",
+      "encargos[].certificado_r13.H5": "boolean",
+      "encargos[].metodos_certificados_por_horizonte.H2": "array",
+      "encargos[].metodos_certificados_por_horizonte.H3": "array",
+      "encargos[].metodos_certificados_por_horizonte.H4": "array",
+      "encargos[].metodos_certificados_por_horizonte.H5": "array"
+     },
+     "rutas_siempre": {
+      "contrato": "string",
+      "emisor": "string",
+      "encargos": "array",
+      "encargos[]": "object",
+      "encargos[].catalizadores_conocidos": "array",
+      "encargos[].catalizadores_conocidos[]": "object",
+      "encargos[].catalizadores_conocidos[].evento": "string",
+      "encargos[].catalizadores_conocidos[].fecha": "string",
+      "encargos[].certificado_r13": "object",
+      "encargos[].clase": "string",
+      "encargos[].datos": "object",
+      "encargos[].datos.drawdown_actual": "number",
+      "encargos[].datos.familias_concordantes": "integer",
+      "encargos[].datos.fecha_dato": "string",
+      "encargos[].datos.mdd": "number",
+      "encargos[].datos.momentum_12_1": "number",
+      "encargos[].datos.p_tendencia": "number",
+      "encargos[].datos.pct_momentum_clase": "number",
+      "encargos[].datos.pct_precio_3a": "number",
+      "encargos[].datos.pendiente_sen_semanal": "number",
+      "encargos[].datos.precio": "number",
+      "encargos[].datos.rent_12m": "number",
+      "encargos[].datos.rent_1m": "number",
+      "encargos[].datos.rent_1s": "number",
+      "encargos[].datos.rent_3m": "number",
+      "encargos[].datos.riesgo_1a5": "integer",
+      "encargos[].datos.senal_compuesta": "number",
+      "encargos[].datos.senal_tsmom": "integer",
+      "encargos[].datos.tendencia_26s": "string",
+      "encargos[].datos.vol_20d": "number",
+      "encargos[].datos.vol_anual_3a": "number",
+      "encargos[].datos.vol_ewma": "number",
+      "encargos[].datos.z_momentum_clase": "number",
+      "encargos[].datos.z_precio_3a": "number",
+      "encargos[].horizontes": "array",
+      "encargos[].horizontes[]": "string",
+      "encargos[].invalidacion_propuesta": "array",
+      "encargos[].invalidacion_propuesta[]": "string",
+      "encargos[].metodos_certificados_por_horizonte": "object",
+      "encargos[].opp_id": "null",
+      "encargos[].proxy": "string",
+      "encargos[].ref": "string",
+      "encargos[].referencia_indice": "null|string",
+      "encargos[].tesis": "string",
+      "encargos[].tipo_pronostico": "string",
+      "fecha_limite_informacion": "string",
+      "msg_id": "string",
+      "presupuesto": "object",
+      "presupuesto.uc": "number",
+      "receptor": "string",
+      "run_id": "string",
+      "timestamp": "string",
+      "tipo_mensaje": "string",
+      "version_contrato": "string"
+     }
+    },
+    "CT-13.ENCARGO": {
+     "combinaciones_de_claves_a_veces": [
+      "",
+      "contrarreplicas"
+     ],
+     "emisores": [
+      "AG-02"
+     ],
+     "receptores": [
+      "AG-11"
+     ],
+     "rutas_a_veces": {
+      "contrarreplicas": "array",
+      "peticiones[]": "object"
+     },
+     "rutas_siempre": {
+      "contrarreplicas[]": "object",
+      "contrarreplicas[].argumento": "string",
+      "contrarreplicas[].evidencia_citada": "array",
+      "contrarreplicas[].evidencia_citada[]": "object",
+      "contrarreplicas[].evidencia_citada[].afirmacion": "string",
+      "contrarreplicas[].evidencia_citada[].direccion": "string",
+      "contrarreplicas[].evidencia_citada[].id": "string",
+      "contrarreplicas[].evidencia_citada[].tipo": "string",
+      "contrarreplicas[].objecion_id": "string",
+      "contrarreplicas[].que_la_resolveria": "string",
+      "contrarreplicas[].ref": "string",
+      "contrarreplicas[].respuesta": "string",
+      "contrato": "string",
+      "emisor": "string",
+      "msg_id": "string",
+      "nivel": "string",
+      "peticiones": "array",
+      "peticiones[].afirmaciones_verificables": "array",
+      "peticiones[].afirmaciones_verificables[]": "object",
+      "peticiones[].afirmaciones_verificables[].afirmacion": "string",
+      "peticiones[].afirmaciones_verificables[].horizonte": "string",
+      "peticiones[].afirmaciones_verificables[].vista": "string",
+      "peticiones[].calculos": "array",
+      "peticiones[].calculos[]": "string",
+      "peticiones[].clase": "string",
+      "peticiones[].evidencias": "array",
+      "peticiones[].evidencias[]": "object",
+      "peticiones[].evidencias[].afirmacion": "string",
+      "peticiones[].evidencias[].direccion": "string",
+      "peticiones[].evidencias[].fuente": "string",
+      "peticiones[].nivel": "string",
+      "peticiones[].opp_id": "string",
+      "peticiones[].ref": "string",
+      "presupuesto": "object",
+      "presupuesto.uc": "number",
+      "receptor": "string",
+      "run_id": "string",
+      "timestamp": "string",
+      "tipo_mensaje": "string",
+      "version_contrato": "string"
+     }
+    },
+    "CT-15.ENCARGO": {
+     "combinaciones_de_claves_a_veces": [
+      ""
+     ],
+     "emisores": [
+      "AG-02"
+     ],
+     "receptores": [
+      "AG-26"
+     ],
+     "rutas_a_veces": {
+      "paquete_sintesis.clases.<clase>": "object",
+      "paquete_sintesis.clases.<clase>.opciones[]": "object"
+     },
+     "rutas_siempre": {
+      "contrato": "string",
+      "emisor": "string",
+      "msg_id": "string",
+      "paquete_sintesis": "object",
+      "paquete_sintesis.apuestas_independientes": "integer",
+      "paquete_sintesis.clases": "object",
+      "paquete_sintesis.clases.<clase>.candidatas_analizadas": "integer",
+      "paquete_sintesis.clases.<clase>.menos_de_tres_motivo": "null|string",
+      "paquete_sintesis.clases.<clase>.n": "integer",
+      "paquete_sintesis.clases.<clase>.opciones": "array",
+      "paquete_sintesis.clases.<clase>.opciones[].ambito": "object",
+      "paquete_sintesis.clases.<clase>.opciones[].ambito.excluye": "string",
+      "paquete_sintesis.clases.<clase>.opciones[].ambito.incluye": "string",
+      "paquete_sintesis.clases.<clase>.opciones[].ambito.region": "string",
+      "paquete_sintesis.clases.<clase>.opciones[].banda": "string",
+      "paquete_sintesis.clases.<clase>.opciones[].horizontes": "array",
+      "paquete_sintesis.clases.<clase>.opciones[].horizontes[]": "string",
+      "paquete_sintesis.clases.<clase>.opciones[].nombre_llano": "string",
+      "paquete_sintesis.clases.<clase>.opciones[].opp_id": "string",
+      "paquete_sintesis.clases.<clase>.opciones[].riesgo_1a5": "integer",
+      "paquete_sintesis.clases.<clase>.opciones[].riesgos": "array",
+      "paquete_sintesis.clases.<clase>.opciones[].riesgos[]": "string",
+      "paquete_sintesis.clases.<clase>.opciones[].tesis": "string",
+      "paquete_sintesis.clases.<clase>.semaforo": "string",
+      "paquete_sintesis.fecha": "string",
+      "paquete_sintesis.historial_aciertos": "object",
+      "paquete_sintesis.historial_aciertos.aciertos": "integer",
+      "paquete_sintesis.historial_aciertos.n": "integer",
+      "paquete_sintesis.historial_aciertos.por_horizonte": "object",
+      "paquete_sintesis.historial_aciertos.referencia": "string",
+      "paquete_sintesis.historial_aciertos.significativo": "boolean",
+      "paquete_sintesis.historial_aciertos.tasa_acierto": "null",
+      "paquete_sintesis.historial_aciertos.tasa_esperada_azar": "number",
+      "paquete_sintesis.run_id": "string",
+      "presupuesto": "object",
+      "presupuesto.uc": "number",
+      "receptor": "string",
+      "run_id": "string",
+      "timestamp": "string",
+      "tipo_mensaje": "string",
+      "version_contrato": "string"
+     }
+    }
+   }
+  },
+  "consulta_al_broker": {
+   "contratos_que_se_guardan": [
+    "CT-22",
+    "CT-23"
+   ],
+   "mensajes": {
+    "CT-22.ENCARGO": {
+     "combinaciones_de_claves_a_veces": [
+      ""
+     ],
+     "emisores": [
+      "AG-01"
+     ],
+     "receptores": [
+      "AG-20"
+     ],
+     "rutas_a_veces": {},
+     "rutas_siempre": {
+      "cns_ids": "array",
+      "cns_ids[]": "string",
+      "contrato": "string",
+      "emisor": "string",
+      "motivo": "string",
+      "msg_id": "string",
+      "presupuesto": "object",
+      "propuesta": "string",
+      "query_id": "string",
+      "receptor": "string",
+      "repeticiones": "integer",
+      "timestamp": "string",
+      "tipo_aviso": "string",
+      "tipo_consulta": "string",
+      "tipo_mensaje": "string",
+      "ventana": "string",
+      "version_contrato": "string"
+     },
+     "valores_de_listas_abiertas": {
+      "tipo": []
+     }
+    },
+    "CT-23.ENCARGO": {
+     "combinaciones_de_claves_a_veces": [
+      "clases motivo plazo_respuesta preguntas punto_control run_id seg_id",
+      "clases motivo plazo_respuesta preguntas punto_control seg_id",
+      "contenido referencia"
+     ],
+     "emisores": [
+      "AG-01",
+      "BROKER"
+     ],
+     "receptores": [
+      "AG-01",
+      "BROKER"
+     ],
+     "rutas_a_veces": {
+      "clases": "array",
+      "clases[]": "string",
+      "contenido": "string",
+      "motivo": "string",
+      "plazo_respuesta": "string",
+      "preguntas": "array",
+      "preguntas[].efecto_si_falso": "string",
+      "punto_control": "null|string",
+      "referencia": "object",
+      "run_id": "string",
+      "seg_id": "null"
+     },
+     "rutas_siempre": {
+      "cns_id": "string",
+      "contrato": "string",
+      "emisor": "string",
+      "modo": "string",
+      "msg_id": "string",
+      "preguntas[]": "object",
+      "preguntas[].supuesto_declarado": "string",
+      "preguntas[].texto": "string",
+      "presupuesto": "object",
+      "query_id": "string",
+      "receptor": "string",
+      "referencia.run_id": "null",
+      "sentido": "string",
+      "timestamp": "string",
+      "tipo": "string",
+      "tipo_mensaje": "string",
+      "version_contrato": "string"
+     },
+     "valores_de_listas_cerradas": {
+      "modo": [
+       "BLOQUEANTE",
+       "NO_BLOQUEANTE"
+      ],
+      "sentido": [
+       "ENTRANTE",
+       "SALIENTE"
+      ],
+      "tipo": [
+       "ACLARACION_ALCANCE",
+       "DATO_O_DOCUMENTO",
+       "OTRA"
+      ]
+     }
+    },
+    "CT-23.RETORNO": {
+     "combinaciones_de_claves_a_veces": [
+      ""
+     ],
+     "emisores": [
+      "BROKER"
+     ],
+     "receptores": [
+      "AG-01"
+     ],
+     "rutas_a_veces": {},
+     "rutas_siempre": {
+      "autoevaluacion": "string",
+      "cns_id": "string",
+      "consumo": "object",
+      "contrato": "string",
+      "emisor": "string",
+      "estado": "string",
+      "estado_consulta": "string",
+      "limitaciones": "array",
+      "msg_id": "string",
+      "query_id": "string",
+      "receptor": "string",
+      "respuestas": "array",
+      "respuestas[]": "object",
+      "respuestas[].indice": "integer",
+      "respuestas[].texto": "string",
+      "timestamp": "string",
+      "tipo_mensaje": "string",
+      "version_contrato": "string"
+     },
+     "valores_de_listas_cerradas": {
+      "estado": [
+       "COMPLETO"
+      ]
+     }
+    }
+   }
+  },
+  "consulta_n0": {
+   "contratos_que_se_guardan": [
+    "CT-03"
+   ],
+   "mensajes": {
+    "CT-03.ENCARGO": {
+     "combinaciones_de_claves_a_veces": [
+      ""
+     ],
+     "emisores": [
+      "BROKER"
+     ],
+     "receptores": [
+      "AG-01"
+     ],
+     "rutas_a_veces": {},
+     "rutas_siempre": {
+      "contexto": "object",
+      "contrato": "string",
+      "emisor": "string",
+      "msg_id": "string",
+      "pregunta": "string",
+      "presupuesto": "object",
+      "receptor": "string",
+      "timestamp": "string",
+      "tipo_mensaje": "string",
+      "urgencia": "string",
+      "version_contrato": "string"
+     },
+     "valores_de_listas_cerradas": {
+      "urgencia": [
+       "NORMAL"
+      ]
+     }
+    },
+    "CT-03.RETORNO": {
+     "combinaciones_de_claves_a_veces": [
+      ""
+     ],
+     "emisores": [
+      "AG-01"
+     ],
+     "receptores": [
+      "BROKER"
+     ],
+     "rutas_a_veces": {},
+     "rutas_siempre": {
+      "autoevaluacion": "string",
+      "clase_consulta": "string",
+      "confianza": "string",
+      "consumo": "object",
+      "contrato": "string",
+      "emisor": "string",
+      "escalado": "null",
+      "estado": "string",
+      "limitaciones": "array",
+      "msg_id": "string",
+      "query_id": "string",
+      "receptor": "string",
+      "referencias": "array",
+      "referencias[]": "string",
+      "respuesta": "string",
+      "ruta": "string",
+      "timestamp": "string",
+      "tipo_mensaje": "string",
+      "version_contrato": "string"
+     },
+     "valores_de_listas_cerradas": {
+      "clase_consulta": [
+       "ACLARACION"
+      ],
+      "confianza": [
+       "probable"
+      ],
+      "ruta": [
+       "N0"
+      ]
+     }
+    }
+   }
+  },
+  "consulta_que_escala": {
+   "contratos_que_se_guardan": [
+    "CT-03"
+   ],
+   "mensajes": {
+    "CT-03.ENCARGO": {
+     "combinaciones_de_claves_a_veces": [
+      ""
+     ],
+     "emisores": [
+      "BROKER"
+     ],
+     "receptores": [
+      "AG-01"
+     ],
+     "rutas_a_veces": {},
+     "rutas_siempre": {
+      "contexto": "object",
+      "contrato": "string",
+      "emisor": "string",
+      "msg_id": "string",
+      "pregunta": "string",
+      "presupuesto": "object",
+      "receptor": "string",
+      "timestamp": "string",
+      "tipo_mensaje": "string",
+      "urgencia": "string",
+      "version_contrato": "string"
+     },
+     "valores_de_listas_cerradas": {
+      "urgencia": [
+       "NORMAL"
+      ]
+     }
+    },
+    "CT-03.RETORNO": {
+     "combinaciones_de_claves_a_veces": [
+      ""
+     ],
+     "emisores": [
+      "AG-01"
+     ],
+     "receptores": [
+      "BROKER"
+     ],
+     "rutas_a_veces": {},
+     "rutas_siempre": {
+      "autoevaluacion": "string",
+      "clase_consulta": "string",
+      "confianza": "string",
+      "consumo": "object",
+      "contrato": "string",
+      "emisor": "string",
+      "escalado": "object",
+      "escalado.clases": "array",
+      "escalado.clases[]": "string",
+      "escalado.estado_run": "string",
+      "escalado.nivel": "string",
+      "escalado.plazo_estimado": "string",
+      "escalado.respuesta_provisional": "string",
+      "escalado.run_id": "string",
+      "estado": "string",
+      "limitaciones": "array",
+      "msg_id": "string",
+      "query_id": "string",
+      "receptor": "string",
+      "referencias": "array",
+      "respuesta": "string",
+      "ruta": "string",
+      "timestamp": "string",
+      "tipo_mensaje": "string",
+      "version_contrato": "string"
+     },
+     "valores_de_listas_cerradas": {
+      "clase_consulta": [
+       "CONTRASTE"
+      ],
+      "confianza": [
+       "especulativo"
+      ],
+      "ruta": [
+       "ANALITICA"
+      ]
+     }
+    }
+   }
+  },
+  "credenciales": {
+   "contratos_que_se_guardan": [
+    "CT-25"
+   ],
+   "mensajes": {
+    "CT-25.ENCARGO": {
+     "combinaciones_de_claves_a_veces": [
+      "herramienta urgencia",
+      "recordatorio"
+     ],
+     "emisores": [
+      "AG-01"
+     ],
+     "receptores": [
+      "BROKER"
+     ],
+     "rutas_a_veces": {
+      "herramienta": "string",
+      "recordatorio": "boolean",
+      "urgencia": "string"
+     },
+     "rutas_siempre": {
+      "contrato": "string",
+      "crd_id": "string",
+      "emisor": "string",
+      "impacto_si_falta": "string",
+      "msg_id": "string",
+      "presupuesto": "object",
+      "query_id": "string",
+      "receptor": "string",
+      "servicio": "string",
+      "solicitante": "string",
+      "timestamp": "string",
+      "tipo_mensaje": "string",
+      "uso_previsto": "string",
+      "version_contrato": "string"
+     },
+     "valores_de_listas_cerradas": {
+      "urgencia": [
+       "NORMAL"
+      ]
+     }
+    },
+    "CT-25.RETORNO": {
+     "combinaciones_de_claves_a_veces": [
+      "",
+      "caducidad"
+     ],
+     "emisores": [
+      "BROKER"
+     ],
+     "receptores": [
+      "AG-01"
+     ],
+     "rutas_a_veces": {
+      "caducidad": "string"
+     },
+     "rutas_siempre": {
+      "autoevaluacion": "string",
+      "consumo": "object",
+      "contrato": "string",
+      "crd_id": "string",
+      "credencial_ref": "null|string",
+      "emisor": "string",
+      "estado": "string",
+      "estado_credencial": "string",
+      "limitaciones": "array",
+      "msg_id": "string",
+      "query_id": "string",
+      "receptor": "string",
+      "timestamp": "string",
+      "tipo_mensaje": "string",
+      "version_contrato": "string"
+     },
+     "valores_de_listas_cerradas": {
+      "estado": [
+       "COMPLETO"
+      ]
+     }
+    }
+   }
+  },
+  "decision_broker": {
+   "contratos_que_se_guardan": [
+    "CT-04",
+    "CT-22"
+   ],
+   "mensajes": {
+    "CT-04.ENCARGO": {
+     "combinaciones_de_claves_a_veces": [
+      "configuracion decisiones valoracion_informe",
+      "resultado_comunicado"
+     ],
+     "emisores": [
+      "BROKER"
+     ],
+     "receptores": [
+      "AG-01"
+     ],
+     "rutas_a_veces": {
+      "configuracion": "object",
+      "decisiones": "array",
+      "resultado_comunicado": "object",
+      "valoracion_informe": "object"
+     },
+     "rutas_siempre": {
+      "configuracion.horizontes": "array",
+      "configuracion.horizontes[]": "string",
+      "contrato": "string",
+      "decisiones[]": "object",
+      "decisiones[].decision": "string",
+      "decisiones[].motivo": "string",
+      "decisiones[].opp_id": "string",
+      "emisor": "string",
+      "msg_id": "string",
+      "presupuesto": "object",
+      "receptor": "string",
+      "resultado_comunicado.opp_id": "string",
+      "resultado_comunicado.texto": "string",
+      "timestamp": "string",
+      "tipo_mensaje": "string",
+      "valoracion_informe.comentario": "string",
+      "valoracion_informe.run_id": "string",
+      "valoracion_informe.utilidad": "integer",
+      "version_contrato": "string"
+     }
+    },
+    "CT-22.ENCARGO": {
+     "combinaciones_de_claves_a_veces": [
+      ""
+     ],
+     "emisores": [
+      "AG-01"
+     ],
+     "receptores": [
+      "AG-20"
+     ],
+     "rutas_a_veces": {
+      "decisiones[]": "object"
+     },
+     "rutas_siempre": {
+      "contrato": "string",
+      "decisiones": "array",
+      "decisiones[].decision": "string",
+      "decisiones[].motivo": "string",
+      "decisiones[].opp_id": "string",
+      "emisor": "string",
+      "msg_id": "string",
+      "presupuesto": "object",
+      "query_id": "string",
+      "receptor": "string",
+      "resultado_comunicado": "null|object",
+      "resultado_comunicado.opp_id": "string",
+      "resultado_comunicado.texto": "string",
+      "ret_id": "string",
+      "timestamp": "string",
+      "tipo": "string",
+      "tipo_mensaje": "string",
+      "version_contrato": "string"
+     },
+     "valores_de_listas_abiertas": {
+      "tipo": [
+       "DECISIONES_BROKER"
+      ]
+     }
+    }
+   }
+  },
+  "informe_de_aprendizaje": {
+   "contratos_que_se_guardan": [
+    "CT-19"
+   ],
+   "mensajes": {
+    "CT-19.RETORNO": {
+     "combinaciones_de_claves_a_veces": [
+      ""
+     ],
+     "emisores": [
+      "AG-20"
+     ],
+     "receptores": [
+      "AG-02"
+     ],
+     "rutas_a_veces": {},
+     "rutas_siempre": {
+      "autoevaluacion": "string",
+      "consumo": "object",
+      "contrato": "string",
+      "emisor": "string",
+      "estado": "string",
+      "informe": "string",
+      "limitaciones": "array",
+      "msg_id": "string",
+      "receptor": "string",
+      "run_id": "string",
+      "timestamp": "string",
+      "tipo_mensaje": "string",
+      "version_contrato": "string"
+     }
+    }
+   }
+  },
+  "peticion_ad_hoc": {
+   "contratos_que_se_guardan": [
+    "CT-01",
+    "CT-02"
+   ],
+   "mensajes": {
+    "CT-01.ENCARGO": {
+     "combinaciones_de_claves_a_veces": [
+      ""
+     ],
+     "emisores": [
+      "BROKER"
+     ],
+     "receptores": [
+      "AG-01"
+     ],
+     "rutas_a_veces": {},
+     "rutas_siempre": {
+      "alcance": "object",
+      "alcance.activos_concretos": "array",
+      "alcance.clases": "array",
+      "alcance.clases[]": "string",
+      "alcance.pregunta": "string",
+      "alcance.regiones": "array",
+      "alcance.regiones[]": "string",
+      "alcance.tematicas": "array",
+      "contrato": "string",
+      "emisor": "string",
+      "fecha_objetivo": "string",
+      "horizontes": "array",
+      "horizontes[]": "string",
+      "msg_id": "string",
+      "nivel_forzado": "null",
+      "presupuesto": "object",
+      "prioridad": "string",
+      "receptor": "string",
+      "referencia_previa": "null",
+      "timestamp": "string",
+      "tipo": "string",
+      "tipo_mensaje": "string",
+      "version_contrato": "string"
+     },
+     "valores_de_listas_cerradas": {
+      "prioridad": [
+       "NORMAL"
+      ],
+      "tipo": [
+       "AD_HOC"
+      ]
+     }
+    },
+    "CT-02.RETORNO": {
+     "combinaciones_de_claves_a_veces": [
+      ""
+     ],
+     "emisores": [
+      "AG-01"
+     ],
+     "receptores": [
+      "BROKER"
+     ],
+     "rutas_a_veces": {
+      "resumen.top3_por_clase.<clase>": "array"
+     },
+     "rutas_siempre": {
+      "autoevaluacion": "string",
+      "consumo": "object",
+      "contrato": "string",
+      "emisor": "string",
+      "entregables": "object",
+      "entregables.informe_tecnico": "string",
+      "entregables.informe_visual": "string",
+      "entregables.paquete_json": "string",
+      "estado": "string",
+      "estado_g3": "string",
+      "limitaciones": "array",
+      "msg_id": "string",
+      "receptor": "string",
+      "resumen": "object",
+      "resumen.apuestas_independientes": "integer",
+      "resumen.cambios_vs_anterior": "string",
+      "resumen.top3_por_clase": "object",
+      "resumen.top3_por_clase.<clase>[]": "string",
+      "run_id": "string",
+      "timestamp": "string",
+      "tipo_mensaje": "string",
+      "version_contrato": "string"
+     },
+     "valores_de_listas_cerradas": {
+      "estado_g3": [
+       "APTO"
+      ]
+     }
+    }
+   }
+  },
+  "pregunta_repetida": {
+   "contratos_que_se_guardan": [
+    "CT-03",
+    "CT-22"
+   ],
+   "mensajes": {
+    "CT-03.ENCARGO": {
+     "combinaciones_de_claves_a_veces": [
+      ""
+     ],
+     "emisores": [
+      "BROKER"
+     ],
+     "receptores": [
+      "AG-01"
+     ],
+     "rutas_a_veces": {},
+     "rutas_siempre": {
+      "contexto": "object",
+      "contrato": "string",
+      "emisor": "string",
+      "msg_id": "string",
+      "pregunta": "string",
+      "presupuesto": "object",
+      "receptor": "string",
+      "timestamp": "string",
+      "tipo_mensaje": "string",
+      "urgencia": "string",
+      "version_contrato": "string"
+     },
+     "valores_de_listas_cerradas": {
+      "urgencia": [
+       "NORMAL"
+      ]
+     }
+    },
+    "CT-03.RETORNO": {
+     "combinaciones_de_claves_a_veces": [
+      ""
+     ],
+     "emisores": [
+      "AG-01"
+     ],
+     "receptores": [
+      "BROKER"
+     ],
+     "rutas_a_veces": {},
+     "rutas_siempre": {
+      "autoevaluacion": "string",
+      "clase_consulta": "string",
+      "confianza": "string",
+      "consumo": "object",
+      "contrato": "string",
+      "emisor": "string",
+      "escalado": "null",
+      "estado": "string",
+      "limitaciones": "array",
+      "msg_id": "string",
+      "query_id": "string",
+      "receptor": "string",
+      "referencias": "array",
+      "referencias[]": "string",
+      "respuesta": "string",
+      "ruta": "string",
+      "timestamp": "string",
+      "tipo_mensaje": "string",
+      "version_contrato": "string"
+     },
+     "valores_de_listas_cerradas": {
+      "clase_consulta": [
+       "ACLARACION"
+      ],
+      "confianza": [
+       "probable"
+      ],
+      "ruta": [
+       "N0"
+      ]
+     }
+    },
+    "CT-22.ENCARGO": {
+     "combinaciones_de_claves_a_veces": [
+      ""
+     ],
+     "emisores": [
+      "AG-01"
+     ],
+     "receptores": [
+      "AG-20"
+     ],
+     "rutas_a_veces": {},
+     "rutas_siempre": {
+      "contrato": "string",
+      "emisor": "string",
+      "msg_id": "string",
+      "presupuesto": "object",
+      "qry_ids": "array",
+      "qry_ids[]": "string",
+      "query_id": "string",
+      "receptor": "string",
+      "tema": "string",
+      "timestamp": "string",
+      "tipo": "string",
+      "tipo_mensaje": "string",
+      "version_contrato": "string"
+     },
+     "valores_de_listas_abiertas": {
+      "tipo": [
+       "PREGUNTA_REPETIDA"
+      ]
+     }
+    }
+   }
+  },
+  "seguimiento_encargado": {
+   "contratos_que_se_guardan": [
+    "CT-05",
+    "CT-06",
+    "CT-22",
+    "CT-24"
+   ],
+   "mensajes": {
+    "CT-05.ENCARGO": {
+     "combinaciones_de_claves_a_veces": [
+      ""
+     ],
+     "emisores": [
+      "AG-01"
+     ],
+     "receptores": [
+      "AG-02"
+     ],
+     "rutas_a_veces": {},
+     "rutas_siempre": {
+      "alcance": "object",
+      "alcance.clases": "array",
+      "alcance.clases[]": "string",
+      "alcance.opp_id": "string",
+      "contrato": "string",
+      "delta_gc0": "object",
+      "emisor": "string",
+      "fecha_objetivo": "string",
+      "memoria": "object",
+      "memoria.senales_interes": "array",
+      "memoria.senales_interes[]": "string",
+      "msg_id": "string",
+      "nivel_por_clase": "object",
+      "nivel_por_clase.<clase>": "string",
+      "opp_id": "string",
+      "presupuesto": "object",
+      "presupuesto.uc": "number",
+      "presupuesto_por_clase": "object",
+      "presupuesto_por_clase.<clase>": "number",
+      "receptor": "string",
+      "run_id": "string",
+      "seg_id": "string",
+      "timestamp": "string",
+      "tipo": "string",
+      "tipo_mensaje": "string",
+      "version_contrato": "string"
+     },
+     "valores_de_listas_cerradas": {
+      "tipo": [
+       "SEGUIMIENTO"
+      ]
+     }
+    },
+    "CT-06.ENCARGO": {
+     "combinaciones_de_claves_a_veces": [
+      ""
+     ],
+     "emisores": [
+      "AG-02"
+     ],
+     "receptores": [
+      "AG-03"
+     ],
+     "rutas_a_veces": {},
+     "rutas_siempre": {
+      "clase": "string",
+      "contrato": "string",
+      "emisor": "string",
+      "fase": "string",
+      "lecciones": "array",
+      "msg_id": "string",
+      "nivel": "string",
+      "opciones_vigentes": "array",
+      "opciones_vigentes[]": "string",
+      "presupuesto": "object",
+      "presupuesto.uc": "number",
+      "receptor": "string",
+      "run_id": "string",
+      "seg_id": "string",
+      "senales_interes": "array",
+      "senales_interes[]": "string",
+      "timestamp": "string",
+      "tipo_mensaje": "string",
+      "version_contrato": "string"
+     },
+     "valores_de_listas_cerradas": {
+      "fase": [
+       "SEGUIMIENTO"
+      ]
+     }
+    },
+    "CT-22.ENCARGO": {
+     "combinaciones_de_claves_a_veces": [
+      ""
+     ],
+     "emisores": [
+      "AG-01"
+     ],
+     "receptores": [
+      "AG-20"
+     ],
+     "rutas_a_veces": {},
+     "rutas_siempre": {
+      "contrato": "string",
+      "decision_seguimiento": "string",
+      "emisor": "string",
+      "msg_id": "string",
+      "opp_id": "string",
+      "presupuesto": "object",
+      "query_id": "string",
+      "receptor": "string",
+      "recomendacion": "string",
+      "seg_id": "string",
+      "timestamp": "string",
+      "tipo_aviso": "string",
+      "tipo_mensaje": "string",
+      "version_contrato": "string"
+     },
+     "valores_de_listas_abiertas": {
+      "tipo": []
+     }
+    },
+    "CT-24.ENCARGO": {
+     "combinaciones_de_claves_a_veces": [
+      "fecha_fin frecuencia opp_id",
+      "frecuencia motivo opp_id senales_interes",
+      "frecuencia seg_id",
+      "seg_id"
+     ],
+     "emisores": [
+      "BROKER"
+     ],
+     "receptores": [
+      "AG-01"
+     ],
+     "rutas_a_veces": {
+      "fecha_fin": "string",
+      "frecuencia": "string",
+      "motivo": "string",
+      "opp_id": "string",
+      "seg_id": "string",
+      "senales_interes": "array"
+     },
+     "rutas_siempre": {
+      "accion": "string",
+      "contrato": "string",
+      "emisor": "string",
+      "msg_id": "string",
+      "presupuesto": "object",
+      "query_id": "string",
+      "receptor": "string",
+      "senales_interes[]": "string",
+      "timestamp": "string",
+      "tipo_mensaje": "string",
+      "version_contrato": "string"
+     },
+     "valores_de_listas_cerradas": {
+      "accion": [
+       "ALTA",
+       "CANCELACION",
+       "MODIFICACION",
+       "PAUSA",
+       "REANUDACION"
+      ],
+      "frecuencia": [
+       "DIARIA",
+       "MENSUAL",
+       "SEMANAL"
+      ]
+     }
+    },
+    "CT-24.RETORNO": {
+     "combinaciones_de_claves_a_veces": [
+      "aviso proximo_ciclo",
+      "informe recomendacion run_id semaforo"
+     ],
+     "emisores": [
+      "AG-01"
+     ],
+     "receptores": [
+      "BROKER"
+     ],
+     "rutas_a_veces": {
+      "aviso": "null|string",
+      "informe": "object",
+      "proximo_ciclo": "null|string",
+      "recomendacion": "string",
+      "run_id": "string",
+      "semaforo": "string"
+     },
+     "rutas_siempre": {
+      "autoevaluacion": "string",
+      "consumo": "object",
+      "contrato": "string",
+      "emisor": "string",
+      "estado": "string",
+      "estado_seguimiento": "string",
+      "informe.informe": "string",
+      "informe.json": "string",
+      "limitaciones": "array",
+      "msg_id": "string",
+      "query_id": "string",
+      "receptor": "string",
+      "seg_id": "string",
+      "timestamp": "string",
+      "tipo_mensaje": "string",
+      "version_contrato": "string"
+     },
+     "valores_de_listas_cerradas": {
+      "estado": [
+       "COMPLETO"
+      ]
+     }
+    }
+   }
+  }
+ }
+}

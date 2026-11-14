@@ -573,13 +573,27 @@
    "version_contrato": "5.1"
   }
  },
+ "CT-22.ENCARGO": {
+  "mensaje": {
+   "contrato": "CT-22",
+   "emisor": "AG-01",
+   "msg_id": "MSG-2026-000027",
+   "presupuesto": {},
+   "receptor": "AG-20",
+   "run_id": "RUN-2026-0001",
+   "timestamp": "2026-06-05T06:00:26+02:00",
+   "tipo": "CONSULTA_RECURRENTE",
+   "tipo_mensaje": "ENCARGO",
+   "version_contrato": "5.1"
+  }
+ },
  "CT-23.ENCARGO": {
   "mensaje": {
    "cns_id": "CNS-2026-0001",
    "contrato": "CT-23",
    "emisor": "AG-01",
    "modo": "NO_BLOQUEANTE",
-   "msg_id": "MSG-2026-000027",
+   "msg_id": "MSG-2026-000028",
    "plazo_respuesta": "2026-06-08T07:00",
    "preguntas": [
     {
@@ -600,7 +614,7 @@
    "run_id": "RUN-2026-0001",
    "seg_id": null,
    "sentido": "SALIENTE",
-   "timestamp": "2026-06-05T06:00:26+02:00",
+   "timestamp": "2026-06-05T06:00:27+02:00",
    "tipo": "ACLARACION_ALCANCE",
    "tipo_mensaje": "ENCARGO",
    "version_contrato": "5.1"
@@ -616,7 +630,7 @@
    "estado": "COMPLETO",
    "estado_consulta": "RESPONDIDA",
    "limitaciones": [],
-   "msg_id": "MSG-2026-000028",
+   "msg_id": "MSG-2026-000029",
    "receptor": "AG-01",
    "respuestas": [
     {
@@ -632,7 +646,7 @@
      "supuesto": "No la incluye."
     }
    ],
-   "timestamp": "2026-06-05T06:00:27+02:00",
+   "timestamp": "2026-06-05T06:00:28+02:00",
    "tipo_mensaje": "RETORNO",
    "version_contrato": "5.1"
   }
@@ -646,7 +660,7 @@
    "fecha_fin": null,
    "frecuencia": "SEMANAL",
    "motivo": "Vigilar la opción.",
-   "msg_id": "MSG-2026-000029",
+   "msg_id": "MSG-2026-000030",
    "opp_id": "OPP-2026-0007",
    "presupuesto": {},
    "receptor": "AG-01",
@@ -655,7 +669,7 @@
    "senales_interes": [
     "Dato de inflación"
    ],
-   "timestamp": "2026-06-05T06:00:28+02:00",
+   "timestamp": "2026-06-05T06:00:29+02:00",
    "tipo_mensaje": "ENCARGO",
    "version_contrato": "5.1"
   }
@@ -669,12 +683,12 @@
    "estado": "COMPLETO",
    "estado_seguimiento": "ACTIVO",
    "limitaciones": [],
-   "msg_id": "MSG-2026-000030",
+   "msg_id": "MSG-2026-000031",
    "proximo_ciclo": "2026-06-12",
    "receptor": "BROKER",
    "run_id": "RUN-2026-0001",
    "seg_id": "SEG-2026-0001",
-   "timestamp": "2026-06-05T06:00:29+02:00",
+   "timestamp": "2026-06-05T06:00:30+02:00",
    "tipo_mensaje": "RETORNO",
    "version_contrato": "5.1"
   }
@@ -686,13 +700,13 @@
    "emisor": "AG-01",
    "herramienta": "HT-01",
    "impacto_si_falta": "Sin datos de la clase.",
-   "msg_id": "MSG-2026-000031",
+   "msg_id": "MSG-2026-000032",
    "presupuesto": {},
    "receptor": "BROKER",
    "run_id": "RUN-2026-0001",
    "servicio": "proveedor de datos",
    "solicitante": "AG-16",
-   "timestamp": "2026-06-05T06:00:30+02:00",
+   "timestamp": "2026-06-05T06:00:31+02:00",
    "tipo_mensaje": "ENCARGO",
    "urgencia": "NORMAL",
    "uso_previsto": "Series de precios.",
@@ -711,10 +725,10 @@
    "estado": "COMPLETO",
    "estado_credencial": "PROVISTA",
    "limitaciones": [],
-   "msg_id": "MSG-2026-000032",
+   "msg_id": "MSG-2026-000033",
    "receptor": "AG-01",
    "run_id": "RUN-2026-0001",
-   "timestamp": "2026-06-05T06:00:31+02:00",
+   "timestamp": "2026-06-05T06:00:32+02:00",
    "tipo_mensaje": "RETORNO",
    "version_contrato": "5.1"
   }

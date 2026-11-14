@@ -5,10 +5,27 @@
   "CT-18",
   "CT-19",
   "CT-20",
-  "CT-21",
-  "CT-22"
+  "CT-21"
  ],
- "mensajes_del_ciclo_simulado_que_no_cumplen_el_anexo_b": {
+ "mensajes_de_los_flujos_simulados_que_no_cumplen_el_anexo_b": {
+  "CT-03.ENCARGO": [
+   "(raíz): 'query_id' is a required property",
+   "contexto: 'opp_id' is a required property",
+   "contexto: 'run_id' is a required property"
+  ],
+  "CT-03.RETORNO": [
+   "escalado: type 'object'"
+  ],
+  "CT-04.ENCARGO": [
+   "(raíz): 'configuracion' is a required property",
+   "(raíz): 'decisiones' is a required property",
+   "(raíz): 'resultado_comunicado' is a required property",
+   "(raíz): 'valoracion_informe' is a required property",
+   "configuracion: 'clases_activas' is a required property",
+   "configuracion: 'dia_hora_entrega' is a required property",
+   "configuracion: 'idioma_usuario' is a required property",
+   "configuracion: 'periodicidad' is a required property"
+  ],
   "CT-06.ENCARGO": [
    "fase: enum ['CRIBADO', 'INVESTIGACION', 'PROFUNDIZACION', 'SEGUIMIENTO']"
   ],
@@ -33,6 +50,46 @@
    "(raíz): 'opp_id' is a required property",
    "(raíz): 'prospectiva' is a required property",
    "(raíz): 'tesis' is a required property"
+  ],
+  "CT-22.ENCARGO": [
+   "(raíz): 'tipo' is a required property"
+  ],
+  "CT-23.ENCARGO": [
+   "(raíz): 'plazo_respuesta' is a required property",
+   "(raíz): 'preguntas' is a required property",
+   "(raíz): 'punto_control' is a required property",
+   "(raíz): 'run_id' is a required property",
+   "(raíz): 'seg_id' is a required property",
+   "preguntas/0: 'efecto_si_falso' is a required property",
+   "preguntas/0: 'opciones_sugeridas' is a required property",
+   "preguntas/0: 'origen' is a required property",
+   "preguntas/0: 'por_que_importa' is a required property"
+  ],
+  "CT-23.RETORNO": [
+   "(raíz): 'supuestos_aplicados' is a required property",
+   "estado: enum ['RESPONDIDA', 'PARCIAL', 'VENCIDA']",
+   "respuestas/0: 'documentos' is a required property"
+  ],
+  "CT-24.ENCARGO": [
+   "(raíz): 'calendario_personalizado' is a required property",
+   "(raíz): 'fecha_fin' is a required property",
+   "(raíz): 'frecuencia' is a required property",
+   "(raíz): 'motivo' is a required property",
+   "(raíz): 'opp_id' is a required property",
+   "(raíz): 'seg_id' is a required property",
+   "(raíz): 'senales_interes' is a required property"
+  ],
+  "CT-24.RETORNO": [
+   "(raíz): 'proximo_ciclo' is a required property",
+   "estado: enum ['ACTIVO', 'PAUSADO', 'CANCELADO', 'FINALIZADO']"
+  ],
+  "CT-25.ENCARGO": [
+   "(raíz): 'herramienta' is a required property",
+   "(raíz): 'urgencia' is a required property"
+  ],
+  "CT-25.RETORNO": [
+   "(raíz): 'caducidad' is a required property",
+   "estado: enum ['PROVISTA', 'DENEGADA', 'APLAZADA']"
   ]
  },
  "por_contrato": {
@@ -165,6 +222,11 @@
     "motivo"
    ]
   },
+  "CT-22.ENCARGO": {
+   "el_ejecutor_admite_que_falte": [
+    "tipo"
+   ]
+  },
   "CT-23.ENCARGO": {
    "el_ejecutor_admite_que_falte": [
     "plazo_respuesta",
@@ -207,5 +269,60 @@
     "credencial_ref"
    ]
   }
+ },
+ "valores_que_el_anexo_b_nombra_en_un_campo_y_el_ejecutor_emite_en_otro": {
+  "CT-22.ENCARGO": [
+   {
+    "campo_del_anexo_b": "tipo",
+    "campo_del_ejecutor": "tipo_aviso",
+    "valor": "CONSULTA_RECURRENTE"
+   },
+   {
+    "campo_del_anexo_b": "tipo",
+    "campo_del_ejecutor": "tipo_aviso",
+    "valor": "DECISION_SEGUIMIENTO"
+   }
+  ],
+  "CT-23.RETORNO": [
+   {
+    "campo_del_anexo_b": "estado",
+    "campo_del_ejecutor": "estado_consulta",
+    "valor": "RESPONDIDA"
+   }
+  ],
+  "CT-24.RETORNO": [
+   {
+    "campo_del_anexo_b": "estado",
+    "campo_del_ejecutor": "estado_seguimiento",
+    "valor": "ACTIVO"
+   },
+   {
+    "campo_del_anexo_b": "estado",
+    "campo_del_ejecutor": "estado_seguimiento",
+    "valor": "CANCELADO"
+   },
+   {
+    "campo_del_anexo_b": "estado",
+    "campo_del_ejecutor": "estado_seguimiento",
+    "valor": "FINALIZADO"
+   },
+   {
+    "campo_del_anexo_b": "estado",
+    "campo_del_ejecutor": "estado_seguimiento",
+    "valor": "PAUSADO"
+   }
+  ],
+  "CT-25.RETORNO": [
+   {
+    "campo_del_anexo_b": "estado",
+    "campo_del_ejecutor": "estado_credencial",
+    "valor": "DENEGADA"
+   },
+   {
+    "campo_del_anexo_b": "estado",
+    "campo_del_ejecutor": "estado_credencial",
+    "valor": "PROVISTA"
+   }
+  ]
  }
 }

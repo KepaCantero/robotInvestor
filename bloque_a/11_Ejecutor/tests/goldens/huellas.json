@@ -2,6 +2,7 @@
  "01_Gobernanza/Documento 0 - Protocolo maestro del Bloque A - Versión óptima V5.1.md": "7e708a030dad30d70517c26c7641e14488401fb76c1457b8dd8e1f9af31ff8cb",
  "06_Plantillas_entregables/Esquema JSON - Informe de seguimiento de opción - V5.1.json": "e21a922222cab8fe6e7ebe9f66995f1729234e847f4cc65af745da868259c4be",
  "06_Plantillas_entregables/Esquema JSON - Paquete de oportunidades - V5.0.json": "8bf00afdecae0ca61229e41a35eeda09d0b8cd7722457d76e648df8cc4129084",
- "goldens/anexo_b_ejemplos.json": "46919d44d45a75b0efe51c8ae446d436d82728928be9509784103896e0918e5c",
- "goldens/anexo_b_esquemas.json": "560a0fcec274993318203129118a5c07a86508114a0080a3d7abafd5d0fc94ed"
+ "goldens/anexo_b_ejemplos.json": "e043997238e3bb474fb168f6c8621146315fa4cc63ee86f2b1b5b9f1c6754d47",
+ "goldens/anexo_b_esquemas.json": "4799ed8406d27411c4e98395e8c602a1b2b0ad98dee7b2915a6562a325a3d124",
+ "goldens/bateria_mensajes.json": "9208f499d649edc0460f4ab51e22eb2f66315ef91505280d025c9ec9f792b231"
 }
