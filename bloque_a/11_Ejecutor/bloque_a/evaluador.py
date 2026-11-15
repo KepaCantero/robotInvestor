@@ -17,6 +17,7 @@ from __future__ import annotations
 
 import copy
 import math
+import re
 from collections import Counter, defaultdict
 
 import numpy as np
@@ -160,13 +161,20 @@ def lecciones_por_encargo(cfg: dict | None) -> int:
 LECCIONES_POR_ENCARGO_MAX = 10   # 12.3 del Documento 0 del Bloque A: «máximo 10»
 
 
+RE_FECHA_ISO = re.compile(r"\d{4}-\d{2}-\d{2}(?:[T ]\d{2}:\d{2}(?::\d{2}(?:\.\d+)?)?)?(?:Z|[+-]\d{2}:?\d{2})?")
+
+
 def _fecha_de_calendario(v) -> pd.Timestamp:
     """T-125 r02 (QA r01, H-02): la fecha de calendario de un texto ISO 8601. Con zona horaria («…+05:00», «…Z») se queda con la
     fecha de esa zona, sin convertirla (`[PROPUESTO]`, INC-T125-01): así todas las fechas se comparan sin zona y una sola pieza
     no lanza `TypeError`. Un valor que no es texto (un número se leería como nanosegundos de 1970) no se lee."""
     if not isinstance(v, str):
         raise TypeError(f"fecha no textual: {v!r}")
-    t = pd.Timestamp(v)
+    if not RE_FECHA_ISO.fullmatch(v.strip()):
+        # T-125 r03 (QA r02, H-10): solo ISO 8601 («AAAA-MM-DD», con hora y zona opcionales). «now», «today», «July 1 2026»,
+        # «20260701» o «1/7/2026» (que pandas leería como 7 de enero) no se leen: dependen del reloj o son ambiguos
+        raise ValueError(f"fecha no ISO 8601: {v!r}")
+    t = pd.Timestamp(v.strip())
     if pd.isna(t):
         raise ValueError(f"fecha vacía: {v!r}")
     if t.tzinfo is not None:
@@ -178,7 +186,7 @@ def _campos_pronostico_fuente(pf: dict) -> tuple | None:
     """T-125: los campos del bloque `pronostico_fuente` de una pieza de F2, o None si falta alguno o una fecha no se lee."""
     try:
         return (_fecha_de_calendario(pf["fecha_objetivo"]), _fecha_de_calendario(pf["fecha_emision"]), pf["ref_id"],
-                pf["serie_ht01"], pf["direccion"], pf["umbral_o_rango"], pf.get("probabilidad"))
+                pf["serie_ht01"], pf["direccion"], pf["umbral_o_rango"], pf.get("probabilidad"), pf["variable"])
     except (KeyError, TypeError, ValueError, OverflowError):
         return None
 
@@ -196,7 +204,14 @@ def fuente_de_opinion_registrada(ref_id, referencias) -> bool:
     return bool(ficha) and ficha.get("archivo") == "F9"
 
 
-def motivo_pronostico_fuente_no_registrable(pf, fuente, registro, referencias) -> str | None:
+def variable_resoluble(variable, variables_nivel) -> bool:
+    """T-125 r03 (QA r02, H-09): el Evaluador resuelve un pronóstico de fuente con el cierre de `serie_ht01` en su fecha
+    objetivo, así que solo vale una `variable` que sea el nivel de la serie (`fiabilidad_fuentes.variables_nivel`). Una
+    rentabilidad, un diferencial u otra transformación no se resuelve con el cierre y no se cuenta (falla cerrado)."""
+    return isinstance(variable, str) and variable.strip().lower() in {str(x).lower() for x in variables_nivel}
+
+
+def motivo_pronostico_fuente_no_registrable(pf, fuente, registro, referencias, variables_nivel=None) -> str | None:
     """T-125 r02 (QA r01, H-01, H-03 y H-04): None si el bloque `pronostico_fuente` de una pieza puede entrar en F2; si no, el
     motivo. Se exige el bloque completo y bien formado (esquema de F2, 4.1), que el `ref_id` sea una fuente de F9 y la propia
     fuente de la pieza, y que se registre antes de su fecha objetivo y no antes de su emisión (conocibilidad: sin fuga)."""
@@ -205,9 +220,16 @@ def motivo_pronostico_fuente_no_registrable(pf, fuente, registro, referencias) -
     campos = _campos_pronostico_fuente(pf)
     if campos is None:
         return "faltan campos del bloque o una fecha no se lee"
-    objetivo, emision, ref_id, serie, direccion, umbral, prob = campos
+    objetivo, emision, ref_id, serie, direccion, umbral, prob, variable = campos
     if not isinstance(serie, str) or not serie:
         return "serie_ht01 no válida"
+    if variables_nivel is None:
+        from .configuracion import config_por_defecto
+        variables_nivel = parametro(config_por_defecto(), "fiabilidad_fuentes.variables_nivel")
+    if not variable_resoluble(variable, variables_nivel):
+        return f"variable {variable!r} no resoluble con el cierre de la serie (solo {', '.join(map(str, variables_nivel))})"
+    if not isinstance(direccion, str):
+        return f"dirección no reconocida: {direccion!r}"
     if direccion in ("por_encima", "por_debajo"):
         forma = _numero_finito(umbral)
     elif direccion in ("dentro", "fuera"):
@@ -1055,16 +1077,15 @@ class Evaluador:
             campos = _campos_pronostico_fuente(pf)
             if campos is None:
                 continue
-            objetivo, emision, ref_id, serie, direccion, umbral, prob = campos
+            objetivo, emision, ref_id, serie, direccion, umbral, prob, variable = campos
             if not (isinstance(ref_id, str) and isinstance(serie, str) and emision < objetivo <= corte and objetivo >= desde):
                 continue
+            if not variable_resoluble(variable, par["variables_nivel"]) or not isinstance(direccion, str):
+                continue   # T-125 r03 (QA r02, H-09 y H-12): variable que el cierre no resuelve, o dirección que no es texto
             if not emision <= pd.Timestamp(registro) < objetivo:
                 continue   # H-03: registrado cuando el resultado ya era conocible (o antes de emitirse): no cuenta
             if not fuente_de_opinion_registrada(ref_id, self.referencias):
                 continue   # H-04: no es una fuente de F9
-            clave = (ref_id, serie, str(objetivo.date()), str(emision.date()), direccion, repr(umbral))
-            if clave in vistos:
-                continue   # H-05: el mismo pronóstico de la fuente en otra afirmación (R10: se cuentan raíces)
             if direccion in ("por_encima", "por_debajo"):
                 if isinstance(umbral, bool) or not isinstance(umbral, (int, float)) or not math.isfinite(umbral):
                     continue
@@ -1073,6 +1094,12 @@ class Evaluador:
                                                                             and math.isfinite(x) for x in umbral) and umbral[0] < umbral[1]):
                     continue
             else:
+                continue
+            # H-05: el mismo pronóstico de la fuente en otra afirmación cuenta una vez (R10: se cuentan raíces); T-125 r03
+            # (QA r02, H-11): el umbral se compara como número, así que «1» y «1.0» son el mismo pronóstico
+            umbral_n = tuple(float(x) for x in umbral) if isinstance(umbral, list) else float(umbral)
+            clave = (ref_id, serie, str(objetivo.date()), str(emision.date()), direccion, umbral_n)
+            if clave in vistos:
                 continue
             if prob is None:
                 prob = float(par["prob_sin_declarar"])
@@ -1104,7 +1131,7 @@ class Evaluador:
         except Exception:  # noqa: BLE001 — sin dato de HT-01 en la fecha objetivo no se resuelve
             return None
 
-    def fiabilidad_fuentes(self, as_of) -> list[dict]:
+    def fiabilidad_fuentes(self, as_of, run_id: str | None = None) -> list[dict]:
         """FUE- por fuente y mes (esquema de F6, 4.5): n, aciertos, BSS frente a la referencia ingenua, BSS contraído con
         k y puntos de historial = neutro · (1 + BSS contraído), entre 0 y el máximo. Una vez por fuente y mes: una fuente con
         FUE- del mes no se repite, y otra que llega a la muestra mínima a mitad de mes sale en el ciclo siguiente (QA r01, H-06).
@@ -1126,7 +1153,7 @@ class Evaluador:
             n = len(ps)
             if n < int(par["n_min"]):
                 continue
-            calc = self._brier_del_motor(ps, ref, as_of)
+            calc = self._brier_del_motor(ps, ref, as_of, run_id)
             if calc is None:
                 continue
             brier, brier_ref, calc_id = calc
@@ -1143,7 +1170,7 @@ class Evaluador:
             nuevas.append(fue)
         return nuevas
 
-    def _brier_del_motor(self, ps: list[dict], ref: float, as_of) -> tuple[float, float, str] | None:
+    def _brier_del_motor(self, ps: list[dict], ref: float, as_of, run_id: str | None = None) -> tuple[float, float, str] | None:
         """Brier de la fuente y de la referencia ingenua servidos por el Motor (FC-EVAL-001), con su `calc_id`; None si el
         Motor no está o no lo sirve."""
         if self.motor is None:
@@ -1153,7 +1180,7 @@ class Evaluador:
                 "p": [p["prob"] for p in ps], "o": [p["resultado"] for p in ps], "p_ref": [ref] * len(ps)}}],
                 "parametros": {"replicas": int(parametro(self.cfg, "evaluacion.bootstrap_replicas")),
                                "simulaciones": int(parametro(self.cfg, "evaluacion.simulaciones_ece"))},
-                "fecha_corte": str(pd.Timestamp(as_of).date())}, "AG-20", None)
+                "fecha_corte": str(pd.Timestamp(as_of).date())}, "AG-20", run_id)   # T-125 r03 (H-13): con su run_id en RC
             r = res.get("resultado") or {}
             if not str(res.get("estado", "")).startswith("SERVED") or not res.get("calc_id"):
                 return None
@@ -1179,7 +1206,7 @@ class Evaluador:
         aju = self.recalibrar(as_of, run_id)
         degradacion_h5 = self.aplicar_degradacion_h5(as_of, run_id)
         try:
-            fiabilidad = self.fiabilidad_fuentes(as_of)   # T-125 (PB-46)
+            fiabilidad = self.fiabilidad_fuentes(as_of, run_id)   # T-125 (PB-46)
         except Exception as e:  # noqa: BLE001 — T-125 r02 (QA r01, H-02): un fallo de la fiabilidad no tumba el resto del C5
             fiabilidad = []
             self.almacen.incidencia("HERRAMIENTA", f"Fiabilidad de las fuentes no calculada en este ciclo: {e}", "AG-20",

@@ -60,9 +60,14 @@ def desempates_al_reves(fichas):
     """A igualdad de Q dentro de una sección, la de fecha más reciente primero (Documento 0, 13.3). Solo se comparan dos fichas
     con año de publicación; un documento sin año («Documento vivo») no tiene fecha con la que desempatar (`[PROPUESTO]`,
     INC-T126-01)."""
-    return [(a["ref_id"], a["anio"], b["ref_id"], b["anio"]) for a, b in itertools.pairwise(fichas)
-            if a["seccion"] == b["seccion"] and a["q"] == b["q"] and a["anio"] is not None and b["anio"] is not None
-            and b["anio"] > a["anio"]]
+    # T-126 r03 (QA r02, H-05): dentro de cada grupo de la misma sección y Q se comparan las fichas con año en su orden,
+    # saltando las que no lo tienen; si no, una ficha sin año entre dos fechadas escondería una inversión
+    grupos: dict[tuple, list] = {}
+    for f in fichas:
+        if f["anio"] is not None:
+            grupos.setdefault((f["seccion"], f["q"]), []).append(f)
+    return [(a["ref_id"], a["anio"], b["ref_id"], b["anio"]) for g in grupos.values() for a, b in itertools.pairwise(g)
+            if b["anio"] > a["anio"]]
 
 
 def niveles_incoherentes(fichas):
@@ -119,6 +124,9 @@ def test_h03_las_comprobaciones_detectan_fichas_estropeadas(refs):
     empate = [{**a, "q": 90, "anio": 2010}, {**b, "q": 90, "anio": 2020}]                  # desempate al revés
     assert desempates_al_reves(empate) and not desempates_al_reves(empate[::-1])
     assert not desempates_al_reves([{**a, "q": 90, "anio": 2010}, {**b, "q": 90, "anio": None}])
+    # T-126 r03 (H-05): una ficha sin año entre dos fechadas no esconde la inversión
+    sin = {**a, "ref_id": "SIN-ANIO", "q": 90, "anio": None}
+    assert desempates_al_reves([{**a, "q": 90, "anio": 2010}, sin, {**b, "q": 90, "anio": 2020}])
 
 
 # ---------------------------------------------------------------- PB-48 en un ciclo (H-01 y H-04)

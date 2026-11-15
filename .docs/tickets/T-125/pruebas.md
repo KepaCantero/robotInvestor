@@ -53,3 +53,11 @@ cd ../.. && python .docs/scripts/mutantes_revisor_ampliado.py .docs/tickets/T-12
 ```
 
 Gate completo (`./tools/check_all.sh`) y suite entera de A: no ejecutados en esta ronda (encargo); los pasa quien hace el commit.
+
+## Ronda r03
+
+| Suite o script | Resultado |
+| --- | --- |
+| `tests/test_t125_r03.py` + `test_t125_r02.py` | 60 passed |
+| `r02_01_ataques_ciclo.py` (B04 adaptada) | B01 con `run_id` en RC; B03, B04 y B11 rechazan las fechas no ISO; B07 un pronóstico por serie; B10 sin excepción; B12 sin `variable` o con «rentabilidad_12m» no entra ni cuenta |
+| `r02_02_ciclos_sin_bloque.py` | iguales salvo la ruta de la carpeta temporal escrita en el informe |

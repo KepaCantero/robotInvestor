@@ -96,3 +96,96 @@ Resumen: 6 de 14 muertos (K02, K03, K04, K09, K10, K14), 8 vivos.
 ## Veredicto
 
 **NO APTO** · H-01 (alta): la función nueva no se alcanza en ningún ciclo, porque el ejecutor pierde el bloque `pronostico_fuente` al construir las piezas, y la documentación lo atribuye al cliente simulado. CA-4 no se cumple (H-02: una fecha con zona tumba el C5 en cada ciclo). Tras la corrección, volver a ejecutar `r01_01`, `r01_02` y `r01_03`.
+
+## Ronda r02
+
+- **Revisor:** revisor nuevo sin contexto de la implementación (subagente de Claude; no es el de la r01 ni quien implementó) · 2026-11-15
+- **Copia revisada:** clon desconectado en `41c0ea4` (wip local con T-125 r02, T-116 r05 y T-126 r02). Mutantes y la versión anterior (`fb3ccd4`, para comparar) en copias desechables con «qa10_mut» en la ruta, ya borradas.
+- Opinión formada con el código (`orquestacion.py`: `_bloque_pronostico_fuente`, `_tipo_con_pronostico_fuente`; `evaluador.py`: `motivo_pronostico_fuente_no_registrable`, `pronosticos_de_fuentes`, `fiabilidad_fuentes`, `_brier_del_motor`), los esquemas de F2 (regla 8 y 4.1) y F6 (4.5) y las pruebas, antes de leer el apartado «Ronda r02» de `analisis-tecnico.md`.
+
+### Reproducción
+
+| Qué | Orden | Resultado |
+| --- | --- | --- |
+| Suite completa de A, una vez | ver `T-116/qa.md`, ronda r05 | dentro de la suite |
+| Goldens, ruff, mypy A, gates ligeros | ver `T-116/qa.md`, ronda r05 | coinciden · 2902 · 109 · los cuatro con 0 |
+| Las 12 pruebas de la r01 «cambiaron sus datos, no sus afirmaciones» | `git diff fb3ccd4 41c0ea4 -- bloque_a/11_Ejecutor/tests/test_t125_fiabilidad_fuentes.py` | **cierto**: los `assert` son los mismos salvo el nombre de las constantes (`REF-0001` → `FUENTE_A = "REF-RF-0001"`, `REF-0002` → `FUENTE_B = "REF-RF-0003"`); cambia el sembrado (`_escribir_clm` registra cada pieza el día de su emisión). Un matiz: en `test_pb46_no_se_resuelve_…` el caso «emitido después de su fecha objetivo» se registra el 2025-01-01, antes de su emisión, así que cae por dos reglas a la vez (no es una prueba aislada de la regla) |
+| Scripts de la r01, tal cual | desde `bloque_a/11_Ejecutor`: `QA_TMP=<tmp> python ../../.docs/tickets/T-125/revisores/r01_01_ataques_fiabilidad.py` y `r01_03_camino_de_entrada_a_f2.py` | `r01_01`: A1–A8 dan 0 (siembran `REF-0001` con el reloj en `AS_OF`: ahora no cuentan por H-03 y H-04, que es lo correcto); A6b: un ciclo con una pieza con zona da la evaluación completa y ninguna incidencia HERRAMIENTA; A7 determinismo `True`; A9 `(0.65, 0.65)`. `r01_03`: 0 con bloque (su bloque tiene otra fuente que la de la pieza: se rechaza) |
+| Script del implementador | `QA_TMP=<tmp> python ../../.docs/tickets/T-125/r02_camino_de_entrada_a_f2.py` | 8 CLM con bloque y, un ciclo después, FUE- de REF-RF-0001 (n 8, 12,4 puntos, `CALC-2026-0021`) comunicada por CT-19 y anotada, como dice `pruebas.md` |
+| Mutantes de la r01, tal cual | desde la raíz: `python .docs/tickets/T-125/revisores/r01_02_mutantes.py <copia «qa10_mut»>/bloque_a` | 6 de 14 muertos (igual que en la r01: el script fija las 12 pruebas de la r01) |
+| Los mismos, con `test_t125_r02.py` | `python .docs/scripts/mutantes_revisor_ampliado.py .docs/tickets/T-125/revisores/r01_02_mutantes.py <copia>/bloque_a tests/test_t125_r02.py` | **13 de 14 muertos**; K08 vivo. Comprobado a mano que es equivalente: con `emision <= registro < objetivo` (H-03), `emision < objetivo` ya no puede fallar |
+| Ataques nuevos en ciclos | `QA_TMP=<tmp> python ../../.docs/tickets/T-125/revisores/r02_01_ataques_ciclo.py` | abajo |
+| Ciclos sin bloque, antes y después | desde el `11_Ejecutor` de cada versión: `QA_TMP=<tmp> python <ruta>/r02_02_ciclos_sin_bloque.py > salida.json`, y `cmp` | abajo |
+
+### Camino entero en vivo y ataques (`revisores/r02_01_ataques_ciclo.py`, ejecutado)
+
+| Bloque | Qué | Obtenido | Juicio |
+| --- | --- | --- | --- |
+| B01 | El Analista simulado da en cada finalista 4 pronósticos de REF-RF-0001 (dos aciertos seguros, dos fallos seguros, p = 0,8); ciclos el 2026-04-03 y el 2026-06-05 | C1: 16 CLM PRONOSTICO_FUENTE con su bloque, registradas el 2026-04-03, ninguna FUE-. C2: FUE- (n 16, 8 aciertos, BSS −0,36, 8,4 puntos). BSS a mano −0,360000 = FUE-; `calc_id` CALC-2026-0021 en RC con `FC-EVAL-001` y solicitante AG-20; CT-19 a AG-16 `MSG-2026-000008`, anotado en la FUE- | correcto (H-01 y H-08 corregidos); la entrada de RC va **sin `run_id`** (H-13) |
+| B02 | Determinismo: B01 en dos almacenes | FUE- y bloques de F2 idénticos | correcto |
+| B03 | Fechas raras en el alta (`motivo_pronostico_fuente_no_registrable`) | `''`, `NaT`, `None`, `tomorrow`, `yesterday`: fuera. **Registrables:** objetivo `now`, `2026-07`, `July 1 2026`, `20260701`, `9999-12-31`. `1/7/2026` se lee 7 de enero | H-10 |
+| B04 | Lecturas de `_fecha_de_calendario` | `now` y `today` → **la fecha de la máquina** (2026-11-15); `1/7/2026` → 2026-01-07; `2026` → 2026-01-01. Emisión «today» con registro a +3 días y objetivo a +10 de hoy: REGISTRABLE (otro día, otra fecha de emisión) | H-10 |
+| B05 | Registro tardío en el ciclo: objetivo hoy, ayer; emitido mañana; objetivo mañana | solo entra «objetivo mañana»; los otros, rechazados en HA con su motivo | correcto (H-03) |
+| B06 | Fuentes falsas en el ciclo: otra fuente de F9 en el bloque, F7, `REF-RF-9999`, `HT-01:` con bloque de F9, dirección `{"x": 1}`, serie `["SPY"]` | ninguna entra; seis motivos distintos en HA; ciclo COMPLETO | correcto (H-04) |
+| B07 | Duplicados en un ciclo: el mismo bloque con dos textos, con umbral `1` en vez de `1.0` y con la fecha con hora | cuentan **2 por serie** (lo esperado: 1): la del umbral entero no se deduplica | H-11 |
+| B08 | El mismo pronóstico citado en dos ciclos con textos distintos | uno por serie | correcto (H-05) |
+| B09 | El Buscador trae pronósticos de sus referencias | backtest: 0 con bloque, 0 rechazos (como dicen INC-T125-01 y el mapa); vivo: 2 con bloque (REF-RF-0342, REF-RF-0343) | correcto |
+| B10 | F2 manipulado: un bloque con `direccion` lista (no hashable) junto a 6 pronósticos sanos de otra fuente | `fiabilidad_fuentes` lanza `TypeError: unhashable type: 'list'`: se pierde la FUE- de la fuente sana (en el ciclo, el `try` lo deja en `[]` con incidencia, y se repite en cada ciclo) | H-12 |
+| B11 | En un ciclo, objetivos `now`, `1/7/2026` y `July 1 2026` | **`now` y `July 1 2026` quedan guardados en F2**; `1/7/2026` se rechaza como «emitido en su fecha objetivo o después» (leído como 7 de enero) | H-10 |
+| B12 | El campo `variable` | Un bloque **sin `variable`** es registrable; con `variable: rentabilidad_12m` también. Cinco pronósticos «rentabilidad a 12 meses de SPY > 0,05» se resuelven con **el cierre** (≈ 123): los cinco «aciertan» y la fuente sale con 11,92 puntos | H-09 |
+
+### Ciclos que no traen el bloque (`revisores/r02_02_ciclos_sin_bloque.py`, ejecutado con `fb3ccd4` y con `41c0ea4`)
+
+Tres escenarios (backtest de RV, dos ciclos en vivo de RV y el ciclo de las doce clases): **la última huella y el número de entradas de cada archivo del almacén (F1–F11, HA, RC…) y la SHA-256 de cada entregable coinciden byte a byte** entre las dos versiones. La única diferencia es el resumen de `Bloque.estado()`, y viene de las latencias medidas con el reloj de la máquina (`W_medio_s`, `latencia_s`), no del código nuevo (comprobado con un `diff` del `estado()` tras un ciclo). Nada de T-125 cambia los ciclos sin pronósticos de fuentes.
+
+### Hallazgos de la r01
+
+| ID | Estado | Evidencia |
+| --- | --- | --- |
+| H-01 (alta) | **corregido** | B01, B09; K01 muere con las pruebas nuevas |
+| H-02 (media) | **corregido** en lo que pedía | A6b de `r01_01`; las fechas con zona no lanzan. Pero la lectura de fechas sigue siendo laxa (H-10) |
+| H-03 (media) | **corregido** | B05; A1 de `r01_01` da 0 |
+| H-04 (media) | **corregido** | B06; A2 de `r01_01` da 0 |
+| H-05 (baja) | **corregido en parte** | B07, B08; queda el umbral `1` / `1.0` (H-11) |
+| H-06 (baja) | **corregido** | `test_r02_h06_…` (y K04 muere) |
+| H-07 (baja) | **corregido** | K05–K07 y K11–K13 mueren; K08 equivalente |
+| H-08 (baja) | **corregido** | 0,65 = banda; B01: Brier del Motor con su `calc_id` (sin `run_id`: H-13) |
+
+### Hallazgos nuevos
+
+| ID | Gravedad | Cómo reproducirlo | Esperado / obtenido | Corrección sugerida |
+| --- | --- | --- | --- | --- |
+| H-09 | **media** | `r02_01_ataques_ciclo.py`, B12 | Esperado (esquema de F2, 4.1: el bloque es `{ref_id, variable, serie_ht01, …}`; docstring de `motivo_…`: «se exige el bloque completo y bien formado»; CA-4: lo mal formado no cuenta): un bloque sin `variable`, o con una variable que el Evaluador no sabe resolver, no entra. Obtenido: `variable` no se lee en ningún sitio; el Evaluador resuelve siempre contra el **cierre** de `serie_ht01`. Un pronóstico «rentabilidad a 12 meses > 5 %» acierta siempre (cierre ≈ 123 > 0,05) e infla la fiabilidad de la fuente, que se comunica al Buscador por CT-19 | Exigir `variable` y aceptar solo las que se resuelven (hoy, `cierre`), con el resto rechazado en HA con su motivo; prueba con `variable` ausente y con otra variable. `[PROPUESTO]` en INC-T125-01 si se amplía |
+| H-10 | **media** | `r02_01`, B03, B04 y B11 | Esperado (docstring de `_fecha_de_calendario`: «un texto ISO 8601»; invariante: determinista y falla cerrado): solo fechas ISO. Obtenido: `pd.Timestamp` acepta palabras relativas y formatos libres: `now`/`today` se leen con **el reloj de la máquina** (el mismo F2 da otra fecha otro día: no determinista, y un objetivo «now» flota con la fecha de la evaluación); `July 1 2026`, `2026-07`, `20260701` entran; `1/7/2026` se lee como 7 de enero. `now` y `July 1 2026` llegan a F2 en un ciclo | Leer con `datetime.date.fromisoformat` / `datetime.fromisoformat` (o una expresión regular `AAAA-MM-DD` con hora y zona opcionales) y rechazar lo demás; pruebas con `now`, `today`, `1/7/2026` y `July 1 2026` |
+| H-11 | baja | `r02_01`, B07 | El mismo pronóstico con umbral `1` y `1.0` (o `[1, 2]` y `[1.0, 2.0]`) cuenta dos veces: la clave de deduplicación usa `repr(umbral)` | Normalizar el umbral a `float` (o tupla de `float`) en la clave |
+| H-12 | baja | `r02_01`, B10 | Esperado (INC-T125-01: «falla por pronóstico, no por run»): una entrada rara de F2 se omite. Obtenido: con `direccion` no hashable (solo en un F2 manipulado o antiguo; el alta la rechaza), `clave in vistos` lanza `TypeError` antes de validar la dirección y se pierde la FUE- de todas las fuentes en cada ciclo | Validar dirección y umbral antes de formar la clave (o envolver cada pieza); prueba |
+| H-13 | baja | `r02_01`, B01 (`run_id` de la entrada de RC) | El esquema de RC (`msg_id` / `run_id` · `query_id`: «Sí», trazabilidad) pide ligar el cálculo a la ejecución; el de la FUE- entra con `run_id` y `msg_id` nulos (el otro cálculo del Evaluador, en `resolver`, pasa el `run_id`) | Pasar el `run_id` del C5 a `fiabilidad_fuentes` y a `_brier_del_motor` |
+
+### Criterios de aceptación
+
+| Criterio | Cumple | Evidencia |
+| --- | --- | --- |
+| CA-1 · dos fuentes de 25, fórmula, > 10 y < 10 | sí | `test_pb46_dos_fuentes_…` (afirmaciones sin cambios); B01: BSS del Motor = BSS a mano |
+| CA-2 · en un ciclo, la FUE- en F6 con el `msg_id` del CT-19 a AG-16 | **sí, ahora de verdad** | B01 (camino Analista → F2 → FUE- → CT-19 en ciclos en vivo), B09 (Buscador) |
+| CA-3 · una vez al mes; sin muestra, nada | sí | K04, K10 mueren; H-06 corregido |
+| CA-4 · no vencidos, mal formados o sin dato no cuentan; las cuatro direcciones | **no** | Un bloque sin `variable` (mal formado según el esquema de F2) cuenta y se resuelve contra el cierre (H-09); fechas no ISO y relativas (`now`, `July 1 2026`) entran y cuentan (H-10). Lo demás, bien (B03, B05, B06, mutantes) |
+| CA-5 · sin pronósticos de fuentes el ciclo no cambia; goldens, ruff, mypy | sí | `r02_02`: byte a byte igual que `fb3ccd4`; goldens coinciden; ruff 2902; mypy 109 (el gate completo no lo pasé) |
+
+### Invariantes
+
+- Sin LLM en la ruta: alta, resolución, FUE- y CT-19 son código. ✔ Determinismo: sí entre ejecuciones (B02), **salvo las fechas relativas**, que dependen del reloj de la máquina (H-10). ✗ (menor)
+- Falla cerrado y valida antes de mutar: el alta valida casi todo (B05, B06), pero no `variable` (H-09) ni el formato de fecha (H-10). ✗
+- Números: de la configuración; 0,65 de la banda. ✔
+- Decisiones del operador: INC-T125-01 ampliada `[PROPUESTO]` y fila en `Decisiones_del_operador_Bloque_A.md`. ✔
+- Secretos: gates en verde; mis scripts no llevan ninguno. ✔
+- Documentación: el análisis técnico ya no atribuye al simulador lo que era del ejecutor; el mapa de PB-46 declara el límite del backtest. ✔
+
+### Lo que no comprobé
+
+- El gate completo (`check_all.sh`), A-Forex y B (encargo).
+- Que el Buscador use la FUE- y recalifique F9 (modelo real).
+- El esquema de las respuestas de los agentes (`contratos.py`) no declara `pronostico_fuente`; no lo he cambiado ni medido más allá de que lo deja pasar.
+
+## Veredicto (r02)
+
+**NO APTO** · Los hallazgos de la r01 están corregidos (H-01, el alto, también: el pronóstico de una fuente viaja del Analista y del Buscador a F2 y, vencido, sale en la FUE- con el Brier del Motor y su `calc_id`, comunicado por CT-19; los ciclos sin el bloque no cambian ni un byte; 13 de 14 mutantes mueren y el que vive es equivalente). Pero CA-4 sigue sin cumplirse: el alta acepta bloques sin `variable` y el Evaluador resuelve cualquier variable contra el cierre (H-09, media), y la lectura de fechas acepta `now`/`today` (reloj de la máquina) y formatos no ISO (H-10, media). Tras corregirlo, volver a ejecutar `r02_01_ataques_ciclo.py` (B03, B04, B07, B10, B11 y B12 deben cambiar) y `r02_02_ciclos_sin_bloque.py`.

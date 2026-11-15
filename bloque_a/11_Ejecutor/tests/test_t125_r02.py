@@ -197,7 +197,7 @@ def test_r02_h02_una_pieza_con_zona_no_tumba_el_c5_del_ciclo(tmp_path, universo)
 def test_r02_h02_si_la_fiabilidad_falla_el_resto_del_c5_sigue(tmp_path, universo, monkeypatch):
     b = _bloque(tmp_path, universo)
 
-    def rota(as_of):
+    def rota(as_of, run_id=None):   # T-125 r03: la llamada pasa también el run_id (H-13)
         raise TypeError("fallo simulado")
     monkeypatch.setattr(b.evaluador, "fiabilidad_fuentes", rota)
     r = b.ciclo(AS_OF, alcance={"clases": ["RV"]})

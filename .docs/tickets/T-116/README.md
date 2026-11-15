@@ -2,7 +2,7 @@
 
 | Campo | Valor |
 | --- | --- |
-| Estado | EN QA |
+| Estado | CERRADO |
 | Pieza | bloque_a (pruebas y documentación) |
 | Planifica · implementa · QA | claude · claude · un revisor nuevo sin contexto (o Astra, si el operador se lo asigna) |
 | Aprobación del operador | aprobada el 2026-11-13: «empieza por la fase 4» |
@@ -120,3 +120,4 @@ Las filas que cambian, fila a fila, están en `analisis-tecnico.md` («Ronda r04
 - 2026-11-14 · EN QA · claude · integrada la r04 con T-125 y T-126: PB-26, PB-46 y PB-48 pasan de SIN_PRUEBA a PARCIAL. Totales del mapa: 22 automáticas, 36 parciales, 7 pendientes de la API, 1 documental, 1 que requiere usuarios, 0 sin prueba; 145 pruebas citadas, todas superadas
 - 2026-11-15 · NO APTO · QA r04 (revisor nuevo sin contexto): H-10 alto (PB-31 y PB-37 con una cláusula sin afirmar, M31, M37a y M37b vivos; PB-58 con un paso del ejecutor que no existe), H-11 medio (huecos incompletos de PB-44, PB-46, PB-48 y PB-26), H-12 bajo (`escalado_operador` sin lector)
 - 2026-11-15 · EN QA · ronda r05 · claude · PB-31 (la banda sigue a la probabilidad interna; 0,65 «más probable que no» en los tres entregables) y PB-37 (`Evaluador.resolver` en los dos vencimientos) con su prueba, siguen automáticas; PB-58 a parcial con su línea en INC-T116-03; huecos completos de PB-44, PB-46, PB-48 y PB-26 (estas tres citan las pruebas de la r02 de T-125 y T-126); `incidencias_escaladas` en el estado del operador (H-12). Mapa: 21 automáticas, 37 parciales, 7 pendientes de la API, 1 documental, 1 con usuarios; 162 pruebas citadas, todas superadas. `r04_01`: 9 de 9 mutantes muertos
+- 2026-11-15 · CERRADO · QA r05 APTO (revisor nuevo sin contexto). Sus hallazgos se resuelven al cerrar: H-13 (hueco de PB-20 completo), H-14 (PB-46 cita las pruebas del `calc_id`, de una FUE- por fuente y mes y las de la r03 de T-125) y H-15 (huecos de PB-08 y PB-29 concretos); evidencias regeneradas, 171 de 171 pruebas citadas superadas

@@ -59,3 +59,77 @@ Ataque A1, en el ciclo de `test_pb48_una_guia_…`: «entradas HT-03: 12 · con 
 ## Veredicto
 
 **APTO** · los cuatro criterios se cumplen (CA-4 salvo el gate, que no me tocaba) y no hay hallazgos críticos ni altos. H-01 y H-02 (medias) dejan incompletos los huecos declarados de PB-48 y PB-26 en el mapa de T-116 (los recojo también en la QA r04 de T-116, H-11); H-01 a H-04 pasan a la deuda con su ID. Cerrar el ticket (estado, deuda, diario, commit) queda para quien coordina: este revisor solo escribe en `qa.md` y `revisores/`.
+
+## Ronda r02
+
+- **Revisor:** revisor nuevo sin contexto de la implementación (subagente de Claude; no es el de la r01 ni quien implementó) · 2026-11-15
+- **Copia revisada:** clon desconectado en `41c0ea4` (wip local con T-125 r02, T-116 r05 y T-126 r02). Mutantes en copias desechables con «qa10_mut» en la ruta, ya borradas.
+- Opinión formada con el plan (PB-26, PB-48), el Documento 0 (13.3) y `tests/test_t126_r02.py` antes de leer el apartado «Ronda r02» de `analisis-tecnico.md`.
+
+### Reproducción
+
+| Qué | Orden | Resultado |
+| --- | --- | --- |
+| No cambia producción ni corpus (T-126) | `git diff fb3ccd4 41c0ea4 --stat` | T-126 solo añade `tests/test_t126_r02.py`; `test_t126_pb26_pb48.py` sin tocar; corpus íntegro (695) |
+| Suite completa de A, una vez | ver `T-116/qa.md`, ronda r05 | dentro de la suite |
+| Mutantes del revisor anterior, tal cual | desde la raíz: `python .docs/tickets/T-126/revisores/r01_01_mutantes_y_ataques.py <copia «qa10_mut»>/bloque_a` | J1, J2, J3, J6 MUERTOS; **J4 y J5 VIVOS** (el script fija `PRUEBAS` en el fichero de la r01, como dice el implementador) |
+| Los mismos, con las pruebas nuevas | `python .docs/scripts/mutantes_revisor_ampliado.py .docs/tickets/T-126/revisores/r01_01_mutantes_y_ataques.py <copia>/bloque_a tests/test_t126_r02.py` | **J1 a J6, los seis MUERTOS** (J4: 2 fallan; J5: 1) |
+| Mutantes nuevos | `python .docs/tickets/T-126/revisores/r02_02_mutantes_nuevos.py <copia «qa10_mut»>/bloque_a` | J7 a J10, los cuatro MUERTOS (abajo) |
+| Medida propia del desempate | desde `bloque_a/11_Ejecutor`: `python ../../.docs/tickets/T-126/revisores/r02_01_desempate_medida.py` | abajo |
+
+**El ayudante `mutantes_revisor_ampliado.py`** (leído y ejecutado): busca la línea `PRUEBAS = [...]` del script del revisor, la sustituye por la lista del revisor más las pruebas que se le pasan (sin duplicados, las del revisor primero), y ejecuta el script con `exec` y `sys.argv = [script, copia]`. No toca los mutantes ni el script en disco; la salida imprime la lista de pruebas usada (`pruebas: ['tests/test_t126_pb26_pb48.py', 'tests/test_t126_r02.py']`). Hace lo que dice. Requiere que `PRUEBAS` sea una lista literal en una sola línea (falla con 2 si no).
+
+### ¿Afirman lo que dicen? (`tests/test_t126_r02.py`, leído entero)
+
+| Prueba | Juicio | Por qué |
+| --- | --- | --- |
+| `test_h02_cada_referencia_esta_fisicamente_en_la_seccion_…` (F7, F8, F9) | bien | Lee la sección `## TX-nn` real de cada ficha y la compara con su campo; inversiones de Q por sección; nivel y temática. J4 (F7), J8 (F9) y J10 (F8) mueren |
+| `test_h02_a_igualdad_de_q_va_primero_la_mas_reciente` | bien, con un hueco pequeño (H-05) | J7 (dos fichas empatadas de F7 intercambiadas: ANA-DOC-0048, 2023 ↔ ANA-DOC-0041, 2016) muere. Solo compara pares contiguos |
+| `test_h02_el_caso_dudoso_es_un_documento_sin_anio` | bien | Afirma lo que dice INC-T126-01 (ANA-DOC-0089 sin año en su campo; el lector del ejecutor le da 2026) |
+| `test_h03_las_comprobaciones_detectan_fichas_estropeadas` | bien | Ahora ejecuta las mismas funciones que las pruebas de los archivos sobre fichas estropeadas (J1–J4 y un desempate al revés); corrige H-03 |
+| `test_h01_en_el_ciclo_…_se_resuelve_con_su_segunda_pasada` | bien | Ciclo real con la lección vigente; las entradas de HT-03 en banda marginal llevan la segunda pasada, todas resueltas, sin PS8, y la segunda pasada está en F3. J5 y J9 (el ciclo deja de guardarla en F3) mueren |
+| `test_h01_sin_la_segunda_pasada_…` | bien | Contraprueba sobre las mismas entradas |
+| `test_h04_la_leccion_…_llega_al_analista_en_su_ct06` | bien | El CT-06 de RV lleva `LEC-2026-0901` y ninguna entrada de HT-03 la nombra (corrige H-04). Que no la nombre no prueba que no la use, pero eso ya lo afirma `test_pb48_una_guia_…` (J6) |
+
+### Mutantes nuevos (`revisores/r02_02_mutantes_nuevos.py`, contra `test_t126_pb26_pb48.py` y `test_t126_r02.py`)
+
+| Mutante | Qué rompe | Resultado |
+| --- | --- | --- |
+| J7 | F7: desempate por fecha al revés (dos fichas contiguas con Q 90 intercambiadas) | MUERTO (`test_h02_a_igualdad…[F7]`) |
+| J8 | F9: la última ficha de TF-01 dentro de la sección TF-02 | MUERTO (`test_h02_cada_referencia…[F9]`) |
+| J9 | el ciclo deja de registrar la segunda pasada en F3 | MUERTO (`test_h01_en_el_ciclo…`) |
+| J10 | F8: un nivel A pasa a B con la misma Q | MUERTO (dos pruebas de F8) |
+
+### Medida propia del desempate (`revisores/r02_01_desempate_medida.py`)
+
+F7: 560 fichas, 0 desempates al revés contiguos y 0 en toda la secuencia de cada empate (ignorando las fichas sin año), 7 sin año en empates. F8: 464, 0 y 0, 5 sin año. F9: 389, 0 y 0; 387 fichas con el campo «Año» vacío. Los archivos cumplen la regla tal como la fija INC-T126-01. Pero la función de la prueba deja pasar un trío «2010 · sin año · 2020» con la misma Q (devuelve `[]`): un documento sin año entre dos fechados esconde la inversión (H-05).
+
+### Hallazgos de la r01
+
+| ID | Estado | Evidencia |
+| --- | --- | --- |
+| H-01 (media) | **corregido** | J5 muere; J9 nuevo también; el ciclo resuelve la banda marginal con la segunda pasada y la registra. Lo que no hace el ejecutor (pedirla si falta) está en el «No comprueba» de PB-48 y en INC-T126-01 |
+| H-02 (media) | **corregido** | J4, J7 y J8 mueren; el desempate sin año queda `[PROPUESTO]` en INC-T126-01 y en el «No comprueba» de PB-26 |
+| H-03 (baja) | **corregido** | las comprobaciones son funciones probadas sobre fichas estropeadas |
+| H-04 (baja) | **corregido** | `test_h04_…` |
+
+### Hallazgo nuevo
+
+| ID | Gravedad | Cómo reproducirlo | Esperado / obtenido | Corrección sugerida |
+| --- | --- | --- | --- | --- |
+| H-05 | baja | `r02_01_desempate_medida.py`, última línea | Esperado: «a igualdad de Q, la más reciente primero» entre todas las fichas fechadas de un empate. Obtenido: `desempates_al_reves` solo mira pares contiguos y un «Documento vivo» entre dos fichas fechadas esconde la inversión. Hoy no ocurre en F7–F9 (medido: 0) | Comparar, dentro de cada (sección, Q), la secuencia de años sin las fichas sin año |
+
+### Invariantes
+
+- No cambia producción ni el corpus (los mutantes de F7–F9 solo en la copia desechable). ✔
+- Sin LLM en la ruta determinista. ✔
+- Decisiones: INC-T126-01 ampliada `[PROPUESTO]` y fila en `Decisiones_del_operador_Bloque_A.md`. ✔
+- Secretos: gates en verde; mis scripts no llevan ninguno. ✔
+
+### Lo que no comprobé
+
+- El gate completo (`check_all.sh`), A-Forex y B (encargo).
+
+## Veredicto (r02)
+
+**APTO** · Las pruebas nuevas afirman lo que dicen: J1–J6 del revisor anterior mueren con ellas (J4 y J5, que vivían, también) y mis cuatro mutantes nuevos (J7–J10) mueren. H-01 a H-04 de la r01 están corregidos. Queda H-05 (baja), que pasa a la deuda técnica con su ID. Cerrar el ticket (estado, deuda, diario y commit) queda para quien coordina: este revisor solo escribe en `qa.md` y `revisores/`.

@@ -67,7 +67,7 @@
    "11_Ejecutor/tests/test_unitarias.py::test_ht04_y_ht06_y_ht08"
   ],
   "comprueba": "Idempotencia y acuse por mensaje; cola del monitor HT-08.",
-  "no_comprueba": "La ráfaga del plan: 100 % registradas y respondidas, y el p90 de N0."
+  "no_comprueba": "La ráfaga del plan: el 100 % registradas y respondidas, el p90 de N0, el orden por prioridad con envejecimiento y el presupuesto por nivel."
  },
  "PB-09": {
   "cobertura": "PARCIAL",
@@ -174,7 +174,7 @@
    "11_Ejecutor/tests/test_unitarias.py::test_saneamiento_r9"
   ],
   "comprueba": "La instrucción se neutraliza, queda una incidencia MANIPULACION, ninguna puntuación cambia y el texto no llega a los entregables.",
-  "no_comprueba": "La degradación o el borrado de la fuente en F9 con su línea en el Registro de bajas."
+  "no_comprueba": "La degradación o el borrado de la fuente en F9 con su línea en el Registro de bajas; el camino del plan (una fuente que trae el Buscador y que pasa al Curador) no se ejerce; ninguna prueba afirma la EVD con `incidencia_manipulacion`; la comprobación G3-EST-06 no existe en el ejecutor ni en HT-09; y el «destino» de la fuente no se prueba."
  },
  "PB-21": {
   "cobertura": "PARCIAL",
@@ -260,7 +260,7 @@
    "11_Ejecutor/tests/test_t65_qa_r01.py::test_r01_h08_ps1_con_el_minimo_de_raices_de_la_configuracion"
   ],
   "comprueba": "La puerta PS1 cuenta raíces independientes con el mínimo de la configuración.",
-  "no_comprueba": "La comprobación G3 de raíces sobre un paquete real y el recuento del Auditor."
+  "no_comprueba": "La comprobación G3 de raíces sobre un paquete real y el recuento del Auditor. El ejecutor no distingue derivadas (escribe `grado_independencia = RAIZ` siempre): «1 raíz y 20 derivadas» depende del Curador, que es un agente de lenguaje."
  },
  "PB-30": {
   "cobertura": "PARCIAL",
@@ -438,7 +438,16 @@
    "11_Ejecutor/tests/test_t125_r02.py::test_r02_h03_solo_cuenta_lo_registrado_antes_de_su_fecha_objetivo",
    "11_Ejecutor/tests/test_t125_r02.py::test_r02_h04_un_ref_id_que_no_es_una_fuente_de_f9_no_cuenta",
    "11_Ejecutor/tests/test_t125_r02.py::test_r02_h07_ventana_de_24_meses_con_su_borde",
-   "11_Ejecutor/tests/test_t125_r02.py::test_r02_h07_antiguedad_del_cierre_con_su_borde"
+   "11_Ejecutor/tests/test_t125_r02.py::test_r02_h07_antiguedad_del_cierre_con_su_borde",
+   "11_Ejecutor/tests/test_t125_r02.py::test_r02_h08_la_probabilidad_sin_declarar_es_la_de_la_banda_y_la_fue_lleva_calc_id",
+   "11_Ejecutor/tests/test_t125_r02.py::test_r02_h06_una_fuente_que_llega_a_la_muestra_a_mitad_de_mes_sale_ese_mes",
+   "11_Ejecutor/tests/test_t125_r03.py::test_h09_variable_obligatoria_y_resoluble",
+   "11_Ejecutor/tests/test_t125_r03.py::test_h10_fechas_no_iso_no_se_leen",
+   "11_Ejecutor/tests/test_t125_r03.py::test_h10_las_iso_se_leen",
+   "11_Ejecutor/tests/test_t125_r03.py::test_h09_el_evaluador_no_cuenta_una_variable_no_resoluble",
+   "11_Ejecutor/tests/test_t125_r03.py::test_h11_umbral_entero_y_decimal_son_el_mismo_pronostico",
+   "11_Ejecutor/tests/test_t125_r03.py::test_h12_una_direccion_que_no_es_texto_no_tumba_la_fiabilidad",
+   "11_Ejecutor/tests/test_t125_r03.py::test_h13_la_entrada_de_rc_de_la_fue_lleva_run_id"
   ],
   "comprueba": "El caso del plan (dos fuentes de 25 pronósticos explícitos, una con habilidad y otra sin ella): FUE- en F6 con n, aciertos, BSS (Brier del Motor, FC-EVAL-001, con su `calc_id`), BSS contraído con k = 20 y puntos de historial (por encima y por debajo del neutro 10), una por fuente y mes y comunicadas al Buscador por CT-19. En ciclos (r02 de T-125): el pronóstico que devuelve el Analista o el Buscador llega a F2 con su bloque y, vencido, sale en la FUE- y en el CT-19; solo cuenta lo registrado antes de su fecha objetivo, de una fuente de F9, dentro de la ventana y con cierre reciente.",
   "no_comprueba": "La recalificación de Q y el orden en F9, que hace el Buscador con el modelo real (T-125). En backtest no entra ningún pronóstico de una fuente de F9 sin fecha (el filtro de evidencia no la da por conocible): el camino se prueba en modo vivo con el cliente simulado."

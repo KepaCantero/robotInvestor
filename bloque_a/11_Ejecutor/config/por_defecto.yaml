@@ -408,6 +408,9 @@ fiabilidad_fuentes:
   ventana_meses: 24               # [PROPUESTO] pronósticos con fecha objetivo dentro de los últimos 24 meses
   prob_sin_declarar: 0.65         # [PROPUESTO] probabilidad de un pronóstico explícito que no la da: la interna de la banda «más probable que no» (Anexo A; T-125 r02)
   referencia: 0.5                 # [PROPUESTO] probabilidad de la referencia ingenua del BSS de una fuente
+  # [PROPUESTO] T-125 r03 (QA r02, H-09): `variable` de un pronóstico de fuente que se resuelve con el cierre de su serie
+  # (esquema de F2, 4.1); una rentabilidad u otra transformación no se cuenta
+  variables_nivel: [nivel, cierre, precio]
 
 aprendizaje:
   solo_endurecer: true
