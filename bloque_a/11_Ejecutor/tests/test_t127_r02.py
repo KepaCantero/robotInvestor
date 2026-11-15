@@ -312,7 +312,10 @@ def test_h03_con_siete_o_mas_el_maximo_es_la_cifra_de_un_componente_sin_identifi
     d = res["neutral_al_riesgo"]["pd_pct"]
     assert math.isclose(d["maximo"], pd_[-1], rel_tol=1e-6) and math.isclose(d["minimo"], pd_[0], rel_tol=1e-6, abs_tol=1e-9)
     assert not any(c["id"] in str(res) for c in v["componentes"])
-    assert fp.FRONTERA_B == {"tolerancia_clon": 0.01, "peso_maximo_componente": 0.95, "componentes_minimos_orden": 7}
+    # T-144 (QA r01 de T-135, H-01): FRONTERA_B gana la tolerancia numérica de la regla de niveles de las copias de una
+    # serie (1e-10, la de verificación de IDX-CONC-001); los tres números de antes no cambian y la igualdad sigue exacta
+    assert fp.FRONTERA_B == {"tolerancia_clon": 0.01, "peso_maximo_componente": 0.95, "componentes_minimos_orden": 7,
+                             "tolerancia_numerica_copias": 1e-10}
 
 
 def test_ninguna_regla_nueva_se_cambia_desde_la_peticion():

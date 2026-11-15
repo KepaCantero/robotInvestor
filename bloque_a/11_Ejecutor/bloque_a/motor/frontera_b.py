@@ -10,7 +10,8 @@ T-127, H-08: es el límite declarado del último párrafo, INC-T127-01 «Ronda r
 - casi clones: dos componentes con los mismos datos a menos de `tolerancia_clon` son uno (`_sin_clones`);
 - copias a escala: dos componentes con las mismas cifras individuales (cocientes que no dependen del tamaño) son uno para el
   mínimo, la dominancia, los estadísticos de orden y los subconjuntos (`_sin_copias_a_escala`); en series de precios (la
-  amplitud de IDX-CONC-001, T-135), dos series con las mismas rentabilidades (`_etiquetas_series_copiadas`);
+  amplitud de IDX-CONC-001, T-135), dos series con las mismas rentabilidades o, salvo el redondeo de cada una, con un
+  cociente de precios constante (T-144) (`_etiquetas_series_copiadas`);
 - dominancia (1, k): ningún componente (o grupo de copias) pesa más de `peso_maximo_componente` de una base del agregado
   (`_sin_dominio`), ni aporta más de eso a una cifra agregada (`_aportacion_maxima`, `_concentradas`);
 - estadísticos de orden (mínimo, cuartiles, máximo) solo con `componentes_minimos_orden` componentes distintos (`_orden`).
@@ -52,6 +53,11 @@ FRONTERA_B: dict[str, Any] = {
     # Estadísticos de orden solo con al menos 7 componentes distintos: con n ≤ 6, los cinco estadísticos (cuantiles de tipo 7)
     # y el agregado ponderado de la misma métrica son n ecuaciones o más que dan la cifra de cada componente.
     "componentes_minimos_orden": len(ESTADISTICOS_ORDEN) + 2,
+    # T-144 (QA r01 de T-135, H-01) [PROPUESTO INC-T128-01]: tolerancia numérica de la regla de niveles de las copias de una
+    # serie de precios (`_etiquetas_series_copiadas`): la de verificación de IDX-CONC-001, la ficha que la usa
+    # (`FICHAS["IDX-CONC-001"]["tol"]`, 1e-10; `tests/test_t144.py` comprueba que son la misma). Fija el paso de precio de
+    # una serie sin redondear y el margen del error de coma flotante de los logaritmos.
+    "tolerancia_numerica_copias": 1e-10,
 }
 # T-127 r03 (QA r02, H-04) [PROPUESTO INC-T127-01]: aviso, no rechazo. Dos componentes que coinciden (a menos de
 # `tolerancia_clon`) en todos los datos del cálculo menos uno son, con toda probabilidad, un mismo emisor con un dato movido
@@ -96,42 +102,125 @@ def _etiquetas_casi_iguales(firmas: list[tuple[Any, ...]], tol: float) -> np.nda
     return np.asarray(csgraph.connected_components(csr_matrix(cerca), directed=False)[1], dtype=int)
 
 
-def _etiquetas_series_copiadas(precios: np.ndarray, anios: np.ndarray, tol: float, anios_minimos: float) -> np.ndarray:
-    """T-135 (QA r02 de T-128, H-05): el grupo de cada serie de precios por sus rentabilidades, la cifra de una serie que no
-    depende de su escala. `precios` es n × T (NaN donde la serie no tiene precio) sobre las T fechas comunes, con `anios`
-    la posición de cada fecha en años. La rentabilidad de cada serie se toma entre sus propios precios consecutivos. Dos
-    series son copias (exactas o a escala ×c) de un mismo valor si en todas las fechas en que las dos tienen rentabilidad
-    coinciden a menos de `tol` relativo (la regla de los casi clones, `_datos_que_coinciden`) y sus precios comunes abarcan
-    al menos `anios_minimos`; una copia recortada en el tiempo también lo es. Cierre transitivo, como en
-    `_etiquetas_casi_iguales`. Una copia con rentabilidades perturbadas a propósito no se detecta (límite declarado)."""
+def _paso_de_precio(precios: np.ndarray, hay: np.ndarray, tol_numerica: float) -> np.ndarray:
+    """T-144 (QA r01 de T-135, H-01): el paso de precio de cada serie, la mayor potencia de 10, 10⁻ᵈ (d = 0, 1, …, las
+    cifras decimales que guarda un float64), de la que todos sus precios son múltiplos a menos de `tol_numerica` relativo:
+    una serie con 2 decimales tiene paso 0,01. Una serie sin redondear encaja cuando 10ᵈ·p pasa de 1/(2·`tol_numerica`),
+    así que su paso relativo (paso / precio) es como mucho del orden de `tol_numerica`: la cota de redondeo nunca es más
+    laxa que eso para una serie de precio corriente."""
+    n = precios.shape[0]
+    paso = np.zeros(n)
+    sin_paso = np.ones(n, dtype=bool)
+    x = np.where(hay, precios, 0.0)
+    for d in range(np.finfo(float).precision + 1):
+        y = x * 10.0 ** d
+        encaja = (np.abs(y - np.round(y)) <= tol_numerica * np.maximum(np.abs(y), 1.0)) | ~hay
+        nuevos = sin_paso & encaja.all(axis=1)
+        paso[nuevos] = 10.0 ** -d
+        sin_paso &= ~nuevos
+        if not sin_paso.any():
+            break
+    return paso
+
+
+def _pares(n: int, limite: int):
+    """Los pares (i, k) con i < k, en tramos de unos `limite` pares (la memoria no crece con n²)."""
+    i0 = 0
+    while i0 < n - 1:
+        filas: list[int] = []
+        cuenta = 0
+        while i0 < n - 1 and (not filas or cuenta + (n - 1 - i0) <= limite):
+            filas.append(i0)
+            cuenta += n - 1 - i0
+            i0 += 1
+        I = np.concatenate([np.full(n - 1 - i, i) for i in filas])
+        K = np.concatenate([np.arange(i + 1, n) for i in filas])
+        yield I, K
+
+
+# T-144 (QA r01 de T-135, H-03): elementos de cada tramo de pares × fechas que se compara de una vez. Solo cambia el coste y
+# la memoria (unos 8 MB por matriz), no el resultado (`tests/test_t144.py` lo comprueba con un tramo pequeño)
+ELEMENTOS_POR_TRAMO = 1 << 20
+
+
+def _etiquetas_series_copiadas(precios: np.ndarray, anios: np.ndarray, tol: float, anios_minimos: float,
+                               tol_numerica: float | None = None) -> np.ndarray:
+    """T-135 (QA r02 de T-128, H-05): el grupo de cada serie de precios, con sus copias. `precios` es n × T (NaN donde la
+    serie no tiene precio) sobre las T fechas comunes, con `anios` la posición de cada fecha en años. Dos series son
+    copias (exactas o a escala ×c) de un mismo valor si sus precios comunes abarcan al menos `anios_minimos` y cumplen
+    una de estas dos reglas:
+
+    - **rentabilidades** (T-135): en todas las fechas en que las dos tienen rentabilidad (cada una entre sus propios
+      precios consecutivos) coinciden a menos de `tol` relativo (la regla de los casi clones, `_datos_que_coinciden`);
+    - **niveles** (T-144, QA r01 de T-135, H-01): en sus fechas comunes, el cociente de precios es una constante salvo el
+      redondeo de cada serie. Con pᵢ redondeado a su paso qᵢ (`_paso_de_precio`), |log pᵢ − log p̃ᵢ| ≤ −log(1 − qᵢ/2pᵢ);
+      son copias si hay una constante c con |log(pᵢ/pₖ) − c| ≤ bᵢ + bₖ + 2·`tol_numerica` en cada fecha común, la cota
+      tope en log(1 + `tol`) (nunca más laxa que la de los casi clones). Así se agrupan la misma serie con una sesión
+      ausente (solo cuentan las fechas comunes), en otra divisa a un cambio fijo, en libras redondeada a 2 decimales (la
+      acción que cotiza en peniques) o de otra fuente con 2 o 3 decimales. Dos series de verdad distintas pero muy
+      correladas no: con datos sin redondear la cota es del orden de `tol_numerica`, y el cociente de dos índices con
+      ρ ≈ 0,995 o de un fondo y su índice con un error de seguimiento de 0,01 %/año se mueve mucho más que eso.
+
+    Cierre transitivo, como en `_etiquetas_casi_iguales`. Límites declarados (INC-T128-01): una copia con rentabilidades
+    perturbadas a propósito, desfasada una sesión o con un cambio de divisa variable no se detecta; con un paso de precio
+    grande frente al precio (p. ej. 0,01 en un valor de 0,50) la cota llega a la de los casi clones y dos series que se
+    mueven poco pueden tomarse por copias (falla cerrado: la amplitud no se sirve).
+
+    T-144 (H-03): se comparan solo los pares que siguen siendo candidatos (en tramos de `ELEMENTOS_POR_TRAMO`); un par sale
+    en cuanto incumple las dos reglas, así que el coste es del orden de n²·(unas pocas fechas) y no n²·T."""
     n = precios.shape[0]
     if not n:
         return np.zeros(0, dtype=int)
+    tol_num = FRONTERA_B["tolerancia_numerica_copias"] if tol_numerica is None else float(tol_numerica)
+    T = precios.shape[1]
     hay = ~np.isnan(precios)
     rend = np.full(precios.shape, np.nan)
     for i in range(n):
         donde = np.flatnonzero(hay[i])
         rend[i, donde[1:]] = precios[i, donde[1:]] / precios[i, donde[:-1]] - 1
-    con_r = ~np.isnan(rend)
-    distinta = np.zeros((n, n), dtype=bool)
-    primera = np.full((n, n), np.inf)
-    ultima = np.full((n, n), -np.inf)
-    fuera = ~np.eye(n, dtype=bool)
-    for j in range(precios.shape[1]):
-        if distinta[fuera].all():
-            break                          # todas las parejas ya difieren: ninguna es copia, sea cual sea su alcance
-        comun = hay[:, j][:, None] & hay[:, j][None, :]
-        primera = np.where(comun, np.minimum(primera, anios[j]), primera)
-        ultima = np.where(comun, np.maximum(ultima, anios[j]), ultima)
-        x = np.where(con_r[:, j], rend[:, j], 0.0)
-        a = np.abs(x)
-        cerca = np.abs(x[:, None] - x[None, :]) <= tol * np.maximum(a[:, None], a[None, :])
-        distinta |= con_r[:, j][:, None] & con_r[:, j][None, :] & ~cerca
-    copia = ~distinta & (ultima - primera >= anios_minimos)   # sin pareja, cada serie es su propio grupo
-    return np.asarray(csgraph.connected_components(csr_matrix(copia), directed=False)[1], dtype=int)
+    logp = np.log(np.where(hay, precios, 1.0))
+    paso = _paso_de_precio(precios, hay, tol_num)
+    rel = np.where(hay, paso[:, None] / (2 * np.where(hay, precios, 1.0)), 0.0)
+    cota_redondeo = -np.log1p(-np.minimum(rel, 0.5)) + tol_num
+    tope = float(np.log1p(tol))
+    filas: list[np.ndarray] = []
+    columnas: list[np.ndarray] = []
+    for I, K in _pares(n, ELEMENTOS_POR_TRAMO):
+        m = len(I)
+        vivos = np.arange(m)
+        lo, hi = np.full(m, -np.inf), np.full(m, np.inf)
+        distinta = np.zeros(m, dtype=bool)
+        primera, ultima = np.full(m, np.inf), np.full(m, -np.inf)
+        j = 0
+        while j < T and len(vivos):
+            Iv, Kv = I[vivos], K[vivos]
+            tramo = slice(j, j + max(1, min(T - j, ELEMENTOS_POR_TRAMO // len(vivos))))
+            comun = hay[Iv, tramo] & hay[Kv, tramo]
+            a = anios[tramo][None, :]
+            primera[vivos] = np.minimum(primera[vivos], np.where(comun, a, np.inf).min(axis=1))
+            ultima[vivos] = np.maximum(ultima[vivos], np.where(comun, a, -np.inf).max(axis=1))
+            ri, rk = rend[Iv, tramo], rend[Kv, tramo]
+            ambas = ~np.isnan(ri) & ~np.isnan(rk)
+            x, y = np.where(ambas, ri, 0.0), np.where(ambas, rk, 0.0)
+            cerca = np.abs(x - y) <= tol * np.maximum(np.abs(x), np.abs(y))
+            distinta[vivos] |= (ambas & ~cerca).any(axis=1)
+            L = logp[Iv, tramo] - logp[Kv, tramo]
+            B = np.minimum(cota_redondeo[Iv, tramo] + cota_redondeo[Kv, tramo], tope)
+            lo[vivos] = np.maximum(lo[vivos], np.where(comun, L - B, -np.inf).max(axis=1))
+            hi[vivos] = np.minimum(hi[vivos], np.where(comun, L + B, np.inf).min(axis=1))
+            vivos = vivos[~(distinta[vivos] & (lo[vivos] > hi[vivos]))]
+            j = tramo.stop
+        copia = vivos[ultima[vivos] - primera[vivos] >= anios_minimos]   # sin pareja, cada serie es su propio grupo
+        filas.append(I[copia])
+        columnas.append(K[copia])
+    f = np.concatenate(filas) if filas else np.zeros(0, dtype=int)
+    c = np.concatenate(columnas) if columnas else np.zeros(0, dtype=int)
+    grafo = csr_matrix((np.ones(len(f), dtype=bool), (f, c)), shape=(n, n))
+    return np.asarray(csgraph.connected_components(grafo, directed=False)[1], dtype=int)
 
 
-def _aviso_casi_clones(firmas: list[tuple[Any, ...]], tol: float, lim: list[str]) -> int:
+def _aviso_casi_clones(firmas: list[tuple[Any, ...]], tol: float, lim: list[str],
+                       repetidos: list[tuple[bool, ...]] | None = None) -> int:
     """T-127 r03 (QA r02, H-04): cuántos componentes coinciden con otro, a menos de `tol`, en todos los datos de su firma
     menos `datos_distintos_aviso` (`AVISO_B`) o menos; si hay alguno, un aviso en las limitaciones (va al Registro de
     cálculos con los datos de la petición). No rechaza: es la marca de una perturbación de un dato, no una regla que
@@ -139,8 +228,15 @@ def _aviso_casi_clones(firmas: list[tuple[Any, ...]], tol: float, lim: list[str]
 
     T-135 (QA r03 de T-127, H-06): las coincidencias triviales (``None`` con ``None``, 0 con 0) siguen contando para «todos
     menos d», pero el par tiene que coincidir además en `coincidencias_informativas_minimas` datos que no lo sean. La ficha
-    pone a ``None`` en la firma los datos que repiten otro (p. ej. la oferta total cuando toda está en circulación) o que se
-    derivan de otros (`otros_pasivos` de REI-NAV-001 cuando se calcula por diferencia): no son datos de quien pide."""
+    pone a ``None`` en la firma los datos que se derivan de otros (`otros_pasivos` de REI-NAV-001 cuando se calcula por
+    diferencia): no son datos de quien pide.
+
+    T-144 (QA r01 de T-135, H-02): un dato que repite otro del mismo componente (la oferta total cuando toda está en
+    circulación) va en la firma tal cual, y `repetidos` (una tupla de booleanos por componente, como su firma) lo marca.
+    Si los dos componentes lo repiten, ese dato no es uno más: su coincidencia o su diferencia es la del dato que repite,
+    así que cuenta como coincidencia trivial (iguala, pero no informa). Si solo uno de los dos lo repite, se compara como
+    los demás: mover el dato del que cuelga (la circulante de una copia) es un dato movido, no dos. En T-135 se ponía a
+    ``None`` y mover la oferta circulante de una copia daba dos diferencias (sin aviso)."""
     n = len(firmas)
     if n < 2:
         return 0
@@ -150,7 +246,14 @@ def _aviso_casi_clones(firmas: list[tuple[Any, ...]], tol: float, lim: list[str]
     for j in range(len(firmas[0])):
         nulo = np.array([f[j] is None for f in firmas])
         cero = np.array([f[j] is not None and float(f[j]) == 0 for f in firmas])
-        triviales += (nulo[:, None] & nulo[None, :]) | (cero[:, None] & cero[None, :])
+        rep = np.array([bool(r[j]) for r in repetidos]) if repetidos is not None else np.zeros(n, dtype=bool)
+        dos_rep = rep[:, None] & rep[None, :]
+        if dos_rep.any():   # T-144 (H-02): lo repetido en los dos iguala siempre (su diferencia es la de su dato)
+            x = np.array([0.0 if f[j] is None else float(f[j]) for f in firmas])
+            a = np.abs(x)
+            igual_j = (np.abs(x[:, None] - x[None, :]) <= tol * np.maximum(a[:, None], a[None, :])) & (nulo[:, None] == nulo[None, :])
+            iguales = iguales + (dos_rep & ~igual_j)
+        triviales += (nulo[:, None] & nulo[None, :]) | (cero[:, None] & cero[None, :]) | dos_rep
     par = (iguales >= len(firmas[0]) - d) & (iguales - triviales >= AVISO_B["coincidencias_informativas_minimas"])
     np.fill_diagonal(par, False)
     k = int(np.sum(par.any(axis=1)))

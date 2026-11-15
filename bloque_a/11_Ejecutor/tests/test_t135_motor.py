@@ -172,7 +172,10 @@ def test_h05_etiquetas_de_series_copiadas():
     cierre transitivo; una serie sin fechas comunes con otra no es su copia."""
     et = fb._etiquetas_series_copiadas
     anios = np.arange(5) / 2.0                                    # 0; 0,5; 1; 1,5; 2 años
-    base = np.array([100.0, 110.0, 99.0, 120.0, 108.0])
+    # T-144 (QA r01 de T-135, H-01): precios sin redondear (con un factor de muchos decimales). Con los enteros de antes, la
+    # serie tiene paso 1 (0,5 % de redondeo a 100) y la regla nueva de niveles toma por copia a «lejos», que a esa
+    # resolución lo es; esta prueba fija la regla de las rentabilidades, que no cambia (la de niveles, en test_t144.py)
+    base = np.array([100.0, 110.0, 99.0, 120.0, 108.0]) * 1.0123456789
     r = base[1:] / base[:-1] - 1
     casi = np.concatenate([[50.0], 50.0 * np.cumprod(1 + r * 1.0099)])     # cada rentabilidad, a menos del 1 %
     lejos = np.concatenate([[50.0], 50.0 * np.cumprod(1 + r * 1.0102)])    # una ya pasa del 1 %

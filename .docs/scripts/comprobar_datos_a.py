@@ -15,7 +15,14 @@ vacía, el último dato de la historia). Al final, cuántos símbolos sirven por
 Uso (desde la raíz):
   .venv/bin/python .docs/scripts/comprobar_datos_a.py <carpeta> [--universo csv] [--as-of AAAA-MM-DD] [--horizonte H3]
                                                      [--clases DIV …]
-Termina con 0 si todos los símbolos están OK, con 1 si no y con 2 si la carpeta no existe.
+`--clases` solo admite los doce tipos de activo del Bloque A, en mayúsculas (T-147, QA r01 de T-141, H-01: con una errata
+la comprobación daba «0 de 0 OK» y el mismo código 0 que con todos los símbolos bien).
+Termina con 0 si todos los símbolos están OK, con 1 si no y con 2 si la carpeta no existe, un tipo de `--clases` no es
+uno de los doce o el universo no tiene ningún símbolo que comprobar.
+
+T-148 (QA r01 de T-145, H-05): un símbolo sin datos en la ventana y con una historia anterior que no valida (un cierre no
+numérico, negativo, fechas repetidas) es ANTIGUO, con el aviso del dato inválido; su `hasta` es la fecha de la última fila
+del archivo hasta as_of, que puede ser la del dato inválido.
 """
 import argparse
 import sys
@@ -29,7 +36,7 @@ EJECUTOR = RAIZ / "bloque_a" / "11_Ejecutor"
 sys.path.insert(0, str(EJECUTOR))
 
 from bloque_a.calendario import _sesiones_entre, validar_festivos_ps2  # noqa: E402
-from bloque_a.configuracion import RUTA_UNIVERSO_EJEMPLO, cargar_config, parametro  # noqa: E402
+from bloque_a.configuracion import CLASES, RUTA_UNIVERSO_EJEMPLO, cargar_config, parametro  # noqa: E402
 from bloque_a.herramientas.ht01_datos import (  # noqa: E402
     DatosInvalidos,
     DatosNoDisponibles,
@@ -69,6 +76,12 @@ def comprobar(carpeta: str | Path, universo: pd.DataFrame, as_of: str, horizonte
         f.update(estado="ANTIGUO", hasta=ultimo.date().isoformat(),
                  motivo=f"último dato el {ultimo.date()}, anterior a la ventana del ciclo (desde {ini.date()}): hace "
                         f"{antiguedad(ultimo)} {unidad} (máximo {max_dias} en {horizonte})")
+        try:   # T-148 (QA r01 de T-145, H-05): la historia también se valida, como en la rama con datos en la ventana
+            prov.cierres(f["simbolo"], None, as_of)
+        except DatosInvalidos as e:
+            f["aviso"] = f"dato inválido en la historia, anterior a la ventana del ciclo (el último dato puede serlo): {e}"
+        except DatosNoDisponibles:
+            pass
 
     filas = []
     for _, u in universo.iterrows():
@@ -106,7 +119,8 @@ def main(argv: list[str] | None = None) -> int:
     ap.add_argument("--universo", default=str(RUTA_UNIVERSO_EJEMPLO))
     ap.add_argument("--as-of", default=pd.Timestamp.today().date().isoformat())
     ap.add_argument("--horizonte", default="H3", choices=["H1", "H2", "H3", "H4", "H5"])
-    ap.add_argument("--clases", nargs="*", default=None, help="solo estos tipos de activo (p. ej. DIV)")
+    ap.add_argument("--clases", nargs="+", default=None, choices=CLASES, metavar="CLASE",
+                    help=f"solo estos tipos de activo (p. ej. DIV), de los doce: {' '.join(CLASES)}")
     a = ap.parse_args(argv)
     if not Path(a.carpeta).is_dir():   # H-04: un mensaje, no una traza
         print(f"no existe la carpeta de datos {a.carpeta}", file=sys.stderr)
@@ -114,6 +128,10 @@ def main(argv: list[str] | None = None) -> int:
     universo = cargar_universo(a.universo)
     if a.clases:   # T-141: una fuente que solo cubre algunos tipos (los tipos de cambio del BCE, solo DIV)
         universo = universo[universo["clase"].isin(a.clases)]
+    if universo.empty:   # T-147 (QA r01 de T-141, H-01): nada que comprobar no es un verde
+        print(f"el universo {a.universo} no tiene ningún símbolo"
+              + (f" de los tipos {' '.join(a.clases)}" if a.clases else "") + ": nada que comprobar", file=sys.stderr)
+        return 2
     filas = comprobar(a.carpeta, universo, a.as_of, a.horizonte)
     for f in filas:
         if f["estado"] != "OK":

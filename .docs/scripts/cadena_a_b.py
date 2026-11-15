@@ -2,8 +2,9 @@
 
 1. Bloque A: un ciclo C1 (`bloque-a ciclo`) con los datos sintéticos y el universo de ejemplo.
 2. Broker (código del lado A, `bloque_a/cadena_b.py`, sin modelo): elige las opciones con siguiente paso
-   `ENVIAR_A_BLOQUE_B` y escribe una petición CT-B-01 por cada una; una opción sin correspondencia de ámbito no se envía
-   (falla cerrado) y queda en el resumen con su código.
+   `ENVIAR_A_BLOQUE_B` y escribe una petición CT-B-01 por cada una; una opción sin correspondencia de ámbito, o cuya
+   petición lleva credenciales o datos personales (R8, `DATOS_PROTEGIDOS`, T-147), no se envía (falla cerrado), no se
+   escribe ni lleva CT-04 de vuelta, y queda en el resumen con su código.
 3. Bloque B: `bloque-b analizar --json` por petición. Si la puerta de tiempo la detiene (EN_PAUSA con `aut_id`), el
    Broker autoriza con la opción que recomienda el propio Bloque B (`autorizar --decidido-por BROKER`), hasta
    `--max-autorizaciones` veces; una pausa por consulta bloqueante no se responde y queda en el resumen.
@@ -161,8 +162,12 @@ def main(argv: list[str] | None = None) -> int:
             resumen["envios"].append(envio)
         if a.sonda_sin_correspondencia:
             sin = next((n for n in resumen["no_enviadas"] if n["codigo"] == "SIN_CORRESPONDENCIA_AMBITO"), None)
-            if sin:
-                pet = cadena_b.construir_peticion(paquete, sin["opp_id"], cfg, exigir_correspondencia=False)
+            try:   # T-147: la sonda pasa los mismos filtros (R8, configuración) que el envío; si no, se anota
+                pet = cadena_b.construir_peticion(paquete, sin["opp_id"], cfg, exigir_correspondencia=False) if sin else None
+            except cadena_b.ErrorCadenaB as e:
+                resumen["sonda_sin_correspondencia"] = {"opp_id": sin["opp_id"], "codigo": e.codigo, "detalle": e.detalle}
+                pet = None
+            if pet is not None:
                 ruta_pet = _escribir(w / "sonda" / f"{sin['opp_id']}_sin_clave.json", pet)
                 estado_sonda = w / "b_sonda" / "estado"
                 res = _cli("b", ["--estado", str(estado_sonda), "--salida", str(w / "b_sonda" / "salida"), "--as-of", a.as_of,

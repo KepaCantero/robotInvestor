@@ -108,6 +108,16 @@ LLAMADAS_DEL_CICLO = (
 )
 # Mensaje de una reparación de JSON (`agentes.Agentes.invocar`): hasta 15 errores de hasta 300 caracteres y el texto fijo
 ERRORES_REPARACION, CARACTERES_POR_ERROR, CARACTERES_FIJOS_REPARACION = 15, 300, 120
+# T-148 (QA r01 de T-145, H-01): papeles cuyo encargo copia, por cada objeción, datos de las llamadas anteriores
+# (`Bloque._refutacion`): la respuesta a objeciones lleva en cada objeción pendiente su argumento, las dimensiones E de la
+# opción y la lista de su evidencia citable; la contrarréplica, en cada objeción fuerte dada por resuelta, el contenido de
+# cada evidencia citada (`_contenido_evidencia`), que puede citarse varias veces. Su encargo crece con objeciones ×
+# evidencias y solo lo acota la reserva del presupuesto (S4b)
+MULTIPLICAN_ENCARGO = ("respuesta_objeciones", "contrarreplica")
+# Desde T-146 (`consumo.ReservaLlamada`), una petición con bolsa solo sale si su peor caso cabe en lo que queda de la bolsa:
+# toda su entrada (system, mensajes y herramientas, a 3,6 caracteres por token) por `presupuesto_uc.reserva.
+# factor_tokens_entrada` y, como poco, `presupuesto_uc.reserva.salida_minima_tokens` de salida. `tests/test_t148.py`
+# comprueba contra `ReservaLlamada` que el tope del encargo es ese (integración de T-148 con T-146, 15-11-2026)
 SUPUESTOS = (
     "S1 · tokens: como mucho `factor_tokens_cota` veces los que aproxima el simulador (3,6 caracteres por token)",
     ("S2 · cada petición, en su peor caso: toda la entrada como escritura de caché, `max_tokens` de salida y `max_usos` "
@@ -115,10 +125,16 @@ SUPUESTOS = (
     "S3 · el número de llamadas, el de las tablas `LLAMADAS_POR_TIPO` y `LLAMADAS_DEL_CICLO` (ciclo C1 de la V5, nivel N2)",
     ("S4 · el encargo de cada llamada: lo que mide el ciclo simulado para ese agente (el mayor de los medidos si no se llamó) "
     "más la salida máxima de cada llamada anterior que puede leer (las de su tipo; en las del ciclo, las de su columna "
-    "«lee» de `LLAMADAS_DEL_CICLO`), copiada una vez"),
-    ("S5 · fuera: lo que lee cada búsqueda y lo que añade la API por la herramienta, los reintentos del SDK, la tarifa de "
-    "contexto largo y lo que el encargo trae de ciclos anteriores (opciones vigentes) más allá de lo medido desde un "
-    "estado vacío"),
+    "«lee» de `LLAMADAS_DEL_CICLO`), copiada una vez; salvo en la respuesta a objeciones y la contrarréplica (S4b)"),
+    ("S4b · (T-148) la respuesta a objeciones y la contrarréplica copian datos anteriores por cada objeción (la "
+    "contrarréplica, el contenido de cada evidencia citada): su encargo crece con objeciones × evidencias y se toma el "
+    "mayor que admite la reserva del presupuesto de su bolsa (T-146: la entrada con el margen y la salida mínima ≤ el "
+    "límite de la bolsa con la ampliación máxima), sumado a lo medido; en toda llamada con bolsa, el encargo es como mucho ese, aunque S4 dé más"),
+    ("S5 · fuera: lo que lee cada búsqueda (se cobra como entrada en su petición y en cada continuación de `pause_turn` "
+    "que la reenvía; la salida da su peso por cada 1 000 tokens leídos), lo que añade la API por la herramienta, los "
+    "reintentos del SDK, la tarifa de contexto largo (los 5.5 de Opus y Sonnet no la tienen; Haiku 5.5, por encima de "
+    "100 000 tokens, sí, y su único papel, la curación, se queda por debajo con S4) y lo que el encargo trae de ciclos "
+    "anteriores (opciones vigentes) más allá de lo medido desde un estado vacío"),
 )
 
 
@@ -166,11 +182,23 @@ def _sistema_del_catalogo(cfg: dict, agente: str) -> int:
 
 
 def cota_ciclo(llamadas: list[dict], cfg: dict, precios: dict, precio_busqueda_mil: float, factor_tokens: float,
-               sistema=None) -> dict:
+               sistema=None, tipos: list[str] | None = None, con_t146: bool = True) -> dict:
     """Cota superior del coste de un ciclo C1 (T-145): la menor de la cota por llamadas y la cota por presupuesto, con los
     supuestos de `SUPUESTOS`. `sistema(agente)` da los tokens del prompt de sistema de un agente que no se llamó en el
-    ciclo medido (por defecto, el del catálogo). Falla cerrado si el diseño no es el V5 o si el ciclo medido hizo una
-    llamada que las tablas no prevén."""
+    ciclo medido (por defecto, el del catálogo). `tipos` son los tipos de activo que analiza el ciclo (T-148, QA r01 de
+    T-145, H-03: los de F10, P-02, si el estado ya existe; por defecto, `perfiles_activos`, que es lo que F10 toma al
+    nacer). Falla cerrado si el diseño no es el V5, si un tipo no es de los doce o si el ciclo medido hizo una llamada
+    que las tablas no prevén.
+
+    `con_t146` (T-148, aviso de la coordinación del 15-11-2026; por defecto desde que T-146 está en el código): con T-146, el presupuesto en UC reserva el peor
+    caso antes de cada petición (entrada con el margen como escritura de caché, `max_tokens` de salida y las búsquedas al
+    máximo, que cuentan en UC), AG-18, AG-19 y AG-20 pagan de la bolsa común y la suma del ciclo no pasa del tope con la
+    ampliación máxima. Entonces ninguna bolsa supera su límite y todo lo gastado pasa por el presupuesto: la cota por
+    presupuesto es solo `limites` (sin la última llamada de cada bolsa, la caché cargada como lectura, lo de fuera del
+    presupuesto ni las búsquedas aparte). El precio por UC de cada bolsa incluye entonces el de una búsqueda si la
+    configuración da sus UC (`uc.uc_por_busqueda_web`, la clave de T-146; si no está, no se añade). Con
+    `con_t146=False`, la cota más holgada que valía antes de T-146, cuando el presupuesto no cortaba antes de cada
+    petición: se mantiene para comparar y sigue siendo una cota superior."""
     from bloque_a.configuracion import (
         max_tokens_de,
         modelo_de,
@@ -181,7 +209,9 @@ def cota_ciclo(llamadas: list[dict], cfg: dict, precios: dict, precio_busqueda_m
     if (cfg.get("diseno") or "v5") != "v5":
         raise SystemExit("la cota por llamadas está hecha para el diseño V5 (`diseno: v5`); la V6 tiene otras llamadas")
     sistema = sistema or (lambda a: _sistema_del_catalogo(cfg, a))
-    tipos = list(perfiles_activos(cfg))
+    tipos = list(perfiles_activos(cfg)) if tipos is None else list(tipos)
+    if not tipos or any(c not in AGENTE_CLASE for c in tipos) or len(set(tipos)) < len(tipos):
+        raise SystemExit(f"tipos de activo no válidos para la cota: {tipos}")
     reparaciones = int(parametro(cfg, "llm.reintento_reparacion"))
     continuaciones = int(parametro(cfg, "llm.max_continuaciones_pause_turn"))
     bw = cfg.get("busqueda_web") or {}
@@ -220,9 +250,30 @@ def cota_ciclo(llamadas: list[dict], cfg: dict, precios: dict, precio_busqueda_m
             raise SystemExit(f"sin tarifa para {m}: añádala al fichero de precios")
         return p
 
-    def peor(a, leido, web):
-        return peor_llamada(precio(a), sistema_de(a), encargo(a) + leido, max_tokens_de(cfg, a), web, reparaciones,
-                            continuaciones, factor_tokens, max_usos, precio_busqueda_mil, uc, tok_rep)
+    # Presupuesto del ciclo: el límite de cada bolsa con la ampliación máxima (autorizada o no). Desde T-146, una petición
+    # con bolsa solo sale si su peor caso (la entrada por el margen, como poco la salida mínima) cabe en lo que queda de la
+    # bolsa, así que el mensaje de una llamada con bolsa no pasa de lo que deja el límite entero (S4b, T-148)
+    factor_reserva = float(parametro(cfg, "presupuesto_uc.reserva.factor_tokens_entrada"))
+    salida_minima = float(parametro(cfg, "presupuesto_uc.reserva.salida_minima_tokens"))
+    amp = max(float(parametro(cfg, "presupuesto_uc.ampliacion_sin_autorizacion")),
+              float(parametro(cfg, "presupuesto_uc.ampliacion_max_autorizable")))
+    tope = float(parametro(cfg, "presupuesto_uc.ciclo_semanal_max"))
+    minimo_comun = float(parametro(cfg, "presupuesto_uc.fraccion_minima_comun")) * tope
+    niveles = sorted({float(parametro(cfg, "presupuesto_uc.N1")), float(parametro(cfg, "presupuesto_uc.N2"))})
+    limite_max = {c: (1 + amp) * niveles[-1] for c in tipos}
+    limite_max["COMUN"] = (1 + amp) * max(minimo_comun, tope - len(tipos) * niveles[0])
+
+    def encargo_max(bolsa):
+        """Tokens de encargo (del simulador) que admite como mucho la reserva en una bolsa vacía: sin contar el system
+        prompt ni las herramientas, que también entran en la reserva, así que es una cota por encima."""
+        return max(0.0, 2 * uc[0] * (limite_max[bolsa] - 0.5 * salida_minima / uc[1]) / factor_reserva)
+
+    def peor(a, leido, web, bolsa=None, multiplica=False):
+        tok = encargo(a) + leido
+        if bolsa is not None:   # S4b: el presupuesto acota el encargo; en la respuesta y la contrarréplica, es la cota
+            tok = encargo(a) + encargo_max(bolsa) if multiplica else min(tok, encargo(a) + encargo_max(bolsa))
+        return peor_llamada(precio(a), sistema_de(a), tok, max_tokens_de(cfg, a), web, reparaciones,
+                            continuaciones, factor_tokens, max_usos, precio_busqueda_mil, uc, tok_rep), tok
 
     papeles, bolsas = [], collections.defaultdict(lambda: {"usd_por_uc": 0.0, "ultima_uc": 0.0})
     salida_papel: collections.Counter = collections.Counter()   # salida máxima de cada papel, sumada en todos los tipos
@@ -230,11 +281,12 @@ def cota_ciclo(llamadas: list[dict], cfg: dict, precios: dict, precio_busqueda_m
         leido = 0          # S4: la salida máxima de las llamadas anteriores de su tipo
         for papel, agentes, n, web in LLAMADAS_POR_TIPO:
             ags = [AGENTE_CLASE[c] if a == "ANALISTA" else a for a in agentes]
-            casos = [(peor(a, leido, web and a in con_busqueda), a) for a in ags]
-            w, a = max(casos, key=lambda x: x[0]["usd"])
+            casos = [(peor(a, leido, web and a in con_busqueda, c, papel in MULTIPLICAN_ENCARGO), a) for a in ags]
+            (w, tok), a = max(casos, key=lambda x: x[0][0]["usd"])
             k = maximo(n)
             papeles.append({"tipo": c, "papel": papel, "agente": a, "agentes": ags, "llamadas": k, "bolsa": c,
-                            "encargo_tok": max(encargo(x) for x in ags) + leido, **{q: v * k for q, v in w.items()}})
+                            "encargo_tok": max(x[0][1] for x in casos), "lee_tok": leido,
+                            **{q: v * k for q, v in w.items()}})
             b = bolsas[c]
             b["usd_por_uc"] = max([b["usd_por_uc"]] + [_usd_por_uc(precio(x), uc) for x in ags])
             b["ultima_uc"] = max(b["ultima_uc"], w["uc"])
@@ -244,9 +296,9 @@ def cota_ciclo(llamadas: list[dict], cfg: dict, precios: dict, precio_busqueda_m
     for papel, a, n, bolsa, lee in LLAMADAS_DEL_CICLO:
         for _i in range(n):   # la segunda llamada del mismo papel puede leer la primera (la reescritura, el 2.º dictamen)
             leido = sum(v for q, v in salida_papel.items() if lee == "*" or q in lee)
-            w = peor(a, leido, a in con_busqueda)
+            w, tok = peor(a, leido, a in con_busqueda, bolsa)
             papeles.append({"tipo": None, "papel": papel, "agente": a, "agentes": [a], "llamadas": 1, "bolsa": bolsa,
-                            "encargo_tok": encargo(a) + leido, **w})
+                            "encargo_tok": tok, "lee_tok": leido, **w})
             if bolsa:
                 b = bolsas[bolsa]
                 b["usd_por_uc"] = max(b["usd_por_uc"], _usd_por_uc(precio(a), uc))
@@ -257,12 +309,7 @@ def cota_ciclo(llamadas: list[dict], cfg: dict, precios: dict, precio_busqueda_m
 
     # Cota por presupuesto. `Bloque._invocar` llama si `Presupuesto.puede(bolsa, estimado)`, con una estimación previa, y
     # carga lo real después: cada llamada admitida empieza con lo consumido ≤ límite − estimado, y la bolsa acaba, como
-    # mucho, en su límite más su última llamada. El límite, con la ampliación máxima (autorizada o no).
-    amp = max(float(parametro(cfg, "presupuesto_uc.ampliacion_sin_autorizacion")),
-              float(parametro(cfg, "presupuesto_uc.ampliacion_max_autorizable")))
-    tope = float(parametro(cfg, "presupuesto_uc.ciclo_semanal_max"))
-    minimo_comun = float(parametro(cfg, "presupuesto_uc.fraccion_minima_comun")) * tope
-    niveles = sorted({float(parametro(cfg, "presupuesto_uc.N1")), float(parametro(cfg, "presupuesto_uc.N2"))})
+    # mucho, en su límite más su última llamada (con el encargo acotado por S4b). El límite, con la ampliación máxima.
     p_tipos = max(bolsas[c]["usd_por_uc"] for c in tipos)
     p_comun = bolsas["COMUN"]["usd_por_uc"]
     limites = 0.0
@@ -272,15 +319,44 @@ def cota_ciclo(llamadas: list[dict], cfg: dict, precios: dict, precio_busqueda_m
     ultimas = sum(b["usd_por_uc"] * b["ultima_uc"] for b in bolsas.values())
     primas = max(b["usd_por_uc"] for b in bolsas.values()) * sum(x["prima_uc"] for x in papeles if x["bolsa"])
     fuera_presupuesto = sum(x["usd"] - x["busquedas"] * precio_busqueda_mil / 1000 for x in papeles if not x["bolsa"])
-    cota_presupuesto = limites + ultimas + primas + fuera_presupuesto + busquedas * precio_busqueda_mil / 1000
-    return {"llamadas_max": sum(x["llamadas"] for x in papeles), "peticiones_max": sum(x["peticiones"] for x in papeles),
+    if con_t146:   # T-146 integrado: todo pasa por el presupuesto y ninguna bolsa pasa de su límite
+        uc_busqueda = (cfg.get("uc") or {}).get("uc_por_busqueda_web")
+        if uc_busqueda:   # una búsqueda cuesta en UC lo suyo: su precio por UC puede ser el más alto
+            p_busq = precio_busqueda_mil / 1000 / float(uc_busqueda)
+            cota_presupuesto = limites * max(p_busq / p_tipos, p_busq / p_comun, 1.0)
+        else:
+            cota_presupuesto = limites
+    else:
+        cota_presupuesto = limites + ultimas + primas + fuera_presupuesto + busquedas * precio_busqueda_mil / 1000
+    # S5 (T-148, H-02): lo que lee cada búsqueda entra como entrada en su petición y en cada continuación posterior del mismo
+    # intento, que reenvía el contenido pausado. Por cada 1 000 tokens leídos por búsqueda, al precio de escritura de caché
+    lecturas = 0.0
+    vueltas = 1 + continuaciones
+    for x in papeles:
+        if x["busquedas"]:
+            lecturas += (x["llamadas"] * (1 + reparaciones) * max_usos * vueltas * (vueltas + 1) / 2
+                         * precio(x["agente"])["escritura_cache"] * 1000 / 1e6)
+    return {"tipos": tipos, "usd_por_mil_tokens_leidos_por_busqueda": lecturas,
+            "encargo_max_por_bolsa": {b: encargo_max(b) for b in limite_max},"llamadas_max": sum(x["llamadas"] for x in papeles), "peticiones_max": sum(x["peticiones"] for x in papeles),
             "busquedas": busquedas, "cota_llamadas": cota_llamadas, "cota_presupuesto": cota_presupuesto,
             "cota": min(cota_llamadas, cota_presupuesto), "presupuesto": {
                 "limites": limites, "ultima_llamada": ultimas, "primas_cache": primas, "fuera_del_presupuesto": fuera_presupuesto},
             "papeles": papeles}
 
 
-def calcular(carpeta: str, precios: str, config: str | None) -> dict:
+def tipos_del_estado(estado: str, cfg: dict) -> list[str]:
+    """T-148 (QA r01 de T-145, H-03): los tipos que analizará el ciclo con ese estado del Bloque A: los de F10 (P-02), como
+    `Bloque.ciclo`; si F10 aún no existe, los de la configuración (`perfiles_activos`, lo que F10 toma al nacer). Una
+    carpeta que no existe falla cerrado (el estado no se crea para leerlo)."""
+    from bloque_a.almacen import Almacen
+    from bloque_a.configuracion import perfiles_activos
+    if not Path(estado).is_dir():
+        raise SystemExit(f"no existe la carpeta del estado del Bloque A {estado}")
+    p02 = (Almacen(estado).estado("F10").get("P-02") or {}).get("valor_vigente")
+    return list(p02) if p02 else list(perfiles_activos(cfg))
+
+
+def calcular(carpeta: str, precios: str, config: str | None, estado: str | None = None, con_t146: bool = True) -> dict:
     llamadas = json.loads((Path(carpeta) / "llamadas.json").read_text(encoding="utf-8"))
     tarifa = yaml.safe_load(Path(precios).read_text(encoding="utf-8"))
     cfg = _config(config)
@@ -290,7 +366,8 @@ def calcular(carpeta: str, precios: str, config: str | None) -> dict:
     r = estimar(llamadas, tarifa["precios_por_millon"], pb, agentes, int(bw.get("max_usos_por_llamada", 0)), factor,
                 int((cfg.get("llm") or {}).get("max_continuaciones_pause_turn", 0)),
                 int((cfg.get("llm") or {}).get("reintento_reparacion", 0)))
-    r["ciclo"] = cota_ciclo(llamadas, cfg, tarifa["precios_por_millon"], pb, factor)
+    r["ciclo"] = cota_ciclo(llamadas, cfg, tarifa["precios_por_millon"], pb, factor,
+                            tipos=tipos_del_estado(estado, cfg) if estado else None, con_t146=con_t146)
     return r
 
 
@@ -299,20 +376,34 @@ def main(argv: list[str] | None = None) -> int:
     ap.add_argument("carpeta")
     ap.add_argument("--precios", default=str(EJECUTOR / "config" / "precios_anthropic.yaml"))
     ap.add_argument("--config", default=None)
+    ap.add_argument("--estado", default=None, help="estado del Bloque A con el que correrá el ciclo: los tipos salen de F10 "
+                                                   "(P-02), como en el ciclo (T-148)")
+    ap.add_argument("--con-t146", action="store_true", help="se acepta por compatibilidad: desde que T-146 está en el "
+                                                             "código, la cota por presupuesto es siempre la de los límites")
+    ap.add_argument("--sin-t146", action="store_true", help="la cota más holgada de antes de T-146 (para comparar)")
     a = ap.parse_args(argv)
-    r = calcular(a.carpeta, a.precios, a.config)
+    con_t146 = not a.sin_t146
+    r = calcular(a.carpeta, a.precios, a.config, a.estado, con_t146)
     c = r["ciclo"]
     print(f"{r['llamadas']} llamadas medidas · suelo {r['estimacion']:.2f} USD · peor caso de esas llamadas "
           f"{r['cota_superior']:.2f} USD (no es una cota del ciclo: faltan las llamadas que dependen del modelo)")
     for m, v in r["por_modelo"].items():
         print(f"  {m:20} llamadas {v['llamadas']:3} · suelo {v['estimacion']:.3f} · peor caso {v['cota_superior']:.3f}")
     p = c["presupuesto"]
-    print(f"Cota superior del ciclo: {c['cota']:.2f} USD, la menor de:\n"
+    print(f"Tipos de activo: {', '.join(c['tipos'])}" + ("" if a.estado else " (de la configuración; con un estado que ya "
+          "tiene F10, el ciclo usa P-02: pase --estado)"))
+    salvo = ("con T-146, el presupuesto acota también lo que lee cada búsqueda" if con_t146 and c["cota"] == c["cota_presupuesto"]
+             else "salvo lo que lee cada búsqueda (S5)")
+    print(f"Cota superior del ciclo: {c['cota']:.2f} USD {salvo}, la menor de:\n"
           f"  por llamadas   {c['cota_llamadas']:7.2f} USD (hasta {c['llamadas_max']} llamadas, {c['peticiones_max']} peticiones "
           f"y {c['busquedas']} búsquedas web)\n"
-          f"  por presupuesto {c['cota_presupuesto']:6.2f} USD (límites {p['limites']:.2f} + última llamada de cada bolsa "
-          f"{p['ultima_llamada']:.2f} + caché cargada como lectura {p['primas_cache']:.2f} + fuera del presupuesto "
-          f"{p['fuera_del_presupuesto']:.2f} + búsquedas)")
+          + (f"  por presupuesto {c['cota_presupuesto']:6.2f} USD (con T-146 integrado: solo los límites de las bolsas)"
+             if con_t146 else
+             f"  por presupuesto {c['cota_presupuesto']:6.2f} USD (límites {p['limites']:.2f} + última llamada de cada bolsa "
+             f"{p['ultima_llamada']:.2f} + caché cargada como lectura {p['primas_cache']:.2f} + fuera del presupuesto "
+             f"{p['fuera_del_presupuesto']:.2f} + búsquedas; la de antes de T-146, más holgada)"))
+    print(f"Lo que lee cada búsqueda (S5): por cada 1 000 tokens leídos en cada búsqueda, la cota por llamadas sube "
+          f"{c['usd_por_mil_tokens_leidos_por_busqueda']:.2f} USD")
     print("Supuestos:\n" + "\n".join("  " + s for s in SUPUESTOS))
     return 0
 
