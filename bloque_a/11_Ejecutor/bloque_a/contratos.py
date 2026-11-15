@@ -337,9 +337,32 @@ def _red_de_tarjeta(cifras: str) -> bool:
     return False
 
 
-def _forma_de_fecha(g: str) -> bool:
-    """Cuatro cifras que pueden ser una caducidad MMAA (mes 01–12) o un año de 1900 a 2099 (calendario, no un umbral)."""
-    return g.isdigit() and len(g) == 4 and (1 <= int(g[:2]) <= 12 or g[:2] in ("19", "20"))
+def _forma_de_caducidad(g: str) -> bool:
+    """Cuatro cifras con forma de caducidad MMAA: mes 01–12 (calendario, no un umbral) y un año cualquiera de dos cifras.
+    T-145 (QA r01 de T-140, H-02): un año de cuatro cifras («2027») ya no cuenta como fecha junto a una tarjeta."""
+    return g.isdigit() and len(g) == 4 and 1 <= int(g[:2]) <= 12
+
+
+def _tarjetas_de_la_serie(grupos: list[str]) -> list[str] | None:
+    """T-145 (QA r01 de T-140, H-02 y H-03): reparte una serie de grupos de cuatro cifras en tarjetas de cuatro grupos (de
+    una red y con Luhn), cada una seguida, si acaso, de su caducidad MMAA. Lo que sobra solo puede ir detrás de una tarjeta
+    y con esa forma: las tablas ponen la fecha delante. Un PIN de cuatro cifras tras la caducidad no se admite (marcaría
+    las filas con una fecha en medio; INC-T123-01). Devuelve las tarjetas o None si la serie no se reparte así.
+    Programación dinámica desde el final (lineal en la longitud de la serie)."""
+    n = len(grupos)
+    resto: list[list[str] | None] = [None] * (n + 1)
+    resto[n] = []
+    for i in range(n - 4, -1, -1):
+        c = "".join(grupos[i:i + 4])
+        if not (_red_de_tarjeta(c) and _luhn(c)):
+            continue
+        siguientes = [i + 4] + ([i + 5] if i + 4 < n and _forma_de_caducidad(grupos[i + 4]) else [])   # con su caducidad
+        for j in siguientes:
+            detras = resto[j]
+            if detras is not None:
+                resto[i] = [c] + detras
+                break
+    return resto[0]
 
 
 GRUPOS_FILA_DE_TABLA = 5   # una tarjeta impresa en grupos de cuatro tiene cuatro (16 cifras); con cinco o más es una tabla
@@ -354,17 +377,12 @@ def tarjetas_en_texto(texto: str) -> list[str]:
     for m in RE_GRUPOS_TARJETA.finditer(texto):
         grupos = [g for g in re.split(r"[ \u00a0\u202f\-]", m.group(1)) if g]
         if len(grupos) >= GRUPOS_FILA_DE_TABLA and all(len(g) == 4 for g in grupos):
-            # T-136 (QA r01 de T-130, H-02) y T-140 (QA r01 de T-136, H-02): cinco o más números de cuatro cifras seguidos son
-            # una fila de tabla, salvo que la serie se reparta, desde el principio o desde el final, en tarjetas válidas de
-            # cuatro grupos y lo que sobre tenga forma de fecha (una caducidad MMAA o un año): una tarjeta con su caducidad,
-            # un año delante o dos tarjetas seguidas se detectan; una fila de números corrientes, casi nunca
-            n = len(grupos)
-            for inicios in (list(range(0, n - 3, 4)), list(range(n - 4, -1, -4))):
-                cubiertos = {j for i in inicios for j in range(i, i + 4)}
-                tarjetas = ["".join(grupos[i:i + 4]) for i in inicios]
-                if all(_red_de_tarjeta(c) and _luhn(c) for c in tarjetas) and all(
-                        _forma_de_fecha(grupos[j]) for j in range(n) if j not in cubiertos):
-                    hallados += ["tarjeta …" + c[-4:] for c in tarjetas]
+            # T-136 (QA r01 de T-130, H-02), T-140 (QA r01 de T-136, H-02) y T-145 (QA r01 de T-140, H-02 y H-03): cinco o
+            # más números de cuatro cifras seguidos son una fila de tabla, salvo que la serie entera se reparta en tarjetas
+            # válidas, cada una con, detrás y si acaso, su caducidad MMAA: una tarjeta con su caducidad, dos
+            # tarjetas seguidas o cada una con su caducidad se detectan; un año o una fecha delante ya no valen
+            tarjetas = _tarjetas_de_la_serie(grupos)
+            hallados += ["tarjeta …" + c[-4:] for c in tarjetas or []]
             continue
         for i in range(len(grupos)):
             cifras = ""

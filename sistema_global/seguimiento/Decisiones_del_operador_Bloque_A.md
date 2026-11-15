@@ -103,7 +103,7 @@ Se sigue preguntando antes de actuar cuando algo gasta dinero o usa una credenci
 
 | Qué | Valor hoy | Quién | Fecha | Dónde y cómo se cambia |
 | --- | --- | --- | --- | --- |
-| Autorizar el gasto del modo sombra | **Autorizado** (operador, 15-11-2026). Coste de un ciclo semanal, entre el suelo y la cota: 0,86–4,58 USD con solo divisas; 2,98–56,79 USD con los 12 tipos (T-140) | — | — | Se pregunta siempre |
+| Autorizar el gasto del modo sombra | **Autorizado** (operador, 15-11-2026). Coste de un ciclo semanal, entre el suelo y la cota: 0,86–19,54 USD con solo divisas; 2,98–166,56 USD con los 12 tipos (T-145; la cota es holgada a propósito y el presupuesto en UC aún no corta antes de cada llamada, T-146) | — | — | Se pregunta siempre |
 | Modelo de cada agente | Opus 5.5 para los que razonan más (AG-02, AG-11…), Sonnet 5.5 para la mayoría, Haiku 5.5 para los más simples | Entrega | — | `modelos` |
 | Tarifa con la que se estima el coste | La publicada el 15-11-2026, en un fichero aparte | Agente (INC-T129-01) | 15-11-2026 | `config/precios_anthropic.yaml`, con `--config` |
 | Repetir en otro modelo una petición rechazada | No | Agente (INC-T129-01) | 15-11-2026 | Código del cliente (`llm.py`) |

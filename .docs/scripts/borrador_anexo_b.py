@@ -29,6 +29,25 @@ OTROS = [
      "cerrada del Anexo B (CRIBADO, INVESTIGACION, PROFUNDIZACION, SEGUIMIENTO) no tiene: añadirlas."),
 ]
 
+# T-140 (QA r02 de T-131, H-06): los retornos de CT-09 y CT-10 los sirve el Motor (`motor/servicio.py`), sin esquema en
+# `ESQUEMAS`; los demás internos son la respuesta de un agente, validada con `ESQUEMAS`
+RETORNOS_DEL_MOTOR = {"CT-09", "CT-10"}
+RETORNOS_INTERNOS = {f"CT-{n:02d}" for n in range(6, 15)} - RETORNOS_DEL_MOTOR
+
+
+def _tramos(cts) -> str:
+    """{"CT-06", "CT-07", "CT-08", "CT-11"} → «CT-06 a CT-08 y CT-11» (tramos de contratos seguidos)."""
+    ns, tramos = sorted(int(c[3:]) for c in cts), []
+    for n in ns:
+        if tramos and n == tramos[-1][1] + 1:
+            tramos[-1][1] = n
+        else:
+            tramos.append([n, n])
+    partes = [p for a, b in tramos for p in ([f"CT-{a:02d} a CT-{b:02d}"] if b > a + 1 else
+                                            [f"CT-{n:02d}" for n in range(a, b + 1)])]
+    return ", ".join(partes[:-1]) + (" y " if len(partes) > 1 else "") + partes[-1]
+
+
 GENERALES = [
     ("Lotes (CT-11, CT-12 y CT-13)", "El Anexo B describe una pieza, un encargo o una petición por mensaje; el ejecutor los "
      "agrupa en una lista (`piezas`, `encargos`, `peticiones`) y rechaza el ejemplo tal cual. Propuesta: describir el "
@@ -52,19 +71,19 @@ GENERALES = [
      "siempre (es más estricto). Propuesta: obligatoria siempre."),
     ("Lo que el Anexo B deja abierto", "La codificación de `coincide` (CT-10) y de `independiente` (CT-11) y los nombres de las "
      "claves de `fechas` (CT-11). Propuesta: fijarlos con los valores que usa el ejecutor (los de `esquemas_respuestas.json`)."),
-    ("Retornos internos (CT-06 a CT-14)", "No pasan por la mensajería: la respuesta de cada agente se valida con los esquemas "
-     "de `ESQUEMAS` (congelados en `bloque_a/11_Ejecutor/tests/goldens/esquemas_respuestas.json`), que no llevan los mismos "
-     "nombres que el Anexo B. Propuesta: describir en el Anexo B los campos de esos esquemas, no marcar opcionales los de hoy."),
+    # T-145 (QA r01 de T-140, H-05): CT-09 y CT-10 no son respuestas de un agente: los sirve el Motor
+    (f"Retornos internos ({_tramos(RETORNOS_INTERNOS)})", ("No pasan por la mensajería: la respuesta de cada agente se "
+     "valida con los esquemas de `ESQUEMAS` (congelados en `bloque_a/11_Ejecutor/tests/goldens/esquemas_respuestas.json`), "
+     "que no llevan los mismos nombres que el Anexo B. Propuesta: describir en el Anexo B los campos de esos esquemas, no "
+     "marcar opcionales los de hoy.")),
+    (f"Retornos del Motor ({_tramos(RETORNOS_DEL_MOTOR)})", ("Tampoco pasan por la mensajería ni son la respuesta de un "
+     "agente: los sirve el Motor (`motor/servicio.py`) y no tienen esquema en `ESQUEMAS`. Propuesta: describir en el Anexo B "
+     "los campos del retorno que sirve el Motor.")),
     ("Campos mínimos que el ejecutor no exige", "Por la decisión del operador, la propuesta por defecto es marcarlos en el "
      "Anexo B como opcionales («si aplica»). Si alguno debe ser obligatorio de verdad, se cambia el código en su lugar y se "
      "re-congelan los goldens con su motivo. La lista, contrato a contrato, está abajo."),
 ]
 
-
-# T-140 (QA r02 de T-131, H-06): los retornos de CT-09 y CT-10 los sirve el Motor (`motor/servicio.py`), sin esquema en
-# `ESQUEMAS`; los demás internos son la respuesta de un agente, validada con `ESQUEMAS`
-RETORNOS_DEL_MOTOR = {"CT-09", "CT-10"}
-RETORNOS_INTERNOS = {f"CT-{n:02d}" for n in range(6, 15)} - RETORNOS_DEL_MOTOR
 
 
 def _ruta(mensaje: str) -> str:

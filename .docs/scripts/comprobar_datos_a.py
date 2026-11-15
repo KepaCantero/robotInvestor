@@ -6,8 +6,11 @@ símbolo, si la carpeta sirve sin tener que lanzar un ciclo.
 Para cada símbolo del universo: OK, FALTA (no hay archivo), INVALIDO (HT-01 lo rechaza, con su motivo) o ANTIGUO (su
 último cierre a la fecha as_of tiene más días, o sesiones en H1, que `ps2_antiguedad_maxima_dias` del horizonte pedido,
 Anexo A); se valida como en el ciclo (`cierres()` de HT-01: cierres positivos y finitos, sin fechas repetidas) y en su
-ventana (la más larga de `senales` y `tasa_base`; un dato malo más antiguo deja el símbolo OK con un aviso); su primera
-y última fecha, el número de filas y el mayor hueco entre dos fechas. Al final, cuántos símbolos sirven por tipo de activo.
+ventana (la más larga de `senales` y `tasa_base`; un dato malo más antiguo deja el símbolo OK con un aviso). Un símbolo
+con datos que acaban antes de la ventana es ANTIGUO, con su último dato (T-145, QA r01 de T-140, H-04). Se dan su primera
+fecha, el número de filas y el mayor hueco entre dos fechas **de la ventana del ciclo** (`desde`, `filas`,
+`mayor_hueco_dias`; vacíos si la ventana no tiene datos) y su último cierre hasta as_of (`hasta`; si la ventana está
+vacía, el último dato de la historia). Al final, cuántos símbolos sirven por tipo de activo.
 
 Uso (desde la raíz):
   .venv/bin/python .docs/scripts/comprobar_datos_a.py <carpeta> [--universo csv] [--as-of AAAA-MM-DD] [--horizonte H3]
@@ -49,6 +52,24 @@ def comprobar(carpeta: str | Path, universo: pd.DataFrame, as_of: str, horizonte
     prov = ProveedorCSV(carpeta)
     prov.fijar_as_of(as_of)
     corte = pd.Timestamp(as_of).normalize()
+    unidad = "sesiones" if horizonte == "H1" else "días"
+
+    def antiguedad(ultimo: pd.Timestamp) -> int:
+        # H-03 (T-131): en H1 la antigüedad se cuenta en sesiones, sin los cierres habituales de mercado, como el ejecutor
+        return _sesiones_entre(ultimo, corte, festivos) if horizonte == "H1" else (corte - ultimo).days
+
+    def antes_de_la_ventana(f: dict, motivo: str) -> None:
+        # T-145 (QA r01 de T-140, H-04): sin datos en la ventana, el símbolo tiene archivo y datos más antiguos (ANTIGUO,
+        # con su último dato) o no tiene ninguno hasta as_of (FALTA)
+        ultimo = prov.ultima_fecha(f["simbolo"])
+        if ultimo is None:
+            f.update(estado="FALTA", motivo=motivo)
+            return
+        ultimo = pd.Timestamp(ultimo).normalize()
+        f.update(estado="ANTIGUO", hasta=ultimo.date().isoformat(),
+                 motivo=f"último dato el {ultimo.date()}, anterior a la ventana del ciclo (desde {ini.date()}): hace "
+                        f"{antiguedad(ultimo)} {unidad} (máximo {max_dias} en {horizonte})")
+
     filas = []
     for _, u in universo.iterrows():
         f = {"simbolo": u["simbolo"], "clase": u["clase"], "estado": "OK", "motivo": "", "aviso": "", "desde": None, "hasta": None,
@@ -60,20 +81,17 @@ def comprobar(carpeta: str | Path, universo: pd.DataFrame, as_of: str, horizonte
         except DatosInvalidos as e:            # antes que DatosNoDisponibles, que es su clase madre
             f.update(estado="INVALIDO", motivo=str(e))
         except DatosNoDisponibles as e:
-            f.update(estado="FALTA", motivo=str(e))
+            antes_de_la_ventana(f, str(e))
         else:
             if s.empty:
-                f.update(estado="FALTA", motivo="sin observaciones hasta as_of")
+                antes_de_la_ventana(f, "sin observaciones hasta as_of")
             else:
                 idx = pd.DatetimeIndex(s.index)
                 f.update(desde=idx.min().date().isoformat(), hasta=idx.max().date().isoformat(), filas=len(idx),
                          mayor_hueco_dias=int(idx.to_series().diff().dt.days.max()) if len(idx) > 1 else 0)
-                # H-03: en H1 la antigüedad se cuenta en sesiones, sin los cierres habituales de mercado, como el ejecutor
-                ultimo = idx.max().normalize()
-                antiguedad = _sesiones_entre(ultimo, corte, festivos) if horizonte == "H1" else (corte - ultimo).days
-                unidad = "sesiones" if horizonte == "H1" else "días"
-                if antiguedad > max_dias:
-                    f.update(estado="ANTIGUO", motivo=f"último cierre hace {antiguedad} {unidad} (máximo {max_dias} en {horizonte})")
+                dias = antiguedad(idx.max().normalize())
+                if dias > max_dias:
+                    f.update(estado="ANTIGUO", motivo=f"último cierre hace {dias} {unidad} (máximo {max_dias} en {horizonte})")
                 try:   # lo anterior a la ventana no cuenta para el estado, pero se avisa
                     prov.cierres(u["simbolo"], None, as_of)
                 except DatosInvalidos as e:
