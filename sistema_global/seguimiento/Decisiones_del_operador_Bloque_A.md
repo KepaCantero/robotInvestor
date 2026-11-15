@@ -60,6 +60,7 @@ Se sigue preguntando antes de actuar cuando algo gasta dinero o usa una credenci
 | Ampliación sin pedir autorización y tope total | +25 % y +50 % de la base | Entrega; la lectura del tope, Agente (INC-T92-01) | 10-11-2026 | `presupuesto_uc.ampliacion_*` |
 | Reparto del presupuesto entre fases | Cribado 35 %, investigación 20 %, prospectiva 15 %, refutación 20 %, respuesta 10 % | Entrega | — | `presupuesto_uc.reparto_fases` |
 | Fracción de ciclos que audita el Auditor en la V6 | 25 % | Agente | 12-11-2026 | `v6.auditoria_fraccion` |
+| Cómo corta el presupuesto antes de llamar al modelo [PROPUESTO] | Cada petición reserva su peor caso (entrada × 1,35 como escritura de caché, salida máxima, búsquedas al máximo); si no cabe, ampliación, después salida recortada (no menos de 2 500 tokens) y si no, no sale; una búsqueda vale 0,32 UC; AG-18, AG-19 y AG-20 pagan de la bolsa común; la consulta N0 sigue como antes (pregunta abierta) | Agente (INC-T146-01) | 15-11-2026 | `presupuesto_uc.reserva`, `uc.uc_por_busqueda_web` |
 
 ## 4. Evaluación y aprendizaje
 

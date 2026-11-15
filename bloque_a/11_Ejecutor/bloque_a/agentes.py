@@ -18,6 +18,7 @@ from .llm import (
     LLMClient,
     ReplayClient,
     Uso,
+    con_guarda,
     contenido_sensible,
     herramienta_busqueda_web,
     respuesta_segura,
@@ -29,7 +30,7 @@ from .prompts import NOMBRES, CatalogoPrompts, mensaje_usuario
 class ResultadoAgente:
     agente: str
     datos: dict | None
-    estado: str                       # COMPLETO | PARCIAL
+    estado: str                       # COMPLETO | PARCIAL | SIN_PRESUPUESTO (T-146: la primera petición no cabía; no salió)
     uc: float = 0.0
     intentos: int = 0
     errores: list[str] = field(default_factory=list)
@@ -94,7 +95,9 @@ class Agentes:
 
     def invocar(self, agente: str, contrato: str, mensaje: dict, esquema_clave: str, instrucciones: str,
                 contexto: dict, run_id: str | None = None, clase: str | None = None, fase: str | None = None,
-                permitir_web: bool = False) -> ResultadoAgente:
+                permitir_web: bool = False, guarda=None) -> ResultadoAgente:
+        """`guarda` (T-146, `consumo.ReservaLlamada`): cada petición reserva su peor caso antes de salir (el primer intento,
+        cada reparación y, en el cliente real, cada continuación); la que no cabe no sale."""
         esquema = ESQUEMAS[esquema_clave]
         llm = self.cfg.get("llm") or {}
         modelo = modelo_de(self.cfg, agente)
@@ -129,15 +132,26 @@ class Agentes:
             self.monitor.encolar(agente)
         try:
             for intento in range(reintentos + 1):
+                mt = max_tokens
+                if guarda is not None:
+                    mt = guarda.reservar(system, mensajes, herramientas, max_tokens)
+                    if mt is None:
+                        if intento == 0:   # no ha salido ninguna petición: la fase se cierra declarada (Bloque._invocar)
+                            return ResultadoAgente(agente, None, "SIN_PRESUPUESTO", errores=[guarda.negada])
+                        errores = [guarda.negada]
+                        break
                 t_llamada = time.perf_counter()
-                r = cliente.generar(agente=agente, modelo=modelo, system=system, mensajes=mensajes,
-                                    max_tokens=max_tokens, herramientas=herramientas, esquema=esquema)
+                with con_guarda(guarda):
+                    r = cliente.generar(agente=agente, modelo=modelo, system=system, mensajes=mensajes,
+                                        max_tokens=mt, herramientas=herramientas, esquema=esquema)
                 latencia = time.perf_counter() - t_llamada
+                if guarda is not None:
+                    guarda.pagar_resto(r.uso)
                 r = respuesta_segura(r)
                 uso_total.sumar(r.uso)
                 uc_total += self.contabilidad.registrar(run_id, agente, modelo, r.uso, clase, fase, intento=intento + 1,
                                                         latencia_s=latencia)
-                if r.rechazo or r.stop_reason in ("refusal", "pause_turn", "error_proveedor", "contenido_sensible"):
+                if r.rechazo or r.stop_reason in ("refusal", "pause_turn", "error_proveedor", "contenido_sensible", "presupuesto_agotado"):
                     errores = [f"turno no utilizable ({r.stop_reason})"]
                     break
                 try:
