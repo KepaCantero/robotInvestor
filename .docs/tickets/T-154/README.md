@@ -2,7 +2,7 @@
 
 | Campo | Valor |
 | --- | --- |
-| Estado | EN QA |
+| Estado | CERRADO (QA r01 APTO) |
 | Pieza | Bloque A (`bloque_a/11_Ejecutor`: `bloque_a/llm.py`, `bloque_a/consumo.py`, `bloque_a/orquestacion.py`, `config/por_defecto.yaml`, `README.md`; `tests/test_t151_reintentos.py`, `tests/test_t154.py`); `docs/incidencias.md` (INC-T146-01, INC-T129-01); `.docs/scripts/estimar_coste_ciclo_a.py` (texto de S5); textos de `.docs/tickets/T-151/` (CA-7 y cuotas) |
 | Planifica · implementa · QA | claude · claude · el otro agente o un revisor nuevo |
 | Aprobación del operador | no necesaria (correcciones, pruebas y textos de un ticket cerrado; lo nuevo, `[PROPUESTO]` en INC-T146-01) |
