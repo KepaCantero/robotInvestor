@@ -2,9 +2,9 @@
 
 | Campo | Valor |
 | --- | --- |
-| Estado | EN QA |
+| Estado | CERRADO (QA r01 APTO, 15-11-2026) |
 | Pieza | `tools/requisitos_entorno.txt` y `.docs/scripts/preparar_entorno.sh` (fuera de los bloques y del marco común) |
-| Planifica · implementa · QA | claude · claude · sin asignar (el operador decide quién, 12-11-2026) |
+| Planifica · implementa · QA | claude · claude · un revisor nuevo sin contexto (operador, 15-11-2026: terminar los tickets hasta aprobar sus QA) |
 | Aprobación del operador | aprobada el 2026-11-11: «haz el punto 1 y 2» (punto 2: fijar las versiones del entorno) |
 | Deuda técnica | T-96 en `sistema_global/seguimiento/Deuda_tecnica_y_pendientes_del_operador.md` |
 
@@ -54,3 +54,4 @@ Que un clon nuevo del repositorio cree el mismo `.venv` con un solo comando y pa
 | Desfase de una versión | Fallo cerrado | CA-3 |
 | Sin Python 3.12 (variable `PYTHON_ENTORNO` apuntando a un ejecutable inexistente) | Fallo cerrado | CA-4 |
 | `git diff --stat` | Regresión | CA-5 |
+- 2026-11-15 · CERRADO · QA r01 APTO (revisor nuevo, base `8dd58d0`): `.venv` desde cero en 36 s, gate 12/12, `--comprobar` detecta `arch` 9.0.0, 18 de 18 casos sin Python 3.12 fallan cerrado; H-01 a H-08 (medios y bajos) a la deuda como T-137
