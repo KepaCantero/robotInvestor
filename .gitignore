@@ -29,7 +29,8 @@ dashboard/consola_n/dist-pagina/
 dashboard/consola_n/test-results/
 dashboard/consola_n/playwright-report/
 
-# T-99: cerrojo del registro de experimentos (el sello sí se sube con el registro)
+# T-99: sello, cerrojo y turno del registro de experimentos: son locales y no se suben (desde la r05 van dentro de .git;
+# estas líneas cubren un registro fuera de un repositorio)
 *.jsonl.lock
 *.jsonl.sello
 *.jsonl.sello.tmp

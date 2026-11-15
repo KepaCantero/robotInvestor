@@ -2,7 +2,7 @@
 
 | Campo | Valor |
 | --- | --- |
-| Estado | EN QA (ronda r04) |
+| Estado | EN QA (ronda r05) |
 | Pieza | `.docs/scripts/registro_experimentos.py` y su uso en `.docs/scripts/banco_medida.py` (fuera de los bloques y del marco común) |
 | Planifica · implementa · QA | claude · claude · un revisor nuevo sin contexto (operador, 15-11-2026: terminar los tickets hasta aprobar sus QA) |
 | Aprobación del operador | 2026-11-12: «haz todo» (punto 2 de lo que se podía adelantar). La decisión de fondo es la 5 de la tanda 1, aceptada el 11-11-2026 |
@@ -59,3 +59,5 @@ Que desde ya cada prueba que pueda cambiar cómo decide o cuánto cuesta el robo
 - 2026-11-15 · EN QA · Ronda r03 (registro 0.3.0): ancla en todo el historial, sello tolerante a un corte y preparado antes de escribir, lectores con cerrojo y espera máxima, intentos pendientes en la adopción, búsqueda o prerregistro atómicos, un registro por agente, rutas públicas en el banco
 - 2026-11-15 · NO APTO · QA r03 (revisor nuevo, base `2468cdf`, gate 12/12): H-25 alto (el sello iba en git: un checkout, reset o stash borraban intentos sin verse), H-26 a H-28 medios, H-29 a H-34 bajos; H-14, H-17 y varios bajos, corregidos en parte
 - 2026-11-15 · EN QA · Ronda r04 (registro 0.4.0): sello local fuera de git, git que no responde falla cerrado, turno para el escritor, «fallido» tardío, RI_AGENTE estricto, `sellar` solo para la 0.1.0, enlaces simbólicos, línea base de las pruebas de `.docs/scripts`
+- 2026-11-15 · NO APTO · QA r04 (revisor nuevo, base `bb504b5`, gate 12/12): H-35 alto (una fusión anterior al registro se tomaba por un borrado), H-36 medio, H-37 a H-41 bajos
+- 2026-11-15 · EN QA · Ronda r05 (registro 0.5.0): fusiones de antes del registro, «fallido» tardío por la cadena, sello y cerrojos dentro de .git, sin repetir una variante con un intento abierto, lector sin permiso, `pruebas_scripts.sh` robusto

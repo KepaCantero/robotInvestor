@@ -60,8 +60,8 @@ RAIZ = Path(__file__).resolve().parents[2]
 AGENTE = os.environ.get("RI_AGENTE", "claude")
 AGENTE_VALIDO = re.fullmatch(r"[a-z0-9_-]{1,32}", AGENTE) is not None
 REGISTRO_DEFECTO = RAIZ / ".docs" / "experimentos" / f"registro_{AGENTE}.jsonl" if AGENTE_VALIDO else None
-VERSION = "0.4.0"   # 0.4.0 (T-99 r04): sello local fuera de git, git que no responde falla cerrado, turno para el escritor,
-                    # «fallido» tardío no deja adoptar, RI_AGENTE estricto
+VERSION = "0.5.0"   # 0.5.0 (T-99 r05): fusiones anteriores al registro (H-35), «fallido» tardío por el orden de la cadena,
+                    # sello y cerrojos fuera del árbol de trabajo, una variante no se repite con un intento abierto
 CERROJO_ESPERA_S = 30   # espera máxima del cerrojo ([PROPUESTO] en la fila T-99 de la deuda)
 OBJETOS = ("RECORTE", "INSTRUCCION", "MODELO", "ESTRATEGIA", "PARAMETRO", "BLOQUE", "OTRO")
 VEREDICTOS = ("mejor", "peor", "todavía no se sabe", "fallido")
@@ -309,8 +309,10 @@ class Registro:
         for linea in lista.stdout.decode("utf-8", "replace").splitlines():
             commit, *padres = linea.split()
             actual = version(commit)
-            if actual is None:
-                raise RegistroError(f"el registro se quitó del repositorio en el commit {commit[:8]}")
+            if actual is None:   # H-35: solo es un borrado si algún padre lo tenía (rev-list lista también fusiones de antes)
+                if any(version(p) is not None for p in padres):
+                    raise RegistroError(f"el registro se quitó del repositorio en el commit {commit[:8]}")
+                continue
             for p in padres:
                 anterior = version(p)
                 if anterior is not None and not actual.startswith(anterior):
@@ -374,9 +376,32 @@ class Registro:
     def verificar(self) -> int:
         return len(self.anotaciones())
 
+    def _local(self, sufijo: str) -> Path:
+        """Dónde van el sello, el cerrojo y el turno: si el registro está en un repositorio git, dentro de su carpeta de git
+        (`git rev-parse --git-path`), fuera del árbol de trabajo, donde ni `stash --all`, ni `clean -X`, ni `checkout` los
+        tocan (H-37); si no, junto al registro."""
+        if not hasattr(self, "_carpeta_local"):
+            self._carpeta_local = None
+            raiz = self._repositorio()
+            if raiz is not None and shutil.which("git") is not None:
+                try:
+                    rel = self.ruta.relative_to(Path(os.path.realpath(raiz))).as_posix()
+                except ValueError:
+                    rel = None
+                if rel is not None:
+                    r = self._git(raiz, "rev-parse", "--git-path", "ri-registro")
+                    if r.returncode == 0:
+                        base = Path(r.stdout.decode("utf-8", "replace").strip())
+                        base = base if base.is_absolute() else raiz / base
+                        self._carpeta_local = (base, rel.replace("/", "__"))
+        if self._carpeta_local is None:
+            return self.ruta.with_name(self.ruta.name + sufijo)
+        base, nombre = self._carpeta_local
+        return base / (nombre + sufijo)
+
     @property
     def sello(self) -> Path:
-        return self.ruta.with_name(self.ruta.name + ".sello")
+        return self._local(".sello")
 
     def _comprobar_sello(self, out: list[dict], texto: str, en_git: bytes | None) -> None:
         """El sello es LOCAL: no se sube a git (H-25), así que un checkout, un reset o un stash que devuelven el registro a una
@@ -416,6 +441,7 @@ class Registro:
             s["sellado_a_mano"] = True   # se arrastra: un registro sellado a mano lo dice siempre
         temporal = self.sello.with_name(self.sello.name + ".tmp")
         try:
+            temporal.parent.mkdir(parents=True, exist_ok=True)
             temporal.write_text(json.dumps(s) + "\n", encoding="utf-8")
         except OSError as ex:
             raise RegistroError(f"no se puede preparar el sello del registro ({ex}): no se escribe nada") from ex
@@ -480,9 +506,13 @@ class Registro:
             return
         try:
             self.ruta.parent.mkdir(parents=True, exist_ok=True)
-            turno = open(self.ruta.with_name(self.ruta.name + ".turno"), "a", encoding="utf-8")   # noqa: SIM115 - se cierra abajo
-            fl = open(self.ruta.with_name(self.ruta.name + ".lock"), "a", encoding="utf-8")   # noqa: SIM115 - se cierra abajo
+            self._local(".lock").parent.mkdir(parents=True, exist_ok=True)
+            turno = open(self._local(".turno"), "a", encoding="utf-8")   # noqa: SIM115 - se cierra abajo
+            fl = open(self._local(".lock"), "a", encoding="utf-8")   # noqa: SIM115 - se cierra abajo
         except OSError as e:
+            if compartido:   # H-39: quien solo puede leer lee sin cerrojo (no escribe nada)
+                yield
+                return
             raise RegistroError(f"no se puede abrir el cerrojo del registro: {e}") from e
         with turno, fl:
             self._esperar(turno, fcntl.LOCK_EX, "esperando turno")
@@ -571,6 +601,11 @@ class Registro:
 
         def construir(previas):
             exp = self.experimento(exp_id, previas)   # sin prerregistro no hay intento
+            con_resultado = {x["n"] for x in exp["resultados"]}
+            abiertos = [x["n"] for x in exp["intentos"] if _nfc(x["variante"]) == _nfc(variante) and x["n"] not in con_resultado]
+            if abiertos:   # QA r04, H-40: repetir con uno abierto deja la variante sin poder adoptarse nunca
+                raise RegistroError(f"la variante {variante!r} de {exp_id} tiene el intento {abiertos[0]} abierto: anota antes su "
+                                    "resultado («fallido» si se cortó) y después repítela")
             return {"tipo": "INTENTO", "exp_id": exp_id, "n": len(exp["intentos"]) + 1, "variante": variante, "inicio": ahora,
                     "huella_prerregistro": exp["prerregistro"]["huella_prerregistro"],
                     "dentro_del_maximo": _dentro(exp["intentos"], variante, exp["prerregistro"]["contenido"]["max_variantes"])}
@@ -594,6 +629,9 @@ class Registro:
                 raise RegistroError(f"{exp_id} no tiene el intento {n}")
             if any(x["n"] == n for x in exp["resultados"]):
                 raise RegistroError(f"el intento {n} de {exp_id} ya tiene resultado: no se reescribe")
+            inicio = next(x["inicio"] for x in exp["intentos"] if x["n"] == n)
+            if _instante(ahora, "ahora") < _instante(inicio, "inicio"):   # QA r04, H-36: el tiempo no retrocede
+                raise RegistroError(f"el resultado del intento {n} de {exp_id} no puede ser anterior a su inicio ({inicio})")
             return {"tipo": "RESULTADO", "exp_id": exp_id, "n": n, "veredicto": veredicto, "detalle": detalle, "registrado_en": ahora}
         return self._anexar(construir)
 
@@ -614,10 +652,10 @@ class Registro:
             pendiente = any(i["n"] not in res for i in suyos)
             # H-27: un «fallido» registrado después de que empezara otro intento de la misma variante no se salta: pudo
             # cerrarse así tras ver el resultado de la repetición. La variante queda «fallido_tardio» y no se adopta.
+            # Se decide por el ORDEN DE LA CADENA (QA r04, H-36), no por los instantes que trae cada anotación.
             fallido_tardio = any(
                 res.get(i["n"], {}).get("veredicto") == "fallido"
-                and any(_instante(j["inicio"], "inicio") < _instante(res[i["n"]]["registrado_en"], "registrado_en")
-                        for j in suyos if j["n"] > i["n"])
+                and any(j["_seq"] < res[i["n"]]["_seq"] for j in suyos if j["n"] > i["n"])
                 for i in suyos)
             primero_vivo = next((i for i in suyos if res.get(i["n"], {}).get("veredicto") != "fallido"), None)
             primero = con_veredicto[0] if con_veredicto and primero_vivo is not None and primero_vivo["n"] in res else None

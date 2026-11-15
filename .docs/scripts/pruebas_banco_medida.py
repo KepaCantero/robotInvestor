@@ -762,7 +762,7 @@ def test_t99_h08_registro_roto_a_mitad_sale_como_bancoerror(tmp_path, monkeypatc
         bm.ejecutar_a(_ns(tmp_path, "r"))
     monkeypatch.setattr(bm, "evaluar", lambda *a, **k: (_ for _ in ()).throw(ValueError("fallo original")))
     with pytest.raises(bm.BancoError, match="fallo original.*no se pudo anotar"):
-        bm.ejecutar_a(_ns(tmp_path, "s"))
+        bm.ejecutar_a(_ns(tmp_path, "s", semilla=8))   # otra variante: la anterior quedó con su intento abierto
 
 
 def test_t99_h24_rutas_publicas_sin_carpetas_de_la_maquina(tmp_path):
