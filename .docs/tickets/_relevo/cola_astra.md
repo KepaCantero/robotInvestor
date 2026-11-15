@@ -4,6 +4,8 @@
 
 > **13-11-2026: el operador asigna C-37 (construir el Bloque B V3) y levanta la congelación de `bloque_b/`** para esa tarea. Va después de C-08 y antes que las demás revisiones. Directrices en `.docs/diseno/bloque_b/directrices_astra.md`. **Publicación autorizada para C-37** (operador, 13-11-2026: «Sí, autorizo publicar todos los tickets»): cada ticket de C-37 (T-111 en adelante) se sube a `develop` al terminarlo, con `.docs/scripts/commit_limpio.sh`, para que Claude haga su QA. El resto de tareas sigue en local hasta nueva autorización.
 
+> **15-11-2026 (operador): «La parte de Astra que necesitamos la haremos nosotros y el resto del bloque B que lo haga Astra».** Claude hace la conexión de los encargos del Bloque A con el ejecutor del Bloque B (Fase 6, en un ticket de Claude); C-37 (el resto del Bloque B V3) sigue siendo de Astra.
+
 > **13-11-2026: autorización puntual de publicación.** El operador autoriza subir la entrega local existente (revisiones D–G, diario, memoria y estados C-04 a C-08). Los trabajos posteriores siguen en local hasta nueva autorización. Ver `.docs/memoria/astra/2026-11-13_publicacion-puntual-revisiones.md`.
 
 Fuente única del **orden y del estado** de las tareas de Astra desde el 12-11-2026. El detalle de cada tarea está en su encargo o en su ticket; las reglas, en `.docs/tickets/_relevo/2026-11-10_pendientes_para_astra.md` (§0 bis a §3). Si este fichero y el relevo no coinciden en el orden, manda este.

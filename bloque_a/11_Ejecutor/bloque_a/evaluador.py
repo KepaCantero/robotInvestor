@@ -187,7 +187,7 @@ def _fecha_de_calendario(v) -> pd.Timestamp:
     try:
         t = pd.Timestamp(v.strip())
         if not pd.isna(t):
-            t.date()   # T-137 (QA r01 de T-134, H-19): «0000-01-01» se lee pero no da fecha de calendario
+            t.date()   # T-140 (QA r01 de T-134, H-19): «0000-01-01» se lee pero no da fecha de calendario
     except (NotImplementedError, OverflowError, ValueError) as e:
         raise ValueError(f"fecha fuera del calendario: {v!r}") from e
     if pd.isna(t):

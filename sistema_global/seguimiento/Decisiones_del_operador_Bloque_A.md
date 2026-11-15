@@ -22,10 +22,14 @@ Se sigue preguntando antes de actuar cuando algo gasta dinero o usa una credenci
 | Bloque A Forex | Es una prueba del Bloque A solo con divisas; no se integra en el bloque final | Operador | 13-11-2026 | T-115 en la deuda (aplazada) |
 | Filtro de los textos del Sintetizador V6 | «Umbrales y sin cifras libres»: las cuentas las escribe el código | Operador | 12-11-2026 | INC-T102-01 |
 | Promover en el Catálogo las fichas que superen sus casos de control | Autorizado, con re-congelado del corpus | Operador | 12-11-2026 | `.docs/scripts/promover_fichas_catalogo.py` |
-| Fuente de datos históricos reales | **Sin decidir.** Hoy, datos sintéticos de ejemplo | — | — | Cuesta dinero o exige una cuenta: se pregunta |
-| API real (modo sombra, Fase 5) | **Sin decidir.** Necesita clave y autorización de gasto | — | — | Se pregunta siempre |
+| Fuente de datos históricos reales | Tipos de cambio de referencia del BCE para las divisas (gratis, sin cuenta); otra fuente cuando se activen otros tipos | Operador (visto bueno general); la fuente, Agente (T-141) | 15-11-2026 | `.docs/scripts/descargar_datos_bce.py`; `--datos <carpeta>` |
+| API real (modo sombra, Fase 5) | Autorizada. Falta que el operador guarde `ANTHROPIC_API_KEY` en el entorno | Operador | 15-11-2026 | Variable de entorno; `--cliente anthropic` |
 | Las 10 fichas P2 del Motor | No se hacen por ahora: son opcionales y tocan el Motor recién cerrado | Agente | 13-11-2026 | Se pide como tarea nueva |
 | Huecos del plan de pruebas que se cubren | Los siete baratos (PB-10, 16, 17, 22, 33, 45, 59); PB-26 y PB-48 quedan sin prueba y PB-46 sin implementar | Operador (confirmó la lista del agente) | 13-11-2026 | T-116 |
+
+| Troceo deliberado de un emisor en el Motor (T-57) | Se acepta el límite declarado: las reglas cubren las fugas accidentales; un agente que fabrique componentes a propósito no se detecta, y el aviso queda en el registro | Operador | 15-11-2026 | INC-T127-01 |
+| Nueva entrega del Documento 0 | Autorizada: el Anexo B se corrige con el borrador para que describa lo que hace el ejecutor | Operador | 15-11-2026 | `.docs/diseno/bloque_a/borrador_correccion_anexo_b.md` |
+| Cadena con el Bloque B | La parte que necesita el Bloque A (que los encargos de A lleguen al ejecutor de B y vuelvan) la hace Claude; el resto del Bloque B V3 (C-37), Astra | Operador | 15-11-2026 | `.docs/tickets/_relevo/cola_astra.md` |
 
 ## 2. Selección de oportunidades
 
@@ -96,7 +100,7 @@ Se sigue preguntando antes de actuar cuando algo gasta dinero o usa una credenci
 
 | Qué | Valor hoy | Quién | Fecha | Dónde y cómo se cambia |
 | --- | --- | --- | --- | --- |
-| Autorizar el gasto del modo sombra | **Sin decidir.** Coste de un ciclo semanal, entre el suelo y la cota: 0,86–4,58 USD con solo divisas; 2,98–56,79 USD con los 12 tipos (T-137) | — | — | Se pregunta siempre |
+| Autorizar el gasto del modo sombra | **Autorizado** (operador, 15-11-2026). Coste de un ciclo semanal, entre el suelo y la cota: 0,86–4,58 USD con solo divisas; 2,98–56,79 USD con los 12 tipos (T-140) | — | — | Se pregunta siempre |
 | Modelo de cada agente | Opus 5.5 para los que razonan más (AG-02, AG-11…), Sonnet 5.5 para la mayoría, Haiku 5.5 para los más simples | Entrega | — | `modelos` |
 | Tarifa con la que se estima el coste | La publicada el 15-11-2026, en un fichero aparte | Agente (INC-T129-01) | 15-11-2026 | `config/precios_anthropic.yaml`, con `--config` |
 | Repetir en otro modelo una petición rechazada | No | Agente (INC-T129-01) | 15-11-2026 | Código del cliente (`llm.py`) |

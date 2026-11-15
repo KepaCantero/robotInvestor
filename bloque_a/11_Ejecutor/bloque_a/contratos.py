@@ -354,7 +354,7 @@ def tarjetas_en_texto(texto: str) -> list[str]:
     for m in RE_GRUPOS_TARJETA.finditer(texto):
         grupos = [g for g in re.split(r"[ \u00a0\u202f\-]", m.group(1)) if g]
         if len(grupos) >= GRUPOS_FILA_DE_TABLA and all(len(g) == 4 for g in grupos):
-            # T-136 (QA r01 de T-130, H-02) y T-137 (QA r01 de T-136, H-02): cinco o más números de cuatro cifras seguidos son
+            # T-136 (QA r01 de T-130, H-02) y T-140 (QA r01 de T-136, H-02): cinco o más números de cuatro cifras seguidos son
             # una fila de tabla, salvo que la serie se reparta, desde el principio o desde el final, en tarjetas válidas de
             # cuatro grupos y lo que sobre tenga forma de fecha (una caducidad MMAA o un año): una tarjeta con su caducidad,
             # un año delante o dos tarjetas seguidas se detectan; una fila de números corrientes, casi nunca

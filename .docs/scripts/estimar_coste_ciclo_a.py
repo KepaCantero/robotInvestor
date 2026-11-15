@@ -8,7 +8,7 @@ Lee el `llamadas.json` que deja `medir_consumo_a.py` (una fila por llamada del c
 - **cota superior** (T-136, H-01): la entrada multiplicada por `factor_tokens_cota` y pagada entera como escritura de
   caché (las llamadas en paralelo pueden no leer la caché de otra), toda la salida hasta `max_tokens` (que incluye el
   razonamiento) y, en los agentes con búsqueda web, cada continuación de `pause_turn` (`llm.max_continuaciones_pause_turn`)
-  reenvía la entrada y puede hacer otras `busqueda_web.max_usos_por_llamada` búsquedas. Desde T-137, la cota se suma
+  reenvía la entrada y puede hacer otras `busqueda_web.max_usos_por_llamada` búsquedas. Desde T-140, la cota se suma
   petición a petición: cada intento (el original y cada reparación de JSON, `llm.reintento_reparacion`) y cada
   continuación reenvía también lo ya generado y puede gastar su propio `max_tokens`. Lo que se lee en una búsqueda se
   cobra como entrada y no se puede saber sin la API: queda fuera (se dice en la salida).
@@ -52,7 +52,7 @@ def estimar(llamadas: list[dict], precios: dict, precio_busqueda_mil: float, age
         est = _coste(p, entrada, x["out_tok"], escr, lect)
         entrada_cota = (x["sys_tok"] + x["user_tok"]) * factor_tokens     # toda como escritura de caché, sin lecturas
         vueltas = 1 + (continuaciones if x["agente"] in agentes_busqueda else 0)
-        # T-137 (QA r01 de T-136, H-01): cada intento (el original y cada reparación de JSON) y cada continuación de
+        # T-140 (QA r01 de T-136, H-01): cada intento (el original y cada reparación de JSON) y cada continuación de
         # `pause_turn` es una petición nueva: reenvía la entrada y lo ya generado, puede gastar todo su `max_tokens` y,
         # en un agente con búsqueda, hacer sus búsquedas
         cota = 0.0

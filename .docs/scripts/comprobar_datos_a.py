@@ -11,6 +11,7 @@ y última fecha, el número de filas y el mayor hueco entre dos fechas. Al final
 
 Uso (desde la raíz):
   .venv/bin/python .docs/scripts/comprobar_datos_a.py <carpeta> [--universo csv] [--as-of AAAA-MM-DD] [--horizonte H3]
+                                                     [--clases DIV …]
 Termina con 0 si todos los símbolos están OK, con 1 si no y con 2 si la carpeta no existe.
 """
 import argparse
@@ -39,7 +40,7 @@ def comprobar(carpeta: str | Path, universo: pd.DataFrame, as_of: str, horizonte
     cfg = cfg or cargar_config()
     max_dias = int(parametro(cfg, f"ps2_antiguedad_maxima_dias.{horizonte}"))
     festivos = validar_festivos_ps2(parametro(cfg, "ps2_festivos"))
-    # T-137 (QA r02 de T-131, H-05): la ventana que valida el ciclo, la más larga entre la del lote de fichas
+    # T-140 (QA r02 de T-131, H-05): la ventana que valida el ciclo, la más larga entre la del lote de fichas
     # (`senales`: años más margen) y la de la tasa base (`tasa_base`); un dato malo más antiguo no excluye el símbolo
     sen, tb = parametro(cfg, "senales"), parametro(cfg, "tasa_base")
     corte_ts = pd.Timestamp(as_of).normalize()
@@ -87,11 +88,15 @@ def main(argv: list[str] | None = None) -> int:
     ap.add_argument("--universo", default=str(RUTA_UNIVERSO_EJEMPLO))
     ap.add_argument("--as-of", default=pd.Timestamp.today().date().isoformat())
     ap.add_argument("--horizonte", default="H3", choices=["H1", "H2", "H3", "H4", "H5"])
+    ap.add_argument("--clases", nargs="*", default=None, help="solo estos tipos de activo (p. ej. DIV)")
     a = ap.parse_args(argv)
     if not Path(a.carpeta).is_dir():   # H-04: un mensaje, no una traza
         print(f"no existe la carpeta de datos {a.carpeta}", file=sys.stderr)
         return 2
-    filas = comprobar(a.carpeta, cargar_universo(a.universo), a.as_of, a.horizonte)
+    universo = cargar_universo(a.universo)
+    if a.clases:   # T-141: una fuente que solo cubre algunos tipos (los tipos de cambio del BCE, solo DIV)
+        universo = universo[universo["clase"].isin(a.clases)]
+    filas = comprobar(a.carpeta, universo, a.as_of, a.horizonte)
     for f in filas:
         if f["estado"] != "OK":
             print(f"{f['estado']:9} {f['clase']:4} {f['simbolo']:14} {f['motivo'][:110]}")

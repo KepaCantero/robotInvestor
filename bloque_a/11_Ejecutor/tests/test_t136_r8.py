@@ -64,7 +64,7 @@ def test_h03_bban_numerico_tiene_los_21_paises_con_va():
 
 def test_h02_filas_de_numeros_de_cuatro_cifras():
     r = random.Random(8)
-    # T-137 (QA r01 de T-136, H-02): una fila de 8 se marca solo si son dos tarjetas válidas seguidas (en torno al 0,6 % con
+    # T-140 (QA r01 de T-136, H-02): una fila de 8 se marca solo si son dos tarjetas válidas seguidas (en torno al 0,6 % con
     # números de 4000 a 5999, que casi siempre tienen prefijo de red); antes se exigía 0 y eso dejaba sin detectar dos
     # tarjetas seguidas o una tarjeta con su caducidad MMAA
     marcadas = sum(bool(tarjetas_en_texto(" ".join(str(r.randint(4000, 5999)) for _ in range(8)))) for _ in range(5000))
