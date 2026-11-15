@@ -2,7 +2,7 @@
 
 | Campo | Valor |
 | --- | --- |
-| Estado | EN QA |
+| Estado | CERRADO (QA r01 APTO) |
 | Pieza | bloque_a (11_Ejecutor: `bloque_a/motor/frontera_b.py`, `bloque_a/cadena_b.py`, `README.md`, `tests/test_t149.py`, `tests/test_t144.py`, `tests/test_t147.py`); `.docs/scripts/cadena_a_b.py` y `descargar_datos_bce.py`; `docs/incidencias.md` (INC-T127-01 y INC-T142-01, rondas T-149); `sistema_global/seguimiento/Decisiones_del_operador_Bloque_A.md` (fila de las fichas con componentes) |
 | Planifica · implementa · QA | claude · claude · el otro agente o un revisor nuevo |
 | Aprobación del operador | 2026-11-14: «quiero que por tu cuenta vayas completando los tickets que quedan abiertos»; las decisiones nuevas van como `[PROPUESTO]` |

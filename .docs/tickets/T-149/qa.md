@@ -1,25 +1,67 @@
 # T-149 · QA independiente
 
-- **Revisor:** <agente que no implementó> · **Ronda:** r01
+- **Revisor:** revisor nuevo sin contexto de la implementación (subagente de Claude; implementó Claude) · **Ronda:** r01 · 2026-11-15
+- **Copia:** git worktree en el scratchpad con HEAD `0e08a7d` («instantánea para la QA de T-149») y `.venv` enlazado. Sin red, sin la API y sin coste. Opinión formada con el README, el diff de HEAD (`frontera_b.py`, `cadena_b.py`, `cadena_a_b.py`, `descargar_datos_bce.py`) y el código antes de leer `analisis-tecnico.md`. Mutantes en dos copias desechables con «t147_mut» en la ruta (extraídas de HEAD con `git archive`), borradas al acabar.
 
 ## Reproducción desde limpio
 
-<Comandos y resultado.>
+| Comprobación | Resultado |
+| --- | --- |
+| Suite completa de A, una vez (`cd bloque_a/11_Ejecutor && ../../.venv/bin/python -m pytest -q -p no:cacheprovider`) | **6444 passed, 2 skipped** en 33 min 41 s (con otra suite en paralelo), exit 0; línea base ≥ 607. Son 16 más que las 6428 de `pruebas.md`: la instantánea lleva también las pruebas de T-146 r02 y T-148 r02 (commit `010108a`) |
+| `pytest -q tests/test_t149.py tests/test_t144.py tests/test_t147.py` | 219 passed, 2 skipped (las dos omitidas son los límites declarados de 1/8 y 0,25 a 12) |
+| `tests/test_fase3_goldens.py` · `python tests/goldens_ct.py` | 102 passed · «goldens de contratos: coinciden» |
+| ruff desde la raíz, tres ejecutores (`… \| wc -l`) · mypy de A (`--ignore-missing-imports --no-error-summary bloque_a/11_Ejecutor/bloque_a \| wc -l`) | **2838** (cuota 2838) · **109** (cuota 109); los ficheros de A tocados, sin avisos de ruff |
+| `tools/refs_vivas.py`, `secrets_scan.py`, `nfc_check.py`, `corpus_integridad.py` | rutas vivas · sin hallazgos · NFC · **695** archivos íntegros (con los scripts de esta ronda ya escritos) |
+| `python -I .docs/tickets/T-144/revisores/r01_01_copias_otras_rejillas.py` | **0 hallazgos**: las seis vías A agrupadas y sin amplitud; B, 0 de 100 (el OBS de ~1 € es el límite declarado) |
+| `python -I .docs/tickets/T-147/revisores/r01_01_r8_y_peticion.py` | **0 hallazgos**; los 4 OBS son los límites de INC-T123-01 |
+| `python -I .docs/tickets/T-147/revisores/r01_02_bce_y_clases.py <tmp>` | **0 hallazgos** (los 2 OBS que ya traía) |
+| `T-147/revisores/r01_03_mutantes_qa.py <copia «t147_mut»> --ticket T-144` · `--ticket T-147` | **Q08, Q09, Q10 y Q11 muertos** · **Q01 a Q07 muertos**; 0 vivos |
+| `.docs/tickets/T-147/mutantes.py <copia «t147_mut»>` (los 37) | **37 de 37 muertos** (T-147 16, T-144 8, T-148 13) |
+| `python -I .docs/tickets/T-135/revisores/r01_01_copias_idx_conc.py bloque_a/11_Ejecutor` · `r01_02_aviso_firmas.py` | 39 ok · 0 hallazgos · 24 ok · 0 hallazgos |
+| `python -I .docs/tickets/T-149/medir_copias.py --semillas 100` | índices ρ ≈ 0,995 y rentabilidad total: 0 en todo; fondos frente a su índice en rejillas gruesas, agrupados (lo que declara INC-T127-01 «Ronda T-149»); copia con un precio suelto: solo 1/32 a 2 (3 de 100, el tope) |
+| `.venv/bin/python .docs/scripts/cadena_a_b.py --trabajo <tmp> --sonda-sin-correspondencia` (los dos ejecutores simulados de verdad) | código 0; entrega ENTREGADA, G3 APTO, 3 enviables, 1 entregada y válida, 1 vuelta CT-04, sonda ADMITIDA, sin `sin_envio` |
 
 ## Criterios de aceptación
 
 | Criterio | Cumple | Evidencia |
 | --- | --- | --- |
-| CA-1 | sí / no | … |
+| CA-1 | sí | `T-144/r01_01`: 0 hallazgos. `r01_01_rejillas_qa.py` (esta ronda): 0,5, 0,2, 2,5, 250, 500, 0,0025, 0,0005, 1/64, 1/256, un cambio de divisa fijo, el 9 % y el 10 % exacto de precios sin redondear, dos copias sin el original, cifras significativas cruzando 10, 1000 y dos décadas, precios de 1e-5 y una serie de 2e6 en el mismo índice: todas agrupadas y sin amplitud. Falsos positivos: 0 de 100 en siete pares de índices ρ ≈ 0,995 (0,05 a 100 … 5 a 1000), bonos y valores poco líquidos con precios repetidos, índices a 4 cifras alrededor de 100 y un monetario casi siempre a 1,00. Con la versión de antes (`--modulo`), 21 hallazgos. Lo que no se agrupa está declarado (más del 10 % fuera, paso del 10 % del precio, tablas por tramo: O-01) salvo truncar (H-05) |
+| CA-2 | sí | `r01_03_mutantes_qa.py --ticket T-144`: Q08, Q09 y Q10 muertos (y Q11) |
+| CA-3 | sí, con matices | `T-147/r01_01`: 0 hallazgos (C2 a C5 en verde). `r01_03_r8_y_g3_qa.py`: cada dato en nueve posiciones (también junto al corte de 200 de `jsonschema`) sale limpio; `test_h01_el_script_*` en verde. Quedan tres vías estrechas, todas bajas (H-01, H-02, H-04): dos datos pegados, un dato justo en el corte de 2000 del error de un ejecutor y un `opp_id` con un correo en un paquete que no cumple el esquema de A; y las pruebas no fijan dos de las limpiezas (H-03) |
+| CA-4 | sí | `T-147/r01_02`: 0 hallazgos. `r01_04_bce_qa.py`: fechas con espacio, con hora, «2026-011-03», «2026-1-3» frente a «2026-01-03», imposibles o de 8 cifras, repetidas con valor vacío: código 1, mensaje y nada escrito; destino fichero, dentro de un fichero o con un CSV que es una carpeta: 1 sin descargar; sin permiso para la carpeta temporal: 1 y mensaje; dos descargas válidas seguidas: los mismos seis CSV. Dos respuestas raras de antes de T-149 siguen sin cerrar (H-06) |
+| CA-5 | sí | `r01_03_mutantes_qa.py --ticket T-147`: Q02, Q03, Q05 y Q07 muertos (y Q01, Q04, Q06) |
+| CA-6 | sí | Cita comprobada: Documento 0 del Bloque A, 7.3, tabla G1–G4, fila G3: «BLOQUEADO impide la entrega»; CT-02 (Anexo B) con `"estado_g3":"APTO\|APTO_CON_ADVERTENCIAS"`. `r01_03_r8_y_g3_qa.py` G1: la librería rechaza `estado_g3` ausente, BLOQUEADO, SIN_RESULTADO, «APTO » con espacio, «apto», lista, objeto, 1 y `True` con `ENTREGA_BLOQUEADA_G3`, antes que cualquier otro error. G2: el script no llama al Bloque B ni escribe peticiones con ENTREGADA·BLOQUEADO, BLOQUEADA·APTO (el G3 de F6) con y sin `estado_g3` en el paquete, ENTREGADA·APTO con el paquete sin estado o BLOQUEADO, sin `entrega`, sin `g3`, sin entregables y con el `paquete_json` que no existe (este con traza: O-04); con APTO y con APTO_CON_ADVERTENCIAS envía. Falla cerrado tres veces (entrega, G3 del ciclo, `estado_g3` del paquete) |
+| CA-7 | sí | `T-147/mutantes.py` 37 de 37; suite completa en verde (arriba); ruff 2838, mypy A 109; los cuatro gates ligeros en verde y el corpus en 695 |
 
 ## Hallazgos
 
 | ID | Gravedad | Cómo reproducirlo | Esperado / obtenido | Corrección sugerida | Estado |
 | --- | --- | --- | --- | --- | --- |
-| H-01 | crítica · alta · media · baja | … | … | … | abierto · corregido |
+| H-01 | baja | `.venv/bin/python -I .docs/tickets/T-149/revisores/r01_03_r8_y_g3_qa.py <tmp>` (R1) | Esperado: `sin_datos_protegidos` no deja rastro de ningún dato que el detector ve. Obtenido: con dos datos pegados sin separador («…@example.com» seguido de «api_key=…», una clave «sk-…» seguida de un IBAN), el detector da también una coincidencia que solapa los dos («…@example.comapi»); al sustituir de la más larga a la más corta, esa se come el principio del segundo dato y su cola deja de reconocerse: sale ««dato protegido por R8»_key=» seguido del valor de la clave, o las veinte últimas cifras del IBAN, y la comprobación final no lo ve | Sustituir por intervalos (las posiciones de cada coincidencia en el texto, unidas) en vez de `str.replace` por longitud, u omitir el detalle si dos coincidencias se solapan sin contenerse; prueba con dos datos pegados | abierto |
+| H-02 | baja | `r01_03_r8_y_g3_qa.py <tmp>` (R4) | Esperado (T-149: «`cadena_a_b.py` limpia … lo que imprime … de un ejecutor que falla»): ningún trozo del dato en la salida. Obtenido: `_cli` recorta el stderr a sus 2000 últimos caracteres (y el stdout a 1000) **antes** de que `main` lo limpie; si el corte cae dentro de un dato, su cola ya no se reconoce y se imprime: las últimas trece cifras y letras del valor de una clave, las dieciséis últimas cifras de un IBAN, el final de una «sk-…» o de una contraseña. Es el mismo defecto que T-149 corrigió en los mensajes de `jsonschema` («un correo cortado ya no se reconoce») | Limpiar antes de recortar en `_cli` (o recortar en `main` después de limpiar); prueba con el dato en el borde del corte | abierto |
+| H-03 | baja | `.venv/bin/python .docs/tickets/T-149/revisores/r01_02_mutantes_qa.py <copia «t147_mut»> --grupo CB` | Viven N21 (`errores_entrada_b` recorta a 200 antes de limpiar) y N27 (`cadena_a_b.py` imprime el fallo de un ejecutor sin `sin_datos_protegidos`): ninguna prueba fija las dos limpiezas que `analisis-tecnico.md` da por hechas (el código de hoy es correcto en N21: R2 lo comprueba). De los 26 mutantes propios, 21 mueren (N01–N12 de las rejillas, N20, N22–N24, N26, N30 y N33–N35) y N25, N31 y N32 son equivalentes (N32, con pandas 3; pandas avisa de que cambiará) | Una prueba con el dato junto al carácter 200 de un mensaje de `jsonschema` y otra con un `FalloEjecutor` cuyo stderr lleva un dato | abierto |
+| H-04 | baja | `r01_03_r8_y_g3_qa.py <tmp>` (R3) | Esperado: ningún dato de R8 en `resumen.json` ni en la salida. Obtenido: con un paquete con `estado_g3` APTO cuyo `opp_id` es un correo, `opciones_enviables` y `no_enviadas[].opp_id` lo escriben tal cual en `resumen.json` y en lo que imprime (el detalle del error sí sale limpio). Solo con un paquete que no cumple el esquema de A (`^OPP-[0-9]{4}-[0-9]{4,}$`), que G3 no entregaría | Escribir solo los `opp_id` que cumplen el patrón (o pasarlos por `sin_datos_protegidos`), o validar el paquete contra el esquema antes de leer las opciones | abierto |
+| H-05 | baja | `.venv/bin/python -I .docs/tickets/T-149/revisores/r01_01_rejillas_qa.py` (A, «truncado») | Esperado (objetivo de T-144: la misma serie de otra fuente se agrupa): una copia truncada hacia abajo a 0,05 o a 2 decimales se agrupa. Obtenido: no se agrupa e IDX-CONC-001 sirve la amplitud (antes y después de T-149): el error de truncar llega a un paso entero y la cota supone medio (q/2p). No está en los límites declarados de INC-T127-01 | Declararlo en INC-T127-01 (ensanchar la cota a q/p es el mutante Q09 y dobla los falsos positivos) o probar también la rejilla desplazada medio paso | abierto |
+| H-06 | baja | `.venv/bin/python -I .docs/tickets/T-149/revisores/r01_04_bce_qa.py <tmp>` | Dos respuestas raras de antes de T-149 (el código de HEAD~1 hace lo mismo): una fila con `TIME_PERIOD` vacío da código 0 y un CSV con una fila sin fecha («,1.2,»), porque «nan» pasa a NaT sin error; y una lectura cortada (`http.client.IncompleteRead`, que no es `OSError`) cae con traza. Ninguna escribe a medias un CSV válido; la primera escribe uno inválido | Rechazar las fechas NaT después de `to_datetime`; capturar `http.client.HTTPException` con el mensaje y el código 1 | abierto |
 
-Los scripts de ataque van en `revisores/` dentro de este ticket, numerados por ronda y sin sobrescribir.
+Observaciones (no son hallazgos):
+
+- **O-01, tablas de pasos por tramo de precio.** Una copia con 0,01 por debajo de 40 o 45 y 0,05 por encima (como las tablas de MiFID II, que cambian de paso en 20 y 50) no se agrupa: es el mismo mecanismo que el límite declarado «cambia de resolución dentro de una misma década», que INC-T127-01 describe solo por el tiempo («2 decimales unos meses y 1 después»). Convendría nombrarlo.
+- **O-02, coste.** En esta máquina, n = 2000 y T = 2520 a 2 decimales: 1,2 s antes y 3,7–4,1 s ahora (memoria máxima 502 → 552 MB); n = 5000: 4,6 → 14 s (953 → 1164 MB). Lo nuevo es lineal en n·T (unas treinta pasadas por la matriz y otra por década), no cuadrático. El Motor no tiene cota de tiempo (el `timeout_s` de 600 es del modelo) y la prueba pone 60 s: no importa para una petición normal.
+- **O-03.** Lo que el detector no ve en el original (un dato pegado a una letra: «xapi_key=…») tampoco se quita: límite de INC-T123-01, no de T-149.
+- **O-04.** Con entrega ENTREGADA y un `paquete_json` que no existe, `cadena_a_b.py` cae con `FileNotFoundError` (traza; no envía nada). Venía de antes.
+- **O-05 (BCE).** Un destino que es un enlace simbólico roto se descarga antes de fallar (después da mensaje y 1, sin traza). Si `os.replace` falla en el tercer CSV quedan los dos primeros y el mensaje dice «no se escribe nada»: el límite está declarado en `analisis-tecnico.md`, pero el mensaje no es exacto.
+- **O-06.** Una configuración YAML rota con un correo en `--config-a` termina con la traza de `yaml`, sin el correo.
+
+Scripts de esta ronda, en `revisores/` (desde la raíz de la copia, en este orden):
+
+1. `.venv/bin/python -I .docs/tickets/T-149/revisores/r01_01_rejillas_qa.py` (con `--modulo <frontera_b.py de HEAD~1>` mide la versión de antes; `--sin-coste` se salta la medida de n = 2000): termina con 1 por H-05.
+2. `.venv/bin/python .docs/tickets/T-149/revisores/r01_02_mutantes_qa.py <copia desechable con «t147_mut»> [--grupo FB|CB|BCE]`: 26 mutantes propios; termina con 1 por N21 y N27 (H-03).
+3. `.venv/bin/python -I .docs/tickets/T-149/revisores/r01_03_r8_y_g3_qa.py <carpeta temporal>`: R8 (R1–R5) y G3 (G1, G2); termina con 1 por H-01, H-02 y H-04.
+4. `.venv/bin/python -I .docs/tickets/T-149/revisores/r01_04_bce_qa.py <carpeta temporal>`: termina con 1 por H-06.
+
+No comprobado: `./tools/check_all.sh` entero, A-Forex y B (fuera del encargo; no se tocan); los revisores de T-141 que necesitan red; `T-142/revisores/r02_cadena_doce_tipos.sh` (la cadena de punta a punta sí, con la configuración por defecto); el ciclo real con un G3 BLOQUEADO de verdad (se simula la salida de `bloque-a ciclo`, como en las pruebas).
 
 ## Veredicto
 
-**APTO / NO APTO** · motivo.
+**APTO** · los siete criterios se cumplen con evidencia y no hay hallazgos críticos ni altos. H-01 a H-06 son bajos: H-01, H-02 y H-04 son vías estrechas (dos datos pegados, un dato justo en el corte de un error de un ejecutor, un paquete fuera del esquema de A) y no rompen lo que CA-3 mide; H-05 y H-06 vienen de antes de T-149. Van a un ticket nuevo. El ticket no se cierra aquí ni se toca la deuda técnica (lo hace la sesión coordinadora).
