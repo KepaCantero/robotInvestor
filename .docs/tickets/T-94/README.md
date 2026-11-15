@@ -2,7 +2,7 @@
 
 | Campo | Valor |
 | --- | --- |
-| Estado | EN QA (ronda r03) |
+| Estado | CERRADO (QA r03 APTO, 15-11-2026) |
 | Pieza | `.docs/scripts` (fuera de los bloques): `banco_medida.py` y sus pruebas |
 | Planifica · implementa · QA | claude · claude · un revisor nuevo sin contexto (operador, 15-11-2026: «Vamos a empezar con los Tickets») |
 | Aprobación del operador | aprobada el 2026-11-11: «Te autorizo que empieces con el banco de medida y las plantillas» (tras aceptar la tanda 1: pauta común de A, B y C con banco de medida) |
@@ -86,3 +86,4 @@ Crea `.docs/scripts/banco_medida.py` y `.docs/scripts/pruebas_banco_medida.py`. 
 - 2026-11-15 · EN QA · Ronda r02, por orden del operador («Corrige todos los hallazgos de T-94 hasta que supere la QA»): H-01 a H-12 corregidos en el banco 0.3.0 con su prueba de regresión cada uno; 51 pruebas, 29 mutantes muertos; `r01_02` en 3,0 %, 0,0 % y 0,0 % de veredictos firmes sin habilidad
 - 2026-11-15 · NO APTO · QA r02 (revisor nuevo, base `cc2dd22`, gate 12/12): CA-1 a CA-8 se cumplen; H-13 alto (ventanas solapadas sobre activos distintos: 23 % de veredictos firmes sin habilidad), H-14 a H-16 medios y H-17 a H-20 bajos
 - 2026-11-15 · EN QA · Ronda r03: solo fechas sin solape (simulación nula con fechas suficientes: 9,5 % y 10,0 %); experimento por fuente; `verificar` con `informe.md` y sin registro; fechas AAAA-MM-DD estrictas; consumo estricto; cotas de un veredicto; 82 pruebas y 57 mutantes muertos
+- 2026-11-15 · CERRADO · QA r03 APTO (revisor nuevo, base `1e896e6`, gate 12/12): H-01 a H-20 corregidos; simulación nula propia con fechas suficientes entre el 10,4 % y el 13,7 % de veredictos firmes sin habilidad; H-21 a H-29 (medios y bajos) a la deuda como T-133
