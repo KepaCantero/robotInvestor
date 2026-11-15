@@ -2,7 +2,7 @@
 
 | Campo | Valor |
 | --- | --- |
-| Estado | EN QA |
+| Estado | CERRADO |
 | Pieza | bloque_a (11_Ejecutor: `bloque_a/contratos.py`, `bloque_a/evaluador.py`); `.docs/scripts/estimar_coste_ciclo_a.py`, `comprobar_datos_a.py`, `borrador_anexo_b.py` |
 | Planifica · implementa · QA | claude · claude · un revisor nuevo sin contexto |
 | Aprobación del operador | 2026-11-14: «quiero que por tu cuenta vayas completando los tickets que quedan abiertos»; 2026-11-15: los tickets nuevos, con QA APTO |
@@ -38,3 +38,4 @@
 - 2026-11-15 · ABIERTO · creado con nuevo_ticket.sh
 - 2026-11-15 · EN QA · claude · implementado y probado
 - 2026-11-15 · claude · renumerado de T-137 a T-140: otra sesión usó T-137 y lo subió antes
+- 2026-11-15 · CERRADO · QA r01 APTO (revisor nuevo sin contexto, revisado como T-137); hallazgos (H-01 y H-02 medios, H-03 a H-06 bajos) en T-145

@@ -466,3 +466,18 @@ parametros_ht03:
   diversidad_margen_rk: 10
   continuidad_margen_rk: 10
   empate_rk: 2
+
+# [PROPUESTO] INC-T142-01 (T-142, Fase 6) · Cadena de encargos A → B en el papel del Broker (`bloque_a/cadena_b.py`):
+# la petición CT-B-01 que se construye con el `paquete_para_bloque_B` de una opción. Técnico, sin pregunta.
+cadena_b:
+  # Ámbito del Bloque A (símbolo del indicador de seguimiento, HT-01) → clave del ámbito del Bloque B (`clave_universo`
+  # de bloque_b/11_Ejecutor/config/ambitos_ejemplo.yaml). Solo los que encajan; un ámbito sin fila no se envía (falla
+  # cerrado: el Broker no inventa la clave). Los dos universos son de ejemplo.
+  correspondencia_ambitos:
+    AUDUSD=X: divisas_materias_primas   # «Divisas de exportadores de materias primas» en los dos
+    CPER: cobre
+    ^NSEI: india
+    ETH-USD: infraestructura_cripto     # redes de contratos inteligentes
+  # Lo que el Bloque A no da y la petición lleva: los valores neutros del Anexo B.1 del Documento 0 del Bloque B
+  # (nivel AUTO: lo propone el Bloque B; marco de invertibilidad por defecto, R4 y 2.7)
+  peticion: {nivel: AUTO, prioridad: NORMAL, perfil_invertibilidad: MINORISTA_UE_DEFECTO}
