@@ -140,7 +140,8 @@ SUPUESTOS = (
     "límite de la bolsa con la ampliación máxima), sumado a lo medido; en toda llamada con bolsa, el encargo es como mucho ese, aunque S4 dé más"),
     ("S5 · fuera: lo que lee cada búsqueda (se cobra como entrada en su petición y en cada continuación de `pause_turn` "
     "que la reenvía; la salida da su peso por cada 1 000 tokens leídos), lo que añade la API por la herramienta, los "
-    "reintentos del SDK, la tarifa de contexto largo (los 5.5 de Opus y Sonnet no la tienen; Haiku 5.5, por encima de "
+    "reintentos ante un fallo del proveedor (T-151: los hace el cliente, no el SDK, y cada uno reserva su petición en el "
+    "presupuesto, así que la cota por presupuesto los cubre y la cota por llamadas no los cuenta), la tarifa de contexto largo (los 5.5 de Opus y Sonnet no la tienen; Haiku 5.5, por encima de "
     "100 000 tokens, sí, y su único papel, la curación, se queda por debajo con S4) y lo que el encargo trae de ciclos "
     "anteriores (opciones vigentes) más allá de lo medido desde un estado vacío"),
 )

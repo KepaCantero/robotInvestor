@@ -198,21 +198,27 @@ class ReglaReintentos:
     reintento pase por la reserva del presupuesto (`consumo.ReservaLlamada`). Los números salen de la configuración
     (`llm.max_reintentos_api` y `llm.reintentos.*`, `[PROPUESTO]`, INC-T146-01): los estados que se reintentan, los que el
     servidor rechaza sin ejecutar la petición (no se cobran) y la espera, determinista (la inicial, doblando hasta la
-    máxima; o la que pida el servidor con `retry-after`)."""
+    máxima; o la que pida el servidor con `retry-after`).
+    T-154 (QA r01 de T-151, H-01 y H-04): desde `cobro_posible` (la clase 5xx) una petición pudo cobrarse aunque no se
+    reintente, salvo las de `sin_cobro`; y no se espera a un `retry-after` mayor que `espera_servidor_max_s` (no se
+    reintenta)."""
     maximo: int
     espera_inicial_s: float
     espera_max_s: float
     estados: frozenset[int]
     sin_cobro: frozenset[int]
+    espera_servidor_max_s: float
+    cobro_posible: int
 
     @classmethod
     def de_config(cls, cfg: dict) -> ReglaReintentos:
         maximo = parametro(cfg, "llm.max_reintentos_api")
         inicial, tope = parametro(cfg, "llm.reintentos.espera_inicial_s"), parametro(cfg, "llm.reintentos.espera_max_s")
         estados, sin_cobro = parametro(cfg, "llm.reintentos.estados_reintentables"), parametro(cfg, "llm.reintentos.estados_sin_cobro")
+        servidor, desde = parametro(cfg, "llm.reintentos.espera_servidor_max_s"), parametro(cfg, "llm.reintentos.cobro_posible_desde")
         if isinstance(maximo, bool) or not isinstance(maximo, int) or maximo < 0:
             raise ValueError("llm.max_reintentos_api debe ser un entero no negativo")
-        for nombre, v in (("espera_inicial_s", inicial), ("espera_max_s", tope)):
+        for nombre, v in (("espera_inicial_s", inicial), ("espera_max_s", tope), ("espera_servidor_max_s", servidor)):
             if isinstance(v, bool) or not isinstance(v, (int, float)) or not math.isfinite(v) or v < 0:
                 raise ValueError(f"llm.reintentos.{nombre} debe ser un número no negativo")
         if inicial > tope:
@@ -222,12 +228,16 @@ class ReglaReintentos:
                 raise ValueError(f"llm.reintentos.{nombre} debe ser una lista de estados HTTP enteros")
         if not set(sin_cobro) <= set(estados):
             raise ValueError("llm.reintentos.estados_sin_cobro debe estar dentro de estados_reintentables")
-        return cls(maximo, float(inicial), float(tope), frozenset(estados), frozenset(sin_cobro))
+        if isinstance(desde, bool) or not isinstance(desde, int) or desde < 0:
+            raise ValueError("llm.reintentos.cobro_posible_desde debe ser un estado HTTP entero")
+        return cls(maximo, float(inicial), float(tope), frozenset(estados), frozenset(sin_cobro), float(servidor), desde)
 
-    def espera(self, reintento: int, error: BaseException) -> float:
+    def espera(self, reintento: int, error: BaseException) -> float | None:
         """Segundos antes del reintento número `reintento` (1, 2…): los que pida el servidor (`retry-after-ms` o
-        `retry-after` en segundos, como el SDK) o la espera inicial doblada en cada reintento, sin pasar de la máxima."""
-        cabeceras = getattr(getattr(error, "response", None), "headers", None) or {}
+        `retry-after` en segundos, como el SDK) o la espera inicial doblada en cada reintento, sin pasar de la máxima.
+        T-154 (H-04): un `retry-after` que no es un número finito y positivo no vale (la espera de la regla); uno mayor que
+        `espera_servidor_max_s` da None: no se reintenta (no se inventa una espera más corta que la que pide el servidor)."""
+        cabeceras = _cabeceras(error)
         for clave, escala in (("retry-after-ms", 1000.0), ("retry-after", 1.0)):
             crudo = cabeceras.get(clave)
             try:
@@ -235,14 +245,26 @@ class ReglaReintentos:
             except ValueError:   # ausente («None») o una fecha: no se interpreta
                 continue
             if math.isfinite(v) and v > 0:
-                return v
+                return v if v <= self.espera_servidor_max_s else None
         return min(self.espera_inicial_s * 2 ** (reintento - 1), self.espera_max_s)
+
+
+def _cabeceras(error: BaseException) -> dict[str, Any]:
+    """T-154 (QA r01 de T-151, H-04): las cabeceras de la respuesta de un error con el nombre en minúsculas (HTTP no distingue
+    mayúsculas en los nombres; las de httpx ya no lo hacen, un diccionario sí)."""
+    crudas = getattr(getattr(error, "response", None), "headers", None) or {}
+    try:
+        return {str(k).lower(): v for k, v in crudas.items()}
+    except AttributeError:   # no es un diccionario de cabeceras
+        return {}
 
 
 def clasificar_error(error: BaseException, regla: ReglaReintentos | None) -> tuple[bool, bool]:
     """T-151: (se reintenta, la API pudo cobrarla). Conexión y timeout: la petición pudo llegar y completarse (se reintenta
     y pudo cobrarse). Un estado HTTP: se reintenta si está en `regla.estados` (o si el servidor lo pide con
-    `x-should-retry`, como el SDK) y no se cobró si está en `regla.sin_cobro` o no se reintenta (el servidor la rechazó).
+    `x-should-retry`, como el SDK, sin distinguir mayúsculas) y no se cobró si está en `regla.sin_cobro` o no se reintenta
+    (el servidor la rechazó). T-154 (QA r01 de T-151, H-01): un estado de la clase 5xx (desde `regla.cobro_posible`) pudo
+    cobrarse aunque no se reintente (501, 520, un 500 con `x-should-retry: false`), salvo los de `regla.sin_cobro`.
     Otro error (no del proveedor): ni se reintenta ni se cobró. Sin regla (un cliente creado sin la configuración) no se
     reintenta nada, y un error del proveedor cuenta como cobrado (prudente: no se sabe qué estados rechaza sin ejecutar)."""
     try:
@@ -254,8 +276,10 @@ def clasificar_error(error: BaseException, regla: ReglaReintentos | None) -> tup
     if isinstance(error, anthropic.APIStatusError):
         if regla is None:
             return False, True
-        pide = str((getattr(error.response, "headers", None) or {}).get("x-should-retry", "")).lower()
+        pide = str(_cabeceras(error).get("x-should-retry", "")).lower().strip()
         reintenta = pide == "true" or (pide != "false" and error.status_code in regla.estados)
+        if error.status_code >= regla.cobro_posible:   # T-154 (H-01): el servidor pudo ejecutarla, se reintente o no
+            return reintenta, error.status_code not in regla.sin_cobro
         return reintenta, reintenta and error.status_code not in regla.sin_cobro
     return False, False
 
@@ -358,7 +382,10 @@ class AnthropicClient(LLMClient):
                 if not reintenta or self.reintentos is None or reintento >= self.reintentos.maximo:
                     return None, "error_proveedor"
                 reintento += 1
-                self.dormir(self.reintentos.espera(reintento, e))
+                espera = self.reintentos.espera(reintento, e)
+                if espera is None:   # T-154 (H-04): el servidor pide esperar más de lo admitido: no se reintenta
+                    return None, "error_proveedor"
+                self.dormir(espera)
             if guarda is not None:
                 mt = guarda.reservar(system, msgs, herramientas, int(kwargs["max_tokens"]))
                 if mt is None:

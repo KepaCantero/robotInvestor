@@ -139,6 +139,11 @@ def test_la_espera_dobla_hasta_la_maxima_o_es_la_del_servidor():
     assert regla.espera(1, ms) == 0.25
     fecha = types.SimpleNamespace(response=types.SimpleNamespace(headers={"retry-after": "Wed, 21 Oct 2026 07:28:00 GMT"}))
     assert regla.espera(2, fecha) == 2 * regla.espera_inicial_s   # una fecha no se interpreta: la de la regla
+    # T-154 (QA r01 de T-151, H-04, mutante Q09): un `retry-after` no finito, negativo o cero no vale como espera
+    for valor in ("inf", "nan", "-5", "0"):
+        for clave in ("retry-after", "retry-after-ms"):
+            raro = types.SimpleNamespace(response=types.SimpleNamespace(headers={clave: valor}))
+            assert regla.espera(1, raro) == regla.espera_inicial_s, (clave, valor)
 
 
 def test_la_clasificacion_de_los_errores():
@@ -152,8 +157,12 @@ def test_la_clasificacion_de_los_errores():
     assert clasificar_error(estado(529), regla) == (True, False) and clasificar_error(estado(429), regla) == (True, False)
     assert clasificar_error(estado(500), regla) == (True, True)
     assert clasificar_error(estado(400), regla) == (False, False)
-    assert clasificar_error(estado(500, {"x-should-retry": "false"}), regla) == (False, False)
+    # T-154 (QA r01 de T-151, H-01): un 5xx que no se reintenta pudo ejecutarse: cuenta como cobrado (antes, (False, False))
+    assert clasificar_error(estado(500, {"x-should-retry": "false"}), regla) == (False, True)
     assert clasificar_error(estado(400, {"x-should-retry": "true"}), regla) == (True, True)
+    # T-154 (H-04, mutante Q10): el valor de `x-should-retry` no distingue mayúsculas
+    assert clasificar_error(estado(400, {"x-should-retry": "True"}), regla) == (True, True)
+    assert clasificar_error(estado(503, {"x-should-retry": "FALSE"}), regla) == (False, True)
     assert clasificar_error(RuntimeError("no es del proveedor"), regla) == (False, False)
     # sin regla: no se reintenta, y lo del proveedor cuenta como cobrado (prudente)
     assert clasificar_error(anthropic.APITimeoutError(request=req), None) == (False, True)

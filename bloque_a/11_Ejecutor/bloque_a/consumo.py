@@ -11,7 +11,7 @@ import math
 import threading
 from collections import defaultdict
 from collections.abc import Callable
-from dataclasses import asdict, fields
+from dataclasses import asdict, dataclass, fields
 from typing import Any
 
 from .configuracion import parametro
@@ -134,6 +134,9 @@ class Presupuesto:
         self._pesos: dict[str, dict[str, int]] = defaultdict(lambda: defaultdict(int))
         self._reales: dict[str, int] = defaultdict(int)
         self._cargadas: dict[str, int] = defaultdict(int)
+        # T-154 (QA r01 de T-151, H-03): los grupos de prefijos con una llamada que tuvo una petición sin respuesta que pudo
+        # cobrarse (esa petición pudo escribir el prefijo sin que ninguna respuesta lo diga)
+        self._grupos_sin_respuesta: set[str] = set()
 
     def _base(self, clase: str) -> float:
         return self.asignado.get(clase, 0.0) * self._escala
@@ -188,6 +191,24 @@ class Presupuesto:
     def anotar(self, lista: str, entrada: dict) -> None:
         with self._lock:
             getattr(self, lista).append(entrada)
+
+    def marca(self) -> dict[str, int]:
+        """T-154 (QA r01 de T-151, H-02): cuántas entradas lleva cada lista de lo declarado (para `desde`)."""
+        with self._lock:
+            return {k: len(getattr(self, k)) for k in _LISTAS_DECLARADAS}
+
+    def desde(self, marca: dict[str, int]) -> TramoPresupuesto:
+        """T-154 (H-02): el presupuesto con solo lo declarado después de `marca` (lo de la auditoría, que corre tras escribir
+        el RUN en F5); el resumen por bolsa es el de ahora."""
+        with self._lock:
+            listas = {k: list(getattr(self, k)[marca.get(k, 0):]) for k in _LISTAS_DECLARADAS}
+        return TramoPresupuesto(self, **listas)
+
+    def grupo_sin_respuesta(self, grupo: str) -> None:
+        """T-154 (QA r01 de T-151, H-03): una llamada del grupo de prefijos `grupo` tuvo una petición sin respuesta que pudo
+        cobrarse (ver `liquidar_primas`)."""
+        with self._lock:
+            self._grupos_sin_respuesta.add(grupo)
 
     def factor_de(self, clase: str, base: float) -> float:
         with self._lock:
@@ -245,7 +266,11 @@ class Presupuesto:
     def liquidar_primas(self) -> None:
         """T-88: en cada grupo de prefijos, reparte los tokens escritos de verdad en proporción a los pesos «solo», y quita lo
         que ya se cargó durante la fase. El total cargado vuelve a ser el real y el reparto no depende del orden de los hilos.
-        Un grupo sin pesos va a la bolsa común."""
+        Un grupo sin pesos va a la bolsa común.
+        T-154 (QA r01 de T-151, H-03): en un grupo con una petición sin respuesta que pudo cobrarse (`grupo_sin_respuesta`),
+        esa petición pudo escribir el prefijo sin que ninguna respuesta lo diga, y lo escrito que se ve depende de qué hilo
+        llegó antes. Ahí se reparte la suma de los pesos «solo»: cada bolsa paga su prima «solo» entera, la cota superior (lo
+        diferido de cada llamada no pasa de su peso) y lo que ya tenía retenido, así que no pasa de su límite por ello."""
         with self._lock:
             for grupo in sorted(self._reales):
                 pesos, reales = self._pesos.get(grupo, {}), self._reales[grupo]
@@ -253,6 +278,8 @@ class Presupuesto:
                 if not total:
                     self.consumido["COMUN"] += self._uc_prima(reales)
                     continue
+                if grupo in self._grupos_sin_respuesta:
+                    reales = total
                 for bolsa in sorted(pesos):
                     self.consumido[bolsa] += self._uc_prima(reales * pesos[bolsa] / total)
             for bolsa in sorted(self._cargadas):
@@ -260,6 +287,7 @@ class Presupuesto:
             self._pesos.clear()
             self._reales.clear()
             self._cargadas.clear()
+            self._grupos_sin_respuesta.clear()
             self.retenido.clear()   # T-146: lo retenido para las primas ya está cargado
 
     def puede(self, clase: str, estimado: float) -> bool:
@@ -296,6 +324,31 @@ class Presupuesto:
             return {k: {"asignado": round(self._base(k), 6) if self._escala < 1 else self.asignado.get(k, 0.0),
                         "ampliado": round(self.ampliado[k], 4),
                         "consumido": round(self.consumido[k], 4)} for k in sorted(set(self.asignado) | set(self.consumido))}
+
+
+# T-154 (H-02): las listas de lo declarado que el RUN de F5 lleva solo si las hay (y los cierres, siempre)
+_LISTAS_DECLARADAS = ("cierres", "recortes", "excesos", "sin_respuesta")
+
+
+@dataclass
+class TramoPresupuesto:
+    """T-154 (QA r01 de T-151, H-02): lo que un `Presupuesto` declaró después de una marca (`Presupuesto.desde`), con su
+    resumen y su escala de ahora, para escribirlo en F5 como el RUN (`Bloque._f5_presupuesto`)."""
+    origen: Presupuesto
+    cierres: list[dict]
+    recortes: list[dict]
+    excesos: list[dict]
+    sin_respuesta: list[dict]
+
+    @property
+    def escala(self) -> float:
+        return self.origen.escala
+
+    def resumen(self) -> dict:
+        return self.origen.resumen()
+
+    def algo(self) -> bool:
+        return bool(self.cierres or self.recortes or self.excesos or self.sin_respuesta)
 
 
 def _volcar(o: Any) -> Any:

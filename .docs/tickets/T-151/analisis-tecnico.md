@@ -33,7 +33,7 @@ Las QA r02 de T-146 y T-148 dieron APTO y dejaron hallazgos bajos (secciones «R
   - **Lo que pudo cobrarse sin respuesta se carga por su peor caso reservado**, no por cero: es una cota superior (falla cerrado), no un valor inventado. La contabilidad no lo registra (no hay uso que registrar): el RUN lo declara en `peticiones_sin_respuesta` y lo consumido de la bolsa pasa a lo de la contabilidad en esa cantidad.
   - **Caché a 1 h:** solo se declara (cambiar la UC de la escritura cambiaría todas las bolsas y su relación con el Anexo A; es del operador).
   - **Los textos citados por los mutantes** (`mutantes_t146.py`, `r01_05`, `r02_02` de T-146 y T-148, `T-147/mutantes.py`) se conservan: aplican todos.
-  - **`tools/cuotas.txt` no se toca:** ruff baja a 2831 (−7) y mypy de A se queda en 109; el *ratchet* lo deja a quien coordina (otra tarea trabaja en paralelo en el mismo paquete).
+  - **Cuotas:** ruff baja a 2831 (−7) y mypy de A se queda en 109. Al escribir esto, `tools/cuotas.txt` no se iba a tocar (el *ratchet* se dejaba a quien coordina); el commit de T-151 (`1ccffd5`) la bajó a 2831 (T-154, H-05 de la QA r01).
 - Límites conocidos:
   - Sin la API no se sabe si los estados sin cobro son exactamente 429 y 529, ni cuánto miden de verdad los bloques de búsqueda reenviados (H-11): para el modo sombra (`peticiones_sin_respuesta`, `excesos_reserva`, `factor_observado`).
   - El motivo de las fases cerradas por una petición negada cambia de texto («reparación, continuación o reintento»): cambia la firma de F5 del `r01_02` con caché (`fce20f7854fb` frente a `20ad04339dc9`); el resto de F5 es idéntico (comprobado campo a campo).
