@@ -171,7 +171,9 @@ def test_r04_h13_en_la_v5_cada_tipo_paga_las_reescrituras_de_su_analista():
     Bloque._cargar(fake, p, "RV", "AG-03", _r(10000, 0))
     Bloque._cargar(fake, p, "RF", "AG-04", _r(20000, 0))
     Bloque._cargar(fake, p, "RV", "AG-03", _r(10000, 0))   # segunda llamada: la caché se perdió y vuelve a escribir
-    base = {"RV": p.consumido["RV"] - p._uc_prima(10000), "RF": p.consumido["RF"] - p._uc_prima(20000)}
+    # T-146: la reescritura (fuera del prefijo de la primera llamada) se carga ya como escritura, no al liquidar; el total
+    # que acaba pagando RV es el mismo de antes: su lectura y las dos escrituras de su prompt
+    base = {"RV": p.consumido["RV"] - 2 * p._uc_prima(10000), "RF": p.consumido["RF"] - p._uc_prima(20000)}
     p.liquidar_primas()
     assert p.consumido["RV"] == pytest.approx(base["RV"] + p._uc_prima(20000))
     assert p.consumido["RF"] == pytest.approx(base["RF"] + p._uc_prima(20000))

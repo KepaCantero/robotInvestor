@@ -144,7 +144,10 @@ def test_h01_la_cota_cubre_el_peor_camino_con_el_cliente_real(est, tarifa, medid
     cfg = cargar_config()
     viejo = est.estimar(medida, tarifa["precios_por_millon"], 10.0, set(), 5, 1.35, 3, 1)["cota_superior"]
     nueva = est.cota_ciclo(medida, cfg, tarifa["precios_por_millon"], 10.0, 1.35)["cota"]
-    assert usd > viejo                  # la cifra de T-140 (solo las llamadas medidas) no era una cota: la reescritura la pasa
+    # T-146: antes, este camino costaba más que la cifra de T-140 (la reescritura la pasaba) y eso mostraba que no era una
+    # cota; con el presupuesto que reserva el peor caso antes de cada petición, el camino se corta antes y la comparación
+    # con la cifra vieja deja de tener sentido. Queda lo que importa: el coste real no pasa de la cota
+    assert viejo > 0
     assert usd <= nueva
 
 
@@ -164,7 +167,9 @@ def test_h01_el_presupuesto_se_pasa_y_la_cota_por_presupuesto_lo_cuenta(peor_cam
         primas = sum(0.5 * x["cache_escritura"] * (1 - cfg["uc"]["factor_lectura_cache"]) / cfg["uc"]["tokens_entrada_por_uc"]
                      for x in ll)
         assert v["consumido"] <= v["asignado"] * (1 + amp) + max(x["uc"] for x in ll) + primas + 1e-6
-    assert pasadas >= 1
+    # T-146: el presupuesto reserva el peor caso antes de cada petición, así que ninguna bolsa pasa ya de su límite (antes
+    # de T-146 esta prueba exigía al menos una bolsa pasada, que era el hallazgo)
+    assert pasadas == 0
 
 
 def test_h01_falla_cerrado(est, tarifa, medida):

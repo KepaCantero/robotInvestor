@@ -12,10 +12,13 @@
 """
 from __future__ import annotations
 
+import contextlib
+import contextvars
 import hashlib
 import json
 import os
 import threading
+from collections.abc import Iterator
 from dataclasses import asdict, dataclass, field
 from pathlib import Path
 from typing import Any
@@ -166,6 +169,21 @@ class LLMClient:
         raise NotImplementedError
 
 
+# T-146: la reserva de presupuesto de la llamada en curso (`consumo.ReservaLlamada`). La fija `Agentes.invocar` alrededor de
+# cada `generar`; el cliente real la usa para reservar cada continuación tras `pause_turn` y pagar cada petición. Cada hilo
+# tiene la suya (las variables de contexto no pasan de un hilo a otro).
+_GUARDA: contextvars.ContextVar[Any] = contextvars.ContextVar("guarda_presupuesto", default=None)
+
+
+@contextlib.contextmanager
+def con_guarda(guarda: Any) -> Iterator[None]:
+    marca = _GUARDA.set(guarda)
+    try:
+        yield
+    finally:
+        _GUARDA.reset(marca)
+
+
 def herramienta_busqueda_web(tipo: str = "web_search_20260318", max_usos: int = 5) -> dict:
     """Definición de la herramienta de servidor de búsqueda web (tipos en anthropic.types.WebSearchTool*Param)."""
     return {"type": tipo, "name": "web_search", "max_uses": int(max_usos)}
@@ -213,13 +231,24 @@ class AnthropicClient(LLMClient):
         uso = Uso()
         textos: list[str] = []
         stop = None
-        for _ in range(self.max_continuaciones + 1):
+        guarda = _GUARDA.get()
+        for vuelta in range(self.max_continuaciones + 1):
+            if guarda is not None and vuelta > 0:
+                # T-146: cada continuación es una petición más y reserva su peor caso antes de salir (la primera la reservó
+                # `Agentes.invocar`, que pasa aquí su `max_tokens`)
+                mt = guarda.reservar(system, msgs, herramientas, int(kwargs["max_tokens"]))
+                if mt is None:
+                    return RespuestaLLM("".join(textos), uso, modelo, stop_reason="presupuesto_agotado")
+                kwargs["max_tokens"] = int(mt)
             try:
                 resp = self.sdk.messages.create(**kwargs)
             except Exception:
                 # El SDK ya ha agotado sus reintentos. Los mensajes de excepción pueden contener secretos.
                 return RespuestaLLM("", uso, modelo, stop_reason="error_proveedor")
-            uso.sumar(self._uso(getattr(resp, "usage", None)))
+            u = self._uso(getattr(resp, "usage", None))
+            uso.sumar(u)
+            if guarda is not None:
+                guarda.pagar(u)
             stop = getattr(resp, "stop_reason", None)
             contenido = list(getattr(resp, "content", []) or [])
             textos = [getattr(b, "text", "") for b in contenido if getattr(b, "type", None) == "text"]

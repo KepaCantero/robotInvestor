@@ -43,7 +43,7 @@ from .configuracion import (
     parametros_ht03,
     perfiles_activos,
 )
-from .consumo import Contabilidad, Presupuesto
+from .consumo import Contabilidad, Presupuesto, ReservaLlamada
 from .contratos import (
     AGENTE_CLASE,
     ESQUEMAS,
@@ -236,62 +236,87 @@ class Bloque:
         return self.anon.salida(obj) if self.anon else obj
 
     def _invocar(self, agente, contrato, mensaje, esquema, instrucciones, as_of, run_id, clase=None, fase=None,
-                 presupuesto: Presupuesto | None = None, bolsa=None, permitir_web=False, max_uc_estimado=None):
-        """Llamada a un agente con control de presupuesto (estimación previa) y anonimización."""
+                 presupuesto: Presupuesto | None = None, bolsa=None, permitir_web=False, max_uc_estimado=None, control=False):
+        """Llamada a un agente con control de presupuesto y anonimización.
+
+        T-146: cada petición al modelo (el primer intento, cada reparación y cada continuación) reserva antes de salir su
+        peor caso en la bolsa (`consumo.ReservaLlamada`); lo real se carga después y el resto se libera. Si no cabe: la
+        ampliación con la regla del ejecutor (`_solicitar_ampliacion`; `control` = AG-18 o AG-19, que R16 no deja recortar
+        mientras quepan en la ampliación máxima), la salida recortada a lo que cabe o, si ni eso, la fase se cierra con
+        alcance reducido declarado. `max_uc_estimado` (solo la consulta N0, C3) conserva la comprobación previa de antes."""
         bolsa = bolsa or clase or "COMUN"
-        if presupuesto is not None:
-            est = max_uc_estimado if max_uc_estimado is not None else self._estimar_uc(agente, mensaje)
-            if not presupuesto.puede(bolsa, est):
-                if not self._solicitar_ampliacion(presupuesto, bolsa, est, run_id, fase):
-                    presupuesto.cierre_parcial(bolsa, fase or contrato, f"presupuesto insuficiente para {agente} ({est:.2f} UC estimadas)")
+        guarda = None
+        if presupuesto is not None and max_uc_estimado is not None:
+            if not presupuesto.puede(bolsa, max_uc_estimado):
+                if not self._solicitar_ampliacion(presupuesto, bolsa, max_uc_estimado, run_id, fase, control):
+                    presupuesto.cierre_parcial(bolsa, fase or contrato,
+                                               f"presupuesto insuficiente para {agente} ({max_uc_estimado:.2f} UC estimadas)")
                     return None
+        elif presupuesto is not None:
+            guarda = ReservaLlamada(presupuesto, bolsa, self.contabilidad, agente,
+                                    ampliar=lambda est: self._solicitar_ampliacion(presupuesto, bolsa, est, run_id,
+                                                                                   (fase or contrato) if control else fase, control))
         ctx = self._contexto(as_of, run_id, clase)
-        r = self.agentes.invocar(agente, contrato, self._vista(mensaje), esquema, instrucciones, self._vista(ctx), run_id,
-                                 clase, fase, permitir_web)
+        try:
+            r = self.agentes.invocar(agente, contrato, self._vista(mensaje), esquema, instrucciones, self._vista(ctx), run_id,
+                                     clase, fase, permitir_web, guarda=guarda)
+        finally:
+            if guarda is not None:
+                guarda.cerrar()
+        if presupuesto is not None and guarda is not None and guarda.negada:
+            presupuesto.cierre_parcial(bolsa, fase or contrato, guarda.negada)
+        if r.estado == "SIN_PRESUPUESTO":
+            return None
         if presupuesto is not None:
-            self._cargar(presupuesto, bolsa, agente, r)
+            self._cargar(presupuesto, bolsa, agente, r, guarda.prefijo if guarda is not None else None)
         if r.datos is not None:
             r.datos = self._real(r.datos)
         return r
 
-    def _cargar(self, presupuesto: Presupuesto, bolsa: str, agente: str, r) -> None:
+    def _cargar(self, presupuesto: Presupuesto, bolsa: str, agente: str, r, prefijo: int | None = None) -> None:
         """T-88 (QA de T-65, H-10): con varios hilos, la escritura de la caché de un prefijo compartido (el system prompt de un
         agente que trabaja para varios tipos, o el núcleo común de los analistas V6) la pagaba el tipo cuyo hilo llegaba
         primero, y eso cambiaba de una ejecución a otra. Durante el ciclo, cada bolsa paga la lectura de lo cacheado y,
         en la primera llamada a su propio analista, la escritura de su prompt, que siempre escribe ella (como antes de T-88;
         QA r01 de T-88, H-01: cargar también la prima «solo» de los agentes compartidos cerraba fases que antes no cerraban).
         `Presupuesto.liquidar_primas` reparte después lo escrito de verdad, por grupo de prefijos y en proporción a lo que
-        escribiría cada bolsa sola (`[PROPUESTO]`, INC-T88-01)."""
+        escribiría cada bolsa sola (`[PROPUESTO]`, INC-T88-01).
+
+        T-146: solo se aplaza la escritura del prefijo compartido, y como mucho la de la primera llamada de la bolsa a ese
+        agente (lo que escribiría sola); lo demás escrito se carga ya como escritura. La prima «solo» de un agente compartido
+        queda retenida hasta la liquidación, que no carga a ninguna bolsa más que eso: así ninguna pasa de su límite.
+        `prefijo`: lo cacheado en la primera petición (de `ReservaLlamada`); sin él, lo cacheado entre los intentos."""
         u = r.uso
         cacheados = u.cache_lectura + u.cache_escritura
         if r.cache_hit or not cacheados:
             presupuesto.cargar(bolsa, r.uc)
             return
-        leido = self.contabilidad.uc_de(Uso(entrada=u.entrada, salida=u.salida, cache_lectura=cacheados, busquedas_web=u.busquedas_web))
-        prefijo = cacheados // max(1, r.intentos)   # cada intento lee o escribe el mismo prefijo
+        if prefijo is None:
+            prefijo = cacheados // max(1, r.intentos)   # cada intento lee o escribe el mismo prefijo
         solo = prefijo if presupuesto.primera_llamada(bolsa, agente) else 0
+        diferido = min(u.cache_escritura, solo)
+        directo = u.cache_escritura - diferido
+        leido = self.contabilidad.uc_de(Uso(entrada=u.entrada + directo, salida=u.salida, cache_lectura=u.cache_lectura + diferido,
+                                            busquedas_web=u.busquedas_web))
         propio = AGENTE_CLASE.get(bolsa) == agente
         # QA r02 de T-88, H-05: en la V5 cada analista escribe solo su prompt, así que su grupo es él mismo (no paga el de
         # otro tipo). En la V6 los analistas comparten el núcleo común y van en un grupo; el kit de cada uno se reparte con
         # el núcleo (hasta unos 0,03 UC por tipo; declarado en INC-T88-01)
         grupo = "ANALISTAS" if (self.v6 and agente in set(AGENTE_CLASE.values())) else agente
-        presupuesto.cargar_con_prima(bolsa, grupo, leido, solo, solo if propio else 0, u.cache_escritura)
+        presupuesto.cargar_con_prima(bolsa, grupo, leido, solo, solo if propio else 0, diferido, 0 if propio else solo)
 
-    def _estimar_uc(self, agente: str, mensaje: dict) -> float:
-        n_user = len(json.dumps(mensaje, ensure_ascii=False, default=str)) / 3.6 + 1500
-        n_sys = (len("".join(b["text"] for b in self.agentes.prompts.system(agente, cache=False))) if self.v6
-                 else len(self.agentes.prompts.texto(agente))) / 3.6
-        return self.contabilidad.uc_de(Uso(entrada=int(n_user), cache_lectura=int(n_sys), salida=2500))
-
-    def _solicitar_ampliacion(self, presupuesto: Presupuesto, bolsa: str, est: float, run_id: str, fase: str | None) -> bool:
+    def _solicitar_ampliacion(self, presupuesto: Presupuesto, bolsa: str, est: float, run_id: str, fase: str | None,
+                              control: bool = False) -> bool:
         """Ampliación > 25 % (10.3): el Orquestador decide en el ciclo periódico con la regla de valor de la
-        información; tope total configurable (por defecto +50 %)."""
+        información; tope total configurable (por defecto +50 %). T-146 (`[PROPUESTO]`, INC-T146-01): también se admite
+        para los controles (dictamen G3 de AG-18 y auditoría de AG-19), que R16 no deja recortar por falta de presupuesto."""
         asignado = presupuesto.asignado.get(bolsa, 0.0)
         autoriza, falta = presupuesto.autorizar_hasta_tope(
-            bolsa, est, fase in ("prospectiva", "refutacion", "respuesta_objeciones"))
+            bolsa, est, control or fase in ("prospectiva", "refutacion", "respuesta_objeciones"))
+        valor = f"control {fase} (R16): la verificación no se recorta" if control else f"fase {fase}: puede cambiar el top-3"
         self.almacen.escribir("HA", "AG-18", {"tipo_entrada": "AUT", "id": self.almacen.nuevo_id("AUT"), "run_id": run_id,
                                               "solicitante": "AG-02", "bolsa": bolsa, "presupuesto_base": asignado,
-                                              "ampliacion_uc": round(falta, 4), "valor_informacion": f"fase {fase}: puede cambiar el top-3",
+                                              "ampliacion_uc": round(falta, 4), "valor_informacion": valor,
                                               "decision": "AUTORIZADA" if autoriza else "DENEGADA",
                                               "motivo": "dentro del tope de ampliación" if autoriza else "supera el tope o la fase no cambia la decisión"})
         return autoriza
@@ -536,7 +561,12 @@ class Bloque:
         except Exception as e:  # pragma: no cover - modo degradado
             res_eval = {"error": str(e)}
             self.almacen.incidencia("HERRAMIENTA", f"Evaluador no disponible: {e}", "AG-20", severidad="Operativa")
-        self._informe_aprendizaje(res_eval, as_of, run_id)
+        # T-146: el informe de aprendizaje (AG-20) corre antes de que el ciclo reparta su presupuesto; lo hace contra la bolsa
+        # COMÚN con lo que esta tiene como mínimo (o la de `presupuesto_override`), y lo consumido pasa después a esa bolsa
+        tope_ciclo = float(parametro(self.cfg, "presupuesto_uc.ciclo_semanal_max"))
+        pres_c5 = Presupuesto({"COMUN": float((presupuesto_override or {}).get(
+            "COMUN", float(parametro(self.cfg, "presupuesto_uc.fraccion_minima_comun")) * tope_ciclo))}, self.cfg)
+        self._informe_aprendizaje(res_eval, as_of, run_id, pres_c5)
         self._comunicar_fiabilidad(res_eval, run_id)
         if self.v6 and v6.op(self, "cobertura.registrar"):   # T-101 (idea 4): descartes muestreados cuyo horizonte ya venció
             v6.resolver_contrafactual(self, as_of, run_id)
@@ -578,14 +608,14 @@ class Bloque:
         asign = {c: float(parametro(self.cfg, f"presupuesto_uc.{nivel[c]}")) for c in clases}
         if tipo != "PERIODICO" and any(nivel[c] == "N3" for c in clases):
             asign = {c: float(parametro(self.cfg, "presupuesto_uc.N3")) / max(len(clases), 1) for c in clases}
-        tope_ciclo = float(parametro(self.cfg, "presupuesto_uc.ciclo_semanal_max"))
         asign["COMUN"] = max(tope_ciclo - sum(asign.values()), float(parametro(self.cfg, "presupuesto_uc.fraccion_minima_comun")) * tope_ciclo)
         if presupuesto_override:
             asign.update(presupuesto_override)
         if self.v6:   # T-101: la parte de prospectiva y refutación de cada tipo pasa a la bolsa del ciclo (el total no cambia;
             asign = v6.repartir_presupuesto(self, asign, clases,   # después del override (H-07 de la QA r01) y respetando el de la
                                             (presupuesto_override or {}).get(v6.BOLSA_GLOBAL))   # bolsa del ciclo (H-18 de la r02)
-        presupuesto = Presupuesto(asign, self.cfg)
+        presupuesto = Presupuesto(asign, self.cfg, tope_total=tope_ciclo)   # T-146: la suma de los límites no pasa del ciclo
+        presupuesto.absorber(pres_c5)
         memoria = {"opp_vigentes": [v["opp_id"] for c in clases for v in vigentes[c]],
                    "tnd_activas": [t["tnd_id"] for t in self.almacen.estado("F1", as_of).values() if t.get("estado") not in ("archivada", "invalidada")][:50],
                    "lec_aplicables": [l["id"] for l in self.evaluador.lecciones_vigentes(as_of)],
@@ -664,7 +694,7 @@ class Bloque:
         if limitaciones:
             paquete["limitaciones"] = limitaciones + [x for x in paquete["limitaciones"] if not x.startswith("Ninguna limitación")]
         # F6 · G3 (HT-09) + dictamen del Orquestador si no es APTO
-        paquete, g3 = self._validar_g3(paquete, extras, as_of, run_id)
+        paquete, g3 = self._validar_g3(paquete, extras, as_of, run_id, presupuesto=presupuesto)
         estado_run = "COMPLETO"
         incompleto_v6 = bool((info_prosp or {}).get("omitidos") or (info_critica or {}).get("sin_respuesta")
                              or (info_critica or {}).get("sin_critica"))   # QA r01 de T-101, H-03: lo que no se entrega por la V6
@@ -697,7 +727,7 @@ class Bloque:
             "estado_g3": g3b["dictamen"]}, run_id=run_id, tipo_mensaje="RETORNO", estado=resultado["estado"])
         resultado["prg_congelados"] = prg
         # F9 · Auditoría asíncrona (nunca bloquea)
-        self._auditar(resultado, tipo, nivel, as_of, run_id)
+        self._auditar(resultado, tipo, nivel, as_of, run_id, presupuesto=presupuesto)
         resultado["consumo"] = self.contabilidad.resumen(run_id)
         resultado["presupuesto"] = presupuesto.resumen()
         return resultado
@@ -715,7 +745,7 @@ class Bloque:
         for f in fue:
             self.almacen.escribir("F6", "AG-20", {"tipo_entrada": "FUE", "id": f["fue_id"], "comunicado_ct19": msg["msg_id"]})
 
-    def _informe_aprendizaje(self, res_eval: dict, as_of, run_id: str) -> None:
+    def _informe_aprendizaje(self, res_eval: dict, as_of, run_id: str, presupuesto: Presupuesto | None = None) -> None:
         if not res_eval or not res_eval.get("resueltos") or not (self.cfg.get("evaluacion") or {}).get("llm_informe_aprendizaje", True):
             return
         if self.v6 and not v6.op(self, "informe_aprendizaje_llm"):   # T-101: las lecciones deterministas siguen; sin informe por IA
@@ -729,7 +759,8 @@ class Bloque:
                "lecciones_deterministas": [l["observacion"] for l in res_eval.get("lecciones_nuevas", [])]}
         r = self._invocar("AG-20", "C5", msg, "APRENDIZAJE",
                           "Redacta el informe de aprendizaje (CT-19) a partir de las métricas: resumen y, solo si los datos lo "
-                          "sostienen, lecciones con ámbito, observación factual con cifras, recomendación y fuerza.", as_of, run_id)
+                          "sostienen, lecciones con ámbito, observación factual con cifras, recomendación y fuerza.", as_of, run_id,
+                          presupuesto=presupuesto, bolsa="COMUN")   # T-146: con presupuesto
         if not r or not r.datos:
             return
         n_tot = sum(m["n"] for m in resumen.values())
@@ -1663,7 +1694,7 @@ class Bloque:
                 "factores_dominantes": [], "lectura_conjunto": "Integración no disponible: alcance reducido declarado.",
                 "preguntas_sugeridas": [], "limitaciones": ["integración del Analizador no disponible"], "cambios_vs_anterior": ""}
 
-    def _validar_g3(self, paquete: dict, extras: dict, as_of, run_id: str) -> tuple[dict, dict]:
+    def _validar_g3(self, paquete: dict, extras: dict, as_of, run_id: str, presupuesto: Presupuesto | None = None) -> tuple[dict, dict]:
         intento = 0
         while True:
             intento += 1
@@ -1690,7 +1721,8 @@ class Bloque:
             else:
                 r = self._invocar("AG-18", "CT-14", msg, "DICTAMEN_G3",
                                   "Dictamina la validación G3: APTO_CON_ADVERTENCIAS solo si no hay bloqueos; si los hay, BLOQUEADO con "
-                                  "condiciones para quedar APTO. Nunca APTO por defecto.", as_of, run_id)
+                                  "condiciones para quedar APTO. Nunca APTO por defecto.", as_of, run_id,
+                                  presupuesto=presupuesto, bolsa="COMUN", control=True)   # T-146: con presupuesto
             dict_orq = (r.datos or {}).get("dictamen") if r and r.datos else None
             if bloq:
                 dict_orq = "BLOQUEADO"     # el Orquestador no puede convertir un bloqueo en apto (R16, R17)
@@ -1870,6 +1902,11 @@ class Bloque:
             "alcance": alcance or {"clases": list(resultado["nivel_por_clase"])}, "horizontes": hz, "prioridad": prioridad,
             "nivel_por_clase": resultado["nivel_por_clase"], "gc0_por_clase": gc0, "decisiones_puertas": dec,
             "presupuesto": presupuesto.resumen(), "cierres_parciales": sorted(presupuesto.cierres, key=lambda c: (c["clase"], c["fase"], c["motivo"])),   # H-09
+            # T-146: las peticiones que salieron con la salida recortada para caber, y las que costaron más de lo reservado
+            **({"recortes_salida": sorted(presupuesto.recortes, key=lambda x: (x["clase"], x["agente"], x["peticion"], x["max_tokens_enviado"]))}
+               if presupuesto.recortes else {}),
+            **({"excesos_reserva": sorted(presupuesto.excesos, key=lambda x: (x["clase"], x["agente"], x["real_uc"]))}
+               if presupuesto.excesos else {}),
             "consumo": {k: cons[k] for k in ("llamadas", "uc", "uc_llm", "uc_motor", "entrada", "salida", "cache_escritura", "cache_lectura")},
             # T-65 (CA-15 de T-53): en orden de agente, no en el de llegada de los hilos
             "participantes": [{"agente": a, "encargos": d["llamadas"]} for a, d in sorted(cons["por_agente"].items())],
@@ -1884,7 +1921,7 @@ class Bloque:
             self.almacen.escribir("F6", "AG-20", {"tipo_entrada": "SOMBRA", "id": f"SOM-{run_id}", "run_id": run_id, "comparacion": sombras,
                                                   "decisiones_top3_cambiadas": sum(s["cambios"] for s in sombras.values())})
 
-    def _auditar(self, resultado: dict, tipo: str, nivel: dict, as_of, run_id: str) -> None:
+    def _auditar(self, resultado: dict, tipo: str, nivel: dict, as_of, run_id: str, presupuesto: Presupuesto | None = None) -> None:
         au = self.cfg.get("auditoria") or {}
         activa = au.get("en_backtest" if self.modo == "backtest" else "en_vivo", True)
         if not activa:
@@ -1906,7 +1943,8 @@ class Bloque:
         self.mensajeria.crear("CT-17", "AG-18", "AG-19", msg, run_id=run_id, presupuesto={"uc": 2})
         r = self._invocar("AG-19", "CT-17", msg, "AUDITORIA",
                           "Revisión experta asíncrona del informe: rigor, sesgos, coherencia entre clases y cumplimiento de las reglas "
-                          "R1–R25. Propón hallazgos con regla, descripción, severidad y objeto. No editas la entrega.", as_of, run_id)
+                          "R1–R25. Propón hallazgos con regla, descripción, severidad y objeto. No editas la entrega.", as_of, run_id,
+                          presupuesto=presupuesto, bolsa="COMUN", control=True)   # T-146: con presupuesto
         aud_id = self.almacen.nuevo_id("AUD")
         hal = []
         for h in ((r.datos or {}).get("hallazgos", []) if r and r.datos else []):

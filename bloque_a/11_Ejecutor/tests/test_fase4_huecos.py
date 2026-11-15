@@ -100,10 +100,15 @@ def test_pb17_en_un_ciclo_la_ampliacion_denegada_cierra_con_alcance_reducido(tmp
     b = nuevo_bloque(tmp_path, universo)
     r = b.ciclo(AS_OF, alcance={"clases": ["MP"]}, presupuesto_override={"MP": 6.0})
     auts = [e for e in b.almacen.leer("HA") if e.get("tipo_entrada") == "AUT" and e["run_id"] == r["run_id"]]
-    assert auts and {e["decision"] for e in auts} == {"DENEGADA"}
+    # T-146: cada petición pide la ampliación de su peor caso; con 6 UC, la de prospectiva cabe en el tope y se autoriza, y
+    # las siguientes se deniegan (antes, con la estimación de 2 500 tokens de salida, solo había denegadas)
+    assert auts and "DENEGADA" in {e["decision"] for e in auts}
     assert r["estado"] == "PARCIAL" and any("MP" in x for x in r["paquete"]["limitaciones"])
-    tope = 6.0 * (1 + config_pruebas()["presupuesto_uc"]["ampliacion_sin_autorizacion"])
-    assert 0 < r["presupuesto"]["MP"]["consumido"] <= tope and r["presupuesto"]["MP"]["ampliado"] == 0.0
+    pu = config_pruebas()["presupuesto_uc"]
+    v = r["presupuesto"]["MP"]
+    assert v["ampliado"] <= 6.0 * (pu["ampliacion_max_autorizable"] - pu["ampliacion_sin_autorizacion"]) + 1e-9
+    assert v["ampliado"] == pytest.approx(sum(e["ampliacion_uc"] for e in auts if e["decision"] == "AUTORIZADA"), abs=1e-3)
+    assert 0 < v["consumido"] <= 6.0 * (1 + pu["ampliacion_sin_autorizacion"]) + v["ampliado"]
     run = b.almacen.estado("F5", clave="id")[r["run_id"]]
     assert run["presupuesto"]["MP"]["consumido"] == r["presupuesto"]["MP"]["consumido"]     # consumo real en F5
 
