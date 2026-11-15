@@ -43,7 +43,7 @@ from .configuracion import (
     parametros_ht03,
     perfiles_activos,
 )
-from .consumo import Contabilidad, Presupuesto, ReservaLlamada
+from .consumo import Contabilidad, Presupuesto, ReservaLlamada, TramoPresupuesto
 from .contratos import (
     AGENTE_CLASE,
     ESQUEMAS,
@@ -133,6 +133,14 @@ def simbolo_seguimiento(x: dict) -> str | None:
     if isinstance(ind, dict) and ind.get("simbolo"):
         return ind["simbolo"]
     return x.get("simbolo_seguimiento") or x.get("proxy_backtest")
+
+
+def grupo_primas(v6: bool, agente: str) -> str:
+    """El grupo de prefijos de un agente en el reparto de las primas de caché (T-88; `Bloque._cargar`; T-154, H-03).
+    QA r02 de T-88, H-05: en la V5 cada analista escribe solo su prompt, así que su grupo es él mismo (no paga el de otro tipo).
+    En la V6 los analistas comparten el núcleo común y van en un grupo; el kit de cada uno se reparte con el núcleo (hasta unos
+    0,03 UC por tipo; declarado en INC-T88-01)."""
+    return "ANALISTAS" if (v6 and agente in set(AGENTE_CLASE.values())) else agente
 
 
 def _semana(fecha) -> str:
@@ -267,6 +275,10 @@ class Bloque:
                 presupuesto.cargar(bolsa, guarda.apartado)
                 guarda.cerrar()
             raise
+        if presupuesto is not None and guarda is not None and guarda.sin_respuesta:
+            # T-154 (QA r01 de T-151, H-03): una petición sin respuesta pudo escribir el prefijo compartido sin que se vea; su
+            # grupo reparte las primas «solo» enteras (`Presupuesto.liquidar_primas`), no lo escrito que se vio
+            presupuesto.grupo_sin_respuesta(grupo_primas(self.v6, agente))
         if presupuesto is not None and guarda is not None and guarda.negada:
             presupuesto.cierre_parcial(bolsa, fase or contrato, guarda.negada)
         if presupuesto is not None and r.estado != "SIN_PRESUPUESTO":
@@ -307,10 +319,7 @@ class Bloque:
         leido = self.contabilidad.uc_de(Uso(entrada=u.entrada + directo, salida=u.salida, cache_lectura=u.cache_lectura + diferido,
                                             busquedas_web=u.busquedas_web))
         propio = AGENTE_CLASE.get(bolsa) == agente
-        # QA r02 de T-88, H-05: en la V5 cada analista escribe solo su prompt, así que su grupo es él mismo (no paga el de
-        # otro tipo). En la V6 los analistas comparten el núcleo común y van en un grupo; el kit de cada uno se reparte con
-        # el núcleo (hasta unos 0,03 UC por tipo; declarado en INC-T88-01)
-        grupo = "ANALISTAS" if (self.v6 and agente in set(AGENTE_CLASE.values())) else agente
+        grupo = grupo_primas(self.v6, agente)   # T-88 r02 (H-05): ver `grupo_primas`
         presupuesto.cargar_con_prima(bolsa, grupo, leido, solo, solo if propio else 0, diferido, 0 if propio else solo)
 
     def _solicitar_ampliacion(self, presupuesto: Presupuesto, bolsa: str, est: float, run_id: str, fase: str | None,
@@ -729,8 +738,10 @@ class Bloque:
             "cambios_vs_anterior": integ.get("cambios_vs_anterior", ""), "apuestas_independientes": paquete["apuestas_independientes"]},
             "estado_g3": g3b["dictamen"]}, run_id=run_id, tipo_mensaje="RETORNO", estado=resultado["estado"])
         resultado["prg_congelados"] = prg
-        # F9 · Auditoría asíncrona (nunca bloquea)
+        # F9 · Auditoría asíncrona (nunca bloquea); lo que deja en el presupuesto, tras el RUN (T-154, H-02)
+        marca = presupuesto.marca()
         self._auditar(resultado, tipo, nivel, as_of, run_id, presupuesto=presupuesto)
+        self._registrar_f9(run_id, presupuesto, marca)
         resultado["consumo"] = self.contabilidad.resumen(run_id)
         resultado["presupuesto"] = presupuesto.resumen()
         return resultado
@@ -1902,7 +1913,7 @@ class Bloque:
         return corte is None or pd.Timestamp(as_of).normalize() <= pd.Timestamp(corte).normalize()
 
     @staticmethod
-    def _f5_presupuesto(presupuesto: Presupuesto) -> dict:
+    def _f5_presupuesto(presupuesto: Presupuesto | TramoPresupuesto) -> dict:
         """T-146 (y T-151): lo que el RUN de F5 lleva del presupuesto: el resumen por bolsa, los cierres parciales y, solo si
         los hay, los recortes de salida, los excesos de reserva y las peticiones sin respuesta que pudieron cobrarse."""
         return {
@@ -1917,6 +1928,18 @@ class Bloque:
             # T-151 (r01 H-09 de T-146): cargadas por su peor caso reservado (no se sabe si la API las cobró)
             **({"peticiones_sin_respuesta": sorted(presupuesto.sin_respuesta, key=lambda x: (x["clase"], x["agente"], x["peticion"]))}
                if presupuesto.sin_respuesta else {})}
+
+    def _registrar_f9(self, run_id: str, presupuesto: Presupuesto, marca: dict[str, int]) -> None:
+        """T-154 (QA r01 de T-151, H-02): la auditoría (AG-19, F9) corre después de escribir el RUN en F5, así que lo que deja
+        en el presupuesto (peticiones sin respuesta, cierres, recortes y excesos) no estaba en ninguna entrada de F5. Si deja
+        algo de eso, una entrada `PRESUPUESTO_F9` del mismo RUN lo declara, con el resumen por bolsa tras la auditoría. El RUN
+        no cambia; sin nada que declarar no se escribe nada (lo que gasta AG-19 sin incidencias está en la contabilidad y en
+        el resultado, no en F5)."""
+        tramo = presupuesto.desde(marca)
+        if not tramo.algo():
+            return
+        self.almacen.escribir("F5", "AG-01", {"tipo_entrada": "PRESUPUESTO_F9", "id": self.almacen.nuevo_id("F5F9"), "run_id": run_id,
+                                              "fase": "F9", **self._f5_presupuesto(tramo)})
 
     def _run_sin_analisis(self, run_id, as_of, tipo, limitaciones, res_eval, disparador, alcance, hz, prioridad,
                           pres_c5: Presupuesto | None = None) -> dict:

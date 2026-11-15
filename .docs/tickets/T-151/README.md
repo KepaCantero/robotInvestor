@@ -58,7 +58,7 @@ Cerrar los hallazgos bajos que dejaron APTO las QA r02 de T-146 (H-11, H-12, H-1
 4. CA-4: `r02_02_mutantes_qa.py` de T-146: V01, V04 y V05 muertos (10/10); el de T-148: W04 y W05 muertos (W02, equivalente, declarado por la QA).
 5. CA-5 (H-09): con `crear_cliente("anthropic")` el SDK sale con `max_retries=0`; un error reintentable se reintenta hasta `max_reintentos_api` veces con su reserva cada vez y las esperas de la configuración; un 429/529 suelta la reserva; un *timeout* la carga en la bolsa y queda en `peticiones_sin_respuesta`; un reintento que no cabe no sale; un error no reintentable no se reintenta. INC-T146-01 lo declara `[PROPUESTO]`, con la caché a 1 h.
 6. CA-6: `mutantes_t146.py` 35/35, `r01_05` 12/12, `T-147/mutantes.py --ticket T-148` 13/13, y los mutantes propios de T-151 (`mutantes_t151.py`) muertos.
-7. CA-7: las suites citadas, los scripts r01/r02 de T-146 y T-148, `comparar_ciclos.sh`, los goldens, los gates ligeros y la suite completa de A en verde; cuotas ruff ≤ 2838 y mypy A ≤ 109.
+7. CA-7: las suites citadas, los scripts r01/r02 de T-146 y T-148, `comparar_ciclos.sh`, los goldens, los gates ligeros y la suite completa de A en verde; cuotas ruff ≤ 2831 y mypy A ≤ 109 (T-154, H-05 de la QA r01: decía ≤ 2838, la cuota de antes; el commit de T-151, `1ccffd5`, la bajó a 2831 en `tools/cuotas.txt`).
 
 ## Plan de pruebas
 

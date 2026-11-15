@@ -46,5 +46,5 @@ Cada corrección tiene su mutante en `mutantes_t151.py`, y todos mueren con las 
 ## Gate
 
 - `tools/refs_vivas.py`, `secrets_scan.py`, `nfc_check.py`, `corpus_integridad.py`: exit 0 los cuatro; corpus **695** archivos coinciden.
-- Cuotas, desde la raíz: ruff (tres ejecutores) **2831** (cuota 2838; −7 por el `import typing` sin usar de `orquestacion.py`); mypy de A **109** (cuota 109). `tools/cuotas.txt` no se toca.
+- Cuotas, desde la raíz: ruff (tres ejecutores) **2831** (la cuota era 2838; −7 por el `import typing` sin usar de `orquestacion.py`); mypy de A **109** (cuota 109). El commit de T-151 (`1ccffd5`) bajó la cuota de ruff de `tools/cuotas.txt` a 2831 (T-154, H-05 de la QA r01: aquí decía que no se tocaba).
 - No se ejecutó `./tools/check_all.sh` entero (A-Forex y B no se tocan; los gates ligeros, las cuotas y la suite de A, sí).
