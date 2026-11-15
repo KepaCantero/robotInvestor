@@ -1,5 +1,28 @@
 # T-94 · Pruebas
 
+## Ronda r03 (15-11-2026)
+
+| Suite | r02 | r03 |
+| --- | --- | --- |
+| `.docs/scripts/pruebas_banco_medida.py` | 51 | 82 en verde (unos 26 s) |
+| `.docs/scripts/pruebas_registro_experimentos.py` | 20 | 20 |
+| Mutantes `.docs/tickets/T-94/mutantes_r03.py` | 0 de 29 vivos | 0 de 57 vivos |
+| Mutantes del revisor `revisores/r02_07_mutantes.py` | 8 de 34 vivos | ninguno vivo entre los que aún casan con el código; los 8 que ya no casan están rehechos en `mutantes_r03.py` (M09, M17, M18, M21, M40, M41, M47 y M49) |
+
+Hallazgos de la QA r02 y sus pruebas:
+- H-13: `test_h13_solo_fechas_sin_solape` y `test_h13_ventanas_solapadas_sobre_activos_distintos_no_suman_fechas`.
+- H-14: `test_h04_otra_semilla_es_otra_variante_del_mismo_experimento` (también otro periodo) y `test_h14_simulado_y_real_son_experimentos_distintos`.
+- H-15: `test_h15_verificar_sin_registro_md_y_experimento_danado`.
+- H-16: `test_h16_csv_raros` (dd/mm, formatos mezclados, fecha repetida, columnas repetidas, sin filas, vacío).
+- H-17: `test_h17_orden_canonico_fechas_normalizadas_horizonte_y_universo`.
+- H-18: `test_h18_*`.
+- H-19: `test_h19_*` y las cotas en `test_h02_pocas_observaciones_no_dan_veredicto`.
+- H-20: `test_h20_*`.
+
+Simulación nula con fechas suficientes (`.docs/tickets/T-94/nula_r03.py`): un 9,5 % y un 10,0 % de veredictos firmes sin habilidad, para un 10 % nominal.
+
+Ejecución del README: 39 selecciones del titular, de las que 36 quedan fuera de la muestra (con H3, en tres meses cabe una sola fecha sin solape). Resultado: «todavía no se sabe», con 1 fecha de un mínimo de 10. `verificar` dice que las huellas casan.
+
 ## Ronda r02 (15-11-2026)
 
 | Suite | Antes (r01) | Después (r02) |

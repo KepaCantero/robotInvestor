@@ -68,3 +68,37 @@ Los demás hallazgos (H-03 a H-12) eran huecos de fallo cerrado, de prerregistro
 .venv/bin/python .docs/scripts/banco_medida.py a --desde 2026-03-06 --hasta 2026-05-29 --salida <carpeta> --registro <carpeta>/r.jsonl
 .venv/bin/python .docs/scripts/banco_medida.py verificar <carpeta>
 ```
+
+## Ronda r03 (15-11-2026, QA r02 NO APTO)
+
+**Causa raíz de H-13 (alta).** La r02 contaba una vez la misma apuesta repetida, pero seguía tratando como independientes dos fechas de corte con ventanas solapadas sobre activos distintos. Si esos activos comparten un factor (un tema o un subsector), sus excesos están correlados. En el mundo nulo del revisor, con 24 fechas efectivas, el banco daba un 23 % de veredictos firmes.
+
+**Corrección.** Solo entran en la muestra las fechas de corte cuyas ventanas no se solapan (`fechas_sin_solape`). La selección es voraz, de la más antigua a la más reciente: se toma una fecha y la siguiente que se toma es la primera que empieza cuando ya han terminado todas las ventanas de la anterior.
+- La muestra se calcula con el titular y es la misma para todos los contendientes.
+- El informe publica, por contendiente, cuántas selecciones quedan fuera de muestra, y la lista de fechas de la muestra.
+- Así las observaciones son independientes de verdad, en lugar de corregir la dependencia con un modelo.
+- El precio es que con un horizonte largo hacen falta periodos largos. Con H3 (6 meses) y el mínimo de 10 fechas, hacen falta unos cinco años de backtest. Es lo que cabe esperar: en menos tiempo no hay diez observaciones independientes.
+
+**Evidencia.**
+- `r02_02_nula_solapada.py`: 0,0 % de veredictos firmes en los escenarios I, T y P. Hay 4 fechas en la muestra, menos del mínimo.
+- Una simulación nula propia con fechas suficientes (620 cortes semanales, horizonte de 8 semanas, 24 activos en 4 subsectores con un factor común, 200 mundos):
+  - un 9,5 % de veredictos firmes sin tema, con 58 fechas efectivas;
+  - un 10,0 % con tema, con 37.
+
+  Está calibrado al 10 % nominal.
+
+**Resto de hallazgos:**
+
+| Hallazgo | Corrección |
+| --- | --- |
+| H-14 | Un experimento del banco es una hipótesis con una **fuente**: cliente, datos y universo (`fuente_banco` en el prerregistro). Otro periodo, otra semilla u otros parámetros son otra variante del mismo experimento, de modo que adelantar `--desde` un día queda fuera del máximo. El cliente simulado y el real son experimentos distintos, y probar con el simulado no gasta la variante del real. El aviso cuenta los experimentos de la misma hipótesis distintos del actual. |
+| H-15 | `verificar` comprueba también que `informe.md` es el que sale de `informe.json`, y sin `experimento.json` siempre da un problema. Un `experimento.json` dañado da un problema, no una traza. |
+| H-16 | Fechas solo en AAAA-MM-DD, sin adivinar el formato. Se rechazan las fechas repetidas, las columnas repetidas y los ficheros sin filas. |
+| H-17 | Orden canónico para la regla de repetición (fecha, clase, símbolo, dirección, horizonte), independiente del orden de entrada. Las fechas de corte se normalizan (`fecha_corte`). Un horizonte desconocido o una resolución no posterior al corte dan `BancoError`. Un universo con símbolos duplicados se rechaza en `evaluar`, `azar` y `momento`. |
+| H-18 | `leer_consumo` rechaza valores no numéricos, no finitos o negativos. Un coste parcial no se suma: queda `None`, con `filas_sin_coste`. Sin `consumo.csv` no hay coste medido y se detiene. La semilla de un experimento ha de ser 0 o más, y un `RegistroError` sale como `BancoError` con su motivo. |
+| H-19 | Cotas de un veredicto, en `ejecutar_a`, en `diferencia` y en la línea de órdenes: al menos 200 remuestreos, nivel entre 0,80 y 0,99 y al menos 5 fechas efectivas. Son `[PROPUESTO]` técnicos en la deuda. `resumen`, que es descriptivo, admite menos. |
+| H-20 | Hay pruebas para los mutantes vivos del revisor: la repetida no alarga la ventana, el orden de entrada da igual, el mínimo mira el lado con menos fechas, la fuga también quita un «peor», la fuga se aplica con el cliente real y no con el simulado, y no queda el `experimento.json` de una ejecución anterior. `mutantes_r03.py` reúne 57 mutantes, y mueren todos. |
+
+**Scripts del revisor que siguen fallando por un cambio de diseño, no por un defecto:**
+- En `r02_05`, el recuento de fechas efectivas ya no es el número de fechas resueltas, sino el de fechas sin solape (H-13). Además, la cota de remuestreos y de nivel está ahora también en `diferencia` (H-19).
+- En `r02_11`, otro periodo ya no abre un experimento nuevo con aviso: es una variante del mismo (H-14). El script se detiene en un nivel de 0,7, que ahora está fuera de las cotas.
