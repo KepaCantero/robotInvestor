@@ -2,7 +2,7 @@
 
 | Campo | Valor |
 | --- | --- |
-| Estado | EN QA (r02: QA r01 NO APTO) |
+| Estado | CERRADO (QA r02 APTO) |
 | Pieza | bloque_a (estimador de coste): `.docs/scripts/estimar_coste_ciclo_a.py`, `comprobar_datos_a.py`, `borrador_anexo_b.py`; `.docs/diseno/bloque_a/borrador_correccion_anexo_b.md`; `bloque_a/11_Ejecutor/tests/test_t148.py`, `tests/test_t145.py`; `docs/incidencias.md` (INC-T129-01); `sistema_global/seguimiento/Decisiones_del_operador_Bloque_A.md` (§7) |
 | Planifica · implementa · QA | claude · claude · el otro agente o un revisor nuevo |
 | Aprobación del operador | 2026-11-14: «quiero que por tu cuenta vayas completando los tickets que quedan abiertos»; las decisiones nuevas van como `[PROPUESTO]` |
