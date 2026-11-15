@@ -430,3 +430,52 @@ def test_r02_h03_opciones_excluyentes_y_ag18_19_20_en_la_comun(est, tarifa, medi
     for con, bolsa in ((True, "COMUN"), (False, None)):
         c = _cota(est, medida, tarifa, con_t146=con)
         assert {x["bolsa"] for x in c["papeles"] if x["agente"] in ("AG-18", "AG-19", "AG-20")} == {bolsa}
+
+
+# ================================================================ T-151 · H-04 de la QA r02 de T-148 (mutantes W04 y W05)
+def test_t151_h04_w04_la_salida_dice_lo_que_reserva_t146_por_busqueda(est, medida, tmp_path, capsys):
+    """W04: con `presupuesto_uc.reserva.tokens_lectura_por_busqueda` > 0 la salida dice cuánto aparta la reserva por
+    búsqueda (y que el peso no lo descuenta); a 0, que no lo cubre; con `--sin-t146` no habla de esa reserva."""
+    (tmp_path / "m").mkdir()
+    (tmp_path / "m" / "llamadas.json").write_text(json.dumps(medida), encoding="utf-8")
+    (tmp_path / "lee.yaml").write_text(yaml.safe_dump({"presupuesto_uc": {"reserva": {"tokens_lectura_por_busqueda": 2000}}}),
+                                       encoding="utf-8")
+    for extra, aparta, cubre in ((["--config", str(tmp_path / "lee.yaml")], True, False), ([], False, True),
+                                 (["--config", str(tmp_path / "lee.yaml"), "--sin-t146"], False, False)):
+        assert est.main([str(tmp_path / "m"), *extra]) == 0
+        linea = next(x for x in capsys.readouterr().out.splitlines() if x.startswith("Lo que lee cada búsqueda (S5)"))
+        assert ("la reserva de T-146 aparta 2000 tokens por búsqueda" in linea and "que el peso no descuenta" in linea) == aparta, extra
+        assert ("la reserva de T-146 no lo cubre" in linea) == cubre, extra
+    c = est.calcular(str(tmp_path / "m"), str(PRECIOS), str(tmp_path / "lee.yaml"))["ciclo"]
+    assert c["tokens_lectura_reservados_por_busqueda"] == 2000
+    assert est.calcular(str(tmp_path / "m"), str(PRECIOS), str(tmp_path / "lee.yaml"), con_t146=False)["ciclo"][
+        "tokens_lectura_reservados_por_busqueda"] == 0
+
+
+def test_t151_h04_w05_el_peso_de_la_cota_por_presupuesto_sin_t146(est, tarifa, medida, tmp_path, capsys):
+    """W05: con `--sin-t146` la comprobación era por llamada: el peso por bolsa de lo que lee cada búsqueda es el de una
+    llamada entera (todas sus peticiones, cada una con lo leído hasta ella), no el de una petición como con T-146. Con los
+    12 tipos, a mano: 4,80 USD frente a 0,96 (QA r02 de T-148, P1)."""
+    doce = cargar_config(extra={"perfiles": {"activos": DOCE}})
+    vueltas = 1 + doce["llm"]["max_continuaciones_pause_turn"]
+    usos = doce["busqueda_web"]["max_usos_por_llamada"]
+    intentos = 1 + doce["llm"]["reintento_reparacion"]
+    pesos = {}
+    for con in (True, False):
+        c = _cota(est, medida, tarifa, doce, con_t146=con)
+        pc = [x for x in c["papeles"] if x["busquedas"]]
+        assert pc and all(x["bolsa"] for x in pc) and {x["bolsa"] for x in pc} == set(DOCE)
+        por_bolsa = {}
+        for x in pc:
+            precio = tarifa["precios_por_millon"][modelo_de(doce, x["agente"])]["escritura_cache"] * 1000 / 1e6
+            una = usos * vueltas * precio if con else intentos * usos * vueltas * (vueltas + 1) / 2 * precio
+            por_bolsa[x["bolsa"]] = max(por_bolsa.get(x["bolsa"], 0.0), una)
+        assert c["usd_por_mil_leidos_cota_presupuesto"] == pytest.approx(sum(por_bolsa.values()))
+        pesos[con] = c["usd_por_mil_leidos_cota_presupuesto"]
+    assert pesos[False] == pytest.approx(pesos[True] * intentos * (vueltas + 1) / 2)   # 4,80 = 0,96 × 2 × 5 / 2
+    (tmp_path / "m").mkdir()
+    (tmp_path / "m" / "llamadas.json").write_text(json.dumps(medida), encoding="utf-8")
+    (tmp_path / "doce.yaml").write_text(yaml.safe_dump({"perfiles": {"activos": DOCE}}), encoding="utf-8")
+    assert est.main([str(tmp_path / "m"), "--config", str(tmp_path / "doce.yaml"), "--sin-t146"]) == 0
+    salida = capsys.readouterr().out
+    assert f"la cota por presupuesto, {pesos[False]:.2f})" in salida

@@ -17,7 +17,7 @@ import json
 import re
 from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any
 
 import pandas as pd
 
@@ -606,7 +606,8 @@ class Bloque:
             for d in self.credenciales.degradaciones(as_of)]
         hz_interes = horizontes or list(f10.get("P-03") or HORIZONTES)
         if not clases:   # nada que analizar (no activas o pausadas): se cierra sin redactar (T-53, QA H-06)
-            return self._run_sin_analisis(run_id, as_of, tipo, limitaciones, res_eval, disparador, alcance, hz_interes, prioridad)
+            return self._run_sin_analisis(run_id, as_of, tipo, limitaciones, res_eval, disparador, alcance, hz_interes, prioridad,
+                                          pres_c5)
         vigentes = {c: self.vigentes(as_of, c) for c in clases}
         gc0 = {c: self.gc0(c, as_of, vigentes[c]) for c in clases}
         if tipo == "PERIODICO" and not nivel_forzado:
@@ -1900,8 +1901,28 @@ class Bloque:
         corte = (self.cfg.get("backtest") or {}).get("fecha_corte_modelo")
         return corte is None or pd.Timestamp(as_of).normalize() <= pd.Timestamp(corte).normalize()
 
-    def _run_sin_analisis(self, run_id, as_of, tipo, limitaciones, res_eval, disparador, alcance, hz, prioridad) -> dict:
-        """Run sin ningún tipo que analizar: PARCIAL, sin paquete que redactar ni validar, con sus limitaciones (7.9)."""
+    @staticmethod
+    def _f5_presupuesto(presupuesto: Presupuesto) -> dict:
+        """T-146 (y T-151): lo que el RUN de F5 lleva del presupuesto: el resumen por bolsa, los cierres parciales y, solo si
+        los hay, los recortes de salida, los excesos de reserva y las peticiones sin respuesta que pudieron cobrarse."""
+        return {
+            "presupuesto": presupuesto.resumen(),
+            **({"escala_presupuesto": round(presupuesto.escala, 6)} if presupuesto.escala < 1 else {}),   # T-146 r02 (H-06)
+            "cierres_parciales": sorted(presupuesto.cierres, key=lambda c: (c["clase"], c["fase"], c["motivo"])),   # H-09
+            # T-146: las peticiones que salieron con la salida recortada para caber, y las que costaron más de lo reservado
+            **({"recortes_salida": sorted(presupuesto.recortes, key=lambda x: (x["clase"], x["agente"], x["peticion"], x["max_tokens_enviado"]))}
+               if presupuesto.recortes else {}),
+            **({"excesos_reserva": sorted(presupuesto.excesos, key=lambda x: (x["clase"], x["agente"], x["real_uc"]))}
+               if presupuesto.excesos else {}),
+            # T-151 (r01 H-09 de T-146): cargadas por su peor caso reservado (no se sabe si la API las cobró)
+            **({"peticiones_sin_respuesta": sorted(presupuesto.sin_respuesta, key=lambda x: (x["clase"], x["agente"], x["peticion"]))}
+               if presupuesto.sin_respuesta else {})}
+
+    def _run_sin_analisis(self, run_id, as_of, tipo, limitaciones, res_eval, disparador, alcance, hz, prioridad,
+                          pres_c5: Presupuesto | None = None) -> dict:
+        """Run sin ningún tipo que analizar: PARCIAL, sin paquete que redactar ni validar, con sus limitaciones (7.9).
+        T-151 (QA r02 de T-146, H-12): con el presupuesto de C5 (la bolsa COMÚN con la que corrió AG-20), lo gastado queda en
+        el RUN de F5 como en uno con análisis."""
         lim = limitaciones or ["Ningún tipo de activo del alcance se puede analizar en este ciclo"]
         paquete = {"run_id": run_id, "fecha_as_of": str(as_of.date()), "clases": {}, "limitaciones": lim}
         resultado = {"run_id": run_id, "as_of": str(as_of.date()), "tipo": tipo, "nivel_por_clase": {}, "gc0": {},
@@ -1911,7 +1932,10 @@ class Bloque:
             "tipo_entrada": "RUN", "id": run_id, "tipo": tipo, "disparador": disparador or {"origen": "HT-05"},
             "fecha_inicio": resultado["as_of"], "fecha_entrega": self.reloj.ahora(), "fecha_objetivo": resultado["as_of"],
             "alcance": alcance or {"clases": []}, "horizontes": hz, "prioridad": prioridad, "nivel_por_clase": {},
-            "top3_por_clase": {}, "estado": "PARCIAL", "entrega": "SIN_RESULTADO", "limitaciones": lim})
+            "top3_por_clase": {}, "estado": "PARCIAL", "entrega": "SIN_RESULTADO", "limitaciones": lim,
+            **(self._f5_presupuesto(pres_c5) if pres_c5 is not None else {})})
+        if pres_c5 is not None:
+            resultado["presupuesto"] = pres_c5.resumen()
         return resultado
 
     def _registrar_run(self, resultado, analisis, seleccion, presupuesto, gc0, disparador, alcance, hz, prioridad, prg, entreg) -> None:
@@ -1939,14 +1963,7 @@ class Bloque:
             "fecha_inicio": resultado["as_of"], "fecha_entrega": self.reloj.ahora(), "fecha_objetivo": resultado["as_of"],
             "alcance": alcance or {"clases": list(resultado["nivel_por_clase"])}, "horizontes": hz, "prioridad": prioridad,
             "nivel_por_clase": resultado["nivel_por_clase"], "gc0_por_clase": gc0, "decisiones_puertas": dec,
-            "presupuesto": presupuesto.resumen(),
-            **({"escala_presupuesto": round(presupuesto.escala, 6)} if presupuesto.escala < 1 else {}),   # T-146 r02 (H-06)
-            "cierres_parciales": sorted(presupuesto.cierres, key=lambda c: (c["clase"], c["fase"], c["motivo"])),   # H-09
-            # T-146: las peticiones que salieron con la salida recortada para caber, y las que costaron más de lo reservado
-            **({"recortes_salida": sorted(presupuesto.recortes, key=lambda x: (x["clase"], x["agente"], x["peticion"], x["max_tokens_enviado"]))}
-               if presupuesto.recortes else {}),
-            **({"excesos_reserva": sorted(presupuesto.excesos, key=lambda x: (x["clase"], x["agente"], x["real_uc"]))}
-               if presupuesto.excesos else {}),
+            **self._f5_presupuesto(presupuesto),
             "consumo": {k: cons[k] for k in ("llamadas", "uc", "uc_llm", "uc_motor", "entrada", "salida", "cache_escritura", "cache_lectura")},
             # T-65 (CA-15 de T-53): en orden de agente, no en el de llegada de los hilos
             "participantes": [{"agente": a, "encargos": d["llamadas"]} for a, d in sorted(cons["por_agente"].items())],

@@ -734,3 +734,151 @@ def test_r02_h10_cargar_usa_el_prefijo_de_la_primera_peticion(tmp_path):
                    permitir_web=True)
     assert r.estado == "COMPLETO" and r.intentos == 1
     assert p.retenido["DIV"] == pytest.approx(p._uc_prima(20000))
+
+
+# ================================================================ T-151 · bajos de la QA r02 de T-146 (H-11, H-12, V01, V04, V05)
+WEB = [{"type": "web_search_20260318", "name": "web_search", "max_uses": 5}]
+
+
+def test_t151_h11_la_continuacion_de_una_generacion_que_busco_no_observa():
+    """H-11 (baja): la continuación de `pause_turn` sin búsquedas nuevas reenvía lo leído antes (en la API, bloques con
+    `encrypted_content` que la medida de 3,6 caracteres por token no ve enteros): su entrada no es error del tokenizador y
+    no sube el factor de la bolsa. Antes subía (6,57 en el R9 del revisor)."""
+    system, msgs = [{"text": "s" * 21600}], [{"role": "user", "content": "u" * 7200}]
+    p, g, _ = _guarda(100.0)
+    bruto = tokens_de_peticion(system, msgs, WEB)
+    g.reservar(system, msgs, WEB, 3000)
+    g.pagar(Uso(cache_escritura=bruto, entrada=5 * 3000, salida=3000, busquedas_web=5))       # la que busca
+    g.reservar(system, msgs, WEB, 3000)
+    g.pagar(Uso(cache_escritura=bruto + 5 * 3000 * 3, salida=3000, busquedas_web=0))          # la continuación: reenvía lo leído
+    g.pagar_resto(Uso(cache_escritura=2 * bruto + 5 * 3000 * 4, salida=6000, busquedas_web=5))
+    g.cerrar()
+    assert not p.factor_observado
+
+
+def test_t151_h11_con_el_cliente_real_la_ultima_continuacion_no_observa():
+    """El R9 del revisor por el cliente real: tres vueltas que buscan y una última sin búsquedas que reenvía 15 lecturas de
+    3 000 tokens que la medida no ve."""
+    class SDK:
+        def __init__(self):
+            self.messages, self.n = self, 0
+
+        def create(self, **kw):
+            self.n += 1
+            medida = tokens_de_peticion(kw["system"], kw["messages"], kw.get("tools"))
+            vuelta = 1 + sum(1 for m in kw["messages"] if m["role"] == "assistant")
+            nuevas = 0 if vuelta == 4 else 5
+            uso = types.SimpleNamespace(input_tokens=0, output_tokens=int(kw["max_tokens"]), cache_read_input_tokens=0,
+                                        cache_creation_input_tokens=int(medida) + 5 * 3000 * (vuelta - 1) + nuevas * 3000,
+                                        server_tool_use=types.SimpleNamespace(web_search_requests=nuevas))
+            return types.SimpleNamespace(stop_reason="end_turn" if vuelta == 4 else "pause_turn", usage=uso,
+                                         content=[types.SimpleNamespace(type="text", text="ok")])
+    system, msgs = [{"type": "text", "text": "s" * 21600}], [{"role": "user", "content": "u" * 7200}]
+    p, g, _ = _guarda(100.0)
+    cli = AnthropicClient(sdk=SDK(), max_continuaciones=3)
+    mt = g.reservar(system, msgs, WEB, 3000)
+    with con_guarda(g):
+        r = cli.generar(agente="AG-14", modelo="m", system=system, mensajes=msgs, max_tokens=mt, herramientas=WEB)
+    g.pagar_resto(r.uso)
+    g.cerrar()
+    assert cli.sdk.n == 4 and not p.factor_observado
+
+
+def test_t151_h11_la_reparacion_tras_buscar_si_observa():
+    """Límite de la regla: la reparación empieza otra generación (solo reenvía el texto de la respuesta, no los bloques de
+    búsqueda), y una petición sin búsquedas de una llamada posterior también: las dos aprenden el tokenizador peor."""
+    system, msgs = [{"text": "s" * 21600}], [{"role": "user", "content": "u" * 7200}]
+    for siguiente in ("reparación", "otra llamada"):
+        p, g, cfg = _guarda(100.0)
+        g.reservar(system, msgs, WEB, 3000)
+        g.pagar_resto(Uso(cache_escritura=tokens_de_peticion(system, msgs, WEB), entrada=5 * 3000, salida=3000, busquedas_web=5))
+        if siguiente == "otra llamada":
+            g.cerrar()
+            g = ReservaLlamada(p, "DIV", Contabilidad(cfg), "AG-05")
+        g.reservar(system, msgs, None, 3000)
+        g.pagar_resto(Uso(cache_escritura=int(tokens_de_peticion(system, msgs, None) * 1.8), salida=3000))
+        g.cerrar()
+        assert p.factor_observado.get("DIV", 0) >= 1.79, siguiente
+
+
+def test_t151_h12_sin_tipos_lo_de_ag20_esta_en_f5(tmp_path, monkeypatch):
+    """H-12 (baja): con un alcance sin ningún tipo que analizar (un tipo no activo), AG-20 corre contra su bolsa de C5 y el
+    ciclo sale por `_run_sin_analisis`, que no escribía el presupuesto en el RUN de F5: lo gastado no estaba en ninguna
+    bolsa (CA-3 de T-146). Ahora sí, en la COMÚN, con los cierres."""
+    cfg = _cfg(llm={"cache_resultados": False})
+    b = _bloque(tmp_path / "a", cfg, MockClient())
+    monkeypatch.setattr(b.evaluador, "ciclo", lambda as_of, run_id: _res_eval_con_resueltos())
+    r = b.ciclo(AS_OF, alcance={"clases": ["RV"]})              # RV no está activo: nada que analizar
+    run = b.almacen.estado("F5", clave="id")[r["run_id"]]
+    gastado = sum(x["uc"] for x in b.contabilidad.llamadas if x["run_id"] == r["run_id"])
+    assert r["estado"] == "PARCIAL" and r["entrega"] == "SIN_RESULTADO"
+    assert {x["agente"] for x in b.contabilidad.llamadas} == {"AG-20"} and gastado > 0
+    assert set(run["presupuesto"]) == {"COMUN"} and run["presupuesto"]["COMUN"]["consumido"] == pytest.approx(gastado, abs=1e-3)
+    assert r["presupuesto"] == run["presupuesto"] and run["cierres_parciales"] == []
+    limite, _ = _limites(cfg, run["presupuesto"]["COMUN"])
+    assert run["presupuesto"]["COMUN"]["consumido"] <= limite
+    # sin sitio para AG-20: no sale y el cierre queda en el RUN sin análisis
+    b2 = _bloque(tmp_path / "b", cfg, MockClient())
+    monkeypatch.setattr(b2.evaluador, "ciclo", lambda as_of, run_id: _res_eval_con_resueltos())
+    r2 = b2.ciclo(AS_OF, alcance={"clases": ["RV"]}, presupuesto_override={"COMUN": 0.01})
+    run2 = b2.almacen.estado("F5", clave="id")[r2["run_id"]]
+    assert not b2.contabilidad.llamadas and run2["presupuesto"]["COMUN"]["consumido"] == 0
+    assert any(c["clase"] == "COMUN" and "AG-20" in c["motivo"] for c in run2["cierres_parciales"])
+
+
+def test_t151_v01_el_exceso_no_depende_de_si_el_prefijo_se_leyo():
+    """Mutante V01 de la QA r02: el exceso se compara con lo real contado como escrito (como lo apartado, H-02). Si se
+    comparara con lo real con la lectura barata, `excesos_reserva` dependería de qué hilo escribió antes el prefijo
+    compartido (el orden de los hilos)."""
+    system = [{"text": "s" * 36000}]
+    excesos = []
+    for campo in ("cache_escritura", "cache_lectura"):
+        p, g, _ = _guarda(100.0)
+        g.reservar(system, [], None, 100)
+        g.pagar_resto(Uso(salida=10, **{campo: 2 * tokens_de_peticion(system, [], None)}))
+        g.cerrar()
+        excesos.append(p.excesos)
+    assert excesos[0] and excesos[0] == excesos[1]
+
+
+def test_t151_v04_un_keyboardinterrupt_deja_lo_pagado_en_la_bolsa(tmp_path):
+    """Mutante V04 de la QA r02: `_invocar` captura `BaseException`, no solo `Exception`: un `KeyboardInterrupt` (que el
+    cliente no captura) en la reparación, tras una petición pagada, deja lo pagado cargado en la bolsa y nada reservado, y
+    sube."""
+    cfg = _cfg(llm={"cache_resultados": False})
+
+    class SDK:
+        def __init__(self):
+            self.messages, self.n = self, 0
+
+        def create(self, **kw):
+            self.n += 1
+            if self.n == 2:
+                raise KeyboardInterrupt
+            uso = types.SimpleNamespace(input_tokens=0, output_tokens=100, cache_read_input_tokens=0, server_tool_use=None,
+                                        cache_creation_input_tokens=int(tokens_de_peticion(kw["system"], kw["messages"], None) * FACTOR))
+            return types.SimpleNamespace(stop_reason="end_turn", usage=uso, content=[types.SimpleNamespace(type="text", text="no es json")])
+    sdk = SDK()
+    b = _bloque(tmp_path, cfg, AnthropicClient(sdk=sdk))
+    p = Presupuesto({"DIV": 18.0}, cfg)
+    with pytest.raises(KeyboardInterrupt):
+        b._invocar("AG-12", "CT-11", {"piezas": []}, "CURACION", "Clasifica.", AS_OF, "RUN-QA", "DIV", "investigacion", p)
+    p.liquidar_primas()
+    gastado = sum(x["uc"] for x in b.contabilidad.llamadas)
+    assert sdk.n == 2 and gastado > 0 and p.reservado["DIV"] == 0
+    assert p.consumido["DIV"] == pytest.approx(gastado, abs=1e-3)
+
+
+def test_t151_v05_r8_sin_comprobar_por_lo_anidado_bloquea(tmp_path, monkeypatch):
+    """Mutante V05 de la QA r02: si la comprobación de credenciales (R8) no se puede hacer (`RecursionError`, por lo
+    anidado), la respuesta se bloquea (falla cerrado) y la llamada no queda COMPLETA."""
+    import bloque_a.agentes as ag
+    cfg = _cfg(llm={"cache_resultados": False})
+    b = _bloque(tmp_path, cfg, MockClient())
+
+    def no_se_puede(datos):
+        raise RecursionError("demasiado anidado")
+    monkeypatch.setattr(ag, "contiene_credenciales", no_se_puede)
+    r = b._invocar("AG-12", "CT-11", {"piezas": []}, "CURACION", "Clasifica.", AS_OF, "RUN-QA", "DIV", "investigacion",
+                   Presupuesto({"DIV": 18.0}, cfg))
+    assert r.estado == "PARCIAL" and r.datos is None and "respuesta bloqueada por R8" in r.errores

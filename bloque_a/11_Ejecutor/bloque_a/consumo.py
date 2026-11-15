@@ -119,6 +119,9 @@ class Presupuesto:
         self.recortes: list[dict] = []
         self.excesos: list[dict] = []
         self.factor_observado: dict[str, float] = {}
+        # T-151 (r01 H-09 de T-146): las peticiones que fallaron sin respuesta y que la API pudo cobrar (conexión o timeout),
+        # cargadas en su bolsa por su peor caso reservado
+        self.sin_respuesta: list[dict] = []
         # T-146: con un reparto por encima del ciclo (N3 forzado en el periódico o un override), cada bolsa se escala para que
         # la suma de los límites con la ampliación máxima no pase de `tope_total` con esa misma ampliación
         total = sum(v for v in self.asignado.values() if v > 0)
@@ -201,12 +204,14 @@ class Presupuesto:
         with otro._lock:
             consumido, cierres = dict(otro.consumido), list(otro.cierres)
             recortes, excesos = list(otro.recortes), list(otro.excesos)
+            sin_respuesta = list(otro.sin_respuesta)
         with self._lock:
             for bolsa, uc in consumido.items():
                 self.consumido[bolsa] += uc
             self.cierres.extend(cierres)
             self.recortes.extend(recortes)
             self.excesos.extend(excesos)
+            self.sin_respuesta.extend(sin_respuesta)
 
     def cargar(self, clase: str, uc: float) -> None:
         with self._lock:
@@ -327,8 +332,9 @@ class ReservaLlamada:
     `Contabilidad.uc_de`. Si no cabe, pide la ampliación con la regla del ejecutor (`ampliar`); si se deniega, recorta la
     salida a lo que cabe (nunca por debajo de `presupuesto_uc.reserva.salida_minima_tokens`) y, si ni eso cabe, la petición
     no sale (`negada` lleva el motivo). `pagar` cambia la reserva de una petición por su coste real (con lo leído de caché
-    contado como escrito, T-146 r02), que queda apartado hasta que `Bloque._cargar` carga lo real y `cerrar` lo suelta. Una
-    llamada corre en un solo hilo."""
+    contado como escrito, T-146 r02), que queda apartado hasta que `Bloque._cargar` carga lo real y `cerrar` lo suelta.
+    T-151 (r01 H-09 de T-146): `fallida` es la petición que no respondió; si la API pudo cobrarla, su peor caso reservado
+    queda apartado y `cerrar` lo carga en la bolsa. Una llamada corre en un solo hilo."""
 
     def __init__(self, presupuesto: Presupuesto, bolsa: str, contabilidad: Contabilidad, agente: str,
                  ampliar: Callable[[float], bool] | None = None) -> None:
@@ -349,6 +355,7 @@ class ReservaLlamada:
         self._abiertas: list[tuple[float, int]] = []   # (peor caso en UC, tokens de entrada estimados sin margen)
         self._pagado = Uso()                           # lo pagado petición a petición en la generación en curso
         self._apartado = 0.0                           # coste real de las peticiones hechas, apartado hasta `cerrar`
+        self._sin_respuesta = 0.0                      # T-151: peor caso de las que no respondieron y pudieron cobrarse
         self.peticiones = 0
         self.prefijo: int | None = None                # lo cacheado (leído o escrito) en la primera petición
         self.negada: str | None = None
@@ -377,7 +384,7 @@ class ReservaLlamada:
                                            "max_tokens": int(max_tokens), "max_tokens_enviado": mt,
                                            "peor_caso_uc": round(completo, 4), "reservado_uc": round(w, 4)})
                 return self._abrir(w, bruto, mt)
-        quien = self.agente if self.peticiones == 0 else f"otra petición de {self.agente} (reparación o continuación)"
+        quien = self.agente if self.peticiones == 0 else f"otra petición de {self.agente} (reparación, continuación o reintento)"
         self.negada = f"presupuesto insuficiente para {quien} ({completo:.2f} UC en el peor caso)"
         return None
 
@@ -395,7 +402,10 @@ class ReservaLlamada:
         llamada: contado así, la decisión no depende del orden de los hilos (T-88). Es lo real o algo más; lo real se carga
         después con `Bloque._cargar`.
         T-146 r02 (QA r01, H-01): el factor de tokens solo se observa en las peticiones sin búsquedas. En las que buscan, la
-        entrada cobrada trae lo que leyeron las búsquedas (no es error del tokenizador) y subiría el factor de toda la bolsa."""
+        entrada cobrada trae lo que leyeron las búsquedas (no es error del tokenizador) y subiría el factor de toda la bolsa.
+        T-151 (QA r02 de T-146, H-11): tampoco en las de una generación que ya buscó (las continuaciones de `pause_turn`
+        reenvían lo leído antes, que la medida no ve entero). La reparación empieza otra generación y solo reenvía texto."""
+        ya_busco = self._pagado.busquedas_web > 0
         w, bruto = self._abiertas.pop(0) if self._abiertas else (0.0, 0)
         self.p.liberar(self.bolsa, w)
         entrada = uso.entrada + uso.cache_escritura + uso.cache_lectura
@@ -406,11 +416,28 @@ class ReservaLlamada:
         self._pagado.sumar(uso)
         if self.prefijo is None:
             self.prefijo = uso.cache_lectura + uso.cache_escritura
-        if bruto and not uso.busquedas_web and entrada > bruto * self.p.factor_de(self.bolsa, self.factor):
+        if bruto and not uso.busquedas_web and entrada > bruto * self.p.factor_de(self.bolsa, self.factor) and not ya_busco:
             self.p.observar_factor(self.bolsa, entrada / bruto)   # el margen no bastó: las siguientes peticiones usan lo visto
         if real > w + 1e-4:
             self.p.anotar("excesos", {"clase": self.bolsa, "agente": self.agente, "reservado_uc": round(w, 4), "real_uc": round(real, 4),
                                       "busquedas_web": int(uso.busquedas_web)})
+
+    def fallida(self, cobro_posible: bool, motivo: str) -> None:
+        """T-151 (r01 H-09 de T-146): la petición más antigua sin pagar falló sin respuesta. Si el servidor la rechazó sin
+        ejecutarla (`cobro_posible` False), su reserva se suelta; si no (conexión o timeout: la API pudo completarla y
+        cobrarla), su peor caso reservado queda apartado, se anota en `sin_respuesta` y `cerrar` lo carga en la bolsa."""
+        w, _ = self._abiertas.pop(0) if self._abiertas else (0.0, 0)
+        if not cobro_posible:
+            self.p.liberar(self.bolsa, w)
+            return
+        self._sin_respuesta += w
+        self.p.anotar("sin_respuesta", {"clase": self.bolsa, "agente": self.agente, "peticion": self.peticiones,
+                                        "reservado_uc": round(w, 4), "motivo": motivo})
+
+    @property
+    def sin_respuesta(self) -> float:
+        """Lo apartado por las peticiones que no respondieron y pudieron cobrarse (se carga al cerrar)."""
+        return self._sin_respuesta
 
     def pagar_resto(self, uso_total: Uso) -> None:
         """Al volver del cliente: lo que la generación costó y no se pagó petición a petición se paga como una petición, y
@@ -429,7 +456,12 @@ class ReservaLlamada:
         return self._apartado
 
     def cerrar(self) -> None:
-        """Suelta lo reservado y lo apartado de esta llamada (`Bloque._cargar` carga lo real antes: T-146 r02, H-08)."""
+        """Suelta lo reservado y lo apartado de esta llamada (`Bloque._cargar` carga lo real antes: T-146 r02, H-08). T-151:
+        lo de las peticiones sin respuesta que pudieron cobrarse se carga en la bolsa (antes de soltarlo, como en H-08)."""
+        if self._sin_respuesta:
+            self.p.cargar(self.bolsa, self._sin_respuesta)
+            self.p.liberar(self.bolsa, self._sin_respuesta)
+            self._sin_respuesta = 0.0
         for w, _ in self._abiertas:
             self.p.liberar(self.bolsa, w)
         self._abiertas.clear()
