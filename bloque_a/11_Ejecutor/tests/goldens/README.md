@@ -35,15 +35,16 @@ Ficheros esperados que congelan el formato de los contratos CT-01 a CT-25. La su
 - **Lo que el ejecutor emite** (`formas_flujos_mock.json`): once flujos con `MockClient` y los doce perfiles de las pruebas.
   - `ciclo_semanal_v5`: dos ciclos semanales, con una semana entre ellos; el segundo ya lleva opciones vigentes y una lección. Con la auditoría activada, para que emita CT-16 y CT-17. Se guardan todos sus contratos.
   - `ciclo_semanal_v6`: un ciclo del diseño V6. Se guardan todos sus contratos.
-  - `consulta_n0`, `consulta_que_escala` y `pregunta_repetida`: CT-03 y el aviso CT-22.
-  - `peticion_ad_hoc`: CT-01 y CT-02.
+  - `consulta_n0` y `pregunta_repetida`: CT-03 y el aviso CT-22.
+  - `consulta_que_escala`: CT-03, CT-22 y todos los contratos del ciclo ad hoc que lanza (desde T-124).
+  - `peticion_ad_hoc`: CT-01, CT-02 y todos los contratos del ciclo ad hoc que lanza (desde T-124).
   - `decision_broker`: CT-04 y CT-22.
   - `seguimiento_encargado`: CT-24 (alta, ciclo C6, pausa, reanudación, modificación, cancelación y fin por fecha), CT-05 y CT-06 del ciclo C6, y CT-22.
   - `consulta_al_broker`: CT-23 (saliente, respuesta y entrante) y CT-22.
   - `credenciales`: CT-25 (solicitud, respuesta y recordatorio).
-  - `informe_de_aprendizaje`: CT-19.
+  - `informe_de_aprendizaje`: CT-19 y todos los contratos del ciclo que lo precede (desde T-124).
 
-  De cada tipo de mensaje se guarda la ruta de cada clave, con `x[]` para los elementos de una lista, y sus tipos JSON, en dos grupos: las que están en todos los objetos que podrían llevarlas y las que solo en algunos. Las claves que son un dato y no un formato (el código de un tipo de activo, un identificador) se escriben `<clase>` e `<id>`. Además, las combinaciones de claves opcionales de primer nivel: una por cada forma de mensaje vista.
+  De cada tipo de mensaje se guarda la ruta de cada clave, con `x[]` para los elementos de una lista, y sus tipos JSON, en dos grupos: las que están en todos los objetos que podrían llevarlas y las que solo en algunos. Las claves que son un dato y no un formato (el código de un tipo de activo, un identificador) se escriben `<clase>` e `<id>`; una ruta genérica cuenta una vez por objeto, aunque el objeto tenga varias claves reales (T-124, H-08). Además, las combinaciones de claves opcionales de primer nivel: una por cada forma de mensaje vista.
 - **Las diferencias con el Anexo B** (`divergencias_anexo_b.json`): medidas con el ejecutor, sobre los ejemplos y sobre los mensajes de los once flujos.
 
 ## Cómo se derivan los esquemas del Anexo B
@@ -69,6 +70,7 @@ Lo que estos goldens **no** ven. Un cambio de este tipo pasa sin que falle ningu
 - **Los retornos internos (CT-06 a CT-14).** No pasan por `Mensajeria`: son la respuesta del agente, que se valida con `ESQUEMAS` (`esquemas_respuestas.json`). Aquí se congela el esquema, no una respuesta vista.
 - **Los valores.** De un mensaje emitido se guardan las claves y los tipos, no los valores (salvo los de los campos con valores nombrados en el Anexo B). Un texto, una cifra o un identificador con otro formato interno (por ejemplo, otro patrón de `run_id`) no se ve.
 - **Tipos y claves opcionales mezclados.** Los mensajes de un mismo flujo, contrato y tipo se resumen juntos. Si una clave anidada opcional deja de emitirse en un caso y sigue en otro, o un valor que ya era «`null|string`» deja de ser `null` en un caso y lo sigue siendo en otro, el resumen no cambia. En el primer nivel sí se ve, por las combinaciones de claves.
+- **Las claves genéricas que faltan en un caso.** Una ruta escrita con `<clase>` o `<id>` está «siempre» si cada objeto tiene al menos una clave de ese tipo: que un CT-05 pierda una de sus clases en `presupuesto_por_clase` en un ciclo no se ve (QA r01 de T-124, H-03).
 - **Lo que el simulador no ejercita.** Las formas son las que salen con `MockClient` y los datos sintéticos: una rama del ejecutor que el simulador no recorre (un G3 con advertencias, un presupuesto agotado, una consulta bloqueante vencida) puede emitir claves que aquí no están.
 - **Reglas fuera de la mensajería.** La batería mide `Mensajeria.crear` y `validar`. Las reglas que el ejecutor aplica antes de crear el mensaje no se congelan aquí; tienen sus pruebas propias:
   - `Bloque.decision` rechaza un CT-04 vacío;

@@ -2,7 +2,7 @@
 
 | Campo | Valor |
 | --- | --- |
-| Estado | EN QA |
+| Estado | CERRADO |
 | Pieza | bloque_a (11_Ejecutor: `tests/goldens_ct.py` y `tests/goldens/`; no cambia código de producción) |
 | Planifica · implementa · QA | claude · claude · un revisor nuevo sin contexto |
 | Aprobación del operador | 2026-11-14: «quiero que por tu cuenta vayas completando los tickets que quedan abiertos» |
@@ -31,3 +31,4 @@ Re-congelado con su motivo: `aceptaciones_rechazos.json`, `formas_flujos_mock.js
 - 2026-11-14 · ABIERTO · creado con nuevo_ticket.sh
 - 2026-11-14 · EN QA · claude · `r02_01 --confirmar`: los 20 mutantes de la mensajería detectados, vivos ninguno
 - 2026-11-14 · EN QA · claude · `r02_02_formas_y_flujos.py --copia`: K01, K02 y K03 detectados (CA-2); goldens coinciden con T-125 integrado (CA-3)
+- 2026-11-15 · CERRADO · QA r01 APTO (revisor nuevo sin contexto); hallazgos bajos (H-01 a H-03) resueltos en T-130

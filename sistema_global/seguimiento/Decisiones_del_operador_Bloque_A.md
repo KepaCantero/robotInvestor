@@ -87,6 +87,16 @@ Se sigue preguntando antes de actuar cuando algo gasta dinero o usa una credenci
 | El Broker pide horizontes con una lista global, no por tipo | Se deja así | Agente (INC-T116-01) | 13-11-2026 | `docs/incidencias.md` |
 | La autorización de ampliación no registra CPI ni EAC | No se añaden por ahora | Agente (INC-T116-02) | 13-11-2026 | `docs/incidencias.md` |
 
+## 7. Modo sombra y coste de la API
+
+| Qué | Valor hoy | Quién | Fecha | Dónde y cómo se cambia |
+| --- | --- | --- | --- | --- |
+| Autorizar el gasto del modo sombra | **Sin decidir.** Coste estimado de un ciclo semanal: 0,86–1,68 USD con solo divisas; 2,98–11,47 USD con los 12 tipos | — | — | Se pregunta siempre |
+| Modelo de cada agente | Opus 5.5 para los que razonan más (AG-02, AG-11…), Sonnet 5.5 para la mayoría, Haiku 5.5 para los más simples | Entrega | — | `modelos` |
+| Tarifa con la que se estima el coste | La publicada el 15-11-2026, en un fichero aparte | Agente (INC-T129-01) | 15-11-2026 | `config/precios_anthropic.yaml`, con `--config` |
+| Repetir en otro modelo una petición rechazada | No | Agente (INC-T129-01) | 15-11-2026 | Código del cliente (`llm.py`) |
+| Esfuerzo de razonamiento de los modelos | El de cada modelo por defecto, hasta medirlo en el banco | Agente (INC-T129-01) | 15-11-2026 | Se añadiría como `llm.effort` |
+
 ## Cómo se mantiene
 
 - Cada decisión nueva que tome el agente por defecto añade o cambia una fila aquí, en el mismo commit.

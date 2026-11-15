@@ -54,3 +54,76 @@ Pero queda un hallazgo **alto**, **H-02**: el patrón de tarjeta marca tramos de
 Vuelve a `ri-implementar`: H-02 y H-01 con sus pruebas (100 000 huellas y UUID sin marcar; caducidad, CVV, IBAN + cifra y prefijo AB12 marcados), y `pruebas.md` rellenado. En la r02 se vuelven a ejecutar `r01_01` a `r01_03`.
 
 **Sin comprobar:** el gate entero; las suites de A-Forex y B (el Forex tiene su propia copia de `RE_SECRETO` y no se toca); mensajes de un ciclo con el modelo real.
+
+---
+
+# Ronda r02 · 2026-11-15
+
+- **Revisor:** subagente revisor nuevo, sin contexto de la implementación ni de la r01 (Claude; implementó otra sesión de Claude) · **Ronda:** r02
+- **Copia revisada:** clon desconectado en `fb3ccd4` (la r02 de T-123 está en ese commit: `contratos.py`, `tests/test_t123_r02.py`, `tests/test_t122_hallazgos.py`, INC-T123-01).
+- **Orden de lectura:** `README.md` → diff de `contratos.py` (`d1ff926..fb3ccd4`) → mis scripts → al final `analisis-tecnico.md`, `pruebas.md` e INC-T123-01.
+
+## Reproducción
+
+Desde la raíz de la copia, con `.venv` enlazado al del repositorio.
+
+| Comprobación | Orden | Resultado |
+| --- | --- | --- |
+| Scripts de la r01 | `.venv/bin/python -I .docs/tickets/T-123/revisores/r01_01_banco_iban_tarjetas.py` | **10/11**: lo que falla son 90 de 5 000 series de cuatro grupos de cuatro cifras al azar (forma de tarjeta, límite declarado en INC-T123-01). Huellas, UUID, importes con espacio de miles y listas de enteros: 0. Coste lineal en las cinco texturas de la r01 |
+| | `… r01_02_caminos_r8.py bloque_a/11_Ejecutor <salida de un backtest mock nuevo, 2024-01-05..2024-03-29>` | **31/31**: CT-04, CT-03 y CT-23 con Visa, Amex e IBAN DE, FR y GB en tres formas, rechazados y sin rastro; 13 380 líneas del ciclo (983 huellas de 32 a 64), ningún falso positivo. Recorriendo los ficheros enteros (2,26 M caracteres, no línea a línea), tampoco |
+| | `… r01_03_efecto_en_ct04.py` | Bloque a **4/4** (caducidad, CVV, caducidad y CVV, IBAN DE + cifra: CT-04 rechazado, sin rastro). El bloque b se para con `StopIteration`: **es lo esperado**, busca entre 100 000 huellas una que se marque como tarjeta y ya no hay ninguna (H-02 corregido). Lo que medía (que una huella no bloquee un CT-04) lo hago en `r02_01` [5] con la huella que dio la r01 |
+| Mi script | `.venv/bin/python -I .docs/tickets/T-123/revisores/r02_01_falsos_r02.py` | **6/12**. Compara con la r01 cargando de `d1ff926` el tramo de patrones de `contratos.py`. Ver H-05 a H-09 |
+| Prueba de T-122 cambiada | lectura | Ver «INC-T123-01 y la prueba de T-122» |
+| Goldens, gates, cuotas, suite | comunes a T-123, T-124 y T-127 (detalle en «Comunes» de `T-127/qa.md`) | suite de A **5798 passed** (24 min 55 s, código 0); goldens coinciden; ruff 2902; mypy A 109; secretos, referencias, NFC y corpus en verde |
+
+## Hallazgos de la r01
+
+| Hallazgo | Estado | Evidencia |
+| --- | --- | --- |
+| H-01 (media) | **corregido** | `r01_03` [a] 4/4; `r02_01` [1]: caducidad, CVV, IBAN + cifra, «Ref AB12», tres espacios, detectados |
+| H-02 (alta) | **corregido** | 0 de 100 000 huellas SHA-256 (`r02_01` [1]), 0 de 6 000 hex, 3 000 en mayúsculas y 3 000 UUID (`r01_01`); la huella que la r01 encontró pasa y el CT-04 se acepta (`r02_01` [5]) |
+| H-03 (baja) | **corregido** | `pruebas.md` rellenado |
+| H-04 (baja) | **corregido** | 0 de 3 000 importes con espacio de miles y 0 de 5 000 listas de enteros (`r01_01`); lo que queda (cuatro grupos de cuatro cifras), en INC-T123-01 |
+
+## Criterios de aceptación
+
+| Criterio | Cumple | Evidencia |
+| --- | --- | --- |
+| CA-1 | sí | `r01_01` [1]: 42 países + 12 publicados en 14 formas, todos; 128 inválidos, ninguno |
+| CA-2 | sí | `r01_01` [2]: seis redes en las formas declaradas, enmascaradas; Luhn mal, ninguna |
+| CA-3 | sí en sus términos | `r01_01` [3] y `tests/test_t123_*`. Pero ver H-06 y H-07 (falsos positivos fuera de los once textos) |
+| CA-4 | sí | `r01_02` 31/31 |
+| CA-5 | sí, salvo el gate entero (no lanzado por instrucción) | Goldens coinciden; ciclo simulado sin falsos positivos; suite 5798 passed; cuotas sin subir |
+
+## INC-T123-01 y la prueba de T-122
+
+`test_t122_hallazgos.py` pasa «tres separadores» de «no se marca» a «se marca» y pone «cuatro» en su lugar. Está justificado: el IBAN español no ha cambiado de patrón (`RE_SECRETO` sigue con dos), pero ES está en `LONGITUD_IBAN` y el detector general admite ahora hasta tres separadores (H-01 de la r01), así que un IBAN español válido con tres se detecta por esa vía; INC-T123-01 lo dice («Por coherencia, el IBAN español con tres separadores seguidos también se detecta ahora»). La prueba no se debilita: detecta más. Queda desfasada la frase de INC-T122-01 «Con tres o más seguidos no se detecta» (H-10).
+
+## Hallazgos nuevos
+
+| ID | Gravedad | Cómo reproducirlo | Esperado / obtenido | Corrección sugerida | Estado |
+| --- | --- | --- | --- | --- | --- |
+| H-05 | media | `r02_01` [2]. A mano: `tarjetas_en_texto("cliente,Juan," + "4111" + "1111" + "1111" + "1111" + ",12/27")` → `[]`; también `"Visa," + …`, `"pago." + …`, `"fin." + "4111 1111 1111 1111"` | **Esperado:** una tarjeta en una fila CSV, o tras una coma o un punto sin cifras delante, se detecta (el IBAN en la misma fila sí se detecta). **Obtenido:** no se detecta. `RE_GRUPOS_TARJETA` excluye con `(?<![0-9A-Za-z.,])` cualquier punto o coma delante, aunque no haya una cifra antes; la intención declarada es «un punto o una coma **con cifras**» (la parte de un decimal), que el lado derecho sí aplica (`[.,][0-9]`). Ya ocurría en la r01; no está entre los límites de INC-T123-01. Un CT-04 o una consulta con datos pegados en CSV deja la tarjeta en F5 | Lookbehind simétrico al de la derecha: `(?<![0-9A-Za-z])(?<![0-9][.,])` (lo he probado: «Visa,…» y «pago.…» pasan a marcarse; «0.4111…», «12,4111…», «…,5» y los decimales del ciclo siguen sin marcar). La fila CSV con un campo detrás que empieza por cifra («…,12/27») sigue sin marcarse por el lado derecho, que no distingue una coma decimal: declararlo en INC-T123-01. Prueba: «Visa,…», «pago.…», «;…;» marcados | abierto |
+| H-06 | media | `r02_01` [3] («token de índice + palabras», «ISIN + palabras», «huella truncada de 16 hex») | **Esperado:** un ISIN, un nombre de índice o una huella del sistema no son un IBAN. **Obtenido:** el candidato IBAN encadena **palabras** siguientes hasta la longitud del país y basta el módulo 97 (1 de 97): «ISIN NL3280300684 precio los…», «El SE30 el los bono…», 56 y 61 de 20 000 (≈ 0,3 % por mención). Y las huellas que escribe el sistema (`prompts.huella`, `HT01.huella`: `sha256(...)[:16]`): con «be» + 2 cifras tienen la longitud de BE (16) y 1 de 97 pasa: `"huella": "be52539bd21ffef4"` se marca; con las que son todo cifras y pasan Luhn (tarjeta), 37 de 1 000 000 de huellas de 16 caracteres. `agentes.py:109` bloquea el encargo («Encargo bloqueado por R8», resultado PARCIAL); en un backtest mock de 12 semanas llegan a los contextos de los agentes 50 huellas de 16 distintas (≈ 0,2 % por backtest). Es la clase de H-02 con una tasa menor; la de ISIN e índices ya estaba en la r01 (el corte a media palabra la hacía mayor) | Validar el BBAN con la estructura de su país del mismo registro ISO 13616 (p. ej. BE: 12 cifras; DE: 18 cifras; NL: 4 letras + 10 cifras), que quita casi todos los casos de palabras, ISIN y huellas; la de 16 cifras como tarjeta no tiene arreglo en R8 (es indistinguible): declararla, o que las huellas truncadas lleven un prefijo con letra | abierto |
+| H-07 | media | `r02_01` [3] («columna…», «fila…»); comparación con la r01 en la orden de abajo | **Esperado** (README: «sin falsos positivos con las series de cifras corrientes»): una tabla de enteros de cuatro cifras no es una tarjeta. **Obtenido, regresión de la r02:** al probar ventanas en cada grupo y admitir hasta tres separadores (también saltos de línea), una fila de 8 enteros de 4 cifras separados por dos espacios pasa de **0 %** (r01) a **11 %** marcada (555 de 5 000), y una columna de 8 en líneas seguidas de 4,6 % a 11,7 %. Con niveles de índice entre 4 000 y 5 999 (prefijos 4 y 51–55) es plausible en un texto del modelo. INC-T123-01 declara «cuatro grupos de cuatro cifras al azar… unas 2 de cada 100», no las series largas ni las que cruzan líneas | No unir grupos a través de un salto de línea (separador `[ \t   \-]`, no `\s`) y declarar en INC-T123-01 la tasa con series largas; o exigir que la serie entera sea de 13 a 19 cifras con su caducidad o CVV como mucho al final | abierto |
+| H-08 | media | `r02_01` [4]: `secretos_en_texto("DE12 " * 200_000)` (1 M caracteres) → **87 s** (250 k: 4 s); `"DE11 " + "1 " * 30` repetido: 17 s | **Esperado** (`analisis-tecnico.md` r02: «El coste sigue siendo lineal»). **Obtenido:** cuadrático. En `ibanes_en_texto`, `for g in grupos[i:]` copia la lista de grupos de la serie desde `i` en cada grupo que empieza como un IBAN, y una serie es todo el texto entre dos signos de puntuación. A tamaños reales es poco (120 000 caracteres: 0,8 s en `secretos_en_texto`, 1,6 s en `contiene_credenciales`), pero es una regresión de la r01 (lineal) en el control R8, y un CT-04 o un texto externo no tienen tope | Recorrer por índice (`for j in range(i, len(grupos))`) o con `itertools.islice`; prueba de tiempo con 1 M caracteres «DE12 » | abierto |
+| H-09 | baja | `r02_01` [2]: `ibanes_en_texto("DE89" + "370400440532013000" + "EUR")` y `"… 0130 00EUR"` → `[]`; la r01 los detectaba | **Esperado:** lo que la r01 detectaba, se sigue detectando (o se declara). **Obtenido:** un IBAN cuyo último grupo va pegado a letras ya no se detecta (la ventana tiene que acabar en un límite de grupo). INC-T123-01 declara «seguido de otra cifra pegada», no de letras | Declararlo en INC-T123-01, o admitir que el último grupo se corte en la longitud del país si lo que sigue son letras | abierto |
+| H-10 | baja | `grep -n "tres o más seguidos" docs/incidencias.md` | INC-T122-01 sigue diciendo «Con tres o más seguidos no se detecta» del IBAN español; desde la r02 de T-123 se detecta con tres (INC-T123-01 lo dice, pero la de T-122 queda desfasada) | Una nota en INC-T122-01 que remita a INC-T123-01 | abierto |
+
+Orden para comparar con la r01 lo que da H-07 (también lo hace `r02_01`): desde `bloque_a/11_Ejecutor`, cargar el tramo de `git show d1ff926:bloque_a/11_Ejecutor/bloque_a/contratos.py` entre `LONGITUD_IBAN = {` y `def secretos_en_texto` y llamar a su `tarjetas_en_texto` con `"  ".join(str(random.randint(1000, 9999)) for _ in range(8))`.
+
+## Invariantes
+
+- No hay LLM en la ruta: R8 es determinista y sin red. ✔
+- Falla cerrado: los falsos positivos rechazan (H-06, H-07); los falsos negativos (H-05, H-09) dejan pasar el dato. ✔ con H-05
+- Ningún número a mano: `LONGITUD_IBAN` es el registro ISO 13616 (dato de un estándar, INC-T123-01); 13–19 cifras, prefijos de red, «grupos de al menos 4» y «hasta 3 separadores» son reglas del formato declaradas en INC-T123-01. ✔
+- Nada de secretos: los números de prueba van partidos en mis scripts; `tools/secrets_scan.py` en verde con ellos. ✔
+- Contratos y estado persistido sin cambios: goldens coinciden. ✔
+
+## Veredicto r02
+
+**APTO.**
+
+Los cuatro hallazgos de la r01 están corregidos (H-02, el alto, con 0 de 100 000 huellas y 0 de 3 000 UUID) y los cinco criterios se cumplen (CA-5 sin el gate entero, que no lancé por instrucción; pasó en el commit). No queda ningún hallazgo crítico ni alto. Quedan cuatro medios y dos bajos, que pasan a la deuda con su ID: **H-05** (tarjeta tras una coma o un punto sin cifras, p. ej. una fila CSV, sin detectar), **H-06** (IBAN «encadenado» con palabras tras un ISIN o un nombre de índice, ≈ 0,3 % por mención, y huellas truncadas de 16 caracteres del sistema, ≈ 4 de cada 100 000), **H-07** (regresión de la r02: series de enteros de cuatro cifras separadas por dos espacios o saltos de línea, del 0 % al 11 %), **H-08** (coste cuadrático de `ibanes_en_texto`, contra lo que dice `analisis-tecnico.md`), **H-09** y **H-10** (bajos). H-05 y H-08 tienen una corrección de una línea; conviene hacerlas antes del modo sombra.
+
+**Sin comprobar:** el gate entero; A-Forex y B; mensajes de un ciclo con el modelo real; las redes Diners y Maestro y el formato con puntos (fuera de lo declarado, como en la r01).
