@@ -2,7 +2,7 @@
 
 | Campo | Valor |
 | --- | --- |
-| Estado | EN QA |
+| Estado | CERRADO |
 | Pieza | bloque_a (11_Ejecutor: `bloque_a/contratos.py`, `tests/test_t145.py`, `tests/test_t140.py`); `.docs/scripts/estimar_coste_ciclo_a.py`, `comprobar_datos_a.py`, `borrador_anexo_b.py`; `.docs/diseno/bloque_a/borrador_correccion_anexo_b.md`; `docs/incidencias.md` (INC-T123-01, INC-T129-01, INC-T114-01) |
 | Planifica · implementa · QA | claude · claude · el otro agente o un revisor nuevo |
 | Aprobación del operador | 2026-11-14: «quiero que por tu cuenta vayas completando los tickets que quedan abiertos»; las decisiones nuevas van como `[PROPUESTO]` |
@@ -81,3 +81,4 @@ Supuestos (los imprime el script): S1 tokens ≤ 1,35 veces los del simulador; S
 
 - 2026-11-15 · ABIERTO · creado con nuevo_ticket.sh
 - 2026-11-15 · EN QA · claude · implementado y probado (sin commit: lo hace quien coordina)
+- 2026-11-15 · CERRADO · QA r01 APTO (revisor nuevo sin contexto: el recuento de llamadas coincide con el código y ningún escenario supera la cota); hallazgos (H-01 media, H-02 a H-07 bajos) en T-148
