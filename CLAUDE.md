@@ -123,7 +123,7 @@ Flags: `--core` (rápido: corpus+config+tests), `--strict` (corta al primer fall
 | ruff, mypy ×3 | **Cuotas (ratchet): solo bajan.** El código entregado no era limpio (ruff 3490, mypy A 135 / FX 174 / B 160); las cuotas congelan el estado y cada fase debe dejarlas más bajas si toca el paquete. Al llegar a 0, la línea se borra y el gate se vuelve estricto. Andamiaje temporal — política sin-deuda. |
 | pytest ×3 | Líneas base innegociables: A ≥ 607 · FX ≥ 68 · B ≥ 174 (el gate comprueba el NÚMERO, no solo el exit code: quitar tests no pasa). |
 
-**Pre-commit** (`.venv/bin/pre-commit install`): check-yaml, merge-conflicts,
+**Pre-commit** (opcional, fuera del entorno fijado: `pipx install pre-commit` y `pre-commit install`): check-yaml, merge-conflicts,
 debug-statements, detect-secrets con `.secrets.baseline` (48 hallazgos auditados como
 falsos el 03-11: fixtures de tests y huellas hex de salidas simuladas — verificados a
 mano). Los fixers de espacios SOLO tocan lo nuestro (`docs/`, `prompts/`, `tools/`,

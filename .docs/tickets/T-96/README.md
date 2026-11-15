@@ -41,7 +41,7 @@ Que un clon nuevo del repositorio cree el mismo `.venv` con un solo comando y pa
 ## Criterios de aceptación (binarios)
 
 1. CA-1: con el `.venv` borrado, `.docs/scripts/preparar_entorno.sh` crea uno nuevo sin intervención y termina con código 0.
-2. CA-2: en ese entorno, `./tools/check_all.sh` da 12/12, con las líneas base A 439, A-Forex 68 y B 176.
+2. CA-2: en ese entorno, `./tools/check_all.sh` da 12/12, con las líneas base A 439, A-Forex 68 y B 176. *(T-137, H-07: las líneas base vigentes son las de `tools/cuotas.txt`; las de aquí son las de su fecha.)*
 3. CA-3: `preparar_entorno.sh --comprobar` da 0 en ese entorno y distinto de 0 si se instala otra versión de un paquete fijado (por ejemplo, `arch` 9.0.0), nombrando el paquete.
 4. CA-4: el script falla con mensaje claro si no encuentra Python 3.12.
 5. CA-5: no cambia ningún fichero de los bloques, del marco común, de la Constitución ni de `tools/check_all.sh`.
