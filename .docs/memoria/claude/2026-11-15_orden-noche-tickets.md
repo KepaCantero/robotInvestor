@@ -15,3 +15,5 @@ Actualización (15-11-2026): T-95 (consola N) queda fuera de la noche y aplazado
 Actualización 2 (15-11-2026, orden del operador): después de T-97, seguir con los tickets nacidos de los hallazgos de estas QA hasta que cada uno supere la suya: T-133 (banco, de T-94), T-137 (entorno, de T-96), T-153 (registro, de T-99) y el que salga de la QA de T-97. Uno detrás de otro.
 
 Actualización 3 (15-11-2026): el ticket de hallazgos de T-97 es T-155.
+
+Actualización 4 (15-11-2026, orden del operador): «Cuando pase la T-133 a APTO quiero que pares hasta que yo te indique lo contrario». Tras cerrar T-133, no empezar T-137, T-153 ni T-155 sin su orden.
