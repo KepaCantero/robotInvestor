@@ -38,3 +38,21 @@ La parte del registro de los dos la resolvió T-99, con la regla de adopción po
 
 - La muestra de fechas se calcula con el titular, que es lo diseñado. Una referencia con fechas propias quedaría fuera de la muestra.
 - La huella de los datos lee todos los CSV de la carpeta, lo que puede tardar con carpetas muy grandes.
+
+## Ronda r02 (15-11-2026, QA r01 NO APTO, sin altos)
+
+Banco 0.5.0.
+
+| Hallazgo | Corrección |
+| --- | --- |
+| H-01 (media) | **Los datos van en la variante, no en el experimento** (`[PROPUESTO]`): la fuente es el cliente, y las huellas de los datos y del universo están en el prerregistro. Así, unos datos cambiados son otra variante del mismo experimento, fuera del máximo, y no un experimento nuevo con su máximo sin estrenar. La huella es solo de lo que A lee: el CSV de cada símbolo del universo y, del universo, los pares (símbolo, clase), sin el nombre del fichero. Un CSV que A no lee, o renombrar el universo, ya no cambian nada. Si los datos cambian durante la ejecución (o el titular usa otros), el banco se detiene. Unos datos nuevos de verdad (los de K) se prerregistran aparte. |
+| H-02 (media) | Que `experimento.json` cite otro registro es un **aviso**, no un problema: una carpeta auténtica copiada a otra profundidad se verifica con código 0. |
+| H-03 (media) | Pruebas de `verificar` sin `--registro`, con el registro del agente (`REGISTRO_DEFECTO`): un registro fabricado que cite la carpeta no se usa, y sin un `RI_AGENTE` válido se dice. |
+| H-04 (baja) | Pruebas de N19 (en `construir_informe`), F03 (subcarpetas), F04 (orden), F05 (carpeta sin CSV), P03 (fechas sin normalizar) y la huella en NFC. |
+| H-05 (baja) | `informe.md` dice cuántas selecciones tenía la plantilla, cuántas entran en la muestra y que una ventana que acaba después del último dato también ocupa su fecha. |
+| H-06 (baja) | Una celda vacía, o una fila corta, en una columna obligatoria de `consumo.csv` es un error. Una columna ausente sale «sin dato» en `informe.md`. |
+| H-07 (baja) | El docstring, el índice de scripts y la fila T-94 de la deuda están al día. En la r01, este análisis decía «otra variante» de los datos cambiados, y era falso: ahora sí lo es. |
+| H-08 (baja) | Nivel mínimo de un veredicto: 0,90 (`[PROPUESTO]`; al 0,80 con 10 fechas salía un 24,5 % de firmes). El mínimo de fechas se lee de `evaluacion.min_conglomerados_bootstrap` de la configuración de A. |
+| H-09 (baja) | La huella lee en trozos y normaliza los nombres a NFC. |
+
+**Evidencia:** 106 pruebas del banco y 79 mutantes muertos (`mutantes.py`). Los mutantes del revisor que siguen casando mueren; los que ya no casan («sin patrón») están rehechos en `mutantes.py` como B01 a B22.

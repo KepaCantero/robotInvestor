@@ -19,8 +19,8 @@ Qué cuenta como una observación (QA r01 de T-94, H-01 y H-02):
 - por debajo de --min-efectivas fechas por lado no hay veredicto: «todavía no se sabe», con el motivo.
 
 Desde T-99, cada ejecución desde la línea de órdenes se anota en el registro de experimentos (`.docs/scripts/registro_experimentos.py`).
-Sin --experimento, el banco reutiliza el experimento ya prerregistrado con la misma hipótesis, objeto y fuente (cliente, datos
-y universo); otro periodo, otra semilla u otros parámetros cuentan como otra variante del mismo experimento. Si no lo hay, lo
+Sin --experimento, el banco reutiliza el experimento ya prerregistrado con la misma hipótesis, objeto y cliente; otro periodo,
+otra semilla, otros parámetros u otros datos (su huella va en el prerregistro) cuentan como otra variante del mismo experimento. Si no lo hay, lo
 prerregistra. Con --experimento, ese experimento tiene que tener la misma hipótesis, objeto y fuente. El máximo de variantes no
 cambia después de prerregistrar. `--sin-registro` no anota nada (y `verificar` lo dirá). `verificar` comprueba las huellas.
 
@@ -41,13 +41,14 @@ import os
 import random
 import shutil
 import sys
+import unicodedata
 from collections.abc import Callable, Sequence
 from pathlib import Path
 
 import numpy as np
 import pandas as pd
 
-VERSION = "0.4.0"   # 0.4.0 (T-133): fuente por huella de los datos, repetidas solo dentro de la muestra, consumo estricto,
+VERSION = "0.5.0"   # 0.5.0 (T-133 r02): datos como variante, huella de lo que A lee, verificar con avisos, nivel ≥ 0,90; 0.4.0 (T-133): fuente por huella de los datos, repetidas solo dentro de la muestra, consumo estricto,
                     # mínimo de fechas efectivas de un experimento igual al de A, verificar contra el registro del agente
 RAIZ = Path(__file__).resolve().parents[2]
 EJECUTOR_A = RAIZ / "bloque_a" / "11_Ejecutor"
@@ -58,10 +59,23 @@ SEMILLA = 7
 REMUESTREOS = 2000
 VENTANA_MOMENTO = 63          # sesiones, unos tres meses
 NIVEL = 0.90                  # nivel del rango
-MIN_EFECTIVAS = 10            # fechas de corte sin solape por lado; el mismo mínimo que A para certificar
-                              # (`evaluacion.min_conglomerados_bootstrap` de su configuración)
+def _minimo_de_a() -> int:
+    """El mínimo de fechas efectivas es el que A exige para certificar: se lee de su configuración (T-133 r02, H-08), no se
+    copia a mano."""
+    import yaml
+    try:
+        conf = yaml.safe_load((EJECUTOR_A / "config" / "por_defecto.yaml").read_text(encoding="utf-8"))
+        v = conf["evaluacion"]["min_conglomerados_bootstrap"]
+    except (OSError, KeyError, TypeError, yaml.YAMLError) as e:
+        raise BancoError(f"no se puede leer evaluacion.min_conglomerados_bootstrap de la configuración de A: {e}") from e
+    if isinstance(v, bool) or not isinstance(v, int) or v < 2:
+        raise BancoError(f"evaluacion.min_conglomerados_bootstrap de A no es un entero válido: {v!r}")
+    return v
+
+
+MIN_EFECTIVAS = _minimo_de_a()   # fechas de corte sin solape por lado; el mismo mínimo que A para certificar
 REMUESTREOS_MIN = 200         # cotas de un experimento (H-19)
-NIVEL_MIN, NIVEL_MAX = 0.80, 0.99
+NIVEL_MIN, NIVEL_MAX = 0.90, 0.99   # T-133 r02 (H-08): al 0,80 con 10 fechas salía un 24,5 % de firmes, no el 20 %
 MIN_EFECTIVAS_MIN = MIN_EFECTIVAS   # T-133 (H-27): con 5 fechas, un 15-17 % de veredictos firmes sin habilidad
 AVISO_FUGA = "FUGA POR CONOCIMIENTO DEL MODELO"
 
@@ -489,6 +503,8 @@ def leer_consumo(fichero: Path) -> dict:
         for n, f in enumerate(csv.DictReader(fh), 2):
             filas += 1
             for k in CAMPOS_ENTEROS:
+                if k in ("llamadas", "tokens_entrada", "tokens_salida") and (f.get(k) is None or not str(f.get(k)).strip()):
+                    raise BancoError(f"{Path(fichero).name}, fila {n}: «{k}» está vacío (T-133 r02, H-06)")
                 v = _cantidad(fichero, n, k, f.get(k) or 0)
                 if v != int(v):   # un recuento de tokens o llamadas no tiene decimales (T-133, H-26)
                     raise BancoError(f"{Path(fichero).name}, fila {n}: «{k}» no es un número entero ({f.get(k)!r})")
@@ -597,6 +613,9 @@ def informe_md(inf: dict, titulo: str) -> str:
                (f"Solo cuentan las fechas de corte cuyas ventanas no se solapan ({len(inf.get('fechas_en_muestra', []))} en la "
                 f"muestra), y una apuesta repetida mientras sigue abierta cuenta una vez. El rango del {pct_nivel} remuestrea esas "
                 f"fechas; sin {inf['min_efectivas']} por lado no hay veredicto."), "",
+               *([(f"La plantilla del titular tenía {inf['plantilla']['selecciones']} selecciones y {inf['plantilla']['en_muestra']} "
+                   "entran en la muestra; las demás quedan fuera antes de evaluar. Una ventana que acaba después del último dato "
+                   "también ocupa su fecha, aunque no se resuelva."), ""] if inf.get("plantilla") else []),
                (f"| Contendiente | Selecciones | Repetidas | Fuera de muestra | Resueltas | Fechas efectivas | Exceso medio | "
                 f"Rango del {pct_nivel} | Acierto |"),
                "| --- | --- | --- | --- | --- | --- | --- | --- | --- |"]
@@ -615,10 +634,14 @@ def informe_md(inf: dict, titulo: str) -> str:
     coste = "sin dato" if t.get("coste_estimado") is None else f"{t['coste_estimado']}"
     if t.get("filas_sin_coste"):
         coste += f" ({t['filas_sin_coste']} filas de consumo.csv sin coste: no se suma un coste parcial)"
+    ausentes = set(t.get("columnas_ausentes") or [])
+
+    def dato(k, defecto=0):   # T-133 r02 (H-06): una columna que no está en consumo.csv es «sin dato», no 0
+        return "sin dato" if k in ausentes else t.get(k, defecto)
     lineas += ["", "## Coste", "",
                (f"- Titular: {t['llamadas']} llamadas; tokens: {t['tokens_entrada']} de entrada, {t['tokens_salida']} de salida, "
-                f"{t.get('tokens_cache_escritura', 0)} escritos en caché y {t.get('tokens_cache_lectura', 0)} leídos de caché; "
-                f"{t.get('uc', 0)} uc; coste estimado {coste}.")]
+                f"{dato('tokens_cache_escritura')} escritos en caché y {dato('tokens_cache_lectura')} leídos de caché; "
+                f"{dato('uc')} uc; coste estimado {coste}.")]
     ps = co.get("por_seleccion_resuelta")
     if ps:
         cps = "sin dato" if ps["coste_estimado"] is None else f"{ps['coste_estimado']}"
@@ -700,19 +723,56 @@ def _ruta_publica(ruta) -> str:
         return f"«externa»/{p.name} ({hashlib.sha256(str(p).encode('utf-8', 'backslashreplace')).hexdigest()[:12]})"
 
 
-def huella_datos(ruta: Path) -> str:
-    """Huella del contenido de una carpeta de CSV (o de un fichero): nombres y bytes, en orden. Los mismos datos en otra
-    carpeta dan la misma huella, y unos datos cambiados dan otra (T-133, H-21 y H-22)."""
+def _huella_fichero(f: Path) -> bytes:
+    h = hashlib.sha256()
+    with open(f, "rb") as fh:
+        for trozo in iter(lambda: fh.read(1 << 20), b""):   # en trozos: un fichero enorme no se carga entero (H-09)
+            h.update(trozo)
+    return h.digest()
+
+
+def huella_datos(ruta: Path, simbolos: Sequence[str] | None = None) -> str:
+    """Huella del CONTENIDO que A lee (T-133, H-21, H-22 y r02 H-01, H-09):
+    - de un CSV de universo, los pares (símbolo, clase) ordenados, sin el nombre del fichero ni el resto de columnas;
+    - de una carpeta de datos, el CSV de cada símbolo dado (o todos los de la carpeta, sin subcarpetas), con su nombre en
+      NFC y sus bytes, en orden.
+    Los mismos datos en otra carpeta o con otro nombre de universo dan la misma huella; un cierre cambiado, otra."""
     ruta = Path(ruta)
     if not ruta.exists():
         raise BancoError(f"no existe {ruta}")
     h = hashlib.sha256()
-    ficheros = sorted(ruta.glob("*.csv")) if ruta.is_dir() else [ruta]
+    if ruta.is_file():
+        try:
+            u = pd.read_csv(ruta, usecols=["simbolo", "clase"], dtype=str, keep_default_na=False)
+        except (ValueError, pd.errors.ParserError, pd.errors.EmptyDataError, UnicodeDecodeError) as e:
+            raise BancoError(f"no se puede leer el universo {ruta.name}: {e}") from e
+        for sim, clase in sorted(zip(u["simbolo"], u["clase"])):
+            h.update(unicodedata.normalize("NFC", f"{sim}\t{clase}\n").encode("utf-8"))
+        return h.hexdigest()
+    if simbolos is None:
+        ficheros = sorted(ruta.glob("*.csv"), key=lambda f: unicodedata.normalize("NFC", f.name))
+    else:
+        ficheros = [ruta / f"{s}.csv" for s in sorted(set(simbolos))]
+        faltan = [f.name for f in ficheros if not f.exists()]
+        if faltan:
+            raise BancoError(f"no hay datos para {faltan[0]} en {ruta}")
     if not ficheros:
         raise BancoError(f"{ruta} no tiene ficheros CSV")
     for f in ficheros:
-        h.update(f.name.encode("utf-8", "backslashreplace") + b"\0" + hashlib.sha256(f.read_bytes()).digest())
+        h.update(unicodedata.normalize("NFC", f.name).encode("utf-8", "backslashreplace") + b"\0" + _huella_fichero(f))
     return h.hexdigest()
+
+
+def rutas_por_defecto() -> tuple[Path, Path]:
+    """Los datos y el universo de ejemplo de A, que el titular usa si no se le dan otros."""
+    return EJECUTOR_A / "ejemplos" / "datos_sinteticos", EJECUTOR_A / "config" / "universo_ejemplo.csv"
+
+
+def _simbolos_del_universo(universo: Path) -> list[str]:
+    try:
+        return pd.read_csv(universo, usecols=["simbolo"], dtype=str, keep_default_na=False)["simbolo"].tolist()
+    except (ValueError, pd.errors.ParserError, pd.errors.EmptyDataError, UnicodeDecodeError) as e:
+        raise BancoError(f"no se puede leer el universo {Path(universo).name}: {e}") from e
 
 
 def ejecutar_a(a: argparse.Namespace) -> dict:
@@ -732,15 +792,19 @@ def ejecutar_a(a: argparse.Namespace) -> dict:
     (salida / "experimento.json").unlink(missing_ok=True)   # nunca el de una ejecución anterior
     datos_txt = _ruta_publica(datos_arg) if datos_arg else "ejemplos/datos_sinteticos de A"
     universo_txt = _ruta_publica(universo_arg) if universo_arg else "config/universo_ejemplo.csv de A"
-    datos_ruta = Path(datos_arg) if datos_arg else EJECUTOR_A / "ejemplos" / "datos_sinteticos"
-    universo_ruta = Path(universo_arg) if universo_arg else EJECUTOR_A / "config" / "universo_ejemplo.csv"
-    huella_d, huella_u = huella_datos(datos_ruta), huella_datos(universo_ruta)
+    datos_defecto, universo_defecto = rutas_por_defecto()
+    datos_ruta = Path(datos_arg) if datos_arg else datos_defecto
+    universo_ruta = Path(universo_arg) if universo_arg else universo_defecto
+    huella_d = huella_datos(datos_ruta, _simbolos_del_universo(universo_ruta))
+    huella_u = huella_datos(universo_ruta)
     prerregistro = {
         "hipotesis": HIPOTESIS_A,
         "titular": "bloque_a (backtest)", "referencias": ["azar", "momento"], "desde": a.desde, "hasta": a.hasta,
         "frecuencia": a.frecuencia, "clases": a.clases, "cliente": a.cliente, "datos": datos_txt, "universo": universo_txt,
-        # La fuente es el contenido, no la ruta (T-133, H-22): los mismos datos copiados en otra carpeta son la misma fuente
-        "fuente": f"cliente {a.cliente}, datos {huella_d[:16]}, universo {huella_u[:16]}",
+        # El experimento es la hipótesis con su cliente; los datos van en las huellas, que forman parte de la variante: unos
+        # datos cambiados son OTRA VARIANTE del mismo experimento, fuera del máximo, y no un experimento nuevo con su máximo
+        # sin estrenar (T-133 r02, H-01; `[PROPUESTO]`). Unos datos nuevos de verdad (los de K) se prerregistran aparte.
+        "fuente": f"cliente {a.cliente}",
         "huella_datos": huella_d, "huella_universo": huella_u,
         "semilla": semilla, "remuestreos": remuestreos, "ventana_momento": ventana, "nivel": nivel, "min_efectivas": min_efectivas,
         "metrica": ("exceso con signo frente a la media de la clase entre la fecha de corte y la de resolución del horizonte "
@@ -770,6 +834,9 @@ def ejecutar_a(a: argparse.Namespace) -> dict:
         tit = titular_a(a.desde, a.hasta, salida / "titular", a.cliente, a.frecuencia, a.clases, **kw)
         universo = pd.read_csv(tit["universo"], usecols=["simbolo", "clase"])
         precios = cargar_precios(tit["datos"], universo["simbolo"].tolist())
+        if (huella_datos(tit["datos"], universo["simbolo"].tolist()), huella_datos(tit["universo"])) != (huella_d, huella_u):
+            raise BancoError("los datos o el universo no son los del prerregistro (cambiaron durante la ejecución o el titular "
+                             "usó otros)")
         plantilla_total = tit["selecciones"]
         # T-133 (H-24): la muestra de fechas sin solape se elige primero, y solo se evalúa dentro de ella; así una apuesta de
         # una fecha que no entra en la muestra no deja «repetida» a otra que sí entra.
@@ -823,7 +890,7 @@ def titulo_informe(desde: str, hasta: str) -> str:
     return f"Banco de medida del Bloque A ({desde} a {hasta})"
 
 
-def verificar(carpeta: Path | str, registro: Path | str | None = None) -> list[str]:
+def verificar(carpeta: Path | str, registro: Path | str | None = None, avisos: list | None = None) -> list[str]:
     """Comprueba una carpeta de salida del banco y devuelve la lista de problemas (vacía si todo cuadra):
     - prerregistro.json casa con su huella y el informe cita esa huella;
     - informe.md es exactamente el que sale de informe.json;
@@ -862,8 +929,9 @@ def verificar(carpeta: Path | str, registro: Path | str | None = None) -> list[s
             if rx.REGISTRO_DEFECTO is None:
                 return problemas + ["sin --registro y sin un RI_AGENTE válido no hay registro con el que comprobar"]
             registro = rx.REGISTRO_DEFECTO
-        if Path(os.path.realpath(registro)) != Path(os.path.realpath(citado)):
-            problemas.append("experimento.json cita otro registro que el indicado: se comprueba contra el indicado")
+        if Path(os.path.realpath(registro)) != Path(os.path.realpath(citado)) and avisos is not None:
+            # Solo un aviso (T-133 r02, H-02): una carpeta auténtica copiada a otra profundidad cita mal su registro
+            avisos.append("experimento.json cita otro registro que el indicado: se comprueba contra el indicado")
         exp = rx.Registro(registro).experimento(e["exp_id"])
         n = e["intento"]
     except (OSError, ValueError, TypeError, KeyError, rx.RegistroError) as ex:
@@ -947,7 +1015,10 @@ def main(argv: list[str] | None = None) -> int:
     pv.add_argument("--registro")
     a = ap.parse_args(argv)
     if a.bloque == "verificar":
-        problemas = verificar(a.carpeta, a.registro)
+        avisos: list[str] = []
+        problemas = verificar(a.carpeta, a.registro, avisos)
+        for x in avisos:
+            print(f"· aviso: {x}", file=sys.stderr)
         for p in problemas:
             print(f"- {p}", file=sys.stderr)
         print("verificado: las huellas casan" if not problemas else f"{len(problemas)} problema(s)")

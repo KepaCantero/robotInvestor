@@ -388,7 +388,7 @@ def _titular_falso(datos, universo, simbolos=("S1", "S4"), falla_evaluar=False):
 
 
 @pytest.fixture
-def datos_falsos(tmp_path):
+def datos_falsos(tmp_path, monkeypatch):
     import numpy as np
     datos = tmp_path / "datos"
     datos.mkdir()
@@ -400,6 +400,7 @@ def datos_falsos(tmp_path):
                       "cierre": 100 * np.exp(np.cumsum(rng.normal(0, 0.01, len(fechas))))}).to_csv(datos / f"{s}.csv", index=False)
     universo = tmp_path / "universo.csv"
     pd.DataFrame({"simbolo": sims, "clase": ["C"] * 8}).to_csv(universo, index=False)
+    monkeypatch.setattr(bm, "rutas_por_defecto", lambda: (datos, universo))   # el prerregistro declara los datos del titular
     return datos, universo
 
 
@@ -675,7 +676,7 @@ def _titular_con_fuga(datos, universo):
 
 
 @pytest.fixture
-def datos_largos(tmp_path):
+def datos_largos(tmp_path, monkeypatch):
     import numpy as np
     datos = tmp_path / "largos"
     datos.mkdir()
@@ -685,6 +686,7 @@ def datos_largos(tmp_path):
                       "cierre": 100 * np.exp(np.cumsum(np.full(len(fechas), deriva)))}).to_csv(datos / f"{s}.csv", index=False)
     universo = tmp_path / "u_largo.csv"
     pd.DataFrame({"simbolo": ["S0", "S1", "S2"], "clase": ["C"] * 3}).to_csv(universo, index=False)
+    monkeypatch.setattr(bm, "rutas_por_defecto", lambda: (datos, universo))
     return datos, universo
 
 
@@ -807,7 +809,8 @@ def test_t133_h23_verificar_no_se_fia_del_registro_que_cita_la_carpeta(tmp_path,
     e = json.loads((c / "experimento.json").read_text(encoding="utf-8"))
     e["registro"] = os.path.relpath(otro, c)
     (c / "experimento.json").write_text(json.dumps(e), encoding="utf-8")
-    assert any("cita otro registro" in p for p in bm.verificar(c, tmp_path / "reg.jsonl"))
+    avisos = []
+    assert bm.verificar(c, tmp_path / "reg.jsonl", avisos) == [] and any("cita otro registro" in x for x in avisos)
     e["registro"] = os.path.relpath(tmp_path / "reg.jsonl", c)
     e["dentro_del_maximo"] = not e["dentro_del_maximo"]
     (c / "experimento.json").write_text(json.dumps(e), encoding="utf-8")
@@ -875,4 +878,134 @@ def test_t133_h28_fecha_sin_ceros_a_la_izquierda(tmp_path):
 
 
 def test_t133_h29_version():
-    assert bm.VERSION == "0.4.0"
+    assert bm.VERSION == "0.5.0"
+
+
+
+# ---------------------------------------------------------------- T-133 r02 (QA r01 NO APTO): una prueba por hallazgo
+
+def test_t133_r02_h01_datos_cambiados_son_otra_variante_del_mismo_experimento(tmp_path, monkeypatch, datos_falsos):
+    import shutil
+    datos, universo = datos_falsos
+    monkeypatch.setattr(bm, "titular_a", _titular_falso(datos, universo))
+    a = bm.ejecutar_a(_ns(tmp_path, "a"))
+    copia = tmp_path / "otros"
+    shutil.copytree(datos, copia)
+    (copia / "NO_LO_LEE_A.csv").write_text("fecha,cierre\n2024-01-01,1\n", encoding="utf-8")   # un CSV que A no lee
+    u2 = tmp_path / "otro_nombre.csv"
+    shutil.copy(universo, u2)
+    monkeypatch.setattr(bm, "rutas_por_defecto", lambda: (copia, u2))
+    monkeypatch.setattr(bm, "titular_a", _titular_falso(copia, u2))
+    b = bm.ejecutar_a(_ns(tmp_path, "b"))
+    assert b["experimento"] == {**a["experimento"], "intento": 2, "registro": b["experimento"]["registro"]}   # misma huella
+    texto = (copia / "S1.csv").read_text(encoding="utf-8").splitlines()
+    texto[5] = texto[5].rsplit(",", 1)[0] + ",123.0"
+    (copia / "S1.csv").write_text("\n".join(texto) + "\n", encoding="utf-8")
+    c = bm.ejecutar_a(_ns(tmp_path, "c"))
+    assert c["experimento"]["exp_id"] == a["experimento"]["exp_id"] and not c["experimento"]["dentro_del_maximo"]
+
+
+def test_t133_r02_h01_datos_cambiados_durante_la_ejecucion(tmp_path, monkeypatch, datos_falsos):
+    datos, universo = datos_falsos
+    base = _titular_falso(datos, universo)
+
+    def cambia(*a, **k):
+        t = base(*a, **k)
+        (datos / "S2.csv").write_text((datos / "S2.csv").read_text(encoding="utf-8") + "2026-07-01,100\n", encoding="utf-8")
+        return t
+    monkeypatch.setattr(bm, "titular_a", cambia)
+    with pytest.raises(bm.BancoError, match="no son los del prerregistro"):
+        bm.ejecutar_a(_ns(tmp_path, "x", registro=None))
+
+
+def test_t133_r02_h02_h03_verificar_con_el_registro_del_agente(tmp_path, monkeypatch, datos_falsos):
+    import registro_experimentos as rx
+    monkeypatch.setattr(bm, "titular_a", _titular_falso(*datos_falsos))
+    bm.ejecutar_a(_ns(tmp_path, "v"))
+    c = tmp_path / "v"
+    monkeypatch.setattr(rx, "REGISTRO_DEFECTO", tmp_path / "reg.jsonl")
+    assert bm.verificar(c) == []                                            # sin --registro: el del agente
+    import shutil
+    archivo = tmp_path / "evidencia" / "honda" / "v"
+    shutil.copytree(c, archivo)                                              # una copia auténtica a otra profundidad
+    assert bm.verificar(archivo) == [] and bm.main(["verificar", str(archivo)]) == 0
+    falso = tmp_path / "falso.jsonl"
+    shutil.copy(tmp_path / "reg.jsonl", falso)
+    monkeypatch.setattr(rx, "REGISTRO_DEFECTO", tmp_path / "vacio.jsonl")   # el del agente no tiene este experimento
+    e = json.loads((c / "experimento.json").read_text(encoding="utf-8"))
+    e["registro"] = os.path.relpath(falso, c)                                # la carpeta cita un registro fabricado
+    (c / "experimento.json").write_text(json.dumps(e), encoding="utf-8")
+    assert any("no se puede leer el experimento" in p for p in bm.verificar(c))
+    monkeypatch.setattr(rx, "REGISTRO_DEFECTO", None)
+    assert any("RI_AGENTE" in p for p in bm.verificar(c))
+
+
+def test_t133_r02_h04_n19_por_fecha_en_el_informe():
+    filas = [{"fecha_asof": "2026-01-01", "resuelta": True, "exceso": 0.01, "clase": c} for c in ("A", "B", "C")]
+    inf = bm.construir_informe({"titular": filas, "azar": filas}, {"llamadas": 0, "tokens_entrada": 0, "tokens_salida": 0,
+                                                                  "coste_estimado": None}, 200, 1, None, "h")
+    assert inf["contendientes"]["titular"]["efectivas"] == 1
+
+
+def test_t133_r02_h04_huella_sin_subcarpetas_ordenada_y_con_csv(tmp_path):
+    d = tmp_path / "d"
+    (d / "sub").mkdir(parents=True)
+    (d / "a.csv").write_text("x\n", encoding="utf-8")
+    (d / "b.csv").write_text("y\n", encoding="utf-8")
+    h = bm.huella_datos(d)
+    (d / "sub" / "c.csv").write_text("z\n", encoding="utf-8")
+    assert bm.huella_datos(d) == h                                           # F03: las subcarpetas no cuentan
+    import hashlib
+    o = hashlib.sha256()
+    for n, txt in (("a.csv", b"x\n"), ("b.csv", b"y\n")):
+        o.update(n.encode() + b"\0" + hashlib.sha256(txt).digest())
+    assert h == o.hexdigest()                                                # F04: en orden
+    vacia = tmp_path / "vacia"
+    vacia.mkdir()
+    with pytest.raises(bm.BancoError, match="no tiene ficheros CSV"):       # F05
+        bm.huella_datos(vacia)
+    import unicodedata
+    n1, n2 = tmp_path / "n1", tmp_path / "n2"
+    n1.mkdir()
+    n2.mkdir()
+    (n1 / (unicodedata.normalize("NFC", "acción") + ".csv")).write_text("1\n", encoding="utf-8")
+    (n2 / (unicodedata.normalize("NFD", "acción") + ".csv")).write_text("1\n", encoding="utf-8")
+    assert bm.huella_datos(n1) == bm.huella_datos(n2)                       # H-09: NFC y NFD, la misma
+
+
+def test_t133_r02_h04_p03_fechas_de_la_plantilla_sin_normalizar(tmp_path, monkeypatch, datos_falsos):
+    datos, universo = datos_falsos
+    cortes = [d.strftime("%Y-%m-%d 00:00:00") for d in pd.date_range("2024-06-07", periods=30, freq="7D")]
+
+    def titular(*a, **k):
+        return {"selecciones": [_sel(c, "S1", clase="C") for c in cortes],
+                "consumo": {"llamadas": 1, "tokens_entrada": 1, "tokens_salida": 1, "coste_estimado": None},
+                "datos": datos, "universo": universo, "fecha_fin": lambda ini, h: ini + pd.Timedelta(weeks=8),
+                "advertencias": [], "excluidos_contaminacion": 0}
+    monkeypatch.setattr(bm, "titular_a", titular)
+    inf = bm.ejecutar_a(_ns(tmp_path, "p", registro=None))
+    assert inf["plantilla"]["en_muestra"] == len(inf["fechas_en_muestra"]) > 0
+
+
+def test_t133_r02_h05_h06_informe_dice_la_plantilla_y_las_columnas_ausentes(tmp_path):
+    f = tmp_path / "consumo.csv"
+    f.write_text("llamadas,tokens_entrada,tokens_salida\n1,10,1\n", encoding="utf-8")
+    c = bm.leer_consumo(f)
+    inf = bm.construir_informe({"titular": [], "azar": []}, c, 200, 1, None, "h")
+    inf["plantilla"] = {"selecciones": 300, "en_muestra": 24}
+    md = bm.informe_md(inf, "t")
+    assert "tenía 300 selecciones y 24 entran en la muestra" in md and "sin dato escritos en caché" in md and "sin dato uc" in md
+    for cuerpo in ("llamadas,tokens_entrada,tokens_salida\n1,,1\n", "llamadas,tokens_entrada,tokens_salida\n1,10\n"):
+        f.write_text(cuerpo, encoding="utf-8")
+        with pytest.raises(bm.BancoError, match="vacío"):
+            bm.leer_consumo(f)
+
+
+def test_t133_r02_h08_nivel_y_minimo_de_la_configuracion_de_a():
+    import yaml
+    conf = yaml.safe_load((bm.EJECUTOR_A / "config" / "por_defecto.yaml").read_text(encoding="utf-8"))
+    assert bm.MIN_EFECTIVAS == conf["evaluacion"]["min_conglomerados_bootstrap"]
+    with pytest.raises(bm.BancoError):
+        bm.diferencia([0.05] * 12, [-0.05] * 12, 300, 1, nivel=0.80)
+    with pytest.raises(SystemExit):
+        bm.main(["a", "--desde", "2026-03-06", "--hasta", "2026-04-24", "--salida", "x", "--nivel", "0.85"])
