@@ -10,11 +10,12 @@ ENTORNO — deja el repo listo para implementar y verifica cada punto con un com
 
 1. Python y venv:
    - `~/.local/bin/python3.12 --version` debe existir. Si no existe: PARA y díselo al propietario; no instales Python por tu cuenta.
-   - El venv del repo es `.venv/`. Si no existe, créalo con ese intérprete exacto.
-   - Instala los tres ejecutores, los opcionales de tests y las herramientas de calidad:
-     `pip install -e bloque_a/11_Ejecutor -e bloque_a_forex/11_Ejecutor -e bloque_b/11_Ejecutor`
-     `pip install arch openpyxl python-docx pytest ruff mypy pre-commit detect-secrets`
-   - Activa el pre-commit: `.venv/bin/pre-commit install` (config ya en el repo).
+   - El venv del repo es `.venv/`. Créalo e instálalo SOLO con `.docs/scripts/preparar_entorno.sh` (T-96): usa las versiones
+     fijadas de `tools/requisitos_entorno.txt`, instala los tres ejecutores, los opcionales de tests y las herramientas de
+     calidad, y comprueba lo instalado. Nunca `pip install` sin versión: así es como `arch` 9.0.0 rompió las cuotas de mypy.
+     Si el script dice que el `.venv` está a medias o es de otro Python, bórralo (`rm -rf .venv`) y vuelve a ejecutarlo.
+     `.docs/scripts/preparar_entorno.sh --comprobar` solo compara lo instalado con el fichero.
+   - El pre-commit es opcional y va fuera del entorno fijado (no lo usa el gate): `pipx install pre-commit` y `pre-commit install`.
    - El gate del repo es `./tools/check_all.sh`: debe terminar **12/12 en verde**. Anota los números REALES obtenidos.
    - Nota conocida: sin `python-docx`, bloque_b falla 3 tests (el .docx del mapa de eslabones degrada con elegancia) — es la incidencia INC-003, no un bug tuyo.
 

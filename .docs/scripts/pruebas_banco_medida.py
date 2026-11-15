@@ -2,6 +2,7 @@
 
 Las unitarias usan precios construidos a mano; la de integración ejecuta el Bloque A con el cliente simulado."""
 import json
+import os
 import subprocess
 import sys
 from pathlib import Path
@@ -226,9 +227,9 @@ def test_h02_pocas_observaciones_no_dan_veredicto():
         d = bm.diferencia([0.05] * n, [-0.05] * n, 300, 1)
         assert d["veredicto"] == "todavía no se sabe" and d["motivo"].startswith("pocas observaciones")
     assert bm.diferencia([0.05] * 10, [-0.05] * 10, 300, 1)["veredicto"] == "mejor"
-    assert bm.diferencia([0.05] * 5, [-0.05] * 5, 300, 1, min_efectivas=5)["veredicto"] == "mejor"
+    assert bm.diferencia([0.05] * 12, [-0.05] * 12, 300, 1, min_efectivas=12)["veredicto"] == "mejor"
     # las cotas de un veredicto (H-19)
-    for kw in ({"min_efectivas": 4}, {"nivel": 0.01}, {"nivel": 0.995}):
+    for kw in ({"min_efectivas": 4}, {"min_efectivas": 9}, {"nivel": 0.01}, {"nivel": 0.995}):   # T-133: mínimo 10
         with pytest.raises(bm.BancoError):
             bm.diferencia([0.05] * 10, [-0.05] * 10, 300, 1, **kw)
     with pytest.raises(bm.BancoError):
@@ -344,7 +345,7 @@ def test_h07_coste_con_cache_uc_y_coste_cero(tmp_path):
                  "R1,2,100,10,500,4000,1.5,0\nR2,1,50,5,0,1000,0.5,0\n", encoding="utf-8")
     c = bm.leer_consumo(f)
     assert c == {"llamadas": 3, "tokens_entrada": 150, "tokens_salida": 15, "tokens_cache_escritura": 500,
-                 "tokens_cache_lectura": 5000, "uc": 2.0, "coste_estimado": 0.0, "filas_sin_coste": 0}
+                 "tokens_cache_lectura": 5000, "uc": 2.0, "coste_estimado": 0.0, "filas_sin_coste": 0, "columnas_ausentes": []}
     ev = [{"resuelta": True, "exceso": 0.01, "fecha_asof": "2026-01-01"}, {"resuelta": True, "exceso": 0.02, "fecha_asof": "2026-01-02"}]
     inf = bm.construir_informe({"titular": ev, "azar": ev}, c, 200, 1, None, "h")
     assert inf["coste"]["por_seleccion_resuelta"] == {"tokens_entrada": 75.0, "tokens_cache_lectura": 2500.0, "uc": 1.0,
@@ -442,7 +443,7 @@ def test_h04_verificar_detecta_reescrituras(tmp_path, monkeypatch, datos_falsos)
     monkeypatch.setattr(bm, "titular_a", _titular_falso(*datos_falsos))
     bm.ejecutar_a(_ns(tmp_path, "v"))
     carpeta = tmp_path / "v"
-    assert bm.verificar(carpeta) == [] and bm.main(["verificar", str(carpeta)]) == 0
+    assert bm.verificar(carpeta, tmp_path / "reg.jsonl") == [] and bm.main(["verificar", str(carpeta), "--registro", str(tmp_path / "reg.jsonl")]) == 0
     pre = json.loads((carpeta / "prerregistro.json").read_text(encoding="utf-8"))
     informe = (carpeta / "informe.json").read_text(encoding="utf-8")
     # reescribir el prerregistro y recalcular su huella, y citarla en el informe: el registro lo delata
@@ -452,13 +453,13 @@ def test_h04_verificar_detecta_reescrituras(tmp_path, monkeypatch, datos_falsos)
     inf = json.loads(informe)
     inf["prerregistro"] = pre["huella"]
     (carpeta / "informe.json").write_text(json.dumps(inf), encoding="utf-8")
-    problemas = bm.verificar(carpeta)
+    problemas = bm.verificar(carpeta, tmp_path / "reg.jsonl")
     assert "el intento del registro no es de este prerregistro" in problemas
     assert "el resultado del registro no casa con el informe" in problemas
     # sin recalcular la huella, el propio prerregistro lo delata
     pre["huella"] = "0" * 64
     (carpeta / "prerregistro.json").write_text(json.dumps(pre), encoding="utf-8")
-    assert any("se reescribió" in p for p in bm.verificar(carpeta)) and bm.main(["verificar", str(carpeta)]) == 2
+    assert any("se reescribió" in p for p in bm.verificar(carpeta, tmp_path / "reg.jsonl")) and bm.main(["verificar", str(carpeta), "--registro", str(tmp_path / "reg.jsonl")]) == 2
 
 
 def test_h05_fallo_despues_del_titular_queda_anotado(tmp_path, monkeypatch, datos_falsos):
@@ -543,23 +544,23 @@ def test_h15_verificar_sin_registro_md_y_experimento_danado(tmp_path, monkeypatc
     monkeypatch.setattr(bm, "titular_a", _titular_falso(*datos_falsos))
     bm.ejecutar_a(_ns(tmp_path, "v"))
     c = tmp_path / "v"
-    assert bm.verificar(c) == []
+    assert bm.verificar(c, tmp_path / "reg.jsonl") == []
     md = (c / "informe.md").read_text(encoding="utf-8")
     (c / "informe.md").write_text(md.replace("todavía no se sabe", "mejor"), encoding="utf-8")
-    assert "informe.md no es el que sale de informe.json" in bm.verificar(c)
+    assert "informe.md no es el que sale de informe.json" in bm.verificar(c, tmp_path / "reg.jsonl")
     (c / "informe.md").write_text(md, encoding="utf-8")
     exp = (c / "experimento.json").read_text(encoding="utf-8")
     (c / "experimento.json").write_text("{roto", encoding="utf-8")
-    assert any("no se puede leer el experimento" in p for p in bm.verificar(c))
+    assert any("no se puede leer el experimento" in p for p in bm.verificar(c, tmp_path / "reg.jsonl"))
     (c / "experimento.json").unlink()
     inf = json.loads((c / "informe.json").read_text(encoding="utf-8"))
     for comp in inf["comparaciones"].values():
         comp["veredicto"] = "mejor"
     (c / "informe.json").write_text(json.dumps(inf), encoding="utf-8")
-    problemas = bm.verificar(c)
-    assert any("no hay experimento.json" in p for p in problemas) and bm.main(["verificar", str(c)]) == 2
+    problemas = bm.verificar(c, tmp_path / "reg.jsonl")
+    assert any("no hay experimento.json" in p for p in problemas) and bm.main(["verificar", str(c), "--registro", str(tmp_path / "reg.jsonl")]) == 2
     (c / "experimento.json").write_text(exp, encoding="utf-8")
-    assert "el resultado del registro no casa con el informe" in bm.verificar(c)
+    assert "el resultado del registro no casa con el informe" in bm.verificar(c, tmp_path / "reg.jsonl")
 
 
 @pytest.mark.parametrize("contenido,motivo", [
@@ -769,3 +770,109 @@ def test_t99_h24_rutas_publicas_sin_carpetas_de_la_maquina(tmp_path):
     fuera = bm._ruta_publica(tmp_path / "datos")
     assert fuera.startswith("«externa»/datos (") and str(tmp_path) not in fuera
     assert bm._ruta_publica(RAIZ / "bloque_a" / "11_Ejecutor") == "bloque_a/11_Ejecutor"
+
+
+# ---------------------------------------------------------------- T-133: hallazgos abiertos de la QA r03 de T-94
+
+def test_t133_h21_h22_la_fuente_es_el_contenido_de_los_datos(tmp_path, monkeypatch, datos_falsos):
+    import shutil
+
+    import registro_experimentos as rx
+    datos, universo = datos_falsos
+    copia = tmp_path / "copia"
+    shutil.copytree(datos, copia)
+    assert bm.huella_datos(datos) == bm.huella_datos(copia)
+    monkeypatch.setattr(bm, "titular_a", _titular_falso(datos, universo))
+    a = bm.ejecutar_a(_ns(tmp_path, "a", datos=str(datos), universo=str(universo)))
+    monkeypatch.setattr(bm, "titular_a", _titular_falso(copia, universo))
+    b = bm.ejecutar_a(_ns(tmp_path, "b", datos=str(copia), universo=str(universo), semilla=8))
+    assert a["experimento"]["exp_id"] == b["experimento"]["exp_id"]          # los mismos datos en otra carpeta: el mismo
+    texto = (copia / "S1.csv").read_text(encoding="utf-8").splitlines()
+    texto[5] = texto[5].rsplit(",", 1)[0] + ",123.0"
+    (copia / "S1.csv").write_text("\n".join(texto) + "\n", encoding="utf-8")
+    assert bm.huella_datos(copia) != bm.huella_datos(datos)                   # datos cambiados: otra huella
+    pre = json.loads((tmp_path / "a" / "prerregistro.json").read_text(encoding="utf-8"))
+    assert pre["huella_datos"] == bm.huella_datos(datos) and str(datos) not in json.dumps(pre)
+    assert rx.Registro(tmp_path / "reg.jsonl").verificar() > 0
+
+
+def test_t133_h23_verificar_no_se_fia_del_registro_que_cita_la_carpeta(tmp_path, monkeypatch, datos_falsos):
+    monkeypatch.setattr(bm, "titular_a", _titular_falso(*datos_falsos))
+    bm.ejecutar_a(_ns(tmp_path, "v"))
+    c = tmp_path / "v"
+    assert bm.verificar(c, tmp_path / "reg.jsonl") == []
+    otro = tmp_path / "otro.jsonl"
+    import shutil
+    shutil.copy(tmp_path / "reg.jsonl", otro)
+    e = json.loads((c / "experimento.json").read_text(encoding="utf-8"))
+    e["registro"] = os.path.relpath(otro, c)
+    (c / "experimento.json").write_text(json.dumps(e), encoding="utf-8")
+    assert any("cita otro registro" in p for p in bm.verificar(c, tmp_path / "reg.jsonl"))
+    e["registro"] = os.path.relpath(tmp_path / "reg.jsonl", c)
+    e["dentro_del_maximo"] = not e["dentro_del_maximo"]
+    (c / "experimento.json").write_text(json.dumps(e), encoding="utf-8")
+    assert any("máximo de variantes" in p for p in bm.verificar(c, tmp_path / "reg.jsonl"))
+
+
+def test_t133_h24_una_fecha_fuera_de_la_muestra_no_deja_repetida_a_otra(tmp_path, monkeypatch, datos_falsos):
+    datos, universo = datos_falsos
+    cortes = [d.strftime("%Y-%m-%d") for d in pd.date_range("2024-06-07", periods=60, freq="7D")]
+
+    def titular(*a, **k):
+        sel = [_sel(c, "S1", clase="C") for c in cortes]            # la misma apuesta cada semana, ventana de 8 semanas
+        return {"selecciones": sel, "consumo": {"llamadas": 1, "tokens_entrada": 1, "tokens_salida": 1, "coste_estimado": None},
+                "datos": datos, "universo": universo, "fecha_fin": lambda ini, h: ini + pd.Timedelta(weeks=8),
+                "advertencias": [], "excluidos_contaminacion": 0}
+    monkeypatch.setattr(bm, "titular_a", titular)
+    inf = bm.ejecutar_a(_ns(tmp_path, "r", registro=None))
+    t = inf["contendientes"]["titular"]
+    assert t["repetidas"] == 0 and t["resueltas"] == t["efectivas"] == len(inf["fechas_en_muestra"]) >= 7
+    assert inf["plantilla"] == {"selecciones": 60, "en_muestra": t["selecciones"]}
+
+
+def test_t133_h25_una_neutral_no_gasta_ventana():
+    filas = [{"fecha_asof": "2026-01-01", "fecha_fin": "2026-03-01", "direccion": "NEUTRAL", "resuelta": False, "exceso": None},
+             {"fecha_asof": "2026-01-08", "fecha_fin": "2026-01-20", "direccion": "LARGO", "resuelta": True, "exceso": 0.01}]
+    assert bm.fechas_sin_solape(filas) == {"2026-01-08"}
+
+
+@pytest.mark.parametrize("contenido,motivo", [
+    ("llamadas,tokens_entrada,tokens_salida\n1,10.5,1\n", "entero"),
+    ("llamadas,tokens_entrada\n1,10\n", "faltan las columnas"),
+    ("llamadas,tokens_entrada,tokens_salida,tokens_salida\n1,10,1,1\n", "columnas repetidas"),
+])
+def test_t133_h26_consumo_estricto(tmp_path, contenido, motivo):
+    f = tmp_path / "consumo.csv"
+    f.write_text(contenido, encoding="utf-8")
+    with pytest.raises(bm.BancoError, match=motivo):
+        bm.leer_consumo(f)
+    f.write_text("llamadas,tokens_entrada,tokens_salida\n1,10,1\n", encoding="utf-8")
+    assert "tokens_cache_lectura" in bm.leer_consumo(f)["columnas_ausentes"]
+
+
+def test_t133_h27_el_minimo_de_un_experimento_es_el_de_a():
+    assert bm.MIN_EFECTIVAS_MIN == bm.MIN_EFECTIVAS == 10
+    with pytest.raises(SystemExit):
+        bm.main(["a", "--desde", "2026-03-06", "--hasta", "2026-04-24", "--salida", "x", "--min-efectivas", "9"])
+
+
+def test_t133_h28_la_muestra_se_aplica_a_todos_y_por_fecha():
+    tit = [{"fecha_asof": d, "fecha_fin": f, "resuelta": True, "exceso": 0.01, "clase": "C"}
+           for d, f in (("2026-01-01", "2026-01-10"), ("2026-01-05", "2026-01-14"), ("2026-01-10", "2026-01-19"))]
+    ref = [dict(x, exceso=-0.01) for x in tit] + [{"fecha_asof": "2026-01-05", "fecha_fin": "2026-01-14", "resuelta": True,
+                                                   "exceso": -0.02, "clase": "K"}]
+    inf = bm.construir_informe({"titular": tit, "azar": ref}, {"llamadas": 0, "tokens_entrada": 0, "tokens_salida": 0,
+                                                               "coste_estimado": None}, 200, 1, None, "h")
+    assert inf["contendientes"]["azar"]["fuera_de_muestra"] == 2 and inf["contendientes"]["azar"]["resueltas"] == 2   # S04
+    mismo_dia = [{"fecha_asof": "2026-01-01", "resuelta": True, "exceso": 0.01, "clase": c} for c in ("A", "B", "C")]
+    assert bm.resumen([0.01] * 3, 200, 1, grupos=[bm._fecha(f) for f in mismo_dia])["efectivas"] == 1                 # N19
+
+
+def test_t133_h28_fecha_sin_ceros_a_la_izquierda(tmp_path):
+    (tmp_path / "X.csv").write_text("fecha,cierre\n2026-1-5,100\n", encoding="utf-8")
+    with pytest.raises(bm.BancoError, match="AAAA-MM-DD"):
+        bm.cargar_precios(tmp_path, ["X"])
+
+
+def test_t133_h29_version():
+    assert bm.VERSION == "0.4.0"
