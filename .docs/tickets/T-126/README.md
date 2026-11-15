@@ -34,3 +34,4 @@ Dar prueba a los dos casos del Plan de pruebas V3.0 que no tenían ninguna (PB-4
 
 - 2026-11-14 · ABIERTO · creado con nuevo_ticket.sh
 - 2026-11-14 · EN QA · claude · 13 pruebas en verde; los archivos entregados cumplen PB-26 (0 inversiones, 0 temáticas inválidas, niveles coherentes)
+- 2026-11-14 · EN QA · claude · CA-3 hecho al integrar la r04 de T-116: el mapa cita estas pruebas y las de T-125 en PB-26, PB-46 y PB-48 (las tres pasan a PARCIAL); `docs/evidencias_pruebas_bloque_a.md` regenerado, 145 de 145 pruebas citadas superadas

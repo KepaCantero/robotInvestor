@@ -38,7 +38,7 @@ import pandas as pd
 from scipy import linalg, optimize
 
 from ..configuracion import parametro
-from .operaciones import ErrorFicha
+from .operaciones import ErrorFicha, dia
 
 Resultado = tuple[dict[str, Any], list[str]]
 Manejador = Callable[[dict[str, Any], dict[str, Any]], Resultado]
@@ -220,7 +220,7 @@ def _fecha(x: Any, que: str) -> pd.Timestamp:
         raise ErrorFicha(f"{que}: fecha no válida ({str(x)[:40]!r})") from None
     if pd.isna(t):
         raise ErrorFicha(f"{que}: fecha no válida ({str(x)[:40]!r})")
-    return t.normalize() if t.tz is None else t.tz_convert(None).normalize()
+    return dia(t)   # T-127 (H-08): el criterio de día común (`operaciones.dia`)
 
 
 def _tabla(filas: Any, campos: dict[str, tuple[float | None, bool]], que: str,

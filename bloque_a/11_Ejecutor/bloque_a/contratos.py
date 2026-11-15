@@ -221,9 +221,14 @@ LONGITUD_IBAN = {"AD": 24, "AE": 23, "AT": 20, "BE": 16, "BG": 22, "BR": 29, "CH
                  "EE": 20, "ES": 24, "FI": 18, "FR": 27, "GB": 22, "GI": 23, "GR": 27, "HR": 21, "HU": 28, "IE": 22, "IL": 23,
                  "IS": 26, "IT": 27, "LI": 21, "LT": 20, "LU": 20, "LV": 21, "MC": 27, "MT": 31, "NL": 18, "NO": 15, "PL": 28,
                  "PT": 25, "RO": 24, "SA": 24, "SE": 24, "SI": 19, "SK": 24, "SM": 27, "TR": 26, "VA": 22}
-RE_CANDIDATO_IBAN = re.compile(r"(?<![A-Za-z0-9])([A-Za-z]{2}[0-9]{2}(?:[\s.\-]{0,2}[A-Za-z0-9]){10,30})")
-# una serie de cifras pegada a un punto o una coma con cifras es la parte de un número decimal, no una tarjeta
-RE_CANDIDATO_TARJETA = re.compile(r"(?<![0-9.,])((?:[0-9][\s\-]?){12,18}[0-9])(?![0-9]|[.,][0-9])")
+# T-123 r02 (QA r01, H-01): el candidato es una serie de grupos separados por hasta tres espacios, puntos o guiones, y
+# dentro de ella se prueban las ventanas de grupos consecutivos; así una caducidad, un CVV, una cifra o un código que van
+# al lado («… 1111 12/27», «Ref AB12 DE89 …») no esconden el dato, como pasaba cuando el control miraba la serie entera.
+RE_GRUPOS_IBAN = re.compile(r"[A-Za-z0-9]+(?:[\s.\-]{1,3}[A-Za-z0-9]+)*")
+RE_SEPARADOR = re.compile(r"[\s.\-]+")
+# H-02: sin letra ni cifra pegadas antes o después (un tramo de cifras entre las letras de una huella SHA-256 o de un UUID
+# no es una tarjeta) y sin un punto o una coma con cifras (la parte de un número decimal tampoco)
+RE_GRUPOS_TARJETA = re.compile(r"(?<![0-9A-Za-z.,])([0-9]+(?:[\s\-]{1,3}[0-9]+)*)(?![0-9A-Za-z]|[.,][0-9])")
 
 
 def _iban_valido(compacto: str) -> bool:
@@ -235,14 +240,22 @@ def _iban_valido(compacto: str) -> bool:
 
 
 def ibanes_en_texto(texto: str) -> list[str]:
-    """IBAN con su longitud de país y su dígito de control correctos, con o sin separadores entre caracteres."""
+    """IBAN con su longitud de país y su dígito de control correctos: grupos consecutivos de una serie que empiezan por dos
+    letras y dos cifras y acaban en un límite de grupo (detrás puede venir una palabra o una cifra suelta)."""
     hallados = []
-    for m in RE_CANDIDATO_IBAN.finditer(texto):
-        compacto = re.sub(r"[\s.\-]", "", m.group(1)).upper()
-        largo = LONGITUD_IBAN.get(compacto[:2])
-        # tras el IBAN puede venir una palabra («… 00 EUR»), pero no una cifra más: eso es otra serie, no un IBAN
-        if largo and len(compacto) >= largo and not compacto[largo:largo + 1].isdigit() and _iban_valido(compacto[:largo]):
-            hallados.append(compacto[:largo])
+    for m in RE_GRUPOS_IBAN.finditer(texto):
+        grupos = [g.upper() for g in RE_SEPARADOR.split(m.group(0)) if g]
+        for i, inicio in enumerate(grupos):
+            largo = LONGITUD_IBAN.get(inicio[:2])
+            if not largo or not inicio[2:4].isdigit() or not inicio[:2].isalpha():
+                continue
+            compacto = ""
+            for g in grupos[i:]:
+                compacto += g
+                if len(compacto) >= largo:
+                    break
+            if len(compacto) == largo and _iban_valido(compacto):
+                hallados.append(compacto)
     return hallados
 
 
@@ -269,14 +282,26 @@ def _red_de_tarjeta(cifras: str) -> bool:
 
 
 def tarjetas_en_texto(texto: str) -> list[str]:
-    """Números de tarjeta: 13 a 19 cifras, con un espacio o un guion opcional entre ellas, de una red conocida y con el
-    dígito de control de Luhn. Se devuelven enmascarados (solo las cuatro últimas cifras)."""
+    """Números de tarjeta: 13 a 19 cifras seguidas o en grupos de al menos cuatro (el último puede ser más corto), de una red
+    conocida y con el dígito de control de Luhn. Se prueban las ventanas de grupos consecutivos de cada serie. Se devuelven
+    enmascarados (solo las cuatro últimas cifras). Un importe con espacio de miles o una lista de números cortos no empiezan
+    por un grupo de cuatro ni siguen con ellos, y no se miran (T-123 r02, H-04)."""
     hallados = []
-    for m in RE_CANDIDATO_TARJETA.finditer(texto):
-        cifras = re.sub(r"[\s\-]", "", m.group(1))
-        if 13 <= len(cifras) <= 19 and _red_de_tarjeta(cifras) and _luhn(cifras):
-            hallados.append("tarjeta …" + cifras[-4:])
-    return hallados
+    for m in RE_GRUPOS_TARJETA.finditer(texto):
+        grupos = [g for g in re.split(r"[\s\-]+", m.group(1)) if g]
+        for i in range(len(grupos)):
+            cifras = ""
+            for j in range(i, len(grupos)):
+                if len(grupos[j]) < 4 and j == i:
+                    break
+                cifras += grupos[j]
+                if len(cifras) > 19:
+                    break
+                if len(cifras) >= 13 and _red_de_tarjeta(cifras) and _luhn(cifras):
+                    hallados.append("tarjeta …" + cifras[-4:])
+                if len(grupos[j]) < 4:
+                    break
+    return list(dict.fromkeys(hallados))
 
 
 def secretos_en_texto(texto) -> list[str]:
@@ -407,11 +432,13 @@ class Mensajeria:
         if msg["version_contrato"] != VERSION_CONTRATO or msg.get("tipo_mensaje") not in ("ENCARGO", "RETORNO"):
             raise MensajeInvalido("Versión o tipo de mensaje no admitido")
         if msg["contrato"] not in CANALES:
-            self.almacen.incidencia("CANAL_NO_PREVISTO", f"Contrato inexistente {msg['contrato']}", msg.get("emisor", ""))
+            self.almacen.incidencia("CANAL_NO_PREVISTO", f"Contrato inexistente {msg['contrato']}", msg.get("emisor", ""),
+                                    tratamiento="rechazada y registrada", escalado_operador=True)   # R2: se escala (PB-22, INC-T116-03)
             raise CanalNoPrevisto(f"Contrato inexistente {msg['contrato']}")
         if not canal_permitido(msg["contrato"], msg["emisor"], msg["receptor"], self.v6):
             self.almacen.incidencia("CANAL_NO_PREVISTO",
-                                    f"{msg['emisor']} → {msg['receptor']} por {msg['contrato']} no previsto (R2)", msg["emisor"])
+                                    f"{msg['emisor']} → {msg['receptor']} por {msg['contrato']} no previsto (R2)", msg["emisor"],
+                                    tratamiento="rechazada y registrada", escalado_operador=True)
             raise CanalNoPrevisto(f"{msg['emisor']} → {msg['receptor']} por {msg['contrato']} no previsto (R2)")
         cred = contiene_credenciales({k: v for k, v in msg.items() if k not in ("msg_id", "timestamp")})
         if cred:

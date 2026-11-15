@@ -20,6 +20,18 @@ class ErrorFicha(ValueError):
     """Entrada insuficiente o no válida para la ficha (se traduce en RECHAZADO)."""
 
 
+def sin_zona(t: pd.Timestamp) -> pd.Timestamp:
+    """T-127 (QA r01 de T-121, H-08): una fecha con zona horaria, pasada a UTC y sin zona; sin zona, tal cual."""
+    return t if t.tz is None else t.tz_convert(None)
+
+
+def dia(t: pd.Timestamp) -> pd.Timestamp:
+    """T-127 (QA r01 de T-121, H-08): el día de una fecha para compararla con la fecha de corte, el mismo en todas las
+    fichas con datos en línea (Fase 1 y Fase 2), para el dato y para el corte: con zona horaria, su día en UTC; sin zona,
+    su día tal cual. «2024-02-01T00:30+14:00» es del 31 de enero (10:30 UTC)."""
+    return sin_zona(t).normalize()
+
+
 def _arr(x) -> np.ndarray:
     a = np.asarray(x, dtype=float)
     return a[~np.isnan(a)]

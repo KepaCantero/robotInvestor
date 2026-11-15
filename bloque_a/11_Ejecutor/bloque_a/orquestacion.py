@@ -548,6 +548,12 @@ class Bloque:
             clases = [c for c in clases if c not in pausadas]
             limitaciones += [f"{NOMBRE_CLASE[c]}: pausado en F0 a la espera de la respuesta del Broker a {k} (consulta BLOQUEANTE, R26)"
                              for c, k in sorted(pausadas.items())]
+        # PB-58 y PB-60 (INC-T116-03): un servicio sin credencial (denegada o pendiente) queda en modo degradado y los
+        # entregables lo declaran
+        limitaciones += [f"Servicio «{d['servicio']}» en modo degradado: " + (
+            f"el Broker denegó la credencial ({d['crd_id']}); no se vuelve a pedir salvo cambio de circunstancias (CT-25)"
+            if d["estado"] == "DENEGADA" else f"credencial pendiente del Broker ({d['crd_id']}, CT-25)")
+            for d in self.credenciales.degradaciones(as_of)]
         hz_interes = horizontes or list(f10.get("P-03") or HORIZONTES)
         if not clases:   # nada que analizar (no activas o pausadas): se cierra sin redactar (T-53, QA H-06)
             return self._run_sin_analisis(run_id, as_of, tipo, limitaciones, res_eval, disparador, alcance, hz_interes, prioridad)

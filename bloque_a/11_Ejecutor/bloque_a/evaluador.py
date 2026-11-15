@@ -844,6 +844,9 @@ class Evaluador:
         de la configuración (`aprendizaje.lecciones_por_encargo`), no de un literal."""
         if max_n is None:
             max_n = lecciones_por_encargo(self.cfg)
+        elif isinstance(max_n, bool) or not isinstance(max_n, int) or not 1 <= max_n <= LECCIONES_POR_ENCARGO_MAX:
+            # T-122, QA r01, H-14: el máximo explícito sigue la misma regla que el de la configuración
+            raise ValueError(f"max_n debe ser un entero de 1 a {LECCIONES_POR_ENCARGO_MAX} (es {max_n!r})")
         orden = {"estadistica": 0, "recurrente": 1, "anecdotica": 2}
         lst = []
         for l in self.almacen.estado("F6", as_of, clave="id").values():

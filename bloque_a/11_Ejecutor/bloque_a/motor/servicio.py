@@ -326,6 +326,11 @@ class _ConfiguracionLeida(dict):
     def __init__(self, cfg: dict | None) -> None:
         super().__init__(cfg or {})
         self.leidas: set[str] = set()
+        # T-127 (QA r01 de T-121, H-07): rutas que `parametro` no encontró aquí y tomó de `config/por_defecto.yaml`
+        self.respaldos: set[str] = set()
+
+    def anotar_respaldo(self, ruta: str) -> None:
+        self.respaldos.add(str(ruta))
 
     def __bool__(self) -> bool:   # `parametro` hace `cfg or {}`: una configuración vacía también se registra
         return True
@@ -355,24 +360,44 @@ def _configuracion_usada(cfg: dict, secciones: Any) -> dict[str, dict[str, Any]]
     return out
 
 
-def _cubre(valor: Any, defecto: Any) -> bool:
-    """T-121 (H-01): ¿trae `valor` todas las claves de `defecto` (la sección de `por_defecto.yaml`), a cualquier nivel? Si
-    las trae, `parametro` no toma nada de `por_defecto.yaml` y un cambio en ese fichero no cambia lo que la ficha lee."""
-    if not isinstance(defecto, dict):
-        return True
-    return isinstance(valor, dict) and all(k in valor and _cubre(valor[k], d) for k, d in defecto.items())
+def _respaldo_en(seccion: str, respaldos: set[str]) -> bool:
+    """T-127 (QA r01 de T-121, H-07): ¿alguna de las rutas que `parametro` tomó de `por_defecto.yaml` es de `seccion`?"""
+    return any(r == seccion or r.startswith(f"{seccion}.") for r in respaldos)
 
 
 def _con_tipo(x: Any) -> str:
     return f"{type(x).__module__}.{type(x).__qualname__}:{x}"
 
 
+def _escalar_json(x: Any) -> bool:
+    """Lo que JSON escribe tal cual y sin confundirlo con otro tipo: texto, booleano, nulo, entero de Python y número de
+    coma flotante (un `numpy.float64` es un `float`: mismo valor, misma firma, como en la r02 de T-119)."""
+    return x is None or isinstance(x, (str, bool, float)) or type(x) is int
+
+
+def _marcado(x: Any) -> Any:
+    """T-127 (QA r02 de T-119, H-11): `x` con el tipo de cada contenedor a la vista. JSON escribe igual una tupla que una
+    lista (y `default` no se llama para ellas) y una clave entera que su texto. Cada contenedor va envuelto en un objeto
+    de una sola clave que dice qué es («d», «l», «t») y lo que no es un escalar de JSON, en «o» con su tipo: dos valores con
+    la misma marca son del mismo tipo a cualquier nivel. Una clave que no es un escalar de JSON no se firma (`TypeError`)."""
+    if isinstance(x, dict):
+        if not all(_escalar_json(k) for k in x):
+            raise TypeError("clave que no es de JSON")
+        pares = [[_marcado(k), _marcado(v)] for k, v in x.items()]
+        return {"d": sorted(pares, key=lambda kv: json.dumps(kv[0], ensure_ascii=False))}
+    if type(x) in (list, tuple):
+        return {"l" if type(x) is list else "t": [_marcado(v) for v in x]}
+    return x if _escalar_json(x) else {"o": _con_tipo(x)}
+
+
 def _firma_tipos(*partes: Any) -> str | None:
     """Ronda r02 de T-119 (QA r01, H-06): `clave_hash` escribe con `str` lo que no es JSON, y un `Decimal("1.5")`, un
     `numpy.float32(1.5)` y el texto "1.5" dan la misma clave. Esta firma distingue el tipo de lo que no es JSON: la caché
-    solo entrega un resultado a una petición con la misma firma. `None` si no se puede calcular (no se usa la caché)."""
+    solo entrega un resultado a una petición con la misma firma. `None` si no se puede calcular (no se usa la caché).
+    T-127 (H-11): también el de los contenedores (una tupla no es una lista), con `_marcado`."""
     try:
-        return hashlib.sha256(json.dumps(partes, sort_keys=True, ensure_ascii=False, default=_con_tipo).encode("utf-8")).hexdigest()
+        return hashlib.sha256(json.dumps(_marcado(partes), sort_keys=True, ensure_ascii=False,
+                                         allow_nan=True).encode("utf-8")).hexdigest()
     except (TypeError, ValueError, RecursionError, UnicodeError):
         return None
 
@@ -899,13 +924,13 @@ class Motor:
         cambiadas = sorted(k for k, reg in (registrada or {}).items() if clave_hash(reg) != clave_hash(vigente[k]))
         # T-121 (QA r01 de T-118, H-01): que la configuración vigente haya cambiado no impide culpar al original, porque la
         # re-ejecución usa la del artefacto. Lo impide no haber podido reproducir sus condiciones: una sección leída que el
-        # artefacto no guarda (`sin_registro`), o una guardada sin registro legible o cuya parte de `por_defecto.yaml` (de
-        # donde `parametro` toma lo que el valor guardado no traiga) ya no es la de entonces
-        # (si el valor guardado trae todas las claves de esa sección de `por_defecto.yaml`, su cambio no interviene)
+        # artefacto no guarda (`sin_registro`), o una guardada sin registro legible o cuya parte de `por_defecto.yaml` ya no
+        # es la de entonces y de la que la re-ejecución ha tomado algo. T-127 (QA r01 de T-121, H-07): «ha tomado algo» es
+        # que `parametro` no encontró una ruta en el valor guardado y la sacó de `por_defecto.yaml` (`respaldos`); una
+        # clave nueva del fichero que la ficha no lee no interviene
         no_reproducidas = sorted(set(sin_registro) | {k for k, reg in (registrada or {}).items() if not isinstance(reg, dict)
                                                       or (reg.get("por_defecto") != vigente[k]["por_defecto"]
-                                                          and not ("valor" in reg and _cubre(reg["valor"],
-                                                                                              config_por_defecto().get(k))))})
+                                                          and _respaldo_en(k, lectura.respaldos))})
         cfg_nota = None
         if fallo:
             coincide, categoria = "NO", "ERROR_REEJECUCION"

@@ -30,10 +30,22 @@ Que R8 (datos sensibles fuera de los mensajes) detecte también un IBAN de otro 
 
 ## Plan de pruebas
 
-`tests/test_t123_r8_iban_y_tarjetas.py`.
+`tests/test_t123_r8_iban_y_tarjetas.py` y, desde la r02, `tests/test_t123_r02.py`.
+
+## Ronda r02 (QA r01 NO APTO)
+
+| Hallazgo | Corrección |
+| --- | --- |
+| H-02 (alta): tramos de cifras de huellas SHA-256 y UUID pasaban como tarjeta | La tarjeta no admite letra ni cifra pegadas; 100 000 huellas y 3 000 UUID, ninguna marcada |
+| H-01 (media): tarjeta con caducidad o CVV, IBAN seguido de una cifra o tras «AB12», IBAN con tres espacios: sin detectar | Ventanas de grupos consecutivos dentro de cada serie; hasta tres separadores |
+| H-03 (baja): `pruebas.md` era la plantilla | Rellenado |
+| H-04 (baja): importes con espacio de miles y listas de enteros marcados | Grupos de al menos cuatro cifras salvo el último; lo que queda, declarado en INC-T123-01 |
+
 
 ## Registro
 
 - 2026-11-14 · ABIERTO · creado con nuevo_ticket.sh
 - 2026-11-14 · EN QA · claude · implementado. Al probarlo con el ciclo simulado, tres decimales de las señales del Motor (p. ej. 0.4228715933084759) pasaban como tarjeta y bloqueaban un CT-12: se excluyen las series pegadas a un punto o una coma con cifras
 - 2026-11-14 · EN QA · claude · un IBAN seguido de otra cifra ya no se marca (era otra serie); pruebas vecinas (684) en verde
+- 2026-11-14 · QA r01 · revisor nuevo · NO APTO (H-02 alta: huellas y UUID como tarjeta; H-01 media; H-03 y H-04 bajas)
+- 2026-11-14 · EN QA · claude · ronda r02: los cuatro corregidos (tabla de arriba); la prueba de T-122 de «tres separadores» pasa a «cuatro» (INC-T123-01)

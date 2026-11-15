@@ -159,6 +159,11 @@ def parametro(cfg: dict | None, ruta_clave: str) -> Any:
     partes = ruta_clave.split(".")
     v = _buscar(cfg or {}, partes)
     if v is _SIN_VALOR:
+        # T-127 (QA r01 de T-121, H-07): una configuración que lo pide (la que el Motor da a una ficha) apunta qué rutas
+        # salen de `por_defecto.yaml`, para saber si un cambio de ese fichero interviene en una re-ejecución (CT-10)
+        anotar = getattr(cfg, "anotar_respaldo", None)
+        if callable(anotar):
+            anotar(ruta_clave)
         v = _buscar(config_por_defecto(), partes)
     if v is _SIN_VALOR or v is None:   # una clave presente pero nula tampoco vale (falla cerrado)
         raise KeyError(f"falta el parámetro de configuración `{ruta_clave}` (ni en la configuración ni en por_defecto.yaml)")

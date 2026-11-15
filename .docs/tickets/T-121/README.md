@@ -2,7 +2,7 @@
 
 | Campo | Valor |
 | --- | --- |
-| Estado | EN QA |
+| Estado | CERRADO |
 | Pieza | bloque_a (11_Ejecutor, motor) |
 | Planifica · implementa · QA | claude (un agente, en una copia de trabajo propia, rama `t119r02`, encima de la r02 de T-119) · el mismo · un revisor que no implementó |
 | Aprobación del operador | No necesaria: corrige hallazgos de una QA. Las decisiones abiertas las toma el agente con la opción más prudente y las apunta como `[PROPUESTO]` en INC-T121-01 (el operador lo pidió así) |
@@ -78,3 +78,4 @@ Cerrar los seis hallazgos que la QA r01 de T-118 dejó abiertos (`.docs/tickets/
 - 2026-11-14 · ABIERTO · creado con nuevo_ticket.sh
 - 2026-11-14 · EN CURSO · claude · retomado de un punto de guardado de otra sesión (commit `0790ce8`, con la mayor parte del código); terminado encima en la rama `t119r02`
 - 2026-11-14 · EN QA · claude · los seis hallazgos corregidos, con 116 pruebas nuevas en `test_t121_hallazgos.py` y 7 en `test_t118_hallazgos.py`; 55 mutantes de las correcciones, ninguno vivo; decisiones en INC-T121-01; detalle en `analisis-tecnico.md` y `pruebas.md`. Sin `git push`: commits locales en la rama `t119r02`
+- 2026-11-14 · CERRADO (14-11-2026): QA r01 APTO. Hallazgos abiertos (H-07, H-08 y H-09, bajos) en T-127 · revisor nuevo sin contexto (`qa.md`)

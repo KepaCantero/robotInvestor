@@ -248,7 +248,9 @@ def _fecha(x: Any, ficha: str, clave: str) -> pd.Timestamp:
         raise ErrorFicha(f"{ficha}: «{clave}» no es una fecha válida") from e
     if t is pd.NaT:
         raise ErrorFicha(f"{ficha}: «{clave}» no es una fecha válida")
-    return t
+    # T-127 (QA r01 de T-121, H-08): con zona horaria, en UTC y sin zona, como en las demás fichas (`operaciones.sin_zona`):
+    # unas fechas con zona y otras sin ella ya no rompen la serie
+    return op.sin_zona(t)
 
 
 def _fechas(d: dict, clave: str, ficha: str) -> pd.DatetimeIndex:
@@ -269,8 +271,7 @@ def _hasta_corte_peticion(fechas: pd.DatetimeIndex, ent: dict, ficha: str, clave
     fc = ent.get("fecha_corte") if isinstance(ent, dict) else None
     if fc is None:
         return
-    corte, ultima = ((t if t.tz is None else t.tz_convert(None)).normalize()
-                     for t in (_fecha(fc, ficha, "fecha_corte de la petición"), fechas[-1]))
+    corte, ultima = (op.dia(t) for t in (_fecha(fc, ficha, "fecha_corte de la petición"), fechas[-1]))   # T-127 (H-08)
     if ultima > corte:
         raise ErrorFicha(f"{ficha}: «{clave}»: dato del {ultima.date()} posterior a la fecha de corte {corte.date()} "
                          f"(no conocible)")
@@ -430,13 +431,16 @@ def f_fon_disc(ent: dict, params: dict) -> tuple[dict, list[str]]:
             raise ErrorFicha(f"{F}: precio y NAV deben estar alineados con «fechas»{ctx}")
         if mb.get("fecha_nav") is None:
             raise ErrorFicha(f"{F}: rechazo sin fecha de NAV{ctx}")
-        fnav = _fecha(mb["fecha_nav"], F, "fecha_nav")
-        if fnav > corte:
-            raise ErrorFicha(f"{F}: fecha de NAV posterior a la fecha de corte{ctx}")
+        # T-127 (QA r01 de T-121, H-09): por día, como la fecha de corte de la petición: un NAV del último día de «fechas»
+        # con hora es de ese día. La «fecha de corte» de la ficha es la última de «fechas», no la de la petición
+        fnav = op.dia(_fecha(mb["fecha_nav"], F, "fecha_nav"))
+        if fnav > op.dia(corte):
+            raise ErrorFicha(f"{F}: fecha de NAV posterior a la fecha de corte de la ficha (la última de «fechas», "
+                             f"{op.dia(corte).date()}; no la de la petición){ctx}")
         privado = _booleano(mb, "privado", F, privados_cat, ctx=ctx)
         meses = m["meses_nav_privados"] if privado else m["meses_nav"]
         ajuste = _texto(mb, "ajuste_nav_declarado", F, opcional=True, ctx=ctx)
-        if fnav < corte - pd.DateOffset(months=meses):
+        if fnav < op.dia(corte) - pd.DateOffset(months=meses):
             if ajuste is None:
                 raise ErrorFicha(f"{F}: rechazo con NAV de antigüedad > {meses} meses sin ajuste declarado{ctx}")
             lim.append(f"miembro {nom}: NAV de {fnav.date()} (> {meses} meses); ajuste declarado: {ajuste}")

@@ -382,15 +382,19 @@ def _sin_una_clave(v):
     return v
 
 
-@pytest.mark.parametrize("valor", [None, _sin_una_clave], ids=["sin_valor", "valor_parcial"])
-def test_h01_convencion_distinta_si_la_parte_de_por_defecto_que_se_uso_ya_no_es_la_de_entonces(tmp_path, valor):
-    """Una sección guardada sin valor, o con un valor que no trae todas las claves, cuyo `por_defecto` (de donde
-    `parametro` toma lo que el valor no trae) ya no es el vigente: la re-ejecución no ha podido reproducir sus condiciones
-    y no se culpa al original."""
+@pytest.mark.parametrize("valor,categoria", [(None, "CONVENCION_DISTINTA"), (_sin_una_clave, "ERROR_ORIGINAL")],
+                         ids=["sin_valor", "valor_parcial"])
+def test_h01_convencion_distinta_si_la_parte_de_por_defecto_que_se_uso_ya_no_es_la_de_entonces(tmp_path, valor, categoria):
+    """Una sección guardada sin valor cuyo `por_defecto` (de donde `parametro` la toma) ya no es el vigente: la
+    re-ejecución no ha podido reproducir sus condiciones y no se culpa al original. T-127 (QA r01 de T-121, H-07): con un
+    valor guardado al que le falta una clave que DEC-VOI-001 no usa, la ficha lee la sección guardada entera y no toma
+    nada de `por_defecto.yaml` (`parametro` no mezcla una sección encontrada con la del fichero): el que difiere es el
+    original. Antes se daba CONVENCION_DISTINTA porque el valor «no cubría» las claves del fichero."""
     m = _motor(tmp_path)
     out = m.reejecutar(_copia(m, _voi(m)["calc_id"], _por_defecto_de_entonces(valor)), "auditoría")
-    assert (out["coincide"], out["categoria"]) == ("NO", "CONVENCION_DISTINTA"), out
-    assert "parametros_ht03" in out["diagnostico"] and "por_defecto.yaml" in out["diagnostico"]
+    assert (out["coincide"], out["categoria"]) == ("NO", categoria), out
+    if categoria == "CONVENCION_DISTINTA":
+        assert "parametros_ht03" in out["diagnostico"] and "por_defecto.yaml" in out["diagnostico"]
 
 
 def test_h01_un_cambio_de_por_defecto_que_el_valor_guardado_cubre_no_ablanda_la_categoria(tmp_path):
@@ -399,9 +403,12 @@ def test_h01_un_cambio_de_por_defecto_que_el_valor_guardado_cubre_no_ablanda_la_
     m = _motor(tmp_path)
     out = m.reejecutar(_copia(m, _voi(m)["calc_id"], _por_defecto_de_entonces(lambda v: v)), "auditoría")
     assert (out["coincide"], out["categoria"]) == ("NO", "ERROR_ORIGINAL"), out
-    assert servicio._cubre({"a": {"b": 1, "c": 2}, "d": 3}, {"a": {"b": 0}, "d": 0})
-    assert not servicio._cubre({"a": {"c": 2}, "d": 3}, {"a": {"b": 0}, "d": 0})
-    assert not servicio._cubre({"a": 1}, {"a": {"b": 0}}) and servicio._cubre(None, None)
+    # T-127 (H-07): la regla ya no compara el valor guardado con las claves del fichero (`_cubre`), sino lo que la
+    # re-ejecución ha tomado de él: las rutas que `parametro` no encuentra en la configuración de la ficha
+    leida = servicio._ConfiguracionLeida({"a": {"b": 1}})
+    assert parametro(leida, "a.b") == 1 and leida.respaldos == set()
+    parametro(leida, "horizontes.H5")
+    assert leida.respaldos == {"horizontes.H5"}
 
 
 def test_h01_sin_la_configuracion_en_el_artefacto_sigue_siendo_convencion_distinta(tmp_path):

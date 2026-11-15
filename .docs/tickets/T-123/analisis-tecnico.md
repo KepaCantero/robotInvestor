@@ -11,3 +11,9 @@ T-120 y T-122 dejaron declarado como límite que R8 no detectaba números de tar
 - Límites: tarjeta con separadores de más de un carácter o en grupos con puntos; IBAN extranjero en un formato con más de dos separadores seguidos; tarjetas de redes locales.
 - El Bloque A Forex tiene su propia copia de `RE_SECRETO` y no se toca (un bloque por tarea; el Forex no se integra).
 - Comandos: desde `bloque_a/11_Ejecutor`, `python -m pytest -q tests/test_t123_r8_iban_y_tarjetas.py`.
+
+## Ronda r02
+
+- `RE_CANDIDATO_IBAN` y `RE_CANDIDATO_TARJETA` se sustituyen por `RE_GRUPOS_IBAN`, `RE_SEPARADOR` y `RE_GRUPOS_TARJETA`: el patrón captura la serie entera y `ibanes_en_texto` y `tarjetas_en_texto` prueban las ventanas de grupos consecutivos. El coste sigue siendo lineal: cada ventana se corta al pasar de 34 caracteres (IBAN) o de 19 cifras (tarjeta).
+- `tarjetas_en_texto` devuelve cada tarjeta una vez.
+- `tests/test_t122_hallazgos.py`: el caso «tres separadores» pasa a detectarse y el de «no se marca» usa cuatro.

@@ -58,4 +58,6 @@ def test_el_maximo_de_lecciones_sale_de_la_configuracion(tmp_path):
     assert len(Evaluador(a, None, None, {"evaluacion": {}}, None).lecciones_vigentes(AS_OF, "DIV")) == 10     # configuración parcial
     cuatro = Evaluador(a, None, None, config_pruebas(aprendizaje={"lecciones_por_encargo": 4}), None)
     assert [x["id"] for x in cuatro.lecciones_vigentes(AS_OF, "DIV")] == [f"LEC-2026-{i:04d}" for i in range(1, 5)]
-    assert len(cuatro.lecciones_vigentes(AS_OF, "DIV", max_n=12)) == 12                                        # el argumento explícito manda
+    assert len(cuatro.lecciones_vigentes(AS_OF, "DIV", max_n=7)) == 7                                          # el argumento explícito manda
+    with pytest.raises(ValueError, match="max_n"):                                                          # T-122 H-14: hasta 10
+        cuatro.lecciones_vigentes(AS_OF, "DIV", max_n=12)
