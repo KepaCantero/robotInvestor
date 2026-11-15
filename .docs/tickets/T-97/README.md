@@ -2,9 +2,9 @@
 
 | Campo | Valor |
 | --- | --- |
-| Estado | EN QA |
+| Estado | CERRADO (QA r01 APTO, 15-11-2026) |
 | Pieza | `sistema_global/marco_comun_c/` (una sola pieza: el código de referencia de la Fase 1) |
-| Planifica · implementa · QA | claude · claude · sin asignar (el operador decide quién, 12-11-2026) |
+| Planifica · implementa · QA | claude · claude · un revisor nuevo sin contexto (operador, 15-11-2026: terminar los tickets hasta aprobar sus QA) |
 | Aprobación del operador | Apertura autorizada el 2026-11-12 («Sí, abre el ticket»). Toca los controles de F: plan **aprobado por escrito el 2026-11-12**: «Apruebo; empieza ya» (implementar sobre la V0.73 y avisar a Astra de que la QA de T-83 se hace sobre la V0.74) |
 | Deuda técnica | T-97 en `sistema_global/seguimiento/Deuda_tecnica_y_pendientes_del_operador.md` |
 
@@ -99,3 +99,4 @@ Son **valores por defecto para cualquier copia** (D-45), no el perfil de nadie: 
 | Migración V0.73 → V0.74 con un estado guardado de V0.73 | Migración | CA-7 |
 | `pruebas_parametros_doc_t83.py` | Regresión | CA-8 |
 | Las 61 baterías, el LEEME y el gate | Regresión e integración | CA-9 y CA-10 |
+- 2026-11-15 · CERRADO · QA r01 APTO (revisor nuevo, base `a8e0f29`, gate 12/12): los diez criterios (CA-5 en T-98); F nunca más laxo que en la V0.73 (4.500 casos); MIG-010 conserva lo guardado; H-01 y H-02 medios y H-03 a H-08 bajos a la deuda como T-155
