@@ -104,3 +104,23 @@ Registro 0.4.0.
 | H-18 | Ya no se sube el sello: un clon no queda bloqueado por un sello desfasado. |
 | H-20 | Un registro que es un directorio, o que no se puede leer, da `RegistroError`. |
 | H-24 | `experimento.json` guarda la ruta del registro relativa a la carpeta de salida. |
+
+## Ronda r05 (15-11-2026, QA r04 NO APTO)
+
+Registro 0.5.0.
+
+| Hallazgo | Corrección |
+| --- | --- |
+| H-35 (alta) | `rev-list --full-history` lista también las fusiones de antes del registro. Ahora, un commit sin el registro solo cuenta como borrado si alguno de sus padres lo tenía. Con eso el registro por defecto se puede crear en el repositorio del proyecto. Prueba: `test_h35_*`, una fusión anterior al registro. |
+| H-36 | El «fallido» tardío se decide por el **orden de la cadena** (`_seq`), no por los instantes que trae cada anotación: el mismo segundo o un `ahora` atrasado ya no lo esquivan. Un resultado anterior a su intento se rechaza. |
+| H-40 (5) | **Una variante no se repite con un intento abierto:** `intento` lo rechaza y pide anotar antes su resultado («fallido» si se cortó). Así, un corte seguido de una repetición ya no deja la variante sin poder adoptarse. Las situaciones de «pendiente» y de «fallido tardío» solo pueden venir de un registro editado o antiguo, y la regla de adopción las sigue tratando. |
+| H-37 | El sello, el cerrojo y el turno viven **dentro de la carpeta de git** (`git rev-parse --git-path ri-registro/…`) cuando el registro está en un repositorio, fuera del árbol de trabajo. `stash --all`, `clean -X` y `checkout` no los tocan. Fuera de un repositorio siguen junto al registro y en `.gitignore`. |
+| H-38 | `pruebas_scripts.sh` muestra la salida si fallan las pruebas, y lee la línea base como el primer número de la primera línea. |
+| H-39 | Quien no puede abrir el cerrojo puede leer sin él, pero no escribir. La marca «sellado a mano» se arrastra a cada sello nuevo; en un clon no viaja, y queda como límite declarado. |
+| H-40 (1-4) | `.gitignore` y `CLAUDE.md` (`RI_AGENTE`) están al día, y la frase del `reset` en la deuda está corregida: en la máquina que anotó, un `reset` de lo ya subido se detecta por el sello; en un clon que solo lee, no. |
+| H-41 | Hay pruebas que matan M04 (sello muy por detrás sin pull), M08 (el escritor retiene el turno mientras espera), M09 (`RI_AGENTE` no válido sin ruta por defecto) y M18 (la marca a mano se arrastra). |
+
+**Lo que aún marcan los scripts de las rondas anteriores:**
+- los casos que repetían una variante con un intento abierto, que ahora da `RegistroError` (H-40);
+- los que esperaban el sello junto al registro, que ahora vive dentro de `.git`;
+- los límites ya declarados de las rondas anteriores.

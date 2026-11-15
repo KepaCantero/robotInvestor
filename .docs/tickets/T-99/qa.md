@@ -265,3 +265,140 @@ Medios y bajos que quedan, que deben corregirse con su prueba de regresión o pa
 La fusión de dos ramas y el sello rehecho por quien manipula a propósito son límites `[PROPUESTO]` que fallan cerrado, o están declarados: **no bloquean el APTO**.
 
 Para la ronda r04: volver a ejecutar `.docs/tickets/T-99/revisores/r03_00_todos.sh <raíz>`, que incluye `r02_00_todos.sh` y los r01 sentencia a sentencia, y `r03_08_mutantes.py <worktree desechable>`, además de las suites del implementador. En los scripts, los casos marcados «(referencia)», «(regla declarada)», «(cosmético)» y «(límite declarado: tocar el sello)» no son hallazgos. Los marcados «(límite por declarar)» son H-26.
+
+## Ronda r04
+
+- **Revisor:** revisor nuevo sin contexto (Claude) · **Ronda:** r04 · **Fecha:** 15-11-2026 · **Código revisado:** `origin/develop` en `bb504b5` (registro 0.4.0).
+- **Método:** me hice una opinión con el plan, el código (`.docs/scripts/registro_experimentos.py`, sus pruebas, la interfaz de `.docs/scripts/banco_medida.py`, `.docs/scripts/pruebas_scripts.sh` con `.docs/scripts/linea_base_pruebas.txt`, `.docs/scripts/commit_limpio.sh`, `.docs/scripts/commit.sh`, `.gitignore` y el punto 9 de `AGENTS.md`) y la fila T-99 de la deuda, y escribí los scripts r04 antes de leer `analisis-tecnico.md`, `pruebas.md` y `mutantes_r04.py`. Scripts nuevos en `revisores/`: `r04_comun.py`, `r04_01_…` a `r04_08_…` y el lanzador `r04_00_todos.sh`, que ejecuta primero `r03_00_todos.sh` (y con él `r02_00_todos.sh` y los r01 sentencia a sentencia) y después los r04 salvo `r04_07_mutantes.py`, que cambia ficheros y solo se lanza sobre un worktree desechable. `r04_02` y `r04_03` son `r03_02` y `r03_01` adaptados sin tocar los originales: el sello ya no se sube, y los originales se cortan al intentar subirlo. La salida completa está en `revisores/r04_salida.txt`. Todos escriben en carpetas nuevas de `/tmp` (los de git, en repositorios temporales con el `.gitignore` del proyecto) y comprueban al terminar que no existe «.docs/experimentos» ni en la raíz revisada ni en el repositorio principal.
+
+### Reproducción desde limpio
+
+1. `git worktree add --detach <scratch>/wt_r04 origin/develop` (`bb504b5`), con el `.venv` del repositorio principal enlazado.
+2. `.docs/scripts/pruebas_scripts.sh` en el worktree: **194 passed** en 39 s, igual a la línea base. Después, ni «.docs/experimentos» ni cambios en `git status`.
+3. `./tools/check_all.sh` una vez en el worktree: **12/12 en 30 min**. Corpus, NFC, YAML, secretos y refs vivas en verde. ruff 2838 = cuota; mypy A 109, A-Forex 174 y B 159, iguales a su cuota; pytest A 6338 ≥ 607, A-Forex 68 ≥ 68 y B 176 ≥ 174.
+4. `r03_00_todos.sh <worktree>` (dentro de `r04_00_todos.sh`). Sale igual en dos ejecuciones, salvo los nombres de las carpetas temporales:
+   - r01 sentencia a sentencia: con el sello del registro, 140 de 148 como pide el plan; con el sello rehecho por el atacante, 137 de 148 (como en la r03).
+   - r02 (sin `r02_08`): `r02_01` 22/24, `r02_02` 18/18, `r02_04` 40/40, `r02_05` 8/8, `r02_06` 34/34, `r02_07` 11/12 y `r02_09` 6/6; `r02_03` se corta en su caso 3 (un «.lock» que es un directorio; falla cerrado). `r03_10` (su versión adaptada): 8/9.
+   - r03: `r03_01` 20/27, `r03_03` 4/4, `r03_04` 9/11, `r03_05` 16/18, `r03_06` 4/4, `r03_09` 4/4 y `r03_10` 8/9. `r03_02` se corta en su caso 3 y `r03_07` al empezar, porque la 0.4.0 ya no sube el sello y `commit_limpio.sh` ya no tiene la comprobación de H-18. Los dos están adaptados en `r04_02` (16/20) y `r04_06` (casos de `commit_limpio.sh`).
+   - **Juicio sobre lo que sigue marcado:**
+     - Es aceptable (falla cerrado, es la regla `[PROPUESTO]` o es un límite declarado):
+       - r01, con el sello rehecho: `r01_01` casos 6 a 8 (tocar el sello). En los dos modos: `r01_01` sin salto final y `r01_02` (la fusión de dos ramas), que fallan cerrado; `r01_06` (cuatro casos: el «ayer» en cascada, «repetir v1» y el intento sin resultado, que son la regla (1), y la clave `contradictorias`, cosmética); `r01_08` (no hay variante por defecto, y su caso siguiente cae en cascada).
+       - `r02_01`, dos casos: el sello una por detrás (un corte) y un sello viejo restaurado (tocar el sello).
+       - `r02_03` y `r03_10`: el script mira a los 5 s y el cerrojo espera 30 s; falla cerrado a los 30,0 s (`r03_03` caso 1, `r04_05` caso 3).
+       - `r02_07`: el registro bloqueado tras la fusión (falla cerrado).
+       - `r03_01`: los casos 2 a 4 y el de borrar el sello marcan porque el script sube el sello a un repositorio sin el `.gitignore` del proyecto. En `r04_03`, con el `.gitignore`, `stash`, `checkout`, `reset --hard` y el `reset` de un commit subido **se detectan**. Quedan el push forzado (límite declarado) y borrar el sello (tocar el sello).
+       - `r03_02` caso 2 y `r04_02` (sello viejo restaurado y sin sello truncado a una): tocar el sello. `r04_02`, la marca «sellado a mano»: va en H-39. El «seq» 7.0: cosmético.
+     - No es aceptable:
+       - `r03_04`, dos casos: el «fallido» tardío **sigue dejando adoptar** cuando las anotaciones tienen el mismo instante (H-36).
+       - `r03_05`, dos casos: `CLAUDE.md` y `common.sh` no hablan de `RI_AGENTE` (H-40, documentación).
+5. Scripts r04 contra el worktree: 126 casos, **102 como pide el plan y 24 marcados**. Lo marcado son los límites declarados, que se dicen en cada caso, y H-35 a H-42.
+6. Mutantes, en un segundo worktree desechable:
+   - `r04_07_mutantes.py` (18 mutantes míos sobre lo nuevo: sello local, git que no responde, turno, «fallido» tardío, `RI_AGENTE`, `sellar` y enlaces): las pruebas del implementador matan 12; con mis scripts r04_01, r04_04 y r04_06, 13.
+     - Vivos frente a las pruebas del implementador: M01, M04, M08, M09, M14 y M18. M01 lo matan mis scripts y M08 lo mata `r03_03`.
+     - M14 es casi equivalente: un HEAD ilegible falla igual después, en `rev-list`.
+     - Van en H-41: M04 (sello varias por detrás con un registro distinto del de git), M08 (el escritor suelta el turno antes de esperar), M09 (el banco con un `RI_AGENTE` no válido) y M18 (la marca «sellado a mano» no se arrastra).
+   - `mutantes_r04.py` del implementador: 0 de 60 vivos.
+
+### Estado de H-01 a H-34
+
+| ID | Estado | Evidencia |
+| --- | --- | --- |
+| H-01 (alta) | **corregido** | Quitar las últimas líneas sin tocar el sello se detecta (`r04_02` casos 1 a 5), y también el truncado subido (`r04_03`). Lo que queda pasa por tocar el sello (límite declarado) o por un push forzado (límite declarado, H-26); `stash --all` y `clean -X` van en H-37. |
+| H-02 (alta) | **corregido** (misma máquina) | `r03_10`: 2 × 100 intentos, 201 anotaciones íntegras. `r04_05` caso 1: 3 escritores × 30 con 3 lectores en bucle a la vez dan 90 intentos correlativos, sin un solo error de lectura ni de escritura. |
+| H-03 (alta) | **corregido** con la regla `[PROPUESTO]` (1) | `r02_04` 40/40 y `r01_06`. Lo del «fallido» tardío va en H-27 y H-36. |
+| H-04 a H-11 | **corregidos** (siguen) | r01_03 12/12, r01_04 37/37, r01_05 30/30, r01_07 11/11, r01_09 6/6, `r02_06` 34/34, `r02_09` 6/6. |
+| H-12 (baja) | **corregido** | `pruebas_scripts.sh` exige 194 pruebas y lo llaman `commit.sh` y `commit_limpio.sh`. Quitar una prueba sin bajar la línea base falla (`r04_06`, «son 193, por debajo de la línea base 194»). Bajar las dos a la vez pasa, como con las cuotas de los bloques. Restos menores: H-38. |
+| H-13 (alta) | **corregido** | `r02_02` 18/18. `r04_03` detecta el truncado en un commit mixto, en una subcarpeta, desde un worktree, en un clon superficial, con nombres con comodines y renombrando. Pero el ancla tiene un fallo nuevo con las fusiones anteriores al registro (H-35). |
+| H-14 (media) | **corregido** | Los cuatro casos que fallaban abiertos fallan cerrado: otro usuario, configuración rota, «.git» vacío y «.git» que apunta a nada. HEAD que apunta a un objeto que no existe, también («bad object HEAD»). Evidencia: `r04_03` y `test_h14_*`. |
+| H-15 (media) | **corregido** | `r03_04`: 9 secuencias de 9. |
+| H-16 (media) | **corregido** | `r04_02` casos 3 y 4: un corte real deja el registro legible, la siguiente escritura pone el sello al día, y un `os.replace` que falla sale como `RegistroError`. |
+| H-17 (media) | **corregido** | Siete valores no válidos de `RI_AGENTE` (`Astra`, `astra ` con espacio, vacío, `ástra`, 33 caracteres, `../astra` y `astra/x`) detienen la orden con un motivo, sin crear nada. Con `--registro` explícito funciona. El banco se detiene al empezar, sin traza (`r04_06`). Sin `RI_AGENTE` se usa `claude` (decisión (3)). `AGENTS.md` (punto 9) y el índice de scripts lo explican; `CLAUDE.md` no (H-40). |
+| H-18 (media) | **corregido** (deja de aplicar) | El sello ya no se sube. Un clon sin sello idéntico a HEAD se lee (`r04_01` caso 7, `r04_03`), y `commit_limpio.sh` rechaza el sello, su temporal, el cerrojo y el turno (`r04_06`). |
+| H-19 (media) | **corregido** | `r02_07` caso 7. |
+| H-20 (baja) | **corregido** | `r03_09` 4/4: un registro que es un directorio da `RegistroError`. |
+| H-21 (baja) | **corregido** | `r03_10` y `r04_05` caso 1, sin falsas alarmas. |
+| H-22 (baja) | **corregido** | `r02_05` 8/8 y `r04_06`. |
+| H-23 (baja) | **corregido en parte** | La r04 de `analisis-tecnico.md` no dice qué marcan todavía los scripts de las rondas anteriores, ni que `r03_02` y `r03_07` se cortan con la 0.4.0 (H-40). |
+| H-24 (baja) | **corregido** | `experimento.json` guarda la ruta relativa a la carpeta de salida (`r03_06` 4/4). |
+| H-25 (alta) | **corregido** | Con el `.gitignore` del proyecto, el sello no se sube y `git add` lo rechaza. `git stash`, `git stash -u`, `git checkout -- <registro>` y `git reset --hard` que quitan la repetición «peor» sin subir **se detectan** («anotación 3 frente a la 5 del sello»), y `adoptable` no cambia (`r04_01` caso 2, `r04_03`, `test_h25_*`). Un pull que trae 8 anotaciones de otra máquina se admite, y la siguiente escritura pone el sello al día (`r04_01` caso 8). Quedan `stash --all` y `clean -X` (H-37). |
+| H-26 (media) | **corregido** como límite declarado | En la máquina que anotó, el `reset --hard HEAD~1` de un commit ya subido ahora **se detecta**: el sello queda por delante (`r04_01` caso 6). El push forzado sigue sin detectarse en un clon que solo leía (`r04_01` caso 7, `r04_03`). Está declarado `[PROPUESTO]` en la fila T-99, con la propuesta de proteger `develop` en GitHub, que es un ajuste del operador: **no bloquea**. La fila dice que «un `reset` de un commit ya subido no se detecta en local»; es más prudente que lo que pasa (H-40). |
+| H-27 (media) | **corregido en parte** | Con instantes distintos, el «fallido» tardío ya no deja adoptar (`r04_04` casos 1, 5 y 6; `test_h27_*`). Con el mismo instante, o con el instante del «fallido» atrasado, sigue dejando: H-36. |
+| H-28 (media, no bloquea) | **declarado** `[PROPUESTO]` (decisión (3)) | `RI_AGENTE` distinto por sesión de un mismo agente, en la fila T-99 y en `AGENTS.md`. Sin `RI_AGENTE`, dos sesiones de Claude siguen anotando en «registro_claude.jsonl», y la fusión falla cerrado (`r04_01` casos 9 y 11). `CLAUDE.md` no lo dice (H-40). |
+| H-29 (baja) | **corregido** | Cuatro lectores en bucle dejan entrar al escritor en 0,7 s (`r03_03` caso 2). Un proceso que muere con el turno no bloquea; uno colgado con el turno hace fallar cerrado al escritor y al lector a los 30,0 s; dos escritores detrás de un lector colgado entran los dos cuando muere (`r04_05`). Fuera de POSIX no se escribe (`test_h29_sin_cerrojo_no_se_escribe`, M16 muerto). Hueco de pruebas: M08 (H-41). |
+| H-30 (baja) | **corregido** | `sellar` se niega con un registro de la 0.4.0, también tras un `git clean -X` (`r04_01` caso 4, `r04_02`, `r04_06`). Sella uno de la 0.1.0 con la marca «sellado a mano», y `verificar` la dice. Restos: H-39. |
+| H-31 (baja) | **corregido** | El «.sello.tmp» de un corte está ignorado (`r04_01` caso 10, `r04_02` caso 3), y `commit_limpio.sh` lo rechaza (`r04_06`). |
+| H-32 (baja) | **corregido** | `r03_03` caso 3: un enlace simbólico comparte el cerrojo y el sello. M15 lo matan las pruebas del implementador. |
+| H-33 (baja) | **corregido** | `test_h33_*` y `test_h14_*`. M13 lo matan las pruebas del implementador. |
+| H-34 (baja) | **corregido en parte** | La fila T-99, el índice de `.docs/README.md` y los docstrings de los mutantes están al día. Quedan el comentario del `.gitignore`, `CLAUDE.md` y la frase del `reset` (H-40). |
+
+### Criterios de aceptación
+
+| Criterio | Cumple | Evidencia |
+| --- | --- | --- |
+| CA-1 | sí | r01_04 37/37; `r02_06` 34/34. |
+| CA-2 | sí | r01_05 30/30. |
+| CA-3 | sí | Reescribir, quitar o cambiar sin tocar el sello se detecta (`r04_02`), y también `stash`, `checkout` y `reset` de lo no subido (`r04_01`, `r04_03`). Con la cadena rota no se anota nada más (r01_03 12/12). Los caminos que quedan son límites declarados: tocar el sello y el push forzado. `stash --all` y `clean -X` van en H-37 (baja). |
+| CA-4 | sí, con un borde | Cuentan todos los intentos, y una variante de más no es adoptable (`r02_04`). Borde: un «fallido» tardío con el mismo instante que la repetición deja adoptar (H-36). |
+| CA-5 | **no**, en el repositorio del proyecto | Con un registro fuera de git o en un repositorio sin fusiones, sí: `test_integracion_bloque_a`, r01_09 6/6 y `r02_07`. **En el repositorio del proyecto, el registro por defecto no se puede crear**: «el registro se quitó del repositorio en el commit 77761065» (`r04_08` caso 3, solo con `ver`, que no crea nada). El banco, sin `--sin-registro` ni un `--registro` externo, se detiene antes de anotar. Ver H-35. |
+| CA-6 | sí | `r02_09` 6/6 y `pruebas_borradores_contratos.py`. |
+| CA-7 | sí | `bb504b5` no toca ningún bloque ni el marco común (solo `.docs/`, `.gitignore`, `AGENTS.md` y la fila de la deuda). Tras las pruebas, el gate y todos los scripts, no existe «.docs/experimentos» ni en el worktree ni en el repositorio principal. |
+
+### Hallazgos nuevos
+
+| ID | Gravedad | Cómo reproducirlo | Esperado / obtenido | Corrección sugerida | Estado |
+| --- | --- | --- | --- | --- | --- |
+| H-35 | alta | `r04_08`. (1) Repositorio temporal con historia completa y una fusión `--no-ff` hecha antes de que exista el registro; después, el primer `prerregistrar`. (2) En la raíz revisada: `RI_AGENTE=claude registro_experimentos.py ver` (solo lee). | **Esperado** (CA-5 y el objetivo del ticket): el registro por defecto nace con el primer experimento. **Obtenido:** `RegistroError: el registro se quitó del repositorio en el commit …`, en los dos casos. En el repositorio del proyecto, con el commit `77761065`: ni la línea de órdenes ni el banco pueden anotar nada, ni con `claude` ni con `astra`. Causa: `git rev-list --full-history --parents HEAD -- <ruta>` reescribe los padres, y en ese modo git **incluye siempre las fusiones**, toquen o no la ruta. En el clon superficial de esta sesión también sale el commit frontera. `_comprobar_ancla` toma cualquier commit de la lista sin la ruta por un borrado. Falla cerrado, pero deja la pieza inservible donde se tiene que usar. Las pruebas no lo ven: sus repositorios no tienen fusiones de antes del registro, y CA-7 prohíbe anotar en el del proyecto. | Un commit sin el registro solo es un borrado si **algún padre** lo tiene. Sin el registro en el commit ni en ningún padre, se salta. Otra opción: sacar la lista con `git log --format='%H %P' --full-history -- <ruta>` y la misma regla. Pruebas: los dos casos de `r04_08` y un clon superficial con una fusión en la frontera. Conviene también una prueba que lea el registro por defecto en la raíz real con `ver`, que no escribe. | abierto |
+| H-36 | media | `r04_04` casos 2, 3, 4 y 9; `r03_04`, dos casos. Intento 1 abierto, intento 2 de la misma variante «mejor» y **después** (en el fichero) `resultado 1 fallido`: (a) todo con el mismo instante; (b) el «fallido» con `ahora` atrasado a antes del inicio del 2 (biblioteca); (c) la línea de órdenes de verdad, con las cuatro órdenes en el mismo segundo. | **Esperado** (H-27, decisión (1)): un «fallido» anotado después de empezar la repetición no deja adoptar. **Obtenido:** en (a), (b) y (c), `adoptable=True` y `fallido_tardio=False`. La regla compara instantes con «<» y se fía del instante que trae la anotación: con instantes al segundo, el mismo segundo no cuenta como «después», y `ahora` deja atrasarlo. Tampoco se valida que los instantes no retrocedan: un resultado registrado antes de que empezara su intento se acepta (caso 4). No es alta: con el banco, una ejecución dura más de un segundo, y atrasar el instante exige la biblioteca. | Decidir «tardío» por el **orden de la cadena**, que no se puede falsear sin romperla: un «fallido» cuyo `_seq` es mayor que el del INTENTO de una repetición posterior de la misma variante es tardío. Además, rechazar al escribir un instante anterior al de la última anotación del experimento (o al del intento, en un resultado). Pruebas: los casos citados. | abierto |
+| H-37 | baja | `r04_01` casos 3 a 5. Repetición «peor» sin subir y luego (a) `git stash --all`, o (b) `git clean -fdX` y, para salir del bloqueo, `git checkout -- <registro>`. | Las dos órdenes mueven o borran ficheros ignorados, y el sello lo es: en (a), `verificar = 3` y `adoptable=True` sin aviso. Además, leer el registro durante el stash vuelve a crear «.lock» y «.turno», y `git stash pop` falla después. En (b), el `clean` solo falla cerrado («falta el sello»), y `sellar` no deja salir. El mensaje no da otra salida, y la más a mano es el `checkout`, que se lleva lo no subido sin que se vea. Son órdenes poco habituales, y quien las usa toca el sello: no es alta. | Guardar el sello (y el cerrojo y el turno) **fuera del árbol de trabajo**: `git rev-parse --git-path ri-registro/<nombre>.sello` cuando el registro está en un repositorio, que ni `stash`, ni `checkout`, ni `clean` tocan. Fuera de git, junto al registro como ahora. Y, cuando falte el sello con anotaciones sin subir, que el mensaje diga «sube el registro tal como está; no lo devuelvas a git». | abierto |
+| H-38 | baja | `r04_06` caso 4, en un worktree desechable. | (1) Con una prueba que falla, `pruebas_scripts.sh` sale con código 1 **sin escribir nada**: `set -e` corta en la asignación con `$(…)`, antes del `echo` y de `fallo`. Falla cerrado, pero no se ve qué pasó. (2) `tr -dc '0-9'` junta todas las cifras del fichero: con un comentario como «194  # T-99, 15-11-2026», la línea base pasa a ser 1949915112026 y todo falla (cerrado). (3) Bajar la línea base en el mismo cambio que quita pruebas pasa, como con las cuotas de los bloques (observación, no hallazgo). | `salida="$(… 2>&1)" \|\| codigo=$?` (con `codigo=0` antes) y escribir la salida si falla. Leer la línea base con `grep -m1 -oE '^[0-9]+'`. | abierto |
+| H-39 | baja | `r04_05` caso 5 (un usuario sin permiso de escritura en la carpeta del registro); `r04_06` caso 2 («sellar» y la marca). | (1) Un lector sin permiso de escritura no puede verificar el registro («no se puede abrir el cerrojo…: Permission denied»): «.turno» y «.lock» se abren para anexar también al leer. Falla cerrado. (2) La marca «sellado a mano» vive en el sello, que es local: en un clon, `verificar` ya no la dice (M18, además, no la arrastran las pruebas). (3) `sellar` solo mira la versión de los PRERREGISTRO: un registro de la 0.1.0 seguido por la 0.4.0, truncado y sin sello, se sella. Es tocar el sello, y no existe ningún registro de la 0.1.0 en el proyecto. | (1) Si no se puede abrir el cerrojo para leer, leer sin él y avisar, o abrir en modo lectura cuando el fichero ya existe. (2) Dejar la marca en la cadena (o en git), no solo en el sello. (3) Negarse si alguna anotación es posterior a un prerregistro de la 0.2.0 o mayor, o si hay intentos de después de la 0.1.0. | abierto |
+| H-40 | baja | Lectura; `r03_05`; `r04_06` caso 1. | (1) El comentario del `.gitignore` sigue diciendo «el sello sí se sube con el registro». (2) `CLAUDE.md`, por donde entra Claude, no dice que dos sesiones de Claude en máquinas distintas usen `RI_AGENTE` distintos: sin `RI_AGENTE` anotan las dos en el de `claude` (H-28). (3) La fila T-99 dice que un `reset` de un commit ya subido «no se detecta en local»: sí se detecta en la máquina que lo anotó, y no en un clon que solo leía. (4) La r04 de `analisis-tecnico.md` no dice qué marcan todavía los scripts de las rondas anteriores, ni que `r03_02` y `r03_07` se cortan con la 0.4.0 (H-23). (5) `intento` admite otro intento de una variante con intentos abiertos, y el banco no avisa (`r04_04` caso 8). Tras un `kill -9` y una repetición, la variante ya no se puede adoptar, ni cerrando el abierto. Con `--max-variantes` 1, eso deja el experimento entero sin adopción posible, y no está escrito en ninguna parte. | Poner al día el comentario, `CLAUDE.md` (una línea, como el punto 9 de `AGENTS.md`), la frase de la fila T-99 y el análisis. Que el banco y `intento` avisen (o se nieguen) si la variante tiene un intento abierto, y digan «ciérralo antes como fallido». | abierto |
+| H-41 | baja | `r04_07`: mutantes M04, M08, M09 y M18 vivos frente a las pruebas del implementador (M08 lo mata `r03_03`). | Ninguna prueba cubre: un sello varias anotaciones por detrás con un registro distinto del de git (M04); que el escritor retenga el turno mientras espera el cerrojo (M08; `test_h29_*` no lo ve); el banco con un `RI_AGENTE` no válido (M09: el banco cogería «registro_claude.jsonl»); que la marca «sellado a mano» se arrastre en la escritura siguiente (M18). | Una prueba por cada uno. Para M08, la de `r03_03` caso 2 (cuatro lectores en bucle y un escritor, con plazo). | abierto |
+
+### Decisiones del operador `[PROPUESTO]`
+
+- **(1) Regla de adopción** (contradictoria, pendiente, fallido tardío): las tres lecturas están implementadas y fallan cerrado en el uso normal (`r02_04` 40/40, `r03_04` 9/9, `r04_04` casos 1, 5 y 6). El «fallido tardío» se decide por instantes, y así no falla cerrado con el mismo segundo ni con un instante atrasado (H-36). Se corrige sin cambiar la decisión. Una consecuencia de la regla que no está escrita: tras un corte, repetir antes de cerrar el intento abierto deja la variante sin adopción posible (H-40, punto 5).
+- **(2) Ancla en todo el historial más sello local:**
+  - Lo que pedía H-25 está bien: el sello solo admite ir por detrás, y lo no subido queda protegido frente a `stash`, `checkout` y `reset` (`r04_01`, `r04_03`).
+  - El límite del push forzado está declarado, con la propuesta de proteger `develop` en GitHub (ajuste del operador fuera del código): **no bloquea el APTO**. Borrar el sello a mano es tocar el sello, también declarado.
+  - Pero el recorrido del historial falla con las fusiones anteriores al registro, que el repositorio del proyecto tiene (H-35, alta). No es una consecuencia de la decisión: es un error al leer la salida de `rev-list`.
+- **(3) Un registro por agente, cerrojo con turno y espera máxima:** bien implementado. `RI_AGENTE` falla cerrado si no es válido. El turno no deja sin entrar al escritor, y todas las esperas fallan cerrado a los 30 s sin escribir (`r04_05`). Fuera de POSIX no se escribe. La fusión de dos máquinas falla cerrado y está declarada (H-28): **no bloquea**.
+- **(5) Línea base de las pruebas de `.docs/scripts`:** bien. Quitar una prueba se ve; bajar la línea base a la vez se ve en el diff, como en los bloques. Restos de forma en H-38.
+
+### Invariantes
+
+- **Orden sin F y G / LLM en la ruta determinista / controles que se relajan solos:** no aplican. La regla de adopción no cambia con el uso.
+- **Falla cerrado y valida antes de mutar:**
+  - Bien en la escritura: el sello se prepara antes, se valida antes de anexar, y un intento rechazado no crea nada.
+  - Git que no responde y `RI_AGENTE` no válido fallan cerrado.
+  - Fallan abiertos: el «fallido» tardío con el mismo instante (H-36), y `stash --all` o `clean -X` seguido de `checkout` (H-37).
+  - H-35 falla cerrado, pero siempre: la pieza no se puede usar.
+- **Números a mano:** `CERROJO_ESPERA_S` = 30 y la línea base 194 están `[PROPUESTO]` en la fila T-99. Los sondeos de 0,02 s del cerrojo no son umbrales del sistema.
+- **Decisiones del operador en silencio:** ninguna. Las de fondo, el límite del push forzado y `RI_AGENTE` están `[PROPUESTO]` en la fila T-99. La frase del `reset` es imprecisa (H-40).
+- **Secretos y datos personales:** `tools/secrets_scan.py` y `tools/nfc_check.py` salen limpios con los scripts r04 dentro. Los scripts no usan claves, y el único correo es de prueba (`ejemplo.invalid`). En `r04_salida.txt`, las rutas del scratch van como «<scratch>».
+- **Documentación:** H-40. El briefing no cambia.
+
+### Veredicto r04
+
+**NO APTO.** CA-5 no se cumple en el repositorio del proyecto, y queda un hallazgo alto abierto:
+
+- **H-35 (alta):** el ancla toma por un borrado cualquier fusión anterior al registro, porque `rev-list --full-history --parents` las lista siempre. En el repositorio del proyecto, el registro por defecto no se puede crear, y ni el banco ni la línea de órdenes pueden anotar. No depende de ninguna decisión del operador. La corrección es pequeña: una ausencia solo es un borrado si algún padre tenía el registro.
+
+Estado de las rondas anteriores:
+
+- Corregidos: H-01 a H-22, H-24, H-25 y H-29 a H-33. H-26 queda corregido como límite declarado, y H-28 está declarado.
+- Abiertos en parte: H-27 (media, el resto va en H-36), y H-23 y H-34 (bajos, el resto va en H-40).
+
+Medios y bajos que quedan, que deben corregirse con su prueba de regresión o pasar a la deuda con su ID si el operador lo decide:
+
+- Medio: H-36 (que es el resto de H-27).
+- Bajos: H-37 a H-41.
+
+Los límites `[PROPUESTO]` declarados **no bloquean el APTO**: el push forzado (que depende de proteger `develop` en GitHub, un ajuste del operador), tocar el sello a mano, la fusión de dos máquinas que anotan el mismo registro (falla cerrado) y la espera máxima de 30 s (falla cerrado).
+
+Para la ronda r05:
+
+- Volver a ejecutar `.docs/tickets/T-99/revisores/r04_00_todos.sh <raíz> <worktree desechable>`, que incluye `r03_00_todos.sh`, `r02_00_todos.sh` y los r01 sentencia a sentencia.
+- Lanzar `r04_07_mutantes.py <worktree desechable>`, además de las suites del implementador.
+- En los scripts, los casos marcados «(límite declarado: …)», «(observación)», «(referencia)» y «(cosmético)» no son hallazgos.
+- `r04_08` caso 3 se puede ejecutar en la raíz real: solo usa `ver` y comprueba que no crea «.docs/experimentos».

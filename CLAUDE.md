@@ -142,6 +142,8 @@ propietario (o una sesión coordinadora) hace commit.
 .docs/scripts/preparar_entorno.sh             # crea .venv e instala ejecutores, herramientas y opcionales; --comprobar solo compara
 source .venv/bin/activate
 # Las cuotas de ruff y mypy dependen de esas versiones (arch 9.0.0 suma 2 errores de mypy en A y en A-Forex).
+# Registro de experimentos (T-99): cada sesión anota en el suyo. Exporta RI_AGENTE (claude por defecto; dos sesiones de
+# Claude en máquinas distintas, valores distintos, p. ej. claude-nube). El sello del registro es local y no se sube.
 
 pytest -q bloque_a/11_Ejecutor        # 607
 pytest -q bloque_a_forex/11_Ejecutor  # 68 (≈5 min: backtests simulados)

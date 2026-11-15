@@ -1,5 +1,22 @@
 # T-99 · Pruebas
 
+## Ronda r05 (15-11-2026)
+
+| Suite | r04 | r05 |
+| --- | --- | --- |
+| `.docs/scripts/pruebas_registro_experimentos.py` | 85 | 94 en verde |
+| Todas las de `.docs/scripts` (`pruebas_scripts.sh`, línea base 203) | 194 | 203 en verde |
+| Mutantes `.docs/tickets/T-99/mutantes_r05.py` | 0 de 60 vivos | 0 de 69 vivos |
+
+Pruebas nuevas:
+- `test_h35_una_fusion_anterior_al_registro_no_cuenta_como_borrado`;
+- `test_h36_*` (mismo segundo, `ahora` atrasado y resultado anterior a su intento);
+- `test_h37_*` (`stash --all` y `clean -X`) y `test_h39_*`;
+- `test_h41_*`, las cuatro que matan M04, M08, M09 y M18.
+
+`test_h15` y `test_h27` construyen ahora a mano los intentos abiertos: la API ya no permite repetir una variante con uno abierto.
+
+
 ## Ronda r04 (15-11-2026)
 
 | Suite | r03 | r04 |
