@@ -657,22 +657,31 @@ def _experimento(reg, exp_id: str | None, prerregistro: dict, h: str, max_varian
         if distinto:
             raise BancoError(f"el experimento {exp_id} no es de este banco: no casan {distinto} con su prerregistro")
     else:
-        de_la_fuente = [x for x in misma if x["contenido"].get("fuente_banco") == fuente]
-        if de_la_fuente:
-            exp_id = de_la_fuente[0]["exp_id"]
-            prev = de_la_fuente[0]["contenido"].get("max_variantes")
-            if prev != max_variantes:
-                raise BancoError(f"el experimento {exp_id} de esta hipótesis y fuente se prerregistró con max_variantes {prev}, "
-                                 f"no {max_variantes}: el máximo no se cambia después (T-99, QA r01 H-08)")
-        else:
-            exp_id = reg.prerregistrar({
-                "hipotesis": prerregistro["hipotesis"], "objeto": "BLOQUE", "metrica": prerregistro["metrica"],
-                "fuente_banco": fuente, "datos": f"backtest de A con {fuente}; huella del prerregistro del banco {h}",
-                "desde": prerregistro["desde"], "hasta": prerregistro["hasta"], "semilla": prerregistro["semilla"],
-                "criterio_exito": prerregistro["criterio"] + " (frente al azar y frente al momento a la vez)",
-                "max_variantes": max_variantes}, autor="banco_medida")["exp_id"]
+        # Buscar o prerregistrar bajo el mismo cerrojo: dos bancos a la vez no crean dos experimentos (T-99, QA r02 H-19)
+        encontrado, _nuevo = reg.buscar_o_prerregistrar(
+            lambda c: c.get("hipotesis") == prerregistro["hipotesis"] and c.get("objeto") == "BLOQUE" and c.get("fuente_banco") == fuente,
+            {"hipotesis": prerregistro["hipotesis"], "objeto": "BLOQUE", "metrica": prerregistro["metrica"],
+             "fuente_banco": fuente, "datos": f"backtest de A con {fuente}; huella del prerregistro del banco {h}",
+             "desde": prerregistro["desde"], "hasta": prerregistro["hasta"], "semilla": prerregistro["semilla"],
+             "criterio_exito": prerregistro["criterio"] + " (frente al azar y frente al momento a la vez)",
+             "max_variantes": max_variantes}, autor="banco_medida")
+        exp_id = encontrado["exp_id"]
+        prev = encontrado["contenido"].get("max_variantes")
+        if prev != max_variantes:
+            raise BancoError(f"el experimento {exp_id} de esta hipótesis y fuente se prerregistró con max_variantes {prev}, "
+                             f"no {max_variantes}: el máximo no se cambia después (T-99, QA r01 H-08)")
     otros = len({x["exp_id"] for x in misma} - {exp_id})
     return exp_id, otros
+
+
+def _ruta_publica(ruta) -> str:
+    """Cómo se nombra una ruta en el prerregistro y en el registro, que se suben a un repositorio público (T-99, QA r02 H-24):
+    relativa a la raíz si está dentro; si no, su nombre y una huella corta de la ruta, sin carpetas de la máquina."""
+    p = Path(ruta).resolve()
+    try:
+        return p.relative_to(RAIZ.resolve()).as_posix()
+    except ValueError:
+        return f"«externa»/{p.name} ({hashlib.sha256(str(p).encode('utf-8', 'backslashreplace')).hexdigest()[:12]})"
 
 
 def ejecutar_a(a: argparse.Namespace) -> dict:
@@ -690,8 +699,8 @@ def ejecutar_a(a: argparse.Namespace) -> dict:
     salida = Path(a.salida).resolve()
     salida.mkdir(parents=True, exist_ok=True)
     (salida / "experimento.json").unlink(missing_ok=True)   # nunca el de una ejecución anterior
-    datos_txt = str(Path(datos_arg).resolve()) if datos_arg else "ejemplos/datos_sinteticos de A"
-    universo_txt = str(Path(universo_arg).resolve()) if universo_arg else "config/universo_ejemplo.csv de A"
+    datos_txt = _ruta_publica(datos_arg) if datos_arg else "ejemplos/datos_sinteticos de A"
+    universo_txt = _ruta_publica(universo_arg) if universo_arg else "config/universo_ejemplo.csv de A"
     prerregistro = {
         "hipotesis": HIPOTESIS_A,
         "titular": "bloque_a (backtest)", "referencias": ["azar", "momento"], "desde": a.desde, "hasta": a.hasta,
@@ -748,7 +757,8 @@ def ejecutar_a(a: argparse.Namespace) -> dict:
     except BaseException as e:
         if reg is not None:
             try:
-                reg.resultado(intento["exp_id"], intento["n"], "fallido", {"motivo": f"{type(e).__name__}: {e}"[:300]})
+                motivo = f"{type(e).__name__}: {e}"[:300].encode("utf-8", "backslashreplace").decode("utf-8")   # H-20
+                reg.resultado(intento["exp_id"], intento["n"], "fallido", {"motivo": motivo})
             except rx.RegistroError as ex:   # no tapa el fallo original: lo encadena
                 raise BancoError(f"{type(e).__name__}: {e}; y no se pudo anotar el intento como fallido: {ex}") from e
         raise
@@ -850,6 +860,13 @@ def _arg_nivel(txt: str) -> float:
     return v
 
 
+def _registro_defecto() -> Path:
+    """El registro del agente (T-99, QA r02 H-17): el mismo que usa registro_experimentos.py por defecto."""
+    sys.path.insert(0, str(Path(__file__).resolve().parent))
+    import registro_experimentos as rx
+    return rx.REGISTRO_DEFECTO
+
+
 def main(argv: list[str] | None = None) -> int:
     ap = argparse.ArgumentParser(description=__doc__.split("\n")[0])
     sub = ap.add_subparsers(dest="bloque", required=True)
@@ -868,7 +885,7 @@ def main(argv: list[str] | None = None) -> int:
     pa.add_argument("--nivel", type=_arg_nivel, default=NIVEL)
     pa.add_argument("--min-efectivas", dest="min_efectivas", type=_arg_entero(MIN_EFECTIVAS_MIN), default=MIN_EFECTIVAS)
     # T-99: registro de experimentos (por defecto, el del repositorio); --experimento añade un intento a uno ya prerregistrado
-    pa.add_argument("--registro", default=str(RAIZ / ".docs" / "experimentos" / "registro.jsonl"))
+    pa.add_argument("--registro", default=str(_registro_defecto()))
     pa.add_argument("--sin-registro", dest="registro", action="store_const", const=None,
                     help="no anotar en el registro de experimentos (el informe no se podrá verificar)")
     pa.add_argument("--experimento")
