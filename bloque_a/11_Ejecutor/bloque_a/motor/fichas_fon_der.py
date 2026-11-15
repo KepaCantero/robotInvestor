@@ -35,6 +35,7 @@ import pandas as pd
 from scipy import optimize, stats
 
 from . import operaciones as op
+from .frontera_b import FRONTERA_B
 from .operaciones import ErrorFicha
 
 # --------------------------------------------------------------------------------------------- convenciones
@@ -420,6 +421,7 @@ def f_fon_disc(ent: dict, params: dict) -> tuple[dict, list[str]]:
         lim.append(f"historia inferior a los {m['anios_recomendados']} años recomendados")
     nombres = sorted(miembros, key=str)
     filas, pesos, subcat = [], [], []
+    ajustados: list[str] = []
     privados_cat = _booleano(v, "activos_privados", F, False)
     for nom in nombres:
         mb, ctx = miembros[nom], f" (miembro {nom})"
@@ -443,7 +445,7 @@ def f_fon_disc(ent: dict, params: dict) -> tuple[dict, list[str]]:
         if fnav < op.dia(corte) - pd.DateOffset(months=meses):
             if ajuste is None:
                 raise ErrorFicha(f"{F}: rechazo con NAV de antigüedad > {meses} meses sin ajuste declarado{ctx}")
-            lim.append(f"miembro {nom}: NAV de {fnav.date()} (> {meses} meses); ajuste declarado: {ajuste}")
+            ajustados.append(ajuste)   # T-128 (1.6): la limitación no cita el miembro (abajo, un recuento)
         filas.append(pr / nav - 1)
         if mb.get("capitalizacion") is not None:
             if _es_numero(mb["capitalizacion"]):
@@ -454,6 +456,9 @@ def f_fon_disc(ent: dict, params: dict) -> tuple[dict, list[str]]:
                 raise ErrorFicha(f"{F}: capitalización no alineada con «fechas»{ctx}")
             pesos.append(c)
         subcat.append(_texto(mb, "subcategoria", F, opcional=True, ctx=ctx) or "(sin subcategoría)")
+    if ajustados:
+        lim.append(f"{len(ajustados)} miembro(s) con NAV de más de los meses admitidos; ajuste declarado: "
+                   f"{'; '.join(sorted(set(ajustados)))}")
     D = np.vstack(filas)                                   # miembros × fechas
     mediana = np.median(D, axis=0)
     ponderada = None
@@ -493,9 +498,23 @@ def f_fon_disc(ent: dict, params: dict) -> tuple[dict, list[str]]:
         lim.append("AR(1) del descuento agregado sin reversión (φ fuera de (0, 1) o serie constante): vida media no definida")
     ult = D[:, -1]
     desglose: dict[str, Any] = {}
+    pocas = 0
     for s in sorted(set(subcat)):
         idx = [i for i, x in enumerate(subcat) if x == s]
-        desglose[s] = {"n": len(idx), "descuento_mediana_pct": float(np.median(ult[idx])) * A_PCT}
+        # T-128 (1.6): una subcategoría es otro agregado, con el mínimo de miembros de la ficha; con menos, su mediana
+        # sería el descuento de fondos concretos y no se entrega
+        desglose[s] = {"n": len(idx), "descuento_mediana_pct": float(np.median(ult[idx])) * A_PCT
+                       if len(idx) >= m["miembros"] else None}
+        pocas += len(idx) < m["miembros"]
+    if pocas:
+        lim.append(f"{pocas} subcategoría(s) con menos de {m['miembros']} miembros: descuento no calculado; con tan pocos "
+                   f"sería el de fondos concretos (1.6)")
+    # T-128 (1.6): el mínimo, el máximo y el rango de los miembros solo con `componentes_minimos_orden` (7) o más: con
+    # menos, dan el descuento de un fondo concreto
+    orden = len(nombres) >= FRONTERA_B["componentes_minimos_orden"]
+    if not orden:
+        lim.append(f"sin mínimo, máximo ni rango de los miembros: menos de {FRONTERA_B['componentes_minimos_orden']} "
+                   f"miembros; serían el descuento de fondos concretos (1.6)")
     catal = v.get("catalizadores")
     if catal is not None and (not isinstance(catal, list) or not all(isinstance(x, str) and x for x in catal)):
         raise ErrorFicha(f"{F}: «catalizadores» debe ser una lista de textos declarados")
@@ -509,14 +528,19 @@ def f_fon_disc(ent: dict, params: dict) -> tuple[dict, list[str]]:
         "z_scores": {"ventana_media": pos_media["z"], "ventana_larga": pos_larga["z"]},
         "medias_pct": {"ventana_media": pos_media["media"] * A_PCT, "ventana_larga": pos_larga["media"] * A_PCT},
         "percentil": pos_larga["percentil"],
-        "dispersion_pp": {"desviacion": float(np.std(ult, ddof=1)) * A_PCT, "rango": float(np.ptp(ult)) * A_PCT},
+        "dispersion_pp": {"desviacion": float(np.std(ult, ddof=1)) * A_PCT,
+                          "rango": float(np.ptp(ult)) * A_PCT if orden else None},
         "phi_ar1": phi, "vida_media_meses": vida_meses,
         "rentabilidad_normalizacion_pct": normalizacion["ventana_media"]["rentabilidad_normalizacion_pct"],
         "normalizacion": normalizacion, "kappa": kappa,
         "desglose_subcategoria": desglose, "catalizadores": catal,
         "verificacion": {
-            "minimo_miembros_pct": float(np.min(ult)) * A_PCT, "maximo_miembros_pct": float(np.max(ult)) * A_PCT,
+            "minimo_miembros_pct": float(np.min(ult)) * A_PCT if orden else None,
+            "maximo_miembros_pct": float(np.max(ult)) * A_PCT if orden else None,
             "agregado_entre_min_y_max": bool(np.min(ult) <= d <= np.max(ult)),
+            # T-128: la comprobación de la segunda vía sin entregar el mínimo ni el máximo
+            "ponderada_entre_min_y_max": None if ponderada is None
+            else bool(np.min(ult) <= float(ponderada[-1]) <= np.max(ult)),
             "segunda_via_ponderada_menos_mediana_pp":
                 (float(ponderada[-1]) - float(mediana[-1])) * A_PCT if ponderada is not None else None},
         "referencias_ingenuas": {"RI_MH_descuento_pct": pos_larga["media"] * A_PCT, "RI_PA_descuento_pct": d * A_PCT},
@@ -767,10 +791,14 @@ def f_fon_td(ent: dict, params: dict) -> tuple[dict, list[str]]:
         segmentos[attr] = {}
         for g in sorted(grupos):
             med = float(np.median(td_a[grupos[g]]))
-            segmentos[attr][g] = {"n": len(grupos[g]), "td_mediana_pb": med * A_PB,
-                                  "diferencia_vs_categoria_pb": (med - td_med) * A_PB}
-            if len(grupos[g]) < m["miembros"]:
-                lim.append(f"segmento {attr}={g} con {len(grupos[g])} miembros (< {m['miembros']}): agregado frágil")
+            # T-128 (1.6, «nunca un ranking de vehículos»): un segmento con menos miembros que el mínimo de la ficha no
+            # se entrega (con uno, era la TD de ese vehículo)
+            pocos = len(grupos[g]) < m["miembros"]
+            segmentos[attr][g] = {"n": len(grupos[g]), "td_mediana_pb": None if pocos else med * A_PB,
+                                  "diferencia_vs_categoria_pb": None if pocos else (med - td_med) * A_PB}
+            if pocos:
+                lim.append(f"segmento {attr}={g} con {len(grupos[g])} miembros (< {m['miembros']}): agregado frágil; no "
+                           f"calculado, sería la cifra de vehículos concretos (1.6)")
     res = {
         "n_miembros": len(nombres), "variante_indice": variante, "anios_completos": n_bloques,
         "td_mediana_pb": td_med * A_PB,
@@ -1781,11 +1809,14 @@ _Caso = dict[str, Any]
 CASOS_CONTROL: dict[str, list[_Caso]] = {
     "FON-DISC-001": [
         {"nombre": "P = NAV ⇒ d = 0", "datos": [{"valores": _ctl_disc(iguales=True)}], "parametros": {},
-         "comprobar": lambda r: abs(r["descuento_agregado_pct"]) <= 1e-10 and abs(r["verificacion"]["maximo_miembros_pct"]) <= 1e-10},
+         # T-128 (1.6): sin el máximo de los miembros (5 < 7); comprueba lo mismo: agregado 0 y desviación 0 ⇒ todos 0
+         "comprobar": lambda r: abs(r["descuento_agregado_pct"]) <= 1e-10 and abs(r["dispersion_pp"]["desviacion"]) <= 1e-10},
         {"nombre": "agregado entre el mínimo y el máximo de los miembros", "datos": [{"valores": _ctl_disc(iguales=False)}],
          "parametros": {},
+         # T-128 (1.6): con 5 miembros (< 7) no se entregan el mínimo ni el máximo; la segunda vía se comprueba con su
+         # indicador (la media ponderada entre ambos), que la ficha calcula sin entregarlos
          "comprobar": lambda r: r["verificacion"]["agregado_entre_min_y_max"]
-         and r["verificacion"]["minimo_miembros_pct"] <= r["descuento_media_ponderada_pct"] <= r["verificacion"]["maximo_miembros_pct"]},
+         and r["verificacion"]["ponderada_entre_min_y_max"] is True and r["verificacion"]["minimo_miembros_pct"] is None},
         {"nombre": "segunda vía: media ponderada frente a mediana (pesos iguales y simétricos ⇒ coinciden)",
          "datos": [{"valores": _ctl_disc(iguales=False, constante=True)}], "parametros": {},
          "comprobar": lambda r: abs(r["verificacion"]["segunda_via_ponderada_menos_mediana_pp"]) <= 1e-10

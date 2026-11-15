@@ -37,3 +37,5 @@ Implementar el ciclo Evaluador → Buscador de la fiabilidad de las fuentes de o
 
 - 2026-11-14 · ABIERTO · creado con nuevo_ticket.sh
 - 2026-11-14 · EN QA · claude · implementado; pruebas del Evaluador, del ciclo y goldens en verde. PB-46 deja de estar «sin prueba»: la parte del ejecutor queda cubierta y la recalificación en F9 es del Buscador
+- 2026-11-15 · NO APTO · QA r01 (revisor nuevo sin contexto): H-01 alto (en un ciclo ningún pronóstico de fuente llegaba a F2: el ejecutor perdía el bloque al construir las piezas), H-02 a H-04 medios (fecha con zona tumbaba el C5, registro tardío, `ref_id` sin validar), H-05 a H-08 bajos
+- 2026-11-15 · EN QA · ronda r02 · claude · el bloque viaja del Analista y del Buscador a F2, validado (fuente de F9 que es la de la pieza, registrado antes de su fecha objetivo); fechas con zona sin excepción y el C5 a salvo; una FUE- por fuente y mes; deduplicación; Brier por el Motor con `calc_id`; probabilidad sin declarar 0,65 (banda). 43 pruebas nuevas en `tests/test_t125_r02.py`; las 12 de la r01, re-sembradas con registro previo y fuentes de F9. INC-T125-01 ampliada `[PROPUESTO]`

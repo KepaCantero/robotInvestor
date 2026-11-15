@@ -10,13 +10,11 @@ from __future__ import annotations
 
 import copy
 import re
-from typing import Any, Dict, List, Optional, Set, Tuple
+from typing import Any
 
 import pandas as pd
 
 from .configuracion import (
-    CLASES,
-    HORIZONTES,
     NATURALEZA_POR_DEFECTO,
     NATURALEZAS,
     NOMBRE_CLASE,

@@ -31,6 +31,7 @@ import numpy as np
 import pandas as pd
 from scipy import optimize, stats
 
+from .frontera_b import FRONTERA_B, _concentradas, _limitacion_concentradas
 from .operaciones import ErrorFicha, cagr, dia
 
 # Constantes de convención (parte del método, no parámetros): unidades y bases de recuento.
@@ -1684,6 +1685,14 @@ def f_idx_reb(ent: dict, params: dict) -> tuple[dict, list[str]]:
         dem = sum(f["demanda"] for f in sel)
         vol = sum(f["volumen_medio"] for f in sel)
         demanda[nombre] = {"demanda": dem, "dias_volumen_cesta": dem / vol if vol else None, "n": len(sel)}
+        # T-128 (1.6, «nunca selecciona valores afectados»): la cesta de un valor, o la que aporta casi entera uno (o
+        # varios con sus mismos días de volumen), es ese valor: su demanda no se entrega (`frontera_b`, `FRONTERA_B`)
+        conc = _concentradas({f"la demanda estimada de las {nombre}": (np.array([f["demanda"] for f in sel]),
+                                                                          np.array([f["volumen_medio"] for f in sel]))},
+                             FRONTERA_B, tol)
+        if conc:
+            _limitacion_concentradas(conc, FRONTERA_B, lim)
+            demanda[nombre].update(demanda=None, dias_volumen_cesta=None)
     # (ii) Estudio de eventos
     comparables = v.get("eventos_comparables")
     comparables = [] if comparables is None else _lista(comparables, f"{ficha}: eventos_comparables")
@@ -1718,8 +1727,7 @@ def f_idx_reb(ent: dict, params: dict) -> tuple[dict, list[str]]:
         proximo = {k: _fecha(_req(pe, k, f"{ficha}.proximo_evento"), ficha).date().isoformat()
                    for k in ("fecha_anuncio", "fecha_efectividad")}
     res = {
-        "demanda_estimada": demanda,
-        "por_componente": filas,
+        "demanda_estimada": demanda,   # T-128 (1.6): sin la fila de cada valor (antes «por_componente», con su id)
         "estudio_eventos": estudio,
         "segunda_via": segunda,
         "n_eventos": len(comparables),
@@ -1905,7 +1913,9 @@ def _evento_reb(flujos: float | None = None, cambios: list[tuple[str, float, flo
     ev: dict[str, Any] = {"fecha_anuncio": "2026-11-20", "fecha_efectividad": "2026-12-18",
                           "activos_indexados": {"valor": 1e12, "fuente": "sintética", "fecha": "2026-11-01"},
                           "cambios": [{"id": i, "delta_peso": w, "volumen_medio": vol}
-                                      for i, w, vol in (cambios or [("IN", 0.001, 5e8), ("OUT", -0.001, 2e8)])]}
+                                      # T-128 (1.6): dos valores por cesta (con uno, la demanda de la cesta es la suya)
+                                      for i, w, vol in (cambios or [("IN1", 0.0006, 5e8), ("IN2", 0.0004, 3e8),
+                                                                    ("OUT1", -0.0007, 2e8), ("OUT2", -0.0003, 1.5e8)])]}
     if flujos is not None:
         ev["flujos_declarados"] = flujos
     return ev

@@ -6,7 +6,6 @@ import math
 import threading
 import time
 from collections import defaultdict
-from typing import Dict, FrozenSet, List
 
 from ..contratos import ANALISTAS
 

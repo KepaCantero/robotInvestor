@@ -56,3 +56,29 @@ Regresiones: `test_pb60_…` falla sin la corrección de los entregables (compro
 Resultado del plan tras la r04: 22 superadas, 33 en parte, 7 pendientes de la API, 3 sin prueba, 1 con usuarios y 1 documental.
 
 No se ha pasado el gate completo (`tools/check_all.sh`) por indicación del encargo (máquina compartida); lo pasa quien coordina al integrar.
+
+## Ronda r05 (15-11-2026)
+
+| Qué | Resultado |
+| --- | --- |
+| `tests/test_t116_r05.py` (nueva) | 5 superadas (PB-31 ×2, PB-37, H-12 ×2) |
+| `test_fase4_mapa.py` y `test_fase4_huecos.py` | en verde (dentro de las vecinas: 595 recogidas; `test_h05_…` falla solo hasta regenerar el documento y pasa después) |
+| Mapa (`.docs/scripts/evidencias_plan_a.py`) | 67 filas; AUTOMATICA 21, PARCIAL 37, PENDIENTE_API 7, DOCUMENTAL 1, REQUIERE_USUARIOS 1; 162 pruebas citadas, todas existen |
+| `--ejecutar` | `docs/evidencias_pruebas_bloque_a.md` escrito · 162 de 162 pruebas citadas superadas · código 0 |
+| Goldens de contratos | coinciden |
+| ruff · mypy A | 2902 · 109 |
+| Gates ligeros (`secrets_scan`, `refs_vivas`, `nfc_check`, `corpus_integridad`) | los cuatro con 0 |
+
+### Scripts del revisor, vueltos a ejecutar sin cambiarlos (copia desechable)
+
+| Script | r04 | r05 |
+| --- | --- | --- |
+| `revisores/r04_01_mutantes_clausulas.py` | M31, M37a, M37b VIVOS; el resto muertos | **9 de 9 MUERTOS** (M31: 2 fallan; M37a y M37b: 1 cada uno) |
+| `revisores/r03_01_pb32_y_muestra.py` | todos muertos | todos muertos («vivos: ninguno»); PB-60 a mano: F10 y los entregables declaran la degradación |
+| `r04_mutantes_implementador.py` | 20 de 20 muertos | 20 de 20 muertos |
+
+### Regresión
+
+M31, M37a y M37b vivían con las citadas de la r04 y mueren con las de la r05: las pruebas nuevas fallan sin la cláusula. H-12: sin la clave `incidencias_escaladas` en `Bloque.estado()`, las dos pruebas de H-12 fallan (la clave no existía).
+
+Comandos: desde la raíz, `python .docs/scripts/evidencias_plan_a.py --ejecutar`; `python .docs/tickets/T-116/revisores/r04_01_mutantes_clausulas.py <copia con «_mut»>/bloque_a`; desde `<copia con «qa2_mut»>/bloque_a/11_Ejecutor`, `python <repo>/.docs/tickets/T-116/revisores/r03_01_pb32_y_muestra.py .` y `python <repo>/.docs/tickets/T-116/r04_mutantes_implementador.py .`. Gate completo y suite entera de A: no ejecutados (encargo).

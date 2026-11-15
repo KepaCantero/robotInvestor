@@ -52,7 +52,7 @@ from .contratos import (
     sanear_contenido_externo,
     sanear_estructura,
 )
-from .evaluador import Evaluador
+from .evaluador import Evaluador, motivo_pronostico_fuente_no_registrable
 from .herramientas import ht03, ht09
 from .herramientas.ht01_datos import (
     DatosInvalidos,
@@ -115,6 +115,13 @@ INSTR = {
 ORIGENES_SIN_SANEAR = frozenset({"AG-13", "AG-14", "AG-16", "AG-28"} | set(AGENTE_CLASE.values()))
 
 
+def _bloque_pronostico_fuente(x: dict) -> dict:
+    """T-125 r02 (QA r01, H-01): el bloque `pronostico_fuente` que trae una afirmación del Analista o una referencia del
+    Buscador pasa a su pieza de evidencia (copia); el alta en F2 lo valida antes de guardarlo."""
+    pf = x.get("pronostico_fuente") if isinstance(x, dict) else None
+    return {"pronostico_fuente": copy.deepcopy(pf)} if pf is not None else {}
+
+
 def simbolo_seguimiento(x: dict) -> str | None:
     """Símbolo HT-01 del indicador de seguimiento de una ficha o de un registro de F3. Compatibilidad: los
     registros y respuestas V4.x usaban «proxy_backtest»."""
@@ -155,9 +162,10 @@ class Bloque:
         if self.v6 and cliente_contradictor is not None:   # idea 8: Contradictor de otro proveedor
             self.agentes.clientes["AG-11"] = cliente_contradictor
         self.motor = Motor(self.almacen, proveedor, cfg, self.contabilidad)
-        self.evaluador = Evaluador(self.almacen, proveedor, self.motor, cfg, self.universo)
-        self.mensajeria = Mensajeria(self.almacen, self.v6)
         self.referencias = Referencias(cfg)
+        # T-125 r02 (QA r01, H-04): el Evaluador valida la fuente de los pronósticos de fuentes contra F9
+        self.evaluador = Evaluador(self.almacen, proveedor, self.motor, cfg, self.universo, referencias=self.referencias)
+        self.mensajeria = Mensajeria(self.almacen, self.v6)
         self.redaccion = Redaccion(cfg)
         anon = (cfg.get("backtest") or {}).get("anonimizar", "auto") if anonimizar is None else anonimizar
         if anon == "auto":   # PA-09 (T-66): se anonimiza un backtest con un modelo real; el simulado no sabe nada
@@ -880,7 +888,8 @@ class Bloque:
             f["_piezas"] = []
             for a in f.get("afirmaciones", []):
                 f["_piezas"].append({"afirmacion": a["afirmacion"], "fuente": a["fuente"], "direccion": a["direccion"],
-                                     "extracto": a.get("extracto") or a["afirmacion"][:160], "origen": agente})
+                                     "extracto": a.get("extracto") or a["afirmacion"][:160], "origen": agente,
+                                     **_bloque_pronostico_fuente(a)})
             if s.get("momentum_12_1") is not None:
                 f["_piezas"].append({"afirmacion": f"Momentum 12-1 de {f['proxy']}: {s['momentum_12_1']:+.2%} (percentil {s.get('pct_momentum_clase', 0):.0%} de la clase) a {as_of.date()}",
                                      "fuente": f"HT-01:{f['proxy']}", "calc": s.get("calc_ids", [None])[0],
@@ -957,7 +966,7 @@ class Bloque:
                 continue   # en backtest solo referencias registradas y anteriores a as_of
             piezas.append({"afirmacion": ref.get("afirmacion") or datos.get("sintesis", "")[:200], "fuente": ref["ref_id"],
                            "direccion": ref.get("direccion", "neutra"), "extracto": (ref.get("extracto") or ref.get("motivo") or "")[:160],
-                           "origen": agente, "incidencia": bool(hall)})
+                           "origen": agente, "incidencia": bool(hall), **_bloque_pronostico_fuente(ref)})
         return {"para": f["proxy"], "piezas": piezas, "refs_ofrecidas": sorted(ofrecidas), "hallazgos_r9": hall,
                 "estado": "COMPLETO" if piezas else "SIN_RESULTADO"}
 
@@ -1256,8 +1265,10 @@ class Bloque:
                 clave_clm = normalizar(p["afirmacion"])
                 clm = clm_por_texto.get(clave_clm)
                 if clm is None:
+                    tipo_afirmacion = self._tipo_con_pronostico_fuente(cl.get("tipo_afirmacion") or p.get("tipo_afirmacion") or "ANALISIS",
+                                                                       p, as_of, run_id)
                     clm = {"tipo_entrada": "CLM", "clm_id": self.almacen.nuevo_id("CLM"), "afirmacion": p["afirmacion"],
-                           "tipo_afirmacion": cl.get("tipo_afirmacion") or p.get("tipo_afirmacion") or "ANALISIS", "clase": clase,
+                           "tipo_afirmacion": tipo_afirmacion, "clase": clase,
                            "evidencias": [], "raices_independientes": 0, "ps1_cumple": False,
                            "nivel_confianza": cl.get("nivel_confianza", "probable"),
                            "utilizada_por": [{"objeto": f["proxy"], "papel": "tesis"}], "historial": [{"fecha": str(as_of.date()), "cambio": "alta", "run_id": run_id}]}
@@ -1305,6 +1316,23 @@ class Bloque:
                 clm = next(c for c in clm_por_texto.values() if c["clm_id"] == cid)
                 self.almacen.escribir("F2", "AG-12", {k: v for k, v in clm.items() if not k.startswith("_")})
                 escritos.add(cid)
+
+    def _tipo_con_pronostico_fuente(self, tipo: str, p: dict, as_of, run_id: str) -> str:
+        """T-125 r02 (QA r01, H-01, H-03 y H-04): una pieza que trae un bloque `pronostico_fuente` registrable (completo, de
+        una fuente de F9 que es la propia fuente de la pieza, emitido y registrado antes de su fecha objetivo) es
+        PRONOSTICO_FUENTE aunque el Curador la clasifique de otro modo (regla 8 de F2: lo decide la resolubilidad, que la
+        comprueba el código). Una pieza PRONOSTICO_FUENTE sin bloque registrable pasa a PREVISION (sin `pronostico_fuente`
+        no se puede resolver) y, si traía un bloque, el rechazo queda en HA con su motivo. `[PROPUESTO]`, INC-T125-01."""
+        pf = p.get("pronostico_fuente")
+        if pf is None:
+            return "PREVISION" if tipo == "PRONOSTICO_FUENTE" else tipo
+        motivo = motivo_pronostico_fuente_no_registrable(pf, p.get("fuente"), as_of, self.referencias)
+        if motivo is None:
+            return "PRONOSTICO_FUENTE"
+        self.almacen.incidencia("DATOS", f"Pronóstico de fuente no registrable ({motivo}): la afirmación «{str(p.get('afirmacion'))[:80]}» "
+                                "queda sin bloque pronostico_fuente y no cuenta para la fiabilidad de la fuente", p.get("origen") or "",
+                                severidad="Menor", run_id=run_id)
+        return "PREVISION" if tipo == "PRONOSTICO_FUENTE" else tipo
 
     def _ps1(self, raices: dict) -> bool:
         """PS1 (Anexo A, P-14): al menos `ps1.raices_min` raíces independientes de nivel A o B, o una fuente primaria de nivel
@@ -2088,4 +2116,9 @@ class Bloque:
                 "pronosticos": {"abiertos": sum(1 for p in f4.values() if p.get("estado") == "ABIERTO"),
                                 "resueltos": sum(1 for p in f4.values() if p.get("estado") == "RESUELTO")},
                 "certificados_vigentes": [c["id"] for c in self.evaluador.certificados_vigentes()],
+                # T-116 r05 (QA r04, H-12): las incidencias marcadas para escalar (canal no previsto, acceso fuera de matriz)
+                # se ven en el estado que consulta el operador (orden `estado`)
+                "incidencias_escaladas": [{"id": e.get("id"), "fecha": e.get("_fecha"), "tipo": e.get("tipo"), "objeto": e.get("objeto"),
+                                           "detalle": e.get("detalle")} for e in self.almacen.leer("HA")
+                                          if e.get("tipo_entrada") == "INC" and e.get("escalado_operador") is True],
                 "integridad_archivos": self.almacen.verificar_integridad()}

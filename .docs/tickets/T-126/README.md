@@ -35,3 +35,5 @@ Dar prueba a los dos casos del Plan de pruebas V3.0 que no tenían ninguna (PB-4
 - 2026-11-14 · ABIERTO · creado con nuevo_ticket.sh
 - 2026-11-14 · EN QA · claude · 13 pruebas en verde; los archivos entregados cumplen PB-26 (0 inversiones, 0 temáticas inválidas, niveles coherentes)
 - 2026-11-14 · EN QA · claude · CA-3 hecho al integrar la r04 de T-116: el mapa cita estas pruebas y las de T-125 en PB-26, PB-46 y PB-48 (las tres pasan a PARCIAL); `docs/evidencias_pruebas_bloque_a.md` regenerado, 145 de 145 pruebas citadas superadas
+- 2026-11-15 · APTO · QA r01 (revisor nuevo sin contexto), con H-01 y H-02 medios y H-03 y H-04 bajos
+- 2026-11-15 · EN QA · ronda r02 · claude · 11 pruebas nuevas en `tests/test_t126_r02.py`: la segunda pasada en el ciclo de PB-48 (H-01) y la lección en el CT-06 (H-04); sección física y desempate por fecha en F7–F9 (H-02), comprobaciones como funciones probadas con fichas estropeadas (H-03). INC-T126-01 ampliada `[PROPUESTO]` (desempate solo entre fichas con año). Sin cambios en producción ni en el corpus

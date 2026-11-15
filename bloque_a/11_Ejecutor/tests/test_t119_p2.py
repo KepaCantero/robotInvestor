@@ -742,8 +742,14 @@ def test_fir_cred_limites_del_dominio_que_se_admiten():
     v["segmento"]["cobertura"] = 0.5
     v["componentes"] = v["componentes"][:10]
     v["componentes"][0]["volatilidad_acciones"] = 10.0
+    # T-127 r02 (QA r01, H-02): con los demás de volatilidad 0,22–0,54, la PD de este (≈ 100 %) era más del 95 % de la PD
+    # media y ahora se rechaza por eso, no por el rango
+    _rechaza("FIR-CRED-001", v, {}, "lo aporta un componente")
+    for i, c in enumerate(v["componentes"][1:]):                           # los demás, de riesgo alto pero distinto
+        c["volatilidad_acciones"] = 0.9 + 0.15 * i
     res, _ = _correr("FIR-CRED-001", v)
     assert res["n_componentes"] == 10 and res["cobertura_segmento_pct"] == 50.0
+    assert res["neutral_al_riesgo"]["pd_pct"]["maximo"] == pytest.approx(100.0, abs=1e-4)   # la volatilidad 10 entra
 
 
 def test_fir_cred_no_entrega_filas_por_componente():
@@ -1141,7 +1147,9 @@ def test_chr_token_oraculo_con_fracciones_exactas():
     v["tokens"].append({"id": "TKC", "precio": 12.5, "oferta_circulante": 2.0e7, "oferta_total": 2.1e7, "oferta_maxima": 2.1e7,
                         "emision_anual": 0.0, "quema_anual": 5.0e5, "staking_nominal": 0.03, "concentracion_10_mayores": 0.62,
                         "calendario": {"fuente": "contrato", "desbloqueos": [{"fecha": "2026-08-01", "cantidad": 1.0e6}]}})
-    res, _ = _correr("CHR-TOKEN-001", v, {"ventanas_desbloqueo": [20, 33, 200]})
+    # T-127 r02 (QA r01, H-02): 31 días en lugar de 20 (a 20 días solo desbloquea TKA y el «sector» sería su cifra: ya no se
+    # entrega; el borde de la ventana lo prueba `test_chr_token_borde_de_la_ventana_y_desbloqueos_pasados`)
+    res, _ = _correr("CHR-TOKEN-001", v, {"ventanas_desbloqueo": [31, 33, 200]})
     F_ = Fraction
     fecha = pd.Timestamp(v["fecha"])
     cm = [F_(t["precio"]) * F_(t["oferta_circulante"]) for t in v["tokens"]]
@@ -1149,7 +1157,7 @@ def test_chr_token_oraculo_con_fracciones_exactas():
     assert res["fdv_sobre_capitalizacion_veces"] == pytest.approx(float(sum(fdv) / sum(cm)), rel=1e-13)
     neta = sum(F_(t["precio"]) * (F_(t["emision_anual"]) - F_(t["quema_anual"])) for t in v["tokens"]) / sum(cm)
     assert res["inflacion_neta_pct_anual"] == pytest.approx(float(neta * 100), rel=1e-12)
-    for w in (20, 33, 200):
+    for w in (31, 33, 200):
         d = sum(F_(t["precio"]) * F_(x["cantidad"]) for t in v["tokens"] for x in t["calendario"]["desbloqueos"]
                 if 0 < (pd.Timestamp(x["fecha"]) - fecha).days <= w)
         assert res["desbloqueos_pct"][str(w)] == pytest.approx(float(d / sum(cm) * 100), rel=1e-12)
@@ -1160,17 +1168,22 @@ def test_chr_token_oraculo_con_fracciones_exactas():
     conc = sum(c * F_(t["concentracion_10_mayores"]) for c, t in con) / sum(c for c, _ in con)
     assert res["concentracion_10_mayores_pct"] == pytest.approx(float(conc * 100), rel=1e-12)
     assert res["cobertura_staking_pct"] == pytest.approx(float(sum(c for c, _ in con) / sum(cm) * 100), rel=1e-12)
-    assert res["n_tokens"] == 3 and list(res["desbloqueos_pct"]) == ["20", "33", "200"]
+    assert res["n_tokens"] == 3 and list(res["desbloqueos_pct"]) == ["31", "33", "200"]
 
 
 def test_chr_token_borde_de_la_ventana_y_desbloqueos_pasados():
     v, _ = _metodo("CHR-TOKEN-001")
+    # T-127 r02 (QA r01, H-02): a 20 días solo desbloqueaba TKA, y el «sector» era su cifra (ahora no se entrega). TKC
+    # desbloquea el mismo 20 de julio (un 3,3 % de su circulante, no el 5 % de TKA): la ventana sigue teniendo su borde
+    v["tokens"].append({"id": "TKC", "precio": 1.0, "oferta_circulante": 3.0e8, "oferta_total": 4.0e8, "oferta_maxima": None,
+                        "emision_anual": 1.0e7, "quema_anual": 0.0,
+                        "calendario": {"fuente": "contrato", "desbloqueos": [{"fecha": "2026-07-20", "cantidad": 1.0e7}]}})
     res, lim = _correr("CHR-TOKEN-001", v, {"ventanas_desbloqueo": [19, 20, 29, 30]})
-    cm = 2.0 * 6.0e8 + 0.5 * 4.0e8
+    cm = 2.0 * 6.0e8 + 0.5 * 4.0e8 + 1.0 * 3.0e8
     assert res["desbloqueos_pct"]["19"] == 0.0                            # el del 20 de julio cae a 20 días
-    assert res["desbloqueos_pct"]["20"] == pytest.approx(2.0 * 3.0e7 / cm * 100)
+    assert res["desbloqueos_pct"]["20"] == pytest.approx((2.0 * 3.0e7 + 1.0e7) / cm * 100)
     assert res["desbloqueos_pct"]["29"] == res["desbloqueos_pct"]["20"]
-    assert res["desbloqueos_pct"]["30"] == pytest.approx((2.0 * 3.0e7 + 0.5 * 2.0e7) / cm * 100)
+    assert res["desbloqueos_pct"]["30"] == pytest.approx((2.0 * 3.0e7 + 1.0e7 + 0.5 * 2.4e7) / cm * 100)   # TKB: 2,4e7
     assert any(x.startswith("1 desbloqueos del calendario con fecha no posterior") for x in lim)
 
 

@@ -19,7 +19,6 @@ import stat
 import tempfile
 import threading
 from pathlib import Path
-from typing import Dict, List, Optional, Union
 
 ESTADOS = ("PROVISTA", "AUSENTE", "CADUCADA", "REVOCADA")
 
@@ -128,7 +127,7 @@ class Boveda:
             idx, sec = self._leer(self._indice), self._leer(self._secretos)
             sec[alias] = valor
             idx[alias] = {"alias": alias, "servicio": servicio, "estado": "PROVISTA", "caducidad": caducidad,
-                          "actualizado": dt.datetime.now(dt.timezone.utc).isoformat(timespec="seconds")}
+                          "actualizado": dt.datetime.now(dt.UTC).isoformat(timespec="seconds")}
             self._escribir(self._secretos, sec, privado=True)
             self._escribir(self._indice, idx)
         return {"credencial_ref": alias, "estado": "PROVISTA", "caducidad": caducidad}
