@@ -4,7 +4,8 @@
   como lista de bloques de texto con `cache_control` (caché de prompts); la herramienta de servidor de
   búsqueda web (`web_search_20260318`) solo se añade cuando el orquestador lo permite (nunca en
   backtest); gestiona `pause_turn` (continuación) y registra tokens de entrada, salida, escritura y
-  lectura de caché y búsquedas web.
+  lectura de caché y búsquedas web. T-151: el SDK no reintenta; reintenta el cliente (`ReglaReintentos`), y cada
+  reintento reserva su petición en el presupuesto como las demás.
 - `MockClient`: respuestas sintéticas deterministas (semilla) generadas a partir del encargo
   (`bloque_a.mock_respuestas`), válidas frente a los esquemas y sensibles a la entrada.
 - `ReplayClient`: graba las respuestas de otro cliente en JSONL y las reproduce exactamente
@@ -16,9 +17,11 @@ import contextlib
 import contextvars
 import hashlib
 import json
+import math
 import os
 import threading
-from collections.abc import Iterator
+import time
+from collections.abc import Callable, Iterator
 from dataclasses import asdict, dataclass, field
 from pathlib import Path
 from typing import Any
@@ -189,20 +192,95 @@ def herramienta_busqueda_web(tipo: str = "web_search_20260318", max_usos: int = 
     return {"type": tipo, "name": "web_search", "max_uses": int(max_usos)}
 
 
+@dataclass(frozen=True)
+class ReglaReintentos:
+    """T-151 (QA r01 de T-146, H-09): los reintentos ante un fallo del proveedor, en el cliente y no en el SDK, para que cada
+    reintento pase por la reserva del presupuesto (`consumo.ReservaLlamada`). Los números salen de la configuración
+    (`llm.max_reintentos_api` y `llm.reintentos.*`, `[PROPUESTO]`, INC-T146-01): los estados que se reintentan, los que el
+    servidor rechaza sin ejecutar la petición (no se cobran) y la espera, determinista (la inicial, doblando hasta la
+    máxima; o la que pida el servidor con `retry-after`)."""
+    maximo: int
+    espera_inicial_s: float
+    espera_max_s: float
+    estados: frozenset[int]
+    sin_cobro: frozenset[int]
+
+    @classmethod
+    def de_config(cls, cfg: dict) -> ReglaReintentos:
+        maximo = parametro(cfg, "llm.max_reintentos_api")
+        inicial, tope = parametro(cfg, "llm.reintentos.espera_inicial_s"), parametro(cfg, "llm.reintentos.espera_max_s")
+        estados, sin_cobro = parametro(cfg, "llm.reintentos.estados_reintentables"), parametro(cfg, "llm.reintentos.estados_sin_cobro")
+        if isinstance(maximo, bool) or not isinstance(maximo, int) or maximo < 0:
+            raise ValueError("llm.max_reintentos_api debe ser un entero no negativo")
+        for nombre, v in (("espera_inicial_s", inicial), ("espera_max_s", tope)):
+            if isinstance(v, bool) or not isinstance(v, (int, float)) or not math.isfinite(v) or v < 0:
+                raise ValueError(f"llm.reintentos.{nombre} debe ser un número no negativo")
+        if inicial > tope:
+            raise ValueError("llm.reintentos.espera_inicial_s no puede pasar de espera_max_s")
+        for nombre, v in (("estados_reintentables", estados), ("estados_sin_cobro", sin_cobro)):
+            if not isinstance(v, list) or any(isinstance(x, bool) or not isinstance(x, int) for x in v):
+                raise ValueError(f"llm.reintentos.{nombre} debe ser una lista de estados HTTP enteros")
+        if not set(sin_cobro) <= set(estados):
+            raise ValueError("llm.reintentos.estados_sin_cobro debe estar dentro de estados_reintentables")
+        return cls(maximo, float(inicial), float(tope), frozenset(estados), frozenset(sin_cobro))
+
+    def espera(self, reintento: int, error: BaseException) -> float:
+        """Segundos antes del reintento número `reintento` (1, 2…): los que pida el servidor (`retry-after-ms` o
+        `retry-after` en segundos, como el SDK) o la espera inicial doblada en cada reintento, sin pasar de la máxima."""
+        cabeceras = getattr(getattr(error, "response", None), "headers", None) or {}
+        for clave, escala in (("retry-after-ms", 1000.0), ("retry-after", 1.0)):
+            crudo = cabeceras.get(clave)
+            try:
+                v = float(str(crudo)) / escala
+            except ValueError:   # ausente («None») o una fecha: no se interpreta
+                continue
+            if math.isfinite(v) and v > 0:
+                return v
+        return min(self.espera_inicial_s * 2 ** (reintento - 1), self.espera_max_s)
+
+
+def clasificar_error(error: BaseException, regla: ReglaReintentos | None) -> tuple[bool, bool]:
+    """T-151: (se reintenta, la API pudo cobrarla). Conexión y timeout: la petición pudo llegar y completarse (se reintenta
+    y pudo cobrarse). Un estado HTTP: se reintenta si está en `regla.estados` (o si el servidor lo pide con
+    `x-should-retry`, como el SDK) y no se cobró si está en `regla.sin_cobro` o no se reintenta (el servidor la rechazó).
+    Otro error (no del proveedor): ni se reintenta ni se cobró. Sin regla (un cliente creado sin la configuración) no se
+    reintenta nada, y un error del proveedor cuenta como cobrado (prudente: no se sabe qué estados rechaza sin ejecutar)."""
+    try:
+        import anthropic
+    except ImportError:   # pragma: no cover - sin el SDK no hay errores suyos
+        return False, False
+    if isinstance(error, anthropic.APIConnectionError):   # también APITimeoutError
+        return regla is not None, True
+    if isinstance(error, anthropic.APIStatusError):
+        if regla is None:
+            return False, True
+        pide = str((getattr(error.response, "headers", None) or {}).get("x-should-retry", "")).lower()
+        reintenta = pide == "true" or (pide != "false" and error.status_code in regla.estados)
+        return reintenta, reintenta and error.status_code not in regla.sin_cobro
+    return False, False
+
+
 class AnthropicClient(LLMClient):
     nombre = "anthropic"
 
-    def __init__(self, api_key: str | None = None, max_reintentos: int = 4, timeout_s: float = 600,
-                 salida_estructurada: bool = False, max_continuaciones: int = 3, sdk: Any = None) -> None:
+    def __init__(self, api_key: str | None = None, timeout_s: float = 600, salida_estructurada: bool = False,
+                 max_continuaciones: int = 3, sdk: Any = None, reintentos: ReglaReintentos | None = None,
+                 dormir: Callable[[float], None] | None = None) -> None:
+        """T-151 (QA r01 de T-146, H-09): el SDK no reintenta (`max_retries=0`; uno recibido con `with_options` se pone
+        también a 0): reintenta este cliente con `reintentos` (sin regla, ninguno) y cada reintento reserva su petición."""
         if sdk is None:
             import anthropic
             clave = api_key or os.environ.get("ANTHROPIC_API_KEY")
             if not clave:
                 raise RuntimeError("Falta ANTHROPIC_API_KEY (variable de entorno). El bloque nunca la guarda en archivos (R8).")
-            sdk = anthropic.Anthropic(api_key=clave, max_retries=max_reintentos, timeout=timeout_s)
+            sdk = anthropic.Anthropic(api_key=clave, max_retries=0, timeout=timeout_s)
+        elif callable(getattr(sdk, "with_options", None)):
+            sdk = sdk.with_options(max_retries=0)
         self.sdk = sdk
         self.salida_estructurada = salida_estructurada
         self.max_continuaciones = max_continuaciones
+        self.reintentos = reintentos
+        self.dormir = dormir or time.sleep
 
     def identidad_cache(self):
         return [super().identidad_cache(), self.salida_estructurada, self.max_continuaciones]
@@ -240,10 +318,10 @@ class AnthropicClient(LLMClient):
                 if mt is None:
                     return RespuestaLLM("".join(textos), uso, modelo, stop_reason="presupuesto_agotado")
                 kwargs["max_tokens"] = int(mt)
-            try:
-                resp = self.sdk.messages.create(**kwargs)
-            except Exception:
-                # El SDK ya ha agotado sus reintentos. Los mensajes de excepción pueden contener secretos.
+            resp, fallo = self._crear(kwargs, guarda, system, msgs, herramientas)
+            if fallo == "presupuesto_agotado":
+                return RespuestaLLM("".join(textos), uso, modelo, stop_reason="presupuesto_agotado")
+            if fallo is not None:   # agotados los reintentos (los mensajes de excepción pueden contener secretos: no se guardan)
                 return RespuestaLLM("", uso, modelo, stop_reason="error_proveedor")
             u = self._uso(getattr(resp, "usage", None))
             uso.sumar(u)
@@ -263,6 +341,29 @@ class AnthropicClient(LLMClient):
             break
         return RespuestaLLM(texto="".join(textos), uso=uso, modelo=modelo, stop_reason=stop,
                             truncada=(stop == "max_tokens"), rechazo=(stop == "refusal"))
+
+    def _crear(self, kwargs: dict, guarda: Any, system: list[dict], msgs: list[dict],
+               herramientas: list[dict] | None) -> tuple[Any, str | None]:
+        """Una petición con sus reintentos (T-151, H-09). Cada intento fallido se declara a la guarda (`fallida`: suelta su
+        reserva si no se cobró, o la deja para cargarla si pudo cobrarse) y cada reintento reserva la suya antes de salir.
+        Devuelve (respuesta, None), (None, "presupuesto_agotado") o (None, "error_proveedor")."""
+        reintento = 0
+        while True:
+            try:
+                return self.sdk.messages.create(**kwargs), None
+            except Exception as e:
+                reintenta, cobro = clasificar_error(e, self.reintentos)
+                if guarda is not None:
+                    guarda.fallida(cobro, type(e).__name__)
+                if not reintenta or self.reintentos is None or reintento >= self.reintentos.maximo:
+                    return None, "error_proveedor"
+                reintento += 1
+                self.dormir(self.reintentos.espera(reintento, e))
+            if guarda is not None:
+                mt = guarda.reservar(system, msgs, herramientas, int(kwargs["max_tokens"]))
+                if mt is None:
+                    return None, "presupuesto_agotado"
+                kwargs["max_tokens"] = int(mt)
 
 
 def _tokens_aprox(texto: str) -> int:
@@ -396,9 +497,9 @@ def crear_cliente(tipo: str, cfg: dict, replay: str | None = None, replay_modo: 
     if tipo == "mock":
         return MockClient(parametro(cfg, "llm.semilla_mock"))
     if tipo == "anthropic":
-        return AnthropicClient(max_reintentos=parametro(cfg, "llm.max_reintentos_api"), timeout_s=parametro(cfg, "llm.timeout_s"),
-                               salida_estructurada=llm.get("salida_estructurada", False),
-                               max_continuaciones=parametro(cfg, "llm.max_continuaciones_pause_turn"))
+        return AnthropicClient(timeout_s=parametro(cfg, "llm.timeout_s"), salida_estructurada=llm.get("salida_estructurada", False),
+                               max_continuaciones=parametro(cfg, "llm.max_continuaciones_pause_turn"),
+                               reintentos=ReglaReintentos.de_config(cfg))
     if tipo == "replay":
         if not replay:
             raise ValueError("--replay RUTA es obligatorio con --cliente replay")

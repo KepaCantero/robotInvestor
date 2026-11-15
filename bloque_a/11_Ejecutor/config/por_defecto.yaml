@@ -175,8 +175,20 @@ max_tokens:
   AG-17: 10000
 
 llm:
-  max_reintentos_api: 4          # reintentos del SDK ante 429/5xx/conexión
+  max_reintentos_api: 4          # reintentos ante 429/5xx/conexión (T-151: los hace el cliente, no el SDK; ver `reintentos`)
   timeout_s: 600
+  # T-151 (QA r01 de T-146, H-09; `[PROPUESTO]`, INC-T146-01): el SDK sale con `max_retries: 0` y reintenta el cliente
+  # (`llm.ReglaReintentos`), para que cada reintento reserve su petición en el presupuesto. Los valores son los del SDK
+  # anthropic 2.8, que dejan de usarse: la espera inicial y la máxima (`INITIAL_RETRY_DELAY` y `MAX_RETRY_DELAY`, sin la
+  # variación aleatoria) y los estados que reintenta (`_should_retry`: 408, 409, 429 y 5xx; aquí los 5xx que da la API).
+  # `estados_sin_cobro`: los que rechazan la petición sin ejecutarla (límite de uso y sobrecarga), que sueltan su reserva;
+  # tras un timeout, un corte de conexión u otro estado, la API pudo completarla y cobrarla: se carga en la bolsa por su
+  # peor caso reservado y queda en `peticiones_sin_respuesta` del RUN en F5. Decisión del operador (T-57).
+  reintentos:
+    espera_inicial_s: 0.5
+    espera_max_s: 8
+    estados_reintentables: [408, 409, 429, 500, 502, 503, 504, 529]
+    estados_sin_cobro: [429, 529]
   cache_prompts: true            # cache_control en el system prompt (caché de prompts)
   cache_ttl: "1h"                # 5m | 1h
   salida_estructurada: false     # true = output_config.format json_schema (comprobar soporte del modelo)
