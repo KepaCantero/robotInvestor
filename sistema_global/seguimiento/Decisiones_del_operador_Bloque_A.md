@@ -31,6 +31,8 @@ Se sigue preguntando antes de actuar cuando algo gasta dinero o usa una credenci
 | Nueva entrega del Documento 0 | Autorizada: el Anexo B se corrige con el borrador para que describa lo que hace el ejecutor | Operador | 15-11-2026 | `.docs/diseno/bloque_a/borrador_correccion_anexo_b.md` |
 | Cadena con el Bloque B | La parte que necesita el Bloque A (que los encargos de A lleguen al ejecutor de B y vuelvan) la hace Claude; el resto del Bloque B V3 (C-37), Astra | Operador | 15-11-2026 | `.docs/tickets/_relevo/cola_astra.md` |
 
+| Que el Bloque A aprenda de los veredictos del Bloque B | No por ahora: la vuelta se registra por CT-04 (`ENVIADA_A_BLOQUE_B` y `resultado_comunicado` en texto); aprender de ella exigiría un campo nuevo en un contrato congelado | Agente (INC-T142-01) | 15-11-2026 | Se pide como tarea nueva |
+
 ## 2. Selección de oportunidades
 
 | Qué | Valor hoy | Quién | Fecha | Dónde y cómo se cambia |
@@ -95,6 +97,7 @@ Se sigue preguntando antes de actuar cuando algo gasta dinero o usa una credenci
 | La autorización de ampliación no registra CPI ni EAC | No se añaden por ahora | Agente (INC-T116-02) | 13-11-2026 | `docs/incidencias.md` |
 | El Buscador pide credenciales en su retorno (PB-58, pasos 1 y 2) | No se implementa por ahora (el ejecutor no tiene el ciclo C4); PB-58 queda «Superada en parte» | Agente (INC-T116-03) | 15-11-2026 | `docs/incidencias.md` |
 | Desempate por fecha en F7–F9 (PB-26) | Solo entre fichas con año de publicación; un «Documento vivo» y las fuentes de F9 no se desempatan | Agente (INC-T126-01) | 15-11-2026 | `docs/incidencias.md` |
+| Encargos al Bloque B (T-142): petición CT-B-01 y correspondencia de ámbitos [PROPUESTO] | El Broker manda las opciones con siguiente paso «enviar al Bloque B», con los campos del Anexo B.1 del Bloque B (nivel AUTO, prioridad NORMAL, marco minorista UE por defecto). Cuatro ámbitos con pareja en el Bloque B (AUD/USD, cobre, India, contratos inteligentes); uno sin pareja no se envía. La vuelta es un CT-04 con «enviada al Bloque B» y el resultado en texto | Agente (INC-T142-01) | 15-11-2026 | `cadena_b.correspondencia_ambitos`, `cadena_b.peticion` |
 
 ## 7. Modo sombra y coste de la API
 

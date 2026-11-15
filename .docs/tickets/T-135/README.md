@@ -2,7 +2,7 @@
 
 | Campo | Valor |
 | --- | --- |
-| Estado | EN QA |
+| Estado | CERRADO |
 | Pieza | bloque_a (11_Ejecutor: `bloque_a/motor/`) |
 | Planifica · implementa · QA | Claude · Claude (subagente) · un revisor nuevo sin contexto |
 | Aprobación del operador | 2026-11-14: «quiero que por tu cuenta vayas completando los tickets que quedan abiertos»; 2026-11-15: los tickets nuevos, con QA APTO |
@@ -52,3 +52,4 @@
 - 2026-11-15 · ABIERTO · creado con nuevo_ticket.sh
 - 2026-11-15 · EN CURSO · Claude (subagente) · implementa los cinco hallazgos en una copia (rama `t135`, base `eb66257`); pruebas en `tests/test_t135_motor.py`
 - 2026-11-15 · EN QA · Claude (subagente) · implementado y probado (`analisis-tecnico.md`, `pruebas.md`); sin commit (lo hace quien coordina)
+- 2026-11-15 · CERRADO · QA r01 APTO (revisor nuevo sin contexto); hallazgos (H-01 media: copias con una sesión de menos o redondeadas no se agrupan en IDX-CONC; H-02 a H-05 bajos) en T-144

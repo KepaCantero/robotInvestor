@@ -218,6 +218,7 @@ Las salidas reales del modelo serán más largas que las simuladas; tómelo como
     llm.py (Anthropic, Mock, Replay) · mock_respuestas.py · prompts.py · contratos.py · agentes.py · consumo.py
     almacen.py · orquestacion.py · sintesis.py · redaccion.py · evaluador.py · backtest.py · cli.py
     referencias.py · anonimizacion.py · configuracion.py · interfaz_broker.py (CT-23, CT-25) · seguimiento.py (CT-24, C6, F11)
+    cadena_b.py (T-142: petición CT-B-01 al Bloque B desde una opción, en el papel del Broker; vuelta CT-04)
     motor/ (operaciones.py, evaluacion.py, servicio.py)
     herramientas/ (ht01_datos, ht01_boveda, ht02, ht03, ht04_graficos, ht05_planificador, ht06_indice, ht07, ht08_monitor, ht09, referencia/)
   tests/ (pytest: test_unitarias, test_integracion, test_autocritica, test_v5, test_v51; MAPA_PLAN_DE_PRUEBAS.md; RESULTADOS.txt;
@@ -290,3 +291,16 @@ CT-01 acepta en el JSON un `msg_id` estable del Broker, en su propio espacio (fo
 Usar un directorio de salida nuevo por backtest independiente. Los registros existentes conservan su historia; en la primera apertura con la versión nueva se comprueba la cadena y se guarda su final en `sellos_integridad.json`. Antes de migrar, detener los procesos anteriores y hacer una copia completa de la carpeta. Si una escritura se cortó entre el registro y su sello (o dejó la última línea a medias), al abrir se aparta ese único registro sin confirmar a `<fichero>.no_confirmado.jsonl` y queda una incidencia en HA; más de un registro sin sello es un fallo de integridad, y una instancia en marcha que encuentra el sello desfasado falla cerrado hasta que se reabre; borrar los sellos de un almacén ya sellado no abre (marca `formato_almacen.json`). Una discrepancia posterior exige revisar/restaurar el conjunto, no borrar el sello. Dos procesos nuevos pueden añadir registros sin duplicar identificadores. Un acuse persistente en curso tras una interrupción requiere contrastar los efectos registrados antes de reintentar.
 
 Los pronósticos nuevos guardan las bases de comparación conocidas al emitir. Un certificado histórico sin método permanece disponible para inspección, pero solo una coincidencia exacta y autorizada por el operador habilita una probabilidad numérica. Para interpretar estados parciales, compatibilidad de las grabaciones y cobertura de las pruebas, consultar el [traspaso de la auditoría](../../.docs/tickets/T-92/auditoria_astra/handoff.md) y el [ticket T-92](../../.docs/tickets/T-92/README.md).
+
+## Cadena con el Bloque B (T-142, 15-11-2026)
+
+El Bloque A no habla con el Bloque B: el Broker reenvía el `paquete_para_bloque_B` de las opciones que decide enviar.
+`bloque_a/cadena_b.py` hace ese papel en código, sin modelo:
+
+- `opciones_enviables(paquete)`: las opciones con `siguiente_paso_sugerido = ENVIAR_A_BLOQUE_B`.
+- `construir_peticion(paquete, opp_id, cfg)`: la petición CT-B-01 con los campos del Anexo B.1 del Documento 0 del Bloque B. El encargo va tal cual, validado contra `entrada_bloque_B`, y la clave del ámbito del Bloque B sale de `cadena_b.correspondencia_ambitos` (por el símbolo del indicador de seguimiento).
+- Falla cerrado con `ErrorCadenaB` y su código: `SIN_CORRESPONDENCIA_AMBITO`, `CONFIGURACION_CADENA_B`, `OPCION_DESCONOCIDA`, `OPCION_DUPLICADA`, `ENTRADA_B_INVALIDA`, `PAQUETE_INVALIDO`, `ESQUEMA_NO_DISPONIBLE`.
+- `ct04_desde_respuesta_b(opp_id, respuesta_b)`: el CT-04 de vuelta (`ENVIADA_A_BLOQUE_B` y `resultado_comunicado`), con `RESPUESTA_B_INVALIDA` si la respuesta no trae `pet_id`.
+
+Las decisiones están en INC-T142-01 (`docs/incidencias.md`, en la raíz). De punta a punta, con los dos ejecutores simulados:
+`.venv/bin/python .docs/scripts/cadena_a_b.py [--sonda-sin-correspondencia]`, desde la raíz del repositorio.
