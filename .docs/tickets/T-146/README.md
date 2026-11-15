@@ -2,7 +2,7 @@
 
 | Campo | Valor |
 | --- | --- |
-| Estado | EN QA (r02: QA r01 NO APTO; r02 implementada y probada) |
+| Estado | CERRADO (QA r02 APTO) |
 | Pieza | bloque_a (11_Ejecutor: `bloque_a/consumo.py`, `agentes.py`, `llm.py`, `orquestacion.py`, `config/por_defecto.yaml`, `README.md`; `tests/test_t146_presupuesto.py`, y un ajuste comentado en `tests/test_t88_consumo.py` y `tests/test_fase4_huecos.py`); `docs/incidencias.md` (INC-T146-01); `sistema_global/seguimiento/Decisiones_del_operador_Bloque_A.md` (§3) |
 | Planifica · implementa · QA | claude · claude · el otro agente o un revisor nuevo |
 | Aprobación del operador | 2026-11-15: modo sombra autorizado (Decisiones del operador, §1, «API real»); este ticket acota su gasto. Las decisiones nuevas van como `[PROPUESTO]` (INC-T146-01) |
