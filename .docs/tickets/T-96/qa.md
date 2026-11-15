@@ -1,25 +1,74 @@
 # T-96 · QA independiente
 
-- **Revisor:** <agente que no implementó> · **Ronda:** r01
+- **Revisor:** revisor nuevo sin contexto (Claude) · **Ronda:** r01 · **Fecha:** 15-11-2026
+- **Revisado:** `origin/develop` en 8dd58d0 (el código de T-96 es el del commit 75eaf53; ningún commit posterior cambia `tools/requisitos_entorno.txt`, `.docs/scripts/preparar_entorno.sh` ni `.docs/scripts/common.sh`).
+- **Método:** me hice una opinión con el plan (`README.md`) y el código antes de leer `analisis-tecnico.md` y `pruebas.md`. Los scripts de ataque están en `revisores/` (`r01_00_comun.sh` … `r01_07_cuotas_mismo_codigo.sh`). Cada uno crea sus propios worktrees desechables desde `origin/develop` en un directorio temporal, los borra al terminar y no toca el `.venv` del repositorio principal (solo lo lee en r01_06 y r01_07).
 
 ## Reproducción desde limpio
 
-<Comandos y resultado.>
+1. `git worktree add --detach <scratch>/wt origin/develop`, sin `.venv`. Antes, en el código: `common.sh` calcula `RAIZ` a partir de la ubicación del script (`BASH_SOURCE`) y `preparar_entorno.sh` usa `VENV="$RAIZ/.venv"`, así que el entorno que crea es el del worktree. Lo confirman el log (`creando <scratch>/wt/.venv con /usr/bin/python3.12`), `sys.prefix` y las rutas de los tres paquetes editables, que apuntan al worktree.
+2. `.docs/scripts/preparar_entorno.sh` → código 0 en 36 s: «entorno conforme: 49 paquetes con la versión fijada» (Python 3.12.3, pip 24.0).
+3. `./tools/check_all.sh`, una vez y con ese entorno → **12/12, código 0, en 26 min 39 s**: corpus, NFC, YAML, secretos y refs-vivas en verde; ruff 2838/2838; mypy A 109/109, A-Forex 174/174 y B 159/159; pytest A 5968 ≥ 607, A-Forex 68 ≥ 68 y B 176 ≥ 174; 0 omitidos.
+4. CA-3 en ese mismo entorno, después del gate: `--comprobar` → 0; `.venv/bin/pip install arch==9.0.0` → `--comprobar` 1 con «arch: instalado 9.0.0, fijado 8.0.0»; el script sin opciones → 0 y arch vuelve a 8.0.0; `--comprobar` → 0. `git status` del worktree, limpio.
+5. El `.venv` del repositorio principal sigue intacto: mismo prefijo, y su `pip freeze --exclude-editable` coincide línea por línea con `tools/requisitos_entorno.txt` (r01_06).
 
 ## Criterios de aceptación
 
 | Criterio | Cumple | Evidencia |
 | --- | --- | --- |
-| CA-1 | sí / no | … |
+| CA-1 | sí | En el worktree nuevo y sin `.venv`, el script crea el entorno sin intervención y termina con código 0 en 36 s (paso 2). Se repite en r01_01, que además usa una ruta con espacios y con «ñ», y en r01_03, r01_04 y r01_06. |
+| CA-2 | sí | Gate 12/12 con el entorno del worktree (paso 3). Con la letra de CA-2: A 5968 ≥ 439, A-Forex 68 y B 176. Con las líneas base vigentes de `tools/cuotas.txt`: A 5968 ≥ 607, A-Forex 68 ≥ 68 y B 176 ≥ 174. Las cuotas de ruff y mypy salen exactas, y r01_07 da las mismas con el entorno principal. Que CA-2 cite cifras viejas es un defecto de documentación (H-07), no del entregable. |
+| CA-3 | sí | `--comprobar` da 0 en el entorno nuevo. Con `arch==9.0.0` da 1 con «arch: instalado 9.0.0, fijado 8.0.0» (paso 4 y r01_04). Si después se ejecuta el script sin opciones, vuelve a 8.0.0 y da 0. Con arch 9.0.0, mypy de A da 111 frente a una cuota de 109 (r01_04), que es lo que motivó T-96. |
+| CA-4 | sí | r01_05, 18/18: con `PYTHON_ENTORNO` inexistente, apuntando a 3.13, a `/bin/false`, a `/bin/true` o a un directorio, y con PATH y HOME sin python3.12, el código es 1, el mensaje es claro («no encuentro Python 3.12…», «… es Python 3.13; el proyecto usa 3.12», «no puedo ejecutar …») y no queda `.venv`. Un fallo distinto, cuando sí hay 3.12 pero la creación del venv se corta a mitad, está en H-01. |
+| CA-5 | sí | `git show --name-only 75eaf53` no toca nada de `bloque_*`, `sistema_global/marco_comun_c`, `sistema_global/constitucion` ni `tools/check_all.sh`. Ningún commit posterior cambia los ficheros de T-96. |
+
+## Ataques (resumen de `revisores/`)
+
+| Script | Resultado | Qué prueba |
+| --- | --- | --- |
+| r01_01_ruta_espacios_idempotencia | 12/12 | Ruta con espacios y «ñ», donde arrancan `bloque-a`, `pytest` y `mypy`. En la segunda ejecución `pip freeze` es idéntico y el script no recrea nada. `--comprobar` deja igual la huella del `.venv` (ruta, tamaño y mtime de cada fichero) y `git status`, y el árbol queda limpio. |
+| r01_02_venv_a_medias | 8/13 | Sin pip, creación cortada a mitad, venv de otro Python, interrupción (SIGTERM) durante pip y pip borrado. Los fallos son H-01 y H-02. La interrupción se recupera bien: `--comprobar` da 1 y el reintento da 0. |
+| r01_03_fichero_versiones | 10/15 | Fichero ausente, `>=`, otras grafías del nombre (`pyyaml`, `Typing-Extensions`, `ast.serialize`, `RPDS_PY`, todas bien), comentario al final de línea, `===`, CRLF (bien), duplicado, línea quitada, paquete fijado que nadie usa, argumentos de más y `--comprobar` sin `.venv` (falla y no lo crea). Los fallos son H-03, H-05 y H-06. |
+| r01_04_desfase_y_restauracion | 9/9 | CA-3, vuelta a la versión fijada, ausencia de `-U`/`--upgrade`, paquete sin fijar (solo avisa, ver H-03) y paquete fijado borrado a mano (el script lo repone). |
+| r01_05_sin_python312 | 18/18 | CA-4. |
+| r01_06_coherencia_requisitos | 9/9 | `pip check` limpio. El fichero es **exactamente** el cierre de dependencias de las raíces (tres ejecutores más `arch openpyxl python-docx ruff mypy pytest pyyaml jsonschema`), sin nada de más ni de menos. Las herramientas del gate están. De las importaciones de terceros del repo solo queda sin resolver `yfinance`, que es el extra opcional `yahoo`, fuera del gate. El entorno nuevo es idéntico al principal. |
+| r01_07_cuotas_mismo_codigo | 5/5 | Con el mismo código y cachés aparte: ruff 2838, mypy A 109, A-Forex 174 y B 159, iguales con el entorno nuevo y con el principal, e iguales a las cuotas. |
 
 ## Hallazgos
 
 | ID | Gravedad | Cómo reproducirlo | Esperado / obtenido | Corrección sugerida | Estado |
 | --- | --- | --- | --- | --- | --- |
-| H-01 | crítica · alta · media · baja | … | … | … | abierto · corregido |
+| H-01 | media | r01_02 a), b) y e). Se simula un `python3.12 -m venv` que se corta tras crear `bin/python`, como pasa en Debian y Ubuntu sin `python3.12-venv` («ensurepip is not available»). También un `.venv` sin pip y uno al que se le ha borrado `bin/pip`. | **Esperado:** que no quede un `.venv` a medias, o que la siguiente ejecución lo detecte y diga que hay que borrarlo. **Obtenido:** queda `.venv` con `bin/python` y sin pip. Las siguientes ejecuciones lo dan por bueno (solo miran `-x .venv/bin/python`) y fallan con «…/.venv/bin/pip: No such file or directory · ERROR: pip no pudo instalar las versiones fijadas», que no dice cómo salir. Con pip borrado, `--comprobar` lista 49 «falta …» porque `pip freeze 2>/dev/null` oculta el error real. Falla cerrado, pero no se recupera. | Crear el venv en un directorio temporal junto a `.venv` y renombrarlo solo si termina bien, o borrarlo con un `trap` si la creación falla. Antes de reutilizar un `.venv` existente, exigir `bin/python` 3.12 y `bin/pip` y, si falta algo, fallar con «el .venv está incompleto: bórralo y repite». En `comprobar`, no silenciar el error de `pip freeze`. Pruebas de regresión: los casos a), b) y e) de r01_02. | abierto |
+| H-02 | media | r01_02 c): un `.venv` existente creado con Python 3.13. | **Esperado:** validar antes de mutar, es decir, comprobar la versión de Python del `.venv` antes de instalar. **Obtenido:** `pip install` corre primero (site-packages pasa de 2 a 119 entradas) y solo después `comprobar` falla con «el entorno usa Python 3.13». Modifica un entorno que el usuario ya tenía antes de rechazarlo. | Mover la comprobación de versión (y la de pip, H-01) a antes de `pip install`, en una función `valida_venv` que se use en los dos modos. Prueba de regresión: r01_02 c). | abierto |
+| H-03 | media | r01_03 8) (quitar `tzdata` del fichero) y r01_04 4) (`pip install six`). | **Esperado** (README, «Diseño»): «si lo instalado no coincide con el fichero, el script termina con error y dice qué paquete difiere». **Obtenido:** un paquete instalado que no está fijado solo da «· aviso: … instalado y no fijado», y el código es 0. Si se quita una línea, o si una dependencia nueva entra por un cambio de `pyproject`, un clon nuevo instala la última versión de ese paquete y `--comprobar` lo da por conforme. Es la misma clase de deriva que T-96 quería cerrar. `analisis-tecnico.md` lo presenta como decisión («los instalados sin fijar solo dan aviso»), y choca con el diseño aprobado. | Al menos en el modo de creación (sin `--comprobar`), fallar si el propio `pip install` del script deja un paquete sin fijar, porque eso significa que el fichero está incompleto. Para `--comprobar`, o fallar también con una lista explícita de extras tolerados (`pre-commit`, `detect-secrets`, …), o que el operador decida y quede `[PROPUESTO]` en la deuda. | abierto |
+| H-04 | media | `prompts/00_ENTORNO.md`, paso 1, y `CLAUDE.md`, «Pre-commit». | **Esperado:** documentación al día. `CLAUDE.md` dice que los prompts de `prompts/` «se pegan tal cual», empezando por `00_ENTORNO.md`. **Obtenido:** `00_ENTORNO.md` sigue mandando `pip install arch openpyxl python-docx pytest ruff mypy pre-commit detect-secrets` sin versiones, con `~/.local/bin/python3.12`, que es justo el camino que dio arch 9.0.0 y mypy A 111 > 109 (r01_04). Además, en un `.venv` creado por el script no existe `.venv/bin/pre-commit`, aunque `CLAUDE.md` manda ejecutar `.venv/bin/pre-commit install`. No está en el corpus congelado (`tools/corpus_manifest.txt`). | Cambiar el paso 1 de `00_ENTORNO.md` para que llame a `.docs/scripts/preparar_entorno.sh` y diga que `pre-commit` y `detect-secrets` se instalan aparte, porque `--comprobar` los avisará como no fijados. Poner la misma nota junto a la línea de pre-commit de `CLAUDE.md`. | abierto |
+| H-05 | baja | r01_03 4), 5) y 7). | **Esperado:** que el script y pip lean el fichero igual, con mensajes exactos. **Obtenido:** con `arch==8.0.0  # nota`, que pip acepta, el script da «arch: instalado 8.0.0, fijado 8.0.0  # nota». Con `arch===8.0.0` dice «fijado =8.0.0». Con un duplicado contradictorio gana el último sin avisar de que está repetido. Una línea de `pip freeze` sin `==` (instalación directa `pkg @ file://…`) saldría como «línea sin versión exacta **en el fichero**». Todo falla cerrado, pero los mensajes confunden. | Quitar los comentarios en línea (`\s+#.*`), rechazar `===` y los duplicados con su propio mensaje, y separar en el mensaje si la línea viene del fichero o de lo instalado. | abierto |
+| H-06 | baja | r01_03 10) y r01_05 (informativo). | `--comprobar --otra` da 0 e ignora el segundo argumento. `PYTHON_ENTORNO=python3.12`, un nombre sin ruta que existe en el PATH, se rechaza con «no encuentro Python 3.12». El mensaje sí pide «su ruta», así que es aceptable, pero confunde. | Rechazar con el uso cualquier argumento de más (`$# -gt 1`). Resolver `PYTHON_ENTORNO` con `command -v`. | abierto |
+| H-07 | baja | `.docs/tickets/T-96/README.md`, CA-2. | CA-2 escribe a mano las líneas base de su fecha (A 439, A-Forex 68 y B 176). Las vigentes del gate están en `tools/cuotas.txt` (A 607, A-Forex 68 y B 174). La de B (176) ni siquiera coincide con la cuota de B de entonces (174, según `CLAUDE.md`, «desde T-64»), sino con el número de pruebas que pasaban. No afecta al gate, que lee `cuotas.txt`, pero el criterio queda rancio en cuanto sube una línea base, que es la trampa que la regla 2 evita con los números. `pruebas.md` lleva fecha y es histórico, así que puede quedarse como está. | Reescribir CA-2 como «12/12, con las líneas base vigentes de `tools/cuotas.txt`». | abierto |
+| H-08 | baja | Lectura del script y r01_06 (informativo). | La reproducibilidad no es total, y eso no está entre los «límites conocidos» de `analisis-tecnico.md`: pip no está fijado (sale del `ensurepip` del Python del sistema, aquí 24.0); el `setuptools` que construye los editables se baja en un entorno aislado sin versión fija (`setuptools>=68`); no hay hashes (`--require-hashes`), y hace falta red hasta PyPI. Hoy no cambia las cuotas, porque r01_07 da cifras iguales. | Documentarlo entre los límites. Opcionalmente, fijar pip (`pip install pip==…` antes de instalar) y aplicar el fichero también a la construcción (`PIP_CONSTRAINT`), o pasar a `--require-hashes` cuando se quiera la cadena de suministro cerrada. | abierto |
 
-Los scripts de ataque van en `revisores/` dentro de este ticket, numerados por ronda y sin sobrescribir.
+## Invariantes
+
+- **Falla cerrado:** sí en todos los casos probados, porque nunca da por conforme un entorno con una versión fijada distinta o que falte. Lo que no cumple es «valida antes de mutar» (H-02) y la tolerancia a paquetes sin fijar (H-03).
+- **Ningún número a mano:** el fichero sale de `pip freeze` y es exactamente el cierre de dependencias (r01_06). El único número escrito a mano es el de CA-2 (H-07).
+- **No actualiza versiones por su cuenta:** no usa `-U`, `--upgrade` ni `--force-reinstall`, y al repetirlo `pip freeze` sale idéntico (r01_01 y r01_04). Las dependencias nuevas sin fijar sí entrarían con su última versión (H-03).
+- **Ruta determinista, F y G, LLM en controles, controles que se relajan:** no aplica, porque es infraestructura fuera de los bloques.
+- **Decisiones del operador en silencio:** la de «solo aviso» para los paquetes sin fijar contradice el diseño aprobado y no está `[PROPUESTO]` (H-03).
+- **Secretos y datos personales:** ninguno en el script, en el fichero ni en los scripts de ataque. `common.sh` solo lee `.env`, que está ignorado por git.
+- **Documentación:** `CLAUDE.md` («Comandos»), la tabla de `.docs/README.md`, el relevo del 11-11 y la deuda técnica (T-96, EN QA) están al día. Faltan `prompts/00_ENTORNO.md` y la nota de pre-commit (H-04).
+
+## Lo que no se pudo comprobar
+
+- Otra máquina u otro sistema operativo (macOS) y otro parche de Python 3.12: solo se probó Linux con Python 3.12.3.
+- La desaparición real de una versión fijada en PyPI. Lo que se probó es el caso equivalente de un paquete fijado que no se puede instalar: falla cerrado.
+- La creación con un Debian real sin `python3.12-venv`, que se simuló con un envoltorio (r01_02 b).
 
 ## Veredicto
 
-**APTO / NO APTO** · motivo.
+**APTO.** Se cumplen los cinco criterios y no hay hallazgos críticos ni altos. El entorno se reproduce desde cero en un solo comando, es idéntico al principal, pasa el gate 12/12 con las cuotas exactas y detecta la deriva de arch 9.0.0 que motivó el ticket.
+
+Siguen abiertos y pasan a la deuda técnica con su ID:
+- **Medios:** H-01 (un `.venv` a medias no se detecta ni se explica), H-02 (instala antes de validar la versión de Python de un `.venv` existente), H-03 (los paquetes sin fijar solo avisan, contra el diseño aprobado: hay que corregirlo o dejarlo `[PROPUESTO]` para el operador) y H-04 (`prompts/00_ENTORNO.md` y la nota de pre-commit de `CLAUDE.md`, desfasados).
+- **Bajos:** H-05 (lectura del fichero distinta de la de pip en casos raros), H-06 (argumentos de más y `PYTHON_ENTORNO` sin ruta), H-07 (CA-2 con líneas base escritas a mano) y H-08 (pip, setuptools de construcción y hashes sin fijar, sin documentar como límites).
+
+Este revisor solo podía escribir `qa.md` y `revisores/`, así que el cierre (estado, deuda, diario, memoria y commit) queda para quien coordine.
