@@ -2,7 +2,7 @@
 
 | Campo | Valor |
 | --- | --- |
-| Estado | EN QA (ronda r02) |
+| Estado | EN QA (ronda r03) |
 | Pieza | `.docs/scripts/registro_experimentos.py` y su uso en `.docs/scripts/banco_medida.py` (fuera de los bloques y del marco común) |
 | Planifica · implementa · QA | claude · claude · un revisor nuevo sin contexto (operador, 15-11-2026: terminar los tickets hasta aprobar sus QA) |
 | Aprobación del operador | 2026-11-12: «haz todo» (punto 2 de lo que se podía adelantar). La decisión de fondo es la 5 de la tanda 1, aceptada el 11-11-2026 |
@@ -55,3 +55,5 @@ Que desde ya cada prueba que pueda cambiar cómo decide o cuánto cuesta el robo
 
 - 2026-11-15 · NO APTO · QA r01 (revisor nuevo, base `eb4be1f`, gate 12/12): H-01 (quitar las últimas anotaciones no se detecta), H-02 (sin cerrojo: dos procesos rompen la cadena), H-03 (repetir una variante hasta que sale «mejor») altos; H-04 a H-08 medios; H-09 a H-12 bajos
 - 2026-11-15 · EN QA · Ronda r02 (registro 0.2.0): ancla en git y sello, cerrojo, regla de adopción por variante, forma de CT-G-24 validada al escribir y al leer, instantes en UTC, banco con `--sin-registro` y máximo de variantes fijo, pruebas de `.docs/scripts` en `commit_limpio.sh`; decisiones `[PROPUESTO]` en la fila T-99 de la deuda
+- 2026-11-15 · NO APTO · QA r02 (revisor nuevo, base `44be002`, gate 12/12): H-13 alto (el ancla solo miraba HEAD), H-14 a H-19 medios, H-20 a H-24 bajos
+- 2026-11-15 · EN QA · Ronda r03 (registro 0.3.0): ancla en todo el historial, sello tolerante a un corte y preparado antes de escribir, lectores con cerrojo y espera máxima, intentos pendientes en la adopción, búsqueda o prerregistro atómicos, un registro por agente, rutas públicas en el banco

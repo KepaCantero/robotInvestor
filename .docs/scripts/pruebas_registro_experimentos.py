@@ -415,3 +415,225 @@ def test_h01_sello_quitar_las_ultimas_sin_git_se_detecta(reg):
     reg.sello.write_text("{roto", encoding="utf-8")
     with pytest.raises(rx.RegistroError, match="sello"):
         reg.verificar()
+
+
+# ---------------------------------------------------------------- ronda r03 (QA r02 NO APTO): una prueba por hallazgo
+
+def _git_ok(carpeta, *args):
+    _git(carpeta, *args)
+
+
+def _commit(carpeta, *ficheros, mensaje="registro"):
+    _git(carpeta, "add", *ficheros)
+    _git(carpeta, "commit", "-q", "-m", mensaje)
+
+
+def test_h13_un_recorte_subido_con_commit_se_detecta(reg_en_git):
+    r, _exp = reg_en_git
+    lineas = r.ruta.read_text(encoding="utf-8").splitlines()
+    r.ruta.write_text("\n".join(lineas[:2]) + "\n", encoding="utf-8")   # se quita el resultado…
+    _resellar(r)
+    _commit(r.ruta.parent, "registro.jsonl", "registro.jsonl.sello")    # …y se sube el recorte
+    with pytest.raises(rx.RegistroError, match="perdió o cambió"):
+        r.verificar()
+
+
+def test_h13_cambiar_un_veredicto_y_subirlo_se_detecta(reg_en_git):
+    r, _exp = reg_en_git
+    a = _leer(r)
+    a[2]["veredicto"] = "mejor"
+    r.ruta.write_text(_rehacer_cadena(a), encoding="utf-8")
+    _resellar(r)
+    _commit(r.ruta.parent, "registro.jsonl", "registro.jsonl.sello")
+    with pytest.raises(rx.RegistroError, match="perdió o cambió"):
+        r.verificar()
+
+
+def test_h13_sacar_el_registro_de_head_se_detecta(reg_en_git):
+    r, _exp = reg_en_git
+    texto = r.ruta.read_text(encoding="utf-8")
+    _git(r.ruta.parent, "rm", "-q", "--cached", "registro.jsonl")
+    _git(r.ruta.parent, "commit", "-q", "-m", "fuera")
+    r.ruta.write_text(texto, encoding="utf-8")
+    with pytest.raises(rx.RegistroError, match="se quitó del repositorio"):
+        r.verificar()
+
+
+def test_h13_resolver_una_fusion_quedandose_con_un_lado_se_detecta(reg_en_git):
+    r, exp = reg_en_git
+    d = r.ruta.parent
+    _git(d, "checkout", "-q", "-b", "otra")
+    r.intento(exp, "vB", DESPUES)
+    _commit(d, "registro.jsonl", "registro.jsonl.sello", mensaje="B")
+    _git(d, "checkout", "-q", "-")
+    r.intento(exp, "vA", DESPUES)
+    _commit(d, "registro.jsonl", "registro.jsonl.sello", mensaje="A")
+    texto_a = r.ruta.read_text(encoding="utf-8")
+    sello_a = r.sello.read_text(encoding="utf-8")
+    subprocess.run(["git", "-C", str(d), "merge", "-q", "otra"], capture_output=True,
+                   env={"GIT_AUTHOR_NAME": "t", "GIT_AUTHOR_EMAIL": "t@t", "GIT_COMMITTER_NAME": "t", "GIT_COMMITTER_EMAIL": "t@t",
+                        "HOME": str(d), "PATH": "/usr/bin:/bin"}, check=False)   # da conflicto: se resuelve a mano
+    r.ruta.write_text(texto_a, encoding="utf-8")   # se resuelve el conflicto quedándose con el lado A
+    r.sello.write_text(sello_a, encoding="utf-8")
+    _commit(d, "registro.jsonl", "registro.jsonl.sello", mensaje="fusión")
+    with pytest.raises(rx.RegistroError, match="perdió o cambió"):
+        r.verificar()
+
+
+def test_h14_el_ancla_no_se_apaga_en_silencio(reg_en_git, monkeypatch):
+    r, _exp = reg_en_git
+    lineas = r.ruta.read_text(encoding="utf-8").splitlines()
+    monkeypatch.setenv("GIT_DIR", "/no/existe")   # un GIT_DIR ajeno no desactiva el ancla
+    r.ruta.write_text("\n".join(lineas[:-1]) + "\n", encoding="utf-8")
+    with pytest.raises(rx.RegistroError, match="HEAD"):
+        r.verificar()
+    monkeypatch.setattr(rx.shutil, "which", lambda _: None)
+    with pytest.raises(rx.RegistroError, match="git no está instalado"):
+        r.verificar()
+    monkeypatch.undo()
+    real = rx.Registro._git
+
+    def dañado(raiz, *args):
+        if args and args[0] == "cat-file":
+            return subprocess.CompletedProcess(args, 128, b"", b"fatal: bad object")
+        return real(raiz, *args)
+    monkeypatch.setattr(rx.Registro, "_git", staticmethod(dañado))
+    r.ruta.write_text("\n".join(lineas) + "\n", encoding="utf-8")
+    with pytest.raises(rx.RegistroError, match="dañado"):
+        r.verificar()
+
+
+def test_h15_un_intento_pendiente_bloquea_la_adopcion(reg):
+    exp = reg.prerregistrar(pre(max_variantes=2), "claude", AHORA)["exp_id"]
+    reg.intento(exp, "v1", DESPUES)                                    # sin resultado todavía
+    n = reg.intento(exp, "v1", DESPUES)["n"]
+    reg.resultado(exp, n, "mejor", ahora=DESPUES)
+    r = reg.resumen(exp)
+    assert r["por_variante"]["v1"]["pendiente"] and r["por_variante"]["v1"]["veredicto"] is None and not r["adoptable"]
+    n = reg.intento(exp, "v2", DESPUES)["n"]
+    reg.resultado(exp, n, "mejor", ahora=DESPUES)
+    reg.intento(exp, "v2", DESPUES)                                    # una repetición pendiente
+    assert not reg.adoptable(exp)
+    reg.resultado(exp, 4, "mejor", ahora=DESPUES)
+    assert reg.adoptable(exp) and reg.resumen(exp)["adoptables"] == [3]
+
+
+def test_h16_si_falla_el_sello_el_registro_sigue_vivo(reg, monkeypatch):
+    exp = reg.prerregistrar(pre(), "claude", AHORA)["exp_id"]
+    real = rx.Registro._escribir_sello
+
+    def falla(self, e, temporal=None):
+        raise rx.RegistroError("no se pudo poner al día el sello (disco lleno)")
+    monkeypatch.setattr(rx.Registro, "_escribir_sello", falla)
+    with pytest.raises(rx.RegistroError, match="sello"):
+        reg.intento(exp, "v1", DESPUES)
+    monkeypatch.setattr(rx.Registro, "_escribir_sello", real)
+    assert reg.verificar() == 2                                        # el sello va una anotación por detrás: se admite
+    reg.intento(exp, "v2", DESPUES)                                    # y la siguiente escritura lo pone al día
+    assert json.loads(reg.sello.read_text(encoding="utf-8"))["seq"] == 3 and reg.verificar() == 3
+
+
+def test_h17_un_registro_por_agente():
+    carpeta = str(Path(rx.__file__).parent)
+    codigo = f"import sys; sys.path.insert(0, {carpeta!r}); import registro_experimentos as rx; print(rx.REGISTRO_DEFECTO.name)"
+    out = subprocess.run([sys.executable, "-c", codigo],
+                         capture_output=True, text=True, env={"RI_AGENTE": "astra", "PATH": "/usr/bin:/bin"}, check=True)
+    assert out.stdout.strip() == "registro_astra.jsonl"
+    assert rx.REGISTRO_DEFECTO.name == f"registro_{rx.AGENTE}.jsonl"
+
+
+def test_h18_un_clon_sin_sello_se_lee_si_es_lo_subido(tmp_path):
+    _git(tmp_path, "init", "-q")
+    r = rx.Registro(tmp_path / "registro.jsonl")
+    exp = r.prerregistrar(pre(), "claude", AHORA)["exp_id"]
+    r.intento(exp, "v1", DESPUES)
+    _commit(tmp_path, "registro.jsonl")
+    r.sello.unlink()
+    assert r.verificar() == 2                                          # idéntico a HEAD: git hace de ancla
+    r2 = rx.Registro(tmp_path / "registro.jsonl", ancla_git=False)
+    with pytest.raises(rx.RegistroError, match="falta el sello"):
+        r2.verificar()
+
+
+_HIJO_BUSCA = """
+import sys
+sys.path.insert(0, {scripts!r})
+import registro_experimentos as rx
+r = rx.Registro({ruta!r})
+e, nuevo = r.buscar_o_prerregistrar(lambda c: c.get("hipotesis") == {hip!r}, {pre!r}, "claude")
+print(e["exp_id"])
+"""
+
+
+def test_h19_buscar_o_prerregistrar_a_la_vez_crea_uno(reg):
+    p = pre()
+    codigo = _HIJO_BUSCA.format(scripts=str(Path(rx.__file__).parent), ruta=str(reg.ruta), hip=p["hipotesis"], pre=p)
+    hijos = [subprocess.Popen([sys.executable, "-c", codigo], stdout=subprocess.PIPE, text=True) for _ in range(4)]
+    ids = {h.communicate()[0].strip() for h in hijos}
+    assert len(ids) == 1 and reg.verificar() == 1
+
+
+def test_h20_sustituto_suelto(reg):
+    with pytest.raises(rx.RegistroError, match="UTF-8"):
+        reg.prerregistrar(pre(hipotesis="Una hipótesis con un sustituto \udc80 suelto"), "claude", AHORA)
+    assert not reg.ruta.exists()
+
+
+def test_h21_lectores_durante_una_escritura_y_espera_del_cerrojo(reg, monkeypatch):
+    import fcntl
+    reg.prerregistrar(pre(max_variantes=5), "claude", AHORA)
+    codigo = _HIJO.format(scripts=str(Path(rx.__file__).parent), ruta=str(reg.ruta), pre=pre())
+    escritor = subprocess.Popen([sys.executable, "-c", codigo, "a"])
+    lecturas = 0
+    while escritor.poll() is None:
+        reg.verificar()                                                # nunca una falsa alarma de manipulación
+        lecturas += 1
+    assert escritor.wait() == 0 and lecturas > 0 and reg.verificar() == 41
+    monkeypatch.setattr(rx, "CERROJO_ESPERA_S", 0.2)
+    with open(reg.ruta.with_name(reg.ruta.name + ".lock"), "a", encoding="utf-8") as fl:
+        fcntl.flock(fl.fileno(), fcntl.LOCK_EX)
+        with pytest.raises(rx.RegistroError, match="ocupado"):
+            reg.intento("EXP-2026-0001", "v9", DESPUES)
+
+
+def test_h21_un_intento_rechazado_no_crea_nada(tmp_path):
+    r = rx.Registro(tmp_path / "nueva" / "registro.jsonl")
+    with pytest.raises(rx.RegistroError, match="no está prerregistrado"):
+        r.intento("EXP-2026-0001", "v1", DESPUES)
+    assert not (tmp_path / "nueva").exists()
+
+
+def test_h22_registro_sin_sello_de_la_010_y_detalle_null(reg, tmp_path):
+    exp = reg.prerregistrar(pre(), "claude", AHORA)["exp_id"]
+    reg.intento(exp, "v1", DESPUES)
+    reg.sello.unlink()                                                 # como un registro de la 0.1.0
+    with pytest.raises(rx.RegistroError, match="sellar"):
+        reg.verificar()
+    assert rx.main(["--registro", str(reg.ruta), "sellar"]) == 0 and reg.verificar() == 2
+    assert rx.main(["--registro", str(reg.ruta), "sellar"]) == 2       # no se vuelve a sellar
+    assert rx.main(["--registro", str(reg.ruta), "resultado", exp, "1", "peor", "--detalle", "null"]) == 2
+
+
+def test_h16_si_el_sello_no_se_puede_preparar_no_se_escribe_nada(reg, monkeypatch):
+    exp = reg.prerregistrar(pre(), "claude", AHORA)["exp_id"]
+    antes = reg.ruta.read_text(encoding="utf-8")
+
+    def falla(self, e):
+        raise rx.RegistroError("no se puede preparar el sello del registro (simulado): no se escribe nada")
+    monkeypatch.setattr(rx.Registro, "_preparar_sello", falla)
+    with pytest.raises(rx.RegistroError, match="no se escribe nada"):
+        reg.intento(exp, "v1", DESPUES)
+    assert reg.ruta.read_text(encoding="utf-8") == antes
+
+
+def test_qa_r02_variantes_nfd_de_un_registro_antiguo(reg):
+    exp = reg.prerregistrar(pre(max_variantes=1), "claude", AHORA)["exp_id"]
+    nfd = unicodedata.normalize("NFD", "única")
+    a = _leer(reg)
+    intento = {"tipo": "INTENTO", "exp_id": exp, "n": 1, "variante": nfd, "inicio": DESPUES,
+               "huella_prerregistro": a[0]["huella_prerregistro"], "dentro_del_maximo": True}
+    reg.ruta.write_text(_rehacer_cadena([a[0], intento]), encoding="utf-8")   # como lo escribiría la 0.1.0, sin normalizar
+    _resellar(reg)
+    reg.intento(exp, unicodedata.normalize("NFC", "única"), DESPUES)
+    r = reg.resumen(exp)
+    assert r["variantes"] == 1 and r["fuera_del_maximo"] == []

@@ -44,6 +44,12 @@ for r in "${borrar[@]}"; do rm -f "$W/$r"; done
 for r in "${rutas[@]}"; do
   if grep -qE '^(<<<<<<<|>>>>>>>)( |$)' "$W/$r" 2>/dev/null; then fallo "$r tiene marcas de un conflicto de fusión sin resolver: no se hace commit"; fi
 done
+# T-99 (QA r02, H-18): un registro de experimentos se sube con su sello, o los clones no lo podrían leer.
+for r in "${rutas[@]}"; do
+  if [[ "$r" == *.jsonl && -e "$r.sello" ]] && ! printf '%s\n' "${rutas[@]}" | grep -qxF "$r.sello"; then
+    fallo "$r se sube sin su sello ($r.sello): súbelos juntos"
+  fi
+done
 aviso "copia limpia en $W con ${#rutas[@]} fichero(s) y ${#borrar[@]} borrado(s)"
 if printf '%s\n' "${rutas[@]}" | grep -q '^sistema_global/marco_comun_c/'; then
   (cd "$W" && .docs/scripts/pruebas_marco.sh) || fallo "las pruebas del marco no pasan en la copia limpia: no se hace commit"

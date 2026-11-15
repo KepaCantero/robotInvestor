@@ -55,3 +55,29 @@ Registro 0.2.0. Las tres decisiones de fondo se dejan `[PROPUESTO]` en la fila T
 - `r01_08`: la variante por defecto ya no existe en la línea de órdenes, y el caso siguiente cae en cascada.
 
 **Límites:** sin git, quien reescribe el registro y el sello a la vez no se detecta. El cerrojo es de una sola máquina (POSIX).
+
+## Ronda r03 (15-11-2026, QA r02 NO APTO)
+
+Registro 0.3.0.
+
+| Hallazgo | Corrección |
+| --- | --- |
+| H-13 (alta) | **Ancla en todo el historial de git**, no solo en HEAD. En cada commit que toca el registro (`git rev-list --full-history --parents`), el registro tiene que existir y empezar por la versión de cada padre, también en las fusiones. Por eso se detectan:<br>• un recorte subido con un commit;<br>• un veredicto cambiado, recalculado y subido;<br>• el registro sacado de HEAD;<br>• una fusión resuelta quedándose con un lado.<br>Además, el fichero de ahora tiene que empezar por la versión de HEAD. |
+| H-14 | El repositorio se busca por «.git» hacia arriba, y git se ejecuta sin las variables `GIT_*`. Si el registro está en un repositorio y git no está, o un objeto no se puede leer, falla cerrado. |
+| H-15 | Un intento sin resultado deja la variante «pendiente», y una variante pendiente no se adopta. Si el primer intento que no falló no tiene resultado, la variante todavía no tiene veredicto. |
+| H-16 | El sello temporal se prepara antes de tocar el registro: si no se puede escribir, no se escribe nada. Si el corte llega entre la línea y el sello, se admite el sello una anotación por detrás, y la siguiente escritura lo pone al día. Quitar líneas deja el registro por detrás del sello, y eso nunca se admite. |
+| H-17 | **Un registro por agente:** `registro_<agente>.jsonl`, con el agente en `RI_AGENTE` (por defecto `claude`; Astra usa `astra`). El banco usa el mismo valor por defecto. |
+| H-18 | Un clon sin sello se lee si el registro es idéntico al de HEAD, porque git hace de ancla. `commit_limpio.sh` no sube un registro sin su sello. |
+| H-19 | `buscar_o_prerregistrar` busca y prerregistra bajo el mismo cerrojo, y el banco lo usa. Dos bancos a la vez crean un solo experimento. |
+| H-20 | Un sustituto suelto da `RegistroError`, en la huella y en la línea. Los fallos del cerrojo y del sello también salen como `RegistroError`. El motivo de un fallo del banco se escapa a UTF-8 válido. |
+| H-21 | Los lectores toman un cerrojo compartido, así que no hay falsas alarmas mientras se escribe. El cerrojo espera como mucho `CERROJO_ESPERA_S`: 30 s, `[PROPUESTO]`. Un intento sobre un registro que no existe no crea carpeta ni cerrojo. |
+| H-22 | Sin sello y con más de una anotación, el mensaje propone la orden `sellar`, que solo sella una vez un registro sin sello. `--detalle null` se rechaza. Las variantes en NFD de un registro de la 0.1.0 se comparan en NFC. |
+| H-23 | Esta sección y `pruebas.md`. Los scripts r01 se ejecutan sentencia a sentencia con `revisores/r02_00_todos.sh`. |
+| H-24 | El banco escribe en el prerregistro y en el registro las rutas relativas a la raíz. Las de fuera del repositorio van como «externa», con su nombre y una huella corta, sin las carpetas de la máquina. |
+| H-12 | `commit.sh` ejecuta también las pruebas de `.docs/scripts`. El número mínimo de pruebas queda en la deuda. |
+
+**Siguen marcando algo en los scripts del revisor, por diseño:**
+- el sello una anotación por detrás se admite (H-16);
+- el cerrojo espera hasta 30 s, cuando el script mira a los 5;
+- la fusión de dos ramas falla cerrada (un escritor por fichero);
+- la variante por defecto ya no existe en la línea de órdenes.

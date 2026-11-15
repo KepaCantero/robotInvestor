@@ -22,6 +22,8 @@ rama="$(git rev-parse --abbrev-ref HEAD)"
 [[ "$rama" == "develop" ]] || fallo "estás en la rama $rama; el proyecto trabaja en develop"
 
 "$SCRIPTS/gate.sh" $gate_opt || fallo "el gate no pasa: no se hace commit"
+# T-99 (QA r02, H-12): las pruebas de .docs/scripts, como en commit_limpio.sh (el gate del repositorio no las ejecuta)
+"$PY" -m pytest -q -p no:cacheprovider .docs/scripts/pruebas_*.py || fallo "las pruebas de .docs/scripts no pasan: no se hace commit"
 
 if [[ ${#rutas[@]} -gt 0 ]]; then git add -- "${rutas[@]}"; else git add -A; fi
 git diff --cached --quiet && fallo "no hay nada que confirmar"

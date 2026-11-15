@@ -1,0 +1,252 @@
+##### r01 sentencia a sentencia (sello del registro)
+=== r01_01_cadena.py 
+[EXCEPCIÓN] línea 74 de r01_01_cadena.py: RegistroError: línea 3 no es JSON: el registro está dañado (en registro_experimentos.py:256)
+[HALLAZGO] sin salto de línea final, el siguiente anexo no corrompe el registro · anexo: RegistroError('el registro no acaba en salto de línea: una escritura se cortó o se editó a mano'); verificar después: el registro no acaba en salto de línea: una escritura se cortó o se editó a mano
+14/15 como pide el plan; 1 hallazgo(s)
+=== r01_02_concurrencia.py 
+[HALLAZGO] dos ramas que anotan a la vez y se fusionan conservando las dos líneas dejan un registro usable · conflicto de git: True; verificar tras la fusión: cadena rota en la anotación 3: alguien la reescribió o la quitó
+4/5 como pide el plan; 1 hallazgo(s)
+=== r01_03_ficheros_danados.py 
+[EXCEPCIÓN] línea 67 de r01_03_ficheros_danados.py: RegistroError: el registro no casa con su sello (anotación 3 frente a 2): le quitaron o cambiaron las últimas líneas, o una escritura se cortó (en registro_experimentos.py:307)
+[EXCEPCIÓN] línea 77 de r01_03_ficheros_danados.py: RegistroError: el intento 2 de EXP-2026-0001 dice mal si está dentro del máximo de variantes (en registro_experimentos.py:275)
+11/11 como pide el plan; 0 hallazgo(s)
+=== r01_04_prerregistro.py 
+[EXCEPCIÓN] línea 68 de r01_04_prerregistro.py: RegistroError: no es JSON estándar: Out of range float values are not JSON compliant: nan (en registro_experimentos.py:88)
+[EXCEPCIÓN] línea 69 de r01_04_prerregistro.py: FileNotFoundError: [Errno 2] No such file or directory: '<tmp>/registro.jsonl' (en pathlib.py:1015)
+[EXCEPCIÓN] línea 70 de r01_04_prerregistro.py: NameError: name 'txt' is not defined (en r01_04_prerregistro.py:70)
+37/37 como pide el plan; 0 hallazgo(s)
+=== r01_05_intentos_resultados.py 
+30/30 como pide el plan; 0 hallazgo(s)
+=== r01_06_adoptable.py 
+[EXCEPCIÓN] línea 43 de r01_06_adoptable.py: RegistroError: «ahora» tiene que ser un instante ISO con zona (AAAA-MM-DDThh:mm:ss+hh:mm o Z): 'ayer' (en registro_experimentos.py:99)
+[HALLAZGO] un «ahora» inyectado que no es una fecha se rechaza · se aceptó creado_en='ayer' y adoptable=True
+[HALLAZGO] repetir v1 tras salir del máximo: sigue dentro (es de las 2 primeras)
+[HALLAZGO] …y el resumen avisa de que esa variante tiene veredictos contradictorios · claves del resumen: ['adoptable', 'adoptables', 'contradictorias', 'exp_id', 'fuera_del_maximo', 'hipotesis', 'intentos', 'max_variantes', 'objeto', 'por_variante', 'sin_resultado', 'variantes', 'veredictos']
+11/14 como pide el plan; 3 hallazgo(s)
+=== r01_07_reloj_numeracion.py 
+[EXCEPCIÓN] línea 47 de r01_07_reloj_numeracion.py: RegistroError: el registro no casa con su sello (anotación 9999 frente a 1): le quitaron o cambiaron las últimas líneas, o una escritura se cortó (en registro_experimentos.py:307)
+[EXCEPCIÓN] línea 73 de r01_07_reloj_numeracion.py: RegistroError: EXP-2026-0001 está prerregistrado dos veces (en registro_experimentos.py:264)
+[EXCEPCIÓN] línea 74 de r01_07_reloj_numeracion.py: NameError: name 'n' is not defined (en r01_07_reloj_numeracion.py:74)
+[EXCEPCIÓN] línea 80 de r01_07_reloj_numeracion.py: RegistroError: el registro no casa con su sello (anotación 2 frente a 1): le quitaron o cambiaron las últimas líneas, o una escritura se cortó (en registro_experimentos.py:307)
+[EXCEPCIÓN] línea 81 de r01_07_reloj_numeracion.py: NameError: name 'n' is not defined (en r01_07_reloj_numeracion.py:81)
+10/10 como pide el plan; 0 hallazgo(s)
+=== r01_08_linea_de_ordenes.py 
+[HALLAZGO] intento con la variante por defecto
+[HALLAZGO] veredicto con espacios en un solo argumento · rc=2 · registro de experimentos: RegistroError: EXP-2026-0002 no tiene el intento 1
+16/18 como pide el plan; 2 hallazgo(s)
+=== r01_09_banco_interfaz.py 
+[EXCEPCIÓN] línea 62 de r01_09_banco_interfaz.py: BancoError: el experimento EXP-2026-0001 de esta hipótesis y fuente se prerregistró con max_variantes 1, no 5: el máximo no se cambia después (T-99, QA r01 H-08) (en banco_medida.py:665)
+[EXCEPCIÓN] línea 63 de r01_09_banco_interfaz.py: NameError: name 'inf' is not defined (en r01_09_banco_interfaz.py:63)
+[EXCEPCIÓN] línea 69 de r01_09_banco_interfaz.py: BancoError: --registro vacío: para no anotar, usa --sin-registro (en banco_medida.py:712)
+[EXCEPCIÓN] línea 70 de r01_09_banco_interfaz.py: NameError: name 'inf' is not defined (en r01_09_banco_interfaz.py:71)
+6/6 como pide el plan; 0 hallazgo(s)
+##### r01 sentencia a sentencia --sello
+=== r01_01_cadena.py --sello
+[HALLAZGO] truncar la última anotación (el resultado «fallido») se detecta · verificar() = 4; resumen: [2]
+[HALLAZGO] quitar el último intento con su resultado se detecta (CA-3, «quitar un intento») · intentos que quedan: 1
+[HALLAZGO] recalcular toda la cadena tras cambiar un veredicto se detecta · adoptable tras la manipulación = True (solo lo delataría git)
+[EXCEPCIÓN] línea 74 de r01_01_cadena.py: RegistroError: línea 3 no es JSON: el registro está dañado (en registro_experimentos.py:256)
+[HALLAZGO] sin salto de línea final, el siguiente anexo no corrompe el registro · anexo: RegistroError('el registro no acaba en salto de línea: una escritura se cortó o se editó a mano'); verificar después: el registro no acaba en salto de línea: una escritura se cortó o se editó a mano
+11/15 como pide el plan; 4 hallazgo(s)
+=== r01_02_concurrencia.py --sello
+[HALLAZGO] dos ramas que anotan a la vez y se fusionan conservando las dos líneas dejan un registro usable · conflicto de git: True; verificar tras la fusión: cadena rota en la anotación 3: alguien la reescribió o la quitó
+4/5 como pide el plan; 1 hallazgo(s)
+=== r01_03_ficheros_danados.py --sello
+[EXCEPCIÓN] línea 77 de r01_03_ficheros_danados.py: RegistroError: el intento 2 de EXP-2026-0001 dice mal si está dentro del máximo de variantes (en registro_experimentos.py:275)
+12/12 como pide el plan; 0 hallazgo(s)
+=== r01_04_prerregistro.py --sello
+[EXCEPCIÓN] línea 68 de r01_04_prerregistro.py: RegistroError: no es JSON estándar: Out of range float values are not JSON compliant: nan (en registro_experimentos.py:88)
+[EXCEPCIÓN] línea 69 de r01_04_prerregistro.py: FileNotFoundError: [Errno 2] No such file or directory: '<tmp>/registro.jsonl' (en pathlib.py:1015)
+[EXCEPCIÓN] línea 70 de r01_04_prerregistro.py: NameError: name 'txt' is not defined (en r01_04_prerregistro.py:70)
+37/37 como pide el plan; 0 hallazgo(s)
+=== r01_05_intentos_resultados.py --sello
+30/30 como pide el plan; 0 hallazgo(s)
+=== r01_06_adoptable.py --sello
+[EXCEPCIÓN] línea 43 de r01_06_adoptable.py: RegistroError: «ahora» tiene que ser un instante ISO con zona (AAAA-MM-DDThh:mm:ss+hh:mm o Z): 'ayer' (en registro_experimentos.py:99)
+[HALLAZGO] un «ahora» inyectado que no es una fecha se rechaza · se aceptó creado_en='ayer' y adoptable=True
+[HALLAZGO] repetir v1 tras salir del máximo: sigue dentro (es de las 2 primeras)
+[HALLAZGO] …y el resumen avisa de que esa variante tiene veredictos contradictorios · claves del resumen: ['adoptable', 'adoptables', 'contradictorias', 'exp_id', 'fuera_del_maximo', 'hipotesis', 'intentos', 'max_variantes', 'objeto', 'por_variante', 'sin_resultado', 'variantes', 'veredictos']
+11/14 como pide el plan; 3 hallazgo(s)
+=== r01_07_reloj_numeracion.py --sello
+[EXCEPCIÓN] línea 47 de r01_07_reloj_numeracion.py: RegistroError: el año 2026 ya tiene 9999 experimentos: EXP-AAAA-NNNN no admite más (en registro_experimentos.py:363)
+[EXCEPCIÓN] línea 73 de r01_07_reloj_numeracion.py: RegistroError: EXP-2026-0001 está prerregistrado dos veces (en registro_experimentos.py:264)
+[EXCEPCIÓN] línea 74 de r01_07_reloj_numeracion.py: NameError: name 'n' is not defined (en r01_07_reloj_numeracion.py:74)
+11/11 como pide el plan; 0 hallazgo(s)
+=== r01_08_linea_de_ordenes.py --sello
+[HALLAZGO] intento con la variante por defecto
+[HALLAZGO] veredicto con espacios en un solo argumento · rc=2 · registro de experimentos: RegistroError: EXP-2026-0002 no tiene el intento 1
+16/18 como pide el plan; 2 hallazgo(s)
+=== r01_09_banco_interfaz.py --sello
+[EXCEPCIÓN] línea 62 de r01_09_banco_interfaz.py: BancoError: el experimento EXP-2026-0001 de esta hipótesis y fuente se prerregistró con max_variantes 1, no 5: el máximo no se cambia después (T-99, QA r01 H-08) (en banco_medida.py:665)
+[EXCEPCIÓN] línea 63 de r01_09_banco_interfaz.py: NameError: name 'inf' is not defined (en r01_09_banco_interfaz.py:63)
+[EXCEPCIÓN] línea 69 de r01_09_banco_interfaz.py: BancoError: --registro vacío: para no anotar, usa --sin-registro (en banco_medida.py:712)
+[EXCEPCIÓN] línea 70 de r01_09_banco_interfaz.py: NameError: name 'inf' is not defined (en r01_09_banco_interfaz.py:71)
+6/6 como pide el plan; 0 hallazgo(s)
+##### r02
+=== r02_01_sello.py
+[OK] corte tras la línea: la llamada falla (no dice que fue bien) · OSError: simulado: el proceso muere antes de mover el sello
+[HALLAZGO] …y la excepción es RegistroError (la que capturan el banco y los demás llamadores) · es OSError: la línea ya está escrita (4 líneas) y el sello no
+[OK] corte tras la línea: el registro queda bloqueado (falla cerrado) · el registro no casa con su sello (anotación 4 frente a 3): le quitaron o cambiaron las últimas líneas, o una escritura s
+[OK] …y no se anota nada más
+[OK] …queda el «.sello.tmp» con el sello nuevo (una pista para recuperar, sin herramienta) · {"seq": 4, "hash": "c5f03ce6b09a15bebe6fda5ba395afcccf05a1fad0bc25430d4a793d35262da0"}
+[OK] (referencia) no hay orden para recuperar un corte (p. ej. «verificar --reparar-sello» que solo avance el sello si la cadena es válida y crece en una línea) · hay que editar el sello a mano, igual que haría quien quiere tapar un truncado
+[OK] corte a mitad de línea: se detecta · el registro no acaba en salto de línea: una escritura se cortó o se editó a mano
+[OK] sello ausente con anotaciones: falla cerrado · falta el sello del registro (registro.jsonl.sello): no se puede saber si le quitaron las últimas lín
+[OK] registro vacío sin sello: se lee (0 anotaciones)
+[OK] registro borrado entero con el sello presente: se detecta
+[OK] (regla declarada) registro y sello borrados fuera de git: la biblioteca lo da por vacío · verificar() = 0; solo «verificar» de la línea de órdenes y el ancla de git lo delatan
+[OK] sello copiado de otro registro con el mismo número de anotaciones: se detecta
+[OK] sello de un estado anterior del mismo registro: se detecta
+[OK] sello vacío: RegistroError · RegistroError: el sello del registro está dañado: Expecting value: line 1 column 1 (char 0)
+[OK] sello no JSON: RegistroError · RegistroError: el sello del registro está dañado: Expecting property name enclosed in double qu
+[OK] sello lista: RegistroError · RegistroError: el registro no casa con su sello (anotación 1 frente a [3]): le quitaron o cambi
+[OK] sello con clave de más: RegistroError · RegistroError: el registro no casa con su sello (anotación 1 frente a 1): le quitaron o cambiar
+[OK] sello seq como texto: RegistroError · RegistroError: el registro no casa con su sello (anotación 1 frente a '1'): le quitaron o cambi
+[OK] (cosmético) sello con seq booleano (seq 1): se acepta porque True == 1 == 1.0 en Python · verificar: acepta
+[OK] (cosmético) sello con seq 1.0 (seq 1): se acepta porque True == 1 == 1.0 en Python · verificar: acepta
+[OK] sello bytes no UTF-8: RegistroError · RegistroError: el sello del registro está dañado: 'utf-8' codec can't decode byte 0xff in posit
+[OK] sello directorio: RegistroError · RegistroError: el sello del registro está dañado: [Errno 21] Is a directory: '<tmp>
+[HALLAZGO] «.sello.tmp» que no se puede escribir: la escritura falla SIN dejar la línea (validar antes de mutar) · IsADirectoryError; líneas antes 1, después 2; verificar ahora: el registro no casa con su sello (anotación 2 frente a 1): le quitaron o cambiaron las últimas líneas, o una escritura se cortó
+[OK] (regla declarada) truncar y rehacer el sello fuera de git no se detecta · solo el ancla de git lo delata (r02_02)
+22/24 como pide el plan; 2 hallazgo(s)
+=== r02_02_ancla_git.py
+[OK] (regla declarada) sin subir a git, truncar y rehacer el sello no se detecta
+[OK] subido: truncar las dos últimas y rehacer el sello se detecta · el registro ya no empieza por lo que está subido en git (HEAD): se quitó o reescribió algo
+[OK] subido: cambiar un veredicto y recalcular cadena y sello se detecta
+[OK] subido y luego anotado (crece): se lee
+[HALLAZGO] truncar, rehacer el sello y hacer commit: se detecta (el ancla mira solo HEAD, no la historia) · verificar: 3 anotaciones; git log del registro: 2 commits
+[HALLAZGO] cambiar un veredicto, recalcular y hacer commit: se detecta · adoptable ahora = True
+[HALLAZGO] sacar el registro de HEAD con un commit y truncarlo: se detecta
+[OK] renombrado con commit y truncado: se detecta
+[OK] (regla declarada) una copia sin subir con otro nombre no tiene ancla
+[OK] volver a main tras anotar en otra rama: el registro de main se lee
+[OK] en la otra rama, truncar lo subido en ella: se detecta
+[OK] repositorio sin commits: se escribe y se lee (sin ancla)
+[HALLAZGO] sin git en el PATH, un registro subido y truncado no se da por bueno (el ancla no se apaga en silencio) · LEE 3
+[HALLAZGO] con GIT_DIR apuntando a otra carpeta, el ancla no se apaga en silencio · LEE 3
+[HALLAZGO] blob del registro en HEAD dañado y registro truncado: no se da por bueno (falla cerrado) · verificar = 3: «git show» falla y se toma como «no está en HEAD»
+[OK] clon nuevo con registro y sello subidos: se lee
+[HALLAZGO] subir el registro sin su sello: nada lo impide y el clon del otro agente queda bloqueado · en el clon: falta el sello del registro (registro.jsonl.sello): no se puede saber si le quitaron las últimas líneas
+[HALLAZGO] subir el registro con el sello atrasado: el clon queda bloqueado («no casa con su sello») · en el clon: el registro no casa con su sello (anotación 6 frente a 5): le quitaron o cambiaron las últ
+10/18 como pide el plan; 8 hallazgo(s)
+=== r02_03_cerrojo.py
+[OK] proceso muerto con el cerrojo: el siguiente escribe sin esperar · 0.00 s, None
+[OK] …el «.lock» que queda no estorba ni se sube (*.jsonl.lock en .gitignore)
+[HALLAZGO] (baja) con otro proceso colgado con el cerrojo, el escritor no espera sin límite: falla cerrado con un mensaje · sigue esperando a los 5 s (flock sin LOCK_NB ni plazo)
+[OK] …y en cuanto el colgado muere, escribe
+[OK] «.lock» que es un directorio: no escribe
+[HALLAZGO] …y sale RegistroError (lo que capturan el banco y los llamadores) · IsADirectoryError
+[OK] dos procesos con 100 intentos cada uno: 200 escritos, cadena íntegra y n correlativo · salidas [['100', '0'], ['100', '0']]; None
+[HALLAZGO] (baja) un lector («ver», «verificar», el banco) mientras otro escribe no acusa a un registro sano · escritor: 300 0; lector (lecturas buenas, falsas alarmas): 202 {'el registro no casa con su sello (anotac': 253}
+[OK] (baja) el registro por un enlace simbólico: o se lee con el mismo sello, o se rechaza con un motivo claro · intento por el enlace: falta el sello del registro (otro.jsonl.sello): no se puede saber si le quitaron las últimas líneas
+6/9 como pide el plan; 3 hallazgo(s)
+=== r02_04_adopcion.py
+[OK] variante con ['mejor']: adoptable=True (regla declarada) · adoptable=True, contradictorias=[]
+[OK] variante con ['mejor', 'mejor']: adoptable=True (regla declarada) · adoptable=True, contradictorias=[]
+[OK] variante con ['mejor', 'peor']: adoptable=False (regla declarada) · adoptable=False, contradictorias=['única']
+[OK] variante con ['peor', 'mejor']: adoptable=False (regla declarada) · adoptable=False, contradictorias=['única']
+[OK] variante con ['fallido', 'mejor']: adoptable=True (regla declarada) · adoptable=True, contradictorias=[]
+[OK] variante con ['mejor', 'fallido']: adoptable=True (regla declarada) · adoptable=True, contradictorias=[]
+[OK] variante con ['todavía no se sabe', 'mejor']: adoptable=False (regla declarada) · adoptable=False, contradictorias=['única']
+[OK] variante con ['mejor', 'todavía no se sabe']: adoptable=False (regla declarada) · adoptable=False, contradictorias=['única']
+[OK] variante con ['fallido', 'fallido', 'mejor']: adoptable=True (regla declarada) · adoptable=True, contradictorias=[]
+[OK] variante con ['fallido', 'fallido']: adoptable=False (regla declarada) · adoptable=False, contradictorias=[]
+[OK] variante con ['todavía no se sabe']: adoptable=False (regla declarada) · adoptable=False, contradictorias=[]
+[OK] variante con ['peor']: adoptable=False (regla declarada) · adoptable=False, contradictorias=[]
+[OK] r01_06 caso 4 (5 en contra y 1 a favor): no adoptable y la variante sale como contradictoria
+[HALLAZGO] intento 1 sin resultado (el que salió mal y no se anotó) y el 2 «mejor»: no adoptable hasta que el 1 tenga resultado · adoptable=True, sin_resultado=[1], por_variante={'intentos': [1, 2], 'cuenta': 2, 'veredicto': 'mejor', 'contradictoria': False, 'dentro_del_maximo': True, 'despues_del_prerregistro': True}
+[HALLAZGO] tres intentos callados y el cuarto «mejor»: no adoptable · adoptable=True
+[HALLAZGO] resultado del intento 2 antes que el del 1: el adoptable no pasa de sí a no · adoptable con el 2 «mejor» y el 1 pendiente: True; con el 1 «peor»: False
+[OK] (regla declarada) los «fallido» no cuentan: tres «fallido» y un «mejor» es adoptable · desde la línea de órdenes el veredicto lo elige quien anota; solo el banco lo calcula
+[OK] «única» en NFC y en NFD es la misma variante (dentro del máximo 1)
+[OK] (regla declarada) «v1» y «v1 » son variantes distintas: la segunda queda fuera del máximo (lado seguro)
+[OK] variante '': RegistroError y nada escrito · RegistroError: la variante tiene que ser un texto no vacío: ''
+[OK] variante '   ': RegistroError y nada escrito · RegistroError: la variante tiene que ser un texto no vacío: '   '
+[OK] variante None: RegistroError y nada escrito · RegistroError: la variante tiene que ser un texto no vacío: None
+[OK] variante 1: RegistroError y nada escrito · RegistroError: la variante tiene que ser un texto no vacío: 1
+[OK] variante ['v']: RegistroError y nada escrito · RegistroError: la variante tiene que ser un texto no vacío: ['v']
+[HALLAZGO] variante '\ud800': RegistroError y nada escrito · UnicodeEncodeError: 'utf-8' codec can't encode character '\ud800' in position 301: surroga
+[OK] max 1: la segunda variante gana y no es adoptable
+[OK] max 2: v3 gana fuera del máximo y v1 se contradice: no adoptable
+[OK] inicio mismo instante (>=): adoptable=True
+[OK] inicio mismo instante en otra zona: adoptable=True
+[OK] inicio un microsegundo antes: adoptable=False
+[OK] inicio un segundo antes: adoptable=False
+[OK] inicio una hora antes en otra zona (r01 H-07): adoptable=False
+[OK] prerregistro a las 23:30-01:00 del 31-12: año UTC 2027 · EXP-2027-0001
+[OK] «ahora» '2026-11-12T10:00:00': RegistroError y nada escrito · RegistroError
+[OK] «ahora» '2026-11-12 10:00:00+00:00': RegistroError y nada escrito · RegistroError
+[OK] «ahora» '2026-02-30T10:00:00Z': RegistroError y nada escrito · RegistroError
+[OK] «ahora» '2026-11-12T10:00:00+24:00': RegistroError y nada escrito · RegistroError
+[OK] «ahora» '２０２６-11-12T10:00:00+00:00': RegistroError y nada escrito · RegistroError
+[OK] «ahora» '2026-11-12T10:00:60Z': RegistroError y nada escrito · RegistroError
+[OK] «desde» con cifras de ancho completo: RegistroError · RegistroError
+36/40 como pide el plan; 4 hallazgo(s)
+=== r02_05_compat_010.py
+[OK] (referencia) versión extraída · 0.1.0
+[OK] registro 0.1.0: la 0.2.0 falla cerrado (no lo da por bueno sin sello) · falta el sello del registro (registro.jsonl.sello): no se puede saber si le quitaron las últimas lín
+[HALLAZGO] …y el mensaje dice que es un registro de la versión 0.1.0 y cómo migrarlo (no solo que «falta el sello») · falta el sello del registro (registro.jsonl.sello): no se puede saber si le quitaron las últimas lín
+[OK] registro 0.1.0 con sello rehecho: su forma valida con las reglas 0.2.0
+[OK] …y se puede seguir anotando con la 0.2.0
+[OK] 0.1.0 con datos vacío: la 0.2.0 lo rechaza al leer (falla cerrado) · «datos» tiene que ser un texto de 1 carácter(es) o más
+[OK] 0.1.0 con fecha imposible: la 0.2.0 lo rechaza al leer (falla cerrado) · «desde» no es una fecha posible: '2026-02-30'
+[HALLAZGO] (baja) variante NFD de la 0.1.0 y la misma en NFC con la 0.2.0: la misma variante · variantes=2
+6/8 como pide el plan; 2 hallazgo(s)
+=== r02_06_linea_de_ordenes.py
+[OK] «prerregistrar <f> --registro R» (como dice el uso) · EXP-2026-0002 prerregistrado; huella 87a0d61117ef906e…
+[OK] (regla declarada) intento sin --variante: código 2 y sin escribir · registro_experimentos.py intento: error: the following arguments are required: --variante
+[OK] intento con --variante y --registro detrás · EXP-2026-0001: intento 1
+[OK] veredicto con espacios en un solo argumento (r01_08 caso 5, con intento) · EXP-2026-0001: resultado del intento 1 registrado
+[OK] --detalle {roto: código 2 y sin escribir · rc=2 · registro de experimentos: JSONDecodeError: Expecting property name enclosed in double quot
+[OK] --detalle [1]: código 2 y sin escribir · rc=2 · registro de experimentos: RegistroError: «detalle» tiene que ser un objeto JSON
+[OK] --detalle NaN: código 2 y sin escribir · rc=2 · registro de experimentos: RegistroError: NaN no es JSON estándar
+[OK] --detalle "texto": código 2 y sin escribir · rc=2 · registro de experimentos: RegistroError: «detalle» tiene que ser un objeto JSON
+[OK] --detalle Infinity: código 2 y sin escribir · rc=2 · registro de experimentos: RegistroError: Infinity no es JSON estándar
+[OK] --detalle {"a": -Infinity}: código 2 y sin escribir · rc=2 · registro de experimentos: RegistroError: -Infinity no es JSON estándar
+[OK] --detalle {"a": [NaN]}: código 2 y sin escribir · rc=2 · registro de experimentos: RegistroError: NaN no es JSON estándar
+[HALLAZGO] --detalle null: código 2 y sin escribir · rc=0 · EXP-2026-0001: resultado del intento 1 registrado
+[OK] --detalle 1e999: código 2 y sin escribir · rc=2 · registro de experimentos: RegistroError: «detalle» tiene que ser un objeto JSON
+[OK] --detalle {"a": "\ud800"}: código 2 y sin escribir · rc=2 · registro de experimentos: UnicodeEncodeError: 'utf-8' codec can't encode character '\ud800
+[OK] --detalle objeto válido: código 0 · EXP-2026-0001: resultado del intento 1 registrado
+[OK] resultado del intento 0: código 2 y sin escribir · registro de experimentos: RegistroError: «n» tiene que ser un entero mayor o igu
+[OK] resultado del intento -1: código 2 y sin escribir · registro de experimentos: RegistroError: «n» tiene que ser un entero mayor o igu
+[OK] resultado del intento 2: código 2 y sin escribir · registro de experimentos: RegistroError: EXP-2026-0001 no tiene el intento 2
+[OK] resultado del intento 1.0: código 2 y sin escribir · registro_experimentos.py resultado: error: argument n: invalid int value: '1.0'
+[OK] variante '': código 2 y sin escribir (salvo U+2028, que es texto) · rc=2 · registro de experimentos: RegistroError: la variante tiene que ser un texto no v
+[OK] variante '   ': código 2 y sin escribir (salvo U+2028, que es texto) · rc=2 · registro de experimentos: RegistroError: la variante tiene que ser un texto no v
+[OK] variante '\u2028': código 2 y sin escribir (salvo U+2028, que es texto) · rc=2 · registro de experimentos: RegistroError: la variante tiene que ser un texto no v
+[OK] variante '\udcff': código 2 y sin escribir (salvo U+2028, que es texto) · rc=2 · registro de experimentos: UnicodeEncodeError: 'utf-8' codec can't encode charact
+[OK] prerregistro null: código 2 y sin escribir · rc=2 · registro de experimentos: RegistroError: el prerregistro tiene que ser un objeto JSON
+[OK] prerregistro lista: código 2 y sin escribir · rc=2 · registro de experimentos: RegistroError: el prerregistro tiene que ser un objeto JSON
+[OK] prerregistro surrogate: código 2 y sin escribir · rc=2 · registro de experimentos: UnicodeEncodeError: 'utf-8' codec can't encode character '\ud800
+[OK] prerregistro NaN: código 2 y sin escribir · rc=2 · registro de experimentos: RegistroError: «semilla» tiene que ser un entero: nan
+[OK] prerregistro bool en semilla: código 2 y sin escribir · rc=2 · registro de experimentos: RegistroError: «semilla» tiene que ser un entero: True
+[OK] prerregistro max 1001: código 2 y sin escribir · rc=2 · registro de experimentos: RegistroError: «max_variantes» tiene que ser un entero entre 1 y
+[OK] prerregistro datos objeto: código 2 y sin escribir · rc=2 · registro de experimentos: RegistroError: «datos» tiene que ser un texto de 1 carácter(es) 
+[OK] --registro vacío: código 2 · registro de experimentos: RegistroError: ruta del registro vacía
+[OK] --registro que es un directorio: código 2 y sin traza · registro de experimentos: IsADirectoryError: [Errno 21] Is a directory: '<tmp>
+[OK] «ver» de un registro que no existe: «[]» y no crea nada · []
+[HALLAZGO] (baja) un intento rechazado no crea carpetas ni «.lock» (validar antes de mutar) · rc=2; queda: ['existe.jsonl.lock']
+32/34 como pide el plan; 2 hallazgo(s)
+=== r02_07_banco.py
+[OK] --sin-registro: no crea el registro ni experimento.json
+[OK] …y «verificar» de esa carpeta lo dice · ['el informe cita una huella distinta de la del prerregistro', 'no hay experimento.json: sin el registro no se puede comprobar que el informe sea el que dio el banco']
+[OK] --sin-registro desde la línea de órdenes del banco: código 0 y sin experimento.json ni registro del repositorio · rc=0
+[OK] prerregistro.json imposible de escribir: falla y el intento queda «fallido» · IsADirectoryError; último resultado fallido
+[OK] --experimento con otro --max-variantes: BancoError y el registro sin tocar
+[OK] --experimento que no existe: BancoError y sin tocar · BancoError
+[HALLAZGO] fallo con una ruta no UTF-8 en el mensaje: el intento queda «fallido» (CA-5) · sale UnicodeEncodeError: 'utf-8' codec can't encode character '\udcff' in position 147: surrogates not allowed; intentos sin resultado: [1]
+[HALLAZGO] …y el error que sale es el original o un BancoError, no un UnicodeEncodeError · UnicodeEncodeError
+[HALLAZGO] corte del sello en el resultado: el banco se detiene con BancoError (código 2, sin traza) · sale OSError: simulado: sin espacio al mover el sello
+[OK] …y el registro queda bloqueado (falla cerrado, sin herramienta para recuperarlo)
+[HALLAZGO] «.lock» directorio desde la línea de órdenes del banco: código 2 sin traza · IsADirectoryError
+[HALLAZGO] dos bancos a la vez con semillas distintas y max 1: no quedan dos experimentos de la misma hipótesis y fuente, cada uno con su variante «dentro del máximo» y adoptable · 6/6 rondas con dos prerregistros iguales y las dos variantes adoptables (la elección reutilizar/prerregistrar se hace fuera del cerrojo)
+7/12 como pide el plan; 5 hallazgo(s)
+=== r02_09_contrato.py
+[OK] todas las 27 anotaciones con bordes validan CT-G-24 · []
+[OK] hipótesis de 9: el borrador lo rechaza y el registro también · borrador rechaza=True, registro rechaza=True
+[OK] max 0: el borrador lo rechaza y el registro también · borrador rechaza=True, registro rechaza=True
+[OK] objeto en minúsculas: el borrador lo rechaza y el registro también · borrador rechaza=True, registro rechaza=True
+[OK] (referencia) semilla 1.0: el registro la rechaza aunque el borrador la admita · borrador rechaza=False, registro rechaza=True
+[OK] datos 1: el borrador lo rechaza y el registro también · borrador rechaza=True, registro rechaza=True
+6/6 como pide el plan; 0 hallazgo(s)
