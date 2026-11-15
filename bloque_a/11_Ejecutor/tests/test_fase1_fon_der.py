@@ -272,7 +272,7 @@ def test_disc_valores_a_mano():
     res, _ = _run("FON-DISC-001", d)
     assert res["descuento_agregado_pct"] == pytest.approx(-6.0, abs=1e-10)
     assert res["dispersion_pp"]["desviacion"] == pytest.approx(math.sqrt(10.0), rel=1e-12)
-    assert res["dispersion_pp"]["rango"] == pytest.approx(8.0, rel=1e-12)
+    assert res["dispersion_pp"]["rango"] is None    # T-128 (1.6): con 5 miembros (< 7), sin rango; con 7 en test_t128_frontera
     assert res["z_scores"] == {"ventana_media": None, "ventana_larga": None}    # historia sin variación: nunca 0
     assert res["vida_media_meses"] is None
     assert res["rentabilidad_normalizacion_pct"] == pytest.approx(0.0, abs=1e-12)
@@ -564,6 +564,8 @@ def _completos(ficha):
     """Datos «perfectos» (todas las entradas opcionales y la historia recomendada): sin limitaciones."""
     if ficha == "FON-DISC-001":
         d = fd._ctl_disc(iguales=False)
+        # T-128 (1.6): 7 miembros (con 5, el mínimo, el máximo y el rango no se entregan y se declara)
+        d["miembros"].update({f"M{i}": copy.deepcopy(d["miembros"]["M1"]) for i in (6, 7)})
         n = 5 * 52 + 2
         d["fechas"] = fd._fechas_semanales(n)
         t = np.arange(n)

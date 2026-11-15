@@ -642,8 +642,10 @@ def test_idx_reb_demanda_a_mano():
                                          "proximo_evento": {"fecha_anuncio": "2027-05-20",
                                                             "fecha_efectividad": "2027-06-18"}})
     inc, exc = res["demanda_estimada"]["inclusiones"], res["demanda_estimada"]["exclusiones"]
-    assert inc["demanda"] == pytest.approx(1e9) and inc["dias_volumen_cesta"] == pytest.approx(2.0)
-    assert exc["demanda"] == pytest.approx(-1e9) and exc["dias_volumen_cesta"] == pytest.approx(-5.0)
+    # T-128 (1.6): dos valores por cesta en `_evento_reb` (con uno, la demanda de la cesta es la suya y ya no se entrega):
+    # 0,0006 y 0,0004 de 1e12 con 5e8 y 3e8 de volumen; −0,0007 y −0,0003 con 2e8 y 1,5e8
+    assert inc["demanda"] == pytest.approx(1e9) and inc["dias_volumen_cesta"] == pytest.approx(1e9 / 8e8)
+    assert exc["demanda"] == pytest.approx(-1e9) and exc["dias_volumen_cesta"] == pytest.approx(-1e9 / 3.5e8)
     assert res["estudio_eventos"] is None and any("< 20" in x for x in lim)
     assert res["calendario_proximo_evento"]["fecha_efectividad"] == "2027-06-18"
 

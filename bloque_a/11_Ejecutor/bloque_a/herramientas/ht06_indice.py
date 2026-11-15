@@ -11,7 +11,7 @@ import re
 import threading
 import unicodedata
 from pathlib import Path
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 RE_ID = re.compile(r"\b(?:RUN|QRY|OPP|TND|PRG|CLM|EVD|CALC|LEC|CERT|MET|RET|AJU)-\d{4}-\d{4,}\b")
 
@@ -72,9 +72,9 @@ def acabar_en_salto(ruta: Path) -> None:
 class CacheResultados:
     """Caché persistente (JSONL) de respuestas por clave de hash."""
 
-    def __init__(self, ruta: Optional[Path]) -> None:
+    def __init__(self, ruta: Path | None) -> None:
         self.ruta = Path(ruta) if ruta else None
-        self._mem: Dict[str, Any] = {}
+        self._mem: dict[str, Any] = {}
         self._lock = threading.Lock()
         self.aciertos = 0
         self.descartadas = 0   # T-113 (H-54): líneas ilegibles o cortadas que no impiden arrancar
@@ -89,7 +89,7 @@ class CacheResultados:
                 else:
                     self.descartadas += 1
 
-    def obtener(self, clave: str) -> Optional[Any]:
+    def obtener(self, clave: str) -> Any | None:
         with self._lock:
             if clave in self._mem:
                 self.aciertos += 1
@@ -109,16 +109,16 @@ class Indice:
     """Índice de búsqueda sobre las entradas del almacén (vista as_of)."""
 
     def __init__(self, almacen, as_of=None, archivos=("F1", "F3", "F4", "F5", "F6", "RC")) -> None:
-        self.docs: List[Dict] = []
+        self.docs: list[dict] = []
         for a in archivos:
             for e in almacen.leer(a, as_of=as_of):
                 texto = json.dumps(e, ensure_ascii=False, default=str)
                 self.docs.append({"archivo": a, "entrada": e, "texto": normalizar(texto), "ids": set(RE_ID.findall(texto))})
 
-    def por_id(self, ident: str) -> List[Dict]:
+    def por_id(self, ident: str) -> list[dict]:
         return [d["entrada"] for d in self.docs if ident in d["ids"]]
 
-    def buscar(self, consulta: str, max_resultados: int = 8) -> List[Dict]:
+    def buscar(self, consulta: str, max_resultados: int = 8) -> list[dict]:
         ids = set(RE_ID.findall(consulta))
         terminos = [t for t in normalizar(consulta).split() if len(t) > 3]
         puntuados = []

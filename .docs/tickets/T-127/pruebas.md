@@ -68,3 +68,51 @@ Con `cd bloque_a/11_Ejecutor && mypy bloque_a` (sin `--ignore-missing-imports`) 
 ## Gate
 
 No ejecutado (instrucción): `./tools/check_all.sh` y la suite completa de A, en el commit. `tools/refs_vivas.py` en verde.
+
+## Ronda r02 (QA r01: H-01, H-02, H-03)
+
+Copia `t127r02` (base `fb3ccd4`) con `.venv` enlazado; hecha junto con T-128 (las cuentas de suites incluyen las dos).
+Por instrucción no se lanza `./tools/check_all.sh` ni la suite completa de A.
+
+| Suite | Antes (`fb3ccd4`) | Después |
+| --- | --- | --- |
+| Motor y vecinas: `tests/test_fase1_*`, `test_fase2_*`, `test_fase3_goldens.py`, `test_t106_*`, `test_t11*`, `test_t12*` | 4848 recogidas | **4912 recogidas** (+24 `test_t127_r02.py`, +32 `test_t128_frontera.py`, +8 de la prueba parametrizada por cada clave de `UMBRALES` de `test_fase2_reales.py`: REI-NAV y REI-FFO ganan cuatro). En verde: `test_fase1_*`, `test_fase2_*` y `test_fase3_goldens.py` 2747 (5 fallos de T-128 corregidos en sus pruebas y repetidos abajo); `test_t106_*`, `test_t11*` y `test_t12*` 2133 passed |
+| Repetición tras los últimos cambios: `test_fase1_fon_der.py`, `test_fase1_mon_idx.py`, `test_fase2_reales.py`, `test_t119_p2.py`, `test_t127_r02.py`, `test_t128_frontera.py`, `test_t127_hallazgos.py`, `test_fase3_goldens.py` | — | **2374 passed** |
+| `python tests/goldens_ct.py` | coinciden | **coinciden** |
+| `verificar_casos_control` (las 67) | 67/67 | **67/67** (en `r01_01` de T-127) |
+
+### Criterio → prueba (`tests/test_t127_r02.py`)
+
+| Hallazgo | Pruebas |
+| --- | --- |
+| H-01 (copias a escala) | `test_h01_copias_a_escala_de_un_emisor_se_rechazan` (FIR-CRED 10 y 12, REI-LEV 3 y 7, CHR-TOKEN 2 y 7; también por el Motor, sin identificadores), `test_h01_las_copias_se_comparan_por_sus_cifras_no_por_sus_datos`, `test_h01_la_tolerancia_de_las_cifras_es_la_de_clon` (1 % sí, 1,02 % no, ausente ≠ 0, cadena), `test_h01_un_grupo_de_copias_es_un_componente_para_la_dominancia` (REI-LEV 97,7 % del GAV; FIR-CRED con 80 copias), `test_h01_una_copia_que_no_domina_cuenta_una_vez` (4 = 3 distintos; dispersión con 7 distintos, no con 7 componentes), `test_h01_los_subconjuntos_cuentan_componentes_distintos_por_sus_cifras`, `test_h01_la_red_propia_no_cuenta_copias`, `test_h01_copias_que_solo_comparten_una_cifra_no_la_dan` |
+| H-02 (aportación) | `test_h02_rellenos_de_pd_nula_se_rechazan` (30 % y 60 %, el ataque del revisor, también por el Motor), `test_h02_rellenos_de_deuda_neta_nula_se_rechazan`, `test_h02_borde_de_la_aportacion` (95 % justo se entrega; vecindario; valor absoluto; agregado nulo; ÷ 0), `test_h02_un_segmento_casi_sin_riesgo_no_se_rechaza_por_la_aportacion`, `test_h02_vencimientos_e_impacto_de_un_solo_componente_no_se_entregan`, `test_h02_un_sector_sin_dilucion_no_da_la_cifra_de_cada_token`, `test_h02_staking_concentrado_en_un_token_no_se_entrega` |
+| Casos de control | `test_casos_de_control_con_sus_datos_de_la_r02` (y con los datos de antes, la inflación y los desbloqueos a 30 días no se entregarían) |
+| H-03 (declarado) | `test_h03_con_siete_o_mas_el_maximo_es_la_cifra_de_un_componente_sin_identificarlo` |
+| Números fijos | `test_ninguna_regla_nueva_se_cambia_desde_la_peticion` |
+
+### Scripts del revisor
+
+| Script | Antes | Después |
+| --- | --- | --- |
+| `.venv/bin/python -I .docs/tickets/T-127/revisores/r01_01_frontera_otras_vias.py bloque_a/11_Ejecutor` | **2/11** | **7/7**: las vías E (copias a escala) se rechazan en las tres fichas; las Z (rellenos de PD 0) se rechazan, y por eso no llegan a ejecutarse las cuatro comprobaciones que dependían de que se sirvieran (Z y O al 30 % y al 60 %); casos de control 67/67 |
+| `.venv/bin/python -I .docs/tickets/T-119/revisores/r02_01_frontera_b.py bloque_a/11_Ejecutor` | FIR-CRED 1/1 y parada en la línea 71 (la dispersión con 3 es `null`, lo esperado desde la r01) | igual |
+| `.venv/bin/python -I .docs/tickets/T-119/revisores/r02_02_cache.py bloque_a/11_Ejecutor` | 12/12 | **12/12** |
+
+### Mutantes y regresiones
+
+`impl_r02_mutantes.py` (copia desechable `t127r02_mut` en el scratchpad, borrada al acabar): **41 mutantes, 40 muertos**;
+vive E11, equivalente (con `tokens_minimos_sector` = 2, un subconjunto de un solo grupo de copias pesa el 100 % de su
+capitalización y lo rechaza la dominancia por grupos, con el mismo mensaje). Incluye, adaptados a su texto nuevo, los
+mutantes de la r01 que ya no se aplicaban tal cual (K01–K05, D01–D03, D05, D07, D08, O01–O05, S01, S03: «r» al final).
+El `impl_mutantes.py` de la r01 sigue dando 18 muertos en los que aún aplica y «no se aplica» en los movidos.
+
+Regresión: con el `fichas_p2.py` de antes de la r02 (`--antes`), `tests/test_t127_r02.py` da **20 failed, 4 passed**; las
+cuatro que pasan no son regresiones (la propia red, H-03 declarado, las reglas fijas y el segmento casi sin riesgo).
+
+### Cuotas
+
+| Cuota | Antes | Después |
+| --- | --- | --- |
+| ruff desde la raíz (`ruff check --output-format=concise bloque_a/11_Ejecutor bloque_a_forex/11_Ejecutor bloque_b/11_Ejecutor \| wc -l`) | 2902 | **2902** |
+| mypy A como el gate (`cd bloque_a/11_Ejecutor && mypy bloque_a --ignore-missing-imports --no-error-summary \| wc -l`) | 109 | **109** |

@@ -160,19 +160,85 @@ def lecciones_por_encargo(cfg: dict | None) -> int:
 LECCIONES_POR_ENCARGO_MAX = 10   # 12.3 del Documento 0 del Bloque A: «máximo 10»
 
 
+def _fecha_de_calendario(v) -> pd.Timestamp:
+    """T-125 r02 (QA r01, H-02): la fecha de calendario de un texto ISO 8601. Con zona horaria («…+05:00», «…Z») se queda con la
+    fecha de esa zona, sin convertirla (`[PROPUESTO]`, INC-T125-01): así todas las fechas se comparan sin zona y una sola pieza
+    no lanza `TypeError`. Un valor que no es texto (un número se leería como nanosegundos de 1970) no se lee."""
+    if not isinstance(v, str):
+        raise TypeError(f"fecha no textual: {v!r}")
+    t = pd.Timestamp(v)
+    if pd.isna(t):
+        raise ValueError(f"fecha vacía: {v!r}")
+    if t.tzinfo is not None:
+        t = t.tz_localize(None)
+    return t.normalize()
+
+
 def _campos_pronostico_fuente(pf: dict) -> tuple | None:
     """T-125: los campos del bloque `pronostico_fuente` de una pieza de F2, o None si falta alguno o una fecha no se lee."""
     try:
-        return (pd.Timestamp(pf["fecha_objetivo"]).normalize(), pd.Timestamp(pf["fecha_emision"]).normalize(), pf["ref_id"],
+        return (_fecha_de_calendario(pf["fecha_objetivo"]), _fecha_de_calendario(pf["fecha_emision"]), pf["ref_id"],
                 pf["serie_ht01"], pf["direccion"], pf["umbral_o_rango"], pf.get("probabilidad"))
-    except (KeyError, TypeError, ValueError):
+    except (KeyError, TypeError, ValueError, OverflowError):
         return None
 
 
+def _numero_finito(x) -> bool:
+    return not isinstance(x, bool) and isinstance(x, (int, float)) and math.isfinite(x)
+
+
+def fuente_de_opinion_registrada(ref_id, referencias) -> bool:
+    """T-125 r02 (QA r01, H-04): el `ref_id` de un pronóstico de fuente es una fuente registrada en F9 (Registro de Fuentes,
+    `REF-RF-…`). Sin registro de referencias no se acepta ninguna (falla cerrado)."""
+    if referencias is None or not isinstance(ref_id, str) or not ref_id.startswith("REF-"):
+        return False
+    ficha = referencias.por_id(ref_id)
+    return bool(ficha) and ficha.get("archivo") == "F9"
+
+
+def motivo_pronostico_fuente_no_registrable(pf, fuente, registro, referencias) -> str | None:
+    """T-125 r02 (QA r01, H-01, H-03 y H-04): None si el bloque `pronostico_fuente` de una pieza puede entrar en F2; si no, el
+    motivo. Se exige el bloque completo y bien formado (esquema de F2, 4.1), que el `ref_id` sea una fuente de F9 y la propia
+    fuente de la pieza, y que se registre antes de su fecha objetivo y no antes de su emisión (conocibilidad: sin fuga)."""
+    if not isinstance(pf, dict):
+        return "sin bloque pronostico_fuente"
+    campos = _campos_pronostico_fuente(pf)
+    if campos is None:
+        return "faltan campos del bloque o una fecha no se lee"
+    objetivo, emision, ref_id, serie, direccion, umbral, prob = campos
+    if not isinstance(serie, str) or not serie:
+        return "serie_ht01 no válida"
+    if direccion in ("por_encima", "por_debajo"):
+        forma = _numero_finito(umbral)
+    elif direccion in ("dentro", "fuera"):
+        forma = isinstance(umbral, list) and len(umbral) == 2 and all(_numero_finito(x) for x in umbral) and umbral[0] < umbral[1]
+    else:
+        return f"dirección no reconocida: {direccion!r}"
+    if not forma:
+        return "umbral_o_rango no válido para la dirección"
+    if prob is not None and not (_prob_valida(prob) and 0.0 < float(prob) < 1.0):
+        return "probabilidad fuera de (0, 1)"
+    if not fuente_de_opinion_registrada(ref_id, referencias):
+        return f"«{ref_id}» no es una fuente registrada en F9"
+    if fuente is not None and ref_id != fuente:
+        return f"el ref_id «{ref_id}» no es la fuente de la pieza («{fuente}»)"
+    reg = pd.Timestamp(registro).normalize()
+    if not emision < objetivo:
+        return "emitido en su fecha objetivo o después"
+    if emision > reg:
+        return "emitido después de la fecha de registro"
+    if not reg < objetivo:
+        return "la fecha objetivo no es posterior al registro (resultado ya conocible)"
+    return None
+
+
 class Evaluador:
-    def __init__(self, almacen, proveedor, motor, cfg: dict, universo: pd.DataFrame) -> None:
+    def __init__(self, almacen, proveedor, motor, cfg: dict, universo: pd.DataFrame, referencias=None) -> None:
         lecciones_por_encargo(cfg)   # T-122: una configuración mal formada falla al crear el Evaluador, no a mitad de ciclo
         self.almacen = almacen
+        # T-125 r02 (QA r01, H-04): registro de referencias (F7–F9) para validar la fuente de los pronósticos de fuentes;
+        # sin él no cuenta ninguno
+        self.referencias = referencias
         self.proveedor = proveedor
         self.motor = motor
         self.cfg = cfg
@@ -969,21 +1035,36 @@ class Evaluador:
     def pronosticos_de_fuentes(self, as_of) -> list[dict]:
         """Pronósticos explícitos de fuentes de opinión registrados en F2 (`tipo_afirmacion = PRONOSTICO_FUENTE` con su
         bloque `pronostico_fuente`), resueltos con la serie de HT-01 en su fecha objetivo. Solo los vencidos y conocibles en
-        `as_of`, dentro de la ventana; uno mal formado o sin dato se omite (no cuenta, no se inventa)."""
+        `as_of`, dentro de la ventana; uno mal formado o sin dato se omite (no cuenta, no se inventa).
+        T-125 r02 (QA r01): se lee el bloque tal como se registró la primera vez y solo cuenta si se registró en F2 antes de su
+        fecha objetivo y no antes de su emisión (H-03); su `ref_id` es una fuente de F9 (H-04); el mismo pronóstico de la
+        misma fuente citado en dos afirmaciones cuenta una vez (H-05); una fecha con zona horaria se lee sin zona (H-02)."""
         par = parametro(self.cfg, "fiabilidad_fuentes")
         corte = pd.Timestamp(as_of).normalize()
         desde = corte - pd.DateOffset(months=int(par["ventana_meses"]))
         salida = []
-        for clm in self.almacen.estado("F2", as_of, clave="clm_id").values():
-            pf = clm.get("pronostico_fuente")
-            if clm.get("tipo_afirmacion") != "PRONOSTICO_FUENTE" or not isinstance(pf, dict):
+        primera: dict[str, tuple[str, dict]] = {}   # clm_id → (fecha de registro, bloque tal como se registró)
+        for e in self.almacen.leer("F2", as_of):
+            if e.get("tipo_entrada") == "CLM" and isinstance(e.get("pronostico_fuente"), dict) and e.get("clm_id") not in primera:
+                primera[e["clm_id"]] = (e["_fecha"], e["pronostico_fuente"])
+        vistos: set[tuple] = set()
+        for clm in sorted(self.almacen.estado("F2", as_of, clave="clm_id").values(), key=lambda c: str(c.get("clm_id"))):
+            if clm.get("tipo_afirmacion") != "PRONOSTICO_FUENTE" or clm.get("clm_id") not in primera:
                 continue
+            registro, pf = primera[clm["clm_id"]]
             campos = _campos_pronostico_fuente(pf)
             if campos is None:
                 continue
             objetivo, emision, ref_id, serie, direccion, umbral, prob = campos
             if not (isinstance(ref_id, str) and isinstance(serie, str) and emision < objetivo <= corte and objetivo >= desde):
                 continue
+            if not emision <= pd.Timestamp(registro) < objetivo:
+                continue   # H-03: registrado cuando el resultado ya era conocible (o antes de emitirse): no cuenta
+            if not fuente_de_opinion_registrada(ref_id, self.referencias):
+                continue   # H-04: no es una fuente de F9
+            clave = (ref_id, serie, str(objetivo.date()), str(emision.date()), direccion, repr(umbral))
+            if clave in vistos:
+                continue   # H-05: el mismo pronóstico de la fuente en otra afirmación (R10: se cuentan raíces)
             if direccion in ("por_encima", "por_debajo"):
                 if isinstance(umbral, bool) or not isinstance(umbral, (int, float)) or not math.isfinite(umbral):
                     continue
@@ -1011,6 +1092,7 @@ class Evaluador:
                 ocurre = umbral[0] <= valor <= umbral[1]
             else:
                 ocurre = not umbral[0] <= valor <= umbral[1]
+            vistos.add(clave)
             salida.append({"clm_id": clm.get("clm_id"), "ref_id": ref_id, "prob": float(prob), "resultado": int(ocurre),
                            "fecha_objetivo": str(objetivo.date()), "valor": valor})
         return sorted(salida, key=lambda x: (x["ref_id"], x["fecha_objetivo"], str(x["clm_id"])))
@@ -1024,24 +1106,30 @@ class Evaluador:
 
     def fiabilidad_fuentes(self, as_of) -> list[dict]:
         """FUE- por fuente y mes (esquema de F6, 4.5): n, aciertos, BSS frente a la referencia ingenua, BSS contraído con
-        k y puntos de historial = neutro · (1 + BSS contraído), entre 0 y el máximo. Una vez por mes: si ya hay FUE- del mes,
-        no se repite. Solo endurece o suaviza la valoración de la fuente; no toca F9 (la recalifica el Buscador)."""
+        k y puntos de historial = neutro · (1 + BSS contraído), entre 0 y el máximo. Una vez por fuente y mes: una fuente con
+        FUE- del mes no se repite, y otra que llega a la muestra mínima a mitad de mes sale en el ciclo siguiente (QA r01, H-06).
+        El Brier y el de la referencia los calcula el Motor (FC-EVAL-001, como las demás métricas del Evaluador) y la FUE-
+        lleva su `calc_id` (H-08); si el Motor no lo sirve, esa fuente no tiene FUE- ese ciclo (falla cerrado). Solo endurece
+        o suaviza la valoración de la fuente; no toca F9 (la recalifica el Buscador)."""
         par = parametro(self.cfg, "fiabilidad_fuentes")
         periodo = str(pd.Timestamp(as_of).date())[:7]
-        if any(e.get("tipo_entrada") == "FUE" and e.get("periodo") == periodo for e in self.almacen.estado("F6", as_of, clave="id").values()):
-            return []
+        f6 = list(self.almacen.estado("F6", as_of, clave="id").values())
         por_fuente: dict[str, list[dict]] = defaultdict(list)
         for p in self.pronosticos_de_fuentes(as_of):
             por_fuente[p["ref_id"]].append(p)
         k, neutro, maximo, ref = float(par["k_contraccion"]), float(par["puntos_neutro"]), float(par["puntos_max"]), float(par["referencia"])
         nuevas = []
         for ref_id in sorted(por_fuente):
+            if any(e.get("tipo_entrada") == "FUE" and e.get("periodo") == periodo and e.get("ref_id") == ref_id for e in f6):
+                continue   # una FUE- por fuente y mes
             ps = por_fuente[ref_id]
             n = len(ps)
             if n < int(par["n_min"]):
                 continue
-            brier = sum((p["prob"] - p["resultado"]) ** 2 for p in ps) / n
-            brier_ref = sum((ref - p["resultado"]) ** 2 for p in ps) / n
+            calc = self._brier_del_motor(ps, ref, as_of)
+            if calc is None:
+                continue
+            brier, brier_ref, calc_id = calc
             bss = 1 - brier / brier_ref if brier_ref > 0 else None
             bss_c = None if bss is None else n / (n + k) * bss
             puntos = neutro if bss_c is None else min(maximo, max(0.0, neutro * (1 + bss_c)))
@@ -1049,11 +1137,32 @@ class Evaluador:
             fue = {"tipo_entrada": "FUE", "id": fue_id, "fue_id": fue_id, "ref_id": ref_id, "periodo": periodo, "n": n,
                    "aciertos": sum(p["resultado"] for p in ps), "bss": None if bss is None else round(bss, 6),
                    "bss_contraido": None if bss_c is None else round(bss_c, 6), "puntos_historial": round(puntos, 4),
-                   "calc_id": None, "comunicado_ct19": None, "pronosticos": [p["clm_id"] for p in ps],
-                   "metodo": "Brier frente a la referencia ingenua; contracción n / (n + k)"}
+                   "calc_id": calc_id, "comunicado_ct19": None, "pronosticos": [p["clm_id"] for p in ps],
+                   "metodo": "Brier frente a la referencia ingenua (FC-EVAL-001); contracción n / (n + k)"}
             self.almacen.escribir("F6", "AG-20", fue)
             nuevas.append(fue)
         return nuevas
+
+    def _brier_del_motor(self, ps: list[dict], ref: float, as_of) -> tuple[float, float, str] | None:
+        """Brier de la fuente y de la referencia ingenua servidos por el Motor (FC-EVAL-001), con su `calc_id`; None si el
+        Motor no está o no lo sirve."""
+        if self.motor is None:
+            return None
+        try:
+            res = self.motor.servir({"operacion": "FC-EVAL-001", "plan": "PLAN_MIN", "datos": [{"valores": {
+                "p": [p["prob"] for p in ps], "o": [p["resultado"] for p in ps], "p_ref": [ref] * len(ps)}}],
+                "parametros": {"replicas": int(parametro(self.cfg, "evaluacion.bootstrap_replicas")),
+                               "simulaciones": int(parametro(self.cfg, "evaluacion.simulaciones_ece"))},
+                "fecha_corte": str(pd.Timestamp(as_of).date())}, "AG-20", None)
+            r = res.get("resultado") or {}
+            if not str(res.get("estado", "")).startswith("SERVED") or not res.get("calc_id"):
+                return None
+            brier, brier_ref = float(r["brier"]), float(r["brier_ref"])
+        except Exception:  # noqa: BLE001 — sin el cálculo del Motor no hay FUE- de esa fuente en este ciclo
+            return None
+        if not (math.isfinite(brier) and math.isfinite(brier_ref)):
+            return None
+        return brier, brier_ref, str(res["calc_id"])
 
     def ciclo(self, as_of, run_id: str | None = None) -> dict:
         """C5: resolución de vencidos, métricas, certificados, lecciones y recalibración (nunca bloquea C1–C3)."""
@@ -1069,7 +1178,12 @@ class Evaluador:
         lecciones = self.extraer_lecciones(as_of, metr)
         aju = self.recalibrar(as_of, run_id)
         degradacion_h5 = self.aplicar_degradacion_h5(as_of, run_id)
-        fiabilidad = self.fiabilidad_fuentes(as_of)   # T-125 (PB-46)
+        try:
+            fiabilidad = self.fiabilidad_fuentes(as_of)   # T-125 (PB-46)
+        except Exception as e:  # noqa: BLE001 — T-125 r02 (QA r01, H-02): un fallo de la fiabilidad no tumba el resto del C5
+            fiabilidad = []
+            self.almacen.incidencia("HERRAMIENTA", f"Fiabilidad de las fuentes no calculada en este ciclo: {e}", "AG-20",
+                                    severidad="Operativa")
         return {"fiabilidad_fuentes": fiabilidad, "resueltos": len([r for r in resueltos if r["estado"] == "RESUELTO"]),
                 "no_resolubles": len([r for r in resueltos if r["estado"] == "NO_RESOLUBLE"]),
                 "metricas": metr, "certificados": certs, "lecciones_nuevas": lecciones, "ajuste": aju,

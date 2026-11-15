@@ -13,17 +13,17 @@ la forma de la serie (rentabilidades, caídas, volatilidad) puede delatar episod
 from __future__ import annotations
 
 import re
-from typing import Any, Dict
+from typing import Any
 
 import pandas as pd
 
 
 class Anonimizador:
     def __init__(self, universo: pd.DataFrame) -> None:
-        self.a_alias: Dict[str, str] = {}
-        self.de_alias: Dict[str, str] = {}
-        self.nombres: Dict[str, str] = {}
-        cont: Dict[str, int] = {}
+        self.a_alias: dict[str, str] = {}
+        self.de_alias: dict[str, str] = {}
+        self.nombres: dict[str, str] = {}
+        cont: dict[str, int] = {}
         for _, f in universo.sort_values(["clase", "simbolo"]).iterrows():
             cont[f["clase"]] = cont.get(f["clase"], 0) + 1
             alias = f"{f['clase']}{cont[f['clase']]:02d}"
@@ -34,7 +34,7 @@ class Anonimizador:
         pares.sort(key=lambda kv: -len(kv[0]))
         self._ida = [(re.compile(r"(?<![\w-])" + re.escape(k) + r"(?![\w-])"), v) for k, v in pares]
         self._vuelta = sorted(self.de_alias.items(), key=lambda kv: -len(kv[0]))
-        self.factores: Dict[str, float] = {}   # símbolo -> factor de rebase (100 / precio as_of)
+        self.factores: dict[str, float] = {}   # símbolo -> factor de rebase (100 / precio as_of)
 
     def texto(self, s: str) -> str:
         for rx, v in self._ida:

@@ -38,6 +38,16 @@ import pandas as pd
 from scipy import linalg, optimize
 
 from ..configuracion import parametro
+from .frontera_b import (
+    FRONTERA_B,
+    _concentradas,
+    _limitacion_concentradas,
+    _limitacion_orden,
+    _orden,
+    _rechazo_concentradas,
+    _sin_copias_a_escala,
+    _sin_dominio,
+)
 from .operaciones import ErrorFicha, dia
 
 Resultado = tuple[dict[str, Any], list[str]]
@@ -98,13 +108,20 @@ UMBRALES: dict[str, dict[str, Any]] = {
                     "ventana_anios_maxima": ANIOS_H5_MAX},           # cota de `ventana` (H-01) [PROPUESTO]
     # REI-FFO-001 · «Entradas mínimas»: ≥ 3 ejercicios. Percentiles de múltiplos con ≥ 5 observaciones
     # (ST-DESC-001, «Entradas mínimas»). «Parámetros»: capex reportado o estimado como % de rentas, en [0, 1).
+    # T-128 (1.6): mínimo de 2 componentes distintos, como REI-NAV-001 (con uno, el agregado es la sociedad), y las reglas
+    # de la frontera con el Bloque B (`FRONTERA_B`) [PROPUESTO INC-T128-01].
     "REI-FFO-001": {"ejercicios_minimos": 3, "observaciones_minimas_percentil": 5,
-                    "capex_admitidos": ("reportado", "estimado"), "rango_capex_pct_rentas": (0.0, 1.0)},
+                    "capex_admitidos": ("reportado", "estimado"), "rango_capex_pct_rentas": (0.0, 1.0),
+                    "componentes_minimos": 2, **FRONTERA_B},
     # REI-NAV-001 · «Aclaración y rechazo»: NAV de antigüedad > 12 meses. «Método»: percentil frente a ≥ 10 años.
     # Variantes de NAV de EPRA (Best Practices Recommendations, referencia de la ficha) [PROPUESTO]. Mínimo de 2
     # componentes [PROPUESTO INC-T119-01, r02 de T-119, H-01]: con uno, el agregado es la sociedad (1.6).
+    # T-128 (1.6): las reglas de la frontera con el Bloque B (`FRONTERA_B`) y la dispersión (desviación típica ponderada)
+    # con al menos 3 componentes distintos: con la prima agregada y los pesos (que conoce quien pide), la prima y la
+    # dispersión son dos ecuaciones que con 2 componentes dan las dos primas (2 estadísticos + 1) [PROPUESTO INC-T128-01].
     "REI-NAV-001": {"meses_antiguedad_nav_max": 12, "anios_percentil_minimos": 10, "componentes_minimos": 2,
-                    "variantes_nav": ("EPRA NTA", "EPRA NRV", "EPRA NDV")},
+                    "variantes_nav": ("EPRA NTA", "EPRA NRV", "EPRA NDV"), "componentes_minimos_dispersion": 3,
+                    **FRONTERA_B},
     # CMD-INV-001 · «Aclaración y rechazo»: < 3 años. «Entradas mínimas»: ≥ 5 años (10 recomendados).
     # «Parámetros»: anos_estacional 3–10; el mínimo del rango (3) es también el mínimo de años previos con el mismo
     # periodo. Correlación con la pendiente de la curva con ≥ 5 observaciones (ST-DESC-001).
@@ -515,6 +532,7 @@ def f_rei_nav(ent: dict[str, Any], params: dict[str, Any]) -> Resultado:
         raise ErrorFicha(f"{F}: rechazo: {len(comps)} componente (< {u['componentes_minimos']}): las sociedades "
                          f"individuales solo entran como componentes del agregado (1.6)")
     filas: list[dict[str, Any]] = []
+    derivados = 0
     for i, c in enumerate(comps):
         ctx = f"{F}: componentes[{i}]"
         c = _dict(c, ctx)
@@ -541,7 +559,7 @@ def f_rei_nav(ent: dict[str, Any], params: dict[str, Any]) -> Resultado:
         if c.get("otros_pasivos") is None:
             otros = gav - deuda - nav
             err: float | None = None
-            lim.append(f"{cid}: otros pasivos derivados por diferencia (GAV − deuda neta − NAV): identidad no verificable")
+            derivados += 1                     # T-128 (1.6): la limitación ya no cita la sociedad (abajo, un recuento)
         else:
             otros = _num(c.get("otros_pasivos"), f"{ctx}.otros_pasivos")
             err = abs(gav - deuda - otros - nav) / nav                 # «Verificación»: NAV = activos − pasivos
@@ -555,24 +573,49 @@ def f_rei_nav(ent: dict[str, Any], params: dict[str, Any]) -> Resultado:
         raise ErrorFicha(f"{F}: componentes con «id» repetido")
     if len({f["fecha"] for f in filas}) != 1:
         raise ErrorFicha(f"{F}: los componentes deben cotizar a la misma fecha de precio (agregado a una fecha)")
+    if derivados:
+        lim.append(f"{derivados} componente(s) con otros pasivos derivados por diferencia (GAV − deuda neta − NAV): "
+                   f"identidad no verificable en ellos")
     filas.sort(key=lambda f: f["id"])
-    capit_total = sum(f["capit"] for f in filas)
-    w = np.array([f["capit"] / capit_total for f in filas])
+    capit = np.array([f["capit"] for f in filas])
+    capit_total = float(np.sum(capit))
+    w = capit / capit_total
     primas = np.array([f["precio"] / f["nav_acc"] - 1 for f in filas])  # P/NAV − 1
+    # T-128 (1.6, `frontera_b`): las cifras de cada sociedad que no dependen de su tamaño (la prima y la estructura del
+    # balance sobre su NAV, y su cap rate); las copias a escala son un componente para el mínimo y la dominancia
+    grupos = _sin_copias_a_escala([(float(pr), f["gav"] / f["nav"], f["deuda"] / f["nav"], f["otros"] / f["nav"], f["cap"])
+                                   for f, pr in zip(filas, primas, strict=True)], f"{F}: componentes",
+                                  u["componentes_minimos"], u["tolerancia_clon"])
+    distintos = len(set(grupos.tolist()))
+    _sin_dominio({"capitalizacion": capit, "nav": [f["nav"] for f in filas]}, f"{F}: componentes",
+                 u["peso_maximo_componente"], grupos)
+    _rechazo_concentradas(_concentradas({"la prima agregada": (capit * primas, capit)}, u, tol), f"{F}: componentes", u)
     prima_agg = float(np.sum(w * primas))                              # agregado ponderado por capitalización
-    dispersion = math.sqrt(float(np.sum(w * (primas - prima_agg) ** 2)))
+    dispersion: float | None = None
+    if distintos >= u["componentes_minimos_dispersion"]:
+        dispersion = math.sqrt(float(np.sum(w * (primas - prima_agg) ** 2)))
+    else:
+        lim.append(f"sin dispersión de la prima: {distintos} componentes distintos (< {u['componentes_minimos_dispersion']}); "
+                   f"con la prima agregada y los pesos daría la prima de cada sociedad (1.6)")
+    sin_orden: list[str] = []
+    rango = _orden(primas, u, sin_orden, "las primas (mínimo y máximo)", distintos)
+    _limitacion_orden(sin_orden, u, lim)
     cap_obj = p["cap_objetivo"]
     nav_ajustado: dict[str, Any] | None = None
-    ajustados: dict[str, float | None] = {f["id"]: None for f in filas}
     if cap_obj is None:
         lim.append("sin cap_objetivo (implícito de REI-CAP-001): NAV ajustado no calculado")
     else:
-        for f in filas:   # NAV ajustado = GAV × (cap_tasación/cap_objetivo) − deuda neta − otros pasivos
-            ajustados[f["id"]] = f["gav"] * (f["cap"] / cap_obj) - f["deuda"] - f["otros"]
-        nav_total = sum(f["nav"] for f in filas)
-        adj_total = float(sum(x for x in ajustados.values() if x is not None))
-        nav_ajustado = {"cap_objetivo": cap_obj, "nav_total": nav_total, "nav_ajustado_total": adj_total,
-                        "variacion_pct": (adj_total / nav_total - 1) * PCT}
+        # NAV ajustado = GAV × (cap_tasación/cap_objetivo) − deuda neta − otros pasivos
+        ajustados = np.array([f["gav"] * (f["cap"] / cap_obj) - f["deuda"] - f["otros"] for f in filas])
+        navs = np.array([f["nav"] for f in filas])
+        nav_total = float(np.sum(navs))
+        adj_total = float(np.sum(ajustados))
+        # T-128: la variación agregada es Σ(ajustado − NAV)/ΣNAV; si la aporta casi entera una sociedad, es la suya
+        conc = _concentradas({"el NAV ajustado": (ajustados - navs, navs)}, u, tol)
+        _limitacion_concentradas(conc, u, lim)
+        if not conc:
+            nav_ajustado = {"cap_objetivo": cap_obj, "nav_total": nav_total, "nav_ajustado_total": adj_total,
+                            "variacion_pct": (adj_total / nav_total - 1) * PCT}
     pos: dict[str, Any] | None = None
     if v.get("historia_prima") is None:
         lim.append("sin historia de la prima agregada: percentil no calculado")
@@ -589,12 +632,12 @@ def f_rei_nav(ent: dict[str, Any], params: dict[str, Any]) -> Resultado:
     errores = [f["err"] for f in filas if f["err"] is not None]
     res = {
         "fecha_precio": filas[0]["fecha"].date().isoformat(), "nav_variante": p["nav_variante"],
-        "prima_agregada_pct": prima_agg * PCT, "dispersion_pct": dispersion * PCT,
-        "rango_pct": [float(np.min(primas)) * PCT, float(np.max(primas)) * PCT],
-        "componentes": {f["id"]: {"prima_pct": float(pr) * PCT, "peso": float(wi), "nav": f["nav"],
-                                  "nav_ajustado": ajustados[f["id"]],
-                                  "antiguedad_nav_dias": int((f["fecha"] - f["fecha_nav"]).days)}
-                        for f, pr, wi in zip(filas, primas, w, strict=True)},
+        # T-128 (1.6): sin filas por sociedad (antes «componentes», con la prima, el peso y el NAV de cada una); la
+        # dispersión con 3 componentes distintos o más, y el rango (mínimo y máximo) con 7 o más
+        "n_componentes": len(filas),
+        "prima_agregada_pct": prima_agg * PCT, "dispersion_pct": None if dispersion is None else dispersion * PCT,
+        "rango_pct": None if rango is None else [rango["minimo"] * PCT, rango["maximo"] * PCT],
+        "antiguedad_nav_dias_max": max(int((f["fecha"] - f["fecha_nav"]).days) for f in filas),
         "nav_ajustado": nav_ajustado,
         "percentil": None if pos is None else pos["percentil"], "z": None if pos is None else pos["z"],
         "media_historica_pct": None if pos is None else pos["media"] * PCT,
@@ -622,6 +665,9 @@ def f_rei_ffo(ent: dict[str, Any], params: dict[str, Any]) -> Resultado:
     lim: list[str] = []
     moneda = _texto(v.get("moneda"), f"{F}: «moneda»")
     comps = _lista(v.get("componentes"), f"{F}: componentes")
+    if len(comps) < u["componentes_minimos"]:   # T-128 (1.6): un agregado de una sociedad es la sociedad
+        raise ErrorFicha(f"{F}: rechazo: {len(comps)} componente (< {u['componentes_minimos']}): las sociedades "
+                         f"individuales solo entran como componentes del agregado (1.6)")
     por_comp: dict[str, dict[int, dict[str, float]]] = {}
     capit: dict[str, float] = {}
     errores_bn: list[float] = []
@@ -686,6 +732,19 @@ def f_rei_ffo(ent: dict[str, Any], params: dict[str, Any]) -> Resultado:
     ultimo = comunes[-1]
     if any(max(t) > ultimo for t in por_comp.values()):
         lim.append(f"hay componentes con ejercicios posteriores a {ultimo}: el agregado usa el último ejercicio común")
+    # T-128 (1.6, `frontera_b`): las cifras de cada sociedad sobre su capitalización en cada ejercicio común (no dependen
+    # de su tamaño): las copias a escala son una; ninguna pesa más del 95 % de una suma del agregado (la capitalización y
+    # el FFO, el AFFO, el dividendo y el beneficio de cada ejercicio, en valor absoluto)
+    cap_a = np.array([capit[c] for c in ids])
+    grupos = _sin_copias_a_escala([tuple(por_comp[c][a][k] / capit[c] for a in comunes for k in ("ffo", "affo", "div", "bn"))
+                                   for c in ids], f"{F}: componentes", u["componentes_minimos"], u["tolerancia_clon"])
+    _sin_dominio({"capitalizacion": cap_a, **{f"{k} {a}": [por_comp[c][a][k] for c in ids] for a in comunes
+                                              for k in ("ffo", "affo", "div", "bn")}},
+                 f"{F}: componentes", u["peso_maximo_componente"], grupos)
+    ult = {k: np.array([por_comp[c][ultimo][k] for c in ids]) for k in ("ffo", "affo", "div")}
+    _rechazo_concentradas(_concentradas({"el rendimiento FFO": (ult["ffo"], cap_a), "el rendimiento AFFO": (ult["affo"], cap_a),
+                                         "la cobertura agregada": (ult["affo"], ult["div"])}, u, FICHAS[F]["tol"]),
+                          f"{F}: componentes", u)
     serie = {str(a): {"ffo": sum(por_comp[c][a]["ffo"] for c in ids), "affo": sum(por_comp[c][a]["affo"] for c in ids),
                       "dividendo": sum(por_comp[c][a]["div"] for c in ids),
                       "beneficio_neto": sum(por_comp[c][a]["bn"] for c in ids)} for a in comunes}
@@ -695,18 +754,20 @@ def f_rei_ffo(ent: dict[str, Any], params: dict[str, Any]) -> Resultado:
     p_affo = cap_total / act["affo"] if act["affo"] > 0 else None
     if p_ffo is None or p_affo is None:
         lim.append("FFO o AFFO agregado no positivo: múltiplo indefinido")
-    coberturas: dict[str, float | None] = {}
-    for c in ids:
-        d = por_comp[c][ultimo]
-        coberturas[c] = d["affo"] / d["div"] if d["div"] > 0 else None
-        if d["div"] <= 0:
-            lim.append(f"{c}: sin dividendo en {ultimo}: cobertura indefinida")
-    cob = np.array([x for x in coberturas.values() if x is not None])
+    # T-128 (1.6): sin la cobertura de cada sociedad con su identificador (antes «cobertura_por_componente») ni su nombre
+    # en las limitaciones; la mediana, el IQR, el mínimo y el máximo, con 7 componentes distintos o más
+    con_div = [i for i, c in enumerate(ids) if por_comp[c][ultimo]["div"] > 0]
+    if len(con_div) < len(ids):
+        lim.append(f"{len(ids) - len(con_div)} componente(s) sin dividendo en {ultimo}: cobertura indefinida en ellos")
+    cob = np.array([por_comp[ids[i]][ultimo]["affo"] / por_comp[ids[i]][ultimo]["div"] for i in con_div])
     resumen_cob: dict[str, Any] | None = None
-    if cob.size:
+    sin_orden: list[str] = []
+    if cob.size and _orden(cob, u, sin_orden, "la cobertura de los componentes",
+                           len(set(grupos[con_div].tolist()))) is not None:
         q25, q50, q75 = (float(x) for x in np.quantile(cob, [0.25, 0.5, 0.75]))   # cuantiles tipo 7 (ST-DESC-001)
         resumen_cob = {"mediana": q50, "iqr": q75 - q25, "minimo": float(np.min(cob)), "maximo": float(np.max(cob)),
                        "n": int(cob.size)}
+    _limitacion_orden(sin_orden, u, lim)
     pos_ffo: dict[str, Any] | None = None
     pos_affo: dict[str, Any] | None = None
     if v.get("historia_multiplos") is None:
@@ -733,7 +794,7 @@ def f_rei_ffo(ent: dict[str, Any], params: dict[str, Any]) -> Resultado:
         "percentil_p_ffo": None if pos_ffo is None else pos_ffo["percentil"],
         "percentil_p_affo": None if pos_affo is None else pos_affo["percentil"],
         "cobertura_agregada": act["affo"] / act["dividendo"] if act["dividendo"] > 0 else None,
-        "cobertura": resumen_cob, "cobertura_por_componente": coberturas,
+        "n_componentes": len(ids), "cobertura": resumen_cob,
         "serie": serie,
         "referencia_ingenua": {"tipo": "RI-MH", "p_ffo": None if pos_ffo is None else pos_ffo["media"],
                                "p_affo": None if pos_affo is None else pos_affo["media"]},
@@ -1150,10 +1211,10 @@ def f_chr_fund(ent: dict[str, Any], params: dict[str, Any]) -> Resultado:
     if corr is None:
         lim.append("correlación base–financiación no calculable (pocas fechas comunes o sin dispersión)")
     res = {
+        # T-128 (1.6: ninguna ficha compara plataformas): las plataformas solo como fuentes del agregado; sin la
+        # financiación ni el peso de cada una (antes «financiacion_por_plataforma_pct_anual» y «pesos»)
         "fecha": T.date().isoformat(), "ponderacion": p["ponderacion"], "plataformas": nombres,
         "financiacion_pct_anual": float(fin.loc[T]) * PCT,
-        "financiacion_por_plataforma_pct_anual": {k: float(A.loc[T, k]) * PCT for k in nombres},
-        "pesos": {k: float(W.loc[T, k] / W.loc[T].sum()) for k in nombres},
         "base_pct_anual": float(base.loc[T]) * PCT, "dias_vencimiento": int(dias[-1]),
         "percentil_financiacion": pf, "percentil_base": pb_, "ventana_percentil_dias": p["ventana_percentil"],
         "interes_abierto_total": oi_total, "interes_abierto_capitalizacion_pct": ratio,
@@ -1520,10 +1581,11 @@ def _caso_rei_nav_metodo(r: dict[str, Any]) -> bool:
     pr = np.array([18 / 20 - 1, 31.5 / 30 - 1])
     agg = float(np.sum(w * pr))
     adj = (3.2e9 * 0.05 / 0.055 - 1.0e9 - 0.2e9) + (2.4e9 * 0.045 / 0.055 - 0.75e9 - 0.15e9)
-    return (_rel(r["prima_agregada_pct"], agg * PCT, tol) and _rel(r["dispersion_pct"],
-                                                                 math.sqrt(float(np.sum(w * (pr - agg) ** 2))) * PCT, tol)
+    # T-128 (1.6): con 2 sociedades no hay dispersión (con la prima agregada y los pesos daría las dos primas) ni filas
+    # por sociedad; el NAV ajustado se comprueba en su total. La dispersión, con 3 o más, en `tests/test_t128_frontera.py`
+    return (_rel(r["prima_agregada_pct"], agg * PCT, tol) and r["dispersion_pct"] is None and r["rango_pct"] is None
             and _rel(r["nav_ajustado"]["variacion_pct"], (adj / 3.5e9 - 1) * PCT, tol)
-            and _rel(r["componentes"]["A"]["nav_ajustado"], 3.2e9 * 0.05 / 0.055 - 1.0e9 - 0.2e9, tol))
+            and _rel(r["nav_ajustado"]["nav_ajustado_total"], adj, tol) and "componentes" not in r)
 
 
 def _caso_rei_nav_percentil(r: dict[str, Any]) -> bool:
@@ -1542,9 +1604,22 @@ _FFO_EJ = {  # (beneficio neto, amortizaciones inmobiliarias, plusvalías, capex
                       2025: (22e6, 17e6, 1e6, 4.5e6, 0.5e6, 24e6)}),
     "Z": (8.0, 5e7, {2023: (10e6, 8e6, 0.0, 2e6, 0.0, 15e6), 2024: (11e6, 8e6, 1e6, 2e6, 0.0, 15e6),
                      2025: (9e6, 9e6, 0.0, 3e6, 1e6, 16e6)}),
+    # T-128 (1.6): cuatro sociedades más, para que el caso «método» siga comprobando la mediana y el IQR de la cobertura
+    # (con 3 componentes son la cifra de cada uno y ya no se entregan; hacen falta 7 distintos). Suman la misma
+    # capitalización (2e9), el mismo FFO (131e6) y el mismo AFFO (109e6) de 2025 que las tres de antes: los múltiplos
+    # agregados no cambian y el empate de `_FFO_HIST` se mantiene
+    "W": (20.0, 4e7, {2023: (26e6, 23e6, 1e6, 6e6, 1e6, 36e6), 2024: (28e6, 24e6, 0.0, 6.5e6, 1e6, 38e6),
+                      2025: (30e6, 25e6, 2e6, 7e6, 1e6, 40e6)}),
+    "V": (15.0, 4e7, {2023: (18e6, 16e6, 2e6, 4e6, 1e6, 30e6), 2024: (19e6, 17e6, 1e6, 4.5e6, 1e6, 31e6),
+                      2025: (20e6, 18e6, 1e6, 5e6, 1e6, 33e6)}),
+    "U": (10.0, 4e7, {2023: (10e6, 9e6, 0.0, 2.5e6, 0.5e6, 12e6), 2024: (11e6, 9.5e6, 0.5e6, 2.8e6, 0.5e6, 13e6),
+                      2025: (12e6, 10e6, 0.0, 3e6, 0.5e6, 14e6)}),
+    "T": (5.0, 4e7, {2023: (8e6, 8e6, 1e6, 3e6, 1e6, 10e6), 2024: (9e6, 9e6, 0.0, 3.2e6, 1e6, 11e6),
+                     2025: (10e6, 9.5e6, 0.5e6, 3.5e6, 1e6, 12e6)}),
 }
 _FFO_RENTAS_Y_2023 = 50e6
-# la historia incluye un empate exacto con los múltiplos actuales (2e9/131e6 y 2e9/109e6): el percentil cuenta los ≤
+# la historia incluye un empate exacto con los múltiplos actuales (2e9/131e6 y 2e9/109e6; T-128: 4e9/262e6 y 4e9/218e6, el
+# mismo número): el percentil cuenta los ≤
 _FFO_HIST = [(12.0, 15.0), (13.5, 16.0), (15.0, 18.0), (11.0, 13.0), (14.0, 17.0), (16.0, 19.0), (13.0, 15.5), (12.5, 14.8),
              (2e9 / 131e6, 2e9 / 109e6)]
 
@@ -1799,11 +1874,14 @@ def _caso_chr_fund_metodo(r: dict[str, Any]) -> bool:
     s = 60_000.0 + 2_000 * math.sin(0.02 * T)
     b_raw = _cf_agregada(T) + 0.02 * math.sin(0.3 * T)
     F_ = s * (1 + b_raw * _cf_dias(T) / DIAS_ANIO)
-    return (all(_rel(r["financiacion_por_plataforma_pct_anual"][k], pl[k], tol) for k in pl)
+    # T-128 (1.6): sin cifras por plataforma; la agregada se comprueba con la de cada plataforma a mano, ponderada por su
+    # interés abierto (antes también la de cada una y el peso de P1)
+    agregada = sum(pl[k] * _CF_PLAT[k][2](T) for k in pl) / oi_T
+    return ("financiacion_por_plataforma_pct_anual" not in r and "pesos" not in r
+            and _rel(r["financiacion_pct_anual"], agregada, tol)
             and _rel(r["financiacion_pct_anual"], _cf_agregada(T) * PCT, tol)
             and _rel(r["base_pct_anual"], (F_ / s - 1) * DIAS_ANIO / _cf_dias(T) * PCT, tol)
-            and _rel(r["interes_abierto_capitalizacion_pct"], oi_T / _CF_CAP * PCT, tol)
-            and _rel(r["pesos"]["P1"], _CF_PLAT["P1"][2](T) / oi_T, tol))
+            and _rel(r["interes_abierto_capitalizacion_pct"], oi_T / _CF_CAP * PCT, tol))
 
 
 def _caso_chr_fund_percentil(r: dict[str, Any]) -> bool:
@@ -2000,7 +2078,9 @@ CASOS_CONTROL: dict[str, list[dict[str, Any]]] = {
          "comprobar": lambda r: r["verificacion"]["error_relativo_nav_max"] <= FICHAS["REI-NAV-001"]["tol"]
          and _cerca(r["nav_ajustado"]["variacion_pct"], 0.0, FICHAS["REI-NAV-001"]["tol"])
          and _rel(r["nav_ajustado"]["nav_total"], 20.0 * 1e8 + 30.0 * 5e7, FICHAS["REI-NAV-001"]["tol"])
-         and all(_rel(c["nav_ajustado"], c["nav"], FICHAS["REI-NAV-001"]["tol"]) for c in r["componentes"].values())},
+         # T-128 (1.6): sin filas por sociedad; con la misma cap rate, el NAV ajustado total es el NAV total
+         and _rel(r["nav_ajustado"]["nav_ajustado_total"], r["nav_ajustado"]["nav_total"], FICHAS["REI-NAV-001"]["tol"])
+         and "componentes" not in r},
         {"nombre": "método: P/NAV − 1 ponderado por capitalización, dispersión y NAV ajustado a otro cap rate",
          "datos": [{"valores": _datos_rei_nav(misma_cap=False)}], "parametros": {"cap_objetivo": 0.055},
          "comprobar": _caso_rei_nav_metodo},

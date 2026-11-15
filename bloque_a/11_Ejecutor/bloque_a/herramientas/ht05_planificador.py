@@ -5,7 +5,6 @@ Calendario simplificado: días hábiles de lunes a viernes (sin festivos de merc
 from __future__ import annotations
 
 import datetime as dt
-from typing import Dict, List
 
 import pandas as pd
 
@@ -13,7 +12,7 @@ FRECUENCIAS = {"diaria": "B", "semanal": 7, "quincenal": 14, "mensual": "M"}
 DIAS = {"LUN": 0, "MAR": 1, "MIE": 2, "MIÉ": 2, "JUE": 3, "VIE": 4, "SAB": 5, "SÁB": 5, "DOM": 6}
 
 
-def fechas_ciclo(desde, hasta, frecuencia: str = "semanal", dia_semana: int = 4) -> List[pd.Timestamp]:
+def fechas_ciclo(desde, hasta, frecuencia: str = "semanal", dia_semana: int = 4) -> list[pd.Timestamp]:
     """Fechas as_of de un backtest: la primera fecha >= desde que cae en `dia_semana` y luego cada periodo."""
     d0, d1 = pd.Timestamp(desde).normalize(), pd.Timestamp(hasta).normalize()
     if frecuencia == "diaria":
@@ -32,7 +31,7 @@ def fechas_ciclo(desde, hasta, frecuencia: str = "semanal", dia_semana: int = 4)
     return out
 
 
-def fecha_resolucion(emision, horizonte: str, cfg_horizontes: Dict) -> pd.Timestamp:
+def fecha_resolucion(emision, horizonte: str, cfg_horizontes: dict) -> pd.Timestamp:
     """H1 = n sesiones hábiles; H2 = n semanas; H3/H4 = n meses (por defecto 5 s, 4 sem, 6 m, 12 m)."""
     e = pd.Timestamp(emision).normalize()
     h = cfg_horizontes[horizonte]

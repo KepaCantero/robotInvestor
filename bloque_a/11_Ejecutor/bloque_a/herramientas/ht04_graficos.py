@@ -4,11 +4,11 @@ Paleta accesible (azul/naranja, apta para daltonismo); todos los gráficos lleva
 """
 from __future__ import annotations
 
+from collections.abc import Sequence
 from html import escape
-from typing import Dict, List, Optional, Sequence, Tuple
 
 
-def _escala(valores: Sequence[float], alto: float, margen: float, vmin=None, vmax=None) -> Tuple[float, float]:
+def _escala(valores: Sequence[float], alto: float, margen: float, vmin=None, vmax=None) -> tuple[float, float]:
     lo = min(valores) if vmin is None else vmin
     hi = max(valores) if vmax is None else vmax
     if hi - lo < 1e-12:
@@ -17,7 +17,7 @@ def _escala(valores: Sequence[float], alto: float, margen: float, vmin=None, vma
 
 
 def puntos_polyline(valores: Sequence[float], ancho: float = 280, alto: float = 72, margen_inf: float = 14,
-                    margen_sup: float = 6, n_puntos: int = 12, vmin=None, vmax=None) -> Tuple[str, Tuple[float, float]]:
+                    margen_sup: float = 6, n_puntos: int = 12, vmin=None, vmax=None) -> tuple[str, tuple[float, float]]:
     """Reduce la serie a `n_puntos` y devuelve los puntos del polyline y el último punto (x, y)."""
     vals = list(valores)
     if not vals:
@@ -41,7 +41,7 @@ def y_de(valor: float, lo: float, hi: float, alto: float = 72, margen_inf: float
     return round(margen_sup + (hi - valor) / (hi - lo) * util, 1)
 
 
-def minigrafico_precio(valores: Sequence[float], zona: Optional[Tuple[float, float]], titulo_alt: str, pie: str,
+def minigrafico_precio(valores: Sequence[float], zona: tuple[float, float] | None, titulo_alt: str, pie: str,
                        id_svg: str) -> str:
     """Minigráfico de precio de 12 meses con zona de interés (clases CSS de la plantilla)."""
     vals = list(valores)
@@ -79,7 +79,7 @@ def mosaico_aciertos(aciertos: int, n: int, max_casillas: int = 30) -> str:
             f'<g>{"".join(rects)}</g></svg>')
 
 
-def grafico_lineas(series: Dict[str, List[float]], etiquetas_x: List[str], titulo: str, ancho: int = 640,
+def grafico_lineas(series: dict[str, list[float]], etiquetas_x: list[str], titulo: str, ancho: int = 640,
                    alto: int = 260) -> str:
     """Gráfico de líneas sencillo (para metricas y el informe técnico en HTML)."""
     colores = ["#1f6fb2", "#d9822b", "#5b8c3a", "#8a4fb0"]

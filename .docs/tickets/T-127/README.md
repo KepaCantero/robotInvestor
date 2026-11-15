@@ -2,7 +2,7 @@
 
 | Campo | Valor |
 | --- | --- |
-| Estado | EN QA |
+| Estado | EN QA · ronda r02 |
 | Pieza | bloque_a (11_Ejecutor, motor) |
 | Planifica · implementa · QA | Claude · Claude · un revisor nuevo (otro agente o un subagente sin contexto de la implementación) |
 | Aprobación del operador | no necesaria (corrección de hallazgos de QA); las decisiones van `[PROPUESTO]` (el operador pidió que el agente decida por defecto y lo deje apuntado) |
@@ -109,3 +109,6 @@ FON-DISC-001 (T-121 H-09).
 - 2026-11-14 · PLANIFICADO · Claude · plan, criterios y decisiones `[PROPUESTO]` (INC-T127-01)
 - 2026-11-14 · EN CURSO · Claude · implementación y pruebas (`tests/test_t127_hallazgos.py`)
 - 2026-11-14 · EN QA · Claude · suites del Motor y vecinas en verde, mutantes muertos, cuotas sin subir; falta `./tools/check_all.sh` en el commit y la QA de un revisor nuevo
+- 2026-11-15 · NO APTO · revisor nuevo (QA r01) · H-01 (alta, copias a escala), H-02 (media, rellenos de cifra nula), H-03 (baja, declarado)
+- 2026-11-15 · EN CURSO · ronda r02 · Claude · H-01: las copias se comparan por sus cifras individuales (sin escala) y cuentan como un componente; H-02: dominancia también de la aportación a cada cifra agregada; H-03: declarado (INC-T127-01, «Ronda r02»)
+- 2026-11-15 · EN QA · ronda r02 · Claude · `tests/test_t127_r02.py` (24), script del revisor 7/7, mutantes de la r02 31 de 32 (el vivo, equivalente), suites del Motor y vecinas en verde, ruff 2902 y mypy A 109; las funciones de la frontera pasan a `motor/frontera_b.py` (T-128); falta `./tools/check_all.sh` en el commit y la QA r02

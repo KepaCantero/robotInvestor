@@ -192,9 +192,11 @@
   "pruebas": [
    "11_Ejecutor/tests/test_unitarias.py::test_contratos_canales_credenciales_e_idempotencia",
    "11_Ejecutor/tests/test_integracion.py::test_canales_y_matriz_respetados",
-   "11_Ejecutor/tests/test_fase4_huecos.py::test_pb22_tres_mensajes_por_canales_no_previstos_tres_incidencias_y_ningun_efecto"
+   "11_Ejecutor/tests/test_fase4_huecos.py::test_pb22_tres_mensajes_por_canales_no_previstos_tres_incidencias_y_ningun_efecto",
+   "11_Ejecutor/tests/test_t116_r05.py::test_h12_las_incidencias_escaladas_se_ven_en_el_estado_del_operador",
+   "11_Ejecutor/tests/test_t116_r05.py::test_h12_la_orden_estado_las_muestra"
   ],
-  "comprueba": "Los tres mensajes del plan (Auditor → Analizador, Analista → Analista, Redactor → Broker) se rechazan, dejan tres incidencias CANAL_NO_PREVISTO escaladas al operador y no cambian ningún archivo salvo el historial de auditoría.",
+  "comprueba": "Los tres mensajes del plan (Auditor → Analizador, Analista → Analista, Redactor → Broker) se rechazan, dejan tres incidencias CANAL_NO_PREVISTO marcadas para escalar al operador, que las ve en el estado (`incidencias_escaladas` de la orden `estado`, r05), y no cambian ningún archivo salvo el historial de auditoría.",
   "no_comprueba": ""
  },
  "PB-23": {
@@ -232,10 +234,13 @@
    "11_Ejecutor/tests/test_t126_pb26_pb48.py::test_pb26_dentro_de_cada_tematica_el_orden_es_por_calidad_descendente",
    "11_Ejecutor/tests/test_t126_pb26_pb48.py::test_pb26_el_nivel_es_coherente_con_la_calidad",
    "11_Ejecutor/tests/test_t126_pb26_pb48.py::test_pb26_una_fuente_de_nivel_d_esta_marcada_como_candidata_a_baja_o_unica",
-   "11_Ejecutor/tests/test_t126_pb26_pb48.py::test_pb26_la_comprobacion_detecta_un_orden_o_un_nivel_mal_puestos"
+   "11_Ejecutor/tests/test_t126_pb26_pb48.py::test_pb26_la_comprobacion_detecta_un_orden_o_un_nivel_mal_puestos",
+   "11_Ejecutor/tests/test_t126_r02.py::test_h02_cada_referencia_esta_fisicamente_en_la_seccion_de_su_tematica",
+   "11_Ejecutor/tests/test_t126_r02.py::test_h02_a_igualdad_de_q_va_primero_la_mas_reciente",
+   "11_Ejecutor/tests/test_t126_r02.py::test_h03_las_comprobaciones_detectan_fichas_estropeadas"
   ],
-  "comprueba": "En los F7, F8 y F9 entregados, leídos como los lee el ejecutor: 100 % de las referencias con una temática del Anexo D de su archivo, 0 inversiones del orden por Q dentro de cada temática, el nivel A/B/C/D coherente con Q (13.3) y las de nivel D marcadas como candidatas a baja o única fuente; la comprobación detecta un desorden, un nivel o una temática inventados.",
-  "no_comprueba": "El alta de 30 referencias nuevas que pide el plan: la hacen los Documentadores con el modelo real; aquí se comprueba el estado de los archivos."
+  "comprueba": "En los F7, F8 y F9 entregados: cada referencia está físicamente en la sección `## TX-nn` de su temática del Anexo D (y su campo «Temática» lo dice), 0 inversiones del orden por Q dentro de cada sección, a igualdad de Q la de año de publicación más reciente primero, el nivel A/B/C/D coherente con Q (13.3) y las de nivel D marcadas como candidatas a baja o única fuente; las mismas comprobaciones detectan un desorden, un nivel, una temática, una sección o un desempate estropeados.",
+  "no_comprueba": "El alta de 30 referencias nuevas que pide el plan: la hacen los Documentadores con el modelo real; aquí se comprueba el estado de los archivos. El desempate solo compara fichas con año de publicación: un «Documento vivo» (ANA-DOC-0089) y las fuentes de F9, que no tienen año, no se desempatan (INC-T126-01, [PROPUESTO])."
  },
  "PB-27": {
   "cobertura": "PENDIENTE_API",
@@ -270,9 +275,11 @@
   "pruebas": [
    "11_Ejecutor/tests/test_integracion.py::test_ciclo_semanal_completo_apto",
    "10_Herramientas/tests/test_ht09_validador_g3.py::TestBloqueos::test_probabilidad_sin_certificado",
-   "11_Ejecutor/tests/test_fase4_huecos.py::test_pb31_sin_certificado_ningun_entregable_da_una_cifra_de_probabilidad_ni_confianza_alta"
+   "11_Ejecutor/tests/test_fase4_huecos.py::test_pb31_sin_certificado_ningun_entregable_da_una_cifra_de_probabilidad_ni_confianza_alta",
+   "11_Ejecutor/tests/test_t116_r05.py::test_pb31_la_banda_de_cada_horizonte_publicado_es_la_de_su_probabilidad_interna",
+   "11_Ejecutor/tests/test_t116_r05.py::test_pb31_el_caso_del_plan_065_es_mas_probable_que_no_en_los_tres_entregables"
   ],
-  "comprueba": "Sin certificado, `prob` y `prob_publicada` son nulas y la etiqueta «sin ventaja demostrada todavía» figura en el JSON, en el técnico y en el visual; ningún entregable da una cifra de probabilidad y el visual no pinta confianza «Alta»; HT-09 bloquea una probabilidad sin certificado.",
+  "comprueba": "Sin certificado, `prob` y `prob_publicada` son nulas y la etiqueta «sin ventaja demostrada todavía» figura en el JSON, en el técnico y en el visual; la banda publicada de cada horizonte es la de su probabilidad interna (`banda_publicable`) y la de 0,65 (preparación del plan) es «más probable que no» en el JSON, en la fila del técnico y en la tarjeta del visual (r05); ningún entregable da una cifra de probabilidad y el visual no pinta confianza «Alta»; HT-09 bloquea una probabilidad sin certificado.",
   "no_comprueba": ""
  },
  "PB-32": {
@@ -342,9 +349,10 @@
    "11_Ejecutor/tests/test_unitarias.py::test_almacen_reserva_integridad_y_as_of",
    "11_Ejecutor/tests/test_autocritica.py::test_arrastre_con_invalidacion_activada",
    "11_Ejecutor/tests/test_fase4_huecos.py::test_pb37_la_correccion_es_un_prg_nuevo_y_el_original_no_cambia",
-   "11_Ejecutor/tests/test_fase4_huecos.py::test_pb37_el_pronostico_original_y_su_correccion_entran_los_dos_en_las_metricas"
+   "11_Ejecutor/tests/test_fase4_huecos.py::test_pb37_el_pronostico_original_y_su_correccion_entran_los_dos_en_las_metricas",
+   "11_Ejecutor/tests/test_t116_r05.py::test_pb37_adelantar_el_reloj_a_los_dos_vencimientos_resuelve_el_original_y_la_correccion"
   ],
-  "comprueba": "El alta congelada no se puede reescribir; la corrección es un PRG nuevo con `version_de`; la entrada original queda igual byte a byte, los dos se resuelven y los dos entran en las métricas. Un pronóstico modificado a mano rompe la cadena de huellas.",
+  "comprueba": "El alta congelada no se puede reescribir; la corrección es un PRG nuevo con `version_de`; la entrada original queda igual byte a byte; al adelantar el reloj a cada vencimiento, `Evaluador.resolver` resuelve el original en su fecha (con su nivel mal transcrito, sin cambios) y la corrección en la suya (r05): los dos RESUELTO y los dos en las métricas. Un pronóstico modificado a mano rompe la cadena de huellas.",
   "no_comprueba": "Que Prospectiva decida corregir (modelo real): el ejecutor no tiene una operación propia de corrección; la corrección es un alta nueva de AG-10 con `version_de`."
  },
  "PB-38": {
@@ -406,7 +414,7 @@
    "11_Ejecutor/tests/test_t53_evaluacion_y_almacen.py::test_hitos_h5_no_cuentan_en_h4_ni_en_el_historial"
   ],
   "comprueba": "El historial publicado no usa resoluciones posteriores a su fecha, ni contaminados, ni hitos de H5.",
-  "no_comprueba": "El recuento exacto del historial contra F4 y F3."
+  "no_comprueba": "El recuento exacto del historial contra F4 y F3 con el escenario del plan (28 opciones, n = 27 con la NO_RESOLUBLE declarada); `significativo` false con n < 30 y su nota de muestra pequeña; que el técnico y el visual («Cómo nos fue») den el mismo dato; y G3-CON-18 PASA sobre ese historial."
  },
  "PB-45": {
   "cobertura": "AUTOMATICA",
@@ -424,10 +432,16 @@
    "11_Ejecutor/tests/test_t125_fiabilidad_fuentes.py::test_pb46_una_vez_al_mes",
    "11_Ejecutor/tests/test_t125_fiabilidad_fuentes.py::test_pb46_sin_muestra_suficiente_no_hay_fue",
    "11_Ejecutor/tests/test_t125_fiabilidad_fuentes.py::test_pb46_no_se_resuelve_lo_que_no_ha_vencido_ni_lo_mal_formado",
-   "11_Ejecutor/tests/test_t125_fiabilidad_fuentes.py::test_pb46_cada_direccion_se_resuelve_bien"
+   "11_Ejecutor/tests/test_t125_fiabilidad_fuentes.py::test_pb46_cada_direccion_se_resuelve_bien",
+   "11_Ejecutor/tests/test_t125_r02.py::test_r02_h01_del_analista_a_f2_al_evaluador_a_la_fue_y_al_ct19",
+   "11_Ejecutor/tests/test_t125_r02.py::test_r02_h01_la_referencia_del_buscador_trae_su_pronostico_a_f2",
+   "11_Ejecutor/tests/test_t125_r02.py::test_r02_h03_solo_cuenta_lo_registrado_antes_de_su_fecha_objetivo",
+   "11_Ejecutor/tests/test_t125_r02.py::test_r02_h04_un_ref_id_que_no_es_una_fuente_de_f9_no_cuenta",
+   "11_Ejecutor/tests/test_t125_r02.py::test_r02_h07_ventana_de_24_meses_con_su_borde",
+   "11_Ejecutor/tests/test_t125_r02.py::test_r02_h07_antiguedad_del_cierre_con_su_borde"
   ],
-  "comprueba": "El caso del plan (dos fuentes de 25 pronósticos explícitos, una con habilidad y otra sin ella): FUE- en F6 con n, aciertos, BSS, BSS contraído con k = 20 y puntos de historial (por encima y por debajo del neutro 10), una vez al mes y comunicadas al Buscador por CT-19.",
-  "no_comprueba": "La recalificación de Q y el orden en F9, que hace el Buscador con el modelo real (T-125)."
+  "comprueba": "El caso del plan (dos fuentes de 25 pronósticos explícitos, una con habilidad y otra sin ella): FUE- en F6 con n, aciertos, BSS (Brier del Motor, FC-EVAL-001, con su `calc_id`), BSS contraído con k = 20 y puntos de historial (por encima y por debajo del neutro 10), una por fuente y mes y comunicadas al Buscador por CT-19. En ciclos (r02 de T-125): el pronóstico que devuelve el Analista o el Buscador llega a F2 con su bloque y, vencido, sale en la FUE- y en el CT-19; solo cuenta lo registrado antes de su fecha objetivo, de una fuente de F9, dentro de la ventana y con cierre reciente.",
+  "no_comprueba": "La recalificación de Q y el orden en F9, que hace el Buscador con el modelo real (T-125). En backtest no entra ningún pronóstico de una fuente de F9 sin fecha (el filtro de evidencia no la da por conocible): el camino se prueba en modo vivo con el cliente simulado."
  },
  "PB-47": {
   "cobertura": "PARCIAL",
@@ -442,10 +456,13 @@
   "cobertura": "PARCIAL",
   "pruebas": [
    "11_Ejecutor/tests/test_t126_pb26_pb48.py::test_pb48_una_guia_que_relaja_un_control_no_llega_a_la_elegibilidad",
-   "11_Ejecutor/tests/test_t126_pb26_pb48.py::test_pb48_ht03_exige_la_segunda_pasada_en_banda_marginal"
+   "11_Ejecutor/tests/test_t126_pb26_pb48.py::test_pb48_ht03_exige_la_segunda_pasada_en_banda_marginal",
+   "11_Ejecutor/tests/test_t126_r02.py::test_h01_en_el_ciclo_una_opcion_en_banda_marginal_se_resuelve_con_su_segunda_pasada",
+   "11_Ejecutor/tests/test_t126_r02.py::test_h01_sin_la_segunda_pasada_esas_opciones_no_serian_elegibles",
+   "11_Ejecutor/tests/test_t126_r02.py::test_h04_la_leccion_que_relaja_el_control_llega_al_analista_en_su_ct06"
   ],
-  "comprueba": "Una lección vigente que sugiere omitir la segunda pasada en banda marginal no llega a las entradas de HT-03 y ninguna opción entregada incumple un control; HT-03 exige la segunda pasada en banda marginal (R23 por construcción).",
-  "no_comprueba": "El registro del conflicto (COR-) y su escalado (P3-): el ejecutor no tiene las guías CT-18 del Orquestador (INC-T126-01)."
+  "comprueba": "Una lección vigente que sugiere omitir la segunda pasada en banda marginal llega al Analista en su CT-06 pero no a las entradas de HT-03; en el ciclo, las opciones en banda marginal llegan a HT-03 con la segunda pasada del Analista, se resuelven con ella y la segunda pasada queda registrada en F3 (sin ella, PS8 las dejaría fuera); ninguna opción entregada incumple un control; HT-03 exige la segunda pasada en banda marginal (R23 por construcción).",
+  "no_comprueba": "El registro del conflicto (COR-) y su escalado (P3-): el ejecutor no tiene las guías CT-18 del Orquestador (INC-T126-01). La segunda pasada la decide el Analista (simulado, que la hace siempre en la prueba); el ejecutor no la pide si falta: la opción queda no elegible por PS8."
  },
  "PB-49": {
   "cobertura": "AUTOMATICA",
@@ -535,14 +552,14 @@
   "no_comprueba": "Lo audita el Auditor con el modelo real."
  },
  "PB-58": {
-  "cobertura": "AUTOMATICA",
+  "cobertura": "PARCIAL",
   "pruebas": [
    "11_Ejecutor/tests/test_v51.py::test_credenciales_boveda",
    "11_Ejecutor/tests/test_v51.py::test_cli_v51",
    "11_Ejecutor/tests/test_fase4_huecos.py::test_pb58_el_servicio_pendiente_se_declara_hasta_la_provision_y_el_valor_no_llega_a_ningun_contexto"
   ],
   "comprueba": "Solicitud con CRD- en F5 sin valor; servicio degradado y declarado en los entregables hasta la provisión (corrección de INC-T116-03); depósito en la bóveda y respuesta solo con estado y alias; la herramienta obtiene el valor de la bóveda; la segunda solicitud se resuelve sin volver al Broker; el valor no aparece en ningún archivo, mensaje, entregable ni contexto enviado a los agentes.",
-  "no_comprueba": ""
+  "no_comprueba": "Los pasos 1 y 2 del plan: el ejecutor no lee `solicitudes_credenciales` del retorno del Buscador (ni de un Analista) ni tiene el mantenimiento C4 en el que el Buscador las detecta; la solicitud CT-25 se emite con `credenciales.solicitar` (orden `credencial solicitar`). Declarado en INC-T116-03 (r05)."
  },
  "PB-59": {
   "cobertura": "AUTOMATICA",

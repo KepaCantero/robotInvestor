@@ -413,7 +413,7 @@ def test_rei_nav_doce_meses_justos_se_admiten_y_otros_pasivos_derivados_se_decla
     v["componentes"][0]["fecha_nav"] = "2025-09-30"
     del v["componentes"][1]["otros_pasivos"]
     res, lim = _correr("REI-NAV-001", v, {"cap_objetivo": 0.05})
-    assert res["componentes"]["A"]["antiguedad_nav_dias"] == 365
+    assert res["antiguedad_nav_dias_max"] == 365        # T-128 (1.6): sin filas por sociedad; la mayor antigüedad
     assert any("derivados por diferencia" in x for x in lim)
 
 
@@ -431,12 +431,12 @@ def test_rei_nav_oraculo_independiente():
     pr = [18 / 20 - 1, 31.5 / 30 - 1]
     m = np.average(pr, weights=caps)
     assert res["prima_agregada_pct"] == pytest.approx(m * 100, rel=1e-12)
-    assert res["dispersion_pct"] == pytest.approx(math.sqrt(np.average((np.array(pr) - m) ** 2, weights=caps)) * 100,
-                                                   rel=1e-12)
+    # T-128 (1.6): con 2 sociedades, sin dispersión ni rango (con la prima agregada y los pesos darían las dos primas);
+    # el mismo oráculo con 3 y con 7, en `test_t128_frontera.py::test_rei_nav_dispersion_desde_tres_y_rango_desde_siete`
+    assert res["dispersion_pct"] is None and res["rango_pct"] is None
     adj = (Fraction(3_200_000_000) * Fraction(5, 100) / Fraction(55, 1000) - 1_200_000_000
            + Fraction(2_400_000_000) * Fraction(45, 1000) / Fraction(55, 1000) - 900_000_000)
     assert res["nav_ajustado"]["variacion_pct"] == pytest.approx(float((adj / 3_500_000_000 - 1) * 100), rel=1e-12)
-    assert res["rango_pct"] == pytest.approx([-10.0, 5.0], rel=1e-12)
 
 
 # ============================================================================= REI-FFO-001

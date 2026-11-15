@@ -67,6 +67,7 @@ Se sigue preguntando antes de actuar cuando algo gasta dinero o usa una credenci
 | Cómo se resuelve un pronóstico con series que acaban en fechas distintas | Todas se miden en la última fecha común; si no la hay, espera | Agente (INC-T91-01) | 12-11-2026 | `evaluacion` (T-91) |
 | Pregunta repetida que genera una lección | 3 veces en 4 semanas | Entrega | — | `pregunta_repetida` |
 | Backtest con un modelo real | Se anonimiza; lo anterior a la fecha de corte del modelo no cuenta para certificar | Agente (PA-09) | 10-11-2026 | `backtest.anonimizar`, `backtest.fecha_corte_modelo` |
+| Fiabilidad de las fuentes de opinión (FUE-) [PROPUESTO] | Mínimo 5 pronósticos resueltos, últimos 24 meses, referencia 0,5, cierre con la antigüedad de H2; sin probabilidad declarada, 0,65 (banda «más probable que no»); una FUE- por fuente y mes; solo cuentan los registrados en F2 antes de su fecha objetivo, de una fuente de F9 que es la de la pieza, una vez aunque se citen en varias afirmaciones | Agente (INC-T125-01) | 15-11-2026 | `fiabilidad_fuentes`; reglas en `docs/incidencias.md` |
 
 ## 5. Motor de cálculo
 
@@ -76,7 +77,8 @@ Se sigue preguntando antes de actuar cuando algo gasta dinero o usa una credenci
 | Decisiones de método y cotas de las 36 fichas de la Fase 2 | Cotas de tamaño, tolerancias, semillas | Agente (INC-T112-01) | 13-11-2026 | `docs/incidencias.md` y `UMBRALES` de cada grupo |
 | Rangos de las fichas de liquidez e índices y otros cierres de deuda | Horizontes hasta H5, listas de hasta 12 elementos, etc. | Agente (INC-T113-01) | 13-11-2026 | `docs/incidencias.md` |
 | Hallazgos abiertos de la QA de la Fase 2 (H-09 a H-15) | Sin corregir; H-09 antes del modo sombra | Agente | 13-11-2026 | T-118 en la deuda |
-| Frontera con el Bloque B en las fichas con componentes (FIR-CRED-001, REI-LEV-001, CHR-TOKEN-001) [PROPUESTO] | Casi clones a menos del 1 % en cada dato del cálculo; ningún componente con más del 95 % de una base del agregado; mínimo, cuartiles y máximo solo con 7 componentes o más; covenants, staking y concentración con el mínimo del agregado; un solo token solo para Bitcoin (BTC) o Ethereum (ETH) | Agente (INC-T127-01) | 14-11-2026 | `FRONTERA_B` y `UMBRALES` de `motor/fichas_p2.py`; `docs/incidencias.md`; pregunta para T-57 |
+| Frontera con el Bloque B en las fichas con componentes (FIR-CRED-001, REI-LEV-001, CHR-TOKEN-001) [PROPUESTO] | Casi clones a menos del 1 % en cada dato del cálculo y (ronda r02) en cada cifra individual que no depende de la escala: las copias a escala cuentan como un componente; ningún componente (o grupo de copias) con más del 95 % de una base del agregado ni (r02) de la aportación a una cifra agregada (en FIR-CRED y en el LTV, ICR y deuda neta/EBITDA de REI-LEV se rechaza; en los vencimientos de REI-LEV y en CHR-TOKEN, la cifra va a `null`); mínimo, cuartiles y máximo solo con 7 componentes distintos o más; covenants, staking y concentración con el mínimo del agregado; un solo token solo para Bitcoin (BTC) o Ethereum (ETH) | Agente (INC-T127-01, ronda r02) | 15-11-2026 | `FRONTERA_B` de `motor/frontera_b.py` (desde T-128) y `UMBRALES` de `motor/fichas_p2.py`; `docs/incidencias.md`; pregunta para T-57 |
+| Fichas con cifras por componente e identificador (REI-NAV-001, REI-FFO-001, IDX-REB-001, CHR-FUND-001, FON-DISC-001, FON-TD-001) [PROPUESTO] | Ninguna salida ni limitación con el identificador de un componente; mínimo, máximo y rango con 7 distintos o más; subcategorías, segmentos y cestas con el mínimo de la ficha (la cesta de un valor de IDX-REB, sin demanda); dispersión de REI-NAV con 3 distintos o más; REI-FFO con 2 componentes o más; REI-NAV y REI-FFO con las reglas de `FRONTERA_B` | Agente (INC-T128-01) | 15-11-2026 | `motor/frontera_b.py` y `UMBRALES` de `motor/fichas_reales.py`; `docs/incidencias.md`; pregunta para T-57 |
 
 ## 6. Contratos y pruebas
 
@@ -86,6 +88,8 @@ Se sigue preguntando antes de actuar cuando algo gasta dinero o usa una credenci
 | Ejemplo publicado del informe de seguimiento, que no cumple su esquema | No se toca la entrega; se corrige en la próxima | Agente (INC-T114-02) | 13-11-2026 | `docs/incidencias.md` |
 | El Broker pide horizontes con una lista global, no por tipo | Se deja así | Agente (INC-T116-01) | 13-11-2026 | `docs/incidencias.md` |
 | La autorización de ampliación no registra CPI ni EAC | No se añaden por ahora | Agente (INC-T116-02) | 13-11-2026 | `docs/incidencias.md` |
+| El Buscador pide credenciales en su retorno (PB-58, pasos 1 y 2) | No se implementa por ahora (el ejecutor no tiene el ciclo C4); PB-58 queda «Superada en parte» | Agente (INC-T116-03) | 15-11-2026 | `docs/incidencias.md` |
+| Desempate por fecha en F7–F9 (PB-26) | Solo entre fichas con año de publicación; un «Documento vivo» y las fuentes de F9 no se desempatan | Agente (INC-T126-01) | 15-11-2026 | `docs/incidencias.md` |
 
 ## 7. Modo sombra y coste de la API
 

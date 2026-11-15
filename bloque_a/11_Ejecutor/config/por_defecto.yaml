@@ -406,7 +406,7 @@ fiabilidad_fuentes:
   puntos_max: 20
   n_min: 5                        # [PROPUESTO] pronósticos resueltos mínimos de una fuente para calcular su fiabilidad
   ventana_meses: 24               # [PROPUESTO] pronósticos con fecha objetivo dentro de los últimos 24 meses
-  prob_sin_declarar: 0.7          # [PROPUESTO] probabilidad de un pronóstico explícito que no la da («más probable que no»)
+  prob_sin_declarar: 0.65         # [PROPUESTO] probabilidad de un pronóstico explícito que no la da: la interna de la banda «más probable que no» (Anexo A; T-125 r02)
   referencia: 0.5                 # [PROPUESTO] probabilidad de la referencia ingenua del BSS de una fuente
 
 aprendizaje:

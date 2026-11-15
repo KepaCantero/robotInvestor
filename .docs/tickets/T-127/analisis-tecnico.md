@@ -105,3 +105,70 @@ revisor». Antes de T-127: `r02_01` 0/5, `r02_02` 11/12, `r01_02` 8/11 (A2, A2b,
   - `cd bloque_a/11_Ejecutor && ../../.venv/bin/pytest -q tests/test_t127_hallazgos.py tests/test_t119_r02.py tests/test_t119_p2.py tests/test_t121_hallazgos.py`
   - `.venv/bin/python -I .docs/tickets/T-119/revisores/r02_02_cache.py bloque_a/11_Ejecutor` y los demás de la tabla de `pruebas.md`
   - `.venv/bin/python .docs/tickets/T-127/revisores/impl_mutantes.py bloque_a/11_Ejecutor <scratchpad>/t127_mut`
+
+## Ronda r02 (QA r01: H-01, H-02, H-03)
+
+### Causa raíz
+
+- **H-01 (alta).** La regla de casi clones comparaba los **datos** del cálculo (importes). Las cifras que agrega cada ficha
+  son cocientes (DD y PD; LTV, ICR; FDV/CM, inflación por unidad de oferta…) que no dependen del tamaño: un emisor copiado
+  con todos sus importes por 1,02^i difiere un 2 % en cada dato, no es casi clon, y el agregado de sus copias es su cifra
+  exacta. La dominancia tampoco saltaba (cada copia pesa poco).
+- **H-02 (media).** La dominancia miraba el **peso** de cada componente en la base de ponderación, no su **aportación** a la
+  cifra agregada. Con rellenos de cifra nula (PD 0, deuda neta 0), un componente con el 30 % del peso aporta el 100 % de la
+  media, y la media dividida por su peso (que conoce quien pide) es su cifra.
+- **H-03 (baja).** Un estadístico de orden es, por definición, la cifra de un componente.
+
+### Implementación
+
+- `bloque_a/11_Ejecutor/bloque_a/motor/fichas_p2.py` (y, desde T-128, `motor/frontera_b.py`, adonde se mueven las funciones
+  comunes sin cambiarlas; `fichas_p2` las importa con los mismos nombres):
+  - `_etiquetas_casi_iguales` (el grupo de cada componente; `_grupos_casi_iguales` cuenta los grupos, como antes).
+  - `_sin_copias_a_escala(cifras, que, minimo, tol)` (H-01): agrupa los componentes por sus cifras individuales con la
+    tolerancia de clon y cierre transitivo, rechaza si hay menos de `minimo` grupos y devuelve el grupo de cada uno. Cifras:
+    FIR-CRED-001, las seis de `_merton_medidas` (DD, PD, DD y PD reales, diferencial, triángulo); REI-LEV-001, LTV, ICR, deuda
+    neta/EBITDA, vencimientos/deuda, sobrecoste/deuda, FFO/GAV y los covenants (`ltv_max`, `icr_min` o ausentes);
+    CHR-TOKEN-001 (sector), FDV/CM, inflación neta, desbloqueos por ventana, *staking* real y concentración (o ausentes).
+  - `_sin_dominio(..., grupos)`: con grupos, el peso es el del grupo (`_por_grupo`).
+  - `_orden(..., distintos)`: los 7 de los estadísticos de orden son grupos distintos; también en los covenants de REI-LEV y
+    en el *staking* y la concentración de CHR-TOKEN (el subconjunto cuenta grupos y su dominancia es por grupos).
+  - `_aportacion_maxima(num, den, tol, cero)` y `_concentradas` (H-02): para una cifra agregada Σnum/Σden, la mayor parte de
+    Σ|num| que aporta un componente junto con los que tienen su misma cifra num/den a menos de la tolerancia de clon (sin
+    cierre transitivo: un vecindario por componente, para que una nube de cifras reales no se junte en una cadena). Una
+    cifra sin definir (den = 0) es solo la suya. Un agregado nulo a la tolerancia de la ficha da 0.
+  - FIR-CRED-001: si alguna media ponderada (DD, PD, diferencial, triángulo y, con `mu: historico`, DD y PD reales) pasa del
+    95 %, **se rechaza** (`_rechazo_concentradas`; el mensaje nombra la cifra, no el componente).
+  - REI-LEV-001: LTV, ICR y deuda neta/EBITDA, **rechazo**; vencimientos a 24 meses e impacto en FFO, **`null`** y limitación
+    (`_limitacion_concentradas`).
+  - CHR-TOKEN-001 (sector): FDV/CM, inflación neta y desbloqueos de cada ventana, **`null`** y limitación; *staking* real y
+    concentración, igual dentro de `parcial`. La propia red no pasa por estas reglas (es su token).
+  - Casos de control de CHR-TOKEN-001 con datos nuevos (comprueban lo mismo): «sin dilución» como la propia red (Bitcoin,
+    BTC; dos tokens sin dilución tienen las mismas cifras y se rechazan); en el método, TKB quema 4e7 (antes 2,4e7) y
+    desbloquea 2,4e7 (antes 2e7). Comentario «T-127 r02» en cada cambio.
+- Decisiones y desviaciones (INC-T127-01, «Ronda r02», `[PROPUESTO]`):
+  - H-01 por las **cifras**, no por los datos normalizados (la segunda opción de la QA): los datos se pueden variar sin
+    cambiar las cifras (en FIR-CRED, el reparto corto/largo con el mismo punto de impago, `test_h01_las_copias_se_comparan_por_sus_cifras_no_por_sus_datos`).
+  - Un grupo de copias **no** rechaza por sí solo (como hacen los casi clones de datos): cuenta como un componente. Así un
+    sector real con dos componentes de cifras casi iguales no se rechaza entero si quedan bastantes distintos.
+  - H-02 con la aportación (la segunda opción de la QA) y vecindarios de la misma cifra, en lugar de «un mínimo de
+    componentes informativos» (rellenos casi nulos, pero no nulos, lo esquivan) o «rechazar rellenos de cifra nula o
+    idéntica» (no distingue un relleno de un componente real sin riesgo). Rechazo o `null` según la cifra: rechazo donde la
+    cifra es la de la ficha (FIR-CRED; los cocientes de REI-LEV, como la dominancia de peso), `null` donde es un
+    subconjunto o donde las cifras reales se quedan en su cota (vencimientos, CHR-TOKEN).
+  - H-03: declarado; quitar el mínimo y el máximo no lo resuelve (la mediana con n impar es la cifra de un componente).
+- Pruebas existentes cambiadas por el comportamiento nuevo (comentario «T-127 r02»; ninguna se debilita):
+  - `test_t119_p2.py::test_chr_token_borde_de_la_ventana_y_desbloqueos_pasados`: a 20 días solo desbloqueaba TKA (su
+    cifra); se añade TKC con un desbloqueo el mismo día y la ventana sigue probando su borde (19 no, 20 sí, 30 con TKB).
+  - `test_t119_p2.py::test_chr_token_oraculo_con_fracciones_exactas`: ventanas 31, 33 y 200 (antes 20: solo TKA).
+  - `test_t119_p2.py::test_fir_cred_limites_del_dominio_que_se_admiten`: la volatilidad 10 de un emisor hacía su PD (≈ 100 %)
+    más del 95 % de la media; ahora se comprueba ese rechazo y, con los demás de riesgo alto, que la volatilidad 10 entra.
+  - `test_t127_hallazgos.py::test_h10_staking_y_concentracion_de_un_solo_token_o_dominados_no_se_calculan`: el tercer token
+    tenía el mismo *staking* real que TKA (4 % − 1 % = 8 % − 5 %); nominal 4,5 %.
+- Límites conocidos: los de INC-T127-01 («Lo que sigue sin poder impedirse»); mutante equivalente E11 (con
+  `tokens_minimos_sector` = 2, un subconjunto de un solo grupo pesa el 100 % y lo rechaza la dominancia por grupos, con el
+  mismo mensaje).
+- Comandos (desde la raíz de la copia, con `.venv` enlazado):
+  - `cd bloque_a/11_Ejecutor && ../../.venv/bin/python -m pytest -q tests/test_t127_r02.py tests/test_t127_hallazgos.py tests/test_t119_p2.py tests/test_t119_r02.py`
+  - `.venv/bin/python -I .docs/tickets/T-127/revisores/r01_01_frontera_otras_vias.py bloque_a/11_Ejecutor`
+  - `git show fb3ccd4:bloque_a/11_Ejecutor/bloque_a/motor/fichas_p2.py > <scratchpad>/antes/fichas_p2.py` y
+    `.venv/bin/python .docs/tickets/T-127/revisores/impl_r02_mutantes.py bloque_a/11_Ejecutor <scratchpad>/t127r02_mut --antes <scratchpad>/antes/fichas_p2.py`

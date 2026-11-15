@@ -50,6 +50,7 @@ Todo lo que Claude, Astra y las personas del equipo necesitan para trabajar en e
 | `.docs/scripts/qa_rama.sh` | QA de una rama de otro agente: commits, archivos, si se fusiona por avance rápido, copia limpia y pruebas de cada pieza tocada contra el código de la rama |
 | `bloque_a/11_Ejecutor/tests/goldens_ct.py` | Goldens de los contratos CT del Bloque A (T-114): sin opciones comprueba (1 si algo difiere); `--update --motivo "…"` re-congela y lo anota en `tests/goldens/REGISTRO.md`. Se ejecuta desde `bloque_a/11_Ejecutor` |
 | `.docs/scripts/evidencias_plan_a.py` | Plan de pruebas del Bloque A (T-116): sin opciones comprueba el mapa `tests/mapa_plan_pruebas.json` contra el plan y la suite; `--ejecutar` ejecuta las pruebas citadas y regenera `docs/evidencias_pruebas_bloque_a.md`; `--pb PB-NN` repite una fila. Con el Python del `.venv` |
+| `.docs/scripts/mutantes_revisor_ampliado.py` | Ejecuta los mutantes de un script de revisor (`revisores/rNN_*mutantes*.py`) contra sus pruebas fijadas en `PRUEBAS` y las nuevas de la ronda siguiente, sin cambiar el script del revisor (T-125 r02) |
 
 ## Diario: formato
 

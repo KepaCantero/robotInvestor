@@ -322,7 +322,9 @@ def test_h10_staking_y_concentracion_de_un_solo_token_o_dominados_no_se_calculan
     assert res["cobertura_staking_pct"] == 0.0 and res["cobertura_concentracion_pct"] == 0.0
     assert any(x.startswith("rendimiento de staking de 1 de 2 tokens, con menos de 2") for x in lim)
     # dos que lo declaran, pero uno pesa el 99 % de su capitalización
-    v["tokens"].append({**_token_extra(1)[0], "precio": 0.1, "staking_nominal": 0.04, "concentracion_10_mayores": 0.3})
+    # T-127 r02 (H-02): nominal 4,5 % (antes 4 %): con 4 %, su rendimiento real (4 % − 1 %) era el de TKA (8 % − 5 %), y
+    # el de los dos sería la cifra de cada uno (ya no se entrega)
+    v["tokens"].append({**_token_extra(1)[0], "precio": 0.1, "staking_nominal": 0.045, "concentracion_10_mayores": 0.3})
     res, lim = _correr("CHR-TOKEN-001", v, p)
     assert res["rendimiento_real_staking_pct"] is None and any("más del 95% de su capitalización" in x for x in lim)
     # dos que lo declaran sin dominar: se calcula sobre ellos, con su cobertura
@@ -330,7 +332,7 @@ def test_h10_staking_y_concentracion_de_un_solo_token_o_dominados_no_se_calculan
     res, lim = _correr("CHR-TOKEN-001", v, p)
     cm = [t["precio"] * t["oferta_circulante"] for t in v["tokens"]]
     infl = [(t["emision_anual"] - t["quema_anual"]) / t["oferta_circulante"] for t in v["tokens"]]
-    esperado = (cm[0] * (0.08 - infl[0]) + cm[2] * (0.04 - infl[2])) / (cm[0] + cm[2]) * 100
+    esperado = (cm[0] * (0.08 - infl[0]) + cm[2] * (0.045 - infl[2])) / (cm[0] + cm[2]) * 100
     assert res["rendimiento_real_staking_pct"] == pytest.approx(esperado, rel=1e-12)
     assert res["cobertura_staking_pct"] == pytest.approx((cm[0] + cm[2]) / sum(cm) * 100, rel=1e-12)
 

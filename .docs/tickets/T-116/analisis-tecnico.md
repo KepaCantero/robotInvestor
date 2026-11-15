@@ -119,3 +119,24 @@ Quedan con el hueco que ya declaraban, porque la cláusula exige el modelo real,
 - Propios (`r04_mutantes_implementador.py`, en este ticket): veinte mutantes, uno por cláusula nueva (M01 a M20: nivel según GC0, congelación sin G3, referencia inventada, plazo, relevancia, escalado, empresa concreta, semáforo del técnico, servicio pendiente, nota del visual, servicio ya provisto, supuestos del técnico, H5 invalidado, cancelación, estado en F3 tras la decisión, confianza «Alta», corrección en métricas, lección enlazada, laguna en F5 y duplicados en C1), contra las pruebas que el mapa cita para su fila: **veinte de veinte muertos**.
 
 Resultado tras la r04: 22 automáticas, 33 parciales, 7 pendientes de la API, 3 sin prueba, 1 con usuarios y 1 documental.
+
+## Ronda r05 (QA r04 NO APTO)
+
+La QA r04 abrió H-10 (alta: PB-31 y PB-37 automáticas con una cláusula sin afirmar, M31, M37a y M37b vivos; PB-58 automática con un paso del ejecutor que no existe), H-11 (media: huecos incompletos en PB-44, PB-46, PB-48 y PB-26) y H-12 (baja: `escalado_operador` sin lector).
+
+| Hallazgo | Fila | Qué se hace |
+| --- | --- | --- |
+| H-10 | PB-31 | `tests/test_t116_r05.py`: en un ciclo de RV sin certificados, la banda publicada de cada horizonte del JSON es `banda_publicable(prob_interna)` de su PRG (y `banda_verbal` en F4, `banda_de`), con al menos dos bandas distintas; el caso del plan (0,65) es «más probable que no» con «sin ventaja demostrada todavía» en el JSON, en la fila del técnico y en la tarjeta del visual. Sigue AUTOMATICA |
+| H-10 | PB-37 | La prueba nueva congela el original (nivel de referencia mal transcrito) y la corrección (`version_de`), adelanta el reloj a cada vencimiento y llama a `Evaluador.resolver`: el original se resuelve el 4-5 y la corrección espera; la corrección, el 11-5; los dos RESUELTO, el original sin cambios byte a byte y los dos en las métricas. Sigue AUTOMATICA |
+| H-10 | PB-58 | Pasa a PARCIAL: el ejecutor no lee `solicitudes_credenciales` de ningún retorno ni tiene el ciclo C4 del Buscador. `[PROPUESTO]`: no se implementa ahora (exige escribir desde la fase en paralelo de los Analistas en orden determinista y comprobar la bóveda por servicio; no es pequeño ni lo pide el Documento 0 al ejecutor). Línea nueva en INC-T116-03 y fila en `Decisiones_del_operador_Bloque_A.md` |
+| H-11 | PB-44 | «No comprueba» completo: el escenario del plan (n = 27), `significativo` false con su nota, el mismo dato en técnico y visual, G3-CON-18 |
+| H-11 | PB-46 | Cita las pruebas de la r02 de T-125 (camino entero en ciclos, conocibilidad, fuente de F9, ventana, antigüedad); hueco: la recalificación en F9 y que en backtest no entra ninguna fuente de F9 sin fecha |
+| H-11 | PB-48 | Cita las pruebas de la r02 de T-126 (segunda pasada en el ciclo, lección en el CT-06); hueco: COR- y P3-, y que el ejecutor no pide la segunda pasada si falta |
+| H-11 | PB-26 | Cita las pruebas de la r02 de T-126 (sección física, desempate por fecha, comprobaciones sobre fichas estropeadas); hueco: el alta de 30 referencias y el desempate solo entre fichas con año |
+| H-12 | PB-22 | `Bloque.estado()` (orden `estado`) lista `incidencias_escaladas` (las INC- con `escalado_operador`: canal no previsto y acceso fuera de matriz). Dos pruebas: en el método y en la orden. Línea en INC-T116-03 |
+
+Mapa: 67 filas; AUTOMATICA 21, PARCIAL 37, PENDIENTE_API 7, DOCUMENTAL 1, REQUIERE_USUARIOS 1; 162 pruebas citadas. Documento regenerado con `--ejecutar`.
+
+Cambio en producción: solo `incidencias_escaladas` en `Bloque.estado()` (una clave nueva en la salida de la orden `estado`, que no es un contrato congelado; los goldens coinciden).
+
+Comandos: desde la raíz, `python .docs/scripts/evidencias_plan_a.py --ejecutar` y `python .docs/tickets/T-116/revisores/r04_01_mutantes_clausulas.py <copia con «_mut»>/bloque_a`; desde `bloque_a/11_Ejecutor`, `python -m pytest -q tests/test_t116_r05.py tests/test_fase4_mapa.py tests/test_fase4_huecos.py`.
