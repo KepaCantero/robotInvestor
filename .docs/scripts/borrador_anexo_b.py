@@ -48,16 +48,28 @@ GENERALES = [
      "mensajería la valida o si la valida el agente que recibe; o validarlas en el código (cambio de formato)."),
     ("CT-16 a CT-21", "El Anexo B no da sus campos (los remite a los prompts de sistema). Propuesta: dar al menos los campos "
      "de los que el ejecutor emite (CT-16, CT-17 y CT-19), que ya están congelados en `formas_flujos_mock.json`."),
+    ("`fecha_corte` de CT-09", "El Anexo B la hace obligatoria solo en evaluaciones y backtesting; el ejecutor la exige "
+     "siempre (es más estricto). Propuesta: obligatoria siempre."),
+    ("Lo que el Anexo B deja abierto", "La codificación de `coincide` (CT-10) y de `independiente` (CT-11) y los nombres de las "
+     "claves de `fechas` (CT-11). Propuesta: fijarlos con los valores que usa el ejecutor (los de `esquemas_respuestas.json`)."),
+    ("Retornos internos (CT-06 a CT-14)", "No pasan por la mensajería: la respuesta de cada agente se valida con los esquemas "
+     "de `ESQUEMAS` (congelados en `bloque_a/11_Ejecutor/tests/goldens/esquemas_respuestas.json`), que no llevan los mismos "
+     "nombres que el Anexo B. Propuesta: describir en el Anexo B los campos de esos esquemas, no marcar opcionales los de hoy."),
     ("Campos mínimos que el ejecutor no exige", "Por la decisión del operador, la propuesta por defecto es marcarlos en el "
      "Anexo B como opcionales («si aplica»). Si alguno debe ser obligatorio de verdad, se cambia el código en su lugar y se "
      "re-congelan los goldens con su motivo. La lista, contrato a contrato, está abajo."),
 ]
 
 
+RETORNOS_INTERNOS = {f"CT-{n:02d}" for n in range(6, 15)}
+
+
 def _ruta(mensaje: str) -> str:
     """«preguntas/0: 'origen' is a required property» → «preguntas[].origen» (mensaje de jsonschema del golden)."""
     donde, _, resto = mensaje.partition(": ")
     campo = resto.split("'")[1]
+    if donde == "(raíz)":
+        return campo
     partes = [("[]" if x.isdigit() else x) for x in donde.split("/")]
     return ".".join(partes).replace(".[]", "[]") + "." + campo
 
@@ -92,18 +104,32 @@ def generar() -> str:
             filas = []
             if "el_ejecutor_exige_y_el_anexo_b_no_nombra" in v:
                 lista, elemento = LOTES.get(ct, (v["el_ejecutor_exige_y_el_anexo_b_no_nombra"][0], "un elemento"))
+                rechazo = v.get("el_ejecutor_rechaza_el_ejemplo_del_anexo_b") or {}
+                campos = sorted({_ruta(m) for m in mensajes.get(clave, []) if "(raíz)" in m and "required property" in m})
                 filas.append((f"el ejecutor exige {_lista(v['el_ejecutor_exige_y_el_anexo_b_no_nombra'])} y rechaza el "
-                              f"ejemplo del Anexo B", f"el mensaje es una lista `{lista}`; cada elemento es {elemento} con "
-                              f"los campos de hoy; ejemplo nuevo"))
+                              f"ejemplo del Anexo B ({rechazo.get('clase', '')}: «{rechazo.get('motivo', '')}»)",
+                              f"el mensaje es una lista `{lista}`; cada elemento es {elemento} con los campos de hoy"
+                              f"{' (' + _lista(campos) + ')' if campos else ''}; ejemplo nuevo"))
+            interno = parte == "RETORNO" and ct in RETORNOS_INTERNOS
             if v.get("el_ejecutor_admite_que_falte"):
                 filas.append((f"el ejecutor admite que falte {_lista(v['el_ejecutor_admite_que_falte'])}",
-                              "marcarlos «opcional» (o exigirlos en el código)"))
+                              "describir los campos del esquema de `ESQUEMAS` de ese agente (ver «Retornos internos» en el §1)"
+                              if interno else "marcarlos «opcional» (o exigirlos en el código)"))
             for x in otro_campo.get(clave, []):
                 filas.append((f"el valor `{x['valor']}` va en `{x['campo_del_ejecutor']}`, no en `{x['campo_del_anexo_b']}`",
                               f"nombrar `{x['campo_del_ejecutor']}`"))
-            vistos = sorted({_ruta(m) for m in mensajes.get(clave, []) if "required property" in m and "(raíz)" not in m})
+            ya = set(v.get("el_ejecutor_admite_que_falte") or [])
+            # T-131 r02 (QA r01, H-02): también los de primer nivel que el ejecutor no exige en la tabla pero no envía (en los
+            # lotes, los de primer nivel son los de cada elemento y ya están en su fila)
+            vistos = sorted({_ruta(m) for m in mensajes.get(clave, []) if "required property" in m
+                             and not ("(raíz)" in m and (ct in LOTES or _ruta(m) in ya))})
             if vistos:
                 filas.append((f"en los mensajes emitidos falta {_lista(vistos)}", "marcarlos «si aplica»"))
+            for m in mensajes.get(clave, []):
+                if ": type '" in m:
+                    campo, tipo = m.split(": type '")
+                    filas.append((f"`{campo}` llega con otro tipo (el Anexo B pide {tipo.rstrip(chr(39))}; el ejecutor envía "
+                                  f"null cuando no aplica)", "admitir null «si no aplica»"))
             for c, origen, texto in OTROS:
                 if c == ct and parte == ("ENCARGO" if c != "CT-24" else "RETORNO"):
                     filas.append((f"{origen}", texto))

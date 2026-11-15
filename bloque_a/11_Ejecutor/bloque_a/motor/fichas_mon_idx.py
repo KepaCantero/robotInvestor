@@ -1207,6 +1207,14 @@ def f_idx_erp(ent: dict, params: dict) -> tuple[dict, list[str]]:
 
 
 # ======================================================================= IDX-CONC-001
+# T-128 r02 (QA r01, H-02: «otra igual» en la tabla de CA-1) [PROPUESTO INC-T128-01]: la amplitud y la contribución son
+# agregados de los componentes del índice; con uno solo (o, en la contribución, con uno que la aporta casi entera, la regla
+# de `FRONTERA_B`), serían su posición frente a su media y su rentabilidad (1.6). El mínimo es el de un agregado de
+# sociedades de REI-NAV-001 y REI-FFO-001 y de un sector de CHR-TOKEN-001. La concentración (peso de los n mayores, HHI,
+# N_ef) no cambia: describe los pesos del índice, que es lo que mide la ficha.
+IDX_CONC_COMPONENTES_MINIMOS = 2
+
+
 def _pesos(comp: Any, ctx: str, tol: float) -> tuple[pd.Timestamp, dict[str, float], dict[str, str]]:
     if not isinstance(comp, dict) or comp.get("fecha") is None:
         raise ErrorFicha(f"{ctx}: composición sin fecha")
@@ -1293,10 +1301,18 @@ def f_idx_conc(ent: dict, params: dict) -> tuple[dict, list[str]]:
             lim.append(f"{len(precios) - validos} componente(s) con < {n_media} sesiones: fuera de la amplitud")
         rend = pd.DataFrame({k: s.pct_change() for k, s in precios.items()}).iloc[1:]
         neto = (rend > 0).sum(axis=1) - (rend < 0).sum(axis=1)
-        amplitud = {"porcentaje_sobre_media": sobre / validos if validos else None, "n_validos": validos,
-                    "linea_avance_retroceso": float(neto.cumsum().iloc[-1]), "sesiones": len(neto)}
         if set(precios) != set(pesos):
             lim.append("los precios no cubren exactamente la composición: amplitud sobre los aportados")
+        if len(precios) < IDX_CONC_COMPONENTES_MINIMOS:   # T-128 r02 (H-02): la amplitud de un componente es la suya
+            lim.append(f"amplitud no calculada: precios de {len(precios)} componente (< {IDX_CONC_COMPONENTES_MINIMOS}); "
+                       f"sería la de ese componente (1.6)")
+        else:
+            if 0 < validos < IDX_CONC_COMPONENTES_MINIMOS:   # T-128 r02 (H-02): el porcentaje de un solo válido es el suyo
+                lim.append(f"porcentaje sobre la media no calculado: {validos} componente con {n_media} sesiones (< "
+                           f"{IDX_CONC_COMPONENTES_MINIMOS}); sería el de ese componente (1.6)")
+            amplitud = {"porcentaje_sobre_media": sobre / validos if validos >= IDX_CONC_COMPONENTES_MINIMOS else None,
+                        "n_validos": validos,
+                        "linea_avance_retroceso": float(neto.cumsum().iloc[-1]), "sesiones": len(neto)}
     else:
         lim.append("sin precios de componentes: amplitud no calculada")
 
@@ -1348,6 +1364,13 @@ def f_idx_conc(ent: dict, params: dict) -> tuple[dict, list[str]]:
                             "porcentaje_top_n": sum(contrib[k] for k in top0) / total if total != 0 else None}
             if total == 0:
                 lim.append("rentabilidad del periodo nula: porcentaje de contribución indefinido")
+            # T-128 r02 (H-02): la rentabilidad del índice que aporta casi entera un componente (o varios con su misma
+            # rentabilidad), o la de un índice de uno, es la suya: la contribución no se entrega (`frontera_b`)
+            sin_contrib = _concentradas({"la contribución a la rentabilidad del índice": (
+                np.array([contrib[k] for k in sorted(w0)]), np.array([w0[k] for k in sorted(w0)]))}, FRONTERA_B, tol)
+            if len(w0) < IDX_CONC_COMPONENTES_MINIMOS or sin_contrib:
+                _limitacion_concentradas(sin_contrib or ["la contribución a la rentabilidad del índice"], FRONTERA_B, lim)
+                contribucion = None
         else:
             lim.append("sin rentabilidades del periodo: contribución no calculada")
     else:

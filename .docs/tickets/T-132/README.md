@@ -2,7 +2,7 @@
 
 | Campo | Valor |
 | --- | --- |
-| Estado | EN QA |
+| Estado | CERRADO |
 | Pieza | bloque_a (11_Ejecutor: `sintesis.py`, `anonimizacion.py`, `herramientas/ht01_datos.py`, `ht01_boveda.py`, `ht04_graficos.py`, `ht05_planificador.py`, `ht06_indice.py`, `ht08_monitor.py`) y `tools/cuotas.txt` |
 | Planifica · implementa · QA | claude · claude · un revisor nuevo sin contexto |
 | Aprobación del operador | 2026-11-15: «me parece genial» (punto 5 de la lista de tareas de la noche) |
@@ -24,3 +24,4 @@ No se tocan las cuatro herramientas de `herramientas/referencia/` (son copias id
 
 - 2026-11-15 · ABIERTO · creado con nuevo_ticket.sh
 - 2026-11-15 · EN QA · claude · 55 correcciones; 150 pruebas vecinas en verde; mypy A 109
+- 2026-11-15 · CERRADO · QA r01 APTO (revisor nuevo sin contexto), sin hallazgos

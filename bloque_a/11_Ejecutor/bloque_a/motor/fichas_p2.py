@@ -84,6 +84,7 @@ from .frontera_b import (  # noqa: F401 — T-128: las reglas de T-127, ahora co
     ESTADISTICOS_ORDEN,
     FRONTERA_B,
     _aportacion_maxima,
+    _aviso_casi_clones,
     _concentradas,
     _distribucion,
     _etiquetas_casi_iguales,
@@ -519,6 +520,7 @@ def f_fir_cred(ent: dict[str, Any], params: dict[str, Any]) -> Resultado:
         deudas.append(corto + largo)
     _ids_unicos(ids, F)
     _sin_clones(firmas, f"{F}: componentes", u["tolerancia_clon"])   # el mínimo de 10 es de componentes distintos
+    _aviso_casi_clones(firmas, u["tolerancia_clon"], lim)   # T-127 r03 (H-04): un dato movido (σ_E·(1 ± δ)), aviso en RC
     col = {k: np.array([f[k] for f in filas]) for k in filas[0]}
     # T-127 r02 (QA r01, H-01): las cifras de cada componente no dependen de su tamaño; las copias a escala de un emisor
     # son un componente para el mínimo de 10 y para la dominancia
@@ -852,6 +854,7 @@ def f_rei_lev(ent: dict[str, Any], params: dict[str, Any]) -> Resultado:
             cov_firma.append((None, None))
     _ids_unicos(ids, F)
     _sin_clones(firmas, f"{F}: componentes", u["tolerancia_clon"])
+    _aviso_casi_clones(firmas, u["tolerancia_clon"], lim)   # T-127 r03 (H-04): un dato movido, aviso en RC
     a = {k: np.array(x) for k, x in col.items()}
     # T-127 r02 (QA r01, H-01): las cifras de cada sociedad, sin escala (LTV, ICR, deuda neta/EBITDA, vencimientos y
     # sobrecoste sobre la deuda, FFO sobre el GAV y sus covenants); las copias a escala son un componente
@@ -1073,6 +1076,7 @@ def f_chr_token(ent: dict[str, Any], params: dict[str, Any]) -> Resultado:
             conc.append((i, cm_i, _rango(tk["concentracion_10_mayores"], f"{que}.concentracion_10_mayores", 0, 1)))
     _ids_unicos(ids, F)
     _sin_clones(firmas, f"{F}: tokens", u["tolerancia_clon"])
+    _aviso_casi_clones(firmas, u["tolerancia_clon"], lim)   # T-127 r03 (H-04): un dato movido, aviso en RC
     grupos = np.arange(len(tokens))
     if not red:   # T-127 (H-10): bases de ponderación del agregado de un sector (la red es su token, sin dominancia)
         # T-127 r02 (QA r01, H-01): las cifras de cada token no dependen de su tamaño (FDV/CM, inflación neta, desbloqueos,

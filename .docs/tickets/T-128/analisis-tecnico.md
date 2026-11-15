@@ -45,7 +45,7 @@ la ficha del Catálogo.
 | FC-EVAL-001 | servicio | no: pronósticos del sistema | no cambia |
 | FC-CAL-001 | servicio | no: pronósticos del sistema | no cambia |
 | SCORE-RK-001 | servicio | no: dimensiones de una opción | no cambia (HT-03 de una opción del Buscador) |
-| IDX-CONC-001 | fichas_mon_idx | pesos de los componentes del índice | no cambia: entrega el peso y la contribución de los n mayores, HHI y amplitud, sin identificar a ninguno; es lo que su ficha mide (la concentración del índice) |
+| IDX-CONC-001 | fichas_mon_idx | pesos de los componentes del índice | no cambia: entrega el peso y la contribución de los n mayores, HHI y amplitud, sin identificar a ninguno; es lo que su ficha mide (la concentración del índice). **Cambia en la r02 (H-02, «otra igual»):** la amplitud con los precios de un solo componente y la contribución de un índice de uno (o que aporta casi entera uno, `FRONTERA_B`) eran las de ese componente: `null` con su limitación (`IDX_CONC_COMPONENTES_MINIMOS = 2`) |
 | IDX-ERP-001 | fichas_mon_idx | no: un índice | no cambia |
 | IDX-REL-001 | fichas_mon_idx | no: dos índices | no cambia |
 | IDX-REB-001 | fichas_mon_idx | cambios de peso por valor (`id`) | **cambia**: sin `por_componente`; la demanda de una cesta que aporta casi entera un valor (o la de un solo valor) va a `null` («la salida describe la cesta del evento, nunca selecciona valores afectados») |
@@ -94,7 +94,7 @@ la ficha del Catálogo.
 | FX-MOM-001 | fichas_valoracion | pares | no cambia: filas por par (ámbitos) |
 | FX-PPA-001 | fichas_valoracion | no: un par | no cambia |
 | ALT-DESMOOTH-001 | fichas_reales | no: una serie suavizada | no cambia |
-| CHR-FLOW-001 | fichas_reales | ofertas de *stablecoins* | no cambia: entrega la oferta agregada, sin cifra por moneda |
+| CHR-FLOW-001 | fichas_reales | ofertas de *stablecoins*; flujos del agregado de ETF | no cambia: entrega la oferta agregada, sin cifra por moneda. **Cambia en la r02 (H-02):** con una moneda era la suya; ahora 2 monedas distintas por su crecimiento y ninguna de más del 95 % de la oferta (rechazo), y el crecimiento que aporta casi entero una, `null`. Los flujos de ETF llegan ya agregados (H-03, declarado) |
 | CHR-FUND-001 | fichas_reales | plataformas (por nombre) | **cambia**: sin la financiación ni el peso de cada plataforma (1.6 prohíbe comparar plataformas); los nombres quedan como fuentes |
 | CMD-INV-001 | fichas_reales | no: inventarios | no cambia |
 | CMD-RETDEC-001 | fichas_reales | calendario de contratos | no cambia: contratos genéricos del roll (tramo) |
@@ -108,12 +108,12 @@ la ficha del Catálogo.
 | CMD-REAL-001 | fichas_p2 | no: un precio y su curva de costes | no cambia |
 | FIR-CRED-001 | fichas_p2 | emisores | ya en T-127 (y ronda r02) |
 | FX-BEER-001 | fichas_p2 | no: fundamentales | no cambia |
-| PRV-CF-001 | fichas_p2 | no: flujos agregados | no cambia («flujos agregados; los fondos individuales solo como componentes») |
-| PRV-PME-001 | fichas_p2 | no: flujos agregados | no cambia |
+| PRV-CF-001 | fichas_p2 | no: flujos agregados | no cambia («flujos agregados; los fondos individuales solo como componentes»); podrían ser de un solo fondo (H-03 de la r02, declarado) |
+| PRV-PME-001 | fichas_p2 | no: flujos agregados | no cambia; podrían ser de un solo fondo (H-03 de la r02, declarado) |
 | REI-LEV-001 | fichas_p2 | sociedades | ya en T-127 (y ronda r02) |
 
-Cuentas: **6 fichas cambian** (REI-NAV-001, REI-FFO-001, IDX-REB-001, CHR-FUND-001, FON-DISC-001 y FON-TD-001), 3 ya
-seguían la regla desde T-127 y 71 no cambian. AUD-REX-001 (la 81 del Catálogo) no es un manejador del CT-09.
+Cuentas (r01): **6 fichas cambian** (REI-NAV-001, REI-FFO-001, IDX-REB-001, CHR-FUND-001, FON-DISC-001 y FON-TD-001), 3 ya
+seguían la regla desde T-127 y 71 no cambian. AUD-REX-001 (la 81 del Catálogo) no es un manejador del CT-09. En la r02 cambian además CHR-FLOW-001 e IDX-CONC-001 (8 en total, 69 sin cambios).
 
 ## Implementación
 
@@ -155,3 +155,36 @@ seguían la regla desde T-127 y 71 no cambian. AUD-REX-001 (la 81 del Catálogo)
   - `cd bloque_a/11_Ejecutor && ../../.venv/bin/python -m pytest -q tests/test_t128_frontera.py tests/test_fase2_reales.py tests/test_fase1_fon_der.py tests/test_fase1_mon_idx.py`
   - `.venv/bin/python -I .docs/tickets/T-128/revisores/impl_barrido_identificadores.py bloque_a/11_Ejecutor`
   - `.venv/bin/python .docs/tickets/T-128/revisores/impl_mutantes.py bloque_a/11_Ejecutor <scratchpad>/t127r02_mut_t128`
+
+## Ronda r02 (QA r01: H-01 alta, H-02 media, H-03 y H-04 bajas)
+
+Hecha junto con la ronda r03 de T-127 (detalle de lo común en `.docs/tickets/T-127/analisis-tecnico.md`, «Ronda r03»).
+
+- **H-01 (alta), límite declarado.** De dónde salen los componentes: los aporta quien pide (datos en línea de CT-09); en el
+  ciclo, ninguna de estas fichas se pide desde el código, y HT-01 solo da cierres por símbolo, así que no hay fuente contra
+  la que verificar una sociedad o un valor. Una sociedad o un valor troceados (o con su NAV por acción perturbado de forma
+  simétrica) dan su cifra; CA-2 se matiza («sin construir los componentes a propósito»). Mitigación: el aviso de
+  `frontera_b._aviso_casi_clones` en REI-NAV-001 (firma: precio, acciones, NAV por acción, deuda neta, otros pasivos, cap
+  rate; el GAV no, lo fija la identidad del balance), que da la vía «S» del revisor. En REI-FFO-001 e IDX-REB-001 no hay
+  aviso (datos que derivan unos de otros; dos datos por valor): declarado.
+- **H-02 (media), CHR-FLOW-001** (`motor/fichas_reales.py`): las ofertas de cada moneda se guardan (`por_moneda`); con
+  la oferta en la última fecha (o_T) y en la base del crecimiento (o_b): grupos por crecimiento a 30 días con la tolerancia
+  de clon (`_etiquetas_casi_iguales`), rechazo con menos de `monedas_estables_minimas` (2, nuevo en `UMBRALES`), rechazo
+  por dominancia de o_T y de o_b por grupos (`_sin_dominio`), y el crecimiento a `null` si su aportación (Σ(o_T − o_b) /
+  Σo_b, en valor absoluto y con signo) pasa del 95 % (`_concentradas`). `FRONTERA_B` entra en sus `UMBRALES` (la petición
+  no lo cambia). La capitalización total se valida igual. Rechazo y no `null` porque la oferta es una entrada obligatoria
+  de la ficha, como un sector de un token en CHR-TOKEN-001; `null` para el crecimiento, como las cifras de CHR-TOKEN-001.
+- **H-02, la «otra igual» de la tabla: IDX-CONC-001** (`motor/fichas_mon_idx.py`): con los precios de un solo componente
+  la amplitud va a `null`; con un solo componente con sesiones suficientes, el porcentaje sobre la media; la contribución,
+  con un índice de un componente o si la aporta casi entera uno (`_concentradas` con `FRONTERA_B`). Número nuevo
+  `IDX_CONC_COMPONENTES_MINIMOS = 2` (el de REI-NAV, REI-FFO y un sector de CHR-TOKEN), `[PROPUESTO]`. Las demás filas: las
+  que suman instrumentos tienen su mínimo (FON-DISC, FON-TD, ALT-AUC, IDX-REB, REI-*, CHR-TOKEN, FIR-CRED) o reciben
+  ámbitos, tramos genéricos o el agregado ya hecho.
+- **H-03 (baja):** declarado en INC-T128-01 («Límites declarados»), con la regla general (las que reciben el agregado o
+  una serie hechos por quien pide no pueden saber si es de un instrumento).
+- **H-04 (baja):** la fila de T-128 en `sistema_global/seguimiento/Deuda_tecnica_y_pendientes_del_operador.md` ya está
+  en el árbol principal; no se toca.
+- Pruebas: `tests/test_t128_r02.py` (nueva); ninguna existente cambia. Casos de control sin cambios (67/67).
+- Comandos: los de `.docs/tickets/T-127/analisis-tecnico.md` («Ronda r03») y
+  `/home/user/robotinvestor/.venv/bin/python -I .docs/tickets/T-128/revisores/r01_02_troceo_y_una_moneda.py bloque_a/11_Ejecutor`,
+  `…/r01_01_barrido_un_componente.py bloque_a/11_Ejecutor`.

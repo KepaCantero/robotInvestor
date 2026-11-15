@@ -43,3 +43,33 @@ devuelven las filas por componente o el identificador en una limitación (el có
 ## Gate
 
 No ejecutado (instrucción): `./tools/check_all.sh` en el commit.
+
+## Ronda r02 (QA r01: H-01, H-02, H-03, H-04)
+
+Copia `t127r03` (base `f7faa1b`), hecha junto con la ronda r03 de T-127: suites, mutantes, casos de control y cuotas en
+`.docs/tickets/T-127/pruebas.md` («Ronda r03»; los mutantes de esta ronda son los F y C, y V09 y V10, de
+`T-127/revisores/impl_r03_mutantes.py`).
+
+### Criterio → prueba (`tests/test_t128_r02.py`, 17)
+
+| Criterio | Pruebas |
+| --- | --- |
+| CA-4 (H-01, límite declarado) | `test_h01_rei_nav_simetrica_se_sirve_con_aviso_y_es_el_limite_declarado` (la vía «S» del revisor: la prima de A, con el aviso y sin identificadores; con dos datos movidos, sin aviso), `test_h01_rei_nav_los_casos_de_control_no_dan_aviso`, `test_h01_limite_declarado_rei_ffo_e_idx_reb_troceados_se_sirven` |
+| CA-5 (H-02, CHR-FLOW-001) | `test_h02_una_sola_moneda_estable_se_rechaza` (la vía «U», también por el Motor, sin citar la moneda), `test_h02_dos_monedas_con_el_mismo_crecimiento_son_una`, `test_h02_dominancia_de_la_oferta` (0,01 % y 5,1 %: rechazo; 6 %: se sirve), `test_h02_un_crecimiento_que_aporta_casi_entero_una_moneda_no_se_entrega`, `test_h02_el_crecimiento_se_mide_desde_su_base`, `test_h02_el_caso_de_control_no_cambia`, `test_h02_la_capitalizacion_se_valida_aunque_el_crecimiento_no_se_entregue`, `test_h02_las_reglas_de_chr_flow_son_umbrales_fijos` |
+| CA-5 (H-02, IDX-CONC-001) | `test_h02_idx_conc_amplitud_y_contribucion_de_un_componente_no_se_entregan` (también con rentabilidad nula), `test_h02_idx_conc_contribucion_dominada_no_se_entrega`, `test_h02_idx_conc_porcentaje_sobre_la_media_de_un_solo_valido` |
+| CA-6 (H-03) | Declarado en INC-T128-01 («Límites declarados») |
+| CA-7 | `test_casos_de_control_de_las_fichas_de_la_r02`; los scripts, abajo |
+
+Ninguna prueba existente cambia. `test_fase2_reales.py` gana 4 pruebas parametrizadas (las claves nuevas de los
+`UMBRALES` de CHR-FLOW-001: las tres de `FRONTERA_B` y `monedas_estables_minimas`).
+
+### Scripts del revisor, uno a uno
+
+| Script y vía | Antes | Después | Lectura |
+| --- | --- | --- | --- |
+| `r01_01_barrido_un_componente.py` | 235 casos; «UNO»: CHR-FLOW-001 con una moneda entre las que se sirven | código 0; **CHR-FLOW-001 ya no está** en «UNO»; las demás de la lista son ámbitos (categorías, pares, escenarios, variables, eventos comparables, contrastes, referencias), como aceptó la QA; «ID» sin cambios | — |
+| `r01_02_troceo_y_una_moneda.py` (total) | **1/3** | **2/3** | — |
+| · IDX-REB-001, la cesta de un valor (control) | ok | ok | — |
+| · IDX-REB-001 T (IN en IN-a e IN-b) | FALLA | FALLA: **límite declarado** | Los dos trozos tienen otro volumen y otro peso: ni copias ni dominancia; un valor troceado por quien pide da su demanda (INC-T128-01 «Ronda r02», H-01). Fijado en `test_h01_limite_declarado_rei_ffo_e_idx_reb_troceados_se_sirven` |
+| · CHR-FLOW-001 U (solo EURX) | FALLA | **ok** (rechazo: «1 moneda(s) estable(s) distinta(s) por su crecimiento (< 2)») | H-02 corregido |
+| T-127 `r02_01_troceo_y_simetria.py`, vías de REI-NAV-001 y REI-FFO-001 | FALLA y FALLA | FALLA (con aviso) y FALLA: **límite declarado** | Ver `pruebas.md` de T-127, «Ronda r03» |

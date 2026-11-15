@@ -232,13 +232,23 @@ RE_SEPARADOR = re.compile(r"[\s.\-]+")
 # H-05), y entre grupos va un solo espacio, espacio duro o guion: con dos espacios o un salto de línea son las columnas
 # de una tabla, no una tarjeta (H-07, regresión de la r02).
 RE_GRUPOS_TARJETA = re.compile(r"(?<![0-9A-Za-z_])(?<![0-9][.,])([0-9]+(?:[ \u00a0\u202f\-][0-9]+)*)(?![0-9A-Za-z_])")
-# T-130 (H-06): países cuyo BBAN es solo de cifras en el registro ISO 13616 de SWIFT; en el resto, como mucho cuatro letras
-# (código de banco), salvo Malta, y ningún grupo de solo letras de más de cuatro. Así una mención de un ISIN o de un índice
-# seguida de palabras, o una huella truncada, no encadena hasta la longitud de un país y pasa el módulo 97 (1 de cada 97).
-BBAN_NUMERICO = frozenset({"AT", "BE", "CZ", "DE", "DK", "EE", "ES", "FI", "HR", "HU", "IL", "IS", "LT", "NO", "PL", "PT",
-                           "SE", "SI", "SK", "AE"})
-LETRAS_BBAN_MAX = 4
-SIN_LIMITE_DE_LETRAS = frozenset({"MT"})
+# T-133 (QA r01 de T-130, H-01 y H-03): estructura del BBAN de cada país en el registro ISO 13616 de SWIFT, tramo a tramo:
+# «n» cifras, «a» letras, «c» letras o cifras. Sustituye al tope común de cuatro letras de T-130, que dejaba fuera IBAN reales
+# de Rumanía o Letonia. Así una mención de un ISIN o de un índice seguida de palabras, o una huella truncada, no encaja por
+# casualidad: además de la longitud y el módulo 97 (1 de cada 97), tiene que cumplir la forma de su país.
+ESTRUCTURA_BBAN = {
+    "AD": "4n4n12c", "AE": "3n16n", "AT": "5n11n", "BE": "3n7n2n", "BG": "4a4n2n8c", "BR": "8n5n10n1a1c", "CH": "5n12c",
+    "CY": "3n5n16c", "CZ": "4n6n10n", "DE": "8n10n", "DK": "4n9n1n", "EE": "2n2n11n1n", "ES": "4n4n1n1n10n", "FI": "3n11n",
+    "FR": "5n5n11c2n", "GB": "4a6n8n", "GI": "4a15c", "GR": "3n4n16c", "HR": "7n10n", "HU": "3n4n1n15n1n", "IE": "4a6n8n",
+    "IL": "3n3n13n", "IS": "4n2n6n10n", "IT": "1a5n5n12c", "LI": "5n12c", "LT": "5n11n", "LU": "3n13c", "LV": "4a13c",
+    "MC": "5n5n11c2n", "MT": "4a5n18c", "NL": "4a10n", "NO": "4n6n1n", "PL": "8n16n", "PT": "4n4n11n2n", "RO": "4a16c",
+    "SA": "2n18c", "SE": "3n16n1n", "SI": "5n8n2n", "SK": "4n6n10n", "SM": "1a5n5n12c", "TR": "5n1n16c", "VA": "3n15n"}
+_CLASE_BBAN = {"n": "[0-9]", "a": "[A-Z]", "c": "[A-Z0-9]"}
+RE_BBAN = {pais: re.compile("".join(f"{_CLASE_BBAN[k]}{{{n}}}" for n, k in re.findall(r"(\d+)([nac])", e)))
+           for pais, e in ESTRUCTURA_BBAN.items()}
+# países cuyo BBAN es solo de cifras (los 21 de la tabla; T-130 los listaba a mano y le faltaba VA, H-03)
+BBAN_NUMERICO = frozenset(p for p, e in ESTRUCTURA_BBAN.items() if set(re.findall(r"[nac]", e)) == {"n"})
+LETRAS_GRUPO_MAX = 4      # un grupo de solo letras más largo es una palabra, no un tramo de un IBAN impreso
 
 
 def _iban_valido(compacto: str) -> bool:
@@ -250,12 +260,28 @@ def _iban_valido(compacto: str) -> bool:
 
 
 def _bban_plausible(compacto: str, grupos: list[str]) -> bool:
-    pais, bban = compacto[:2], compacto[4:]
-    if pais in BBAN_NUMERICO:
-        return bban.isdigit()
-    if pais in SIN_LIMITE_DE_LETRAS:
+    """El BBAN cumple la estructura de su país (ISO 13616) y, si el IBAN venía en grupos, ninguno es una palabra de más de
+    cuatro letras ni, salvo el último, una sola cifra suelta (T-133, H-05: lo que dejan los decimales de una
+    cifra con punto tras un ISIN)."""
+    patron = RE_BBAN.get(compacto[:2])
+    if patron is None or not patron.fullmatch(compacto[4:]):
+        return False
+    if any(g.isalpha() and len(g) > LETRAS_GRUPO_MAX for g in grupos):
+        return False
+    return not any(len(g) == 1 and g.isdigit() for g in grupos[:-1])   # una letra suelta sí: el CIN italiano («IT60 X 05428…»)
+
+
+def _misma_caja(iban: str) -> bool:
+    """T-133: las letras de un IBAN van todas en la misma caja que su código de país (o todo en mayúsculas o todo en
+    minúsculas): las palabras de una frase en minúsculas tras un ISIN o un índice en mayúsculas no forman un IBAN."""
+    pais, letras = iban[:2], [c for c in iban[4:] if c.isalpha()]
+    if not letras:
         return True
-    return sum(c.isalpha() for c in bban) <= LETRAS_BBAN_MAX and not any(g.isalpha() and len(g) > LETRAS_BBAN_MAX for g in grupos)
+    if pais.isupper():
+        return all(c.isupper() for c in letras)
+    if pais.islower():
+        return all(c.islower() for c in letras)
+    return all(c.isupper() for c in letras) or all(c.islower() for c in letras)
 
 
 def ibanes_en_texto(texto: str) -> list[str]:
@@ -265,14 +291,16 @@ def ibanes_en_texto(texto: str) -> list[str]:
     país (T-130, H-08: la r02 copiaba la lista en cada vuelta)."""
     hallados = []
     for m in RE_GRUPOS_IBAN.finditer(texto):
-        grupos = [g.upper() for g in RE_SEPARADOR.split(m.group(0)) if g]
+        originales = [g for g in RE_SEPARADOR.split(m.group(0)) if g]
+        grupos = [g.upper() for g in originales]
         for i, inicio in enumerate(grupos):
             largo = LONGITUD_IBAN.get(inicio[:2])
             if not largo or not inicio[2:4].isdigit() or not inicio[:2].isalpha():
                 continue
-            compacto, usados = "", []
+            compacto, usados, tal_cual = "", [], ""
             for j in range(i, len(grupos)):
                 compacto += grupos[j]
+                tal_cual += originales[j]
                 usados.append(grupos[j])
                 if len(compacto) >= largo:
                     break
@@ -280,6 +308,8 @@ def ibanes_en_texto(texto: str) -> list[str]:
             if len(compacto) < largo or (sobra and not sobra.isalpha()):   # H-09: «…3000EUR» sí; una cifra pegada, no
                 continue
             compacto = compacto[:largo]
+            if not _misma_caja(tal_cual[:largo]):
+                continue
             if _bban_plausible(compacto, usados[1:] if not sobra else usados[1:-1]) and _iban_valido(compacto):
                 hallados.append(compacto)
     return hallados
@@ -307,6 +337,9 @@ def _red_de_tarjeta(cifras: str) -> bool:
     return False
 
 
+GRUPOS_FILA_DE_TABLA = 5   # una tarjeta impresa en grupos de cuatro tiene cuatro (16 cifras); con cinco o más es una tabla
+
+
 def tarjetas_en_texto(texto: str) -> list[str]:
     """Números de tarjeta: 13 a 19 cifras seguidas o en grupos de al menos cuatro (el último puede ser más corto), de una red
     conocida y con el dígito de control de Luhn. Se prueban las ventanas de grupos consecutivos de cada serie. Se devuelven
@@ -315,6 +348,8 @@ def tarjetas_en_texto(texto: str) -> list[str]:
     hallados = []
     for m in RE_GRUPOS_TARJETA.finditer(texto):
         grupos = [g for g in re.split(r"[ \u00a0\u202f\-]", m.group(1)) if g]
+        if len(grupos) >= GRUPOS_FILA_DE_TABLA and all(len(g) == 4 for g in grupos):
+            continue   # T-133 (QA r01 de T-130, H-02): cinco o más números de cuatro cifras seguidos son una fila de tabla
         for i in range(len(grupos)):
             cifras = ""
             for j in range(i, len(grupos)):

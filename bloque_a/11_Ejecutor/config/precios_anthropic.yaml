@@ -14,3 +14,7 @@ precios_por_millon:
 # Búsqueda web: 10 USD por 1 000 búsquedas, más los tokens de lo leído (página de la herramienta de
 # búsqueda web, consultada el 15-11-2026). Una búsqueda que falla no se cobra.
 precio_busqueda_web_por_mil: 10.0
+# T-133 (QA r01 de T-129, H-01): margen de la cota superior sobre los tokens que mide el simulador, que los aproxima con 3,6
+# caracteres por token. La documentación de Anthropic dice que el tokenizador de los modelos actuales usa entre 1 y 1,35 veces
+# los tokens de los anteriores; se toma el extremo alto.
+factor_tokens_cota: 1.35

@@ -25,3 +25,5 @@ Dejar listo lo que se pueda de dos decisiones del operador, sin tomarlas:
 
 - 2026-11-15 · ABIERTO · creado con nuevo_ticket.sh
 - 2026-11-15 · EN QA · claude · implementado y probado
+- 2026-11-15 · NO APTO · QA r01 (revisor nuevo sin contexto): H-01 alta (la comprobación no validaba las filas como el ciclo), H-02 media (borrador incompleto), H-03 y H-04 bajas
+- 2026-11-15 · EN QA · claude · ronda r02: valida con `cierres()` como el ciclo; en H1 cuenta sesiones con los festivos de la configuración; carpeta inexistente con mensaje y código 2; el borrador recoge los campos de primer nivel que no se envían, los de cada elemento de los lotes con el motivo del rechazo, el tipo de `escalado`, `fecha_corte` de CT-09, lo que el Anexo B deja abierto y, en los retornos CT-06 a CT-14, que se describan los campos de `ESQUEMAS`
