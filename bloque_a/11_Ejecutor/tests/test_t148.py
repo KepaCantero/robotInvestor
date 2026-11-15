@@ -18,6 +18,7 @@ from bloque_a.configuracion import RUTA_UNIVERSO_EJEMPLO, cargar_config, modelo_
 from bloque_a.consumo import Contabilidad, Presupuesto, ReservaLlamada
 from bloque_a.contratos import AGENTE_CLASE
 from bloque_a.herramientas.ht01_datos import ProveedorCSV, cargar_universo
+from bloque_a.llm import Uso
 from bloque_a.orquestacion import Bloque
 from conftest import DATOS
 
@@ -250,6 +251,11 @@ def _usd_por_uc_bolsa(est, cfg, tarifa, agentes):
     return max(est._usd_por_uc(tarifa["precios_por_millon"][modelo_de(cfg, a)], est._uc(cfg)) for a in agentes)
 
 
+# T-148 r02 (QA r01 de T-148, H-03): con T-146, AG-18, AG-19 y AG-20 pagan de la COMÚN, como AG-02 y AG-17 (antes de la r02 el
+# estimador los dejaba fuera del presupuesto y esta prueba ponía en la COMÚN solo AG-02 y AG-17)
+COMUNES = ["AG-02", "AG-17", "AG-18", "AG-19", "AG-20"]
+
+
 def test_h04_r04_r05_los_limites_del_presupuesto_a_mano(est, tarifa, medida):
     """Los límites, a mano, en dos casos (los modelos salen de la tarifa): tipos baratos y bolsa común cara con el tope de
     siempre (el máximo es con todos los tipos en N1: no basta el reparto todo N2, R05) y tipos caros con un tope pequeño
@@ -259,11 +265,11 @@ def test_h04_r04_r05_los_limites_del_presupuesto_a_mano(est, tarifa, medida):
     de_tipo = {AGENTE_CLASE[t] for t in DOCE} | {"AG-10", "AG-11", "AG-12", "AG-14", "AG-16"}
     for tope, m_tipo, m_comun in ((240, barato, caro), (100, caro, barato)):
         cfg = cargar_config(extra={"perfiles": {"activos": DOCE}, "presupuesto_uc": {"ciclo_semanal_max": tope},
-                                   "modelos": {**{a: m_tipo for a in de_tipo}, "AG-02": m_comun, "AG-17": m_comun}})
+                                   "modelos": {**{a: m_tipo for a in de_tipo}, **{a: m_comun for a in COMUNES}}})
         c = _cota(est, medida, tarifa, cfg)
         p = cfg["presupuesto_uc"]
         pt = _usd_por_uc_bolsa(est, cfg, tarifa, de_tipo)
-        pc = _usd_por_uc_bolsa(est, cfg, tarifa, ["AG-02", "AG-17"])
+        pc = _usd_por_uc_bolsa(est, cfg, tarifa, COMUNES)
         amp = max(p["ampliacion_sin_autorizacion"], p["ampliacion_max_autorizable"])
         bases = [k * p["N2"] + (12 - k) * p["N1"] for k in range(13)]
         esperado = max((1 + amp) * (pt * b + pc * max(tope - b, p["fraccion_minima_comun"] * tope)) for b in bases)
@@ -352,3 +358,75 @@ def test_h07_inc_t129_01_limites_del_estimador_al_dia():
     assert "Cuenta las reparaciones de JSON" in limites and "S4b" in limites
     assert "no cuenta lo que lee cada búsqueda web, reintentos ni reparaciones" not in inc
     assert "Ronda T-148" in inc and "Con T-146 integrado" in inc
+
+
+# ================================================================ r02 · hallazgos de la QA r01 de T-148
+def test_r02_h01_con_busquedas_la_salida_no_dice_que_el_presupuesto_acote_lo_leido(est, tarifa, medida, tmp_path, capsys):
+    """H-01 (media): con los 12 tipos manda la cota por presupuesto y la salida decía «con T-146, el presupuesto acota
+    también lo que lee cada búsqueda». No es así: la reserva de T-146 no aparta lo que leen las búsquedas
+    (`presupuesto_uc.reserva.tokens_lectura_por_busqueda` = 0) y una petición que lee deja su bolsa por encima del límite.
+    Ahora la cota es «salvo lo que lee cada búsqueda» también con T-146, y el peso por cada 1 000 tokens leídos es el de la
+    cota que manda: en la cota por presupuesto, la lectura de una petición por bolsa con búsqueda (la que cruza el límite;
+    `max_usos` búsquedas en cada vuelta de `pause_turn`)."""
+    doce = cargar_config(extra={"perfiles": {"activos": DOCE}})
+    assert doce["presupuesto_uc"]["reserva"]["tokens_lectura_por_busqueda"] == 0
+    c = _cota(est, medida, tarifa, doce)
+    assert c["manda"] == "presupuesto" and c["cota"] == c["cota_presupuesto"] < c["cota_llamadas"]
+    pc = [x for x in c["papeles"] if x["busquedas"]]
+    assert pc and {x["bolsa"] for x in pc} == set(DOCE)            # la petición de conocimiento, una por tipo
+    vueltas = 1 + doce["llm"]["max_continuaciones_pause_turn"]
+    usos = doce["busqueda_web"]["max_usos_por_llamada"]
+    por_tipo = {t: max(usos * vueltas * tarifa["precios_por_millon"][modelo_de(doce, x["agente"])]["escritura_cache"] * 1000 / 1e6
+                       for x in pc if x["bolsa"] == t) for t in DOCE}
+    assert c["usd_por_mil_leidos_cota_presupuesto"] == pytest.approx(sum(por_tipo.values()))
+    assert c["usd_por_mil_tokens_leidos_por_busqueda"] == pytest.approx(c["usd_por_mil_leidos_cota_presupuesto"])
+    assert 0 < c["usd_por_mil_leidos_cota_presupuesto"] < c["usd_por_mil_leidos_cota_llamadas"]
+    # la salida, con los 12 tipos (manda el presupuesto) y con divisas (mandan las llamadas)
+    (tmp_path / "m").mkdir()
+    (tmp_path / "m" / "llamadas.json").write_text(json.dumps(medida), encoding="utf-8")
+    (tmp_path / "doce.yaml").write_text(yaml.safe_dump({"perfiles": {"activos": DOCE}}), encoding="utf-8")
+    for extra, manda in ((["--config", str(tmp_path / "doce.yaml")], "presupuesto"), ([], "llamadas")):
+        assert est.main([str(tmp_path / "m"), *extra]) == 0
+        salida = capsys.readouterr().out
+        cota = next(x for x in salida.splitlines() if x.startswith("Cota superior del ciclo"))
+        assert "acota también" not in salida and "salvo lo que lee cada búsqueda" in cota
+        assert f"la cota que manda (por {manda})" in salida and "no lo cubre" in salida
+
+
+def test_r02_h01_el_peso_cubre_la_lectura_que_la_reserva_deja_pasar(est, tarifa, medida):
+    """El caso C del revisor: con la bolsa llena hasta el peor caso reservado, una petición con cinco búsquedas que leen
+    8 000 tokens cada una deja la bolsa por encima del límite. Lo que pasa, en USD, no llega a lo que suma el peso de la
+    cota por presupuesto en esa bolsa por 8 000 tokens leídos por búsqueda."""
+    cfg = cargar_config(extra={"perfiles": {"activos": DOCE}})
+    pres, cont = Presupuesto({"DIV": 18.0}, cfg), Contabilidad(cfg)
+    limite = pres.limite("DIV")
+    web = [{"type": "web_search_20260318", "name": "web_search", "max_uses": 5}]
+    mensaje = [{"role": "user", "content": "a" * int(8000 * 3.6)}]
+    peor = ReservaLlamada(Presupuesto({"DIV": 18.0}, cfg), "DIV", cont, "AG-14")
+    peor.reservar([], mensaje, web, 4000)
+    pres.consumido["DIV"] = limite - peor.peor_total - 0.01
+    g = ReservaLlamada(pres, "DIV", cont, "AG-14")
+    mt = g.reservar([], mensaje, web, 4000)
+    real = Uso(entrada=8000 + 5 * 8000, salida=mt or 0, busquedas_web=5)
+    g.pagar(real)
+    g.cerrar()
+    pres.consumido["DIV"] += cont.uc_de(real)
+    pasa_uc = pres.consumido["DIV"] - limite
+    assert mt is not None and pasa_uc > 0                       # la reserva no lo cubre (T-146, `tokens_lectura_por_busqueda` = 0)
+    c = _cota(est, medida, tarifa, cfg)
+    peso_bolsa = c["usd_por_mil_leidos_cota_presupuesto"] / len(DOCE)   # una bolsa (las doce, iguales)
+    p = tarifa["precios_por_millon"][modelo_de(cfg, "AG-14")]
+    assert pasa_uc * est._usd_por_uc(p, est._uc(cfg)) <= peso_bolsa * 8
+
+
+def test_r02_h03_opciones_excluyentes_y_ag18_19_20_en_la_comun(est, tarifa, medida, tmp_path):
+    """H-03 (baja): `--sin-t146` y `--con-t146` no van juntas; con T-146, AG-18, AG-19 y AG-20 pagan de la COMÚN (como en el
+    código), y sin T-146 siguen fuera del presupuesto."""
+    (tmp_path / "m").mkdir()
+    (tmp_path / "m" / "llamadas.json").write_text(json.dumps(medida), encoding="utf-8")
+    with pytest.raises(SystemExit) as e:
+        est.main([str(tmp_path / "m"), "--sin-t146", "--con-t146"])
+    assert e.value.code == 2
+    for con, bolsa in ((True, "COMUN"), (False, None)):
+        c = _cota(est, medida, tarifa, con_t146=con)
+        assert {x["bolsa"] for x in c["papeles"] if x["agente"] in ("AG-18", "AG-19", "AG-20")} == {bolsa}

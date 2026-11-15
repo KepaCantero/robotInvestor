@@ -216,13 +216,21 @@ presupuesto_uc:
   # como escritura de caché, `max_tokens` de salida y las búsquedas al máximo; lo real se carga después.
   # - factor_tokens_entrada: el mismo margen que `factor_tokens_cota` de config/precios_anthropic.yaml (T-136): el tokenizador
   #   de los modelos actuales usa entre 1 y 1,35 veces los tokens de los anteriores; se toma el extremo alto. Si una petición
-  #   mide más, la bolsa usa desde entonces el factor observado.
+  #   mide más, la bolsa usa desde entonces el factor observado. El margen es sobre una aproximación (3,6 caracteres por
+  #   token), no una cota del tokenizador: un texto con muchas cifras puede medir más, y esa petición ya está pagada cuando
+  #   se ve (queda en `excesos_reserva` de F5). El factor solo se observa en las peticiones sin búsquedas (T-146 r02, QA r01,
+  #   H-01: lo que leen las búsquedas no es error del tokenizador).
   # - salida_minima_tokens: si el peor caso no cabe y la ampliación se deniega, la petición sale con la salida que cabe, pero
   #   no con menos que esto (si no, no sale y la fase se cierra declarada). Es la salida que el ejecutor suponía para cada
   #   llamada en su estimación previa desde la entrega (`_estimar_uc`, 2 500 tokens).
+  # - tokens_lectura_por_busqueda (T-146 r02, QA r01, H-04): tokens de entrada que se reservan por cada búsqueda posible de la
+  #   petición (`max_uses`), por lo que trae la búsqueda y la API cobra como entrada de la misma petición. Sin dato medido: 0
+  #   (no se reserva nada, como en la r01). Cada petición que lea más de lo reservado queda en `excesos_reserva` con sus
+  #   búsquedas, que es la medida para fijarlo en el modo sombra. Decisión del operador.
   reserva:
     factor_tokens_entrada: 1.35
     salida_minima_tokens: 2500
+    tokens_lectura_por_busqueda: 0
 
 uc:
   # 1 UC ≈ 8 000 tokens de entrada y 1 500 de salida (Anexo A). Decisión del ejecutor:
@@ -234,7 +242,8 @@ uc:
   # T-146 · [PROPUESTO] técnico (INC-T146-01). UC de una búsqueda web (antes no contaba). Una búsqueda cuesta 0,01 USD
   # (10 USD por 1 000, config/precios_anthropic.yaml, 15-11-2026) y 1 UC (8 000 tokens de entrada y 1 500 de salida) con la
   # tarifa del modelo por defecto (`modelos.por_defecto`: 2 y 10 USD por millón) cuesta 0,031 USD: 0,01 / 0,031 = 0,32 UC.
-  # Lo que lee cada búsqueda llega como tokens de entrada y se cobra con ellos (después de la petición: no se reserva).
+  # Lo que lee cada búsqueda llega como tokens de entrada y se cobra con ellos (se reserva con
+  # `presupuesto_uc.reserva.tokens_lectura_por_busqueda`, hoy 0: sin dato medido).
   uc_por_busqueda_web: 0.32
   # Cálculos deterministas del Motor (sin modelo de lenguaje)
   motor_por_plan: {PLAN_MIN: 0.02, PLAN_STD: 0.1, PLAN_EXT: 0.5}

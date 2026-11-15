@@ -65,6 +65,21 @@ Al llevar T-148 al árbol principal, que ya tiene T-146, falló `test_h01_el_top
 | Orden | Resultado |
 | --- | --- |
 | `pytest -q tests/test_t148.py tests/test_t145.py tests/test_t136_coste.py tests/test_t129_modo_sombra.py` | 74 passed |
-| `medir_consumo_a.py` + `estimar_coste_ciclo_a.py` (solo divisas; los 12 tipos con `--config` de `perfiles.activos`) | 28,04 USD (presupuesto 46,08) · 46,08 USD (llamadas 267,71); `--sin-t146`: 28,04 (69,62) · 250,11 |
+| `medir_consumo_a.py` + `estimar_coste_ciclo_a.py` (solo divisas; los 12 tipos con `--config` de `perfiles.activos`) | 28,04 USD (presupuesto 46,08) · 46,08 USD (llamadas 267,71); `--sin-t146`: 28,04 (69,62) · 250,11 (r01; las de los 12 tipos se midieron con un ciclo de solo divisas: QA r01, H-02. Corregidas en la r02, abajo) |
 
 Las cifras de las tablas de arriba son las de antes de la integración.
+
+## Ronda r02 (QA r01 de T-148 NO APTO; copia `t146r02`, con la r02 de T-146)
+
+Desde `bloque_a/11_Ejecutor`, con `PYTHONPATH=$PWD` (sin él, `medir_consumo_a.py` importa el `bloque_a` instalado en el `.venv`, que es el de otra copia):
+
+| Orden | Resultado |
+| --- | --- |
+| `pytest -q -p no:cacheprovider tests/test_t148.py tests/test_t145.py` | 62 passed (23 + 39; tres pruebas nuevas en `test_t148.py`, `test_r02_*`) |
+| `../../.venv/bin/python ../../.docs/scripts/medir_consumo_a.py <m_div> 2024-03-29` y `… <m_12> 2024-03-29 --config doce.yaml` (`perfiles: {activos: [los doce]}`) | 8 y 77 llamadas medidas |
+| `../../.venv/bin/python ../../.docs/scripts/estimar_coste_ciclo_a.py <m_div>` · `--sin-t146` | **28,04** (llamadas; presupuesto 46,08) · 28,04 (presupuesto 69,62); peso por 1 000 tokens leídos 0,40 (llamadas, manda) y 0,08 (presupuesto) |
+| `… <m_12> --config doce.yaml` · `--sin-t146` | **46,08** (presupuesto; llamadas **268,48**) · **248,02**; peso 0,96 (presupuesto, manda) y 4,80 (llamadas); con `--sin-t146`, 4,80 en las dos |
+| `… <m_div> --sin-t146 --con-t146` | error de uso (código 2) |
+| `.venv/bin/python -I .docs/tickets/T-148/revisores/r01_01_tope_y_cota_con_t146.py <qa20w>/m_div <qa20w>/m_12 <qa20w>/doce.yaml <trabajo>` (con `PYTHONPATH`) | A: 6 OK (topes 310 123 / 4 167 901 / 3 190 123, como en la r01) · B: 4 OK (también «las dos a la vez», que en la r01 era OBS) · **C: HALLAZGO** (+2,31 UC, como en la r01: la lectura sigue sin reservarse; la salida ya no dice que la acote: el script imprime «?» donde antes citaba la frase) · D: 4 OK |
+
+Las medidas de la r02 dan las mismas cifras que las del revisor (`qa20w/m_div`, `m_12`). Matriz de la r02: H-01 → `test_r02_h01_con_busquedas_la_salida_no_dice_que_el_presupuesto_acote_lo_leido` (la frase no sale con los 12 tipos ni con divisas; el peso, a mano) y `test_r02_h01_el_peso_cubre_la_lectura_que_la_reserva_deja_pasar` (caso C); H-03 → `test_r02_h03_opciones_excluyentes_y_ag18_19_20_en_la_comun`. Las tres fallan con el estimador de la r01 (la frase, la clave del peso y la COMÚN). `test_h04_r04_r05…` cambia: pone también AG-18, AG-19 y AG-20 en la COMÚN (es lo que hace ya el estimador con T-146), con las mismas cifras a mano. Mutantes: `.venv/bin/python .docs/tickets/T-147/mutantes.py <copia «t147_mut»> --ticket T-148` (desde la raíz), **13 de 13 muertos** (M25–M32 de la r01 y M33–M37, uno por corrección de la r02). Cuotas: ruff 2838, mypy A 109.

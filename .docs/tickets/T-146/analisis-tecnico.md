@@ -110,3 +110,53 @@ $py -I .docs/tickets/T-146/peor_caso_por_bolsa.py bloque_a/11_Ejecutor <tmp> [--
 .docs/tickets/T-146/comparar_ciclos.sh <antes>/bloque_a/11_Ejecutor bloque_a/11_Ejecutor <tmp> $py
 $py .docs/tickets/T-146/mutantes_t146.py <copia desechable con «t146_mut» en la ruta>
 ```
+
+## Ronda r02 (QA r01 NO APTO)
+
+### H-01 · el factor observado y las búsquedas
+
+`pagar` comparaba la entrada cobrada con la medida de la petición. En una petición con búsquedas, la entrada cobrada trae lo que leyeron (la API lo cobra como entrada de esa misma petición), así que el factor subía a lo que leyeron las búsquedas (≈ 4,7 con 5 × 6 000 tokens) y todas las peticiones siguientes de la bolsa reservaban varias veces su peor caso. Ahora el factor solo se aprende de las peticiones con `busquedas_web == 0`. Se valoró restar una estimación de lo leído, pero no hay número con origen (ver H-04) y restar 0 no corrige nada. El exceso de una petición con búsquedas sigue anotándose (con `busquedas_web`, para medir en el modo sombra lo que leen).
+
+### H-02 · determinismo con una caché compartida
+
+Lo que se aparta entre las peticiones de una llamada decide si caben la reparación y las continuaciones. Era `uc_de(uso)`, que cuenta la lectura de caché a 0,1: dependía de si otro hilo ya había escrito el prefijo compartido (AG-10, AG-11, AG-12, AG-14, AG-16). Ahora se aparta `uc_de` con `cache_escritura + cache_lectura` como escritura, que depende solo del tamaño de la petición. El exceso (`excesos_reserva`, en F5) se calcula con lo mismo, así que también es independiente del orden. Lo cargado en la bolsa al final (`_cargar` y `liquidar_primas`, T-88) ya era independiente del orden cuando el punto de caché está al final del system prompt: el prefijo de la primera petición (`ReservaLlamada.prefijo` = lectura + escritura) es el mismo leído o escrito. Nota para quien escriba SDK falsos: si un SDK cuenta también el encargo como escritura de caché solo cuando escribe el prefijo (y no cuando lo lee), el prefijo de la primera petición cambia con el orden y F5 también; la API no hace eso (lo de después del último punto de caché es entrada), y `SDKCacheYBusquedas` de la prueba tampoco.
+
+La prueba fuerza el orden sin depender de los tiempos: cada hilo de tipo espera a que acabe el anterior, en el orden RV, RF, DIV, MP y en el contrario. Con el código de la r01, F5 cambia (consumido, ampliado, cierres y qué petición se cierra); con la r02, iguales, y también las llamadas por agente.
+
+### H-03 · AG-20 con escala
+
+AG-20 corre en C5 antes del reparto, porque sus lecciones cambian GC0 (`lecciones_vigentes` → nivel N1 o N2) y no se puede mover detrás. Se calcula antes el peor reparto posible, con el mismo código del reparto (`Bloque._reparto`, sacado de `ciclo` sin cambiar nada): los tipos pedidos que estén activos en F10 (P-02 solo cambia con un CT-04, no en C5), cada uno con el nivel de más presupuesto que le puede tocar (en un periódico sin nivel forzado, el mayor de N1 y N2; si no, el forzado o el de la profundización), el override y el reparto V6. La base de COMÚN escalada baja cuando sube lo de los tipos (sin escala, COMÚN = ciclo − tipos; con escala, mínimo × ciclo / (tipos + mínimo)), así que la del peor reparto es la menor posible. La bolsa de C5 es la de antes o esa, la menor: lo que consume AG-20 (sin ampliación: no es fase de las que la admiten) cabe en el límite de COMÚN del ciclo. Con el reparto de siempre la del peor reparto es ≥ el mínimo y no cambia nada (`comparar_ciclos.sh`: F5 igual que en la r01).
+
+### H-04 · la salvedad y la lectura por búsqueda
+
+`presupuesto_uc.reserva.tokens_lectura_por_busqueda` (por defecto 0) se suma a la entrada reservada por cada búsqueda posible (`max_uses`). Con 0 la reserva es la de la r01. No se pone otro valor porque no hay ninguno con origen (ni el Documento 0, ni la documentación de la API, ni una medida); queda la pregunta al operador en INC-T146-01, y los excesos de F5 con sus búsquedas son la medida. La salvedad (también el margen 1,35 sobre una aproximación) va en el CA-1 y en INC-T146-01. Lo que no se reserva solo puede pasar el límite de una bolsa en la petición que lo cruza: después lo disponible es negativo y no sale ninguna más; T-148 r02 usa eso para el peso de lo leído en la cota por presupuesto.
+
+### H-05 a H-10
+
+- H-05: `extraer_json` → `ValueError` ante `RecursionError`; `invocar` también lo captura al validar con el esquema y, en R8, falla cerrado. `_invocar` carga lo apartado si la llamada se cae (el análisis de un tipo puede seguir en modo degradado y lo gastado debe estar en la bolsa).
+- H-06: `Presupuesto.escala` y `base`; `resumen` da lo asignado escalado si la escala es < 1; CT-05 igual; F5 con `escala_presupuesto`. Con escala 1, ni un byte cambia.
+- H-07: ver README.
+- H-08: `_cargar` antes de `cerrar`. Entre los dos, la bolsa cuenta lo de la llamada dos veces (prudente).
+- H-09: no se hace (sin la API), para la deuda.
+- H-10: tres pruebas que matan Q01, Q09 y Q12.
+
+### Límites conocidos (r02)
+
+- Lo que lee cada búsqueda y lo que la entrada pase del margen siguen sin cota (salvedad declarada); en la petición que cruza el límite, la bolsa pasa de él en eso.
+- `r01_01` U2 reproduce a mano el orden `cerrar` → `cargar` y sigue dando VIOLA; `_invocar` ya no lo hace.
+- Los mensajes de V6 que llevan `presupuesto: {"uc": presupuesto.asignado…}` siguen con lo asignado sin escalar (informativo; con escala 1, igual).
+
+### Comandos (r02)
+
+```bash
+cd bloque_a/11_Ejecutor
+../../.venv/bin/python -m pytest -q -p no:cacheprovider tests/test_t146_presupuesto.py -k r02
+../../.venv/bin/python -m pytest -q -p no:cacheprovider tests/test_t146_presupuesto.py tests/test_t145.py tests/test_t148.py tests/test_t88_consumo.py tests/test_fase4_huecos.py tests/test_integracion.py
+cd ../..
+.venv/bin/python -I .docs/tickets/T-146/revisores/r01_01_reserva_unidad.py bloque_a/11_Ejecutor
+.venv/bin/python -I .docs/tickets/T-146/revisores/r01_02_ciclo_sdk_hostil.py bloque_a/11_Ejecutor <tmp> --tipos RV,RF,DIV,MP,IDX,FON,DER,INM,CRI,ALT,MON,TCV --hilos 6 --lectura 3000
+.venv/bin/python -I .docs/tickets/T-146/revisores/r01_02_ciclo_sdk_hostil.py bloque_a/11_Ejecutor <tmp> --tipos RV,RF,DIV,MP --hilos 4 --cache --orden directo --veces 2
+.venv/bin/python -I .docs/tickets/T-146/revisores/r01_03_c5_con_escala.py bloque_a/11_Ejecutor <tmp>
+.venv/bin/python .docs/tickets/T-146/mutantes_t146.py <copia con «t146_mut»>
+.venv/bin/python .docs/tickets/T-146/revisores/r01_05_mutantes_qa.py <copia con «qa19_mut»>
+```
