@@ -40,6 +40,10 @@ for r in "${rutas[@]}"; do mkdir -p "$W/$(dirname "$r")"; cp -p "$r" "$W/$r"; do
 for r in "${borrar[@]}"; do rm -f "$W/$r"; done
 [[ -e "$RAIZ/.venv" ]] && ln -s "$RAIZ/.venv" "$W/.venv"
 
+# Un conflicto de fusión a medio resolver no se sube nunca (15-11-2026: un autostash dejó marcas en la deuda y el gate no las ve).
+for r in "${rutas[@]}"; do
+  if grep -qE '^(<<<<<<<|>>>>>>>)( |$)' "$W/$r" 2>/dev/null; then fallo "$r tiene marcas de un conflicto de fusión sin resolver: no se hace commit"; fi
+done
 aviso "copia limpia en $W con ${#rutas[@]} fichero(s) y ${#borrar[@]} borrado(s)"
 if printf '%s\n' "${rutas[@]}" | grep -q '^sistema_global/marco_comun_c/'; then
   (cd "$W" && .docs/scripts/pruebas_marco.sh) || fallo "las pruebas del marco no pasan en la copia limpia: no se hace commit"
