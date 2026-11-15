@@ -55,12 +55,13 @@ except ImportError:   # pragma: no cover - fuera de POSIX no hay cerrojo: se dic
     fcntl = None
 
 RAIZ = Path(__file__).resolve().parents[2]
-AGENTE = os.environ.get("RI_AGENTE", "claude")   # un registro por agente (H-17): Astra exporta RI_AGENTE=astra
-if not re.fullmatch(r"[a-z0-9_-]{1,32}", AGENTE):
-    AGENTE = "claude"
-REGISTRO_DEFECTO = RAIZ / ".docs" / "experimentos" / f"registro_{AGENTE}.jsonl"
-VERSION = "0.3.0"   # 0.3.0 (T-99 r03): ancla en todo el historial de git, sello tolerante a un corte, cerrojo con espera y
-                    # lectores, intentos pendientes en la regla de adopción, búsqueda o prerregistro atómicos
+# Un registro por agente (H-17, H-28): RI_AGENTE dice quién escribe (Astra exporta RI_AGENTE=astra; dos sesiones de Claude en
+# máquinas distintas usan valores distintos, p. ej. claude-nube). Un valor no válido no cae en silencio en el de Claude.
+AGENTE = os.environ.get("RI_AGENTE", "claude")
+AGENTE_VALIDO = re.fullmatch(r"[a-z0-9_-]{1,32}", AGENTE) is not None
+REGISTRO_DEFECTO = RAIZ / ".docs" / "experimentos" / f"registro_{AGENTE}.jsonl" if AGENTE_VALIDO else None
+VERSION = "0.4.0"   # 0.4.0 (T-99 r04): sello local fuera de git, git que no responde falla cerrado, turno para el escritor,
+                    # «fallido» tardío no deja adoptar, RI_AGENTE estricto
 CERROJO_ESPERA_S = 30   # espera máxima del cerrojo ([PROPUESTO] en la fila T-99 de la deuda)
 OBJETOS = ("RECORTE", "INSTRUCCION", "MODELO", "ESTRATEGIA", "PARAMETRO", "BLOQUE", "OTRO")
 VEREDICTOS = ("mejor", "peor", "todavía no se sabe", "fallido")
@@ -217,10 +218,16 @@ def _linea(e: dict) -> str:
 
 
 class Registro:
-    def __init__(self, ruta: Path | str = REGISTRO_DEFECTO, ancla_git: bool = True):
+    def __init__(self, ruta: Path | str | None = None, ancla_git: bool = True):
+        if ruta is None:
+            if not AGENTE_VALIDO:
+                raise RegistroError(f"RI_AGENTE={AGENTE!r} no es válido (minúsculas, cifras, «-» o «_», hasta 32): no se elige "
+                                    "un registro por defecto")
+            ruta = REGISTRO_DEFECTO
         if not str(ruta).strip():
             raise RegistroError("ruta del registro vacía")
-        self.ruta = Path(ruta)
+        # El fichero real, aunque se llegue por un enlace: un solo cerrojo y un solo sello por registro (H-32)
+        self.ruta = Path(os.path.realpath(ruta))
         self.ancla_git = ancla_git
 
     # ------------------------------------------------------------------ lectura y verificación
@@ -231,6 +238,8 @@ class Registro:
             texto = self.ruta.read_bytes().decode("utf-8")
         except UnicodeDecodeError as e:
             raise RegistroError(f"el registro no está en UTF-8: está dañado ({e})") from e
+        except OSError as e:   # un directorio o un fichero ilegible (H-20)
+            raise RegistroError(f"no se puede leer el registro: {e}") from e
         if texto and not texto.endswith("\n"):
             raise RegistroError("el registro no acaba en salto de línea: una escritura se cortó o se editó a mano")
         return texto
@@ -269,8 +278,15 @@ class Registro:
             rel = self.ruta.resolve().relative_to(raiz.resolve()).as_posix()
         except ValueError as e:
             raise RegistroError(f"no se puede situar el registro dentro de {raiz}: {e}") from e
-        if self._git(raiz, "rev-parse", "--verify", "-q", "HEAD").returncode != 0:
+        dir_git = self._git(raiz, "rev-parse", "--git-dir")
+        if dir_git.returncode != 0:   # «.git» vacío o roto, repositorio de otro usuario, configuración mal formada (H-14)
+            raise RegistroError(f"git no reconoce el repositorio del registro ({dir_git.stderr.decode('utf-8', 'replace').strip()}): "
+                                "no se puede comprobar el ancla")
+        cabeza = self._git(raiz, "rev-parse", "--verify", "-q", "HEAD")
+        if cabeza.returncode == 1 and not cabeza.stderr.strip():
             return None   # repositorio sin commits: todavía no hay ancla
+        if cabeza.returncode != 0:
+            raise RegistroError(f"git no puede leer HEAD ({cabeza.stderr.decode('utf-8', 'replace').strip()}): no se puede comprobar el ancla")
         lista = self._git(raiz, "rev-list", "--full-history", "--parents", "HEAD", "--", rel)
         if lista.returncode != 0:
             raise RegistroError(f"git no puede leer el historial del registro: {lista.stderr.decode('utf-8', 'replace').strip()}")
@@ -363,11 +379,14 @@ class Registro:
         return self.ruta.with_name(self.ruta.name + ".sello")
 
     def _comprobar_sello(self, out: list[dict], texto: str, en_git: bytes | None) -> None:
-        """El sello tiene que casar con la última anotación (H-01: quitar las últimas se detecta). Se admite:
-        - un sello una anotación por detrás: la escritura se cortó entre la línea y el sello, y la siguiente lo pone al día
-          (H-16); quitar líneas deja el registro por DETRÁS del sello, y eso nunca se admite;
-        - sin sello, un registro idéntico al que está subido en git (un clon recién hecho, H-18) o con una sola anotación
-          (el corte de la primera escritura)."""
+        """El sello es LOCAL: no se sube a git (H-25), así que un checkout, un reset o un stash que devuelven el registro a una
+        versión anterior lo dejan por detrás de su sello, y eso se detecta. El sello tiene que señalar una anotación de la
+        cadena; se admite que vaya:
+        - en la última anotación;
+        - una por detrás: la escritura se cortó entre la línea y el sello, y la siguiente lo pone al día (H-16);
+        - más atrás, solo si el registro es exactamente el que está subido en git (se trajo con un pull).
+        Sin sello, se admite un registro idéntico al de git (un clon, H-18) o con una sola anotación (el corte de la primera
+        escritura)."""
         ultima = out[-1] if out else None
         if not self.sello.exists():
             if ultima is None or len(out) == 1 or (en_git is not None and texto.encode("utf-8") == en_git):
@@ -378,14 +397,23 @@ class Registro:
             s = json.loads(self.sello.read_text(encoding="utf-8"))
         except (OSError, ValueError, UnicodeDecodeError) as e:
             raise RegistroError(f"el sello del registro está dañado: {e}") from e
-        esperado = {"seq": 0, "hash": CERO} if ultima is None else {"seq": ultima["_seq"], "hash": ultima["_hash"]}
-        un_corte = None if ultima is None else {"seq": ultima["_seq"] - 1, "hash": ultima["_hash_prev"]}
-        if s != esperado and s != un_corte:
-            raise RegistroError(f"el registro no casa con su sello (anotación {esperado['seq']} frente a "
-                                f"{s.get('seq') if isinstance(s, dict) else s!r}): le quitaron o cambiaron las últimas líneas")
+        if not isinstance(s, dict) or not {"seq", "hash"} <= set(s) or set(s) - {"seq", "hash", "sellado_a_mano"} \
+                or isinstance(s["seq"], bool) or not isinstance(s["seq"], int):
+            raise RegistroError(f"el sello del registro no tiene la forma esperada: {s!r}")
+        k = s["seq"]
+        en_cadena = (k == 0 and s["hash"] == CERO) or (1 <= k <= len(out) and out[k - 1]["_hash"] == s["hash"])
+        if not en_cadena:
+            raise RegistroError(f"el registro no casa con su sello (anotación {len(out)} frente a la {k} del sello): le quitaron "
+                                "o cambiaron las últimas líneas, o se devolvió a una versión anterior")
+        if k < len(out) - 1 and not (en_git is not None and texto.encode("utf-8") == en_git):
+            raise RegistroError(f"el sello va {len(out) - k} anotaciones por detrás del registro y lo de después no está subido "
+                                "en git: no se puede saber de dónde salió")
+        self.sello_a_mano = bool(s.get("sellado_a_mano"))
 
-    def _preparar_sello(self, e: dict | None) -> Path:
+    def _preparar_sello(self, e: dict | None, a_mano: bool = False) -> Path:
         s = {"seq": 0, "hash": CERO} if e is None else {"seq": e["_seq"], "hash": e["_hash"]}
+        if a_mano or getattr(self, "sello_a_mano", False):
+            s["sellado_a_mano"] = True   # se arrastra: un registro sellado a mano lo dice siempre
         temporal = self.sello.with_name(self.sello.name + ".tmp")
         try:
             temporal.write_text(json.dumps(s) + "\n", encoding="utf-8")
@@ -402,15 +430,22 @@ class Registro:
                                 "escritura lo pondrá al día") from ex
 
     def sellar(self) -> int:
-        """Sella un registro sin sello (versión 0.1.0). Solo si no tiene: no puede saber si antes le quitaron líneas."""
+        """Sella un registro sin sello de la versión 0.1.0. Se niega si el registro lo escribió una versión con sello (0.2.0 o
+        posterior): ahí, que falte el sello es una señal, no un olvido (H-30). El sello queda marcado «sellado_a_mano» y
+        `verificar` lo dice siempre."""
         with self._cerrojo():
             if self.sello.exists():
                 raise RegistroError("el registro ya tiene sello: no se vuelve a sellar")
             texto = self._texto()
             self._comprobar_ancla(texto)
-            sin_sello = Registro(self.ruta, ancla_git=False)
-            out = sin_sello._leer_sin_sello()
-            self._escribir_sello(out[-1] if out else None)
+            out = Registro(self.ruta, ancla_git=False)._leer_sin_sello()
+            con_sello = [x["exp_id"] for x in out if x["tipo"] == "PRERREGISTRO"
+                         and tuple(int(c) for c in x["version_registro"].split(".")) >= (0, 2, 0)]
+            if con_sello:
+                raise RegistroError(f"el registro lo escribió una versión con sello ({con_sello[0]} y otros): que le falte el "
+                                    "sello no se arregla sellándolo")
+            temporal = self._preparar_sello(out[-1] if out else None, a_mano=True)
+            self._escribir_sello(out[-1] if out else None, temporal)
             return len(out)
 
     def _leer_sin_sello(self) -> list[dict]:
@@ -421,32 +456,48 @@ class Registro:
         finally:
             self._comprobar_sello = original   # type: ignore[method-assign]
 
+    def _esperar(self, fichero, modo: int, que: str) -> None:
+        limite = time.monotonic() + CERROJO_ESPERA_S
+        while True:
+            try:
+                fcntl.flock(fichero.fileno(), modo | fcntl.LOCK_NB)
+                return
+            except BlockingIOError:
+                if time.monotonic() > limite:
+                    raise RegistroError(f"el registro lleva más de {CERROJO_ESPERA_S} s ocupado ({que})") from None
+                time.sleep(0.02)
+
     @contextlib.contextmanager
     def _cerrojo(self, compartido: bool = False):
-        """H-02 y H-21: una sola escritura a la vez en la misma máquina, y los lectores esperan a que acabe. El cerrojo va en
-        un fichero aparte («.lock») y espera como mucho CERROJO_ESPERA_S segundos."""
+        """H-02, H-21 y H-29: una sola escritura a la vez en la misma máquina; los lectores esperan a que acabe y no pueden
+        dejar sin turno al escritor. Dos ficheros aparte: «.turno», que el escritor coge primero y retiene mientras espera
+        (los lectores que llegan después esperan detrás de él), y «.lock», compartido por los lectores y exclusivo del
+        escritor. Cada espera dura como mucho CERROJO_ESPERA_S. Fuera de POSIX no hay cerrojo: se lee, pero no se escribe."""
+        if fcntl is None:
+            if not compartido:
+                raise RegistroError("este sistema no tiene cerrojo de ficheros (fcntl): no se escribe en el registro")
+            yield
+            return
         try:
             self.ruta.parent.mkdir(parents=True, exist_ok=True)
-            fl = open(self.ruta.with_name(self.ruta.name + ".lock"), "a", encoding="utf-8")   # noqa: SIM115 - se cierra en el with de abajo
+            turno = open(self.ruta.with_name(self.ruta.name + ".turno"), "a", encoding="utf-8")   # noqa: SIM115 - se cierra abajo
+            fl = open(self.ruta.with_name(self.ruta.name + ".lock"), "a", encoding="utf-8")   # noqa: SIM115 - se cierra abajo
         except OSError as e:
             raise RegistroError(f"no se puede abrir el cerrojo del registro: {e}") from e
-        with fl:
-            if fcntl is not None:
-                modo = (fcntl.LOCK_SH if compartido else fcntl.LOCK_EX) | fcntl.LOCK_NB
-                limite = time.monotonic() + CERROJO_ESPERA_S
-                while True:
-                    try:
-                        fcntl.flock(fl.fileno(), modo)
-                        break
-                    except BlockingIOError:
-                        if time.monotonic() > limite:
-                            raise RegistroError(f"el registro lleva más de {CERROJO_ESPERA_S} s ocupado por otra escritura") from None
-                        time.sleep(0.05)
+        with turno, fl:
+            self._esperar(turno, fcntl.LOCK_EX, "esperando turno")
+            try:
+                if compartido:   # el lector pasa por el turno y lo suelta enseguida
+                    fcntl.flock(turno.fileno(), fcntl.LOCK_UN)
+                self._esperar(fl, fcntl.LOCK_SH if compartido else fcntl.LOCK_EX,
+                              "otra escritura" if compartido else "lectores u otra escritura")
+            finally:
+                if not compartido:   # el escritor suelta el turno cuando ya tiene el cerrojo
+                    fcntl.flock(turno.fileno(), fcntl.LOCK_UN)
             try:
                 yield
             finally:
-                if fcntl is not None:
-                    fcntl.flock(fl.fileno(), fcntl.LOCK_UN)
+                fcntl.flock(fl.fileno(), fcntl.LOCK_UN)
 
     def _anexar(self, construir) -> dict:
         """Lee, construye y escribe bajo el cerrojo: dos procesos no pueden leer el mismo estado y escribir a la vez."""
@@ -561,16 +612,24 @@ class Registro:
             con_veredicto = [(i, res[i["n"]]["veredicto"]) for i in suyos if i["n"] in res and res[i["n"]]["veredicto"] != "fallido"]
             # H-15: un intento sin resultado deja la variante pendiente; si es el primero que no falló, todavía no hay veredicto
             pendiente = any(i["n"] not in res for i in suyos)
+            # H-27: un «fallido» registrado después de que empezara otro intento de la misma variante no se salta: pudo
+            # cerrarse así tras ver el resultado de la repetición. La variante queda «fallido_tardio» y no se adopta.
+            fallido_tardio = any(
+                res.get(i["n"], {}).get("veredicto") == "fallido"
+                and any(_instante(j["inicio"], "inicio") < _instante(res[i["n"]]["registrado_en"], "registrado_en")
+                        for j in suyos if j["n"] > i["n"])
+                for i in suyos)
             primero_vivo = next((i for i in suyos if res.get(i["n"], {}).get("veredicto") != "fallido"), None)
             primero = con_veredicto[0] if con_veredicto and primero_vivo is not None and primero_vivo["n"] in res else None
             contradictoria = bool(primero) and any(ver != primero[1] for _, ver in con_veredicto[1:])
             por_variante[v] = {"intentos": [i["n"] for i in suyos], "cuenta": primero[0]["n"] if primero else None,
                                "veredicto": primero[1] if primero else None, "contradictoria": contradictoria,
-                               "pendiente": pendiente,
+                               "pendiente": pendiente, "fallido_tardio": fallido_tardio,
                                "dentro_del_maximo": orden_variantes.index(v) < maximo,
                                "despues_del_prerregistro": bool(primero) and _instante(primero[0]["inicio"], "inicio") >= creado}
         adoptables = [d["cuenta"] for d in por_variante.values()
-                      if d["veredicto"] == "mejor" and not d["contradictoria"] and not d["pendiente"] and d["dentro_del_maximo"] and d["despues_del_prerregistro"]]
+                      if d["veredicto"] == "mejor" and not d["contradictoria"] and not d["pendiente"] and not d["fallido_tardio"]
+                      and d["dentro_del_maximo"] and d["despues_del_prerregistro"]]
         return {"exp_id": exp_id, "hipotesis": pre["contenido"]["hipotesis"], "objeto": pre["contenido"]["objeto"],
                 "max_variantes": maximo, "intentos": len(intentos), "variantes": len(orden_variantes),
                 "sin_resultado": [i["n"] for i in intentos if i["n"] not in res],
@@ -621,7 +680,7 @@ def main(argv: list[str] | None = None) -> int:
     sub.add_parser("sellar", parents=[comun], help="sella una vez un registro sin sello (versión 0.1.0)")
     a = ap.parse_args(argv)
     try:
-        r = Registro(getattr(a, "registro", REGISTRO_DEFECTO))
+        r = Registro(getattr(a, "registro", None))
         if a.orden == "prerregistrar":
             e = r.prerregistrar(json.loads(Path(a.fichero).read_text(encoding="utf-8")), a.autor)
             print(f"{e['exp_id']} prerregistrado; huella {e['huella_prerregistro'][:16]}…")
@@ -644,7 +703,8 @@ def main(argv: list[str] | None = None) -> int:
             if not r.ruta.exists():
                 raise RegistroError(f"no existe el registro {r.ruta}")
             n = r.verificar()
-            print(f"registro íntegro: {n} anotaciones" + ("" if n else " (vacío)"))
+            print(f"registro íntegro: {n} anotaciones" + ("" if n else " (vacío)")
+                  + (" · sellado a mano (lo anterior al sello no se pudo comprobar)" if getattr(r, "sello_a_mano", False) else ""))
     except Exception as e:   # noqa: BLE001 - la línea de órdenes nunca sale con una traza: motivo y código 2 (H-06)
         print(f"registro de experimentos: {type(e).__name__}: {e}", file=sys.stderr)
         return 2

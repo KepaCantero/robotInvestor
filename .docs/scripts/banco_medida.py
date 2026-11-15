@@ -718,7 +718,7 @@ def ejecutar_a(a: argparse.Namespace) -> dict:
     reg = intento = None
     otros_misma = 0
     if getattr(a, "registro", None) == "":   # T-99, QA r01 H-08: un registro vacío no desactiva el registro en silencio
-        raise BancoError("--registro vacío: para no anotar, usa --sin-registro")
+        raise BancoError("--registro vacío (o RI_AGENTE no válido, sin registro por defecto): indica uno, o usa --sin-registro")
     if getattr(a, "registro", None):   # T-99: cada intento cuenta, también los que fallan
         sys.path.insert(0, str(Path(__file__).resolve().parent))
         import registro_experimentos as rx
@@ -765,7 +765,8 @@ def ejecutar_a(a: argparse.Namespace) -> dict:
     if reg is not None:
         # El intento va aparte (experimento.json), para que el informe de dos ejecuciones iguales sea idéntico byte a byte.
         experimento = {"exp_id": intento["exp_id"], "intento": intento["n"], "dentro_del_maximo": intento["dentro_del_maximo"],
-                       "registro": str(Path(a.registro).resolve())}
+                       # relativa a la carpeta de salida: sin carpetas de la máquina (T-99, QA r03 H-24)
+                       "registro": os.path.relpath(Path(a.registro).resolve(), salida)}
         try:
             reg.resultado(intento["exp_id"], intento["n"], veredicto_conjunto(inf["comparaciones"]),
                           {"comparaciones": {k: v["veredicto"] for k, v in inf["comparaciones"].items()}, "aviso": aviso,
@@ -815,7 +816,7 @@ def verificar(carpeta: Path | str, registro: Path | str | None = None) -> list[s
     import registro_experimentos as rx
     try:
         e = json.loads(fe.read_text(encoding="utf-8"))
-        exp = rx.Registro(registro or e["registro"]).experimento(e["exp_id"])
+        exp = rx.Registro(registro or (carpeta / e["registro"])).experimento(e["exp_id"])
         n = e["intento"]
     except (OSError, ValueError, TypeError, KeyError, rx.RegistroError) as ex:
         return problemas + [f"no se puede leer el experimento del registro: {type(ex).__name__}: {ex}"]
@@ -860,11 +861,12 @@ def _arg_nivel(txt: str) -> float:
     return v
 
 
-def _registro_defecto() -> Path:
-    """El registro del agente (T-99, QA r02 H-17): el mismo que usa registro_experimentos.py por defecto."""
+def _registro_defecto() -> str | None:
+    """El registro del agente (T-99, QA r02 H-17): el mismo que usa registro_experimentos.py por defecto. Con un RI_AGENTE
+    no válido no hay registro por defecto, y el banco se detiene al empezar (QA r03)."""
     sys.path.insert(0, str(Path(__file__).resolve().parent))
     import registro_experimentos as rx
-    return rx.REGISTRO_DEFECTO
+    return None if rx.REGISTRO_DEFECTO is None else str(rx.REGISTRO_DEFECTO)
 
 
 def main(argv: list[str] | None = None) -> int:
@@ -885,7 +887,7 @@ def main(argv: list[str] | None = None) -> int:
     pa.add_argument("--nivel", type=_arg_nivel, default=NIVEL)
     pa.add_argument("--min-efectivas", dest="min_efectivas", type=_arg_entero(MIN_EFECTIVAS_MIN), default=MIN_EFECTIVAS)
     # T-99: registro de experimentos (por defecto, el del repositorio); --experimento añade un intento a uno ya prerregistrado
-    pa.add_argument("--registro", default=str(_registro_defecto()))
+    pa.add_argument("--registro", default=_registro_defecto() or "")
     pa.add_argument("--sin-registro", dest="registro", action="store_const", const=None,
                     help="no anotar en el registro de experimentos (el informe no se podrá verificar)")
     pa.add_argument("--experimento")
