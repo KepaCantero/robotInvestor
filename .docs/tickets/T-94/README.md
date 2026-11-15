@@ -2,9 +2,9 @@
 
 | Campo | Valor |
 | --- | --- |
-| Estado | EN QA |
+| Estado | NO APTO (QA r01, 15-11-2026); vuelve a implementar cuando lo ordene el operador |
 | Pieza | `.docs/scripts` (fuera de los bloques): `banco_medida.py` y sus pruebas |
-| Planifica · implementa · QA | claude · claude · sin asignar (el operador decide quién, 12-11-2026) |
+| Planifica · implementa · QA | claude · claude · un revisor nuevo sin contexto (operador, 15-11-2026: «Vamos a empezar con los Tickets») |
 | Aprobación del operador | aprobada el 2026-11-11: «Te autorizo que empieces con el banco de medida y las plantillas» (tras aceptar la tanda 1: pauta común de A, B y C con banco de medida) |
 | Deuda técnica | T-94 en `sistema_global/seguimiento/Deuda_tecnica_y_pendientes_del_operador.md` |
 
@@ -81,3 +81,4 @@ Crea `.docs/scripts/banco_medida.py` y `.docs/scripts/pruebas_banco_medida.py`. 
 - 2026-11-11 · ABIERTO · creado con nuevo_ticket.sh
 - 2026-11-11 · EN CURSO · claude · plan escrito; implementa claude, QA astra cuando termine sus revisiones de diseño
 - 2026-11-11 · EN QA · claude · banco y pruebas (10/10) listos; informe en `pruebas.md`. Espera la QA de Astra
+- 2026-11-15 · NO APTO · QA r01 (revisor nuevo, base `df4a60a`, gate 12/12): H-01 y H-02 altos (el rango trata como independientes selecciones repetidas de la misma oportunidad y da «mejor» con una sola selección por lado; sin habilidad, veredicto firme el 42,5 % y el 87 % de las veces), H-03 a H-08 medios (valores no finitos sin fallo cerrado, prerregistro creado en cada ejecución, intento sin resultado, referencias con menos selecciones, coste sin caché, aviso de fuga perdido), H-09 a H-12 bajos. Detalle en `qa.md`
