@@ -102,24 +102,83 @@ def _etiquetas_casi_iguales(firmas: list[tuple[Any, ...]], tol: float) -> np.nda
     return np.asarray(csgraph.connected_components(csr_matrix(cerca), directed=False)[1], dtype=int)
 
 
+# T-149 (QA r01 de T-144, H-01) [PROPUESTO INC-T128-01]: rejillas de precio de la regla de niveles (`_paso_de_precio`).
+# Además de las potencias de 10, los pasos de cotización de las tablas de los mercados: 2·10⁻ᵈ, 5·10⁻ᵈ y 25·10⁻ᵈ
+# (= 2,5·10⁻ᵈ⁺¹: 0,25, 0,025…) dentro de cada década, y las fracciones 1/2ᵏ hasta 1/`denominador_binario_maximo` (octavos,
+# treintaidosavos de los bonos y sus cuartos, 1/128, y 1/256). Un paso más grueso que el real solo ensancha la cota (se
+# agrupa más: falla cerrado); uno más fino la estrecha y deja pasar una copia, así que se busca el mayor que encaje. Una
+# serie está en una rejilla si lo están al menos `fraccion_en_rejilla` de sus precios: así un precio suelto sin redondear,
+# o unos pocos de otra fuente, no la hunden al paso de la coma flotante. Ha de ser bastante mayor que 1/2, la fracción de
+# precios de una rejilla que caen por azar en la siguiente más gruesa que la contiene (los pares de 0,01 en 0,02).
+REJILLAS_PRECIO: dict[str, Any] = {"multiplos_de_la_decada": (25, 5, 2), "denominador_binario_maximo": 256,
+                                   "fraccion_en_rejilla": 0.9}
+
+
+def _en_rejilla(x: np.ndarray, hay: np.ndarray, paso: np.ndarray, tol_numerica: float) -> np.ndarray:
+    """T-149: qué series tienen al menos `fraccion_en_rejilla` de sus precios en múltiplos de su `paso` (uno por serie) a
+    menos de `tol_numerica` relativo. Una serie sin precios encaja en cualquiera (no tiene fechas comunes con nadie)."""
+    y = np.abs(x / paso[:, None])
+    resto = np.rint(y)
+    np.subtract(y, resto, out=resto)
+    np.abs(resto, out=resto)                              # |y − round(y)|
+    np.maximum(y, 1.0, out=y)
+    y *= tol_numerica                                     # tol·max(|y|, 1)
+    encaja = resto <= y
+    encaja &= hay
+    return encaja.sum(axis=1) >= REJILLAS_PRECIO["fraccion_en_rejilla"] * hay.sum(axis=1)
+
+
 def _paso_de_precio(precios: np.ndarray, hay: np.ndarray, tol_numerica: float) -> np.ndarray:
-    """T-144 (QA r01 de T-135, H-01): el paso de precio de cada serie, la mayor potencia de 10, 10⁻ᵈ (d = 0, 1, …, las
-    cifras decimales que guarda un float64), de la que todos sus precios son múltiplos a menos de `tol_numerica` relativo:
-    una serie con 2 decimales tiene paso 0,01. Una serie sin redondear encaja cuando 10ᵈ·p pasa de 1/(2·`tol_numerica`),
-    así que su paso relativo (paso / precio) es como mucho del orden de `tol_numerica`: la cota de redondeo nunca es más
-    laxa que eso para una serie de precio corriente."""
+    """T-144 (QA r01 de T-135, H-01): el paso de precio de cada serie. Primero la mayor potencia de 10, 10⁻ᵈ (desde la de
+    su mayor precio hasta las cifras decimales que guarda un float64), en la que está la serie; después, la mayor rejilla
+    de `REJILLAS_PRECIO` más gruesa que esa potencia en la que también está (T-149, QA r01 de T-144, H-01: los múltiplos
+    de 0,05 lo son de 0,01, y con 0,01 el error de redondeo supuesto era la quinta parte del real). Una serie está en una
+    rejilla si lo están `fraccion_en_rejilla` de sus precios (T-149: un precio suelto sin redondear la llevaba antes al
+    paso de la coma flotante). Una serie sin redondear encaja cuando 10ᵈ·p pasa de 1/(2·`tol_numerica`), así que su paso
+    relativo (paso / precio) es como mucho del orden de `tol_numerica`: la cota de redondeo nunca es más laxa que eso
+    para una serie de precio corriente."""
     n = precios.shape[0]
     paso = np.zeros(n)
     sin_paso = np.ones(n, dtype=bool)
     x = np.where(hay, precios, 0.0)
-    for d in range(np.finfo(float).precision + 1):
-        y = x * 10.0 ** d
-        encaja = (np.abs(y - np.round(y)) <= tol_numerica * np.maximum(np.abs(y), 1.0)) | ~hay
-        nuevos = sin_paso & encaja.all(axis=1)
+    mayor = float(np.max(np.abs(x))) if x.size else 0.0
+    d0 = -int(np.floor(np.log10(mayor))) if mayor >= 1 else 0   # la década del mayor precio: un paso de 10, 50 o 100
+    for d in range(d0, np.finfo(float).precision + 1):
+        nuevos = sin_paso & _en_rejilla(x, hay, np.full(n, 10.0 ** -d), tol_numerica)
         paso[nuevos] = 10.0 ** -d
         sin_paso &= ~nuevos
         if not sin_paso.any():
             break
+    potencia = paso.copy()
+    for m in REJILLAS_PRECIO["multiplos_de_la_decada"]:
+        filas = np.flatnonzero((potencia > 0) & (m * potencia > paso))
+        if len(filas):
+            mejor = filas[_en_rejilla(x[filas], hay[filas], m * potencia[filas], tol_numerica)]
+            paso[mejor] = m * potencia[mejor]
+    # 1/2ᵏ = 5ᵏ·10⁻ᵏ: una serie en esa rejilla está también en la de 10⁻ᵏ, así que solo se mira donde la potencia llega
+    for k in range(1, int(np.log2(REJILLAS_PRECIO["denominador_binario_maximo"])) + 1):
+        q = 2.0 ** -k
+        filas = np.flatnonzero((potencia >= 10.0 ** -k * (1 - tol_numerica)) & (q > paso))
+        if len(filas):
+            mejor = filas[_en_rejilla(x[filas], hay[filas], np.full(len(filas), q), tol_numerica)]
+            paso[mejor] = q
+    return paso
+
+
+def _paso_por_decada(precios: np.ndarray, hay: np.ndarray, tol_numerica: float) -> np.ndarray:
+    """T-149 (QA r01 de T-144, H-01): el paso de cada precio según los de su serie en su misma década (10ᵏ ≤ p < 10ᵏ⁺¹),
+    n × T. Una serie redondeada a cifras significativas cambia de paso al cruzar una potencia de 10 (4 cifras: 0,01 por
+    debajo de 100 y 0,1 por encima); el paso de la serie entera es el de la parte más fina. Solo se calcula para las
+    series que cruzan una década; en las demás es el de la serie (0 aquí: `_etiquetas_series_copiadas` toma el mayor)."""
+    paso = np.zeros(precios.shape)
+    dec = np.where(hay, np.floor(np.log10(np.where(hay, precios, 1.0))), np.nan)
+    cruzan = np.flatnonzero(np.nanmax(dec, axis=1, initial=-np.inf) > np.nanmin(dec, axis=1, initial=np.inf))
+    if not len(cruzan):
+        return paso
+    sub, dsub = precios[cruzan], dec[cruzan]
+    for k in np.unique(dsub[~np.isnan(dsub)]):
+        en = dsub == k
+        paso[cruzan] = np.where(en, _paso_de_precio(sub, en, tol_numerica)[:, None], paso[cruzan])
     return paso
 
 
@@ -161,10 +220,17 @@ def _etiquetas_series_copiadas(precios: np.ndarray, anios: np.ndarray, tol: floa
       correladas no: con datos sin redondear la cota es del orden de `tol_numerica`, y el cociente de dos índices con
       ρ ≈ 0,995 o de un fondo y su índice con un error de seguimiento de 0,01 %/año se mueve mucho más que eso.
 
+    T-149 (QA r01 de T-144, H-01): el paso de cada serie admite las rejillas de `REJILLAS_PRECIO` (0,05, 0,25, 1/8,
+    1/32…), no solo potencias de 10, aunque una minoría de sus precios no esté en ella, y el de cada precio es el mayor de
+    los de su serie entera y de su década (`_paso_por_decada`: cifras significativas).
+
     Cierre transitivo, como en `_etiquetas_casi_iguales`. Límites declarados (INC-T128-01): una copia con rentabilidades
     perturbadas a propósito, desfasada una sesión o con un cambio de divisa variable no se detecta; con un paso de precio
     grande frente al precio (p. ej. 0,01 en un valor de 0,50) la cota llega a la de los casi clones y dos series que se
-    mueven poco pueden tomarse por copias (falla cerrado: la amplitud no se sirve).
+    mueven poco pueden tomarse por copias (falla cerrado: la amplitud no se sirve). T-149: tampoco se agrupa una copia
+    en una rejilla que no es de `REJILLAS_PRECIO` (pasos de 0,03 o de 1/3), una que cambia de resolución dentro de una
+    misma década (2 decimales unos meses y 1 después) ni una con más de 1 − `fraccion_en_rejilla` de sus precios fuera
+    de su rejilla.
 
     T-144 (H-03): se comparan solo los pares que siguen siendo candidatos (en tramos de `ELEMENTOS_POR_TRAMO`); un par sale
     en cuanto incumple las dos reglas, así que el coste es del orden de n²·(unas pocas fechas) y no n²·T."""
@@ -181,6 +247,7 @@ def _etiquetas_series_copiadas(precios: np.ndarray, anios: np.ndarray, tol: floa
     logp = np.log(np.where(hay, precios, 1.0))
     paso = _paso_de_precio(precios, hay, tol_num)
     rel = np.where(hay, paso[:, None] / (2 * np.where(hay, precios, 1.0)), 0.0)
+    rel = np.maximum(rel, _paso_por_decada(precios, hay, tol_num) / (2 * np.where(hay, precios, 1.0)))   # T-149
     cota_redondeo = -np.log1p(-np.minimum(rel, 0.5)) + tol_num
     tope = float(np.log1p(tol))
     filas: list[np.ndarray] = []

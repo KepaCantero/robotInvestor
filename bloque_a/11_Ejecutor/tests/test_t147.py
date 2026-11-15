@@ -125,7 +125,8 @@ def test_h02_el_script_no_escribe_ni_devuelve_ct04_de_una_peticion_con_datos_pro
     def cli(bloque, args):
         llamadas.append((bloque, args[-1]))
         if bloque == "a" and args[-1] == "ciclo":
-            return {"run_id": ejemplo["run_id"], "entregables": {"paquete_json": str(paquete)}}
+            # T-149: con la entrega y el dictamen G3 que da `bloque-a ciclo` (sin ellos, el script ya no encarga nada)
+            return {"run_id": ejemplo["run_id"], "entrega": "ENTREGADA", "g3": "APTO", "entregables": {"paquete_json": str(paquete)}}
         raise AssertionError(f"no debería llamar a {bloque} {args[-3:]}")
     monkeypatch.setattr(mod, "_cli", cli)
     extra = tmp_path / "extra.yaml"
@@ -357,3 +358,56 @@ def test_t141_h03_respuesta_normal_escribe_las_seis_series(bce, monkeypatch, tmp
 def test_t141_h02_el_docstring_dice_cuando_se_publica():
     texto = " ".join((SCRIPTS / "descargar_datos_bce.py").read_text(encoding="utf-8").split("Uso")[0].split())
     assert "hacia las 16:00 (CET)" in texto and "14:15" in texto and "no el cierre de un mercado" in texto
+
+
+# ---------------------------------------------------------------- T-149 (QA r01 de T-147, H-03) · mutantes que vivían
+# Q02 (clave genérica desde 8 caracteres), Q03 (dominio de primer nivel de una letra), Q05 (fechas del BCE en cualquier
+# formato) y Q07 (la sonda sin capturar `ErrorCadenaB`) de `.docs/tickets/T-147/revisores/r01_03_mutantes_qa.py`.
+@pytest.mark.parametrize("texto, marcado", [
+    ("token: " + "abcdefgh" + "1234567", False), ("token: " + "abcdefgh" + "12345678", True),        # 15 y 16 caracteres
+    ("secret=" + "Zx9Qw8Er" + "7Ty6Ui5", False), ("secreto: " + "Zx9Qw8Er" + "7Ty6Ui5O", True),
+])
+def test_t149_el_valor_de_una_clave_generica_empieza_en_16_caracteres(texto, marcado):
+    assert bool(contratos.secretos_en_texto(texto)) is marcado
+    assert bool(contenido_sensible(texto)) is marcado
+
+
+@pytest.mark.parametrize("texto", ["usuario" + "@ejemplo.c", "ver nombre" + "@dominio.x y sigue", "a.b" + "@c.d"])
+def test_t149_un_dominio_de_primer_nivel_de_una_letra_no_es_un_correo(texto):
+    assert not contratos.secretos_en_texto(texto) and not contratos.contiene_credenciales({"t": texto})
+
+
+def test_t149_un_dominio_de_primer_nivel_de_dos_letras_si():
+    assert contratos.secretos_en_texto("contacto" + "@empresa.io")
+
+
+@pytest.mark.parametrize("fechas", [("11/12/2026", "11/13/2026"), ("20261112", "20261113")])
+def test_t149_bce_fechas_que_no_son_aaaa_mm_dd_no_se_escriben(bce, monkeypatch, tmp_path, capsys, fechas):
+    """Q05: sin el formato, pandas deduce otro («11/12/2026» como mes/día) y se escribirían fechas que el BCE no da así."""
+    cuerpo = CAB + "".join(_fila(m, d, v) for d in fechas for m, v in VAL.items())
+    _con_respuesta(bce, monkeypatch, cuerpo)
+    assert bce.main([str(tmp_path / "datos")]) == 1
+    assert not (tmp_path / "datos").exists() and "AAAA-MM-DD" in capsys.readouterr().err
+
+
+def test_t149_la_sonda_con_datos_protegidos_se_anota_sin_el_dato(tmp_path, ejemplo, monkeypatch, capsys):
+    """Q07: la opción sin correspondencia que lleva un correo no se envía a la sonda: queda anotada con DATOS_PROTEGIDOS y
+    el script no cae con la excepción; ni el resumen ni lo impreso llevan el correo."""
+    mod = _modulo("cadena_a_b")
+    for e in ejemplo["paquete_para_bloque_B"]:
+        e["tesis"] = f"La tesis. {CORREO}"
+    paquete = tmp_path / "paquete.json"
+    paquete.write_text(json.dumps(ejemplo, ensure_ascii=False), encoding="utf-8")
+
+    def cli(bloque, args):
+        if bloque == "a" and args[-1] == "ciclo":
+            return {"run_id": ejemplo["run_id"], "entrega": "ENTREGADA", "g3": "APTO", "entregables": {"paquete_json": str(paquete)}}
+        raise AssertionError(f"no debería llamar a {bloque} {args[-3:]}")
+    monkeypatch.setattr(mod, "_cli", cli)
+    w = tmp_path / "w"
+    assert mod.main(["--trabajo", str(w), "--sonda-sin-correspondencia"]) == 1
+    resumen = json.loads((w / "resumen.json").read_text(encoding="utf-8"))
+    assert {n["codigo"] for n in resumen["no_enviadas"]} == {"SIN_CORRESPONDENCIA_AMBITO"}
+    assert resumen["sonda_sin_correspondencia"]["codigo"] == "DATOS_PROTEGIDOS"
+    assert CORREO not in json.dumps(resumen) and CORREO not in capsys.readouterr().out
+    assert not (w / "sonda").exists() and not (w / "b_sonda").exists()

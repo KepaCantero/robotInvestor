@@ -85,7 +85,9 @@ def test_h01_paso_de_precio():
     x = np.array([[12.34, 12.35, 99.99], [1.0, 2.0, 3.0], [1.2345, 1.2, np.nan], [np.pi, np.e, 1.1]])
     hay = ~np.isnan(x)
     paso = fb._paso_de_precio(x, hay, 1e-10)
-    assert paso[:3].tolist() == [0.01, 1.0, 0.0001]
+    # T-149 (QA r01 de T-144, H-01): 1,2345 y 1,2 son los dos múltiplos de 0,0005, la mayor rejilla de las admitidas en la
+    # que están (antes, 0,0001: la mayor potencia de 10, y así el error de redondeo supuesto era la quinta parte del real)
+    assert paso[:3].tolist() == [0.01, 1.0, 0.0005]
     assert paso[3] * 0.5 / 1.1 <= 1e-9                                 # sin redondear: del orden de la tolerancia numérica
 
 
@@ -252,3 +254,43 @@ def test_h05_dos_copias_y_otra_serie_siguen_pesando_cada_una():
              != float(A.iloc[-1] > A.iloc[-200:].mean()))
     res, _ = _correr({"B": b, "K0": A, "K1": A * 2})
     assert res["amplitud"] is not None and res["amplitud"]["porcentaje_sobre_media"] in (1 / 3, 2 / 3)
+
+
+# ---------------------------------------------------------------- T-149 (QA r01 de T-144, H-02) · la anchura de la cota
+# Los mutantes Q08 (sin la tolerancia numérica), Q09 (error de redondeo q/p en vez de q/2p) y Q10 (`lo >= hi`) del revisor
+# (`.docs/tickets/T-147/revisores/r01_03_mutantes_qa.py`) pasaban la batería: estas pruebas fijan la cota en el borde.
+X_BORDE = np.array([101.37, 102.49, 103.11, 101.93])     # 2 decimales: paso 0,01 (la última cifra no es par ni 5)
+Y_BORDE = np.array([50.69, np.nan, 51.57, 50.99])        # ~ la mitad, a 2 decimales y sin la segunda sesión
+ANIOS_BORDE = np.array([0.0, 0.4, 0.7, 1.0])
+
+
+def _hueco_de_la_cota():
+    """max(Lₜ − bₜ) − min(Lₛ + bₛ) en las fechas comunes, con bₜ = −log(1 − qₓ/2x) − log(1 − q_y/2y): el par es copia por
+    la regla de niveles si y solo si el hueco cabe en las dos tolerancias numéricas de cada lado, 4·tol_numerica."""
+    comun = ~np.isnan(Y_BORDE)
+    x, y = X_BORDE[comun], Y_BORDE[comun]
+    L = np.log(x) - np.log(y)
+    b = -np.log1p(-0.01 / (2 * x)) - np.log1p(-0.01 / (2 * y))
+    return float(np.max(L - b) - np.min(L + b))
+
+
+def test_t149_la_cota_de_niveles_es_el_redondeo_de_las_dos_mas_dos_tolerancias():
+    m = np.vstack([X_BORDE, Y_BORDE])
+    hueco = _hueco_de_la_cota()
+    assert 4e-5 < hueco < 4e-4                       # sin la tolerancia numérica, no son copias (Q08)
+    for tol_num in (hueco / 4 * (1 - 1e-3), hueco / 4 * (1 + 1e-3)):
+        assert fb._paso_de_precio(m, ~np.isnan(m), tol_num).tolist() == [0.01, 0.01]   # la tolerancia no mueve el paso
+    # la regla de las rentabilidades no los agrupa (Y no tiene la segunda sesión): solo decide la de niveles
+    dentro = fb._etiquetas_series_copiadas(m, ANIOS_BORDE, 0.01, 1.0, tol_numerica=hueco / 4 * (1 + 1e-3))
+    fuera = fb._etiquetas_series_copiadas(m, ANIOS_BORDE, 0.01, 1.0, tol_numerica=hueco / 4 * (1 - 1e-3))
+    assert dentro.tolist() == [0, 0]                 # justo dentro: copias (Q08 los separa)
+    assert len(set(fuera.tolist())) == 2             # justo fuera: no (Q09, con el doble de cota, los agruparía)
+
+
+def test_t149_en_el_borde_exacto_de_la_cota_es_copia():
+    """|log(pᵢ/pₖ) − c| ≤ B no es estricta: con tope 0 (tolerancia de clon 0) y el mismo precio en las fechas comunes, lo =
+    hi = 0 y el par es copia por niveles aunque sus rentabilidades difieran (falta una sesión en una). Q10 (`lo >= hi`)
+    lo descartaba."""
+    x = np.array([101.37, 102.49, 103.11, 101.93])
+    y = np.array([101.37, np.nan, 103.11, 101.93])
+    assert fb._etiquetas_series_copiadas(np.vstack([x, y]), ANIOS_BORDE, 0.0, 1.0).tolist() == [0, 0]
