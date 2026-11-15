@@ -77,4 +77,6 @@ def test_h04_importes_con_espacio_de_miles_y_listas_no_se_marcan():
 
 
 def test_r02_decimales_siguen_sin_marcarse():
-    assert tarjetas_en_texto("0." + VISA) == [] and tarjetas_en_texto(VISA + ",5") == []
+    # T-130 (H-05): la parte decimal de un número no se marca; una parte entera de 16 cifras sí (como en una fila CSV)
+    assert tarjetas_en_texto("0." + VISA) == [] and tarjetas_en_texto("3,5" + VISA) == []
+    assert tarjetas_en_texto(VISA + ",5") == ["tarjeta …1111"]

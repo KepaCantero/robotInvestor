@@ -226,9 +226,19 @@ LONGITUD_IBAN = {"AD": 24, "AE": 23, "AT": 20, "BE": 16, "BG": 22, "BR": 29, "CH
 # al lado («… 1111 12/27», «Ref AB12 DE89 …») no esconden el dato, como pasaba cuando el control miraba la serie entera.
 RE_GRUPOS_IBAN = re.compile(r"[A-Za-z0-9]+(?:[\s.\-]{1,3}[A-Za-z0-9]+)*")
 RE_SEPARADOR = re.compile(r"[\s.\-]+")
-# H-02: sin letra ni cifra pegadas antes o después (un tramo de cifras entre las letras de una huella SHA-256 o de un UUID
-# no es una tarjeta) y sin un punto o una coma con cifras (la parte de un número decimal tampoco)
-RE_GRUPOS_TARJETA = re.compile(r"(?<![0-9A-Za-z.,])([0-9]+(?:[\s\-]{1,3}[0-9]+)*)(?![0-9A-Za-z]|[.,][0-9])")
+# H-02: sin letra, cifra ni «_» pegados antes o después (un tramo de cifras entre las letras de una huella SHA-256, de un
+# UUID o de un identificador no es una tarjeta) y sin una cifra y un punto o una coma delante (la parte decimal de un
+# número tampoco). T-130 (QA r02 de T-123): una coma o un punto sin cifra delante sí valen («Visa,4111…», una fila CSV,
+# H-05), y entre grupos va un solo espacio, espacio duro o guion: con dos espacios o un salto de línea son las columnas
+# de una tabla, no una tarjeta (H-07, regresión de la r02).
+RE_GRUPOS_TARJETA = re.compile(r"(?<![0-9A-Za-z_])(?<![0-9][.,])([0-9]+(?:[ \u00a0\u202f\-][0-9]+)*)(?![0-9A-Za-z_])")
+# T-130 (H-06): países cuyo BBAN es solo de cifras en el registro ISO 13616 de SWIFT; en el resto, como mucho cuatro letras
+# (código de banco), salvo Malta, y ningún grupo de solo letras de más de cuatro. Así una mención de un ISIN o de un índice
+# seguida de palabras, o una huella truncada, no encadena hasta la longitud de un país y pasa el módulo 97 (1 de cada 97).
+BBAN_NUMERICO = frozenset({"AT", "BE", "CZ", "DE", "DK", "EE", "ES", "FI", "HR", "HU", "IL", "IS", "LT", "NO", "PL", "PT",
+                           "SE", "SI", "SK", "AE"})
+LETRAS_BBAN_MAX = 4
+SIN_LIMITE_DE_LETRAS = frozenset({"MT"})
 
 
 def _iban_valido(compacto: str) -> bool:
@@ -239,9 +249,20 @@ def _iban_valido(compacto: str) -> bool:
     return int("".join(str(int(c, 36)) for c in reordenado)) % 97 == 1
 
 
+def _bban_plausible(compacto: str, grupos: list[str]) -> bool:
+    pais, bban = compacto[:2], compacto[4:]
+    if pais in BBAN_NUMERICO:
+        return bban.isdigit()
+    if pais in SIN_LIMITE_DE_LETRAS:
+        return True
+    return sum(c.isalpha() for c in bban) <= LETRAS_BBAN_MAX and not any(g.isalpha() and len(g) > LETRAS_BBAN_MAX for g in grupos)
+
+
 def ibanes_en_texto(texto: str) -> list[str]:
-    """IBAN con su longitud de país y su dígito de control correctos: grupos consecutivos de una serie que empiezan por dos
-    letras y dos cifras y acaban en un límite de grupo (detrás puede venir una palabra o una cifra suelta)."""
+    """IBAN con su longitud de país, un BBAN plausible para su país y su dígito de control correctos: grupos consecutivos de
+    una serie que empiezan por dos letras y dos cifras y acaban en un límite de grupo (detrás puede venir una palabra o una
+    cifra suelta) o en letras pegadas al último grupo («… 3000EUR»). Coste lineal: cada ventana se corta en la longitud del
+    país (T-130, H-08: la r02 copiaba la lista en cada vuelta)."""
     hallados = []
     for m in RE_GRUPOS_IBAN.finditer(texto):
         grupos = [g.upper() for g in RE_SEPARADOR.split(m.group(0)) if g]
@@ -249,12 +270,17 @@ def ibanes_en_texto(texto: str) -> list[str]:
             largo = LONGITUD_IBAN.get(inicio[:2])
             if not largo or not inicio[2:4].isdigit() or not inicio[:2].isalpha():
                 continue
-            compacto = ""
-            for g in grupos[i:]:
-                compacto += g
+            compacto, usados = "", []
+            for j in range(i, len(grupos)):
+                compacto += grupos[j]
+                usados.append(grupos[j])
                 if len(compacto) >= largo:
                     break
-            if len(compacto) == largo and _iban_valido(compacto):
+            sobra = compacto[largo:]
+            if len(compacto) < largo or (sobra and not sobra.isalpha()):   # H-09: «…3000EUR» sí; una cifra pegada, no
+                continue
+            compacto = compacto[:largo]
+            if _bban_plausible(compacto, usados[1:] if not sobra else usados[1:-1]) and _iban_valido(compacto):
                 hallados.append(compacto)
     return hallados
 
@@ -288,7 +314,7 @@ def tarjetas_en_texto(texto: str) -> list[str]:
     por un grupo de cuatro ni siguen con ellos, y no se miran (T-123 r02, H-04)."""
     hallados = []
     for m in RE_GRUPOS_TARJETA.finditer(texto):
-        grupos = [g for g in re.split(r"[\s\-]+", m.group(1)) if g]
+        grupos = [g for g in re.split(r"[ \u00a0\u202f\-]", m.group(1)) if g]
         for i in range(len(grupos)):
             cifras = ""
             for j in range(i, len(grupos)):

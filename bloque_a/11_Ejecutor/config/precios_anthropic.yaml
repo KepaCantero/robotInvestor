@@ -1,0 +1,16 @@
+# Tarifa de la API de Anthropic para estimar el coste (T-129). No se fusiona sola: se pasa con
+# `--config config/precios_anthropic.yaml`. `por_defecto.yaml` deja los precios vacíos a propósito
+# (la entrega no inventa precios y sus pruebas lo comprueban).
+#
+# Fuente: https://platform.claude.com/docs/en/about-claude/pricing (consultada el 15-11-2026).
+# Antes de autorizar gasto, vuelva a comprobarla: los precios cambian. USD por millón de tokens.
+# - escritura_cache es la de 1 hora, porque `llm.cache_ttl` es "1h" (la de 5 minutos es más barata).
+# - Haiku 5.5: tarifa de prompts de hasta 100 000 tokens; por encima es 5 veces más cara (no se modela).
+# - Inferencia solo en EE. UU. (`inference_geo`) multiplica por 1,1 (el ejecutor no la usa).
+precios_por_millon:
+  claude-opus-5-5: {entrada: 4.0, salida: 20.0, escritura_cache: 8.0, lectura_cache: 0.20}
+  claude-sonnet-5-5: {entrada: 2.0, salida: 10.0, escritura_cache: 4.0, lectura_cache: 0.10}
+  claude-haiku-5-5: {entrada: 0.10, salida: 0.50, escritura_cache: 0.20, lectura_cache: 0.01}
+# Búsqueda web: 10 USD por 1 000 búsquedas, más los tokens de lo leído (página de la herramienta de
+# búsqueda web, consultada el 15-11-2026). Una búsqueda que falla no se cobra.
+precio_busqueda_web_por_mil: 10.0

@@ -344,3 +344,144 @@ Salida de `r03_01` (ejecutado sobre `00ed8d3`):
 ## Veredicto (r03)
 
 **NO APTO** · H-06 está corregido en lo que pedía (P32a a P32d mueren ahora con las pruebas citadas; PB-32 y PB-49 en PARCIAL) y PB-49 tiene su hueco bien dicho. Pero queda abierto un hallazgo alto nuevo del mismo tipo que H-01 y H-06 (H-07): en una muestra de seis filas AUTOMATICA ya leídas por las rondas anteriores, **PB-60 se publica «Superada» con una cláusula del plan que el ejecutor no cumple** (los entregables no declaran la degradación; ejecutado), sin incidencia, y PB-33, PB-56 y PB-06 tienen cláusulas afirmables sin afirmar. Además, el hueco de PB-32 está incompleto (H-08, media: Holm y el método). Como es la tercera vez que una muestra encuentra filas así, la corrección que propongo es un repaso cláusula a cláusula de las 24 AUTOMATICA por quien implementa, no solo de estas cuatro. Después basta volver a ejecutar `r03_01` y `r03_02`.
+
+## Ronda r04
+
+- **Revisor:** revisor nuevo sin contexto de la implementación (subagente de Claude; no es el de la r01, la r02 ni la r03, ni quien implementó) · 2026-11-15
+- **Copia revisada:** clon desconectado en `fb3ccd4` (la ronda r04 integrada con T-125 y T-126). Mutantes en dos copias desechables («qa7_mut»), ya borradas.
+- Opinión formada con el plan, el mapa y las pruebas citadas antes de leer el apartado «Ronda r04» de `analisis-tecnico.md`.
+
+### Reproducción
+
+| Qué | Orden | Resultado |
+| --- | --- | --- |
+| Suite completa de A, una vez | `cd bloque_a/11_Ejecutor && python -m pytest -q -p no:cacheprovider` | **5798 passed** en 1489 s (máquina compartida con otra QA); el árbol queda limpio (solo mis ficheros nuevos) |
+| Pruebas de `10_Herramientas` (no están en el gate; el mapa las cita) | `cd bloque_a/10_Herramientas && python -m pytest -q -p no:cacheprovider tests` | 135 passed, 38 subtests passed |
+| Comprobar el mapa | `.venv/bin/python .docs/scripts/evidencias_plan_a.py` | «67 pruebas del plan, 145 pruebas automáticas citadas y todas existen · AUTOMATICA 22, DOCUMENTAL 1, PARCIAL 36, PENDIENTE_API 7, REQUIERE_USUARIOS 1», código 0 |
+| Goldens de contratos | `cd bloque_a/11_Ejecutor && python tests/goldens_ct.py` | «goldens de contratos: coinciden» |
+| ruff (tres `11_Ejecutor`, como el gate) | `ruff check --output-format=concise bloque_a/11_Ejecutor bloque_a_forex/11_Ejecutor bloque_b/11_Ejecutor \| wc -l` | 2902 (cuota 2902) |
+| Gates ligeros | `tools/secrets_scan.py`, `refs_vivas.py`, `nfc_check.py`, `corpus_integridad.py` | los cuatro con 0 |
+
+### Scripts de rondas anteriores, vueltos a ejecutar (sin cambiarlos)
+
+| Script | Resultado r04 |
+| --- | --- |
+| `r03_01_pb32_y_muestra.py` (lee las citadas del mapa) | P32a a P32h, S06, S14, S33, S56, S60a y S60b: **todos MUERTOS** («vivos: ninguno»); S64 no se ejecuta (como en la r03). A mano, con una credencial denegada: F10 la tiene y **los tres entregables declaran la degradación** (técnico y JSON con servicio, DEGRADADO y CRD-; visual con el servicio) |
+| `r04_mutantes_implementador.py` (del implementador) | M01 a M20: **20 de 20 MUERTOS** («vivos o no aplicados: ninguno») |
+| `r03_02_vivos_contra_la_suite.py` | no se ejecuta: era informativo para los vivos de `r03_01`, y en `r03_01` ya no queda ninguno |
+
+```bash
+cd <copia desechable con «qa2_mut»>/bloque_a/11_Ejecutor && python <repo>/.docs/tickets/T-116/revisores/r03_01_pb32_y_muestra.py .
+python <repo>/.docs/tickets/T-116/r04_mutantes_implementador.py .
+```
+
+### Script nuevo de la r04 (`revisores/r04_01_mutantes_clausulas.py`)
+
+Un mutante por cláusula, enfrentado a las pruebas que el mapa cita para su fila (del ejecutor y de `10_Herramientas`). Uso: `python .docs/tickets/T-116/revisores/r04_01_mutantes_clausulas.py <copia desechable de bloque_a con «_mut»>`.
+
+| Mutante | Fila | Qué rompe | Citadas | Resultado |
+| --- | --- | --- | --- | --- |
+| **M31** | PB-31 | la banda verbal de cada horizonte publicado deja de seguir a la probabilidad interna (siempre «incierto») | 3 | **VIVO** |
+| **M37a** | PB-37 | el Evaluador deja de resolver las correcciones (PRG con `version_de`) | 4 | **VIVO** |
+| **M37b** | PB-37 | el Evaluador deja de resolver el original de un PRG corregido | 4 | **VIVO** |
+| M22 | PB-22 | la incidencia de canal no previsto deja de marcarse como escalada (corrección r04) | 3 | MUERTO |
+| M60a | PB-60 | los entregables dejan de declarar la degradación (corrección r04) | 2 | MUERTO |
+| M60b | PB-60 | con cambio de circunstancias tampoco se vuelve a pedir | 2 | MUERTO |
+| M58 | PB-58 | una solicitud pendiente deja de declararse como degradada | 3 | MUERTO |
+| M56 | PB-56 | el C1 deja de llamar a la regla de duplicados entre tipos | 5 | MUERTO |
+| M33 | PB-33 | no se genera la alerta de sobreconfianza | 6 | MUERTO |
+
+### Las dos correcciones del ejecutor de la r04
+
+- **PB-58 y PB-60 (degradación declarada):** leído `Credenciales.degradaciones` y su uso en el ciclo (`orquestacion.py`, «Servicio «…» en modo degradado») y en el visual (`redaccion.py`). `test_pb60_…` afirma la limitación en el paquete, el técnico, el JSON y el visual, que no se vuelve a pedir salvo cambio de circunstancias y que deja de declararse al proveerse; `test_pb58_…`, el servicio pendiente declarado y el valor fuera de todo contexto. M60a, M60b y M58 mueren; S60a y S60b de la r03 también. **Bien.**
+- **PB-22 (escalado):** las dos incidencias CANAL_NO_PREVISTO de `Mensajeria.crear` llevan `escalado_operador=True` y «rechazada y registrada», como la de acceso fuera de matriz; M22 muere. **Bien**, con una nota (H-12): la marca no la lee nada.
+
+### Repaso cláusula a cláusula de las 22 AUTOMATICA (leídas todas, con la entrada entera del plan)
+
+| Fila | Juicio r04 | Por qué |
+| --- | --- | --- |
+| PB-01 | bien | Nombres `AAAA-MM-DD_tipo_RUN-id`, F1–F5, ≤ 3, RUN- en F5, PRG congelados tras G3 (y no sin G3), N2/N1 según GC0, mensajes del catálogo, todo lo que va al Broker sale de AG-01. Fuera: hora de entrega (reloj simulado) y «siete clases» (el ciclo usa doce) |
+| PB-06 | bien | ACLARACION, N0, referencias existentes en F1–F6, QRY- en F5, cero CT-05, ningún RUN- nuevo, ≤ 1 UC (S06 muere) |
+| PB-12 | bien | La regla de relevancia es la misma función en el productor y en la prueba (`ht09.relevancia_esperada_alta`), pero la anclan los dos casos fijos (CRI nueva ALTA, RF de seguimiento MEDIA o BAJA); G3-CON-14, 15 y 20 corresponden a C10, C01 (vocabulario) y C11 de HT-09 |
+| PB-14 | bien | GC0 positivo con la opción en `invalidadas`, CERRADA con motivo INVALIDACION en F3, PRG ABIERTO |
+| PB-16 | bien | PARCIAL, limitación en los dos informes, laguna en F5, menos candidatas en RV, mismas comprobaciones G3 sin NO_APLICA, C08 OK |
+| PB-22 | bien | Tres mensajes del plan, tres INC- CANAL_NO_PREVISTO, ningún efecto fuera de HA (M22 muere); nota en H-12 |
+| PB-23 | bien | Tres intentos, tres ACCESO_FUERA_DE_MATRIZ, huella de F4 igual tras cada uno |
+| **PB-31** | **mal puesta** | Plan, resultado esperado: «Banda «más probable que no» con «sin ventaja demostrada todavía» en técnico, visual y JSON». Las citadas afirman la etiqueta, `prob` nula, ninguna cifra ni «Alta», y que HT-09 bloquea la variante sembrada; **ninguna afirma la banda**: si todas las bandas publicadas salen «incierto» (M31), las tres siguen en verde. La banda la calcula el ejecutor (`sintesis.py`, `banda_publicable`) y es afirmable con el simulador. «No comprueba» vacío |
+| **PB-37** | **mal puesta** | Plan: «Adelantar el reloj a ambos vencimientos» → «el original sin cambios y resuelto en su fecha»; criterio «ambos RESUELTO». Las dos pruebas nuevas escriben la RESOLUCION de los dos PRG **a mano** (AG-20) y no llaman a `Evaluador.resolver`: si el Evaluador dejara de resolver la corrección o el original (M37a, M37b), las cuatro citadas siguen en verde. Es el mismo patrón que S56 en la r03 (la regla probada con la llamada hecha a mano) |
+| PB-43 | bien | CT-22, LEC- de producto enlazada a las tres QRY-, tema común en F5; las palabras distintas y la sección siguiente son del modelo |
+| PB-45 | bien | Diez lecciones, la estadística primero, ninguna de otro tipo |
+| PB-49 | bien | Ocho semanas: cada instantánea de F1–F6, RC y HA contiene la anterior; borrado del medio y del final detectado; supresiones de F7–F9 con registro de bajas (HT-02) |
+| PB-53 | bien | El caso del plan en un C1; el nombre solo en `ejemplos_ilustrativos`; HT-09 bloquea un activo concreto |
+| PB-54 | bien | Once campos no vacíos en cada encargo |
+| PB-55 | bien | Doce apartados con semáforo en el técnico, ≤ 3 y motivo de menos de tres |
+| PB-56 | bien | El caso del plan en un C1 con su motivo en F3 (M56 y S56 mueren) |
+| **PB-58** | **dudosa** | Pasos 1 y 2 del plan: «El BFA envía `solicitudes_credenciales` con su retorno» y «el Coordinador comprueba HT-01 y emite CT-25». Ningún código lee `solicitudes_credenciales` de un retorno (`grep`: solo aparece en los goldens, siempre vacío); las pruebas llaman a `credenciales.solicitar` a mano. El paso es del ejecutor (leer el retorno y emitir el CT-25), no del modelo. Ni «No comprueba» ni INC-T116-03 lo dicen. El resto del criterio (valor en ningún sitio, segunda solicitud sin molestar al Broker, degradación declarada) está bien afirmado |
+| PB-59 | bien | Rechazo íntegro (sigue pendiente), SEGURIDAD en HA sin el valor, depósito y renovación pedidos |
+| PB-60 | bien | Corrección y sus cláusulas afirmadas (M60a, M60b, S60a y S60b mueren) |
+| PB-63 | bien | Banda sin cifra, ≥ 3 hitos con fecha, indicador y criterio, espaciado, congelados con su padre, C18 OK; HT-09 bloquea sin hitos o con probabilidad |
+| PB-65 | bien | Los tres dictámenes del plan en HT-09 con su motivo; el del Orquestador (CT-14) es del modelo |
+| PB-66 | bien | SEG- en F11, EN_SEGUIMIENTO y `seg_id` en F3, dos C6 con ≤ 300 palabras, recomendación del vocabulario y HT-09; pausa, reanudación, cancelación inmediata y ningún ciclo después |
+
+### Muestra de PARCIAL (regla: «No comprueba» dice todo lo que falta)
+
+| Fila | Juicio | Por qué |
+| --- | --- | --- |
+| PB-02, PB-07, PB-30, PB-39, PB-62 | bien | El hueco declarado es el que hay |
+| PB-13 | aceptable | Declara la rotación; «comprobación de invalidación registrada (AS-06)» es del Auditor |
+| **PB-44** | **incompleta** | Declara solo «el recuento exacto contra F4 y F3». El plan pide además `significativo` false (n < 30) con nota de muestra pequeña, el mismo dato en el técnico y en el visual («Cómo nos fue») y G3-CON-18; ninguna citada lo afirma |
+| **PB-46** | **incompleta** | Declara solo la recalificación en F9. No dice que en un ciclo ningún pronóstico de fuente llega a F2 (el ejecutor pierde el bloque `pronostico_fuente` al construir las piezas; QA r01 de T-125, H-01) |
+| **PB-48** | **incompleta** | Declara solo COR- y P3-. No dice que en el ciclo citado ninguna opción en banda marginal se resuelve con su segunda pasada y que quitar la segunda pasada del ciclo deja las citadas en verde (QA r01 de T-126, H-01) |
+| **PB-26** | **incompleta** | No dice que la «sección temática» se comprueba por el campo de la ficha y no por la sección en la que está, ni que el desempate por fecha no se comprueba (QA r01 de T-126, H-02) |
+
+### Estado de los hallazgos anteriores
+
+| ID | Gravedad | Estado | Evidencia |
+| --- | --- | --- | --- |
+| H-01 a H-06 | — | corregidos (rondas anteriores) | sin cambios |
+| H-07 | alta | **corregido en lo que pedía** | PB-60: los entregables declaran la degradación (M60a, S60a, S60b mueren); PB-33 a parcial con su hueco y S33 muere; PB-56 (S56) y PB-06 (S06) mueren. Pero el repaso sistemático deja dos filas del mismo tipo (H-10) |
+| H-08 | media | **corregido** | P32e, P32f y P32h mueren con las citadas (`r03_01`) |
+| H-09 | baja | **corregido** | La fila T-116 de la deuda dice 145 citadas, como el script |
+
+### INC-T116-03 (`docs/incidencias.md`)
+
+Leída. Es `[PROPUESTO]`, distingue lo corregido (PB-60 y PB-58, PB-22) de lo que no se arregla y cada línea casa con el «No comprueba» de su fila (PB-32, 33, 07, 11, 21, 36, 38, 61, 62, 19, 50 y 64). Falta una línea para el paso de `solicitudes_credenciales` de PB-58 (H-10). PB-31 y PB-37 no son fallos del ejecutor sino de las pruebas, así que no van a la incidencia.
+
+### Criterios de aceptación
+
+| Criterio | Cumple | Evidencia |
+| --- | --- | --- |
+| CA-1 · 67 filas con cobertura, pruebas, qué comprueban y qué no | sí en la forma; **no en el fondo** (H-10, H-11) | PB-31 y PB-37 se publican «Superada» con una cláusula determinista sin afirmar (M31, M37a y M37b viven); PB-58 con un paso del ejecutor que no existe; cuatro parciales con el hueco incompleto |
+| CA-2 · toda prueba citada existe | sí | 145 citadas, código 0 (ejecutado) |
+| CA-3 · `--ejecutar` genera el documento y termina con 0 | no repetido | La suite completa de A y la de `10_Herramientas` pasan (arriba), que contienen todas las citadas; `test_h05_…` compara documento y mapa |
+| CA-4 · cada fila superada tiene una orden que, copiada, pasa | no repetido | — |
+| CA-5 · nada del modelo real, de usuarios o documental figura superado | sí | 7 PENDIENTE_API, 1 con usuarios, 1 documental, sin pruebas |
+| CA-6 · mapa roto ⇒ el script y `test_fase4_mapa.py` fallan | sí | dentro de la suite |
+| CA-7 · huecos en el ticket y en la deuda | sí | README (registro) y fila T-116 de la deuda al día |
+| CA-8 · gate 12/12; cuotas; pruebas recogidas | por partes | gates ligeros y ruff 2902; el gate entero y mypy no los he pasado (encargo) |
+
+### Hallazgos nuevos
+
+| ID | Gravedad | Cómo reproducirlo | Esperado / obtenido | Corrección sugerida | Estado |
+| --- | --- | --- | --- | --- | --- |
+| H-10 | **alta** | `python .docs/tickets/T-116/revisores/r04_01_mutantes_clausulas.py <copia desechable de bloque_a con «_mut»>`: M31, M37a y M37b «VIVO». Para PB-58: `grep -rn solicitudes_credenciales bloque_a/11_Ejecutor/bloque_a` (vacío) | Esperado (regla estricta, la de H-01, H-06 y H-07): AUTOMATICA solo si las citadas afirman cada cláusula determinista de la entrada del plan. Obtenido: **PB-31** no afirma la banda «más probable que no» en los tres entregables (todas «incierto» y las citadas en verde); **PB-37** no afirma que el Evaluador resuelva los dos PRG (las pruebas escriben la resolución a mano); **PB-58** publica «Superada» sin el paso del BFA (`solicitudes_credenciales` en su retorno → CT-25), que el ejecutor no hace y nadie declara | PB-31: afirmar la banda de cada horizonte publicado frente a `banda_publicable(prob_interna)` en el JSON, el técnico y el visual (y el caso del plan con 0,65). PB-37: hacer vencer los dos PRG y llamar a `Evaluador.resolver` (o a un ciclo) en vez de escribir la RESOLUCION. PB-58: pasar a PARCIAL con el hueco y su línea en INC-T116-03, o implementar la lectura del retorno. Regenerar el documento |
+| H-11 | media | Leer el plan y la fila del mapa de PB-44, PB-46, PB-48 y PB-26 (tabla de la muestra de PARCIAL) | Esperado: el «No comprueba» de una parcial dice todo lo que le falta (como H-08). Obtenido: cuatro huecos incompletos (PB-44: `significativo` y nota, mismo dato en los dos informes, G3-CON-18; PB-46: el camino de F2 roto; PB-48: la segunda pasada en el ciclo; PB-26: sección física y desempate por fecha) | Completar los cuatro «No comprueba» (o añadir las pruebas) y regenerar |
+| H-12 | baja | `grep -rn escalado_operador bloque_a/11_Ejecutor/bloque_a` | El mapa de PB-22 dice «escaladas al operador»; la marca `escalado_operador` se escribe en HA y nada la lee (ni el paquete, ni los informes, ni una cola). Es igual que la de acceso fuera de matriz, ya aceptada | Decir «marcadas para escalar» o llevarlas a donde el operador las vea; si se deja, apuntarlo |
+
+### Invariantes
+
+- No hay LLM en la ruta determinista; mock antes que API. ✔
+- Las dos correcciones del ejecutor validan antes de mutar y no cambian formatos congelados (goldens coinciden). ✔
+- Decisiones del operador: INC-T116-01 a 03 `[PROPUESTO]`; falta la de PB-58 (H-10). ✗ (menor)
+- Secretos: los gates en verde; mis scripts no llevan ninguno. ✔
+- Documentación: LEEME y deuda al día; el documento de evidencias publica PB-31, PB-37 y PB-58 como «Superada» (H-10). ✗
+
+### Lo que quedó sin comprobar
+
+- `--ejecutar` completo, el gate entero, mypy, A-Forex y B (encargo).
+- CA-4 (órdenes copiadas del documento).
+- Mutantes contra la suite entera para M31 y M37 (solo contra las citadas, que es la regla).
+
+## Veredicto (r04)
+
+**NO APTO** · Las dos correcciones del ejecutor están bien (degradación declarada en los entregables en PB-58 y PB-60; CANAL_NO_PREVISTO escalado en PB-22: sus mutantes mueren), y H-07, H-08 y H-09 están corregidos. Pero el repaso cláusula a cláusula de las 22 AUTOMATICA deja otra vez filas del mismo tipo (H-10, alta): PB-31 (la banda) y PB-37 (la resolución por el Evaluador) tienen una cláusula determinista sin afirmar, con mutantes vivos, y PB-58 da por superado un paso del ejecutor que no existe. Además, cuatro parciales tienen el hueco incompleto (H-11, media). Tras corregirlo, volver a ejecutar `r04_01_mutantes_clausulas.py` (M31, M37a y M37b deben morir) y `r03_01`.

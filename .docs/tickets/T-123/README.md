@@ -2,7 +2,7 @@
 
 | Campo | Valor |
 | --- | --- |
-| Estado | EN QA |
+| Estado | CERRADO |
 | Pieza | bloque_a (11_Ejecutor: `contratos.py`) |
 | Planifica · implementa · QA | claude · claude · un revisor nuevo sin contexto |
 | Aprobación del operador | 2026-11-14: «quiero que pases a completar el apartado 3 de huecos menores apuntados en la deuda técnica» |
@@ -49,3 +49,4 @@ Que R8 (datos sensibles fuera de los mensajes) detecte también un IBAN de otro 
 - 2026-11-14 · EN QA · claude · un IBAN seguido de otra cifra ya no se marca (era otra serie); pruebas vecinas (684) en verde
 - 2026-11-14 · QA r01 · revisor nuevo · NO APTO (H-02 alta: huellas y UUID como tarjeta; H-01 media; H-03 y H-04 bajas)
 - 2026-11-14 · EN QA · claude · ronda r02: los cuatro corregidos (tabla de arriba); la prueba de T-122 de «tres separadores» pasa a «cuatro» (INC-T123-01)
+- 2026-11-15 · CERRADO · QA r02 APTO (revisor nuevo sin contexto); hallazgos abiertos (H-05 a H-10) corregidos en T-130

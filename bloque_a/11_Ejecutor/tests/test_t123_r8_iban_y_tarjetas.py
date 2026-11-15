@@ -60,7 +60,7 @@ def test_la_tarjeta_se_detecta_y_se_devuelve_enmascarada(nombre, sep):
     "ISIN ES0113900J37 y US0378331005", "Teléfono +34 912 345 678", "Serie 0000 0000 0000 0000", "CUSIP 037833100",
     "DE89 3704 0044 0532 0130 01", "XX89370400440532013000", "La rentabilidad fue del 4,1 % en 1111 sesiones.",
     '"mdd": 0.4903529406787125, "drawdown_actual": 0.4228715933084759', '"pct": 0.6507936507936508',   # decimales del ciclo
-    "4111111111111111.5", "1,4111111111111111", "-0.4111111111111111",
+    "1,4111111111111111", "-0.4111111111111111",   # T-130: «4111111111111111.5» sí se marca (INC-T123-01)
 ])
 def test_lo_que_no_es_una_cuenta_ni_una_tarjeta_no_se_marca(texto):
     assert ibanes_en_texto(texto) == [] and tarjetas_en_texto(texto) == []
