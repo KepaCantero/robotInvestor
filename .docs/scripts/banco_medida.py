@@ -2,18 +2,29 @@
 
 Compara, con los mismos datos y las mismas fechas de corte, lo que elige el titular (hoy, el Bloque A en modo backtest)
 con dos referencias: azar con semilla y momento (solo código, sin datos posteriores al corte). Mide calidad (exceso frente
-a la cesta de la clase, con rango por remuestreo) y coste (llamadas, tokens y coste estimado). Antes de evaluar sella un
-prerregistro con su huella. No modifica ningún bloque ni el marco común: solo importa A para ejecutarlo.
+a la cesta de la clase, con rango por remuestreo) y coste (llamadas, tokens, caché, uc y coste estimado). Antes de evaluar
+sella un prerregistro con su huella. No modifica ningún bloque ni el marco común: solo importa A para ejecutarlo.
 
 Uso (desde la raíz del repositorio):
   .venv/bin/python .docs/scripts/banco_medida.py a --desde 2026-03-06 --hasta 2026-05-29 --salida <carpeta>
-      [--cliente mock] [--frecuencia semanal] [--clases DIV,RV] [--semilla 7] [--remuestreos 2000] [--ventana 63]
+      [--cliente mock] [--frecuencia semanal] [--clases DIV,RV] [--datos <carpeta de CSV>] [--universo <csv>]
+      [--semilla 7] [--remuestreos 2000] [--ventana 63] [--nivel 0.90] [--min-efectivas 10]
+  .venv/bin/python .docs/scripts/banco_medida.py verificar <carpeta> [--registro R]
 
-Desde T-99, cada ejecución desde la línea de órdenes se anota en el registro de experimentos (`.docs/scripts/registro_experimentos.py`):
-un prerregistro nuevo, o un intento más de `--experimento EXP-…`, y su resultado, también si falla. `--registro` elige el fichero.
+Qué cuenta como una observación (QA r01 de T-94, H-01 y H-02):
+- una apuesta sobre el mismo activo, la misma clase y la misma dirección cuya ventana sigue abierta no se vuelve a contar:
+  queda «repetida» y fuera de la media (el Bloque A repite cada semana la misma oportunidad VIGENTE);
+- el rango se calcula remuestreando por fecha de corte (todas las selecciones de una fecha juntas), y el número efectivo
+  de observaciones es el de fechas distintas;
+- por debajo de --min-efectivas fechas por lado no hay veredicto: «todavía no se sabe», con el motivo.
 
-Deja en <carpeta>: prerregistro.json, informe.json, informe.md y la salida del titular (titular/). Con el cliente
-simulado o los datos de ejemplo, el informe lo avisa en su primera línea: entonces prueba la tubería, no mide a A.
+Desde T-99, cada ejecución desde la línea de órdenes se anota en el registro de experimentos (`.docs/scripts/registro_experimentos.py`).
+Sin --experimento, el banco reutiliza el experimento ya prerregistrado con la misma hipótesis, objeto y periodo, y otra semilla
+o parámetros cuentan como otra variante del mismo experimento; si no lo hay, lo prerregistra. Con --experimento, ese
+experimento tiene que tener la misma hipótesis, objeto y periodo. `verificar` comprueba después las huellas.
+
+Deja en <carpeta>: prerregistro.json, informe.json, informe.md y la salida del titular (titular/). El informe avisa en su
+primera línea si el cliente es simulado o los datos son los de ejemplo: entonces prueba la tubería, no mide a A.
 B y C se conectan como un contendiente más (una función que devuelve selecciones); ver `.docs/tickets/T-94/README.md`.
 """
 from __future__ import annotations
@@ -24,6 +35,7 @@ import csv
 import hashlib
 import io
 import json
+import math
 import os
 import random
 import shutil
@@ -34,28 +46,77 @@ from pathlib import Path
 import numpy as np
 import pandas as pd
 
-VERSION = "0.2.0"   # 0.2.0 (T-99): cada ejecución se anota en el registro de experimentos
+VERSION = "0.3.0"   # 0.3.0 (T-94 r02): repeticiones, remuestreo por fechas, mínimo de observaciones y fallo cerrado
 RAIZ = Path(__file__).resolve().parents[2]
 EJECUTOR_A = RAIZ / "bloque_a" / "11_Ejecutor"
 SIGNO = {"LARGO": 1.0, "CORTO": -1.0}
+DIRECCIONES = ("LARGO", "CORTO", "NEUTRAL")
+# Valores por defecto de los argumentos ([PROPUESTO] técnico en la fila T-94 de la deuda; el banco no es parte del robot).
+SEMILLA = 7
+REMUESTREOS = 2000
+VENTANA_MOMENTO = 63          # sesiones, unos tres meses
+NIVEL = 0.90                  # nivel del rango
+MIN_EFECTIVAS = 10            # fechas de corte distintas por lado; el mismo mínimo que A para certificar
+                              # (`evaluacion.min_conglomerados_bootstrap` de su configuración)
+AVISO_FUGA = "FUGA POR CONOCIMIENTO DEL MODELO"
 
 
 class BancoError(RuntimeError):
     """Fallo que detiene el banco con su motivo (nunca se rellena un hueco)."""
 
 
+def _entero(nombre: str, valor, minimo: int = 1) -> int:
+    if isinstance(valor, bool) or not isinstance(valor, (int, np.integer)) or valor < minimo:
+        raise BancoError(f"«{nombre}» tiene que ser un entero mayor o igual que {minimo} (se recibió {valor!r})")
+    return int(valor)
+
+
+def _nivel(valor) -> float:
+    if isinstance(valor, bool) or not isinstance(valor, (int, float)) or not (0 < float(valor) < 1):
+        raise BancoError(f"«nivel» tiene que estar entre 0 y 1, sin incluirlos (se recibió {valor!r})")
+    return float(valor)
+
+
 # ---------------------------------------------------------------- datos
 
+def validar_serie(simbolo: str, serie: pd.Series) -> pd.Series:
+    """Falla cerrado si la serie no es utilizable: índice de fechas sin zona horaria y cierres finitos y positivos."""
+    if not isinstance(serie, pd.Series) or not isinstance(serie.index, pd.DatetimeIndex):
+        raise BancoError(f"los precios de {simbolo} no son una serie indexada por fechas")
+    if serie.index.tz is not None:
+        raise BancoError(f"los precios de {simbolo} tienen zona horaria ({serie.index.tz}); se esperan fechas de sesión sin zona")
+    try:
+        v = serie.to_numpy(dtype=float)
+    except (TypeError, ValueError) as e:
+        raise BancoError(f"los precios de {simbolo} no son numéricos: {e}") from e
+    malos = ~np.isfinite(v) | (v <= 0)
+    if malos.any():
+        i = int(np.argmax(malos))
+        raise BancoError(f"cierre no válido de {simbolo} el {serie.index[i]:%Y-%m-%d}: {serie.iloc[i]!r} (tiene que ser finito y positivo)")
+    return serie
+
+
 def cargar_precios(carpeta: Path, simbolos: Sequence[str]) -> dict[str, pd.Series]:
-    """Cierres por símbolo desde CSV con columnas «fecha» y «cierre». Falla si falta alguno."""
+    """Cierres por símbolo desde CSV con columnas «fecha» y «cierre». Falla con el motivo si falta un fichero, una columna,
+    una fecha legible o un cierre finito y positivo."""
     out = {}
     for s in sorted(set(simbolos)):
         f = Path(carpeta) / f"{s}.csv"
         if not f.exists():
             raise BancoError(f"no hay datos para {s} en {carpeta}")
-        df = pd.read_csv(f, usecols=["fecha", "cierre"])
-        serie = pd.Series(df["cierre"].astype(float).values, index=pd.to_datetime(df["fecha"])).sort_index()
-        out[s] = serie[~serie.index.duplicated(keep="last")]
+        try:
+            df = pd.read_csv(f, dtype={"fecha": str, "cierre": str}, keep_default_na=False)
+        except (ValueError, pd.errors.ParserError, UnicodeDecodeError) as e:
+            raise BancoError(f"no se puede leer {f.name}: {e}") from e
+        falta = [c for c in ("fecha", "cierre") if c not in df.columns]
+        if falta:
+            raise BancoError(f"a {f.name} le faltan las columnas {falta}")
+        fechas = pd.to_datetime(df["fecha"], errors="coerce", format="mixed")
+        if fechas.isna().any():
+            raise BancoError(f"fecha ilegible en {f.name}: {df['fecha'][fechas.isna()].iloc[0]!r}")
+        cierre = pd.to_numeric(df["cierre"].str.strip(), errors="coerce")   # lo ilegible queda NaN y validar_serie lo rechaza
+        serie = pd.Series(cierre.to_numpy(dtype=float), index=pd.DatetimeIndex(fechas)).sort_index()
+        out[s] = validar_serie(s, serie[~serie.index.duplicated(keep="last")])
     return out
 
 
@@ -66,12 +127,13 @@ def cierre_hasta(serie: pd.Series, fecha) -> float | None:
 
 
 def rentabilidad(serie: pd.Series, inicio, fin) -> float | None:
-    """Rentabilidad entre el último cierre conocido al inicio y al fin. None si los datos no llegan al fin."""
+    """Rentabilidad entre el último cierre conocido al inicio y al fin. None si los datos no llegan al fin o algún extremo
+    no es finito y positivo."""
     fin = pd.Timestamp(fin)
     if serie.empty or serie.index.max() < fin:
         return None
     a, b = cierre_hasta(serie, inicio), cierre_hasta(serie, fin)
-    if a is None or b is None or a <= 0:
+    if a is None or b is None or not (math.isfinite(a) and math.isfinite(b)) or a <= 0 or b <= 0:
         return None
     return b / a - 1.0
 
@@ -82,61 +144,144 @@ def evaluar(selecciones: list[dict], precios: dict[str, pd.Series], universo: pd
             fecha_fin: Callable[[pd.Timestamp, str], pd.Timestamp]) -> list[dict]:
     """Exceso de cada selección frente a la cesta de su clase (media del universo de esa clase), con su signo.
 
-    Una selección queda sin resolver si su símbolo o la cesta no tienen precio al final; nunca se estima.
-    Las selecciones NEUTRAL no se puntúan."""
+    - Una selección queda sin resolver si su símbolo o la cesta no tienen precio al final; nunca se estima.
+    - Las selecciones NEUTRAL no se puntúan.
+    - Una selección del mismo activo, clase y dirección que otra puntuada cuya ventana sigue abierta en su fecha de corte
+      queda «repetida»: es la misma apuesta y no se cuenta dos veces (H-01).
+    - Se detiene con el motivo si la clase no está en el universo, si el símbolo no es de esa clase o no tiene datos, si la
+      dirección no es LARGO, CORTO ni NEUTRAL, o si una serie no es utilizable (H-03, H-10)."""
     miembros = universo.groupby("clase")["simbolo"].apply(list).to_dict()
-    out = []
-    for s in selecciones:
-        fila = dict(s)
-        ini = pd.Timestamp(s["fecha_asof"])
-        fin = fecha_fin(ini, s["horizonte"])
-        fila["fecha_fin"] = fin.strftime("%Y-%m-%d")
-        if s["simbolo"] not in precios:
-            raise BancoError(f"la selección usa {s['simbolo']}, que no está en los datos")
-        signo = SIGNO.get(s["direccion"])
-        r = rentabilidad(precios[s["simbolo"]], ini, fin)
-        cesta = [rentabilidad(precios[m], ini, fin) for m in miembros.get(s["clase"], []) if m in precios]
-        cesta = [x for x in cesta if x is not None]
-        if signo is None or r is None or not cesta:
-            fila.update(resuelta=False, exceso=None)
+    clase_de = dict(zip(universo["simbolo"], universo["clase"]))
+    validadas: set[str] = set()
+
+    def serie(sim: str) -> pd.Series:
+        if sim not in precios:
+            raise BancoError(f"la selección usa {sim}, que no está en los datos")
+        if sim not in validadas:
+            validar_serie(sim, precios[sim])
+            validadas.add(sim)
+        return precios[sim]
+
+    def corte(s: dict) -> pd.Timestamp:
+        try:
+            t = pd.Timestamp(s["fecha_asof"])
+        except (KeyError, ValueError, TypeError) as e:
+            raise BancoError(f"fecha de corte ilegible en la selección {s!r}") from e
+        if t.tz is not None:
+            raise BancoError(f"la fecha de corte {s['fecha_asof']!r} tiene zona horaria")
+        return t
+
+    inicios = [corte(s) for s in selecciones]
+    out: list[dict | None] = [None] * len(selecciones)
+    abiertas: dict[tuple, tuple[pd.Timestamp, str]] = {}
+    for i in sorted(range(len(selecciones)), key=lambda k: (inicios[k], k)):
+        s = selecciones[i]
+        clase, sim, direccion = s.get("clase"), s.get("simbolo"), s.get("direccion")
+        if direccion not in DIRECCIONES:
+            raise BancoError(f"dirección {direccion!r} desconocida en la selección de {sim} ({', '.join(DIRECCIONES)})")
+        if clase not in miembros:
+            raise BancoError(f"la clase {clase!r} de la selección de {sim} no está en el universo")
+        serie(sim)
+        if clase_de.get(sim) != clase:
+            raise BancoError(f"{sim} no es de la clase {clase} en el universo (es de {clase_de.get(sim)!r})")
+        ini = inicios[i]
+        fin = pd.Timestamp(fecha_fin(ini, s["horizonte"]))
+        fila = {**s, "fecha_fin": fin.strftime("%Y-%m-%d"), "repetida": False}
+        clave = (clase, sim, direccion)
+        if direccion == "NEUTRAL":
+            fila.update(resuelta=False, exceso=None, motivo="NEUTRAL no se puntúa")
+        elif clave in abiertas and abiertas[clave][0] > ini:
+            fila.update(resuelta=False, exceso=None, repetida=True,
+                        motivo=f"repetida: la misma apuesta sigue abierta desde el {abiertas[clave][1]}")
         else:
-            fila.update(resuelta=True, exceso=round(signo * (r - float(np.mean(cesta))), 10))
-        out.append(fila)
-    return out
+            abiertas[clave] = (fin, ini.strftime("%Y-%m-%d"))
+            r = rentabilidad(serie(sim), ini, fin)
+            cesta = [rentabilidad(serie(m), ini, fin) for m in miembros[clase] if m in precios]
+            cesta = [x for x in cesta if x is not None]
+            if r is None or not cesta:
+                fila.update(resuelta=False, exceso=None, motivo="sin precio al final de la ventana")
+            else:
+                fila.update(resuelta=True, exceso=round(SIGNO[direccion] * (r - float(np.mean(cesta))), 10), cesta_n=len(cesta))
+        out[i] = fila
+    return [f for f in out if f is not None]
 
 
 # ---------------------------------------------------------------- estadística
 
-def _remuestreo_medias(x: np.ndarray, n: int, rng: np.random.Generator) -> np.ndarray:
-    idx = rng.integers(0, len(x), size=(n, len(x)))
-    return x[idx].mean(axis=1)
+def _limpios(excesos: Sequence, grupos: Sequence | None) -> tuple[np.ndarray, list | None]:
+    if grupos is not None and len(grupos) != len(excesos):
+        raise BancoError("excesos y grupos de distinta longitud")
+    pares = [(e, None if grupos is None else grupos[i]) for i, e in enumerate(excesos) if e is not None]
+    x = np.asarray([p[0] for p in pares], dtype=float)
+    if not np.isfinite(x).all():
+        raise BancoError("hay un exceso no finito: los datos no son utilizables")
+    return x, (None if grupos is None else [p[1] for p in pares])
 
 
-def resumen(excesos: Sequence[float], remuestreos: int, semilla: int) -> dict:
-    x = np.asarray([e for e in excesos if e is not None], dtype=float)
+def _efectivas(x: np.ndarray, grupos: list | None) -> int:
+    return len(x) if grupos is None else len(set(grupos))
+
+
+def _medias_remuestreadas(x: np.ndarray, grupos: list | None, n: int, rng: np.random.Generator) -> np.ndarray:
+    """Medias de n remuestreos. Sin grupos, de observaciones; con grupos, de grupos enteros (todas sus observaciones)."""
+    if grupos is None:
+        idx = rng.integers(0, len(x), size=(n, len(x)))
+        return x[idx].mean(axis=1)
+    claves = sorted(set(grupos), key=str)
+    pos = {c: k for k, c in enumerate(claves)}
+    sumas = np.zeros(len(claves))
+    cuentas = np.zeros(len(claves))
+    for v, g in zip(x, grupos):
+        sumas[pos[g]] += v
+        cuentas[pos[g]] += 1
+    idx = rng.integers(0, len(claves), size=(n, len(claves)))
+    return sumas[idx].sum(axis=1) / cuentas[idx].sum(axis=1)
+
+
+def _cuantiles(m: np.ndarray, nivel: float) -> list[float]:
+    cola = (1.0 - nivel) / 2.0
+    return [round(float(np.quantile(m, cola)), 6), round(float(np.quantile(m, 1.0 - cola)), 6)]
+
+
+def resumen(excesos: Sequence[float], remuestreos: int, semilla: int, nivel: float = NIVEL,
+            grupos: Sequence | None = None) -> dict:
+    remuestreos, nivel = _entero("remuestreos", remuestreos), _nivel(nivel)
+    x, g = _limpios(excesos, grupos)
     if len(x) == 0:
-        return {"n": 0, "media": None, "acierto": None, "rango90": None}
-    m = _remuestreo_medias(x, remuestreos, np.random.default_rng(semilla))
-    return {"n": len(x), "media": round(float(x.mean()), 6), "acierto": round(float((x > 0).mean()), 4),
-            "rango90": [round(float(np.quantile(m, 0.05)), 6), round(float(np.quantile(m, 0.95)), 6)]}
+        return {"n": 0, "efectivas": 0, "media": None, "acierto": None, "rango": None, "nivel": nivel}
+    m = _medias_remuestreadas(x, g, remuestreos, np.random.default_rng(semilla))
+    return {"n": len(x), "efectivas": _efectivas(x, g), "media": round(float(x.mean()), 6),
+            "acierto": round(float((x > 0).mean()), 4), "rango": _cuantiles(m, nivel), "nivel": nivel}
 
 
-def diferencia(a: Sequence[float], b: Sequence[float], remuestreos: int, semilla: int) -> dict:
-    """Diferencia de medias (a menos b) con rango del 90 % por remuestreo independiente."""
-    xa = np.asarray([e for e in a if e is not None], dtype=float)
-    xb = np.asarray([e for e in b if e is not None], dtype=float)
+def diferencia(a: Sequence[float], b: Sequence[float], remuestreos: int, semilla: int, nivel: float = NIVEL,
+               min_efectivas: int = MIN_EFECTIVAS, grupos_a: Sequence | None = None, grupos_b: Sequence | None = None) -> dict:
+    """Diferencia de medias (a menos b) con su rango por remuestreo independiente de cada lado (por grupos si se dan).
+
+    Sin al menos «min_efectivas» observaciones efectivas por lado no hay veredicto (H-02)."""
+    remuestreos, nivel = _entero("remuestreos", remuestreos), _nivel(nivel)
+    min_efectivas = _entero("min_efectivas", min_efectivas)
+    xa, ga = _limpios(a, grupos_a)
+    xb, gb = _limpios(b, grupos_b)
     if len(xa) == 0 or len(xb) == 0:
-        return {"diferencia": None, "rango90": None, "veredicto": "sin datos"}
+        return {"diferencia": None, "rango": None, "nivel": nivel, "efectivas": [len(xa), len(xb)], "veredicto": "sin datos",
+                "motivo": "un lado no tiene ninguna selección resuelta"}
+    efectivas = [_efectivas(xa, ga), _efectivas(xb, gb)]
     rng = np.random.default_rng(semilla)
-    d = _remuestreo_medias(xa, remuestreos, rng) - _remuestreo_medias(xb, remuestreos, rng)
-    rango = [round(float(np.quantile(d, 0.05)), 6), round(float(np.quantile(d, 0.95)), 6)]
-    return {"diferencia": round(float(xa.mean() - xb.mean()), 6), "rango90": rango, "veredicto": veredicto(rango)}
+    d = _medias_remuestreadas(xa, ga, remuestreos, rng) - _medias_remuestreadas(xb, gb, remuestreos, rng)
+    rango = _cuantiles(d, nivel)
+    out = {"diferencia": round(float(xa.mean() - xb.mean()), 6), "rango": rango, "nivel": nivel, "efectivas": efectivas,
+           "veredicto": veredicto(rango), "motivo": None}
+    if min(efectivas) < min_efectivas:
+        out.update(veredicto="todavía no se sabe",
+                   motivo=f"pocas observaciones efectivas ({min(efectivas)} de un mínimo de {min_efectivas} por lado)")
+    return out
 
 
-def veredicto(rango90: Sequence[float] | None) -> str:
-    if not rango90:
+def veredicto(rango: Sequence[float] | None) -> str:
+    if not rango:
         return "sin datos"
-    lo, hi = rango90
+    lo, hi = rango
     if lo > 0:
         return "mejor"
     if hi < 0:
@@ -154,25 +299,28 @@ def _grupos(plantilla: list[dict]) -> dict[tuple, list[dict]]:
 
 
 def azar(plantilla: list[dict], universo: pd.DataFrame, semilla: int) -> list[dict]:
-    """Tantas selecciones como el titular en cada fecha y clase, al azar dentro de la clase.
+    """Tantas selecciones como el titular en cada fecha y clase, al azar dentro de la clase y sin repetir activo.
 
-    Copia dirección y horizonte del titular selección a selección, para medir solo la elección del activo."""
+    Copia dirección y horizonte del titular selección a selección, para medir solo la elección del activo. Se detiene si la
+    clase no tiene miembros suficientes para igualar al titular (H-06)."""
     miembros = universo.groupby("clase")["simbolo"].apply(sorted).to_dict()
     out = []
     for (fecha, clase), filas in sorted(_grupos(plantilla).items()):
         pool = miembros.get(clase, [])
-        if not pool:
-            raise BancoError(f"la clase {clase} no tiene miembros en el universo")
+        if len(pool) < len(filas):
+            raise BancoError(f"azar no puede igualar al titular el {fecha} en {clase}: {len(filas)} selecciones y "
+                             f"{len(pool)} miembros en el universo")
         rng = random.Random(f"{semilla}|{fecha}|{clase}")
-        elegidos = rng.sample(pool, k=min(len(filas), len(pool)))
-        for f, sim in zip(filas, elegidos):
+        for f, sim in zip(filas, rng.sample(pool, k=len(filas))):
             out.append({**f, "simbolo": sim})
     return out
 
 
 def momento(plantilla: list[dict], universo: pd.DataFrame, precios: dict[str, pd.Series], ventana: int) -> list[dict]:
     """Tantas selecciones como el titular en cada fecha y clase: para LARGO, la de mayor rentabilidad en las últimas
-    «ventana» sesiones hasta la fecha de corte; para CORTO, la de menor. Solo usa datos conocidos en la fecha."""
+    «ventana» sesiones hasta la fecha de corte; para CORTO, la de menor. Solo usa datos conocidos en la fecha.
+    Se detiene si no hay bastantes miembros con historia para igualar al titular (H-06)."""
+    ventana = _entero("ventana", ventana)
     miembros = universo.groupby("clase")["simbolo"].apply(sorted).to_dict()
     out = []
     for (fecha, clase), filas in sorted(_grupos(plantilla).items()):
@@ -182,26 +330,27 @@ def momento(plantilla: list[dict], universo: pd.DataFrame, precios: dict[str, pd
             serie = precios.get(m)
             if serie is None:
                 continue
-            hist = serie.loc[:corte]
+            hist = validar_serie(m, serie).loc[:corte]
             if len(hist) > ventana:
                 puntos[m] = float(hist.iloc[-1] / hist.iloc[-1 - ventana] - 1.0)
+        if len(puntos) < len(filas):
+            raise BancoError(f"momento no puede igualar al titular el {fecha} en {clase}: {len(filas)} selecciones y "
+                             f"{len(puntos)} miembros con más de {ventana} sesiones de historia")
         orden = sorted(puntos, key=lambda k: (-puntos[k], k))
         usados: set = set()
         for f in filas:
             candidatos = orden if f["direccion"] != "CORTO" else list(reversed(orden))
-            libre = [c for c in candidatos if c not in usados]
-            if not libre:
-                continue
-            usados.add(libre[0])
-            out.append({**f, "simbolo": libre[0]})
+            libre = next(c for c in candidatos if c not in usados)
+            usados.add(libre)
+            out.append({**f, "simbolo": libre})
     return out
 
 
 # ---------------------------------------------------------------- titular: Bloque A
 
 def titular_a(desde: str, hasta: str, carpeta: Path, cliente: str, frecuencia: str | None,
-              clases: str | None) -> dict:
-    """Ejecuta A en backtest, espía las llamadas del cliente simulado y devuelve selecciones y consumo."""
+              clases: str | None, datos: Path | None = None, universo: Path | None = None) -> dict:
+    """Ejecuta A en backtest, espía las llamadas del cliente simulado y devuelve selecciones, consumo y advertencias."""
     sys.path.insert(0, str(EJECUTOR_A))
     from bloque_a.configuracion import config_por_defecto
     from bloque_a.herramientas.ht05_planificador import fecha_resolucion
@@ -216,8 +365,11 @@ def titular_a(desde: str, hasta: str, carpeta: Path, cliente: str, frecuencia: s
         llamadas.append({"agente": kw["agente"], "modelo": kw["modelo"], "salida": r.uso.salida})
         return r
 
-    datos = EJECUTOR_A / "ejemplos" / "datos_sinteticos"
-    universo_csv = EJECUTOR_A / "config" / "universo_ejemplo.csv"
+    datos = Path(datos).resolve() if datos else EJECUTOR_A / "ejemplos" / "datos_sinteticos"
+    universo_csv = Path(universo).resolve() if universo else EJECUTOR_A / "config" / "universo_ejemplo.csv"
+    for p in (datos, universo_csv):
+        if not p.exists():
+            raise BancoError(f"no existe {p}")
     args = ["--cliente", cliente, "--datos", str(datos), "--universo", str(universo_csv),
             "--estado", str(carpeta / "estado"), "--salida", str(carpeta / "salida"),
             "backtest", "--desde", desde, "--hasta", hasta]
@@ -245,23 +397,40 @@ def titular_a(desde: str, hasta: str, carpeta: Path, cliente: str, frecuencia: s
     selecciones = [{"fecha_asof": f["fecha_asof"], "clase": f["clase"], "simbolo": f["indicador_seguimiento_simbolo"],
                     "direccion": f["direccion"], "horizonte": f["horizonte_principal"]}
                    for f in filas if f.get("indicador_seguimiento_simbolo")]
-    consumo = {"llamadas": 0, "tokens_entrada": 0, "tokens_salida": 0, "coste_estimado": None}
-    fc = carpeta / "salida" / "consumo.csv"
-    if fc.exists():
-        with open(fc, encoding="utf-8") as fh:
-            for f in csv.DictReader(fh):
-                consumo["llamadas"] += int(float(f["llamadas"] or 0))
-                consumo["tokens_entrada"] += int(float(f["tokens_entrada"] or 0))
-                consumo["tokens_salida"] += int(float(f["tokens_salida"] or 0))
-                if f.get("coste_estimado"):
-                    consumo["coste_estimado"] = round((consumo["coste_estimado"] or 0) + float(f["coste_estimado"]), 4)
+    consumo = leer_consumo(carpeta / "salida" / "consumo.csv")
     por_agente: dict[str, int] = {}
     for x in llamadas:
         por_agente[x["agente"]] = por_agente.get(x["agente"], 0) + 1
     consumo["llamadas_por_agente"] = dict(sorted(por_agente.items()))
+    advertencias, excluidos = [], None
+    fm = carpeta / "salida" / "metricas.json"
+    if fm.exists():
+        m = json.loads(fm.read_text(encoding="utf-8"))
+        advertencias = [str(x) for x in m.get("advertencias") or []]
+        excluidos = (m.get("excluidos_contaminacion") or {}).get("total")
     horizontes = config_por_defecto()["horizontes"]
     return {"selecciones": selecciones, "consumo": consumo, "datos": datos, "universo": universo_csv,
+            "advertencias": advertencias, "excluidos_contaminacion": excluidos,
             "fecha_fin": lambda ini, h: fecha_resolucion(ini, h, horizontes)}
+
+
+CAMPOS_ENTEROS = ("llamadas", "tokens_entrada", "tokens_salida", "tokens_cache_escritura", "tokens_cache_lectura")
+
+
+def leer_consumo(fichero: Path) -> dict:
+    """Suma del consumo.csv de A: llamadas, tokens (también de caché), uc y coste estimado (None si ninguna fila lo trae)."""
+    consumo: dict = {k: 0 for k in CAMPOS_ENTEROS}
+    consumo.update(uc=0.0, coste_estimado=None)
+    if not Path(fichero).exists():
+        return consumo
+    with open(fichero, encoding="utf-8") as fh:
+        for f in csv.DictReader(fh):
+            for k in CAMPOS_ENTEROS:
+                consumo[k] += int(float(f.get(k) or 0))
+            consumo["uc"] = round(consumo["uc"] + float(f.get("uc") or 0), 4)
+            if f.get("coste_estimado") not in (None, ""):
+                consumo["coste_estimado"] = round((consumo["coste_estimado"] or 0) + float(f["coste_estimado"]), 4)
+    return consumo
 
 
 # ---------------------------------------------------------------- informe
@@ -271,111 +440,244 @@ def huella(obj) -> str:
 
 
 def construir_informe(contendientes: dict[str, list[dict]], consumo_titular: dict, remuestreos: int, semilla: int,
-                      aviso: str | None, huella_prerregistro: str) -> dict:
+                      aviso: str | None, huella_prerregistro: str, nivel: float = NIVEL, min_efectivas: int = MIN_EFECTIVAS,
+                      advertencias: Sequence[str] = (), sin_veredicto: str | None = None) -> dict:
+    """Informe: calidad por contendiente, comparación del titular con cada referencia y coste. Con «sin_veredicto» (por
+    ejemplo, fuga por conocimiento del modelo), ninguna comparación da veredicto firme."""
     res = {}
     excesos = {}
     for nombre, filas in contendientes.items():
-        ex = [f["exceso"] for f in filas if f["resuelta"]]
-        excesos[nombre] = ex
-        res[nombre] = {"selecciones": len(filas), "resueltas": len(ex), **resumen(ex, remuestreos, semilla)}
-    comparaciones = {f"titular_vs_{n}": diferencia(excesos["titular"], excesos[n], remuestreos, semilla)
-                     for n in contendientes if n != "titular"}
+        puntuadas = [f for f in filas if f["resuelta"]]
+        excesos[nombre] = ([f["exceso"] for f in puntuadas], [f["fecha_asof"] for f in puntuadas])
+        res[nombre] = {"selecciones": len(filas), "repetidas": sum(1 for f in filas if f.get("repetida")),
+                       "resueltas": len(puntuadas), **resumen(excesos[nombre][0], remuestreos, semilla, nivel, excesos[nombre][1])}
+    comparaciones = {}
+    for n in contendientes:
+        if n == "titular":
+            continue
+        c = diferencia(excesos["titular"][0], excesos[n][0], remuestreos, semilla, nivel, min_efectivas,
+                       excesos["titular"][1], excesos[n][1])
+        if sin_veredicto and c["veredicto"] in ("mejor", "peor"):
+            c.update(veredicto="todavía no se sabe", motivo=sin_veredicto)
+        comparaciones[f"titular_vs_{n}"] = c
     resueltas = res["titular"]["resueltas"]
-    coste = consumo_titular.get("coste_estimado")
+    t = consumo_titular
+    coste = t.get("coste_estimado")
+    por_sel = {}
+    if resueltas:
+        por_sel = {"tokens_entrada": round(t.get("tokens_entrada", 0) / resueltas, 1),
+                   "tokens_cache_lectura": round(t.get("tokens_cache_lectura", 0) / resueltas, 1),
+                   "uc": round(t.get("uc", 0.0) / resueltas, 4),
+                   "coste_estimado": None if coste is None else round(coste / resueltas, 4)}
     return {"version_banco": VERSION, "prerregistro": huella_prerregistro, "aviso": aviso,
+            "advertencias_titular": list(advertencias), "nivel": nivel, "min_efectivas": min_efectivas,
             "contendientes": res, "comparaciones": comparaciones,
             "coste": {"titular": consumo_titular, "referencias": "cero (solo código)",
-                      "tokens_entrada_por_seleccion_resuelta": (round(consumo_titular["tokens_entrada"] / resueltas, 1)
-                                                                if resueltas else None),
-                      "coste_por_seleccion_resuelta": round(coste / resueltas, 4) if coste and resueltas else None}}
+                      "por_seleccion_resuelta": por_sel or None}}
 
 
 def _pct(x) -> str:
     return "—" if x is None else f"{x * 100:+.2f} %"
 
 
+def _rango(r) -> str:
+    return "—" if not r else f"{_pct(r[0])} a {_pct(r[1])}"
+
+
 def informe_md(inf: dict, titulo: str) -> str:
+    pct_nivel = f"{inf['nivel'] * 100:g} %"
     lineas = []
     if inf["aviso"]:
         lineas += [f"**Aviso:** {inf['aviso']}", ""]
-    lineas += [f"# {titulo}", "", f"Banco de medida {inf['version_banco']} · prerregistro `{inf['prerregistro'][:16]}…`", "",
-               "## Calidad: exceso frente a la cesta de la clase", "",
-               "| Contendiente | Selecciones | Resueltas | Exceso medio | Rango del 90 % | Acierto |", "| --- | --- | --- | --- | --- | --- |"]
+    lineas += [f"# {titulo}", "", f"Banco de medida {inf['version_banco']} · prerregistro `{inf['prerregistro'][:16]}…`", ""]
+    if inf.get("advertencias_titular"):
+        lineas += ["Advertencias del titular:", ""] + [f"- {a}" for a in inf["advertencias_titular"]] + [""]
+    lineas += ["## Calidad: exceso frente a la cesta de la clase", "",
+               (f"Una apuesta repetida mientras sigue abierta cuenta una vez. El rango del {pct_nivel} remuestrea fechas de corte; "
+                f"sin {inf['min_efectivas']} fechas efectivas por lado no hay veredicto."), "",
+               f"| Contendiente | Selecciones | Repetidas | Resueltas | Fechas efectivas | Exceso medio | Rango del {pct_nivel} | Acierto |",
+               "| --- | --- | --- | --- | --- | --- | --- | --- |"]
     for n, r in inf["contendientes"].items():
-        rango = "—" if not r["rango90"] else f"{_pct(r['rango90'][0])} a {_pct(r['rango90'][1])}"
         acierto = "—" if r["acierto"] is None else f"{r['acierto'] * 100:.0f} %"
-        lineas.append(f"| {n} | {r['selecciones']} | {r['resueltas']} | {_pct(r['media'])} | {rango} | {acierto} |")
-    lineas += ["", "## El titular frente a cada referencia", "", "| Comparación | Diferencia | Rango del 90 % | Veredicto |",
-               "| --- | --- | --- | --- |"]
+        lineas.append(f"| {n} | {r['selecciones']} | {r['repetidas']} | {r['resueltas']} | {r['efectivas']} | {_pct(r['media'])} | "
+                      f"{_rango(r['rango'])} | {acierto} |")
+    lineas += ["", "## El titular frente a cada referencia", "",
+               f"| Comparación | Diferencia | Rango del {pct_nivel} | Veredicto | Motivo |", "| --- | --- | --- | --- | --- |"]
     for n, c in inf["comparaciones"].items():
-        rango = "—" if not c["rango90"] else f"{_pct(c['rango90'][0])} a {_pct(c['rango90'][1])}"
-        lineas.append(f"| {n} | {_pct(c['diferencia'])} | {rango} | {c['veredicto']} |")
+        lineas.append(f"| {n} | {_pct(c['diferencia'])} | {_rango(c['rango'])} | {c['veredicto']} | {c.get('motivo') or '—'} |")
     co = inf["coste"]
     t = co["titular"]
+    coste = "sin dato" if t.get("coste_estimado") is None else f"{t['coste_estimado']}"
     lineas += ["", "## Coste", "",
-               (f"- Titular: {t['llamadas']} llamadas, {t['tokens_entrada']} tokens de entrada y {t['tokens_salida']} de salida; "
-                f"coste estimado {t['coste_estimado'] if t['coste_estimado'] is not None else 'sin dato'}."),
-               f"- Tokens de entrada por selección resuelta: {co['tokens_entrada_por_seleccion_resuelta']}.",
-               "- Referencias: coste cero (solo código).", ""]
+               (f"- Titular: {t['llamadas']} llamadas; tokens: {t['tokens_entrada']} de entrada, {t['tokens_salida']} de salida, "
+                f"{t.get('tokens_cache_escritura', 0)} escritos en caché y {t.get('tokens_cache_lectura', 0)} leídos de caché; "
+                f"{t.get('uc', 0)} uc; coste estimado {coste}.")]
+    ps = co.get("por_seleccion_resuelta")
+    if ps:
+        cps = "sin dato" if ps["coste_estimado"] is None else f"{ps['coste_estimado']}"
+        lineas.append(f"- Por selección resuelta: {ps['tokens_entrada']} tokens de entrada, {ps['tokens_cache_lectura']} leídos de caché, "
+                      f"{ps['uc']} uc; coste estimado {cps}.")
+    else:
+        lineas.append("- Por selección resuelta: sin selecciones resueltas.")
+    lineas += ["- Referencias: coste cero (solo código).", ""]
     if t.get("llamadas_por_agente"):
         lineas += ["Llamadas por agente: " + ", ".join(f"{a} {n}" for a, n in t["llamadas_por_agente"].items()) + ".", ""]
     return "\n".join(lineas)
 
 
+def _escribir_json(ruta: Path, obj) -> None:
+    ruta.write_text(json.dumps(obj, ensure_ascii=False, indent=2, sort_keys=True, allow_nan=False) + "\n", encoding="utf-8")
+
+
+def _aviso(cliente: str, datos: Path, universo: Path) -> str | None:
+    partes = []
+    if cliente == "mock":
+        partes.append("cliente simulado: las señales salen de reglas sintéticas, no de un modelo")
+    if Path(datos).resolve() == (EJECUTOR_A / "ejemplos" / "datos_sinteticos").resolve():
+        partes.append("datos sintéticos de ejemplo")
+    if Path(universo).resolve() == (EJECUTOR_A / "config" / "universo_ejemplo.csv").resolve():
+        partes.append("universo de ejemplo")
+    if not partes:
+        return None
+    return "; ".join(partes) + ". Esto prueba la tubería del banco, no mide la capacidad de A."
+
+
+HIPOTESIS_A = ("El Bloque A elige, dentro de cada clase, activos que baten a la cesta de su clase más que el azar y que la "
+               "regla de momento")
+
+
+def _experimento(reg, exp_id: str | None, prerregistro: dict, h: str, max_variantes: int) -> tuple[str, int]:
+    """Experimento al que se anota el intento (H-04) y cuántos experimentos previos tienen la misma hipótesis."""
+    previos = [x for x in reg.anotaciones() if x["tipo"] == "PRERREGISTRO"]
+    misma = [x for x in previos if x["contenido"].get("hipotesis") == prerregistro["hipotesis"]
+             and x["contenido"].get("objeto") == "BLOQUE"]
+    del_periodo = [x for x in misma if x["contenido"].get("desde") == prerregistro["desde"]
+                   and x["contenido"].get("hasta") == prerregistro["hasta"]]
+    if exp_id:
+        pre = reg.experimento(exp_id)["prerregistro"]["contenido"]
+        distinto = [k for k, v in (("hipotesis", prerregistro["hipotesis"]), ("objeto", "BLOQUE"),
+                                   ("desde", prerregistro["desde"]), ("hasta", prerregistro["hasta"])) if pre.get(k) != v]
+        if distinto:
+            raise BancoError(f"el experimento {exp_id} no es de este banco: no casan {distinto} con su prerregistro")
+        return exp_id, len(misma)
+    if del_periodo:
+        return del_periodo[0]["exp_id"], len(misma)
+    nuevo = reg.prerregistrar({"hipotesis": prerregistro["hipotesis"], "objeto": "BLOQUE", "metrica": prerregistro["metrica"],
+                               "datos": (f"backtest de A con el cliente {prerregistro['cliente']}, datos {prerregistro['datos']}, "
+                                         f"universo {prerregistro['universo']}; huella del prerregistro del banco {h}"),
+                               "desde": prerregistro["desde"], "hasta": prerregistro["hasta"], "semilla": prerregistro["semilla"],
+                               "criterio_exito": prerregistro["criterio"] + " (frente al azar y frente al momento a la vez)",
+                               "max_variantes": max_variantes}, autor="banco_medida")
+    return nuevo["exp_id"], len(misma)
+
+
 def ejecutar_a(a: argparse.Namespace) -> dict:
+    semilla = _entero("semilla", getattr(a, "semilla", SEMILLA), minimo=-(2 ** 63))
+    remuestreos = _entero("remuestreos", getattr(a, "remuestreos", REMUESTREOS))
+    ventana = _entero("ventana", getattr(a, "ventana", VENTANA_MOMENTO))
+    nivel = _nivel(getattr(a, "nivel", NIVEL))
+    min_efectivas = _entero("min_efectivas", getattr(a, "min_efectivas", MIN_EFECTIVAS))
+    max_variantes = _entero("max_variantes", getattr(a, "max_variantes", 1))
+    datos_arg, universo_arg = getattr(a, "datos", None), getattr(a, "universo", None)
     salida = Path(a.salida).resolve()
     salida.mkdir(parents=True, exist_ok=True)
+    (salida / "experimento.json").unlink(missing_ok=True)   # nunca el de una ejecución anterior
+    datos_txt = str(Path(datos_arg).resolve()) if datos_arg else "ejemplos/datos_sinteticos de A"
+    universo_txt = str(Path(universo_arg).resolve()) if universo_arg else "config/universo_ejemplo.csv de A"
     prerregistro = {
-        "hipotesis": "El Bloque A elige, dentro de cada clase, activos que baten a la cesta de su clase más que el azar y que la regla de momento",
+        "hipotesis": HIPOTESIS_A,
         "titular": "bloque_a (backtest)", "referencias": ["azar", "momento"], "desde": a.desde, "hasta": a.hasta,
-        "frecuencia": a.frecuencia, "clases": a.clases, "cliente": a.cliente, "semilla": a.semilla,
-        "remuestreos": a.remuestreos, "ventana_momento": a.ventana,
-        "metrica": "exceso con signo frente a la media de la clase entre la fecha de corte y la de resolución del horizonte principal",
-        "criterio": "mejor si el rango del 90 % de la diferencia de medias queda por encima de cero; peor si queda por debajo; si no, todavía no se sabe",
+        "frecuencia": a.frecuencia, "clases": a.clases, "cliente": a.cliente, "datos": datos_txt, "universo": universo_txt,
+        "semilla": semilla, "remuestreos": remuestreos, "ventana_momento": ventana, "nivel": nivel, "min_efectivas": min_efectivas,
+        "metrica": ("exceso con signo frente a la media de la clase entre la fecha de corte y la de resolución del horizonte "
+                    "principal; una apuesta repetida mientras sigue abierta cuenta una vez"),
+        "criterio": (f"mejor si el rango del {nivel * 100:g} % de la diferencia de medias, remuestreando fechas de corte, queda por "
+                     f"encima de cero con al menos {min_efectivas} fechas efectivas por lado; peor si queda por debajo; si no, "
+                     "todavía no se sabe"),
         "version_banco": VERSION}
     h = huella(prerregistro)
     reg = intento = None
+    previos_misma = 0
     if getattr(a, "registro", None):   # T-99: cada intento cuenta, también los que fallan
         sys.path.insert(0, str(Path(__file__).resolve().parent))
         import registro_experimentos as rx
         reg = rx.Registro(a.registro)
-        exp_id = getattr(a, "experimento", None)
-        if not exp_id:
-            exp_id = reg.prerregistrar({"hipotesis": prerregistro["hipotesis"], "objeto": "BLOQUE", "metrica": prerregistro["metrica"],
-                                        "datos": f"backtest de A con el cliente {a.cliente}; huella del prerregistro del banco {h}",
-                                        "desde": a.desde, "hasta": a.hasta, "semilla": a.semilla, "criterio_exito": prerregistro["criterio"]
-                                        + " (frente al azar y frente al momento a la vez)",
-                                        "max_variantes": getattr(a, "max_variantes", 1)}, autor="banco_medida")["exp_id"]
+        exp_id, previos_misma = _experimento(reg, getattr(a, "experimento", None), prerregistro, h, max_variantes)
         intento = reg.intento(exp_id, variante=h[:16])
-    (salida / "prerregistro.json").write_text(json.dumps({**prerregistro, "huella": h}, ensure_ascii=False, indent=2,
-                                                          sort_keys=True) + "\n", encoding="utf-8")
+    _escribir_json(salida / "prerregistro.json", {**prerregistro, "huella": h})
     try:
-        tit = titular_a(a.desde, a.hasta, salida / "titular", a.cliente, a.frecuencia, a.clases)
-    except BancoError as e:
+        kw = {k: v for k, v in (("datos", datos_arg), ("universo", universo_arg)) if v}
+        tit = titular_a(a.desde, a.hasta, salida / "titular", a.cliente, a.frecuencia, a.clases, **kw)
+        universo = pd.read_csv(tit["universo"], usecols=["simbolo", "clase"])
+        precios = cargar_precios(tit["datos"], universo["simbolo"].tolist())
+        plantilla = tit["selecciones"]
+        contendientes = {
+            "titular": evaluar(plantilla, precios, universo, tit["fecha_fin"]),
+            "azar": evaluar(azar(plantilla, universo, semilla), precios, universo, tit["fecha_fin"]),
+            "momento": evaluar(momento(plantilla, universo, precios, ventana), precios, universo, tit["fecha_fin"]),
+        }
+        advertencias = list(tit.get("advertencias") or [])
+        if tit.get("excluidos_contaminacion"):
+            advertencias.append(f"el titular apartó {tit['excluidos_contaminacion']} pronósticos por contaminación")
+        if previos_misma > 1:
+            advertencias.append(f"hay {previos_misma} experimentos con esta misma hipótesis en el registro: mirar todos sus resultados")
+        sin_veredicto = None
+        if a.cliente != "mock" and any(AVISO_FUGA in x for x in advertencias):
+            sin_veredicto = "el periodo empieza antes de la fecha de corte del modelo: puede conocer el resultado"
+        aviso = _aviso(a.cliente, tit["datos"], tit["universo"])
+        inf = construir_informe(contendientes, tit["consumo"], remuestreos, semilla, aviso, h, nivel, min_efectivas,
+                                advertencias, sin_veredicto)
+        _escribir_json(salida / "informe.json", inf)
+        (salida / "informe.md").write_text(informe_md(inf, f"Banco de medida del Bloque A ({a.desde} a {a.hasta})"), encoding="utf-8")
+    except BaseException as e:
         if reg is not None:
-            reg.resultado(intento["exp_id"], intento["n"], "fallido", {"motivo": str(e)[:300]})
+            reg.resultado(intento["exp_id"], intento["n"], "fallido", {"motivo": f"{type(e).__name__}: {e}"[:300]})
         raise
-    universo = pd.read_csv(tit["universo"], usecols=["simbolo", "clase"])
-    precios = cargar_precios(tit["datos"], universo["simbolo"].tolist())
-    plantilla = tit["selecciones"]
-    contendientes = {
-        "titular": evaluar(plantilla, precios, universo, tit["fecha_fin"]),
-        "azar": evaluar(azar(plantilla, universo, a.semilla), precios, universo, tit["fecha_fin"]),
-        "momento": evaluar(momento(plantilla, universo, precios, a.ventana), precios, universo, tit["fecha_fin"]),
-    }
-    aviso = None
-    if a.cliente == "mock" or "ejemplos" in str(tit["datos"]):
-        aviso = ("cliente simulado y datos sintéticos de ejemplo: esto prueba la tubería del banco, "
-                 "no mide la capacidad de A. Con datos de K (T-86) y el cliente real, el mismo banco da la medida de verdad.")
-    inf = construir_informe(contendientes, tit["consumo"], a.remuestreos, a.semilla, aviso, h)
-    (salida / "informe.json").write_text(json.dumps(inf, ensure_ascii=False, indent=2, sort_keys=True) + "\n", encoding="utf-8")
-    (salida / "informe.md").write_text(informe_md(inf, f"Banco de medida del Bloque A ({a.desde} a {a.hasta})"), encoding="utf-8")
     if reg is not None:
-        inf["experimento"] = {"exp_id": intento["exp_id"], "intento": intento["n"]}
+        # El intento va aparte (experimento.json), para que el informe de dos ejecuciones iguales sea idéntico byte a byte.
+        experimento = {"exp_id": intento["exp_id"], "intento": intento["n"], "dentro_del_maximo": intento["dentro_del_maximo"],
+                       "registro": str(Path(a.registro).resolve())}
         reg.resultado(intento["exp_id"], intento["n"], veredicto_conjunto(inf["comparaciones"]),
                       {"comparaciones": {k: v["veredicto"] for k, v in inf["comparaciones"].items()}, "aviso": aviso,
-                       "huella_informe": huella({k: v for k, v in inf.items() if k != "experimento"})})
+                       "huella_prerregistro_banco": h, "huella_informe": huella(inf)})
+        _escribir_json(salida / "experimento.json", experimento)
+        inf["experimento"] = experimento
     return inf
+
+
+def verificar(carpeta: Path | str, registro: Path | str | None = None) -> list[str]:
+    """Comprueba que prerregistro.json no se reescribió (su huella), que el informe cita esa huella y, con el registro, que el
+    intento y su resultado casan con los dos ficheros. Devuelve la lista de problemas (vacía si todo cuadra)."""
+    carpeta = Path(carpeta)
+    problemas = []
+    try:
+        pre = json.loads((carpeta / "prerregistro.json").read_text(encoding="utf-8"))
+        inf = json.loads((carpeta / "informe.json").read_text(encoding="utf-8"))
+    except (OSError, ValueError) as e:
+        return [f"no se pueden leer los ficheros: {e}"]
+    h = huella({k: v for k, v in pre.items() if k != "huella"})
+    if pre.get("huella") != h:
+        problemas.append("prerregistro.json no casa con su huella: se reescribió")
+    if inf.get("prerregistro") != h:
+        problemas.append("el informe cita una huella distinta de la del prerregistro")
+    fe = carpeta / "experimento.json"
+    if fe.exists():
+        sys.path.insert(0, str(Path(__file__).resolve().parent))
+        import registro_experimentos as rx
+        e = json.loads(fe.read_text(encoding="utf-8"))
+        try:
+            exp = rx.Registro(registro or e["registro"]).experimento(e["exp_id"])
+        except (rx.RegistroError, KeyError) as ex:
+            return problemas + [f"no se puede leer el experimento del registro: {ex}"]
+        it = next((x for x in exp["intentos"] if x["n"] == e["intento"]), None)
+        rs = next((x for x in exp["resultados"] if x["n"] == e["intento"]), None)
+        if it is None or it["variante"] != h[:16]:
+            problemas.append("el intento del registro no es de este prerregistro")
+        if rs is None or rs["detalle"].get("huella_informe") != huella(inf):
+            problemas.append("el resultado del registro no casa con el informe")
+    elif registro:
+        problemas.append("no hay experimento.json: esta salida no se anotó en el registro")
+    return problemas
 
 
 def veredicto_conjunto(comparaciones: dict) -> str:
@@ -388,6 +690,25 @@ def veredicto_conjunto(comparaciones: dict) -> str:
     return "todavía no se sabe"
 
 
+def _arg_entero(minimo: int):
+    def f(txt: str) -> int:
+        try:
+            v = int(txt)
+        except ValueError as e:
+            raise argparse.ArgumentTypeError(f"{txt!r} no es un entero") from e
+        if v < minimo:
+            raise argparse.ArgumentTypeError(f"tiene que ser mayor o igual que {minimo}")
+        return v
+    return f
+
+
+def _arg_nivel(txt: str) -> float:
+    try:
+        return _nivel(float(txt))
+    except (ValueError, BancoError) as e:
+        raise argparse.ArgumentTypeError(str(e)) from e
+
+
 def main(argv: list[str] | None = None) -> int:
     ap = argparse.ArgumentParser(description=__doc__.split("\n")[0])
     sub = ap.add_subparsers(dest="bloque", required=True)
@@ -398,14 +719,27 @@ def main(argv: list[str] | None = None) -> int:
     pa.add_argument("--cliente", default="mock")
     pa.add_argument("--frecuencia", choices=["diaria", "semanal", "quincenal", "mensual"])
     pa.add_argument("--clases")
-    pa.add_argument("--semilla", type=int, default=7)
-    pa.add_argument("--remuestreos", type=int, default=2000)
-    pa.add_argument("--ventana", type=int, default=63)
+    pa.add_argument("--datos", help="carpeta de CSV de precios (por defecto, los datos sintéticos de ejemplo de A)")
+    pa.add_argument("--universo", help="CSV del universo (por defecto, el universo de ejemplo de A)")
+    pa.add_argument("--semilla", type=int, default=SEMILLA)
+    pa.add_argument("--remuestreos", type=_arg_entero(1), default=REMUESTREOS)
+    pa.add_argument("--ventana", type=_arg_entero(1), default=VENTANA_MOMENTO)
+    pa.add_argument("--nivel", type=_arg_nivel, default=NIVEL)
+    pa.add_argument("--min-efectivas", dest="min_efectivas", type=_arg_entero(1), default=MIN_EFECTIVAS)
     # T-99: registro de experimentos (por defecto, el del repositorio); --experimento añade un intento a uno ya prerregistrado
     pa.add_argument("--registro", default=str(RAIZ / ".docs" / "experimentos" / "registro.jsonl"))
     pa.add_argument("--experimento")
-    pa.add_argument("--max-variantes", dest="max_variantes", type=int, default=1)
+    pa.add_argument("--max-variantes", dest="max_variantes", type=_arg_entero(1), default=1)
+    pv = sub.add_parser("verificar", help="comprueba las huellas de una carpeta de salida del banco")
+    pv.add_argument("carpeta")
+    pv.add_argument("--registro")
     a = ap.parse_args(argv)
+    if a.bloque == "verificar":
+        problemas = verificar(a.carpeta, a.registro)
+        for p in problemas:
+            print(f"- {p}", file=sys.stderr)
+        print("verificado: las huellas casan" if not problemas else f"{len(problemas)} problema(s)")
+        return 0 if not problemas else 2
     try:
         inf = ejecutar_a(a)
     except BancoError as e:
