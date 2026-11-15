@@ -250,6 +250,34 @@ def test_h01_el_script_no_imprime_un_dato_de_la_correspondencia(tmp_path, capsys
     assert "no tiene" in err and CORREO not in err and "inversor.prueba" not in err
 
 
+# ---------------------------------------------------------------- T-150 (QA r01 de T-149, H-03) · las dos limpiezas
+# En este fichero porque es uno de los que fija el script de mutantes del revisor (`T-149/revisores/r01_02_mutantes_qa.py`):
+# N21 recortaba el mensaje de `jsonschema` a 200 antes de limpiarlo y N27 imprimía el fallo de un ejecutor sin limpiar.
+def test_t150_el_mensaje_de_jsonschema_se_limpia_antes_de_recortarlo(ejemplo, cfg):
+    """El correo junto al carácter 200 del mensaje («tipo_activo: 'ZZ… <correo>' is not one of …»): recortado antes, su
+    dominio o su parte local quedan cortados, el detector ya no lo ve y su principio llega al detalle."""
+    for relleno in range(150, 200):
+        p = copy.deepcopy(ejemplo)
+        _entrada(p)["tipo_activo"] = "Z" * relleno + " " + CORREO
+        e = _error(p, cfg)
+        assert e.codigo == "ENTRADA_B_INVALIDA" and "tipo_activo" in e.detalle, relleno
+        assert "inversor" not in str(e) and "@example" not in str(e) and not cadena_b.contiene_credenciales(str(e)), relleno
+
+
+def test_t150_el_script_limpia_el_fallo_de_un_ejecutor_que_imprime(tmp_path, monkeypatch, capsys):
+    mod = _modulo("cadena_a_b")
+
+    def cli(bloque, args):
+        raise mod.FalloEjecutor(f"bloque A ciclo: código 3\nTraceback …\nValueError: {CORREO} {AK}=ABCDEF1234567890")
+    monkeypatch.setattr(mod, "_cli", cli)
+    extra = tmp_path / "extra.yaml"
+    extra.write_text(json.dumps({"cadena_b": {"correspondencia_ambitos": {"LETRAS-EUR-12M": "liquidez_eur"}}}), encoding="utf-8")
+    assert mod.main(["--trabajo", str(tmp_path / "w"), "--config-a", str(extra)]) == 2
+    err = capsys.readouterr().err
+    assert "código 3" in err and cadena_b.DATO_PROTEGIDO in err
+    assert "inversor.prueba" not in err and "ABCDEF1234567890" not in err
+
+
 # ---------------------------------------------------------------- T-147 H-02 · descarga del BCE sin trazas
 CAB = "KEY,FREQ,CURRENCY,CURRENCY_DENOM,EXR_TYPE,EXR_SUFFIX,TIME_PERIOD,OBS_VALUE,OBS_STATUS\n"
 VAL = {"USD": 1.1, "JPY": 170.0, "GBP": 0.85, "AUD": 1.7, "CHF": 0.93, "MXN": 20.5}

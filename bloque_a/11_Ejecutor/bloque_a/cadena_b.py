@@ -54,13 +54,41 @@ DATO_PROTEGIDO = "«dato protegido por R8»"
 DETALLE_OMITIDO = "detalle omitido: reproducía un dato protegido por R8"
 
 
+def _sin_tramos(texto: str, datos: list[str]) -> str:
+    """T-150 (H-01): `texto` con cada tramo donde aparece alguno de `datos` (todas sus apariciones, también solapadas)
+    sustituido por `DATO_PROTEGIDO`; los tramos que se solapan o se tocan se unen antes. Un dato que no aparece tal cual
+    (el detector lo vio con los escapes sustituidos, o compacto) no tiene tramo: lo atrapa la comprobación de después."""
+    tramos = []
+    for dato in dict.fromkeys(d for d in datos if d):
+        i = texto.find(dato)
+        while i >= 0:
+            tramos.append((i, i + len(dato)))
+            i = texto.find(dato, i + 1)
+    unidos: list[list[int]] = []
+    for inicio, final in sorted(tramos):
+        if unidos and inicio <= unidos[-1][1]:   # se solapa con el anterior o lo toca: se une
+            unidos[-1][1] = max(unidos[-1][1], final)
+        else:
+            unidos.append([inicio, final])
+    partes, desde = [], 0
+    for inicio, final in unidos:
+        partes += [texto[desde:inicio], DATO_PROTEGIDO]
+        desde = final
+    return "".join(partes) + texto[desde:]
+
+
 def sin_datos_protegidos(texto: str) -> str:
     """T-149 (QA r01 de T-147, H-01): el texto de un error sin los datos que protege R8 (`contratos.secretos_en_texto`):
     cada uno se sustituye por «dato protegido por R8» y, si aun así queda alguno (uno que el detector solo ve con los
     escapes de JSON sustituidos, o un IBAN con otros espacios), el texto entero se cambia por un aviso. Los mensajes de
-    `jsonschema` llevan el valor que no cumple («'…' is not one of …»), y una configuración rara también."""
-    for dato in sorted(secretos_en_texto(texto), key=len, reverse=True):
-        texto = texto.replace(dato, DATO_PROTEGIDO)
+    `jsonschema` llevan el valor que no cumple («'…' is not one of …»), y una configuración rara también.
+
+    T-150 (QA r01 de T-149, H-01): se sustituyen tramos del texto, no cadenas una tras otra. Cada aparición de cada dato
+    que ve el detector es un tramo (inicio, fin) del texto original; los que se solapan o se tocan se unen y cada unión
+    se sustituye una vez. Antes, con dos datos pegados sin separador, el detector daba también una coincidencia que
+    abarcaba los dos (el correo con el principio de la clave que lo sigue: «…@example.comapi»); al sustituirla, la cola
+    del segundo dato dejaba de reconocerse y quedaba en el texto."""
+    texto = _sin_tramos(texto, secretos_en_texto(texto))
     if secretos_en_texto(texto) or contiene_credenciales(texto):
         return DETALLE_OMITIDO
     return texto

@@ -16,11 +16,16 @@ una carpeta temporal junto al destino y se mueven al final, así que un fallo no
 rara del servicio (vacía, HTML, error HTTP, sin conexión) termina con un mensaje y el código 1, sin traza.
 T-149 (QA r01 de T-147, H-02): también una fecha repetida escrita de dos formas («2026-11-3» y «2026-11-03») y un
 destino que no es una carpeta (se mira antes de descargar) o en el que no se puede escribir.
+T-150 (QA r01 de T-149, H-06): una fila sin fecha (`TIME_PERIOD` vacío) y una lectura cortada a medias
+(`http.client.IncompleteRead` y los demás errores de `http.client`, que no son `OSError`) terminan también con un mensaje
+y el código 1 sin escribir nada; si el traslado de los CSV falla cuando ya se han movido algunos, el mensaje dice cuáles
+quedaron escritos (antes decía «no se escribe nada»).
 
 Uso (desde la raíz): .venv/bin/python .docs/scripts/descargar_datos_bce.py <carpeta> [--desde AAAA-MM-DD]
 Luego: .venv/bin/python .docs/scripts/comprobar_datos_a.py <carpeta> --clases DIV
 """
 import argparse
+import http.client
 import io
 import os
 import shutil
@@ -64,6 +69,8 @@ def leer(cuerpo: bytes) -> pd.DataFrame:
         fechas = pd.to_datetime(crudo["TIME_PERIOD"].astype(str), format="%Y-%m-%d")   # T-149: el texto, no un número
     except (ValueError, TypeError) as e:
         raise RespuestaBCE("fechas que no son AAAA-MM-DD en TIME_PERIOD") from e
+    if fechas.isna().any():   # T-150 (H-06): un TIME_PERIOD vacío pasa a NaT sin error y dejaba una fila sin fecha
+        raise RespuestaBCE(f"{int(fechas.isna().sum())} filas sin fecha en TIME_PERIOD")
     # T-149 (QA r01 de T-147, H-02): las repetidas se buscan en la fecha ya convertida, no en el texto («2026-11-3» y
     # «2026-11-03» son el mismo día; antes `pivot` caía con una traza)
     repetidas = crudo[pd.DataFrame({"m": crudo["CURRENCY"], "f": fechas}).duplicated(keep=False)]
@@ -93,14 +100,27 @@ def cruces(ancho: pd.DataFrame) -> dict[str, pd.DataFrame]:
     return salida
 
 
+class EscrituraIncompleta(OSError):
+    """T-150 (QA r01 de T-149, O-05 y H-06): el traslado de los CSV falló cuando ya se habían movido algunos; `movidos` son
+    los que quedaron escritos en el destino (nuevos o sustituidos)."""
+
+    def __init__(self, movidos: list[str], causa: OSError) -> None:
+        super().__init__(causa.errno, causa.strerror)
+        self.movidos = movidos
+        self.causa = causa
+
+
 class DestinoNoValido(OSError):
     """El destino no admite los CSV: no se escribe nada (T-149)."""
 
 
 def comprobar_destino(destino: Path, simbolos) -> None:
     """T-149 (QA r01 de T-147, H-02): antes de descargar y de escribir, el destino es una carpeta (o no existe) y ninguno
-    de los CSV que se van a escribir es ya una carpeta; si no, `DestinoNoValido` (antes, una traza de `mkdir`)."""
+    de los CSV que se van a escribir es ya una carpeta; si no, `DestinoNoValido` (antes, una traza de `mkdir`). T-150: ni
+    el destino ni una carpeta de su ruta es un enlace simbólico roto."""
     for p in (destino, *destino.parents):
+        if p.is_symlink() and not p.exists():   # T-150 (O-05): antes se descargaba y fallaba después
+            raise DestinoNoValido(f"{p} es un enlace simbólico roto")
         if p.exists():
             if not p.is_dir():
                 raise DestinoNoValido(f"{p} existe y no es una carpeta")
@@ -118,8 +138,15 @@ def escribir(series: dict[str, pd.DataFrame], destino: Path) -> None:
     try:
         for simbolo, df in series.items():
             df.to_csv(tmp / f"{simbolo}.csv", index=False)
+        movidos: list[str] = []
         for simbolo in series:
-            os.replace(tmp / f"{simbolo}.csv", destino / f"{simbolo}.csv")
+            try:
+                os.replace(tmp / f"{simbolo}.csv", destino / f"{simbolo}.csv")
+            except OSError as e:
+                if movidos:
+                    raise EscrituraIncompleta(movidos, e) from e
+                raise
+            movidos.append(f"{simbolo}.csv")
     finally:
         shutil.rmtree(tmp, ignore_errors=True)
 
@@ -142,11 +169,16 @@ def main(argv: list[str] | None = None) -> int:
     except urllib.error.HTTPError as e:
         print(f"el BCE respondió HTTP {e.code} ({e.reason}), no se escribe nada", file=sys.stderr)
         return 1
-    except (urllib.error.URLError, OSError) as e:
+    except (urllib.error.URLError, OSError, http.client.HTTPException) as e:   # T-150 (H-06): también IncompleteRead
         print(f"no se pudo descargar del BCE ({type(e).__name__}: {e}), no se escribe nada", file=sys.stderr)
         return 1
     try:
         escribir(series, destino)
+    except EscrituraIncompleta as e:   # T-150 (O-05): no se puede decir «no se escribe nada»
+        print(f"no se pudo escribir en {destino} ({type(e.causa).__name__}: {e.causa}) cuando ya se habían escrito "
+              f"{', '.join(e.movidos)} (de esta descarga); los demás CSV del destino no se han tocado. "
+              "Repite la descarga", file=sys.stderr)
+        return 1
     except OSError as e:   # T-149 (H-02): sin permiso, disco lleno…: mensaje y 1, y la carpeta temporal se borra
         print(f"no se pudo escribir en {destino} ({type(e).__name__}: {e}), no se escribe nada", file=sys.stderr)
         return 1

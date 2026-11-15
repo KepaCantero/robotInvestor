@@ -26,6 +26,12 @@ Uso (desde la raíz):
 Deja en DIR (por defecto, una carpeta temporal nueva) los estados, entregables, peticiones, CT-04 y `resumen.json`.
 Termina con 0 si hay al menos una entrega del Bloque B y todas validan contra su esquema; con 1 si no; con 2 si falla
 un ejecutor o la configuración no casa con los ámbitos del Bloque B.
+
+T-150 (QA r01 de T-149): lo que se escribe en `resumen.json` y lo que se imprime pasa entero por
+`cadena_b.sin_datos_protegidos` (H-04: un `opp_id` con un correo en un paquete que no cumple el esquema); el error de un
+ejecutor se limpia antes de recortarlo (H-02); un `--config-a` que no se lee (no existe, YAML roto, no es un
+diccionario) o un `paquete_json` que no se lee (no existe, no es JSON, no es un objeto) terminan con un mensaje sin su
+contenido y el código 1, sin ejecutar ni enviar nada más.
 """
 from __future__ import annotations
 
@@ -59,12 +65,61 @@ def _cli(bloque: str, args: list[str]) -> dict:
     cwd = EJ_A if bloque == "a" else EJ_B
     r = subprocess.run([sys.executable, "-m", f"bloque_{bloque}.cli", "--cliente", "mock", *args], cwd=cwd,
                        capture_output=True, text=True, check=False)
+    # T-150 (QA r01 de T-149, H-02): se limpia antes de recortar; si el corte cae dentro de un dato, su cola ya no se
+    # reconoce (el mismo defecto que T-149 corrigió en los mensajes de `jsonschema`)
     if r.returncode != 0:
-        raise FalloEjecutor(f"bloque {bloque.upper()} {' '.join(args[-3:])}: código {r.returncode}\n{r.stderr[-2000:]}")
+        raise FalloEjecutor(f"bloque {bloque.upper()} {' '.join(args[-3:])}: código {r.returncode}\n"
+                            f"{cadena_b.sin_datos_protegidos(r.stderr)[-2000:]}")
     try:
         return json.loads(r.stdout)
     except json.JSONDecodeError as e:
-        raise FalloEjecutor(f"bloque {bloque.upper()}: la salida no es JSON ({e})\n{r.stdout[-1000:]}") from e
+        raise FalloEjecutor(f"bloque {bloque.upper()}: la salida no es JSON ({e})\n"
+                            f"{cadena_b.sin_datos_protegidos(r.stdout)[-1000:]}") from e
+
+
+def _sin_datos(obj):
+    """T-150 (QA r01 de T-149, H-04): cada texto del resumen (claves y valores) sin los datos de R8."""
+    if isinstance(obj, str):
+        return cadena_b.sin_datos_protegidos(obj)
+    if isinstance(obj, dict):
+        return {_sin_datos(k): _sin_datos(v) for k, v in obj.items()}
+    if isinstance(obj, (list, tuple)):
+        return [_sin_datos(v) for v in obj]
+    return obj
+
+
+def _resumen(w: Path, resumen: dict) -> dict:
+    """`resumen.json`, sin datos de R8 (H-04); devuelve lo escrito, que es lo que se imprime."""
+    limpio = _sin_datos(resumen)
+    _escribir(w / "resumen.json", limpio)
+    return limpio
+
+
+def _motivo_lectura(e: Exception) -> str:
+    """T-150 (observaciones O-04 y O-06 de la QA r01 de T-149): por qué no se lee un fichero, sin su contenido (el error
+    de `yaml` copia la línea que no entiende): el tipo, la posición y, de un `OSError`, su descripción."""
+    marca = getattr(e, "problem_mark", None)
+    if marca is not None:
+        return f"{type(e).__name__} en la línea {marca.line + 1}, columna {marca.column + 1}"
+    if isinstance(e, json.JSONDecodeError):
+        return f"no es JSON (línea {e.lineno}, columna {e.colno})"
+    if isinstance(e, OSError):
+        return f"{type(e).__name__}: {e.strerror or 'sin descripción'}"
+    return type(e).__name__
+
+
+def _leer_yaml_extra(ruta: str) -> None:
+    """El `--config-a` se lee y se mira antes de nada: un diccionario (o vacío), con `cadena_b` y su correspondencia de
+    ámbitos, si están, también diccionarios. Si no, `ValueError` con el motivo, sin el contenido."""
+    datos = yaml.safe_load(Path(ruta).read_text(encoding="utf-8"))
+    if datos is not None and not isinstance(datos, dict):
+        raise ValueError(f"no es un diccionario sino {type(datos).__name__}")
+    sec = (datos or {}).get("cadena_b")
+    if sec is not None and not isinstance(sec, dict):
+        raise ValueError(f"«cadena_b» no es un diccionario sino {type(sec).__name__}")
+    corr = (sec or {}).get("correspondencia_ambitos")
+    if corr is not None and not isinstance(corr, dict):
+        raise ValueError(f"«cadena_b.correspondencia_ambitos» no es un diccionario sino {type(corr).__name__}")
 
 
 def _escribir(ruta: Path, datos: dict) -> Path:
@@ -119,7 +174,14 @@ def main(argv: list[str] | None = None) -> int:
     a = ap.parse_args(argv)
     w = Path(a.trabajo).resolve() if a.trabajo else Path(tempfile.mkdtemp(prefix="cadena_a_b_"))
     w.mkdir(parents=True, exist_ok=True)
-    cfg = cargar_config(a.config_a)
+    try:   # T-150 (O-06): un YAML roto daba la traza de `yaml`, con la línea que no entiende
+        if a.config_a:
+            _leer_yaml_extra(a.config_a)
+        cfg = cargar_config(a.config_a)
+    except (OSError, UnicodeDecodeError, yaml.YAMLError, ValueError) as e:
+        motivo = str(e) if type(e) is ValueError else _motivo_lectura(e)
+        print(cadena_b.sin_datos_protegidos(f"--config-a no se puede leer ({motivo}): no se ejecuta nada"), file=sys.stderr)
+        return 1
     ambitos_b = yaml.safe_load(AMBITOS_B.read_text(encoding="utf-8")) or {}
     ajenas = sorted({v for v in ((cfg.get("cadena_b") or {}).get("correspondencia_ambitos") or {}).values()} - set(ambitos_b))
     if ajenas:
@@ -140,11 +202,21 @@ def main(argv: list[str] | None = None) -> int:
             resumen["sin_envio"] = {"motivo": "ENTREGA_BLOQUEADA_G3", "entrega": ciclo.get("entrega"), "g3": ciclo.get("g3"),
                                     "detalle": "el ciclo del Bloque A no entregó (7.3: «BLOQUEADO impide la entrega»): el Broker "
                                                "no recibe el paquete y no envía nada al Bloque B"}
-            _escribir(w / "resumen.json", resumen)
-            print(f"Sin entrega del Bloque A (entrega {ciclo.get('entrega')}, G3 {ciclo.get('g3')}): no se envía nada al Bloque B",
+            _resumen(w, resumen)
+            print(cadena_b.sin_datos_protegidos(f"Sin entrega del Bloque A (entrega {ciclo.get('entrega')}, G3 {ciclo.get('g3')}): "
+                                                "no se envía nada al Bloque B"), file=sys.stderr)
+            return 1
+        try:   # T-150 (O-04): un paquete que no se lee daba una traza
+            paquete = json.loads(Path(ruta_paquete).read_text(encoding="utf-8"))
+            if not isinstance(paquete, dict):
+                raise TypeError(f"no es un objeto JSON sino {type(paquete).__name__}")
+        except (OSError, UnicodeDecodeError, json.JSONDecodeError, TypeError) as e:
+            motivo = str(e) if type(e) is TypeError else _motivo_lectura(e)
+            resumen["sin_envio"] = {"motivo": "PAQUETE_ILEGIBLE", "detalle": f"el paquete del Bloque A no se lee ({motivo})"}
+            _resumen(w, resumen)
+            print(cadena_b.sin_datos_protegidos(f"El paquete del Bloque A no se lee ({motivo}): no se envía nada al Bloque B"),
                   file=sys.stderr)
             return 1
-        paquete = json.loads(Path(ruta_paquete).read_text(encoding="utf-8"))
         enviables = cadena_b.opciones_enviables(paquete)
         resumen["opciones_enviables"] = enviables
         for opp_id in enviables:
@@ -195,14 +267,13 @@ def main(argv: list[str] | None = None) -> int:
                             "de su configuración (INC-T142-01). Por eso el Broker falla cerrado."}
     except FalloEjecutor as e:
         print(cadena_b.sin_datos_protegidos(str(e)), file=sys.stderr)
-        _escribir(w / "resumen.json", resumen)
+        _resumen(w, resumen)
         return 2
     entregadas = [e for e in resumen["envios"] if e.get("estado_peticion") == "ENTREGADA"]
     resumen["veredicto_cadena"] = {"entregadas": len(entregadas),
                                    "todas_validas": all(e.get("paquete_b_valido") for e in entregadas),
                                    "vueltas_registradas": sum(1 for e in resumen["envios"] if (e.get("vuelta_a") or {}).get("ret_id"))}
-    _escribir(w / "resumen.json", resumen)
-    print(json.dumps(resumen, ensure_ascii=False, indent=1))
+    print(json.dumps(_resumen(w, resumen), ensure_ascii=False, indent=1))
     return 0 if entregadas and resumen["veredicto_cadena"]["todas_validas"] else 1
 
 

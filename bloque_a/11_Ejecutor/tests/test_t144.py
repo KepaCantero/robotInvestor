@@ -266,12 +266,24 @@ ANIOS_BORDE = np.array([0.0, 0.4, 0.7, 1.0])
 
 def _hueco_de_la_cota():
     """max(Lₜ − bₜ) − min(Lₛ + bₛ) en las fechas comunes, con bₜ = −log(1 − qₓ/2x) − log(1 − q_y/2y): el par es copia por
-    la regla de niveles si y solo si el hueco cabe en las dos tolerancias numéricas de cada lado, 4·tol_numerica."""
+    la regla de niveles si y solo si el hueco cabe en las dos tolerancias numéricas de cada lado, 4·tol_numerica.
+    T-150 (QA r01 de T-149, H-05): cada serie puede estar redondeada (centro p, media anchura q/2p) o truncada hacia abajo
+    (centro p + q/2, media anchura (q/2)/(p + q/2)); el par es copia si cabe en alguna de las cuatro combinaciones, así
+    que el hueco es el menor de los cuatro."""
     comun = ~np.isnan(Y_BORDE)
     x, y = X_BORDE[comun], Y_BORDE[comun]
-    L = np.log(x) - np.log(y)
-    b = -np.log1p(-0.01 / (2 * x)) - np.log1p(-0.01 / (2 * y))
-    return float(np.max(L - b) - np.min(L + b))
+
+    def centro_y_cota(p, truncada):
+        r = 0.01 / (2 * p)
+        return (np.log(p) + np.log1p(r), -np.log1p(-r / (1 + r))) if truncada else (np.log(p), -np.log1p(-r))
+    huecos = []
+    for tx in (False, True):
+        for ty in (False, True):
+            (lx, bx), (ly, by) = centro_y_cota(x, tx), centro_y_cota(y, ty)
+            L, b = lx - ly, bx + by
+            huecos.append(float(np.max(L - b) - np.min(L + b)))
+    assert max(huecos) / min(huecos) < 1.01          # las cuatro, a menos de un 1 % unas de otras
+    return min(huecos)
 
 
 def test_t149_la_cota_de_niveles_es_el_redondeo_de_las_dos_mas_dos_tolerancias():
