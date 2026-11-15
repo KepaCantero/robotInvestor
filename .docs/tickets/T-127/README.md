@@ -2,7 +2,7 @@
 
 | Campo | Valor |
 | --- | --- |
-| Estado | EN QA · ronda r03 |
+| Estado | CERRADO |
 | Pieza | bloque_a (11_Ejecutor, motor) |
 | Planifica · implementa · QA | Claude · Claude · un revisor nuevo (otro agente o un subagente sin contexto de la implementación) |
 | Aprobación del operador | no necesaria (corrección de hallazgos de QA); las decisiones van `[PROPUESTO]` (el operador pidió que el agente decida por defecto y lo deje apuntado) |
@@ -128,3 +128,4 @@ FON-DISC-001 (T-121 H-09).
 - 2026-11-15 · NO APTO · revisor nuevo (QA r02) · H-04 (alta, un emisor troceado o con perturbaciones simétricas da su cifra), H-05 (baja, la frase del «error de al menos un 5 %»)
 - 2026-11-15 · EN CURSO · ronda r03 · Claude · H-04: los componentes los aporta quien pide (HT-01 solo da precios): límite declarado con su alcance, aviso cuando dos componentes solo difieren en un dato y pregunta para T-57; H-05: aportación también con signo y frase corregida (INC-T127-01, «Ronda r03»); junto con la r02 de T-128
 - 2026-11-15 · EN QA · ronda r03 · Claude · `tests/test_t127_r03.py` (12) y `tests/test_t128_r02.py` (17), mutantes de la r03 29 de 29, casos de control 67/67, scripts del revisor explicados uno a uno en `pruebas.md`, suites del Motor y vecinas en verde, ruff 2902 y mypy A 109; falta `./tools/check_all.sh` en el commit y la QA r03
+- 2026-11-15 · CERRADO · QA r03 APTO (revisor nuevo sin contexto): la decisión de declarar el troceo se verificó en el código; hallazgos bajos (H-06 a H-08) en T-135

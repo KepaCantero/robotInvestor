@@ -232,7 +232,7 @@ RE_SEPARADOR = re.compile(r"[\s.\-]+")
 # H-05), y entre grupos va un solo espacio, espacio duro o guion: con dos espacios o un salto de línea son las columnas
 # de una tabla, no una tarjeta (H-07, regresión de la r02).
 RE_GRUPOS_TARJETA = re.compile(r"(?<![0-9A-Za-z_])(?<![0-9][.,])([0-9]+(?:[ \u00a0\u202f\-][0-9]+)*)(?![0-9A-Za-z_])")
-# T-133 (QA r01 de T-130, H-01 y H-03): estructura del BBAN de cada país en el registro ISO 13616 de SWIFT, tramo a tramo:
+# T-136 (QA r01 de T-130, H-01 y H-03): estructura del BBAN de cada país en el registro ISO 13616 de SWIFT, tramo a tramo:
 # «n» cifras, «a» letras, «c» letras o cifras. Sustituye al tope común de cuatro letras de T-130, que dejaba fuera IBAN reales
 # de Rumanía o Letonia. Así una mención de un ISIN o de un índice seguida de palabras, o una huella truncada, no encaja por
 # casualidad: además de la longitud y el módulo 97 (1 de cada 97), tiene que cumplir la forma de su país.
@@ -261,7 +261,7 @@ def _iban_valido(compacto: str) -> bool:
 
 def _bban_plausible(compacto: str, grupos: list[str]) -> bool:
     """El BBAN cumple la estructura de su país (ISO 13616) y, si el IBAN venía en grupos, ninguno es una palabra de más de
-    cuatro letras ni, salvo el último, una sola cifra suelta (T-133, H-05: lo que dejan los decimales de una
+    cuatro letras ni, salvo el último, una sola cifra suelta (T-136, H-05: lo que dejan los decimales de una
     cifra con punto tras un ISIN)."""
     patron = RE_BBAN.get(compacto[:2])
     if patron is None or not patron.fullmatch(compacto[4:]):
@@ -272,7 +272,7 @@ def _bban_plausible(compacto: str, grupos: list[str]) -> bool:
 
 
 def _misma_caja(iban: str) -> bool:
-    """T-133: las letras de un IBAN van todas en la misma caja que su código de país (o todo en mayúsculas o todo en
+    """T-136: las letras de un IBAN van todas en la misma caja que su código de país (o todo en mayúsculas o todo en
     minúsculas): las palabras de una frase en minúsculas tras un ISIN o un índice en mayúsculas no forman un IBAN."""
     pais, letras = iban[:2], [c for c in iban[4:] if c.isalpha()]
     if not letras:
@@ -337,6 +337,11 @@ def _red_de_tarjeta(cifras: str) -> bool:
     return False
 
 
+def _forma_de_fecha(g: str) -> bool:
+    """Cuatro cifras que pueden ser una caducidad MMAA (mes 01–12) o un año de 1900 a 2099 (calendario, no un umbral)."""
+    return g.isdigit() and len(g) == 4 and (1 <= int(g[:2]) <= 12 or g[:2] in ("19", "20"))
+
+
 GRUPOS_FILA_DE_TABLA = 5   # una tarjeta impresa en grupos de cuatro tiene cuatro (16 cifras); con cinco o más es una tabla
 
 
@@ -349,7 +354,18 @@ def tarjetas_en_texto(texto: str) -> list[str]:
     for m in RE_GRUPOS_TARJETA.finditer(texto):
         grupos = [g for g in re.split(r"[ \u00a0\u202f\-]", m.group(1)) if g]
         if len(grupos) >= GRUPOS_FILA_DE_TABLA and all(len(g) == 4 for g in grupos):
-            continue   # T-133 (QA r01 de T-130, H-02): cinco o más números de cuatro cifras seguidos son una fila de tabla
+            # T-136 (QA r01 de T-130, H-02) y T-137 (QA r01 de T-136, H-02): cinco o más números de cuatro cifras seguidos son
+            # una fila de tabla, salvo que la serie se reparta, desde el principio o desde el final, en tarjetas válidas de
+            # cuatro grupos y lo que sobre tenga forma de fecha (una caducidad MMAA o un año): una tarjeta con su caducidad,
+            # un año delante o dos tarjetas seguidas se detectan; una fila de números corrientes, casi nunca
+            n = len(grupos)
+            for inicios in (list(range(0, n - 3, 4)), list(range(n - 4, -1, -4))):
+                cubiertos = {j for i in inicios for j in range(i, i + 4)}
+                tarjetas = ["".join(grupos[i:i + 4]) for i in inicios]
+                if all(_red_de_tarjeta(c) and _luhn(c) for c in tarjetas) and all(
+                        _forma_de_fecha(grupos[j]) for j in range(n) if j not in cubiertos):
+                    hallados += ["tarjeta …" + c[-4:] for c in tarjetas]
+            continue
         for i in range(len(grupos)):
             cifras = ""
             for j in range(i, len(grupos)):

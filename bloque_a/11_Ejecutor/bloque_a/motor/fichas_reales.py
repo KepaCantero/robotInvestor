@@ -574,7 +574,7 @@ def f_rei_nav(ent: dict[str, Any], params: dict[str, Any]) -> Resultado:
                 raise ErrorFicha(f"{ctx}: NAV ≠ GAV − deuda neta − otros pasivos (error relativo {err:.3g})")
         filas.append({"id": cid, "fecha": fp, "fecha_nav": fn_, "precio": precio, "acciones": acciones,
                       "nav_acc": nav_acc, "nav": nav, "gav": gav, "deuda": deuda, "otros": otros, "cap": cap_tas,
-                      "capit": precio * acciones, "err": err})
+                      "capit": precio * acciones, "err": err, "otros_derivados": err is None})
     ids = [f["id"] for f in filas]
     if len(set(ids)) != len(ids):
         raise ErrorFicha(f"{F}: componentes con «id» repetido")
@@ -598,9 +598,13 @@ def f_rei_nav(ent: dict[str, Any], params: dict[str, Any]) -> Resultado:
                  u["peso_maximo_componente"], grupos)
     _rechazo_concentradas(_concentradas({"la prima agregada": (capit * primas, capit)}, u, tol), f"{F}: componentes", u)
     # T-128 r02 (QA r01, H-01; INC-T127-01 r03): aviso si dos sociedades solo difieren en un dato (p. ej. el NAV por acción
-    # movido ±δ); el GAV no entra porque lo fija la identidad NAV = GAV − deuda neta − otros pasivos
-    _aviso_casi_clones([(f["precio"], f["acciones"], f["nav_acc"], f["deuda"], f["otros"], f["cap"]) for f in filas],
-                       u["tolerancia_clon"], lim)
+    # movido ±δ); el GAV no entra porque lo fija la identidad NAV = GAV − deuda neta − otros pasivos.
+    # T-135 (QA r03 de T-127, H-07): la firma son los datos de quien pide. Sin `otros_pasivos`, la ficha los deriva de los
+    # demás (GAV − deuda − NAV) y se moverían con el NAV por acción: en la firma van como ``None`` y entra el GAV, que es
+    # entonces el dato aportado (con `otros_pasivos`, al revés: el GAV es el derivado y va como ``None``)
+    _aviso_casi_clones([(f["precio"], f["acciones"], f["nav_acc"], f["deuda"],
+                         None if f["otros_derivados"] else f["otros"], f["gav"] if f["otros_derivados"] else None, f["cap"])
+                        for f in filas], u["tolerancia_clon"], lim)
     prima_agg = float(np.sum(w * primas))                              # agregado ponderado por capitalización
     dispersion: float | None = None
     if distintos >= u["componentes_minimos_dispersion"]:

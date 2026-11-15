@@ -2,7 +2,7 @@
 
 | Campo | Valor |
 | --- | --- |
-| Estado | EN QA |
+| Estado | CERRADO |
 | Pieza | `.docs/scripts/comprobar_datos_a.py`, `.docs/scripts/borrador_anexo_b.py`, `.docs/diseno/bloque_a/borrador_correccion_anexo_b.md`; pruebas en `bloque_a/11_Ejecutor/tests/test_t131_preparativos.py`. No cambia el ejecutor ni el corpus |
 | Planifica · implementa · QA | claude · claude · un revisor nuevo sin contexto |
 | Aprobación del operador | 2026-11-15: «me parece genial» (puntos 7 y 8 de la lista de tareas de la noche) |
@@ -27,3 +27,4 @@ Dejar listo lo que se pueda de dos decisiones del operador, sin tomarlas:
 - 2026-11-15 · EN QA · claude · implementado y probado
 - 2026-11-15 · NO APTO · QA r01 (revisor nuevo sin contexto): H-01 alta (la comprobación no validaba las filas como el ciclo), H-02 media (borrador incompleto), H-03 y H-04 bajas
 - 2026-11-15 · EN QA · claude · ronda r02: valida con `cierres()` como el ciclo; en H1 cuenta sesiones con los festivos de la configuración; carpeta inexistente con mensaje y código 2; el borrador recoge los campos de primer nivel que no se envían, los de cada elemento de los lotes con el motivo del rechazo, el tipo de `escalado`, `fecha_corte` de CT-09, lo que el Anexo B deja abierto y, en los retornos CT-06 a CT-14, que se describan los campos de `ESQUEMAS`
+- 2026-11-15 · CERRADO · QA r02 APTO (revisor nuevo sin contexto); hallazgos (H-05 media, H-06 baja) en T-137

@@ -126,7 +126,7 @@ def test_el_estimador_aplica_la_tarifa_y_la_cota():
     r = est.estimar(llamadas, precios, 10.0, {"AG-16"}, 5)
     # 1.ª: 0,5 M de entrada (1) + 0,1 M de salida (1) + 1 M de escritura (4) = 6; 2.ª: 1 M de lectura = 0,1
     assert r["estimacion"] == pytest.approx(6.1)
-    # cota (desde T-133, H-01): toda la entrada como escritura de caché (1,5 M × 4 = 6 y 1 M × 4 = 4), la salida hasta
+    # cota (desde T-136, H-01): toda la entrada como escritura de caché (1,5 M × 4 = 6 y 1 M × 4 = 4), la salida hasta
     # max_tokens (1 M × 10 = 10) y 5 búsquedas a 10 USD/1000 en AG-16
     assert r["cota_superior"] == pytest.approx(6 + 4 + 10 + 0.05) and r["busquedas_cota"] == 5
     with pytest.raises(SystemExit):

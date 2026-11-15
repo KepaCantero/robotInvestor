@@ -25,7 +25,7 @@
 | CT-03.ENCARGO | el ejecutor admite que falte `contexto`, `urgencia` | marcarlos «opcional» (o exigirlos en el código) |
 | CT-03.ENCARGO | en los mensajes emitidos falta `contexto.opp_id`, `contexto.run_id`, `query_id` | marcarlos «si aplica» |
 | CT-03.RETORNO | el ejecutor admite que falte `escalado` | marcarlos «opcional» (o exigirlos en el código) |
-| CT-03.RETORNO | `escalado` llega con otro tipo (el Anexo B pide object; el ejecutor envía null cuando no aplica) | admitir null «si no aplica» |
+| CT-03.RETORNO | `escalado` llega con otro tipo en algún mensaje emitido (el Anexo B pide object) | admitir el tipo que envía el ejecutor (ver el golden de formas) |
 | CT-04.ENCARGO | el ejecutor admite que falte `configuracion`, `decisiones`, `resultado_comunicado`, `valoracion_informe` | marcarlos «opcional» (o exigirlos en el código) |
 | CT-04.ENCARGO | en los mensajes emitidos falta `configuracion.clases_activas`, `configuracion.dia_hora_entrega`, `configuracion.idioma_usuario`, `configuracion.periodicidad` | marcarlos «si aplica» |
 | CT-04.ENCARGO | INC-T116-01 | El Broker pide horizontes con una lista global (`horizontes`), no por tipo de activo: se rechaza cada celda que la tabla 8.3 marca «No». Decir en el Anexo B que la lista es global y que el rechazo es por celda. |
@@ -33,8 +33,8 @@
 | CT-06.RETORNO | el ejecutor admite que falte `cribado`, `descartadas_relevantes`, `finalistas`, `lagunas`, `regimen_clase`, `revision_vigentes`, `senales_para_otras_clases` | describir los campos del esquema de `ESQUEMAS` de ese agente (ver «Retornos internos» en el §1) |
 | CT-07.RETORNO | el ejecutor admite que falte `contradicciones`, `evidencias_enviadas_a_curador`, `lagunas`, `referencias`, `sintesis` | describir los campos del esquema de `ESQUEMAS` de ese agente (ver «Retornos internos» en el §1) |
 | CT-08.RETORNO | el ejecutor admite que falte `contradicciones`, `evidencias_enviadas_a_curador`, `lagunas`, `referencias`, `sintesis` | describir los campos del esquema de `ESQUEMAS` de ese agente (ver «Retornos internos» en el §1) |
-| CT-09.RETORNO | el ejecutor admite que falte `artefacto_id`, `clase_cifra`, `incertidumbre`, `informe_calidad_datos`, `resultado` | describir los campos del esquema de `ESQUEMAS` de ese agente (ver «Retornos internos» en el §1) |
-| CT-10.RETORNO | el ejecutor admite que falte `coincide`, `diagnostico`, `diferencias` | describir los campos del esquema de `ESQUEMAS` de ese agente (ver «Retornos internos» en el §1) |
+| CT-09.RETORNO | el ejecutor admite que falte `artefacto_id`, `clase_cifra`, `incertidumbre`, `informe_calidad_datos`, `resultado` | describir los campos del retorno que sirve el Motor (`motor/servicio.py`), que no tiene esquema en `ESQUEMAS` |
+| CT-10.RETORNO | el ejecutor admite que falte `coincide`, `diagnostico`, `diferencias` | describir los campos del retorno que sirve el Motor (`motor/servicio.py`), que no tiene esquema en `ESQUEMAS` |
 | CT-11.ENCARGO | el ejecutor exige `piezas` y rechaza el ejemplo del Anexo B (MensajeInvalido: «CT-11: faltan campos mínimos ['piezas']») | el mensaje es una lista `piezas`; cada elemento es una pieza de evidencia con los campos de hoy (`afirmacion`, `direccion`, `extracto`, `fechas`, `fuente`, `unidad_divisa`); ejemplo nuevo |
 | CT-11.RETORNO | el ejecutor admite que falte `clm_id`, `duplicado_de`, `evd_id`, `independiente`, `raiz_id` | describir los campos del esquema de `ESQUEMAS` de ese agente (ver «Retornos internos» en el §1) |
 | CT-12.ENCARGO | el ejecutor exige `encargos` y rechaza el ejemplo del Anexo B (MensajeInvalido: «CT-12: faltan campos mínimos ['encargos']») | el mensaje es una lista `encargos`; cada elemento es un encargo de prospectiva con los campos de hoy (`catalizadores_conocidos`, `datos`, `horizontes`, `opp_id`, `tesis`); ejemplo nuevo |

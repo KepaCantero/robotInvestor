@@ -2,7 +2,7 @@
 
 | Campo | Valor |
 | --- | --- |
-| Estado | EN QA · ronda r02 |
+| Estado | CERRADO |
 | Pieza | bloque_a (11_Ejecutor: `bloque_a/motor/`) |
 | Planifica · implementa · QA | Claude · Claude · un revisor nuevo sin contexto |
 | Aprobación del operador | 2026-11-15: «me parece genial» (punto 2 de la lista de tareas de la noche) |
@@ -62,3 +62,4 @@ Al revisar el informe de T-127 (15-11-2026): REI-NAV-001 (`motor/fichas_reales.p
 - 2026-11-15 · NO APTO · revisor nuevo (QA r01) · H-01 (alta, una sociedad o un valor troceados dan su cifra; la raíz de T-127 H-04), H-02 (media, CHR-FLOW-001 con una moneda estable), H-03 (baja, flujos ya agregados sin declarar), H-04 (baja, fila de la deuda)
 - 2026-11-15 · EN CURSO · ronda r02 · Claude · junto con la r03 de T-127: H-01 declarado (los componentes los aporta quien pide), aviso en REI-NAV-001; H-02: CHR-FLOW-001 con 2 monedas distintas y dominancia, e IDX-CONC-001 (la «otra igual» de la tabla); H-03 declarado; H-04: la fila ya está en el árbol principal
 - 2026-11-15 · EN QA · ronda r02 · Claude · `tests/test_t128_r02.py` (17), mutantes de `T-127/revisores/impl_r03_mutantes.py` 29 de 29, casos de control 67/67, scripts del revisor explicados en `pruebas.md`, suites del Motor y vecinas en verde, ruff 2902 y mypy A 109; falta `./tools/check_all.sh` en el commit y la QA r02
+- 2026-11-15 · CERRADO · QA r02 APTO (revisor nuevo sin contexto); hallazgos (H-05 media: IDX-CONC con copias a escala; H-06 baja) en T-135

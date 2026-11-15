@@ -48,8 +48,17 @@ def contaminacion_posible(p: dict) -> bool:
     return not (v is None or v is False)
 
 
+def _finito(x) -> bool:
+    """`math.isfinite` sin excepciones: un entero de cientos de cifras (JSON válido, que `json.loads` da tal cual) no cabe
+    en un float y `math.isfinite` lanza `OverflowError`; aquí cuenta como no finito (T-134, QA r03 de T-125, H-14 y H-15)."""
+    try:
+        return math.isfinite(x)
+    except OverflowError:
+        return False
+
+
 def _prob_valida(v) -> bool:
-    return not isinstance(v, bool) and isinstance(v, (int, float)) and math.isfinite(v) and 0.0 <= float(v) <= 1.0
+    return not isinstance(v, bool) and isinstance(v, (int, float)) and _finito(v) and 0.0 <= float(v) <= 1.0
 
 
 def _version_menor_siguiente(v) -> str:
@@ -161,7 +170,8 @@ def lecciones_por_encargo(cfg: dict | None) -> int:
 LECCIONES_POR_ENCARGO_MAX = 10   # 12.3 del Documento 0 del Bloque A: «máximo 10»
 
 
-RE_FECHA_ISO = re.compile(r"\d{4}-\d{2}-\d{2}(?:[T ]\d{2}:\d{2}(?::\d{2}(?:\.\d+)?)?)?(?:Z|[+-]\d{2}:?\d{2})?")
+# T-134 (QA r03 de T-125, H-16): solo cifras ASCII (`\d` admite las de otros alfabetos) y la zona solo detrás de una hora
+RE_FECHA_ISO = re.compile(r"[0-9]{4}-[0-9]{2}-[0-9]{2}(?:[T ][0-9]{2}:[0-9]{2}(?::[0-9]{2}(?:\.[0-9]+)?)?(?:Z|[+-][0-9]{2}:?[0-9]{2})?)?")
 
 
 def _fecha_de_calendario(v) -> pd.Timestamp:
@@ -174,7 +184,12 @@ def _fecha_de_calendario(v) -> pd.Timestamp:
         # T-125 r03 (QA r02, H-10): solo ISO 8601 («AAAA-MM-DD», con hora y zona opcionales). «now», «today», «July 1 2026»,
         # «20260701» o «1/7/2026» (que pandas leería como 7 de enero) no se leen: dependen del reloj o son ambiguos
         raise ValueError(f"fecha no ISO 8601: {v!r}")
-    t = pd.Timestamp(v.strip())
+    try:
+        t = pd.Timestamp(v.strip())
+        if not pd.isna(t):
+            t.date()   # T-137 (QA r01 de T-134, H-19): «0000-01-01» se lee pero no da fecha de calendario
+    except (NotImplementedError, OverflowError, ValueError) as e:
+        raise ValueError(f"fecha fuera del calendario: {v!r}") from e
     if pd.isna(t):
         raise ValueError(f"fecha vacía: {v!r}")
     if t.tzinfo is not None:
@@ -192,7 +207,7 @@ def _campos_pronostico_fuente(pf: dict) -> tuple | None:
 
 
 def _numero_finito(x) -> bool:
-    return not isinstance(x, bool) and isinstance(x, (int, float)) and math.isfinite(x)
+    return not isinstance(x, bool) and isinstance(x, (int, float)) and _finito(x)
 
 
 def fuente_de_opinion_registrada(ref_id, referencias) -> bool:
@@ -204,6 +219,15 @@ def fuente_de_opinion_registrada(ref_id, referencias) -> bool:
     return bool(ficha) and ficha.get("archivo") == "F9"
 
 
+def variables_nivel(cfg: dict | None) -> list[str]:
+    """T-134 (QA r03 de T-125, H-17): `fiabilidad_fuentes.variables_nivel` es una lista no vacía de textos no vacíos; si no,
+    `ValueError` al crear el Evaluador (un texto suelto se recorrería letra a letra y aceptaría «c»)."""
+    v = parametro(cfg, "fiabilidad_fuentes.variables_nivel")
+    if not isinstance(v, list) or not v or not all(isinstance(x, str) and x.strip() for x in v):
+        raise ValueError(f"fiabilidad_fuentes.variables_nivel debe ser una lista de textos no vacíos (es {v!r})")
+    return [x.strip() for x in v]
+
+
 def variable_resoluble(variable, variables_nivel) -> bool:
     """T-125 r03 (QA r02, H-09): el Evaluador resuelve un pronóstico de fuente con el cierre de `serie_ht01` en su fecha
     objetivo, así que solo vale una `variable` que sea el nivel de la serie (`fiabilidad_fuentes.variables_nivel`). Una
@@ -211,7 +235,7 @@ def variable_resoluble(variable, variables_nivel) -> bool:
     return isinstance(variable, str) and variable.strip().lower() in {str(x).lower() for x in variables_nivel}
 
 
-def motivo_pronostico_fuente_no_registrable(pf, fuente, registro, referencias, variables_nivel=None) -> str | None:
+def motivo_pronostico_fuente_no_registrable(pf, fuente, registro, referencias, variables_nivel_cfg=None) -> str | None:
     """T-125 r02 (QA r01, H-01, H-03 y H-04): None si el bloque `pronostico_fuente` de una pieza puede entrar en F2; si no, el
     motivo. Se exige el bloque completo y bien formado (esquema de F2, 4.1), que el `ref_id` sea una fuente de F9 y la propia
     fuente de la pieza, y que se registre antes de su fecha objetivo y no antes de su emisión (conocibilidad: sin fuga)."""
@@ -223,11 +247,11 @@ def motivo_pronostico_fuente_no_registrable(pf, fuente, registro, referencias, v
     objetivo, emision, ref_id, serie, direccion, umbral, prob, variable = campos
     if not isinstance(serie, str) or not serie:
         return "serie_ht01 no válida"
-    if variables_nivel is None:
+    if variables_nivel_cfg is None:
         from .configuracion import config_por_defecto
-        variables_nivel = parametro(config_por_defecto(), "fiabilidad_fuentes.variables_nivel")
-    if not variable_resoluble(variable, variables_nivel):
-        return f"variable {variable!r} no resoluble con el cierre de la serie (solo {', '.join(map(str, variables_nivel))})"
+        variables_nivel_cfg = variables_nivel(config_por_defecto())
+    if not variable_resoluble(variable, variables_nivel_cfg):
+        return f"variable {variable!r} no resoluble con el cierre de la serie (solo {', '.join(map(str, variables_nivel_cfg))})"
     if not isinstance(direccion, str):
         return f"dirección no reconocida: {direccion!r}"
     if direccion in ("por_encima", "por_debajo"):
@@ -257,6 +281,7 @@ def motivo_pronostico_fuente_no_registrable(pf, fuente, registro, referencias, v
 class Evaluador:
     def __init__(self, almacen, proveedor, motor, cfg: dict, universo: pd.DataFrame, referencias=None) -> None:
         lecciones_por_encargo(cfg)   # T-122: una configuración mal formada falla al crear el Evaluador, no a mitad de ciclo
+        variables_nivel(cfg)         # T-134 (H-17)
         self.almacen = almacen
         # T-125 r02 (QA r01, H-04): registro de referencias (F7–F9) para validar la fuente de los pronósticos de fuentes;
         # sin él no cuenta ninguno
@@ -1080,18 +1105,17 @@ class Evaluador:
             objetivo, emision, ref_id, serie, direccion, umbral, prob, variable = campos
             if not (isinstance(ref_id, str) and isinstance(serie, str) and emision < objetivo <= corte and objetivo >= desde):
                 continue
-            if not variable_resoluble(variable, par["variables_nivel"]) or not isinstance(direccion, str):
+            if not variable_resoluble(variable, variables_nivel(self.cfg)) or not isinstance(direccion, str):
                 continue   # T-125 r03 (QA r02, H-09 y H-12): variable que el cierre no resuelve, o dirección que no es texto
             if not emision <= pd.Timestamp(registro) < objetivo:
                 continue   # H-03: registrado cuando el resultado ya era conocible (o antes de emitirse): no cuenta
             if not fuente_de_opinion_registrada(ref_id, self.referencias):
                 continue   # H-04: no es una fuente de F9
             if direccion in ("por_encima", "por_debajo"):
-                if isinstance(umbral, bool) or not isinstance(umbral, (int, float)) or not math.isfinite(umbral):
+                if not _numero_finito(umbral):
                     continue
             elif direccion in ("dentro", "fuera"):
-                if not (isinstance(umbral, list) and len(umbral) == 2 and all(isinstance(x, (int, float)) and not isinstance(x, bool)
-                                                                            and math.isfinite(x) for x in umbral) and umbral[0] < umbral[1]):
+                if not (isinstance(umbral, list) and len(umbral) == 2 and all(_numero_finito(x) for x in umbral) and umbral[0] < umbral[1]):
                     continue
             else:
                 continue

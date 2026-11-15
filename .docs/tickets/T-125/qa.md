@@ -189,3 +189,136 @@ Tres escenarios (backtest de RV, dos ciclos en vivo de RV y el ciclo de las doce
 ## Veredicto (r02)
 
 **NO APTO** · Los hallazgos de la r01 están corregidos (H-01, el alto, también: el pronóstico de una fuente viaja del Analista y del Buscador a F2 y, vencido, sale en la FUE- con el Brier del Motor y su `calc_id`, comunicado por CT-19; los ciclos sin el bloque no cambian ni un byte; 13 de 14 mutantes mueren y el que vive es equivalente). Pero CA-4 sigue sin cumplirse: el alta acepta bloques sin `variable` y el Evaluador resuelve cualquier variable contra el cierre (H-09, media), y la lectura de fechas acepta `now`/`today` (reloj de la máquina) y formatos no ISO (H-10, media). Tras corregirlo, volver a ejecutar `r02_01_ataques_ciclo.py` (B03, B04, B07, B10, B11 y B12 deben cambiar) y `r02_02_ciclos_sin_bloque.py`.
+
+## Ronda r03
+
+- **Revisor:** revisor nuevo sin contexto de la implementación (subagente de Claude; no es el de la r01 ni el de la r02, ni quien implementó) · 2026-11-15
+- **Copia revisada:** clon desconectado en `4125525` (instantánea con T-125 r03). Versión anterior (`5098b09`, la de la r02) y mutantes, en copias desechables extraídas con `git archive` dentro del scratchpad («qa12_prev» y «qa12_mut»), ya borradas.
+- Opinión formada con el diff de la r03 (`evaluador.py`: `RE_FECHA_ISO`, `_fecha_de_calendario`, `variable_resoluble`, `motivo_pronostico_fuente_no_registrable`, `pronosticos_de_fuentes`, `fiabilidad_fuentes`/`_brier_del_motor` con `run_id`; `orquestacion.py`, `_tipo_con_pronostico_fuente`; `por_defecto.yaml`), el esquema de F2 (regla 8 y 4.1, que no enumera los valores de `variable`) y las pruebas, antes de leer el apartado «Ronda r03» de `analisis-tecnico.md`.
+
+### Reproducción
+
+| Qué | Orden | Resultado |
+| --- | --- | --- |
+| Suite completa de A, una vez | `cd bloque_a/11_Ejecutor && python -m pytest -q -p no:cacheprovider` | **5968 passed** en 27 min 24 s (línea base 607) |
+| Goldens de contratos | `python tests/goldens_ct.py` | «goldens de contratos: coinciden» |
+| ruff (tres `11_Ejecutor`, desde la raíz) | `ruff check --output-format=concise … \| wc -l` | 2838 (cuota 2838) |
+| mypy de A, como el gate | `mypy bloque_a --ignore-missing-imports --no-error-summary \| wc -l` | 109 (cuota 109) |
+| Gates ligeros | `tools/secrets_scan.py`, `refs_vivas.py`, `nfc_check.py`, `corpus_integridad.py` | los cuatro en verde (695 archivos del corpus coinciden) |
+| Script de la r02, tal cual | desde `bloque_a/11_Ejecutor`: `QA_TMP=<tmp> python ../../.docs/tickets/T-125/revisores/r02_01_ataques_ciclo.py` | B01–B03 bien y **se para en B04** con `ValueError: fecha no ISO 8601: 'now'`. Es lo esperado: B04 llamaba a `_fecha_de_calendario("now")` dando por hecho que devolvía una fecha; ahora falla cerrado, que es lo que pedía H-10 |
+| La r02 con B04 adaptado | `QA_TMP=<tmp> python ../../.docs/tickets/T-125/revisores/r03_01_r02_con_b04_adaptado.py` (ejecuta el fichero de la r02 sin tocarlo, con solo B04 sustituido en memoria) | abajo |
+| Ataques nuevos | `QA_TMP=<tmp> python ../../.docs/tickets/T-125/revisores/r03_02_fechas_variables_y_numeros.py` | abajo |
+| Ciclo tras el desbordamiento | `QA_TMP=<tmp> python ../../.docs/tickets/T-125/revisores/r03_03_ciclo_tras_desbordamiento.py` | abajo (H-14) |
+| Ciclos sin bloque, antes y después | desde el `11_Ejecutor` de `5098b09` y de `4125525`, con el mismo `QA_TMP`: `python <ruta>/r02_02_ciclos_sin_bloque.py > salida.json`, y `diff` | abajo |
+| Mutantes de la r03 | desde la raíz: `python .docs/tickets/T-125/revisores/r03_04_mutantes.py <copia «qa12_mut»>/bloque_a` | abajo |
+
+### La r02 otra vez (`revisores/r03_01_r02_con_b04_adaptado.py`, ejecutado)
+
+| Bloque | r02 | r03 | Juicio |
+| --- | --- | --- | --- |
+| B01 | FUE- de REF-RF-0001 (n 16, BSS −0,36, 8,4 puntos); RC **sin `run_id`** | igual, y la entrada de RC lleva `RUN-2026-0002`, el run del ciclo | H-13 corregido |
+| B02 | determinista | determinista | correcto |
+| B03 | `now`, `2026-07`, `July 1 2026`, `20260701` registrables; `1/7/2026` leído 7 de enero | todos rechazados («faltan campos del bloque o una fecha no se lee»); siguen registrables `2026-07-01T23:00-12:00` (ISO) y `9999-12-31` (ISO, no se resuelve nunca: no cuenta) | H-10 corregido |
+| B04 (adaptado) | `now`/`today` con el reloj de la máquina | `now`, `today`, `tomorrow`, `1/7/2026`, `July 1 2026`, `2026`, `2026-07`, `20260701`, `2026/07/01`, `01-07-2026`: todos `ValueError`; emisión «today»: rechazada | H-10 corregido |
+| B05, B06, B08, B09 | correctos | iguales (B06 rechaza ahora la dirección `{"x": 1}` con «dirección no reconocida») | correcto |
+| B07 | 2 por serie (umbral `1` frente a `1.0`) | **4 para 4 series** | H-11 corregido |
+| B10 | `TypeError: unhashable type: 'list'` y se pierde la FUE- sana | FUE- de REF-RF-0001 | H-12 corregido |
+| B11 | `now` y `July 1 2026` guardados en F2 | ninguno en F2; rechazos en HA | H-10 corregido |
+| B12 | sin `variable` registrable; «rentabilidad_12m > 0,05» acierta con el cierre (11,92 puntos) | sin `variable`: rechazado; `rentabilidad_12m`: «no resoluble con el cierre de la serie (solo nivel, cierre, precio)»; en F2 manipulado, 0 resueltos y ninguna FUE- | H-09 corregido |
+
+### Ataques nuevos (`revisores/r03_02_fechas_variables_y_numeros.py`, ejecutado)
+
+| Bloque | Qué | Obtenido | Juicio |
+| --- | --- | --- | --- |
+| N01a | ISO válidas: fecha, con espacios alrededor, con hora, segundos, microsegundos, `+05:00`, `Z`, `+0500`, `-12:00` | las nueve se leen como 2026-07-01 | correcto |
+| N01b | En un ciclo, objetivos con hora (`…T16:00`), con zona (`…T16:00:00+02:00`, emisión `…T08:00Z`) y con `Z` | 12 en F2, ningún rechazo, los 12 cuentan y se resuelven | correcto: las ISO con hora y zona siguen entrando |
+| N02a | Formatos que aún pasan el filtro | **cifras de ancho completo (`２０２６-０７-０１`), árabes orientales y devanagari** se leen y son registrables (el `\d` de `re` es Unicode); `2026-07-01-05:00` (zona sin hora, no es ISO) también; `9999-12-31` registrable (no cuenta nunca); `0001-01-01` como emisión se lee | H-16 (baja) |
+| N02b | En un ciclo, fecha objetivo en cifras de ancho completo | se guarda **tal cual** en F2 (`２０２６-０４-０８`) y cuenta (4 resueltos) | H-16 (baja): determinista y sin ambigüedad, pero no es ISO y queda así en el registro |
+| N03a | Variables: `CIERRE`, `" precio\n"`, `Nivel`, `nivel ` → sí; `cierre​`, `cierre_ajustado`, `rentabilidad`, `close`, `c`, `""`, `None`, `1`, `["cierre"]` → no | correcto (falla cerrado) |
+| N03b | `variables_nivel` mal formada | texto `"cierre"`: **la variable `c` es registrable** (se recorre letra a letra); `[]`: nada registrable; número `5`: **`TypeError`** en el alta | H-17 (baja) |
+| N03c | Configuración propia con `variables_nivel: [cierre]` en un ciclo | el alta del ciclo la respeta: solo `cierre` en F2 y `precio` rechazado en HA con su motivo | correcto (pero sin prueba: M14 vive) |
+| N03d | Se estrecha la lista después de registrar | 8 cuentan con la de por defecto, 4 con `[cierre]` | correcto (conservador) |
+| N04a | Alta con un entero de 400 cifras (JSON válido: `json.loads` lo lee como `int`) | umbral, rango `[0, 10^400]` y probabilidad: **`OverflowError: int too large to convert to float`** (`_numero_finito` y `_prob_valida` → `math.isfinite`); `1e400` (inf) y `True`: rechazados con motivo | H-14 |
+| N04b | El mismo umbral, devuelto por el Analista en un ciclo | **el ciclo entero lanza `OverflowError`** (`ciclo` → `_registrar_evidencia_clase` → `_tipo_con_pronostico_fuente` → `motivo_…`): ni estado, ni entregables, ni incidencia en HA | H-14 |
+| N04c | F2 manipulado: seis pronósticos sanos y uno con umbral de 400 cifras | `fiabilidad_fuentes` lanza `OverflowError` y se pierde la FUE- de la fuente sana (en el ciclo, el `try` del C5 la deja en `[]` con incidencia, y se repite cada ciclo) | H-15 (baja, la misma clase que H-12) |
+| N05 | Rangos `[a, b]` enteros y decimales; `[0, 1e9]`, `[-0.0, 1e9]`, `[0.0, 1e9]` | cuentan dos | correcto (H-11) |
+
+### Ciclo tras el desbordamiento (`revisores/r03_03_ciclo_tras_desbordamiento.py`, ejecutado)
+
+C1 con el umbral de 400 cifras: `OverflowError`; quedan en el almacén 2 entradas de F2, 9 de F10 y 6 de RC del run a medias, sin cierre del run; `verificar_integridad()` da todo `True`. C2, en el mismo almacén y con respuestas normales: COMPLETO (`RUN-2026-0002`), integridad `True`. No se repite (el bloque no llegó a F2), pero cada respuesta así tumba su ciclo. Con `5098b09` (la versión de la r02) el ciclo cae igual: viene de la r02 (el alta de T-125), no de la r03; antes de T-125 el bloque no se leía y no tumbaba nada.
+
+### Ciclos que no traen el bloque (`revisores/r02_02_ciclos_sin_bloque.py`, con `5098b09` y con `4125525`)
+
+En los tres escenarios, **la última huella y el número de entradas de cada archivo del almacén y la SHA-256 de cada entregable coinciden** entre las dos versiones. Solo difiere la huella del resumen de `Bloque.estado()`, y difiere también entre **dos ejecuciones de la misma versión** (`4125525` contra sí misma): son las latencias del reloj de la máquina, como vio la r02. La r03 no cambia los ciclos sin pronósticos de fuentes.
+
+### Mutantes (`revisores/r03_04_mutantes.py`, contra `test_t125_r03.py`, `test_t125_r02.py` y `test_t125_fiabilidad_fuentes.py`)
+
+| Mutante | Qué rompe | Resultado |
+| --- | --- | --- |
+| M01 | sin el filtro ISO | MUERTO |
+| M02 | el filtro admite AAAAMMDD | MUERTO |
+| M03 | el filtro sin zona horaria | MUERTO |
+| M04 | cualquier variable es resoluble | MUERTO |
+| M05 | variable sin `strip` | MUERTO |
+| M06 | variable sin `lower` | MUERTO |
+| M07 | el Evaluador no mira la variable | MUERTO |
+| M08 | el Evaluador no mira si la dirección es texto | VIVO · equivalente: una lista o un dict no está en `("por_encima", …)` (la tupla compara con `==`, sin hash) y cae en `else: continue`; la clave se forma después |
+| M09 | el alta no mira la variable | MUERTO |
+| M10 | el alta no mira si la dirección es texto | VIVO · equivalente, por lo mismo (cae en «dirección no reconocida») |
+| M11 | deduplicación con `repr(umbral)` | MUERTO |
+| M12 | el C5 no pasa el `run_id` a `fiabilidad_fuentes` | **VIVO** (H-18): `test_h13_…` llama a `fiabilidad_fuentes(AS_OF, "RUN-…")` directamente; ninguna prueba mira el `run_id` de RC en un ciclo (B01 sí lo muestra) |
+| M13 | la petición al Motor sin `run_id` | MUERTO |
+| M14 | el alta del ciclo usa la lista por defecto y no la de la configuración | **VIVO** (H-18): ninguna prueba cambia `variables_nivel` en un ciclo (N03c muestra que funciona) |
+| M15 | la fecha sin `strip` antes del filtro | VIVO · más estricto (rechaza `" 2026-07-01"`): conservador |
+| M16 | la lista de la configuración sin `lower` | VIVO · equivalente con la configuración de por defecto (en minúsculas) |
+
+Resumen: 10 de 16 muertos; de los 6 vivos, 3 equivalentes (M08, M10, M16), 1 conservador (M15) y 2 huecos de prueba (M12, M14).
+
+### Hallazgos de la r02
+
+| ID | Estado | Evidencia |
+| --- | --- | --- |
+| H-09 (media) | **corregido** | B12; N03a; M04, M07 y M09 mueren |
+| H-10 (media) | **corregido** en lo que pedía | B03, B04 (adaptado) y B11; N01a/N01b (las ISO con hora y zona siguen leyéndose); M01–M03 mueren. Queda el `\d` Unicode (H-16, baja) |
+| H-11 (baja) | **corregido** | B07; N05; M11 muere |
+| H-12 (baja) | **corregido** | B10; queda la misma clase con un entero enorme (H-15) |
+| H-13 (baja) | **corregido** | B01 (`RUN-2026-0002` en RC); M13 muere (M12 vive: H-18) |
+
+### Hallazgos nuevos
+
+| ID | Gravedad | Cómo reproducirlo | Esperado / obtenido | Corrección sugerida |
+| --- | --- | --- | --- | --- |
+| H-14 | **media** | `r03_02`, N04a y N04b; `r03_03` | Esperado (INC-T125-01: «falla por pronóstico, no por run»; valida antes de mutar): un bloque con un umbral o una probabilidad que no es un número finito representable se rechaza en HA con su motivo y el ciclo sigue. Obtenido: un entero de 400 cifras (JSON válido, lo que `json.loads` de `agentes.py` da con el modelo real; el esquema de la respuesta no declara `pronostico_fuente`) lanza `OverflowError` en `_numero_finito`/`_prob_valida` y **tumba el ciclo entero** a mitad, con entradas de F2, F10 y RC ya escritas y el run sin cerrar (la cadena de huellas sigue íntegra y el ciclo siguiente acaba bien). Viene de la r02; la r03 no lo toca. Mismo camino para la referencia del Buscador | En `_numero_finito` y `_prob_valida`, capturar `OverflowError` (o comparar enteros sin pasar a `float`) y devolver `False`; envolver el alta de cada pieza para que un fallo raro la rechace en HA en vez de tumbar el ciclo; prueba con `10**400` en umbral, rango y probabilidad, en el alta y en un ciclo |
+| H-15 | baja | `r03_02`, N04c | Lo mismo en `pronosticos_de_fuentes` con un F2 manipulado o antiguo: `math.isfinite(10**400)` lanza y se pierde la FUE- de todas las fuentes en cada ciclo (la clase de H-12) | La misma corrección de H-14 (usar `_numero_finito` también aquí); prueba |
+| H-16 | baja | `r03_02`, N02a y N02b | El docstring y INC-T125-01 dicen «solo ISO 8601». `\d` de `re` admite cifras Unicode (ancho completo, árabes orientales, devanagari), que pandas lee bien y que quedan **tal cual** en F2; también pasa una zona sin hora (`2026-07-01-05:00`). No es ambiguo ni depende del reloj | `re.compile(..., re.ASCII)` o `[0-9]`; la zona solo detrás de la hora; prueba con `２０２６-０７-０１` |
+| H-17 | baja | `r03_02`, N03b | `fiabilidad_fuentes.variables_nivel` no se valida: un texto (`cierre`) se recorre letra a letra y hace registrable la variable `c`; un número lanza `TypeError` en el alta (tumba el ciclo). Es configuración del operador, pero T-122 fijó que una configuración mal formada falle al crear el Evaluador | Validar al crear el Evaluador (lista no vacía de textos), como `lecciones_por_encargo`; prueba |
+| H-18 | baja | `r03_04`, M12 y M14 | Las dos conexiones del ciclo que añade la r03 (el `run_id` del C5 a `fiabilidad_fuentes` y la lista de la configuración al alta en `orquestacion.py`) no tienen prueba: se pueden quitar sin que falle ninguna. Hoy funcionan (B01, N03c) | Una prueba de ciclo que mire el `run_id` de la entrada de RC de la FUE- y otra con `variables_nivel: [cierre]` que rechace `precio` |
+
+### Criterios de aceptación
+
+| Criterio | Cumple | Evidencia |
+| --- | --- | --- |
+| CA-1 · dos fuentes de 25, fórmula, > 10 y < 10 | sí | `test_pb46_dos_fuentes_…` en la suite; B01: BSS del Motor = BSS a mano |
+| CA-2 · en un ciclo, la FUE- en F6 con el `msg_id` del CT-19 a AG-16 | sí | B01 (`MSG-2026-000008` anotado), B09 |
+| CA-3 · una vez al mes; sin muestra, nada | sí | suite; mutantes K04 y K10 de la r01/r02 no tocados por la r03 |
+| CA-4 · no vencidos, mal formados o sin dato no cuentan; las cuatro direcciones | **sí** | B03, B04, B11, B12, N01–N05: lo mal formado no cuenta y las ISO válidas sí. El entero enorme tampoco cuenta, pero tumba el ciclo en vez de rechazarse (H-14, media, no del criterio sino de la robustez) |
+| CA-5 · sin pronósticos de fuentes el ciclo no cambia; goldens, ruff, mypy | sí | `r02_02`: almacén y entregables iguales byte a byte que `5098b09`; goldens coinciden; ruff 2838; mypy 109; gates ligeros en verde (el `check_all.sh` completo no lo pasé, por el encargo) |
+
+### Invariantes
+
+- Sin LLM en la ruta: alta, resolución, FUE- y CT-19 son código. ✔ Determinismo: las fechas ya no dependen del reloj de la máquina (B04). ✔
+- Falla cerrado y valida antes de mutar: sí para fechas, variables, direcciones y umbrales normales; **no** con un entero enorme, que tumba el ciclo a mitad (H-14) o la FUE- de todas las fuentes (H-15). ✗ (media)
+- Números: `variables_nivel` en la configuración, `[PROPUESTO]` en INC-T125-01 y en `Decisiones_del_operador_Bloque_A.md`. ✔ (sin validar: H-17)
+- Decisiones del operador: las de la r03 están como `[PROPUESTO]` (INC-T125-01, ronda r03). ✔
+- Secretos y datos personales: gates en verde; mis scripts no llevan ninguno ni identificadores de modelo. ✔
+- Documentación: README del ticket, `analisis-tecnico.md`, `pruebas.md`, INC-T125-01, mapa de PB-46, evidencias y deuda técnica al día con la r03. ✔
+
+### Lo que no comprobé
+
+- El gate completo (`./tools/check_all.sh`), A-Forex y B (encargo).
+- Que el Buscador use la FUE- y recalifique F9 (modelo real), ni una respuesta real del modelo con un número enorme: lo reproduje con el cliente simulado parcheado, sobre el mismo camino (`json.loads` sin `parse_int` en `agentes.py` lo permite).
+- Otros caminos del ciclo con enteros enormes fuera de T-125.
+
+## Veredicto (r03)
+
+**APTO** · Los cinco hallazgos de la r02 están corregidos (H-09 y H-10, los medios, con sus pruebas y mutantes muertos): `variable` obligatoria y resoluble con el cierre, fechas solo ISO 8601 (las de hora y zona siguen entrando, también en un ciclo), umbral comparado como número, dirección no textual descartada sin excepción y `run_id` en RC. Los cinco criterios se cumplen, los ciclos sin el bloque no cambian ni un byte y la suite completa pasa (5968). Queda abierto **H-14 (media)**: un entero de 400 cifras en el umbral o la probabilidad de un bloque tumba el ciclo entero en el alta (viene de la r02); y H-15 a H-18 (bajos). Según `ri-qa`, sin críticos ni altos abiertos es APTO, y H-14 a H-18 pasan a la deuda técnica con su ID (o se corrigen antes de cerrar, si el operador lo prefiere: H-14 y H-15 son la misma corrección de pocas líneas). El cierre (estado CERRADO, deuda, diario, memoria y commit) queda para quien coordina: este revisor solo escribe en `qa.md` y `revisores/`.

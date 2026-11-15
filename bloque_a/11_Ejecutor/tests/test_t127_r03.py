@@ -201,7 +201,9 @@ def test_h04_el_aviso_cuenta_los_datos_que_coinciden():
     # los grupos de casi clones no cambian (`_etiquetas_casi_iguales` cuenta ahora con `_datos_que_coinciden`)
     assert fb._grupos_casi_iguales([(1.0, 2.0), (1.008, 2.0), (1.016, 2.0), (1.0, 2.5)], 0.01) == 2
     assert fb._grupos_casi_iguales([(1.0, None), (1.0, 0.0)], 0.01) == 2
-    assert fb.AVISO_B == {"datos_distintos_aviso": 1}
+    # T-135 (QA r03 de T-127, H-06): `AVISO_B` gana `coincidencias_informativas_minimas` (2 = 1 + 1); el dato que se
+    # permite mover sigue siendo 1. No se debilita: la prueba fija ahora los dos números
+    assert fb.AVISO_B == {"datos_distintos_aviso": 1, "coincidencias_informativas_minimas": 2}
 
 
 # ====================================================================================================== H-04 · límite declarado

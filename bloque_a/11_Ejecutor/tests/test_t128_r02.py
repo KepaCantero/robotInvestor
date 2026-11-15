@@ -195,8 +195,15 @@ def test_h02_idx_conc_porcentaje_sobre_la_media_de_un_solo_valido():
     res, lim = _correr("IDX-CONC-001", v, {"top_n": 5}, series={"C00": largo, "C01": corto})
     assert res["amplitud"]["porcentaje_sobre_media"] is None and res["amplitud"]["n_validos"] == 1
     assert any(x.startswith("porcentaje sobre la media no calculado: 1 componente") for x in lim)
+    # T-135 (QA r02 de T-128, H-05): antes, `{"C00": largo, "C01": largo * 0.5}` se servía con el porcentaje de `largo`
+    # (1.0); era una copia a escala de C00, y la prueba fijaba como correcta la fuga del hallazgo. Ahora la copia no cuenta
+    # como componente distinto (amplitud `null`, `test_t135_motor.py`) y el caso servido es el de dos series distintas
+    # (`largo` sube en línea recta; `otro`, a ritmo constante: sus rentabilidades difieren), las dos sobre su media.
+    otro = pd.Series(np.geomspace(80, 120, 320), index=fechas)
+    res, _ = _correr("IDX-CONC-001", v, {"top_n": 5}, series={"C00": largo, "C01": otro})
+    assert res["amplitud"]["porcentaje_sobre_media"] == pytest.approx(1.0) and res["amplitud"]["n_validos"] == 2
     res, _ = _correr("IDX-CONC-001", v, {"top_n": 5}, series={"C00": largo, "C01": largo * 0.5})
-    assert res["amplitud"]["porcentaje_sobre_media"] == pytest.approx(1.0)
+    assert res["amplitud"] is None
 
 
 # ====================================================================================================== H-01 · límite declarado

@@ -52,7 +52,11 @@ from .contratos import (
     sanear_contenido_externo,
     sanear_estructura,
 )
-from .evaluador import Evaluador, motivo_pronostico_fuente_no_registrable
+from .evaluador import (
+    Evaluador,
+    motivo_pronostico_fuente_no_registrable,
+    variables_nivel,
+)
 from .herramientas import ht03, ht09
 from .herramientas.ht01_datos import (
     DatosInvalidos,
@@ -1327,7 +1331,7 @@ class Bloque:
         if pf is None:
             return "PREVISION" if tipo == "PRONOSTICO_FUENTE" else tipo
         motivo = motivo_pronostico_fuente_no_registrable(pf, p.get("fuente"), as_of, self.referencias,
-                                                               parametro(self.cfg, "fiabilidad_fuentes.variables_nivel"))
+                                                               variables_nivel(self.cfg))
         if motivo is None:
             return "PRONOSTICO_FUENTE"
         self.almacen.incidencia("DATOS", f"Pronóstico de fuente no registrable ({motivo}): la afirmación «{str(p.get('afirmacion'))[:80]}» "

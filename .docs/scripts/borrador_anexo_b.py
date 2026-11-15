@@ -61,7 +61,10 @@ GENERALES = [
 ]
 
 
-RETORNOS_INTERNOS = {f"CT-{n:02d}" for n in range(6, 15)}
+# T-137 (QA r02 de T-131, H-06): los retornos de CT-09 y CT-10 los sirve el Motor (`motor/servicio.py`), sin esquema en
+# `ESQUEMAS`; los demás internos son la respuesta de un agente, validada con `ESQUEMAS`
+RETORNOS_DEL_MOTOR = {"CT-09", "CT-10"}
+RETORNOS_INTERNOS = {f"CT-{n:02d}" for n in range(6, 15)} - RETORNOS_DEL_MOTOR
 
 
 def _ruta(mensaje: str) -> str:
@@ -111,10 +114,15 @@ def generar() -> str:
                               f"el mensaje es una lista `{lista}`; cada elemento es {elemento} con los campos de hoy"
                               f"{' (' + _lista(campos) + ')' if campos else ''}; ejemplo nuevo"))
             interno = parte == "RETORNO" and ct in RETORNOS_INTERNOS
+            del_motor = parte == "RETORNO" and ct in RETORNOS_DEL_MOTOR
             if v.get("el_ejecutor_admite_que_falte"):
-                filas.append((f"el ejecutor admite que falte {_lista(v['el_ejecutor_admite_que_falte'])}",
-                              "describir los campos del esquema de `ESQUEMAS` de ese agente (ver «Retornos internos» en el §1)"
-                              if interno else "marcarlos «opcional» (o exigirlos en el código)"))
+                if interno:
+                    cambio = "describir los campos del esquema de `ESQUEMAS` de ese agente (ver «Retornos internos» en el §1)"
+                elif del_motor:
+                    cambio = "describir los campos del retorno que sirve el Motor (`motor/servicio.py`), que no tiene esquema en `ESQUEMAS`"
+                else:
+                    cambio = "marcarlos «opcional» (o exigirlos en el código)"
+                filas.append((f"el ejecutor admite que falte {_lista(v['el_ejecutor_admite_que_falte'])}", cambio))
             for x in otro_campo.get(clave, []):
                 filas.append((f"el valor `{x['valor']}` va en `{x['campo_del_ejecutor']}`, no en `{x['campo_del_anexo_b']}`",
                               f"nombrar `{x['campo_del_ejecutor']}`"))
@@ -128,8 +136,8 @@ def generar() -> str:
             for m in mensajes.get(clave, []):
                 if ": type '" in m:
                     campo, tipo = m.split(": type '")
-                    filas.append((f"`{campo}` llega con otro tipo (el Anexo B pide {tipo.rstrip(chr(39))}; el ejecutor envía "
-                                  f"null cuando no aplica)", "admitir null «si no aplica»"))
+                    filas.append((f"`{campo}` llega con otro tipo en algún mensaje emitido (el Anexo B pide "
+                                  f"{tipo.rstrip(chr(39))})", "admitir el tipo que envía el ejecutor (ver el golden de formas)"))
             for c, origen, texto in OTROS:
                 if c == ct and parte == ("ENCARGO" if c != "CT-24" else "RETORNO"):
                     filas.append((f"{origen}", texto))
