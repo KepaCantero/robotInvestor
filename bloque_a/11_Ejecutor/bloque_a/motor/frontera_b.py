@@ -197,6 +197,20 @@ def _pares(n: int, limite: int):
         yield I, K
 
 
+def _pares_por_hipotesis(n: int, limite: int, con_paso: np.ndarray):
+    """T-150 (QA r01 de T-149, H-05): los pares de `_pares` bajo cada hipótesis de cómo se llevó cada serie a su paso:
+    redondeada (fila i) o truncada hacia abajo (fila n + i de `_etiquetas_series_copiadas`). Una serie sin paso que cuente
+    (`con_paso` falso: sin redondear) es la misma en las dos, así que sus pares truncados no se repiten."""
+    for di, dk in ((0, 0), (n, 0), (0, n), (n, n)):
+        for I, K in _pares(n, limite):
+            if di or dk:
+                quedan = (con_paso[I] | (di == 0)) & (con_paso[K] | (dk == 0))
+                I, K = I[quedan], K[quedan]
+                if not len(I):
+                    continue
+            yield I + di, K + dk
+
+
 # T-144 (QA r01 de T-135, H-03): elementos de cada tramo de pares × fechas que se compara de una vez. Solo cambia el coste y
 # la memoria (unos 8 MB por matriz), no el resultado (`tests/test_t144.py` lo comprueba con un tramo pequeño)
 ELEMENTOS_POR_TRAMO = 1 << 20
@@ -229,8 +243,10 @@ def _etiquetas_series_copiadas(precios: np.ndarray, anios: np.ndarray, tol: floa
     grande frente al precio (p. ej. 0,01 en un valor de 0,50) la cota llega a la de los casi clones y dos series que se
     mueven poco pueden tomarse por copias (falla cerrado: la amplitud no se sirve). T-149: tampoco se agrupa una copia
     en una rejilla que no es de `REJILLAS_PRECIO` (pasos de 0,03 o de 1/3), una que cambia de resolución dentro de una
-    misma década (2 decimales unos meses y 1 después) ni una con más de 1 − `fraccion_en_rejilla` de sus precios fuera
-    de su rejilla.
+    misma década (2 decimales unos meses y 1 después, o una tabla de paso por tramo de precio como las de MiFID II:
+    0,01 por debajo de 40 y 0,05 por encima) ni una con más de 1 − `fraccion_en_rejilla` de sus precios fuera de su
+    rejilla. T-150 (QA r01 de T-149, H-05): una copia truncada hacia abajo (⌊p/q⌋·q) sí se agrupa (cada serie se prueba
+    redondeada y truncada); una redondeada hacia arriba (⌈p/q⌉·q), no (límite declarado en INC-T127-01, ronda T-150).
 
     T-144 (H-03): se comparan solo los pares que siguen siendo candidatos (en tramos de `ELEMENTOS_POR_TRAMO`); un par sale
     en cuanto incumple las dos reglas, así que el coste es del orden de n²·(unas pocas fechas) y no n²·T."""
@@ -249,10 +265,24 @@ def _etiquetas_series_copiadas(precios: np.ndarray, anios: np.ndarray, tol: floa
     rel = np.where(hay, paso[:, None] / (2 * np.where(hay, precios, 1.0)), 0.0)
     rel = np.maximum(rel, _paso_por_decada(precios, hay, tol_num) / (2 * np.where(hay, precios, 1.0)))   # T-149
     cota_redondeo = -np.log1p(-np.minimum(rel, 0.5)) + tol_num
+    # T-150 (QA r01 de T-149, H-05): una copia truncada hacia abajo (p̃ = ⌊p/q⌋·q) tiene el valor de verdad en [p̃, p̃ + q): un
+    # paso entero, siempre por debajo, que la cota de medio paso centrada en p̃ no cubre cuando el precio cambia. Su
+    # hipótesis es la misma cota de medio paso centrada en p̃ + q/2: log p̃ + log(1 + q/2p̃), con media anchura
+    # (q/2)/(p̃ + q/2). Cada serie va dos veces (filas i y n + i) y un par es copia si lo es en alguna de las cuatro
+    # combinaciones (`_pares_por_hipotesis`). No ensancha la cota (eso dobla los falsos positivos): solo la desplaza. Se
+    # desplaza solo en los precios cuyo paso entero, q/p, no pasa de `tol`: con un paso grande frente al precio (1 en un
+    # monetario a 1,00) la cota ya llega al tope, y desplazarla medio paso, que cambia con el precio, alinea por azar series
+    # distintas (el límite declarado de los pasos grandes); esos precios se quedan como redondeados. Una serie sin ningún
+    # precio desplazado más que `tol_numerica` (sin redondear) es la misma en las dos hipótesis.
+    desplaza = 2 * rel <= tol
+    logp = np.vstack([logp, logp + np.where(desplaza, np.log1p(rel), 0.0)])
+    cota_redondeo = np.vstack([cota_redondeo, np.where(desplaza, -np.log1p(-np.minimum(rel / (1 + rel), 0.5)) + tol_num,
+                                                       cota_redondeo)])
+    con_paso = (desplaza & (rel > tol_num)).any(axis=1)
     tope = float(np.log1p(tol))
     filas: list[np.ndarray] = []
     columnas: list[np.ndarray] = []
-    for I, K in _pares(n, ELEMENTOS_POR_TRAMO):
+    for I, K in _pares_por_hipotesis(n, ELEMENTOS_POR_TRAMO, con_paso):
         m = len(I)
         vivos = np.arange(m)
         lo, hi = np.full(m, -np.inf), np.full(m, np.inf)
@@ -261,12 +291,13 @@ def _etiquetas_series_copiadas(precios: np.ndarray, anios: np.ndarray, tol: floa
         j = 0
         while j < T and len(vivos):
             Iv, Kv = I[vivos], K[vivos]
+            Ib, Kb = Iv % n, Kv % n                       # la serie de cada fila (T-150)
             tramo = slice(j, j + max(1, min(T - j, ELEMENTOS_POR_TRAMO // len(vivos))))
-            comun = hay[Iv, tramo] & hay[Kv, tramo]
+            comun = hay[Ib, tramo] & hay[Kb, tramo]
             a = anios[tramo][None, :]
             primera[vivos] = np.minimum(primera[vivos], np.where(comun, a, np.inf).min(axis=1))
             ultima[vivos] = np.maximum(ultima[vivos], np.where(comun, a, -np.inf).max(axis=1))
-            ri, rk = rend[Iv, tramo], rend[Kv, tramo]
+            ri, rk = rend[Ib, tramo], rend[Kb, tramo]
             ambas = ~np.isnan(ri) & ~np.isnan(rk)
             x, y = np.where(ambas, ri, 0.0), np.where(ambas, rk, 0.0)
             cerca = np.abs(x - y) <= tol * np.maximum(np.abs(x), np.abs(y))
@@ -280,8 +311,8 @@ def _etiquetas_series_copiadas(precios: np.ndarray, anios: np.ndarray, tol: floa
         copia = vivos[ultima[vivos] - primera[vivos] >= anios_minimos]   # sin pareja, cada serie es su propio grupo
         filas.append(I[copia])
         columnas.append(K[copia])
-    f = np.concatenate(filas) if filas else np.zeros(0, dtype=int)
-    c = np.concatenate(columnas) if columnas else np.zeros(0, dtype=int)
+    f = np.concatenate(filas) % n if filas else np.zeros(0, dtype=int)
+    c = np.concatenate(columnas) % n if columnas else np.zeros(0, dtype=int)
     grafo = csr_matrix((np.ones(len(f), dtype=bool), (f, c)), shape=(n, n))
     return np.asarray(csgraph.connected_components(grafo, directed=False)[1], dtype=int)
 
