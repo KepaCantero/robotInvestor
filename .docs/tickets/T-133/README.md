@@ -1,3 +1,5 @@
+> **Número renumerado (15-11-2026).** Este ticket del Bloque A se abrió como T-133, pero otra sesión usó T-133 para los hallazgos del banco de medida (T-94) y lo subió antes. El ticket del Bloque A sigue en **`.docs/tickets/T-136/`**; lo de esta carpeta es la copia antigua y no se actualiza (de `.docs/` no se borra nada: lo viejo se marca).
+
 # T-133 · Bloque A: hallazgos de las QA r01 de T-129 y T-130
 
 | Campo | Valor |

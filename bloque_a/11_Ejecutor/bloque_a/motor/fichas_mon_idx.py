@@ -31,7 +31,12 @@ import numpy as np
 import pandas as pd
 from scipy import optimize, stats
 
-from .frontera_b import FRONTERA_B, _concentradas, _limitacion_concentradas
+from .frontera_b import (
+    FRONTERA_B,
+    _concentradas,
+    _etiquetas_series_copiadas,
+    _limitacion_concentradas,
+)
 from .operaciones import ErrorFicha, cagr, dia
 
 # Constantes de convención (parte del método, no parámetros): unidades y bases de recuento.
@@ -1212,6 +1217,10 @@ def f_idx_erp(ent: dict, params: dict) -> tuple[dict, list[str]]:
 # de `FRONTERA_B`), serían su posición frente a su media y su rentabilidad (1.6). El mínimo es el de un agregado de
 # sociedades de REI-NAV-001 y REI-FFO-001 y de un sector de CHR-TOKEN-001. La concentración (peso de los n mayores, HHI,
 # N_ef) no cambia: describe los pesos del índice, que es lo que mide la ficha.
+# T-135 (QA r02 de T-128, H-05): en la amplitud, los componentes que cuentan para este mínimo son los distintos por sus
+# rentabilidades: una serie y sus copias (exactas o a escala) son uno (`frontera_b._etiquetas_series_copiadas`, con la
+# `tolerancia_clon` de `FRONTERA_B` y el año de precios mínimo de la ficha); y ningún grupo de copias puede ser más del
+# `peso_maximo_componente` de las series (la regla de dominancia (1, k), con el mismo peso para cada componente).
 IDX_CONC_COMPONENTES_MINIMOS = 2
 
 
@@ -1235,6 +1244,15 @@ def _pesos(comp: Any, ctx: str, tol: float) -> tuple[pd.Timestamp, dict[str, flo
     if abs(suma - 1) > tol:
         raise ErrorFicha(f"{ctx}: los pesos suman {suma!r}, no 1 (verificación de la ficha)")
     return fecha, pesos, sectores
+
+
+def _distintos_y_dominio(grupos: np.ndarray) -> tuple[int, float]:
+    """T-135 (H-05): cuántos grupos de copias hay y qué parte de las series es el mayor (0 sin series)."""
+    if not len(grupos):
+        return 0, 0.0
+    tam = np.bincount(grupos)
+    tam = tam[tam > 0]
+    return len(tam), float(np.max(tam)) / len(grupos)
 
 
 def _hhi(pesos: dict[str, float]) -> float:
@@ -1303,14 +1321,36 @@ def f_idx_conc(ent: dict, params: dict) -> tuple[dict, list[str]]:
         neto = (rend > 0).sum(axis=1) - (rend < 0).sum(axis=1)
         if set(precios) != set(pesos):
             lim.append("los precios no cubren exactamente la composición: amplitud sobre los aportados")
-        if len(precios) < IDX_CONC_COMPONENTES_MINIMOS:   # T-128 r02 (H-02): la amplitud de un componente es la suya
-            lim.append(f"amplitud no calculada: precios de {len(precios)} componente (< {IDX_CONC_COMPONENTES_MINIMOS}); "
-                       f"sería la de ese componente (1.6)")
+        # T-135 (QA r02 de T-128, H-05): una serie y sus copias (las mismas rentabilidades, exactas o a escala) son un
+        # componente para el mínimo y para la dominancia; la amplitud de un valor y su copia sería la de ese valor (1.6)
+        tabla = pd.DataFrame(precios).sort_index()
+        grupos = _etiquetas_series_copiadas(tabla.to_numpy(dtype=float).T,
+                                            np.asarray((tabla.index - tabla.index[0]).days, dtype=float) / DIAS_ANIO,
+                                            FRONTERA_B["tolerancia_clon"], float(p["anios_precios_min"]))
+        k_max = FRONTERA_B["peso_maximo_componente"]
+        en_validos = np.array([len(s) >= n_media for s in precios.values()])
+        distintos, dominio = _distintos_y_dominio(grupos)
+        distintos_v, dominio_v = _distintos_y_dominio(grupos[en_validos])
+        if distintos < len(precios):
+            lim.append(f"{len(precios) - distintos} componente(s) con las mismas rentabilidades que otro (a menos del "
+                       f"{FRONTERA_B['tolerancia_clon']:.0%}): una copia de un valor, exacta o a escala, no cuenta como "
+                       f"componente distinto de la amplitud (1.6)")
+        if distintos < IDX_CONC_COMPONENTES_MINIMOS:   # T-128 r02 (H-02): la amplitud de un componente es la suya
+            lim.append(f"amplitud no calculada: precios de {distintos} componente (< {IDX_CONC_COMPONENTES_MINIMOS}) "
+                       f"distinto por sus rentabilidades; sería la de ese componente (1.6)")
+        elif dominio > k_max:
+            lim.append(f"amplitud no calculada: un componente y sus copias son el {dominio:.1%} de las series (más del "
+                       f"{k_max:.0%}); sería la de ese componente (1.6)")
         else:
-            if 0 < validos < IDX_CONC_COMPONENTES_MINIMOS:   # T-128 r02 (H-02): el porcentaje de un solo válido es el suyo
-                lim.append(f"porcentaje sobre la media no calculado: {validos} componente con {n_media} sesiones (< "
-                           f"{IDX_CONC_COMPONENTES_MINIMOS}); sería el de ese componente (1.6)")
-            amplitud = {"porcentaje_sobre_media": sobre / validos if validos >= IDX_CONC_COMPONENTES_MINIMOS else None,
+            sin_porcentaje = 0 < distintos_v < IDX_CONC_COMPONENTES_MINIMOS or dominio_v > k_max
+            if 0 < distintos_v < IDX_CONC_COMPONENTES_MINIMOS:   # T-128 r02 (H-02): el de un solo válido es el suyo
+                lim.append(f"porcentaje sobre la media no calculado: {distintos_v} componente con {n_media} sesiones (< "
+                           f"{IDX_CONC_COMPONENTES_MINIMOS}) distinto por sus rentabilidades; sería el de ese componente "
+                           f"(1.6)")
+            elif dominio_v > k_max:
+                lim.append(f"porcentaje sobre la media no calculado: un componente y sus copias son el {dominio_v:.1%} "
+                           f"de las series con {n_media} sesiones (más del {k_max:.0%}); sería el de ese componente (1.6)")
+            amplitud = {"porcentaje_sobre_media": sobre / validos if validos and not sin_porcentaje else None,
                         "n_validos": validos,
                         "linea_avance_retroceso": float(neto.cumsum().iloc[-1]), "sesiones": len(neto)}
     else:

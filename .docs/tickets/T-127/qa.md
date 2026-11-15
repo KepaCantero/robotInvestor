@@ -157,3 +157,89 @@ Pero el objetivo que la ronda vuelve a afirmar no se cumple: **H-04 (alta)**, un
 Vuelve a `ri-implementar`: H-04 declarado o resuelto, con su prueba; H-05, la frase corregida (o la aportación con signo). En la r03 se vuelve a ejecutar `r02_01_troceo_y_simetria.py` (si H-04 se declara, sus FALLA de las vías T y S pasan a ser el límite declarado y el script se lee así).
 
 **Sin comprobar:** el gate entero; A-Forex y B; ciclos con el modelo real.
+
+---
+
+# Ronda r03 · QA independiente
+
+- **Revisor:** subagente revisor nuevo, sin contexto de la implementación ni de las rondas anteriores (Claude; implementó otra sesión de Claude) · **Ronda:** r03 · 2026-11-15
+- **Copia revisada:** clon desconectado en `eb66257` («wip local: T-127 r03 y T-128 r02»): `motor/frontera_b.py` (`AVISO_B`, `_datos_que_coinciden`, `_aviso_casi_clones`, `_aportacion_maxima` con signo), sus llamadas en FIR-CRED-001, REI-LEV-001, CHR-TOKEN-001 (`fichas_p2.py`) y REI-NAV-001 (`fichas_reales.py`); `tests/test_t127_r03.py`; INC-T127-01 «Ronda r03» y la fila de §5 de `Decisiones_del_operador_Bloque_A.md`. Para el motivo del límite: `orquestacion.py`, `agentes.py`, `evaluador.py`, `motor/servicio.py` y `herramientas/ht01_datos.py`.
+- **Orden de lectura:** `README.md` → diff `f7faa1b..eb66257` del código → mis scripts → al final `analisis-tecnico.md`, `pruebas.md` e INC-T127-01.
+
+## Reproducción
+
+Desde la raíz de la copia, con `.venv` enlazado al del repositorio (enlace borrado al acabar).
+
+| Comprobación | Orden | Resultado |
+| --- | --- | --- |
+| Script de la r02 | `.venv/bin/python -I .docs/tickets/T-127/revisores/r02_01_troceo_y_simetria.py bloque_a/11_Ejecutor` | **2/7** (era 1/7): la vía «C» (compensación ±400) pasa a «ok» (rechazo por la aportación con signo). Las cinco FALLA (REI-LEV T3, CHR-TOKEN T2, REI-NAV S2, REI-FFO T2, FIR-CRED S10) son el límite declarado de INC-T127-01 «Ronda r03», tal como las lee `pruebas.md`; REI-NAV S2 y FIR-CRED S10 llevan el aviso |
+| Script de la r01 | `.venv/bin/python -I .docs/tickets/T-127/revisores/r01_01_frontera_otras_vias.py bloque_a/11_Ejecutor` | **7/7**; casos de control 67/67 |
+| Mi script de la r03 | `.venv/bin/python -I .docs/tickets/T-127/revisores/r03_01_cota_aviso_y_origen.py bloque_a/11_Ejecutor` | **10/11**. Ver «Lo comprobado» y H-06; H-07 lo imprime el bloque A4 |
+| Mutantes de la r03 | `python .docs/tickets/T-127/revisores/impl_r03_mutantes.py bloque_a/11_Ejecutor <scratchpad>/qa13_mut_t127r03_mut` | **29 de 29 muertos**. Copia borrada |
+| Mutantes propios (copia `qa13_mut_propios`, borrada) | a mano: `_aportacion_maxima` con `return 1.0` si la suma con signo es 0 | vive: equivalente (con Σden ≠ 0 y suma 0 ya se devuelve 0 antes; solo se llega con Σden = 0) |
+| Goldens, gates, cuotas, suite | «Comunes», abajo | en verde |
+
+## Lo comprobado
+
+**H-04: ¿es correcta la decisión de declarar el límite?** Sí. Lo verifiqué en el código, no en el análisis:
+
+- Recorrido del AST de todo `bloque_a/` (bloque «O» de mi script): `Motor.servir` lo llaman solo `orquestacion.py:361` (las seis fichas de series de HT-01 del lote, ACC-MOM, FX-VOL, FX-TREND, RISK-DD, ST-DESC y FIN-CAGR, con `datos = [{"serie": s, ...}]`), `orquestacion.py:1350` (ML-CLUS-001), `evaluador.py:456` (FC-EVAL-001) y el propio `servicio.py` (casos de control y CT-10). `agentes.py` no toca el Motor ni las herramientas de los modelos llegan a él (`llm.py` solo declara la búsqueda web). Ninguna de las fichas con componentes se pide desde el ciclo: sus `valores` los escribiría un agente analista por CT-09.
+- HT-01 (`ht01_datos.ProveedorDatos`) normaliza CSV con `fecha` y `cierre` y sirve `cierres`, `serie`, `valor_en` y `huella` por símbolo: no hay balances, deudas, ofertas de tokens, NAV ni flujos contra los que verificar un componente.
+- ¿Hay una verificación barata? No para lo que importa: comprobar que el `id` es un símbolo del universo, o incluso contrastar el `precio` de REI-NAV o CHR-TOKEN con el cierre de HT-01, no detecta un troceo (los trozos comparten precio y se reparten las acciones o los importes). La única fuente fiable sería un proveedor de fundamentales que no existe; por eso la opción (b) de la QA r02 pasa a T-57 como pregunta, que es lo correcto (decisión del operador, `[PROPUESTO]`).
+- La declaración dice lo que no se cubre: el troceo con repartos distintos y la perturbación simétrica, con el alcance («un solicitante que fabrica los componentes a propósito»), el control (propósito 1.6 y Registro de cálculos, que guarda `datos[].valor`: lo fija `test_h04_limite_declarado_un_emisor_troceado_se_sirve_y_queda_en_el_registro`), las vías del revisor una a una y la pregunta para T-57 en INC-T127-01 y en §5. Dos matices de redacción en H-07 y H-08 (bajos).
+
+**H-04, el aviso.** Funciona en las vías para las que se hizo: FIR-CRED S10 (10 componentes) y REI-NAV S2 dan el aviso, sin identificadores, y llega al RC. Ningún caso de control lo da, ni las 67 fichas de `verificar_casos_control` en su RC (bloque A1). La petición no lo cambia (`datos_distintos_aviso`, `tolerancia_clon` y `peso_maximo_componente` en `parametros` se rechazan; bloque A5). Con datos corrientes simulados (cifras redondeadas a 2 significativas, como las escribiría un analista; bloque A2) es raro en FIR-CRED (0,1 % a 1,1 % de las peticiones de 10 a 30 emisores) y no aparece en REI-LEV ni en REI-NAV; en CHR-TOKEN no (H-06).
+
+**H-05, la cota.** Correcta y justa. 4000 casos propios (bloque K: n de 2 a 12, pesos de e⁻³ a e³, copias de la misma cifra, resto construido junto al borde con los dos signos y rellenos ±10 que se compensan): 2833 pasan la regla y en **todos los grupos** (no solo el primero) el error de agregado·Σden/den_G es ≥ (1 − k)/(2 − k); el peor caso queda a 1,0024 veces la cota, 0 violaciones. Es exacta: con un resto de −c·num_G y rellenos ±10, c = cota·(1 + 10⁻⁶) da 0,949999947 (se sirve) y c = cota·(1 − 10⁻⁶) da 0,950000052 (se rechaza). Con el resto del mismo signo la cota es (1 − k)/k, como dice la frase. La deducción: si 1 − |R|/|S| ≤ k con S = num_G + R, entonces |R| ≥ (1 − k)|num_G + R|, cuyo mínimo de |R|/|num_G| es (1 − k)/(2 − k) con R de signo contrario y (1 − k)/k con el mismo. La prueba del implementador (`test_h05_por_debajo_de_k_el_error_es_de_al_menos_la_cota`) solo mide el grupo del componente 0; la mía, todos.
+
+## Hallazgos de la r02
+
+| ID | Estado en la r03 | Evidencia |
+| --- | --- | --- |
+| H-04 (alta, troceo) | **declarado bien** (límite con su alcance, pregunta para T-57, prueba que lo fija y aviso) | Arriba; `r02_01` vías T y S como límite |
+| H-05 (baja, frase del 5 %) | **corregido** | `r02_01` vía C «ok»; bloque K de `r03_01` |
+
+## Hallazgos de la r03
+
+| ID | Gravedad | Cómo reproducirlo | Esperado / obtenido | Corrección sugerida | Estado |
+| --- | --- | --- | --- | --- | --- |
+| H-06 | baja | `r03_01`, bloque A3. A mano: CHR-TOKEN-001, caso de control 1, con dos tokens más de oferta fija y redonda, totalmente en circulación (circulante = total = máxima = 1e9), sin emisión ni quema, precios 0,42 y 7,9 y *staking* y concentración distintos | **Esperado** (AVISO_B: «dos emisores reales que coincidan en todos los demás datos a la vez no se esperan»). **Obtenido:** se sirve con «aviso (1.6): 2 componentes coinciden con otro … pueden ser un mismo emisor con un dato movido». La firma de CHR-TOKEN (precio, circulante, total, máxima, emisión, quema) tiene cuatro datos que en tokens reales coinciden a menudo sin informar nada (máxima = total o `None`, emisión 0, quema 0, ofertas redondas). En la simulación del bloque A2 la frecuencia depende de cuántos tokens así haya: del 0,2 % al 1 % de las peticiones de 10 a 20 tokens con supuestos prudentes (20–30 % de ofertas redondas) y del 15 % al 46 % si la mitad son de oferta fija y redonda. No cambia ninguna cifra (solo la limitación y el estado `SERVED_WITH_LIMITATIONS`), pero quita valor al aviso como señal para el Registro | Contar solo las coincidencias informativas (no `None` = `None` ni 0 = 0), o poner en la firma del aviso las cifras que distinguen a dos tokens (*staking*, concentración), o exigir que el dato distinto difiera poco (la perturbación simétrica de la r02 llega al 10 %); con una prueba de tokens de oferta fija sin aviso | abierto |
+| H-07 | baja | `r03_01`, bloque A4: REI-NAV-001, la sociedad A del caso 2 en dos partes con el NAV por acción ±4 % (la vía S2 de la r02) **sin `otros_pasivos`** | **Esperado** (INC-T127-01 r03: el aviso salta con un dato movido; «moviendo dos datos … se esquiva»). **Obtenido:** prima agregada −10 %, la de A, **sin aviso**: al omitir `otros_pasivos` (opcional), la ficha lo deriva como GAV − deuda − NAV y la firma del aviso cambia en dos datos aunque quien pide solo movió uno. Es el límite declarado del aviso, pero con un solo dato de entrada | Construir la firma del aviso de REI-NAV con los datos de entrada (`otros_pasivos` como `None` cuando se deriva) o decir en INC-T127-01 que un dato derivado cuenta como movido | abierto |
+| H-08 | baja | Lectura: `motor/frontera_b.py`, líneas 5 a 7 del docstring | El módulo sigue abriendo con «Ninguna cifra de una entrega puede ser la de un instrumento concreto … ni de forma que se pueda despejar de una sola respuesta», la frase que INC-T127-01 r03 dice haber quitado; el párrafo de la r03 (líneas 19 a 25) la matiza más abajo | Matizarla en la misma frase («… sin que quien pide haya construido los componentes para ello; ver el límite declarado») | abierto |
+
+## Invariantes
+
+- Ningún camino a una orden: el Motor no emite órdenes. ✔
+- Sin LLM en la ruta: el aviso y la aportación con signo son numpy. ✔
+- Controles: `FRONTERA_B` y `AVISO_B` no los cambia la petición (bloque A5). El aviso no relaja nada: añade una limitación. ✔
+- Falla cerrado: la compensación rechaza (REI-LEV, FIR-CRED) o va a `null` (CHR-TOKEN, CHR-FLOW) sin identificadores. ✔
+- Números: `AVISO_B` (1 dato) con su motivo y `[PROPUESTO INC-T127-01]`; los de `FRONTERA_B` no cambian. ✔
+- Decisiones del operador: el límite y la alternativa (b) van `[PROPUESTO]` con su pregunta para T-57 en INC-T127-01 y en §5 de las decisiones. ✔
+- Secretos y datos personales: ninguno (`secrets_scan`). ✔
+- Documentación: README del ejecutor (limitación 3) con el límite declarado; INC-T127-01 r03 al día salvo H-08. La fila de T-127 en la deuda técnica sigue sin la r03 (la añade quien hace el commit, según el README del ticket). ✔ con nota
+
+## Comunes (T-127 r03 y T-128 r02)
+
+| Comprobación | Orden | Resultado |
+| --- | --- | --- |
+| Suite de A, una vez | `cd bloque_a/11_Ejecutor && /home/user/robotinvestor/.venv/bin/python -m pytest -q -p no:cacheprovider` | **5895 passed** en 24 min 36 s, código 0 (línea base 607); lanzada mientras corrían los mutantes y mis scripts |
+| `verificar_casos_control` | en `r01_01_frontera_otras_vias.py` y en `r03_01` (bloque A1) | 67 fichas (66 + AUD-REX-001), todas superadas |
+| Goldens de contratos | `cd bloque_a/11_Ejecutor && python tests/goldens_ct.py` | «goldens de contratos: coinciden» |
+| ruff | `ruff check --output-format=concise bloque_a/11_Ejecutor bloque_a_forex/11_Ejecutor bloque_b/11_Ejecutor \| wc -l` | **2902** (cuota 2902) |
+| mypy A como el gate | `cd bloque_a/11_Ejecutor && mypy bloque_a --ignore-missing-imports --no-error-summary \| wc -l` | **109** (cuota 109) |
+| Gates ligeros | `tools/secrets_scan.py`, `tools/refs_vivas.py`, `tools/nfc_check.py`, `tools/corpus_integridad.py` | en verde (con mis scripts en la copia); corpus 695 |
+| Gate entero, A-Forex y B | — | no lanzados (por instrucción) |
+
+## Veredicto (r03)
+
+**APTO.**
+
+Los criterios CA-10 a CA-12 se cumplen y los nueve de la r01 siguen cumpliéndose (casos de control 67/67, `r01_01` 7/7, mutantes de la r03 29/29 muertos, suite en verde, cuotas sin subir, ninguna prueba existente cambia).
+
+- **H-04 (alta de la r02): la decisión de declarar el límite es correcta y suficiente para esta tarea.** Lo comprobé en el código: ningún camino del ejecutor pide una ficha con componentes (solo las seis de series de HT-01, ML-CLUS-001 y FC-EVAL-001, más los casos de control y CT-10 del propio servicio), los `valores` de esas fichas los escribiría un agente analista por CT-09, y HT-01 solo sirve cierres: no hay fuente contra la que verificar balances, ofertas ni NAV, ni una comprobación barata que detecte un troceo. La declaración dice qué no se cubre (troceo, perturbación simétrica), contra quién (un solicitante que fabrica los componentes a propósito), qué controla ese caso (1.6 y el Registro de cálculos, con una prueba que lo fija) y lleva la pregunta para T-57 con la alternativa de una fuente verificable. Que sea aceptable es decisión del operador (`[PROPUESTO]`), no del código.
+- **El aviso** funciona en las vías del revisor, no lo da ningún caso de control y la petición no lo cambia; con datos corrientes es raro en FIR-CRED, REI-LEV y REI-NAV. Quedan dos defectos bajos: falsos avisos en CHR-TOKEN con tokens de oferta fija y redonda (H-06) y REI-NAV sin aviso si se omite `otros_pasivos` (H-07).
+- **H-05 (baja de la r02): corregido.** La medida con signo rechaza la compensación, y la frase «(1 − k)/(2 − k)» es cierta y exacta: 4000 casos propios sin ninguna violación en ningún grupo, y en el borde la regla cambia de servir a rechazar a ε = ±10⁻⁶.
+
+H-06, H-07 y H-08 (bajos) pasan a la deuda técnica con su ID. Cerrar la tarea (estado, deuda, diario, memoria, commit) le toca a quien coordina: por instrucción, este revisor no hace commit ni toca otros archivos.
+
+**Sin comprobar:** el gate entero (`./tools/check_all.sh`), A-Forex y B (por instrucción); ciclos con el modelo real; el comportamiento de un agente analista real al construir componentes.

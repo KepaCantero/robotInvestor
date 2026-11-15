@@ -122,5 +122,6 @@ def test_r02_h02_el_borrador_recoge_los_campos_de_primer_nivel_y_los_lotes():
     assert any(ln.startswith("| CT-03.ENCARGO |") and "`query_id`" in ln for ln in filas)
     assert any(ln.startswith("| CT-23.ENCARGO |") and "`run_id`" in ln for ln in filas)
     assert any(ln.startswith("| CT-03.RETORNO |") and "`escalado` llega con otro tipo" in ln for ln in filas)
+    assert any(ln.startswith("| CT-09.RETORNO |") and "lo sirve el Motor" not in ln and "Motor" in ln for ln in filas)   # T-137, H-06
     assert "faltan campos mínimos ['piezas']" in texto and "`afirmacion`" in texto
     assert "`fecha_corte` de CT-09" in texto and "esquemas_respuestas.json" in texto

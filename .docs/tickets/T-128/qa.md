@@ -68,3 +68,71 @@ Pero **H-01 (alta)**: CA-2 pide que no haya «una cifra individual reconstruible
 Vuelve a `ri-implementar` junto con T-127 H-04 (es una sola decisión para T-57): H-01 declarado o resuelto, H-02 corregido o declarado, con sus pruebas. En la r02 se vuelven a ejecutar `r01_01_barrido_un_componente.py` y `r01_02_troceo_y_una_moneda.py`.
 
 **Sin comprobar:** el gate entero; A-Forex y B; las 14 fichas del ejecutor V1.0 solo se han visto en la tabla y en el barrido (no tienen casos de control); ciclos con el modelo real.
+
+---
+
+# Ronda r02 · QA independiente
+
+- **Revisor:** subagente revisor nuevo, sin contexto de la implementación ni de la r01 (Claude; implementó otra sesión de Claude) · **Ronda:** r02 · 2026-11-15
+- **Copia revisada:** clon desconectado en `eb66257` («wip local: T-127 r03 y T-128 r02»): CHR-FLOW-001 y el aviso de REI-NAV-001 en `motor/fichas_reales.py`, IDX-CONC-001 en `motor/fichas_mon_idx.py`, `motor/frontera_b.py`; `tests/test_t128_r02.py`; INC-T128-01 «Ronda r02»; la ficha IDX-CONC-001 del Catálogo V5.0 (leída solo esa, por su identificador).
+- **Orden de lectura:** `README.md` → diff `f7faa1b..eb66257` → mis scripts → al final `analisis-tecnico.md`, `pruebas.md` e INC-T128-01.
+
+## Reproducción
+
+Desde la raíz de la copia, con `.venv` enlazado al del repositorio (enlace borrado al acabar).
+
+| Comprobación | Orden | Resultado |
+| --- | --- | --- |
+| Barrido de la r01 | `.venv/bin/python -I .docs/tickets/T-128/revisores/r01_01_barrido_un_componente.py bloque_a/11_Ejecutor` | código 0; **CHR-FLOW-001 ya no está** en «UNO»; quedan ámbitos (BIB-MET, FON-FLOW, FX-MOM, IDX-ERP, IDX-REB eventos comparables, ML-PRED, ST-INF), como aceptó la r01 |
+| Troceo y una moneda de la r01 | `.venv/bin/python -I .docs/tickets/T-128/revisores/r01_02_troceo_y_una_moneda.py bloque_a/11_Ejecutor` | **2/3**: «U» en «ok» (rechazo: 1 moneda estable distinta); la FALLA «T» (IN troceado en IDX-REB) es el límite declarado (INC-T128-01 r02, H-01) |
+| Vías de REI-NAV y REI-FFO | `.venv/bin/python -I .docs/tickets/T-127/revisores/r02_01_troceo_y_simetria.py bloque_a/11_Ejecutor` | REI-NAV S2 (con aviso) y REI-FFO T2: límite declarado |
+| Mi script de la r02 | `.venv/bin/python -I .docs/tickets/T-128/revisores/r02_01_chr_flow_e_idx_conc.py bloque_a/11_Ejecutor` | **16/18**. Ver H-05 |
+| Mutantes F, C, V09 y V10 | `T-127/revisores/impl_r03_mutantes.py` (ronda r03 de T-127) | muertos (29 de 29) |
+| Mutante propio (copia `qa13_mut_propios`, borrada) | `_sin_dominio` de CHR-FLOW-001 sin `grupos` | **vive** (H-06) |
+| Goldens, gates, cuotas, suite | «Comunes» de `.docs/tickets/T-127/qa.md` (ronda r03) | en verde |
+
+## Lo comprobado
+
+- **CHR-FLOW-001 (H-02).** Bloque F: el caso de control se sirve con el crecimiento del total (sin cambios); una moneda, tres copias a escala de una y una del 96 % de la oferta se rechazan sin citar la moneda; EURX con dos rellenos de +1e9 y −1e9 en los 30 días da el crecimiento `null` (la aportación con signo de T-127 r03 llega aquí); `monedas_estables_minimas`, `peso_maximo_componente` y `tolerancia_clon` en la petición se rechazan como umbrales fijos; EURX troceada en dos con crecimientos distintos da su crecimiento (límite declarado). Nota sin hallazgo: dos monedas reales sin cambio de oferta en 30 días (crecimiento 0 y 0) se rechazan como «1 moneda distinta»; el agregado 0 es entonces la cifra de las dos, así que el rechazo es coherente con la regla.
+- **IDX-CONC-001 y su ficha.** La ficha del Catálogo pide en «Salidas» amplitud y contribución y dice en «Supuestos y limitaciones» que «los componentes son datos de composición, nunca candidatos a selección (1.6)»; no fija un mínimo de componentes. Dejar la amplitud y la contribución en `null` con su limitación cuando son las de un solo componente (o una aportación dominada) es un fallo cerrado compatible con la ficha y con 1.6, y no toca la concentración (peso de los n mayores, HHI, N_ef), que es lo que la ficha mide. El cambio está permitido. Lo que no cubre: H-05.
+- **Números nuevos y su origen (regla 2).** `AVISO_B = {"datos_distintos_aviso": 1}` (`frontera_b.py`, con su motivo y `[PROPUESTO INC-T127-01]`); `monedas_estables_minimas: 2` (en los `UMBRALES` de CHR-FLOW-001, con su motivo: el mínimo de un sector de CHR-TOKEN-001, `[PROPUESTO INC-T128-01]`); `IDX_CONC_COMPONENTES_MINIMOS = 2` (constante de `fichas_mon_idx.py` con su comentario y `[PROPUESTO INC-T128-01]`, citada en INC-T128-01 r02 y en §5). Los tres tienen el origen declarado y ninguno lo cambia la petición (A5 de `T-127/revisores/r03_01_…` y bloque F). Ninguno está en el Anexo A ni en el Catálogo: son `[PROPUESTO]` del agente para T-57, como los de `FRONTERA_B`. ✔
+- **CA-2 matizado.** «Sin construir los componentes a propósito» recoge el límite de INC-T127-01 r03, revisado en el `qa.md` de T-127 (r03): la decisión es correcta.
+
+## Hallazgos de la r01
+
+| ID | Estado en la r02 | Evidencia |
+| --- | --- | --- |
+| H-01 (alta, troceo) | **declarado bien** (INC-T128-01 r02 e INC-T127-01 r03; CA-2 matizado; `test_h01_limite_declarado_rei_ffo_e_idx_reb_troceados_se_sirven`; aviso en REI-NAV-001) | `r01_02` «T» y `T-127/r02_01` como límite |
+| H-02 (media, una moneda estable) | **corregido** | `r01_02` «U» ok; bloque F de mi script |
+| H-03 (baja, agregados ya hechos) | **declarado** | INC-T128-01, «Límites declarados», ronda r02 |
+| H-04 (baja, fila de la deuda) | no verificable en esta copia | el ticket dice que la fila está en el árbol principal; aquí solo están las de T-127 (línea 176) |
+
+## Hallazgos de la r02
+
+| ID | Gravedad | Cómo reproducirlo | Esperado / obtenido | Corrección sugerida | Estado |
+| --- | --- | --- | --- | --- | --- |
+| H-05 | media | `.venv/bin/python -I .docs/tickets/T-128/revisores/r02_01_chr_flow_e_idx_conc.py bloque_a/11_Ejecutor` (bloque C). A mano: IDX-CONC-001 con una composición de 10 y precios solo de C00 y de una copia suya (exacta o ×0,5) | **Esperado** (INC-T127-01 r03: las reglas cubren las «copias a escala»; INC-T128-01 r02: la amplitud de un solo componente no se entrega). **Obtenido:** se sirve, y `porcentaje_sobre_media` (0 o 1) es el de C00 frente a su media de 200 sesiones y `linea_avance_retroceso` es el doble de la de C00 (−34 = 2 × −17). El mínimo de 2 cuenta series, no series distintas; la contribución sí agrupa por la misma cifra (`_concentradas`), la amplitud no. Una prueba del implementador lo fija como correcto: en `test_h02_idx_conc_porcentaje_sobre_la_media_de_un_solo_valido`, `series={"C00": largo, "C01": largo * 0.5}` se sirve con `porcentaje_sobre_media == 1.0` | Contar los componentes de la amplitud como los grupos de `_etiquetas_casi_iguales` sobre sus rentabilidades (o sus precios normalizados) y exigir `IDX_CONC_COMPONENTES_MINIMOS` grupos; cambiar esa línea de la prueba por dos series distintas y añadir la copia a escala como caso que no se sirve | abierto |
+| H-06 | baja | Mutante: en `f_chr_flow`, `_sin_dominio(..., u["peso_maximo_componente"], grupos)` sin `grupos`; `pytest -q tests/test_t128_r02.py tests/test_t127_r03.py tests/test_t127_r02.py tests/test_t128_frontera.py tests/test_fase2_reales.py` | **Esperado:** alguna prueba falla (INC-T128-01 r02: «ninguna (o grupo de copias) con más del 95 % de la oferta»). **Obtenido:** 683 passed. La dominancia por grupos de copias de CHR-FLOW-001 no tiene prueba (en la práctica la aportación agrupada pone el crecimiento a `null`, pero la oferta y la razón se entregarían) | Una prueba: USDX al 4 % y dos copias a escala de EURX al 48 % cada una, rechazo | abierto |
+
+## Invariantes
+
+- Ningún camino a una orden: el Motor no emite órdenes. ✔
+- Sin LLM en la ruta: CHR-FLOW-001 e IDX-CONC-001 son deterministas. ✔
+- Controles: los umbrales nuevos no los cambia la petición. ✔
+- Falla cerrado: una moneda, copias o dominancia rechazan; crecimiento, amplitud y contribución van a `null` con su limitación; la capitalización total se sigue validando con el crecimiento en `null`. ✔ (salvo H-05)
+- Números: con su origen y `[PROPUESTO]`. ✔
+- Decisiones del operador: `[PROPUESTO]` en INC-T128-01 r02, pregunta para T-57 ampliada y fila de §5 al día. ✔
+- Secretos y datos personales: ninguno. ✔
+- Documentación: README del ejecutor (limitación 3) e INC-T128-01 al día; la tabla de CA-1 se revisó en la r02 (IDX-CONC). ✔
+
+## Veredicto (r02)
+
+**APTO.**
+
+CA-4 a CA-7 se cumplen: H-01 declarado con su alcance y CA-2 matizado (la misma decisión que T-127 r03, que considero correcta); CHR-FLOW-001 rechaza una moneda, copias a escala y una moneda de más del 95 %, y pone a `null` el crecimiento concentrado, también con rellenos que se compensan; H-03 declarado; `r01_01` sin CHR-FLOW-001 en «UNO»; `r01_02` con «U» en «ok» y «T» como límite declarado; casos de control 67/67; mutantes F y C muertos; cuotas sin subir; suite en verde (5895, en el `qa.md` de T-127 r03).
+
+El cambio de IDX-CONC-001 lo permite su ficha (amplitud y contribución a `null` con su limitación en los casos degenerados; la concentración, que es lo que la ficha mide, no cambia). Los tres números nuevos (`AVISO_B`, `monedas_estables_minimas`, `IDX_CONC_COMPONENTES_MINIMOS`) tienen su origen declarado con `[PROPUESTO]` y la petición no los cambia.
+
+Quedan **H-05 (media)**, la amplitud de IDX-CONC-001 con dos copias de la misma serie de precios es la de ese valor (la «copia a escala» que INC-T127-01 r03 da por cubierta, y una prueba del implementador la fija como correcta), y **H-06 (baja)**, la dominancia por grupos de CHR-FLOW-001 sin prueba (mutante vivo). Ninguno es crítico ni alto: pasan a la deuda técnica con su ID; H-05 conviene corregirlo antes del modo sombra. El cierre (estado, deuda, diario, commit) le toca a quien coordina.
+
+**Sin comprobar:** el gate entero, A-Forex y B (por instrucción); la fila de la deuda técnica en el árbol principal (H-04 de la r01); ciclos con el modelo real.

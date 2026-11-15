@@ -5,7 +5,8 @@ símbolo, si la carpeta sirve sin tener que lanzar un ciclo.
 
 Para cada símbolo del universo: OK, FALTA (no hay archivo), INVALIDO (HT-01 lo rechaza, con su motivo) o ANTIGUO (su
 último cierre a la fecha as_of tiene más días, o sesiones en H1, que `ps2_antiguedad_maxima_dias` del horizonte pedido,
-Anexo A); se valida como en el ciclo (`cierres()` de HT-01: cierres positivos y finitos, sin fechas repetidas); su primera
+Anexo A); se valida como en el ciclo (`cierres()` de HT-01: cierres positivos y finitos, sin fechas repetidas) y en su
+ventana (la más larga de `senales` y `tasa_base`; un dato malo más antiguo deja el símbolo OK con un aviso); su primera
 y última fecha, el número de filas y el mayor hueco entre dos fechas. Al final, cuántos símbolos sirven por tipo de activo.
 
 Uso (desde la raíz):
@@ -38,17 +39,23 @@ def comprobar(carpeta: str | Path, universo: pd.DataFrame, as_of: str, horizonte
     cfg = cfg or cargar_config()
     max_dias = int(parametro(cfg, f"ps2_antiguedad_maxima_dias.{horizonte}"))
     festivos = validar_festivos_ps2(parametro(cfg, "ps2_festivos"))
+    # T-137 (QA r02 de T-131, H-05): la ventana que valida el ciclo, la más larga entre la del lote de fichas
+    # (`senales`: años más margen) y la de la tasa base (`tasa_base`); un dato malo más antiguo no excluye el símbolo
+    sen, tb = parametro(cfg, "senales"), parametro(cfg, "tasa_base")
+    corte_ts = pd.Timestamp(as_of).normalize()
+    ini = min(corte_ts - pd.DateOffset(years=int(sen["ventana_anios"]), days=int(sen["margen_dias"])),
+              corte_ts - pd.DateOffset(years=int(tb["ventana_anios"])))
     prov = ProveedorCSV(carpeta)
     prov.fijar_as_of(as_of)
     corte = pd.Timestamp(as_of).normalize()
     filas = []
     for _, u in universo.iterrows():
-        f = {"simbolo": u["simbolo"], "clase": u["clase"], "estado": "OK", "motivo": "", "desde": None, "hasta": None,
+        f = {"simbolo": u["simbolo"], "clase": u["clase"], "estado": "OK", "motivo": "", "aviso": "", "desde": None, "hasta": None,
              "filas": 0, "mayor_hueco_dias": None}
         try:
             # T-131 r02 (QA r01, H-01): con `cierres()`, como el ciclo, que rechaza cierres no numéricos, a cero o negativos y
             # fechas repetidas en el rango; `serie()` no valida las filas
-            s = prov.cierres(u["simbolo"])
+            s = prov.cierres(u["simbolo"], ini, as_of)
         except DatosInvalidos as e:            # antes que DatosNoDisponibles, que es su clase madre
             f.update(estado="INVALIDO", motivo=str(e))
         except DatosNoDisponibles as e:
@@ -66,6 +73,10 @@ def comprobar(carpeta: str | Path, universo: pd.DataFrame, as_of: str, horizonte
                 unidad = "sesiones" if horizonte == "H1" else "días"
                 if antiguedad > max_dias:
                     f.update(estado="ANTIGUO", motivo=f"último cierre hace {antiguedad} {unidad} (máximo {max_dias} en {horizonte})")
+                try:   # lo anterior a la ventana no cuenta para el estado, pero se avisa
+                    prov.cierres(u["simbolo"], None, as_of)
+                except DatosInvalidos as e:
+                    f["aviso"] = f"dato inválido anterior a la ventana del ciclo (desde {ini.date()}): {e}"
         filas.append(f)
     return filas
 
@@ -84,6 +95,8 @@ def main(argv: list[str] | None = None) -> int:
     for f in filas:
         if f["estado"] != "OK":
             print(f"{f['estado']:9} {f['clase']:4} {f['simbolo']:14} {f['motivo'][:110]}")
+        elif f["aviso"]:
+            print(f"{'aviso':9} {f['clase']:4} {f['simbolo']:14} {f['aviso'][:110]}")
     por_clase: dict[str, Counter] = defaultdict(Counter)
     for f in filas:
         por_clase[f["clase"]][f["estado"]] += 1

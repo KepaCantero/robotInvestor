@@ -1,4 +1,4 @@
-"""T-133 · Hallazgos de la QA r01 de T-129: la cota superior del coste (H-01), el suelo (H-02) y dos mutantes vivos del
+"""T-136 · Hallazgos de la QA r01 de T-129: la cota superior del coste (H-01), el suelo (H-02) y dos mutantes vivos del
 cliente real (H-03: `output_config` con otra cosa que el formato y una versión vieja de la búsqueda web)."""
 import importlib.util
 from pathlib import Path
@@ -54,7 +54,10 @@ def test_h01_la_cota_cubre_sin_cache_margen_de_tokens_y_continuaciones():
     # suelo: 0,2 M sin caché (0,4) + 0,8 M de lectura (0,08)
     assert r["estimacion"] == pytest.approx(0.48)
     # cota: 4 vueltas × 1,35 M como escritura (4 × 5,4) + 0,1 M de salida (1) + 20 búsquedas (0,2)
-    assert r["cota_superior"] == pytest.approx(4 * 1.35 * 4.0 + 1.0 + 0.2) and r["busquedas_cota"] == 20
+    # T-137 (QA r01 de T-136, H-01): cada continuación es una petición que reenvía lo ya generado y paga su max_tokens:
+    # Σ_v (1,35 M + v · 0,1 M) × 4 + 4 × 0,1 M × 10 + 20 búsquedas
+    assert r["cota_superior"] == pytest.approx(sum((1.35 + 0.1 * v) * 4.0 for v in range(4)) + 4 * 1.0 + 0.2)
+    assert r["busquedas_cota"] == 20
     sin = est.estimar([llamada], precios, 10.0, set(), 5, factor_tokens=1.35, continuaciones=3)
     assert sin["cota_superior"] == pytest.approx(1.35 * 4.0 + 1.0) and sin["busquedas_cota"] == 0
 

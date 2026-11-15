@@ -4,11 +4,13 @@ T-127 (QA r02 de T-119, H-10; ronda r02, QA r01 H-01 y H-02) las escribió para 
 (`fichas_p2`); T-128 las saca a este módulo para aplicarlas también a REI-NAV-001 y REI-FFO-001 (`fichas_reales`),
 IDX-REB-001 (`fichas_mon_idx`), FON-DISC-001 y FON-TD-001 (`fichas_fon_der`). Ninguna cifra de una entrega puede ser la de
 un instrumento concreto (un valor, una emisión, una sociedad, un fondo, un token), ni con su identificador ni de forma que
-se pueda despejar de una sola respuesta:
+se pueda despejar de una sola respuesta, salvo que quien pide haya construido los componentes para ello (T-135, QA r03 de
+T-127, H-08: es el límite declarado del último párrafo, INC-T127-01 «Ronda r03»):
 
 - casi clones: dos componentes con los mismos datos a menos de `tolerancia_clon` son uno (`_sin_clones`);
 - copias a escala: dos componentes con las mismas cifras individuales (cocientes que no dependen del tamaño) son uno para el
-  mínimo, la dominancia, los estadísticos de orden y los subconjuntos (`_sin_copias_a_escala`);
+  mínimo, la dominancia, los estadísticos de orden y los subconjuntos (`_sin_copias_a_escala`); en series de precios (la
+  amplitud de IDX-CONC-001, T-135), dos series con las mismas rentabilidades (`_etiquetas_series_copiadas`);
 - dominancia (1, k): ningún componente (o grupo de copias) pesa más de `peso_maximo_componente` de una base del agregado
   (`_sin_dominio`), ni aporta más de eso a una cifra agregada (`_aportacion_maxima`, `_concentradas`);
 - estadísticos de orden (mínimo, cuartiles, máximo) solo con `componentes_minimos_orden` componentes distintos (`_orden`).
@@ -56,7 +58,11 @@ FRONTERA_B: dict[str, Any] = {
 # (la perturbación simétrica más sencilla: σ·(1 ± δ)); dos emisores reales que coincidan en todos los demás datos a la vez
 # no se esperan, por lo mismo que los casi clones. No se rechaza porque moviendo dos datos, o troceando, se esquiva igual:
 # la entrega lleva el aviso como limitación y queda en el Registro de cálculos con los datos de la petición.
-AVISO_B: dict[str, Any] = {"datos_distintos_aviso": 1}
+# T-135 (QA r03 de T-127, H-06) [PROPUESTO INC-T127-01]: un dato ausente (``None``) o nulo (0) en los dos componentes no es
+# una coincidencia que informe (dos tokens sin oferta máxima, o sin emisión ni quema, no son por eso el mismo); el par
+# tiene que coincidir además en al menos `coincidencias_informativas_minimas` datos no triviales: uno más de los que se le
+# permite mover (`datos_distintos_aviso` + 1), para que lo que coincide pese más que lo que difiere.
+AVISO_B: dict[str, Any] = {"datos_distintos_aviso": 1, "coincidencias_informativas_minimas": 2}
 
 
 def _distribucion(x: np.ndarray) -> dict[str, float]:
@@ -90,16 +96,62 @@ def _etiquetas_casi_iguales(firmas: list[tuple[Any, ...]], tol: float) -> np.nda
     return np.asarray(csgraph.connected_components(csr_matrix(cerca), directed=False)[1], dtype=int)
 
 
+def _etiquetas_series_copiadas(precios: np.ndarray, anios: np.ndarray, tol: float, anios_minimos: float) -> np.ndarray:
+    """T-135 (QA r02 de T-128, H-05): el grupo de cada serie de precios por sus rentabilidades, la cifra de una serie que no
+    depende de su escala. `precios` es n × T (NaN donde la serie no tiene precio) sobre las T fechas comunes, con `anios`
+    la posición de cada fecha en años. La rentabilidad de cada serie se toma entre sus propios precios consecutivos. Dos
+    series son copias (exactas o a escala ×c) de un mismo valor si en todas las fechas en que las dos tienen rentabilidad
+    coinciden a menos de `tol` relativo (la regla de los casi clones, `_datos_que_coinciden`) y sus precios comunes abarcan
+    al menos `anios_minimos`; una copia recortada en el tiempo también lo es. Cierre transitivo, como en
+    `_etiquetas_casi_iguales`. Una copia con rentabilidades perturbadas a propósito no se detecta (límite declarado)."""
+    n = precios.shape[0]
+    if not n:
+        return np.zeros(0, dtype=int)
+    hay = ~np.isnan(precios)
+    rend = np.full(precios.shape, np.nan)
+    for i in range(n):
+        donde = np.flatnonzero(hay[i])
+        rend[i, donde[1:]] = precios[i, donde[1:]] / precios[i, donde[:-1]] - 1
+    con_r = ~np.isnan(rend)
+    distinta = np.zeros((n, n), dtype=bool)
+    primera = np.full((n, n), np.inf)
+    ultima = np.full((n, n), -np.inf)
+    fuera = ~np.eye(n, dtype=bool)
+    for j in range(precios.shape[1]):
+        if distinta[fuera].all():
+            break                          # todas las parejas ya difieren: ninguna es copia, sea cual sea su alcance
+        comun = hay[:, j][:, None] & hay[:, j][None, :]
+        primera = np.where(comun, np.minimum(primera, anios[j]), primera)
+        ultima = np.where(comun, np.maximum(ultima, anios[j]), ultima)
+        x = np.where(con_r[:, j], rend[:, j], 0.0)
+        a = np.abs(x)
+        cerca = np.abs(x[:, None] - x[None, :]) <= tol * np.maximum(a[:, None], a[None, :])
+        distinta |= con_r[:, j][:, None] & con_r[:, j][None, :] & ~cerca
+    copia = ~distinta & (ultima - primera >= anios_minimos)   # sin pareja, cada serie es su propio grupo
+    return np.asarray(csgraph.connected_components(csr_matrix(copia), directed=False)[1], dtype=int)
+
+
 def _aviso_casi_clones(firmas: list[tuple[Any, ...]], tol: float, lim: list[str]) -> int:
     """T-127 r03 (QA r02, H-04): cuántos componentes coinciden con otro, a menos de `tol`, en todos los datos de su firma
     menos `datos_distintos_aviso` (`AVISO_B`) o menos; si hay alguno, un aviso en las limitaciones (va al Registro de
     cálculos con los datos de la petición). No rechaza: es la marca de una perturbación de un dato, no una regla que
-    impida el troceo (límite declarado en INC-T127-01 «Ronda r03»). El aviso no cita identificadores."""
+    impida el troceo (límite declarado en INC-T127-01 «Ronda r03»). El aviso no cita identificadores.
+
+    T-135 (QA r03 de T-127, H-06): las coincidencias triviales (``None`` con ``None``, 0 con 0) siguen contando para «todos
+    menos d», pero el par tiene que coincidir además en `coincidencias_informativas_minimas` datos que no lo sean. La ficha
+    pone a ``None`` en la firma los datos que repiten otro (p. ej. la oferta total cuando toda está en circulación) o que se
+    derivan de otros (`otros_pasivos` de REI-NAV-001 cuando se calcula por diferencia): no son datos de quien pide."""
     n = len(firmas)
     if n < 2:
         return 0
     d = AVISO_B["datos_distintos_aviso"]
-    par = _datos_que_coinciden(firmas, tol) >= len(firmas[0]) - d
+    iguales = _datos_que_coinciden(firmas, tol)
+    triviales = np.zeros((n, n), dtype=int)
+    for j in range(len(firmas[0])):
+        nulo = np.array([f[j] is None for f in firmas])
+        cero = np.array([f[j] is not None and float(f[j]) == 0 for f in firmas])
+        triviales += (nulo[:, None] & nulo[None, :]) | (cero[:, None] & cero[None, :])
+    par = (iguales >= len(firmas[0]) - d) & (iguales - triviales >= AVISO_B["coincidencias_informativas_minimas"])
     np.fill_diagonal(par, False)
     k = int(np.sum(par.any(axis=1)))
     if k:

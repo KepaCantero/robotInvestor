@@ -1,4 +1,4 @@
-"""T-133 · R8: hallazgos de la QA r01 de T-130. Estructura del BBAN de cada país (H-01 y H-03), filas de tabla de números
+"""T-136 · R8: hallazgos de la QA r01 de T-130. Estructura del BBAN de cada país (H-01 y H-03), filas de tabla de números
 de cuatro cifras (H-02), decimales tras un ISIN (H-05) y misma caja en el IBAN."""
 import random
 import re
@@ -64,9 +64,11 @@ def test_h03_bban_numerico_tiene_los_21_paises_con_va():
 
 def test_h02_filas_de_numeros_de_cuatro_cifras():
     r = random.Random(8)
-    for _ in range(5000):
-        nums = [str(r.randint(4000, 5999)) for _ in range(8)]
-        assert tarjetas_en_texto(" ".join(nums)) == []
+    # T-137 (QA r01 de T-136, H-02): una fila de 8 se marca solo si son dos tarjetas válidas seguidas (en torno al 0,6 % con
+    # números de 4000 a 5999, que casi siempre tienen prefijo de red); antes se exigía 0 y eso dejaba sin detectar dos
+    # tarjetas seguidas o una tarjeta con su caducidad MMAA
+    marcadas = sum(bool(tarjetas_en_texto(" ".join(str(r.randint(4000, 5999)) for _ in range(8)))) for _ in range(5000))
+    assert marcadas <= 50
     assert tarjetas_en_texto(_g("4111" + "1111" + "1111" + "1111")) == ["tarjeta …1111"]   # cuatro grupos sí
 
 

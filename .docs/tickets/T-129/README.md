@@ -38,4 +38,4 @@ No incluye lo que lee cada búsqueda (se cobra como entrada), reintentos ni repa
 
 - 2026-11-15 · ABIERTO · creado con nuevo_ticket.sh
 - 2026-11-15 · EN QA · claude · implementado; decisiones en INC-T129-01
-- 2026-11-15 · CERRADO · QA r01 APTO (revisor nuevo sin contexto); hallazgos (H-01 media: la cota superior no es una cota; H-02 y H-03 bajas) en T-133
+- 2026-11-15 · CERRADO · QA r01 APTO (revisor nuevo sin contexto); hallazgos (H-01 media: la cota superior no es una cota; H-02 y H-03 bajas) en T-136

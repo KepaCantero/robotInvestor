@@ -34,4 +34,4 @@ Decisiones en INC-T123-01 (`[PROPUESTO]`): una tarjeta con dos espacios entre gr
 
 - 2026-11-15 · ABIERTO · creado con nuevo_ticket.sh
 - 2026-11-15 · EN QA · claude · implementado y probado
-- 2026-11-15 · CERRADO · QA r01 APTO (revisor nuevo sin contexto); hallazgos (H-01 y H-02 medios, H-03 a H-05 bajos) en T-133
+- 2026-11-15 · CERRADO · QA r01 APTO (revisor nuevo sin contexto); hallazgos (H-01 y H-02 medios, H-03 a H-05 bajos) en T-136
