@@ -2,7 +2,7 @@
 
 | Campo | Valor |
 | --- | --- |
-| Estado | EN QA |
+| Estado | CERRADO |
 | Pieza | `.docs/scripts/descargar_datos_bce.py`, `.docs/scripts/comprobar_datos_a.py` (`--clases`); pruebas `bloque_a/11_Ejecutor/tests/test_t141_datos_bce.py` |
 | Planifica · implementa · QA | claude · claude · un revisor nuevo sin contexto |
 | Aprobación del operador | 2026-11-15: «Doy el visto bueno a todo lo que depende de mí» (fuente de datos reales: el agente elige por defecto) |
@@ -29,3 +29,4 @@ Fuente elegida por defecto `[PROPUESTO]` (registro de decisiones del operador): 
 - 2026-11-15 · ABIERTO · creado con nuevo_ticket.sh
 - 2026-11-15 · EN QA · claude · implementado y probado (con red: descarga, comprobación y ciclo mock)
 - 2026-11-15 · claude · renumerado de T-138 a T-141: otra sesión usó T-138 y lo subió antes
+- 2026-11-15 · CERRADO · QA r01 APTO (revisor nuevo sin contexto; cruces contrastados con los tipos de la Reserva Federal); hallazgos (H-01 media, H-02 a H-04 bajos) en T-147

@@ -28,9 +28,12 @@ def _modulo(nombre):
 
 
 # ---------------------------------------------------------------- T-136 H-02 · tarjeta junto a otro número de 4 cifras
+# T-145 (QA r01 de T-140, H-02): un año de cuatro cifras, delante («2027 <tarjeta>») o detrás («<tarjeta> 1999»), ya no
+# cuenta como fecha en una serie de cinco o más grupos: marcaba del 5 al 8 % de las filas «año + cuatro niveles». Esos dos
+# casos pasan a no detectarse (declarado en INC-T123-01) y los prueba `test_t145.py`; los demás siguen igual.
 @pytest.mark.parametrize("texto,esperado", [
-    (V + " 0128", ["tarjeta …1111"]), ("2027 " + V, ["tarjeta …1111"]), ("4111-1111-1111-1111-0128", ["tarjeta …1111"]),
-    (V + " " + M, ["tarjeta …1111", "tarjeta …4444"]), (V + " 1999", ["tarjeta …1111"]),
+    (V + " 0128", ["tarjeta …1111"]), ("2027 " + V, []), ("4111-1111-1111-1111-0128", ["tarjeta …1111"]),
+    (V + " " + M, ["tarjeta …1111", "tarjeta …4444"]), (V + " 1999", []),
 ])
 def test_h02_tarjeta_con_caducidad_ano_o_otra_tarjeta(texto, esperado):
     assert tarjetas_en_texto(texto) == esperado

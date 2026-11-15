@@ -2,7 +2,7 @@
 
 | Campo | Valor |
 | --- | --- |
-| Estado | EN QA |
+| Estado | CERRADO |
 | Pieza | Lado A: `bloque_a/11_Ejecutor/bloque_a/` (un módulo que construye la petición CT-B-01 a partir de una opción con su `paquete_para_bloque_B`) y sus pruebas; `.docs/scripts/cadena_a_b.py` (de punta a punta, con las dos CLI). El Bloque B no se cambia salvo que falte algo imprescindible para recibir el encargo (y entonces, cambio mínimo, con su prueba en B) |
 | Planifica · implementa · QA | claude · un agente · un revisor nuevo sin contexto |
 | Aprobación del operador | 2026-11-15: «La parte de Astra que necesitamos la haremos nosotros y el resto del bloque B que lo haga Astra» |
@@ -32,3 +32,4 @@
 - 2026-11-15 · ABIERTO · creado con nuevo_ticket.sh
 - 2026-11-15 · PLANIFICADO · claude · plan
 - 2026-11-15 · EN QA · claude · implementado y probado: `bloque_a/cadena_b.py` (petición CT-B-01, correspondencia `[PROPUESTO]` que falla cerrado, CT-04 de vuelta), 30 pruebas, `.docs/scripts/cadena_a_b.py` (1 entrega de B válida; la sonda muestra que B V2.1 sin clave elige un ámbito él mismo); el Bloque B no se ha tocado; INC-T142-01; sin commit (lo hace la sesión coordinadora)
+- 2026-11-15 · CERRADO · QA r01 APTO (revisor nuevo sin contexto); hallazgos (H-01 a H-03 medios, H-04 a H-06 bajos) en T-147
