@@ -30,7 +30,7 @@ from typing import Any
 import jsonschema
 
 from .configuracion import buscar_versionado, ruta
-from .contratos import contiene_credenciales
+from .contratos import contiene_credenciales, secretos_en_texto
 
 ORIGEN_BLOQUE_A = "BLOQUE_A"
 SIGUIENTE_PASO_ENVIO = "ENVIAR_A_BLOQUE_B"
@@ -46,12 +46,31 @@ ENUMERACIONES_B1: dict[str, tuple[str, ...]] = {"nivel": ("N1", "N2", "N3", "PER
                                                 "perfil_invertibilidad": ("MINORISTA_UE_DEFECTO",)}
 RE_IDIOMA = re.compile(r"[a-z]{2,3}(?:-[A-Z]{2})?")
 RE_SIN_ESPACIOS = re.compile(r"\S+")   # una clave o un símbolo de la tabla de correspondencia: sin espacios
+# T-149 (QA r01 de T-147, H-02 de T-142): el Broker solo recibe el paquete en la entrega CT-02, que exige un dictamen G3
+# favorable (Documento 0 del Bloque A, 7.3: «BLOQUEADO impide la entrega»; `contratos.py`, CT-02). Un paquete sin uno de
+# estos dos estados no se reenvía al Bloque B.
+ESTADOS_G3_ENTREGA = ("APTO", "APTO_CON_ADVERTENCIAS")
+DATO_PROTEGIDO = "«dato protegido por R8»"
+DETALLE_OMITIDO = "detalle omitido: reproducía un dato protegido por R8"
+
+
+def sin_datos_protegidos(texto: str) -> str:
+    """T-149 (QA r01 de T-147, H-01): el texto de un error sin los datos que protege R8 (`contratos.secretos_en_texto`):
+    cada uno se sustituye por «dato protegido por R8» y, si aun así queda alguno (uno que el detector solo ve con los
+    escapes de JSON sustituidos, o un IBAN con otros espacios), el texto entero se cambia por un aviso. Los mensajes de
+    `jsonschema` llevan el valor que no cumple («'…' is not one of …»), y una configuración rara también."""
+    for dato in sorted(secretos_en_texto(texto), key=len, reverse=True):
+        texto = texto.replace(dato, DATO_PROTEGIDO)
+    if secretos_en_texto(texto) or contiene_credenciales(texto):
+        return DETALLE_OMITIDO
+    return texto
 
 
 class ErrorCadenaB(ValueError):
     """La petición CT-B-01 no se construye: `codigo` dice por qué (falla cerrado, sin valores inventados)."""
 
     def __init__(self, codigo: str, detalle: str) -> None:
+        detalle = sin_datos_protegidos(detalle)   # T-149 (QA r01 de T-147, H-01): ningún error copia un dato de R8
         super().__init__(f"{codigo}: {detalle}")
         self.codigo = codigo
         self.detalle = detalle
@@ -75,7 +94,9 @@ def errores_entrada_b(entrada: Any, cfg: dict, definicion: str = "entrada_bloque
     con `definicion="opcion/properties/tipos_secundarios"`, de los tipos secundarios de la opción frente a su definición
     en `$defs/opcion`, T-147)."""
     v = _validador_entrada(str(_ruta_esquema_paquete(cfg)), definicion)
-    return [f"{'/'.join(map(str, e.absolute_path)) or '(raíz)'}: {e.message}"[:200] for e in v.iter_errors(entrada)][:10]
+    # T-149: sin los datos de R8 antes de recortar (un correo cortado ya no se reconoce y dejaría su parte local)
+    return [sin_datos_protegidos(f"{'/'.join(map(str, e.absolute_path)) or '(raíz)'}: {e.message}")[:200]
+            for e in v.iter_errors(entrada)][:10]
 
 
 def _opciones(paquete: dict) -> list[dict]:
@@ -160,13 +181,19 @@ def construir_peticion(paquete: dict, opp_id: str, cfg: dict, *, exigir_correspo
 
     T-147 (QA r01 de T-142, H-01): los `tipos_secundarios` de la opción, que entran en la petición, se validan contra su
     definición en `$defs/opcion` del esquema del Bloque A (lista de tipos de los doce, sin repetir); si no cumplen,
-    `ENTRADA_B_INVALIDA`. La opción entera no se valida: el paquete en memoria del ciclo lleva campos internos. H-02: la petición construida pasa el
+    `ENTRADA_B_INVALIDA`. T-149: un paquete sin `estado_g3` APTO o APTO_CON_ADVERTENCIAS (el de un ciclo con G3
+    BLOQUEADO) no se reenvía (`ENTREGA_BLOQUEADA_G3`), y ningún error copia en su detalle un dato protegido por R8
+    (`sin_datos_protegidos`). La opción entera no se valida: el paquete en memoria del ciclo lleva campos internos. H-02: la petición construida pasa el
     mismo filtro R8 que los mensajes del bloque (`contratos.contiene_credenciales`); si lleva credenciales o datos
     personales, no se devuelve (`DATOS_PROTEGIDOS`, sin reproducir el dato) y el Broker no la envía."""
     if not isinstance(paquete, dict):
         raise ErrorCadenaB("PAQUETE_INVALIDO", "el paquete de oportunidades no es un objeto JSON")
     if not isinstance(paquete.get("run_id"), str) or not paquete["run_id"]:
         raise ErrorCadenaB("PAQUETE_INVALIDO", "el paquete de oportunidades no trae «run_id»")
+    if paquete.get("estado_g3") not in ESTADOS_G3_ENTREGA:   # T-149: sin entrega CT-02 no hay encargo
+        raise ErrorCadenaB("ENTREGA_BLOQUEADA_G3", "el paquete no trae un dictamen G3 que permita la entrega "
+                                                   f"({' o '.join(ESTADOS_G3_ENTREGA)}; 7.3: «BLOQUEADO impide la entrega»): "
+                                                   "el Broker no lo ha recibido y no lo reenvía al Bloque B")
     opcion = _una(_opciones(paquete), opp_id, "las opciones del paquete")
     entrada = _una(paquete.get("paquete_para_bloque_B") or [], opp_id, "«paquete_para_bloque_B»")
     errores = errores_entrada_b(entrada, cfg)

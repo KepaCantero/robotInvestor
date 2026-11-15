@@ -14,6 +14,8 @@ T-147 (QA r01 de T-141, H-03): todo se valida antes de escribir nada (columnas, 
 repetida para una moneda, ninguna serie vacía tras quitar los valores no positivos o no finitos); los CSV se escriben en
 una carpeta temporal junto al destino y se mueven al final, así que un fallo no deja la carpeta a medias. Una respuesta
 rara del servicio (vacía, HTML, error HTTP, sin conexión) termina con un mensaje y el código 1, sin traza.
+T-149 (QA r01 de T-147, H-02): también una fecha repetida escrita de dos formas («2026-11-3» y «2026-11-03») y un
+destino que no es una carpeta (se mira antes de descargar) o en el que no se puede escribir.
 
 Uso (desde la raíz): .venv/bin/python .docs/scripts/descargar_datos_bce.py <carpeta> [--desde AAAA-MM-DD]
 Luego: .venv/bin/python .docs/scripts/comprobar_datos_a.py <carpeta> --clases DIV
@@ -57,16 +59,18 @@ def leer(cuerpo: bytes) -> pd.DataFrame:
     sin = sorted(set(MONEDAS) - set(crudo["CURRENCY"]))
     if sin:
         raise RespuestaBCE(f"faltan las monedas {', '.join(sin)}")
-    repetidas = crudo[crudo.duplicated(["CURRENCY", "TIME_PERIOD"], keep=False)]
+    crudo = crudo.assign(OBS_VALUE=pd.to_numeric(crudo["OBS_VALUE"], errors="coerce"))
+    try:
+        fechas = pd.to_datetime(crudo["TIME_PERIOD"].astype(str), format="%Y-%m-%d")   # T-149: el texto, no un número
+    except (ValueError, TypeError) as e:
+        raise RespuestaBCE("fechas que no son AAAA-MM-DD en TIME_PERIOD") from e
+    # T-149 (QA r01 de T-147, H-02): las repetidas se buscan en la fecha ya convertida, no en el texto («2026-11-3» y
+    # «2026-11-03» son el mismo día; antes `pivot` caía con una traza)
+    repetidas = crudo[pd.DataFrame({"m": crudo["CURRENCY"], "f": fechas}).duplicated(keep=False)]
     if not repetidas.empty:
         ej = repetidas.iloc[0]
         raise RespuestaBCE(f"{len(repetidas)} filas con una fecha repetida para su moneda (p. ej. {ej['CURRENCY']} el "
                            f"{ej['TIME_PERIOD']}): no se elige una en silencio")
-    crudo = crudo.assign(OBS_VALUE=pd.to_numeric(crudo["OBS_VALUE"], errors="coerce"))
-    try:
-        fechas = pd.to_datetime(crudo["TIME_PERIOD"], format="%Y-%m-%d")
-    except (ValueError, TypeError) as e:
-        raise RespuestaBCE("fechas que no son AAAA-MM-DD en TIME_PERIOD") from e
     ancho = crudo.assign(TIME_PERIOD=fechas).pivot(index="TIME_PERIOD", columns="CURRENCY", values="OBS_VALUE")
     return ancho.sort_index()
 
@@ -89,8 +93,26 @@ def cruces(ancho: pd.DataFrame) -> dict[str, pd.DataFrame]:
     return salida
 
 
+class DestinoNoValido(OSError):
+    """El destino no admite los CSV: no se escribe nada (T-149)."""
+
+
+def comprobar_destino(destino: Path, simbolos) -> None:
+    """T-149 (QA r01 de T-147, H-02): antes de descargar y de escribir, el destino es una carpeta (o no existe) y ninguno
+    de los CSV que se van a escribir es ya una carpeta; si no, `DestinoNoValido` (antes, una traza de `mkdir`)."""
+    for p in (destino, *destino.parents):
+        if p.exists():
+            if not p.is_dir():
+                raise DestinoNoValido(f"{p} existe y no es una carpeta")
+            break
+    ocupados = [s for s in simbolos if (destino / f"{s}.csv").exists() and not (destino / f"{s}.csv").is_file()]
+    if ocupados:
+        raise DestinoNoValido(f"en {destino} ya hay algo que no es un fichero con el nombre de {', '.join(ocupados)}")
+
+
 def escribir(series: dict[str, pd.DataFrame], destino: Path) -> None:
     """Escribe todo en una carpeta temporal junto al destino y lo mueve al final (T-147, H-03)."""
+    comprobar_destino(destino, series)
     destino.mkdir(parents=True, exist_ok=True)
     tmp = Path(tempfile.mkdtemp(prefix=".bce_", dir=destino))
     try:
@@ -109,7 +131,11 @@ def main(argv: list[str] | None = None) -> int:
     a = ap.parse_args(argv)
     destino = Path(a.carpeta)
     try:
+        comprobar_destino(destino, CRUCES)   # T-149: antes de descargar
         series = cruces(descargar(a.desde))
+    except DestinoNoValido as e:
+        print(f"destino no válido, no se descarga y no se escribe nada: {e}", file=sys.stderr)
+        return 1
     except RespuestaBCE as e:
         print(f"respuesta del BCE no válida, no se escribe nada: {e}", file=sys.stderr)
         return 1
@@ -119,7 +145,11 @@ def main(argv: list[str] | None = None) -> int:
     except (urllib.error.URLError, OSError) as e:
         print(f"no se pudo descargar del BCE ({type(e).__name__}: {e}), no se escribe nada", file=sys.stderr)
         return 1
-    escribir(series, destino)
+    try:
+        escribir(series, destino)
+    except OSError as e:   # T-149 (H-02): sin permiso, disco lleno…: mensaje y 1, y la carpeta temporal se borra
+        print(f"no se pudo escribir en {destino} ({type(e).__name__}: {e}), no se escribe nada", file=sys.stderr)
+        return 1
     for simbolo, df in series.items():
         print(f"{simbolo}: {len(df)} cierres, {df['fecha'].iloc[0]} → {df['fecha'].iloc[-1]}")
     return 0

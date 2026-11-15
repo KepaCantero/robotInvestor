@@ -1,6 +1,8 @@
 """Cadena de encargos A → B de punta a punta con el cliente simulado en los dos bloques (T-142, Fase 6). Coste cero.
 
-1. Bloque A: un ciclo C1 (`bloque-a ciclo`) con los datos sintéticos y el universo de ejemplo.
+1. Bloque A: un ciclo C1 (`bloque-a ciclo`) con los datos sintéticos y el universo de ejemplo. Si su entrega no sale
+   (G3 BLOQUEADO: «BLOQUEADO impide la entrega», 7.3 del Documento 0 del Bloque A; T-149), el Broker no recibe el paquete
+   y no se envía nada al Bloque B: queda en `sin_envio` del resumen y el script termina con 1.
 2. Broker (código del lado A, `bloque_a/cadena_b.py`, sin modelo): elige las opciones con siguiente paso
    `ENVIAR_A_BLOQUE_B` y escribe una petición CT-B-01 por cada una; una opción sin correspondencia de ámbito, o cuya
    petición lleva credenciales o datos personales (R8, `DATOS_PROTEGIDOS`, T-147), no se envía (falla cerrado), no se
@@ -121,7 +123,8 @@ def main(argv: list[str] | None = None) -> int:
     ambitos_b = yaml.safe_load(AMBITOS_B.read_text(encoding="utf-8")) or {}
     ajenas = sorted({v for v in ((cfg.get("cadena_b") or {}).get("correspondencia_ambitos") or {}).values()} - set(ambitos_b))
     if ajenas:
-        print(f"La correspondencia de ámbitos cita claves que el Bloque B no tiene: {ajenas}", file=sys.stderr)
+        print(cadena_b.sin_datos_protegidos(f"La correspondencia de ámbitos cita claves que el Bloque B no tiene: {ajenas}"),
+              file=sys.stderr)
         return 2
     config_a = ["--config", str(Path(a.config_a).resolve())] if a.config_a else []
     base_a = config_a + ["--datos", "ejemplos/datos_sinteticos", "--universo", "config/universo_ejemplo.csv",
@@ -131,7 +134,17 @@ def main(argv: list[str] | None = None) -> int:
     try:
         ciclo = _cli("a", base_a + ["ciclo"])
         resumen["bloque_a"] = {k: ciclo.get(k) for k in ("run_id", "estado", "entrega", "g3", "top3_por_clase")}
-        paquete = json.loads(Path(ciclo["entregables"]["paquete_json"]).read_text(encoding="utf-8"))
+        ruta_paquete = (ciclo.get("entregables") or {}).get("paquete_json")
+        # T-149 (QA r01 de T-147, O-01): sin entrega CT-02 (G3 BLOQUEADO) el Broker no tiene el paquete: no se encarga nada
+        if ciclo.get("entrega") != "ENTREGADA" or ciclo.get("g3") not in cadena_b.ESTADOS_G3_ENTREGA or not ruta_paquete:
+            resumen["sin_envio"] = {"motivo": "ENTREGA_BLOQUEADA_G3", "entrega": ciclo.get("entrega"), "g3": ciclo.get("g3"),
+                                    "detalle": "el ciclo del Bloque A no entregó (7.3: «BLOQUEADO impide la entrega»): el Broker "
+                                               "no recibe el paquete y no envía nada al Bloque B"}
+            _escribir(w / "resumen.json", resumen)
+            print(f"Sin entrega del Bloque A (entrega {ciclo.get('entrega')}, G3 {ciclo.get('g3')}): no se envía nada al Bloque B",
+                  file=sys.stderr)
+            return 1
+        paquete = json.loads(Path(ruta_paquete).read_text(encoding="utf-8"))
         enviables = cadena_b.opciones_enviables(paquete)
         resumen["opciones_enviables"] = enviables
         for opp_id in enviables:
@@ -181,7 +194,7 @@ def main(argv: list[str] | None = None) -> int:
                     "nota": "Sin clave, el Bloque B V2.1 no responde AMBITO_INDETERMINADO: su Director encuadra con los ámbitos "
                             "de su configuración (INC-T142-01). Por eso el Broker falla cerrado."}
     except FalloEjecutor as e:
-        print(str(e), file=sys.stderr)
+        print(cadena_b.sin_datos_protegidos(str(e)), file=sys.stderr)
         _escribir(w / "resumen.json", resumen)
         return 2
     entregadas = [e for e in resumen["envios"] if e.get("estado_peticion") == "ENTREGADA"]
