@@ -19,9 +19,10 @@ Qué cuenta como una observación (QA r01 de T-94, H-01 y H-02):
 - por debajo de --min-efectivas fechas por lado no hay veredicto: «todavía no se sabe», con el motivo.
 
 Desde T-99, cada ejecución desde la línea de órdenes se anota en el registro de experimentos (`.docs/scripts/registro_experimentos.py`).
-Sin --experimento, el banco reutiliza el experimento ya prerregistrado con la misma hipótesis, objeto y periodo, y otra semilla
-o parámetros cuentan como otra variante del mismo experimento; si no lo hay, lo prerregistra. Con --experimento, ese
-experimento tiene que tener la misma hipótesis, objeto y periodo. `verificar` comprueba después las huellas.
+Sin --experimento, el banco reutiliza el experimento ya prerregistrado con la misma hipótesis, objeto y fuente (cliente, datos
+y universo); otro periodo, otra semilla u otros parámetros cuentan como otra variante del mismo experimento. Si no lo hay, lo
+prerregistra. Con --experimento, ese experimento tiene que tener la misma hipótesis, objeto y fuente. El máximo de variantes no
+cambia después de prerregistrar. `--sin-registro` no anota nada (y `verificar` lo dirá). `verificar` comprueba las huellas.
 
 Deja en <carpeta>: prerregistro.json, informe.json, informe.md y la salida del titular (titular/). El informe avisa en su
 primera línea si el cliente es simulado o los datos son los de ejemplo: entonces prueba la tubería, no mide a A.
@@ -648,6 +649,9 @@ def _experimento(reg, exp_id: str | None, prerregistro: dict, h: str, max_varian
              and x["contenido"].get("objeto") == "BLOQUE"]
     if exp_id:
         pre = reg.experimento(exp_id)["prerregistro"]["contenido"]
+        if pre.get("max_variantes") != max_variantes:
+            raise BancoError(f"el experimento {exp_id} se prerregistró con max_variantes {pre.get('max_variantes')}, no "
+                             f"{max_variantes}: el máximo no se cambia después (T-99, QA r01 H-08)")
         distinto = [k for k, v in (("hipotesis", prerregistro["hipotesis"]), ("objeto", "BLOQUE"), ("fuente_banco", fuente))
                     if pre.get(k) != v]
         if distinto:
@@ -656,6 +660,10 @@ def _experimento(reg, exp_id: str | None, prerregistro: dict, h: str, max_varian
         de_la_fuente = [x for x in misma if x["contenido"].get("fuente_banco") == fuente]
         if de_la_fuente:
             exp_id = de_la_fuente[0]["exp_id"]
+            prev = de_la_fuente[0]["contenido"].get("max_variantes")
+            if prev != max_variantes:
+                raise BancoError(f"el experimento {exp_id} de esta hipótesis y fuente se prerregistró con max_variantes {prev}, "
+                                 f"no {max_variantes}: el máximo no se cambia después (T-99, QA r01 H-08)")
         else:
             exp_id = reg.prerregistrar({
                 "hipotesis": prerregistro["hipotesis"], "objeto": "BLOQUE", "metrica": prerregistro["metrica"],
@@ -700,6 +708,8 @@ def ejecutar_a(a: argparse.Namespace) -> dict:
     h = huella(prerregistro)
     reg = intento = None
     otros_misma = 0
+    if getattr(a, "registro", None) == "":   # T-99, QA r01 H-08: un registro vacío no desactiva el registro en silencio
+        raise BancoError("--registro vacío: para no anotar, usa --sin-registro")
     if getattr(a, "registro", None):   # T-99: cada intento cuenta, también los que fallan
         sys.path.insert(0, str(Path(__file__).resolve().parent))
         import registro_experimentos as rx
@@ -709,8 +719,8 @@ def ejecutar_a(a: argparse.Namespace) -> dict:
             intento = reg.intento(exp_id, variante=h[:16])
         except rx.RegistroError as e:
             raise BancoError(f"registro de experimentos: {e}") from e
-    _escribir_json(salida / "prerregistro.json", {**prerregistro, "huella": h})
     try:
+        _escribir_json(salida / "prerregistro.json", {**prerregistro, "huella": h})   # dentro: si falla, el intento es «fallido»
         kw = {k: v for k, v in (("datos", datos_arg), ("universo", universo_arg)) if v}
         tit = titular_a(a.desde, a.hasta, salida / "titular", a.cliente, a.frecuencia, a.clases, **kw)
         universo = pd.read_csv(tit["universo"], usecols=["simbolo", "clase"])
@@ -737,15 +747,21 @@ def ejecutar_a(a: argparse.Namespace) -> dict:
         (salida / "informe.md").write_text(informe_md(inf, titulo_informe(a.desde, a.hasta)), encoding="utf-8")
     except BaseException as e:
         if reg is not None:
-            reg.resultado(intento["exp_id"], intento["n"], "fallido", {"motivo": f"{type(e).__name__}: {e}"[:300]})
+            try:
+                reg.resultado(intento["exp_id"], intento["n"], "fallido", {"motivo": f"{type(e).__name__}: {e}"[:300]})
+            except rx.RegistroError as ex:   # no tapa el fallo original: lo encadena
+                raise BancoError(f"{type(e).__name__}: {e}; y no se pudo anotar el intento como fallido: {ex}") from e
         raise
     if reg is not None:
         # El intento va aparte (experimento.json), para que el informe de dos ejecuciones iguales sea idéntico byte a byte.
         experimento = {"exp_id": intento["exp_id"], "intento": intento["n"], "dentro_del_maximo": intento["dentro_del_maximo"],
                        "registro": str(Path(a.registro).resolve())}
-        reg.resultado(intento["exp_id"], intento["n"], veredicto_conjunto(inf["comparaciones"]),
-                      {"comparaciones": {k: v["veredicto"] for k, v in inf["comparaciones"].items()}, "aviso": aviso,
-                       "huella_prerregistro_banco": h, "huella_informe": huella(inf)})
+        try:
+            reg.resultado(intento["exp_id"], intento["n"], veredicto_conjunto(inf["comparaciones"]),
+                          {"comparaciones": {k: v["veredicto"] for k, v in inf["comparaciones"].items()}, "aviso": aviso,
+                           "huella_prerregistro_banco": h, "huella_informe": huella(inf)})
+        except rx.RegistroError as e:
+            raise BancoError(f"registro de experimentos: {e}") from e
         _escribir_json(salida / "experimento.json", experimento)
         inf["experimento"] = experimento
     return inf
@@ -853,6 +869,8 @@ def main(argv: list[str] | None = None) -> int:
     pa.add_argument("--min-efectivas", dest="min_efectivas", type=_arg_entero(MIN_EFECTIVAS_MIN), default=MIN_EFECTIVAS)
     # T-99: registro de experimentos (por defecto, el del repositorio); --experimento añade un intento a uno ya prerregistrado
     pa.add_argument("--registro", default=str(RAIZ / ".docs" / "experimentos" / "registro.jsonl"))
+    pa.add_argument("--sin-registro", dest="registro", action="store_const", const=None,
+                    help="no anotar en el registro de experimentos (el informe no se podrá verificar)")
     pa.add_argument("--experimento")
     pa.add_argument("--max-variantes", dest="max_variantes", type=_arg_entero(1), default=1)
     pv = sub.add_parser("verificar", help="comprueba las huellas de una carpeta de salida del banco")

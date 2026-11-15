@@ -1,6 +1,8 @@
 """Pruebas del registro de experimentos (T-99). Uso: .venv/bin/python -m pytest -q .docs/scripts/pruebas_registro_experimentos.py"""
 import json
+import subprocess
 import sys
+import unicodedata
 from pathlib import Path
 
 import pytest
@@ -126,7 +128,7 @@ def test_cambiar_el_criterio_despues_rompe_la_cadena(reg):
 def test_linea_que_no_es_json(reg):
     reg.prerregistrar(pre(), "claude", AHORA)
     with open(reg.ruta, "a", encoding="utf-8") as f:
-        f.write('{"tipo": "INTEN')
+        f.write('{"tipo": "INTEN\n')
     with pytest.raises(rx.RegistroError, match="no es JSON"):
         reg.verificar()
 
@@ -143,3 +145,273 @@ def test_linea_de_ordenes(tmp_path, capsys):
     assert rx.main(["--registro", r, "verificar"]) == 0
     assert rx.main(["--registro", r, "ver", exp]) == 0
     assert '"intentos": 1' in capsys.readouterr().out
+
+
+# ---------------------------------------------------------------- ronda r02 (QA r01 NO APTO): una prueba por hallazgo
+
+
+def _resellar(reg):
+    """Lo que haría quien reescribe a propósito: rehacer también el sello (contra eso solo vale el ancla de git)."""
+    lineas = [json.loads(x) for x in reg.ruta.read_text(encoding="utf-8").splitlines()]
+    s = {"seq": lineas[-1]["_seq"], "hash": lineas[-1]["_hash"]} if lineas else {"seq": 0, "hash": "0" * 64}
+    reg.sello.write_text(json.dumps(s) + "\n", encoding="utf-8")
+
+
+def _rehacer_cadena(anotaciones):
+    """Lo que haría quien reescribe el fichero: recalcular la cadena entera tras cambiar algo."""
+    prev, out = "0" * 64, []
+    for i, e in enumerate(anotaciones, 1):
+        e = {k: v for k, v in e.items() if k not in ("_seq", "_hash_prev", "_hash")}
+        e.update(_seq=i, _hash_prev=prev)
+        e["_hash"] = rx.huella(e)
+        prev = e["_hash"]
+        out.append(json.dumps(e, ensure_ascii=False, sort_keys=True))
+    return "\n".join(out) + ("\n" if out else "")
+
+
+def _leer(reg):
+    return [json.loads(x) for x in reg.ruta.read_text(encoding="utf-8").splitlines()]
+
+
+def _git(carpeta, *args):
+    subprocess.run(["git", "-C", str(carpeta), *args], check=True, capture_output=True,
+                   env={"GIT_AUTHOR_NAME": "t", "GIT_AUTHOR_EMAIL": "t@t", "GIT_COMMITTER_NAME": "t", "GIT_COMMITTER_EMAIL": "t@t",
+                        "HOME": str(carpeta), "PATH": "/usr/bin:/bin"})
+
+
+@pytest.fixture
+def reg_en_git(tmp_path):
+    _git(tmp_path, "init", "-q")
+    r = rx.Registro(tmp_path / "registro.jsonl")
+    exp = r.prerregistrar(pre(), "claude", AHORA)["exp_id"]
+    r.intento(exp, "v1", DESPUES)
+    r.resultado(exp, 1, "peor", ahora=DESPUES)
+    _git(tmp_path, "add", "registro.jsonl")
+    _git(tmp_path, "commit", "-q", "-m", "registro")
+    return r, exp
+
+
+def test_h01_ancla_en_git_quitar_las_ultimas_o_recalcular_se_detecta(reg_en_git):
+    r, exp = reg_en_git
+    original = r.ruta.read_text(encoding="utf-8")
+    r.intento(exp, "v2", DESPUES)   # lo nuevo sin subir sí se admite (el registro crece)
+    assert r.verificar() == 4
+    lineas = original.splitlines()
+    r.ruta.write_text("\n".join(lineas[:-1]) + "\n", encoding="utf-8")   # quitar la última anotación subida
+    with pytest.raises(rx.RegistroError, match="HEAD"):
+        r.verificar()
+    anot = [json.loads(x) for x in lineas]
+    anot[2]["veredicto"] = "mejor"
+    r.ruta.write_text(_rehacer_cadena(anot), encoding="utf-8")   # reescribir y recalcular la cadena entera
+    with pytest.raises(rx.RegistroError, match="HEAD"):
+        r.verificar()
+    r.ruta.unlink()   # borrar el registro entero
+    with pytest.raises(rx.RegistroError, match="HEAD"):
+        r.verificar()
+    assert rx.main(["--registro", str(r.ruta), "verificar"]) == 2
+
+
+def test_h01_huella_del_prerregistro_y_del_intento_se_contrastan(reg):
+    exp = reg.prerregistrar(pre(), "claude", AHORA)["exp_id"]
+    reg.intento(exp, "v1", DESPUES)
+    anot = _leer(reg)
+    a = json.loads(json.dumps(anot))
+    a[0]["contenido"]["criterio_exito"] = "cualquier mejora, aunque el rango incluya el cero"   # cambio del criterio, cadena rehecha
+    reg.ruta.write_text(_rehacer_cadena(a), encoding="utf-8")
+    with pytest.raises(rx.RegistroError, match="huella del prerregistro"):
+        reg.verificar()
+    b = json.loads(json.dumps(anot))
+    b[1]["huella_prerregistro"] = "f" * 64
+    reg.ruta.write_text(_rehacer_cadena(b), encoding="utf-8")
+    with pytest.raises(rx.RegistroError, match="cita otro prerregistro"):
+        reg.verificar()
+
+
+def test_h01_verificar_sin_registro_da_error(tmp_path):
+    assert rx.main(["--registro", str(tmp_path / "no.jsonl"), "verificar"]) == 2
+
+
+_HIJO = """
+import sys
+sys.path.insert(0, {scripts!r})
+import registro_experimentos as rx
+r = rx.Registro({ruta!r})
+if sys.argv[1] == "pre":
+    print(r.prerregistrar({pre!r}, "claude")["exp_id"])
+else:
+    for _ in range(40):
+        r.intento("EXP-2026-0001", sys.argv[1], "2026-11-12T11:00:00+00:00")
+"""
+
+
+def test_h02_dos_procesos_a_la_vez_no_rompen_la_cadena(reg):
+    reg.prerregistrar(pre(max_variantes=5), "claude", AHORA)
+    codigo = _HIJO.format(scripts=str(Path(rx.__file__).parent), ruta=str(reg.ruta), pre=pre())
+    py = sys.executable
+    hijos = [subprocess.Popen([py, "-c", codigo, v]) for v in ("a", "b")]
+    assert [h.wait() for h in hijos] == [0, 0]
+    assert reg.verificar() == 81
+    hijos = [subprocess.Popen([py, "-c", codigo, "pre"], stdout=subprocess.PIPE, text=True) for _ in range(2)]
+    ids = sorted(h.communicate()[0].strip() for h in hijos)
+    assert len(set(ids)) == 2 and reg.verificar() == 83
+
+
+def test_h03_repetir_una_variante_no_la_hace_adoptable(reg):
+    exp = reg.prerregistrar(pre(max_variantes=3), "claude", AHORA)["exp_id"]
+    for v, ver in (("v1", "peor"), ("v1", "peor"), ("v1", "mejor"),     # repetir hasta que salga «mejor»
+                   ("v2", "fallido"), ("v2", "mejor"),                   # el primero que no es «fallido» cuenta
+                   ("v3", "mejor"), ("v3", "todavía no se sabe")):       # un «mejor» que no se repite
+        n = reg.intento(exp, v, DESPUES)["n"]
+        reg.resultado(exp, n, ver, ahora=DESPUES)
+    r = reg.resumen(exp)
+    assert r["por_variante"]["v1"]["veredicto"] == "peor" and r["por_variante"]["v1"]["contradictoria"]
+    assert r["por_variante"]["v2"]["cuenta"] == 5 and not r["por_variante"]["v2"]["contradictoria"]
+    assert r["por_variante"]["v3"]["contradictoria"]
+    assert r["contradictorias"] == ["v1", "v3"] and r["adoptables"] == [5] and r["adoptable"]
+
+
+def test_h04_separadores_unicode_y_fichero_sin_salto_final(reg):
+    exp = reg.prerregistrar(pre(hipotesis="Una hipótesis con separador\u0085y otro"), "claude", AHORA)["exp_id"]
+    reg.intento(exp, "v ", DESPUES)
+    assert reg.verificar() == 2 and _leer(reg)[0]["contenido"]["hipotesis"].count(" ") == 1
+    texto = reg.ruta.read_text(encoding="utf-8")
+    reg.ruta.write_text(texto.rstrip("\n"), encoding="utf-8")
+    with pytest.raises(rx.RegistroError, match="salto de línea"):
+        reg.intento(exp, "v2", DESPUES)
+    assert reg.ruta.read_text(encoding="utf-8") == texto.rstrip("\n")   # no se escribió nada
+
+
+@pytest.mark.parametrize("cambio", [{"datos": None}, {"datos": 3}, {"datos": ["a"]}, {"datos": ""}, {"desde": "2026-02-30"},
+                                    {"hasta": "2026-13-01"}, {"desde": "0000-00-00"}, {"extra": float("nan")}])
+def test_h05_h09_prerregistro_que_no_validaria_no_escribe(reg, cambio):
+    with pytest.raises(rx.RegistroError):
+        reg.prerregistrar(pre(**cambio), "claude", AHORA)
+    assert not reg.ruta.exists()
+
+
+@pytest.mark.parametrize("detalle", [["a"], "texto", 3, {"x": float("nan")}])
+def test_h05_detalle_que_no_es_un_objeto_json(reg, detalle):
+    exp = reg.prerregistrar(pre(), "claude", AHORA)["exp_id"]
+    reg.intento(exp, "v1", DESPUES)
+    with pytest.raises(rx.RegistroError):
+        reg.resultado(exp, 1, "peor", detalle, ahora=DESPUES)
+    assert reg.verificar() == 2
+
+
+def test_h05_n_booleano_ahora_mal_formado_y_exp_sin_cifras(reg, monkeypatch):
+    exp = reg.prerregistrar(pre(), "claude", AHORA)["exp_id"]
+    reg.intento(exp, "v1", DESPUES)
+    with pytest.raises(rx.RegistroError):
+        reg.resultado(exp, True, "peor", ahora=DESPUES)
+    for malo in ("2026-11-12", "2026-11-12T10:00:00", "ayer", "2026-11-31T10:00:00+00:00"):
+        with pytest.raises(rx.RegistroError):
+            reg.intento(exp, "v1", malo)
+    monkeypatch.setattr(rx, "MAX_EXP_POR_ANIO", 1)
+    with pytest.raises(rx.RegistroError, match="no admite más"):
+        reg.prerregistrar(pre(), "claude", AHORA)
+    assert reg.verificar() == 2
+
+
+def test_h05_todo_lo_escrito_valida_con_las_reglas_de_ct24(reg):
+    exp = reg.prerregistrar(pre(otra="clave"), "claude", AHORA)["exp_id"]
+    reg.intento(exp, "v1", DESPUES)
+    reg.resultado(exp, 1, "mejor", {"x": [1, 2]}, ahora=DESPUES)
+    for e in _leer(reg):
+        rx.validar_anotacion(e)
+
+
+@pytest.mark.parametrize("mutar,motivo", [
+    (lambda a: a[1].pop("tipo"), "tipo"),
+    (lambda a: a[1].update(tipo="BORRADO"), "tipo"),
+    (lambda a: a.append(json.loads(json.dumps(a[0]))), "dos veces"),
+    (lambda a: a[1].update(dentro_del_maximo=True), "máximo"),
+    (lambda a: a[1].update(n=5), "correlativo"),
+    (lambda a: a[1].update(extra=1), "forma"),
+])
+def test_h06_forma_y_semantica_al_leer(reg, mutar, motivo):
+    exp = reg.prerregistrar(pre(max_variantes=1), "claude", AHORA)["exp_id"]
+    reg.intento(exp, "v1", DESPUES)
+    reg.intento(exp, "v2", DESPUES)   # fuera del máximo
+    a = _leer(reg)
+    a[1], a[2] = a[2], a[1]            # la de fuera del máximo primero, para que el falseo de «dentro» se note
+    a[1]["n"], a[2]["n"] = 1, 2
+    a[1]["dentro_del_maximo"], a[2]["dentro_del_maximo"] = True, False
+    reg.ruta.write_text(_rehacer_cadena(a), encoding="utf-8")
+    _resellar(reg)
+    assert reg.verificar() == 3       # un registro rehecho (también su sello) pero coherente se lee
+    a = _leer(reg)
+    mutar(a)
+    if motivo == "máximo":
+        a[2]["dentro_del_maximo"] = True
+        motivo = "máximo"
+    reg.ruta.write_text(_rehacer_cadena(a), encoding="utf-8")
+    _resellar(reg)
+    with pytest.raises(rx.RegistroError, match=motivo):
+        reg.verificar()
+    assert rx.main(["--registro", str(reg.ruta), "ver"]) == 2
+
+
+def test_h07_instantes_y_anio_en_utc(reg):
+    exp = reg.prerregistrar(pre(), "claude", "2026-11-12T10:00:00-02:00")["exp_id"]   # 12:00 UTC
+    n = reg.intento(exp, "v1", "2026-11-12T11:00:00+00:00")["n"]                     # una hora ANTES
+    reg.resultado(exp, n, "mejor", ahora="2026-11-12T13:00:00+00:00")
+    assert not reg.adoptable(exp)
+    exp2 = reg.prerregistrar(pre(), "claude", "2026-11-12T12:00:00Z")["exp_id"]
+    n = reg.intento(exp2, "v1", "2026-11-12T12:00:00+00:00")["n"]                     # el mismo instante con otra escritura
+    reg.resultado(exp2, n, "mejor", ahora="2026-11-12T13:00:00+00:00")
+    assert reg.adoptable(exp2)
+    assert reg.prerregistrar(pre(), "claude", "2027-01-01T00:30:00+01:00")["exp_id"] == "EXP-2026-0003"
+
+
+def test_h09_bytes_no_utf8_y_variantes(reg):
+    exp = reg.prerregistrar(pre(), "claude", AHORA)["exp_id"]
+    for v in (None, "", "  ", 1, {"a": 1}):
+        with pytest.raises(rx.RegistroError):
+            reg.intento(exp, v, DESPUES)
+    nfc, nfd = unicodedata.normalize("NFC", "única"), unicodedata.normalize("NFD", "única")
+    reg.intento(exp, nfc, DESPUES)
+    reg.intento(exp, nfd, DESPUES)
+    assert reg.resumen(exp)["variantes"] == 1
+    with open(reg.ruta, "ab") as f:
+        f.write(b"\xff\xfe\n")
+    with pytest.raises(rx.RegistroError, match="UTF-8"):
+        reg.verificar()
+
+
+def test_h09_h10_linea_de_ordenes(tmp_path):
+    f = tmp_path / "pre.json"
+    r = str(tmp_path / "r.jsonl")
+    f.write_text("null", encoding="utf-8")
+    assert rx.main(["--registro", r, "prerregistrar", str(f)]) == 2
+    f.write_text(json.dumps(pre()), encoding="utf-8")
+    assert rx.main(["prerregistrar", str(f), "--registro", r]) == 0   # --registro también detrás de la orden
+    assert rx.main(["intento", "EXP-" + _anio() + "-0001", "--variante", "v1", "--registro", r]) == 0
+    assert rx.main(["resultado", "EXP-" + _anio() + "-0001", "1", "peor", "--detalle", '{"x": NaN}', "--registro", r]) == 2
+    assert rx.main(["resultado", "EXP-" + _anio() + "-0001", "1", "peor", "--detalle", "[1]", "--registro", r]) == 2
+    with pytest.raises(SystemExit):
+        rx.main(["--registro", r, "intento", "EXP-" + _anio() + "-0001"])   # la variante es obligatoria en la línea de órdenes
+
+
+def _anio():
+    from datetime import UTC, datetime
+    return str(datetime.now(UTC).year)
+
+
+def test_h01_sello_quitar_las_ultimas_sin_git_se_detecta(reg):
+    exp = reg.prerregistrar(pre(), "claude", AHORA)["exp_id"]
+    reg.intento(exp, "v1", DESPUES)
+    reg.resultado(exp, 1, "fallido", ahora=DESPUES)
+    texto = reg.ruta.read_text(encoding="utf-8")
+    lineas = texto.splitlines()
+    for quedan in (2, 1):   # quitar el «fallido», o el intento entero con su resultado
+        reg.ruta.write_text("\n".join(lineas[:quedan]) + "\n", encoding="utf-8")
+        with pytest.raises(rx.RegistroError, match="sello"):
+            reg.verificar()
+    reg.ruta.write_text(texto, encoding="utf-8")
+    assert reg.verificar() == 3
+    reg.sello.unlink()
+    with pytest.raises(rx.RegistroError, match="falta el sello"):
+        reg.verificar()
+    reg.sello.write_text("{roto", encoding="utf-8")
+    with pytest.raises(rx.RegistroError, match="sello"):
+        reg.verificar()
