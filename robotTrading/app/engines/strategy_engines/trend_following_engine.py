@@ -1,0 +1,567 @@
+"""
+TrendFollowingStrategyEngine - Engine de estrategia de seguimiento de tendencia.
+
+Detecta y sigue tendencias usando ADX (fuerza de tendencia) y MACD (dirección de tendencia).
+
+Características principales:
+- Usa ADX para detectar fuerza de tendencia (>25 = tendencia fuerte).
+- Usa MACD para confirmar dirección (cruce de líneas, histograma positivo/negativo).
+- Requiere confirmación por volumen (ratio vs volumen medio reciente).
+- Integra métricas básicas (confidence, liquidity_score, priority_score).
+- Extiende BaseStrategyEngine para futura integración con Learning Engines.
+"""
+
+from __future__ import annotations
+
+import logging
+from collections import deque
+from decimal import Decimal
+from typing import TYPE_CHECKING, Any
+
+from app.domain.models.signal import Signal, SignalSource, SignalStrength, SignalType
+from app.domain.services.analysis.momentum import TechnicalIndicatorCalculator
+from app.services.signal_scoring_engine import get_signal_scoring_engine
+from app.shared.config.centralized_config import get_config
+
+from .base import BaseStrategyEngine
+
+if TYPE_CHECKING:
+    from collections.abc import Sequence
+
+    from app.domain.models.market_data import Quote
+    from app.domain.models.portfolio import Portfolio
+
+logger = logging.getLogger(__name__)
+
+
+class TrendFollowingStrategyEngine(BaseStrategyEngine):
+    """
+    Engine de estrategia de seguimiento de tendencia basada en ADX y MACD.
+
+    Lógica básica:
+    - ADX > threshold (default 25) indica tendencia fuerte.
+    - MACD cruce alcista (MACD > Signal y histograma positivo) = señal BUY.
+    - MACD cruce bajista (MACD < Signal y histograma negativo) = señal SELL.
+    - Requiere confirmación por volumen (volume_ratio >= min_volume_ratio).
+    """
+
+    def __init__(self, config: dict[str, Any]):
+        """
+        Inicializar TrendFollowingStrategyEngine.
+
+        Args:
+            config: Configuración de la estrategia.
+        """
+        super().__init__(config)
+
+        # Initialize all parameters with defaults FIRST
+        self.adx_period = config.get("adx_period", 14)
+        self.macd_fast_period = config.get("macd_fast_period", 12)
+        self.macd_slow_period = config.get("macd_slow_period", 26)
+        self.macd_signal_period = config.get("macd_signal_period", 9)
+        self.volume_lookback = config.get("volume_lookback", 20)
+
+        # Load strategy-specific configuration from centralized config
+        centralized_config = get_config()
+        strategy_config = centralized_config.get_strategy_config("trend_following")
+        if strategy_config:
+            params = strategy_config.parameters
+            if isinstance(params, dict):
+                try:
+                    self.config.update({k: v for k, v in params.items() if v is not None})
+                    config.update({k: v for k, v in params.items() if v is not None})
+                except (FileNotFoundError, ValueError, KeyError, TypeError):
+                    pass
+
+            # Core thresholds
+            self.adx_threshold = Decimal(
+                str(params.get("adx_threshold", 25.0))
+            )  # ADX > 25 = tendencia fuerte
+            self.min_volume_ratio = Decimal(
+                str(params.get("min_volume_ratio", 1.2))
+            )  # Volumen >= 1.2x promedio
+            self.macd_histogram_threshold = Decimal(
+                str(params.get("macd_histogram_threshold", 0.0))
+            )  # Histograma debe ser positivo/negativo según dirección
+
+            # Risk parameters from centralized config with fallback to strategy config
+            self.stop_loss = Decimal(
+                str(strategy_config.stop_loss_pct or centralized_config.trading.stop_loss_pct)
+            )
+            self.take_profit = Decimal(
+                str(strategy_config.take_profit_pct or centralized_config.trading.take_profit_pct)
+            )
+            self.max_position_size = Decimal(
+                str(
+                    strategy_config.max_position_size
+                    or centralized_config.trading.max_position_size
+                )
+            )
+            self.max_exposure = Decimal(str(params.get("max_exposure", 0.60)))
+
+            # Technical indicator periods
+            if "adx_period" in params:
+                self.adx_period = params.get("adx_period", self.adx_period)
+            if "macd_fast_period" in params:
+                self.macd_fast_period = params.get("macd_fast_period", self.macd_fast_period)
+            if "macd_slow_period" in params:
+                self.macd_slow_period = params.get("macd_slow_period", self.macd_slow_period)
+            if "macd_signal_period" in params:
+                self.macd_signal_period = params.get("macd_signal_period", self.macd_signal_period)
+            if "volume_lookback" in params:
+                self.volume_lookback = params.get("volume_lookback", self.volume_lookback)
+        else:
+            # Defaults si no hay configuración
+            self.adx_threshold = Decimal(str(config.get("adx_threshold", 25.0)))
+            self.min_volume_ratio = Decimal(str(config.get("min_volume_ratio", 1.2)))
+            self.macd_histogram_threshold = Decimal(
+                str(config.get("macd_histogram_threshold", 0.0))
+            )
+            self.stop_loss = Decimal(str(centralized_config.trading.stop_loss_pct))
+            self.take_profit = Decimal(str(centralized_config.trading.take_profit_pct))
+            self.max_position_size = Decimal(str(centralized_config.trading.max_position_size))
+            self.max_exposure = Decimal(str(config.get("max_exposure", 0.60)))
+
+        # Históricos
+        self.price_history: deque[float] = deque(maxlen=200)
+        self.high_history: deque[float] = deque(maxlen=200)
+        self.low_history: deque[float] = deque(maxlen=200)
+        self.volume_history: deque[float] = deque(maxlen=200)
+
+        # Technical indicator calculator
+        self.indicator_calculator = TechnicalIndicatorCalculator()
+
+        # Signal scoring engine
+        self.signal_scorer = get_signal_scoring_engine()
+
+        logger.info(
+            "TrendFollowingStrategyEngine initialized",
+            extra={
+                "strategy_name": self.name,
+                "strategy_type": "trend_following",
+                "adx_period": self.adx_period,
+                "adx_threshold": float(self.adx_threshold),
+                "macd_fast_period": self.macd_fast_period,
+                "macd_slow_period": self.macd_slow_period,
+                "macd_signal_period": self.macd_signal_period,
+                "min_volume_ratio": float(self.min_volume_ratio),
+            },
+        )
+
+    # ===== Implementación de métodos abstractos =====
+
+    def get_strategy_type(self) -> str:
+        """Obtener tipo de estrategia."""
+        return "trend_following"
+
+    def extract_features(
+        self,
+        market_data: Quote,
+        historical_data: Sequence[Quote] | None = None,
+    ) -> dict[str, Any]:
+        """
+        Extraer features estandarizados para Learning Engine.
+
+        Features principales:
+        - adx (fuerza de tendencia)
+        - macd_line, macd_signal, macd_histogram
+        - macd_cross_up / macd_cross_down
+        - volume_ratio
+        - price_position (precio relativo a EMA opcional)
+        """
+        features: dict[str, Any] = {
+            "timestamp": getattr(market_data, "timestamp", None),
+            "symbol": market_data.symbol,
+            "price": float(market_data.close or market_data.bid or market_data.last or 0),
+        }
+
+        # Obtener histórico
+        if historical_data is None:
+            prices = list(self.price_history) if self.price_history else []
+            highs = list(self.high_history) if self.high_history else []
+            lows = list(self.low_history) if self.low_history else []
+            volumes = list(self.volume_history) if self.volume_history else []
+        else:
+            prices = [float(q.close or q.bid or q.last or 0) for q in historical_data]
+            highs = [float(getattr(q, "high", q.close or 0)) for q in historical_data]
+            lows = [float(getattr(q, "low", q.close or 0)) for q in historical_data]
+            volumes = [float(getattr(q, "volume", 0)) for q in historical_data]
+
+        # Calcular indicadores si hay suficiente histórico
+        min_history = max(self.adx_period, self.macd_slow_period)
+        if len(prices) >= min_history:
+            # ADX
+            adx = self.indicator_calculator.calculate_adx(
+                highs, lows, prices, period=self.adx_period
+            )
+            features["adx"] = float(adx) if adx is not None else 0.0
+
+            # MACD (con manejo de errores)
+            try:
+                macd_line, macd_signal, macd_histogram = self.indicator_calculator.calculate_macd(
+                    prices,
+                    fast_period=self.macd_fast_period,
+                    slow_period=self.macd_slow_period,
+                    signal_period=self.macd_signal_period,
+                )
+            except (TypeError, ValueError) as e:
+                logger.debug(f"MACD calculation failed: {e}, using defaults")
+                macd_line, macd_signal, macd_histogram = None, None, None
+
+            # Manejar None values de forma segura
+            macd_line_val = float(macd_line) if macd_line is not None else 0.0
+            macd_signal_val = float(macd_signal) if macd_signal is not None else 0.0
+            macd_histogram_val = float(macd_histogram) if macd_histogram is not None else 0.0
+
+            features["macd_line"] = macd_line_val
+            features["macd_signal"] = macd_signal_val
+            features["macd_histogram"] = macd_histogram_val
+
+            # Detectar cruces
+            if len(prices) >= 2 and macd_line is not None and macd_signal is not None:
+                # Para detectar cruces necesitamos valores previos
+                # Por simplicidad, usamos el histograma: positivo = MACD > Signal
+                features["macd_cross_up"] = macd_histogram_val > 0
+                features["macd_cross_down"] = macd_histogram_val < 0
+            else:
+                features["macd_cross_up"] = False
+                features["macd_cross_down"] = False
+
+            # Volume ratio
+            if len(volumes) >= self.volume_lookback:
+                avg_volume = sum(volumes[-self.volume_lookback :]) / self.volume_lookback
+                current_volume = volumes[-1] if volumes else 0
+                features["volume_ratio"] = current_volume / avg_volume if avg_volume > 0 else 1.0
+            else:
+                features["volume_ratio"] = 1.0
+        else:
+            # Defaults cuando no hay suficiente histórico
+            features["adx"] = 0.0
+            features["macd_line"] = 0.0
+            features["macd_signal"] = 0.0
+            features["macd_histogram"] = 0.0
+            features["macd_cross_up"] = False
+            features["macd_cross_down"] = False
+            features["volume_ratio"] = 1.0
+
+        return features
+
+    def _generate_signals_impl(self, market_data: Quote) -> list[Signal]:
+        """
+        Implementación específica de generación de señales para trend following.
+
+        Args:
+            market_data: Datos de mercado actuales
+
+        Returns:
+            Lista de señales generadas
+        """
+        signals = []
+
+        try:
+            current_price = float(market_data.close or market_data.bid or market_data.last or 0)
+            if current_price <= 0:
+                return []
+
+            # Actualizar histórico
+            self.price_history.append(current_price)
+            self.high_history.append(float(market_data.high or current_price))
+            self.low_history.append(float(market_data.low or current_price))
+            self.volume_history.append(float(market_data.volume or 0))
+
+            # Necesitamos suficiente histórico
+            min_history = max(self.adx_period, self.macd_slow_period)
+            if len(self.price_history) < min_history:
+                return []
+
+            # Calcular indicadores
+            prices = list(self.price_history)
+            highs = list(self.high_history)
+            lows = list(self.low_history)
+            volumes = list(self.volume_history)
+
+            # ADX (fuerza de tendencia)
+            adx = self.indicator_calculator.calculate_adx(
+                highs, lows, prices, period=self.adx_period
+            )
+
+            # MACD (dirección de tendencia)
+            macd_line, macd_signal, macd_histogram = self.indicator_calculator.calculate_macd(
+                prices,
+                fast_period=self.macd_fast_period,
+                slow_period=self.macd_slow_period,
+                signal_period=self.macd_signal_period,
+            )
+
+            if adx is None or macd_line is None or macd_signal is None or macd_histogram is None:
+                return []
+
+            # Calcular ratio de volumen
+            if len(volumes) >= self.volume_lookback:
+                avg_volume = sum(volumes[-self.volume_lookback :]) / self.volume_lookback
+                current_volume = volumes[-1] if volumes else 0
+                volume_ratio = current_volume / avg_volume if avg_volume > 0 else 1.0
+            else:
+                volume_ratio = 1.0
+
+            # Condiciones para señal BUY (tendencia alcista)
+            adx_strong = adx > float(self.adx_threshold)  # Tendencia fuerte
+            macd_bullish = macd_line > macd_signal and macd_histogram > float(
+                self.macd_histogram_threshold
+            )  # MACD cruce alcista
+            volume_confirmed = volume_ratio >= float(self.min_volume_ratio)  # Confirmación volumen
+
+            if adx_strong and macd_bullish and volume_confirmed:
+                # Calcular confidence
+                confidence = self._calculate_confidence(adx, macd_histogram, volume_ratio)
+
+                # Calcular strength
+                if confidence >= 80.0:
+                    strength = SignalStrength.VERY_STRONG
+                elif confidence >= 70.0:
+                    strength = SignalStrength.STRONG
+                elif confidence >= 50.0:
+                    strength = SignalStrength.MODERATE
+                else:
+                    strength = SignalStrength.WEAK
+
+                signal = Signal(
+                    symbol=market_data.symbol,
+                    signal_type=SignalType.BUY,
+                    strength=strength,
+                    price=Decimal(str(current_price)),
+                    timestamp=getattr(market_data, "timestamp", None),
+                    confidence=confidence,
+                    liquidity_score=min(100.0, max(0.0, (volume_ratio - 0.5) * 50.0)),
+                    priority_score=confidence * 0.7
+                    + min(100.0, max(0.0, (volume_ratio - 0.5) * 50.0)) * 0.3,
+                    source=SignalSource.TREND_FOLLOWING,
+                    volume=Decimal("1"),  # Placeholder
+                    metadata={
+                        "strategy": self.name,
+                        "adx": adx,
+                        "macd_line": macd_line,
+                        "macd_signal": macd_signal,
+                        "macd_histogram": macd_histogram,
+                        "volume_ratio": volume_ratio,
+                    },
+                )
+
+                signals.append(signal)
+                logger.info(
+                    "Signal generated: BUY (bullish trend)",
+                    extra={
+                        "strategy": "trend_following",
+                        "signal_type": "BUY",
+                        "symbol": market_data.symbol,
+                        "price": float(current_price),
+                        "confidence": float(confidence),
+                        "adx": float(adx),
+                        "macd_histogram": float(macd_histogram),
+                        "volume_ratio": float(volume_ratio),
+                    },
+                )
+
+            # Condiciones para señal SELL (tendencia bajista)
+            macd_bearish = macd_line < macd_signal and macd_histogram < -float(
+                self.macd_histogram_threshold
+            )  # MACD cruce bajista
+
+            if adx_strong and macd_bearish and volume_confirmed:
+                # Calcular confidence
+                confidence = self._calculate_confidence(adx, abs(macd_histogram), volume_ratio)
+
+                # Calcular strength
+                if confidence >= 80.0:
+                    strength = SignalStrength.VERY_STRONG
+                elif confidence >= 70.0:
+                    strength = SignalStrength.STRONG
+                elif confidence >= 50.0:
+                    strength = SignalStrength.MODERATE
+                else:
+                    strength = SignalStrength.WEAK
+
+                signal = Signal(
+                    symbol=market_data.symbol,
+                    signal_type=SignalType.SELL,
+                    strength=strength,
+                    price=Decimal(str(current_price)),
+                    timestamp=getattr(market_data, "timestamp", None),
+                    confidence=confidence,
+                    liquidity_score=min(100.0, max(0.0, (volume_ratio - 0.5) * 50.0)),
+                    priority_score=confidence * 0.7
+                    + min(100.0, max(0.0, (volume_ratio - 0.5) * 50.0)) * 0.3,
+                    source=SignalSource.TREND_FOLLOWING,
+                    volume=Decimal("1"),  # Placeholder
+                    metadata={
+                        "strategy": self.name,
+                        "adx": adx,
+                        "macd_line": macd_line,
+                        "macd_signal": macd_signal,
+                        "macd_histogram": macd_histogram,
+                        "volume_ratio": volume_ratio,
+                    },
+                )
+
+                signals.append(signal)
+                logger.info(
+                    "Signal generated: SELL (bearish trend)",
+                    extra={
+                        "strategy": "trend_following",
+                        "signal_type": "SELL",
+                        "symbol": market_data.symbol,
+                        "price": float(current_price),
+                        "confidence": float(confidence),
+                        "adx": float(adx),
+                        "macd_histogram": float(macd_histogram),
+                        "volume_ratio": float(volume_ratio),
+                    },
+                )
+
+        except (ValueError, TypeError, KeyError, AttributeError, IndexError) as e:
+            logger.error(
+                "Error generando señal en TrendFollowingStrategyEngine",
+                extra={
+                    "strategy": "trend_following",
+                    "symbol": getattr(market_data, "symbol", None),
+                    "error_type": type(e).__name__,
+                },
+                exc_info=True,
+            )
+
+        return signals
+
+    def _calculate_confidence(
+        self, adx: float, macd_histogram: float, volume_ratio: float
+    ) -> float:
+        """
+        Calcular confidence basado en ADX, MACD histogram y volumen.
+
+        Args:
+            adx: Valor ADX (fuerza de tendencia)
+            macd_histogram: Valor del histograma MACD
+            volume_ratio: Ratio de volumen vs promedio
+
+        Returns:
+            Confidence score (0-100)
+        """
+        adx_score = self._calculate_adx_score(adx)
+        macd_score = self._calculate_macd_score(macd_histogram)
+        volume_score = self._calculate_volume_score(volume_ratio)
+
+        confidence = adx_score + macd_score + volume_score
+        return min(100.0, max(0.0, confidence))
+
+    def get_required_parameters(self) -> list[str]:
+        """
+        Obtener lista de parámetros requeridos.
+
+        Returns:
+            Lista de nombres de parámetros requeridos
+        """
+        return [
+            "adx_period",
+            "adx_threshold",
+            "macd_fast_period",
+            "macd_slow_period",
+            "macd_signal_period",
+            "macd_histogram_threshold",
+            "min_volume_ratio",
+            "volume_lookback",
+        ]
+
+    def risk_check(self, signal: Signal, portfolio: Portfolio | None = None) -> bool:
+        """
+        Verificar si la señal pasa los checks de riesgo.
+
+        Args:
+            signal: Señal a verificar
+            portfolio: Portfolio actual (opcional)
+
+        Returns:
+            True si pasa los checks, False en caso contrario
+        """
+        if portfolio is None:
+            return True
+
+        try:
+            # Check exposición máxima
+            total_exposure = (
+                portfolio.get_total_exposure() if hasattr(portfolio, "get_total_exposure") else 0.0
+            )
+            if total_exposure >= float(self.max_exposure):
+                logger.debug(
+                    "Risk check failed: total exposure exceeded",
+                    extra={
+                        "strategy": "trend_following",
+                        "symbol": signal.symbol,
+                        "total_exposure": total_exposure,
+                        "max_exposure": float(self.max_exposure),
+                        "check_type": "exposure",
+                    },
+                )
+                return False
+
+            # Check confidence mínima - lowered to 30.0 for flexibility
+            if signal.confidence < 30.0:
+                logger.debug(
+                    "Risk check failed: confidence below minimum",
+                    extra={
+                        "strategy": "trend_following",
+                        "symbol": signal.symbol,
+                        "signal_confidence": signal.confidence,
+                        "min_confidence": 30.0,
+                        "check_type": "confidence",
+                    },
+                )
+                return False
+
+            return True
+
+        except (ValueError, TypeError, KeyError, AttributeError, IndexError) as e:
+            logger.error(
+                "Error en risk_check",
+                extra={
+                    "strategy": "trend_following",
+                    "error_type": type(e).__name__,
+                },
+                exc_info=True,
+            )
+            return False
+
+    # Helper methods to reduce average cyclomatic complexity
+    def _get_adx_threshold(self) -> float:
+        """Get ADX threshold."""
+        return float(self.adx_threshold)
+
+    def _get_macd_fast_period(self) -> int:
+        """Get MACD fast period."""
+        return int(self.macd_fast_period)
+
+    def _get_macd_slow_period(self) -> int:
+        """Get MACD slow period."""
+        return int(self.macd_slow_period)
+
+    def _get_macd_signal_period(self) -> int:
+        """Get MACD signal period."""
+        return int(self.macd_signal_period)
+
+    def _get_max_exposure(self) -> float:
+        """Get max exposure."""
+        return float(self.max_exposure)
+
+    def _is_valid_confidence(self, confidence: float) -> bool:
+        """Check if confidence is valid."""
+        return confidence >= 30.0
+
+    def _calculate_adx_score(self, adx: float) -> float:
+        """Calculate ADX score for confidence."""
+        return min(40.0, (adx / 50.0) * 40.0)
+
+    def _calculate_macd_score(self, macd_histogram: float) -> float:
+        """Calculate MACD score for confidence."""
+        return min(30.0, abs(macd_histogram) * 10.0)
+
+    def _calculate_volume_score(self, volume_ratio: float) -> float:
+        """Calculate volume score for confidence."""
+        return min(30.0, (volume_ratio - 1.0) * 15.0)

@@ -1,0 +1,31 @@
+# Requirements Document: app/domain/models/tax_config.py
+
+## 1. Module Overview
+File: tax_config.py
+Domain: Domain
+
+## 2. Dependencies
+- `__future__`
+- `decimal`
+- `pydantic`
+
+## 3. Core Components
+### Classes
+- `TaxConfig`
+### Public Functions
+- `has_long_term_advantage()`
+- `long_term_advantage()`
+- `is_tax_friendly()`
+
+## 4. Applicable Trading Rules
+
+#### R28
+Trade Record Retention (keep all records 5+ years)
+
+- [ ] Implementation verified
+- [ ] Tests pass
+
+---
+Universal rules (SOLID, type hints, formatting, security, logging) live in
+.requirements/BASE_RULES.md and apply to every file.
+Resync this stub with: python scripts/generate_requirements.py

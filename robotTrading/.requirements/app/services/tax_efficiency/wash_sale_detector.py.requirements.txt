@@ -1,0 +1,40 @@
+# Requirements Document: app/services/tax_efficiency/wash_sale_detector.py
+
+## 1. Module Overview
+File: wash_sale_detector.py
+Domain: Service
+
+## 2. Dependencies
+- `__future__`
+- `dataclasses`
+- `datetime`
+- `decimal`
+- `logging`
+
+## 3. Core Components
+### Classes
+- `Trade`
+- `WashSaleViolation`
+- `CostBasisAdjustment`
+- `WashSaleDetector`
+### Public Functions
+- `get_wash_sale_detector()`
+- `detect_wash_sale()`
+- `adjust_cost_basis()`
+- `get_compliance_window()`
+- `is_substantially_identical()`
+- `get_cost_basis_per_share()`
+- `generate_compliance_report()`
+
+## 4. Applicable Trading Rules
+
+#### R28
+Trade Record Retention (keep all records 5+ years)
+
+- [ ] Implementation verified
+- [ ] Tests pass
+
+---
+Universal rules (SOLID, type hints, formatting, security, logging) live in
+.requirements/BASE_RULES.md and apply to every file.
+Resync this stub with: python scripts/generate_requirements.py

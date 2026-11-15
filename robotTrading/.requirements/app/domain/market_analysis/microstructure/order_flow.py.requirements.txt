@@ -1,0 +1,68 @@
+# Requirements Document: app/domain/market_analysis/microstructure/order_flow.py
+
+## 1. Module Overview
+File: order_flow.py
+Domain: Domain
+
+## 2. Dependencies
+- `__future__`
+- `app.shared.config.centralized_config`
+- `dataclasses`
+- `datetime`
+- `decimal`
+- `enum`
+- `logging`
+- `numpy`
+- `pandas`
+- `typing`
+
+## 3. Core Components
+### Classes
+- `OrderType`
+- `OrderSide`
+- `TraderType`
+- `Order`
+- `OrderFlowSnapshot`
+- `InformationAsymmetryMetrics`
+- `OrderFlowForecast`
+- `OrderFlowAnalyzer`
+- `OrderFlowSimulator`
+### Public Functions
+- `get_order_flow_analyzer()`
+- `get_order_flow_simulator()`
+- `to_dict()`
+- `add_order()`
+- `calculate_order_imbalance()`
+- `estimate_order_flow_toxicity()`
+- `calculate_probability_of_informed_trading()`
+- `detect_informed_trading()`
+- `measure_adverse_selection_cost()`
+- `forecast_order_flow()`
+- `calculate_information_content()`
+- `generate_order_flow_report()`
+- `generate_order_flow()`
+
+## 4. Applicable Trading Rules
+
+#### R8
+Bid-Ask Spread Management (avoid market orders for low-liquidity)
+
+- [ ] Implementation verified
+- [ ] Tests pass
+
+#### R9
+Execution Timing (avoid first/last 15 min, VWAP/TWAP for large orders)
+
+- [ ] Implementation verified
+- [ ] Tests pass
+
+#### R10
+Slippage Monitor (track actual vs expected fill, alert if >0.5%)
+
+- [ ] Implementation verified
+- [ ] Tests pass
+
+---
+Universal rules (SOLID, type hints, formatting, security, logging) live in
+.requirements/BASE_RULES.md and apply to every file.
+Resync this stub with: python scripts/generate_requirements.py

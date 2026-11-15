@@ -1,0 +1,138 @@
+# Requirements Document: app/services/compliance/compliance_engine.py
+
+## 1. Module Overview
+File: compliance_engine.py
+Domain: Service
+
+## 2. Dependencies
+- `__future__`
+- `app.backtesting.engine`
+- `app.backtesting.labeling.meta_labeling`
+- `app.backtesting.validation.cross_validation`
+- `app.domain.entities.portfolio_optimization`
+- `app.domain.entities.post_trade_analysis`
+- `app.domain.entities.pre_trade_analysis`
+- `app.domain.market_analysis.microstructure.liquidity`
+- `app.domain.market_analysis.microstructure.order_flow`
+- `app.domain.strategies.alpha_models`
+- `app.engines.context_engine`
+- `app.engines.data_engine`
+- `app.engines.execution_engine.microstructure`
+- `app.engines.execution_engine.microstructure.harris_integration`
+- `app.engines.portfolio_engine`
+- `app.engines.risk_engine`
+- `app.engines.risk_engine.var_calculators.var_calculators`
+- `app.infrastructure.logging.trading_decision_logger`
+- `app.services.alerting_system`
+- `app.services.execution_algorithms`
+- `app.services.live_trading.alert_to_trade_mapper`
+- `app.services.live_trading.broker_adapters.paper_adapter`
+- `app.services.live_trading.broker_connector`
+- `app.services.optimization_chan`
+- `app.services.portfolio_construction_narang`
+- `app.services.regime_detection_chan`
+- `app.services.tax_efficiency.engines.spain_tax_engine_impl`
+- `app.shared.config.centralized_config`
+- `app.shared.utils.safe_parse`
+- `app.shared.utils.subsystem_config_factory`
+- `app.sre.monitoring.golden_signals`
+- `dataclasses`
+- `datetime`
+- `decimal`
+- `empyrical`
+- `hashlib`
+- `importlib.util`
+- `json`
+- `logging`
+- `math`
+- `numpy`
+- `pandas`
+- `pathlib`
+- `pydantic`
+- `scipy`
+- `statsmodels.tsa.stattools`
+- `sys`
+- `typing`
+
+## 3. Core Components
+### Classes
+- `TradeResult`
+- `CycleResult`
+- `ComplianceConfig`
+- `SystemAvailability`
+- `SystemBus`
+- `ComplianceEngine`
+### Public Functions
+- `get_compliance_engine()`
+- `quick_check()`
+- `get_execution_plan()`
+- `kill_switch_must_be_negative()`
+- `get_availability()`
+- `is_available()`
+- `get_summary()`
+- `execute_pre_trade_analysis()`
+- `check_kill_switch()`
+- `track_daily_pnl()`
+- `reset_daily_tracking()`
+- `set_starting_capital()`
+- `get_daily_pnl_summary()`
+- `calculate_position_size()`
+- `validate_risk_envelope()`
+- `get_risk_envelope_exposures()`
+- `analyze_pre_trade()`
+- `analyze_post_trade()`
+- `optimize_portfolio()`
+- `track_order_submission()`
+- `track_order_completion()`
+- `get_slo_metrics()`
+- `process_alert()`
+- `validate_alert()`
+- `filter_duplicate_alerts()`
+- `prioritize_alerts()`
+- `get_alert_history()`
+- `execute_trade()`
+- `cancel_order()`
+- `modify_order()`
+- `get_order_status()`
+- `get_open_orders()`
+- `run_cycle()`
+- `validate_cycle_input()`
+- `execute_cycle_phase()`
+- `handle_cycle_error()`
+- `get_cycle_metrics()`
+- `get_system_status()`
+- `load_backtesting_engine()`
+- `load_live_trading()`
+- `load_paper_trading()`
+- `load_strategies()`
+- `load_risk_engine()`
+- `load_portfolio_engine()`
+- `load_data_engine()`
+- `load_context_engine()`
+- `load_execution_engine()`
+- `load_ernest_chan()`
+- `load_narang()`
+- `load_lopez_de_prado()`
+- `load_tomasini()`
+- `load_hastie()`
+- `load_harris()`
+- `load_ohara()`
+- `load_percival()`
+- `load_hull()`
+- `load_google_sre()`
+- `load_beck_tdd()`
+- `load_martin_arch()`
+- `get_priority()`
+
+## 4. Applicable Trading Rules
+
+#### R15
+Complete Logging (log all decisions, trade journal format)
+
+- [ ] Implementation verified
+- [ ] Tests pass
+
+---
+Universal rules (SOLID, type hints, formatting, security, logging) live in
+.requirements/BASE_RULES.md and apply to every file.
+Resync this stub with: python scripts/generate_requirements.py

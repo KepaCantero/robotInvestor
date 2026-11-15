@@ -1,0 +1,60 @@
+# Requirements Document: app/domain/services/shadow_mode.py
+
+## 1. Module Overview
+File: shadow_mode.py
+Domain: Domain
+
+## 2. Dependencies
+- `__future__`
+- `aiofiles`
+- `app.shared.config.centralized_config`
+- `app.shared.interfaces.broker_base`
+- `app.sre.data_integrity.sanity_layer`
+- `app.sre.state_machine.wal_persistence`
+- `asyncio`
+- `collections`
+- `dataclasses`
+- `datetime`
+- `decimal`
+- `enum`
+- `json`
+- `logging`
+- `numpy`
+- `os`
+- `random`
+- `typing`
+- `uuid`
+
+## 3. Core Components
+### Classes
+- `ShadowModeType`
+- `ShadowModeConfig`
+- `ShadowExecutionResult`
+- `ShadowRealComparison`
+- `ShadowModeExecutor`
+- `ShadowModeAwareBroker`
+### Public Functions
+- `detect_shadow_mode_from_env()`
+- `to_dict()`
+- `is_shadow_mode_enabled()`
+- `execute_order_shadow()`
+- `validate_order_for_shadow()`
+- `simulate_fill()`
+- `shadow_to_production_transition()`
+- `compare_shadow_vs_real()`
+- `get_shadow_statistics()`
+- `reset_daily_counters()`
+- `execute_order_with_wal()`
+
+## 4. Applicable Trading Rules
+
+#### R15
+Complete Logging (log all decisions, trade journal format)
+
+- [ ] Implementation verified
+- [ ] Tests pass
+
+---
+Universal rules (SOLID, type hints, formatting, security, logging) live in
+.requirements/BASE_RULES.md and apply to every file.
+Resync this stub with: python scripts/generate_requirements.py

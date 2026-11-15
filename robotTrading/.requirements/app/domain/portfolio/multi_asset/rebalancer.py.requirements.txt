@@ -1,0 +1,66 @@
+# Requirements Document: app/domain/portfolio/multi_asset/rebalancer.py
+
+## 1. Module Overview
+File: rebalancer.py
+Domain: Domain
+
+## 2. Dependencies
+- `__future__`
+- `app.backtesting.models`
+- `app.shared.config.centralized_config`
+- `asset_class`
+- `dataclasses`
+- `datetime`
+- `decimal`
+- `enum`
+- `logging`
+- `models`
+- `typing`
+- `uuid`
+
+## 3. Core Components
+### Classes
+- `RebalancePriority`
+- `CostEstimate`
+- `RebalanceTrade`
+- `RebalancePlan`
+- `MultiAssetRebalancer`
+### Public Functions
+- `to_dict()`
+- `to_trade()`
+- `is_buy()`
+- `is_sell()`
+- `n_trades()`
+- `total_value_to_trade()`
+- `buys()`
+- `sells()`
+- `net_cash_flow()`
+- `create_rebalance_plan()`
+- `prioritize_trades()`
+- `estimate_costs()`
+- `calculate_rebalance_trades()`
+
+## 4. Applicable Trading Rules
+
+#### R1
+Kelly Criterion + Max Position Size (max 5% per position)
+
+- [ ] Implementation verified
+- [ ] Tests pass
+
+#### R3
+Correlation & Concentration Limits (max 20% per sector)
+
+- [ ] Implementation verified
+- [ ] Tests pass
+
+#### R11
+Dynamic Trailing Stop (ATR-based, never loosen)
+
+- [ ] Implementation verified
+- [ ] Tests pass
+
+---
+Universal rules (SOLID, type hints, formatting, security, logging) live in
+.requirements/BASE_RULES.md and apply to every file.
+Resync this stub with: python scripts/generate_requirements.py

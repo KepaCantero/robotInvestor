@@ -1,0 +1,56 @@
+# Requirements Document: app/services/live_trading/broker_adapters/ibkr_adapter_spain.py
+
+## 1. Module Overview
+File: ibkr_adapter_spain.py
+Domain: Service
+
+## 2. Dependencies
+- `__future__`
+- `app.infrastructure.resilience.reconnection_manager`
+- `asyncio`
+- `currency_converter`
+- `datetime`
+- `ib_insync`
+- `ib_insync.contract`
+- `ibex35_contracts`
+- `logging`
+- `os`
+- `typing`
+
+## 3. Core Components
+### Classes
+- `IBKRSpainAdapter`
+### Public Functions
+- `get_ibkr_spain_adapter()`
+- `connect()`
+- `disconnect()`
+- `place_order()`
+- `cancel_order()`
+- `get_account()`
+- `get_order_status()`
+- `is_connected()`
+
+## 4. Applicable Trading Rules
+
+#### R8
+Bid-Ask Spread Management (avoid market orders for low-liquidity)
+
+- [ ] Implementation verified
+- [ ] Tests pass
+
+#### R9
+Execution Timing (avoid first/last 15 min, VWAP/TWAP for large orders)
+
+- [ ] Implementation verified
+- [ ] Tests pass
+
+#### R10
+Slippage Monitor (track actual vs expected fill, alert if >0.5%)
+
+- [ ] Implementation verified
+- [ ] Tests pass
+
+---
+Universal rules (SOLID, type hints, formatting, security, logging) live in
+.requirements/BASE_RULES.md and apply to every file.
+Resync this stub with: python scripts/generate_requirements.py

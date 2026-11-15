@@ -1,0 +1,70 @@
+# Requirements Document: app/backtesting/execution/order_fill_simulator.py
+
+## 1. Module Overview
+File: order_fill_simulator.py
+Domain: Backtest
+
+## 2. Dependencies
+- `__future__`
+- `app.shared.config.centralized_config`
+- `dataclasses`
+- `decimal`
+- `logging`
+- `market_impact`
+- `models`
+- `slippage_model`
+- `transaction_cost`
+
+## 3. Core Components
+### Classes
+- `FillConstraints`
+- `SimulatorConfig`
+- `OrderFillSimulator`
+### Public Functions
+- `simulate_fill()`
+- `simulate_fill_sequence()`
+- `estimate_fill_probability()`
+- `get_cost_breakdown()`
+
+## 4. Applicable Trading Rules
+
+#### R5
+Walk-Forward Analysis (70/30 train/test split, min 50 trades OOS, max 30% degradation)
+
+- [ ] Implementation verified
+- [ ] Tests pass
+
+#### R6
+Overfitting Prevention (min 30 samples per parameter, purged cross-validation)
+
+- [ ] Implementation verified
+- [ ] Tests pass
+
+#### R7
+Monte Carlo Risk Analysis (1000 simulations, validate DD within 5-95 percentile)
+
+- [ ] Implementation verified
+- [ ] Tests pass
+
+#### R8
+Bid-Ask Spread Management (avoid market orders for low-liquidity)
+
+- [ ] Implementation verified
+- [ ] Tests pass
+
+#### R9
+Execution Timing (avoid first/last 15 min, VWAP/TWAP for large orders)
+
+- [ ] Implementation verified
+- [ ] Tests pass
+
+#### R10
+Slippage Monitor (track actual vs expected fill, alert if >0.5%)
+
+- [ ] Implementation verified
+- [ ] Tests pass
+
+---
+Universal rules (SOLID, type hints, formatting, security, logging) live in
+.requirements/BASE_RULES.md and apply to every file.
+Resync this stub with: python scripts/generate_requirements.py

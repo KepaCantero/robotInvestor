@@ -1,0 +1,71 @@
+# Requirements Document: app/services/signal_execution_engine.py
+
+## 1. Module Overview
+File: signal_execution_engine.py
+Domain: Service
+
+## 2. Dependencies
+- `__future__`
+- `app.domain.models.order`
+- `app.domain.models.portfolio`
+- `app.domain.models.signal`
+- `app.shared.config.centralized_config`
+- `asyncio`
+- `datetime`
+- `decimal`
+- `logging`
+- `typing`
+
+## 3. Core Components
+### Classes
+- `SignalExecutionEngine`
+### Public Functions
+- `execute_signal()`
+- `get_execution_statistics()`
+- `get_recent_executions()`
+- `get_executions_by_symbol()`
+- `clear_history()`
+- `reset_statistics()`
+
+## 4. Applicable Trading Rules
+
+#### R8
+Bid-Ask Spread Management (avoid market orders for low-liquidity)
+
+- [ ] Implementation verified
+- [ ] Tests pass
+
+#### R9
+Execution Timing (avoid first/last 15 min, VWAP/TWAP for large orders)
+
+- [ ] Implementation verified
+- [ ] Tests pass
+
+#### R10
+Slippage Monitor (track actual vs expected fill, alert if >0.5%)
+
+- [ ] Implementation verified
+- [ ] Tests pass
+
+#### R19
+Market Regime Detection (trend/range/volatile classification)
+
+- [ ] Implementation verified
+- [ ] Tests pass
+
+#### R20
+Multi-Confirmation (min 2 independent signals before trade)
+
+- [ ] Implementation verified
+- [ ] Tests pass
+
+#### R24
+Strategy Diversification (min 3 uncorrelated strategies)
+
+- [ ] Implementation verified
+- [ ] Tests pass
+
+---
+Universal rules (SOLID, type hints, formatting, security, logging) live in
+.requirements/BASE_RULES.md and apply to every file.
+Resync this stub with: python scripts/generate_requirements.py

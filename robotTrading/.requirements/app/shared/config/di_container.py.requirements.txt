@@ -1,0 +1,52 @@
+# Requirements Document: app/shared/config/di_container.py
+
+## 1. Module Overview
+File: di_container.py
+Domain: Shared
+
+## 2. Dependencies
+- `__future__`
+- `app.domain.strategies.config_loader`
+- `app.domain.strategies.execution_engine`
+- `app.domain.strategies.strategy_logger`
+- `app.domain.strategies.strategy_registry`
+- `app.infrastructure.providers.paper_trading`
+- `app.services.portfolio_service`
+- `app.services.signal_scorer`
+- `inspect`
+- `logging`
+- `typing`
+
+## 3. Core Components
+### Classes
+- `DIContainer`
+### Public Functions
+- `get_container()`
+- `reset_container()`
+- `get_portfolio_service()`
+- `reset_portfolio_service()`
+- `get_signal_scorer_service()`
+- `reset_signal_scorer_service()`
+- `get_strategy_registry()`
+- `get_strategy_config_loader()`
+- `get_strategy_logger()`
+- `get_execution_engine()`
+- `reset_strategy_services()`
+- `register_singleton()`
+- `register_transient()`
+- `register_factory()`
+- `get()`
+- `get_optional()`
+
+## 4. Applicable Trading Rules
+
+#### R15
+Complete Logging (log all decisions, trade journal format)
+
+- [ ] Implementation verified
+- [ ] Tests pass
+
+---
+Universal rules (SOLID, type hints, formatting, security, logging) live in
+.requirements/BASE_RULES.md and apply to every file.
+Resync this stub with: python scripts/generate_requirements.py

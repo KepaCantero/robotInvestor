@@ -1,0 +1,74 @@
+# Requirements Document: app/services/_strategy_stock_allocator.py
+
+## 1. Module Overview
+File: _strategy_stock_allocator.py
+Domain: Service
+
+## 2. Dependencies
+- `__future__`
+- `app.services.momentum_analysis`
+- `app.shared.config.centralized_config`
+- `app.shared.config.params.strategy_config`
+- `app.shared.performance.statsmodels_fallback`
+- `arch`
+- `collections`
+- `logging`
+- `numpy`
+- `pandas`
+- `pydantic`
+- `scipy`
+- `scipy.optimize`
+- `statsmodels.regression.linear_model`
+- `statsmodels.tsa.stattools`
+- `typing`
+
+## 3. Core Components
+### Classes
+- `StockMetrics`
+- `PairMetrics`
+- `AllocationResult`
+- `StrategyStockAllocator`
+### Public Functions
+- `ols()`
+- `arch_model()`
+- `filter_stocks()`
+- `calculate_hurst_exponent()`
+- `classify_market_regime()`
+- `test_stationarity()`
+- `calculate_half_life()`
+- `calculate_sortino_ratio()`
+- `calculate_garch_volatility()`
+- `score_momentum()`
+- `score_mean_reversion()`
+- `score_pairs_trading()`
+- `calculate_wcm_scores()`
+- `allocate_capital_erc()`
+- `validate_assignment()`
+- `generate_output()`
+- `allocate()`
+- `objective()`
+
+## 4. Applicable Trading Rules
+
+#### R19
+Market Regime Detection (trend/range/volatile classification)
+
+- [ ] Implementation verified
+- [ ] Tests pass
+
+#### R20
+Multi-Confirmation (min 2 independent signals before trade)
+
+- [ ] Implementation verified
+- [ ] Tests pass
+
+#### R24
+Strategy Diversification (min 3 uncorrelated strategies)
+
+- [ ] Implementation verified
+- [ ] Tests pass
+
+---
+Universal rules (SOLID, type hints, formatting, security, logging) live in
+.requirements/BASE_RULES.md and apply to every file.
+Resync this stub with: python scripts/generate_requirements.py

@@ -1,0 +1,58 @@
+# Requirements Document: app/domain/strategies/pairs_trading.py
+
+## 1. Module Overview
+File: pairs_trading.py
+Domain: Domain
+
+## 2. Dependencies
+- `__future__`
+- `app.shared.config.centralized_config`
+- `dataclasses`
+- `enum`
+- `logging`
+- `numpy`
+- `statsmodels.tsa.stattools`
+
+## 3. Core Components
+### Classes
+- `PairSignal`
+- `CointegrationResult`
+- `PairPosition`
+- `TradingPair`
+- `PairsTrading`
+### Public Functions
+- `net_exposure()`
+- `is_long_short()`
+- `is_short_long()`
+- `pair_id()`
+- `is_valid_pair()`
+- `find_cointegrated_pairs()`
+- `calculate_spread_z_score()`
+- `generate_signal()`
+- `create_pair_position()`
+- `update_pair_position()`
+
+## 4. Applicable Trading Rules
+
+#### R8
+Bid-Ask Spread Management (avoid market orders for low-liquidity)
+
+- [ ] Implementation verified
+- [ ] Tests pass
+
+#### R9
+Execution Timing (avoid first/last 15 min, VWAP/TWAP for large orders)
+
+- [ ] Implementation verified
+- [ ] Tests pass
+
+#### R10
+Slippage Monitor (track actual vs expected fill, alert if >0.5%)
+
+- [ ] Implementation verified
+- [ ] Tests pass
+
+---
+Universal rules (SOLID, type hints, formatting, security, logging) live in
+.requirements/BASE_RULES.md and apply to every file.
+Resync this stub with: python scripts/generate_requirements.py

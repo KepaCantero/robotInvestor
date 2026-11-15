@@ -1,0 +1,46 @@
+# Requirements Document: app/shared/protocols/i_data_feed.py
+
+## 1. Module Overview
+File: i_data_feed.py
+Domain: Shared
+
+## 2. Dependencies
+- `__future__`
+- `app.domain.models.market_data`
+- `datetime`
+- `typing`
+
+## 3. Core Components
+### Classes
+- `IDataFeed`
+### Public Functions
+- `connect()`
+- `disconnect()`
+- `get_quote()`
+- `get_historical_data()`
+- `subscribe_to_symbols()`
+
+## 4. Applicable Trading Rules
+
+#### R14
+Data Quality Validation (OHLCV sanity checks, detect gaps/stale data)
+
+- [ ] Implementation verified
+- [ ] Tests pass
+
+#### R15
+Complete Logging (log all decisions, trade journal format)
+
+- [ ] Implementation verified
+- [ ] Tests pass
+
+#### R16
+Daily Reconciliation (compare broker vs internal, alert discrepancies >1%)
+
+- [ ] Implementation verified
+- [ ] Tests pass
+
+---
+Universal rules (SOLID, type hints, formatting, security, logging) live in
+.requirements/BASE_RULES.md and apply to every file.
+Resync this stub with: python scripts/generate_requirements.py

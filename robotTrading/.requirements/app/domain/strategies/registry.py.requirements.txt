@@ -1,0 +1,42 @@
+# Requirements Document: app/domain/strategies/registry.py
+
+## 1. Module Overview
+File: registry.py
+Domain: Domain
+
+## 2. Dependencies
+- `__future__`
+- `base`
+- `datetime`
+- `factory`
+- `logging`
+- `typing`
+
+## 3. Core Components
+### Classes
+- `StrategyRegistry`
+### Public Functions
+- `load_strategy()`
+- `unload_strategy()`
+- `get_strategy()`
+- `set_active_strategy()`
+- `get_active_strategy()`
+- `list_loaded_strategies()`
+- `list_available_strategies()`
+- `get_strategy_status()`
+- `get_all_strategies_status()`
+- `reload_strategy()`
+- `clear_all_strategies()`
+
+## 4. Applicable Trading Rules
+
+#### R15
+Complete Logging (log all decisions, trade journal format)
+
+- [ ] Implementation verified
+- [ ] Tests pass
+
+---
+Universal rules (SOLID, type hints, formatting, security, logging) live in
+.requirements/BASE_RULES.md and apply to every file.
+Resync this stub with: python scripts/generate_requirements.py

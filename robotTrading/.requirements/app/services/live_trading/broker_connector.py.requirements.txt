@@ -1,0 +1,92 @@
+# Requirements Document: app/services/live_trading/broker_connector.py
+
+## 1. Module Overview
+File: broker_connector.py
+Domain: Service
+
+## 2. Dependencies
+- `__future__`
+- `app.infrastructure.resilience.reconnection_manager`
+- `broker_adapters.alpaca_adapter`
+- `broker_adapters.paper_adapter`
+- `dataclasses`
+- `datetime`
+- `decimal`
+- `enum`
+- `logging`
+- `typing`
+- `uuid`
+
+## 3. Core Components
+### Classes
+- `BrokerType`
+- `OrderStatus`
+- `OrderType`
+- `OrderSide`
+- `BrokerAccount`
+- `BrokerPosition`
+- `BrokerOrder`
+- `BrokerAdapter`
+- `BrokerConnector`
+### Public Functions
+- `get_broker_connector()`
+- `connect()`
+- `disconnect()`
+- `get_account_info()`
+- `get_positions()`
+- `get_position()`
+- `place_order()`
+- `cancel_order()`
+- `get_order_status()`
+- `update_positions()`
+- `sync_account_balance()`
+- `calculate_portfolio_value()`
+- `is_paper_trading()`
+- `account()`
+- `positions()`
+- `orders()`
+- `is_connected()`
+- `connect()`
+- `connect_with_retry()`
+- `get_connection_stats()`
+- `disconnect()`
+- `get_account_info()`
+- `get_positions()`
+- `get_position()`
+- `place_order()`
+- `cancel_order()`
+- `get_order_status()`
+- `update_positions()`
+- `sync_account_balance()`
+- `calculate_portfolio_value()`
+- `get_broker_type()`
+- `is_paper_trading()`
+- `on_attempt()`
+- `on_success()`
+- `on_failure()`
+- `alert_callback()`
+
+## 4. Applicable Trading Rules
+
+#### R8
+Bid-Ask Spread Management (avoid market orders for low-liquidity)
+
+- [ ] Implementation verified
+- [ ] Tests pass
+
+#### R9
+Execution Timing (avoid first/last 15 min, VWAP/TWAP for large orders)
+
+- [ ] Implementation verified
+- [ ] Tests pass
+
+#### R10
+Slippage Monitor (track actual vs expected fill, alert if >0.5%)
+
+- [ ] Implementation verified
+- [ ] Tests pass
+
+---
+Universal rules (SOLID, type hints, formatting, security, logging) live in
+.requirements/BASE_RULES.md and apply to every file.
+Resync this stub with: python scripts/generate_requirements.py

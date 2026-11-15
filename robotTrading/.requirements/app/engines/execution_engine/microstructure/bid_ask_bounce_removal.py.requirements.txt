@@ -1,0 +1,48 @@
+# Requirements Document: app/engines/execution_engine/microstructure/bid_ask_bounce_removal.py
+
+## 1. Module Overview
+File: bid_ask_bounce_removal.py
+Domain: Engine
+
+## 2. Dependencies
+- `__future__`
+- `dataclasses`
+- `logging`
+- `numpy`
+- `pandas`
+
+## 3. Core Components
+### Classes
+- `BounceAnalysisResult`
+- `BidAskBounceRemover`
+### Public Functions
+- `get_bid_ask_bounce_remover()`
+- `remove_bid_ask_bounce()`
+- `analyze_bounce()`
+- `detect_crossing_pattern()`
+- `get_optimal_sampling_frequency()`
+
+## 4. Applicable Trading Rules
+
+#### R8
+Bid-Ask Spread Management (avoid market orders for low-liquidity)
+
+- [ ] Implementation verified
+- [ ] Tests pass
+
+#### R9
+Execution Timing (avoid first/last 15 min, VWAP/TWAP for large orders)
+
+- [ ] Implementation verified
+- [ ] Tests pass
+
+#### R10
+Slippage Monitor (track actual vs expected fill, alert if >0.5%)
+
+- [ ] Implementation verified
+- [ ] Tests pass
+
+---
+Universal rules (SOLID, type hints, formatting, security, logging) live in
+.requirements/BASE_RULES.md and apply to every file.
+Resync this stub with: python scripts/generate_requirements.py

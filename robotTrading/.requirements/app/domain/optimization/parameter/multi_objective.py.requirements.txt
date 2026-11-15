@@ -1,0 +1,53 @@
+# Requirements Document: app/domain/optimization/parameter/multi_objective.py
+
+## 1. Module Overview
+File: multi_objective.py
+Domain: Domain
+
+## 2. Dependencies
+- `__future__`
+- `base_optimizer`
+- `dataclasses`
+- `logging`
+- `models`
+- `numpy`
+- `random_search`
+- `trial`
+- `typing`
+
+## 3. Core Components
+### Classes
+- `ParetoSolution`
+- `ParetoFront`
+- `MultiObjectiveOptimizer`
+- `ScalarizationOptimizer`
+### Public Functions
+- `find_non_dominated_solutions()`
+- `calculate_hypervolume()`
+- `dominates()`
+- `to_dict()`
+- `calculate_crowding_distance()`
+- `get_pareto_front()`
+- `get_best_by_objective()`
+- `get_best_by_weighted_criteria()`
+- `get_knee_point()`
+- `get_diverse_solutions()`
+- `to_dict()`
+- `optimize_multi_objective()`
+- `scalarize()`
+- `optimize()`
+- `combined_objective()`
+- `scalarized_objective()`
+
+## 4. Applicable Trading Rules
+
+#### R15
+Complete Logging (log all decisions, trade journal format)
+
+- [ ] Implementation verified
+- [ ] Tests pass
+
+---
+Universal rules (SOLID, type hints, formatting, security, logging) live in
+.requirements/BASE_RULES.md and apply to every file.
+Resync this stub with: python scripts/generate_requirements.py

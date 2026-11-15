@@ -1,0 +1,63 @@
+# Requirements Document: app/backtesting/numba_metrics.py
+
+## 1. Module Overview
+File: numba_metrics.py
+Domain: Backtest
+
+## 2. Dependencies
+- `__future__`
+- `logging`
+- `numba`
+- `numpy`
+
+## 3. Core Components
+### Public Functions
+- `validate_numeric_array()`
+- `sample_std_numba()`
+- `calculate_returns_numba()`
+- `calculate_cumulative_returns_numba()`
+- `calculate_cagr_numba()`
+- `calculate_log_returns_numba()`
+- `calculate_sharpe_numba()`
+- `calculate_sortino_numba()`
+- `calculate_var_numba()`
+- `calculate_cvar_numba()`
+- `calculate_drawdown_series_numba()`
+- `calculate_max_drawdown_numba()`
+- `calculate_max_drawdown_duration_numba()`
+- `calculate_win_rate_numba()`
+- `calculate_profit_factor_numba()`
+- `calculate_avg_win_loss_numba()`
+- `calculate_expectancy_numba()`
+- `calculate_volatility_numba()`
+- `calculate_rolling_volatility_numba()`
+- `calculate_calmar_ratio_numba()`
+- `calculate_information_ratio_numba()`
+- `calculate_skewness_numba()`
+- `calculate_kurtosis_numba()`
+- `get_numba_metrics_info()`
+
+## 4. Applicable Trading Rules
+
+#### R5
+Walk-Forward Analysis (70/30 train/test split, min 50 trades OOS, max 30% degradation)
+
+- [ ] Implementation verified
+- [ ] Tests pass
+
+#### R6
+Overfitting Prevention (min 30 samples per parameter, purged cross-validation)
+
+- [ ] Implementation verified
+- [ ] Tests pass
+
+#### R7
+Monte Carlo Risk Analysis (1000 simulations, validate DD within 5-95 percentile)
+
+- [ ] Implementation verified
+- [ ] Tests pass
+
+---
+Universal rules (SOLID, type hints, formatting, security, logging) live in
+.requirements/BASE_RULES.md and apply to every file.
+Resync this stub with: python scripts/generate_requirements.py

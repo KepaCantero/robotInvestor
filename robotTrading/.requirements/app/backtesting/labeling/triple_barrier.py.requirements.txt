@@ -1,0 +1,67 @@
+# Requirements Document: app/backtesting/labeling/triple_barrier.py
+
+## 1. Module Overview
+File: triple_barrier.py
+Domain: Backtest
+
+## 2. Dependencies
+- `__future__`
+- `arch`
+- `dataclasses`
+- `matplotlib.axes`
+- `matplotlib.figure`
+- `matplotlib.pyplot`
+- `numba`
+- `numpy`
+- `pandas`
+- `sklearn.model_selection`
+- `typing`
+- `warnings`
+
+## 3. Core Components
+### Classes
+- `TripleBarrierConfig`
+- `TripleBarrierLabeler`
+### Public Functions
+- `get_barrier_labels()`
+- `get_barrier_labels_with_timing()`
+- `calculate_dynamic_barriers()`
+- `get_vertical_barriers()`
+- `plot_triple_barrier()`
+- `meta_labeling()`
+- `calculate_sample_weights()`
+- `calculate_sample_weights_uniqueness()`
+- `calculate_sample_weights_td()`
+- `purged_cv_split()`
+- `triple_barrier_method()`
+- `fit()`
+- `transform()`
+- `fit_transform()`
+- `get_label_distribution()`
+- `get_average_holding_period()`
+- `get_bin_labels()`
+
+## 4. Applicable Trading Rules
+
+#### R5
+Walk-Forward Analysis (70/30 train/test split, min 50 trades OOS, max 30% degradation)
+
+- [ ] Implementation verified
+- [ ] Tests pass
+
+#### R6
+Overfitting Prevention (min 30 samples per parameter, purged cross-validation)
+
+- [ ] Implementation verified
+- [ ] Tests pass
+
+#### R7
+Monte Carlo Risk Analysis (1000 simulations, validate DD within 5-95 percentile)
+
+- [ ] Implementation verified
+- [ ] Tests pass
+
+---
+Universal rules (SOLID, type hints, formatting, security, logging) live in
+.requirements/BASE_RULES.md and apply to every file.
+Resync this stub with: python scripts/generate_requirements.py

@@ -1,0 +1,55 @@
+# Requirements Document: app/services/portfolio_construction/rebalancing_engine.py
+
+## 1. Module Overview
+File: rebalancing_engine.py
+Domain: Service
+
+## 2. Dependencies
+- `__future__`
+- `dataclasses`
+- `datetime`
+- `decimal`
+- `enum`
+- `logging`
+
+## 3. Core Components
+### Classes
+- `RebalancingFrequency`
+- `RebalancingTrade`
+- `RebalancingEvent`
+- `RebalancingEngine`
+### Public Functions
+- `get_rebalancing_engine()`
+- `should_rebalance_by_schedule()`
+- `plan_rebalancing()`
+- `execute_rebalancing()`
+- `should_rebalance_by_drift()`
+- `estimate_rebalancing_cost()`
+- `get_rebalancing_statistics()`
+- `get_rebalancing_history()`
+- `get_engine_status()`
+
+## 4. Applicable Trading Rules
+
+#### R1
+Kelly Criterion + Max Position Size (max 5% per position)
+
+- [ ] Implementation verified
+- [ ] Tests pass
+
+#### R3
+Correlation & Concentration Limits (max 20% per sector)
+
+- [ ] Implementation verified
+- [ ] Tests pass
+
+#### R11
+Dynamic Trailing Stop (ATR-based, never loosen)
+
+- [ ] Implementation verified
+- [ ] Tests pass
+
+---
+Universal rules (SOLID, type hints, formatting, security, logging) live in
+.requirements/BASE_RULES.md and apply to every file.
+Resync this stub with: python scripts/generate_requirements.py

@@ -1,0 +1,44 @@
+# Requirements Document: app/services/knowledge_graph/graph_builder.py
+
+## 1. Module Overview
+File: graph_builder.py
+Domain: Service
+
+## 2. Dependencies
+- `__future__`
+- `logging`
+- `os`
+- `requests.exceptions`
+- `typing`
+
+## 3. Core Components
+### Classes
+- `KnowledgeGraphBuilder`
+### Public Functions
+- `get_knowledge_graph_builder()`
+- `connect()`
+- `create_asset_nodes()`
+- `create_strategy_nodes()`
+- `create_correlation_relationships()`
+- `create_strategy_asset_relationships()`
+- `create_performance_nodes()`
+- `find_similar_assets()`
+- `find_best_strategies_for_asset()`
+- `find_correlated_assets()`
+- `get_strategy_network()`
+- `get_asset_portfolio_recommendations()`
+- `get_builder_status()`
+- `disconnect()`
+
+## 4. Applicable Trading Rules
+
+#### R15
+Complete Logging (log all decisions, trade journal format)
+
+- [ ] Implementation verified
+- [ ] Tests pass
+
+---
+Universal rules (SOLID, type hints, formatting, security, logging) live in
+.requirements/BASE_RULES.md and apply to every file.
+Resync this stub with: python scripts/generate_requirements.py

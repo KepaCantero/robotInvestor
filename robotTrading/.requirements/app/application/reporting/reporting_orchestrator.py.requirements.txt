@@ -1,0 +1,36 @@
+# Requirements Document: app/application/reporting/reporting_orchestrator.py
+
+## 1. Module Overview
+File: reporting_orchestrator.py
+Domain: Application
+
+## 2. Dependencies
+- `__future__`
+- `app.application.reporting.quantstats_integration`
+- `app.application.reporting.report_templates`
+- `datetime`
+- `logging`
+- `numpy`
+- `pandas`
+- `typing`
+
+## 3. Core Components
+### Classes
+- `ReportingOrchestrator`
+### Public Functions
+- `get_reporting_orchestrator()`
+- `generate_comprehensive_report()`
+- `generate_executive_summary()`
+
+## 4. Applicable Trading Rules
+
+#### R15
+Complete Logging (log all decisions, trade journal format)
+
+- [ ] Implementation verified
+- [ ] Tests pass
+
+---
+Universal rules (SOLID, type hints, formatting, security, logging) live in
+.requirements/BASE_RULES.md and apply to every file.
+Resync this stub with: python scripts/generate_requirements.py

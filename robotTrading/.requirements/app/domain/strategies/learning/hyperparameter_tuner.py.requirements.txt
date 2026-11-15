@@ -1,0 +1,51 @@
+# Requirements Document: app/domain/strategies/learning/hyperparameter_tuner.py
+
+## 1. Module Overview
+File: hyperparameter_tuner.py
+Domain: Domain
+
+## 2. Dependencies
+- `__future__`
+- `logging`
+- `numpy`
+- `optuna`
+- `optuna.visualization`
+- `time`
+- `torch`
+- `typing`
+
+## 3. Core Components
+### Classes
+- `EarlyStoppingAdaptive`
+- `ResourceAwareTuner`
+- `HyperparameterTuner`
+- `LearningEngineTuner`
+### Public Functions
+- `reset()`
+- `get_best_score()`
+- `get_best_epoch()`
+- `should_continue()`
+- `start_tuning()`
+- `record_trial()`
+- `get_remaining_time()`
+- `get_resource_info()`
+- `set_training_callback()`
+- `optimize()`
+- `get_best_params()`
+- `get_trial_history()`
+- `visualize_optimization()`
+- `tune()`
+- `objective()`
+
+## 4. Applicable Trading Rules
+
+#### R15
+Complete Logging (log all decisions, trade journal format)
+
+- [ ] Implementation verified
+- [ ] Tests pass
+
+---
+Universal rules (SOLID, type hints, formatting, security, logging) live in
+.requirements/BASE_RULES.md and apply to every file.
+Resync this stub with: python scripts/generate_requirements.py

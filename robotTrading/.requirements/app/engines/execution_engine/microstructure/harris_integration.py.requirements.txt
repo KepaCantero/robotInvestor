@@ -1,0 +1,68 @@
+# Requirements Document: app/engines/execution_engine/microstructure/harris_integration.py
+
+## 1. Module Overview
+File: harris_integration.py
+Domain: Engine
+
+## 2. Dependencies
+- `__future__`
+- `almgren_chriss_model`
+- `app.shared.config.centralized_config`
+- `bid_ask_bounce_removal`
+- `dark_pool_router`
+- `dataclasses`
+- `datetime`
+- `decimal`
+- `logging`
+- `math`
+- `microstructure_engine`
+- `numpy`
+- `order_book_analyzer`
+- `pandas`
+- `tick_size_constraints`
+- `typing`
+
+## 3. Core Components
+### Classes
+- `PreTradeCheckResult`
+- `PostTradeAnalysis`
+- `HarrisMicrostructureIntegrator`
+### Public Functions
+- `get_harris_integrator()`
+- `analyze_order_book_depth()`
+- `remove_bid_ask_bounce()`
+- `record_signal_time()`
+- `calculate_timing_cost()`
+- `estimate_market_impact()`
+- `detect_quote_stuffing()`
+- `calculate_optimal_limit_price()`
+- `should_use_dark_pool()`
+- `validate_liquidity_assumption()`
+- `evaluate_execution_quality()`
+- `pre_trade_check()`
+- `analyze_execution()`
+
+## 4. Applicable Trading Rules
+
+#### R8
+Bid-Ask Spread Management (avoid market orders for low-liquidity)
+
+- [ ] Implementation verified
+- [ ] Tests pass
+
+#### R9
+Execution Timing (avoid first/last 15 min, VWAP/TWAP for large orders)
+
+- [ ] Implementation verified
+- [ ] Tests pass
+
+#### R10
+Slippage Monitor (track actual vs expected fill, alert if >0.5%)
+
+- [ ] Implementation verified
+- [ ] Tests pass
+
+---
+Universal rules (SOLID, type hints, formatting, security, logging) live in
+.requirements/BASE_RULES.md and apply to every file.
+Resync this stub with: python scripts/generate_requirements.py

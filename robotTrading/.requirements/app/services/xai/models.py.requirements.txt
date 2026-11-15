@@ -1,0 +1,45 @@
+# Requirements Document: app/services/xai/models.py
+
+## 1. Module Overview
+File: models.py
+Domain: Service
+
+## 2. Dependencies
+- `__future__`
+- `dataclasses`
+- `datetime`
+- `logging`
+- `pydantic`
+- `typing`
+
+## 3. Core Components
+### Classes
+- `SHAPValue`
+- `SHAPExplanation`
+- `SHAPSummaryPlot`
+- `LIMEFeature`
+- `LIMEExplanation`
+- `FeatureImportance`
+- `FeatureImportanceReport`
+- `PredictionExplanation`
+- `PartialDependence`
+- `PDPExplanation`
+- `ICEExplanation`
+- `InterpretationReport`
+- `ExplainabilityConfig`
+### Public Functions
+- `get_top_features()`
+- `get_top_features()`
+
+## 4. Applicable Trading Rules
+
+#### R15
+Complete Logging (log all decisions, trade journal format)
+
+- [ ] Implementation verified
+- [ ] Tests pass
+
+---
+Universal rules (SOLID, type hints, formatting, security, logging) live in
+.requirements/BASE_RULES.md and apply to every file.
+Resync this stub with: python scripts/generate_requirements.py

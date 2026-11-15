@@ -1,0 +1,29 @@
+# Requirements Document: app/shared/config/params/__init__.py
+
+## 1. Module Overview
+File: __init__.py
+Domain: Shared
+
+## 2. Dependencies
+- `app.shared.config.params.backtest_config`
+- `app.shared.config.params.infrastructure_config`
+- `app.shared.config.params.risk_config`
+- `app.shared.config.params.strategy_config`
+- `app.shared.config.params.trading_thresholds`
+
+## 3. Core Components
+### Module Initialization
+- Package/module initialization file
+
+## 4. Applicable Trading Rules
+
+#### R15
+Complete Logging (log all decisions, trade journal format)
+
+- [ ] Implementation verified
+- [ ] Tests pass
+
+---
+Universal rules (SOLID, type hints, formatting, security, logging) live in
+.requirements/BASE_RULES.md and apply to every file.
+Resync this stub with: python scripts/generate_requirements.py

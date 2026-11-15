@@ -1,0 +1,54 @@
+# Requirements Document: app/domain/strategies/learning/deep_learning_engine.py
+
+## 1. Module Overview
+File: deep_learning_engine.py
+Domain: Domain
+
+## 2. Dependencies
+- `__future__`
+- `app.domain.strategies.learning.deep_learning_engine`
+- `app.security.secrets.secure_serialization`
+- `base_learning_engine`
+- `contextlib`
+- `logging`
+- `multiprocessing`
+- `numpy`
+- `os`
+- `tempfile`
+- `torch`
+- `torch.nn`
+- `torch.optim`
+- `torch.utils.data`
+- `typing`
+
+## 3. Core Components
+### Classes
+- `DeepLearningEngine`
+- `TimeSeriesDataset`
+- `LSTMModel`
+- `GRUModel`
+- `AttentionLSTMModel`
+- `TransformerModel`
+- `TimeSeriesDatasetEval`
+- `TimeSeriesDatasetVal`
+### Public Functions
+- `train()`
+- `predict()`
+- `evaluate()`
+- `forward()`
+- `forward()`
+- `forward()`
+- `forward()`
+
+## 4. Applicable Trading Rules
+
+#### R15
+Complete Logging (log all decisions, trade journal format)
+
+- [ ] Implementation verified
+- [ ] Tests pass
+
+---
+Universal rules (SOLID, type hints, formatting, security, logging) live in
+.requirements/BASE_RULES.md and apply to every file.
+Resync this stub with: python scripts/generate_requirements.py

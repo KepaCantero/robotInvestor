@@ -1,0 +1,45 @@
+# Requirements Document: app/domain/strategies/config_loader.py
+
+## 1. Module Overview
+File: config_loader.py
+Domain: Domain
+
+## 2. Dependencies
+- `__future__`
+- `datetime`
+- `json`
+- `logging`
+- `pathlib`
+- `typing`
+- `yaml`
+
+## 3. Core Components
+### Classes
+- `StrategyConfigLoader`
+### Public Functions
+- `load_config()`
+- `save_config()`
+- `get_active_strategies()`
+- `get_strategy_config()`
+- `get_backtesting_strategies()`
+- `get_paper_trading_strategy()`
+- `get_logging_config()`
+- `validate_config()`
+- `add_strategy_config()`
+- `remove_strategy_config()`
+- `update_strategy_config()`
+- `reload_config()`
+- `get_config_summary()`
+
+## 4. Applicable Trading Rules
+
+#### R15
+Complete Logging (log all decisions, trade journal format)
+
+- [ ] Implementation verified
+- [ ] Tests pass
+
+---
+Universal rules (SOLID, type hints, formatting, security, logging) live in
+.requirements/BASE_RULES.md and apply to every file.
+Resync this stub with: python scripts/generate_requirements.py

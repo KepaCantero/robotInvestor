@@ -1,0 +1,57 @@
+# Requirements Document: app/services/live_trading/alert_to_trade_mapper.py
+
+## 1. Module Overview
+File: alert_to_trade_mapper.py
+Domain: Service
+
+## 2. Dependencies
+- `__future__`
+- `app.services.alerting_system`
+- `app.shared.config.centralized_config`
+- `broker_connector`
+- `dataclasses`
+- `datetime`
+- `decimal`
+- `enum`
+- `logging`
+
+## 3. Core Components
+### Classes
+- `TradeSignalType`
+- `AlertToTradeRule`
+- `TradeSignal`
+- `AlertToTradeMapper`
+### Public Functions
+- `get_alert_to_trade_mapper()`
+- `to_dict()`
+- `register_rule()`
+- `unregister_rule()`
+- `map_alert_to_signal()`
+- `get_signal()`
+- `get_pending_signals()`
+- `get_signal_statistics()`
+
+## 4. Applicable Trading Rules
+
+#### R8
+Bid-Ask Spread Management (avoid market orders for low-liquidity)
+
+- [ ] Implementation verified
+- [ ] Tests pass
+
+#### R9
+Execution Timing (avoid first/last 15 min, VWAP/TWAP for large orders)
+
+- [ ] Implementation verified
+- [ ] Tests pass
+
+#### R10
+Slippage Monitor (track actual vs expected fill, alert if >0.5%)
+
+- [ ] Implementation verified
+- [ ] Tests pass
+
+---
+Universal rules (SOLID, type hints, formatting, security, logging) live in
+.requirements/BASE_RULES.md and apply to every file.
+Resync this stub with: python scripts/generate_requirements.py

@@ -1,0 +1,45 @@
+# Requirements Document: app/infrastructure/middleware/error_middleware.py
+
+## 1. Module Overview
+File: error_middleware.py
+Domain: Infrastructure
+
+## 2. Dependencies
+- `__future__`
+- `app.services.centralized_logging`
+- `app.shared.exceptions.error_handler`
+- `fastapi`
+- `fastapi.responses`
+- `logging`
+- `starlette.applications`
+- `starlette.middleware.base`
+- `time`
+- `typing`
+- `uuid`
+
+## 3. Core Components
+### Classes
+- `ErrorHandlingMiddleware`
+- `RequestContextMiddleware`
+- `SecurityHeadersMiddleware`
+- `RateLimitingMiddleware`
+- `HealthCheckMiddleware`
+### Public Functions
+- `dispatch()`
+- `dispatch()`
+- `dispatch()`
+- `dispatch()`
+- `dispatch()`
+
+## 4. Applicable Trading Rules
+
+#### R15
+Complete Logging (log all decisions, trade journal format)
+
+- [ ] Implementation verified
+- [ ] Tests pass
+
+---
+Universal rules (SOLID, type hints, formatting, security, logging) live in
+.requirements/BASE_RULES.md and apply to every file.
+Resync this stub with: python scripts/generate_requirements.py

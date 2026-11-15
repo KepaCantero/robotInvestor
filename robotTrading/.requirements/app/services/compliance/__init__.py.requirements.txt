@@ -1,0 +1,28 @@
+# Requirements Document: app/services/compliance/__init__.py
+
+## 1. Module Overview
+File: __init__.py
+Domain: Service
+
+## 2. Dependencies
+- `app.services.compliance.manager`
+- `app.services.compliance.order_pattern_analyzer`
+- `app.services.compliance.pdt_tracker`
+- `app.services.compliance.wash_sale_tracker`
+
+## 3. Core Components
+### Module Initialization
+- Package/module initialization file
+
+## 4. Applicable Trading Rules
+
+#### R15
+Complete Logging (log all decisions, trade journal format)
+
+- [ ] Implementation verified
+- [ ] Tests pass
+
+---
+Universal rules (SOLID, type hints, formatting, security, logging) live in
+.requirements/BASE_RULES.md and apply to every file.
+Resync this stub with: python scripts/generate_requirements.py

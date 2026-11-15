@@ -1,0 +1,46 @@
+# Requirements Document: app/sre/chaos_engine/hypothesis.py
+
+## 1. Module Overview
+File: hypothesis.py
+Domain: SRE
+
+## 2. Dependencies
+- `__future__`
+- `aiosqlite`
+- `app.shared.utils.safe_parse`
+- `asyncio`
+- `dataclasses`
+- `datetime`
+- `decimal`
+- `enum`
+- `logging`
+- `pathlib`
+- `typing`
+
+## 3. Core Components
+### Classes
+- `HypothesisStatus`
+- `ChaosHypothesis`
+- `ValidationResult`
+- `HypothesisValidator`
+### Public Functions
+- `to_dict()`
+- `to_dict()`
+- `is_passed()`
+- `initialize()`
+- `validate()`
+- `get_hypothesis_history()`
+- `get_summary()`
+
+## 4. Applicable Trading Rules
+
+#### R15
+Complete Logging (log all decisions, trade journal format)
+
+- [ ] Implementation verified
+- [ ] Tests pass
+
+---
+Universal rules (SOLID, type hints, formatting, security, logging) live in
+.requirements/BASE_RULES.md and apply to every file.
+Resync this stub with: python scripts/generate_requirements.py

@@ -1,0 +1,51 @@
+# Requirements Document: app/shared/config/params/strategy_config.py
+
+## 1. Module Overview
+File: strategy_config.py
+Domain: Shared
+
+## 2. Dependencies
+- `__future__`
+- `app.shared.config.config_loader`
+- `logging`
+- `pydantic`
+- `pydantic_settings`
+- `typing`
+
+## 3. Core Components
+### Classes
+- `StrategyConfig`
+- `StockAllocationSettings`
+### Public Functions
+- `validate_percentage()`
+- `validate_weight()`
+- `validate_optional_percentage()`
+- `validate_weights_sum()`
+- `validate_tolerance()`
+- `validate_exposure()`
+- `from_yaml()`
+
+## 4. Applicable Trading Rules
+
+#### R19
+Market Regime Detection (trend/range/volatile classification)
+
+- [ ] Implementation verified
+- [ ] Tests pass
+
+#### R20
+Multi-Confirmation (min 2 independent signals before trade)
+
+- [ ] Implementation verified
+- [ ] Tests pass
+
+#### R24
+Strategy Diversification (min 3 uncorrelated strategies)
+
+- [ ] Implementation verified
+- [ ] Tests pass
+
+---
+Universal rules (SOLID, type hints, formatting, security, logging) live in
+.requirements/BASE_RULES.md and apply to every file.
+Resync this stub with: python scripts/generate_requirements.py

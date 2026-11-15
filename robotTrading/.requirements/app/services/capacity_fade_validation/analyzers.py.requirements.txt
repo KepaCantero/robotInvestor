@@ -1,0 +1,35 @@
+# Requirements Document: app/services/capacity_fade_validation/analyzers.py
+
+## 1. Module Overview
+File: analyzers.py
+Domain: Service
+
+## 2. Dependencies
+- `__future__`
+- `decimal`
+- `logging`
+- `models`
+
+## 3. Core Components
+### Classes
+- `HistoricalCapacityAnalyzer`
+- `LiquidityHeadroom`
+- `AlphaDecayEstimator`
+### Public Functions
+- `analyze_capacity_impact()`
+- `calculate_headroom()`
+- `estimate_alpha_at_scale()`
+- `calculate_required_alpha()`
+
+## 4. Applicable Trading Rules
+
+#### R15
+Complete Logging (log all decisions, trade journal format)
+
+- [ ] Implementation verified
+- [ ] Tests pass
+
+---
+Universal rules (SOLID, type hints, formatting, security, logging) live in
+.requirements/BASE_RULES.md and apply to every file.
+Resync this stub with: python scripts/generate_requirements.py

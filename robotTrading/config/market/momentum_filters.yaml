@@ -1,0 +1,219 @@
+# Momentum Filters Configuration
+# Centralized configuration for all momentum strategy filters
+#
+# This file contains default thresholds and parameters for:
+# - RSI Filter
+# - Momentum Filter
+# - ATR Filter
+# - Volume Filter
+# - Stochastic RSI Filter
+# - EMA Filter
+
+# ============================================================================
+# RSI FILTER PARAMETERS
+# ============================================================================
+# CORRECTED RSI Strategy with Crossover Confirmation:
+# - BUY when RSI crosses ABOVE buy_threshold (confirms oversold reversal, typically > 30)
+# - SELL when RSI crosses BELOW sell_threshold (confirms overbought reversal, typically < 70)
+# - 30 <= RSI <= 70: Neutral zone (no clear signal)
+#
+# This prevents:
+# - Buying at the exact bottom (falling knife) - waits for reversal confirmation
+# - Selling at the exact top - waits for reversal confirmation
+#
+# FALLBACK MODE (no previous RSI available):
+# - Uses stricter threshold (buy_threshold - fallback_offset) for safety
+rsi_filter:
+  # Default thresholds for RSI-based signals
+  thresholds:
+    buy_threshold: 30       # RSI crosses above this = oversold reversal confirmed = buy signal
+    sell_threshold: 70      # RSI crosses below this = overbought reversal confirmed = sell signal
+
+  # Crossover settings
+  settings:
+    period: 14                    # RSI calculation period
+    adaptive: true                # Use adaptive thresholds based on market regime
+    use_crossover: true           # Enable crossover confirmation (CORRECTED logic)
+    fallback_offset: 2            # Stricter threshold offset when no history (buy: 30-2=28, sell: 70+2=72)
+
+  # Adaptive thresholds based on market regime
+  # FIX: Lowered buy_thresholds for more BUY signals
+  adaptive_thresholds:
+    balanced:
+      buy_threshold: 35
+      sell_threshold: 70
+    volatile:
+      buy_threshold: 30         # Lowered from 25
+      sell_threshold: 75
+    trending:
+      buy_threshold: 40         # Lowered from 40
+      sell_threshold: 75        # Raised from 65
+    trend_up:
+      buy_threshold: 40         # Lowered from 45 - too restrictive in uptrends
+      sell_threshold: 80        # Raised from 70
+    trend_down:
+      buy_threshold: 25         # Lowered from 30
+      sell_threshold: 55        # Raised from 50
+    range:
+      buy_threshold: 30
+      sell_threshold: 70
+    high_vol:
+      buy_threshold: 30         # Lowered from 35
+      sell_threshold: 70        # Raised from 65
+
+# ============================================================================
+# MOMENTUM FILTER PARAMETERS
+# ============================================================================
+momentum_filter:
+  # Momentum thresholds for signal generation
+  # FIX: Lowered from 0.015 to 0.005 for more BUY signals
+  thresholds:
+    min_positive_momentum: 0.005    # Minimum positive momentum for buy (was 0.015)
+    min_negative_momentum: -0.005   # Minimum negative momentum for sell (was -0.015)
+
+  # Confidence weights for momentum calculation
+  confidence_weights:
+    weak: 0.5          # Weight for weak momentum signals
+    moderate: 1.0      # Weight for moderate momentum signals
+    strong: 2.0        # Weight for strong momentum signals
+
+# ============================================================================
+# ATR FILTER PARAMETERS (VOLATILITY)
+# ============================================================================
+atr_filter:
+  # ATR percentile thresholds
+  # FIX: Lowered thresholds for more permissive trading
+  thresholds:
+    min_atr_percentile: 40       # Minimum ATR percentile (was 60)
+    min_relative_atr: 0.004      # Minimum relative ATR (was 0.006)
+
+  # ATR multipliers for position sizing
+  multipliers:
+    conservative: 1.5    # Conservative ATR multiplier
+    moderate: 2.0        # Moderate ATR multiplier
+    aggressive: 2.5      # Aggressive ATR multiplier
+
+# ============================================================================
+# VOLUME FILTER PARAMETERS
+# ============================================================================
+volume_filter:
+  # Volume ratio thresholds
+  # FIX: Lowered from 1.1 to 0.9 - don't require above-average volume
+  thresholds:
+    min_volume_ratio: 0.9        # Minimum ratio vs average volume (was 1.1)
+
+  # Volume confirmation levels
+  confirmation_levels:
+    weak: 1.0          # Weak volume confirmation
+    moderate: 1.2      # Moderate volume confirmation
+    strong: 1.5        # Strong volume confirmation
+
+# ============================================================================
+# STOCHASTIC RSI FILTER PARAMETERS
+# ============================================================================
+# Standard StochRSI Strategy:
+# - BUY when StochRSI K <= oversold_threshold (typically <= 20)
+# - SELL when StochRSI K >= overbought_threshold (typically >= 80)
+# FIX: Raised oversold_threshold for more BUY signals in trending markets
+stoch_rsi_filter:
+  # Stochastic RSI thresholds
+  thresholds:
+    oversold_threshold: 30       # StochRSI at or below this = oversold = buy (was 20)
+    overbought_threshold: 75     # StochRSI at or above this = overbought = sell (was 80)
+
+  # Stochastic RSI settings
+  settings:
+    k_period: 14        # Stochastic %K period
+    d_period: 3         # Stochastic %D period
+    smooth_k: 3         # Smooth %K period
+    stoch_rsi_period: 14 # RSI period for Stochastic calculation
+
+# ============================================================================
+# EMA FILTER PARAMETERS
+# ============================================================================
+ema_filter:
+  # EMA crossover thresholds
+  # FIX: Lowered min_distance_pct and added allow_dip_buy
+  thresholds:
+    min_distance_pct: 0.002      # Minimum % distance between EMAs (was 0.005)
+    require_crossover: false      # Whether crossover is required
+    allow_dip_buy: true           # Allow buying during dips (price slightly below EMA fast)
+
+  # EMA period settings
+  periods:
+    fast_ema: 12         # Fast EMA period
+    slow_ema: 26         # Slow EMA period
+    signal_ema: 9       # Signal EMA period
+
+  # Crossover confirmation
+  confirmation:
+    price_above_ema: true         # Require price above EMA for buy
+    volume_confirm: false          # Require volume confirmation
+
+# ============================================================================
+# MACD FILTER PARAMETERS
+# ============================================================================
+macd_filter:
+  # MACD settings
+  settings:
+    fast_period: 12      # MACD fast EMA period
+    slow_period: 26      # MACD slow EMA period
+    signal_period: 9     # MACD signal period
+
+  # MACD thresholds
+  thresholds:
+    min_positive_macd: 0       # Minimum positive MACD for buy
+    min_negative_macd: 0       # Minimum negative MACD for sell
+    histogram_threshold: 0      # MACD histogram threshold
+
+# ============================================================================
+# CAPITAL TIER OVERRIDES
+# ============================================================================
+# Tier-specific adjustments for filter sensitivity
+# - micro: < $15k - More conservative
+# - small: $15k - $50k - Slightly conservative
+# - medium: $50k - $250k - Balanced
+# - large: >= $250k - More aggressive
+tiers:
+  micro:
+    rsi_filter:
+      thresholds:
+        buy_threshold: 35       # More conservative buy threshold
+        sell_threshold: 65      # More conservative sell threshold
+    momentum_filter:
+      thresholds:
+        min_positive_momentum: 0.02   # Higher threshold
+        min_negative_momentum: -0.02
+    volume_filter:
+      thresholds:
+        min_volume_ratio: 1.2         # Higher volume requirement
+
+  small:
+    rsi_filter:
+      thresholds:
+        buy_threshold: 32
+        sell_threshold: 68
+    momentum_filter:
+      thresholds:
+        min_positive_momentum: 0.017
+        min_negative_momentum: -0.017
+    volume_filter:
+      thresholds:
+        min_volume_ratio: 1.15
+
+  medium:
+    # Use default values
+    pass
+
+  large:
+    rsi_filter:
+      thresholds:
+        buy_threshold: 25       # More aggressive buy threshold
+        sell_threshold: 75      # More aggressive sell threshold
+    momentum_filter:
+      thresholds:
+        min_positive_momentum: 0.01    # Lower threshold
+        min_negative_momentum: -0.01
+    volume_filter:
+      thresholds:
+        min_volume_ratio: 1.0         # Lower volume requirement

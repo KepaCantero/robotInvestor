@@ -1,0 +1,53 @@
+# Requirements Document: app/engines/execution_engine/microstructure/almgren_chriss_model.py
+
+## 1. Module Overview
+File: almgren_chriss_model.py
+Domain: Engine
+
+## 2. Dependencies
+- `__future__`
+- `dataclasses`
+- `decimal`
+- `enum`
+- `logging`
+- `numpy`
+- `pandas`
+- `typing`
+
+## 3. Core Components
+### Classes
+- `ImpactComponent`
+- `MarketImpactEstimate`
+- `OptimalExecutionSchedule`
+- `AlmgrenChrissModel`
+### Public Functions
+- `get_almgren_chriss_model()`
+- `estimate_impact()`
+- `calculate_optimal_schedule()`
+- `compare_execution_strategies()`
+- `calibrate_parameters()`
+
+## 4. Applicable Trading Rules
+
+#### R8
+Bid-Ask Spread Management (avoid market orders for low-liquidity)
+
+- [ ] Implementation verified
+- [ ] Tests pass
+
+#### R9
+Execution Timing (avoid first/last 15 min, VWAP/TWAP for large orders)
+
+- [ ] Implementation verified
+- [ ] Tests pass
+
+#### R10
+Slippage Monitor (track actual vs expected fill, alert if >0.5%)
+
+- [ ] Implementation verified
+- [ ] Tests pass
+
+---
+Universal rules (SOLID, type hints, formatting, security, logging) live in
+.requirements/BASE_RULES.md and apply to every file.
+Resync this stub with: python scripts/generate_requirements.py

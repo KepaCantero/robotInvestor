@@ -1,0 +1,52 @@
+# Requirements Document: app/services/smart_order_routing/execution_cost_monitor.py
+
+## 1. Module Overview
+File: execution_cost_monitor.py
+Domain: Service
+
+## 2. Dependencies
+- `__future__`
+- `datetime`
+- `decimal`
+- `logging`
+- `models`
+- `numpy`
+
+## 3. Core Components
+### Classes
+- `ExecutionCostMonitor`
+### Public Functions
+- `get_execution_cost_monitor()`
+- `start_monitoring()`
+- `record_tranche_execution()`
+- `complete_execution()`
+- `get_monitoring_status()`
+- `get_cost_breakdown()`
+- `compare_to_estimate()`
+- `estimate_remaining_budget()`
+- `should_abort_execution()`
+
+## 4. Applicable Trading Rules
+
+#### R8
+Bid-Ask Spread Management (avoid market orders for low-liquidity)
+
+- [ ] Implementation verified
+- [ ] Tests pass
+
+#### R9
+Execution Timing (avoid first/last 15 min, VWAP/TWAP for large orders)
+
+- [ ] Implementation verified
+- [ ] Tests pass
+
+#### R10
+Slippage Monitor (track actual vs expected fill, alert if >0.5%)
+
+- [ ] Implementation verified
+- [ ] Tests pass
+
+---
+Universal rules (SOLID, type hints, formatting, security, logging) live in
+.requirements/BASE_RULES.md and apply to every file.
+Resync this stub with: python scripts/generate_requirements.py

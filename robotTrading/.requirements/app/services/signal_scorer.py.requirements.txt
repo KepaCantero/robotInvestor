@@ -1,0 +1,59 @@
+# Requirements Document: app/services/signal_scorer.py
+
+## 1. Module Overview
+File: signal_scorer.py
+Domain: Service
+
+## 2. Dependencies
+- `__future__`
+- `app.domain.models.signal`
+- `app.services.portfolio_service`
+- `app.services.position_sizing_engine`
+- `app.services.signal_evaluation_engine`
+- `app.services.signal_execution_engine`
+- `app.shared.config.centralized_config`
+- `datetime`
+- `decimal`
+- `logging`
+- `typing`
+
+## 3. Core Components
+### Classes
+- `SignalScorerService`
+### Public Functions
+- `evaluate_signal()`
+- `calculate_position_size()`
+- `execute_signal()`
+- `get_signal_statistics()`
+- `get_next_actionable_signal()`
+- `get_signals_by_symbol()`
+- `clear_expired_signals()`
+- `update_thresholds()`
+- `reset_statistics()`
+- `update_position_size_limit()`
+- `execution_callback()`
+
+## 4. Applicable Trading Rules
+
+#### R19
+Market Regime Detection (trend/range/volatile classification)
+
+- [ ] Implementation verified
+- [ ] Tests pass
+
+#### R20
+Multi-Confirmation (min 2 independent signals before trade)
+
+- [ ] Implementation verified
+- [ ] Tests pass
+
+#### R24
+Strategy Diversification (min 3 uncorrelated strategies)
+
+- [ ] Implementation verified
+- [ ] Tests pass
+
+---
+Universal rules (SOLID, type hints, formatting, security, logging) live in
+.requirements/BASE_RULES.md and apply to every file.
+Resync this stub with: python scripts/generate_requirements.py

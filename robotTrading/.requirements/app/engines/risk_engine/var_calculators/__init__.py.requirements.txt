@@ -1,0 +1,25 @@
+# Requirements Document: app/engines/risk_engine/var_calculators/__init__.py
+
+## 1. Module Overview
+File: __init__.py
+Domain: Engine
+
+## 2. Dependencies
+- `var_calculators`
+
+## 3. Core Components
+### Module Initialization
+- Package/module initialization file
+
+## 4. Applicable Trading Rules
+
+#### R2
+Drawdown Monitor (15% warning, 25% halt trading, auto cooldown)
+
+- [ ] Implementation verified
+- [ ] Tests pass
+
+---
+Universal rules (SOLID, type hints, formatting, security, logging) live in
+.requirements/BASE_RULES.md and apply to every file.
+Resync this stub with: python scripts/generate_requirements.py

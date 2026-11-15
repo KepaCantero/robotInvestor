@@ -1,0 +1,64 @@
+# Requirements Document: app/shared/config/base/environment_config.py
+
+## 1. Module Overview
+File: environment_config.py
+Domain: Shared
+
+## 2. Dependencies
+- `__future__`
+- `app.shared.exceptions.exceptions`
+- `enum`
+- `logging`
+- `os`
+- `pathlib`
+- `pydantic`
+- `pydantic_settings`
+- `typing`
+
+## 3. Core Components
+### Classes
+- `Environment`
+- `LogLevel`
+- `DatabaseConfig`
+- `RedisConfig`
+- `APIConfig`
+- `TradingConfig`
+- `LoggingConfig`
+- `MonitoringConfig`
+- `CentralizedConfig`
+### Public Functions
+- `get_config()`
+- `reload_config()`
+- `set_config()`
+- `load_config_from_file()`
+- `get_settings()`
+- `create_config_for_environment()`
+- `validate_port()`
+- `validate_pool_size()`
+- `connection_string()`
+- `validate_port()`
+- `connection_string()`
+- `validate_port()`
+- `validate_secret_key()`
+- `validate_position_size()`
+- `validate_daily_loss()`
+- `validate_stop_loss()`
+- `validate_file_size()`
+- `validate_port()`
+- `get_config_dict()`
+- `is_production()`
+- `is_development()`
+- `is_testing()`
+
+## 4. Applicable Trading Rules
+
+#### R15
+Complete Logging (log all decisions, trade journal format)
+
+- [ ] Implementation verified
+- [ ] Tests pass
+
+---
+Universal rules (SOLID, type hints, formatting, security, logging) live in
+.requirements/BASE_RULES.md and apply to every file.
+Resync this stub with: python scripts/generate_requirements.py

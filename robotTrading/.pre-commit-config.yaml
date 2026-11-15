@@ -1,0 +1,42 @@
+repos:
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+
+    rev: v4.6.0
+    hooks:
+      - id: trailing-whitespace
+      - id: end-of-file-fixer
+      - id: check-yaml
+        args: [--allow-multiple-documents]  # plantillas k8s multi-doc
+      - id: check-merge-conflict
+      - id: debug-statements
+      - id: check-docstring-first
+
+  - repo: https://github.com/astral-sh/ruff-pre-commit
+    rev: v0.11.2
+    hooks:
+      - id: ruff
+        args: [--fix]
+      - id: ruff-format
+  - repo: https://github.com/PyCQA/bandit
+    rev: 1.8.0
+    hooks:
+      - id: bandit
+        args:
+          ["-r", "app/", "-ll", "--baseline", ".bandit.baseline.json"]
+        pass_filenames: false
+  - repo: https://github.com/Yelp/detect-secrets
+    rev: v1.5.0
+    hooks:
+      - id: detect-secrets
+        args: ["--baseline", ".secrets.baseline"]
+
+  # Prose lint for the ELI5 docs (B2 profile in .vale.ini).
+  # Errors (AI-writing tells) block the commit; warnings only inform.
+  # Requires the vale binary on PATH (installed at ~/.local/bin).
+  - repo: local
+    hooks:
+      - id: vale-eli5
+        name: vale B2 prose lint (docs/eli5)
+        entry: vale
+        language: system
+        files: ^docs/eli5/.*\.md$

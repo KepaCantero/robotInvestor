@@ -1,0 +1,39 @@
+# Requirements Document: app/services/numba_risk.py
+
+## 1. Module Overview
+File: numba_risk.py
+Domain: Service
+
+## 2. Dependencies
+- `logging`
+- `numba`
+- `numpy`
+
+## 3. Core Components
+### Public Functions
+- `calculate_historical_var_numba()`
+- `calculate_parametric_var_numba()`
+- `calculate_portfolio_var_numba()`
+- `calculate_historical_cvar_numba()`
+- `calculate_correlation_matrix_numba()`
+- `calculate_covariance_matrix_numba()`
+- `sample_std_numba_risk()`
+- `calculate_portfolio_volatility_numba()`
+- `calculate_portfolio_beta_numba()`
+- `calculate_tracking_error_numba()`
+- `calculate_marginal_var_numba()`
+- `calculate_component_var_numba()`
+- `get_numba_risk_info()`
+
+## 4. Applicable Trading Rules
+
+#### R2
+Drawdown Monitor (15% warning, 25% halt trading, auto cooldown)
+
+- [ ] Implementation verified
+- [ ] Tests pass
+
+---
+Universal rules (SOLID, type hints, formatting, security, logging) live in
+.requirements/BASE_RULES.md and apply to every file.
+Resync this stub with: python scripts/generate_requirements.py

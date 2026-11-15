@@ -1,0 +1,47 @@
+# Requirements Document: app/sre/chaos_engine/blast_radius.py
+
+## 1. Module Overview
+File: blast_radius.py
+Domain: SRE
+
+## 2. Dependencies
+- `__future__`
+- `aiosqlite`
+- `app.shared.utils.safe_parse`
+- `asyncio`
+- `dataclasses`
+- `datetime`
+- `decimal`
+- `enum`
+- `logging`
+- `pathlib`
+- `typing`
+
+## 3. Core Components
+### Classes
+- `BlastRadiusScope`
+- `BlastRadiusConfig`
+- `ContainmentState`
+- `BlastRadiusController`
+### Public Functions
+- `to_dict()`
+- `to_dict()`
+- `initialize()`
+- `apply_controls()`
+- `remove_controls()`
+- `get_active_containment()`
+- `get_containment_history()`
+- `check_health_in_containment()`
+
+## 4. Applicable Trading Rules
+
+#### R15
+Complete Logging (log all decisions, trade journal format)
+
+- [ ] Implementation verified
+- [ ] Tests pass
+
+---
+Universal rules (SOLID, type hints, formatting, security, logging) live in
+.requirements/BASE_RULES.md and apply to every file.
+Resync this stub with: python scripts/generate_requirements.py

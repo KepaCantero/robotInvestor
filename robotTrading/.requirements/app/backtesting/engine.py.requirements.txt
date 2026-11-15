@@ -1,0 +1,70 @@
+# Requirements Document: app/backtesting/engine.py
+
+## 1. Module Overview
+File: engine.py
+Domain: Backtest
+
+## 2. Dependencies
+- `__future__`
+- `app.backtesting.base_engine`
+- `app.backtesting.liquidity_validator`
+- `app.backtesting.models`
+- `app.backtesting.services.equity_tracker`
+- `app.backtesting.services.exit_monitor`
+- `app.backtesting.services.performance_calculator`
+- `app.backtesting.services.pnl_calculator`
+- `app.backtesting.services.position_manager`
+- `app.backtesting.services.signal_processor`
+- `app.backtesting.services.trade_executor`
+- `app.backtesting.shared.slippage_utils`
+- `app.backtesting.shared.trade_utils`
+- `app.domain.models.market_data`
+- `app.domain.models.portfolio`
+- `app.domain.models.signal`
+- `app.domain.services.compliance.compliance_engine`
+- `app.domain.services.trading_validators`
+- `app.domain.strategies.learning.learning_updater`
+- `app.engines.execution_engine.microstructure`
+- `app.services.dynamic_capital_reallocation`
+- `app.shared.config.centralized_config`
+- `contextlib`
+- `datetime`
+- `decimal`
+- `logging`
+- `pandas`
+- `typing`
+- `uuid`
+
+## 3. Core Components
+### Classes
+- `BacktestEngine`
+### Public Functions
+- `get_price()`
+- `reset_live_trading_gates()`
+- `positions()`
+- `run_backtest()`
+
+## 4. Applicable Trading Rules
+
+#### R5
+Walk-Forward Analysis (70/30 train/test split, min 50 trades OOS, max 30% degradation)
+
+- [ ] Implementation verified
+- [ ] Tests pass
+
+#### R6
+Overfitting Prevention (min 30 samples per parameter, purged cross-validation)
+
+- [ ] Implementation verified
+- [ ] Tests pass
+
+#### R7
+Monte Carlo Risk Analysis (1000 simulations, validate DD within 5-95 percentile)
+
+- [ ] Implementation verified
+- [ ] Tests pass
+
+---
+Universal rules (SOLID, type hints, formatting, security, logging) live in
+.requirements/BASE_RULES.md and apply to every file.
+Resync this stub with: python scripts/generate_requirements.py

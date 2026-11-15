@@ -1,0 +1,50 @@
+# Requirements Document: app/infrastructure/monitoring/time_sync_monitor.py
+
+## 1. Module Overview
+File: time_sync_monitor.py
+Domain: Infrastructure
+
+## 2. Dependencies
+- `__future__`
+- `app.shared.utils.timezone_utils`
+- `asyncio`
+- `contextlib`
+- `dataclasses`
+- `datetime`
+- `logging`
+- `ntplib`
+- `subprocess`
+- `typing`
+
+## 3. Core Components
+### Classes
+- `TimeSyncConfig`
+- `TimeSyncStatus`
+- `TimeSyncMonitor`
+### Public Functions
+- `get_time_sync_monitor()`
+- `reset_time_sync_monitor()`
+- `to_dict()`
+- `start()`
+- `stop()`
+- `check_time_drift()`
+- `validate_order_timestamp()`
+- `get_status()`
+- `get_drift_seconds()`
+- `is_synced()`
+- `get_ntp_availability()`
+- `sync_clock()`
+- `force_check()`
+
+## 4. Applicable Trading Rules
+
+#### R15
+Complete Logging (log all decisions, trade journal format)
+
+- [ ] Implementation verified
+- [ ] Tests pass
+
+---
+Universal rules (SOLID, type hints, formatting, security, logging) live in
+.requirements/BASE_RULES.md and apply to every file.
+Resync this stub with: python scripts/generate_requirements.py

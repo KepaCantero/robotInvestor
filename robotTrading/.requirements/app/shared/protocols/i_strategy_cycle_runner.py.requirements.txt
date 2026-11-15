@@ -1,0 +1,45 @@
+# Requirements Document: app/shared/protocols/i_strategy_cycle_runner.py
+
+## 1. Module Overview
+File: i_strategy_cycle_runner.py
+Domain: Shared
+
+## 2. Dependencies
+- `__future__`
+- `app.services.live_trading.alert_to_trade_mapper`
+- `typing`
+
+## 3. Core Components
+### Classes
+- `IStrategyCycleRunner`
+### Public Functions
+- `run_cycle()`
+- `validate_cycle_input()`
+- `execute_cycle_phase()`
+- `handle_cycle_error()`
+- `get_cycle_metrics()`
+
+## 4. Applicable Trading Rules
+
+#### R19
+Market Regime Detection (trend/range/volatile classification)
+
+- [ ] Implementation verified
+- [ ] Tests pass
+
+#### R20
+Multi-Confirmation (min 2 independent signals before trade)
+
+- [ ] Implementation verified
+- [ ] Tests pass
+
+#### R24
+Strategy Diversification (min 3 uncorrelated strategies)
+
+- [ ] Implementation verified
+- [ ] Tests pass
+
+---
+Universal rules (SOLID, type hints, formatting, security, logging) live in
+.requirements/BASE_RULES.md and apply to every file.
+Resync this stub with: python scripts/generate_requirements.py

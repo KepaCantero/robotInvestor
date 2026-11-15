@@ -1,0 +1,63 @@
+# Requirements Document: app/domain/market_analysis/microstructure/price_discovery.py
+
+## 1. Module Overview
+File: price_discovery.py
+Domain: Domain
+
+## 2. Dependencies
+- `__future__`
+- `dataclasses`
+- `datetime`
+- `decimal`
+- `enum`
+- `logging`
+- `numpy`
+- `pandas`
+- `statsmodels.tsa.stattools`
+- `typing`
+
+## 3. Core Components
+### Classes
+- `PriceDiscoveryModel`
+- `MarketEfficiency`
+- `PriceDiscoveryMetrics`
+- `EfficientPriceEstimate`
+- `InformationFlowMetrics`
+- `MarketIntegrationMetrics`
+- `PriceDiscoveryAnalyzer`
+- `PriceDiscoveryMonitor`
+### Public Functions
+- `get_price_discovery_analyzer()`
+- `get_price_discovery_monitor()`
+- `coint()`
+- `adfuller()`
+- `to_dict()`
+- `to_dict()`
+- `to_dict()`
+- `to_dict()`
+- `estimate_efficient_price_roll()`
+- `calculate_information_share_hasbrouck()`
+- `measure_price_adjustment_speed()`
+- `calculate_pricing_error()`
+- `test_market_efficiency()`
+- `analyze_information_flow()`
+- `compare_markets_price_discovery()`
+- `calculate_discovery_quality_score()`
+- `generate_price_discovery_report()`
+- `check_discovery_quality()`
+- `get_discovery_trend()`
+- `coint()`
+- `adfuller()`
+
+## 4. Applicable Trading Rules
+
+#### R15
+Complete Logging (log all decisions, trade journal format)
+
+- [ ] Implementation verified
+- [ ] Tests pass
+
+---
+Universal rules (SOLID, type hints, formatting, security, logging) live in
+.requirements/BASE_RULES.md and apply to every file.
+Resync this stub with: python scripts/generate_requirements.py

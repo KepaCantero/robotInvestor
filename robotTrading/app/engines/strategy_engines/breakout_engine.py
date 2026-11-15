@@ -1,0 +1,584 @@
+"""
+BreakoutStrategyEngine - Engine de estrategia de breakout.
+
+Detecta rupturas de rango (soporte/resistencia) con confirmación de volumen.
+
+Características principales:
+- Usa una ventana configurable para definir el rango reciente (máximos/mínimos).
+- Genera señales cuando el precio rompe el máximo/mínimo del rango por encima
+  de un umbral porcentual configurable.
+- Requiere confirmación por volumen (ratio vs volumen medio reciente).
+- Integra métricas básicas (confidence, liquidity_score, priority_score).
+- Extiende BaseStrategyEngine para futura integración con Learning Engines.
+"""
+
+from __future__ import annotations
+
+import logging
+from collections import deque
+from decimal import Decimal
+from typing import TYPE_CHECKING, Any
+
+from app.domain.models.signal import Signal, SignalSource, SignalStrength, SignalType
+from app.domain.services.analysis.momentum import TechnicalIndicatorCalculator
+from app.shared.config.centralized_config import get_config
+
+from .base import BaseStrategyEngine
+
+if TYPE_CHECKING:
+    from collections.abc import Sequence
+
+    from app.domain.models.market_data import Quote
+    from app.domain.models.portfolio import Portfolio
+
+logger = logging.getLogger(__name__)
+
+
+class BreakoutStrategyEngine(BaseStrategyEngine):
+    """
+    Engine de estrategia de breakout basada en rupturas de rango.
+
+    Lógica básica:
+    - Calcula un rango reciente usando máximos/mínimos de los últimos N periodos.
+    - Detecta breakout alcista cuando el precio actual rompe por encima del máximo reciente
+      más un umbral porcentual configurable.
+    - Detecta breakout bajista cuando el precio rompe por debajo del mínimo reciente
+      menos un umbral porcentual configurable.
+    - Requiere confirmación por volumen (volume_ratio >= min_volume_ratio).
+    """
+
+    def __init__(self, config: dict[str, Any]):
+        """
+        Inicializar BreakoutStrategyEngine.
+
+        Args:
+            config: Configuración de la estrategia.
+        """
+        super().__init__(config)
+
+        # Initialize all parameters with defaults FIRST (before loading YAML config)
+        # Parámetros principales
+        self.lookback_period: int = int(config.get("lookback_period", 20))
+        # Umbral de breakout expresado como fracción (0.01 = 1%)
+        self.breakout_threshold_pct: Decimal = Decimal(
+            str(config.get("breakout_threshold_pct", 0.01))
+        )
+        # Mínimo volumen relativo requerido (>= 1.0 significa al menos igual al promedio)
+        self.min_volume_ratio: Decimal = Decimal(str(config.get("min_volume_ratio", 1.5)))
+        # Exposición máxima global del portfolio (similar a MomentumStrategyEngine)
+        self.max_exposure: Decimal = Decimal(str(config.get("max_exposure", 0.60)))
+        # Confianza mínima para pasar risk_check
+        self.min_signal_confidence: float = float(config.get("min_signal_confidence", 60.0))
+
+        # Load strategy-specific configuration from centralized config and override defaults
+        centralized_config = get_config()
+        strategy_config = centralized_config.get_strategy_config("breakout")
+        if strategy_config:
+            params = strategy_config.parameters
+            # Merge strategy parameters into local config
+            if isinstance(params, dict):
+                try:
+                    self.config.update({k: v for k, v in params.items() if v is not None})
+                    config.update({k: v for k, v in params.items() if v is not None})
+                except (ValueError, TypeError, KeyError, AttributeError):
+                    pass
+
+            # Core thresholds - load from YAML
+            if "lookback_period" in params:
+                self.lookback_period = int(params.get("lookback_period", self.lookback_period))
+            if "breakout_threshold_pct" in params:
+                self.breakout_threshold_pct = Decimal(
+                    str(params.get("breakout_threshold_pct", self.breakout_threshold_pct))
+                )
+            if "min_volume_ratio" in params:
+                self.min_volume_ratio = Decimal(
+                    str(params.get("min_volume_ratio", self.min_volume_ratio))
+                )
+            if "min_signal_confidence" in params:
+                self.min_signal_confidence = float(
+                    params.get("min_signal_confidence", self.min_signal_confidence)
+                )
+
+            # Risk parameters from centralized config with fallback to strategy config
+            self.stop_loss = Decimal(
+                str(strategy_config.stop_loss_pct or centralized_config.trading.stop_loss_pct)
+            )
+            self.take_profit = Decimal(
+                str(strategy_config.take_profit_pct or centralized_config.trading.take_profit_pct)
+            )
+            self.max_position_size = Decimal(
+                str(
+                    strategy_config.max_position_size
+                    or centralized_config.trading.max_position_size
+                )
+            )
+            if "max_exposure" in params:
+                self.max_exposure = Decimal(str(params.get("max_exposure", self.max_exposure)))
+
+        # Históricos
+        self.price_history: deque[float] = deque(maxlen=max(self.lookback_period, 100))
+        self.high_history: deque[float] = deque(maxlen=max(self.lookback_period, 100))
+        self.low_history: deque[float] = deque(maxlen=max(self.lookback_period, 100))
+        self.volume_history: deque[float] = deque(maxlen=100)
+
+        # Calculadora de indicadores técnicos (para ATR opcional)
+        self.indicator_calculator = TechnicalIndicatorCalculator()
+
+        logger.info(
+            "BreakoutStrategyEngine initialized",
+            extra={
+                "strategy_name": self.name,
+                "strategy_type": "breakout",
+                "lookback_period": self.lookback_period,
+                "breakout_threshold_pct": float(self.breakout_threshold_pct),
+                "min_volume_ratio": float(self.min_volume_ratio),
+                "max_exposure": float(self.max_exposure),
+                "min_signal_confidence": self.min_signal_confidence,
+            },
+        )
+
+    # ===== Implementación de métodos abstractos =====
+
+    def get_strategy_type(self) -> str:
+        """Obtener tipo de estrategia."""
+        return "breakout"
+
+    def extract_features(
+        self,
+        market_data: Quote,
+        historical_data: Sequence[Quote] | None = None,
+    ) -> dict[str, Any]:
+        """
+        Extraer features estandarizados para Learning Engine.
+
+        Features principales:
+        - range_high / range_low / range_width
+        - distance_to_range_high / distance_to_range_low
+        - breakout_up_candidate / breakout_down_candidate
+        - volume_ratio
+        - atr / relative_atr (si hay suficiente histórico)
+        """
+        features: dict[str, Any] = {
+            "timestamp": getattr(market_data, "timestamp", None),
+            "symbol": market_data.symbol,
+            "price": float(market_data.close or market_data.bid or market_data.last or 0),
+        }
+
+        # Obtener histórico
+        if historical_data is None:
+            prices = list(self.price_history) if self.price_history else []
+            highs = list(self.high_history) if self.high_history else []
+            lows = list(self.low_history) if self.low_history else []
+            volumes = list(self.volume_history) if self.volume_history else []
+        else:
+            prices = [float(q.close or q.bid or q.last or 0) for q in historical_data]
+            highs = [float(getattr(q, "high", q.close or 0)) for q in historical_data]
+            lows = [float(getattr(q, "low", q.close or 0)) for q in historical_data]
+            volumes = [float(getattr(q, "volume", 0)) for q in historical_data]
+
+        if len(prices) >= self.lookback_period:
+            window_prices = prices[-self.lookback_period :]
+            window_highs = highs[-self.lookback_period :] if highs else window_prices
+            window_lows = lows[-self.lookback_period :] if lows else window_prices
+
+            range_high = max(window_highs)
+            range_low = min(window_lows)
+            range_width = max(range_high - range_low, 1e-8)  # evitar división por cero
+
+            current_price = features["price"]
+            distance_to_high = range_high - current_price
+            distance_to_low = current_price - range_low
+
+            features.update(
+                {
+                    "range_high": float(range_high),
+                    "range_low": float(range_low),
+                    "range_width": float(range_width),
+                    "distance_to_range_high": float(distance_to_high),
+                    "distance_to_range_low": float(distance_to_low),
+                }
+            )
+
+            # Volume ratio
+            if volumes and len(volumes) >= 20:
+                avg_volume = sum(volumes[-20:]) / 20
+                current_volume = volumes[-1]
+                volume_ratio = current_volume / avg_volume if avg_volume > 0 else 1.0
+            else:
+                volume_ratio = 1.0
+
+            features["volume_ratio"] = float(volume_ratio)
+
+            # ATR y relative ATR (opcional)
+            atr = self.indicator_calculator.calculate_atr(
+                window_highs, window_lows, window_prices, period=min(14, self.lookback_period)
+            )
+            if atr is not None and current_price > 0:
+                features["atr"] = float(atr)
+                features["relative_atr"] = float(atr) / current_price
+            else:
+                features["atr"] = 0.0
+                features["relative_atr"] = 0.0
+
+            # Flags de posible breakout
+            breakout_up_level = range_high * (1 + float(self.breakout_threshold_pct))
+            breakout_down_level = range_low * (1 - float(self.breakout_threshold_pct))
+
+            features["breakout_up_candidate"] = current_price >= breakout_up_level
+            features["breakout_down_candidate"] = current_price <= breakout_down_level
+            features["breakout_threshold_pct"] = float(self.breakout_threshold_pct)
+        else:
+            # Defaults cuando no hay suficiente histórico
+            features.update(
+                {
+                    "range_high": features["price"],
+                    "range_low": features["price"],
+                    "range_width": 0.0,
+                    "distance_to_range_high": 0.0,
+                    "distance_to_range_low": 0.0,
+                    "volume_ratio": 1.0,
+                    "atr": 0.0,
+                    "relative_atr": 0.0,
+                    "breakout_up_candidate": False,
+                    "breakout_down_candidate": False,
+                    "breakout_threshold_pct": float(self.breakout_threshold_pct),
+                }
+            )
+
+        return features
+
+    def _generate_signals_impl(self, market_data: Quote) -> list[Signal]:
+        """
+        Implementación específica de generación de señales para breakout.
+
+        Args:
+            market_data: Datos de mercado actuales.
+
+        Returns:
+            Lista de señales generadas.
+        """
+        signals: list[Signal] = []
+
+        try:
+            current_price = float(market_data.close or market_data.bid or market_data.last or 0)
+            if current_price <= 0:
+                return []
+
+            # Necesitamos suficiente histórico ANTES de añadir el precio actual
+            if len(self.price_history) < self.lookback_period:
+                # Añadir al histórico pero no generar señal aún
+                self.price_history.append(current_price)
+                self.high_history.append(float(getattr(market_data, "high", current_price)))
+                self.low_history.append(float(getattr(market_data, "low", current_price)))
+                self.volume_history.append(float(getattr(market_data, "volume", 0)))
+                return []
+
+            # Calcular rango ANTES de añadir el precio actual (para detectar breakout correctamente)
+            prices = list(self.price_history)
+            highs = list(self.high_history)
+            lows = list(self.low_history)
+            volumes = list(self.volume_history)
+
+            prices[-self.lookback_period :]
+            window_highs = highs[-self.lookback_period :]
+            window_lows = lows[-self.lookback_period :]
+
+            range_high = max(window_highs)
+            range_low = min(window_lows)
+            range_width = max(range_high - range_low, 1e-8)
+
+            # Volume ratio
+            if len(volumes) >= 20:
+                avg_volume = sum(volumes[-20:]) / 20
+                current_volume = volumes[-1]
+                volume_ratio = current_volume / avg_volume if avg_volume > 0 else 1.0
+            else:
+                volume_ratio = 1.0
+
+            # Niveles de breakout
+            breakout_up_level = range_high * (1 + float(self.breakout_threshold_pct))
+            breakout_down_level = range_low * (1 - float(self.breakout_threshold_pct))
+
+            # Actualizar histórico DESPUÉS de calcular el rango (para el próximo ciclo)
+            self.price_history.append(current_price)
+            self.high_history.append(float(getattr(market_data, "high", current_price)))
+            self.low_history.append(float(getattr(market_data, "low", current_price)))
+            self.volume_history.append(float(getattr(market_data, "volume", 0)))
+
+            # Flags de breakout
+            breakout_up = current_price >= breakout_up_level
+            breakout_down = current_price <= breakout_down_level
+            volume_ok = volume_ratio >= float(self.min_volume_ratio)
+
+            if breakout_up and volume_ok:
+                confidence = self._calculate_breakout_confidence(
+                    current_price=current_price,
+                    range_high=range_high,
+                    range_low=range_low,
+                    volume_ratio=volume_ratio,
+                    direction="up",
+                )
+                strength = self._map_confidence_to_strength(confidence)
+
+                signal = Signal(
+                    symbol=market_data.symbol,
+                    signal_type=SignalType.BUY,
+                    strength=strength,
+                    price=Decimal(str(current_price)),
+                    timestamp=getattr(market_data, "timestamp", None),
+                    confidence=confidence,
+                    liquidity_score=min(100.0, max(0.0, (volume_ratio - 0.5) * 50.0)),
+                    priority_score=confidence * 0.7
+                    + min(100.0, max(0.0, (volume_ratio - 0.5) * 50.0)) * 0.3,
+                    source=SignalSource.TECHNICAL,
+                    volume=Decimal("1"),  # El tamaño real lo calcula get_position_size()
+                    metadata={
+                        "strategy": self.name,
+                        "breakout_direction": "up",
+                        "range_high": range_high,
+                        "range_low": range_low,
+                        "range_width": range_width,
+                        "breakout_level": breakout_up_level,
+                        "volume_ratio": volume_ratio,
+                        "lookback_period": self.lookback_period,
+                        "breakout_threshold_pct": float(self.breakout_threshold_pct),
+                    },
+                )
+                signals.append(signal)
+                logger.info(
+                    "Signal generated: BUY (breakout up)",
+                    extra={
+                        "strategy": "breakout",
+                        "signal_type": "BUY",
+                        "symbol": market_data.symbol,
+                        "price": float(current_price),
+                        "confidence": float(confidence),
+                        "range_high": range_high,
+                        "range_low": range_low,
+                        "volume_ratio": volume_ratio,
+                        "breakout_level": breakout_up_level,
+                    },
+                )
+
+            elif breakout_down and volume_ok:
+                confidence = self._calculate_breakout_confidence(
+                    current_price=current_price,
+                    range_high=range_high,
+                    range_low=range_low,
+                    volume_ratio=volume_ratio,
+                    direction="down",
+                )
+                strength = self._map_confidence_to_strength(confidence)
+
+                signal = Signal(
+                    symbol=market_data.symbol,
+                    signal_type=SignalType.SELL,
+                    strength=strength,
+                    price=Decimal(str(current_price)),
+                    timestamp=getattr(market_data, "timestamp", None),
+                    confidence=confidence,
+                    liquidity_score=min(100.0, max(0.0, (volume_ratio - 0.5) * 50.0)),
+                    priority_score=confidence * 0.7
+                    + min(100.0, max(0.0, (volume_ratio - 0.5) * 50.0)) * 0.3,
+                    source=SignalSource.TECHNICAL,
+                    volume=Decimal("1"),
+                    metadata={
+                        "strategy": self.name,
+                        "breakout_direction": "down",
+                        "range_high": range_high,
+                        "range_low": range_low,
+                        "range_width": range_width,
+                        "breakout_level": breakout_down_level,
+                        "volume_ratio": volume_ratio,
+                        "lookback_period": self.lookback_period,
+                        "breakout_threshold_pct": float(self.breakout_threshold_pct),
+                    },
+                )
+                signals.append(signal)
+                logger.info(
+                    "Signal generated: SELL (breakout down)",
+                    extra={
+                        "strategy": "breakout",
+                        "signal_type": "SELL",
+                        "symbol": market_data.symbol,
+                        "price": float(current_price),
+                        "confidence": float(confidence),
+                        "range_high": range_high,
+                        "range_low": range_low,
+                        "volume_ratio": volume_ratio,
+                        "breakout_level": breakout_down_level,
+                    },
+                )
+
+        except (ValueError, TypeError, KeyError, AttributeError) as e:
+            logger.error(
+                "Error generando señal en BreakoutStrategyEngine",
+                extra={
+                    "strategy": "breakout",
+                    "symbol": getattr(market_data, "symbol", None),
+                    "error_type": type(e).__name__,
+                },
+                exc_info=True,
+            )
+
+        return signals
+
+    def _calculate_breakout_confidence(
+        self,
+        current_price: float,
+        range_high: float,
+        range_low: float,
+        volume_ratio: float,
+        direction: str,
+    ) -> float:
+        """
+        Calcular confidence de la señal de breakout basado en:
+        - Distancia relativa más allá del rango (normalizada).
+        - Confirmación de volumen.
+        """
+        confidence = 50.0  # base
+
+        range_width = max(range_high - range_low, 1e-8)
+
+        try:
+            config = get_config()
+
+            if direction == "up":
+                distance_beyond = max(0.0, current_price - range_high)
+            else:
+                distance_beyond = max(0.0, range_low - current_price)
+
+            distance_ratio = distance_beyond / range_width
+
+            # Contribución por distancia (hasta +25)
+            distance_high_threshold = float(
+                getattr(config.trading, "breakout_distance_high_threshold", 0.05)
+            )
+            distance_medium_threshold = float(
+                getattr(config.trading, "breakout_distance_medium_threshold", 0.02)
+            )
+            distance_low_threshold = float(
+                getattr(config.trading, "breakout_distance_low_threshold", 0.01)
+            )
+
+            if distance_ratio > distance_high_threshold:
+                confidence += 25.0
+            elif distance_ratio > distance_medium_threshold:
+                confidence += 15.0
+            elif distance_ratio > distance_low_threshold:
+                confidence += 10.0
+
+            # Contribución por volumen (hasta +25)
+            volume_high_threshold = float(
+                getattr(config.trading, "breakout_volume_ratio_high_threshold", 3.0)
+            )
+            volume_medium_threshold = float(
+                getattr(config.trading, "breakout_volume_ratio_medium_threshold", 2.0)
+            )
+            min_volume_threshold = float(self.min_volume_ratio)
+
+            if volume_ratio > volume_high_threshold:
+                confidence += 25.0
+            elif volume_ratio > volume_medium_threshold:
+                confidence += 15.0
+            elif volume_ratio > min_volume_threshold:
+                confidence += 10.0
+
+            return min(100.0, max(0.0, confidence))
+
+        except (ValueError, AttributeError, KeyError) as e:
+            logger.error(
+                "Error calculating breakout confidence",
+                extra={
+                    "strategy": "breakout",
+                    "direction": direction,
+                    "error_type": type(e).__name__,
+                },
+            )
+            # Fallback to original hardcoded values
+            if direction == "up":
+                distance_beyond = max(0.0, current_price - range_high)
+            else:
+                distance_beyond = max(0.0, range_low - current_price)
+
+            distance_ratio = distance_beyond / range_width
+
+            if distance_ratio > 0.05:
+                confidence += 25.0
+            elif distance_ratio > 0.02:
+                confidence += 15.0
+            elif distance_ratio > 0.01:
+                confidence += 10.0
+
+            if volume_ratio > 3.0:
+                confidence += 25.0
+            elif volume_ratio > 2.0:
+                confidence += 15.0
+            elif volume_ratio > float(self.min_volume_ratio):
+                confidence += 10.0
+
+            return min(100.0, max(0.0, confidence))
+
+    @staticmethod
+    def _map_confidence_to_strength(confidence: float) -> SignalStrength:
+        """Mapear confidence (0-100) a SignalStrength."""
+        if confidence >= 80.0:
+            return SignalStrength.VERY_STRONG
+        if confidence >= 70.0:
+            return SignalStrength.STRONG
+        if confidence >= 50.0:
+            return SignalStrength.MODERATE
+        return SignalStrength.WEAK
+
+    def get_required_parameters(self) -> list[str]:
+        """Obtener parámetros requeridos."""
+        return [
+            "lookback_period",
+            "breakout_threshold_pct",
+            "min_volume_ratio",
+            "max_exposure",
+            "min_signal_confidence",
+        ]
+
+    def risk_check(self, signal: Signal, portfolio: Portfolio) -> bool:
+        """
+        Verificar criterios de riesgo básicos para breakout.
+
+        - Limitar exposición total del portfolio.
+        - Requerir una confianza mínima en la señal.
+        """
+        # Exposición máxima
+        try:
+            current_exposure = portfolio.get_total_exposure()
+        except (ValueError, TypeError, KeyError, AttributeError, IndexError):
+            # Fallback defensivo: si el método no existe o falla, no bloquear por exposición
+            current_exposure = 0.0
+
+        if current_exposure >= float(self.max_exposure):
+            logger.debug(
+                "Risk check fallido en BreakoutStrategyEngine: exposición excedida",
+                extra={
+                    "strategy": "breakout",
+                    "symbol": signal.symbol,
+                    "current_exposure": current_exposure,
+                    "max_exposure": float(self.max_exposure),
+                    "check_type": "exposure",
+                },
+            )
+            return False
+
+        # Confianza mínima
+        if signal.confidence < self.min_signal_confidence:
+            logger.debug(
+                "Risk check fallido en BreakoutStrategyEngine: confidence insuficiente",
+                extra={
+                    "strategy": "breakout",
+                    "symbol": signal.symbol,
+                    "signal_confidence": signal.confidence,
+                    "min_confidence": self.min_signal_confidence,
+                    "check_type": "confidence",
+                },
+            )
+            return False
+
+        return True

@@ -1,0 +1,56 @@
+# Requirements Document: app/services/broker_failover/manager.py
+
+## 1. Module Overview
+File: manager.py
+Domain: Service
+
+## 2. Dependencies
+- `__future__`
+- `app.services.live_trading.broker_connector`
+- `app.shared.utils.timezone_utils`
+- `asyncio`
+- `dataclasses`
+- `datetime`
+- `decimal`
+- `enum`
+- `logging`
+- `typing`
+
+## 3. Core Components
+### Classes
+- `BrokerAdapterProtocol`
+- `BrokerHealth`
+- `BrokerConfig`
+- `BrokerState`
+- `BrokerFailoverManager`
+### Public Functions
+- `place_order()`
+- `get_positions()`
+- `get_account_info()`
+- `to_dict()`
+- `start()`
+- `stop()`
+- `execute_order_with_failover()`
+- `sync_positions()`
+- `get_account_info()`
+- `get_active_broker()`
+- `get_active_broker_name()`
+- `get_broker_states()`
+- `get_statistics()`
+- `get_health_report()`
+- `force_failover()`
+- `enable_broker()`
+- `disable_broker()`
+
+## 4. Applicable Trading Rules
+
+#### R15
+Complete Logging (log all decisions, trade journal format)
+
+- [ ] Implementation verified
+- [ ] Tests pass
+
+---
+Universal rules (SOLID, type hints, formatting, security, logging) live in
+.requirements/BASE_RULES.md and apply to every file.
+Resync this stub with: python scripts/generate_requirements.py

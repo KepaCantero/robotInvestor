@@ -1,0 +1,45 @@
+# Requirements Document: app/engines/strategy_engines/__init__.py
+
+## 1. Module Overview
+File: __init__.py
+Domain: Engine
+
+## 2. Dependencies
+- `arbitrage_engine`
+- `base`
+- `breakout_engine`
+- `ensemble`
+- `mean_reversion_engine`
+- `modular_momentum_engine`
+- `momentum_engine`
+- `pairs_engine`
+- `trend_following_engine`
+
+## 3. Core Components
+### Module Initialization
+- Package/module initialization file
+
+## 4. Applicable Trading Rules
+
+#### R19
+Market Regime Detection (trend/range/volatile classification)
+
+- [ ] Implementation verified
+- [ ] Tests pass
+
+#### R20
+Multi-Confirmation (min 2 independent signals before trade)
+
+- [ ] Implementation verified
+- [ ] Tests pass
+
+#### R24
+Strategy Diversification (min 3 uncorrelated strategies)
+
+- [ ] Implementation verified
+- [ ] Tests pass
+
+---
+Universal rules (SOLID, type hints, formatting, security, logging) live in
+.requirements/BASE_RULES.md and apply to every file.
+Resync this stub with: python scripts/generate_requirements.py

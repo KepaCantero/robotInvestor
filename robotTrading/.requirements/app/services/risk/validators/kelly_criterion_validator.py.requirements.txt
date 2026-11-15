@@ -1,0 +1,33 @@
+# Requirements Document: app/services/risk/validators/kelly_criterion_validator.py
+
+## 1. Module Overview
+File: kelly_criterion_validator.py
+Domain: Service
+
+## 2. Dependencies
+- `__future__`
+- `dataclasses`
+- `decimal`
+- `logging`
+
+## 3. Core Components
+### Classes
+- `KellyResult`
+- `KellyCriterionValidator`
+### Public Functions
+- `calculate_kelly_fraction()`
+- `validate()`
+- `update_parameters()`
+
+## 4. Applicable Trading Rules
+
+#### R2
+Drawdown Monitor (15% warning, 25% halt trading, auto cooldown)
+
+- [ ] Implementation verified
+- [ ] Tests pass
+
+---
+Universal rules (SOLID, type hints, formatting, security, logging) live in
+.requirements/BASE_RULES.md and apply to every file.
+Resync this stub with: python scripts/generate_requirements.py

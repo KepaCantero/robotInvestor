@@ -1,0 +1,37 @@
+# Requirements Document: app/services/risk/validators/drawdown_validator.py
+
+## 1. Module Overview
+File: drawdown_validator.py
+Domain: Service
+
+## 2. Dependencies
+- `__future__`
+- `dataclasses`
+- `datetime`
+- `decimal`
+- `logging`
+
+## 3. Core Components
+### Classes
+- `DrawdownResult`
+- `DrawdownValidator`
+### Public Functions
+- `update_equity()`
+- `validate()`
+- `get_current_drawdown()`
+- `activate_kill_switch()`
+- `deactivate_kill_switch()`
+- `is_kill_switch_active()`
+
+## 4. Applicable Trading Rules
+
+#### R2
+Drawdown Monitor (15% warning, 25% halt trading, auto cooldown)
+
+- [ ] Implementation verified
+- [ ] Tests pass
+
+---
+Universal rules (SOLID, type hints, formatting, security, logging) live in
+.requirements/BASE_RULES.md and apply to every file.
+Resync this stub with: python scripts/generate_requirements.py

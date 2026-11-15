@@ -1,0 +1,63 @@
+# Requirements Document: app/engines/data_engine/sources/sentiment_sources.py
+
+## 1. Module Overview
+File: sentiment_sources.py
+Domain: Engine
+
+## 2. Dependencies
+- `__future__`
+- `aiohttp`
+- `app.shared.config.api_endpoints`
+- `app.shared.config.timeout_config`
+- `asyncio`
+- `base_source`
+- `logging`
+- `numpy`
+- `requests.exceptions`
+- `sqlalchemy.exc`
+- `tweepy`
+- `typing`
+
+## 3. Core Components
+### Classes
+- `TwitterSentimentSource`
+- `RedditSentimentSource`
+- `NewsSentimentSource`
+### Public Functions
+- `connect()`
+- `disconnect()`
+- `health_check()`
+- `get_sentiment()`
+- `connect()`
+- `disconnect()`
+- `health_check()`
+- `get_sentiment()`
+- `connect()`
+- `disconnect()`
+- `health_check()`
+- `get_sentiment()`
+
+## 4. Applicable Trading Rules
+
+#### R14
+Data Quality Validation (OHLCV sanity checks, detect gaps/stale data)
+
+- [ ] Implementation verified
+- [ ] Tests pass
+
+#### R15
+Complete Logging (log all decisions, trade journal format)
+
+- [ ] Implementation verified
+- [ ] Tests pass
+
+#### R16
+Daily Reconciliation (compare broker vs internal, alert discrepancies >1%)
+
+- [ ] Implementation verified
+- [ ] Tests pass
+
+---
+Universal rules (SOLID, type hints, formatting, security, logging) live in
+.requirements/BASE_RULES.md and apply to every file.
+Resync this stub with: python scripts/generate_requirements.py

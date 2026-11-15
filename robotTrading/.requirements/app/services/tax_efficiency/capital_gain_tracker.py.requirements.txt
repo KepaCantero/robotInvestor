@@ -1,0 +1,61 @@
+# Requirements Document: app/services/tax_efficiency/capital_gain_tracker.py
+
+## 1. Module Overview
+File: capital_gain_tracker.py
+Domain: Service
+
+## 2. Dependencies
+- `__future__`
+- `dataclasses`
+- `datetime`
+- `decimal`
+- `logging`
+
+## 3. Core Components
+### Classes
+- `GainLossRecord`
+- `PositionGainLoss`
+- `TaxLotReport`
+- `CapitalGainTracker`
+### Public Functions
+- `get_capital_gain_tracker()`
+- `record_position_purchase()`
+- `record_position_sale()`
+- `calculate_unrealized_gains()`
+- `get_short_term_gains()`
+- `get_short_term_losses()`
+- `get_long_term_gains()`
+- `get_long_term_losses()`
+- `project_annual_tax()`
+- `generate_tax_lot_report()`
+
+## 4. Applicable Trading Rules
+
+#### R28
+Trade Record Retention (keep all records 5+ years)
+
+- [ ] Implementation verified
+- [ ] Tests pass
+
+#### R25
+Phase 1: 5K-15K EUR, max 3 positions, 2% risk/trade
+
+- [ ] Implementation verified
+- [ ] Tests pass
+
+#### R26
+Phase 2: 15K-50K EUR, max 5 positions, 1.5% risk/trade
+
+- [ ] Implementation verified
+- [ ] Tests pass
+
+#### R27
+Phase 3: 50K+ EUR, max 10 positions, 1% risk/trade
+
+- [ ] Implementation verified
+- [ ] Tests pass
+
+---
+Universal rules (SOLID, type hints, formatting, security, logging) live in
+.requirements/BASE_RULES.md and apply to every file.
+Resync this stub with: python scripts/generate_requirements.py

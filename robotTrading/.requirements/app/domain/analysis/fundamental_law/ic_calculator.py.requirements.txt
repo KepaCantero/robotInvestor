@@ -1,0 +1,39 @@
+# Requirements Document: app/domain/analysis/fundamental_law/ic_calculator.py
+
+## 1. Module Overview
+File: ic_calculator.py
+Domain: Domain
+
+## 2. Dependencies
+- `__future__`
+- `app.domain.analysis.fundamental_law.models`
+- `app.shared.utils.decimal_utils`
+- `decimal`
+- `logging`
+- `numpy`
+- `pandas`
+- `scipy`
+- `typing`
+
+## 3. Core Components
+### Classes
+- `ICCalculator`
+### Public Functions
+- `calculate_ic()`
+- `calculate_ic_decay()`
+- `test_significance()`
+- `calculate_confidence_interval()`
+- `calculate_rolling_ic()`
+
+## 4. Applicable Trading Rules
+
+#### R15
+Complete Logging (log all decisions, trade journal format)
+
+- [ ] Implementation verified
+- [ ] Tests pass
+
+---
+Universal rules (SOLID, type hints, formatting, security, logging) live in
+.requirements/BASE_RULES.md and apply to every file.
+Resync this stub with: python scripts/generate_requirements.py

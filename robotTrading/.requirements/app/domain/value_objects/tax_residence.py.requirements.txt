@@ -1,0 +1,38 @@
+# Requirements Document: app/domain/value_objects/tax_residence.py
+
+## 1. Module Overview
+File: tax_residence.py
+Domain: Domain
+
+## 2. Dependencies
+- `__future__`
+- `dataclasses`
+- `decimal`
+- `enum`
+
+## 3. Core Components
+### Classes
+- `RegulatoryRegion`
+- `TaxResidence`
+### Public Functions
+- `is_eu_resident()`
+- `is_us_resident()`
+- `has_tax_treaty_with_us()`
+- `get_capital_gains_rate()`
+- `get_withholding_tax_rate()`
+- `spain()`
+- `usa()`
+- `uk()`
+
+## 4. Applicable Trading Rules
+
+#### R28
+Trade Record Retention (keep all records 5+ years)
+
+- [ ] Implementation verified
+- [ ] Tests pass
+
+---
+Universal rules (SOLID, type hints, formatting, security, logging) live in
+.requirements/BASE_RULES.md and apply to every file.
+Resync this stub with: python scripts/generate_requirements.py

@@ -1,0 +1,53 @@
+# Requirements Document: app/services/portfolio_analytics/_portfolio_calculations.py
+
+## 1. Module Overview
+File: _portfolio_calculations.py
+Domain: Service
+
+## 2. Dependencies
+- `__future__`
+- `app.domain.models.portfolio`
+- `app.domain.models.portfolio_analytics`
+- `decimal`
+- `typing`
+
+## 3. Core Components
+### Classes
+- `PortfolioCalculations`
+### Public Functions
+- `calculate_herfindahl_index()`
+- `calculate_effective_positions()`
+- `calculate_largest_position_weight()`
+- `calculate_diversification_ratio()`
+- `calculate_equity_allocation()`
+- `calculate_cash_allocation()`
+- `get_top_holdings()`
+- `estimate_rebalance_risk_impact()`
+- `estimate_rebalance_return_impact()`
+- `calculate_liquidity_score()`
+- `calculate_diversification_score()`
+
+## 4. Applicable Trading Rules
+
+#### R1
+Kelly Criterion + Max Position Size (max 5% per position)
+
+- [ ] Implementation verified
+- [ ] Tests pass
+
+#### R3
+Correlation & Concentration Limits (max 20% per sector)
+
+- [ ] Implementation verified
+- [ ] Tests pass
+
+#### R11
+Dynamic Trailing Stop (ATR-based, never loosen)
+
+- [ ] Implementation verified
+- [ ] Tests pass
+
+---
+Universal rules (SOLID, type hints, formatting, security, logging) live in
+.requirements/BASE_RULES.md and apply to every file.
+Resync this stub with: python scripts/generate_requirements.py

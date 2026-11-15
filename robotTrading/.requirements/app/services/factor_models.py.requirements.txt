@@ -1,0 +1,52 @@
+# Requirements Document: app/services/factor_models.py
+
+## 1. Module Overview
+File: factor_models.py
+Domain: Service
+
+## 2. Dependencies
+- `__future__`
+- `dataclasses`
+- `logging`
+- `numpy`
+- `pandas`
+- `scipy`
+- `scipy.optimize`
+- `sklearn.decomposition`
+
+## 3. Core Components
+### Classes
+- `FactorReturns`
+- `FactorLoadings`
+- `FactorModelResult`
+- `FamaFrenchFactorModel`
+- `APTModel`
+- `StatisticalArbitrage`
+### Public Functions
+- `calculate_factor_exposure()`
+- `create_factor_portfolio()`
+- `get_factor_model()`
+- `fit()`
+- `predict()`
+- `fit()`
+- `get_factor_loadings()`
+- `get_factor_returns()`
+- `get_explained_variance_ratio()`
+- `predict_portfolio_risk()`
+- `calculate_residuals()`
+- `generate_signals()`
+- `construct_factor_neutral_portfolio()`
+- `objective()`
+
+## 4. Applicable Trading Rules
+
+#### R15
+Complete Logging (log all decisions, trade journal format)
+
+- [ ] Implementation verified
+- [ ] Tests pass
+
+---
+Universal rules (SOLID, type hints, formatting, security, logging) live in
+.requirements/BASE_RULES.md and apply to every file.
+Resync this stub with: python scripts/generate_requirements.py

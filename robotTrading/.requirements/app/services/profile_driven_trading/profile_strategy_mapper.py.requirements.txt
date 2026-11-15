@@ -1,0 +1,78 @@
+# Requirements Document: app/services/profile_driven_trading/profile_strategy_mapper.py
+
+## 1. Module Overview
+File: profile_strategy_mapper.py
+Domain: Service
+
+## 2. Dependencies
+- `__future__`
+- `app.domain.models.input_profile`
+- `app.services.multi_strategy_allocation`
+- `app.shared.config.centralized_config`
+- `app.shared.utils.safe_parse`
+- `app.shared.utils.tier_mapper`
+- `decimal`
+- `logging`
+- `pathlib`
+- `pydantic`
+- `typing`
+- `yaml`
+
+## 3. Core Components
+### Classes
+- `StrategyMapping`
+- `ProfileStrategyMapper`
+### Public Functions
+- `get_capital_tier()`
+- `create_profile_mapper()`
+- `map_profile_to_strategies()`
+- `validate_weights_sum()`
+- `map_profile_to_strategies()`
+- `get_capital_allocation()`
+- `get_learning_engines()`
+- `get_ensemble_config()`
+- `create_strategy_mapping()`
+- `get_learning_parameters()`
+
+## 4. Applicable Trading Rules
+
+#### R8
+Bid-Ask Spread Management (avoid market orders for low-liquidity)
+
+- [ ] Implementation verified
+- [ ] Tests pass
+
+#### R9
+Execution Timing (avoid first/last 15 min, VWAP/TWAP for large orders)
+
+- [ ] Implementation verified
+- [ ] Tests pass
+
+#### R10
+Slippage Monitor (track actual vs expected fill, alert if >0.5%)
+
+- [ ] Implementation verified
+- [ ] Tests pass
+
+#### R19
+Market Regime Detection (trend/range/volatile classification)
+
+- [ ] Implementation verified
+- [ ] Tests pass
+
+#### R20
+Multi-Confirmation (min 2 independent signals before trade)
+
+- [ ] Implementation verified
+- [ ] Tests pass
+
+#### R24
+Strategy Diversification (min 3 uncorrelated strategies)
+
+- [ ] Implementation verified
+- [ ] Tests pass
+
+---
+Universal rules (SOLID, type hints, formatting, security, logging) live in
+.requirements/BASE_RULES.md and apply to every file.
+Resync this stub with: python scripts/generate_requirements.py

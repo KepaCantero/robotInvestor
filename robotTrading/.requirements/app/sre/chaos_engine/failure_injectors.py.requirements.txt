@@ -1,0 +1,60 @@
+# Requirements Document: app/sre/chaos_engine/failure_injectors.py
+
+## 1. Module Overview
+File: failure_injectors.py
+Domain: SRE
+
+## 2. Dependencies
+- `__future__`
+- `abc`
+- `asyncio`
+- `contextlib`
+- `dataclasses`
+- `decimal`
+- `enum`
+- `logging`
+- `psutil`
+- `random`
+- `signal`
+- `subprocess`
+- `typing`
+
+## 3. Core Components
+### Classes
+- `InjectionType`
+- `InjectionConfig`
+- `FailureInjector`
+- `PodKiller`
+- `NetworkDelayInjector`
+- `ErrorInjector`
+- `LatencyInjector`
+- `ResourceStarver`
+- `FailureInjectorFactory`
+### Public Functions
+- `inject()`
+- `rollback()`
+- `is_active()`
+- `inject()`
+- `rollback()`
+- `inject()`
+- `rollback()`
+- `inject()`
+- `rollback()`
+- `inject()`
+- `rollback()`
+- `inject()`
+- `rollback()`
+- `create()`
+
+## 4. Applicable Trading Rules
+
+#### R15
+Complete Logging (log all decisions, trade journal format)
+
+- [ ] Implementation verified
+- [ ] Tests pass
+
+---
+Universal rules (SOLID, type hints, formatting, security, logging) live in
+.requirements/BASE_RULES.md and apply to every file.
+Resync this stub with: python scripts/generate_requirements.py

@@ -1,0 +1,59 @@
+# Requirements Document: app/domain/analysis/vectorization/benchmark.py
+
+## 1. Module Overview
+File: benchmark.py
+Domain: Domain
+
+## 2. Dependencies
+- `__future__`
+- `app.domain.analysis.vectorization.models`
+- `logging`
+- `numpy`
+- `pandas`
+- `time`
+- `typing`
+
+## 3. Core Components
+### Classes
+- `VectorizationBenchmark`
+### Public Functions
+- `benchmark_sum()`
+- `benchmark_ewm_calculate()`
+- `benchmark_rolling_calculation()`
+- `benchmark_correlation()`
+- `benchmark_elementwise_operation()`
+- `benchmark_filtering()`
+- `benchmark_groupby()`
+- `benchmark_percentage_change()`
+- `run_all_benchmarks()`
+- `generate_report()`
+- `generate_latex_table()`
+- `sum_non_vectorized()`
+- `sum_vectorized()`
+- `ewm_non_vectorized()`
+- `ewm_vectorized()`
+- `rolling_non_vectorized()`
+- `rolling_vectorized()`
+- `corr_non_vectorized()`
+- `corr_vectorized()`
+- `elementwise_non_vectorized()`
+- `elementwise_vectorized()`
+- `filter_non_vectorized()`
+- `filter_vectorized()`
+- `groupby_non_vectorized()`
+- `groupby_vectorized()`
+- `pct_change_non_vectorized()`
+- `pct_change_vectorized()`
+
+## 4. Applicable Trading Rules
+
+#### R15
+Complete Logging (log all decisions, trade journal format)
+
+- [ ] Implementation verified
+- [ ] Tests pass
+
+---
+Universal rules (SOLID, type hints, formatting, security, logging) live in
+.requirements/BASE_RULES.md and apply to every file.
+Resync this stub with: python scripts/generate_requirements.py

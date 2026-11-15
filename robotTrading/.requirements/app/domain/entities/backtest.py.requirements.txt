@@ -1,0 +1,46 @@
+# Requirements Document: app/domain/entities/backtest.py
+
+## 1. Module Overview
+File: backtest.py
+Domain: Domain
+
+## 2. Dependencies
+- `__future__`
+- `dataclasses`
+- `datetime`
+- `decimal`
+- `enum`
+- `logging`
+- `typing`
+- `value_objects.backtest_config`
+- `value_objects.backtest_result`
+
+## 3. Core Components
+### Classes
+- `BacktestStatus`
+- `BacktestType`
+- `Backtest`
+### Public Functions
+- `start()`
+- `complete()`
+- `fail()`
+- `cancel()`
+- `get_duration()`
+- `is_running()`
+- `is_completed()`
+- `is_failed()`
+- `get_roi()`
+- `get_sharpe_ratio()`
+
+## 4. Applicable Trading Rules
+
+#### R15
+Complete Logging (log all decisions, trade journal format)
+
+- [ ] Implementation verified
+- [ ] Tests pass
+
+---
+Universal rules (SOLID, type hints, formatting, security, logging) live in
+.requirements/BASE_RULES.md and apply to every file.
+Resync this stub with: python scripts/generate_requirements.py

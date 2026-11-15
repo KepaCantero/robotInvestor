@@ -1,0 +1,67 @@
+# Requirements Document: app/engines/data_engine/data_engine.py
+
+## 1. Module Overview
+File: data_engine.py
+Domain: Engine
+
+## 2. Dependencies
+- `__future__`
+- `asyncio`
+- `cache.distributed_cache`
+- `config_loader`
+- `datetime`
+- `logging`
+- `normalizers.unified_normalizer`
+- `numpy`
+- `os`
+- `sources.base_source`
+- `sources.fundamental_sources`
+- `sources.ohlcv_sources`
+- `sources.options_sources`
+- `sources.sentiment_sources`
+- `streaming.websocket_streaming`
+- `typing`
+- `validators.data_cleaning_pipeline`
+- `versioning.data_lineage`
+- `versioning.schema_versioner`
+- `versioning.version_manager`
+
+## 3. Core Components
+### Classes
+- `DataEngine`
+### Public Functions
+- `connect_all()`
+- `disconnect_all()`
+- `get_ohlcv()`
+- `get_fundamentals()`
+- `get_sentiment()`
+- `get_options_chain()`
+- `get_volatility_surface()`
+- `initialize()`
+- `shutdown()`
+- `get_status()`
+
+## 4. Applicable Trading Rules
+
+#### R14
+Data Quality Validation (OHLCV sanity checks, detect gaps/stale data)
+
+- [ ] Implementation verified
+- [ ] Tests pass
+
+#### R15
+Complete Logging (log all decisions, trade journal format)
+
+- [ ] Implementation verified
+- [ ] Tests pass
+
+#### R16
+Daily Reconciliation (compare broker vs internal, alert discrepancies >1%)
+
+- [ ] Implementation verified
+- [ ] Tests pass
+
+---
+Universal rules (SOLID, type hints, formatting, security, logging) live in
+.requirements/BASE_RULES.md and apply to every file.
+Resync this stub with: python scripts/generate_requirements.py

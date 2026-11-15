@@ -1,0 +1,55 @@
+# Requirements Document: app/domain/repositories/unit_of_work.py
+
+## 1. Module Overview
+File: unit_of_work.py
+Domain: Domain
+
+## 2. Dependencies
+- `__future__`
+- `abc`
+- `asyncio`
+- `base_repository`
+- `collections.abc`
+- `contextlib`
+- `dataclasses`
+- `logging`
+- `typing`
+
+## 3. Core Components
+### Classes
+- `TrackedEntity`
+- `AbstractUnitOfWork`
+- `GenericUnitOfWork`
+- `AsyncUnitOfWorkProtocol`
+- `UnitOfWorkError`
+- `AlreadyCommittedError`
+- `NotActiveError`
+- `TradingUnitOfWork`
+### Public Functions
+- `unit_of_work_context()`
+- `commit()`
+- `rollback()`
+- `collect_new_events()`
+- `register_repository()`
+- `track_entity()`
+- `commit()`
+- `rollback()`
+- `collect_new_events()`
+- `mark_dirty()`
+- `mark_deleted()`
+- `commit()`
+- `rollback()`
+- `collect_new_events()`
+
+## 4. Applicable Trading Rules
+
+#### R15
+Complete Logging (log all decisions, trade journal format)
+
+- [ ] Implementation verified
+- [ ] Tests pass
+
+---
+Universal rules (SOLID, type hints, formatting, security, logging) live in
+.requirements/BASE_RULES.md and apply to every file.
+Resync this stub with: python scripts/generate_requirements.py

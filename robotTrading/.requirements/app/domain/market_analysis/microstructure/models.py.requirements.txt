@@ -1,0 +1,69 @@
+# Requirements Document: app/domain/market_analysis/microstructure/models.py
+
+## 1. Module Overview
+File: models.py
+Domain: Domain
+
+## 2. Dependencies
+- `__future__`
+- `dataclasses`
+- `datetime`
+- `decimal`
+- `enum`
+- `logging`
+- `numpy`
+- `pandas`
+- `typing`
+
+## 3. Core Components
+### Classes
+- `ModelType`
+- `InformationEvent`
+- `ModelParameters`
+- `GlostenMilgromResult`
+- `KyleModelResult`
+- `OrderFlowImpactResult`
+- `RollSpreadResult`
+- `StollDecompositionResult`
+- `GlostenMilgromModel`
+- `KyleModel`
+- `MadhavanRichardsonModel`
+- `RollSpreadEstimator`
+- `StollSpreadDecomposer`
+- `MicrostructureModelComparator`
+### Public Functions
+- `get_glosten_milgrom_model()`
+- `get_kyle_model()`
+- `get_madhavanh_richardson_model()`
+- `get_roll_estimator()`
+- `get_stoll_decomposer()`
+- `get_model_comparator()`
+- `to_dict()`
+- `to_dict()`
+- `to_dict()`
+- `to_dict()`
+- `to_dict()`
+- `to_dict()`
+- `calculate_equilibrium_spread()`
+- `simulate_trade_sequence()`
+- `calculate_spread_components()`
+- `calculate_market_depth()`
+- `calculate_optimal_informed_trading()`
+- `simulate_kyle_equilibrium()`
+- `estimate_order_flow_impact()`
+- `estimate_spread()`
+- `decompose_spread()`
+- `analyze_market()`
+
+## 4. Applicable Trading Rules
+
+#### R15
+Complete Logging (log all decisions, trade journal format)
+
+- [ ] Implementation verified
+- [ ] Tests pass
+
+---
+Universal rules (SOLID, type hints, formatting, security, logging) live in
+.requirements/BASE_RULES.md and apply to every file.
+Resync this stub with: python scripts/generate_requirements.py

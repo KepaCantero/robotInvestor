@@ -1,0 +1,80 @@
+# Requirements Document: app/engines/strategy_engines/base.py
+
+## 1. Module Overview
+File: base.py
+Domain: Engine
+
+## 2. Dependencies
+- `__future__`
+- `abc`
+- `app.domain.models.market_data`
+- `app.domain.models.signal`
+- `app.domain.strategies.base`
+- `app.domain.strategies.learning.base_learning_engine`
+- `app.engines.context_engine.context_engine`
+- `app.engines.data_engine.data_engine`
+- `app.engines.portfolio_engine.portfolio_engine`
+- `app.engines.risk_engine.risk_engine`
+- `asyncio`
+- `collections.abc`
+- `concurrent.futures`
+- `contextlib`
+- `datetime`
+- `decimal`
+- `logging`
+- `typing`
+
+## 3. Core Components
+### Classes
+- `_HasInitialize`
+- `_HasGetStatus`
+- `BaseStrategyEngine`
+### Public Functions
+- `initialize()`
+- `get_status()`
+- `extract_features()`
+- `get_strategy_type()`
+- `set_learning_engine()`
+- `get_learning_prediction()`
+- `apply_learning_adjustments()`
+- `register_signal_callback()`
+- `register_trade_callback()`
+- `register_market_data_callback()`
+- `set_ensemble_weight()`
+- `get_ensemble_weight()`
+- `get_context_analysis()`
+- `get_volatility_regime()`
+- `get_market_data_from_engine()`
+- `set_data_engine()`
+- `set_context_engine()`
+- `set_portfolio_engine()`
+- `set_risk_engine()`
+- `generate_signals()`
+- `get_metrics()`
+- `reset_metrics()`
+- `get_status()`
+
+## 4. Applicable Trading Rules
+
+#### R19
+Market Regime Detection (trend/range/volatile classification)
+
+- [ ] Implementation verified
+- [ ] Tests pass
+
+#### R20
+Multi-Confirmation (min 2 independent signals before trade)
+
+- [ ] Implementation verified
+- [ ] Tests pass
+
+#### R24
+Strategy Diversification (min 3 uncorrelated strategies)
+
+- [ ] Implementation verified
+- [ ] Tests pass
+
+---
+Universal rules (SOLID, type hints, formatting, security, logging) live in
+.requirements/BASE_RULES.md and apply to every file.
+Resync this stub with: python scripts/generate_requirements.py

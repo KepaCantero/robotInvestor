@@ -1,0 +1,48 @@
+# Requirements Document: app/services/momentum/orchestrator.py
+
+## 1. Module Overview
+File: orchestrator.py
+Domain: Service
+
+## 2. Dependencies
+- `__future__`
+- `app.domain.models.momentum`
+- `app.services.momentum.analyzer`
+- `app.services.momentum.data_provider`
+- `app.services.momentum.indicators.calculator`
+- `app.services.momentum.protocols`
+- `app.services.momentum.signal_generator`
+- `app.services.momentum.storage`
+- `app.services.momentum.strategy_manager`
+- `logging`
+- `typing`
+
+## 3. Core Components
+### Classes
+- `MomentumAnalysisService`
+### Public Functions
+- `get_momentum_analysis_service()`
+- `analyze_asset_momentum()`
+- `get_momentum_signals()`
+- `get_strategy_signals()`
+- `get_top_momentum_assets()`
+- `create_strategy()`
+- `get_strategy()`
+- `update_strategy()`
+- `delete_strategy()`
+- `get_analyses()`
+- `get_analysis()`
+- `delete_analysis()`
+
+## 4. Applicable Trading Rules
+
+#### R15
+Complete Logging (log all decisions, trade journal format)
+
+- [ ] Implementation verified
+- [ ] Tests pass
+
+---
+Universal rules (SOLID, type hints, formatting, security, logging) live in
+.requirements/BASE_RULES.md and apply to every file.
+Resync this stub with: python scripts/generate_requirements.py

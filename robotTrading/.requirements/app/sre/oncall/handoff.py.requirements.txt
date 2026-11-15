@@ -1,0 +1,60 @@
+# Requirements Document: app/sre/oncall/handoff.py
+
+## 1. Module Overview
+File: handoff.py
+Domain: SRE
+
+## 2. Dependencies
+- `__future__`
+- `aiosqlite`
+- `app.shared.utils.safe_parse`
+- `asyncio`
+- `dataclasses`
+- `datetime`
+- `enum`
+- `logging`
+- `numpy`
+- `pathlib`
+- `typing`
+
+## 3. Core Components
+### Classes
+- `HandoffStatus`
+- `ChecklistItemType`
+- `ChecklistItem`
+- `ChecklistCompletion`
+- `HandoffContext`
+- `HandoffSession`
+- `HandoffConfig`
+- `HandoffManager`
+### Public Functions
+- `to_dict()`
+- `to_dict()`
+- `start()`
+- `complete()`
+- `fail()`
+- `cancel()`
+- `complete_item()`
+- `get_completion_percentage()`
+- `get_required_remaining()`
+- `calculate_quality_score()`
+- `to_dict()`
+- `initialize()`
+- `create_handoff()`
+- `start_handoff()`
+- `complete_handoff()`
+- `complete_checklist_item()`
+- `get_handoff_metrics()`
+
+## 4. Applicable Trading Rules
+
+#### R15
+Complete Logging (log all decisions, trade journal format)
+
+- [ ] Implementation verified
+- [ ] Tests pass
+
+---
+Universal rules (SOLID, type hints, formatting, security, logging) live in
+.requirements/BASE_RULES.md and apply to every file.
+Resync this stub with: python scripts/generate_requirements.py

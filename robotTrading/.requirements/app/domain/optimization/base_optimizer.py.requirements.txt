@@ -1,0 +1,56 @@
+# Requirements Document: app/domain/optimization/base_optimizer.py
+
+## 1. Module Overview
+File: base_optimizer.py
+Domain: Domain
+
+## 2. Dependencies
+- `__future__`
+- `abc`
+- `collections.abc`
+- `dataclasses`
+- `datetime`
+- `enum`
+- `logging`
+- `numpy`
+- `numpy.typing`
+- `os`
+- `random`
+- `typing`
+
+## 3. Core Components
+### Classes
+- `OptimizerType`
+- `OptimizationStatus`
+- `OptimizationConfig`
+- `TrialResult`
+- `OptimizationResult`
+- `BaseOptimizer`
+### Public Functions
+- `n_parallel_jobs()`
+- `to_dict()`
+- `is_success()`
+- `duration_seconds()`
+- `to_dict()`
+- `success_rate()`
+- `mean_score()`
+- `std_score()`
+- `get_top_n()`
+- `to_dict()`
+- `optimize()`
+- `get_best_params()`
+- `get_history()`
+- `get_optimizer_type()`
+
+## 4. Applicable Trading Rules
+
+#### R15
+Complete Logging (log all decisions, trade journal format)
+
+- [ ] Implementation verified
+- [ ] Tests pass
+
+---
+Universal rules (SOLID, type hints, formatting, security, logging) live in
+.requirements/BASE_RULES.md and apply to every file.
+Resync this stub with: python scripts/generate_requirements.py

@@ -1,0 +1,70 @@
+# Requirements Document: app/shared/config/profile_config_loader.py
+
+## 1. Module Overview
+File: profile_config_loader.py
+Domain: Shared
+
+## 2. Dependencies
+- `__future__`
+- `config_loader`
+- `logging`
+- `pathlib`
+- `typing`
+- `typing_extensions`
+
+## 3. Core Components
+### Classes
+- `ProfileConfigLoader`
+### Public Functions
+- `get_profile_config_loader()`
+- `get_common_params()`
+- `get_model_params()`
+- `get_threshold_ranges()`
+- `get_rl_config()`
+- `clear_loader_cache()`
+- `config()`
+- `get()`
+- `get()`
+- `get()`
+- `get_random_state()`
+- `get_test_size()`
+- `get_cv_folds()`
+- `get_min_train_samples()`
+- `get_max_workers()`
+- `get_batch_size()`
+- `get_task_timeout()`
+- `get_model_params()`
+- `get_random_forest_params()`
+- `get_xgboost_params()`
+- `get_lightgbm_params()`
+- `get_rl_environment_config()`
+- `get_rl_reward_config()`
+- `get_rl_algorithm_params()`
+- `get_rl_training_params()`
+- `get_rl_network_config()`
+- `get_threshold_config()`
+- `get_optimization_method()`
+- `get_optimization_scoring()`
+- `get_walk_forward_config()`
+- `get_monte_carlo_config()`
+- `get_validation_thresholds()`
+- `get_output_directory()`
+- `get_report_metrics()`
+- `get_visualization_config()`
+- `get_memory_config()`
+- `get_max_results_in_memory()`
+- `validate_parameter_range()`
+- `get_parameter_range()`
+
+## 4. Applicable Trading Rules
+
+#### R15
+Complete Logging (log all decisions, trade journal format)
+
+- [ ] Implementation verified
+- [ ] Tests pass
+
+---
+Universal rules (SOLID, type hints, formatting, security, logging) live in
+.requirements/BASE_RULES.md and apply to every file.
+Resync this stub with: python scripts/generate_requirements.py

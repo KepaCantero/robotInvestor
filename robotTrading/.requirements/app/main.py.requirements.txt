@@ -1,0 +1,67 @@
+# Requirements Document: app/main.py
+
+## 1. Module Overview
+File: main.py
+Domain: General
+
+## 2. Dependencies
+- `__future__`
+- `app.api.cost_analysis`
+- `app.infrastructure.persistence.database`
+- `app.presentation.api`
+- `app.presentation.api.assets`
+- `app.presentation.api.capa2_endpoints`
+- `app.presentation.api.error_handler`
+- `app.presentation.api.health`
+- `app.presentation.api.live_trading`
+- `app.presentation.api.market_data`
+- `app.presentation.api.middleware`
+- `app.presentation.api.momentum`
+- `app.presentation.api.optimization`
+- `app.presentation.api.paper_trading`
+- `app.presentation.api.portfolio`
+- `app.presentation.api.portfolio_analytics`
+- `app.presentation.api.signals`
+- `app.presentation.api.strategies`
+- `app.presentation.api.trading_error_handler`
+- `app.shared.config.config`
+- `app.shared.performance.numba_enforcer`
+- `asyncio`
+- `contextlib`
+- `datetime`
+- `fastapi`
+- `fastapi.exceptions`
+- `fastapi.middleware.cors`
+- `fastapi.responses`
+- `logging`
+- `os`
+- `platform`
+- `pydantic`
+- `sqlalchemy.exc`
+- `starlette.exceptions`
+- `starlette.responses`
+- `sys`
+- `typing`
+- `uvicorn`
+
+## 3. Core Components
+### Public Functions
+- `get_app_settings()`
+- `lifespan()`
+- `root()`
+- `detailed_health_check()`
+- `not_found_handler()`
+- `internal_error_handler()`
+
+## 4. Applicable Trading Rules
+
+#### R15
+Complete Logging (log all decisions, trade journal format)
+
+- [ ] Implementation verified
+- [ ] Tests pass
+
+---
+Universal rules (SOLID, type hints, formatting, security, logging) live in
+.requirements/BASE_RULES.md and apply to every file.
+Resync this stub with: python scripts/generate_requirements.py

@@ -1,0 +1,56 @@
+# Requirements Document: app/services/portfolio_analytics/_performance_calculations.py
+
+## 1. Module Overview
+File: _performance_calculations.py
+Domain: Service
+
+## 2. Dependencies
+- `datetime`
+- `decimal`
+- `statistics`
+
+## 3. Core Components
+### Classes
+- `PerformanceCalculations`
+### Public Functions
+- `get_period_start_date()`
+- `calculate_returns()`
+- `calculate_total_return()`
+- `calculate_annualized_return()`
+- `calculate_cumulative_return()`
+- `calculate_volatility()`
+- `calculate_sharpe_ratio()`
+- `calculate_sortino_ratio()`
+- `calculate_max_drawdown()`
+- `calculate_var()`
+- `calculate_calmar_ratio()`
+- `calculate_information_ratio()`
+- `calculate_treynor_ratio()`
+- `calculate_jensen_alpha()`
+- `calculate_tracking_error()`
+- `calculate_realized_volatility()`
+
+## 4. Applicable Trading Rules
+
+#### R1
+Kelly Criterion + Max Position Size (max 5% per position)
+
+- [ ] Implementation verified
+- [ ] Tests pass
+
+#### R3
+Correlation & Concentration Limits (max 20% per sector)
+
+- [ ] Implementation verified
+- [ ] Tests pass
+
+#### R11
+Dynamic Trailing Stop (ATR-based, never loosen)
+
+- [ ] Implementation verified
+- [ ] Tests pass
+
+---
+Universal rules (SOLID, type hints, formatting, security, logging) live in
+.requirements/BASE_RULES.md and apply to every file.
+Resync this stub with: python scripts/generate_requirements.py

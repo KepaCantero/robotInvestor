@@ -1,0 +1,78 @@
+# Requirements Document: app/backtesting/config_loader.py
+
+## 1. Module Overview
+File: config_loader.py
+Domain: Backtest
+
+## 2. Dependencies
+- `__future__`
+- `logging`
+- `pathlib`
+- `pydantic`
+- `typing`
+- `yaml`
+
+## 3. Core Components
+### Classes
+- `MetricThresholdConfig`
+- `RollingWindowsConfig`
+- `SeasonalityConfig`
+- `RegimeDetectionConfig`
+- `AnalysisConfig`
+- `StaticPlotsConfig`
+- `InteractiveConfig`
+- `VisualizationConfig`
+- `ReportingConfig`
+- `LoggingConfig`
+- `AdvancedConfig`
+- `MetaAnalyzerConfig`
+- `ConfigLoader`
+### Public Functions
+- `get_config()`
+- `reset_config()`
+- `validate_positive_thresholds()`
+- `validate_logging_level()`
+- `validate_config()`
+- `get()`
+- `get_section()`
+- `get_metric_thresholds()`
+- `get_analysis_config()`
+- `get_visualization_config()`
+- `get_reporting_config()`
+- `get_alerts_config()`
+- `get_regime_detection_config()`
+- `get_seasonality_config()`
+- `get_clustering_config()`
+- `get_walk_forward_config()`
+- `get_alert_threshold()`
+- `is_enabled()`
+- `get_random_state()`
+- `get_logging_level()`
+- `to_dict()`
+- `reload()`
+- `validate_config()`
+
+## 4. Applicable Trading Rules
+
+#### R5
+Walk-Forward Analysis (70/30 train/test split, min 50 trades OOS, max 30% degradation)
+
+- [ ] Implementation verified
+- [ ] Tests pass
+
+#### R6
+Overfitting Prevention (min 30 samples per parameter, purged cross-validation)
+
+- [ ] Implementation verified
+- [ ] Tests pass
+
+#### R7
+Monte Carlo Risk Analysis (1000 simulations, validate DD within 5-95 percentile)
+
+- [ ] Implementation verified
+- [ ] Tests pass
+
+---
+Universal rules (SOLID, type hints, formatting, security, logging) live in
+.requirements/BASE_RULES.md and apply to every file.
+Resync this stub with: python scripts/generate_requirements.py

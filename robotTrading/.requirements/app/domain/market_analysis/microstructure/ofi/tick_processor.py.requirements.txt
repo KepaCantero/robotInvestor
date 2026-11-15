@@ -1,0 +1,54 @@
+# Requirements Document: app/domain/market_analysis/microstructure/ofi/tick_processor.py
+
+## 1. Module Overview
+File: tick_processor.py
+Domain: Domain
+
+## 2. Dependencies
+- `__future__`
+- `app.domain.market_analysis.microstructure.ofi.models`
+- `app.domain.market_analysis.microstructure.ofi.ofi_calculator`
+- `collections`
+- `dataclasses`
+- `datetime`
+- `decimal`
+- `logging`
+- `math`
+- `numpy`
+- `typing`
+
+## 3. Core Components
+### Classes
+- `InvalidPriceError`
+- `TickOFIResult`
+- `OrderBookLevel`
+- `OrderBookState`
+- `TickLevelOFIProcessor`
+### Public Functions
+- `to_dict()`
+- `update_bid()`
+- `update_ask()`
+- `get_best_bid()`
+- `get_best_ask()`
+- `to_snapshot()`
+- `get_depth()`
+- `process_tick()`
+- `calculate_tick_ofi()`
+- `update_order_book()`
+- `get_aggressive_flow_ratio()`
+- `detect_aggressive_surge()`
+- `reset()`
+- `get_statistics()`
+
+## 4. Applicable Trading Rules
+
+#### R15
+Complete Logging (log all decisions, trade journal format)
+
+- [ ] Implementation verified
+- [ ] Tests pass
+
+---
+Universal rules (SOLID, type hints, formatting, security, logging) live in
+.requirements/BASE_RULES.md and apply to every file.
+Resync this stub with: python scripts/generate_requirements.py

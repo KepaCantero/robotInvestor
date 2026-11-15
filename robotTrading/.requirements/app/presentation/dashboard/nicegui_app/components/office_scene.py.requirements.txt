@@ -1,0 +1,33 @@
+# Requirements Document: app/presentation/dashboard/nicegui_app/components/office_scene.py
+
+## 1. Module Overview
+File: office_scene.py
+Domain: Presentation
+
+## 2. Dependencies
+- `__future__`
+- `app.presentation.dashboard.nicegui_app.components.agent_card`
+- `app.services.agent_swarm.executor`
+- `json`
+- `nicegui`
+- `typing`
+
+## 3. Core Components
+### Classes
+- `OfficeScene`
+### Public Functions
+- `build_office_svg()`
+- `update()`
+
+## 4. Applicable Trading Rules
+
+#### R15
+Complete Logging (log all decisions, trade journal format)
+
+- [ ] Implementation verified
+- [ ] Tests pass
+
+---
+Universal rules (SOLID, type hints, formatting, security, logging) live in
+.requirements/BASE_RULES.md and apply to every file.
+Resync this stub with: python scripts/generate_requirements.py

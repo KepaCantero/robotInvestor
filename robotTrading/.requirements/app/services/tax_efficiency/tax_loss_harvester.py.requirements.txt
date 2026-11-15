@@ -1,0 +1,38 @@
+# Requirements Document: app/services/tax_efficiency/tax_loss_harvester.py
+
+## 1. Module Overview
+File: tax_loss_harvester.py
+Domain: Service
+
+## 2. Dependencies
+- `__future__`
+- `dataclasses`
+- `decimal`
+- `logging`
+
+## 3. Core Components
+### Classes
+- `HarvestablePosition`
+- `ReplacementPosition`
+- `HarvestingOpportunity`
+- `TaxLossHarvester`
+### Public Functions
+- `get_tax_loss_harvester()`
+- `identify_harvestable_positions()`
+- `calculate_tax_benefit()`
+- `suggest_replacement_position()`
+- `estimate_annual_tax_benefit()`
+- `create_harvesting_opportunity()`
+
+## 4. Applicable Trading Rules
+
+#### R28
+Trade Record Retention (keep all records 5+ years)
+
+- [ ] Implementation verified
+- [ ] Tests pass
+
+---
+Universal rules (SOLID, type hints, formatting, security, logging) live in
+.requirements/BASE_RULES.md and apply to every file.
+Resync this stub with: python scripts/generate_requirements.py

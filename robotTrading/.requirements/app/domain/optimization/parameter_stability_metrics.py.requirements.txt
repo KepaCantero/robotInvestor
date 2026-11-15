@@ -1,0 +1,60 @@
+# Requirements Document: app/domain/optimization/parameter_stability_metrics.py
+
+## 1. Module Overview
+File: parameter_stability_metrics.py
+Domain: Domain
+
+## 2. Dependencies
+- `__future__`
+- `dataclasses`
+- `datetime`
+- `json`
+- `logging`
+- `numpy`
+- `pathlib`
+- `typing`
+
+## 3. Core Components
+### Classes
+- `WindowOptimalValue`
+- `ParameterStabilityResult`
+- `StabilityReport`
+- `ParameterStabilityMetrics`
+### Public Functions
+- `to_dict()`
+- `to_dict()`
+- `to_json()`
+- `calculate_variance_across_windows()`
+- `calculate_convergence_speed()`
+- `calculate_stability_score()`
+- `analyze_parameter_stability()`
+- `get_parameter_plateau_width()`
+- `rank_parameters_by_stability()`
+- `detect_unstable_parameters()`
+- `recommend_parameter_simplification()`
+- `print_stability_report()`
+
+## 4. Applicable Trading Rules
+
+#### R5
+Walk-Forward Analysis (70/30 train/test split, min 50 trades OOS, max 30% degradation)
+
+- [ ] Implementation verified
+- [ ] Tests pass
+
+#### R6
+Overfitting Prevention (min 30 samples per parameter, purged cross-validation)
+
+- [ ] Implementation verified
+- [ ] Tests pass
+
+#### R7
+Monte Carlo Risk Analysis (1000 simulations, validate DD within 5-95 percentile)
+
+- [ ] Implementation verified
+- [ ] Tests pass
+
+---
+Universal rules (SOLID, type hints, formatting, security, logging) live in
+.requirements/BASE_RULES.md and apply to every file.
+Resync this stub with: python scripts/generate_requirements.py

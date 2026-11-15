@@ -1,0 +1,46 @@
+# Requirements Document: app/services/security/key_rotation.py
+
+## 1. Module Overview
+File: key_rotation.py
+Domain: Service
+
+## 2. Dependencies
+- `__future__`
+- `dataclasses`
+- `datetime`
+- `enum`
+- `logging`
+- `secrets`
+
+## 3. Core Components
+### Classes
+- `RotationStatus`
+- `RotationSchedule`
+- `RotationResult`
+- `RotationError`
+- `KeyRotationManager`
+### Public Functions
+- `is_due()`
+- `is_in_grace_period()`
+- `schedule_rotation()`
+- `check_rotations_due()`
+- `rotate_key()`
+- `rollback_rotation()`
+- `get_rotation_schedule()`
+- `list_schedules()`
+- `get_rotation_history()`
+- `cancel_schedule()`
+- `update_schedule()`
+
+## 4. Applicable Trading Rules
+
+#### R29
+API Key Security (rotate every 90 days, never in code)
+
+- [ ] Implementation verified
+- [ ] Tests pass
+
+---
+Universal rules (SOLID, type hints, formatting, security, logging) live in
+.requirements/BASE_RULES.md and apply to every file.
+Resync this stub with: python scripts/generate_requirements.py

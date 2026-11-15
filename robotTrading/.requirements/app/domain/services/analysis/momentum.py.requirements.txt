@@ -1,0 +1,50 @@
+# Requirements Document: app/domain/services/analysis/momentum.py
+
+## 1. Module Overview
+File: momentum.py
+Domain: Domain
+
+## 2. Dependencies
+- `__future__`
+- `app.domain.services.indicators.factory`
+- `app.domain.services.indicators.technical_indicators`
+- `logging`
+- `math`
+- `numpy`
+- `pandas`
+- `typing`
+
+## 3. Core Components
+### Classes
+- `TechnicalIndicatorCalculator`
+### Public Functions
+- `indicators()`
+- `calculate_zscore()`
+- `calculate_volatility()`
+- `calculate_rsi()`
+- `calculate_ema()`
+- `calculate_sma()`
+- `calculate_macd()`
+- `calculate_atr()`
+- `calculate_bollinger_bands()`
+- `calculate_roc()`
+- `calculate_stochastic()`
+- `calculate_stochastic_rsi()`
+- `calculate_adx()`
+- `calculate_cci()`
+- `calculate_obv()`
+- `calculate_williams_r()`
+- `calculate_all_indicators()`
+
+## 4. Applicable Trading Rules
+
+#### R15
+Complete Logging (log all decisions, trade journal format)
+
+- [ ] Implementation verified
+- [ ] Tests pass
+
+---
+Universal rules (SOLID, type hints, formatting, security, logging) live in
+.requirements/BASE_RULES.md and apply to every file.
+Resync this stub with: python scripts/generate_requirements.py

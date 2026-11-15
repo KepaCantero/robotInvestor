@@ -1,0 +1,48 @@
+# Requirements Document: app/services/corporate_actions/handler.py
+
+## 1. Module Overview
+File: handler.py
+Domain: Service
+
+## 2. Dependencies
+- `__future__`
+- `app.shared.interfaces.broker_base`
+- `app.shared.utils.timezone_utils`
+- `dataclasses`
+- `datetime`
+- `decimal`
+- `enum`
+- `logging`
+- `typing`
+
+## 3. Core Components
+### Classes
+- `CorporateActionType`
+- `CorporateAction`
+- `CorporateActionsHandler`
+### Public Functions
+- `to_dict()`
+- `on_stock_split()`
+- `on_dividend()`
+- `on_merger()`
+- `on_delisting()`
+- `on_spinoff()`
+- `on_symbol_change()`
+- `get_processed_actions()`
+- `get_action_for_symbol()`
+- `get_action_by_type()`
+- `get_stats()`
+- `clear_history()`
+
+## 4. Applicable Trading Rules
+
+#### R15
+Complete Logging (log all decisions, trade journal format)
+
+- [ ] Implementation verified
+- [ ] Tests pass
+
+---
+Universal rules (SOLID, type hints, formatting, security, logging) live in
+.requirements/BASE_RULES.md and apply to every file.
+Resync this stub with: python scripts/generate_requirements.py

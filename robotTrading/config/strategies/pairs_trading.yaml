@@ -1,0 +1,42 @@
+# Pairs Trading Strategy Configuration
+name: pairs_trading
+enabled: true
+weight: 0.6
+
+# Strategy-specific parameters
+parameters:
+  # Explicit pair definitions - Best cointegrated pairs found
+  pair_symbols:
+    - ["KO", "SRE"] # Utilities pair (Score: 0.7000, Corr: 0.893, p-value: <0.01)
+    - ["AEP", "SRE"] # Utilities pair (Score: 0.6997, Corr: 0.897, p-value: <0.01)
+    - ["DUK", "KO"] # Utilities pair (Score: 0.6996, Corr: 0.915, p-value: <0.01)
+    - ["JPM", "WMT"] # Cross-sector pair (Score: 0.6990, Corr: 0.959, p-value: <0.01)
+    - ["NEE", "PLD"] # Utilities/REIT pair (Score: 0.6990, Corr: 0.920, p-value: <0.01)
+    - ["AAPL", "MSFT"] # Technology pair (Score: 0.6979, Corr: 0.977, p-value: 0.0061)
+
+  cointegration_threshold: 0.01 # VERY STRICT: p-value < 0.01 to avoid spurious relationships
+  min_correlation: 0.80 # RELAXED: Minimum 0.80 correlation (was 0.85) - allows more pairs
+  max_pair_exposure: 0.10 # Further reduced to minimize risk
+  max_total_exposure: 0.12 # Further reduced (was 0.15)
+  lookback_period: 30 # Good for spread calculation
+  hedge_ratio_threshold: 0.1
+  spread_threshold: 0.008 #INCREASED: 0.8% minimum spread (was 0.5%) - minimum edge filter
+  min_spread_z_score: 2.0 # NEW: Minimum normalized deviation >= 2σ (minimum edge filter)
+  max_pair_half_life_days: 90 # RELAXED: Half-life < 90 days (was 15) - allows AAPL-MSFT and similar pairs
+  max_trades_per_day: 1 # REDUCED: Only 1 trade per day to reduce overtrading (was 2)
+  max_capital_per_day: 0.03 # REDUCED: Limit daily capital usage to 3% (was 5%)
+  slippage_per_trade_pct: 0.05 # NEW: Model slippage 0.05% per side
+  commission_per_trade_pct: 0.05 # NEW: Model commission 0.05% per side
+
+# Risk parameters - DYNAMIC STOP-LOSS ENABLED
+max_position_size: 0.12 # Reduced from 0.15
+stop_loss_pct: 0.03 # 3% static fallback (dynamic ATR-based preferred)
+take_profit_pct: 0.06 # 6% take profit (risk/reward ~2:1)
+atr_multiplier: 2.5 # Dynamic stop = ATR * 2.5 (wider for pairs trading)
+use_dynamic_stop_loss: true # Enable ATR-based dynamic stop loss
+max_drawdown_per_strategy: 0.05 # 5% max drawdown per strategy
+
+# Performance thresholds
+min_sharpe_ratio: 1.5
+max_drawdown: 0.1
+min_win_rate: 0.5

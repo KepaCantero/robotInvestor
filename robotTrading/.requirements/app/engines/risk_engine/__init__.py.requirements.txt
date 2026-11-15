@@ -1,0 +1,81 @@
+# Requirements Document: app/engines/risk_engine/__init__.py
+
+## 1. Module Overview
+File: __init__.py
+Domain: Engine
+
+## 2. Dependencies
+- `__future__`
+- `abc`
+- `alert_system`
+- `app.domain.models.portfolio`
+- `app.domain.services.risk.portfolio`
+- `correlation_analyzers`
+- `datetime`
+- `drawdown_controllers`
+- `exposure_managers`
+- `greeks_calculator`
+- `logging`
+- `numpy`
+- `risk_attribution`
+- `risk_limits_enforcer`
+- `stress_testers`
+- `stress_testers.comprehensive_scenarios`
+- `stress_testers.correlation_stress`
+- `stress_testers.portfolio_variance_stress`
+- `typing`
+- `var_calculators.component_var`
+- `var_calculators.ewma_var`
+
+## 3. Core Components
+### Classes
+- `PortfolioProtocol`
+- `VaRCalculatorProtocol`
+- `StressTesterProtocol`
+- `ExposureManagerProtocol`
+- `DrawdownControllerProtocol`
+- `CorrelationAnalyzerProtocol`
+- `RiskAttributorProtocol`
+- `AlertSystemProtocol`
+- `BaseRiskEngine`
+- `RiskEngine`
+- `_PortfolioPlaceholder`
+- `_PortfolioRiskManagerPlaceholder`
+### Public Functions
+- `portfolio_id()`
+- `capital()`
+- `calculate_var()`
+- `run_stress_tests()`
+- `analyze_exposure()`
+- `assess_drawdown()`
+- `analyze_correlations()`
+- `attribute_risk()`
+- `check_thresholds()`
+- `send_alerts()`
+- `initialize()`
+- `assess_risk()`
+- `risk_manager()`
+- `initialize()`
+- `assess_risk()`
+- `set_var_calculator()`
+- `set_stress_tester()`
+- `set_exposure_manager()`
+- `set_drawdown_controller()`
+- `set_correlation_analyzer()`
+- `set_risk_attributor()`
+- `set_alert_system()`
+- `get_status()`
+- `assess_portfolio_risk()`
+
+## 4. Applicable Trading Rules
+
+#### R2
+Drawdown Monitor (15% warning, 25% halt trading, auto cooldown)
+
+- [ ] Implementation verified
+- [ ] Tests pass
+
+---
+Universal rules (SOLID, type hints, formatting, security, logging) live in
+.requirements/BASE_RULES.md and apply to every file.
+Resync this stub with: python scripts/generate_requirements.py

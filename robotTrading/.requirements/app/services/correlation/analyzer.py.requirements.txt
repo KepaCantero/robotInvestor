@@ -1,0 +1,47 @@
+# Requirements Document: app/services/correlation/analyzer.py
+
+## 1. Module Overview
+File: analyzer.py
+Domain: Service
+
+## 2. Dependencies
+- `__future__`
+- `app.domain.models.market_data`
+- `asyncio`
+- `contextlib`
+- `dataclasses`
+- `datetime`
+- `logging`
+- `numpy`
+- `pandas`
+- `typing`
+
+## 3. Core Components
+### Classes
+- `CorrelationConfig`
+- `CorrelationCache`
+- `CorrelationAnalyzer`
+### Public Functions
+- `is_valid()`
+- `calculate_correlation_matrix()`
+- `update_correlation_cache()`
+- `get_correlation()`
+- `get_cached_matrix()`
+- `start_background_updates()`
+- `stop_background_updates()`
+- `set_symbol_metadata()`
+- `get_statistics()`
+- `clear_cache()`
+
+## 4. Applicable Trading Rules
+
+#### R15
+Complete Logging (log all decisions, trade journal format)
+
+- [ ] Implementation verified
+- [ ] Tests pass
+
+---
+Universal rules (SOLID, type hints, formatting, security, logging) live in
+.requirements/BASE_RULES.md and apply to every file.
+Resync this stub with: python scripts/generate_requirements.py

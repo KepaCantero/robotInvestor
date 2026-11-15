@@ -1,0 +1,41 @@
+# Requirements Document: app/engines/risk_engine/greeks_calculator.py
+
+## 1. Module Overview
+File: greeks_calculator.py
+Domain: Engine
+
+## 2. Dependencies
+- `__future__`
+- `datetime`
+- `logging`
+- `numpy`
+- `scipy.stats`
+- `typing`
+
+## 3. Core Components
+### Classes
+- `GreeksCalculator`
+### Public Functions
+- `get_greeks_calculator()`
+- `calculate_all_greeks()`
+- `calculate_portfolio_greeks()`
+- `calculate_delta_hedge_ratio()`
+- `validate_greeks_consistency()`
+- `validate_greeks_risk_limits()`
+- `calculate_greeks_sensitivity_analysis()`
+- `validate_put_call_parity()`
+- `calculate_greeks_implied_values()`
+- `validate_greeks_market_prices()`
+
+## 4. Applicable Trading Rules
+
+#### R2
+Drawdown Monitor (15% warning, 25% halt trading, auto cooldown)
+
+- [ ] Implementation verified
+- [ ] Tests pass
+
+---
+Universal rules (SOLID, type hints, formatting, security, logging) live in
+.requirements/BASE_RULES.md and apply to every file.
+Resync this stub with: python scripts/generate_requirements.py

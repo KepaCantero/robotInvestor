@@ -1,0 +1,71 @@
+# Requirements Document: app/shared/interfaces/broker_base.py
+
+## 1. Module Overview
+File: broker_base.py
+Domain: Shared
+
+## 2. Dependencies
+- `__future__`
+- `abc`
+- `dataclasses`
+- `datetime`
+- `decimal`
+- `enum`
+- `logging`
+
+## 3. Core Components
+### Classes
+- `BrokerType`
+- `OrderSide`
+- `OrderType`
+- `OrderStatus`
+- `Balance`
+- `Ticker`
+- `Order`
+- `OrderResult`
+- `Position`
+- `BrokerConfig`
+- `BrokerError`
+- `RateLimitError`
+- `BrokerConnectionError`
+- `OrderRejectedError`
+- `IBroker`
+### Public Functions
+- `validate_order()`
+- `normalize_symbol()`
+- `market_value()`
+- `get_broker_type()`
+- `get_broker_name()`
+- `connect()`
+- `disconnect()`
+- `is_connected()`
+- `ping()`
+- `get_normalized_balance()`
+- `get_account_id()`
+- `get_live_ticker()`
+- `get_historical_ohlcv()`
+- `execute_order_with_wal()`
+- `cancel_order()`
+- `get_order_status()`
+- `get_all_open_positions()`
+- `close_position()`
+- `start_ticker_stream()`
+- `stop_ticker_stream()`
+- `map_internal_to_broker()`
+- `map_broker_to_internal()`
+- `acquire_rate_limit_token()`
+- `get_rate_limit_stats()`
+- `is_shadow_mode_enabled()`
+
+## 4. Applicable Trading Rules
+
+#### R15
+Complete Logging (log all decisions, trade journal format)
+
+- [ ] Implementation verified
+- [ ] Tests pass
+
+---
+Universal rules (SOLID, type hints, formatting, security, logging) live in
+.requirements/BASE_RULES.md and apply to every file.
+Resync this stub with: python scripts/generate_requirements.py

@@ -1,0 +1,35 @@
+# Requirements Document: app/shared/config/params/risk_config.py
+
+## 1. Module Overview
+File: risk_config.py
+Domain: Shared
+
+## 2. Dependencies
+- `__future__`
+- `decimal`
+- `logging`
+- `pydantic`
+
+## 3. Core Components
+### Classes
+- `CurrencyHedgingConfig`
+- `SectorCountryDiversificationConfig`
+- `ComplianceConfig`
+### Public Functions
+- `validate_score_100()`
+- `validate_score_1()`
+- `validate_spread_bps()`
+- `validate_liquidity_weights_sum()`
+
+## 4. Applicable Trading Rules
+
+#### R2
+Drawdown Monitor (15% warning, 25% halt trading, auto cooldown)
+
+- [ ] Implementation verified
+- [ ] Tests pass
+
+---
+Universal rules (SOLID, type hints, formatting, security, logging) live in
+.requirements/BASE_RULES.md and apply to every file.
+Resync this stub with: python scripts/generate_requirements.py

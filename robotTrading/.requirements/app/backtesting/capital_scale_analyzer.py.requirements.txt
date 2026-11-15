@@ -1,0 +1,75 @@
+# Requirements Document: app/backtesting/capital_scale_analyzer.py
+
+## 1. Module Overview
+File: capital_scale_analyzer.py
+Domain: Backtest
+
+## 2. Dependencies
+- `__future__`
+- `app.backtesting.constants`
+- `app.backtesting.engine`
+- `app.backtesting.models`
+- `app.backtesting.services.transaction_cost_model`
+- `app.domain.models.market_data`
+- `app.shared.config.centralized_config`
+- `dataclasses`
+- `datetime`
+- `decimal`
+- `logging`
+- `numpy`
+- `typing`
+
+## 3. Core Components
+### Classes
+- `CapitalLevelResult`
+- `CapitalScaleAnalysisReport`
+- `CapitalScaleAnalyzer`
+### Public Functions
+- `calculate_commission_for_level()`
+- `apply_adv_limit()`
+- `simulate_single_capital_level()`
+- `analyze_capital_scaling()`
+- `generate_summary_table()`
+
+## 4. Applicable Trading Rules
+
+#### R5
+Walk-Forward Analysis (70/30 train/test split, min 50 trades OOS, max 30% degradation)
+
+- [ ] Implementation verified
+- [ ] Tests pass
+
+#### R6
+Overfitting Prevention (min 30 samples per parameter, purged cross-validation)
+
+- [ ] Implementation verified
+- [ ] Tests pass
+
+#### R7
+Monte Carlo Risk Analysis (1000 simulations, validate DD within 5-95 percentile)
+
+- [ ] Implementation verified
+- [ ] Tests pass
+
+#### R25
+Phase 1: 5K-15K EUR, max 3 positions, 2% risk/trade
+
+- [ ] Implementation verified
+- [ ] Tests pass
+
+#### R26
+Phase 2: 15K-50K EUR, max 5 positions, 1.5% risk/trade
+
+- [ ] Implementation verified
+- [ ] Tests pass
+
+#### R27
+Phase 3: 50K+ EUR, max 10 positions, 1% risk/trade
+
+- [ ] Implementation verified
+- [ ] Tests pass
+
+---
+Universal rules (SOLID, type hints, formatting, security, logging) live in
+.requirements/BASE_RULES.md and apply to every file.
+Resync this stub with: python scripts/generate_requirements.py

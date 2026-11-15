@@ -1,0 +1,73 @@
+# Requirements Document: app/application/services/__init__.py
+
+## 1. Module Overview
+File: __init__.py
+Domain: Application
+
+## 2. Dependencies
+- `__future__`
+- `abc`
+- `app.domain.entities.order`
+- `app.domain.entities.portfolio`
+- `app.domain.repositories.order_repository`
+- `app.domain.repositories.position_repository`
+- `app.domain.repositories.unit_of_work`
+- `app.domain.value_objects.capital`
+- `app.domain.value_objects.risk_parameters`
+- `dataclasses`
+- `datetime`
+- `decimal`
+- `logging`
+- `risk_configurator`
+- `tax_optimizer`
+- `typing`
+
+## 3. Core Components
+### Classes
+- `Command`
+- `Query`
+- `CommandHandler`
+- `ApplicationService`
+- `CreateOrderCommand`
+- `SubmitOrderCommand`
+- `CancelOrderCommand`
+- `GetOrderQuery`
+- `GetPortfolioOrdersQuery`
+- `OrderApplicationService`
+- `PortfolioApplicationService`
+- `ServiceOrchestrator`
+- `ValidationError`
+- `BusinessRuleError`
+- `NotFoundError`
+### Public Functions
+- `validate()`
+- `execute()`
+- `handle()`
+- `validate()`
+- `validate()`
+- `validate()`
+- `execute()`
+- `execute()`
+- `create_order()`
+- `submit_order()`
+- `cancel_order()`
+- `get_order()`
+- `get_portfolio_orders()`
+- `create_portfolio()`
+- `add_position()`
+- `update_position_prices()`
+- `register_service()`
+- `execute_workflow()`
+
+## 4. Applicable Trading Rules
+
+#### R15
+Complete Logging (log all decisions, trade journal format)
+
+- [ ] Implementation verified
+- [ ] Tests pass
+
+---
+Universal rules (SOLID, type hints, formatting, security, logging) live in
+.requirements/BASE_RULES.md and apply to every file.
+Resync this stub with: python scripts/generate_requirements.py

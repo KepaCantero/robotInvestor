@@ -1,0 +1,92 @@
+# Requirements Document: app/domain/strategies/strategy_registry.py
+
+## 1. Module Overview
+File: strategy_registry.py
+Domain: Domain
+
+## 2. Dependencies
+- `__future__`
+- `abc`
+- `app.domain.models.market_data`
+- `app.domain.models.portfolio`
+- `app.domain.models.signal`
+- `dataclasses`
+- `datetime`
+- `inspect`
+- `logging`
+- `typing`
+
+## 3. Core Components
+### Classes
+- `BaseStrategy`
+- `StrategyContext`
+- `StrategyMetadata`
+- `StrategyRegistry`
+- `StrategyFactory`
+### Public Functions
+- `register_strategy()`
+- `get_default_registry()`
+- `register_default_strategy()`
+- `create_default_strategy()`
+- `execute()`
+- `validate_config()`
+- `get_required_parameters()`
+- `get_metadata()`
+- `get_parameters()`
+- `update_parameters()`
+- `generate_signals()`
+- `risk_check()`
+- `set_strategy()`
+- `get_strategy()`
+- `execute_strategy()`
+- `get_execution_history()`
+- `active_strategy()`
+- `get_active_strategy()`
+- `get_all_strategies_status()`
+- `list_available_strategies()`
+- `list_loaded_strategies()`
+- `load_strategy()`
+- `set_active_strategy()`
+- `unload_strategy()`
+- `get_strategy_status()`
+- `get_strategy()`
+- `register()`
+- `unregister()`
+- `create()`
+- `get_metadata()`
+- `list_strategies()`
+- `find_by_category()`
+- `enable()`
+- `disable()`
+- `clear_cache()`
+- `categories()`
+- `create()`
+- `create_context()`
+- `create_batch()`
+- `list_available()`
+- `decorator()`
+
+## 4. Applicable Trading Rules
+
+#### R19
+Market Regime Detection (trend/range/volatile classification)
+
+- [ ] Implementation verified
+- [ ] Tests pass
+
+#### R20
+Multi-Confirmation (min 2 independent signals before trade)
+
+- [ ] Implementation verified
+- [ ] Tests pass
+
+#### R24
+Strategy Diversification (min 3 uncorrelated strategies)
+
+- [ ] Implementation verified
+- [ ] Tests pass
+
+---
+Universal rules (SOLID, type hints, formatting, security, logging) live in
+.requirements/BASE_RULES.md and apply to every file.
+Resync this stub with: python scripts/generate_requirements.py

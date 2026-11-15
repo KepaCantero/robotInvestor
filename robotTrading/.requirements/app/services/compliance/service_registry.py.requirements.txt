@@ -1,0 +1,62 @@
+# Requirements Document: app/services/compliance/service_registry.py
+
+## 1. Module Overview
+File: service_registry.py
+Domain: Service
+
+## 2. Dependencies
+- `__future__`
+- `app.backtesting.labeling.meta_labeling`
+- `app.backtesting.validation.cross_validation`
+- `app.domain.market_analysis.microstructure.liquidity`
+- `app.domain.market_analysis.microstructure.order_flow`
+- `app.domain.market_analysis.microstructure.price_discovery`
+- `app.domain.market_analysis.microstructure.trading_mechanisms`
+- `app.domain.services.execution.algorithms`
+- `app.domain.strategies.alpha_models`
+- `app.engines.execution_engine.microstructure.dark_pool_router`
+- `app.engines.execution_engine.microstructure.harris_integration`
+- `app.engines.execution_engine.microstructure.order_book_analyzer`
+- `app.engines.risk_engine.greeks_calculator`
+- `app.engines.risk_engine.stress_testers.advanced_stress_scenarios`
+- `app.engines.risk_engine.var_calculators.var_calculators`
+- `app.services.execution_narang`
+- `app.services.optimization_chan`
+- `app.services.portfolio_construction_narang`
+- `app.services.regime_detection_chan`
+- `app.services.risk_models_narang`
+- `app.services.transaction_costs`
+- `app.sre.automation.toil_tracker`
+- `app.sre.monitoring.golden_signals`
+- `app.sre.monitoring.trading_metrics`
+- `logging`
+- `threading`
+- `typing`
+
+## 3. Core Components
+### Classes
+- `ComplianceService`
+- `ComplianceServiceRegistry`
+### Public Functions
+- `get_service_registry()`
+- `get_service()`
+- `get_instance()`
+- `reset_instance()`
+- `register_service()`
+- `get_service()`
+- `is_available()`
+- `get_all_services()`
+- `get_availability_report()`
+
+## 4. Applicable Trading Rules
+
+#### R15
+Complete Logging (log all decisions, trade journal format)
+
+- [ ] Implementation verified
+- [ ] Tests pass
+
+---
+Universal rules (SOLID, type hints, formatting, security, logging) live in
+.requirements/BASE_RULES.md and apply to every file.
+Resync this stub with: python scripts/generate_requirements.py

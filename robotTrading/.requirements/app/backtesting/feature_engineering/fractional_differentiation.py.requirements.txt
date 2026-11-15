@@ -1,0 +1,68 @@
+# Requirements Document: app/backtesting/feature_engineering/fractional_differentiation.py
+
+## 1. Module Overview
+File: fractional_differentiation.py
+Domain: Backtest
+
+## 2. Dependencies
+- `__future__`
+- `app.shared.performance.statsmodels_fallback`
+- `logging`
+- `numba`
+- `numpy`
+- `pandas`
+- `statsmodels.tsa.stattools`
+- `typing`
+- `warnings`
+
+## 3. Core Components
+### Classes
+- `FractionalDifferentiation`
+- `FractionalDiffTransformer`
+### Public Functions
+- `calculate_weights_numba()`
+- `calculate_weights()`
+- `fractional_diff_fast_numba()`
+- `fractional_diff_parallel_numba()`
+- `calculate_adfuller_on_diff_series()`
+- `apply_frac_diff_to_dataframe()`
+- `get_weights()`
+- `fractional_diff()`
+- `find_optimal_d()`
+- `adfuller_wrapper()`
+- `get_weights()`
+- `fractional_diff()`
+- `fractional_diff_ffd()`
+- `find_optimal_d()`
+- `calculate_memory_loss()`
+- `compare_d_values()`
+- `fit()`
+- `transform()`
+- `fit_transform()`
+- `get_feature_names_out()`
+- `adfuller_wrapper()`
+
+## 4. Applicable Trading Rules
+
+#### R5
+Walk-Forward Analysis (70/30 train/test split, min 50 trades OOS, max 30% degradation)
+
+- [ ] Implementation verified
+- [ ] Tests pass
+
+#### R6
+Overfitting Prevention (min 30 samples per parameter, purged cross-validation)
+
+- [ ] Implementation verified
+- [ ] Tests pass
+
+#### R7
+Monte Carlo Risk Analysis (1000 simulations, validate DD within 5-95 percentile)
+
+- [ ] Implementation verified
+- [ ] Tests pass
+
+---
+Universal rules (SOLID, type hints, formatting, security, logging) live in
+.requirements/BASE_RULES.md and apply to every file.
+Resync this stub with: python scripts/generate_requirements.py

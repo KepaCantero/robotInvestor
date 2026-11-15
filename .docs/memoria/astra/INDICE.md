@@ -11,3 +11,4 @@
 | astra/2026-11-12_solo-local-hasta-autorizacion | leccion | El operador exige mantener todo en local hasta autorización expresa de subida | vigente |
 | astra/2026-11-12_revisiones-diseno-a-e | leccion | Hallazgos de A a E: mediciones, reutilización y comparación de cartera | vigente |
 | astra/2026-11-13_publicacion-puntual-revisiones | decision | Subida puntual autorizada de D–G y registros; futuros trabajos siguen locales | vigente |
+| astra/2026-11-15_integracion-robottrading | estado | Plataforma incluida en RoboInvestor y ejemplos A/B con históricos | vigente |

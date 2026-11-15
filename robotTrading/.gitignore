@@ -1,0 +1,164 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+
+# Virtual environments
+venv/
+.venv/
+ENV/
+env/
+.ENV
+
+# IDE
+.vscode/
+.idea/
+.zcode/
+*.swp
+*.swo
+*~
+
+# Testing
+.pytest_cache/
+.coverage
+coverage.xml
+htmlcov/
+.tox/
+.hypothesis/
+
+# Logs
+*.log
+logs/
+
+# Data
+*.csv
+# Sample historical data is intentionally tracked (used by the test suite)
+!data/historical/*.csv
+# News sentiment series are intentionally tracked (backtest input)
+!data/news_sentiment/*.csv
+# Real FX (ECB-derived) and policy-rate corpora — backtest input + the
+# real-corpus tests read them (Bloque 3, PLAN_DATOS_REALES_Y_EJECUCION)
+!data/fx/*.csv
+!data/rates/*.csv
+# SimFin free tier: ANNUAL statements + companies are committed (~16M) —
+# the PIT tests run on them in CI. Quarterlies (32M) and shareprices
+# (~300M, market-cap source) stay local: download with --with-prices.
+!data/fundamentals/us-*-annual.csv
+!data/fundamentals/us-companies-general.csv
+
+# Build
+build/
+dist/
+*.egg-info/
+site/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Project specific
+backup/
+*.bak
+*.backup
+.cursor/
+.cursorrules
+.memory/
+
+# Temporary scripts
+fix_*.py
+repair_*.py
+test_*.sh
+# kept on purpose: F6p2 E2E restore proof, run by CI
+!scripts/db/test_backup_restore.sh
+check_all_output.log
+simple_check.log
+DASHBOARD_SUMMARY.md
+
+# ============================================================================
+# Phase 4.2: Production Config Management - Sensitive Files
+# ============================================================================
+
+# Environment files (production secrets)
+.env
+.env.prod
+.env.staging
+.env.local
+.env.production
+
+# Secrets configuration (NEVER commit this)
+config/secrets.yaml
+
+# Production backups
+backups/*.db
+backups/*.tar.gz
+backups/pre-deploy-*
+backups/post-rollback-*
+
+# Production logs
+logs/production.log
+logs/staging.log
+
+# SSL certificates and keys
+*.key
+*.pem
+*.crt
+*.cer
+
+# Encrypted data
+*.encrypted
+*.gpg
+
+
+# ralphex progress logs
+.ralphex/
+progress*.txt
+.ralphex/execution.log
+.worktrees/
+
+# === LIMPIEZA 2026-03-08 ===
+# Large generated files (never commit these)
+.ralph/outputs/
+.desloppify/
+docs/BACKTEST_RESULTS/
+docs/OPTIMIZATION_RESULTS/
+coverage.json
+check_all_errors.txt
+*.db
+*.sqlite
+
+# === LIMPIEZA 2026-10-17 (public-sharing cleanup) ===
+# Generated reports and artifacts (kept on disk, never in git)
+reports/
+outputs/
+semgrep-report.json
+.benchmarks/
+models/registry/models/
+app/services/.ralph/
+.ralph/events-*.jsonl
+
+# === LIMPIEZA 2026-04-02 ===
+# SQLite runtime sidecars
+*.db-shm
+*.db-wal
+.pgdata/
+
+# Portfolio-management runtime state (paper account snapshot)
+data/paper_account.json
+
+# Imported account snapshots — real positions and cost basis of the
+# owner's live money; this repo is public, these never get committed
+data/import/
+
+# Investor profile saved by the /start wizard (user answers, runtime)
+investor_profile.json
+
+# Named investor profiles (wizard runtime state)
+investor_profiles.json
+
+# SimFin bulk downloads (derived, regenerate via the fundamentals source)
+data/fundamentals/download/
+
+# Gráficas de los backtests de RoboInvestor
+/resultados/

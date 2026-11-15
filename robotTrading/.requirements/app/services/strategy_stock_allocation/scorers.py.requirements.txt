@@ -1,0 +1,82 @@
+# Requirements Document: app/services/strategy_stock_allocation/scorers.py
+
+## 1. Module Overview
+File: scorers.py
+Domain: Service
+
+## 2. Dependencies
+- `__future__`
+- `app.shared.config.centralized_config`
+- `app.shared.config.params.strategy_config`
+- `app.shared.performance.statsmodels_fallback`
+- `arch`
+- `calculators`
+- `logging`
+- `numpy`
+- `pandas`
+- `scipy`
+- `statsmodels.regression.linear_model`
+- `statsmodels.tsa.stattools`
+- `typing`
+- `warnings`
+
+## 3. Core Components
+### Classes
+- `TechnicalIndicatorCalculator`
+- `MomentumScorer`
+- `MeanReversionScorer`
+- `PairsTradingScorer`
+- `WCMScoreCalculator`
+### Public Functions
+- `ols()`
+- `calculate_rsi()`
+- `calculate_macd()`
+- `calculate_roc()`
+- `score()`
+- `score()`
+- `score()`
+- `calculate_all()`
+- `adfuller()`
+
+## 4. Applicable Trading Rules
+
+#### R19
+Market Regime Detection (trend/range/volatile classification)
+
+- [ ] Implementation verified
+- [ ] Tests pass
+
+#### R20
+Multi-Confirmation (min 2 independent signals before trade)
+
+- [ ] Implementation verified
+- [ ] Tests pass
+
+#### R24
+Strategy Diversification (min 3 uncorrelated strategies)
+
+- [ ] Implementation verified
+- [ ] Tests pass
+
+#### R25
+Phase 1: 5K-15K EUR, max 3 positions, 2% risk/trade
+
+- [ ] Implementation verified
+- [ ] Tests pass
+
+#### R26
+Phase 2: 15K-50K EUR, max 5 positions, 1.5% risk/trade
+
+- [ ] Implementation verified
+- [ ] Tests pass
+
+#### R27
+Phase 3: 50K+ EUR, max 10 positions, 1% risk/trade
+
+- [ ] Implementation verified
+- [ ] Tests pass
+
+---
+Universal rules (SOLID, type hints, formatting, security, logging) live in
+.requirements/BASE_RULES.md and apply to every file.
+Resync this stub with: python scripts/generate_requirements.py

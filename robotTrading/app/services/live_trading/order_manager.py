@@ -1,0 +1,754 @@
+"""
+T16.1.2: OrderManager - Order lifecycle management
+
+Manages order placement, execution tracking, cancellation, and error handling.
+Integrates with BrokerConnector for actual order operations.
+"""
+
+from __future__ import annotations
+
+import asyncio
+import logging
+import uuid
+from dataclasses import dataclass, field
+from datetime import date, datetime
+from decimal import Decimal
+from typing import TYPE_CHECKING
+
+from .broker_connector import (
+    BrokerAccount,
+    BrokerConnector,
+    BrokerOrder,
+    OrderSide,
+    OrderStatus,
+    OrderType,
+    get_broker_connector,
+)
+
+if TYPE_CHECKING:
+    from .risk_gates import RiskCheckResult, RiskGates
+
+logger = logging.getLogger(__name__)
+
+_DEFAULT_FEES = Decimal("0")
+
+
+@dataclass
+class OrderExecution:
+    """Record of order execution."""
+
+    order_id: str
+    symbol: str
+    quantity: Decimal
+    price: Decimal
+    execution_time: datetime = field(default_factory=datetime.now)
+    fees: Decimal = Decimal("0")
+    net_proceeds: Decimal = Decimal("0")
+
+
+@dataclass
+class OrderError:
+    """Order error information."""
+
+    order_id: str
+    symbol: str
+    error_code: str
+    error_message: str
+    timestamp: datetime = field(default_factory=datetime.now)
+    retry_count: int = 0
+    max_retries: int = 3
+
+
+class OrderManager:
+    """
+    Manages order lifecycle from placement to execution.
+
+    Features:
+    - Order placement and tracking
+    - Execution monitoring
+    - Cancellation handling
+    - Order history
+    - Error tracking and recovery
+    - Order status polling
+    """
+
+    def __init__(
+        self,
+        broker: BrokerConnector | None = None,
+        risk_gates: RiskGates | None = None,
+    ):
+        """Initialize order manager with risk validation."""
+        self.broker = broker or get_broker_connector()
+        # Create RiskGates instance directly if not provided (avoiding Depends() for direct instantiation)
+        if risk_gates is None:
+            from .risk_gates import RiskGates as RiskGatesImpl
+
+            self.risk_gates = RiskGatesImpl(broker=self.broker)
+        else:
+            self.risk_gates = risk_gates
+        self.pending_orders: dict[str, BrokerOrder] = {}
+        self.executed_orders: dict[str, BrokerOrder] = {}
+        self.order_history: list[BrokerOrder] = []
+        self.order_errors: dict[str, OrderError] = {}
+        self.executions: list[OrderExecution] = []
+        # Serialize read-account -> validate -> send in place_order so two
+        # concurrent calls cannot validate against the same buying power
+        self._execution_lock = asyncio.Lock()
+        # Daily-loss breaker feeding: baseline day + last reported equity
+        self.pnl_baseline_date: date | None = None
+        self._last_reported_equity = Decimal("0")
+        # A16: human-readable reason of the last rejection, surfaced by the
+        # API instead of a fake SUBMITTED.
+        self.last_rejection: str | None = None
+        # A06: order_id -> reservation_id while an order is in flight.
+        self._order_reservations: dict[str, str] = {}
+        logger.info("✅ OrderManager initialized with risk validation")
+
+    async def place_order(
+        self,
+        symbol: str,
+        side: OrderSide,
+        quantity: Decimal,
+        order_type: OrderType = OrderType.MARKET,
+        price: Decimal | None = None,
+        stop_price: Decimal | None = None,
+        timeout_seconds: int = 60,
+        order_ref: str | None = None,
+    ) -> BrokerOrder | None:
+        """
+        Place order with broker.
+
+        Args:
+            symbol: Stock symbol
+            side: BUY or SELL
+            quantity: Number of shares
+            order_type: Type of order
+            price: Limit price (for limit orders)
+            stop_price: Stop price (for stop orders)
+            timeout_seconds: Timeout for order placement
+            order_ref: Optional caller reference (e.g. signal/alert id). When
+                provided, the client_order_id is derived deterministically from
+                it so retries of the same intent dedup at the broker instead of
+                creating duplicate orders.
+
+        Returns:
+            BrokerOrder if successful, None if risk validation fails
+        """
+        # SEC-005: idempotency key, generated once per call (never inside a
+        # retry loop). With order_ref it is deterministic across retries;
+        # determinism is the caller's responsibility (pass order_ref).
+        if order_ref:
+            client_order_id = f"{order_ref}:{symbol}:{side.value}:{quantity}"
+        else:
+            client_order_id = f"trade_{uuid.uuid4().hex}"
+
+        # Serialize read-account -> validate -> send: two concurrent requests
+        # must not both validate against the same buying power.
+        async with self._execution_lock:
+            # Generate correlation ID for audit trail (SEC-005)
+            correlation_id = str(uuid.uuid4())
+
+            account = await self.broker.get_account_info()
+
+            # Feed the daily-loss circuit breaker with real account equity
+            self._feed_daily_loss_breaker(account)
+
+            # A04/A05: resolve a REAL validation price for every order type.
+            # LIMIT/STOP_LIMIT use their price, STOP its trigger, MARKET a
+            # live quote. No order skips the risk gates, no placeholder
+            # price exists anymore.
+            validation_price = price
+            if validation_price is None and order_type == OrderType.STOP:
+                validation_price = stop_price
+            quote = None
+            if validation_price is None:
+                quote = await self.broker.get_quote(symbol)
+                if quote is None or quote.price is None or quote.price <= 0:
+                    self.last_rejection = (
+                        f"No valid quote for {symbol}: risk validation requires "
+                        "a real price (missing or stale)"
+                    )
+                    logger.warning(
+                        "Order rejected: no valid quote",
+                        extra={
+                            "correlation_id": correlation_id,
+                            "symbol": symbol,
+                            "order_type": order_type.value,
+                        },
+                    )
+                    return None
+                validation_price = quote.price
+
+            # TRD-002: Risk validation BEFORE order execution — ALWAYS (A04)
+            try:
+                risk_result: RiskCheckResult = await self.risk_gates.validate_order(
+                    symbol=symbol,
+                    side=side,
+                    quantity=quantity,
+                    price=validation_price,
+                )
+
+                if not risk_result.passed:
+                    self.last_rejection = (
+                        "; ".join(risk_result.violations) or "rejected by risk gates"
+                    )
+                    # Log rejection with structured logging and correlation ID
+                    logger.warning(
+                        "Order rejected by risk gates",
+                        extra={
+                            "correlation_id": correlation_id,
+                            "symbol": symbol,
+                            "side": side.value,
+                            "quantity": str(quantity),
+                            "price": str(validation_price),
+                            "order_type": order_type.value,
+                            "risk_level": risk_result.risk_level.value,
+                            "violations": risk_result.violations,
+                            "warnings": risk_result.warnings,
+                        },
+                    )
+                    return None
+
+                # Log risk approval with structured logging (SEC-005)
+                logger.info(
+                    "Order approved by risk gates",
+                    extra={
+                        "correlation_id": correlation_id,
+                        "symbol": symbol,
+                        "side": side.value,
+                        "quantity": str(quantity),
+                        "price": str(validation_price),
+                        "order_type": order_type.value,
+                        "risk_level": risk_result.risk_level.value,
+                    },
+                )
+            except Exception as e:
+                self.last_rejection = f"risk validation error: {e}"
+                logger.error(
+                    "Risk validation failed - order rejected",
+                    extra={
+                        "correlation_id": correlation_id,
+                        "symbol": symbol,
+                        "side": side.value,
+                        "error": str(e),
+                    },
+                )
+                return None
+
+            # A06: reserve risk capacity while the order is in flight.
+            reservation_id = self.risk_gates.reserve(symbol, side, quantity, validation_price)
+
+            # A05: MARKET orders execute at the resolved real quote so the
+            # paper fill cannot invent a price.
+            execution_price = price
+            if execution_price is None and quote is not None:
+                execution_price = quote.price
+
+            # A09: persist the INTENT before the broker send — a crash
+            # between here and the ack leaves a recoverable record keyed by
+            # the stable client_order_id (the unique broker_order_id
+            # constraint makes retries of the same intent idempotent at the
+            # persistence layer).
+            intent_row_id = await self._persist_order_intent(
+                symbol=symbol,
+                side=side,
+                quantity=quantity,
+                order_type=order_type,
+                price=execution_price,
+                client_order_id=client_order_id,
+            )
+
+            try:
+                order = await self.broker.place_order(
+                    symbol=symbol,
+                    side=side,
+                    quantity=quantity,
+                    order_type=order_type,
+                    price=execution_price,
+                    stop_price=stop_price,
+                    client_order_id=client_order_id,
+                )
+
+                if order:
+                    self.pending_orders[order.order_id] = order
+                    self.order_history.append(order)
+                    self._order_reservations[order.order_id] = reservation_id
+                    self._release_reservation_if_terminal(order)
+                    if intent_row_id:
+                        await self._update_intent_status(
+                            intent_row_id, order.status, order_id=order.order_id
+                        )
+                    # SEC-005: Structured logging with correlation ID
+                    logger.info(
+                        "Order placed successfully",
+                        extra={
+                            "correlation_id": correlation_id,
+                            "order_id": order.order_id,
+                            "client_order_id": client_order_id,
+                            "symbol": symbol,
+                            "side": side.value,
+                            "quantity": str(quantity),
+                            "order_type": order_type.value,
+                            "price": str(execution_price) if execution_price else None,
+                        },
+                    )
+                    return order
+                else:
+                    self.risk_gates.release(reservation_id)
+                    self.last_rejection = "broker rejected the order"
+                    if intent_row_id:
+                        await self._update_intent_status(
+                            intent_row_id,
+                            OrderStatus.REJECTED,
+                            error=self.last_rejection,
+                        )
+                    logger.error(
+                        "Order placement failed",
+                        extra={
+                            "correlation_id": correlation_id,
+                            "symbol": symbol,
+                            "side": side.value,
+                            "quantity": str(quantity),
+                        },
+                    )
+                    return None
+
+            except (ValueError, KeyError, AttributeError, IndexError, TypeError) as e:
+                self.risk_gates.release(reservation_id)
+                self.last_rejection = f"order placement error: {e}"
+                if intent_row_id:
+                    await self._update_intent_status(
+                        intent_row_id, OrderStatus.REJECTED, error=self.last_rejection
+                    )
+                logger.error(
+                    "Error placing order",
+                    extra={
+                        "correlation_id": correlation_id,
+                        "symbol": symbol,
+                        "side": side.value,
+                        "error": str(e),
+                        "error_type": type(e).__name__,
+                    },
+                )
+                return None
+
+    async def _persist_order_intent(
+        self,
+        *,
+        symbol: str,
+        side: OrderSide,
+        quantity: Decimal,
+        order_type: OrderType,
+        price: Decimal | None,
+        client_order_id: str,
+    ) -> str | None:
+        """A09: persist the order intent BEFORE the send.
+
+        Returns the persistence row id, or None when persistence is
+        unavailable (paper keeps trading — loudly, never silently). The
+        unique broker_order_id column holds the stable client_order_id, so
+        a retried intent cannot create a second row.
+        """
+        try:
+            from .trade_persistence import get_trade_persistence_manager
+
+            persistence = get_trade_persistence_manager()
+            broker_name = getattr(self.broker, "broker_type", None)
+            return await persistence.save_order(
+                {
+                    "symbol": symbol,
+                    "side": side.value,
+                    "quantity": str(quantity),
+                    "price": str(price) if price is not None else None,
+                    "order_type": order_type.value,
+                    "status": "PENDING",
+                    "broker_name": broker_name.value if broker_name else "unknown",
+                    "broker_order_id": client_order_id,
+                    "raw_response": {"phase": "INTENT", "client_order_id": client_order_id},
+                }
+            )
+        except Exception as exc:  # noqa: BLE001 - paper resilience, logged loudly
+            logger.critical("Order-intent persistence failed (order continues in-memory): %s", exc)
+            return None
+
+    async def _update_intent_status(
+        self,
+        intent_row_id: str,
+        order_status: OrderStatus,
+        order_id: str | None = None,
+        error: str | None = None,
+    ) -> None:
+        """A09: reflect the broker outcome on the persisted intent row."""
+        try:
+            from .trade_persistence import get_trade_persistence_manager
+
+            persistence = get_trade_persistence_manager()
+            status = order_status.value if hasattr(order_status, "value") else str(order_status)
+            if error:
+                status = f"{status}: {error[:400]}"
+            await persistence.update_order_status(intent_row_id, status)
+        except Exception as exc:  # noqa: BLE001 - never block trading on logs
+            logger.error("Failed to update intent %s status: %s", intent_row_id, exc)
+
+    def _release_reservation_if_terminal(self, order: BrokerOrder) -> None:
+        """A06: free reserved risk capacity on terminal order states."""
+        reservation_id = self._order_reservations.get(order.order_id)
+        if reservation_id is None:
+            return
+        if order.status in (OrderStatus.FILLED, OrderStatus.CANCELED, OrderStatus.REJECTED):
+            self.risk_gates.release(reservation_id)
+            del self._order_reservations[order.order_id]
+
+    def _feed_daily_loss_breaker(self, account: BrokerAccount | None) -> None:
+        """Feed the risk gates daily-loss circuit breaker from account equity.
+
+        Sets the start-of-day baseline once per calendar day (resetting when
+        the day changes), then reports the equity change since the last report
+        on every call so cumulative daily_pnl tracks equity - baseline.
+        No-op when equity is unavailable: never break on missing data, and
+        never trade on a stale baseline.
+
+        Args:
+            account: Latest broker account info (may be None)
+        """
+        equity = account.equity if account else None
+        if equity is None or equity <= 0:
+            return
+
+        today = datetime.now().date()
+        if self.pnl_baseline_date != today or self.risk_gates.start_of_day_capital <= 0:
+            self.risk_gates.set_start_of_day_capital(equity)
+            self.pnl_baseline_date = today
+        else:
+            self.risk_gates.update_daily_pnl(equity - self._last_reported_equity)
+        self._last_reported_equity = equity
+
+    async def cancel_order(self, order_id: str) -> bool:
+        """
+        Cancel pending order.
+
+        Args:
+            order_id: Order ID to cancel
+
+        Returns:
+            True if canceled successfully
+        """
+        if order_id not in self.pending_orders:
+            logger.warning(f"⚠️ Order not found in pending: {order_id}")
+            return False
+
+        try:
+            success = await self.broker.cancel_order(order_id)
+            if success:
+                order = self.pending_orders.pop(order_id)
+                order.status = OrderStatus.CANCELED
+                order.updated_at = datetime.now()
+                self.order_history.append(order)
+                self._release_reservation_if_terminal(order)
+                logger.info(f"✅ Order canceled: {order_id}")
+            return success
+        except (OSError, ValueError) as e:
+            logger.error(f"❌ Error canceling order: {e!s}")
+            return False
+
+    async def cancel_all_orders(self) -> int:
+        """
+        Cancel all pending orders.
+
+        Returns:
+            Number of orders canceled
+        """
+        canceled_count = 0
+        order_ids = list(self.pending_orders.keys())
+
+        for order_id in order_ids:
+            if await self.cancel_order(order_id):
+                canceled_count += 1
+
+        logger.info(f"✅ Canceled {canceled_count} orders")
+        return canceled_count
+
+    async def get_order_status(self, order_id: str) -> OrderStatus | None:
+        """
+        Get current order status.
+
+        Args:
+            order_id: Order ID
+
+        Returns:
+            OrderStatus or None
+        """
+        # Check pending orders first
+        if order_id in self.pending_orders:
+            return self.pending_orders[order_id].status
+
+        # Check executed orders
+        if order_id in self.executed_orders:
+            return self.executed_orders[order_id].status
+
+        # Query broker
+        return await self.broker.get_order_status(order_id)
+
+    async def poll_order_status(
+        self,
+        order_id: str,
+        max_polls: int = 60,
+        max_wait_seconds: int = 30,
+    ) -> BrokerOrder | None:
+        """
+        Poll order status until execution or timeout.
+
+        ASYNC-004: Implements exponential backoff to avoid rate limit saturation.
+
+        Args:
+            order_id: Order ID to poll
+            max_polls: Maximum number of polls
+            max_wait_seconds: Maximum wait time between polls (caps exponential backoff)
+
+        Returns:
+            Final BrokerOrder or None
+        """
+        for poll_count in range(max_polls):
+            order = self.pending_orders.get(order_id)
+            if not order:
+                logger.warning(
+                    "Order not found in pending orders",
+                    extra={"order_id": order_id},
+                )
+                return None
+
+            status = await self.get_order_status(order_id)
+            if status in (
+                OrderStatus.FILLED,
+                OrderStatus.EXECUTED,
+                OrderStatus.CANCELED,
+                OrderStatus.REJECTED,
+            ):
+                # Move to executed
+                self.pending_orders.pop(order_id, None)
+                self.executed_orders[order_id] = order
+                logger.info(
+                    "Order reached terminal status",
+                    extra={
+                        "order_id": order_id,
+                        "status": status.value,
+                        "poll_count": poll_count + 1,
+                    },
+                )
+                return order
+
+            # ASYNC-004: Exponential backoff with cap at max_wait_seconds
+            # Wait pattern: 1s, 2s, 4s, 8s, 16s, 30s, 30s, ...
+            if poll_count < max_polls - 1:
+                wait_time = min(2**poll_count, max_wait_seconds)
+                await asyncio.sleep(wait_time)
+
+        logger.warning(
+            "Order polling timeout",
+            extra={
+                "order_id": order_id,
+                "max_polls": max_polls,
+            },
+        )
+        return None
+
+    async def record_execution(
+        self,
+        order_id: str,
+        symbol: str,
+        quantity: Decimal,
+        price: Decimal,
+        fees: Decimal = _DEFAULT_FEES,
+    ) -> OrderExecution | None:
+        """
+        Record order execution.
+
+        Args:
+            order_id: Order ID
+            symbol: Stock symbol
+            quantity: Executed quantity
+            price: Execution price
+            fees: Transaction fees
+
+        Returns:
+            OrderExecution record
+        """
+        net_proceeds = quantity * price - fees
+
+        execution = OrderExecution(
+            order_id=order_id,
+            symbol=symbol,
+            quantity=quantity,
+            price=price,
+            fees=fees,
+            net_proceeds=net_proceeds,
+        )
+
+        self.executions.append(execution)
+        logger.info(f"✅ Recorded execution: {order_id} - {quantity} {symbol} @ {price}")
+        return execution
+
+    async def get_pending_orders(self, symbol: str | None = None) -> list[BrokerOrder]:
+        """
+        Get pending orders.
+
+        Args:
+            symbol: Filter by symbol (optional)
+
+        Returns:
+            List of pending BrokerOrder objects
+        """
+        orders = list(self.pending_orders.values())
+        if symbol:
+            orders = [o for o in orders if o.symbol == symbol]
+        return orders
+
+    async def get_executed_orders(self, symbol: str | None = None) -> list[BrokerOrder]:
+        """
+        Get executed orders.
+
+        Args:
+            symbol: Filter by symbol (optional)
+
+        Returns:
+            List of executed BrokerOrder objects
+        """
+        orders = list(self.executed_orders.values())
+        if symbol:
+            orders = [o for o in orders if o.symbol == symbol]
+        return orders
+
+    async def get_order_history(self, symbol: str | None = None) -> list[BrokerOrder]:
+        """
+        Get complete order history.
+
+        Args:
+            symbol: Filter by symbol (optional)
+
+        Returns:
+            List of all BrokerOrder objects
+        """
+        orders = self.order_history
+        if symbol:
+            orders = [o for o in orders if o.symbol == symbol]
+        return orders
+
+    async def get_execution_history(
+        self,
+        symbol: str | None = None,
+        since: datetime | None = None,
+    ) -> list[OrderExecution]:
+        """
+        Get execution history.
+
+        Args:
+            symbol: Filter by symbol
+            since: Filter by date
+
+        Returns:
+            List of OrderExecution records
+        """
+        executions = self.executions
+
+        if symbol:
+            executions = [e for e in executions if e.symbol == symbol]
+
+        if since:
+            executions = [e for e in executions if e.execution_time >= since]
+
+        return executions
+
+    async def record_error(
+        self,
+        order_id: str,
+        symbol: str,
+        error_code: str,
+        error_message: str,
+    ) -> OrderError:
+        """
+        Record order error.
+
+        Args:
+            order_id: Order ID
+            symbol: Stock symbol
+            error_code: Error code
+            error_message: Error message
+
+        Returns:
+            OrderError record
+        """
+        error = OrderError(
+            order_id=order_id,
+            symbol=symbol,
+            error_code=error_code,
+            error_message=error_message,
+        )
+
+        self.order_errors[order_id] = error
+        logger.warning(f"⚠️ Order error {error_code}: {error_message}")
+        return error
+
+    async def get_order_errors(self, symbol: str | None = None) -> list[OrderError]:
+        """
+        Get recorded order errors.
+
+        Args:
+            symbol: Filter by symbol
+
+        Returns:
+            List of OrderError records
+        """
+        errors = list(self.order_errors.values())
+        if symbol:
+            errors = [e for e in errors if e.symbol == symbol]
+        return errors
+
+    def get_total_executions(self) -> int:
+        """Get total number of executions."""
+        return len(self.executions)
+
+    def get_pending_count(self) -> int:
+        """Get number of pending orders."""
+        return len(self.pending_orders)
+
+    def get_executed_count(self) -> int:
+        """Get number of executed orders."""
+        return len(self.executed_orders)
+
+
+# Import asyncio at module level for poll_order_status
+# import pandas as pd  # F401 unused
+
+# Singleton
+_manager: OrderManager | None = None
+
+
+def get_order_manager(
+    broker: BrokerConnector | None = None,
+) -> OrderManager:
+    """broker=None usa el conector PAPER por defecto (fuera de FastAPI el
+    Depends() llegaba sin resolver como objeto y reventaba en runtime)."""
+    """Get or create singleton OrderManager."""
+    global _manager
+    if broker is None:
+        broker = get_broker_connector()
+    if _manager is None:
+        # Import here to avoid circular dependency
+        from .risk_gates import get_risk_gates
+
+        # A03: share THE singleton RiskGates — the API's PATCH
+        # /live-trading/risk/limits mutates the same object orders use.
+        _manager = OrderManager(broker=broker, risk_gates=get_risk_gates(broker))
+
+    return _manager
+
+
+def get_order_manager_for_api() -> OrderManager:
+    """Proveedor sin parámetros para ``Depends()`` de FastAPI.
+
+    ``get_order_manager(broker: BrokerConnector | None)`` no puede usarse
+    como dependencia: FastAPI intenta materializar la anotación del
+    parámetro ``broker`` en un campo y el registro de la ruta falla al
+    importar ``app.main`` (rompía la colección de 7 ficheros de tests).
+    """
+    return get_order_manager()

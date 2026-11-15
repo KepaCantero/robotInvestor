@@ -1,0 +1,53 @@
+# Requirements Document: app/domain/services/compliance/portfolio_optimizer.py
+
+## 1. Module Overview
+File: portfolio_optimizer.py
+Domain: Domain
+
+## 2. Dependencies
+- `__future__`
+- `app.domain.services.compliance.results`
+- `app.domain.services.compliance.service_registry`
+- `app.services.optimization_chan`
+- `decimal`
+- `logging`
+- `numpy`
+- `pandas`
+- `typing`
+
+## 3. Core Components
+### Classes
+- `PortfolioComplianceOptimizer`
+- `PortfolioOptimizerService`
+- `RegimeDetectorService`
+### Public Functions
+- `optimize_portfolio()`
+- `get_available_optimizers()`
+- `calculate_portfolio_metrics()`
+- `optimize()`
+- `detect_regimes()`
+
+## 4. Applicable Trading Rules
+
+#### R1
+Kelly Criterion + Max Position Size (max 5% per position)
+
+- [ ] Implementation verified
+- [ ] Tests pass
+
+#### R3
+Correlation & Concentration Limits (max 20% per sector)
+
+- [ ] Implementation verified
+- [ ] Tests pass
+
+#### R11
+Dynamic Trailing Stop (ATR-based, never loosen)
+
+- [ ] Implementation verified
+- [ ] Tests pass
+
+---
+Universal rules (SOLID, type hints, formatting, security, logging) live in
+.requirements/BASE_RULES.md and apply to every file.
+Resync this stub with: python scripts/generate_requirements.py

@@ -1,0 +1,107 @@
+# Requirements Document: app/sre/monitoring/trading_metrics.py
+
+## 1. Module Overview
+File: trading_metrics.py
+Domain: SRE
+
+## 2. Dependencies
+- `__future__`
+- `aiosqlite`
+- `asyncio`
+- `collections`
+- `contextlib`
+- `dataclasses`
+- `datetime`
+- `enum`
+- `logging`
+- `numpy`
+- `pathlib`
+- `typing`
+
+## 3. Core Components
+### Classes
+- `TradingHealthStatus`
+- `OrderExecutionPhase`
+- `OrderExecutionMetrics`
+- `SlippageMetrics`
+- `PositionSyncMetrics`
+- `MarketDataMetrics`
+- `StrategyHealthMetrics`
+- `RiskLimitMetrics`
+- `TradingMetrics`
+- `OrderRecord`
+- `TradingMetricsConfig`
+- `TradingMetricsMonitor`
+### Public Functions
+- `get_trading_metrics_monitor()`
+- `to_dict()`
+- `to_dict()`
+- `to_dict()`
+- `to_dict()`
+- `to_dict()`
+- `to_dict()`
+- `to_dict()`
+- `get_latency_ms()`
+- `get_slippage_bps()`
+- `initialize()`
+- `start_collection()`
+- `stop_collection()`
+- `collect_metrics()`
+- `record_order()`
+- `update_order_fill()`
+- `update_order_rejection()`
+- `update_order_cancellation()`
+- `update_internal_position()`
+- `update_broker_position()`
+- `update_market_data_timestamp()`
+- `update_strategy_health()`
+- `update_risk_limit()`
+- `calculate_fill_rate()`
+- `calculate_slippage()`
+- `check_position_sync()`
+- `evaluate_trading_health()`
+- `get_current_metrics()`
+- `get_metrics_summary()`
+
+## 4. Applicable Trading Rules
+
+#### R5
+Walk-Forward Analysis (70/30 train/test split, min 50 trades OOS, max 30% degradation)
+
+- [ ] Implementation verified
+- [ ] Tests pass
+
+#### R6
+Overfitting Prevention (min 30 samples per parameter, purged cross-validation)
+
+- [ ] Implementation verified
+- [ ] Tests pass
+
+#### R7
+Monte Carlo Risk Analysis (1000 simulations, validate DD within 5-95 percentile)
+
+- [ ] Implementation verified
+- [ ] Tests pass
+
+#### R8
+Bid-Ask Spread Management (avoid market orders for low-liquidity)
+
+- [ ] Implementation verified
+- [ ] Tests pass
+
+#### R9
+Execution Timing (avoid first/last 15 min, VWAP/TWAP for large orders)
+
+- [ ] Implementation verified
+- [ ] Tests pass
+
+#### R10
+Slippage Monitor (track actual vs expected fill, alert if >0.5%)
+
+- [ ] Implementation verified
+- [ ] Tests pass
+
+---
+Universal rules (SOLID, type hints, formatting, security, logging) live in
+.requirements/BASE_RULES.md and apply to every file.
+Resync this stub with: python scripts/generate_requirements.py

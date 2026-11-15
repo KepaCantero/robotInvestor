@@ -1,0 +1,67 @@
+# Requirements Document: app/services/portfolio_construction_narang.py
+
+## 1. Module Overview
+File: portfolio_construction_narang.py
+Domain: Service
+
+## 2. Dependencies
+- `__future__`
+- `app.services.risk_models_narang`
+- `app.services.transaction_costs`
+- `dataclasses`
+- `datetime`
+- `decimal`
+- `enum`
+- `logging`
+- `numpy`
+- `pandas`
+- `scipy.optimize`
+- `typing`
+
+## 3. Core Components
+### Classes
+- `OptimizationMethod`
+- `RebalanceTrigger`
+- `AlphaView`
+- `PortfolioConstraints`
+- `PortfolioWeights`
+- `RebalanceRecommendation`
+- `PortfolioConstructor`
+### Public Functions
+- `get_portfolio_constructor()`
+- `long_exposure()`
+- `short_exposure()`
+- `gross_exposure()`
+- `net_exposure()`
+- `set_risk_model()`
+- `set_cost_model()`
+- `construct_portfolio()`
+- `should_rebalance()`
+- `objective()`
+- `objective()`
+- `objective()`
+
+## 4. Applicable Trading Rules
+
+#### R1
+Kelly Criterion + Max Position Size (max 5% per position)
+
+- [ ] Implementation verified
+- [ ] Tests pass
+
+#### R3
+Correlation & Concentration Limits (max 20% per sector)
+
+- [ ] Implementation verified
+- [ ] Tests pass
+
+#### R11
+Dynamic Trailing Stop (ATR-based, never loosen)
+
+- [ ] Implementation verified
+- [ ] Tests pass
+
+---
+Universal rules (SOLID, type hints, formatting, security, logging) live in
+.requirements/BASE_RULES.md and apply to every file.
+Resync this stub with: python scripts/generate_requirements.py

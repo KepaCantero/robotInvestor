@@ -1,0 +1,72 @@
+# Requirements Document: app/domain/services/metrics/risk_metrics.py
+
+## 1. Module Overview
+File: risk_metrics.py
+Domain: Domain
+
+## 2. Dependencies
+- `__future__`
+- `app.shared.config.centralized_config`
+- `dataclasses`
+- `logging`
+- `numpy`
+- `pandas`
+- `scipy`
+
+## 3. Core Components
+### Classes
+- `VaRResult`
+- `RiskMetricsResult`
+- `RiskMetricsCalculator`
+### Public Functions
+- `get_var()`
+- `get_cvar()`
+- `get_volatility()`
+- `get_beta()`
+- `get_correlation()`
+- `get_tracking_error()`
+- `get_information_ratio()`
+- `var()`
+- `var_comprehensive()`
+- `cvar()`
+- `volatility()`
+- `rolling_volatility()`
+- `beta()`
+- `correlation()`
+- `correlation_matrix()`
+- `tracking_error()`
+- `information_ratio()`
+- `upside_capture()`
+- `downside_capture()`
+- `calculate_all()`
+
+## 4. Applicable Trading Rules
+
+#### R5
+Walk-Forward Analysis (70/30 train/test split, min 50 trades OOS, max 30% degradation)
+
+- [ ] Implementation verified
+- [ ] Tests pass
+
+#### R6
+Overfitting Prevention (min 30 samples per parameter, purged cross-validation)
+
+- [ ] Implementation verified
+- [ ] Tests pass
+
+#### R7
+Monte Carlo Risk Analysis (1000 simulations, validate DD within 5-95 percentile)
+
+- [ ] Implementation verified
+- [ ] Tests pass
+
+#### R2
+Drawdown Monitor (15% warning, 25% halt trading, auto cooldown)
+
+- [ ] Implementation verified
+- [ ] Tests pass
+
+---
+Universal rules (SOLID, type hints, formatting, security, logging) live in
+.requirements/BASE_RULES.md and apply to every file.
+Resync this stub with: python scripts/generate_requirements.py

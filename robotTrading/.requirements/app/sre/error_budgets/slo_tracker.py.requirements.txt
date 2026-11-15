@@ -1,0 +1,59 @@
+# Requirements Document: app/sre/error_budgets/slo_tracker.py
+
+## 1. Module Overview
+File: slo_tracker.py
+Domain: SRE
+
+## 2. Dependencies
+- `__future__`
+- `aiosqlite`
+- `asyncio`
+- `collections`
+- `dataclasses`
+- `datetime`
+- `decimal`
+- `enum`
+- `logging`
+- `pathlib`
+- `typing`
+
+## 3. Core Components
+### Classes
+- `SLIMetricType`
+- `SLOComplianceStatus`
+- `SLIMetric`
+- `SLOConfig`
+- `SLOViolation`
+- `SLOComplianceReport`
+- `SLOTracker`
+### Public Functions
+- `to_dict()`
+- `to_dict()`
+- `duration_minutes()`
+- `to_dict()`
+- `compliance_percentage()`
+- `violation_count()`
+- `total_violation_minutes()`
+- `to_dict()`
+- `initialize()`
+- `register_slo()`
+- `record_metric()`
+- `generate_compliance_report()`
+- `set_violation_callback()`
+- `set_resolution_callback()`
+- `get_active_violations()`
+- `get_slo_configs()`
+- `get_summary()`
+
+## 4. Applicable Trading Rules
+
+#### R15
+Complete Logging (log all decisions, trade journal format)
+
+- [ ] Implementation verified
+- [ ] Tests pass
+
+---
+Universal rules (SOLID, type hints, formatting, security, logging) live in
+.requirements/BASE_RULES.md and apply to every file.
+Resync this stub with: python scripts/generate_requirements.py

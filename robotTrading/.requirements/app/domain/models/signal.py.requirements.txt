@@ -1,0 +1,76 @@
+# Requirements Document: app/domain/models/signal.py
+
+## 1. Module Overview
+File: signal.py
+Domain: Domain
+
+## 2. Dependencies
+- `__future__`
+- `app.shared.config.centralized_config`
+- `dataclasses`
+- `datetime`
+- `decimal`
+- `enum`
+- `heapq`
+- `logging`
+- `numpy`
+- `pydantic`
+- `typing`
+
+## 3. Core Components
+### Classes
+- `SignalType`
+- `SignalStrength`
+- `SignalSource`
+- `MarketData`
+- `Signal`
+- `SignalScorer`
+- `SignalPriorityQueue`
+### Public Functions
+- `mid_price()`
+- `spread_percentage()`
+- `validate_score_fields()`
+- `validate_price()`
+- `validate_volume()`
+- `validate_timestamp()`
+- `validate_signal_consistency()`
+- `combined_score()`
+- `is_actionable()`
+- `is_high_priority()`
+- `calculate_confidence_score()`
+- `calculate_liquidity_score()`
+- `calculate_priority_score()`
+- `add_signal()`
+- `is_empty()`
+- `get_next_signal()`
+- `get_highest_priority_signal()`
+- `peek_next_signal()`
+- `get_signals_by_symbol()`
+- `clear_signals()`
+- `get_queue_size()`
+- `get_queue_summary()`
+
+## 4. Applicable Trading Rules
+
+#### R19
+Market Regime Detection (trend/range/volatile classification)
+
+- [ ] Implementation verified
+- [ ] Tests pass
+
+#### R20
+Multi-Confirmation (min 2 independent signals before trade)
+
+- [ ] Implementation verified
+- [ ] Tests pass
+
+#### R24
+Strategy Diversification (min 3 uncorrelated strategies)
+
+- [ ] Implementation verified
+- [ ] Tests pass
+
+---
+Universal rules (SOLID, type hints, formatting, security, logging) live in
+.requirements/BASE_RULES.md and apply to every file.
+Resync this stub with: python scripts/generate_requirements.py

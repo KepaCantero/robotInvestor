@@ -1,0 +1,43 @@
+# Requirements Document: app/services/risk_scaling_application/limit_adjuster.py
+
+## 1. Module Overview
+File: limit_adjuster.py
+Domain: Service
+
+## 2. Dependencies
+- `__future__`
+- `app.services.portfolio_constructor`
+- `dataclasses`
+- `decimal`
+- `logging`
+- `typing`
+
+## 3. Core Components
+### Classes
+- `AdjustedLimit`
+- `LimitBreach`
+- `LimitAdjuster`
+### Public Functions
+- `get_limit_adjuster()`
+- `adjust_position_limits()`
+- `detect_limit_breaches()`
+- `apply_leverage_adjustment()`
+- `validate_position_within_limits()`
+- `validate_leverage_within_limits()`
+- `enforce_hard_stops()`
+- `set_position_limit()`
+- `set_max_leverage()`
+- `set_max_allocation()`
+
+## 4. Applicable Trading Rules
+
+#### R2
+Drawdown Monitor (15% warning, 25% halt trading, auto cooldown)
+
+- [ ] Implementation verified
+- [ ] Tests pass
+
+---
+Universal rules (SOLID, type hints, formatting, security, logging) live in
+.requirements/BASE_RULES.md and apply to every file.
+Resync this stub with: python scripts/generate_requirements.py

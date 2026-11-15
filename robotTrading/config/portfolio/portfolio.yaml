@@ -1,0 +1,338 @@
+# Portfolio Multi-Strategy Configuration
+# Automated sector and country allocation with market type filtering
+
+# Country and Sector Mapping
+symbol_mappings:
+  AAPL: { sector: technology, country: USA }
+  MSFT: { sector: technology, country: USA }
+  GOOGL: { sector: technology, country: USA }
+  AMZN: { sector: technology, country: USA }
+  META: { sector: technology, country: USA }
+  NVDA: { sector: technology, country: USA }
+  TSLA: { sector: technology, country: USA }
+  ORCL: { sector: technology, country: USA }
+  INTC: { sector: technology, country: USA }
+  CSCO: { sector: technology, country: USA }
+  ADBE: { sector: technology, country: USA }
+  CRM: { sector: technology, country: USA }
+  AMD: { sector: technology, country: USA }
+  AVGO: { sector: technology, country: USA }
+  QCOM: { sector: technology, country: USA }
+  ASML: { sector: technology, country: Netherlands }
+  SAP: { sector: technology, country: Germany }
+
+  NFLX: { sector: growth, country: USA }
+  SHOP: { sector: growth, country: Canada }
+  SQ: { sector: growth, country: USA }
+  SNOW: { sector: growth, country: USA }
+  CRWD: { sector: growth, country: USA }
+  NET: { sector: growth, country: USA }
+
+  XOM: { sector: energy, country: USA }
+  CVX: { sector: energy, country: USA }
+  COP: { sector: energy, country: USA }
+  EOG: { sector: energy, country: USA }
+  SLB: { sector: energy, country: USA }
+  MPC: { sector: energy, country: USA }
+  VLO: { sector: energy, country: USA }
+  PSX: { sector: energy, country: USA }
+  HAL: { sector: energy, country: USA }
+  FTI: { sector: energy, country: Canada }
+
+  NEE: { sector: utilities, country: USA }
+  DUK: { sector: utilities, country: USA }
+  SO: { sector: utilities, country: USA }
+  AEP: { sector: utilities, country: USA }
+  SRE: { sector: utilities, country: USA }
+  D: { sector: utilities, country: USA }
+  EXC: { sector: utilities, country: USA }
+  ES: { sector: utilities, country: Spain }
+  ETR: { sector: utilities, country: Germany }
+  FE: { sector: utilities, country: USA }
+
+  PG: { sector: consumer_staples, country: USA }
+  KO: { sector: consumer_staples, country: USA }
+  PEP: { sector: consumer_staples, country: USA }
+  WMT: { sector: consumer_staples, country: USA }
+  COST: { sector: consumer_staples, country: USA }
+  HD: { sector: consumer_staples, country: USA }
+  MCD: { sector: consumer_staples, country: USA }
+  NKE: { sector: consumer_staples, country: USA }
+  SBUX: { sector: consumer_staples, country: USA }
+  TGT: { sector: consumer_staples, country: USA }
+  NSRGY: { sector: consumer_staples, country: Switzerland }
+
+  AMT: { sector: reits, country: USA }
+  PLD: { sector: reits, country: USA }
+  EQIX: { sector: reits, country: USA }
+  PSA: { sector: reits, country: USA }
+  WELL: { sector: reits, country: USA }
+  SPG: { sector: reits, country: USA }
+  O: { sector: reits, country: USA }
+  DLR: { sector: reits, country: USA }
+  AVB: { sector: reits, country: USA }
+  EQR: { sector: reits, country: USA }
+
+  JPM: { sector: banking, country: USA }
+  BAC: { sector: banking, country: USA }
+  WFC: { sector: banking, country: USA }
+  C: { sector: banking, country: USA }
+  GS: { sector: banking, country: USA }
+  MS: { sector: banking, country: USA }
+  BX: { sector: banking, country: USA }
+  SCHW: { sector: banking, country: USA }
+  USB: { sector: banking, country: USA }
+  PNC: { sector: banking, country: USA }
+  DBSSF: { sector: banking, country: Germany }
+  SCCO: { sector: banking, country: Chile }
+
+  JNJ: { sector: healthcare, country: USA }
+  UNH: { sector: healthcare, country: USA }
+  PFE: { sector: healthcare, country: USA }
+  ABT: { sector: healthcare, country: USA }
+  TMO: { sector: healthcare, country: USA }
+  DHR: { sector: healthcare, country: USA }
+  BMY: { sector: healthcare, country: USA }
+  AMGN: { sector: healthcare, country: USA }
+  CI: { sector: healthcare, country: USA }
+  HUM: { sector: healthcare, country: USA }
+  ASGA: { sector: healthcare, country: Australia }
+
+  BA: { sector: industrials, country: USA }
+  CAT: { sector: industrials, country: USA }
+  GE: { sector: industrials, country: USA }
+  HON: { sector: industrials, country: USA }
+  LMT: { sector: industrials, country: USA }
+  RTX: { sector: industrials, country: USA }
+  UNP: { sector: industrials, country: USA }
+  UPS: { sector: industrials, country: USA }
+  DE: { sector: industrials, country: USA }
+  ETN: { sector: industrials, country: USA }
+  SIEGY: { sector: industrials, country: Germany }
+
+  LIN: { sector: materials, country: USA }
+  APD: { sector: materials, country: USA }
+  SHW: { sector: materials, country: USA }
+  FCX: { sector: materials, country: USA }
+  NEM: { sector: materials, country: USA }
+  ECL: { sector: materials, country: USA }
+  PPG: { sector: materials, country: USA }
+  DD: { sector: materials, country: USA }
+  DOW: { sector: materials, country: USA }
+  CTVA: { sector: materials, country: USA }
+
+  VZ: { sector: communication, country: USA }
+  T: { sector: communication, country: USA }
+  CMCSA: { sector: communication, country: USA }
+  DIS: { sector: communication, country: USA }
+  TMUS: { sector: communication, country: USA }
+
+# Sector Definitions
+sectors:
+  technology:
+    symbols:
+      [
+        "AAPL",
+        "MSFT",
+        "GOOGL",
+        "AMZN",
+        "META",
+        "NVDA",
+        "TSLA",
+        "ORCL",
+        "INTC",
+        "CSCO",
+        "ADBE",
+        "CRM",
+        "AMD",
+        "AVGO",
+        "QCOM",
+      ]
+    description: "Technology and growth stocks"
+
+  growth:
+    symbols:
+      [
+        "TSLA",
+        "NFLX",
+        "AMZN",
+        "META",
+        "GOOGL",
+        "NVDA",
+        "AMD",
+        "SHOP",
+        "SQ",
+        "SNOW",
+        "CRWD",
+        "NET",
+      ]
+    description: "High growth companies"
+
+  energy:
+    symbols:
+      ["XOM", "CVX", "COP", "EOG", "SLB", "MPC", "VLO", "PSX", "HAL", "FTI"]
+    description: "Energy sector"
+
+  utilities:
+    symbols: ["NEE", "DUK", "SO", "AEP", "SRE", "D", "EXC", "ES", "ETR", "FE"]
+    description: "Utilities sector (stable)"
+
+  consumer_staples:
+    symbols:
+      ["PG", "KO", "PEP", "WMT", "COST", "HD", "MCD", "NKE", "SBUX", "TGT"]
+    description: "Consumer staples (defensive)"
+
+  reits:
+    symbols:
+      ["AMT", "PLD", "EQIX", "PSA", "WELL", "SPG", "O", "DLR", "AVB", "EQR"]
+    description: "Real Estate Investment Trusts"
+
+  banks:
+    symbols: ["JPM", "BAC", "WFC", "C", "GS", "MS", "BX", "SCHW", "USB", "PNC"]
+    description: "Banking sector"
+
+  healthcare:
+    symbols:
+      ["JNJ", "UNH", "PFE", "ABT", "TMO", "DHR", "BMY", "AMGN", "CI", "HUM"]
+    description: "Healthcare sector"
+
+  industrials:
+    symbols: ["BA", "CAT", "GE", "HON", "LMT", "RTX", "UNP", "UPS", "DE", "ETN"]
+    description: "Industrial sector"
+
+  materials:
+    symbols:
+      ["LIN", "APD", "SHW", "FCX", "NEM", "ECL", "PPG", "DD", "DOW", "CTVA"]
+    description: "Materials sector"
+
+  communication:
+    symbols: ["VZ", "T", "CMCSA", "DIS", "NFLX", "GOOGL", "META", "TMUS"]
+    description: "Communication services"
+
+# Market Type Definitions
+market_types:
+  trending:
+    description: "Momentum-based market with clear trends"
+    indicators:
+      - adx_threshold: 25
+      - trend_strength: high
+
+  sideways:
+    description: "Range-bound or stable market"
+    indicators:
+      - adx_threshold: 15
+      - trend_strength: low
+      - volatility: stable
+
+  correlated:
+    description: "Highly correlated markets suitable for pairs trading"
+    indicators:
+      - min_correlation: 0.7
+      - cointegration_required: true
+
+# Strategy Allocations with Sector and Market Type Filters
+strategy_allocations:
+  momentum:
+    enabled: true
+    capital_allocation:
+      target_weight: 0.60 # 60% of total capital (increased from 50% per recommendation)
+      min_weight: 0.40
+      max_weight: 0.70 # Increased max exposure for momentum
+
+    # Sector filtering - only trade these sectors
+    sectors:
+      - technology # ✅ Data available: AAPL, MSFT, GOOGL, AMZN, META, NVDA, TSLA
+      - growth # ✅ Data available: TSLA, AMZN, META
+      # - energy     # Uncomment when CSV files are available (XOM, CVX)
+
+    # Market type filtering
+    market_types:
+      - trending
+
+    # Symbols (if you want explicit symbol list instead of sectors)
+    # symbols: ["AAPL", "MSFT", "GOOGL"]
+
+    # Rebalancing configuration
+    rebalancing:
+      frequency: monthly # monthly, quarterly, yearly
+      threshold: 0.05 # Rebalance if drift > 5%
+      enabled: true
+
+  mean_reversion:
+    enabled: true
+    capital_allocation:
+      target_weight: 0.25 # 25% of total capital (per recommendation: 60% Momentum, 25% Mean, 15% Pairs)
+      min_weight: 0.15
+      max_weight: 0.35 # Hard limit to prevent overexposure
+
+    sectors:
+      - technology # Temporary: using available symbols until utilities are downloaded
+      # - utilities     # Uncomment when CSV files are available
+      # - consumer_staples
+      # - reits
+
+    market_types:
+      - sideways
+
+    rebalancing:
+      frequency: quarterly
+      threshold: 0.05
+      enabled: true
+
+  pairs_trading:
+    enabled: true
+    capital_allocation:
+      target_weight: 0.15 # 15% of total capital (per recommendation: 60% Momentum, 25% Mean, 15% Pairs)
+      min_weight: 0.05
+      max_weight: 0.15 # Hard limit to minimize impact of low win rate strategy
+
+    sectors:
+      - banks
+      - energy
+      - technology
+
+    market_types:
+      - correlated
+
+    # Explicit pair definitions (required for pairs trading)
+    pair_symbols:
+      - ["AAPL", "MSFT"] # Technology pair
+      - ["JPM", "BAC"] # Banking pair
+      - ["XOM", "CVX"] # Energy pair (when data available)
+
+    rebalancing:
+      frequency: monthly
+      threshold: 0.05
+      enabled: true
+
+# Global Portfolio Settings
+portfolio:
+  total_capital: 100000
+  initial_allocation_date: "2015-01-01"
+
+  # Rebalancing settings
+  global_rebalancing:
+    enabled: true
+    frequency: monthly # monthly, quarterly, yearly
+    threshold: 0.05
+
+  # Reporting settings
+  reporting:
+    save_results: true
+    output_path: "docs/BACKTEST_RESULTS"
+    generate_summary: true
+    include_metrics:
+      - sharpe_ratio
+      - max_drawdown
+      - total_return
+      - win_rate
+      - total_trades
+      - per_strategy_metrics
+
+# Performance-based optimization (for future use)
+optimization:
+  enabled: false
+  metric: sharpe # sharpe, return, calmar
+  lookback_days: 90
+  min_performance_history_days: 30
+  rebalance_on_optimization: true

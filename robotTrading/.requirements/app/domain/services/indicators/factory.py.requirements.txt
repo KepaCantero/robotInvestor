@@ -1,0 +1,65 @@
+# Requirements Document: app/domain/services/indicators/factory.py
+
+## 1. Module Overview
+File: factory.py
+Domain: Domain
+
+## 2. Dependencies
+- `__future__`
+- `app.domain.services.indicators.numba_indicators`
+- `app.domain.services.indicators.technical_indicators`
+- `enum`
+- `logging`
+- `numpy`
+- `pandas`
+- `typing`
+
+## 3. Core Components
+### Classes
+- `IndicatorBackend`
+- `IndicatorCalculator`
+- `UnifiedIndicatorCalculator`
+### Public Functions
+- `get_indicator_calculator()`
+- `get_available_backends()`
+- `calculate_rsi()`
+- `calculate_ema()`
+- `calculate_sma()`
+- `calculate_macd()`
+- `calculate_atr()`
+- `calculate_bollinger_bands()`
+- `rsi()`
+- `ema()`
+- `sma()`
+- `macd()`
+- `atr()`
+- `bollinger_bands()`
+- `stochastic()`
+- `pandas()`
+- `numba()`
+- `rsi()`
+- `ema()`
+- `sma()`
+- `macd()`
+- `atr()`
+- `bollinger_bands()`
+- `adx()`
+- `stochastic()`
+- `cci()`
+- `obv()`
+- `williams_r()`
+- `roc()`
+- `calculate_all()`
+
+## 4. Applicable Trading Rules
+
+#### R15
+Complete Logging (log all decisions, trade journal format)
+
+- [ ] Implementation verified
+- [ ] Tests pass
+
+---
+Universal rules (SOLID, type hints, formatting, security, logging) live in
+.requirements/BASE_RULES.md and apply to every file.
+Resync this stub with: python scripts/generate_requirements.py

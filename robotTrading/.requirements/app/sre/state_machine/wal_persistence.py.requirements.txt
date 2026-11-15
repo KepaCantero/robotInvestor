@@ -1,0 +1,63 @@
+# Requirements Document: app/sre/state_machine/wal_persistence.py
+
+## 1. Module Overview
+File: wal_persistence.py
+Domain: SRE
+
+## 2. Dependencies
+- `__future__`
+- `aiofiles`
+- `aiosqlite`
+- `asyncio`
+- `dataclasses`
+- `datetime`
+- `decimal`
+- `enum`
+- `json`
+- `logging`
+- `pathlib`
+- `typing`
+- `uuid`
+
+## 3. Core Components
+### Classes
+- `OrderState`
+- `OrderLog`
+- `OrderStateMachine`
+- `WALOrderManager`
+### Public Functions
+- `to_dict()`
+- `from_dict()`
+- `initialize()`
+- `write_state()`
+- `get_order_history()`
+- `get_orders_in_state()`
+- `get_pending_orders()`
+- `initialize()`
+- `submit_order()`
+- `recover_orphaned_orders()`
+
+## 4. Applicable Trading Rules
+
+#### R14
+Data Quality Validation (OHLCV sanity checks, detect gaps/stale data)
+
+- [ ] Implementation verified
+- [ ] Tests pass
+
+#### R15
+Complete Logging (log all decisions, trade journal format)
+
+- [ ] Implementation verified
+- [ ] Tests pass
+
+#### R16
+Daily Reconciliation (compare broker vs internal, alert discrepancies >1%)
+
+- [ ] Implementation verified
+- [ ] Tests pass
+
+---
+Universal rules (SOLID, type hints, formatting, security, logging) live in
+.requirements/BASE_RULES.md and apply to every file.
+Resync this stub with: python scripts/generate_requirements.py

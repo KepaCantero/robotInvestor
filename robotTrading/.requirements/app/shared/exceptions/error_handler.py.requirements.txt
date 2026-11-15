@@ -1,0 +1,50 @@
+# Requirements Document: app/shared/exceptions/error_handler.py
+
+## 1. Module Overview
+File: error_handler.py
+Domain: Shared
+
+## 2. Dependencies
+- `__future__`
+- `app.services.centralized_logging`
+- `app.shared.exceptions.trading_exceptions`
+- `fastapi`
+- `fastapi.exceptions`
+- `fastapi.responses`
+- `logging`
+- `starlette.exceptions`
+- `traceback`
+- `typing`
+
+## 3. Core Components
+### Classes
+- `ErrorHandler`
+### Public Functions
+- `algotrading_exception_handler()`
+- `validation_exception_handler()`
+- `http_exception_handler()`
+- `starlette_http_exception_handler()`
+- `generic_exception_handler()`
+- `create_error_response()`
+- `raise_validation_error()`
+- `raise_business_logic_error()`
+- `raise_external_api_error()`
+- `raise_database_error()`
+- `raise_configuration_error()`
+- `handle_algotrading_error()`
+- `handle_validation_error()`
+- `handle_http_exception()`
+- `handle_generic_exception()`
+
+## 4. Applicable Trading Rules
+
+#### R15
+Complete Logging (log all decisions, trade journal format)
+
+- [ ] Implementation verified
+- [ ] Tests pass
+
+---
+Universal rules (SOLID, type hints, formatting, security, logging) live in
+.requirements/BASE_RULES.md and apply to every file.
+Resync this stub with: python scripts/generate_requirements.py

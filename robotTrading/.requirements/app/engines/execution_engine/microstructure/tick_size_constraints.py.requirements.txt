@@ -1,0 +1,53 @@
+# Requirements Document: app/engines/execution_engine/microstructure/tick_size_constraints.py
+
+## 1. Module Overview
+File: tick_size_constraints.py
+Domain: Engine
+
+## 2. Dependencies
+- `__future__`
+- `dataclasses`
+- `decimal`
+- `logging`
+- `pandas`
+- `typing`
+
+## 3. Core Components
+### Classes
+- `TickSizeAnalysis`
+- `TickConstraintsResult`
+- `TickSizeConstraints`
+### Public Functions
+- `get_tick_size_constraints()`
+- `get_tick_size()`
+- `round_to_tick()`
+- `adjust_limit_price()`
+- `analyze_tick_regime()`
+- `calculate_tick_constraints()`
+- `get_optimal_tick_size()`
+- `validate_price_ticks()`
+
+## 4. Applicable Trading Rules
+
+#### R8
+Bid-Ask Spread Management (avoid market orders for low-liquidity)
+
+- [ ] Implementation verified
+- [ ] Tests pass
+
+#### R9
+Execution Timing (avoid first/last 15 min, VWAP/TWAP for large orders)
+
+- [ ] Implementation verified
+- [ ] Tests pass
+
+#### R10
+Slippage Monitor (track actual vs expected fill, alert if >0.5%)
+
+- [ ] Implementation verified
+- [ ] Tests pass
+
+---
+Universal rules (SOLID, type hints, formatting, security, logging) live in
+.requirements/BASE_RULES.md and apply to every file.
+Resync this stub with: python scripts/generate_requirements.py

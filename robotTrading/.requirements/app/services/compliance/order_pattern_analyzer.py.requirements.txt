@@ -1,0 +1,56 @@
+# Requirements Document: app/services/compliance/order_pattern_analyzer.py
+
+## 1. Module Overview
+File: order_pattern_analyzer.py
+Domain: Service
+
+## 2. Dependencies
+- `__future__`
+- `app.shared.utils.timezone_utils`
+- `collections`
+- `dataclasses`
+- `datetime`
+- `decimal`
+- `logging`
+- `typing`
+
+## 3. Core Components
+### Classes
+- `OrderRecord`
+- `PatternAlert`
+- `OrderPatternAnalyzer`
+### Public Functions
+- `to_dict()`
+- `to_dict()`
+- `analyze_order()`
+- `record_order()`
+- `record_cancellation()`
+- `record_fill()`
+- `get_order_to_trade_ratio()`
+- `get_alerts()`
+- `reset()`
+
+## 4. Applicable Trading Rules
+
+#### R8
+Bid-Ask Spread Management (avoid market orders for low-liquidity)
+
+- [ ] Implementation verified
+- [ ] Tests pass
+
+#### R9
+Execution Timing (avoid first/last 15 min, VWAP/TWAP for large orders)
+
+- [ ] Implementation verified
+- [ ] Tests pass
+
+#### R10
+Slippage Monitor (track actual vs expected fill, alert if >0.5%)
+
+- [ ] Implementation verified
+- [ ] Tests pass
+
+---
+Universal rules (SOLID, type hints, formatting, security, logging) live in
+.requirements/BASE_RULES.md and apply to every file.
+Resync this stub with: python scripts/generate_requirements.py

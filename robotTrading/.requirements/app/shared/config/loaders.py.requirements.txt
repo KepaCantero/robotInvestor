@@ -1,0 +1,41 @@
+# Requirements Document: app/shared/config/loaders.py
+
+## 1. Module Overview
+File: loaders.py
+Domain: Shared
+
+## 2. Dependencies
+- `__future__`
+- `app.shared.config.protocols`
+- `json`
+- `logging`
+- `pathlib`
+- `typing`
+- `yaml`
+
+## 3. Core Components
+### Classes
+- `YAMLConfigLoader`
+- `JSONConfigLoader`
+- `ConfigLoaderRegistry`
+### Public Functions
+- `load()`
+- `supports()`
+- `load()`
+- `supports()`
+- `register()`
+- `get_loader()`
+- `load()`
+
+## 4. Applicable Trading Rules
+
+#### R15
+Complete Logging (log all decisions, trade journal format)
+
+- [ ] Implementation verified
+- [ ] Tests pass
+
+---
+Universal rules (SOLID, type hints, formatting, security, logging) live in
+.requirements/BASE_RULES.md and apply to every file.
+Resync this stub with: python scripts/generate_requirements.py

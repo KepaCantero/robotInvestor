@@ -1,0 +1,58 @@
+# Requirements Document: app/domain/strategies/strategy_logger.py
+
+## 1. Module Overview
+File: strategy_logger.py
+Domain: Domain
+
+## 2. Dependencies
+- `__future__`
+- `app.domain.models.signal`
+- `datetime`
+- `decimal`
+- `json`
+- `logging`
+- `pathlib`
+- `typing`
+
+## 3. Core Components
+### Classes
+- `StrategyLogger`
+### Public Functions
+- `log_signal_generated()`
+- `log_signal_rejected()`
+- `log_signal_executed()`
+- `log_strategy_error()`
+- `log_execution_error()`
+- `log_strategy_loaded()`
+- `log_strategy_unloaded()`
+- `log_strategy_activated()`
+- `log_strategy_deactivated()`
+- `get_strategy_metrics()`
+- `get_all_metrics()`
+- `clear_logs()`
+- `export_logs()`
+
+## 4. Applicable Trading Rules
+
+#### R19
+Market Regime Detection (trend/range/volatile classification)
+
+- [ ] Implementation verified
+- [ ] Tests pass
+
+#### R20
+Multi-Confirmation (min 2 independent signals before trade)
+
+- [ ] Implementation verified
+- [ ] Tests pass
+
+#### R24
+Strategy Diversification (min 3 uncorrelated strategies)
+
+- [ ] Implementation verified
+- [ ] Tests pass
+
+---
+Universal rules (SOLID, type hints, formatting, security, logging) live in
+.requirements/BASE_RULES.md and apply to every file.
+Resync this stub with: python scripts/generate_requirements.py

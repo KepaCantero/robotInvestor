@@ -1,0 +1,72 @@
+# Requirements Document: app/domain/market_analysis/microstructure/ofi/models.py
+
+## 1. Module Overview
+File: models.py
+Domain: Domain
+
+## 2. Dependencies
+- `__future__`
+- `dataclasses`
+- `datetime`
+- `decimal`
+- `enum`
+- `logging`
+- `numpy`
+- `pydantic`
+- `typing`
+
+## 3. Core Components
+### Classes
+- `ModelValidationError`
+- `OFIHorizon`
+- `OrderSide`
+- `OrderBookSnapshot`
+- `TickData`
+- `OFIConfig`
+- `OFISignalConfig`
+- `OFIPrediction`
+- `OFISignal`
+- `CumulativeOFI`
+- `OFIStatistics`
+### Public Functions
+- `best_bid()`
+- `best_ask()`
+- `mid_price()`
+- `bid_volume()`
+- `ask_volume()`
+- `total_volume()`
+- `spread()`
+- `spread_bps()`
+- `depth_imbalance()`
+- `to_dict()`
+- `notional_value()`
+- `to_dict()`
+- `sell_threshold_must_be_negative()`
+- `ofi_min_must_be_negative_or_zero()`
+- `bearish_threshold_must_be_negative()`
+- `sell_threshold_must_be_negative()`
+- `validate_direction()`
+- `to_dict()`
+- `validate_action()`
+- `is_tradeable()`
+- `to_dict()`
+- `update()`
+- `z_score()`
+- `is_extreme_high()`
+- `is_extreme_low()`
+- `reset()`
+- `to_dict()`
+- `to_dict()`
+
+## 4. Applicable Trading Rules
+
+#### R15
+Complete Logging (log all decisions, trade journal format)
+
+- [ ] Implementation verified
+- [ ] Tests pass
+
+---
+Universal rules (SOLID, type hints, formatting, security, logging) live in
+.requirements/BASE_RULES.md and apply to every file.
+Resync this stub with: python scripts/generate_requirements.py

@@ -1,0 +1,476 @@
+"""
+Orchestrator for backtesting operations.
+
+This module provides coordination and orchestration for backtesting operations,
+including result management, parallel execution, and test coordination.
+
+SINGLE SOURCE OF TRUTH: All defaults from CentralizedConfig.
+"""
+
+from __future__ import annotations
+
+import logging
+from collections import deque
+from decimal import Decimal
+from threading import Lock
+from typing import TYPE_CHECKING, Union
+
+import numpy as np
+
+from app.backtesting.models import BacktestConfig, BacktestResult
+
+# SINGLE SOURCE OF TRUTH: Import CentralizedConfig
+from app.shared.config.centralized_config import get_config
+
+# Forward reference for type hints
+if TYPE_CHECKING:
+    from app.backtesting.core.executor import BacktestExecutor
+
+logger = logging.getLogger(__name__)
+
+# Type alias for backtest results (can be BacktestResult or dict)
+ResultValue = Union[int, float, str, bool]
+BacktestResultItem = Union[BacktestResult, dict[str, ResultValue]]
+
+
+def _get_backtesting_config():
+    """Helper to get backtesting config from CentralizedConfig."""
+    return get_config().backtesting
+
+
+class BacktestDefaults:
+    """
+    Centralized backtest defaults and constants.
+
+    DEPRECATED: This class now delegates to CentralizedConfig.
+    SINGLE SOURCE OF TRUTH: All values from CentralizedConfig.
+
+    NOTE: These defaults are used ONLY when configuration is not provided.
+    Always use proper YAML configuration with risk management parameters.
+    """
+
+    @property
+    def commission(self) -> Decimal:
+        """Default commission per trade."""
+        return Decimal(str(_get_backtesting_config().default_commission_fixed))
+
+    @property
+    def slippage(self) -> Decimal:
+        """Default slippage percentage."""
+        return Decimal(str(_get_backtesting_config().base_slippage_bps)) / Decimal(
+            "100"
+        )  # bps to %
+
+    @property
+    def initial_capital(self) -> Decimal:
+        """Default initial capital."""
+        return Decimal("100000")
+
+    @property
+    def max_position_size(self) -> Decimal:
+        """Default max position size as % of capital."""
+        return Decimal(str(_get_backtesting_config().default_max_position_size))
+
+    @property
+    def risk_free_rate(self) -> Decimal:
+        """Default risk-free rate."""
+        return Decimal(str(_get_backtesting_config().default_risk_free_rate))
+
+    @property
+    def stop_loss_percentage(self) -> Decimal:
+        """Default stop loss percentage."""
+        return Decimal(str(_get_backtesting_config().default_stop_loss_pct)) * Decimal(
+            "100"
+        )  # Convert to %
+
+    @property
+    def take_profit_percentage(self) -> Decimal:
+        """Default take profit percentage."""
+        return Decimal(str(_get_backtesting_config().default_take_profit_pct)) * Decimal(
+            "100"
+        )  # Convert to %
+
+    # Default metric thresholds (these are static)
+    SHARPE_RATIO_EXCELLENT = 2.0
+    SHARPE_RATIO_GOOD = 1.0
+    SHARPE_RATIO_WARNING = 0.5
+
+    MAX_DRAWDOWN_WARNING = Decimal("-0.20")  # -20%
+    MAX_DRAWDOWN_CRITICAL = Decimal("-0.50")  # -50%
+
+    WIN_RATE_EXCELLENT = Decimal("0.60")  # 60%
+    WIN_RATE_GOOD = Decimal("0.50")  # 50%
+    WIN_RATE_WARNING = Decimal("0.40")  # 40%
+
+
+class BoundedResults:
+    """
+    Thread-safe bounded results container.
+
+    This container maintains a fixed-size collection of backtest results
+    with automatic cleanup when the limit is exceeded. Thread-safe for
+    concurrent execution scenarios.
+    """
+
+    def __init__(self, maxlen: int = 1000):
+        """
+        Initialize bounded results container.
+
+        Args:
+            maxlen: Maximum number of results to store
+        """
+        self._results: deque[dict[str, ResultValue]] = deque(maxlen=maxlen)
+        self._lock = Lock()
+        self._maxlen = maxlen
+
+    def add(self, result: dict[str, ResultValue]) -> None:
+        """
+        Add result thread-safely.
+
+        Args:
+            result: Result dictionary to add
+        """
+        with self._lock:
+            self._results.append(result)
+
+    def extend(self, results: list[dict[str, ResultValue]]) -> None:
+        """
+        Extend results thread-safely.
+
+        Args:
+            results: List of result dictionaries to add
+        """
+        with self._lock:
+            self._results.extend(results)
+
+    def get_all(self) -> list[dict[str, ResultValue]]:
+        """
+        Get all results.
+
+        Returns:
+            List of all result dictionaries
+        """
+        with self._lock:
+            return list(self._results)
+
+    def get_latest(self, n: int) -> list[dict[str, ResultValue]]:
+        """
+        Get latest n results.
+
+        Args:
+            n: Number of latest results to retrieve
+
+        Returns:
+            List of latest result dictionaries
+        """
+        with self._lock:
+            results_list = list(self._results)
+            return results_list[-n:] if n < len(results_list) else results_list
+
+    def clear(self) -> None:
+        """Clear all results."""
+        with self._lock:
+            self._results.clear()
+
+    def __len__(self) -> int:
+        """Get number of results stored."""
+        with self._lock:
+            return len(self._results)
+
+
+class OrchestrationResult:
+    """
+    Result from backtest orchestration.
+
+    This class encapsulates the results of running multiple backtests,
+    providing summary statistics and access to individual results.
+    """
+
+    def __init__(self, results: list[BacktestResultItem], config: BacktestConfig | None = None):
+        """
+        Initialize orchestration result.
+
+        Args:
+            results: List of backtest results
+            config: Optional backtest configuration used
+        """
+        self.results = results
+        self.total = len(results)
+        self.config = config
+        self._summary: dict[str, ResultValue] | None = None
+
+    @property
+    def summary(self) -> dict[str, ResultValue]:
+        """Get summary statistics."""
+        if self._summary is None:
+            self._summary = self._calculate_summary()
+        return self._summary
+
+    def _calculate_summary(self) -> dict[str, ResultValue]:
+        """Calculate summary statistics from results."""
+        if not self.results:
+            return {
+                "total": 0,
+                "successful": 0,
+                "failed": 0,
+            }
+
+        successful = [r for r in self.results if self._is_successful(r)]
+        failed = self.total - len(successful)
+
+        summary: dict[str, ResultValue] = {
+            "total": self.total,
+            "successful": len(successful),
+            "failed": failed,
+        }
+
+        # Add metric statistics if we have BacktestResult objects
+        backtest_results = [r for r in successful if isinstance(r, BacktestResult)]
+        if backtest_results:
+            total_returns = [float(r.total_return) for r in backtest_results]
+            sharpe_ratios: list[float] = []
+            for r in backtest_results:
+                if r.performance is not None and r.performance.sharpe_ratio is not None:
+                    sharpe_ratios.append(float(r.performance.sharpe_ratio))
+
+            if total_returns:
+                summary.update(
+                    {
+                        "avg_return": float(np.mean(total_returns)),
+                        "best_return": float(max(total_returns)),
+                        "worst_return": float(min(total_returns)),
+                    }
+                )
+
+            if sharpe_ratios:
+                summary.update(
+                    {
+                        "avg_sharpe": float(np.mean(sharpe_ratios)),
+                        "best_sharpe": float(max(sharpe_ratios)),
+                    }
+                )
+
+        return summary
+
+    @staticmethod
+    def _is_successful(result: BacktestResultItem) -> bool:
+        """Check if backtest result is successful."""
+        # For dictionaries, any result is considered successful
+        # unless explicitly marked as failed
+        if isinstance(result, dict):
+            final_capital_value = result.get("final_capital", 0)
+            return isinstance(final_capital_value, (int, float)) and final_capital_value > 0
+        # For BacktestResult objects, check if capital is positive
+        if isinstance(result, BacktestResult):
+            return bool(result.final_capital > 0)
+        return False
+
+    def get_best_result(self, metric: str = "sharpe_ratio") -> BacktestResultItem | None:
+        """
+        Get best result by metric.
+
+        Args:
+            metric: Metric name ('sharpe_ratio', 'total_return', etc.)
+
+        Returns:
+            Best BacktestResult or None
+        """
+        if not self.results:
+            return None
+
+        def get_metric(r: BacktestResultItem) -> float:
+            if isinstance(r, BacktestResult):
+                if metric == "total_return":
+                    return float(r.total_return)
+                elif r.performance and hasattr(r.performance, metric):
+                    value = getattr(r.performance, metric)
+                    return float(value) if value else 0.0
+            elif isinstance(r, dict):
+                return float(r.get(metric, 0.0))
+            return 0.0
+
+        return max(self.results, key=get_metric)
+
+    def filter_results(self, **criteria: object) -> list[BacktestResultItem]:
+        """
+        Filter results by criteria.
+
+        Args:
+            **criteria: Key-value pairs to filter by
+
+        Returns:
+            Filtered list of results
+        """
+        filtered = list(self.results)
+
+        for key, value in criteria.items():
+            new_filtered: list[BacktestResultItem] = []
+            for r in filtered:
+                if (isinstance(r, dict) and r.get(key) == value) or (
+                    hasattr(r, key) and getattr(r, key) == value
+                ):
+                    new_filtered.append(r)
+            filtered = new_filtered
+
+        return filtered
+
+
+class BacktestOrchestrator:
+    """
+    Orchestrates backtesting operations.
+
+    This coordinator manages the execution of multiple backtests,
+    result collection, and provides a high-level interface for
+    running backtesting workflows.
+    """
+
+    def __init__(
+        self,
+        config: BacktestConfig,
+        executor: BacktestExecutor | None = None,
+        max_results: int = 1000,
+    ):
+        """
+        Initialize orchestrator.
+
+        Args:
+            config: Backtest configuration
+            executor: Optional executor instance (created from config if None)
+            max_results: Maximum number of results to store
+        """
+        self.config = config
+        self.executor = executor
+        self.results = BoundedResults(maxlen=max_results)
+        self._execution_count = 0
+
+        logger.info(
+            "Backtest orchestrator initialized",
+            extra={
+                "operation": "orchestrator_init",
+                "initial_capital": float(config.initial_capital),
+                "commission": float(config.commission),
+                "max_results": max_results,
+                "executor_type": type(executor).__name__ if executor else None,
+            },
+        )
+
+    def run_all(
+        self, quotes: list[object], strategies: list[object], **kwargs
+    ) -> OrchestrationResult:
+        """
+        Run all backtests with given quotes and strategies.
+
+        Args:
+            quotes: List of market data quotes
+            strategies: List of trading strategy instances
+            **kwargs: Additional execution parameters
+
+        Returns:
+            OrchestrationResult with all results
+        """
+        all_results = []
+        successful_count = 0
+        failed_count = 0
+
+        logger.info(
+            "Starting batch backtest execution",
+            extra={
+                "operation": "run_all",
+                "strategies_count": len(strategies),
+                "quotes_count": len(quotes),
+            },
+        )
+
+        for strategy in strategies:
+            try:
+                result = self._run_single(quotes, strategy, **kwargs)
+                all_results.append(result)
+                self.results.add(self._result_to_dict(result))
+                successful_count += 1
+            except (ValueError, TypeError, KeyError, AttributeError, IndexError) as e:
+                failed_count += 1
+                logger.error(
+                    "Error executing backtest",
+                    extra={
+                        "operation": "run_single",
+                        "strategy_name": getattr(strategy, "name", "unknown"),
+                        "strategy_class": type(strategy).__name__,
+                        "error_type": type(e).__name__,
+                        "error_message": str(e),
+                    },
+                    exc_info=True,
+                )
+
+        logger.info(
+            "Batch backtest execution completed",
+            extra={
+                "operation": "run_all_completed",
+                "total_strategies": len(strategies),
+                "successful": successful_count,
+                "failed": failed_count,
+            },
+        )
+
+        return OrchestrationResult(results=all_results, config=self.config)
+
+    def _run_single(self, quotes: list[object], strategy: object, **kwargs) -> BacktestResult:
+        """Run single backtest."""
+        strategy_name = getattr(strategy, "name", "unknown")
+
+        logger.debug(
+            "Executing single backtest",
+            extra={
+                "operation": "run_single_start",
+                "strategy_name": strategy_name,
+                "strategy_class": type(strategy).__name__,
+                "execution_count": self._execution_count + 1,
+            },
+        )
+
+        if self.executor is None:
+            from app.backtesting.core.executor import BacktestExecutorFactory
+
+            self.executor = BacktestExecutorFactory.create(self.config)
+
+        self._execution_count += 1
+        result = self.executor.execute(quotes, strategy, **kwargs)
+
+        logger.debug(
+            "Single backtest completed",
+            extra={
+                "operation": "run_single_complete",
+                "strategy_name": strategy_name,
+                "final_capital": float(result.final_capital),
+                "total_return": float(result.total_return),
+                "execution_count": self._execution_count,
+            },
+        )
+
+        return result
+
+    @staticmethod
+    def _result_to_dict(result: BacktestResult) -> dict[str, ResultValue]:
+        """Convert BacktestResult to dictionary."""
+        if not isinstance(result, BacktestResult):
+            return result if isinstance(result, dict) else {}
+
+        return {
+            "strategy_name": result.strategy_name,
+            "final_capital": float(result.final_capital),
+            "total_return": float(result.total_return),
+            "total_trades": result.performance.total_trades if result.performance else 0,
+            "win_rate": float(result.performance.win_rate) if result.performance else 0.0,
+            "sharpe_ratio": (
+                float(result.performance.sharpe_ratio)
+                if result.performance and result.performance.sharpe_ratio
+                else 0.0
+            ),
+            "max_drawdown": (
+                float(result.performance.max_drawdown_percentage) if result.performance else 0.0
+            ),
+        }
+
+    @property
+    def execution_count(self) -> int:
+        """Get number of executions performed."""
+        return self._execution_count

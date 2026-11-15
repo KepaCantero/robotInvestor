@@ -1,0 +1,48 @@
+# Requirements Document: app/services/compliance/manager.py
+
+## 1. Module Overview
+File: manager.py
+Domain: Service
+
+## 2. Dependencies
+- `__future__`
+- `app.services.compliance.order_pattern_analyzer`
+- `app.services.compliance.pdt_tracker`
+- `app.services.compliance.wash_sale_tracker`
+- `dataclasses`
+- `datetime`
+- `decimal`
+- `logging`
+
+## 3. Core Components
+### Classes
+- `TradeRecord`
+- `ComplianceViolation`
+- `ComplianceReport`
+- `ComplianceManager`
+### Public Functions
+- `to_dict()`
+- `to_dict()`
+- `to_dict()`
+- `check_trade_allowed()`
+- `record_trade()`
+- `generate_report()`
+- `can_day_trade()`
+- `get_day_trades_remaining()`
+- `get_violations()`
+- `clear_violations()`
+- `update_equity()`
+- `reset()`
+
+## 4. Applicable Trading Rules
+
+#### R15
+Complete Logging (log all decisions, trade journal format)
+
+- [ ] Implementation verified
+- [ ] Tests pass
+
+---
+Universal rules (SOLID, type hints, formatting, security, logging) live in
+.requirements/BASE_RULES.md and apply to every file.
+Resync this stub with: python scripts/generate_requirements.py

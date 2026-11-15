@@ -1,0 +1,40 @@
+# Requirements Document: app/services/awesome_quant/talib_wrapper.py
+
+## 1. Module Overview
+File: talib_wrapper.py
+Domain: Service
+
+## 2. Dependencies
+- `__future__`
+- `decimal`
+- `logging`
+- `requests.exceptions`
+
+## 3. Core Components
+### Classes
+- `TALibWrapper`
+### Public Functions
+- `get_talib_wrapper()`
+- `connect()`
+- `calculate_sma()`
+- `calculate_ema()`
+- `calculate_rsi()`
+- `calculate_atr()`
+- `calculate_macd()`
+- `calculate_bollinger_bands()`
+- `calculate_all_indicators()`
+- `get_indicator_list()`
+- `get_wrapper_status()`
+
+## 4. Applicable Trading Rules
+
+#### R15
+Complete Logging (log all decisions, trade journal format)
+
+- [ ] Implementation verified
+- [ ] Tests pass
+
+---
+Universal rules (SOLID, type hints, formatting, security, logging) live in
+.requirements/BASE_RULES.md and apply to every file.
+Resync this stub with: python scripts/generate_requirements.py

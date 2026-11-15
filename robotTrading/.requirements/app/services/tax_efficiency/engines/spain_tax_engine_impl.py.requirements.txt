@@ -1,0 +1,39 @@
+# Requirements Document: app/services/tax_efficiency/engines/spain_tax_engine_impl.py
+
+## 1. Module Overview
+File: spain_tax_engine_impl.py
+Domain: Service
+
+## 2. Dependencies
+- `__future__`
+- `app.shared.protocols.i_spain_tax_engine`
+- `datetime`
+- `decimal`
+- `logging`
+- `typing`
+
+## 3. Core Components
+### Classes
+- `SpainTaxEngineImpl`
+### Public Functions
+- `calculate_capital_gains_tax()`
+- `calculate_dividend_tax()`
+- `is_eu_country()`
+- `check_modelo_720_threshold()`
+- `generate_modelo_720_report()`
+- `record_loss()`
+- `get_available_losses()`
+- `apply_loss_carryforward()`
+
+## 4. Applicable Trading Rules
+
+#### R28
+Trade Record Retention (keep all records 5+ years)
+
+- [ ] Implementation verified
+- [ ] Tests pass
+
+---
+Universal rules (SOLID, type hints, formatting, security, logging) live in
+.requirements/BASE_RULES.md and apply to every file.
+Resync this stub with: python scripts/generate_requirements.py

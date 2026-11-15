@@ -1,0 +1,44 @@
+# Requirements Document: app/services/alerting_system/rule_templates.py
+
+## 1. Module Overview
+File: rule_templates.py
+Domain: Service
+
+## 2. Dependencies
+- `app.services.alerting_system.models`
+- `decimal`
+- `logging`
+
+## 3. Core Components
+### Classes
+- `AlertRuleTemplates`
+### Public Functions
+- `portfolio_drawdown_warning()`
+- `portfolio_drawdown_critical()`
+- `portfolio_drawdown_halt()`
+- `volatility_spike()`
+- `cost_overrun_warning()`
+- `cost_overrun_critical()`
+- `fill_ratio_low()`
+- `sharpe_ratio_deterioration()`
+- `consecutive_losses_warning()`
+- `consecutive_losses_critical()`
+- `latency_spike()`
+- `error_rate_high()`
+- `get_all_default_templates()`
+- `get_template_by_id()`
+- `get_templates_by_category()`
+- `get_critical_templates()`
+
+## 4. Applicable Trading Rules
+
+#### R15
+Complete Logging (log all decisions, trade journal format)
+
+- [ ] Implementation verified
+- [ ] Tests pass
+
+---
+Universal rules (SOLID, type hints, formatting, security, logging) live in
+.requirements/BASE_RULES.md and apply to every file.
+Resync this stub with: python scripts/generate_requirements.py

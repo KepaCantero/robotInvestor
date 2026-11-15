@@ -1,0 +1,33 @@
+# Requirements Document: app/engines/risk_engine/var_calculators/ewma_var.py
+
+## 1. Module Overview
+File: ewma_var.py
+Domain: Engine
+
+## 2. Dependencies
+- `__future__`
+- `logging`
+- `numpy`
+- `scipy`
+- `typing`
+
+## 3. Core Components
+### Classes
+- `EWMAVaRCalculator`
+### Public Functions
+- `calculate_ewma_var()`
+- `calculate_ewma_correlation()`
+- `forecast_volatility()`
+
+## 4. Applicable Trading Rules
+
+#### R2
+Drawdown Monitor (15% warning, 25% halt trading, auto cooldown)
+
+- [ ] Implementation verified
+- [ ] Tests pass
+
+---
+Universal rules (SOLID, type hints, formatting, security, logging) live in
+.requirements/BASE_RULES.md and apply to every file.
+Resync this stub with: python scripts/generate_requirements.py

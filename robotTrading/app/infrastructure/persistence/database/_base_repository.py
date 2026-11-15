@@ -1,0 +1,230 @@
+"""
+Base Repository Pattern Implementation for Database Access.
+
+This module provides the base repository class with common CRUD operations
+and the Protocol for type-safe SQLAlchemy model access.
+"""
+
+from __future__ import annotations
+
+from typing import TYPE_CHECKING, Generic, Protocol, TypeVar, runtime_checkable
+
+from sqlalchemy.exc import (
+    DatabaseError,
+    DataError,
+    IntegrityError,
+    OperationalError,
+    ProgrammingError,
+)
+from sqlalchemy.orm import Mapped
+from structlog import get_logger
+
+from app.shared.exceptions.exceptions import raise_database_error
+
+if TYPE_CHECKING:
+    import uuid
+
+    from sqlalchemy.orm import Session
+
+
+@runtime_checkable
+class HasIdAndTableName(Protocol):
+    """Protocol for SQLAlchemy models with id and __tablename__."""
+
+    id: Mapped[uuid.UUID]
+    __tablename__: str
+
+
+T = TypeVar("T", bound=HasIdAndTableName)
+logger = get_logger(__name__)
+
+
+class BaseRepository(Generic[T]):
+    """Base repository class with common CRUD operations."""
+
+    def __init__(self, model_class: type[T], session: Session):
+        self.model_class = model_class
+        self.session = session
+
+    def create(self, **kwargs) -> T:
+        """Create a new record."""
+        try:
+            instance = self.model_class(**kwargs)
+            self.session.add(instance)
+            self.session.commit()
+            self.session.refresh(instance)
+            logger.info(
+                "created_record",
+                model=self.model_class.__name__,
+                id=str(instance.id),
+            )
+            return instance
+        except IntegrityError as e:
+            self.session.rollback()
+            logger.error(
+                "create_failed",
+                model=self.model_class.__name__,
+                error=str(e),
+            )
+            raise_database_error(
+                f"Failed to create {self.model_class.__name__}: {e!s}",
+                "create",
+                {"table": self.model_class.__tablename__},
+            )
+
+    def get_by_id(self, record_id: uuid.UUID) -> T | None:
+        """Get record by ID."""
+        try:
+            result = (
+                self.session.query(self.model_class)
+                .filter(self.model_class.id == record_id)
+                .first()
+            )
+            logger.debug(
+                "queried_by_id",
+                model=self.model_class.__name__,
+                id=str(record_id),
+                found=result is not None,
+            )
+            return result
+        except (IntegrityError, DataError, OperationalError, ProgrammingError, DatabaseError) as e:
+            logger.error(
+                "get_by_id_failed",
+                model=self.model_class.__name__,
+                id=str(record_id),
+                error=str(e),
+            )
+            raise_database_error(
+                f"Failed to get {self.model_class.__name__} by ID: {e!s}",
+                "get_by_id",
+                {"table": self.model_class.__tablename__},
+            )
+
+    def get_all(self, limit: int | None = None, offset: int | None = None) -> list[T]:
+        """Get all records with optional pagination."""
+        try:
+            query = self.session.query(self.model_class)
+            if offset:
+                query = query.offset(offset)
+            if limit:
+                query = query.limit(limit)
+            result = query.all()
+            logger.debug(
+                "queried_all",
+                model=self.model_class.__name__,
+                count=len(result),
+                limit=limit,
+                offset=offset,
+            )
+            return result
+        except (IntegrityError, DataError, OperationalError, ProgrammingError, DatabaseError) as e:
+            logger.error(
+                "get_all_failed",
+                model=self.model_class.__name__,
+                error=str(e),
+            )
+            raise_database_error(
+                f"Failed to get all {self.model_class.__name__}: {e!s}",
+                "get_all",
+                {"table": self.model_class.__tablename__},
+            )
+
+    def update(self, record_id: uuid.UUID, **kwargs) -> T | None:
+        """Update record by ID."""
+        try:
+            instance = self.get_by_id(record_id)
+            if not instance:
+                logger.warning(
+                    "update_not_found",
+                    model=self.model_class.__name__,
+                    id=str(record_id),
+                )
+                return None
+            for key, value in kwargs.items():
+                if hasattr(instance, key):
+                    setattr(instance, key, value)
+            self.session.commit()
+            self.session.refresh(instance)
+            logger.info(
+                "updated_record",
+                model=self.model_class.__name__,
+                id=str(record_id),
+                fields=list(kwargs.keys()),
+            )
+            return instance
+        except (IntegrityError, DataError, OperationalError, ProgrammingError, DatabaseError) as e:
+            self.session.rollback()
+            logger.error(
+                "update_failed",
+                model=self.model_class.__name__,
+                id=str(record_id),
+                error=str(e),
+            )
+            raise_database_error(
+                f"Failed to update {self.model_class.__name__}: {e!s}",
+                "update",
+                {"table": self.model_class.__tablename__},
+            )
+
+    def delete(self, record_id: uuid.UUID) -> bool:
+        """Delete record by ID."""
+        try:
+            instance = self.get_by_id(record_id)
+            if not instance:
+                logger.warning(
+                    "delete_not_found",
+                    model=self.model_class.__name__,
+                    id=str(record_id),
+                )
+                return False
+            self.session.delete(instance)
+            self.session.commit()
+            logger.info(
+                "deleted_record",
+                model=self.model_class.__name__,
+                id=str(record_id),
+            )
+            return True
+        except (IntegrityError, DataError, OperationalError, ProgrammingError, DatabaseError) as e:
+            self.session.rollback()
+            logger.error(
+                "delete_failed",
+                model=self.model_class.__name__,
+                id=str(record_id),
+                error=str(e),
+            )
+            raise_database_error(
+                f"Failed to delete {self.model_class.__name__}: {e!s}",
+                "delete",
+                {"table": self.model_class.__tablename__},
+            )
+
+    def count(self) -> int:
+        """Count total records."""
+        try:
+            result = self.session.query(self.model_class).count()
+            logger.debug(
+                "counted_records",
+                model=self.model_class.__name__,
+                count=result,
+            )
+            return result
+        except (IntegrityError, DataError, OperationalError, ProgrammingError, DatabaseError) as e:
+            logger.error(
+                "count_failed",
+                model=self.model_class.__name__,
+                error=str(e),
+            )
+            raise_database_error(
+                f"Failed to count {self.model_class.__name__}: {e!s}",
+                "count",
+                {"table": self.model_class.__tablename__},
+            )
+
+
+__all__ = [
+    "BaseRepository",
+    "HasIdAndTableName",
+    "T",
+    "logger",
+]

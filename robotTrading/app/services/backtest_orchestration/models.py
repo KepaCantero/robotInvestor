@@ -1,0 +1,391 @@
+"""
+T4.1: BacktestOrchestrator Models
+
+Dataclasses for backtesting orchestration, execution, and result handling.
+Uses centralized configuration for default values.
+"""
+
+from __future__ import annotations
+
+import logging
+from dataclasses import dataclass, field
+from datetime import date, datetime
+from decimal import Decimal
+from enum import Enum
+
+from app.backtesting.dividends import DividendMetrics
+
+logger = logging.getLogger(__name__)
+
+
+# Import config for default values (avoid circular import)
+def _get_default_commission() -> Decimal:
+    logger.debug("Getting default commission value")
+    return Decimal("0.001")  # 0.1% default commission
+
+
+def _get_default_slippage() -> Decimal:
+    from app.shared.config.centralized_config import get_config
+
+    tt = get_config().trading_thresholds
+    slippage = tt.base_slippage / Decimal("100")  # Convert % to decimal
+    logger.debug("Getting default slippage from config", extra={"base_slippage": float(slippage)})
+    return slippage
+
+
+def _get_default_stop_loss() -> Decimal:
+    from app.shared.config.centralized_config import get_config
+
+    tt = get_config().trading_thresholds
+    stop_loss = Decimal(str(tt.stop_loss_pct))
+    logger.debug("Getting default stop loss from config", extra={"stop_loss_pct": float(stop_loss)})
+    return stop_loss
+
+
+def _get_default_take_profit() -> Decimal:
+    from app.shared.config.centralized_config import get_config
+
+    tt = get_config().trading_thresholds
+    take_profit = Decimal(str(tt.take_profit_pct))
+    logger.debug(
+        "Getting default take profit from config", extra={"take_profit_pct": float(take_profit)}
+    )
+    return take_profit
+
+
+def _get_default_max_loss() -> Decimal:
+    from app.shared.config.centralized_config import get_config
+
+    tt = get_config().trading_thresholds
+    max_loss = Decimal(str(tt.circuit_breaker_daily_loss))
+    logger.debug(
+        "Getting default max loss from config",
+        extra={"circuit_breaker_daily_loss": float(max_loss)},
+    )
+    return max_loss
+
+
+def _get_default_position_size() -> Decimal:
+    from app.shared.config.centralized_config import get_config
+
+    tt = get_config().trading_thresholds
+    position_size = Decimal(str(tt.max_position_size))
+    logger.debug(
+        "Getting default position size from config",
+        extra={"max_position_size": float(position_size)},
+    )
+    return position_size
+
+
+class BacktestStatus(str, Enum):
+    """Status of a backtest execution."""
+
+    PENDING = "pending"
+    RUNNING = "running"
+    COMPLETED = "completed"
+    FAILED = "failed"
+    TIMEOUT = "timeout"
+
+
+@dataclass
+class BacktestConfig:
+    """Configuration for a single backtest execution - uses centralized config for defaults."""
+
+    # Test metadata
+    test_id: str
+    profile_id: str
+    input_id: str
+    module_parameter_set_id: str
+
+    # Backtesting parameters
+    initial_capital: Decimal
+    start_date: date
+    end_date: date
+    commission_pct: Decimal = field(default_factory=_get_default_commission)  # Uses config
+    slippage_pct: Decimal = field(default_factory=_get_default_slippage)  # Uses config
+
+    # Strategy parameters
+    strategy_name: str = "momentum_modular"
+    symbols: list[str] = field(default_factory=list)
+    max_positions: int = 10
+    max_position_size_pct: Decimal = field(
+        default_factory=_get_default_position_size
+    )  # Uses config
+
+    # Risk parameters - use centralized config
+    max_loss_pct: Decimal = field(
+        default_factory=_get_default_max_loss
+    )  # Uses config (circuit_breaker_daily_loss)
+    stop_loss_pct: Decimal = field(default_factory=_get_default_stop_loss)  # Uses config
+    take_profit_pct: Decimal = field(default_factory=_get_default_take_profit)  # Uses config
+
+    # Validation/gating
+    run_risk_envelope: bool = True
+    enable_diagnostics: bool = False
+
+
+@dataclass
+class BacktestMetrics:
+    """Performance metrics from a backtest."""
+
+    # Returns
+    total_return_pct: Decimal
+    annual_return_pct: Decimal
+    monthly_return_pct: Decimal
+
+    # Risk metrics
+    sharpe_ratio: Decimal
+    sortino_ratio: Decimal
+    calmar_ratio: Decimal
+    max_drawdown_pct: Decimal
+    volatility_pct: Decimal
+    var_95_pct: Decimal  # Value at Risk
+
+    # Trade statistics
+    total_trades: int
+    winning_trades: int
+    losing_trades: int
+    win_rate_pct: Decimal
+    avg_win_pct: Decimal
+    avg_loss_pct: Decimal
+    profit_factor: Decimal
+    expectancy_pct: Decimal
+
+    # Other metrics
+    recovery_factor: Decimal  # Net profit / max drawdown
+    ulcer_index: Decimal
+    consecutive_wins: int
+    consecutive_losses: int
+
+
+@dataclass
+class BacktestResult:
+    """Result of a single backtest execution."""
+
+    # Execution metadata
+    test_id: str
+    profile_id: str
+    input_id: str
+    status: BacktestStatus = BacktestStatus.PENDING
+    success: bool = False
+    error_message: str = ""
+
+    # Configuration reference
+    config: BacktestConfig | None = None
+
+    # Performance metrics
+    metrics: BacktestMetrics | None = None
+
+    # Feasibility calculation
+    required_annual_return_pct: Decimal = field(default=Decimal("0.0"))
+    achieved_annual_return_pct: Decimal = field(default=Decimal("0.0"))
+    feasibility_ratio: Decimal = field(default=Decimal("0.0"))  # achieved / required
+
+    # Capital evolution
+    starting_capital: Decimal = field(default=Decimal("0.0"))
+    ending_capital: Decimal = field(default=Decimal("0.0"))
+    peak_capital: Decimal = field(default=Decimal("0.0"))
+
+    # Income metrics from real distribution events against the executed
+    # book (Fase 4, D01) — separate from total return.
+    dividend_metrics: "DividendMetrics | None" = None
+
+    # Validation results
+    validation_passed: bool = True
+    validation_warnings: list[str] = field(default_factory=list)
+    validation_failures: list[str] = field(default_factory=list)
+
+    # Walk-forward gate (R5/R6/DATA-001) — mandatory on every real backtest.
+    # None = gate could not run (no windows); False = ran and FAILED.
+    walk_forward_passed: bool | None = None
+    walk_forward_degradation: Decimal | None = None
+    walk_forward_windows: int = 0
+    walk_forward_summary: str = ""
+
+    # Benchmark (buy&hold reference over the same window) — market context
+    benchmark_symbol: str = ""
+    benchmark_return_pct: Decimal | None = None
+    excess_return_pct: Decimal | None = None
+    #: equal-weight of the run's own universe — the honest benchmark for a
+    #: dividend strategy (SPY is mega-cap tech). D12 separates the two
+    #: policies: `universe_ew_return_pct` rebalances DAILY, `*_buy_hold_*`
+    #: buys each sleeve once at its first in-window close and holds.
+    #: Since 2026-10-27 the SCORE and the UI text use the BUY&HOLD twin
+    #: (the achievable passive) — see backtest_orchestrator.
+    universe_ew_return_pct: Decimal | None = None
+    universe_ew_sharpe: Decimal | None = None
+    universe_ew_max_dd_pct: Decimal | None = None
+    #: sorted symbols actually in the EW benchmark (composition explicit,
+    #: invariant to input order — D12)
+    universe_ew_symbols_used: list[str] = field(default_factory=list)
+    excess_vs_universe_ew_pct: Decimal | None = None
+    benchmark_curve: list[tuple[str, str]] = field(default_factory=list)
+    dividend_tax_drag_pct: Decimal | None = None
+    tax_efficiency: dict | None = None
+
+    # Execution timing
+    execution_timestamp: datetime = field(default_factory=datetime.utcnow)
+    execution_duration_seconds: float = 0.0
+
+    # Equity curve for charting (list of [iso_ts, value] pairs)
+    equity_curve: list[tuple[str, str]] = field(default_factory=list)
+    #: fiabilidad (30-10) — bootstrap de la serie diaria REAL ejecutada:
+    #: abanico P5–P95, alimentación del MonteCarloValidator
+    bootstrap_analysis: dict | None = None
+    #: sequence-of-returns: retirada fija anual — la pregunta de VIVIR
+    withdrawal_analysis: dict | None = None
+    #: replay del universo en COVID-2020 y shock-de-tipos-2022
+    stress_analysis: dict | None = None
+    #: VaR 95 diario histórico + fracción €·día desplegada (31-10)
+    risk_analysis: dict | None = None
+
+    # Novice-readable trade list (symbol, shares, prices, P&L per trade)
+    trades_summary: list[dict] = field(default_factory=list)
+
+    # Universe the run actually traded (may be corpus-derived, not the
+    # request's manual selection — the UI shows it in the result panel)
+    symbols: list[str] = field(default_factory=list)
+
+    #: GATE Fase A — per-symbol execution-window coverage (dict form of
+    #: DataQualityReport). Attached to every run that got past the gate.
+    data_quality: dict | None = None
+
+    def to_dict(self) -> dict:
+        """Convert result to dictionary."""
+        logger.debug(
+            "Converting backtest result to dict",
+            extra={
+                "test_id": self.test_id,
+                "profile_id": self.profile_id,
+                "status": self.status.value,
+                "success": self.success,
+            },
+        )
+        result = {
+            "test_id": self.test_id,
+            "profile_id": self.profile_id,
+            "input_id": self.input_id,
+            "status": self.status.value,
+            "success": self.success,
+            "error_message": self.error_message,
+            "required_annual_return_pct": str(self.required_annual_return_pct),
+            "achieved_annual_return_pct": str(self.achieved_annual_return_pct),
+            "feasibility_ratio": str(self.feasibility_ratio),
+            "starting_capital": str(self.starting_capital),
+            "ending_capital": str(self.ending_capital),
+            "peak_capital": str(self.peak_capital),
+            "validation_passed": self.validation_passed,
+            "validation_failures": list(self.validation_failures),
+            "walk_forward_passed": self.walk_forward_passed,
+            "walk_forward_degradation": (
+                str(self.walk_forward_degradation)
+                if self.walk_forward_degradation is not None
+                else None
+            ),
+            "walk_forward_windows": self.walk_forward_windows,
+            "walk_forward_summary": self.walk_forward_summary,
+            "benchmark_symbol": self.benchmark_symbol,
+            "benchmark_return_pct": (
+                str(self.benchmark_return_pct) if self.benchmark_return_pct is not None else None
+            ),
+            "excess_return_pct": (
+                str(self.excess_return_pct) if self.excess_return_pct is not None else None
+            ),
+            "universe_ew_return_pct": (
+                str(self.universe_ew_return_pct)
+                if self.universe_ew_return_pct is not None
+                else None
+            ),
+            "universe_ew_sharpe": (
+                str(self.universe_ew_sharpe) if self.universe_ew_sharpe is not None else None
+            ),
+            "universe_ew_max_dd_pct": (
+                str(self.universe_ew_max_dd_pct)
+                if self.universe_ew_max_dd_pct is not None
+                else None
+            ),
+            "universe_ew_symbols_used": list(self.universe_ew_symbols_used),
+            "excess_vs_universe_ew_pct": (
+                str(self.excess_vs_universe_ew_pct)
+                if self.excess_vs_universe_ew_pct is not None
+                else None
+            ),
+            "benchmark_curve": [{"ts": ts, "value": v} for ts, v in self.benchmark_curve]
+            if self.benchmark_curve
+            else [],
+            "execution_duration_seconds": self.execution_duration_seconds,
+            "equity_curve": [{"ts": ts, "value": val} for ts, val in self.equity_curve]
+            if self.equity_curve
+            else [],
+            "bootstrap_analysis": self.bootstrap_analysis,
+            "withdrawal_analysis": self.withdrawal_analysis,
+            "stress_analysis": self.stress_analysis,
+            "risk_analysis": self.risk_analysis,
+            "trades_summary": self.trades_summary,
+            "symbols": list(self.symbols),
+            "metrics": (
+                {
+                    "total_return_pct": str(self.metrics.total_return_pct),
+                    "annual_return_pct": str(self.metrics.annual_return_pct),
+                    "sharpe_ratio": str(self.metrics.sharpe_ratio),
+                    "max_drawdown_pct": str(self.metrics.max_drawdown_pct),
+                    "win_rate_pct": str(self.metrics.win_rate_pct),
+                }
+                if self.metrics
+                else None
+            ),
+        }
+        return result
+
+
+@dataclass
+class BacktestOrchestrationRequest:
+    """Request to orchestrate backtesting for a profile."""
+
+    profile_id: str
+    input_id: str
+    module_parameter_set_id: str
+    initial_capital: Decimal
+    target_monthly_return_eur: Decimal
+    objective: str  # Investment objective
+    risk_profile: str  # Risk profile
+    start_date: date
+    end_date: date
+    strategy_name: str = "mean_reversion"
+    symbols: list[str] = field(default_factory=list)
+    commission_per_trade: Decimal | None = None  # engine cost model (€/trade)
+    slippage_percentage: Decimal | None = None  # engine cost model (%)
+    stop_loss_percentage: Decimal | None = None  # per-trade stop (%)
+    take_profit_percentage: Decimal | None = None  # per-trade take profit (%)
+    #: reference series for market-conditions analysis (buy&hold of this
+    #: symbol over the same window); "" disables
+    benchmark_symbol: str = "SPY"
+    #: GATE Fase A — STRICT data-coverage gate by default: a symbol whose
+    #: CSV cannot cover the execution window's start FAILS the run with an
+    #: actionable InsufficientDataError. True = run anyway, attaching the
+    #: coverage report + warning (never silently).
+    allow_partial_data: bool = False
+
+
+@dataclass
+class BacktestOrchestrationResult:
+    """Result of backtest orchestration."""
+
+    success: bool
+    backtest_result: BacktestResult | None = None
+    error_message: str = ""
+    warnings: list[str] = field(default_factory=list)
+    feasibility_ratio: Decimal = field(default_factory=lambda: Decimal("0.0"))
+    feasibility_status: str = "unknown"  # APPROVED, CONDITIONAL, REJECTED
+    orchestration_time_ms: float = 0.0
+    #: The strategy the ENGINE actually ran — T6 recommends modules, the
+    #: dashboard tile must never say "dividend_tracking" for a static_ew run.
+    strategy_name: str = ""
+    #: Income metrics from real distribution events against the executed
+    #: book (Fase 4, D01): SEPARATE from total return. None when the run
+    #: never reached the engine (failure) — never a fabricated income.
+    dividend_metrics: DividendMetrics | None = None
+    #: GATE Fase A — per-symbol coverage of the execution window. Attached
+    #: on EVERY successful run (and on partial-data runs), so results carry
+    #: the evidence of what data actually backed them.
+    data_quality: dict | None = None

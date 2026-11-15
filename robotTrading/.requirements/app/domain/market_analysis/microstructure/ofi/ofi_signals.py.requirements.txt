@@ -1,0 +1,54 @@
+# Requirements Document: app/domain/market_analysis/microstructure/ofi/ofi_signals.py
+
+## 1. Module Overview
+File: ofi_signals.py
+Domain: Domain
+
+## 2. Dependencies
+- `__future__`
+- `app.domain.market_analysis.microstructure.ofi.models`
+- `app.domain.market_analysis.microstructure.ofi.ofi_calculator`
+- `app.domain.market_analysis.microstructure.ofi.ofi_predictor`
+- `datetime`
+- `logging`
+- `numpy`
+- `typing`
+
+## 3. Core Components
+### Classes
+- `SignalGenerationError`
+- `InvalidOFIError`
+- `OFISignalGenerator`
+### Public Functions
+- `generate_signal()`
+- `generate_batch_signals()`
+- `filter_signals()`
+- `rank_signals()`
+- `validate_signal()`
+- `get_signal_summary()`
+- `update_config()`
+
+## 4. Applicable Trading Rules
+
+#### R19
+Market Regime Detection (trend/range/volatile classification)
+
+- [ ] Implementation verified
+- [ ] Tests pass
+
+#### R20
+Multi-Confirmation (min 2 independent signals before trade)
+
+- [ ] Implementation verified
+- [ ] Tests pass
+
+#### R24
+Strategy Diversification (min 3 uncorrelated strategies)
+
+- [ ] Implementation verified
+- [ ] Tests pass
+
+---
+Universal rules (SOLID, type hints, formatting, security, logging) live in
+.requirements/BASE_RULES.md and apply to every file.
+Resync this stub with: python scripts/generate_requirements.py

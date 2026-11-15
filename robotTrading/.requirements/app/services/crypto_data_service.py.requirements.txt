@@ -1,0 +1,62 @@
+# Requirements Document: app/services/crypto_data_service.py
+
+## 1. Module Overview
+File: crypto_data_service.py
+Domain: Service
+
+## 2. Dependencies
+- `__future__`
+- `app.infrastructure.resilience.reconnection_manager`
+- `app.shared.config.centralized_config`
+- `app.shared.utils.timezone_utils`
+- `asyncio`
+- `datetime`
+- `decimal`
+- `logging`
+- `requests.exceptions`
+- `typing`
+
+## 3. Core Components
+### Classes
+- `CryptoDataFetcher`
+### Public Functions
+- `get_crypto_fetcher()`
+- `reset_crypto_fetcher()`
+- `get_available_cryptos()`
+- `get_crypto_pairs()`
+- `get_current_prices()`
+- `get_historical_ohlcv()`
+- `get_connection_stats()`
+- `get_bid_ask_spread()`
+- `get_risk_metrics()`
+- `is_trading_hours()`
+- `invalidate_cache()`
+- `on_attempt()`
+- `on_success()`
+- `on_failure()`
+- `alert_callback()`
+
+## 4. Applicable Trading Rules
+
+#### R14
+Data Quality Validation (OHLCV sanity checks, detect gaps/stale data)
+
+- [ ] Implementation verified
+- [ ] Tests pass
+
+#### R15
+Complete Logging (log all decisions, trade journal format)
+
+- [ ] Implementation verified
+- [ ] Tests pass
+
+#### R16
+Daily Reconciliation (compare broker vs internal, alert discrepancies >1%)
+
+- [ ] Implementation verified
+- [ ] Tests pass
+
+---
+Universal rules (SOLID, type hints, formatting, security, logging) live in
+.requirements/BASE_RULES.md and apply to every file.
+Resync this stub with: python scripts/generate_requirements.py

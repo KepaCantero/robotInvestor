@@ -1,0 +1,43 @@
+# Requirements Document: app/services/external_integrations/zipline_integrator.py
+
+## 1. Module Overview
+File: zipline_integrator.py
+Domain: Service
+
+## 2. Dependencies
+- `__future__`
+- `dataclasses`
+- `datetime`
+- `decimal`
+- `logging`
+
+## 3. Core Components
+### Classes
+- `BacktestConfig`
+- `BacktestResult`
+- `ZiplineOrder`
+- `ZiplineIntegrator`
+### Public Functions
+- `get_zipline_integrator()`
+- `create_backtest()`
+- `place_order()`
+- `execute_backtest()`
+- `get_backtest_result()`
+- `get_backtest_trades()`
+- `analyze_backtest()`
+- `compare_backtests()`
+- `optimize_parameters()`
+- `get_integration_status()`
+
+## 4. Applicable Trading Rules
+
+#### R15
+Complete Logging (log all decisions, trade journal format)
+
+- [ ] Implementation verified
+- [ ] Tests pass
+
+---
+Universal rules (SOLID, type hints, formatting, security, logging) live in
+.requirements/BASE_RULES.md and apply to every file.
+Resync this stub with: python scripts/generate_requirements.py

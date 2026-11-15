@@ -1,0 +1,69 @@
+# Requirements Document: app/domain/entities/order.py
+
+## 1. Module Overview
+File: order.py
+Domain: Domain
+
+## 2. Dependencies
+- `__future__`
+- `dataclasses`
+- `datetime`
+- `decimal`
+- `enum`
+- `logging`
+- `typing`
+
+## 3. Core Components
+### Classes
+- `OrderSide`
+- `OrderType`
+- `OrderStatus`
+- `OrderEvent`
+- `OrderFill`
+- `Order`
+### Public Functions
+- `validate()`
+- `submit()`
+- `acknowledge()`
+- `fill()`
+- `request_cancel()`
+- `confirm_cancel()`
+- `reject()`
+- `suspend()`
+- `unsuspend()`
+- `expire()`
+- `is_filled()`
+- `is_partially_filled()`
+- `is_pending()`
+- `is_terminal()`
+- `is_active()`
+- `get_remaining_quantity()`
+- `get_fill_rate()`
+- `get_total_fees()`
+- `get_age_seconds()`
+- `to_dict()`
+
+## 4. Applicable Trading Rules
+
+#### R8
+Bid-Ask Spread Management (avoid market orders for low-liquidity)
+
+- [ ] Implementation verified
+- [ ] Tests pass
+
+#### R9
+Execution Timing (avoid first/last 15 min, VWAP/TWAP for large orders)
+
+- [ ] Implementation verified
+- [ ] Tests pass
+
+#### R10
+Slippage Monitor (track actual vs expected fill, alert if >0.5%)
+
+- [ ] Implementation verified
+- [ ] Tests pass
+
+---
+Universal rules (SOLID, type hints, formatting, security, logging) live in
+.requirements/BASE_RULES.md and apply to every file.
+Resync this stub with: python scripts/generate_requirements.py

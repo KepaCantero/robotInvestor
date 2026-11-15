@@ -1,0 +1,57 @@
+# Requirements Document: app/services/advanced_risk_manager.py
+
+## 1. Module Overview
+File: advanced_risk_manager.py
+Domain: Service
+
+## 2. Dependencies
+- `__future__`
+- `app.domain.models.portfolio`
+- `app.domain.models.signal`
+- `app.shared.config.centralized_config`
+- `collections`
+- `datetime`
+- `decimal`
+- `logging`
+- `typing`
+
+## 3. Core Components
+### Classes
+- `TradeRiskLimiter`
+- `RiskRewardValidator`
+- `StrategyExposureLimiter`
+- `DrawdownMonitor`
+- `CircuitBreaker`
+- `AdvancedRiskManager`
+### Public Functions
+- `get_advanced_risk_manager()`
+- `calculate_max_position_size()`
+- `validate_trade_risk()`
+- `validate_risk_reward()`
+- `calculate_min_take_profit()`
+- `calculate_strategy_exposure()`
+- `validate_exposure()`
+- `update_equity()`
+- `check_drawdown()`
+- `reset()`
+- `record_stop_loss()`
+- `reset_stops()`
+- `is_strategy_paused()`
+- `get_consecutive_stops()`
+- `validate_trade()`
+- `calculate_safe_position_size()`
+- `record_trade_result()`
+- `get_risk_status()`
+
+## 4. Applicable Trading Rules
+
+#### R2
+Drawdown Monitor (15% warning, 25% halt trading, auto cooldown)
+
+- [ ] Implementation verified
+- [ ] Tests pass
+
+---
+Universal rules (SOLID, type hints, formatting, security, logging) live in
+.requirements/BASE_RULES.md and apply to every file.
+Resync this stub with: python scripts/generate_requirements.py
