@@ -1,0 +1,172 @@
+=== r01_01_cadena.py
+[OK] reescribir un resultado se detecta
+[OK] quitar una anotación del medio se detecta
+[OK] reordenar dos anotaciones se detecta
+[OK] insertar una línea duplicada en medio se detecta
+[OK] duplicar la última línea se detecta
+[HALLAZGO] truncar la última anotación (el resultado «fallido») se detecta · verificar() = 4; resumen: [2]
+[HALLAZGO] quitar el último intento con su resultado se detecta (CA-3, «quitar un intento») · intentos que quedan: 1
+[HALLAZGO] recalcular toda la cadena tras cambiar un veredicto se detecta · adoptable tras la manipulación = True (solo lo delataría git)
+[HALLAZGO] cambiar el criterio y recalcular huellas: los intentos citan la huella vieja y se detecta · el registro no compara la huella_prerregistro de cada intento con la del prerregistro
+[OK] líneas vacías intercaladas: se toleran sin perder anotaciones
+[HALLAZGO] sin salto de línea final, el siguiente anexo no corrompe el registro · anexo: None; verificar después: línea 5 no es JSON: el registro está dañado
+[HALLAZGO] un prerregistro válido con U+2028 en la hipótesis no bloquea el registro · verificar: línea 1 no es JSON: el registro está dañado; siguiente intento: RegistroError('línea 1 no es JSON: el registro está dañado')
+[HALLAZGO] un prerregistro válido con U+0085 en la hipótesis no bloquea el registro · verificar: línea 1 no es JSON: el registro está dañado; siguiente intento: RegistroError('línea 1 no es JSON: el registro está dañado')
+[OK] un prerregistro válido con U+001C en la hipótesis no bloquea el registro
+[HALLAZGO] una variante con U+2028 no bloquea el registro · línea 2 no es JSON: el registro está dañado
+[HALLAZGO] contenido cambiado con la huella_prerregistro vieja (cadena recalculada) se detecta · verificar() no compara huella_prerregistro con huella(contenido)
+7/16 como pide el plan; 9 hallazgo(s)
+=== r01_02_concurrencia.py
+[HALLAZGO] ronda 1: dos procesos anotando a la vez dejan la cadena íntegra · intentos dados por buenos 2, rechazados 118; verificar: cadena rota en la anotación 3: alguien la reescribió o la quitó
+[HALLAZGO] ronda 2: dos procesos anotando a la vez dejan la cadena íntegra · intentos dados por buenos 2, rechazados 118; verificar: cadena rota en la anotación 3: alguien la reescribió o la quitó
+[HALLAZGO] ronda 3: dos procesos anotando a la vez dejan la cadena íntegra · intentos dados por buenos 2, rechazados 118; verificar: cadena rota en la anotación 3: alguien la reescribió o la quitó
+[HALLAZGO] dos prerregistros simultáneos nunca reciben los dos el mismo EXP-… dado por bueno · 10/10 rondas con el mismo identificador devuelto a los dos
+[HALLAZGO] dos ramas que anotan a la vez y se fusionan conservando las dos líneas dejan un registro usable · conflicto de git: True; verificar tras la fusión: cadena rota en la anotación 3: alguien la reescribió o la quitó
+0/5 como pide el plan; 5 hallazgo(s)
+=== r01_03_ficheros_danados.py
+[HALLAZGO] bytes no UTF-8: la biblioteca lanza RegistroError · UnicodeDecodeError('utf-8', b'{"_hash": "d319373d88f75174df051ee98c079881460f125fe8f81879b07605afd3c2831f", "_hash_prev"
+[OK] bytes no UTF-8: la línea de órdenes sale con 2 y un mensaje · rc=2 · registro de experimentos: 'utf-8' codec can't decode byte 0xff in position 714: invalid start byte
+[OK] BOM inicial: falla cerrado con RegistroError · RegistroError('línea 1 no es JSON: el registro está dañado')
+[OK] CRLF: se lee igual (mismo contenido)
+[HALLAZGO] anotación sin «tipo» con cadena correcta: verificar() la rechaza · verificar = 2
+[HALLAZGO] …y anotar después falla con RegistroError (no KeyError) · KeyError('tipo')
+[HALLAZGO] …y la línea de órdenes sale con 2 y un mensaje, no con una traza · rc=1 · KeyError: 'tipo'
+[HALLAZGO] …y «ver» sale con 2 y un mensaje · rc=1 · KeyError: 'tipo'
+[HALLAZGO] anotación de un tipo que no existe (BORRADO) con cadena correcta: se rechaza · verificar = 2
+[OK] (referencia) un resultado escrito a mano con la cadena recalculada pasa verificar()
+[HALLAZGO] «dentro_del_maximo» falseado (cadena recalculada): resumen() lo recalcula y no lo da por adoptable · adoptable = True: resumen() se fía del campo guardado
+[OK] línea que es una lista JSON: RegistroError · RegistroError('cadena rota en la anotación 2: alguien la reescribió o la quitó')
+[OK] --registro que es un directorio: 2 y mensaje · rc=2 · registro de experimentos: [Errno 21] Is a directory: '/tmp/r01_t99_ru2_232b/registro.jsonl'
+6/13 como pide el plan; 7 hallazgo(s)
+=== r01_04_prerregistro.py
+[OK] rechaza sin escribir: datos que no es un objeto (lista)
+[HALLAZGO] rechaza sin escribir: datos None · error=TypeError; escribió=False; valida CT-G-24=None
+[HALLAZGO] rechaza sin escribir: datos que es una cadena con todos los nombres de campo · error=TypeError; escribió=False; valida CT-G-24=None
+[OK] rechaza sin escribir: objeto en minúsculas
+[OK] rechaza sin escribir: objeto lista
+[OK] rechaza sin escribir: max_variantes 0
+[OK] rechaza sin escribir: max_variantes 1001
+[OK] rechaza sin escribir: max_variantes -1
+[OK] rechaza sin escribir: max_variantes 2.0
+[OK] rechaza sin escribir: max_variantes '2'
+[OK] rechaza sin escribir: max_variantes None
+[OK] rechaza sin escribir: max_variantes NaN
+[OK] rechaza sin escribir: max_variantes infinito
+[OK] rechaza sin escribir: semilla True
+[OK] rechaza sin escribir: semilla 7.0
+[OK] rechaza sin escribir: semilla None
+[OK] rechaza sin escribir: hipótesis de 10 espacios
+[OK] rechaza sin escribir: hipótesis None
+[HALLAZGO] rechaza sin escribir: fecha 2026-02-30 · error=None; escribió=True; valida CT-G-24=True
+[HALLAZGO] rechaza sin escribir: fecha 2026-13-01 · error=None; escribió=True; valida CT-G-24=True
+[HALLAZGO] rechaza sin escribir: fecha 0000-00-00 · error=None; escribió=True; valida CT-G-24=True
+[OK] rechaza sin escribir: fecha con dígitos no ASCII (٢٠٢٦-٠٣-٠٦)
+[OK] rechaza sin escribir: desde > hasta
+[HALLAZGO] rechaza sin escribir: «datos» None · error=None; escribió=True; valida CT-G-24=False
+[HALLAZGO] rechaza sin escribir: «datos» 123 · error=None; escribió=True; valida CT-G-24=False
+[HALLAZGO] rechaza sin escribir: «datos» vacío · error=None; escribió=True; valida CT-G-24=True
+[HALLAZGO] rechaza sin escribir: «datos» lista · error=None; escribió=True; valida CT-G-24=False
+[OK] rechaza sin escribir: autor vacío
+[OK] rechaza sin escribir: autor None
+[OK] acepta y valida CT-G-24: max_variantes 1 · error=None; valida=True
+[OK] acepta y valida CT-G-24: max_variantes 1000 · error=None; valida=True
+[OK] acepta y valida CT-G-24: desde == hasta · error=None; valida=True
+[OK] acepta y valida CT-G-24: semilla negativa · error=None; valida=True
+[OK] acepta y valida CT-G-24: semilla 2**64 · error=None; valida=True
+[OK] acepta y valida CT-G-24: hipótesis de 10 caracteres · error=None; valida=True
+[OK] acepta y valida CT-G-24: campo extra · error=None; valida=True
+[HALLAZGO] un NaN en un campo extra no se escribe como JSON no estándar · la línea contiene NaN
+[OK] mutar el dict de entrada después no cambia el registro
+28/38 como pide el plan; 10 hallazgo(s)
+=== r01_05_intentos_resultados.py
+[OK] intento sobre un experimento sin prerregistro
+[OK] intento con el identificador en minúsculas
+[OK] resultado sin intento
+[OK] resultado sobre otro experimento (B no tiene el intento 1 de A)
+[OK] veredicto no válido 'Mejor'
+[OK] veredicto no válido 'mejor '
+[OK] veredicto no válido 'todavia no se sabe'
+[OK] veredicto no válido ''
+[OK] veredicto no válido None
+[OK] veredicto no válido 'MEJOR'
+[OK] resultado del intento 0
+[OK] resultado del intento -1
+[OK] resultado con n='1' (cadena)
+[HALLAZGO] resultado con n=True: se rechaza o lo escrito valida CT-G-24 · escribió n=True, que no valida CT-G-24
+[OK] resultado con n=1.0: se rechaza o lo escrito valida CT-G-24
+[OK] doble resultado con el mismo veredicto
+[OK] doble resultado con otro veredicto
+[HALLAZGO] detalle lista: se rechaza o lo escrito valida CT-G-24 · escribió detalle=[1]
+[HALLAZGO] detalle cadena: se rechaza o lo escrito valida CT-G-24 · escribió detalle='texto'
+[HALLAZGO] detalle número: se rechaza o lo escrito valida CT-G-24 · escribió detalle=5
+[HALLAZGO] detalle NaN: se rechaza o lo escrito valida CT-G-24 · escribió detalle=nan
+[OK] detalle 0: se rechaza o lo escrito valida CT-G-24
+[OK] detalle [] vacía: se rechaza o lo escrito valida CT-G-24
+[HALLAZGO] variante None: se rechaza (no se convierte en silencio en texto) · escribió variante='None'
+[HALLAZGO] variante vacía: se rechaza (no se convierte en silencio en texto) · escribió variante=''
+[HALLAZGO] variante entero 1: se rechaza (no se convierte en silencio en texto) · escribió variante='1'
+[HALLAZGO] variante dict: se rechaza (no se convierte en silencio en texto) · escribió variante="{'a': 1}"
+[HALLAZGO] «única» en NFC y en NFD son la misma variante (lección macOS) · la NFD cuenta como variante nueva y queda fuera del máximo
+[OK] los intentos se numeran 1, 2, 3 por experimento
+[OK] los resultados pueden llegar en otro orden; el 2 queda sin resultado
+20/30 como pide el plan; 10 hallazgo(s)
+=== r01_06_adoptable.py
+[OK] intento con inicio anterior al prerregistro: no adoptable
+[OK] intento en el mismo segundo que el prerregistro: adoptable (borde >=)
+[HALLAZGO] intento una hora ANTES del prerregistro escrito en otra zona: no adoptable · adoptable: compara «2026-11-12T11…» con «2026-11-12T10…» como texto
+[HALLAZGO] intento después del prerregistro escrito en otra zona: adoptable · no adoptable por la comparación de texto (falla hacia el lado seguro)
+[HALLAZGO] «Z» y «+00:00» en el mismo instante: adoptable · «+00:00» < «Z» como texto
+[HALLAZGO] un «ahora» inyectado que no es una fecha se rechaza · se aceptó creado_en='ayer' y adoptable=False
+[OK] la tercera variante con max 2 gana: no adoptable (CA-4)
+[OK] repetir v1 tras salir del máximo: sigue dentro (es de las 2 primeras)
+[HALLAZGO] repetir la misma variante hasta que sale «mejor» (5 en contra, 1 a favor) no la deja adoptable · adoptable=True, adoptables=[6], veredictos={'1': 'peor', '2': 'peor', '3': 'fallido', '4': 'todavía no se sabe', '5': 'peor', '6': 'mejor'}, fuera_del_maximo=[]
+[HALLAZGO] …y el resumen avisa de que esa variante tiene veredictos contradictorios · claves del resumen: ['adoptable', 'adoptables', 'exp_id', 'fuera_del_maximo', 'hipotesis', 'intentos', 'max_variantes', 'objeto', 'sin_resultado', 'variantes', 'veredictos']
+[HALLAZGO] diez cambios distintos etiquetados igual: el registro no puede distinguirlos (la etiqueta es texto libre) · adoptable=True: nada ata la etiqueta a una huella de lo ejecutado
+[OK] max 3: v2 gana y las otras pierden → adoptable solo el intento de v2
+[OK] (regla declarada) con max 1000, una de mil variantes gana y es adoptable sin corrección por intentos · adoptable=True: la corrección por número de intentos (§9.17) no está en esta regla; queda para J
+[OK] un intento sin resultado antes no impide adoptar (cuenta en sin_resultado)
+7/14 como pide el plan; 7 hallazgo(s)
+=== r01_07_reloj_numeracion.py
+[OK] cambio de año: 2026-0001, 2026-0002, 2027-0001 y un 2026 tardío 2026-0003 · ['EXP-2026-0001', 'EXP-2026-0002', 'EXP-2027-0001', 'EXP-2026-0003']
+[OK] doce prerregistros seguidos: correlativos y sin huecos
+[HALLAZGO] el año del identificador es el de UTC aunque el «ahora» venga en otra zona · EXP-2027-0001: toma los cuatro primeros caracteres del texto
+[OK] con el reloj real, creado_en es UTC y el año del EXP es el de UTC
+[HALLAZGO] el prerregistro 10000 del año se rechaza o tiene un identificador que valida CT-G-24 · escribió EXP-2026-10000, que no casa con ^EXP-\d{4}-\d{4}$
+[HALLAZGO] ahora='ayer' se rechaza o lo escrito valida CT-G-24 · escribió exp_id=EXP-ayer-0001, creado_en='ayer'
+[HALLAZGO] ahora='2026-11-12' se rechaza o lo escrito valida CT-G-24 · escribió exp_id=EXP-2026-0001, creado_en='2026-11-12'
+[HALLAZGO] ahora='12/11/2026 10:00' se rechaza o lo escrito valida CT-G-24 · escribió exp_id=EXP-12/1-0001, creado_en='12/11/2026 10:00'
+[HALLAZGO] ahora='20261112T100000Z' se rechaza o lo escrito valida CT-G-24 · escribió exp_id=EXP-2026-0001, creado_en='20261112T100000Z'
+[HALLAZGO] dos PRERREGISTRO con el mismo EXP-… (cadena recalculada): verificar() lo rechaza · verificar = 2; experimento() devuelve el primero
+[OK] …y el siguiente prerregistro no reutiliza un identificador existente · EXP-2026-0003
+[OK] con un hueco escrito a mano (0001, 0005), el siguiente no choca con uno existente · EXP-2026-0003
+5/12 como pide el plan; 7 hallazgo(s)
+=== r01_08_linea_de_ordenes.py
+[HALLAZGO] «prerregistrar <f> --registro R» (como dice el uso del docstring) funciona · rc=2 · registro_experimentos.py: error: unrecognized arguments: --registro /tmp/r01_t99_tkti4ltd/registro.jsonl
+[HALLAZGO] «verificar --registro R» (como dice el uso) funciona · rc=2 · registro_experimentos.py: error: unrecognized arguments: --registro /tmp/r01_t99_tkti4ltd/registro.jsonl
+[OK] prerregistrar con --registro delante · EXP-2026-0001 prerregistrado; huella 87a0d61117ef906e…
+[OK] intento con la variante por defecto
+[OK] prerregistro ausente: código 2 con mensaje y sin escribir · rc=2 · registro de experimentos: [Errno 2] No such file or directory: '/tmp/r01_t99_tkti4ltd/p_1387394369883628851.js
+[OK] prerregistro no JSON: código 2 con mensaje y sin escribir · rc=2 · registro de experimentos: Expecting property name enclosed in double quotes: line 1 column 2 (char 1)
+[OK] prerregistro lista: código 2 con mensaje y sin escribir · rc=2 · registro de experimentos: al prerregistro le faltan ['hipotesis', 'objeto', 'metrica', 'datos', 'desde', 'hast
+[HALLAZGO] prerregistro null: código 2 con mensaje y sin escribir · rc=1 · TypeError: argument of type 'NoneType' is not iterable
+[OK] prerregistro con BOM: código 2 con mensaje y sin escribir · rc=2 · registro de experimentos: Unexpected UTF-8 BOM (decode using utf-8-sig): line 1 column 1 (char 0)
+[OK] --detalle {roto: código 2 y sin escribir · rc=2 · registro de experimentos: Expecting property name enclosed in double quotes: line 1 column 2 (char 1
+[HALLAZGO] --detalle [1]: código 2 y sin escribir · rc=0 · EXP-2026-0001: resultado del intento 1 registrado
+[HALLAZGO] --detalle NaN: código 2 y sin escribir · rc=0 · EXP-2026-0001: resultado del intento 1 registrado
+[HALLAZGO] --detalle "texto": código 2 y sin escribir · rc=0 · EXP-2026-0001: resultado del intento 1 registrado
+[OK] n no entero: código 2 (argparse)
+[OK] veredicto con espacios en un solo argumento · rc=0 · EXP-2026-0001: resultado del intento 1 registrado
+[HALLAZGO] «verificar» de un registro que no existe avisa de que no existe (no lo da por íntegro) · rc=0 · registro íntegro: 0 anotaciones
+[OK] «ver» de un registro vacío · []
+[OK] ninguna orden de lectura crea el fichero
+11/18 como pide el plan; 7 hallazgo(s)
+=== r01_09_banco_interfaz.py
+[HALLAZGO] banco: repetir la misma orden hasta que sale «mejor» no deja el experimento adoptable (T-133, H-21) · variantes=1, veredictos={'1': 'peor', '2': 'peor', '3': 'todavía no se sabe', '4': 'mejor'}, adoptables=[4]
+[HALLAZGO] --max-variantes 5 al reutilizar un experimento de máximo 1: se rechaza o se avisa · dentro_del_maximo=False, sin aviso: el máximo prerregistrado manda en silencio
+[HALLAZGO] --registro vacío: el banco se niega o avisa (cada ejecución de la línea de órdenes cuenta) · ejecuta sin anotar nada y sin aviso; solo «verificar» lo notaría
+[OK] un titular que revienta deja el intento como «fallido» (CA-5)
+[HALLAZGO] un fallo al escribir prerregistro.json deja el intento como «fallido» · error IsADirectoryError; sin_resultado=[7]
+[HALLAZGO] cadena rota a mitad de ejecución: el banco para con BancoError (código 2 en la línea de órdenes) · sale RegistroError: cadena rota en la anotación 3: alguien la reescribió o la quitó
+[HALLAZGO] docstring del banco y código dicen lo mismo sobre el periodo · el docstring dice «misma hipótesis, objeto y periodo»; el código y la prueba H-14 tratan otro periodo como otra variante
+[OK] el registro del repositorio no se tocó
+2/8 como pide el plan; 6 hallazgo(s)

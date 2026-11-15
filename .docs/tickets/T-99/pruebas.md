@@ -1,5 +1,18 @@
 # T-99 · Pruebas
 
+## Ronda r02 (15-11-2026)
+
+| Suite | r01 | r02 |
+| --- | --- | --- |
+| `.docs/scripts/pruebas_registro_experimentos.py` | 20 | 50 en verde |
+| `.docs/scripts/pruebas_borradores_contratos.py` | 22 | 22 |
+| `.docs/scripts/pruebas_banco_medida.py` | 82 | 86 (4 de la interfaz con el registro, H-08) |
+| Todas las de `.docs/scripts` (las que ahora ejecuta `commit_limpio.sh`) | — | 158 en verde |
+| Mutantes `.docs/tickets/T-99/mutantes_r02.py` | — | 0 de 30 vivos |
+
+Scripts del revisor de la r01 contra el registro 0.2.0: `r01_05` (intentos y resultados) da 30 de 30. Los que aún marcan algo son por diseño y se explican en `analisis-tecnico.md`, «Ronda r02»: truncar fuera de git rehaciendo el sello, fusionar dos ramas y la variante por defecto.
+
+
 Ejecutadas el 12-11-2026 por Claude, con el `.venv` de T-96.
 
 | Suite | Antes | Después |

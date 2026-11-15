@@ -45,6 +45,11 @@ if printf '%s\n' "${rutas[@]}" | grep -q '^sistema_global/marco_comun_c/'; then
   (cd "$W" && .docs/scripts/pruebas_marco.sh) || fallo "las pruebas del marco no pasan en la copia limpia: no se hace commit"
   (cd "$W" && "$PY" -I .docs/scripts/leeme_marco.py sistema_global/marco_comun_c) || fallo "el LEEME del marco no coincide en la copia limpia"
 fi
+# T-99 (QA r01, H-12): el gate del repositorio no ejecuta las pruebas de .docs/scripts; si el commit toca un script o un
+# borrador de contrato, se ejecutan aquí todas (banco, registro, borradores, cola), y sin ellas en verde no hay commit.
+if printf '%s\n' "${rutas[@]}" | grep -qE '^\.docs/(scripts|diseno/contratos)/'; then
+  (cd "$W" && "$PY" -m pytest -q -p no:cacheprovider .docs/scripts/pruebas_*.py) || fallo "las pruebas de .docs/scripts no pasan en la copia limpia: no se hace commit"
+fi
 (cd "$W" && .docs/scripts/gate.sh --completo) || fallo "el gate no pasa en la copia limpia: no se hace commit"
 
 # Se sube la copia probada de cada fichero, no la del árbol principal (que pudo cambiar durante las pruebas).

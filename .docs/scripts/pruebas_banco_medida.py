@@ -713,3 +713,53 @@ def test_h20_no_queda_el_experimento_de_una_ejecucion_anterior(tmp_path, monkeyp
     assert (tmp_path / "e" / "experimento.json").exists()
     bm.ejecutar_a(_ns(tmp_path, "e", registro=None))
     assert not (tmp_path / "e" / "experimento.json").exists()
+
+
+# ---------------------------------------------------------------- T-99 r02 (QA r01, H-08): la interfaz del banco con el registro
+
+def test_t99_h08_registro_vacio_y_sin_registro(tmp_path, monkeypatch, datos_falsos):
+    monkeypatch.setattr(bm, "titular_a", _titular_falso(*datos_falsos))
+    with pytest.raises(bm.BancoError, match="--sin-registro"):
+        bm.ejecutar_a(_ns(tmp_path, "v", registro=""))
+    inf = bm.ejecutar_a(_ns(tmp_path, "s", registro=None))   # --sin-registro deja registro=None: no se anota, y se dice
+    assert "experimento" not in inf and any("no hay experimento.json" in p for p in bm.verificar(tmp_path / "s"))
+
+
+def test_t99_h08_max_variantes_no_cambia_despues(tmp_path, monkeypatch, datos_falsos):
+    monkeypatch.setattr(bm, "titular_a", _titular_falso(*datos_falsos))
+    exp = bm.ejecutar_a(_ns(tmp_path, "a"))["experimento"]["exp_id"]
+    with pytest.raises(bm.BancoError, match="max_variantes 1"):
+        bm.ejecutar_a(_ns(tmp_path, "b", max_variantes=5))
+    with pytest.raises(bm.BancoError, match="max_variantes 1"):
+        bm.ejecutar_a(_ns(tmp_path, "c", max_variantes=5, experimento=exp))
+
+
+def test_t99_h08_fallo_al_escribir_el_prerregistro_queda_fallido(tmp_path, monkeypatch, datos_falsos):
+    import registro_experimentos as rx
+    monkeypatch.setattr(bm, "titular_a", _titular_falso(*datos_falsos))
+    real = bm._escribir_json
+
+    def falla(ruta, obj):
+        if Path(ruta).name == "prerregistro.json":
+            raise OSError("disco lleno")
+        real(ruta, obj)
+    monkeypatch.setattr(bm, "_escribir_json", falla)
+    with pytest.raises(OSError):
+        bm.ejecutar_a(_ns(tmp_path, "p"))
+    reg = rx.Registro(tmp_path / "reg.jsonl")
+    exp = next(x["exp_id"] for x in reg.anotaciones() if x["tipo"] == "PRERREGISTRO")
+    assert reg.resumen(exp)["veredictos"] == {"1": "fallido"} and reg.resumen(exp)["sin_resultado"] == []
+
+
+def test_t99_h08_registro_roto_a_mitad_sale_como_bancoerror(tmp_path, monkeypatch, datos_falsos):
+    import registro_experimentos as rx
+    monkeypatch.setattr(bm, "titular_a", _titular_falso(*datos_falsos))
+
+    def roto(self, *a, **k):
+        raise rx.RegistroError("cadena rota en la anotación 3")
+    monkeypatch.setattr(rx.Registro, "resultado", roto)
+    with pytest.raises(bm.BancoError, match="registro de experimentos"):
+        bm.ejecutar_a(_ns(tmp_path, "r"))
+    monkeypatch.setattr(bm, "evaluar", lambda *a, **k: (_ for _ in ()).throw(ValueError("fallo original")))
+    with pytest.raises(bm.BancoError, match="fallo original.*no se pudo anotar"):
+        bm.ejecutar_a(_ns(tmp_path, "s"))
