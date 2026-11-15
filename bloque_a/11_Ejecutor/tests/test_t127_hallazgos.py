@@ -107,7 +107,10 @@ def _token_extra(n):
 
 # ====================================================================================================== H-10 · umbrales
 def test_h10_las_reglas_de_la_frontera_son_umbrales_fijos_de_las_tres_fichas():
-    assert fp.FRONTERA_B == {"tolerancia_clon": 0.01, "peso_maximo_componente": 0.95, "componentes_minimos_orden": 7}
+    # T-144 (QA r01 de T-135, H-01): FRONTERA_B gana la tolerancia numérica de la regla de niveles de las copias de una
+    # serie (1e-10, la de verificación de IDX-CONC-001); los tres números de antes no cambian y la igualdad sigue exacta
+    assert fp.FRONTERA_B == {"tolerancia_clon": 0.01, "peso_maximo_componente": 0.95, "componentes_minimos_orden": 7,
+                             "tolerancia_numerica_copias": 1e-10}
     assert fp.FRONTERA_B["componentes_minimos_orden"] == len(fp.ESTADISTICOS_ORDEN) + 2
     assert set(fp._distribucion(np.arange(9.0))) == set(fp.ESTADISTICOS_ORDEN)       # los que entrega la dispersión
     assert fp.UMBRALES["CHR-TOKEN-001"]["redes_propias"] == {"bitcoin": "BTC", "ethereum": "ETH"}

@@ -122,9 +122,15 @@ def test_las_dos_claves_van_donde_las_pone_el_ejemplo_del_bloque_b(ciclo, cfg):
 
 
 def test_no_muta_el_paquete(ciclo, cfg):
-    _, paquete = ciclo
+    # T-147 (QA r01 de T-142, H-05): una copia propia del paquete y sin la extensión que solo pone la tabla. El fixture es
+    # de módulo: con un `construir_peticion` que mutara el paquete, las pruebas anteriores ya le habrían dejado la clave y
+    # la copia de «antes» la llevaría también (el mutante `muta_paquete` sobrevivía). Se refuerza, no se debilita
+    paquete = copy.deepcopy(ciclo[1])
+    for e in paquete["paquete_para_bloque_B"]:
+        e.pop("x_clave_universo", None)
     antes = copy.deepcopy(paquete)
-    cadena_b.construir_peticion(paquete, "OPP-2024-0002", cfg)
+    pet = cadena_b.construir_peticion(paquete, "OPP-2024-0002", cfg)
+    assert not any(pet["paquete_para_bloque_B"] is e for e in paquete["paquete_para_bloque_B"])
     with pytest.raises(cadena_b.ErrorCadenaB):
         cadena_b.construir_peticion(paquete, "OPP-2024-0001", cfg)
     assert paquete == antes

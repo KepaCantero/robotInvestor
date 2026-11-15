@@ -1020,6 +1020,7 @@ def f_chr_token(ent: dict[str, Any], params: dict[str, Any]) -> Resultado:
     ids: list[str] = []
     firmas: list[tuple[Any, ...]] = []
     firmas_aviso: list[tuple[Any, ...]] = []
+    repetidos_aviso: list[tuple[bool, ...]] = []
     cm: list[float] = []
     fdv: list[float] = []
     neta: list[float] = []
@@ -1076,16 +1077,18 @@ def f_chr_token(ent: dict[str, Any], params: dict[str, Any]) -> Resultado:
         if tk.get("concentracion_10_mayores") is not None:
             conc.append((i, cm_i, _rango(tk["concentracion_10_mayores"], f"{que}.concentracion_10_mayores", 0, 1)))
         # T-135 (QA r03 de T-127, H-06): la firma del aviso lleva también el staking y la concentración declarados (datos
-        # de quien pide que distinguen a dos tokens) y deja en ``None`` lo que repite otro dato: la oferta total cuando
-        # toda está en circulación y la máxima cuando es la total (o no la hay). Dos tokens de oferta fija y redonda no
-        # coinciden así en datos que no informan (`frontera_b._aviso_casi_clones`)
-        firmas_aviso.append((precio, circ, None if total == circ else total,
-                             None if maxima is None or maxima == total else maxima, emision, quema,
+        # de quien pide que distinguen a dos tokens). T-144 (QA r01 de T-135, H-02): lo que repite otro dato (la oferta
+        # total cuando toda está en circulación y la máxima cuando es la total) va tal cual y se marca en `repetidos_aviso`:
+        # dos tokens de oferta fija y redonda no coinciden así en datos que no informan, y mover solo la circulante de una
+        # copia sigue siendo un dato movido (`frontera_b._aviso_casi_clones`)
+        firmas_aviso.append((precio, circ, total, maxima, emision, quema,
                              None if tk.get("staking_nominal") is None else float(tk["staking_nominal"]),
                              None if tk.get("concentracion_10_mayores") is None else float(tk["concentracion_10_mayores"])))
+        repetidos_aviso.append((False, False, total == circ, maxima is not None and maxima == total,
+                                False, False, False, False))
     _ids_unicos(ids, F)
     _sin_clones(firmas, f"{F}: tokens", u["tolerancia_clon"])
-    _aviso_casi_clones(firmas_aviso, u["tolerancia_clon"], lim)   # T-127 r03 (H-04): un dato movido, aviso en RC
+    _aviso_casi_clones(firmas_aviso, u["tolerancia_clon"], lim, repetidos_aviso)   # T-127 r03 (H-04): un dato movido, aviso en RC
     grupos = np.arange(len(tokens))
     if not red:   # T-127 (H-10): bases de ponderación del agregado de un sector (la red es su token, sin dominancia)
         # T-127 r02 (QA r01, H-01): las cifras de cada token no dependen de su tamaño (FDV/CM, inflación neta, desbloqueos,

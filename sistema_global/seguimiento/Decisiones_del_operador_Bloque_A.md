@@ -104,7 +104,7 @@ Se sigue preguntando antes de actuar cuando algo gasta dinero o usa una credenci
 
 | Qué | Valor hoy | Quién | Fecha | Dónde y cómo se cambia |
 | --- | --- | --- | --- | --- |
-| Autorizar el gasto del modo sombra | **Autorizado** (operador, 15-11-2026). Coste de un ciclo semanal, entre el suelo y la cota: 0,86–19,54 USD con solo divisas; 2,98–166,56 USD con los 12 tipos (T-145; la cota es holgada a propósito y el presupuesto en UC aún no corta antes de cada llamada, T-146) | — | — | Se pregunta siempre |
+| Autorizar el gasto del modo sombra | **Autorizado** (operador, 15-11-2026). Coste de un ciclo semanal, entre el suelo y la cota (salvo lo que lee cada búsqueda): 0,86–28,04 USD con solo divisas y 2,98–46,08 USD con los 12 tipos, con T-146 en el código (el presupuesto en UC corta antes de cada petición; T-148: la respuesta a objeciones y la contrarréplica, acotadas por esa reserva). Antes de T-146: 31,50 y 275,77; en T-145: 19,54 y 166,56. Cada 1 000 tokens que lea cada búsqueda suman como mucho 0,40 USD (divisas) o 4,80 USD (12 tipos) | — | — | Se pregunta siempre |
 | Modelo de cada agente | Opus 5.5 para los que razonan más (AG-02, AG-11…), Sonnet 5.5 para la mayoría, Haiku 5.5 para los más simples | Entrega | — | `modelos` |
 | Tarifa con la que se estima el coste | La publicada el 15-11-2026, en un fichero aparte | Agente (INC-T129-01) | 15-11-2026 | `config/precios_anthropic.yaml`, con `--config` |
 | Repetir en otro modelo una petición rechazada | No | Agente (INC-T129-01) | 15-11-2026 | Código del cliente (`llm.py`) |

@@ -399,6 +399,45 @@ def tarjetas_en_texto(texto: str) -> list[str]:
     return list(dict.fromkeys(hallados))
 
 
+# T-147 (QA r01 de T-142, H-02) [PROPUESTO INC-T123-01] · R8: correos electrónicos y asignaciones de una clave en texto.
+# Correo: una parte local de hasta 64 caracteres, «@» y un dominio con al menos un punto y un dominio de primer nivel de
+# letras (RFC 5321: 64 es el máximo de la parte local; 63, el de cada etiqueta del dominio). Sin letra, cifra, «.», «%», «+»
+# ni «-» pegados delante ni detrás, y no cuentan los nombres de imagen de alta resolución («logo@2x.png»). Cualquier correo
+# es un dato personal para R8, también el de un dominio de ejemplo (el detector no distingue el de un inversor del de una
+# empresa: límite declarado en INC-T123-01).
+RE_CORREO = re.compile(r"(?<![A-Za-z0-9._%+\-])[A-Za-z0-9._%+\-]{1,64}@(?!\d+x\.)"
+                       r"[A-Za-z0-9](?:[A-Za-z0-9\-]{0,61}[A-Za-z0-9])?(?:\.[A-Za-z0-9](?:[A-Za-z0-9\-]{0,61}[A-Za-z0-9])?)*"
+                       r"\.[A-Za-z]{2,24}(?![A-Za-z0-9\-])")
+# Asignación de una clave fuera de JSON («api_key=…», «token: …», «X-Api-Key: …», «export SECRET_KEY=…», «'password': '…'»;
+# el par JSON entre comillas ya lo cubre `RE_SECRETO`). Nombres de credencial inequívocos: el valor cuenta si tiene 6
+# caracteres o más (como el detector del Bloque B) y lleva una cifra o un signo, o 12 letras o más (así «contraseña:
+# obligatoria» no es una clave). Nombres genéricos («token», «secret», «secreto»): el valor tiene que parecer una clave,
+# 16 caracteres o más de letras, cifras y «._~+/=-» con al menos una letra y una cifra. Una dirección o huella «0x…» en
+# hexadecimal (un contrato de un token, una transacción) es pública y no cuenta.
+NOMBRES_CLAVE_FUERTES = (r"(?:x[_\-])?api[_\-.]?key|apikey|secret[_\-]?key|client[_\-]?secret|access[_\-]?key(?:[_\-]?id)?"
+                         r"|private[_\-]?key|(?:access|auth|refresh|id|bearer)[_\-]?token|password|passwd|pwd"
+                         r"|contrase(?:ñ|n)a|clave[_\-](?:api|secreta|privada)")
+NOMBRES_CLAVE_GENERICOS = r"token|secret|secreto"
+RE_ASIGNACION_CLAVE = re.compile(
+    rf"(?i)(?<![A-Za-z0-9])(?:(?P<fuerte>{NOMBRES_CLAVE_FUERTES})|(?P<generico>{NOMBRES_CLAVE_GENERICOS}))[\"']?\s*[:=]\s*"
+    r"[\"']?(?P<valor>[^\s\"',;<>()\[\]{}]{6,512})")
+RE_VALOR_GENERICO = re.compile(r"(?=[A-Za-z0-9._~+/=\-]*[A-Za-z])(?=[A-Za-z0-9._~+/=\-]*[0-9])[A-Za-z0-9._~+/=\-]{16,}")
+
+
+def _asignaciones_de_clave(texto: str) -> list[str]:
+    hallados = []
+    for m in RE_ASIGNACION_CLAVE.finditer(texto):
+        v = m.group("valor")
+        if v.lower().startswith("0x") and all(c in "0123456789abcdefABCDEF" for c in v[2:]):
+            continue
+        if m.group("fuerte"):
+            if any(not c.isalpha() for c in v) or len(v) >= 12:
+                hallados.append(m.group(0))
+        elif RE_VALOR_GENERICO.fullmatch(v):
+            hallados.append(m.group(0))
+    return hallados
+
+
 def secretos_en_texto(texto) -> list[str]:
     """Indicios de secretos en un texto: los patrones de `RE_SECRETO` y las claves «sk-». También se mira el texto con los
     escapes de JSON («\\n», «\\t», «\\r», «\\/») sustituidos, porque la respuesta de un agente es JSON escrito como
@@ -411,6 +450,7 @@ def secretos_en_texto(texto) -> list[str]:
         hallados += [m.group(0) for m in RE_SECRETO.finditer(t)]
         hallados += [m.group(0) for m in RE_CANDIDATO_SK.finditer(t) if _es_clave_sk(m.group(1))]
         hallados += ibanes_en_texto(t) + tarjetas_en_texto(t)   # T-123
+        hallados += [m.group(0) for m in RE_CORREO.finditer(t)] + _asignaciones_de_clave(t)   # T-147
     return list(dict.fromkeys(hallados))
 
 

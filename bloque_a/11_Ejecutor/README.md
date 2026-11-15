@@ -299,7 +299,7 @@ El Bloque A no habla con el Bloque B: el Broker reenvía el `paquete_para_bloque
 
 - `opciones_enviables(paquete)`: las opciones con `siguiente_paso_sugerido = ENVIAR_A_BLOQUE_B`.
 - `construir_peticion(paquete, opp_id, cfg)`: la petición CT-B-01 con los campos del Anexo B.1 del Documento 0 del Bloque B. El encargo va tal cual, validado contra `entrada_bloque_B`, y la clave del ámbito del Bloque B sale de `cadena_b.correspondencia_ambitos` (por el símbolo del indicador de seguimiento).
-- Falla cerrado con `ErrorCadenaB` y su código: `SIN_CORRESPONDENCIA_AMBITO`, `CONFIGURACION_CADENA_B`, `OPCION_DESCONOCIDA`, `OPCION_DUPLICADA`, `ENTRADA_B_INVALIDA`, `PAQUETE_INVALIDO`, `ESQUEMA_NO_DISPONIBLE`.
+- Falla cerrado con `ErrorCadenaB` y su código: `SIN_CORRESPONDENCIA_AMBITO`, `CONFIGURACION_CADENA_B` (también si `cadena_b.peticion` o `idioma` no son valores del Anexo B.1, o si la tabla lleva espacios; T-147), `OPCION_DESCONOCIDA`, `OPCION_DUPLICADA`, `ENTRADA_B_INVALIDA` (también con `tipos_secundarios` que no cumplen el esquema de A; T-147), `PAQUETE_INVALIDO`, `ESQUEMA_NO_DISPONIBLE` y `DATOS_PROTEGIDOS` (la petición lleva credenciales o datos personales, R8: no se envía; T-147).
 - `ct04_desde_respuesta_b(opp_id, respuesta_b)`: el CT-04 de vuelta (`ENVIADA_A_BLOQUE_B` y `resultado_comunicado`), con `RESPUESTA_B_INVALIDA` si la respuesta no trae `pet_id`.
 
 Las decisiones están en INC-T142-01 (`docs/incidencias.md`, en la raíz). De punta a punta, con los dos ejecutores simulados:

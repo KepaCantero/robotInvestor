@@ -69,8 +69,13 @@ GENERALES = [
      "de los que el ejecutor emite (CT-16, CT-17 y CT-19), que ya están congelados en `formas_flujos_mock.json`."),
     ("`fecha_corte` de CT-09", "El Anexo B la hace obligatoria solo en evaluaciones y backtesting; el ejecutor la exige "
      "siempre (es más estricto). Propuesta: obligatoria siempre."),
+    # T-148 (QA r01 de T-145, H-06): ni `coincide` ni `independiente` están en `esquemas_respuestas.json`
     ("Lo que el Anexo B deja abierto", "La codificación de `coincide` (CT-10) y de `independiente` (CT-11) y los nombres de las "
-     "claves de `fechas` (CT-11). Propuesta: fijarlos con los valores que usa el ejecutor (los de `esquemas_respuestas.json`)."),
+     "claves de `fechas` (CT-11). Propuesta: fijarlos con los valores que usa el ejecutor. `coincide` lo sirve el Motor "
+     "(`motor/servicio.py`, la re-ejecución de CT-10): SI, DENTRO_TOLERANCIA o NO, con su `categoria`. `independiente` no "
+     "lo devuelve el Curador: el ejecutor asigna los EVD- y CLM-, los duplicados y las raíces en código "
+     "(`Bloque._registrar_evidencia_clase`, `orquestacion.py`) y la independencia queda en `grado_independencia` de cada "
+     "EVD de F2."),
     # T-145 (QA r01 de T-140, H-05): CT-09 y CT-10 no son respuestas de un agente: los sirve el Motor
     (f"Retornos internos ({_tramos(RETORNOS_INTERNOS)})", ("No pasan por la mensajería: la respuesta de cada agente se "
      "valida con los esquemas de `ESQUEMAS` (congelados en `bloque_a/11_Ejecutor/tests/goldens/esquemas_respuestas.json`), "

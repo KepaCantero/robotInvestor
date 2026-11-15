@@ -133,7 +133,14 @@ def test_h01_la_tabla_de_llamadas_del_ciclo(est, tarifa, medida):
     # S4: la contrarréplica lee la salida máxima de las cinco llamadas anteriores de su tipo (cribado y respuesta del
     # Analista, 12 000 cada una; petición, 8 000; prospectiva y refutación, 10 000 cada una)
     contra = next(x for x in c["papeles"] if x["papel"] == "contrarreplica")
-    assert contra["encargo_tok"] == max(x["user_tok"] for x in medida if x["agente"] == "AG-11") + 52_000
+    assert contra["lee_tok"] == 52_000
+    # T-148 (QA r01 de T-145, H-01): S4 no acota la contrarréplica (su encargo crece con objeciones × evidencias); su encargo
+    # es el mayor que admite la reserva del presupuesto en la bolsa del tipo (T-146; N2 = 18 UC con la ampliación máxima,
+    # +50 %): 2·8 000·(27 − 0,5·2 500/1 500) / 1,35 tokens sobre lo medido (la salida mínima y el margen de la entrada de
+    # `presupuesto_uc.reserva`). Cambia la igualdad de antes (52 000), que fijaba el supuesto que la QA mostró falso; no se
+    # debilita: la cifra nueva es mayor y se fija igual de exacta
+    assert contra["encargo_tok"] == pytest.approx(max(x["user_tok"] for x in medida if x["agente"] == "AG-11")
+                                                  + 2 * 8000 * (18 * 1.5 - 0.5 * 2500 / 1500) / 1.35)
     # el presupuesto del ciclo (240 UC) con la ampliación máxima (+50 %), al peor precio por UC (Opus: 16 000 tokens de
     # entrada como escritura de caché a 8 USD por millón) en las dos bolsas
     assert c["presupuesto"]["limites"] == pytest.approx(240 * 1.5 * 16_000 * 8.0 / 1e6)

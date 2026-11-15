@@ -1218,7 +1218,8 @@ def f_idx_erp(ent: dict, params: dict) -> tuple[dict, list[str]]:
 # sociedades de REI-NAV-001 y REI-FFO-001 y de un sector de CHR-TOKEN-001. La concentración (peso de los n mayores, HHI,
 # N_ef) no cambia: describe los pesos del índice, que es lo que mide la ficha.
 # T-135 (QA r02 de T-128, H-05): en la amplitud, los componentes que cuentan para este mínimo son los distintos por sus
-# rentabilidades: una serie y sus copias (exactas o a escala) son uno (`frontera_b._etiquetas_series_copiadas`, con la
+# rentabilidades (T-144: o por su cociente de precios, salvo el redondeo de cada serie): una serie y sus copias (exactas,
+# a escala, con una sesión ausente o redondeadas) son uno (`frontera_b._etiquetas_series_copiadas`, con la
 # `tolerancia_clon` de `FRONTERA_B` y el año de precios mínimo de la ficha); y ningún grupo de copias puede ser más del
 # `peso_maximo_componente` de las series (la regla de dominancia (1, k), con el mismo peso para cada componente).
 IDX_CONC_COMPONENTES_MINIMOS = 2
@@ -1305,6 +1306,10 @@ def f_idx_conc(ent: dict, params: dict) -> tuple[dict, list[str]]:
             _hasta_corte(s.index, corte, f"{ficha}: precios[{k}]")
     elif ent.get("series"):
         precios = {str(k): s.dropna().sort_index() for k, s in sorted(ent["series"].items())}
+    for k, s in precios.items():   # T-144 (QA r01 de T-135, H-04): un precio ≤ 0 o no finito no es un dato válido (HT-01)
+        x = np.asarray(s.to_numpy(), dtype=float)
+        if not (np.isfinite(x).all() and (x > 0).all()):
+            raise ErrorFicha(f"{ficha}: precios de «{k}» con valores nulos, negativos o no finitos (un precio es positivo)")
     amplitud: dict[str, Any] | None = None
     if precios:
         n_media = int(p["media_amplitud"])
@@ -1326,7 +1331,8 @@ def f_idx_conc(ent: dict, params: dict) -> tuple[dict, list[str]]:
         tabla = pd.DataFrame(precios).sort_index()
         grupos = _etiquetas_series_copiadas(tabla.to_numpy(dtype=float).T,
                                             np.asarray((tabla.index - tabla.index[0]).days, dtype=float) / DIAS_ANIO,
-                                            FRONTERA_B["tolerancia_clon"], float(p["anios_precios_min"]))
+                                            FRONTERA_B["tolerancia_clon"], float(p["anios_precios_min"]),
+                                            tol_numerica=tol)   # T-144: la misma que FRONTERA_B["tolerancia_numerica_copias"]
         k_max = FRONTERA_B["peso_maximo_componente"]
         en_validos = np.array([len(s) >= n_media for s in precios.values()])
         distintos, dominio = _distintos_y_dominio(grupos)
