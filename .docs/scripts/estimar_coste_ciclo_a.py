@@ -2,11 +2,14 @@
 
 Lee el `llamadas.json` que deja `medir_consumo_a.py` (una fila por llamada del cliente simulado) y le aplica una tarifa
 (`bloque_a/11_Ejecutor/config/precios_anthropic.yaml` u otra con las mismas claves). Da dos cifras:
-- **estimación:** la entrada que mide el simulador (que es la real: prompts de sistema y encargos) y la salida simulada,
-  que es más corta que la de un modelo;
-- **cota superior:** la misma entrada, toda la salida hasta `max_tokens` en cada llamada y, en los agentes con búsqueda
-  web, todas las búsquedas que permite `busqueda_web.max_usos_por_llamada`. Lo que se lee en una búsqueda también se
-  cobra como entrada y no se puede saber sin la API: queda fuera de las dos cifras (se dice en la salida).
+- **suelo:** la entrada que mide el simulador (prompts de sistema y encargos, con su caché) y la salida simulada, que es
+  mucho más corta que la de un modelo y no lleva el razonamiento adaptativo, que se cobra como salida. No es un valor
+  central: el coste real queda por encima (T-133, H-02);
+- **cota superior** (T-133, H-01): la entrada multiplicada por `factor_tokens_cota` y pagada entera como escritura de
+  caché (las llamadas en paralelo pueden no leer la caché de otra), toda la salida hasta `max_tokens` (que incluye el
+  razonamiento) y, en los agentes con búsqueda web, cada continuación de `pause_turn` (`llm.max_continuaciones_pause_turn`)
+  reenvía la entrada y puede hacer otras `busqueda_web.max_usos_por_llamada` búsquedas. Lo que se lee en una búsqueda se
+  cobra como entrada y no se puede saber sin la API: queda fuera (se dice en la salida).
 
 Uso (desde la raíz):
   .venv/bin/python .docs/scripts/estimar_coste_ciclo_a.py <carpeta de medir_consumo_a> [--precios yaml] [--config yaml]
@@ -35,7 +38,7 @@ def _coste(p: dict, entrada: float, salida: float, escr: float, lect: float) -> 
 
 
 def estimar(llamadas: list[dict], precios: dict, precio_busqueda_mil: float, agentes_busqueda: set[str],
-            max_usos: int) -> dict:
+            max_usos: int, factor_tokens: float = 1.0, continuaciones: int = 0) -> dict:
     tot = {"estimacion": 0.0, "cota_superior": 0.0, "busquedas_cota": 0}
     por_modelo: dict[str, dict] = collections.defaultdict(lambda: {"llamadas": 0, "estimacion": 0.0, "cota_superior": 0.0})
     for x in llamadas:
@@ -45,10 +48,12 @@ def estimar(llamadas: list[dict], precios: dict, precio_busqueda_mil: float, age
         escr, lect = x.get("cache_escr", 0), x.get("cache_lect", 0)
         entrada = max(0, x["sys_tok"] + x["user_tok"] - escr - lect)      # lo que no sale de la caché ni se escribe en ella
         est = _coste(p, entrada, x["out_tok"], escr, lect)
-        cota = _coste(p, entrada, x["max_tokens"], escr, lect)
+        entrada_cota = (x["sys_tok"] + x["user_tok"]) * factor_tokens     # toda como escritura de caché, sin lecturas
+        vueltas = 1 + (continuaciones if x["agente"] in agentes_busqueda else 0)
+        cota = vueltas * _coste(p, 0, 0, entrada_cota, 0) + _coste(p, 0, x["max_tokens"], 0, 0)
         if x["agente"] in agentes_busqueda:
-            tot["busquedas_cota"] += max_usos
-            cota += max_usos * precio_busqueda_mil / 1000
+            tot["busquedas_cota"] += max_usos * vueltas
+            cota += max_usos * vueltas * precio_busqueda_mil / 1000
         tot["estimacion"] += est
         tot["cota_superior"] += cota
         m = por_modelo[x["modelo"]]
@@ -72,12 +77,14 @@ def main(argv: list[str] | None = None) -> int:
     bw = cfg.get("busqueda_web") or {}
     agentes = set(bw.get("agentes") or []) if bw.get("habilitada_en_vivo") else set()
     r = estimar(llamadas, tarifa["precios_por_millon"], float(tarifa["precio_busqueda_web_por_mil"]), agentes,
-                int(bw.get("max_usos_por_llamada", 0)))
-    print(f"{r['llamadas']} llamadas · estimación {r['estimacion']:.2f} USD · cota superior {r['cota_superior']:.2f} USD "
+                int(bw.get("max_usos_por_llamada", 0)), float(tarifa.get("factor_tokens_cota", 1.0)),
+                int((cfg.get("llm") or {}).get("max_continuaciones_pause_turn", 0)))
+    print(f"{r['llamadas']} llamadas · suelo {r['estimacion']:.2f} USD · cota superior {r['cota_superior']:.2f} USD "
           f"(con hasta {r['busquedas_cota']} búsquedas web)")
     for m, v in r["por_modelo"].items():
-        print(f"  {m:20} llamadas {v['llamadas']:3} · estimación {v['estimacion']:.3f} · cota {v['cota_superior']:.3f}")
-    print("No incluye: los tokens de lo que lee cada búsqueda web, reintentos ni reparaciones de JSON.")
+        print(f"  {m:20} llamadas {v['llamadas']:3} · suelo {v['estimacion']:.3f} · cota {v['cota_superior']:.3f}")
+    print("No incluye: los tokens de lo que lee cada búsqueda web, reintentos ni reparaciones de JSON. El suelo no cuenta el "
+          "razonamiento adaptativo, que se cobra como salida; la cota sí (cabe en max_tokens).")
     return 0
 
 

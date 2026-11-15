@@ -70,3 +70,57 @@ def test_el_borrador_del_anexo_b_esta_al_dia():
     for ct in ("CT-11.ENCARGO", "CT-22.ENCARGO", "CT-24.RETORNO", "CT-25.RETORNO"):
         assert f"| {ct} |" in texto
     assert "is a required property" not in texto
+
+
+# ---------------------------------------------------------------- T-131 r02 (QA r01)
+def _estropear(tmp_path, cambio):
+    u = cargar_universo(RUTA_UNIVERSO_EJEMPLO).head(1)
+    d = _carpeta(tmp_path, u)
+    s = u["simbolo"].iloc[0]
+    df = pd.read_csv(d / f"{s}.csv")
+    df = df[pd.to_datetime(df["fecha"]) <= "2024-03-29"]
+    cambio(df).to_csv(d / f"{s}.csv", index=False)
+    return d, u
+
+
+@pytest.mark.parametrize("nombre,cambio", [
+    ("cierre de texto", lambda df: df.assign(cierre="n/d")),
+    ("cierre cero", lambda df: df.assign(cierre=0.0)),
+    ("cierre negativo", lambda df: df.assign(cierre=-df["cierre"])),
+    ("fechas repetidas dentro del rango", lambda df: pd.concat([df, df.tail(3)])),
+])
+def test_r02_h01_valida_como_el_ciclo(tmp_path, comprobar, nombre, cambio):
+    d, u = _estropear(tmp_path, cambio)
+    assert comprobar(d, u, "2024-03-29")[0]["estado"] == "INVALIDO", nombre
+
+
+def test_r02_h01_lo_posterior_a_as_of_no_cuenta_como_en_el_ciclo(tmp_path, comprobar):
+    # un dato malo posterior a as_of no excluye el símbolo (T-65, QA r03, H-21): el ciclo tampoco lo ve
+    u = cargar_universo(RUTA_UNIVERSO_EJEMPLO).head(1)
+    d = _carpeta(tmp_path, u)
+    s = u["simbolo"].iloc[0]
+    df = pd.read_csv(d / f"{s}.csv")
+    pd.concat([df, df.tail(3)]).to_csv(d / f"{s}.csv", index=False)       # repetidas en 2026, as_of en 2024
+    assert comprobar(d, u, "2024-03-29")[0]["estado"] == "OK"
+
+
+def test_r02_h03_en_h1_cuenta_sesiones(tmp_path, comprobar):
+    d, u = _estropear(tmp_path, lambda df: df[pd.to_datetime(df["fecha"]) <= "2024-03-22"])   # último cierre, viernes
+    assert comprobar(d, u, "2024-03-25", "H1")[0]["estado"] == "OK"          # el lunes: una sesión
+    assert comprobar(d, u, "2024-03-27", "H1")[0]["estado"] == "ANTIGUO"
+
+
+def test_r02_h04_carpeta_inexistente(capsys):
+    mod = _modulo("comprobar_datos_a")
+    assert mod.main(["/no/existe/carpeta"]) == 2
+    assert "no existe la carpeta" in capsys.readouterr().err
+
+
+def test_r02_h02_el_borrador_recoge_los_campos_de_primer_nivel_y_los_lotes():
+    texto = _modulo("borrador_anexo_b").generar()
+    filas = [ln for ln in texto.splitlines() if ln.startswith("| CT-")]
+    assert any(ln.startswith("| CT-03.ENCARGO |") and "`query_id`" in ln for ln in filas)
+    assert any(ln.startswith("| CT-23.ENCARGO |") and "`run_id`" in ln for ln in filas)
+    assert any(ln.startswith("| CT-03.RETORNO |") and "`escalado` llega con otro tipo" in ln for ln in filas)
+    assert "faltan campos mínimos ['piezas']" in texto and "`afirmacion`" in texto
+    assert "`fecha_corte` de CT-09" in texto and "esquemas_respuestas.json" in texto

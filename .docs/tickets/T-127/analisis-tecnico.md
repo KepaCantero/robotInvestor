@@ -172,3 +172,66 @@ revisor». Antes de T-127: `r02_01` 0/5, `r02_02` 11/12, `r01_02` 8/11 (A2, A2b,
   - `.venv/bin/python -I .docs/tickets/T-127/revisores/r01_01_frontera_otras_vias.py bloque_a/11_Ejecutor`
   - `git show fb3ccd4:bloque_a/11_Ejecutor/bloque_a/motor/fichas_p2.py > <scratchpad>/antes/fichas_p2.py` y
     `.venv/bin/python .docs/tickets/T-127/revisores/impl_r02_mutantes.py bloque_a/11_Ejecutor <scratchpad>/t127r02_mut --antes <scratchpad>/antes/fichas_p2.py`
+
+## Ronda r03 (QA r02: H-04 alta, H-05 baja)
+
+Hecha junto con la ronda r02 de T-128 (la misma raíz: T-128 H-01). Copia `t127r03` (base `f7faa1b`).
+
+### De dónde salen los componentes (lo que decide H-04)
+
+- `Motor.servir` lo llaman en el ejecutor solo `orquestacion.py` (`senales_clase`: ACC-MOM-001, FX-VOL-001, FX-TREND-001,
+  RISK-DD-001, ST-DESC-001 y FIN-CAGR-001 con `{"serie": símbolo}` de HT-01; y ML-CLUS-001 con series de las opciones) y
+  `evaluador.py` (FC-EVAL-001 con los pronósticos del sistema, `valores` que construye el código). `grep -rn "servir(" bloque_a`.
+- Ninguna de las fichas con componentes (FIR-CRED, REI-LEV, CHR-TOKEN, REI-NAV, REI-FFO, IDX-REB, FON-DISC, FON-TD,
+  CHR-FLOW, IDX-CONC) se pide hoy desde el ciclo: no hay código que construya sus `valores`. Por diseño las pide un agente
+  analista por CT-09 (Marco común de los Analistas, «Puedes solicitar… cálculos reproducibles al Motor (CT-09)»; prompt del
+  Motor, paso 0 y «HT-01 caído: solo calculas con datos en línea aportados»): los `valores` los escribe quien pide.
+- `Motor._resolver_datos` acepta `{"serie": …}` (HT-01) o `{"valores": …}` en línea, que guarda tal cual en el artefacto
+  (`datos[].valor`, con su huella, para CT-10). HT-01 (`herramientas/ht01_datos.ProveedorDatos`) solo da cierres por
+  símbolo (`cierres`, `valor_en`, `huella`): no hay balances, deudas, ofertas de tokens, NAV ni flujos contra los que
+  verificar un componente.
+- **Decisión** (por defecto, `[PROPUESTO]`, INC-T127-01 «Ronda r03»): (a) verificar contra una fuente que el solicitante
+  no controle **no existe** ni es barato (habría que crear un servicio de fundamentales); comprobar que el `id` es un símbolo
+  del universo no verifica las cifras. Se toma (b): el límite se declara con su alcance (amenaza: un solicitante que fabrica
+  los componentes; lo que sí cubren las reglas: fugas por descuido con uno o pocos componentes, casi clones, copias a
+  escala, dominancia de peso y de aportación) y va como pregunta para T-57; y (c): un aviso barato en las limitaciones (que
+  va al RC) cuando dos componentes solo difieren en un dato.
+
+### Implementación
+
+- `bloque_a/11_Ejecutor/bloque_a/motor/frontera_b.py`:
+  - docstring del módulo: el límite declarado.
+  - `AVISO_B = {"datos_distintos_aviso": 1}` con su motivo (número nuevo, `[PROPUESTO]`; fuera de `FRONTERA_B` para no
+    cambiar los `UMBRALES` de las fichas ni las pruebas que fijan `FRONTERA_B`; la petición no lo alcanza).
+  - `_datos_que_coinciden(firmas, tol)`: matriz de cuántos datos coinciden en cada par (la comparación de
+    `_etiquetas_casi_iguales`, sacada para compartirla; `_etiquetas_casi_iguales` pasa a ser «coinciden todos»).
+  - `_aviso_casi_clones(firmas, tol, lim)` (H-04): cuenta los componentes que coinciden con otro en todos los datos menos
+    `datos_distintos_aviso` y, si hay, añade «aviso (1.6): N componentes coinciden con otro en todos los datos del cálculo
+    menos 1 (a menos del 1%): pueden ser un mismo emisor con un dato movido, y el agregado, su cifra; la petición queda en
+    el Registro de cálculos con sus datos». No rechaza ni cita identificadores.
+  - `_aportacion_maxima` (H-05): además de la parte de Σ|num| (r02), 1 − |Σnum − num_G| / |Σnum| con num_G la suma con
+    signo del vecindario de la misma cifra; devuelve la mayor. Si Σnum = 0, la de la r02 (y el agregado nulo a la tolerancia
+    de la ficha sigue dando 0).
+- `motor/fichas_p2.py`: `_aviso_casi_clones` tras `_sin_clones` en FIR-CRED-001, REI-LEV-001 y CHR-TOKEN-001 (con sus firmas
+  de datos de siempre).
+- `motor/fichas_reales.py`: el aviso en REI-NAV-001 con la firma (precio, acciones, NAV por acción, deuda neta, otros
+  pasivos, cap rate); el GAV no entra porque lo fija la identidad NAV = GAV − deuda neta − otros pasivos (la vía del
+  revisor mueve el NAV por acción y el GAV con él). CHR-FLOW-001 e IDX-CONC-001: ver T-128 r02.
+- Pruebas: `tests/test_t127_r03.py` (nuevo). Ninguna prueba existente cambia.
+- Desviaciones: no se elige la opción (b) de la QA (identificadores verificables): no hay fuente. El aviso no se aplica en
+  REI-FFO-001 (sus datos por ejercicio derivan unos de otros: mover el beneficio neto mueve el FFO y el AFFO) ni en IDX-REB-001
+  (dos datos por valor): declarado.
+
+### Límites conocidos
+
+- El troceo con repartos distintos (y la perturbación de dos datos o más) no da aviso: es el límite declarado.
+- El aviso puede salir con dos componentes reales que coinciden en todos los datos menos uno (no se espera, por lo mismo
+  que los casi clones); no cambia ninguna cifra.
+- La cota de H-05 es para la estimación «agregado × Σden / peso del grupo»; quien inventó los rellenos y conoce sus cifras
+  las resta (límite de la r02, sigue).
+
+### Comandos (desde la raíz de la copia)
+
+- `cd bloque_a/11_Ejecutor && /home/user/robotinvestor/.venv/bin/python -m pytest -q tests/test_t127_r03.py tests/test_t128_r02.py tests/test_t127_r02.py tests/test_t127_hallazgos.py tests/test_t128_frontera.py tests/test_t119_p2.py tests/test_fase2_reales.py tests/test_fase1_mon_idx.py`
+- `/home/user/robotinvestor/.venv/bin/python -I .docs/tickets/T-127/revisores/r02_01_troceo_y_simetria.py bloque_a/11_Ejecutor`
+- `/home/user/robotinvestor/.venv/bin/python .docs/tickets/T-127/revisores/impl_r03_mutantes.py bloque_a/11_Ejecutor <scratchpad>/t127r03_mut --base f7faa1b`

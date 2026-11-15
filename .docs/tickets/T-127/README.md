@@ -2,7 +2,7 @@
 
 | Campo | Valor |
 | --- | --- |
-| Estado | EN QA · ronda r02 |
+| Estado | EN QA · ronda r03 |
 | Pieza | bloque_a (11_Ejecutor, motor) |
 | Planifica · implementa · QA | Claude · Claude · un revisor nuevo (otro agente o un subagente sin contexto de la implementación) |
 | Aprobación del operador | no necesaria (corrección de hallazgos de QA); las decisiones van `[PROPUESTO]` (el operador pidió que el agente decida por defecto y lo deje apuntado) |
@@ -81,6 +81,18 @@ FON-DISC-001 (T-121 H-09).
    diferencias por zona horaria; mutantes de `revisores/impl_mutantes.py` muertos; suites del Motor y vecinas en verde;
    ruff ≤ 2902 y mypy A ≤ 109.
 
+### Ronda r03 (QA r02: H-04 alta, H-05 baja)
+
+10. CA-10 (H-04): decidido y apuntado `[PROPUESTO]` en INC-T127-01 «Ronda r03» y en §5 de las decisiones del operador, con
+    la pregunta para T-57: de dónde salen los componentes (los aporta quien pide; HT-01 solo da precios), el límite con su
+    alcance y el aviso de `frontera_b._aviso_casi_clones`; una prueba fija el límite (S1 troceado se sirve y queda en el
+    Registro con sus partes) y otra el aviso (C11 con σ_E·(1 ± δ)).
+11. CA-11 (H-05): S1 con dos rellenos de deuda neta +400 y −400 se rechaza; la frase de INC-T127-01 dice la cota que se
+    cumple, (1 − k)/(2 − k), y una prueba la barre con rellenos de los dos signos.
+12. CA-12: `r02_01_troceo_y_simetria.py` con la vía «C» en «ok» y cada FALLA restante explicada en `pruebas.md` como límite
+    declarado; casos de control 67/67; mutantes de `revisores/impl_r03_mutantes.py` muertos; suites del Motor y vecinas en
+    verde; ruff ≤ 2902 y mypy A ≤ 109.
+
 ## Plan de pruebas
 
 | Prueba | Tipo | Criterio |
@@ -94,6 +106,7 @@ FON-DISC-001 (T-121 H-09).
 | `test_h07_una_clave_nueva_de_por_defecto_que_la_ficha_no_lee_no_ablanda_el_error` (A2, A2b, A5), `test_h07_convencion_distinta_si_la_ruta_leida_salio_del_fichero_y_este_cambio`, `test_h07_la_configuracion_leida_apunta_solo_lo_que_sale_del_fichero` | regresión | CA-7 |
 | `test_h08_un_solo_criterio_de_dia_en_los_cuatro_modulos`, `test_h08_mismo_veredicto_en_mon_tcv_y_fon`, `test_h08_tcv_rechaza_un_texto_con_basura_tras_la_fecha_y_fon_admite_zonas_mezcladas`, `test_h09_fon_disc_un_nav_del_ultimo_dia_con_hora_se_sirve` | regresión, límite | CA-8 |
 | Scripts del revisor, `revisores/impl_mutantes.py`, suites y cuotas | integración | CA-9 |
+| `tests/test_t127_r03.py` (H-04: aviso y límite declarado; H-05: con signo y la cota) y `revisores/impl_r03_mutantes.py` | regresión, límite | CA-10 a CA-12 |
 
 ## Scripts
 
@@ -112,3 +125,6 @@ FON-DISC-001 (T-121 H-09).
 - 2026-11-15 · NO APTO · revisor nuevo (QA r01) · H-01 (alta, copias a escala), H-02 (media, rellenos de cifra nula), H-03 (baja, declarado)
 - 2026-11-15 · EN CURSO · ronda r02 · Claude · H-01: las copias se comparan por sus cifras individuales (sin escala) y cuentan como un componente; H-02: dominancia también de la aportación a cada cifra agregada; H-03: declarado (INC-T127-01, «Ronda r02»)
 - 2026-11-15 · EN QA · ronda r02 · Claude · `tests/test_t127_r02.py` (24), script del revisor 7/7, mutantes de la r02 31 de 32 (el vivo, equivalente), suites del Motor y vecinas en verde, ruff 2902 y mypy A 109; las funciones de la frontera pasan a `motor/frontera_b.py` (T-128); falta `./tools/check_all.sh` en el commit y la QA r02
+- 2026-11-15 · NO APTO · revisor nuevo (QA r02) · H-04 (alta, un emisor troceado o con perturbaciones simétricas da su cifra), H-05 (baja, la frase del «error de al menos un 5 %»)
+- 2026-11-15 · EN CURSO · ronda r03 · Claude · H-04: los componentes los aporta quien pide (HT-01 solo da precios): límite declarado con su alcance, aviso cuando dos componentes solo difieren en un dato y pregunta para T-57; H-05: aportación también con signo y frase corregida (INC-T127-01, «Ronda r03»); junto con la r02 de T-128
+- 2026-11-15 · EN QA · ronda r03 · Claude · `tests/test_t127_r03.py` (12) y `tests/test_t128_r02.py` (17), mutantes de la r03 29 de 29, casos de control 67/67, scripts del revisor explicados uno a uno en `pruebas.md`, suites del Motor y vecinas en verde, ruff 2902 y mypy A 109; falta `./tools/check_all.sh` en el commit y la QA r03

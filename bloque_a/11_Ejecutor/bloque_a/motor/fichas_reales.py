@@ -40,7 +40,9 @@ from scipy import linalg, optimize
 from ..configuracion import parametro
 from .frontera_b import (
     FRONTERA_B,
+    _aviso_casi_clones,
     _concentradas,
+    _etiquetas_casi_iguales,
     _limitacion_concentradas,
     _limitacion_orden,
     _orden,
@@ -136,9 +138,14 @@ UMBRALES: dict[str, dict[str, Any]] = {
                        "frecuencias_admitidas": ("mensual", "trimestral", "anual")},
     # CHR-FLOW-001 · «Entradas mínimas»: ≥ 120 días. «Método»: crecimiento de stablecoins a 30 días. z-score con ≥ 2
     # observaciones (desviación muestral, ST-DESC-001).
+    # T-128 r02 (QA r01, H-02; 1.6): la oferta de stablecoins, de al menos 2 monedas distintas por su crecimiento (con
+    # una, la oferta y el crecimiento son los de esa moneda; el mínimo de un sector de CHR-TOKEN-001) y sin una de más del
+    # 95 % de la oferta (si no, rechazo); el crecimiento, sin una que aporte más del 95 % (si no, `null`), con los números
+    # de `FRONTERA_B` [PROPUESTO INC-T128-01].
     "CHR-FLOW-001": {"dias_minimos": 120, "dias_crecimiento_stablecoins": 30,
                      # cotas (H-01) [PROPUESTO]: ventanas hasta el final de H2 en sesiones; ventana_z hasta el de H5
-                     "ventana_sesiones_maxima": SEMANAS_H2_MAX * SESIONES_SEMANA, "ventana_z_anios_maxima": ANIOS_H5_MAX},
+                     "ventana_sesiones_maxima": SEMANAS_H2_MAX * SESIONES_SEMANA, "ventana_z_anios_maxima": ANIOS_H5_MAX,
+                     "monedas_estables_minimas": 2, **FRONTERA_B},
     # CHR-FUND-001 · «Aclaración y rechazo»: < 2 plataformas. «Entradas mínimas»: ≥ 90 días (≥ 1 año = 365 días para
     # percentiles). Ponderaciones: interés abierto (ficha) o igual [PROPUESTO]. Coherencia base–financiación con ≥ 5
     # observaciones para la correlación (ST-DESC-001).
@@ -590,6 +597,10 @@ def f_rei_nav(ent: dict[str, Any], params: dict[str, Any]) -> Resultado:
     _sin_dominio({"capitalizacion": capit, "nav": [f["nav"] for f in filas]}, f"{F}: componentes",
                  u["peso_maximo_componente"], grupos)
     _rechazo_concentradas(_concentradas({"la prima agregada": (capit * primas, capit)}, u, tol), f"{F}: componentes", u)
+    # T-128 r02 (QA r01, H-01; INC-T127-01 r03): aviso si dos sociedades solo difieren en un dato (p. ej. el NAV por acción
+    # movido ±δ); el GAV no entra porque lo fija la identidad NAV = GAV − deuda neta − otros pasivos
+    _aviso_casi_clones([(f["precio"], f["acciones"], f["nav_acc"], f["deuda"], f["otros"], f["cap"]) for f in filas],
+                       u["tolerancia_clon"], lim)
     prima_agg = float(np.sum(w * primas))                              # agregado ponderado por capitalización
     dispersion: float | None = None
     if distintos >= u["componentes_minimos_dispersion"]:
@@ -1258,9 +1269,11 @@ def f_chr_flow(ent: dict[str, Any], params: dict[str, Any]) -> Resultado:
         raise ErrorFicha(f"{F}: flujos de ETF con < {u['dias_minimos']} días (entradas mínimas)")
     ofertas = _dict(v.get("oferta_stablecoins"), f"{F}: «oferta_stablecoins»")
     so: pd.Series | None = None
+    por_moneda: list[pd.Series] = []
     for nombre in sorted(ofertas, key=str):
         s = _tabla(ofertas[nombre], {"oferta": (0, True)}, f"{F}: oferta_stablecoins[{nombre}]")["oferta"]
         _hasta_corte(s.index, corte, f"{F}: oferta_stablecoins[{nombre}]")
+        por_moneda.append(s)
         so = s if so is None else so.loc[so.index.intersection(s.index)] + s.loc[so.index.intersection(s.index)]
     if so is None or so.size < 2 or _anios(so.index) * DIAS_ANIO < u["dias_minimos"]:
         raise ErrorFicha(f"{F}: oferta de stablecoins con < {u['dias_minimos']} días comunes (entradas mínimas)")
@@ -1290,7 +1303,24 @@ def f_chr_flow(ent: dict[str, Any], params: dict[str, Any]) -> Resultado:
     previos = so[so.index <= T - pd.Timedelta(days=u["dias_crecimiento_stablecoins"])]
     if previos.empty:
         raise ErrorFicha(f"{F}: sin oferta de stablecoins {u['dias_crecimiento_stablecoins']} días antes de {T.date()}")
-    crecimiento = float(so.iloc[-1] / previos.iloc[-1] - 1)
+    crecimiento: float | None = float(so.iloc[-1] / previos.iloc[-1] - 1)
+    # T-128 r02 (QA r01, H-02; 1.6): con una moneda estable (o varias con su mismo crecimiento, copias a escala) o con una
+    # (o un grupo de copias) de más del 95 % de la oferta, la oferta, el crecimiento y la razón serían los de esa moneda: se
+    # rechaza, como un sector de un token en CHR-TOKEN-001 (la oferta es una entrada obligatoria). Si el crecimiento lo
+    # aporta casi entero una (o varias con su mismo crecimiento), solo el crecimiento va a `null`, con su limitación
+    o_T = np.array([float(s.loc[T]) for s in por_moneda])
+    o_b = np.array([float(s.loc[previos.index[-1]]) for s in por_moneda])
+    grupos = _etiquetas_casi_iguales([(float(x),) for x in o_T / o_b - 1], u["tolerancia_clon"])
+    distintas = len(set(grupos.tolist()))
+    if distintas < u["monedas_estables_minimas"]:
+        raise ErrorFicha(f"{F}: rechazo: {distintas} moneda(s) estable(s) distinta(s) por su crecimiento (< "
+                         f"{u['monedas_estables_minimas']}): la oferta y el crecimiento serían los de una moneda (1.6)")
+    _sin_dominio({"oferta de stablecoins": o_T, "oferta de stablecoins de la base del crecimiento": o_b},
+                 f"{F}: oferta_stablecoins", u["peso_maximo_componente"], grupos)
+    conc = _concentradas({"el crecimiento de las stablecoins": (o_T - o_b, o_b)}, u, FICHAS[F]["tol"])
+    _limitacion_concentradas(conc, u, lim)
+    if conc:
+        crecimiento = None
     razon: float | None = None
     if v.get("capitalizacion_total") is None:
         lim.append("sin capitalización total: razón stablecoins/capitalización no calculada")
@@ -1306,7 +1336,7 @@ def f_chr_flow(ent: dict[str, Any], params: dict[str, Any]) -> Resultado:
             _fecha(f["fecha_publicacion"], "fecha_publicacion") for f in filas).date().isoformat(),
         "flujos": ventanas, "ventana_z_anios": p["ventana_z"],
         "fecha_stablecoins": T.date().isoformat(), "oferta_stablecoins": float(so.iloc[-1]),
-        "crecimiento_stablecoins_pct": crecimiento * PCT,
+        "crecimiento_stablecoins_pct": None if crecimiento is None else crecimiento * PCT,
         "fecha_base_crecimiento": previos.index[-1].date().isoformat(),
         "razon_stablecoins_capitalizacion_pct": razon,
         "referencia_ingenua": {"tipo": "flujo nulo y RI-PA", "flujo_nulo": 0.0, "paseo_aleatorio_flujo": float(fl[-1])},

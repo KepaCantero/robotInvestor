@@ -2,7 +2,7 @@
 
 | Campo | Valor |
 | --- | --- |
-| Estado | EN QA |
+| Estado | CERRADO |
 | Pieza | bloque_a (11_Ejecutor: `config/precios_anthropic.yaml`, pruebas; `.docs/scripts/estimar_coste_ciclo_a.py`). No cambia código de producción |
 | Planifica · implementa · QA | claude · claude · un revisor nuevo sin contexto |
 | Aprobación del operador | 2026-11-15: «me parece genial» (punto 6 de la lista de tareas de la noche) |
@@ -38,3 +38,4 @@ No incluye lo que lee cada búsqueda (se cobra como entrada), reintentos ni repa
 
 - 2026-11-15 · ABIERTO · creado con nuevo_ticket.sh
 - 2026-11-15 · EN QA · claude · implementado; decisiones en INC-T129-01
+- 2026-11-15 · CERRADO · QA r01 APTO (revisor nuevo sin contexto); hallazgos (H-01 media: la cota superior no es una cota; H-02 y H-03 bajas) en T-133

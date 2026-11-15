@@ -116,3 +116,68 @@ cuatro que pasan no son regresiones (la propia red, H-03 declarado, las reglas f
 | --- | --- | --- |
 | ruff desde la raíz (`ruff check --output-format=concise bloque_a/11_Ejecutor bloque_a_forex/11_Ejecutor bloque_b/11_Ejecutor \| wc -l`) | 2902 | **2902** |
 | mypy A como el gate (`cd bloque_a/11_Ejecutor && mypy bloque_a --ignore-missing-imports --no-error-summary \| wc -l`) | 109 | **109** |
+
+## Ronda r03 (QA r02: H-04, H-05)
+
+Copia `t127r03` (base `f7faa1b`), hecha junto con la ronda r02 de T-128 (las cuentas de suites incluyen las dos), con el
+intérprete del repositorio (`/home/user/robotinvestor/.venv/bin/python`). Por instrucción no se lanza `./tools/check_all.sh`
+ni la suite completa de A.
+
+| Suite | Antes (`f7faa1b`) | Después |
+| --- | --- | --- |
+| Motor y vecinas: `tests/test_fase1_*`, `test_fase2_*`, `test_fase3_goldens.py` | 2747 recogidas (en verde en la r02) | **2751 passed** (4 min): +4 de la prueba parametrizada por cada clave de `UMBRALES` de `test_fase2_reales.py` (CHR-FLOW-001 gana las tres de `FRONTERA_B` y `monedas_estables_minimas`) |
+| `tests/test_t106_*`, `test_t11*`, `test_t12*` | 2165 recogidas | **2194 passed** (5 min): +12 `test_t127_r03.py`, +17 `test_t128_r02.py` |
+| `python tests/goldens_ct.py` | coinciden | **coinciden** |
+| `verificar_casos_control` (las 67) | 67/67 | **67/67** (`r01_04_casos_control.py` de T-121 y `r01_01` de T-127) |
+
+### Criterio → prueba (`tests/test_t127_r03.py`, 12)
+
+| Hallazgo | Pruebas |
+| --- | --- |
+| H-05 (con signo) | `test_h05_rellenos_que_se_compensan_se_rechazan` (la vía «C» del revisor, también por el Motor, sin identificadores), `test_h05_la_aportacion_con_signo` (compensación exacta y casi exacta a los dos lados del 95 %, mismo signo = la medida de la r02, vecindario con signo, agregado nulo), `test_h05_por_debajo_de_k_el_error_es_de_al_menos_la_cota` (4000 casos aleatorios con semilla, rellenos de los dos signos: la frase corregida de INC-T127-01) |
+| H-04 (aviso) | `test_h04_un_dato_perturbado_de_forma_simetrica_se_sirve_con_aviso` (la vía «S» de FIR-CRED: el texto del aviso, en la respuesta y en la entrada del RC con los datos), `test_h04_dos_datos_movidos_no_dan_aviso` (límite del aviso), `test_h04_aviso_en_rei_lev_y_chr_token` (caja, emisión y quema; con otro dato más, sin aviso), `test_h04_los_casos_de_control_no_dan_aviso`, `test_h04_el_aviso_cuenta_los_datos_que_coinciden` (la matriz, el borde del 1 %, `None`, los grupos de casi clones sin cambios, `AVISO_B`) |
+| H-04 (límite declarado) | `test_h04_limite_declarado_un_emisor_troceado_se_sirve_y_queda_en_el_registro` (S1 en 3 partes da el LTV y el ICR de S1, sin aviso, y el RC guarda las tres partes), `test_h04_limite_declarado_perturbacion_simetrica_da_la_dd_a_menos_del_uno_por_ciento` |
+
+Ninguna prueba existente cambia.
+
+### Scripts del revisor, uno a uno
+
+| Script y vía | Antes | Después | Lectura |
+| --- | --- | --- | --- |
+| `r02_01_troceo_y_simetria.py` (total) | **1/7** | **2/7** | Las cinco FALLA que quedan son el límite declarado de H-04 (INC-T127-01 «Ronda r03»): el script comprueba «la entrega no es la cifra del emisor», y con componentes construidos a propósito lo es |
+| · REI-LEV-001 T3 (S1 en 3 partes) | FALLA | FALLA: **límite declarado** | Repartos distintos de cada importe: ni casi clones, ni copias a escala, ni dominancia, ni aviso (las partes difieren en todos los datos). Fijado en `test_h04_limite_declarado_un_emisor_troceado_se_sirve_y_queda_en_el_registro`; el RC guarda las partes |
+| · REI-LEV-001 C (compensación +400/−400) | FALLA | **ok** (rechazo: «más del 95% de el LTV, la deuda neta/EBITDA lo aporta un componente») | H-05 corregido: aportación con signo |
+| · CHR-TOKEN-001 (TKA solo, control) | ok | ok | — |
+| · CHR-TOKEN-001 T2 (TKA en 2) | FALLA | FALLA: **límite declarado** | Las partes comparten precio y *staking* pero difieren en las cinco ofertas, la emisión y la quema: sin aviso. Que TKA solo se rechace y troceado no, es el mismo límite (la regla de la «propia red» la esquiva quien inventa un segundo token) |
+| · REI-NAV-001 S2 (A con NAV por acción ±4 %) | FALLA | FALLA: **límite declarado, con aviso** | Se sirve con «aviso (1.6): 2 componentes coinciden con otro en todos los datos del cálculo menos 1…» (`test_h01_rei_nav_simetrica_se_sirve_con_aviso_y_es_el_limite_declarado` de T-128 r02) |
+| · REI-FFO-001 T2 (X en 2) | FALLA | FALLA: **límite declarado** | Troceo con repartos distintos; sin aviso (declarado) |
+| · FIR-CRED-001 S10 (C11 con σ_E·(1 ± δ)) | FALLA | FALLA: **límite declarado, con aviso** | Se sirve con el aviso de 10 componentes; la DD queda a menos del 1 % de C11 (`test_h04_limite_declarado_perturbacion_simetrica_…`). Moviendo también la capitalización no hay aviso (`test_h04_dos_datos_movidos_no_dan_aviso`) |
+| `r01_01_frontera_otras_vias.py` (r01 de T-127) | 7/7 | **7/7** | Casos de control 67/67 |
+| T-119 `r02_01_frontera_b.py` | FIR-CRED 1/1 y parada en la línea 71 | igual | La dispersión con 3 es `null` (lo esperado desde la r01 de T-127) |
+| T-119 `r01_08_frontera_b.py` | parada en la línea 83 (`KeyError: 'limitaciones'`) | igual | Un solo token sin red de `redes_propias` se rechaza desde la r01 de T-127 y el script lee las limitaciones de un servido; comprobado también en la base `f7faa1b` |
+| T-119 `r02_02_cache.py` | 12/12 | **12/12** | — |
+| T-121 `r01_02_h01_ct10.py` | 11/11 | **11/11** | — |
+| T-121 `r01_04_casos_control.py` | 67/67 | **67/67** | 80 manejadores |
+| T-128 `r01_01_barrido_un_componente.py` y `r01_02_troceo_y_una_moneda.py` | ver `pruebas.md` de T-128 | ver `pruebas.md` de T-128 | — |
+
+### Mutantes y regresiones
+
+`revisores/impl_r03_mutantes.py` (copia desechable `t127r03_mut` en el scratchpad, borrada al acabar; pruebas:
+`test_t127_r03.py`, `test_t128_r02.py`, `test_t127_r02.py`, `test_t128_frontera.py`, `test_fase1_mon_idx.py`):
+**29 mutantes, 29 muertos** (V: el aviso; S: la medida con signo; F: CHR-FLOW-001; C: IDX-CONC-001; K02t, K03t y A01t: los de la r02 cuyo texto cambió). En la primera pasada vivían S04 (la medida con signo sin el vecindario de la misma cifra) y F05 (la base del
+crecimiento de CHR-FLOW en otra fecha); se añadieron los casos a `test_h05_la_aportacion_con_signo` ([5, 5, 7, −7]) y
+`test_h02_el_crecimiento_se_mide_desde_su_base`, y mueren.
+
+Regresión: con los cuatro módulos de `f7faa1b` (`--base f7faa1b`), `test_t127_r03.py` y `test_t128_r02.py` dan
+**19 failed, 10 passed**; las diez que pasan no son regresiones (el límite declarado, que ya se servía; los
+casos de control y los umbrales, que no cambian de comportamiento; la contribución de IDX-CONC con 3 componentes; los dos
+datos movidos sin aviso).
+
+`impl_r02_mutantes.py` (de la r02, sobre el código de la r03): **41 mutantes, 36 muertos**; vive E11, el equivalente de la r02, y cuatro no se aplican porque su texto cambió en la r03: E12, K02r y K03r (la comparación de datos, ahora en `_datos_que_coinciden`; adaptados como V11, K02t y K03t) y A01 (el vecindario de la aportación; adaptado como A01t), los cuatro muertos en `impl_r03_mutantes.py`.
+
+### Cuotas
+
+| Cuota | Antes | Después |
+| --- | --- | --- |
+| ruff desde la raíz (`ruff check --output-format=concise bloque_a/11_Ejecutor bloque_a_forex/11_Ejecutor bloque_b/11_Ejecutor \| wc -l`) | 2902 | **2902** |
+| mypy A como el gate (`cd bloque_a/11_Ejecutor && mypy bloque_a --ignore-missing-imports --no-error-summary \| wc -l`) | 109 | **109** |
