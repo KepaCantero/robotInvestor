@@ -1,0 +1,34 @@
+# Requirements Document: app/shared/protocols/__init__.py
+
+## 1. Module Overview
+File: __init__.py
+Domain: Shared
+
+## 2. Dependencies
+- `app.shared.protocols.i_alert_processor`
+- `app.shared.protocols.i_broker_adapter`
+- `app.shared.protocols.i_data_feed`
+- `app.shared.protocols.i_kill_switch_monitor`
+- `app.shared.protocols.i_post_trade_analyzer`
+- `app.shared.protocols.i_pre_trade_validator`
+- `app.shared.protocols.i_spain_tax_engine`
+- `app.shared.protocols.i_strategy_cycle_runner`
+- `app.shared.protocols.i_trade_executor`
+- `app.shared.protocols.i_trading_decision_logger`
+
+## 3. Core Components
+### Module Initialization
+- Package/module initialization file
+
+## 4. Applicable Trading Rules
+
+#### R15
+Complete Logging (log all decisions, trade journal format)
+
+- [ ] Implementation verified
+- [ ] Tests pass
+
+---
+Universal rules (SOLID, type hints, formatting, security, logging) live in
+.requirements/BASE_RULES.md and apply to every file.
+Resync this stub with: python scripts/generate_requirements.py

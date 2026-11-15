@@ -1,0 +1,58 @@
+# Requirements Document: app/services/portfolio_config_manager.py
+
+## 1. Module Overview
+File: portfolio_config_manager.py
+Domain: Service
+
+## 2. Dependencies
+- `__future__`
+- `app.services.multi_strategy_allocation`
+- `decimal`
+- `logging`
+- `pathlib`
+- `typing`
+- `yaml`
+
+## 3. Core Components
+### Classes
+- `SectorFilter`
+- `PortfolioConfigManager`
+### Public Functions
+- `get_portfolio_config_manager()`
+- `symbol_belongs_to_sector()`
+- `filter_symbols_by_sector()`
+- `load_config()`
+- `get_strategy_sectors()`
+- `get_strategy_market_types()`
+- `get_strategy_symbols()`
+- `should_filter_symbol()`
+- `get_allocation_manager()`
+- `get_rebalancing_config()`
+- `get_reporting_config()`
+- `update_total_capital()`
+- `get_enabled_strategies()`
+
+## 4. Applicable Trading Rules
+
+#### R1
+Kelly Criterion + Max Position Size (max 5% per position)
+
+- [ ] Implementation verified
+- [ ] Tests pass
+
+#### R3
+Correlation & Concentration Limits (max 20% per sector)
+
+- [ ] Implementation verified
+- [ ] Tests pass
+
+#### R11
+Dynamic Trailing Stop (ATR-based, never loosen)
+
+- [ ] Implementation verified
+- [ ] Tests pass
+
+---
+Universal rules (SOLID, type hints, formatting, security, logging) live in
+.requirements/BASE_RULES.md and apply to every file.
+Resync this stub with: python scripts/generate_requirements.py

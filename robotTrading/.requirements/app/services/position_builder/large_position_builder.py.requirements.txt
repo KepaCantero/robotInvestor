@@ -1,0 +1,51 @@
+# Requirements Document: app/services/position_builder/large_position_builder.py
+
+## 1. Module Overview
+File: large_position_builder.py
+Domain: Service
+
+## 2. Dependencies
+- `__future__`
+- `app.services.smart_order_routing.models`
+- `datetime`
+- `decimal`
+- `logging`
+- `typing`
+
+## 3. Core Components
+### Classes
+- `IntraDayExecutionScheduler`
+- `LargePositionBuilder`
+### Public Functions
+- `get_large_position_builder()`
+- `find_good_windows()`
+- `time_window_to_datetime()`
+- `is_in_volatile_period()`
+- `build_position()`
+- `calculate_position_impact()`
+- `estimate_build_duration()`
+
+## 4. Applicable Trading Rules
+
+#### R1
+Kelly Criterion + Max Position Size (max 5% per position)
+
+- [ ] Implementation verified
+- [ ] Tests pass
+
+#### R3
+Correlation & Concentration Limits (max 20% per sector)
+
+- [ ] Implementation verified
+- [ ] Tests pass
+
+#### R11
+Dynamic Trailing Stop (ATR-based, never loosen)
+
+- [ ] Implementation verified
+- [ ] Tests pass
+
+---
+Universal rules (SOLID, type hints, formatting, security, logging) live in
+.requirements/BASE_RULES.md and apply to every file.
+Resync this stub with: python scripts/generate_requirements.py

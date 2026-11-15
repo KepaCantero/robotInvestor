@@ -1,0 +1,54 @@
+# Requirements Document: app/services/profile_driven_trading/workflow_manager.py
+
+## 1. Module Overview
+File: workflow_manager.py
+Domain: Service
+
+## 2. Dependencies
+- `__future__`
+- `asyncio`
+- `datetime`
+- `logging`
+- `models`
+- `typing`
+
+## 3. Core Components
+### Classes
+- `PipelineResult`
+- `WorkflowManager`
+### Public Functions
+- `get_stage_by_type()`
+- `execute_stage()`
+- `execute_pipeline()`
+- `execute_parallel_stages()`
+- `get_current_state()`
+- `reset_state()`
+- `get_execution_statistics()`
+- `create_rollback_checkpoint()`
+- `rollback_to_checkpoint()`
+- `bounded_execute()`
+
+## 4. Applicable Trading Rules
+
+#### R8
+Bid-Ask Spread Management (avoid market orders for low-liquidity)
+
+- [ ] Implementation verified
+- [ ] Tests pass
+
+#### R9
+Execution Timing (avoid first/last 15 min, VWAP/TWAP for large orders)
+
+- [ ] Implementation verified
+- [ ] Tests pass
+
+#### R10
+Slippage Monitor (track actual vs expected fill, alert if >0.5%)
+
+- [ ] Implementation verified
+- [ ] Tests pass
+
+---
+Universal rules (SOLID, type hints, formatting, security, logging) live in
+.requirements/BASE_RULES.md and apply to every file.
+Resync this stub with: python scripts/generate_requirements.py

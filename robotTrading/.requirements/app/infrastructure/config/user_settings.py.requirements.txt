@@ -1,0 +1,43 @@
+# Requirements Document: app/infrastructure/config/user_settings.py
+
+## 1. Module Overview
+File: user_settings.py
+Domain: Infrastructure
+
+## 2. Dependencies
+- `__future__`
+- `decimal`
+- `enum`
+- `logging`
+- `pydantic`
+
+## 3. Core Components
+### Classes
+- `BrokerType`
+- `OrderTypePreference`
+- `TradingProfile`
+- `NotificationSettings`
+- `BrokerSettings`
+- `OrderPreferences`
+- `TradingHours`
+- `RiskLimits`
+- `SymbolUniverse`
+- `UserSettings`
+### Public Functions
+- `validate_log_level()`
+- `get_allowed_symbols()`
+- `is_symbol_allowed()`
+- `is_paper_trading()`
+
+## 4. Applicable Trading Rules
+
+#### R15
+Complete Logging (log all decisions, trade journal format)
+
+- [ ] Implementation verified
+- [ ] Tests pass
+
+---
+Universal rules (SOLID, type hints, formatting, security, logging) live in
+.requirements/BASE_RULES.md and apply to every file.
+Resync this stub with: python scripts/generate_requirements.py

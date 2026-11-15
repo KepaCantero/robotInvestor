@@ -1,0 +1,39 @@
+# Requirements Document: app/domain/strategies/fx_intermarket/correlation_analyzer.py
+
+## 1. Module Overview
+File: correlation_analyzer.py
+Domain: Domain
+
+## 2. Dependencies
+- `__future__`
+- `app.domain.strategies.fx_intermarket.models`
+- `decimal`
+- `logging`
+- `numpy`
+- `pandas`
+- `scipy`
+
+## 3. Core Components
+### Classes
+- `CorrelationAnalyzer`
+### Public Functions
+- `calculate_correlation()`
+- `calculate_fx_pair_correlation()`
+- `calculate_intermarket_correlation()`
+- `detect_correlation_regime_change()`
+- `calculate_rolling_correlation()`
+- `identify_significant_relationships()`
+- `get_correlation_matrix()`
+
+## 4. Applicable Trading Rules
+
+#### R15
+Complete Logging (log all decisions, trade journal format)
+
+- [ ] Implementation verified
+- [ ] Tests pass
+
+---
+Universal rules (SOLID, type hints, formatting, security, logging) live in
+.requirements/BASE_RULES.md and apply to every file.
+Resync this stub with: python scripts/generate_requirements.py

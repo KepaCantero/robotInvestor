@@ -1,0 +1,48 @@
+# Requirements Document: app/domain/services/compliance/compliance_integration.py
+
+## 1. Module Overview
+File: compliance_integration.py
+Domain: Domain
+
+## 2. Dependencies
+- `__future__`
+- `app.core.compliance`
+- `app.engines.execution_engine.microstructure.order_book_analyzer`
+- `datetime`
+- `decimal`
+- `logging`
+- `pandas`
+- `pathlib`
+- `sys`
+- `typing`
+
+## 3. Core Components
+### Classes
+- `ComplianceIntegrationFacade`
+- `ComplianceIntegrationEngine`
+### Public Functions
+- `get_compliance_integration_engine()`
+- `quick_pre_trade_check()`
+- `get_execution_recommendation()`
+- `get_instance()`
+- `pre_trade_checker()`
+- `post_trade_checker()`
+- `portfolio_optimizer()`
+- `comprehensive_pre_trade_check()`
+- `comprehensive_post_trade_analysis()`
+- `optimize_portfolio_comprehensive()`
+- `track_slo_compliance()`
+- `get_system_availability()`
+
+## 4. Applicable Trading Rules
+
+#### R15
+Complete Logging (log all decisions, trade journal format)
+
+- [ ] Implementation verified
+- [ ] Tests pass
+
+---
+Universal rules (SOLID, type hints, formatting, security, logging) live in
+.requirements/BASE_RULES.md and apply to every file.
+Resync this stub with: python scripts/generate_requirements.py

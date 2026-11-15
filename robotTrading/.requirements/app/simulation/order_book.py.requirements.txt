@@ -1,0 +1,81 @@
+# Requirements Document: app/simulation/order_book.py
+
+## 1. Module Overview
+File: order_book.py
+Domain: Simulation
+
+## 2. Dependencies
+- `__future__`
+- `bisect`
+- `collections`
+- `dataclasses`
+- `datetime`
+- `decimal`
+- `enum`
+- `logging`
+- `numpy`
+- `uuid`
+
+## 3. Core Components
+### Classes
+- `OrderSide`
+- `OrderType`
+- `OrderStatus`
+- `Order`
+- `PriceLevel`
+- `Trade`
+- `OrderBookSnapshot`
+- `LimitOrderBook`
+### Public Functions
+- `create_limit_order_book()`
+- `remaining_quantity()`
+- `fill()`
+- `cancel()`
+- `is_buy()`
+- `is_sell()`
+- `is_active()`
+- `is_marketable()`
+- `add_order()`
+- `remove_order()`
+- `get_quantity()`
+- `get_order_count()`
+- `is_empty()`
+- `is_empty()`
+- `bids()`
+- `asks()`
+- `best_bid()`
+- `best_ask()`
+- `spread()`
+- `mid_price()`
+- `trades()`
+- `get_snapshot()`
+- `submit_order()`
+- `cancel_order()`
+- `get_order()`
+- `get_market_depth()`
+- `get_liquidity_metrics()`
+
+## 4. Applicable Trading Rules
+
+#### R8
+Bid-Ask Spread Management (avoid market orders for low-liquidity)
+
+- [ ] Implementation verified
+- [ ] Tests pass
+
+#### R9
+Execution Timing (avoid first/last 15 min, VWAP/TWAP for large orders)
+
+- [ ] Implementation verified
+- [ ] Tests pass
+
+#### R10
+Slippage Monitor (track actual vs expected fill, alert if >0.5%)
+
+- [ ] Implementation verified
+- [ ] Tests pass
+
+---
+Universal rules (SOLID, type hints, formatting, security, logging) live in
+.requirements/BASE_RULES.md and apply to every file.
+Resync this stub with: python scripts/generate_requirements.py

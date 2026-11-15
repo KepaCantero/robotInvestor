@@ -1,0 +1,60 @@
+# Requirements Document: app/services/live_trading/account_synchronizer.py
+
+## 1. Module Overview
+File: account_synchronizer.py
+Domain: Service
+
+## 2. Dependencies
+- `__future__`
+- `asyncio`
+- `broker_connector`
+- `collections`
+- `dataclasses`
+- `datetime`
+- `decimal`
+- `fastapi`
+- `logging`
+
+## 3. Core Components
+### Classes
+- `PortfolioSnapshot`
+- `Reconciliation`
+- `AccountSynchronizer`
+### Public Functions
+- `get_account_synchronizer()`
+- `sync_account()`
+- `sync_positions()`
+- `full_sync()`
+- `reconcile_balance()`
+- `reconcile_positions()`
+- `take_snapshot()`
+- `get_latest_snapshot()`
+- `get_portfolio_history()`
+- `calculate_daily_return()`
+- `get_margin_status()`
+- `get_sync_status()`
+
+## 4. Applicable Trading Rules
+
+#### R8
+Bid-Ask Spread Management (avoid market orders for low-liquidity)
+
+- [ ] Implementation verified
+- [ ] Tests pass
+
+#### R9
+Execution Timing (avoid first/last 15 min, VWAP/TWAP for large orders)
+
+- [ ] Implementation verified
+- [ ] Tests pass
+
+#### R10
+Slippage Monitor (track actual vs expected fill, alert if >0.5%)
+
+- [ ] Implementation verified
+- [ ] Tests pass
+
+---
+Universal rules (SOLID, type hints, formatting, security, logging) live in
+.requirements/BASE_RULES.md and apply to every file.
+Resync this stub with: python scripts/generate_requirements.py

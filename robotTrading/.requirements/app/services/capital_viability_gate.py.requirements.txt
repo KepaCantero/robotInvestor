@@ -1,0 +1,44 @@
+# Requirements Document: app/services/capital_viability_gate.py
+
+## 1. Module Overview
+File: capital_viability_gate.py
+Domain: Service
+
+## 2. Dependencies
+- `__future__`
+- `app.shared.config.centralized_config`
+- `decimal`
+- `logging`
+
+## 3. Core Components
+### Classes
+- `CapitalViabilityValidator`
+### Public Functions
+- `validate_profit_goal()`
+- `get_minimum_viable_capital()`
+- `log_viability_check()`
+
+## 4. Applicable Trading Rules
+
+#### R25
+Phase 1: 5K-15K EUR, max 3 positions, 2% risk/trade
+
+- [ ] Implementation verified
+- [ ] Tests pass
+
+#### R26
+Phase 2: 15K-50K EUR, max 5 positions, 1.5% risk/trade
+
+- [ ] Implementation verified
+- [ ] Tests pass
+
+#### R27
+Phase 3: 50K+ EUR, max 10 positions, 1% risk/trade
+
+- [ ] Implementation verified
+- [ ] Tests pass
+
+---
+Universal rules (SOLID, type hints, formatting, security, logging) live in
+.requirements/BASE_RULES.md and apply to every file.
+Resync this stub with: python scripts/generate_requirements.py

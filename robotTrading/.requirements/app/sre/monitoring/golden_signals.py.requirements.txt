@@ -1,0 +1,85 @@
+# Requirements Document: app/sre/monitoring/golden_signals.py
+
+## 1. Module Overview
+File: golden_signals.py
+Domain: SRE
+
+## 2. Dependencies
+- `__future__`
+- `aiosqlite`
+- `asyncio`
+- `collections`
+- `contextlib`
+- `dataclasses`
+- `datetime`
+- `decimal`
+- `enum`
+- `logging`
+- `os`
+- `pathlib`
+- `psutil`
+- `time`
+- `typing`
+
+## 3. Core Components
+### Classes
+- `HealthStatus`
+- `SignalType`
+- `LatencyMetrics`
+- `TrafficMetrics`
+- `ErrorMetrics`
+- `SaturationMetrics`
+- `GoldenSignalMetrics`
+- `SLOTarget`
+- `GoldenSignalsConfig`
+- `RequestTracker`
+- `LatencyCollector`
+- `GoldenSignalsMonitor`
+### Public Functions
+- `get_golden_signals_monitor()`
+- `to_dict()`
+- `to_dict()`
+- `to_dict()`
+- `to_dict()`
+- `to_dict()`
+- `is_compliant()`
+- `record_request()`
+- `get_metrics()`
+- `record_latency()`
+- `get_metrics()`
+- `initialize()`
+- `start_collection()`
+- `stop_collection()`
+- `collect_metrics()`
+- `record_request()`
+- `record_latency()`
+- `evaluate_health()`
+- `get_current_metrics()`
+- `get_metrics_history()`
+- `get_metrics_summary()`
+- `check_slo_compliance()`
+
+## 4. Applicable Trading Rules
+
+#### R19
+Market Regime Detection (trend/range/volatile classification)
+
+- [ ] Implementation verified
+- [ ] Tests pass
+
+#### R20
+Multi-Confirmation (min 2 independent signals before trade)
+
+- [ ] Implementation verified
+- [ ] Tests pass
+
+#### R24
+Strategy Diversification (min 3 uncorrelated strategies)
+
+- [ ] Implementation verified
+- [ ] Tests pass
+
+---
+Universal rules (SOLID, type hints, formatting, security, logging) live in
+.requirements/BASE_RULES.md and apply to every file.
+Resync this stub with: python scripts/generate_requirements.py

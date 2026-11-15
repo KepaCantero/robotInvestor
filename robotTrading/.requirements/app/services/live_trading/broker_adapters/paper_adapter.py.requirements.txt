@@ -1,0 +1,56 @@
+# Requirements Document: app/services/live_trading/broker_adapters/paper_adapter.py
+
+## 1. Module Overview
+File: paper_adapter.py
+Domain: Service
+
+## 2. Dependencies
+- `__future__`
+- `app.services.live_trading.broker_connector`
+- `datetime`
+- `decimal`
+- `logging`
+- `uuid`
+
+## 3. Core Components
+### Classes
+- `PaperAdapter`
+### Public Functions
+- `connect()`
+- `disconnect()`
+- `place_order()`
+- `cancel_order()`
+- `get_order_status()`
+- `get_account_info()`
+- `get_positions()`
+- `get_position()`
+- `update_positions()`
+- `sync_account_balance()`
+- `calculate_portfolio_value()`
+- `is_paper_trading()`
+- `get_broker_type()`
+
+## 4. Applicable Trading Rules
+
+#### R8
+Bid-Ask Spread Management (avoid market orders for low-liquidity)
+
+- [ ] Implementation verified
+- [ ] Tests pass
+
+#### R9
+Execution Timing (avoid first/last 15 min, VWAP/TWAP for large orders)
+
+- [ ] Implementation verified
+- [ ] Tests pass
+
+#### R10
+Slippage Monitor (track actual vs expected fill, alert if >0.5%)
+
+- [ ] Implementation verified
+- [ ] Tests pass
+
+---
+Universal rules (SOLID, type hints, formatting, security, logging) live in
+.requirements/BASE_RULES.md and apply to every file.
+Resync this stub with: python scripts/generate_requirements.py

@@ -1,0 +1,65 @@
+# Requirements Document: app/shared/utils/symbol_mapper.py
+
+## 1. Module Overview
+File: symbol_mapper.py
+Domain: Shared
+
+## 2. Dependencies
+- `__future__`
+- `abc`
+- `app.shared.interfaces.broker_base`
+- `dataclasses`
+- `datetime`
+- `enum`
+- `logging`
+- `re`
+- `sqlalchemy.ext.asyncio`
+- `typing`
+- `uuid`
+
+## 3. Core Components
+### Classes
+- `MappingStatus`
+- `SymbolMappingError`
+- `AmbiguousSymbolError`
+- `UnknownSymbolError`
+- `ValidationError`
+- `SymbolMapping`
+- `BrokerMappingTables`
+- `SymbolValidator`
+- `SymbolMapper`
+- `SymbolMapperMixin`
+### Public Functions
+- `create_symbol_mapper()`
+- `get_or_create_mapping()`
+- `to_dict()`
+- `get_default_mapping()`
+- `get_all_broker_symbols()`
+- `validate_internal_symbol()`
+- `validate_broker_symbol()`
+- `extract_internal_from_broker()`
+- `map_internal_to_broker()`
+- `map_broker_to_internal()`
+- `add_mapping()`
+- `get_all_brokers_for_symbol()`
+- `validate_mapping()`
+- `get_supported_brokers()`
+- `get_statistics()`
+- `clear_cache()`
+- `get_broker_name()`
+- `map_to_broker()`
+- `map_from_broker()`
+- `validate_symbol_mapping()`
+
+## 4. Applicable Trading Rules
+
+#### R15
+Complete Logging (log all decisions, trade journal format)
+
+- [ ] Implementation verified
+- [ ] Tests pass
+
+---
+Universal rules (SOLID, type hints, formatting, security, logging) live in
+.requirements/BASE_RULES.md and apply to every file.
+Resync this stub with: python scripts/generate_requirements.py

@@ -1,0 +1,54 @@
+# Requirements Document: app/shared/audit.py
+
+## 1. Module Overview
+File: audit.py
+Domain: Shared
+
+## 2. Dependencies
+- `__future__`
+- `app.infrastructure.logging.logging_config`
+- `contextlib`
+- `datetime`
+- `enum`
+- `fastapi`
+- `json`
+- `logging`
+- `logging.handlers`
+- `pathlib`
+- `threading`
+- `typing`
+
+## 3. Core Components
+### Classes
+- `AuditAction`
+- `AuditLogger`
+- `AuditContext`
+### Public Functions
+- `get_audit_logger()`
+- `audit_context()`
+- `log_trade_execution()`
+- `log_deployment_decision()`
+- `cleanup_audit_logs()`
+- `get_audit_log_info()`
+- `cleanup_old_logs()`
+- `get_log_size_info()`
+- `log()`
+- `log_trade()`
+- `log_deployment()`
+- `log_portfolio()`
+- `from_request()`
+- `mark_success()`
+- `mark_failure()`
+
+## 4. Applicable Trading Rules
+
+#### R15
+Complete Logging (log all decisions, trade journal format)
+
+- [ ] Implementation verified
+- [ ] Tests pass
+
+---
+Universal rules (SOLID, type hints, formatting, security, logging) live in
+.requirements/BASE_RULES.md and apply to every file.
+Resync this stub with: python scripts/generate_requirements.py

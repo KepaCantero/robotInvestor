@@ -1,0 +1,67 @@
+# Requirements Document: app/shared/config/strategy_config_loader.py
+
+## 1. Module Overview
+File: strategy_config_loader.py
+Domain: Shared
+
+## 2. Dependencies
+- `__future__`
+- `decimal`
+- `logging`
+- `pathlib`
+- `typing`
+- `yaml`
+
+## 3. Core Components
+### Classes
+- `StrategyConfigLoader`
+### Public Functions
+- `get_strategy_config()`
+- `reload_strategy_config()`
+- `get_indicator_config()`
+- `get_rsi_period()`
+- `get_rsi_threshold()`
+- `get_rsi_adaptive_threshold()`
+- `get_ma_period()`
+- `get_atr_period()`
+- `get_atr_multiplier()`
+- `get_risk_config()`
+- `get_position_sizing()`
+- `get_max_position_size()`
+- `get_stop_loss()`
+- `get_take_profit()`
+- `get_risk_reward_ratio()`
+- `get_max_leverage()`
+- `get_tier_config()`
+- `get_tier_thresholds()`
+- `get_tier_from_capital()`
+- `get_tier_config_value()`
+- `get_max_positions()`
+- `get_enabled_strategies()`
+- `reload_config()`
+- `get_all_config()`
+
+## 4. Applicable Trading Rules
+
+#### R19
+Market Regime Detection (trend/range/volatile classification)
+
+- [ ] Implementation verified
+- [ ] Tests pass
+
+#### R20
+Multi-Confirmation (min 2 independent signals before trade)
+
+- [ ] Implementation verified
+- [ ] Tests pass
+
+#### R24
+Strategy Diversification (min 3 uncorrelated strategies)
+
+- [ ] Implementation verified
+- [ ] Tests pass
+
+---
+Universal rules (SOLID, type hints, formatting, security, logging) live in
+.requirements/BASE_RULES.md and apply to every file.
+Resync this stub with: python scripts/generate_requirements.py

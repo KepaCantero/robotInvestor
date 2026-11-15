@@ -1,0 +1,50 @@
+# Requirements Document: app/domain/trading/market_making/avellaneda_stoikov/as_model.py
+
+## 1. Module Overview
+File: as_model.py
+Domain: Domain
+
+## 2. Dependencies
+- `__future__`
+- `app.domain.trading.market_making.avellaneda_stoikov.models`
+- `decimal`
+- `logging`
+- `math`
+
+## 3. Core Components
+### Classes
+- `AvellanedaStoikovModel`
+### Public Functions
+- `calculate_inventory_risk()`
+- `calculate_reservation_price()`
+- `calculate_optimal_spread()`
+- `calculate_inventory_skew()`
+- `calculate_quotes()`
+- `get_model_state()`
+- `update_volatility()`
+- `update_risk_aversion()`
+
+## 4. Applicable Trading Rules
+
+#### R8
+Bid-Ask Spread Management (avoid market orders for low-liquidity)
+
+- [ ] Implementation verified
+- [ ] Tests pass
+
+#### R9
+Execution Timing (avoid first/last 15 min, VWAP/TWAP for large orders)
+
+- [ ] Implementation verified
+- [ ] Tests pass
+
+#### R10
+Slippage Monitor (track actual vs expected fill, alert if >0.5%)
+
+- [ ] Implementation verified
+- [ ] Tests pass
+
+---
+Universal rules (SOLID, type hints, formatting, security, logging) live in
+.requirements/BASE_RULES.md and apply to every file.
+Resync this stub with: python scripts/generate_requirements.py

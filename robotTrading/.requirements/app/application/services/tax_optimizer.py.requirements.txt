@@ -1,0 +1,43 @@
+# Requirements Document: app/application/services/tax_optimizer.py
+
+## 1. Module Overview
+File: tax_optimizer.py
+Domain: Application
+
+## 2. Dependencies
+- `__future__`
+- `dataclasses`
+- `datetime`
+- `decimal`
+- `enum`
+- `logging`
+
+## 3. Core Components
+### Classes
+- `TaxMethod`
+- `TaxJurisdiction`
+- `TaxLot`
+- `TaxCalculation`
+- `TaxOptimizer`
+### Public Functions
+- `is_long_term()`
+- `realized_pnl()`
+- `configure_for_residence()`
+- `calculate_tax_liability()`
+- `find_tax_loss_harvesting_opportunities()`
+- `should_harvest_loss()`
+- `optimize_dividend_tax()`
+- `calculate_after_tax_return()`
+
+## 4. Applicable Trading Rules
+
+#### R28
+Trade Record Retention (keep all records 5+ years)
+
+- [ ] Implementation verified
+- [ ] Tests pass
+
+---
+Universal rules (SOLID, type hints, formatting, security, logging) live in
+.requirements/BASE_RULES.md and apply to every file.
+Resync this stub with: python scripts/generate_requirements.py

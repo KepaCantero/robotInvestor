@@ -1,0 +1,52 @@
+# Requirements Document: app/domain/strategies/protocols.py
+
+## 1. Module Overview
+File: protocols.py
+Domain: Domain
+
+## 2. Dependencies
+- `__future__`
+- `app.domain.models.signal`
+- `app.domain.strategies.strategy_registry`
+- `decimal`
+- `typing`
+
+## 3. Core Components
+### Classes
+- `StrategyRegistryProto`
+- `StrategyLoggerProto`
+### Public Functions
+- `active_strategy()`
+- `get_active_strategy()`
+- `get_all_strategies_status()`
+- `list_available_strategies()`
+- `list_loaded_strategies()`
+- `load_strategy()`
+- `set_active_strategy()`
+- `unload_strategy()`
+- `get_strategy_status()`
+- `get_strategy()`
+- `log_signal_generated()`
+- `log_signal_rejected()`
+- `log_signal_executed()`
+- `log_strategy_error()`
+- `log_execution_error()`
+- `log_strategy_loaded()`
+- `log_strategy_unloaded()`
+- `log_strategy_activated()`
+- `log_strategy_deactivated()`
+- `get_strategy_metrics()`
+- `get_all_metrics()`
+
+## 4. Applicable Trading Rules
+
+#### R15
+Complete Logging (log all decisions, trade journal format)
+
+- [ ] Implementation verified
+- [ ] Tests pass
+
+---
+Universal rules (SOLID, type hints, formatting, security, logging) live in
+.requirements/BASE_RULES.md and apply to every file.
+Resync this stub with: python scripts/generate_requirements.py

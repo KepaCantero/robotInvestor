@@ -1,0 +1,30 @@
+# Requirements Document: app/services/tax_efficiency/engines/__init__.py
+
+## 1. Module Overview
+File: __init__.py
+Domain: Service
+
+## 2. Dependencies
+- `app.services.tax_efficiency.engines.base`
+- `app.services.tax_efficiency.engines.factory`
+- `app.services.tax_efficiency.engines.modelo_720_generator`
+- `app.services.tax_efficiency.engines.spain_dividend_tax`
+- `app.services.tax_efficiency.engines.spain_tax_engine`
+- `app.services.tax_efficiency.engines.spain_tax_engine_impl`
+
+## 3. Core Components
+### Module Initialization
+- Package/module initialization file
+
+## 4. Applicable Trading Rules
+
+#### R28
+Trade Record Retention (keep all records 5+ years)
+
+- [ ] Implementation verified
+- [ ] Tests pass
+
+---
+Universal rules (SOLID, type hints, formatting, security, logging) live in
+.requirements/BASE_RULES.md and apply to every file.
+Resync this stub with: python scripts/generate_requirements.py

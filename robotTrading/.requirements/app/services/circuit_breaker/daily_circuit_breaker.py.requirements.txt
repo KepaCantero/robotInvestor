@@ -1,0 +1,47 @@
+# Requirements Document: app/services/circuit_breaker/daily_circuit_breaker.py
+
+## 1. Module Overview
+File: daily_circuit_breaker.py
+Domain: Service
+
+## 2. Dependencies
+- `__future__`
+- `app.shared.config.centralized_config`
+- `app.shared.utils.timezone_utils`
+- `dataclasses`
+- `datetime`
+- `decimal`
+- `enum`
+- `logging`
+- `typing`
+
+## 3. Core Components
+### Classes
+- `DailyBreakerStatus`
+- `DailyBreakerEvent`
+- `DailyBreakerState`
+- `DailyCircuitBreaker`
+### Public Functions
+- `create_daily_breaker()`
+- `to_dict()`
+- `is_trading_halted()`
+- `to_dict()`
+- `reset_for_trading_day()`
+- `update_pnl()`
+- `is_trading_halted()`
+- `get_state()`
+- `get_event_history()`
+- `can_trade()`
+
+## 4. Applicable Trading Rules
+
+#### R15
+Complete Logging (log all decisions, trade journal format)
+
+- [ ] Implementation verified
+- [ ] Tests pass
+
+---
+Universal rules (SOLID, type hints, formatting, security, logging) live in
+.requirements/BASE_RULES.md and apply to every file.
+Resync this stub with: python scripts/generate_requirements.py

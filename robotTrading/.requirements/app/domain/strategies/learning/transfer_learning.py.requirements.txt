@@ -1,0 +1,63 @@
+# Requirements Document: app/domain/strategies/learning/transfer_learning.py
+
+## 1. Module Overview
+File: transfer_learning.py
+Domain: Domain
+
+## 2. Dependencies
+- `__future__`
+- `copy`
+- `datetime`
+- `importlib`
+- `io`
+- `joblib`
+- `json`
+- `logging`
+- `msgpack`
+- `numpy`
+- `numpy.typing`
+- `pathlib`
+- `pickle`
+- `torch`
+- `types`
+- `typing`
+
+## 3. Core Components
+### Classes
+- `_PyTorchParameter`
+- `_PyTorchModel`
+- `ModelRegistry`
+- `FineTuner`
+- `KnowledgeDistiller`
+- `TransferLearningManager`
+- `_MigrationUnpickler`
+### Public Functions
+- `parameters()`
+- `train()`
+- `eval()`
+- `children()`
+- `register_model()`
+- `get_model()`
+- `list_models()`
+- `load_model()`
+- `fine_tune()`
+- `distill()`
+- `create_pretrained_model()`
+- `load_and_finetune()`
+- `find_best_model()`
+- `distill_model()`
+- `distillation_loss()`
+- `find_class()`
+
+## 4. Applicable Trading Rules
+
+#### R15
+Complete Logging (log all decisions, trade journal format)
+
+- [ ] Implementation verified
+- [ ] Tests pass
+
+---
+Universal rules (SOLID, type hints, formatting, security, logging) live in
+.requirements/BASE_RULES.md and apply to every file.
+Resync this stub with: python scripts/generate_requirements.py

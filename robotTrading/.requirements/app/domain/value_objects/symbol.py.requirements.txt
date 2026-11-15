@@ -1,0 +1,44 @@
+# Requirements Document: app/domain/value_objects/symbol.py
+
+## 1. Module Overview
+File: symbol.py
+Domain: Domain
+
+## 2. Dependencies
+- `__future__`
+- `dataclasses`
+- `enum`
+
+## 3. Core Components
+### Classes
+- `AssetClass`
+- `Exchange`
+- `Symbol`
+### Public Functions
+- `is_us_equity()`
+- `is_etf()`
+- `is_index()`
+- `is_futures()`
+- `is_option()`
+- `is_forex()`
+- `is_crypto()`
+- `stock()`
+- `etf()`
+- `index()`
+- `futures()`
+- `forex()`
+- `crypto()`
+- `option()`
+
+## 4. Applicable Trading Rules
+
+#### R15
+Complete Logging (log all decisions, trade journal format)
+
+- [ ] Implementation verified
+- [ ] Tests pass
+
+---
+Universal rules (SOLID, type hints, formatting, security, logging) live in
+.requirements/BASE_RULES.md and apply to every file.
+Resync this stub with: python scripts/generate_requirements.py

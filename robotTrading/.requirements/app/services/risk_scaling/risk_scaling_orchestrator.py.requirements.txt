@@ -1,0 +1,39 @@
+# Requirements Document: app/services/risk_scaling/risk_scaling_orchestrator.py
+
+## 1. Module Overview
+File: risk_scaling_orchestrator.py
+Domain: Service
+
+## 2. Dependencies
+- `__future__`
+- `app.services.risk_scaling.drawdown_monitor`
+- `app.services.risk_scaling.loss_monitor`
+- `app.services.risk_scaling.models`
+- `app.services.risk_scaling.sharpe_ratio_monitor`
+- `app.services.risk_scaling.volatility_monitor`
+- `decimal`
+- `logging`
+
+## 3. Core Components
+### Classes
+- `RiskScalingOrchestrator`
+### Public Functions
+- `calculate_scaling_factors()`
+- `apply_dynamic_scaling()`
+- `get_scaling_state()`
+- `generate_scaling_report()`
+- `calculate_position_size()`
+- `calculate_position_size_from_volatility()`
+
+## 4. Applicable Trading Rules
+
+#### R2
+Drawdown Monitor (15% warning, 25% halt trading, auto cooldown)
+
+- [ ] Implementation verified
+- [ ] Tests pass
+
+---
+Universal rules (SOLID, type hints, formatting, security, logging) live in
+.requirements/BASE_RULES.md and apply to every file.
+Resync this stub with: python scripts/generate_requirements.py

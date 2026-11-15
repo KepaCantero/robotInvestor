@@ -1,0 +1,82 @@
+# Requirements Document: app/infrastructure/persistence/database/_user_portfolio_repositories.py
+
+## 1. Module Overview
+File: _user_portfolio_repositories.py
+Domain: Infrastructure
+
+## 2. Dependencies
+- `__future__`
+- `app.infrastructure.persistence.database._base_repository`
+- `app.infrastructure.persistence.database.models`
+- `app.shared.exceptions.exceptions`
+- `decimal`
+- `sqlalchemy`
+- `sqlalchemy.exc`
+- `typing`
+- `uuid`
+
+## 3. Core Components
+### Classes
+- `UserRepository`
+- `PortfolioRepository`
+- `AssetRepository`
+- `PositionRepository`
+### Public Functions
+- `get_by_username()`
+- `get_by_email()`
+- `get_active_users()`
+- `get_by_user()`
+- `get_active_by_user()`
+- `update_total_value()`
+- `get_by_symbol()`
+- `get_by_asset_class()`
+- `get_active_assets()`
+- `search_by_name()`
+- `get_non_zero_positions()`
+- `get_by_portfolio()`
+- `get_by_portfolio_and_asset()`
+- `get_open_positions()`
+- `update_position_price()`
+
+## 4. Applicable Trading Rules
+
+#### R1
+Kelly Criterion + Max Position Size (max 5% per position)
+
+- [ ] Implementation verified
+- [ ] Tests pass
+
+#### R3
+Correlation & Concentration Limits (max 20% per sector)
+
+- [ ] Implementation verified
+- [ ] Tests pass
+
+#### R11
+Dynamic Trailing Stop (ATR-based, never loosen)
+
+- [ ] Implementation verified
+- [ ] Tests pass
+
+#### R14
+Data Quality Validation (OHLCV sanity checks, detect gaps/stale data)
+
+- [ ] Implementation verified
+- [ ] Tests pass
+
+#### R15
+Complete Logging (log all decisions, trade journal format)
+
+- [ ] Implementation verified
+- [ ] Tests pass
+
+#### R16
+Daily Reconciliation (compare broker vs internal, alert discrepancies >1%)
+
+- [ ] Implementation verified
+- [ ] Tests pass
+
+---
+Universal rules (SOLID, type hints, formatting, security, logging) live in
+.requirements/BASE_RULES.md and apply to every file.
+Resync this stub with: python scripts/generate_requirements.py

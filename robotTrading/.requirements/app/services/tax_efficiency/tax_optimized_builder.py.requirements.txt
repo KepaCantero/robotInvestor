@@ -1,0 +1,37 @@
+# Requirements Document: app/services/tax_efficiency/tax_optimized_builder.py
+
+## 1. Module Overview
+File: tax_optimized_builder.py
+Domain: Service
+
+## 2. Dependencies
+- `__future__`
+- `capital_gain_tracker`
+- `dataclasses`
+- `decimal`
+- `logging`
+- `tax_loss_harvester`
+- `wash_sale_detector`
+
+## 3. Core Components
+### Classes
+- `TaxOptimizedAllocation`
+- `TaxOptimizedPortfolioBuilder`
+### Public Functions
+- `get_tax_optimized_builder()`
+- `optimize_for_taxes()`
+- `calculate_after_tax_return()`
+- `get_tax_report()`
+
+## 4. Applicable Trading Rules
+
+#### R28
+Trade Record Retention (keep all records 5+ years)
+
+- [ ] Implementation verified
+- [ ] Tests pass
+
+---
+Universal rules (SOLID, type hints, formatting, security, logging) live in
+.requirements/BASE_RULES.md and apply to every file.
+Resync this stub with: python scripts/generate_requirements.py

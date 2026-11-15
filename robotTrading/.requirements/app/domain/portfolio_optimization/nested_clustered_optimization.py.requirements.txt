@@ -1,0 +1,57 @@
+# Requirements Document: app/domain/portfolio_optimization/nested_clustered_optimization.py
+
+## 1. Module Overview
+File: nested_clustered_optimization.py
+Domain: Domain
+
+## 2. Dependencies
+- `__future__`
+- `app.shared.config.centralized_config`
+- `dataclasses`
+- `enum`
+- `logging`
+- `numpy`
+- `numpy.typing`
+- `scipy.optimize`
+- `sklearn.cluster`
+- `typing`
+
+## 3. Core Components
+### Classes
+- `ClusteringMethod`
+- `NCOConfig`
+- `NCOResult`
+- `NestedClusteredOptimization`
+### Public Functions
+- `compute_nco_weights()`
+- `get_weight_dict()`
+- `get_cluster_summary()`
+- `is_diversified()`
+- `get_weights()`
+- `get_distance_matrix()`
+- `portfolio_variance()`
+
+## 4. Applicable Trading Rules
+
+#### R1
+Kelly Criterion + Max Position Size (max 5% per position)
+
+- [ ] Implementation verified
+- [ ] Tests pass
+
+#### R3
+Correlation & Concentration Limits (max 20% per sector)
+
+- [ ] Implementation verified
+- [ ] Tests pass
+
+#### R11
+Dynamic Trailing Stop (ATR-based, never loosen)
+
+- [ ] Implementation verified
+- [ ] Tests pass
+
+---
+Universal rules (SOLID, type hints, formatting, security, logging) live in
+.requirements/BASE_RULES.md and apply to every file.
+Resync this stub with: python scripts/generate_requirements.py

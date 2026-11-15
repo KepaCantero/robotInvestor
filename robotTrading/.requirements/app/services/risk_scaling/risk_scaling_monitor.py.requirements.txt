@@ -1,0 +1,41 @@
+# Requirements Document: app/services/risk_scaling/risk_scaling_monitor.py
+
+## 1. Module Overview
+File: risk_scaling_monitor.py
+Domain: Service
+
+## 2. Dependencies
+- `__future__`
+- `app.services.risk_scaling.models`
+- `datetime`
+- `decimal`
+- `logging`
+- `numpy`
+
+## 3. Core Components
+### Classes
+- `RiskScalingMonitor`
+### Public Functions
+- `get_scaling_status()`
+- `get_scaling_history()`
+- `subscribe_to_alerts()`
+- `record_alert()`
+- `get_scaling_trends()`
+- `get_alert_history()`
+- `resolve_alert()`
+- `store_state()`
+- `generate_daily_report()`
+- `get_portfolio_dashboard_data()`
+
+## 4. Applicable Trading Rules
+
+#### R2
+Drawdown Monitor (15% warning, 25% halt trading, auto cooldown)
+
+- [ ] Implementation verified
+- [ ] Tests pass
+
+---
+Universal rules (SOLID, type hints, formatting, security, logging) live in
+.requirements/BASE_RULES.md and apply to every file.
+Resync this stub with: python scripts/generate_requirements.py

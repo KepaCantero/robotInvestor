@@ -1,0 +1,47 @@
+# Requirements Document: app/engines/context_engine/context_engine.py
+
+## 1. Module Overview
+File: context_engine.py
+Domain: Engine
+
+## 2. Dependencies
+- `__future__`
+- `correlation_analyzers.correlation_network_analyzer`
+- `correlation_analyzers.dcc_garch_analyzer`
+- `correlation_analyzers.rolling_correlation_analyzer`
+- `datetime`
+- `logging`
+- `macro_indicators.market_breadth_analyzer`
+- `macro_indicators.sector_rotation_detector`
+- `macro_indicators.vix_analyzer`
+- `macro_indicators.yield_curve_analyzer`
+- `numpy`
+- `regime_detectors.clustering_regime_detector`
+- `regime_detectors.correlation_regime_detector`
+- `regime_detectors.hmm_regime_detector`
+- `typing`
+- `volatility_analyzers.garch_analyzer`
+- `volatility_analyzers.structural_change_detector`
+- `volatility_analyzers.volatility_regime_detector`
+
+## 3. Core Components
+### Classes
+- `ContextEngine`
+### Public Functions
+- `get_current_regime()`
+- `get_volatility_regime()`
+- `get_correlation_matrix()`
+- `get_context_summary()`
+
+## 4. Applicable Trading Rules
+
+#### R15
+Complete Logging (log all decisions, trade journal format)
+
+- [ ] Implementation verified
+- [ ] Tests pass
+
+---
+Universal rules (SOLID, type hints, formatting, security, logging) live in
+.requirements/BASE_RULES.md and apply to every file.
+Resync this stub with: python scripts/generate_requirements.py

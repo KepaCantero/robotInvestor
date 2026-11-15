@@ -1,0 +1,64 @@
+# Requirements Document: app/simulation/trading_costs.py
+
+## 1. Module Overview
+File: trading_costs.py
+Domain: Simulation
+
+## 2. Dependencies
+- `__future__`
+- `dataclasses`
+- `datetime`
+- `decimal`
+- `enum`
+- `logging`
+- `numpy`
+
+## 3. Core Components
+### Classes
+- `CostComponent`
+- `ImpactModel`
+- `CostBreakdown`
+- `ExecutionQualityMetrics`
+- `MarketImpactModel`
+- `BidAskSpreadAnalyzer`
+- `TimingRiskCalculator`
+- `TradingCostAnalyzer`
+### Public Functions
+- `create_trading_cost_analyzer()`
+- `cost_percentage()`
+- `excellent_execution()`
+- `poor_execution()`
+- `calculate_impact()`
+- `add_spread_observation()`
+- `get_average_spread()`
+- `get_spread_statistics()`
+- `estimate_adverse_selection_cost()`
+- `calculate_timing_risk()`
+- `calculate_implicit_cost()`
+- `analyze_execution()`
+- `evaluate_execution_quality()`
+
+## 4. Applicable Trading Rules
+
+#### R8
+Bid-Ask Spread Management (avoid market orders for low-liquidity)
+
+- [ ] Implementation verified
+- [ ] Tests pass
+
+#### R9
+Execution Timing (avoid first/last 15 min, VWAP/TWAP for large orders)
+
+- [ ] Implementation verified
+- [ ] Tests pass
+
+#### R10
+Slippage Monitor (track actual vs expected fill, alert if >0.5%)
+
+- [ ] Implementation verified
+- [ ] Tests pass
+
+---
+Universal rules (SOLID, type hints, formatting, security, logging) live in
+.requirements/BASE_RULES.md and apply to every file.
+Resync this stub with: python scripts/generate_requirements.py

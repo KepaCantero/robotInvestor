@@ -1,0 +1,57 @@
+# Requirements Document: app/domain/portfolio/multi_asset/multi_asset_portfolio.py
+
+## 1. Module Overview
+File: multi_asset_portfolio.py
+Domain: Domain
+
+## 2. Dependencies
+- `__future__`
+- `app.backtesting.models`
+- `asset_class`
+- `dataclasses`
+- `datetime`
+- `decimal`
+- `logging`
+- `models`
+- `numpy`
+- `pandas`
+- `pydantic`
+- `typing`
+
+## 3. Core Components
+### Classes
+- `MultiAssetConfig`
+- `PortfolioConstructionResult`
+- `RebalanceResult`
+- `MultiAssetPortfolioManager`
+### Public Functions
+- `validate_max_position_size()`
+- `validate_asset_classes()`
+- `construct_portfolio()`
+- `rebalance()`
+- `calculate_risk_contributions()`
+
+## 4. Applicable Trading Rules
+
+#### R1
+Kelly Criterion + Max Position Size (max 5% per position)
+
+- [ ] Implementation verified
+- [ ] Tests pass
+
+#### R3
+Correlation & Concentration Limits (max 20% per sector)
+
+- [ ] Implementation verified
+- [ ] Tests pass
+
+#### R11
+Dynamic Trailing Stop (ATR-based, never loosen)
+
+- [ ] Implementation verified
+- [ ] Tests pass
+
+---
+Universal rules (SOLID, type hints, formatting, security, logging) live in
+.requirements/BASE_RULES.md and apply to every file.
+Resync this stub with: python scripts/generate_requirements.py

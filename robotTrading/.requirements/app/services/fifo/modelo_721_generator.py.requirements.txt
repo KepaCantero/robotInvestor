@@ -1,0 +1,51 @@
+# Requirements Document: app/services/fifo/modelo_721_generator.py
+
+## 1. Module Overview
+File: modelo_721_generator.py
+Domain: Service
+
+## 2. Dependencies
+- `__future__`
+- `app.infrastructure.persistence`
+- `app.infrastructure.persistence.tax.fifo_schema`
+- `asyncio`
+- `csv`
+- `dataclasses`
+- `datetime`
+- `decimal`
+- `logging`
+- `pathlib`
+- `sqlalchemy`
+- `sqlalchemy.exc`
+- `sqlalchemy.ext.asyncio`
+- `typing`
+- `uuid`
+
+## 3. Core Components
+### Classes
+- `_BalanceEntry`
+- `CryptoBalance`
+- `TransactionDetail`
+- `CapitalGainLoss`
+- `Modelo721Report`
+- `Modelo721Generator`
+### Public Functions
+- `get_modelo_721_generator()`
+- `to_dict()`
+- `generate_annual_report()`
+- `export_to_csv()`
+- `save_report_to_database()`
+- `get_previous_year_reports()`
+
+## 4. Applicable Trading Rules
+
+#### R28
+Trade Record Retention (keep all records 5+ years)
+
+- [ ] Implementation verified
+- [ ] Tests pass
+
+---
+Universal rules (SOLID, type hints, formatting, security, logging) live in
+.requirements/BASE_RULES.md and apply to every file.
+Resync this stub with: python scripts/generate_requirements.py

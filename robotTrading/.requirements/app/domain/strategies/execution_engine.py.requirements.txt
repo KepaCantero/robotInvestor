@@ -1,0 +1,56 @@
+# Requirements Document: app/domain/strategies/execution_engine.py
+
+## 1. Module Overview
+File: execution_engine.py
+Domain: Domain
+
+## 2. Dependencies
+- `__future__`
+- `app.domain.models.market_data`
+- `app.domain.models.portfolio`
+- `app.domain.models.signal`
+- `datetime`
+- `decimal`
+- `logging`
+- `protocols`
+- `typing`
+
+## 3. Core Components
+### Classes
+- `ExecutionEngine`
+### Public Functions
+- `start()`
+- `stop()`
+- `run_cycle()`
+- `execute_signal()`
+- `execute_signals()`
+- `get_execution_stats()`
+- `reset_stats()`
+- `validate_market_data()`
+- `validate_portfolio()`
+- `run_cycle_with_validation()`
+
+## 4. Applicable Trading Rules
+
+#### R8
+Bid-Ask Spread Management (avoid market orders for low-liquidity)
+
+- [ ] Implementation verified
+- [ ] Tests pass
+
+#### R9
+Execution Timing (avoid first/last 15 min, VWAP/TWAP for large orders)
+
+- [ ] Implementation verified
+- [ ] Tests pass
+
+#### R10
+Slippage Monitor (track actual vs expected fill, alert if >0.5%)
+
+- [ ] Implementation verified
+- [ ] Tests pass
+
+---
+Universal rules (SOLID, type hints, formatting, security, logging) live in
+.requirements/BASE_RULES.md and apply to every file.
+Resync this stub with: python scripts/generate_requirements.py

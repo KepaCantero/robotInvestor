@@ -1,0 +1,64 @@
+# Requirements Document: app/services/live_trading/broker_adapters/alpaca_error_handler.py
+
+## 1. Module Overview
+File: alpaca_error_handler.py
+Domain: Service
+
+## 2. Dependencies
+- `__future__`
+- `datetime`
+- `enum`
+- `logging`
+- `re`
+- `typing`
+
+## 3. Core Components
+### Classes
+- `ErrorType`
+- `ErrorRecoveryStrategy`
+- `AlpacaErrorClassifier`
+- `CircuitBreaker`
+- `RetryConfig`
+- `PositionSyncRecovery`
+- `ErrorRecoveryManager`
+### Public Functions
+- `classify()`
+- `get_strategy()`
+- `is_retryable()`
+- `record_success()`
+- `record_failure()`
+- `is_available()`
+- `get_delay()`
+- `record_sync_success()`
+- `record_sync_failure()`
+- `should_retry()`
+- `is_stale()`
+- `should_allow_request()`
+- `handle_request_failure()`
+- `handle_request_success()`
+- `get_retry_delay()`
+
+## 4. Applicable Trading Rules
+
+#### R8
+Bid-Ask Spread Management (avoid market orders for low-liquidity)
+
+- [ ] Implementation verified
+- [ ] Tests pass
+
+#### R9
+Execution Timing (avoid first/last 15 min, VWAP/TWAP for large orders)
+
+- [ ] Implementation verified
+- [ ] Tests pass
+
+#### R10
+Slippage Monitor (track actual vs expected fill, alert if >0.5%)
+
+- [ ] Implementation verified
+- [ ] Tests pass
+
+---
+Universal rules (SOLID, type hints, formatting, security, logging) live in
+.requirements/BASE_RULES.md and apply to every file.
+Resync this stub with: python scripts/generate_requirements.py

@@ -1,0 +1,71 @@
+# Requirements Document: app/services/live_trading/risk_gates.py
+
+## 1. Module Overview
+File: risk_gates.py
+Domain: Service
+
+## 2. Dependencies
+- `__future__`
+- `app.shared.config.centralized_config`
+- `broker_connector`
+- `dataclasses`
+- `decimal`
+- `enum`
+- `fastapi`
+- `logging`
+
+## 3. Core Components
+### Classes
+- `RiskLevel`
+- `RiskLimit`
+- `RiskCheckResult`
+- `RiskGates`
+### Public Functions
+- `get_risk_gates()`
+- `validate_order()`
+- `reset_circuit_breaker()`
+- `update_daily_pnl()`
+- `check_daily_loss_limit()`
+- `halt_trading()`
+- `set_start_of_day_capital()`
+- `check_daily_loss()`
+- `check_drawdown()`
+- `validate_position_limit()`
+- `check_sector_concentration()`
+- `check_correlation_risk()`
+- `set_max_position_size()`
+- `set_max_leverage()`
+- `set_max_daily_loss()`
+- `set_max_drawdown()`
+- `get_current_drawdown()`
+
+## 4. Applicable Trading Rules
+
+#### R2
+Drawdown Monitor (15% warning, 25% halt trading, auto cooldown)
+
+- [ ] Implementation verified
+- [ ] Tests pass
+
+#### R8
+Bid-Ask Spread Management (avoid market orders for low-liquidity)
+
+- [ ] Implementation verified
+- [ ] Tests pass
+
+#### R9
+Execution Timing (avoid first/last 15 min, VWAP/TWAP for large orders)
+
+- [ ] Implementation verified
+- [ ] Tests pass
+
+#### R10
+Slippage Monitor (track actual vs expected fill, alert if >0.5%)
+
+- [ ] Implementation verified
+- [ ] Tests pass
+
+---
+Universal rules (SOLID, type hints, formatting, security, logging) live in
+.requirements/BASE_RULES.md and apply to every file.
+Resync this stub with: python scripts/generate_requirements.py

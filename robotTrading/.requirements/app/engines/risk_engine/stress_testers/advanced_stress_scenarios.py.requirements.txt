@@ -1,0 +1,40 @@
+# Requirements Document: app/engines/risk_engine/stress_testers/advanced_stress_scenarios.py
+
+## 1. Module Overview
+File: advanced_stress_scenarios.py
+Domain: Engine
+
+## 2. Dependencies
+- `__future__`
+- `app.domain.models.portfolio`
+- `datetime`
+- `logging`
+- `numpy`
+- `typing`
+
+## 3. Core Components
+### Classes
+- `LiquidityRiskStressTester`
+- `CounterpartyRiskStressTester`
+- `OperationalRiskStressTester`
+- `AdvancedStressTestOrchestrator`
+### Public Functions
+- `get_advanced_stress_tester()`
+- `calculate_liquidity_adjusted_var()`
+- `run_liquidity_stress_tests()`
+- `calculate_counterparty_exposure()`
+- `calculate_operational_risk_impact()`
+- `run_comprehensive_advanced_stress_tests()`
+
+## 4. Applicable Trading Rules
+
+#### R2
+Drawdown Monitor (15% warning, 25% halt trading, auto cooldown)
+
+- [ ] Implementation verified
+- [ ] Tests pass
+
+---
+Universal rules (SOLID, type hints, formatting, security, logging) live in
+.requirements/BASE_RULES.md and apply to every file.
+Resync this stub with: python scripts/generate_requirements.py

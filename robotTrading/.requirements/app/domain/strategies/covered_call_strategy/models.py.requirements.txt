@@ -1,0 +1,64 @@
+# Requirements Document: app/domain/strategies/covered_call_strategy/models.py
+
+## 1. Module Overview
+File: models.py
+Domain: Domain
+
+## 2. Dependencies
+- `__future__`
+- `dataclasses`
+- `datetime`
+- `decimal`
+- `enum`
+- `typing`
+
+## 3. Core Components
+### Classes
+- `Moneyness`
+- `AssignmentProbability`
+- `RollType`
+- `OptionGreeks`
+- `CallOption`
+- `CoveredCallConfig`
+- `CoveredCallPosition`
+- `RollDecision`
+- `RollOpportunity`
+- `OptionScreeningCriteria`
+- `OptionScreenerResult`
+### Public Functions
+- `is_itm()`
+- `is_otm()`
+- `total_cost()`
+- `break_even_price()`
+- `return_if_called()`
+- `downside_protection()`
+- `return_if_unchanged()`
+- `net_cost()`
+- `total_value()`
+- `pass_rate()`
+- `best_option()`
+
+## 4. Applicable Trading Rules
+
+#### R19
+Market Regime Detection (trend/range/volatile classification)
+
+- [ ] Implementation verified
+- [ ] Tests pass
+
+#### R20
+Multi-Confirmation (min 2 independent signals before trade)
+
+- [ ] Implementation verified
+- [ ] Tests pass
+
+#### R24
+Strategy Diversification (min 3 uncorrelated strategies)
+
+- [ ] Implementation verified
+- [ ] Tests pass
+
+---
+Universal rules (SOLID, type hints, formatting, security, logging) live in
+.requirements/BASE_RULES.md and apply to every file.
+Resync this stub with: python scripts/generate_requirements.py

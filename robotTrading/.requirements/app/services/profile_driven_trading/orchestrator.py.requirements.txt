@@ -1,0 +1,73 @@
+# Requirements Document: app/services/profile_driven_trading/orchestrator.py
+
+## 1. Module Overview
+File: orchestrator.py
+Domain: Service
+
+## 2. Dependencies
+- `__future__`
+- `app.infrastructure.data.real_market_data`
+- `app.services._strategy_stock_allocator`
+- `app.services.backtest_orchestration.backtest_orchestrator`
+- `app.services.backtest_orchestration.models`
+- `app.services.live_trading.broker_connector`
+- `app.services.live_trading.risk_gates`
+- `app.services.live_trading.trading_bridge_orchestrator`
+- `app.services.market_universe_orchestrator`
+- `app.services.profile_generator.models`
+- `app.services.profile_generator.profile_generator`
+- `app.services.strategy_stock_allocator`
+- `app.services.tax_efficiency.tax_optimized_builder`
+- `asyncio`
+- `datetime`
+- `decimal`
+- `importlib.util`
+- `logging`
+- `models`
+- `numpy`
+- `pandas`
+- `random`
+- `signal_integrator`
+- `typing`
+- `workflow_manager`
+
+## 3. Core Components
+### Classes
+- `ProfileDrivenTradingOrchestrator`
+### Public Functions
+- `execute_trading_lifecycle()`
+- `stage_1_generate_profile()`
+- `stage_2_select_universe()`
+- `stage_2_select_universe_with_real_data()`
+- `stage_3_allocate_capital()`
+- `stage_4_generate_signals()`
+- `stage_5_optimize_taxes()`
+- `stage_6_validate_risk()`
+- `stage_7_backtest_validate()`
+- `stage_8_execute_trades()`
+- `get_status()`
+
+## 4. Applicable Trading Rules
+
+#### R8
+Bid-Ask Spread Management (avoid market orders for low-liquidity)
+
+- [ ] Implementation verified
+- [ ] Tests pass
+
+#### R9
+Execution Timing (avoid first/last 15 min, VWAP/TWAP for large orders)
+
+- [ ] Implementation verified
+- [ ] Tests pass
+
+#### R10
+Slippage Monitor (track actual vs expected fill, alert if >0.5%)
+
+- [ ] Implementation verified
+- [ ] Tests pass
+
+---
+Universal rules (SOLID, type hints, formatting, security, logging) live in
+.requirements/BASE_RULES.md and apply to every file.
+Resync this stub with: python scripts/generate_requirements.py

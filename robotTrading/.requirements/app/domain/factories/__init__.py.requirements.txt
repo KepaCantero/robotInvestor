@@ -1,0 +1,81 @@
+# Requirements Document: app/domain/factories/__init__.py
+
+## 1. Module Overview
+File: __init__.py
+Domain: Domain
+
+## 2. Dependencies
+- `__future__`
+- `abc`
+- `datetime`
+- `decimal`
+- `entities.order`
+- `entities.portfolio`
+- `entities.position`
+- `logging`
+- `typing`
+- `typing_extensions`
+- `value_objects.capital`
+- `value_objects.risk_parameters`
+
+## 3. Core Components
+### Classes
+- `EntityFactoryProtocol`
+- `AbstractEntityFactory`
+- `TradingEntityFactory`
+- `OrderFactory`
+- `OrderBuilder`
+- `OrderPrototype`
+- `FactoryRegistry`
+### Public Functions
+- `get_factory()`
+- `register_factory()`
+- `create_order()`
+- `create_portfolio()`
+- `create_position()`
+- `create_order()`
+- `create_portfolio()`
+- `create_position()`
+- `create_order()`
+- `create_portfolio()`
+- `create_position()`
+- `create_market_order()`
+- `create_limit_order()`
+- `create_stop_loss_order()`
+- `create_take_profit_order()`
+- `create_stop_limit_order()`
+- `for_symbol()`
+- `buy()`
+- `sell()`
+- `quantity()`
+- `market_order()`
+- `limit_price()`
+- `stop_price()`
+- `for_portfolio()`
+- `with_time_in_force()`
+- `with_good_til_cancel()`
+- `day_order()`
+- `immediate_or_cancel()`
+- `fill_or_kill()`
+- `with_factory()`
+- `build()`
+- `with_price()`
+- `with_quantity()`
+- `for_symbol()`
+- `build()`
+- `register()`
+- `get()`
+- `list_factories()`
+
+## 4. Applicable Trading Rules
+
+#### R15
+Complete Logging (log all decisions, trade journal format)
+
+- [ ] Implementation verified
+- [ ] Tests pass
+
+---
+Universal rules (SOLID, type hints, formatting, security, logging) live in
+.requirements/BASE_RULES.md and apply to every file.
+Resync this stub with: python scripts/generate_requirements.py

@@ -1,0 +1,43 @@
+# Requirements Document: app/services/live_trading/broker_adapters/ibex35_contracts.py
+
+## 1. Module Overview
+File: ibex35_contracts.py
+Domain: Service
+
+## 2. Dependencies
+- `__future__`
+- `ib_insync.contract`
+- `logging`
+
+## 3. Core Components
+### Public Functions
+- `create_stock_contract()`
+- `create_index_contract()`
+- `get_ibex35_symbols()`
+- `is_ibex35_symbol()`
+- `get_spanish_exchange_suffix()`
+
+## 4. Applicable Trading Rules
+
+#### R8
+Bid-Ask Spread Management (avoid market orders for low-liquidity)
+
+- [ ] Implementation verified
+- [ ] Tests pass
+
+#### R9
+Execution Timing (avoid first/last 15 min, VWAP/TWAP for large orders)
+
+- [ ] Implementation verified
+- [ ] Tests pass
+
+#### R10
+Slippage Monitor (track actual vs expected fill, alert if >0.5%)
+
+- [ ] Implementation verified
+- [ ] Tests pass
+
+---
+Universal rules (SOLID, type hints, formatting, security, logging) live in
+.requirements/BASE_RULES.md and apply to every file.
+Resync this stub with: python scripts/generate_requirements.py

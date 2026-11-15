@@ -1,0 +1,58 @@
+# Requirements Document: app/engines/risk_engine/var_calculators/var_calculators.py
+
+## 1. Module Overview
+File: var_calculators.py
+Domain: Engine
+
+## 2. Dependencies
+- `__future__`
+- `abc`
+- `arch`
+- `datetime`
+- `importlib.util`
+- `logging`
+- `numba`
+- `numpy`
+- `pandas`
+- `scipy`
+- `scipy.stats`
+
+## 3. Core Components
+### Classes
+- `BaseVaRCalculator`
+- `HistoricalVaRCalculator`
+- `ParametricVaRCalculator`
+- `MonteCarloVaRCalculator`
+- `GARCHVaRCalculator`
+- `VaRBacktester`
+### Public Functions
+- `calculate_percentile_numba()`
+- `calculate_mean_std_numba()`
+- `calculate_cvar_numba()`
+- `monte_carlo_simulation_numba()`
+- `calculate_jarque_bera_numba()`
+- `calculate_var()`
+- `get_var_calculators_info()`
+- `run_var_backtest()`
+- `calculate_var()`
+- `calculate_var()`
+- `calculate_var()`
+- `calculate_var()`
+- `calculate_var()`
+- `kupiec_test()`
+- `christoffersen_test()`
+- `calculate_var_exceptions()`
+- `run_comprehensive_backtest()`
+
+## 4. Applicable Trading Rules
+
+#### R2
+Drawdown Monitor (15% warning, 25% halt trading, auto cooldown)
+
+- [ ] Implementation verified
+- [ ] Tests pass
+
+---
+Universal rules (SOLID, type hints, formatting, security, logging) live in
+.requirements/BASE_RULES.md and apply to every file.
+Resync this stub with: python scripts/generate_requirements.py

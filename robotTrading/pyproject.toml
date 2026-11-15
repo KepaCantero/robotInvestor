@@ -1,0 +1,501 @@
+[project]
+name = "algotrading"
+version = "1.0.0"
+description = "Algorithmic Trading Platform"
+requires-python = ">=3.11"
+license = {text = "MIT"}
+
+dependencies = [
+    "pyjwt>=2.8.0",
+    # Web framework
+    "fastapi>=0.100.0",
+    "uvicorn[standard]>=0.23.0",
+    "python-multipart>=0.0.6",
+    "websockets>=11.0",
+
+    # Data & Config
+    "pydantic>=2.0.0",
+    "pydantic-settings>=2.0.0",
+    "eval-type-backport>=0.2.0",
+    "python-dotenv>=1.0.0",
+    "PyYAML>=6.0",
+
+    # Database
+    "sqlalchemy>=2.0.0",
+    "alembic>=1.12.0",
+    "psycopg2-binary>=2.9.0",
+    "redis>=5.0.0",
+    "aiosqlite>=0.19.0",
+
+    # HTTP clients
+    "requests>=2.31.0",
+    "httpx>=0.25.0",
+    "aiohttp>=3.9.0",
+
+    # Data processing
+    "numpy>=1.24.0",
+    "pandas>=2.0.0",
+    "pyarrow>=12.0.0",
+    "scipy>=1.11.0",
+    "numba>=0.58.0",
+    "joblib>=1.3.0",
+    "h5py>=3.9.0",
+
+    # ML & Deep Learning
+    "scikit-learn>=1.3.0",
+    "xgboost>=2.0.0",
+    "lightgbm>=4.1.0",
+    "catboost>=1.2",
+    "torch>=2.1.0",
+    "optuna>=3.4.0",
+    "shap>=0.43.0",
+
+    # Statistics & Econometrics
+    "statsmodels>=0.14.0",
+    "arch>=6.1.0",
+    "patsy>=0.5.0",
+
+    # Reinforcement Learning
+    "gymnasium>=0.29.0",
+    "stable-baselines3>=2.1.0",
+
+    # Visualization
+    "matplotlib>=3.7.0",
+    "seaborn>=0.12.0",
+    "plotly>=5.17.0",
+    "nicegui>=3.18.0",
+
+    # Quant/Finance
+    "empyrical>=0.5.0; python_version < '3.12'",
+    "empyrical-reloaded>=0.7.0; python_version >= '3.12'",
+    "quantstats>=0.0.62",
+    "yfinance>=0.2.30",
+
+    # Broker integration
+    "ib-insync>=0.9.86",
+    # B2/T2.6: conformal prediction on the dividend-cut classifier
+    "mapie>=1.0.0",
+
+    # Utilities
+    "structlog>=23.2.0",
+    "tenacity>=8.2.0",
+    "tqdm>=4.66.0",
+    "psutil>=5.9.0",
+    "pytz>=2023.3",
+    "python-dateutil>=2.8.0",
+    "click>=8.1.0",
+    "typer>=0.9.0",
+    "rich>=13.6.0",
+    "tabulate>=0.9.0",
+    "networkx>=3.1",
+    "msgpack>=1.0.0",
+    "cryptography>=41.0.0",
+    "aiofiles>=23.2.0",
+    "beautifulsoup4>=4.12.0",
+    "lxml>=4.9.0",
+    "jsonschema>=4.19.0",
+    "jinja2>=3.1.0",
+]
+
+[project.optional-dependencies]
+# A19: runtime extras the deployed paper stack actually imports. asyncpg
+# backs the async PostgreSQL engine the API initializes with a postgres
+# DATABASE_URL; safety runs in CI. Install with `.[paper]`.
+paper = [
+    "asyncpg>=0.29",
+    "greenlet>=3.0",
+    "psycopg[binary]>=3.1",
+]
+dev = [
+    # Testing
+    "pytest>=8.0.0",
+    "pytest-cov>=5.0.0",
+    "pytest-asyncio>=0.24.0",
+    "pytest-mock>=3.14.0",
+    "pytest-xdist>=3.6.0",
+    "pytest-timeout>=2.2.0",
+    "hypothesis>=6.88.0",
+
+    # Linting & Formatting
+    "ruff>=0.11.0",
+    "black>=24.0.0",
+    "isort>=5.13.0",
+
+    # Type checking
+    "mypy>=1.14.0",
+    "types-requests",
+    "types-PyYAML",
+    "types-python-dateutil",
+    "types-redis",
+    "types-PyMySQL",
+
+    # Security
+    "bandit>=1.8.0",
+    "pip-audit>=2.7.0",
+    "detect-secrets>=1.5.0",
+
+    # Quality
+    "radon>=6.0.0",
+    "pylint>=3.3.0",
+    "vulture>=2.11",
+    "pre-commit>=3.8.0",
+]
+
+[build-system]
+requires = ["setuptools>=68.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools.packages.find]
+include = ["app*"]
+exclude = ["tests*", "scripts*", "docs*", ".venv*"]
+
+[tool.black]
+line-length = 100
+target-version = ["py39"]
+skip-string-normalization = true
+
+[tool.isort]
+profile = "black"
+line_length = 100
+combine_as_imports = true
+known_first_party = ["app"]
+multi_line_output = 3
+include_trailing_comma = true
+force_grid_wrap = 0
+use_parentheses = true
+
+[tool.ruff]
+line-length = 100
+target-version = "py39"
+
+[tool.ruff.lint]
+# E/F/W/I/B only: style families (N, UP, SIM, RUF, A, C4, TCH) were selected
+# but never passing on this codebase and add no safety; revisit incrementally.
+select = ["E", "F", "W", "I", "B"]
+ignore = [
+    "E203",   # conflicts with ruff-format
+    "E402",   # module-level imports after code (pattern used across the app)
+    "E501",   # line length handled by ruff-format
+    "B008",   # function calls in defaults (FastAPI dependency pattern)
+    "B007",   # unused loop variable (low value; see ruff docs)
+]
+
+[tool.ruff.lint.per-file-ignores]
+# Pydantic model_rebuild() requires runtime imports for forward reference resolution
+"app/services/risk_scaling_application/models.py" = ["TCH"]
+
+# Test-code patterns that are accepted practice: broad pytest.raises (B017),
+# assert False / probe expressions, star re-exports in test package __init__,
+# unused locals and truthiness comparisons inside assertions.
+"tests/**" = ["B011", "B015", "B017", "B018", "F403", "F405", "F811", "F841", "E712", "E741"]
+
+[tool.ruff.lint.pep8-naming]
+# Standard mathematical/ML variable names (X for features, T for time, etc.)
+# Also includes external API parameter names (reqId from IBKR) and
+# common class-variable patterns (Session from SQLAlchemy, LogLevel from logging)
+classmethod-decorators = ["classmethod", "validator"]
+ignore-names = ["X", "X_train", "X_test", "X_val", "X_array", "X_scaled", "X_transformed", "X_meta", "X_meta_train", "X_meta_test", "X_permuted", "X_data", "X_t", "X_boot", "X_sample", "X_train_cv", "X_restricted", "X_unrestricted", "X_with_intercept", "X_with_const", "X_window", "X_weighted", "X_val_t", "X_val_df", "X_tsne", "X_train_t", "X_train_fold", "X_train_df", "X_test_fold", "X_single", "X_sequences", "X_pca", "X_other", "X_normalized", "X_no_noise", "X_mean", "X_df", "X_aligned", "X_adf", "X1", "X1_values", "X2", "X2_values", "Y", "Y_mean", "S", "S_", "T", "K", "R", "R1", "R2", "R_S", "R_combined", "R_", "Q", "Q_values", "P", "P_i", "P_rows", "G", "G_", "N", "N_", "N_d1", "N_d2", "N_prime_d1", "V0", "V_low", "V_high", "Sigma", "Sigma0", "Sigma_u", "Omega", "Omega_inv", "tau_Sigma", "tau_Sigma_inv", "Xty", "XtX_inv", "XtX", "dW", "M", "M1", "M2", "M_inv", "M_combined", "W", "STRENGTH_DIVISOR", "MIN_ANNUAL_VOLATILITY", "PI", "reqId", "errorString", "errorCode", "estimatedSpread", "Session", "SessionLocal", "LogService", "LogLevel", "_LogLevel", "ExecutorClass", "ExceptionHandlerType", "RiskManagerClass", "log_RS", "I", "A", "B", "C", "D", "E", "F", "H", "J", "L", "U", "Z"]
+
+[tool.ruff.lint.isort]
+known-first-party = ["app"]
+combine-as-imports = true
+split-on-trailing-comma = false
+
+[tool.mypy]
+python_version = "3.10"
+mypy_path = "stubs"
+warn_return_any = true
+warn_unused_configs = true
+disallow_untyped_defs = false
+disallow_incomplete_defs = false
+check_untyped_defs = true
+no_implicit_optional = true
+warn_redundant_casts = true
+warn_unused_ignores = false
+warn_no_return = true
+follow_imports = "silent"
+ignore_missing_imports = true
+strict_optional = true
+
+
+# Deuda de tipos RESTANTE (2-11): 895 errores en 98 submódulos, listados
+# UNO A UNO — el resto del árbol está cubierto por el gate (mypy app/).
+# Rehabilitar un módulo: quitarlo de esta lista y arreglar sus errores.
+# Histórico: baseline 2026-10-17 = 4.317 con 6 paquetes enteros excluidos;
+# las campañas de purga/fusión lo dejaron en esto.
+[[tool.mypy.overrides]]
+module = [
+    "app.backtesting.advanced_visualizations",
+    "app.backtesting.advanced_visualizations.*",
+    "app.backtesting.awesome_quant_integrator",
+    "app.backtesting.awesome_quant_integrator.*",
+    "app.backtesting.base_engine",
+    "app.backtesting.base_engine.*",
+    "app.backtesting.capital_scale_analyzer",
+    "app.backtesting.capital_scale_analyzer.*",
+    "app.backtesting.chan_metrics",
+    "app.backtesting.chan_metrics.*",
+    "app.backtesting.core",
+    "app.backtesting.core.*",
+    "app.backtesting.data_loader",
+    "app.backtesting.data_loader.*",
+    "app.backtesting.dividend_cut_classifier",
+    "app.backtesting.dividend_cut_classifier.*",
+    "app.backtesting.dividend_safety",
+    "app.backtesting.dividend_safety.*",
+    "app.backtesting.engine",
+    "app.backtesting.engine.*",
+    "app.backtesting.engines",
+    "app.backtesting.engines.*",
+    "app.backtesting.ensemble_methods",
+    "app.backtesting.ensemble_methods.*",
+    "app.backtesting.execution",
+    "app.backtesting.execution.*",
+    "app.backtesting.feature_engineering",
+    "app.backtesting.feature_engineering.*",
+    "app.backtesting.financial_ml",
+    "app.backtesting.financial_ml.*",
+    "app.backtesting.fundamentals_source",
+    "app.backtesting.fundamentals_source.*",
+    "app.backtesting.labeling",
+    "app.backtesting.labeling.*",
+    "app.backtesting.liquidity_validator",
+    "app.backtesting.liquidity_validator.*",
+    "app.backtesting.model_selection",
+    "app.backtesting.model_selection.*",
+    "app.backtesting.point_in_time_database",
+    "app.backtesting.point_in_time_database.*",
+    "app.backtesting.realistic_data_generator",
+    "app.backtesting.realistic_data_generator.*",
+    "app.backtesting.regime_analyzer",
+    "app.backtesting.regime_analyzer.*",
+    "app.backtesting.reports",
+    "app.backtesting.reports.*",
+    "app.backtesting.runners",
+    "app.backtesting.runners.*",
+    "app.backtesting.services",
+    "app.backtesting.services.*",
+    "app.backtesting.shared",
+    "app.backtesting.shared.*",
+    "app.backtesting.signal_diagnostic_logger",
+    "app.backtesting.signal_diagnostic_logger.*",
+    "app.backtesting.universe_manager",
+    "app.backtesting.universe_manager.*",
+    "app.backtesting.validation",
+    "app.backtesting.validation.*",
+    "app.backtesting.walk_forward_validator",
+    "app.backtesting.walk_forward_validator.*",
+    "app.domain.analysis",
+    "app.domain.analysis.*",
+    "app.domain.ensemble",
+    "app.domain.ensemble.*",
+    "app.domain.market_analysis",
+    "app.domain.market_analysis.*",
+    "app.domain.models",
+    "app.domain.models.*",
+    "app.domain.optimization",
+    "app.domain.optimization.*",
+    "app.domain.portfolio_optimization",
+    "app.domain.portfolio_optimization.*",
+    "app.domain.repositories",
+    "app.domain.repositories.*",
+    "app.domain.services",
+    "app.domain.services.*",
+    "app.domain.strategies",
+    "app.domain.strategies.*",
+    "app.domain.trading",
+    "app.domain.trading.*",
+    "app.engines.context_engine",
+    "app.engines.context_engine.*",
+    "app.engines.data_engine",
+    "app.engines.data_engine.*",
+    "app.engines.event_engine",
+    "app.engines.event_engine.*",
+    "app.engines.execution_engine",
+    "app.engines.execution_engine.*",
+    "app.engines.portfolio_engine",
+    "app.engines.portfolio_engine.*",
+    "app.engines.risk_engine",
+    "app.engines.risk_engine.*",
+    "app.engines.strategy_engines",
+    "app.engines.strategy_engines.*",
+    "app.infrastructure.data",
+    "app.infrastructure.data.*",
+    "app.infrastructure.data_sources",
+    "app.infrastructure.data_sources.*",
+    "app.infrastructure.execution",
+    "app.infrastructure.execution.*",
+    "app.infrastructure.feeds",
+    "app.infrastructure.feeds.*",
+    "app.infrastructure.logging",
+    "app.infrastructure.logging.*",
+    "app.infrastructure.middleware",
+    "app.infrastructure.middleware.*",
+    "app.infrastructure.monitoring",
+    "app.infrastructure.monitoring.*",
+    "app.infrastructure.persistence",
+    "app.infrastructure.persistence.*",
+    "app.presentation.api",
+    "app.presentation.api.*",
+    "app.presentation.dashboard",
+    "app.presentation.dashboard.*",
+    "app.services.agent_swarm",
+    "app.services.agent_swarm.*",
+    "app.services.alerting_system",
+    "app.services.alerting_system.*",
+    "app.services.backtest_orchestration",
+    "app.services.backtest_orchestration.*",
+    "app.services.capital_tier_strategy_selector",
+    "app.services.capital_tier_strategy_selector.*",
+    "app.services.compliance",
+    "app.services.compliance.*",
+    "app.services.corporate_actions",
+    "app.services.corporate_actions.*",
+    "app.services.crypto_data_service",
+    "app.services.crypto_data_service.*",
+    "app.services.execution_cost_analyzer",
+    "app.services.execution_cost_analyzer.*",
+    "app.services.external_integrations",
+    "app.services.external_integrations.*",
+    "app.services.factor_models",
+    "app.services.factor_models.*",
+    "app.services.fifo",
+    "app.services.fifo.*",
+    "app.services.forex_data_service",
+    "app.services.forex_data_service.*",
+    "app.services.forex_risk",
+    "app.services.forex_risk.*",
+    "app.services.half_life_calculator",
+    "app.services.half_life_calculator.*",
+    "app.services.hurst_analysis",
+    "app.services.hurst_analysis.*",
+    "app.services.hurst_exponent_analyzer",
+    "app.services.hurst_exponent_analyzer.*",
+    "app.services.live_trading",
+    "app.services.live_trading.*",
+    "app.services.market_data_service",
+    "app.services.market_data_service.*",
+    "app.services.market_universe_orchestrator",
+    "app.services.market_universe_orchestrator.*",
+    "app.services.momentum",
+    "app.services.momentum.*",
+    "app.services.momentum_analysis",
+    "app.services.momentum_analysis.*",
+    "app.services.monitoring",
+    "app.services.monitoring.*",
+    "app.services.numba_risk",
+    "app.services.numba_risk.*",
+    "app.services.ops",
+    "app.services.ops.*",
+    "app.services.portfolio_analytics",
+    "app.services.portfolio_analytics.*",
+    "app.services.portfolio_management",
+    "app.services.portfolio_management.*",
+    "app.services.portfolio_risk_manager",
+    "app.services.portfolio_risk_manager.*",
+    "app.services.position_management",
+    "app.services.position_management.*",
+    "app.services.position_sizing_engine",
+    "app.services.position_sizing_engine.*",
+    "app.services.profile_driven_trading",
+    "app.services.profile_driven_trading.*",
+    "app.services.profile_generator",
+    "app.services.profile_generator.*",
+    "app.services.rate_limiting",
+    "app.services.rate_limiting.*",
+    "app.services.risk_scaling",
+    "app.services.risk_scaling.*",
+    "app.services.risk_scaling_application",
+    "app.services.risk_scaling_application.*",
+    "app.services.signal_execution_engine",
+    "app.services.signal_execution_engine.*",
+    "app.services.signal_scorer",
+    "app.services.signal_scorer.*",
+    "app.services.smart_order_routing",
+    "app.services.smart_order_routing.*",
+    "app.services.strategy_recommender",
+    "app.services.strategy_recommender.*",
+    "app.services.tax_efficiency",
+    "app.services.tax_efficiency.*",
+    "app.shared.config",
+    "app.shared.config.*",
+    "app.shared.performance",
+    "app.shared.performance.*",
+]
+ignore_errors = true
+
+# scripts/ (helpers ad-hoc, no producto) queda fuera del gate
+[[tool.mypy.overrides]]
+module = "scripts.*"
+ignore_errors = true
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+python_files = ["test_*.py"]
+python_classes = ["Test*"]
+python_functions = ["test_*"]
+addopts = [
+    "-v",
+    "--strict-markers",
+    "--tb=short",
+    "--import-mode=importlib",
+    "--cov=app",
+    "--cov-branch",
+    "--cov-report=term-missing",
+    "--cov-report=html:htmlcov",
+    "--cov-report=xml:coverage.xml",
+    "--cov-fail-under=80",
+]
+filterwarnings = [
+    "ignore::DeprecationWarning",
+    "ignore::pytest.PytestDeprecationWarning",
+    "ignore::pydantic.warnings.PydanticDeprecatedSince20",
+]
+markers = [
+    "unit: Unit tests (fast, isolated)",
+    "integration: Integration tests (slower, may use external services)",
+    "api: API endpoint tests",
+    "performance: Performance tests",
+    "load: Load and stress tests",
+    "configuration: Configuration tests",
+    "strategy: Strategy tests",
+    "database: Database tests",
+    "error_handling: Error handling tests",
+    "e2e: End-to-end tests",
+    "slow: Slow running tests",
+    "property_based: Property-based tests",
+    "property: Property-based test alias",
+    "coverage: Coverage tests",
+    "critical: Critical path tests that must always pass",
+    "requires_broker: Tests requiring broker connection",
+    "requires_market_data: Tests requiring market data API",
+    "requires_database: Tests requiring database connection",
+    "overnight: Tests suitable for overnight runs",
+]
+asyncio_mode = "auto"
+asyncio_default_fixture_loop_scope = "function"
+
+[tool.coverage.run]
+source = ["app"]
+omit = [
+    "tests/*",
+    "scripts/*",
+    "*/migrations/*",
+    "*/alembic/*",
+    "*/__pycache__/*",
+    "*/.venv/*",
+    "*/venv/*",
+    "*/docs/*",
+    "*/config/*",
+]
+branch = true
+
+[tool.coverage.report]
+fail_under = 80
+exclude_lines = [
+    "pragma: no cover",
+    "if TYPE_CHECKING:",
+    "if __name__ == .__main__.:",
+    "pass",
+    "raise NotImplementedError",
+]

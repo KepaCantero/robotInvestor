@@ -1,0 +1,63 @@
+# Requirements Document: app/services/live_trading/trading_bridge_orchestrator.py
+
+## 1. Module Overview
+File: trading_bridge_orchestrator.py
+Domain: Service
+
+## 2. Dependencies
+- `__future__`
+- `alert_to_trade_mapper`
+- `app.services.alerting_system`
+- `asyncio`
+- `broker_connector`
+- `collections`
+- `dataclasses`
+- `datetime`
+- `decimal`
+- `enum`
+- `itertools`
+- `logging`
+- `order_manager`
+- `risk_gates`
+- `typing`
+- `uuid`
+
+## 3. Core Components
+### Classes
+- `BridgeStatus`
+- `AlertToTradeExecution`
+- `TradingBridgeOrchestrator`
+### Public Functions
+- `get_trading_bridge_orchestrator()`
+- `to_dict()`
+- `start()`
+- `stop()`
+- `process_alert()`
+- `get_execution()`
+- `get_recent_executions()`
+- `get_bridge_statistics()`
+
+## 4. Applicable Trading Rules
+
+#### R8
+Bid-Ask Spread Management (avoid market orders for low-liquidity)
+
+- [ ] Implementation verified
+- [ ] Tests pass
+
+#### R9
+Execution Timing (avoid first/last 15 min, VWAP/TWAP for large orders)
+
+- [ ] Implementation verified
+- [ ] Tests pass
+
+#### R10
+Slippage Monitor (track actual vs expected fill, alert if >0.5%)
+
+- [ ] Implementation verified
+- [ ] Tests pass
+
+---
+Universal rules (SOLID, type hints, formatting, security, logging) live in
+.requirements/BASE_RULES.md and apply to every file.
+Resync this stub with: python scripts/generate_requirements.py

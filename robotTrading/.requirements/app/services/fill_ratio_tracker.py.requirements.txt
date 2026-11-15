@@ -1,0 +1,40 @@
+# Requirements Document: app/services/fill_ratio_tracker.py
+
+## 1. Module Overview
+File: fill_ratio_tracker.py
+Domain: Service
+
+## 2. Dependencies
+- `__future__`
+- `app.domain.models.order`
+- `collections`
+- `datetime`
+- `decimal`
+- `logging`
+- `typing`
+
+## 3. Core Components
+### Classes
+- `FillMetrics`
+- `FillRatioTracker`
+### Public Functions
+- `get_fill_ratio_tracker()`
+- `track_order()`
+- `record_fill()`
+- `record_partial_fill()`
+- `record_order_status()`
+- `get_fill_ratio_stats()`
+- `find_metrics()`
+
+## 4. Applicable Trading Rules
+
+#### R15
+Complete Logging (log all decisions, trade journal format)
+
+- [ ] Implementation verified
+- [ ] Tests pass
+
+---
+Universal rules (SOLID, type hints, formatting, security, logging) live in
+.requirements/BASE_RULES.md and apply to every file.
+Resync this stub with: python scripts/generate_requirements.py

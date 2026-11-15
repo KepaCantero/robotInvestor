@@ -1,0 +1,75 @@
+# Requirements Document: app/services/multi_strategy_allocation.py
+
+## 1. Module Overview
+File: multi_strategy_allocation.py
+Domain: Service
+
+## 2. Dependencies
+- `__future__`
+- `app.shared.config.centralized_config`
+- `datetime`
+- `decimal`
+- `logging`
+- `typing`
+
+## 3. Core Components
+### Classes
+- `StrategyCapitalAllocation`
+- `MultiStrategyAllocationManager`
+- `DynamicPortfolioSelector`
+### Public Functions
+- `get_multi_strategy_manager()`
+- `get_dynamic_selector()`
+- `allocate()`
+- `update_weight()`
+- `add_performance_data()`
+- `calculate_rolling_returns()`
+- `allocate_capital()`
+- `get_allocation_for_strategy()`
+- `update_total_capital()`
+- `update_strategy_performance()`
+- `rebalance_allocations()`
+- `should_rebalance()`
+
+## 4. Applicable Trading Rules
+
+#### R19
+Market Regime Detection (trend/range/volatile classification)
+
+- [ ] Implementation verified
+- [ ] Tests pass
+
+#### R20
+Multi-Confirmation (min 2 independent signals before trade)
+
+- [ ] Implementation verified
+- [ ] Tests pass
+
+#### R24
+Strategy Diversification (min 3 uncorrelated strategies)
+
+- [ ] Implementation verified
+- [ ] Tests pass
+
+#### R25
+Phase 1: 5K-15K EUR, max 3 positions, 2% risk/trade
+
+- [ ] Implementation verified
+- [ ] Tests pass
+
+#### R26
+Phase 2: 15K-50K EUR, max 5 positions, 1.5% risk/trade
+
+- [ ] Implementation verified
+- [ ] Tests pass
+
+#### R27
+Phase 3: 50K+ EUR, max 10 positions, 1% risk/trade
+
+- [ ] Implementation verified
+- [ ] Tests pass
+
+---
+Universal rules (SOLID, type hints, formatting, security, logging) live in
+.requirements/BASE_RULES.md and apply to every file.
+Resync this stub with: python scripts/generate_requirements.py

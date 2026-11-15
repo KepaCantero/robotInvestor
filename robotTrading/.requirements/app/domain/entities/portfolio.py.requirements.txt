@@ -1,0 +1,85 @@
+# Requirements Document: app/domain/entities/portfolio.py
+
+## 1. Module Overview
+File: portfolio.py
+Domain: Domain
+
+## 2. Dependencies
+- `__future__`
+- `app.domain.entities.position`
+- `app.domain.value_objects.capital`
+- `app.domain.value_objects.money`
+- `app.domain.value_objects.risk_parameters`
+- `app.shared.config.centralized_config`
+- `collections.abc`
+- `dataclasses`
+- `datetime`
+- `decimal`
+- `enum`
+- `logging`
+- `typing`
+
+## 3. Core Components
+### Classes
+- `TradingConfigProvider`
+- `PortfolioStatus`
+- `Portfolio`
+### Public Functions
+- `stop_loss_pct()`
+- `take_profit_pct()`
+- `set_audit_logger()`
+- `set_config_provider()`
+- `add_position()`
+- `remove_position()`
+- `update_position_price()`
+- `get_position()`
+- `get_open_positions()`
+- `get_closed_positions()`
+- `iterate_positions()`
+- `get_total_value()`
+- `get_cash()`
+- `get_positions_value()`
+- `get_total_pnl()`
+- `get_unrealized_pnl()`
+- `get_realized_pnl()`
+- `get_total_return_percent()`
+- `get_exposure()`
+- `get_gross_exposure()`
+- `get_portfolio_beta()`
+- `is_risk_limit_exceeded()`
+- `get_concentration()`
+- `get_max_concentration()`
+- `is_position_size_allowed()`
+- `can_add_position()`
+- `freeze()`
+- `unfreeze()`
+- `suspend()`
+- `activate()`
+- `close()`
+- `create()`
+- `to_dict()`
+
+## 4. Applicable Trading Rules
+
+#### R1
+Kelly Criterion + Max Position Size (max 5% per position)
+
+- [ ] Implementation verified
+- [ ] Tests pass
+
+#### R3
+Correlation & Concentration Limits (max 20% per sector)
+
+- [ ] Implementation verified
+- [ ] Tests pass
+
+#### R11
+Dynamic Trailing Stop (ATR-based, never loosen)
+
+- [ ] Implementation verified
+- [ ] Tests pass
+
+---
+Universal rules (SOLID, type hints, formatting, security, logging) live in
+.requirements/BASE_RULES.md and apply to every file.
+Resync this stub with: python scripts/generate_requirements.py

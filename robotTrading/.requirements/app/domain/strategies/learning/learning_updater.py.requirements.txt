@@ -1,0 +1,57 @@
+# Requirements Document: app/domain/strategies/learning/learning_updater.py
+
+## 1. Module Overview
+File: learning_updater.py
+Domain: Domain
+
+## 2. Dependencies
+- `__future__`
+- `app.domain.models.market_data`
+- `base_learning_engine`
+- `datetime`
+- `decimal`
+- `drift_detector`
+- `feature_importance`
+- `importlib.util`
+- `logging`
+- `numpy`
+- `pathlib`
+- `training_data_preparator`
+- `transfer_learning`
+- `typing`
+- `yaml`
+
+## 3. Core Components
+### Classes
+- `LearningEngineUpdater`
+### Public Functions
+- `load_transfer_learning_config()`
+- `should_retrain()`
+- `check_drift()`
+- `set_reference_data()`
+- `record_training_metrics()`
+- `get_drift_history()`
+- `get_drift_summary()`
+- `add_trade_result()`
+- `add_market_data()`
+- `retrain_if_needed()`
+- `get_last_feature_importance_analysis()`
+- `get_feature_importance_history()`
+- `get_feature_importance_summary()`
+- `get_last_transfer_operation()`
+- `get_transfer_history()`
+- `get_available_pretrained_models()`
+- `get_transfer_learning_status()`
+
+## 4. Applicable Trading Rules
+
+#### R15
+Complete Logging (log all decisions, trade journal format)
+
+- [ ] Implementation verified
+- [ ] Tests pass
+
+---
+Universal rules (SOLID, type hints, formatting, security, logging) live in
+.requirements/BASE_RULES.md and apply to every file.
+Resync this stub with: python scripts/generate_requirements.py

@@ -1,0 +1,87 @@
+# Requirements Document: app/domain/strategies/fx_carry_trade/fx_rates_provider.py
+
+## 1. Module Overview
+File: fx_rates_provider.py
+Domain: Domain
+
+## 2. Dependencies
+- `__future__`
+- `abc`
+- `app.domain.strategies.fx_carry_trade.models`
+- `app.shared.config.centralized_config`
+- `dataclasses`
+- `datetime`
+- `decimal`
+- `logging`
+- `time`
+- `typing`
+
+## 3. Core Components
+### Classes
+- `FXDataSource`
+- `FXInterestRateProviderProtocol`
+- `FXRateProvider`
+- `InMemoryFXRateProvider`
+- `CompositeFXRateProvider`
+- `MockFXDataSource`
+- `CachedFXRateProvider`
+- `FXRateProviderImpl`
+- `FXInterestRateProviderImpl`
+### Public Functions
+- `get_rate()`
+- `get_forward_points()`
+- `get_interest_rate()`
+- `get_quote()`
+- `get_spot_rate()`
+- `get_forward_rate()`
+- `get_interest_rate()`
+- `get_available_pairs()`
+- `get_available_currencies()`
+- `spot_rates()`
+- `forward_rates()`
+- `interest_rates()`
+- `add_spot_rate()`
+- `add_forward_rate()`
+- `add_interest_rate()`
+- `get_spot_rate()`
+- `get_forward_rate()`
+- `get_interest_rate()`
+- `get_available_pairs()`
+- `get_available_currencies()`
+- `get_rate_quote()`
+- `get_fx_summary()`
+- `get_interest_rate_summary()`
+- `clear_data()`
+- `get_spot_rate()`
+- `get_forward_rate()`
+- `get_interest_rate()`
+- `get_available_pairs()`
+- `get_available_currencies()`
+- `get_rate()`
+- `get_forward_points()`
+- `get_interest_rate()`
+- `get_spot_rate()`
+- `get_forward_rate()`
+- `get_interest_rate()`
+- `get_available_pairs()`
+- `get_available_currencies()`
+- `clear_cache()`
+- `get_spot_rate()`
+- `get_forward_rate()`
+- `get_interest_rate()`
+- `get_available_pairs()`
+- `get_available_currencies()`
+- `get_quote()`
+
+## 4. Applicable Trading Rules
+
+#### R15
+Complete Logging (log all decisions, trade journal format)
+
+- [ ] Implementation verified
+- [ ] Tests pass
+
+---
+Universal rules (SOLID, type hints, formatting, security, logging) live in
+.requirements/BASE_RULES.md and apply to every file.
+Resync this stub with: python scripts/generate_requirements.py

@@ -1,0 +1,960 @@
+"""
+FIFO Trading Database Schema - Spain Tax Compliance (Modelo 721)
+
+CRITICAL FOR SPAIN RESIDENTS:
+- Modelo 720: Foreign assets > €50k
+- Modelo 721: Cryptocurrency holdings (ANY amount)
+- FIFO tracking: MANDATORY for Hacienda
+- Multi-exchange tracking: Binance, Coinbase, Kraken, Ledger, etc.
+
+Architecture:
+- PostgreSQL for relational data (trades, lots)
+- TimescaleDB extension for time-series (prices, balances)
+- Immutable audit trail (Hacienda puede auditar)
+
+Phase 0.3: Timezone Awareness
+- All timestamps use timezone-aware datetime
+- Exchange timezone tracking (for Phase 3 implementation)
+
+Author: Claude (Multi-Market Expansion)
+Date: 2025-01-25
+Status: DESIGN PHASE - Not implemented
+"""
+
+from __future__ import annotations
+
+import logging
+from dataclasses import dataclass
+from datetime import datetime, timezone
+from decimal import Decimal
+from enum import Enum
+from typing import cast
+from uuid import UUID, uuid4
+
+logger = logging.getLogger(__name__)
+
+import sqlalchemy as sa
+from sqlalchemy import select
+from sqlalchemy.dialects.postgresql import JSONB, UUID as PGUUID
+from sqlalchemy.ext.hybrid import hybrid_property
+from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column
+
+
+class Base(DeclarativeBase):
+    """SQLAlchemy declarative base for FIFO tax schema."""
+
+
+# ============================================================================
+# ENUMS
+# ============================================================================
+
+
+class AssetType(str, Enum):
+    """Tipo de activo para Modelo 721/720"""
+
+    CRYPTO = "crypto"  # Modelo 721
+    STOCK_US = "stock_us"  # Modelo 720
+    STOCK_EU = "stock_eu"  # No reporting (UE)
+    FOREX = "forex"  # Modelo 720
+    ETF = "etf"  # Modelo 720
+
+
+class ExchangeType(str, Enum):
+    """Tipo de exchange/plataforma"""
+
+    CEX = "cex"  # Centralized (Binance, Coinbase)
+    DEX = "dex"  # Decentralized (Uniswap)
+    BROKER = "broker"  # Traditional broker (IBKR, Degiro)
+    WALLET = "wallet"  # Hardware wallet (Ledger, Trezor)
+    OTC = "otc"  # Over-the-counter
+
+
+class TransactionType(str, Enum):
+    """Tipo de transacción"""
+
+    BUY = "buy"
+    SELL = "sell"
+    TRANSFER_IN = "transfer_in"  # Deposit to exchange
+    TRANSFER_OUT = "transfer_out"  # Withdraw from exchange
+    STAKING_REWARD = "staking_reward"  # Staking income
+    MINING_REWARD = "mining_reward"  # Mining income
+    AIRDROP = "airdrop"  # Airdrop (taxable event!)
+    FORK = "fork"  # Chain split (taxable event!)
+    FEE = "fee"  # Trading fee
+    GAS = "gas"  # Network fee
+
+
+class LotStatus(str, Enum):
+    """Estado de un lote FIFO"""
+
+    OPEN = "open"  # Disponible para vender
+    CLOSED = "closed"  # Vendido completamente
+    PARTIAL = "partial"  # Vendido parcialmente
+
+
+# ============================================================================
+# TABLES
+# ============================================================================
+
+
+class Account(Base):
+    """
+    Cuenta de trading/broker.
+
+    Una cuenta = Un exchange + Un currency.
+
+    Ejemplo:
+    - Binance BTC wallet
+    - Coinbase EUR wallet
+    - Ledger ETH wallet
+    - IBKR USD account
+    """
+
+    __tablename__ = "accounts"
+
+    # Primary key
+    id: Mapped[UUID] = mapped_column(PGUUID(as_uuid=True), primary_key=True, default=uuid4)
+
+    # Identification
+    user_id: Mapped[UUID] = mapped_column(PGUUID(as_uuid=True), nullable=False, index=True)
+    account_name: Mapped[str] = mapped_column(sa.String(100), nullable=False)
+    exchange_type: Mapped[ExchangeType] = mapped_column(
+        sa.Enum(
+            ExchangeType,
+            native_enum=False,
+            values_callable=lambda e: [m.value for m in e],
+            validate_strings=True,
+        ),
+        nullable=False,
+    )
+    # Tipo de activo fiscal (Modelo 721/720); migración 0003 hace el backfill
+    asset_type: Mapped[AssetType] = mapped_column(
+        sa.Enum(
+            AssetType,
+            native_enum=False,
+            values_callable=lambda e: [m.value for m in e],
+            validate_strings=True,
+        ),
+        nullable=False,
+        server_default="crypto",
+    )
+    exchange_name: Mapped[str] = mapped_column(
+        sa.String(100), nullable=False
+    )  # "Binance", "Coinbase", "IBKR"
+
+    # Currency
+    currency: Mapped[str] = mapped_column(
+        sa.String(10), nullable=False
+    )  # "BTC", "ETH", "EUR", "USD"
+
+    # Account details (encrypted at rest)
+    api_key_encrypted: Mapped[str | None] = mapped_column(sa.Text, nullable=True)
+    api_secret_encrypted: Mapped[str | None] = mapped_column(sa.Text, nullable=True)
+    wallet_address: Mapped[str | None] = mapped_column(
+        sa.String(255), nullable=True
+    )  # For DEX/Wallets
+
+    # Balance tracking
+    balance_cached: Mapped[Decimal] = mapped_column(sa.Numeric(36, 18), default=Decimal("0"))
+    balance_updated_at: Mapped[datetime | None] = mapped_column(
+        sa.TIMESTAMP(timezone=True), nullable=True
+    )
+    last_sync_at: Mapped[datetime | None] = mapped_column(
+        sa.TIMESTAMP(timezone=True), nullable=True
+    )
+
+    # Metadata
+    is_active: Mapped[bool] = mapped_column(sa.Boolean, default=True)
+    created_at: Mapped[datetime] = mapped_column(
+        sa.TIMESTAMP(timezone=True), default=lambda: datetime.now(timezone.utc)
+    )
+    closed_at: Mapped[datetime | None] = mapped_column(sa.TIMESTAMP(timezone=True), nullable=True)
+
+    # JSONB for extra fields
+    meta_data: Mapped[dict] = mapped_column(JSONB, default=dict)
+
+    # Relationships
+    transactions = sa.orm.relationship(
+        "Transaction",
+        back_populates="account",
+        cascade="all, delete-orphan",
+        foreign_keys="[Transaction.account_id]",
+    )
+    lots = sa.orm.relationship("Lot", back_populates="account", cascade="all, delete-orphan")
+    balances = sa.orm.relationship(
+        "BalanceSnapshot", back_populates="account", cascade="all, delete-orphan"
+    )
+
+    __table_args__ = (
+        sa.Index("idx_accounts_user_active", "user_id", "is_active"),
+        sa.Index("idx_accounts_exchange_currency", "exchange_name", "currency"),
+    )
+
+
+class Transaction(Base):
+    """
+    Transacción individual con tracking FIFO.
+
+    CRITICAL: Cada transacción debe ser inmutable para auditoría.
+    """
+
+    __tablename__ = "transactions"
+
+    # Primary key
+    id: Mapped[UUID] = mapped_column(PGUUID(as_uuid=True), primary_key=True, default=uuid4)
+
+    # External ID (from exchange) - PREVENTS DUPLICATES
+    external_id: Mapped[str] = mapped_column(sa.String(255), nullable=False, index=True)
+    exchange_tx_id: Mapped[str | None] = mapped_column(
+        sa.String(255), nullable=True
+    )  # Raw TX hash for crypto
+
+    # Account
+    account_id: Mapped[UUID] = mapped_column(
+        PGUUID(as_uuid=True), sa.ForeignKey("accounts.id"), nullable=False
+    )
+    account = sa.orm.relationship(
+        "Account", back_populates="transactions", foreign_keys="Transaction.account_id"
+    )
+
+    # Asset
+    asset_type: Mapped[AssetType] = mapped_column(
+        sa.Enum(
+            AssetType,
+            native_enum=False,
+            values_callable=lambda e: [m.value for m in e],
+            validate_strings=True,
+        ),
+        nullable=False,
+        server_default="crypto",
+    )
+    symbol: Mapped[str] = mapped_column(
+        sa.String(20), nullable=False, index=True
+    )  # "BTC", "AAPL", "EURUSD"
+
+    # Transaction details
+    tx_type: Mapped[TransactionType] = mapped_column(
+        sa.Enum(
+            TransactionType,
+            native_enum=False,
+            values_callable=lambda e: [m.value for m in e],
+            validate_strings=True,
+        ),
+        nullable=False,
+    )
+    side: Mapped[str | None] = mapped_column(
+        sa.String(10), nullable=True
+    )  # "BUY", "SELL" (for trades)
+
+    # Quantities - ALWAYS DECIMAL
+    quantity: Mapped[Decimal] = mapped_column(sa.Numeric(36, 18), nullable=False)
+    quantity_symbol: Mapped[str] = mapped_column(sa.String(20), nullable=False)  # "BTC", "USD"
+
+    # Prices - ALWAYS DECIMAL
+    price: Mapped[Decimal | None] = mapped_column(sa.Numeric(36, 18), nullable=True)  # Unit price
+    total_value: Mapped[Decimal | None] = mapped_column(
+        sa.Numeric(36, 18), nullable=True
+    )  # quantity * price
+
+    # Fees - CRITICAL FOR TAX BASIS
+    fee_amount: Mapped[Decimal] = mapped_column(sa.Numeric(36, 18), default=Decimal("0"))
+    fee_currency: Mapped[str] = mapped_column(sa.String(10), nullable=False)
+    fee_included: Mapped[bool] = mapped_column(
+        sa.Boolean, default=False
+    )  # If fee is included in total_value
+
+    # Timestamps - TIMEZONE AWARE
+    occurred_at: Mapped[datetime] = mapped_column(
+        sa.TIMESTAMP(timezone=True), nullable=False, index=True
+    )
+    recorded_at: Mapped[datetime] = mapped_column(
+        sa.TIMESTAMP(timezone=True), default=lambda: datetime.now(timezone.utc)
+    )
+
+    # Settlement (for stocks/forex)
+    settled_at: Mapped[datetime | None] = mapped_column(sa.TIMESTAMP(timezone=True), nullable=True)
+    settlement_date: Mapped[datetime | None] = mapped_column(sa.DATE, nullable=True)
+
+    # FIFO linking
+    lot_id: Mapped[UUID | None] = mapped_column(
+        PGUUID(as_uuid=True), sa.ForeignKey("lots.id"), nullable=True
+    )
+    lot = sa.orm.relationship(
+        "Lot", back_populates="transactions", foreign_keys="Transaction.lot_id"
+    )
+
+    # Tax-related fields
+    is_taxable: Mapped[bool] = mapped_column(sa.Boolean, default=True)
+    tax_year: Mapped[int] = mapped_column(
+        sa.Integer, nullable=True, index=True
+    )  # For Modelo 721 annual filtering
+
+    # Counterparty (for transfers)
+    from_account_id: Mapped[UUID | None] = mapped_column(
+        PGUUID(as_uuid=True), sa.ForeignKey("accounts.id"), nullable=True
+    )
+    to_account_id: Mapped[UUID | None] = mapped_column(
+        PGUUID(as_uuid=True), sa.ForeignKey("accounts.id"), nullable=True
+    )
+    from_address: Mapped[str | None] = mapped_column(
+        sa.String(255), nullable=True
+    )  # Crypto address
+    to_address: Mapped[str | None] = mapped_column(sa.String(255), nullable=True)  # Crypto address
+
+    # Metadata
+    notes: Mapped[str | None] = mapped_column(sa.Text, nullable=True)
+    meta_data: Mapped[dict] = mapped_column(JSONB, default=dict)
+
+    # Audit fields
+    created_at: Mapped[datetime] = mapped_column(
+        sa.TIMESTAMP(timezone=True), default=lambda: datetime.now(timezone.utc)
+    )
+    updated_at: Mapped[datetime] = mapped_column(
+        sa.TIMESTAMP(timezone=True),
+        default=lambda: datetime.now(timezone.utc),
+        onupdate=lambda: datetime.now(timezone.utc),
+    )
+    is_verified: Mapped[bool] = mapped_column(
+        sa.Boolean, default=False
+    )  # Verified against exchange API
+
+    __table_args__ = (
+        sa.UniqueConstraint("external_id", "account_id", name="uq_tx_external_account"),
+        sa.Index("idx_transactions_symbol_type", "symbol", "tx_type"),
+        sa.Index("idx_transactions_occurred", "occurred_at"),
+        sa.Index("idx_transactions_tax_year", "tax_year"),
+    )
+
+    @hybrid_property
+    def cost_basis(self) -> Decimal:
+        """
+        Cost basis para cálculo fiscal.
+
+        Para BUY: total_value + fees
+        Para SELL: Se calcula basado en lotes FIFO cerrados
+        """
+        if self.tx_type == TransactionType.BUY:
+            return (self.total_value or Decimal("0")) + self.fee_amount
+        elif self.tx_type == TransactionType.SELL:
+            # Cost basis comes from closed lots
+            # This is calculated during lot closure
+            raw_value = self.meta_data.get("cost_basis_from_lots", Decimal("0"))
+            return cast("Decimal", raw_value)
+        else:
+            return Decimal("0")
+
+
+class Lot(Base):
+    """
+    Lote FIFO para tracking de cost basis.
+
+    Cada BUY crea uno o más lotes.
+    Cada SELL cierra lotes en orden FIFO.
+    """
+
+    __tablename__ = "lots"
+
+    # Primary key
+    id: Mapped[UUID] = mapped_column(PGUUID(as_uuid=True), primary_key=True, default=uuid4)
+
+    # Account
+    account_id: Mapped[UUID] = mapped_column(
+        PGUUID(as_uuid=True), sa.ForeignKey("accounts.id"), nullable=False
+    )
+    account = sa.orm.relationship("Account", back_populates="lots")
+
+    # Asset
+    symbol: Mapped[str] = mapped_column(sa.String(20), nullable=False, index=True)
+    asset_type: Mapped[AssetType] = mapped_column(
+        sa.Enum(
+            AssetType,
+            native_enum=False,
+            values_callable=lambda e: [m.value for m in e],
+            validate_strings=True,
+        ),
+        nullable=False,
+        server_default="crypto",
+    )
+
+    # Original purchase (cost basis)
+    opening_transaction_id: Mapped[UUID] = mapped_column(
+        PGUUID(as_uuid=True), sa.ForeignKey("transactions.id"), nullable=False
+    )
+    quantity_opened: Mapped[Decimal] = mapped_column(sa.Numeric(36, 18), nullable=False)
+    cost_basis_open: Mapped[Decimal] = mapped_column(
+        sa.Numeric(36, 18), nullable=False
+    )  # Total cost (price + fees)
+
+    # Current status
+    quantity_remaining: Mapped[Decimal] = mapped_column(sa.Numeric(36, 18), nullable=False)
+    status: Mapped[LotStatus] = mapped_column(
+        sa.Enum(
+            LotStatus,
+            native_enum=False,
+            values_callable=lambda e: [m.value for m in e],
+            validate_strings=True,
+        ),
+        default=LotStatus.OPEN,
+        nullable=False,
+    )
+
+    # Realized gains (when closed)
+    realized_gain: Mapped[Decimal | None] = mapped_column(sa.Numeric(36, 18), nullable=True)
+    realized_loss: Mapped[Decimal | None] = mapped_column(sa.Numeric(36, 18), nullable=True)
+
+    # Dates
+    opened_at: Mapped[datetime] = mapped_column(sa.TIMESTAMP(timezone=True), nullable=False)
+    closed_at: Mapped[datetime | None] = mapped_column(sa.TIMESTAMP(timezone=True), nullable=True)
+
+    # Holding period (for tax classification)
+    holding_period_days: Mapped[int | None] = mapped_column(sa.Integer, nullable=True)
+
+    # Tax year (when closed)
+    tax_year_closed: Mapped[int | None] = mapped_column(sa.Integer, nullable=True)
+
+    # Relationships
+    transactions = sa.orm.relationship(
+        "Transaction", back_populates="lot", foreign_keys="Transaction.lot_id"
+    )
+
+    # Metadata
+    meta_data: Mapped[dict] = mapped_column(JSONB, default=dict)
+
+    __table_args__ = (
+        sa.Index("idx_lots_symbol_status", "symbol", "status"),
+        sa.Index("idx_lots_opened", "opened_at"),
+        sa.CheckConstraint("quantity_remaining >= 0", name="ck_lot_remaining_positive"),
+        sa.CheckConstraint(
+            "quantity_remaining <= quantity_opened", name="ck_lot_remaining_le_opened"
+        ),
+    )
+
+    @hybrid_property
+    def is_long_term(self) -> bool | None:
+        """True if holding period > 1 year (for Spain LT tax rate)"""
+        if self.closed_at is None:
+            return None
+        return (self.closed_at - self.opened_at).days >= 365
+
+
+class BalanceSnapshot(Base):
+    """
+    Snapshot de balance para tracking histórico.
+
+    Necesario para Modelo 721 (valor a 31 de diciembre).
+    """
+
+    __tablename__ = "balance_snapshots"
+
+    # Primary key
+    id: Mapped[UUID] = mapped_column(PGUUID(as_uuid=True), primary_key=True, default=uuid4)
+
+    # Account
+    account_id: Mapped[UUID] = mapped_column(
+        PGUUID(as_uuid=True), sa.ForeignKey("accounts.id"), nullable=False
+    )
+    account = sa.orm.relationship("Account", back_populates="balances")
+
+    # Snapshot details
+    snapshot_type: Mapped[str] = mapped_column(
+        sa.String(20), nullable=False
+    )  # "eod", "monthly", "annual"
+    balance: Mapped[Decimal] = mapped_column(sa.Numeric(36, 18), nullable=False)
+
+    # Valuation in EUR (for Modelo 721)
+    balance_eur: Mapped[Decimal] = mapped_column(
+        sa.Numeric(36, 18), nullable=False
+    )  # Converted to EUR
+    exchange_rate_eur: Mapped[Decimal] = mapped_column(
+        sa.Numeric(18, 8), nullable=False
+    )  # Rate used
+
+    # Timestamp
+    captured_at: Mapped[datetime] = mapped_column(
+        sa.TIMESTAMP(timezone=True), nullable=False, index=True
+    )
+
+    # Source
+    source: Mapped[str] = mapped_column(
+        sa.String(50), nullable=False
+    )  # "api", "manual", "estimated"
+
+    __table_args__ = (
+        sa.Index("idx_balances_account_captured", "account_id", "captured_at"),
+        sa.Index("idx_balances_annual", "account_id", sa.text("date_trunc('year', captured_at)")),
+    )
+
+
+class TaxReport(Base):
+    """
+    Reporte fiscal generado (Modelo 721/720).
+
+    Cada reporte es inmutable para auditoría.
+    """
+
+    __tablename__ = "tax_reports"
+
+    # Primary key
+    id: Mapped[UUID] = mapped_column(PGUUID(as_uuid=True), primary_key=True, default=uuid4)
+
+    # User
+    user_id: Mapped[UUID] = mapped_column(PGUUID(as_uuid=True), nullable=False, index=True)
+
+    # Report type
+    report_type: Mapped[str] = mapped_column(
+        sa.String(20), nullable=False
+    )  # "modelo_720", "modelo_721"
+    tax_year: Mapped[int] = mapped_column(sa.Integer, nullable=False)
+
+    # Report data (JSONB for flexibility)
+    report_data: Mapped[dict] = mapped_column(JSONB, nullable=False)
+
+    # Summary fields (for easy querying)
+    total_holdings_eur: Mapped[Decimal] = mapped_column(sa.Numeric(36, 18), nullable=False)
+    total_gain_eur: Mapped[Decimal] = mapped_column(sa.Numeric(36, 18), nullable=False)
+    total_loss_eur: Mapped[Decimal] = mapped_column(sa.Numeric(36, 18), nullable=False)
+
+    # Status
+    status: Mapped[str] = mapped_column(sa.String(20), default="draft")  # "draft", "final", "filed"
+    is_amended: Mapped[bool] = mapped_column(sa.Boolean, default=False)
+    amended_from_id: Mapped[UUID | None] = mapped_column(PGUUID(as_uuid=True), nullable=True)
+
+    # Dates
+    report_date: Mapped[datetime] = mapped_column(
+        sa.TIMESTAMP(timezone=True), nullable=False
+    )  # As of date
+    generated_at: Mapped[datetime] = mapped_column(
+        sa.TIMESTAMP(timezone=True), default=lambda: datetime.now(timezone.utc)
+    )
+    filed_at: Mapped[datetime | None] = mapped_column(sa.TIMESTAMP(timezone=True), nullable=True)
+
+    # Validation
+    checksum: Mapped[str] = mapped_column(sa.String(64), nullable=True)  # SHA-256 of report_data
+
+    __table_args__ = (
+        sa.UniqueConstraint(
+            "user_id",
+            "report_type",
+            "tax_year",
+            "is_amended",
+            name="uq_tax_report_user_type_year_amended",
+        ),
+        sa.Index("idx_tax_reports_user_year", "user_id", "tax_year"),
+    )
+
+
+# ============================================================================
+# FIFO CALCULATOR
+# ============================================================================
+
+
+@dataclass
+class FIFOCalculation:
+    """
+    Resultado de cálculo FIFO.
+
+    Para cada venta, calcula:
+    1. Qué lotes se cierran (en orden FIFO)
+    2. Cost basis de esos lotes
+    3. Gain/Loss realizados
+    """
+
+    symbol: str
+    sell_transaction_id: UUID
+    quantity_sold: Decimal
+    lots_closed: list[UUID]  # Lot IDs closed
+    cost_basis: Decimal
+    proceeds: Decimal
+    gain: Decimal
+    loss: Decimal
+    holding_period_days: int
+
+
+class FIFOProcessor:
+    """
+    Procesador FIFO para cálculo fiscal.
+
+    Lógica:
+    1. Para cada BUY → Crear nuevo lot
+    2. Para cada SELL → Cerrar lotes en orden FIFO
+    3. Para TRANSFER → Rastrear cost basis entre cuentas
+    """
+
+    def __init__(self, session):
+        self.session = session
+        logger.debug("FIFOProcessor initialized", extra={"session_type": type(session).__name__})
+
+    async def process_buy(self, transaction: Transaction) -> Lot:
+        """
+        Procesar compra → Crear nuevo lote.
+
+        Args:
+            transaction: BUY transaction
+
+        Returns:
+            Lot creado
+        """
+        logger.debug(
+            "Processing BUY transaction for FIFO",
+            extra={
+                "transaction_id": str(transaction.id),
+                "symbol": transaction.symbol,
+                "quantity": str(transaction.quantity),
+                "tx_type": transaction.tx_type.value,
+            },
+        )
+        lot = Lot(
+            account_id=transaction.account_id,
+            symbol=transaction.symbol,
+            asset_type=transaction.asset_type,
+            opening_transaction_id=transaction.id,
+            quantity_opened=transaction.quantity,
+            cost_basis_open=transaction.cost_basis,
+            quantity_remaining=transaction.quantity,
+            status=LotStatus.OPEN,
+            opened_at=transaction.occurred_at,
+        )
+        self.session.add(lot)
+        await self.session.flush()
+        logger.debug(
+            "FIFO lot created for BUY transaction",
+            extra={
+                "lot_id": str(lot.id),
+                "transaction_id": str(transaction.id),
+                "symbol": transaction.symbol,
+                "quantity_opened": str(transaction.quantity),
+                "cost_basis": str(transaction.cost_basis),
+            },
+        )
+        return lot
+
+    async def process_sell(
+        self, transaction: Transaction, strict_fifo: bool = True
+    ) -> FIFOCalculation:
+        """
+        Procesar venta → Cerrar lotes FIFO.
+
+        Args:
+            transaction: SELL transaction
+            strict_fifo: Si True, error si no hay suficientes lotes
+
+        Returns:
+            FIFOCalculation con details
+
+        Raises:
+            ValueError: Si no hay suficientes lotes disponibles
+        """
+        logger.debug(
+            "Processing SELL transaction for FIFO",
+            extra={
+                "transaction_id": str(transaction.id),
+                "symbol": transaction.symbol,
+                "quantity": str(transaction.quantity),
+                "strict_fifo": strict_fifo,
+            },
+        )
+        # Query open lots for this symbol, ordered by opened_at (FIFO)
+        open_lots = list(
+            (
+                await self.session.execute(
+                    select(Lot)
+                    .filter(
+                        Lot.account_id == transaction.account_id,
+                        Lot.symbol == transaction.symbol,
+                        Lot.status == LotStatus.OPEN,
+                        Lot.quantity_remaining > 0,
+                    )
+                    .order_by(Lot.opened_at)  # FIFO = oldest first
+                )
+            )
+            .scalars()
+            .all()
+        )
+
+        logger.debug(
+            "Found open lots for FIFO processing",
+            extra={
+                "symbol": transaction.symbol,
+                "open_lots_count": len(open_lots),
+                "total_available": str(sum(lot.quantity_remaining for lot in open_lots)),
+            },
+        )
+
+        quantity_to_close = transaction.quantity
+        lots_closed = []
+        total_cost_basis = Decimal("0")
+        total_quantity_closed = Decimal("0")
+
+        for lot in open_lots:
+            if quantity_to_close <= 0:
+                break
+
+            # How much of this lot to close?
+            close_from_lot = min(quantity_to_close, lot.quantity_remaining)
+
+            # Update lot
+            lot.quantity_remaining -= close_from_lot
+            total_cost_basis += (lot.cost_basis_open / lot.quantity_opened) * close_from_lot
+
+            # Estado del lot: CLOSED (agotado) o PARTIAL (queda cantidad)
+            if lot.quantity_remaining == 0:
+                lot.status = LotStatus.CLOSED
+                lot.closed_at = transaction.occurred_at
+                lot.holding_period_days = (transaction.occurred_at - lot.opened_at).days
+                lot.tax_year_closed = transaction.occurred_at.year
+            elif close_from_lot > 0:
+                lot.status = LotStatus.PARTIAL
+
+            lots_closed.append(lot.id)
+            quantity_to_close -= close_from_lot
+            total_quantity_closed += close_from_lot
+
+        # Validation
+        if quantity_to_close > 0 and strict_fifo:
+            logger.error(
+                "Insufficient lots for SELL transaction",
+                extra={
+                    "transaction_id": str(transaction.id),
+                    "symbol": transaction.symbol,
+                    "quantity_requested": str(transaction.quantity),
+                    "quantity_missing": str(quantity_to_close),
+                    "available_quantity": str(sum([lot.quantity_remaining for lot in open_lots])),
+                },
+            )
+            raise ValueError(
+                f"Insufficient lots to sell {transaction.quantity} {transaction.symbol}. "
+                f"Missing {quantity_to_close}. Available: {sum([lot.quantity_remaining for lot in open_lots])}"
+            )
+
+        # Calculate gain/loss
+        proceeds = transaction.total_value or Decimal("0")
+        gain = max(Decimal("0"), proceeds - total_cost_basis)
+        loss = max(Decimal("0"), total_cost_basis - proceeds)
+
+        # Create FIFO calculation record
+        fifo_calc = FIFOCalculation(
+            symbol=transaction.symbol,
+            sell_transaction_id=transaction.id,
+            quantity_sold=total_quantity_closed,
+            lots_closed=lots_closed,
+            cost_basis=total_cost_basis,
+            proceeds=proceeds,
+            gain=gain,
+            loss=loss,
+            holding_period_days=0,  # Weighted average could be calculated
+        )
+
+        # Link transaction to lots
+        transaction.meta_data["fifo_calculation"] = {
+            "lots_closed": lots_closed,
+            "cost_basis": str(total_cost_basis),
+            "gain": str(gain),
+            "loss": str(loss),
+        }
+
+        logger.debug(
+            "FIFO calculation completed for SELL transaction",
+            extra={
+                "transaction_id": str(transaction.id),
+                "symbol": transaction.symbol,
+                "lots_closed_count": len(lots_closed),
+                "cost_basis": str(total_cost_basis),
+                "proceeds": str(proceeds),
+                "gain": str(gain),
+                "loss": str(loss),
+            },
+        )
+
+        return fifo_calc
+
+    def process_transfer(
+        self, transaction: Transaction, from_account: Account, to_account: Account
+    ) -> None:
+        """
+        Procesar transferencia entre cuentas/exchanges.
+
+        CRITICAL: Mantener cost basis original.
+
+        Args:
+            transaction: TRANSFER_OUT transaction
+            from_account: Source account
+            to_account: Destination account
+        """
+        logger.debug(
+            "Processing transfer between accounts",
+            extra={
+                "transaction_id": str(transaction.id),
+                "symbol": transaction.symbol,
+                "from_account_id": str(from_account.id),
+                "to_account_id": str(to_account.id),
+                "quantity": str(transaction.quantity),
+            },
+        )
+        # For tracking, we create a "virtual" lot in the destination
+        # with the SAME cost basis as the source
+
+        # Find the lot(s) being transferred
+        # This requires tracking which specific BTC/ETH are moving
+        # Implementation depends on whether exchange reports this granularity
+
+        # For now, create a placeholder lot in destination
+
+
+# ============================================================================
+# MODELO 721 GENERATOR
+# ============================================================================
+
+
+class Modelo721Generator:
+    """
+    Generador de datos para Modelo 721 (Criptomonedas).
+
+    Requerimientos Hacienda:
+    - Saldo a 31 de diciembre de cada criptomoneda
+    - Valor en EUR (usando tipo de cambio oficial)
+    - Identificación de exchanges utilizados
+    - Fecha y hora de cada transacción
+    """
+
+    def __init__(self, session):
+        self.session = session
+        logger.debug(
+            "Modelo721Generator initialized", extra={"session_type": type(session).__name__}
+        )
+
+    async def generate_annual_report(self, user_id: UUID, year: int) -> TaxReport:
+        """
+        Generar reporte Modelo 721 para un año.
+
+        Args:
+            user_id: User UUID
+            year: Año fiscal
+
+        Returns:
+            TaxReport con datos completos
+        """
+        logger.info(
+            "Generating Modelo 721 annual report", extra={"user_id": str(user_id), "tax_year": year}
+        )
+        # Get all crypto accounts
+        crypto_accounts = list(
+            (
+                await self.session.execute(
+                    select(Account).filter(
+                        Account.user_id == user_id,
+                        Account.asset_type == AssetType.CRYPTO,
+                        Account.is_active,
+                    )
+                )
+            )
+            .scalars()
+            .all()
+        )
+
+        logger.debug(
+            "Retrieved crypto accounts for tax report",
+            extra={
+                "user_id": str(user_id),
+                "tax_year": year,
+                "accounts_count": len(crypto_accounts),
+                "exchanges": [a.exchange_name for a in crypto_accounts],
+            },
+        )
+
+        # For each symbol, calculate balance at Dec 31
+        balances = {}
+
+        for account in crypto_accounts:
+            # Get last snapshot of the year
+            # Using func.extract for proper typing - sa.extract has incomplete type stubs
+            year_extract = sa.func.extract("year", BalanceSnapshot.captured_at)
+            snapshot = (
+                (
+                    await self.session.execute(
+                        select(BalanceSnapshot)
+                        .filter(
+                            BalanceSnapshot.account_id == account.id,
+                            year_extract == year,
+                        )
+                        .order_by(sa.desc(BalanceSnapshot.captured_at))
+                    )
+                )
+                .scalars()
+                .first()
+            )
+
+            if snapshot:
+                symbol = account.currency
+                if symbol not in balances:
+                    balances[symbol] = Decimal("0")
+                balances[symbol] += snapshot.balance_eur
+
+        # Calculate total gains/losses for the year
+        closed_lots = list(
+            (
+                await self.session.execute(
+                    select(Lot).filter(
+                        Lot.__table__.c.account_id.in_([a.id for a in crypto_accounts]),
+                        Lot.tax_year_closed == year,
+                        Lot.status == LotStatus.CLOSED,
+                    )
+                )
+            )
+            .scalars()
+            .all()
+        )
+
+        total_gain = sum([lot.realized_gain or Decimal("0") for lot in closed_lots])
+        total_loss = sum([lot.realized_loss or Decimal("0") for lot in closed_lots])
+
+        logger.debug(
+            "Calculated gains/losses for tax year",
+            extra={
+                "user_id": str(user_id),
+                "tax_year": year,
+                "total_gain": str(total_gain),
+                "total_loss": str(total_loss),
+                "closed_lots_count": len(closed_lots),
+            },
+        )
+
+        # Create report
+        report = TaxReport(
+            user_id=user_id,
+            report_type="modelo_721",
+            tax_year=year,
+            report_data={
+                "balances_by_symbol": {k: str(v) for k, v in balances.items()},
+                "total_holdings_eur": str(sum(balances.values())),
+                "exchanges_used": [a.exchange_name for a in crypto_accounts],
+                "closed_transactions": len(closed_lots),
+            },
+            total_holdings_eur=sum(balances.values()),
+            total_gain_eur=total_gain,
+            total_loss_eur=total_loss,
+            report_date=datetime(year, 12, 31),
+        )
+
+        logger.info(
+            "Modelo 721 annual report generated successfully",
+            extra={
+                "user_id": str(user_id),
+                "tax_year": year,
+                "report_id": str(report.id),
+                "total_holdings_eur": str(report.total_holdings_eur),
+                "total_gain_eur": str(total_gain),
+                "total_loss_eur": str(total_loss),
+            },
+        )
+
+        return report
+
+
+# ============================================================================
+# ALEMBIC MIGRATIONS
+# ============================================================================
+
+# Nota de uso (alembic): ejecutar para crear las tablas --
+#   alembic revision --autogenerate -m "Add FIFO tracking for Modelo 721"
+#   alembic upgrade head
+# Requisitos: pip install sqlalchemy psycopg2-binary alembic

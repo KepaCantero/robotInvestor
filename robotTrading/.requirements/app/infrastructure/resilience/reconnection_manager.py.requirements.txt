@@ -1,0 +1,42 @@
+# Requirements Document: app/infrastructure/resilience/reconnection_manager.py
+
+## 1. Module Overview
+File: reconnection_manager.py
+Domain: Infrastructure
+
+## 2. Dependencies
+- `__future__`
+- `app.shared.config.centralized_config`
+- `app.shared.utils.timezone_utils`
+- `asyncio`
+- `collections.abc`
+- `dataclasses`
+- `datetime`
+- `logging`
+- `random`
+- `typing`
+
+## 3. Core Components
+### Classes
+- `ReconnectionConfig`
+- `ReconnectionStats`
+- `ReconnectionManager`
+### Public Functions
+- `success_rate()`
+- `calculate_backoff()`
+- `connect_with_backoff()`
+- `maintain_connection()`
+- `get_stats()`
+
+## 4. Applicable Trading Rules
+
+#### R15
+Complete Logging (log all decisions, trade journal format)
+
+- [ ] Implementation verified
+- [ ] Tests pass
+
+---
+Universal rules (SOLID, type hints, formatting, security, logging) live in
+.requirements/BASE_RULES.md and apply to every file.
+Resync this stub with: python scripts/generate_requirements.py

@@ -1,0 +1,44 @@
+# Requirements Document: app/services/live_trading/__init__.py
+
+## 1. Module Overview
+File: __init__.py
+Domain: Service
+
+## 2. Dependencies
+- `account_synchronizer`
+- `alert_to_trade_mapper`
+- `broker_connector`
+- `order_manager`
+- `risk_gates`
+- `trade_persistence`
+- `trading_audit_trail`
+- `trading_bridge_orchestrator`
+
+## 3. Core Components
+### Module Initialization
+- Package/module initialization file
+
+## 4. Applicable Trading Rules
+
+#### R8
+Bid-Ask Spread Management (avoid market orders for low-liquidity)
+
+- [ ] Implementation verified
+- [ ] Tests pass
+
+#### R9
+Execution Timing (avoid first/last 15 min, VWAP/TWAP for large orders)
+
+- [ ] Implementation verified
+- [ ] Tests pass
+
+#### R10
+Slippage Monitor (track actual vs expected fill, alert if >0.5%)
+
+- [ ] Implementation verified
+- [ ] Tests pass
+
+---
+Universal rules (SOLID, type hints, formatting, security, logging) live in
+.requirements/BASE_RULES.md and apply to every file.
+Resync this stub with: python scripts/generate_requirements.py

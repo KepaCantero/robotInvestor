@@ -1,0 +1,52 @@
+# Requirements Document: app/engines/risk_engine/drawdown_controllers/drawdown_controllers.py
+
+## 1. Module Overview
+File: drawdown_controllers.py
+Domain: Engine
+
+## 2. Dependencies
+- `__future__`
+- `abc`
+- `app.domain.models.portfolio`
+- `datetime`
+- `decimal`
+- `logging`
+- `numba`
+- `numpy`
+- `typing`
+
+## 3. Core Components
+### Classes
+- `BaseDrawdownController`
+- `CircuitBreakerController`
+- `PeakDrawdownController`
+- `DrawdownController`
+### Public Functions
+- `calculate_running_peak_numba()`
+- `calculate_drawdown_from_peaks_numba()`
+- `calculate_max_drawdown_numba()`
+- `calculate_drawdown_duration_numba()`
+- `calculate_rolling_max_drawdown_numba()`
+- `calculate_rolling_avg_drawdown_numba()`
+- `convert_decimal_array_to_float()`
+- `calculate_drawdown()`
+- `get_drawdown_controller_info()`
+- `assess_drawdown()`
+- `assess_drawdown()`
+- `assess_drawdown()`
+- `assess_drawdown()`
+- `reset_circuit_breaker()`
+- `get_status()`
+
+## 4. Applicable Trading Rules
+
+#### R2
+Drawdown Monitor (15% warning, 25% halt trading, auto cooldown)
+
+- [ ] Implementation verified
+- [ ] Tests pass
+
+---
+Universal rules (SOLID, type hints, formatting, security, logging) live in
+.requirements/BASE_RULES.md and apply to every file.
+Resync this stub with: python scripts/generate_requirements.py

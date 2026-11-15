@@ -1,0 +1,53 @@
+# Requirements Document: app/domain/strategies/factor_models.py
+
+## 1. Module Overview
+File: factor_models.py
+Domain: Domain
+
+## 2. Dependencies
+- `__future__`
+- `dataclasses`
+- `factor_calculator`
+- `logging`
+- `models`
+- `numpy`
+- `scipy.stats`
+- `typing`
+
+## 3. Core Components
+### Classes
+- `FactorModelResult`
+- `BaseFactorModel`
+- `CAPMModel`
+- `FF3FactorModel`
+- `FF5FactorModel`
+- `Carhart4FactorModel`
+- `FF6FactorModel`
+- `SimpleOLSResult`
+- `FactorModelManager`
+### Public Functions
+- `sm_add_constant()`
+- `fit()`
+- `predict()`
+- `fit()`
+- `fit()`
+- `fit()`
+- `fit()`
+- `fit()`
+- `fit_model()`
+- `compare_models()`
+- `get_best_model()`
+- `calculate_factor_exposures_from_scores()`
+
+## 4. Applicable Trading Rules
+
+#### R15
+Complete Logging (log all decisions, trade journal format)
+
+- [ ] Implementation verified
+- [ ] Tests pass
+
+---
+Universal rules (SOLID, type hints, formatting, security, logging) live in
+.requirements/BASE_RULES.md and apply to every file.
+Resync this stub with: python scripts/generate_requirements.py

@@ -1,0 +1,57 @@
+# Requirements Document: app/domain/repositories/base_repository.py
+
+## 1. Module Overview
+File: base_repository.py
+Domain: Domain
+
+## 2. Dependencies
+- `__future__`
+- `abc`
+- `collections.abc`
+- `logging`
+- `time`
+- `typing`
+
+## 3. Core Components
+### Classes
+- `AbstractRepository`
+- `QueryableRepository`
+- `StreamableRepository`
+- `CachedRepository`
+- `RepositoryError`
+- `NotFoundError`
+- `DuplicateError`
+### Public Functions
+- `add()`
+- `get()`
+- `update()`
+- `delete()`
+- `list_all()`
+- `get_or_create()`
+- `exists()`
+- `count()`
+- `add_many()`
+- `get_many()`
+- `find_by_criteria()`
+- `find_first()`
+- `find_by_specification()`
+- `stream_all()`
+- `stream_by_criteria()`
+- `add()`
+- `get()`
+- `update()`
+- `delete()`
+- `list_all()`
+
+## 4. Applicable Trading Rules
+
+#### R15
+Complete Logging (log all decisions, trade journal format)
+
+- [ ] Implementation verified
+- [ ] Tests pass
+
+---
+Universal rules (SOLID, type hints, formatting, security, logging) live in
+.requirements/BASE_RULES.md and apply to every file.
+Resync this stub with: python scripts/generate_requirements.py

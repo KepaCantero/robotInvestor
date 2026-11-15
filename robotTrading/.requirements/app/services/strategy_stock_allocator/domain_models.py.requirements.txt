@@ -1,0 +1,57 @@
+# Requirements Document: app/services/strategy_stock_allocator/domain_models.py
+
+## 1. Module Overview
+File: domain_models.py
+Domain: Service
+
+## 2. Dependencies
+- `__future__`
+- `dataclasses`
+- `decimal`
+- `enum`
+- `logging`
+- `typing`
+
+## 3. Core Components
+### Classes
+- `StrategyType`
+- `StockCategory`
+- `StockMetrics`
+- `PairMetrics`
+- `AllocationResult`
+- `AllocationConfig`
+### Public Functions
+- `to_dict()`
+- `to_dict()`
+- `get_total_allocated_capital()`
+- `get_allocation_count()`
+- `get_pairs_count()`
+- `to_dict()`
+- `get_reservable_capital()`
+- `get_allocatable_capital()`
+- `to_dict()`
+
+## 4. Applicable Trading Rules
+
+#### R19
+Market Regime Detection (trend/range/volatile classification)
+
+- [ ] Implementation verified
+- [ ] Tests pass
+
+#### R20
+Multi-Confirmation (min 2 independent signals before trade)
+
+- [ ] Implementation verified
+- [ ] Tests pass
+
+#### R24
+Strategy Diversification (min 3 uncorrelated strategies)
+
+- [ ] Implementation verified
+- [ ] Tests pass
+
+---
+Universal rules (SOLID, type hints, formatting, security, logging) live in
+.requirements/BASE_RULES.md and apply to every file.
+Resync this stub with: python scripts/generate_requirements.py

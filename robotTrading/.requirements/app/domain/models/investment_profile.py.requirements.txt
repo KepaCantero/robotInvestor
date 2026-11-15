@@ -1,0 +1,41 @@
+# Requirements Document: app/domain/models/investment_profile.py
+
+## 1. Module Overview
+File: investment_profile.py
+Domain: Domain
+
+## 2. Dependencies
+- `__future__`
+- `app.domain.models.input_profile`
+- `decimal`
+- `enum`
+- `logging`
+- `pathlib`
+- `pydantic`
+- `uuid`
+
+## 3. Core Components
+### Classes
+- `CapitalTier`
+- `InvestmentProfile`
+- `ProfileGenerator`
+### Public Functions
+- `validate_capital_tier()`
+- `validate_objetivo()`
+- `validate_risk_tolerance()`
+- `to_dict()`
+- `determine_capital_tier()`
+- `generate()`
+
+## 4. Applicable Trading Rules
+
+#### R15
+Complete Logging (log all decisions, trade journal format)
+
+- [ ] Implementation verified
+- [ ] Tests pass
+
+---
+Universal rules (SOLID, type hints, formatting, security, logging) live in
+.requirements/BASE_RULES.md and apply to every file.
+Resync this stub with: python scripts/generate_requirements.py

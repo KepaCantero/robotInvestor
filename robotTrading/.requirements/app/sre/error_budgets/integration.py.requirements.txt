@@ -1,0 +1,58 @@
+# Requirements Document: app/sre/error_budgets/integration.py
+
+## 1. Module Overview
+File: integration.py
+Domain: SRE
+
+## 2. Dependencies
+- `__future__`
+- `asyncio`
+- `budget_alerts`
+- `datetime`
+- `decimal`
+- `development_gates`
+- `error_budget_manager`
+- `fastapi`
+- `logging`
+- `slo_tracker`
+- `typing`
+
+## 3. Core Components
+### Classes
+- `ErrorBudgetIntegration`
+### Public Functions
+- `get_error_budget_integration()`
+- `create_error_budget_router()`
+- `initialize()`
+- `shutdown()`
+- `record_downtime()`
+- `check_deployment_allowed()`
+- `get_budget_summary()`
+- `health_check()`
+- `get_budget_summary()`
+- `get_budget_health()`
+- `record_downtime()`
+- `check_deployment()`
+- `get_slo_report()`
+- `get_alerts()`
+- `acknowledge_alert()`
+- `resolve_alert()`
+- `clear_deployment_blocker()`
+- `get_incident_history()`
+- `on_budget_exhausted()`
+- `on_burn_rate_high()`
+- `on_slo_violation()`
+- `on_slo_resolved()`
+
+## 4. Applicable Trading Rules
+
+#### R15
+Complete Logging (log all decisions, trade journal format)
+
+- [ ] Implementation verified
+- [ ] Tests pass
+
+---
+Universal rules (SOLID, type hints, formatting, security, logging) live in
+.requirements/BASE_RULES.md and apply to every file.
+Resync this stub with: python scripts/generate_requirements.py

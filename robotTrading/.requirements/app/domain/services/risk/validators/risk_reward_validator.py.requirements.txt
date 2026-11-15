@@ -1,0 +1,31 @@
+# Requirements Document: app/domain/services/risk/validators/risk_reward_validator.py
+
+## 1. Module Overview
+File: risk_reward_validator.py
+Domain: Domain
+
+## 2. Dependencies
+- `app.shared.config.centralized_config`
+- `dataclasses`
+- `decimal`
+
+## 3. Core Components
+### Classes
+- `RiskRewardResult`
+- `RiskRewardValidator`
+### Public Functions
+- `validate()`
+- `calculate_minimum_stop()`
+
+## 4. Applicable Trading Rules
+
+#### R2
+Drawdown Monitor (15% warning, 25% halt trading, auto cooldown)
+
+- [ ] Implementation verified
+- [ ] Tests pass
+
+---
+Universal rules (SOLID, type hints, formatting, security, logging) live in
+.requirements/BASE_RULES.md and apply to every file.
+Resync this stub with: python scripts/generate_requirements.py

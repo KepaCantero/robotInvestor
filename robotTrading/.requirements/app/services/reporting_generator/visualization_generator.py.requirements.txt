@@ -1,0 +1,44 @@
+# Requirements Document: app/services/reporting_generator/visualization_generator.py
+
+## 1. Module Overview
+File: visualization_generator.py
+Domain: Service
+
+## 2. Dependencies
+- `__future__`
+- `dataclasses`
+- `datetime`
+- `decimal`
+- `json`
+- `logging`
+- `numpy`
+- `typing`
+
+## 3. Core Components
+### Classes
+- `PlotlyChart`
+- `ChartMetadata`
+- `AdvancedVisualizationGenerator`
+### Public Functions
+- `get_visualization_generator()`
+- `to_json()`
+- `to_html_div()`
+- `generate_cumulative_returns_chart()`
+- `generate_drawdown_waterfall()`
+- `generate_rolling_metrics_chart()`
+- `generate_heatmap_monthly_returns()`
+- `generate_factor_exposures_chart()`
+- `get_generator_status()`
+
+## 4. Applicable Trading Rules
+
+#### R15
+Complete Logging (log all decisions, trade journal format)
+
+- [ ] Implementation verified
+- [ ] Tests pass
+
+---
+Universal rules (SOLID, type hints, formatting, security, logging) live in
+.requirements/BASE_RULES.md and apply to every file.
+Resync this stub with: python scripts/generate_requirements.py

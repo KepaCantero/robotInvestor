@@ -1,0 +1,56 @@
+# Requirements Document: app/services/hurst_exponent_analyzer.py
+
+## 1. Module Overview
+File: hurst_exponent_analyzer.py
+Domain: Service
+
+## 2. Dependencies
+- `__future__`
+- `dataclasses`
+- `datetime`
+- `enum`
+- `logging`
+- `numba`
+- `numpy`
+- `pandas`
+
+## 3. Core Components
+### Classes
+- `MarketRegime`
+- `StrategyRecommendation`
+- `HurstResult`
+- `RegimeChange`
+- `HurstExponentAnalyzer`
+### Public Functions
+- `calculate_rs_numba()`
+- `calculate_cumulative_deviation_numba()`
+- `calculate_rs_for_window_numba()`
+- `calculate_hurst_rs_numba()`
+- `calculate_hurst_variance_numba()`
+- `calculate_aggregated_variance_numba()`
+- `calculate_hurst_exponent()`
+- `classify_regime()`
+- `recommend_strategy_from_hurst()`
+- `get_analyzer_info()`
+- `analyze()`
+- `detect_regime_change()`
+- `monitor_multiple_symbols()`
+- `get_historical_hurst()`
+- `calculate_hurst_exponent()`
+- `classify_regime()`
+- `get_strategy_recommendation()`
+- `calculate_rolling_hurst()`
+- `detect_regime_changes()`
+
+## 4. Applicable Trading Rules
+
+#### R15
+Complete Logging (log all decisions, trade journal format)
+
+- [ ] Implementation verified
+- [ ] Tests pass
+
+---
+Universal rules (SOLID, type hints, formatting, security, logging) live in
+.requirements/BASE_RULES.md and apply to every file.
+Resync this stub with: python scripts/generate_requirements.py

@@ -1,0 +1,57 @@
+# Requirements Document: app/application/scheduling/market_scheduler.py
+
+## 1. Module Overview
+File: market_scheduler.py
+Domain: Application
+
+## 2. Dependencies
+- `__future__`
+- `app.shared.utils.timezone_utils`
+- `asyncio`
+- `dataclasses`
+- `datetime`
+- `enum`
+- `logging`
+- `pytz`
+- `typing`
+
+## 3. Core Components
+### Classes
+- `MarketType`
+- `MarketStatus`
+- `MarketSchedule`
+- `ScheduledTask`
+- `MarketScheduler`
+### Public Functions
+- `is_24_7()`
+- `start()`
+- `stop()`
+- `schedule_task()`
+- `unschedule_task()`
+- `enable_task()`
+- `disable_task()`
+- `get_market_status()`
+- `wait_until_market_open()`
+- `is_market_open()`
+- `add_holiday()`
+- `remove_holiday()`
+- `get_task_info()`
+- `list_tasks()`
+- `run_task_once()`
+- `get_market_schedule()`
+- `is_running()`
+- `get_task_count()`
+- `get_enabled_task_count()`
+
+## 4. Applicable Trading Rules
+
+#### R15
+Complete Logging (log all decisions, trade journal format)
+
+- [ ] Implementation verified
+- [ ] Tests pass
+
+---
+Universal rules (SOLID, type hints, formatting, security, logging) live in
+.requirements/BASE_RULES.md and apply to every file.
+Resync this stub with: python scripts/generate_requirements.py

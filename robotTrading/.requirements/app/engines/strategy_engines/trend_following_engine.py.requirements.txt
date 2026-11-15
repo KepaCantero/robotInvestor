@@ -1,0 +1,54 @@
+# Requirements Document: app/engines/strategy_engines/trend_following_engine.py
+
+## 1. Module Overview
+File: trend_following_engine.py
+Domain: Engine
+
+## 2. Dependencies
+- `__future__`
+- `app.domain.models.market_data`
+- `app.domain.models.portfolio`
+- `app.domain.models.signal`
+- `app.domain.services.analysis.momentum`
+- `app.services.signal_scoring_engine`
+- `app.shared.config.centralized_config`
+- `base`
+- `collections`
+- `collections.abc`
+- `decimal`
+- `logging`
+- `typing`
+
+## 3. Core Components
+### Classes
+- `TrendFollowingStrategyEngine`
+### Public Functions
+- `get_strategy_type()`
+- `extract_features()`
+- `get_required_parameters()`
+- `risk_check()`
+
+## 4. Applicable Trading Rules
+
+#### R19
+Market Regime Detection (trend/range/volatile classification)
+
+- [ ] Implementation verified
+- [ ] Tests pass
+
+#### R20
+Multi-Confirmation (min 2 independent signals before trade)
+
+- [ ] Implementation verified
+- [ ] Tests pass
+
+#### R24
+Strategy Diversification (min 3 uncorrelated strategies)
+
+- [ ] Implementation verified
+- [ ] Tests pass
+
+---
+Universal rules (SOLID, type hints, formatting, security, logging) live in
+.requirements/BASE_RULES.md and apply to every file.
+Resync this stub with: python scripts/generate_requirements.py

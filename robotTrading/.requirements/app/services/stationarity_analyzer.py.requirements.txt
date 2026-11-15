@@ -1,0 +1,45 @@
+# Requirements Document: app/services/stationarity_analyzer.py
+
+## 1. Module Overview
+File: stationarity_analyzer.py
+Domain: Service
+
+## 2. Dependencies
+- `__future__`
+- `app.shared.performance.statsmodels_fallback`
+- `dataclasses`
+- `logging`
+- `numpy`
+- `pandas`
+- `typing`
+
+## 3. Core Components
+### Classes
+- `AdfTestResult`
+- `StationarityTestResult`
+- `CointegrationTestResult`
+- `MeanReversionParameters`
+- `StationarityAnalyzer`
+- `CointegrationAnalyzer`
+### Public Functions
+- `find_cointegrated_pairs()`
+- `test_stationarity()`
+- `calculate_half_life()`
+- `calculate_hurst_exponent()`
+- `find_optimal_lookback()`
+- `test_cointegration()`
+- `calculate_optimal_position_sizes()`
+- `calculate_entry_exit_thresholds()`
+
+## 4. Applicable Trading Rules
+
+#### R15
+Complete Logging (log all decisions, trade journal format)
+
+- [ ] Implementation verified
+- [ ] Tests pass
+
+---
+Universal rules (SOLID, type hints, formatting, security, logging) live in
+.requirements/BASE_RULES.md and apply to every file.
+Resync this stub with: python scripts/generate_requirements.py

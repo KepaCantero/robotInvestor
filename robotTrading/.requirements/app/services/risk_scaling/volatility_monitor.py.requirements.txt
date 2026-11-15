@@ -1,0 +1,41 @@
+# Requirements Document: app/services/risk_scaling/volatility_monitor.py
+
+## 1. Module Overview
+File: volatility_monitor.py
+Domain: Service
+
+## 2. Dependencies
+- `__future__`
+- `app.shared.config.centralized_config`
+- `dataclasses`
+- `datetime`
+- `decimal`
+- `logging`
+- `statistics`
+
+## 3. Core Components
+### Classes
+- `PriceData`
+- `VolatilityMonitor`
+### Public Functions
+- `true_range()`
+- `calculate_atr()`
+- `calculate_average_atr()`
+- `calculate_volatility_scale()`
+- `is_volatility_spike()`
+- `get_volatility_regime()`
+- `get_recent_volatility_spikes()`
+- `calculate_atr_std_dev()`
+
+## 4. Applicable Trading Rules
+
+#### R2
+Drawdown Monitor (15% warning, 25% halt trading, auto cooldown)
+
+- [ ] Implementation verified
+- [ ] Tests pass
+
+---
+Universal rules (SOLID, type hints, formatting, security, logging) live in
+.requirements/BASE_RULES.md and apply to every file.
+Resync this stub with: python scripts/generate_requirements.py

@@ -1,0 +1,36 @@
+# Requirements Document: app/services/reconciliation/discrepancy_detector.py
+
+## 1. Module Overview
+File: discrepancy_detector.py
+Domain: Service
+
+## 2. Dependencies
+- `__future__`
+- `app.shared.config.centralized_config`
+- `decimal`
+- `logging`
+- `typing`
+
+## 3. Core Components
+### Classes
+- `DiscrepancyDetector`
+### Public Functions
+- `detect_position_mismatch()`
+- `detect_price_mismatch()`
+- `detect_value_mismatch()`
+- `detect_missing_positions()`
+- `detect_all_discrepancies()`
+- `get_severity_counts()`
+
+## 4. Applicable Trading Rules
+
+#### R15
+Complete Logging (log all decisions, trade journal format)
+
+- [ ] Implementation verified
+- [ ] Tests pass
+
+---
+Universal rules (SOLID, type hints, formatting, security, logging) live in
+.requirements/BASE_RULES.md and apply to every file.
+Resync this stub with: python scripts/generate_requirements.py

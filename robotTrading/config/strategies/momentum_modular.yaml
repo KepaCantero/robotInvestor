@@ -1,0 +1,330 @@
+# Momentum Modular Strategy Configuration
+# Versión 2.0 - Arquitectura completamente modular
+
+strategy_name: momentum_modular
+enabled: true
+version: "2.0.0"
+
+# PHASE 1 T1.1: Capital Tier Recommendations
+recommended_for_tiers: ["micro", "small", "medium", "large"]  # Suitable for all tiers
+tier_preset_mapping:
+  micro: "conservative"        # Use conservative preset for micro
+  small: "conservative"        # Use conservative preset for small
+  medium: "balanced"           # Use balanced preset for medium
+  large: "aggressive"          # Use aggressive preset for large
+
+# MARKET CONTEXT ANALYZER
+market_analyzer:
+  enabled: true
+  lookback_period: 60 # días para identificar régimen
+  trend_detection:
+    method: "ema_cross" # 'ema_cross' | 'adx' | 'macd'
+    ema_fast_period: 12
+    ema_slow_period: 26
+    min_trend_strength: 0.6 # 0-1
+  volatility_detection:
+    method: "atr_percentile" # 'atr_percentile' | 'std_dev'
+    percentile_window: 30
+    high_vol_threshold: 75 # percentil
+    low_vol_threshold: 25
+  range_detection:
+    method: "bollinger_squeeze"
+    lookback_period: 20
+    squeeze_threshold: 0.1
+
+# PRESET DE CONFIGURACIÓN
+preset: "aggressive" # 'conservative' | 'balanced' | 'aggressive' - ITERATION 10: More permissive
+
+presets:
+  conservative:
+    combination_mode: "ALL" # Todos los filtros deben pasar
+    min_confidence: 0.75
+    risk_adjustment: 1.2 # Más conservador (reduce tamaño de posición 20%)
+
+  balanced:
+    combination_mode: "MAJORITY" # FIX: Changed back from ANY to reduce false signals
+    min_confidence: 0.55 # FIX: Raised from 0.50 for better signal quality
+    risk_adjustment: 1.0
+
+  aggressive:
+    combination_mode: "ANY" # ITERATION 12: Changed to ANY for more signal generation
+    min_confidence: 0.45 # ITERATION 12: Lowered for more signals (still above random)
+    risk_adjustment: 0.85 # Permite posiciones 15% más grandes
+
+# MÓDULOS DE FILTRO
+modules:
+  # EMA FILTER - Filtro de tendencia
+  ema_filter:
+    enabled: true
+    priority: "high" # 'high' | 'medium' | 'low' (para combinación MAJORITY)
+
+    # Condiciones de activación según contexto
+    active_in_contexts:
+      - "trend_up"
+      - "trend_down"
+      - "high_vol"
+    inactive_in_contexts:
+      - "low_vol" # Desactivar en baja volatilidad
+
+    parameters:
+      fast_period: 12
+      slow_period: 26
+      trend_confirmation:
+        method: "price_above" # 'price_above' | 'crossover' | 'distance'
+        min_distance_pct: 0.005 # 0.5% mínimo
+
+    # Thresholds por preset
+    thresholds:
+      conservative:
+        min_distance_pct: 0.01 # 1%
+        require_crossover: true
+      balanced:
+        min_distance_pct: 0.005 # 0.5%
+        require_crossover: false
+      aggressive:
+        min_distance_pct: 0.002 # 0.2%
+        require_crossover: false
+
+  # RSI FILTER - Filtro de momentum relativo
+  # Standard RSI Strategy:
+  # - BUY when RSI <= buy_threshold (oversold condition, typically <= 30)
+  # - SELL when RSI >= sell_threshold (overbought condition, typically >= 70)
+  # RE-ENABLED: Iteration 11 - Critical for signal quality
+  rsi_filter:
+    enabled: true
+    priority: "high"
+
+    active_in_contexts:
+      - "trend_up"
+      - "trend_down"
+      - "range"
+      - "high_vol"
+    inactive_in_contexts: []
+
+    parameters:
+      period: 14
+
+    # FIXED: Thresholds adaptativos según contexto - NOW USING SINGLE THRESHOLDS
+    # FIX: Standard RSI thresholds for proper signal quality
+    adaptive_thresholds:
+      trend_up:
+        buy_threshold: 35   # Oversold in uptrend - good entry
+        sell_threshold: 70  # Standard overbought
+
+      trend_down:
+        buy_threshold: 30   # More oversold required in downtrend
+        sell_threshold: 65  # Sell earlier in downtrend
+
+      range:
+        buy_threshold: 30   # Standard oversold
+        sell_threshold: 70  # Standard overbought
+
+      high_vol:
+        buy_threshold: 30   # Standard oversold
+        sell_threshold: 70  # Standard overbought
+
+  # STOCHASTIC RSI FILTER
+  # Standard StochRSI Strategy:
+  # - BUY when StochRSI K <= oversold_threshold (typically <= 20)
+  # - SELL when StochRSI K >= overbought_threshold (typically >= 80)
+  # RE-ENABLED: Iteration 11 - Additional momentum confirmation
+  stoch_rsi_filter:
+    enabled: true
+    priority: "medium"
+
+    active_in_contexts:
+      - "trend_up"
+      - "range"
+    inactive_in_contexts:
+      - "low_vol" # Menos útil en baja volatilidad
+
+    parameters:
+      rsi_period: 14
+      stoch_period: 14
+      k_period: 3
+      d_period: 3
+
+    # FIXED: Now using single thresholds for oversold/overbought
+    # FIXED: Now using single thresholds for oversold/overbought
+    # FIX: Raised oversold_threshold for more BUY signals
+    thresholds:
+      conservative:
+        oversold_threshold: 30     # FIX: Raised from 25
+        overbought_threshold: 75   # Take profits earlier
+      balanced:
+        oversold_threshold: 30     # FIX: Raised from 20
+        overbought_threshold: 75   # FIX: Lowered from 80
+      aggressive:
+        oversold_threshold: 35     # FIX: Raised from 15
+        overbought_threshold: 80   # FIX: Lowered from 85
+
+  # MOMENTUM FILTER (ROC - Rate of Change)
+  momentum_filter:
+    enabled: true
+    priority: "high"
+
+    active_in_contexts:
+      - "trend_up" # Crítico en tendencias
+      - "trend_down"
+    inactive_in_contexts:
+      - "range" # Menos relevante en rangos
+
+    parameters:
+      period: 12
+      method: "roc" # 'roc' | 'momentum' | 'price_change'
+
+    # FIX: Lowered momentum thresholds for more BUY signals
+    # ITERATION 10: Even more permissive
+    thresholds:
+      conservative:
+        min_positive_momentum: 0.01 # FIX: Lowered from 0.02
+        min_negative_momentum: -0.01
+      balanced:
+        min_positive_momentum: 0.003 # FIX: Lowered from 0.005
+        min_negative_momentum: -0.003
+      aggressive:
+        min_positive_momentum: 0.001 # FIX: Very sensitive
+        min_negative_momentum: -0.001
+
+  # VOLUME FILTER
+  volume_filter:
+    enabled: true
+    priority: "high"
+
+    active_in_contexts:
+      - "ALL" # Siempre activo
+
+    parameters:
+      lookback_period: 20
+      method: "ratio" # 'ratio' | 'percentile' | 'sma_cross'
+
+    # FIX: Lowered volume requirements - don't require above-average volume
+    # ITERATION 10: Even more permissive
+    thresholds:
+      conservative:
+        min_volume_ratio: 0.8 # FIX: Lowered from 1.2
+      balanced:
+        min_volume_ratio: 0.7 # FIX: Lowered from 1.1
+      aggressive:
+        min_volume_ratio: 0.5 # FIX: Very permissive for more signals
+
+  # ATR FILTER - Filtro de volatilidad
+  atr_filter:
+    enabled: true
+    priority: "medium"
+
+    active_in_contexts:
+      - "ALL"
+
+    parameters:
+      period: 14
+      method: "relative_percentile"
+      use_relative_atr: true # ATR como % del precio
+
+    # FIX: Lowered ATR thresholds for more permissive trading
+    # ITERATION 10: Even more permissive
+    thresholds:
+      # Thresholds adaptativos según volatilidad
+      high_vol:
+        min_atr_percentile: 30 # FIX: Lowered from 40
+        min_relative_atr: 0.002 # FIX: Lowered from 0.003
+
+      normal_vol:
+        min_atr_percentile: 30 # FIX: Lowered from 40
+        min_relative_atr: 0.003 # FIX: Lowered from 0.004
+
+      low_vol:
+        min_atr_percentile: 30 # FIX: Lowered from 50
+        min_relative_atr: 0.005 # FIX: Lowered from 0.008
+
+      conservative:
+        min_atr_percentile: 50
+        min_relative_atr: 0.005
+      balanced:
+        min_atr_percentile: 40
+        min_relative_atr: 0.004
+      aggressive:
+        min_atr_percentile: 30
+        min_relative_atr: 0.003
+
+# RISK MANAGER
+risk_manager:
+  enabled: true
+
+  position_sizing:
+    method: "fixed_percentage" # 'fixed_percentage' | 'volatility_target' | 'kelly'
+    base_percentage: 0.10 # 10% del capital por posición
+
+    volatility_targeting:
+      enabled: false
+      target_volatility: 0.10 # 10% anualizada
+      lookback_period: 30
+
+    kelly_criterion:
+      enabled: false
+      kelly_fraction: 0.25 # Usar 25% de Kelly completo
+
+  stop_loss:
+    enabled: true
+    method: "dynamic_atr" # 'fixed_percentage' | 'dynamic_atr' | 'trailing'
+
+    fixed_percentage:
+      value: 0.025 # 2.5%
+
+    dynamic_atr:
+      multiplier: 2.0 # ATR * 2.0
+      min_percentage: 0.015 # Mínimo 1.5%
+      max_percentage: 0.05 # Máximo 5%
+
+    trailing:
+      activation_pct_above_entry: 0.02 # Activar después de +2%
+      trail_distance_pct: 0.01 # Trail a 1% del máximo
+
+  take_profit:
+    enabled: true
+    method: "fixed_percentage" # 'fixed_percentage' | 'atr_multiple' | 'trailing'
+
+    fixed_percentage:
+      value: 0.08 # 8% (risk/reward ~3:1 si stop es 2.5%)
+
+    atr_multiple:
+      multiplier: 4.0
+      min_percentage: 0.05
+      max_percentage: 0.15
+
+  max_exposure:
+    total_portfolio: 0.50 # Máximo 50% del capital total invertido
+    per_strategy: 0.40 # Máximo 40% por estrategia
+    per_symbol: 0.15 # Máximo 15% por símbolo
+
+  max_positions:
+    total: 10
+    per_strategy: 7
+
+# COOLDOWN Y FRECUENCIA DE SEÑALES
+signal_frequency:
+  cooldown_bars: 5 # Mínimo 5 barras entre señales del mismo tipo
+  max_signals_per_day: 3
+  max_signals_per_symbol_per_day: 1
+
+# ADAPTIVE LEARNING (Reservado para futura IA)
+adaptive_learning:
+  enabled: true  # HABILITADO para validar funcionamiento
+
+  # Cuando se habilite, estos módulos aprenderán de resultados
+  modules_for_adaptation:
+    - "ema_filter"
+    - "rsi_filter"
+    - "momentum_filter"
+
+  adaptation_method: "reinforcement_learning" # 'rl' | 'genetic_algorithm' | 'neural_net'
+
+  parameters_to_adapt:
+    thresholds: true
+    period: false # Mantener períodos fijos por ahora
+    combination_weights: true # Aprender pesos para combinación MAJORITY
+
+  learning_window:
+    lookback_days: 90
+    reoptimize_frequency_days: 30
+    min_trades_for_learning: 20

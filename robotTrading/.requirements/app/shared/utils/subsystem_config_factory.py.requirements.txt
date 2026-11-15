@@ -1,0 +1,41 @@
+# Requirements Document: app/shared/utils/subsystem_config_factory.py
+
+## 1. Module Overview
+File: subsystem_config_factory.py
+Domain: Shared
+
+## 2. Dependencies
+- `__future__`
+- `app.backtesting.models`
+- `app.shared.config.centralized_config`
+- `decimal`
+- `logging`
+- `typing`
+
+## 3. Core Components
+### Classes
+- `SubsystemConfigFactory`
+### Public Functions
+- `get_subsystem_config_factory()`
+- `get_backtest_config()`
+- `get_risk_engine_config()`
+- `get_portfolio_engine_config()`
+- `get_alpha_model_config()`
+- `get_portfolio_constructor_config()`
+- `get_regime_detector_config()`
+- `get_execution_algorithm_config()`
+- `get_live_trading_config()`
+- `get_config()`
+
+## 4. Applicable Trading Rules
+
+#### R15
+Complete Logging (log all decisions, trade journal format)
+
+- [ ] Implementation verified
+- [ ] Tests pass
+
+---
+Universal rules (SOLID, type hints, formatting, security, logging) live in
+.requirements/BASE_RULES.md and apply to every file.
+Resync this stub with: python scripts/generate_requirements.py

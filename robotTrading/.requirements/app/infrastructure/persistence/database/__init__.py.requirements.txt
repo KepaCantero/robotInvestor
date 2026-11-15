@@ -1,0 +1,79 @@
+# Requirements Document: app/infrastructure/persistence/database/__init__.py
+
+## 1. Module Overview
+File: __init__.py
+Domain: Infrastructure
+
+## 2. Dependencies
+- `__future__`
+- `app.shared.config.base.environment_config`
+- `app.shared.exceptions.exceptions`
+- `collections.abc`
+- `contextlib`
+- `logging`
+- `sqlalchemy`
+- `sqlalchemy.engine`
+- `sqlalchemy.exc`
+- `sqlalchemy.ext.asyncio`
+- `sqlalchemy.ext.declarative`
+- `sqlalchemy.orm`
+- `sqlalchemy.pool`
+- `typing`
+
+## 3. Core Components
+### Classes
+- `DatabaseManager`
+- `DatabaseSession`
+### Public Functions
+- `get_sync_db()`
+- `get_async_db()`
+- `initialize_database()`
+- `initialize_database_async()`
+- `check_database_health()`
+- `check_database_health_async()`
+- `get_database_url()`
+- `get_database_config()`
+- `database_transaction()`
+- `async_database_transaction()`
+- `get_session_factory()`
+- `close_database()`
+- `init_database()`
+- `get_db_transaction()`
+- `initialize_sync_engine()`
+- `initialize_async_engine()`
+- `create_tables()`
+- `drop_tables()`
+- `get_sync_session()`
+- `get_async_session()`
+- `close_connections()`
+- `close_connections_async()`
+- `wrapper()`
+- `wrapper()`
+- `set_sqlite_pragma()`
+- `receive_checkout()`
+- `receive_checkin()`
+
+## 4. Applicable Trading Rules
+
+#### R14
+Data Quality Validation (OHLCV sanity checks, detect gaps/stale data)
+
+- [ ] Implementation verified
+- [ ] Tests pass
+
+#### R15
+Complete Logging (log all decisions, trade journal format)
+
+- [ ] Implementation verified
+- [ ] Tests pass
+
+#### R16
+Daily Reconciliation (compare broker vs internal, alert discrepancies >1%)
+
+- [ ] Implementation verified
+- [ ] Tests pass
+
+---
+Universal rules (SOLID, type hints, formatting, security, logging) live in
+.requirements/BASE_RULES.md and apply to every file.
+Resync this stub with: python scripts/generate_requirements.py

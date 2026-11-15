@@ -1,0 +1,59 @@
+# Requirements Document: app/domain/market_analysis/microstructure/liquidity.py
+
+## 1. Module Overview
+File: liquidity.py
+Domain: Domain
+
+## 2. Dependencies
+- `__future__`
+- `app.shared.config.centralized_config`
+- `dataclasses`
+- `datetime`
+- `decimal`
+- `enum`
+- `logging`
+- `numpy`
+- `pandas`
+- `typing`
+
+## 3. Core Components
+### Classes
+- `LiquidityDimension`
+- `SpreadComponent`
+- `LiquidityMetrics`
+- `SpreadDecomposition`
+- `DepthProfile`
+- `LiquidityRisk`
+- `LiquidityAnalyzer`
+- `LiquidityMonitor`
+### Public Functions
+- `get_liquidity_analyzer()`
+- `get_liquidity_monitor()`
+- `to_dict()`
+- `to_dict()`
+- `to_dict()`
+- `to_dict()`
+- `measure_market_depth()`
+- `calculate_liquidity_score()`
+- `classify_liquidity_regime()`
+- `decompose_spread()`
+- `calculate_effective_spread()`
+- `measure_market_resilience()`
+- `assess_liquidity_risk()`
+- `calculate_liquidity_metrics()`
+- `get_liquidity_trend()`
+- `generate_liquidity_report()`
+- `check_liquidity_alert()`
+
+## 4. Applicable Trading Rules
+
+#### R15
+Complete Logging (log all decisions, trade journal format)
+
+- [ ] Implementation verified
+- [ ] Tests pass
+
+---
+Universal rules (SOLID, type hints, formatting, security, logging) live in
+.requirements/BASE_RULES.md and apply to every file.
+Resync this stub with: python scripts/generate_requirements.py

@@ -1,0 +1,51 @@
+# Requirements Document: app/engines/data_engine/config_loader.py
+
+## 1. Module Overview
+File: config_loader.py
+Domain: Engine
+
+## 2. Dependencies
+- `__future__`
+- `logging`
+- `pathlib`
+- `typing`
+- `yaml`
+
+## 3. Core Components
+### Classes
+- `DataEngineConfigLoader`
+### Public Functions
+- `get_cache_config()`
+- `get_streaming_config()`
+- `get_source_config()`
+- `get_ibkr_config()`
+- `get_api_config()`
+- `get_sentiment_config()`
+- `get_normalization_config()`
+- `get_cleaning_config()`
+- `get_versioning_config()`
+
+## 4. Applicable Trading Rules
+
+#### R14
+Data Quality Validation (OHLCV sanity checks, detect gaps/stale data)
+
+- [ ] Implementation verified
+- [ ] Tests pass
+
+#### R15
+Complete Logging (log all decisions, trade journal format)
+
+- [ ] Implementation verified
+- [ ] Tests pass
+
+#### R16
+Daily Reconciliation (compare broker vs internal, alert discrepancies >1%)
+
+- [ ] Implementation verified
+- [ ] Tests pass
+
+---
+Universal rules (SOLID, type hints, formatting, security, logging) live in
+.requirements/BASE_RULES.md and apply to every file.
+Resync this stub with: python scripts/generate_requirements.py

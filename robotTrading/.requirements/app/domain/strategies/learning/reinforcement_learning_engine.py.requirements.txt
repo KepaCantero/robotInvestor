@@ -1,0 +1,43 @@
+# Requirements Document: app/domain/strategies/learning/reinforcement_learning_engine.py
+
+## 1. Module Overview
+File: reinforcement_learning_engine.py
+Domain: Domain
+
+## 2. Dependencies
+- `__future__`
+- `base_learning_engine`
+- `gymnasium`
+- `gymnasium.spaces`
+- `logging`
+- `numpy`
+- `os`
+- `stable_baselines3`
+- `stable_baselines3.common.base_class`
+- `stable_baselines3.common.callbacks`
+- `typing`
+
+## 3. Core Components
+### Classes
+- `TradingEnv`
+- `ReinforcementLearningEngine`
+- `MarketDataCallback`
+### Public Functions
+- `reset()`
+- `step()`
+- `train()`
+- `predict()`
+- `evaluate()`
+
+## 4. Applicable Trading Rules
+
+#### R15
+Complete Logging (log all decisions, trade journal format)
+
+- [ ] Implementation verified
+- [ ] Tests pass
+
+---
+Universal rules (SOLID, type hints, formatting, security, logging) live in
+.requirements/BASE_RULES.md and apply to every file.
+Resync this stub with: python scripts/generate_requirements.py

@@ -1,0 +1,41 @@
+# Requirements Document: app/services/monitoring/prometheus_collector.py
+
+## 1. Module Overview
+File: prometheus_collector.py
+Domain: Service
+
+## 2. Dependencies
+- `__future__`
+- `datetime`
+- `enum`
+- `logging`
+- `time`
+- `typing`
+
+## 3. Core Components
+### Classes
+- `MetricType`
+- `PrometheusMetric`
+- `PrometheusMetricsCollector`
+### Public Functions
+- `get_prometheus_collector()`
+- `set_gauge()`
+- `increment_counter()`
+- `observe_histogram()`
+- `get_metric_value()`
+- `export_prometheus_format()`
+- `get_metrics_summary()`
+- `reset_metrics()`
+
+## 4. Applicable Trading Rules
+
+#### R15
+Complete Logging (log all decisions, trade journal format)
+
+- [ ] Implementation verified
+- [ ] Tests pass
+
+---
+Universal rules (SOLID, type hints, formatting, security, logging) live in
+.requirements/BASE_RULES.md and apply to every file.
+Resync this stub with: python scripts/generate_requirements.py

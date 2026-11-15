@@ -1,0 +1,52 @@
+# Requirements Document: app/services/capital/capital_phase_manager.py
+
+## 1. Module Overview
+File: capital_phase_manager.py
+Domain: Service
+
+## 2. Dependencies
+- `__future__`
+- `app.services.capital.phase_config`
+- `dataclasses`
+- `datetime`
+- `decimal`
+- `logging`
+
+## 3. Core Components
+### Classes
+- `CapitalPhaseEvent`
+- `CapitalPhaseManager`
+### Public Functions
+- `update_capital()`
+- `get_current_phase()`
+- `get_current_capital()`
+- `get_risk_parameters()`
+- `can_increase_position_size()`
+- `get_phase_summary()`
+- `get_phase_history()`
+- `get_capital_progress()`
+
+## 4. Applicable Trading Rules
+
+#### R25
+Phase 1: 5K-15K EUR, max 3 positions, 2% risk/trade
+
+- [ ] Implementation verified
+- [ ] Tests pass
+
+#### R26
+Phase 2: 15K-50K EUR, max 5 positions, 1.5% risk/trade
+
+- [ ] Implementation verified
+- [ ] Tests pass
+
+#### R27
+Phase 3: 50K+ EUR, max 10 positions, 1% risk/trade
+
+- [ ] Implementation verified
+- [ ] Tests pass
+
+---
+Universal rules (SOLID, type hints, formatting, security, logging) live in
+.requirements/BASE_RULES.md and apply to every file.
+Resync this stub with: python scripts/generate_requirements.py

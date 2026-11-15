@@ -1,0 +1,57 @@
+# Requirements Document: app/engines/data_engine/cache/distributed_cache.py
+
+## 1. Module Overview
+File: distributed_cache.py
+Domain: Engine
+
+## 2. Dependencies
+- `__future__`
+- `app.security.secrets.secure_serialization`
+- `asyncio`
+- `datetime`
+- `importlib`
+- `json`
+- `logging`
+- `redis.asyncio`
+- `sqlalchemy`
+- `sqlalchemy.exc`
+- `sqlalchemy.orm`
+- `typing`
+
+## 3. Core Components
+### Classes
+- `Base`
+- `CacheEntry`
+- `DistributedCache`
+### Public Functions
+- `get()`
+- `set()`
+- `delete()`
+- `clear_expired()`
+- `close()`
+- `get_status()`
+
+## 4. Applicable Trading Rules
+
+#### R14
+Data Quality Validation (OHLCV sanity checks, detect gaps/stale data)
+
+- [ ] Implementation verified
+- [ ] Tests pass
+
+#### R15
+Complete Logging (log all decisions, trade journal format)
+
+- [ ] Implementation verified
+- [ ] Tests pass
+
+#### R16
+Daily Reconciliation (compare broker vs internal, alert discrepancies >1%)
+
+- [ ] Implementation verified
+- [ ] Tests pass
+
+---
+Universal rules (SOLID, type hints, formatting, security, logging) live in
+.requirements/BASE_RULES.md and apply to every file.
+Resync this stub with: python scripts/generate_requirements.py

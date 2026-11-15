@@ -1,0 +1,75 @@
+# Requirements Document: app/services/execution_narang.py
+
+## 1. Module Overview
+File: execution_narang.py
+Domain: Service
+
+## 2. Dependencies
+- `__future__`
+- `abc`
+- `app.services.transaction_costs`
+- `app.shared.config.centralized_config`
+- `dataclasses`
+- `datetime`
+- `decimal`
+- `enum`
+- `logging`
+- `typing`
+
+## 3. Core Components
+### Classes
+- `OrderStatus`
+- `OrderType`
+- `TimeInForce`
+- `OrderSide`
+- `ChildOrder`
+- `ExecutionReport`
+- `IntradayVolumeProfile`
+- `ExecutionAlgoBase`
+- `VWAPExecution`
+- `TWAPExecution`
+- `POVExecution`
+- `MarketExecution`
+- `ExecutionEngine`
+### Public Functions
+- `get_execution_engine()`
+- `generate_child_orders()`
+- `should_update_child_orders()`
+- `calculate_implementation_shortfall()`
+- `generate_child_orders()`
+- `should_update_child_orders()`
+- `generate_child_orders()`
+- `should_update_child_orders()`
+- `generate_child_orders()`
+- `should_update_child_orders()`
+- `generate_child_orders()`
+- `should_update_child_orders()`
+- `set_cost_model()`
+- `select_execution_algorithm()`
+- `execute_order()`
+- `analyze_execution_quality()`
+
+## 4. Applicable Trading Rules
+
+#### R8
+Bid-Ask Spread Management (avoid market orders for low-liquidity)
+
+- [ ] Implementation verified
+- [ ] Tests pass
+
+#### R9
+Execution Timing (avoid first/last 15 min, VWAP/TWAP for large orders)
+
+- [ ] Implementation verified
+- [ ] Tests pass
+
+#### R10
+Slippage Monitor (track actual vs expected fill, alert if >0.5%)
+
+- [ ] Implementation verified
+- [ ] Tests pass
+
+---
+Universal rules (SOLID, type hints, formatting, security, logging) live in
+.requirements/BASE_RULES.md and apply to every file.
+Resync this stub with: python scripts/generate_requirements.py

@@ -1,0 +1,52 @@
+# Requirements Document: app/domain/analysis/vectorization/vectorization_auditor.py
+
+## 1. Module Overview
+File: vectorization_auditor.py
+Domain: Domain
+
+## 2. Dependencies
+- `__future__`
+- `app.domain.analysis.vectorization.models`
+- `app.domain.analysis.vectorization.patterns`
+- `ast`
+- `decimal`
+- `logging`
+- `pathlib`
+- `time`
+- `typing`
+
+## 3. Core Components
+### Classes
+- `VectorizationAuditor`
+- `ForLoopVisitor`
+- `ApplyVisitor`
+- `IterrowsVisitor`
+- `ListCompVisitor`
+- `EnumerateVisitor`
+- `RangeLenVisitor`
+- `WhileLoopVisitor`
+### Public Functions
+- `audit_file()`
+- `audit_directory()`
+- `calculate_score()`
+- `audit_code_snippet()`
+- `visit_For()`
+- `visit_Call()`
+- `visit_Call()`
+- `visit_ListComp()`
+- `visit_For()`
+- `visit_For()`
+- `visit_While()`
+
+## 4. Applicable Trading Rules
+
+#### R15
+Complete Logging (log all decisions, trade journal format)
+
+- [ ] Implementation verified
+- [ ] Tests pass
+
+---
+Universal rules (SOLID, type hints, formatting, security, logging) live in
+.requirements/BASE_RULES.md and apply to every file.
+Resync this stub with: python scripts/generate_requirements.py

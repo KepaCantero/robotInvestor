@@ -1,0 +1,56 @@
+# Requirements Document: app/core/exceptions.py
+
+## 1. Module Overview
+File: exceptions.py
+Domain: Core
+
+## 2. Dependencies
+- `__future__`
+- `logging`
+- `typing`
+- `unicodedata`
+
+## 3. Core Components
+### Classes
+- `AlgoTradingError`
+- `BacktestError`
+- `ValidationError`
+- `ConfigurationError`
+- `DataError`
+- `TradingError`
+- `PortfolioError`
+- `SignalError`
+- `BrokerError`
+- `MarketDataError`
+- `StrategyError`
+- `OptimizationError`
+- `DeploymentError`
+- `AuthenticationError`
+- `AuthorizationError`
+- `RateLimitError`
+- `TradingTimeoutError`
+- `TradingConnectionError`
+- `AlgoTradingDatabaseError`
+- `APIError`
+- `BusinessLogicError`
+### Public Functions
+- `raise_configuration_error()`
+- `raise_validation_error()`
+- `raise_business_logic_error()`
+- `raise_market_data_error()`
+- `raise_trading_error()`
+- `raise_database_error()`
+- `raise_authentication_error()`
+
+## 4. Applicable Trading Rules
+
+#### R15
+Complete Logging (log all decisions, trade journal format)
+
+- [ ] Implementation verified
+- [ ] Tests pass
+
+---
+Universal rules (SOLID, type hints, formatting, security, logging) live in
+.requirements/BASE_RULES.md and apply to every file.
+Resync this stub with: python scripts/generate_requirements.py

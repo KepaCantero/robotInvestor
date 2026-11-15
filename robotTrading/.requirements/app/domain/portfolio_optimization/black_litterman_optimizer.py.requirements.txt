@@ -1,0 +1,66 @@
+# Requirements Document: app/domain/portfolio_optimization/black_litterman_optimizer.py
+
+## 1. Module Overview
+File: black_litterman_optimizer.py
+Domain: Domain
+
+## 2. Dependencies
+- `__future__`
+- `app.shared.config.centralized_config`
+- `dataclasses`
+- `enum`
+- `logging`
+- `numpy`
+- `numpy.typing`
+- `scipy.optimize`
+- `sklearn.covariance`
+- `typing`
+
+## 3. Core Components
+### Classes
+- `ViewType`
+- `InvestorView`
+- `BlackLittermanConfig`
+- `BlackLittermanResult`
+- `EquilibriumReturns`
+- `ViewMatrix`
+- `BlackLittermanOptimizer`
+### Public Functions
+- `compute_black_litterman_weights()`
+- `weights_dict()`
+- `get_view_summary()`
+- `from_market_caps()`
+- `from_weights()`
+- `build_pick_matrix()`
+- `build_q_vector()`
+- `build_omega_matrix()`
+- `calculate_covariance_matrix()`
+- `calculate_equilibrium_returns()`
+- `calculate_bl_returns()`
+- `optimize()`
+- `negative_sharpe()`
+
+## 4. Applicable Trading Rules
+
+#### R1
+Kelly Criterion + Max Position Size (max 5% per position)
+
+- [ ] Implementation verified
+- [ ] Tests pass
+
+#### R3
+Correlation & Concentration Limits (max 20% per sector)
+
+- [ ] Implementation verified
+- [ ] Tests pass
+
+#### R11
+Dynamic Trailing Stop (ATR-based, never loosen)
+
+- [ ] Implementation verified
+- [ ] Tests pass
+
+---
+Universal rules (SOLID, type hints, formatting, security, logging) live in
+.requirements/BASE_RULES.md and apply to every file.
+Resync this stub with: python scripts/generate_requirements.py

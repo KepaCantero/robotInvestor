@@ -1,0 +1,64 @@
+# Requirements Document: app/domain/strategies/fx_intermarket_strategy.py
+
+## 1. Module Overview
+File: fx_intermarket_strategy.py
+Domain: Domain
+
+## 2. Dependencies
+- `__future__`
+- `app.domain.models.market_data`
+- `app.domain.models.signal`
+- `app.domain.strategies.base`
+- `app.domain.strategies.fx_intermarket.correlation_analyzer`
+- `app.domain.strategies.fx_intermarket.models`
+- `dataclasses`
+- `datetime`
+- `decimal`
+- `logging`
+- `numpy`
+- `pandas`
+- `typing`
+
+## 3. Core Components
+### Classes
+- `FXIntermarketState`
+- `FXIntermarketStrategy`
+### Public Functions
+- `generate_signals()`
+- `analyze_intermarket_relationships()`
+- `detect_significant_moves()`
+- `generate_intermarket_signal()`
+- `calculate_expected_move()`
+- `calculate_signal_strength()`
+- `calculate_confidence()`
+- `update_correlations()`
+- `get_monitored_pairs()`
+- `get_monitored_assets()`
+- `risk_check()`
+- `get_required_parameters()`
+- `get_portfolio_summary()`
+
+## 4. Applicable Trading Rules
+
+#### R19
+Market Regime Detection (trend/range/volatile classification)
+
+- [ ] Implementation verified
+- [ ] Tests pass
+
+#### R20
+Multi-Confirmation (min 2 independent signals before trade)
+
+- [ ] Implementation verified
+- [ ] Tests pass
+
+#### R24
+Strategy Diversification (min 3 uncorrelated strategies)
+
+- [ ] Implementation verified
+- [ ] Tests pass
+
+---
+Universal rules (SOLID, type hints, formatting, security, logging) live in
+.requirements/BASE_RULES.md and apply to every file.
+Resync this stub with: python scripts/generate_requirements.py

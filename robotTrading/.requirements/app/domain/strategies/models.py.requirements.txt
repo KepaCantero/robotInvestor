@@ -1,0 +1,101 @@
+# Requirements Document: app/domain/strategies/models.py
+
+## 1. Module Overview
+File: models.py
+Domain: Domain
+
+## 2. Dependencies
+- `__future__`
+- `app.shared.config.centralized_config`
+- `dataclasses`
+- `datetime`
+- `decimal`
+- `enum`
+- `logging`
+- `pydantic`
+- `typing`
+
+## 3. Core Components
+### Classes
+- `FactorType`
+- `FactorTiltDirection`
+- `FactorTilt`
+- `FactorScores`
+- `FactorProfile`
+- `FactorStrategyConfig`
+- `FactorPosition`
+- `FactorPortfolio`
+- `FactorOptimizationResult`
+- `FactorRebalanceRecommendation`
+- `DividendSafety`
+- `DividendData`
+- `DividendProfile`
+- `DividendStock`
+- `DividendStrategyConfig`
+- `ExDividendDate`
+- `VolatilityRegime`
+- `VolatilityMetrics`
+- `LowVolatilityProfile`
+- `LowVolatilityStock`
+- `LowVolatilityStockResult`
+- `LowVolatilityScreeningResult`
+- `LowVolatilityStrategyConfig`
+- `DividendScreeningCriteria`
+- `LowVolatilityScreeningCriteria`
+- `SectorDefensiveLevel`
+- `ScreeningResult`
+- `DividendStockResult`
+- `DividendScreeningResult`
+- `Moneyness`
+- `AssignmentProbability`
+- `OptionGreeks`
+- `CallOption`
+- `OptionScreeningCriteria`
+- `OptionScreenerResult`
+- `OnChainMetrics`
+- `CryptoAssetType`
+- `CryptoExchange`
+- `CryptoAsset`
+- `CryptoScreeningResult`
+- `CryptoMomentumConfig`
+- `CryptoMomentumScore`
+- `CryptoPortfolio`
+- `RollType`
+- `CoveredCallConfig`
+- `CoveredCallPosition`
+- `RollDecision`
+- `RollOpportunity`
+### Public Functions
+- `momentum_excluding_last_month()`
+- `is_value_stock()`
+- `is_small_cap()`
+- `is_profitable()`
+- `is_conservative_investor()`
+- `is_winner()`
+- `validate_weights_sum()`
+- `validate_tilt_ranges()`
+- `get_factor_tilts()`
+- `get_config_description()`
+- `positions_count()`
+- `invested_capital()`
+- `is_diversified()`
+- `max_position_weight()`
+- `herfindahl_index()`
+- `pass_rate()`
+- `pass_rate()`
+- `pass_rate()`
+- `best_option()`
+- `pass_rate()`
+
+## 4. Applicable Trading Rules
+
+#### R15
+Complete Logging (log all decisions, trade journal format)
+
+- [ ] Implementation verified
+- [ ] Tests pass
+
+---
+Universal rules (SOLID, type hints, formatting, security, logging) live in
+.requirements/BASE_RULES.md and apply to every file.
+Resync this stub with: python scripts/generate_requirements.py

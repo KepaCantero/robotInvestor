@@ -1,0 +1,77 @@
+# Requirements Document: app/shared/config/config_validator.py
+
+## 1. Module Overview
+File: config_validator.py
+Domain: Shared
+
+## 2. Dependencies
+- `__future__`
+- `argparse`
+- `datetime`
+- `logging`
+- `os`
+- `pathlib`
+- `pydantic`
+- `re`
+- `sys`
+- `typing`
+- `yaml`
+
+## 3. Core Components
+### Classes
+- `ProfileOptimizationConfigValidator`
+- `BatchBacktestConfigValidator`
+- `ValidationErrorDetail`
+- `ValidationResult`
+- `DatabaseConfigValidator`
+- `RiskConfigValidator`
+- `CircuitBreakerValidator`
+- `ConfigValidator`
+### Public Functions
+- `main()`
+- `validate_test_size()`
+- `validate_cv_folds()`
+- `validate_worker_multiplier()`
+- `validate_positive_thresholds()`
+- `validate_drawdown()`
+- `validate_database_url()`
+- `validate_non_empty_dict()`
+- `validate_symbols()`
+- `validate_date_format()`
+- `validate_n_trials()`
+- `validate_max_profiles()`
+- `add_error()`
+- `add_warning()`
+- `print_summary()`
+- `validate_backup_interval()`
+- `validate_retention()`
+- `validate_percentages()`
+- `validate_leverage()`
+- `validate_thresholds()`
+- `validate_yaml_syntax()`
+- `validate_environment_value()`
+- `validate_debug_mode()`
+- `validate_required_sections()`
+- `validate_placeholders()`
+- `validate_environment_variables()`
+- `validate_database_config()`
+- `validate_risk_config()`
+- `validate_circuit_breaker_config()`
+- `validate_production_config()`
+- `validate_profile_optimization_config()`
+- `validate_batch_backtest_config()`
+- `check_dict()`
+- `extract()`
+
+## 4. Applicable Trading Rules
+
+#### R15
+Complete Logging (log all decisions, trade journal format)
+
+- [ ] Implementation verified
+- [ ] Tests pass
+
+---
+Universal rules (SOLID, type hints, formatting, security, logging) live in
+.requirements/BASE_RULES.md and apply to every file.
+Resync this stub with: python scripts/generate_requirements.py

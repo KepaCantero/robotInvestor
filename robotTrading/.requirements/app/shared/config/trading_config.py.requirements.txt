@@ -1,0 +1,67 @@
+# Requirements Document: app/shared/config/trading_config.py
+
+## 1. Module Overview
+File: trading_config.py
+Domain: Shared
+
+## 2. Dependencies
+- `__future__`
+- `app.shared.config.base.base`
+- `app.shared.config.compliance`
+- `app.shared.config.infrastructure`
+- `app.shared.config.position_sizing`
+- `app.shared.config.signal_risk`
+- `app.shared.config.technical_indicators`
+- `decimal`
+- `logging`
+- `pathlib`
+- `pydantic`
+- `pydantic_settings`
+- `typing`
+- `yaml`
+
+## 3. Core Components
+### Classes
+- `TradingThresholds`
+- `StrategyConfig`
+- `CurrencyHedgingConfig`
+- `SectorCountryDiversificationConfig`
+- `CentralizedConfig`
+### Public Functions
+- `get_config()`
+- `set_config()`
+- `reload_config()`
+- `get_trading_threshold()`
+- `get_strategy_config()`
+- `get_compliance_config()`
+- `get_spain_tax_config()`
+- `get_strategy_config()`
+- `get_trading_threshold()`
+- `update_strategy_config()`
+- `validate_configuration()`
+- `get_config_summary()`
+
+## 4. Applicable Trading Rules
+
+#### R8
+Bid-Ask Spread Management (avoid market orders for low-liquidity)
+
+- [ ] Implementation verified
+- [ ] Tests pass
+
+#### R9
+Execution Timing (avoid first/last 15 min, VWAP/TWAP for large orders)
+
+- [ ] Implementation verified
+- [ ] Tests pass
+
+#### R10
+Slippage Monitor (track actual vs expected fill, alert if >0.5%)
+
+- [ ] Implementation verified
+- [ ] Tests pass
+
+---
+Universal rules (SOLID, type hints, formatting, security, logging) live in
+.requirements/BASE_RULES.md and apply to every file.
+Resync this stub with: python scripts/generate_requirements.py

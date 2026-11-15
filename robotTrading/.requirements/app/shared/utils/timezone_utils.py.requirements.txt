@@ -1,0 +1,42 @@
+# Requirements Document: app/shared/utils/timezone_utils.py
+
+## 1. Module Overview
+File: timezone_utils.py
+Domain: Shared
+
+## 2. Dependencies
+- `__future__`
+- `datetime`
+- `logging`
+- `tzlocal`
+
+## 3. Core Components
+### Public Functions
+- `utc_now()`
+- `to_utc()`
+- `to_market_time()`
+- `format_utc()`
+- `format_market_time()`
+- `get_market_timezone()`
+- `is_market_open()`
+- `get_market_open_close_time()`
+- `validate_timezone_aware()`
+- `ensure_timezone_aware()`
+- `parse_iso_datetime()`
+- `get_db_timestamp_default()`
+- `get_db_timestamp_onupdate()`
+- `to_local_timezone()`
+- `format_for_display()`
+
+## 4. Applicable Trading Rules
+
+#### R15
+Complete Logging (log all decisions, trade journal format)
+
+- [ ] Implementation verified
+- [ ] Tests pass
+
+---
+Universal rules (SOLID, type hints, formatting, security, logging) live in
+.requirements/BASE_RULES.md and apply to every file.
+Resync this stub with: python scripts/generate_requirements.py

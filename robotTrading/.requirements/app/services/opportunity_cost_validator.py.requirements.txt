@@ -1,0 +1,33 @@
+# Requirements Document: app/services/opportunity_cost_validator.py
+
+## 1. Module Overview
+File: opportunity_cost_validator.py
+Domain: Service
+
+## 2. Dependencies
+- `__future__`
+- `decimal`
+- `logging`
+
+## 3. Core Components
+### Classes
+- `OpportunityCostValidator`
+### Public Functions
+- `is_active_trading_worthwhile()`
+- `get_minimum_alpha_for_trading()`
+- `capital_inflection_point()`
+- `analyze_capital_tier_viability()`
+- `log_opportunity_cost_decision()`
+
+## 4. Applicable Trading Rules
+
+#### R15
+Complete Logging (log all decisions, trade journal format)
+
+- [ ] Implementation verified
+- [ ] Tests pass
+
+---
+Universal rules (SOLID, type hints, formatting, security, logging) live in
+.requirements/BASE_RULES.md and apply to every file.
+Resync this stub with: python scripts/generate_requirements.py

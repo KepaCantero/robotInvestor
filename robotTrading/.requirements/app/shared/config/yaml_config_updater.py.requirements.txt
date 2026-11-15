@@ -1,0 +1,43 @@
+# Requirements Document: app/shared/config/yaml_config_updater.py
+
+## 1. Module Overview
+File: yaml_config_updater.py
+Domain: Shared
+
+## 2. Dependencies
+- `__future__`
+- `datetime`
+- `json`
+- `logging`
+- `pathlib`
+- `shutil`
+- `typing`
+- `yaml`
+
+## 3. Core Components
+### Classes
+- `YAMLConfigUpdater`
+### Public Functions
+- `update_filter_thresholds()`
+- `update_detector_params()`
+- `update_strategy_params()`
+- `update_learning_params()`
+- `update_multiple_filters()`
+- `update_from_optimization_results()`
+- `get_change_history()`
+- `save_change_history()`
+- `list_backups()`
+- `restore_from_backup()`
+
+## 4. Applicable Trading Rules
+
+#### R15
+Complete Logging (log all decisions, trade journal format)
+
+- [ ] Implementation verified
+- [ ] Tests pass
+
+---
+Universal rules (SOLID, type hints, formatting, security, logging) live in
+.requirements/BASE_RULES.md and apply to every file.
+Resync this stub with: python scripts/generate_requirements.py

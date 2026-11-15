@@ -1,0 +1,57 @@
+# Requirements Document: app/application/alerting/alerting_orchestrator.py
+
+## 1. Module Overview
+File: alerting_orchestrator.py
+Domain: Application
+
+## 2. Dependencies
+- `__future__`
+- `app.services.alerting_system.alert_manager`
+- `app.services.alerting_system.alert_rule_engine`
+- `app.services.alerting_system.metrics_driven_alerter`
+- `app.services.alerting_system.models`
+- `app.services.alerting_system.notification_channels`
+- `app.services.alerting_system.rule_templates`
+- `asyncio`
+- `dataclasses`
+- `datetime`
+- `logging`
+- `typing`
+
+## 3. Core Components
+### Classes
+- `AlertingHealth`
+- `AlertingStatistics`
+- `AlertingOrchestrator`
+### Public Functions
+- `to_dict()`
+- `initialize()`
+- `register_default_rules()`
+- `register_custom_rule()`
+- `enable_rule()`
+- `disable_rule()`
+- `start()`
+- `stop()`
+- `trigger_alert_manual()`
+- `acknowledge_alert()`
+- `resolve_alert()`
+- `get_health_status()`
+- `get_statistics()`
+- `get_registered_rules()`
+- `get_rule_by_id()`
+- `get_rules_by_severity()`
+- `get_rules_by_category()`
+- `reset_statistics()`
+
+## 4. Applicable Trading Rules
+
+#### R15
+Complete Logging (log all decisions, trade journal format)
+
+- [ ] Implementation verified
+- [ ] Tests pass
+
+---
+Universal rules (SOLID, type hints, formatting, security, logging) live in
+.requirements/BASE_RULES.md and apply to every file.
+Resync this stub with: python scripts/generate_requirements.py

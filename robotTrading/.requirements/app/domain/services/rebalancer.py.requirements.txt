@@ -1,0 +1,41 @@
+# Requirements Document: app/domain/services/rebalancer.py
+
+## 1. Module Overview
+File: rebalancer.py
+Domain: Domain
+
+## 2. Dependencies
+- `__future__`
+- `app.domain.entities.portfolio`
+- `app.domain.value_objects.percentage`
+- `dataclasses`
+- `decimal`
+- `logging`
+- `typing`
+
+## 3. Core Components
+### Classes
+- `RebalanceTrade`
+- `RebalancePlan`
+- `RebalanceConfig`
+- `Rebalancer`
+### Public Functions
+- `has_trades()`
+- `calculate_drift()`
+- `create_rebalance_plan()`
+- `optimize_rebalance_order()`
+- `validate_rebalance_plan()`
+- `get_rebalance_summary()`
+
+## 4. Applicable Trading Rules
+
+#### R15
+Complete Logging (log all decisions, trade journal format)
+
+- [ ] Implementation verified
+- [ ] Tests pass
+
+---
+Universal rules (SOLID, type hints, formatting, security, logging) live in
+.requirements/BASE_RULES.md and apply to every file.
+Resync this stub with: python scripts/generate_requirements.py

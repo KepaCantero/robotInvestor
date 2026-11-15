@@ -1,0 +1,27 @@
+# Requirements Document: app/services/risk/validators/__init__.py
+
+## 1. Module Overview
+File: __init__.py
+Domain: Service
+
+## 2. Dependencies
+- `app.domain.services.risk.validators.risk_reward_validator`
+- `app.services.risk.validators.drawdown_validator`
+- `app.services.risk.validators.kelly_criterion_validator`
+
+## 3. Core Components
+### Module Initialization
+- Package/module initialization file
+
+## 4. Applicable Trading Rules
+
+#### R2
+Drawdown Monitor (15% warning, 25% halt trading, auto cooldown)
+
+- [ ] Implementation verified
+- [ ] Tests pass
+
+---
+Universal rules (SOLID, type hints, formatting, security, logging) live in
+.requirements/BASE_RULES.md and apply to every file.
+Resync this stub with: python scripts/generate_requirements.py

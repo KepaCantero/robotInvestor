@@ -1,0 +1,69 @@
+# Requirements Document: app/backtesting/services/position_manager.py
+
+## 1. Module Overview
+File: position_manager.py
+Domain: Backtest
+
+## 2. Dependencies
+- `__future__`
+- `decimal`
+- `logging`
+- `typing`
+
+## 3. Core Components
+### Classes
+- `PositionManager`
+### Public Functions
+- `get_position()`
+- `update_position()`
+- `set_position()`
+- `close_position()`
+- `has_open_position()`
+- `get_all_positions()`
+- `get_symbols_with_positions()`
+- `clear_all_positions()`
+- `get_total_position_count()`
+- `get_total_position_value()`
+
+## 4. Applicable Trading Rules
+
+#### R5
+Walk-Forward Analysis (70/30 train/test split, min 50 trades OOS, max 30% degradation)
+
+- [ ] Implementation verified
+- [ ] Tests pass
+
+#### R6
+Overfitting Prevention (min 30 samples per parameter, purged cross-validation)
+
+- [ ] Implementation verified
+- [ ] Tests pass
+
+#### R7
+Monte Carlo Risk Analysis (1000 simulations, validate DD within 5-95 percentile)
+
+- [ ] Implementation verified
+- [ ] Tests pass
+
+#### R1
+Kelly Criterion + Max Position Size (max 5% per position)
+
+- [ ] Implementation verified
+- [ ] Tests pass
+
+#### R3
+Correlation & Concentration Limits (max 20% per sector)
+
+- [ ] Implementation verified
+- [ ] Tests pass
+
+#### R11
+Dynamic Trailing Stop (ATR-based, never loosen)
+
+- [ ] Implementation verified
+- [ ] Tests pass
+
+---
+Universal rules (SOLID, type hints, formatting, security, logging) live in
+.requirements/BASE_RULES.md and apply to every file.
+Resync this stub with: python scripts/generate_requirements.py

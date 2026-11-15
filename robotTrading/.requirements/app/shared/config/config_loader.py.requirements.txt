@@ -1,0 +1,46 @@
+# Requirements Document: app/shared/config/config_loader.py
+
+## 1. Module Overview
+File: config_loader.py
+Domain: Shared
+
+## 2. Dependencies
+- `__future__`
+- `os`
+- `pathlib`
+- `structlog`
+- `threading`
+- `typing`
+- `yaml`
+
+## 3. Core Components
+### Classes
+- `YAMLConfigLoader`
+### Public Functions
+- `get_config_loader()`
+- `load_strategy_stock_allocator_config()`
+- `load_momentum_filters_config()`
+- `load_market_detectors_config()`
+- `load_strategy_defaults_config()`
+- `load_learning_parameters_config()`
+- `get_filter_config()`
+- `get_detector_config()`
+- `get_strategy_config()`
+- `load()`
+- `get_nested()`
+- `load_with_tier_override()`
+- `get_strategy_stock_allocator_config()`
+- `clear_cache()`
+
+## 4. Applicable Trading Rules
+
+#### R15
+Complete Logging (log all decisions, trade journal format)
+
+- [ ] Implementation verified
+- [ ] Tests pass
+
+---
+Universal rules (SOLID, type hints, formatting, security, logging) live in
+.requirements/BASE_RULES.md and apply to every file.
+Resync this stub with: python scripts/generate_requirements.py

@@ -1,0 +1,402 @@
+# Strategy Defaults Configuration
+# Centralized configuration for main trading strategies
+#
+# Based on "Realistic Retail Trading Rules" (rules/trading/64-realistic-retail-trading-rules.md)
+# Objective: Scale from 1000€ → 500k
+#
+# This file contains parameters for:
+# - Momentum Strategy
+# - Mean Reversion Strategy
+# - Pairs Trading Strategy
+# - Capital Phase Management (R25-R27)
+# - Position Management (R11-R13)
+
+# ============================================================================
+# MOMENTUM STRATEGY
+# ============================================================================
+momentum_strategy:
+  # Technical indicator periods
+  periods:
+    rsi_period: 14            # RSI calculation period
+    ema_period: 20            # EMA calculation period
+    lookback_period: 5        # Lookback for signal generation
+
+  # Signal cooldown
+  cooldown:
+    bars: 5                   # Number of bars to wait after signal
+
+  # History lengths
+  history_lengths:
+    price_history: 200        # Max bars of price history
+
+  # Position sizing
+  position_sizing:
+    base_size: 0.10           # Base position size (10% of capital)
+    max_size: 0.25            # Maximum position size (25% of capital)
+
+  # Stop loss and take profit
+  risk_management:
+    stop_loss_pct: 0.025      # Stop loss percentage (2.5%)
+    take_profit_pct: 0.08     # Take profit percentage (8%)
+
+# ============================================================================
+# MEAN REVERSION STRATEGY
+# ============================================================================
+mean_reversion_strategy:
+  # Z-score thresholds
+  thresholds:
+    min_z_score: 1.5          # Minimum Z-score for signal
+    max_z_score: 2.5          # Maximum Z-score for signal
+    exit_z_score: 0.5         # Exit position when Z-score returns to this
+
+  # Half-life parameters
+  half_life:
+    min_days: 1               # Minimum half-life (too fast = noise)
+    max_days: 120             # Maximum half-life for valid signals
+
+  # Lookback period
+  lookback_period: 20         # Period for Z-score calculation
+
+  # Position sizing
+  position_sizing:
+    base_size: 0.07           # Base position size (7% of capital)
+    max_size: 0.15            # Maximum position size (15% of capital)
+
+  # Stop loss and take profit
+  risk_management:
+    stop_loss_pct: 0.015      # Stop loss percentage (1.5%)
+    take_profit_pct: 0.10     # Take profit percentage (10%)
+
+# ============================================================================
+# PAIRS TRADING STRATEGY
+# ============================================================================
+pairs_trading_strategy:
+  # Default trading pairs (fallback if none provided)
+  default_pairs:
+    - ["AAPL", "MSFT"]
+    - ["GOOGL", "META"]
+
+  # Cointegration parameters
+  cointegration:
+    lookback_days: 250        # Lookback for cointegration test
+    p_value_threshold: 0.05    # P-value threshold for cointegration
+    recalc_interval_days: 30  # Interval to recalculate cointegration
+
+  # Spread parameters
+  spread:
+    max_std_deviation: 3.0     # Maximum standard deviations for entry
+    exit_std_deviation: 0.5    # Exit when spread returns to this
+    z_score_entry: 2.0         # Z-score for entry
+    z_score_exit: 0.5          # Z-score for exit
+
+  # Hedge ratio
+  hedge_ratio:
+    default: 1.0              # Default hedge ratio (1:1)
+    method: "ols"              # Method: ols, kalman, rolling
+    recalc_bars: 100          # Recalculate hedge ratio every N bars
+
+  # Position sizing
+  position_sizing:
+    base_size: 0.10           # Base position size per leg (10% each)
+    max_size: 0.20            # Maximum total position size (20% for both legs)
+
+  # Stop loss and take profit
+  risk_management:
+    stop_loss_pct: 0.03       # Stop loss percentage (3%)
+    take_profit_pct: 0.06     # Take profit percentage (6%)
+
+# ============================================================================
+# STRATEGY ENABLEMENT BY CAPITAL TIER
+# ============================================================================
+# Defines which strategies are enabled for each capital tier
+strategy_tiers:
+  micro:
+    enabled:
+      - momentum_strategy
+    disabled:
+      - pairs_trading_strategy    # Requires more capital
+      - mean_reversion_strategy  # May require more liquidity
+
+  small:
+    enabled:
+      - momentum_strategy
+      - mean_reversion_strategy
+    disabled:
+      - pairs_trading_strategy    # Typically disabled for small
+
+  medium:
+    enabled:
+      - momentum_strategy
+      - mean_reversion_strategy
+      - pairs_trading_strategy
+    disabled: []
+
+  large:
+    enabled:
+      - momentum_strategy
+      - mean_reversion_strategy
+      - pairs_trading_strategy
+    disabled: []
+
+# ============================================================================
+# CAPITAL TIER OVERRIDES
+# ============================================================================
+# Tier-specific adjustments for strategy parameters
+tiers:
+  micro:
+    momentum_strategy:
+      position_sizing:
+        base_size: 0.08         # Smaller positions
+        max_size: 0.15
+
+    risk_management:
+      stop_loss_pct: 0.035     # Tighter stops
+      take_profit_pct: 0.06    # Smaller targets
+
+    mean_reversion_strategy:
+      thresholds:
+        min_z_score: 2.0       # More conservative
+
+  small:
+    momentum_strategy:
+      position_sizing:
+        base_size: 0.09
+        max_size: 0.18
+
+    risk_management:
+      stop_loss_pct: 0.030
+      take_profit_pct: 0.07
+
+  medium:
+    # Use default values
+    pass
+
+  large:
+    momentum_strategy:
+      position_sizing:
+        base_size: 0.12        # Larger positions
+        max_size: 0.25
+
+    risk_management:
+      stop_loss_pct: 0.020     # Wider stops
+      take_profit_pct: 0.10    # Larger targets
+
+    mean_reversion_strategy:
+      thresholds:
+        min_z_score: 1.0       # More aggressive
+        max_z_score: 3.0       # Wider range
+
+    pairs_trading_strategy:
+      position_sizing:
+        base_size: 0.12
+        max_size: 0.25
+
+# ============================================================================
+# CAPITAL PHASE MANAGEMENT (R25-R27)
+# ============================================================================
+# Parámetros específicos por fase de capital para escalar de 1k → 500k
+capital_phases:
+  # Fase 1: SURVIVAL (1k-10k) - Objetivo: sobrevivir y aprender
+  survival:
+    capital_range: [1000, 10000]
+    max_risk_per_trade: 0.01      # 1% máximo por trade
+    max_positions: 2               # Máximo 2 posiciones simultáneas
+    max_single_asset: 0.20         # 20% máximo en un activo
+    max_single_sector: 0.40        # 40% máximo en un sector
+    max_correlation: 0.7           # Correlación máxima entre activos
+    min_rr_ratio: 2.5              # R:R mínimo más alto en fase inicial
+    strategies_enabled:
+      - momentum_strategy
+
+  # Fase 2: GROWTH (10k-50k) - Objetivo: crecimiento controlado
+  growth:
+    capital_range: [10000, 50000]
+    max_risk_per_trade: 0.015     # 1.5% por trade
+    max_positions: 3               # Hasta 3 posiciones
+    max_single_asset: 0.15         # 15% máximo en un activo
+    max_single_sector: 0.35        # 35% máximo en un sector
+    max_correlation: 0.7           # Correlación máxima
+    min_rr_ratio: 2.2              # R:R mínimo
+    strategies_enabled:
+      - momentum_strategy
+      - mean_reversion_strategy
+
+  # Fase 3: OPTIMIZATION (50k-500k) - Objetivo: optimización y diversificación
+  optimization:
+    capital_range: [50000, 500000]
+    max_risk_per_trade: 0.02       # 2% por trade
+    max_positions: 5               # Hasta 5 posiciones
+    max_single_asset: 0.10         # 10% máximo en un activo
+    max_single_sector: 0.25        # 25% máximo en un sector
+    max_correlation: 0.6           # Correlación más estricta
+    min_rr_ratio: 2.0              # R:R mínimo
+    strategies_enabled:
+      - momentum_strategy
+      - mean_reversion_strategy
+      - pairs_trading_strategy
+
+# ============================================================================
+# POSITION MANAGEMENT (R11-R13)
+# ============================================================================
+# Gestión avanzada de posiciones con trailing stop, take profit parcial y pyramiding
+position_management:
+  # R11: Trailing Stop Dinámico
+  trailing_stop:
+    enabled: true
+    trailing_pct: 0.015             # 1.5% desde el máximo
+    trigger_2r: "move_to_breakeven" # Al +2R: mover a break-even
+    trigger_3r: "trailing_50pct"   # Al +3R: trailing al 50% del beneficio
+
+  # R12: Take Profit Parcial
+  partial_take_profit:
+    enabled: true
+    levels:
+      - r_multiple: 2.0
+        close_pct: 0.50             # Cerrar 50% en +2R
+        action: "move_to_breakeven"
+      - r_multiple: 3.0
+        close_pct: 0.25             # Cerrar 25% más en +3R
+        action: "trailing_stop"
+      - r_multiple: 5.0
+        close_pct: 0.25             # Cerrar 25% final en +5R
+        action: "none"
+
+  # R13: Pyramiding - Añadir a Ganadores
+  pyramiding:
+    enabled: true
+    max_additions: 2                # Máximo 2 adiciones por posición
+    only_add_to_winners: true      # NUNCA añadir a perdedoras
+    first_addition_pct: 0.50       # 50% del tamaño inicial
+    second_addition_pct: 0.25      # 25% del tamaño inicial
+
+# ============================================================================
+# RISK MANAGEMENT RULES (R1-R4)
+# ============================================================================
+risk_management_rules:
+  # R1: Kelly Criterion
+  kelly_criterion:
+    enabled: true
+    kelly_fraction: 0.5            # Half-Kelly (50% del Kelly óptimo)
+    max_position_from_kelly: 0.25  # Máximo 25% del capital desde Kelly
+
+  # R2: Drawdown Máximo
+  drawdown_limits:
+    warning_threshold: 0.15        # 15% - reducir tamaño 50%
+    critical_threshold: 0.25       # 25% - detener trading completamente
+    auto_halt: true
+
+  # R4: Ratio Riesgo/Beneficio Mínimo
+  min_rr_ratio:
+    default: 2.0                   # 2:1 mínimo estándar
+    high_confidence: 1.5           # 1.5:1 para confianza >80%
+
+# ============================================================================
+# BACKTESTING VALIDATION (R5-R7)
+# ============================================================================
+backtesting_validation:
+  # R5: Walk-Forward Analysis
+  walk_forward:
+    enabled: true
+    train_pct: 0.70                # 70% training
+    test_pct: 0.30                 # 30% out-of-sample
+    min_train_periods: 60          # Mínimo 6 meses datos diarios
+    max_oos_degradation: 0.30      # Máximo 30% degradación IS vs OOS
+
+  # R6: Overfitting Prevention
+  overfitting_prevention:
+    parameter_data_ratio: 30       # Mínimo 30 datos por parámetro
+    min_train_samples: 50          # Mínimo 50 trades en backtest
+    embargo_periods: 3             # Eliminar 3 períodos entre train/test
+
+  # R7: Monte Carlo Risk Analysis
+  monte_carlo:
+    enabled: true
+    n_simulations: 1000            # 1000 simulaciones
+    confidence_level: 0.05         # Percentil 5% para DD máximo
+
+# ============================================================================
+# EXECUTION RULES (R8-R10)
+# ============================================================================
+execution_rules:
+  # R8: Spread Bid-Ask Management
+  spread_management:
+    limit_threshold: 0.001         # < 0.1%: usar LIMIT orders
+    market_threshold: 0.002        # 0.1-0.2%: MARKET solo en señales fuertes
+    avoid_threshold: 0.005         # > 0.5%: evitar trading
+
+  # R9: Execution Timing
+  timing:
+    avoid_first_minutes: 15        # Evitar primeros 15 min
+    avoid_last_minutes: 15         # Evitar últimos 15 min
+    avoid_macro_announcements: true  # Evitar FED, CPI, NFP
+
+  # R10: Slippage Maximum
+  slippage_limits:
+    max_warning: 0.001             # 0.1% - warning
+    max_reject: 0.002              # 0.2% - reject execution
+
+# ============================================================================
+# DATA & LOGGING (R14-R16)
+# ============================================================================
+data_logging:
+  # R14: Data Quality
+  data_quality:
+    max_consecutive_gaps: 3        # Forward fill máximo 3 gaps
+    outlier_std_threshold: 3.0     # Marcar outliers > 3 std
+
+  # R15: Trading Decision Logger
+  decision_logging:
+    enabled: true
+    log_all_signals: true
+    log_all_executions: true
+    log_all_risk_checks: true
+    append_only: true              # Nunca sobreescribir logs
+
+  # R16: Daily Reconciliation
+  reconciliation:
+    enabled: true
+    tolerance_pct: 0.001           # 0.1% tolerancia
+    auto_alert_on_mismatch: true
+
+# ============================================================================
+# PSYCHOLOGY & DISCIPLINE (R17-R18)
+# ============================================================================
+psychology_controls:
+  # R17: Emotion Control
+  emotion_control:
+    cooldown_after_losses: 3       # Cooldown tras 3 pérdidas consecutivas
+    cooldown_duration_minutes: 60  # 1 hora de cooldown
+    no_rule_changes_during_market: true  # Nunca cambiar reglas en mercado abierto
+
+  # R18: Trading Journal
+  trading_journal:
+    enabled: true
+    record_emotions: true           # Emoción 1-5 antes/después
+    record_lessons: true           # Lecciones aprendidas
+    categorize_trades: true        # ganador_planificado, perdedor_error, etc.
+
+# ============================================================================
+# TARGET METRICS BY PHASE
+# ============================================================================
+# Objetivos de rendimiento según fase de capital
+target_metrics:
+  survival:  # 1k-10k
+    trades_per_month: [10, 20]
+    win_rate_min: 0.45
+    rr_ratio_min: 2.5
+    max_drawdown: 0.20
+    sharpe_min: 1.0
+
+  growth:  # 10k-50k
+    trades_per_month: [20, 40]
+    win_rate_min: 0.50
+    rr_ratio_min: 2.2
+    max_drawdown: 0.15
+    sharpe_min: 1.2
+
+  optimization:  # 50k-500k
+    trades_per_month: [40, 100]
+    win_rate_min: 0.55
+    rr_ratio_min: 2.0
+    max_drawdown: 0.12
+    sharpe_min: 1.5

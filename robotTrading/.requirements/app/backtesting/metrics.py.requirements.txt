@@ -1,0 +1,72 @@
+# Requirements Document: app/backtesting/metrics.py
+
+## 1. Module Overview
+File: metrics.py
+Domain: Backtest
+
+## 2. Dependencies
+- `__future__`
+- `app.backtesting.advanced_metrics`
+- `app.backtesting.lopez_de_prado_metrics`
+- `app.backtesting.models`
+- `app.shared.config.centralized_config`
+- `app.shared.utils.decimal_utils`
+- `collections.abc`
+- `datetime`
+- `decimal`
+- `empyrical`
+- `logging`
+- `numpy`
+- `scipy`
+- `sklearn.metrics`
+- `typing`
+
+## 3. Core Components
+### Classes
+- `MetricsCalculator`
+- `LopezDePradoMetricsCalculator`
+### Public Functions
+- `build_daily_equity_series()`
+- `calculate_max_drawdown()`
+- `bounded_drawdown_percentage()`
+- `bounded_drawdown_fraction()`
+- `calculate_profit_factor()`
+- `calculate_expectancy()`
+- `calculate_expectancy_with_confidence()`
+- `calculate_f1_score()`
+- `calculate_matthews_corrcoef()`
+- `calculate_classification_metrics_imbalanced()`
+- `calculate_imbalanced_metrics_from_trades()`
+- `create_lopez_de_prado_calculator()`
+- `calculate_all_metrics()`
+- `calculate_cagr()`
+- `combine_strategy_sharpes()`
+- `validate_portfolio_stability()`
+- `calculate_turnover_adjusted_metrics()`
+- `analyze_portfolio_concentration()`
+- `generate_comprehensive_report()`
+
+## 4. Applicable Trading Rules
+
+#### R5
+Walk-Forward Analysis (70/30 train/test split, min 50 trades OOS, max 30% degradation)
+
+- [ ] Implementation verified
+- [ ] Tests pass
+
+#### R6
+Overfitting Prevention (min 30 samples per parameter, purged cross-validation)
+
+- [ ] Implementation verified
+- [ ] Tests pass
+
+#### R7
+Monte Carlo Risk Analysis (1000 simulations, validate DD within 5-95 percentile)
+
+- [ ] Implementation verified
+- [ ] Tests pass
+
+---
+Universal rules (SOLID, type hints, formatting, security, logging) live in
+.requirements/BASE_RULES.md and apply to every file.
+Resync this stub with: python scripts/generate_requirements.py

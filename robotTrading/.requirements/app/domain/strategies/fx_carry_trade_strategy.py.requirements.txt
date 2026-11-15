@@ -1,0 +1,57 @@
+# Requirements Document: app/domain/strategies/fx_carry_trade_strategy.py
+
+## 1. Module Overview
+File: fx_carry_trade_strategy.py
+Domain: Domain
+
+## 2. Dependencies
+- `__future__`
+- `app.domain.strategies.base`
+- `app.domain.strategies.config.fx_carry_config`
+- `app.domain.strategies.fx_carry_trade.carry_calculator`
+- `app.domain.strategies.fx_carry_trade.fx_rates_provider`
+- `app.domain.strategies.fx_carry_trade.models`
+- `dataclasses`
+- `datetime`
+- `decimal`
+- `logging`
+
+## 3. Core Components
+### Classes
+- `FXCarryTradeState`
+- `FXCarryTradeStrategy`
+### Public Functions
+- `generate_signals()`
+- `analyze_opportunities()`
+- `execute_signal()`
+- `update_positions()`
+- `close_position()`
+- `check_exit_conditions()`
+- `risk_check()`
+- `get_required_parameters()`
+- `get_portfolio_summary()`
+
+## 4. Applicable Trading Rules
+
+#### R19
+Market Regime Detection (trend/range/volatile classification)
+
+- [ ] Implementation verified
+- [ ] Tests pass
+
+#### R20
+Multi-Confirmation (min 2 independent signals before trade)
+
+- [ ] Implementation verified
+- [ ] Tests pass
+
+#### R24
+Strategy Diversification (min 3 uncorrelated strategies)
+
+- [ ] Implementation verified
+- [ ] Tests pass
+
+---
+Universal rules (SOLID, type hints, formatting, security, logging) live in
+.requirements/BASE_RULES.md and apply to every file.
+Resync this stub with: python scripts/generate_requirements.py

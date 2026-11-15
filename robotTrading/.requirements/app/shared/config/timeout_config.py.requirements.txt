@@ -1,0 +1,40 @@
+# Requirements Document: app/shared/config/timeout_config.py
+
+## 1. Module Overview
+File: timeout_config.py
+Domain: Shared
+
+## 2. Dependencies
+- `__future__`
+- `dataclasses`
+- `logging`
+- `os`
+
+## 3. Core Components
+### Classes
+- `TimeoutConfig`
+- `TimeoutManager`
+### Public Functions
+- `get_timeouts()`
+- `get_timeout()`
+- `http_timeout()`
+- `alpaca_timeout()`
+- `ib_timeout()`
+- `get_httpx_timeout()`
+- `get_aiohttp_timeout()`
+- `from_env()`
+- `get_timeout()`
+- `get_timeout_for_service()`
+
+## 4. Applicable Trading Rules
+
+#### R15
+Complete Logging (log all decisions, trade journal format)
+
+- [ ] Implementation verified
+- [ ] Tests pass
+
+---
+Universal rules (SOLID, type hints, formatting, security, logging) live in
+.requirements/BASE_RULES.md and apply to every file.
+Resync this stub with: python scripts/generate_requirements.py

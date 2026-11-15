@@ -1,0 +1,41 @@
+# Requirements Document: app/services/risk_scaling_application/risk_adjustment_calculator.py
+
+## 1. Module Overview
+File: risk_adjustment_calculator.py
+Domain: Service
+
+## 2. Dependencies
+- `__future__`
+- `app.services.portfolio_constructor`
+- `decimal`
+- `logging`
+- `models`
+- `typing`
+
+## 3. Core Components
+### Classes
+- `RiskAdjustmentCalculator`
+### Public Functions
+- `get_risk_adjustment_calculator()`
+- `calculate_regime_adjustment()`
+- `calculate_volatility_adjustment()`
+- `calculate_drawdown_adjustment()`
+- `calculate_allocation_adjustment()`
+- `calculate_adjusted_allocations()`
+- `calculate_overall_scaling_factor()`
+- `calculate_loss_streak_adjustment()`
+- `calculate_return_adjustment()`
+- `build_adjustment_rationale()`
+
+## 4. Applicable Trading Rules
+
+#### R2
+Drawdown Monitor (15% warning, 25% halt trading, auto cooldown)
+
+- [ ] Implementation verified
+- [ ] Tests pass
+
+---
+Universal rules (SOLID, type hints, formatting, security, logging) live in
+.requirements/BASE_RULES.md and apply to every file.
+Resync this stub with: python scripts/generate_requirements.py

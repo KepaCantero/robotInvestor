@@ -1,0 +1,56 @@
+# Requirements Document: app/services/monitoring/metrics_exporter.py
+
+## 1. Module Overview
+File: metrics_exporter.py
+Domain: Service
+
+## 2. Dependencies
+- `__future__`
+- `aiohttp`
+- `asyncio`
+- `datetime`
+- `json`
+- `logging`
+- `requests.exceptions`
+- `sqlalchemy.exc`
+
+## 3. Core Components
+### Classes
+- `MetricsExporter`
+### Public Functions
+- `get_metrics_exporter()`
+- `connect()`
+- `disconnect()`
+- `push_metrics()`
+- `query_prometheus()`
+- `query_range()`
+- `export_json()`
+- `export_csv()`
+- `export_prometheus_text()`
+- `get_export_history()`
+- `health_check()`
+
+## 4. Applicable Trading Rules
+
+#### R5
+Walk-Forward Analysis (70/30 train/test split, min 50 trades OOS, max 30% degradation)
+
+- [ ] Implementation verified
+- [ ] Tests pass
+
+#### R6
+Overfitting Prevention (min 30 samples per parameter, purged cross-validation)
+
+- [ ] Implementation verified
+- [ ] Tests pass
+
+#### R7
+Monte Carlo Risk Analysis (1000 simulations, validate DD within 5-95 percentile)
+
+- [ ] Implementation verified
+- [ ] Tests pass
+
+---
+Universal rules (SOLID, type hints, formatting, security, logging) live in
+.requirements/BASE_RULES.md and apply to every file.
+Resync this stub with: python scripts/generate_requirements.py

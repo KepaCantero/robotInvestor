@@ -1,0 +1,127 @@
+# Trading Strategies Configuration - TASK-31
+# Sistema de Estrategias Múltiples
+
+# Configuración de estrategias disponibles
+strategies:
+  momentum:
+    class: "MomentumStrategy"
+    config:
+      name: "momentum"
+      description: "Estrategia de momentum basada en RSI, EMA y volumen"
+      version: "1.0.0"
+      # Parámetros técnicos
+      rsi_threshold: 40
+      momentum_threshold: 0.02
+      volume_threshold: 1.5
+      rsi_period: 14
+      ema_period: 20
+      lookback_period: 5
+      # Parámetros de riesgo específicos para Momentum
+      stop_loss: 0.05
+      take_profit: 0.10
+      max_position_size: 0.1
+      # Thresholds dinámicos por estrategia
+      min_signal_strength: 60.0
+      min_signal_confidence: 70.0
+      max_daily_trades: 10
+      risk_per_trade: 0.02
+
+  mean_reversion:
+    class: "MeanReversionStrategy"
+    config:
+      name: "mean_reversion"
+      description: "Estrategia de reversión a la media basada en Z-score"
+      version: "1.0.0"
+      # Parámetros técnicos
+      z_score_threshold: 2.0
+      min_z_score: 1.5
+      lookback_period: 20
+      volatility_threshold: 0.02
+      mean_reversion_speed: 0.1
+      # Parámetros de riesgo específicos para Mean Reversion
+      stop_loss: 0.03
+      take_profit: 0.06
+      max_position_size: 0.08
+      # Thresholds dinámicos por estrategia
+      min_signal_strength: 55.0
+      min_signal_confidence: 65.0
+      max_daily_trades: 8
+      risk_per_trade: 0.015
+
+  pairs_trading:
+    # clase real: app/engines/strategy_engines/pairs_engine.py (el nombre
+    # anterior "PairsTradingStrategy" no existía en el código)
+    class: "PairsTradingStrategyEngine"
+    config:
+      name: "pairs_trading"
+      description: "Estrategia de trading de pares basada en cointegración"
+      version: "1.0.0"
+      # Parámetros técnicos
+      cointegration_threshold: 0.05
+      spread_threshold: 2.0
+      max_spread_deviation: 3.0
+      min_correlation: 0.7
+      hedge_ratio: 1.0
+      lookback_period: 30
+      pair_symbols: ["AAPL", "MSFT"]
+      # Parámetros que lee el engine (sin ellos Decimal(None) crashea en __init__)
+      hedge_ratio_threshold: 0.5
+      max_pair_exposure: 0.10
+      max_total_exposure: 0.60
+      min_spread_z_score: 2.0
+      max_pair_half_life_days: 30
+      slippage_per_trade_pct: 0.001
+      # Parámetros de riesgo específicos para Pairs Trading
+      stop_loss: 0.04
+      take_profit: 0.08
+      max_position_size: 0.06
+      # Thresholds dinámicos por estrategia
+      min_signal_strength: 50.0
+      min_signal_confidence: 60.0
+      max_daily_trades: 6
+      risk_per_trade: 0.01
+
+# Configuración activa
+active_strategies: ["momentum"]
+backtesting_strategies: ["momentum", "mean_reversion", "pairs_trading"]
+paper_trading_strategy: "momentum"
+
+# Configuración de logging
+logging:
+  level: "INFO"
+  log_path: "logs/strategy_logs.json"
+  max_log_size: "10MB"
+  backup_count: 5
+
+# Configuración de ejecución
+execution:
+  cycle_interval_seconds: 60
+  max_concurrent_signals: 10
+  signal_timeout_seconds: 300
+  risk_check_enabled: true
+  position_sizing_enabled: true
+
+# Configuración de métricas
+metrics:
+  enabled: true
+  collection_interval_seconds: 300
+  export_format: "json"
+  export_path: "logs/strategy_metrics.json"
+  retention_days: 30
+
+# Configuración de alertas
+alerts:
+  enabled: true
+  signal_generated: true
+  signal_executed: true
+  signal_rejected: true
+  strategy_error: true
+  execution_error: true
+  risk_limit_exceeded: true
+
+# Configuración de desarrollo
+development:
+  debug_mode: false
+  mock_execution: false
+  log_all_signals: true
+  performance_monitoring: true

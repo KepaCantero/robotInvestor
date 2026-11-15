@@ -1,0 +1,43 @@
+# Requirements Document: app/engines/context_engine/volatility_analyzers/garch_analyzer.py
+
+## 1. Module Overview
+File: garch_analyzer.py
+Domain: Engine
+
+## 2. Dependencies
+- `__future__`
+- `arch`
+- `logging`
+- `numpy`
+- `typing`
+
+## 3. Core Components
+### Classes
+- `GARCHAnalyzer`
+- `SimpleGARCHModel`
+- `SimpleGARCHFitResult`
+- `SimpleParams`
+- `SimpleForecast`
+- `SimpleVarianceForecast`
+### Public Functions
+- `fit()`
+- `predict_volatility()`
+- `detect_clustering()`
+- `fit()`
+- `forecast()`
+- `get()`
+- `to_dict()`
+- `values()`
+
+## 4. Applicable Trading Rules
+
+#### R15
+Complete Logging (log all decisions, trade journal format)
+
+- [ ] Implementation verified
+- [ ] Tests pass
+
+---
+Universal rules (SOLID, type hints, formatting, security, logging) live in
+.requirements/BASE_RULES.md and apply to every file.
+Resync this stub with: python scripts/generate_requirements.py

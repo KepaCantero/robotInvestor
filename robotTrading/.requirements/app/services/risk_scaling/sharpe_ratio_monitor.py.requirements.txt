@@ -1,0 +1,40 @@
+# Requirements Document: app/services/risk_scaling/sharpe_ratio_monitor.py
+
+## 1. Module Overview
+File: sharpe_ratio_monitor.py
+Domain: Service
+
+## 2. Dependencies
+- `__future__`
+- `app.shared.config.centralized_config`
+- `datetime`
+- `decimal`
+- `logging`
+- `math`
+- `statistics`
+- `typing`
+
+## 3. Core Components
+### Classes
+- `SharpeRatioMonitor`
+### Public Functions
+- `calculate_rolling_sharpe()`
+- `calculate_sharpe_scale()`
+- `is_sharpe_declining()`
+- `get_sharpe_interpretation()`
+- `calculate_information_ratio()`
+- `detect_performance_regime_shift()`
+- `suggest_capital_adjustment()`
+
+## 4. Applicable Trading Rules
+
+#### R2
+Drawdown Monitor (15% warning, 25% halt trading, auto cooldown)
+
+- [ ] Implementation verified
+- [ ] Tests pass
+
+---
+Universal rules (SOLID, type hints, formatting, security, logging) live in
+.requirements/BASE_RULES.md and apply to every file.
+Resync this stub with: python scripts/generate_requirements.py

@@ -1,0 +1,63 @@
+# Requirements Document: app/security/input_validation.py
+
+## 1. Module Overview
+File: input_validation.py
+Domain: Security
+
+## 2. Dependencies
+- `__future__`
+- `collections`
+- `decimal`
+- `html`
+- `logging`
+- `pydantic`
+- `re`
+- `time`
+- `typing`
+- `urllib.parse`
+
+## 3. Core Components
+### Classes
+- `ValidationError`
+- `InputSanitizer`
+- `NumericValidator`
+- `ListValidator`
+- `TradingValidator`
+- `RateLimiter`
+- `DictValidator`
+- `SecureRequestValidator`
+### Public Functions
+- `validate_and_sanitize_input()`
+- `sanitize_string()`
+- `sanitize_html()`
+- `sanitize_symbol()`
+- `sanitize_email()`
+- `sanitize_url()`
+- `validate_decimal()`
+- `validate_integer()`
+- `validate_percentage()`
+- `validate_list()`
+- `validate_symbol_list()`
+- `validate_price()`
+- `validate_quantity()`
+- `validate_symbol()`
+- `validate_order_params()`
+- `validate_portfolio_allocation()`
+- `check_rate_limit()`
+- `reset_limit()`
+- `get_usage_stats()`
+- `validate_dict()`
+- `validate_request_model()`
+
+## 4. Applicable Trading Rules
+
+#### R29
+API Key Security (rotate every 90 days, never in code)
+
+- [ ] Implementation verified
+- [ ] Tests pass
+
+---
+Universal rules (SOLID, type hints, formatting, security, logging) live in
+.requirements/BASE_RULES.md and apply to every file.
+Resync this stub with: python scripts/generate_requirements.py

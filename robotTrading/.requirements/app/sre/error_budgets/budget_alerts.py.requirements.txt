@@ -1,0 +1,50 @@
+# Requirements Document: app/sre/error_budgets/budget_alerts.py
+
+## 1. Module Overview
+File: budget_alerts.py
+Domain: SRE
+
+## 2. Dependencies
+- `__future__`
+- `aiohttp`
+- `asyncio`
+- `dataclasses`
+- `datetime`
+- `decimal`
+- `enum`
+- `error_budget_manager`
+- `logging`
+- `typing`
+- `uuid`
+
+## 3. Core Components
+### Classes
+- `AlertSeverity`
+- `AlertChannel`
+- `AlertRecipients`
+- `BudgetAlert`
+- `BudgetAlertConfig`
+- `BudgetAlertManager`
+### Public Functions
+- `to_dict()`
+- `initialize()`
+- `check_and_alert()`
+- `acknowledge_alert()`
+- `resolve_alert()`
+- `get_alert_history()`
+- `get_active_alerts()`
+- `get_alert_summary()`
+- `shutdown()`
+
+## 4. Applicable Trading Rules
+
+#### R15
+Complete Logging (log all decisions, trade journal format)
+
+- [ ] Implementation verified
+- [ ] Tests pass
+
+---
+Universal rules (SOLID, type hints, formatting, security, logging) live in
+.requirements/BASE_RULES.md and apply to every file.
+Resync this stub with: python scripts/generate_requirements.py

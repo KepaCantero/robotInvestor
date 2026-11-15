@@ -1,0 +1,64 @@
+# Requirements Document: app/sre/oncall/escalation.py
+
+## 1. Module Overview
+File: escalation.py
+Domain: SRE
+
+## 2. Dependencies
+- `__future__`
+- `aiosqlite`
+- `app.shared.utils.safe_parse`
+- `asyncio`
+- `contextlib`
+- `dataclasses`
+- `datetime`
+- `enum`
+- `logging`
+- `pathlib`
+- `typing`
+
+## 3. Core Components
+### Classes
+- `IncidentSeverity`
+- `EscalationStatus`
+- `LevelType`
+- `EscalationLevel`
+- `EscalationPath`
+- `EscalationIncident`
+- `EscalationPolicy`
+- `EscalationManager`
+### Public Functions
+- `escalation_threshold()`
+- `to_dict()`
+- `get_level()`
+- `get_next_level()`
+- `should_escalate()`
+- `to_dict()`
+- `should_auto_escalate()`
+- `acknowledge()`
+- `escalate()`
+- `resolve()`
+- `cancel()`
+- `add_contact_attempt()`
+- `to_dict()`
+- `initialize()`
+- `start_auto_escalation()`
+- `stop_auto_escalation()`
+- `create_incident()`
+- `acknowledge_incident()`
+- `resolve_incident()`
+- `get_active_incidents()`
+- `get_incident_metrics()`
+
+## 4. Applicable Trading Rules
+
+#### R15
+Complete Logging (log all decisions, trade journal format)
+
+- [ ] Implementation verified
+- [ ] Tests pass
+
+---
+Universal rules (SOLID, type hints, formatting, security, logging) live in
+.requirements/BASE_RULES.md and apply to every file.
+Resync this stub with: python scripts/generate_requirements.py

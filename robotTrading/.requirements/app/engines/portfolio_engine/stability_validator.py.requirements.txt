@@ -1,0 +1,59 @@
+# Requirements Document: app/engines/portfolio_engine/stability_validator.py
+
+## 1. Module Overview
+File: stability_validator.py
+Domain: Engine
+
+## 2. Dependencies
+- `__future__`
+- `app.backtesting.lopez_de_prado_metrics`
+- `app.shared.config.centralized_config`
+- `dataclasses`
+- `datetime`
+- `json`
+- `logging`
+- `numpy`
+- `pathlib`
+- `typing`
+
+## 3. Core Components
+### Classes
+- `StabilityValidationConfig`
+- `PortfolioValidationResult`
+- `PortfolioStabilityValidator`
+- `StabilityBasedPortfolioSelector`
+### Public Functions
+- `create_portfolio_stability_validator()`
+- `validate_single_portfolio()`
+- `to_dict()`
+- `validate_portfolio_allocation()`
+- `compare_portfolio_stabilities()`
+- `get_stability_recommendations()`
+- `save_validation_report()`
+- `select_most_stable_portfolio()`
+- `rank_portfolios_by_stability()`
+
+## 4. Applicable Trading Rules
+
+#### R1
+Kelly Criterion + Max Position Size (max 5% per position)
+
+- [ ] Implementation verified
+- [ ] Tests pass
+
+#### R3
+Correlation & Concentration Limits (max 20% per sector)
+
+- [ ] Implementation verified
+- [ ] Tests pass
+
+#### R11
+Dynamic Trailing Stop (ATR-based, never loosen)
+
+- [ ] Implementation verified
+- [ ] Tests pass
+
+---
+Universal rules (SOLID, type hints, formatting, security, logging) live in
+.requirements/BASE_RULES.md and apply to every file.
+Resync this stub with: python scripts/generate_requirements.py

@@ -1,0 +1,63 @@
+# Requirements Document: app/services/centralized_logging.py
+
+## 1. Module Overview
+File: centralized_logging.py
+Domain: Service
+
+## 2. Dependencies
+- `__future__`
+- `app.shared.config.centralized_config`
+- `contextlib`
+- `dataclasses`
+- `datetime`
+- `enum`
+- `functools`
+- `json`
+- `logging`
+- `os`
+- `pathlib`
+- `typing`
+
+## 3. Core Components
+### Classes
+- `LogLevel`
+- `LogService`
+- `LogEntry`
+- `CentralizedLogger`
+### Public Functions
+- `log_performance()`
+- `log_async_performance()`
+- `log_trading_signal()`
+- `log_trade_execution()`
+- `log_portfolio_update()`
+- `log_market_data()`
+- `to_dict()`
+- `log()`
+- `debug()`
+- `info()`
+- `warning()`
+- `error()`
+- `critical()`
+- `log_performance()`
+- `performance_timer()`
+- `log_trading_signal()`
+- `log_trade_execution()`
+- `log_portfolio_update()`
+- `log_market_data()`
+- `decorator()`
+- `decorator()`
+- `wrapper()`
+- `wrapper()`
+
+## 4. Applicable Trading Rules
+
+#### R15
+Complete Logging (log all decisions, trade journal format)
+
+- [ ] Implementation verified
+- [ ] Tests pass
+
+---
+Universal rules (SOLID, type hints, formatting, security, logging) live in
+.requirements/BASE_RULES.md and apply to every file.
+Resync this stub with: python scripts/generate_requirements.py

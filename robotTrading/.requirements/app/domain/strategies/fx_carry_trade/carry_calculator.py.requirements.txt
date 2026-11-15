@@ -1,0 +1,44 @@
+# Requirements Document: app/domain/strategies/fx_carry_trade/carry_calculator.py
+
+## 1. Module Overview
+File: carry_calculator.py
+Domain: Domain
+
+## 2. Dependencies
+- `__future__`
+- `app.domain.strategies.fx_carry_trade.fx_rates_provider`
+- `app.domain.strategies.fx_carry_trade.models`
+- `collections.abc`
+- `dataclasses`
+- `datetime`
+- `decimal`
+- `logging`
+- `math`
+- `typing`
+
+## 3. Core Components
+### Classes
+- `CarryTradeOpportunity`
+- `CarryCalculator`
+### Public Functions
+- `is_actionable()`
+- `calculate_forward_premium()`
+- `calculate_carry()`
+- `calculate_signal()`
+- `calculate_signal_full()`
+- `filter_signals()`
+- `rank_signals()`
+- `calculate_signals_from_provider()`
+
+## 4. Applicable Trading Rules
+
+#### R15
+Complete Logging (log all decisions, trade journal format)
+
+- [ ] Implementation verified
+- [ ] Tests pass
+
+---
+Universal rules (SOLID, type hints, formatting, security, logging) live in
+.requirements/BASE_RULES.md and apply to every file.
+Resync this stub with: python scripts/generate_requirements.py

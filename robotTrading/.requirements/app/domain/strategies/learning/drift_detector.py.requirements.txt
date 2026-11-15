@@ -1,0 +1,94 @@
+# Requirements Document: app/domain/strategies/learning/drift_detector.py
+
+## 1. Module Overview
+File: drift_detector.py
+Domain: Domain
+
+## 2. Dependencies
+- `__future__`
+- `collections`
+- `dataclasses`
+- `datetime`
+- `enum`
+- `logging`
+- `numpy`
+- `pathlib`
+- `scipy.stats`
+- `typing`
+- `yaml`
+
+## 3. Core Components
+### Classes
+- `DriftSeverity`
+- `DriftResult`
+- `FeatureDriftReport`
+- `ComprehensiveDriftReport`
+- `PSIDetector`
+- `ADWINDetector`
+- `ConceptDriftDetector`
+- `FeatureDriftMonitor`
+- `OverfittingSeverity`
+- `OverfittingMetrics`
+- `OverfittingResult`
+- `OverfittingReport`
+- `OverfittingDetector`
+- `AdvancedOverfittingDetector`
+- `ComprehensiveDriftDetector`
+- `AutoRetrainingTrigger`
+### Public Functions
+- `load_drift_config()`
+- `get_default_drift_config()`
+- `load_overfitting_config()`
+- `get_default_overfitting_config()`
+- `to_dict()`
+- `calculate_psi()`
+- `detect()`
+- `add_element()`
+- `detect()`
+- `reset()`
+- `update_reference()`
+- `detect_drift_ks()`
+- `detect_drift_mmd()`
+- `detect()`
+- `detect_drift()`
+- `get_drift_history()`
+- `initialize_features()`
+- `set_reference()`
+- `detect_feature_drift()`
+- `generalization_gap()`
+- `gap_ratio()`
+- `to_dict()`
+- `to_dict()`
+- `update_metrics()`
+- `detect_overfitting()`
+- `get_learning_curves()`
+- `update_metrics()`
+- `add_cv_scores()`
+- `detect_overfitting()`
+- `get_learning_curves()`
+- `generate_report()`
+- `reset()`
+- `set_reference()`
+- `update_reference()`
+- `detect()`
+- `record_retrain()`
+- `reset()`
+- `should_retrain()`
+- `record_retrain()`
+- `record_performance()`
+- `record_drift()`
+- `record_overfitting()`
+- `get_retrain_history()`
+
+## 4. Applicable Trading Rules
+
+#### R15
+Complete Logging (log all decisions, trade journal format)
+
+- [ ] Implementation verified
+- [ ] Tests pass
+
+---
+Universal rules (SOLID, type hints, formatting, security, logging) live in
+.requirements/BASE_RULES.md and apply to every file.
+Resync this stub with: python scripts/generate_requirements.py

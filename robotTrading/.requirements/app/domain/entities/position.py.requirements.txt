@@ -1,0 +1,70 @@
+# Requirements Document: app/domain/entities/position.py
+
+## 1. Module Overview
+File: position.py
+Domain: Domain
+
+## 2. Dependencies
+- `__future__`
+- `app.domain.value_objects.money`
+- `dataclasses`
+- `datetime`
+- `decimal`
+- `enum`
+- `logging`
+
+## 3. Core Components
+### Classes
+- `PositionSide`
+- `PositionStatus`
+- `Position`
+### Public Functions
+- `avg_price()`
+- `get_pnl()`
+- `get_quantity()`
+- `get_current_price()`
+- `get_value()`
+- `get_cost_basis()`
+- `get_unrealized_pnl_amount()`
+- `get_unrealized_pnl()`
+- `get_realized_pnl_amount()`
+- `get_realized_pnl()`
+- `get_pnl_percent()`
+- `update_price()`
+- `add_shares()`
+- `remove_shares()`
+- `is_stop_loss_hit()`
+- `is_take_profit_hit()`
+- `get_risk_reward_ratio()`
+- `get_age_days()`
+- `is_open()`
+- `is_closed()`
+- `is_profitable()`
+- `create_long()`
+- `create_short()`
+- `to_dict()`
+
+## 4. Applicable Trading Rules
+
+#### R1
+Kelly Criterion + Max Position Size (max 5% per position)
+
+- [ ] Implementation verified
+- [ ] Tests pass
+
+#### R3
+Correlation & Concentration Limits (max 20% per sector)
+
+- [ ] Implementation verified
+- [ ] Tests pass
+
+#### R11
+Dynamic Trailing Stop (ATR-based, never loosen)
+
+- [ ] Implementation verified
+- [ ] Tests pass
+
+---
+Universal rules (SOLID, type hints, formatting, security, logging) live in
+.requirements/BASE_RULES.md and apply to every file.
+Resync this stub with: python scripts/generate_requirements.py

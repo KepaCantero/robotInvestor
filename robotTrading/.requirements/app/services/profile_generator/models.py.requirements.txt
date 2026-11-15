@@ -1,0 +1,39 @@
+# Requirements Document: app/services/profile_generator/models.py
+
+## 1. Module Overview
+File: models.py
+Domain: Service
+
+## 2. Dependencies
+- `__future__`
+- `app.shared.config.centralized_config`
+- `dataclasses`
+- `datetime`
+- `decimal`
+- `enum`
+- `logging`
+
+## 3. Core Components
+### Classes
+- `CapitalTier`
+- `InvestmentObjective`
+- `RiskProfile`
+- `ModuleConfig`
+- `InvestmentProfile`
+- `ProfileGenerationRequest`
+- `ProfileGenerationResult`
+### Public Functions
+- `to_dict()`
+
+## 4. Applicable Trading Rules
+
+#### R15
+Complete Logging (log all decisions, trade journal format)
+
+- [ ] Implementation verified
+- [ ] Tests pass
+
+---
+Universal rules (SOLID, type hints, formatting, security, logging) live in
+.requirements/BASE_RULES.md and apply to every file.
+Resync this stub with: python scripts/generate_requirements.py

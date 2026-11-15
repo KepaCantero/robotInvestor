@@ -1,0 +1,65 @@
+# Requirements Document: app/services/live_trading/broker_adapters/alpaca_client.py
+
+## 1. Module Overview
+File: alpaca_client.py
+Domain: Service
+
+## 2. Dependencies
+- `__future__`
+- `alpaca_trade_api`
+- `app.shared.config.timeout_config`
+- `asyncio`
+- `datetime`
+- `decimal`
+- `json`
+- `logging`
+- `requests.exceptions`
+- `typing`
+- `websockets`
+- `websockets.asyncio.client`
+
+## 3. Core Components
+### Classes
+- `AlpacaClientError`
+- `AlpacaClient`
+### Public Functions
+- `authenticate()`
+- `get_account()`
+- `submit_order()`
+- `cancel_order()`
+- `get_order()`
+- `get_positions()`
+- `get_orders()`
+- `start_stream()`
+- `register_quote_handler()`
+- `register_trade_handler()`
+- `register_order_handler()`
+- `register_error_handler()`
+- `stop_stream()`
+- `create_client()`
+- `submit()`
+
+## 4. Applicable Trading Rules
+
+#### R8
+Bid-Ask Spread Management (avoid market orders for low-liquidity)
+
+- [ ] Implementation verified
+- [ ] Tests pass
+
+#### R9
+Execution Timing (avoid first/last 15 min, VWAP/TWAP for large orders)
+
+- [ ] Implementation verified
+- [ ] Tests pass
+
+#### R10
+Slippage Monitor (track actual vs expected fill, alert if >0.5%)
+
+- [ ] Implementation verified
+- [ ] Tests pass
+
+---
+Universal rules (SOLID, type hints, formatting, security, logging) live in
+.requirements/BASE_RULES.md and apply to every file.
+Resync this stub with: python scripts/generate_requirements.py

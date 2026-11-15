@@ -1,0 +1,48 @@
+# Requirements Document: app/services/reporting_generator/delivery_manager.py
+
+## 1. Module Overview
+File: delivery_manager.py
+Domain: Service
+
+## 2. Dependencies
+- `__future__`
+- `dataclasses`
+- `datetime`
+- `decimal`
+- `enum`
+- `json`
+- `logging`
+- `pathlib`
+- `typing`
+
+## 3. Core Components
+### Classes
+- `ExportFormat`
+- `DeliveryChannel`
+- `ExportConfig`
+- `EmailConfig`
+- `S3Config`
+- `ExportResult`
+- `DeliveryResult`
+- `ReportDeliveryManager`
+### Public Functions
+- `get_delivery_manager()`
+- `export_to_html()`
+- `export_to_pdf()`
+- `export_to_excel()`
+- `send_email()`
+- `upload_to_s3()`
+- `get_manager_status()`
+
+## 4. Applicable Trading Rules
+
+#### R15
+Complete Logging (log all decisions, trade journal format)
+
+- [ ] Implementation verified
+- [ ] Tests pass
+
+---
+Universal rules (SOLID, type hints, formatting, security, logging) live in
+.requirements/BASE_RULES.md and apply to every file.
+Resync this stub with: python scripts/generate_requirements.py

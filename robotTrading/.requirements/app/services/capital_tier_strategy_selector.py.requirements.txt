@@ -1,0 +1,80 @@
+# Requirements Document: app/services/capital_tier_strategy_selector.py
+
+## 1. Module Overview
+File: capital_tier_strategy_selector.py
+Domain: Service
+
+## 2. Dependencies
+- `__future__`
+- `app.services.account_configuration`
+- `app.services.deployment_validator`
+- `app.services.expensive_module_gate`
+- `app.services.learning_capital_gate`
+- `app.shared.config.centralized_config`
+- `dataclasses`
+- `decimal`
+- `enum`
+- `logging`
+- `typing`
+
+## 3. Core Components
+### Classes
+- `EnsembleType`
+- `PositionSizingStrategy`
+- `StrategySelection`
+- `RiskProfile`
+- `StrategyCapabilities`
+- `DeploymentReport`
+- `CapitalTierStrategySelector`
+### Public Functions
+- `get_selector()`
+- `validate()`
+- `select_strategies()`
+- `get_risk_profile()`
+- `get_enabled_features()`
+- `validate_deployment()`
+- `get_tier_info()`
+- `get_upgrade_path()`
+
+## 4. Applicable Trading Rules
+
+#### R19
+Market Regime Detection (trend/range/volatile classification)
+
+- [ ] Implementation verified
+- [ ] Tests pass
+
+#### R20
+Multi-Confirmation (min 2 independent signals before trade)
+
+- [ ] Implementation verified
+- [ ] Tests pass
+
+#### R24
+Strategy Diversification (min 3 uncorrelated strategies)
+
+- [ ] Implementation verified
+- [ ] Tests pass
+
+#### R25
+Phase 1: 5K-15K EUR, max 3 positions, 2% risk/trade
+
+- [ ] Implementation verified
+- [ ] Tests pass
+
+#### R26
+Phase 2: 15K-50K EUR, max 5 positions, 1.5% risk/trade
+
+- [ ] Implementation verified
+- [ ] Tests pass
+
+#### R27
+Phase 3: 50K+ EUR, max 10 positions, 1% risk/trade
+
+- [ ] Implementation verified
+- [ ] Tests pass
+
+---
+Universal rules (SOLID, type hints, formatting, security, logging) live in
+.requirements/BASE_RULES.md and apply to every file.
+Resync this stub with: python scripts/generate_requirements.py

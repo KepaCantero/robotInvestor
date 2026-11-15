@@ -1,0 +1,48 @@
+# Requirements Document: app/security/web_security/csrf_protection.py
+
+## 1. Module Overview
+File: csrf_protection.py
+Domain: Security
+
+## 2. Dependencies
+- `__future__`
+- `base64`
+- `fastapi`
+- `hashlib`
+- `hmac`
+- `logging`
+- `os`
+- `secrets`
+- `time`
+
+## 3. Core Components
+### Classes
+- `CSRFTokenManager`
+- `DoubleSubmitCookieCSRF`
+- `SameSiteCookieMiddleware`
+### Public Functions
+- `get_csrf_token_manager()`
+- `get_csrf_protection()`
+- `require_csrf()`
+- `generate_csrf_token()`
+- `validate_csrf_token()`
+- `generate_token()`
+- `validate_token()`
+- `rotate_token()`
+- `generate_token_for_request()`
+- `validate_request()`
+- `get_token_for_frontend()`
+- `send_wrapper()`
+
+## 4. Applicable Trading Rules
+
+#### R29
+API Key Security (rotate every 90 days, never in code)
+
+- [ ] Implementation verified
+- [ ] Tests pass
+
+---
+Universal rules (SOLID, type hints, formatting, security, logging) live in
+.requirements/BASE_RULES.md and apply to every file.
+Resync this stub with: python scripts/generate_requirements.py

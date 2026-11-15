@@ -1,0 +1,65 @@
+# Requirements Document: app/domain/strategies/strategy.py
+
+## 1. Module Overview
+File: strategy.py
+Domain: Domain
+
+## 2. Dependencies
+- `__future__`
+- `app.domain.models.market_data`
+- `app.domain.models.portfolio`
+- `app.domain.models.signal`
+- `app.domain.services.analysis.momentum`
+- `app.domain.strategies.base`
+- `bisect`
+- `collections`
+- `datetime`
+- `decimal`
+- `learning.feature_extractor`
+- `learning.subprocess_engine_wrapper`
+- `learning.supervised_learning_engine`
+- `logging`
+- `modules.filters`
+- `modules.market_analyzer`
+- `numpy`
+- `os`
+- `typing`
+
+## 3. Core Components
+### Classes
+- `StrategyConfig`
+- `RateLimitedLogger`
+- `ModularMomentumStrategy`
+### Public Functions
+- `warning()`
+- `generate_signals()`
+- `add_trade_result()`
+- `risk_check()`
+- `get_required_parameters()`
+- `get_position_size()`
+- `ema()`
+
+## 4. Applicable Trading Rules
+
+#### R19
+Market Regime Detection (trend/range/volatile classification)
+
+- [ ] Implementation verified
+- [ ] Tests pass
+
+#### R20
+Multi-Confirmation (min 2 independent signals before trade)
+
+- [ ] Implementation verified
+- [ ] Tests pass
+
+#### R24
+Strategy Diversification (min 3 uncorrelated strategies)
+
+- [ ] Implementation verified
+- [ ] Tests pass
+
+---
+Universal rules (SOLID, type hints, formatting, security, logging) live in
+.requirements/BASE_RULES.md and apply to every file.
+Resync this stub with: python scripts/generate_requirements.py

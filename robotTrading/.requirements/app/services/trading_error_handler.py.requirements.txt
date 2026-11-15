@@ -1,0 +1,56 @@
+# Requirements Document: app/services/trading_error_handler.py
+
+## 1. Module Overview
+File: trading_error_handler.py
+Domain: Service
+
+## 2. Dependencies
+- `__future__`
+- `app.services.centralized_logging`
+- `app.shared.config.centralized_config`
+- `app.shared.exceptions.trading_exceptions`
+- `asyncio`
+- `datetime`
+- `enum`
+- `logging`
+- `typing`
+
+## 3. Core Components
+### Classes
+- `ErrorAction`
+- `ErrorContext`
+- `TradingErrorHandler`
+### Public Functions
+- `handle_trading_error()`
+- `execute_with_retry()`
+- `get_error_statistics()`
+- `reset_circuit_breaker()`
+- `handle_error()`
+- `handle_with_retry()`
+- `get_error_statistics()`
+- `reset_circuit_breaker()`
+
+## 4. Applicable Trading Rules
+
+#### R8
+Bid-Ask Spread Management (avoid market orders for low-liquidity)
+
+- [ ] Implementation verified
+- [ ] Tests pass
+
+#### R9
+Execution Timing (avoid first/last 15 min, VWAP/TWAP for large orders)
+
+- [ ] Implementation verified
+- [ ] Tests pass
+
+#### R10
+Slippage Monitor (track actual vs expected fill, alert if >0.5%)
+
+- [ ] Implementation verified
+- [ ] Tests pass
+
+---
+Universal rules (SOLID, type hints, formatting, security, logging) live in
+.requirements/BASE_RULES.md and apply to every file.
+Resync this stub with: python scripts/generate_requirements.py

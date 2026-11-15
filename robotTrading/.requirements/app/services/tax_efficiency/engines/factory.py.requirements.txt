@@ -1,0 +1,31 @@
+# Requirements Document: app/services/tax_efficiency/engines/factory.py
+
+## 1. Module Overview
+File: factory.py
+Domain: Service
+
+## 2. Dependencies
+- `__future__`
+- `app.services.tax_efficiency.engines.base`
+- `app.services.tax_efficiency.engines.spain_tax_engine`
+- `logging`
+
+## 3. Core Components
+### Public Functions
+- `get_tax_engine()`
+- `register_tax_engine()`
+- `get_supported_countries()`
+- `is_country_supported()`
+
+## 4. Applicable Trading Rules
+
+#### R28
+Trade Record Retention (keep all records 5+ years)
+
+- [ ] Implementation verified
+- [ ] Tests pass
+
+---
+Universal rules (SOLID, type hints, formatting, security, logging) live in
+.requirements/BASE_RULES.md and apply to every file.
+Resync this stub with: python scripts/generate_requirements.py

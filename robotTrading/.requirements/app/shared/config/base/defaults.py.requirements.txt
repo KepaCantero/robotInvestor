@@ -1,0 +1,28 @@
+# Requirements Document: app/shared/config/base/defaults.py
+
+## 1. Module Overview
+File: defaults.py
+Domain: Shared
+
+## 2. Dependencies
+
+## 3. Core Components
+### Public Functions
+- `get_default_atr_multiplier()`
+- `get_default_risk_per_trade()`
+- `get_default_max_position_size()`
+- `get_default_stop_distance_pct()`
+- `get_default_magic_values()`
+
+## 4. Applicable Trading Rules
+
+#### R15
+Complete Logging (log all decisions, trade journal format)
+
+- [ ] Implementation verified
+- [ ] Tests pass
+
+---
+Universal rules (SOLID, type hints, formatting, security, logging) live in
+.requirements/BASE_RULES.md and apply to every file.
+Resync this stub with: python scripts/generate_requirements.py

@@ -1,0 +1,42 @@
+# Requirements Document: app/services/alerting_system/alert_manager.py
+
+## 1. Module Overview
+File: alert_manager.py
+Domain: Service
+
+## 2. Dependencies
+- `__future__`
+- `datetime`
+- `logging`
+- `models`
+- `typing`
+- `uuid`
+
+## 3. Core Components
+### Classes
+- `AlertManager`
+### Public Functions
+- `should_trigger_alert()`
+- `trigger_alert()`
+- `resolve_alert()`
+- `acknowledge_alert()`
+- `record_notification_sent()`
+- `get_active_alerts()`
+- `get_alert_by_id()`
+- `get_recent_alerts()`
+- `get_alert_statistics()`
+- `get_alert_history()`
+- `clear_resolved_alerts()`
+
+## 4. Applicable Trading Rules
+
+#### R15
+Complete Logging (log all decisions, trade journal format)
+
+- [ ] Implementation verified
+- [ ] Tests pass
+
+---
+Universal rules (SOLID, type hints, formatting, security, logging) live in
+.requirements/BASE_RULES.md and apply to every file.
+Resync this stub with: python scripts/generate_requirements.py

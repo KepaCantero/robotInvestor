@@ -1,0 +1,58 @@
+# Requirements Document: app/services/position_sizing_engine.py
+
+## 1. Module Overview
+File: position_sizing_engine.py
+Domain: Service
+
+## 2. Dependencies
+- `__future__`
+- `app.backtesting.labeling.bet_sizing`
+- `app.backtesting.labeling.meta_labeling`
+- `app.shared.config.centralized_config`
+- `app.shared.config.strategy_config_loader`
+- `app.shared.utils.safe_parse`
+- `decimal`
+- `logging`
+- `math`
+- `numpy`
+
+## 3. Core Components
+### Classes
+- `PositionSizingEngine`
+- `MetaLabelingPositionSizer`
+- `PositionSizingEngineWithMetaLabeling`
+### Public Functions
+- `calculate_stop_loss_price()`
+- `calculate_position_size_from_atr()`
+- `calculate_kelly_position_size()`
+- `calculate_kelly_from_backtest()`
+- `calculate_position_size()`
+- `calculate_position_size_with_meta_model()`
+- `fit_meta_model()`
+- `calculate_meta_labeling_sizes()`
+- `calculate_hybrid_sizes()`
+
+## 4. Applicable Trading Rules
+
+#### R1
+Kelly Criterion + Max Position Size (max 5% per position)
+
+- [ ] Implementation verified
+- [ ] Tests pass
+
+#### R3
+Correlation & Concentration Limits (max 20% per sector)
+
+- [ ] Implementation verified
+- [ ] Tests pass
+
+#### R11
+Dynamic Trailing Stop (ATR-based, never loosen)
+
+- [ ] Implementation verified
+- [ ] Tests pass
+
+---
+Universal rules (SOLID, type hints, formatting, security, logging) live in
+.requirements/BASE_RULES.md and apply to every file.
+Resync this stub with: python scripts/generate_requirements.py

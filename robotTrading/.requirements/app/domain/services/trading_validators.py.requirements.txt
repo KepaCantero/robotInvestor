@@ -1,0 +1,45 @@
+# Requirements Document: app/domain/services/trading_validators.py
+
+## 1. Module Overview
+File: trading_validators.py
+Domain: Domain
+
+## 2. Dependencies
+- `__future__`
+- `app.shared.config.centralized_config`
+- `decimal`
+- `logging`
+
+## 3. Core Components
+### Classes
+- `TradingValidator`
+### Public Functions
+- `validate_position_size()`
+- `validate_stop_loss()`
+- `validate_trade_risk_reward()`
+- `validate_trading_hours()`
+
+## 4. Applicable Trading Rules
+
+#### R8
+Bid-Ask Spread Management (avoid market orders for low-liquidity)
+
+- [ ] Implementation verified
+- [ ] Tests pass
+
+#### R9
+Execution Timing (avoid first/last 15 min, VWAP/TWAP for large orders)
+
+- [ ] Implementation verified
+- [ ] Tests pass
+
+#### R10
+Slippage Monitor (track actual vs expected fill, alert if >0.5%)
+
+- [ ] Implementation verified
+- [ ] Tests pass
+
+---
+Universal rules (SOLID, type hints, formatting, security, logging) live in
+.requirements/BASE_RULES.md and apply to every file.
+Resync this stub with: python scripts/generate_requirements.py

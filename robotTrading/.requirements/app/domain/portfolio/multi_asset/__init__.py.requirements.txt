@@ -1,0 +1,42 @@
+# Requirements Document: app/domain/portfolio/multi_asset/__init__.py
+
+## 1. Module Overview
+File: __init__.py
+Domain: Domain
+
+## 2. Dependencies
+- `allocation`
+- `app.backtesting.models`
+- `asset_class`
+- `models`
+- `multi_asset_portfolio`
+- `rebalancer`
+
+## 3. Core Components
+### Module Initialization
+- Package/module initialization file
+
+## 4. Applicable Trading Rules
+
+#### R1
+Kelly Criterion + Max Position Size (max 5% per position)
+
+- [ ] Implementation verified
+- [ ] Tests pass
+
+#### R3
+Correlation & Concentration Limits (max 20% per sector)
+
+- [ ] Implementation verified
+- [ ] Tests pass
+
+#### R11
+Dynamic Trailing Stop (ATR-based, never loosen)
+
+- [ ] Implementation verified
+- [ ] Tests pass
+
+---
+Universal rules (SOLID, type hints, formatting, security, logging) live in
+.requirements/BASE_RULES.md and apply to every file.
+Resync this stub with: python scripts/generate_requirements.py

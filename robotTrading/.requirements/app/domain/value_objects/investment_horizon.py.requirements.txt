@@ -1,0 +1,37 @@
+# Requirements Document: app/domain/value_objects/investment_horizon.py
+
+## 1. Module Overview
+File: investment_horizon.py
+Domain: Domain
+
+## 2. Dependencies
+- `__future__`
+- `dataclasses`
+- `enum`
+
+## 3. Core Components
+### Classes
+- `HorizonCategory`
+- `InvestmentHorizon`
+### Public Functions
+- `years()`
+- `category()`
+- `is_short_term()`
+- `is_long_term()`
+- `allows_high_risk()`
+- `allows_very_high_risk()`
+- `from_months()`
+- `from_years()`
+
+## 4. Applicable Trading Rules
+
+#### R15
+Complete Logging (log all decisions, trade journal format)
+
+- [ ] Implementation verified
+- [ ] Tests pass
+
+---
+Universal rules (SOLID, type hints, formatting, security, logging) live in
+.requirements/BASE_RULES.md and apply to every file.
+Resync this stub with: python scripts/generate_requirements.py

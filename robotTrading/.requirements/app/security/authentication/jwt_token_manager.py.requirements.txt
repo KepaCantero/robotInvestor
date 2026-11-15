@@ -1,0 +1,38 @@
+# Requirements Document: app/security/authentication/jwt_token_manager.py
+
+## 1. Module Overview
+File: jwt_token_manager.py
+Domain: Security
+
+## 2. Dependencies
+- `__future__`
+- `app.shared.config.base.environment_config`
+- `datetime`
+- `jwt`
+- `logging`
+- `threading`
+- `typing`
+
+## 3. Core Components
+### Classes
+- `JWTTokenManager`
+### Public Functions
+- `get_token_manager()`
+- `set_token_manager()`
+- `create_access_token()`
+- `verify_token()`
+- `decode_token()`
+- `refresh_token()`
+
+## 4. Applicable Trading Rules
+
+#### R29
+API Key Security (rotate every 90 days, never in code)
+
+- [ ] Implementation verified
+- [ ] Tests pass
+
+---
+Universal rules (SOLID, type hints, formatting, security, logging) live in
+.requirements/BASE_RULES.md and apply to every file.
+Resync this stub with: python scripts/generate_requirements.py

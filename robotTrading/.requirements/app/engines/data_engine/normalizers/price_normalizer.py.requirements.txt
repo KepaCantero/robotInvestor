@@ -1,0 +1,47 @@
+# Requirements Document: app/engines/data_engine/normalizers/price_normalizer.py
+
+## 1. Module Overview
+File: price_normalizer.py
+Domain: Engine
+
+## 2. Dependencies
+- `__future__`
+- `datetime`
+- `decimal`
+- `logging`
+- `typing`
+
+## 3. Core Components
+### Classes
+- `PriceNormalizer`
+### Public Functions
+- `normalize()`
+- `register_corporate_action()`
+- `normalize_batch()`
+- `get_split_date()`
+- `get_dividend_date()`
+
+## 4. Applicable Trading Rules
+
+#### R14
+Data Quality Validation (OHLCV sanity checks, detect gaps/stale data)
+
+- [ ] Implementation verified
+- [ ] Tests pass
+
+#### R15
+Complete Logging (log all decisions, trade journal format)
+
+- [ ] Implementation verified
+- [ ] Tests pass
+
+#### R16
+Daily Reconciliation (compare broker vs internal, alert discrepancies >1%)
+
+- [ ] Implementation verified
+- [ ] Tests pass
+
+---
+Universal rules (SOLID, type hints, formatting, security, logging) live in
+.requirements/BASE_RULES.md and apply to every file.
+Resync this stub with: python scripts/generate_requirements.py

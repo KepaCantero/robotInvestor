@@ -1,0 +1,55 @@
+# Requirements Document: app/application/orchestration/target_optimization/capital_tier_selector.py
+
+## 1. Module Overview
+File: capital_tier_selector.py
+Domain: Application
+
+## 2. Dependencies
+- `__future__`
+- `decimal`
+- `logging`
+- `models`
+- `typing`
+
+## 3. Core Components
+### Classes
+- `CapitalTierSelector`
+- `StrategyFeatureGatekeeper`
+- `RiskProfileScaler`
+### Public Functions
+- `detect_tier()`
+- `get_tier_config()`
+- `select_strategy()`
+- `activate_features()`
+- `can_use_feature()`
+- `scale_risk_profile()`
+- `get_risk_level()`
+- `get_max_leverage()`
+- `get_max_position_size()`
+- `get_max_position_size_eur()`
+- `get_max_daily_loss_eur()`
+
+## 4. Applicable Trading Rules
+
+#### R25
+Phase 1: 5K-15K EUR, max 3 positions, 2% risk/trade
+
+- [ ] Implementation verified
+- [ ] Tests pass
+
+#### R26
+Phase 2: 15K-50K EUR, max 5 positions, 1.5% risk/trade
+
+- [ ] Implementation verified
+- [ ] Tests pass
+
+#### R27
+Phase 3: 50K+ EUR, max 10 positions, 1% risk/trade
+
+- [ ] Implementation verified
+- [ ] Tests pass
+
+---
+Universal rules (SOLID, type hints, formatting, security, logging) live in
+.requirements/BASE_RULES.md and apply to every file.
+Resync this stub with: python scripts/generate_requirements.py

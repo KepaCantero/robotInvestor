@@ -1,0 +1,57 @@
+# Requirements Document: app/engines/data_engine/sources/fundamental_sources.py
+
+## 1. Module Overview
+File: fundamental_sources.py
+Domain: Engine
+
+## 2. Dependencies
+- `__future__`
+- `aiohttp`
+- `app.shared.config.api_endpoints`
+- `app.shared.config.timeout_config`
+- `asyncio`
+- `base_source`
+- `logging`
+- `typing`
+
+## 3. Core Components
+### Classes
+- `FinancialModelingPrepSource`
+- `AlphaVantageFundamentalSource`
+### Public Functions
+- `connect()`
+- `disconnect()`
+- `health_check()`
+- `get_company_profile()`
+- `get_key_metrics()`
+- `get_financial_statements()`
+- `connect()`
+- `disconnect()`
+- `health_check()`
+- `get_company_overview()`
+- `get_earnings()`
+
+## 4. Applicable Trading Rules
+
+#### R14
+Data Quality Validation (OHLCV sanity checks, detect gaps/stale data)
+
+- [ ] Implementation verified
+- [ ] Tests pass
+
+#### R15
+Complete Logging (log all decisions, trade journal format)
+
+- [ ] Implementation verified
+- [ ] Tests pass
+
+#### R16
+Daily Reconciliation (compare broker vs internal, alert discrepancies >1%)
+
+- [ ] Implementation verified
+- [ ] Tests pass
+
+---
+Universal rules (SOLID, type hints, formatting, security, logging) live in
+.requirements/BASE_RULES.md and apply to every file.
+Resync this stub with: python scripts/generate_requirements.py

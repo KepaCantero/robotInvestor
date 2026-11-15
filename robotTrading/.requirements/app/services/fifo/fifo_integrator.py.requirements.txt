@@ -1,0 +1,52 @@
+# Requirements Document: app/services/fifo/fifo_integrator.py
+
+## 1. Module Overview
+File: fifo_integrator.py
+Domain: Service
+
+## 2. Dependencies
+- `__future__`
+- `app.infrastructure.persistence.database`
+- `app.infrastructure.persistence.tax.fifo_schema`
+- `app.shared.config`
+- `asyncio`
+- `dataclasses`
+- `datetime`
+- `decimal`
+- `logging`
+- `sqlalchemy`
+- `sqlalchemy.orm`
+- `typing`
+- `uuid`
+
+## 3. Core Components
+### Classes
+- `Trade`
+- `Position`
+- `LotInfo`
+- `FIFOIntegrator`
+### Public Functions
+- `get_fifo_integrator()`
+- `initialize()`
+- `on_trade_executed()`
+- `on_position_opened()`
+- `on_position_closed()`
+- `get_open_lots()`
+- `get_cost_basis()`
+- `get_total_quantity()`
+- `get_average_cost()`
+- `get_realized_gains_losses()`
+- `verify_fifo_integrity()`
+
+## 4. Applicable Trading Rules
+
+#### R28
+Trade Record Retention (keep all records 5+ years)
+
+- [ ] Implementation verified
+- [ ] Tests pass
+
+---
+Universal rules (SOLID, type hints, formatting, security, logging) live in
+.requirements/BASE_RULES.md and apply to every file.
+Resync this stub with: python scripts/generate_requirements.py

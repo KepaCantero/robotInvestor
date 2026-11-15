@@ -1,0 +1,40 @@
+# Requirements Document: app/services/portfolio_construction/__init__.py
+
+## 1. Module Overview
+File: __init__.py
+Domain: Service
+
+## 2. Dependencies
+- `app.services.portfolio_construction.allocation_manager`
+- `app.services.portfolio_construction.allocation_recommender`
+- `app.services.portfolio_construction.portfolio_constructor`
+- `app.services.portfolio_construction.rebalancing_engine`
+
+## 3. Core Components
+### Module Initialization
+- Package/module initialization file
+
+## 4. Applicable Trading Rules
+
+#### R1
+Kelly Criterion + Max Position Size (max 5% per position)
+
+- [ ] Implementation verified
+- [ ] Tests pass
+
+#### R3
+Correlation & Concentration Limits (max 20% per sector)
+
+- [ ] Implementation verified
+- [ ] Tests pass
+
+#### R11
+Dynamic Trailing Stop (ATR-based, never loosen)
+
+- [ ] Implementation verified
+- [ ] Tests pass
+
+---
+Universal rules (SOLID, type hints, formatting, security, logging) live in
+.requirements/BASE_RULES.md and apply to every file.
+Resync this stub with: python scripts/generate_requirements.py

@@ -1,0 +1,50 @@
+# Requirements Document: app/services/smart_order_routing/smart_order_router.py
+
+## 1. Module Overview
+File: smart_order_router.py
+Domain: Service
+
+## 2. Dependencies
+- `__future__`
+- `broker_negotiation_engine`
+- `decimal`
+- `execution_cost_monitor`
+- `logging`
+- `market_impact_estimator`
+- `models`
+- `order_splitting_optimizer`
+- `typing`
+
+## 3. Core Components
+### Classes
+- `SmartOrderRouter`
+### Public Functions
+- `get_smart_order_router()`
+- `route_order()`
+- `get_cost_forecast()`
+- `validate_execution_plan()`
+
+## 4. Applicable Trading Rules
+
+#### R8
+Bid-Ask Spread Management (avoid market orders for low-liquidity)
+
+- [ ] Implementation verified
+- [ ] Tests pass
+
+#### R9
+Execution Timing (avoid first/last 15 min, VWAP/TWAP for large orders)
+
+- [ ] Implementation verified
+- [ ] Tests pass
+
+#### R10
+Slippage Monitor (track actual vs expected fill, alert if >0.5%)
+
+- [ ] Implementation verified
+- [ ] Tests pass
+
+---
+Universal rules (SOLID, type hints, formatting, security, logging) live in
+.requirements/BASE_RULES.md and apply to every file.
+Resync this stub with: python scripts/generate_requirements.py

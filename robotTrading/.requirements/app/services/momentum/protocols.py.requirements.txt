@@ -1,0 +1,75 @@
+# Requirements Document: app/services/momentum/protocols.py
+
+## 1. Module Overview
+File: protocols.py
+Domain: Service
+
+## 2. Dependencies
+- `__future__`
+- `app.domain.models.momentum`
+- `decimal`
+- `logging`
+- `typing`
+
+## 3. Core Components
+### Classes
+- `PriceData`
+- `IndicatorCalculator`
+- `MomentumAnalyzer`
+- `SignalGenerator`
+- `StrategyManager`
+- `StorageBackend`
+- `PriceDataProvider`
+### Public Functions
+- `calculate_rsi()`
+- `calculate_ema()`
+- `calculate_macd()`
+- `calculate_roc()`
+- `calculate_stochastic_rsi()`
+- `calculate_atr()`
+- `calculate_adx()`
+- `calculate_volume_sma()`
+- `calculate_vwap()`
+- `calculate_zscore()`
+- `calculate_volatility()`
+- `calculate_expectancy()`
+- `detect_macd_divergence()`
+- `calculate_all_indicators()`
+- `analyze_asset_momentum()`
+- `calculate_overall_momentum()`
+- `determine_trend_direction()`
+- `assess_risk_level()`
+- `assess_volatility_level()`
+- `generate_signals()`
+- `create_price_momentum_signal()`
+- `create_volume_momentum_signal()`
+- `create_combined_momentum_signal()`
+- `filter_signals()`
+- `initialize_default_strategies()`
+- `create_strategy()`
+- `get_strategy()`
+- `update_strategy()`
+- `delete_strategy()`
+- `get_strategy_signals()`
+- `get_top_momentum_assets()`
+- `save_analysis()`
+- `get_analysis()`
+- `get_all_analyses()`
+- `delete_analysis()`
+- `save_strategy()`
+- `load_strategies()`
+- `get_price_data()`
+- `generate_mock_data()`
+
+## 4. Applicable Trading Rules
+
+#### R15
+Complete Logging (log all decisions, trade journal format)
+
+- [ ] Implementation verified
+- [ ] Tests pass
+
+---
+Universal rules (SOLID, type hints, formatting, security, logging) live in
+.requirements/BASE_RULES.md and apply to every file.
+Resync this stub with: python scripts/generate_requirements.py

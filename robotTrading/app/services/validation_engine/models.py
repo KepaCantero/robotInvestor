@@ -1,0 +1,129 @@
+"""
+T5.1: ValidationEngine - Models
+
+Data models for validation requests and results.
+"""
+
+from __future__ import annotations
+
+import logging
+from dataclasses import dataclass, field
+from datetime import datetime
+from decimal import Decimal
+
+logger = logging.getLogger(__name__)
+
+
+@dataclass
+class ModuleViabilityAnalysis:
+    """Analysis of module viability."""
+
+    module_name: str
+    enabled: bool
+    reason: str
+    recommendation: str
+    cost_monthly: Decimal | None = None
+    cost_ratio: Decimal | None = None
+
+
+@dataclass
+class CapitalViabilityAnalysis:
+    """Analysis of capital viability for profit goals."""
+
+    is_viable: bool
+    required_alpha_pct: Decimal
+    expected_alpha_pct: Decimal
+    reason: str
+    recommendation: str
+    severity: str
+
+
+@dataclass
+class LearningViabilityAnalysis:
+    """Analysis of learning module viability."""
+
+    learning_recommended: bool
+    reason: str
+    recommendation: str
+    severity: str
+    capital_tier: str
+    learning_cost_monthly: Decimal
+    cost_benefit_ratio: Decimal
+
+
+@dataclass
+class FeasibilityAnalysis:
+    """Analysis of feasibility ratio."""
+
+    feasibility_ratio: Decimal
+    feasibility_status: str  # APPROVED, CONDITIONAL, REJECTED
+    is_viable: bool
+    reason: str
+
+
+@dataclass
+class ValidationRequest:
+    """Request for validation."""
+
+    profile_id: str
+    input_id: str
+    initial_capital: Decimal
+    target_monthly_return_eur: Decimal
+    module_parameter_set_id: str | None = None
+    backtest_feasibility_ratio: Decimal | None = None
+    backtest_sharpe_ratio: Decimal | None = None
+    backtest_max_drawdown_pct: Decimal | None = None
+    expected_trades_per_month: int = 10
+    tax_rate: Decimal = Decimal("0.35")
+    commission_per_trade: Decimal = Decimal("15")
+    learning_enabled: bool = True
+    # Walk-forward gate outcome from the real backtest (R5/R6/DATA-001).
+    # None = not run; False = ran and failed -> critical failure.
+    walk_forward_passed: bool | None = None
+    walk_forward_failures: list[str] = field(default_factory=list)
+    # Perfil de riesgo declarado (aggressive/moderate/conservative): calibra
+    # la tolerancia de drawdown — exigirle -30% a un perfil Alto contradice
+    # al propio SPY (-33.7% en COVID)
+    risk_profile: str = ""
+
+
+@dataclass
+class ValidationResult:
+    """Result of validation."""
+
+    success: bool
+    profile_id: str
+    validation_timestamp: datetime = field(default_factory=datetime.utcnow)
+
+    # Core validations
+    passed: bool = False
+    critical_failures: list[str] = field(default_factory=list)
+    warnings: list[str] = field(default_factory=list)
+
+    # Detailed analyses
+    capital_viability: CapitalViabilityAnalysis | None = None
+    feasibility: FeasibilityAnalysis | None = None
+    learning_viability: LearningViabilityAnalysis | None = None
+    module_viabilities: dict[str, ModuleViabilityAnalysis] = field(default_factory=dict)
+
+    # Overall recommendation
+    overall_recommendation: str = "PENDING"  # APPROVE, CONDITIONAL, REJECT, REVIEW_REQUIRED
+    confidence_level: str = "high"  # high, medium, low
+    error_message: str | None = None
+
+
+logger.debug(
+    "ValidationEngine models loaded",
+    extra={
+        "component": "validation_engine_models",
+        "operation": "module_init",
+        "models": [
+            "ModuleViabilityAnalysis",
+            "CapitalViabilityAnalysis",
+            "LearningViabilityAnalysis",
+            "FeasibilityAnalysis",
+            "ValidationRequest",
+            "ValidationResult",
+        ],
+    },
+)

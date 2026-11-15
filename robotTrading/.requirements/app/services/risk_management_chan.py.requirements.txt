@@ -1,0 +1,52 @@
+# Requirements Document: app/services/risk_management_chan.py
+
+## 1. Module Overview
+File: risk_management_chan.py
+Domain: Service
+
+## 2. Dependencies
+- `__future__`
+- `app.shared.config.centralized_config`
+- `dataclasses`
+- `logging`
+- `numpy`
+- `pandas`
+- `typing`
+
+## 3. Core Components
+### Classes
+- `StopLossResult`
+- `PositionSizeResult`
+- `RiskMetrics`
+- `ChanStopLossCalculator`
+- `ChanPositionSizer`
+- `ChanDrawdownController`
+- `ChanRiskMetrics`
+### Public Functions
+- `calculate_optimal_stop_loss()`
+- `calculate_optimal_position_size()`
+- `calculate_atr_stop_loss()`
+- `calculate_fixed_percentage_stop()`
+- `calculate_trailing_stop()`
+- `calculate_risk_based_position()`
+- `calculate_kelly_position()`
+- `calculate_volatility_adjusted_position()`
+- `update_equity()`
+- `get_current_drawdown()`
+- `should_halt_trading()`
+- `get_position_size_multiplier()`
+- `calculate_risk_of_ruin()`
+- `calculate_all_metrics()`
+
+## 4. Applicable Trading Rules
+
+#### R2
+Drawdown Monitor (15% warning, 25% halt trading, auto cooldown)
+
+- [ ] Implementation verified
+- [ ] Tests pass
+
+---
+Universal rules (SOLID, type hints, formatting, security, logging) live in
+.requirements/BASE_RULES.md and apply to every file.
+Resync this stub with: python scripts/generate_requirements.py

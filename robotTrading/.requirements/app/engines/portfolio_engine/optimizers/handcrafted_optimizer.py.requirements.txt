@@ -1,0 +1,45 @@
+# Requirements Document: app/engines/portfolio_engine/optimizers/handcrafted_optimizer.py
+
+## 1. Module Overview
+File: handcrafted_optimizer.py
+Domain: Engine
+
+## 2. Dependencies
+- `__future__`
+- `base`
+- `logging`
+- `numpy`
+- `numpy.typing`
+- `typing`
+
+## 3. Core Components
+### Classes
+- `HandcraftedWeightsOptimizer`
+### Public Functions
+- `create_handcrafted_weights()`
+- `optimize()`
+
+## 4. Applicable Trading Rules
+
+#### R1
+Kelly Criterion + Max Position Size (max 5% per position)
+
+- [ ] Implementation verified
+- [ ] Tests pass
+
+#### R3
+Correlation & Concentration Limits (max 20% per sector)
+
+- [ ] Implementation verified
+- [ ] Tests pass
+
+#### R11
+Dynamic Trailing Stop (ATR-based, never loosen)
+
+- [ ] Implementation verified
+- [ ] Tests pass
+
+---
+Universal rules (SOLID, type hints, formatting, security, logging) live in
+.requirements/BASE_RULES.md and apply to every file.
+Resync this stub with: python scripts/generate_requirements.py

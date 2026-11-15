@@ -1,0 +1,58 @@
+# Requirements Document: app/backtesting/validation/purged_kfold.py
+
+## 1. Module Overview
+File: purged_kfold.py
+Domain: Backtest
+
+## 2. Dependencies
+- `__future__`
+- `dataclasses`
+- `logging`
+- `numpy`
+- `pandas`
+- `sklearn.metrics`
+- `sklearn.model_selection`
+
+## 3. Core Components
+### Classes
+- `PurgedKFoldConfig`
+- `PurgedSplit`
+- `PurgedKFold`
+- `PurgedTimeSeriesSplit`
+### Public Functions
+- `get_purge_indices()`
+- `get_embargo_indices()`
+- `apply_embargo()`
+- `purged_kfold_splits()`
+- `cross_validate_with_purging()`
+- `split()`
+- `get_n_splits()`
+- `validate_no_leakage()`
+- `get_split_summary()`
+- `split()`
+- `get_n_splits()`
+
+## 4. Applicable Trading Rules
+
+#### R5
+Walk-Forward Analysis (70/30 train/test split, min 50 trades OOS, max 30% degradation)
+
+- [ ] Implementation verified
+- [ ] Tests pass
+
+#### R6
+Overfitting Prevention (min 30 samples per parameter, purged cross-validation)
+
+- [ ] Implementation verified
+- [ ] Tests pass
+
+#### R7
+Monte Carlo Risk Analysis (1000 simulations, validate DD within 5-95 percentile)
+
+- [ ] Implementation verified
+- [ ] Tests pass
+
+---
+Universal rules (SOLID, type hints, formatting, security, logging) live in
+.requirements/BASE_RULES.md and apply to every file.
+Resync this stub with: python scripts/generate_requirements.py

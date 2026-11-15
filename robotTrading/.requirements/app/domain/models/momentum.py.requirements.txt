@@ -1,0 +1,64 @@
+# Requirements Document: app/domain/models/momentum.py
+
+## 1. Module Overview
+File: momentum.py
+Domain: Domain
+
+## 2. Dependencies
+- `__future__`
+- `datetime`
+- `decimal`
+- `enum`
+- `logging`
+- `pydantic`
+- `typing`
+
+## 3. Core Components
+### Classes
+- `MomentumType`
+- `Timeframe`
+- `TechnicalIndicator`
+- `MomentumSignal`
+- `MarketData`
+- `TechnicalIndicators`
+- `MomentumStrategy`
+- `MomentumAnalysis`
+- `MomentumFilter`
+### Public Functions
+- `validate_symbol()`
+- `validate_direction()`
+- `is_expired()`
+- `time_to_expiry()`
+- `momentum_score()`
+- `validate_price_fields()`
+- `validate_volume()`
+- `validate_bid_ask()`
+- `validate_price_consistency()`
+- `validate_symbol()`
+- `ema_trend()`
+- `rsi_signal()`
+- `macd_signal_indicator()`
+- `validate_name()`
+- `validate_description()`
+- `update_timestamp()`
+- `validate_symbol()`
+- `validate_trend_direction()`
+- `validate_risk_level()`
+- `validate_volatility_level()`
+- `add_signal()`
+- `get_active_signals()`
+- `get_signals_by_type()`
+- `matches()`
+
+## 4. Applicable Trading Rules
+
+#### R15
+Complete Logging (log all decisions, trade journal format)
+
+- [ ] Implementation verified
+- [ ] Tests pass
+
+---
+Universal rules (SOLID, type hints, formatting, security, logging) live in
+.requirements/BASE_RULES.md and apply to every file.
+Resync this stub with: python scripts/generate_requirements.py

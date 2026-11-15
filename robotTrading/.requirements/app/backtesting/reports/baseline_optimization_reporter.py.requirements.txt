@@ -1,0 +1,56 @@
+# Requirements Document: app/backtesting/reports/baseline_optimization_reporter.py
+
+## 1. Module Overview
+File: baseline_optimization_reporter.py
+Domain: Backtest
+
+## 2. Dependencies
+- `__future__`
+- `app.domain.models.input_profile`
+- `dataclasses`
+- `datetime`
+- `jinja2`
+- `json`
+- `logging`
+- `numpy`
+- `pathlib`
+- `scipy`
+- `typing`
+- `weasyprint`
+
+## 3. Core Components
+### Classes
+- `ComparisonMetrics`
+- `ParameterChange`
+- `StatisticalTest`
+- `Recommendation`
+- `BaselineOptimizationReporter`
+### Public Functions
+- `generate_report()`
+- `save_report()`
+- `generate_pdf()`
+
+## 4. Applicable Trading Rules
+
+#### R5
+Walk-Forward Analysis (70/30 train/test split, min 50 trades OOS, max 30% degradation)
+
+- [ ] Implementation verified
+- [ ] Tests pass
+
+#### R6
+Overfitting Prevention (min 30 samples per parameter, purged cross-validation)
+
+- [ ] Implementation verified
+- [ ] Tests pass
+
+#### R7
+Monte Carlo Risk Analysis (1000 simulations, validate DD within 5-95 percentile)
+
+- [ ] Implementation verified
+- [ ] Tests pass
+
+---
+Universal rules (SOLID, type hints, formatting, security, logging) live in
+.requirements/BASE_RULES.md and apply to every file.
+Resync this stub with: python scripts/generate_requirements.py

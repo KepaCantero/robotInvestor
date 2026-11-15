@@ -1,0 +1,73 @@
+# Requirements Document: app/domain/strategies/covered_call_strategy/position_manager.py
+
+## 1. Module Overview
+File: position_manager.py
+Domain: Domain
+
+## 2. Dependencies
+- `__future__`
+- `datetime`
+- `decimal`
+- `greeks_calculator`
+- `logging`
+- `models`
+
+## 3. Core Components
+### Classes
+- `PositionManager`
+### Public Functions
+- `open_position()`
+- `update_position()`
+- `close_position()`
+- `should_roll_position()`
+- `get_position()`
+- `get_all_positions()`
+- `get_positions_by_symbol()`
+- `get_expiring_positions()`
+- `get_itm_positions()`
+- `calculate_portfolio_pnl()`
+- `get_position_metrics()`
+- `record_assignment()`
+
+## 4. Applicable Trading Rules
+
+#### R1
+Kelly Criterion + Max Position Size (max 5% per position)
+
+- [ ] Implementation verified
+- [ ] Tests pass
+
+#### R3
+Correlation & Concentration Limits (max 20% per sector)
+
+- [ ] Implementation verified
+- [ ] Tests pass
+
+#### R11
+Dynamic Trailing Stop (ATR-based, never loosen)
+
+- [ ] Implementation verified
+- [ ] Tests pass
+
+#### R19
+Market Regime Detection (trend/range/volatile classification)
+
+- [ ] Implementation verified
+- [ ] Tests pass
+
+#### R20
+Multi-Confirmation (min 2 independent signals before trade)
+
+- [ ] Implementation verified
+- [ ] Tests pass
+
+#### R24
+Strategy Diversification (min 3 uncorrelated strategies)
+
+- [ ] Implementation verified
+- [ ] Tests pass
+
+---
+Universal rules (SOLID, type hints, formatting, security, logging) live in
+.requirements/BASE_RULES.md and apply to every file.
+Resync this stub with: python scripts/generate_requirements.py

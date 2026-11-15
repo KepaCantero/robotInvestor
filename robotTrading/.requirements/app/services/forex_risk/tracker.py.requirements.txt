@@ -1,0 +1,46 @@
+# Requirements Document: app/services/forex_risk/tracker.py
+
+## 1. Module Overview
+File: tracker.py
+Domain: Service
+
+## 2. Dependencies
+- `__future__`
+- `app.domain.models.portfolio`
+- `app.shared.utils.decimal_utils`
+- `app.shared.utils.timezone_utils`
+- `asyncio`
+- `dataclasses`
+- `datetime`
+- `decimal`
+- `logging`
+- `typing`
+
+## 3. Core Components
+### Classes
+- `CurrencyExposure`
+- `ForexExposureReport`
+- `ForexRiskTracker`
+### Public Functions
+- `to_dict()`
+- `from_dict()`
+- `to_dict()`
+- `generate_report()`
+- `calculate_fx_exposure()`
+- `calculate_unhedged_exposure()`
+- `get_hedging_recommendation()`
+- `calculate_forward_cost()`
+- `clear_rate_cache()`
+
+## 4. Applicable Trading Rules
+
+#### R2
+Drawdown Monitor (15% warning, 25% halt trading, auto cooldown)
+
+- [ ] Implementation verified
+- [ ] Tests pass
+
+---
+Universal rules (SOLID, type hints, formatting, security, logging) live in
+.requirements/BASE_RULES.md and apply to every file.
+Resync this stub with: python scripts/generate_requirements.py

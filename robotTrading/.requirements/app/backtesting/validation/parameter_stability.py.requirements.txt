@@ -1,0 +1,55 @@
+# Requirements Document: app/backtesting/validation/parameter_stability.py
+
+## 1. Module Overview
+File: parameter_stability.py
+Domain: Backtest
+
+## 2. Dependencies
+- `__future__`
+- `decimal`
+- `logging`
+- `models`
+- `numpy`
+- `pandas`
+- `scipy`
+- `typing`
+
+## 3. Core Components
+### Classes
+- `ParameterStabilityAnalyzer`
+### Public Functions
+- `calculate_parameter_stability()`
+- `detect_parameter_drift_simple()`
+- `rank_parameters_by_stability()`
+- `filter_stable_parameters()`
+- `analyze()`
+- `calculate_stability_score()`
+- `detect_drift()`
+- `compare_parameter_distributions()`
+- `calculate_parameter_correlation()`
+- `find_redundant_parameters()`
+
+## 4. Applicable Trading Rules
+
+#### R5
+Walk-Forward Analysis (70/30 train/test split, min 50 trades OOS, max 30% degradation)
+
+- [ ] Implementation verified
+- [ ] Tests pass
+
+#### R6
+Overfitting Prevention (min 30 samples per parameter, purged cross-validation)
+
+- [ ] Implementation verified
+- [ ] Tests pass
+
+#### R7
+Monte Carlo Risk Analysis (1000 simulations, validate DD within 5-95 percentile)
+
+- [ ] Implementation verified
+- [ ] Tests pass
+
+---
+Universal rules (SOLID, type hints, formatting, security, logging) live in
+.requirements/BASE_RULES.md and apply to every file.
+Resync this stub with: python scripts/generate_requirements.py
