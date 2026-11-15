@@ -31,3 +31,6 @@ dashboard/consola_n/playwright-report/
 
 # T-99: cerrojo del registro de experimentos (el sello sí se sube con el registro)
 *.jsonl.lock
+*.jsonl.sello
+*.jsonl.sello.tmp
+*.jsonl.turno

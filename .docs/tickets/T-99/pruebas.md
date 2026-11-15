@@ -1,5 +1,20 @@
 # T-99 · Pruebas
 
+## Ronda r04 (15-11-2026)
+
+| Suite | r03 | r04 |
+| --- | --- | --- |
+| `.docs/scripts/pruebas_registro_experimentos.py` | 66 | 85 en verde |
+| Todas las de `.docs/scripts` (`pruebas_scripts.sh`, línea base 194) | 175 | 194 en verde |
+| Mutantes `.docs/tickets/T-99/mutantes_r04.py` | 0 de 48 vivos | 0 de 60 vivos |
+
+Una prueba por hallazgo de la QA r03:
+- `test_h25_*`: checkout, reset y stash que quitan intentos; el sello no se sube; un pull que trae líneas nuevas;
+- `test_h14_git_que_no_responde_falla_cerrado` y `test_h33_*`;
+- `test_h17_ri_agente_no_valido_no_cae_en_el_de_claude` (cinco valores);
+- `test_h20_*`, `test_h27_*`, `test_h29_*` (lectores y escritor, sin `fcntl`), `test_h30_*` y `test_h32_*`.
+
+
 ## Ronda r03 (15-11-2026)
 
 | Suite | r02 | r03 |

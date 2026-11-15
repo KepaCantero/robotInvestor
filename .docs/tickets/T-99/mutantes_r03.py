@@ -1,7 +1,7 @@
 """T-99 r03 · Mutantes del registro de experimentos: cada uno debe morir ante sus pruebas y las del borrador de CT-G-24.
 
 Trabaja en una copia de `.docs/scripts` en una carpeta temporal (nunca en el árbol principal) y sin la prueba de
-integración sobre A, que necesita la raíz del repositorio. Uso: .venv/bin/python -B .docs/tickets/T-94/mutantes_r03.py"""
+integración sobre A, que necesita la raíz del repositorio. Uso: .venv/bin/python -B .docs/tickets/T-99/mutantes_r03.py"""
 import shutil
 import subprocess
 import sys

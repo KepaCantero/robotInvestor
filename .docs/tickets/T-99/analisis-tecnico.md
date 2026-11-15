@@ -81,3 +81,26 @@ Registro 0.3.0.
 - el cerrojo espera hasta 30 s, cuando el script mira a los 5;
 - la fusión de dos ramas falla cerrada (un escritor por fichero);
 - la variante por defecto ya no existe en la línea de órdenes.
+
+## Ronda r04 (15-11-2026, QA r03 NO APTO)
+
+Registro 0.4.0.
+
+| Hallazgo | Corrección |
+| --- | --- |
+| H-25 (alta) | **El sello es local y no se sube** (`.gitignore`, y `commit_limpio.sh` rechaza subirlo). Un `checkout`, un `reset --hard` o un `stash` devuelven el registro a lo subido, pero dejan el sello donde estaba, por delante: se detecta. El sello tiene que señalar una anotación de la cadena. Puede ir una por detrás (un corte entre la línea y el sello), o más atrás si el registro es exactamente el de git (un pull que trajo líneas de otra máquina). |
+| H-26 | **Límite declarado `[PROPUESTO]`:** reescribir la historia subida (push forzado) o hacer un `reset` de un commit ya subido no se detecta en local. Se propone proteger `develop` contra el push forzado en GitHub, que es un ajuste del operador. |
+| H-27 | Un «fallido» registrado después de que empezara otro intento de la misma variante no se salta: la variante queda `fallido_tardio` y no se adopta. |
+| H-28 | `RI_AGENTE` distinto para cada sesión de un mismo agente en máquinas distintas (decisión 3, `[PROPUESTO]`). |
+| H-14 | `git rev-parse --git-dir` falla cerrado si «.git» está vacío o apunta a nada, si el repositorio es de otro usuario o si la configuración está rota. Un HEAD ilegible también falla cerrado. Solo un repositorio sin commits (código 1 sin mensaje) no tiene ancla. |
+| H-17 | Un `RI_AGENTE` no válido deja sin registro por defecto: `Registro()` y el banco se detienen. `AGENTS.md` (punto 9) y el índice de scripts lo explican. |
+| H-29 | **Turno para el escritor:** coge «.turno» y lo retiene mientras espera, y los lectores pasan por el turno antes del cerrojo compartido. Así cuatro lectores en bucle ya no lo dejan sin entrar. Fuera de POSIX se lee, pero no se escribe. |
+| H-30 | `sellar` se niega si algún prerregistro lo escribió una versión con sello (0.2.0 o posterior). El sello hecho a mano lleva `sellado_a_mano`, y `verificar` lo dice siempre. |
+| H-31 | `*.jsonl.sello`, `*.jsonl.sello.tmp` y `*.jsonl.turno` están en `.gitignore`. |
+| H-32 | `Registro` trabaja sobre el fichero real (`realpath`): un enlace simbólico comparte cerrojo y sello. |
+| H-33 | Pruebas de `rev-list` que falla, de `os.replace` del sello que falla y de los dos casos de «.git» roto. |
+| H-34 | La fila T-99 de la deuda, el índice de `.docs/README.md`, este análisis, `pruebas.md` y los docstrings de los mutantes están al día. |
+| H-12 | `pruebas_scripts.sh`: todas las pruebas de `.docs/scripts` y su línea base (`linea_base_pruebas.txt`, 194), en `commit.sh` y en `commit_limpio.sh`. |
+| H-18 | Ya no se sube el sello: un clon no queda bloqueado por un sello desfasado. |
+| H-20 | Un registro que es un directorio, o que no se puede leer, da `RegistroError`. |
+| H-24 | `experimento.json` guarda la ruta del registro relativa a la carpeta de salida. |

@@ -603,13 +603,17 @@ def test_h21_un_intento_rechazado_no_crea_nada(tmp_path):
     assert not (tmp_path / "nueva").exists()
 
 
-def test_h22_registro_sin_sello_de_la_010_y_detalle_null(reg, tmp_path):
+def test_h22_registro_sin_sello_de_la_010_y_detalle_null(reg, tmp_path, capsys):
     exp = reg.prerregistrar(pre(), "claude", AHORA)["exp_id"]
     reg.intento(exp, "v1", DESPUES)
-    reg.sello.unlink()                                                 # como un registro de la 0.1.0
+    a = _leer(reg)
+    a[0]["version_registro"] = "0.1.0"                                 # como un registro de la 0.1.0, sin sello
+    reg.ruta.write_text(_rehacer_cadena(a), encoding="utf-8")
+    reg.sello.unlink()
     with pytest.raises(rx.RegistroError, match="sellar"):
         reg.verificar()
     assert rx.main(["--registro", str(reg.ruta), "sellar"]) == 0 and reg.verificar() == 2
+    assert rx.main(["--registro", str(reg.ruta), "verificar"]) == 0 and "sellado a mano" in capsys.readouterr().out
     assert rx.main(["--registro", str(reg.ruta), "sellar"]) == 2       # no se vuelve a sellar
     assert rx.main(["--registro", str(reg.ruta), "resultado", exp, "1", "peor", "--detalle", "null"]) == 2
 
@@ -637,3 +641,153 @@ def test_qa_r02_variantes_nfd_de_un_registro_antiguo(reg):
     reg.intento(exp, unicodedata.normalize("NFC", "única"), DESPUES)
     r = reg.resumen(exp)
     assert r["variantes"] == 1 and r["fuera_del_maximo"] == []
+
+
+# ---------------------------------------------------------------- ronda r04 (QA r03 NO APTO): una prueba por hallazgo
+
+@pytest.mark.parametrize("deshacer", [["checkout", "--", "registro.jsonl"], ["reset", "-q", "--hard"], ["stash", "-q"]])
+def test_h25_checkout_reset_o_stash_que_quitan_intentos_se_detectan(reg_en_git, deshacer):
+    r, exp = reg_en_git
+    r.intento(exp, "v2", DESPUES)                                       # sin subir
+    r.resultado(exp, 2, "mejor", ahora=DESPUES)
+    _git(r.ruta.parent, *deshacer)                                      # git devuelve el registro a lo subido
+    with pytest.raises(rx.RegistroError, match="sello"):
+        r.verificar()
+
+
+def test_h25_el_sello_no_se_sube(tmp_path):
+    raiz = Path(rx.__file__).resolve().parents[2]
+    ign = subprocess.run(["git", "-C", str(raiz), "check-ignore", "-q", ".docs/experimentos/registro_x.jsonl.sello"], check=False)
+    tmp = subprocess.run(["git", "-C", str(raiz), "check-ignore", "-q", ".docs/experimentos/registro_x.jsonl.sello.tmp"], check=False)
+    assert ign.returncode == 0 and tmp.returncode == 0
+
+
+def test_h25_un_pull_que_trae_lineas_nuevas_se_admite(reg_en_git):
+    r, exp = reg_en_git
+    d = r.ruta.parent
+    sello_viejo = r.sello.read_text(encoding="utf-8")
+    r.intento(exp, "v2", DESPUES)                                       # otra máquina anota y sube…
+    r.intento(exp, "v3", DESPUES)
+    _commit(d, "registro.jsonl")
+    r.sello.write_text(sello_viejo, encoding="utf-8")                   # …y aquí el sello local se quedó atrás
+    assert r.verificar() == 5                                           # lo de después del sello está en git: se admite
+
+
+@pytest.mark.parametrize("estropear", ["vacio", "a_ninguna_parte"])
+def test_h14_git_que_no_responde_falla_cerrado(tmp_path, estropear):
+    r = rx.Registro(tmp_path / "registro.jsonl")
+    r.prerregistrar(pre(), "claude", AHORA)
+    if estropear == "vacio":
+        (tmp_path / ".git").mkdir()
+    else:
+        (tmp_path / ".git").write_text("gitdir: /no/existe/.git/worktrees/x\n", encoding="utf-8")
+    with pytest.raises(rx.RegistroError, match="git no reconoce el repositorio"):
+        r.verificar()
+
+
+def test_h33_rev_list_y_os_replace_que_fallan(reg_en_git, monkeypatch):
+    r, exp = reg_en_git
+    real = rx.Registro._git
+
+    def falla_rev_list(raiz, *args):
+        if args and args[0] == "rev-list":
+            return subprocess.CompletedProcess(args, 128, b"", b"fatal: bad revision")
+        return real(raiz, *args)
+    monkeypatch.setattr(rx.Registro, "_git", staticmethod(falla_rev_list))
+    with pytest.raises(rx.RegistroError, match="historial"):
+        r.verificar()
+    monkeypatch.setattr(rx.Registro, "_git", staticmethod(real))
+
+    def no_mueve(a, b):
+        raise OSError("dispositivo lleno")
+    monkeypatch.setattr(rx.os, "replace", no_mueve)
+    with pytest.raises(rx.RegistroError, match="no se pudo poner al día el sello"):
+        r.intento(exp, "v2", DESPUES)
+
+
+@pytest.mark.parametrize("valor", ["Astra", "astra ", "", "ástra", "a" * 33])
+def test_h17_ri_agente_no_valido_no_cae_en_el_de_claude(valor):
+    carpeta = str(Path(rx.__file__).parent)
+    codigo = (f"import sys; sys.path.insert(0, {carpeta!r}); import registro_experimentos as rx; "
+              "rx.Registro()")
+    out = subprocess.run([sys.executable, "-c", codigo], capture_output=True, text=True, check=False,
+                         env={"RI_AGENTE": valor, "PATH": "/usr/bin:/bin"})
+    assert out.returncode != 0 and "RI_AGENTE" in out.stderr
+
+
+def test_h20_un_registro_que_es_un_directorio(tmp_path):
+    (tmp_path / "registro.jsonl").mkdir()
+    with pytest.raises(rx.RegistroError, match="no se puede leer"):
+        rx.Registro(tmp_path / "registro.jsonl").verificar()
+
+
+def test_h27_un_fallido_tardio_no_deja_adoptar(reg):
+    exp = reg.prerregistrar(pre(), "claude", AHORA)["exp_id"]
+    reg.intento(exp, "v1", "2026-11-12T11:00:00+00:00")                # abierto
+    reg.intento(exp, "v1", "2026-11-12T11:05:00+00:00")                # repetición
+    reg.resultado(exp, 2, "mejor", ahora="2026-11-12T11:10:00+00:00")
+    reg.resultado(exp, 1, "fallido", ahora="2026-11-12T11:20:00+00:00")   # se cierra como «fallido» después de ver el «mejor»
+    r = reg.resumen(exp)
+    assert r["por_variante"]["v1"]["fallido_tardio"] and not r["adoptable"]
+    exp2 = reg.prerregistrar(pre(), "claude", AHORA)["exp_id"]
+    reg.intento(exp2, "v1", "2026-11-12T11:00:00+00:00")
+    reg.resultado(exp2, 1, "fallido", ahora="2026-11-12T11:01:00+00:00")  # falló antes de repetir: se salta
+    reg.intento(exp2, "v1", "2026-11-12T11:05:00+00:00")
+    reg.resultado(exp2, 2, "mejor", ahora="2026-11-12T11:10:00+00:00")
+    assert reg.adoptable(exp2)
+
+
+_LECTOR = """
+import sys, time
+sys.path.insert(0, {scripts!r})
+import registro_experimentos as rx
+r = rx.Registro({ruta!r})
+fin = time.monotonic() + 6
+while time.monotonic() < fin:
+    r.verificar()
+"""
+
+
+def test_h29_los_lectores_no_dejan_sin_turno_al_escritor(reg, monkeypatch):
+    exp = reg.prerregistrar(pre(), "claude", AHORA)["exp_id"]
+    codigo = _LECTOR.format(scripts=str(Path(rx.__file__).parent), ruta=str(reg.ruta))
+    lectores = [subprocess.Popen([sys.executable, "-c", codigo]) for _ in range(4)]
+    try:
+        import time
+        time.sleep(0.5)
+        monkeypatch.setattr(rx, "CERROJO_ESPERA_S", 3)
+        t0 = time.monotonic()
+        reg.intento(exp, "v1", DESPUES)
+        assert time.monotonic() - t0 < 3
+    finally:
+        for p in lectores:
+            p.wait()
+
+
+def test_h29_sin_cerrojo_no_se_escribe(reg, monkeypatch):
+    reg.prerregistrar(pre(), "claude", AHORA)
+    monkeypatch.setattr(rx, "fcntl", None)
+    assert reg.verificar() == 1
+    with pytest.raises(rx.RegistroError, match="cerrojo"):
+        reg.intento("EXP-2026-0001", "v1", DESPUES)
+
+
+def test_h30_sellar_se_niega_con_un_registro_de_una_version_con_sello(reg):
+    exp = reg.prerregistrar(pre(), "claude", AHORA)["exp_id"]
+    reg.intento(exp, "v1", DESPUES)
+    reg.intento(exp, "v2", DESPUES)
+    lineas = reg.ruta.read_text(encoding="utf-8").splitlines()
+    reg.sello.unlink()
+    reg.ruta.write_text("\n".join(lineas[:2]) + "\n", encoding="utf-8")   # truncado y sin sello
+    with pytest.raises(rx.RegistroError, match="versión con sello"):
+        reg.sellar()
+
+
+def test_h32_un_enlace_simbolico_comparte_cerrojo_y_sello(reg, tmp_path):
+    exp = reg.prerregistrar(pre(), "claude", AHORA)["exp_id"]
+    alias = tmp_path / "alias.jsonl"
+    alias.symlink_to(reg.ruta)
+    otro = rx.Registro(alias)
+    assert otro.ruta == reg.ruta and otro.sello == reg.sello
+    otro.intento(exp, "v1", DESPUES)
+    assert reg.verificar() == 2
