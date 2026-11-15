@@ -2,7 +2,7 @@
 
 | Campo | Valor |
 | --- | --- |
-| Estado | NO APTO (QA r01, 15-11-2026); vuelve a implementar cuando lo ordene el operador |
+| Estado | EN QA (ronda r02) |
 | Pieza | `.docs/scripts` (fuera de los bloques): `banco_medida.py` y sus pruebas |
 | Planifica · implementa · QA | claude · claude · un revisor nuevo sin contexto (operador, 15-11-2026: «Vamos a empezar con los Tickets») |
 | Aprobación del operador | aprobada el 2026-11-11: «Te autorizo que empieces con el banco de medida y las plantillas» (tras aceptar la tanda 1: pauta común de A, B y C con banco de medida) |
@@ -38,6 +38,7 @@ Medir, con los mismos datos y fechas de corte, si el diseño actual de un bloque
 - Estado persistido: no cambia nada del sistema; todo va a una carpeta de salida.
 - Números: semilla, ventana de momento (63 sesiones) y remuestreos (2.000) son argumentos con valor por defecto; no salen de ningún Documento 0 porque el banco no es parte del robot.
 - Cómo falla cerrado: si el titular falla, si una fecha no tiene datos o si el universo no casa con los datos, el banco se detiene con el motivo; no rellena huecos.
+- **Ronda r02 (QA r01, H-01 y H-02):** una apuesta repetida sobre el mismo activo, clase y dirección mientras su ventana sigue abierta cuenta una vez; el rango remuestrea fechas de corte enteras; sin `--min-efectivas` fechas por lado (10) no hay veredicto. El detalle de la ronda está en `analisis-tecnico.md`.
 
 ## Riesgos
 
@@ -82,3 +83,4 @@ Crea `.docs/scripts/banco_medida.py` y `.docs/scripts/pruebas_banco_medida.py`. 
 - 2026-11-11 · EN CURSO · claude · plan escrito; implementa claude, QA astra cuando termine sus revisiones de diseño
 - 2026-11-11 · EN QA · claude · banco y pruebas (10/10) listos; informe en `pruebas.md`. Espera la QA de Astra
 - 2026-11-15 · NO APTO · QA r01 (revisor nuevo, base `df4a60a`, gate 12/12): H-01 y H-02 altos (el rango trata como independientes selecciones repetidas de la misma oportunidad y da «mejor» con una sola selección por lado; sin habilidad, veredicto firme el 42,5 % y el 87 % de las veces), H-03 a H-08 medios (valores no finitos sin fallo cerrado, prerregistro creado en cada ejecución, intento sin resultado, referencias con menos selecciones, coste sin caché, aviso de fuga perdido), H-09 a H-12 bajos. Detalle en `qa.md`
+- 2026-11-15 · EN QA · Ronda r02, por orden del operador («Corrige todos los hallazgos de T-94 hasta que supere la QA»): H-01 a H-12 corregidos en el banco 0.3.0 con su prueba de regresión cada uno; 51 pruebas, 29 mutantes muertos; `r01_02` en 3,0 %, 0,0 % y 0,0 % de veredictos firmes sin habilidad
