@@ -2,7 +2,7 @@
 
 | Campo | Valor |
 | --- | --- |
-| Estado | EN QA |
+| Estado | CERRADO (QA r01 APTO) |
 | Pieza | Bloque A (`bloque_a/11_Ejecutor`: `bloque_a/consumo.py`, `llm.py`, `orquestacion.py`, `config/por_defecto.yaml`, `README.md`; `tests/test_t146_presupuesto.py`, `tests/test_t148.py`); `docs/incidencias.md` (INC-T146-01); el README de T-146 (texto del CA-1) |
 | Planifica · implementa · QA | claude · claude · el otro agente o un revisor nuevo |
 | Aprobación del operador | no necesaria (correcciones y pruebas de dos tickets cerrados; lo nuevo, `[PROPUESTO]` en INC-T146-01) |
