@@ -1,3 +1,5 @@
+> **Número renumerado (15-11-2026).** Este ticket del Bloque A se abrió como T-137, pero otra sesión usó T-137 para los hallazgos del entorno reproducible (T-96) y lo subió antes. El ticket del Bloque A sigue en **`.docs/tickets/T-140/`**; lo de esta carpeta es la copia antigua y no se actualiza (de `.docs/` no se borra nada: lo viejo se marca).
+
 # T-137 · Pruebas
 
 | Suite o script | Resultado |

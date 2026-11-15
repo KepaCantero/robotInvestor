@@ -28,4 +28,4 @@
 
 - 2026-11-15 · ABIERTO · creado con nuevo_ticket.sh
 - 2026-11-15 · EN QA · claude · implementado y probado
-- 2026-11-15 · CERRADO · QA r01 APTO (revisor nuevo sin contexto); H-19 (baja) en T-137
+- 2026-11-15 · CERRADO · QA r01 APTO (revisor nuevo sin contexto); H-19 (baja) en T-140

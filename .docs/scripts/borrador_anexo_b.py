@@ -61,7 +61,7 @@ GENERALES = [
 ]
 
 
-# T-137 (QA r02 de T-131, H-06): los retornos de CT-09 y CT-10 los sirve el Motor (`motor/servicio.py`), sin esquema en
+# T-140 (QA r02 de T-131, H-06): los retornos de CT-09 y CT-10 los sirve el Motor (`motor/servicio.py`), sin esquema en
 # `ESQUEMAS`; los demás internos son la respuesta de un agente, validada con `ESQUEMAS`
 RETORNOS_DEL_MOTOR = {"CT-09", "CT-10"}
 RETORNOS_INTERNOS = {f"CT-{n:02d}" for n in range(6, 15)} - RETORNOS_DEL_MOTOR

@@ -40,4 +40,4 @@
 - 2026-11-15 · ABIERTO · creado con nuevo_ticket.sh
 - 2026-11-15 · EN QA · claude · implementado y probado
 - 2026-11-15 · EN QA · claude · renumerado de T-133 a T-136: otra sesión usó T-133 para los hallazgos del banco de medida (T-94) y lo subió antes
-- 2026-11-15 · CERRADO · QA r01 APTO (revisor nuevo sin contexto, revisado como T-133); hallazgos (H-01 y H-02 medios, H-03 y H-04 bajos) en T-137
+- 2026-11-15 · CERRADO · QA r01 APTO (revisor nuevo sin contexto, revisado como T-133); hallazgos (H-01 y H-02 medios, H-03 y H-04 bajos) en T-140

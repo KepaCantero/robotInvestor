@@ -54,7 +54,7 @@ def test_h01_la_cota_cubre_sin_cache_margen_de_tokens_y_continuaciones():
     # suelo: 0,2 M sin caché (0,4) + 0,8 M de lectura (0,08)
     assert r["estimacion"] == pytest.approx(0.48)
     # cota: 4 vueltas × 1,35 M como escritura (4 × 5,4) + 0,1 M de salida (1) + 20 búsquedas (0,2)
-    # T-137 (QA r01 de T-136, H-01): cada continuación es una petición que reenvía lo ya generado y paga su max_tokens:
+    # T-140 (QA r01 de T-136, H-01): cada continuación es una petición que reenvía lo ya generado y paga su max_tokens:
     # Σ_v (1,35 M + v · 0,1 M) × 4 + 4 × 0,1 M × 10 + 20 búsquedas
     assert r["cota_superior"] == pytest.approx(sum((1.35 + 0.1 * v) * 4.0 for v in range(4)) + 4 * 1.0 + 0.2)
     assert r["busquedas_cota"] == 20
