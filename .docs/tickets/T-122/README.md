@@ -2,7 +2,7 @@
 
 | Campo | Valor |
 | --- | --- |
-| Estado | EN QA |
+| Estado | CERRADO |
 | Pieza | bloque_a (11_Ejecutor: `contratos.py`, `evaluador.py`, `llm.py`) |
 | Planifica · implementa · QA | claude · claude · un revisor nuevo sin contexto |
 | Aprobación del operador | no necesaria (corrección; el agente decide por defecto desde el 13-11-2026) |
@@ -38,3 +38,5 @@ Corregir los hallazgos que dejaron abiertos la QA r02 de T-113 y la QA r01 de T-
 
 - 2026-11-14 · ABIERTO · creado con nuevo_ticket.sh
 - 2026-11-14 · EN QA · claude · corregido; scripts de los revisores: `r01_03_iban_fuera_de_lo_declarado.py` pasa de 6 formas admitidas a 0, `r01_01_iban_banco.py` 0 fallos, `r02_06` 0 regresiones, `r01_01_sensible_diferencial.py` 0 fallos, `r01_13_r8_camino_real.py` nada enviado al SDK
+- 2026-11-14 · CERRADO (14-11-2026): QA r01 APTO. Hallazgos abiertos (H-13 y H-14, bajos) en T-127 · revisor nuevo sin contexto (`qa.md`)
+- 2026-11-14 · CERRADO · claude · hallazgos bajos de la QA r01 resueltos aparte: H-13 se queda (el 10 es un tope citado del 12.3 del Documento 0, no un parámetro; anotado en INC-T122-01) y H-14 corregido (`max_n` explícito validado de 1 a 10; la prueba de T-120 que pedía 12 pasa a esperar el rechazo)

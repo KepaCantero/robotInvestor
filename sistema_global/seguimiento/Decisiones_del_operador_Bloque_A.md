@@ -76,6 +76,7 @@ Se sigue preguntando antes de actuar cuando algo gasta dinero o usa una credenci
 | Decisiones de método y cotas de las 36 fichas de la Fase 2 | Cotas de tamaño, tolerancias, semillas | Agente (INC-T112-01) | 13-11-2026 | `docs/incidencias.md` y `UMBRALES` de cada grupo |
 | Rangos de las fichas de liquidez e índices y otros cierres de deuda | Horizontes hasta H5, listas de hasta 12 elementos, etc. | Agente (INC-T113-01) | 13-11-2026 | `docs/incidencias.md` |
 | Hallazgos abiertos de la QA de la Fase 2 (H-09 a H-15) | Sin corregir; H-09 antes del modo sombra | Agente | 13-11-2026 | T-118 en la deuda |
+| Frontera con el Bloque B en las fichas con componentes (FIR-CRED-001, REI-LEV-001, CHR-TOKEN-001) [PROPUESTO] | Casi clones a menos del 1 % en cada dato del cálculo; ningún componente con más del 95 % de una base del agregado; mínimo, cuartiles y máximo solo con 7 componentes o más; covenants, staking y concentración con el mínimo del agregado; un solo token solo para Bitcoin (BTC) o Ethereum (ETH) | Agente (INC-T127-01) | 14-11-2026 | `FRONTERA_B` y `UMBRALES` de `motor/fichas_p2.py`; `docs/incidencias.md`; pregunta para T-57 |
 
 ## 6. Contratos y pruebas
 

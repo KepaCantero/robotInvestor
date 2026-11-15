@@ -37,3 +37,22 @@ Las ocho pruebas de `test_fase4_huecos.py` no corrigen fallos: afirman cláusula
 ## Gate
 
 El gate completo 12/12 lo pasa `commit_limpio.sh` al hacer el commit; su resultado se anota en el registro del ticket.
+
+## Ronda r04 (14-11-2026)
+
+| Qué | Orden (desde la raíz de la copia, con el `.venv`) | Resultado |
+| --- | --- | --- |
+| Pruebas de la fase | `cd bloque_a/11_Ejecutor && python -m pytest -q tests/test_fase4_huecos.py tests/test_fase4_mapa.py` | 25 pruebas nuevas en `test_fase4_huecos.py` (29 casos) y dos ampliadas (PB-16 y PB-22); un caso de `test_fase4_mapa.py` corregido (dependía de cuántas pruebas cita PB-01). Las dos en verde |
+| Goldens de contratos | `cd bloque_a/11_Ejecutor && python tests/goldens_ct.py` | «goldens de contratos: coinciden» (tras cada corrección del ejecutor) |
+| Evidencias | `.venv/bin/python .docs/scripts/evidencias_plan_a.py --ejecutar` | «escrito docs/evidencias_pruebas_bloque_a.md · 132 de 132 pruebas citadas superadas», código 0 (8 min con la máquina compartida) |
+| Suite del Bloque A, una vez | `cd bloque_a/11_Ejecutor && python -m pytest -q -p no:cacheprovider` | **5527 passed** en 1546 s (máquina compartida), el árbol queda limpio |
+| ruff (tres `11_Ejecutor`, `--output-format=concise \| wc -l`) y mypy de A | — | 2902 (cuota 2902) y 109 (cuota 109) |
+| Corpus, refs, secretos, NFC | `tools/corpus_integridad.py`, `refs_vivas.py`, `secrets_scan.py`, `nfc_check.py` | los cuatro con código 0 |
+| Mutantes de la QA r03 | `python .docs/tickets/T-116/revisores/r03_01_pb32_y_muestra.py <copia desechable con «qa2_mut»>` | P32a a P32h, S06, S14, S33, S56, S60a y S60b: todos MUERTOS; a mano, los tres entregables declaran la degradación |
+| Mutantes propios | `python .docs/tickets/T-116/r04_mutantes_implementador.py <copia desechable con «_mut»>` | 20 de 20 MUERTOS |
+
+Regresiones: `test_pb60_…` falla sin la corrección de los entregables (comprobado en la copia desechable con `orquestacion.py` y `redaccion.py` del commit anterior: falla en «limitación visible en el paquete»). M06 (escalado), M09 (servicio pendiente), M10 y M11 (nota del visual y servicio ya provisto) son los mutantes que deshacen las otras dos correcciones, y mueren.
+
+Resultado del plan tras la r04: 22 superadas, 33 en parte, 7 pendientes de la API, 3 sin prueba, 1 con usuarios y 1 documental.
+
+No se ha pasado el gate completo (`tools/check_all.sh`) por indicación del encargo (máquina compartida); lo pasa quien coordina al integrar.

@@ -24,7 +24,11 @@ Convenciones de este módulo:
 - Frontera con el Bloque B (1.6): las fichas con componentes (FIR-CRED, REI-LEV, CHR-TOKEN) entregan solo el agregado y su
   dispersión, nunca una fila por componente: con su salida no se puede ordenar emisores ni tokens. Ronda r02 (QA r01,
   H-01): el agregado necesita un mínimo de componentes distintos (dos con los mismos datos se rechazan, aunque lleven
-  otro identificador); un solo token solo se admite si el ámbito se declara como la propia red.
+  otro identificador); un solo token solo se admite si el ámbito se declara como la propia red. T-127 (QA r02, H-10;
+  `FRONTERA_B`, INC-T127-01): «los mismos datos» es a menos de una tolerancia relativa; ningún componente puede pesar casi
+  todo el agregado; los estadísticos de orden (mínimo, cuartiles, máximo) solo se entregan con componentes suficientes
+  para que no den la cifra de cada uno; un subconjunto (covenants, staking, concentración) es otro agregado y sigue las
+  mismas reglas; y la «propia red» es una de las redes de `UMBRALES`, no lo que declare el solicitante.
 - Determinista: ninguna ficha usa azar (todas declaran semilla ``null``).
 
 Interfaz de cada manejador: ``fn(ent, params) -> (resultado, limitaciones)``.
@@ -41,6 +45,7 @@ from typing import Any
 import numpy as np
 import pandas as pd
 from scipy import optimize, special, stats
+from scipy.sparse import csgraph, csr_matrix
 
 from ..configuracion import parametro
 from . import fichas_series as fs
@@ -83,6 +88,23 @@ BASE_INDICE = 100            # ALT-AUC-001: «índice base 100»
 # por un total infinito daría un cero con apariencia de cifra; se rechaza antes de calcular
 MAGNITUD_MAX = 1e100
 
+# ------------------------------------------------------------------ frontera con el Bloque B (1.6) [PROPUESTO INC-T127-01]
+# T-127 (QA r02 de T-119, H-10). Reglas comunes de FIR-CRED-001, REI-LEV-001 y CHR-TOKEN-001 para que ninguna cifra de la
+# entrega sea la de un emisor o un token concreto. Las tres fichas las llevan en sus `UMBRALES` (la petición no las cambia).
+ESTADISTICOS_ORDEN = ("minimo", "q25", "mediana", "q75", "maximo")   # los que entrega `_distribucion`
+FRONTERA_B: dict[str, Any] = {
+    # Casi clones: dos componentes cuyos datos del cálculo difieren todos, cada uno, en menos de un 1 % relativo son el
+    # mismo emisor o token con ruido; su agregado sería su cifra con dos o más cifras significativas.
+    "tolerancia_clon": 0.01,
+    # Regla de dominancia (1, k) del control de revelación estadística: ningún componente puede pesar más del 95 % de una
+    # base de ponderación del agregado (por encima, el agregado es la cifra de ese componente). Los casos de control llegan
+    # a un 90,9 % (CHR-TOKEN-001 sin dilución).
+    "peso_maximo_componente": 0.95,
+    # Estadísticos de orden solo con al menos 7 componentes distintos: con n ≤ 6, los cinco estadísticos (cuantiles de tipo 7)
+    # y el agregado ponderado de la misma métrica son n ecuaciones o más que dan la cifra de cada componente.
+    "componentes_minimos_orden": len(ESTADISTICOS_ORDEN) + 2,
+}
+
 # ------------------------------------------------------------------ parámetros por defecto (campo «Parámetros»)
 PARAMETROS_POR_DEFECTO: dict[str, dict[str, Any]] = {
     # FIR-CRED-001 · «Parámetros»: T (1 año); metodo (iterativo; ingenuo); mu (rendimiento histórico de activos o r).
@@ -120,7 +142,7 @@ UMBRALES: dict[str, dict[str, Any]] = {
                      "dd_umbral": 2, "ingenuo_sigma_deuda": (0.05, 0.25), "metodos_admitidos": ("iterativo", "ingenuo"),
                      "mu_admitidos": ("historico", "r"), "cobertura_minima": 0.5, "T_maximo_anios": ANIOS_H5_MAX,
                      "rango_tipo": (-1.0, 1.0), "volatilidad_maxima": 10.0, "tolerancia_raiz": 1e-13,
-                     "iteraciones_maximas": 200},
+                     "iteraciones_maximas": 200, **FRONTERA_B},
     # FX-BEER-001 · «Aclaración y rechazo»: < 15 años. «Entradas mínimas»: trimestrales ≥ 20 años. «Método»: los cuatro
     # fundamentales. Retardos 1–4 trimestres [PROPUESTO]; contraste al 0,05, uno de los niveles tabulados de FX-COINT-001.
     "FX-BEER-001": {"anios_rechazo": 15, "anios_entrada_minima": 20,
@@ -139,7 +161,7 @@ UMBRALES: dict[str, dict[str, Any]] = {
     "REI-LEV-001": {"meses_vencimientos": 24, "componentes_minimos": 3, "componentes_maximos": COMPONENTES_MAX,
                     "vencimientos_maximos": 100,
                     "caidas_maximas": LISTA_PARAMETRO_MAX, "rango_caida": (-1.0, 0.0), "rango_coste": (-1.0, 1.0),
-                    "rango_margen": (0.0, 1.0)},
+                    "rango_margen": (0.0, 1.0), **FRONTERA_B},
     # CHR-ONCHAIN-001 · «Entradas mínimas»: diarias ≥ 2 años (≥ 4 recomendados; con menos, «pocos ciclos», sección 13).
     # media_nvt 1–365 días; historia hasta H5 (30 años) en días [PROPUESTO], como CHR-FUND-001.
     "CHR-ONCHAIN-001": {"dias_minimos": 2 * DIAS_ANIO, "dias_recomendados": 4 * DIAS_ANIO, "rango_media_nvt": (1, DIAS_ANIO),
@@ -147,8 +169,12 @@ UMBRALES: dict[str, dict[str, Any]] = {
     # CHR-TOKEN-001 · «Parámetros»: ventanas de desbloqueo en días, hasta H5 (30 años) y 12 ventanas [PROPUESTO].
     # Concentración en [0, 1]; rendimiento de staking en (−1, 10). «Propósito»: los tokens individuales solo como
     # componentes o cuando el ámbito es la propia red; un sector necesita al menos 2 tokens distintos [PROPUESTO, r02].
+    # T-127 (H-10): la «propia red» no la declara el solicitante: es una de `redes_propias` (nombre de la red → id de su
+    # token nativo), las del perfil PERF-CHR («Ámbito: redes (Bitcoin, plataformas de contratos inteligentes)») [PROPUESTO
+    # INC-T127-01; el operador amplía la lista].
     "CHR-TOKEN-001": {"tokens_minimos_sector": 2, "tokens_maximos": COMPONENTES_MAX, "desbloqueos_maximos": 1000, "ventanas_maximas": LISTA_PARAMETRO_MAX,
-                      "ventana_dias_maxima": ANIOS_H5_MAX * DIAS_ANIO, "rango_staking": (-1.0, 10.0)},
+                      "ventana_dias_maxima": ANIOS_H5_MAX * DIAS_ANIO, "rango_staking": (-1.0, 10.0),
+                      "redes_propias": {"bitcoin": "BTC", "ethereum": "ETH"}, **FRONTERA_B},
     # PRV-PME-001 · métodos de la ficha. Flujos ≤ 10 000 fechas; TIR buscada en (−0,99, 10) con tolerancia fija
     # [PROPUESTO] (la ficha da 1e-8 para la re-ejecución). Rejilla de 1 000 puntos para contar las soluciones cuando la
     # TIR no queda aislada entre los extremos del rango [PROPUESTO, r02].
@@ -280,13 +306,59 @@ def _ids_unicos(ids: list[str], que: str) -> None:
         raise ErrorFicha(f"{que}: identificadores de componente repetidos")
 
 
-def _sin_clones(firmas: list[tuple[Any, ...]], que: str) -> None:
+def _grupos_casi_iguales(firmas: list[tuple[Any, ...]], tol: float) -> int:
+    """T-127 (H-10): número de grupos de componentes con los mismos datos a menos de `tol` relativo en cada uno
+    (|a − b| ≤ tol·max(|a|, |b|); un dato ausente, ``None``, solo es igual a otro ausente). Dos componentes casi iguales a
+    un tercero están en su grupo aunque entre ellos difieran algo más (cierre transitivo): una cadena de casi clones es
+    un solo componente."""
+    n = len(firmas)
+    cerca = np.ones((n, n), dtype=bool)
+    for j in range(len(firmas[0]) if firmas else 0):
+        nulo = np.array([f[j] is None for f in firmas])
+        x = np.array([0.0 if f[j] is None else float(f[j]) for f in firmas])
+        a = np.abs(x)
+        cerca &= np.abs(x[:, None] - x[None, :]) <= tol * np.maximum(a[:, None], a[None, :])
+        cerca &= nulo[:, None] == nulo[None, :]
+    return int(csgraph.connected_components(csr_matrix(cerca), directed=False)[0]) if n else 0
+
+
+def _sin_clones(firmas: list[tuple[Any, ...]], que: str, tol: float) -> None:
     """Ronda r02 (QA r01, H-01): dos componentes con los mismos datos son el mismo emisor (o token) con otro identificador;
-    no cuentan como componentes distintos y el agregado se rechaza (el mensaje no cita identificadores)."""
-    repetidos = len(firmas) - len(set(firmas))
+    no cuentan como componentes distintos y el agregado se rechaza (el mensaje no cita identificadores). T-127 (QA r02,
+    H-10): «los mismos» a menos de `tol` relativo en cada dato del cálculo (`FRONTERA_B`), no solo exactamente."""
+    repetidos = len(firmas) - _grupos_casi_iguales(firmas, tol)
     if repetidos:
-        raise ErrorFicha(f"{que}: rechazo: {repetidos} componentes con los mismos datos que otro: un componente repetido "
-                         f"con otro identificador no cuenta como componente distinto del agregado (1.6)")
+        raise ErrorFicha(f"{que}: rechazo: {repetidos} componentes con los mismos datos que otro (a menos del {tol:.0%} "
+                         f"relativo en cada dato del cálculo): un componente repetido con otro identificador no cuenta "
+                         f"como componente distinto del agregado (1.6)")
+
+
+def _sin_dominio(bases: dict[str, Any], que: str, peso_maximo: float) -> None:
+    """T-127 (H-10): regla de dominancia (1, k). Si un componente pesa más de `peso_maximo` de una base de ponderación del
+    agregado (la suma de los valores absolutos), el agregado es su cifra: se rechaza (el mensaje no cita identificadores)."""
+    for nombre, x in bases.items():
+        a = np.abs(np.asarray(x, dtype=float))
+        total = float(np.sum(a))
+        peso = float(np.max(a)) / total if total > 0 else 0.0
+        if peso > peso_maximo:
+            raise ErrorFicha(f"{que}: rechazo: un componente pesa el {peso:.4%} de «{nombre}» (más del {peso_maximo:.0%}): "
+                             f"el agregado sería la cifra de ese componente (1.6)")
+
+
+def _orden(x: np.ndarray, u: dict[str, Any], sin_orden: list[str], que: str) -> dict[str, float] | None:
+    """T-127 (H-10): la dispersión de `_distribucion` si hay al menos `componentes_minimos_orden` componentes; si no,
+    ``None``, y `que` se apunta en `sin_orden` para declararlo una vez en las limitaciones."""
+    if len(x) >= u["componentes_minimos_orden"]:
+        return _distribucion(x)
+    sin_orden.append(que)
+    return None
+
+
+def _limitacion_orden(sin_orden: list[str], u: dict[str, Any], lim: list[str]) -> None:
+    if sin_orden:
+        lim.append(f"sin estadísticos de orden de {', '.join(dict.fromkeys(sin_orden))}: menos de "
+                   f"{u['componentes_minimos_orden']} componentes distintos; con tan pocos, el mínimo, los cuartiles y el "
+                   f"máximo darían la cifra de cada componente (1.6)")
 
 
 def _lista_parametro(x: Any, que: str, maximo: int) -> list[Any]:
@@ -499,7 +571,8 @@ def f_fir_cred(ent: dict[str, Any], params: dict[str, Any]) -> Resultado:
         filas.append(_merton_medidas(V, sV, D, r, mu, T))
         deudas.append(corto + largo)
     _ids_unicos(ids, F)
-    _sin_clones(firmas, f"{F}: componentes")   # el mínimo de 10 es de componentes distintos
+    _sin_clones(firmas, f"{F}: componentes", u["tolerancia_clon"])   # el mínimo de 10 es de componentes distintos
+    _sin_dominio({"deuda": deudas}, f"{F}: componentes", u["peso_maximo_componente"])   # T-127 (H-10): pesos del agregado
     w = np.array(deudas) / float(np.sum(deudas))
 
     def bloque(dd: np.ndarray, pd_: np.ndarray) -> dict[str, Any]:
@@ -814,20 +887,30 @@ def f_rei_lev(ent: dict[str, Any], params: dict[str, Any]) -> Resultado:
             caida_rompe.append((ltv_i / lmax - 1) * PCT)                # variación del GAV que lleva el LTV a su máximo
             ltv_max.append(lmax)
     _ids_unicos(ids, F)
-    _sin_clones(firmas, f"{F}: componentes")
+    _sin_clones(firmas, f"{F}: componentes", u["tolerancia_clon"])
+    # T-127 (H-10): las bases de los cocientes agregados (el FFO, en valor absoluto: puede ser negativo)
+    _sin_dominio({"gav": col["gav"], "deuda": col["deuda"], "ebitda": col["ebitda"], "gastos_financieros": col["gf"],
+                  "ffo": col["ffo"]}, f"{F}: componentes", u["peso_maximo_componente"])
     a = {k: np.array(x) for k, x in col.items()}
     tot = {k: float(np.sum(x)) for k, x in a.items()}
     if not tot["ffo"] > 0:
         raise ErrorFicha(f"{F}: FFO agregado no positivo: el impacto en FFO no está definido")
+    sin_orden: list[str] = []
     covenants: dict[str, Any] | None = None
-    if holg_ltv:
+    if 0 < len(holg_ltv) < u["componentes_minimos"]:
+        # T-127 (H-10): los que declaran covenants son otro agregado, con el mismo mínimo (con uno, «en incumplimiento» es
+        # la situación de ese emisor)
+        lim.append(f"covenants de {len(holg_ltv)} de {len(comps)} componentes (< {u['componentes_minimos']}): holgura no "
+                   f"calculada; con tan pocos serían las cifras de emisores concretos (1.6)")
+    elif holg_ltv:
         neta_cov = np.array([n_ for n_, c in zip(col["neta"], comps, strict=True) if c.get("covenants") is not None])
         gav_cov = np.array([g for g, c in zip(col["gav"], comps, strict=True) if c.get("covenants") is not None])
         lmax_a = np.array(ltv_max)
         covenants = {
             "n_componentes": len(holg_ltv),
-            "holgura_ltv_pp": _distribucion(np.array(holg_ltv)), "holgura_icr_veces": _distribucion(np.array(holg_icr)),
-            "caida_valor_que_agota_ltv_pct": _distribucion(np.array(caida_rompe)),
+            "holgura_ltv_pp": _orden(np.array(holg_ltv), u, sin_orden, "las holguras frente a covenants"),
+            "holgura_icr_veces": _orden(np.array(holg_icr), u, sin_orden, "las holguras frente a covenants"),
+            "caida_valor_que_agota_ltv_pct": _orden(np.array(caida_rompe), u, sin_orden, "las holguras frente a covenants"),
             "en_incumplimiento_pct": float(np.mean((np.array(holg_ltv) < 0) | (np.array(holg_icr) < 0))) * PCT,
             "en_incumplimiento_ltv_estresado_pct": {
                 f"{c:g}": float(np.mean(neta_cov / (gav_cov * (1 + c)) > lmax_a)) * PCT for c in p["caidas_valor"]}}
@@ -835,6 +918,12 @@ def f_rei_lev(ent: dict[str, Any], params: dict[str, Any]) -> Resultado:
             lim.append(f"covenants de {len(holg_ltv)} de {len(comps)} componentes: holgura sobre los declarados")
     else:
         lim.append("sin covenants declarados: holgura no calculada")
+    dispersion: dict[str, Any] | None = None
+    if _orden(a["gav"], u, sin_orden, "la dispersión de los componentes") is not None:   # T-127 (H-10)
+        dispersion = {"ltv_pct": _distribucion(a["neta"] / a["gav"] * PCT), "icr_veces": _distribucion(a["ebitda"] / a["gf"]),
+                      "deuda_neta_sobre_ebitda_veces": _distribucion(a["neta"] / a["ebitda"]),
+                      "vencimientos_24m_pct": _distribucion(a["venc"] / a["deuda"] * PCT)}
+    _limitacion_orden(sin_orden, u, lim)
     res = {
         "moneda": moneda, "fecha": _iso(fecha), "n_componentes": len(comps),
         "ltv_pct": tot["neta"] / tot["gav"] * PCT, "icr_veces": tot["ebitda"] / tot["gf"],
@@ -843,9 +932,7 @@ def f_rei_lev(ent: dict[str, Any], params: dict[str, Any]) -> Resultado:
         "coste_refinanciacion": {"swap": swap, "margen": margen, "coste": coste_nuevo},
         "impacto_ffo_pct": -tot["extra"] / tot["ffo"] * PCT,
         "ltv_estresado_pct": {f"{c:g}": tot["neta"] / (tot["gav"] * (1 + c)) * PCT for c in p["caidas_valor"]},
-        "dispersion": {"ltv_pct": _distribucion(a["neta"] / a["gav"] * PCT), "icr_veces": _distribucion(a["ebitda"] / a["gf"]),
-                       "deuda_neta_sobre_ebitda_veces": _distribucion(a["neta"] / a["ebitda"]),
-                       "vencimientos_24m_pct": _distribucion(a["venc"] / a["deuda"] * PCT)},
+        "dispersion": dispersion,
         "covenants": covenants,
         "referencia_ingenua": {"tipo": "RI-NA"},
         "verificacion": {"error_relativo_vencimientos_max": error},     # suma de vencimientos = deuda
@@ -932,10 +1019,18 @@ def f_chr_token(ent: dict[str, Any], params: dict[str, Any]) -> Resultado:
     es_red = v.get("ambito_es_red")
     if es_red is not None and not isinstance(es_red, bool):
         raise ErrorFicha(f"{F}: «ambito_es_red» debe ser true o false")
-    if len(tokens) < u["tokens_minimos_sector"]:
+    red = len(tokens) < u["tokens_minimos_sector"]
+    if red:
         if es_red is not True:   # «Propósito»: los tokens individuales, solo cuando el ámbito es la propia red (1.6)
             raise ErrorFicha(f"{F}: rechazo: {len(tokens)} token (< {u['tokens_minimos_sector']}) y el ámbito no se declara "
                              f"como la propia red (ambito_es_red: true): el agregado de un sector no es un token (1.6)")
+        # T-127 (H-10): la declaración se comprueba: el ámbito es una red de `redes_propias` y el token, su token nativo
+        nativo = u["redes_propias"].get(ambito.strip().casefold())
+        id_token = tokens[0].get("id") if isinstance(tokens[0], dict) else None
+        if nativo is None or not isinstance(id_token, str) or id_token.strip().upper() != nativo:
+            raise ErrorFicha(f"{F}: rechazo: con un solo token, el ámbito tiene que ser una red con token propio de la ficha "
+                             f"({', '.join(f'{k} ({t})' for k, t in sorted(u['redes_propias'].items()))}) y el token, el "
+                             f"suyo: «{ambito[:40]}» no lo es (1.6)")
         lim.append("un solo token: el ámbito declarado es la propia red (1.6); las cifras son las de la red, no un agregado")
     ventanas = p["ventanas_desbloqueo"]
     ids: list[str] = []
@@ -996,7 +1091,9 @@ def f_chr_token(ent: dict[str, Any], params: dict[str, Any]) -> Resultado:
         if tk.get("concentracion_10_mayores") is not None:
             conc.append((cm_i, _rango(tk["concentracion_10_mayores"], f"{que}.concentracion_10_mayores", 0, 1)))
     _ids_unicos(ids, F)
-    _sin_clones(firmas, f"{F}: tokens")
+    _sin_clones(firmas, f"{F}: tokens", u["tolerancia_clon"])
+    if not red:   # T-127 (H-10): bases de ponderación del agregado de un sector (la red es su token, sin dominancia)
+        _sin_dominio({"capitalizacion_circulante": cm, "fdv": fdv}, f"{F}: tokens", u["peso_maximo_componente"])
     if pasados:
         lim.append(f"{pasados} desbloqueos del calendario con fecha no posterior a la de los datos: ya están en la oferta "
                    f"circulante y no cuentan como dilución futura")
@@ -1009,12 +1106,25 @@ def f_chr_token(ent: dict[str, Any], params: dict[str, Any]) -> Resultado:
             lim.append(f"sin {que} declarado: no calculado")
             return None, 0.0
         peso = float(sum(c for c, _ in pares))
+        # T-127 (H-10): los tokens que declaran el dato son otro agregado, con el mismo mínimo y la misma dominancia
+        if not red and (len(pares) < u["tokens_minimos_sector"]
+                        or max(c for c, _ in pares) / peso > u["peso_maximo_componente"]):
+            lim.append(f"{que} de {len(pares)} de {len(tokens)} tokens, con menos de {u['tokens_minimos_sector']} o con "
+                       f"uno de más del {u['peso_maximo_componente']:.0%} de su capitalización: no calculado; sería la "
+                       f"cifra de un token (1.6)")
+            return None, 0.0
         if len(pares) < len(tokens):
             lim.append(f"{que} de {len(pares)} de {len(tokens)} tokens: media ponderada sobre los declarados")
         return float(sum(c * x for c, x in pares)) / peso * PCT, peso / float(np.sum(a_cm)) * PCT
 
     real, cob_staking = parcial(staking, "rendimiento de staking")
     concentracion, cob_conc = parcial(conc, "dato de concentración de tenedores")
+    sin_orden: list[str] = []
+    dispersion: dict[str, Any] | None = None
+    if not red and _orden(a_cm, u, sin_orden, "la dispersión de los tokens") is not None:   # T-127 (H-10)
+        dispersion = {"fdv_sobre_capitalizacion_veces": _distribucion(a_fdv),
+                      "inflacion_neta_pct_anual": _distribucion(a_neta * PCT)}
+    _limitacion_orden(sin_orden, u, lim)
     res = {
         "ambito": ambito, "fecha": _iso(fecha), "fuente": fuente, "n_tokens": len(tokens),
         "capitalizacion_circulante": float(np.sum(a_cm)),
@@ -1023,8 +1133,7 @@ def f_chr_token(ent: dict[str, Any], params: dict[str, Any]) -> Resultado:
         "desbloqueos_pct": {str(w): float(w_cm @ np.array(desb[w])) * PCT for w in ventanas},
         "rendimiento_real_staking_pct": real, "cobertura_staking_pct": cob_staking,
         "concentracion_10_mayores_pct": concentracion, "cobertura_concentracion_pct": cob_conc,
-        "dispersion": {"fdv_sobre_capitalizacion_veces": _distribucion(a_fdv),
-                       "inflacion_neta_pct_anual": _distribucion(a_neta * PCT)},
+        "dispersion": dispersion,
         "referencia_ingenua": {"tipo": "RI-NA"},
         "verificacion": {"circulante_le_total_le_maxima": True,       # se rechaza si no se cumple
                          "holgura_desbloqueos_min": holgura},          # (no circulante − desbloqueos futuros)/total ≥ 0
@@ -1780,17 +1889,19 @@ def _datos_rei_lev() -> dict[str, Any]:
                  "ffo": 14.0, "covenants": {"ltv_max": 0.55, "icr_min": 2.5},
                  "vencimientos": [{"fecha": "2026-12-31", "importe": 90.0, "coste": 0.03},
                                   {"fecha": "2028-07-01", "importe": 240.0, "coste": 0.025}]},
+                # T-127 (H-10): S3 declara covenants para que los que los declaran (3) lleguen al mínimo del agregado
                 {"id": "S3", "gav": 400.0, "deuda": 100.0, "caja": 10.0, "ebitda": 20.0, "gastos_financieros": 4.0,
-                 "ffo": 12.0,
+                 "ffo": 12.0, "covenants": {"ltv_max": 0.5, "icr_min": 2.0},
                  "vencimientos": [{"fecha": "2030-01-31", "importe": 100.0, "coste": 0.04}]}]}
 
 
 def _caso_rei_lev_vencimientos(r: dict[str, Any]) -> bool:
     tol = FICHAS["REI-LEV-001"]["tol"]
     # Hasta el 2028-06-30 (24 meses): S1 120 + 100; S2 90 (el del 2028-07-01 queda fuera); S3 nada
+    # T-127 (H-10): con 3 componentes (< 7) no hay estadísticos de orden: serían las cifras de los tres
     return (r["verificacion"]["error_relativo_vencimientos_max"] <= tol
             and _rel(r["vencimientos_24m_pct"], (120.0 + 100.0 + 90.0) / (420.0 + 330.0 + 100.0) * PCT, tol)
-            and _dist_ok(r["dispersion"]["vencimientos_24m_pct"], [220.0 / 420.0 * PCT, 90.0 / 330.0 * PCT, 0.0], tol))
+            and r["dispersion"] is None)
 
 
 def _caso_rei_lev_ratios(r: dict[str, Any]) -> bool:
@@ -1800,22 +1911,21 @@ def _caso_rei_lev_ratios(r: dict[str, Any]) -> bool:
             and _rel(r["deuda_neta_sobre_ebitda_veces"], neta / ebitda, tol)
             and _rel(r["ltv_estresado_pct"]["-0.1"], neta / (gav * 0.9) * PCT, tol)
             and _rel(r["ltv_estresado_pct"]["-0.2"], neta / (gav * 0.8) * PCT, tol)
-            and _dist_ok(r["dispersion"]["ltv_pct"], [40.0, 50.0, 22.5], tol)
-            and _dist_ok(r["dispersion"]["icr_veces"], [4.0, 2.7, 5.0], tol))
+            and r["dispersion"] is None)                                   # T-127 (H-10): 3 componentes, sin dispersión
 
 
 def _caso_rei_lev_refinanciacion(r: dict[str, Any]) -> bool:
     tol = FICHAS["REI-LEV-001"]["tol"]
     extra = 120.0 * (0.045 - 0.015) + 100.0 * (0.045 - 0.02) + 90.0 * (0.045 - 0.03)   # coste nuevo = 2,7 % + 1,8 %
     c = r["covenants"]
+    # T-127 (H-10): los tres declaran covenants; con 3 (< 7), las holguras no llevan estadísticos de orden
     return (_rel(r["impacto_ffo_pct"], -extra / 56.0 * PCT, tol) and _rel(r["coste_refinanciacion"]["coste"], 0.045, tol)
-            and c["n_componentes"] == 2 and _dist_ok(c["holgura_ltv_pp"], [20.0, 5.0], tol)
-            and _dist_ok(c["holgura_icr_veces"], [2.0, 0.2], tol)
-            and _dist_ok(c["caida_valor_que_agota_ltv_pct"], [(0.4 / 0.6 - 1) * PCT, (0.5 / 0.55 - 1) * PCT], tol)
+            and c["n_componentes"] == 3 and c["holgura_ltv_pp"] is None and c["holgura_icr_veces"] is None
+            and c["caida_valor_que_agota_ltv_pct"] is None
             and _cerca(c["en_incumplimiento_pct"], 0.0, tol)
-            # con −10 %: S1 0,444 ≤ 0,6; S2 0,556 > 0,55. Con −20 %: S2 0,625 > 0,55
-            and _rel(c["en_incumplimiento_ltv_estresado_pct"]["-0.1"], 50.0, tol)
-            and _rel(c["en_incumplimiento_ltv_estresado_pct"]["-0.2"], 50.0, tol))
+            # con −10 %: S1 0,444 ≤ 0,6; S2 0,556 > 0,55; S3 0,25 ≤ 0,5. Con −20 %: S2 0,625 > 0,55; S3 0,281 ≤ 0,5
+            and _rel(c["en_incumplimiento_ltv_estresado_pct"]["-0.1"], PCT / 3, tol)
+            and _rel(c["en_incumplimiento_ltv_estresado_pct"]["-0.2"], PCT / 3, tol))
 
 
 # ---- CHR-ONCHAIN-001
@@ -1880,8 +1990,9 @@ def _datos_chr_token(sin_dilucion: bool = False) -> dict[str, Any]:
                  {"fecha": "2026-06-30", "cantidad": 5.0e7},                                   # no posterior: no cuenta
                  {"fecha": "2026-07-20", "cantidad": 3.0e7}, {"fecha": "2026-09-15", "cantidad": 6.0e7},
                  {"fecha": "2027-01-01", "cantidad": 9.0e7}]}},
+            # T-127 (H-10): TKB también declara staking y concentración (un dato de un solo token sería su cifra)
             {"id": "TKB", "precio": 0.5, "oferta_circulante": 4.0e8, "oferta_total": 5.0e8, "oferta_maxima": None,
-             "emision_anual": 2.0e7, "quema_anual": 2.4e7,
+             "emision_anual": 2.0e7, "quema_anual": 2.4e7, "staking_nominal": 0.05, "concentracion_10_mayores": 0.5,
              "calendario": {"fuente": "panel de desbloqueos B", "desbloqueos": [{"fecha": "2026-07-30", "cantidad": 2.0e7}]}}]
     return {"fecha": "2026-06-30", "fuente": "agregador de datos de tokens, 2026-06-30", "ambito": "sector de capa 2",
             "tokens": tokens}
@@ -1904,8 +2015,7 @@ def _caso_chr_token_metodo(r: dict[str, Any]) -> bool:
             and _rel(r["desbloqueos_pct"]["30"], (2.0 * 3.0e7 + 0.5 * 2.0e7) / cm * PCT, tol)
             and _rel(r["desbloqueos_pct"]["90"], (2.0 * 9.0e7 + 0.5 * 2.0e7) / cm * PCT, tol)
             and _rel(r["capitalizacion_circulante"], cm, tol)
-            and _dist_ok(r["dispersion"]["fdv_sobre_capitalizacion_veces"], [1.0e9 / 6.0e8, 5.0e8 / 4.0e8], tol)
-            and _dist_ok(r["dispersion"]["inflacion_neta_pct_anual"], [3.0e7 / 6.0e8 * PCT, -4.0e6 / 4.0e8 * PCT], tol)
+            and r["dispersion"] is None                                    # T-127 (H-10): 2 tokens, sin dispersión
             # holgura: TKA (9e8 − 6e8 − 1,8e8)/9e8 = 0,133; TKB (5e8 − 4e8 − 2e7)/5e8 = 0,16
             and _rel(r["verificacion"]["holgura_desbloqueos_min"], (9.0e8 - 6.0e8 - 1.8e8) / 9.0e8, tol))
 
@@ -1913,10 +2023,11 @@ def _caso_chr_token_metodo(r: dict[str, Any]) -> bool:
 def _caso_chr_token_staking(r: dict[str, Any]) -> bool:
     tol = FICHAS["CHR-TOKEN-001"]["tol"]
     cm_a, cm_b = 2.0 * 6.0e8, 0.5 * 4.0e8
-    return (_rel(r["rendimiento_real_staking_pct"], (0.08 - 3.0e7 / 6.0e8) * PCT, tol)       # nominal − inflación neta
-            and _rel(r["concentracion_10_mayores_pct"], 35.0, tol)
-            and _rel(r["cobertura_staking_pct"], cm_a / (cm_a + cm_b) * PCT, tol)
-            and _rel(r["cobertura_concentracion_pct"], cm_a / (cm_a + cm_b) * PCT, tol))
+    # nominal − inflación neta de cada token, ponderado por capitalización (TKA 8 % − 5 %; TKB 5 % − (−1 %))
+    real = (cm_a * (0.08 - 3.0e7 / 6.0e8) + cm_b * (0.05 - -4.0e6 / 4.0e8)) / (cm_a + cm_b) * PCT
+    return (_rel(r["rendimiento_real_staking_pct"], real, tol)
+            and _rel(r["concentracion_10_mayores_pct"], (cm_a * 0.35 + cm_b * 0.5) / (cm_a + cm_b) * PCT, tol)
+            and _rel(r["cobertura_staking_pct"], PCT, tol) and _rel(r["cobertura_concentracion_pct"], PCT, tol))
 
 
 # ---- PRV-PME-001 y PRV-CF-001
@@ -2242,7 +2353,7 @@ CASOS_CONTROL: dict[str, list[dict[str, Any]]] = {
          "datos": [{"valores": _datos_cmd_real()}], "parametros": {}, "comprobar": _caso_cmd_real_coste},
     ],
     "REI-LEV-001": [
-        {"nombre": "suma de vencimientos = deuda; vencimientos a 24 meses (% de la deuda) y su dispersión",
+        {"nombre": "suma de vencimientos = deuda; vencimientos a 24 meses (% de la deuda); con 3 componentes, sin dispersión",
          "datos": [{"valores": _datos_rei_lev()}], "parametros": {}, "comprobar": _caso_rei_lev_vencimientos},
         {"nombre": "LTV, ICR y deuda neta/EBITDA del agregado y LTV ante caídas de valor de −10 % y −20 %",
          "datos": [{"valores": _datos_rei_lev()}], "parametros": {}, "comprobar": _caso_rei_lev_ratios},

@@ -31,7 +31,7 @@ import numpy as np
 import pandas as pd
 from scipy import optimize, stats
 
-from .operaciones import ErrorFicha, cagr
+from .operaciones import ErrorFicha, cagr, dia
 
 # Constantes de convención (parte del método, no parámetros): unidades y bases de recuento.
 PB = 10_000                # pb por unidad (tanto por uno)
@@ -193,7 +193,7 @@ def _corte(ent: dict) -> pd.Timestamp | None:
 
 
 def _dia(t: pd.Timestamp) -> pd.Timestamp:
-    return (t if t.tz is None else t.tz_convert(None)).normalize()
+    return dia(t)   # T-127 (QA r01 de T-121, H-08): el criterio de día común (`operaciones.dia`)
 
 
 def _hasta_corte(fechas: Any, corte: pd.Timestamp | None, ctx: str) -> None:

@@ -197,19 +197,20 @@ def aceptaciones(bateria: dict, ejemplos: dict, carpeta_tmp: Path, fecha: str, m
 # con su tipo JSON.
 # ---------------------------------------------------------------------------------------------------------------------
 TODOS = "todos"
-# Nombre del flujo → contratos que se guardan de él. De los flujos que lanzan un ciclo ad hoc por dentro (consulta que
-# escala, petición) solo se guardan los contratos que el flujo añade: los del ciclo ya están en los ciclos semanales.
+# Nombre del flujo → contratos que se guardan de él. T-124 (QA r02 de T-114, H-07): de los flujos que lanzan un ciclo ad hoc
+# por dentro (consulta que escala, petición, informe de aprendizaje) se guardan todos los contratos, porque su ciclo no es
+# el semanal (CT-05 AD_HOC con su pregunta, el `foco` de CT-06, el historial por horizonte de CT-15).
 FLUJOS = {
     "ciclo_semanal_v5": TODOS,
     "consulta_n0": ("CT-03",),
-    "consulta_que_escala": ("CT-03",),
+    "consulta_que_escala": TODOS,
     "pregunta_repetida": ("CT-03", "CT-22"),
-    "peticion_ad_hoc": ("CT-01", "CT-02"),
+    "peticion_ad_hoc": TODOS,
     "decision_broker": ("CT-04", "CT-22"),
     "seguimiento_encargado": ("CT-05", "CT-06", "CT-22", "CT-24"),
     "consulta_al_broker": ("CT-22", "CT-23"),
     "credenciales": ("CT-25",),
-    "informe_de_aprendizaje": ("CT-19",),
+    "informe_de_aprendizaje": TODOS,
     "ciclo_semanal_v6": TODOS,
 }
 VALOR_DE_PRUEBA = "valor-de-prueba-no-es-una-clave"   # lo que el Broker deposita en la bóveda simulada; nunca va en un mensaje
@@ -354,8 +355,11 @@ def rutas(mensajes: list[dict]) -> tuple[dict[str, str], dict[str, str]]:
     def recorrer(valor, ruta: str) -> None:
         if isinstance(valor, dict):
             contenedores[ruta] = contenedores.get(ruta, 0) + 1
+            hijas: set[str] = set()   # T-124 (H-08): una ruta genérica («<clase>») cuenta una vez por objeto, no por clave
             for clave, v in valor.items():
-                anotar(ruta, f"{ruta}.{_clave(clave)}" if ruta else _clave(clave), v, True)
+                hija = f"{ruta}.{_clave(clave)}" if ruta else _clave(clave)
+                anotar(ruta, hija, v, hija not in hijas)
+                hijas.add(hija)
         elif isinstance(valor, list):
             contenedores[ruta] = contenedores.get(ruta, 0) + 1
             for n, v in enumerate(valor):

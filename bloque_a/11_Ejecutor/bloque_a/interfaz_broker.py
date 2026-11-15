@@ -301,6 +301,20 @@ class Credenciales:
         r = self.boveda.depositar(c["servicio"], valor, caducidad)
         return self.responder({"crd_id": crd_id, "estado": "PROVISTA", "credencial_ref": r["credencial_ref"], "caducidad": caducidad}, as_of)
 
+    def degradaciones(self, as_of) -> list[dict]:
+        """Servicios en modo degradado que no se han provisto: por una credencial denegada (limitación de F10) o pendiente
+        de una solicitud CT-25 abierta. Los entregables los declaran (PB-58 y PB-60, INC-T116-03): el modo degradado no
+        queda solo en F10 ni en la respuesta a la solicitud."""
+        as_of = pd.Timestamp(as_of)
+        por_servicio: dict[str, dict] = {}
+        for e in self.b.almacen.estado("F10", as_of).values():
+            if e.get("tipo_entrada") == "LIMITACION_SERVICIO" and e.get("servicio"):
+                por_servicio[e["servicio"]] = {"servicio": e["servicio"], "crd_id": e.get("crd_id"), "estado": "DENEGADA"}
+        for c in self._todas(as_of).values():   # una solicitud abierta es posterior a la denegación (cambio de circunstancias)
+            if c.get("estado") in ("SOLICITADA", "APLAZADA") and c.get("servicio"):
+                por_servicio[c["servicio"]] = {"servicio": c["servicio"], "crd_id": c["crd_id"], "estado": c["estado"]}
+        return [d for s, d in sorted(por_servicio.items()) if self.boveda.estado_servicio(s, as_of.date())["estado"] != "PROVISTA"]
+
     def recordatorios(self, as_of) -> list[str]:
         as_of = pd.Timestamp(as_of)
         dias, maximo = int(parametro(self.b.cfg, "credenciales.recordatorio_dias")), int(parametro(self.b.cfg, "credenciales.max_recordatorios"))

@@ -1,6 +1,6 @@
 # Evidencias del Plan de pruebas del Bloque A (Fase 4, T-116)
 
-Generado por `.docs/scripts/evidencias_plan_a.py --ejecutar` el 2026-11-14 sobre el commit `6b9f916`, con el cliente simulado (`MockClient`): sin red, sin clave y sin coste. No se edita a mano: se regenera.
+Generado por `.docs/scripts/evidencias_plan_a.py --ejecutar` el 2026-11-14 sobre el commit `df4a60a`, con el cliente simulado (`MockClient`): sin red, sin clave y sin coste. No se edita a mano: se regenera.
 
 Qué significa cada resultado:
 
@@ -17,10 +17,9 @@ Con el cliente simulado se valida la tubería (canales, archivos, puertas, herra
 
 | Resultado | Pruebas del plan |
 | --- | --- |
-| Superada en parte | 31 |
-| Superada | 24 |
+| Superada en parte | 36 |
+| Superada | 22 |
 | Pendiente API | 7 |
-| Sin prueba | 3 |
 | Requiere usuarios | 1 |
 | Revisión documental | 1 |
 | **Total** | **67** |
@@ -29,72 +28,72 @@ Con el cliente simulado se valida la tubería (canales, archivos, puertas, herra
 
 | Prueba | Resultado | Comprueba | No comprueba |
 | --- | --- | --- | --- |
-| PB-01 Ciclo periódico completo de extremo a extremo | Superada | Entregables, archivos F1–F5, G3 APTO, pronósticos congelados y cero mensajes fuera del catálogo de contratos. | La entrega en hora: el reloj es simulado. |
+| PB-01 Ciclo periódico completo de extremo a extremo | Superada | Entregables con su nombre, archivos F1–F5, G3 APTO, tres opciones como máximo, RUN- completo en F5 y pronósticos congelados; con un ciclo anterior en memoria, N2 donde GC0 ve cambio material y N1 en el resto; los mensajes del ciclo (CT-05, CT-06, CT-11, CT-12, CT-13, CT-15, CT-02) son todos del catálogo, y solo el Coordinador escribe al Broker; sin G3 APTO no se congela ningún pronóstico ni se entrega. | La entrega en hora: el reloj es simulado. Que sean precisamente RV, RF y MP las que cambian depende de los datos sintéticos; se afirma la regla (nivel según GC0). |
 | PB-02 Top-3 con menos de tres elegibles | Superada en parte | Motivo obligatorio con menos de tres opciones (ciclo y HT-09) y segunda pasada en banda marginal (HT-03). | El caso sembrado del plan (exactamente dos opciones, con una en banda marginal) no se ejecuta de extremo a extremo. |
 | PB-03 Clase sin ninguna opción elegible | Superada en parte | Un tipo con cero opciones se entrega sin relleno (por presupuesto agotado) y HT-03 admite cero opciones. | El caso del plan (ALT sin ninguna elegible por puntuación) y que el Auditor no registre hallazgo, que exige el modelo real. |
 | PB-04 Misma tendencia, estrategias distintas por clase | Pendiente API | — | Las lentes por tipo de activo las aplica el modelo. |
 | PB-05 Marco de otra clase aplicado sin justificación | Pendiente API | — | Lo detecta el Auditor con el modelo real. |
-| PB-06 Consulta N0 sin escalado | Superada | Ruta N0, referencias existentes, cero encargos CT-05 y consumo de 1 UC como máximo. | El tiempo de respuesta real (< 2 minutos). |
-| PB-07 Consulta que escala a análisis | Superada | Ruta ANALITICA, RUN- ad hoc de alcance mínimo y enlazado a la QRY-. | El tiempo real de la respuesta provisional y que el Coordinador no responda con conocimiento propio (modelo real). |
+| PB-06 Consulta N0 sin escalado | Superada | Clase ACLARACION y ruta N0; cada referencia de la respuesta es el identificador de una entrada de F1–F6 (no solo un prefijo válido); QRY- en F5 con sus referencias; cero encargos CT-05, ningún RUN- nuevo y consumo de 1 UC como máximo. | El tiempo de respuesta real (< 2 minutos) y que cada afirmación del texto del modelo real lleve su referencia. |
+| PB-07 Consulta que escala a análisis | Superada en parte | Clase CONTRASTE y ruta ANALITICA; respuesta provisional por CT-03 con el nivel y el plazo; RUN- ad hoc de alcance mínimo enlazado a la QRY-. | La respuesta final por CT-03 con referencias al acabar el RUN-: el ejecutor solo envía la provisional, con el RUN- enlazado (INC-T116-03). El tiempo real de la respuesta provisional y que el Coordinador no responda con conocimiento propio (modelo real). |
 | PB-08 Ráfaga de peticiones sin límite | Superada en parte | Idempotencia y acuse por mensaje; cola del monitor HT-08. | La ráfaga del plan: 100 % registradas y respondidas, y el p90 de N0. |
 | PB-09 Cambio de periodicidad por el Broker | Superada en parte | La periodicidad cambia en F10 (P-01) desde su fecha de efecto, los valores no válidos se rechazan y se avisa al Evaluador (CT-22). | El disparo del siguiente C1 en la fecha nueva (lo hace el planificador externo, HT-05) y que ningún otro parámetro cambie. |
 | PB-10 Configuración no permitida rechazada parcialmente | Superada en parte | Estado APLICADA_PARCIALMENTE; el umbral E y la celda ALT×H1 se rechazan con su motivo y la celda sigue sin aplicarse; P-02 aplicado; ningún otro parámetro de F10 cambia salvo la lista de horizontes; HA sin incidencia de escritura. | Que F10 cambie solo en P-02: el CT-04 del ejecutor lleva una lista global de horizontes y la guarda en P-03 aunque rechace la celda ALT×H1 (INC-T116-01). |
-| PB-11 Decisión del Broker sin alterar el análisis ni la evaluación | Superada en parte | La decisión del Broker se anota sin cambiar el estado de la opción en F3 y se avisa al Evaluador (CT-22). | Que los PRG de la opción descartada se resuelvan igualmente y que el historial HAC- la cuente. |
-| PB-12 Campos de decisión y paquete para el Bloque B | Superada | El JSON entregado cumple el esquema publicado, G3 APTO y una entrada de `paquete_para_bloque_B` por opción; HT-09 bloquea un paquete para B incompleto. | — |
+| PB-11 Decisión del Broker sin alterar el análisis ni la evaluación | Superada en parte | La decisión del Broker se anota sin cambiar el estado de la opción en F3 y se avisa al Evaluador (CT-22); al vencer, los PRG de la opción enviada y de la descartada quedan RESUELTO y el historial de aciertos los cuenta; ningún mensaje al Bloque B. | La lección de producto que compara las enviadas con las descartadas cuando haya muestra: el Evaluador no la genera (INC-T116-03). |
+| PB-12 Campos de decisión y paquete para el Bloque B | Superada | El JSON entregado cumple el esquema publicado y G3 APTO (C01, C10 y C11 en OK); la relevancia de cada opción sigue la regla del Anexo A (una CRI nueva, ALTA; una RF de seguimiento, MEDIA o BAJA); `siguiente_paso_sugerido`, `reversibilidad` y `que_cambiaria_la_conclusion` presentes; `paquete_para_bloque_B` con una entrada por opción y los mismos datos; HT-09 bloquea un paquete para B incompleto. | — |
 | PB-13 GC0 negativo con arrastre verificado | Superada en parte | Nivel N1 con 5 UC como máximo, arrastre verificado, sin candidatas nuevas, solo modo ligero; las celdas de rotación exploratoria salen de la configuración. | Que la rotación exploratoria quede entre el 15 % y el 25 %. |
-| PB-14 Arrastre con invalidación activada | Superada | Opción CERRADA con motivo INVALIDACION en F3 y en el paquete; sus PRG siguen ABIERTO en F4. | — |
+| PB-14 Arrastre con invalidación activada | Superada | Opción CERRADA con motivo INVALIDACION en F3 y en el paquete; sus PRG siguen ABIERTO en F4. | La explicación en «cambios frente al ciclo anterior», que es texto del modelo real. |
 | PB-15 Reglas de parada por rendimientos decrecientes | Pendiente API | — | Las iteraciones del Analizador las decide el modelo. |
-| PB-16 Presupuesto agotado: alcance reducido, verificación intacta | Superada | Estado PARCIAL, limitación en el informe técnico y en el visual, y G3 en F6 y F7 con las mismas comprobaciones que un ciclo completo y ninguna sin aplicar. | — |
+| PB-16 Presupuesto agotado: alcance reducido, verificación intacta | Superada | Estado PARCIAL, limitación en el informe técnico y en el visual, laguna declarada en F5, menos candidatas investigadas en RV, y G3 en F6 y F7 con las mismas comprobaciones que un ciclo completo, ninguna sin aplicar y C08 (ninguna cifra sin origen) en OK. | — |
 | PB-17 Ampliación de presupuesto en el ciclo periódico | Superada en parte | Una ampliación que puede cambiar el top-3 y cabe en el tope se autoriza; una que no puede cambiarlo o que supera el tope se deniega; cada decisión deja su AUT- en HA con el motivo; en un ciclo, la denegada cierra con alcance reducido y el consumo real queda en F5. | Los campos CPI y EAC de la AUT-, que el ejecutor no registra (INC-T116-02), y una ampliación autorizada dentro de un ciclo completo. |
 | PB-18 Cola saturada y apertura de instancia | Superada en parte | El monitor ordena abrir instancia (ORD-) de un agente sin estado al superar el umbral de cola. | Cero duplicados en F2 y la vuelta del tiempo medio de ingesta al objetivo. |
-| PB-19 Agente de instancia única saturado | Superada en parte | Ninguna ORD- para AG-02; un agente de instancia única saturado (AG-20) deja un registro CAR-. | El registro CAR- del propio AG-02. |
+| PB-19 Agente de instancia única saturado | Superada en parte | Ninguna ORD- para AG-02 con seis órdenes en cola: el monitor deja un registro CAR- de su saturación, que el ciclo escribe en HA; un agente de instancia única saturado (AG-20) también deja su CAR-. | La reordenación por prioridad y el aviso al Coordinador sobre plazos, y la propuesta de tipo 3 si se repite: el CAR- solo lo anota (INC-T116-03). |
 | PB-20 Instrucción incrustada en una fuente | Superada en parte | La instrucción se neutraliza, queda una incidencia MANIPULACION, ninguna puntuación cambia y el texto no llega a los entregables. | La degradación o el borrado de la fuente en F9 con su línea en el Registro de bajas. |
-| PB-21 Credencial en un mensaje | Superada | El CT-04 del plan (una clave API y un IBAN en el comentario) se rechaza íntegro, deja una incidencia SEGURIDAD con el campo y sin el valor, y ni la clave ni el IBAN aparecen en ningún archivo ni mensaje; lo mismo en CT-03 y con las credenciales de CT-25. | — |
-| PB-22 Canal no previsto | Superada | Los tres mensajes del plan (Auditor → Analizador, Analista → Analista, Redactor → Broker) se rechazan, dejan tres incidencias CANAL_NO_PREVISTO y no cambian ningún archivo salvo el historial de auditoría. | — |
+| PB-21 Credencial en un mensaje | Superada en parte | El CT-04 del plan (una clave API y un IBAN en el comentario) se rechaza íntegro, deja una incidencia SEGURIDAD con el campo y sin el valor, y ni la clave ni el IBAN aparecen en ningún archivo ni mensaje; lo mismo en CT-03 y con las credenciales de CT-25. | El tipo de dato protegido en la incidencia (clave API, IBAN): el ejecutor registra el campo y «credenciales o datos personales», no el tipo (INC-T116-03). |
+| PB-22 Canal no previsto | Superada | Los tres mensajes del plan (Auditor → Analizador, Analista → Analista, Redactor → Broker) se rechazan, dejan tres incidencias CANAL_NO_PREVISTO escaladas al operador y no cambian ningún archivo salvo el historial de auditoría. | — |
 | PB-23 Escritura fuera de reserva | Superada | Los tres intentos del plan (el Analizador escribe en F4, Prospectiva escribe un campo de resolución y el Evaluador cambia la afirmación) se rechazan, dejan tres incidencias y la huella de F4 no cambia tras ninguno. | — |
 | PB-24 Enlace roto y borrado con registro de bajas | Superada en parte | HT-02 confirma el enlace roto y borra con línea en el Registro de bajas y motivo obligatorio. | La integración en el bloque: EVD marcada, revisión registrada en F3 y el paquete CT-21 del mes. El ejecutor solo invoca HT-02. |
 | PB-25 Contenido cambiado y retractación | Superada en parte | HT-02 detecta el contenido cambiado y la retractación. | El recálculo de Q con motivo en F9, que hace el Documentador con el modelo real. |
-| PB-26 Clasificación temática y orden por calidad | Sin prueba | — | Ninguna prueba comprueba el orden por calidad ni la temática de los archivos de referencias. |
+| PB-26 Clasificación temática y orden por calidad | Superada en parte | En los F7, F8 y F9 entregados, leídos como los lee el ejecutor: 100 % de las referencias con una temática del Anexo D de su archivo, 0 inversiones del orden por Q dentro de cada temática, el nivel A/B/C/D coherente con Q (13.3) y las de nivel D marcadas como candidatas a baja o única fuente; la comprobación detecta un desorden, un nivel o una temática inventados. | El alta de 30 referencias nuevas que pide el plan: la hacen los Documentadores con el modelo real; aquí se comprueba el estado de los archivos. |
 | PB-27 Aplicación del Fondo metodológico | Pendiente API | — | Las etapas del Fondo metodológico las aplica el modelo. |
 | PB-28 Alimentación continua y Novedades | Pendiente API | — | La publicación y la lectura de Novedades dependen del modelo. |
 | PB-29 Contar raíces, no menciones | Superada en parte | La puerta PS1 cuenta raíces independientes con el mínimo de la configuración. | La comprobación G3 de raíces sobre un paquete real y el recuento del Auditor. |
 | PB-30 Cifra sin artefacto bloqueada por G3 | Superada en parte | HT-09 detecta una opción sin evidencias o sin cálculos. | El caso del plan de extremo a extremo: cifra sin artefacto, dos G3V- en HA y la cifra retirada o con su CALC-. |
-| PB-31 Horizonte no certificado sin probabilidad | Superada en parte | Sin certificado, `prob` es nula y lleva la etiqueta «sin ventaja demostrada todavía»; HT-09 bloquea una probabilidad sin certificado. | Que el informe visual no muestre confianza «alta» sin base. |
-| PB-32 Certificación de un horizonte | Superada en parte | El caso del plan: con una celda con habilidad (RF × H3) y otra sin ella (RV × H3) se emite un solo certificado, el de RF. Cada condición del certificado (muestra efectiva, IC del BSS, calibración frente al nulo y tope de ECE) impide por sí sola certificar. La probabilidad solo se publica en la celda certificada y HT-09 la bloquea en las demás. | La re-ejecución CT-10 coincidente que el plan pide para el certificado. |
-| PB-33 Revocación de certificado por deterioro | Superada | Un certificado se revoca por falta de habilidad o por calibración, con el umbral de la configuración; queda REVOCADO con motivo y fecha, antes de esa fecha seguía vigente, los pronósticos congelados no cambian y HT-09 bloquea probabilidades con un certificado no vigente. | — |
+| PB-31 Horizonte no certificado sin probabilidad | Superada | Sin certificado, `prob` y `prob_publicada` son nulas y la etiqueta «sin ventaja demostrada todavía» figura en el JSON, en el técnico y en el visual; ningún entregable da una cifra de probabilidad y el visual no pinta confianza «Alta»; HT-09 bloquea una probabilidad sin certificado. | — |
+| PB-32 Certificación de un horizonte | Superada en parte | El caso del plan: con una celda con habilidad (RF × H3) y otra sin ella (RV × H3) se emite un solo certificado, el de RF. Cada condición del certificado (muestra efectiva, IC del BSS, calibración frente al nulo y tope de ECE) impide por sí sola certificar, y también Holm: el criterio exige el alfa corregido y el Evaluador se lo pasa (una celda hábil en la que Holm se detiene no se certifica). El certificado es de la celda × método y cada método cuenta aparte. La probabilidad solo se publica en la celda certificada, con su `certificado_ref`, y HT-09 la bloquea en las demás. | La re-ejecución CT-10 coincidente que el plan pide para el certificado: el Evaluador no la hace (INC-T116-03). |
+| PB-33 Revocación de certificado por deterioro | Superada en parte | Un certificado se revoca por falta de habilidad o por calibración, con el umbral de la configuración; queda REVOCADO con motivo y fecha, antes de esa fecha seguía vigente y los pronósticos congelados no cambian. Con el caso del plan (celda certificada que pierde la habilidad), la revisión del ciclo revoca, deja en F6 la lección CALIBRACION de sobreconfianza de la celda y el RUN- posterior no publica probabilidad en ella; HT-09 bloquea probabilidades con un certificado no vigente. | La sección «Novedades» de F6: el ejecutor no la publica; la revocación y la lección quedan como entradas de F6 (INC-T116-03). |
 | PB-34 Fuga de información en evaluación detectada | Superada en parte | Ningún dato posterior a la fecha de corte (proveedor, Motor y resolución) y los pronósticos contaminados no cuentan para recalibrar. | La corrección registrada en F6 tras detectar la fuga. |
 | PB-35 Recalibración dentro de bandas con evaluación sombra | Superada en parte | La recalibración respeta el paso y las bandas de la configuración y queda como propuesta. | El registro de la evaluación sombra y la decisión documentada con DM-HLN. |
-| PB-36 Recalibración fuera de bandas rechazada | Superada en parte | Fuera de banda no se aplica: sale una propuesta P3 con el motivo. | Que F10 quede intacto en P-09 y P-05 y que la P3- esté en la cola de HA. |
-| PB-37 Pronóstico congelado inmutable | Superada en parte | El alta congelada no se puede reescribir; la corrección es un PRG nuevo con `version_de`; la entrada original queda igual byte a byte y los dos se resuelven. Un pronóstico modificado a mano rompe la cadena de huellas. | Que los dos entren en las métricas: la corrección de un nivel mal transcrito no tiene una operación propia en el ejecutor (solo usa `version_de` en el arrastre). |
-| PB-38 Objeción fuerte sin resolver impide el top-3 | Superada | La opción con una objeción fuerte sin resolver no entra en el top-3 y queda en F3 como no elegible; HT-09 lo bloquea. | — |
+| PB-36 Recalibración fuera de bandas rechazada | Superada en parte | Fuera de banda no se aplica: sale una propuesta P3 con el motivo. | El caso del plan (umbral E en P-09 y P-05 con banda PENDIENTE_OPERADOR): el Evaluador solo recalibra los pesos de RK (P-11), y su P3- queda en F6, no en la cola de HA como PENDING_OPERATOR (INC-T116-03). |
+| PB-37 Pronóstico congelado inmutable | Superada | El alta congelada no se puede reescribir; la corrección es un PRG nuevo con `version_de`; la entrada original queda igual byte a byte, los dos se resuelven y los dos entran en las métricas. Un pronóstico modificado a mano rompe la cadena de huellas. | Que Prospectiva decida corregir (modelo real): el ejecutor no tiene una operación propia de corrección; la corrección es un alta nueva de AG-10 con `version_de`. |
+| PB-38 Objeción fuerte sin resolver impide el top-3 | Superada en parte | La opción con una objeción fuerte sin resolver no entra en el top-3 y queda en F3 como no elegible; HT-09 lo bloquea. | Que la objeción figure en el informe técnico como sin resolver y la opción como alternativa documentada: el técnico solo lista las objeciones de las opciones del top-3 (INC-T116-03). |
 | PB-39 Informe visual con legibilidad < 70 bloqueado | Superada en parte | El visual entregado tiene índice de 70 o más; HT-07 mide un texto difícil por debajo y HT-09 comprueba la legibilidad. | El bloqueo y la reescritura en un ciclo con un visual por debajo de 70. |
 | PB-40 Comprensión del informe visual por usuarios inexpertos | Requiere usuarios | — | Requiere usuarios reales. |
-| PB-41 Coherencia entre entregables y entre clases | Superada en parte | El ciclo solo entrega con la comprobación de coherencia superada (G3 APTO). | Un caso con entregables incoherentes que deba bloquearse y el recuento del Auditor. |
+| PB-41 Coherencia entre entregables y entre clases | Superada en parte | El ciclo solo entrega con la comprobación de coherencia superada (G3 APTO); con entregables incoherentes, G3 bloquea, nada llega a las carpetas de entrega y no se congela ningún pronóstico. | El caso del plan (RF larga, REIT y RV de crecimiento con el mismo factor en un clúster común y `apuestas_independientes` que lo refleja) y el recuento del Auditor (modelo real). |
 | PB-42 Auditoría asíncrona sin bloqueo y hallazgo posterior | Pendiente API | — | Los hallazgos de la auditoría posterior exigen el modelo real; el ejecutor registra AUD- y HAL- tras la entrega. |
-| PB-43 Pregunta repetida y lección de producto | Superada en parte | A la tercera repetición se crea una lección de producto en F6 y se avisa al Evaluador (CT-22). | El enlace de la LEC- a las tres QRY- y la sección en el informe siguiente. |
+| PB-43 Pregunta repetida y lección de producto | Superada | A la tercera repetición, aviso CT-22 al Evaluador y una lección de producto en F6 enlazada a las tres QRY-, con un tema normalizado común en F5. | Que preguntas con palabras distintas den el mismo tema (lo normaliza el Coordinador, modelo real) y la sección en el informe siguiente (la aplica el modelo a partir de la lección). |
 | PB-44 Historial de aciertos honesto | Superada en parte | El historial publicado no usa resoluciones posteriores a su fecha, ni contaminados, ni hitos de H5. | El recuento exacto del historial contra F4 y F3. |
-| PB-45 Lección aplicada en el siguiente encargo | Superada | Con 14 lecciones vigentes del tipo y una estadística, el encargo CT-06 lleva diez: la estadística primero, después las recurrentes, y ninguna de otro tipo de activo. | La aplicación de la lección en el informe del Analista, que es del modelo real. |
-| PB-46 Fiabilidad de fuentes de opinión | Sin prueba | — | La fiabilidad de fuentes (FUE-) no está implementada en el ejecutor. |
+| PB-45 Lección aplicada en el siguiente encargo | Superada | Con 14 lecciones vigentes del tipo y una estadística, el encargo CT-06 lleva diez: la estadística primero, después las recurrentes, y ninguna de otro tipo de activo. | La aplicación de la lección en el informe del Analista y la comprobación AS-11 del Auditor, que son del modelo real. |
+| PB-46 Fiabilidad de fuentes de opinión | Superada en parte | El caso del plan (dos fuentes de 25 pronósticos explícitos, una con habilidad y otra sin ella): FUE- en F6 con n, aciertos, BSS, BSS contraído con k = 20 y puntos de historial (por encima y por debajo del neutro 10), una vez al mes y comunicadas al Buscador por CT-19. | La recalificación de Q y el orden en F9, que hace el Buscador con el modelo real (T-125). |
 | PB-47 Estados de madurez | Superada en parte | Una ficha no implementada se rechaza con METODO_NO_IMPLEMENTADO y una con código provisional no da cifras. | Que el entregable final declare «documentado» cuando un método no se pudo usar. |
-| PB-48 Conflicto de normas: la más restrictiva | Sin prueba | — | Ninguna prueba cubre el conflicto de normas del plan (segunda pasada, COR- y P3- en HA). |
-| PB-49 Historial íntegro y supresiones permitidas | Superada en parte | La cadena de huellas detecta una entrada modificada y una borrada (del medio o la última), y todos los archivos siguen íntegros tras un ciclo. | Las supresiones permitidas (borrado de fuentes en F7–F9) las hace HT-02 fuera del ejecutor, y no se comparan instantáneas de ocho semanas. |
-| PB-50 Horizontes según la clase de activo | Superada en parte | La tabla de horizontes por tipo y el bloqueo de HT-09 a un horizonte no aplicable. | El CFG- de P-31 registrado con evidencia DM-HLN. |
+| PB-48 Conflicto de normas: la más restrictiva | Superada en parte | Una lección vigente que sugiere omitir la segunda pasada en banda marginal no llega a las entradas de HT-03 y ninguna opción entregada incumple un control; HT-03 exige la segunda pasada en banda marginal (R23 por construcción). | El registro del conflicto (COR-) y su escalado (P3-): el ejecutor no tiene las guías CT-18 del Orquestador (INC-T126-01). |
+| PB-49 Historial íntegro y supresiones permitidas | Superada | En ocho semanas simuladas, cada instantánea de F1–F6, RC y HA contiene la anterior byte a byte (solo añadidos) y todo sigue íntegro; la cadena de huellas detecta una entrada modificada y una borrada (del medio o la última); las supresiones de F7–F9 las hace HT-02 con su línea en el Registro de bajas y motivo obligatorio. | — |
+| PB-50 Horizontes según la clase de activo | Superada en parte | La tabla de horizontes por tipo y el bloqueo de HT-09 a un horizonte no aplicable. | El cambio automático de «Sí» a «Limitado» de un horizonte que pierde frente a la referencia (RF × H2, con DM-HLN) y su CFG- de P-31: el Evaluador solo degrada H5, por hitos (INC-T116-03). |
 | PB-51 Conocimiento específico en los system prompts | Revisión documental | — | Revisión documental de los prompts de sistema; no es una prueba del ejecutor. |
 | PB-52 Modo degradado: herramienta caída | Superada en parte | Una salida no conforme o un símbolo sin datos dan una entrega PARCIAL con la limitación declarada y sin cifras inventadas. | El caso del plan como tal: una herramienta caída a mitad de ciclo. |
-| PB-53 Frontera A/B: un Analista propone un activo concreto | Superada | La ficha de finalista no admite vehículos, la propuesta de una empresa se retira antes de entregar y HT-09 bloquea un activo concreto. | — |
+| PB-53 Frontera A/B: un Analista propone un activo concreto | Superada | El caso del plan en un C1: el Analista RV propone una empresa concreta y no llega al top-3 ni al encargo para B ni a los informes; la ficha de finalista no admite vehículos, la propuesta de una empresa se retira antes de entregar y HT-09 bloquea un activo concreto. | — |
 | PB-54 Encargo completo para el Bloque B | Superada | Cada encargo para el Bloque B lleva sus once campos presentes y no vacíos (ámbito, tesis, horizontes, pronósticos, catalizadores, riesgos, invalidación, indicador, criterios, métricas y preguntas) y cumple el esquema. | — |
-| PB-55 Cobertura de los doce tipos de activo | Superada | Los doce tipos presentes en el paquete, con tres opciones como máximo cada uno. | — |
-| PB-56 Oportunidad duplicada entre tipos | Superada | La duplicada se quita del tipo con menor RK, con su motivo; HT-09 bloquea un duplicado por nombre, por ámbito o por identificador. | — |
+| PB-55 Cobertura de los doce tipos de activo | Superada | Los doce tipos en el paquete, en el informe visual y en el técnico (un apartado con su semáforo por tipo), con tres opciones como máximo cada uno y el motivo cuando hay menos. | — |
+| PB-56 Oportunidad duplicada entre tipos | Superada | El caso del plan en un C1: RV e IDX proponen el mismo ámbito y queda en un solo top-3, con el motivo de la otra en F3; ningún nombre ni ámbito en dos top-3. La regla (se quita la de menor RK, con su motivo) sobre la función, y HT-09 bloquea un duplicado por nombre, por ámbito o por identificador. | — |
 | PB-57 Estrategias de los tipos nuevos | Pendiente API | — | Lo audita el Auditor con el modelo real. |
-| PB-58 Solicitud y provisión de una credencial por CT-25 | Superada | Solicitud, depósito en la bóveda, respuesta solo con estado y alias, segunda solicitud resuelta sin volver al Broker y el valor ausente de todos los archivos y mensajes. | Los contextos de los agentes con el modelo real. |
+| PB-58 Solicitud y provisión de una credencial por CT-25 | Superada | Solicitud con CRD- en F5 sin valor; servicio degradado y declarado en los entregables hasta la provisión (corrección de INC-T116-03); depósito en la bóveda y respuesta solo con estado y alias; la herramienta obtiene el valor de la bóveda; la segunda solicitud se resuelve sin volver al Broker; el valor no aparece en ningún archivo, mensaje, entregable ni contexto enviado a los agentes. | — |
 | PB-59 Credencial expuesta en un mensaje del Broker | Superada | El mensaje con el valor se rechaza, queda una incidencia SEGURIDAD en HA, el valor no aparece en ningún archivo ni mensaje y se pide depositar y renovar; HT-09 bloquea un valor de credencial en el paquete. | — |
-| PB-60 Credencial denegada | Superada | Tras la denegación no se vuelve a pedir y queda la limitación de servicio en F10. | — |
-| PB-61 Consulta bloqueante al Broker con vencimiento | Superada | El tipo afectado se pausa, al vencer sigue con el supuesto declarado en el paquete (C19 de HT-09 en OK) y la respuesta tardía se marca. | Que el modelo no invente un dato del Broker. |
-| PB-62 Filtro, agrupación y recurrencia de consultas | Superada en parte | Tres CT-23 como máximo por RUN- (la cuarta se agrupa), validaciones y aviso de consulta recurrente. | La LEC- de producto creada. |
-| PB-63 Pronóstico H5 con hitos | Superada | H5 solo con banda y tres hitos o más congelados en F4; HT-09 bloquea un H5 sin hitos o con probabilidad numérica. | — |
-| PB-64 Evaluación de H5 por hitos y degradación | Superada | H5 se evalúa por hitos; con 20 hitos y el 40 % cumplidos la celda se degrada, queda en F6 y F10 y cambia la tabla del ciclo siguiente; la revisión de certificados no emite ninguno para H5. | — |
+| PB-60 Credencial denegada | Superada | Tras la denegación queda la limitación de servicio en F10; una nueva necesidad del mismo servicio no envía ninguna CT-25, salvo con cambio de circunstancias; el paquete, el informe técnico, el JSON y el visual del ciclo declaran la degradación, y dejan de declararla cuando la credencial se provee (corrección de INC-T116-03). | — |
+| PB-61 Consulta bloqueante al Broker con vencimiento | Superada en parte | Solo CRI se pausa y RV sigue; al vencer, el análisis continúa con el supuesto declarado, que figura en el paquete, en el JSON y en el informe técnico (C19 de HT-09 en OK); la respuesta tardía se marca. | Que la respuesta tardía abra una revisión C2: el ejecutor solo lo indica en la respuesta (INC-T116-03). Que el modelo no invente un dato del Broker. |
+| PB-62 Filtro, agrupación y recurrencia de consultas | Superada en parte | Tres CT-23 como máximo por RUN- (la cuarta se agrupa), validaciones y aviso de consulta recurrente. | La LEC- de producto: el aviso CONSULTA_RECURRENTE sale, pero el ejecutor no crea la lección (INC-T116-03). |
+| PB-63 Pronóstico H5 con hitos | Superada | H5 solo con banda y tres hitos HIT- o más, cada uno con fecha, indicador y criterio, el primero a 12 meses como máximo y 24 como máximo entre hitos, congelados en F4 con su PRG padre (C18 en OK); HT-09 bloquea un H5 sin hitos o con probabilidad numérica y advierte del espaciado. | — |
+| PB-64 Evaluación de H5 por hitos y degradación | Superada en parte | H5 se evalúa por hitos con sus tres estados (EN_CURSO_CONFORME, DESVIADO, INVALIDADO); con 20 hitos y el 40 % cumplidos MP × H5 baja de «Sí» a «Limitado» con el ajuste en F6 y en F10 y cambia la tabla del ciclo siguiente; la revisión de certificados no emite ninguno para H5. | Que los estados se publiquen: el ejecutor los calcula y los usa en el seguimiento C6, pero no los publica en F6 ni en los entregables (INC-T116-03). |
 | PB-65 Horizonte principal incoherente con la naturaleza | Superada | Los tres casos del plan en HT-09: fuera de rango sin justificación, BLOQUEADO; con justificación, APTO_CON_ADVERTENCIAS; principal en una celda «No» (DER con H5), BLOQUEADO. En el ciclo, cada opción es coherente o está justificada. | El dictamen del Orquestador sobre la advertencia (CT-14), que es del modelo real. |
-| PB-66 Seguimiento encargado: alta, ciclos y cancelación | Superada | Alta, ciclo C6 con informe de 300 palabras como máximo y válido, pausa, reanudación, cancelación y ningún ciclo después. | Que C6 no retrase C1–C3: el reloj es simulado. |
+| PB-66 Seguimiento encargado: alta, ciclos y cancelación | Superada | Alta con SEG- en F11 y EN_SEGUIMIENTO y `seg_id` en F3; dos ciclos C6 con informe de 300 palabras como máximo, una recomendación y HT-09 sin bloqueo; pausa y reanudación con la fecha del siguiente ciclo; cancelación inmediata y ningún ciclo después. | Que C6 no retrase C1–C3: el reloj es simulado. |
 | PB-67 Seguimiento que propone el envío al Bloque B | Superada en parte | HT-09 (perfil SEGUIMIENTO) da APTO a PROPONER_ENVIO_A_B con su paquete y elegible, y BLOQUEADO sin él. | Un ciclo C6 del ejecutor que produzca esa recomendación y la comprobación de que no hay envío automático. |
 
 ## Cómo repetir cada fila
@@ -106,11 +105,13 @@ Desde la raíz del repositorio. También: `.venv/bin/python .docs/scripts/eviden
 Criterio de aprobación del plan: Todos los elementos presentes; G3 APTO o APTO_CON_ADVERTENCIAS; entrega en hora; cero mensajes fuera del catálogo de contratos
 
 ```bash
-(cd bloque_a/11_Ejecutor && ../../.venv/bin/python -m pytest -q 'tests/test_integracion.py::test_ciclo_semanal_completo_apto' 'tests/test_integracion.py::test_canales_y_matriz_respetados')
+(cd bloque_a/11_Ejecutor && ../../.venv/bin/python -m pytest -q 'tests/test_integracion.py::test_ciclo_semanal_completo_apto' 'tests/test_integracion.py::test_canales_y_matriz_respetados' 'tests/test_fase4_huecos.py::test_pb01_con_memoria_el_nivel_sigue_a_gc0_y_todos_los_mensajes_son_del_catalogo' 'tests/test_fase4_huecos.py::test_pb01_sin_g3_apto_no_se_congela_ningun_pronostico_ni_se_entrega')
 ```
 
 - `11_Ejecutor/tests/test_integracion.py::test_ciclo_semanal_completo_apto`: SUPERADA
 - `11_Ejecutor/tests/test_integracion.py::test_canales_y_matriz_respetados`: SUPERADA
+- `11_Ejecutor/tests/test_fase4_huecos.py::test_pb01_con_memoria_el_nivel_sigue_a_gc0_y_todos_los_mensajes_son_del_catalogo`: SUPERADA
+- `11_Ejecutor/tests/test_fase4_huecos.py::test_pb01_sin_g3_apto_no_se_congela_ningun_pronostico_ni_se_entrega`: SUPERADA
 
 ### PB-02 · Top-3 con menos de tres elegibles
 
@@ -143,20 +144,22 @@ Criterio de aprobación del plan: Cero opciones ALT; el Auditor no registra hall
 Criterio de aprobación del plan: Respuesta < 2 minutos; ≥ 1 referencia por afirmación; cero encargos CT-05; consumo ≤ 1 UC
 
 ```bash
-(cd bloque_a/11_Ejecutor && ../../.venv/bin/python -m pytest -q 'tests/test_integracion.py::test_consulta_n0_sin_escalado')
+(cd bloque_a/11_Ejecutor && ../../.venv/bin/python -m pytest -q 'tests/test_integracion.py::test_consulta_n0_sin_escalado' 'tests/test_fase4_huecos.py::test_pb06_la_respuesta_n0_es_una_aclaracion_y_cada_referencia_existe_en_f1_a_f6')
 ```
 
 - `11_Ejecutor/tests/test_integracion.py::test_consulta_n0_sin_escalado`: SUPERADA
+- `11_Ejecutor/tests/test_fase4_huecos.py::test_pb06_la_respuesta_n0_es_una_aclaracion_y_cada_referencia_existe_en_f1_a_f6`: SUPERADA
 
 ### PB-07 · Consulta que escala a análisis
 
 Criterio de aprobación del plan: Respuesta provisional < 2 minutos; QRY- enlazada al RUN-; el Coordinador no responde con conocimiento propio no trazado
 
 ```bash
-(cd bloque_a/11_Ejecutor && ../../.venv/bin/python -m pytest -q 'tests/test_integracion.py::test_consulta_que_escala_y_pregunta_repetida')
+(cd bloque_a/11_Ejecutor && ../../.venv/bin/python -m pytest -q 'tests/test_integracion.py::test_consulta_que_escala_y_pregunta_repetida' 'tests/test_fase4_huecos.py::test_pb07_la_consulta_de_contraste_responde_provisional_con_nivel_y_plazo')
 ```
 
 - `11_Ejecutor/tests/test_integracion.py::test_consulta_que_escala_y_pregunta_repetida`: SUPERADA
+- `11_Ejecutor/tests/test_fase4_huecos.py::test_pb07_la_consulta_de_contraste_responde_provisional_con_nivel_y_plazo`: SUPERADA
 
 ### PB-08 · Ráfaga de peticiones sin límite
 
@@ -196,23 +199,25 @@ Criterio de aprobación del plan: F10 cambia solo P-02; HA sin incidencia de esc
 Criterio de aprobación del plan: Ningún mensaje del bloque al Bloque B; ambos PRG RESUELTO; HAC- con n que incluye OPP-B
 
 ```bash
-(cd bloque_a/11_Ejecutor && ../../.venv/bin/python -m pytest -q 'tests/test_integracion.py::test_peticion_ad_hoc_y_decisiones')
+(cd bloque_a/11_Ejecutor && ../../.venv/bin/python -m pytest -q 'tests/test_integracion.py::test_peticion_ad_hoc_y_decisiones' 'tests/test_fase4_huecos.py::test_pb11_la_opcion_descartada_se_resuelve_y_cuenta_en_el_historial')
 ```
 
 - `11_Ejecutor/tests/test_integracion.py::test_peticion_ad_hoc_y_decisiones`: SUPERADA
+- `11_Ejecutor/tests/test_fase4_huecos.py::test_pb11_la_opcion_descartada_se_resuelve_y_cuenta_en_el_historial`: SUPERADA
 
 ### PB-12 · Campos de decisión y paquete para el Bloque B
 
 Criterio de aprobación del plan: G3-CON-14, G3-CON-15 y G3-CON-20 PASA; validación JSON sin errores
 
 ```bash
-(cd bloque_a/11_Ejecutor && ../../.venv/bin/python -m pytest -q 'tests/test_integracion.py::test_ciclo_semanal_completo_apto')
+(cd bloque_a/11_Ejecutor && ../../.venv/bin/python -m pytest -q 'tests/test_integracion.py::test_ciclo_semanal_completo_apto' 'tests/test_fase4_huecos.py::test_pb12_relevancia_segun_la_regla_y_el_encargo_para_b_repite_los_datos_de_su_opcion')
 (cd bloque_a/10_Herramientas && ../../.venv/bin/python -m pytest -q 'tests/test_ht09_validador_g3.py::TestBloqueos::test_paquete_bloque_b' 'tests/test_ht09_validador_g3.py::TestV5::test_encargo_para_bloque_b')
 ```
 
 - `11_Ejecutor/tests/test_integracion.py::test_ciclo_semanal_completo_apto`: SUPERADA
 - `10_Herramientas/tests/test_ht09_validador_g3.py::TestBloqueos::test_paquete_bloque_b`: SUPERADA
 - `10_Herramientas/tests/test_ht09_validador_g3.py::TestV5::test_encargo_para_bloque_b`: SUPERADA
+- `11_Ejecutor/tests/test_fase4_huecos.py::test_pb12_relevancia_segun_la_regla_y_el_encargo_para_b_repite_los_datos_de_su_opcion`: SUPERADA
 
 ### PB-13 · GC0 negativo con arrastre verificado
 
@@ -273,11 +278,12 @@ Criterio de aprobación del plan: Apertura ≤ 1 ciclo de lectura tras superar e
 Criterio de aprobación del plan: Cero ORD- para AG-02; registro CAR- de la saturación
 
 ```bash
-(cd bloque_a/11_Ejecutor && ../../.venv/bin/python -m pytest -q 'tests/test_unitarias.py::test_ht04_y_ht06_y_ht08' 'tests/test_t53_evaluacion_y_almacen.py::test_monitor_abre_instancias_de_los_analistas_nuevos')
+(cd bloque_a/11_Ejecutor && ../../.venv/bin/python -m pytest -q 'tests/test_unitarias.py::test_ht04_y_ht06_y_ht08' 'tests/test_t53_evaluacion_y_almacen.py::test_monitor_abre_instancias_de_los_analistas_nuevos' 'tests/test_fase4_huecos.py::test_pb19_el_analizador_saturado_no_abre_instancias_y_deja_su_registro_car_en_ha')
 ```
 
 - `11_Ejecutor/tests/test_unitarias.py::test_ht04_y_ht06_y_ht08`: SUPERADA
 - `11_Ejecutor/tests/test_t53_evaluacion_y_almacen.py::test_monitor_abre_instancias_de_los_analistas_nuevos`: SUPERADA
+- `11_Ejecutor/tests/test_fase4_huecos.py::test_pb19_el_analizador_saturado_no_abre_instancias_y_deja_su_registro_car_en_ha`: SUPERADA
 
 ### PB-20 · Instrucción incrustada en una fuente
 
@@ -350,6 +356,20 @@ Criterio de aprobación del plan: Q recalculada con motivo; baja registrada
 - `10_Herramientas/tests/test_ht02_verificador_enlaces.py::TestEstados::test_contenido_igual_casi_y_cambiado`: SUPERADA
 - `10_Herramientas/tests/test_ht02_verificador_enlaces.py::TestEstados::test_retractacion`: SUPERADA
 
+### PB-26 · Clasificación temática y orden por calidad
+
+Criterio de aprobación del plan: Comprobación automática del orden: 0 inversiones; 100 % con temática válida
+
+```bash
+(cd bloque_a/11_Ejecutor && ../../.venv/bin/python -m pytest -q 'tests/test_t126_pb26_pb48.py::test_pb26_cada_referencia_esta_en_una_tematica_del_anexo_d' 'tests/test_t126_pb26_pb48.py::test_pb26_dentro_de_cada_tematica_el_orden_es_por_calidad_descendente' 'tests/test_t126_pb26_pb48.py::test_pb26_el_nivel_es_coherente_con_la_calidad' 'tests/test_t126_pb26_pb48.py::test_pb26_una_fuente_de_nivel_d_esta_marcada_como_candidata_a_baja_o_unica' 'tests/test_t126_pb26_pb48.py::test_pb26_la_comprobacion_detecta_un_orden_o_un_nivel_mal_puestos')
+```
+
+- `11_Ejecutor/tests/test_t126_pb26_pb48.py::test_pb26_cada_referencia_esta_en_una_tematica_del_anexo_d`: SUPERADA
+- `11_Ejecutor/tests/test_t126_pb26_pb48.py::test_pb26_dentro_de_cada_tematica_el_orden_es_por_calidad_descendente`: SUPERADA
+- `11_Ejecutor/tests/test_t126_pb26_pb48.py::test_pb26_el_nivel_es_coherente_con_la_calidad`: SUPERADA
+- `11_Ejecutor/tests/test_t126_pb26_pb48.py::test_pb26_una_fuente_de_nivel_d_esta_marcada_como_candidata_a_baja_o_unica`: SUPERADA
+- `11_Ejecutor/tests/test_t126_pb26_pb48.py::test_pb26_la_comprobacion_detecta_un_orden_o_un_nivel_mal_puestos`: SUPERADA
+
 ### PB-29 · Contar raíces, no menciones
 
 Criterio de aprobación del plan: G3-DAT-09 coherente; el Auditor no encuentra doble cómputo
@@ -375,19 +395,20 @@ Criterio de aprobación del plan: Tiempo de dictamen ≤ 10 min; dos G3V- en HA;
 Criterio de aprobación del plan: Ninguna cifra de probabilidad en entregables; el visual no muestra confianza «alta» sin base
 
 ```bash
-(cd bloque_a/11_Ejecutor && ../../.venv/bin/python -m pytest -q 'tests/test_integracion.py::test_ciclo_semanal_completo_apto')
+(cd bloque_a/11_Ejecutor && ../../.venv/bin/python -m pytest -q 'tests/test_integracion.py::test_ciclo_semanal_completo_apto' 'tests/test_fase4_huecos.py::test_pb31_sin_certificado_ningun_entregable_da_una_cifra_de_probabilidad_ni_confianza_alta')
 (cd bloque_a/10_Herramientas && ../../.venv/bin/python -m pytest -q 'tests/test_ht09_validador_g3.py::TestBloqueos::test_probabilidad_sin_certificado')
 ```
 
 - `11_Ejecutor/tests/test_integracion.py::test_ciclo_semanal_completo_apto`: SUPERADA
 - `10_Herramientas/tests/test_ht09_validador_g3.py::TestBloqueos::test_probabilidad_sin_certificado`: SUPERADA
+- `11_Ejecutor/tests/test_fase4_huecos.py::test_pb31_sin_certificado_ningun_entregable_da_una_cifra_de_probabilidad_ni_confianza_alta`: SUPERADA
 
 ### PB-32 · Certificación de un horizonte
 
 Criterio de aprobación del plan: Un certificado; G3-CON-10 PASA en RF y bloquearía en RV
 
 ```bash
-(cd bloque_a/11_Ejecutor && ../../.venv/bin/python -m pytest -q 'tests/test_integracion.py::test_certificado_emitido_con_muestra_suficiente' 'tests/test_unitarias.py::test_metricas_de_pronostico_con_pronosticadores_sinteticos' 'tests/test_t87_datos.py::test_r13_certificado_por_metodo_en_la_entrega' 'tests/test_fase4_huecos.py::test_pb32_se_certifica_la_celda_con_habilidad_y_no_la_que_no_la_tiene' 'tests/test_fase4_huecos.py::test_pb32_cada_condicion_del_certificado_cuenta_por_separado')
+(cd bloque_a/11_Ejecutor && ../../.venv/bin/python -m pytest -q 'tests/test_integracion.py::test_certificado_emitido_con_muestra_suficiente' 'tests/test_unitarias.py::test_metricas_de_pronostico_con_pronosticadores_sinteticos' 'tests/test_t87_datos.py::test_r13_certificado_por_metodo_en_la_entrega' 'tests/test_fase4_huecos.py::test_pb32_se_certifica_la_celda_con_habilidad_y_no_la_que_no_la_tiene' 'tests/test_fase4_huecos.py::test_pb32_cada_condicion_del_certificado_cuenta_por_separado' 'tests/test_fase4_huecos.py::test_pb32_una_celda_habil_que_no_supera_holm_no_se_certifica_y_el_certificado_lleva_su_metodo' 'tests/test_fase4_huecos.py::test_pb32_el_criterio_exige_el_alfa_de_holm' 'tests/test_fase4_huecos.py::test_pb32_el_certificado_es_de_la_celda_por_metodo' 'tests/test_fase4_huecos.py::test_pb32_la_probabilidad_se_publica_solo_en_la_celda_certificada_y_con_su_certificado_ref' 'tests/test_t87_datos.py::test_certificados_separan_metodos' 'tests/test_t53_evaluacion_y_almacen.py::test_holm_escalonado_se_detiene_en_el_primer_fallo')
 (cd bloque_a/10_Herramientas && ../../.venv/bin/python -m pytest -q 'tests/test_ht09_validador_g3.py::TestBloqueos::test_certificado_no_vigente')
 ```
 
@@ -397,13 +418,19 @@ Criterio de aprobación del plan: Un certificado; G3-CON-10 PASA en RF y bloquea
 - `10_Herramientas/tests/test_ht09_validador_g3.py::TestBloqueos::test_certificado_no_vigente`: SUPERADA
 - `11_Ejecutor/tests/test_fase4_huecos.py::test_pb32_se_certifica_la_celda_con_habilidad_y_no_la_que_no_la_tiene`: SUPERADA
 - `11_Ejecutor/tests/test_fase4_huecos.py::test_pb32_cada_condicion_del_certificado_cuenta_por_separado`: SUPERADA
+- `11_Ejecutor/tests/test_fase4_huecos.py::test_pb32_una_celda_habil_que_no_supera_holm_no_se_certifica_y_el_certificado_lleva_su_metodo`: SUPERADA
+- `11_Ejecutor/tests/test_fase4_huecos.py::test_pb32_el_criterio_exige_el_alfa_de_holm`: SUPERADA
+- `11_Ejecutor/tests/test_fase4_huecos.py::test_pb32_el_certificado_es_de_la_celda_por_metodo`: SUPERADA
+- `11_Ejecutor/tests/test_fase4_huecos.py::test_pb32_la_probabilidad_se_publica_solo_en_la_celda_certificada_y_con_su_certificado_ref`: SUPERADA
+- `11_Ejecutor/tests/test_t87_datos.py::test_certificados_separan_metodos`: SUPERADA
+- `11_Ejecutor/tests/test_t53_evaluacion_y_almacen.py::test_holm_escalonado_se_detiene_en_el_primer_fallo`: SUPERADA
 
 ### PB-33 · Revocación de certificado por deterioro
 
 Criterio de aprobación del plan: Estado del CERT- y fecha de efecto; G3-CON-10 bloquea probabilidades posteriores
 
 ```bash
-(cd bloque_a/11_Ejecutor && ../../.venv/bin/python -m pytest -q 'tests/test_t66_evaluacion.py::test_pa10_revocar_y_retirar_siguen_siendo_automaticos' 'tests/test_t53_evaluacion_y_almacen.py::test_ece_cero_no_revoca_un_certificado' 'tests/test_t53_evaluacion_y_almacen.py::test_umbral_de_revocacion_ece_sale_de_la_configuracion' 'tests/test_fase4_huecos.py::test_pb33_la_revocacion_registra_estado_motivo_y_fecha_de_efecto')
+(cd bloque_a/11_Ejecutor && ../../.venv/bin/python -m pytest -q 'tests/test_t66_evaluacion.py::test_pa10_revocar_y_retirar_siguen_siendo_automaticos' 'tests/test_t53_evaluacion_y_almacen.py::test_ece_cero_no_revoca_un_certificado' 'tests/test_t53_evaluacion_y_almacen.py::test_umbral_de_revocacion_ece_sale_de_la_configuracion' 'tests/test_fase4_huecos.py::test_pb33_la_revocacion_registra_estado_motivo_y_fecha_de_efecto' 'tests/test_fase4_huecos.py::test_pb33_tras_la_revocacion_hay_alerta_de_sobreconfianza_y_el_run_siguiente_no_publica_probabilidad')
 (cd bloque_a/10_Herramientas && ../../.venv/bin/python -m pytest -q 'tests/test_ht09_validador_g3.py::TestBloqueos::test_certificado_no_vigente')
 ```
 
@@ -412,6 +439,7 @@ Criterio de aprobación del plan: Estado del CERT- y fecha de efecto; G3-CON-10 
 - `11_Ejecutor/tests/test_t53_evaluacion_y_almacen.py::test_umbral_de_revocacion_ece_sale_de_la_configuracion`: SUPERADA
 - `10_Herramientas/tests/test_ht09_validador_g3.py::TestBloqueos::test_certificado_no_vigente`: SUPERADA
 - `11_Ejecutor/tests/test_fase4_huecos.py::test_pb33_la_revocacion_registra_estado_motivo_y_fecha_de_efecto`: SUPERADA
+- `11_Ejecutor/tests/test_fase4_huecos.py::test_pb33_tras_la_revocacion_hay_alerta_de_sobreconfianza_y_el_run_siguiente_no_publica_probabilidad`: SUPERADA
 
 ### PB-34 · Fuga de información en evaluación detectada
 
@@ -453,12 +481,13 @@ Criterio de aprobación del plan: F10 intacto en P-09 y P-05; P3- en la cola de 
 Criterio de aprobación del plan: Hash de la entrada original intacto; ambos RESUELTO
 
 ```bash
-(cd bloque_a/11_Ejecutor && ../../.venv/bin/python -m pytest -q 'tests/test_unitarias.py::test_almacen_reserva_integridad_y_as_of' 'tests/test_autocritica.py::test_arrastre_con_invalidacion_activada' 'tests/test_fase4_huecos.py::test_pb37_la_correccion_es_un_prg_nuevo_y_el_original_no_cambia')
+(cd bloque_a/11_Ejecutor && ../../.venv/bin/python -m pytest -q 'tests/test_unitarias.py::test_almacen_reserva_integridad_y_as_of' 'tests/test_autocritica.py::test_arrastre_con_invalidacion_activada' 'tests/test_fase4_huecos.py::test_pb37_la_correccion_es_un_prg_nuevo_y_el_original_no_cambia' 'tests/test_fase4_huecos.py::test_pb37_el_pronostico_original_y_su_correccion_entran_los_dos_en_las_metricas')
 ```
 
 - `11_Ejecutor/tests/test_unitarias.py::test_almacen_reserva_integridad_y_as_of`: SUPERADA
 - `11_Ejecutor/tests/test_autocritica.py::test_arrastre_con_invalidacion_activada`: SUPERADA
 - `11_Ejecutor/tests/test_fase4_huecos.py::test_pb37_la_correccion_es_un_prg_nuevo_y_el_original_no_cambia`: SUPERADA
+- `11_Ejecutor/tests/test_fase4_huecos.py::test_pb37_el_pronostico_original_y_su_correccion_entran_los_dos_en_las_metricas`: SUPERADA
 
 ### PB-38 · Objeción fuerte sin resolver impide el top-3
 
@@ -491,20 +520,23 @@ Criterio de aprobación del plan: Ningún informe visual entregado con índice <
 Criterio de aprobación del plan: G3-ENT-07 PASA; el Auditor no recuenta menos apuestas que las declaradas
 
 ```bash
-(cd bloque_a/11_Ejecutor && ../../.venv/bin/python -m pytest -q 'tests/test_integracion.py::test_ciclo_semanal_completo_apto')
+(cd bloque_a/11_Ejecutor && ../../.venv/bin/python -m pytest -q 'tests/test_integracion.py::test_ciclo_semanal_completo_apto' 'tests/test_t53_seleccion_y_entrega.py::test_entregable_bloqueado_no_llega_a_las_carpetas_de_entrega' 'tests/test_fase4_huecos.py::test_pb01_sin_g3_apto_no_se_congela_ningun_pronostico_ni_se_entrega')
 ```
 
 - `11_Ejecutor/tests/test_integracion.py::test_ciclo_semanal_completo_apto`: SUPERADA
+- `11_Ejecutor/tests/test_t53_seleccion_y_entrega.py::test_entregable_bloqueado_no_llega_a_las_carpetas_de_entrega`: SUPERADA
+- `11_Ejecutor/tests/test_fase4_huecos.py::test_pb01_sin_g3_apto_no_se_congela_ningun_pronostico_ni_se_entrega`: SUPERADA
 
 ### PB-43 · Pregunta repetida y lección de producto
 
 Criterio de aprobación del plan: LEC- en F6 enlazada a las tres QRY-; sección presente en el informe siguiente
 
 ```bash
-(cd bloque_a/11_Ejecutor && ../../.venv/bin/python -m pytest -q 'tests/test_integracion.py::test_consulta_que_escala_y_pregunta_repetida')
+(cd bloque_a/11_Ejecutor && ../../.venv/bin/python -m pytest -q 'tests/test_integracion.py::test_consulta_que_escala_y_pregunta_repetida' 'tests/test_fase4_huecos.py::test_pb43_la_leccion_de_producto_enlaza_las_tres_consultas_repetidas')
 ```
 
 - `11_Ejecutor/tests/test_integracion.py::test_consulta_que_escala_y_pregunta_repetida`: SUPERADA
+- `11_Ejecutor/tests/test_fase4_huecos.py::test_pb43_la_leccion_de_producto_enlaza_las_tres_consultas_repetidas`: SUPERADA
 
 ### PB-44 · Historial de aciertos honesto
 
@@ -528,6 +560,21 @@ Criterio de aprobación del plan: Lista de LEC- del encargo ≤ 10; aplicación 
 
 - `11_Ejecutor/tests/test_fase4_huecos.py::test_pb45_el_encargo_lleva_diez_lecciones_como_maximo_y_las_de_mas_fuerza`: SUPERADA
 
+### PB-46 · Fiabilidad de fuentes de opinión
+
+Criterio de aprobación del plan: FUE- en F6; Q y orden actualizados en F9 con motivo
+
+```bash
+(cd bloque_a/11_Ejecutor && ../../.venv/bin/python -m pytest -q 'tests/test_t125_fiabilidad_fuentes.py::test_pb46_dos_fuentes_una_con_habilidad_y_otra_sin_ella' 'tests/test_t125_fiabilidad_fuentes.py::test_pb46_las_fue_quedan_en_f6_y_se_comunican_al_buscador_por_ct19' 'tests/test_t125_fiabilidad_fuentes.py::test_pb46_una_vez_al_mes' 'tests/test_t125_fiabilidad_fuentes.py::test_pb46_sin_muestra_suficiente_no_hay_fue' 'tests/test_t125_fiabilidad_fuentes.py::test_pb46_no_se_resuelve_lo_que_no_ha_vencido_ni_lo_mal_formado' 'tests/test_t125_fiabilidad_fuentes.py::test_pb46_cada_direccion_se_resuelve_bien')
+```
+
+- `11_Ejecutor/tests/test_t125_fiabilidad_fuentes.py::test_pb46_dos_fuentes_una_con_habilidad_y_otra_sin_ella`: SUPERADA
+- `11_Ejecutor/tests/test_t125_fiabilidad_fuentes.py::test_pb46_las_fue_quedan_en_f6_y_se_comunican_al_buscador_por_ct19`: SUPERADA
+- `11_Ejecutor/tests/test_t125_fiabilidad_fuentes.py::test_pb46_una_vez_al_mes`: SUPERADA
+- `11_Ejecutor/tests/test_t125_fiabilidad_fuentes.py::test_pb46_sin_muestra_suficiente_no_hay_fue`: SUPERADA
+- `11_Ejecutor/tests/test_t125_fiabilidad_fuentes.py::test_pb46_no_se_resuelve_lo_que_no_ha_vencido_ni_lo_mal_formado`: SUPERADA
+- `11_Ejecutor/tests/test_t125_fiabilidad_fuentes.py::test_pb46_cada_direccion_se_resuelve_bien`: SUPERADA
+
 ### PB-47 · Estados de madurez
 
 Criterio de aprobación del plan: Entregable final declara «documentado» o no usa el método
@@ -539,17 +586,31 @@ Criterio de aprobación del plan: Entregable final declara «documentado» o no 
 - `11_Ejecutor/tests/test_unitarias.py::test_servicio_del_motor_rc_cache_fuga_y_reejecucion`: SUPERADA
 - `11_Ejecutor/tests/test_t65_resto_t53.py::test_cs08_fichas_documentadas_no_entregan_cifras`: SUPERADA
 
+### PB-48 · Conflicto de normas: la más restrictiva
+
+Criterio de aprobación del plan: Segunda pasada registrada; COR- y P3- en HA
+
+```bash
+(cd bloque_a/11_Ejecutor && ../../.venv/bin/python -m pytest -q 'tests/test_t126_pb26_pb48.py::test_pb48_una_guia_que_relaja_un_control_no_llega_a_la_elegibilidad' 'tests/test_t126_pb26_pb48.py::test_pb48_ht03_exige_la_segunda_pasada_en_banda_marginal')
+```
+
+- `11_Ejecutor/tests/test_t126_pb26_pb48.py::test_pb48_una_guia_que_relaja_un_control_no_llega_a_la_elegibilidad`: SUPERADA
+- `11_Ejecutor/tests/test_t126_pb26_pb48.py::test_pb48_ht03_exige_la_segunda_pasada_en_banda_marginal`: SUPERADA
+
 ### PB-49 · Historial íntegro y supresiones permitidas
 
 Criterio de aprobación del plan: Cero entradas modificadas o borradas fuera de las excepciones
 
 ```bash
-(cd bloque_a/11_Ejecutor && ../../.venv/bin/python -m pytest -q 'tests/test_unitarias.py::test_almacen_reserva_integridad_y_as_of' 'tests/test_integracion.py::test_canales_y_matriz_respetados' 'tests/test_fase4_huecos.py::test_pb49_una_entrada_borrada_rompe_la_integridad')
+(cd bloque_a/11_Ejecutor && ../../.venv/bin/python -m pytest -q 'tests/test_unitarias.py::test_almacen_reserva_integridad_y_as_of' 'tests/test_integracion.py::test_canales_y_matriz_respetados' 'tests/test_fase4_huecos.py::test_pb49_una_entrada_borrada_rompe_la_integridad' 'tests/test_fase4_huecos.py::test_pb49_en_ocho_semanas_simuladas_las_entradas_de_f1_a_f6_rc_y_ha_solo_se_anaden')
+(cd bloque_a/10_Herramientas && ../../.venv/bin/python -m pytest -q 'tests/test_ht02_verificador_enlaces.py::TestEscritura::test_borrar_crea_registro_y_exige_motivo')
 ```
 
 - `11_Ejecutor/tests/test_unitarias.py::test_almacen_reserva_integridad_y_as_of`: SUPERADA
 - `11_Ejecutor/tests/test_integracion.py::test_canales_y_matriz_respetados`: SUPERADA
 - `11_Ejecutor/tests/test_fase4_huecos.py::test_pb49_una_entrada_borrada_rompe_la_integridad`: SUPERADA
+- `11_Ejecutor/tests/test_fase4_huecos.py::test_pb49_en_ocho_semanas_simuladas_las_entradas_de_f1_a_f6_rc_y_ha_solo_se_anaden`: SUPERADA
+- `10_Herramientas/tests/test_ht02_verificador_enlaces.py::TestEscritura::test_borrar_crea_registro_y_exige_motivo`: SUPERADA
 
 ### PB-50 · Horizontes según la clase de activo
 
@@ -581,13 +642,14 @@ Criterio de aprobación del plan: Entrega con limitaciones declaradas o bloqueo 
 Criterio de aprobación del plan: Ninguna opción del top-3 es un activo concreto
 
 ```bash
-(cd bloque_a/11_Ejecutor && ../../.venv/bin/python -m pytest -q 'tests/test_v5.py::test_esquema_de_finalista_sin_vehiculos' 'tests/test_t87_contratos.py::test_r21_se_retira_la_propuesta_de_una_empresa_antes_de_entregar')
+(cd bloque_a/11_Ejecutor && ../../.venv/bin/python -m pytest -q 'tests/test_v5.py::test_esquema_de_finalista_sin_vehiculos' 'tests/test_t87_contratos.py::test_r21_se_retira_la_propuesta_de_una_empresa_antes_de_entregar' 'tests/test_fase4_huecos.py::test_pb53_la_empresa_concreta_que_propone_el_analista_rv_no_llega_al_top3')
 (cd bloque_a/10_Herramientas && ../../.venv/bin/python -m pytest -q 'tests/test_ht09_validador_g3.py::TestV5::test_seleccion_de_activo_concreto')
 ```
 
 - `11_Ejecutor/tests/test_v5.py::test_esquema_de_finalista_sin_vehiculos`: SUPERADA
 - `11_Ejecutor/tests/test_t87_contratos.py::test_r21_se_retira_la_propuesta_de_una_empresa_antes_de_entregar`: SUPERADA
 - `10_Herramientas/tests/test_ht09_validador_g3.py::TestV5::test_seleccion_de_activo_concreto`: SUPERADA
+- `11_Ejecutor/tests/test_fase4_huecos.py::test_pb53_la_empresa_concreta_que_propone_el_analista_rv_no_llega_al_top3`: SUPERADA
 
 ### PB-54 · Encargo completo para el Bloque B
 
@@ -607,18 +669,19 @@ Criterio de aprobación del plan: 100 % de los campos presentes y no vacíos
 Criterio de aprobación del plan: 12 tipos presentes; ≤ 3 opciones por tipo
 
 ```bash
-(cd bloque_a/11_Ejecutor && ../../.venv/bin/python -m pytest -q 'tests/test_v5.py::test_doce_tipos_agentes_y_canales' 'tests/test_integracion.py::test_ciclo_semanal_completo_apto')
+(cd bloque_a/11_Ejecutor && ../../.venv/bin/python -m pytest -q 'tests/test_v5.py::test_doce_tipos_agentes_y_canales' 'tests/test_integracion.py::test_ciclo_semanal_completo_apto' 'tests/test_fase4_huecos.py::test_pb55_el_tecnico_tiene_un_apartado_con_semaforo_por_cada_tipo_y_el_motivo_de_menos_de_tres')
 ```
 
 - `11_Ejecutor/tests/test_v5.py::test_doce_tipos_agentes_y_canales`: SUPERADA
 - `11_Ejecutor/tests/test_integracion.py::test_ciclo_semanal_completo_apto`: SUPERADA
+- `11_Ejecutor/tests/test_fase4_huecos.py::test_pb55_el_tecnico_tiene_un_apartado_con_semaforo_por_cada_tipo_y_el_motivo_de_menos_de_tres`: SUPERADA
 
 ### PB-56 · Oportunidad duplicada entre tipos
 
 Criterio de aprobación del plan: Ninguna oportunidad en dos top-3
 
 ```bash
-(cd bloque_a/11_Ejecutor && ../../.venv/bin/python -m pytest -q 'tests/test_v5.py::test_sin_duplicados_entre_tipos')
+(cd bloque_a/11_Ejecutor && ../../.venv/bin/python -m pytest -q 'tests/test_v5.py::test_sin_duplicados_entre_tipos' 'tests/test_fase4_huecos.py::test_pb56_en_un_c1_el_mismo_ambito_propuesto_por_rv_e_idx_queda_en_un_solo_top3')
 (cd bloque_a/10_Herramientas && ../../.venv/bin/python -m pytest -q 'tests/test_ht09_validador_g3.py::TestV5::test_duplicado_en_dos_tipos_por_nombre' 'tests/test_ht09_validador_g3.py::TestV5::test_duplicado_en_dos_tipos_por_ambito' 'tests/test_ht09_validador_g3.py::TestV5::test_mismo_opp_id_en_dos_tipos')
 ```
 
@@ -626,17 +689,19 @@ Criterio de aprobación del plan: Ninguna oportunidad en dos top-3
 - `10_Herramientas/tests/test_ht09_validador_g3.py::TestV5::test_duplicado_en_dos_tipos_por_nombre`: SUPERADA
 - `10_Herramientas/tests/test_ht09_validador_g3.py::TestV5::test_duplicado_en_dos_tipos_por_ambito`: SUPERADA
 - `10_Herramientas/tests/test_ht09_validador_g3.py::TestV5::test_mismo_opp_id_en_dos_tipos`: SUPERADA
+- `11_Ejecutor/tests/test_fase4_huecos.py::test_pb56_en_un_c1_el_mismo_ambito_propuesto_por_rv_e_idx_queda_en_un_solo_top3`: SUPERADA
 
 ### PB-58 · Solicitud y provisión de una credencial por CT-25
 
 Criterio de aprobación del plan: Cero apariciones del valor en mensajes, F1–F11, entregables y contextos; segunda solicitud resuelta sin molestar al Broker
 
 ```bash
-(cd bloque_a/11_Ejecutor && ../../.venv/bin/python -m pytest -q 'tests/test_v51.py::test_credenciales_boveda' 'tests/test_v51.py::test_cli_v51')
+(cd bloque_a/11_Ejecutor && ../../.venv/bin/python -m pytest -q 'tests/test_v51.py::test_credenciales_boveda' 'tests/test_v51.py::test_cli_v51' 'tests/test_fase4_huecos.py::test_pb58_el_servicio_pendiente_se_declara_hasta_la_provision_y_el_valor_no_llega_a_ningun_contexto')
 ```
 
 - `11_Ejecutor/tests/test_v51.py::test_credenciales_boveda`: SUPERADA
 - `11_Ejecutor/tests/test_v51.py::test_cli_v51`: SUPERADA
+- `11_Ejecutor/tests/test_fase4_huecos.py::test_pb58_el_servicio_pendiente_se_declara_hasta_la_provision_y_el_valor_no_llega_a_ningun_contexto`: SUPERADA
 
 ### PB-59 · Credencial expuesta en un mensaje del Broker
 
@@ -656,22 +721,24 @@ Criterio de aprobación del plan: El valor no aparece en ningún registro; incid
 Criterio de aprobación del plan: Ninguna nueva CT-25 para ese servicio; limitación visible
 
 ```bash
-(cd bloque_a/11_Ejecutor && ../../.venv/bin/python -m pytest -q 'tests/test_v51.py::test_credenciales_boveda')
+(cd bloque_a/11_Ejecutor && ../../.venv/bin/python -m pytest -q 'tests/test_v51.py::test_credenciales_boveda' 'tests/test_fase4_huecos.py::test_pb60_credencial_denegada_no_se_vuelve_a_pedir_y_los_entregables_declaran_la_degradacion')
 ```
 
 - `11_Ejecutor/tests/test_v51.py::test_credenciales_boveda`: SUPERADA
+- `11_Ejecutor/tests/test_fase4_huecos.py::test_pb60_credencial_denegada_no_se_vuelve_a_pedir_y_los_entregables_declaran_la_degradacion`: SUPERADA
 
 ### PB-61 · Consulta bloqueante al Broker con vencimiento
 
 Criterio de aprobación del plan: `supuestos_declarados` con CNS- en el paquete (HT-09 C19 OK); ningún dato del Broker inventado
 
 ```bash
-(cd bloque_a/11_Ejecutor && ../../.venv/bin/python -m pytest -q 'tests/test_v51.py::test_consulta_bloqueante_pausa_y_vencimiento')
+(cd bloque_a/11_Ejecutor && ../../.venv/bin/python -m pytest -q 'tests/test_v51.py::test_consulta_bloqueante_pausa_y_vencimiento' 'tests/test_fase4_huecos.py::test_pb61_solo_cri_se_pausa_y_al_vencer_el_supuesto_figura_en_los_entregables')
 (cd bloque_a/10_Herramientas && ../../.venv/bin/python -m pytest -q 'tests/test_ht09_validador_g3.py::TestV51::test_supuestos_declarados')
 ```
 
 - `11_Ejecutor/tests/test_v51.py::test_consulta_bloqueante_pausa_y_vencimiento`: SUPERADA
 - `10_Herramientas/tests/test_ht09_validador_g3.py::TestV51::test_supuestos_declarados`: SUPERADA
+- `11_Ejecutor/tests/test_fase4_huecos.py::test_pb61_solo_cri_se_pausa_y_al_vencer_el_supuesto_figura_en_los_entregables`: SUPERADA
 
 ### PB-62 · Filtro, agrupación y recurrencia de consultas
 
@@ -688,21 +755,23 @@ Criterio de aprobación del plan: ≤ 3 mensajes CT-23 por RUN-; LEC- de product
 Criterio de aprobación del plan: HT-09 C18 OK; un H5 sin hitos o con probabilidad numérica queda BLOQUEADO
 
 ```bash
-(cd bloque_a/11_Ejecutor && ../../.venv/bin/python -m pytest -q 'tests/test_v51.py::test_h5_con_hitos_y_sin_probabilidad' 'tests/test_v51.py::test_ht09_bloquea_h5_sin_hitos')
-(cd bloque_a/10_Herramientas && ../../.venv/bin/python -m pytest -q 'tests/test_ht09_validador_g3.py::TestV51::test_h5_con_probabilidad_numerica' 'tests/test_ht09_validador_g3.py::TestV51::test_h5_sin_hitos_o_insuficientes')
+(cd bloque_a/11_Ejecutor && ../../.venv/bin/python -m pytest -q 'tests/test_v51.py::test_h5_con_hitos_y_sin_probabilidad' 'tests/test_v51.py::test_ht09_bloquea_h5_sin_hitos' 'tests/test_fase4_huecos.py::test_pb63_los_hitos_h5_del_ciclo_tienen_fecha_indicador_criterio_y_el_espaciado_del_anexo_a')
+(cd bloque_a/10_Herramientas && ../../.venv/bin/python -m pytest -q 'tests/test_ht09_validador_g3.py::TestV51::test_h5_con_probabilidad_numerica' 'tests/test_ht09_validador_g3.py::TestV51::test_h5_sin_hitos_o_insuficientes' 'tests/test_ht09_validador_g3.py::TestV51::test_h5_espaciado_de_hitos')
 ```
 
 - `11_Ejecutor/tests/test_v51.py::test_h5_con_hitos_y_sin_probabilidad`: SUPERADA
 - `11_Ejecutor/tests/test_v51.py::test_ht09_bloquea_h5_sin_hitos`: SUPERADA
 - `10_Herramientas/tests/test_ht09_validador_g3.py::TestV51::test_h5_con_probabilidad_numerica`: SUPERADA
 - `10_Herramientas/tests/test_ht09_validador_g3.py::TestV51::test_h5_sin_hitos_o_insuficientes`: SUPERADA
+- `11_Ejecutor/tests/test_fase4_huecos.py::test_pb63_los_hitos_h5_del_ciclo_tienen_fecha_indicador_criterio_y_el_espaciado_del_anexo_a`: SUPERADA
+- `10_Herramientas/tests/test_ht09_validador_g3.py::TestV51::test_h5_espaciado_de_hitos`: SUPERADA
 
 ### PB-64 · Evaluación de H5 por hitos y degradación
 
 Criterio de aprobación del plan: Ajuste registrado en F6 y F10; ningún certificado H5 emitido
 
 ```bash
-(cd bloque_a/11_Ejecutor && ../../.venv/bin/python -m pytest -q 'tests/test_v51.py::test_estado_h5_por_hitos' 'tests/test_t53_evaluacion_y_almacen.py::test_degradacion_h5_se_aplica_en_f6_y_f10' 'tests/test_t53_seleccion_y_entrega.py::test_h05_degradacion_h5_cambia_la_tabla_del_ciclo_siguiente' 'tests/test_t65_hallazgos.py::test_h13_la_degradacion_registra_el_efecto_desde_el_mismo_ciclo' 'tests/test_fase4_huecos.py::test_pb64_la_revision_de_certificados_no_emite_ninguno_para_h5')
+(cd bloque_a/11_Ejecutor && ../../.venv/bin/python -m pytest -q 'tests/test_v51.py::test_estado_h5_por_hitos' 'tests/test_t53_evaluacion_y_almacen.py::test_degradacion_h5_se_aplica_en_f6_y_f10' 'tests/test_t53_seleccion_y_entrega.py::test_h05_degradacion_h5_cambia_la_tabla_del_ciclo_siguiente' 'tests/test_t65_hallazgos.py::test_h13_la_degradacion_registra_el_efecto_desde_el_mismo_ciclo' 'tests/test_fase4_huecos.py::test_pb64_la_revision_de_certificados_no_emite_ninguno_para_h5' 'tests/test_fase4_huecos.py::test_pb64_los_tres_estados_h5_por_hitos_y_mp_baja_de_si_a_limitado_en_f6_y_f10')
 (cd bloque_a/10_Herramientas && ../../.venv/bin/python -m pytest -q 'tests/test_ht09_validador_g3.py::TestV51::test_h5_certificado_no_habilita_probabilidad')
 ```
 
@@ -712,6 +781,7 @@ Criterio de aprobación del plan: Ajuste registrado en F6 y F10; ningún certifi
 - `11_Ejecutor/tests/test_t65_hallazgos.py::test_h13_la_degradacion_registra_el_efecto_desde_el_mismo_ciclo`: SUPERADA
 - `10_Herramientas/tests/test_ht09_validador_g3.py::TestV51::test_h5_certificado_no_habilita_probabilidad`: SUPERADA
 - `11_Ejecutor/tests/test_fase4_huecos.py::test_pb64_la_revision_de_certificados_no_emite_ninguno_para_h5`: SUPERADA
+- `11_Ejecutor/tests/test_fase4_huecos.py::test_pb64_los_tres_estados_h5_por_hitos_y_mp_baja_de_si_a_limitado_en_f6_y_f10`: SUPERADA
 
 ### PB-65 · Horizonte principal incoherente con la naturaleza
 
@@ -732,11 +802,12 @@ Criterio de aprobación del plan: Dictámenes correctos y motivados
 Criterio de aprobación del plan: Ningún ciclo tras la cancelación; C6 no retrasa C1–C3; informes ≤ 300 palabras
 
 ```bash
-(cd bloque_a/11_Ejecutor && ../../.venv/bin/python -m pytest -q 'tests/test_v51.py::test_seguimiento_alta_ciclo_y_cancelacion' 'tests/test_v51.py::test_seguimiento_frecuencia_corta_y_opp_inexistente')
+(cd bloque_a/11_Ejecutor && ../../.venv/bin/python -m pytest -q 'tests/test_v51.py::test_seguimiento_alta_ciclo_y_cancelacion' 'tests/test_v51.py::test_seguimiento_frecuencia_corta_y_opp_inexistente' 'tests/test_fase4_huecos.py::test_pb66_dos_ciclos_c6_con_registro_en_f11_y_ninguno_tras_la_cancelacion')
 ```
 
 - `11_Ejecutor/tests/test_v51.py::test_seguimiento_alta_ciclo_y_cancelacion`: SUPERADA
 - `11_Ejecutor/tests/test_v51.py::test_seguimiento_frecuencia_corta_y_opp_inexistente`: SUPERADA
+- `11_Ejecutor/tests/test_fase4_huecos.py::test_pb66_dos_ciclos_c6_con_registro_en_f11_y_ninguno_tras_la_cancelacion`: SUPERADA
 
 ### PB-67 · Seguimiento que propone el envío al Bloque B
 

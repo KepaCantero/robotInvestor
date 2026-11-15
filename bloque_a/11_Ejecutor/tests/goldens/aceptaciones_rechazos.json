@@ -436,6 +436,11 @@
    },
    "resultado": "ADMITIDO"
   },
+  "CT-01/horizontes_texto_vacio": {
+   "clase": "MensajeInvalido",
+   "motivo": "CT-01: alcance u horizontes no válidos",
+   "resultado": "RECHAZADO"
+  },
   "CT-01/msg_id_del_broker": {
    "mensaje": {
     "alcance": {
@@ -1187,6 +1192,11 @@
    "resultado": "RECHAZADO"
   },
   "CT-02/entrega_sin_resumen": {
+   "clase": "MensajeInvalido",
+   "motivo": "CT-02: se requiere una entrega G3 aprobada con rutas y resumen",
+   "resultado": "RECHAZADO"
+  },
+  "CT-02/resumen_lista": {
    "clase": "MensajeInvalido",
    "motivo": "CT-02: se requiere una entrega G3 aprobada con rutas y resumen",
    "resultado": "RECHAZADO"
@@ -3360,6 +3370,11 @@
    "motivo": "CT-24: faltan campos mínimos ['accion']",
    "resultado": "RECHAZADO"
   },
+  "CT-24/estado_comun_distinto_del_propio": {
+   "clase": "MensajeInvalido",
+   "motivo": "CT-24: estados de objeto contradictorios",
+   "resultado": "RECHAZADO"
+  },
   "CT-24/retorno_con_estado_comun_en_el_cuerpo_y_sin_el_propio": {
    "clase": "MensajeInvalido",
    "motivo": "estado_seguimiento no válido",
@@ -3983,6 +3998,31 @@
   "CT-25/validar_retorno_sin_campo_propio": {
    "clase": "MensajeInvalido",
    "motivo": "estado_credencial no válido",
+   "resultado": "RECHAZADO"
+  },
+  "R8/autoevaluacion_con_dato_protegido": {
+   "clase": "DatosSensibles",
+   "motivo": "Mensaje MSG-2026-000001 con datos protegidos en ['autoevaluacion']",
+   "resultado": "RECHAZADO"
+  },
+  "R8/consumo_con_dato_protegido": {
+   "clase": "DatosSensibles",
+   "motivo": "Mensaje MSG-2026-000001 con datos protegidos en ['consumo']",
+   "resultado": "RECHAZADO"
+  },
+  "R8/limitaciones_con_dato_protegido": {
+   "clase": "DatosSensibles",
+   "motivo": "Mensaje MSG-2026-000001 con datos protegidos en ['limitaciones']",
+   "resultado": "RECHAZADO"
+  },
+  "R8/presupuesto_con_dato_protegido": {
+   "clase": "DatosSensibles",
+   "motivo": "Mensaje MSG-2026-000001 con datos protegidos en ['presupuesto']",
+   "resultado": "RECHAZADO"
+  },
+  "comun/run_id_vacio": {
+   "clase": "MensajeInvalido",
+   "motivo": "Falta run_id o query_id",
    "resultado": "RECHAZADO"
   },
   "sobre/cabecera_de_autorizacion_en_el_cuerpo": {

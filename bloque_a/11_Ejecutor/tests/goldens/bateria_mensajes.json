@@ -264,6 +264,14 @@
    },
    "que": "Petición con un horizonte repetido: se admite"
   },
+  "CT-01/horizontes_texto_vacio": {
+   "base": "CT-01.ENCARGO",
+   "espera": "RECHAZADO",
+   "pon": {
+    "horizontes": ""
+   },
+   "que": "Petición con `horizontes` como texto vacío (T-124, H-09)"
+  },
   "CT-01/msg_id_del_broker": {
    "base": "CT-01.ENCARGO",
    "espera": "ADMITIDO",
@@ -649,6 +657,14 @@
    "quita": [
     "resumen"
    ]
+  },
+  "CT-02/resumen_lista": {
+   "base": "CT-02.RETORNO",
+   "espera": "RECHAZADO",
+   "pon": {
+    "resumen": []
+   },
+   "que": "Entrega con `resumen` como lista (T-124, H-09)"
   },
   "CT-02/sin_run_id_ni_query_id": {
    "base": "CT-02.RETORNO",
@@ -2194,6 +2210,15 @@
     "accion"
    ]
   },
+  "CT-24/estado_comun_distinto_del_propio": {
+   "base": "CT-24.RETORNO",
+   "espera": "RECHAZADO",
+   "pon": {
+    "estado": "PARCIAL",
+    "estado_seguimiento": "ACTIVO"
+   },
+   "que": "Retorno con `estado` PARCIAL en el cuerpo y el estado propio ACTIVO: contradictorios (T-124, H-09)"
+  },
   "CT-24/retorno_con_estado_comun_en_el_cuerpo_y_sin_el_propio": {
    "base": "CT-24.RETORNO",
    "espera": "RECHAZADO",
@@ -2631,6 +2656,49 @@
     "estado_credencial"
    ],
    "que": "Un retorno ya creado al que se le quita `estado_credencial`",
+   "via": "validar"
+  },
+  "R8/autoevaluacion_con_dato_protegido": {
+   "base": "CT-03.RETORNO",
+   "espera": "RECHAZADO",
+   "pon": {
+    "autoevaluacion": "Bearer xxxxxxxxxxxxxxxxxxxxxxxx"
+   },
+   "que": "Retorno con un dato protegido en `autoevaluacion` (T-124, H-09)"
+  },
+  "R8/consumo_con_dato_protegido": {
+   "base": "CT-10.RETORNO",
+   "consumo": {
+    "nota": "Bearer xxxxxxxxxxxxxxxxxxxxxxxx"
+   },
+   "espera": "RECHAZADO",
+   "que": "Retorno con un dato protegido en `consumo` (T-124, H-09)"
+  },
+  "R8/limitaciones_con_dato_protegido": {
+   "base": "CT-03.RETORNO",
+   "espera": "RECHAZADO",
+   "pon": {
+    "limitaciones": [
+     "Bearer xxxxxxxxxxxxxxxxxxxxxxxx"
+    ]
+   },
+   "que": "Retorno con un dato protegido en `limitaciones` (T-124, H-09)"
+  },
+  "R8/presupuesto_con_dato_protegido": {
+   "base": "CT-10.ENCARGO",
+   "espera": "RECHAZADO",
+   "presupuesto": {
+    "nota": "Bearer xxxxxxxxxxxxxxxxxxxxxxxx"
+   },
+   "que": "Encargo con un dato protegido en `presupuesto` (T-124, H-09)"
+  },
+  "comun/run_id_vacio": {
+   "base": "CT-10.ENCARGO",
+   "espera": "RECHAZADO",
+   "mensaje_pon": {
+    "run_id": ""
+   },
+   "que": "Un `run_id` vacío no vale como identificador (T-124, H-09)",
    "via": "validar"
   },
   "sobre/cabecera_de_autorizacion_en_el_cuerpo": {

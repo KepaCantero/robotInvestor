@@ -111,6 +111,10 @@ class Redaccion:
                  f'<div>Datos de mercado del {escape(fecha_larga(paquete["fecha_datos_mercado"]))}</div></div></header>')
         if paquete.get("x_estado_run") == "PARCIAL":
             h.append('<div class="vacia" role="note"><b>Informe parcial.</b> Algunas partes no se pudieron completar. Lo decimos para que lo tengas en cuenta.</div>')
+        cred = getattr(bloque, "credenciales", None)
+        for d in (cred.degradaciones(as_of) if cred else []):   # PB-60 (INC-T116-03): servicio degradado por credencial denegada
+            h.append(f'<div class="vacia" role="note"><b>Falta un servicio de datos.</b> No tenemos acceso a «{escape(d["servicio"])}». '
+                     'Las ideas que lo usan tienen menos datos.</div>')
         h.append('<section aria-labelledby="h-30"><div class="panel"><h2 id="h-30">La semana en 30 segundos</h2><ol class="treinta">')
         for i, f in enumerate(frases):
             h.append(f'<li><span class="num" aria-hidden="true">{i + 1}</span><span>{escape(f)}</span></li>')

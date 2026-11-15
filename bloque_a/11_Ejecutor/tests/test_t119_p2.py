@@ -507,11 +507,12 @@ def test_una_serie_de_ht01_no_se_ignora_en_silencio(ficha):
 
 
 def test_la_envoltura_rechaza_resultados_no_finitos_y_traduce_excepciones(monkeypatch):
+    # T-127 (H-10): con los 3 componentes del caso de REI-LEV-001 ya no se calcula la dispersión; FIR-CRED-001 (12) sí
     monkeypatch.setattr(fp, "_distribucion", lambda x: {"mediana": math.nan})
-    v, p = _metodo("REI-LEV-001")
-    _rechaza("REI-LEV-001", v, p, "resultado no finito")
+    v, p = _metodo("FIR-CRED-001")
+    _rechaza("FIR-CRED-001", v, p, "resultado no finito")
     monkeypatch.setattr(fp, "_distribucion", lambda x: 1 / 0)
-    _rechaza("REI-LEV-001", v, p, "ZeroDivisionError")
+    _rechaza("FIR-CRED-001", v, p, "ZeroDivisionError")
 
 
 GIGANTES = [("FIR-CRED-001", ("componentes", 0, "capitalizacion")), ("FIR-CRED-001", ("componentes", 3, "deuda_largo")),
@@ -1006,8 +1007,10 @@ def test_rei_lev_oraculo_independiente_con_pandas():
     assert res["dispersion"]["ltv_pct"]["mediana"] == pytest.approx(np.median(ltv))
     assert res["dispersion"]["ltv_pct"]["q75"] == pytest.approx(np.percentile(ltv, 75))
     assert res["dispersion"]["ltv_pct"]["maximo"] == pytest.approx(max(ltv))
-    assert res["n_componentes"] == 9 and res["covenants"]["n_componentes"] == 2
-    assert lim == ["covenants de 2 de 9 componentes: holgura sobre los declarados"]
+    assert res["n_componentes"] == 9 and res["covenants"]["n_componentes"] == 3   # T-127: S3 declara covenants en el caso
+    assert lim == ["covenants de 3 de 9 componentes: holgura sobre los declarados",
+                   ("sin estadísticos de orden de las holguras frente a covenants: menos de 7 componentes distintos; con "
+                    "tan pocos, el mínimo, los cuartiles y el máximo darían la cifra de cada componente (1.6)")]
 
 
 def test_rei_lev_el_borde_de_los_24_meses_y_el_margen_de_los_datos():
@@ -1024,11 +1027,23 @@ def test_rei_lev_el_borde_de_los_24_meses_y_el_margen_de_los_datos():
     assert _correr("REI-LEV-001", v, {"margen": 0.018})[0]["impacto_ffo_pct"] == pytest.approx(b["impacto_ffo_pct"])
 
 
+def _con_cuatro_mas(v):
+    """T-127 (H-10): el caso de control con cuatro sociedades más, todas con covenants (7: hay estadísticos de orden)."""
+    v["componentes"] += [{"id": f"S{4 + i}", "gav": 500.0 + 70 * i, "deuda": 200.0 + 15 * i, "caja": 8.0 + i,
+                          "ebitda": 25.0 + 2 * i, "gastos_financieros": 6.0 + i, "ffo": 15.0 + i,
+                          "covenants": {"ltv_max": 0.6, "icr_min": 2.0},
+                          "vencimientos": [{"fecha": "2029-06-30", "importe": 200.0 + 15 * i, "coste": 0.03}]}
+                         for i in range(4)]
+    return v
+
+
 def test_rei_lev_covenants_incumplidos_y_sin_covenants():
     v, _ = _metodo("REI-LEV-001")
     v["componentes"][1]["covenants"] = {"ltv_max": 0.45, "icr_min": 3.0}  # S2: LTV 50 % e ICR 2,7
     c = _correr("REI-LEV-001", v)[0]["covenants"]
-    assert c["en_incumplimiento_pct"] == 50.0 and c["holgura_ltv_pp"]["minimo"] == pytest.approx(-5.0)
+    assert c["en_incumplimiento_pct"] == pytest.approx(100 / 3) and c["holgura_ltv_pp"] is None   # T-127: 3 (< 7)
+    c = _correr("REI-LEV-001", _con_cuatro_mas(copy.deepcopy(v)))[0]["covenants"]
+    assert c["en_incumplimiento_pct"] == pytest.approx(100 / 7) and c["holgura_ltv_pp"]["minimo"] == pytest.approx(-5.0)
     assert c["holgura_icr_veces"]["minimo"] == pytest.approx(-0.3)
     assert c["caida_valor_que_agota_ltv_pct"]["maximo"] == pytest.approx((0.5 / 0.45 - 1) * 100)
     for comp in v["componentes"]:
@@ -1668,7 +1683,9 @@ def test_r02_h02_rei_lev_incumple_quien_falla_uno_solo_de_los_dos_covenants(cove
     v, p = _metodo("REI-LEV-001")
     v["componentes"][1]["covenants"] = covenants
     c = _correr("REI-LEV-001", v, p)[0]["covenants"]
-    assert c["n_componentes"] == 2 and c["en_incumplimiento_pct"] == 50.0
+    assert c["n_componentes"] == 3 and c["en_incumplimiento_pct"] == pytest.approx(100 / 3)   # T-127: S3 los declara
+    c = _correr("REI-LEV-001", _con_cuatro_mas(v), p)[0]["covenants"]                       # T-127: 7, con orden
+    assert c["n_componentes"] == 7 and c["en_incumplimiento_pct"] == pytest.approx(100 / 7)
     assert (c["holgura_ltv_pp"]["minimo"] < 0) != (c["holgura_icr_veces"]["minimo"] < 0)   # falla uno solo
 
 

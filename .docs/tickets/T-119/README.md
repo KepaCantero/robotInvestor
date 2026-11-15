@@ -2,7 +2,7 @@
 
 | Campo | Valor |
 | --- | --- |
-| Estado | EN QA |
+| Estado | CERRADO |
 | Pieza | `bloque_a/11_Ejecutor` (`bloque_a/motor/`) y el Catálogo del Motor (`bloque_a/04_Motor_conocimiento_y_catalogo/`, corpus congelado) |
 | Planifica · implementa · QA | claude (un agente, en una copia de trabajo propia, rama `p2-trabajo`) · el mismo · un revisor que no implementó |
 | Aprobación del operador | 2026-11-12: autorización para promover en el Catálogo las fichas que superen sus casos de control, re-congelando el corpus (la misma de T-106 y T-112). Las decisiones de método que la ficha deja abiertas las toma el agente y las apunta como `[PROPUESTO]` |
@@ -103,3 +103,4 @@ Todo lo de T-112, con las correcciones de sus dos QA aplicadas desde el principi
 - 2026-11-13 · EN QA · claude · las 10 fichas con código y casos de control superados (33 en total); 1301 pruebas nuevas y 124 mutantes sin vivos; promovidas en el Catálogo (81 IMPLEMENTADO, ninguna en DOCUMENTADO) y corpus re-congelado; decisiones de método en INC-T119-01; detalle en `analisis-tecnico.md` y `pruebas.md`. Sin `git push`: commits locales en la rama `p2-trabajo`
 - 2026-11-14 · NO APTO (QA r01) · revisor independiente · CA-5 no se cumple (H-02: 8 mutantes no equivalentes vivos) y un medio de frontera con el Bloque B (H-01: REI-LEV-001 sirve las cifras de un emisor con un solo componente); bajos H-03 a H-05 y heredados H-06 a H-09. Vuelve a `ri-implementar`
 - 2026-11-14 · EN QA (r02) · claude · H-01 a H-09 corregidos: mínimo de componentes distintos y rechazo de clones (FIR-CRED, REI-LEV, CHR-TOKEN y REI-NAV), un solo token solo con `ambito_es_red`; pruebas que matan los 8 mutantes; TIR con varias soluciones contadas en una rejilla; LN-PME y el IC de la tendencia declarados en la entrega; rangos de dominio enumerados en INC-T119-01; caché que distingue tipos y configuración; solicitante y argumentos de `servir` comprobados (con T-121, H-02). Detalle en `analisis-tecnico.md` («Ronda r02») y `pruebas.md`. Sin `git push`: commits locales en la rama `t119r02`
+- 2026-11-14 · CERRADO (14-11-2026): QA r02 APTO; los ocho mutantes vivos de la r01 mueren. Hallazgos abiertos de la QA r02 (H-10 media, H-11 baja) en T-127 · revisor nuevo sin contexto (`qa.md`)

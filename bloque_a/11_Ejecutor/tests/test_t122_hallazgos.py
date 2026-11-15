@@ -23,6 +23,7 @@ G = [DIGITOS[i:i + 4] for i in range(2, 22, 4)]
     "ES" + DIGITOS[:2] + " " + " ".join([G[0], G[1], G[2][:2], G[2][2:] + G[3] + G[4]]),   # formato impreso: 4 4 2 10
     "ES" + DIGITOS[:2] + "  " + "  ".join(G),                                 # dos espacios
     "ES" + DIGITOS[:2] + "- " + "- ".join(G),                                 # guion y espacio
+    "ES" + DIGITOS[:2] + "   " + "   ".join(G),                               # tres separadores (T-123 r02, H-01)
     "ES" + DIGITOS[:2] + "\t" + "\t".join(G),
     "cobren en ES" + DIGITOS + " gracias",                                    # todo junto, como antes
     "es" + DIGITOS[:2] + " " + " ".join(G), "Es" + DIGITOS,                   # en minúsculas
@@ -34,7 +35,7 @@ def test_t120_h01_el_iban_se_detecta_en_sus_formas_corrientes(texto):
 @pytest.mark.parametrize("texto", [
     "ES" + DIGITOS[:2] + " " + " ".join(G)[:-1],                              # una cifra de menos
     "ES" + DIGITOS[:2] + " " + " ".join(G) + "0",                             # una de más
-    "ES" + DIGITOS[:2] + "   " + "   ".join(G),                               # tres separadores seguidos
+    "ES" + DIGITOS[:2] + "    " + "    ".join(G),                             # cuatro separadores (T-123 r02: tres sí)
     "RES" + DIGITOS, "xES" + DIGITOS,                                         # pegado a una letra
     "ISIN ES0113900J37 y ES0000012B88", "El índice ES50 cerró en 4 900 puntos el 2026-06-05.",
     "Entre 2100 0418 4502 y 0005 1332 hay series de cuatro cifras.",
@@ -127,3 +128,17 @@ def test_t113_h10_un_diccionario_con_claves_que_no_son_texto_dentro_de_un_conjun
     """Como antes de T-113: un diccionario con claves que no son texto es un error del llamador."""
     with pytest.raises(TypeError):
         contenido_sensible({"a": frozenset({_DictConHash({("x", 1): "abcdef"})})})
+
+
+# ---------------------------------------------------------------- T-122 QA r01 · H-14
+@pytest.mark.parametrize("max_n", [0, -1, 11, True, 2.0, "3"])
+def test_h14_max_n_explicito_fuera_de_rango_falla_cerrado(tmp_path, max_n):
+    ev = Evaluador(Almacen(tmp_path), None, None, config_pruebas(), None)
+    with pytest.raises(ValueError):
+        ev.lecciones_vigentes(AS_OF, max_n=max_n)
+
+
+def test_h14_max_n_explicito_valido_se_respeta(tmp_path):
+    ev = Evaluador(Almacen(tmp_path), None, None, config_pruebas(), None)
+    assert ev.lecciones_vigentes(AS_OF, max_n=1) == [] and ev.lecciones_vigentes(AS_OF, max_n=LECCIONES_POR_ENCARGO_MAX) == []
+

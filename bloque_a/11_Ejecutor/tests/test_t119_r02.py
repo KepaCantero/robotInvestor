@@ -132,8 +132,10 @@ def test_h01_chr_token_un_solo_token_solo_si_el_ambito_es_la_propia_red(tmp_path
     for malo in ("sí", 1, [True]):
         with pytest.raises(ErrorFicha, match="«ambito_es_red» debe ser true o false"):
             _correr("CHR-TOKEN-001", {**v, "ambito_es_red": malo}, p)
-    # declarado como la propia red, se sirve y se dice en la entrega
-    r = _servir(_motor(tmp_path), "CHR-TOKEN-001", {**uno, "ambito": "red TKA", "ambito_es_red": True}, p)
+    # declarado como la propia red, se sirve y se dice en la entrega. T-127 (H-10): la red es una de `redes_propias` y el
+    # token, su token nativo (antes valía cualquier ámbito, como «red TKA»: lo comprueba `test_t127_hallazgos.py`)
+    red = {**uno, "tokens": [{**uno["tokens"][0], "id": "BTC"}], "ambito": "Bitcoin", "ambito_es_red": True}
+    r = _servir(_motor(tmp_path), "CHR-TOKEN-001", red, p)
     assert r["estado"] == "SERVED_WITH_LIMITATIONS" and r["resultado"]["n_tokens"] == 1
     assert any("un solo token: el ámbito declarado es la propia red" in x for x in r["limitaciones"])
     assert r["resultado"]["fdv_sobre_capitalizacion_veces"] == pytest.approx(1.0e9 / 6.0e8)

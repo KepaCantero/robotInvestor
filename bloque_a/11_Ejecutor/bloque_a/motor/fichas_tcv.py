@@ -33,7 +33,7 @@ import numpy as np
 import pandas as pd
 from scipy import stats
 
-from .operaciones import ErrorFicha
+from .operaciones import ErrorFicha, dia
 
 Resultado = tuple[dict[str, Any], list[str]]
 
@@ -294,20 +294,23 @@ _ISO = re.compile(r"^\d{4}-\d{2}-\d{2}([T ].*)?$")
 
 
 def _fecha(x: Any, que: str) -> date:
-    """Fecha ISO (texto «AAAA-MM-DD»), `date` o `Timestamp`. Los números se rechazan (H-11: 20261110 no es fecha)."""
+    """Fecha ISO (texto «AAAA-MM-DD»), `date` o `Timestamp`. Los números se rechazan (H-11: 20261110 no es fecha).
+    T-127 (QA r01 de T-121, H-08): con hora, el día es el de `operaciones.dia` (con zona horaria, el día en UTC), como en
+    las demás fichas con datos en línea; antes se tomaban los diez primeros caracteres (el día local)."""
     if isinstance(x, pd.Timestamp):
         if pd.isna(x):
             raise ErrorFicha(f"{que}: fecha vacía (NaT)")
-        return x.date()
+        return dia(x).date()
     if isinstance(x, datetime):
-        return x.date()
+        return dia(pd.Timestamp(x)).date()
     if isinstance(x, date):
         return x
     if not isinstance(x, str) or not _ISO.match(x.strip()):
         raise ErrorFicha(f"{que}: fecha no válida ({str(x)[:40]!r}); se espera texto ISO «AAAA-MM-DD»")
     try:
-        return date.fromisoformat(x.strip()[:10])
-    except ValueError as e:
+        d = date.fromisoformat(x.strip()[:10])
+        return d if len(x.strip()) == 10 else dia(pd.Timestamp(x.strip())).date()
+    except (ValueError, OverflowError) as e:
         raise ErrorFicha(f"{que}: fecha no válida ({x!r})") from e
 
 
@@ -338,7 +341,7 @@ def _corte(ent: dict[str, Any]) -> date | None:
             raise ValueError("vacía")
     except (TypeError, ValueError, OverflowError) as e:
         raise ErrorFicha(f"fecha de corte de la petición ilegible ({str(fc)[:40]})") from e
-    return (t if t.tz is None else t.tz_convert(None)).date()
+    return dia(t).date()   # T-127 (H-08): el criterio de día común
 
 
 def _hasta_corte(fechas: Any, corte: date | None, que: str) -> None:
