@@ -60,6 +60,18 @@ MUTANTES = [
     ("T-148", "M31 lecturas de la búsqueda sin los reenvíos", EST, "max_usos * vueltas * (vueltas + 1) / 2", "max_usos", P148),
     ("T-148", "M32 sin el aviso de la historia antigua", CD,
      '            f["aviso"] = f"dato inválido en la historia, anterior', '            pass  # f"dato inválido en la historia, anterior', P148),
+    # T-148 r02 (QA r01 de T-148)
+    ("T-148", "M33 H-01: con T-146 vuelve la frase de que el presupuesto acota lo leído", EST,
+     '    salvo = "salvo lo que lee cada búsqueda (S5) y lo que la entrada real pase del margen de S1"',
+     '    salvo = ("con T-146, el presupuesto acota también lo que lee cada búsqueda" if con_t146 and c["cota"] == c["cota_presupuesto"] else "salvo lo que lee cada búsqueda (S5) y lo que la entrada real pase del margen de S1")', P148),
+    ("T-148", "M34 H-01: el peso es siempre el de la cota por llamadas", EST,
+     '"usd_por_mil_tokens_leidos_por_busqueda": lecturas_presupuesto if manda_presupuesto else lecturas,',
+     '"usd_por_mil_tokens_leidos_por_busqueda": lecturas,', P148),
+    ("T-148", "M35 H-01: el peso de la cota por presupuesto, una vuelta", EST,
+     "una = (max_usos * vueltas * precio(", "una = (max_usos * precio(", P148),
+    ("T-148", "M36 H-03: AG-18/19/20 fuera de la COMÚN con T-146", EST,
+     '        bolsa = bolsa or ("COMUN" if con_t146 else None)', "        pass", P148),
+    ("T-148", "M37 H-03: opciones no excluyentes", EST, "    t146 = ap.add_mutually_exclusive_group()", "    t146 = ap", P148),
 ]
 vivos = 0
 for ticket, nombre, rel, viejo, nuevo, pruebas in MUTANTES:

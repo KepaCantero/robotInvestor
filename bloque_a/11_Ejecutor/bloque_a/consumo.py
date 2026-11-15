@@ -135,6 +135,15 @@ class Presupuesto:
     def _base(self, clase: str) -> float:
         return self.asignado.get(clase, 0.0) * self._escala
 
+    @property
+    def escala(self) -> float:
+        """T-146 r02 (QA r01, H-06): la escala de las bolsas (1 salvo que el reparto pase del ciclo)."""
+        return self._escala
+
+    def base(self, clase: str) -> float:
+        """T-146 r02: la base efectiva de la bolsa (lo asignado por la escala), sobre la que se aplican los márgenes."""
+        return self._base(clase)
+
     def _limite(self, clase: str) -> float:
         """Límite actual de la bolsa: la base con el margen sin autorización y lo autorizado (con el cerrojo tomado)."""
         return self._base(clase) * (1 + float(parametro(self.cfg, "presupuesto_uc.ampliacion_sin_autorizacion"))) + self.ampliado[clase]
@@ -275,9 +284,12 @@ class Presupuesto:
             self.cierres.append({"clase": clase, "fase": fase, "motivo": motivo})
 
     def resumen(self) -> dict:
+        """Por bolsa: lo asignado (T-146 r02, QA r01, H-06: escalado si el reparto pasa del ciclo; `escala`), lo ampliado y lo
+        consumido."""
         self.liquidar_primas()
         with self._lock:
-            return {k: {"asignado": self.asignado.get(k, 0.0), "ampliado": round(self.ampliado[k], 4),
+            return {k: {"asignado": round(self._base(k), 6) if self._escala < 1 else self.asignado.get(k, 0.0),
+                        "ampliado": round(self.ampliado[k], 4),
                         "consumido": round(self.consumido[k], 4)} for k in sorted(set(self.asignado) | set(self.consumido))}
 
 
@@ -314,8 +326,9 @@ class ReservaLlamada:
     caché (no hay garantía de lectura), `max_tokens` de salida y las búsquedas al máximo, convertido a UC con
     `Contabilidad.uc_de`. Si no cabe, pide la ampliación con la regla del ejecutor (`ampliar`); si se deniega, recorta la
     salida a lo que cabe (nunca por debajo de `presupuesto_uc.reserva.salida_minima_tokens`) y, si ni eso cabe, la petición
-    no sale (`negada` lleva el motivo). `pagar` cambia la reserva de una petición por su coste real, que queda apartado
-    hasta que `cerrar` lo suelta y `Bloque._cargar` lo carga. Una llamada corre en un solo hilo."""
+    no sale (`negada` lleva el motivo). `pagar` cambia la reserva de una petición por su coste real (con lo leído de caché
+    contado como escrito, T-146 r02), que queda apartado hasta que `Bloque._cargar` carga lo real y `cerrar` lo suelta. Una
+    llamada corre en un solo hilo."""
 
     def __init__(self, presupuesto: Presupuesto, bolsa: str, contabilidad: Contabilidad, agente: str,
                  ampliar: Callable[[float], bool] | None = None) -> None:
@@ -327,6 +340,11 @@ class ReservaLlamada:
         cfg = presupuesto.cfg
         self.factor = float(parametro(cfg, "presupuesto_uc.reserva.factor_tokens_entrada"))
         self.salida_minima = int(parametro(cfg, "presupuesto_uc.reserva.salida_minima_tokens"))
+        # T-146 r02 (QA r01, H-04): lo que lee cada búsqueda llega como entrada de la misma petición; se reserva esto por
+        # búsqueda posible (`[PROPUESTO]`, sin dato medido: por defecto 0, y lo que pase queda en `excesos_reserva`)
+        self.lectura_por_busqueda = int(parametro(cfg, "presupuesto_uc.reserva.tokens_lectura_por_busqueda"))
+        if self.lectura_por_busqueda < 0:
+            raise ValueError("presupuesto_uc.reserva.tokens_lectura_por_busqueda no puede ser negativo")
         self.tokens_salida_por_uc = float(parametro(cfg, "uc.tokens_salida_por_uc"))
         self._abiertas: list[tuple[float, int]] = []   # (peor caso en UC, tokens de entrada estimados sin margen)
         self._pagado = Uso()                           # lo pagado petición a petición en la generación en curso
@@ -342,8 +360,8 @@ class ReservaLlamada:
     def reservar(self, system: list[dict], mensajes: list[dict], herramientas: list[dict] | None, max_tokens: int) -> int | None:
         """Reserva la siguiente petición. Devuelve el `max_tokens` con el que puede salir o None si no cabe."""
         bruto = tokens_de_peticion(system, mensajes, herramientas)
-        tokens = math.ceil(bruto * self.p.factor_de(self.bolsa, self.factor))
         busq = busquedas_maximas(herramientas)
+        tokens = math.ceil(bruto * self.p.factor_de(self.bolsa, self.factor)) + busq * self.lectura_por_busqueda
         completo = self._peor(tokens, int(max_tokens), busq)
         concedido = self.p.reservar(self.bolsa, completo) or (
             self.ampliar is not None and self.ampliar(completo) and self.p.reservar(self.bolsa, completo))
@@ -370,20 +388,29 @@ class ReservaLlamada:
         return mt
 
     def pagar(self, uso: Uso) -> None:
-        """La petición más antigua sin pagar ha terminado con `uso`: suelta su reserva y aparta su coste real."""
+        """La petición más antigua sin pagar ha terminado con `uso`: suelta su reserva y aparta su coste real.
+
+        T-146 r02 (QA r01, H-02): lo apartado cuenta lo leído de caché como escrito. Lo leído depende de si otro hilo escribió
+        antes el prefijo compartido, y con lo apartado se decide si caben la reparación y las continuaciones de la misma
+        llamada: contado así, la decisión no depende del orden de los hilos (T-88). Es lo real o algo más; lo real se carga
+        después con `Bloque._cargar`.
+        T-146 r02 (QA r01, H-01): el factor de tokens solo se observa en las peticiones sin búsquedas. En las que buscan, la
+        entrada cobrada trae lo que leyeron las búsquedas (no es error del tokenizador) y subiría el factor de toda la bolsa."""
         w, bruto = self._abiertas.pop(0) if self._abiertas else (0.0, 0)
         self.p.liberar(self.bolsa, w)
-        real = self.cont.uc_de(uso)
+        entrada = uso.entrada + uso.cache_escritura + uso.cache_lectura
+        real = self.cont.uc_de(Uso(entrada=uso.entrada, salida=uso.salida, cache_escritura=uso.cache_escritura + uso.cache_lectura,
+                                   busquedas_web=uso.busquedas_web))
         self.p.retener_real(self.bolsa, real)
         self._apartado += real
         self._pagado.sumar(uso)
-        entrada = uso.entrada + uso.cache_escritura + uso.cache_lectura
         if self.prefijo is None:
             self.prefijo = uso.cache_lectura + uso.cache_escritura
-        if bruto and entrada > bruto * self.p.factor_de(self.bolsa, self.factor):
+        if bruto and not uso.busquedas_web and entrada > bruto * self.p.factor_de(self.bolsa, self.factor):
             self.p.observar_factor(self.bolsa, entrada / bruto)   # el margen no bastó: las siguientes peticiones usan lo visto
         if real > w + 1e-4:
-            self.p.anotar("excesos", {"clase": self.bolsa, "agente": self.agente, "reservado_uc": round(w, 4), "real_uc": round(real, 4)})
+            self.p.anotar("excesos", {"clase": self.bolsa, "agente": self.agente, "reservado_uc": round(w, 4), "real_uc": round(real, 4),
+                                      "busquedas_web": int(uso.busquedas_web)})
 
     def pagar_resto(self, uso_total: Uso) -> None:
         """Al volver del cliente: lo que la generación costó y no se pagó petición a petición se paga como una petición, y
@@ -396,8 +423,13 @@ class ReservaLlamada:
         self._abiertas.clear()
         self._pagado = Uso()
 
+    @property
+    def apartado(self) -> float:
+        """Lo apartado por las peticiones ya pagadas de esta llamada (aún sin cargar)."""
+        return self._apartado
+
     def cerrar(self) -> None:
-        """Suelta lo reservado y lo apartado de esta llamada (después se carga lo real con `Bloque._cargar`)."""
+        """Suelta lo reservado y lo apartado de esta llamada (`Bloque._cargar` carga lo real antes: T-146 r02, H-08)."""
         for w, _ in self._abiertas:
             self.p.liberar(self.bolsa, w)
         self._abiertas.clear()

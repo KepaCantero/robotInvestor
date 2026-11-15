@@ -260,15 +260,23 @@ class Bloque:
         try:
             r = self.agentes.invocar(agente, contrato, self._vista(mensaje), esquema, instrucciones, self._vista(ctx), run_id,
                                      clase, fase, permitir_web, guarda=guarda)
-        finally:
-            if guarda is not None:
+        except BaseException:
+            if guarda is not None and presupuesto is not None:
+                # T-146 r02 (QA r01, H-05): lo ya pagado de una llamada que se cae no se pierde (el ciclo puede seguir en
+                # modo degradado): queda cargado en la bolsa tal como se apartó (lo leído de caché, como escrito)
+                presupuesto.cargar(bolsa, guarda.apartado)
                 guarda.cerrar()
+            raise
         if presupuesto is not None and guarda is not None and guarda.negada:
             presupuesto.cierre_parcial(bolsa, fase or contrato, guarda.negada)
+        if presupuesto is not None and r.estado != "SIN_PRESUPUESTO":
+            # T-146 r02 (QA r01, H-08): lo real se carga antes de soltar lo apartado; entre medias la bolsa lo cuenta dos
+            # veces (prudente), nunca ninguna
+            self._cargar(presupuesto, bolsa, agente, r, guarda.prefijo if guarda is not None else None)
+        if guarda is not None:
+            guarda.cerrar()
         if r.estado == "SIN_PRESUPUESTO":
             return None
-        if presupuesto is not None:
-            self._cargar(presupuesto, bolsa, agente, r, guarda.prefijo if guarda is not None else None)
         if r.datos is not None:
             r.datos = self._real(r.datos)
         return r
@@ -564,8 +572,8 @@ class Bloque:
         # T-146: el informe de aprendizaje (AG-20) corre antes de que el ciclo reparta su presupuesto; lo hace contra la bolsa
         # COMÚN con lo que esta tiene como mínimo (o la de `presupuesto_override`), y lo consumido pasa después a esa bolsa
         tope_ciclo = float(parametro(self.cfg, "presupuesto_uc.ciclo_semanal_max"))
-        pres_c5 = Presupuesto({"COMUN": float((presupuesto_override or {}).get(
-            "COMUN", float(parametro(self.cfg, "presupuesto_uc.fraccion_minima_comun")) * tope_ciclo))}, self.cfg)
+        pres_c5 = Presupuesto({"COMUN": self._comun_minimo_c5(as_of, tipo, alcance, nivel_forzado, presupuesto_override, tope_ciclo)},
+                              self.cfg)
         self._informe_aprendizaje(res_eval, as_of, run_id, pres_c5)
         self._comunicar_fiabilidad(res_eval, run_id)
         if self.v6 and v6.op(self, "cobertura.registrar"):   # T-101 (idea 4): descartes muestreados cuyo horizonte ya venció
@@ -605,17 +613,11 @@ class Bloque:
             nivel = {c: "N2" if gc0[c]["cambio_material"] else "N1" for c in clases}
         else:
             nivel = {c: nivel_forzado or ("N3" if tipo == "PROFUNDIZACION" else "N2") for c in clases}
-        asign = {c: float(parametro(self.cfg, f"presupuesto_uc.{nivel[c]}")) for c in clases}
-        if tipo != "PERIODICO" and any(nivel[c] == "N3" for c in clases):
-            asign = {c: float(parametro(self.cfg, "presupuesto_uc.N3")) / max(len(clases), 1) for c in clases}
-        asign["COMUN"] = max(tope_ciclo - sum(asign.values()), float(parametro(self.cfg, "presupuesto_uc.fraccion_minima_comun")) * tope_ciclo)
-        if presupuesto_override:
-            asign.update(presupuesto_override)
-        if self.v6:   # T-101: la parte de prospectiva y refutación de cada tipo pasa a la bolsa del ciclo (el total no cambia;
-            asign = v6.repartir_presupuesto(self, asign, clases,   # después del override (H-07 de la QA r01) y respetando el de la
-                                            (presupuesto_override or {}).get(v6.BOLSA_GLOBAL))   # bolsa del ciclo (H-18 de la r02)
+        asign = self._reparto(tipo, clases, nivel, presupuesto_override, tope_ciclo)
         presupuesto = Presupuesto(asign, self.cfg, tope_total=tope_ciclo)   # T-146: la suma de los límites no pasa del ciclo
         presupuesto.absorber(pres_c5)
+        if presupuesto.escala < 1:   # T-146 r02 (QA r01, H-06): CT-05 da lo asignado de verdad (escalado), como F5
+            asign = {k: round(presupuesto.base(k), 6) for k in asign}
         memoria = {"opp_vigentes": [v["opp_id"] for c in clases for v in vigentes[c]],
                    "tnd_activas": [t["tnd_id"] for t in self.almacen.estado("F1", as_of).values() if t.get("estado") not in ("archivada", "invalidada")][:50],
                    "lec_aplicables": [l["id"] for l in self.evaluador.lecciones_vigentes(as_of)],
@@ -744,6 +746,42 @@ class Bloque:
             run_id=run_id, tipo_mensaje="RETORNO", estado="COMPLETO")
         for f in fue:
             self.almacen.escribir("F6", "AG-20", {"tipo_entrada": "FUE", "id": f["fue_id"], "comunicado_ct19": msg["msg_id"]})
+
+    def _reparto(self, tipo: str, clases: list[str], nivel: dict[str, str], presupuesto_override: dict[str, float] | None,
+                 tope_ciclo: float) -> dict[str, float]:
+        """El presupuesto asignado a cada bolsa del ciclo (§7.2 y Anexo A; T-146 r02: sacado de `ciclo` para calcular antes de
+        C5 el de su peor caso, `_comun_minimo_c5`)."""
+        asign = {c: float(parametro(self.cfg, f"presupuesto_uc.{nivel[c]}")) for c in clases}
+        if tipo != "PERIODICO" and any(nivel[c] == "N3" for c in clases):
+            asign = {c: float(parametro(self.cfg, "presupuesto_uc.N3")) / max(len(clases), 1) for c in clases}
+        asign["COMUN"] = max(tope_ciclo - sum(asign.values()), float(parametro(self.cfg, "presupuesto_uc.fraccion_minima_comun")) * tope_ciclo)
+        if presupuesto_override:
+            asign.update(presupuesto_override)
+        if self.v6:   # T-101: la parte de prospectiva y refutación de cada tipo pasa a la bolsa del ciclo (el total no cambia;
+            asign = v6.repartir_presupuesto(self, asign, clases,   # después del override (H-07 de la QA r01) y respetando el de la
+                                            (presupuesto_override or {}).get(v6.BOLSA_GLOBAL))   # bolsa del ciclo (H-18 de la r02)
+        return asign
+
+    def _comun_minimo_c5(self, as_of, tipo: str, alcance: dict | None, nivel_forzado: str | None,
+                         presupuesto_override: dict[str, float] | None, tope_ciclo: float) -> float:
+        """T-146 r02 (QA r01, H-03): la bolsa con la que corre el informe de aprendizaje (AG-20, C5), antes del reparto.
+
+        Es la de antes (lo que COMÚN tiene como mínimo, `fraccion_minima_comun` × ciclo, o su `presupuesto_override`), salvo
+        que el reparto pueda pasar del ciclo: entonces, la base de COMÚN ya escalada en el peor reparto posible, para que lo
+        que consume AG-20 quepa siempre en el límite de COMÚN del ciclo. El peor reparto: los tipos que se pueden analizar
+        (los pedidos que estén activos en F10) con el nivel de más presupuesto que les puede tocar. La base escalada de
+        COMÚN baja cuando sube lo de los tipos, así que con cualquier reparto real es igual o mayor."""
+        minimo = float((presupuesto_override or {}).get(
+            "COMUN", float(parametro(self.cfg, "presupuesto_uc.fraccion_minima_comun")) * tope_ciclo))
+        activas = list(self.f10(as_of).get("P-02") or perfiles_activos(self.cfg))
+        clases = [c for c in ((alcance or {}).get("clases") or activas) if c in activas]
+        if tipo == "PERIODICO" and not nivel_forzado:   # GC0 elige N1 o N2: el de más presupuesto
+            n = max(("N1", "N2"), key=lambda k: float(parametro(self.cfg, f"presupuesto_uc.{k}")))
+        else:
+            n = nivel_forzado or ("N3" if tipo == "PROFUNDIZACION" else "N2")
+        peor = Presupuesto(self._reparto(tipo, clases, {c: n for c in clases}, presupuesto_override, tope_ciclo), self.cfg,
+                           tope_total=tope_ciclo)
+        return min(minimo, peor.base("COMUN"))
 
     def _informe_aprendizaje(self, res_eval: dict, as_of, run_id: str, presupuesto: Presupuesto | None = None) -> None:
         if not res_eval or not res_eval.get("resueltos") or not (self.cfg.get("evaluacion") or {}).get("llm_informe_aprendizaje", True):
@@ -1901,7 +1939,9 @@ class Bloque:
             "fecha_inicio": resultado["as_of"], "fecha_entrega": self.reloj.ahora(), "fecha_objetivo": resultado["as_of"],
             "alcance": alcance or {"clases": list(resultado["nivel_por_clase"])}, "horizontes": hz, "prioridad": prioridad,
             "nivel_por_clase": resultado["nivel_por_clase"], "gc0_por_clase": gc0, "decisiones_puertas": dec,
-            "presupuesto": presupuesto.resumen(), "cierres_parciales": sorted(presupuesto.cierres, key=lambda c: (c["clase"], c["fase"], c["motivo"])),   # H-09
+            "presupuesto": presupuesto.resumen(),
+            **({"escala_presupuesto": round(presupuesto.escala, 6)} if presupuesto.escala < 1 else {}),   # T-146 r02 (H-06)
+            "cierres_parciales": sorted(presupuesto.cierres, key=lambda c: (c["clase"], c["fase"], c["motivo"])),   # H-09
             # T-146: las peticiones que salieron con la salida recortada para caber, y las que costaron más de lo reservado
             **({"recortes_salida": sorted(presupuesto.recortes, key=lambda x: (x["clase"], x["agente"], x["peticion"], x["max_tokens_enviado"]))}
                if presupuesto.recortes else {}),

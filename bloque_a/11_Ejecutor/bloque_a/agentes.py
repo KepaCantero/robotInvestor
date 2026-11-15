@@ -39,17 +39,22 @@ class ResultadoAgente:
 
 
 def extraer_json(texto: str) -> Any:
+    """El JSON de una respuesta. T-146 r02 (QA r01, H-05): uno demasiado anidado para leerlo (`RecursionError`) es un JSON
+    no válido (`ValueError`), como cualquier otro: la llamada pide su reparación o queda PARCIAL, y el ciclo sigue."""
     t = texto.strip()
     if t.startswith("```"):
         t = re.sub(r"^```[a-zA-Z]*\n?", "", t)
         t = re.sub(r"\n?```\s*$", "", t)
     try:
-        return json.loads(t)
-    except json.JSONDecodeError:
-        i, j = t.find("{"), t.rfind("}")
-        if i >= 0 and j > i:
-            return json.loads(t[i:j + 1])
-        raise
+        try:
+            return json.loads(t)
+        except json.JSONDecodeError:
+            i, j = t.find("{"), t.rfind("}")
+            if i >= 0 and j > i:
+                return json.loads(t[i:j + 1])
+            raise
+    except RecursionError:
+        raise ValueError("JSON demasiado anidado para leerlo") from None
 
 
 def errores_esquema(datos: Any, esquema: dict) -> list[str]:
@@ -159,9 +164,13 @@ class Agentes:
                     errores = errores_esquema(datos, esquema)
                     if r.truncada or r.stop_reason == "max_tokens":
                         errores.append("respuesta truncada por max_tokens")
-                except (json.JSONDecodeError, ValueError) as e:
-                    datos, errores = None, [f"JSON no válido: {e}"[:200]]
-                if datos is not None and contiene_credenciales(datos):
+                except (json.JSONDecodeError, ValueError, RecursionError) as e:   # T-146 r02 (H-05): también si no se puede
+                    datos, errores = None, [f"JSON no válido: {e}"[:200]]       # validar por lo anidado (falla cerrado)
+                try:
+                    con_credenciales = datos is not None and bool(contiene_credenciales(datos))
+                except RecursionError:   # T-146 r02 (H-05): demasiado anidado para comprobarlo: falla cerrado
+                    con_credenciales = True
+                if con_credenciales:
                     errores = ["respuesta bloqueada por R8"]
                     break
                 if not errores:

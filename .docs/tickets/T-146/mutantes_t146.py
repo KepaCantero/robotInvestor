@@ -10,7 +10,7 @@ from pathlib import Path
 COPIA = Path(sys.argv[1]).resolve()
 assert "t146_mut" in str(COPIA) and (COPIA / "bloque_a" / "11_Ejecutor" / "bloque_a").is_dir()
 CO, AG, LL, OR = (f"bloque_a/11_Ejecutor/bloque_a/{f}.py" for f in ("consumo", "agentes", "llm", "orquestacion"))
-PRUEBAS = ["tests/test_t146_presupuesto.py", "tests/test_t88_consumo.py"]
+PRUEBAS = ["tests/test_t146_presupuesto.py", "tests/test_t88_consumo.py"]   # r02: las pruebas r02 van en el primero
 MUTANTES = [
     ("M01", "la bolsa no comprueba lo que queda", CO, "if self._limite(clase) - self._ocupado(clase) + 1e-9 >= uc:", "if True:"),
     ("M02", "sin el margen del tokenizador", CO, "tokens = math.ceil(bruto * self.p.factor_de(self.bolsa, self.factor))",
@@ -48,6 +48,22 @@ MUTANTES = [
     ("M25", "G3 (AG-18) sin presupuesto", OR, "Nunca APTO por defecto.\", as_of, run_id,\n                                  presupuesto=presupuesto,",
      "Nunca APTO por defecto.\", as_of, run_id,\n                                  presupuesto=None,"),
     ("M26", "el exceso no se anota", CO, "        if real > w + 1e-4:", "        if False:"),
+    # r02 (QA r01): un mutante por corrección
+    ("M27", "H-01: el factor se observa también con búsquedas", CO, "if bruto and not uso.busquedas_web and entrada >",
+     "if bruto and entrada >"),
+    ("M28", "H-02: lo apartado cuenta lo leído de caché como lectura", CO,
+     "        real = self.cont.uc_de(Uso(entrada=uso.entrada,", "        real = self.cont.uc_de(uso) if True else self.cont.uc_de(Uso(entrada=uso.entrada,"),
+    ("M29", "H-03: la bolsa de C5 sin el peor reparto", OR, "        return min(minimo, peor.base(\"COMUN\"))", "        return minimo"),
+    ("M30", "H-05: extraer_json no convierte RecursionError", AG, "    except RecursionError:\n        raise ValueError(",
+     "    except ZeroDivisionError:\n        raise ValueError("),
+    ("M31", "H-08: lo apartado se suelta antes de cargar lo real", OR,
+     "        if presupuesto is not None and r.estado != \"SIN_PRESUPUESTO\":",
+     "        if guarda is not None:\n            guarda.cerrar()\n        if presupuesto is not None and r.estado != \"SIN_PRESUPUESTO\":"),
+    ("M32", "H-05: la llamada que se cae no carga lo pagado", OR, "                presupuesto.cargar(bolsa, guarda.apartado)",
+     "                pass"),
+    ("M33", "H-04: sin la lectura por búsqueda", CO, " + busq * self.lectura_por_busqueda", ""),
+    ("M34", "H-06: F5 sin lo asignado escalado", CO, "round(self._base(k), 6) if self._escala < 1 else", "None if False else"),
+    ("M35", "H-06: CT-05 sin lo asignado escalado", OR, "            asign = {k: round(presupuesto.base(k), 6) for k in asign}", "            pass"),
 ]
 
 

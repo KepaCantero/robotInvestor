@@ -147,15 +147,23 @@ def test_h01_la_tabla_de_llamadas_del_ciclo(est, tarifa, medida):
 
 
 def test_h01_la_cota_cubre_el_peor_camino_con_el_cliente_real(est, tarifa, medida, peor_camino):
-    usd, _r, _b = peor_camino
+    usd, r, b = peor_camino
     cfg = cargar_config()
     viejo = est.estimar(medida, tarifa["precios_por_millon"], 10.0, set(), 5, 1.35, 3, 1)["cota_superior"]
     nueva = est.cota_ciclo(medida, cfg, tarifa["precios_por_millon"], 10.0, 1.35)["cota"]
     # T-146: antes, este camino costaba más que la cifra de T-140 (la reescritura la pasaba) y eso mostraba que no era una
-    # cota; con el presupuesto que reserva el peor caso antes de cada petición, el camino se corta antes y la comparación
-    # con la cifra vieja deja de tener sentido. Queda lo que importa: el coste real no pasa de la cota
-    assert viejo > 0
+    # cota; con el presupuesto que reserva el peor caso antes de cada petición, el camino se corta antes. Queda lo que
+    # importa: el coste real no pasa de la cota
     assert usd <= nueva
+    # T-146 r02 (QA r01 de T-146, H-07; sustituye a un `assert viejo > 0` que no comprobaba nada): lo que fija T-146 es
+    # que todo lo gastado está en las bolsas, así que el coste del camino no pasa de lo consumido en UC al precio más alto
+    # de una UC entre los modelos que llamó; y el camino ya cortado queda por debajo de la cifra de T-140, que antes pasaba
+    uc = est._uc(b.cfg)
+    usd_por_uc = max(est._usd_por_uc(tarifa["precios_por_millon"][x["modelo"]], uc) for x in b.contabilidad.llamadas)
+    consumido = sum(v["consumido"] for v in r["presupuesto"].values())
+    assert consumido == pytest.approx(sum(x["uc"] for x in b.contabilidad.llamadas), abs=0.01)
+    assert 0 < usd <= consumido * usd_por_uc
+    assert usd < viejo
 
 
 def test_h01_el_presupuesto_se_pasa_y_la_cota_por_presupuesto_lo_cuenta(peor_camino):

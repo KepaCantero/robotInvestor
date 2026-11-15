@@ -2,7 +2,7 @@
 
 | Campo | Valor |
 | --- | --- |
-| Estado | EN CURSO (r02: QA r01 NO APTO) |
+| Estado | EN QA (r02: QA r01 NO APTO; r02 implementada y probada) |
 | Pieza | bloque_a (11_Ejecutor: `bloque_a/consumo.py`, `agentes.py`, `llm.py`, `orquestacion.py`, `config/por_defecto.yaml`, `README.md`; `tests/test_t146_presupuesto.py`, y un ajuste comentado en `tests/test_t88_consumo.py` y `tests/test_fase4_huecos.py`); `docs/incidencias.md` (INC-T146-01); `sistema_global/seguimiento/Decisiones_del_operador_Bloque_A.md` (§3) |
 | Planifica · implementa · QA | claude · claude · el otro agente o un revisor nuevo |
 | Aprobación del operador | 2026-11-15: modo sombra autorizado (Decisiones del operador, §1, «API real»); este ticket acota su gasto. Las decisiones nuevas van como `[PROPUESTO]` (INC-T146-01) |
@@ -15,7 +15,7 @@ Que **ninguna petición al modelo salga si su peor caso no cabe en lo que queda 
 ## Alcance
 
 - Entra: la reserva del peor caso petición a petición (primer intento, reparaciones y continuaciones de `pause_turn`); el cobro de la escritura de caché de los agentes compartidos sin que la liquidación pase una bolsa de su límite; AG-18, AG-19 y AG-20 dentro del presupuesto; las búsquedas web en UC; la suma de los límites del ciclo.
-- No entra: la consulta N0 (C3, fuera del ciclo y del modo sombra; ver INC-T146-01); lo que lee cada búsqueda (llega como entrada y se cobra después, no se reserva); `contratos.py` y `.docs/scripts/estimar_coste_ciclo_a.py` (los lleva otra copia); la deuda técnica; los esquemas de los contratos (no cambian).
+- No entra: la consulta N0 (C3, fuera del ciclo y del modo sombra; ver INC-T146-01); lo que lee cada búsqueda (llega como entrada y se cobra después; desde la r02 se reserva `presupuesto_uc.reserva.tokens_lectura_por_busqueda` por búsqueda posible, hoy 0 por falta de dato); `contratos.py` y `.docs/scripts/estimar_coste_ciclo_a.py` (los lleva otra copia); la deuda técnica; los esquemas de los contratos (no cambian).
 
 ## Diseño
 
@@ -48,7 +48,7 @@ Que **ninguna petición al modelo salga si su peor caso no cabe en lo que queda 
 
 ## Criterios de aceptación (binarios)
 
-1. CA-1: con el cliente real sobre un SDK falso de peor caso (reparaciones y continuaciones), solo divisas: ninguna bolsa supera su límite (asignado × 1,25 + ampliado ≤ asignado × 1,5), la suma no pasa de 240 × 1,5, todo lo gastado está en las bolsas, el ciclo termina PARCIAL con los cierres declarados y ninguna petición cuesta más de lo reservado.
+1. CA-1: con el cliente real sobre un SDK falso de peor caso (reparaciones y continuaciones), solo divisas: ninguna bolsa supera su límite (asignado × 1,25 + ampliado ≤ asignado × 1,5), la suma no pasa de 240 × 1,5, todo lo gastado está en las bolsas, el ciclo termina PARCIAL con los cierres declarados y ninguna petición cuesta más de lo reservado. **Salvedad (r02, QA r01, H-04; `[PROPUESTO]`, INC-T146-01):** el criterio vale con la entrada real dentro de 1,35 veces la aproximación de 3,6 caracteres por token (un margen sobre una aproximación, no una cota del tokenizador) y con las búsquedas leyendo como mucho lo reservado por búsqueda (`presupuesto_uc.reserva.tokens_lectura_por_busqueda`, hoy 0). Si no, esa petición ya está pagada: queda en `excesos_reserva` (con sus búsquedas) y su bolsa puede pasar de su límite en lo que costó de más; después no sale ninguna más de esa bolsa. Es lo que se mide en el modo sombra para que el operador fije los dos números.
 2. CA-2: lo mismo con los 12 tipos y 6 hilos; con 4 tipos y 4 hilos, dos ejecuciones dan el mismo presupuesto, cierres y recortes en F5; también con el diseño V6.
 3. CA-3: AG-18, AG-19 y AG-20 cargan en COMÚN (todo lo gastado está en las bolsas); sin sitio, AG-20 no sale y se declara; los controles admiten ampliación con su AUT-.
 4. CA-4: las búsquedas cuentan en UC (`uc_de`, `resumen`) y se reservan al máximo.
@@ -82,3 +82,22 @@ En el ticket: `peor_caso_por_bolsa.py` (UC por bolsa con el peor caso, contra el
 - 2026-11-15 · ABIERTO · creado con nuevo_ticket.sh
 - 2026-11-15 · PLANIFICADO · claude · plan sobre el análisis de T-145 y el Documento 0 (§7.2, §10.3, R16, Anexo A)
 - 2026-11-15 · EN QA · claude · implementado y probado (sin commit: lo hace quien coordina)
+- 2026-11-15 · EN CURSO (r02) · claude · QA r01 NO APTO (H-01 y H-02 altas, H-03 y H-04 medias, H-05 a H-10 bajas)
+- 2026-11-15 · EN QA · claude · r02 implementada y probada en la copia `t146r02`; commit local «wip local: T-146 r02 y T-148 r02»
+
+## Ronda r02 (QA r01 NO APTO)
+
+| Hallazgo | Qué se hizo |
+| --- | --- |
+| H-01 (alta) | `ReservaLlamada.pagar` solo observa el factor del tokenizador en las peticiones sin búsquedas (en las otras, la entrada trae lo leído). Lo que pasa de la reserva sigue en `excesos_reserva`, ahora con `busquedas_web`. Con 3 000 tokens por búsqueda, la Prospectiva de los 12 tipos vuelve a 18 llamadas (en la r01, 14). Pruebas: `test_r02_h01_lo_que_leen_las_busquedas_no_sube_el_factor_de_la_bolsa`, `test_r02_h01_en_un_ciclo_la_lectura_de_las_busquedas_no_cierra_fases` |
+| H-02 (alta) | Lo apartado entre las peticiones de una llamada cuenta lo leído de caché como escrito (no depende de qué hilo escribió antes el prefijo); el exceso se compara con eso mismo. Lo real se carga después con `_cargar`, como antes. Prueba con un SDK que sí devuelve lectura de caché y fija el orden de los hilos (cada tipo espera al anterior, en un orden y en el contrario): mismo F5 y mismas llamadas (`test_r02_h02_con_cache_compartida_…`; con el código de la r01, distinto) y `test_r02_h02_lo_apartado_cuenta_lo_leido_como_escrito` |
+| H-03 (media) | Corregido: AG-20 (C5, antes del reparto) corre contra la bolsa de antes o, si es menor, la base de COMÚN ya escalada en el peor reparto posible (`Bloque._comun_minimo_c5`; el reparto sale a `Bloque._reparto`, el mismo código). Con el reparto de siempre no cambia nada. `r01_03`: COMÚN 4,55 con límite 5,88 (en la r01, 9,78). Pruebas: `test_r02_h03_y_h06_…` (N2 = 100 con los 12 tipos y AG-20 con el cliente real), `test_r02_h03_con_el_reparto_normal_la_bolsa_de_c5_no_cambia` |
+| H-04 (media) | La salvedad, en el CA-1 de arriba e INC-T146-01, `[PROPUESTO]`. Mecanismo barato y con número de configuración: `presupuesto_uc.reserva.tokens_lectura_por_busqueda` (tokens que se reservan por búsqueda posible; valor negativo, `ValueError`). Su valor es **0**: no hay dato en el Documento 0 ni medido, y la regla 2 no deja inventarlo; se fija con los excesos del modo sombra (decisión del operador, pregunta en INC-T146-01). Prueba: `test_r02_h04_…`. `estimar_coste_ciclo_a.py` y `test_t148.py` siguen coherentes (con 0 nada cambia; con más, el encargo que cabe es menor y el tope del estimador sigue siendo una cota) |
+| H-05 (baja) | `extraer_json` convierte `RecursionError` en `ValueError` (JSON no válido: reparación o PARCIAL, el ciclo sigue); `Agentes.invocar` también lo captura al validar y, si no se puede comprobar R8 por lo anidado, falla cerrado («bloqueada por R8»). Además, si una llamada se cae a mitad, `_invocar` carga en la bolsa lo ya apartado antes de propagar la excepción. Pruebas: `test_r02_h05_…` (dos) |
+| H-06 (baja) | Con escala < 1, F5 (`presupuesto[*].asignado`) y CT-05 (`presupuesto_por_clase`) dan lo asignado escalado y el RUN de F5 añade `escala_presupuesto`. Con escala 1 nada cambia (goldens iguales). No se tocan los `presupuesto: {"uc": …}` informativos de los mensajes V6 (`diseno_v6.py`) |
+| H-07 (baja) | `test_t145.py::test_h01_la_cota_cubre…`: en lugar de `assert viejo > 0`, el coste del camino no pasa de lo consumido en UC al precio más alto de una UC de los modelos que llamó, lo consumido es lo gastado y el camino ya cortado queda por debajo de la cifra de T-140 (la inversa de lo que fijaba antes de T-146). `_comprobar_cotas` usa lo asignado escalado (el de `Presupuesto.limite`) y comprueba la suma de los límites máximos. El SDK con caché, en la prueba de H-02 |
+| H-08 (baja) | `_invocar` carga lo real antes de soltar lo apartado (`test_r02_h08_…`). `r01_01` U2 sigue dando VIOLA porque el script reproduce a mano el orden de antes (`cerrar` y después `cargar`), no llama a `_invocar` |
+| H-09 (baja, observación) | **No se hace** (sin la API no se puede comprobar): los reintentos de *timeout* del SDK y la UC de la escritura de caché a 1 h frente a su precio en USD quedan para la deuda técnica (lo decide la sesión coordinadora con el operador) |
+| H-10 (baja) | Pruebas nuevas: cada continuación se paga por separado (`test_r02_h10_cada_continuacion_…`, mata Q09), `pagar_resto` suelta las reservas que no salieron (mata Q01) y `_cargar` usa el prefijo de la primera petición (mata Q12) |
+
+Mutantes nuevos M27–M35 en `mutantes_t146.py` (uno por corrección). Resultados, scripts del revisor antes y después y la suite completa, en `pruebas.md`. Ficheros nuevos o cambiados en la r02: `bloque_a/consumo.py`, `agentes.py`, `orquestacion.py`, `config/por_defecto.yaml`, `README.md` del ejecutor; `tests/test_t146_presupuesto.py` (13 pruebas nuevas), `tests/test_t145.py` (H-07); `docs/incidencias.md` (INC-T146-01); `sistema_global/seguimiento/Decisiones_del_operador_Bloque_A.md` (§3); `.docs/scripts/estimar_coste_ciclo_a.py` (un comentario; y la r02 de T-148); `mutantes_t146.py`.
