@@ -2,7 +2,7 @@
 
 | Campo | Valor |
 | --- | --- |
-| Estado | EN QA |
+| Estado | CERRADO |
 | Pieza | bloque_a (11_Ejecutor, solo pruebas) |
 | Planifica · implementa · QA | claude · claude · un revisor nuevo sin contexto |
 | Aprobación del operador | 2026-11-14: «quiero que pases a completar el apartado 3 de huecos menores apuntados en la deuda técnica» |
@@ -37,3 +37,4 @@ Dar prueba a los dos casos del Plan de pruebas V3.0 que no tenían ninguna (PB-4
 - 2026-11-14 · EN QA · claude · CA-3 hecho al integrar la r04 de T-116: el mapa cita estas pruebas y las de T-125 en PB-26, PB-46 y PB-48 (las tres pasan a PARCIAL); `docs/evidencias_pruebas_bloque_a.md` regenerado, 145 de 145 pruebas citadas superadas
 - 2026-11-15 · APTO · QA r01 (revisor nuevo sin contexto), con H-01 y H-02 medios y H-03 y H-04 bajos
 - 2026-11-15 · EN QA · ronda r02 · claude · 11 pruebas nuevas en `tests/test_t126_r02.py`: la segunda pasada en el ciclo de PB-48 (H-01) y la lección en el CT-06 (H-04); sección física y desempate por fecha en F7–F9 (H-02), comprobaciones como funciones probadas con fichas estropeadas (H-03). INC-T126-01 ampliada `[PROPUESTO]` (desempate solo entre fichas con año). Sin cambios en producción ni en el corpus
+- 2026-11-15 · CERRADO · QA r02 APTO (revisor nuevo sin contexto). H-05 resuelto al cerrar: el desempate por fecha compara las fichas con año de cada grupo saltando las que no lo tienen (prueba con una sin año entre dos fechadas)

@@ -49,3 +49,11 @@ Las líneas que fijan los mutantes del revisor (`r01_02_mutantes.py`) se conserv
 ### Comandos
 
 Desde `bloque_a/11_Ejecutor`: `python -m pytest -q tests/test_t125_fiabilidad_fuentes.py tests/test_t125_r02.py`. Camino entero: `python ../../.docs/tickets/T-125/r02_camino_de_entrada_a_f2.py`. Mutantes del revisor con las pruebas nuevas, desde la raíz: `python .docs/scripts/mutantes_revisor_ampliado.py .docs/tickets/T-125/revisores/r01_02_mutantes.py <copia con «_mut»>/bloque_a tests/test_t125_r02.py`.
+
+## Ronda r03 (QA r02)
+
+- `evaluador.py`: `RE_FECHA_ISO` y `_fecha_de_calendario` (solo ISO 8601), `variable_resoluble`, `variable` en `_campos_pronostico_fuente`, comprobación de `variable` y del tipo de `direccion` en `motivo_pronostico_fuente_no_registrable` y en `pronosticos_de_fuentes`, clave de duplicados con el umbral como número, `run_id` hasta la petición al Motor (`fiabilidad_fuentes(as_of, run_id)`).
+- `orquestacion.py`: la validación al registrar recibe `fiabilidad_fuentes.variables_nivel` de la configuración del bloque.
+- `config/por_defecto.yaml`: `fiabilidad_fuentes.variables_nivel: [nivel, cierre, precio]` `[PROPUESTO]`.
+- `tests/test_t125_r02.py`: la función falsa de `test_r02_h02_…` acepta el `run_id` (cambio de firma; la prueba afirma lo mismo).
+- El script `r02_01_ataques_ciclo.py` del revisor se para en B04 porque llama a `_fecha_de_calendario("now")`, que ahora falla cerrado (lo que pedía H-10). Con esa línea cambiada para anotar el rechazo (copia en el scratchpad, no en el repo), B03–B12 dan lo esperado.

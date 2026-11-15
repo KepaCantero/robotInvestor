@@ -79,3 +79,81 @@ Pero el objetivo central de T-127, cerrar H-10 («ninguna petición da las cifra
 Vuelve a `ri-implementar`: H-01 con su prueba (copias a escala rechazadas en las tres fichas), y H-02 declarado o corregido. En la r02 se vuelve a ejecutar `r01_01_frontera_otras_vias.py`.
 
 **Sin comprobar:** el gate entero; A-Forex y B; REI-NAV-001 (fuera del alcance, anotado en INC-T127-01); ciclos con el modelo real.
+
+---
+
+# Ronda r02 · QA independiente
+
+- **Revisor:** subagente revisor nuevo, sin contexto de la implementación ni de la r01 (Claude; implementó otra sesión de Claude) · **Ronda:** r02 · 2026-11-15
+- **Copia revisada:** clon desconectado en `f7faa1b` («wip local: T-127 r02 y T-128»): `motor/frontera_b.py` (nuevo; `_sin_copias_a_escala`, `_aportacion_maxima`, `_concentradas`, `_sin_dominio` con grupos), FIR-CRED-001, REI-LEV-001 y CHR-TOKEN-001 en `motor/fichas_p2.py`, sus casos de control, `tests/test_t127_r02.py` y las pruebas cambiadas de `test_t119_p2.py` y `test_t127_hallazgos.py`; INC-T127-01 «Ronda r02».
+- **Orden de lectura:** `README.md` → `frontera_b.py` y las tres fichas → mis scripts → al final `analisis-tecnico.md`, `pruebas.md` e INC-T127-01.
+
+## Reproducción
+
+Desde la raíz de la copia, con `.venv` enlazado al del repositorio (enlace borrado al acabar).
+
+| Comprobación | Orden | Resultado |
+| --- | --- | --- |
+| Script de la r01 | `.venv/bin/python -I .docs/tickets/T-127/revisores/r01_01_frontera_otras_vias.py bloque_a/11_Ejecutor` | **7/7** (era 2/11): las copias a escala se rechazan en las tres fichas (FIR-CRED con 10, REI-LEV con 3 y 7, CHR-TOKEN con 2 y 7) y los rellenos de PD 0 al 30 % y al 60 % también (aportación); casos de control 67/67 |
+| Mi script de la r02 | `.venv/bin/python -I .docs/tickets/T-127/revisores/r02_01_troceo_y_simetria.py bloque_a/11_Ejecutor` | **1/7**. Ver H-04 y H-05 (y H-01 de T-128) |
+| T-119 `r02_02_cache.py`, T-121 `r01_02_h01_ct10.py` | ídem | 12/12 y 11/11 |
+| Mutantes de la r02 | `python .docs/tickets/T-127/revisores/impl_r02_mutantes.py bloque_a/11_Ejecutor <scratchpad>/qa9_mut_t127r02_mut --antes <fichas_p2.py de fb3ccd4>` | **41 mutantes, 40 muertos**; vive E11, equivalente (con `tokens_minimos_sector` = 2, un subconjunto de un solo grupo pesa el 100 % y la dominancia ya lo deja sin calcular). Copia borrada |
+| Goldens, gates, cuotas, suite | «Comunes», abajo | en verde |
+
+## Hallazgos de la r01
+
+| ID | Estado en la r02 | Evidencia |
+| --- | --- | --- |
+| H-01 (alta, copias a escala) | **corregido** | `r01_01` vías E: «1 componentes distintos por sus cifras individuales (< 10 / 3 / 2)». Leído: además del grupo por la tupla de cifras, cada media pasa por `_aportacion_maxima`, que agrupa por la cifra de esa media; así, unas copias a escala con otro `mu_historico`, otros covenants u otra concentración (tupla distinta) siguen rechazadas porque la DD, el LTV o la inflación de todas es la misma. Probado a mano |
+| H-02 (media, rellenos de cifra nula) | **corregido** | `r01_01` vías Z: «más del 95 % de la PD media … lo aporta un componente». Coste declarado en INC-T127-01 |
+| H-03 (baja, orden con 7 o más) | **declarado bien** | INC-T127-01 r02, «H-03»: «un estadístico de orden es siempre la cifra de un componente … La frontera impide identificar el componente, no dar una cifra que coincide con la de uno». Lo que pedía la r01 |
+
+## Criterios de aceptación
+
+Los nueve de la r01 siguen cumpliéndose (casos de control 67/67, `r01_01` 7/7, scripts de T-119 y T-121, mutantes, cuotas). Lo que la r02 añade (copias a escala por sus cifras, dominancia de la aportación) se cumple en sus términos. El objetivo de H-10 que la r02 vuelve a afirmar no (H-04).
+
+## Pruebas cambiadas (¿se debilitó alguna?)
+
+Leídas en el diff `fb3ccd4..f7faa1b`. `test_fir_cred_limites_del_dominio_que_se_admiten`: primero exige el rechazo nuevo (aportación) y después sube la volatilidad de los demás para que se sirva, y añade que la PD máxima es 100 % (la volatilidad 10 entra): más fuerte. `test_chr_token_oraculo_con_fracciones_exactas`: ventana 20 → 31 (a 20 días solo desbloqueaba TKA); el borde de 20 días se sigue probando en `test_chr_token_borde_de_la_ventana_y_desbloqueos_pasados`, con un tercer token que desbloquea el mismo día. `test_h10_staking_…`: nominal 4 % → 4,5 % para que los dos *staking* reales no coincidan. Casos de control de CHR-TOKEN-001 (TKB quema 4e7 y desbloquea 2,4e7): `verificar_casos_control` 67/67. Ninguna rebajada. ✔
+
+## Hallazgos de la r02
+
+| ID | Gravedad | Cómo reproducirlo | Esperado / obtenido | Corrección sugerida | Estado |
+| --- | --- | --- | --- | --- | --- |
+| H-04 | alta | `.venv/bin/python -I .docs/tickets/T-127/revisores/r02_01_troceo_y_simetria.py bloque_a/11_Ejecutor` (vías «T» y «S»). A mano: en REI-LEV-001, S1 del caso de control partido en 3 «componentes» con repartos distintos de cada importe (GAV 50/30/20 %, deuda 30/40/30 %, caja 50/25/25 %, EBITDA 40/40/20 %, gastos 25/35/40 %, FFO 50/30/20 % y cada vencimiento repartido de otra forma) | **Esperado** (objetivo de T-127, INC-T127-01 r02: «la frontera impide que la entrega sea la cifra de un componente o se despeje solo con ella y los pesos»; el principio: el Bloque A no entrega la cifra de un emisor o token concreto con una sola respuesta). **Obtenido:** con **una** petición y solo los datos del propio emisor, sin calcular nada fuera, la entrega es su cifra exacta (a 1e-9): REI-LEV-001 da el LTV 40 %, el ICR 4, la deuda neta/EBITDA 8,33, los vencimientos a 24 meses 52,38 % y el impacto en FFO −20,33 % de S1; CHR-TOKEN-001 da, como «sector» de 2 tokens, FDV/CM 1,667, inflación 5 %, desbloqueos 5 % y 15 %, *staking* real 3 % y concentración 35 % de TKA, el token que la regla de la «propia red» (CA-4) no deja pedir solo. Las partes difieren más del 1 % en datos y en cifras (no son clones ni copias a escala), ninguna pasa del 95 % de una base ni de la aportación, y un cociente de sumas de las partes es el del entero. En FIR-CRED-001 (Merton, no lineal) 10 copias de C11 con σ_E·(1 ± δ), δ de 2 % a 10 %, dan su DD con un error de 0,44 % (media) y 0,04 % (mediana): la precisión que INC-T127-01 da como motivo para rechazar los casi clones («por debajo del 1 %, el agregado … es la cifra del emisor con dos o más cifras significativas»). No está entre los límites declarados: «restar dos peticiones», «rellenos para un estadístico de orden», «quien conoce las cifras de sus rellenos» (aquí no hay rellenos ni se calcula nada fuera) y «compensaciones que se anulan en una suma» (aquí ningún componente se anula; se reparte el emisor) | Ninguna regla sobre los datos distingue un emisor troceado (o copias con perturbaciones simétricas) de varios emisores reales, así que es una decisión para T-57, no un ajuste de tolerancias: (a) declararlo en INC-T127-01 y en la pregunta para T-57 con su alcance («un emisor troceado en partes, o copias perturbadas de forma simétrica, da su cifra en una sola petición; la frontera evita la revelación por descuido, no la de un solicitante que construye los componentes; el control es el propósito de la petición, 1.6, y el Registro de cálculos»), y quitar o matizar la frase de que la entrega no puede ser la cifra de un componente; o (b) exigir que cada componente sea un instrumento del universo con su identificador verificable (HT-01 o el Broker) y rechazar partes de uno. Con (a), una prueba que fije el límite declarado (S1 troceado se sirve y se registra) | abierto |
+| H-05 | baja | El mismo script, vía «C»: S1 + un relleno de deuda neta +400 + otro de −400 (caja mayor que la deuda) | Se sirve, y LTV agregado · ΣGAV / GAV de S1 = 40 %, el LTV de S1, exacto. Está declarado («compensaciones entre componentes que se anulan en una suma»), pero la frase de INC-T127-01 r02 «con la aportación limitada al 95 %, el agregado dividido por el peso de un componente acota su cifra con un error de al menos un 5 %» no es cierta: `_aportacion_maxima` mide Σ\|numᵢ\| y no ve que el resto suma 0 | Corregir la frase (el 5 % vale solo si las aportaciones del resto tienen el mismo signo), o medir también la parte con signo: rechazar si \|Σnum − num_G\| < (1 − k)·\|Σnum\| (el resto no aporta casi nada al agregado) | abierto |
+
+## Invariantes
+
+- Ningún camino a una orden: el Motor no emite órdenes. ✔
+- Sin LLM en la ruta: `frontera_b.py` y las tres fichas son deterministas (numpy y scipy). ✔
+- Controles: `FRONTERA_B` en los `UMBRALES` de las tres fichas; la petición no los cambia (`test_t128_frontera.py::test_las_reglas_son_las_de_frontera_b_y_la_peticion_no_las_cambia` y las de T-127). ✔
+- Falla cerrado: copias y aportación rechazan (FIR-CRED, cocientes de REI-LEV) o van a `null` con limitación, sin citar identificadores. ✔ (salvo H-04: se sirve lo que el objetivo dice que no)
+- Números: los mismos 1 %, 95 % y 7 de `FRONTERA_B`, con su origen y `[PROPUESTO INC-T127-01]`. ✔
+- Decisiones del operador: `[PROPUESTO]` en INC-T127-01 r02 y en la fila de §5 de `Decisiones_del_operador_Bloque_A.md`. ✔
+- Secretos y datos personales: ninguno (`secrets_scan`). ✔
+- Documentación: INC-T127-01 r02 al día salvo H-04 y H-05; la fila T-127 de la deuda técnica sigue en «EN QA (14-11-2026)» sin la r02 (la añade quien haga el commit, según el README). ✔ con nota
+
+## Comunes (T-127 r02 y T-128)
+
+| Comprobación | Orden | Resultado |
+| --- | --- | --- |
+| Suite de A, una vez | `cd bloque_a/11_Ejecutor && /home/user/robotinvestor/.venv/bin/python -m pytest -q -p no:cacheprovider` | **5862 passed** en 30 min 52 s, código 0 (línea base 607); lanzada mientras corrían los mutantes y mis scripts |
+| `verificar_casos_control` | en `r01_01_frontera_otras_vias.py` | 67 fichas (66 + AUD-REX-001), todas superadas |
+| Goldens de contratos | `cd bloque_a/11_Ejecutor && python tests/goldens_ct.py` | «goldens de contratos: coinciden» |
+| ruff | `ruff check --output-format=concise bloque_a/11_Ejecutor bloque_a_forex/11_Ejecutor bloque_b/11_Ejecutor \| wc -l` | **2902** (cuota 2902) |
+| mypy A como el gate | `cd bloque_a/11_Ejecutor && mypy bloque_a --ignore-missing-imports --no-error-summary \| wc -l` | **109** (cuota 109) |
+| Gates ligeros | `tools/secrets_scan.py`, `tools/refs_vivas.py`, `tools/nfc_check.py`, `tools/corpus_integridad.py` | en verde (con mis scripts en la copia); corpus 695 |
+| Gate entero, A-Forex y B | — | no lanzados (por instrucción) |
+
+## Veredicto (r02)
+
+**NO APTO.**
+
+La r02 corrige lo que la r01 encontró: las copias a escala ya no pasan (por la tupla de cifras y, con más fuerza, por la aportación agrupada por la cifra de cada media), los rellenos de cifra nula se rechazan, H-03 está bien declarado, 40 de 41 mutantes mueren (el vivo es equivalente), ninguna prueba se debilita y las cuotas no suben.
+
+Pero el objetivo que la ronda vuelve a afirmar no se cumple: **H-04 (alta)**, un emisor troceado en partes con repartos distintos (o copias con perturbaciones simétricas) da en una sola petición su cifra exacta en REI-LEV-001 y CHR-TOKEN-001 (en CHR-TOKEN, la de un token que la regla de la «propia red» no deja pedir solo) y en FIR-CRED-001 con la precisión que el propio INC rechaza en los casi clones, sin estar entre los límites declarados. No se arregla con otra tolerancia: hace falta declararlo con su alcance (y que T-57 lo decida) o verificar los componentes contra el universo. **H-05 (baja):** la frase del «error de al menos un 5 %» es falsa con compensaciones.
+
+Vuelve a `ri-implementar`: H-04 declarado o resuelto, con su prueba; H-05, la frase corregida (o la aportación con signo). En la r03 se vuelve a ejecutar `r02_01_troceo_y_simetria.py` (si H-04 se declara, sus FALLA de las vías T y S pasan a ser el límite declarado y el script se lee así).
+
+**Sin comprobar:** el gate entero; A-Forex y B; ciclos con el modelo real.

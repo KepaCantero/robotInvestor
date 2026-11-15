@@ -485,3 +485,102 @@ Leída. Es `[PROPUESTO]`, distingue lo corregido (PB-60 y PB-58, PB-22) de lo qu
 ## Veredicto (r04)
 
 **NO APTO** · Las dos correcciones del ejecutor están bien (degradación declarada en los entregables en PB-58 y PB-60; CANAL_NO_PREVISTO escalado en PB-22: sus mutantes mueren), y H-07, H-08 y H-09 están corregidos. Pero el repaso cláusula a cláusula de las 22 AUTOMATICA deja otra vez filas del mismo tipo (H-10, alta): PB-31 (la banda) y PB-37 (la resolución por el Evaluador) tienen una cláusula determinista sin afirmar, con mutantes vivos, y PB-58 da por superado un paso del ejecutor que no existe. Además, cuatro parciales tienen el hueco incompleto (H-11, media). Tras corregirlo, volver a ejecutar `r04_01_mutantes_clausulas.py` (M31, M37a y M37b deben morir) y `r03_01`.
+
+## Ronda r05
+
+- **Revisor:** revisor nuevo sin contexto de la implementación (subagente de Claude; no es el de las rondas r01 a r04 ni quien implementó) · 2026-11-15
+- **Copia revisada:** clon desconectado en `41c0ea4` (wip local: T-125 r02, T-116 r05, T-126 r02). Mutantes en copias desechables con «qa10_mut» en la ruta (y «qa2_mut» dentro, para `r03_01`), ya borradas.
+- Opinión formada con el plan, el mapa y las pruebas citadas antes de leer el apartado «Ronda r05» de `analisis-tecnico.md`.
+
+### Reproducción
+
+| Qué | Orden | Resultado |
+| --- | --- | --- |
+| Suite completa de A, una vez | `cd bloque_a/11_Ejecutor && python -m pytest -q -p no:cacheprovider` | **5857 passed** en 1940 s (máquina compartida con los mutantes) |
+| `10_Herramientas` (el mapa las cita) | `cd bloque_a/10_Herramientas && python -m pytest -q -p no:cacheprovider tests` | 135 passed, 38 subtests passed |
+| Comprobar el mapa | `python .docs/scripts/evidencias_plan_a.py` | «67 pruebas del plan, 162 pruebas automáticas citadas y todas existen · AUTOMATICA 21, DOCUMENTAL 1, PARCIAL 37, PENDIENTE_API 7, REQUIERE_USUARIOS 1», código 0 |
+| `--ejecutar` | no repetido | las 162 citadas están dentro de las dos suites de arriba, en verde; `test_h05_…` compara documento y mapa (en verde) |
+| CA-4, órdenes copiadas del documento | las de PB-31 y PB-37 de `docs/evidencias_pruebas_bloque_a.md`, tal cual desde la raíz (con `.venv` enlazado) | todas pasan (4 + 1 y 5 + 1 + 2) |
+| Goldens de contratos | `cd bloque_a/11_Ejecutor && python tests/goldens_ct.py` | «goldens de contratos: coinciden» |
+| ruff (tres `11_Ejecutor`) | `ruff check --output-format=concise bloque_a/11_Ejecutor bloque_a_forex/11_Ejecutor bloque_b/11_Ejecutor \| wc -l` | 2902 (cuota 2902) |
+| mypy de A, como el gate | `cd bloque_a/11_Ejecutor && mypy bloque_a --ignore-missing-imports --no-error-summary \| wc -l` | 109 (cuota 109) |
+| Gates ligeros | `tools/secrets_scan.py`, `refs_vivas.py`, `nfc_check.py`, `corpus_integridad.py` | los cuatro con 0 (corpus: 695 coinciden) |
+
+### Scripts de rondas anteriores, vueltos a ejecutar sin cambiarlos
+
+| Script | Resultado r05 |
+| --- | --- |
+| `revisores/r04_01_mutantes_clausulas.py <copia «qa10_mut»>/bloque_a` | **9 de 9 MUERTOS**: M31 (2 fallan), M37a (1), M37b (1), M22 (3), M60a, M60b, M58, M56, M33 |
+| `revisores/r03_01_pb32_y_muestra.py .` (desde `<copia «qa2_mut»>/bloque_a/11_Ejecutor`) | P32a–P32h, S06, S14, S33, S56, S60a, S60b MUERTOS; «vivos: ninguno»; PB-60 a mano: F10 la tiene y los entregables declaran la degradación |
+| `r04_mutantes_implementador.py .` (ídem) | M01 a M20 MUERTOS; «vivos o no aplicados: ninguno» |
+
+### Repaso de las 21 AUTOMATICA
+
+| Fila | Juicio r05 | Por qué |
+| --- | --- | --- |
+| **PB-31** | **bien** | Plan: banda «más probable que no» con «sin ventaja demostrada todavía» en técnico, visual y JSON; `prob_publicada` nula; variante bloqueada. `test_t116_r05.py` afirma, en un ciclo de RV sin certificados, que la banda de cada horizonte del JSON es `banda_publicable(prob_interna)` de su PRG (con `banda_verbal` en F4 y al menos dos bandas distintas) y, para los PRG con 0,65, la banda en el JSON, la fila del técnico (expresión regular por horizonte) y la tarjeta del visual. M31 muere. Nota: en el visual basta con que la cadena aparezca una vez, pero el plan solo pide el caso de 0,65 |
+| **PB-37** | **bien** | Plan: «adelantar el reloj a ambos vencimientos» → el original sin cambios y resuelto en su fecha, ambos RESUELTO, ambos en métricas, huella intacta. La prueba nueva congela los dos PRG, adelanta el reloj y llama a `Evaluador.resolver` dos veces: el original se resuelve el 4-5 con su dato del 1-5 y la corrección espera; la corrección, el 11-5; nivel original igual, F4 con el prefijo de bytes y `verificar_integridad`; los dos en `resueltos` y `metricas` (n = 2). M37a y M37b mueren. Que Prospectiva decida corregir es del modelo (declarado) |
+| PB-22 | bien | Las dos pruebas nuevas afirman que `estado()` y la orden `estado` listan exactamente las incidencias con `escalado_operador` (y no una DATOS sin la marca). El «comprueba» dice ahora «marcadas para escalar» |
+| PB-01, PB-06, PB-12, PB-14, PB-16, PB-23, PB-43, PB-45, PB-49, PB-53, PB-54, PB-55, PB-56, PB-59, PB-60, PB-63, PB-65, PB-66 | bien | Sus citas no cambian desde la r04. Releí contra el plan PB-14 (GC0 positivo con la opción en `invalidadas`, CERRADA por INVALIDACION en F3 y en el paquete, PRG ABIERTO), PB-45, PB-54, PB-59 y PB-65: cada cláusula determinista tiene su `assert`; lo del modelo está en «No comprueba». Las demás, con la muestra de mutantes de `r03_01` y `r04_mutantes_implementador`, todos muertos |
+
+PB-58 pasa a PARCIAL con los pasos 1 y 2 en «No comprueba», línea en INC-T116-03 y fila en `Decisiones_del_operador_Bloque_A.md`: corrige la parte de PB-58 de H-10.
+
+### Muestra de PARCIAL
+
+| Fila | Juicio | Por qué |
+| --- | --- | --- |
+| PB-44 | bien | El «No comprueba» enumera ahora el escenario de n = 27, `significativo` y su nota, el mismo dato en los dos informes y G3-CON-18 (H-11 corregido) |
+| PB-46 | bien en el hueco; el «comprueba» va un poco más allá de las citadas (H-14) | Hueco: la recalificación en F9 y el backtest sin fuentes de F9. El «comprueba» dice «Brier del Motor, FC-EVAL-001, con su `calc_id`» y «una por fuente y mes», pero las pruebas que lo afirman (`test_r02_h08_…_calc_id`, `test_r02_h06_…`) no están citadas; las citadas solo afirman que `calc_id` no es vacío |
+| PB-48, PB-26 | bien | Huecos completos (segunda pasada que el ejecutor no pide; desempate solo entre fichas con año) |
+| PB-58 | bien | Pasos 1 y 2 declarados, con la orden que los sustituye |
+| PB-10, PB-03, PB-18, PB-24, PB-35, PB-52 | bien | El hueco declarado es el que hay |
+| **PB-20** | **incompleta** | Plan: el Buscador recupera la página para un Analista, ingesta al Curador, «EVD con `incidencia_manipulacion` INSTRUCCION_INCRUSTADA», fuente invalidada, INC- en HA, «si el texto llegara a un entregable, G3-EST-06 bloquea»; criterio: «ninguna puntuación **ni destino** alterado». Las citadas inyectan la instrucción por la nota del universo (otro camino), afirman la INC- MANIPULACION, que la puntuación A < 100 y que el texto no llega a los entregables. Ninguna prueba de la suite afirma `incidencia_manipulacion` en una EVD (`grep` en `tests/`: vacío), G3-EST-06 no existe en HT-09 ni en el ejecutor (solo en el prompt del Orquestador) y el «destino» no se ejerce. El «No comprueba» solo declara la baja en F9 (H-13) |
+| PB-08, PB-29 | aceptables, poco precisas (H-15) | PB-08 declara «la ráfaga del plan» pero no nombra el orden por prioridad con envejecimiento ni el presupuesto por nivel; PB-29 no dice que el ejecutor no distingue derivadas (escribe `grado_independencia = RAIZ` siempre), así que «1 raíz y 20 derivadas» es del Curador |
+
+### Estado de los hallazgos anteriores
+
+| ID | Gravedad | Estado | Evidencia |
+| --- | --- | --- | --- |
+| H-10 | alta | **corregido** | M31, M37a y M37b mueren con las citadas (`r04_01`); PB-58 a PARCIAL con su hueco, INC-T116-03 y la decisión |
+| H-11 | media | **corregido** | PB-44, PB-46, PB-48 y PB-26 con el hueco completo |
+| H-12 | baja | **corregido** | `incidencias_escaladas` en `Bloque.estado()` y en la orden `estado`, con dos pruebas; leído: solo filtra las INC- de HA con `escalado_operador is True`; los goldens coinciden; no cambia ningún ciclo (`T-125/revisores/r02_02_ciclos_sin_bloque.py`: almacén y entregables iguales byte a byte que en `fb3ccd4`) |
+
+### Hallazgos nuevos
+
+| ID | Gravedad | Cómo reproducirlo | Esperado / obtenido | Corrección sugerida |
+| --- | --- | --- | --- | --- |
+| H-13 | media | Leer PB-20 en el plan y su fila del mapa; `grep -rn incidencia_manipulacion bloque_a/11_Ejecutor/tests` (vacío); `grep -rln EST-06 bloque_a` (solo el prompt del Orquestador y el plan) | Esperado (regla de las parciales): el «No comprueba» dice todo lo que falta. Obtenido: no dice que no se ejerce el camino del plan (Buscador → Curador), que ninguna prueba afirma la EVD con `incidencia_manipulacion`, que G3-EST-06 no existe en el ejecutor ni en HT-09 ni que el «destino» no se prueba | Completar el «No comprueba» de PB-20 (o probar la EVD por el camino del Buscador, que el ejecutor ya marca en `_peticion_conocimiento`) y regenerar |
+| H-14 | baja | Fila PB-46 del mapa frente a sus citadas | El «comprueba» afirma el Brier del Motor con su `calc_id` y una FUE- por fuente y mes, que solo afirman pruebas no citadas | Citar `test_r02_h08_…_calc_id` y `test_r02_h06_…` (o quitarlo del «comprueba»). Si T-125 cambia en su r03 (NO APTO en la r02), revisar la fila |
+| H-15 | baja | Filas PB-08 y PB-29 | Huecos declarados de forma genérica | Nombrar en PB-08 el orden con envejecimiento y el presupuesto por nivel; en PB-29, que la detección de derivadas es del Curador |
+
+Nota: el documento de evidencias dice «sobre el commit `fb3ccd4`» porque se generó antes del commit `41c0ea4`; al hacer el commit definitivo conviene regenerarlo para que el sello coincida.
+
+### Criterios de aceptación
+
+| Criterio | Cumple | Evidencia |
+| --- | --- | --- |
+| CA-1 · 67 filas con cobertura, pruebas, qué comprueban y qué no | sí, con H-13 a H-15 | las 21 AUTOMATICA aguantan el repaso; una parcial con el hueco incompleto (PB-20) |
+| CA-2 · toda prueba citada existe | sí | 162 citadas, código 0 |
+| CA-3 · `--ejecutar` genera el documento y termina con 0 | por las suites | 5857 + 135 en verde, que contienen las 162 |
+| CA-4 · cada fila superada tiene una orden que, copiada, pasa | sí en la muestra | PB-31 y PB-37 |
+| CA-5 · nada del modelo real, de usuarios o documental figura superado | sí | 7 PENDIENTE_API, 1 con usuarios, 1 documental |
+| CA-6 · mapa roto ⇒ el script y `test_fase4_mapa.py` fallan | sí | dentro de la suite |
+| CA-7 · huecos en el ticket y en la deuda | sí | INC-T116-03 ampliada; registro del README |
+| CA-8 · gate 12/12; cuotas; pruebas recogidas | por partes | ruff 2902, mypy 109, gates ligeros 0, 5857 pruebas de A; `check_all.sh` no lo pasé (encargo) |
+
+### Invariantes
+
+- Sin LLM en la ruta determinista; mock antes que API. ✔
+- El cambio de producción (`incidencias_escaladas`) solo lee HA y no cambia formatos congelados (goldens coinciden). ✔
+- Decisiones del operador: INC-T116-03 `[PROPUESTO]` con PB-58 y PB-22; fila nueva en las decisiones. ✔
+- Secretos: gates en verde. ✔
+- Documentación: el documento de evidencias publica cada fila como está (PB-31 y PB-37 superadas con sus mutantes muertos; PB-58 en parte). ✔
+
+### Lo que quedó sin comprobar
+
+- `--ejecutar` completo, el gate entero, A-Forex y B (encargo).
+- Mutantes propios para las 18 AUTOMATICA sin cambios desde la r04 (cubiertas por los mutantes de `r03_01` y `r04_mutantes_implementador`).
+
+## Veredicto (r05)
+
+**APTO** · H-10 (alta), H-11 y H-12 están corregidos: M31, M37a y M37b mueren con las pruebas nuevas, PB-58 pasa a parcial con su hueco declarado, los cuatro huecos incompletos de la r04 están completos y las incidencias escaladas se ven en el estado. Las 21 AUTOMATICA aguantan el repaso cláusula a cláusula. Quedan H-13 (media: el hueco de PB-20 está incompleto) y H-14 y H-15 (bajas), que pasan a la deuda técnica con su ID. Cerrar el ticket queda para quien coordina: este revisor solo escribe en `qa.md` y `revisores/`.

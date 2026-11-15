@@ -1326,7 +1326,8 @@ class Bloque:
         pf = p.get("pronostico_fuente")
         if pf is None:
             return "PREVISION" if tipo == "PRONOSTICO_FUENTE" else tipo
-        motivo = motivo_pronostico_fuente_no_registrable(pf, p.get("fuente"), as_of, self.referencias)
+        motivo = motivo_pronostico_fuente_no_registrable(pf, p.get("fuente"), as_of, self.referencias,
+                                                               parametro(self.cfg, "fiabilidad_fuentes.variables_nivel"))
         if motivo is None:
             return "PRONOSTICO_FUENTE"
         self.almacen.incidencia("DATOS", f"Pronóstico de fuente no registrable ({motivo}): la afirmación «{str(p.get('afirmacion'))[:80]}» "
