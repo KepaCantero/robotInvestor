@@ -79,3 +79,28 @@ cd bloque_a/11_Ejecutor
 ../../.venv/bin/python -m bloque_a.herramientas.verificador_ids | head -40          # informe por la salida estándar
 ../../.venv/bin/python -m bloque_a.herramientas.verificador_ids --raiz /ruta/sin/catalogo; echo $?   # 2, fallo cerrado
 ```
+
+## Ronda r02 (16-11-2026)
+
+- **Causa de H-01.** `_clave_id("F2") == _clave_id("F02")`, y `sorted(set(...), key=_clave_id)` dejaba el empate al orden del
+  `set`, que depende del hash de cada cadena en cada proceso. La prueba de determinismo comparaba dos ejecuciones dentro del mismo
+  proceso, con el mismo hash, y no podía verlo. Ahora `_clave_id` devuelve `(orden natural, cadena)`, y la prueba lanza
+  subprocesos con `PYTHONHASHSEED` distintos.
+- **Causa de H-02 y H-03.** Las reglas de contexto se escribieron mirando los casos reales (todos inocuos) y no los errores que
+  podían tapar: excusaban un ámbito (la línea, el valor JSON, el documento) en lugar de la cita concreta. Se cambian por reglas
+  que excusan solo lo que lleva dentro (INC-T157-01, versión r02). La regla del campo JSON se sustituye por la del símbolo
+  declarado: en el corpus, la única «ficha» de un valor JSON que no lo es (IDX-FICT-001) está declarada como `serie_ht01`.
+- **Archivos cambiados en r02:** `verificador_ids.py` (reglas de contexto, `_clave_id`, guiones, mayúsculas, familia
+  desconocida, `versiones_en_py`, `auditoria_actualizada` y `_escribir_todo`), `tests/test_t157_verificador_ids.py` (46
+  pruebas, 12 nuevas), `docs/auditoria_ids_bloque_a.md` y `.json` (regenerados), `docs/incidencias.md` (INC-T157-01, 03, 04 y
+  05), `sistema_global/seguimiento/Decisiones_del_operador_Bloque_A.md` (§6, D-1 a D-4) y `mutantes_t157.py` (7 mutantes nuevos).
+- **Lo que cambia en el informe real.** Pasa de 3 errores y 3 avisos a 2 y 2, porque T-160 corrigió D-1: el escaneo de los `.py`
+  ya no encuentra versiones distintas de la vigente. Las demás cifras no cambian. Las notas pasan de 13 a 12: entra
+  WI-METH-001 (`FAMILIA_DESCONOCIDA`, de F9), e IDX-FICT-001 queda en una sola nota (símbolo declarado) en lugar de tres.
+- **H-04, no corregido a propósito:** queda como AVISO, documentado. Un ERROR obligaría a una lista de palabras que «explican» el
+  ID («tarjeta», «figura»…), que es otra heurística, y el aviso ya queda a la vista con su ubicación.
+- **Límites que siguen:** las reglas de contexto son heurísticas, más estrechas pero heurísticas. Un rango «F02–F12» con los dos
+  extremos válidos excusa también las F intermedias que no existan en el documento (hoy no hay ninguna). Un `RF-123` sigue siendo
+  aviso.
+- **Mutante M10 del revisor:** ahora sale ROTO, porque su texto (`if m and m.group(1) not in CAMPOS_FICHA:`) ya no existe: la
+  regla desapareció. Lo sustituye el mutante «r02 cualquier campo JSON declara símbolo» de `mutantes_t157.py`, que muere.

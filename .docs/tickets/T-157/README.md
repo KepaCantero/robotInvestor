@@ -2,7 +2,7 @@
 
 | Campo | Valor |
 | --- | --- |
-| Estado | EN CURSO (r02: QA r01 NO APTO) |
+| Estado | EN QA (r02: corregidos H-01 a H-08 de la QA r01, NO APTO) |
 | Pieza | bloque_a (ejecutor: `bloque_a/11_Ejecutor/bloque_a/herramientas/verificador_ids.py`) |
 | Planifica · implementa · QA | claude · claude · un revisor nuevo sin contexto (regla del 12-11-2026, `compartida/2026-11-12_claude-puede-hacer-qa`) |
 | Aprobación del operador | no necesaria: herramienta de medida, sin cambio de contrato, de corpus ni de controles (tipo «corrección, pruebas, documentación» de `ri-planificar`) |
@@ -109,9 +109,26 @@ tal cual, es `prompts/FASE0_VERIFICADOR_IDS.md`; las notas de la sesión coordin
 Ninguno nuevo en `.docs/scripts/`: la orden repetible es el propio módulo (`python -m bloque_a.herramientas.verificador_ids`),
 que además regenera el bloque del informe dentro de `docs/auditoria_ids_bloque_a.md` con `--auditoria`.
 
+## Ronda r02 (16-11-2026, QA r01 NO APTO)
+
+La QA r01 (`qa.md`) dio NO APTO por H-01 (CA-5) y H-02. Qué se hace con cada hallazgo:
+
+| Hallazgo | Qué se hace | Prueba |
+| --- | --- | --- |
+| H-01 (media) — el informe cambia con `PYTHONHASHSEED` | `_clave_id` desempata por la propia cadena («F02» antes que «F2»); las familias de la expresión de fichas, ordenadas igual | `test_r02_clave_id_desempata_por_la_cadena`, `test_r02_mismo_json_y_markdown_con_semillas_distintas` (cuatro subprocesos con semillas distintas, mismos bytes) |
+| H-02 (media) — una ficha en cualquier valor JSON se excusaba | Ya no hay excusa por campo JSON. Solo se excusa un ID que el corpus declara como símbolo de una serie (valor entero de `serie_ht01` o `simbolo`), y sus demás apariciones. Una ficha en `estado_madurez_metodos` o en prosa dentro de un valor es ERROR. Con el corpus real no sale ningún error nuevo: IDX-FICT-001 sigue en INFO, ahora como símbolo declarado | `test_r02_contextos_no_excusan_de_mas`, `test_contextos_que_no_son_citas` |
+| H-03 (baja) — reglas que excusan de más | «JEL»: solo los códigos de la lista que sigue a «JEL», y solo para R y F. Fórmula: solo F. Función local: solo en un rango cuyos dos extremos son funciones del documento («F02–F12», «ORQ-F03 a F05»). CT y PS no tienen ninguna excusa | `test_r02_contextos_no_excusan_de_mas`, `test_r02_rango_de_funciones_con_un_extremo_ajeno_no_excusa` |
+| H-04 (baja) — RF-123 y RF-00123 como aviso | Se mantiene AVISO `REF_FORMA_DISTINTA` y queda documentado en INC-T157-01: con solo el texto no se distingue un error de tecleo de otro ID con el mismo prefijo («tarjeta RF-1»). Las dos comprobaciones de `r01_02_siembra.py` que lo piden como ERROR siguen fallando por esta decisión | `test_e_referencias` |
+| H-05 (baja) — familia desconocida, minúsculas, guion U+2011 | Familia desconocida: ERROR si se parece a una ficha y, si no, INFO `FAMILIA_DESCONOCIDA`. Menciones sin distinguir mayúsculas. Guiones U+2010 y U+2011 cuentan como «-» | `test_r02_contextos_no_excusan_de_mas` |
+| H-06 (baja) — destino inexistente: traza y salida 1 | Se comprueban todos los destinos antes de escribir; un destino imposible da salida 2 y no se escribe nada. Escritura por temporal y renombrado, con la auditoría la última; `OSError` también da salida 2 | `test_r02_destino_imposible_sale_2_y_no_escribe_nada` (en los dos órdenes) |
+| H-07 (baja) — mutantes vivos y prueba de NFC | Una prueba por protección (FILA_DUPLICADA, FICHA_DUPLICADA, TOTAL_DISTINTO, CT_SOLO_CODIGO de CANALES_V6 y CAMPOS_MINIMOS, FICHA_DUPLICADA_CODIGO, ALTERNATIVA_SIN_FICHA, REF_DEFINIDA_Y_DE_BAJA, carpetas con punto, «errores» en `validar_informe`, marcas repetidas, desempate por código). El escaneo de versiones pasa a `versiones_en_py`, probada con un paquete de juguete y con el paquete real. NFC: el Catálogo con nombre en NFD | `test_r02_*`, `test_nombres_en_nfd_se_encuentran` |
+| H-08 (baja) — registro de decisiones y textos | D-1 (aplicada por T-160) y D-2 a D-4 (pendientes del operador) en `sistema_global/seguimiento/Decisiones_del_operador_Bloque_A.md` §6. En D-2 y en INC-T157-03: conviene antes de la Fase 5. En INC-T157-03: la octava mención va en D-3 | revisión manual |
+
 ## Registro
 
 - 2026-11-15 · ABIERTO · creado con nuevo_ticket.sh
 - 2026-11-15 · PLANIFICADO · claude · plan y criterios escritos
 - 2026-11-15 · EN CURSO · claude · implementación y pruebas
 - 2026-11-15 · EN QA · claude · implementado y probado; commit local «wip local: T-157»; el commit definitivo lo hace la sesión coordinadora
+- 2026-11-16 · EN CURSO r02 · claude · QA r01 NO APTO (H-01 y H-02 medias; H-03 a H-08 bajas)
+- 2026-11-16 · EN QA · claude · r02 corregida y probada; commit local «wip local: T-157 r02»

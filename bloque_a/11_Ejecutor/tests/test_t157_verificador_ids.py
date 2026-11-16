@@ -7,9 +7,11 @@ aquí con código propio (no con el del verificador).
 import copy
 import hashlib
 import json
+import os
 import re
 import subprocess
 import sys
+import unicodedata
 from pathlib import Path
 
 import jsonschema
@@ -118,19 +120,21 @@ Nada.
 PROMPT = """# System prompt de juguete
 
 Usa CT-01, CT-02 y CT-04 (no existe). Cumple R1 y R9 (no existe). Escribe en F1, en F2 y en F7 (no existe).
-La fase F0 no es un archivo. Aplica PS1 y PS3 (no existe).
+La fase F0 no es un archivo. Aplica PS1 y PS3 (no existe). Y F05 (no existe) y F5.
 Calcula con la ficha AA-ALFA-001, la AA-BETA-001 y la AA-GAMA-001 (no existe) del Catálogo V8.0.
 Lee RF-0002, RF-0099 (no existe), RF-0003 (de baja), la tarjeta RF-1, TA-01 y TM-07 (no existe).
 Filtro por códigos JEL (E43, R30, F31).
 Pendiente `(F1 − F12) / F12`.
 {"serie_ht01":"AA-SERIE-001","ficha_id":"AA-ZETA-001"}
+La serie AA-SERIE-001 no es una ficha.
 """
 
 FUNCIONES = """# Funciones de juguete
 
 | ID | Función | Salidas |
 |---|---|---|
-| MOT-F04 | Cuarta | Resultados de F04 |
+| MOT-F01 | Primera | — |
+| MOT-F04 | Cuarta | Resultados F01–F04 |
 """
 
 ARCHIVOS = {
@@ -155,16 +159,18 @@ ARCHIVOS = {
 }
 
 
-def corpus_juguete(raiz: Path, doc0: str = DOC0, catalogo: str | None = CATALOGO) -> Path:
+def corpus_juguete(raiz: Path, doc0: str = DOC0, catalogo: str | None = CATALOGO, prompt: str = PROMPT,
+                   funciones: str = FUNCIONES, archivos_05: dict | None = None) -> Path:
     archivos = {
         "01_Gobernanza/Documento 0 - Protocolo de prueba - V9.1.md": doc0,
-        "02_System_prompts/System prompt - Motor de juguete - V9.0.md": PROMPT,
-        "03_Funciones/Funciones – Motor de juguete.md": FUNCIONES,
-        **{f"05_Archivos_operativos/{k}": v for k, v in ARCHIVOS.items()},
+        "02_System_prompts/System prompt - Motor de juguete - V9.0.md": prompt,
+        "03_Funciones/Funciones – Motor de juguete.md": funciones,
+        **{f"05_Archivos_operativos/{k}": v for k, v in (archivos_05 or ARCHIVOS).items()},
         # nada de esto se lee
         "99_Historico_V1.0/02_System_prompts/viejo.md": "Cita CT-99, R99, F99, PS99 y RF-9999.\n",
         "01_Gobernanza/99_Historico_V9.0/Documento 0 - viejo.md": "Cita CT-97.\n",
         "11_Ejecutor/README.md": "Cita CT-98.\n",
+        ".oculta/notas.md": "Cita CT-96.\n",
     }
     (raiz / "04_Motor_conocimiento_y_catalogo").mkdir(parents=True, exist_ok=True)
     if catalogo is not None:
@@ -212,7 +218,7 @@ def test_b_reglas(informe):
 
 
 def test_c_archivos_y_mapa_por_h1(informe):
-    assert _de(informe, "c", "F_INEXISTENTE", "ERROR") == {"F7"}        # F0 es una fase, F1 y F2 archivos (y fases)
+    assert _de(informe, "c", "F_INEXISTENTE", "ERROR") == {"F05", "F7"}  # F0 es una fase, F1 y F2 archivos (y fases)
     assert _de(informe, "c", "F_SIN_ARCHIVO", "ERROR") == {"F5"}        # en §5.1, sin archivo que lo declare en su H1
     assert _de(informe, "c", "F_SOLO_ARCHIVO", "ERROR") == {"F4"}       # un H1 dice F4 y §5.1 no lo tiene
     assert _de(informe, "c", "F_NOMBRE_DISTINTO", "AVISO") == {"F3"}    # §5.1 y el H1 no coinciden
@@ -268,16 +274,56 @@ def test_un_error_de_cada_clase(informe):
     assert informe["errores"] == sum(1 for h in informe["hallazgos"] if h["nivel"] == "ERROR")
 
 
-def test_contextos_que_no_son_citas(informe):
-    info = {(h["id"], h["mensaje"].split(" aparece como ")[1].split(":")[0]) for h in informe["hallazgos"]
+def _motivos(informe):
+    return {(h["id"], h["mensaje"].split(" aparece como ")[1].rsplit(": no se cuenta", 1)[0]) for h in informe["hallazgos"]
             if h["codigo"] == "CITA_EN_CONTEXTO_AJENO"}
+
+
+def test_contextos_que_no_son_citas(informe):
+    info = _motivos(informe)
     assert ("R30", "código JEL de clasificación de la literatura económica") in info
     assert ("F31", "código JEL de clasificación de la literatura económica") in info
     assert ("F12", "notación dentro de una fórmula") in info
-    assert ("F04", "abreviatura de la función MOT-F04 del mismo documento") in info
-    assert ("AA-SERIE-001", "valor del campo JSON «serie_ht01», que no es el de una ficha") in info
+    assert ("F01", "abreviatura de la función MOT-F01 del mismo documento, en el rango F01–F04") in info
+    serie_motivo = ("símbolo de una serie (valor de «serie_ht01» en "
+                    "02_System_prompts/System prompt - Motor de juguete - V9.0.md:9), no una ficha")
+    assert ("AA-SERIE-001", serie_motivo) in info
+    serie = [h for h in informe["hallazgos"] if h["id"] == "AA-SERIE-001"]
+    assert len(serie) == 1 and [u["linea"] for u in serie[0]["ubicaciones"]] == [9, 10]   # también en prosa, ya declarada
     errores = {h["id"] for h in informe["hallazgos"] if h["nivel"] == "ERROR"}
-    assert not errores & {"R30", "F31", "F12", "F04", "AA-SERIE-001"}
+    assert not errores & {"R30", "F31", "F12", "F01", "F04", "AA-SERIE-001"}
+
+
+TRAMPAS = PROMPT + """{"estado_madurez_metodos":"AA-CARYY-001: implementado"}
+{"metodo":"Brier frente a la referencia (AA-ETA-001)"}
+Clasificación JEL de la fuente; el contrato CT-27 manda y la regla R28 también.
+Regla de corte: `R29 = R1 + R2`.
+Usa la ficha ZZ-ALFA-001 y la QQ-WXYZ-001.
+Según el catálogo v7.0 del Motor.
+Contrato CT\u201106 con guion no separable.
+"""
+
+
+def test_r02_contextos_no_excusan_de_mas(tmp_path):
+    """QA r01, H-02 y H-03: una ficha en un valor JSON o en prosa dentro de él, un CT en una línea con «JEL», una R en una
+    fórmula y un F13 en prosa de un documento con la función MOT-F13 son errores; H-05: familia desconocida, mayúsculas y
+    guion U+2011."""
+    raiz = corpus_juguete(tmp_path, prompt=TRAMPAS,
+                          funciones=FUNCIONES + "| MOT-F13 | Trece | — |\n\nEl archivo F13 no existe.\n")
+    inf = vi.verificar(raiz, codigo_juguete())
+    assert {"AA-CARYY-001", "AA-ETA-001"} <= _de(inf, "d", "FICHA_CITADA_INEXISTENTE", "ERROR")
+    assert {"CT-06", "CT-27"} <= _de(inf, "a", "CT_INEXISTENTE", "ERROR")          # CT-06 escrito con U+2011
+    assert {"R28", "R29"} <= _de(inf, "b", "R_INEXISTENTE", "ERROR")                # «JEL» en la línea; R en una fórmula
+    assert "F13" in _de(inf, "c", "F_INEXISTENTE", "ERROR")
+    assert "ZZ-ALFA-001" in _de(inf, "d", "FICHA_CITADA_INEXISTENTE", "ERROR")     # familia desconocida, parecida a AA-ALFA-001
+    assert _de(inf, "d", "FAMILIA_DESCONOCIDA", "INFO") == {"QQ-WXYZ-001"}
+    assert _de(inf, "d", "MENCION_OTRA_VERSION", "AVISO") == {"Catálogo V8.0", "Catálogo V7.0"}
+    assert not {i for i, _ in _motivos(inf)} & {"AA-CARYY-001", "AA-ETA-001", "CT-27", "R28", "R29", "F13"}
+
+
+def test_r02_rango_de_funciones_con_un_extremo_ajeno_no_excusa(tmp_path):
+    raiz = corpus_juguete(tmp_path, funciones=FUNCIONES + "Resultados F04–F09.\n")   # MOT-F09 no existe
+    assert "F09" in _de(vi.verificar(raiz, codigo_juguete()), "c", "F_INEXISTENTE", "ERROR")
 
 
 def test_cada_hallazgo_con_ubicacion_real(informe, tmp_path):
@@ -294,7 +340,7 @@ def test_cada_hallazgo_con_ubicacion_real(informe, tmp_path):
 # ---------------------------------------------------------------- CA-7: ni 99_Historico* ni 11_Ejecutor
 def test_no_lee_historico_ni_ejecutor(informe):
     ids = {h["id"] for h in informe["hallazgos"]}
-    assert not ids & {"CT-97", "CT-98", "CT-99", "R99", "F99", "PS99", "RF-9999"}
+    assert not ids & {"CT-96", "CT-97", "CT-98", "CT-99", "R99", "F99", "PS99", "RF-9999"}   # CT-96: carpeta con punto
     assert informe["entradas"]["md_escaneados"] == 9
     texto = json.dumps(informe, ensure_ascii=False)
     assert "99_Historico_V1.0" not in texto and "11_Ejecutor/README" not in texto
@@ -315,11 +361,16 @@ def test_dos_documentos_0_fallan_cerrado(tmp_path):
         vi.verificar(raiz, codigo_juguete())
 
 
-def test_documento_0_en_nfd_se_encuentra(tmp_path):
+def test_nombres_en_nfd_se_encuentran(tmp_path):
+    """QA r01, H-07 (M14): el patrón del Catálogo lleva acentos; un nombre en NFD solo casa si se normaliza a NFC."""
     raiz = corpus_juguete(tmp_path)
-    viejo = raiz / "01_Gobernanza/Documento 0 - Protocolo de prueba - V9.1.md"
-    viejo.rename(raiz / "01_Gobernanza" / "Documento 0 - Protocolo maestro - Versión óptima V9.1.md".replace("ó", "ó"))
-    assert vi.verificar(raiz, codigo_juguete())["entradas"]["documento_0"]["version_nombre"] == "9.1"
+    carpeta = raiz / "04_Motor_conocimiento_y_catalogo"
+    nfc = "Catálogo de cálculos del Motor - V9.0.md"
+    (carpeta / nfc).rename(carpeta / unicodedata.normalize("NFD", nfc))
+    assert any(p.name != nfc and unicodedata.normalize("NFC", p.name) == nfc for p in carpeta.iterdir())
+    inf = vi.verificar(raiz, codigo_juguete())
+    assert inf["entradas"]["catalogo"]["archivo"] == f"04_Motor_conocimiento_y_catalogo/{nfc}"
+    assert inf["fichas"]["encabezados"] == 4
 
 
 def test_sin_catalogo_falla_cerrado(tmp_path):
@@ -476,3 +527,101 @@ def test_real_no_lee_historico(informe_real):
     total = sum(1 for p in RAIZ_BLOQUE.rglob("*.md")
                 if not any(x == "11_Ejecutor" or x.startswith(("99_Historico", ".")) for x in p.relative_to(RAIZ_BLOQUE).parts[:-1]))
     assert informe_real["entradas"]["md_escaneados"] == total
+
+
+# ---------------------------------------------------------------- QA r01: H-01 (determinismo entre procesos)
+def test_r02_clave_id_desempata_por_la_cadena():
+    assert vi._clave_id("F2") != vi._clave_id("F02")
+    assert sorted({"F02", "F2", "F10", "F5", "F05"}, key=vi._clave_id) == ["F02", "F2", "F05", "F5", "F10"]
+
+
+def test_r02_mismo_json_y_markdown_con_semillas_distintas(tmp_path):
+    raiz = corpus_juguete(tmp_path / "bloque")
+    salidas = []
+    for semilla in ("0", "1", "3", "7"):
+        js, md = tmp_path / f"{semilla}.json", tmp_path / f"{semilla}.md"
+        r = subprocess.run([sys.executable, "-m", "bloque_a.herramientas.verificador_ids", "--raiz", str(raiz), "--json", str(js),
+                            "--md", str(md)], cwd=DIR_EJECUTOR, capture_output=True, text=True, timeout=300, check=False,
+                           env={**os.environ, "PYTHONHASHSEED": semilla})
+        assert r.returncode == 1, r.stderr
+        salidas.append((js.read_bytes(), md.read_bytes()))
+    assert len(set(salidas)) == 1
+    citas_f = [c["id"] for c in json.loads(salidas[0][0])["archivos"]["citas"]]
+    assert citas_f.index("F05") < citas_f.index("F5")                  # el empate de F05 y F5 lo decide la cadena
+
+
+# ---------------------------------------------------------------- QA r01: H-06 (destino imposible)
+def test_r02_destino_imposible_sale_2_y_no_escribe_nada(tmp_path, informe):
+    raiz = corpus_juguete(tmp_path / "b")
+    audit = tmp_path / "auditoria.md"
+    original = f"# A\n\n{vi.MARCA_INICIO}\nviejo\n{vi.MARCA_FIN}\n"
+    audit.write_text(original, encoding="utf-8")
+    md = tmp_path / "i.md"
+    for destino in (tmp_path / "no" / "existe" / "i.json", tmp_path):   # carpeta inexistente; una carpeta como archivo
+        assert vi.main(["--raiz", str(raiz), "--md", str(md), "--json", str(destino), "--auditoria", str(audit)]) == 2
+        assert audit.read_text(encoding="utf-8") == original and not md.exists()
+    js = tmp_path / "i.json"                                             # al revés: el JSON vale y el Markdown no
+    assert vi.main(["--raiz", str(raiz), "--json", str(js), "--md", str(tmp_path / "no" / "i.md"), "--auditoria", str(audit)]) == 2
+    assert not js.exists() and audit.read_text(encoding="utf-8") == original
+    assert not list(tmp_path.glob(".*.tmp"))
+
+
+# ---------------------------------------------------------------- QA r01: H-07 (protecciones sin prueba)
+def test_r02_filas_y_fichas_duplicadas_y_total(tmp_path):
+    raiz = corpus_juguete(tmp_path, doc0=DOC0.replace("| R2 | Dos | — |", "| R2 | Dos | — |\n| R2 | Otra vez | — |"),
+                          catalogo=CATALOGO.replace("Total: 4 fichas.", "Total: 5 fichas.")
+                          + "\n### AA-ALFA-001 · Alfa repetida\n")
+    inf = vi.verificar(raiz, codigo_juguete(fichas_catalogo=("AA-ALFA-001", "AA-ALFA-001", "AA-DELTA-002", "BB-REX-001")))
+    assert _de(inf, "b", "FILA_DUPLICADA", "ERROR") == {"R2"}
+    assert _de(inf, "d", "FICHA_DUPLICADA", "ERROR") == {"AA-ALFA-001"}
+    assert _de(inf, "d", "TOTAL_DISTINTO", "ERROR") == {"Total"}
+    assert _de(inf, "d", "FICHA_DUPLICADA_CODIGO", "ERROR") == {"AA-ALFA-001"}
+
+
+def test_r02_ct_solo_en_canales_v6_o_campos_minimos(tmp_path):
+    inf = vi.verificar(corpus_juguete(tmp_path), codigo_juguete(canales_v6=frozenset({"CT-08"}),
+                                                                campos_minimos=frozenset({"CT-01", "CT-09"})))
+    assert {"CT-08", "CT-09"} <= _de(inf, "a", "CT_SOLO_CODIGO", "ERROR")
+
+
+def test_r02_alternativa_sin_ficha_y_referencia_definida_y_de_baja(tmp_path):
+    archivos = dict(ARCHIVOS)
+    archivos["Registro de Fuentes - V3.2.md"] += "| RF-0002 | Otra | Retirada | 2026-11-02 | — |\n"
+    inf = vi.verificar(corpus_juguete(tmp_path, archivos_05=archivos), codigo_juguete(alternativas={"AA-ALFA-001": "ZZ-NO-001"}))
+    assert _de(inf, "d", "ALTERNATIVA_SIN_FICHA", "ERROR") == {"ZZ-NO-001"}
+    assert _de(inf, "e", "REF_DEFINIDA_Y_DE_BAJA", "AVISO") == {"RF-0002"}
+
+
+def test_r02_versiones_escritas_en_los_py(tmp_path):
+    paquete = tmp_path / "11_Ejecutor" / "paquete"
+    paquete.mkdir(parents=True)
+    (paquete / "a.py").write_text('X = {"catalog_version": "4.0"}\n', encoding="utf-8")
+    (paquete / "b.py").write_text('"""Fichas del Catálogo de cálculos V4.0."""\nY = "catálogo v5.0"\n', encoding="utf-8")
+    assert vi.versiones_en_py(paquete, tmp_path, tmp_path) == [("11_Ejecutor/paquete/a.py", 1, "4.0", True),
+                                                               ("11_Ejecutor/paquete/b.py", 1, "4.0", False),
+                                                               ("11_Ejecutor/paquete/b.py", 2, "5.0", False)]
+
+
+def test_r02_el_paquete_real_no_escribe_otra_version_del_catalogo():
+    codigo = vi.Codigo.desde_paquete(RAIZ_BLOQUE)
+    assert codigo.versiones_en_codigo                                   # el escaneo encuentra las menciones a la vigente
+    assert {v for _, _, v, _ in codigo.versiones_en_codigo} == {servicio.CATALOG_VERSION}
+
+
+def test_r02_validar_informe_comprueba_errores_y_auditoria_marcas_repetidas(tmp_path, informe):
+    roto = copy.deepcopy(informe)
+    roto["errores"] += 1
+    with pytest.raises(jsonschema.ValidationError):
+        vi.validar_informe(roto)
+    doc = tmp_path / "a.md"
+    doc.write_text(f"{vi.MARCA_INICIO}\n{vi.MARCA_FIN}\n{vi.MARCA_INICIO}\n{vi.MARCA_FIN}\n", encoding="utf-8")
+    with pytest.raises(vi.EntradaInvalida):
+        vi.actualizar_auditoria(doc, "x")
+
+
+def test_r02_orden_de_hallazgos_con_desempate_por_codigo(tmp_path):
+    raiz = corpus_juguete(tmp_path, catalogo=CATALOGO.replace("| AA-BETA-001 | Beta | P1 | DOCUMENTADO |",
+                                                               "| AA-BETA-001 | Beta | P1 | IMPLEMENTADO |"))
+    beta = [h["codigo"] for h in vi.verificar(raiz, codigo_juguete())["hallazgos"]
+            if h["id"] == "AA-BETA-001" and h["nivel"] == "ERROR"]
+    assert beta == ["FALTA_EN_FICHAS_CATALOGO", "SOLO_CATALOGO"]       # se crean al revés; el orden es por código

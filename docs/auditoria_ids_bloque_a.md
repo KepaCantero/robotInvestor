@@ -35,7 +35,7 @@ Generado por `bloque_a/herramientas/verificador_ids.py` 1.0.0 (T-157). Todo dato
 | Documento 0 | `01_Gobernanza/Documento 0 - Protocolo maestro del Bloque A - Versión óptima V5.1.md` | V5.1 (título: V5.1) | `7e708a030dad30d70517c26c7641e14488401fb76c1457b8dd8e1f9af31ff8cb` |
 | Catálogo | `04_Motor_conocimiento_y_catalogo/Catálogo de cálculos del Motor - V5.0.md` | V5.0 | `16fdb3b30833c7d7a2bece5c0c1628a7327b38fdeaa11a82b5bdca31062bd66f` |
 | Código | `bloque_a/contratos.py` | — | `b0316aa4078b65cdb29fa1cd4ade690c39211a1a0aff0e102599f2761b2796b1` |
-| Código | `bloque_a/motor/servicio.py` | — | `6e18a97ff27111107635235be13acbdc5d2fcd72f6987302e6188c04ee0d312d` |
+| Código | `bloque_a/motor/servicio.py` | — | `97c2b3ac80d64087a37e309d80185e843fbbe5b5b131de29b39024777882f7f0` |
 | Corpus | 88 `.md` (sin 11_Ejecutor/, 99_Historico*/) | — | `b73cfc2117bdc954859e0e743a9b35e82e31c39cf121861c0d670af039ff65b0` |
 
 Secciones del Documento 0 leídas (línea del título): §1 l. 25, §5.1 l. 263, §6.1 l. 296, §7.3 (solo el título) l. 370, §9.3 l. 556.
@@ -48,11 +48,11 @@ Secciones del Documento 0 leídas (línea del título): §1 l. 25, §5.1 l. 263,
 | a · Contratos CT | 0 | 0 | 0 |
 | b · Reglas R | 0 | 0 | 1 |
 | c · Archivos F | 0 | 0 | 9 |
-| d · Fichas del Catálogo | 2 | 2 | 3 |
+| d · Fichas del Catálogo | 1 | 1 | 2 |
 | e · Referencias de los archivos operativos | 1 | 1 | 0 |
 | f · Puertas PS | 0 | 0 | 0 |
 
-**Total de errores: 3.**
+**Total de errores: 2.**
 
 ### (a) Contratos CT
 
@@ -175,11 +175,11 @@ Las fases salen del título de §7.3 («7.3 Fases de un análisis (F0–F8) y fa
 |---|---|---|---|---|
 | INFO | CODIGO_FUERA_DE_05 | CC | CC («Catálogo de cálculos, Perfiles de clase y Mapa de conocimientos del Motor») no es un archivo de 05_Archivos_operativos/ | `01_Gobernanza/Documento 0 - Protocolo maestro del Bloque A - Versión óptima V5.1.md:263` |
 | INFO | CODIGO_FUERA_DE_05 | ENT | ENT («Carpetas de entregables») no es un archivo de 05_Archivos_operativos/ | `01_Gobernanza/Documento 0 - Protocolo maestro del Bloque A - Versión óptima V5.1.md:263` |
-| INFO | CITA_EN_CONTEXTO_AJENO | F02 | F02 aparece como abreviatura de la función AUD-F02 del mismo documento: no se cuenta como cita | `03_Funciones/Funciones, tareas y cometidos – Auditor – óptima V5.0.md:30` |
-| INFO | CITA_EN_CONTEXTO_AJENO | F02 | F02 aparece como abreviatura de la función PROS-F02 del mismo documento: no se cuenta como cita | `03_Funciones/Funciones, tareas y cometidos – Analista de Prospectiva y Horizontes – óptima V5.0.md:31` |
-| INFO | CITA_EN_CONTEXTO_AJENO | F05 | F05 aparece como abreviatura de la función ORQ-F05 del mismo documento: no se cuenta como cita | `03_Funciones/Funciones, tareas y cometidos – Orquestador técnico – óptima V5.0.md:23` |
-| INFO | CITA_EN_CONTEXTO_AJENO | F12 | F12 aparece como abreviatura de la función AUD-F12 del mismo documento: no se cuenta como cita | `03_Funciones/Funciones, tareas y cometidos – Auditor – óptima V5.0.md:30` |
-| INFO | CITA_EN_CONTEXTO_AJENO | F12 | F12 aparece como abreviatura de la función PROS-F12 del mismo documento: no se cuenta como cita | `03_Funciones/Funciones, tareas y cometidos – Analista de Prospectiva y Horizontes – óptima V5.0.md:31` |
+| INFO | CITA_EN_CONTEXTO_AJENO | F02 | F02 aparece como abreviatura de la función AUD-F02 del mismo documento, en el rango F02–F12: no se cuenta como cita | `03_Funciones/Funciones, tareas y cometidos – Auditor – óptima V5.0.md:30` |
+| INFO | CITA_EN_CONTEXTO_AJENO | F02 | F02 aparece como abreviatura de la función PROS-F02 del mismo documento, en el rango F02–F12: no se cuenta como cita | `03_Funciones/Funciones, tareas y cometidos – Analista de Prospectiva y Horizontes – óptima V5.0.md:31` |
+| INFO | CITA_EN_CONTEXTO_AJENO | F05 | F05 aparece como abreviatura de la función ORQ-F05 del mismo documento, en el rango ORQ-F03 a F05: no se cuenta como cita | `03_Funciones/Funciones, tareas y cometidos – Orquestador técnico – óptima V5.0.md:23` |
+| INFO | CITA_EN_CONTEXTO_AJENO | F12 | F12 aparece como abreviatura de la función AUD-F12 del mismo documento, en el rango F02–F12: no se cuenta como cita | `03_Funciones/Funciones, tareas y cometidos – Auditor – óptima V5.0.md:30` |
+| INFO | CITA_EN_CONTEXTO_AJENO | F12 | F12 aparece como abreviatura de la función PROS-F12 del mismo documento, en el rango F02–F12: no se cuenta como cita | `03_Funciones/Funciones, tareas y cometidos – Analista de Prospectiva y Horizontes – óptima V5.0.md:31` |
 | INFO | CITA_EN_CONTEXTO_AJENO | F12 | F12 aparece como notación dentro de una fórmula: no se cuenta como cita | `02_System_prompts/System prompt - Analista de Materias Primas - Versión óptima V5.0.md:81`, `02_System_prompts/System prompt - Analista de Materias Primas - Versión óptima V5.0.md:81`, `02_System_prompts/System prompt - Analista de Materias Primas - Versión óptima V5.0.md:111`, `02_System_prompts/System prompt - Analista de Materias Primas - Versión óptima V5.0.md:111` |
 | INFO | CITA_EN_CONTEXTO_AJENO | F31 | F31 aparece como código JEL de clasificación de la literatura económica: no se cuenta como cita | `02_System_prompts/System prompt - Documentador para el Analizador - Versión óptima V5.0.md:368` |
 
@@ -303,12 +303,9 @@ Ficha a ficha:
 | Nivel | Código | ID | Motivo | Dónde |
 |---|---|---|---|---|
 | ERROR | FICHA_CITADA_INEXISTENTE | FX-MC10-003 | Se cita la ficha FX-MC10-003, que no está en el Catálogo | `05_Archivos_operativos/Registro de cálculos del Motor (esquema V2.0).md:92` |
-| ERROR | CATALOG_VERSION_LITERAL | catalog_version 4.0 | El código escribe `catalog_version` 4.0 en 1 sitio(s) y el Catálogo vigente es V5.0 (CATALOG_VERSION = 5.0) | `11_Ejecutor/bloque_a/evaluador.py:491` |
 | AVISO | MENCION_OTRA_VERSION | Catálogo V4.0 | 8 menciones a la versión 4.0 del Catálogo («Catálogo V4.0» o `catalog_version` 4.0; 6 en 02_System_prompts/); el vigente es V5.0 | `02_System_prompts/System prompt - MC-01 Fundamentos cuantitativos y estadística - Versión óptima V5.0.md:23`, `02_System_prompts/System prompt - MC-01 Fundamentos cuantitativos y estadística - Versión óptima V5.0.md:240`, `02_System_prompts/System prompt - MC-02 Series temporales, tendencias, regímenes y volatilidad - Versión óptima V5.0.md:213`, `02_System_prompts/System prompt - MC-03 Econometría, causalidad y macroeconomía cuantitativa - Versión óptima V5.0.md:196`, `02_System_prompts/System prompt - MC-04 Crecimiento, difusión y prospectiva cuantitativa - Versión óptima V5.0.md:189`, `02_System_prompts/System prompt - MC-05 Simulación estocástica y escenarios - Versión óptima V5.0.md:191` y 2 más |
-| AVISO | MENCION_OTRA_VERSION_CODIGO | Catálogo V4.0 (código) | 1 mención(es) a «Catálogo V4.0» en comentarios o docstrings del código; el vigente es V5.0 | `11_Ejecutor/bloque_a/motor/operaciones.py:1` |
-| INFO | CITA_EN_CONTEXTO_AJENO | IDX-FICT-001 | IDX-FICT-001 aparece como valor del campo JSON «afirmacion», que no es el de una ficha: no se cuenta como cita | `05_Archivos_operativos/Registro de pronósticos congelados (esquema V2.0).md:132` |
-| INFO | CITA_EN_CONTEXTO_AJENO | IDX-FICT-001 | IDX-FICT-001 aparece como valor del campo JSON «serie_ht01», que no es el de una ficha: no se cuenta como cita | `05_Archivos_operativos/Registro de cálculos del Motor (esquema V2.0).md:94`, `05_Archivos_operativos/Registro de oportunidades (esquema V3.0).md:130`, `05_Archivos_operativos/Registro de pronósticos congelados (esquema V2.0).md:133` |
-| INFO | CITA_EN_CONTEXTO_AJENO | IDX-FICT-001 | IDX-FICT-001 aparece como valor del campo JSON «simbolo», que no es el de una ficha: no se cuenta como cita | `05_Archivos_operativos/Registro de oportunidades (esquema V3.0).md:130` |
+| INFO | CITA_EN_CONTEXTO_AJENO | IDX-FICT-001 | IDX-FICT-001 aparece como símbolo de una serie (valor de «serie_ht01» en 05_Archivos_operativos/Registro de cálculos del Motor (esquema V2.0).md:94), no una ficha: no se cuenta como cita | `05_Archivos_operativos/Registro de cálculos del Motor (esquema V2.0).md:94`, `05_Archivos_operativos/Registro de oportunidades (esquema V3.0).md:130`, `05_Archivos_operativos/Registro de oportunidades (esquema V3.0).md:130`, `05_Archivos_operativos/Registro de pronósticos congelados (esquema V2.0).md:132`, `05_Archivos_operativos/Registro de pronósticos congelados (esquema V2.0).md:133` |
+| INFO | FAMILIA_DESCONOCIDA | WI-METH-001 | WI-METH-001 tiene forma de ficha y su familia (WI) no es la de ninguna ficha del Catálogo ni del código: probablemente es otro identificador | `05_Archivos_operativos/Registro de Fuentes para el Analizador de Tendencias de Inversión - V3.2.md:5594` |
 
 ### (e) Referencias de los archivos operativos
 
@@ -353,25 +350,30 @@ Sin hallazgos.
   CT-10 (`SERVICIOS_CT10`), así que las 81 salen IMPLEMENTADO y ninguna SOLO_CATALOGO, SOLO_CODIGO o ID_DISTINTO; la madurez que
   lee `madurez_catalogo()` coincide fila a fila con el índice §4. De las 81, 21 están en secciones «V5.0» del Catálogo y 60 en
   las anteriores: el «60 frente a 81» del desfase.
-- **Lo que queda del desfase son textos con la versión 4.0:** seis menciones en los prompts MC-01 a MC-05 (una en prosa y cinco
-  en ejemplos JSON), una línea de las funciones del Motor y el ejemplo del Registro de cálculos (corpus congelado), más un literal `catalog_version` 4.0 que el
-  propio código escribe en el Registro de cálculos (`evaluador.py`) y el docstring de `motor/operaciones.py`.
+- **Lo que queda del desfase son textos del corpus con la versión 4.0:** seis menciones en los prompts MC-01 a MC-05 (una en
+  prosa y cinco en ejemplos JSON) y una línea de las funciones del Motor (D-2), más el ejemplo del Registro de cálculos, la
+  octava mención, que va con su ficha inexistente en D-3. El literal `catalog_version` 4.0 que el código escribía en
+  `evaluador.py` y el docstring de `motor/operaciones.py` (D-1) los corrigió T-160: el escaneo de los `.py` del paquete ya no
+  encuentra ninguna versión distinta de la vigente.
 - **Contratos (a), reglas (b), archivos (c) y puertas (f): sin errores.** Las 25 CT de §6.1 tienen canal en `contratos.py` y
   `canal_permitido` admite al menos un par en cada una; no se cita ninguna CT, regla, archivo o puerta inexistente. El mapa de
-  (c) da el archivo real de cada F por su H1. Los INFO de (b) y (c) son códigos JEL, notación de una fórmula de futuros y
-  abreviaturas de las funciones de cada documento de `03_Funciones` (`PROS-F02`, `ORQ-F05`…): el informe dice cuál y dónde.
+  (c) da el archivo real de cada F por su H1. Los INFO de (b) y (c) son códigos de la lista JEL del Documentador, notación de una
+  fórmula de futuros y rangos de funciones de cada documento de `03_Funciones` («F02–F12» por `PROS-F02` a `PROS-F12`,
+  «ORQ-F03 a F05»): el informe dice cuál y dónde. Los INFO de (d) son IDX-FICT-001, que el corpus declara como símbolo de una
+  serie (`serie_ht01`), y WI-METH-001, con forma de ficha pero de una familia que no existe y sin parecido con ninguna.
 - **(e) referencias:** las 23 TA, 18 TM y 19 TF citadas en prompts y funciones existen en `05_Archivos_operativos`; de las RF,
   una (`RF-0123`, en un ejemplo del prompt del Evaluador) no tiene entrada, y «RF-1» del prompt del Auditor es una tarjeta del
   informe visual, no una referencia (AVISO, sin acción).
 
-## Decisiones propuestas (no aplicadas)
+## Decisiones propuestas
 
-Solo lo que de verdad queda desincronizado. Ninguna se ejecuta en esta fase.
+Solo lo que estaba desincronizado al medir. La Fase 0 no aplica ninguna; D-1 la aplicó después T-160. Las cuatro están en el
+registro de decisiones del Bloque A (`sistema_global/seguimiento/Decisiones_del_operador_Bloque_A.md`, §6).
 
 | # | Qué está desincronizado (hallazgo del informe) | Decisión propuesta | Por qué | Quién la decide y cuándo | Incidencia |
 | --- | --- | --- | --- | --- | --- |
-| D-1 | El código escribe `catalog_version` 4.0 en la entrada del Registro de cálculos de la tasa base RI-TB (FC-EVAL-001), y el docstring de `motor/operaciones.py` dice «Catálogo de cálculos V4.0» (CATALOG_VERSION_LITERAL, MENCION_OTRA_VERSION_CODIGO) | Escribir `servicio.CATALOG_VERSION` en lugar del literal y corregir el docstring | Una re-ejecución CT-10 usa la versión del artefacto (§1.1 del Catálogo); un artefacto que declara 4.0 cita un Catálogo que ya no es el vigente. Con la constante, el próximo cambio de versión no deja literales atrás | El agente, por defecto (`compartida/2026-11-13_decide-el-agente-por-defecto`), en la próxima tarea del Motor que toque `evaluador.py`; con su prueba | INC-T157-02 |
-| D-2 | Seis menciones de los prompts MC-01 a MC-05 y una línea de las funciones del Motor citan el «Catálogo V4.0» (MENCION_OTRA_VERSION) | Dejar el corpus como está en esta entrega; en la próxima, «Catálogo V5.0» (o la versión vigente) | Es corpus congelado: no se edita en una fase de código. Los prompts son datos en tiempo de ejecución y el código no lee de ellos la versión: el Registro de cálculos lleva `CATALOG_VERSION` en los servicios del Motor, así que el texto no cambia ningún cálculo | El operador, en la próxima entrega del corpus del Bloque A (re-congelado deliberado) | INC-T157-03 |
+| D-1 | El código escribe `catalog_version` 4.0 en la entrada del Registro de cálculos de la tasa base RI-TB (FC-EVAL-001), y el docstring de `motor/operaciones.py` dice «Catálogo de cálculos V4.0» (CATALOG_VERSION_LITERAL, MENCION_OTRA_VERSION_CODIGO) | Escribir `servicio.CATALOG_VERSION` en lugar del literal y corregir el docstring | Una re-ejecución CT-10 usa la versión del artefacto (§1.1 del Catálogo); un artefacto que declara 4.0 cita un Catálogo que ya no es el vigente. Con la constante, el próximo cambio de versión no deja literales atrás | El agente, por defecto (`compartida/2026-11-13_decide-el-agente-por-defecto`). **Aplicada por T-160** (16-11-2026): `evaluador.py` escribe `servicio.CATALOG_VERSION` y el informe ya no da CATALOG_VERSION_LITERAL ni MENCION_OTRA_VERSION_CODIGO | INC-T157-02 |
+| D-2 | Seis menciones de los prompts MC-01 a MC-05 y una línea de las funciones del Motor citan el «Catálogo V4.0» (MENCION_OTRA_VERSION) | Dejar el corpus como está en esta entrega; en la próxima, «Catálogo V5.0» (o la versión vigente) | Es corpus congelado: no se edita en una fase de código. Los prompts son datos en tiempo de ejecución y el código no lee de ellos la versión: el Registro de cálculos lleva `CATALOG_VERSION` en los servicios del Motor, así que el texto no cambia ningún cálculo | El operador, en la próxima entrega del corpus del Bloque A (re-congelado deliberado). **Conviene antes de la Fase 5** (modo sombra con la API real, ya autorizada): con la API, «la ficha VIGENTE del Catálogo V4.0» llega tal cual al modelo | INC-T157-03 |
 | D-3 | El ejemplo del Registro de cálculos (`05_Archivos_operativos`, RC) cita la ficha `FX-MC10-003`, que no existe en el Catálogo V5.0, con `catalog_version` 4.0 (FICHA_CITADA_INEXISTENTE) | En la próxima entrega, citar una ficha vigente del MC-10 con su versión: FC-EVAL-001 es la que el ejecutor usa para la tasa base RI-TB (`evaluador.py`) | El ejemplo es ficticio, pero es la plantilla de una entrada de RC: quien lo copie cita una ficha que el Motor rechazaría con `OPERACION_SIN_FICHA` | El operador, en la próxima entrega del corpus | INC-T157-04 |
 | D-4 | El ejemplo del prompt del Evaluador cita `RF-0123`, sin entrada en F9 ni en su Registro de bajas (REF_INEXISTENTE) | En la próxima entrega, citar una RF que exista en F9 o marcarla como ficticia | Un ejemplo con una referencia inexistente enseña a citar fuentes que el bloque no tiene registradas (R7) | El operador, en la próxima entrega del corpus | INC-T157-05 |
 
