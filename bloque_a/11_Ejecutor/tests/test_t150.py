@@ -511,19 +511,24 @@ def _en_tramo(lo, hi, semilla):
     return lo + (hi - lo) * (u - u.min()) / (u.max() - u.min())
 
 
-@pytest.mark.parametrize("lo, hi, agrupa", [(5.15, 5.45, True), (5.06, 5.45, True), (4.6, 4.9, False), (4.55, 4.95, False)])
-def test_t152_h02_el_umbral_del_desplazamiento_esta_en_q_p_del_1_por_ciento(lo, hi, agrupa):
-    """H-02: el umbral `[PROPUESTO]` de INC-T127-01 (ronda T-150): un precio se desplaza a la hipótesis truncada solo si
-    su paso entero no pasa de `tolerancia_clon` (q/p ≤ 1 %). Con 0,05 entre 5,06 y 5,45 (q/p de 0,92 a 0,99 %), la
-    copia truncada se agrupa; entre 4,55 y 4,95 (de 1,01 a 1,10 %), no (el límite declarado de los pasos grandes).
-    Con el umbral al 2 % (mutante X01) se agruparía también la segunda; a la mitad, ninguna de las dos (medido en
-    `.docs/tickets/T-152/medir_umbral.py`). Resolución medida: mata un umbral un 5 % más bajo o un 10 % más alto; más cerca
-    del 1 %, con precios de tramo estrecho, la hipótesis redondeada ya agrupa o no según el camino, sea cual sea el
-    umbral (`T-152/analisis-tecnico.md`). Si el operador cambia el umbral (T-57), esta prueba cambia con él."""
+@pytest.mark.parametrize("paso, lo, hi, agrupa", [
+    (0.05, 2.55, 2.75, True),     # q/p de 1,82 a 1,96 %: justo por debajo del umbral
+    (0.05, 2.75, 4.5, True),      # de 1,11 a 1,82 %: lo que gana el umbral nuevo (con el 1 %, ninguna)
+    (0.01, 0.55, 0.95, True),     # de 1,05 a 1,82 %, con otro paso
+    (0.05, 4.6, 4.9, True),       # de 1,02 a 1,09 %: con el 1 % no se agrupaba (T-152, primera versión)
+    (0.05, 2.3, 2.45, False),     # de 2,04 a 2,17 %: la cota está en el tope (límite declarado)
+])
+def test_t152_h02_el_umbral_del_desplazamiento_esta_en_q_p_del_2_por_ciento(paso, lo, hi, agrupa):
+    """H-02 y la decisión del operador (16-11-2026): un precio se desplaza a la hipótesis truncada si su paso entero no
+    pasa de 2·`tolerancia_clon` (q/p ≤ 2 %; la media anchura q/2p no pasa de `tolerancia_clon`). Por debajo, la copia
+    truncada se agrupa; por encima del 2 %, no: la cota de la serie redondeada llega al tope de los casi clones, y
+    desplazarla no la hace caber, sea cual sea el umbral (`.docs/tickets/T-152/medir_umbral.py`). Por eso un umbral más
+    alto no se distingue (mutante equivalente) y esta prueba fija el lado de abajo: mata un umbral un 5 % más bajo (el
+    tramo de 1,82 a 1,96 %) y el 1 % de antes. Si el umbral cambia (T-57), esta prueba cambia con él."""
     assert fb.FRONTERA_B["tolerancia_clon"] == 0.01
-    qp = 0.05 / np.array([hi, lo])
-    assert ((qp <= 0.01).all() if agrupa else (qp > 0.01).all())
-    juntas = [_juntas(x, _trunc(x, 0.05)) for x in (_en_tramo(lo, hi, s) for s in range(12))]
+    qp = paso / np.array([hi, lo])
+    assert ((qp <= 0.02).all() if agrupa else (qp > 0.02).all())
+    juntas = [_juntas(x, _trunc(x, paso)) for x in (_en_tramo(lo, hi, s) for s in range(12))]
     assert juntas == [agrupa] * 12
 
 

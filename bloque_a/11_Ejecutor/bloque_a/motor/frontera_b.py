@@ -274,7 +274,11 @@ def _etiquetas_series_copiadas(precios: np.ndarray, anios: np.ndarray, tol: floa
     # monetario a 1,00) la cota ya llega al tope, y desplazarla medio paso, que cambia con el precio, alinea por azar series
     # distintas (el límite declarado de los pasos grandes); esos precios se quedan como redondeados. Una serie sin ningún
     # precio desplazado más que `tol_numerica` (sin redondear) es la misma en las dos hipótesis.
-    desplaza = 2 * rel <= tol
+    # T-152 (QA r01 de T-150, H-02; decisión del operador del 16-11-2026): el umbral es q/p ≤ 2·`tol` (la media anchura
+    # q/2p, `rel`, no pasa de `tol`), no q/p ≤ `tol`. Es donde la cota llega al tope: medido con 100 semillas
+    # (`.docs/tickets/T-152/medir_umbral.py`), entre q/p del 1 y del 2 % agrupa las copias truncadas sin agrupar más series
+    # distintas, y por encima no cambia nada.
+    desplaza = rel <= tol
     logp = np.vstack([logp, logp + np.where(desplaza, np.log1p(rel), 0.0)])
     cota_redondeo = np.vstack([cota_redondeo, np.where(desplaza, -np.log1p(-np.minimum(rel / (1 + rel), 0.5)) + tol_num,
                                                        cota_redondeo)])
