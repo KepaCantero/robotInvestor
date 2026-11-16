@@ -8,11 +8,10 @@ import json
 import os
 import sys
 from pathlib import Path
-from typing import List, Optional
 
 import pandas as pd
 
-from .configuracion import RUTA_UNIVERSO_EJEMPLO, DIR_EJECUTOR, cargar_config, ruta
+from .configuracion import DIR_EJECUTOR, RUTA_UNIVERSO_EJEMPLO, cargar_config, ruta
 
 
 def _resumen_run(r: dict) -> dict:
@@ -37,7 +36,7 @@ def _bloque(a, cfg):
     return Bloque(cfg, prov, uni, cli, a.estado or (cfg["rutas"]["almacen"]), a.salida or cfg["rutas"]["entregables"], anonimizar=a.anonimizar)
 
 
-def main(argv: Optional[List[str]] = None) -> int:
+def main(argv: list[str] | None = None) -> int:
     ap = argparse.ArgumentParser(prog="bloque-a", description="Ejecutor programático del Bloque A (Robot Investor)")
     ap.add_argument("--config", help="YAML que se fusiona sobre config/por_defecto.yaml")
     ap.add_argument("--datos", help="Carpeta de datos CSV (HT-01)")
@@ -103,6 +102,8 @@ def main(argv: Optional[List[str]] = None) -> int:
     p.add_argument("--receptor", help="emitir: agente receptor (AG-nn)")
     p.add_argument("--json", help="emitir: {items: [{tipo, origen, que_cambia, donde_se_comprueba, como_se_sabe, caducidad}], "
                                    "fecha_aplicacion}")
+    p.add_argument("--simular-fallo-del-emisor", action="store_true",
+                   help="emitir (solo con --cliente mock): deja pasar el control doble del emisor para ejercer PB-48 (T-161)")
     p = sub.add_parser("generar-sinteticos", help="Escribe precios sintéticos (CSV) para el universo")
     p.add_argument("--desde", default="2022-01-03")
     p.add_argument("--hasta", default="2026-10-30")
@@ -220,7 +221,12 @@ def _guia(bloque, a, as_of) -> object:
         d = _json(a)
         if not a.receptor or not isinstance(d, dict):
             sys.exit("emitir necesita --receptor y --json con {items, fecha_aplicacion}")
-        return bloque.guias.emitir(a.receptor, d.get("items"), as_of=as_of, fecha_aplicacion=d.get("fecha_aplicacion"))
+        from .contratos import MensajeInvalido
+        try:   # T-161 (H-05): un cuerpo inválido o un ítem en conflicto no se emite y la orden termina con el motivo
+            return bloque.guias.emitir(a.receptor, d.get("items"), as_of=as_of, fecha_aplicacion=d.get("fecha_aplicacion"),
+                                       simular_fallo_del_emisor=a.simular_fallo_del_emisor)
+        except MensajeInvalido as e:
+            sys.exit(f"guia emitir: no se emite: {e}")
     return {k: {c: v.get(c) for c in ("agente", "version", "estado", "fecha_aplicacion", "sustituye", "sustituida_por", "motivo")}
             for k, v in bloque.guias.todas().items()}
 

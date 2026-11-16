@@ -11,7 +11,7 @@ import pytest
 from bloque_a.almacen import Almacen
 from bloque_a.evaluador import Evaluador, contaminacion_posible
 from bloque_a.motor import evaluacion as ev
-from conftest import config_pruebas
+from conftest import certificado_con_reejecucion, config_pruebas
 
 AS_OF = "2026-01-02"
 
@@ -227,8 +227,7 @@ def test_pa10_revocar_y_retirar_siguen_siendo_automaticos(tmp_path):
         pid = f"PRG-2025-{i + 101:04d}"
         _alta(a, pid, prob_interna=0.65, clase="MP", fecha_resolucion=str((pd.Timestamp("2025-01-02") + pd.Timedelta(days=i)).date()))
         _resolver(a, pid, i % 2)
-    a.escribir("F6", "AG-20", {"tipo_entrada": "CERT", "id": "CERT-2025-0001", "estado": "VIGENTE",
-                               "celda": {"clase": "RV", "horizonte": "H3", "metodo": None}})
+    certificado_con_reejecucion(a, {"clase": "RV", "horizonte": "H3", "metodo": None}, "CERT-2025-0001")  # T-163 (H-02): con su soporte y su CT-10
     a.escribir("F6", "AG-20", {"tipo_entrada": "CERT", "id": "CERT-2025-0002", "estado": "PROPUESTO",
                                "celda": {"clase": "MP", "horizonte": "H3", "metodo": None}})
     res = Evaluador(a, None, None, _cfg(), None).revisar_certificados(AS_OF)

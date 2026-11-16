@@ -165,11 +165,27 @@ def f_roll(ent, params):
     return op.roll_yield(float(v["f_proximo"]), float(v["f_siguiente"]), float(v["dias_entre"]), v.get("tipo_libre")), []
 
 
+# T-163 (QA r01 de T-160, H-04): mínimo de conglomerados de fecha admisible para el IC del BSS por conglomerados (PA-03). La
+# ficha FC-EVAL-001 no lo fija; es el suelo que el Evaluador ya exigía a `evaluacion.min_conglomerados_bootstrap` (con un solo
+# conglomerado el bootstrap por fechas no varía). El valor que se usa sale de la configuración; esto solo lo valida
+MIN_CONGLOMERADOS = 2
+
+
+def min_conglomerados_valido(x: Any) -> bool:
+    """T-163 (H-04): un entero (no booleano) ≥ MIN_CONGLOMERADOS."""
+    return isinstance(x, (int, np.integer)) and not isinstance(x, (bool, np.bool_)) and int(x) >= MIN_CONGLOMERADOS
+
+
 def f_fc_eval(ent, params):
     v = ent["valores"]
     # T-160 (PB-32): con `fechas` (una por pronóstico, la de su conglomerado) y `min_conglomerados`, la muestra efectiva y el
     # IC del BSS por conglomerados de fecha (PA-03), como en el certificado del Evaluador; sin ellas, como antes
     fechas = v.get("fechas")
+    # T-163 (H-04): con fechas, un mínimo que no es un entero ≥ MIN_CONGLOMERADOS se rechaza (DATOS_INSUFICIENTES); si falta,
+    # el KeyError de abajo también es un rechazo
+    if fechas is not None and "min_conglomerados" in params and not min_conglomerados_valido(params["min_conglomerados"]):
+        raise op.ErrorFicha(f"FC-EVAL-001: min_conglomerados debe ser un entero ≥ {MIN_CONGLOMERADOS}, no "
+                            f"{str(params['min_conglomerados'])[:40]!r}")
     m = ev.evaluar_celda(v["p"], v["o"], v.get("p_ref", [0.5] * len(v["p"])), float(params.get("tasa_base", 0.5)),
                          int(params.get("replicas", 2000)), int(params.get("simulaciones", 2000)),
                          float(params.get("nivel", 0.90)), int(params.get("semilla_bootstrap", 12345)), int(params.get("h", 1)),

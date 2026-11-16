@@ -61,7 +61,13 @@ fi
 if printf '%s\n' "${rutas[@]}" | grep -qE '^\.docs/(scripts|diseno/contratos)/'; then
   (cd "$W" && .docs/scripts/pruebas_scripts.sh) || fallo "las pruebas de .docs/scripts no pasan en la copia limpia: no se hace commit"
 fi
-(cd "$W" && .docs/scripts/gate.sh --completo) || fallo "el gate no pasa en la copia limpia: no se hace commit"
+if ! (cd "$W" && .docs/scripts/gate.sh --completo); then
+  # 16-11-2026: el log del gate vive en la copia limpia, que se borra al salir; se guarda en el árbol principal
+  # (`.docs/scripts/.logs/`, ignorado por git) para poder ver qué prueba falló.
+  mkdir -p "$RAIZ/.docs/scripts/.logs"
+  for l in "$W"/.docs/scripts/.logs/gate_*.log; do [[ -f "$l" ]] && cp -p "$l" "$RAIZ/.docs/scripts/.logs/commit_limpio_$(basename "$l")"; done
+  fallo "el gate no pasa en la copia limpia: no se hace commit (log en .docs/scripts/.logs/commit_limpio_gate_*.log)"
+fi
 
 # Se sube la copia probada de cada fichero, no la del árbol principal (que pudo cambiar durante las pruebas).
 for r in "${rutas[@]}"; do

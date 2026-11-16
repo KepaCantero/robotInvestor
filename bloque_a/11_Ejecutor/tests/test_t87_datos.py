@@ -1,12 +1,11 @@
 """T-87: las cifras de evaluación conservan evidencia y límites de acceso."""
 import pandas as pd
 import pytest
-from test_t53_evaluacion_y_almacen import MotorFalso, _alta, _h5_con_hitos, _resolver
-
 from bloque_a.almacen import Almacen
 from bloque_a.backtest import ejecutar_backtest
 from bloque_a.evaluador import Evaluador
 from bloque_a.herramientas.ht01_datos import DatosNoDisponibles, ProveedorCSV
+from test_t53_evaluacion_y_almacen import MotorFalso, _alta, _h5_con_hitos, _resolver
 
 
 def _csv(carpeta, nombre, texto):
@@ -125,13 +124,12 @@ def test_cesta_conserva_composicion_y_precios_de_emision(tmp_path):
 
 
 def test_r13_certificado_por_metodo_en_la_entrega(tmp_path, universo):
-    from conftest import AS_OF, nuevo_bloque
+    from conftest import AS_OF, certificado_con_reejecucion, nuevo_bloque
 
     b = nuevo_bloque(tmp_path, universo)
     b.fijar_fecha(AS_OF)
     for h, metodo in [("H2", "OTRO-METODO"), ("H3", "ACC-MOM-001"), ("H2", None)]:
-        b.almacen.escribir("F6", "AG-20", {"tipo_entrada": "CERT", "id": b.almacen.nuevo_id("CERT"), "estado": "VIGENTE",
-                                           "celda": {"clase": "RV", "horizonte": h, "metodo": metodo}})
+        certificado_con_reejecucion(b.almacen, {"clase": "RV", "horizonte": h, "metodo": metodo}, motor=b.motor)  # T-163 (H-02): con su soporte y su CT-10
     r = b.ciclo(AS_OF, alcance={"clases": ["RV"]})
     altas = [p for p in b.almacen.estado("F4").values() if p.get("metodo") == "ACC-MOM-001"]
     assert altas and r["entregables"]

@@ -2,7 +2,7 @@
 
 | Campo | Valor |
 | --- | --- |
-| Estado | EN QA |
+| Estado | CERRADO (QA r02 APTO) |
 | Pieza | bloque_a (solo pruebas: `bloque_a/11_Ejecutor/tests/` y el mapa del plan de pruebas) |
 | Planifica · implementa · QA | claude · claude · otro agente o un revisor nuevo sin contexto |
 | Aprobación del operador | no necesaria: pruebas y documentación, sin cambio de código del ejecutor, de contrato, de corpus ni de controles (tipo «corrección, pruebas, documentación» de `ri-planificar`) |
@@ -76,3 +76,5 @@ ninguno nuevo: la actualización del mapa fue una edición única.
 - 2026-11-16 · PLANIFICADO · claude · plan y criterios
 - 2026-11-16 · EN CURSO · claude · clasificación y pruebas
 - 2026-11-16 · EN QA · claude · 8 casos (A) pasan a «Superada»; 27 (B) y 2 (C) siguen «en parte» con su motivo
+- 2026-11-16 · EN QA r02 · claude (coordinadora) · QA r01 NO APTO; PB-47 vuelve a «en parte» (falta G3-MET-13) y PB-25 y PB-46 pasan a B: 7 casos (A) a «Superada», 30 (B)
+- 2026-11-16 · CERRADO · QA r02 APTO; R02-H-06 y R02-H-07 (bajos, de texto) resueltos al cerrar

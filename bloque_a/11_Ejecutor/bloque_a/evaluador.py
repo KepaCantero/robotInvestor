@@ -75,6 +75,37 @@ def cifras_certificado(m: dict) -> dict:
             "muestra_efectiva": {c: _num(muestra.get(c)) for c in ("conglomerados", "m_medio", "rho", "efecto_diseno")}}
 
 
+CAMPOS_MUESTRA = ("conglomerados", "m_medio", "rho", "efecto_diseno")
+
+
+def campos_certificado(m: dict) -> dict:
+    """T-163: las cifras de la celda `m` (la salida de `evaluar_celda`, FC-EVAL-001) tal como las escribe el CERT-."""
+    muestra = m.get("muestra_efectiva") or {}
+    return {"n": m["n"], "n_eff": m["n_eff"], "muestra_efectiva": {c: muestra.get(c) for c in CAMPOS_MUESTRA},
+            "brier": m["brier"], "brier_ref": m["brier_ref"], "bss": m["bss"]["valor"], "bss_ic90": m["bss"]["ic"],
+            "bss_ic_metodo": m["bss"].get("metodo"), "ece": m["calibracion"]["ece"], "ece_nulo_q90": m["ece_nulo"]["q90"]}
+
+
+def cifras_del_soporte(m: dict) -> dict:
+    """T-163 (QA r01 de T-160, H-01): de las cifras de `cifras_certificado`, las que guarda el CERT- (no guarda la p de DM-HLN,
+    que solo cuenta para Holm entre celdas) y el método del IC del BSS."""
+    cif = {k: v for k, v in cifras_certificado(m).items() if k != "dm_p_unilateral"}
+    cif["bss_ic_metodo"] = (m.get("bss") or {}).get("metodo") if isinstance(m.get("bss"), dict) else None
+    return cif
+
+
+def cifras_del_certificado(c: dict) -> dict:
+    """T-163 (H-01): las mismas cifras leídas de un CERT- de F6. Lo que no tenga la forma esperada se deja tal cual, para que la
+    comparación con el cálculo de soporte lo marque como distinto (falla cerrado)."""
+    ic, muestra = c.get("bss_ic90"), c.get("muestra_efectiva")
+    return {"n": c.get("n"), "n_eff": _num(c.get("n_eff")), "brier": _num(c.get("brier")), "brier_ref": _num(c.get("brier_ref")),
+            "bss": _num(c.get("bss")),
+            "bss_ic90": [_num(x) for x in (ic or [None, None])] if isinstance(ic, (list, tuple, type(None))) else ic,
+            "ece": _num(c.get("ece")), "ece_nulo_q90": _num(c.get("ece_nulo_q90")),
+            "muestra_efectiva": {k: _num(muestra.get(k)) for k in CAMPOS_MUESTRA} if isinstance(muestra, dict) else muestra,
+            "bss_ic_metodo": c.get("bss_ic_metodo")}
+
+
 def holgura_tolerancia(tol: float, pasos: int) -> float:
     """T-160: diferencia relativa máxima, frente a la cifra del certificado, de una que difiere de ella en `pasos`
     comparaciones encadenadas, cada una con diferencia relativa ≤ `tol` (la de CT-10: |a − b| ≤ tol · max(|a|, |b|))."""
@@ -386,9 +417,10 @@ class Evaluador:
 
     def _min_conglomerados(self) -> int:
         v = self._clave("evaluacion", "min_conglomerados_bootstrap")
-        if isinstance(v, bool) or not isinstance(v, int) or v < 2:
-            raise ValueError(f"evaluacion.min_conglomerados_bootstrap debe ser un entero ≥ 2, no {v!r}")
-        return v
+        # T-163: el suelo es el mismo que exige FC-EVAL-001 en el Motor (`servicio.MIN_CONGLOMERADOS`)
+        if not servicio.min_conglomerados_valido(v):
+            raise ValueError(f"evaluacion.min_conglomerados_bootstrap debe ser un entero ≥ {servicio.MIN_CONGLOMERADOS}, no {v!r}")
+        return int(v)
 
     @staticmethod
     def _fechas_conglomerado(lst: list[dict]) -> list[str] | None:
@@ -906,11 +938,21 @@ class Evaluador:
             hechos.append(aju)
         return hechos
 
-    def certificados_vigentes(self, as_of=None) -> list[dict]:
-        """Certificados VIGENTE (los únicos que habilitan probabilidades numéricas). Un PROPUESTO (PA-10) no lo es hasta
-        su CERT_APROBACION."""
+    def _vigentes_en_f6(self, as_of=None) -> list[dict]:
+        """Los certificados que F6 tiene en estado VIGENTE, tengan o no su re-ejecución CT-10."""
         return [c for c in self.almacen.estado("F6", as_of, clave="id").values()
                 if c.get("tipo_entrada") in ("CERT", "CERT_REVOCACION", "CERT_APROBACION") and c.get("estado") == "VIGENTE"]
+
+    def certificados_vigentes(self, as_of=None) -> list[dict]:
+        """Certificados VIGENTE (los únicos que habilitan probabilidades numéricas). Un PROPUESTO (PA-10) no lo es hasta
+        su CERT_APROBACION. T-163 (QA r01 de T-160, H-02; decidido, INC-T160-01): solo los que tienen su re-ejecución CT-10
+        coincidente en el Registro de cálculos (`motivo_sin_reejecucion`); uno sin ella no se usa, y la revisión siguiente lo
+        revoca y vuelve a proponer la celda."""
+        vig = self._vigentes_en_f6(as_of)
+        if not vig:
+            return []
+        ctx = self._contexto_reejecucion()
+        return [c for c in vig if self.motivo_sin_reejecucion(c, ctx) is None]
 
     def certificados_propuestos(self, as_of=None) -> list[dict]:
         """PA-10: certificados que pasan el criterio y esperan la aprobación del operador (CT-04)."""
@@ -933,7 +975,8 @@ class Evaluador:
             raise ValueError("aprobar_certificados: falta el autor de la aprobación")
         as_of = pd.Timestamp(as_of).normalize()
         f6 = self.almacen.estado("F6", as_of, clave="id")
-        vigentes = {(c["celda"]["clase"], c["celda"]["horizonte"], c["celda"].get("metodo")) for c in self.certificados_vigentes(as_of) if c.get("celda")}
+        # T-163: también los VIGENTE sin re-ejecución, que la revisión revoca antes de volver a proponer la celda
+        vigentes = {(c["celda"]["clase"], c["celda"]["horizonte"], c["celda"].get("metodo")) for c in self._vigentes_en_f6(as_of) if c.get("celda")}
         for i in ids:
             c = f6.get(i)
             if c is None or not any(h.get("tipo") == "CERT" for h in c.get("_historial", [])):
@@ -957,14 +1000,35 @@ class Evaluador:
             hechos.append(e)
         return hechos
 
-    def motivo_sin_reejecucion(self, c: dict) -> str | None:
+    def _contexto_reejecucion(self) -> dict:
+        """T-163: lo que `motivo_sin_reejecucion` lee del Registro de cálculos y de F6, una vez por llamada: el RC por calc_id,
+        la posición de cada entrada (`_seq`), las re-ejecuciones CT-10 de cada cálculo y el primer CERT- que cita cada una."""
+        rc = self.almacen.estado("RC")
+        seq = {k: (v.get("_historial") or [{}])[0].get("seq") for k, v in rc.items()}
+        ct10: dict[str, list[tuple]] = defaultdict(list)
+        for k, r in rc.items():
+            rx = r.get("reejecucion")
+            if r.get("tipo_entrada") == "REEJECUCION" and isinstance(rx, dict) and isinstance(rx.get("calc_original"), str):
+                ct10[rx["calc_original"]].append((seq[k], k, rx.get("coincide")))
+        primero: dict[str, object] = {}
+        for e in self.almacen.leer("F6"):
+            if e.get("tipo_entrada") == "CERT" and isinstance(e.get("reejecucion"), str):
+                primero.setdefault(e["reejecucion"], e.get("id"))
+        return {"rc": rc, "seq": seq, "ct10": ct10, "primero": primero}
+
+    def motivo_sin_reejecucion(self, c: dict, contexto: dict | None = None) -> str | None:
         """T-160 (PB-32): None si el certificado `c` cita en `reejecucion` una re-ejecución CT-10 del Evaluador que está en el
         Registro de cálculos, coincide (SI o DENTRO_TOLERANCIA) y re-ejecuta su `calc_soporte`, un servicio FC-EVAL-001 de
-        su misma celda; si no, el motivo."""
+        su misma celda; si no, el motivo. T-163 (QA r01 de T-160, H-01 y H-05): y que esa re-ejecución sea la de este
+        certificado: el soporte es de su método y de sus entradas (`huella_entradas`, las mismas que re-ejecutó la CT-10), la
+        CT-10 es posterior al soporte y ninguna CT-10 posterior del mismo soporte da NO, ningún otro CERT- la citó antes (cada
+        re-ejecución sirve a un solo certificado) y las cifras del CERT- son las del soporte con la tolerancia de CT-10.
+        `contexto` (de `_contexto_reejecucion`) evita releer el RC y F6 al mirar varios certificados."""
         rex_id, soporte = c.get("reejecucion"), c.get("calc_soporte")
         if not isinstance(rex_id, str) or not isinstance(soporte, str):
             return "no cita la re-ejecución CT-10 ni el cálculo que lo sostiene"
-        rc = self.almacen.estado("RC")
+        ctx = contexto if contexto is not None else self._contexto_reejecucion()
+        rc = ctx["rc"]
         r, s = rc.get(rex_id) or {}, rc.get(soporte) or {}
         rx: dict = r["reejecucion"] if isinstance(r.get("reejecucion"), dict) else {}
         if r.get("tipo_entrada") != "REEJECUCION" or r.get("contrato") != "CT-10" or r.get("solicitante") != "AG-20":
@@ -978,6 +1042,35 @@ class Evaluador:
         if (s.get("tipo_entrada") != "SERVICIO" or op_.get("ficha_id") != FICHA_CERTIFICADO
                 or (s.get("clase"), s.get("horizonte")) != (celda.get("clase"), celda.get("horizonte"))):
             return f"{soporte} no es un servicio {FICHA_CERTIFICADO} de la celda {celda.get('clase')}|{celda.get('horizonte')}"
+        # T-163 (H-01): el método de la celda va en los parámetros del soporte desde T-163; sin él, no consta (falla cerrado)
+        prm: dict = s["parametros"] if isinstance(s.get("parametros"), dict) else {}
+        if "metodo" not in prm or prm["metodo"] != celda.get("metodo"):
+            return (f"{soporte} no es del método {celda.get('metodo')} de la celda "
+                    f"({prm.get('metodo', 'sin método')} en el cálculo)")
+        huellas_s = [d.get("huella") for d in s["datos"] if isinstance(d, dict)] if isinstance(s.get("datos"), list) else None
+        huellas_r = [d.get("huella") for d in r["datos"] if isinstance(d, dict)] if isinstance(r.get("datos"), list) else None
+        if (not huellas_s or huellas_s != [c.get("huella_entradas")] or huellas_r != huellas_s
+                or r.get("operacion") != s.get("operacion")):
+            return f"las entradas del certificado, las de {soporte} y las que re-ejecutó {rex_id} no son las mismas"
+        sq_s, sq_r = ctx["seq"].get(soporte), ctx["seq"].get(rex_id)
+        if not isinstance(sq_s, int) or not isinstance(sq_r, int) or sq_r <= sq_s:
+            return f"{rex_id} no es posterior a {soporte} en el Registro de cálculos"
+        # T-163 (H-05): una CT-10 posterior del mismo soporte que no coincide (p. ej. del Auditor) lo invalida
+        despues = [k for q, k, co in ctx["ct10"].get(soporte, []) if isinstance(q, int) and q > sq_r and co not in COINCIDE_CT10]
+        if despues:
+            return f"una re-ejecución CT-10 posterior de {soporte} no coincide ({', '.join(despues[:5])})"
+        quien = ctx["primero"].get(rex_id)
+        if quien is not None and quien != c.get("id"):
+            return f"{rex_id} ya sostiene {quien}: cada re-ejecución CT-10 sirve a un solo certificado"
+        res_s = s.get("resultado")
+        payload = res_s.get("payload") if isinstance(res_s, dict) else None
+        if not isinstance(payload, dict):
+            return f"{soporte} no tiene las cifras del cálculo"
+        tol_ct04 = float(servicio.IMPLEMENTADAS[FICHA_CERTIFICADO]["tol"])
+        distintas = servicio.comparar(cifras_del_certificado(c), cifras_del_soporte(payload), tol_ct04)
+        if distintas:
+            return (f"las cifras del certificado no son las de {soporte} con la tolerancia {tol_ct04:g} ({ORIGEN_TOLERANCIA}): "
+                    f"{'; '.join(sorted(distintas)[:5])}")
         return None
 
     def _parametros_certificado(self) -> dict:
@@ -1006,7 +1099,7 @@ class Evaluador:
         celda = etiqueta_celda(k)
         tol = float(servicio.IMPLEMENTADAS[FICHA_CERTIFICADO]["tol"])
         out: dict = {"coincide": False, "motivo": None, "severidad": "Operativa", "calc_soporte": None, "reejecucion": None,
-                     "detalle": None}
+                     "detalle": None, "huella_entradas": None}
 
         def fallo(motivo: str, severidad: str = "Operativa") -> dict:
             out.update(motivo=motivo, severidad=severidad)
@@ -1015,7 +1108,8 @@ class Evaluador:
             return fallo("sin Motor: la re-ejecución CT-10 del cálculo que sostiene el certificado no es posible")
         peticion = {"operacion": FICHA_CERTIFICADO, "plan": "PLAN_MIN", "clase": k[0], "horizonte": k[1],
                     "datos": [{"valores": copy.deepcopy(entradas)}],
-                    "parametros": {**self._parametros_certificado(), "tasa_base": tasa_base},
+                    # T-163 (H-01): el método de la celda, para que CT-04 compruebe que el soporte es de ese método
+                    "parametros": {**self._parametros_certificado(), "tasa_base": tasa_base, "metodo": k[2]},
                     "fecha_corte": str(pd.Timestamp(as_of).date())}
         try:
             res = self.motor.servir(peticion, "AG-20", run_id)
@@ -1038,7 +1132,12 @@ class Evaluador:
             return fallo(f"re-ejecución CT-10 de {calc} imposible ({type(e).__name__}: {str(e)[:200]})")
         rex = rex if isinstance(rex, dict) else {}
         out["reejecucion"] = rex.get("calc_id")
-        rx = (self.almacen.estado("RC").get(rex.get("calc_id")) or {}).get("reejecucion") or {}
+        rc = self.almacen.estado("RC")
+        rx = (rc.get(rex.get("calc_id")) or {}).get("reejecucion") or {}
+        # T-163 (H-01): la huella de las entradas del soporte, que el CERT- cita para atarse a él
+        datos_s = (rc.get(calc) or {}).get("datos")
+        out["huella_entradas"] = datos_s[0].get("huella") if isinstance(datos_s, list) and len(datos_s) == 1 \
+            and isinstance(datos_s[0], dict) else None
         exactas = propias == del_motor
         out["detalle"] = {"contrato": "CT-10", "calc_id": rex.get("calc_id"), "calc_original": calc,
                           "coincide": rex.get("coincide"), "categoria": rex.get("categoria"),
@@ -1074,9 +1173,25 @@ class Evaluador:
         for p in self.resueltos(as_of):
             celdas[(p["clase"], p["horizonte"], p.get("metodo"))].append(p)
         candidatas = {k: v for k, v in celdas.items() if len(v) >= n_cert}
-        vigentes = {(c["celda"]["clase"], c["celda"]["horizonte"], c["celda"].get("metodo")): c for c in self.certificados_vigentes(as_of)}
         propuestos = {(c["celda"]["clase"], c["celda"]["horizonte"], c["celda"].get("metodo")): c for c in self.certificados_propuestos(as_of)}
         emitidos, revocados, retirados, evaluadas, sin_rex = [], [], [], {}, {}
+        # T-163 (QA r01 de T-160, H-02; decidido, INC-T160-01): un VIGENTE sin re-ejecución CT-10 coincidente del cálculo que
+        # lo sostiene ya no habilita probabilidades (`certificados_vigentes`); se revoca (endurece, PA-10) y la celda se evalúa
+        # como si no tuviera certificado, para volver a proponerla con su CT-10
+        vigentes, vigentes_sin_rex = {}, {}
+        ctx = self._contexto_reejecucion()
+        for c in self._vigentes_en_f6(as_of):
+            motivo_v = self.motivo_sin_reejecucion(c, ctx)
+            if motivo_v is None:
+                vigentes[(c["celda"]["clase"], c["celda"]["horizonte"], c["celda"].get("metodo"))] = c
+                continue
+            self.almacen.escribir("F6", "AG-20", {"tipo_entrada": "CERT_REVOCACION", "id": c["id"], "estado": "REVOCADO",
+                                                  "motivo_cambio": "sin re-ejecución CT-10 coincidente del cálculo que lo "
+                                                  f"sostiene ({motivo_v}): deja de habilitar probabilidades y la celda se vuelve "
+                                                  "a evaluar y a proponer (PB-32; H-02 de la QA r01 de T-160)",
+                                                  "fecha": str(pd.Timestamp(as_of).date())})
+            revocados.append(c["id"])
+            vigentes_sin_rex[c["id"]] = motivo_v
         # T-160 (PB-32): una propuesta sin re-ejecución CT-10 coincidente no puede entrar en vigor; se retira (endurece, PA-10)
         for k, c in list(propuestos.items()):
             sin = self.motivo_sin_reejecucion(c)
@@ -1105,7 +1220,25 @@ class Evaluador:
                 evaluadas[etiqueta_celda(k)] = crit
                 if crit["certificable"] and k not in vigentes and k not in propuestos:
                     ver = self._verificar_reejecucion(k, *entradas[k], m, n_cert, ece_max, alfa_k, as_of, run_id)
-                    if not ver["coincide"]:
+                    cert = None
+                    if ver["coincide"]:
+                        cert = {"tipo_entrada": "CERT", "id": None, "estado": "PROPUESTO" if solo_endurecer else "VIGENTE",
+                                "celda": {"clase": k[0], "horizonte": k[1], "metodo": k[2]}, **campos_certificado(m),
+                                "holm_superado": True,
+                                "methodology_version": parametro(self.cfg, "methodology_version"),
+                                "emitido": str(pd.Timestamp(as_of).date()),
+                                # T-160 (esquema de F6 4.3): el cálculo que lo sostiene (con la curva de fiabilidad) y su CT-10;
+                                # T-163: la huella de sus entradas
+                                "calc_soporte": ver["calc_soporte"], "curva_fiabilidad": ver["calc_soporte"],
+                                "huella_entradas": ver["huella_entradas"],
+                                "reejecucion": ver["reejecucion"], "reejecucion_ct10": ver["detalle"]}
+                        # T-163 (H-03): el borrador pasa la misma comprobación que CT-04 contra el Registro de cálculos antes de
+                        # escribirse (un Motor que dice «SI» sin escribir la CT-10 no deja certificado, tampoco VIGENTE)
+                        sin_borrador = self.motivo_sin_reejecucion(cert)
+                        if sin_borrador:
+                            ver = {**ver, "coincide": False, "severidad": "Material",
+                                   "motivo": f"el certificado no pasa la comprobación de CT-04: {sin_borrador}"}
+                    if not ver["coincide"] or cert is None:
                         # T-160: sin re-ejecución CT-10 coincidente no hay certificado (falla cerrado); se reintenta en la
                         # próxima revisión
                         evaluadas[etiqueta_celda(k)] = {**crit, "certificable": False,
@@ -1116,18 +1249,7 @@ class Evaluador:
                                                 f"emitido: {ver['motivo']} (PB-32, EVAL-F05)", etiqueta_celda(k),
                                                 severidad=ver["severidad"])
                         continue
-                    muestra = m.get("muestra_efectiva") or {}
-                    cert = {"tipo_entrada": "CERT", "id": self.almacen.nuevo_id("CERT"),
-                            "estado": "PROPUESTO" if solo_endurecer else "VIGENTE",
-                            "celda": {"clase": k[0], "horizonte": k[1], "metodo": k[2]}, "n": m["n"], "n_eff": m["n_eff"],
-                            "muestra_efectiva": {c: muestra.get(c) for c in ("conglomerados", "m_medio", "rho", "efecto_diseno")},
-                            "brier": m["brier"], "brier_ref": m["brier_ref"], "bss": m["bss"]["valor"], "bss_ic90": m["bss"]["ic"],
-                            "bss_ic_metodo": m["bss"].get("metodo"),
-                            "holm_superado": True, "ece": m["calibracion"]["ece"], "ece_nulo_q90": m["ece_nulo"]["q90"],
-                            "methodology_version": parametro(self.cfg, "methodology_version"), "emitido": str(pd.Timestamp(as_of).date()),
-                            # T-160 (esquema de F6 4.3): el cálculo que lo sostiene (con la curva de fiabilidad) y su CT-10
-                            "calc_soporte": ver["calc_soporte"], "curva_fiabilidad": ver["calc_soporte"],
-                            "reejecucion": ver["reejecucion"], "reejecucion_ct10": ver["detalle"]}
+                    cert["id"] = self.almacen.nuevo_id("CERT")
                     if solo_endurecer:
                         cert["pendiente"] = ("aprobación del operador por CT-04 (aprobar_certificados); hasta entonces no "
                                              "habilita probabilidades numéricas (PA-10, aprendizaje.solo_endurecer)")
@@ -1154,7 +1276,7 @@ class Evaluador:
                         revocados.append(c["id"])
         no_cert = {etiqueta_celda(k): f"n = {len(v)} < {n_cert}" for k, v in celdas.items() if k not in candidatas}
         return {"emitidos": emitidos, "revocados": revocados, "propuestas_retiradas": retirados, "evaluadas": evaluadas,
-                "insuficientes": no_cert, "sin_reejecucion_coincidente": sin_rex,
+                "insuficientes": no_cert, "sin_reejecucion_coincidente": sin_rex, "vigentes_sin_reejecucion": vigentes_sin_rex,
                 "excluidos_contaminacion": self.excluidos_contaminacion(as_of)}
 
     def lecciones_vigentes(self, as_of, clase: str | None = None, max_n: int | None = None) -> list[dict]:

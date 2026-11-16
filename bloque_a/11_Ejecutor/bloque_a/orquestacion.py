@@ -55,7 +55,7 @@ from .evaluador import (
     motivo_pronostico_fuente_no_registrable,
     variables_nivel,
 )
-from .guias import Guias
+from .guias import Guias, conflicto_de_leccion
 from .herramientas import ht03, ht09
 from .herramientas.ht01_datos import (
     DatosInvalidos,
@@ -705,7 +705,9 @@ class Bloque:
             limitaciones = limitaciones + [(f"clústeres de exposición sin medir para {', '.join(clusteres['sin_historia'])} (menos de "
                                             f"{parametro(self.cfg, 'clusteres.min_semanas_proxy')} semanas válidas de historia en la ventana "
                                             "en común con el resto): "
-                                            "cada uno cuenta como un clúster propio; el resto se agrupa con ML-CLUS-001")]
+                                            "cada uno cuenta como un clúster propio; "
+                                            + ("el resto tampoco se agrupa (ML-CLUS-001 rechazado)" if clusteres.get("rechazo")
+                                               else "el resto se agrupa con ML-CLUS-001"))]   # T-165: no cita lo que no se usó
         if clusteres.get("rechazo"):
             limitaciones = limitaciones + [(f"clústeres de exposición no calculados ({clusteres['rechazo']}): la concentración entre "
                                             "opciones no se ha podido medir en este ciclo")]
@@ -821,6 +823,14 @@ class Bloque:
             return
         n_tot = sum(m["n"] for m in resumen.values())
         for l in r.datos.get("lecciones", [])[:3]:
+            # T-161 r02 (QA r01, H-01): una lección del modelo va a F6 VIGENTE y de ahí al contexto de todos los agentes; si
+            # rebaja un control (el detector de las guías, con el criterio de los campos descriptivos), no se escribe
+            conflicto = conflicto_de_leccion(l)
+            if conflicto:
+                self.almacen.incidencia("OTRO", f"Lección de AG-20 retenida: contradice {', '.join(conflicto['reglas'])} "
+                                        f"({', '.join(conflicto['familias'])}); no se escribe en F6 (R23)", "AG-20",
+                                        severidad="Material", run_id=run_id, conflicto=conflicto)
+                continue
             fuerza = l.get("fuerza", "anecdotica")
             if fuerza == "estadistica" and n_tot < 30:
                 fuerza = "anecdotica"
