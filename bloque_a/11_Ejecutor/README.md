@@ -282,6 +282,14 @@ De las 21 propuestas de T-53 (`.docs/tickets/T-53/propuestas.md`), se aplican la
 - **Muestra efectiva (PA-03, en parte).**
   - Los certificados exigen `n_eff ≥ min_certificar`. `n_eff` sale del efecto de diseño por conglomerados de fecha.
   - El intervalo del BSS es un bootstrap por fechas, con al menos `evaluacion.min_conglomerados_bootstrap` fechas.
+- **Re-ejecución CT-10 antes de certificar (PB-32, T-160).**
+  - Antes de proponer o emitir un certificado, el Evaluador pide al Motor el cálculo que lo sostiene (FC-EVAL-001, con las
+    fechas de conglomerado y los mismos parámetros), comprueba que da sus mismas cifras y encarga su re-ejecución CT-10.
+  - Solo sigue con `coincide` SI o DENTRO_TOLERANCIA (tolerancia de la ficha, la de CT-10) y si una diferencia dentro de
+    tolerancia no cruza ningún umbral del certificado. El CERT- cita `calc_soporte` y `reejecucion` (CALC- de CT-10).
+  - Si no coincide o no se puede re-ejecutar (sin Motor incluido), no hay certificado: la celda sale en
+    `sin_reejecucion_coincidente` y queda una incidencia en HA. CT-04 no pone en vigor un PROPUESTO sin esa re-ejecución en
+    el RC; una propuesta anterior sin ella se retira y la celda se vuelve a evaluar (`[PROPUESTO]` INC-T160-01).
 - **Ablación (PA-14).** Cada run guarda en F5 (`ablacion`) dos comparaciones, sin coste en tokens:
   - el top-3 que saldría sin las objeciones del Contradictor;
   - cuántas opciones coinciden con una referencia simple, el top-3 por señal compuesta.

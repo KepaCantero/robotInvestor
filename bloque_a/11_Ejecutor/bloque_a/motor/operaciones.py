@@ -1,4 +1,4 @@
-"""Operaciones numéricas del Motor (fichas del Catálogo de cálculos V4.0).
+"""Operaciones numéricas del Motor (fichas del Catálogo de cálculos V5.0; la versión vigente es `servicio.CATALOG_VERSION`).
 
 Convenciones (sección 3.1 del Catálogo): rendimientos simples por defecto (logarítmicos donde la ficha
 lo pide), anualización 252 sesiones (365 en criptoactivos), cuantiles de tipo 7, redondeo solo al final.

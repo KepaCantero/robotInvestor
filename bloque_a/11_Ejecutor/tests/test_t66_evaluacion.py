@@ -50,6 +50,13 @@ def _celda_habil(a: Almacen, n: int = 150, contaminados: int = 0, fechas=None, p
         _resolver(a, pid, o)
 
 
+def _con_motor(a: Almacen, cfg: dict) -> Evaluador:
+    """T-160 (PB-32): un certificado exige la re-ejecución CT-10 del cálculo que lo sostiene, así que el Evaluador que debe
+    emitirlo necesita el Motor (sin él no hay certificado: `test_t160_reejecucion_certificado`)."""
+    from bloque_a.motor.servicio import Motor
+    return Evaluador(a, None, Motor(a, None, cfg), cfg, None)
+
+
 def _almacen(tmp_path) -> Almacen:
     a = Almacen(tmp_path)
     a.reloj.fijar(AS_OF)
@@ -158,7 +165,7 @@ def test_pa10_clave_en_la_configuracion_por_defecto():
 def test_pa10_certificado_nace_propuesto_y_no_habilita_probabilidades(tmp_path):
     a = _almacen(tmp_path)
     _celda_habil(a)
-    e = Evaluador(a, None, None, _cfg(), None)
+    e = _con_motor(a, _cfg())
     res = e.revisar_certificados(AS_OF)
     assert [(c["celda"]["clase"], c["celda"]["horizonte"], c["estado"]) for c in res["emitidos"]] == [("RF", "H3", "PROPUESTO")]
     assert e.certificados_vigentes(AS_OF) == []
@@ -169,7 +176,7 @@ def test_pa10_certificado_nace_propuesto_y_no_habilita_probabilidades(tmp_path):
 def test_pa10_aprobar_certificados_por_ct04(tmp_path):
     a = _almacen(tmp_path)
     _celda_habil(a)
-    e = Evaluador(a, None, None, _cfg(), None)
+    e = _con_motor(a, _cfg())
     cid = e.revisar_certificados(AS_OF)["emitidos"][0]["id"]
     n_f6 = len(a.leer("F6"))
     for malos, motivo in (([], "vacía"), ([cid, cid], "repetidos"), ("CERT-2026-0001", "lista"),
@@ -189,7 +196,7 @@ def test_pa10_aprobar_certificados_por_ct04(tmp_path):
 def test_pa10_desactivado_mantiene_el_comportamiento_anterior(tmp_path):
     a = _almacen(tmp_path)
     _celda_habil(a)
-    e = Evaluador(a, None, None, _cfg(solo_endurecer=False), None)
+    e = _con_motor(a, _cfg(solo_endurecer=False))
     res = e.revisar_certificados(AS_OF)
     assert [c["estado"] for c in res["emitidos"]] == ["VIGENTE"]
     assert [c["id"] for c in e.certificados_vigentes(AS_OF)] == [res["emitidos"][0]["id"]]
@@ -299,7 +306,7 @@ def test_pa03_criterio_exige_n_eff():
 def test_pa03_certificado_guarda_n_y_n_eff(tmp_path):
     a = _almacen(tmp_path)
     _celda_habil(a, fechas=None)
-    cert = Evaluador(a, None, None, _cfg(), None).revisar_certificados(AS_OF)["emitidos"][0]
+    cert = _con_motor(a, _cfg()).revisar_certificados(AS_OF)["emitidos"][0]
     assert cert["n"] == 150 and cert["n_eff"] == pytest.approx(150) and cert["muestra_efectiva"]["conglomerados"] == 150
     assert cert["bss_ic_metodo"] == "bootstrap por conglomerados de fecha"
 

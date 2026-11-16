@@ -167,9 +167,14 @@ def f_roll(ent, params):
 
 def f_fc_eval(ent, params):
     v = ent["valores"]
+    # T-160 (PB-32): con `fechas` (una por pronóstico, la de su conglomerado) y `min_conglomerados`, la muestra efectiva y el
+    # IC del BSS por conglomerados de fecha (PA-03), como en el certificado del Evaluador; sin ellas, como antes
+    fechas = v.get("fechas")
     m = ev.evaluar_celda(v["p"], v["o"], v.get("p_ref", [0.5] * len(v["p"])), float(params.get("tasa_base", 0.5)),
                          int(params.get("replicas", 2000)), int(params.get("simulaciones", 2000)),
-                         float(params.get("nivel", 0.90)), int(params.get("semilla_bootstrap", 12345)), int(params.get("h", 1)))
+                         float(params.get("nivel", 0.90)), int(params.get("semilla_bootstrap", 12345)), int(params.get("h", 1)),
+                         fechas=list(fechas) if fechas is not None else None,
+                         min_conglomerados=int(params["min_conglomerados"]) if fechas is not None else None)
     lim = [] if m["n"] >= 30 else [f"n = {m['n']} < 30: solo detecta ventajas grandes; «no significativo» no equivale a «sin ventaja»"]
     return m, lim
 
@@ -436,7 +441,7 @@ def madurez_catalogo(raiz: str | os.PathLike | None = None) -> dict[str, str]:
 
 def citable_segun_catalogo(ficha: str, raiz: str | os.PathLike | None = None) -> bool:
     estado = madurez_catalogo(raiz).get(ficha, "")
-    return estado.startswith("IMPLEMENTADO") or estado.startswith("VALIDADO")
+    return estado.startswith(("IMPLEMENTADO", "VALIDADO"))
 
 
 def servible(ficha: object, raiz: str | os.PathLike | None = None) -> TypeGuard[str]:
@@ -982,6 +987,12 @@ def _reejecucion_fallida_entrada(calc_id: str, orig: dict, motivo: str, solicita
                             "configuracion": {"origen": "no se llegó a ejecutar la ficha", "distinta_de_la_vigente": [],
                                               "sin_registro": []}},
             "datos": [], "consumo_uc": 0.0, "madurez_metodo": "IMPLEMENTADO"}
+
+
+def comparar(a: Any, b: Any, tol: float) -> list[str]:
+    """T-160: la regla de comparación de CT-10 (diferencia relativa ≤ `tol` en cada número; igualdad exacta en lo demás), para
+    quien tiene que contrastar unas cifras con las de un cálculo del Registro con la misma vara que la re-ejecución."""
+    return _comparar(a, b, tol)
 
 
 def _comparar(a: Any, b: Any, tol: float, ruta: str = "") -> list[str]:
