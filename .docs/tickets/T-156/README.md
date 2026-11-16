@@ -2,7 +2,7 @@
 
 | Campo | Valor |
 | --- | --- |
-| Estado | EN QA |
+| Estado | CERRADO (QA r01 APTO) |
 | Pieza | bloque_a (ejecutor): `bloque_a/llm.py` (`ReglaReintentos.de_config`), `tests/test_t154.py`, `config/por_defecto.yaml` (comentario), `docs/incidencias.md` (INC-T146-01) |
 | Planifica · implementa · QA | claude · claude · un revisor nuevo |
 | Aprobación del operador | 2026-11-14: «quiero que por tu cuenta vayas completando los tickets que quedan abiertos»; las decisiones nuevas van como `[PROPUESTO]` |
