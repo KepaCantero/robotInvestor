@@ -97,6 +97,12 @@ def main(argv: Optional[List[str]] = None) -> int:
     p.add_argument("--caducidad")
     p.add_argument("--respuesta", dest="estado_credencial", choices=["PROVISTA", "DENEGADA", "APLAZADA"],
                    help="responder: estado que comunica el Broker (sin valores)")
+    # T-158 · Guías de mejora del Orquestador (CT-18)
+    p = sub.add_parser("guia", help="CT-18: emitir (el Orquestador, con el esquema del cuerpo) o listar las guías y su estado")
+    p.add_argument("accion", choices=["emitir", "listar"])
+    p.add_argument("--receptor", help="emitir: agente receptor (AG-nn)")
+    p.add_argument("--json", help="emitir: {items: [{tipo, origen, que_cambia, donde_se_comprueba, como_se_sabe, caducidad}], "
+                                   "fecha_aplicacion}")
     p = sub.add_parser("generar-sinteticos", help="Escribe precios sintéticos (CSV) para el universo")
     p.add_argument("--desde", default="2022-01-03")
     p.add_argument("--hasta", default="2026-10-30")
@@ -162,6 +168,8 @@ def main(argv: Optional[List[str]] = None) -> int:
         print(json.dumps(_consulta_broker(bloque, a, as_of), ensure_ascii=False, indent=1, default=str))
     elif a.cmd == "credencial":
         print(json.dumps(_credencial(bloque, a, as_of), ensure_ascii=False, indent=1, default=str))
+    elif a.cmd == "guia":
+        print(json.dumps(_guia(bloque, a, as_of), ensure_ascii=False, indent=1, default=str))
     return 0
 
 
@@ -204,6 +212,17 @@ def _consulta_broker(bloque, a, as_of) -> object:
         bloque.fijar_fecha(as_of)
         return {"vencidas": c.vencer(as_of)}
     return {k: {x: v.get(x) for x in ("sentido", "tipo", "modo", "estado", "plazo_respuesta", "run_id", "clases")} for k, v in c._todas().items()}
+
+
+def _guia(bloque, a, as_of) -> object:
+    bloque.fijar_fecha(as_of)
+    if a.accion == "emitir":
+        d = _json(a)
+        if not a.receptor or not isinstance(d, dict):
+            sys.exit("emitir necesita --receptor y --json con {items, fecha_aplicacion}")
+        return bloque.guias.emitir(a.receptor, d.get("items"), as_of=as_of, fecha_aplicacion=d.get("fecha_aplicacion"))
+    return {k: {c: v.get(c) for c in ("agente", "version", "estado", "fecha_aplicacion", "sustituye", "sustituida_por", "motivo")}
+            for k, v in bloque.guias.todas().items()}
 
 
 def _credencial(bloque, a, as_of) -> object:

@@ -462,16 +462,20 @@
   "no_comprueba": "Que el entregable final declare «documentado» cuando un método no se pudo usar."
  },
  "PB-48": {
-  "cobertura": "PARCIAL",
+  "cobertura": "AUTOMATICA",
   "pruebas": [
    "11_Ejecutor/tests/test_t126_pb26_pb48.py::test_pb48_una_guia_que_relaja_un_control_no_llega_a_la_elegibilidad",
    "11_Ejecutor/tests/test_t126_pb26_pb48.py::test_pb48_ht03_exige_la_segunda_pasada_en_banda_marginal",
    "11_Ejecutor/tests/test_t126_r02.py::test_h01_en_el_ciclo_una_opcion_en_banda_marginal_se_resuelve_con_su_segunda_pasada",
    "11_Ejecutor/tests/test_t126_r02.py::test_h01_sin_la_segunda_pasada_esas_opciones_no_serian_elegibles",
-   "11_Ejecutor/tests/test_t126_r02.py::test_h04_la_leccion_que_relaja_el_control_llega_al_analista_en_su_ct06"
+   "11_Ejecutor/tests/test_t126_r02.py::test_h04_la_leccion_que_relaja_el_control_llega_al_analista_en_su_ct06",
+   "11_Ejecutor/tests/test_t158_guias.py::test_pb48_la_guia_que_omite_la_segunda_pasada_se_registra_se_escala_y_se_retira",
+   "11_Ejecutor/tests/test_t158_guias.py::test_pb48_con_otro_item_valido_la_version_siguiente_conserva_solo_el_valido",
+   "11_Ejecutor/tests/test_t158_guias.py::test_pb48_una_guia_ya_vigente_se_revisa_tambien_en_el_siguiente_run",
+   "11_Ejecutor/tests/test_t158_guias.py::test_el_item_de_pb48_cita_la_regla_9_1"
   ],
-  "comprueba": "Una lección vigente que sugiere omitir la segunda pasada en banda marginal llega al Analista en su CT-06 pero no a las entradas de HT-03; en el ciclo, las opciones en banda marginal llegan a HT-03 con la segunda pasada del Analista, se resuelven con ella y la segunda pasada queda registrada en F3 (sin ella, PS8 las dejaría fuera); ninguna opción entregada incumple un control; HT-03 exige la segunda pasada en banda marginal (R23 por construcción).",
-  "no_comprueba": "El registro del conflicto (COR-) y su escalado (P3-): el ejecutor no tiene las guías CT-18 del Orquestador (INC-T126-01). La segunda pasada la decide el Analista (simulado, que la hace siempre en la prueba); el ejecutor no la pide si falta: la opción queda no elegible por PS8."
+  "comprueba": "T-158: con una guía CT-18 de tipo 2 vigente para el Analizador que sugiere omitir la segunda pasada en banda marginal (contradice 9.1), en un ciclo con el cliente simulado la guía no se aplica (R23): las opciones en banda marginal llegan a HT-03 con la segunda pasada y se resuelven con ella, que queda registrada en F3; en HA quedan un COR- (la guía corregida, la regla 9.1, quién lo detectó y a quién se comunica) y un P3- del Orquestador reclasificado como tipo 3 en PENDING_OPERATOR (cola de tipo 3), y el ítem se retira de la guía (RETIRADA o versión nueva por CT-18 con el resto); el texto del ítem no llega a ningún agente ni a HT-03. Una guía ya vigente sin revisar se revisa en el F0 del run siguiente. HT-03 exige la segunda pasada en banda marginal (R23 por construcción) y una lección vigente que relaja el control no llega a la elegibilidad.",
+  "no_comprueba": "Con el modelo real: que el Orquestador (modelo) redacte las guías a partir de hallazgos y lecciones y que el Analista haga la segunda pasada por sí mismo (en la prueba la hace el simulado; el ejecutor no la pide si falta: la opción queda no elegible por PS8). El detector de conflictos lee el texto del ítem: una paráfrasis que no reconoce llega como contexto al modelo, pero no a las puertas (INC-T126-01, T-158)."
  },
  "PB-49": {
   "cobertura": "AUTOMATICA",

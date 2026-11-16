@@ -1,6 +1,6 @@
 # Evidencias del Plan de pruebas del Bloque A (Fase 4, T-116)
 
-Generado por `.docs/scripts/evidencias_plan_a.py --ejecutar` el 2026-11-15 sobre el commit `5098b09`, con el cliente simulado (`MockClient`): sin red, sin clave y sin coste. No se edita a mano: se regenera.
+Generado por `.docs/scripts/evidencias_plan_a.py --ejecutar` el 2026-11-16 sobre el commit `899ae9e`, con el cliente simulado (`MockClient`): sin red, sin clave y sin coste. No se edita a mano: se regenera.
 
 Qué significa cada resultado:
 
@@ -17,8 +17,8 @@ Con el cliente simulado se valida la tubería (canales, archivos, puertas, herra
 
 | Resultado | Pruebas del plan |
 | --- | --- |
-| Superada en parte | 37 |
-| Superada | 21 |
+| Superada en parte | 36 |
+| Superada | 22 |
 | Pendiente API | 7 |
 | Requiere usuarios | 1 |
 | Revisión documental | 1 |
@@ -75,7 +75,7 @@ Con el cliente simulado se valida la tubería (canales, archivos, puertas, herra
 | PB-45 Lección aplicada en el siguiente encargo | Superada | Con 14 lecciones vigentes del tipo y una estadística, el encargo CT-06 lleva diez: la estadística primero, después las recurrentes, y ninguna de otro tipo de activo. | La aplicación de la lección en el informe del Analista y la comprobación AS-11 del Auditor, que son del modelo real. |
 | PB-46 Fiabilidad de fuentes de opinión | Superada en parte | El caso del plan (dos fuentes de 25 pronósticos explícitos, una con habilidad y otra sin ella): FUE- en F6 con n, aciertos, BSS (Brier del Motor, FC-EVAL-001, con su `calc_id`), BSS contraído con k = 20 y puntos de historial (por encima y por debajo del neutro 10), una por fuente y mes y comunicadas al Buscador por CT-19. En ciclos (r02 de T-125): el pronóstico que devuelve el Analista o el Buscador llega a F2 con su bloque y, vencido, sale en la FUE- y en el CT-19; solo cuenta lo registrado antes de su fecha objetivo, de una fuente de F9, dentro de la ventana y con cierre reciente. | La recalificación de Q y el orden en F9, que hace el Buscador con el modelo real (T-125). En backtest no entra ningún pronóstico de una fuente de F9 sin fecha (el filtro de evidencia no la da por conocible): el camino se prueba en modo vivo con el cliente simulado. |
 | PB-47 Estados de madurez | Superada en parte | Una ficha no implementada se rechaza con METODO_NO_IMPLEMENTADO y una con código provisional no da cifras. | Que el entregable final declare «documentado» cuando un método no se pudo usar. |
-| PB-48 Conflicto de normas: la más restrictiva | Superada en parte | Una lección vigente que sugiere omitir la segunda pasada en banda marginal llega al Analista en su CT-06 pero no a las entradas de HT-03; en el ciclo, las opciones en banda marginal llegan a HT-03 con la segunda pasada del Analista, se resuelven con ella y la segunda pasada queda registrada en F3 (sin ella, PS8 las dejaría fuera); ninguna opción entregada incumple un control; HT-03 exige la segunda pasada en banda marginal (R23 por construcción). | El registro del conflicto (COR-) y su escalado (P3-): el ejecutor no tiene las guías CT-18 del Orquestador (INC-T126-01). La segunda pasada la decide el Analista (simulado, que la hace siempre en la prueba); el ejecutor no la pide si falta: la opción queda no elegible por PS8. |
+| PB-48 Conflicto de normas: la más restrictiva | Superada | T-158: con una guía CT-18 de tipo 2 vigente para el Analizador que sugiere omitir la segunda pasada en banda marginal (contradice 9.1), en un ciclo con el cliente simulado la guía no se aplica (R23): las opciones en banda marginal llegan a HT-03 con la segunda pasada y se resuelven con ella, que queda registrada en F3; en HA quedan un COR- (la guía corregida, la regla 9.1, quién lo detectó y a quién se comunica) y un P3- del Orquestador reclasificado como tipo 3 en PENDING_OPERATOR (cola de tipo 3), y el ítem se retira de la guía (RETIRADA o versión nueva por CT-18 con el resto); el texto del ítem no llega a ningún agente ni a HT-03. Una guía ya vigente sin revisar se revisa en el F0 del run siguiente. HT-03 exige la segunda pasada en banda marginal (R23 por construcción) y una lección vigente que relaja el control no llega a la elegibilidad. | Con el modelo real: que el Orquestador (modelo) redacte las guías a partir de hallazgos y lecciones y que el Analista haga la segunda pasada por sí mismo (en la prueba la hace el simulado; el ejecutor no la pide si falta: la opción queda no elegible por PS8). El detector de conflictos lee el texto del ítem: una paráfrasis que no reconoce llega como contexto al modelo, pero no a las puertas (INC-T126-01, T-158). |
 | PB-49 Historial íntegro y supresiones permitidas | Superada | En ocho semanas simuladas, cada instantánea de F1–F6, RC y HA contiene la anterior byte a byte (solo añadidos) y todo sigue íntegro; la cadena de huellas detecta una entrada modificada y una borrada (del medio o la última); las supresiones de F7–F9 las hace HT-02 con su línea en el Registro de bajas y motivo obligatorio. | — |
 | PB-50 Horizontes según la clase de activo | Superada en parte | La tabla de horizontes por tipo y el bloqueo de HT-09 a un horizonte no aplicable. | El cambio automático de «Sí» a «Limitado» de un horizonte que pierde frente a la referencia (RF × H2, con DM-HLN) y su CFG- de P-31: el Evaluador solo degrada H5, por hitos (INC-T116-03). |
 | PB-51 Conocimiento específico en los system prompts | Revisión documental | — | Revisión documental de los prompts de sistema; no es una prueba del ejecutor. |
@@ -614,7 +614,7 @@ Criterio de aprobación del plan: Entregable final declara «documentado» o no 
 Criterio de aprobación del plan: Segunda pasada registrada; COR- y P3- en HA
 
 ```bash
-(cd bloque_a/11_Ejecutor && ../../.venv/bin/python -m pytest -q 'tests/test_t126_pb26_pb48.py::test_pb48_una_guia_que_relaja_un_control_no_llega_a_la_elegibilidad' 'tests/test_t126_pb26_pb48.py::test_pb48_ht03_exige_la_segunda_pasada_en_banda_marginal' 'tests/test_t126_r02.py::test_h01_en_el_ciclo_una_opcion_en_banda_marginal_se_resuelve_con_su_segunda_pasada' 'tests/test_t126_r02.py::test_h01_sin_la_segunda_pasada_esas_opciones_no_serian_elegibles' 'tests/test_t126_r02.py::test_h04_la_leccion_que_relaja_el_control_llega_al_analista_en_su_ct06')
+(cd bloque_a/11_Ejecutor && ../../.venv/bin/python -m pytest -q 'tests/test_t126_pb26_pb48.py::test_pb48_una_guia_que_relaja_un_control_no_llega_a_la_elegibilidad' 'tests/test_t126_pb26_pb48.py::test_pb48_ht03_exige_la_segunda_pasada_en_banda_marginal' 'tests/test_t126_r02.py::test_h01_en_el_ciclo_una_opcion_en_banda_marginal_se_resuelve_con_su_segunda_pasada' 'tests/test_t126_r02.py::test_h01_sin_la_segunda_pasada_esas_opciones_no_serian_elegibles' 'tests/test_t126_r02.py::test_h04_la_leccion_que_relaja_el_control_llega_al_analista_en_su_ct06' 'tests/test_t158_guias.py::test_pb48_la_guia_que_omite_la_segunda_pasada_se_registra_se_escala_y_se_retira' 'tests/test_t158_guias.py::test_pb48_con_otro_item_valido_la_version_siguiente_conserva_solo_el_valido' 'tests/test_t158_guias.py::test_pb48_una_guia_ya_vigente_se_revisa_tambien_en_el_siguiente_run' 'tests/test_t158_guias.py::test_el_item_de_pb48_cita_la_regla_9_1')
 ```
 
 - `11_Ejecutor/tests/test_t126_pb26_pb48.py::test_pb48_una_guia_que_relaja_un_control_no_llega_a_la_elegibilidad`: SUPERADA
@@ -622,6 +622,10 @@ Criterio de aprobación del plan: Segunda pasada registrada; COR- y P3- en HA
 - `11_Ejecutor/tests/test_t126_r02.py::test_h01_en_el_ciclo_una_opcion_en_banda_marginal_se_resuelve_con_su_segunda_pasada`: SUPERADA
 - `11_Ejecutor/tests/test_t126_r02.py::test_h01_sin_la_segunda_pasada_esas_opciones_no_serian_elegibles`: SUPERADA
 - `11_Ejecutor/tests/test_t126_r02.py::test_h04_la_leccion_que_relaja_el_control_llega_al_analista_en_su_ct06`: SUPERADA
+- `11_Ejecutor/tests/test_t158_guias.py::test_pb48_la_guia_que_omite_la_segunda_pasada_se_registra_se_escala_y_se_retira`: SUPERADA
+- `11_Ejecutor/tests/test_t158_guias.py::test_pb48_con_otro_item_valido_la_version_siguiente_conserva_solo_el_valido`: SUPERADA
+- `11_Ejecutor/tests/test_t158_guias.py::test_pb48_una_guia_ya_vigente_se_revisa_tambien_en_el_siguiente_run`: SUPERADA
+- `11_Ejecutor/tests/test_t158_guias.py::test_el_item_de_pb48_cita_la_regla_9_1`: SUPERADA
 
 ### PB-49 · Historial íntegro y supresiones permitidas
 
