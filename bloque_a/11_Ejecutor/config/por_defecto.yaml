@@ -406,6 +406,10 @@ guias_orquestador:
   max_items_por_version: 8
   max_hallazgos_por_version: 10
   caducidad_por_defecto_meses: 6
+  # T-161 r02 [PROPUESTO] (QA r01, H-05): el diseño no da número. 6.9 pide que cada campo sea «una acción concreta, en
+  # imperativo, sin ambigüedad», «campo, archivo o comprobación» o un «criterio observable»; el ejemplo de 4.5 tiene
+  # 150 caracteres en su campo más largo. Un texto más largo no se emite y, si está en HA, la guía no se aplica
+  max_caracteres_por_texto: 600
 
 auditoria:
   en_vivo: true

@@ -10,6 +10,7 @@ from __future__ import annotations
 
 import copy
 import re
+from pathlib import Path
 from typing import Any
 
 import pandas as pd
@@ -27,6 +28,7 @@ from .contratos import REGIONES
 from .herramientas import ht09
 from .herramientas.ht05_planificador import fecha_resolucion
 from .herramientas.ht06_indice import normalizar
+from .motor import servicio as _servicio
 
 RE_FECHA_CAT = re.compile(r"^[0-9]{4}-[0-9]{2}(-[0-9]{2})?$|^[0-9]{4}-T[1-4]$|^[0-9]{4}-S[12]$")
 ETIQUETA_SIN_CERT = "sin ventaja demostrada todavía"
@@ -431,7 +433,8 @@ def construir(bloque, run_id, tipo, as_of, clases, nivel, gc0, analisis, selecci
                "x_lectura_conjunto": integ.get("lectura_conjunto", ""), "x_cambios_vs_anterior": integ.get("cambios_vs_anterior", ""),
                "x_n_efectivo": clusteres.get("n_efectivo")}
     extras = {"prg_borradores": prg_borradores, "desgloses": desgloses, "paquete_clases": paquete_clases, "por_opp": por_opp,
-              "seleccion": seleccion, "analisis": analisis, "gc0": gc0}
+              "seleccion": seleccion, "analisis": analisis, "gc0": gc0,
+              "clusteres_calc_id": clusteres.get("calc_id")}   # T-165: el técnico cita ML-CLUS-001 solo si el Motor lo sirvió
     return paquete, extras
 
 
@@ -481,13 +484,89 @@ def ht09_validar(bloque, paquete: dict, extras: dict, informe_visual: str | None
                     c07["incidencias"].append({"severidad": "BLOQUEO", "ruta": f"{opcion['opp_id']}.{horizonte}",
                                               "detalle": "R13: falta el método del pronóstico con probabilidad numérica"})
                     c07["resultado"] = "BLOQUEO"
+    res["comprobaciones"].append(g3_met13(bloque, paquete, extras, informe_visual))
+    return _recalcular(res)
+
+
+def _recalcular(res: dict) -> dict:
+    """El dictamen, el motivo y el resumen de HT-09 tras sumar las comprobaciones del ejecutor (con la regla de la referencia)."""
     bloqueos = [c for c in res["comprobaciones"] if c["resultado"] == "BLOQUEO"]
-    if bloqueos:
-        res["dictamen"] = "BLOQUEADO"
-        res["motivo"] = "; ".join(f"{c['id']} {c['nombre']}" for c in bloqueos)
+    advert = [c for c in res["comprobaciones"] if c["resultado"] == "ADVERTENCIA"]
+    if bloqueos or advert:
+        res["dictamen"] = "BLOQUEADO" if bloqueos else "APTO_CON_ADVERTENCIAS"
+        res["motivo"] = "; ".join(f"{c['id']} {c['nombre']}" for c in (bloqueos or advert))
         recuentos = [c["resultado"] for c in res["comprobaciones"]]
         res["resumen"].update(ok=recuentos.count("OK"), advertencias=recuentos.count("ADVERTENCIA"), bloqueos=len(bloqueos))
     return res
+
+
+# ------------------------------------------------------------------ G3-MET-13 · madurez declarada (T-165, PB-47)
+_RE_OPP = re.compile(r"OPP-(\d{4})-(\d{4,})")
+
+
+def _sirve(bloque):
+    """Si el Motor sirve una ficha: código e IMPLEMENTADO o VALIDADO en el Catálogo (`servible`); AUD-REX-001 es CT-10."""
+    raiz = bloque.motor.raiz
+    return lambda f: (_servicio.servible(f, raiz)
+                      or (f in _servicio.SERVICIOS_CT10 and _servicio.citable_segun_catalogo(f, raiz)))
+
+
+def _comprobar_met13(bloque, textos: list[tuple[str, str, str]]) -> dict:
+    return ht09.comprobar_madurez(textos, _servicio.madurez_catalogo(bloque.motor.raiz), _sirve(bloque),
+                                  _servicio.FICHAS_CATALOGO)
+
+
+def g3_met13(bloque, paquete: dict, extras: dict, informe_visual: str | None) -> dict:
+    """G3-MET-13 sobre lo que se entrega y lo que lo sostiene (INC-T165-01 `[PROPUESTO]`): el paquete de síntesis (superconjunto
+    del JSON; una incidencia dentro de una opción lleva su OPP-, y F6 la retira), el informe visual y los informes de clase del
+    run. Lo que dijo el Analista de una candidata que es opción bloquea esa opción; de una que no llega a la entrega (no
+    seleccionada o ya retirada), y lo de la clase que no pasa al paquete, es una advertencia: es un hallazgo R22, pero no se
+    presenta al Broker. El informe técnico se comprueba al escribirlo (`g3_met13_tecnico`)."""
+    textos = [(r, t, "BLOQUEO") for r, t in ht09.textos_de(paquete, "paquete")]
+    ilegible = None
+    if informe_visual:
+        try:
+            textos.append(("informe_visual", ht09.texto_html(Path(informe_visual).read_text(encoding="utf-8")), "BLOQUEO"))
+        except (OSError, ValueError) as e:   # falla cerrado: lo que no se puede leer no se da por bueno
+            ilegible = f"G3-MET-13: no se puede leer el informe visual: {type(e).__name__}: {e}"
+    opciones = {o["opp_id"] for d in paquete.get("clases", {}).values() for o in d.get("opciones", [])}
+    for c, s in (extras.get("seleccion") or {}).items():
+        for f in (s or {}).get("candidatos", []) if isinstance(s, dict) else []:
+            if not isinstance(f, dict):
+                continue
+            if f.get("opp_id") in opciones:
+                textos += [(r, t, "BLOQUEO") for r, t in ht09.textos_de(f, f"informes_clase.{c}[{f['opp_id']}]")]
+            else:   # sin OPP- en la ruta: F6 no la toma por una opción que retirar
+                marca = str(f.get("proxy") or f.get("simbolo") or "?")
+                textos += [(_RE_OPP.sub(r"opp \1/\2", r), t, "ADVERTENCIA")
+                           for r, t in ht09.textos_de(f, f"informes_clase.{c}.no_entregada[{marca}]")]
+    for c, a in (extras.get("analisis") or {}).items():
+        if isinstance(a, dict):
+            textos += [(_RE_OPP.sub(r"opp \1/\2", r), t, "ADVERTENCIA")
+                       for k in ("regimen", "lagunas") for r, t in ht09.textos_de(a.get(k), f"informes_clase.{c}.{k}")]
+    comp = _comprobar_met13(bloque, textos)
+    if ilegible:
+        comp["incidencias"].append({"severidad": "BLOQUEO", "ruta": "informe_visual", "detalle": ilegible})
+        comp["resultado"] = "BLOQUEO"
+    return comp
+
+
+def g3_met13_tecnico(bloque, res: dict, texto: str) -> bool:
+    """G3-MET-13 sobre el informe técnico, que se escribe después de HT-09 (lleva su dictamen). Suma sus incidencias a la
+    comprobación G3-MET-13 de `res`, recalcula el dictamen y dice si bloquea."""
+    comp = _comprobar_met13(bloque, [(f"informe_tecnico, línea {n}", linea, "BLOQUEO")
+                                     for n, linea in enumerate(texto.splitlines(), start=1)])
+    if not comp["incidencias"]:
+        return False
+    destino = next((c for c in res["comprobaciones"] if c["id"] == ht09.ID_MET13), None)
+    if destino is None:
+        res["comprobaciones"].append(comp)
+    else:
+        destino["incidencias"].extend(comp["incidencias"])
+        destino["resultado"] = "BLOQUEO"
+        destino.setdefault("datos", {})["fichas_citadas_tecnico"] = comp["datos"]["fichas_citadas"]
+    _recalcular(res)
+    return True
 
 
 def retirar_opciones(bloque, paquete: dict, extras: dict, afectadas: set[str]) -> tuple[dict, dict]:

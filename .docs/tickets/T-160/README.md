@@ -2,7 +2,7 @@
 
 | Campo | Valor |
 | --- | --- |
-| Estado | EN QA |
+| Estado | CERRADO (QA r01 APTO) |
 | Pieza | bloque_a (ejecutor: `bloque_a/evaluador.py` y `bloque_a/motor/servicio.py`) |
 | Planifica · implementa · QA | claude · claude · un revisor nuevo sin contexto (regla del 12-11-2026, `compartida/2026-11-12_claude-puede-hacer-qa`) |
 | Aprobación del operador | no necesaria: completa una función del diseño (PB-32, EVAL-F05) y corrige un literal; no cambia contratos CT, esquemas del corpus, la Constitución ni los controles. Solo endurece: un certificado exige una condición más. Lo que el diseño no dice se decide por defecto (`compartida/2026-11-13_decide-el-agente-por-defecto`) |

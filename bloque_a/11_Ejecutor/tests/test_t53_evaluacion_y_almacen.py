@@ -31,7 +31,7 @@ from bloque_a.herramientas.ht01_datos import (
 )
 from bloque_a.herramientas.ht08_monitor import SIN_ESTADO, Monitor
 from bloque_a.motor import evaluacion as ev
-from conftest import RAIZ
+from conftest import RAIZ, certificado_con_reejecucion
 
 ESQUEMA_PAQUETE = RAIZ.parent / "06_Plantillas_entregables" / "Esquema JSON - Paquete de oportunidades - V5.0.json"
 
@@ -251,8 +251,7 @@ def _almacen_certificado(tmp_path):
         pid = f"PRG-2026-{i + 1:04d}"
         _alta(a, pid, prob_interna=0.75, fecha_emision=str((pd.Timestamp("2026-01-02") + pd.Timedelta(days=i)).date()))
         _resolver(a, pid, 1 if i % 4 else 0, "2027-06-04")
-    a.escribir("F6", "AG-20", {"tipo_entrada": "CERT", "id": "CERT-2027-0001", "estado": "VIGENTE",
-                               "celda": {"clase": "RV", "horizonte": "H3", "metodo": None}})
+    certificado_con_reejecucion(a, {"clase": "RV", "horizonte": "H3", "metodo": None}, "CERT-2027-0001")  # T-163 (H-02): con su soporte y su CT-10
     return a
 
 

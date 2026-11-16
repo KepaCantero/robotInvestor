@@ -268,7 +268,8 @@ def ciclo_pb48_guia(tmp_path, universo, monkeypatch, contextos):
         blq = nuevo_bloque(tmp_path, universo)
         blq.fijar_fecha(AS_OF)
         vistos = contextos(blq)
-        emitida = blq.guias.emitir("AG-02", items, as_of=AS_OF)                         # paso 1: el Analizador recibe la guía
+        # paso 1: el Analizador recibe la guía (T-161: el emisor ya la rechaza; PB-48 supone que su filtro falló)
+        emitida = blq.guias.emitir("AG-02", items, as_of=AS_OF, simular_fallo_del_emisor=True)
         run = blq.ciclo(AS_OF, alcance={"clases": ["RV"]})                               # paso 2: una selección con banda marginal
         return blq, emitida, run, vistos, [(op, res) for op, res in evaluadas if op.get("opp_id") != "PROV"]
     return preparar
@@ -333,7 +334,7 @@ def test_determinismo_misma_entrada_mismas_entradas_de_ha(tmp_path, universo):
     def huella(sub):
         blq = nuevo_bloque(tmp_path / sub, universo)
         blq.fijar_fecha(AS_OF)
-        blq.guias.emitir("AG-02", [item(PB48), item()], as_of=AS_OF)
+        blq.guias.emitir("AG-02", [item(PB48), item()], as_of=AS_OF, simular_fallo_del_emisor=True)   # T-161 (H-05)
         blq.guias.cargar(AS_OF, "RUN-2026-0001")
         return [{k: v for k, v in e.items() if k not in ("_ts", "_hash", "_hash_prev")} for e in guias_ha(blq)]
     assert huella("a") == huella("b")

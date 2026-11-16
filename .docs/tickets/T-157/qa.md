@@ -116,3 +116,85 @@ del campo JSON escondería en una nota un error real de la clase (d). No hay hal
 informe actual salen del corpus y del código, y los he comprobado: los 3 errores y los 3 avisos son reales y ninguna de las 13
 notas esconde nada. Siguiente: el implementador corrige H-01 y H-02 con sus pruebas (y, si quiere, H-03 a H-07), regenera
 `docs/auditoria_ids_bloque_a.*`, y el revisor repite los tres scripts r01 en una ronda r02.
+
+---
+
+# Ronda r02
+
+- **Revisor:** el mismo de la r01 (Claude, subagente sin el contexto de la implementación) · 16-11-2026 · copia `qa33` en
+  `04be333` («wip local: T-157 r02»), sin red ni gasto. Entre la r01 y la r02, T-160 quitó el literal «4.0» de `evaluador.py`
+  (D-1) y el docstring V4.0 de `motor/operaciones.py`: el informe real pasa a 2 errores y 2 avisos.
+
+## Reproducción
+
+| Paso | Resultado |
+| --- | --- |
+| El verificador con `PYTHONHASHSEED` 0, 1, 2, 3, 4, 5, 7 y 11 (`--json` y `--md`) | **un solo JSON y un solo Markdown** en las 8 ejecuciones; idénticos a `docs/auditoria_ids_bloque_a.json`, y `--auditoria` sobre una copia de `docs/auditoria_ids_bloque_a.md` la deja igual byte a byte |
+| Informe real | salida 1; 2 errores (FX-MC10-003, RF-0123), 2 avisos (8 menciones a V4.0, RF-1) y 12 notas |
+| `r01_01_cifras.py` sobre ese JSON | 21 comprobaciones, todas iguales: las cifras salen del corpus y del código |
+| `r01_02_siembra.py` | 39 de 43. Fallan las 2 de H-04 (aviso a propósito, INC-T157-01) y las 2 de T-143 que esperaban 3 errores fijos (ahora 2, por T-160): **no son hallazgos**. Pasan las que fallaban por H-01, H-02, H-03, H-05 y H-06 |
+| `r01_03_mutantes.py` | 25 matados. M13 sigue vivo solo por el arnés (muta en el proceso; la prueba de subproceso lo mataría), y M10 sale ROTO porque la regla que mutaba ya no existe |
+| `.docs/tickets/T-157/mutantes_t157.py` | nulo vivo; los 13 mutantes, matados (7 nuevos de la r02) |
+| `r02_01_ataques.py` (nuevo) | 11 de 16; los 5 que fallan son H-09 a H-11 |
+| `r02_02_mutantes.py` (nuevo, 10 mutantes de las reglas de la r02) | 4 matados y 6 vivos (H-12) |
+| ruff (las tres carpetas de ejecutor) | **2825** (cuota 2825); los dos archivos de T-157, «All checks passed!». Ojo: con un `tests/conftest_mutante_*.py` temporal de un script de mutantes en disco, la cuenta sube a 2828; medir siempre con los scripts terminados |
+| mypy `bloque_a/11_Ejecutor/bloque_a` | 109 (cuota 109) |
+| `tools/refs_vivas.py`, `secrets_scan.py`, `nfc_check.py`, `corpus_integridad.py` | en verde; «Corpus íntegro: 695 archivos» |
+| Suite completa de A | 6765 superadas, 2 omitidas, 0 fallos (1 h 16 min) |
+
+## Hallazgos de la r01, uno a uno
+
+| ID | Estado | Evidencia |
+| --- | --- | --- |
+| H-01 | **corregido** | `_clave_id` desempata por la cadena. Mismos bytes con 8 semillas en el corpus real y con 4 semillas en una copia con empates sembrados en todas las clases (CT-01/CT-1, R1/R01, PS1/PS01, F5/F05, F2/F02, RF-0001/RF-1, TA-01/TA-1, TM-01/TM-1). Los demás `sorted` y conjuntos del módulo: revisados, sin otro empate que dependa de un `set` |
+| H-02 | **corregido en lo que se informó**: `estado_madurez_metodos`, la prosa en un valor JSON, un array, el guion U+2011, la negrita y una fórmula dan ERROR. Queda una vía más estrecha, H-09 | `r02_01_ataques.py` §2; `r01_02_siembra.py` §2 |
+| H-03 | corregido | CT-27 en una línea con «JEL», `R29 = R1 + R2` y F13 en prosa con AUD-F13: los tres son ERROR. Los contextos legítimos (lista JEL, fórmula de vencimientos, «AUD-F03 a F12», fases, CT-B-28, la serie IDX-FICT-001) no crean ningún error falso (`r02_01_ataques.py` §3) |
+| H-04 | no se corrige, por decisión documentada en INC-T157-01 (la razón vale: «tarjeta RF-1» es otro ID con el mismo prefijo). Lo acepto. Si no se cambia, pasa a la deuda como baja | `test_e_referencias` |
+| H-05 | corregido | GARCH-VOL-001 da INFO `FAMILIA_DESCONOCIDA` (ZZ-ALFA-001, que se parece a una ficha, da ERROR); «catálogo v4.0» cuenta; CT‑28 con U+2011 da ERROR. En el corpus real solo entra WI-METH-001 (una serie de F9) como INFO |
+| H-06 | corregido para una carpeta inexistente o una carpeta como destino. Queda un caso, H-11 | `r01_02_siembra.py` §3; `r02_01_ataques.py` §4 |
+| H-07 | corregido | Los 12 mutantes vivos de la r01 que eran protecciones sin prueba están matados, NFC incluida (el Catálogo con nombre en NFD) |
+| H-08 | corregido | D-1 (aplicada por T-160) y D-2 a D-4 (pendientes del operador) en `Decisiones_del_operador_Bloque_A.md` §6. D-2 dice que conviene decidirla antes de la Fase 5, y INC-T157-03 explica la octava mención |
+
+## Hallazgos nuevos
+
+| ID | Gravedad | Cómo reproducirlo | Esperado / obtenido | Corrección sugerida | Estado |
+| --- | --- | --- | --- | --- | --- |
+| H-09 | media | `r02_01_ataques.py` §2: `{"simbolo":"FX-TRND-009"}` en un ejemplo de `05` y «Calcula el momento con la ficha FX-TRND-009.» en un prompt; o `{"serie_ht01":"VOL-GARH-001","operacion":{"ficha_id":"VOL-GARH-001"}}` | Esperado: ERROR en la cita como ficha. Obtenido: INFO «símbolo de una serie». Un ID declarado como `serie_ht01` o `simbolo` en cualquier archivo del corpus excusa todas sus apariciones, incluso el valor de `ficha_id` u `operacion` y la prosa «la ficha X». Es la misma clase que H-02, más estrecha: hace falta que la misma cadena figure como serie en algún sitio. Hoy no esconde nada real (el único símbolo, IDX-FICT-001, nunca va como ficha) | No excusar nunca una aparición que es el valor de `ficha_id`, `method_id` u `operacion`, ni la que sigue a «ficha» en la misma frase; y una prueba con los dos casos. Como alternativa, excusar solo dentro del mismo objeto JSON o del mismo archivo que la declaración | abierto |
+| H-10 | baja | `r02_01_ataques.py` §2: «Usa la FX-TREND-01 y la FX-TREND-0001.» | Esperado: algún hallazgo. Obtenido: nada. Tanto la cita de ficha como `RE_FORMA_FICHA` exigen exactamente tres cifras finales, así que una ficha con el número mal escrito no se ve | Buscar también `-\d{1,2}` y `-\d{4,}` con tallo de una ficha conocida y darlo como ERROR con «¿FX-TREND-001?» | abierto |
+| H-11 | baja | `r02_01_ataques.py` §4: `--json <carpeta válida>/ok.json --md /proc/qa_t157.md --auditoria <doc>` | Esperado: salida 2 y nada escrito. Obtenido: salida 2 y la auditoría intacta, pero **`ok.json` sí se escribe**. `_escribir_todo` solo comprueba que la carpeta existe, no que admita archivos; el temporal del Markdown falla después de renombrar el JSON. (Como root no se puede simular una carpeta sin permiso de escritura; con un usuario normal sería el caso típico) | Escribir primero todos los temporales y renombrar solo cuando todos se hayan escrito (si uno falla, borrar los demás temporales) | abierto |
+| H-12 | baja | `r02_02_mutantes.py` | 6 mutantes vivos de las reglas nuevas: **N02**, un rango con un solo extremo del documento excusa (la prueba usa F09, que es error igual; falta el caso del extremo que sí es función); **N04**, una familia desconocida declarada como símbolo; **N05**, el destino que es una carpeta (lo frena después el `OSError`); **N06**, el `except OSError` de `main` (ninguna prueba llega a él); **N07**, la fórmula excusa una F fuera de las comillas invertidas si en la línea hay una fórmula; **N08**, JEL excusa cualquier código a partir de la lista. Hoy el comportamiento es correcto (lo comprueban mis ataques), pero nada lo protege | Una prueba por cada uno: «MOT-F04–F09» que exija ERROR en F04, una F fuera de la fórmula en la misma línea, un código tras el cierre de la lista JEL, un destino que da `OSError` (con `monkeypatch` de `os.replace`) | abierto |
+
+Orden de reproducción, desde `bloque_a/11_Ejecutor`:
+
+```bash
+for s in 0 1 3 7; do PYTHONHASHSEED=$s ../../.venv/bin/python -m bloque_a.herramientas.verificador_ids --json /tmp/h$s.json; done; md5sum /tmp/h*.json
+../../.venv/bin/python ../../.docs/tickets/T-157/revisores/r01_01_cifras.py /tmp/h0.json     # 0: las cifras cuadran
+../../.venv/bin/python ../../.docs/tickets/T-157/revisores/r01_02_siembra.py                 # 39/43 (4 esperados, ver arriba)
+../../.venv/bin/python ../../.docs/tickets/T-157/revisores/r02_01_ataques.py                 # 11/16: H-09, H-10 y H-11
+../../.venv/bin/python ../../.docs/tickets/T-157/revisores/r01_03_mutantes.py                # 25 matados, M13 (arnés), M10 roto
+../../.venv/bin/python ../../.docs/tickets/T-157/revisores/r02_02_mutantes.py                # 6 vivos: H-12
+../../.venv/bin/python ../../.docs/tickets/T-157/mutantes_t157.py                            # 13 matados
+```
+
+## Criterios de aceptación (r02)
+
+| Criterio | Cumple | Evidencia |
+| --- | --- | --- |
+| CA-1 | sí | Salida 1 con 2 errores; `--json`, `--md`, `--auditoria` y la salida estándar |
+| CA-2 | sí | Pruebas del corpus de juguete; `r01_02_siembra.py` §1 (un ERROR de cada clase sembrado en el corpus real) |
+| CA-3 | sí | `r01_01_cifras.py`: el mapa por H1 |
+| CA-4 | sí | 9 casos de salida 2 sin informe y destinos imposibles; queda H-11 (baja), que es de salidas, no de entradas |
+| CA-5 | **sí** | 8 semillas en el corpus real y 4 con empates sembrados: los mismos bytes |
+| CA-6 | sí | `test_informe_que_no_valida_no_se_escribe`, `test_r02_validar_informe_…` |
+| CA-7 | sí | T-143 simulado en dos variantes: lee la V5.2, no el histórico |
+| CA-8 | sí | `r01_01_cifras.py`, 21 de 21 |
+| CA-9 | sí | D-1 a D-4 con INC-T157-02 a 05 y en el registro de decisiones |
+| CA-10 | sí | Suite de A: 6765 superadas, 2 omitidas, 0 fallos; ruff 2825, mypy A 109, gates ligeros en verde |
+
+## Suite completa (r02)
+
+Una pasada en `bloque_a/11_Ejecutor` (`../../.venv/bin/python -m pytest -q -p no:cacheprovider`, en segundo plano): **6765 superadas, 2 omitidas, 0 fallos** en 1 h 16 min (salida 0; más lenta que en la r01 por la carga de otras suites). Terminó antes del reinicio de la sesión, así que no hubo que relanzarla. 6765 ≥ 607, con las 46 de T-157.
+
+## Veredicto (r02)
+
+**APTO** · Se cumplen los diez criterios, CA-5 incluido: el informe es el mismo byte a byte con cualquier semilla. H-01 y H-03 a H-08 están corregidos (H-04 se queda como aviso, por una decisión documentada que acepto). H-02 está corregido en todo lo que se informó. No hay hallazgos críticos ni altos. Quedan abiertos H-09 (media), un ID declarado como símbolo de una serie que excusa también el valor de `ficha_id` y «la ficha X», y H-10 a H-12 (bajas). Si no se corrigen antes de cerrar, pasan a la deuda técnica con su ID, junto con H-04. Las cifras del informe real salen del corpus y del código: las recuento aparte y coinciden, y los 2 errores y los 2 avisos son reales. No cierro el ticket: el cierre, la deuda y el commit los hace la sesión coordinadora.

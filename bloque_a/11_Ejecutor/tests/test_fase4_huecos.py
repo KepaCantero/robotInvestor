@@ -14,7 +14,7 @@ from bloque_a.configuracion import aplicabilidad
 from bloque_a.consumo import Presupuesto
 from bloque_a.contratos import CanalNoPrevisto, DatosSensibles, Mensajeria
 from bloque_a.evaluador import Evaluador
-from conftest import AS_OF, config_pruebas, nuevo_bloque
+from conftest import AS_OF, certificado_con_reejecucion, config_pruebas, nuevo_bloque
 
 
 def _huellas(carpeta):
@@ -151,8 +151,7 @@ def test_pb33_la_revocacion_registra_estado_motivo_y_fecha_de_efecto(tmp_path):
                                    "resolucion": {"resultado_binario": i % 2, "valor_observado": 0.01, "comprobacion_fuga": "SUPERADA",
                                                   "fecha_resuelto": "2025-07-02"}})
     a.reloj.fijar("2025-12-01")
-    a.escribir("F6", "AG-20", {"tipo_entrada": "CERT", "id": "CERT-2025-0001", "estado": "VIGENTE",
-                               "celda": {"clase": "RV", "horizonte": "H3", "metodo": None}})
+    certificado_con_reejecucion(a, {"clase": "RV", "horizonte": "H3", "metodo": None}, "CERT-2025-0001")  # T-163 (H-02): con su soporte y su CT-10
     a.reloj.fijar("2026-01-02")
     f4_antes = hashlib.sha256((tmp_path / "F4_registro_pronosticos.jsonl").read_bytes()).hexdigest()
     cfg = config_pruebas(evaluacion={"bootstrap_replicas": 50, "simulaciones_ece": 50})
@@ -430,8 +429,8 @@ def test_pb60_credencial_denegada_no_se_vuelve_a_pedir_y_los_entregables_declara
 def test_pb33_tras_la_revocacion_hay_alerta_de_sobreconfianza_y_el_run_siguiente_no_publica_probabilidad(tmp_path, universo):
     b = nuevo_bloque(tmp_path, universo)
     b.reloj.fijar("2025-06-02")
-    b.almacen.escribir("F6", "AG-20", {"tipo_entrada": "CERT", "id": "CERT-2025-0001", "estado": "VIGENTE",
-                                       "celda": {"clase": "RV", "horizonte": "H3", "metodo": "ACC-MOM-001"}})
+    certificado_con_reejecucion(b.almacen, {"clase": "RV", "horizonte": "H3", "metodo": "ACC-MOM-001"}, "CERT-2025-0001",
+                                motor=b.motor)  # T-163 (H-02): con su soporte y su CT-10
     b.reloj.fijar("2026-01-02")
     for i in range(120):                                  # la celda pierde la habilidad: dice 0,65 y acierta la mitad de las veces
         pid = f"PRG-2025-{i + 1:04d}"
@@ -540,8 +539,8 @@ def test_pb32_el_certificado_es_de_la_celda_por_metodo(tmp_path, universo):
 def test_pb32_la_probabilidad_se_publica_solo_en_la_celda_certificada_y_con_su_certificado_ref(tmp_path, universo):
     b = nuevo_bloque(tmp_path, universo)
     b.fijar_fecha(AS_OF)
-    b.almacen.escribir("F6", "AG-20", {"tipo_entrada": "CERT", "id": "CERT-2026-0001", "estado": "VIGENTE",
-                                       "celda": {"clase": "RV", "horizonte": "H3", "metodo": "ACC-MOM-001"}})
+    certificado_con_reejecucion(b.almacen, {"clase": "RV", "horizonte": "H3", "metodo": "ACC-MOM-001"}, "CERT-2026-0001",
+                                motor=b.motor)  # T-163 (H-02): con su soporte y su CT-10
     r = b.ciclo(AS_OF, alcance={"clases": ["RV"]})
     altas = [p for p in b.almacen.estado("F4").values() if p.get("clase") == "RV" and p.get("tipo_entrada") == "ALTA"]
     assert {p["horizonte"] for p in altas if p.get("metodo") == "ACC-MOM-001"} >= {"H3"}

@@ -269,7 +269,7 @@ class Redaccion:
              f"| Entregables hermanos | `{rutas.get('informe_visual')}` · `{rutas.get('paquete_json')}` |", "",
              "## 1. Resumen ejecutivo", "", f"**Lectura del conjunto.** {p.get('x_lectura_conjunto') or '—'}", "",
              f"**Qué ha cambiado.** {p.get('x_cambios_vs_anterior') or 'Sin ciclo anterior comparable.'}", "",
-             f"**Apuestas independientes: {p['apuestas_independientes']}** (N efectivo ML-CLUS-001: {p.get('x_n_efectivo')}).", ""]
+             f"**Apuestas independientes: {p['apuestas_independientes']}** ({_rotulo_n_efectivo(extras)}: {p.get('x_n_efectivo')}).", ""]
         for e in p.get("clusteres_exposicion", []):
             L.append(f"- {e['cluster_id']}: {e['factor_dominante']} — {', '.join(e['opp_ids'])}")
         L += ["", "| Tipo de activo | Semáforo | Opción | RK | Riesgo | Relevancia | Siguiente paso |", "|---|---|---|---|---|---|---|"]
@@ -399,6 +399,9 @@ class Redaccion:
         rutas_entrega = {k: str(dirs[k] / n) for k, n in nombres.items()}   # las que cita el informe: las de entrega
         Path(rutas["informe_tecnico"]).write_text(self.tecnico(paquete, extras, g3, rutas_entrega, estado_run, cons), encoding="utf-8")
         coh = coherencia(rutas, js)
+        # T-165 (G3-MET-13): el técnico se escribe después de HT-09; su madurez declarada se comprueba aquí y suma a HT-09
+        if sint.g3_met13_tecnico(bloque, res, Path(rutas["informe_tecnico"]).read_text(encoding="utf-8")) and "G3-MET-13" not in bloq:
+            bloq.append("G3-MET-13")
         if errores:
             bloq.append("ESQUEMA_JSON")
         if coh:
@@ -421,6 +424,14 @@ class Redaccion:
                                                                    for c in res["comprobaciones"]]})
         return rutas, {"dictamen": dictamen, "bloqueos": bloq, "advertencias": adv, "legibilidad": leg["fernandez_huerta"],
                        "frases_largas": leg["frases_largas"][:10], "errores_esquema": errores, "incoherencias": coh}
+
+
+def _rotulo_n_efectivo(extras: dict) -> str:
+    """T-165: el N efectivo se atribuye a ML-CLUS-001 solo si el Motor sirvió los clústeres en este ciclo; si no (rechazado o sin
+    series que agrupar), cada serie cuenta aparte y no se cita un método que no se usó (R22, G3-MET-13)."""
+    if "clusteres_calc_id" in extras and not extras["clusteres_calc_id"]:
+        return "N efectivo sin clústeres del Motor, cada serie cuenta aparte"
+    return "N efectivo ML-CLUS-001"
 
 
 def carpeta_bloqueados(bloque, as_of, run_id: str) -> Path:

@@ -8,6 +8,8 @@ cumple y solo les faltaba la prueba; otras necesitan una función que el ejecuto
 
 ## Clasificación de los 37
 
+> **Corregida en la r02** (QA r01, H-01 y H-02): PB-47 pasa de A a B y PB-25 y PB-46, de C a B. Clasificación final: 7 A, 30 B y 0 C. Las filas de abajo llevan ya la clase final; el motivo de cada cambio está en «Ronda r02».
+
 - **A** (8): la cláusula la cumple ya el código; prueba nueva en `tests/test_t159_extremo_a_extremo.py` y la fila pasa a «Superada».
 - **B** (27): falta una función del ejecutor. 17 eran conocidos: los 16 del apartado 2 del plan de la noche (INC-T116-01, -02 y
   -03, y PB-48 de INC-T126-01, que lleva T-158) y PB-26 (INC-T126-01, ronda r02). 10 son nuevos o no tenían incidencia propia y
@@ -30,7 +32,7 @@ cumple y solo les faltaba la prueba; otras necesitan una función que el ejecuto
 | PB-20 | Instrucción incrustada en una fuente | B | Nuevo en lo que falta (INC-T159-01): la fuente no se degrada ni se borra en F9 con su línea de baja, y G3-EST-06 no existe en HT-09. |
 | PB-21 | Credencial en un mensaje | B | Conocido (INC-T116-03): la incidencia no lleva el tipo de dato protegido. |
 | PB-24 | Enlace roto y borrado con registro de bajas | B | Nuevo (INC-T159-01): el ejecutor solo invoca HT-02; la baja no se propaga (EVD FUENTE_RETIRADA, revisión en F3, CT-21 del mes). |
-| PB-25 | Contenido cambiado y retractación | C | El recálculo de Q con su motivo lo hace el Documentador (modelo real); la baja con su línea ya está probada (HT-02). |
+| PB-25 | Contenido cambiado y retractación | B (r02) | El recálculo de Q con su motivo lo hace el Documentador (modelo real); la baja con su línea ya está probada (HT-02). |
 | PB-26 | Clasificación temática y orden por calidad | B | Conocido (INC-T126-01, r02): el desempate por fecha no alcanza a las fichas sin año (documento vivo, F9). Las 30 altas las hacen los Documentadores (C). |
 | PB-29 | Contar raíces, no menciones | B | Nuevo en lo que falta (INC-T159-01): `grado_independencia` es siempre RAIZ y las raíces se cuentan por fuente (veinte medios, veinte raíces); el ejecutor no lee derivadas del Curador. |
 | PB-30 | Cifra sin artefacto bloqueada por G3 | A | El caso de extremo a extremo: C08 bloquea, CT-14, retirada, segundo G3V- APTO; dos G3V- en HA y la cifra fuera de la entrega. El tiempo de dictamen es de tiempo real. |
@@ -43,8 +45,8 @@ cumple y solo les faltaba la prueba; otras necesitan una función que el ejecuto
 | PB-39 | Informe visual con legibilidad < 70 | A | El ciclo bloquea el visual por C12, pide la reescritura y entrega el reescrito con 70 o más; si sigue por debajo, no se entrega ningún visual. |
 | PB-41 | Coherencia entre entregables y entre clases | A | Con un factor común sembrado en RF, INM y RV: clúster común de los tres tipos, `apuestas_independientes` = clústeres, y las mismas OPP- en el mismo orden en los tres entregables. El recuento del Auditor es del modelo real. |
 | PB-44 | Historial de aciertos honesto | A | Nueve ciclos con una invalidada, una descartada y una NO_RESOLUBLE: el historial es el recuento de F4 y F3, la NO_RESOLUBLE se declara, `significativo` false con su nota, el mismo dato en los tres entregables y C01 (G3-CON-18) en OK. |
-| PB-46 | Fiabilidad de fuentes de opinión | C | La recalificación de Q y el orden en F9 los hace el Buscador con el modelo real (T-125). |
-| PB-47 | Estados de madurez | A | Con ML-CLUS-001 en DOCUMENTADO: el Motor lo rechaza, la entrega no cita cifras suyas, declara la limitación y no dice «validado». |
+| PB-46 | Fiabilidad de fuentes de opinión | B (r02) | La recalificación de Q y el orden en F9 los hace el Buscador con el modelo real (T-125). |
+| PB-47 | Estados de madurez | B (r02) | Con ML-CLUS-001 en DOCUMENTADO: el Motor lo rechaza, la entrega no cita cifras suyas, declara la limitación y no dice «validado». |
 | PB-48 | Conflicto de normas | B | Conocido (INC-T126-01); lo lleva T-158: no se toca. |
 | PB-50 | Horizontes según la clase de activo | B | Conocido (INC-T116-03). |
 | PB-52 | Modo degradado: herramienta caída | B | **Descubierto por una prueba** (INC-T159-01): con HT-09 caído, `Bloque.ciclo` termina con la excepción; no hay CT-14, ni G3 manual con etiqueta, ni RUN- en F5, ni incidencia. Lo que sí cumple (nada se entrega, nada se congela, ningún APTO) queda probado. |
@@ -54,7 +56,7 @@ cumple y solo les faltaba la prueba; otras necesitan una función que el ejecuto
 | PB-64 | Evaluación de H5 por hitos y degradación | B | Conocido (INC-T116-03). |
 | PB-67 | Seguimiento que propone el envío al Bloque B | A | Un C6 del ejecutor da PROPONER_ENVIO_A_B con HT-09 de seguimiento APTO y su paquete; el único mensaje fuera del bloque es el CT-24 al Broker y F3 no cambia. |
 
-Nota sobre los (C): por la definición del documento de evidencias, una fila cuya única cláusula pendiente es del modelo real
+Nota sobre los (C), **superada en la r02** (ya no queda ningún C: PB-25 y PB-46 son B): por la definición del documento de evidencias, una fila cuya única cláusula pendiente es del modelo real
 podría ser «Superada» con esa cláusula en «No comprueba». El encargo pide dejarlas «en parte»; se dejan así, y la QA o el
 operador pueden decidir moverlas.
 
@@ -100,3 +102,15 @@ operador pueden decidir moverlas.
 - Comandos exactos, desde `bloque_a/11_Ejecutor`:
   - `../../.venv/bin/python -m pytest -q -p no:cacheprovider tests/test_t159_extremo_a_extremo.py tests/test_fase4_mapa.py`
   - desde la raíz: `.venv/bin/python .docs/scripts/evidencias_plan_a.py` (comprobación) y `--ejecutar` (regenera).
+
+## Ronda r02 (QA r01 NO APTO, H-01 a H-03; la hizo la sesión coordinadora)
+
+Solo cambian el mapa, este análisis y la incidencia: el código del ejecutor no se toca.
+
+- **H-01 (media).** PB-47 vuelve a «Superada en parte». La prueba solo sembraba la mitad de la preparación del plan, el método en DOCUMENTADO. Con la otra mitad, un informe de clase que llama «validado» al método, G3 da APTO y lo entregado dice «validado»: HT-09 no tiene G3-MET-13. Pasa de A a B y el motivo del mapa se corrige; la prueba `test_pb47_…` se queda, porque lo que comprueba sigue siendo cierto.
+- **H-02 (media).** PB-25 y PB-46 pasan de C a B. PB-25: el ejecutor no trata CONTENIDO_CAMBIADO ni RETRACTADA, y la baja no se propaga a F2. PB-46: el CT-19 al Buscador se crea COMPLETO y nadie lo atiende.
+- **H-03 (baja).** INC-T159-01 cuenta trece casos, con PB-47, PB-25 y PB-46.
+- **H-04 (baja).** Las entradas que deja en F2 y en RC el ciclo con HT-09 caído se quedan como observación de PB-52, que sigue en B.
+- **H-05 (baja).** La sugerencia de N3 de PB-67, que solo se comprueba como booleano, no se toca: el criterio del plan no pide más.
+
+Clasificación tras la r02: 7 A, 30 B y 0 C. Las evidencias quedan en 30 «Superada» y 28 «en parte».
