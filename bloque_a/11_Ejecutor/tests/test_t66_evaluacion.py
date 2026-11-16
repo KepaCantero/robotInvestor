@@ -228,12 +228,16 @@ def test_pa10_revocar_y_retirar_siguen_siendo_automaticos(tmp_path):
         _alta(a, pid, prob_interna=0.65, clase="MP", fecha_resolucion=str((pd.Timestamp("2025-01-02") + pd.Timedelta(days=i)).date()))
         _resolver(a, pid, i % 2)
     certificado_con_reejecucion(a, {"clase": "RV", "horizonte": "H3", "metodo": None}, "CERT-2025-0001")  # T-163 (H-02): con su soporte y su CT-10
-    a.escribir("F6", "AG-20", {"tipo_entrada": "CERT", "id": "CERT-2025-0002", "estado": "PROPUESTO",
-                               "celda": {"clase": "MP", "horizonte": "H3", "metodo": None}})
+    # T-180 (QA r01 de T-163, H-03): la propuesta también con su soporte y su CT-10, para que se retire por el criterio de la
+    # celda y no por no tener re-ejecución (esa vía la cubre test_t160_reejecucion_certificado)
+    certificado_con_reejecucion(a, {"clase": "MP", "horizonte": "H3", "metodo": None}, "CERT-2025-0002", estado="PROPUESTO")
     res = Evaluador(a, None, None, _cfg(), None).revisar_certificados(AS_OF)
     assert res["revocados"] == ["CERT-2025-0001"] and res["propuestas_retiradas"] == ["CERT-2025-0002"]
     f6 = a.estado("F6", clave="id")
     assert f6["CERT-2025-0001"]["estado"] == "REVOCADO" and f6["CERT-2025-0002"]["estado"] == "REVOCADO"
+    # T-180 (H-03): por qué: el VIGENTE por deterioro y la propuesta porque la celda ya no cumple el criterio
+    assert res["vigentes_sin_reejecucion"] == {} and f6["CERT-2025-0001"]["motivo_cambio"].startswith("deterioro: BSS ≤ 0")
+    assert f6["CERT-2025-0002"]["motivo_cambio"].startswith("propuesta retirada: la celda ya no cumple el criterio (")
 
 
 # ================================================================================================ PA-03 · muestra efectiva

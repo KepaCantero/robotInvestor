@@ -49,19 +49,29 @@ def certificado_con_reejecucion(almacen, celda, cid=None, estado="VIGENTE", moto
     cálculo de soporte FC-EVAL-001 del Motor (con el método de la celda), su re-ejecución CT-10 coincidente en el Registro de
     cálculos y las cifras de ese soporte. Para las pruebas que necesitan un certificado VIGENTE y prueban otra cosa (publicación,
     revocación por deterioro), que antes lo escribían a mano sin re-ejecución. Las cifras son de unos datos sintéticos, no de
-    los PRG de la celda: lo que se ata es el certificado a su soporte."""
+    los PRG de la celda: lo que se ata es el certificado a su soporte. T-180 (QA r01 de T-163, H-01): desde T-180 el soporte
+    tiene que cumplir el criterio del certificado con los umbrales de la configuración; estos datos lo cumplen (160 pronósticos
+    calibrados al 90 % y al 10 %, cada uno en su fecha: n_eff 160, ECE 0, BSS 0,64) y la petición lleva el horizonte (H-02)."""
+    from bloque_a.configuracion import parametro
     from bloque_a.evaluador import campos_certificado
+    from bloque_a.motor import evaluacion as ev
     from bloque_a.motor.servicio import Motor
 
     motor = motor or Motor(almacen, None, cfg or config_pruebas())
-    n = 60
-    valores = {"p": [0.8, 0.2] * (n // 2), "o": [1, 0, 1, 0, 0, 1] * (n // 6), "p_ref": [0.5] * n,
-               "fechas": [f"2025-0{1 + i // 20}-{1 + i % 20:02d}" for i in range(n)]}
+    n = 160
+    j = [i % 20 for i in range(n)]
+    valores = {"p": [0.9 if x % 2 else 0.1 for x in j], "o": [int((x % 2 and x != 19) or x == 0) for x in j], "p_ref": [0.5] * n,
+               "fechas": [str((pd.Timestamp("2025-01-02") + pd.offsets.BDay(i)).date()) for i in range(n)]}
     res = motor.servir({"operacion": "FC-EVAL-001", "clase": celda["clase"], "horizonte": celda["horizonte"],
                         "fecha_corte": str(almacen.reloj.fecha), "datos": [{"valores": valores}],
-                        "parametros": {"replicas": 50, "simulaciones": 50, "min_conglomerados": 2, "metodo": celda.get("metodo")}},
+                        "parametros": {"replicas": 50, "simulaciones": 50, "min_conglomerados": 2, "horizonte": celda["horizonte"],
+                                       "metodo": celda.get("metodo")}},
                        "AG-20")
     assert str(res["estado"]).startswith("SERVED"), res
+    umbrales = cfg or motor.cfg
+    crit = ev.criterio_certificado(res["resultado"], int(parametro(umbrales, "evaluacion.min_certificar")),
+                                   float(parametro(umbrales, "evaluacion.ece_max")), float(parametro(umbrales, "evaluacion.alfa_holm")))
+    assert crit["certificable"], crit                  # el soporte cumple el criterio que CT-04 le aplica (T-180)
     rex = motor.reejecutar(res["calc_id"], "prueba: certificado de horizonte con su re-ejecución CT-10", "AG-20")
     assert rex["coincide"] == "SI", rex
     soporte = almacen.estado("RC")[res["calc_id"]]

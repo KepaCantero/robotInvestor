@@ -947,7 +947,8 @@ class Evaluador:
         """Certificados VIGENTE (los únicos que habilitan probabilidades numéricas). Un PROPUESTO (PA-10) no lo es hasta
         su CERT_APROBACION. T-163 (QA r01 de T-160, H-02; decidido, INC-T160-01): solo los que tienen su re-ejecución CT-10
         coincidente en el Registro de cálculos (`motivo_sin_reejecucion`); uno sin ella no se usa, y la revisión siguiente lo
-        revoca y vuelve a proponer la celda."""
+        revoca y vuelve a proponer la celda. T-180 (QA r01 de T-163, H-01): tampoco uno cuyo cálculo de soporte no cumple el
+        criterio del certificado con los umbrales de la configuración o no lo pidió el Evaluador."""
         vig = self._vigentes_en_f6(as_of)
         if not vig:
             return []
@@ -1023,6 +1024,10 @@ class Evaluador:
         certificado: el soporte es de su método y de sus entradas (`huella_entradas`, las mismas que re-ejecutó la CT-10), la
         CT-10 es posterior al soporte y ninguna CT-10 posterior del mismo soporte da NO, ningún otro CERT- la citó antes (cada
         re-ejecución sirve a un solo certificado) y las cifras del CERT- son las del soporte con la tolerancia de CT-10.
+        T-180 (QA r01 de T-163, H-01): y que el soporte lo pidiera el Evaluador (AG-20) y cumpla el criterio del certificado
+        con los umbrales de la configuración (`_umbrales_certificado`): n_eff, extremo inferior del IC del BSS > 0, ECE ≤ q90
+        del nulo y < `ece_max`, y p de DM-HLN ≤ α (condición necesaria de Holm, que es entre celdas); con la CT-10 citada
+        DENTRO_TOLERANCIA, con las cifras movidas en contra lo que permite su tolerancia (la materialidad de la propuesta).
         `contexto` (de `_contexto_reejecucion`) evita releer el RC y F6 al mirar varios certificados."""
         rex_id, soporte = c.get("reejecucion"), c.get("calc_soporte")
         if not isinstance(rex_id, str) or not isinstance(soporte, str):
@@ -1042,6 +1047,9 @@ class Evaluador:
         if (s.get("tipo_entrada") != "SERVICIO" or op_.get("ficha_id") != FICHA_CERTIFICADO
                 or (s.get("clase"), s.get("horizonte")) != (celda.get("clase"), celda.get("horizonte"))):
             return f"{soporte} no es un servicio {FICHA_CERTIFICADO} de la celda {celda.get('clase')}|{celda.get('horizonte')}"
+        # T-180 (QA r01 de T-163, H-01): el soporte lo pide el Evaluador, como su re-ejecución CT-10
+        if s.get("solicitante") != "AG-20":
+            return f"{soporte} no lo pidió el Evaluador (AG-20), sino {s.get('solicitante')}"
         # T-163 (H-01): el método de la celda va en los parámetros del soporte desde T-163; sin él, no consta (falla cerrado)
         prm: dict = s["parametros"] if isinstance(s.get("parametros"), dict) else {}
         if "metodo" not in prm or prm["metodo"] != celda.get("metodo"):
@@ -1071,7 +1079,28 @@ class Evaluador:
         if distintas:
             return (f"las cifras del certificado no son las de {soporte} con la tolerancia {tol_ct04:g} ({ORIGEN_TOLERANCIA}): "
                     f"{'; '.join(sorted(distintas)[:5])}")
+        # T-180 (QA r01 de T-163, H-01): el soporte cumple el criterio del certificado, con sus cifras (las del Registro de
+        # cálculos, que escribe el Motor) y los umbrales de la configuración, los mismos que al proponer. Con la CT-10 citada
+        # «SI» es `criterio_certificado` tal cual; con DENTRO_TOLERANCIA, la materialidad de un paso. Un certificado legítimo
+        # siempre lo pasa: al proponer cumplió con sus cifras movidas en contra lo que permitían el soporte y la CT-10
+        n_cert, ece_max, alfa_holm = self._umbrales_certificado()
+        pasos_ct10 = 0 if rx.get("coincide") == "SI" else 1
+        try:
+            crit = criterio_desfavorable(payload, holgura_tolerancia(tol_ct04, pasos_ct10), n_cert, ece_max, alfa_holm)
+        except (TypeError, ValueError, AttributeError) as e:   # cifras con otra forma: no se dan por buenas (falla cerrado)
+            return f"las cifras de {soporte} no se pueden comprobar con el criterio del certificado ({type(e).__name__})"
+        if not crit["certificable"]:
+            return (f"{soporte} no cumple el criterio del certificado con los umbrales de la configuración (evaluacion."
+                    f"min_certificar, ece_max y alfa_holm){' y la tolerancia de su CT-10 DENTRO_TOLERANCIA' if pasos_ct10 else ''}: "
+                    f"{'; '.join(crit['motivos'])}")
         return None
+
+    def _umbrales_certificado(self) -> tuple[int, float, float]:
+        """T-180 (QA r01 de T-163, H-01): los umbrales del criterio del certificado de horizonte (Anexo A), de la configuración:
+        la muestra efectiva mínima (`evaluacion.min_certificar`), el tope del ECE (`evaluacion.ece_max`) y el α de Holm
+        (`evaluacion.alfa_holm`). Los leen la revisión al proponer y `motivo_sin_reejecucion` al comprobar el soporte."""
+        return (int(parametro(self.cfg, "evaluacion.min_certificar")), float(parametro(self.cfg, "evaluacion.ece_max")),
+                float(parametro(self.cfg, "evaluacion.alfa_holm")))
 
     def _parametros_certificado(self) -> dict:
         """T-160: parámetros del cálculo de un certificado, los mismos en el Evaluador y en la petición al Motor (FC-EVAL-001):
@@ -1108,8 +1137,10 @@ class Evaluador:
             return fallo("sin Motor: la re-ejecución CT-10 del cálculo que sostiene el certificado no es posible")
         peticion = {"operacion": FICHA_CERTIFICADO, "plan": "PLAN_MIN", "clase": k[0], "horizonte": k[1],
                     "datos": [{"valores": copy.deepcopy(entradas)}],
-                    # T-163 (H-01): el método de la celda, para que CT-04 compruebe que el soporte es de ese método
-                    "parametros": {**self._parametros_certificado(), "tasa_base": tasa_base, "metodo": k[2]},
+                    # T-163 (H-01): el método de la celda, para que CT-04 compruebe que el soporte es de ese método. T-180 (QA r01
+                    # de T-163, H-02): y su horizonte, que la clave de la caché del Motor no lleva (sí la clase, de la petición):
+                    # sin él, dos horizontes con las mismas entradas compartían soporte y el segundo no se certificaba nunca
+                    "parametros": {**self._parametros_certificado(), "horizonte": k[1], "tasa_base": tasa_base, "metodo": k[2]},
                     "fecha_corte": str(pd.Timestamp(as_of).date())}
         try:
             res = self.motor.servir(peticion, "AG-20", run_id)
@@ -1164,9 +1195,10 @@ class Evaluador:
         retirar un PROPUESTO que ya no cumple el criterio endurecen: son automáticos. T-160 (PB-32): ningún certificado se
         propone ni se emite sin la re-ejecución CT-10 coincidente del cálculo que lo sostiene (`_verificar_reejecucion`); si
         no la hay, la celda no se certifica, queda en `sin_reejecucion_coincidente` y se registra una incidencia en HA. Una
-        propuesta PROPUESTO sin esa re-ejecución (anterior a T-160) se retira y la celda se vuelve a evaluar."""
-        n_cert = int(parametro(self.cfg, "evaluacion.min_certificar"))
-        ece_max = float(parametro(self.cfg, "evaluacion.ece_max"))
+        propuesta PROPUESTO sin esa re-ejecución (anterior a T-160) se retira y la celda se vuelve a evaluar. T-180 (QA r01 de
+        T-163, H-01): los umbrales son los que CT-04 aplica al soporte (`_umbrales_certificado`), y Holm se aplica también con
+        una sola celda candidata (con una hipótesis es la prueba a α)."""
+        n_cert, ece_max, alfa_holm = self._umbrales_certificado()
         min_cong = self._min_conglomerados()
         solo_endurecer = self.solo_endurecer()
         celdas = defaultdict(list)
@@ -1213,9 +1245,12 @@ class Evaluador:
             # Holm escalonado (Anexo A, certificado R13): en cuanto una celda no supera su umbral, ninguna de las
             # siguientes (de p mayor) lo supera. α: clave evaluacion.alfa_holm (0,10, coherente con el IC 90 % del criterio)
             umbrales = ev.holm({etiqueta_celda(k): (m["dm_hln"]["p_unilateral"] if m["dm_hln"]["p_unilateral"] is not None else 1.0)
-                                for k, m in metr.items()}, float(parametro(self.cfg, "evaluacion.alfa_holm")))
+                                for k, m in metr.items()}, alfa_holm)
             for k, m in metr.items():
-                alfa_k = umbrales[etiqueta_celda(k)] if len(metr) > 1 else None
+                # T-180 (QA r01 de T-163, H-01; decidido por el agente, INC-T160-01): también con una sola celda candidata, en
+                # la que Holm es la prueba de DM-HLN a α. Así el criterio al proponer es el que CT-04 aplica al soporte (p ≤ α,
+                # condición necesaria de Holm) y el `holm_superado` del CERT- es cierto; antes, con una celda no se miraba la p
+                alfa_k = umbrales[etiqueta_celda(k)]
                 crit = ev.criterio_certificado(m, n_cert, ece_max, alfa_k)
                 evaluadas[etiqueta_celda(k)] = crit
                 if crit["certificable"] and k not in vigentes and k not in propuestos:

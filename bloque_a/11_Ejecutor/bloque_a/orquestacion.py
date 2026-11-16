@@ -265,6 +265,8 @@ class Bloque:
                                     ampliar=lambda est: self._solicitar_ampliacion(presupuesto, bolsa, est, run_id,
                                                                                    (fase or contrato) if control else fase, control))
         ctx = self._contexto(as_of, run_id, clase)
+        # T-161 r03 (QA r02, H-06): a un agente de control, solo lecciones del código; a los demás, las que pasan F6 4.4 y el detector
+        ctx["lecciones"] = self.guias.lecciones_para(agente, ctx.get("lecciones") or [], as_of, run_id)
         guias = self.guias.para(agente, as_of, run_id)   # T-158: solo los ítems revisados y vigentes del agente (CT-18)
         if guias:
             ctx["guias"] = guias
@@ -823,9 +825,9 @@ class Bloque:
             return
         n_tot = sum(m["n"] for m in resumen.values())
         for l in r.datos.get("lecciones", [])[:3]:
-            # T-161 r02 (QA r01, H-01): una lección del modelo va a F6 VIGENTE y de ahí al contexto de todos los agentes; si
-            # rebaja un control (el detector de las guías, con el criterio de los campos descriptivos), no se escribe
-            conflicto = conflicto_de_leccion(l)
+            # T-161 r02 (QA r01, H-01): una lección del modelo va a F6 VIGENTE y de ahí al contexto de los agentes; si no
+            # cumple F6 4.4 (`tipo`, `ambito`) o el detector la reconoce como conflicto, no se escribe (T-161 r03, H-06)
+            conflicto = conflicto_de_leccion({**l, "tipo": l.get("tipo", "PREDICTIVA"), "ambito": l.get("ambito") or {}}, self.cfg)
             if conflicto:
                 self.almacen.incidencia("OTRO", f"Lección de AG-20 retenida: contradice {', '.join(conflicto['reglas'])} "
                                         f"({', '.join(conflicto['familias'])}); no se escribe en F6 (R23)", "AG-20",

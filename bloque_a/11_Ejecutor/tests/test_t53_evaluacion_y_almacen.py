@@ -267,7 +267,12 @@ def test_ece_cero_no_revoca_un_certificado(tmp_path):
 def test_umbral_de_revocacion_ece_sale_de_la_configuracion(tmp_path):
     a = _almacen_certificado(tmp_path)
     cfg = {"evaluacion": {"bootstrap_replicas": 50, "simulaciones_ece": 50, "ece_revocacion": 0.0}}
-    assert Evaluador(a, None, None, cfg, None).revisar_certificados("2027-06-04")["revocados"] == ["CERT-2027-0001"]
+    res = Evaluador(a, None, None, cfg, None).revisar_certificados("2027-06-04")
+    assert res["revocados"] == ["CERT-2027-0001"]
+    # T-180 (QA r01 de T-163, H-03): se revoca por el umbral de la configuración (ECE ≥ 0.0), no por otro motivo
+    cert = a.estado("F6", clave="id")["CERT-2027-0001"]
+    assert res["vigentes_sin_reejecucion"] == {} and cert["estado"] == "REVOCADO"
+    assert cert["motivo_cambio"].startswith("deterioro:") and cert["motivo_cambio"].endswith("ECE ≥ 0.0"), cert["motivo_cambio"]
 
 
 # ------------------------------------------------------------------------------------------------ CS-03 · HT-08

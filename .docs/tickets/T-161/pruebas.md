@@ -149,3 +149,47 @@ Copia: worktree con `5bbd60d` en HEAD (T-161 integrado) y los cambios de la r02 
 | `evidencias_plan_a.py --ejecutar` tras cambiar el mapa de PB-48 | «196 de 196 pruebas citadas superadas»; `docs/evidencias_pruebas_bloque_a.md` regenerado (cabecera y `no_comprueba` de PB-48); PB-48 «Superada»; `test_fase4_mapa.py`: 23 superadas |
 
 Copias desechables (`qa29_r02q_mut`, `qa29_r02g_mut`, `qa29_r02m_mut` y las de los scripts del revisor): borradas.
+
+## Ronda r03 (QA r02 de T-161: NO APTO)
+
+Copia: worktree con `e987e54` en HEAD (r02 integrada) y los cambios de la r03 sin commit.
+
+| Suite / comprobación | Resultado |
+| --- | --- |
+| `tests/test_t161_r03.py` (nuevo) | 188 superadas |
+| `test_t161_guias.py` + `test_t161_r02.py` + `test_t158_guias.py` + `test_t126_pb26_pb48.py` + `test_t126_r02.py` + `test_fase3_goldens.py` | 501 superadas |
+| Suite completa de A (una vez, en segundo plano, 65 min con carga ≈ 11 y los mutantes corriendo) | **7364 superadas, 2 omitidas y 1 fallo**: `test_fase4_mapa.py::test_h05_el_documento_publicado_coincide_con_el_mapa`. Se cambió el texto de PB-48 en el mapa antes de regenerar el documento. Tras `evidencias_plan_a.py --ejecutar` (204 de 204 citadas superadas), `test_fase4_mapa.py` + `test_t161_r03.py`: 211 superadas |
+| `evidencias_plan_a.py --pb PB-48` | PB-48 «Superada» |
+| Goldens | coinciden |
+| ruff (cuota 2813) · mypy de A (cuota 109) | **2813** · **109** |
+| `refs_vivas`, `secrets_scan`, `nfc_check`, `corpus_integridad` | verdes; corpus de 695 |
+| Sin guías, ciclo por la CLI frente a HEAD (copia de T-158 `r01_03` que admite la base HEAD y simula el fallo del emisor) | 15 ficheros, **ninguno difiere**; «CLI con la guía de PB-48: bien» |
+
+### Medida
+
+| Conjunto | Antes de la r03 | Después |
+| --- | --- | --- |
+| 52 ataques de `r02_01` | 47 pasan | **0** |
+| 68 de la r01 y 50 de T-158 | 0 · 0 | 0 · 0 |
+| 48 válidos de `r02_01` | 0 falsos positivos | **0** |
+| 40 válidos de la r01 · 17 del diseño · 40 de dominio | 0 · 0 · 1 | 0 · 0 · 1 («escala de 1 a 5», aceptado) |
+| Lecciones prudentes: las 6 de la QA, las 4 recomendaciones deterministas del Evaluador y 10 más | 3 de 6 retenidas | **0 de 20** |
+| Lecciones que rebajan un control (8) | — | 8 de 8 retenidas |
+
+### Mutantes
+
+| Script | Resultado |
+| --- | --- |
+| `r02_03_mutantes.py` (S01–S11) + `test_t161_r03.py` | 9/11 en la pasada. **S06 no aplica** porque el umbral de mayúsculas se quitó, como pidió H-10. **S04 vivía**: mis frases financieras llevaban un verbo de rebaja y ya no se enmascaraban. Se añadió `test_h10_el_enmascarado_solo_tapa_la_frase_financiera`: con S04 aplicado a mano da 3 fallos; sin él, 3 superadas |
+| `r01_03_mutantes.py` (Q01–Q14) | 14/14 |
+| T-158 `r01_04_mutantes.py` (G01–G30) | 30/30 |
+| `mutantes_t161.py` (M01–M38) | 37/38 en la pasada. M31 (se da una lección que no está en F6) vivía porque la prueba usaba una lección no válida. Se corrigió `test_h06_una_leccion_que_no_esta_en_f6_no_se_da` para usar una válida: con M31 aplicado a mano falla; sin él pasa |
+
+### Scripts del revisor que fallan donde medían lo viejo
+
+| Script | Resultado | Por qué |
+| --- | --- | --- |
+| `r02_02_integracion.py` | 7 superadas, 9 fallan | **3 lecciones a AG-11 y 1 lección ya escrita en F6:** su condición previa no se cumple o el código ya no da la lección (H-06 corregido). **`test_falsos_positivos_de_las_lecciones`:** cuenta 6 de 6 porque sus lecciones no llevan `tipo` y ahora no son válidas; con un `tipo` válido son 0 de 6 (`test_t161_r03.py::test_h08_*`). **3 ataques de la r02 frente a PS8:** su condición previa no se cumple porque ya se detectan. **Determinismo con hilos:** emite sin simular dos guías que ahora se rechazan. Con una copia que simula el fallo, las huellas coinciden con 4, 4 y 1 hilos; solo falla su última línea, que esperaba que se aplicaran |
+| `r01_02_integracion.py` (r01) · T-158 `r01_02` + `r01_05` | 6 fallan · 10 fallan | los mismos de las rondas anteriores |
+
+Copias desechables (`qa29_r03*_mut` y las de los scripts del revisor): borradas.
