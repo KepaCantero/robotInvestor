@@ -2,7 +2,7 @@
 
 | Campo | Valor |
 | --- | --- |
-| Estado | EN QA |
+| Estado | CERRADO (QA r01 APTO) |
 | Pieza | bloque_a (ejecutor: `bloque_a/evaluador.py` y `bloque_a/motor/servicio.py`) |
 | Planifica · implementa · QA | claude · claude · un revisor nuevo sin contexto (regla del 12-11-2026, `compartida/2026-11-12_claude-puede-hacer-qa`) |
 | Aprobación del operador | no necesaria: corrige hallazgos de QA y solo endurece (un certificado exige más condiciones; un VIGENTE sin re-ejecución deja de usarse). No cambia contratos CT, esquemas del corpus, la Constitución ni los controles. H-02 **decidido** por el agente por delegación del operador (16-11-2026, `Decisiones_del_operador_Bloque_A.md` §1, «Certificados de horizonte VIGENTE anteriores a T-160»): la opción prudente |
