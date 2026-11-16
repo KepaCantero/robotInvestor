@@ -130,9 +130,12 @@ def test_t154_h01_la_clasificacion_de_los_5xx_sale_de_la_configuracion():
     assert clasificar_error(_estado(desde + 1), regla) == (False, True)       # 501: no se reintenta, pudo cobrarse
     assert clasificar_error(_estado(desde - 1), regla) == (False, False)      # 499: lo rechazó, no se cobró
     assert clasificar_error(_estado(desde), regla) == (True, True)            # 500: se reintenta y pudo cobrarse
-    cfg["llm"]["reintentos"]["cobro_posible_desde"] = 600                     # otro valor de la configuración, otra regla
+    # otro valor de la configuración, otra regla (T-156: uno válido, entre 100 y 500; 600 ya no se admite, falla abierto)
+    cfg["llm"]["reintentos"]["cobro_posible_desde"] = 400
     otra = ReglaReintentos.de_config(cfg)
-    assert clasificar_error(_estado(501), otra) == (False, False)
+    assert clasificar_error(_estado(450), otra) == (False, True)              # con 400, un 450 pudo cobrarse
+    assert clasificar_error(_estado(450), regla) == (False, False)            # con 500, no
+    assert clasificar_error(_estado(399), otra) == (False, False)
 
 
 # ---------------------------------------------------------------- H-04: la espera del servidor y las mayúsculas
@@ -336,6 +339,39 @@ def test_t154_h02_los_cierres_y_excesos_tras_el_run_tambien(tmp_path):
     assert len(f9[0]["excesos_reserva"]) == 1 and len(f9[0]["recortes_salida"]) == 1 and "peticiones_sin_respuesta" not in f9[0]
     b._registrar_f9(r["run_id"], p, p.marca())                # nada nuevo desde la marca: nada que escribir
     assert len([e for e in b.almacen.leer("F5") if e.get("tipo_entrada") == "PRESUPUESTO_F9"]) == 1
+
+
+@pytest.mark.parametrize("lista", ["cierres_parciales", "excesos_reserva", "recortes_salida"])
+def test_t156_h02_cada_lista_sola_basta_para_escribir_f9(tmp_path, lista):
+    """T-156 (QA r01 de T-154, H-02): una sola incidencia tras el RUN, de cualquiera de las tres listas, escribe la entrada
+    `PRESUPUESTO_F9` con ella (la prueba de arriba anota las tres a la vez y no ve que `algo()` olvide una)."""
+    b, r, _ = _ciclo(tmp_path, "ninguno")
+    p = Presupuesto({"COMUN": 5.0}, b.cfg)
+    marca = p.marca()
+    if lista == "cierres_parciales":
+        p.cierre_parcial("COMUN", "CT-17", "presupuesto insuficiente para AG-19")
+    elif lista == "excesos_reserva":
+        p.anotar("excesos", {"clase": "COMUN", "agente": "AG-19", "reservado_uc": 1.0, "real_uc": 1.5, "busquedas_web": 0})
+    else:
+        p.anotar("recortes", {"clase": "COMUN", "agente": "AG-19", "peticion": 1, "max_tokens": 9, "max_tokens_enviado": 8,
+                              "peor_caso_uc": 1.0, "reservado_uc": 0.9})
+    b._registrar_f9(r["run_id"], p, marca)
+    f9 = [e for e in b.almacen.leer("F5") if e.get("tipo_entrada") == "PRESUPUESTO_F9"]
+    assert len(f9) == 1 and len(f9[0][lista]) == 1
+    assert all(not f9[0].get(otra) for otra in ("cierres_parciales", "excesos_reserva", "recortes_salida") if otra != lista)
+
+
+@pytest.mark.parametrize("desde,vale", [(500, True), (100, True), (400, True), (501, False), (600, False), (99, False),
+                                        (0, False), (-1, False), (True, False), (500.0, False), ("500", False)])
+def test_t156_h01_cobro_posible_desde_con_rango(desde, vale):
+    """T-156 (QA r01 de T-154, H-01): `cobro_posible_desde` es un estado HTTP entre 100 y 500. Con uno mayor, un 5xx que no
+    se reintenta se soltaría como no cobrado (falla abierto); se rechaza al cargar la configuración."""
+    cfg = _cfg(llm={"reintentos": {"cobro_posible_desde": desde}})
+    if vale:
+        assert ReglaReintentos.de_config(cfg).cobro_posible == desde
+    else:
+        with pytest.raises(ValueError, match="cobro_posible_desde"):
+            ReglaReintentos.de_config(cfg)
 
 
 def test_t154_h03_en_el_ciclo_la_peticion_sin_respuesta_marca_su_grupo(tmp_path, monkeypatch):

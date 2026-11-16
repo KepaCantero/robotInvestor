@@ -192,6 +192,10 @@ def herramienta_busqueda_web(tipo: str = "web_search_20260318", max_usos: int = 
     return {"type": tipo, "name": "web_search", "max_uses": int(max_usos)}
 
 
+# Límites del protocolo HTTP (RFC 9110, §15), no parámetros de ajuste: el menor estado y el primero de la clase 5xx (T-156)
+ESTADO_HTTP_MIN, PRIMER_ESTADO_5XX = 100, 500
+
+
 @dataclass(frozen=True)
 class ReglaReintentos:
     """T-151 (QA r01 de T-146, H-09): los reintentos ante un fallo del proveedor, en el cliente y no en el SDK, para que cada
@@ -228,8 +232,12 @@ class ReglaReintentos:
                 raise ValueError(f"llm.reintentos.{nombre} debe ser una lista de estados HTTP enteros")
         if not set(sin_cobro) <= set(estados):
             raise ValueError("llm.reintentos.estados_sin_cobro debe estar dentro de estados_reintentables")
-        if isinstance(desde, bool) or not isinstance(desde, int) or desde < 0:
-            raise ValueError("llm.reintentos.cobro_posible_desde debe ser un estado HTTP entero")
+        # T-156 (QA r01 de T-154, H-01): un estado HTTP (RFC 9110, §15: de 100 a 599) y como mucho el primero de la clase
+        # 5xx. Con uno mayor, un 5xx por debajo que no se reintenta se soltaría como no cobrado (fallaría abierto); con uno
+        # menor se cuentan como cobrados también estados anteriores, que es más prudente.
+        if isinstance(desde, bool) or not isinstance(desde, int) or not ESTADO_HTTP_MIN <= desde <= PRIMER_ESTADO_5XX:
+            raise ValueError(f"llm.reintentos.cobro_posible_desde debe ser un estado HTTP entero entre {ESTADO_HTTP_MIN} y "
+                             f"{PRIMER_ESTADO_5XX} (con uno mayor, un 5xx que no se reintenta se soltaría como no cobrado)")
         return cls(maximo, float(inicial), float(tope), frozenset(estados), frozenset(sin_cobro), float(servidor), desde)
 
     def espera(self, reintento: int, error: BaseException) -> float | None:
