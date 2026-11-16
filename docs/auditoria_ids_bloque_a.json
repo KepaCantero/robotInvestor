@@ -1,0 +1,2185 @@
+{
+ "verificador": {
+  "nombre": "verificador_ids",
+  "version": "1.0.0",
+  "ticket": "T-157"
+ },
+ "entradas": {
+  "raiz": "bloque_a",
+  "documento_0": {
+   "archivo": "01_Gobernanza/Documento 0 - Protocolo maestro del Bloque A - Versión óptima V5.1.md",
+   "version_nombre": "5.1",
+   "version_titulo": "5.1",
+   "sha256": "7e708a030dad30d70517c26c7641e14488401fb76c1457b8dd8e1f9af31ff8cb"
+  },
+  "catalogo": {
+   "archivo": "04_Motor_conocimiento_y_catalogo/Catálogo de cálculos del Motor - V5.0.md",
+   "version_nombre": "5.0",
+   "sha256": "16fdb3b30833c7d7a2bece5c0c1628a7327b38fdeaa11a82b5bdca31062bd66f"
+  },
+  "codigo": {
+   "bloque_a/contratos.py": "b0316aa4078b65cdb29fa1cd4ade690c39211a1a0aff0e102599f2761b2796b1",
+   "bloque_a/motor/servicio.py": "6e18a97ff27111107635235be13acbdc5d2fcd72f6987302e6188c04ee0d312d"
+  },
+  "md_escaneados": 88,
+  "huella_corpus": "b73cfc2117bdc954859e0e743a9b35e82e31c39cf121861c0d670af039ff65b0",
+  "excluidos": [
+   "11_Ejecutor/",
+   "99_Historico*/"
+  ],
+  "secciones_doc0": {
+   "§1": 25,
+   "§5.1": 263,
+   "§6.1": 296,
+   "§7.3 (solo el título)": 370,
+   "§9.3": 556
+  }
+ },
+ "resumen": {
+  "entradas": {
+   "ERROR": 0,
+   "AVISO": 0,
+   "INFO": 0
+  },
+  "a": {
+   "ERROR": 0,
+   "AVISO": 0,
+   "INFO": 0
+  },
+  "b": {
+   "ERROR": 0,
+   "AVISO": 0,
+   "INFO": 1
+  },
+  "c": {
+   "ERROR": 0,
+   "AVISO": 0,
+   "INFO": 9
+  },
+  "d": {
+   "ERROR": 2,
+   "AVISO": 2,
+   "INFO": 3
+  },
+  "e": {
+   "ERROR": 1,
+   "AVISO": 1,
+   "INFO": 0
+  },
+  "f": {
+   "ERROR": 0,
+   "AVISO": 0,
+   "INFO": 0
+  }
+ },
+ "errores": 3,
+ "contratos": {
+  "titulo": "6.1 Contratos en vigor (CT-01 a CT-25)",
+  "definidos_doc0": [
+   "CT-01",
+   "CT-02",
+   "CT-03",
+   "CT-04",
+   "CT-05",
+   "CT-06",
+   "CT-07",
+   "CT-08",
+   "CT-09",
+   "CT-10",
+   "CT-11",
+   "CT-12",
+   "CT-13",
+   "CT-14",
+   "CT-15",
+   "CT-16",
+   "CT-17",
+   "CT-18",
+   "CT-19",
+   "CT-20",
+   "CT-21",
+   "CT-22",
+   "CT-23",
+   "CT-24",
+   "CT-25"
+  ],
+  "definidos_codigo": [
+   "CT-01",
+   "CT-02",
+   "CT-03",
+   "CT-04",
+   "CT-05",
+   "CT-06",
+   "CT-07",
+   "CT-08",
+   "CT-09",
+   "CT-10",
+   "CT-11",
+   "CT-12",
+   "CT-13",
+   "CT-14",
+   "CT-15",
+   "CT-16",
+   "CT-17",
+   "CT-18",
+   "CT-19",
+   "CT-20",
+   "CT-21",
+   "CT-22",
+   "CT-23",
+   "CT-24",
+   "CT-25"
+  ],
+  "filas": [
+   {
+    "id": "CT-01",
+    "en_doc0": true,
+    "canal_codigo": true,
+    "canal_admitido": true,
+    "canal_v6": false,
+    "campos_minimos": true,
+    "citas": 37,
+    "archivos": 11
+   },
+   {
+    "id": "CT-02",
+    "en_doc0": true,
+    "canal_codigo": true,
+    "canal_admitido": true,
+    "canal_v6": false,
+    "campos_minimos": true,
+    "citas": 28,
+    "archivos": 8
+   },
+   {
+    "id": "CT-03",
+    "en_doc0": true,
+    "canal_codigo": true,
+    "canal_admitido": true,
+    "canal_v6": false,
+    "campos_minimos": true,
+    "citas": 40,
+    "archivos": 6
+   },
+   {
+    "id": "CT-04",
+    "en_doc0": true,
+    "canal_codigo": true,
+    "canal_admitido": true,
+    "canal_v6": false,
+    "campos_minimos": false,
+    "citas": 47,
+    "archivos": 13
+   },
+   {
+    "id": "CT-05",
+    "en_doc0": true,
+    "canal_codigo": true,
+    "canal_admitido": true,
+    "canal_v6": false,
+    "campos_minimos": true,
+    "citas": 92,
+    "archivos": 12
+   },
+   {
+    "id": "CT-06",
+    "en_doc0": true,
+    "canal_codigo": true,
+    "canal_admitido": true,
+    "canal_v6": false,
+    "campos_minimos": true,
+    "citas": 330,
+    "archivos": 33
+   },
+   {
+    "id": "CT-07",
+    "en_doc0": true,
+    "canal_codigo": true,
+    "canal_admitido": true,
+    "canal_v6": true,
+    "campos_minimos": true,
+    "citas": 98,
+    "archivos": 38
+   },
+   {
+    "id": "CT-08",
+    "en_doc0": true,
+    "canal_codigo": true,
+    "canal_admitido": true,
+    "canal_v6": true,
+    "campos_minimos": true,
+    "citas": 93,
+    "archivos": 38
+   },
+   {
+    "id": "CT-09",
+    "en_doc0": true,
+    "canal_codigo": true,
+    "canal_admitido": true,
+    "canal_v6": false,
+    "campos_minimos": true,
+    "citas": 191,
+    "archivos": 52
+   },
+   {
+    "id": "CT-10",
+    "en_doc0": true,
+    "canal_codigo": true,
+    "canal_admitido": true,
+    "canal_v6": false,
+    "campos_minimos": true,
+    "citas": 97,
+    "archivos": 25
+   },
+   {
+    "id": "CT-11",
+    "en_doc0": true,
+    "canal_codigo": true,
+    "canal_admitido": true,
+    "canal_v6": false,
+    "campos_minimos": true,
+    "citas": 83,
+    "archivos": 42
+   },
+   {
+    "id": "CT-12",
+    "en_doc0": true,
+    "canal_codigo": true,
+    "canal_admitido": true,
+    "canal_v6": false,
+    "campos_minimos": true,
+    "citas": 48,
+    "archivos": 12
+   },
+   {
+    "id": "CT-13",
+    "en_doc0": true,
+    "canal_codigo": true,
+    "canal_admitido": true,
+    "canal_v6": false,
+    "campos_minimos": true,
+    "citas": 107,
+    "archivos": 41
+   },
+   {
+    "id": "CT-14",
+    "en_doc0": true,
+    "canal_codigo": true,
+    "canal_admitido": true,
+    "canal_v6": false,
+    "campos_minimos": true,
+    "citas": 36,
+    "archivos": 8
+   },
+   {
+    "id": "CT-15",
+    "en_doc0": true,
+    "canal_codigo": true,
+    "canal_admitido": true,
+    "canal_v6": true,
+    "campos_minimos": true,
+    "citas": 45,
+    "archivos": 14
+   },
+   {
+    "id": "CT-16",
+    "en_doc0": true,
+    "canal_codigo": true,
+    "canal_admitido": true,
+    "canal_v6": false,
+    "campos_minimos": false,
+    "citas": 35,
+    "archivos": 8
+   },
+   {
+    "id": "CT-17",
+    "en_doc0": true,
+    "canal_codigo": true,
+    "canal_admitido": true,
+    "canal_v6": false,
+    "campos_minimos": false,
+    "citas": 49,
+    "archivos": 8
+   },
+   {
+    "id": "CT-18",
+    "en_doc0": true,
+    "canal_codigo": true,
+    "canal_admitido": true,
+    "canal_v6": false,
+    "campos_minimos": false,
+    "citas": 66,
+    "archivos": 23
+   },
+   {
+    "id": "CT-19",
+    "en_doc0": true,
+    "canal_codigo": true,
+    "canal_admitido": true,
+    "canal_v6": false,
+    "campos_minimos": false,
+    "citas": 95,
+    "archivos": 32
+   },
+   {
+    "id": "CT-20",
+    "en_doc0": true,
+    "canal_codigo": true,
+    "canal_admitido": true,
+    "canal_v6": false,
+    "campos_minimos": false,
+    "citas": 40,
+    "archivos": 9
+   },
+   {
+    "id": "CT-21",
+    "en_doc0": true,
+    "canal_codigo": true,
+    "canal_admitido": true,
+    "canal_v6": false,
+    "campos_minimos": false,
+    "citas": 61,
+    "archivos": 20
+   },
+   {
+    "id": "CT-22",
+    "en_doc0": true,
+    "canal_codigo": true,
+    "canal_admitido": true,
+    "canal_v6": false,
+    "campos_minimos": false,
+    "citas": 67,
+    "archivos": 12
+   },
+   {
+    "id": "CT-23",
+    "en_doc0": true,
+    "canal_codigo": true,
+    "canal_admitido": true,
+    "canal_v6": false,
+    "campos_minimos": true,
+    "citas": 147,
+    "archivos": 50
+   },
+   {
+    "id": "CT-24",
+    "en_doc0": true,
+    "canal_codigo": true,
+    "canal_admitido": true,
+    "canal_v6": false,
+    "campos_minimos": true,
+    "citas": 84,
+    "archivos": 16
+   },
+   {
+    "id": "CT-25",
+    "en_doc0": true,
+    "canal_codigo": true,
+    "canal_admitido": true,
+    "canal_v6": false,
+    "campos_minimos": true,
+    "citas": 171,
+    "archivos": 44
+   }
+  ]
+ },
+ "reglas": {
+  "titulo": "1. REGLAS CRÍTICAS (R1–R27)",
+  "definidas": [
+   "R1",
+   "R2",
+   "R3",
+   "R4",
+   "R5",
+   "R6",
+   "R7",
+   "R8",
+   "R9",
+   "R10",
+   "R11",
+   "R12",
+   "R13",
+   "R14",
+   "R15",
+   "R16",
+   "R17",
+   "R18",
+   "R19",
+   "R20",
+   "R21",
+   "R22",
+   "R23",
+   "R24",
+   "R25",
+   "R26",
+   "R27"
+  ],
+  "filas": [
+   {
+    "id": "R1",
+    "en_doc0": true,
+    "citas": 27,
+    "archivos": 14
+   },
+   {
+    "id": "R2",
+    "en_doc0": true,
+    "citas": 27,
+    "archivos": 20
+   },
+   {
+    "id": "R3",
+    "en_doc0": true,
+    "citas": 17,
+    "archivos": 13
+   },
+   {
+    "id": "R4",
+    "en_doc0": true,
+    "citas": 39,
+    "archivos": 24
+   },
+   {
+    "id": "R5",
+    "en_doc0": true,
+    "citas": 35,
+    "archivos": 23
+   },
+   {
+    "id": "R6",
+    "en_doc0": true,
+    "citas": 19,
+    "archivos": 15
+   },
+   {
+    "id": "R7",
+    "en_doc0": true,
+    "citas": 76,
+    "archivos": 54
+   },
+   {
+    "id": "R8",
+    "en_doc0": true,
+    "citas": 46,
+    "archivos": 29
+   },
+   {
+    "id": "R9",
+    "en_doc0": true,
+    "citas": 64,
+    "archivos": 48
+   },
+   {
+    "id": "R10",
+    "en_doc0": true,
+    "citas": 34,
+    "archivos": 26
+   },
+   {
+    "id": "R11",
+    "en_doc0": true,
+    "citas": 20,
+    "archivos": 13
+   },
+   {
+    "id": "R12",
+    "en_doc0": true,
+    "citas": 35,
+    "archivos": 25
+   },
+   {
+    "id": "R13",
+    "en_doc0": true,
+    "citas": 141,
+    "archivos": 58
+   },
+   {
+    "id": "R14",
+    "en_doc0": true,
+    "citas": 50,
+    "archivos": 32
+   },
+   {
+    "id": "R15",
+    "en_doc0": true,
+    "citas": 40,
+    "archivos": 29
+   },
+   {
+    "id": "R16",
+    "en_doc0": true,
+    "citas": 46,
+    "archivos": 34
+   },
+   {
+    "id": "R17",
+    "en_doc0": true,
+    "citas": 21,
+    "archivos": 13
+   },
+   {
+    "id": "R18",
+    "en_doc0": true,
+    "citas": 13,
+    "archivos": 7
+   },
+   {
+    "id": "R19",
+    "en_doc0": true,
+    "citas": 23,
+    "archivos": 13
+   },
+   {
+    "id": "R20",
+    "en_doc0": true,
+    "citas": 14,
+    "archivos": 10
+   },
+   {
+    "id": "R21",
+    "en_doc0": true,
+    "citas": 141,
+    "archivos": 45
+   },
+   {
+    "id": "R22",
+    "en_doc0": true,
+    "citas": 70,
+    "archivos": 47
+   },
+   {
+    "id": "R23",
+    "en_doc0": true,
+    "citas": 19,
+    "archivos": 15
+   },
+   {
+    "id": "R24",
+    "en_doc0": true,
+    "citas": 20,
+    "archivos": 14
+   },
+   {
+    "id": "R25",
+    "en_doc0": true,
+    "citas": 62,
+    "archivos": 41
+   },
+   {
+    "id": "R26",
+    "en_doc0": true,
+    "citas": 31,
+    "archivos": 20
+   },
+   {
+    "id": "R27",
+    "en_doc0": true,
+    "citas": 47,
+    "archivos": 24
+   },
+   {
+    "id": "R30",
+    "en_doc0": false,
+    "citas": 1,
+    "archivos": 1
+   }
+  ]
+ },
+ "archivos": {
+  "titulo_fases": "7.3 Fases de un análisis (F0–F8) y fases asíncronas (F9–F10)",
+  "fases": [
+   "F0",
+   "F1",
+   "F2",
+   "F3",
+   "F4",
+   "F5",
+   "F6",
+   "F7",
+   "F8",
+   "F9",
+   "F10"
+  ],
+  "mapa": [
+   {
+    "codigo": "CC",
+    "nombre_doc0": "Catálogo de cálculos, Perfiles de clase y Mapa de conocimientos del Motor",
+    "archivo": null,
+    "nombre_h1": null
+   },
+   {
+    "codigo": "ENT",
+    "nombre_doc0": "Carpetas de entregables",
+    "archivo": null,
+    "nombre_h1": null
+   },
+   {
+    "codigo": "F1",
+    "nombre_doc0": "Registro maestro de tendencias",
+    "archivo": "05_Archivos_operativos/Registro maestro de tendencias (esquema V2.0).md",
+    "nombre_h1": "Registro maestro de tendencias"
+   },
+   {
+    "codigo": "F2",
+    "nombre_doc0": "Registro de evidencia y afirmaciones",
+    "archivo": "05_Archivos_operativos/Registro de evidencia y afirmaciones (esquema V2.0).md",
+    "nombre_h1": "Registro de evidencia y afirmaciones"
+   },
+   {
+    "codigo": "F3",
+    "nombre_doc0": "Registro de oportunidades",
+    "archivo": "05_Archivos_operativos/Registro de oportunidades (esquema V3.0).md",
+    "nombre_h1": "Registro de oportunidades"
+   },
+   {
+    "codigo": "F4",
+    "nombre_doc0": "Registro de pronósticos congelados",
+    "archivo": "05_Archivos_operativos/Registro de pronósticos congelados (esquema V2.0).md",
+    "nombre_h1": "Registro de pronósticos congelados"
+   },
+   {
+    "codigo": "F5",
+    "nombre_doc0": "Historial de análisis",
+    "archivo": "05_Archivos_operativos/Historial de análisis (esquema V2.0).md",
+    "nombre_h1": "Historial de análisis"
+   },
+   {
+    "codigo": "F6",
+    "nombre_doc0": "Memoria de aprendizaje",
+    "archivo": "05_Archivos_operativos/Memoria de aprendizaje (esquema V2.0).md",
+    "nombre_h1": "Memoria de aprendizaje"
+   },
+   {
+    "codigo": "F7",
+    "nombre_doc0": "Documentación para el Analizador de Tendencias de Inversión",
+    "archivo": "05_Archivos_operativos/Documentación para el Analizador de Tendencias de Inversión - V3.2.md",
+    "nombre_h1": "Documentación para el Analizador de Tendencias de Inversión"
+   },
+   {
+    "codigo": "F8",
+    "nombre_doc0": "Documentación para el Motor de Cálculo Avanzado",
+    "archivo": "05_Archivos_operativos/Documentación para el Motor de Cálculo Avanzado - V3.2.md",
+    "nombre_h1": "Documentación para el Motor de Cálculo Avanzado"
+   },
+   {
+    "codigo": "F9",
+    "nombre_doc0": "Registro de Fuentes para el Analizador de Tendencias de Inversión",
+    "archivo": "05_Archivos_operativos/Registro de Fuentes para el Analizador de Tendencias de Inversión - V3.2.md",
+    "nombre_h1": "Registro de Fuentes para el Analizador de Tendencias de Inversión"
+   },
+   {
+    "codigo": "F10",
+    "nombre_doc0": "Configuración y parámetros del bloque",
+    "archivo": "05_Archivos_operativos/Configuración y parámetros del bloque (esquema V3.0).md",
+    "nombre_h1": "Configuración y parámetros del bloque"
+   },
+   {
+    "codigo": "F11",
+    "nombre_doc0": "Registro de seguimientos encargados",
+    "archivo": "05_Archivos_operativos/Registro de seguimientos encargados (esquema V1.0).md",
+    "nombre_h1": "Registro de seguimientos encargados"
+   },
+   {
+    "codigo": "FM",
+    "nombre_doc0": "Fondo metodológico bibliográfico",
+    "archivo": "05_Archivos_operativos/Fondo Metodológico Bibliográfico - V3.1.md",
+    "nombre_h1": "Fondo Metodológico Bibliográfico"
+   },
+   {
+    "codigo": "HA",
+    "nombre_doc0": "Historial de auditorías",
+    "archivo": "05_Archivos_operativos/Historial de auditorías (esquema V2.0).md",
+    "nombre_h1": "Historial de auditorías"
+   },
+   {
+    "codigo": "RC",
+    "nombre_doc0": "Registro de cálculos del Motor",
+    "archivo": "05_Archivos_operativos/Registro de cálculos del Motor (esquema V2.0).md",
+    "nombre_h1": "Registro de cálculos del Motor"
+   }
+  ],
+  "citas": [
+   {
+    "id": "F0",
+    "archivo": false,
+    "fase": true,
+    "citas": 39,
+    "archivos": 26
+   },
+   {
+    "id": "F1",
+    "archivo": true,
+    "fase": true,
+    "citas": 217,
+    "archivos": 57
+   },
+   {
+    "id": "F02",
+    "archivo": false,
+    "fase": false,
+    "citas": 2,
+    "archivos": 2
+   },
+   {
+    "id": "F2",
+    "archivo": true,
+    "fase": true,
+    "citas": 234,
+    "archivos": 55
+   },
+   {
+    "id": "F3",
+    "archivo": true,
+    "fase": true,
+    "citas": 220,
+    "archivos": 53
+   },
+   {
+    "id": "F4",
+    "archivo": true,
+    "fase": true,
+    "citas": 176,
+    "archivos": 64
+   },
+   {
+    "id": "F05",
+    "archivo": false,
+    "fase": false,
+    "citas": 1,
+    "archivos": 1
+   },
+   {
+    "id": "F5",
+    "archivo": true,
+    "fase": true,
+    "citas": 199,
+    "archivos": 48
+   },
+   {
+    "id": "F6",
+    "archivo": true,
+    "fase": true,
+    "citas": 294,
+    "archivos": 63
+   },
+   {
+    "id": "F7",
+    "archivo": true,
+    "fase": true,
+    "citas": 236,
+    "archivos": 59
+   },
+   {
+    "id": "F8",
+    "archivo": true,
+    "fase": true,
+    "citas": 158,
+    "archivos": 43
+   },
+   {
+    "id": "F9",
+    "archivo": true,
+    "fase": true,
+    "citas": 249,
+    "archivos": 63
+   },
+   {
+    "id": "F10",
+    "archivo": true,
+    "fase": true,
+    "citas": 239,
+    "archivos": 62
+   },
+   {
+    "id": "F11",
+    "archivo": true,
+    "fase": false,
+    "citas": 90,
+    "archivos": 27
+   },
+   {
+    "id": "F12",
+    "archivo": false,
+    "fase": false,
+    "citas": 6,
+    "archivos": 3
+   },
+   {
+    "id": "F31",
+    "archivo": false,
+    "fase": false,
+    "citas": 1,
+    "archivos": 1
+   }
+  ]
+ },
+ "fichas": {
+  "catalog_version_codigo": "5.0",
+  "catalog_version_declarada": "5.0",
+  "version_nombre": "5.0",
+  "total_declarado": 81,
+  "encabezados": 81,
+  "en_indice": 81,
+  "en_fichas_catalogo": 81,
+  "manejadores_ct09": 80,
+  "servicios_ct10": [
+   "AUD-REX-001"
+  ],
+  "secciones": [
+   {
+    "titulo": "6. Fichas heredadas de la línea V3.0",
+    "linea": 209,
+    "fichas": 17,
+    "nueva_en_version": false
+   },
+   {
+    "titulo": "7. Fichas nuevas — núcleo transversal",
+    "linea": 500,
+    "fichas": 15,
+    "nueva_en_version": false
+   },
+   {
+    "titulo": "8. Fichas nuevas — renta variable (PERF-ACC)",
+    "linea": 757,
+    "fichas": 4,
+    "nueva_en_version": false
+   },
+   {
+    "titulo": "9. Fichas nuevas — renta fija y crédito (PERF-FIR)",
+    "linea": 827,
+    "fichas": 5,
+    "nueva_en_version": false
+   },
+   {
+    "titulo": "10. Fichas nuevas — divisas (PERF-FX)",
+    "linea": 914,
+    "fichas": 2,
+    "nueva_en_version": false
+   },
+   {
+    "titulo": "11. Fichas nuevas — materias primas (PERF-CMD)",
+    "linea": 950,
+    "fichas": 4,
+    "nueva_en_version": false
+   },
+   {
+    "titulo": "12. Fichas nuevas — inmobiliario cotizado (PERF-REI)",
+    "linea": 1020,
+    "fichas": 4,
+    "nueva_en_version": false
+   },
+   {
+    "titulo": "13. Fichas nuevas — criptoactivos (PERF-CHR)",
+    "linea": 1090,
+    "fichas": 4,
+    "nueva_en_version": false
+   },
+   {
+    "titulo": "14. Fichas nuevas — alternativos y mercados privados (PERF-PRV, PERF-ALT)",
+    "linea": 1162,
+    "fichas": 5,
+    "nueva_en_version": false
+   },
+   {
+    "titulo": "15. Fichas nuevas V5.0 — índices bursátiles (PERF-IDX)",
+    "linea": 1249,
+    "fichas": 4,
+    "nueva_en_version": true
+   },
+   {
+    "titulo": "16. Fichas nuevas V5.0 — fondos y vehículos de inversión colectiva (PERF-ETF)",
+    "linea": 1321,
+    "fichas": 4,
+    "nueva_en_version": true
+   },
+   {
+    "titulo": "17. Fichas nuevas V5.0 — derivados financieros (PERF-DER)",
+    "linea": 1393,
+    "fichas": 4,
+    "nueva_en_version": true
+   },
+   {
+    "titulo": "18. Fichas nuevas V5.0 — instrumentos monetarios y liquidez (PERF-MON)",
+    "linea": 1465,
+    "fichas": 4,
+    "nueva_en_version": true
+   },
+   {
+    "titulo": "19. Fichas nuevas V5.0 — tipos de interés, crédito y volatilidad (PERF-TCV)",
+    "linea": 1537,
+    "fichas": 5,
+    "nueva_en_version": true
+   }
+  ],
+  "nuevas_en_version": 21,
+  "anteriores_a_version": 60,
+  "conteo_clases": {
+   "IMPLEMENTADO": 81,
+   "SOLO_CATALOGO": 0,
+   "SOLO_CODIGO": 0,
+   "ID_DISTINTO": 0
+  },
+  "filas": [
+   {
+    "id": "ACC-ERP-001",
+    "clase": "IMPLEMENTADO",
+    "seccion": "8. Fichas nuevas — renta variable (PERF-ACC)",
+    "madurez_indice": "IMPLEMENTADO (ejecutor, casos de control registrados (T-112))",
+    "en_fichas_catalogo": true,
+    "manejador": "CT-09",
+    "servible": true,
+    "similar_a": null
+   },
+   {
+    "id": "ACC-FACT-001",
+    "clase": "IMPLEMENTADO",
+    "seccion": "8. Fichas nuevas — renta variable (PERF-ACC)",
+    "madurez_indice": "IMPLEMENTADO (ejecutor, casos de control registrados (T-112))",
+    "en_fichas_catalogo": true,
+    "manejador": "CT-09",
+    "servible": true,
+    "similar_a": null
+   },
+   {
+    "id": "ACC-MOM-001",
+    "clase": "IMPLEMENTADO",
+    "seccion": "8. Fichas nuevas — renta variable (PERF-ACC)",
+    "madurez_indice": "IMPLEMENTADO (ejecutor V1.0, pruebas unitarias)",
+    "en_fichas_catalogo": true,
+    "manejador": "CT-09",
+    "servible": true,
+    "similar_a": null
+   },
+   {
+    "id": "ACC-VAL-001",
+    "clase": "IMPLEMENTADO",
+    "seccion": "8. Fichas nuevas — renta variable (PERF-ACC)",
+    "madurez_indice": "IMPLEMENTADO (ejecutor, casos de control registrados (T-112))",
+    "en_fichas_catalogo": true,
+    "manejador": "CT-09",
+    "servible": true,
+    "similar_a": null
+   },
+   {
+    "id": "ALT-AUC-001",
+    "clase": "IMPLEMENTADO",
+    "seccion": "14. Fichas nuevas — alternativos y mercados privados (PERF-PRV, PERF-ALT)",
+    "madurez_indice": "IMPLEMENTADO (ejecutor, casos de control registrados (T-119))",
+    "en_fichas_catalogo": true,
+    "manejador": "CT-09",
+    "servible": true,
+    "similar_a": null
+   },
+   {
+    "id": "ALT-DESMOOTH-001",
+    "clase": "IMPLEMENTADO",
+    "seccion": "14. Fichas nuevas — alternativos y mercados privados (PERF-PRV, PERF-ALT)",
+    "madurez_indice": "IMPLEMENTADO (ejecutor, casos de control registrados (T-112))",
+    "en_fichas_catalogo": true,
+    "manejador": "CT-09",
+    "servible": true,
+    "similar_a": null
+   },
+   {
+    "id": "ALT-HF-001",
+    "clase": "IMPLEMENTADO",
+    "seccion": "14. Fichas nuevas — alternativos y mercados privados (PERF-PRV, PERF-ALT)",
+    "madurez_indice": "IMPLEMENTADO (ejecutor, casos de control registrados (T-119))",
+    "en_fichas_catalogo": true,
+    "manejador": "CT-09",
+    "servible": true,
+    "similar_a": null
+   },
+   {
+    "id": "AUD-REX-001",
+    "clase": "IMPLEMENTADO",
+    "seccion": "6. Fichas heredadas de la línea V3.0",
+    "madurez_indice": "IMPLEMENTADO (ejecutor, casos de control registrados (T-112))",
+    "en_fichas_catalogo": true,
+    "manejador": "CT-10",
+    "servible": false,
+    "similar_a": null
+   },
+   {
+    "id": "BIB-MET-001",
+    "clase": "IMPLEMENTADO",
+    "seccion": "6. Fichas heredadas de la línea V3.0",
+    "madurez_indice": "IMPLEMENTADO (ejecutor, casos de control registrados (T-112))",
+    "en_fichas_catalogo": true,
+    "manejador": "CT-09",
+    "servible": true,
+    "similar_a": null
+   },
+   {
+    "id": "BT-DSR-001",
+    "clase": "IMPLEMENTADO",
+    "seccion": "7. Fichas nuevas — núcleo transversal",
+    "madurez_indice": "IMPLEMENTADO (ejecutor, casos de control registrados (T-112))",
+    "en_fichas_catalogo": true,
+    "manejador": "CT-09",
+    "servible": true,
+    "similar_a": null
+   },
+   {
+    "id": "BT-PBO-001",
+    "clase": "IMPLEMENTADO",
+    "seccion": "7. Fichas nuevas — núcleo transversal",
+    "madurez_indice": "IMPLEMENTADO (ejecutor, casos de control registrados (T-112))",
+    "en_fichas_catalogo": true,
+    "manejador": "CT-09",
+    "servible": true,
+    "similar_a": null
+   },
+   {
+    "id": "BT-VAR-001",
+    "clase": "IMPLEMENTADO",
+    "seccion": "7. Fichas nuevas — núcleo transversal",
+    "madurez_indice": "IMPLEMENTADO (ejecutor, casos de control registrados (T-112))",
+    "en_fichas_catalogo": true,
+    "manejador": "CT-09",
+    "servible": true,
+    "similar_a": null
+   },
+   {
+    "id": "CHR-FLOW-001",
+    "clase": "IMPLEMENTADO",
+    "seccion": "13. Fichas nuevas — criptoactivos (PERF-CHR)",
+    "madurez_indice": "IMPLEMENTADO (ejecutor, casos de control registrados (T-112))",
+    "en_fichas_catalogo": true,
+    "manejador": "CT-09",
+    "servible": true,
+    "similar_a": null
+   },
+   {
+    "id": "CHR-FUND-001",
+    "clase": "IMPLEMENTADO",
+    "seccion": "13. Fichas nuevas — criptoactivos (PERF-CHR)",
+    "madurez_indice": "IMPLEMENTADO (ejecutor, casos de control registrados (T-112))",
+    "en_fichas_catalogo": true,
+    "manejador": "CT-09",
+    "servible": true,
+    "similar_a": null
+   },
+   {
+    "id": "CHR-ONCHAIN-001",
+    "clase": "IMPLEMENTADO",
+    "seccion": "13. Fichas nuevas — criptoactivos (PERF-CHR)",
+    "madurez_indice": "IMPLEMENTADO (ejecutor, casos de control registrados (T-119))",
+    "en_fichas_catalogo": true,
+    "manejador": "CT-09",
+    "servible": true,
+    "similar_a": null
+   },
+   {
+    "id": "CHR-TOKEN-001",
+    "clase": "IMPLEMENTADO",
+    "seccion": "13. Fichas nuevas — criptoactivos (PERF-CHR)",
+    "madurez_indice": "IMPLEMENTADO (ejecutor, casos de control registrados (T-119))",
+    "en_fichas_catalogo": true,
+    "manejador": "CT-09",
+    "servible": true,
+    "similar_a": null
+   },
+   {
+    "id": "CMD-CURVE-001",
+    "clase": "IMPLEMENTADO",
+    "seccion": "11. Fichas nuevas — materias primas (PERF-CMD)",
+    "madurez_indice": "IMPLEMENTADO (ejecutor V1.0, pruebas unitarias)",
+    "en_fichas_catalogo": true,
+    "manejador": "CT-09",
+    "servible": true,
+    "similar_a": null
+   },
+   {
+    "id": "CMD-INV-001",
+    "clase": "IMPLEMENTADO",
+    "seccion": "11. Fichas nuevas — materias primas (PERF-CMD)",
+    "madurez_indice": "IMPLEMENTADO (ejecutor, casos de control registrados (T-112))",
+    "en_fichas_catalogo": true,
+    "manejador": "CT-09",
+    "servible": true,
+    "similar_a": null
+   },
+   {
+    "id": "CMD-REAL-001",
+    "clase": "IMPLEMENTADO",
+    "seccion": "11. Fichas nuevas — materias primas (PERF-CMD)",
+    "madurez_indice": "IMPLEMENTADO (ejecutor, casos de control registrados (T-119))",
+    "en_fichas_catalogo": true,
+    "manejador": "CT-09",
+    "servible": true,
+    "similar_a": null
+   },
+   {
+    "id": "CMD-RETDEC-001",
+    "clase": "IMPLEMENTADO",
+    "seccion": "11. Fichas nuevas — materias primas (PERF-CMD)",
+    "madurez_indice": "IMPLEMENTADO (ejecutor, casos de control registrados (T-112))",
+    "en_fichas_catalogo": true,
+    "manejador": "CT-09",
+    "servible": true,
+    "similar_a": null
+   },
+   {
+    "id": "DEC-VOI-001",
+    "clase": "IMPLEMENTADO",
+    "seccion": "7. Fichas nuevas — núcleo transversal",
+    "madurez_indice": "IMPLEMENTADO (ejecutor, casos de control registrados (T-112))",
+    "en_fichas_catalogo": true,
+    "manejador": "CT-09",
+    "servible": true,
+    "similar_a": null
+   },
+   {
+    "id": "DER-OPT-001",
+    "clase": "IMPLEMENTADO",
+    "seccion": "7. Fichas nuevas — núcleo transversal",
+    "madurez_indice": "IMPLEMENTADO (ejecutor, casos de control registrados (T-112))",
+    "en_fichas_catalogo": true,
+    "manejador": "CT-09",
+    "servible": true,
+    "similar_a": null
+   },
+   {
+    "id": "DER-ROLL-001",
+    "clase": "IMPLEMENTADO",
+    "seccion": "17. Fichas nuevas V5.0 — derivados financieros (PERF-DER)",
+    "madurez_indice": "IMPLEMENTADO (ejecutor, casos de control registrados (T-106))",
+    "en_fichas_catalogo": true,
+    "manejador": "CT-09",
+    "servible": true,
+    "similar_a": null
+   },
+   {
+    "id": "DER-SKEW-001",
+    "clase": "IMPLEMENTADO",
+    "seccion": "17. Fichas nuevas V5.0 — derivados financieros (PERF-DER)",
+    "madurez_indice": "IMPLEMENTADO (ejecutor, casos de control registrados (T-106))",
+    "en_fichas_catalogo": true,
+    "manejador": "CT-09",
+    "servible": true,
+    "similar_a": null
+   },
+   {
+    "id": "DER-TERM-001",
+    "clase": "IMPLEMENTADO",
+    "seccion": "17. Fichas nuevas V5.0 — derivados financieros (PERF-DER)",
+    "madurez_indice": "IMPLEMENTADO (ejecutor, casos de control registrados (T-106))",
+    "en_fichas_catalogo": true,
+    "manejador": "CT-09",
+    "servible": true,
+    "similar_a": null
+   },
+   {
+    "id": "DER-VRP-001",
+    "clase": "IMPLEMENTADO",
+    "seccion": "17. Fichas nuevas V5.0 — derivados financieros (PERF-DER)",
+    "madurez_indice": "IMPLEMENTADO (ejecutor, casos de control registrados (T-106))",
+    "en_fichas_catalogo": true,
+    "manejador": "CT-09",
+    "servible": true,
+    "similar_a": null
+   },
+   {
+    "id": "FC-CAL-001",
+    "clase": "IMPLEMENTADO",
+    "seccion": "7. Fichas nuevas — núcleo transversal",
+    "madurez_indice": "IMPLEMENTADO (ejecutor V1.0, pruebas unitarias)",
+    "en_fichas_catalogo": true,
+    "manejador": "CT-09",
+    "servible": true,
+    "similar_a": null
+   },
+   {
+    "id": "FC-EVAL-001",
+    "clase": "IMPLEMENTADO",
+    "seccion": "7. Fichas nuevas — núcleo transversal",
+    "madurez_indice": "IMPLEMENTADO (ejecutor V1.0, pruebas unitarias)",
+    "en_fichas_catalogo": true,
+    "manejador": "CT-09",
+    "servible": true,
+    "similar_a": null
+   },
+   {
+    "id": "FIN-CAGR-001",
+    "clase": "IMPLEMENTADO",
+    "seccion": "6. Fichas heredadas de la línea V3.0",
+    "madurez_indice": "IMPLEMENTADO (ejecutor V1.0, pruebas unitarias)",
+    "en_fichas_catalogo": true,
+    "manejador": "CT-09",
+    "servible": true,
+    "similar_a": null
+   },
+   {
+    "id": "FIR-CARRY-001",
+    "clase": "IMPLEMENTADO",
+    "seccion": "9. Fichas nuevas — renta fija y crédito (PERF-FIR)",
+    "madurez_indice": "IMPLEMENTADO (ejecutor, casos de control registrados (T-112))",
+    "en_fichas_catalogo": true,
+    "manejador": "CT-09",
+    "servible": true,
+    "similar_a": null
+   },
+   {
+    "id": "FIR-CRED-001",
+    "clase": "IMPLEMENTADO",
+    "seccion": "9. Fichas nuevas — renta fija y crédito (PERF-FIR)",
+    "madurez_indice": "IMPLEMENTADO (ejecutor, casos de control registrados (T-119))",
+    "en_fichas_catalogo": true,
+    "manejador": "CT-09",
+    "servible": true,
+    "similar_a": null
+   },
+   {
+    "id": "FIR-CURVE-001",
+    "clase": "IMPLEMENTADO",
+    "seccion": "9. Fichas nuevas — renta fija y crédito (PERF-FIR)",
+    "madurez_indice": "IMPLEMENTADO (ejecutor, casos de control registrados (T-112))",
+    "en_fichas_catalogo": true,
+    "manejador": "CT-09",
+    "servible": true,
+    "similar_a": null
+   },
+   {
+    "id": "FIR-PRICE-001",
+    "clase": "IMPLEMENTADO",
+    "seccion": "9. Fichas nuevas — renta fija y crédito (PERF-FIR)",
+    "madurez_indice": "IMPLEMENTADO (ejecutor, casos de control registrados (T-112))",
+    "en_fichas_catalogo": true,
+    "manejador": "CT-09",
+    "servible": true,
+    "similar_a": null
+   },
+   {
+    "id": "FIR-SPREAD-001",
+    "clase": "IMPLEMENTADO",
+    "seccion": "9. Fichas nuevas — renta fija y crédito (PERF-FIR)",
+    "madurez_indice": "IMPLEMENTADO (ejecutor, casos de control registrados (T-112))",
+    "en_fichas_catalogo": true,
+    "manejador": "CT-09",
+    "servible": true,
+    "similar_a": null
+   },
+   {
+    "id": "FON-DISC-001",
+    "clase": "IMPLEMENTADO",
+    "seccion": "16. Fichas nuevas V5.0 — fondos y vehículos de inversión colectiva (PERF-ETF)",
+    "madurez_indice": "IMPLEMENTADO (ejecutor, casos de control registrados (T-106))",
+    "en_fichas_catalogo": true,
+    "manejador": "CT-09",
+    "servible": true,
+    "similar_a": null
+   },
+   {
+    "id": "FON-FLOW-001",
+    "clase": "IMPLEMENTADO",
+    "seccion": "16. Fichas nuevas V5.0 — fondos y vehículos de inversión colectiva (PERF-ETF)",
+    "madurez_indice": "IMPLEMENTADO (ejecutor, casos de control registrados (T-106))",
+    "en_fichas_catalogo": true,
+    "manejador": "CT-09",
+    "servible": true,
+    "similar_a": null
+   },
+   {
+    "id": "FON-LEV-001",
+    "clase": "IMPLEMENTADO",
+    "seccion": "16. Fichas nuevas V5.0 — fondos y vehículos de inversión colectiva (PERF-ETF)",
+    "madurez_indice": "IMPLEMENTADO (ejecutor, casos de control registrados (T-106))",
+    "en_fichas_catalogo": true,
+    "manejador": "CT-09",
+    "servible": true,
+    "similar_a": null
+   },
+   {
+    "id": "FON-TD-001",
+    "clase": "IMPLEMENTADO",
+    "seccion": "16. Fichas nuevas V5.0 — fondos y vehículos de inversión colectiva (PERF-ETF)",
+    "madurez_indice": "IMPLEMENTADO (ejecutor, casos de control registrados (T-106))",
+    "en_fichas_catalogo": true,
+    "manejador": "CT-09",
+    "servible": true,
+    "similar_a": null
+   },
+   {
+    "id": "FX-BEER-001",
+    "clase": "IMPLEMENTADO",
+    "seccion": "10. Fichas nuevas — divisas (PERF-FX)",
+    "madurez_indice": "IMPLEMENTADO (ejecutor, casos de control registrados (T-119))",
+    "en_fichas_catalogo": true,
+    "manejador": "CT-09",
+    "servible": true,
+    "similar_a": null
+   },
+   {
+    "id": "FX-BRK-001",
+    "clase": "IMPLEMENTADO",
+    "seccion": "6. Fichas heredadas de la línea V3.0",
+    "madurez_indice": "IMPLEMENTADO (ejecutor, casos de control registrados (T-112))",
+    "en_fichas_catalogo": true,
+    "manejador": "CT-09",
+    "servible": true,
+    "similar_a": null
+   },
+   {
+    "id": "FX-CARRY-001",
+    "clase": "IMPLEMENTADO",
+    "seccion": "6. Fichas heredadas de la línea V3.0",
+    "madurez_indice": "IMPLEMENTADO (ejecutor V1.0, pruebas unitarias)",
+    "en_fichas_catalogo": true,
+    "manejador": "CT-09",
+    "servible": true,
+    "similar_a": null
+   },
+   {
+    "id": "FX-COINT-001",
+    "clase": "IMPLEMENTADO",
+    "seccion": "6. Fichas heredadas de la línea V3.0",
+    "madurez_indice": "IMPLEMENTADO (ejecutor, casos de control registrados (T-112))",
+    "en_fichas_catalogo": true,
+    "manejador": "CT-09",
+    "servible": true,
+    "similar_a": null
+   },
+   {
+    "id": "FX-CORR-001",
+    "clase": "IMPLEMENTADO",
+    "seccion": "6. Fichas heredadas de la línea V3.0",
+    "madurez_indice": "IMPLEMENTADO (ejecutor V1.0, pruebas unitarias)",
+    "en_fichas_catalogo": true,
+    "manejador": "CT-09",
+    "servible": true,
+    "similar_a": null
+   },
+   {
+    "id": "FX-MOM-001",
+    "clase": "IMPLEMENTADO",
+    "seccion": "10. Fichas nuevas — divisas (PERF-FX)",
+    "madurez_indice": "IMPLEMENTADO (ejecutor, casos de control registrados (T-112))",
+    "en_fichas_catalogo": true,
+    "manejador": "CT-09",
+    "servible": true,
+    "similar_a": null
+   },
+   {
+    "id": "FX-PPA-001",
+    "clase": "IMPLEMENTADO",
+    "seccion": "6. Fichas heredadas de la línea V3.0",
+    "madurez_indice": "IMPLEMENTADO (ejecutor, casos de control registrados (T-112))",
+    "en_fichas_catalogo": true,
+    "manejador": "CT-09",
+    "servible": true,
+    "similar_a": null
+   },
+   {
+    "id": "FX-REGIME-001",
+    "clase": "IMPLEMENTADO",
+    "seccion": "6. Fichas heredadas de la línea V3.0",
+    "madurez_indice": "IMPLEMENTADO (ejecutor, casos de control registrados (T-112))",
+    "en_fichas_catalogo": true,
+    "manejador": "CT-09",
+    "servible": true,
+    "similar_a": null
+   },
+   {
+    "id": "FX-STL-001",
+    "clase": "IMPLEMENTADO",
+    "seccion": "6. Fichas heredadas de la línea V3.0",
+    "madurez_indice": "IMPLEMENTADO (ejecutor, casos de control registrados (T-112))",
+    "en_fichas_catalogo": true,
+    "manejador": "CT-09",
+    "servible": true,
+    "similar_a": null
+   },
+   {
+    "id": "FX-TREND-001",
+    "clase": "IMPLEMENTADO",
+    "seccion": "6. Fichas heredadas de la línea V3.0",
+    "madurez_indice": "IMPLEMENTADO (ejecutor V1.0, pruebas unitarias)",
+    "en_fichas_catalogo": true,
+    "manejador": "CT-09",
+    "servible": true,
+    "similar_a": null
+   },
+   {
+    "id": "FX-VOL-001",
+    "clase": "IMPLEMENTADO",
+    "seccion": "6. Fichas heredadas de la línea V3.0",
+    "madurez_indice": "IMPLEMENTADO (ejecutor V1.0, pruebas unitarias)",
+    "en_fichas_catalogo": true,
+    "manejador": "CT-09",
+    "servible": true,
+    "similar_a": null
+   },
+   {
+    "id": "IDX-CONC-001",
+    "clase": "IMPLEMENTADO",
+    "seccion": "15. Fichas nuevas V5.0 — índices bursátiles (PERF-IDX)",
+    "madurez_indice": "IMPLEMENTADO (ejecutor, casos de control registrados (T-106))",
+    "en_fichas_catalogo": true,
+    "manejador": "CT-09",
+    "servible": true,
+    "similar_a": null
+   },
+   {
+    "id": "IDX-ERP-001",
+    "clase": "IMPLEMENTADO",
+    "seccion": "15. Fichas nuevas V5.0 — índices bursátiles (PERF-IDX)",
+    "madurez_indice": "IMPLEMENTADO (ejecutor, casos de control registrados (T-106))",
+    "en_fichas_catalogo": true,
+    "manejador": "CT-09",
+    "servible": true,
+    "similar_a": null
+   },
+   {
+    "id": "IDX-REB-001",
+    "clase": "IMPLEMENTADO",
+    "seccion": "15. Fichas nuevas V5.0 — índices bursátiles (PERF-IDX)",
+    "madurez_indice": "IMPLEMENTADO (ejecutor, casos de control registrados (T-106))",
+    "en_fichas_catalogo": true,
+    "manejador": "CT-09",
+    "servible": true,
+    "similar_a": null
+   },
+   {
+    "id": "IDX-REL-001",
+    "clase": "IMPLEMENTADO",
+    "seccion": "15. Fichas nuevas V5.0 — índices bursátiles (PERF-IDX)",
+    "madurez_indice": "IMPLEMENTADO (ejecutor, casos de control registrados (T-106))",
+    "en_fichas_catalogo": true,
+    "manejador": "CT-09",
+    "servible": true,
+    "similar_a": null
+   },
+   {
+    "id": "ML-CAL-001",
+    "clase": "IMPLEMENTADO",
+    "seccion": "6. Fichas heredadas de la línea V3.0",
+    "madurez_indice": "IMPLEMENTADO (ejecutor, casos de control registrados (T-112))",
+    "en_fichas_catalogo": true,
+    "manejador": "CT-09",
+    "servible": true,
+    "similar_a": null
+   },
+   {
+    "id": "ML-CLUS-001",
+    "clase": "IMPLEMENTADO",
+    "seccion": "7. Fichas nuevas — núcleo transversal",
+    "madurez_indice": "IMPLEMENTADO (ejecutor V1.0, pruebas unitarias)",
+    "en_fichas_catalogo": true,
+    "manejador": "CT-09",
+    "servible": true,
+    "similar_a": null
+   },
+   {
+    "id": "ML-PRED-001",
+    "clase": "IMPLEMENTADO",
+    "seccion": "7. Fichas nuevas — núcleo transversal",
+    "madurez_indice": "IMPLEMENTADO (ejecutor, casos de control registrados (T-112))",
+    "en_fichas_catalogo": true,
+    "manejador": "CT-09",
+    "servible": true,
+    "similar_a": null
+   },
+   {
+    "id": "MON-EXP-001",
+    "clase": "IMPLEMENTADO",
+    "seccion": "18. Fichas nuevas V5.0 — instrumentos monetarios y liquidez (PERF-MON)",
+    "madurez_indice": "IMPLEMENTADO (ejecutor, casos de control registrados (T-106))",
+    "en_fichas_catalogo": true,
+    "manejador": "CT-09",
+    "servible": true,
+    "similar_a": null
+   },
+   {
+    "id": "MON-FIX-001",
+    "clase": "IMPLEMENTADO",
+    "seccion": "18. Fichas nuevas V5.0 — instrumentos monetarios y liquidez (PERF-MON)",
+    "madurez_indice": "IMPLEMENTADO (ejecutor, casos de control registrados (T-106))",
+    "en_fichas_catalogo": true,
+    "manejador": "CT-09",
+    "servible": true,
+    "similar_a": null
+   },
+   {
+    "id": "MON-REAL-001",
+    "clase": "IMPLEMENTADO",
+    "seccion": "18. Fichas nuevas V5.0 — instrumentos monetarios y liquidez (PERF-MON)",
+    "madurez_indice": "IMPLEMENTADO (ejecutor, casos de control registrados (T-106))",
+    "en_fichas_catalogo": true,
+    "manejador": "CT-09",
+    "servible": true,
+    "similar_a": null
+   },
+   {
+    "id": "MON-YLD-001",
+    "clase": "IMPLEMENTADO",
+    "seccion": "18. Fichas nuevas V5.0 — instrumentos monetarios y liquidez (PERF-MON)",
+    "madurez_indice": "IMPLEMENTADO (ejecutor, casos de control registrados (T-106))",
+    "en_fichas_catalogo": true,
+    "manejador": "CT-09",
+    "servible": true,
+    "similar_a": null
+   },
+   {
+    "id": "PRV-CF-001",
+    "clase": "IMPLEMENTADO",
+    "seccion": "14. Fichas nuevas — alternativos y mercados privados (PERF-PRV, PERF-ALT)",
+    "madurez_indice": "IMPLEMENTADO (ejecutor, casos de control registrados (T-119))",
+    "en_fichas_catalogo": true,
+    "manejador": "CT-09",
+    "servible": true,
+    "similar_a": null
+   },
+   {
+    "id": "PRV-PME-001",
+    "clase": "IMPLEMENTADO",
+    "seccion": "14. Fichas nuevas — alternativos y mercados privados (PERF-PRV, PERF-ALT)",
+    "madurez_indice": "IMPLEMENTADO (ejecutor, casos de control registrados (T-119))",
+    "en_fichas_catalogo": true,
+    "manejador": "CT-09",
+    "servible": true,
+    "similar_a": null
+   },
+   {
+    "id": "REG-HMM-001",
+    "clase": "IMPLEMENTADO",
+    "seccion": "7. Fichas nuevas — núcleo transversal",
+    "madurez_indice": "IMPLEMENTADO (ejecutor, casos de control registrados (T-112))",
+    "en_fichas_catalogo": true,
+    "manejador": "CT-09",
+    "servible": true,
+    "similar_a": null
+   },
+   {
+    "id": "REI-CAP-001",
+    "clase": "IMPLEMENTADO",
+    "seccion": "12. Fichas nuevas — inmobiliario cotizado (PERF-REI)",
+    "madurez_indice": "IMPLEMENTADO (ejecutor, casos de control registrados (T-112))",
+    "en_fichas_catalogo": true,
+    "manejador": "CT-09",
+    "servible": true,
+    "similar_a": null
+   },
+   {
+    "id": "REI-FFO-001",
+    "clase": "IMPLEMENTADO",
+    "seccion": "12. Fichas nuevas — inmobiliario cotizado (PERF-REI)",
+    "madurez_indice": "IMPLEMENTADO (ejecutor, casos de control registrados (T-112))",
+    "en_fichas_catalogo": true,
+    "manejador": "CT-09",
+    "servible": true,
+    "similar_a": null
+   },
+   {
+    "id": "REI-LEV-001",
+    "clase": "IMPLEMENTADO",
+    "seccion": "12. Fichas nuevas — inmobiliario cotizado (PERF-REI)",
+    "madurez_indice": "IMPLEMENTADO (ejecutor, casos de control registrados (T-119))",
+    "en_fichas_catalogo": true,
+    "manejador": "CT-09",
+    "servible": true,
+    "similar_a": null
+   },
+   {
+    "id": "REI-NAV-001",
+    "clase": "IMPLEMENTADO",
+    "seccion": "12. Fichas nuevas — inmobiliario cotizado (PERF-REI)",
+    "madurez_indice": "IMPLEMENTADO (ejecutor, casos de control registrados (T-112))",
+    "en_fichas_catalogo": true,
+    "manejador": "CT-09",
+    "servible": true,
+    "similar_a": null
+   },
+   {
+    "id": "RISK-DD-001",
+    "clase": "IMPLEMENTADO",
+    "seccion": "7. Fichas nuevas — núcleo transversal",
+    "madurez_indice": "IMPLEMENTADO (ejecutor V1.0, pruebas unitarias)",
+    "en_fichas_catalogo": true,
+    "manejador": "CT-09",
+    "servible": true,
+    "similar_a": null
+   },
+   {
+    "id": "RISK-VAR-001",
+    "clase": "IMPLEMENTADO",
+    "seccion": "6. Fichas heredadas de la línea V3.0",
+    "madurez_indice": "IMPLEMENTADO (ejecutor, casos de control registrados (T-112))",
+    "en_fichas_catalogo": true,
+    "manejador": "CT-09",
+    "servible": true,
+    "similar_a": null
+   },
+   {
+    "id": "SCN-H-001",
+    "clase": "IMPLEMENTADO",
+    "seccion": "7. Fichas nuevas — núcleo transversal",
+    "madurez_indice": "IMPLEMENTADO (ejecutor, casos de control registrados (T-112))",
+    "en_fichas_catalogo": true,
+    "manejador": "CT-09",
+    "servible": true,
+    "similar_a": null
+   },
+   {
+    "id": "SCORE-RK-001",
+    "clase": "IMPLEMENTADO",
+    "seccion": "7. Fichas nuevas — núcleo transversal",
+    "madurez_indice": "IMPLEMENTADO (ejecutor V1.0, pruebas unitarias)",
+    "en_fichas_catalogo": true,
+    "manejador": "CT-09",
+    "servible": true,
+    "similar_a": null
+   },
+   {
+    "id": "SIM-MC-001",
+    "clase": "IMPLEMENTADO",
+    "seccion": "6. Fichas heredadas de la línea V3.0",
+    "madurez_indice": "IMPLEMENTADO (ejecutor, casos de control registrados (T-112))",
+    "en_fichas_catalogo": true,
+    "manejador": "CT-09",
+    "servible": true,
+    "similar_a": null
+   },
+   {
+    "id": "ST-DESC-001",
+    "clase": "IMPLEMENTADO",
+    "seccion": "6. Fichas heredadas de la línea V3.0",
+    "madurez_indice": "IMPLEMENTADO (ejecutor V1.0, pruebas unitarias)",
+    "en_fichas_catalogo": true,
+    "manejador": "CT-09",
+    "servible": true,
+    "similar_a": null
+   },
+   {
+    "id": "ST-INF-001",
+    "clase": "IMPLEMENTADO",
+    "seccion": "6. Fichas heredadas de la línea V3.0",
+    "madurez_indice": "IMPLEMENTADO (ejecutor, casos de control registrados (T-112))",
+    "en_fichas_catalogo": true,
+    "manejador": "CT-09",
+    "servible": true,
+    "similar_a": null
+   },
+   {
+    "id": "TCV-BEI-001",
+    "clase": "IMPLEMENTADO",
+    "seccion": "19. Fichas nuevas V5.0 — tipos de interés, crédito y volatilidad (PERF-TCV)",
+    "madurez_indice": "IMPLEMENTADO (ejecutor, casos de control registrados (T-106))",
+    "en_fichas_catalogo": true,
+    "manejador": "CT-09",
+    "servible": true,
+    "similar_a": null
+   },
+   {
+    "id": "TCV-CDS-001",
+    "clase": "IMPLEMENTADO",
+    "seccion": "19. Fichas nuevas V5.0 — tipos de interés, crédito y volatilidad (PERF-TCV)",
+    "madurez_indice": "IMPLEMENTADO (ejecutor, casos de control registrados (T-106))",
+    "en_fichas_catalogo": true,
+    "manejador": "CT-09",
+    "servible": true,
+    "similar_a": null
+   },
+   {
+    "id": "TCV-SLOPE-001",
+    "clase": "IMPLEMENTADO",
+    "seccion": "19. Fichas nuevas V5.0 — tipos de interés, crédito y volatilidad (PERF-TCV)",
+    "madurez_indice": "IMPLEMENTADO (ejecutor, casos de control registrados (T-106))",
+    "en_fichas_catalogo": true,
+    "manejador": "CT-09",
+    "servible": true,
+    "similar_a": null
+   },
+   {
+    "id": "TCV-TP-001",
+    "clase": "IMPLEMENTADO",
+    "seccion": "19. Fichas nuevas V5.0 — tipos de interés, crédito y volatilidad (PERF-TCV)",
+    "madurez_indice": "IMPLEMENTADO (ejecutor, casos de control registrados (T-106))",
+    "en_fichas_catalogo": true,
+    "manejador": "CT-09",
+    "servible": true,
+    "similar_a": null
+   },
+   {
+    "id": "TCV-VIXTS-001",
+    "clase": "IMPLEMENTADO",
+    "seccion": "19. Fichas nuevas V5.0 — tipos de interés, crédito y volatilidad (PERF-TCV)",
+    "madurez_indice": "IMPLEMENTADO (ejecutor, casos de control registrados (T-106))",
+    "en_fichas_catalogo": true,
+    "manejador": "CT-09",
+    "servible": true,
+    "similar_a": null
+   },
+   {
+    "id": "TEM-DIFF-001",
+    "clase": "IMPLEMENTADO",
+    "seccion": "7. Fichas nuevas — núcleo transversal",
+    "madurez_indice": "IMPLEMENTADO (ejecutor, casos de control registrados (T-112))",
+    "en_fichas_catalogo": true,
+    "manejador": "CT-09",
+    "servible": true,
+    "similar_a": null
+   },
+   {
+    "id": "VOL-GARCH-001",
+    "clase": "IMPLEMENTADO",
+    "seccion": "7. Fichas nuevas — núcleo transversal",
+    "madurez_indice": "IMPLEMENTADO (ejecutor V1.0, pruebas unitarias)",
+    "en_fichas_catalogo": true,
+    "manejador": "CT-09",
+    "servible": true,
+    "similar_a": null
+   }
+  ],
+  "menciones_otra_version": [
+   {
+    "version": "4.0",
+    "menciones": 8,
+    "en_prompts": 6,
+    "archivos": [
+     "02_System_prompts/System prompt - MC-01 Fundamentos cuantitativos y estadística - Versión óptima V5.0.md",
+     "02_System_prompts/System prompt - MC-02 Series temporales, tendencias, regímenes y volatilidad - Versión óptima V5.0.md",
+     "02_System_prompts/System prompt - MC-03 Econometría, causalidad y macroeconomía cuantitativa - Versión óptima V5.0.md",
+     "02_System_prompts/System prompt - MC-04 Crecimiento, difusión y prospectiva cuantitativa - Versión óptima V5.0.md",
+     "02_System_prompts/System prompt - MC-05 Simulación estocástica y escenarios - Versión óptima V5.0.md",
+     "03_Funciones/Funciones, tareas y cometidos – Motor de Cálculo Avanzado para el Analizador de Tendencias de Inversión – óptima V5.0.md",
+     "05_Archivos_operativos/Registro de cálculos del Motor (esquema V2.0).md"
+    ]
+   }
+  ]
+ },
+ "referencias": {
+  "citadores": [
+   "02_System_prompts/",
+   "03_Funciones/"
+  ],
+  "definidas": 1473,
+  "de_baja": 15,
+  "definidas_en": {
+   "ANA-DOC": [
+    "05_Archivos_operativos/Documentación para el Analizador de Tendencias de Inversión - V3.2.md"
+   ],
+   "DOC-MOT": [
+    "05_Archivos_operativos/Documentación para el Motor de Cálculo Avanzado - V3.2.md"
+   ],
+   "RF": [
+    "05_Archivos_operativos/Registro de Fuentes para el Analizador de Tendencias de Inversión - V3.2.md"
+   ],
+   "TA": [
+    "05_Archivos_operativos/Documentación para el Analizador de Tendencias de Inversión - V3.2.md"
+   ],
+   "TF": [
+    "05_Archivos_operativos/Registro de Fuentes para el Analizador de Tendencias de Inversión - V3.2.md"
+   ],
+   "TM": [
+    "05_Archivos_operativos/Documentación para el Motor de Cálculo Avanzado - V3.2.md"
+   ]
+  },
+  "prefijos": [
+   {
+    "prefijo": "DOC-MOT",
+    "citas": 4,
+    "distintas": 4,
+    "existentes": 4,
+    "de_baja": 0,
+    "inexistentes": 0,
+    "otra_forma": 0
+   },
+   {
+    "prefijo": "RF",
+    "citas": 2,
+    "distintas": 2,
+    "existentes": 0,
+    "de_baja": 0,
+    "inexistentes": 1,
+    "otra_forma": 1
+   },
+   {
+    "prefijo": "TA",
+    "citas": 146,
+    "distintas": 23,
+    "existentes": 23,
+    "de_baja": 0,
+    "inexistentes": 0,
+    "otra_forma": 0
+   },
+   {
+    "prefijo": "TF",
+    "citas": 125,
+    "distintas": 19,
+    "existentes": 19,
+    "de_baja": 0,
+    "inexistentes": 0,
+    "otra_forma": 0
+   },
+   {
+    "prefijo": "TM",
+    "citas": 107,
+    "distintas": 18,
+    "existentes": 18,
+    "de_baja": 0,
+    "inexistentes": 0,
+    "otra_forma": 0
+   }
+  ]
+ },
+ "puertas": {
+  "titulo": "9.3 Puertas de selección PS1–PS8",
+  "definidas": [
+   "PS1",
+   "PS2",
+   "PS3",
+   "PS4",
+   "PS5",
+   "PS6",
+   "PS7",
+   "PS8"
+  ],
+  "filas": [
+   {
+    "id": "PS1",
+    "en_doc0": true,
+    "citas": 50,
+    "archivos": 26
+   },
+   {
+    "id": "PS2",
+    "en_doc0": true,
+    "citas": 39,
+    "archivos": 26
+   },
+   {
+    "id": "PS3",
+    "en_doc0": true,
+    "citas": 68,
+    "archivos": 30
+   },
+   {
+    "id": "PS4",
+    "en_doc0": true,
+    "citas": 5,
+    "archivos": 3
+   },
+   {
+    "id": "PS5",
+    "en_doc0": true,
+    "citas": 5,
+    "archivos": 3
+   },
+   {
+    "id": "PS6",
+    "en_doc0": true,
+    "citas": 4,
+    "archivos": 2
+   },
+   {
+    "id": "PS7",
+    "en_doc0": true,
+    "citas": 7,
+    "archivos": 5
+   },
+   {
+    "id": "PS8",
+    "en_doc0": true,
+    "citas": 39,
+    "archivos": 15
+   }
+  ]
+ },
+ "hallazgos": [
+  {
+   "clase": "b",
+   "nivel": "INFO",
+   "codigo": "CITA_EN_CONTEXTO_AJENO",
+   "id": "R30",
+   "mensaje": "R30 aparece como código JEL de clasificación de la literatura económica: no se cuenta como cita",
+   "ubicaciones": [
+    {
+     "archivo": "02_System_prompts/System prompt - Documentador para el Analizador - Versión óptima V5.0.md",
+     "linea": 368
+    }
+   ]
+  },
+  {
+   "clase": "c",
+   "nivel": "INFO",
+   "codigo": "CODIGO_FUERA_DE_05",
+   "id": "CC",
+   "mensaje": "CC («Catálogo de cálculos, Perfiles de clase y Mapa de conocimientos del Motor») no es un archivo de 05_Archivos_operativos/",
+   "ubicaciones": [
+    {
+     "archivo": "01_Gobernanza/Documento 0 - Protocolo maestro del Bloque A - Versión óptima V5.1.md",
+     "linea": 263
+    }
+   ]
+  },
+  {
+   "clase": "c",
+   "nivel": "INFO",
+   "codigo": "CODIGO_FUERA_DE_05",
+   "id": "ENT",
+   "mensaje": "ENT («Carpetas de entregables») no es un archivo de 05_Archivos_operativos/",
+   "ubicaciones": [
+    {
+     "archivo": "01_Gobernanza/Documento 0 - Protocolo maestro del Bloque A - Versión óptima V5.1.md",
+     "linea": 263
+    }
+   ]
+  },
+  {
+   "clase": "c",
+   "nivel": "INFO",
+   "codigo": "CITA_EN_CONTEXTO_AJENO",
+   "id": "F02",
+   "mensaje": "F02 aparece como abreviatura de la función AUD-F02 del mismo documento: no se cuenta como cita",
+   "ubicaciones": [
+    {
+     "archivo": "03_Funciones/Funciones, tareas y cometidos – Auditor – óptima V5.0.md",
+     "linea": 30
+    }
+   ]
+  },
+  {
+   "clase": "c",
+   "nivel": "INFO",
+   "codigo": "CITA_EN_CONTEXTO_AJENO",
+   "id": "F02",
+   "mensaje": "F02 aparece como abreviatura de la función PROS-F02 del mismo documento: no se cuenta como cita",
+   "ubicaciones": [
+    {
+     "archivo": "03_Funciones/Funciones, tareas y cometidos – Analista de Prospectiva y Horizontes – óptima V5.0.md",
+     "linea": 31
+    }
+   ]
+  },
+  {
+   "clase": "c",
+   "nivel": "INFO",
+   "codigo": "CITA_EN_CONTEXTO_AJENO",
+   "id": "F05",
+   "mensaje": "F05 aparece como abreviatura de la función ORQ-F05 del mismo documento: no se cuenta como cita",
+   "ubicaciones": [
+    {
+     "archivo": "03_Funciones/Funciones, tareas y cometidos – Orquestador técnico – óptima V5.0.md",
+     "linea": 23
+    }
+   ]
+  },
+  {
+   "clase": "c",
+   "nivel": "INFO",
+   "codigo": "CITA_EN_CONTEXTO_AJENO",
+   "id": "F12",
+   "mensaje": "F12 aparece como abreviatura de la función AUD-F12 del mismo documento: no se cuenta como cita",
+   "ubicaciones": [
+    {
+     "archivo": "03_Funciones/Funciones, tareas y cometidos – Auditor – óptima V5.0.md",
+     "linea": 30
+    }
+   ]
+  },
+  {
+   "clase": "c",
+   "nivel": "INFO",
+   "codigo": "CITA_EN_CONTEXTO_AJENO",
+   "id": "F12",
+   "mensaje": "F12 aparece como abreviatura de la función PROS-F12 del mismo documento: no se cuenta como cita",
+   "ubicaciones": [
+    {
+     "archivo": "03_Funciones/Funciones, tareas y cometidos – Analista de Prospectiva y Horizontes – óptima V5.0.md",
+     "linea": 31
+    }
+   ]
+  },
+  {
+   "clase": "c",
+   "nivel": "INFO",
+   "codigo": "CITA_EN_CONTEXTO_AJENO",
+   "id": "F12",
+   "mensaje": "F12 aparece como notación dentro de una fórmula: no se cuenta como cita",
+   "ubicaciones": [
+    {
+     "archivo": "02_System_prompts/System prompt - Analista de Materias Primas - Versión óptima V5.0.md",
+     "linea": 81
+    },
+    {
+     "archivo": "02_System_prompts/System prompt - Analista de Materias Primas - Versión óptima V5.0.md",
+     "linea": 81
+    },
+    {
+     "archivo": "02_System_prompts/System prompt - Analista de Materias Primas - Versión óptima V5.0.md",
+     "linea": 111
+    },
+    {
+     "archivo": "02_System_prompts/System prompt - Analista de Materias Primas - Versión óptima V5.0.md",
+     "linea": 111
+    }
+   ]
+  },
+  {
+   "clase": "c",
+   "nivel": "INFO",
+   "codigo": "CITA_EN_CONTEXTO_AJENO",
+   "id": "F31",
+   "mensaje": "F31 aparece como código JEL de clasificación de la literatura económica: no se cuenta como cita",
+   "ubicaciones": [
+    {
+     "archivo": "02_System_prompts/System prompt - Documentador para el Analizador - Versión óptima V5.0.md",
+     "linea": 368
+    }
+   ]
+  },
+  {
+   "clase": "d",
+   "nivel": "ERROR",
+   "codigo": "FICHA_CITADA_INEXISTENTE",
+   "id": "FX-MC10-003",
+   "mensaje": "Se cita la ficha FX-MC10-003, que no está en el Catálogo",
+   "ubicaciones": [
+    {
+     "archivo": "05_Archivos_operativos/Registro de cálculos del Motor (esquema V2.0).md",
+     "linea": 92
+    }
+   ]
+  },
+  {
+   "clase": "d",
+   "nivel": "ERROR",
+   "codigo": "CATALOG_VERSION_LITERAL",
+   "id": "catalog_version 4.0",
+   "mensaje": "El código escribe `catalog_version` 4.0 en 1 sitio(s) y el Catálogo vigente es V5.0 (CATALOG_VERSION = 5.0)",
+   "ubicaciones": [
+    {
+     "archivo": "11_Ejecutor/bloque_a/evaluador.py",
+     "linea": 491
+    }
+   ]
+  },
+  {
+   "clase": "d",
+   "nivel": "AVISO",
+   "codigo": "MENCION_OTRA_VERSION",
+   "id": "Catálogo V4.0",
+   "mensaje": "8 menciones a la versión 4.0 del Catálogo («Catálogo V4.0» o `catalog_version` 4.0; 6 en 02_System_prompts/); el vigente es V5.0",
+   "ubicaciones": [
+    {
+     "archivo": "02_System_prompts/System prompt - MC-01 Fundamentos cuantitativos y estadística - Versión óptima V5.0.md",
+     "linea": 23
+    },
+    {
+     "archivo": "02_System_prompts/System prompt - MC-01 Fundamentos cuantitativos y estadística - Versión óptima V5.0.md",
+     "linea": 240
+    },
+    {
+     "archivo": "02_System_prompts/System prompt - MC-02 Series temporales, tendencias, regímenes y volatilidad - Versión óptima V5.0.md",
+     "linea": 213
+    },
+    {
+     "archivo": "02_System_prompts/System prompt - MC-03 Econometría, causalidad y macroeconomía cuantitativa - Versión óptima V5.0.md",
+     "linea": 196
+    },
+    {
+     "archivo": "02_System_prompts/System prompt - MC-04 Crecimiento, difusión y prospectiva cuantitativa - Versión óptima V5.0.md",
+     "linea": 189
+    },
+    {
+     "archivo": "02_System_prompts/System prompt - MC-05 Simulación estocástica y escenarios - Versión óptima V5.0.md",
+     "linea": 191
+    },
+    {
+     "archivo": "03_Funciones/Funciones, tareas y cometidos – Motor de Cálculo Avanzado para el Analizador de Tendencias de Inversión – óptima V5.0.md",
+     "linea": 23
+    },
+    {
+     "archivo": "05_Archivos_operativos/Registro de cálculos del Motor (esquema V2.0).md",
+     "linea": 92
+    }
+   ]
+  },
+  {
+   "clase": "d",
+   "nivel": "AVISO",
+   "codigo": "MENCION_OTRA_VERSION_CODIGO",
+   "id": "Catálogo V4.0 (código)",
+   "mensaje": "1 mención(es) a «Catálogo V4.0» en comentarios o docstrings del código; el vigente es V5.0",
+   "ubicaciones": [
+    {
+     "archivo": "11_Ejecutor/bloque_a/motor/operaciones.py",
+     "linea": 1
+    }
+   ]
+  },
+  {
+   "clase": "d",
+   "nivel": "INFO",
+   "codigo": "CITA_EN_CONTEXTO_AJENO",
+   "id": "IDX-FICT-001",
+   "mensaje": "IDX-FICT-001 aparece como valor del campo JSON «afirmacion», que no es el de una ficha: no se cuenta como cita",
+   "ubicaciones": [
+    {
+     "archivo": "05_Archivos_operativos/Registro de pronósticos congelados (esquema V2.0).md",
+     "linea": 132
+    }
+   ]
+  },
+  {
+   "clase": "d",
+   "nivel": "INFO",
+   "codigo": "CITA_EN_CONTEXTO_AJENO",
+   "id": "IDX-FICT-001",
+   "mensaje": "IDX-FICT-001 aparece como valor del campo JSON «serie_ht01», que no es el de una ficha: no se cuenta como cita",
+   "ubicaciones": [
+    {
+     "archivo": "05_Archivos_operativos/Registro de cálculos del Motor (esquema V2.0).md",
+     "linea": 94
+    },
+    {
+     "archivo": "05_Archivos_operativos/Registro de oportunidades (esquema V3.0).md",
+     "linea": 130
+    },
+    {
+     "archivo": "05_Archivos_operativos/Registro de pronósticos congelados (esquema V2.0).md",
+     "linea": 133
+    }
+   ]
+  },
+  {
+   "clase": "d",
+   "nivel": "INFO",
+   "codigo": "CITA_EN_CONTEXTO_AJENO",
+   "id": "IDX-FICT-001",
+   "mensaje": "IDX-FICT-001 aparece como valor del campo JSON «simbolo», que no es el de una ficha: no se cuenta como cita",
+   "ubicaciones": [
+    {
+     "archivo": "05_Archivos_operativos/Registro de oportunidades (esquema V3.0).md",
+     "linea": 130
+    }
+   ]
+  },
+  {
+   "clase": "e",
+   "nivel": "ERROR",
+   "codigo": "REF_INEXISTENTE",
+   "id": "RF-0123",
+   "mensaje": "Se cita RF-0123, que no tiene entrada en 05_Archivos_operativos/",
+   "ubicaciones": [
+    {
+     "archivo": "02_System_prompts/System prompt - Evaluador de Previsiones y Aprendizaje - Versión óptima V5.0.md",
+     "linea": 116
+    }
+   ]
+  },
+  {
+   "clase": "e",
+   "nivel": "AVISO",
+   "codigo": "REF_FORMA_DISTINTA",
+   "id": "RF-1",
+   "mensaje": "RF-1 no tiene la forma de las entradas RF- (4 cifras): probablemente es otro identificador",
+   "ubicaciones": [
+    {
+     "archivo": "02_System_prompts/System prompt - Auditor - Versión óptima V5.0.md",
+     "linea": 459
+    }
+   ]
+  }
+ ]
+}

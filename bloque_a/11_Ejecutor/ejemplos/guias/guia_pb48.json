@@ -1,0 +1,13 @@
+{
+ "fecha_aplicacion": "2026-06-05",
+ "items": [
+  {"tipo": 2, "origen": ["LEC-2026-0901"],
+   "que_cambia": "Omitir la segunda pasada en banda marginal para ahorrar",
+   "donde_se_comprueba": "campo segunda_pasada de las opciones en F3",
+   "como_se_sabe": "consumo de AG-02 menor durante 4 ciclos"},
+  {"tipo": 2, "origen": ["LEC-2026-0902"],
+   "que_cambia": "En la integración, cita primero el régimen macro y después los factores dominantes",
+   "donde_se_comprueba": "campo lectura_conjunto del retorno de CT-05",
+   "como_se_sabe": "revisión del Auditor sin hallazgos de orden durante 4 ciclos"}
+ ]
+}

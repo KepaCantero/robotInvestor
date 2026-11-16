@@ -400,6 +400,13 @@ clusteres: {umbral_rho: 0.7, ventana_semanas: 156, min_semanas_proxy: 52}
 # Legibilidad mínima del informe visual (Fernández-Huerta; control C12 de HT-09, Anexo A)
 redaccion: {umbral_fh: 70}
 
+# Guías de mejora del Orquestador (CT-18, tipos 1 y 2; T-158). Origen: prompt del Orquestador 6.9, «Máximo 10 hallazgos y
+# 8 ítems por versión de guía» y «caducidad (por defecto, 2 trimestres)». Una guía que los pasa no se emite.
+guias_orquestador:
+  max_items_por_version: 8
+  max_hallazgos_por_version: 10
+  caducidad_por_defecto_meses: 6
+
 auditoria:
   en_vivo: true
   en_backtest: false

@@ -100,6 +100,9 @@ bloque-a --datos DATOS --estado ./estado credencial solicitar --servicio "API de
 CLAVE=… bloque-a --datos DATOS --estado ./estado credencial depositar --crd CRD-2026-0001 --valor-desde-entorno CLAVE   # el Broker, fuera de banda
 bloque-a --datos DATOS --estado ./estado credencial responder --crd CRD-2026-0002 --respuesta DENEGADA
 bloque-a --datos DATOS --estado ./estado credencial estado|recordatorios
+# T-158 · Guías de mejora del Orquestador (CT-18): emitir una guía (el Orquestador) y ver su estado en HA
+bloque-a --datos DATOS --estado ./estado guia emitir --receptor AG-02 --json ejemplos/guias/guia_pb48.json
+bloque-a --datos DATOS --estado ./estado guia listar
 # Backtest
 bloque-a --datos DATOS --universo MI_UNIVERSO.csv --salida ./bt --cliente anthropic \
          backtest --desde 2026-07-03 --hasta 2026-12-25 --frecuencia semanal [--clases RV,RF] [--anonimizar]
@@ -195,6 +198,7 @@ Las salidas reales del modelo serán más largas que las simuladas; tómelo como
 - **H5 y horizonte principal.** La tabla 8.3 incluye H5 (décadas). En los tipos con H5 «Sí» (RV, MP, IDX, ALT) el mock ofrece H5 como horizonte secundario. El PRG H5 se congela **sin probabilidad interna** (solo banda) y con **3 hitos HIT-** (a 12, 30 y 54 meses; `h5.meses_hitos`), cada uno un PRG ordinario de horizonte H4 que el Evaluador resuelve en su fecha; `Evaluador.estado_h5` deriva `EN_CURSO_CONFORME`, `DESVIADO` o `INVALIDADO` y la tasa de hitos cumplidos por tipo. Cada opción lleva `naturaleza_inversion` (la del Analista si es válida; si no, por defecto por tipo: MON `LIQUIDEZ`, DER `PRIMA_RIESGO`, ALT `ESTRUCTURAL`, resto `CICLICA`) y un `horizonte_principal`: el que declara el Analista (con su `justificacion_horizonte`) si está entre los ofrecidos; si no lo declara, el ejecutor propone uno coherente con la naturaleza (y solo si la naturaleza tampoco la declaró el Analista la ajusta al horizonte). HT-09 lo valida (C17, C18) y bloquea lo incoherente sin justificar (T-53, CS-01). Los hitos H5 se excluyen de las métricas, los certificados y el historial de aciertos: se evalúan aparte en `estado_h5` (T-53, CA-08).
 - **Consultas al Broker (CT-23).** `consulta-broker` registra las CNS- en F5 (máx. 3 por RUN-, agrupación automática), vigila plazos y detecta consultas recurrentes (CT-22 `CONSULTA_RECURRENTE`). En el F0 de cada ciclo, las vencidas pasan a `VENCIDA` y una `BLOQUEANTE` sin respuesta **pausa** los tipos de activo afectados (limitación declarada); los supuestos de las pendientes o vencidas viajan en `supuestos_declarados` del paquete y del informe técnico. Los plazos se aceptan solo en ISO 8601 (con hora y zona opcionales) o como `date`; un número o un booleano se rechaza (T-93). Una consulta guardada con un plazo que no se lee o sin plazo (estado de otra versión o manipulado) se da por vencida con una incidencia DATOS en HA, y así una `BLOQUEANTE` deja de pausar sus tipos de activo (T-93, H-38; T-103, H-43).
 - **Credenciales (CT-25).** `credencial` registra las CRD- en F5 sin valores; la bóveda simulada (`<estado>/boveda/`, `secretos.json` con permisos 0600) solo devuelve alias y estado; una respuesta del Broker que traiga el valor se rechaza íntegra y se pide su depósito y renovación; las denegadas quedan como limitación de servicio en F10.
+- **Guías de mejora del Orquestador (CT-18, T-158).** `guia emitir` (o `Bloque.guias.emitir`) valida el cuerpo contra `guias.ESQUEMA_CT18_GUIA` y los límites de `guias_orquestador` (8 ítems y 10 hallazgos por versión; caducidad por defecto de 6 meses), lo envía por la mensajería (AG-18 → receptor) y lo deja en HA como GUI- `ISSUED` con su acuse; la versión anterior del agente pasa a `SUPERSEDED`. En el F0 de cada run el receptor revisa sus guías (control doble del prompt del Orquestador, 6.8 y 6.9): un ítem que relaja un control o una regla, que es de tipo 3 o que pide credenciales o cambiar un prompt o un contrato no se aplica (R23), deja un COR- y un P3- (`PENDING_OPERATOR`, cola de tipo 3) en HA y el Orquestador lo retira (versión nueva con el resto o `RETIRADA`). Los ítems válidos, vigentes y sin caducar llegan al contexto del agente receptor (`contexto["guias"]`) y el RUN de F5 anota `guias_aplicadas`; nunca llegan a HT-03, a las puertas ni a G3 (PB-48).
 - **Seguimiento encargado (CT-24, C6, F11).** `seguimiento` gestiona los encargos en F11 (propietario AG-01) y ejecuta los ciclos vencidos: revisión ligera **determinista** (delta del indicador frente a 1,5 σ semanales, distancia a la invalidación, catalizadores, T/E/A/RK reconstruidos con HT-03 y umbrales de F10, pronósticos e hitos abiertos), una recomendación, informe breve (.md) y JSON en `Informes de seguimiento/`, validados con HT-09 (`validar_seguimiento`) y, en ejecución, con el esquema JSON V5.1; un informe bloqueado va a `_bloqueados/<RUN>/` y no a la carpeta de entrega (T-53, CA-03); RUN- de tipo `SEGUIMIENTO` en F5 (`tipo_entrada: RUN_C6`, para no mezclarse con los RUN de C1–C3). Estado de madurez: implementado sin llamada al Analista de tipo de activo (el CT-06 de fase SEGUIMIENTO queda registrado).
 
 ## 10. Decisiones de diseño relevantes
@@ -217,10 +221,11 @@ Las salidas reales del modelo serán más largas que las simuladas; tómelo como
   bloque_a/
     llm.py (Anthropic, Mock, Replay) · mock_respuestas.py · prompts.py · contratos.py · agentes.py · consumo.py
     almacen.py · orquestacion.py · sintesis.py · redaccion.py · evaluador.py · backtest.py · cli.py
-    referencias.py · anonimizacion.py · configuracion.py · interfaz_broker.py (CT-23, CT-25) · seguimiento.py (CT-24, C6, F11)
+    referencias.py · anonimizacion.py · configuracion.py · interfaz_broker.py (CT-23, CT-25) · seguimiento.py (CT-24, C6, F11) · guias.py (CT-18, T-158)
     cadena_b.py (T-142: petición CT-B-01 al Bloque B desde una opción, en el papel del Broker; vuelta CT-04)
     motor/ (operaciones.py, evaluacion.py, servicio.py)
-    herramientas/ (ht01_datos, ht01_boveda, ht02, ht03, ht04_graficos, ht05_planificador, ht06_indice, ht07, ht08_monitor, ht09, referencia/)
+    herramientas/ (ht01_datos, ht01_boveda, ht02, ht03, ht04_graficos, ht05_planificador, ht06_indice, ht07, ht08_monitor, ht09, referencia/;
+                   verificador_ids: consistencia de identificadores corpus ↔ código, T-157)
   tests/ (pytest: test_unitarias, test_integracion, test_autocritica, test_v5, test_v51; MAPA_PLAN_DE_PRUEBAS.md; RESULTADOS.txt;
          goldens/ y goldens_ct.py: formatos congelados de los contratos CT, T-114; la regla de re-congelado, en tests/goldens/README.md)
   ejemplos/datos_sinteticos/ · ejemplos/peticiones/
@@ -304,3 +309,21 @@ El Bloque A no habla con el Bloque B: el Broker reenvía el `paquete_para_bloque
 
 Las decisiones están en INC-T142-01 (`docs/incidencias.md`, en la raíz). De punta a punta, con los dos ejecutores simulados:
 `.venv/bin/python .docs/scripts/cadena_a_b.py [--sonda-sin-correspondencia]`, desde la raíz del repositorio. Desde T-150, todo lo que escribe en `resumen.json` y lo que imprime pasa por `sin_datos_protegidos` (el error de un ejecutor, antes de recortarlo), y un `--config-a` o un `paquete_json` que no se leen terminan con un mensaje sin su contenido y el código 1.
+
+## Verificador de identificadores (T-157, Fase 0, 15-11-2026)
+
+Mide qué identificadores están desincronizados entre el corpus vigente del Bloque A y el código. Desde `bloque_a/11_Ejecutor`:
+
+```bash
+../../.venv/bin/python -m bloque_a.herramientas.verificador_ids [--json RUTA] [--md RUTA] [--auditoria ../../docs/auditoria_ids_bloque_a.md]
+```
+
+- Clases: (a) contratos CT frente a §6.1 y a `contratos.py`; (b) reglas R frente a §1; (c) archivos F frente a §5.1, con el
+  archivo real de cada código por su H1; (d) fichas del Catálogo frente a `FICHAS_CATALOGO`, `IMPLEMENTADAS` y `SERVICIOS_CT10`
+  (IMPLEMENTADO, SOLO_CATALOGO, SOLO_CODIGO, ID_DISTINTO), la madurez del índice §4 y las menciones a otra versión del Catálogo
+  (también en los `.py` del paquete); (e) referencias RF/TA/TM/TF/ANA-DOC/DOC-MOT de prompts y funciones frente a
+  `05_Archivos_operativos`; (f) puertas PS frente a §9.3.
+- El Documento 0 y el Catálogo se buscan por patrón; con cero o más de uno falla cerrado. No lee `99_Historico*`.
+- Salida: 0 sin errores, 1 con errores, 2 si falla cerrado. El JSON se valida contra `ESQUEMA_INFORME` antes de escribirse.
+- Informe vigente y decisiones propuestas: `docs/auditoria_ids_bloque_a.md` (en la raíz); criterios: INC-T157-01 de
+  `docs/incidencias.md`. Pruebas: `tests/test_t157_verificador_ids.py`.

@@ -46,9 +46,7 @@ from .configuracion import (
 from .consumo import Contabilidad, Presupuesto, ReservaLlamada, TramoPresupuesto
 from .contratos import (
     AGENTE_CLASE,
-    ESQUEMAS,
     Mensajeria,
-    contiene_credenciales,
     sanear_contenido_externo,
     sanear_estructura,
 )
@@ -57,13 +55,13 @@ from .evaluador import (
     motivo_pronostico_fuente_no_registrable,
     variables_nivel,
 )
+from .guias import Guias
 from .herramientas import ht03, ht09
 from .herramientas.ht01_datos import (
     DatosInvalidos,
     DatosNoDisponibles,
     FugaDeInformacion,
 )
-from .herramientas.ht05_planificador import fecha_resolucion
 from .herramientas.ht06_indice import (
     RE_ID,
     CacheResultados,
@@ -197,6 +195,8 @@ class Bloque:
         self.consultas = ConsultasBroker(self)
         self.credenciales = Credenciales(self, Path(carpeta_estado) / "boveda")
         self.seguimientos = Seguimientos(self)
+        # T-158: guías de mejora del Orquestador (CT-18); el receptor las revisa al empezar cada run (R23)
+        self.guias = Guias(self)
 
     # ====================================================================================
     # Utilidades
@@ -265,6 +265,9 @@ class Bloque:
                                     ampliar=lambda est: self._solicitar_ampliacion(presupuesto, bolsa, est, run_id,
                                                                                    (fase or contrato) if control else fase, control))
         ctx = self._contexto(as_of, run_id, clase)
+        guias = self.guias.para(agente, as_of, run_id)   # T-158: solo los ítems revisados y vigentes del agente (CT-18)
+        if guias:
+            ctx["guias"] = guias
         try:
             r = self.agentes.invocar(agente, contrato, self._vista(mensaje), esquema, instrucciones, self._vista(ctx), run_id,
                                      clase, fase, permitir_web, guarda=guarda)
@@ -572,6 +575,9 @@ class Bloque:
         as_of = self.fijar_fecha(instante)
         run_id = self.almacen.nuevo_id("RUN")
         limitaciones: list[str] = []
+        # T-158 (F0): el receptor revisa las guías CT-18 antes de aplicarlas; un ítem que contradice una regla no se aplica,
+        # queda un COR- y un P3- en HA y el Orquestador lo retira (R23, PB-48)
+        self.guias.cargar(as_of, run_id)
         # C5 primero (no bloquea): resolución, métricas, certificados, lecciones
         try:
             res_eval = self.evaluador.ciclo(as_of, run_id)
@@ -1995,7 +2001,9 @@ class Bloque:
             "g3": resultado.get("g3_entregables") or resultado.get("g3"), "estado": resultado["estado"],
             "entrega": resultado.get("entrega", "ENTREGADA"), "limitaciones": paquete.get("limitaciones", []),
             "sombra": {c: s["sombra"] for c, s in seleccion.items() if s.get("sombra")},
-            "ablacion": {c: s.get("ablacion") for c, s in seleccion.items() if s.get("ablacion")}})
+            "ablacion": {c: s.get("ablacion") for c, s in seleccion.items() if s.get("ablacion")},
+            # T-158: guías CT-18 aplicadas por agente («el agente registra la guia_id aplicada», 6.9); solo si hubo alguna
+            **({"guias_aplicadas": ap} if (ap := self.guias.aplicadas(run_id)) else {})})
         sombras = {c: s["sombra"] for c, s in seleccion.items() if s.get("sombra")}
         if sombras:
             self.almacen.escribir("F6", "AG-20", {"tipo_entrada": "SOMBRA", "id": f"SOM-{run_id}", "run_id": run_id, "comparacion": sombras,
