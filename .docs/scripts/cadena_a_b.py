@@ -32,6 +32,10 @@ T-150 (QA r01 de T-149): lo que se escribe en `resumen.json` y lo que se imprime
 ejecutor se limpia antes de recortarlo (H-02); un `--config-a` que no se lee (no existe, YAML roto, no es un
 diccionario) o un `paquete_json` que no se lee (no existe, no es JSON, no es un objeto) terminan con un mensaje sin su
 contenido y el código 1, sin ejecutar ni enviar nada más.
+
+T-152 (QA r01 de T-150, O-02): lo mismo con los que se leen pero no tienen la forma que se recorre (una correspondencia
+con símbolos o claves que no son textos; un paquete con `clases` que no es un objeto, una opción sin `opp_id` de texto o
+un `paquete_para_bloque_B` que no es una lista): antes, una traza de `TypeError`, `KeyError` o `AttributeError`.
 """
 from __future__ import annotations
 
@@ -120,6 +124,34 @@ def _leer_yaml_extra(ruta: str) -> None:
     corr = (sec or {}).get("correspondencia_ambitos")
     if corr is not None and not isinstance(corr, dict):
         raise ValueError(f"«cadena_b.correspondencia_ambitos» no es un diccionario sino {type(corr).__name__}")
+    # T-152 (QA r01 de T-150, O-02): un símbolo o una clave que no son textos (una lista, un diccionario, un número junto
+    # a un texto) daban una traza de `TypeError` al ordenar las claves del Bloque B
+    raros = sorted({type(x).__name__ for kv in (corr or {}).items() for x in kv if not isinstance(x, str)})
+    if raros:
+        raise ValueError(f"«cadena_b.correspondencia_ambitos» tiene símbolos o claves que no son textos ({', '.join(raros)})")
+
+
+def _forma_paquete(paquete: dict) -> None:
+    """T-152 (QA r01 de T-150, O-02): el paquete del Bloque A, ya leído, tiene la forma que se recorre: `clases` es un
+    diccionario de clases (diccionarios) con `opciones` en lista, cada opción que es un diccionario tiene un `opp_id` de
+    texto y `paquete_para_bloque_B` es una lista. Si no, `TypeError` con dónde falla y el tipo, sin el contenido (antes,
+    una traza de `KeyError` o de `AttributeError`). Lo demás lo mira el esquema al construir cada petición."""
+    clases = paquete.get("clases")
+    if clases is not None and not isinstance(clases, dict):
+        raise TypeError(f"«clases» no es un objeto sino {type(clases).__name__}")
+    for n, clase in enumerate((clases or {}).values(), 1):
+        if clase is not None and not isinstance(clase, dict):
+            raise TypeError(f"la clase {n} no es un objeto sino {type(clase).__name__}")
+        opciones = (clase or {}).get("opciones")
+        if opciones is not None and not isinstance(opciones, list):
+            raise TypeError(f"las opciones de la clase {n} no son una lista sino {type(opciones).__name__}")
+        for m, o in enumerate(opciones or [], 1):
+            if isinstance(o, dict) and not isinstance(o.get("opp_id"), str):
+                raise TypeError(f"la opción {m} de la clase {n} no tiene un «opp_id» de texto "
+                                f"({type(o.get('opp_id')).__name__})")
+    entradas = paquete.get("paquete_para_bloque_B")
+    if entradas is not None and not isinstance(entradas, list):
+        raise TypeError(f"«paquete_para_bloque_B» no es una lista sino {type(entradas).__name__}")
 
 
 def _escribir(ruta: Path, datos: dict) -> Path:
@@ -210,6 +242,7 @@ def main(argv: list[str] | None = None) -> int:
             paquete = json.loads(Path(ruta_paquete).read_text(encoding="utf-8"))
             if not isinstance(paquete, dict):
                 raise TypeError(f"no es un objeto JSON sino {type(paquete).__name__}")
+            _forma_paquete(paquete)   # T-152 (O-02): leído, pero sin la forma que se recorre
         except (OSError, UnicodeDecodeError, json.JSONDecodeError, TypeError) as e:
             motivo = str(e) if type(e) is TypeError else _motivo_lectura(e)
             resumen["sin_envio"] = {"motivo": "PAQUETE_ILEGIBLE", "detalle": f"el paquete del Bloque A no se lee ({motivo})"}
