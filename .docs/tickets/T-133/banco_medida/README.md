@@ -4,7 +4,7 @@
 
 | Campo | Valor |
 | --- | --- |
-| Estado | EN QA (ronda r02) |
+| Estado | CERRADO (QA r02 APTO, 16-11-2026) |
 | Pieza | `.docs/scripts/banco_medida.py` y sus pruebas (fuera de los bloques y del marco común) |
 | Planifica · implementa · QA | claude · claude · un revisor nuevo sin contexto |
 | Aprobación del operador | 2026-11-15: «Después del T-97 quiero que sigas terminando los tickets que se han generado de los hallazgos de estos tickets» |
@@ -40,3 +40,4 @@ Cerrar los hallazgos medios y bajos que dejó la QA r03 de T-94 (`.docs/tickets/
 - 2026-11-15 · EN QA · correcciones de H-21 a H-29 en el banco 0.4.0, con sus pruebas
 - 2026-11-15 · NO APTO · QA r01 (revisor nuevo, base `bdeb3d8`, gate 12/12): CA-2 (datos cambiados abrían otro experimento), H-01 a H-03 medios, H-04 a H-09 bajos; sin altos
 - 2026-11-15 · EN QA · Ronda r02 (banco 0.5.0): datos como variante, huella de lo que A lee, verificar con avisos, informe con la plantilla, consumo estricto, nivel ≥ 0,90
+- 2026-11-16 · CERRADO · QA r02 APTO (revisor nuevo, base `e08081e`, gate 12/12): CA-1 a CA-4; H-01 a H-04 y H-09 corregidos; restos y H-10 a H-17 (un medio y bajos) a la deuda como T-170

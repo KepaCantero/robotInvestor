@@ -17,3 +17,5 @@ Actualización 2 (15-11-2026, orden del operador): después de T-97, seguir con 
 Actualización 3 (15-11-2026): el ticket de hallazgos de T-97 es T-155.
 
 Actualización 4 (15-11-2026, orden del operador): «Cuando pase la T-133 a APTO quiero que pares hasta que yo te indique lo contrario». Tras cerrar T-133, no empezar T-137, T-153 ni T-155 sin su orden.
+
+Estado al parar (16-11-2026): T-133 cerrado (QA r02 APTO); sus hallazgos en T-170. Pendientes, sin empezar hasta nueva orden: QA de T-137 (ya implementado y subido), T-153, T-155 y T-170.
