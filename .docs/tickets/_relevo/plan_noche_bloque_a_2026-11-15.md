@@ -1,6 +1,6 @@
 # Plan de la noche del 15 al 16-11-2026 · terminar de implementar el Bloque A
 
-Lo pidió el operador el 15-11-2026: tareas autónomas, solo para acabar de implementar el Bloque A. Cada tarea es un ticket que pasa por las cuatro fases y no cuenta como hecha sin su QA APTO. Si la QA deja hallazgos medios o bajos, van a un ticket nuevo que se hace la misma noche. El número de agentes no tiene tope (el operador lo quitó el 15-11): van a la vez los que no se crucen en sus ficheros. Lo que limita es el uso de la API, que, si salta, los para todos. No se tocan otros bloques.
+Lo pidió el operador el 15-11-2026: tareas autónomas, solo para acabar de implementar el Bloque A. Cada tarea es un ticket que pasa por las cuatro fases y no cuenta como hecha sin su QA APTO. Si la QA deja hallazgos medios o altos, van a un ticket nuevo que se hace la misma noche. Desde el 16-11, por decisión del operador, los bajos no abren ticket ni se aplazan a la deuda: se subsanan en el mismo ticket antes de cerrarlo (ronda de cierre), y el mismo revisor comprueba esos arreglos. El número de agentes no tiene tope (el operador lo quitó el 15-11): van a la vez los que no se crucen en sus ficheros. Lo que limita es el uso de la API, que, si salta, los para todos. No se tocan otros bloques.
 
 **Fuera del plan:**
 - el modo sombra, porque falta la clave de la API;
