@@ -19,7 +19,7 @@
   },
   "codigo": {
    "bloque_a/contratos.py": "b0316aa4078b65cdb29fa1cd4ade690c39211a1a0aff0e102599f2761b2796b1",
-   "bloque_a/motor/servicio.py": "6e18a97ff27111107635235be13acbdc5d2fcd72f6987302e6188c04ee0d312d"
+   "bloque_a/motor/servicio.py": "97c2b3ac80d64087a37e309d80185e843fbbe5b5b131de29b39024777882f7f0"
   },
   "md_escaneados": 88,
   "huella_corpus": "b73cfc2117bdc954859e0e743a9b35e82e31c39cf121861c0d670af039ff65b0",
@@ -57,9 +57,9 @@
    "INFO": 9
   },
   "d": {
-   "ERROR": 2,
-   "AVISO": 2,
-   "INFO": 3
+   "ERROR": 1,
+   "AVISO": 1,
+   "INFO": 2
   },
   "e": {
    "ERROR": 1,
@@ -72,7 +72,7 @@
    "INFO": 0
   }
  },
- "errores": 3,
+ "errores": 2,
  "contratos": {
   "titulo": "6.1 Contratos en vigor (CT-01 a CT-25)",
   "definidos_doc0": [
@@ -1930,7 +1930,7 @@
    "nivel": "INFO",
    "codigo": "CITA_EN_CONTEXTO_AJENO",
    "id": "F02",
-   "mensaje": "F02 aparece como abreviatura de la función AUD-F02 del mismo documento: no se cuenta como cita",
+   "mensaje": "F02 aparece como abreviatura de la función AUD-F02 del mismo documento, en el rango F02–F12: no se cuenta como cita",
    "ubicaciones": [
     {
      "archivo": "03_Funciones/Funciones, tareas y cometidos – Auditor – óptima V5.0.md",
@@ -1943,7 +1943,7 @@
    "nivel": "INFO",
    "codigo": "CITA_EN_CONTEXTO_AJENO",
    "id": "F02",
-   "mensaje": "F02 aparece como abreviatura de la función PROS-F02 del mismo documento: no se cuenta como cita",
+   "mensaje": "F02 aparece como abreviatura de la función PROS-F02 del mismo documento, en el rango F02–F12: no se cuenta como cita",
    "ubicaciones": [
     {
      "archivo": "03_Funciones/Funciones, tareas y cometidos – Analista de Prospectiva y Horizontes – óptima V5.0.md",
@@ -1956,7 +1956,7 @@
    "nivel": "INFO",
    "codigo": "CITA_EN_CONTEXTO_AJENO",
    "id": "F05",
-   "mensaje": "F05 aparece como abreviatura de la función ORQ-F05 del mismo documento: no se cuenta como cita",
+   "mensaje": "F05 aparece como abreviatura de la función ORQ-F05 del mismo documento, en el rango ORQ-F03 a F05: no se cuenta como cita",
    "ubicaciones": [
     {
      "archivo": "03_Funciones/Funciones, tareas y cometidos – Orquestador técnico – óptima V5.0.md",
@@ -1969,7 +1969,7 @@
    "nivel": "INFO",
    "codigo": "CITA_EN_CONTEXTO_AJENO",
    "id": "F12",
-   "mensaje": "F12 aparece como abreviatura de la función AUD-F12 del mismo documento: no se cuenta como cita",
+   "mensaje": "F12 aparece como abreviatura de la función AUD-F12 del mismo documento, en el rango F02–F12: no se cuenta como cita",
    "ubicaciones": [
     {
      "archivo": "03_Funciones/Funciones, tareas y cometidos – Auditor – óptima V5.0.md",
@@ -1982,7 +1982,7 @@
    "nivel": "INFO",
    "codigo": "CITA_EN_CONTEXTO_AJENO",
    "id": "F12",
-   "mensaje": "F12 aparece como abreviatura de la función PROS-F12 del mismo documento: no se cuenta como cita",
+   "mensaje": "F12 aparece como abreviatura de la función PROS-F12 del mismo documento, en el rango F02–F12: no se cuenta como cita",
    "ubicaciones": [
     {
      "archivo": "03_Funciones/Funciones, tareas y cometidos – Analista de Prospectiva y Horizontes – óptima V5.0.md",
@@ -2043,19 +2043,6 @@
   },
   {
    "clase": "d",
-   "nivel": "ERROR",
-   "codigo": "CATALOG_VERSION_LITERAL",
-   "id": "catalog_version 4.0",
-   "mensaje": "El código escribe `catalog_version` 4.0 en 1 sitio(s) y el Catálogo vigente es V5.0 (CATALOG_VERSION = 5.0)",
-   "ubicaciones": [
-    {
-     "archivo": "11_Ejecutor/bloque_a/evaluador.py",
-     "linea": 491
-    }
-   ]
-  },
-  {
-   "clase": "d",
    "nivel": "AVISO",
    "codigo": "MENCION_OTRA_VERSION",
    "id": "Catálogo V4.0",
@@ -2097,36 +2084,10 @@
   },
   {
    "clase": "d",
-   "nivel": "AVISO",
-   "codigo": "MENCION_OTRA_VERSION_CODIGO",
-   "id": "Catálogo V4.0 (código)",
-   "mensaje": "1 mención(es) a «Catálogo V4.0» en comentarios o docstrings del código; el vigente es V5.0",
-   "ubicaciones": [
-    {
-     "archivo": "11_Ejecutor/bloque_a/motor/operaciones.py",
-     "linea": 1
-    }
-   ]
-  },
-  {
-   "clase": "d",
    "nivel": "INFO",
    "codigo": "CITA_EN_CONTEXTO_AJENO",
    "id": "IDX-FICT-001",
-   "mensaje": "IDX-FICT-001 aparece como valor del campo JSON «afirmacion», que no es el de una ficha: no se cuenta como cita",
-   "ubicaciones": [
-    {
-     "archivo": "05_Archivos_operativos/Registro de pronósticos congelados (esquema V2.0).md",
-     "linea": 132
-    }
-   ]
-  },
-  {
-   "clase": "d",
-   "nivel": "INFO",
-   "codigo": "CITA_EN_CONTEXTO_AJENO",
-   "id": "IDX-FICT-001",
-   "mensaje": "IDX-FICT-001 aparece como valor del campo JSON «serie_ht01», que no es el de una ficha: no se cuenta como cita",
+   "mensaje": "IDX-FICT-001 aparece como símbolo de una serie (valor de «serie_ht01» en 05_Archivos_operativos/Registro de cálculos del Motor (esquema V2.0).md:94), no una ficha: no se cuenta como cita",
    "ubicaciones": [
     {
      "archivo": "05_Archivos_operativos/Registro de cálculos del Motor (esquema V2.0).md",
@@ -2137,6 +2098,14 @@
      "linea": 130
     },
     {
+     "archivo": "05_Archivos_operativos/Registro de oportunidades (esquema V3.0).md",
+     "linea": 130
+    },
+    {
+     "archivo": "05_Archivos_operativos/Registro de pronósticos congelados (esquema V2.0).md",
+     "linea": 132
+    },
+    {
      "archivo": "05_Archivos_operativos/Registro de pronósticos congelados (esquema V2.0).md",
      "linea": 133
     }
@@ -2145,13 +2114,13 @@
   {
    "clase": "d",
    "nivel": "INFO",
-   "codigo": "CITA_EN_CONTEXTO_AJENO",
-   "id": "IDX-FICT-001",
-   "mensaje": "IDX-FICT-001 aparece como valor del campo JSON «simbolo», que no es el de una ficha: no se cuenta como cita",
+   "codigo": "FAMILIA_DESCONOCIDA",
+   "id": "WI-METH-001",
+   "mensaje": "WI-METH-001 tiene forma de ficha y su familia (WI) no es la de ninguna ficha del Catálogo ni del código: probablemente es otro identificador",
    "ubicaciones": [
     {
-     "archivo": "05_Archivos_operativos/Registro de oportunidades (esquema V3.0).md",
-     "linea": 130
+     "archivo": "05_Archivos_operativos/Registro de Fuentes para el Analizador de Tendencias de Inversión - V3.2.md",
+     "linea": 5594
     }
    ]
   },

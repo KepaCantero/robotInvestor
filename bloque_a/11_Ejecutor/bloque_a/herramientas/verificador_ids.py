@@ -29,6 +29,7 @@ from __future__ import annotations
 import argparse
 import hashlib
 import json
+import os
 import re
 import sys
 import unicodedata
@@ -65,7 +66,7 @@ RE_PS = re.compile(r"(?<![\w-])PS(\d{1,2})\b(?!-)")
 RE_REFERENCIA = re.compile(r"(?<![\w-])(RF-\d+|TA-\d+|TM-\d+|TF-\d+|ANA-DOC-\d+|DOC-MOT-\d+)\b(?!-)")
 RE_VERSION = re.compile(r"V(\d+(?:\.\d+)+)")
 RE_MENCION_CATALOGO = re.compile(r"Catálogo(?: de cálculos)?(?: del Motor)?[\s\-–]*(?:óptima\s+)?V(\d+(?:\.\d+)+)"
-                                 r'|"catalog_version"\s*:\s*"(\d+(?:\.\d+)+)"')
+                                 r'|"catalog_version"\s*:\s*"(\d+(?:\.\d+)+)"', re.IGNORECASE)   # r02, H-05: «catálogo v4.0»
 RE_ENCABEZADO = re.compile(r"^(#{1,6}) (.*)$")
 RE_ID_FICHA = r"[A-Z][A-Z0-9]*(?:-[A-Z0-9]+)*-\d{3}"
 RE_ENCABEZADO_FICHA = re.compile(rf"^### ({RE_ID_FICHA})(?=\s|$)")
@@ -74,11 +75,18 @@ RE_ENCABEZADO_FICHA = re.compile(rf"^### ({RE_ID_FICHA})(?=\s|$)")
 DISTANCIA_PARECIDO = 2
 # Contextos en los que un ID con forma de cita es otra cosa (cada uno se deduce del propio texto y se informa como INFO
 # CITA_EN_CONTEXTO_AJENO, con su ubicación; solo se consultan para citas que de otro modo serían error)
-RE_JEL = re.compile(r"\bJEL\b")
-RE_OPERADOR = re.compile(r"[−/+*=×]")
+# r02 (H-03): cada contexto excusa solo lo que lleva dentro, no la línea ni el documento enteros
+RE_LISTA_JEL = re.compile(r"\bJEL\b\s*[:(]?\s*((?:[A-Z]\d{1,2}(?:\s*[,;]\s*|\s*…\s*|\s+y\s+|\s*(?=\)))?)+)")  # solo R y F
+RE_OPERADOR = re.compile(r"[−/+*=×]")                                                  # fórmula: solo F (vencimientos)
 RE_FUNCION_LOCAL = re.compile(r"^\|\s*[A-Z]+-(F\d+)\s*\|")
-RE_CAMPO_JSON = re.compile(r'"([A-Za-z_][A-Za-z0-9_]*)"\s*:\s*"[^"]*$')
-CAMPOS_FICHA = ("ficha_id", "method_id", "operacion")   # campos de un mensaje CT-09 que llevan el ID de una ficha
+RE_RANGO_F = re.compile(r"(?<![\w-])(?:[A-Z]+-)?(F\d+)\s*(?:–|—|\ba\b)\s*(?:[A-Z]+-)?(F\d+)(?![\w-])")
+# r02 (H-02): una ficha no se excusa por estar en un valor JSON; sí un ID que el corpus declara como símbolo de una serie
+# (valor entero de uno de estos campos) y sus demás apariciones
+CAMPOS_SERIE = ("serie_ht01", "simbolo")
+RE_SIMBOLO_SERIE = re.compile(r'"(' + "|".join(CAMPOS_SERIE) + r')"\s*:\s*"([^"]+)"')
+# r02 (H-05): guiones Unicode que se escriben dentro de un ID (U+2010, U+2011) cuentan como «-»; la raya de rango (–) no
+GUIONES = str.maketrans({"\u2010": "-", "\u2011": "-"})
+RE_FORMA_FICHA = re.compile(r"(?<![\w-])([A-Z]{2,}(?:-[A-Z][A-Z0-9]*)+-\d{3})(?![\w-])")
 
 
 class EntradaInvalida(Exception):
@@ -117,17 +125,7 @@ class Codigo:
                               if any(ct.canal_permitido(c, e, r) for em, rc in pares for e in em for r in rc))
         base = Path(sv.__file__).resolve().parents[2]
         fuentes = {Path(str(m.__file__)).resolve().relative_to(base).as_posix(): _sha256(Path(str(m.__file__))) for m in (sv, ct)}
-        versiones: list[tuple[str, int, str, bool]] = []
-        for py in sorted(Path(sv.__file__).resolve().parents[1].rglob("*.py")):
-            if py.resolve() == Path(__file__).resolve() or "__pycache__" in py.parts:
-                continue   # el propio verificador cita versiones en sus patrones
-            try:
-                rel = py.resolve().relative_to(Path(raiz).resolve()).as_posix()
-            except ValueError:
-                rel = py.resolve().relative_to(base).as_posix()
-            for n, linea in enumerate(_leer(py).splitlines(), 1):
-                for m in RE_MENCION_CATALOGO.finditer(linea):
-                    versiones.append((rel, n, m.group(1) or m.group(2), m.group(2) is not None))
+        versiones = versiones_en_py(Path(sv.__file__).resolve().parents[1], Path(raiz), base)
         return cls(catalog_version=str(sv.CATALOG_VERSION), fichas_catalogo=fichas, manejadores=frozenset(sv.IMPLEMENTADAS),
                    servicios_ct10=frozenset(sv.SERVICIOS_CT10), documentadas_con_codigo=frozenset(sv.DOCUMENTADAS_CON_CODIGO),
                    alternativas=dict(sv.ALTERNATIVAS), ruta_catalogo=tuple(sv.RUTA_CATALOGO), canales=frozenset(ct.CANALES),
@@ -135,6 +133,23 @@ class Codigo:
                    campos_minimos=frozenset(ct.CAMPOS_MINIMOS), madurez_leida=dict(sv.madurez_catalogo(raiz)),
                    servibles=frozenset(f for f in sorted(universo) if sv.servible(f, raiz)), fuentes=fuentes,
                    versiones_en_codigo=tuple(versiones))
+
+
+def versiones_en_py(paquete: Path, raiz: Path, base: Path) -> list[tuple[str, int, str, bool]]:
+    """(archivo, línea, versión, es_literal) de cada versión del Catálogo escrita en los .py de `paquete` (salvo este módulo,
+    que las cita en sus patrones). El archivo va relativo a `raiz` (la del bloque) o, si no está debajo, a `base`."""
+    versiones: list[tuple[str, int, str, bool]] = []
+    for py in sorted(paquete.resolve().rglob("*.py")):
+        if py.resolve() == Path(__file__).resolve() or "__pycache__" in py.parts:
+            continue
+        try:
+            rel = py.resolve().relative_to(raiz.resolve()).as_posix()
+        except ValueError:
+            rel = py.resolve().relative_to(base.resolve()).as_posix()
+        for n, linea in enumerate(_leer(py).splitlines(), 1):
+            for m in RE_MENCION_CATALOGO.finditer(linea):
+                versiones.append((rel, n, m.group(1) or m.group(2), m.group(2) is not None))
+    return versiones
 
 
 # ----------------------------------------------------------------------------------------------- lectura del corpus
@@ -201,17 +216,26 @@ def _citas(docs: Iterable[Documento], patron: re.Pattern[str], formato: str = "{
     out: dict[str, list[Cita]] = {}
     for d in docs:
         for n, linea in enumerate(d.lineas, 1):
+            linea = linea.translate(GUIONES)   # misma longitud: las columnas no cambian
             for m in patron.finditer(linea):
                 out.setdefault(formato.format(*m.groups(), m.group(0)), []).append(Cita(d.rel, n, linea, m.start()))
     return out
 
 
-def _contexto_general(c: Cita) -> str | None:
-    if RE_JEL.search(c.texto):
-        return "código JEL de clasificación de la literatura económica"
-    for m in re.finditer(r"`([^`]*)`", c.texto):
-        if m.start() < c.inicio < m.end() and RE_OPERADOR.search(m.group(1)):
-            return "notación dentro de una fórmula"
+def _en_lista_jel(c: Cita) -> bool:
+    """La cita es uno de los códigos de la lista que sigue a «JEL» (no basta con que la línea diga «JEL»)."""
+    return any(m.start(1) <= c.inicio < m.end(1) for m in RE_LISTA_JEL.finditer(c.texto))
+
+
+def _en_formula(c: Cita) -> bool:
+    return any(m.start() < c.inicio < m.end() and RE_OPERADOR.search(m.group(1)) for m in re.finditer(r"`([^`]*)`", c.texto))
+
+
+def _contexto_r(x: str, c: Cita) -> str | None:
+    return "código JEL de clasificación de la literatura económica" if _en_lista_jel(c) else None
+
+
+def _sin_contexto(x: str, c: Cita) -> str | None:
     return None
 
 
@@ -337,7 +361,8 @@ class _Hallazgos:
 
 
 def _clave_id(x: str) -> tuple[Any, ...]:
-    return tuple(int(t) if t.isdigit() else t for t in re.split(r"(\d+)", x))
+    """Orden natural («F2» antes que «F10»); el empate («F2» y «F02») lo decide la cadena, no el orden de un set (r02, H-01)."""
+    return (tuple(int(t) if t.isdigit() else t for t in re.split(r"(\d+)", x)), x)
 
 
 def _resumen_citas(citas: Mapping[str, list[Cita]], id_: str) -> dict[str, int]:
@@ -399,7 +424,7 @@ def verificar(raiz: Path, codigo: Codigo | None = None) -> dict[str, Any]:
     _inexistentes(h, "a", "CT_INEXISTENTE", set(citas_ct) - set(ct_def), citas_ct,
                   lambda x: f"Se cita {x}, que no está en §6.1 del Documento 0"
                   + (" (el código sí le da canal)" if x in codigo.canales else " (tampoco lo define el código)"),
-                  lambda x, c: _contexto_general(c))
+                  _sin_contexto)
     for x in sorted(set(ct_def) - codigo.canales, key=_clave_id):
         h("a", "ERROR", "CT_SIN_CANAL", x, f"{x} está en §6.1 pero no en CANALES de contratos.py: R2 rechazaría todo mensaje")
     for x in sorted((codigo.canales & set(ct_def)) - codigo.canales_admitidos, key=_clave_id):
@@ -422,7 +447,7 @@ def verificar(raiz: Path, codigo: Codigo | None = None) -> dict[str, Any]:
     _comprobar_rango(h, "b", s1[0], _rango(s1[0], "R"), r_def, "§1", (rel_doc0, l1))
     citas_r = _citas(corpus, RE_R, "R{0}")
     _inexistentes(h, "b", "R_INEXISTENTE", set(citas_r) - set(r_def), citas_r,
-                  lambda x: f"Se cita {x}, que no está en §1 del Documento 0", lambda x, c: _contexto_general(c))
+                  lambda x: f"Se cita {x}, que no está en §1 del Documento 0", _contexto_r)
     reglas = {"titulo": s1[0].lstrip("# "), "definidas": r_def,
               "filas": [{"id": x, "en_doc0": x in r_def, **_resumen_citas(citas_r, x)}
                         for x in sorted(set(r_def) | set(citas_r), key=_clave_id)]}
@@ -480,8 +505,15 @@ def verificar(raiz: Path, codigo: Codigo | None = None) -> dict[str, Any]:
                 locales.setdefault(d.rel, {}).setdefault(m.group(1), x.split("|")[1].strip())
 
     def contexto_f(x: str, c: Cita) -> str | None:
-        local = locales.get(c.archivo, {}).get(x)
-        return f"abreviatura de la función {local} del mismo documento" if local else _contexto_general(c)
+        loc = locales.get(c.archivo, {})
+        for m in RE_RANGO_F.finditer(c.texto):   # «Resultados F02–F12», «ORQ-F03 a F05»: los dos extremos, funciones del documento
+            if m.start() <= c.inicio < m.end() and m.group(1) in loc and m.group(2) in loc:
+                return f"abreviatura de la función {loc[x]} del mismo documento, en el rango {m.group(0)}" if x in loc else None
+        if _en_lista_jel(c):
+            return "código JEL de clasificación de la literatura económica"
+        if _en_formula(c):
+            return "notación dentro de una fórmula"
+        return None
 
     _inexistentes(h, "c", "F_INEXISTENTE", set(citas_f) - set(inventario) - set(fases), citas_f,
                   lambda x: f"Se cita {x}, que no es un archivo de §5.1 ni una fase de §7.3", contexto_f)
@@ -503,7 +535,7 @@ def verificar(raiz: Path, codigo: Codigo | None = None) -> dict[str, Any]:
     _comprobar_rango(h, "f", s93[0], _rango(s93[0], "PS"), ps_def, "§9.3", (rel_doc0, l93))
     citas_ps = _citas(corpus, RE_PS, "PS{0}")
     _inexistentes(h, "f", "PS_INEXISTENTE", set(citas_ps) - set(ps_def), citas_ps,
-                  lambda x: f"Se cita {x}, que no está en §9.3 del Documento 0", lambda x, c: _contexto_general(c))
+                  lambda x: f"Se cita {x}, que no está en §9.3 del Documento 0", _sin_contexto)
     puertas = {"titulo": s93[0].lstrip("# "), "definidas": ps_def,
                "filas": [{"id": x, "en_doc0": x in ps_def, **_resumen_citas(citas_ps, x)}
                          for x in sorted(set(ps_def) | set(citas_ps), key=_clave_id)]}
@@ -645,7 +677,7 @@ def _fichas(h: _Hallazgos, cat: Documento, corpus: list[Documento], codigo: Codi
                 h("d", "ERROR", "ALTERNATIVA_SIN_FICHA", y, f"ALTERNATIVAS del código cita {y} ({k} → {v}), que no tiene ficha")
     # fichas citadas en el corpus (familias de los ID del Catálogo y del código)
     # la forma de los segmentos intermedios sale de los ID del Catálogo (hoy todos empiezan por letra: «FX-TREND-001»)
-    familias = sorted({x.split("-")[0] for x in cat_ids | del_codigo}, key=len, reverse=True)
+    familias = sorted({x.split("-")[0] for x in cat_ids | del_codigo}, key=lambda f: (-len(f), f))
     medio = r"[A-Z][A-Z0-9]*" if all(re.fullmatch(r"[A-Z][A-Z0-9]*", s) for x in cat_ids for s in x.split("-")[1:-1]) \
         else r"[A-Z0-9]+"
     re_cita = re.compile(r"(?<![\w-])((?:" + "|".join(map(re.escape, familias)) + rf")(?:-{medio})+-\d{{3}})(?![\w-])")
@@ -653,15 +685,35 @@ def _fichas(h: _Hallazgos, cat: Documento, corpus: list[Documento], codigo: Codi
     citas = {k: v for k, v in ((k, [c for c in v if not (c.archivo == rel_cat and l4 <= c.linea < l4 + len(s4))])
                                for k, v in _citas(corpus, re_cita).items()) if v}
 
+    simbolos: dict[str, tuple[str, str, int]] = {}   # ID → (campo, archivo, línea) donde se declara como símbolo de una serie
+    for d in corpus:
+        for n, linea in enumerate(d.lineas, 1):
+            for m in RE_SIMBOLO_SERIE.finditer(linea.translate(GUIONES)):
+                simbolos.setdefault(m.group(2), (m.group(1), d.rel, n))
+
     def contexto_d(x: str, c: Cita) -> str | None:
-        m = RE_CAMPO_JSON.search(c.texto[:c.inicio])
-        if m and m.group(1) not in CAMPOS_FICHA:
-            return f"valor del campo JSON «{m.group(1)}», que no es el de una ficha"
-        return _contexto_general(c)
+        if x in simbolos:
+            campo, archivo, n = simbolos[x]
+            return f"símbolo de una serie (valor de «{campo}» en {archivo}:{n}), no una ficha"
+        return None
 
     _inexistentes(h, "d", "FICHA_CITADA_INEXISTENTE", set(citas) - cat_ids, citas,
                   lambda x: f"Se cita la ficha {x}, que no está en el Catálogo"
                   + (f" (¿{p}?)" if (p := _mas_parecido(x, cat_ids)) else ""), contexto_d)
+    # r02 (H-05): forma de ficha con una familia que no es de ninguna ficha: ERROR si se parece a una del Catálogo, si no INFO
+    conocidas = set(familias)
+    otras = {k: v for k, v in ((k, [c for c in v if not (c.archivo == rel_cat and l4 <= c.linea < l4 + len(s4))])
+                               for k, v in _citas(corpus, RE_FORMA_FICHA).items() if k.split("-")[0] not in conocidas) if v}
+    for x in sorted(otras, key=_clave_id):
+        if x in simbolos:
+            continue
+        p = _mas_parecido(x, cat_ids)
+        if p:
+            h("d", "ERROR", "FICHA_CITADA_INEXISTENTE", x, f"Se cita {x}, con forma de ficha de una familia que no existe (¿{p}?)",
+              otras[x])
+        else:
+            h("d", "INFO", "FAMILIA_DESCONOCIDA", x, f"{x} tiene forma de ficha y su familia ({x.split('-')[0]}) no es la de "
+              "ninguna ficha del Catálogo ni del código: probablemente es otro identificador", otras[x])
     # menciones de una versión del Catálogo distinta de la vigente
     menciones: dict[str, list[tuple[str, int]]] = {}
     for d in corpus:
@@ -960,14 +1012,33 @@ def a_markdown(informe: Mapping[str, Any]) -> str:
     return "\n".join(md).rstrip() + "\n"
 
 
-def actualizar_auditoria(ruta: Path, markdown: str) -> None:
-    """Sustituye el bloque entre MARCA_INICIO y MARCA_FIN. Sin las dos marcas (una vez cada una y en orden), falla cerrado."""
+def auditoria_actualizada(ruta: Path, markdown: str) -> str:
+    """El documento con el bloque entre MARCA_INICIO y MARCA_FIN sustituido (sin escribir nada). Sin las dos marcas (una vez
+    cada una y en orden), falla cerrado."""
     texto = _leer(ruta)
     i, j = texto.find(MARCA_INICIO), texto.find(MARCA_FIN)
     if i < 0 or j < i or texto.count(MARCA_INICIO) != 1 or texto.count(MARCA_FIN) != 1:
         raise EntradaInvalida(f"{ruta.name}: faltan las marcas {MARCA_INICIO} … {MARCA_FIN}, o están repetidas o al revés")
     cuerpo = "\n".join("#" + x if x.startswith("#") else x for x in markdown.splitlines())   # un nivel por debajo
-    ruta.write_text(texto[:i + len(MARCA_INICIO)] + "\n\n" + cuerpo + "\n" + texto[j:], encoding="utf-8")
+    return texto[:i + len(MARCA_INICIO)] + "\n\n" + cuerpo + "\n" + texto[j:]
+
+
+def actualizar_auditoria(ruta: Path, markdown: str) -> None:
+    ruta.write_text(auditoria_actualizada(ruta, markdown), encoding="utf-8")
+
+
+def _escribir_todo(salidas: list[tuple[Path, str]]) -> None:
+    """r02 (H-06): comprueba todos los destinos antes de escribir ninguno y escribe cada uno en un temporal que se renombra;
+    la auditoría va la última. Un destino imposible es EntradaInvalida (fallo cerrado, nada escrito)."""
+    for ruta, _ in salidas:
+        if not ruta.parent.is_dir():
+            raise EntradaInvalida(f"no existe la carpeta de destino {ruta.parent}")
+        if ruta.is_dir():
+            raise EntradaInvalida(f"el destino {ruta} es una carpeta")
+    for ruta, texto in salidas:
+        tmp = ruta.with_name(f".{ruta.name}.tmp")
+        tmp.write_text(texto, encoding="utf-8")
+        os.replace(tmp, ruta)
 
 
 def main(argv: list[str] | None = None) -> int:
@@ -982,18 +1053,19 @@ def main(argv: list[str] | None = None) -> int:
     try:
         informe = verificar(args.raiz)
         texto_json, texto_md = a_json(informe), a_markdown(informe)
+        salidas = [(r, t) for r, t in ((args.json, texto_json), (args.md, texto_md)) if r]
         if args.auditoria:
-            actualizar_auditoria(args.auditoria, texto_md)
+            salidas.append((args.auditoria, auditoria_actualizada(args.auditoria, texto_md)))
+        _escribir_todo(salidas)
     except EntradaInvalida as e:
         print(f"verificador_ids: FALLO CERRADO: {e}", file=sys.stderr)
         return 2
     except jsonschema.ValidationError as e:
         print(f"verificador_ids: FALLO CERRADO: el informe no cumple su esquema y no se escribe: {e.message}", file=sys.stderr)
         return 2
-    if args.json:
-        args.json.write_text(texto_json, encoding="utf-8")
-    if args.md:
-        args.md.write_text(texto_md, encoding="utf-8")
+    except OSError as e:
+        print(f"verificador_ids: FALLO CERRADO: no se puede escribir la salida: {e}", file=sys.stderr)
+        return 2
     if not (args.json or args.md or args.auditoria):
         sys.stdout.write(texto_md)
     r = informe["resumen"]
