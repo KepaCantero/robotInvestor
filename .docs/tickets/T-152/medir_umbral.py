@@ -2,8 +2,9 @@
 
 Uso, desde la raíz del repositorio:  .venv/bin/python -I .docs/tickets/T-152/medir_umbral.py [--semillas N]
 
-`motor/frontera_b.py` desplaza la cota de un precio a la hipótesis truncada solo si su paso entero no pasa de
-`tolerancia_clon` (q/p ≤ 1 %, `[PROPUESTO]` en INC-T127-01, ronda T-150). Este script construye en memoria el mismo
+`motor/frontera_b.py` desplaza la cota de un precio a la hipótesis truncada solo si su paso entero no pasa de un umbral:
+q/p ≤ `tolerancia_clon` (1 %) en T-150; q/p ≤ 2·`tolerancia_clon` (2 %) desde la decisión del operador del 16-11-2026,
+tomada con esta medida (INC-T127-01, ronda T-152). Este script construye en memoria el mismo
 módulo con el umbral al 1, 2, 5 y 10 % y mide, en tres tramos de q/p (paso 0,01 con precios entre 0,55 y 0,95, entre
 0,42 y 0,55, entre 0,22 y 0,42 y entre 0,11 y 0,19, sin cruzar de década):
 - copias truncadas frente a la original (cuántas NO se agrupan: lo que se pierde);
@@ -25,7 +26,7 @@ import bloque_a.motor.operaciones  # noqa: F401  (carga el registro de fichas, c
 from bloque_a.motor import fichas_mon_idx as fm
 from bloque_a.motor import frontera_b as fb
 
-LINEA = "    desplaza = 2 * rel <= tol\n"
+LINEA = "    desplaza = rel <= tol\n"   # q/p ≤ 2·`tolerancia_clon` desde la decisión del operador (16-11-2026)
 UMBRALES = (0.01, 0.02, 0.05, 0.10)
 TRAMOS = ((0.55, 0.95), (0.42, 0.55), (0.22, 0.42), (0.11, 0.19))
 PASO = 0.01

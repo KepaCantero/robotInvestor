@@ -3,8 +3,11 @@
 Uso, desde la raíz de la copia de trabajo:
   .venv/bin/python .docs/tickets/T-152/mutantes.py <copia desechable con «t147_mut»> [--grupo FB|CB|CAB|BCE]
 Cada mutante cambia un texto que aparece exactamente una vez, ejecuta las pruebas de T-150 y T-149 (y las de T-144 en
-FB), restaura el fichero e imprime MUERTO o VIVO. Termina con 1 si alguno sobrevive. Sin red ni coste. Los mutantes del
-revisor (Y01, Z03, W01, X01) están en `.docs/tickets/T-150/revisores/r01_04_mutantes_qa.py`; estos son otros."""
+FB), restaura el fichero e imprime MUERTO, VIVO o EQUIVALENTE (los que se esperan equivalentes). Termina con 1 si sobrevive
+alguno que no se espera equivalente. Sin red ni coste. Los mutantes del
+revisor (Y01, Z03, W01, X01) están en `.docs/tickets/T-150/revisores/r01_04_mutantes_qa.py`; estos son otros. Desde que
+el umbral pasó a q/p ≤ 2 % (decisión del operador, 16-11-2026), la línea que mutan X01 de ese script y F3 de
+`T-150/mutantes.py` ya no está: U1 y U4 son sus equivalentes con la línea nueva."""
 import subprocess
 import sys
 from pathlib import Path
@@ -17,12 +20,14 @@ FB, CB = A + "motor/frontera_b.py", A + "cadena_b.py"
 CAB, BCE = ".docs/scripts/cadena_a_b.py", ".docs/scripts/descargar_datos_bce.py"
 P_FB = ["tests/test_t150.py", "tests/test_t149.py", "tests/test_t144.py"]
 P = ["tests/test_t150.py", "tests/test_t149.py"]
-MUTANTES = [   # (grupo, nombre, fichero, texto, sustituto, pruebas)
-    ("FB", "U1 el umbral a la mitad (q/p ≤ 0,5 %)", FB, "    desplaza = 2 * rel <= tol\n", "    desplaza = 4 * rel <= tol\n", P_FB),
-    ("FB", "U2 el umbral un 10 % más alto (la resolución medida de la prueba)", FB, "    desplaza = 2 * rel <= tol\n",
-     "    desplaza = 2 * rel <= 1.10 * tol\n", P_FB),
-    ("FB", "U2b el umbral un 5 % más bajo (la resolución medida de la prueba)", FB, "    desplaza = 2 * rel <= tol\n",
-     "    desplaza = 2 * rel <= 0.95 * tol\n", P_FB),
+MUTANTES = [   # (grupo, nombre, fichero, texto, sustituto, pruebas[, ¿equivalente esperado?])
+    ("FB", "U1 el umbral de antes (q/p ≤ 1 %)", FB, "    desplaza = rel <= tol\n", "    desplaza = 2 * rel <= tol\n", P_FB),
+    ("FB", "U2b el umbral un 5 % más bajo (la resolución medida de la prueba)", FB, "    desplaza = rel <= tol\n",
+     "    desplaza = rel <= 0.95 * tol\n", P_FB),
+    ("FB", "U4 se desplazan también los pasos grandes (F3 de T-150, con la línea nueva)", FB, "    desplaza = rel <= tol\n",
+     "    desplaza = rel >= 0\n", P_FB),
+    ("FB", "U2 el umbral al doble (q/p ≤ 4 %): equivalente, la cota ya está en el tope", FB, "    desplaza = rel <= tol\n",
+     "    desplaza = rel <= 2 * tol\n", P_FB, True),
     ("CB", "U3 una unión que toca la anterior empieza otra vez", CB, "            unidos[-1][1] = max(unidos[-1][1], final)",
      "            unidos[-1][1] = max(unidos[-1][1], final) if final > unidos[-1][1] else unidos[-1][0]", P),
     ("CAB", "K1 sin mirar la forma del paquete", CAB, "            _forma_paquete(paquete)   # T-152", "            pass   # T-152", P),
@@ -49,7 +54,8 @@ MUTANTES = [   # (grupo, nombre, fichero, texto, sustituto, pruebas)
      P),
 ]
 vivos = 0
-for grupo, nombre, rel, viejo, nuevo, pruebas in MUTANTES:
+for grupo, nombre, rel, viejo, nuevo, pruebas, *equiv in MUTANTES:
+    equiv = bool(equiv and equiv[0])
     if SOLO and grupo != SOLO:
         continue
     ruta = COPIA / rel
@@ -63,7 +69,8 @@ for grupo, nombre, rel, viejo, nuevo, pruebas in MUTANTES:
         ruta.write_text(original, encoding="utf-8")
     assert r.returncode in (0, 1), r.stdout[-1500:] + r.stderr[-1500:]
     muerto = r.returncode == 1
-    vivos += not muerto
-    print(f"{grupo:3} {nombre:72} {'MUERTO' if muerto else 'VIVO':7} {r.stdout.strip().splitlines()[-1][:60]}", flush=True)
-print(f"\n{vivos} vivos")
+    vivos += not muerto and not equiv
+    estado = "MUERTO" if muerto else ("EQUIVALENTE" if equiv else "VIVO")
+    print(f"{grupo:3} {nombre:72} {estado:11} {r.stdout.strip().splitlines()[-1][:60]}", flush=True)
+print(f"\n{vivos} vivos (sin contar los equivalentes esperados)")
 sys.exit(1 if vivos else 0)
