@@ -7,7 +7,7 @@ Los bancos recogen las frases de las QA r01 y r02 de T-102 que antes pasaban (li
 preferida es X», probabilidades en letra o con cifra) y frases legítimas escritas como pide el prompt (sin cifras)."""
 import copy
 import json
-import time
+import time  # T-168: las pruebas de tiempo miden CPU del proceso (process_time), no reloj: con la máquina cargada el reloj falla sin que el código cambie
 from pathlib import Path
 
 import pytest
@@ -130,10 +130,10 @@ def test_un_texto_limpio_sale_igual(perm):
 
 def test_textos_largos_en_tiempo_lineal(perm):
     casos = ["Apple Microsoft Alphabet Amazon " * 2000, "acciones de " * 2500, "Comprar oro, " * 2500, "{n_ideas} " * 5000]
-    t0 = time.perf_counter()
+    t0 = time.process_time()
     for t in casos:
         v6.texto_prohibido(t, perm, MARCAS)
-    assert time.perf_counter() - t0 < 2
+    assert time.process_time() - t0 < 2
 
 
 def test_una_tarjeta_mala_no_tira_las_demas(tmp_path, monkeypatch):
@@ -324,10 +324,10 @@ def test_r04_un_glosario_que_no_es_texto_no_rompe_el_ciclo(tmp_path, monkeypatch
 
 def test_r04_muchos_espacios_en_tiempo_lineal(perm):
     """H-26: 50.000 espacios o tabuladores seguidos (antes, 11 s)."""
-    t0 = time.perf_counter()
+    t0 = time.process_time()
     for t in (" " * 50_000 + "x", "\t" * 50_000 + "x", "a." + " " * 50_000 + "b"):
         v6.limpiar(t, perm, MARCAS)
-    assert time.perf_counter() - t0 < 2
+    assert time.process_time() - t0 < 2
 
 
 def test_r04_el_sintetizador_recibe_la_lista_de_siglas(tmp_path):
@@ -412,11 +412,11 @@ def test_r05_h31_una_lista_de_probabilidades_en_letra_no_llega(perm):
 
 
 def test_r05_h37_sufijo_en_tiempo_lineal(perm):
-    t0 = time.perf_counter()
+    t0 = time.process_time()
     for n in (20000, 40000):
         v6.frase_prohibida("A." * n, perm)
         v6.frase_prohibida("Abc " * n + "Inc", perm)
-    assert time.perf_counter() - t0 < 2.0
+    assert time.process_time() - t0 < 2.0
 
 
 def test_r05_h39_las_siglas_con_cifras_no_se_ofrecen(tmp_path):
@@ -529,10 +529,10 @@ def test_r06_el_sintetizador_escribe_dos_frases_de_30s():
 
 
 def test_r06_h45_marcador_y_muchos_espacios_en_tiempo_lineal(perm):
-    t0 = time.perf_counter()
+    t0 = time.process_time()
     for n in (16000, 32000):
         v6.frase_prohibida("{tipo:RV}" + " " * n + "{tipo:RV}", perm)
-    assert time.perf_counter() - t0 < 1.0
+    assert time.process_time() - t0 < 1.0
 
 
 def test_r06_n39_q19_un_codigo_de_dos_letras_es_un_instrumento(perm):
