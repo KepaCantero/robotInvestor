@@ -2,7 +2,7 @@
 
 | Campo | Valor |
 | --- | --- |
-| Estado | EN QA |
+| Estado | CERRADO (QA r01 APTO) |
 | Pieza | bloque_a (ejecutor, `11_Ejecutor`) |
 | Planifica · implementa · QA | claude · claude · un revisor nuevo sin contexto (regla del 12-11-2026, `compartida/2026-11-12_claude-puede-hacer-qa`) |
 | Aprobación del operador | no necesaria: corrección de una función que deja PB-48 a medias; lo que el diseño no dice se decide por defecto (regla del 13-11-2026) y va al registro de decisiones |

@@ -11,24 +11,26 @@
   "no_comprueba": "La entrega en hora: el reloj es simulado. Que sean precisamente RV, RF y MP las que cambian depende de los datos sintéticos; se afirma la regla (nivel según GC0)."
  },
  "PB-02": {
-  "cobertura": "PARCIAL",
+  "cobertura": "AUTOMATICA",
   "pruebas": [
    "11_Ejecutor/tests/test_integracion.py::test_ciclo_semanal_completo_apto",
    "10_Herramientas/tests/test_ht03_puntuaciones.py::TestSeleccion::test_menos_de_tres",
    "10_Herramientas/tests/test_ht09_validador_g3.py::TestBloqueos::test_menos_de_tres_sin_motivo",
-   "10_Herramientas/tests/test_ht03_puntuaciones.py::TestOpcion::test_banda_marginal_sin_y_con_segunda_pasada"
+   "10_Herramientas/tests/test_ht03_puntuaciones.py::TestOpcion::test_banda_marginal_sin_y_con_segunda_pasada",
+   "11_Ejecutor/tests/test_t159_extremo_a_extremo.py::test_pb02_dos_opciones_y_la_de_banda_marginal_fuera_con_su_segunda_pasada"
   ],
-  "comprueba": "Motivo obligatorio con menos de tres opciones (ciclo y HT-09) y segunda pasada en banda marginal (HT-03).",
-  "no_comprueba": "El caso sembrado del plan (exactamente dos opciones, con una en banda marginal) no se ejecuta de extremo a extremo."
+  "comprueba": "Motivo obligatorio con menos de tres opciones (ciclo y HT-09) y segunda pasada en banda marginal (HT-03). El caso sembrado del plan en un C1 de DIV (T-159): de las candidatas, dos superan E y A, una queda en banda marginal (primera pasada en el umbral, segunda con media 57,5, que HT-03 redondea a 55) y el resto lejos; salen exactamente dos opciones, la marginal no aparece y su segunda pasada queda en F3 como la que decide; el motivo de «menos de tres» da las candidatas analizadas, el motivo de cada una y qué tendría que ocurrir; C03 (G3-CON-03) en OK en las dos validaciones G3, y ninguna opción entregada incumple un umbral.",
+  "no_comprueba": "La «E = 58» del plan no existe como total: HT-03 redondea a múltiplos de 5 y las dimensiones van de 10 en 10; se siembra una segunda pasada de media 57,5. El universo de ejemplo tiene seis ámbitos DIV, no siete."
  },
  "PB-03": {
-  "cobertura": "PARCIAL",
+  "cobertura": "AUTOMATICA",
   "pruebas": [
    "11_Ejecutor/tests/test_integracion.py::test_presupuesto_agotado_parcial_declarado",
-   "10_Herramientas/tests/test_ht03_puntuaciones.py::TestSeleccion::test_cero_opciones"
+   "10_Herramientas/tests/test_ht03_puntuaciones.py::TestSeleccion::test_cero_opciones",
+   "11_Ejecutor/tests/test_t159_extremo_a_extremo.py::test_pb03_alt_sin_vehiculo_minorista_queda_sin_opciones_y_en_gris"
   ],
-  "comprueba": "Un tipo con cero opciones se entrega sin relleno (por presupuesto agotado) y HT-03 admite cero opciones.",
-  "no_comprueba": "El caso del plan (ALT sin ninguna elegible por puntuación) y que el Auditor no registre hallazgo, que exige el modelo real."
+  "comprueba": "Un tipo con cero opciones se entrega sin relleno (por presupuesto agotado) y HT-03 admite cero opciones. El caso del plan en un C1 (T-159): las candidatas de ALT no superan PS3 (sin universo invertible para un minorista); ALT queda con cero opciones y semáforo GRIS, cada candidata queda en F3 no elegible con PS3 en su motivo, el técnico da el motivo por candidata, el visual no pinta ninguna tarjeta de ALT y lo explica en lenguaje llano, y el resto del ciclo se entrega.",
+  "no_comprueba": "Que el Auditor no registre hallazgo por ello, que exige el modelo real. El universo de ejemplo tiene dos ámbitos ALT y uno pasa el cribado: la prueba lo hace con esa finalista, no con tres."
  },
  "PB-04": {
   "cobertura": "PENDIENTE_API",
@@ -67,7 +69,7 @@
    "11_Ejecutor/tests/test_unitarias.py::test_ht04_y_ht06_y_ht08"
   ],
   "comprueba": "Idempotencia y acuse por mensaje; cola del monitor HT-08.",
-  "no_comprueba": "La ráfaga del plan: el 100 % registradas y respondidas, el p90 de N0, el orden por prioridad con envejecimiento y el presupuesto por nivel."
+  "no_comprueba": "La ráfaga del plan: el ejecutor atiende cada CT-01 y cada CT-03 en el momento, sin cola de peticiones con prioridad y envejecimiento ni presupuesto por nivel (INC-T159-01). El p90 de N0 es de tiempo real."
  },
  "PB-09": {
   "cobertura": "PARCIAL",
@@ -76,7 +78,7 @@
    "11_Ejecutor/tests/test_integracion.py::test_peticion_ad_hoc_y_decisiones"
   ],
   "comprueba": "La periodicidad cambia en F10 (P-01) desde su fecha de efecto, los valores no válidos se rechazan y se avisa al Evaluador (CT-22).",
-  "no_comprueba": "El disparo del siguiente C1 en la fecha nueva (lo hace el planificador externo, HT-05) y que ningún otro parámetro cambie."
+  "no_comprueba": "El disparo del siguiente C1 en la fecha nueva: HT-05 tiene `proxima_ejecucion`, pero nada la llama con el P-01 de F10, y el P-01 que escribe el CT-04 guarda la hora de entrega y pierde la del ciclo (INC-T159-01). Que ningún otro parámetro cambie."
  },
  "PB-10": {
   "cobertura": "PARCIAL",
@@ -114,7 +116,7 @@
    "11_Ejecutor/tests/test_t65_resto_t53.py::test_cs10_celdas_de_rotacion_exploratoria_de_la_configuracion"
   ],
   "comprueba": "Nivel N1 con 5 UC como máximo, arrastre verificado, sin candidatas nuevas, solo modo ligero; las celdas de rotación exploratoria salen de la configuración.",
-  "no_comprueba": "Que la rotación exploratoria quede entre el 15 % y el 25 %."
+  "no_comprueba": "Que la rotación exploratoria quede entre el 15 % y el 25 %: el ejecutor la mide en celdas fijas (`seleccion.rotacion_exploratoria_celdas`, [PROPUESTO] hasta T-57) y no lee `presupuesto_uc.rotacion_exploratoria` (0,20) (INC-T159-01). AS-06 es del Auditor (modelo real)."
  },
  "PB-14": {
   "cobertura": "AUTOMATICA",
@@ -155,7 +157,7 @@
    "11_Ejecutor/tests/test_t53_evaluacion_y_almacen.py::test_monitor_abre_instancias_de_los_analistas_nuevos"
   ],
   "comprueba": "El monitor ordena abrir instancia (ORD-) de un agente sin estado al superar el umbral de cola.",
-  "no_comprueba": "Cero duplicados en F2 y la vuelta del tiempo medio de ingesta al objetivo."
+  "no_comprueba": "Cero duplicados en F2 y la vuelta del tiempo medio de ingesta al objetivo: HT-08 solo abre instancias por cola; no tiene el disparo por tiempo (> 2 × objetivo), ni el objetivo de tiempo de ingesta, ni la orden ORD- de cierre tras dos lecturas con cola 0 y ρ < 0,30 (INC-T159-01)."
  },
  "PB-19": {
   "cobertura": "PARCIAL",
@@ -174,7 +176,7 @@
    "11_Ejecutor/tests/test_unitarias.py::test_saneamiento_r9"
   ],
   "comprueba": "La instrucción se neutraliza, queda una incidencia MANIPULACION, ninguna puntuación cambia y el texto no llega a los entregables.",
-  "no_comprueba": "La degradación o el borrado de la fuente en F9 con su línea en el Registro de bajas; el camino del plan (una fuente que trae el Buscador y que pasa al Curador) no se ejerce; ninguna prueba afirma la EVD con `incidencia_manipulacion`; la comprobación G3-EST-06 no existe en el ejecutor ni en HT-09; y el «destino» de la fuente no se prueba."
+  "no_comprueba": "La degradación o el borrado de la fuente en F9 con su línea en el Registro de bajas; el camino del plan (una fuente que trae el Buscador y que pasa al Curador) no se ejerce; ninguna prueba afirma la EVD con `incidencia_manipulacion`; la comprobación G3-EST-06 no existe en el ejecutor ni en HT-09; y el «destino» de la fuente no se prueba. Lo que falta es del ejecutor: degradar o borrar la fuente en F9 y G3-EST-06 (INC-T159-01)."
  },
  "PB-21": {
   "cobertura": "PARCIAL",
@@ -216,7 +218,7 @@
    "10_Herramientas/tests/test_ht02_verificador_enlaces.py::TestEscritura::test_borrar_con_registro_existente"
   ],
   "comprueba": "HT-02 confirma el enlace roto y borra con línea en el Registro de bajas y motivo obligatorio.",
-  "no_comprueba": "La integración en el bloque: EVD marcada, revisión registrada en F3 y el paquete CT-21 del mes. El ejecutor solo invoca HT-02."
+  "no_comprueba": "La integración en el bloque: EVD marcada FUENTE_RETIRADA, revisión registrada en F3 y el paquete CT-21 del mes. El ejecutor solo invoca HT-02; la propagación de la baja no existe (INC-T159-01)."
  },
  "PB-25": {
   "cobertura": "PARCIAL",
@@ -260,15 +262,16 @@
    "11_Ejecutor/tests/test_t65_qa_r01.py::test_r01_h08_ps1_con_el_minimo_de_raices_de_la_configuracion"
   ],
   "comprueba": "La puerta PS1 cuenta raíces independientes con el mínimo de la configuración.",
-  "no_comprueba": "La comprobación G3 de raíces sobre un paquete real y el recuento del Auditor. El ejecutor no distingue derivadas (escribe `grado_independencia = RAIZ` siempre): «1 raíz y 20 derivadas» depende del Curador, que es un agente de lenguaje."
+  "no_comprueba": "La comprobación G3 de raíces sobre un paquete real y el recuento del Auditor. El ejecutor no distingue derivadas (escribe `grado_independencia = RAIZ` siempre): «1 raíz y 20 derivadas» depende del Curador, que es un agente de lenguaje. Además, las raíces se cuentan por fuente: veinte medios distintos serían veinte raíces (INC-T159-01)."
  },
  "PB-30": {
-  "cobertura": "PARCIAL",
+  "cobertura": "AUTOMATICA",
   "pruebas": [
-   "10_Herramientas/tests/test_ht09_validador_g3.py::TestBloqueos::test_evidencias_y_calculos"
+   "10_Herramientas/tests/test_ht09_validador_g3.py::TestBloqueos::test_evidencias_y_calculos",
+   "11_Ejecutor/tests/test_t159_extremo_a_extremo.py::test_pb30_la_cifra_sin_artefacto_bloquea_se_retira_y_lo_entregado_no_la_lleva"
   ],
-  "comprueba": "HT-09 detecta una opción sin evidencias o sin cálculos.",
-  "no_comprueba": "El caso del plan de extremo a extremo: cifra sin artefacto, dos G3V- en HA y la cifra retirada o con su CALC-."
+  "comprueba": "HT-09 detecta una opción sin evidencias o sin cálculos. El caso del plan de extremo a extremo (T-159): con una rentabilidad esperada que cita un CALC- sin artefacto en el Registro de cálculos, el primer G3V- queda BLOQUEADO por C08, el CT-14 llega al Orquestador, que no lo da por bueno, la opción se retira y el segundo G3V- queda APTO: dos G3V- en HA; la cifra y su CALC- no llegan a ningún entregable, todo CALC- entregado tiene artefacto servido y la retirada se declara en las limitaciones.",
+  "no_comprueba": "El tiempo de dictamen (10 minutos como máximo): el reloj es simulado."
  },
  "PB-31": {
   "cobertura": "AUTOMATICA",
@@ -283,7 +286,7 @@
   "no_comprueba": ""
  },
  "PB-32": {
-  "cobertura": "PARCIAL",
+  "cobertura": "AUTOMATICA",
   "pruebas": [
    "11_Ejecutor/tests/test_integracion.py::test_certificado_emitido_con_muestra_suficiente",
    "11_Ejecutor/tests/test_unitarias.py::test_metricas_de_pronostico_con_pronosticadores_sinteticos",
@@ -296,10 +299,19 @@
    "11_Ejecutor/tests/test_fase4_huecos.py::test_pb32_el_certificado_es_de_la_celda_por_metodo",
    "11_Ejecutor/tests/test_fase4_huecos.py::test_pb32_la_probabilidad_se_publica_solo_en_la_celda_certificada_y_con_su_certificado_ref",
    "11_Ejecutor/tests/test_t87_datos.py::test_certificados_separan_metodos",
-   "11_Ejecutor/tests/test_t53_evaluacion_y_almacen.py::test_holm_escalonado_se_detiene_en_el_primer_fallo"
+   "11_Ejecutor/tests/test_t53_evaluacion_y_almacen.py::test_holm_escalonado_se_detiene_en_el_primer_fallo",
+   "11_Ejecutor/tests/test_t160_reejecucion_certificado.py::test_ca6_pb32_de_punta_a_punta_con_el_cliente_simulado",
+   "11_Ejecutor/tests/test_t160_reejecucion_certificado.py::test_ca1_el_certificado_lleva_su_reejecucion_ct10_coincidente_y_el_calculo_que_lo_sostiene",
+   "11_Ejecutor/tests/test_t160_reejecucion_certificado.py::test_ca2_una_reejecucion_que_no_coincide_no_deja_certificado_y_registra_la_incidencia",
+   "11_Ejecutor/tests/test_t160_reejecucion_certificado.py::test_ca3_sin_motor_no_hay_certificado",
+   "11_Ejecutor/tests/test_t160_reejecucion_certificado.py::test_ca3_el_motor_no_sirve_la_ficha_que_sostiene_el_certificado",
+   "11_Ejecutor/tests/test_t160_reejecucion_certificado.py::test_ca3_los_datos_del_artefacto_no_se_pueden_resolver_en_la_reejecucion",
+   "11_Ejecutor/tests/test_t160_reejecucion_certificado.py::test_ca4_si_el_motor_no_reproduce_las_cifras_del_certificado_no_hay_certificado",
+   "11_Ejecutor/tests/test_t160_reejecucion_certificado.py::test_ca4_dentro_de_tolerancia_pero_material_no_certifica",
+   "11_Ejecutor/tests/test_t160_reejecucion_certificado.py::test_ca5_ct04_no_pone_en_vigor_un_propuesto_sin_reejecucion_coincidente"
   ],
-  "comprueba": "El caso del plan: con una celda con habilidad (RF × H3) y otra sin ella (RV × H3) se emite un solo certificado, el de RF. Cada condición del certificado (muestra efectiva, IC del BSS, calibración frente al nulo y tope de ECE) impide por sí sola certificar, y también Holm: el criterio exige el alfa corregido y el Evaluador se lo pasa (una celda hábil en la que Holm se detiene no se certifica). El certificado es de la celda × método y cada método cuenta aparte. La probabilidad solo se publica en la celda certificada, con su `certificado_ref`, y HT-09 la bloquea en las demás.",
-  "no_comprueba": "La re-ejecución CT-10 coincidente que el plan pide para el certificado: el Evaluador no la hace (INC-T116-03)."
+  "comprueba": "El caso del plan: con una celda con habilidad (RF × H3) y otra sin ella (RV × H3) se emite un solo certificado, el de RF. Cada condición del certificado (muestra efectiva, IC del BSS, calibración frente al nulo y tope de ECE) impide por sí sola certificar, y también Holm: el criterio exige el alfa corregido y el Evaluador se lo pasa (una celda hábil en la que Holm se detiene no se certifica). El certificado es de la celda × método y cada método cuenta aparte. La probabilidad solo se publica en la celda certificada, con su `certificado_ref`, y HT-09 la bloquea en las demás. T-160: antes de proponer o emitir el certificado, el Evaluador pide al Motor el cálculo que lo sostiene (FC-EVAL-001), comprueba que da sus mismas cifras y encarga su re-ejecución CT-10, que tiene que coincidir con la tolerancia de la ficha (SI o DENTRO_TOLERANCIA sin cruzar ningún umbral); el CERT- cita el CALC- de soporte y el de la re-ejecución. Si no coincide, si no se puede re-ejecutar (sin Motor, ficha no servida, datos irresolubles) o si las cifras difieren, no hay certificado y queda una incidencia en HA; CT-04 no pone en vigor un PROPUESTO sin esa re-ejecución en el Registro de cálculos. De punta a punta con el cliente simulado: revisión del Evaluador, un solo certificado (RF × H3 × método) con CT-10 coincidente y ninguno para RV × H3, aprobación por CT-04 y, en el RUN- siguiente, probabilidad solo en RF H3 con su `certificado_ref` y G3-CON-10 (C10) en OK.",
+  "no_comprueba": ""
  },
  "PB-33": {
   "cobertura": "PARCIAL",
@@ -324,7 +336,7 @@
    "11_Ejecutor/tests/test_t66_evaluacion.py::test_pa09_contaminados_no_cuentan_para_la_recalibracion"
   ],
   "comprueba": "Ningún dato posterior a la fecha de corte (proveedor, Motor y resolución) y los pronósticos contaminados no cuentan para recalibrar.",
-  "no_comprueba": "La corrección registrada en F6 tras detectar la fuga."
+  "no_comprueba": "La corrección registrada en F6 tras detectar la fuga: el Evaluador marca la resolución FALLIDA y la deja fuera, pero no registra la corrección ni el recálculo como entrada nueva (INC-T159-01)."
  },
  "PB-35": {
   "cobertura": "PARCIAL",
@@ -333,7 +345,7 @@
    "11_Ejecutor/tests/test_t65_qa_r01.py::test_r01_h08_recalibracion_de_rk_con_el_paso_y_las_bandas_de_la_configuracion"
   ],
   "comprueba": "La recalibración respeta el paso y las bandas de la configuración y queda como propuesta.",
-  "no_comprueba": "El registro de la evaluación sombra y la decisión documentada con DM-HLN."
+  "no_comprueba": "El registro de la evaluación sombra y la decisión documentada con DM-HLN: la selección calcula el top-3 con los pesos en sombra, pero nada cierra el AJU- EN_SOMBRA como CONFIRMADO o REVERTIDO (INC-T159-01)."
  },
  "PB-36": {
   "cobertura": "PARCIAL",
@@ -366,14 +378,16 @@
   "no_comprueba": "Que la objeción figure en el informe técnico como sin resolver y la opción como alternativa documentada: el técnico solo lista las objeciones de las opciones del top-3 (INC-T116-03)."
  },
  "PB-39": {
-  "cobertura": "PARCIAL",
+  "cobertura": "AUTOMATICA",
   "pruebas": [
    "11_Ejecutor/tests/test_integracion.py::test_ciclo_semanal_completo_apto",
    "10_Herramientas/tests/test_ht07_legibilidad.py::TestIndice::test_texto_dificil_no_cumple",
-   "10_Herramientas/tests/test_ht09_validador_g3.py::TestBloqueos::test_legibilidad"
+   "10_Herramientas/tests/test_ht09_validador_g3.py::TestBloqueos::test_legibilidad",
+   "11_Ejecutor/tests/test_t159_extremo_a_extremo.py::test_pb39_el_visual_por_debajo_de_70_se_bloquea_y_tras_la_reescritura_se_entrega",
+   "11_Ejecutor/tests/test_t159_extremo_a_extremo.py::test_pb39_si_la_reescritura_sigue_por_debajo_de_70_no_se_entrega_ningun_visual"
   ],
-  "comprueba": "El visual entregado tiene índice de 70 o más; HT-07 mide un texto difícil por debajo y HT-09 comprueba la legibilidad.",
-  "no_comprueba": "El bloqueo y la reescritura en un ciclo con un visual por debajo de 70."
+  "comprueba": "El visual entregado tiene índice de 70 o más; HT-07 mide un texto difícil por debajo y HT-09 comprueba la legibilidad. En un ciclo con el Redactor sembrado con frases largas y jerga (T-159): el primer visual queda por debajo de 70 y BLOQUEADO por C12, se pide una reescritura a AG-17 y el visual reescrito, con 70 o más, es el que se entrega; si la reescritura sigue por debajo de 70, la entrega queda BLOQUEADA, ningún visual llega a la carpeta de entrega y no se congela nada.",
+  "no_comprueba": "Que el Redactor detecte y reescriba por sí mismo con HT-07 antes de HT-09, y las frases de 20 palabras como máximo y la jerga explicada del texto reescrito, que son del modelo real."
  },
  "PB-40": {
   "cobertura": "REQUIERE_USUARIOS",
@@ -382,14 +396,15 @@
   "no_comprueba": "Requiere usuarios reales."
  },
  "PB-41": {
-  "cobertura": "PARCIAL",
+  "cobertura": "AUTOMATICA",
   "pruebas": [
    "11_Ejecutor/tests/test_integracion.py::test_ciclo_semanal_completo_apto",
    "11_Ejecutor/tests/test_t53_seleccion_y_entrega.py::test_entregable_bloqueado_no_llega_a_las_carpetas_de_entrega",
-   "11_Ejecutor/tests/test_fase4_huecos.py::test_pb01_sin_g3_apto_no_se_congela_ningun_pronostico_ni_se_entrega"
+   "11_Ejecutor/tests/test_fase4_huecos.py::test_pb01_sin_g3_apto_no_se_congela_ningun_pronostico_ni_se_entrega",
+   "11_Ejecutor/tests/test_t159_extremo_a_extremo.py::test_pb41_el_factor_comun_de_rf_reit_y_rv_queda_en_un_cluster_y_los_tres_entregables_coinciden"
   ],
-  "comprueba": "El ciclo solo entrega con la comprobación de coherencia superada (G3 APTO); con entregables incoherentes, G3 bloquea, nada llega a las carpetas de entrega y no se congela ningún pronóstico.",
-  "no_comprueba": "El caso del plan (RF larga, REIT y RV de crecimiento con el mismo factor en un clúster común y `apuestas_independientes` que lo refleja) y el recuento del Auditor (modelo real)."
+  "comprueba": "El ciclo solo entrega con la comprobación de coherencia superada (G3 APTO); con entregables incoherentes, G3 bloquea, nada llega a las carpetas de entrega y no se congela ningún pronóstico. El caso del plan en un C1 (T-159): con las series de RF, inmobiliario cotizado y RV expuestas al mismo factor, un clúster común reúne opciones de los tres tipos con su factor dominante, `apuestas_independientes` es el número de clústeres (menos que de opciones) y el técnico lo dice; el JSON, el técnico y el visual tienen las mismas OPP- en el mismo orden y la validación de los entregables no ve incoherencias (G3-ENT-07).",
+  "no_comprueba": "El recuento del Auditor (modelo real). Los datos sintéticos no tienen un factor común entre tipos: se siembra en las series del proveedor."
  },
  "PB-42": {
   "cobertura": "PENDIENTE_API",
@@ -407,14 +422,15 @@
   "no_comprueba": "Que preguntas con palabras distintas den el mismo tema (lo normaliza el Coordinador, modelo real) y la sección en el informe siguiente (la aplica el modelo a partir de la lección)."
  },
  "PB-44": {
-  "cobertura": "PARCIAL",
+  "cobertura": "AUTOMATICA",
   "pruebas": [
    "11_Ejecutor/tests/test_integracion.py::test_pronosticos_resueltos_sin_look_ahead",
    "11_Ejecutor/tests/test_t66_evaluacion.py::test_pa09_contaminados_se_registran_pero_no_cuentan_en_metricas_ni_historial",
-   "11_Ejecutor/tests/test_t53_evaluacion_y_almacen.py::test_hitos_h5_no_cuentan_en_h4_ni_en_el_historial"
+   "11_Ejecutor/tests/test_t53_evaluacion_y_almacen.py::test_hitos_h5_no_cuentan_en_h4_ni_en_el_historial",
+   "11_Ejecutor/tests/test_t159_extremo_a_extremo.py::test_pb44_el_historial_publicado_es_el_recuento_de_f4_con_su_muestra_y_el_mismo_dato_en_los_informes"
   ],
-  "comprueba": "El historial publicado no usa resoluciones posteriores a su fecha, ni contaminados, ni hitos de H5.",
-  "no_comprueba": "El recuento exacto del historial contra F4 y F3 con el escenario del plan (28 opciones, n = 27 con la NO_RESOLUBLE declarada); `significativo` false con n < 30 y su nota de muestra pequeña; que el técnico y el visual («Cómo nos fue») den el mismo dato; y G3-CON-18 PASA sobre ese historial."
+  "comprueba": "El historial publicado no usa resoluciones posteriores a su fecha, ni contaminados, ni hitos de H5. El escenario del plan a escala de los datos sintéticos (T-159), con nueve ciclos semanales: una opción cerrada por invalidación, una descartada por el Broker y una cuyo PRG queda NO_RESOLUBLE. El historial publicado es el recuento de F4 (PRG del informe resueltos en la ventana, sin fuga, sin hitos ni contaminados) y sus opciones están en F3; cuenta la invalidada y la descartada, no la NO_RESOLUBLE, que se declara en la nota; con n < 30, `significativo` false y la nota de muestra pequeña; el mismo dato en el JSON, en el técnico y en el visual («Cómo nos fue»); y el historial con su tamaño muestral pasa G3 (C01, G3-CON-18).",
+  "no_comprueba": "Las cifras exactas del plan (28 opciones, n = 27) dependen de los datos sintéticos: se afirma la regla sobre las opciones que salen."
  },
  "PB-45": {
   "cobertura": "AUTOMATICA",
@@ -453,13 +469,14 @@
   "no_comprueba": "La recalificación de Q y el orden en F9, que hace el Buscador con el modelo real (T-125). En backtest no entra ningún pronóstico de una fuente de F9 sin fecha (el filtro de evidencia no la da por conocible): el camino se prueba en modo vivo con el cliente simulado."
  },
  "PB-47": {
-  "cobertura": "PARCIAL",
+  "cobertura": "AUTOMATICA",
   "pruebas": [
    "11_Ejecutor/tests/test_unitarias.py::test_servicio_del_motor_rc_cache_fuga_y_reejecucion",
-   "11_Ejecutor/tests/test_t65_resto_t53.py::test_cs08_fichas_documentadas_no_entregan_cifras"
+   "11_Ejecutor/tests/test_t65_resto_t53.py::test_cs08_fichas_documentadas_no_entregan_cifras",
+   "11_Ejecutor/tests/test_t159_extremo_a_extremo.py::test_pb47_un_metodo_documentado_no_se_usa_y_la_entrega_lo_declara"
   ],
-  "comprueba": "Una ficha no implementada se rechaza con METODO_NO_IMPLEMENTADO y una con código provisional no da cifras.",
-  "no_comprueba": "Que el entregable final declare «documentado» cuando un método no se pudo usar."
+  "comprueba": "Una ficha no implementada se rechaza con METODO_NO_IMPLEMENTADO y una con código provisional no da cifras. En un ciclo con un método que el ciclo usa (ML-CLUS-001) en DOCUMENTADO en el Catálogo (T-159): el Motor lo rechaza con METODO_NO_IMPLEMENTADO y madurez DOCUMENTADO, sin resultado; el entregable no cita ninguna cifra suya (todo CALC- entregado es de un método servido), declara la limitación (clústeres no calculados) y ningún entregable dice «validado».",
+  "no_comprueba": "La comprobación G3-MET-13 sobre un texto del Analista que llame «validado» a un método: el simulado no escribe esa palabra, y la regla de la madurez la aplica el Motor antes de que haya cifra."
  },
  "PB-48": {
   "cobertura": "AUTOMATICA",
@@ -510,10 +527,11 @@
   "pruebas": [
    "11_Ejecutor/tests/test_unitarias.py::test_busqueda_web_solo_en_vivo_y_reparacion_json",
    "11_Ejecutor/tests/test_t53_seleccion_y_entrega.py::test_un_simbolo_sin_historia_no_vacia_su_tipo",
-   "11_Ejecutor/tests/test_t65_hallazgos.py::test_h15_simbolo_con_datos_invalidos_se_excluye_y_se_declara"
+   "11_Ejecutor/tests/test_t65_hallazgos.py::test_h15_simbolo_con_datos_invalidos_se_excluye_y_se_declara",
+   "11_Ejecutor/tests/test_t159_extremo_a_extremo.py::test_pb52_con_ht09_caido_nunca_hay_apto_por_defecto_ni_entrega"
   ],
-  "comprueba": "Una salida no conforme o un símbolo sin datos dan una entrega PARCIAL con la limitación declarada y sin cifras inventadas.",
-  "no_comprueba": "El caso del plan como tal: una herramienta caída a mitad de ciclo."
+  "comprueba": "Una salida no conforme o un símbolo sin datos dan una entrega PARCIAL con la limitación declarada y sin cifras inventadas. Con HT-09 caído (T-159), el ciclo no entrega nada, no congela pronósticos y no deja ningún dictamen APTO.",
+  "no_comprueba": "El caso del plan como tal: con HT-09 caído el ciclo termina con una excepción, sin CT-14 al Orquestador, sin G3 manual con etiqueta y sin el RUN- ni la incidencia en el historial: falta el modo degradado de HT-09 (INC-T159-01). El de HT-01 sin datos de una clase sí se prueba."
  },
  "PB-53": {
   "cobertura": "AUTOMATICA",
@@ -660,11 +678,12 @@
   "no_comprueba": "Que C6 no retrase C1–C3: el reloj es simulado."
  },
  "PB-67": {
-  "cobertura": "PARCIAL",
+  "cobertura": "AUTOMATICA",
   "pruebas": [
-   "10_Herramientas/tests/test_ht09_validador_g3.py::TestV51::test_seguimiento_envio_a_b"
+   "10_Herramientas/tests/test_ht09_validador_g3.py::TestV51::test_seguimiento_envio_a_b",
+   "11_Ejecutor/tests/test_t159_extremo_a_extremo.py::test_pb67_el_ciclo_c6_propone_el_envio_a_b_sin_enviar_nada"
   ],
-  "comprueba": "HT-09 (perfil SEGUIMIENTO) da APTO a PROPONER_ENVIO_A_B con su paquete y elegible, y BLOQUEADO sin él.",
-  "no_comprueba": "Un ciclo C6 del ejecutor que produzca esa recomendación y la comprobación de que no hay envío automático."
+  "comprueba": "HT-09 (perfil SEGUIMIENTO) da APTO a PROPONER_ENVIO_A_B con su paquete y elegible, y BLOQUEADO sin él. Un ciclo C6 del ejecutor (T-159): la opción vigilada vuelve a ser elegible sin objeciones fuertes y con novedad (ocurre su catalizador) y el C6 recomienda PROPONER_ENVIO_A_B con HT-09 de seguimiento APTO, el `paquete_para_bloque_B` actualizado y la sugerencia de N3 decidida; sin envío automático: el único mensaje fuera del bloque es el CT-24 al Broker, ninguno va al Bloque B y F3 sigue con la decisión EN_SEGUIMIENTO del Broker.",
+  "no_comprueba": ""
  }
 }

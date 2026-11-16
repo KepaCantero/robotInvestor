@@ -72,7 +72,8 @@ def test_ca5_una_fila_sin_pruebas_nunca_resulta_superada(ev):
     (lambda m: m["PB-01"]["pruebas"].append("11_Ejecutor/tests/test_integracion.py::test_que_no_existe"), "PB-01: la prueba citada no existe"),
     (lambda m: m.pop("PB-40"), "PB-40: está en el plan y falta en el mapa"),
     (lambda m: m.__setitem__("PB-99", copy.deepcopy(m["PB-01"])), "PB-99: está en el mapa y no en el plan"),
-    (lambda m: m["PB-02"].__setitem__("no_comprueba", " "), "PB-02: PARCIAL sin decir qué queda sin comprobar"),
+    # T-159: PB-02 pasó a AUTOMATICA; la misma comprobación sobre una fila que sigue PARCIAL
+    (lambda m: m["PB-08"].__setitem__("no_comprueba", " "), "PB-08: PARCIAL sin decir qué queda sin comprobar"),
     (lambda m: m["PB-04"].__setitem__("no_comprueba", ""), "PB-04: PENDIENTE_API sin decir qué queda sin comprobar"),
     (lambda m: m["PB-01"].__setitem__("comprueba", ""), "PB-01: falta decir qué comprueban sus pruebas"),
     (lambda m: m["PB-01"].__setitem__("pruebas", []), "PB-01: AUTOMATICA con 0 pruebas citadas"),

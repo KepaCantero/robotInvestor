@@ -2,7 +2,7 @@
 
 | Campo | Valor |
 | --- | --- |
-| Estado | EN QA |
+| Estado | EN CURSO (r02: QA r01 NO APTO) |
 | Pieza | bloque_a (ejecutor: `bloque_a/11_Ejecutor/bloque_a/herramientas/verificador_ids.py`) |
 | Planifica · implementa · QA | claude · claude · un revisor nuevo sin contexto (regla del 12-11-2026, `compartida/2026-11-12_claude-puede-hacer-qa`) |
 | Aprobación del operador | no necesaria: herramienta de medida, sin cambio de contrato, de corpus ni de controles (tipo «corrección, pruebas, documentación» de `ri-planificar`) |

@@ -12,13 +12,18 @@
   aprendizaje automático solo endurece; certificados PROPUESTO hasta CT-04 y recalibración siempre como propuesta);
   PA-03 (certificados con muestra efectiva n_eff por conglomerados de fecha); PA-21 (Brier del Analista frente al de
   Prospectiva, solo informativo).
+- T-160 (PB-32, EVAL-F05): antes de proponer o emitir un certificado, el Evaluador pide al Motor el cálculo que lo sostiene
+  (FC-EVAL-001, CT-09), comprueba que da sus mismas cifras y encarga su re-ejecución CT-10; sin coincidencia (con la
+  tolerancia de la ficha) no hay certificado. Un PROPUESTO solo entra en vigor por CT-04 con esa re-ejecución en el RC.
 """
 from __future__ import annotations
 
 import copy
+import inspect
 import math
 import re
 from collections import Counter, defaultdict
+from itertools import pairwise
 
 import numpy as np
 import pandas as pd
@@ -29,10 +34,70 @@ from .configuracion import CLASES, TABLA_HORIZONTES, parametro, parametros_ht03
 from .herramientas.ht01_datos import DatosNoDisponibles
 from .herramientas.ht05_planificador import dias_habiles_entre
 from .motor import evaluacion as ev
+from .motor import servicio
 
 CADUCIDAD_MESES = {"anecdotica": 3, "recurrente": 6, "estadistica": 12}
 # Escalón inferior de aplicabilidad de un horizonte (12.2): «Sí» → «Limitado» → «No»
 ESCALON_INFERIOR = {"SI": "LIMITADO", "LIMITADO": "NO"}
+# T-160 (PB-32, EVAL-F05, §6.6 del prompt del Evaluador): ficha del cálculo que sostiene un certificado de horizonte
+# (`evaluar_celda` es FC-EVAL-001 + FC-CAL-001) y respuestas de la re-ejecución CT-10 (AUD-REX-001) que lo dejan seguir
+FICHA_CERTIFICADO = "FC-EVAL-001"
+COINCIDE_CT10 = ("SI", "DENTRO_TOLERANCIA")
+# La tolerancia de las dos comparaciones es la de la ficha en el Motor, la misma que usa la re-ejecución CT-10. Ni el Anexo A
+# ni la configuración fijan una; el Catálogo V5.0 dice que CT-10 usa la de la ficha original (AUD-REX-001), y FC-EVAL-001
+# fija 1e-8 en métricas y 1e-6 en IC con la misma semilla (el Motor aplica 1e-8 a todo: la más estricta)
+ORIGEN_TOLERANCIA = ("ficha FC-EVAL-001 del Motor (servicio.IMPLEMENTADAS), la de su re-ejecución CT-10; Catálogo V5.0: "
+                     "AUD-REX-001 usa las tolerancias de la ficha original y FC-EVAL-001 fija 1e-8 en métricas")
+# Semilla del bootstrap y h de DM-HLN del certificado: los de `evaluar_celda` por defecto, leídos de su firma (no se escribe
+# ningún número aquí), para que la petición al Motor lleve los mismos que el cálculo del Evaluador
+_DEFECTO_CELDA = {k: v.default for k, v in inspect.signature(ev.evaluar_celda).parameters.items() if k in ("semilla", "h")}
+
+
+def _num(x):
+    """T-160: un número de un certificado como lo guarda el Registro de cálculos (float finito o None); lo demás, tal cual."""
+    if x is None or isinstance(x, (bool, str)):
+        return x
+    try:
+        f = float(x)
+    except (TypeError, ValueError):
+        return x
+    return f if math.isfinite(f) else None
+
+
+def cifras_certificado(m: dict) -> dict:
+    """T-160: las cifras de una celda en que se apoya un certificado (las que escribe el CERT- y las que usa su criterio)."""
+    bss = m.get("bss") or {}
+    muestra = m.get("muestra_efectiva") or {}
+    return {"n": m.get("n"), "n_eff": _num(m.get("n_eff")), "brier": _num(m.get("brier")), "brier_ref": _num(m.get("brier_ref")),
+            "bss": _num(bss.get("valor")), "bss_ic90": [_num(x) for x in (bss.get("ic") or [None, None])],
+            "ece": _num((m.get("calibracion") or {}).get("ece")), "ece_nulo_q90": _num((m.get("ece_nulo") or {}).get("q90")),
+            "dm_p_unilateral": _num((m.get("dm_hln") or {}).get("p_unilateral")),
+            "muestra_efectiva": {c: _num(muestra.get(c)) for c in ("conglomerados", "m_medio", "rho", "efecto_diseno")}}
+
+
+def holgura_tolerancia(tol: float, pasos: int) -> float:
+    """T-160: diferencia relativa máxima, frente a la cifra del certificado, de una que difiere de ella en `pasos`
+    comparaciones encadenadas, cada una con diferencia relativa ≤ `tol` (la de CT-10: |a − b| ≤ tol · max(|a|, |b|))."""
+    if not (0 <= tol < 1) or pasos < 0:
+        raise ValueError(f"tolerancia {tol!r} o pasos {pasos!r} no válidos")
+    return (1 + tol / (1 - tol)) ** pasos - 1
+
+
+def criterio_desfavorable(m: dict, holgura: float, n_min: int, ece_max: float, alfa_holm: float | None) -> dict:
+    """T-160 (materialidad, §6.3 del prompt de MC-08): el criterio del certificado con cada cifra movida en contra del
+    certificado lo máximo que permite una diferencia relativa `holgura`. Una diferencia dentro de tolerancia que cruza un umbral
+    del certificado es material y obliga a `NO` [PROPUESTO INC-T160-01]."""
+    c = cifras_certificado(m)
+
+    def baja(x):
+        return None if x is None else x - holgura * abs(x)
+
+    def sube(x):
+        return None if x is None else x + holgura * abs(x)
+    ic = c["bss_ic90"] + [None] * (2 - len(c["bss_ic90"]))
+    peor = {"n": c["n"], "n_eff": baja(c["n_eff"]), "bss": {"ic": [baja(ic[0]), ic[1]]}, "calibracion": {"ece": sube(c["ece"])},
+            "ece_nulo": {"q90": baja(c["ece_nulo_q90"])}, "dm_hln": {"p_unilateral": sube(c["dm_p_unilateral"])}}
+    return ev.criterio_certificado(peor, n_min, ece_max, alfa_holm)
 
 
 def _coma(x) -> str:
@@ -104,7 +169,7 @@ def validar_bandas(tabla=None) -> list[dict]:
         if not (0.0 <= b["min"] <= b["prob_interna"] <= b["max"] <= 1.0):
             raise ValueError(f"bandas_verbales: intervalo o probabilidad interna incoherentes en {b['codigo']}")
     filas.sort(key=lambda b: b["min"])
-    if any(a["max"] >= s["min"] for a, s in zip(filas, filas[1:])):
+    if any(a["max"] >= s["min"] for a, s in pairwise(filas)):
         raise ValueError("bandas_verbales: los intervalos se solapan")
     return filas
 
@@ -137,7 +202,7 @@ def _banda(p: float, bandas=None) -> dict:
         return tabla[0]
     if p > tabla[-1]["max"]:
         return tabla[-1]
-    inf, sup = next((a, s) for a, s in zip(tabla, tabla[1:]) if a["max"] < p < s["min"])
+    inf, sup = next((a, s) for a, s in pairwise(tabla) if a["max"] < p < s["min"])
     return min((inf, sup), key=_distancia_a_50)
 
 
@@ -488,7 +553,9 @@ class Evaluador:
         calc_id = self.almacen.nuevo_id("CALC")
         self.almacen.escribir("RC", "AG-13", {
             "tipo_entrada": "SERVICIO", "calc_id": calc_id, "contrato": "CT-09", "run_id": run_id, "solicitante": "AG-10",
-            "operacion": {"method_id": "RI-TB", "ficha_id": "FC-EVAL-001", "ficha_version": "1.0", "catalog_version": "4.0",
+            "operacion": {"method_id": "RI-TB", "ficha_id": "FC-EVAL-001", "ficha_version": "1.0",
+                          # T-160 (D-1 de T-157, INC-T157-02): la versión vigente del Catálogo, no un literal
+                          "catalog_version": servicio.CATALOG_VERSION,
                           "op_sin_ficha": False}, "perfil": ["TRANSVERSAL"], "clase": clase, "modo": "SYNC_CALC",
             "plan": "PLAN_MIN", "as_of": str(pd.Timestamp(as_of).date()), "estado": "SERVED",
             "datos": [{"serie_ht01": proxy, "fecha_dato": str(s.index[-1].date()) if len(s) else None, "n": len(s)},
@@ -853,7 +920,8 @@ class Evaluador:
     def aprobar_certificados(self, ids, as_of, autor: str = "BROKER") -> list[dict]:
         """PA-10 (CT-04): el operador aprueba certificados PROPUESTO. Escribe en F6 una entrada CERT_APROBACION por id y
         el certificado queda VIGENTE. Valida todos los ids antes de escribir nada (falla cerrado: ValueError con el
-        motivo y F6 sin cambios)."""
+        motivo y F6 sin cambios). T-160 (PB-32): un PROPUESTO sin re-ejecución CT-10 coincidente en el Registro de cálculos del
+        cálculo que lo sostiene no entra en vigor."""
         if isinstance(ids, str) or not isinstance(ids, (list, tuple)):
             raise ValueError("aprobar_certificados: se espera una lista de identificadores CERT-")
         ids = list(ids)
@@ -876,6 +944,10 @@ class Evaluador:
             if (celda.get("clase"), celda.get("horizonte"), celda.get("metodo")) in vigentes:
                 raise ValueError(f"aprobar_certificados: la celda {celda.get('clase')}|{celda.get('horizonte')} de {i} ya "
                                  "tiene un certificado VIGENTE")
+            sin = self.motivo_sin_reejecucion(c)
+            if sin:
+                raise ValueError(f"aprobar_certificados: {i} no entra en vigor sin una re-ejecución CT-10 coincidente del "
+                                 f"cálculo que lo sostiene (PB-32): {sin}")
             vigentes.add((celda.get("clase"), celda.get("horizonte"), celda.get("metodo")))
         hechos = []
         for i in ids:
@@ -885,11 +957,117 @@ class Evaluador:
             hechos.append(e)
         return hechos
 
+    def motivo_sin_reejecucion(self, c: dict) -> str | None:
+        """T-160 (PB-32): None si el certificado `c` cita en `reejecucion` una re-ejecución CT-10 del Evaluador que está en el
+        Registro de cálculos, coincide (SI o DENTRO_TOLERANCIA) y re-ejecuta su `calc_soporte`, un servicio FC-EVAL-001 de
+        su misma celda; si no, el motivo."""
+        rex_id, soporte = c.get("reejecucion"), c.get("calc_soporte")
+        if not isinstance(rex_id, str) or not isinstance(soporte, str):
+            return "no cita la re-ejecución CT-10 ni el cálculo que lo sostiene"
+        rc = self.almacen.estado("RC")
+        r, s = rc.get(rex_id) or {}, rc.get(soporte) or {}
+        rx: dict = r["reejecucion"] if isinstance(r.get("reejecucion"), dict) else {}
+        if r.get("tipo_entrada") != "REEJECUCION" or r.get("contrato") != "CT-10" or r.get("solicitante") != "AG-20":
+            return f"{rex_id} no es una re-ejecución CT-10 del Evaluador en el Registro de cálculos"
+        if rx.get("calc_original") != soporte:
+            return f"{rex_id} no re-ejecuta {soporte}"
+        if rx.get("coincide") not in COINCIDE_CT10:
+            return f"{rex_id} no coincide ({rx.get('coincide')}: {rx.get('diagnostico')})"
+        celda = c.get("celda") or {}
+        op_: dict = s["operacion"] if isinstance(s.get("operacion"), dict) else {}
+        if (s.get("tipo_entrada") != "SERVICIO" or op_.get("ficha_id") != FICHA_CERTIFICADO
+                or (s.get("clase"), s.get("horizonte")) != (celda.get("clase"), celda.get("horizonte"))):
+            return f"{soporte} no es un servicio {FICHA_CERTIFICADO} de la celda {celda.get('clase')}|{celda.get('horizonte')}"
+        return None
+
+    def _parametros_certificado(self) -> dict:
+        """T-160: parámetros del cálculo de un certificado, los mismos en el Evaluador y en la petición al Motor (FC-EVAL-001):
+        réplicas, simulaciones, nivel del IC y mínimo de conglomerados de la configuración; semilla y h de `evaluar_celda`."""
+        return {"replicas": int(parametro(self.cfg, "evaluacion.bootstrap_replicas")),
+                "simulaciones": int(parametro(self.cfg, "evaluacion.simulaciones_ece")),
+                "nivel": float(parametro(self.cfg, "evaluacion.nivel_ic")),
+                "semilla_bootstrap": int(_DEFECTO_CELDA["semilla"]), "h": int(_DEFECTO_CELDA["h"]),
+                "min_conglomerados": self._min_conglomerados()}
+
+    def _entradas_celda(self, v: list[dict]) -> tuple[dict, float]:
+        """T-160: las entradas del cálculo de una celda (p, o, referencia y fechas de conglomerado) y su tasa base."""
+        pr = [float(x["referencia_ingenua"]["valor_o_prob"]) for x in v]
+        return ({"p": [float(x["prob_interna"]) for x in v], "o": [int(x["resolucion"]["resultado_binario"]) for x in v],
+                 "p_ref": pr, "fechas": self._fechas_conglomerado(v)}, float(np.mean(pr)))
+
+    def _verificar_reejecucion(self, k, entradas: dict, tasa_base: float, m: dict, n_cert: int, ece_max: float,
+                               alfa_holm: float | None, as_of, run_id: str | None) -> dict:
+        """T-160 (PB-32, EVAL-F05 y punto 5 de §6.6 del prompt del Evaluador): antes de escribir el certificado de la celda
+        `k`, (1) se pide al Motor el cálculo que lo sostiene (FC-EVAL-001 por CT-09, con las mismas entradas y parámetros) y
+        sus cifras se comparan con las del certificado; (2) se encarga su re-ejecución CT-10 (AUD-REX-001), que tiene que dar
+        SI o DENTRO_TOLERANCIA, y (3) si alguna comparación no es exacta, el criterio tiene que seguir cumpliéndose con las
+        cifras movidas en contra lo que permite la tolerancia (materialidad). Devuelve `coincide` (bool), el motivo si no, la
+        severidad de la incidencia, `calc_soporte`, `reejecucion` y el detalle para el CERT-. No lanza: falla cerrado."""
+        celda = etiqueta_celda(k)
+        tol = float(servicio.IMPLEMENTADAS[FICHA_CERTIFICADO]["tol"])
+        out: dict = {"coincide": False, "motivo": None, "severidad": "Operativa", "calc_soporte": None, "reejecucion": None,
+                     "detalle": None}
+
+        def fallo(motivo: str, severidad: str = "Operativa") -> dict:
+            out.update(motivo=motivo, severidad=severidad)
+            return out
+        if self.motor is None:
+            return fallo("sin Motor: la re-ejecución CT-10 del cálculo que sostiene el certificado no es posible")
+        peticion = {"operacion": FICHA_CERTIFICADO, "plan": "PLAN_MIN", "clase": k[0], "horizonte": k[1],
+                    "datos": [{"valores": copy.deepcopy(entradas)}],
+                    "parametros": {**self._parametros_certificado(), "tasa_base": tasa_base},
+                    "fecha_corte": str(pd.Timestamp(as_of).date())}
+        try:
+            res = self.motor.servir(peticion, "AG-20", run_id)
+        except Exception as e:  # noqa: BLE001 — sin el cálculo del Motor no hay certificado (falla cerrado)
+            return fallo(f"el Motor no ha podido servir {FICHA_CERTIFICADO} ({type(e).__name__}: {str(e)[:200]})")
+        calc = res.get("calc_id") if isinstance(res, dict) else None
+        if not isinstance(res, dict) or not str(res.get("estado", "")).startswith("SERVED") or not isinstance(calc, str):
+            r = res if isinstance(res, dict) else {}
+            return fallo(f"el Motor no sirve {FICHA_CERTIFICADO}: {r.get('motivo')} ({str(r.get('detalle'))[:200]})")
+        out["calc_soporte"] = calc
+        propias, del_motor = cifras_certificado(m), cifras_certificado(res.get("resultado") or {})
+        difs = servicio.comparar(propias, del_motor, tol)
+        if difs:
+            return fallo(f"el cálculo {calc} del Motor no reproduce las cifras del certificado con la tolerancia {tol:g} "
+                         f"({ORIGEN_TOLERANCIA}): {'; '.join(sorted(difs)[:5])}", "Material")
+        try:
+            rex = self.motor.reejecutar(calc, f"certificado de horizonte {celda}: re-ejecución del cálculo que lo sostiene "
+                                              "antes de proponerlo o emitirlo (PB-32, EVAL-F05)", "AG-20")
+        except Exception as e:  # noqa: BLE001 — CT-10 imposible: no hay certificado (falla cerrado)
+            return fallo(f"re-ejecución CT-10 de {calc} imposible ({type(e).__name__}: {str(e)[:200]})")
+        rex = rex if isinstance(rex, dict) else {}
+        out["reejecucion"] = rex.get("calc_id")
+        rx = (self.almacen.estado("RC").get(rex.get("calc_id")) or {}).get("reejecucion") or {}
+        exactas = propias == del_motor
+        out["detalle"] = {"contrato": "CT-10", "calc_id": rex.get("calc_id"), "calc_original": calc,
+                          "coincide": rex.get("coincide"), "categoria": rex.get("categoria"),
+                          "diagnostico": rex.get("diagnostico"), "tolerancia": tol, "tolerancia_ct10": rx.get("tolerancia"),
+                          "origen_tolerancia": ORIGEN_TOLERANCIA,
+                          "cifras_frente_al_motor": "iguales" if exactas else "dentro de la tolerancia"}
+        if rex.get("coincide") not in COINCIDE_CT10:
+            return fallo(f"la re-ejecución CT-10 {rex.get('calc_id')} de {calc} no coincide ({rex.get('coincide')}: "
+                         f"{str(rex.get('diagnostico'))[:300]})",
+                         "Operativa" if rex.get("categoria") == "ERROR_REEJECUCION" else "Material")
+        pasos = (0 if exactas else 1) + (0 if rex["coincide"] == "SI" else 1)
+        if pasos:
+            crit = criterio_desfavorable(m, holgura_tolerancia(tol, pasos), n_cert, ece_max, alfa_holm)
+            out["detalle"]["materialidad"] = {"holgura": holgura_tolerancia(tol, pasos), "certificable": crit["certificable"]}
+            if not crit["certificable"]:
+                return fallo("diferencia dentro de la tolerancia pero material: con las cifras movidas en contra lo que "
+                             f"permite la tolerancia, el criterio no se cumple ({'; '.join(crit['motivos'])})", "Material")
+        out["coincide"] = True
+        return out
+
     def revisar_certificados(self, as_of, run_id: str | None = None) -> dict:
         """Certificados de horizonte (Anexo A). T-66: solo con PRG admisibles (PA-09); el mínimo de muestra se exige a
         n_eff (PA-03); con `aprendizaje.solo_endurecer` el certificado nace PROPUESTO (PA-10). Revocar un VIGENTE y
-        retirar un PROPUESTO que ya no cumple el criterio endurecen: son automáticos."""
+        retirar un PROPUESTO que ya no cumple el criterio endurecen: son automáticos. T-160 (PB-32): ningún certificado se
+        propone ni se emite sin la re-ejecución CT-10 coincidente del cálculo que lo sostiene (`_verificar_reejecucion`); si
+        no la hay, la celda no se certifica, queda en `sin_reejecucion_coincidente` y se registra una incidencia en HA. Una
+        propuesta PROPUESTO sin esa re-ejecución (anterior a T-160) se retira y la celda se vuelve a evaluar."""
         n_cert = int(parametro(self.cfg, "evaluacion.min_certificar"))
+        ece_max = float(parametro(self.cfg, "evaluacion.ece_max"))
         min_cong = self._min_conglomerados()
         solo_endurecer = self.solo_endurecer()
         celdas = defaultdict(list)
@@ -898,23 +1076,46 @@ class Evaluador:
         candidatas = {k: v for k, v in celdas.items() if len(v) >= n_cert}
         vigentes = {(c["celda"]["clase"], c["celda"]["horizonte"], c["celda"].get("metodo")): c for c in self.certificados_vigentes(as_of)}
         propuestos = {(c["celda"]["clase"], c["celda"]["horizonte"], c["celda"].get("metodo")): c for c in self.certificados_propuestos(as_of)}
-        emitidos, revocados, retirados, evaluadas = [], [], [], {}
+        emitidos, revocados, retirados, evaluadas, sin_rex = [], [], [], {}, {}
+        # T-160 (PB-32): una propuesta sin re-ejecución CT-10 coincidente no puede entrar en vigor; se retira (endurece, PA-10)
+        for k, c in list(propuestos.items()):
+            sin = self.motivo_sin_reejecucion(c)
+            if sin:
+                self.almacen.escribir("F6", "AG-20", {"tipo_entrada": "CERT_REVOCACION", "id": c["id"], "estado": "REVOCADO",
+                                                      "motivo_cambio": "propuesta retirada: sin re-ejecución CT-10 coincidente "
+                                                      f"del cálculo que la sostiene ({sin}); la celda se vuelve a evaluar (PB-32)",
+                                                      "fecha": str(pd.Timestamp(as_of).date())})
+                retirados.append(c["id"])
+                del propuestos[k]
         if candidatas:
-            metr = {k: ev.evaluar_celda([float(x["prob_interna"]) for x in v], [int(x["resolucion"]["resultado_binario"]) for x in v],
-                                        [float(x["referencia_ingenua"]["valor_o_prob"]) for x in v],
-                                        float(np.mean([x["referencia_ingenua"]["valor_o_prob"] for x in v])),
-                                        int(parametro(self.cfg, "evaluacion.bootstrap_replicas")), int(parametro(self.cfg, "evaluacion.simulaciones_ece")),
-                                        fechas=self._fechas_conglomerado(v), min_conglomerados=min_cong)
-                    for k, v in candidatas.items()}
+            prm = self._parametros_certificado()
+            entradas = {k: self._entradas_celda(v) for k, v in candidatas.items()}
+            # T-160: los parámetros salen de `_parametros_certificado`, los mismos que la petición al Motor (el nivel del IC,
+            # `evaluacion.nivel_ic`; antes, el de `evaluar_celda` por defecto, el mismo 0,90)
+            metr = {k: ev.evaluar_celda(e["p"], e["o"], e["p_ref"], tb, prm["replicas"], prm["simulaciones"], prm["nivel"],
+                                        prm["semilla_bootstrap"], prm["h"], fechas=e["fechas"], min_conglomerados=min_cong)
+                    for k, (e, tb) in entradas.items()}
             # Holm escalonado (Anexo A, certificado R13): en cuanto una celda no supera su umbral, ninguna de las
             # siguientes (de p mayor) lo supera. α: clave evaluacion.alfa_holm (0,10, coherente con el IC 90 % del criterio)
             umbrales = ev.holm({etiqueta_celda(k): (m["dm_hln"]["p_unilateral"] if m["dm_hln"]["p_unilateral"] is not None else 1.0)
                                 for k, m in metr.items()}, float(parametro(self.cfg, "evaluacion.alfa_holm")))
             for k, m in metr.items():
-                crit = ev.criterio_certificado(m, n_cert, float(parametro(self.cfg, "evaluacion.ece_max")),
-                                               umbrales[etiqueta_celda(k)] if len(metr) > 1 else None)
+                alfa_k = umbrales[etiqueta_celda(k)] if len(metr) > 1 else None
+                crit = ev.criterio_certificado(m, n_cert, ece_max, alfa_k)
                 evaluadas[etiqueta_celda(k)] = crit
                 if crit["certificable"] and k not in vigentes and k not in propuestos:
+                    ver = self._verificar_reejecucion(k, *entradas[k], m, n_cert, ece_max, alfa_k, as_of, run_id)
+                    if not ver["coincide"]:
+                        # T-160: sin re-ejecución CT-10 coincidente no hay certificado (falla cerrado); se reintenta en la
+                        # próxima revisión
+                        evaluadas[etiqueta_celda(k)] = {**crit, "certificable": False,
+                                                        "motivos": [*crit["motivos"], f"re-ejecución CT-10: {ver['motivo']}"],
+                                                        "reejecucion_ct10": {c: ver[c] for c in ("calc_soporte", "reejecucion", "detalle")}}
+                        sin_rex[etiqueta_celda(k)] = ver["motivo"]
+                        self.almacen.incidencia("HERRAMIENTA", f"Certificado de horizonte {etiqueta_celda(k)} no propuesto ni "
+                                                f"emitido: {ver['motivo']} (PB-32, EVAL-F05)", etiqueta_celda(k),
+                                                severidad=ver["severidad"])
+                        continue
                     muestra = m.get("muestra_efectiva") or {}
                     cert = {"tipo_entrada": "CERT", "id": self.almacen.nuevo_id("CERT"),
                             "estado": "PROPUESTO" if solo_endurecer else "VIGENTE",
@@ -923,7 +1124,10 @@ class Evaluador:
                             "brier": m["brier"], "brier_ref": m["brier_ref"], "bss": m["bss"]["valor"], "bss_ic90": m["bss"]["ic"],
                             "bss_ic_metodo": m["bss"].get("metodo"),
                             "holm_superado": True, "ece": m["calibracion"]["ece"], "ece_nulo_q90": m["ece_nulo"]["q90"],
-                            "methodology_version": parametro(self.cfg, "methodology_version"), "emitido": str(pd.Timestamp(as_of).date())}
+                            "methodology_version": parametro(self.cfg, "methodology_version"), "emitido": str(pd.Timestamp(as_of).date()),
+                            # T-160 (esquema de F6 4.3): el cálculo que lo sostiene (con la curva de fiabilidad) y su CT-10
+                            "calc_soporte": ver["calc_soporte"], "curva_fiabilidad": ver["calc_soporte"],
+                            "reejecucion": ver["reejecucion"], "reejecucion_ct10": ver["detalle"]}
                     if solo_endurecer:
                         cert["pendiente"] = ("aprobación del operador por CT-04 (aprobar_certificados); hasta entonces no "
                                              "habilita probabilidades numéricas (PA-10, aprendizaje.solo_endurecer)")
@@ -950,7 +1154,8 @@ class Evaluador:
                         revocados.append(c["id"])
         no_cert = {etiqueta_celda(k): f"n = {len(v)} < {n_cert}" for k, v in celdas.items() if k not in candidatas}
         return {"emitidos": emitidos, "revocados": revocados, "propuestas_retiradas": retirados, "evaluadas": evaluadas,
-                "insuficientes": no_cert, "excluidos_contaminacion": self.excluidos_contaminacion(as_of)}
+                "insuficientes": no_cert, "sin_reejecucion_coincidente": sin_rex,
+                "excluidos_contaminacion": self.excluidos_contaminacion(as_of)}
 
     def lecciones_vigentes(self, as_of, clase: str | None = None, max_n: int | None = None) -> list[dict]:
         """Lecciones vigentes del tipo, las de más fuerza primero. T-120: el máximo por encargo (12.3 del Documento 0) sale
