@@ -1,5 +1,5 @@
-"""T-161 · Mutantes de las correcciones de T-161 (M01–M14) y de su r02 (M15–M26) sobre `guias.py`, para confirmar que cada prueba nueva falla sin
-su corrección (regresión). M04 se cambió en la r02 (la comprobación de escritura es otra).
+"""T-161 · Mutantes de las correcciones de T-161 (M01–M14), de su r02 (M15–M26) y de su r03 (M27–M38) sobre `guias.py`, para confirmar que cada prueba nueva falla sin
+su corrección (regresión). M04 se cambió en la r02 (la comprobación de escritura es otra); M19, M20 y M25, en la r03 (cambió la línea).
 
 Uso, desde la raíz: python .docs/tickets/T-161/mutantes_t161.py <copia desechable con «qa29_» y «_mut» y `bloque_a/` entero>
 Cada mutante se aplica en la copia, se pasan `PRUEBAS` (con -x) y se restaura. Vivo = ninguna prueba lo
@@ -13,7 +13,7 @@ COPIA = Path(sys.argv[1]).resolve()
 assert "qa29_" in str(COPIA) and "_mut" in str(COPIA) and (COPIA / "bloque_a" / "11_Ejecutor" / "bloque_a").is_dir()
 GU = "bloque_a/11_Ejecutor/bloque_a/guias.py"
 OR = "bloque_a/11_Ejecutor/bloque_a/orquestacion.py"
-PRUEBAS = ["tests/test_t161_guias.py", "tests/test_t161_r02.py"]
+PRUEBAS = ["tests/test_t161_guias.py", "tests/test_t161_r02.py", "tests/test_t161_r03.py"]
 MUTANTES = [
     ("M01", "H-01 sin NFKC", 't = unicodedata.normalize("NFKC", str(texto))', "t = str(texto)"),
     ("M02", "H-01 sin quitar los caracteres de formato", 'for c in t if unicodedata.category(c) != "Cf")', "for c in t)"),
@@ -39,18 +39,38 @@ MUTANTES = [
     ("M16", "r02 H-03 sin enmascarar los sentidos financieros", 't = FINANCIERO.sub(" termino financiero ", t)', "t = t"),
     ("M17", "r02 H-03 IDIOMA cuenta los nombres propios", 't = _NOMBRE_PROPIO.sub(" ", t)', "t = t"),
     ("M18", "r02 H-03 IDIOMA cuenta las siglas", 't = _SIGLA.sub(" ", t)', "t = t"),
-    ("M19", "r02 H-02 sin leer las cifras como letras", "return [v] if v != t else []", "return []"),
+    ("M19", "r02 H-02 sin otras lecturas del texto", "return [x for x in dict.fromkeys(otras) if x != t]", "return []"),
     ("M20", "r02 H-02 sin condiciones en los campos descriptivos",
-     "condicion = None if estricto else (REFUERZA.search(t) and NIEGA.search(t))", "condicion = None"),
+     "condicion = None if estricto else ((REFUERZA.search(t) or NEUTRO.search(t)) and NIEGA.search(t))", "condicion = None"),
     ("M21", "r02 H-02 sin «con una fuente» junto a la tesis", " or (MULTIPLICIDAD.search(t) if SUFICIENCIA.search(t) else None)", ""),
     ("M22", "r02 H-02 sin R9", '(RE_INYECCION, "INYECCION",', '(re.compile("(?!)"), "INYECCION",'),
     ("M23", "r02 H-02 sin retirar la guía comprometida", "if any(COMPROMETEN & set(c[\"familias\"]) for _, c in conflictos):",
      "if False:"),
     ("M24", "r02 H-01 AG-20 fuera de los agentes de control",
      '                      "AG-20": "aprendizaje: sus lecciones llegan como contexto a todos los agentes",\n', ""),
-    ("M25", "r02 H-01 las lecciones de AG-20 sin detector", "            conflicto = conflicto_de_leccion(l)\n",
+    ("M25", "r02 H-01 las lecciones de AG-20 sin detector al escribir",
+     '            conflicto = conflicto_de_leccion({**l, "tipo": l.get("tipo", "PREDICTIVA"), "ambito": l.get("ambito") or {}}, self.cfg)\n',
      "            conflicto = None\n", OR),
     ("M26", "r02 H-05 sin longitud máxima", 'if len(it[campo]) > lim["max_caracteres_por_texto"]:', "if False:"),
+    ("M27", "r03 H-06 los controles reciben lecciones de un modelo",
+     "if agente in AGENTES_DE_CONTROL and r.get(\"origen\") != ORIGEN_DETERMINISTA:", "if False:"),
+    ("M28", "r03 H-06 sin detector al leer", "self._veredictos[clave] = conflicto_de_leccion(leccion, self.b.cfg)",
+     "self._veredictos[clave] = None"),
+    ("M29", "r03 H-06 sin validar el tipo", "if leccion.get(\"tipo\") not in TIPOS_LECCION:", "if False:"),
+    ("M30", "r03 H-06 sin validar las claves del ámbito", "        if fuera:\n", "        if False:\n"),
+    ("M31", "r03 H-06 una lección que no está en F6 se da", "            if r is None:\n                continue\n",
+     "            if r is None:\n                r = l\n"),
+    ("M32", "r03 H-08 sin enmascarar lo que endurece", '_enmascarar_crudo(v, ENDURECE, " endurece ") if v else v', "v"),
+    ("M33", "r03 H-07 los verbos neutros eximen siempre",
+     "claro = REFUERZA.search(t) or (NEUTRO.search(t) and not any(r in NUCLEO for _, r in _controles(t)))",
+     "claro = REFUERZA.search(t) or NEUTRO.search(t)"),
+    ("M34", "r03 H-07 el enmascarado financiero aunque haya un verbo de cambio",
+     "if not (CAMBIO_FINANCIERO.search(t) or RELAJA.search(t)):", "if True:"),
+    ("M35", "r03 H-07 sin palabras fuertes de otra lengua", "idioma = idioma or IDIOMA_FUERTE.search(entero)", "idioma = idioma"),
+    ("M36", "r03 H-07 sin texto codificado", "codigo = _codificado(_texto(item.get(campo)))", "codigo = []"),
+    ("M37", "r03 H-06 sin revisión de las lecciones en el F0", "self._revisar_lecciones(hoy, run_id, clave)", "pass"),
+    ("M38", "r03 H-06 si la revisión de las lecciones falla, se dan igual",
+     'if (run_id or "", hoy.isoformat()) in self._lecciones_caidas or not lecciones:', "if not lecciones:"),
 ]
 
 

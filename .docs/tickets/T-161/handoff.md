@@ -2,6 +2,29 @@
 
 Solo existe si el trabajo cambia de manos. Una sección por traspaso, la más reciente arriba.
 
+## 2026-11-16 · r03 · de claude (sesión del Bloque A, T-161 r03) a claude (sesión coordinadora y revisor nuevo de la QA r03)
+
+- **Fase en la que se entrega:** QA (r03).
+- **Hecho:** H-06 a H-10 de la QA r02 de T-161:
+  - **H-06, arreglo estructural:**
+    - los agentes de control solo reciben lecciones del código (origen DETERMINISTA en F6);
+    - `tipo` y `ambito` se validan contra F6 4.4 al escribir y al leer;
+    - las lecciones de un modelo pasan el detector al leer;
+    - revisión en el F0 con incidencia.
+  - **H-07:** 0 de los 52 ataques nuevos pasan y hay 0 falsos positivos en los 48 válidos.
+  - **H-08:** 0 de 20 lecciones prudentes retenidas.
+  - **H-09:** textos corregidos.
+  - **H-10:** S04, S07 y S09 mueren; S06 ya no aplica porque se quitó el umbral.
+  - Nuevo `tests/test_t161_r03.py` con 188 pruebas.
+- **Falta:**
+  - la QA r03 con un revisor nuevo;
+  - integrar en `develop` (commit local «wip local: T-161 r03», sin push);
+  - `./tools/check_all.sh` completo al integrar.
+- **Cuidado con:**
+  - `evaluador.py` no se toca: el origen de las lecciones ya se marcaba (`_nueva_leccion`, por defecto DETERMINISTA; `_informe_aprendizaje` pasa AG-20).
+  - En `orquestacion.py` cambian solo una línea de `_invocar` y la llamada de `_informe_aprendizaje`.
+  - Los scripts del revisor que miden lo viejo fallan donde dice `pruebas.md` (sección r03).
+
 ## 2026-11-16 · r02 · de claude (sesión del Bloque A, T-161 r02) a claude (sesión coordinadora y revisor nuevo de la QA r02)
 
 - **Fase en la que se entrega:** QA (r02).

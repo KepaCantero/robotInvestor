@@ -20,8 +20,12 @@ esquema de HA V2.0 (4.4 GUI-, 4.8 P3- y COR-, 5 estados). Plan de pruebas V3.0: 
 """
 from __future__ import annotations
 
+import base64
 import copy
 import datetime as dt
+import hashlib
+import html
+import json
 import re
 import threading
 import unicodedata
@@ -29,7 +33,7 @@ from typing import Any
 
 import jsonschema
 
-from .configuracion import parametro
+from .configuracion import CLASES, HORIZONTES, parametro
 from .contratos import RE_INYECCION, TODOS, MensajeInvalido
 from .llm import MockClient
 
@@ -130,8 +134,8 @@ CONTROLES = (
     (r"\bverific\w*|\bcomprob\w*|\bcomprueb\w*|\bvalid\w*|\bcontrol(?:es)?\b|\brevis\w*|\bchecks?\b", "R16 (los controles nunca se recortan)"),
     (r"\bregistr\w*|\bhistorial\w*|\btrazab\w*|\banot\w*", "R7 y R24 (registro y trazabilidad)"),
     (r"\bseguridad\b", "R8 y sección 17 (seguridad)"),
-    ((r"\brefut\w*|\bobjecion\w*|\bcontrari[ao]s?\b|\bautocritic\w*|\binvalidacion\w*|\ben contra\b|\ba favor\b|\bargument\w*"
-      r"|\bdebilidad\w*|\briesgos?\b"), "R12 (autocrítica obligatoria)"),
+    (r"\brefut\w*|\bobjecion\w*|\bcontrari[ao]s?\b|\bautocritic\w*|\binvalidacion\w*|\ben contra\b", "R12 (autocrítica obligatoria)"),
+    (r"\ba favor\b|\bargument\w*|\bdebilidad\w*|\briesgos?\b", "R12 (contenido de la tesis: argumentos, debilidades y riesgos)"),
     (r"\bevidencias?\b", "R7 (trazabilidad de la evidencia)"),
     (r"\bconfianza\b|\bcalibra\w*|\bprimari[ao]s?\b|\bsecundari[ao]s?\b", "R10 y R12 (clasificación de la evidencia y confianza)"),
     (r"\bauditor\w*|\baudit\w*|\bhallazg\w*", "R16 y auditoría (AG-19)"),
@@ -166,6 +170,8 @@ RELAJA = re.compile(
     # T-161 r02 (QA r01, H-02): negaciones indirectas, excepciones y números con letras
     r"|\bsobra(?:n|ra|ran|ndo)?\b|\bsobrar\b|\besta(?:n)? de mas\b|\bcarec\w*|\bpor alto\b|\bde lado\b|\bexcepto\b|\bsalvo\b"
     r"|\bmenos en\b|\bfacultativ\w*|\bvoluntari\w*|\bdescart\w*"
+    # T-161 r03 (QA r02, H-07): más verbos y giros de omitir
+    r"|\bsuspend\w*|\baparc\w*|\bde largo\b|\btramite\b|\bno aporta\w*|\bolvid\w*|\bcancel\w*|\ben diagonal\b|\bpor encima\b"
     r"|\b(?:cero|ningun[ao]?|nada de) (?:\w+ ){0,2}?(?:" + _OBJETOS_DE_CONTROL + r")\b|\bcero veces\b"
     r"|\bskip\w*|\bbypass\w*|\bdisabl\w*|\bwithout\b|\bno need\b|\bdon t\b|\bdo not\b|\bometr\w*|\bometi\w*|\bno cal\b|\bsense\b")
 # Rebajas implícitas: conflicto por sí solas (un solo análisis u origen, dar por bueno o resuelto sin comprobar, objeciones o
@@ -189,12 +195,19 @@ REFUERZA = re.compile(
     r"|incluir|incluya|consulta|consultar|consulte|revisa|revisar|revise|documenta|documentar|documente|refuerza|reforzar"
     r"|refuerce|amplia|ampliar|amplie|corrobora|corroborar|corrobore|contrasta|contrastar|contraste|confirma|confirmar|confirme"
     r"|busca|buscar|busque|manten|mantener|mantenga|conserva|conservar|conserve|detalla|detallar|detalle|justifica|justificar"
-    r"|justifique|explicita|explicitar|asegura|asegurar|asegurate|corrige|corregir|corrija"
-    # T-161 r02 (QA r01, H-03): verbos de orden, formato y búsqueda (tipo 2 de 6.8), que no tocan el control que nombran
-    r"|presenta|presentar|presente|resume|resumir|resuma|agrupa|agrupar|agrupe|ordena|ordenar|ordene|expresa|expresar|exprese"
+    r"|justifique|explicita|explicitar|asegura|asegurar|asegurate|corrige|corregir|corrija)\b")
+# T-161 r02 (QA r01, H-03): verbos de orden, formato y búsqueda (tipo 2 de 6.8). T-161 r03 (QA r02, H-07): solo cuentan como
+# acción que no toca el control si el control que nombran no es del núcleo (`NUCLEO`: segunda pasada y puntuaciones,
+# corroboración, verificación, refutación y objeciones, auditoría, G3, elegibilidad): «Reutiliza en la segunda pasada las
+# puntuaciones de la primera» es conflicto; «Resume cada pieza de evidencia en una línea», no
+NEUTRO = re.compile(
+    r"\b(?:presenta|presentar|presente|resume|resumir|resuma|agrupa|agrupar|agrupe|ordena|ordenar|ordene|expresa|expresar|exprese"
     r"|escribe|escribir|escriba|usa|usar|use|utiliza|utilizar|utilice|lee|leer|lea|mira|mirar|mire|empieza|empezar|empiece"
     r"|indica|indicar|indique|senala|senalar|senale|muestra|mostrar|muestre|describe|describir|describa|nombra|nombrar"
     r"|explica|explicar|explique|separa|separar|separe|reutiliza|reutilizar|reutilice|rehaz|rehacer|adelanta|adelantar)\b")
+NUCLEO = {"9.1 (banda marginal: segunda pasada)", "R10 y PS1 (corroboración)", "R16 (los controles nunca se recortan)",
+          "R12 (autocrítica obligatoria)", "R16 y auditoría (AG-19)", "G3 (HT-09: un bloqueo nunca pasa a aviso; R16 y R17)",
+          "HT-03 y PS1–PS8 (elegibilidad)"}
 NIEGA = re.compile(r"\b(?:no|nunca|jamas|ni|tampoco|sin|salvo|excepto|solo|solamente|unicamente|basta\w*|vale|suficiente"
                    r"|presupuesto|coste\w*|prisa|rapid\w*|si (?:da|hay) tiempo|si (?:lo )?permite|oportun\w*|criterio|consider\w*"
                    r"|procede|proceda|discrecion\w*|convenient\w*|si (?:quieres|puedes|prefieres)|cuando (?:puedas|quieras)"
@@ -202,7 +215,11 @@ NIEGA = re.compile(r"\b(?:no|nunca|jamas|ni|tampoco|sin|salvo|excepto|solo|solam
                    r"|sobra\w*|cualquier\w*|si te parece|cuando (?:lo )?veas|veas necesario|voluntari\w*|facultativ\w*|eleccion|elijas"
                    r"|despues de (?:entregar|enviar|cerrar)|siguiente|proximo|posterior\w*|mas adelante|a mano|que tengas"
                    r"|cubiert\w* por|anterior|cero|ningun\w*|nada|(?:una|uno|dos|tres|cuatro|cinco|[0-9]+) de (?:cada|las|los)"
-                   r"|(?:en|a|para) (?:las |los )?(?:opciones|candidatas|casos)(?: \w+){0,2} lejos del corte)\b")
+                   r"|(?:en|a|para) (?:las |los )?(?:opciones|candidatas|casos)(?: \w+){0,2} lejos del corte"
+                   # T-161 r03 (QA r02, H-07): más condiciones (margen, ciclos alternos, un porcentaje, después de entregar…)
+                   r"|cuando haya\w*|ciclos? (?:pares|impares|alternos)|en un [0-9]+ ?% de|[0-9]+ ?% de (?:las|los)"
+                   r"|una vez (?:entregad|enviad|cerrad)\w*|a final de|al final de|en pocas|en algunas|algunas veces|a veces"
+                   r"|de vez en cuando)\b|=\s*(?:obligatori|necesari|imprescindible)\w*|×\s*0")
 CREDENCIALES = re.compile(r"\bcredencial\w*|\bcontrasen\w*|\bpassword\w*|\bapi ?keys?\b|\bclaves? (?:de )?(?:la )?api\b"
                           r"|\btoken(?:s)? de acceso\b|\baccess ?token\w*|\bsecret\w*|\bclaves? (?:de acceso|privada\w*|secreta\w*)\b"
                           r"|\bllaves? (?:de acceso|privada\w*)\b|\btokens? (?:de )?(?:api|autenticacion|sesion)\b|\bbearer\b")
@@ -214,9 +231,19 @@ PROMPT_O_CONTRATO = re.compile(r"\bprompt\w*|\bcontratos?\b|\bct ?[0-9]{2}\b")
 CAMBIO = re.compile(r"\b(?:modific|cambi|edit|reescrib|sustitu|actualiz|ampli|anad|quit|elimin|retir)\w*")
 CAMBIO_T3 = re.compile(r"\b(?:modific|cambi|sustitu|actualiz|ajust|aument|disminu|establec|relaj|endurec)\w*"
                        r"|\b(?:sube|subir|suba|baja|bajar|baje|fija|fijar|fije|pon|poner|ponga|marca|marcar|marque)\b")
+# T-161 r03 (QA r02, H-07): un verbo de cambio en el texto impide enmascarar sus frases financieras («Duplica los pesos de
+# referencia», «Eleva los topes de concentración», «Envía el informe por canales externos», «Pon en VIGILANCIA el estado…»)
+CAMBIO_FINANCIERO = re.compile(
+    r"\b(?:cambia|cambiar|cambie|modifica|modificar|modifique|sustituye|sustituir|actualiza|actualizar|ajusta|ajustar|aumenta"
+    r"|aumentar|disminuye|disminuir|establece|establecer|relaja|relajar|endurece|sube|subir|suba|baja|bajar|baje|fija|fijar|fije"
+    r"|pon|poner|ponga|marca|marcar|marque|duplica|duplicar|triplica|multiplica|dobla|doblar|eleva|elevar|recorta|recortar"
+    r"|reduce|reducir|amplia|ampliar|envia|enviar|envie|manda|mandar|remite|remitir|redirige|desvia|traslada|pasa a|lleva a)\b")
 # Un ítem que redefine términos o remite a otro ítem no es una acción concreta y verificable (6.9)
 INSTRUCCION = re.compile(r"\bsignifica\w*|\bequivale\w* a\b|\bquiere decir\b|\bse entiende por\b|\binterpret\w* (?:\w+ ){0,3}como\b"
-                         r"|\blo contrario\b|\bal reves\b|\b(?:punto|item|apartado|instruccion|parrafo) anterior\b|\bcubiert[ao]s? por\b")
+                         r"|\blo contrario\b|\bal reves\b|\b(?:punto|item|apartado|instruccion|parrafo) anterior\b|\bcubiert[ao]s? por\b"
+                         # T-161 r03 (QA r02, H-07): otras redefiniciones y remisiones
+                         r"|\bdesign\w*|\btoma\w* (?:\w+ ){1,2}por (?:ningun\w*|nada|cero|todas?|todos?)\b|\blease\b|\bvease\b"
+                         r"|=\s*(?:ningun\w*|nada|cero|no|nunca)\b|\bsegun el (?:item|punto|apartado)\b|\b(?:item|apartado) [0-9]{1,2}\b")
 MARCADO = re.compile(r"<\s*/?\s*[a-z!][^>]*>|~~|\]\s*\(")   # HTML o Markdown que tacha, oculta o enlaza texto
 # Palabras funcionales de otras lenguas (inglés, catalán, francés, portugués, italiano y alemán) que no son castellano
 IDIOMA = re.compile(
@@ -224,6 +251,11 @@ IDIOMA = re.compile(
     r"|from|into|pass|don t|amb|per|els|dels|segona|passada|ometre|cal|nomes|sense|aquest\w*|fer|tambe|perque|mai|quan"
     r"|avec|pour|sans|ne|pas|des|du|une|est|sont|deuxieme|toujours|jamais|nao|voce|uma|sem|passagem|tambem|sempre|entao"
     r"|della|delle|degli|il|gli|seconda|passaggio|senza|nicht|und|der|die|zweite|ohne|ist|immer)\b")
+# T-161 r03 (QA r02, H-07): palabras de instrucción de otras lenguas, que cuentan aunque vayan en mayúsculas o en títulos
+IDIOMA_FUERTE = re.compile(r"\b(?:leave|out|skip|every|review|second|only|weekends?|objections?|laisse\w*|tomber|seconde|revue"
+                           r"|ignorer|sauter|omettre|lascia\w*|saltare|weglassen)\b")
+# Texto codificado en base64 (se busca en el texto sin normalizar)
+_BASE64 = re.compile(r"[A-Za-z0-9+/]{16,}={0,2}")
 # Nombres propios (dos o más palabras con mayúscula, con sus conectores) y siglas: no cuentan para IDIOMA («Bank of England»,
 # «The Economist», «DER», «PER»)
 _NOMBRE_PROPIO = re.compile(r"\b[A-ZÁÉÍÓÚÜÑ][\w&.'’]*(?:\s+(?:(?:of|the|and|for|de|del|la|las|los|y|&|der|die|und|du|des|le)\s+)?"
@@ -235,7 +267,7 @@ _LEET = str.maketrans("013457", "oieast")
 CAMPOS_TEXTO = ("que_cambia", "donde_se_comprueba", "como_se_sabe", "origen")   # T-161 (H-02): todo lo que llega al modelo
 R23 = "R23 (manda la más restrictiva mientras se escala)"
 # Familias que hacen sospechosa toda la guía: sus otros ítems también se retiran (una instrucción repartida entre ítems)
-COMPROMETEN = {"INYECCION", "INSTRUCCION", "MARCADO"}
+COMPROMETEN = {"INYECCION", "INSTRUCCION", "MARCADO"} | {"CODIFICADO"}   # T-161 r03: también lo codificado
 # T-161 (H-04) [PROPUESTO]: 6.8 y 6.9 no dicen a quién puede dirigir guías el Orquestador; por defecto, a ningún agente que
 # sea un control (lo que hace un modelo y una guía podría debilitar). T-161 r02 (QA r01, H-01): AG-20 también, porque sus
 # lecciones van a F6 y de ahí al contexto de todos los agentes, también los de control
@@ -275,19 +307,40 @@ def _otra_escritura(texto: str) -> list[str]:
 
 
 def _sin_nombres(crudo: str) -> str:
-    """El texto sin siglas ni nombres propios (para IDIOMA); si casi todo está en mayúsculas, solo sin nombres propios."""
+    """El texto sin siglas ni nombres propios (para IDIOMA). T-161 r03 (QA r02, H-10): sin el umbral de mayúsculas de la r02,
+    que no hacía nada (`_NOMBRE_PROPIO` ya se lleva las palabras en mayúsculas); el inglés en mayúsculas o en títulos lo
+    detecta `IDIOMA_FUERTE`, que mira el texto entero."""
     t = unicodedata.normalize("NFKC", crudo)
-    letras = [c for c in t if c.isalpha()]
     t = _NOMBRE_PROPIO.sub(" ", t)
-    if letras and sum(c.isupper() for c in letras) / len(letras) < 0.6:
-        t = _SIGLA.sub(" ", t)
+    t = _SIGLA.sub(" ", t)
     return _normalizar(t)
 
 
 def _variantes(t: str) -> list[str]:
-    """El texto con las cifras de las palabras que mezclan letras y cifras leídas como letras («0mite», «n0»), si cambia."""
+    """Otras lecturas del texto, las que cambian: las cifras de las palabras que mezclan letras y cifras leídas como letras
+    («0mite», «n0»); T-161 r03 (QA r02, H-07): las letras separadas por espacios o puntos («O m i t e»), «rn» por «m»
+    («Ornite»), una palabra corta partida por un espacio («Omi te»), las entidades HTML («&#79;mite») y el texto al revés."""
     v = re.sub(r"\b(?=\w*[a-z])(?=\w*[013457])\w+\b", lambda m: m.group(0).translate(_LEET), t)
-    return [v] if v != t else []
+    otras = [v, re.sub(r"\b\w(?:[ .]\w\b){2,}", lambda m: re.sub(r"[ .]", "", m.group(0)), t), t.replace("rn", "m"),
+             re.sub(r"\b(\w{2,4}) (\w{1,3})\b", r"\1\2", t),   # una palabra partida por un espacio («Omi te»)
+             _normalizar(html.unescape(t)), t[::-1]]
+    return [x for x in dict.fromkeys(otras) if x != t]
+
+
+def _codificado(crudo: str) -> list[str]:
+    """Trozos en base64 que se decodifican como texto (T-161 r03, QA r02, H-07): un ítem no lleva instrucciones codificadas."""
+    out = []
+    for m in _BASE64.finditer(crudo):
+        trozo = m.group(0)
+        if not (re.search(r"[a-z]", trozo) and re.search(r"[A-Z]", trozo)):
+            continue
+        try:
+            texto = base64.b64decode(trozo + "=" * (-len(trozo) % 4), validate=True).decode("utf-8")
+        except (ValueError, UnicodeDecodeError):
+            continue
+        if texto and sum(c.isalpha() or c.isspace() for c in texto) / len(texto) >= 0.8:
+            out.append(trozo)
+    return out
 
 
 def _controles(t: str) -> list[tuple[str, str]]:
@@ -295,14 +348,18 @@ def _controles(t: str) -> list[tuple[str, str]]:
 
 
 def _refuerza(t: str) -> bool:
-    """La acción es claramente de reforzar: un verbo de refuerzo y ninguna marca de negación, rebaja o excepción."""
-    return bool(REFUERZA.search(t)) and not (NIEGA.search(t) or RELAJA.search(t) or REBAJA_IMPLICITA.search(t))
+    """La acción es claramente de reforzar (o no toca el control): un verbo de refuerzo, o uno neutro si no nombra un control
+    del núcleo, y ninguna marca de negación, rebaja o excepción."""
+    claro = REFUERZA.search(t) or (NEUTRO.search(t) and not any(r in NUCLEO for _, r in _controles(t)))
+    return bool(claro) and not (NIEGA.search(t) or RELAJA.search(t) or REBAJA_IMPLICITA.search(t))
 
 
 def _revisar_texto(t: str, estricto: bool, familias: list, terminos: list, reglas: list, crudo: str | None = None) -> None:
     """Familias de conflicto de un texto normalizado. `estricto` para `que_cambia` (la acción); los campos descriptivos
     no son conflicto solo por nombrar un control o un término de tipo 3. `crudo` (el texto sin normalizar) para IDIOMA."""
-    t = FINANCIERO.sub(" termino financiero ", t)
+    entero = t
+    if not (CAMBIO_FINANCIERO.search(t) or RELAJA.search(t)):   # T-161 r03: con un verbo de cambio o de rebaja, no se enmascara
+        t = FINANCIERO.sub(" termino financiero ", t)
     tipo3 = [m.group(0) for p in TIPO_3 for m in [re.search(p, t)] if m] if estricto or CAMBIO_T3.search(t) else []
     prio = PRIORIDAD.search(t) if estricto and not AGENDA.search(t) else None
     if prio:
@@ -323,7 +380,7 @@ def _revisar_texto(t: str, estricto: bool, familias: list, terminos: list, regla
             familias.append("RELAJA_CONTROL")
             terminos += [relaja.group(0)] + [x for x, _ in tocados]
             reglas += [r for _, r in tocados]
-    condicion = None if estricto else (REFUERZA.search(t) and NIEGA.search(t))
+    condicion = None if estricto else ((REFUERZA.search(t) or NEUTRO.search(t)) and NIEGA.search(t))
     if condicion and _controles(t):
         familias.append("RELAJA_CONTROL")    # una orden con una condición sobre un control, en un campo descriptivo
         terminos.append(condicion.group(0))
@@ -364,6 +421,7 @@ def _revisar_texto(t: str, estricto: bool, familias: list, terminos: list, regla
             reglas.append(regla)
     for t in ((_sin_nombres(crudo),) if crudo is not None else ()):   # IDIOMA, sin siglas ni nombres propios (T-161 r02)
         idioma = IDIOMA.search(t)
+        idioma = idioma or IDIOMA_FUERTE.search(entero)
         if idioma:
             familias.append("IDIOMA")
             terminos.append(idioma.group(0))
@@ -382,8 +440,8 @@ def conflicto_del_item(item: dict) -> dict | None:
     campos: list[str] = []
     t = _normalizar(item.get("que_cambia", ""))
     _revisar_texto(t, True, familias, terminos, reglas, _texto(item.get("que_cambia", "")))
-    for variante in _variantes(t):
-        _revisar_texto(variante, True, familias, terminos, reglas)
+    for variante in _variantes(t):   # T-161 r03: las otras lecturas solo buscan rebajas (criterio de los campos descriptivos)
+        _revisar_texto(variante, False, familias, terminos, reglas)
     if familias:
         campos.append("que_cambia")
     for campo in CAMPOS_TEXTO[1:]:
@@ -400,6 +458,14 @@ def conflicto_del_item(item: dict) -> dict | None:
             reglas.append(ESCRITURA)
         if len(familias) > antes:
             campos.append(campo)
+    for campo in CAMPOS_TEXTO:
+        codigo = _codificado(_texto(item.get(campo)))
+        if codigo:
+            familias.append("CODIFICADO")
+            terminos += codigo
+            reglas.append("6.9 (cada ítem es una acción concreta y legible: nada codificado)")
+            if campo not in campos:
+                campos.append(campo)
     letras = _otra_escritura(_texto(item.get("que_cambia", "")))
     if letras:
         familias.append("ESCRITURA")
@@ -425,15 +491,105 @@ def conflicto_para(item: dict, receptor: str | None) -> dict | None:
             "campos": base["campos"], "reglas": list(dict.fromkeys([regla] + [r for r in base["reglas"] if r != R23] + [R23]))}
 
 
-def conflicto_de_leccion(leccion: dict) -> dict | None:
-    """T-161 r02 (QA r01, H-01): una lección redactada por un modelo (AG-20) va a F6 y de ahí al contexto de todos los agentes;
-    su `recomendacion` y su `observacion` pasan el detector con el criterio de los campos descriptivos (una lección habla de
-    controles por oficio) antes de escribirse. None si no hay conflicto."""
-    c = conflicto_del_item({"que_cambia": "", "donde_se_comprueba": leccion.get("recomendacion", ""),
-                            "como_se_sabe": leccion.get("observacion", "")})
+# ---------------------------------------------------------------------------------------------------------------------
+# Lecciones de F6 en el contexto de los agentes (T-161 r02 y r03)
+# ---------------------------------------------------------------------------------------------------------------------
+# [PROPUESTO] (T-161 r03, QA r02, H-06): arreglo estructural, no de listas. Los agentes de control (`AGENTES_DE_CONTROL`) solo
+# reciben las lecciones que escribe el código del ejecutor (`origen` DETERMINISTA en F6, el valor por defecto de
+# `Evaluador._nueva_leccion`); ninguna redactada por un modelo. `tipo` y `ambito` se validan contra el esquema de F6 V2.0 (4.4)
+# al escribir y al leer. Las lecciones de un modelo pasan el detector al escribir (`_informe_aprendizaje`) y al leer
+# (`Guias.lecciones_para`), para los demás agentes. Lo que el detector no reconoce en una lección de un modelo llega como
+# contexto a los agentes que no son de control.
+TIPOS_LECCION = ("PREDICTIVA", "OPERATIVA", "PRODUCTO", "FUENTE", "CALIBRACION")   # F6 V2.0, 4.4: `tipo`
+CLAVES_AMBITO = ("clase", "horizonte", "agente", "fuente", "metodo")              # F6 V2.0, 4.4: `ambito`
+ORIGEN_DETERMINISTA = "DETERMINISTA"
+# T-161 r03 (QA r02, H-08): lo que hace más prudente una lección (rebajar la confianza declarada o la banda verbal, exigir más
+# raíces, describir que las de una sola raíz fallaron) no es rebajar un control; se enmascara antes de revisar la lección
+ENDURECE = re.compile(
+    r"\b(?:rebaj|baj|reduc|disminu|moder|acerc)\w* (?:un nivel |un punto |un escalon )?(?:la |el |las |los )?(?:confianza"
+    r"|probabilidad\w*) (?:declarad\w*|asignad\w*|intern\w*|media|de|del|en|a)\b"
+    r"|\b(?:rebaj|baj|reduc|disminu|moder)\w* (?:un nivel |un punto |un escalon )?(?:la |las )?bandas?(?: verbal\w*)?\b(?! marginal)"
+    r"|\b(?:mas de|al menos|como minimo|minimo|mas) (?:un[ao]? |dos |tres |[0-9]+ )?(?:raiz|raices|fuentes?|pasadas?|revision\w*"
+    r"|objecion\w*|comprobacion\w*|confirmacion\w*|hitos?)\b"
+    r"|\b(?:con|de) (?:un|una) (?:sol[oa] |unic[oa] )?(?:raiz|fuente|origen) (?:\w+ ){0,2}?(?:fallar|acert|tuvier|obtuvier|dier)\w*"
+    r"|\bpor (?:\w+ ){0,2}?(?:omitid|olvidad|saltad|ignorad)\w*")   # la causa de un hallazgo («por objeciones omitidas»)
+
+
+def _enmascarar_crudo(crudo: str, patron: re.Pattern, por: str) -> str:
+    """Sustituye en el texto sin normalizar (tras NFKC) lo que `patron` encuentra en su forma normalizada, para conservar las
+    mayúsculas (siglas y nombres propios) que miran IDIOMA y la escritura."""
+    raw = unicodedata.normalize("NFKC", str(crudo))
+    piezas = ["" if unicodedata.category(c) == "Cf" else " " if c == "_" or unicodedata.category(c) == "Pd" or c in "\u2212\u2043"
+              else "".join(x for x in unicodedata.normalize("NFKD", c) if not unicodedata.combining(x)).lower() for c in raw]
+    inicio, pos = [], 0
+    for pieza in piezas:
+        inicio.append(pos)
+        pos += len(pieza)
+    norm = "".join(piezas)
+    out, ultimo = [], 0
+    for m in patron.finditer(norm):
+        a = max((i for i, ini in enumerate(inicio) if ini <= m.start()), default=0)
+        b = max((i for i, ini in enumerate(inicio) if ini < m.end()), default=a) + 1
+        if a < ultimo:
+            continue
+        out += [raw[ultimo:a], por]
+        ultimo = b
+    return "".join(out + [raw[ultimo:]])
+
+
+def validar_leccion(leccion: Any, cfg: dict | None) -> list[str]:
+    """Errores de una lección frente al esquema de F6 V2.0 (4.4): `tipo` enumerado, `ambito` con sus claves y valores
+    (`clase` de las clases del bloque, `horizonte` H1–H5, `agente` de AG-01 a AG-25, `fuente` y `metodo` texto), y
+    `observacion` y `recomendacion` con texto y con la longitud máxima de `guias_orquestador.max_caracteres_por_texto`."""
+    if not isinstance(leccion, dict):
+        return ["la lección no es un objeto"]
+    lim = limites(cfg)["max_caracteres_por_texto"]
+    errores = []
+    if leccion.get("tipo") not in TIPOS_LECCION:
+        errores.append(f"tipo {str(leccion.get('tipo'))[:40]!r} no es de F6 4.4 ({', '.join(TIPOS_LECCION)})")
+    amb = leccion.get("ambito")
+    amb = {} if amb is None else amb
+    if not isinstance(amb, dict):
+        errores.append("ambito no es un objeto")
+    else:
+        fuera = sorted(str(k)[:40] for k in amb if k not in CLAVES_AMBITO)
+        if fuera:
+            errores.append(f"ambito con claves que no son de F6 4.4: {fuera}")
+        if amb.get("clase") is not None and amb.get("clase") not in CLASES:
+            errores.append(f"ambito.clase {str(amb.get('clase'))[:40]!r} no es una clase del bloque")
+        if amb.get("horizonte") is not None and amb.get("horizonte") not in HORIZONTES:
+            errores.append(f"ambito.horizonte {str(amb.get('horizonte'))[:40]!r} no es un horizonte")
+        ag = amb.get("agente")
+        if ag is not None and (not isinstance(ag, list) or any(a not in TODOS for a in ag)):
+            errores.append("ambito.agente no es una lista de agentes AG-01 a AG-25")
+        for k in ("fuente", "metodo"):
+            v = amb.get(k)
+            if v is not None and (not isinstance(v, str) or len(v) > lim):
+                errores.append(f"ambito.{k} no es un texto de como mucho {lim} caracteres")
+    for k in ("observacion", "recomendacion"):
+        v = leccion.get(k)
+        if not isinstance(v, str) or not v.strip() or len(v) > lim:
+            errores.append(f"{k} no es un texto de 1 a {lim} caracteres")
+    return errores
+
+
+def conflicto_de_leccion(leccion: dict, cfg: dict | None = None) -> dict | None:
+    """T-161 r02 y r03: una lección redactada por un modelo (AG-20) va a F6 y de ahí al contexto de los agentes. Primero se
+    valida contra F6 4.4 (`validar_leccion`); después, su `recomendacion`, su `observacion` y los textos de su `ambito`
+    (`fuente`, `metodo`) pasan el detector con el criterio de los campos descriptivos (una lección habla de controles por
+    oficio), sin contar lo que la hace más prudente (`ENDURECE`). None si no hay conflicto."""
+    errores = validar_leccion(leccion, cfg)
+    if errores:
+        return {"familias": ["LECCION_NO_VALIDA"], "terminos": [], "campos": ["esquema"],
+                "reglas": [f"esquema de F6 V2.0, 4.4: {'; '.join(errores)}"[:400], R23]}
+    texto = {"que_cambia": "", "donde_se_comprueba": leccion.get("recomendacion", ""),
+             "como_se_sabe": leccion.get("observacion", "")}
+    amb = leccion.get("ambito") or {}
+    texto["origen"] = " ".join(str(amb.get(k) or "") for k in ("fuente", "metodo"))
+    c = conflicto_del_item({k: _enmascarar_crudo(v, ENDURECE, " endurece ") if v else v for k, v in texto.items()})
     if c is None:
         return None
-    nombres = {"donde_se_comprueba": "recomendacion", "como_se_sabe": "observacion"}
+    nombres = {"donde_se_comprueba": "recomendacion", "como_se_sabe": "observacion", "origen": "ambito"}
     return {**c, "campos": [nombres.get(x, x) for x in c["campos"]]}
 
 
@@ -519,6 +675,8 @@ class Guias:
         self._lock = threading.RLock()
         self._por_run: dict[tuple[str, str], dict[str, list[dict]]] = {}
         self._aplicadas: dict[str, dict[str, set[str]]] = {}
+        self._veredictos: dict[str, dict | None] = {}          # T-161 r03: veredicto de cada lección, por su contenido
+        self._lecciones_caidas: set[tuple[str, str]] = set()   # runs en los que la revisión de las lecciones falló
 
     # ---------------------------------------------------------------- lectura
     def todas(self, as_of=None) -> dict[str, dict]:
@@ -620,7 +778,64 @@ class Guias:
                                           "aplica ninguna en este run", "AG-18", severidad="Operativa", run_id=run_id)
                 aplicables = {}
             self._por_run[clave] = aplicables
+            self._revisar_lecciones(hoy, run_id, clave)   # T-161 r03 (QA r02, H-06): las lecciones de F6, en el mismo F0
             return aplicables
+
+    # ---------------------------------------------------------------- lecciones de F6 (T-161 r03)
+    def _veredicto(self, leccion: dict) -> dict | None:
+        """None si la lección se puede dar a un agente que no es de control; si no, el motivo. Las del código del ejecutor
+        (origen DETERMINISTA) solo se validan contra F6 4.4; las de un modelo, además, pasan el detector."""
+        clave = hashlib.sha256(json.dumps({k: leccion.get(k) for k in ("id", "tipo", "ambito", "observacion", "recomendacion", "origen")},
+                                          sort_keys=True, ensure_ascii=False, default=str).encode("utf-8")).hexdigest()
+        with self._lock:
+            if clave not in self._veredictos:
+                if leccion.get("origen") == ORIGEN_DETERMINISTA:
+                    errores = validar_leccion(leccion, self.b.cfg)
+                    self._veredictos[clave] = None if not errores else {
+                        "familias": ["LECCION_NO_VALIDA"], "terminos": [], "campos": ["esquema"],
+                        "reglas": [f"esquema de F6 V2.0, 4.4: {'; '.join(errores)}"[:400], R23]}
+                else:
+                    self._veredictos[clave] = conflicto_de_leccion(leccion, self.b.cfg)
+            return self._veredictos[clave]
+
+    def _revisar_lecciones(self, hoy: dt.date, run_id: str | None, clave: tuple[str, str]) -> None:
+        """F0: cada lección vigente de F6 que no se puede dar a ningún agente deja una incidencia (una sola vez por lección).
+        Si la revisión falla, ese run no da ninguna lección a ningún agente (falla cerrado)."""
+        try:
+            avisadas = {e.get("leccion_id") for e in self.b.almacen.leer("HA") if e.get("tipo_entrada") == "INC" and e.get("leccion_id")}
+            for lid, l in sorted(self.b.almacen.estado("F6", hoy, clave="id").items()):
+                if l.get("tipo_entrada") != "LEC" or l.get("estado") != "VIGENTE" or lid in avisadas:
+                    continue
+                v = self._veredicto(l)
+                if v is not None:
+                    self.b.almacen.incidencia("OTRO", f"Lección {lid} (origen {l.get('origen')}) no se da a ningún agente: "
+                                              f"{', '.join(v['reglas'])[:300]} (R23)", str(l.get("origen") or "F6"),
+                                              severidad="Material", run_id=run_id, leccion_id=lid, conflicto=v)
+        except Exception as e:   # noqa: BLE001 - cualquier fallo deja el run sin lecciones, nunca con una sin revisar
+            self._lecciones_caidas.add(clave)
+            self.b.almacen.incidencia("HERRAMIENTA", f"Revisión de las lecciones de F6 no disponible ({type(e).__name__}): no se "
+                                      "da ninguna lección en este run", "AG-20", severidad="Operativa", run_id=run_id)
+
+    def lecciones_para(self, agente: str, lecciones: list[dict], as_of, run_id: str | None) -> list[dict]:
+        """Las lecciones (de `Evaluador.lecciones_vigentes`) que se dan a `agente`: a un agente de control, solo las del código
+        del ejecutor (origen DETERMINISTA en F6); a los demás, las que cumplen F6 4.4 y, si las redactó un modelo, pasan el
+        detector al leerlas. Una lección que no está en F6 no se da (falla cerrado)."""
+        hoy = dt.date.fromisoformat(str(as_of)[:10]) if as_of is not None else self.b.reloj.fecha
+        self.cargar(as_of, run_id)
+        if (run_id or "", hoy.isoformat()) in self._lecciones_caidas or not lecciones:
+            return [] if lecciones else lecciones
+        registros = self.b.almacen.estado("F6", hoy, clave="id")
+        out = []
+        for l in lecciones:
+            r = registros.get(l.get("id")) if isinstance(l, dict) else None
+            if r is None:
+                continue
+            if agente in AGENTES_DE_CONTROL and r.get("origen") != ORIGEN_DETERMINISTA:
+                continue
+            if self._veredicto(r) is not None:
+                continue
+            out.append(l)
+        return out
 
     def _revisar(self, hoy: dt.date, run_id: str | None) -> dict[str, list[dict]]:
         aplicables: dict[str, list[dict]] = {}

@@ -149,3 +149,68 @@ Desde la raíz:
 - **Falsos positivos aceptados:** «escala de 1 a 5» (6.8 hace de tipo 3 las escalas) y las letras griegas.
 - **Sobre los nombres propios:** un texto entero en mayúsculas y minúsculas alternas o en títulos («Skip The Second Pass») no cuenta como otra lengua, pero lo detecta `RELAJA`.
 - **Ataques que siguen pasando:** de los 68, en «dos ítems: clave y orden» el segundo ítem («Haz la segunda pasada siempre ZETA») no dice nada por sí solo. El primero («haz lo contrario») es `INSTRUCCION` y retira la guía entera.
+
+## Ronda r03 (QA r02 de T-161: NO APTO)
+
+### Causa raíz
+
+- **H-06 (alta).** La r02 cerró el camino de AG-20 con más lista (`conflicto_de_leccion` al escribir) y no con estructura.
+  - `Evaluador.lecciones_vigentes` reparte también `ambito` y `tipo`, que escribe el modelo y nadie revisaba.
+  - Una recomendación que la lista no reconoce pasaba.
+  - Lo que ya estaba en F6 no se revisaba al leer.
+  - Nada impedía que una lección de un modelo llegara a AG-11, AG-18, AG-19 o AG-20.
+- **H-07 (media).** Al corregir los falsos positivos, la r02 abrió dos familias:
+  - el enmascarado financiero tapaba la frase cuando esa misma frase era el objeto del cambio;
+  - los verbos de formato eximían a cualquier control, también a los del núcleo.
+- **H-08 (media).** El detector de los campos descriptivos leía como rebaja lo que hace más prudente una lección: rebajar la confianza o la banda verbal, «con más de una raíz».
+- **H-09 y H-10 (bajos).**
+  - Los textos decían «nunca un agente de control» sin matiz.
+  - Tres mutantes no tenían prueba.
+  - Un umbral no hacía nada.
+
+### Cómo se marca el origen
+
+`Evaluador._nueva_leccion(…, origen="DETERMINISTA")` lo escribe en cada LEC- de F6. Las lecciones del código del Evaluador usan el valor por defecto; `_informe_aprendizaje` pasa `origen="AG-20"`. **No hace falta tocar `evaluador.py`.** Como `lecciones_vigentes` no devuelve el origen, `Guias.lecciones_para` lo lee de F6 por `id`, y si el `id` no está en F6, la lección no se da.
+
+### Archivos cambiados
+
+- `bloque_a/11_Ejecutor/bloque_a/guias.py`:
+  - **Lecciones:**
+    - `TIPOS_LECCION`, `CLAVES_AMBITO` y `ORIGEN_DETERMINISTA`;
+    - `validar_leccion` (F6 V2.0, 4.4);
+    - `conflicto_de_leccion(leccion, cfg)`, que valida primero y revisa también `ambito.fuente` y `ambito.metodo`, con `ENDURECE` enmascarado sobre el texto sin normalizar (`_enmascarar_crudo`) para conservar las siglas;
+    - en `Guias`, `_veredicto` (en caché por el contenido de la lección), `_revisar_lecciones` (F0, en `cargar`: incidencia Material una sola vez por lección; si falla, ese run no da ninguna) y `lecciones_para`.
+  - **Detector:**
+    - `CAMBIO_FINANCIERO`: con un verbo de cambio o de rebaja no se enmascara;
+    - `NEUTRO` aparte de `REFUERZA`, y `NUCLEO`;
+    - el grupo R12 se separa en el núcleo (refutación, objeciones) y el contenido de la tesis (argumentos, riesgos);
+    - `NIEGA`, `RELAJA` e `INSTRUCCION` ampliados;
+    - `IDIOMA_FUERTE` sobre el texto entero;
+    - `_variantes` con más lecturas (letras separadas, «rn», palabra partida, HTML, al revés), revisadas con el criterio de los campos descriptivos para no abrir falsos positivos;
+    - `_codificado` (base64, familia CODIFICADO, que compromete la guía);
+    - `_sin_nombres` sin el umbral de mayúsculas.
+  - Se conservan literalmente las líneas que usan los mutantes del revisor (G01–G30, Q01–Q14 y S01–S11, salvo S06) y los míos, actualizados donde cambió la línea (M19, M20, M25).
+- `bloque_a/11_Ejecutor/bloque_a/orquestacion.py`:
+  - `_invocar`: una línea que filtra `ctx["lecciones"]` con `guias.lecciones_para` para el agente.
+  - `_informe_aprendizaje`: la llamada a `conflicto_de_leccion` con el `tipo` y el `ambito` que se van a escribir y la configuración.
+  - El simulado no devuelve lecciones de AG-20 y las deterministas cumplen F6, así que los ciclos simulados no cambian.
+- `bloque_a/11_Ejecutor/tests/test_t161_r03.py` (nuevo, 188 pruebas).
+- `bloque_a/11_Ejecutor/tests/test_t161_r02.py`: `test_h01_conflicto_de_leccion` mide el texto con un `tipo` válido y comprueba, además, que sin `tipo` la lección no es válida.
+- Textos:
+  - `docs/incidencias.md` (viñeta r03 y matices de la r02), el registro de decisiones, el mapa de PB-48 (y las evidencias, regeneradas), el README del ejecutor y el README del ticket (CA-9 corregido y sección r03);
+  - `mutantes_t161.py` (M27–M38) y `medir_detector.py` sin cambios.
+
+### Decisiones de la r03 (`[PROPUESTO]`)
+
+1. **Agentes de control y lecciones:** solo las del código del ejecutor, por su origen en F6, aunque la de un modelo pase el detector. Las de origen desconocido, o sin origen, no se dan a un agente de control.
+2. **Validación de `tipo` y `ambito`:** con la lista cerrada de F6 V2.0 (4.4). `ambito` admite solo sus cinco claves, y `fuente` y `metodo`, como texto, pasan además el detector. También se validan las del código.
+3. **Al leer:** las del código solo se validan; las de un modelo, además, pasan el detector. La incidencia se escribe en el F0, una vez por lección; durante el run no se escribe nada, para que el ciclo con hilos siga siendo determinista.
+4. **`ENDURECE`, solo para lecciones.** En una guía, «rebaja la confianza» sigue siendo conflicto, porque una guía no toca la calibración.
+
+### Límites conocidos (r03)
+
+- **Lecciones.** Lo que el detector no reconoce en una lección de un modelo llega como contexto a los agentes que no son de control. A los de control no llega nunca, la reconozca o no.
+- **Guías.**
+  - Siguen siendo listas. Hoy pasan 0 de 52 + 68 + 50 ataques; con una paráfrasis sin ninguna palabra de las listas, pasaría.
+  - Las otras lecturas del texto solo buscan rebajas: una variante no crea un conflicto de tipo 3.
+- **Traslado de segundo orden.** Sigue: un Analista que obedece una guía no detectada puede escribirlo en su tesis, y eso llega a AG-11 y AG-19.

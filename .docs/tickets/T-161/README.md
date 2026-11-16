@@ -2,7 +2,7 @@
 
 | Campo | Valor |
 | --- | --- |
-| Estado | EN CURSO (r03: QA r02 NO APTO) |
+| Estado | EN QA (r03: QA r02 NO APTO) |
 | Pieza | bloque_a (ejecutor, `11_Ejecutor`) |
 | Planifica · implementa · QA | claude · claude · un revisor nuevo sin contexto (regla del 12-11-2026, `compartida/2026-11-12_claude-puede-hacer-qa`) |
 | Aprobación del operador | no necesaria: corrección de hallazgos de QA de una función ya cerrada (T-158); lo que el diseño no dice se decide por defecto (regla del 13-11-2026), se marca `[PROPUESTO]` y va a INC-T126-01 y al registro de decisiones |
@@ -96,10 +96,22 @@ Hallazgos de `.docs/tickets/T-161/qa.md` y cómo se cierran (detalle en `analisi
 
 Criterios de aceptación de la r02:
 
-- CA-9: AG-20 no recibe guías y una lección de AG-20 que rebaja un control no llega a F6 ni al contexto de ningún agente.
+- CA-9 (corregido en la r03): AG-20 no recibe guías; ningún agente de control recibe una lección redactada por un modelo (solo las del código del ejecutor, origen DETERMINISTA en F6); las lecciones de AG-20 que no cumplen F6 4.4 (`tipo`, `ambito`) o que el detector reconoce como conflicto no se escriben en F6 ni se dan al leerlas; lo que el detector no reconoce llega como contexto a los agentes que no son de control.
 - CA-10: 0 de los 68 ataques nuevos pasan; los explicados, explicados.
 - CA-11: falsos positivos medidos y declarados con cifras en INC-T126-01.
 - CA-12: Q02, Q06 y Q12 mueren; los textos tienen longitud máxima de la configuración.
+
+## Ronda r03 (QA r02 de T-161: NO APTO)
+
+Hallazgos de la sección «Ronda r02» de `.docs/tickets/T-161/qa.md` (detalle en `analisis-tecnico.md`, sección r03; pruebas en `pruebas.md`):
+
+| Hallazgo | Corrección | Prueba |
+| --- | --- | --- |
+| H-06 (alta) | Arreglo estructural: los agentes de control solo reciben lecciones del código (origen DETERMINISTA en F6); `tipo` y `ambito` validados contra F6 4.4 al escribir y al leer; detector al leer para los demás; revisión en el F0 con incidencia; falla cerrado. `orquestacion.py`: una línea en `_invocar` y la llamada de `_informe_aprendizaje`. `evaluador.py`: sin tocar (ya marcaba el origen) | `test_t161_r03.py::test_h06_*`; M27–M31, M37, M38 |
+| H-07 (media) | Sin enmascarado si hay un verbo de cambio o de rebaja; verbos neutros solo fuera del núcleo; condiciones, verbos de omitir, otras lecturas del texto, base64, otra lengua en mayúsculas, redefiniciones | `test_h07_*` (los 52 ataques y los 48 válidos); M33–M36 |
+| H-08 (media) | `ENDURECE`: lo que hace más prudente una lección no cuenta como rebaja | `test_h08_*` (20 prudentes, 8 ataques); M32 |
+| H-09 (baja) | INC-T126-01, registro de decisiones, mapa de PB-48 y CA-9 | lectura |
+| H-10 (baja) | Pruebas para S04, S07 y S09; el umbral de mayúsculas de `_sin_nombres` se quita (S06 ya no aplica) | `test_h10_*` |
 
 ## Registro
 
@@ -109,3 +121,5 @@ Criterios de aceptación de la r02:
 - 2026-11-16 · EN QA · claude · implementado y probado; QA con un revisor nuevo
 - 2026-11-16 · EN CURSO · claude · r02: QA r01 NO APTO (H-01 alta); correcciones
 - 2026-11-16 · EN QA · claude · r02 implementada y probada; QA r02 con un revisor nuevo
+- 2026-11-16 · EN CURSO · claude · r03: QA r02 NO APTO (H-06 alta); correcciones
+- 2026-11-16 · EN QA · claude · r03 implementada y probada; QA r03 con un revisor nuevo
