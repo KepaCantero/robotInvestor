@@ -2,7 +2,7 @@
 
 | Campo | Valor |
 | --- | --- |
-| Estado | EN QA |
+| Estado | CERRADO (QA r01 APTO) |
 | Pieza | bloque_a (11_Ejecutor: `bloque_a/motor/frontera_b.py`, una línea; `tests/test_t150.py`); `.docs/scripts/cadena_a_b.py`; `docs/incidencias.md` (INC-T127-01 e INC-T142-01, rondas T-152) |
 | Planifica · implementa · QA | claude (sesión de los tickets, no la del Bloque A) · claude · un revisor nuevo |
 | Aprobación del operador | 2026-11-16: «Completa el T-152»; y, con la medida, «Acepto subir el umbral» (q/p ≤ 2·`tolerancia_clon`). La fila de la deuda (15-11-2026) asigna T-152 a esta sesión; la del Bloque A no lo toca. Lo nuevo va como `[PROPUESTO]` |
@@ -71,3 +71,4 @@ Cerrar H-01, H-02 y las observaciones O-01 y O-02 de la QA r01 de T-150 (`.docs/
 - 2026-11-16 · EN QA · claude · pendiente de QA por un revisor nuevo (lanzada y detenida al empezar: el operador decide subir el umbral)
 - 2026-11-16 · EN CURSO · claude · umbral a q/p ≤ 2 % por decisión del operador; medidas, pruebas y mutantes rehechos
 - 2026-11-16 · EN QA · claude · versión definitiva (umbral 2 %), pendiente de QA por un revisor nuevo
+- 2026-11-16 · CERRADO · QA r01 APTO (revisor nuevo); hallazgos bajos H-01 a H-03 en T-190
