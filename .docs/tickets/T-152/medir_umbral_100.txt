@@ -1,0 +1,31 @@
+| Caso | q/p | 1% | 2% | 5% | 10% |
+| --- | --- | --- | --- | --- | --- |
+| copia truncada sin agrupar | 1.1% a 1.8% | 100 de 100 | 0 de 100 | 0 de 100 | 0 de 100 |
+| distintas, ρ 0.999, r/r, agrupadas | 1.1% a 1.8% | 27 de 100 | 27 de 100 | 27 de 100 | 27 de 100 |
+| distintas, ρ 0.999, t/t, agrupadas | 1.1% a 1.8% | 22 de 100 | 22 de 100 | 22 de 100 | 22 de 100 |
+| distintas, ρ 0.999, r/t, agrupadas | 1.1% a 1.8% | 38 de 100 | 38 de 100 | 38 de 100 | 38 de 100 |
+| distintas, ρ 0.9999, r/r, agrupadas | 1.1% a 1.8% | 49 de 100 | 49 de 100 | 49 de 100 | 49 de 100 |
+| distintas, ρ 0.9999, t/t, agrupadas | 1.1% a 1.8% | 47 de 100 | 47 de 100 | 47 de 100 | 47 de 100 |
+| distintas, ρ 0.9999, r/t, agrupadas | 1.1% a 1.8% | 100 de 100 | 100 de 100 | 100 de 100 | 100 de 100 |
+| copia truncada sin agrupar | 1.8% a 2.4% | 100 de 100 | 100 de 100 | 100 de 100 | 100 de 100 |
+| distintas, ρ 0.999, r/r, agrupadas | 1.8% a 2.4% | 0 de 100 | 0 de 100 | 0 de 100 | 0 de 100 |
+| distintas, ρ 0.999, t/t, agrupadas | 1.8% a 2.4% | 0 de 100 | 0 de 100 | 0 de 100 | 0 de 100 |
+| distintas, ρ 0.999, r/t, agrupadas | 1.8% a 2.4% | 0 de 100 | 0 de 100 | 0 de 100 | 0 de 100 |
+| distintas, ρ 0.9999, r/r, agrupadas | 1.8% a 2.4% | 1 de 100 | 1 de 100 | 1 de 100 | 1 de 100 |
+| distintas, ρ 0.9999, t/t, agrupadas | 1.8% a 2.4% | 0 de 100 | 0 de 100 | 0 de 100 | 0 de 100 |
+| distintas, ρ 0.9999, r/t, agrupadas | 1.8% a 2.4% | 0 de 100 | 0 de 100 | 0 de 100 | 0 de 100 |
+| copia truncada sin agrupar | 2.4% a 4.5% | 100 de 100 | 100 de 100 | 100 de 100 | 100 de 100 |
+| distintas, ρ 0.999, r/r, agrupadas | 2.4% a 4.5% | 0 de 100 | 0 de 100 | 0 de 100 | 0 de 100 |
+| distintas, ρ 0.999, t/t, agrupadas | 2.4% a 4.5% | 0 de 100 | 0 de 100 | 0 de 100 | 0 de 100 |
+| distintas, ρ 0.999, r/t, agrupadas | 2.4% a 4.5% | 0 de 100 | 0 de 100 | 0 de 100 | 0 de 100 |
+| distintas, ρ 0.9999, r/r, agrupadas | 2.4% a 4.5% | 0 de 100 | 0 de 100 | 0 de 100 | 0 de 100 |
+| distintas, ρ 0.9999, t/t, agrupadas | 2.4% a 4.5% | 0 de 100 | 0 de 100 | 0 de 100 | 0 de 100 |
+| distintas, ρ 0.9999, r/t, agrupadas | 2.4% a 4.5% | 0 de 100 | 0 de 100 | 0 de 100 | 0 de 100 |
+| copia truncada sin agrupar | 5.3% a 9.1% | 100 de 100 | 100 de 100 | 100 de 100 | 100 de 100 |
+| distintas, ρ 0.999, r/r, agrupadas | 5.3% a 9.1% | 0 de 100 | 0 de 100 | 0 de 100 | 0 de 100 |
+| distintas, ρ 0.999, t/t, agrupadas | 5.3% a 9.1% | 0 de 100 | 0 de 100 | 0 de 100 | 0 de 100 |
+| distintas, ρ 0.999, r/t, agrupadas | 5.3% a 9.1% | 0 de 100 | 0 de 100 | 0 de 100 | 0 de 100 |
+| distintas, ρ 0.9999, r/r, agrupadas | 5.3% a 9.1% | 0 de 100 | 0 de 100 | 0 de 100 | 0 de 100 |
+| distintas, ρ 0.9999, t/t, agrupadas | 5.3% a 9.1% | 0 de 100 | 0 de 100 | 0 de 100 | 0 de 100 |
+| distintas, ρ 0.9999, r/t, agrupadas | 5.3% a 9.1% | 0 de 100 | 0 de 100 | 0 de 100 | 0 de 100 |
+| monetario a 1,00 frente a otro a 2 decimales, agrupados | 1 % a 100 % | 7 de 100 | 7 de 100 | 7 de 100 | 7 de 100 |

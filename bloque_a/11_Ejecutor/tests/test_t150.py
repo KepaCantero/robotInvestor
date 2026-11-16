@@ -440,3 +440,161 @@ def test_h06_una_respuesta_valida_sigue_escribiendo_los_seis(bce, monkeypatch, t
     destino = tmp_path / "datos"
     assert bce.main([str(destino)]) == 0
     assert sorted(p.name for p in destino.iterdir()) == sorted(f"{s}.csv" for s in bce.CRUCES)
+
+
+# ================================================================ T-152 · hallazgos de la QA r01 de T-150
+# Van en este fichero porque es el que ejecuta el script de mutantes del revisor (`T-150/revisores/r01_04_mutantes_qa.py`).
+DATO = cadena_b.DATO_PROTEGIDO
+
+
+def test_t152_h01_un_tramo_contenido_en_otro_no_acorta_la_union():
+    """Mutante Y01: la unión de un tramo con otro que cabe dentro no se acorta al final del de dentro."""
+    assert cadena_b._sin_tramos("abcdef", ["abcdef", "cd"]) == DATO
+    assert cadena_b._sin_tramos("xabcdefy", ["abcdef", "bc"]) == f"x{DATO}y"
+    assert cadena_b._sin_tramos("xabcdefy", ["bc", "abcdef", "de"]) == f"x{DATO}y"
+
+
+def test_t152_h01_un_correo_dentro_de_una_contrasena_no_deja_su_cola():
+    """El caso del revisor: el detector da la contraseña entera y, dentro, el correo; la cola de la contraseña
+    («/ZZZZ1234567») no la ve la comprobación final si queda suelta."""
+    texto = "password=x/" + CORREO + "/ZZZZ1234567"
+    tramos = secretos_en_texto(texto)
+    assert CORREO in tramos and any(t.endswith("ZZZZ1234567") and len(t) > len(CORREO) for t in tramos)
+    r = cadena_b.sin_datos_protegidos(texto)
+    assert "ZZZZ1234567" not in r and "inversor" not in r and "x/" not in r
+
+
+def test_t152_h01_el_aviso_de_sin_entrega_se_limpia(tmp_path, monkeypatch, capsys):
+    """Mutante Z03: el aviso «Sin entrega del Bloque A (entrega …, G3 …)» copia lo que dice el ciclo; se limpia."""
+    mod = _modulo("cadena_a_b")
+    llamadas = []
+
+    def cli(bloque, args):
+        llamadas.append((bloque, args[-1]))
+        return {"run_id": "RUN-X", "entrega": f"NO_ENTREGADA {CORREO}", "g3": f"BLOQUEADO {CLAVE}", "entregables": {}}
+    monkeypatch.setattr(mod, "_cli", cli)
+    w = tmp_path / "w"
+    assert mod.main(["--trabajo", str(w), "--config-a", str(_extra(tmp_path))]) == 1
+    salida = capsys.readouterr()
+    assert "Sin entrega del Bloque A" in salida.err and DATO in salida.err
+    resumen = (w / "resumen.json").read_text(encoding="utf-8")
+    assert json.loads(resumen)["sin_envio"]["motivo"] == "ENTREGA_BLOQUEADA_G3"
+    for texto in (salida.out, salida.err, resumen):
+        assert "inversor" not in texto and "ABCDEF1234567890" not in texto
+    assert llamadas == [("a", "ciclo")] and not (w / "peticiones").exists()
+
+
+@pytest.mark.parametrize("falla", [2, 3, 4, 6])
+def test_t152_h01_el_traslado_a_medias_nombra_solo_los_escritos(bce, monkeypatch, tmp_path, capsys, falla):
+    """Mutante W01: el mensaje nombra exactamente los CSV que quedaron escritos, no el que falló ni los que no se movieron."""
+    _con_respuesta(bce, monkeypatch, _cuerpo())
+    destino = tmp_path / "datos"
+    reales = bce.os.replace
+    cuenta = {"n": 0}
+
+    def replace(a, b):
+        cuenta["n"] += 1
+        if cuenta["n"] == falla:
+            raise OSError(5, "Error de E/S")
+        return reales(a, b)
+    monkeypatch.setattr(bce.os, "replace", replace)
+    assert bce.main([str(destino)]) == 1
+    err = capsys.readouterr().err
+    escritos = {p.name for p in destino.iterdir()}
+    assert escritos == {f"{s}.csv" for s in list(bce.CRUCES)[:falla - 1]}
+    assert {f"{s}.csv" for s in bce.CRUCES if f"{s}.csv" in err} == escritos
+
+
+def _en_tramo(lo, hi, semilla):
+    """Un paseo aleatorio llevado al tramo [lo, hi]: el precio cambia sin salir de un tramo de q/p (ni de su década)."""
+    u = np.cumsum(np.random.default_rng(semilla).normal(0, 0.03, len(FECHAS)))
+    return lo + (hi - lo) * (u - u.min()) / (u.max() - u.min())
+
+
+@pytest.mark.parametrize("lo, hi, agrupa", [(5.15, 5.45, True), (5.06, 5.45, True), (4.6, 4.9, False), (4.55, 4.95, False)])
+def test_t152_h02_el_umbral_del_desplazamiento_esta_en_q_p_del_1_por_ciento(lo, hi, agrupa):
+    """H-02: el umbral `[PROPUESTO]` de INC-T127-01 (ronda T-150): un precio se desplaza a la hipótesis truncada solo si
+    su paso entero no pasa de `tolerancia_clon` (q/p ≤ 1 %). Con 0,05 entre 5,06 y 5,45 (q/p de 0,92 a 0,99 %), la
+    copia truncada se agrupa; entre 4,55 y 4,95 (de 1,01 a 1,10 %), no (el límite declarado de los pasos grandes).
+    Con el umbral al 2 % (mutante X01) se agruparía también la segunda; a la mitad, ninguna de las dos (medido en
+    `.docs/tickets/T-152/medir_umbral.py`). Resolución medida: mata un umbral un 5 % más bajo o un 10 % más alto; más cerca
+    del 1 %, con precios de tramo estrecho, la hipótesis redondeada ya agrupa o no según el camino, sea cual sea el
+    umbral (`T-152/analisis-tecnico.md`). Si el operador cambia el umbral (T-57), esta prueba cambia con él."""
+    assert fb.FRONTERA_B["tolerancia_clon"] == 0.01
+    qp = 0.05 / np.array([hi, lo])
+    assert ((qp <= 0.01).all() if agrupa else (qp > 0.01).all())
+    juntas = [_juntas(x, _trunc(x, 0.05)) for x in (_en_tramo(lo, hi, s) for s in range(12))]
+    assert juntas == [agrupa] * 12
+
+
+def test_t152_o01_un_cambio_de_metodo_a_mitad_de_la_historia_no_se_agrupa():
+    """Observación O-01: una copia redondeada a 0,05 la primera mitad y truncada después no se agrupa (cada par elige una
+    hipótesis para toda la serie). Límite declarado en INC-T127-01 (ronda T-152): si algún día se agrupa, hay que
+    actualizar la incidencia."""
+    mitad = len(A) // 2
+    copia = np.concatenate([np.round(A[:mitad] / 0.05) * 0.05, _trunc(A[mitad:], 0.05)])
+    assert not _juntas(A, copia)
+    assert _juntas(A, np.round(A / 0.05) * 0.05) and _juntas(A, _trunc(A, 0.05))    # cada mitad sola, sí
+
+
+@pytest.mark.parametrize("como, contenido", [
+    ("un símbolo con una lista", "cadena_b:\n  correspondencia_ambitos:\n    LETRAS-EUR-12M: [" + CORREO + "]\n"),
+    ("un símbolo con un diccionario", "cadena_b:\n  correspondencia_ambitos:\n    LETRAS-EUR-12M: {" + CORREO + ": 1}\n"),
+    ("un número y un texto", "cadena_b:\n  correspondencia_ambitos: {A: 1, B: " + CORREO + ", C: contenido-xyz}\n"),
+    ("un símbolo que es un número", "cadena_b:\n  correspondencia_ambitos: {1: liquidez_eur}\n"),
+])
+def test_t152_o02_una_correspondencia_que_no_son_textos_da_un_mensaje_y_1(tmp_path, monkeypatch, capsys, como, contenido):
+    """O-02: un `--config-a` que se lee pero no tiene la forma (antes, una traza de `TypeError` al ordenar)."""
+    mod = _modulo("cadena_a_b")
+    monkeypatch.setattr(mod, "_cli", lambda *a: (_ for _ in ()).throw(AssertionError("no debería ejecutar nada")))
+    w = tmp_path / "w"
+    assert mod.main(["--trabajo", str(w), "--config-a", str(_extra(tmp_path, contenido))]) == 1, como
+    err = capsys.readouterr().err
+    assert "--config-a no se puede leer" in err and "no son textos" in err and "Traceback" not in err
+    assert "inversor" not in err and "contenido-xyz" not in err and not (w / "resumen.json").exists()
+
+
+MARCA = "contenido-del-paquete-xyz"   # sin datos de R8: si sale en un mensaje, el mensaje copia el contenido
+
+
+def _sin_forma(paquete, como):
+    clases = paquete["clases"]
+    primera = next(iter(clases.values()))
+    if como == "clases es una lista":
+        paquete["clases"] = list(clases.values()) + [MARCA]
+    elif como == "una clase que es un texto":
+        clases[next(iter(clases))] = f"{CORREO} {MARCA}"
+    elif como == "opciones que no son una lista":
+        primera["opciones"] = {CORREO: MARCA}
+    elif como == "una opción sin opp_id":
+        del primera["opciones"][0]["opp_id"]
+        primera["opciones"][0]["nota"] = MARCA
+    elif como == "un opp_id que no es un texto":
+        primera["opciones"][0]["opp_id"] = [CORREO, MARCA]
+    elif como == "paquete_para_bloque_B que no es una lista":
+        paquete["paquete_para_bloque_B"] = {CORREO: MARCA}
+    return paquete
+
+
+@pytest.mark.parametrize("como", ["clases es una lista", "una clase que es un texto", "opciones que no son una lista",
+                                  "una opción sin opp_id", "un opp_id que no es un texto",
+                                  "paquete_para_bloque_B que no es una lista"])
+def test_t152_o02_un_paquete_sin_la_forma_da_paquete_ilegible(tmp_path, ejemplo, monkeypatch, capsys, como):
+    """O-02: un `paquete_json` que se lee pero no tiene la forma que se recorre (antes, `KeyError` o `AttributeError`)."""
+    mod = _modulo("cadena_a_b")
+    paquete = tmp_path / "paquete.json"
+    paquete.write_text(json.dumps(_sin_forma(ejemplo, como), ensure_ascii=False), encoding="utf-8")
+    llamadas = []
+    monkeypatch.setattr(mod, "_cli", _cli_ciclo(paquete, llamadas))
+    w = tmp_path / "w"
+    assert mod.main(["--trabajo", str(w), "--config-a", str(_extra(tmp_path))]) == 1, como
+    err = capsys.readouterr().err
+    assert "no se lee" in err and "Traceback" not in err and "inversor" not in err and MARCA not in err
+    resumen = json.loads((w / "resumen.json").read_text(encoding="utf-8"))
+    assert resumen["sin_envio"]["motivo"] == "PAQUETE_ILEGIBLE"
+    assert "inversor" not in json.dumps(resumen) and MARCA not in json.dumps(resumen)
+    assert llamadas == [("a", "ciclo")] and not (w / "peticiones").exists()
+
+
+def test_t152_o02_el_paquete_de_ejemplo_tiene_la_forma(ejemplo):
+    _modulo("cadena_a_b")._forma_paquete(ejemplo)
