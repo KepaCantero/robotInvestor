@@ -196,7 +196,7 @@ llm:
     espera_servidor_max_s: 600
     estados_reintentables: [408, 409, 429, 500, 502, 503, 504, 529]
     estados_sin_cobro: [429, 529]
-    cobro_posible_desde: 500
+    cobro_posible_desde: 500          # T-156: entre 100 y 500; con uno mayor un 5xx se soltaría sin cobro
   cache_prompts: true            # cache_control en el system prompt (caché de prompts)
   cache_ttl: "1h"                # 5m | 1h
   salida_estructurada: false     # true = output_config.format json_schema (comprobar soporte del modelo)
