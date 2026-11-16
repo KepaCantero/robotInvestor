@@ -28,7 +28,8 @@ MUTANTES = [
      "\"x-should-retry\", \"\")).lower()"),
     ("P08", "H-04: espera_servidor_max_s sin validar", LL, ", (\"espera_servidor_max_s\", servidor)):", "):"),
     ("P09", "H-01: cobro_posible_desde sin validar", LL,
-     "        if isinstance(desde, bool) or not isinstance(desde, int) or desde < 0:", "        if False:"),
+     "        if isinstance(desde, bool) or not isinstance(desde, int) or not ESTADO_HTTP_MIN <= desde <= PRIMER_ESTADO_5XX:",
+     "        if False:"),   # T-156 (QA r01, H-01): la línea que valida el rango desde T-156
     ("P10", "H-03: el grupo con un fallo reparte lo escrito que se vio", CO,
      "                if grupo in self._grupos_sin_respuesta:\n                    reales = total\n", ""),
     ("P11", "H-03: la liquidación no suelta los grupos marcados", CO, "            self._grupos_sin_respuesta.clear()\n", ""),
