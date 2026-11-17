@@ -231,7 +231,8 @@ def test_h02_una_instruccion_repartida_retira_la_guia_entera(b):
                              it(que_cambia="Haz la segunda pasada siempre ZETA")], as_of=AS_OF, simular_fallo_del_emisor=True)
     assert b.guias.para("AG-02", AS_OF, "RUN-1") == []
     cors = [e for e in b.almacen.leer("HA") if e["tipo_entrada"] == "COR"]
-    assert [c["conflicto"]["familias"] for c in cors] == [["INSTRUCCION"], ["GUIA_COMPROMETIDA"]]
+    # T-161 r04: el primero también nombra un control del núcleo con una acotación («Cuando…, haz lo contrario»)
+    assert [c["conflicto"]["familias"] for c in cors] == [["INSTRUCCION", "NOMBRA_CONTROL"], ["GUIA_COMPROMETIDA"]]
     assert b.guias.todas()["GUI-AG02-0001"]["estado"] == "RETIRADA"
 
 

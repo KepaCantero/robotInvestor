@@ -193,3 +193,97 @@ Copia: worktree con `e987e54` en HEAD (r02 integrada) y los cambios de la r03 si
 | `r01_02_integracion.py` (r01) · T-158 `r01_02` + `r01_05` | 6 fallan · 10 fallan | los mismos de las rondas anteriores |
 
 Copias desechables (`qa29_r03*_mut` y las de los scripts del revisor): borradas.
+
+## Ronda r04 (QA r03 de T-161: NO APTO)
+
+Copia: worktree con la rama `wip/t161r04` rebasada sobre `origin/develop` (`c728c91`) y los cambios de la r04.
+
+| Suite / comprobación | Resultado |
+| --- | --- |
+| `tests/test_t161_r04.py` (nuevo) | 197 superadas |
+| `tests/test_t161_r03.py` (+1: `test_h16_*`, mata T04) | 189 superadas |
+| `test_t161_guias.py` + `test_t161_r02.py` + `test_t161_r03.py` + `test_t161_r04.py` + `test_t158_guias.py` + `test_t126_pb26_pb48.py` | superadas todas (773 antes de añadir la prueba de M35; esa prueba, aparte: 1 superada) |
+| Suite completa de A (una vez, en segundo plano, 48 min con los mutantes corriendo) | **7626 superadas, 2 omitidas, 0 fallos** (antes de añadir la prueba de M35, que pasa); línea base 607 |
+| `.docs/scripts/evidencias_plan_a.py` (comprobación del mapa) | 67 pruebas del plan, 204 citadas y todas existen; `test_fase4_mapa.py` pasa dentro de la suite (mapa y documento coinciden) |
+| Goldens | coinciden |
+| ruff desde la raíz (cuota 2813) · mypy de A (cuota 109) | **2813** · **109** |
+| `refs_vivas`, `secrets_scan`, `nfc_check`, `corpus_integridad` | verdes; corpus de 695 |
+| `./tools/check_all.sh` completo | no se ejecuta en la copia (sin `.venv` propio): las comprobaciones de arriba son sus gates uno a uno; queda para la integración en `develop` |
+
+### Criterio de aceptación → prueba (r04)
+
+| Criterio | Pruebas |
+| --- | --- |
+| CA-9 (r04: a un control, solo texto del código; `ambito.agente`; la entrada de alta) | `test_h11_*` (7), `test_h15_*` (5), `test_t161_r03.py::test_h16_*` |
+| CA-10 (ataques) | `test_h12_los_27_ataques_de_la_qa_r03_se_detectan`, `test_h12_los_ataques_propios_contra_las_reglas_de_la_r04` (22 + 10 reservados) y las de estructura (`test_h12_*`) |
+| CA-11 (falsos positivos medidos y declarados) | `test_h13_*`, `test_h13_tasas_medidas` (las cifras de INC-T126-01) |
+| CA-12 (mutantes) | M01–M52, T01–T04, Q01–Q14, G01–G30, S01–S11 (abajo) |
+
+### Medida
+
+| Conjunto | Antes de la r04 | Después |
+| --- | --- | --- |
+| 27 ataques de `r03_01` | 27 pasan | **0** |
+| 22 ataques propios · 10 reservados | — | 0 · 0 (en el reservado, «en dos palabras» pasaba con la primera versión y se corrigió) |
+| 52 de la r02 · 68 de la r01 · 50 de T-158 | 0 · 0 (1 repartido, explicado) · 0 | 0 · 0 (el mismo) · 0 |
+| 26 válidos de `r03_01` | 21 falsos positivos | **3** (declarados) |
+| 20 de formato propios · 15 reservados · 6 descriptivos | — | 1 · 1 · 1 (declarados) |
+| 48 de la r02 · 40 de la r01 · 17 del diseño · 40 de dominio | 0 · 0 · 0 · 1 | 0 · 0 · 0 · 1 |
+| Lecciones prudentes: 2 de la QA r03, 16 propias, 8 reservadas | 2 de 2 de la QA retenidas | **1 de 26** (reservada, declarada) |
+| Lecciones que rebajan un control (6 nuevas) | — | 6 de 6 retenidas |
+
+### Mutantes
+
+| Script | Resultado |
+| --- | --- |
+| `mutantes_t161.py` (M01–M52; `PRUEBAS` con `test_t161_r04.py`) | 51/52 en la pasada. **M35** (sin `IDIOMA_FUERTE`) vivía: lo que detectaba lo detecta ahora también la exigencia de castellano. Se añadió `test_h12_idioma_fuerte_sigue_haciendo_falta_dentro_de_un_texto_en_castellano` («Haz la segunda pasada Only On Weekends»): con M35 aplicado a mano falla; sin él pasa |
+| `r03_03_mutantes.py` (T01–T04, sin cambiarlo) | **4/4**; T04 muere con `test_t161_r03.py::test_h16_*` |
+| `r01_03` (Q01–Q14), T-158 `r01_04` (G01–G30), `r02_03` (S01–S11), con `mutantes_revisor_ampliado.py` y las pruebas de T-161 (r01 a r04) | 14/14 · 30/30 · 10/11 (S06 no aplica desde la r03). Con solo las pruebas que fijan sus scripts viven Q02, Q06, Q12, G08, G09, G22, S04, S07 y S09, como en las rondas anteriores |
+
+### Scripts del revisor que fallan donde medían lo viejo
+
+| Script | Resultado | Por qué |
+| --- | --- | --- |
+| `r03_02_integracion.py` | 7 superadas, 3 fallan | **`test_leccion_producto_lleva_el_tema_…` y `test_leccion_producto_directa_…`:** afirmaban que la lección de PRODUCTO llegaba a los controles (H-11, corregido). **`test_leccion_sin_origen_no_llega_a_ningun_control`:** quita el origen con una entrada posterior de F6; desde H-15 eso altera un dato de alta y la lección no se da a nadie, así que su condición previa (que llegue a los demás) no se cumple. La lección sin origen en su alta la prueba `test_h16_*` |
+| `r03_01_ataques_nuevos.py` | 0 de 27 pasan; 3 de 26 válidos son conflicto | los 3 declarados |
+
+### Comandos usados (r04)
+
+```bash
+cd bloque_a/11_Ejecutor
+../../.venv/bin/python -m pytest -q -p no:cacheprovider tests/test_t161_guias.py tests/test_t161_r02.py tests/test_t161_r03.py tests/test_t161_r04.py tests/test_t158_guias.py tests/test_t126_pb26_pb48.py
+../../.venv/bin/python -m pytest -q -p no:cacheprovider                      # suite completa de A
+../../.venv/bin/python ../../.docs/tickets/T-161/revisores/r03_01_ataques_nuevos.py
+../../.venv/bin/python ../../.docs/tickets/T-161/revisores/r02_01_ataques_nuevos.py
+../../.venv/bin/python ../../.docs/tickets/T-161/revisores/r01_01_ataques_nuevos.py
+../../.venv/bin/python ../../.docs/tickets/T-161/medir_detector.py
+../../.venv/bin/python -m pytest -q -p no:cacheprovider ../../.docs/tickets/T-161/revisores/r03_02_integracion.py
+cd ../..
+.venv/bin/python .docs/tickets/T-161/mutantes_t161.py <copia qa29_…_mut>
+.venv/bin/python .docs/tickets/T-161/revisores/r03_03_mutantes.py <copia qa29_…_mut>
+.venv/bin/python .docs/scripts/mutantes_revisor_ampliado.py .docs/tickets/T-161/revisores/r01_03_mutantes.py <copia> tests/test_t161_guias.py tests/test_t161_r02.py tests/test_t161_r03.py tests/test_t161_r04.py --solo Q02,Q06,Q12
+# ídem con .docs/tickets/T-158/revisores/r01_04_mutantes.py (--solo G08,G09,G22) y r02_03_mutantes.py (--solo S04,S07,S09)
+.venv/bin/ruff check --output-format=concise bloque_a/11_Ejecutor bloque_a_forex/11_Ejecutor bloque_b/11_Ejecutor | wc -l
+(cd bloque_a/11_Ejecutor && ../../.venv/bin/mypy --ignore-missing-imports --no-error-summary bloque_a | wc -l)
+.venv/bin/python tools/corpus_integridad.py; .venv/bin/python tools/nfc_check.py; .venv/bin/python tools/refs_vivas.py; .venv/bin/python tools/secrets_scan.py
+```
+
+Copias desechables (`qa29_r04a_mut`, `qa29_r04b_mut`): borradas.
+
+## Ronda de cierre (QA r04 de T-161: APTO, con bajos H-17 y H-20)
+
+Copia: el mismo worktree, con `85344de` en HEAD y la QA r04 traída de `bdac281` (`qa.md` y `revisores/`). Por la regla de la ronda, sin la suite completa ni el gate.
+
+| Suite / comprobación | Resultado |
+| --- | --- |
+| `test_t161_guias` + `test_t161_r02` + `test_t161_r03` + `test_t161_r04` + `test_t158_guias` + `test_t126_pb26_pb48` | **777 superadas** (antes 774: +3 `test_h17_*`; `test_h15_…_no_toca_…` pasa a `…_solo_cambia_el_ciclo_de_vida_…`) |
+| `r04_02_integracion.py` (25) | 23 superadas; fallan, como se esperaba, las dos `test_defecto_*`, que afirmaban H-17 (ahora la lección no llega a nadie y queda `LECCION_ALTERADA`: sus versiones invertidas son `test_h17_una_entrada_posterior_sin_tipo_entrada_…` y `test_h17_un_campo_que_no_es_de_ciclo_de_vida_…`) |
+| `r04_01_ataques_nuevos.py` | 17 de 30 pasan; 3 de 28 ítems y 2 de 10 lecciones, falsos positivos: lo medido por la QA (H-18, H-19 → T-171), ahora declarado en INC-T126-01 |
+| `r03_01_ataques_nuevos.py` | 0 de 27; 3 de 26 (los declarados) |
+| `mutantes_t161.py` (M01–M55) | **55/55 muertos** (M53–M55, nuevos: entradas sin `tipo_entrada`, `fuerza`/`fecha` como ciclo de vida, la lección consolidada al agente) |
+| `r03_03_mutantes.py` (T01–T04) | 4/4 muertos |
+| `r04_04_mutantes.py --scripts` (U01–U08) | 6/8 muertos. **U04** vivo, equivalente (lo dice la QA r04: `validar_leccion` ya rechaza un `agente` que no es lista); el «muere con r04_02» que imprime se debe a las dos `test_defecto_*`, que fallan ahora con cualquier código. **U06 no aplica**: la corrección pedida sustituye `CAMPOS_DE_ALTA` por la lista blanca. Su análogo a mano (`CAMPOS_DE_CICLO_DE_VIDA` con `origen`, `tipo` y `ambito`) muere con `test_h15_*` |
+| ruff desde la raíz (cuota 2813) · mypy de A (cuota 109) | **2813** · **109** |
+| `refs_vivas`, `secrets_scan`, `nfc_check`, `corpus_integridad` | verdes; corpus de 695 |
+
+Comandos: los de la r04, más `../../.venv/bin/python -m pytest -q -p no:cacheprovider ../../.docs/tickets/T-161/revisores/r04_02_integracion.py`, `../../.venv/bin/python ../../.docs/tickets/T-161/revisores/r04_01_ataques_nuevos.py` y `.venv/bin/python .docs/tickets/T-161/revisores/r04_04_mutantes.py <copia qa29_…_mut> --scripts`. Copias desechables (`qa29_cierre*_mut`): borradas.

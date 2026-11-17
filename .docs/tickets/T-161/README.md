@@ -2,7 +2,7 @@
 
 | Campo | Valor |
 | --- | --- |
-| Estado | EN CURSO (r04: QA r03 NO APTO) |
+| Estado | CERRADO (17-11-2026, QA r04 APTO tras la ronda de cierre; H-18 y H-19 en T-171) |
 | Pieza | bloque_a (ejecutor, `11_Ejecutor`) |
 | Planifica · implementa · QA | claude · claude · un revisor nuevo sin contexto (regla del 12-11-2026, `compartida/2026-11-12_claude-puede-hacer-qa`) |
 | Aprobación del operador | no necesaria: corrección de hallazgos de QA de una función ya cerrada (T-158); lo que el diseño no dice se decide por defecto (regla del 13-11-2026), se marca `[PROPUESTO]` y va a INC-T126-01 y al registro de decisiones |
@@ -96,7 +96,7 @@ Hallazgos de `.docs/tickets/T-161/qa.md` y cómo se cierran (detalle en `analisi
 
 Criterios de aceptación de la r02:
 
-- CA-9 (corregido en la r03): AG-20 no recibe guías; ningún agente de control recibe una lección redactada por un modelo (solo las del código del ejecutor, origen DETERMINISTA en F6); las lecciones de AG-20 que no cumplen F6 4.4 (`tipo`, `ambito`) o que el detector reconoce como conflicto no se escriben en F6 ni se dan al leerlas; lo que el detector no reconoce llega como contexto a los agentes que no son de control.
+- CA-9 (corregido en la r03 y en la r04): AG-20 no recibe guías; ningún agente de control recibe una lección redactada por un modelo ni una que lleve texto de fuera (solo aquellas cuyo texto escribe entero el código del ejecutor: origen DETERMINISTA y tipo PREDICTIVA o CALIBRACION en la entrada de alta de F6; la r03 decía «origen DETERMINISTA» y una de PRODUCTO llevaba el tema del Coordinador, QA r03 H-11); las lecciones de AG-20 que no cumplen F6 4.4 (`tipo`, `ambito`) o que el detector reconoce como conflicto no se escriben en F6 ni se dan al leerlas; lo que el detector no reconoce llega como contexto a los agentes que no son de control.
 - CA-10: 0 de los 68 ataques nuevos pasan; los explicados, explicados.
 - CA-11: falsos positivos medidos y declarados con cifras en INC-T126-01.
 - CA-12: Q02, Q06 y Q12 mueren; los textos tienen longitud máxima de la configuración.
@@ -113,6 +113,30 @@ Hallazgos de la sección «Ronda r02» de `.docs/tickets/T-161/qa.md` (detalle e
 | H-09 (baja) | INC-T126-01, registro de decisiones, mapa de PB-48 y CA-9 | lectura |
 | H-10 (baja) | Pruebas para S04, S07 y S09; el umbral de mayúsculas de `_sin_nombres` se quita (S06 ya no aplica) | `test_h10_*` |
 
+## Ronda r04 (QA r03 de T-161: NO APTO)
+
+Hallazgos de la sección «Ronda r03» de `.docs/tickets/T-161/qa.md` (detalle en `analisis-tecnico.md`, sección r04; pruebas en `pruebas.md`). Solo cambia `guias.py`; `evaluador.py` y `orquestacion.py` no se tocan.
+
+| Hallazgo | Corrección | Prueba |
+| --- | --- | --- |
+| H-11 (alta) | A un agente de control solo llegan las lecciones cuyo texto es entero del código: origen DETERMINISTA y tipo de `TIPOS_TEXTO_DEL_CODIGO` (PREDICTIVA, CALIBRACION). Las de PRODUCTO (`leccion_producto`, con el tema del Coordinador o del Broker) se tratan como de un modelo: a ningún control y, a los demás, tras el detector. Se respeta `ambito.agente`. Falla cerrado: un tipo nuevo no llega a un control hasta que se añada a la lista | `test_t161_r04.py::test_h11_*`; M39–M41 |
+| H-12 (media) | Reglas por estructura: enmascarado por el sentido (`FINANCIERO` siempre; `FINANCIERO_PARAMETRO` solo si el ítem lo muestra); verbos que muestran (`PRESENTA`) frente a verbos que transforman, núcleo ampliado (reglas de datos, confianza, limitaciones, registro, prompts); una orden sobre el núcleo no se acota (`ACOTA`) ni se reduce (`REDUCE`); castellano exigido (`_sin_castellano`); campos descriptivos comprobables (`_no_verificable`) | `test_h12_*` (los 27 ataques, 22 propios y 10 reservados); M34, M44–M50 |
+| H-13 (media) | Lo anterior baja los falsos positivos de 21 a 3 de 26; lecciones: descartar una oportunidad por lo que le falta no es rebaja, y la carencia de una observación es el hallazgo si la recomendación refuerza (`CARENCIA`). Coste declarado en INC-T126-01 | `test_h13_*`; M51, M52 |
+| H-14 (baja) | Textos de INC-T126-01 (r03 y r04), registro de decisiones, mapa de PB-48 (y su evidencia), README del ejecutor y CA-9 | lectura |
+| H-15 (baja) | Origen, tipo, ámbito y texto, de la entrada de alta en F6 (`Guias._altas`); una entrada posterior que los cambia deja la lección sin dar (`LECCION_ALTERADA`) | `test_h15_*`; M42, M43 |
+| H-16 (baja) | Una lección sin origen en su alta no llega a ningún agente de control | `test_t161_r03.py::test_h16_*` (mata T04 con las pruebas que usa `r03_03`) |
+
+## Ronda de cierre (QA r04 de T-161: APTO, con bajos)
+
+Hallazgos de la sección «Ronda r04» de `.docs/tickets/T-161/qa.md`, con las correcciones exactas del revisor (detalle en `analisis-tecnico.md` y `pruebas.md`, sección «Ronda de cierre»):
+
+| Hallazgo | Corrección | Prueba |
+| --- | --- | --- |
+| H-17 (baja) | `Guias._altas`: la alta es la primera entrada con `tipo_entrada` LEC y ese `id`; toda otra entrada con ese `id`, lleve o no `tipo_entrada`, se compara con ella, y cualquier campo distinto de `estado` y `caducidad` (`CAMPOS_DE_CICLO_DE_VIDA`, lista blanca en lugar de `CAMPOS_DE_ALTA`) es una alteración (`LECCION_ALTERADA`). `lecciones_para` da al agente los campos de la alta (`CAMPOS_PARA_EL_AGENTE`), no la lección consolidada | `test_t161_r04.py::test_h17_*` (las dos `test_defecto_*` de `r04_02`, invertidas, y la de los campos de la alta); M53–M55 |
+| H-20 (baja) | INC-T126-01: la frase de los campos de ciclo de vida; «Límite» con las familias de H-18 (17 de 30) y «Falsos positivos» con H-19 (3 de 28 ítems y 2 de 10 lecciones) | lectura |
+| H-18 (media) | → T-171 | — |
+| H-19 (media) | → T-171 | — |
+
 ## Registro
 
 - 2026-11-16 · ABIERTO · creado con nuevo_ticket.sh
@@ -123,3 +147,8 @@ Hallazgos de la sección «Ronda r02» de `.docs/tickets/T-161/qa.md` (detalle e
 - 2026-11-16 · EN QA · claude · r02 implementada y probada; QA r02 con un revisor nuevo
 - 2026-11-16 · EN CURSO · claude · r03: QA r02 NO APTO (H-06 alta); correcciones
 - 2026-11-16 · EN QA · claude · r03 implementada y probada; QA r03 con un revisor nuevo
+- 2026-11-17 · EN CURSO · claude · r04: QA r03 NO APTO (H-11 alta); correcciones (partiendo de la rama `wip/t161r04`)
+- 2026-11-17 · EN QA · claude · r04 implementada y probada; QA r04 con un revisor nuevo
+- 2026-11-17 · EN CURSO · claude · ronda de cierre: QA r04 APTO con dos bajos (H-17, H-20); H-18 y H-19 (medios) → T-171
+- 2026-11-17 · EN QA · claude · ronda de cierre implementada y probada
+- 2026-11-17 · CERRADO · claude · QA de la ronda de cierre APTO: H-17 y H-20 corregidos; H-18 y H-19 → T-171

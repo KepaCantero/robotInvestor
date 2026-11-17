@@ -111,18 +111,39 @@ TIPO_3 = (r"\bpesos?\b", r"\bescalas?\b", r"\banclas?\b", r"\btopes?\b", r"\bumb
 # T-161 r02 (QA r01, H-03): sentidos financieros corrientes de términos de tipo 3 y de controles; se enmascaran antes de
 # detectar (lo demás del texto se revisa igual)
 FINANCIERO = re.compile(
-    r"\bpesos? (?:en|de|del|dentro del?) (?:el |la |los |las |un |una )?(?:indice|cartera|sector|benchmark|referencia|fondo)\w*"
+    r"\bpesos? (?:en|de|del|dentro del?) (?:el |la |los |las |un |una )?(?:indice|sector|fondo)\w*"
     r"|\bpesos? sectorial\w*|\bestados? (?:financier|contable)\w*|\bestados? de (?:resultados|flujos|cuentas|situacion|cambios)\b"
     r"|\bdestinos? de (?:los |sus )?fondos\b|\bcanal(?:es)? de (?:distribucion|venta|ventas|comercializacion)\b"
     r"|\besquemas? de (?:comisiones|remuneracion|incentivos|pagos?|amortizacion|dividendos|cupones)\b"
-    r"|\bbandas? de (?:fluctuacion|cotizacion|bollinger|precios?)\b|\b(?:fecha|dia|hora) de corte\b|\bcorte (?:del|de) cupon\b"
+    r"|\bbandas? de (?:fluctuacion|cotizacion|bollinger|precios?)\b|\bcorte (?:del|de) cupon\b"
     r"|\bavisos? (?:de|del) (?:la |el )?(?:cnmv|sec|esma|regulador\w*|supervisor\w*|emisor\w*|bolsa)\b|\bhechos? relevantes?\b"
     r"|\bperiodos? de bloqueo\b|\block ?up\b|\bauditor(?:es|a|as)? extern\w*|\bauditorias? extern\w*|\bcuentas auditadas\b"
     r"|\bbalances? auditad\w*|\binformes? de auditoria\b|\bauditorias? de (?:los |sus )?contratos\b"
     r"|\bcontratos? (?:inteligentes|de futuros?|de opciones|de derivados|forward|de permuta|de arrendamiento|de suministro)\b"
     r"|\bvencimiento del contrato\b|\bcontrato (?:del|de) (?:subyacente|futuro)\b"
-    r"|\bestados? de (?:los |las |la |el )?(?:inventarios|obras?|red|activos?|proyectos?|economia|mercados?|cosechas|balance)\b"
-    r"|\bumbral de rentabilidad\b|\btopes? de concentracion\b|\bpor canal(?:es)?\b|\banclas? (?:monetari|nominal)\w*")
+    r"|\bestados? de (?:los |las |la |el )?(?:inventarios|obras?|red|economia|cosechas|balance)\b"
+    r"|\banclas? (?:monetari|nominal)\w*")
+# T-161 r04 (QA r03, H-12 y H-13) [PROPUESTO]: el enmascarado va por el sentido de la frase, no por el verbo. `FINANCIERO` son
+# los sentidos financieros que no coinciden con nada que el ejecutor tenga como parámetro o como estado (el peso de un valor en
+# un índice, los estados financieros, la banda de fluctuación de una divisa): se enmascaran siempre, sea cual sea el verbo
+# («Actualiza el peso en el índice de cada valor» no cambia un peso del ejecutor). `FINANCIERO_PARAMETRO` son las frases
+# financieras que nombran lo mismo que un parámetro, un estado o un canal del ejecutor (topes de concentración y pesos de
+# referencia o de cartera, el umbral de rentabilidad, la fecha de corte, el estado de los activos, «por canales»): solo se
+# enmascaran cuando el ítem muestra el dato y no lo cambia (`_solo_muestra`); con cualquier otro verbo, o sin verbo, cuentan
+# como tipo 3. Falla cerrado: un verbo que no es de `MUESTRA` no enmascara.
+FINANCIERO_PARAMETRO = re.compile(
+    r"\bpesos? (?:en|de|del|dentro del?) (?:el |la |los |las |un |una )?(?:cartera|benchmark|referencia)\w*"
+    r"|\b(?:fecha|dia|hora) de corte\b|\bestados? de (?:los |las |la |el )?(?:activos?|proyectos?|mercados?)\b"
+    r"|\bumbral de rentabilidad\b|\btopes? de concentracion\b|\bpor canal(?:es)?\b")
+# Verbos que solo muestran o consultan un dato (lo citan, lo indican, lo describen): la lista es cerrada y lo que no está en
+# ella no enmascara `FINANCIERO_PARAMETRO` ni exime a un control del núcleo (`PRESENTA`)
+MUESTRA = re.compile(r"^(?:cita|citar|cite|indica|indicar|indique|describe|describir|describa|consulta|consultar|consulte"
+                     r"|presenta|presentar|presente|muestra|mostrar|muestre|senala|senalar|senale|compara|comparar|compare"
+                     r"|menciona|mencionar|mencione|nombra|nombrar|nombre)\b")
+# Una cifra, «que» tras el verbo («Indica que el tope es…») o un verbo de cambio o de rebaja: el ítem ya no solo muestra
+_NO_SOLO_MUESTRA = re.compile(r"[0-9]|^\w+ que\b|\b(?:doble|mitad|triple)\b"
+                              r"|\b\w{2,}[aei](?:lo|la|los|las)\b")   # y un imperativo con pronombre («súbelo», «cámbiala»)
+_PREFIJO = re.compile(r"^(?:en|para|de|del) [^,]{1,40}, ")   # «En IDX, cita…»: el ámbito delante de la acción
 PRIORIDAD = re.compile(r"\bprioridad(?:es)?\b|\bprioriz\w*|\bantep[ou]n\w*|\bpor encima de\b|\bjerarquia\w*")
 AGENDA = re.compile(r"\bagenda\b")   # 6.8: «prioridades de la agenda de vigilancia» es tipo 2
 METRICA = re.compile(r"\bmaximiz\w*|\bminimiz\w*|\bmetricas?\b")
@@ -207,7 +228,32 @@ NEUTRO = re.compile(
     r"|explica|explicar|explique|separa|separar|separe|reutiliza|reutilizar|reutilice|rehaz|rehacer|adelanta|adelantar)\b")
 NUCLEO = {"9.1 (banda marginal: segunda pasada)", "R10 y PS1 (corroboración)", "R16 (los controles nunca se recortan)",
           "R12 (autocrítica obligatoria)", "R16 y auditoría (AG-19)", "G3 (HT-09: un bloqueo nunca pasa a aviso; R16 y R17)",
-          "HT-03 y PS1–PS8 (elegibilidad)"}
+          "HT-03 y PS1–PS8 (elegibilidad)",
+          # T-161 r04 (QA r03, H-12): lo que 6.9 pone entre los límites de una guía («nunca altera reglas de datos») y lo que
+          # sostiene la evidencia (su clasificación y la confianza, las limitaciones declaradas, el registro) y los prompts
+          "6.9 (reglas de datos)", "R10 y R12 (clasificación de la evidencia y confianza)", "R7 (limitaciones declaradas)",
+          "R7 y R24 (registro y trazabilidad)", "18.1 (prompts y contratos)"}
+# T-161 r04 (QA r03, H-12 y H-13) [PROPUESTO]: los verbos neutros no son todos iguales. Los de `PRESENTA` muestran el control tal
+# como es (lo presentan, lo indican, lo ordenan): eximen también a un control del núcleo si son la acción del ítem (van
+# delante) y el ítem no le da un valor («como alta») ni lo reduce a un trozo (`REDUCE`: «en una palabra», «en una
+# línea»). Los demás de `NEUTRO` (resumir, agrupar, usar, leer, reutilizar, rehacer…) transforman lo que tocan: solo eximen
+# a los controles que no son del núcleo. Falla cerrado: un verbo que no está en `PRESENTA` no exime a un control del núcleo.
+PRESENTA = re.compile(r"^(?:presenta|presentar|presente|muestra|mostrar|muestre|indica|indicar|indique|senala|senalar|senale"
+                      r"|describe|describir|describa|explica|explicar|explique|nombra|nombrar|nombre|ordena|ordenar|ordene"
+                      r"|separa|separar|separe|expresa|expresar|exprese|menciona|mencionar|mencione)\b")
+REDUCE = re.compile(r"\bcomo\b|\b(?:en|a) (?:(?:una|un|[0-9]+|dos|tres|cuatro|cinco|pocas|pocos|sola|solo|unica|unico|breves?"
+                    r"|cortas?) ){1,2}(?:palabras?|lineas?|frases?|cifras?|letras?|numeros?|entradas?|notas?)\b")
+# T-161 r04 (QA r03, H-12) [PROPUESTO]: una orden de refuerzo sobre un control del núcleo no se acota. Un control obligatorio
+# vale para todas las opciones y todos los ciclos, así que una condición o un alcance («si…», «cuando…», «tras…», «en las
+# opciones que…», «en la opción con el … más alto») no lo refuerza: lo limita. Son las conjunciones y preposiciones que
+# introducen una condición o un alcance (clase cerrada del castellano), no una lista de ataques. «Comprueba si…» (el «si» de
+# una pregunta indirecta, justo tras el verbo) no acota.
+AMPLIA = re.compile(r"\b(?:tambien|ademas|incluso)\b")   # «también en las opciones que…» amplía el alcance, no lo limita
+ACOTA = re.compile(r"(?<!^)(?<!^comprueba )(?<!^verifica )(?<!^revisa )(?<!^confirma )(?<!^consulta )\bsi\b|\bcuando\b"
+                   r"|\btras\b|\bdespues\b|\bmientras\b|\bhasta\b|\bdesde\b|\ben caso\b|\ba partir\b"
+                   r"|\bsiempre que\b|\bsalvo\b|\bexcepto\b"
+                   r"|\b(?:la|el|las|los) (?:\w+ ){1,2}(?:que|cuy[oa]s?|cuando|donde)\b"
+                   r"|\bcon (?:el|la|los|las) (?:\w+ ){0,3}(?:mas|menos|mayor|menor|max\w*|min\w*)\b")
 NIEGA = re.compile(r"\b(?:no|nunca|jamas|ni|tampoco|sin|salvo|excepto|solo|solamente|unicamente|basta\w*|vale|suficiente"
                    r"|presupuesto|coste\w*|prisa|rapid\w*|si (?:da|hay) tiempo|si (?:lo )?permite|oportun\w*|criterio|consider\w*"
                    r"|procede|proceda|discrecion\w*|convenient\w*|si (?:quieres|puedes|prefieres)|cuando (?:puedas|quieras)"
@@ -316,6 +362,39 @@ def _sin_nombres(crudo: str) -> str:
     return _normalizar(t)
 
 
+# T-161 r04 (QA r03, H-12) [PROPUESTO]: `IDIOMA` e `IDIOMA_FUERTE` son listas de palabras de otras lenguas y no detectan una
+# lengua en general. Lo estructural es exigir castellano: las palabras funcionales del castellano (artículos, preposiciones,
+# conjunciones y poco más: una clase cerrada) tienen que aparecer en el texto que queda sin nombres propios ni siglas, y en
+# cada tramo de palabras en mayúsculas (que `_SIGLA` quitaría). Un texto que solo son «nombres propios» («Treat Marginal
+# Options As Final») o mayúsculas sin castellano («AT YOUR DISCRETION») se escala.
+FUNCIONALES = frozenset(("de", "del", "la", "el", "los", "las", "lo", "en", "y", "e", "o", "u", "a", "al", "con", "por",
+                         "para", "que", "se", "un", "una", "unos", "unas", "su", "sus", "no", "ni", "si", "sin", "cada",
+                         "como", "mas", "entre", "sobre", "segun", "tras", "hasta", "desde", "ante", "bajo", "es", "son",
+                         "esta", "estan", "hay", "le", "les", "mi", "tu"))
+_TRAMO_MAYUSCULAS = re.compile(r"(?<![\w/&-])[A-ZÁÉÍÓÚÜÑ]{2,}(?:\s+[A-ZÁÉÍÓÚÜÑ]{2,})+(?![\w/&-])")
+_PALABRA = re.compile(r"[^\W\d_]{2,}")
+
+
+def _sin_castellano(crudo: str, sin_nombres: str) -> str | None:
+    """T-161 r04: el tramo que delata un texto sin castellano, o None. (1) El texto tiene al menos dos palabras con minúsculas
+    (o en mayúsculas, de cinco letras o más) y, sin nombres propios ni siglas, no queda ninguna; (2) un tramo de dos o más
+    palabras en mayúsculas, alguna de cinco letras o más, sin ninguna palabra funcional del castellano; (3) quedan seis
+    palabras o más sin ninguna palabra funcional del castellano."""
+    raw = unicodedata.normalize("NFKC", str(crudo))
+    palabras = [w for w in _PALABRA.findall(raw) if not w.isupper() or len(w) >= 5]
+    restantes = _PALABRA.findall(sin_nombres)
+    if len(palabras) >= 2 and not restantes:
+        return raw.strip()[:60]
+    todas = set(re.findall(r"[^\W\d_]+", sin_nombres))   # con las de una letra («a», «y»)
+    for m in _TRAMO_MAYUSCULAS.finditer(raw):
+        tramo = _normalizar(m.group(0)).split()
+        if any(len(w) >= 5 for w in tramo) and not FUNCIONALES & set(tramo):
+            return m.group(0)
+    if len(restantes) >= 6 and not FUNCIONALES & todas:
+        return " ".join(restantes)[:60]
+    return None
+
+
 def _variantes(t: str) -> list[str]:
     """Otras lecturas del texto, las que cambian: las cifras de las palabras que mezclan letras y cifras leídas como letras
     («0mite», «n0»); T-161 r03 (QA r02, H-07): las letras separadas por espacios o puntos («O m i t e»), «rn» por «m»
@@ -343,6 +422,19 @@ def _codificado(crudo: str) -> list[str]:
     return out
 
 
+def _accion(t: str) -> str:
+    """El texto normalizado sin el ámbito que va delante de la acción («En IDX, cita…» → «cita…»)."""
+    return _PREFIJO.sub("", t)
+
+
+def _solo_muestra(t: str) -> bool:
+    """T-161 r04 (QA r03, H-12): la acción del ítem es mostrar o consultar un dato (`MUESTRA`) y no lleva una cifra, un «que»
+    tras el verbo ni un verbo de cambio o de rebaja. Falla cerrado: sin verbo, o con otro, no."""
+    a = _accion(t)
+    return bool(MUESTRA.match(a)) and not (_NO_SOLO_MUESTRA.search(a) or CAMBIO_FINANCIERO.search(a) or CAMBIO_T3.search(a)
+                                           or RELAJA.search(a))
+
+
 def _controles(t: str) -> list[tuple[str, str]]:
     return [(m.group(0), r) for p, r in CONTROLES for m in [re.search(p, t)] if m]
 
@@ -351,6 +443,11 @@ def _refuerza(t: str) -> bool:
     """La acción es claramente de reforzar (o no toca el control): un verbo de refuerzo, o uno neutro si no nombra un control
     del núcleo, y ninguna marca de negación, rebaja o excepción."""
     claro = REFUERZA.search(t) or (NEUTRO.search(t) and not any(r in NUCLEO for _, r in _controles(t)))
+    nucleo = any(r in NUCLEO for _, r in _controles(t))
+    a = _accion(t)
+    if claro and nucleo and ((ACOTA.search(a) and not AMPLIA.search(t)) or REDUCE.search(a)):
+        claro = None   # T-161 r04 (H-12): un control del núcleo no se acota ni se reduce a un trozo
+    claro = claro or (PRESENTA.match(a) and not REDUCE.search(a))   # T-161 r04 (H-13): mostrar un control no lo toca
     return bool(claro) and not (NIEGA.search(t) or RELAJA.search(t) or REBAJA_IMPLICITA.search(t))
 
 
@@ -358,8 +455,11 @@ def _revisar_texto(t: str, estricto: bool, familias: list, terminos: list, regla
     """Familias de conflicto de un texto normalizado. `estricto` para `que_cambia` (la acción); los campos descriptivos
     no son conflicto solo por nombrar un control o un término de tipo 3. `crudo` (el texto sin normalizar) para IDIOMA."""
     entero = t
-    if not (CAMBIO_FINANCIERO.search(t) or RELAJA.search(t)):   # T-161 r03: con un verbo de cambio o de rebaja, no se enmascara
-        t = FINANCIERO.sub(" termino financiero ", t)
+    if RELAJA.search(t):   # T-161 r04: una rebaja sobre una frase financiera conserva los controles que nombra («Ignora los avisos…»)
+        t = FINANCIERO.sub(lambda m: " termino financiero " + " ".join(x for x, _ in _controles(m.group(0))) + " ", t)
+    t = FINANCIERO.sub(" termino financiero ", t)   # T-161 r04 (H-13): por el sentido, sea cual sea el verbo
+    if _solo_muestra(entero):   # T-161 r04 (H-12): lo que coincide con un parámetro, solo si el ítem lo muestra
+        t = FINANCIERO_PARAMETRO.sub(" termino financiero ", t)
     tipo3 = [m.group(0) for p in TIPO_3 for m in [re.search(p, t)] if m] if estricto or CAMBIO_T3.search(t) else []
     prio = PRIORIDAD.search(t) if estricto and not AGENDA.search(t) else None
     if prio:
@@ -422,9 +522,10 @@ def _revisar_texto(t: str, estricto: bool, familias: list, terminos: list, regla
     for t in ((_sin_nombres(crudo),) if crudo is not None else ()):   # IDIOMA, sin siglas ni nombres propios (T-161 r02)
         idioma = IDIOMA.search(t)
         idioma = idioma or IDIOMA_FUERTE.search(entero)
-        if idioma:
+        ajeno = idioma.group(0) if idioma else _sin_castellano(crudo or "", t)   # T-161 r04 (H-12): además, se exige castellano
+        if ajeno:
             familias.append("IDIOMA")
-            terminos.append(idioma.group(0))
+            terminos.append(ajeno)
             reglas.append("T-161 [PROPUESTO]: las guías se redactan en castellano; otra lengua no se revisa y se escala")
 
 
@@ -432,8 +533,35 @@ ESCRITURA = ("T-161 [PROPUESTO]: caracteres fuera de los permitidos (otra escrit
              "del castellano, emojis); se escala")
 
 
-def conflicto_del_item(item: dict) -> dict | None:
-    """El ítem contradice una regla (None si no). Devuelve las familias, los términos que lo delatan, las reglas y los campos."""
+# T-161 r04 (QA r03, H-12) [PROPUESTO]: `donde_se_comprueba` y `como_se_sabe` dicen dónde y cómo se comprueba el ítem (6.9:
+# «acción concreta y verificable»). Si nombran un control del núcleo, tienen que decir algo que se pueda comprobar de él: una
+# cifra, un campo, un registro o un contrato (F-, HA, CT-, HT-), una revisión o comprobación, un «sin …» o un verbo de
+# `REFUERZA`; y no pueden negarlo. «Arrincona la segunda pasada», «La segunda pasada queda en el aire» o «Segunda pasada: no»
+# no dicen cómo se sabe nada: se escalan. No se aplica a las lecciones, que describen lo que pasó.
+NEGACION = re.compile(r"\b(?:no|nunca|jamas|tampoco|ni)\b")
+ANCLA = re.compile(r"[0-9]|\bcampos?\b|\bretornos?\b|\binformes?\b|\bregistr\w*|\bentradas?\b|\bha\b|\bf ?[0-9]+\b"
+                   r"|\bct ?[0-9]{2}\b|\bht ?[0-9]{2}\b|\bsin\b|\brevision\w*|\bcomprobacion\w*|\bverificacion\w*")
+REGLA_VERIFICABLE = ("6.9 (dónde y cómo se comprueba un ítem que nombra un control del núcleo: algo comprobable y sin negarlo; "
+                     "T-161 r04 [PROPUESTO])")
+
+
+def _no_verificable(t: str, familias: list, terminos: list, reglas: list) -> None:
+    """T-161 r04: un campo descriptivo que nombra un control del núcleo sin decir cómo se comprueba, o negándolo."""
+    u = FINANCIERO.sub(" termino financiero ", t)
+    nucleo = [(x, r) for x, r in _controles(u) if r in NUCLEO]
+    if not nucleo:
+        return
+    negado = NEGACION.search(u)
+    if negado or not (ANCLA.search(u) or REFUERZA.search(u)):
+        familias.append("RELAJA_CONTROL")
+        terminos += ([negado.group(0)] if negado else []) + [x for x, _ in nucleo]
+        reglas += [REGLA_VERIFICABLE] + [r for _, r in nucleo]
+
+
+def conflicto_del_item(item: dict, leccion: bool = False) -> dict | None:
+    """El ítem contradice una regla (None si no). Devuelve las familias, los términos que lo delatan, las reglas y los campos.
+    `leccion` (T-161 r04): los textos son de una lección (`conflicto_de_leccion`), que describe lo que pasó; no se les pide
+    lo que `_no_verificable` pide a los campos descriptivos de un ítem."""
     familias: list[str] = []
     terminos: list[str] = []
     reglas: list[str] = []
@@ -449,6 +577,8 @@ def conflicto_del_item(item: dict) -> dict | None:
         crudo = _texto(item.get(campo))
         normal = _normalizar(crudo)
         _revisar_texto(normal, False, familias, terminos, reglas, crudo)
+        if not leccion and campo != "origen":
+            _no_verificable(normal, familias, terminos, reglas)
         for variante in _variantes(normal):
             _revisar_texto(variante, False, familias, terminos, reglas)
         letras = _otra_escritura(crudo)
@@ -503,6 +633,19 @@ def conflicto_para(item: dict, receptor: str | None) -> dict | None:
 TIPOS_LECCION = ("PREDICTIVA", "OPERATIVA", "PRODUCTO", "FUENTE", "CALIBRACION")   # F6 V2.0, 4.4: `tipo`
 CLAVES_AMBITO = ("clase", "horizonte", "agente", "fuente", "metodo")              # F6 V2.0, 4.4: `ambito`
 ORIGEN_DETERMINISTA = "DETERMINISTA"
+# [PROPUESTO] (T-161 r04, QA r03, H-11): el origen dice quién escribió la entrada, no de dónde viene su texto. A un agente de
+# control solo llegan las lecciones cuyo texto escribe entero el código del Evaluador: las de estos tipos y origen DETERMINISTA
+# (sus cifras, clases y horizontes salen de las métricas y de la configuración). Las de tipo PRODUCTO llevan el tema de una
+# pregunta (`Evaluador.leccion_producto`: lo redacta el modelo del Coordinador o es la pregunta del Broker), así que se tratan
+# como redactadas por un modelo: no llegan a un agente de control y pasan el detector para los demás. Falla cerrado: un tipo
+# nuevo del código no llega a un agente de control hasta que se añada aquí.
+TIPOS_TEXTO_DEL_CODIGO = ("PREDICTIVA", "CALIBRACION")
+# T-161 r04 (QA r03, H-15) y ronda de cierre (QA r04, H-17): lo único de una lección que puede cambiar después de su entrada de
+# alta en F6 (su ciclo de vida). Lista blanca: cualquier otro campo de una entrada posterior con ese `id`, lleve o no
+# `tipo_entrada`, es una alteración y la lección no se da a nadie (`LECCION_ALTERADA`)
+CAMPOS_DE_CICLO_DE_VIDA = ("estado", "caducidad")
+# Lo que se da al agente de una lección: de su entrada de alta, no del estado consolidado (los campos de `lecciones_vigentes`)
+CAMPOS_PARA_EL_AGENTE = ("id", "ambito", "tipo", "observacion", "recomendacion", "fuerza", "fecha")
 # T-161 r03 (QA r02, H-08): lo que hace más prudente una lección (rebajar la confianza declarada o la banda verbal, exigir más
 # raíces, describir que las de una sola raíz fallaron) no es rebajar un control; se enmascara antes de revisar la lección
 ENDURECE = re.compile(
@@ -512,7 +655,23 @@ ENDURECE = re.compile(
     r"|\b(?:mas de|al menos|como minimo|minimo|mas) (?:un[ao]? |dos |tres |[0-9]+ )?(?:raiz|raices|fuentes?|pasadas?|revision\w*"
     r"|objecion\w*|comprobacion\w*|confirmacion\w*|hitos?)\b"
     r"|\b(?:con|de) (?:un|una) (?:sol[oa] |unic[oa] )?(?:raiz|fuente|origen) (?:\w+ ){0,2}?(?:fallar|acert|tuvier|obtuvier|dier)\w*"
-    r"|\bpor (?:\w+ ){0,2}?(?:omitid|olvidad|saltad|ignorad)\w*")   # la causa de un hallazgo («por objeciones omitidas»)
+    r"|\bpor (?:\w+ ){0,2}?(?:omitid|olvidad|saltad|ignorad)\w*"   # la causa de un hallazgo («por objeciones omitidas»)
+    # T-161 r04 (QA r03, H-13): descartar una oportunidad por lo que le falta («Descartar las candidatas con datos de más de 5
+    # días») no rebaja un control: lo que no se propone no pasa ninguna puerta (falla cerrado)
+    r"|\b(?:descart|exclu|retir)\w* (?:las |los |la |el )?(?:candidat|opcion|propuest|oportunidad)\w* (?:con|sin|cuy\w*|que)\b"
+    r"(?:(?! y | e | o )[^.;,])*")   # hasta el final de lo que describe a la oportunidad («… y omite …» se sigue revisando)
+# T-161 r04 (QA r03, H-13): en la observación de una lección, que una tesis o una candidata saliera «sin objeciones» o «sin
+# segunda pasada» es el hallazgo, no una orden. Se enmascara solo si la observación no lleva ningún verbo de orden (`REFUERZA`,
+# `NEUTRO`) y la recomendación, sin conflicto, refuerza el control (`_refuerza`) o es de las que lo hacen más prudente (`ENDURECE`)
+CARENCIA = re.compile(
+    r"\b(?:tesis|candidatas?|opciones?|propuestas?|informes?|analisis) (?:\w+ ){0,3}?sin (?:la |el |las |los |su |sus )?"
+    r"(?:objecion|segunda pasada|pasada|refutacion|corroboracion|verificacion|comprobacion|contraste|revision|raices|raiz"
+    r"|fuentes? independientes)\w*")
+
+
+def _texto_del_codigo(leccion: dict) -> bool:
+    """T-161 r04 (QA r03, H-11): la lección la escribió el código del ejecutor y su texto también es entero del código."""
+    return leccion.get("origen") == ORIGEN_DETERMINISTA and leccion.get("tipo") in TIPOS_TEXTO_DEL_CODIGO
 
 
 def _enmascarar_crudo(crudo: str, patron: re.Pattern, por: str) -> str:
@@ -586,7 +745,12 @@ def conflicto_de_leccion(leccion: dict, cfg: dict | None = None) -> dict | None:
              "como_se_sabe": leccion.get("observacion", "")}
     amb = leccion.get("ambito") or {}
     texto["origen"] = " ".join(str(amb.get(k) or "") for k in ("fuente", "metodo"))
-    c = conflicto_del_item({k: _enmascarar_crudo(v, ENDURECE, " endurece ") if v else v for k, v in texto.items()})
+    obs, rec = _normalizar(texto["como_se_sabe"]), _normalizar(texto["donde_se_comprueba"])
+    if CARENCIA.search(obs) and not (REFUERZA.search(obs) or NEUTRO.search(obs)) and (_refuerza(rec) or ENDURECE.search(rec)) \
+            and conflicto_del_item({"que_cambia": "", "donde_se_comprueba": _enmascarar_crudo(texto["donde_se_comprueba"], ENDURECE,
+                                                                                " endurece ")}, leccion=True) is None:
+        texto["como_se_sabe"] = _enmascarar_crudo(texto["como_se_sabe"], CARENCIA, " carencia ")   # T-161 r04 (H-13)
+    c = conflicto_del_item({k: _enmascarar_crudo(v, ENDURECE, " endurece ") if v else v for k, v in texto.items()}, leccion=True)
     if c is None:
         return None
     nombres = {"donde_se_comprueba": "recomendacion", "como_se_sabe": "observacion", "origen": "ambito"}
@@ -789,7 +953,7 @@ class Guias:
                                           sort_keys=True, ensure_ascii=False, default=str).encode("utf-8")).hexdigest()
         with self._lock:
             if clave not in self._veredictos:
-                if leccion.get("origen") == ORIGEN_DETERMINISTA:
+                if _texto_del_codigo(leccion):   # T-161 r04 (H-11): las PRODUCTO llevan texto de fuera y pasan el detector
                     errores = validar_leccion(leccion, self.b.cfg)
                     self._veredictos[clave] = None if not errores else {
                         "familias": ["LECCION_NO_VALIDA"], "terminos": [], "campos": ["esquema"],
@@ -798,18 +962,49 @@ class Guias:
                     self._veredictos[clave] = conflicto_de_leccion(leccion, self.b.cfg)
             return self._veredictos[clave]
 
+    def _altas(self, hoy: dt.date) -> dict[str, dict]:
+        """T-161 r04 (QA r03, H-15; ronda de cierre, QA r04, H-17): cada lección de F6 por su entrada de alta (la primera con
+        `tipo_entrada` LEC y ese `id`), con `alterada`: los campos que cambia cualquier otra entrada con ese `id`, lleve o no
+        `tipo_entrada` (la consolidación de `Almacen.estado` las junta todas), salvo los de `CAMPOS_DE_CICLO_DE_VIDA`."""
+        por_id: dict[str, list[dict]] = {}
+        for e in self.b.almacen.leer("F6", hoy):
+            if isinstance(e.get("id"), str) and e["id"]:
+                por_id.setdefault(e["id"], []).append(e)
+        altas: dict[str, dict] = {}
+        for lid, entradas in por_id.items():
+            alta_e = next((e for e in entradas if e.get("tipo_entrada") == "LEC"), None)
+            if alta_e is None:
+                continue
+            alta = {**{k: copy.deepcopy(v) for k, v in alta_e.items() if not k.startswith("_")}, "alterada": []}
+            for e in entradas:
+                if e is alta_e:
+                    continue
+                alta["alterada"] += [k for k, v in e.items() if not k.startswith("_") and k not in CAMPOS_DE_CICLO_DE_VIDA
+                                     and v != alta.get(k) and k not in alta["alterada"]]
+            altas[lid] = alta
+        return altas
+
+    def _veredicto_de_alta(self, alta: dict) -> dict | None:
+        if alta.get("alterada"):
+            return {"familias": ["LECCION_ALTERADA"], "terminos": list(alta["alterada"]), "campos": list(alta["alterada"]),
+                    "reglas": [(f"F6: una entrada posterior cambia {', '.join(alta['alterada'])} de la lección (datos de creación; "
+                                "T-161 r04 [PROPUESTO])"), R23]}
+        return self._veredicto(alta)
+
     def _revisar_lecciones(self, hoy: dt.date, run_id: str | None, clave: tuple[str, str]) -> None:
         """F0: cada lección vigente de F6 que no se puede dar a ningún agente deja una incidencia (una sola vez por lección).
         Si la revisión falla, ese run no da ninguna lección a ningún agente (falla cerrado)."""
         try:
             avisadas = {e.get("leccion_id") for e in self.b.almacen.leer("HA") if e.get("tipo_entrada") == "INC" and e.get("leccion_id")}
+            altas = self._altas(hoy)
             for lid, l in sorted(self.b.almacen.estado("F6", hoy, clave="id").items()):
                 if l.get("tipo_entrada") != "LEC" or l.get("estado") != "VIGENTE" or lid in avisadas:
                     continue
-                v = self._veredicto(l)
+                v = self._veredicto_de_alta(altas[lid]) if lid in altas else self._veredicto(l)
                 if v is not None:
-                    self.b.almacen.incidencia("OTRO", f"Lección {lid} (origen {l.get('origen')}) no se da a ningún agente: "
-                                              f"{', '.join(v['reglas'])[:300]} (R23)", str(l.get("origen") or "F6"),
+                    origen = (altas.get(lid) or l).get("origen")   # T-161 r04 (H-15): el de la entrada de alta
+                    self.b.almacen.incidencia("OTRO", f"Lección {lid} (origen {origen}) no se da a ningún agente: "
+                                              f"{', '.join(v['reglas'])[:300]} (R23)", str(origen or "F6"),
                                               severidad="Material", run_id=run_id, leccion_id=lid, conflicto=v)
         except Exception as e:   # noqa: BLE001 - cualquier fallo deja el run sin lecciones, nunca con una sin revisar
             self._lecciones_caidas.add(clave)
@@ -817,24 +1012,32 @@ class Guias:
                                       "da ninguna lección en este run", "AG-20", severidad="Operativa", run_id=run_id)
 
     def lecciones_para(self, agente: str, lecciones: list[dict], as_of, run_id: str | None) -> list[dict]:
-        """Las lecciones (de `Evaluador.lecciones_vigentes`) que se dan a `agente`: a un agente de control, solo las del código
-        del ejecutor (origen DETERMINISTA en F6); a los demás, las que cumplen F6 4.4 y, si las redactó un modelo, pasan el
-        detector al leerlas. Una lección que no está en F6 no se da (falla cerrado)."""
+        """Las lecciones (de `Evaluador.lecciones_vigentes`) que se dan a `agente`. Todo se lee de la entrada de alta de la
+        lección en F6 (T-161 r04, H-15), y una lección cuyos datos de creación cambian después no se da a nadie. A un agente de
+        control, solo las que escribe entero el código del ejecutor (origen DETERMINISTA y tipo de `TIPOS_TEXTO_DEL_CODIGO`;
+        T-161 r04, H-11); a los demás, las que cumplen F6 4.4 y, si su texto no es entero del código, pasan el detector al
+        leerlas. Si la lección nombra agentes (`ambito.agente`), solo a esos (H-11). Una lección que no está en F6 no se da
+        (falla cerrado)."""
         hoy = dt.date.fromisoformat(str(as_of)[:10]) if as_of is not None else self.b.reloj.fecha
         self.cargar(as_of, run_id)
         if (run_id or "", hoy.isoformat()) in self._lecciones_caidas or not lecciones:
             return [] if lecciones else lecciones
-        registros = self.b.almacen.estado("F6", hoy, clave="id")
+        altas = self._altas(hoy)
         out = []
         for l in lecciones:
-            r = registros.get(l.get("id")) if isinstance(l, dict) else None
+            r = altas.get(str(l.get("id"))) if isinstance(l, dict) else None
             if r is None:
                 continue
             if agente in AGENTES_DE_CONTROL and r.get("origen") != ORIGEN_DETERMINISTA:
                 continue
-            if self._veredicto(r) is not None:
+            if agente in AGENTES_DE_CONTROL and r.get("tipo") not in TIPOS_TEXTO_DEL_CODIGO:   # T-161 r04 (H-11): texto del código
                 continue
-            out.append(l)
+            destinatarios = r["ambito"].get("agente") if isinstance(r.get("ambito"), dict) else None
+            if destinatarios is not None and (not isinstance(destinatarios, list) or agente not in destinatarios):
+                continue   # T-161 r04 (H-11): si la lección nombra agentes (`ambito.agente`, F6 4.4), solo a esos
+            if self._veredicto_de_alta(r) is not None:
+                continue
+            out.append({k: copy.deepcopy(r.get(k)) for k in CAMPOS_PARA_EL_AGENTE})   # H-17: de la entrada de alta
         return out
 
     def _revisar(self, hoy: dt.date, run_id: str | None) -> dict[str, list[dict]]:

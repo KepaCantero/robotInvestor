@@ -445,3 +445,17 @@ def test_h10_el_enmascarado_solo_tapa_la_frase_financiera(texto, familia):   # S
     assert not G.CAMBIO_FINANCIERO.search(G._normalizar(texto)) and not G.RELAJA.search(G._normalizar(texto))
     assert G.FINANCIERO.search(G._normalizar(texto))
     assert familia in G.conflicto_del_item(it(que_cambia=texto))["familias"]
+
+
+def test_h16_una_leccion_sin_origen_no_llega_a_un_agente_de_control(b):   # T-161 r04 (QA r03, H-16): mata T04 del revisor
+    """Una lección cuya entrada de alta no tiene `origen` (PREDICTIVA, que pasa el detector): a los demás, sí; a ningún
+    agente de control."""
+    lec = {"tipo_entrada": "LEC", "id": b.almacen.nuevo_id("LEC"), "fecha": AS_OF, "ambito": {}, "nivel": "B", "tipo": "PREDICTIVA",
+           "observacion": "Acierto 38 % en 26 pronósticos (MARCA-SO)", "evidencia": ["RUN-X"],
+           "recomendacion": "Rebajar un nivel la banda verbal", "fuerza": "anecdotica", "n": 1, "caducidad": "2026-09-05",
+           "estado": "VIGENTE"}
+    b.almacen.escribir("F6", "AG-20", lec)
+    vigentes = b.evaluador.lecciones_vigentes(AS_OF)
+    assert [x["id"] for x in b.guias.lecciones_para("AG-03", vigentes, AS_OF, "RUN-X")] == [lec["id"]]
+    for agente in G.AGENTES_DE_CONTROL:
+        assert b.guias.lecciones_para(agente, vigentes, AS_OF, "RUN-X") == [], agente
