@@ -1,5 +1,7 @@
-"""T-161 · Mutantes de las correcciones de T-161 (M01–M14), de su r02 (M15–M26) y de su r03 (M27–M38) sobre `guias.py`, para confirmar que cada prueba nueva falla sin
-su corrección (regresión). M04 se cambió en la r02 (la comprobación de escritura es otra); M19, M20 y M25, en la r03 (cambió la línea).
+"""T-161 · Mutantes de las correcciones de T-161 (M01–M14), de su r02 (M15–M26), de su r03 (M27–M38), de su r04 (M39–M52) y de la ronda de cierre (M53–M55) sobre `guias.py`,
+para confirmar que cada prueba nueva falla sin su corrección (regresión). M04 se cambió en la r02 (la comprobación de escritura es otra);
+M19, M20 y M25, en la r03 (cambió la línea); M07 y M34, en la r04 (la familia IDIOMA se decide con `ajeno`; el enmascarado ya no
+depende del verbo, sino de `_solo_muestra` para lo que coincide con un parámetro).
 
 Uso, desde la raíz: python .docs/tickets/T-161/mutantes_t161.py <copia desechable con «qa29_» y «_mut» y `bloque_a/` entero>
 Cada mutante se aplica en la copia, se pasan `PRUEBAS` (con -x) y se restaura. Vivo = ninguna prueba lo
@@ -13,7 +15,7 @@ COPIA = Path(sys.argv[1]).resolve()
 assert "qa29_" in str(COPIA) and "_mut" in str(COPIA) and (COPIA / "bloque_a" / "11_Ejecutor" / "bloque_a").is_dir()
 GU = "bloque_a/11_Ejecutor/bloque_a/guias.py"
 OR = "bloque_a/11_Ejecutor/bloque_a/orquestacion.py"
-PRUEBAS = ["tests/test_t161_guias.py", "tests/test_t161_r02.py", "tests/test_t161_r03.py"]
+PRUEBAS = ["tests/test_t161_guias.py", "tests/test_t161_r02.py", "tests/test_t161_r03.py", "tests/test_t161_r04.py"]
 MUTANTES = [
     ("M01", "H-01 sin NFKC", 't = unicodedata.normalize("NFKC", str(texto))', "t = str(texto)"),
     ("M02", "H-01 sin quitar los caracteres de formato", 'for c in t if unicodedata.category(c) != "Cf")', "for c in t)"),
@@ -24,7 +26,7 @@ MUTANTES = [
     ("M05", "H-01 sin la familia NOMBRA_CONTROL", '    if nombrados:\n', "    if False:\n"),
     ("M06", "H-01 el refuerzo no mira las marcas de negación", "not (NIEGA.search(t) or RELAJA.search(t) or REBAJA_IMPLICITA.search(t))",
      "not (RELAJA.search(t) or REBAJA_IMPLICITA.search(t))"),
-    ("M07", "H-01 sin la familia IDIOMA", "    if idioma:\n", "    if False:\n"),
+    ("M07", "H-01 sin la familia IDIOMA", "        if ajeno:\n", "        if False:\n"),
     ("M08", "H-01 sin rebajas implícitas", "    if implicita:\n", "    if False:\n"),
     ("M09", "H-02 solo se revisa que_cambia", "    for campo in CAMPOS_TEXTO[1:]:\n", "    for campo in ():\n"),
     ("M10", "H-04 sin agentes de control", 'AGENTES_DE_CONTROL = {"AG-11"', 'AGENTES_DE_CONTROL = {} and {"AG-11"'),
@@ -64,13 +66,45 @@ MUTANTES = [
     ("M33", "r03 H-07 los verbos neutros eximen siempre",
      "claro = REFUERZA.search(t) or (NEUTRO.search(t) and not any(r in NUCLEO for _, r in _controles(t)))",
      "claro = REFUERZA.search(t) or NEUTRO.search(t)"),
-    ("M34", "r03 H-07 el enmascarado financiero aunque haya un verbo de cambio",
-     "if not (CAMBIO_FINANCIERO.search(t) or RELAJA.search(t)):", "if True:"),
+    ("M34", "r04 H-12 lo que coincide con un parámetro se enmascara aunque no solo se muestre", "if _solo_muestra(entero):",
+     "if True:"),
     ("M35", "r03 H-07 sin palabras fuertes de otra lengua", "idioma = idioma or IDIOMA_FUERTE.search(entero)", "idioma = idioma"),
     ("M36", "r03 H-07 sin texto codificado", "codigo = _codificado(_texto(item.get(campo)))", "codigo = []"),
     ("M37", "r03 H-06 sin revisión de las lecciones en el F0", "self._revisar_lecciones(hoy, run_id, clave)", "pass"),
     ("M38", "r03 H-06 si la revisión de las lecciones falla, se dan igual",
      'if (run_id or "", hoy.isoformat()) in self._lecciones_caidas or not lecciones:', "if not lecciones:"),
+    ("M39", "r04 H-11 un agente de control recibe lecciones de PRODUCTO del código",
+     'if agente in AGENTES_DE_CONTROL and r.get("tipo") not in TIPOS_TEXTO_DEL_CODIGO:', "if False:"),
+    ("M40", "r04 H-11 sin respetar ambito.agente",
+     "if destinatarios is not None and (not isinstance(destinatarios, list) or agente not in destinatarios):", "if False:"),
+    ("M41", "r04 H-11 las de PRODUCTO del código sin detector", "if _texto_del_codigo(leccion):",
+     'if leccion.get("origen") == ORIGEN_DETERMINISTA:'),
+    ("M42", "r04 H-15 el origen del estado consolidado", 'r = altas.get(str(l.get("id"))) if isinstance(l, dict) else None',
+     'r = self.b.almacen.estado("F6", hoy, clave="id").get(l.get("id")) if isinstance(l, dict) else None'),
+    ("M43", "r04 H-15 una lección alterada después se da igual", 'if alta.get("alterada"):', "if False:"),
+    ("M44", "r04 H-12 una rebaja sobre una frase financiera pierde los controles que nombra",
+     "if RELAJA.search(t):   # T-161 r04: una rebaja", "if False:   # T-161 r04: una rebaja"),
+    ("M45", "r04 H-12 una orden de refuerzo sobre el núcleo se puede acotar",
+     "if claro and nucleo and ((ACOTA.search(a) and not AMPLIA.search(t)) or REDUCE.search(a)):", "if False:"),
+    ("M46", "r04 H-13 los verbos de presentar no eximen al núcleo",
+     "claro = claro or (PRESENTA.match(a) and not REDUCE.search(a))", "claro = claro"),
+    ("M47", "r04 H-12 los verbos de presentar eximen aunque reduzcan",
+     "claro = claro or (PRESENTA.match(a) and not REDUCE.search(a))", "claro = claro or PRESENTA.match(a)"),
+    ("M48", "r04 H-12 el núcleo sin las reglas de datos, la confianza ni las limitaciones",
+     '"6.9 (reglas de datos)", "R10 y R12 (clasificación de la evidencia y confianza)", "R7 (limitaciones declaradas)",', ""),
+    ("M49", "r04 H-12 sin exigir castellano", "ajeno = idioma.group(0) if idioma else _sin_castellano(crudo or \"\", t)",
+     "ajeno = idioma.group(0) if idioma else None"),
+    ("M50", "r04 H-12 los campos descriptivos no dicen cómo se comprueba", 'if not leccion and campo != "origen":', "if False:"),
+    ("M51", "r04 H-13 la carencia se enmascara aunque la recomendación no refuerce",
+     "and (_refuerza(rec) or ENDURECE.search(rec))", "and True"),
+    ("M52", "r04 H-13 descartar una oportunidad cuenta como rebaja", "(?:descart|exclu|retir)\\w* (?:las |los |la |el )?(?:candidat",
+     "(?:xdescart|xexclu|xretir)\\w* (?:las |los |la |el )?(?:candidat"),
+    ("M53", "cierre H-17 las entradas posteriores sin tipo_entrada no se comparan", "            if isinstance(e.get(\"id\"), str) and e[\"id\"]:",
+     "            if isinstance(e.get(\"id\"), str) and e[\"id\"] and e.get(\"tipo_entrada\") == \"LEC\":"),
+    ("M54", "cierre H-17 fuerza y fecha como campos de ciclo de vida", 'CAMPOS_DE_CICLO_DE_VIDA = ("estado", "caducidad")',
+     'CAMPOS_DE_CICLO_DE_VIDA = ("estado", "caducidad", "fuerza", "fecha")'),
+    ("M55", "cierre H-17 se da al agente la lección consolidada",
+     "out.append({k: copy.deepcopy(r.get(k)) for k in CAMPOS_PARA_EL_AGENTE})", "out.append(l)"),
 ]
 
 

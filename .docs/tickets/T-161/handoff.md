@@ -2,6 +2,28 @@
 
 Solo existe si el trabajo cambia de manos. Una sección por traspaso, la más reciente arriba.
 
+## 2026-11-17 · r04 · de claude (subagente implementador de la r04) a claude (sesión coordinadora y revisor nuevo de la QA r04)
+
+- **Fase en la que se entrega:** QA (r04).
+- **De dónde parte:** la rama local `wip/t161r04` (`5eea86f`, cortada por la pausa), rebasada sobre `origin/develop` (`c728c91`). Se conservó lo que tenía de H-11 y H-15 y se completó.
+- **Hecho:** H-11 a H-16 de la QA r03 de T-161, solo en `guias.py`:
+  - **H-11:** a un agente de control solo llegan las lecciones de texto entero del código (DETERMINISTA y PREDICTIVA o CALIBRACION); las de PRODUCTO pasan el detector y van solo a su `ambito.agente`.
+  - **H-12:** reglas por estructura (enmascarado por el sentido, verbos que muestran frente a los que transforman, núcleo ampliado, órdenes sobre el núcleo sin acotar ni reducir, castellano exigido, campos descriptivos comprobables). 0 de 27 ataques de la QA r03 pasan; tampoco 22 propios ni 10 reservados.
+  - **H-13:** 3 de 26 falsos positivos de la QA r03 (antes 21); 2 de 35 de formato propios, 1 de 6 descriptivos y 1 de 26 lecciones prudentes, declarados en INC-T126-01.
+  - **H-14:** textos (INC-T126-01, registro de decisiones, mapa y evidencia de PB-48, README del ejecutor, CA-9).
+  - **H-15:** origen, tipo, ámbito y texto de la entrada de alta; si cambian después, la lección no se da (`LECCION_ALTERADA`).
+  - **H-16:** `test_t161_r03.py::test_h16_*` mata T04.
+  - Nuevo `tests/test_t161_r04.py`; mutantes M39–M52 en `mutantes_t161.py`.
+- **Falta:**
+  - la QA r04 con un revisor nuevo;
+  - integrar en `develop` (commit local «wip local: T-161 r04», sin push);
+  - `./tools/check_all.sh` completo al integrar.
+- **Cuidado con:**
+  - `evaluador.py` y `orquestacion.py` no se tocan.
+  - `r03_02_integracion.py` falla en 3 casos que medían lo viejo (ver `pruebas.md`, r04).
+  - `test_t161_r02.py::test_h02_una_instruccion_repartida_*` espera ahora también NOMBRA_CONTROL en el primer ítem.
+  - Las líneas de los mutantes del revisor (G, Q, S, T) se conservan literalmente; en `_no_verificable` la variable es `u` para que M16 y S0x sigan apareciendo una vez.
+
 ## 2026-11-16 · r03 · de claude (sesión del Bloque A, T-161 r03) a claude (sesión coordinadora y revisor nuevo de la QA r03)
 
 - **Fase en la que se entrega:** QA (r03).
