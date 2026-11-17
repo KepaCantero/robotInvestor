@@ -710,84 +710,254 @@
    "que": "`urgencia` con un valor que no está en la lista del Anexo B: la mensajería no la aplica"
   },
   "CT-03/respuesta_con_escalado_nulo": {
-   "base": "CT-03.RETORNO",
+   "contrato": "CT-03",
+   "cuerpo": {
+    "clase_consulta": "ACLARACION",
+    "confianza": "probable",
+    "escalado": {
+     "plazo_estimado": null,
+     "run_id": null
+    },
+    "query_id": "QRY-2026-0001",
+    "referencias": [
+     "OPP-2026-0007",
+     "CLM-2026-0001",
+     "PRG-2026-0001"
+    ],
+    "respuesta": "Bajó por la dimensión de valoración.",
+    "ruta": "N0"
+   },
    "espera": "ADMITIDO",
    "pon": {
     "escalado": null
    },
-   "que": "Respuesta con `escalado` nulo, como la de una consulta N0"
+   "que": "Respuesta con `escalado` nulo, como la de una consulta N0",
+   "tipo_mensaje": "RETORNO"
   },
   "CT-03/respuesta_sin_escalado": {
-   "base": "CT-03.RETORNO",
+   "contrato": "CT-03",
+   "cuerpo": {
+    "clase_consulta": "ACLARACION",
+    "confianza": "probable",
+    "escalado": {
+     "plazo_estimado": null,
+     "run_id": null
+    },
+    "query_id": "QRY-2026-0001",
+    "referencias": [
+     "OPP-2026-0007",
+     "CLM-2026-0001",
+     "PRG-2026-0001"
+    ],
+    "respuesta": "Bajó por la dimensión de valoración.",
+    "ruta": "N0"
+   },
    "espera": "ADMITIDO",
    "que": "Respuesta sin `escalado`",
    "quita": [
     "escalado"
-   ]
+   ],
+   "tipo_mensaje": "RETORNO"
   },
   "CT-03/retorno_clase_consulta_fuera_de_la_lista_del_anexo_b": {
-   "base": "CT-03.RETORNO",
+   "contrato": "CT-03",
+   "cuerpo": {
+    "clase_consulta": "ACLARACION",
+    "confianza": "probable",
+    "escalado": {
+     "plazo_estimado": null,
+     "run_id": null
+    },
+    "query_id": "QRY-2026-0001",
+    "referencias": [
+     "OPP-2026-0007",
+     "CLM-2026-0001",
+     "PRG-2026-0001"
+    ],
+    "respuesta": "Bajó por la dimensión de valoración.",
+    "ruta": "N0"
+   },
    "espera": "ADMITIDO",
    "pon": {
     "clase_consulta": "FUERA_DE_LISTA"
    },
-   "que": "`clase_consulta` con un valor que no está en la lista del Anexo B: la mensajería no la aplica"
+   "que": "`clase_consulta` con un valor que no está en la lista del Anexo B: la mensajería no la aplica",
+   "tipo_mensaje": "RETORNO"
   },
   "CT-03/retorno_confianza_fuera_de_la_lista_del_anexo_b": {
-   "base": "CT-03.RETORNO",
+   "contrato": "CT-03",
+   "cuerpo": {
+    "clase_consulta": "ACLARACION",
+    "confianza": "probable",
+    "escalado": {
+     "plazo_estimado": null,
+     "run_id": null
+    },
+    "query_id": "QRY-2026-0001",
+    "referencias": [
+     "OPP-2026-0007",
+     "CLM-2026-0001",
+     "PRG-2026-0001"
+    ],
+    "respuesta": "Bajó por la dimensión de valoración.",
+    "ruta": "N0"
+   },
    "espera": "ADMITIDO",
    "pon": {
     "confianza": "FUERA_DE_LISTA"
    },
-   "que": "`confianza` con un valor que no está en la lista del Anexo B: la mensajería no la aplica"
+   "que": "`confianza` con un valor que no está en la lista del Anexo B: la mensajería no la aplica",
+   "tipo_mensaje": "RETORNO"
   },
   "CT-03/retorno_ruta_fuera_de_la_lista_del_anexo_b": {
-   "base": "CT-03.RETORNO",
+   "contrato": "CT-03",
+   "cuerpo": {
+    "clase_consulta": "ACLARACION",
+    "confianza": "probable",
+    "escalado": {
+     "plazo_estimado": null,
+     "run_id": null
+    },
+    "query_id": "QRY-2026-0001",
+    "referencias": [
+     "OPP-2026-0007",
+     "CLM-2026-0001",
+     "PRG-2026-0001"
+    ],
+    "respuesta": "Bajó por la dimensión de valoración.",
+    "ruta": "N0"
+   },
    "espera": "ADMITIDO",
    "pon": {
     "ruta": "FUERA_DE_LISTA"
    },
-   "que": "`ruta` con un valor que no está en la lista del Anexo B: la mensajería no la aplica"
+   "que": "`ruta` con un valor que no está en la lista del Anexo B: la mensajería no la aplica",
+   "tipo_mensaje": "RETORNO"
   },
   "CT-03/retorno_sin_clase_consulta": {
-   "base": "CT-03.RETORNO",
+   "contrato": "CT-03",
+   "cuerpo": {
+    "clase_consulta": "ACLARACION",
+    "confianza": "probable",
+    "escalado": {
+     "plazo_estimado": null,
+     "run_id": null
+    },
+    "query_id": "QRY-2026-0001",
+    "referencias": [
+     "OPP-2026-0007",
+     "CLM-2026-0001",
+     "PRG-2026-0001"
+    ],
+    "respuesta": "Bajó por la dimensión de valoración.",
+    "ruta": "N0"
+   },
    "espera": "RECHAZADO",
    "que": "Retorno sin el campo de retorno `clase_consulta`",
    "quita": [
     "clase_consulta"
-   ]
+   ],
+   "tipo_mensaje": "RETORNO"
   },
   "CT-03/retorno_sin_confianza": {
-   "base": "CT-03.RETORNO",
+   "contrato": "CT-03",
+   "cuerpo": {
+    "clase_consulta": "ACLARACION",
+    "confianza": "probable",
+    "escalado": {
+     "plazo_estimado": null,
+     "run_id": null
+    },
+    "query_id": "QRY-2026-0001",
+    "referencias": [
+     "OPP-2026-0007",
+     "CLM-2026-0001",
+     "PRG-2026-0001"
+    ],
+    "respuesta": "Bajó por la dimensión de valoración.",
+    "ruta": "N0"
+   },
    "espera": "RECHAZADO",
    "que": "Retorno sin el campo de retorno `confianza`",
    "quita": [
     "confianza"
-   ]
+   ],
+   "tipo_mensaje": "RETORNO"
   },
   "CT-03/retorno_sin_referencias": {
-   "base": "CT-03.RETORNO",
+   "contrato": "CT-03",
+   "cuerpo": {
+    "clase_consulta": "ACLARACION",
+    "confianza": "probable",
+    "escalado": {
+     "plazo_estimado": null,
+     "run_id": null
+    },
+    "query_id": "QRY-2026-0001",
+    "referencias": [
+     "OPP-2026-0007",
+     "CLM-2026-0001",
+     "PRG-2026-0001"
+    ],
+    "respuesta": "Bajó por la dimensión de valoración.",
+    "ruta": "N0"
+   },
    "espera": "RECHAZADO",
    "que": "Retorno sin el campo de retorno `referencias`",
    "quita": [
     "referencias"
-   ]
+   ],
+   "tipo_mensaje": "RETORNO"
   },
   "CT-03/retorno_sin_respuesta": {
-   "base": "CT-03.RETORNO",
+   "contrato": "CT-03",
+   "cuerpo": {
+    "clase_consulta": "ACLARACION",
+    "confianza": "probable",
+    "escalado": {
+     "plazo_estimado": null,
+     "run_id": null
+    },
+    "query_id": "QRY-2026-0001",
+    "referencias": [
+     "OPP-2026-0007",
+     "CLM-2026-0001",
+     "PRG-2026-0001"
+    ],
+    "respuesta": "Bajó por la dimensión de valoración.",
+    "ruta": "N0"
+   },
    "espera": "RECHAZADO",
    "que": "Retorno sin el campo de retorno `respuesta`",
    "quita": [
     "respuesta"
-   ]
+   ],
+   "tipo_mensaje": "RETORNO"
   },
   "CT-03/retorno_sin_ruta": {
-   "base": "CT-03.RETORNO",
+   "contrato": "CT-03",
+   "cuerpo": {
+    "clase_consulta": "ACLARACION",
+    "confianza": "probable",
+    "escalado": {
+     "plazo_estimado": null,
+     "run_id": null
+    },
+    "query_id": "QRY-2026-0001",
+    "referencias": [
+     "OPP-2026-0007",
+     "CLM-2026-0001",
+     "PRG-2026-0001"
+    ],
+    "respuesta": "Bajó por la dimensión de valoración.",
+    "ruta": "N0"
+   },
    "espera": "RECHAZADO",
    "que": "Retorno sin el campo de retorno `ruta`",
    "quita": [
     "ruta"
-   ]
+   ],
+   "tipo_mensaje": "RETORNO"
   },
   "CT-03/sin_run_id_ni_query_id": {
    "base": "CT-03.ENCARGO",
@@ -1251,12 +1421,23 @@
    "receptor": "AG-13"
   },
   "CT-09/retorno_clase_cifra_fuera_de_la_lista_del_anexo_b": {
-   "base": "CT-09.RETORNO",
+   "contrato": "CT-09",
+   "cuerpo": {
+    "artefacto_id": "CALC-2026-0001",
+    "clase_cifra": "determinista",
+    "incertidumbre": null,
+    "informe_calidad_datos": {},
+    "limitaciones": [],
+    "resultado": {
+     "valor": 0.1
+    }
+   },
    "espera": "ADMITIDO",
    "pon": {
     "clase_cifra": "FUERA_DE_LISTA"
    },
-   "que": "`clase_cifra` con un valor que no está en la lista del Anexo B: la mensajería no la aplica"
+   "que": "`clase_cifra` con un valor que no está en la lista del Anexo B: la mensajería no la aplica",
+   "tipo_mensaje": "RETORNO"
   },
   "CT-09/sin_run_id_ni_query_id": {
    "base": "CT-09.ENCARGO",
@@ -1321,9 +1502,23 @@
    "tipo_mensaje": "ENCARGO"
   },
   "CT-11/ejemplo_del_anexo_b_suelto": {
-   "base": "CT-11.ENCARGO",
+   "contrato": "CT-11",
+   "cuerpo": {
+    "afirmacion": "El diferencial se amplió.",
+    "direccion": "favorable",
+    "extracto": "Extracto mínimo.",
+    "fechas": {
+     "conocible_desde": "2026-06-01",
+     "fenomeno": "2026-05-29",
+     "publicacion": "2026-06-01",
+     "recuperacion": "2026-06-05"
+    },
+    "fuente": "REF-2026-0001",
+    "unidad_divisa": "puntos básicos"
+   },
    "espera": "RECHAZADO",
-   "que": "El ejemplo del Anexo B tal cual, sin lote"
+   "que": "El ejemplo del Anexo B V5.1 tal cual: una pieza suelta, sin lote (el Anexo B V5.2 ya describe el lote)",
+   "tipo_mensaje": "ENCARGO"
   },
   "CT-11/encargo_sin_piezas": {
    "contrato": "CT-11",
@@ -1411,9 +1606,19 @@
    "tipo_mensaje": "ENCARGO"
   },
   "CT-12/ejemplo_del_anexo_b_suelto": {
-   "base": "CT-12.ENCARGO",
+   "contrato": "CT-12",
+   "cuerpo": {
+    "catalizadores_conocidos": [],
+    "datos": {},
+    "horizontes": [
+     "H3"
+    ],
+    "opp_id": "OPP-2026-0007",
+    "tesis": "Tesis de la opción."
+   },
    "espera": "RECHAZADO",
-   "que": "El ejemplo del Anexo B tal cual, sin lote"
+   "que": "El ejemplo del Anexo B V5.1 tal cual: un encargo suelto, sin lote (el Anexo B V5.2 ya describe el lote)",
+   "tipo_mensaje": "ENCARGO"
   },
   "CT-12/encargo_sin_encargos": {
    "contrato": "CT-12",
@@ -1518,9 +1723,21 @@
    "tipo_mensaje": "ENCARGO"
   },
   "CT-13/ejemplo_del_anexo_b_suelto": {
-   "base": "CT-13.ENCARGO",
+   "contrato": "CT-13",
+   "cuerpo": {
+    "calculos": [
+     "CALC-2026-0001"
+    ],
+    "evidencias_clave": [
+     "CLM-2026-0001"
+    ],
+    "opp_id": "OPP-2026-0007",
+    "prospectiva": {},
+    "tesis": "Tesis de la opción."
+   },
    "espera": "RECHAZADO",
-   "que": "El ejemplo del Anexo B tal cual, sin lote"
+   "que": "El ejemplo del Anexo B V5.1 tal cual: una petición suelta, sin lote (el Anexo B V5.2 ya describe el lote)",
+   "tipo_mensaje": "ENCARGO"
   },
   "CT-13/encargo_sin_peticiones": {
    "contrato": "CT-13",
@@ -1598,12 +1815,23 @@
    ]
   },
   "CT-14/retorno_dictamen_fuera_de_la_lista_del_anexo_b": {
-   "base": "CT-14.RETORNO",
+   "contrato": "CT-14",
+   "cuerpo": {
+    "comprobaciones": [
+     {
+      "comprobacion": "C1",
+      "resultado": "apto"
+     }
+    ],
+    "dictamen": "APTO",
+    "motivo": "Sin advertencias."
+   },
    "espera": "ADMITIDO",
    "pon": {
     "dictamen": "FUERA_DE_LISTA"
    },
-   "que": "`dictamen` con un valor que no está en la lista del Anexo B: la mensajería no la aplica"
+   "que": "`dictamen` con un valor que no está en la lista del Anexo B: la mensajería no la aplica",
+   "tipo_mensaje": "RETORNO"
   },
   "CT-14/sin_run_id_ni_query_id": {
    "base": "CT-14.ENCARGO",
@@ -1996,108 +2224,341 @@
    "receptor": "AG-01"
   },
   "CT-23/retorno_con_estado_comun_en_el_cuerpo_y_sin_el_propio": {
-   "base": "CT-23.RETORNO",
+   "contrato": "CT-23",
+   "cuerpo": {
+    "cns_id": "CNS-2026-0001",
+    "estado": "RESPONDIDA",
+    "respuestas": [
+     {
+      "documentos": [],
+      "indice": 0,
+      "texto": "No la incluye."
+     }
+    ],
+    "supuestos_aplicados": [
+     {
+      "indice": 0,
+      "supuesto": "No la incluye."
+     }
+    ]
+   },
    "espera": "RECHAZADO",
    "pon": {
     "estado": "COMPLETO"
    },
-   "que": "Retorno que trae COMPLETO en `estado` y nada en su campo propio: COMPLETO no es un estado del objeto"
+   "que": "Retorno que trae COMPLETO en `estado` y nada en su campo propio: COMPLETO no es un estado del objeto",
+   "tipo_mensaje": "RETORNO"
   },
   "CT-23/retorno_con_estado_comun_parcial_y_campo_propio": {
-   "base": "CT-23.RETORNO",
+   "contrato": "CT-23",
+   "cuerpo": {
+    "cns_id": "CNS-2026-0001",
+    "estado": "RESPONDIDA",
+    "respuestas": [
+     {
+      "documentos": [],
+      "indice": 0,
+      "texto": "No la incluye."
+     }
+    ],
+    "supuestos_aplicados": [
+     {
+      "indice": 0,
+      "supuesto": "No la incluye."
+     }
+    ]
+   },
    "espera": "ADMITIDO",
    "estado": "PARCIAL",
    "pon": {
     "estado": "PARCIAL",
     "estado_consulta": "RESPONDIDA"
    },
-   "que": "Retorno con PARCIAL por su sitio y en `estado`, y el del objeto en `estado_consulta`"
+   "que": "Retorno con PARCIAL por su sitio y en `estado`, y el del objeto en `estado_consulta`",
+   "tipo_mensaje": "RETORNO"
   },
   "CT-23/retorno_con_estado_comun_y_campo_propio": {
-   "base": "CT-23.RETORNO",
+   "contrato": "CT-23",
+   "cuerpo": {
+    "cns_id": "CNS-2026-0001",
+    "estado": "RESPONDIDA",
+    "respuestas": [
+     {
+      "documentos": [],
+      "indice": 0,
+      "texto": "No la incluye."
+     }
+    ],
+    "supuestos_aplicados": [
+     {
+      "indice": 0,
+      "supuesto": "No la incluye."
+     }
+    ]
+   },
    "espera": "ADMITIDO",
    "pon": {
     "estado": "COMPLETO",
     "estado_consulta": "PARCIAL"
    },
-   "que": "Retorno con el estado común en `estado` y el del objeto en `estado_consulta`"
+   "que": "Retorno con el estado común en `estado` y el del objeto en `estado_consulta`",
+   "tipo_mensaje": "RETORNO"
   },
   "CT-23/retorno_con_los_dos_estados_contradictorios": {
-   "base": "CT-23.RETORNO",
+   "contrato": "CT-23",
+   "cuerpo": {
+    "cns_id": "CNS-2026-0001",
+    "estado": "RESPONDIDA",
+    "respuestas": [
+     {
+      "documentos": [],
+      "indice": 0,
+      "texto": "No la incluye."
+     }
+    ],
+    "supuestos_aplicados": [
+     {
+      "indice": 0,
+      "supuesto": "No la incluye."
+     }
+    ]
+   },
    "espera": "RECHAZADO",
    "pon": {
     "estado": "RESPONDIDA",
     "estado_consulta": "PARCIAL"
    },
-   "que": "Retorno con `estado` y `estado_consulta` distintos"
+   "que": "Retorno con `estado` y `estado_consulta` distintos",
+   "tipo_mensaje": "RETORNO"
   },
   "CT-23/retorno_con_los_dos_estados_iguales": {
-   "base": "CT-23.RETORNO",
+   "contrato": "CT-23",
+   "cuerpo": {
+    "cns_id": "CNS-2026-0001",
+    "estado": "RESPONDIDA",
+    "respuestas": [
+     {
+      "documentos": [],
+      "indice": 0,
+      "texto": "No la incluye."
+     }
+    ],
+    "supuestos_aplicados": [
+     {
+      "indice": 0,
+      "supuesto": "No la incluye."
+     }
+    ]
+   },
    "espera": "ADMITIDO",
    "pon": {
     "estado": "RESPONDIDA",
     "estado_consulta": "RESPONDIDA"
    },
-   "que": "Retorno con `estado` y `estado_consulta` iguales"
+   "que": "Retorno con `estado` y `estado_consulta` iguales",
+   "tipo_mensaje": "RETORNO"
   },
   "CT-23/retorno_estado_propio_de_otro_contrato": {
-   "base": "CT-23.RETORNO",
+   "contrato": "CT-23",
+   "cuerpo": {
+    "cns_id": "CNS-2026-0001",
+    "estado": "RESPONDIDA",
+    "respuestas": [
+     {
+      "documentos": [],
+      "indice": 0,
+      "texto": "No la incluye."
+     }
+    ],
+    "supuestos_aplicados": [
+     {
+      "indice": 0,
+      "supuesto": "No la incluye."
+     }
+    ]
+   },
    "espera": "RECHAZADO",
    "pon": {
     "estado": "ACTIVO"
    },
-   "que": "Retorno con el estado del objeto de otro contrato"
+   "que": "Retorno con el estado del objeto de otro contrato",
+   "tipo_mensaje": "RETORNO"
   },
   "CT-23/retorno_estado_propio_en_minusculas": {
-   "base": "CT-23.RETORNO",
+   "contrato": "CT-23",
+   "cuerpo": {
+    "cns_id": "CNS-2026-0001",
+    "estado": "RESPONDIDA",
+    "respuestas": [
+     {
+      "documentos": [],
+      "indice": 0,
+      "texto": "No la incluye."
+     }
+    ],
+    "supuestos_aplicados": [
+     {
+      "indice": 0,
+      "supuesto": "No la incluye."
+     }
+    ]
+   },
    "espera": "RECHAZADO",
    "pon": {
     "estado": "respondida"
    },
-   "que": "Retorno con el estado del objeto en minúsculas"
+   "que": "Retorno con el estado del objeto en minúsculas",
+   "tipo_mensaje": "RETORNO"
   },
   "CT-23/retorno_estado_propio_fuera_de_lista": {
-   "base": "CT-23.RETORNO",
+   "contrato": "CT-23",
+   "cuerpo": {
+    "cns_id": "CNS-2026-0001",
+    "estado": "RESPONDIDA",
+    "respuestas": [
+     {
+      "documentos": [],
+      "indice": 0,
+      "texto": "No la incluye."
+     }
+    ],
+    "supuestos_aplicados": [
+     {
+      "indice": 0,
+      "supuesto": "No la incluye."
+     }
+    ]
+   },
    "espera": "RECHAZADO",
    "pon": {
     "estado": "ANULADA"
    },
-   "que": "Retorno con un estado del objeto que no existe"
+   "que": "Retorno con un estado del objeto que no existe",
+   "tipo_mensaje": "RETORNO"
   },
   "CT-23/retorno_estado_propio_parcial": {
-   "base": "CT-23.RETORNO",
+   "contrato": "CT-23",
+   "cuerpo": {
+    "cns_id": "CNS-2026-0001",
+    "estado": "RESPONDIDA",
+    "respuestas": [
+     {
+      "documentos": [],
+      "indice": 0,
+      "texto": "No la incluye."
+     }
+    ],
+    "supuestos_aplicados": [
+     {
+      "indice": 0,
+      "supuesto": "No la incluye."
+     }
+    ]
+   },
    "espera": "ADMITIDO",
    "pon": {
     "estado": "PARCIAL"
    },
-   "que": "Retorno con el estado del objeto PARCIAL en `estado`: pasa a `estado_consulta`"
+   "que": "Retorno con el estado del objeto PARCIAL en `estado`: pasa a `estado_consulta`",
+   "tipo_mensaje": "RETORNO"
   },
   "CT-23/retorno_estado_propio_recibida": {
-   "base": "CT-23.RETORNO",
+   "contrato": "CT-23",
+   "cuerpo": {
+    "cns_id": "CNS-2026-0001",
+    "estado": "RESPONDIDA",
+    "respuestas": [
+     {
+      "documentos": [],
+      "indice": 0,
+      "texto": "No la incluye."
+     }
+    ],
+    "supuestos_aplicados": [
+     {
+      "indice": 0,
+      "supuesto": "No la incluye."
+     }
+    ]
+   },
    "espera": "ADMITIDO",
    "pon": {
     "estado": "RECIBIDA"
    },
-   "que": "Retorno con el estado del objeto RECIBIDA en `estado`: pasa a `estado_consulta`"
+   "que": "Retorno con el estado del objeto RECIBIDA en `estado`: pasa a `estado_consulta`",
+   "tipo_mensaje": "RETORNO"
   },
   "CT-23/retorno_estado_propio_respondida": {
-   "base": "CT-23.RETORNO",
+   "contrato": "CT-23",
+   "cuerpo": {
+    "cns_id": "CNS-2026-0001",
+    "estado": "RESPONDIDA",
+    "respuestas": [
+     {
+      "documentos": [],
+      "indice": 0,
+      "texto": "No la incluye."
+     }
+    ],
+    "supuestos_aplicados": [
+     {
+      "indice": 0,
+      "supuesto": "No la incluye."
+     }
+    ]
+   },
    "espera": "ADMITIDO",
    "pon": {
     "estado": "RESPONDIDA"
    },
-   "que": "Retorno con el estado del objeto RESPONDIDA en `estado`: pasa a `estado_consulta`"
+   "que": "Retorno con el estado del objeto RESPONDIDA en `estado`: pasa a `estado_consulta`",
+   "tipo_mensaje": "RETORNO"
   },
   "CT-23/retorno_estado_propio_vencida": {
-   "base": "CT-23.RETORNO",
+   "contrato": "CT-23",
+   "cuerpo": {
+    "cns_id": "CNS-2026-0001",
+    "estado": "RESPONDIDA",
+    "respuestas": [
+     {
+      "documentos": [],
+      "indice": 0,
+      "texto": "No la incluye."
+     }
+    ],
+    "supuestos_aplicados": [
+     {
+      "indice": 0,
+      "supuesto": "No la incluye."
+     }
+    ]
+   },
    "espera": "ADMITIDO",
    "pon": {
     "estado": "VENCIDA"
    },
-   "que": "Retorno con el estado del objeto VENCIDA en `estado`: pasa a `estado_consulta`"
+   "que": "Retorno con el estado del objeto VENCIDA en `estado`: pasa a `estado_consulta`",
+   "tipo_mensaje": "RETORNO"
   },
   "CT-23/retorno_rechazado_con_estado_propio": {
-   "base": "CT-23.RETORNO",
+   "contrato": "CT-23",
+   "cuerpo": {
+    "cns_id": "CNS-2026-0001",
+    "estado": "RESPONDIDA",
+    "respuestas": [
+     {
+      "documentos": [],
+      "indice": 0,
+      "texto": "No la incluye."
+     }
+    ],
+    "supuestos_aplicados": [
+     {
+      "indice": 0,
+      "supuesto": "No la incluye."
+     }
+    ]
+   },
    "espera": "ADMITIDO",
    "estado": "RECHAZADO",
    "pon": {
@@ -2106,35 +2567,107 @@
    "que": "Retorno con el estado común RECHAZADO y el del objeto en su campo",
    "quita": [
     "estado"
-   ]
+   ],
+   "tipo_mensaje": "RETORNO"
   },
   "CT-23/retorno_sin_cns_id": {
-   "base": "CT-23.RETORNO",
+   "contrato": "CT-23",
+   "cuerpo": {
+    "cns_id": "CNS-2026-0001",
+    "estado": "RESPONDIDA",
+    "respuestas": [
+     {
+      "documentos": [],
+      "indice": 0,
+      "texto": "No la incluye."
+     }
+    ],
+    "supuestos_aplicados": [
+     {
+      "indice": 0,
+      "supuesto": "No la incluye."
+     }
+    ]
+   },
    "espera": "RECHAZADO",
    "que": "Retorno sin el campo de retorno `cns_id`",
    "quita": [
     "cns_id"
-   ]
+   ],
+   "tipo_mensaje": "RETORNO"
   },
   "CT-23/retorno_sin_estado_propio": {
-   "base": "CT-23.RETORNO",
+   "contrato": "CT-23",
+   "cuerpo": {
+    "cns_id": "CNS-2026-0001",
+    "estado": "RESPONDIDA",
+    "respuestas": [
+     {
+      "documentos": [],
+      "indice": 0,
+      "texto": "No la incluye."
+     }
+    ],
+    "supuestos_aplicados": [
+     {
+      "indice": 0,
+      "supuesto": "No la incluye."
+     }
+    ]
+   },
    "espera": "RECHAZADO",
    "que": "Retorno sin estado del objeto",
    "quita": [
     "estado"
-   ]
+   ],
+   "tipo_mensaje": "RETORNO"
   },
   "CT-23/retorno_sin_identificador_y_sin_estado": {
-   "base": "CT-23.RETORNO",
+   "contrato": "CT-23",
+   "cuerpo": {
+    "cns_id": "CNS-2026-0001",
+    "estado": "RESPONDIDA",
+    "respuestas": [
+     {
+      "documentos": [],
+      "indice": 0,
+      "texto": "No la incluye."
+     }
+    ],
+    "supuestos_aplicados": [
+     {
+      "indice": 0,
+      "supuesto": "No la incluye."
+     }
+    ]
+   },
    "espera": "RECHAZADO",
    "que": "Retorno sin identificador ni estado: se rechaza por el estado del objeto, que se mira antes",
    "quita": [
     "cns_id",
     "estado"
-   ]
+   ],
+   "tipo_mensaje": "RETORNO"
   },
   "CT-23/retorno_solo_con_el_campo_propio": {
-   "base": "CT-23.RETORNO",
+   "contrato": "CT-23",
+   "cuerpo": {
+    "cns_id": "CNS-2026-0001",
+    "estado": "RESPONDIDA",
+    "respuestas": [
+     {
+      "documentos": [],
+      "indice": 0,
+      "texto": "No la incluye."
+     }
+    ],
+    "supuestos_aplicados": [
+     {
+      "indice": 0,
+      "supuesto": "No la incluye."
+     }
+    ]
+   },
    "espera": "ADMITIDO",
    "pon": {
     "estado_consulta": "PARCIAL"
@@ -2142,7 +2675,8 @@
    "que": "Retorno que ya trae `estado_consulta` y no trae `estado`",
    "quita": [
     "estado"
-   ]
+   ],
+   "tipo_mensaje": "RETORNO"
   },
   "CT-23/saliente_con_contenido": {
    "base": "CT-23.ENCARGO",
@@ -2163,12 +2697,30 @@
    "run_id": null
   },
   "CT-23/validar_retorno_sin_campo_propio": {
-   "base": "CT-23.RETORNO",
+   "contrato": "CT-23",
+   "cuerpo": {
+    "cns_id": "CNS-2026-0001",
+    "estado": "RESPONDIDA",
+    "respuestas": [
+     {
+      "documentos": [],
+      "indice": 0,
+      "texto": "No la incluye."
+     }
+    ],
+    "supuestos_aplicados": [
+     {
+      "indice": 0,
+      "supuesto": "No la incluye."
+     }
+    ]
+   },
    "espera": "RECHAZADO",
    "mensaje_quita": [
     "estado_consulta"
    ],
    "que": "Un retorno ya creado al que se le quita `estado_consulta`",
+   "tipo_mensaje": "RETORNO",
    "via": "validar"
   },
   "CT-24/canal_en_sentido_contrario": {
@@ -2211,117 +2763,200 @@
    ]
   },
   "CT-24/estado_comun_distinto_del_propio": {
-   "base": "CT-24.RETORNO",
+   "contrato": "CT-24",
+   "cuerpo": {
+    "estado": "ACTIVO",
+    "proximo_ciclo": "2026-06-12",
+    "seg_id": "SEG-2026-0001"
+   },
    "espera": "RECHAZADO",
    "pon": {
     "estado": "PARCIAL",
     "estado_seguimiento": "ACTIVO"
    },
-   "que": "Retorno con `estado` PARCIAL en el cuerpo y el estado propio ACTIVO: contradictorios (T-124, H-09)"
+   "que": "Retorno con `estado` PARCIAL en el cuerpo y el estado propio ACTIVO: contradictorios (T-124, H-09)",
+   "tipo_mensaje": "RETORNO"
   },
   "CT-24/retorno_con_estado_comun_en_el_cuerpo_y_sin_el_propio": {
-   "base": "CT-24.RETORNO",
+   "contrato": "CT-24",
+   "cuerpo": {
+    "estado": "ACTIVO",
+    "proximo_ciclo": "2026-06-12",
+    "seg_id": "SEG-2026-0001"
+   },
    "espera": "RECHAZADO",
    "pon": {
     "estado": "COMPLETO"
    },
-   "que": "Retorno que trae COMPLETO en `estado` y nada en su campo propio: COMPLETO no es un estado del objeto"
+   "que": "Retorno que trae COMPLETO en `estado` y nada en su campo propio: COMPLETO no es un estado del objeto",
+   "tipo_mensaje": "RETORNO"
   },
   "CT-24/retorno_con_estado_comun_parcial_y_campo_propio": {
-   "base": "CT-24.RETORNO",
+   "contrato": "CT-24",
+   "cuerpo": {
+    "estado": "ACTIVO",
+    "proximo_ciclo": "2026-06-12",
+    "seg_id": "SEG-2026-0001"
+   },
    "espera": "ADMITIDO",
    "estado": "PARCIAL",
    "pon": {
     "estado": "PARCIAL",
     "estado_seguimiento": "ACTIVO"
    },
-   "que": "Retorno con PARCIAL por su sitio y en `estado`, y el del objeto en `estado_seguimiento`"
+   "que": "Retorno con PARCIAL por su sitio y en `estado`, y el del objeto en `estado_seguimiento`",
+   "tipo_mensaje": "RETORNO"
   },
   "CT-24/retorno_con_estado_comun_y_campo_propio": {
-   "base": "CT-24.RETORNO",
+   "contrato": "CT-24",
+   "cuerpo": {
+    "estado": "ACTIVO",
+    "proximo_ciclo": "2026-06-12",
+    "seg_id": "SEG-2026-0001"
+   },
    "espera": "ADMITIDO",
    "pon": {
     "estado": "COMPLETO",
     "estado_seguimiento": "PAUSADO"
    },
-   "que": "Retorno con el estado común en `estado` y el del objeto en `estado_seguimiento`"
+   "que": "Retorno con el estado común en `estado` y el del objeto en `estado_seguimiento`",
+   "tipo_mensaje": "RETORNO"
   },
   "CT-24/retorno_con_los_dos_estados_contradictorios": {
-   "base": "CT-24.RETORNO",
+   "contrato": "CT-24",
+   "cuerpo": {
+    "estado": "ACTIVO",
+    "proximo_ciclo": "2026-06-12",
+    "seg_id": "SEG-2026-0001"
+   },
    "espera": "RECHAZADO",
    "pon": {
     "estado": "ACTIVO",
     "estado_seguimiento": "PAUSADO"
    },
-   "que": "Retorno con `estado` y `estado_seguimiento` distintos"
+   "que": "Retorno con `estado` y `estado_seguimiento` distintos",
+   "tipo_mensaje": "RETORNO"
   },
   "CT-24/retorno_con_los_dos_estados_iguales": {
-   "base": "CT-24.RETORNO",
+   "contrato": "CT-24",
+   "cuerpo": {
+    "estado": "ACTIVO",
+    "proximo_ciclo": "2026-06-12",
+    "seg_id": "SEG-2026-0001"
+   },
    "espera": "ADMITIDO",
    "pon": {
     "estado": "ACTIVO",
     "estado_seguimiento": "ACTIVO"
    },
-   "que": "Retorno con `estado` y `estado_seguimiento` iguales"
+   "que": "Retorno con `estado` y `estado_seguimiento` iguales",
+   "tipo_mensaje": "RETORNO"
   },
   "CT-24/retorno_estado_propio_activo": {
-   "base": "CT-24.RETORNO",
+   "contrato": "CT-24",
+   "cuerpo": {
+    "estado": "ACTIVO",
+    "proximo_ciclo": "2026-06-12",
+    "seg_id": "SEG-2026-0001"
+   },
    "espera": "ADMITIDO",
    "pon": {
     "estado": "ACTIVO"
    },
-   "que": "Retorno con el estado del objeto ACTIVO en `estado`: pasa a `estado_seguimiento`"
+   "que": "Retorno con el estado del objeto ACTIVO en `estado`: pasa a `estado_seguimiento`",
+   "tipo_mensaje": "RETORNO"
   },
   "CT-24/retorno_estado_propio_cancelado": {
-   "base": "CT-24.RETORNO",
+   "contrato": "CT-24",
+   "cuerpo": {
+    "estado": "ACTIVO",
+    "proximo_ciclo": "2026-06-12",
+    "seg_id": "SEG-2026-0001"
+   },
    "espera": "ADMITIDO",
    "pon": {
     "estado": "CANCELADO"
    },
-   "que": "Retorno con el estado del objeto CANCELADO en `estado`: pasa a `estado_seguimiento`"
+   "que": "Retorno con el estado del objeto CANCELADO en `estado`: pasa a `estado_seguimiento`",
+   "tipo_mensaje": "RETORNO"
   },
   "CT-24/retorno_estado_propio_de_otro_contrato": {
-   "base": "CT-24.RETORNO",
+   "contrato": "CT-24",
+   "cuerpo": {
+    "estado": "ACTIVO",
+    "proximo_ciclo": "2026-06-12",
+    "seg_id": "SEG-2026-0001"
+   },
    "espera": "RECHAZADO",
    "pon": {
     "estado": "PROVISTA"
    },
-   "que": "Retorno con el estado del objeto de otro contrato"
+   "que": "Retorno con el estado del objeto de otro contrato",
+   "tipo_mensaje": "RETORNO"
   },
   "CT-24/retorno_estado_propio_en_minusculas": {
-   "base": "CT-24.RETORNO",
+   "contrato": "CT-24",
+   "cuerpo": {
+    "estado": "ACTIVO",
+    "proximo_ciclo": "2026-06-12",
+    "seg_id": "SEG-2026-0001"
+   },
    "espera": "RECHAZADO",
    "pon": {
     "estado": "activo"
    },
-   "que": "Retorno con el estado del objeto en minúsculas"
+   "que": "Retorno con el estado del objeto en minúsculas",
+   "tipo_mensaje": "RETORNO"
   },
   "CT-24/retorno_estado_propio_finalizado": {
-   "base": "CT-24.RETORNO",
+   "contrato": "CT-24",
+   "cuerpo": {
+    "estado": "ACTIVO",
+    "proximo_ciclo": "2026-06-12",
+    "seg_id": "SEG-2026-0001"
+   },
    "espera": "ADMITIDO",
    "pon": {
     "estado": "FINALIZADO"
    },
-   "que": "Retorno con el estado del objeto FINALIZADO en `estado`: pasa a `estado_seguimiento`"
+   "que": "Retorno con el estado del objeto FINALIZADO en `estado`: pasa a `estado_seguimiento`",
+   "tipo_mensaje": "RETORNO"
   },
   "CT-24/retorno_estado_propio_fuera_de_lista": {
-   "base": "CT-24.RETORNO",
+   "contrato": "CT-24",
+   "cuerpo": {
+    "estado": "ACTIVO",
+    "proximo_ciclo": "2026-06-12",
+    "seg_id": "SEG-2026-0001"
+   },
    "espera": "RECHAZADO",
    "pon": {
     "estado": "ANULADA"
    },
-   "que": "Retorno con un estado del objeto que no existe"
+   "que": "Retorno con un estado del objeto que no existe",
+   "tipo_mensaje": "RETORNO"
   },
   "CT-24/retorno_estado_propio_pausado": {
-   "base": "CT-24.RETORNO",
+   "contrato": "CT-24",
+   "cuerpo": {
+    "estado": "ACTIVO",
+    "proximo_ciclo": "2026-06-12",
+    "seg_id": "SEG-2026-0001"
+   },
    "espera": "ADMITIDO",
    "pon": {
     "estado": "PAUSADO"
    },
-   "que": "Retorno con el estado del objeto PAUSADO en `estado`: pasa a `estado_seguimiento`"
+   "que": "Retorno con el estado del objeto PAUSADO en `estado`: pasa a `estado_seguimiento`",
+   "tipo_mensaje": "RETORNO"
   },
   "CT-24/retorno_rechazado_con_estado_propio": {
-   "base": "CT-24.RETORNO",
+   "contrato": "CT-24",
+   "cuerpo": {
+    "estado": "ACTIVO",
+    "proximo_ciclo": "2026-06-12",
+    "seg_id": "SEG-2026-0001"
+   },
    "espera": "ADMITIDO",
    "estado": "RECHAZADO",
    "pon": {
@@ -2330,35 +2965,59 @@
    "que": "Retorno con el estado común RECHAZADO y el del objeto en su campo",
    "quita": [
     "estado"
-   ]
+   ],
+   "tipo_mensaje": "RETORNO"
   },
   "CT-24/retorno_sin_estado_propio": {
-   "base": "CT-24.RETORNO",
+   "contrato": "CT-24",
+   "cuerpo": {
+    "estado": "ACTIVO",
+    "proximo_ciclo": "2026-06-12",
+    "seg_id": "SEG-2026-0001"
+   },
    "espera": "RECHAZADO",
    "que": "Retorno sin estado del objeto",
    "quita": [
     "estado"
-   ]
+   ],
+   "tipo_mensaje": "RETORNO"
   },
   "CT-24/retorno_sin_identificador_y_sin_estado": {
-   "base": "CT-24.RETORNO",
+   "contrato": "CT-24",
+   "cuerpo": {
+    "estado": "ACTIVO",
+    "proximo_ciclo": "2026-06-12",
+    "seg_id": "SEG-2026-0001"
+   },
    "espera": "RECHAZADO",
    "que": "Retorno sin identificador ni estado: se rechaza por el estado del objeto, que se mira antes",
    "quita": [
     "seg_id",
     "estado"
-   ]
+   ],
+   "tipo_mensaje": "RETORNO"
   },
   "CT-24/retorno_sin_seg_id": {
-   "base": "CT-24.RETORNO",
+   "contrato": "CT-24",
+   "cuerpo": {
+    "estado": "ACTIVO",
+    "proximo_ciclo": "2026-06-12",
+    "seg_id": "SEG-2026-0001"
+   },
    "espera": "RECHAZADO",
    "que": "Retorno sin el campo de retorno `seg_id`",
    "quita": [
     "seg_id"
-   ]
+   ],
+   "tipo_mensaje": "RETORNO"
   },
   "CT-24/retorno_solo_con_el_campo_propio": {
-   "base": "CT-24.RETORNO",
+   "contrato": "CT-24",
+   "cuerpo": {
+    "estado": "ACTIVO",
+    "proximo_ciclo": "2026-06-12",
+    "seg_id": "SEG-2026-0001"
+   },
    "espera": "ADMITIDO",
    "pon": {
     "estado_seguimiento": "PAUSADO"
@@ -2366,7 +3025,8 @@
    "que": "Retorno que ya trae `estado_seguimiento` y no trae `estado`",
    "quita": [
     "estado"
-   ]
+   ],
+   "tipo_mensaje": "RETORNO"
   },
   "CT-24/sin_run_id_ni_query_id": {
    "base": "CT-24.ENCARGO",
@@ -2387,12 +3047,18 @@
    "tipo_mensaje": "ENCARGO"
   },
   "CT-24/validar_retorno_sin_campo_propio": {
-   "base": "CT-24.RETORNO",
+   "contrato": "CT-24",
+   "cuerpo": {
+    "estado": "ACTIVO",
+    "proximo_ciclo": "2026-06-12",
+    "seg_id": "SEG-2026-0001"
+   },
    "espera": "RECHAZADO",
    "mensaje_quita": [
     "estado_seguimiento"
    ],
    "que": "Un retorno ya creado al que se le quita `estado_seguimiento`",
+   "tipo_mensaje": "RETORNO",
    "via": "validar"
   },
   "CT-25/buscador_al_broker": {
@@ -2478,116 +3144,213 @@
    ]
   },
   "CT-25/retorno_con_campo_valor_sin_forma_de_clave": {
-   "base": "CT-25.RETORNO",
+   "contrato": "CT-25",
+   "cuerpo": {
+    "caducidad": null,
+    "crd_id": "CRD-2026-0001",
+    "credencial_ref": "alias-datos",
+    "estado": "PROVISTA"
+   },
    "espera": "ADMITIDO",
    "pon": {
     "valor": "texto sin forma de clave"
    },
-   "que": "Respuesta con un campo `valor` cuyo texto no tiene forma de clave: la mensajería la admite (la rechaza `Credenciales.responder`, antes de crearla)"
+   "que": "Respuesta con un campo `valor` cuyo texto no tiene forma de clave: la mensajería la admite (la rechaza `Credenciales.responder`, antes de crearla)",
+   "tipo_mensaje": "RETORNO"
   },
   "CT-25/retorno_con_dato_protegido": {
-   "base": "CT-25.RETORNO",
+   "contrato": "CT-25",
+   "cuerpo": {
+    "caducidad": null,
+    "crd_id": "CRD-2026-0001",
+    "credencial_ref": "alias-datos",
+    "estado": "PROVISTA"
+   },
    "espera": "RECHAZADO",
    "pon": {
     "credencial_ref": "Bearer xxxxxxxxxxxxxxxxxxxxxxxx"
    },
-   "que": "Respuesta con un dato protegido en el alias"
+   "que": "Respuesta con un dato protegido en el alias",
+   "tipo_mensaje": "RETORNO"
   },
   "CT-25/retorno_con_estado_comun_en_el_cuerpo_y_sin_el_propio": {
-   "base": "CT-25.RETORNO",
+   "contrato": "CT-25",
+   "cuerpo": {
+    "caducidad": null,
+    "crd_id": "CRD-2026-0001",
+    "credencial_ref": "alias-datos",
+    "estado": "PROVISTA"
+   },
    "espera": "RECHAZADO",
    "pon": {
     "estado": "COMPLETO"
    },
-   "que": "Retorno que trae COMPLETO en `estado` y nada en su campo propio: COMPLETO no es un estado del objeto"
+   "que": "Retorno que trae COMPLETO en `estado` y nada en su campo propio: COMPLETO no es un estado del objeto",
+   "tipo_mensaje": "RETORNO"
   },
   "CT-25/retorno_con_estado_comun_parcial_y_campo_propio": {
-   "base": "CT-25.RETORNO",
+   "contrato": "CT-25",
+   "cuerpo": {
+    "caducidad": null,
+    "crd_id": "CRD-2026-0001",
+    "credencial_ref": "alias-datos",
+    "estado": "PROVISTA"
+   },
    "espera": "ADMITIDO",
    "estado": "PARCIAL",
    "pon": {
     "estado": "PARCIAL",
     "estado_credencial": "PROVISTA"
    },
-   "que": "Retorno con PARCIAL por su sitio y en `estado`, y el del objeto en `estado_credencial`"
+   "que": "Retorno con PARCIAL por su sitio y en `estado`, y el del objeto en `estado_credencial`",
+   "tipo_mensaje": "RETORNO"
   },
   "CT-25/retorno_con_estado_comun_y_campo_propio": {
-   "base": "CT-25.RETORNO",
+   "contrato": "CT-25",
+   "cuerpo": {
+    "caducidad": null,
+    "crd_id": "CRD-2026-0001",
+    "credencial_ref": "alias-datos",
+    "estado": "PROVISTA"
+   },
    "espera": "ADMITIDO",
    "pon": {
     "estado": "COMPLETO",
     "estado_credencial": "DENEGADA"
    },
-   "que": "Retorno con el estado común en `estado` y el del objeto en `estado_credencial`"
+   "que": "Retorno con el estado común en `estado` y el del objeto en `estado_credencial`",
+   "tipo_mensaje": "RETORNO"
   },
   "CT-25/retorno_con_los_dos_estados_contradictorios": {
-   "base": "CT-25.RETORNO",
+   "contrato": "CT-25",
+   "cuerpo": {
+    "caducidad": null,
+    "crd_id": "CRD-2026-0001",
+    "credencial_ref": "alias-datos",
+    "estado": "PROVISTA"
+   },
    "espera": "RECHAZADO",
    "pon": {
     "estado": "PROVISTA",
     "estado_credencial": "DENEGADA"
    },
-   "que": "Retorno con `estado` y `estado_credencial` distintos"
+   "que": "Retorno con `estado` y `estado_credencial` distintos",
+   "tipo_mensaje": "RETORNO"
   },
   "CT-25/retorno_con_los_dos_estados_iguales": {
-   "base": "CT-25.RETORNO",
+   "contrato": "CT-25",
+   "cuerpo": {
+    "caducidad": null,
+    "crd_id": "CRD-2026-0001",
+    "credencial_ref": "alias-datos",
+    "estado": "PROVISTA"
+   },
    "espera": "ADMITIDO",
    "pon": {
     "estado": "PROVISTA",
     "estado_credencial": "PROVISTA"
    },
-   "que": "Retorno con `estado` y `estado_credencial` iguales"
+   "que": "Retorno con `estado` y `estado_credencial` iguales",
+   "tipo_mensaje": "RETORNO"
   },
   "CT-25/retorno_estado_propio_aplazada": {
-   "base": "CT-25.RETORNO",
+   "contrato": "CT-25",
+   "cuerpo": {
+    "caducidad": null,
+    "crd_id": "CRD-2026-0001",
+    "credencial_ref": "alias-datos",
+    "estado": "PROVISTA"
+   },
    "espera": "ADMITIDO",
    "pon": {
     "estado": "APLAZADA"
    },
-   "que": "Retorno con el estado del objeto APLAZADA en `estado`: pasa a `estado_credencial`"
+   "que": "Retorno con el estado del objeto APLAZADA en `estado`: pasa a `estado_credencial`",
+   "tipo_mensaje": "RETORNO"
   },
   "CT-25/retorno_estado_propio_de_otro_contrato": {
-   "base": "CT-25.RETORNO",
+   "contrato": "CT-25",
+   "cuerpo": {
+    "caducidad": null,
+    "crd_id": "CRD-2026-0001",
+    "credencial_ref": "alias-datos",
+    "estado": "PROVISTA"
+   },
    "espera": "RECHAZADO",
    "pon": {
     "estado": "RESPONDIDA"
    },
-   "que": "Retorno con el estado del objeto de otro contrato"
+   "que": "Retorno con el estado del objeto de otro contrato",
+   "tipo_mensaje": "RETORNO"
   },
   "CT-25/retorno_estado_propio_denegada": {
-   "base": "CT-25.RETORNO",
+   "contrato": "CT-25",
+   "cuerpo": {
+    "caducidad": null,
+    "crd_id": "CRD-2026-0001",
+    "credencial_ref": "alias-datos",
+    "estado": "PROVISTA"
+   },
    "espera": "ADMITIDO",
    "pon": {
     "estado": "DENEGADA"
    },
-   "que": "Retorno con el estado del objeto DENEGADA en `estado`: pasa a `estado_credencial`"
+   "que": "Retorno con el estado del objeto DENEGADA en `estado`: pasa a `estado_credencial`",
+   "tipo_mensaje": "RETORNO"
   },
   "CT-25/retorno_estado_propio_en_minusculas": {
-   "base": "CT-25.RETORNO",
+   "contrato": "CT-25",
+   "cuerpo": {
+    "caducidad": null,
+    "crd_id": "CRD-2026-0001",
+    "credencial_ref": "alias-datos",
+    "estado": "PROVISTA"
+   },
    "espera": "RECHAZADO",
    "pon": {
     "estado": "provista"
    },
-   "que": "Retorno con el estado del objeto en minúsculas"
+   "que": "Retorno con el estado del objeto en minúsculas",
+   "tipo_mensaje": "RETORNO"
   },
   "CT-25/retorno_estado_propio_fuera_de_lista": {
-   "base": "CT-25.RETORNO",
+   "contrato": "CT-25",
+   "cuerpo": {
+    "caducidad": null,
+    "crd_id": "CRD-2026-0001",
+    "credencial_ref": "alias-datos",
+    "estado": "PROVISTA"
+   },
    "espera": "RECHAZADO",
    "pon": {
     "estado": "ANULADA"
    },
-   "que": "Retorno con un estado del objeto que no existe"
+   "que": "Retorno con un estado del objeto que no existe",
+   "tipo_mensaje": "RETORNO"
   },
   "CT-25/retorno_estado_propio_provista": {
-   "base": "CT-25.RETORNO",
+   "contrato": "CT-25",
+   "cuerpo": {
+    "caducidad": null,
+    "crd_id": "CRD-2026-0001",
+    "credencial_ref": "alias-datos",
+    "estado": "PROVISTA"
+   },
    "espera": "ADMITIDO",
    "pon": {
     "estado": "PROVISTA"
    },
-   "que": "Retorno con el estado del objeto PROVISTA en `estado`: pasa a `estado_credencial`"
+   "que": "Retorno con el estado del objeto PROVISTA en `estado`: pasa a `estado_credencial`",
+   "tipo_mensaje": "RETORNO"
   },
   "CT-25/retorno_rechazado_con_estado_propio": {
-   "base": "CT-25.RETORNO",
+   "contrato": "CT-25",
+   "cuerpo": {
+    "caducidad": null,
+    "crd_id": "CRD-2026-0001",
+    "credencial_ref": "alias-datos",
+    "estado": "PROVISTA"
+   },
    "espera": "ADMITIDO",
    "estado": "RECHAZADO",
    "pon": {
@@ -2596,35 +3359,63 @@
    "que": "Retorno con el estado común RECHAZADO y el del objeto en su campo",
    "quita": [
     "estado"
-   ]
+   ],
+   "tipo_mensaje": "RETORNO"
   },
   "CT-25/retorno_sin_crd_id": {
-   "base": "CT-25.RETORNO",
+   "contrato": "CT-25",
+   "cuerpo": {
+    "caducidad": null,
+    "crd_id": "CRD-2026-0001",
+    "credencial_ref": "alias-datos",
+    "estado": "PROVISTA"
+   },
    "espera": "RECHAZADO",
    "que": "Retorno sin el campo de retorno `crd_id`",
    "quita": [
     "crd_id"
-   ]
+   ],
+   "tipo_mensaje": "RETORNO"
   },
   "CT-25/retorno_sin_estado_propio": {
-   "base": "CT-25.RETORNO",
+   "contrato": "CT-25",
+   "cuerpo": {
+    "caducidad": null,
+    "crd_id": "CRD-2026-0001",
+    "credencial_ref": "alias-datos",
+    "estado": "PROVISTA"
+   },
    "espera": "RECHAZADO",
    "que": "Retorno sin estado del objeto",
    "quita": [
     "estado"
-   ]
+   ],
+   "tipo_mensaje": "RETORNO"
   },
   "CT-25/retorno_sin_identificador_y_sin_estado": {
-   "base": "CT-25.RETORNO",
+   "contrato": "CT-25",
+   "cuerpo": {
+    "caducidad": null,
+    "crd_id": "CRD-2026-0001",
+    "credencial_ref": "alias-datos",
+    "estado": "PROVISTA"
+   },
    "espera": "RECHAZADO",
    "que": "Retorno sin identificador ni estado: se rechaza por el estado del objeto, que se mira antes",
    "quita": [
     "crd_id",
     "estado"
-   ]
+   ],
+   "tipo_mensaje": "RETORNO"
   },
   "CT-25/retorno_solo_con_el_campo_propio": {
-   "base": "CT-25.RETORNO",
+   "contrato": "CT-25",
+   "cuerpo": {
+    "caducidad": null,
+    "crd_id": "CRD-2026-0001",
+    "credencial_ref": "alias-datos",
+    "estado": "PROVISTA"
+   },
    "espera": "ADMITIDO",
    "pon": {
     "estado_credencial": "DENEGADA"
@@ -2632,7 +3423,8 @@
    "que": "Retorno que ya trae `estado_credencial` y no trae `estado`",
    "quita": [
     "estado"
-   ]
+   ],
+   "tipo_mensaje": "RETORNO"
   },
   "CT-25/sin_run_id_ni_query_id": {
    "base": "CT-25.ENCARGO",
@@ -2650,39 +3442,86 @@
    "que": "Solicitud con un dato protegido en `uso_previsto`"
   },
   "CT-25/validar_retorno_sin_campo_propio": {
-   "base": "CT-25.RETORNO",
+   "contrato": "CT-25",
+   "cuerpo": {
+    "caducidad": null,
+    "crd_id": "CRD-2026-0001",
+    "credencial_ref": "alias-datos",
+    "estado": "PROVISTA"
+   },
    "espera": "RECHAZADO",
    "mensaje_quita": [
     "estado_credencial"
    ],
    "que": "Un retorno ya creado al que se le quita `estado_credencial`",
+   "tipo_mensaje": "RETORNO",
    "via": "validar"
   },
   "R8/autoevaluacion_con_dato_protegido": {
-   "base": "CT-03.RETORNO",
+   "contrato": "CT-03",
+   "cuerpo": {
+    "clase_consulta": "ACLARACION",
+    "confianza": "probable",
+    "escalado": {
+     "plazo_estimado": null,
+     "run_id": null
+    },
+    "query_id": "QRY-2026-0001",
+    "referencias": [
+     "OPP-2026-0007",
+     "CLM-2026-0001",
+     "PRG-2026-0001"
+    ],
+    "respuesta": "Bajó por la dimensión de valoración.",
+    "ruta": "N0"
+   },
    "espera": "RECHAZADO",
    "pon": {
     "autoevaluacion": "Bearer xxxxxxxxxxxxxxxxxxxxxxxx"
    },
-   "que": "Retorno con un dato protegido en `autoevaluacion` (T-124, H-09)"
+   "que": "Retorno con un dato protegido en `autoevaluacion` (T-124, H-09)",
+   "tipo_mensaje": "RETORNO"
   },
   "R8/consumo_con_dato_protegido": {
-   "base": "CT-10.RETORNO",
    "consumo": {
     "nota": "Bearer xxxxxxxxxxxxxxxxxxxxxxxx"
    },
+   "contrato": "CT-10",
+   "cuerpo": {
+    "coincide": "sí",
+    "diagnostico": "Coincide.",
+    "diferencias": []
+   },
    "espera": "RECHAZADO",
-   "que": "Retorno con un dato protegido en `consumo` (T-124, H-09)"
+   "que": "Retorno con un dato protegido en `consumo` (T-124, H-09)",
+   "tipo_mensaje": "RETORNO"
   },
   "R8/limitaciones_con_dato_protegido": {
-   "base": "CT-03.RETORNO",
+   "contrato": "CT-03",
+   "cuerpo": {
+    "clase_consulta": "ACLARACION",
+    "confianza": "probable",
+    "escalado": {
+     "plazo_estimado": null,
+     "run_id": null
+    },
+    "query_id": "QRY-2026-0001",
+    "referencias": [
+     "OPP-2026-0007",
+     "CLM-2026-0001",
+     "PRG-2026-0001"
+    ],
+    "respuesta": "Bajó por la dimensión de valoración.",
+    "ruta": "N0"
+   },
    "espera": "RECHAZADO",
    "pon": {
     "limitaciones": [
      "Bearer xxxxxxxxxxxxxxxxxxxxxxxx"
     ]
    },
-   "que": "Retorno con un dato protegido en `limitaciones` (T-124, H-09)"
+   "que": "Retorno con un dato protegido en `limitaciones` (T-124, H-09)",
+   "tipo_mensaje": "RETORNO"
   },
   "R8/presupuesto_con_dato_protegido": {
    "base": "CT-10.ENCARGO",
@@ -2780,13 +3619,19 @@
    "que": "El cuerpo trae el campo reservado `estado` con otro valor"
   },
   "sobre/cuerpo_cambia_estado_del_retorno": {
-   "base": "CT-10.RETORNO",
+   "contrato": "CT-10",
+   "cuerpo": {
+    "coincide": "sí",
+    "diagnostico": "Coincide.",
+    "diferencias": []
+   },
    "espera": "RECHAZADO",
    "estado": "COMPLETO",
    "pon": {
     "estado": "PARCIAL"
    },
-   "que": "El cuerpo de un retorno trae un `estado` distinto del que se pasa por su sitio"
+   "que": "El cuerpo de un retorno trae un `estado` distinto del que se pasa por su sitio",
+   "tipo_mensaje": "RETORNO"
   },
   "sobre/cuerpo_cambia_msg_id": {
    "base": "CT-10.ENCARGO",
@@ -2888,13 +3733,19 @@
    "receptor": "AG-13"
   },
   "sobre/cuerpo_repite_estado_del_retorno": {
-   "base": "CT-10.RETORNO",
+   "contrato": "CT-10",
+   "cuerpo": {
+    "coincide": "sí",
+    "diagnostico": "Coincide.",
+    "diferencias": []
+   },
    "espera": "ADMITIDO",
    "estado": "PARCIAL",
    "pon": {
     "estado": "PARCIAL"
    },
-   "que": "El cuerpo de un retorno trae el mismo `estado`"
+   "que": "El cuerpo de un retorno trae el mismo `estado`",
+   "tipo_mensaje": "RETORNO"
   },
   "sobre/cuerpo_repite_presupuesto": {
    "base": "CT-10.ENCARGO",
@@ -2995,9 +3846,14 @@
    "que": "Un encargo sin presupuesto lleva `presupuesto` vacío"
   },
   "sobre/retorno_con_consumo_limitaciones_y_autoevaluacion": {
-   "base": "CT-10.RETORNO",
    "consumo": {
     "uc": 1.5
+   },
+   "contrato": "CT-10",
+   "cuerpo": {
+    "coincide": "sí",
+    "diagnostico": "Coincide.",
+    "diferencias": []
    },
    "espera": "ADMITIDO",
    "pon": {
@@ -3006,48 +3862,91 @@
      "Sin datos de la última semana."
     ]
    },
-   "que": "Un retorno que trae su consumo, sus limitaciones y su autoevaluación"
+   "que": "Un retorno que trae su consumo, sus limitaciones y su autoevaluación",
+   "tipo_mensaje": "RETORNO"
   },
   "sobre/retorno_estado_completo": {
-   "base": "CT-10.RETORNO",
+   "contrato": "CT-10",
+   "cuerpo": {
+    "coincide": "sí",
+    "diagnostico": "Coincide.",
+    "diferencias": []
+   },
    "espera": "ADMITIDO",
    "estado": "COMPLETO",
-   "que": "Un retorno con el estado común COMPLETO"
+   "que": "Un retorno con el estado común COMPLETO",
+   "tipo_mensaje": "RETORNO"
   },
   "sobre/retorno_estado_en_minusculas": {
-   "base": "CT-10.RETORNO",
+   "contrato": "CT-10",
+   "cuerpo": {
+    "coincide": "sí",
+    "diagnostico": "Coincide.",
+    "diferencias": []
+   },
    "espera": "RECHAZADO",
    "estado": "completo",
-   "que": "Un retorno con el estado común en minúsculas"
+   "que": "Un retorno con el estado común en minúsculas",
+   "tipo_mensaje": "RETORNO"
   },
   "sobre/retorno_estado_fuera_de_lista": {
-   "base": "CT-10.RETORNO",
+   "contrato": "CT-10",
+   "cuerpo": {
+    "coincide": "sí",
+    "diagnostico": "Coincide.",
+    "diferencias": []
+   },
    "espera": "RECHAZADO",
    "estado": "HECHO",
-   "que": "Un retorno con un estado común que no existe"
+   "que": "Un retorno con un estado común que no existe",
+   "tipo_mensaje": "RETORNO"
   },
   "sobre/retorno_estado_parcial": {
-   "base": "CT-10.RETORNO",
+   "contrato": "CT-10",
+   "cuerpo": {
+    "coincide": "sí",
+    "diagnostico": "Coincide.",
+    "diferencias": []
+   },
    "espera": "ADMITIDO",
    "estado": "PARCIAL",
-   "que": "Un retorno con el estado común PARCIAL"
+   "que": "Un retorno con el estado común PARCIAL",
+   "tipo_mensaje": "RETORNO"
   },
   "sobre/retorno_estado_rechazado": {
-   "base": "CT-10.RETORNO",
+   "contrato": "CT-10",
+   "cuerpo": {
+    "coincide": "sí",
+    "diagnostico": "Coincide.",
+    "diferencias": []
+   },
    "espera": "ADMITIDO",
    "estado": "RECHAZADO",
-   "que": "Un retorno con el estado común RECHAZADO"
+   "que": "Un retorno con el estado común RECHAZADO",
+   "tipo_mensaje": "RETORNO"
   },
   "sobre/retorno_estado_sin_resultado": {
-   "base": "CT-10.RETORNO",
+   "contrato": "CT-10",
+   "cuerpo": {
+    "coincide": "sí",
+    "diagnostico": "Coincide.",
+    "diferencias": []
+   },
    "espera": "ADMITIDO",
    "estado": "SIN_RESULTADO",
-   "que": "Un retorno con el estado común SIN_RESULTADO"
+   "que": "Un retorno con el estado común SIN_RESULTADO",
+   "tipo_mensaje": "RETORNO"
   },
   "sobre/retorno_por_defecto": {
-   "base": "CT-10.RETORNO",
+   "contrato": "CT-10",
+   "cuerpo": {
+    "coincide": "sí",
+    "diagnostico": "Coincide.",
+    "diferencias": []
+   },
    "espera": "ADMITIDO",
-   "que": "Un retorno sin más: estado COMPLETO, consumo vacío, limitaciones y autoevaluación vacías"
+   "que": "Un retorno sin más: estado COMPLETO, consumo vacío, limitaciones y autoevaluación vacías",
+   "tipo_mensaje": "RETORNO"
   },
   "sobre/retorno_rechazado_de_ct03_sin_sus_campos": {
    "contrato": "CT-03",
@@ -3097,21 +3996,33 @@
    "via": "validar"
   },
   "sobre/validar_retorno_estado_fuera_de_lista": {
-   "base": "CT-10.RETORNO",
+   "contrato": "CT-10",
+   "cuerpo": {
+    "coincide": "sí",
+    "diagnostico": "Coincide.",
+    "diferencias": []
+   },
    "espera": "RECHAZADO",
    "mensaje_pon": {
     "estado": "HECHO"
    },
    "que": "Un retorno con un estado que no es de los cuatro",
+   "tipo_mensaje": "RETORNO",
    "via": "validar"
   },
   "sobre/validar_retorno_sin_estado": {
-   "base": "CT-10.RETORNO",
+   "contrato": "CT-10",
+   "cuerpo": {
+    "coincide": "sí",
+    "diagnostico": "Coincide.",
+    "diferencias": []
+   },
    "espera": "RECHAZADO",
    "mensaje_quita": [
     "estado"
    ],
    "que": "Un retorno sin estado",
+   "tipo_mensaje": "RETORNO",
    "via": "validar"
   },
   "sobre/validar_sin_contrato": {

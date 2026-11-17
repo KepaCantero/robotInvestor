@@ -33,7 +33,7 @@ Se sigue preguntando antes de actuar cuando algo gasta dinero o usa una credenci
 | Huecos del plan de pruebas que se cubren | Los siete baratos (PB-10, 16, 17, 22, 33, 45, 59); PB-26 y PB-48 quedan sin prueba y PB-46 sin implementar | Operador (confirmó la lista del agente) | 13-11-2026 | T-116 |
 
 | Troceo deliberado de un emisor en el Motor (T-57) | Se acepta el límite declarado: las reglas cubren las fugas accidentales; un agente que fabrique componentes a propósito no se detecta, y el aviso queda en el registro | Operador | 15-11-2026 | INC-T127-01 |
-| Nueva entrega del Documento 0 | Autorizada: el Anexo B se corrige con el borrador para que describa lo que hace el ejecutor | Operador | 15-11-2026 | `.docs/diseno/bloque_a/borrador_correccion_anexo_b.md` |
+| Nueva entrega del Documento 0 | Autorizada: el Anexo B se corrige con el borrador para que describa lo que hace el ejecutor. Aplicada en la V5.2 (T-143, 15-11-2026); la V5.1 está en `bloque_a/99_Historico_V5.1/01_Gobernanza/` | Operador | 15-11-2026 | `bloque_a/01_Gobernanza/Documento 0 - Protocolo maestro del Bloque A - Versión óptima V5.2.md`; el borrador, `.docs/diseno/bloque_a/borrador_correccion_anexo_b.md` |
 | Cadena con el Bloque B | La parte que necesita el Bloque A (que los encargos de A lleguen al ejecutor de B y vuelvan) la hace Claude; el resto del Bloque B V3 (C-37), Astra | Operador | 15-11-2026 | `.docs/tickets/_relevo/cola_astra.md` |
 
 | Que el Bloque A aprenda de los veredictos del Bloque B | No por ahora: la vuelta se registra por CT-04 (`ENVIADA_A_BLOQUE_B` y `resultado_comunicado` en texto); aprender de ella exigiría un campo nuevo en un contrato congelado | Agente (INC-T142-01) | 15-11-2026 | Se pide como tarea nueva |

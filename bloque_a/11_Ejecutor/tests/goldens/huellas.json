@@ -1,8 +1,8 @@
 {
- "01_Gobernanza/Documento 0 - Protocolo maestro del Bloque A - Versión óptima V5.1.md": "7e708a030dad30d70517c26c7641e14488401fb76c1457b8dd8e1f9af31ff8cb",
+ "01_Gobernanza/Documento 0 - Protocolo maestro del Bloque A - Versión óptima V5.2.md": "d8f9e3d05c19aa91f17d27ed254fdf706b9905b25b82da42567e8f284ae01e37",
  "06_Plantillas_entregables/Esquema JSON - Informe de seguimiento de opción - V5.1.json": "e21a922222cab8fe6e7ebe9f66995f1729234e847f4cc65af745da868259c4be",
  "06_Plantillas_entregables/Esquema JSON - Paquete de oportunidades - V5.0.json": "8bf00afdecae0ca61229e41a35eeda09d0b8cd7722457d76e648df8cc4129084",
- "goldens/anexo_b_ejemplos.json": "e043997238e3bb474fb168f6c8621146315fa4cc63ee86f2b1b5b9f1c6754d47",
- "goldens/anexo_b_esquemas.json": "4799ed8406d27411c4e98395e8c602a1b2b0ad98dee7b2915a6562a325a3d124",
- "goldens/bateria_mensajes.json": "36af07ac427631773eca6c02a5b1fac259fc0e74c7d50729a4804b8616f92985"
+ "goldens/anexo_b_ejemplos.json": "b8e9370ba9097bf392435dae27d46952c53ddce7fb2ab4bb99dcad3e867cb406",
+ "goldens/anexo_b_esquemas.json": "ade76bc9fa7700eee8d7819bf09ba178e1777df0c7ab3e1c42d60960ab7dbf34",
+ "goldens/bateria_mensajes.json": "756096748c33a841347737b82dff46dedf6efc15b48b4f4985ca9f0e71d7910d"
 }

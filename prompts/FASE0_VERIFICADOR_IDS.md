@@ -10,7 +10,7 @@
 FASE 0 — Verificador de consistencia de IDs del bloque_a. Antes de implementar nada del Motor, quiero poder medir con un comando exactamente qué está desincronizado entre el corpus (V5.1) y el código.
 
 Kit de contexto de ESTA fase (no abras nada más del corpus):
-- `bloque_a/01_Gobernanza/Documento 0 - Protocolo maestro del Bloque A - Versión óptima V5.1.md` — solo §1 (reglas R), §5 (archivos F), §6 (contratos CT), §9 (puntuaciones/puertas)
+- `bloque_a/01_Gobernanza/Documento 0 - Protocolo maestro del Bloque A - Versión óptima V5.2.md` — solo §1 (reglas R), §5 (archivos F), §6 (contratos CT), §9 (puntuaciones/puertas)
 - `bloque_a/04_Motor_conocimiento_y_catalogo/Catálogo de cálculos del Motor - V5.0.md`
 - `bloque_a/11_Ejecutor/bloque_a/motor/servicio.py` (FICHAS_CATALOGO, CATALOG_VERSION)
 - `bloque_a/11_Ejecutor/bloque_a/contratos.py` (ESQUEMAS, canal_permitido)

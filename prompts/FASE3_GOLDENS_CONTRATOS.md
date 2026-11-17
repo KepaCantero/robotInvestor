@@ -7,7 +7,7 @@
 FASE 3 — Congelar los contratos CT en goldens verificables para que ningún cambio futuro pueda romper un formato sin que salte una prueba. Empieza por bloque_a (CT-01..CT-25) y luego replica en bloque_a_forex con sus contratos.
 
 Kit de contexto:
-- `bloque_a/01_Gobernanza/Documento 0 - Protocolo maestro del Bloque A - Versión óptima V5.1.md` — Anexo B (campos mínimos de contratos y esquemas JSON) y §6 (catálogo de contratos).
+- `bloque_a/01_Gobernanza/Documento 0 - Protocolo maestro del Bloque A - Versión óptima V5.2.md` — Anexo B (campos mínimos de contratos y esquemas JSON) y §6 (catálogo de contratos).
 - `bloque_a/06_Plantillas_entregables/Esquema JSON - Paquete de oportunidades - V5.0.json` + su ejemplo válido (y el de seguimiento V5.1): son la definición, no una inspiración.
 - `bloque_a/11_Ejecutor/bloque_a/contratos.py` (ESQUEMAS existentes) y la lección de robotTrading: goldens congelados y comparados byte a byte en CI.
 

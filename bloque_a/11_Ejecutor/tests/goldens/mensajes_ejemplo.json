@@ -93,10 +93,7 @@
    "consumo": {},
    "contrato": "CT-03",
    "emisor": "AG-01",
-   "escalado": {
-    "plazo_estimado": null,
-    "run_id": null
-   },
+   "escalado": null,
    "estado": "COMPLETO",
    "limitaciones": [],
    "msg_id": "MSG-2026-000004",
@@ -226,6 +223,7 @@
  "CT-06.RETORNO": {
   "mensaje": {
    "autoevaluacion": "Sin incidencias.",
+   "clase": "RV",
    "consumo": {
     "llamadas": 1
    },
@@ -244,7 +242,6 @@
    },
    "revision_vigentes": [],
    "run_id": "RUN-2026-0001",
-   "senales_para_otras_clases": [],
    "timestamp": "2026-06-05T06:00:08+02:00",
    "tipo_mensaje": "RETORNO",
    "version_contrato": "5.1"
@@ -278,9 +275,6 @@
    "contrato": "CT-07",
    "emisor": "AG-16",
    "estado": "COMPLETO",
-   "evidencias_enviadas_a_curador": [
-    "EVD-2026-0001"
-   ],
    "lagunas": [],
    "limitaciones": [],
    "msg_id": "MSG-2026-000011",
@@ -327,9 +321,6 @@
    "contrato": "CT-08",
    "emisor": "AG-14",
    "estado": "COMPLETO",
-   "evidencias_enviadas_a_curador": [
-    "EVD-2026-0001"
-   ],
    "lagunas": [],
    "limitaciones": [],
    "msg_id": "MSG-2026-000013",
@@ -375,16 +366,18 @@
   "mensaje": {
    "artefacto_id": "CALC-2026-0001",
    "autoevaluacion": "",
-   "clase_cifra": "determinista",
+   "cache_hit": false,
+   "calc_id": "CALC-2026-0001",
+   "clase_cifra": "DETERMINISTA",
    "consumo": {},
    "contrato": "CT-09",
    "emisor": "AG-13",
    "estado": "COMPLETO",
-   "incertidumbre": null,
-   "informe_calidad_datos": {},
+   "informe_calidad_datos": [],
    "limitaciones": [],
    "msg_id": "MSG-2026-000015",
    "receptor": "AG-02",
+   "referencia_ingenua": "RI-NA",
    "resultado": {
     "valor": 0.1
    },
@@ -412,10 +405,12 @@
  "CT-10.RETORNO": {
   "mensaje": {
    "autoevaluacion": "",
-   "coincide": "sí",
+   "calc_id": "CALC-2026-0002",
+   "categoria": null,
+   "coincide": "SI",
    "consumo": {},
    "contrato": "CT-10",
-   "diagnostico": "Coincide.",
+   "diagnostico": "coincidencia exacta",
    "diferencias": [],
    "emisor": "AG-13",
    "estado": "COMPLETO",
@@ -429,25 +424,44 @@
   }
  },
  "CT-11.ENCARGO": {
-  "rechazo": {
-   "clase": "MensajeInvalido",
-   "motivo": "CT-11: faltan campos mínimos ['piezas']"
+  "mensaje": {
+   "clase": "RV",
+   "contrato": "CT-11",
+   "emisor": "AG-03",
+   "msg_id": "MSG-2026-000018",
+   "piezas": [
+    {
+     "afirmacion": "El diferencial se amplió.",
+     "direccion": "favorable",
+     "extracto": "Extracto mínimo.",
+     "fuente": "REF-2026-0001",
+     "indice": 0
+    }
+   ],
+   "presupuesto": {},
+   "receptor": "AG-12",
+   "run_id": "RUN-2026-0001",
+   "timestamp": "2026-06-05T06:00:17+02:00",
+   "tipo_mensaje": "ENCARGO",
+   "version_contrato": "5.1"
   }
  },
  "CT-11.RETORNO": {
   "mensaje": {
    "autoevaluacion": "",
-   "clm_id": "CLM-2026-0001",
    "consumo": {},
    "contrato": "CT-11",
-   "duplicado_de": null,
    "emisor": "AG-12",
    "estado": "COMPLETO",
-   "evd_id": "EVD-2026-0001",
-   "independiente": "sí",
    "limitaciones": [],
    "msg_id": "MSG-2026-000019",
-   "raiz_id": "EVD-2026-0001",
+   "piezas": [
+    {
+     "indice": 0,
+     "nivel_confianza": "probable",
+     "tipo_afirmacion": "DATO"
+    }
+   ],
    "receptor": "AG-03",
    "run_id": "RUN-2026-0001",
    "timestamp": "2026-06-05T06:00:18+02:00",
@@ -456,9 +470,39 @@
   }
  },
  "CT-12.ENCARGO": {
-  "rechazo": {
-   "clase": "MensajeInvalido",
-   "motivo": "CT-12: faltan campos mínimos ['encargos']"
+  "mensaje": {
+   "contrato": "CT-12",
+   "emisor": "AG-02",
+   "encargos": [
+    {
+     "catalizadores_conocidos": [],
+     "certificado_r13": {
+      "H3": false
+     },
+     "datos": {},
+     "horizontes": [
+      "H3"
+     ],
+     "invalidacion_propuesta": [],
+     "metodos_certificados_por_horizonte": {
+      "H3": []
+     },
+     "opp_id": null,
+     "proxy": "EJEMPLO",
+     "ref": "EJEMPLO",
+     "referencia_indice": null,
+     "tesis": "Tesis de la opción.",
+     "tipo_pronostico": "DIRECCIONAL"
+    }
+   ],
+   "fecha_limite_informacion": "2026-06-05",
+   "msg_id": "MSG-2026-000020",
+   "presupuesto": {},
+   "receptor": "AG-10",
+   "run_id": "RUN-2026-0001",
+   "timestamp": "2026-06-05T06:00:19+02:00",
+   "tipo_mensaje": "ENCARGO",
+   "version_contrato": "5.1"
   }
  },
  "CT-12.RETORNO": {
@@ -467,21 +511,23 @@
    "consumo": {},
    "contrato": "CT-12",
    "emisor": "AG-10",
-   "escenarios": {
-    "H3": {
-     "adverso": {},
-     "base": {},
-     "favorable": {}
-    }
-   },
    "estado": "COMPLETO",
-   "hitos": [],
-   "indicadores_adelantados": [],
-   "invalidacion": [],
    "limitaciones": [],
    "msg_id": "MSG-2026-000021",
-   "pronosticos": [],
    "receptor": "AG-02",
+   "resultados": [
+    {
+     "escenarios": {
+      "H3": {
+       "adverso": {},
+       "base": {},
+       "favorable": {}
+      }
+     },
+     "pronosticos": [],
+     "ref": "EJEMPLO"
+    }
+   ],
    "run_id": "RUN-2026-0001",
    "timestamp": "2026-06-05T06:00:20+02:00",
    "tipo_mensaje": "RETORNO",
@@ -489,9 +535,28 @@
   }
  },
  "CT-13.ENCARGO": {
-  "rechazo": {
-   "clase": "MensajeInvalido",
-   "motivo": "CT-13: faltan campos mínimos ['peticiones']"
+  "mensaje": {
+   "contrato": "CT-13",
+   "emisor": "AG-02",
+   "msg_id": "MSG-2026-000022",
+   "nivel": "N2",
+   "peticiones": [
+    {
+     "afirmaciones_verificables": [],
+     "calculos": [
+      "CALC-2026-0001"
+     ],
+     "evidencias": [],
+     "opp_id": null,
+     "ref": "EJEMPLO"
+    }
+   ],
+   "presupuesto": {},
+   "receptor": "AG-11",
+   "run_id": "RUN-2026-0001",
+   "timestamp": "2026-06-05T06:00:21+02:00",
+   "tipo_mensaje": "ENCARGO",
+   "version_contrato": "5.1"
   }
  },
  "CT-13.RETORNO": {
@@ -503,21 +568,25 @@
    "estado": "COMPLETO",
    "limitaciones": [],
    "msg_id": "MSG-2026-000023",
-   "objeciones": [
+   "receptor": "AG-02",
+   "resultados": [
     {
-     "argumento": "La valoración ya lo descuenta.",
-     "evidencia": "CLM-2026-0002",
-     "fuerza": "moderada",
-     "id": "OBJ-1",
-     "que_la_resolveria": "Un dato de beneficios.",
-     "tipo": "valoracion"
+     "objeciones": [
+      {
+       "argumento": "La valoración ya lo descuenta.",
+       "fuerza": "moderada",
+       "id": "OBJ-EJEMPLO-01",
+       "que_la_resolveria": "Un dato de beneficios.",
+       "tipo": "valoracion"
+      }
+     ],
+     "ref": "EJEMPLO",
+     "veredicto_global": "tesis robusta"
     }
    ],
-   "receptor": "AG-02",
    "run_id": "RUN-2026-0001",
    "timestamp": "2026-06-05T06:00:22+02:00",
    "tipo_mensaje": "RETORNO",
-   "veredicto_global": "tesis robusta",
    "version_contrato": "5.1"
   }
  },
@@ -537,20 +606,17 @@
  },
  "CT-14.RETORNO": {
   "mensaje": {
-   "autoevaluacion": "",
-   "comprobaciones": [
-    {
-     "comprobacion": "C1",
-     "resultado": "apto"
-    }
+   "advertencias": [
+    "Frase larga."
    ],
+   "autoevaluacion": "",
    "consumo": {},
    "contrato": "CT-14",
-   "dictamen": "APTO",
+   "dictamen": "APTO_CON_ADVERTENCIAS",
    "emisor": "AG-18",
    "estado": "COMPLETO",
    "limitaciones": [],
-   "motivo": "Sin advertencias.",
+   "motivo": "Una frase larga en el informe visual.",
    "msg_id": "MSG-2026-000025",
    "receptor": "AG-02",
    "run_id": "RUN-2026-0001",
@@ -573,16 +639,146 @@
    "version_contrato": "5.1"
   }
  },
+ "CT-15.RETORNO": {
+  "mensaje": {
+   "autoevaluacion": "",
+   "consumo": {},
+   "contrato": "CT-15",
+   "emisor": "AG-17",
+   "estado": "COMPLETO",
+   "frase_historial": "Frase del historial.",
+   "frases_30s": [
+    "Primera frase.",
+    "Segunda frase.",
+    "Tercera frase."
+   ],
+   "glosario": [
+    {
+     "definicion": "Definición.",
+     "termino": "Término"
+    }
+   ],
+   "limitaciones": [],
+   "motivos_llanos": {},
+   "msg_id": "MSG-2026-000027",
+   "receptor": "AG-02",
+   "run_id": "RUN-2026-0001",
+   "tarjetas": [
+    {
+     "opp_id": "OPP-2026-0007",
+     "por_que_llano": "Por qué, en llano.",
+     "que_puede_salir_mal_llano": "Qué puede salir mal."
+    }
+   ],
+   "timestamp": "2026-06-05T06:00:26+02:00",
+   "tipo_mensaje": "RETORNO",
+   "version_contrato": "5.1"
+  }
+ },
+ "CT-16.ENCARGO": {
+  "mensaje": {
+   "contrato": "CT-16",
+   "emisor": "AG-01",
+   "msg_id": "MSG-2026-000028",
+   "paquete_auditoria": {
+    "entregables": {
+     "informe_tecnico": "ruta",
+     "informe_visual": "ruta",
+     "paquete_json": "ruta"
+    },
+    "run_id": "RUN-2026-0001"
+   },
+   "presupuesto": {},
+   "receptor": "AG-18",
+   "run_id": "RUN-2026-0001",
+   "timestamp": "2026-06-05T06:00:27+02:00",
+   "tipo_mensaje": "ENCARGO",
+   "version_contrato": "5.1"
+  }
+ },
+ "CT-17.ENCARGO": {
+  "mensaje": {
+   "contrato": "CT-17",
+   "emisor": "AG-18",
+   "g3": {
+    "dictamen": "APTO"
+   },
+   "msg_id": "MSG-2026-000029",
+   "nivel_por_clase": {
+    "RV": "N2"
+   },
+   "opciones": [
+    {
+     "clase": "RV",
+     "nombre": "Nombre de la opción.",
+     "objeciones": [],
+     "opp_id": "OPP-2026-0007",
+     "puntuaciones": {},
+     "relevancia_decisional": "ALTA",
+     "riesgo_1a5": 3,
+     "tesis": "Tesis de la opción."
+    }
+   ],
+   "presupuesto": {},
+   "receptor": "AG-19",
+   "run_id": "RUN-2026-0001",
+   "timestamp": "2026-06-05T06:00:28+02:00",
+   "tipo": "PERIODICO",
+   "tipo_mensaje": "ENCARGO",
+   "version_contrato": "5.1"
+  }
+ },
+ "CT-17.RETORNO": {
+  "mensaje": {
+   "autoevaluacion": "",
+   "consumo": {},
+   "contrato": "CT-17",
+   "emisor": "AG-19",
+   "estado": "COMPLETO",
+   "hallazgos": [
+    {
+     "descripcion": "Una cifra sin cálculo citado.",
+     "regla": "R13",
+     "severidad": "Menor"
+    }
+   ],
+   "limitaciones": [],
+   "msg_id": "MSG-2026-000030",
+   "receptor": "AG-18",
+   "resumen": "Una observación menor.",
+   "run_id": "RUN-2026-0001",
+   "timestamp": "2026-06-05T06:00:29+02:00",
+   "tipo_mensaje": "RETORNO",
+   "version_contrato": "5.1"
+  }
+ },
+ "CT-19.RETORNO": {
+  "mensaje": {
+   "autoevaluacion": "",
+   "consumo": {},
+   "contrato": "CT-19",
+   "emisor": "AG-20",
+   "estado": "COMPLETO",
+   "informe": "Resumen del informe de aprendizaje.",
+   "limitaciones": [],
+   "msg_id": "MSG-2026-000031",
+   "receptor": "AG-01",
+   "run_id": "RUN-2026-0001",
+   "timestamp": "2026-06-05T06:00:30+02:00",
+   "tipo_mensaje": "RETORNO",
+   "version_contrato": "5.1"
+  }
+ },
  "CT-22.ENCARGO": {
   "mensaje": {
    "contrato": "CT-22",
    "emisor": "AG-01",
-   "msg_id": "MSG-2026-000027",
+   "msg_id": "MSG-2026-000032",
    "presupuesto": {},
    "receptor": "AG-20",
    "run_id": "RUN-2026-0001",
-   "timestamp": "2026-06-05T06:00:26+02:00",
-   "tipo": "CONSULTA_RECURRENTE",
+   "timestamp": "2026-06-05T06:00:31+02:00",
+   "tipo": "PREGUNTA_REPETIDA",
    "tipo_mensaje": "ENCARGO",
    "version_contrato": "5.1"
   }
@@ -593,7 +789,7 @@
    "contrato": "CT-23",
    "emisor": "AG-01",
    "modo": "NO_BLOQUEANTE",
-   "msg_id": "MSG-2026-000028",
+   "msg_id": "MSG-2026-000033",
    "plazo_respuesta": "2026-06-08T07:00",
    "preguntas": [
     {
@@ -614,7 +810,7 @@
    "run_id": "RUN-2026-0001",
    "seg_id": null,
    "sentido": "SALIENTE",
-   "timestamp": "2026-06-05T06:00:27+02:00",
+   "timestamp": "2026-06-05T06:00:32+02:00",
    "tipo": "ACLARACION_ALCANCE",
    "tipo_mensaje": "ENCARGO",
    "version_contrato": "5.1"
@@ -630,7 +826,7 @@
    "estado": "COMPLETO",
    "estado_consulta": "RESPONDIDA",
    "limitaciones": [],
-   "msg_id": "MSG-2026-000029",
+   "msg_id": "MSG-2026-000034",
    "receptor": "AG-01",
    "respuestas": [
     {
@@ -646,7 +842,7 @@
      "supuesto": "No la incluye."
     }
    ],
-   "timestamp": "2026-06-05T06:00:28+02:00",
+   "timestamp": "2026-06-05T06:00:33+02:00",
    "tipo_mensaje": "RETORNO",
    "version_contrato": "5.1"
   }
@@ -660,7 +856,7 @@
    "fecha_fin": null,
    "frecuencia": "SEMANAL",
    "motivo": "Vigilar la opción.",
-   "msg_id": "MSG-2026-000030",
+   "msg_id": "MSG-2026-000035",
    "opp_id": "OPP-2026-0007",
    "presupuesto": {},
    "receptor": "AG-01",
@@ -669,7 +865,7 @@
    "senales_interes": [
     "Dato de inflación"
    ],
-   "timestamp": "2026-06-05T06:00:29+02:00",
+   "timestamp": "2026-06-05T06:00:34+02:00",
    "tipo_mensaje": "ENCARGO",
    "version_contrato": "5.1"
   }
@@ -683,12 +879,12 @@
    "estado": "COMPLETO",
    "estado_seguimiento": "ACTIVO",
    "limitaciones": [],
-   "msg_id": "MSG-2026-000031",
+   "msg_id": "MSG-2026-000036",
    "proximo_ciclo": "2026-06-12",
    "receptor": "BROKER",
    "run_id": "RUN-2026-0001",
    "seg_id": "SEG-2026-0001",
-   "timestamp": "2026-06-05T06:00:30+02:00",
+   "timestamp": "2026-06-05T06:00:35+02:00",
    "tipo_mensaje": "RETORNO",
    "version_contrato": "5.1"
   }
@@ -700,13 +896,13 @@
    "emisor": "AG-01",
    "herramienta": "HT-01",
    "impacto_si_falta": "Sin datos de la clase.",
-   "msg_id": "MSG-2026-000032",
+   "msg_id": "MSG-2026-000037",
    "presupuesto": {},
    "receptor": "BROKER",
    "run_id": "RUN-2026-0001",
    "servicio": "proveedor de datos",
    "solicitante": "AG-16",
-   "timestamp": "2026-06-05T06:00:31+02:00",
+   "timestamp": "2026-06-05T06:00:36+02:00",
    "tipo_mensaje": "ENCARGO",
    "urgencia": "NORMAL",
    "uso_previsto": "Series de precios.",
@@ -725,10 +921,10 @@
    "estado": "COMPLETO",
    "estado_credencial": "PROVISTA",
    "limitaciones": [],
-   "msg_id": "MSG-2026-000033",
+   "msg_id": "MSG-2026-000038",
    "receptor": "AG-01",
    "run_id": "RUN-2026-0001",
-   "timestamp": "2026-06-05T06:00:32+02:00",
+   "timestamp": "2026-06-05T06:00:37+02:00",
    "tipo_mensaje": "RETORNO",
    "version_contrato": "5.1"
   }

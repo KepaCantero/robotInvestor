@@ -1,5 +1,4 @@
-26691b68bf3f6277779209f29710c686b9e29276a05a9098940563c43d3d4d1b  bloque_a/01_Gobernanza/Documento 0 - Protocolo maestro del Bloque A - Versión óptima V5.1.docx
-7e708a030dad30d70517c26c7641e14488401fb76c1457b8dd8e1f9af31ff8cb  bloque_a/01_Gobernanza/Documento 0 - Protocolo maestro del Bloque A - Versión óptima V5.1.md
+d8f9e3d05c19aa91f17d27ed254fdf706b9905b25b82da42567e8f284ae01e37  bloque_a/01_Gobernanza/Documento 0 - Protocolo maestro del Bloque A - Versión óptima V5.2.md
 cb1c4ab900c73df2bc6256171d463e6f4a7ecea535fcafe1ee2e0dc012b4f91a  bloque_a/02_System_prompts/Marco común de los Analistas de tipo de activo (plantilla) - V5.0.docx
 a3c7bf05530d0ccaf18c14d6fd5eec01e3c07b859c08088881ed6e2ac90ab38d  bloque_a/02_System_prompts/Marco común de los Analistas de tipo de activo (plantilla) - V5.0.md
 fc4ae71b420b1e00f2260753eb6c74add16d26483dadac39dd3d2afb55e3117a  bloque_a/02_System_prompts/System prompt - Analista Inmobiliario y de Infraestructuras - Versión óptima V5.0.docx
@@ -240,8 +239,10 @@ a59b7246c42787cb19d6fddac820f774b0d97f081f19ad8bfc6723341a339d2d  bloque_a/99_Hi
 7d2204b54d68253d191373fa6d6c653683a12b8657fef014f9ff7dd3c9a48701  bloque_a/99_Historico_V3.0/08_Descripcion/Arquitectura del Bloque A - Descripción detallada para LLM V2.0 (2026-11-01).md
 47afd38d14ced5bc3c3528d1cf98df85ff4c7ed1b85f5fed9074eecd323f5f56  bloque_a/99_Historico_V3.0/09_Pruebas/Plan de pruebas del Bloque A - batería mínima - V1.0.md
 983d4a70af8f261de9b2576d7c0562894d9a52d5c0d50c3f72941567f4bfa523  bloque_a/99_Historico_V3.0/README - índice de la entrega y registro de la actualización.md
+26691b68bf3f6277779209f29710c686b9e29276a05a9098940563c43d3d4d1b  bloque_a/99_Historico_V5.1/01_Gobernanza/Documento 0 - Protocolo maestro del Bloque A - Versión óptima V5.1.docx
+7e708a030dad30d70517c26c7641e14488401fb76c1457b8dd8e1f9af31ff8cb  bloque_a/99_Historico_V5.1/01_Gobernanza/Documento 0 - Protocolo maestro del Bloque A - Versión óptima V5.1.md
 be660fc35264bb0f2602c65c2a9c6d45a1f34f79586bdbfd3b5f4d11c4a8c857  bloque_a/README - Índice de la entrega y registro de la actualización V5.1.docx
-70f6b0de3a16b14883d8ffdfbae56bfc94974bcc8e6c8c25a4d2239e4f8d544d  bloque_a/README - Índice de la entrega y registro de la actualización V5.1.md
+e25d7eb768ffd390e7c929222e07001038594e4493972d46c876c3f84b55f624  bloque_a/README - Índice de la entrega y registro de la actualización V5.1.md
 be5d4f2fa3bd0a212059b9a371d0d73df4675b4a47cdfe56292e1ac2b399272b  bloque_a_forex/01_Gobernanza/Documento 0 - Protocolo maestro del Bloque A Forex - Versión óptima V1.1.docx
 4ab8f5eb83b9151047c32e0b5cccda57ad515c1c094036bd90396af0063c63e1  bloque_a_forex/01_Gobernanza/Documento 0 - Protocolo maestro del Bloque A Forex - Versión óptima V1.1.md
 d623031dd5b91328211d7dae3e0af8837bcccee812d00c5609a4302833d582d8  bloque_a_forex/02_System_prompts/Marco común de los Analistas de segmento (plantilla) - Bloque A Forex - V1.0.docx
