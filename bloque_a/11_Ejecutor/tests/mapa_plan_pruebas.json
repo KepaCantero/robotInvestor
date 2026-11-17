@@ -328,7 +328,8 @@
    "11_Ejecutor/tests/test_t53_evaluacion_y_almacen.py::test_umbral_de_revocacion_ece_sale_de_la_configuracion",
    "10_Herramientas/tests/test_ht09_validador_g3.py::TestBloqueos::test_certificado_no_vigente",
    "11_Ejecutor/tests/test_fase4_huecos.py::test_pb33_la_revocacion_registra_estado_motivo_y_fecha_de_efecto",
-   "11_Ejecutor/tests/test_fase4_huecos.py::test_pb33_tras_la_revocacion_hay_alerta_de_sobreconfianza_y_el_run_siguiente_no_publica_probabilidad"
+   "11_Ejecutor/tests/test_fase4_huecos.py::test_pb33_tras_la_revocacion_hay_alerta_de_sobreconfianza_y_el_run_siguiente_no_publica_probabilidad",
+   "11_Ejecutor/tests/test_fase4_huecos.py::test_pb33_con_la_degradacion_dm_neutralizada_la_vista_h3_decertificada_no_publica_probabilidad"
   ],
   "comprueba": "Un certificado se revoca por falta de habilidad o por calibración, con el umbral de la configuración; queda REVOCADO con motivo y fecha, antes de esa fecha seguía vigente y los pronósticos congelados no cambian. Con el caso del plan (celda certificada que pierde la habilidad), la revisión del ciclo revoca, deja en F6 la lección CALIBRACION de sobreconfianza de la celda y el RUN- posterior no publica probabilidad en ella; HT-09 bloquea probabilidades con un certificado no vigente.",
   "no_comprueba": "La sección «Novedades» de F6: el ejecutor no la publica; la revocación y la lección quedan como entradas de F6 (INC-T116-03)."
@@ -530,14 +531,32 @@
   "no_comprueba": ""
  },
  "PB-50": {
-  "cobertura": "PARCIAL",
+  "cobertura": "AUTOMATICA",
   "pruebas": [
    "11_Ejecutor/tests/test_v5.py::test_doce_tipos_agentes_y_canales",
    "10_Herramientas/tests/test_ht09_validador_g3.py::TestBloqueos::test_horizonte_no_aplicable",
-   "10_Herramientas/tests/test_ht09_validador_g3.py::TestV5::test_doce_tipos_y_tabla_8_3"
+   "10_Herramientas/tests/test_ht09_validador_g3.py::TestV5::test_doce_tipos_y_tabla_8_3",
+   "11_Ejecutor/tests/test_t173.py::test_pb50_rf_h2_pierde_con_significacion_y_baja_a_limitado",
+   "11_Ejecutor/tests/test_t173.py::test_pb50_sin_muestra_o_sin_perdida_significativa_no_degrada",
+   "11_Ejecutor/tests/test_t173.py::test_pb50_con_p_por_encima_de_alfa_no_degrada",
+   "11_Ejecutor/tests/test_t173.py::test_pb50_ningun_cambio_hacia_o_desde_no",
+   "11_Ejecutor/tests/test_t173.py::test_pb50_un_escalon_por_trimestre_y_nunca_sube",
+   "11_Ejecutor/tests/test_t173.py::test_pb50_restituida_a_si_no_vuelve_a_bajar_en_el_mismo_trimestre",
+   "11_Ejecutor/tests/test_t173.py::test_pb50_h5_no_entra_en_la_degradacion_por_dm",
+   "11_Ejecutor/tests/test_t173.py::test_pb50_el_c5_degrada_y_el_ciclo_lee_limitado_sin_bloqueo_de_g3",
+   "11_Ejecutor/tests/test_t173.py::test_pb50_un_fallo_de_la_degradacion_dm_no_tumba_el_c5",
+   "11_Ejecutor/tests/test_t173.py::test_pb50_r02_h01_una_sola_semana_mala_no_degrada",
+   "11_Ejecutor/tests/test_t173.py::test_pb50_r02_h01_historia_buena_mas_una_semana_mala_no_degrada",
+   "11_Ejecutor/tests/test_t173.py::test_pb50_r02_h01_sin_fechas_de_conglomerado_ni_conglomerados_minimos_no_degrada",
+   "11_Ejecutor/tests/test_t173.py::test_pb50_r02_h01_n_suficiente_pero_n_eff_insuficiente_no_degrada",
+   "11_Ejecutor/tests/test_t173.py::test_pb50_r02_h03_holm_entre_las_celdas_de_la_misma_revision",
+   "11_Ejecutor/tests/test_t173.py::test_pb50_cierre_h06_la_familia_es_fija_y_cuenta_las_celdas_sin_muestra",
+   "11_Ejecutor/tests/test_t173.py::test_pb50_r02_h03_solo_en_la_revision_mensual",
+   "11_Ejecutor/tests/test_t173.py::test_pb50_r02_h02_un_fallo_en_f10_anula_el_ajuste_y_el_reintento_degrada",
+   "11_Ejecutor/tests/test_t173.py::test_pb50_r02_h02_si_falla_el_cfg_de_p30_se_revierte_el_de_p31"
   ],
-  "comprueba": "La tabla de horizontes por tipo y el bloqueo de HT-09 a un horizonte no aplicable.",
-  "no_comprueba": "El cambio automático de «Sí» a «Limitado» de un horizonte que pierde frente a la referencia (RF × H2, con DM-HLN) y su CFG- de P-31: el Evaluador solo degrada H5, por hitos (INC-T116-03)."
+  "comprueba": "La tabla de horizontes por tipo (INM sin H1; ALT sin H1 ni H2; DIV × H4 «Limitado») y el bloqueo de HT-09 a un horizonte no aplicable; en la revisión mensual del C5 (registro RDM- en F6), RF × H2 con 35 pronósticos resueltos en 35 fechas que pierden frente a la referencia ingenua con DM-HLN sobre las medias por conglomerado de fecha (PA-03) y p ≤ umbral de Holm (familia fija: todas las celdas H1–H4 en «Sí» del bloque) pasa de «Sí» a «Limitado» con su AJU- en F6 (evidencia: estadístico, p, h, α, umbral de Holm, n, n_eff, conglomerados y los PRG-) y su CFG- de P-31 (y de P-30) en F10, solo en esa celda; el ciclo siguiente lee «Limitado» y G3 no bloquea; no degrada sin muestra efectiva (n_eff < 30 o menos de 10 conglomerados: una sola semana mala, o una historia buena con una semana mala), sin fechas, con p > α o sobre el umbral de Holm de la revisión, con pronósticos que ganan, con PRG contaminados, en H5, fuera de la revisión mensual ni dos veces en un trimestre, y ningún cambio hacia o desde «No»; si falla la escritura en F10, el AJU- queda ANULADO (y el CFG- de P-31 revertido) y la revisión se repite.",
+  "no_comprueba": "La revisión mensual en el calendario real: el reloj es simulado (el primer C5 de cada mes hace la revisión). Las muestras mínimas (`evaluacion.min_calibrar` sobre n_eff y `evaluacion.min_conglomerados_bootstrap`) y la periodicidad mensual de 12.2 no figuran en el Anexo A ([PROPUESTO] INC-T173-01); el α (`evaluacion.alfa_holm`) con Holm sobre la familia fija de la revisión es decisión del operador por delegación (17-11-2026, INC-T173-01)."
  },
  "PB-51": {
   "cobertura": "DOCUMENTAL",
@@ -666,7 +685,7 @@
   "no_comprueba": ""
  },
  "PB-64": {
-  "cobertura": "PARCIAL",
+  "cobertura": "AUTOMATICA",
   "pruebas": [
    "11_Ejecutor/tests/test_v51.py::test_estado_h5_por_hitos",
    "11_Ejecutor/tests/test_t53_evaluacion_y_almacen.py::test_degradacion_h5_se_aplica_en_f6_y_f10",
@@ -674,10 +693,14 @@
    "11_Ejecutor/tests/test_t65_hallazgos.py::test_h13_la_degradacion_registra_el_efecto_desde_el_mismo_ciclo",
    "10_Herramientas/tests/test_ht09_validador_g3.py::TestV51::test_h5_certificado_no_habilita_probabilidad",
    "11_Ejecutor/tests/test_fase4_huecos.py::test_pb64_la_revision_de_certificados_no_emite_ninguno_para_h5",
-   "11_Ejecutor/tests/test_fase4_huecos.py::test_pb64_los_tres_estados_h5_por_hitos_y_mp_baja_de_si_a_limitado_en_f6_y_f10"
+   "11_Ejecutor/tests/test_fase4_huecos.py::test_pb64_los_tres_estados_h5_por_hitos_y_mp_baja_de_si_a_limitado_en_f6_y_f10",
+   "11_Ejecutor/tests/test_t173.py::test_estado_hito_publicable",
+   "11_Ejecutor/tests/test_t173.py::test_pb64_c5_publica_los_estados_h5_en_f6",
+   "11_Ejecutor/tests/test_t173.py::test_pb64_sin_h5_no_publica_nada",
+   "11_Ejecutor/tests/test_t173.py::test_pb64_paquete_y_tecnico_publican_los_estados_h5"
   ],
-  "comprueba": "H5 se evalúa por hitos con sus tres estados (EN_CURSO_CONFORME, DESVIADO, INVALIDADO); con 20 hitos y el 40 % cumplidos MP × H5 baja de «Sí» a «Limitado» con el ajuste en F6 y en F10 y cambia la tabla del ciclo siguiente; la revisión de certificados no emite ninguno para H5.",
-  "no_comprueba": "Que los estados se publiquen: el ejecutor los calcula y los usa en el seguimiento C6, pero no los publica en F6 ni en los entregables (INC-T116-03)."
+  "comprueba": "H5 se evalúa por hitos con sus tres estados (EN_CURSO_CONFORME, DESVIADO, INVALIDADO); con 20 hitos y el 40 % cumplidos MP × H5 baja de «Sí» a «Limitado» con el ajuste en F6 y en F10 y cambia la tabla del ciclo siguiente; la revisión de certificados no emite ninguno para H5. Los estados se publican: cada C5 escribe en F6 una entrada EH5- con el estado de cada PRG H5 abierto y de sus hitos, la tasa de hitos cumplidos por celda tipo × H5 y el número de PRG en cada estado; el paquete lleva lo mismo en `x_estados_h5` (valida contra su esquema) y el estado de cada hito, y el informe técnico los muestra junto a los hitos y en la sección 8.",
+  "no_comprueba": "El informe visual no los muestra (lenguaje llano; su plantilla no tiene sitio para ellos) ni el CT-19 del Evaluador los lleva. Los H5 congelados en el mismo RUN- se publican desde el C5 siguiente. El prefijo EH5- de F6 es [PROPUESTO] (INC-T173-01)."
  },
  "PB-65": {
   "cobertura": "AUTOMATICA",
