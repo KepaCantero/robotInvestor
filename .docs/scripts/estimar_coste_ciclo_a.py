@@ -101,7 +101,7 @@ LLAMADAS_POR_TIPO = (
     ("contrarreplica", ("AG-11",), 1, False),                   # CT-13, si el Analista da una fuerte por resuelta
     ("curacion", ("AG-12",), 1, False),                         # _registrar_evidencia_clase: CT-11
 )
-# Una vez por ciclo, en orden: (papel, agente, máximo, bolsa del presupuesto o None si no pasa por él, salidas que puede
+# Una vez por ciclo, en orden: (papel, agente, máximo (un número o la clave de la configuración), bolsa del presupuesto o None si no pasa por él, salidas que puede
 # llevar su encargo: los papeles de los tipos que lee, o «*», todas las anteriores). None es el código de antes de T-146
 # (`--sin-t146`): con T-146 (por defecto), AG-20, AG-18 y AG-19 pagan de la COMÚN, como en `orquestacion.py`, y `cota_ciclo`
 # los pone ahí (T-148 r02, QA r01 de T-148, H-03)
@@ -112,6 +112,28 @@ LLAMADAS_DEL_CICLO = (
     ("redaccion", "AG-17", 2, "COMUN", "*"),                    # _redactar: la redacción y la reescritura por C12
     ("auditoria", "AG-19", 1, None, "*"),                       # _auditar: CT-17
 )
+# T-165 (r04–r06): `Bloque._invocar` reescribe por la raíz «valid-» toda respuesta de un agente que no está en
+# `ht09.AGENTES_SIN_TEXTO_ENTREGADO`, hasta `redaccion.reescrituras_r22` veces por llamada. Las filas de esas reescrituras no se
+# escriben a mano: `con_reescrituras` las deriva de las tablas y de esa constante. Una reescritura sustituye a la respuesta de
+# su papel: paga sus llamadas, pero lo que leen las siguientes no crece (S4)
+REESCRITURA = "reescritura_r22"
+CLAVE_REESCRITURAS = "redaccion.reescrituras_r22"
+
+
+def con_reescrituras(sin_texto: frozenset[str] | set[str]) -> tuple[tuple, tuple]:
+    """Las dos tablas con, detrás de cada papel de un agente cuyo texto llega al entregable, su papel de reescritura R22: los
+    mismos agentes y búsqueda, y como máximo (máximo del papel) × `redaccion.reescrituras_r22` llamadas."""
+    por_tipo, del_ciclo = [], []
+    for papel, agentes, n, web in LLAMADAS_POR_TIPO:
+        por_tipo.append((papel, agentes, n, web))
+        conx = tuple(a for a in agentes if a == "ANALISTA" or a not in sin_texto)
+        if conx:
+            por_tipo.append((f"{REESCRITURA}_{papel}", conx, ("×", n, CLAVE_REESCRITURAS), web))
+    for papel, a, n, bolsa, lee in LLAMADAS_DEL_CICLO:
+        del_ciclo.append((papel, a, n, bolsa, lee))
+        if a not in sin_texto:
+            del_ciclo.append((f"{REESCRITURA}_{papel}", a, ("×", n, CLAVE_REESCRITURAS), bolsa, lee))
+    return tuple(por_tipo), tuple(del_ciclo)
 # Mensaje de una reparación de JSON (`agentes.Agentes.invocar`): hasta 15 errores de hasta 300 caracteres y el texto fijo
 ERRORES_REPARACION, CARACTERES_POR_ERROR, CARACTERES_FIJOS_REPARACION = 15, 300, 120
 # T-148 (QA r01 de T-145, H-01): papeles cuyo encargo copia, por cada objeción, datos de las llamadas anteriores
@@ -235,16 +257,21 @@ def cota_ciclo(llamadas: list[dict], cfg: dict, precios: dict, precio_busqueda_m
     tok_rep = (ERRORES_REPARACION * (CARACTERES_POR_ERROR + 3) + CARACTERES_FIJOS_REPARACION) / 3.6
 
     def maximo(n):
+        if isinstance(n, tuple):   # («×», a, b): el producto (las reescrituras de un papel)
+            return maximo(n[1]) * maximo(n[2])
         return int(parametro(cfg, n)) if isinstance(n, str) else int(n)
+
+    from bloque_a.herramientas.ht09 import AGENTES_SIN_TEXTO_ENTREGADO
+    por_tipo, del_ciclo = con_reescrituras(AGENTES_SIN_TEXTO_ENTREGADO)
 
     # S3: el ciclo medido no puede haber hecho más llamadas de un agente que las que prevén las tablas
     previstas: collections.Counter = collections.Counter()
     for c in tipos:
-        for _papel, agentes, n, _web in LLAMADAS_POR_TIPO:
+        for _papel, agentes, n, _web in por_tipo:
             for a in agentes:
                 previstas[AGENTE_CLASE[c] if a == "ANALISTA" else a] += maximo(n)
-    for _papel, a, n, _bolsa, _lee in LLAMADAS_DEL_CICLO:
-        previstas[a] += n
+    for _papel, a, n, _bolsa, _lee in del_ciclo:
+        previstas[a] += maximo(n)
     medidas = collections.Counter(x["agente"] for x in llamadas)
     fuera = sorted(a for a, k in medidas.items() if k > previstas.get(a, 0))
     if fuera:
@@ -293,9 +320,10 @@ def cota_ciclo(llamadas: list[dict], cfg: dict, precios: dict, precio_busqueda_m
     salida_papel: collections.Counter = collections.Counter()   # salida máxima de cada papel, sumada en todos los tipos
     for c in tipos:
         leido = 0          # S4: la salida máxima de las llamadas anteriores de su tipo
-        for papel, agentes, n, web in LLAMADAS_POR_TIPO:
+        for papel, agentes, n, web in por_tipo:
             ags = [AGENTE_CLASE[c] if a == "ANALISTA" else a for a in agentes]
-            casos = [(peor(a, leido, web and a in con_busqueda, c, papel in MULTIPLICAN_ENCARGO), a) for a in ags]
+            base = papel.removeprefix(f"{REESCRITURA}_")   # la reescritura lleva el encargo de su papel (S4b)
+            casos = [(peor(a, leido, web and a in con_busqueda, c, base in MULTIPLICAN_ENCARGO), a) for a in ags]
             (w, tok), a = max(casos, key=lambda x: x[0][0]["usd"])
             k = maximo(n)
             papeles.append({"tipo": c, "papel": papel, "agente": a, "agentes": ags, "llamadas": k, "bolsa": c,
@@ -305,11 +333,12 @@ def cota_ciclo(llamadas: list[dict], cfg: dict, precios: dict, precio_busqueda_m
             b["usd_por_uc"] = max([b["usd_por_uc"]] + [_usd_por_uc(precio(x), uc) for x in ags])
             b["ultima_uc"] = max(b["ultima_uc"], w["uc"])
             salida = k * max(max_tokens_de(cfg, x) for x in ags)
-            leido += salida
-            salida_papel[papel] += salida
-    for papel, a, n, bolsa, lee in LLAMADAS_DEL_CICLO:
+            if not papel.startswith(REESCRITURA):   # T-165: la reescritura sustituye a la respuesta, no se suma a lo que se lee
+                leido += salida
+                salida_papel[papel] += salida
+    for papel, a, n, bolsa, lee in del_ciclo:
         bolsa = bolsa or ("COMUN" if con_t146 else None)   # T-148 r02 (H-03): con T-146, AG-18/19/20 pagan de la COMÚN
-        for _i in range(n):   # la segunda llamada del mismo papel puede leer la primera (la reescritura, el 2.º dictamen)
+        for _i in range(maximo(n)):   # la segunda llamada del mismo papel puede leer la primera (la reescritura, el 2.º dictamen)
             leido = sum(v for q, v in salida_papel.items() if lee == "*" or q in lee)
             w, tok = peor(a, leido, a in con_busqueda, bolsa)
             papeles.append({"tipo": None, "papel": papel, "agente": a, "agentes": [a], "llamadas": 1, "bolsa": bolsa,
@@ -318,7 +347,8 @@ def cota_ciclo(llamadas: list[dict], cfg: dict, precios: dict, precio_busqueda_m
                 b = bolsas[bolsa]
                 b["usd_por_uc"] = max(b["usd_por_uc"], _usd_por_uc(precio(a), uc))
                 b["ultima_uc"] = max(b["ultima_uc"], w["uc"])
-            salida_papel[papel] += max_tokens_de(cfg, a)
+            if not papel.startswith(REESCRITURA):
+                salida_papel[papel] += max_tokens_de(cfg, a)
     cota_llamadas = sum(x["usd"] for x in papeles)
     busquedas = sum(x["busquedas"] for x in papeles)
 

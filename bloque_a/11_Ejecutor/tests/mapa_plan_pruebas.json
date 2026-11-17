@@ -482,16 +482,16 @@
    "11_Ejecutor/tests/test_t65_resto_t53.py::test_cs08_fichas_documentadas_no_entregan_cifras",
    "11_Ejecutor/tests/test_t159_extremo_a_extremo.py::test_pb47_un_metodo_documentado_no_se_usa_y_la_entrega_lo_declara",
    "11_Ejecutor/tests/test_t165_g3_met13.py::test_pb47_informe_de_clase_que_llama_validado_a_un_metodo_documentado_bloquea_g3",
-   "11_Ejecutor/tests/test_t165_g3_met13.py::test_pb47_corregida_la_declaracion_documentado_la_entrega_pasa",
+   "11_Ejecutor/tests/test_t165_g3_met13.py::test_pb47_corregida_la_declaracion_con_la_forma_canonica_la_entrega_pasa",
    "11_Ejecutor/tests/test_t165_g3_met13.py::test_un_metodo_no_servido_solo_en_el_tecnico_bloquea_la_entrega_en_f7",
    "11_Ejecutor/tests/test_t165_g3_met13.py::test_un_visual_que_presenta_un_metodo_como_validado_bloquea_en_f7",
-   "11_Ejecutor/tests/test_t165_g3_met13.py::test_el_ciclo_simulado_normal_sigue_apto_y_la_comprobacion_ve_las_fichas",
-   "11_Ejecutor/tests/test_t165_g3_met13.py::test_bloquea_una_madurez_que_el_catalogo_no_da_o_un_metodo_que_no_se_sirve",
-   "11_Ejecutor/tests/test_t165_g3_met13.py::test_no_salta_con_frases_que_no_sobredeclaran",
+   "11_Ejecutor/tests/test_t165_g3_met13.py::test_el_ciclo_simulado_normal_sigue_apto_y_lleva_la_madurez_canonica",
+   "11_Ejecutor/tests/test_t165_g3_met13.py::test_bloquea",
+   "11_Ejecutor/tests/test_t165_g3_met13.py::test_no_salta",
    "11_Ejecutor/tests/test_t165_g3_met13.py::test_g3_met13_localiza_en_la_opcion_y_advierte_de_lo_que_no_se_entrega"
   ],
-  "comprueba": "Una ficha no implementada se rechaza con METODO_NO_IMPLEMENTADO y una con código provisional no da cifras. Con la preparación completa del plan (T-165): ML-CLUS-001 en DOCUMENTADO en el Catálogo y un informe de clase que lo llama «validado», HT-09 (G3-MET-13, comprobación complementaria del ejecutor) deja el primer G3V- BLOQUEADO con la incidencia de G3-MET-13, el CT-14 llega al Orquestador, que no lo da por bueno, las opciones que lo afirman se retiran y el entregable final no lo presenta como validado ni cita cifras suyas. Con la declaración corregida («documentado») el mismo ciclo pasa APTO y se entrega. Un método no servido que solo nombra el informe técnico, o un «validado» en el informe visual, bloquea la entrega en F7. El ciclo simulado normal (doce tipos) sigue APTO con G3-MET-13 OK y la comprobación lee las fichas servidas que cita.",
-  "no_comprueba": "Con el cliente simulado, la redacción de un modelo real (la lectura de texto libre es frase a frase y se ha medido con las frases de los prompts de los Analistas y el ciclo simulado; INC-T165-01)."
+  "comprueba": "Una ficha no implementada se rechaza con METODO_NO_IMPLEMENTADO y una con código provisional no da cifras. Con la preparación completa del plan (T-165): ML-CLUS-001 en DOCUMENTADO en el Catálogo y un informe de clase que lo llama «validado», HT-09 (G3-MET-13, comprobación complementaria del ejecutor) deja el primer G3V- BLOQUEADO con la incidencia de G3-MET-13, el CT-14 llega al Orquestador, que no lo da por bueno, las opciones que lo afirman se retiran y el entregable final no lo presenta como validado ni cita cifras suyas. Con la declaración corregida (la ficha en su forma canónica, «ML-CLUS-001 [madurez: DOCUMENTADO; no la sirve el Motor]») el mismo ciclo pasa APTO y se entrega. Un método no servido que solo nombra el informe técnico, o un «validado» en el informe visual, bloquea la entrega en F7. El ciclo simulado normal (doce tipos) sigue APTO con G3-MET-13 OK, la comprobación lee las fichas servidas que cita y los entregables llevan la madurez canónica de cada ficha, que escribe el ejecutor desde el Catálogo (r03).",
+  "no_comprueba": "Con el cliente simulado, la redacción de un modelo real. Desde la r03 la prosa no se interpreta (la raíz «valid-» junto a un método bloquea; los sinónimos no cuentan): falsos positivos medidos con un banco nuevo, los de la r02 y los del revisor, y límites, en INC-T165-01."
  },
  "PB-48": {
   "cobertura": "AUTOMATICA",

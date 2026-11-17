@@ -158,7 +158,7 @@ def test_pb30_la_cifra_sin_artefacto_bloquea_se_retira_y_lo_entregado_no_la_llev
     for ruta in r["entregables"].values():
         texto = Path(ruta).read_text(encoding="utf-8")
         assert "CALC-2026-9999" not in texto and "12,4 %" not in texto
-        sin_avisos = re.sub(r"retiradas por (?:bloqueo|la validación) G3: [^.\n\"<]*", "", texto)   # solo se nombra al declararla
+        sin_avisos = re.sub(r"retiradas por (?:bloqueo|el control) G3: [^.\n\"<]*", "", texto)   # solo se nombra al declararla (T-165 r03: «el control G3»)
         assert sembrada["opp_id"] not in sin_avisos
     entregado = _entregado(r)
     servidos = {e["calc_id"] for e in b.almacen.leer("RC") if e.get("estado") in ("SERVED", "SERVED_WITH_LIMITATIONS")}

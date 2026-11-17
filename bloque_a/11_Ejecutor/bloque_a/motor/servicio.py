@@ -730,7 +730,7 @@ class Motor:
                                  "configuracion_usada": _configuracion_usada(self.cfg, lectura.leidas)},
                    "verificacion_interna": {"identity_checks": "doble pasada idéntica" if identico else "DIFERENCIA ENTRE PASADAS",
                                             "second_path": "según ficha (campo segunda_via_* en el resultado)"},
-                   "consumo_uc": uc, "limitaciones": limitaciones or ["ninguna conocida (ficha implementada, no validada)"],
+                   "consumo_uc": uc, "limitaciones": limitaciones or ["ninguna conocida (ficha implementada; su madurez, la del Catálogo)"],
                    "incidencias": [] if identico else ["no determinismo detectado"]}
         self.almacen.escribir("RC", "AG-13", entrada)
         if self.contabilidad:

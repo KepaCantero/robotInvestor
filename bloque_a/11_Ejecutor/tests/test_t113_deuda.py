@@ -517,7 +517,7 @@ def test_r02_h07_sin_respuesta_valida_del_sintetizador_se_declara():
     paquete = {**_paquete(), "limitaciones": ["Ninguna limitación adicional a las declaradas por opción"]}
     red = v6._redaccion_segura(bloque, paquete, None, perm0)
     assert red == _Redaccion().textos_por_defecto(paquete)
-    assert paquete["limitaciones"] == [v6._SIN_SINTESIS] and "no dio una respuesta válida" in v6._SIN_SINTESIS
+    assert paquete["limitaciones"] == [v6._SIN_SINTESIS] and "no dio una respuesta utilizable" in v6._SIN_SINTESIS
     v6._redaccion_segura(bloque, paquete, None, perm0)
     assert paquete["limitaciones"] == [v6._SIN_SINTESIS]   # no se repite
     d = {"frases_30s": ["El mercado espera con calma.", "El dólar pesa."], "tarjetas": [], "motivos_llanos": {}, "glosario": [], "frase_historial": "Aún es pronto."}

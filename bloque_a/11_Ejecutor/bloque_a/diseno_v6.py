@@ -27,6 +27,7 @@ import pandas as pd
 from . import sintesis as sint
 from .configuracion import NOMBRE_CLASE, parametro
 from .contratos import AGENTE_CLASE
+from .herramientas import ht09
 from .herramientas.ht01_datos import DatosNoDisponibles, FugaDeInformacion
 
 DISENOS = ("v5", "v6")
@@ -240,7 +241,8 @@ def gc1_falsos_negativos(out: dict) -> None:
 INSTR_PROSPECTIVA = ("Para cada encargo, construye escenarios por horizonte y propone un pronóstico verificable por horizonte pedido: "
                      "vista (alcista/bajista para DIRECCIONAL; relativa_favorable/relativa_desfavorable para RELATIVO frente a la "
                      "referencia), probabilidad interna (0,05–0,95), afirmación inequívoca y escenario. Devuelve un resultado por "
-                     "cada «ref» recibida: los encargos son de tipos de activo distintos y no comparten razonamiento.")
+                     "cada «ref» recibida: los encargos son de tipos de activo distintos y no comparten razonamiento. "
+                     + ht09.REGLA_R22_REDACCION)   # T-165 r04 (H-28: la R22 del prompt de Prospectiva)
 
 
 def prospectiva_global(bloque, grupos: dict[str, list[dict]], as_of, run_id, presupuesto, hz_interes) -> dict:
@@ -306,7 +308,8 @@ def prospectiva_global(bloque, grupos: dict[str, list[dict]], as_of, run_id, pre
 # Contradictor de la selección provisional y de sus sustitutas (A-01)
 # ======================================================================================================
 INSTR_REFUTACION = ("Refuta de forma independiente cada tesis: objeciones graduadas (fuerte, moderada, débil) con id OBJ-<ref>-nn, "
-                    "tipo, argumento, evidencia y qué la resolvería; veredicto global por tesis. Devuelve un resultado por cada «ref».")
+                    "tipo, argumento, evidencia y qué la resolvería; veredicto global por tesis. Devuelve un resultado por cada «ref». "
+                    + ht09.REGLA_R22_REDACCION)   # T-165 r05 (H-33)
 
 
 def refutacion_global(bloque, grupos: dict[str, list[dict]], nivel: dict[str, str], as_of, run_id, presupuesto) -> dict:
@@ -483,19 +486,20 @@ def integracion_determinista(bloque, seleccion, analisis, as_of) -> dict:
             cambios.append(f"{NOMBRE_CLASE[c]}: entran {', '.join(entran) or 'ninguna'}; salen {', '.join(salen) or 'ninguna'}")
     return {"regimen_macro": ("; ".join(reg) if reg else "Régimen por tipo no disponible en este ciclo")[:op(bloque, "sintetizador_limites")["regimen"]],
             "factores_dominantes": [], "lectura_conjunto": "Integración determinista (diseño V6): la lectura del conjunto la "
-            "escribe el Sintetizador sobre el paquete validado.", "preguntas_sugeridas": [], "limitaciones": [],
+            "escribe el Sintetizador sobre el paquete ya revisado por G3.", "preguntas_sugeridas": [], "limitaciones": [],
             "cambios_vs_anterior": "; ".join(cambios) if cambios else "Sin cambios en los top-3 frente al run anterior."}
 
 
-INSTR_SINTESIS = ("Sobre el paquete ya validado: escribe la integración (régimen macro común, el factor que domina cada clúster, "
+INSTR_SINTESIS = ("Sobre el paquete ya revisado por G3: escribe la integración (régimen macro común, el factor que domina cada clúster, "
                   "la lectura del conjunto, preguntas sugeridas para el Broker y limitaciones) y los textos llanos del informe "
                   "visual (exactamente dos frases para «la semana en 30 segundos»: el código pone delante una tercera, con las cuentas; por cada opción «por qué» y «qué podría salir mal» "
                   "(≤ 20 palabras, sin jerga o explicada entre paréntesis), motivos llanos de los tipos sin tres opciones, un "
                   "glosario de hasta 5 términos y una frase honesta sobre el historial). Índice Fernández-Huerta ≥ 70. No cambies "
-                  "la selección ni las cifras: vienen calculadas y validadas. Regla de escritura (§4 del prompt): NO escribas "
+                  "la selección ni las cifras: vienen calculadas y revisadas. Regla de escritura (§4 del prompt): NO escribas "
                   "ninguna cifra ni ningún código de un activo concreto; para nombrar una opción usa {opp:OPP-…}, para un tipo "
                   "{tipo:RV}: el código los rellena. No cuentes: las cuentas (ideas, tipos, apuestas, candidatas) las escribe el código. "
-                  "Una frase con una cifra, también en letra, un código de un activo o un marcador desconocido o de cuenta se quita.")
+                  "Una frase con una cifra, también en letra, un código de un activo o un marcador desconocido o de cuenta se quita. "
+                  + ht09.REGLA_R22_REDACCION)   # T-165 r04 (H-28)
 _CAMPOS_REDACCION = ("frases_30s", "tarjetas", "motivos_llanos", "glosario", "frase_historial")
 
 
@@ -836,7 +840,7 @@ def _cuenta_motivo(paquete: dict, clase: str) -> str:
     return f"De {cand} {ideas} de {tipo} {analizadas}, {n} {'pasó' if n == 1 else 'pasaron'} todos los filtros."
 
 
-_SIN_SINTESIS = ("El Sintetizador no dio una respuesta válida: la integración y los textos llanos son los que el código escribe por "
+_SIN_SINTESIS = ("El Sintetizador no dio una respuesta utilizable: la integración y los textos llanos son los que el código escribe por "
                  "defecto")
 
 

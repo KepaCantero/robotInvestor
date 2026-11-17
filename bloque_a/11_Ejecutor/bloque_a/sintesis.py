@@ -143,6 +143,11 @@ def _umbrales_presentacion(cfg: dict) -> tuple[dict, dict]:
 
 def construir(bloque, run_id, tipo, as_of, clases, nivel, gc0, analisis, seleccion, clusteres, integ, historial, presupuesto) -> tuple[dict, dict]:
     cfg = bloque.cfg
+    descartadas = canonizar_madurez(bloque, seleccion)   # T-165 r03: los campos de madurez de los informes de clase los escribe el ejecutor
+    if descartadas and getattr(bloque, "almacen", None) is not None:   # r04: lo que dijo el modelo queda en HA para auditar R22
+        bloque.almacen.incidencia("OTRO", f"G3-MET-13 (R22): {len(descartadas)} campo(s) de madurez de los informes de clase "
+                                  "reescritos por el ejecutor en forma canónica; lo que escribió el modelo no pasa al paquete",
+                                  objeto=run_id, severidad="Operativa", madurez_del_modelo=descartadas)
     umbral_paso, umbral_sem = _umbrales_presentacion(cfg)
     dias_nr = int(parametro(cfg, "evaluacion.dias_habiles_no_resoluble"))   # QA r01 de T-65, H-05
     pres = parametro(cfg, "presentacion")   # [PROPUESTO] INC-T53-05: confianza y zona de interés (T-65, CA-14)
@@ -154,6 +159,7 @@ def construir(bloque, run_id, tipo, as_of, clases, nivel, gc0, analisis, selecci
     prefer = parametro(cfg, "horizonte_principal_preferente")
     meses_hitos = parametro(cfg, "h5.meses_hitos")
     prg_borradores: list[dict] = []
+    riesgo_sin_motor: set[str] = set()   # T-165 r02 (H-06): opciones cuyo riesgo 1–5 no sale de RISK-DD-001
     desgloses, paquete_clases, por_opp = {}, {}, {}
     clases_out: dict[str, dict] = {}
     bloque_b: list[dict] = []
@@ -289,6 +295,8 @@ def construir(bloque, run_id, tipo, as_of, clases, nivel, gc0, analisis, selecci
                 just = None
             f["_naturaleza"], f["_hp"], f["_just_hp"] = nat, hp, just
             sen = f["senales"]
+            if sen.get("riesgo_1a5") is None:
+                riesgo_sin_motor.add(f["opp_id"])
             if sen.get("fecha_dato"):
                 fechas_dato.append(sen["fecha_dato"])
             precio = float(bloque.proveedor.valor_en(f["proxy"], as_of)[1])
@@ -395,7 +403,9 @@ def construir(bloque, run_id, tipo, as_of, clases, nivel, gc0, analisis, selecci
         clust.setdefault(o["cluster_id"], []).append(o["opp_id"])
     fact = {str(x.get("cluster_id")): x.get("factor") for x in integ.get("factores_dominantes", []) if isinstance(x, dict)}
     clusteres_exp = [{"cluster_id": k if re.match(r"^CL-[0-9]{1,3}$", k) else "CL-99",
-                      "factor_dominante": fact.get(k) or f"Factor común de las opciones del clúster {k} (correlación semanal ≥ 0,7, ML-CLUS-001)",
+                      "factor_dominante": fact.get(k) or (f"Factor común de las opciones del clúster {k} (correlación semanal ≥ 0,7, ML-CLUS-001)"
+                                                          if clusteres.get("calc_id") else   # T-165 r02 (H-06): no cita lo que no se usó
+                                                          f"Opciones del clúster {k}, sin clústeres del Motor: cada serie cuenta aparte"),
                       "opp_ids": v} for k, v in sorted(clust.items())]
     # Seguimiento de vigentes
     seguimiento = []
@@ -413,7 +423,8 @@ def construir(bloque, run_id, tipo, as_of, clases, nivel, gc0, analisis, selecci
     limit = [x for x in integ.get("limitaciones", []) if isinstance(x, str) and len(x) >= 5] + avisos_hp
     for c in clases:
         if analisis[c].get("estado") == "PARCIAL":
-            limit.append(f"{NOMBRE_CLASE[c]}: alcance reducido declarado ({'; '.join(analisis[c].get('lagunas', [])[:2]) or 'salida parcial'})")
+            lagunas = [_laguna_r22(x) for x in analisis[c].get("lagunas", [])[:2]]
+            limit.append(f"{NOMBRE_CLASE[c]}: alcance reducido declarado ({'; '.join(lagunas) or 'salida parcial'})")
     for cz in sorted(presupuesto.cierres, key=lambda c: (c["clase"], c["fase"], c["motivo"])):   # T-113 (H-16 de T-107)
         limit.append(f"Presupuesto agotado en {cz['clase']} (fase {cz['fase']}): {cz['motivo']}; alcance reducido, controles intactos (R16)")
     if bloque.modo == "backtest":
@@ -434,7 +445,7 @@ def construir(bloque, run_id, tipo, as_of, clases, nivel, gc0, analisis, selecci
                "x_n_efectivo": clusteres.get("n_efectivo")}
     extras = {"prg_borradores": prg_borradores, "desgloses": desgloses, "paquete_clases": paquete_clases, "por_opp": por_opp,
               "seleccion": seleccion, "analisis": analisis, "gc0": gc0,
-              "clusteres_calc_id": clusteres.get("calc_id")}   # T-165: el técnico cita ML-CLUS-001 solo si el Motor lo sirvió
+              "clusteres_calc_id": clusteres.get("calc_id"), "riesgo_sin_motor": riesgo_sin_motor}   # T-165: el técnico cita ML-CLUS-001 solo si el Motor lo sirvió
     return paquete, extras
 
 
@@ -511,9 +522,124 @@ def _sirve(bloque):
                       or (f in _servicio.SERVICIOS_CT10 and _servicio.citable_segun_catalogo(f, raiz)))
 
 
+def _fichas(bloque) -> ht09.Fichas:
+    """Las fichas que se reconocen en un texto: las del índice del Ejecutor y las de la tabla del Catálogo."""
+    return ht09.fichas_de(set(_servicio.FICHAS_CATALOGO) | set(_servicio.madurez_catalogo(bloque.motor.raiz)))
+
+
 def _comprobar_met13(bloque, textos: list[tuple[str, str, str]]) -> dict:
-    return ht09.comprobar_madurez(textos, _servicio.madurez_catalogo(bloque.motor.raiz), _sirve(bloque),
-                                  _servicio.FICHAS_CATALOGO)
+    return ht09.comprobar_madurez(textos, _servicio.madurez_catalogo(bloque.motor.raiz), _sirve(bloque), _fichas(bloque))
+
+
+def _conocidas(bloque) -> set[str]:
+    return set(_servicio.FICHAS_CATALOGO) | set(_servicio.madurez_catalogo(bloque.motor.raiz))
+
+
+def anotar(bloque, texto: str) -> str:
+    """T-165 r03: el texto con la forma canónica de la madurez tras cada ficha (la escribe el ejecutor, desde el Catálogo)."""
+    return ht09.anotar_madurez(texto, _servicio.madurez_catalogo(bloque.motor.raiz), _sirve(bloque), _conocidas(bloque))
+
+
+def anotar_json(bloque, obj: Any, sin_anotar: frozenset[str] | set[str] = frozenset()) -> Any:
+    """`anotar` en cada cadena de un JSON salvo las que son solo una ficha (un identificador, no una frase) y las de las claves
+    `sin_anotar` (r04, H-31: las que el esquema limita con `maxLength`; su madurez está en `x_madurez_metodos`); las claves no."""
+    conocidas = {f.upper() for f in _conocidas(bloque)}
+
+    def ir(x: Any, clave: str | None) -> Any:
+        if isinstance(x, dict):
+            return {k: ir(v, k) for k, v in x.items()}
+        if isinstance(x, list):
+            return [ir(v, clave) for v in x]
+        if isinstance(x, str) and x.strip().upper() not in conocidas and clave not in sin_anotar:
+            return anotar(bloque, x)
+        return x
+    return ir(obj, None)
+
+
+def claves_con_longitud_maxima(esquema: Any) -> set[str]:
+    """Las propiedades de un esquema JSON con `maxLength` (en ellas, o en los elementos de una lista), a cualquier profundidad."""
+    out: set[str] = set()
+    if isinstance(esquema, dict):
+        for k, v in (esquema.get("properties") or {}).items():
+            if isinstance(v, dict) and ("maxLength" in v or "maxLength" in (v.get("items") or {})):
+                out.add(k)
+        for v in esquema.values():
+            out |= claves_con_longitud_maxima(v)
+    elif isinstance(esquema, list):
+        for v in esquema:
+            out |= claves_con_longitud_maxima(v)
+    return out
+
+
+_RE_VALID_CRUDO = re.compile(r"(?i)(?<![a-záéíóúüñàèìòùâêîôûç])(?:re|con|pre)?v[aá]lid[a-záéíóúüñàèìòùâêîôûç]*")
+
+
+def _laguna_r22(texto: Any) -> Any:
+    """r04 (H-28), r05 (H-35): una laguna de un Analista que lleva la raíz «valid-» (fuera de una opción bloquearía el run) llega
+    al paquete con la palabra cambiada por «comprobar» y la marca «(redacción ajustada por R22)», para que el Broker sepa qué
+    no se pudo comprobar. Si la raíz persiste (otra grafía), se omite y se dice; sigue en su informe de clase (advertencia)."""
+    if not (isinstance(texto, str) and ht09.tiene_raiz_valid(texto)):
+        return texto
+    t = _RE_VALID_CRUDO.sub("comprobar", texto)
+    if not ht09.tiene_raiz_valid(t):
+        return f"{t} (redacción ajustada por R22)"
+    return "laguna del Analista omitida en el paquete por R22 (usaba la raíz que reserva la madurez; consta en su informe de clase)"
+
+
+def resumen_madurez(bloque, texto: str) -> str:
+    """La declaración R22 en forma canónica de las fichas que cita `texto` (con su grafía): la escribe el ejecutor."""
+    raiz = bloque.motor.raiz
+    return ht09.resumen_madurez(ht09.fichas_citadas(texto, _conocidas(bloque)), _servicio.madurez_catalogo(raiz), _sirve(bloque))
+
+
+def madurez_metodos(bloque, texto: str) -> dict[str, str]:
+    """`x_madurez_metodos` del paquete JSON: la madurez canónica de cada ficha que cita, desde el Catálogo."""
+    madurez, sirve = _servicio.madurez_catalogo(bloque.motor.raiz), _sirve(bloque)
+    return {f: ht09.madurez_canonica(f, madurez, sirve).split(":", 1)[1].strip()
+            for f in ht09.fichas_citadas(texto, _conocidas(bloque))}
+
+
+def canonizar_madurez(bloque, seleccion: dict | None) -> list[dict]:
+    """T-165 r03: en cada informe de clase (candidata del Analista), un campo de madurez (`estado_madurez_metodos` y cualquier
+    clave con «madurez» o «maturity») no lo escribe el modelo: el ejecutor pone la forma canónica de las fichas que cita la
+    candidata en sus demás campos (o «sin fichas del Catálogo citadas»). Lo que decía el modelo se descarta (R22) y se devuelve,
+    para dejarlo en HA (r04)."""
+    fx = _fichas(bloque)
+    madurez, sirve = _servicio.madurez_catalogo(bloque.motor.raiz), _sirve(bloque)
+    descartadas: list[dict] = []
+    for s in (seleccion or {}).values():
+        for f in (s or {}).get("candidatos", []) if isinstance(s, dict) else []:
+            if not isinstance(f, dict):
+                continue
+            citadas = {x for _, t in ht09.textos_de(_sin_madurez(f), "", fx)
+                       for _, _, x in fx.buscar(ht09.normalizar(t)) if not x.startswith("?")}
+            canonica = ht09.resumen_madurez(citadas, madurez, sirve)
+            antes = [(r, t) for r, t in ht09.textos_de(f, "", fx) if ht09.RE_CLAVE_MADUREZ.search(r.lower())]
+            _poner_madurez(f, canonica)
+            if any(not t.endswith(f": {canonica}") for _, t in antes):
+                descartadas.append({"opp_id": f.get("opp_id"), "proxy": f.get("proxy"), "campos": [{"ruta": r, "texto": t[:300]}
+                                                                                                    for r, t in antes]})
+    return descartadas
+
+
+def _sin_madurez(obj: Any) -> Any:
+    if isinstance(obj, dict):
+        return {k: _sin_madurez(v) for k, v in obj.items() if not ht09.RE_CLAVE_MADUREZ.search(str(k).lower())}
+    if isinstance(obj, list):
+        return [_sin_madurez(v) for v in obj]
+    return obj
+
+
+def _poner_madurez(obj: Any, canonica: str) -> None:
+    if isinstance(obj, dict):
+        for k in list(obj):
+            if ht09.RE_CLAVE_MADUREZ.search(str(k).lower()):
+                obj[k] = canonica
+            else:
+                _poner_madurez(obj[k], canonica)
+    elif isinstance(obj, list):
+        for v in obj:
+            _poner_madurez(v, canonica)
 
 
 def g3_met13(bloque, paquete: dict, extras: dict, informe_visual: str | None) -> dict:
@@ -522,7 +648,8 @@ def g3_met13(bloque, paquete: dict, extras: dict, informe_visual: str | None) ->
     run. Lo que dijo el Analista de una candidata que es opción bloquea esa opción; de una que no llega a la entrega (no
     seleccionada o ya retirada), y lo de la clase que no pasa al paquete, es una advertencia: es un hallazgo R22, pero no se
     presenta al Broker. El informe técnico se comprueba al escribirlo (`g3_met13_tecnico`)."""
-    textos = [(r, t, "BLOQUEO") for r, t in ht09.textos_de(paquete, "paquete")]
+    fx = _fichas(bloque)
+    textos = [(r, t, "BLOQUEO") for r, t in ht09.textos_de(paquete, "paquete", fx)]
     ilegible = None
     if informe_visual:
         try:
@@ -535,15 +662,15 @@ def g3_met13(bloque, paquete: dict, extras: dict, informe_visual: str | None) ->
             if not isinstance(f, dict):
                 continue
             if f.get("opp_id") in opciones:
-                textos += [(r, t, "BLOQUEO") for r, t in ht09.textos_de(f, f"informes_clase.{c}[{f['opp_id']}]")]
+                textos += [(r, t, "BLOQUEO") for r, t in ht09.textos_de(f, f"informes_clase.{c}[{f['opp_id']}]", fx)]
             else:   # sin OPP- en la ruta: F6 no la toma por una opción que retirar
                 marca = str(f.get("proxy") or f.get("simbolo") or "?")
                 textos += [(_RE_OPP.sub(r"opp \1/\2", r), t, "ADVERTENCIA")
-                           for r, t in ht09.textos_de(f, f"informes_clase.{c}.no_entregada[{marca}]")]
+                           for r, t in ht09.textos_de(f, f"informes_clase.{c}.no_entregada[{marca}]", fx)]
     for c, a in (extras.get("analisis") or {}).items():
         if isinstance(a, dict):
             textos += [(_RE_OPP.sub(r"opp \1/\2", r), t, "ADVERTENCIA")
-                       for k in ("regimen", "lagunas") for r, t in ht09.textos_de(a.get(k), f"informes_clase.{c}.{k}")]
+                       for k in ("regimen", "lagunas") for r, t in ht09.textos_de(a.get(k), f"informes_clase.{c}.{k}", fx)]
     comp = _comprobar_met13(bloque, textos)
     if ilegible:
         comp["incidencias"].append({"severidad": "BLOQUEO", "ruta": "informe_visual", "detalle": ilegible})
@@ -551,11 +678,28 @@ def g3_met13(bloque, paquete: dict, extras: dict, informe_visual: str | None) ->
     return comp
 
 
+def _parrafos(texto: str) -> list[tuple[int, str]]:
+    """Los párrafos de un Markdown con la línea en que empiezan (la unidad de lectura de G3-MET-13, H-02 de la QA r01)."""
+    out: list[tuple[int, str]] = []
+    actual: list[str] = []
+    inicio = 1
+    for n, linea in enumerate(texto.splitlines(), start=1):
+        if linea.strip():
+            if not actual:
+                inicio = n
+            actual.append(linea)
+        elif actual:
+            out.append((inicio, "\n".join(actual)))
+            actual = []
+    if actual:
+        out.append((inicio, "\n".join(actual)))
+    return out
+
+
 def g3_met13_tecnico(bloque, res: dict, texto: str) -> bool:
     """G3-MET-13 sobre el informe técnico, que se escribe después de HT-09 (lleva su dictamen). Suma sus incidencias a la
     comprobación G3-MET-13 de `res`, recalcula el dictamen y dice si bloquea."""
-    comp = _comprobar_met13(bloque, [(f"informe_tecnico, línea {n}", linea, "BLOQUEO")
-                                     for n, linea in enumerate(texto.splitlines(), start=1)])
+    comp = _comprobar_met13(bloque, [(f"informe_tecnico, línea {n}", parrafo, "BLOQUEO") for n, parrafo in _parrafos(texto)])
     if not comp["incidencias"]:
         return False
     destino = next((c for c in res["comprobaciones"] if c["id"] == ht09.ID_MET13), None)
@@ -581,7 +725,7 @@ def retirar_opciones(bloque, paquete: dict, extras: dict, afectadas: set[str]) -
             d["estado_semaforo"] = "GRIS" if not quedan else d["estado_semaforo"]
             if len(quedan) < 3:
                 d["menos_de_tres_motivo"] = ((d.get("menos_de_tres_motivo") or f"Se proponen {len(quedan)} opción(es).")
-                                             + " Opciones retiradas por la validación G3: " + ", ".join(sorted(afectadas)) + ".")
+                                             + " Opciones retiradas por el control G3: " + ", ".join(sorted(afectadas)) + ".")
             extras["paquete_clases"][c] = [{"opp_id": o["opp_id"], "rango": o["rango"], "confianza": o["confianza"]} for o in quedan]
     p["paquete_para_bloque_B"] = [b for b in p["paquete_para_bloque_B"] if b["opp_id"] not in afectadas]
     for e in p["clusteres_exposicion"]:

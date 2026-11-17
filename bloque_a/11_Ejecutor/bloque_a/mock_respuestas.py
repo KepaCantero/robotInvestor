@@ -11,7 +11,8 @@ from __future__ import annotations
 import hashlib
 import json
 import random
-from typing import Dict, List
+import re
+from typing import Any, Dict, List
 
 import pandas as pd
 
@@ -48,12 +49,29 @@ def responder(agente: str, mensajes: List[Dict], semilla: int) -> Dict:
     rng = _rng(semilla, agente, ctx.get("fecha_as_of"), json.dumps(msg, sort_keys=True, default=str)[:4000])
     inyectado = "ignora las instrucciones" in json.dumps(enc, ensure_ascii=False).lower()
     if agente in ANALISTAS_MOCK:
-        return _analista(msg, ctx, rng, inyectado)
-    return {"AG-10": _prospectiva, "AG-11": _contrarias, "AG-12": _curador, "AG-02": _integracion, "AG-17": _redactor,
+        return _obedece_r22(msg, _analista(msg, ctx, rng, inyectado))
+    return _obedece_r22(msg, {"AG-10": _prospectiva, "AG-11": _contrarias, "AG-12": _curador, "AG-02": _integracion, "AG-17": _redactor,
             "AG-01": _coordinador, "AG-18": _orquestador, "AG-19": _auditor, "AG-20": _evaluador, "AG-14": _busqueda,
             "AG-16": _busqueda, "AG-15": _busqueda, "AG-13": _plan_motor,
             # Diseño V6 (T-101)
-            "AG-26": _sintetizador, "AG-27": _coordinador, "AG-28": _busqueda}[agente](msg, ctx, rng)
+            "AG-26": _sintetizador, "AG-27": _coordinador, "AG-28": _busqueda}[agente](msg, ctx, rng))
+
+
+_RAIZ_R22 = re.compile(r"(?i)(?<![a-záéíóúüñàèìòùâêîôûç])(?:re|con|pre)?v[aá]lid[a-záéíóúüñàèìòùâêîôûç]*")
+
+
+def _obedece_r22(msg: dict, d: Any) -> Any:
+    """T-165 r05: en la reescritura que pide el ejecutor por la regla R22 de redacción, el simulado la sigue, como un modelo que
+    obedece: cambia la raíz «valid-» por «comprobar» en todos sus textos."""
+    if not (isinstance(msg, dict) and isinstance(msg.get("reescritura"), dict) and msg["reescritura"].get("r22")):
+        return d
+    if isinstance(d, str):
+        return _RAIZ_R22.sub("comprobar", d)
+    if isinstance(d, dict):
+        return {k: _obedece_r22(msg, v) for k, v in d.items()}
+    if isinstance(d, list):
+        return [_obedece_r22(msg, v) for v in d]
+    return d
 
 
 # ------------------------------------------------------------------------------------------
@@ -216,7 +234,12 @@ def _integracion(msg, ctx, rng):
             "lectura_conjunto": "Las opciones dependen sobre todo del impulso de precios; las apuestas comparten riesgo de reversión.",
             "cambios_vs_anterior": "Cambios derivados de la evolución de las señales.",
             "preguntas_sugeridas": ["¿Qué opciones comparten el mismo factor de riesgo?", "¿Qué haría cambiar el semáforo de cada clase?"],
-            "limitaciones": ["Datos sintéticos o de proveedor sin flujos ni posicionamiento"], "autoevaluacion": "Integración breve."}
+            # T-165 r04 (H-28): la declaración R22 que pide el prompt del Analizador («documentado, implementado o validado»); en la
+            # reescritura que pide el ejecutor (regla R22 de redacción), sin la raíz
+            "limitaciones": ["Datos sintéticos o de proveedor sin flujos ni posicionamiento",
+                             ("Métodos usados (R22): su madurez la escribe el ejecutor junto a cada ficha." if msg.get("reescritura")
+                              else "Métodos usados (R22): implementados y aún no validados.")],
+            "autoevaluacion": "Integración breve."}
 
 
 def _redactor(msg, ctx, rng):
