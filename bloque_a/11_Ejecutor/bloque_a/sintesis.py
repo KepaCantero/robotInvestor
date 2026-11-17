@@ -26,6 +26,7 @@ from .configuracion import (
     sesiones_horizonte,
 )
 from .contratos import REGIONES
+from .evaluador import estado_hito
 from .herramientas import ht03, ht09
 from .herramientas.ht05_planificador import fecha_resolucion
 from .herramientas.ht06_indice import normalizar
@@ -272,8 +273,11 @@ def construir(bloque, run_id, tipo, as_of, clases, nivel, gc0, analisis, selecci
                     hz[h]["advertencia"] = ADVERTENCIA_H1
                 if h == "H5":
                     b5 = b if "hitos" in b else bloque.almacen.estado("F4", as_of).get(ids[h], {})
+                    # T-173 (PB-64): cada hito con su estado publicable en F4 (enum `hito.estado` del esquema)
+                    f4_hit = bloque.almacen.estado("F4", as_of)
                     hz[h].update({"prob": None, "certificado_r13": False, "etiqueta": ETIQUETA_SIN_CERT,
-                                  "hitos": copy.deepcopy(b5.get("hitos") or [])})
+                                  "hitos": [{**x, "estado": estado_hito(f4_hit.get(x.get("hit_id")))}
+                                            for x in copy.deepcopy(b5.get("hitos") or [])]})
                     if b5.get("tesis_estructural"):
                         hz[h]["tesis_estructural"] = b5["tesis_estructural"]
             # V5.1 (8.3): naturaleza de la inversión y horizonte principal coherentes
@@ -447,6 +451,10 @@ def construir(bloque, run_id, tipo, as_of, clases, nivel, gc0, analisis, selecci
                "aviso_legal": AVISO_LEGAL,
                "x_lectura_conjunto": integ.get("lectura_conjunto", ""), "x_cambios_vs_anterior": integ.get("cambios_vs_anterior", ""),
                "x_n_efectivo": clusteres.get("n_efectivo")}
+    # T-173 (PB-64): los estados de los H5 por hitos que el Evaluador publicó en F6 (EH5-), tal cual
+    eh5 = bloque.evaluador.estados_h5_vigentes(as_of)
+    if eh5 is not None:
+        paquete["x_estados_h5"] = eh5
     extras = {"prg_borradores": prg_borradores, "desgloses": desgloses, "paquete_clases": paquete_clases, "por_opp": por_opp,
               "seleccion": seleccion, "analisis": analisis, "gc0": gc0,
               "clusteres_calc_id": clusteres.get("calc_id"), "riesgo_sin_motor": riesgo_sin_motor}   # T-165: el técnico cita ML-CLUS-001 solo si el Motor lo sirvió

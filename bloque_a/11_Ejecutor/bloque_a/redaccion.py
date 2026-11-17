@@ -16,6 +16,7 @@ import jsonschema
 import pandas as pd
 
 from .configuracion import NOMBRE_CLASE, buscar_versionado, ruta
+from .evaluador import ESTADOS_H5
 from .herramientas import ht04_graficos as ht04
 from .herramientas import ht07
 
@@ -319,8 +320,13 @@ class Redaccion:
                              f"`{v['prg_id']}` | {v.get('fecha_resolucion')} — {v.get('criterio_resolucion')} |")
                 for hh, v in o["horizontes"].items():
                     if v.get("hitos"):
-                        L += ["", f"**Hitos intermedios del pronóstico {hh} `{v['prg_id']}`** (probabilidad siempre cualitativa; se evalúa por sus hitos):", ""]
-                        L += [f"- `{x['hit_id']}` · {x['fecha']} · {x['indicador']} · criterio: {x['criterio']}" for x in v["hitos"]]
+                        # T-173 (PB-64): el estado del PRG H5 (F6, EH5-) y el de cada hito
+                        e5 = ((p.get("x_estados_h5") or {}).get("pronosticos") or {}).get(v["prg_id"])
+                        L += ["", f"**Hitos intermedios del pronóstico {hh} `{v['prg_id']}`** (probabilidad siempre cualitativa; se evalúa por sus hitos)"
+                              + (f"; estado: **{e5['estado']}** ({e5['hitos_cumplidos']} de {e5['hitos_resueltos']} hitos resueltos cumplidos)" if e5 else "")
+                              + ":", ""]
+                        L += [f"- `{x['hit_id']}` · {x['fecha']} · {x['indicador']} · criterio: {x['criterio']}"
+                              + (f" · estado: {x['estado']}" if x.get("estado") else "") for x in v["hitos"]]
                 L += ["", f"**Catalizadores.** {'; '.join(x['evento'] + ' (' + x['fecha'] + ')' for x in o['catalizadores']) or '—'}", "",
                       f"**Riesgos.** {'; '.join(o['riesgos'])} — riesgo sintético **{o['riesgo_1a5']}/5** ({_fuente_riesgo(extras, o)}).", "",
                       f"**Invalidación.** {'; '.join(o['invalidacion'])}", "", f"**Qué cambiaría la conclusión.** {'; '.join(o['que_cambiaria_la_conclusion'])}", "",
@@ -364,6 +370,16 @@ class Redaccion:
               "| Ámbito | n | Aciertos | Tasa | Tasa esperada por azar | Significativo |", "|---|---|---|---|---|---|"]
         for k, v in [("Global", hg.get("global") or {})] + list(hg.get("por_clase", {}).items()):
             L.append(f"| {k} | {v.get('n')} | {v.get('aciertos')} | {v.get('tasa_acierto')} | {v.get('tasa_esperada_azar')} | {v.get('significativo')} |")
+        e5 = p.get("x_estados_h5")
+        if e5:   # T-173 (PB-64): los estados de los H5 por hitos que el Evaluador publicó en F6
+            L += ["", f"**Pronósticos H5 por hitos** (`{e5['eh5_id']}`; 12.1: EN_CURSO_CONFORME, DESVIADO, INVALIDADO).", "",
+                  "| `PRG-` H5 | Tipo de activo | Estado | Hitos resueltos | Cumplidos | Hitos totales |", "|---|---|---|---|---|---|"]
+            L += [f"| `{k}` | {x.get('clase')} | {x['estado']} | {x['hitos_resueltos']} | {x['hitos_cumplidos']} | {x['hitos_totales']} |"
+                  for k, x in e5["pronosticos"].items()] or ["| — | — | sin H5 abiertos | — | — | — |"]
+            L += ["", "| Tipo de activo × H5 | Hitos resueltos | Tasa de hitos cumplidos | "
+                  + " | ".join(f"PRG {k}" for k in ESTADOS_H5) + " |", "|---|---|---|" + "---|" * len(ESTADOS_H5)]
+            L += [f"| {c}×H5 | {x['n_hitos']} | {x['tasa_cumplidos'] if x['tasa_cumplidos'] is not None else '—'} | "
+                  + " | ".join(str(x["prg_por_estado"].get(k, 0)) for k in ESTADOS_H5) + " |" for c, x in e5["celdas"].items()]
         L += ["", "## 9. Preguntas sugeridas", ""] + [f"- {x}" for x in p["preguntas_sugeridas"]]
         L += ["", f"*{p['aviso_legal']}*", ""]
         return "\n".join(L)

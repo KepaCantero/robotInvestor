@@ -426,7 +426,9 @@ def test_pb60_credencial_denegada_no_se_vuelve_a_pedir_y_los_entregables_declara
 
 
 # ---------------------------------------------------------------- PB-33 · revisión mensual y RUN- posterior con la celda deteriorada
-def test_pb33_tras_la_revocacion_hay_alerta_de_sobreconfianza_y_el_run_siguiente_no_publica_probabilidad(tmp_path, universo):
+def _pb33_revision_y_run(tmp_path, universo):
+    """PB-33: la celda certificada RV × H3 pierde la habilidad; C5 (revisión) y después el RUN-. Devuelve el bloque y el RUN-
+    tras comprobar la revocación, la alerta de sobreconfianza y que los PRG congelados siguen intactos."""
     b = nuevo_bloque(tmp_path, universo)
     b.reloj.fijar("2025-06-02")
     certificado_con_reejecucion(b.almacen, {"clase": "RV", "horizonte": "H3", "metodo": "ACC-MOM-001"}, "CERT-2025-0001",
@@ -450,6 +452,27 @@ def test_pb33_tras_la_revocacion_hay_alerta_de_sobreconfianza_y_el_run_siguiente
     assert len(alertas) == 1 and alertas[0]["observacion"].startswith("Sobreconfianza en RV×H3")            # alerta de sobreconfianza
     assert alertas[0]["id"] in b.almacen.estado("F6", clave="id")
     assert (tmp_path / "estado" / "F4_registro_pronosticos.jsonl").read_bytes().startswith(f4)     # PRG congelados intactos
+    return b, r
+
+
+def test_pb33_tras_la_revocacion_hay_alerta_de_sobreconfianza_y_el_run_siguiente_no_publica_probabilidad(tmp_path, universo):
+    b, r = _pb33_revision_y_run(tmp_path, universo)
+    # T-173 (PB-50, 12.2): la celda pierde frente a la referencia (p ≈ 0,05), pero no supera el umbral de Holm de la revisión
+    # mensual con la familia fija de las celdas H1–H4 en «Sí» (cierre de la QA r02, H-06): sigue en «Sí» y el RUN- ofrece H3
+    rev = b.almacen.estado("F6", clave="id")[f"RDM-{AS_OF[:7]}"]["celdas"]["RV|H3"]
+    assert r["evaluacion"]["degradacion_dm"] == [] and not rev["degradar"] and rev["dm_hln"]["p_valor"] > rev["umbral_holm"]
+    publicadas = [v for o in r["paquete"]["clases"]["RV"]["opciones"] for h, v in o["horizontes"].items() if h == "H3"]
+    assert publicadas and all(v["prob"] is None for v in publicadas)                 # sin certificado vigente, sin probabilidad
+    assert r["g3"]["dictamen"] in ("APTO", "APTO_CON_ADVERTENCIAS")
+
+
+def test_pb33_con_la_degradacion_dm_neutralizada_la_vista_h3_decertificada_no_publica_probabilidad(tmp_path, universo,
+                                                                                                   monkeypatch):
+    """T-173 r02 (QA r01, H-04): el criterio original de PB-33 sobre la celda decertificada. Sin la degradación DM de 12.2
+    (neutralizada aquí), RV × H3 sigue en «Sí»: el RUN- la ofrece y ninguna de sus vistas lleva probabilidad (G3-CON-10, HT-09)."""
+    monkeypatch.setattr(Evaluador, "aplicar_degradacion_dm", lambda self, *a, **k: [])
+    b, r = _pb33_revision_y_run(tmp_path, universo)
+    assert r["evaluacion"]["degradacion_dm"] == [] and aplicabilidad(b.cfg, "RV", "H3") == "SI"
     publicadas = [v for o in r["paquete"]["clases"]["RV"]["opciones"] for h, v in o["horizontes"].items() if h == "H3"]
     assert publicadas and all(v["prob"] is None for v in publicadas)                 # sin certificado vigente, sin probabilidad
     assert r["g3"]["dictamen"] in ("APTO", "APTO_CON_ADVERTENCIAS")

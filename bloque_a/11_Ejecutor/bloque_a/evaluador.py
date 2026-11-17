@@ -39,6 +39,8 @@ from .motor import servicio
 CADUCIDAD_MESES = {"anecdotica": 3, "recurrente": 6, "estadistica": 12}
 # Escalón inferior de aplicabilidad de un horizonte (12.2): «Sí» → «Limitado» → «No»
 ESCALON_INFERIOR = {"SI": "LIMITADO", "LIMITADO": "NO"}
+# T-173 (PB-50, 12.2): horizontes que degrada la revisión mensual por DM-HLN (H5 se degrada por hitos)
+HORIZONTES_DM = ("H1", "H2", "H3", "H4")
 # T-160 (PB-32, EVAL-F05, §6.6 del prompt del Evaluador): ficha del cálculo que sostiene un certificado de horizonte
 # (`evaluar_celda` es FC-EVAL-001 + FC-CAL-001) y respuestas de la re-ejecución CT-10 (AUD-REX-001) que lo dejan seguir
 FICHA_CERTIFICADO = "FC-EVAL-001"
@@ -155,6 +157,18 @@ def _finito(x) -> bool:
 
 def _prob_valida(v) -> bool:
     return not isinstance(v, bool) and isinstance(v, (int, float)) and _finito(v) and 0.0 <= float(v) <= 1.0
+
+
+# T-173 (PB-64): estados de un PRG H5 por sus hitos (12.1) y de cada hito en el paquete (enum `hito.estado` del esquema)
+ESTADOS_H5 = ("EN_CURSO_CONFORME", "DESVIADO", "INVALIDADO")
+
+
+def estado_hito(h: dict | None) -> str:
+    """Estado publicable de un HIT- de F4: CUMPLIDO o FALLADO si está resuelto, NO_RESOLUBLE, y si no, PENDIENTE."""
+    h = h or {}
+    if h.get("estado") == "RESUELTO" and h.get("resolucion"):
+        return "CUMPLIDO" if int(h["resolucion"]["resultado_binario"]) else "FALLADO"
+    return "NO_RESOLUBLE" if h.get("estado") == "NO_RESOLUBLE" else "PENDIENTE"
 
 
 def _version_menor_siguiente(v) -> str:
@@ -858,10 +872,109 @@ class Evaluador:
                    for c, v in celdas.items()}
         return {"pronosticos": out, "celdas": resumen, "umbral": {"tasa_min": tasa_min, "min_hitos": min_hitos}}
 
+    def estados_h5_publicables(self, as_of=None) -> dict:
+        """T-173 (PB-64; esquema de F4, 5.1; prompt del Evaluador, 6.7 bis.3 y .4): lo que se publica de los H5 por hitos, en F6
+        y en los entregables: el estado de cada PRG H5 abierto, el de cada uno de sus hitos y, por celda tipo × H5, la tasa de
+        hitos cumplidos (P-42) y el número de PRG abiertos en cada estado. Es un recuento reproducible sobre F4 (regla 2 de F6)."""
+        f4 = self.almacen.estado("F4", as_of)
+        est = self.estado_h5(as_of)
+        pron: dict[str, dict] = {}
+        por_estado: dict[str, Counter] = defaultdict(Counter)
+        for pid, e in sorted(est["pronosticos"].items()):
+            p = f4.get(pid) or {}
+            if p.get("estado") != "ABIERTO":
+                continue
+            pron[pid] = {"clase": p.get("clase"), "opp_id": p.get("opp_id"), **e,
+                         "hitos": {h: estado_hito(f4.get(h)) for h in p.get("hit_ids", [])}}
+            por_estado[str(p.get("clase"))][e["estado"]] += 1
+        celdas = {c: {"n_hitos": v["n"], "tasa_cumplidos": v["tasa_cumplidos"],
+                      "prg_por_estado": {k: por_estado[c].get(k, 0) for k in ESTADOS_H5}}
+                  for c, v in sorted(est["celdas"].items())}
+        for c in sorted(set(por_estado) - set(celdas)):
+            celdas[c] = {"n_hitos": 0, "tasa_cumplidos": None, "prg_por_estado": {k: por_estado[c].get(k, 0) for k in ESTADOS_H5}}
+        return {"pronosticos": pron, "celdas": celdas, "umbral": est["umbral"]}
+
+    def publicar_estados_h5(self, as_of, run_id: str | None = None) -> dict | None:
+        """T-173 (PB-64): entrada EH5- de F6 con `estados_h5_publicables` en cada C5 que tenga H5 abiertos o hitos resueltos
+        (append-only; el prefijo EH5- es [PROPUESTO] INC-T173-01: el esquema de F6 no fija uno)."""
+        pub = self.estados_h5_publicables(as_of)
+        if not pub["pronosticos"] and not pub["celdas"]:
+            return None
+        ent = {"tipo_entrada": "EH5", "id": f"EH5-{pd.Timestamp(as_of).date()}", "fecha": str(pd.Timestamp(as_of).date()),
+               **pub, "run_id": run_id, "comprobacion_fuga": "SUPERADA", "madurez": "implementado"}
+        self.almacen.escribir("F6", "AG-20", ent)
+        return ent
+
+    def estados_h5_vigentes(self, as_of=None) -> dict | None:
+        """T-173 (PB-64): la última entrada EH5- de F6 hasta `as_of`, que es lo que llega a los entregables (como el historial
+        de aciertos, a través de F6). Sin ninguna, None."""
+        ult = [e for e in self.almacen.leer("F6", as_of) if e.get("tipo_entrada") == "EH5"]
+        if not ult:
+            return None
+        e = ult[-1]
+        return {"eh5_id": e["id"], "fecha": e["fecha"], "pronosticos": copy.deepcopy(e["pronosticos"]),
+                "celdas": copy.deepcopy(e["celdas"]), "umbral": copy.deepcopy(e["umbral"])}
+
     def _matriz_aplicabilidad(self, as_of) -> dict[str, dict[str, str]]:
         """Matriz de aplicabilidad vigente (P-31): la de F10 si AG-20 ya la ajustó; si no, la tabla 8.3 de la configuración."""
         vig = (self.almacen.estado("F10", as_of).get("P-31") or {}).get("valor_vigente")
         return copy.deepcopy(vig or self._tabla_base)
+
+    def _p31_ya_movida(self, f6: list[dict], ambito: dict, trimestre: str) -> bool:
+        """Esquema F10, regla 7: como mucho un escalón de P-31 por celda y trimestre, y nunca con una P3 de la celda pendiente.
+        T-173 r02 (QA r01, H-02): un AJU- ANULADO (su escritura en F10 falló y se deshizo) no cuenta."""
+        return any(a.get("parametro") == "P-31" and a.get("celda") == ambito and a.get("estado") != "ANULADO"
+                   and (a.get("trimestre") == trimestre or (a.get("tipo_entrada") == "P3" and a.get("estado") == "ENVIADA"))
+                   for a in f6)
+
+    def _bajar_a_limitado(self, as_of, ambito: dict, f10: dict, matriz: dict, actual: str, nuevo: str, trimestre: str,
+                          fecha_efecto: str, evid: dict, motivo: str, nota: str) -> dict:
+        """«Sí» → «Limitado» de una celda de P-31 (12.2, régimen CALIBRABLE_RESTRINGIDO): AJU- en F6 y CFG- de P-31 y de P-30
+        (versión menor nueva) en F10. Lo comparten la degradación de H5 por hitos y la de H1–H4 por DM-HLN (T-173).
+        T-173 r02 (QA r01, H-02): las tres entradas se construyen antes de escribir ninguna; si una escritura en F10 falla, el
+        CFG- de P-31 ya escrito se revierte en F10 (`revierte_a`, la matriz anterior), el AJU- queda ANULADO en F6 (no aplicado)
+        y la excepción se relanza: F6 nunca afirma un ajuste que F10 no tiene, y la celda se puede volver a evaluar."""
+        clase, horizonte = ambito["clase"], ambito["horizonte"]
+        mv_de = str((f10.get("P-30") or {}).get("valor_vigente") or parametro(self.cfg, "methodology_version"))
+        mv = {"de": mv_de, "a": _version_menor_siguiente(mv_de)}
+        nueva = copy.deepcopy(matriz)
+        nueva[clase][horizonte] = nuevo
+        fecha = str(pd.Timestamp(as_of).date())
+        aju = {"tipo_entrada": "AJU", "id": self.almacen.nuevo_id("AJU"), "parametro": "P-31", "celda": ambito,
+               "de": actual, "a": nuevo, "trimestre": trimestre,
+               "banda": {"regla": "«Sí» ↔ «Limitado» automático (12.2, P-31); hacia «No», tipo 3"},
+               "evidencia": evid, "methodology_version": mv, "efecto_desde": fecha_efecto,
+               "sombra_hasta": None, "estado": "CONFIRMADO", "aplicado_en_produccion": True, "nota": nota}
+        comun = {"tipo_entrada": "CFG", "autor": "AG-20", "origen": aju["id"], "methodology_version": mv,
+                 "fecha_registro": fecha, "fecha_efecto": aju["efecto_desde"], "revierte_a": None}
+        cfg31 = {**comun, "cfg_id": self.almacen.nuevo_id("CFG"), "param_id": "P-31", "de": matriz, "a": nueva,
+                 "valor_vigente": nueva, "regimen": "CALIBRABLE_RESTRINGIDO", "motivo": motivo}
+        cfg30 = {**comun, "cfg_id": self.almacen.nuevo_id("CFG"), "param_id": "P-30", "de": mv["de"], "a": mv["a"],
+                 "valor_vigente": mv["a"], "regimen": "CALIBRABLE", "motivo": f"ajuste {aju['id']} (P-31, {clase}×{horizonte})"}
+        self.almacen.escribir("F6", "AG-20", aju)
+        escrito31 = False
+        try:
+            self.almacen.escribir("F10", "AG-20", cfg31)
+            escrito31 = True
+            self.almacen.escribir("F10", "AG-20", cfg30)
+        except Exception as fallo:
+            revertido = None
+            if escrito31:
+                try:
+                    self.almacen.escribir("F10", "AG-20", {**comun, "methodology_version": {"de": mv["de"], "a": mv["de"]},
+                                                           "cfg_id": self.almacen.nuevo_id("CFG"), "param_id": "P-31",
+                                                           "de": nueva, "a": matriz, "valor_vigente": matriz,
+                                                           "regimen": "CALIBRABLE_RESTRINGIDO", "revierte_a": cfg31["cfg_id"],
+                                                           "motivo": f"reversión de {cfg31['cfg_id']}: el ajuste {aju['id']} no "
+                                                                     f"se completó en F10 ({fallo})"})
+                    revertido = True
+                except Exception:  # noqa: BLE001 — se deja dicho en el AJU- anulado; la excepción original se relanza abajo
+                    revertido = False
+            self.almacen.escribir("F6", "AG-20", {"tipo_entrada": "AJU", "id": aju["id"], "estado": "ANULADO",
+                                                  "aplicado_en_produccion": False, "cfg_p31_revertido": revertido,
+                                                  "motivo_anulacion": f"la escritura en F10 falló ({fallo}); no se aplicó"})
+            raise
+        return aju
 
     def aplicar_degradacion_h5(self, as_of, run_id: str | None = None) -> list[dict]:
         """12.2 y Anexo A (P-42): si la tasa de hitos cumplidos de una celda tipo × H5 queda bajo el umbral con muestra
@@ -883,9 +996,7 @@ class Evaluador:
                 continue
             f6 = list(self.almacen.estado("F6", as_of, clave="id").values())
             ambito = {"clase": clase, "horizonte": "H5"}
-            if any(a.get("parametro") == "P-31" and a.get("celda") == ambito
-                   and (a.get("trimestre") == trimestre or (a.get("tipo_entrada") == "P3" and a.get("estado") == "ENVIADA"))
-                   for a in f6):
+            if self._p31_ya_movida(f6, ambito, trimestre):
                 continue
             # Componer con acuerdos ya registrados que entrarán en vigor el mismo día, sin abrir el corte de conocimiento.
             f10 = self.almacen.estado("F10", as_of, efectivo_el=fecha_efecto)
@@ -915,27 +1026,135 @@ class Evaluador:
                 self.almacen.escribir("F6", "AG-20", p3)
                 hechos.append(p3)
                 continue
-            mv_de = str((f10.get("P-30") or {}).get("valor_vigente") or parametro(self.cfg, "methodology_version"))
-            mv = {"de": mv_de, "a": _version_menor_siguiente(mv_de)}
-            nueva = copy.deepcopy(matriz)
-            nueva[clase]["H5"] = nuevo
-            aju = {"tipo_entrada": "AJU", "id": self.almacen.nuevo_id("AJU"), "parametro": "P-31", "celda": ambito,
-                   "de": actual, "a": nuevo, "trimestre": trimestre,
-                   "banda": {"regla": "«Sí» ↔ «Limitado» automático (12.2, P-31); hacia «No», tipo 3"},
-                   "evidencia": evid, "methodology_version": mv, "efecto_desde": fecha_efecto,
-                   "sombra_hasta": None, "estado": "CONFIRMADO", "aplicado_en_produccion": True,
-                   "nota": "degradación automática de 12.2: se aplica desde este mismo ciclo (la lectura de F10 es por fecha de "
-                           "registro; T-65, H-13) y no se revierte sola (volver a subir exige tipo 3)"}
-            self.almacen.escribir("F6", "AG-20", aju)
-            comun = {"tipo_entrada": "CFG", "autor": "AG-20", "origen": aju["id"], "methodology_version": mv,
-                     "fecha_registro": str(as_of.date()), "fecha_efecto": aju["efecto_desde"], "revierte_a": None}
-            self.almacen.escribir("F10", "AG-20", {**comun, "cfg_id": self.almacen.nuevo_id("CFG"), "param_id": "P-31",
-                                                   "de": matriz, "a": nueva, "valor_vigente": nueva,
-                                                   "regimen": "CALIBRABLE_RESTRINGIDO", "motivo": obs})
-            self.almacen.escribir("F10", "AG-20", {**comun, "cfg_id": self.almacen.nuevo_id("CFG"), "param_id": "P-30",
-                                                   "de": mv["de"], "a": mv["a"], "valor_vigente": mv["a"], "regimen": "CALIBRABLE",
-                                                   "motivo": f"ajuste {aju['id']} (P-31, {clase}×H5)"})
+            aju = self._bajar_a_limitado(as_of, ambito, f10, matriz, str(actual), nuevo, trimestre, fecha_efecto, evid, obs,
+                                         "degradación automática de 12.2: se aplica desde este mismo ciclo (la lectura de F10 es "
+                                         "por fecha de registro; T-65, H-13) y no se revierte sola (volver a subir exige tipo 3)")
             hechos.append(aju)
+        return hechos
+
+    def degradacion_dm(self, as_of=None, matriz: dict | None = None) -> dict[str, dict]:
+        """T-173 (PB-50, 12.2): por celda clase × horizonte H1–H4, la prueba DM-HLN de que el pronóstico pierde frente a la
+        referencia ingenua (pérdida de Brier; la h es la del certificado, `_DEFECTO_CELDA`), solo con PRG admisibles (PA-09).
+        T-173 r02 (QA r01, H-01 y H-03), con la regla de muestra del resto del Evaluador (PA-03):
+        - conglomerados por fecha de resolución (`_fechas_conglomerado`; sin fechas, no se evalúa) y muestra efectiva de Kish
+          (`ev.n_efectiva`): se exige n_eff ≥ `evaluacion.min_calibrar` y ≥ `_min_conglomerados()` fechas distintas;
+        - la DM-HLN se calcula sobre la serie de medias de d por fecha de conglomerado, en orden de fecha, no por PRG;
+        - Holm escalonado (α = `evaluacion.alfa_holm`) entre las celdas de la misma revisión que pueden bajar: muestra
+          suficiente y «Sí» en la matriz (`matriz`; por defecto, la vigente). `degradar` = p ≤ umbral de Holm de la celda.
+        [PROPUESTO] INC-T173-01."""
+        n_min = int(parametro(self.cfg, "evaluacion.min_calibrar"))
+        min_cong = self._min_conglomerados()
+        alfa = float(parametro(self.cfg, "evaluacion.alfa_holm"))
+        h_dm = int(_DEFECTO_CELDA["h"])
+        matriz = matriz if matriz is not None else self._matriz_aplicabilidad(as_of)
+        celdas: dict[tuple[str, str], list[dict]] = defaultdict(list)
+        for p in self.resueltos(as_of):
+            if p.get("horizonte") != "H5":
+                celdas[(p["clase"], p["horizonte"])].append(p)
+        out: dict[str, dict] = {}
+        for (c, h), lst in sorted(celdas.items()):
+            lst.sort(key=lambda x: (x["fecha_emision"], x["prg_id"]))
+            try:
+                pp = np.asarray([float(x["prob_interna"]) for x in lst])
+                pr = np.asarray([float(x["referencia_ingenua"]["valor_o_prob"]) for x in lst])
+            except (TypeError, ValueError, KeyError):   # QA r01 (obs. §8): una celda sin cifras no aborta las demás
+                pp = pr = np.full(len(lst), np.nan)
+            oo = np.asarray([int(x["resolucion"]["resultado_binario"]) for x in lst], float)
+            fechas = self._fechas_conglomerado(lst)
+            muestra, dm, motivo = None, None, None
+            if fechas is None:
+                motivo = "sin fechas de conglomerado (PA-03)"
+            elif not (np.all(np.isfinite(pp)) and np.all(np.isfinite(pr))):
+                motivo = "probabilidad o referencia ingenua ausente o no finita"
+            else:
+                muestra = ev.n_efectiva(fechas, oo - pp)
+                if muestra["n_eff"] < n_min or muestra["conglomerados"] < min_cong:
+                    motivo = (f"muestra insuficiente: n_eff = {muestra['n_eff']:.1f} (mínimo {n_min}) y "
+                              f"{muestra['conglomerados']} conglomerados (mínimo {min_cong})")
+                else:
+                    # d = pérdida de la referencia − pérdida del pronóstico, media por fecha de conglomerado: estadístico < 0
+                    # ⇔ el pronóstico pierde (p unilateral)
+                    d = pd.Series((pr - oo) ** 2 - (pp - oo) ** 2).groupby(pd.Series(fechas)).mean().sort_index()
+                    dm = ev.diebold_mariano_hln(d.tolist(), [0.0] * len(d), h_dm)
+            p_peor = None if dm is None else dm.get("p_unilateral")
+            if motivo is None and (matriz.get(c) or {}).get(h) != "SI":
+                motivo = f"la celda está en «{(matriz.get(c) or {}).get(h)}»: 12.2 solo baja de «Sí» a «Limitado»"
+            out[f"{c}|{h}"] = {"clase": c, "horizonte": h, "n": len(lst), "n_min": n_min, "min_conglomerados": min_cong,
+                               "n_eff": None if muestra is None else muestra["n_eff"],
+                               "conglomerados": None if muestra is None else muestra["conglomerados"],
+                               "alfa": alfa, "h": h_dm, "brier": ev.brier(pp, oo), "brier_ref": ev.brier(pr, oo),
+                               "dm_hln": None if dm is None else {
+                                   "estadistico": dm.get("estadistico"), "p_valor": p_peor, "h": h_dm, "n_conglomerados": dm.get("n"),
+                                   "hipotesis": "el pronóstico pierde frente a la referencia ingenua (medias por conglomerado)"},
+                               "prg_ids": [x["prg_id"] for x in lst], "motivo": motivo, "umbral_holm": None, "degradar": False}
+        # T-173, cierre de la QA r02 (H-06; decisión por delegación del operador, 17-11-2026, opción b): la familia de Holm de
+        # la revisión es fija, todas las celdas H1–H4 en «Sí» de la matriz del bloque, tengan muestra o no; las que no se
+        # pueden evaluar cuentan como no rechazables (p ausente). Así una sola celda evaluable no se prueba a α entero.
+        familia: dict[str, float | None] = {f"{c}|{h}": None for c, fila in sorted(matriz.items()) for h in HORIZONTES_DM
+                                            if (fila or {}).get(h) == "SI"}
+        familia.update({k: v["dm_hln"]["p_valor"] for k, v in out.items() if v["motivo"] is None})
+        umbrales = ev.holm(familia, alfa) if familia else {}   # type: ignore[arg-type]  # holm admite p ausente (no rechazable)
+        for k, u in umbrales.items():
+            if k not in out or out[k]["motivo"] is not None:
+                continue
+            pv = familia[k]
+            out[k].update({"umbral_holm": u, "celdas_holm": len(familia),
+                           "degradar": bool(pv is not None and _finito(pv) and pv <= u)})
+            if not out[k]["degradar"]:
+                out[k]["motivo"] = f"DM-HLN p = {pv} > umbral de Holm {u:.4g} (α = {alfa}, {len(familia)} celdas)"
+        return out
+
+    def aplicar_degradacion_dm(self, as_of, run_id: str | None = None) -> list[dict]:
+        """T-173 (PB-50, 12.2 del Documento 0): un horizonte H1–H4 cuyo acierto es inferior a la referencia ingenua con
+        significación (DM-HLN, `degradacion_dm`) pasa solo de «Sí» a «Limitado»: AJU- en F6 con la evidencia y CFG- de P-31 y
+        de P-30 en F10, desde este mismo ciclo. Nunca hacia o desde «No» (P-31 exige tipo 3; aquí ni se propone: 12.2 solo
+        prevé «Sí» → «Limitado»), nunca sube (volver a «Sí» exige además el certificado) y como mucho un escalón por celda y
+        trimestre (esquema F10, regla 7).
+        T-173 r02 (QA r01, H-03): es la revisión mensual del Evaluador (PB-50, paso 2): corre en el primer C5 de cada mes y deja
+        en F6 su registro RDM-AAAA-MM (celdas evaluadas, p, umbrales de Holm y degradaciones); con ese registro, los demás C5
+        del mes no hacen nada. Si la revisión falla, no hay registro y el C5 siguiente la repite. [PROPUESTO] INC-T173-01."""
+        as_of = pd.Timestamp(as_of).normalize()
+        rdm_id = f"RDM-{as_of.year}-{as_of.month:02d}"
+        if rdm_id in self.almacen.estado("F6", as_of, clave="id"):
+            return []
+        trimestre = f"{as_of.year}-T{(as_of.month - 1) // 3 + 1}"
+        fecha_efecto = str(as_of.date())
+        f10 = self.almacen.estado("F10", as_of, efectivo_el=fecha_efecto)
+        revision = self.degradacion_dm(as_of, (f10.get("P-31") or {}).get("valor_vigente") or self._tabla_base)
+        hechos: list[dict] = []
+        for _k, celda in sorted(revision.items()):
+            if not celda["degradar"]:
+                continue
+            clase, h = celda["clase"], celda["horizonte"]
+            ambito = {"clase": clase, "horizonte": h}
+            f6 = list(self.almacen.estado("F6", as_of, clave="id").values())
+            if self._p31_ya_movida(f6, ambito, trimestre):
+                celda["motivo"] = f"P-31 de {clase}×{h} ya se movió en {trimestre} (un escalón por trimestre)"
+                continue
+            # la familia de `degradacion_dm` ya es la de las celdas en «Sí» (12.2: «Limitado» → «No» no es automático y desde
+            # «No» no se mueve nada); se relee F10 por si otra celda de esta revisión ya escribió P-31
+            f10 = self.almacen.estado("F10", as_of, efectivo_el=fecha_efecto)
+            matriz = (f10.get("P-31") or {}).get("valor_vigente") or self._tabla_base
+            dm = celda["dm_hln"]
+            obs = (f"{clase}×{h}: con {celda['n']} pronósticos resueltos (n_eff = {celda['n_eff']:.1f}, {celda['conglomerados']} "
+                   f"conglomerados), Brier {celda['brier']:.4f} frente a {celda['brier_ref']:.4f} de la referencia ingenua; "
+                   f"DM-HLN por conglomerado (h = {celda['h']}) p = {dm['p_valor']:.4g} ≤ umbral de Holm {celda['umbral_holm']:.4g} "
+                   f"(α = {celda['alfa']}, {celda['celdas_holm']} celdas en la revisión {rdm_id}; 12.2: acierto inferior a la "
+                   "referencia con significación).")
+            evid = {"objetivo": "pérdida de Brier frente a la referencia ingenua (DM-HLN por conglomerado de fecha)",
+                    "n": celda["n"], "n_eff": celda["n_eff"], "conglomerados": celda["conglomerados"], "n_min": celda["n_min"],
+                    "min_conglomerados": celda["min_conglomerados"], "brier": celda["brier"], "brier_ref": celda["brier_ref"],
+                    "dm_hln": dm, "alfa": celda["alfa"], "umbral_holm": celda["umbral_holm"], "celdas_holm": celda["celdas_holm"],
+                    "revision": rdm_id, "prg": celda["prg_ids"], "run_id": run_id}
+            aju = self._bajar_a_limitado(as_of, ambito, f10, matriz, "SI", "LIMITADO", trimestre, fecha_efecto, evid, obs,
+                                         "degradación automática de 12.2 por DM-HLN en la revisión mensual: se aplica desde este "
+                                         "mismo ciclo y no se revierte sola (volver a «Sí» exige además el certificado del Evaluador)")
+            hechos.append(aju)
+        self.almacen.escribir("F6", "AG-20", {
+            "tipo_entrada": "REVISION_DM", "id": rdm_id, "fecha": fecha_efecto, "run_id": run_id,
+            "celdas": {k: {c: v[c] for c in ("n", "n_eff", "conglomerados", "dm_hln", "umbral_holm", "degradar", "motivo")}
+                       for k, v in revision.items()},
+            "ajustes": [x["id"] for x in hechos], "comprobacion_fuga": "SUPERADA", "madurez": "implementado"})
         return hechos
 
     def _vigentes_en_f6(self, as_of=None) -> list[dict]:
@@ -1592,6 +1811,13 @@ class Evaluador:
         aju = self.recalibrar(as_of, run_id)
         degradacion_h5 = self.aplicar_degradacion_h5(as_of, run_id)
         try:
+            degradacion_dm = self.aplicar_degradacion_dm(as_of, run_id)   # T-173 (PB-50)
+        except Exception as e:  # noqa: BLE001 — como la fiabilidad: un fallo de la degradación DM no tumba el resto del C5
+            degradacion_dm = []
+            self.almacen.incidencia("HERRAMIENTA", f"Degradación por DM-HLN no evaluada en este ciclo: {e}", "AG-20",
+                                    severidad="Operativa")
+        estados_h5 = self.publicar_estados_h5(as_of, run_id)   # T-173 (PB-64)
+        try:
             fiabilidad = self.fiabilidad_fuentes(as_of, run_id)   # T-125 (PB-46)
         except Exception as e:  # noqa: BLE001 — T-125 r02 (QA r01, H-02): un fallo de la fiabilidad no tumba el resto del C5
             fiabilidad = []
@@ -1600,4 +1826,5 @@ class Evaluador:
         return {"fiabilidad_fuentes": fiabilidad, "resueltos": len([r for r in resueltos if r["estado"] == "RESUELTO"]),
                 "no_resolubles": len([r for r in resueltos if r["estado"] == "NO_RESOLUBLE"]),
                 "metricas": metr, "certificados": certs, "lecciones_nuevas": lecciones, "ajuste": aju,
-                "degradacion_h5": degradacion_h5, "excluidos_contaminacion": excl}
+                "degradacion_h5": degradacion_h5, "degradacion_dm": degradacion_dm, "estados_h5": estados_h5,
+                "excluidos_contaminacion": excl}
