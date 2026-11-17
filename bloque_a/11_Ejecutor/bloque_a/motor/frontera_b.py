@@ -265,19 +265,21 @@ def _etiquetas_series_copiadas(precios: np.ndarray, anios: np.ndarray, tol: floa
     rel = np.where(hay, paso[:, None] / (2 * np.where(hay, precios, 1.0)), 0.0)
     rel = np.maximum(rel, _paso_por_decada(precios, hay, tol_num) / (2 * np.where(hay, precios, 1.0)))   # T-149
     cota_redondeo = -np.log1p(-np.minimum(rel, 0.5)) + tol_num
-    # T-150 (QA r01 de T-149, H-05): una copia truncada hacia abajo (p̃ = ⌊p/q⌋·q) tiene el valor de verdad en [p̃, p̃ + q): un
-    # paso entero, siempre por debajo, que la cota de medio paso centrada en p̃ no cubre cuando el precio cambia. Su
-    # hipótesis es la misma cota de medio paso centrada en p̃ + q/2: log p̃ + log(1 + q/2p̃), con media anchura
+    # T-150 (QA r01 de T-149, H-05): una copia truncada hacia abajo (p̃ = ⌊p/q⌋·q) tiene el valor de verdad en [p̃, p̃ +
+    # q): un paso entero, siempre por debajo, que la cota de medio paso centrada en p̃ no cubre cuando el precio cambia.
+    # Su hipótesis es la misma cota de medio paso centrada en p̃ + q/2: log p̃ + log(1 + q/2p̃), con media anchura
     # (q/2)/(p̃ + q/2). Cada serie va dos veces (filas i y n + i) y un par es copia si lo es en alguna de las cuatro
     # combinaciones (`_pares_por_hipotesis`). No ensancha la cota (eso dobla los falsos positivos): solo la desplaza. Se
-    # desplaza solo en los precios cuyo paso entero, q/p, no pasa de `tol`: con un paso grande frente al precio (1 en un
-    # monetario a 1,00) la cota ya llega al tope, y desplazarla medio paso, que cambia con el precio, alinea por azar series
-    # distintas (el límite declarado de los pasos grandes); esos precios se quedan como redondeados. Una serie sin ningún
-    # precio desplazado más que `tol_numerica` (sin redondear) es la misma en las dos hipótesis.
+    # desplaza solo en los precios cuyo paso entero, q/p, no pasa de 2·`tol` (T-152; era `tol`): con un paso grande frente
+    # al precio (1 en un monetario a 1,00) la cota ya llega al tope, y desplazarla medio paso, que cambia con el precio,
+    # alinea por azar series distintas (el límite declarado de los pasos grandes); esos precios se quedan como
+    # redondeados. Una serie sin ningún precio desplazado más que `tol_numerica` (sin redondear) es la misma en las dos
+    # hipótesis.
     # T-152 (QA r01 de T-150, H-02; decisión del operador del 16-11-2026): el umbral es q/p ≤ 2·`tol` (la media anchura
     # q/2p, `rel`, no pasa de `tol`), no q/p ≤ `tol`. Es donde la cota llega al tope: medido con 100 semillas
     # (`.docs/tickets/T-152/medir_umbral.py`), entre q/p del 1 y del 2 % agrupa las copias truncadas sin agrupar más series
-    # distintas, y por encima no cambia nada.
+    # distintas; con todos los precios por encima, la cota está en el tope y el umbral no cambia nada. Una serie que cruza el
+    # 2 % se desplaza a medias y su resultado sí depende del umbral (T-190, límite declarado en INC-T127-01).
     desplaza = rel <= tol
     logp = np.vstack([logp, logp + np.where(desplaza, np.log1p(rel), 0.0)])
     cota_redondeo = np.vstack([cota_redondeo, np.where(desplaza, -np.log1p(-np.minimum(rel / (1 + rel), 0.5)) + tol_num,
