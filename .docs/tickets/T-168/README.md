@@ -2,7 +2,7 @@
 
 | Campo | Valor |
 | --- | --- |
-| Estado | EN QA |
+| Estado | CERRADO (16-11-2026, QA r01 APTO; bajos subsanados en la ronda de cierre) |
 | Pieza | bloque_a (pruebas): `bloque_a/11_Ejecutor/tests/test_t102_filtro.py` |
 | Planifica · implementa · QA | claude · claude · un revisor nuevo |
 | Aprobación del operador | 2026-11-15: plan de la noche para terminar el Bloque A; sin decisión nueva |
@@ -15,16 +15,16 @@ Que el gate deje de fallar por la carga de la máquina. El 16-11-2026 cayó dos 
 ## Alcance
 
 - **Entra:** las cuatro pruebas de tiempo de `test_t102_filtro.py` (`test_textos_largos_en_tiempo_lineal`, `test_r04_muchos_espacios_en_tiempo_lineal`, `test_r05_h37_sufijo_en_tiempo_lineal` y `test_r06_h45_marcador_y_muchos_espacios_en_tiempo_lineal`). Miden una función pura del mismo proceso.
-- **No entra:** las otras diez pruebas que miden reloj con `time.perf_counter() - t0 <` en otros ficheros. Hay que revisarlas una a una, porque alguna puede medir algo que no corre en el proceso, como un subproceso o E/S. Quedan apuntadas en la deuda.
+- **No entra:** las otras once pruebas que miden reloj en otros ficheros (`test_t92_revision`, `test_t103_r8_y_bajos`, `test_t113_deuda` ×3, `test_t123_r8_iban_y_tarjetas`, `test_t130_r8::test_h08_coste_lineal`, `test_t144`, `test_fase2_series` ×2 y `test_fase2_riesgo`). Hay que revisarlas una a una, porque alguna puede medir algo que no corre en el proceso, como un subproceso o E/S. Quedan apuntadas en la deuda.
 
 ## Diseño
 
 - `time.perf_counter()` pasa a `time.process_time()`, que es el tiempo de CPU del proceso con todos sus hilos. Los topes no cambian (2 s y 1 s), así que la prueba no se debilita: comprueba lo mismo, que el filtro no se vuelva cuadrático, pero no depende de cuántos procesos compitan por la máquina.
-- **Margen:** con poca carga, la más lenta tarda 0,97 s. El defecto que vigilan tardaba 11 s (H-26 de T-102), así que un regreso a coste cuadrático sigue fallando.
+- **Margen:** con poca carga, la más lenta tarda 0,97 s. El defecto que vigilan tardaba 11 s (H-26 de T-102), así que un regreso a ese defecto sigue fallando (un cuadrático de constante baja, no: ver CA-3).
 - **Estado persistido:** no cambia. **Números:** ninguno nuevo.
 
 ## Criterios de aceptación
 
 1. Las cuatro pruebas miden `process_time` y conservan sus topes.
 2. Pasan con la máquina cargada.
-3. Un filtro que vuelva a coste cuadrático las hace fallar.
+3. Un filtro que vuelva al defecto vigilado (retroceso de expresiones regulares, H-26, H-37 y H-45 de T-102: segundos a estos tamaños) las hace fallar. Límite declarado: un cuadrático cuyo coste a estos tamaños quede bajo el tope (mutantes Q5 y Q6 de la QA r01) no las hace fallar, igual que antes de T-168.
