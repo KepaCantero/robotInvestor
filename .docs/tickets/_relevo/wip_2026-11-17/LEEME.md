@@ -24,3 +24,5 @@ Si el contenedor sigue vivo, las ramas `wip/*` locales y las copias del scratchp
 Después siguen T-164, T-166 (tras T-143), T-167 y el resto del plan (`plan_noche_bloque_a_2026-11-15.md`). Cuando entre T-143, se cambia «695» por «696» en `CLAUDE.md` (aprobado por el operador).
 
 **Números de ticket nuevos** (operador, 17-11-2026): se rellenan los huecos, el más bajo libre primero. Ahora toca T-171 a T-179 y después T-181 a T-189.
+
+**Recordatorio para el operador** (lo pidió el 17-11-2026): cuando el Bloque A esté casi terminado, recordarle la clave de la API (`ANTHROPIC_API_KEY`) para el modo sombra y el barrido HT-02 de fuentes. Hay que guiarle paso a paso para localizarla en la consola de Anthropic y se le pide con el formulario seguro (`request_credential`), nunca por el chat.
