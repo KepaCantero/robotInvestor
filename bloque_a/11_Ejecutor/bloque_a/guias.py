@@ -110,8 +110,12 @@ TIPO_3 = (r"\bpesos?\b", r"\bescalas?\b", r"\banclas?\b", r"\btopes?\b", r"\bumb
           r"\bdestinos?\b", r"\bcanal(?:es)?\b", r"\bcatalogo de comprobaciones\b", r"\bestados?\b")
 # T-161 r02 (QA r01, H-03): sentidos financieros corrientes de términos de tipo 3 y de controles; se enmascaran antes de
 # detectar (lo demás del texto se revisa igual)
+# T-171 (QA r04 de T-161, H-19): el determinante del castellano es una clase cerrada (artículos, posesivos, «cada»), y el peso
+# puede llevar delante el componente del índice del que es («el peso de cada valor en su índice»)
+_DET = r"(?:el |la |los |las |un |una |su |sus |cada |este |esta |estos |estas )"
+_COMPONENTE = r"(?:valor|accion|emision|bono|activo|componente|empresa|titulo|compania|emisor)\w*"
 FINANCIERO = re.compile(
-    r"\bpesos? (?:en|de|del|dentro del?) (?:el |la |los |las |un |una )?(?:indice|sector|fondo)\w*"
+    r"\bpesos? (?:(?:de|del) " + _DET + r"?" + _COMPONENTE + r" )?(?:en|de|del|dentro del?) " + _DET + r"?(?:indice|sector|fondo)\w*"
     r"|\bpesos? sectorial\w*|\bestados? (?:financier|contable)\w*|\bestados? de (?:resultados|flujos|cuentas|situacion|cambios)\b"
     r"|\bdestinos? de (?:los |sus )?fondos\b|\bcanal(?:es)? de (?:distribucion|venta|ventas|comercializacion)\b"
     r"|\besquemas? de (?:comisiones|remuneracion|incentivos|pagos?|amortizacion|dividendos|cupones)\b"
@@ -139,7 +143,7 @@ FINANCIERO_PARAMETRO = re.compile(
 # ella no enmascara `FINANCIERO_PARAMETRO` ni exime a un control del núcleo (`PRESENTA`)
 MUESTRA = re.compile(r"^(?:cita|citar|cite|indica|indicar|indique|describe|describir|describa|consulta|consultar|consulte"
                      r"|presenta|presentar|presente|muestra|mostrar|muestre|senala|senalar|senale|compara|comparar|compare"
-                     r"|menciona|mencionar|mencione|nombra|nombrar|nombre)\b")
+                     r"|menciona|mencionar|mencione|nombra|nombrar|nombre|lista|listar|liste|enumera|enumerar|enumere)\b")
 # Una cifra, «que» tras el verbo («Indica que el tope es…») o un verbo de cambio o de rebaja: el ítem ya no solo muestra
 _NO_SOLO_MUESTRA = re.compile(r"[0-9]|^\w+ que\b|\b(?:doble|mitad|triple)\b"
                               r"|\b\w{2,}[aei](?:lo|la|los|las)\b")   # y un imperativo con pronombre («súbelo», «cámbiala»)
@@ -194,7 +198,11 @@ RELAJA = re.compile(
     # T-161 r03 (QA r02, H-07): más verbos y giros de omitir
     r"|\bsuspend\w*|\baparc\w*|\bde largo\b|\btramite\b|\bno aporta\w*|\bolvid\w*|\bcancel\w*|\ben diagonal\b|\bpor encima\b"
     r"|\b(?:cero|ningun[ao]?|nada de) (?:\w+ ){0,2}?(?:" + _OBJETOS_DE_CONTROL + r")\b|\bcero veces\b"
-    r"|\bskip\w*|\bbypass\w*|\bdisabl\w*|\bwithout\b|\bno need\b|\bdon t\b|\bdo not\b|\bometr\w*|\bometi\w*|\bno cal\b|\bsense\b")
+    r"|\bskip\w*|\bbypass\w*|\bdisabl\w*|\bwithout\b|\bno need\b|\bdon t\b|\bdo not\b|\bometr\w*|\bometi\w*|\bno cal\b|\bsense\b"
+    # T-171 (QA r04 de T-161, H-18): lo que dice que algo está vacío es de la misma clase que «vacío» («en blanco», «sin rellenar»)
+    r"|\ben blanco\b|\bsin (?:rellenar|cumplimentar|completar|contenido|texto)\b|\bnul[oa]s?\b|\ba cero\b"
+    # y los verbos de sacar algo de donde está, de la misma clase que «quitar» y «descartar»
+    r"|\bexclu[yi]\w*|\bexclusion\w*|\bretir[aeo]\w*|\bretirar\b")
 # Rebajas implícitas: conflicto por sí solas (un solo análisis u origen, dar por bueno o resuelto sin comprobar, objeciones o
 # bloqueos como leves, la primera lectura como definitiva)
 REBAJA_IMPLICITA = re.compile(
@@ -240,7 +248,8 @@ NUCLEO = {"9.1 (banda marginal: segunda pasada)", "R10 y PS1 (corroboración)", 
 # a los controles que no son del núcleo. Falla cerrado: un verbo que no está en `PRESENTA` no exime a un control del núcleo.
 PRESENTA = re.compile(r"^(?:presenta|presentar|presente|muestra|mostrar|muestre|indica|indicar|indique|senala|senalar|senale"
                       r"|describe|describir|describa|explica|explicar|explique|nombra|nombrar|nombre|ordena|ordenar|ordene"
-                      r"|separa|separar|separe|expresa|expresar|exprese|menciona|mencionar|mencione)\b")
+                      r"|separa|separar|separe|expresa|expresar|exprese|menciona|mencionar|mencione"
+                      r"|lista|listar|liste|enumera|enumerar|enumere)\b")   # T-171 (H-19): listar y enumerar también muestran
 REDUCE = re.compile(r"\bcomo\b|\b(?:en|a) (?:(?:una|un|[0-9]+|dos|tres|cuatro|cinco|pocas|pocos|sola|solo|unica|unico|breves?"
                     r"|cortas?) ){1,2}(?:palabras?|lineas?|frases?|cifras?|letras?|numeros?|entradas?|notas?)\b")
 # T-161 r04 (QA r03, H-12) [PROPUESTO]: una orden de refuerzo sobre un control del núcleo no se acota. Un control obligatorio
@@ -254,6 +263,53 @@ ACOTA = re.compile(r"(?<!^)(?<!^comprueba )(?<!^verifica )(?<!^revisa )(?<!^conf
                    r"|\bsiempre que\b|\bsalvo\b|\bexcepto\b"
                    r"|\b(?:la|el|las|los) (?:\w+ ){1,2}(?:que|cuy[oa]s?|cuando|donde)\b"
                    r"|\bcon (?:el|la|los|las) (?:\w+ ){0,3}(?:mas|menos|mayor|menor|max\w*|min\w*)\b")
+# T-171 (QA r04 de T-161, H-18) [PROPUESTO]: el alcance también se acota con un complemento, sin conjunción. Dos clases:
+# - `ALCANCE_TIEMPO`, una parte del calendario: un día de la semana («los lunes»), unas semanas, ciclos o meses («en semanas
+#   pares», «en los ciclos de enero», «en el primer ciclo del mes»), un plazo («durante 3 ciclos»). Un control del núcleo vale
+#   en todos los ciclos: con un control del núcleo en el ítem, siempre acota.
+# - `ALCANCE_PARTE`, una parte de las opciones: una clase de activo o un horizonte («en las opciones de RV», «para H1 y H2»), una
+#   población con un especificador («de las opciones de RF», «en las candidatas con…») o el ámbito delante de la acción («En RV,
+#   …»). Las guías se dirigen a un Analista de una clase y lo normal es que hablen de ella (el ejemplo del prompt 4.5: «En
+#   cribado DIV, comprobar el diferencial…»), así que solo acota cuando el control del núcleo es el objeto directo de la acción
+#   («Haz la segunda pasada en las opciones de RV»), es decir, cuando el ítem solo repite el control con un alcance.
+# «En cada ciclo», «en todos los ciclos» o «de cada afirmación» no eligen una parte. Se mira en el texto entero.
+_CLASE = r"(?:" + "|".join(c.lower() for c in CLASES) + r"|h ?[1-5])"
+ALCANCE_TIEMPO = re.compile(
+    r"\b(?:los|el|cada|todos los) (?:lunes|martes|miercoles|jueves|viernes|sabados?|domingos?)\b"
+    r"|\b(?:en|durante) (?:(?:la|el|las|los|unas?|unos?|[0-9]+|dos|tres|cuatro|cinco|primer\w*|ultim\w*|algun\w*|cierto\w*) ){0,2}"
+    r"(?:semanas?|ciclos?|meses|mes|dias?|sesiones?|trimestres?|anos?|runs?|ejecuciones?)\b")
+ALCANCE_PARTE = re.compile(
+    r"\b(?:en|para|de|del|a) (?:la |el |las |los )?(?:clases? |horizontes? |opcion\w* |candidat\w* |tesis |propuest\w* |casos? )?"
+    + _CLASE + r"\b"
+    r"|\b(?:en|para|a|de) (?:la|el|las|los|unas?|unos?) (?:\w+ )?(?:opcion|candidat|tesis|propuest|caso|oportunidad|activo|valor"
+    r"|emision|ficha|clase)\w* (?:de|del|con|sin|que|en|cuy\w*)\b")
+# El objeto directo de la acción: tras el verbo (y sin los complementos de alcance que se pongan delante del objeto), un adverbio,
+# un determinante y un modificador como mucho
+_OBJETO = re.compile(r"^\w+ (?:(?:siempre|tambien|ademas|primero|antes|bien|solo) )?" + _DET + r"?(?:mism[oa]s? |\w+ (?=pasada))?")
+# T-171 (QA r04 de T-161, H-18) [PROPUESTO]: un verbo de mostrar exime a un control del núcleo si mostrar es toda la acción. No
+# la es si (a) separa el control de donde está o lo saca de él («Separa las objeciones del informe», «fuera del informe»), o
+# (b) hay una segunda acción coordinada cuyo verbo no es de mostrar ni de reforzar («… y quédate con la primera», «… y quita
+# las fuertes»). Se reconoce la segunda acción por la estructura: tras «y», «e», «pero», «luego» o «después» (y sus adverbios)
+# viene una palabra que no abre un sintagma nominal (determinante, preposición, cifra, sigla de clase o plural). Falla cerrado:
+# una palabra que no se reconoce como verbo de mostrar o de reforzar cuenta como otra acción.
+_SEPARA = re.compile(r"^(?:separa\w*|separe|apart\w*|sac\w*|aisl\w*|extra\w*)\b.*\b(?:del|de (?:la|los|las)) "
+                     r"(?:\w+ )?(?:informe|registro|historial|retorno|auditor\w*|f ?[0-9]+|ha|ciclo|tesis|traza\w*|dictamen|mensaje"
+                     r"|entrega|envio|contexto|evidencia)\w*")
+_FUERA = re.compile(r"\bfuera (?:del?|de (?:la|los|las))\b|\baparte del?\b|\bal margen del?\b")
+_COORDINA = re.compile(r"(?:,? \b(?:y|e|pero|luego|despues|y luego|y despues|y tambien|y ademas)\b)((?: (?:luego|despues|tambien|ademas"
+                       r"|finalmente|entonces|solo))*) (\w+)")
+# Lo que abre un sintagma nominal tras la conjunción (clase cerrada): artículos, posesivos, demostrativos, cuantificadores,
+# preposiciones, conjunciones y adverbios; con esto, las cifras, las siglas de clase y los plurales no son una segunda acción
+_ABRE_NOMBRE = frozenset((
+    "el", "la", "los", "las", "lo", "un", "una", "unos", "unas", "su", "sus", "mi", "mis", "tu", "tus", "este", "esta",
+    "estos", "estas", "ese", "esa", "esos", "esas", "aquel", "cada", "todo", "toda", "todos", "todas", "otro", "otra",
+    "otros", "otras", "ambos", "ambas", "varios", "varias", "algun", "alguna", "algunos", "algunas", "ningun", "ninguna",
+    "dos", "tres", "cuatro", "cinco", "seis", "siete", "ocho", "nueve", "diez", "cien", "mil", "de", "del", "en", "con",
+    "por", "para", "a", "al", "sin", "segun", "sobre", "entre", "hasta", "desde", "tras", "ante", "bajo", "que", "como",
+    "si", "no", "mas", "menos", "muy", "tan", "ya", "aun", "cual", "cuales", "cuyo", "cuya", "donde", "cuando", "quien",
+    "quienes"))
+_VERBOS_DE_MOSTRAR = re.compile(MUESTRA.pattern.lstrip("^"))   # sin el ancla de inicio: el verbo de la segunda acción
+_RESPONDE = re.compile(r"respond(?:e|er|a)|contest(?:a|ar|e)")
 NIEGA = re.compile(r"\b(?:no|nunca|jamas|ni|tampoco|sin|salvo|excepto|solo|solamente|unicamente|basta\w*|vale|suficiente"
                    r"|presupuesto|coste\w*|prisa|rapid\w*|si (?:da|hay) tiempo|si (?:lo )?permite|oportun\w*|criterio|consider\w*"
                    r"|procede|proceda|discrecion\w*|convenient\w*|si (?:quieres|puedes|prefieres)|cuando (?:puedas|quieras)"
@@ -264,8 +320,12 @@ NIEGA = re.compile(r"\b(?:no|nunca|jamas|ni|tampoco|sin|salvo|excepto|solo|solam
                    r"|(?:en|a|para) (?:las |los )?(?:opciones|candidatas|casos)(?: \w+){0,2} lejos del corte"
                    # T-161 r03 (QA r02, H-07): más condiciones (margen, ciclos alternos, un porcentaje, después de entregar…)
                    r"|cuando haya\w*|ciclos? (?:pares|impares|alternos)|en un [0-9]+ ?% de|[0-9]+ ?% de (?:las|los)"
-                   r"|una vez (?:entregad|enviad|cerrad)\w*|a final de|al final de|en pocas|en algunas|algunas veces|a veces"
-                   r"|de vez en cuando)\b|=\s*(?:obligatori|necesari|imprescindible)\w*|×\s*0")
+                   r"|una vez (?:entregad|enviad|cerrad)\w*|en pocas|en algunas|algunas veces|a veces"
+                   r"|de vez en cuando)\b|=\s*(?:obligatori|necesari|imprescindible)\w*|×\s*0"
+                   # T-171 (QA r04 de T-161, H-19): «al final de» aplaza si es un momento («al final del ciclo»); el final de
+                   # un documento es un sitio («al final del informe»), no una condición
+                   r"|\bal? final del? (?!" + _DET + r"?(?:informe|tesis|documento|tabla|resumen|seccion|texto|pagina|apartado"
+                   r"|parrafo|retorno|mensaje|lista)\w*\b)")
 CREDENCIALES = re.compile(r"\bcredencial\w*|\bcontrasen\w*|\bpassword\w*|\bapi ?keys?\b|\bclaves? (?:de )?(?:la )?api\b"
                           r"|\btoken(?:s)? de acceso\b|\baccess ?token\w*|\bsecret\w*|\bclaves? (?:de acceso|privada\w*|secreta\w*)\b"
                           r"|\bllaves? (?:de acceso|privada\w*)\b|\btokens? (?:de )?(?:api|autenticacion|sesion)\b|\bbearer\b")
@@ -285,7 +345,8 @@ CAMBIO_FINANCIERO = re.compile(
     r"|pon|poner|ponga|marca|marcar|marque|duplica|duplicar|triplica|multiplica|dobla|doblar|eleva|elevar|recorta|recortar"
     r"|reduce|reducir|amplia|ampliar|envia|enviar|envie|manda|mandar|remite|remitir|redirige|desvia|traslada|pasa a|lleva a)\b")
 # Un ítem que redefine términos o remite a otro ítem no es una acción concreta y verificable (6.9)
-INSTRUCCION = re.compile(r"\bsignifica\w*|\bequivale\w* a\b|\bquiere decir\b|\bse entiende por\b|\binterpret\w* (?:\w+ ){0,3}como\b"
+INSTRUCCION = re.compile(r"\bsignific(?:a|an|ara|aran|aria|arian|ando|ado|ados|ada|adas|ar|o|aba|aban)\b|\bsignifique\w*"  # T-171 (H-19): el verbo, no el adjetivo «significativo»
+                         r"|\bequivale\w* a\b|\bquiere decir\b|\bse entiende por\b|\binterpret\w* (?:\w+ ){0,3}como\b"
                          r"|\blo contrario\b|\bal reves\b|\b(?:punto|item|apartado|instruccion|parrafo) anterior\b|\bcubiert[ao]s? por\b"
                          # T-161 r03 (QA r02, H-07): otras redefiniciones y remisiones
                          r"|\bdesign\w*|\btoma\w* (?:\w+ ){1,2}por (?:ningun\w*|nada|cero|todas?|todos?)\b|\blease\b|\bvease\b"
@@ -427,27 +488,60 @@ def _accion(t: str) -> str:
     return _PREFIJO.sub("", t)
 
 
+def _otra_accion(a: str, permitidos: tuple[re.Pattern, ...]) -> str | None:
+    """T-171 (H-18): el verbo de una acción coordinada («… y quédate con…») que no es de `permitidos`, o None. Lo que sigue a la
+    conjunción abre otra acción si no abre un sintagma nominal (`_ABRE_NOMBRE`), no es una cifra ni una sigla de clase o de
+    horizonte y no es un plural."""
+    for m in _COORDINA.finditer(a):
+        w = m.group(2)
+        if w in _ABRE_NOMBRE or re.search(r"[0-9]", w) or re.fullmatch(_CLASE, w) or len(w) < 2 or w.endswith("s"):
+            continue
+        # Ronda de cierre (QA r01 de T-171, H-02): el verbo con un clítico es el mismo verbo («compárala»); con los de mostrar
+        # valen todos los de mostrar o consultar, y con los de reforzar, responder (a una objeción: R12)
+        formas = {w, re.sub(r"(?<=[aei])(?:se)?(?:l[aeo]s?|me|te|nos)$", "", w)}
+        extra = ((_VERBOS_DE_MOSTRAR,) if PRESENTA in permitidos else ()) + ((_RESPONDE,) if REFUERZA in permitidos else ())
+        if not any(p.fullmatch(x) for p in permitidos + extra for x in formas):
+            return w
+    return None
+
+
+def _oculta(a: str) -> bool:
+    """T-171 (H-18): la acción saca el control de donde está (`_SEPARA`, `_FUERA`) o añade otra acción que no es de mostrar ni
+    de reforzar."""
+    return bool(_SEPARA.search(a) or _FUERA.search(a) or _otra_accion(a, (PRESENTA, REFUERZA)))
+
+
 def _solo_muestra(t: str) -> bool:
     """T-161 r04 (QA r03, H-12): la acción del ítem es mostrar o consultar un dato (`MUESTRA`) y no lleva una cifra, un «que»
-    tras el verbo ni un verbo de cambio o de rebaja. Falla cerrado: sin verbo, o con otro, no."""
+    tras el verbo ni un verbo de cambio o de rebaja. Falla cerrado: sin verbo, o con otro, no. T-171 (H-18): ni una segunda
+    acción que no sea de mostrar («Cita el umbral … y trabaja con uno más bajo»)."""
     a = _accion(t)
     return bool(MUESTRA.match(a)) and not (_NO_SOLO_MUESTRA.search(a) or CAMBIO_FINANCIERO.search(a) or CAMBIO_T3.search(a)
-                                           or RELAJA.search(a))
+                                           or RELAJA.search(a) or _otra_accion(a, (_VERBOS_DE_MOSTRAR,)))
 
 
 def _controles(t: str) -> list[tuple[str, str]]:
     return [(m.group(0), r) for p, r in CONTROLES for m in [re.search(p, t)] if m]
 
 
-def _refuerza(t: str) -> bool:
+def _refuerza(t: str, leccion: bool = False) -> bool:
     """La acción es claramente de reforzar (o no toca el control): un verbo de refuerzo, o uno neutro si no nombra un control
-    del núcleo, y ninguna marca de negación, rebaja o excepción."""
+    del núcleo, y ninguna marca de negación, rebaja o excepción. `leccion` (T-171): la recomendación de una lección, que va
+    acotada por oficio a su clase, horizonte o población (su `ambito`); no se le aplica `ALCANCE`."""
     claro = REFUERZA.search(t) or (NEUTRO.search(t) and not any(r in NUCLEO for _, r in _controles(t)))
     nucleo = any(r in NUCLEO for _, r in _controles(t))
     a = _accion(t)
-    if claro and nucleo and ((ACOTA.search(a) and not AMPLIA.search(t)) or REDUCE.search(a)):
-        claro = None   # T-161 r04 (H-12): un control del núcleo no se acota ni se reduce a un trozo
-    claro = claro or (PRESENTA.match(a) and not REDUCE.search(a))   # T-161 r04 (H-13): mostrar un control no lo toca
+    sin_alcance = re.sub(r" +", " ", re.sub(r"\b" + _CLASE + r"\b", " ", ALCANCE_PARTE.sub(" ", a)))   # «Comprueba en RV la…»
+    m = _OBJETO.match(sin_alcance)
+    objeto = sin_alcance[m.end():] if m else ""
+    directo = any(r in NUCLEO for p, r in CONTROLES if re.match(p, objeto))   # el control del núcleo es el objeto directo
+    acotado = bool(ACOTA.search(a) or (not leccion and (ALCANCE_TIEMPO.search(t)
+                                                        or (directo and (ALCANCE_PARTE.search(t) or _PREFIJO.match(t))))))
+    acotado = acotado and not AMPLIA.search(t)
+    if claro and nucleo and (acotado or REDUCE.search(a) or _otra_accion(a, (PRESENTA, REFUERZA))):
+        claro = None   # T-161 r04 (H-12): un control del núcleo no se acota ni se reduce a un trozo; T-171: ni se le añade otra acción
+    if not claro and PRESENTA.match(a) and not (REDUCE.search(a) or (nucleo and _oculta(a))):
+        claro = True   # T-161 r04 (H-13): mostrar un control no lo toca; T-171 (H-18): si mostrar es toda la acción
     return bool(claro) and not (NIEGA.search(t) or RELAJA.search(t) or REBAJA_IMPLICITA.search(t))
 
 
@@ -654,11 +748,21 @@ ENDURECE = re.compile(
     r"|\b(?:rebaj|baj|reduc|disminu|moder)\w* (?:un nivel |un punto |un escalon )?(?:la |las )?bandas?(?: verbal\w*)?\b(?! marginal)"
     r"|\b(?:mas de|al menos|como minimo|minimo|mas) (?:un[ao]? |dos |tres |[0-9]+ )?(?:raiz|raices|fuentes?|pasadas?|revision\w*"
     r"|objecion\w*|comprobacion\w*|confirmacion\w*|hitos?)\b"
-    r"|\b(?:con|de) (?:un|una) (?:sol[oa] |unic[oa] )?(?:raiz|fuente|origen) (?:\w+ ){0,2}?(?:fallar|acert|tuvier|obtuvier|dier)\w*"
+    # T-171 (QA r04 de T-161, H-18 y H-19): el resultado puede ir más lejos en la misma frase («de una sola raíz en 9 tesis que
+    # fallaron»), y solo enmascara si es desfavorable: que las de una sola raíz acertaran no hace más prudente nada (antes, a
+    # dos palabras como mucho y también con «acertaron»)
+    r"|\b(?:con|de) (?:un|una) (?:sol[oa] |unic[oa] )?(?:raiz|fuente|origen)\b[^.;]*?\b(?:fallar\w*|fallaron|fallo|fallaba\w*|fallid\w*"
+    r"|erraron|perdier\w*|empeor\w*|(?:tuvieron|obtuvieron|dieron) (?:mas |muchos |peores )?(?:errores|fallos|perdidas|hallazgos"
+    r"|peores))\b"
     r"|\bpor (?:\w+ ){0,2}?(?:omitid|olvidad|saltad|ignorad)\w*"   # la causa de un hallazgo («por objeciones omitidas»)
     # T-161 r04 (QA r03, H-13): descartar una oportunidad por lo que le falta («Descartar las candidatas con datos de más de 5
     # días») no rebaja un control: lo que no se propone no pasa ninguna puerta (falla cerrado)
-    r"|\b(?:descart|exclu|retir)\w* (?:las |los |la |el )?(?:candidat|opcion|propuest|oportunidad)\w* (?:con|sin|cuy\w*|que)\b"
+    r"|\b(?:descart|exclu|retir)\w* (?:las |los |la |el )?(?:candidat|opcion|propuest|oportunidad|tesis)\w* (?:con|sin|cuy\w*|que)\b"
+    # T-171 (QA r04 de T-161, H-18): no es descartar una oportunidad si se la quita de un registro, de un informe o de una
+    # auditoría, o antes de un control del núcleo: eso no la descarta, la oculta (R7, R24, R16). Entonces no se enmascara nada
+    r"(?![^.;,]*\b(?:del|de (?:la|los|las)|al|a (?:la|los|las)|en (?:el|la|los|las)) (?:\w+ )?(?:informe|registro|historial|retorno"
+    r"|auditor\w*|f ?[0-9]+|ha|traza\w*|dictamen\w*|evidencia\w*|control\w*|revision\w*|validacion\w*|g[1-4]|ht ?[0-9]{2})\b"
+    r"|[^.;,]*\b(?:antes|despues|fuera|lejos|aparte) (?:de|del)\b)"
     r"(?:(?! y | e | o )[^.;,])*")   # hasta el final de lo que describe a la oportunidad («… y omite …» se sigue revisando)
 # T-161 r04 (QA r03, H-13): en la observación de una lección, que una tesis o una candidata saliera «sin objeciones» o «sin
 # segunda pasada» es el hallazgo, no una orden. Se enmascara solo si la observación no lleva ningún verbo de orden (`REFUERZA`,
@@ -666,7 +770,19 @@ ENDURECE = re.compile(
 CARENCIA = re.compile(
     r"\b(?:tesis|candidatas?|opciones?|propuestas?|informes?|analisis) (?:\w+ ){0,3}?sin (?:la |el |las |los |su |sus )?"
     r"(?:objecion|segunda pasada|pasada|refutacion|corroboracion|verificacion|comprobacion|contraste|revision|raices|raiz"
-    r"|fuentes? independientes)\w*")
+    r"|fuentes? independientes)\w*"
+    # T-171 (QA r04 de T-161, H-19): la carencia también se cuenta en pasado, con el control de sujeto («La autocrítica se
+    # omitió en 4 tesis», «se olvidó declarar…», «no se hizo la segunda pasada»). Solo el pretérito: «se omite» es una orden
+    r"|\b(?:se|no se) (?:omiti(?:o|eron)|olvid(?:o|aron)|salt(?:o|aron)|ignor(?:o|aron)|hizo|hicieron|aplic(?:o|aron)"
+    r"|realiz(?:o|aron)|registr(?:o|aron)|declar(?:o|aron)|escribi(?:o|eron))\b"
+    r"|\b(?:fue|fueron|quedo|quedaron) (?:omitid|olvidad|saltad|ignorad)\w*|\bfalt(?:o|aron)\b")
+# T-171 (QA r04 de T-161, H-18): una carencia es un hallazgo si lo que pasó sin el control fue peor o se cuenta sin juzgarlo.
+# Si la observación dice que sin el control salió igual o mejor («acertaron más», «rindieron igual»), es un argumento para
+# quitarlo y no se enmascara
+FAVORABLE = re.compile(r"\b(?:acert|rindi|rinde|rinden|gan|super|mejor)\w*\b(?! (?:menos|peor)\b)|\bigual\w*\b|\bmism[oa]s? "
+                       r"(?:resultad|acierto|rendimiento)\w*|\bsin diferencia\w*|\bno (?:fallaron|empeor\w*|perdieron)\b"
+                       r"|\bmas (?:aciertos?|rentab\w*|beneficio\w*)\b")
+UNIVERSAL = re.compile(r"\b(?:siempre|tod[oa]s (?:las|los)|cada)\b")   # T-171: una recomendación que extiende el control a todo
 
 
 def _texto_del_codigo(leccion: dict) -> bool:
@@ -746,7 +862,10 @@ def conflicto_de_leccion(leccion: dict, cfg: dict | None = None) -> dict | None:
     amb = leccion.get("ambito") or {}
     texto["origen"] = " ".join(str(amb.get(k) or "") for k in ("fuente", "metodo"))
     obs, rec = _normalizar(texto["como_se_sabe"]), _normalizar(texto["donde_se_comprueba"])
-    if CARENCIA.search(obs) and not (REFUERZA.search(obs) or NEUTRO.search(obs)) and (_refuerza(rec) or ENDURECE.search(rec)) \
+    refuerza = _refuerza(rec, leccion=True) or bool(UNIVERSAL.search(rec) and any(r in NUCLEO for _, r in _controles(rec))
+                                                     and not (NIEGA.search(rec) or RELAJA.search(rec) or REBAJA_IMPLICITA.search(rec)))
+    if CARENCIA.search(obs) and not (REFUERZA.search(obs) or NEUTRO.search(obs) or FAVORABLE.search(obs)) \
+            and (refuerza or ENDURECE.search(rec)) \
             and conflicto_del_item({"que_cambia": "", "donde_se_comprueba": _enmascarar_crudo(texto["donde_se_comprueba"], ENDURECE,
                                                                                 " endurece ")}, leccion=True) is None:
         texto["como_se_sabe"] = _enmascarar_crudo(texto["como_se_sabe"], CARENCIA, " carencia ")   # T-161 r04 (H-13)
