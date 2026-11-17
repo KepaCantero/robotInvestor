@@ -654,14 +654,40 @@
   "no_comprueba": ""
  },
  "PB-61": {
-  "cobertura": "PARCIAL",
+  "cobertura": "AUTOMATICA",
   "pruebas": [
    "11_Ejecutor/tests/test_v51.py::test_consulta_bloqueante_pausa_y_vencimiento",
    "10_Herramientas/tests/test_ht09_validador_g3.py::TestV51::test_supuestos_declarados",
-   "11_Ejecutor/tests/test_fase4_huecos.py::test_pb61_solo_cri_se_pausa_y_al_vencer_el_supuesto_figura_en_los_entregables"
+   "11_Ejecutor/tests/test_fase4_huecos.py::test_pb61_solo_cri_se_pausa_y_al_vencer_el_supuesto_figura_en_los_entregables",
+   "11_Ejecutor/tests/test_t174_pb61_revision_c2.py::test_pb61_respuesta_tardia_que_invalida_el_supuesto_abre_una_revision_c2",
+   "11_Ejecutor/tests/test_t174_pb61_revision_c2.py::test_pb61_sin_informe_entregado_no_hay_revision",
+   "11_Ejecutor/tests/test_t174_pb61_revision_c2.py::test_pb61_un_run_bloqueado_no_cuenta_como_entregado",
+   "11_Ejecutor/tests/test_t174_pb61_revision_c2.py::test_pb61_segunda_respuesta_sin_indices_nuevos_no_reabre",
+   "11_Ejecutor/tests/test_t174_pb61_revision_c2.py::test_pb61_revision_pendiente_sin_ejecutar",
+   "11_Ejecutor/tests/test_t174_pb61_revision_c2.py::test_pb61_revision_fallida_queda_anotada_y_el_error_de_control_se_relanza",
+   "11_Ejecutor/tests/test_t174_pb61_revision_c2.py::test_pb61_no_bloqueante_contestada_en_plazo_tras_una_entrega",
+   "11_Ejecutor/tests/test_t174_pb61_revision_c2.py::test_pb61_informe_de_seguimiento_c6_entregado_con_el_supuesto",
+   "11_Ejecutor/tests/test_t174_pb61_revision_c2.py::test_r02_h01_dos_procesos_con_la_misma_respuesta_abren_una_sola_revision",
+   "11_Ejecutor/tests/test_t174_pb61_revision_c2.py::test_r02_h01_la_reserva_queda_en_curso_en_la_misma_entrada_que_la_respuesta",
+   "11_Ejecutor/tests/test_t174_pb61_revision_c2.py::test_r02_h02_error_de_control_deja_la_revision_interrumpida_y_se_relanza",
+   "11_Ejecutor/tests/test_t174_pb61_revision_c2.py::test_r02_h02_la_pendiente_se_relanza_en_la_siguiente_respuesta_y_la_en_curso_solo_si_se_pide",
+   "11_Ejecutor/tests/test_t174_pb61_revision_c2.py::test_r02_h03_el_alcance_es_la_interseccion_con_lo_entregado",
+   "11_Ejecutor/tests/test_t174_pb61_revision_c2.py::test_r02_h03_sin_tipos_que_revisar_no_se_lanza_un_ciclo_de_todo_el_alcance",
+   "11_Ejecutor/tests/test_t174_pb61_revision_c2.py::test_r02_h04_una_respuesta_fechada_antes_de_la_entrega_no_la_revisa",
+   "11_Ejecutor/tests/test_t174_pb61_revision_c2.py::test_r02_h05_un_fallo_tras_entregar_deja_la_revision_entregada",
+   "11_Ejecutor/tests/test_t174_pb61_revision_c2.py::test_r02_h06_la_fallida_va_al_operador_y_se_relanza_por_la_linea_de_ordenes",
+   "11_Ejecutor/tests/test_t174_pb61_revision_c2.py::test_r02_h06_relanzar_reclama_bajo_el_cerrojo_y_no_repite_una_ya_hecha",
+   "11_Ejecutor/tests/test_t174_pb61_revision_c2.py::test_r03_h07_la_en_curso_huerfana_se_avisa_una_sola_vez",
+   "11_Ejecutor/tests/test_t174_pb61_revision_c2.py::test_r03_h07_una_en_curso_viva_no_es_huerfana",
+   "11_Ejecutor/tests/test_t174_pb61_revision_c2.py::test_r03_h08_el_proceso_muere_tras_entregar_y_relanzar_no_duplica",
+   "11_Ejecutor/tests/test_t174_pb61_revision_c2.py::test_r03_h08_cada_reclamacion_lleva_su_numero_de_intento",
+   "11_Ejecutor/tests/test_t174_pb61_revision_c2.py::test_cierre_h09_la_revision_esta_en_marcha_desde_la_reserva",
+   "11_Ejecutor/tests/test_t174_pb61_revision_c2.py::test_cierre_h09_se_da_de_baja_tambien_sin_alcance_y_si_falla_la_escritura",
+   "11_Ejecutor/tests/test_t174_pb61_revision_c2.py::test_cierre_h10_la_clave_lleva_la_carpeta_del_almacen",
+   "11_Ejecutor/tests/test_t174_pb61_revision_c2.py::test_cierre_h11_lo_que_no_se_puede_juzgar_se_dice"
   ],
-  "comprueba": "Solo CRI se pausa y RV sigue; al vencer, el análisis continúa con el supuesto declarado, que figura en el paquete, en el JSON y en el informe técnico (C19 de HT-09 en OK); la respuesta tardía se marca.",
-  "no_comprueba": "Que la respuesta tardía abra una revisión C2: el ejecutor solo lo indica en la respuesta (INC-T116-03). Que el modelo no invente un dato del Broker."
+  "comprueba": "Solo CRI se pausa y RV sigue; al vencer, el análisis continúa con el supuesto declarado, que figura en el paquete, en el JSON y en el informe técnico (C19 de HT-09 en OK); la respuesta tardía que contesta ese supuesto ya entregado abre una revisión C2: un RUN- AD_HOC disparado por la CT-23, con los RUN- revisados, cuyo paquete ya no lleva el supuesto, declara la revisión en sus entregables y llega al Broker por CT-02 (corrección de INC-T116-03; reglas en INC-T174-01). Sin informe entregado con el supuesto no hay revisión, y una respuesta sin nada nuevo no la reabre; un fallo queda anotado y escalado al operador y un error de control se relanza dejando la revisión INTERRUMPIDA, que se relanza; dos procesos con la misma respuesta abren una sola revisión; el alcance no pasa de lo entregado ni de lo entregado hasta la fecha de la respuesta (QA r01 de T-174, H-01 a H-06); una revisión cuyo proceso murió se avisa una vez al operador y, si ya se había entregado, relanzarla no la repite (QA r02, H-07 y H-08).",
+  "no_comprueba": "Que el modelo real no invente un dato del Broker (con el cliente simulado no se puede medir; modo sombra). Los plazos con el reloj de pared (las pruebas fijan la hora). Si la respuesta contradice de verdad el supuesto: el ejecutor no lo juzga y toda respuesta nueva cuenta como invalidación (INC-T174-01)."
  },
  "PB-62": {
   "cobertura": "PARCIAL",

@@ -602,6 +602,7 @@ class Bloque:
             instante = instante.tz_convert(self.reloj.zona).tz_localize(None)
         as_of = self.fijar_fecha(instante)
         respuesta_final.enviar_pendientes(self, as_of)   # T-169 (H-02): las finales CT-03 que no salieron (sin ninguna, nada)
+        self.consultas.huerfanas()   # T-174 r03 (H-07): avisa una vez de cada revisión C2 EN_CURSO cuyo proceso murió
         run_id = self.almacen.nuevo_id("RUN")
         limitaciones: list[str] = []
         # T-158 (F0): el receptor revisa las guías CT-18 antes de aplicarlas; un ítem que contradice una regla no se aplica,
@@ -642,6 +643,7 @@ class Bloque:
             clases = [c for c in clases if c not in pausadas]
             limitaciones += [f"{NOMBRE_CLASE[c]}: pausado en F0 a la espera de la respuesta del Broker a {k} (consulta BLOQUEANTE, R26)"
                              for c, k in sorted(pausadas.items())]
+        limitaciones += self.consultas.nota_revision(disparador)   # T-174 (PB-61): revisión C2 abierta por una respuesta CT-23
         # PB-58 y PB-60 (INC-T116-03): un servicio sin credencial (denegada o pendiente) queda en modo degradado y los
         # entregables lo declaran
         limitaciones += [f"Servicio «{d['servicio']}» en modo degradado: " + (
@@ -2078,7 +2080,9 @@ class Bloque:
             "sombra": {c: s["sombra"] for c, s in seleccion.items() if s.get("sombra")},
             "ablacion": {c: s.get("ablacion") for c, s in seleccion.items() if s.get("ablacion")},
             # T-158: guías CT-18 aplicadas por agente («el agente registra la guia_id aplicada», 6.9); solo si hubo alguna
-            **({"guias_aplicadas": ap} if (ap := self.guias.aplicadas(run_id)) else {})})
+            **({"guias_aplicadas": ap} if (ap := self.guias.aplicadas(run_id)) else {}),
+            # T-174 (PB-61): las CNS- cuyo supuesto lleva lo entregado; una respuesta posterior abre una revisión C2 (7.9.5)
+            **({"supuestos_cns": sc} if (sc := sorted({s["cns_id"] for s in paquete.get("supuestos_declarados") or []})) else {})})
         sombras = {c: s["sombra"] for c, s in seleccion.items() if s.get("sombra")}
         if sombras:
             self.almacen.escribir("F6", "AG-20", {"tipo_entrada": "SOMBRA", "id": f"SOM-{run_id}", "run_id": run_id, "comparacion": sombras,
