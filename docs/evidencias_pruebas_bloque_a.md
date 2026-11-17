@@ -1,6 +1,6 @@
 # Evidencias del Plan de pruebas del Bloque A (Fase 4, T-116)
 
-Generado por `.docs/scripts/evidencias_plan_a.py --ejecutar` el 2026-11-16 sobre el commit `5aa9681`, con el cliente simulado (`MockClient`): sin red, sin clave y sin coste. No se edita a mano: se regenera.
+Generado por `.docs/scripts/evidencias_plan_a.py --ejecutar` el 2026-11-17 sobre el commit `f21172d`, con el cliente simulado (`MockClient`): sin red, sin clave y sin coste. No se edita a mano: se regenera.
 
 Qué significa cada resultado:
 
@@ -17,8 +17,8 @@ Con el cliente simulado se valida la tubería (canales, archivos, puertas, herra
 
 | Resultado | Pruebas del plan |
 | --- | --- |
-| Superada | 31 |
-| Superada en parte | 27 |
+| Superada | 32 |
+| Superada en parte | 26 |
 | Pendiente API | 7 |
 | Requiere usuarios | 1 |
 | Revisión documental | 1 |
@@ -34,7 +34,7 @@ Con el cliente simulado se valida la tubería (canales, archivos, puertas, herra
 | PB-04 Misma tendencia, estrategias distintas por clase | Pendiente API | — | Las lentes por tipo de activo las aplica el modelo. |
 | PB-05 Marco de otra clase aplicado sin justificación | Pendiente API | — | Lo detecta el Auditor con el modelo real. |
 | PB-06 Consulta N0 sin escalado | Superada | Clase ACLARACION y ruta N0; cada referencia de la respuesta es el identificador de una entrada de F1–F6 (no solo un prefijo válido); QRY- en F5 con sus referencias; cero encargos CT-05, ningún RUN- nuevo y consumo de 1 UC como máximo. | El tiempo de respuesta real (< 2 minutos) y que cada afirmación del texto del modelo real lleve su referencia. |
-| PB-07 Consulta que escala a análisis | Superada en parte | Clase CONTRASTE y ruta ANALITICA; respuesta provisional por CT-03 con el nivel y el plazo; RUN- ad hoc de alcance mínimo enlazado a la QRY-. | La respuesta final por CT-03 con referencias al acabar el RUN-: el ejecutor solo envía la provisional, con el RUN- enlazado (INC-T116-03). El tiempo real de la respuesta provisional y que el Coordinador no responda con conocimiento propio (modelo real). |
+| PB-07 Consulta que escala a análisis | Superada | Clase CONTRASTE y ruta ANALITICA; respuesta provisional por CT-03 con el nivel y el plazo; RUN- ad hoc de alcance mínimo enlazado a la QRY-; al terminar el RUN-, respuesta final por CT-03 (después de la provisional y de la entrega CT-02), enlazada a la QRY- y al RUN-, con referencias que existen en F1–F5 (el RUN- y las OPP- del top-3 con sus TND-, CLM- y PRG-), validada contra su esquema y por la mensajería, una sola vez; si el RUN- falla, no entrega o no se lanza, la final lo dice sin citar nada (T-162); un fallo de integridad del almacén para la consulta sin responder, y una final que no salió la envía la consulta siguiente, enlazada a la provisional registrada en F5 (T-169). | El tiempo real de la respuesta provisional (< 2 minutos) y que el Coordinador no responda con conocimiento propio con un modelo real (modo sombra). En el ejecutor síncrono la provisional se crea al terminar el RUN-, justo antes de la final. |
 | PB-08 Ráfaga de peticiones sin límite | Superada en parte | Idempotencia y acuse por mensaje; cola del monitor HT-08. | La ráfaga del plan: el ejecutor atiende cada CT-01 y cada CT-03 en el momento, sin cola de peticiones con prioridad y envejecimiento ni presupuesto por nivel (INC-T159-01). El p90 de N0 es de tiempo real. |
 | PB-09 Cambio de periodicidad por el Broker | Superada en parte | La periodicidad cambia en F10 (P-01) desde su fecha de efecto, los valores no válidos se rechazan y se avisa al Evaluador (CT-22). | El disparo del siguiente C1 en la fecha nueva: HT-05 tiene `proxima_ejecucion`, pero nada la llama con el P-01 de F10, y el P-01 que escribe el CT-04 guarda la hora de entrega y pierde la del ciclo (INC-T159-01). Que ningún otro parámetro cambie. |
 | PB-10 Configuración no permitida rechazada parcialmente | Superada en parte | Estado APLICADA_PARCIALMENTE; el umbral E y la celda ALT×H1 se rechazan con su motivo y la celda sigue sin aplicarse; P-02 aplicado; ningún otro parámetro de F10 cambia salvo la lista de horizontes; HA sin incidencia de escritura. | Que F10 cambie solo en P-02: el CT-04 del ejecutor lleva una lista global de horizontes y la guarda en P-03 aunque rechace la celda ALT×H1 (INC-T116-01). |
@@ -157,11 +157,18 @@ Criterio de aprobación del plan: Respuesta < 2 minutos; ≥ 1 referencia por af
 Criterio de aprobación del plan: Respuesta provisional < 2 minutos; QRY- enlazada al RUN-; el Coordinador no responde con conocimiento propio no trazado
 
 ```bash
-(cd bloque_a/11_Ejecutor && ../../.venv/bin/python -m pytest -q 'tests/test_integracion.py::test_consulta_que_escala_y_pregunta_repetida' 'tests/test_fase4_huecos.py::test_pb07_la_consulta_de_contraste_responde_provisional_con_nivel_y_plazo')
+(cd bloque_a/11_Ejecutor && ../../.venv/bin/python -m pytest -q 'tests/test_integracion.py::test_consulta_que_escala_y_pregunta_repetida' 'tests/test_fase4_huecos.py::test_pb07_la_consulta_de_contraste_responde_provisional_con_nivel_y_plazo' 'tests/test_t162_respuesta_final.py::test_pb07_de_punta_a_punta_con_el_simulado' 'tests/test_t162_respuesta_final.py::test_ca1_la_final_sale_despues_de_la_provisional_enlazada_a_la_consulta_y_al_run' 'tests/test_t162_respuesta_final.py::test_ca2_las_referencias_son_las_del_run_y_existen_en_la_memoria' 'tests/test_t162_respuesta_final.py::test_ca3_si_el_run_falla_la_final_lo_dice_sin_referencias' 'tests/test_t162_respuesta_final.py::test_ca4_enviar_dos_veces_no_duplica' 'tests/test_t169_hallazgos_t162.py::test_h01_un_fallo_de_integridad_para_la_consulta_como_en_la_base' 'tests/test_t169_hallazgos_t162.py::test_h02_la_siguiente_consulta_envia_la_final_pendiente')
 ```
 
 - `11_Ejecutor/tests/test_integracion.py::test_consulta_que_escala_y_pregunta_repetida`: SUPERADA
 - `11_Ejecutor/tests/test_fase4_huecos.py::test_pb07_la_consulta_de_contraste_responde_provisional_con_nivel_y_plazo`: SUPERADA
+- `11_Ejecutor/tests/test_t162_respuesta_final.py::test_pb07_de_punta_a_punta_con_el_simulado`: SUPERADA
+- `11_Ejecutor/tests/test_t162_respuesta_final.py::test_ca1_la_final_sale_despues_de_la_provisional_enlazada_a_la_consulta_y_al_run`: SUPERADA
+- `11_Ejecutor/tests/test_t162_respuesta_final.py::test_ca2_las_referencias_son_las_del_run_y_existen_en_la_memoria`: SUPERADA
+- `11_Ejecutor/tests/test_t162_respuesta_final.py::test_ca3_si_el_run_falla_la_final_lo_dice_sin_referencias`: SUPERADA
+- `11_Ejecutor/tests/test_t162_respuesta_final.py::test_ca4_enviar_dos_veces_no_duplica`: SUPERADA
+- `11_Ejecutor/tests/test_t169_hallazgos_t162.py::test_h01_un_fallo_de_integridad_para_la_consulta_como_en_la_base`: SUPERADA
+- `11_Ejecutor/tests/test_t169_hallazgos_t162.py::test_h02_la_siguiente_consulta_envia_la_final_pendiente`: SUPERADA
 
 ### PB-08 · Ráfaga de peticiones sin límite
 

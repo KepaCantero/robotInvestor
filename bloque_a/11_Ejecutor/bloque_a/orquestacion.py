@@ -22,6 +22,7 @@ from typing import Any
 import pandas as pd
 
 from . import diseno_v6 as v6
+from . import respuesta_final
 from . import sintesis as sint
 from .agentes import Agentes
 from .almacen import Almacen, Reloj
@@ -575,6 +576,7 @@ class Bloque:
         if instante.tzinfo is not None:
             instante = instante.tz_convert(self.reloj.zona).tz_localize(None)
         as_of = self.fijar_fecha(instante)
+        respuesta_final.enviar_pendientes(self, as_of)   # T-169 (H-02): las finales CT-03 que no salieron (sin ninguna, nada)
         run_id = self.almacen.nuevo_id("RUN")
         limitaciones: list[str] = []
         # T-158 (F0): el receptor revisa las guías CT-18 antes de aplicarlas; un ítem que contradice una regla no se aplica,
@@ -2082,6 +2084,7 @@ class Bloque:
     def consulta(self, texto: str, contexto: dict | None = None, as_of=None, urgencia: str = "NORMAL",
                  ejecutar_escalado: bool = True) -> dict:
         as_of = self.fijar_fecha(as_of or pd.Timestamp.today())
+        respuesta_final.enviar_pendientes(self, as_of)   # T-169 (H-02): las finales CT-03 que no salieron (sin ninguna, nada)
         msg = self.mensajeria.crear("CT-03", "BROKER", "AG-01", {"pregunta": texto, "contexto": contexto or {}, "urgencia": urgencia})
         qry_id = self.almacen.nuevo_id("QRY")
         indice = Indice(self.almacen, as_of)
@@ -2121,6 +2124,7 @@ class Bloque:
             d["respuesta"] = "La memoria del bloque no contiene una respuesta trazable; se escala a análisis. " + d["respuesta"]
         d["referencias"] = refs
         escalado = None
+        fallo = None
         if d["ruta"] == "ANALITICA":
             esc = d.get("escalado") or {}
             activas = list(self.f10(as_of).get("P-02") or perfiles_activos(self.cfg))
@@ -2130,10 +2134,20 @@ class Bloque:
             escalado = {"nivel": nivel, "clases": clases, "plazo_estimado": "mismo día (ejecución síncrona del ejecutor)",
                         "respuesta_provisional": d["respuesta"], "run_id": None}
             if ejecutar_escalado:
-                res = self.ciclo(as_of, tipo="AD_HOC", alcance={"clases": clases, "pregunta": esc.get("pregunta") or texto},
-                                 nivel_forzado=nivel, disparador={"origen": "CT-03", "msg_id": msg["msg_id"], "qry_id": qry_id})
-                escalado["run_id"] = res["run_id"]
-                escalado["estado_run"] = res["estado"]
+                try:
+                    res = self.ciclo(as_of, tipo="AD_HOC", alcance={"clases": clases, "pregunta": esc.get("pregunta") or texto},
+                                     nivel_forzado=nivel, disparador={"origen": "CT-03", "msg_id": msg["msg_id"], "qry_id": qry_id})
+                except Exception as e:   # T-162: un RUN- que falla no se pierde; la provisional y la final lo dicen
+                    if respuesta_final.para_la_consulta(self.almacen, e):
+                        raise   # T-169 (H-01): integridad o control del almacén: se para como antes, sin QRY ni CT-03
+                    fallo = type(e).__name__   # solo la clase: el texto podría llevar datos (R8)
+                    self.almacen.incidencia("HERRAMIENTA", f"El análisis escalado de {qry_id} falló ({fallo})", "AG-01")
+                    escalado["run_id"] = next((x["id"] for x in self.almacen.leer("F5") if x.get("tipo_entrada") == "RUN"
+                                               and (x.get("disparador") or {}).get("qry_id") == qry_id), None)
+                    escalado["estado_run"] = "FALLIDO"
+                else:
+                    escalado["run_id"] = res["run_id"]
+                    escalado["estado_run"] = res["estado"]
         tema = normalizar(d.get("tema_normalizado") or texto)[:80].strip()
         pr_rep = parametro(self.cfg, "pregunta_repetida")   # Anexo A, P-26 (T-65, CS-10 de T-53)
         hace4 = str((pd.Timestamp(as_of) - pd.Timedelta(weeks=int(pr_rep["semanas"]))).date())
@@ -2154,8 +2168,13 @@ class Bloque:
         self.almacen.escribir("F5", "AG-01", entrada)
         respuesta = self.mensajeria.crear("CT-03", "AG-01", "BROKER", {k: entrada[k] for k in ("clase_consulta", "ruta", "respuesta", "referencias", "confianza", "escalado")},
                                           query_id=qry_id, tipo_mensaje="RETORNO", estado="COMPLETO")
+        # T-162 (PB-07): al terminar (o fallar) el análisis escalado, la respuesta final por CT-03, una sola vez. T-169 (H-02):
+        # antes, el msg_id de la provisional queda en F5; si la final no sale ahora, la envía la consulta o el ciclo siguientes
+        if escalado is not None:
+            respuesta_final.registrar_provisional(self.almacen, qry_id, respuesta["msg_id"], fallo)
+        final = respuesta_final.enviar(self, qry_id, respuesta["msg_id"], as_of, fallo) if escalado is not None else None
         return {"query_id": qry_id, **{k: entrada[k] for k in ("clase_consulta", "ruta", "respuesta", "referencias", "confianza", "escalado")},
-                "repeticion": repeticion, "consumo": cons, "msg_id": respuesta["msg_id"]}
+                "repeticion": repeticion, "consumo": cons, "msg_id": respuesta["msg_id"], "respuesta_final": final}
 
     # ====================================================================================
     # CT-04 · Decisiones y configuración

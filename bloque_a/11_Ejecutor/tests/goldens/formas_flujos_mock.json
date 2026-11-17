@@ -1459,7 +1459,8 @@
     },
     "CT-03.RETORNO": {
      "combinaciones_de_claves_a_veces": [
-      ""
+      "",
+      "respuesta_final run_id"
      ],
      "emisores": [
       "AG-01"
@@ -1467,7 +1468,12 @@
      "receptores": [
       "BROKER"
      ],
-     "rutas_a_veces": {},
+     "rutas_a_veces": {
+      "limitaciones[]": "string",
+      "referencias[]": "string",
+      "respuesta_final": "object",
+      "run_id": "string"
+     },
      "rutas_siempre": {
       "autoevaluacion": "string",
       "clase_consulta": "string",
@@ -1490,6 +1496,8 @@
       "receptor": "string",
       "referencias": "array",
       "respuesta": "string",
+      "respuesta_final.provisional_msg_id": "string",
+      "respuesta_final.resultado_analisis": "string",
       "ruta": "string",
       "timestamp": "string",
       "tipo_mensaje": "string",
@@ -1500,7 +1508,8 @@
        "CONTRASTE"
       ],
       "confianza": [
-       "especulativo"
+       "especulativo",
+       "probable"
       ],
       "ruta": [
        "ANALITICA"
