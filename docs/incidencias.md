@@ -13,6 +13,8 @@ versión quedó sin bump. Decisión: se deja tal cual pendiente de confirmar con
 propietario de la entrega; no se corrige en silencio porque una versión en el paquete
 instalado (`bloque-a --version` / metadata) diría 1.1.0.
 
+**INC-001, resuelta (17-11-2026, T-167).** Por delegación del operador (`sistema_global/seguimiento/Decisiones_del_operador_Bloque_A.md` §1), `pyproject.toml` y `bloque_a.__version__` pasan a 1.2.0, la versión del README. `tests/test_t167_version.py` comprueba que las tres coinciden. Un entorno ya instalado sigue diciendo 1.1.0 en sus metadatos hasta que se reinstale (`.docs/scripts/preparar_entorno.sh`). INC-002 (A-Forex) sigue abierta: no es del Bloque A.
+
 **INC-002 · 2026-11-03 · Igual patrón en bloque_a_forex.** El README V1.1 del Bloque A
 Forex declara "V1.1" (subcomandos seguimiento/consulta-broker/credencial incluidos, 68
 tests) pero su `pyproject.toml` declara `version = "1.0.0"`. Mismo tratamiento que
