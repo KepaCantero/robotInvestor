@@ -1,10 +1,26 @@
 # Borrador · corrección del Anexo B del Documento 0 del Bloque A
 
-**Estado: borrador para la próxima entrega del Documento 0. No se aplica al corpus** (el Documento 0 es una entrega congelada). Generado por `.docs/scripts/borrador_anexo_b.py` a partir de `bloque_a/11_Ejecutor/tests/goldens/divergencias_anexo_b.json`; no se edita a mano: si cambian las diferencias, se vuelve a generar.
+**Estado: aplicado en el Documento 0 V5.2** (`bloque_a/01_Gobernanza/Documento 0 - Protocolo maestro del Bloque A - Versión óptima V5.2.md`, T-143, 15-11-2026). La V5.1 está en `bloque_a/99_Historico_V5.1/01_Gobernanza/`. Generado por `.docs/scripts/borrador_anexo_b.py`; no se edita a mano: si cambian las diferencias, se vuelve a generar. Las decisiones de la aplicación están en INC-T114-01 (`docs/incidencias.md`) y en `.docs/tickets/T-143/analisis-tecnico.md`.
+
+## Lo que queda contra la V5.2
+
+- **Contratos sin campos en el Anexo B.** `CT-18`, `CT-20`, `CT-21`: la V5.2 los sigue remitiendo a los prompts de sistema.
+- **Diferencias medidas.** Ninguna: contra la V5.2, `divergencias_anexo_b.json` no tiene diferencias por contrato, ni mensajes de los flujos que no cumplan el Anexo B, ni valores en otro campo.
+- **Ejemplo publicado del informe de seguimiento (INC-T114-02).** Sigue sin cumplir su propio esquema por la clave `x_aviso_ejemplo`. Está en `06_Plantillas_entregables`, no en el Documento 0, y la V5.2 no lo toca.
+- **Campo del tipo en CT-22.** La V5.2 documenta los dos campos como están (`tipo` y `tipo_aviso`, uno de los dos por aviso). Unificarlos en el código sigue siendo posible, pero sería un cambio de formato con re-congelado de los goldens.
+- **Listas cerradas.** La V5.2 dice que la mensajería solo comprueba las de CT-01, CT-02 y los estados; las demás no. Validarlas en el código sería un cambio de formato.
+- **Lo que el golden no mide.** Los retornos internos (CT-05 a CT-08, CT-11 a CT-15 y CT-17) no tienen más esquema derivado que sus campos de primer nivel: lo que el Anexo B V5.2 dice de ellos (campos de primer nivel, anidados, también los de la ficha `FINALISTA`, y valores de sus listas cerradas) lo comparan con `ESQUEMAS` las pruebas `test_t143_*` de `tests/test_fase3_goldens.py`; las claves de los retornos del Motor, con el Motor de verdad, y la `memoria` de cada orden CT-05, con las órdenes que emite el ejecutor.
+- **Copias y citas.** La V5.2 no tiene `.docx` (INC-T143-01). Los documentos congelados de la entrega (system prompts, funciones, archivos operativos…) y el Documento 0 del Bloque B siguen citando la V5.1, y no se editan.
+
+## Borrador aplicado (contra el Anexo B V5.1)
+
+El borrador tal como se aplicó, generado con las diferencias congeladas contra la V5.1 (`.docs/diseno/bloque_a/divergencias_anexo_b_v51.json`, copia de `divergencias_anexo_b.json` antes de T-143).
+
+> Estado hasta T-143: borrador para la próxima entrega del Documento 0. No se aplica al corpus (el Documento 0 es una entrega congelada). Generado por `.docs/scripts/borrador_anexo_b.py` a partir de `bloque_a/11_Ejecutor/tests/goldens/divergencias_anexo_b.json`; no se edita a mano: si cambian las diferencias, se vuelve a generar.
 
 **Por qué.** El operador decidió el 13-11-2026 que, si el Documento 0 y el código difieren, manda el código, porque el Documento 0 se escribió antes de construir el bloque (INC-T114-01 en `docs/incidencias.md`). El Anexo B se corrige para que describa lo que hace el ejecutor.
 
-## 1. Cambios generales
+### 1. Cambios generales
 
 - **Lotes (CT-11, CT-12 y CT-13).** El Anexo B describe una pieza, un encargo o una petición por mensaje; el ejecutor los agrupa en una lista (`piezas`, `encargos`, `peticiones`) y rechaza el ejemplo tal cual. Propuesta: describir el mensaje como la lista, con los campos de hoy dentro de cada elemento, y cambiar el ejemplo.
 - **Estado del objeto en los retornos de CT-23, CT-24 y CT-25.** El bloque JSON del Anexo B pone el estado del objeto en `estado`; el ejecutor lo lleva en `estado_consulta`, `estado_seguimiento` y `estado_credencial`, como pide el §6.2.6 del propio Documento 0, y deja `estado` para el estado común. Propuesta: usar esos nombres en el Anexo B.
@@ -18,7 +34,7 @@
 - **Retornos del Motor (CT-09 y CT-10).** Tampoco pasan por la mensajería ni son la respuesta de un agente: los sirve el Motor (`motor/servicio.py`) y no tienen esquema en `ESQUEMAS`. Propuesta: describir en el Anexo B los campos del retorno que sirve el Motor.
 - **Campos mínimos que el ejecutor no exige.** Por la decisión del operador, la propuesta por defecto es marcarlos en el Anexo B como opcionales («si aplica»). Si alguno debe ser obligatorio de verdad, se cambia el código en su lugar y se re-congelan los goldens con su motivo. La lista, contrato a contrato, está abajo.
 
-## 2. Contrato a contrato
+### 2. Contrato a contrato
 
 | Contrato | Lo que difiere hoy | Cambio propuesto en el Anexo B |
 | --- | --- | --- |
@@ -63,11 +79,11 @@
 | CT-25.RETORNO | el valor `DENEGADA` va en `estado_credencial`, no en `estado` | nombrar `estado_credencial` |
 | CT-25.RETORNO | el valor `PROVISTA` va en `estado_credencial`, no en `estado` | nombrar `estado_credencial` |
 
-## 3. Contratos sin campos en el Anexo B
+### 3. Contratos sin campos en el Anexo B
 
 `CT-16`, `CT-17`, `CT-18`, `CT-19`, `CT-20`, `CT-21`: ver «CT-16 a CT-21» en el §1.
 
-## 4. Cómo se aplica en la entrega
+### 4. Cómo se aplica en la entrega
 
 1. Se edita el Anexo B (y los §7.6 y §7.9 si se unifica el campo de CT-22) en la nueva versión del Documento 0.
 2. Se re-congela el corpus con su motivo (`tools/corpus_integridad.py --update`) y los goldens que dependan del Anexo B (`anexo_b_esquemas.json`, `huellas.json`, `divergencias_anexo_b.json`) con `goldens_ct.py --update --motivo`.

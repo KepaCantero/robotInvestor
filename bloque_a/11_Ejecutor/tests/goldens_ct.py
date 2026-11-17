@@ -277,11 +277,14 @@ def capturar_flujos(carpeta_tmp: Path, fecha: str) -> dict[str, list[dict]]:
     opps = [o["opp_id"] for d in r2["paquete"]["clases"].values() for o in d["opciones"]]
     with captura.flujo("peticion_ad_hoc"):
         b.peticion(json.loads((RAIZ / "ejemplos" / "peticiones" / "peticion_ad_hoc.json").read_text(encoding="utf-8")), semana2)
+    # T-143 r03 (QA r02, H-11 c): si un cambio del ejecutor deja el ciclo sin opciones, los flujos que las usan quedan vacíos
+    # (y lo dicen las pruebas) en vez de romper la captura con un IndexError
     with captura.flujo("decision_broker"):
-        b.decision({"decisiones": [{"opp_id": opps[0], "decision": "DESCARTADA", "motivo": "no encaja"}],
-                    "valoracion_informe": {"run_id": r2["run_id"], "utilidad": 4, "comentario": "Claro."},
-                    "configuracion": {"horizontes": ["H1", "H3"]}}, semana2)
-        b.decision({"resultado_comunicado": {"opp_id": opps[0], "texto": "No se operó."}}, semana2)
+        if opps:
+            b.decision({"decisiones": [{"opp_id": opps[0], "decision": "DESCARTADA", "motivo": "no encaja"}],
+                        "valoracion_informe": {"run_id": r2["run_id"], "utilidad": 4, "comentario": "Claro."},
+                        "configuracion": {"horizontes": ["H1", "H3"]}}, semana2)
+            b.decision({"resultado_comunicado": {"opp_id": opps[0], "texto": "No se operó."}}, semana2)
     # ---- otro bloque V5: consulta al Broker, credenciales y, tras un ciclo corto que no se guarda, el seguimiento encargado
     b = conftest.nuevo_bloque(Path(carpeta_tmp) / "broker", universo)
     captura.espiar(b)
@@ -304,15 +307,16 @@ def capturar_flujos(carpeta_tmp: Path, fecha: str) -> dict[str, list[dict]]:
         b.credenciales.recordatorios(_mas_dias(fecha, 8))
     opps = [o["opp_id"] for d in b.ciclo(fecha, alcance={"clases": ["RV", "MP"]})["paquete"]["clases"].values() for o in d["opciones"]]
     with captura.flujo("seguimiento_encargado"):
-        seg = b.seguimientos.procesar({"accion": "ALTA", "opp_id": opps[0], "frecuencia": "SEMANAL", "motivo": "Vigilar sin enviar a B",
-                                       "senales_interes": ["Momentum relativo"]}, fecha)["seg_id"]
-        b.seguimientos.procesar({"accion": "ALTA", "opp_id": opps[1], "frecuencia": "DIARIA", "fecha_fin": _mas_dias(fecha, 3)}, fecha)
-        b.seguimientos.ejecutar(semana2)      # un ciclo C6 del primero; el segundo ha llegado a su fecha de fin
-        b.seguimientos.procesar({"accion": "PAUSA", "seg_id": seg}, semana2)
-        b.seguimientos.procesar({"accion": "REANUDACION", "seg_id": seg}, semana2)
-        b.seguimientos.procesar({"accion": "MODIFICACION", "seg_id": seg, "frecuencia": "MENSUAL"}, semana2)
-        b.seguimientos.respuesta_broker(seg, "RECHAZADA", as_of=semana2)
-        b.seguimientos.procesar({"accion": "CANCELACION", "seg_id": seg}, semana2)
+        if len(opps) >= 2:   # T-143 r03 (H-11 c): sin dos opciones, el flujo queda vacío
+            seg = b.seguimientos.procesar({"accion": "ALTA", "opp_id": opps[0], "frecuencia": "SEMANAL", "motivo": "Vigilar sin enviar a B",
+                                           "senales_interes": ["Momentum relativo"]}, fecha)["seg_id"]
+            b.seguimientos.procesar({"accion": "ALTA", "opp_id": opps[1], "frecuencia": "DIARIA", "fecha_fin": _mas_dias(fecha, 3)}, fecha)
+            b.seguimientos.ejecutar(semana2)      # un ciclo C6 del primero; el segundo ha llegado a su fecha de fin
+            b.seguimientos.procesar({"accion": "PAUSA", "seg_id": seg}, semana2)
+            b.seguimientos.procesar({"accion": "REANUDACION", "seg_id": seg}, semana2)
+            b.seguimientos.procesar({"accion": "MODIFICACION", "seg_id": seg, "frecuencia": "MENSUAL"}, semana2)
+            b.seguimientos.respuesta_broker(seg, "RECHAZADA", as_of=semana2)
+            b.seguimientos.procesar({"accion": "CANCELACION", "seg_id": seg}, semana2)
     with captura.flujo("informe_de_aprendizaje"):
         b.ciclo(_mas_dias(fecha, 35), alcance={"clases": ["RV", "MP"]})   # cinco semanas después ya hay pronósticos resueltos
 

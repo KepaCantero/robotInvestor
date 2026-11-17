@@ -1,4 +1,4 @@
-"""Contratos CT-01 a CT-25 (sección 6 y Anexo B del Documento 0 óptima V5.1; CT-23 a CT-25 añadidos en V5.1).
+"""Contratos CT-01 a CT-25 (sección 6 y Anexo B del Documento 0 óptima V5.2, que describe este módulo; CT-23 a CT-25 añadidos en V5.1).
 
 - `crear_mensaje` añade los campos comunes (msg_id, contrato, version_contrato, emisor, receptor,
   run_id/query_id, timestamp, presupuesto/consumo, estado…).

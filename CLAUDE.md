@@ -115,7 +115,7 @@ Flags: `--core` (rápido: corpus+config+tests), `--strict` (corta al primer fall
 
 | Gate | Qué protege |
 |---|---|
-| corpus-integridad | El corpus canónico congelado por hash (695 archivos: prompts, catálogo, esquemas, referencias…). Adaptación de los goldens de conformance: **re-congelar solo es deliberado** — `--update-corpus` en el MISMO commit que el cambio y con el motivo en el mensaje. Nada silencioso. |
+| corpus-integridad | El corpus canónico congelado por hash (696 archivos: prompts, catálogo, esquemas, referencias…). Adaptación de los goldens de conformance: **re-congelar solo es deliberado** — `--update-corpus` en el MISMO commit que el cambio y con el motivo en el mensaje. Nada silencioso. |
 | nombres-nfc | Lección macOS pagada 2×: nombres NFD rompen tests que en Linux pasan. |
 | yaml-configs | Los 3 `por_defecto.yaml` parsean. |
 | secrets | Repo público: patrones reales con allowlist explícita (`tools/secrets_allowlist.txt`, solo cadadas verificadas a mano). |

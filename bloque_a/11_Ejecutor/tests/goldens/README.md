@@ -11,9 +11,9 @@ Ficheros esperados que congelan el formato de los contratos CT-01 a CT-25. La su
 | `formas_flujos_mock.json` | Por flujo simulado, contrato y tipo de mensaje: emisores, receptores, la ruta de cada clave (anidadas incluidas) con su tipo JSON y las combinaciones de claves opcionales | Generado con el ejecutor y `MockClient` |
 | `divergencias_anexo_b.json` | Dónde difieren el Anexo B y el ejecutor (INC-T114-01) | Calculado |
 | `huellas.json` | SHA-256 del Documento 0, de los esquemas publicados y de los tres ficheros escritos a mano | Calculado |
-| `anexo_b_esquemas.json` | Un esquema JSON por contrato y sentido, **derivado solo del Anexo B** del Documento 0 V5.1 | Escrito a mano |
+| `anexo_b_esquemas.json` | Un esquema JSON por contrato y sentido, **derivado solo del Anexo B** del Documento 0 V5.2 (hasta T-143, de la V5.1) | Escrito a mano |
 | `anexo_b_ejemplos.json` | Un ejemplo por esquema derivado | Escrito a mano |
-| `bateria_mensajes.json` | La batería: mensajes válidos e inválidos por contrato, cada uno con lo que se espera de él | Escrito a mano |
+| `bateria_mensajes.json` | La batería: mensajes válidos e inválidos por contrato, cada uno con lo que se espera de él. Desde T-143, los casos que partían de un ejemplo que cambió con la V5.2 llevan su cuerpo (el ejemplo V5.1) dentro del caso, para seguir midiendo lo mismo | Escrito a mano |
 | `REGISTRO.md` | Una línea por re-congelado: fecha, ficheros y motivo | Lo escribe `--update` |
 
 ## Qué ve cada golden
@@ -45,17 +45,19 @@ Ficheros esperados que congelan el formato de los contratos CT-01 a CT-25. La su
   - `informe_de_aprendizaje`: CT-19 y todos los contratos del ciclo que lo precede (desde T-124).
 
   De cada tipo de mensaje se guarda la ruta de cada clave, con `x[]` para los elementos de una lista, y sus tipos JSON, en dos grupos: las que están en todos los objetos que podrían llevarlas y las que solo en algunos. Las claves que son un dato y no un formato (el código de un tipo de activo, un identificador) se escriben `<clase>` e `<id>`; una ruta genérica cuenta una vez por objeto, aunque el objeto tenga varias claves reales (T-124, H-08). Además, las combinaciones de claves opcionales de primer nivel: una por cada forma de mensaje vista.
-- **Las diferencias con el Anexo B** (`divergencias_anexo_b.json`): medidas con el ejecutor, sobre los ejemplos y sobre los mensajes de los once flujos.
+- **Las diferencias con el Anexo B** (`divergencias_anexo_b.json`): medidas con el ejecutor, sobre los ejemplos y sobre los mensajes de los once flujos. Con el Anexo B V5.2 (T-143) no queda ninguna diferencia medida; solo la lista de contratos sin campos (CT-18, CT-20 y CT-21).
 
 ## Cómo se derivan los esquemas del Anexo B
 
-- Son obligatorios los campos que el Anexo B nombra sin marcarlos como opcionales o condicionales («opcional», «solo en…», «cuando aplica»).
+- Son obligatorios los campos que el Anexo B nombra sin marcarlos como opcionales o condicionales («opcional», «si aplica», «solo en…», «cuando aplica», «la mensajería no lo exige»).
 - Una condición del Anexo B se codifica con `if`/`then`: `seg_id` y `opp_id` de CT-05 solo con `SEGUIMIENTO`, y `contenido` de CT-23 «solo en ENTRANTE» (obligatorio en ENTRANTE y ausente en los demás).
 - Las listas cerradas del Anexo B (`A|B|C`) son `enum`. Una lista abierta («admite además…», `tipo` de CT-22) no restringe: sus valores van en `examples`.
 - No se añade ningún tipo, patrón ni límite que el Anexo B no diga, y los campos de más se admiten: el §6.2.3 dice que los campos son el mínimo común y que el esquema del operador puede ampliarlos.
 - Cada esquema lleva en `$comment` la marca «derivado del Anexo B» y, si hace falta, la nota de lo que el Anexo B deja abierto.
-- **Retornos rechazados.** El Anexo B no dice qué campos lleva un retorno con estado RECHAZADO o SIN_RESULTADO; el §6.2.6 solo pide el motivo, y en CT-09 el Anexo B prevé un retorno `RECHAZADO` con motivo `ACLARACION_REQUERIDA`. No se inventa una regla: los esquemas de retorno describen el retorno con resultado y no sirven para juzgar los otros. Lo dice el `$comment` de cada uno.
-- CT-16 a CT-21 no tienen campos en el Anexo B (los remite a los prompts de sistema): de ellos se congelan el canal, la regla de `run_id` y, si un flujo los emite, su forma. De CT-22 el Anexo B solo nombra `tipo`.
+- **Retornos rechazados.** El Anexo B V5.1 no decía qué campos lleva un retorno con estado RECHAZADO o SIN_RESULTADO; el V5.2 dice que lleva el estado común y el motivo, sin los campos de resultado (y que la mensajería exige igualmente los campos de retorno de su contrato). Los esquemas de retorno describen el retorno con resultado y no sirven para juzgar los otros. Lo dice el `$comment` de cada uno.
+- **Retornos internos y del Motor (T-143).** El Anexo B V5.2 describe los retornos de CT-05 a CT-08, CT-11 a CT-15 y CT-17 con los esquemas de respuesta de `ESQUEMAS` («con `CLAVE`, que exige …; admite además …», y sus campos anidados con «En `CLAVE`, cada elemento de `campo` lleva …; admite además …», con los valores de las listas cerradas entre paréntesis; desde T-143 r03, también CT-17 y los anidados de la ficha `FINALISTA`, con «En `FINALISTA`, …») y los de CT-09 y CT-10 con las claves que devuelve el Motor. La `memoria` de cada tipo de orden CT-05 la compara `test_t143_r03_*` con las órdenes que emite el ejecutor. Como no pasan por la mensajería, su esquema derivado nombra esos campos de primer nivel y no exige ninguno; las pruebas `test_t143_*` comparan el Anexo B con `ESQUEMAS` (primer nivel, anidados y valores) y con el Motor de verdad.
+- **La prosa frente al esquema derivado (T-143 r02).** Cada lista cerrada de un esquema derivado tiene en el párrafo de su contrato los mismos valores (en su bloque JSON o entre paréntesis tras el campo), y cada campo que el derivado no exige está marcado como opcional junto al campo («Son opcionales `a` y `b`», «`a` es opcional», «`a` (si aplica)», «`a` solo con …», o en una frase que dice que la mensajería no lo exige; desde la r03, una marca suelta en la frase no basta). Lo comprueban `test_t143_r02_*`.
+- CT-18, CT-20 y CT-21 no tienen campos en el Anexo B (los remite a los prompts de sistema): de ellos se congelan el canal y la regla de `run_id`. De CT-16, CT-17 y CT-19 el Anexo B V5.2 da los campos de lo que el ejecutor emite, y de CT-22, `tipo` y `tipo_aviso` (uno de los dos por aviso, `oneOf`).
 - Una prueba comprueba que cada campo de cada esquema, anidados incluidos, está en el párrafo del Anexo B que habla de su contrato.
 
 ## Límites
@@ -67,7 +69,7 @@ Lo que estos goldens **no** ven. Un cambio de este tipo pasa sin que falle ningu
   - CT-07 y CT-14: el ejecutor los emite, pero no con las respuestas de `MockClient` (ningún analista simulado pide una búsqueda CT-07, y el G3 simulado sale APTO a la primera). El cuerpo de CT-07 lo construye la misma función que el de CT-08, que sí se ve.
 
   De estos siete se congelan las tablas, el mensaje de ejemplo, el canal y la regla de `run_id`, no una forma emitida.
-- **Los retornos internos (CT-06 a CT-14).** No pasan por `Mensajeria`: son la respuesta del agente, que se valida con `ESQUEMAS` (`esquemas_respuestas.json`). Aquí se congela el esquema, no una respuesta vista.
+- **Los retornos internos (CT-06 a CT-08 y CT-11 a CT-14) y los del Motor (CT-09 y CT-10).** No pasan por `Mensajeria`: los internos son la respuesta del agente, que se valida con `ESQUEMAS` (`esquemas_respuestas.json`), y los del Motor los devuelve `motor/servicio.py`. Aquí se congela el esquema, no una respuesta vista; que el Anexo B diga lo mismo lo comprueban las pruebas `test_t143_*`.
 - **Los valores.** De un mensaje emitido se guardan las claves y los tipos, no los valores (salvo los de los campos con valores nombrados en el Anexo B). Un texto, una cifra o un identificador con otro formato interno (por ejemplo, otro patrón de `run_id`) no se ve.
 - **Tipos y claves opcionales mezclados.** Los mensajes de un mismo flujo, contrato y tipo se resumen juntos. Si una clave anidada opcional deja de emitirse en un caso y sigue en otro, o un valor que ya era «`null|string`» deja de ser `null` en un caso y lo sigue siendo en otro, el resumen no cambia. En el primer nivel sí se ve, por las combinaciones de claves.
 - **Las claves genéricas que faltan en un caso.** Una ruta escrita con `<clase>` o `<id>` está «siempre» si cada objeto tiene al menos una clave de ese tipo: que un CT-05 pierda una de sus clases en `presupuesto_por_clase` en un ciclo no se ve (QA r01 de T-124, H-03).

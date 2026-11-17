@@ -386,9 +386,6 @@
       "timestamp": "string",
       "tipo_mensaje": "string",
       "version_contrato": "string"
-     },
-     "valores_de_listas_cerradas": {
-      "direccion": []
      }
     },
     "CT-12.ENCARGO": {
@@ -1197,7 +1194,10 @@
       "version_contrato": "string"
      },
      "valores_de_listas_abiertas": {
-      "tipo": []
+      "tipo": [],
+      "tipo_aviso": [
+       "CONSULTA_RECURRENTE"
+      ]
      }
     },
     "CT-23.ENCARGO": {
@@ -1294,8 +1294,8 @@
       "version_contrato": "string"
      },
      "valores_de_listas_cerradas": {
-      "estado": [
-       "COMPLETO"
+      "estado_consulta": [
+       "RESPONDIDA"
       ]
      }
     }
@@ -1785,9 +1785,6 @@
       "timestamp": "string",
       "tipo_mensaje": "string",
       "version_contrato": "string"
-     },
-     "valores_de_listas_cerradas": {
-      "direccion": []
      }
     },
     "CT-12.ENCARGO": {
@@ -2038,8 +2035,9 @@
       "version_contrato": "string"
      },
      "valores_de_listas_cerradas": {
-      "estado": [
-       "COMPLETO"
+      "estado_credencial": [
+       "DENEGADA",
+       "PROVISTA"
       ]
      }
     }
@@ -2126,7 +2124,8 @@
      "valores_de_listas_abiertas": {
       "tipo": [
        "DECISIONES_BROKER"
-      ]
+      ],
+      "tipo_aviso": []
      }
     }
    }
@@ -2456,9 +2455,6 @@
       "timestamp": "string",
       "tipo_mensaje": "string",
       "version_contrato": "string"
-     },
-     "valores_de_listas_cerradas": {
-      "direccion": []
      }
     },
     "CT-12.ENCARGO": {
@@ -2675,6 +2671,9 @@
       "timestamp": "string",
       "tipo_mensaje": "string",
       "version_contrato": "string"
+     },
+     "valores_de_listas_abiertas": {
+      "tipo": []
      }
     }
    }
@@ -3010,9 +3009,6 @@
       "timestamp": "string",
       "tipo_mensaje": "string",
       "version_contrato": "string"
-     },
-     "valores_de_listas_cerradas": {
-      "direccion": []
      }
     },
     "CT-12.ENCARGO": {
@@ -3310,7 +3306,8 @@
      "valores_de_listas_abiertas": {
       "tipo": [
        "PREGUNTA_REPETIDA"
-      ]
+      ],
+      "tipo_aviso": []
      }
     }
    }
@@ -3434,7 +3431,10 @@
       "version_contrato": "string"
      },
      "valores_de_listas_abiertas": {
-      "tipo": []
+      "tipo": [],
+      "tipo_aviso": [
+       "DECISION_SEGUIMIENTO"
+      ]
      }
     },
     "CT-24.ENCARGO": {
@@ -3524,8 +3524,11 @@
       "version_contrato": "string"
      },
      "valores_de_listas_cerradas": {
-      "estado": [
-       "COMPLETO"
+      "estado_seguimiento": [
+       "ACTIVO",
+       "CANCELADO",
+       "FINALIZADO",
+       "PAUSADO"
       ]
      }
     }

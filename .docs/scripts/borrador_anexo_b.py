@@ -5,6 +5,10 @@ se corrige en la próxima entrega para que describa lo que hace el ejecutor. Est
 `bloque_a/11_Ejecutor/tests/goldens/divergencias_anexo_b.json` y escribe, contrato a contrato, qué dice hoy el Anexo B,
 qué hace el ejecutor y el cambio que se propone. No toca el corpus: el Documento 0 es una entrega congelada.
 
+T-143 (15-11-2026): el borrador se aplicó en el Documento 0 V5.2. Desde entonces el fichero dice primero lo que queda contra
+la V5.2 (de las diferencias congeladas de hoy) y conserva, debajo, el borrador aplicado, generado con la copia de las
+diferencias contra la V5.1 (`.docs/diseno/bloque_a/divergencias_anexo_b_v51.json`): de `.docs/` no se borra nada.
+
 Uso (desde la raíz): .venv/bin/python .docs/scripts/borrador_anexo_b.py [--comprobar]
 Con --comprobar no escribe: termina con 1 si el borrador no coincide con lo que generaría (las diferencias cambiaron).
 """
@@ -15,6 +19,26 @@ from pathlib import Path
 RAIZ = Path(__file__).resolve().parents[2]
 DIVERGENCIAS = RAIZ / "bloque_a" / "11_Ejecutor" / "tests" / "goldens" / "divergencias_anexo_b.json"
 SALIDA = RAIZ / ".docs" / "diseno" / "bloque_a" / "borrador_correccion_anexo_b.md"
+# T-143: las diferencias contra el Anexo B V5.1, tal como estaban congeladas antes de la V5.2 (copia del golden)
+DIVERGENCIAS_V51 = RAIZ / ".docs" / "diseno" / "bloque_a" / "divergencias_anexo_b_v51.json"
+DOC0_V52 = "bloque_a/01_Gobernanza/Documento 0 - Protocolo maestro del Bloque A - Versión óptima V5.2.md"
+
+# T-143: lo que queda contra la V5.2 y no sale del golden (no es una diferencia medida o está fuera del Documento 0)
+QUEDA = [
+    ("Ejemplo publicado del informe de seguimiento (INC-T114-02)", ("Sigue sin cumplir su propio esquema por la clave "
+     "`x_aviso_ejemplo`. Está en `06_Plantillas_entregables`, no en el Documento 0, y la V5.2 no lo toca.")),
+    ("Campo del tipo en CT-22", ("La V5.2 documenta los dos campos como están (`tipo` y `tipo_aviso`, uno de los dos por "
+     "aviso). Unificarlos en el código sigue siendo posible, pero sería un cambio de formato con re-congelado de los goldens.")),
+    ("Listas cerradas", ("La V5.2 dice que la mensajería solo comprueba las de CT-01, CT-02 y los estados; las demás no. "
+     "Validarlas en el código sería un cambio de formato.")),
+    ("Lo que el golden no mide", ("Los retornos internos (CT-05 a CT-08, CT-11 a CT-15 y CT-17) no tienen más esquema derivado "
+     "que sus campos de primer nivel: lo que el Anexo B V5.2 dice de ellos (campos de primer nivel, anidados, también los de la "
+     "ficha `FINALISTA`, y valores de sus listas cerradas) lo comparan con `ESQUEMAS` las pruebas `test_t143_*` de "
+     "`tests/test_fase3_goldens.py`; las claves de los retornos del Motor, con el Motor de verdad, y la `memoria` de cada "
+     "orden CT-05, con las órdenes que emite el ejecutor.")),
+    ("Copias y citas", ("La V5.2 no tiene `.docx` (INC-T143-01). Los documentos congelados de la entrega (system prompts, "
+     "funciones, archivos operativos…) y el Documento 0 del Bloque B siguen citando la V5.1, y no se editan.")),
+]
 
 # Lo que el código hace en los lotes (`Mensajeria`, CT-11 a CT-13): la lista y sus elementos
 LOTES = {"CT-11": ("piezas", "una pieza de evidencia"), "CT-12": ("encargos", "un encargo de prospectiva"),
@@ -105,8 +129,8 @@ def _lista(xs):
     return ", ".join(f"`{x}`" for x in xs)
 
 
-def generar() -> str:
-    d = json.loads(DIVERGENCIAS.read_text(encoding="utf-8"))
+def _borrador(d: dict) -> list[str]:
+    """El borrador contrato a contrato de unas diferencias (el texto que se generaba hasta T-143)."""
     por = d["por_contrato"]
     mensajes = d.get("mensajes_de_los_flujos_simulados_que_no_cumplen_el_anexo_b", {})
     otro_campo = d.get("valores_que_el_anexo_b_nombra_en_un_campo_y_el_ejecutor_emite_en_otro", {})
@@ -175,6 +199,43 @@ def generar() -> str:
             "del Anexo B (`anexo_b_esquemas.json`, `huellas.json`, `divergencias_anexo_b.json`) con `goldens_ct.py "
             "--update --motivo`.", "3. `divergencias_anexo_b.json` debería quedar vacío, salvo lo que se decida dejar.",
             ""]
+    return out
+
+
+def _lo_que_queda(d: dict) -> list[str]:
+    medidas = any(d.get(k) for k in ("por_contrato", "mensajes_de_los_flujos_simulados_que_no_cumplen_el_anexo_b",
+                                     "valores_que_el_anexo_b_nombra_en_un_campo_y_el_ejecutor_emite_en_otro"))
+    sin = d.get("contratos_sin_campos_en_el_anexo_b", [])
+    out = [f"- **Contratos sin campos en el Anexo B.** {_lista(sin)}: la V5.2 los sigue remitiendo a los prompts de sistema."
+           if sin else "- **Contratos sin campos en el Anexo B.** Ninguno."]
+    if not medidas:
+        out += ["- **Diferencias medidas.** Ninguna: contra la V5.2, `divergencias_anexo_b.json` no tiene diferencias por "
+                "contrato, ni mensajes de los flujos que no cumplan el Anexo B, ni valores en otro campo."]
+    out += [f"- **{titulo}.** {texto}" for titulo, texto in QUEDA]
+    if medidas:   # una diferencia nueva contra la V5.2: se dice contrato a contrato, como en el borrador
+        tabla = _borrador(d)
+        desde = tabla.index("| Contrato | Lo que difiere hoy | Cambio propuesto en el Anexo B |")
+        hasta = tabla.index("## 3. Contratos sin campos en el Anexo B")
+        out += ["", "### Diferencias medidas contra la V5.2", ""] + tabla[desde:hasta - 1]
+    return out
+
+
+def generar() -> str:
+    actual = json.loads(DIVERGENCIAS.read_text(encoding="utf-8"))
+    v51 = json.loads(DIVERGENCIAS_V51.read_text(encoding="utf-8"))
+    borrador = _borrador(v51)
+    cuerpo = borrador[borrador.index("## 1. Cambios generales"):]
+    out = ["# Borrador · corrección del Anexo B del Documento 0 del Bloque A", "",
+           f"**Estado: aplicado en el Documento 0 V5.2** (`{DOC0_V52}`, T-143, 15-11-2026). La V5.1 está en "
+           "`bloque_a/99_Historico_V5.1/01_Gobernanza/`. Generado por `.docs/scripts/borrador_anexo_b.py`; no se edita a mano: "
+           "si cambian las diferencias, se vuelve a generar. Las decisiones de la aplicación están en INC-T114-01 "
+           "(`docs/incidencias.md`) y en `.docs/tickets/T-143/analisis-tecnico.md`.", "",
+           "## Lo que queda contra la V5.2", ""] + _lo_que_queda(actual)
+    out += ["", "## Borrador aplicado (contra el Anexo B V5.1)", "",
+            "El borrador tal como se aplicó, generado con las diferencias congeladas contra la V5.1 "
+            "(`.docs/diseno/bloque_a/divergencias_anexo_b_v51.json`, copia de `divergencias_anexo_b.json` antes de T-143).", "",
+            "> Estado hasta T-143: " + borrador[2].removeprefix("**Estado: ").replace("**", ""), "", *borrador[4:6]]
+    out += [("#" + x if x.startswith("## ") else x) for x in cuerpo]
     return "\n".join(out)
 
 

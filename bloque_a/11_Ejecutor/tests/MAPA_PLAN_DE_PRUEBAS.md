@@ -1,6 +1,6 @@
 # Mapa del Plan de pruebas V3.0 → pruebas automáticas del ejecutor
 
-**Bloque A · Robot Investor · Ejecutor programático V1.1 · Versión óptima V5.0 · 02/11/2026 · actualizado V5.1 (03/11/2026, ejecutor V1.2)** · Subordinado al Documento 0 óptima V5.1.
+**Bloque A · Robot Investor · Ejecutor programático V1.1 · Versión óptima V5.0 · 02/11/2026 · actualizado V5.1 (03/11/2026, ejecutor V1.2)** · Subordinado al Documento 0 óptima V5.2 (15/11/2026: la V5.1 con el Anexo B corregido).
 
 > **Aviso (13-11-2026, T-116).** Este mapa es del 3-11-2026 y se conserva como estaba. El mapa vigente y verificado prueba a prueba es `tests/mapa_plan_pruebas.json`, con una regla más estricta (una fila solo es automática si sus pruebas comprueban todo el criterio del plan); el resultado de ejecutarlo está en `docs/evidencias_pruebas_bloque_a.md` (desde la raíz del repositorio), que genera `.docs/scripts/evidencias_plan_a.py --ejecutar`.
 
