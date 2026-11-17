@@ -12,11 +12,9 @@
 """
 from __future__ import annotations
 
-import copy
 import json
 import math
 from pathlib import Path
-from typing import Dict, List, Optional
 
 import numpy as np
 import pandas as pd
@@ -226,7 +224,9 @@ class Seguimientos:
         b.almacen.escribir("F5", "AG-01", {"tipo_entrada": "RUN_C6", "id": run_id, "run_id": run_id, "tipo": "SEGUIMIENTO", "seg_id": seg_id,
                                             "opp_id": opp_id, "clase": clase, "nivel": "N1 de seguimiento", "consumo": {"uc": uc},
                                             "entregables": rutas, "g3": val["dictamen"], "recomendacion": informe["recomendacion"],
-                                            "entrega": "ENTREGADA" if entregado else "BLOQUEADA"})
+                                            "entrega": "ENTREGADA" if entregado else "BLOQUEADA",
+                                            # T-174 (PB-61): las CNS- cuyo supuesto lleva el informe (revisión C2 si se contestan)
+                                            **({"supuestos_cns": sc} if (sc := sorted({s["cns_id"] for s in informe["supuestos_declarados"]})) else {})})
         if informe["recomendacion"] == "CERRAR" and rev["invalidacion_activada"]:
             b.almacen.escribir("F3", "AG-02", {"tipo_entrada": "ACTUALIZACION", "opp_id": opp_id, "estado": "CERRADA",
                                                "cierre": {"fecha": str(as_of.date()), "motivo": "INVALIDACION", "comentario": f"Verificada en el ciclo C6 {run_id}"},

@@ -1,6 +1,6 @@
 # Evidencias del Plan de pruebas del Bloque A (Fase 4, T-116)
 
-Generado por `.docs/scripts/evidencias_plan_a.py --ejecutar` el 2026-11-17 sobre el commit `7de9eca`, con el cliente simulado (`MockClient`): sin red, sin clave y sin coste. No se edita a mano: se regenera.
+Generado por `.docs/scripts/evidencias_plan_a.py --ejecutar` el 2026-11-17 sobre el commit `51d68f5`, con el cliente simulado (`MockClient`): sin red, sin clave y sin coste. No se edita a mano: se regenera.
 
 Qué significa cada resultado:
 
@@ -17,8 +17,8 @@ Con el cliente simulado se valida la tubería (canales, archivos, puertas, herra
 
 | Resultado | Pruebas del plan |
 | --- | --- |
-| Superada | 35 |
-| Superada en parte | 23 |
+| Superada | 36 |
+| Superada en parte | 22 |
 | Pendiente API | 7 |
 | Requiere usuarios | 1 |
 | Revisión documental | 1 |
@@ -88,7 +88,7 @@ Con el cliente simulado se valida la tubería (canales, archivos, puertas, herra
 | PB-58 Solicitud y provisión de una credencial por CT-25 | Superada en parte | Solicitud con CRD- en F5 sin valor; servicio degradado y declarado en los entregables hasta la provisión (corrección de INC-T116-03); depósito en la bóveda y respuesta solo con estado y alias; la herramienta obtiene el valor de la bóveda; la segunda solicitud se resuelve sin volver al Broker; el valor no aparece en ningún archivo, mensaje, entregable ni contexto enviado a los agentes. | Los pasos 1 y 2 del plan: el ejecutor no lee `solicitudes_credenciales` del retorno del Buscador (ni de un Analista) ni tiene el mantenimiento C4 en el que el Buscador las detecta; la solicitud CT-25 se emite con `credenciales.solicitar` (orden `credencial solicitar`). Declarado en INC-T116-03 (r05). |
 | PB-59 Credencial expuesta en un mensaje del Broker | Superada | El mensaje con el valor se rechaza, queda una incidencia SEGURIDAD en HA, el valor no aparece en ningún archivo ni mensaje y se pide depositar y renovar; HT-09 bloquea un valor de credencial en el paquete. | — |
 | PB-60 Credencial denegada | Superada | Tras la denegación queda la limitación de servicio en F10; una nueva necesidad del mismo servicio no envía ninguna CT-25, salvo con cambio de circunstancias; el paquete, el informe técnico, el JSON y el visual del ciclo declaran la degradación, y dejan de declararla cuando la credencial se provee (corrección de INC-T116-03). | — |
-| PB-61 Consulta bloqueante al Broker con vencimiento | Superada en parte | Solo CRI se pausa y RV sigue; al vencer, el análisis continúa con el supuesto declarado, que figura en el paquete, en el JSON y en el informe técnico (C19 de HT-09 en OK); la respuesta tardía se marca. | Que la respuesta tardía abra una revisión C2: el ejecutor solo lo indica en la respuesta (INC-T116-03). Que el modelo no invente un dato del Broker. |
+| PB-61 Consulta bloqueante al Broker con vencimiento | Superada | Solo CRI se pausa y RV sigue; al vencer, el análisis continúa con el supuesto declarado, que figura en el paquete, en el JSON y en el informe técnico (C19 de HT-09 en OK); la respuesta tardía que contesta ese supuesto ya entregado abre una revisión C2: un RUN- AD_HOC disparado por la CT-23, con los RUN- revisados, cuyo paquete ya no lleva el supuesto, declara la revisión en sus entregables y llega al Broker por CT-02 (corrección de INC-T116-03; reglas en INC-T174-01). Sin informe entregado con el supuesto no hay revisión, y una respuesta sin nada nuevo no la reabre; un fallo queda anotado y escalado al operador y un error de control se relanza dejando la revisión INTERRUMPIDA, que se relanza; dos procesos con la misma respuesta abren una sola revisión; el alcance no pasa de lo entregado ni de lo entregado hasta la fecha de la respuesta (QA r01 de T-174, H-01 a H-06); una revisión cuyo proceso murió se avisa una vez al operador y, si ya se había entregado, relanzarla no la repite (QA r02, H-07 y H-08). | Que el modelo real no invente un dato del Broker (con el cliente simulado no se puede medir; modo sombra). Los plazos con el reloj de pared (las pruebas fijan la hora). Si la respuesta contradice de verdad el supuesto: el ejecutor no lo juzga y toda respuesta nueva cuenta como invalidación (INC-T174-01). |
 | PB-62 Filtro, agrupación y recurrencia de consultas | Superada en parte | Tres CT-23 como máximo por RUN- (la cuarta se agrupa), validaciones y aviso de consulta recurrente. | La LEC- de producto: el aviso CONSULTA_RECURRENTE sale, pero el ejecutor no crea la lección (INC-T116-03). |
 | PB-63 Pronóstico H5 con hitos | Superada | H5 solo con banda y tres hitos HIT- o más, cada uno con fecha, indicador y criterio, el primero a 12 meses como máximo y 24 como máximo entre hitos, congelados en F4 con su PRG padre (C18 en OK); HT-09 bloquea un H5 sin hitos o con probabilidad numérica y advierte del espaciado. | — |
 | PB-64 Evaluación de H5 por hitos y degradación | Superada | H5 se evalúa por hitos con sus tres estados (EN_CURSO_CONFORME, DESVIADO, INVALIDADO); con 20 hitos y el 40 % cumplidos MP × H5 baja de «Sí» a «Limitado» con el ajuste en F6 y en F10 y cambia la tabla del ciclo siguiente; la revisión de certificados no emite ninguno para H5. Los estados se publican: cada C5 escribe en F6 una entrada EH5- con el estado de cada PRG H5 abierto y de sus hitos, la tasa de hitos cumplidos por celda tipo × H5 y el número de PRG en cada estado; el paquete lleva lo mismo en `x_estados_h5` (valida contra su esquema) y el estado de cada hito, y el informe técnico los muestra junto a los hitos y en la sección 8. | El informe visual no los muestra (lenguaje llano; su plantilla no tiene sitio para ellos) ni el CT-19 del Evaluador los lleva. Los H5 congelados en el mismo RUN- se publican desde el C5 siguiente. El prefijo EH5- de F6 es [PROPUESTO] (INC-T173-01). |
@@ -823,13 +823,39 @@ Criterio de aprobación del plan: Ninguna nueva CT-25 para ese servicio; limitac
 Criterio de aprobación del plan: `supuestos_declarados` con CNS- en el paquete (HT-09 C19 OK); ningún dato del Broker inventado
 
 ```bash
-(cd bloque_a/11_Ejecutor && ../../.venv/bin/python -m pytest -q 'tests/test_v51.py::test_consulta_bloqueante_pausa_y_vencimiento' 'tests/test_fase4_huecos.py::test_pb61_solo_cri_se_pausa_y_al_vencer_el_supuesto_figura_en_los_entregables')
+(cd bloque_a/11_Ejecutor && ../../.venv/bin/python -m pytest -q 'tests/test_v51.py::test_consulta_bloqueante_pausa_y_vencimiento' 'tests/test_fase4_huecos.py::test_pb61_solo_cri_se_pausa_y_al_vencer_el_supuesto_figura_en_los_entregables' 'tests/test_t174_pb61_revision_c2.py::test_pb61_respuesta_tardia_que_invalida_el_supuesto_abre_una_revision_c2' 'tests/test_t174_pb61_revision_c2.py::test_pb61_sin_informe_entregado_no_hay_revision' 'tests/test_t174_pb61_revision_c2.py::test_pb61_un_run_bloqueado_no_cuenta_como_entregado' 'tests/test_t174_pb61_revision_c2.py::test_pb61_segunda_respuesta_sin_indices_nuevos_no_reabre' 'tests/test_t174_pb61_revision_c2.py::test_pb61_revision_pendiente_sin_ejecutar' 'tests/test_t174_pb61_revision_c2.py::test_pb61_revision_fallida_queda_anotada_y_el_error_de_control_se_relanza' 'tests/test_t174_pb61_revision_c2.py::test_pb61_no_bloqueante_contestada_en_plazo_tras_una_entrega' 'tests/test_t174_pb61_revision_c2.py::test_pb61_informe_de_seguimiento_c6_entregado_con_el_supuesto' 'tests/test_t174_pb61_revision_c2.py::test_r02_h01_dos_procesos_con_la_misma_respuesta_abren_una_sola_revision' 'tests/test_t174_pb61_revision_c2.py::test_r02_h01_la_reserva_queda_en_curso_en_la_misma_entrada_que_la_respuesta' 'tests/test_t174_pb61_revision_c2.py::test_r02_h02_error_de_control_deja_la_revision_interrumpida_y_se_relanza' 'tests/test_t174_pb61_revision_c2.py::test_r02_h02_la_pendiente_se_relanza_en_la_siguiente_respuesta_y_la_en_curso_solo_si_se_pide' 'tests/test_t174_pb61_revision_c2.py::test_r02_h03_el_alcance_es_la_interseccion_con_lo_entregado' 'tests/test_t174_pb61_revision_c2.py::test_r02_h03_sin_tipos_que_revisar_no_se_lanza_un_ciclo_de_todo_el_alcance' 'tests/test_t174_pb61_revision_c2.py::test_r02_h04_una_respuesta_fechada_antes_de_la_entrega_no_la_revisa' 'tests/test_t174_pb61_revision_c2.py::test_r02_h05_un_fallo_tras_entregar_deja_la_revision_entregada' 'tests/test_t174_pb61_revision_c2.py::test_r02_h06_la_fallida_va_al_operador_y_se_relanza_por_la_linea_de_ordenes' 'tests/test_t174_pb61_revision_c2.py::test_r02_h06_relanzar_reclama_bajo_el_cerrojo_y_no_repite_una_ya_hecha' 'tests/test_t174_pb61_revision_c2.py::test_r03_h07_la_en_curso_huerfana_se_avisa_una_sola_vez' 'tests/test_t174_pb61_revision_c2.py::test_r03_h07_una_en_curso_viva_no_es_huerfana' 'tests/test_t174_pb61_revision_c2.py::test_r03_h08_el_proceso_muere_tras_entregar_y_relanzar_no_duplica' 'tests/test_t174_pb61_revision_c2.py::test_r03_h08_cada_reclamacion_lleva_su_numero_de_intento' 'tests/test_t174_pb61_revision_c2.py::test_cierre_h09_la_revision_esta_en_marcha_desde_la_reserva' 'tests/test_t174_pb61_revision_c2.py::test_cierre_h09_se_da_de_baja_tambien_sin_alcance_y_si_falla_la_escritura' 'tests/test_t174_pb61_revision_c2.py::test_cierre_h10_la_clave_lleva_la_carpeta_del_almacen' 'tests/test_t174_pb61_revision_c2.py::test_cierre_h11_lo_que_no_se_puede_juzgar_se_dice')
 (cd bloque_a/10_Herramientas && ../../.venv/bin/python -m pytest -q 'tests/test_ht09_validador_g3.py::TestV51::test_supuestos_declarados')
 ```
 
 - `11_Ejecutor/tests/test_v51.py::test_consulta_bloqueante_pausa_y_vencimiento`: SUPERADA
 - `10_Herramientas/tests/test_ht09_validador_g3.py::TestV51::test_supuestos_declarados`: SUPERADA
 - `11_Ejecutor/tests/test_fase4_huecos.py::test_pb61_solo_cri_se_pausa_y_al_vencer_el_supuesto_figura_en_los_entregables`: SUPERADA
+- `11_Ejecutor/tests/test_t174_pb61_revision_c2.py::test_pb61_respuesta_tardia_que_invalida_el_supuesto_abre_una_revision_c2`: SUPERADA
+- `11_Ejecutor/tests/test_t174_pb61_revision_c2.py::test_pb61_sin_informe_entregado_no_hay_revision`: SUPERADA
+- `11_Ejecutor/tests/test_t174_pb61_revision_c2.py::test_pb61_un_run_bloqueado_no_cuenta_como_entregado`: SUPERADA
+- `11_Ejecutor/tests/test_t174_pb61_revision_c2.py::test_pb61_segunda_respuesta_sin_indices_nuevos_no_reabre`: SUPERADA
+- `11_Ejecutor/tests/test_t174_pb61_revision_c2.py::test_pb61_revision_pendiente_sin_ejecutar`: SUPERADA
+- `11_Ejecutor/tests/test_t174_pb61_revision_c2.py::test_pb61_revision_fallida_queda_anotada_y_el_error_de_control_se_relanza`: SUPERADA
+- `11_Ejecutor/tests/test_t174_pb61_revision_c2.py::test_pb61_no_bloqueante_contestada_en_plazo_tras_una_entrega`: SUPERADA
+- `11_Ejecutor/tests/test_t174_pb61_revision_c2.py::test_pb61_informe_de_seguimiento_c6_entregado_con_el_supuesto`: SUPERADA
+- `11_Ejecutor/tests/test_t174_pb61_revision_c2.py::test_r02_h01_dos_procesos_con_la_misma_respuesta_abren_una_sola_revision`: SUPERADA
+- `11_Ejecutor/tests/test_t174_pb61_revision_c2.py::test_r02_h01_la_reserva_queda_en_curso_en_la_misma_entrada_que_la_respuesta`: SUPERADA
+- `11_Ejecutor/tests/test_t174_pb61_revision_c2.py::test_r02_h02_error_de_control_deja_la_revision_interrumpida_y_se_relanza`: SUPERADA
+- `11_Ejecutor/tests/test_t174_pb61_revision_c2.py::test_r02_h02_la_pendiente_se_relanza_en_la_siguiente_respuesta_y_la_en_curso_solo_si_se_pide`: SUPERADA
+- `11_Ejecutor/tests/test_t174_pb61_revision_c2.py::test_r02_h03_el_alcance_es_la_interseccion_con_lo_entregado`: SUPERADA
+- `11_Ejecutor/tests/test_t174_pb61_revision_c2.py::test_r02_h03_sin_tipos_que_revisar_no_se_lanza_un_ciclo_de_todo_el_alcance`: SUPERADA
+- `11_Ejecutor/tests/test_t174_pb61_revision_c2.py::test_r02_h04_una_respuesta_fechada_antes_de_la_entrega_no_la_revisa`: SUPERADA
+- `11_Ejecutor/tests/test_t174_pb61_revision_c2.py::test_r02_h05_un_fallo_tras_entregar_deja_la_revision_entregada`: SUPERADA
+- `11_Ejecutor/tests/test_t174_pb61_revision_c2.py::test_r02_h06_la_fallida_va_al_operador_y_se_relanza_por_la_linea_de_ordenes`: SUPERADA
+- `11_Ejecutor/tests/test_t174_pb61_revision_c2.py::test_r02_h06_relanzar_reclama_bajo_el_cerrojo_y_no_repite_una_ya_hecha`: SUPERADA
+- `11_Ejecutor/tests/test_t174_pb61_revision_c2.py::test_r03_h07_la_en_curso_huerfana_se_avisa_una_sola_vez`: SUPERADA
+- `11_Ejecutor/tests/test_t174_pb61_revision_c2.py::test_r03_h07_una_en_curso_viva_no_es_huerfana`: SUPERADA
+- `11_Ejecutor/tests/test_t174_pb61_revision_c2.py::test_r03_h08_el_proceso_muere_tras_entregar_y_relanzar_no_duplica`: SUPERADA
+- `11_Ejecutor/tests/test_t174_pb61_revision_c2.py::test_r03_h08_cada_reclamacion_lleva_su_numero_de_intento`: SUPERADA
+- `11_Ejecutor/tests/test_t174_pb61_revision_c2.py::test_cierre_h09_la_revision_esta_en_marcha_desde_la_reserva`: SUPERADA
+- `11_Ejecutor/tests/test_t174_pb61_revision_c2.py::test_cierre_h09_se_da_de_baja_tambien_sin_alcance_y_si_falla_la_escritura`: SUPERADA
+- `11_Ejecutor/tests/test_t174_pb61_revision_c2.py::test_cierre_h10_la_clave_lleva_la_carpeta_del_almacen`: SUPERADA
+- `11_Ejecutor/tests/test_t174_pb61_revision_c2.py::test_cierre_h11_lo_que_no_se_puede_juzgar_se_dice`: SUPERADA
 
 ### PB-62 · Filtro, agrupación y recurrencia de consultas
 

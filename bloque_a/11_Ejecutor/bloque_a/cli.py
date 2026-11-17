@@ -79,11 +79,14 @@ def main(argv: list[str] | None = None) -> int:
     p.add_argument("--forzar", action="store_true", help="ejecutar: lanza el ciclo C6 del encargo aunque no haya vencido")
     p.add_argument("--decision", help="responder: decisión del Broker sobre la última recomendación (p. ej., ACEPTADA, RECHAZADA)")
     # V5.1 · Consultas del bloque al Broker (CT-23)
-    p = sub.add_parser("consulta-broker", help="CT-23: enviar (saliente), responder, entrante, vencer, listar")
-    p.add_argument("accion", choices=["enviar", "responder", "entrante", "vencer", "listar"])
+    p = sub.add_parser("consulta-broker", help="CT-23: enviar (saliente), responder, entrante, vencer, listar, revisiones (C2 "
+                                               "pendientes), relanzar (revisiones C2 interrumpidas, pendientes o fallidas)")
+    p.add_argument("accion", choices=["enviar", "responder", "entrante", "vencer", "listar", "revisiones", "relanzar"])
     p.add_argument("--json", help="enviar: {tipo, modo, preguntas[{texto, supuesto_declarado, efecto_si_falso}], clases, run_id}; "
                                    "responder: {respuestas, estado}; entrante: {contenido, referencia}")
-    p.add_argument("--cns", help="CNS- (responder)")
+    p.add_argument("--cns", help="CNS- (responder; en relanzar, solo las de esa consulta)")
+    p.add_argument("--incluir-en-curso", action="store_true",
+                   help="relanzar: también las EN_CURSO (solo si el proceso que las lanzó ya no corre; T-174)")
     # V5.1 · Credenciales (CT-25, bóveda simulada de HT-01)
     p = sub.add_parser("credencial", help="CT-25: solicitar, depositar (Broker, fuera de banda), responder, estado, recordatorios")
     p.add_argument("accion", choices=["solicitar", "depositar", "responder", "estado", "recordatorios"])
@@ -212,6 +215,11 @@ def _consulta_broker(bloque, a, as_of) -> object:
     if a.accion == "vencer":
         bloque.fijar_fecha(as_of)
         return {"vencidas": c.vencer(as_of)}
+    if a.accion == "revisiones":   # T-174 r02 (H-06): revisiones C2 que no han llegado al Broker
+        return c.revisiones_pendientes()
+    if a.accion == "relanzar":
+        estados = ("INTERRUMPIDA", "PENDIENTE", "FALLIDA") + (("EN_CURSO",) if a.incluir_en_curso else ())
+        return c.relanzar_revisiones(as_of, cns_id=a.cns, estados=estados)
     return {k: {x: v.get(x) for x in ("sentido", "tipo", "modo", "estado", "plazo_respuesta", "run_id", "clases")} for k, v in c._todas().items()}
 
 
