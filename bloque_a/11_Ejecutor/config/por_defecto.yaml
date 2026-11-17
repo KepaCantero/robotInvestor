@@ -398,7 +398,11 @@ referencias: {antiguedad_maxima_dias: 7}
 clusteres: {umbral_rho: 0.7, ventana_semanas: 156, min_semanas_proxy: 52}
 
 # Legibilidad mínima del informe visual (Fernández-Huerta; control C12 de HT-09, Anexo A)
-redaccion: {umbral_fh: 70}
+# T-165 r04 [PROPUESTO] (QA r03, H-28; INC-T165-01): reescrituras de una redacción fuera de una opción que lleva la raíz «valid-»
+# (G3-MET-13 la bloquearía en todo el documento). Una, como la de legibilidad de PB-39 (el Documento 0 no da otro número)
+# r05 [PROPUESTO] (QA r04, H-37): las frases con la raíz que se le devuelven al agente en la reescritura, como las frases
+# largas de la reescritura de legibilidad (`frases_largas[:10]`)
+redaccion: {umbral_fh: 70, reescrituras_r22: 1, frases_r22_max: 10}
 
 # Guías de mejora del Orquestador (CT-18, tipos 1 y 2; T-158). Origen: prompt del Orquestador 6.9, «Máximo 10 hallazgos y
 # 8 ítems por versión de guía» y «caducidad (por defecto, 2 trimestres)». Una guía que los pasa no se emite.

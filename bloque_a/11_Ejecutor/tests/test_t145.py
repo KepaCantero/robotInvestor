@@ -120,15 +120,17 @@ def test_h01_la_tabla_de_llamadas_del_ciclo(est, tarifa, medida):
     cfg = cargar_config()
     c = est.cota_ciclo(medida, cfg, tarifa["precios_por_millon"], 10.0, 1.35)
     # 7 por tipo de activo (cribado, petición, prospectiva, refutación, respuesta, contrarréplica, curación) y 7 del ciclo
-    # (aprendizaje, integración, dos dictámenes G3, redacción y reescritura, auditoría)
-    assert c["llamadas_max"] == 7 + 7 > len(medida)
-    # la petición de conocimiento (con búsqueda): 2 intentos × 4 peticiones (3 continuaciones) × 5 búsquedas
-    # y las otras 13 llamadas, 2 peticiones cada una (el intento y la reparación)
-    assert c["busquedas"] == 1 * 2 * 4 * 5 and c["peticiones_max"] == 13 * 2 + 1 * 2 * 4
+    # (aprendizaje, integración, dos dictámenes G3, redacción y reescritura, auditoría); desde T-165 r06, la reescritura R22 de
+    # cada llamada de un agente cuyo texto llega al entregable (`redaccion.reescrituras_r22`, derivada en `con_reescrituras`):
+    # 5 por tipo (cribado, prospectiva, refutación, respuesta y contrarréplica) y 3 del ciclo (integración y las dos redacciones)
+    assert c["llamadas_max"] == (7 + 5) + (7 + 3) > len(medida)
+    # la petición de conocimiento (con búsqueda, sin reescritura): 2 intentos × 4 peticiones (3 continuaciones) × 5 búsquedas
+    # y las otras 21 llamadas, 2 peticiones cada una (el intento y la reparación)
+    assert c["busquedas"] == 1 * 2 * 4 * 5 and c["peticiones_max"] == 21 * 2 + 1 * 2 * 4
     assert {x["papel"] for x in c["papeles"]} >= {"peticion_conocimiento", "contrarreplica", "dictamen_g3", "informe_aprendizaje"}
     doce = cargar_config(extra={"perfiles": {"activos": ["RV", "RF", "DIV", "MP", "IDX", "FON", "DER", "INM", "CRI", "ALT",
                                                          "MON", "TCV"]}})
-    assert est.cota_ciclo(medida, doce, tarifa["precios_por_millon"], 10.0, 1.35)["llamadas_max"] == 7 * 12 + 7
+    assert est.cota_ciclo(medida, doce, tarifa["precios_por_millon"], 10.0, 1.35)["llamadas_max"] == 12 * 12 + 10
     assert c["cota"] == min(c["cota_llamadas"], c["cota_presupuesto"])
     # S4: la contrarréplica lee la salida máxima de las cinco llamadas anteriores de su tipo (cribado y respuesta del
     # Analista, 12 000 cada una; petición, 8 000; prospectiva y refutación, 10 000 cada una)

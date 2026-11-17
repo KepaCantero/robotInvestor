@@ -2,7 +2,7 @@
 
 | Campo | Valor |
 | --- | --- |
-| Estado | EN QA (pendiente de un revisor nuevo sin contexto) |
+| Estado | CERRADO (17-11-2026, QA r06 APTO tras la ronda de cierre) |
 | Pieza | bloque_a (ejecutor: validación G3 complementaria de HT-09) |
 | Planifica · implementa · QA | claude · claude · un revisor nuevo sin contexto (regla del 12-11-2026, `compartida/2026-11-12_claude-puede-hacer-qa`) |
 | Aprobación del operador | no necesaria: completa una comprobación que el diseño ya define (G3-MET-13, clase B, en §6.2 del prompt del Orquestador técnico) y solo endurece G3. No toca el corpus, los contratos CT, los esquemas ni el Documento 0. Lo que el diseño no dice se decide por defecto (`compartida/2026-11-13_decide-el-agente-por-defecto`) y queda `[PROPUESTO]` en INC-T165-01. Dónde vive está decidido: `sistema_global/seguimiento/Decisiones_del_operador_Bloque_A.md` §1, fila «G3-MET-13» (Agente, por delegación del operador, 16-11-2026): G3-MET-13 se queda como comprobación complementaria del ejecutor y el HT-09 de referencia del corpus no se toca |
@@ -95,6 +95,61 @@ DOCUMENTADO), o que nombra por su ficha un método que el Motor no sirve sin dec
 - **Falla cerrado.** Sin Catálogo legible, ninguna ficha se sirve: toda mención no declarada bloquea. Si la comprobación lanza una
   excepción, se propaga (como cualquier fallo de HT-09: no hay APTO por defecto).
 
+## Ronda r03 (QA r02 NO APTO: H-13 a H-27): enfoque estructural
+
+La r01 y la r02 interpretaban la prosa del modelo (frase, párrafo, negación, personas, sustantivos ligados, sinónimos); cada ronda
+tapaba los ataques y salían familias nuevas (QA r02: 35 de 36 madurez falsas nuevas pasaban y 14 de 49 frases legítimas
+bloqueaban). Por decisión del coordinador (delegación del operador), la r03 deja de interpretar y cambia la estructura
+(INC-T165-01, ronda r03, `[PROPUESTO]`):
+
+1. **La madurez de un método solo la escribe el ejecutor**, desde la tabla del Catálogo, en una forma canónica detrás de cada
+   ficha: «ST-DESC-001 [madurez: IMPLEMENTADO]» (si el Motor no la sirve, «[madurez: DOCUMENTADO; no la sirve el Motor]»). La pone
+   `redaccion.generar` en los tres entregables como último paso, después de G3-MET-13; el técnico lleva su declaración R22 en la
+   misma forma y el JSON `x_madurez_metodos`. Los campos de madurez de los informes de clase (`estado_madurez_metodos`) los
+   reescribe el ejecutor (`sintesis.canonizar_madurez`) y lo que dijo el modelo se descarta.
+2. **El vocabulario del modelo no se interpreta.** Regla A: la raíz «valid-» en un ámbito (la opción, la candidata o el documento)
+   que nombra un método que no está VALIDADO (hoy, todos) bloquea; «implement-» con una ficha por debajo de IMPLEMENTADO, igual.
+   Regla B: una ficha que el Motor no sirve solo se nombra con su forma canónica. Regla C: una forma canónica que no coincide con
+   el Catálogo, o un campo de madurez de un JSON que no es la forma canónica, bloquea. Sin negaciones ni sinónimos (H-18: los
+   sinónimos no cuentan, es un límite declarado).
+3. **Cambios de expectativa** respecto de la r01 y la r02 (documentados en `pruebas.md`): las declaraciones honestas en prosa
+   («no validado», «documentado y no se sirve», «ninguna ficha está validada») y la prosa financiera con «validad-» junto a una ficha
+   bloquean; la única declaración que vale es la canónica. CA-2 se cumple con la declaración en forma canónica; CA-4 queda: bloquea
+   «validado» de una IMPLEMENTADO, «implementado» de una DOCUMENTADO, una ficha inventada y una no servida sin su forma canónica;
+   no salta con una ficha servida sin madurez, con la forma canónica correcta, ni con una frase sin la raíz.
+4. **Entregables:** cambian solo por la forma canónica (técnico y JSON; el visual del ciclo normal no cita fichas): `pruebas.md`.
+
+## Ronda r04 (QA r03 NO APTO: H-28 a H-32)
+
+H-28 (alto): con el corpus, los agentes escriben la raíz que G3-MET-13 prohíbe, y fuera de una opción una sola aparición dejaba el
+ciclo sin entrega. Corrección (la del revisor, por decisión del coordinador; INC-T165-01, ronda r04):
+1. `ht09.REGLA_R22_REDACCION` al final de las instrucciones del ejecutor a los agentes que redactan (INSTR de CT-06 y objeciones,
+   integración AG-02, Redactor AG-17, Prospectiva, `INSTR_SINTESIS`, que deja de decir «validado»).
+2. `Bloque.reescribir_r22`: una reescritura (`redaccion.reescrituras_r22`) de la integración, el Redactor o el Sintetizador V6 si
+   su respuesta lleva la raíz; si persiste, G3-MET-13 bloquea. Las lagunas de los Analistas con la raíz no se transcriben al
+   paquete. Dentro de una opción no hay reescritura: la opción se retira.
+3. El simulado escribe la declaración R22 del Analizador con la raíz y una prueba exige que el ciclo entregue tras la reescritura.
+4. Sin la raíz en los textos del ejecutor: el Motor en RC, la limitación de «sin historia» y el respaldo del Sintetizador.
+
+Además: H-29 (el técnico se comprueba con marcadores en lugar de las rutas), H-30 («válido»), H-31 (sin anotar las claves con
+`maxLength`), H-32 («metodología», «sistema», «fuera de la muestra») y lo descartado de `estado_madurez_metodos` en HA.
+
+## Ronda r05 (QA r04 NO APTO: H-33 a H-37)
+
+- H-33 (alto): la refutación de AG-11 (V5 y V6) lleva la regla R22 y se reescribe; una prueba recorre todas las instrucciones cuyos
+  textos van al paquete.
+- H-34: el informe de clase (CT-06) se reescribe si lleva la raíz, en la bolsa de su tipo; la cota de coste lo prevé.
+- H-35: la laguna con la raíz llega con «comprobar» y «(redacción ajustada por R22)».
+- H-36 y H-37: la reescritura de la integración repite su instrucción, y toda reescritura lleva las frases con la raíz.
+- El simulado obedece la reescritura (`mock_respuestas._obedece_r22`).
+
+## Ronda r06 (QA r05 NO APTO: H-38 a H-40)
+
+Por decisión del coordinador, la reescritura R22 pasa a un solo punto: `Bloque._invocar` la hace para toda respuesta de un agente
+que no esté en la lista de exclusión `ht09.AGENTES_SIN_TEXTO_ENTREGADO`, con los datos de la propia llamada; el estimador deriva
+sus filas de la misma constante. H-38: la reescritura no mira los campos de madurez. H-39: lo reescrito queda en HA y la regla
+pide no calificar la fiabilidad.
+
 ## Riesgos
 
 | Riesgo | Consecuencia | Mitigación |
@@ -141,3 +196,15 @@ DOCUMENTADO), o que nombra por su ficha un método que el Motor no sirve sin dec
 - 2026-11-16 · PLANIFICADO · claude · plan y criterios
 - 2026-11-16 · EN CURSO · claude · implementación (`ht09.py`, `sintesis.py`, `redaccion.py`, una expresión de `orquestacion.py`) y pruebas
 - 2026-11-16 · EN QA · claude · `analisis-tecnico.md` y `pruebas.md`; commit local «wip local: T-165»
+- 2026-11-16 · EN QA → EN CURSO · claude · QA r01 NO APTO (H-01 a H-12; los bajos también, regla del operador)
+- 2026-11-16 · EN QA · claude · r02: lectura rehecha (normalización, fichas con otra grafía, párrafo o fila como unidad, raíces, negación, personas, prosa financiera, registros JSON) y literales del ejecutor condicionales; commit local «wip local: T-165 r02»
+- 2026-11-17 · EN QA → EN CURSO · revisor nuevo sin contexto (subagente de Claude) · QA r02 NO APTO (H-13 a H-17 altos, H-18 a H-20 medios, H-21 a H-27 bajos); scripts `revisores/r02_01` a `r02_03`
+- 2026-11-17 · EN QA · claude (subagente implementador) · r03, enfoque estructural por decisión del coordinador: la madurez canónica la escribe el ejecutor y la prosa no se interpreta (raíz «valid-» por ámbito, ficha no servida sin forma canónica, forma canónica falsa); bajos H-21 a H-27 subsanados o no aplicables; commit local «wip local: T-165 r03»
+- 2026-11-17 · EN QA → EN CURSO · revisor (subagente de Claude) · QA r03 NO APTO (H-28 alto, H-29 medio, H-30 a H-32 bajos); scripts `revisores/r03_01` a `r03_03`
+- 2026-11-17 · EN QA · claude (subagente implementador) · r04: regla R22 de redacción en las instrucciones del ejecutor, reescritura fuera de una opción, textos del ejecutor sin la raíz, H-29 a H-32; commit local «wip local: T-165 r04»
+- 2026-11-17 · EN QA → EN CURSO · revisor (subagente de Claude) · QA r04 NO APTO (H-33 alto, H-34 y H-35 medios, H-36 y H-37 bajos); script `revisores/r04_01`
+- 2026-11-17 · EN QA · claude (subagente implementador) · r05: refutación con la regla y reescrita, informe de clase reescrito, lagunas ajustadas, reescritura con su instrucción y sus frases; commit local «wip local: T-165 r05»
+- 2026-11-17 · EN QA → EN CURSO · revisor (subagente de Claude) · QA r05 NO APTO (H-40 alto, H-38 medio, H-39 bajo); script `revisores/r05_01`
+- 2026-11-17 · EN QA · claude (subagente implementador) · r06: reescritura R22 en `_invocar` con lista de exclusión, estimador derivado de la constante, H-38 y H-39; commit local «wip local: T-165 r06»
+- 2026-11-17 · EN QA · revisor (subagente de Claude) · QA r06 APTO, sin hallazgos; una observación (la reescritura que no cabe en la bolsa puede cerrar la fase); script `revisores/r06_01`
+- 2026-11-17 · EN QA · claude (subagente implementador) · ronda de cierre de la QA r06: la reescritura R22 no se pide si su peor caso no cabe en la bolsa; commit local «wip local: T-165 cierre de la QA r06»

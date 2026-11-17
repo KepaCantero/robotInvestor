@@ -44,7 +44,13 @@ from .configuracion import (
     parametros_ht03,
     perfiles_activos,
 )
-from .consumo import Contabilidad, Presupuesto, ReservaLlamada, TramoPresupuesto
+from .consumo import (
+    Contabilidad,
+    Presupuesto,
+    ReservaLlamada,
+    TramoPresupuesto,
+    tokens_de_peticion,
+)
 from .contratos import (
     AGENTE_CLASE,
     Mensajeria,
@@ -111,6 +117,8 @@ INSTR = {
         "citada la resuelven de verdad, a la vista de «qué la resolvería». Responde «resuelta» (true/false) y un motivo "
         "breve. Ante la duda, no está resuelta."),
 }
+# T-165 r04 (QA r03, H-28): todos los agentes que redactan prosa reciben la regla de redacción R22 del ejecutor
+INSTR = {k: f"{v} {ht09.REGLA_R22_REDACCION}" for k, v in INSTR.items()}
 
 
 # T-65 (QA de T-66, H-21): orígenes de pieza cuyo texto no es contenido externo (código y Analistas) o que ya se saneó al
@@ -246,6 +254,20 @@ class Bloque:
 
     def _invocar(self, agente, contrato, mensaje, esquema, instrucciones, as_of, run_id, clase=None, fase=None,
                  presupuesto: Presupuesto | None = None, bolsa=None, permitir_web=False, max_uc_estimado=None, control=False):
+        """El camino único de toda llamada a un agente (`_invocar_una`) y, para los agentes cuyo texto puede llegar al paquete o a
+        los entregables (todos salvo `ht09.AGENTES_SIN_TEXTO_ENTREGADO`), la reescritura R22 (T-165 r06, H-40): si la respuesta
+        lleva la raíz «valid-», se pide de nuevo con la regla, con la misma instrucción, esquema, clase, fase y bolsa de la
+        llamada. Una reescritura no se reescribe (falla cerrado: si persiste, G3-MET-13 bloquea)."""
+        r = self._invocar_una(agente, contrato, mensaje, esquema, instrucciones, as_of, run_id, clase, fase, presupuesto, bolsa,
+                              permitir_web, max_uc_estimado, control)
+        if agente in ht09.AGENTES_SIN_TEXTO_ENTREGADO or (isinstance(mensaje, dict) and isinstance(mensaje.get("reescritura"), dict)
+                                                       and mensaje["reescritura"].get("r22")):
+            return r
+        return self.reescribir_r22(r, agente, contrato, mensaje, esquema, instrucciones, as_of, run_id, clase, fase, presupuesto,
+                                   bolsa=bolsa, permitir_web=permitir_web, max_uc_estimado=max_uc_estimado, control=control)
+
+    def _invocar_una(self, agente, contrato, mensaje, esquema, instrucciones, as_of, run_id, clase=None, fase=None,
+                     presupuesto: Presupuesto | None = None, bolsa=None, permitir_web=False, max_uc_estimado=None, control=False):
         """Llamada a un agente con control de presupuesto y anonimización.
 
         T-146: cada petición al modelo (el primer intento, cada reparación y cada continuación) reserva antes de salir su
@@ -292,7 +314,10 @@ class Bloque:
             # veces (prudente), nunca ninguna
             self._cargar(presupuesto, bolsa, agente, r, guarda.prefijo if guarda is not None else None)
         if guarda is not None:
+            r.peor_caso_uc = guarda.peor_total   # T-165: con esto decide `reescribir_r22` si la reescritura cabe
             guarda.cerrar()
+        elif max_uc_estimado is not None:
+            r.peor_caso_uc = float(max_uc_estimado)
         if r.estado == "SIN_PRESUPUESTO":
             return None
         if r.datos is not None:
@@ -707,14 +732,16 @@ class Bloque:
                                          historial, presupuesto)
         if clusteres.get("sin_historia"):
             limitaciones = limitaciones + [(f"clústeres de exposición sin medir para {', '.join(clusteres['sin_historia'])} (menos de "
-                                            f"{parametro(self.cfg, 'clusteres.min_semanas_proxy')} semanas válidas de historia en la ventana "
+                                            f"{parametro(self.cfg, 'clusteres.min_semanas_proxy')} semanas con datos utilizables en la ventana "
                                             "en común con el resto): "
                                             "cada uno cuenta como un clúster propio; "
-                                            + ("el resto tampoco se agrupa (ML-CLUS-001 rechazado)" if clusteres.get("rechazo")
+                                            + ("el resto tampoco se agrupa (el Motor no sirvió los clústeres)" if clusteres.get("rechazo")
                                                else "el resto se agrupa con ML-CLUS-001"))]   # T-165: no cita lo que no se usó
         if clusteres.get("rechazo"):
-            limitaciones = limitaciones + [(f"clústeres de exposición no calculados ({clusteres['rechazo']}): la concentración entre "
-                                            "opciones no se ha podido medir en este ciclo")]
+            # T-165 r03: la ficha va con su forma canónica (la escribe el ejecutor); si el Motor no la sirve, sin su detalle
+            motivo = (clusteres["rechazo"] if sint._sirve(self)("ML-CLUS-001") else "el Motor no sirve ML-CLUS-001")
+            limitaciones = limitaciones + [(f"clústeres de exposición no calculados ({sint.anotar(self, motivo)}): la concentración "
+                                            "entre opciones no se ha podido medir en este ciclo")]
         if limitaciones:
             paquete["limitaciones"] = limitaciones + [x for x in paquete["limitaciones"] if not x.startswith("Ninguna limitación")]
         # F6 · G3 (HT-09) + dictamen del Orquestador si no es APTO
@@ -877,7 +904,8 @@ class Bloque:
         rechazadas = self._fichas_rechazadas.get((clase, run_id)) or []
         if rechazadas:
             out["estado"] = "PARCIAL"
-            out["lagunas"].append(f"fichas del Motor rechazadas en este ciclo: {', '.join(rechazadas)} (sus señales faltan)")
+            out["lagunas"].append(f"fichas del Motor rechazadas en este ciclo: {sint.anotar(self, ', '.join(rechazadas))} "
+                                  "(sus señales faltan)")   # T-165 r03: con su forma canónica, que escribe el ejecutor
         if not senales:
             out.update({"estado": "PARCIAL", "lagunas": ["sin datos HT-01 para el universo de la clase (PS2)"]})
             return out
@@ -933,8 +961,8 @@ class Bloque:
             instr += v6.NOTA_GC1
         pr = self.cfg.get("presupuesto_uc", {}).get("reparto_fases", {})
         self.mensajeria.crear("CT-06", "AG-02", agente, msg, run_id=run_id, presupuesto={"uc": presupuesto.asignado.get(clase)})
-        r = self._invocar(agente, "CT-06", msg, "INFORME_CLASE" if fase == "CRIBADO_E_INVESTIGACION" else "REVISION_VIGENTES",
-                          instr, as_of, run_id, clase, "cribado", presupuesto)
+        esquema = "INFORME_CLASE" if fase == "CRIBADO_E_INVESTIGACION" else "REVISION_VIGENTES"
+        r = self._invocar(agente, "CT-06", msg, esquema, instr, as_of, run_id, clase, "cribado", presupuesto)
         if r is None or r.datos is None:
             out["estado"] = "PARCIAL"
             out["lagunas"].append("informe de clase no disponible (presupuesto o salida no conforme): alcance reducido declarado")
@@ -1095,8 +1123,8 @@ class Bloque:
         r = self._invocar("AG-10", "CT-12", msg, "PROSPECTIVA",
                           "Para cada encargo, construye escenarios por horizonte y propone un pronóstico verificable por horizonte "
                           "pedido: vista (alcista/bajista para DIRECCIONAL; relativa_favorable/relativa_desfavorable para "
-                          "RELATIVO frente a la referencia), probabilidad interna (0,05–0,95), afirmación inequívoca y escenario.",
-                          as_of, run_id, clase, "prospectiva", presupuesto)
+                          "RELATIVO frente a la referencia), probabilidad interna (0,05–0,95), afirmación inequívoca y escenario. "
+                          + ht09.REGLA_R22_REDACCION, as_of, run_id, clase, "prospectiva", presupuesto)   # T-165 r04 (H-28)
         res = {x["ref"]: x for x in (r.datos or {}).get("resultados", [])} if r and r.datos else {}
         for f in finales:
             f["_prospectiva"] = res.get(f["proxy"])
@@ -1247,10 +1275,9 @@ class Bloque:
                        "calculos": f["senales"].get("calc_ids", [])} for f in finales]
         msg = {"peticiones": peticiones, "nivel": nivel}
         self.mensajeria.crear("CT-13", "AG-02", "AG-11", msg, run_id=run_id, presupuesto={"uc": presupuesto.asignado.get(clase)})
-        r = self._invocar("AG-11", "CT-13", msg, "REFUTACION",
-                          "Refuta de forma independiente cada tesis: objeciones graduadas (fuerte, moderada, débil) con id "
-                          "OBJ-<ref>-nn, tipo, argumento, evidencia y qué la resolvería; veredicto global por tesis.",
-                          as_of, run_id, clase, "refutacion", presupuesto)
+        instr = ("Refuta de forma independiente cada tesis: objeciones graduadas (fuerte, moderada, débil) con id "
+                 "OBJ-<ref>-nn, tipo, argumento, evidencia y qué la resolvería; veredicto global por tesis. " + ht09.REGLA_R22_REDACCION)
+        r = self._invocar("AG-11", "CT-13", msg, "REFUTACION", instr, as_of, run_id, clase, "refutacion", presupuesto)
         if not r or not r.datos:
             for f in finales:
                 f["_refutacion"] = None
@@ -1754,15 +1781,48 @@ class Bloque:
                "top3_anterior": anterior[-1].get("top3_por_clase") if anterior else None},
                "delta_gc0": {c: g["motivos"] for c, g in gc0.items()}, "fecha_objetivo": str(pd.Timestamp(as_of).date()),
                "insumos_integracion": resumen}
-        r = self._invocar("AG-02", "CT-05", msg, "INTEGRACION",
-                          "Integra los informes de clase: régimen macro común, factores dominantes (qué opciones dependen del mismo "
-                          "factor), lectura del conjunto, cambios frente al ciclo anterior, preguntas sugeridas para el Broker y "
-                          "limitaciones. No cambies la selección: la ha hecho HT-03.", as_of, run_id, None, "integracion", presupuesto, bolsa="COMUN")
+        instr = ("Integra los informes de clase: régimen macro común, factores dominantes (qué opciones dependen del mismo "
+                 "factor), lectura del conjunto, cambios frente al ciclo anterior, preguntas sugeridas para el Broker y "
+                 "limitaciones. No cambies la selección: la ha hecho HT-03. " + ht09.REGLA_R22_REDACCION)
+        r = self._invocar("AG-02", "CT-05", msg, "INTEGRACION", instr, as_of, run_id, None, "integracion", presupuesto, bolsa="COMUN")
         if r and r.datos:
             return r.datos
         return {"regimen_macro": "Régimen no integrado por el Analizador (salida no disponible); ver regímenes por clase.",
                 "factores_dominantes": [], "lectura_conjunto": "Integración no disponible: alcance reducido declarado.",
                 "preguntas_sugeridas": [], "limitaciones": ["integración del Analizador no disponible"], "cambios_vs_anterior": ""}
+
+    def reescribir_r22(self, r, agente, contrato, msg, esquema, instr, as_of, run_id, clase, fase, presupuesto, bolsa=None,
+                       **extra):
+        """T-165 r04–r06 (H-28, H-33, H-34, H-40): la reescritura R22 de una respuesta, que hace `_invocar` en toda llamada de un
+        agente cuyo texto puede llegar al entregable. Si la respuesta, sin sus campos de madurez (los reescribe el ejecutor,
+        H-38), lleva la raíz «valid-», que G3-MET-13 bloquearía, se pide de nuevo con la regla R22 y las frases que la llevan
+        (H-37, hasta `redaccion.frases_r22_max`), tantas veces como `redaccion.reescrituras_r22`; lo reescrito queda en HA (H-39).
+        Si persiste, se usa la última y G3-MET-13 bloquea (falla cerrado)."""
+        for _ in range(int(parametro(self.cfg, "redaccion.reescrituras_r22")) if isinstance(msg, dict) else 0):
+            datos = sint._sin_madurez(r.datos) if r and r.datos else None
+            if not (datos and ht09.tiene_raiz_valid(datos)):
+                break
+            frases = [{"ruta": a, "texto": t} for a, t in ht09.frases_con_raiz(datos, int(parametro(self.cfg, "redaccion.frases_r22_max")))]
+            # Cierre de la QA r06: la reescritura es opcional; si su peor caso (el de la llamada, más las frases) no cabe en la
+            # bolsa, no se pide (pedirla podría cerrar la fase por presupuesto aunque la respuesta exista) y G3-MET-13 decide
+            b = bolsa or clase or "COMUN"
+            extra_tok = tokens_de_peticion([], [{"role": "user", "content": json.dumps(frases, ensure_ascii=False)}], None)
+            peor = float(getattr(r, "peor_caso_uc", 0.0) or 0.0) + self.contabilidad.uc_de(Uso(entrada=extra_tok))
+            if presupuesto is not None and not presupuesto.puede(b, peor):
+                self.almacen.incidencia("OTRO", f"G3-MET-13 (R22): respuesta de {agente} ({esquema}) con la raíz «valid-» sin "
+                                        f"reescribir: su peor caso ({peor:.2f} UC) no cabe en la bolsa {b}; decide G3-MET-13",
+                                        objeto=run_id, severidad="Operativa", frases_r22=frases)
+                break
+            self.almacen.incidencia("OTRO", f"G3-MET-13 (R22): respuesta de {agente} ({esquema}) reescrita por la raíz «valid-»",
+                                    objeto=run_id, severidad="Operativa", frases_r22=frases)
+            previa = msg.get("reescritura") if isinstance(msg.get("reescritura"), dict) else {}
+            msg2 = {**msg, "reescritura": {**previa, "r22": ht09.REGLA_R22_REDACCION, "frases": frases}}
+            r2 = self._invocar(agente, contrato, msg2, esquema, f"{instr} Reescribe: {ht09.REGLA_R22_REDACCION}", as_of, run_id,
+                               clase, fase, presupuesto, bolsa=bolsa, **extra)
+            if not (r2 and r2.datos):
+                break
+            r = r2
+        return r
 
     def _validar_g3(self, paquete: dict, extras: dict, as_of, run_id: str, presupuesto: Presupuesto | None = None) -> tuple[dict, dict]:
         intento = 0
@@ -1823,7 +1883,8 @@ class Bloque:
         instr = ("Redacta los textos del informe visual para un usuario sin conocimientos financieros: tres frases de «la semana "
                  "en 30 segundos», por cada opción «por qué» y «qué podría salir mal» (≤ 20 palabras, sin jerga o explicada entre "
                  "paréntesis), motivos llanos de las clases sin tres opciones, un glosario de hasta 5 términos y una frase honesta "
-                 "sobre el historial de aciertos. Índice Fernández-Huerta ≥ 70. Las cifras ya vienen calculadas: no inventes otras.")
+                 "sobre el historial de aciertos. Índice Fernández-Huerta ≥ 70. Las cifras ya vienen calculadas: no inventes otras. "
+                 + ht09.REGLA_R22_REDACCION)
         r = self._invocar("AG-17", "CT-15", {"paquete_sintesis": msg}, "REDACCION", instr, as_of, run_id, None, "redaccion", presupuesto, bolsa="COMUN")
         red = (r.datos if r and r.datos else None) or self.redaccion.textos_por_defecto(paquete)
         entreg, g3b = self.redaccion.generar(self, paquete, extras, red, as_of, run_id, estado_run)

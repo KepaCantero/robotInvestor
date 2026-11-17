@@ -317,7 +317,7 @@ class Redaccion:
                         L += ["", f"**Hitos intermedios del pronóstico {hh} `{v['prg_id']}`** (probabilidad siempre cualitativa; se evalúa por sus hitos):", ""]
                         L += [f"- `{x['hit_id']}` · {x['fecha']} · {x['indicador']} · criterio: {x['criterio']}" for x in v["hitos"]]
                 L += ["", f"**Catalizadores.** {'; '.join(x['evento'] + ' (' + x['fecha'] + ')' for x in o['catalizadores']) or '—'}", "",
-                      f"**Riesgos.** {'; '.join(o['riesgos'])} — riesgo sintético **{o['riesgo_1a5']}/5** (RISK-DD-001).", "",
+                      f"**Riesgos.** {'; '.join(o['riesgos'])} — riesgo sintético **{o['riesgo_1a5']}/5** ({_fuente_riesgo(extras, o)}).", "",
                       f"**Invalidación.** {'; '.join(o['invalidacion'])}", "", f"**Qué cambiaría la conclusión.** {'; '.join(o['que_cambiaria_la_conclusion'])}", "",
                       f"**Lo que no sabemos.** {'; '.join(o['lo_que_no_sabemos'])}", ""]
                 if o.get("ejemplos_ilustrativos"):
@@ -336,7 +336,7 @@ class Redaccion:
             for o in d["opciones"]:
                 for ob in o["objeciones"]:
                     L.append(f"| `{o['opp_id']}` | {ob['fuerza']} | {ob['resumen']} | {ob.get('respuesta') or '—'} | {ob['estado']} |")
-        L += ["", "## 7. Limitaciones, lagunas y qué no sabemos", ""] + [f"- {x}" for x in p["limitaciones"]]
+        L += ["", CABECERA_LIMITACIONES, ""] + [f"- {x}" for x in p["limitaciones"]]
         if p.get("supuestos_declarados"):
             L += ["", "**Supuestos declarados (consultas al Broker sin respuesta, CT-23).**", ""] + \
                  [f"- {s['supuesto']} (`{s['cns_id']}`) — efecto si fuera falso: {s.get('efecto_si_falso', '—')}" for s in p["supuestos_declarados"]]
@@ -376,9 +376,13 @@ class Redaccion:
         borrador = base / "_borradores" / run_id
         borrador.mkdir(parents=True, exist_ok=True)
         rutas = {k: str(borrador / n) for k, n in nombres.items()}
-        Path(rutas["informe_visual"]).write_text(self.visual(bloque, paquete, red, as_of), encoding="utf-8")
+        visual = self.visual(bloque, paquete, red, as_of)
+        Path(rutas["informe_visual"]).write_text(visual, encoding="utf-8")
         leg = ht07.analizar(Path(rutas["informe_visual"]).read_text(encoding="utf-8"), es_html=True)
         res = sint.ht09_validar(bloque, paquete, extras, rutas["informe_visual"])
+        # T-165 r03: G3-MET-13 lee lo que se ha redactado; después, el ejecutor pone junto a cada ficha su madurez canónica desde el
+        # Catálogo (R22), en los tres entregables. Es el último paso: lo que escribe el ejecutor no se toma por lo del modelo
+        Path(rutas["informe_visual"]).write_text(sint.anotar(bloque, visual), encoding="utf-8")
         bloq = [c["id"] for c in res["comprobaciones"] if c["resultado"] == "BLOQUEO"]
         adv = [c["id"] for c in res["comprobaciones"] if c["resultado"] == "ADVERTENCIA"]
         dictamen = "BLOQUEADO" if bloq else ("APTO_CON_ADVERTENCIAS" if adv else "APTO")
@@ -387,20 +391,26 @@ class Redaccion:
             paquete.pop("estado_g3", None)
         else:
             paquete["estado_g3"] = dictamen
-        js = entregable_json(paquete)
+        esquema = json.loads(self.esquema_json.read_text(encoding="utf-8"))
+        # r04 (H-31): las cadenas con `maxLength` en el esquema no se anotan (la anotación las pasaría del límite)
+        js = sint.anotar_json(bloque, entregable_json(paquete), sint.claves_con_longitud_maxima(esquema))
+        js["x_madurez_metodos"] = sint.madurez_metodos(bloque, json.dumps(entregable_json(paquete), ensure_ascii=False))
         if dictamen == "BLOQUEADO":
             js.pop("estado_g3", None)
-        esquema = json.loads(self.esquema_json.read_text(encoding="utf-8"))
         errores = [f"{'/'.join(map(str, e.absolute_path))}: {e.message}"[:200]
                    for e in jsonschema.Draft202012Validator(esquema).iter_errors(js)][:10]
         Path(rutas["paquete_json"]).write_text(json.dumps(js, ensure_ascii=False, indent=1), encoding="utf-8")
         g3 = {"dictamen": dictamen, "advertencias": adv}
         cons = bloque.contabilidad.resumen(run_id)
         rutas_entrega = {k: str(dirs[k] / n) for k, n in nombres.items()}   # las que cita el informe: las de entrega
-        Path(rutas["informe_tecnico"]).write_text(self.tecnico(paquete, extras, g3, rutas_entrega, estado_run, cons), encoding="utf-8")
+        tec = self.tecnico(paquete, extras, g3, rutas_entrega, estado_run, cons)
+        Path(rutas["informe_tecnico"]).write_text(sint.anotar(bloque, _con_madurez(tec, sint.resumen_madurez(bloque, tec))), encoding="utf-8")
         coh = coherencia(rutas, js)
-        # T-165 (G3-MET-13): el técnico se escribe después de HT-09; su madurez declarada se comprueba aquí y suma a HT-09
-        if sint.g3_met13_tecnico(bloque, res, Path(rutas["informe_tecnico"]).read_text(encoding="utf-8")) and "G3-MET-13" not in bloq:
+        # T-165 (G3-MET-13): el técnico se escribe después de HT-09; su madurez declarada (lo redactado, antes de la forma
+        # canónica del ejecutor) se comprueba aquí y suma a HT-09. r04 (H-29): con marcadores en lugar de las rutas de entrega,
+        # que son texto de la configuración del operador, no del modelo
+        tec_g3 = self.tecnico(paquete, extras, g3, {k: f"<{k}>" for k in rutas_entrega}, estado_run, cons)
+        if sint.g3_met13_tecnico(bloque, res, tec_g3) and "G3-MET-13" not in bloq:
             bloq.append("G3-MET-13")
         if errores:
             bloq.append("ESQUEMA_JSON")
@@ -424,6 +434,25 @@ class Redaccion:
                                                                    for c in res["comprobaciones"]]})
         return rutas, {"dictamen": dictamen, "bloqueos": bloq, "advertencias": adv, "legibilidad": leg["fernandez_huerta"],
                        "frases_largas": leg["frases_largas"][:10], "errores_esquema": errores, "incoherencias": coh}
+
+
+CABECERA_LIMITACIONES = "## 7. Limitaciones, lagunas y qué no sabemos"
+
+
+def _con_madurez(tecnico: str, resumen: str) -> str:
+    """T-165 r03: la declaración R22 del técnico, en forma canónica y escrita por el ejecutor, al principio de las limitaciones."""
+    linea = f"- Madurez de los métodos citados (R22; la escribe el ejecutor desde el Catálogo): {resumen}."
+    if f"{CABECERA_LIMITACIONES}\n\n" in tecnico:
+        return tecnico.replace(f"{CABECERA_LIMITACIONES}\n\n", f"{CABECERA_LIMITACIONES}\n\n{linea}\n", 1)
+    return f"{tecnico.rstrip()}\n\n{linea}\n"
+
+
+def _fuente_riesgo(extras: dict, o: dict) -> str:
+    """T-165 r02 (H-06): el riesgo sintético se atribuye a RISK-DD-001 solo si el Motor lo calculó para esa opción; si no, es el
+    valor neutro de la síntesis y no se cita un método que no se usó (R22, G3-MET-13)."""
+    if o.get("opp_id") in (extras.get("riesgo_sin_motor") or ()):
+        return "valor neutro: sin cálculo del Motor en este ciclo"
+    return "RISK-DD-001"
 
 
 def _rotulo_n_efectivo(extras: dict) -> str:

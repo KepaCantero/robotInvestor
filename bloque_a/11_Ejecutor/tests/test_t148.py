@@ -166,7 +166,8 @@ def test_h02_el_peso_de_lo_que_lee_cada_busqueda(est, tarifa, medida, tmp_path, 
     # de escritura de caché de su agente, por cada 1 000 tokens leídos
     pc = next(x for x in c["papeles"] if x["papel"] == "peticion_conocimiento")
     esperado = 2 * 5 * (4 + 3 + 2 + 1) * tarifa["precios_por_millon"][modelo_de(cfg, pc["agente"])]["escritura_cache"] * 1000 / 1e6
-    assert c["usd_por_mil_tokens_leidos_por_busqueda"] == pytest.approx(esperado)
+    # T-165 r06: con las reescrituras R22 manda la cota por presupuesto; el peso de la cota por llamadas es el mismo
+    assert c["usd_por_mil_leidos_cota_llamadas"] == pytest.approx(esperado)
     (tmp_path / "m").mkdir()
     (tmp_path / "m" / "llamadas.json").write_text(json.dumps(medida), encoding="utf-8")
     assert est.main([str(tmp_path / "m")]) == 0
@@ -209,7 +210,7 @@ def test_h03_los_tipos_salen_de_f10(est, tarifa, medida, tmp_path):
     doce = cargar_config(extra={"perfiles": {"activos": DOCE}})
     assert est.tipos_del_estado(str(estado), doce) == ["DIV", "RV"]
     c = _cota(est, medida, tarifa, doce, tipos=est.tipos_del_estado(str(estado), doce))
-    assert c["tipos"] == ["DIV", "RV"] and c["llamadas_max"] == 7 * 2 + 7
+    assert c["tipos"] == ["DIV", "RV"] and c["llamadas_max"] == 12 * 2 + 10   # T-165 r06: + las reescrituras R22
     vacio = tmp_path / "vacio"
     vacio.mkdir()
     assert est.tipos_del_estado(str(vacio), doce) == DOCE                  # sin F10: lo que F10 tomará al nacer
@@ -302,13 +303,13 @@ def test_h04_r06_r07_ultima_llamada_y_primas_a_mano(est, tarifa, medida):
 
 
 def test_h04_r08_s3_en_el_borde(est, tarifa, medida):
-    """AG-11 puede llamarse 2 veces por tipo (refutación y contrarréplica): el ciclo medido hizo 1; con una más, en el
-    borde, vale; con dos más, falla cerrado."""
+    """AG-11 puede llamarse 4 veces por tipo (refutación y contrarréplica, cada una con su reescritura R22 desde T-165 r06): el
+    ciclo medido hizo 1; con tres más, en el borde, vale; con cuatro más, falla cerrado."""
     a11 = [x for x in medida if x["agente"] == "AG-11"]
     assert len(a11) == 1
-    _cota(est, medida + [dict(a11[0])], tarifa)
+    _cota(est, medida + [dict(a11[0])] * 3, tarifa)
     with pytest.raises(SystemExit, match="previstas"):
-        _cota(est, medida + [dict(a11[0])] * 2, tarifa)
+        _cota(est, medida + [dict(a11[0])] * 4, tarifa)
 
 
 def test_h04_r09_precio_por_uc_con_la_lectura_de_cache(est):
@@ -385,8 +386,14 @@ def test_r02_h01_con_busquedas_la_salida_no_dice_que_el_presupuesto_acote_lo_lei
     (tmp_path / "m").mkdir()
     (tmp_path / "m" / "llamadas.json").write_text(json.dumps(medida), encoding="utf-8")
     (tmp_path / "doce.yaml").write_text(yaml.safe_dump({"perfiles": {"activos": DOCE}}), encoding="utf-8")
-    for extra, manda in ((["--config", str(tmp_path / "doce.yaml")], "presupuesto"), ([], "llamadas")):
-        assert est.main([str(tmp_path / "m"), *extra]) == 0
+    # T-165 r06: con las reescrituras R22, también con divisas manda el presupuesto; sin ellas, mandan las llamadas
+    (tmp_path / "sin_r22.yaml").write_text(yaml.safe_dump({"redaccion": {"reescrituras_r22": 0}}), encoding="utf-8")
+    (tmp_path / "m0").mkdir()   # sin reescrituras, el ciclo medido sin la reescritura de la integración del simulado
+    i = max(k for k, x in enumerate(medida) if x["agente"] == "AG-02")
+    (tmp_path / "m0" / "llamadas.json").write_text(json.dumps(medida[:i] + medida[i + 1:]), encoding="utf-8")
+    for carpeta, extra, manda in (("m", ["--config", str(tmp_path / "doce.yaml")], "presupuesto"), ("m", [], "presupuesto"),
+                                  ("m0", ["--config", str(tmp_path / "sin_r22.yaml")], "llamadas")):
+        assert est.main([str(tmp_path / carpeta), *extra]) == 0
         salida = capsys.readouterr().out
         cota = next(x for x in salida.splitlines() if x.startswith("Cota superior del ciclo"))
         assert "acota también" not in salida and "salvo lo que lee cada búsqueda" in cota

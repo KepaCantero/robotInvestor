@@ -36,6 +36,7 @@ class ResultadoAgente:
     errores: list[str] = field(default_factory=list)
     cache_hit: bool = False
     uso: Uso = field(default_factory=Uso)
+    peor_caso_uc: float = 0.0         # T-165 (cierre de la QA r06): lo reservado en el peor caso (`Bloque._invocar_una`)
 
 
 def extraer_json(texto: str) -> Any:
