@@ -9,7 +9,7 @@ git fetch .docs/tickets/_relevo/wip_2026-11-17/wip.bundle 'refs/heads/wip/*:refs
 git worktree add --detach /ruta/copia wip/t143
 ```
 
-Si el contenedor sigue vivo, las ramas `wip/*` locales y las copias del scratchpad todavía existen. Los ficheros `*.patch` de esta carpeta son una primera instantánea en texto. No se suben, porque los de las QA repiten los del implementador. El bundle es la fuente.
+Si el contenedor sigue vivo, las ramas `wip/*` locales y las copias del scratchpad todavía existen. El bundle es la fuente.
 
 ## Estado por ticket y siguiente paso
 
