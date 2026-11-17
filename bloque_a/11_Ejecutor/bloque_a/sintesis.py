@@ -9,6 +9,7 @@ campos que HT-09 aprovecha (`puertas`, `cluster`, `vigente`, `horizontes.Hn.adve
 from __future__ import annotations
 
 import copy
+import math
 import re
 from pathlib import Path
 from typing import Any
@@ -25,7 +26,7 @@ from .configuracion import (
     sesiones_horizonte,
 )
 from .contratos import REGIONES
-from .herramientas import ht09
+from .herramientas import ht03, ht09
 from .herramientas.ht05_planificador import fecha_resolucion
 from .herramientas.ht06_indice import normalizar
 from .motor import servicio as _servicio
@@ -67,7 +68,8 @@ EXCLUYE_POR_DEFECTO = "Activos e instrumentos concretos: su selección correspon
 
 
 def _ambito(f: dict, c: str) -> dict:
-    a = f.get("ambito") if isinstance(f.get("ambito"), dict) else {}
+    a = f.get("ambito")
+    a = a if isinstance(a, dict) else {}
     inc = str(a.get("incluye") or f.get("nombre") or "").strip()
     exc = str(a.get("excluye") or "").strip()
     reg = str(a.get("region") or "").strip()
@@ -77,7 +79,8 @@ def _ambito(f: dict, c: str) -> dict:
 
 
 def _indicador(f: dict, fuente: str) -> dict:
-    i = f.get("indicador_seguimiento") if isinstance(f.get("indicador_seguimiento"), dict) else {}
+    i = f.get("indicador_seguimiento")
+    i = i if isinstance(i, dict) else {}
     out = {"nombre": str(i.get("nombre") or f.get("nombre") or f["proxy"])[:200], "simbolo": f["proxy"], "fuente": fuente}
     if str(i.get("tipo", "")).upper() in TIPOS_INDICADOR:
         out["tipo"] = str(i["tipo"]).upper()
@@ -85,7 +88,8 @@ def _indicador(f: dict, fuente: str) -> dict:
 
 
 def _invertibilidad(f: dict) -> dict:
-    i = f.get("invertibilidad") if isinstance(f.get("invertibilidad"), dict) else {}
+    i = f.get("invertibilidad")
+    i = i if isinstance(i, dict) else {}
     nota = str(i.get("nota") or "").strip()
     return {"universo_suficiente": True,   # en el top-3 solo hay ámbitos que superan PS3
             "nota": nota if len(nota) >= 5 else "Universo negociable suficiente y accesible según el Analista (PS3 superada)"}
@@ -304,7 +308,7 @@ def construir(bloque, run_id, tipo, as_of, clases, nivel, gc0, analisis, selecci
             objs = []
             for o in f.get("_objeciones", []):
                 resp = o.get("respuesta")
-                ok = bool(resp and len(resp) >= 10) and (o["fuerza"] != "fuerte" or o["resuelta"])
+                ok = _objecion_respondida(o)
                 objs.append({"objecion_id": o["objecion_id"], "fuerza": o["fuerza"], "resumen": o["resumen"], "respuesta": resp,
                              "estado": "RESPONDIDA" if ok else "SIN_RESOLVER", "resuelta": bool(o["resuelta"]) if o["fuerza"] == "fuerte" else ok})
             calcs = [x for x in (sen.get("calc_ids") or []) if str(x).startswith("CALC-")]
@@ -460,6 +464,120 @@ _UNITARIA = re.compile(
     r"|\b(?:acciones|bonos)\s+de\s+[^.;,\n]{1,120}?\s+(?:corporation|incorporated|inc\b|corp\b|plc\b|ag\b|s\.a\.)",
     re.IGNORECASE,
 )
+
+
+def _objecion_respondida(o: dict) -> bool:
+    """Estado de una objeción en los entregables: RESPONDIDA si tiene respuesta (≥ 10 caracteres) y, si es fuerte, está resuelta.
+    La misma regla para las del top-3 y las de las alternativas descartadas (T-175)."""
+    resp = o.get("respuesta")
+    return bool(isinstance(resp, str) and len(resp) >= 10) and (o.get("fuerza") != "fuerte" or bool(o.get("resuelta")))
+
+
+TEXTO_RETIRADO_MET13 = "Texto del modelo retirado por G3-MET-13 (R22); íntegro en F3"
+
+
+def _texto_rechazado(bloque, texto: Any) -> bool:
+    """T-175 r02 (QA r01, H-01): si un texto del modelo sobre una alternativa descartada lo rechazaría G3-MET-13 en el técnico: la
+    raíz «valid-» (sin mirar el ámbito: en el técnico la tabla entera es un párrafo) o cualquier incidencia de las reglas A a C."""
+    if not isinstance(texto, str) or not texto.strip():
+        return False
+    return ht09.tiene_raiz_valid(texto) or bool(_comprobar_met13(bloque, [("informe_tecnico", texto, "BLOQUEO")])["incidencias"])
+
+
+def _rk_valido(rk: Any) -> float | None:
+    """Un RK que se puede escribir y ordenar (QA r01, H-02): número finito, no booleano."""
+    return rk if isinstance(rk, (int, float)) and not isinstance(rk, bool) and math.isfinite(rk) else None
+
+
+def alternativas_descartadas(paquete: dict, extras: dict, bloque=None) -> dict[str, list[dict]]:
+    """T-175 (PB-38; 4.N.4 de la plantilla del informe técnico y 14.1 del Documento 0): por tipo de activo, las finalistas que no
+    están en el top-3 porque HT-03 las declara no elegibles (una puerta no superada, una objeción fuerte sin resolver, un umbral),
+    con la puerta, el motivo, lo que tendría que ocurrir y sus objeciones fuertes y moderadas. No se listan las elegibles fuera del
+    top-3 por RK (no se descartan), las vigentes (salen en la sección 5) ni las de arrastre (INC-T175-01 `[PROPUESTO]`). Lo mal
+    formado no se lista o se ignora: no rompe el informe ni se presenta como alternativa. Orden: RK descendente y `opp_id`.
+
+    Con `bloque` (r02, QA r01 H-01), un texto del modelo que G3-MET-13 rechazaría en el técnico no se presenta: el nombre pasa a
+    ser el símbolo de seguimiento, el resumen y la respuesta de una objeción, `TEXTO_RETIRADO_MET13`, y su «qué la resolvería»
+    se omite. La fila se mantiene (PB-38) y `retirados` dice qué se retiró, para la ADVERTENCIA en HA."""
+    def rechazado(t: Any) -> bool:
+        return bloque is not None and _texto_rechazado(bloque, t)
+
+    en_paquete = {o.get("opp_id") for d in (paquete.get("clases") or {}).values() for o in d.get("opciones", [])}
+    out: dict[str, list[dict]] = {}
+    for c, s in (extras.get("seleccion") or {}).items():
+        filas = []
+        cands = s.get("candidatos") if isinstance(s, dict) else None
+        for f in cands if isinstance(cands, list) else []:
+            ev = f.get("_ht03") if isinstance(f, dict) else None
+            oid = f.get("opp_id") if isinstance(f, dict) else None
+            if (not isinstance(ev, dict) or ev.get("elegible") is not False or not isinstance(oid, str) or oid in en_paquete
+                    or f.get("_arrastre") or f.get("_vigente")):
+                continue
+            mot = ev.get("motivos_no_elegible")
+            motivos = [m for m in (mot if isinstance(mot, list) else []) if isinstance(m, dict) and m.get("codigo")]
+            if not motivos:
+                continue
+            crudas = f.get("_objeciones")
+            objs = [o for o in (crudas if isinstance(crudas, list) else []) if isinstance(o, dict) and o.get("fuerza") in ("fuerte", "moderada")]
+            abiertas = [o for o in objs if o.get("fuerza") == "fuerte" and o.get("resuelta") is not True]
+            retirados: list[str] = []
+            puertas = sorted({str(m["puerta"]) for m in motivos if m.get("codigo") in ("PUERTA_NO_SUPERADA", "PUERTA_SIN_DATO") and m.get("puerta")})
+            ids = ", ".join(str(o.get("objecion_id") or "—") for o in abiertas)
+            motivo = [str(m.get("detalle") or m["codigo"]) + (f" ({ids})" if m["codigo"] == "OBJECION_FUERTE" and ids else "") for m in motivos]
+            condicion = ht03.modulo._que_tendria_que_ocurrir(motivos)   # la misma frase que R14 (`menos_de_tres_motivo`)
+            for o in abiertas:
+                q = o.get("que_la_resolveria")
+                if not isinstance(q, str) or not q.strip():
+                    continue
+                if rechazado(q):
+                    retirados.append(f"«qué la resolvería» de {o.get('objecion_id') or '—'}")
+                    continue
+                condicion.append(f"{o.get('objecion_id') or '—'}: {q}")
+            nombre = str(f.get("nombre") or f.get("proxy") or oid)
+            if rechazado(nombre):
+                nombre = str(f.get("proxy") or oid)
+                retirados.append("nombre")
+            filas_obj = []
+            for o in objs:
+                x = {"objecion_id": o.get("objecion_id"), "fuerza": o["fuerza"], "resumen": o.get("resumen"), "respuesta": o.get("respuesta"),
+                     "estado": "RESPONDIDA" if _objecion_respondida(o) else "SIN_RESOLVER"}
+                for k in ("resumen", "respuesta"):
+                    if rechazado(x[k]):
+                        x[k] = TEXTO_RETIRADO_MET13
+                        retirados.append(f"{k} de {o.get('objecion_id') or '—'}")
+                filas_obj.append(x)
+            filas.append({"opp_id": oid, "nombre": nombre, "rk": _rk_valido((ev.get("puntuaciones") or {}).get("RK")
+                                                                             if isinstance(ev.get("puntuaciones"), dict) else None),
+                          "puertas": puertas, "motivo": motivo, "condicion": condicion, "objeciones": filas_obj, "retirados": retirados})
+        if filas:
+            out[c] = sorted(filas, key=lambda x: (-(x["rk"] if x["rk"] is not None else -1), x["opp_id"]))
+    return out
+
+
+def bloqueos_delante(comprobacion: dict) -> None:
+    """QA r02 de T-175 (H-04): los BLOQUEOS delante en las incidencias de una comprobación, en su orden (ordenación estable), para
+    que las ADVERTENCIAS no los dejen fuera de los cinco detalles que guarda el G3V de F7 en HA."""
+    comprobacion["incidencias"].sort(key=lambda i: i.get("severidad") != "BLOQUEO")
+
+
+def advertir_alternativas_retiradas(res: dict, alternativas: dict[str, list[dict]]) -> list[str]:
+    """T-175 r02 (QA r01, H-01): una ADVERTENCIA de G3-MET-13 (en HA, con el G3V de F7) por cada alternativa a la que se le retiró
+    texto del modelo en el técnico; el texto íntegro sigue en F3. Nunca rebaja un BLOQUEO. Devuelve los detalles añadidos."""
+    detalles = [f"G3-MET-13: texto de la alternativa {a['opp_id']} retirado del técnico ({', '.join(a['retirados'])}); íntegro en F3"
+                for filas in alternativas.values() for a in filas if a.get("retirados")]
+    if not detalles:
+        return []
+    destino = next((c for c in res["comprobaciones"] if c["id"] == ht09.ID_MET13), None)
+    if destino is None:
+        destino = {"id": ht09.ID_MET13, "nombre": ht09.NOMBRE_MET13, "resultado": "OK", "incidencias": [], "datos": {"fichas_citadas": []}}
+        res["comprobaciones"].append(destino)
+    # delante de las demás advertencias; los BLOQUEOS, antes (aquí y al escribir el G3V, `redaccion.detalles_g3v`, que guarda cinco)
+    destino["incidencias"][:0] = [{"severidad": "ADVERTENCIA", "ruta": "informe_tecnico", "detalle": d} for d in detalles]
+    bloqueos_delante(destino)
+    if destino["resultado"] != "BLOQUEO":
+        destino["resultado"] = "ADVERTENCIA"
+    _recalcular(res)
+    return detalles
 
 
 def _control_unitarias(paquete, res):
@@ -707,6 +825,7 @@ def g3_met13_tecnico(bloque, res: dict, texto: str) -> bool:
         res["comprobaciones"].append(comp)
     else:
         destino["incidencias"].extend(comp["incidencias"])
+        bloqueos_delante(destino)   # T-175 (QA r02, H-04): tras las ADVERTENCIAS de las alternativas, no detrás
         destino["resultado"] = "BLOQUEO"
         destino.setdefault("datos", {})["fichas_citadas_tecnico"] = comp["datos"]["fichas_citadas"]
     _recalcular(res)
