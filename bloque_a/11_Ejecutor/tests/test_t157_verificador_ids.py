@@ -301,6 +301,7 @@ Regla de corte: `R29 = R1 + R2`.
 Usa la ficha ZZ-ALFA-001 y la QQ-WXYZ-001.
 Según el catálogo v7.0 del Motor.
 Contrato CT\u201106 con guion no separable.
+{"metodo":"AA-THETA-001"}
 """
 
 
@@ -312,6 +313,7 @@ def test_r02_contextos_no_excusan_de_mas(tmp_path):
                           funciones=FUNCIONES + "| MOT-F13 | Trece | — |\n\nEl archivo F13 no existe.\n")
     inf = vi.verificar(raiz, codigo_juguete())
     assert {"AA-CARYY-001", "AA-ETA-001"} <= _de(inf, "d", "FICHA_CITADA_INEXISTENTE", "ERROR")
+    assert "AA-THETA-001" in _de(inf, "d", "FICHA_CITADA_INEXISTENTE", "ERROR")   # T-164: solo un campo de serie declara símbolo
     assert {"CT-06", "CT-27"} <= _de(inf, "a", "CT_INEXISTENTE", "ERROR")          # CT-06 escrito con U+2011
     assert {"R28", "R29"} <= _de(inf, "b", "R_INEXISTENTE", "ERROR")                # «JEL» en la línea; R en una fórmula
     assert "F13" in _de(inf, "c", "F_INEXISTENTE", "ERROR")
@@ -625,3 +627,167 @@ def test_r02_orden_de_hallazgos_con_desempate_por_codigo(tmp_path):
     beta = [h["codigo"] for h in vi.verificar(raiz, codigo_juguete())["hallazgos"]
             if h["id"] == "AA-BETA-001" and h["nivel"] == "ERROR"]
     assert beta == ["FALTA_EN_FICHAS_CATALOGO", "SOLO_CATALOGO"]       # se crean al revés; el orden es por código
+
+
+# ---------------------------------------------------------------- T-164: hallazgos de la QA r02 de T-157 (H-09 a H-12)
+def _lineas(inf, ident, nivel, codigo=None):
+    return sorted((u["archivo"].split("/")[0], u["linea"]) for h in inf["hallazgos"] if h["id"] == ident and h["nivel"] == nivel
+                  and (codigo is None or h["codigo"] == codigo) for u in h["ubicaciones"])
+
+
+SIMBOLOS = PROMPT + """Calcula con la ficha AA-SERIE-001.
+{"serie_ht01":"AA-SERIE-002","operacion":{"ficha_id":"AA-SERIE-002"}}
+Usa la ficha AA-SERIE-003. La serie AA-SERIE-003 sube.
+{"estado_madurez_metodos":"AA-SERIE-003: implementado"}
+{"afirmacion":"El índice AA-SERIE-003 sube; la ficha que lo mide es otra"}
+Según la ficha: {"nota":"AA-SERIE-003 sube"}
+{"method_id":["AA-SERIE-003"]}
+{"datos":[{"serie_ht01":"AA-SERIE-002","ficha_id":"AA-SERIE-002"}]}
+{"pasos":[{"method_id":"AA-SERIE-003"}]}
+{"fichas":["AA-SERIE-003"]}
+{"ficha":"AA-SERIE-003"}
+Usa una ficha de índices (p. ej. AA-SERIE-003).
+Fichas: AA-ALFA-001; AA-SERIE-003.
+Una ficha de índices (Ej. AA-SERIE-003).
+"""
+
+
+def test_t164_h09_simbolo_no_excusa_como_ficha(tmp_path):
+    """QA r02, H-09: la excusa del símbolo es por aparición. Tras «ficha» en la misma frase o en un campo de ficha es ERROR,
+    aunque el símbolo se declare en otro archivo; el valor de la serie y la prosa sin «ficha» siguen en INFO."""
+    raiz = corpus_juguete(tmp_path, prompt=SIMBOLOS, funciones=FUNCIONES + '\n{"simbolo":"AA-SERIE-003"}\n')
+    inf = vi.verificar(raiz, codigo_juguete())
+    p = "02_System_prompts"
+    assert _lineas(inf, "AA-SERIE-001", "ERROR") == [(p, 11)]                   # tras «la ficha», declarado en la línea 9
+    assert _lineas(inf, "AA-SERIE-001", "INFO") == [(p, 9), (p, 10)]
+    assert _lineas(inf, "AA-SERIE-002", "ERROR") == [(p, 12), (p, 18)]          # el valor de ficha_id de la misma línea…
+    assert _lineas(inf, "AA-SERIE-002", "INFO") == [(p, 12), (p, 18)]           # …y el de serie_ht01, excusado (r02: en array)
+    assert len([h for h in inf["hallazgos"] if h["id"] == "AA-SERIE-002"]) == 2
+    assert _lineas(inf, "AA-SERIE-003", "ERROR") == [(p, 13), (p, 14), (p, 17)] + [(p, n) for n in range(19, 25)]
+    # «la ficha X», estado_madurez_metodos, array; r02 (H-01, H-02): array de objetos, clave «fichas» o «ficha», «p. ej.», «;»; «Ej.» (H-07)
+    assert _lineas(inf, "AA-SERIE-003", "INFO") == [(p, 13), (p, 15), (p, 16), ("03_Funciones", 8)]   # otra frase; otro valor
+
+
+def test_t164_h09_simbolo_de_familia_desconocida(tmp_path):
+    """H-09 y H-12 (N04): una familia desconocida declarada como símbolo se excusa por aparición: la serie no da ERROR ni
+    FAMILIA_DESCONOCIDA, pero «la ficha AB-ALFA-001» (parecida a AA-ALFA-001) sí es ERROR."""
+    raiz = corpus_juguete(tmp_path, prompt=PROMPT + '{"serie_ht01":"AB-ALFA-001"}\nLa serie AB-ALFA-001 sube.\n'
+                          'Con la ficha AB-ALFA-001.\n{"simbolo":"QQ-WXYZ-001"}\n')
+    inf = vi.verificar(raiz, codigo_juguete())
+    p = "02_System_prompts"
+    assert _lineas(inf, "AB-ALFA-001", "ERROR", "FICHA_CITADA_INEXISTENTE") == [(p, 13)]
+    assert _lineas(inf, "AB-ALFA-001", "INFO", "CITA_EN_CONTEXTO_AJENO") == [(p, 11), (p, 12)]
+    assert not _de(inf, "d", "FAMILIA_DESCONOCIDA")                              # QQ-WXYZ-001 es un símbolo: solo INFO
+    assert _lineas(inf, "QQ-WXYZ-001", "INFO", "CITA_EN_CONTEXTO_AJENO") == [(p, 14)]
+
+
+def test_t164_h10_ficha_con_otro_numero_de_cifras(tmp_path):
+    """QA r02, H-10: una ficha de familia conocida con una, dos, cuatro o más cifras finales es ERROR, con la sugerencia."""
+    raiz = corpus_juguete(tmp_path, prompt=PROMPT + "Usa la AA-ALFA-01, la AA-ALFA-0001 y la AA-ALFA-1.\n")
+    inf = vi.verificar(raiz, codigo_juguete())
+    assert {"AA-ALFA-01", "AA-ALFA-0001", "AA-ALFA-1"} <= _de(inf, "d", "FICHA_CITADA_INEXISTENTE", "ERROR")
+    for x in ("AA-ALFA-01", "AA-ALFA-0001", "AA-ALFA-1"):
+        (m,) = [h["mensaje"] for h in inf["hallazgos"] if h["id"] == x]
+        assert "otro número de cifras" in m and "(¿AA-ALFA-001?)" in m
+    assert "otro número de cifras" not in next(h["mensaje"] for h in inf["hallazgos"] if h["id"] == "AA-GAMA-001")
+
+
+def _corpus_y_auditoria(tmp_path):
+    raiz = corpus_juguete(tmp_path / "b")
+    audit = tmp_path / "auditoria.md"
+    original = f"# A\n\n{vi.MARCA_INICIO}\nviejo\n{vi.MARCA_FIN}\n"
+    audit.write_text(original, encoding="utf-8")
+    return raiz, audit, original
+
+
+def _nada_escrito(tmp_path, audit, original, *rutas):
+    assert audit.read_text(encoding="utf-8") == original
+    assert not any(r.exists() for r in rutas)
+    assert not list(tmp_path.rglob(".*.tmp"))
+
+
+@pytest.mark.skipif(not Path("/proc").is_dir(), reason="hace falta /proc, una carpeta que no admite archivos")
+def test_t164_h11_carpeta_que_no_admite_archivos(tmp_path):
+    """QA r02, H-11: el JSON (válido) no se escribe si el Markdown va a una carpeta que no admite archivos."""
+    raiz, audit, original = _corpus_y_auditoria(tmp_path)
+    js = tmp_path / "ok.json"
+    assert vi.main(["--raiz", str(raiz), "--json", str(js), "--md", "/proc/t164_no_admite.md", "--auditoria", str(audit)]) == 2
+    _nada_escrito(tmp_path, audit, original, js)
+
+
+def test_t164_h11_temporal_que_falla_no_deja_nada(tmp_path, monkeypatch, capsys):
+    """H-11 y H-12 (N06): un temporal que no se puede escribir llega al `except OSError` de main: salida 2, nada escrito."""
+    raiz, audit, original = _corpus_y_auditoria(tmp_path)
+    js, md = tmp_path / "i.json", tmp_path / "i.md"
+    escribir = Path.write_text
+
+    def falla_md(self, *a, **k):
+        if self.name == ".i.md.tmp":
+            escribir(self, "a medias", encoding="utf-8")
+            raise OSError(28, "sin espacio")
+        return escribir(self, *a, **k)
+
+    monkeypatch.setattr(Path, "write_text", falla_md)
+    assert vi.main(["--raiz", str(raiz), "--json", str(js), "--md", str(md), "--auditoria", str(audit)]) == 2
+    assert "no se puede escribir la salida" in capsys.readouterr().err
+    _nada_escrito(tmp_path, audit, original, js, md)
+
+
+def test_t164_h11_renombrado_que_falla_no_deja_temporales(tmp_path, monkeypatch):
+    raiz, audit, original = _corpus_y_auditoria(tmp_path)
+    js, md = tmp_path / "i.json", tmp_path / "i.md"
+
+    def falla(a, b):
+        raise OSError(18, "otro dispositivo")
+
+    monkeypatch.setattr(vi.os, "replace", falla)
+    assert vi.main(["--raiz", str(raiz), "--json", str(js), "--md", str(md), "--auditoria", str(audit)]) == 2
+    _nada_escrito(tmp_path, audit, original, js, md)
+
+
+def test_t164_h12_destino_carpeta_es_entrada_invalida(tmp_path):
+    """H-12 (N05): una carpeta como destino se rechaza antes de escribir (EntradaInvalida), no por el OSError posterior."""
+    otro = tmp_path / "otro.json"
+    with pytest.raises(vi.EntradaInvalida, match="es una carpeta"):
+        vi._escribir_todo([(otro, "{}"), (tmp_path, "x")])
+    assert not otro.exists() and not list(tmp_path.glob(".*.tmp"))
+
+
+def test_t164_h12_rango_con_un_extremo_ajeno_no_excusa_el_otro(tmp_path):
+    """H-12 (N02): en «F04–F09», con MOT-F04 en la tabla y MOT-F09 no, F04 tampoco se excusa en esa línea."""
+    raiz = corpus_juguete(tmp_path, funciones=FUNCIONES + "Resultados F04–F09.\n")
+    inf = vi.verificar(raiz, codigo_juguete())
+    assert _lineas(inf, "F04", "ERROR", "F_INEXISTENTE") == [("03_Funciones", 7)]
+    assert _lineas(inf, "F04", "INFO") == [("03_Funciones", 6)]                  # el rango F01–F04 sí es del documento
+
+
+def test_t164_h12_formula_y_jel_solo_excusan_lo_suyo(tmp_path):
+    """H-12 (N07, N08): la fórmula no excusa una F de fuera de las comillas invertidas, ni la lista JEL un código tras ella."""
+    raiz = corpus_juguete(tmp_path, prompt=PROMPT + "La F14 y `(F1 − F12) / F12`.\nFiltro JEL (E43, R30) y la regla R31.\n")
+    inf = vi.verificar(raiz, codigo_juguete())
+    assert "F14" in _de(inf, "c", "F_INEXISTENTE", "ERROR")
+    assert "R31" in _de(inf, "b", "R_INEXISTENTE", "ERROR")
+    assert not {i for i, _ in _motivos(inf)} & {"F14", "R31"}
+
+
+def test_t164_r02_h04_destino_repetido(tmp_path):
+    """QA r01 de T-164, H-04: el mismo destino dos veces es fallo cerrado; los destinos quedan intactos y sin temporales."""
+    raiz, audit, original = _corpus_y_auditoria(tmp_path)
+    x = tmp_path / "x.txt"
+    x.write_text("viejo", encoding="utf-8")
+    assert vi.main(["--raiz", str(raiz), "--json", str(x), "--md", str(tmp_path / "." / "x.txt")]) == 2
+    assert vi.main(["--raiz", str(raiz), "--md", str(audit), "--auditoria", str(audit)]) == 2
+    assert x.read_text(encoding="utf-8") == "viejo"
+    _nada_escrito(tmp_path, audit, original)
+
+
+def test_t164_r02_h05_el_destino_conserva_sus_permisos(tmp_path):
+    """QA r01 de T-164, H-05: regenerar un informe no cambia los permisos del archivo que ya existía."""
+    raiz, audit, _ = _corpus_y_auditoria(tmp_path)
+    js = tmp_path / "i.json"
+    js.write_text("viejo", encoding="utf-8")
+    os.chmod(js, 0o640)
+    os.chmod(audit, 0o600)
+    assert vi.main(["--raiz", str(raiz), "--json", str(js), "--auditoria", str(audit)]) == 1
+    assert js.read_text(encoding="utf-8").startswith("{") and "Informe" in audit.read_text(encoding="utf-8")
+    assert (js.stat().st_mode & 0o777, audit.stat().st_mode & 0o777) == (0o640, 0o600)

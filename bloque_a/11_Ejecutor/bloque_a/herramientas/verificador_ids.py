@@ -27,10 +27,12 @@ Salida: 0 sin errores · 1 con errores · 2 fallo cerrado (entrada ausente, ambi
 from __future__ import annotations
 
 import argparse
+import contextlib
 import hashlib
 import json
 import os
 import re
+import stat
 import sys
 import unicodedata
 from collections.abc import Callable, Iterable, Mapping
@@ -40,7 +42,7 @@ from typing import Any, NamedTuple
 
 import jsonschema
 
-VERSION = "1.0.0"
+VERSION = "1.1.0"
 NIVELES = ("ERROR", "AVISO", "INFO")
 CLASES = {"entradas": "Entradas", "a": "Contratos CT", "b": "Reglas R", "c": "Archivos F", "d": "Fichas del Catálogo",
           "e": "Referencias de los archivos operativos", "f": "Puertas PS"}
@@ -87,6 +89,17 @@ RE_SIMBOLO_SERIE = re.compile(r'"(' + "|".join(CAMPOS_SERIE) + r')"\s*:\s*"([^"]
 # r02 (H-05): guiones Unicode que se escriben dentro de un ID (U+2010, U+2011) cuentan como «-»; la raya de rango (–) no
 GUIONES = str.maketrans({"\u2010": "-", "\u2011": "-"})
 RE_FORMA_FICHA = re.compile(r"(?<![\w-])([A-Z]{2,}(?:-[A-Z][A-Z0-9]*)+-\d{3})(?![\w-])")
+# T-164 (H-09): el símbolo de una serie se excusa por aparición. No se excusa la que es el valor (cadena o array) de uno de
+# estos campos (los del corpus cuyo valor es una ficha) ni la que sigue a «ficha»/«fichas» en la misma frase
+CAMPOS_FICHA = ("ficha_id", "method_id", "operacion", "estado_madurez_metodos")
+# r02 de T-164 (H-01): la rama de array solo toma arrays de escalares; en un array de objetos, `finditer` llega a las claves
+# de dentro («"datos":[{"ficha_id":"X"}]» atribuye X a ficha_id, no a datos)
+RE_VALOR_JSON = re.compile(r'"(\w+)"\s*:\s*(?:"([^"]*)"|\[([^\]\[{}]*)\])')
+RE_PALABRA_FICHA = re.compile(r"\bfichas?\b", re.IGNORECASE)
+# r02 de T-164 (H-02): «;» no corta la frase (enumeraciones de fichas) ni la corta el punto de una abreviatura
+# ronda de cierre de la r02 de T-164 (H-07): también «i.e.», y sin distinguir mayúsculas («Ej.»)
+RE_FIN_FRASE = re.compile(r"(?<!\bp)(?<!\bej)(?<!\be\.g)(?<!\bi\.e)(?<!\bvs)(?<!\bcf)(?<!\bpág)(?<!\bnúm)[.!?](?=\s)",
+                          re.IGNORECASE)
 
 
 class EntradaInvalida(Exception):
@@ -229,6 +242,26 @@ def _en_lista_jel(c: Cita) -> bool:
 
 def _en_formula(c: Cita) -> bool:
     return any(m.start() < c.inicio < m.end() and RE_OPERADOR.search(m.group(1)) for m in re.finditer(r"`([^`]*)`", c.texto))
+
+
+def _campo_json(c: Cita) -> tuple[str, int] | None:
+    """(campo, columna donde empieza su clave) del valor JSON, cadena o array de escalares, que contiene la cita; None si no
+    está en uno. La frase de un valor JSON empieza en su clave (r02 de T-164, H-02: «"fichas":["X"]» cuenta «fichas»)."""
+    for m in RE_VALOR_JSON.finditer(c.texto):
+        g = 2 if m.group(2) is not None else 3
+        if m.start(g) <= c.inicio < m.end(g):
+            return m.group(1), m.start()
+    return None
+
+
+def _como_ficha(c: Cita, campo: tuple[str, int] | None) -> bool:
+    """T-164 (H-09): la aparición se usa como ficha: es el valor de un campo de ficha, o la precede «ficha» en su frase (que
+    empieza tras el último «.», «!» o «?» que no cierra una de las abreviaturas p., ej., e.g., i.e., vs., cf., pág. y núm. (sin
+    distinguir mayúsculas) o, dentro de un valor JSON, en su clave)."""
+    if campo and campo[0] in CAMPOS_FICHA:
+        return True
+    desde = max([m.end() for m in RE_FIN_FRASE.finditer(c.texto, 0, c.inicio)] + [campo[1] if campo else 0])
+    return RE_PALABRA_FICHA.search(c.texto, desde, c.inicio) is not None
 
 
 def _contexto_r(x: str, c: Cita) -> str | None:
@@ -681,9 +714,12 @@ def _fichas(h: _Hallazgos, cat: Documento, corpus: list[Documento], codigo: Codi
     medio = r"[A-Z][A-Z0-9]*" if all(re.fullmatch(r"[A-Z][A-Z0-9]*", s) for x in cat_ids for s in x.split("-")[1:-1]) \
         else r"[A-Z0-9]+"
     re_cita = re.compile(r"(?<![\w-])((?:" + "|".join(map(re.escape, familias)) + rf")(?:-{medio})+-\d{{3}})(?![\w-])")
+    # T-164 (H-10): la misma forma con otra cantidad de cifras finales («FX-TREND-01», «FX-TREND-0001») también es una cita
+    re_otras_cifras = re.compile(r"(?<![\w-])((?:" + "|".join(map(re.escape, familias))
+                                 + rf")(?:-{medio})+-(?:\d{{1,2}}|\d{{4,}}))(?![\w-])")
     # las filas del índice §4 son declaraciones (se contrastan arriba con los encabezados), no citas
     citas = {k: v for k, v in ((k, [c for c in v if not (c.archivo == rel_cat and l4 <= c.linea < l4 + len(s4))])
-                               for k, v in _citas(corpus, re_cita).items()) if v}
+                               for k, v in (_citas(corpus, re_cita) | _citas(corpus, re_otras_cifras)).items()) if v}
 
     simbolos: dict[str, tuple[str, str, int]] = {}   # ID → (campo, archivo, línea) donde se declara como símbolo de una serie
     for d in corpus:
@@ -692,28 +728,40 @@ def _fichas(h: _Hallazgos, cat: Documento, corpus: list[Documento], codigo: Codi
                 simbolos.setdefault(m.group(2), (m.group(1), d.rel, n))
 
     def contexto_d(x: str, c: Cita) -> str | None:
-        if x in simbolos:
-            campo, archivo, n = simbolos[x]
-            return f"símbolo de una serie (valor de «{campo}» en {archivo}:{n}), no una ficha"
-        return None
+        """T-164 (H-09): un ID declarado como símbolo se excusa en cada aparición que no lo usa como ficha (el valor de su
+        campo de serie, la prosa); nunca en un campo de ficha ni tras «ficha» en la misma frase, aunque se declare en otro sitio.
+        Límite (r02 de T-164, H-03): el contexto se lee en la línea de la cita. No se ve «ficha» en otra línea (frase partida,
+        cabecera de una tabla), ni la clave de un JSON con sangría cuyo valor va en la línea siguiente, ni una ficha que es la
+        clave de un objeto («"estado_madurez_metodos":{"X":…}»); ahí un ID declarado como símbolo se excusa (INFO)."""
+        if x not in simbolos or _como_ficha(c, _campo_json(c)):
+            return None
+        campo, archivo, n = simbolos[x]
+        return f"símbolo de una serie (valor de «{campo}» en {archivo}:{n}), no una ficha"
 
     _inexistentes(h, "d", "FICHA_CITADA_INEXISTENTE", set(citas) - cat_ids, citas,
                   lambda x: f"Se cita la ficha {x}, que no está en el Catálogo"
+                  + ("" if re.fullmatch(RE_ID_FICHA, x) else " (con otro número de cifras finales que las fichas del Catálogo)")
                   + (f" (¿{p}?)" if (p := _mas_parecido(x, cat_ids)) else ""), contexto_d)
     # r02 (H-05): forma de ficha con una familia que no es de ninguna ficha: ERROR si se parece a una del Catálogo, si no INFO
     conocidas = set(familias)
     otras = {k: v for k, v in ((k, [c for c in v if not (c.archivo == rel_cat and l4 <= c.linea < l4 + len(s4))])
                                for k, v in _citas(corpus, RE_FORMA_FICHA).items() if k.split("-")[0] not in conocidas) if v}
     for x in sorted(otras, key=_clave_id):
-        if x in simbolos:
+        # T-164 (H-09): también aquí la excusa del símbolo es por aparición (antes, un símbolo declarado se omitía entero)
+        motivos = {c: contexto_d(x, c) for c in otras[x]}
+        for motivo in sorted({m for m in motivos.values() if m}):
+            h("d", "INFO", "CITA_EN_CONTEXTO_AJENO", x, f"{x} aparece como {motivo}: no se cuenta como cita",
+              [c for c, m in motivos.items() if m == motivo])
+        resto = [c for c, m in motivos.items() if not m]
+        if not resto:
             continue
         p = _mas_parecido(x, cat_ids)
         if p:
             h("d", "ERROR", "FICHA_CITADA_INEXISTENTE", x, f"Se cita {x}, con forma de ficha de una familia que no existe (¿{p}?)",
-              otras[x])
+              resto)
         else:
             h("d", "INFO", "FAMILIA_DESCONOCIDA", x, f"{x} tiene forma de ficha y su familia ({x.split('-')[0]}) no es la de "
-              "ninguna ficha del Catálogo ni del código: probablemente es otro identificador", otras[x])
+              "ninguna ficha del Catálogo ni del código: probablemente es otro identificador", resto)
     # menciones de una versión del Catálogo distinta de la vigente
     menciones: dict[str, list[tuple[str, int]]] = {}
     for d in corpus:
@@ -1028,17 +1076,32 @@ def actualizar_auditoria(ruta: Path, markdown: str) -> None:
 
 
 def _escribir_todo(salidas: list[tuple[Path, str]]) -> None:
-    """r02 (H-06): comprueba todos los destinos antes de escribir ninguno y escribe cada uno en un temporal que se renombra;
-    la auditoría va la última. Un destino imposible es EntradaInvalida (fallo cerrado, nada escrito)."""
+    """r02 (H-06): comprueba todos los destinos antes de escribir ninguno; un destino imposible es EntradaInvalida (fallo
+    cerrado, nada escrito). T-164 (H-11): escribe primero todos los temporales y solo cuando están todos los renombra (la
+    auditoría la última); si un temporal o un renombrado falla, borra los temporales que queden y relanza el OSError. Un
+    destino pedido dos veces es EntradaInvalida, y un destino que ya existe conserva sus permisos (r02 de T-164, H-04 y H-05). Límite:
+    un renombrado que falle a mitad deja renombrados los anteriores (no hay transacción entre archivos)."""
+    destinos = [r.resolve() for r, _ in salidas]
+    if len(set(destinos)) != len(destinos):   # r02 de T-164 (H-04): dos temporales con el mismo nombre se pisarían
+        raise EntradaInvalida("el mismo destino se pide dos veces (--json, --md o --auditoria)")
     for ruta, _ in salidas:
         if not ruta.parent.is_dir():
             raise EntradaInvalida(f"no existe la carpeta de destino {ruta.parent}")
         if ruta.is_dir():
             raise EntradaInvalida(f"el destino {ruta} es una carpeta")
-    for ruta, texto in salidas:
-        tmp = ruta.with_name(f".{ruta.name}.tmp")
-        tmp.write_text(texto, encoding="utf-8")
-        os.replace(tmp, ruta)
+    temporales: list[Path] = []
+    try:
+        for ruta, texto in salidas:
+            temporales.append(ruta.with_name(f".{ruta.name}.tmp"))
+            temporales[-1].write_text(texto, encoding="utf-8")
+        for (ruta, _), tmp in zip(salidas, temporales, strict=True):
+            if ruta.exists():   # r02 de T-164 (H-05): el destino conserva sus permisos (el temporal nace con la umask)
+                os.chmod(tmp, stat.S_IMODE(ruta.stat().st_mode))
+            os.replace(tmp, ruta)
+    finally:
+        for tmp in temporales:
+            with contextlib.suppress(OSError):
+                tmp.unlink(missing_ok=True)
 
 
 def main(argv: list[str] | None = None) -> int:

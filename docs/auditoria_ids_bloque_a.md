@@ -26,17 +26,17 @@ sigue valiendo cuando llegue otra versión del Documento 0. No se lee `11_Ejecut
 
 ## Informe de consistencia de identificadores del Bloque A
 
-Generado por `bloque_a/herramientas/verificador_ids.py` 1.0.0 (T-157). Todo dato sale del corpus y del código escaneados; las huellas permiten comprobar que se leyó exactamente esto.
+Generado por `bloque_a/herramientas/verificador_ids.py` 1.1.0 (T-157). Todo dato sale del corpus y del código escaneados; las huellas permiten comprobar que se leyó exactamente esto.
 
 ### Entradas
 
 | Entrada | Archivo | Versión | SHA-256 |
 |---|---|---|---|
-| Documento 0 | `01_Gobernanza/Documento 0 - Protocolo maestro del Bloque A - Versión óptima V5.1.md` | V5.1 (título: V5.1) | `7e708a030dad30d70517c26c7641e14488401fb76c1457b8dd8e1f9af31ff8cb` |
+| Documento 0 | `01_Gobernanza/Documento 0 - Protocolo maestro del Bloque A - Versión óptima V5.2.md` | V5.2 (título: V5.2) | `d8f9e3d05c19aa91f17d27ed254fdf706b9905b25b82da42567e8f284ae01e37` |
 | Catálogo | `04_Motor_conocimiento_y_catalogo/Catálogo de cálculos del Motor - V5.0.md` | V5.0 | `16fdb3b30833c7d7a2bece5c0c1628a7327b38fdeaa11a82b5bdca31062bd66f` |
-| Código | `bloque_a/contratos.py` | — | `b0316aa4078b65cdb29fa1cd4ade690c39211a1a0aff0e102599f2761b2796b1` |
-| Código | `bloque_a/motor/servicio.py` | — | `97c2b3ac80d64087a37e309d80185e843fbbe5b5b131de29b39024777882f7f0` |
-| Corpus | 88 `.md` (sin 11_Ejecutor/, 99_Historico*/) | — | `b73cfc2117bdc954859e0e743a9b35e82e31c39cf121861c0d670af039ff65b0` |
+| Código | `bloque_a/contratos.py` | — | `76105e903c217ab684af38e48c88507ab74a212aa7c7d3093e7761baa8176e94` |
+| Código | `bloque_a/motor/servicio.py` | — | `d5bf9d7ab758f2226ae4d64cd042481c95653563525c7821ecbc289997e55945` |
+| Corpus | 88 `.md` (sin 11_Ejecutor/, 99_Historico*/) | — | `fb583f9c8203bfcf49775731d19ee0013b16fe3895b912a276e320932be2b35e` |
 
 Secciones del Documento 0 leídas (línea del título): §1 l. 25, §5.1 l. 263, §6.1 l. 296, §7.3 (solo el título) l. 370, §9.3 l. 556.
 
@@ -60,31 +60,31 @@ Secciones del Documento 0 leídas (línea del título): §1 l. 25, §5.1 l. 263,
 
 | CT | §6.1 | CANALES | canal_permitido | CANALES_V6 | CAMPOS_MINIMOS | Citas | Archivos |
 |---|---|---|---|---|---|---|---|
-| CT-01 | sí | sí | sí | no | sí | 37 | 11 |
-| CT-02 | sí | sí | sí | no | sí | 28 | 8 |
-| CT-03 | sí | sí | sí | no | sí | 40 | 6 |
-| CT-04 | sí | sí | sí | no | no | 47 | 13 |
-| CT-05 | sí | sí | sí | no | sí | 92 | 12 |
-| CT-06 | sí | sí | sí | no | sí | 330 | 33 |
+| CT-01 | sí | sí | sí | no | sí | 38 | 11 |
+| CT-02 | sí | sí | sí | no | sí | 30 | 8 |
+| CT-03 | sí | sí | sí | no | sí | 41 | 6 |
+| CT-04 | sí | sí | sí | no | no | 48 | 13 |
+| CT-05 | sí | sí | sí | no | sí | 93 | 12 |
+| CT-06 | sí | sí | sí | no | sí | 332 | 33 |
 | CT-07 | sí | sí | sí | sí | sí | 98 | 38 |
-| CT-08 | sí | sí | sí | sí | sí | 93 | 38 |
-| CT-09 | sí | sí | sí | no | sí | 191 | 52 |
-| CT-10 | sí | sí | sí | no | sí | 97 | 25 |
-| CT-11 | sí | sí | sí | no | sí | 83 | 42 |
-| CT-12 | sí | sí | sí | no | sí | 48 | 12 |
-| CT-13 | sí | sí | sí | no | sí | 107 | 41 |
-| CT-14 | sí | sí | sí | no | sí | 36 | 8 |
-| CT-15 | sí | sí | sí | sí | sí | 45 | 14 |
-| CT-16 | sí | sí | sí | no | no | 35 | 8 |
-| CT-17 | sí | sí | sí | no | no | 49 | 8 |
-| CT-18 | sí | sí | sí | no | no | 66 | 23 |
-| CT-19 | sí | sí | sí | no | no | 95 | 32 |
-| CT-20 | sí | sí | sí | no | no | 40 | 9 |
-| CT-21 | sí | sí | sí | no | no | 61 | 20 |
+| CT-08 | sí | sí | sí | sí | sí | 94 | 38 |
+| CT-09 | sí | sí | sí | no | sí | 192 | 52 |
+| CT-10 | sí | sí | sí | no | sí | 98 | 25 |
+| CT-11 | sí | sí | sí | no | sí | 87 | 42 |
+| CT-12 | sí | sí | sí | no | sí | 49 | 12 |
+| CT-13 | sí | sí | sí | no | sí | 109 | 41 |
+| CT-14 | sí | sí | sí | no | sí | 37 | 8 |
+| CT-15 | sí | sí | sí | sí | sí | 47 | 14 |
+| CT-16 | sí | sí | sí | no | no | 36 | 8 |
+| CT-17 | sí | sí | sí | no | no | 52 | 8 |
+| CT-18 | sí | sí | sí | no | no | 67 | 23 |
+| CT-19 | sí | sí | sí | no | no | 97 | 32 |
+| CT-20 | sí | sí | sí | no | no | 41 | 9 |
+| CT-21 | sí | sí | sí | no | no | 62 | 20 |
 | CT-22 | sí | sí | sí | no | no | 67 | 12 |
-| CT-23 | sí | sí | sí | no | sí | 147 | 50 |
-| CT-24 | sí | sí | sí | no | sí | 84 | 16 |
-| CT-25 | sí | sí | sí | no | sí | 171 | 44 |
+| CT-23 | sí | sí | sí | no | sí | 152 | 50 |
+| CT-24 | sí | sí | sí | no | sí | 87 | 16 |
+| CT-25 | sí | sí | sí | no | sí | 175 | 44 |
 
 Sin hallazgos.
 
@@ -157,7 +157,7 @@ Las fases salen del título de §7.3 («7.3 Fases de un análisis (F0–F8) y fa
 | F0 | no | sí | 39 | 26 |
 | F1 | sí | sí | 217 | 57 |
 | F02 | no | no | 2 | 2 |
-| F2 | sí | sí | 234 | 55 |
+| F2 | sí | sí | 235 | 55 |
 | F3 | sí | sí | 220 | 53 |
 | F4 | sí | sí | 176 | 64 |
 | F05 | no | no | 1 | 1 |
@@ -173,8 +173,8 @@ Las fases salen del título de §7.3 («7.3 Fases de un análisis (F0–F8) y fa
 
 | Nivel | Código | ID | Motivo | Dónde |
 |---|---|---|---|---|
-| INFO | CODIGO_FUERA_DE_05 | CC | CC («Catálogo de cálculos, Perfiles de clase y Mapa de conocimientos del Motor») no es un archivo de 05_Archivos_operativos/ | `01_Gobernanza/Documento 0 - Protocolo maestro del Bloque A - Versión óptima V5.1.md:263` |
-| INFO | CODIGO_FUERA_DE_05 | ENT | ENT («Carpetas de entregables») no es un archivo de 05_Archivos_operativos/ | `01_Gobernanza/Documento 0 - Protocolo maestro del Bloque A - Versión óptima V5.1.md:263` |
+| INFO | CODIGO_FUERA_DE_05 | CC | CC («Catálogo de cálculos, Perfiles de clase y Mapa de conocimientos del Motor») no es un archivo de 05_Archivos_operativos/ | `01_Gobernanza/Documento 0 - Protocolo maestro del Bloque A - Versión óptima V5.2.md:263` |
+| INFO | CODIGO_FUERA_DE_05 | ENT | ENT («Carpetas de entregables») no es un archivo de 05_Archivos_operativos/ | `01_Gobernanza/Documento 0 - Protocolo maestro del Bloque A - Versión óptima V5.2.md:263` |
 | INFO | CITA_EN_CONTEXTO_AJENO | F02 | F02 aparece como abreviatura de la función AUD-F02 del mismo documento, en el rango F02–F12: no se cuenta como cita | `03_Funciones/Funciones, tareas y cometidos – Auditor – óptima V5.0.md:30` |
 | INFO | CITA_EN_CONTEXTO_AJENO | F02 | F02 aparece como abreviatura de la función PROS-F02 del mismo documento, en el rango F02–F12: no se cuenta como cita | `03_Funciones/Funciones, tareas y cometidos – Analista de Prospectiva y Horizontes – óptima V5.0.md:31` |
 | INFO | CITA_EN_CONTEXTO_AJENO | F05 | F05 aparece como abreviatura de la función ORQ-F05 del mismo documento, en el rango ORQ-F03 a F05: no se cuenta como cita | `03_Funciones/Funciones, tareas y cometidos – Orquestador técnico – óptima V5.0.md:23` |

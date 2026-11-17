@@ -1,16 +1,16 @@
 {
  "verificador": {
   "nombre": "verificador_ids",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "ticket": "T-157"
  },
  "entradas": {
   "raiz": "bloque_a",
   "documento_0": {
-   "archivo": "01_Gobernanza/Documento 0 - Protocolo maestro del Bloque A - Versión óptima V5.1.md",
-   "version_nombre": "5.1",
-   "version_titulo": "5.1",
-   "sha256": "7e708a030dad30d70517c26c7641e14488401fb76c1457b8dd8e1f9af31ff8cb"
+   "archivo": "01_Gobernanza/Documento 0 - Protocolo maestro del Bloque A - Versión óptima V5.2.md",
+   "version_nombre": "5.2",
+   "version_titulo": "5.2",
+   "sha256": "d8f9e3d05c19aa91f17d27ed254fdf706b9905b25b82da42567e8f284ae01e37"
   },
   "catalogo": {
    "archivo": "04_Motor_conocimiento_y_catalogo/Catálogo de cálculos del Motor - V5.0.md",
@@ -18,11 +18,11 @@
    "sha256": "16fdb3b30833c7d7a2bece5c0c1628a7327b38fdeaa11a82b5bdca31062bd66f"
   },
   "codigo": {
-   "bloque_a/contratos.py": "b0316aa4078b65cdb29fa1cd4ade690c39211a1a0aff0e102599f2761b2796b1",
-   "bloque_a/motor/servicio.py": "97c2b3ac80d64087a37e309d80185e843fbbe5b5b131de29b39024777882f7f0"
+   "bloque_a/contratos.py": "76105e903c217ab684af38e48c88507ab74a212aa7c7d3093e7761baa8176e94",
+   "bloque_a/motor/servicio.py": "d5bf9d7ab758f2226ae4d64cd042481c95653563525c7821ecbc289997e55945"
   },
   "md_escaneados": 88,
-  "huella_corpus": "b73cfc2117bdc954859e0e743a9b35e82e31c39cf121861c0d670af039ff65b0",
+  "huella_corpus": "fb583f9c8203bfcf49775731d19ee0013b16fe3895b912a276e320932be2b35e",
   "excluidos": [
    "11_Ejecutor/",
    "99_Historico*/"
@@ -137,7 +137,7 @@
     "canal_admitido": true,
     "canal_v6": false,
     "campos_minimos": true,
-    "citas": 37,
+    "citas": 38,
     "archivos": 11
    },
    {
@@ -147,7 +147,7 @@
     "canal_admitido": true,
     "canal_v6": false,
     "campos_minimos": true,
-    "citas": 28,
+    "citas": 30,
     "archivos": 8
    },
    {
@@ -157,7 +157,7 @@
     "canal_admitido": true,
     "canal_v6": false,
     "campos_minimos": true,
-    "citas": 40,
+    "citas": 41,
     "archivos": 6
    },
    {
@@ -167,7 +167,7 @@
     "canal_admitido": true,
     "canal_v6": false,
     "campos_minimos": false,
-    "citas": 47,
+    "citas": 48,
     "archivos": 13
    },
    {
@@ -177,7 +177,7 @@
     "canal_admitido": true,
     "canal_v6": false,
     "campos_minimos": true,
-    "citas": 92,
+    "citas": 93,
     "archivos": 12
    },
    {
@@ -187,7 +187,7 @@
     "canal_admitido": true,
     "canal_v6": false,
     "campos_minimos": true,
-    "citas": 330,
+    "citas": 332,
     "archivos": 33
    },
    {
@@ -207,7 +207,7 @@
     "canal_admitido": true,
     "canal_v6": true,
     "campos_minimos": true,
-    "citas": 93,
+    "citas": 94,
     "archivos": 38
    },
    {
@@ -217,7 +217,7 @@
     "canal_admitido": true,
     "canal_v6": false,
     "campos_minimos": true,
-    "citas": 191,
+    "citas": 192,
     "archivos": 52
    },
    {
@@ -227,7 +227,7 @@
     "canal_admitido": true,
     "canal_v6": false,
     "campos_minimos": true,
-    "citas": 97,
+    "citas": 98,
     "archivos": 25
    },
    {
@@ -237,7 +237,7 @@
     "canal_admitido": true,
     "canal_v6": false,
     "campos_minimos": true,
-    "citas": 83,
+    "citas": 87,
     "archivos": 42
    },
    {
@@ -247,7 +247,7 @@
     "canal_admitido": true,
     "canal_v6": false,
     "campos_minimos": true,
-    "citas": 48,
+    "citas": 49,
     "archivos": 12
    },
    {
@@ -257,7 +257,7 @@
     "canal_admitido": true,
     "canal_v6": false,
     "campos_minimos": true,
-    "citas": 107,
+    "citas": 109,
     "archivos": 41
    },
    {
@@ -267,7 +267,7 @@
     "canal_admitido": true,
     "canal_v6": false,
     "campos_minimos": true,
-    "citas": 36,
+    "citas": 37,
     "archivos": 8
    },
    {
@@ -277,7 +277,7 @@
     "canal_admitido": true,
     "canal_v6": true,
     "campos_minimos": true,
-    "citas": 45,
+    "citas": 47,
     "archivos": 14
    },
    {
@@ -287,7 +287,7 @@
     "canal_admitido": true,
     "canal_v6": false,
     "campos_minimos": false,
-    "citas": 35,
+    "citas": 36,
     "archivos": 8
    },
    {
@@ -297,7 +297,7 @@
     "canal_admitido": true,
     "canal_v6": false,
     "campos_minimos": false,
-    "citas": 49,
+    "citas": 52,
     "archivos": 8
    },
    {
@@ -307,7 +307,7 @@
     "canal_admitido": true,
     "canal_v6": false,
     "campos_minimos": false,
-    "citas": 66,
+    "citas": 67,
     "archivos": 23
    },
    {
@@ -317,7 +317,7 @@
     "canal_admitido": true,
     "canal_v6": false,
     "campos_minimos": false,
-    "citas": 95,
+    "citas": 97,
     "archivos": 32
    },
    {
@@ -327,7 +327,7 @@
     "canal_admitido": true,
     "canal_v6": false,
     "campos_minimos": false,
-    "citas": 40,
+    "citas": 41,
     "archivos": 9
    },
    {
@@ -337,7 +337,7 @@
     "canal_admitido": true,
     "canal_v6": false,
     "campos_minimos": false,
-    "citas": 61,
+    "citas": 62,
     "archivos": 20
    },
    {
@@ -357,7 +357,7 @@
     "canal_admitido": true,
     "canal_v6": false,
     "campos_minimos": true,
-    "citas": 147,
+    "citas": 152,
     "archivos": 50
    },
    {
@@ -367,7 +367,7 @@
     "canal_admitido": true,
     "canal_v6": false,
     "campos_minimos": true,
-    "citas": 84,
+    "citas": 87,
     "archivos": 16
    },
    {
@@ -377,7 +377,7 @@
     "canal_admitido": true,
     "canal_v6": false,
     "campos_minimos": true,
-    "citas": 171,
+    "citas": 175,
     "archivos": 44
    }
   ]
@@ -723,7 +723,7 @@
     "id": "F2",
     "archivo": true,
     "fase": true,
-    "citas": 234,
+    "citas": 235,
     "archivos": 55
    },
    {
@@ -1907,7 +1907,7 @@
    "mensaje": "CC («Catálogo de cálculos, Perfiles de clase y Mapa de conocimientos del Motor») no es un archivo de 05_Archivos_operativos/",
    "ubicaciones": [
     {
-     "archivo": "01_Gobernanza/Documento 0 - Protocolo maestro del Bloque A - Versión óptima V5.1.md",
+     "archivo": "01_Gobernanza/Documento 0 - Protocolo maestro del Bloque A - Versión óptima V5.2.md",
      "linea": 263
     }
    ]
@@ -1920,7 +1920,7 @@
    "mensaje": "ENT («Carpetas de entregables») no es un archivo de 05_Archivos_operativos/",
    "ubicaciones": [
     {
-     "archivo": "01_Gobernanza/Documento 0 - Protocolo maestro del Bloque A - Versión óptima V5.1.md",
+     "archivo": "01_Gobernanza/Documento 0 - Protocolo maestro del Bloque A - Versión óptima V5.2.md",
      "linea": 263
     }
    ]
