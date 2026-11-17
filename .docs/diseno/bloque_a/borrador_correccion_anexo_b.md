@@ -1,11 +1,11 @@
 # Borrador · corrección del Anexo B del Documento 0 del Bloque A
 
-**Estado: aplicado en el Documento 0 V5.2** (`bloque_a/01_Gobernanza/Documento 0 - Protocolo maestro del Bloque A - Versión óptima V5.2.md`, T-143, 15-11-2026). La V5.1 está en `bloque_a/99_Historico_V5.1/01_Gobernanza/`. Generado por `.docs/scripts/borrador_anexo_b.py`; no se edita a mano: si cambian las diferencias, se vuelve a generar. Las decisiones de la aplicación están en INC-T114-01 (`docs/incidencias.md`) y en `.docs/tickets/T-143/analisis-tecnico.md`.
+**Estado: aplicado en el Documento 0 V5.2** (`bloque_a/99_Historico_V5.2/01_Gobernanza/Documento 0 - Protocolo maestro del Bloque A - Versión óptima V5.2.md`, T-143, 15-11-2026). La V5.1 está en `bloque_a/99_Historico_V5.1/01_Gobernanza/`. Desde el 17-11-2026 la vigente es la V5.3 (`bloque_a/01_Gobernanza/Documento 0 - Protocolo maestro del Bloque A - Versión óptima V5.3.md`, T-166), que solo añade al Anexo B la respuesta final de CT-03. Generado por `.docs/scripts/borrador_anexo_b.py`; no se edita a mano: si cambian las diferencias, se vuelve a generar. Las decisiones de la aplicación están en INC-T114-01 (`docs/incidencias.md`) y en `.docs/tickets/T-143/analisis-tecnico.md`.
 
-## Lo que queda contra la V5.2
+## Lo que queda contra la V5.3
 
-- **Contratos sin campos en el Anexo B.** `CT-18`, `CT-20`, `CT-21`: la V5.2 los sigue remitiendo a los prompts de sistema.
-- **Diferencias medidas.** Ninguna: contra la V5.2, `divergencias_anexo_b.json` no tiene diferencias por contrato, ni mensajes de los flujos que no cumplan el Anexo B, ni valores en otro campo.
+- **Contratos sin campos en el Anexo B.** `CT-18`, `CT-20`, `CT-21`: la V5.3 los sigue remitiendo a los prompts de sistema.
+- **Diferencias medidas.** Ninguna: contra la V5.3, `divergencias_anexo_b.json` no tiene diferencias por contrato, ni mensajes de los flujos que no cumplan el Anexo B, ni valores en otro campo.
 - **Ejemplo publicado del informe de seguimiento (INC-T114-02).** Sigue sin cumplir su propio esquema por la clave `x_aviso_ejemplo`. Está en `06_Plantillas_entregables`, no en el Documento 0, y la V5.2 no lo toca.
 - **Campo del tipo en CT-22.** La V5.2 documenta los dos campos como están (`tipo` y `tipo_aviso`, uno de los dos por aviso). Unificarlos en el código sigue siendo posible, pero sería un cambio de formato con re-congelado de los goldens.
 - **Listas cerradas.** La V5.2 dice que la mensajería solo comprueba las de CT-01, CT-02 y los estados; las demás no. Validarlas en el código sería un cambio de formato.

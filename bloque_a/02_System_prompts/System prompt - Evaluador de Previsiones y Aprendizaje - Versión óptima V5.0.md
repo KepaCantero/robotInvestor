@@ -113,7 +113,7 @@ Campos de alta (escritos por Prospectiva): `prg_id`, `version_de`, `opp_id`, `tn
  "ajustes_aplicados":[{"aju_id":"AJU-2027-0003","parametro":"pesos_RK.A","de":0.45,"a":0.48,"methodology_version":"4.1","sombra_hasta":"2027-06-30"}],
  "propuestas_tipo3":[{"p3_id":"P3-EVAL-2027-0001","objeto":"…","evidencia":"…","impacto":"…","pruebas_regresion":"…"}],
  "sobreconfianza":[{"celda":"CRI×H1","prob_media":0.66,"frecuencia":0.48,"n":41,"p_valor":0.01}],
- "fiabilidad_fuentes":[{"ref_id":"RF-0123","n":22,"bss_shrunk":0.06,"puntos_historial":11}],
+ "fiabilidad_fuentes":[{"ref_id":"RF-0046","n":22,"bss_shrunk":0.06,"puntos_historial":11}],
  "lecciones_producto":[{"lec_id":"LEC-2026-0044","tema":"…"}],
  "presupuestos":{"desviacion_media":0.18,"propuesta":"…"},
  "historial_aciertos_ref":"F6:HAC-2026-W45",

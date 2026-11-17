@@ -11,7 +11,7 @@ Ficheros esperados que congelan el formato de los contratos CT-01 a CT-25. La su
 | `formas_flujos_mock.json` | Por flujo simulado, contrato y tipo de mensaje: emisores, receptores, la ruta de cada clave (anidadas incluidas) con su tipo JSON y las combinaciones de claves opcionales | Generado con el ejecutor y `MockClient` |
 | `divergencias_anexo_b.json` | Dónde difieren el Anexo B y el ejecutor (INC-T114-01) | Calculado |
 | `huellas.json` | SHA-256 del Documento 0, de los esquemas publicados y de los tres ficheros escritos a mano | Calculado |
-| `anexo_b_esquemas.json` | Un esquema JSON por contrato y sentido, **derivado solo del Anexo B** del Documento 0 V5.2 (hasta T-143, de la V5.1) | Escrito a mano |
+| `anexo_b_esquemas.json` | Un esquema JSON por contrato y sentido, **derivado solo del Anexo B** del Documento 0 V5.3 (hasta T-166, de la V5.2; hasta T-143, de la V5.1) | Escrito a mano |
 | `anexo_b_ejemplos.json` | Un ejemplo por esquema derivado | Escrito a mano |
 | `bateria_mensajes.json` | La batería: mensajes válidos e inválidos por contrato, cada uno con lo que se espera de él. Desde T-143, los casos que partían de un ejemplo que cambió con la V5.2 llevan su cuerpo (el ejemplo V5.1) dentro del caso, para seguir midiendo lo mismo | Escrito a mano |
 | `REGISTRO.md` | Una línea por re-congelado: fecha, ficheros y motivo | Lo escribe `--update` |

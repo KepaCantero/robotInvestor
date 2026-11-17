@@ -7,10 +7,10 @@
  "entradas": {
   "raiz": "bloque_a",
   "documento_0": {
-   "archivo": "01_Gobernanza/Documento 0 - Protocolo maestro del Bloque A - Versión óptima V5.2.md",
-   "version_nombre": "5.2",
-   "version_titulo": "5.2",
-   "sha256": "d8f9e3d05c19aa91f17d27ed254fdf706b9905b25b82da42567e8f284ae01e37"
+   "archivo": "01_Gobernanza/Documento 0 - Protocolo maestro del Bloque A - Versión óptima V5.3.md",
+   "version_nombre": "5.3",
+   "version_titulo": "5.3",
+   "sha256": "12cc5182ca4fb2cb9ca1cbbe43c1286985add017f1dff10582c70dd9f721cf74"
   },
   "catalogo": {
    "archivo": "04_Motor_conocimiento_y_catalogo/Catálogo de cálculos del Motor - V5.0.md",
@@ -18,11 +18,11 @@
    "sha256": "16fdb3b30833c7d7a2bece5c0c1628a7327b38fdeaa11a82b5bdca31062bd66f"
   },
   "codigo": {
-   "bloque_a/contratos.py": "76105e903c217ab684af38e48c88507ab74a212aa7c7d3093e7761baa8176e94",
+   "bloque_a/contratos.py": "424c5bf521087627babcb2e1028ecd28837ca7f0276f118806f5fad415425910",
    "bloque_a/motor/servicio.py": "d5bf9d7ab758f2226ae4d64cd042481c95653563525c7821ecbc289997e55945"
   },
   "md_escaneados": 88,
-  "huella_corpus": "fb583f9c8203bfcf49775731d19ee0013b16fe3895b912a276e320932be2b35e",
+  "huella_corpus": "7649e725c1ac338b75d20c75aeeb01d675cd5dbc9f85982d7bf5f5f806f4c851",
   "excluidos": [
    "11_Ejecutor/",
    "99_Historico*/"
@@ -57,12 +57,12 @@
    "INFO": 9
   },
   "d": {
-   "ERROR": 1,
-   "AVISO": 1,
+   "ERROR": 0,
+   "AVISO": 0,
    "INFO": 2
   },
   "e": {
-   "ERROR": 1,
+   "ERROR": 0,
    "AVISO": 1,
    "INFO": 0
   },
@@ -72,7 +72,7 @@
    "INFO": 0
   }
  },
- "errores": 2,
+ "errores": 0,
  "contratos": {
   "titulo": "6.1 Contratos en vigor (CT-01 a CT-25)",
   "definidos_doc0": [
@@ -157,8 +157,8 @@
     "canal_admitido": true,
     "canal_v6": false,
     "campos_minimos": true,
-    "citas": 41,
-    "archivos": 6
+    "citas": 47,
+    "archivos": 7
    },
    {
     "id": "CT-04",
@@ -459,7 +459,7 @@
    {
     "id": "R8",
     "en_doc0": true,
-    "citas": 46,
+    "citas": 47,
     "archivos": 29
    },
    {
@@ -709,7 +709,7 @@
     "id": "F1",
     "archivo": true,
     "fase": true,
-    "citas": 217,
+    "citas": 218,
     "archivos": 57
    },
    {
@@ -730,7 +730,7 @@
     "id": "F3",
     "archivo": true,
     "fase": true,
-    "citas": 220,
+    "citas": 222,
     "archivos": 53
    },
    {
@@ -751,7 +751,7 @@
     "id": "F5",
     "archivo": true,
     "fase": true,
-    "citas": 199,
+    "citas": 210,
     "archivos": 48
    },
    {
@@ -779,7 +779,7 @@
     "id": "F9",
     "archivo": true,
     "fase": true,
-    "citas": 249,
+    "citas": 250,
     "archivos": 63
    },
    {
@@ -1730,22 +1730,7 @@
     "similar_a": null
    }
   ],
-  "menciones_otra_version": [
-   {
-    "version": "4.0",
-    "menciones": 8,
-    "en_prompts": 6,
-    "archivos": [
-     "02_System_prompts/System prompt - MC-01 Fundamentos cuantitativos y estadística - Versión óptima V5.0.md",
-     "02_System_prompts/System prompt - MC-02 Series temporales, tendencias, regímenes y volatilidad - Versión óptima V5.0.md",
-     "02_System_prompts/System prompt - MC-03 Econometría, causalidad y macroeconomía cuantitativa - Versión óptima V5.0.md",
-     "02_System_prompts/System prompt - MC-04 Crecimiento, difusión y prospectiva cuantitativa - Versión óptima V5.0.md",
-     "02_System_prompts/System prompt - MC-05 Simulación estocástica y escenarios - Versión óptima V5.0.md",
-     "03_Funciones/Funciones, tareas y cometidos – Motor de Cálculo Avanzado para el Analizador de Tendencias de Inversión – óptima V5.0.md",
-     "05_Archivos_operativos/Registro de cálculos del Motor (esquema V2.0).md"
-    ]
-   }
-  ]
+  "menciones_otra_version": []
  },
  "referencias": {
   "citadores": [
@@ -1788,9 +1773,9 @@
     "prefijo": "RF",
     "citas": 2,
     "distintas": 2,
-    "existentes": 0,
+    "existentes": 1,
     "de_baja": 0,
-    "inexistentes": 1,
+    "inexistentes": 0,
     "otra_forma": 1
    },
    {
@@ -1907,7 +1892,7 @@
    "mensaje": "CC («Catálogo de cálculos, Perfiles de clase y Mapa de conocimientos del Motor») no es un archivo de 05_Archivos_operativos/",
    "ubicaciones": [
     {
-     "archivo": "01_Gobernanza/Documento 0 - Protocolo maestro del Bloque A - Versión óptima V5.2.md",
+     "archivo": "01_Gobernanza/Documento 0 - Protocolo maestro del Bloque A - Versión óptima V5.3.md",
      "linea": 263
     }
    ]
@@ -1920,7 +1905,7 @@
    "mensaje": "ENT («Carpetas de entregables») no es un archivo de 05_Archivos_operativos/",
    "ubicaciones": [
     {
-     "archivo": "01_Gobernanza/Documento 0 - Protocolo maestro del Bloque A - Versión óptima V5.2.md",
+     "archivo": "01_Gobernanza/Documento 0 - Protocolo maestro del Bloque A - Versión óptima V5.3.md",
      "linea": 263
     }
    ]
@@ -2030,60 +2015,6 @@
   },
   {
    "clase": "d",
-   "nivel": "ERROR",
-   "codigo": "FICHA_CITADA_INEXISTENTE",
-   "id": "FX-MC10-003",
-   "mensaje": "Se cita la ficha FX-MC10-003, que no está en el Catálogo",
-   "ubicaciones": [
-    {
-     "archivo": "05_Archivos_operativos/Registro de cálculos del Motor (esquema V2.0).md",
-     "linea": 92
-    }
-   ]
-  },
-  {
-   "clase": "d",
-   "nivel": "AVISO",
-   "codigo": "MENCION_OTRA_VERSION",
-   "id": "Catálogo V4.0",
-   "mensaje": "8 menciones a la versión 4.0 del Catálogo («Catálogo V4.0» o `catalog_version` 4.0; 6 en 02_System_prompts/); el vigente es V5.0",
-   "ubicaciones": [
-    {
-     "archivo": "02_System_prompts/System prompt - MC-01 Fundamentos cuantitativos y estadística - Versión óptima V5.0.md",
-     "linea": 23
-    },
-    {
-     "archivo": "02_System_prompts/System prompt - MC-01 Fundamentos cuantitativos y estadística - Versión óptima V5.0.md",
-     "linea": 240
-    },
-    {
-     "archivo": "02_System_prompts/System prompt - MC-02 Series temporales, tendencias, regímenes y volatilidad - Versión óptima V5.0.md",
-     "linea": 213
-    },
-    {
-     "archivo": "02_System_prompts/System prompt - MC-03 Econometría, causalidad y macroeconomía cuantitativa - Versión óptima V5.0.md",
-     "linea": 196
-    },
-    {
-     "archivo": "02_System_prompts/System prompt - MC-04 Crecimiento, difusión y prospectiva cuantitativa - Versión óptima V5.0.md",
-     "linea": 189
-    },
-    {
-     "archivo": "02_System_prompts/System prompt - MC-05 Simulación estocástica y escenarios - Versión óptima V5.0.md",
-     "linea": 191
-    },
-    {
-     "archivo": "03_Funciones/Funciones, tareas y cometidos – Motor de Cálculo Avanzado para el Analizador de Tendencias de Inversión – óptima V5.0.md",
-     "linea": 23
-    },
-    {
-     "archivo": "05_Archivos_operativos/Registro de cálculos del Motor (esquema V2.0).md",
-     "linea": 92
-    }
-   ]
-  },
-  {
-   "clase": "d",
    "nivel": "INFO",
    "codigo": "CITA_EN_CONTEXTO_AJENO",
    "id": "IDX-FICT-001",
@@ -2121,19 +2052,6 @@
     {
      "archivo": "05_Archivos_operativos/Registro de Fuentes para el Analizador de Tendencias de Inversión - V3.2.md",
      "linea": 5594
-    }
-   ]
-  },
-  {
-   "clase": "e",
-   "nivel": "ERROR",
-   "codigo": "REF_INEXISTENTE",
-   "id": "RF-0123",
-   "mensaje": "Se cita RF-0123, que no tiene entrada en 05_Archivos_operativos/",
-   "ubicaciones": [
-    {
-     "archivo": "02_System_prompts/System prompt - Evaluador de Previsiones y Aprendizaje - Versión óptima V5.0.md",
-     "linea": 116
     }
    ]
   },

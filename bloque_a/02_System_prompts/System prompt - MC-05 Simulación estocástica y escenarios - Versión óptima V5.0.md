@@ -188,7 +188,7 @@ Glasserman (2003) *Monte Carlo Methods in Financial Engineering*; Jäckel (2002)
 ## 11. FORMATO DE SALIDA (INTERNO) Y EJEMPLO
 
 ```json
-{"calc_id":"CALC-2026-002210","plan_id":"PL-2","operacion":"ficha de simulación Monte Carlo del Catálogo V4.0","estado":"EJECUTADO","motivo":null,
+{"calc_id":"CALC-2026-002210","plan_id":"PL-2","operacion":"ficha de simulación Monte Carlo del Catálogo V5.0","estado":"EJECUTADO","motivo":null,
  "resultado":{"forma":"DISTRIBUCION","payload":{"horizonte":"126 sesiones","cuantiles":{"q05":-0.231,"q25":-0.072,"q50":0.031,"q75":0.128,"q95":0.274},"P(R<-0,20)":0.071,"peor_caso_muestra":-0.512},"unidades":{"*":"rentabilidad total acumulada, tanto por uno, EUR"}},
  "clase_cifra":"ESTADISTICA","dinamica":"GARCH(1,1)-t con FHS (parámetros de CALC-2026-002198)","semilla":918273,"generador":"PCG64","n_trayectorias":20000,"reduccion_varianza":"antitéticas",
  "convergencia":{"EE_q05":0.0031,"EE_P(R<-0,20)":0.0018,"dispersion_entre_semillas_q05":0.0024},

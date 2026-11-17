@@ -1,6 +1,6 @@
 {
  "CT-01.ENCARGO": {
-  "$comment": "derivado del Anexo B del Documento 0 V5.2. `alcance.pregunta` es «texto libre opcional»; `nivel_forzado`, `fecha_objetivo` y `referencia_previa`, opcionales; dentro de `alcance`, todo es opcional",
+  "$comment": "derivado del Anexo B del Documento 0 V5.3. `alcance.pregunta` es «texto libre opcional»; `nivel_forzado`, `fecha_objetivo` y `referencia_previa`, opcionales; dentro de `alcance`, todo es opcional",
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "properties": {
    "alcance": {
@@ -41,7 +41,7 @@
   "type": "object"
  },
  "CT-02.RETORNO": {
-  "$comment": "derivado del Anexo B del Documento 0 V5.2. Un retorno con estado común RECHAZADO o SIN_RESULTADO lleva el estado común y el motivo, sin los campos de resultado (Anexo B, «Cómo se lee este anexo», y §6.2.6): este esquema describe el retorno con resultado y no sirve para juzgar los otros",
+  "$comment": "derivado del Anexo B del Documento 0 V5.3. Un retorno con estado común RECHAZADO o SIN_RESULTADO lleva el estado común y el motivo, sin los campos de resultado (Anexo B, «Cómo se lee este anexo», y §6.2.6): este esquema describe el retorno con resultado y no sirve para juzgar los otros",
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "properties": {
    "entregables": {
@@ -87,7 +87,7 @@
   "type": "object"
  },
  "CT-03.ENCARGO": {
-  "$comment": "derivado del Anexo B del Documento 0 V5.2. `query_id` lo asigna el bloque; `contexto` y `urgencia`, opcionales; `contexto.run_id` y `contexto.opp_id`, si aplica",
+  "$comment": "derivado del Anexo B del Documento 0 V5.3. `query_id` lo asigna el bloque; `contexto` y `urgencia`, opcionales; `contexto.run_id` y `contexto.opp_id`, si aplica",
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "properties": {
    "contexto": {
@@ -112,7 +112,7 @@
   "type": "object"
  },
  "CT-03.RETORNO": {
-  "$comment": "derivado del Anexo B del Documento 0 V5.2. `escalado` es opcional: nulo si la consulta no escala, un objeto si escala, con `estado_run` solo si se ejecutó el análisis. Un retorno con estado común RECHAZADO o SIN_RESULTADO lleva el estado común y el motivo, sin los campos de resultado (Anexo B, «Cómo se lee este anexo», y §6.2.6): este esquema describe el retorno con resultado y no sirve para juzgar los otros",
+  "$comment": "derivado del Anexo B del Documento 0 V5.3. `escalado` es opcional: nulo si la consulta no escala, un objeto si escala, con `estado_run` solo si se ejecutó el análisis. `respuesta_final` (V5.3) solo lo lleva la respuesta final de una consulta escalada, con `provisional_msg_id` y `resultado_analisis`. Un retorno con estado común RECHAZADO o SIN_RESULTADO lleva el estado común y el motivo, sin los campos de resultado (Anexo B, «Cómo se lee este anexo», y §6.2.6): este esquema describe el retorno con resultado y no sirve para juzgar los otros",
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "properties": {
    "clase_consulta": {
@@ -157,6 +157,25 @@
    "query_id": {},
    "referencias": {},
    "respuesta": {},
+   "respuesta_final": {
+    "properties": {
+     "provisional_msg_id": {},
+     "resultado_analisis": {
+      "enum": [
+       "ENTREGADO",
+       "ENTREGADO_PARCIAL",
+       "SIN_ENTREGA",
+       "FALLIDO",
+       "NO_EJECUTADO"
+      ]
+     }
+    },
+    "required": [
+     "provisional_msg_id",
+     "resultado_analisis"
+    ],
+    "type": "object"
+   },
    "ruta": {
     "enum": [
      "N0",
@@ -175,7 +194,7 @@
   "type": "object"
  },
  "CT-04.ENCARGO": {
-  "$comment": "derivado del Anexo B del Documento 0 V5.2. Los cinco bloques son opcionales (un CT-04 sin ninguno de los cinco lo rechaza `Bloque.decision`, no la mensajería); `configuracion` lleva solo lo que cambia; `motivo` de cada decisión y `resultado_comunicado.texto` son «opcional»",
+  "$comment": "derivado del Anexo B del Documento 0 V5.3. Los cinco bloques son opcionales (un CT-04 sin ninguno de los cinco lo rechaza `Bloque.decision`, no la mensajería); `configuracion` lleva solo lo que cambia; `motivo` de cada decisión y `resultado_comunicado.texto` son «opcional»",
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "properties": {
    "aprobar_certificados": {},
@@ -239,7 +258,7 @@
   "type": "object"
  },
  "CT-05.ENCARGO": {
-  "$comment": "derivado del Anexo B del Documento 0 V5.2. `seg_id` y `opp_id` solo con tipo SEGUIMIENTO; `insumos_integracion`, solo con INTEGRACION (no se exige); `memoria` y `delta_gc0` dependen del tipo (no se fijan sus claves)",
+  "$comment": "derivado del Anexo B del Documento 0 V5.3. `seg_id` y `opp_id` solo con tipo SEGUIMIENTO; `insumos_integracion`, solo con INTEGRACION (no se exige); `memoria` y `delta_gc0` dependen del tipo (no se fijan sus claves)",
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "if": {
    "properties": {
@@ -289,7 +308,7 @@
   "type": "object"
  },
  "CT-05.RETORNO": {
-  "$comment": "derivado del Anexo B del Documento 0 V5.2. No pasa por la mensajería: la respuesta del Analizador la valida su esquema de respuesta (`INTEGRACION`); el retorno parcial (`SOLICITUD_PRESUPUESTO`, `consultas_broker`, `solicitudes_credenciales`) es opcional y el ejecutor no lo lee; aquí no se exige ningún campo. Un retorno con estado común RECHAZADO o SIN_RESULTADO lleva el estado común y el motivo, sin los campos de resultado (Anexo B, «Cómo se lee este anexo», y §6.2.6): este esquema describe el retorno con resultado y no sirve para juzgar los otros",
+  "$comment": "derivado del Anexo B del Documento 0 V5.3. No pasa por la mensajería: la respuesta del Analizador la valida su esquema de respuesta (`INTEGRACION`); el retorno parcial (`SOLICITUD_PRESUPUESTO`, `consultas_broker`, `solicitudes_credenciales`) es opcional y el ejecutor no lo lee; aquí no se exige ningún campo. Un retorno con estado común RECHAZADO o SIN_RESULTADO lleva el estado común y el motivo, sin los campos de resultado (Anexo B, «Cómo se lee este anexo», y §6.2.6): este esquema describe el retorno con resultado y no sirve para juzgar los otros",
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "properties": {
    "SOLICITUD_PRESUPUESTO": {},
@@ -306,7 +325,7 @@
   "type": "object"
  },
  "CT-06.ENCARGO": {
-  "$comment": "derivado del Anexo B del Documento 0 V5.2. `foco` es «opcional»",
+  "$comment": "derivado del Anexo B del Documento 0 V5.3. `foco` es «opcional»",
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "properties": {
    "clase": {},
@@ -338,7 +357,7 @@
   "type": "object"
  },
  "CT-06.RETORNO": {
-  "$comment": "derivado del Anexo B del Documento 0 V5.2. No pasa por la mensajería: la respuesta del agente la valida su esquema de respuesta (`INFORME_CLASE`, `REVISION_VIGENTES` o `RESPUESTA_OBJECIONES`, según la fase); aquí no se exige ningún campo. Un retorno con estado común RECHAZADO o SIN_RESULTADO lleva el estado común y el motivo, sin los campos de resultado (Anexo B, «Cómo se lee este anexo», y §6.2.6): este esquema describe el retorno con resultado y no sirve para juzgar los otros",
+  "$comment": "derivado del Anexo B del Documento 0 V5.3. No pasa por la mensajería: la respuesta del agente la valida su esquema de respuesta (`INFORME_CLASE`, `REVISION_VIGENTES` o `RESPUESTA_OBJECIONES`, según la fase); aquí no se exige ningún campo. Un retorno con estado común RECHAZADO o SIN_RESULTADO lleva el estado común y el motivo, sin los campos de resultado (Anexo B, «Cómo se lee este anexo», y §6.2.6): este esquema describe el retorno con resultado y no sirve para juzgar los otros",
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "properties": {
    "clase": {},
@@ -355,7 +374,7 @@
   "type": "object"
  },
  "CT-07.ENCARGO": {
-  "$comment": "derivado del Anexo B del Documento 0 V5.2",
+  "$comment": "derivado del Anexo B del Documento 0 V5.3",
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "properties": {
    "clase": {},
@@ -386,7 +405,7 @@
   "type": "object"
  },
  "CT-07.RETORNO": {
-  "$comment": "derivado del Anexo B del Documento 0 V5.2. No pasa por la mensajería: la respuesta del agente la valida su esquema de respuesta (`BUSQUEDA`); aquí no se exige ningún campo. Un retorno con estado común RECHAZADO o SIN_RESULTADO lleva el estado común y el motivo, sin los campos de resultado (Anexo B, «Cómo se lee este anexo», y §6.2.6): este esquema describe el retorno con resultado y no sirve para juzgar los otros",
+  "$comment": "derivado del Anexo B del Documento 0 V5.3. No pasa por la mensajería: la respuesta del agente la valida su esquema de respuesta (`BUSQUEDA`); aquí no se exige ningún campo. Un retorno con estado común RECHAZADO o SIN_RESULTADO lleva el estado común y el motivo, sin los campos de resultado (Anexo B, «Cómo se lee este anexo», y §6.2.6): este esquema describe el retorno con resultado y no sirve para juzgar los otros",
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "properties": {
    "contradicciones": {},
@@ -398,7 +417,7 @@
   "type": "object"
  },
  "CT-08.ENCARGO": {
-  "$comment": "derivado del Anexo B del Documento 0 V5.2",
+  "$comment": "derivado del Anexo B del Documento 0 V5.3",
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "properties": {
    "clase": {},
@@ -429,7 +448,7 @@
   "type": "object"
  },
  "CT-08.RETORNO": {
-  "$comment": "derivado del Anexo B del Documento 0 V5.2. No pasa por la mensajería: la respuesta del agente la valida su esquema de respuesta (`BUSQUEDA`); aquí no se exige ningún campo. Un retorno con estado común RECHAZADO o SIN_RESULTADO lleva el estado común y el motivo, sin los campos de resultado (Anexo B, «Cómo se lee este anexo», y §6.2.6): este esquema describe el retorno con resultado y no sirve para juzgar los otros",
+  "$comment": "derivado del Anexo B del Documento 0 V5.3. No pasa por la mensajería: la respuesta del agente la valida su esquema de respuesta (`BUSQUEDA`); aquí no se exige ningún campo. Un retorno con estado común RECHAZADO o SIN_RESULTADO lleva el estado común y el motivo, sin los campos de resultado (Anexo B, «Cómo se lee este anexo», y §6.2.6): este esquema describe el retorno con resultado y no sirve para juzgar los otros",
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "properties": {
    "contradicciones": {},
@@ -441,7 +460,7 @@
   "type": "object"
  },
  "CT-09.ENCARGO": {
-  "$comment": "derivado del Anexo B del Documento 0 V5.2. `fecha_corte` la exige la mensajería (el Motor, si falta, usa la fecha del proveedor)",
+  "$comment": "derivado del Anexo B del Documento 0 V5.3. `fecha_corte` la exige la mensajería (el Motor, si falta, usa la fecha del proveedor)",
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "properties": {
    "datos": {},
@@ -477,7 +496,7 @@
   "type": "object"
  },
  "CT-09.RETORNO": {
-  "$comment": "derivado del Anexo B del Documento 0 V5.2. No pasa por la mensajería: la sirve el Motor (`motor/servicio.py`); aquí no se exige ningún campo. Un rechazo lleva además `motivo`, `detalle` y `alternativa`; servido desde la caché, `calc_id_cache`. Una petición que requiere aclaración se rechaza con ACLARACION_REQUERIDA en el `detalle`. Un retorno con estado común RECHAZADO o SIN_RESULTADO lleva el estado común y el motivo, sin los campos de resultado (Anexo B, «Cómo se lee este anexo», y §6.2.6): este esquema describe el retorno con resultado y no sirve para juzgar los otros",
+  "$comment": "derivado del Anexo B del Documento 0 V5.3. No pasa por la mensajería: la sirve el Motor (`motor/servicio.py`); aquí no se exige ningún campo. Un rechazo lleva además `motivo`, `detalle` y `alternativa`; servido desde la caché, `calc_id_cache`. Una petición que requiere aclaración se rechaza con ACLARACION_REQUERIDA en el `detalle`. Un retorno con estado común RECHAZADO o SIN_RESULTADO lleva el estado común y el motivo, sin los campos de resultado (Anexo B, «Cómo se lee este anexo», y §6.2.6): este esquema describe el retorno con resultado y no sirve para juzgar los otros",
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "properties": {
    "alternativa": {},
@@ -502,7 +521,7 @@
   "type": "object"
  },
  "CT-10.ENCARGO": {
-  "$comment": "derivado del Anexo B del Documento 0 V5.2",
+  "$comment": "derivado del Anexo B del Documento 0 V5.3",
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "properties": {
    "artefacto_id": {},
@@ -515,7 +534,7 @@
   "type": "object"
  },
  "CT-10.RETORNO": {
-  "$comment": "derivado del Anexo B del Documento 0 V5.2. No pasa por la mensajería: la sirve el Motor (`motor/servicio.py`); aquí no se exige ningún campo. Un retorno con estado común RECHAZADO o SIN_RESULTADO lleva el estado común y el motivo, sin los campos de resultado (Anexo B, «Cómo se lee este anexo», y §6.2.6): este esquema describe el retorno con resultado y no sirve para juzgar los otros",
+  "$comment": "derivado del Anexo B del Documento 0 V5.3. No pasa por la mensajería: la sirve el Motor (`motor/servicio.py`); aquí no se exige ningún campo. Un retorno con estado común RECHAZADO o SIN_RESULTADO lleva el estado común y el motivo, sin los campos de resultado (Anexo B, «Cómo se lee este anexo», y §6.2.6): este esquema describe el retorno con resultado y no sirve para juzgar los otros",
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "properties": {
    "calc_id": {},
@@ -534,7 +553,7 @@
   "type": "object"
  },
  "CT-11.ENCARGO": {
-  "$comment": "derivado del Anexo B del Documento 0 V5.2. El encargo es un lote: la mensajería exige `piezas`; `clase`, si aplica; en cada pieza, `fechas` y `unidad_divisa` son opcionales",
+  "$comment": "derivado del Anexo B del Documento 0 V5.3. El encargo es un lote: la mensajería exige `piezas`; `clase`, si aplica; en cada pieza, `fechas` y `unidad_divisa` son opcionales",
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "properties": {
    "clase": {},
@@ -582,7 +601,7 @@
   "type": "object"
  },
  "CT-11.RETORNO": {
-  "$comment": "derivado del Anexo B del Documento 0 V5.2. No pasa por la mensajería: la respuesta del agente la valida su esquema de respuesta (`CURACION`); aquí no se exige ningún campo. Un retorno con estado común RECHAZADO o SIN_RESULTADO lleva el estado común y el motivo, sin los campos de resultado (Anexo B, «Cómo se lee este anexo», y §6.2.6): este esquema describe el retorno con resultado y no sirve para juzgar los otros",
+  "$comment": "derivado del Anexo B del Documento 0 V5.3. No pasa por la mensajería: la respuesta del agente la valida su esquema de respuesta (`CURACION`); aquí no se exige ningún campo. Un retorno con estado común RECHAZADO o SIN_RESULTADO lleva el estado común y el motivo, sin los campos de resultado (Anexo B, «Cómo se lee este anexo», y §6.2.6): este esquema describe el retorno con resultado y no sirve para juzgar los otros",
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "properties": {
    "piezas": {}
@@ -591,7 +610,7 @@
   "type": "object"
  },
  "CT-12.ENCARGO": {
-  "$comment": "derivado del Anexo B del Documento 0 V5.2. El encargo es un lote: la mensajería exige `encargos`; `fecha_limite_informacion` y, en cada encargo, `clase`, si aplica",
+  "$comment": "derivado del Anexo B del Documento 0 V5.3. El encargo es un lote: la mensajería exige `encargos`; `fecha_limite_informacion` y, en cada encargo, `clase`, si aplica",
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "properties": {
    "encargos": {
@@ -642,7 +661,7 @@
   "type": "object"
  },
  "CT-12.RETORNO": {
-  "$comment": "derivado del Anexo B del Documento 0 V5.2. No pasa por la mensajería: la respuesta del agente la valida su esquema de respuesta (`PROSPECTIVA`); aquí no se exige ningún campo. Un retorno con estado común RECHAZADO o SIN_RESULTADO lleva el estado común y el motivo, sin los campos de resultado (Anexo B, «Cómo se lee este anexo», y §6.2.6): este esquema describe el retorno con resultado y no sirve para juzgar los otros",
+  "$comment": "derivado del Anexo B del Documento 0 V5.3. No pasa por la mensajería: la respuesta del agente la valida su esquema de respuesta (`PROSPECTIVA`); aquí no se exige ningún campo. Un retorno con estado común RECHAZADO o SIN_RESULTADO lleva el estado común y el motivo, sin los campos de resultado (Anexo B, «Cómo se lee este anexo», y §6.2.6): este esquema describe el retorno con resultado y no sirve para juzgar los otros",
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "properties": {
    "resultados": {}
@@ -651,7 +670,7 @@
   "type": "object"
  },
  "CT-13.ENCARGO": {
-  "$comment": "derivado del Anexo B del Documento 0 V5.2. El encargo es un lote: la mensajería exige `peticiones`; `nivel` y `contrarreplicas` y, en cada petición, `clase` y `nivel`, si aplica",
+  "$comment": "derivado del Anexo B del Documento 0 V5.3. El encargo es un lote: la mensajería exige `peticiones`; `nivel` y `contrarreplicas` y, en cada petición, `clase` y `nivel`, si aplica",
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "properties": {
    "contrarreplicas": {},
@@ -685,7 +704,7 @@
   "type": "object"
  },
  "CT-13.RETORNO": {
-  "$comment": "derivado del Anexo B del Documento 0 V5.2. No pasa por la mensajería: la respuesta del agente la valida su esquema de respuesta (`REFUTACION` o `CONTRARREPLICA`); aquí no se exige ningún campo. Un retorno con estado común RECHAZADO o SIN_RESULTADO lleva el estado común y el motivo, sin los campos de resultado (Anexo B, «Cómo se lee este anexo», y §6.2.6): este esquema describe el retorno con resultado y no sirve para juzgar los otros",
+  "$comment": "derivado del Anexo B del Documento 0 V5.3. No pasa por la mensajería: la respuesta del agente la valida su esquema de respuesta (`REFUTACION` o `CONTRARREPLICA`); aquí no se exige ningún campo. Un retorno con estado común RECHAZADO o SIN_RESULTADO lleva el estado común y el motivo, sin los campos de resultado (Anexo B, «Cómo se lee este anexo», y §6.2.6): este esquema describe el retorno con resultado y no sirve para juzgar los otros",
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "properties": {
    "resultados": {}
@@ -694,7 +713,7 @@
   "type": "object"
  },
  "CT-14.ENCARGO": {
-  "$comment": "derivado del Anexo B del Documento 0 V5.2",
+  "$comment": "derivado del Anexo B del Documento 0 V5.3",
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "properties": {
    "paquete_sintesis": {},
@@ -707,7 +726,7 @@
   "type": "object"
  },
  "CT-14.RETORNO": {
-  "$comment": "derivado del Anexo B del Documento 0 V5.2. No pasa por la mensajería: la respuesta del agente la valida su esquema de respuesta (`DICTAMEN_G3`); aquí no se exige ningún campo. Un retorno con estado común RECHAZADO o SIN_RESULTADO lleva el estado común y el motivo, sin los campos de resultado (Anexo B, «Cómo se lee este anexo», y §6.2.6): este esquema describe el retorno con resultado y no sirve para juzgar los otros",
+  "$comment": "derivado del Anexo B del Documento 0 V5.3. No pasa por la mensajería: la respuesta del agente la valida su esquema de respuesta (`DICTAMEN_G3`); aquí no se exige ningún campo. Un retorno con estado común RECHAZADO o SIN_RESULTADO lleva el estado común y el motivo, sin los campos de resultado (Anexo B, «Cómo se lee este anexo», y §6.2.6): este esquema describe el retorno con resultado y no sirve para juzgar los otros",
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "properties": {
    "advertencias": {},
@@ -724,7 +743,7 @@
   "type": "object"
  },
  "CT-15.ENCARGO": {
-  "$comment": "derivado del Anexo B del Documento 0 V5.2. La respuesta («rutas de los tres entregables + métricas de legibilidad») no tiene nombres de campo en el Anexo B: sin esquema de retorno",
+  "$comment": "derivado del Anexo B del Documento 0 V5.3. La respuesta («rutas de los tres entregables + métricas de legibilidad») no tiene nombres de campo en el Anexo B: sin esquema de retorno",
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "properties": {
    "paquete_sintesis": {}
@@ -735,7 +754,7 @@
   "type": "object"
  },
  "CT-15.RETORNO": {
-  "$comment": "derivado del Anexo B del Documento 0 V5.2. No pasa por la mensajería: la respuesta del agente la valida su esquema de respuesta (`REDACCION` o, en V6, `SINTESIS`); aquí no se exige ningún campo. Un retorno con estado común RECHAZADO o SIN_RESULTADO lleva el estado común y el motivo, sin los campos de resultado (Anexo B, «Cómo se lee este anexo», y §6.2.6): este esquema describe el retorno con resultado y no sirve para juzgar los otros",
+  "$comment": "derivado del Anexo B del Documento 0 V5.3. No pasa por la mensajería: la respuesta del agente la valida su esquema de respuesta (`REDACCION` o, en V6, `SINTESIS`); aquí no se exige ningún campo. Un retorno con estado común RECHAZADO o SIN_RESULTADO lleva el estado común y el motivo, sin los campos de resultado (Anexo B, «Cómo se lee este anexo», y §6.2.6): este esquema describe el retorno con resultado y no sirve para juzgar los otros",
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "properties": {
    "factores_dominantes": {},
@@ -753,7 +772,7 @@
   "type": "object"
  },
  "CT-16.ENCARGO": {
-  "$comment": "derivado del Anexo B del Documento 0 V5.2. Lo que el ejecutor envía; la mensajería no lo exige",
+  "$comment": "derivado del Anexo B del Documento 0 V5.3. Lo que el ejecutor envía; la mensajería no lo exige",
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "properties": {
    "paquete_auditoria": {
@@ -784,7 +803,7 @@
   "type": "object"
  },
  "CT-17.ENCARGO": {
-  "$comment": "derivado del Anexo B del Documento 0 V5.2. Lo que el ejecutor envía al Auditor; la mensajería no lo exige",
+  "$comment": "derivado del Anexo B del Documento 0 V5.3. Lo que el ejecutor envía al Auditor; la mensajería no lo exige",
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "properties": {
    "g3": {},
@@ -821,7 +840,7 @@
   "type": "object"
  },
  "CT-17.RETORNO": {
-  "$comment": "derivado del Anexo B del Documento 0 V5.2. No pasa por la mensajería: la respuesta del Auditor la valida su esquema de respuesta (`AUDITORIA`); aquí no se exige ningún campo. Un retorno con estado común RECHAZADO o SIN_RESULTADO lleva el estado común y el motivo, sin los campos de resultado (Anexo B, «Cómo se lee este anexo», y §6.2.6): este esquema describe el retorno con resultado y no sirve para juzgar los otros",
+  "$comment": "derivado del Anexo B del Documento 0 V5.3. No pasa por la mensajería: la respuesta del Auditor la valida su esquema de respuesta (`AUDITORIA`); aquí no se exige ningún campo. Un retorno con estado común RECHAZADO o SIN_RESULTADO lleva el estado común y el motivo, sin los campos de resultado (Anexo B, «Cómo se lee este anexo», y §6.2.6): este esquema describe el retorno con resultado y no sirve para juzgar los otros",
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "properties": {
    "hallazgos": {},
@@ -831,7 +850,7 @@
   "type": "object"
  },
  "CT-19.RETORNO": {
-  "$comment": "derivado del Anexo B del Documento 0 V5.2. Lo que el Evaluador envía (al Analizador, `informe`; al Buscador, `tipo` y `fuentes`); la mensajería no lo exige. Un retorno con estado común RECHAZADO o SIN_RESULTADO lleva el estado común y el motivo, sin los campos de resultado (Anexo B, «Cómo se lee este anexo», y §6.2.6): este esquema describe el retorno con resultado y no sirve para juzgar los otros",
+  "$comment": "derivado del Anexo B del Documento 0 V5.3. Lo que el Evaluador envía (al Analizador, `informe`; al Buscador, `tipo` y `fuentes`); la mensajería no lo exige. Un retorno con estado común RECHAZADO o SIN_RESULTADO lleva el estado común y el motivo, sin los campos de resultado (Anexo B, «Cómo se lee este anexo», y §6.2.6): este esquema describe el retorno con resultado y no sirve para juzgar los otros",
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "properties": {
    "fuentes": {},
@@ -846,7 +865,7 @@
   "type": "object"
  },
  "CT-22.ENCARGO": {
-  "$comment": "derivado del Anexo B del Documento 0 V5.2. Cada aviso lleva uno de dos campos de tipo, `tipo` o `tipo_aviso` (`oneOf`); la mensajería no lo comprueba. Los valores van en `examples`, que no restringe: los demás campos, en los prompts de sistema",
+  "$comment": "derivado del Anexo B del Documento 0 V5.3. Cada aviso lleva uno de dos campos de tipo, `tipo` o `tipo_aviso` (`oneOf`); la mensajería no lo comprueba. Los valores van en `examples`, que no restringe: los demás campos, en los prompts de sistema",
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "oneOf": [
    {
@@ -878,7 +897,7 @@
   "type": "object"
  },
  "CT-23.ENCARGO": {
-  "$comment": "derivado del Anexo B del Documento 0 V5.2. Opcionales `run_id`, `seg_id`, `preguntas`, `plazo_respuesta` y `punto_control`; en cada pregunta, todo salvo `texto` y `supuesto_declarado`. `contenido` «solo en ENTRANTE»: obligatorio con sentido ENTRANTE y ausente en los demás, con `if`/`then`/`else` (igual que `seg_id` y `opp_id` de CT-05)",
+  "$comment": "derivado del Anexo B del Documento 0 V5.3. Opcionales `run_id`, `seg_id`, `preguntas`, `plazo_respuesta` y `punto_control`; en cada pregunta, todo salvo `texto` y `supuesto_declarado`. `contenido` «solo en ENTRANTE»: obligatorio con sentido ENTRANTE y ausente en los demás, con `if`/`then`/`else` (igual que `seg_id` y `opp_id` de CT-05)",
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "else": {
    "not": {
@@ -958,7 +977,7 @@
   "type": "object"
  },
  "CT-23.RETORNO": {
-  "$comment": "derivado del Anexo B del Documento 0 V5.2. El estado de la consulta va en `estado_consulta`; `respuestas` y `supuestos_aplicados` son opcionales, y `documentos` de cada respuesta, si aplica. Un retorno con estado común RECHAZADO o SIN_RESULTADO lleva el estado común y el motivo, sin los campos de resultado (Anexo B, «Cómo se lee este anexo», y §6.2.6): este esquema describe el retorno con resultado y no sirve para juzgar los otros",
+  "$comment": "derivado del Anexo B del Documento 0 V5.3. El estado de la consulta va en `estado_consulta`; `respuestas` y `supuestos_aplicados` son opcionales, y `documentos` de cada respuesta, si aplica. Un retorno con estado común RECHAZADO o SIN_RESULTADO lleva el estado común y el motivo, sin los campos de resultado (Anexo B, «Cómo se lee este anexo», y §6.2.6): este esquema describe el retorno con resultado y no sirve para juzgar los otros",
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "properties": {
    "cns_id": {},
@@ -1007,7 +1026,7 @@
   "type": "object"
  },
  "CT-24.ENCARGO": {
-  "$comment": "derivado del Anexo B del Documento 0 V5.2. Todo es opcional salvo `accion`",
+  "$comment": "derivado del Anexo B del Documento 0 V5.3. Todo es opcional salvo `accion`",
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "properties": {
    "accion": {
@@ -1042,7 +1061,7 @@
   "type": "object"
  },
  "CT-24.RETORNO": {
-  "$comment": "derivado del Anexo B del Documento 0 V5.2. El estado del seguimiento va en `estado_seguimiento`; `aviso` y `proximo_ciclo`, opcionales. Un retorno con estado común RECHAZADO o SIN_RESULTADO lleva el estado común y el motivo, sin los campos de resultado (Anexo B, «Cómo se lee este anexo», y §6.2.6): este esquema describe el retorno con resultado y no sirve para juzgar los otros",
+  "$comment": "derivado del Anexo B del Documento 0 V5.3. El estado del seguimiento va en `estado_seguimiento`; `aviso` y `proximo_ciclo`, opcionales. Un retorno con estado común RECHAZADO o SIN_RESULTADO lleva el estado común y el motivo, sin los campos de resultado (Anexo B, «Cómo se lee este anexo», y §6.2.6): este esquema describe el retorno con resultado y no sirve para juzgar los otros",
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "properties": {
    "aviso": {},
@@ -1064,7 +1083,7 @@
   "type": "object"
  },
  "CT-25.ENCARGO": {
-  "$comment": "derivado del Anexo B del Documento 0 V5.2. `herramienta` y `urgencia` son opcionales",
+  "$comment": "derivado del Anexo B del Documento 0 V5.3. `herramienta` y `urgencia` son opcionales",
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "properties": {
    "crd_id": {},
@@ -1090,7 +1109,7 @@
   "type": "object"
  },
  "CT-25.RETORNO": {
-  "$comment": "derivado del Anexo B del Documento 0 V5.2. El estado de la credencial va en `estado_credencial`; `credencial_ref` y `caducidad`, opcionales. Un retorno con estado común RECHAZADO o SIN_RESULTADO lleva el estado común y el motivo, sin los campos de resultado (Anexo B, «Cómo se lee este anexo», y §6.2.6): este esquema describe el retorno con resultado y no sirve para juzgar los otros",
+  "$comment": "derivado del Anexo B del Documento 0 V5.3. El estado de la credencial va en `estado_credencial`; `credencial_ref` y `caducidad`, opcionales. Un retorno con estado común RECHAZADO o SIN_RESULTADO lleva el estado común y el motivo, sin los campos de resultado (Anexo B, «Cómo se lee este anexo», y §6.2.6): este esquema describe el retorno con resultado y no sirve para juzgar los otros",
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "properties": {
    "caducidad": {},

@@ -460,7 +460,7 @@ def test_ca8_las_formas_no_dependen_del_orden_de_los_mensajes(flujos, a_mano):
 def test_las_huellas_cubren_el_documento_0_los_esquemas_publicados_y_lo_escrito_a_mano(tmp_path):
     huellas = _congelado("huellas.json")
     assert sorted(huellas) == sorted([
-        "01_Gobernanza/Documento 0 - Protocolo maestro del Bloque A - Versión óptima V5.2.md",   # T-143
+        "01_Gobernanza/Documento 0 - Protocolo maestro del Bloque A - Versión óptima V5.3.md",   # T-143; V5.3 desde T-166
         "06_Plantillas_entregables/Esquema JSON - Informe de seguimiento de opción - V5.1.json",
         "06_Plantillas_entregables/Esquema JSON - Paquete de oportunidades - V5.0.json",
         "goldens/anexo_b_ejemplos.json", "goldens/anexo_b_esquemas.json", "goldens/bateria_mensajes.json"])
@@ -1032,10 +1032,10 @@ def test_t143_las_divergencias_que_quedan():
 
 
 def test_t143_la_v52_es_la_v51_con_el_anexo_b_corregido():
-    """CA-1 y CA-2 de T-143: en `01_Gobernanza` solo está la V5.2; la V5.1 (`.md` y `.docx`) está en `99_Historico_V5.1`, y
-    fuera del Anexo B la V5.2 solo cambia la cabecera de versión y añade una fila al registro de cambios (Anexo F)."""
-    gobernanza = sorted(p.name for p in (g.BLOQUE / "01_Gobernanza").iterdir())
-    assert gobernanza == ["Documento 0 - Protocolo maestro del Bloque A - Versión óptima V5.2.md"]
+    """CA-1 y CA-2 de T-143: la V5.1 (`.md` y `.docx`) está en `99_Historico_V5.1`, y fuera del Anexo B la V5.2 solo cambia
+    la cabecera de versión y añade una fila al registro de cambios (Anexo F). Desde T-166 la V5.2 está en `99_Historico_V5.2` y
+    en `01_Gobernanza` está la V5.3 (`test_t166_entrega_corpus.py` compara la V5.3 con la V5.2)."""
+    v52_md = g.BLOQUE / "99_Historico_V5.2" / "01_Gobernanza" / "Documento 0 - Protocolo maestro del Bloque A - Versión óptima V5.2.md"
     historico = g.BLOQUE / "99_Historico_V5.1" / "01_Gobernanza"
     assert sorted(p.name for p in historico.iterdir()) == [f"Documento 0 - Protocolo maestro del Bloque A - Versión óptima V5.1.{x}" for x in ("docx", "md")]
 
@@ -1043,7 +1043,8 @@ def test_t143_la_v52_es_la_v51_con_el_anexo_b_corregido():
         return (texto[:texto.index("## ANEXO B.")] + texto[texto.index("## ANEXO C."):]).splitlines()
 
     v51 = sin_anexo_b((historico / "Documento 0 - Protocolo maestro del Bloque A - Versión óptima V5.1.md").read_text(encoding="utf-8"))
-    v52 = sin_anexo_b(_doc0())
+    v52_texto = v52_md.read_text(encoding="utf-8")
+    v52 = sin_anexo_b(v52_texto)
     import difflib
     cambios = [x for x in difflib.ndiff(v51, v52) if x[:1] in "+-"]
     quitadas = [x[2:] for x in cambios if x[0] == "-"]
@@ -1052,7 +1053,7 @@ def test_t143_la_v52_es_la_v51_con_el_anexo_b_corregido():
     assert [x.split(":**")[0] for x in puestas[:4]] == ["## Buscador de Oportunidades de Inversión · Versión óptima V5.2", "**Fecha", "**Sustituye a", "**Actualizado"]
     assert len(puestas) == 5 and puestas[4].startswith("| óptima V5.2 | 15/11/2026 | Anexo B corregido")
     assert "`99_Historico_V5.1`" in puestas[2] and "INC-T114-01" in puestas[4]
-    assert '`version_contrato` ("5.1")' in _anexo_b() and contratos.VERSION_CONTRATO == "5.1"
+    assert '`version_contrato` ("5.1")' in v52_texto and '`version_contrato` ("5.1")' in _anexo_b() and contratos.VERSION_CONTRATO == "5.1"
 
 
 # ================================================================ T-143 r02 (QA r01, H-01 a H-05) · lo que la prosa del Anexo B dice

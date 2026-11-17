@@ -15,7 +15,7 @@ Publicar la V5.2 del Documento 0 del Bloque A: la V5.1 con el Anexo B corregido 
 ## Alcance
 
 - Entra:
-  - `bloque_a/01_Gobernanza/Documento 0 - Protocolo maestro del Bloque A - Versión óptima V5.2.md`: la V5.1 con el Anexo B reescrito según el borrador, la cabecera de versión y una fila nueva en el Anexo F (registro de cambios);
+  - `bloque_a/99_Historico_V5.2/01_Gobernanza/Documento 0 - Protocolo maestro del Bloque A - Versión óptima V5.2.md` (en `01_Gobernanza` hasta T-166, que la pasó al histórico): la V5.1 con el Anexo B reescrito según el borrador, la cabecera de versión y una fila nueva en el Anexo F (registro de cambios);
   - la V5.1 (`.md` y `.docx`), sin cambios, a `bloque_a/99_Historico_V5.1/01_Gobernanza/` (precedente: `99_Historico_V3.0`);
   - los goldens de contratos: los esquemas y ejemplos derivados del Anexo B (`anexo_b_esquemas.json`, `anexo_b_ejemplos.json`), la batería (solo para que siga midiendo lo mismo), su README y el re-congelado con `goldens_ct.py --update --motivo`;
   - las pruebas `tests/test_fase3_goldens.py`, actualizadas a propósito y con pruebas nuevas que comparan el Anexo B V5.2 con el código (esquemas de respuesta, estados propios, retornos del Motor);
