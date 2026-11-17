@@ -80,8 +80,9 @@ H5 décadas con hitos HIT- y `horizonte_principal` obligatorio (HT-09 C17–C19)
   manejador responde `METODO_NO_IMPLEMENTADO`; una ajena al catálogo, `OPERACION_SIN_FICHA`. Una alternativa
   solo se anuncia si se sirve. → Fase 0 de bloque_a.
 - **Versión sin subir en pyprojects (INC-001/002):** `bloque_a/11_Ejecutor` declara
-  1.1.0 (README dice V1.2); `bloque_a_forex/11_Ejecutor` declara 1.0.0 (README dice
-  V1.1). El código entregado ES el de la versión del README. No corregir en silencio.
+  1.2.0 desde T-167 (decidido por delegación del operador; una prueba lo ata al README);
+  `bloque_a_forex/11_Ejecutor` sigue en 1.0.0 (README dice V1.1). El código entregado ES
+  el de la versión del README. No corregir en silencio.
 - **Numeración F ≠ nombre de archivo** (p. ej. F7 = "Documentación para el
   Analizador…"). Verificar siempre el H1 del archivo en `05_Archivos_operativos`.
 - **Identificadores de modelo sin verificar:** los `config/por_defecto.yaml` usan
