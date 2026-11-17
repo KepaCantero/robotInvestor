@@ -22,3 +22,5 @@ Si el contenedor sigue vivo, las ramas `wip/*` locales y las copias del scratchp
 | T-168 | — | CERRADO | Su commit (`commit_limpio`) estaba en marcha al parar. Si no llegó a develop, hay que repetirlo con los ficheros de `.docs/tickets/T-168/`, la deuda, el diario y la QA r03 de T-161. |
 
 Después siguen T-164, T-166 (tras T-143), T-167 y el resto del plan (`plan_noche_bloque_a_2026-11-15.md`). Cuando entre T-143, se cambia «695» por «696» en `CLAUDE.md` (aprobado por el operador).
+
+**Números de ticket nuevos** (operador, 17-11-2026): se rellenan los huecos, el más bajo libre primero. Ahora toca T-171 a T-179 y después T-181 a T-189.
