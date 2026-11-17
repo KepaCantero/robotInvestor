@@ -375,14 +375,20 @@
   "no_comprueba": "Que Prospectiva decida corregir (modelo real): el ejecutor no tiene una operación propia de corrección; la corrección es un alta nueva de AG-10 con `version_de`."
  },
  "PB-38": {
-  "cobertura": "PARCIAL",
+  "cobertura": "AUTOMATICA",
   "pruebas": [
    "11_Ejecutor/tests/test_autocritica.py::test_objecion_fuerte_sin_resolver_excluye_del_top3",
    "10_Herramientas/tests/test_ht09_validador_g3.py::TestBloqueos::test_objecion_fuerte_sin_resolver",
-   "10_Herramientas/tests/test_ht09_validador_g3.py::TestBloqueos::test_objecion_fuerte_respondida_pero_no_resuelta"
+   "10_Herramientas/tests/test_ht09_validador_g3.py::TestBloqueos::test_objecion_fuerte_respondida_pero_no_resuelta",
+   "11_Ejecutor/tests/test_t175_alternativas.py::test_pb38_la_opcion_con_objecion_fuerte_sin_resolver_es_una_alternativa_documentada_en_el_tecnico",
+   "11_Ejecutor/tests/test_t175_alternativas.py::test_pb38_la_alternativa_no_entra_en_el_json_ni_altera_la_coherencia_ni_el_dictamen",
+   "11_Ejecutor/tests/test_t175_alternativas.py::test_pb38_tambien_en_el_diseno_v6",
+   "11_Ejecutor/tests/test_t175_alternativas.py::test_objeciones_de_la_alternativa_estado_y_condicion",
+   "11_Ejecutor/tests/test_t175_alternativas.py::test_un_texto_del_modelo_que_g3_met13_rechaza_en_una_alternativa_se_retira_y_la_entrega_sale",
+   "11_Ejecutor/tests/test_t175_alternativas.py::test_la_sustitucion_cubre_nombre_resumen_respuesta_y_que_la_resolveria"
   ],
-  "comprueba": "La opción con una objeción fuerte sin resolver no entra en el top-3 y queda en F3 como no elegible; HT-09 lo bloquea.",
-  "no_comprueba": "Que la objeción figure en el informe técnico como sin resolver y la opción como alternativa documentada: el técnico solo lista las objeciones de las opciones del top-3 (INC-T116-03)."
+  "comprueba": "La opción con una objeción fuerte sin resolver no entra en el top-3 ni en el JSON y queda en F3 como no elegible; HT-09 lo bloquea. En el informe técnico (V5 y V6) figura en la subsección 4.N.4 «Alternativas descartadas relevantes» de su tipo, con la puerta (G2), el motivo con su OBJ- y lo que tendría que ocurrir, y su objeción fuerte en la sección 6 como SIN_RESOLVER; un texto del modelo de la alternativa que G3-MET-13 rechazaría se sustituye (íntegro en F3, ADVERTENCIA en HA) y no bloquea la entrega (T-175).",
+  "no_comprueba": ""
  },
  "PB-39": {
   "cobertura": "AUTOMATICA",

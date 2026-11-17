@@ -1,6 +1,6 @@
 # Evidencias del Plan de pruebas del Bloque A (Fase 4, T-116)
 
-Generado por `.docs/scripts/evidencias_plan_a.py --ejecutar` el 2026-11-17 sobre el commit `448c25b`, con el cliente simulado (`MockClient`): sin red, sin clave y sin coste. No se edita a mano: se regenera.
+Generado por `.docs/scripts/evidencias_plan_a.py --ejecutar` el 2026-11-17 sobre el commit `484d07d`, con el cliente simulado (`MockClient`): sin red, sin clave y sin coste. No se edita a mano: se regenera.
 
 Qué significa cada resultado:
 
@@ -17,8 +17,8 @@ Con el cliente simulado se valida la tubería (canales, archivos, puertas, herra
 
 | Resultado | Pruebas del plan |
 | --- | --- |
-| Superada | 32 |
-| Superada en parte | 26 |
+| Superada | 33 |
+| Superada en parte | 25 |
 | Pendiente API | 7 |
 | Requiere usuarios | 1 |
 | Revisión documental | 1 |
@@ -65,7 +65,7 @@ Con el cliente simulado se valida la tubería (canales, archivos, puertas, herra
 | PB-35 Recalibración dentro de bandas con evaluación sombra | Superada en parte | La recalibración respeta el paso y las bandas de la configuración y queda como propuesta. | El registro de la evaluación sombra y la decisión documentada con DM-HLN: la selección calcula el top-3 con los pesos en sombra, pero nada cierra el AJU- EN_SOMBRA como CONFIRMADO o REVERTIDO (INC-T159-01). |
 | PB-36 Recalibración fuera de bandas rechazada | Superada en parte | Fuera de banda no se aplica: sale una propuesta P3 con el motivo. | El caso del plan (umbral E en P-09 y P-05 con banda PENDIENTE_OPERADOR): el Evaluador solo recalibra los pesos de RK (P-11), y su P3- queda en F6, no en la cola de HA como PENDING_OPERATOR (INC-T116-03). |
 | PB-37 Pronóstico congelado inmutable | Superada | El alta congelada no se puede reescribir; la corrección es un PRG nuevo con `version_de`; la entrada original queda igual byte a byte; al adelantar el reloj a cada vencimiento, `Evaluador.resolver` resuelve el original en su fecha (con su nivel mal transcrito, sin cambios) y la corrección en la suya (r05): los dos RESUELTO y los dos en las métricas. Un pronóstico modificado a mano rompe la cadena de huellas. | Que Prospectiva decida corregir (modelo real): el ejecutor no tiene una operación propia de corrección; la corrección es un alta nueva de AG-10 con `version_de`. |
-| PB-38 Objeción fuerte sin resolver impide el top-3 | Superada en parte | La opción con una objeción fuerte sin resolver no entra en el top-3 y queda en F3 como no elegible; HT-09 lo bloquea. | Que la objeción figure en el informe técnico como sin resolver y la opción como alternativa documentada: el técnico solo lista las objeciones de las opciones del top-3 (INC-T116-03). |
+| PB-38 Objeción fuerte sin resolver impide el top-3 | Superada | La opción con una objeción fuerte sin resolver no entra en el top-3 ni en el JSON y queda en F3 como no elegible; HT-09 lo bloquea. En el informe técnico (V5 y V6) figura en la subsección 4.N.4 «Alternativas descartadas relevantes» de su tipo, con la puerta (G2), el motivo con su OBJ- y lo que tendría que ocurrir, y su objeción fuerte en la sección 6 como SIN_RESOLVER; un texto del modelo de la alternativa que G3-MET-13 rechazaría se sustituye (íntegro en F3, ADVERTENCIA en HA) y no bloquea la entrega (T-175). | — |
 | PB-39 Informe visual con legibilidad < 70 bloqueado | Superada | El visual entregado tiene índice de 70 o más; HT-07 mide un texto difícil por debajo y HT-09 comprueba la legibilidad. En un ciclo con el Redactor sembrado con frases largas y jerga (T-159): el primer visual queda por debajo de 70 y BLOQUEADO por C12, se pide una reescritura a AG-17 y el visual reescrito, con 70 o más, es el que se entrega; si la reescritura sigue por debajo de 70, la entrega queda BLOQUEADA, ningún visual llega a la carpeta de entrega y no se congela nada. | Que el Redactor detecte y reescriba por sí mismo con HT-07 antes de HT-09, y las frases de 20 palabras como máximo y la jerga explicada del texto reescrito, que son del modelo real. |
 | PB-40 Comprensión del informe visual por usuarios inexpertos | Requiere usuarios | — | Requiere usuarios reales. |
 | PB-41 Coherencia entre entregables y entre clases | Superada | El ciclo solo entrega con la comprobación de coherencia superada (G3 APTO); con entregables incoherentes, G3 bloquea, nada llega a las carpetas de entrega y no se congela ningún pronóstico. El caso del plan en un C1 (T-159): con las series de RF, inmobiliario cotizado y RV expuestas al mismo factor, un clúster común reúne opciones de los tres tipos con su factor dominante, `apuestas_independientes` es el número de clústeres (menos que de opciones) y el técnico lo dice; el JSON, el técnico y el visual tienen las mismas OPP- en el mismo orden y la validación de los entregables no ve incoherencias (G3-ENT-07). | El recuento del Auditor (modelo real). Los datos sintéticos no tienen un factor común entre tipos: se siembra en las series del proveedor. |
@@ -522,13 +522,19 @@ Criterio de aprobación del plan: Hash de la entrada original intacto; ambos RES
 Criterio de aprobación del plan: Opción ausente del top-3; F3 con objeción SIN_RESOLVER
 
 ```bash
-(cd bloque_a/11_Ejecutor && ../../.venv/bin/python -m pytest -q 'tests/test_autocritica.py::test_objecion_fuerte_sin_resolver_excluye_del_top3')
+(cd bloque_a/11_Ejecutor && ../../.venv/bin/python -m pytest -q 'tests/test_autocritica.py::test_objecion_fuerte_sin_resolver_excluye_del_top3' 'tests/test_t175_alternativas.py::test_pb38_la_opcion_con_objecion_fuerte_sin_resolver_es_una_alternativa_documentada_en_el_tecnico' 'tests/test_t175_alternativas.py::test_pb38_la_alternativa_no_entra_en_el_json_ni_altera_la_coherencia_ni_el_dictamen' 'tests/test_t175_alternativas.py::test_pb38_tambien_en_el_diseno_v6' 'tests/test_t175_alternativas.py::test_objeciones_de_la_alternativa_estado_y_condicion' 'tests/test_t175_alternativas.py::test_un_texto_del_modelo_que_g3_met13_rechaza_en_una_alternativa_se_retira_y_la_entrega_sale' 'tests/test_t175_alternativas.py::test_la_sustitucion_cubre_nombre_resumen_respuesta_y_que_la_resolveria')
 (cd bloque_a/10_Herramientas && ../../.venv/bin/python -m pytest -q 'tests/test_ht09_validador_g3.py::TestBloqueos::test_objecion_fuerte_sin_resolver' 'tests/test_ht09_validador_g3.py::TestBloqueos::test_objecion_fuerte_respondida_pero_no_resuelta')
 ```
 
 - `11_Ejecutor/tests/test_autocritica.py::test_objecion_fuerte_sin_resolver_excluye_del_top3`: SUPERADA
 - `10_Herramientas/tests/test_ht09_validador_g3.py::TestBloqueos::test_objecion_fuerte_sin_resolver`: SUPERADA
 - `10_Herramientas/tests/test_ht09_validador_g3.py::TestBloqueos::test_objecion_fuerte_respondida_pero_no_resuelta`: SUPERADA
+- `11_Ejecutor/tests/test_t175_alternativas.py::test_pb38_la_opcion_con_objecion_fuerte_sin_resolver_es_una_alternativa_documentada_en_el_tecnico`: SUPERADA
+- `11_Ejecutor/tests/test_t175_alternativas.py::test_pb38_la_alternativa_no_entra_en_el_json_ni_altera_la_coherencia_ni_el_dictamen`: SUPERADA
+- `11_Ejecutor/tests/test_t175_alternativas.py::test_pb38_tambien_en_el_diseno_v6`: SUPERADA
+- `11_Ejecutor/tests/test_t175_alternativas.py::test_objeciones_de_la_alternativa_estado_y_condicion`: SUPERADA
+- `11_Ejecutor/tests/test_t175_alternativas.py::test_un_texto_del_modelo_que_g3_met13_rechaza_en_una_alternativa_se_retira_y_la_entrega_sale`: SUPERADA
+- `11_Ejecutor/tests/test_t175_alternativas.py::test_la_sustitucion_cubre_nombre_resumen_respuesta_y_que_la_resolveria`: SUPERADA
 
 ### PB-39 · Informe visual con legibilidad < 70 bloqueado
 

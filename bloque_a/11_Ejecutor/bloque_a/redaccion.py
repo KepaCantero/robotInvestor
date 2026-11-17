@@ -257,7 +257,12 @@ class Redaccion:
 
     # ------------------------------------------------------------------------------------
     def tecnico(self, paquete: dict, extras: dict, g3: dict, rutas: dict, estado_run: str, consumo: dict) -> str:
+        from . import sintesis as sint
         p = paquete
+        # T-175 (PB-38): 4.N.4 y sus objeciones en la sección 6; las de `generar`, ya sin el texto que G3-MET-13 rechazaría (r02)
+        alternativas = extras.get("alternativas_descartadas")
+        if not isinstance(alternativas, dict):
+            alternativas = sint.alternativas_descartadas(p, extras)
         L = [f"# Informe técnico del Bloque A — {_semana_o_peticion(p)}", "",
              "**Bloque A · Robot Investor · Versión óptima V5.0** · Documento 0 óptima V5.0 · Generado por el Ejecutor programático V1.1.", "",
              "> El Bloque A delimita ámbitos de inversión (dónde, por qué y cuándo); la selección de activos concretos "
@@ -328,6 +333,15 @@ class Redaccion:
                           f"Métricas clave: {'; '.join(b['metricas_clave'])}. Preguntas: {' '.join(b['preguntas_para_B'])}", ""]
                 L += [
                       f"**Evidencia y cálculos.** {', '.join(o['evidencias'])} · {', '.join(o['calculos'])}", ""]
+            if alternativas.get(c):
+                L += [f"#### 4.{i}.4 Alternativas descartadas relevantes", "",
+                      "Finalistas que no entran en el top-3 porque no son elegibles (HT-03); siguen en F3 como alternativas documentadas.", "",
+                      "| Candidata | Puerta en la que quedó | Motivo | Qué tendría que ocurrir |", "|---|---|---|---|"]
+                for a in alternativas[c]:
+                    rk = f" (RK {a['rk']})" if a["rk"] is not None else ""
+                    L.append(f"| {_celda(a['nombre'])} · `{a['opp_id']}`{rk} | {', '.join(a['puertas']) or 'Elegibilidad HT-03 (9.2)'} | "
+                             f"{_celda('; '.join(a['motivo']))} | {_celda('; '.join(a['condicion'])) or '—'} |")
+                L.append("")
         L += ["## 5. Seguimiento de opciones vigentes", "", "| OPP | Estado | Decisión del Broker | Comentario |", "|---|---|---|---|"]
         for s in p["seguimiento_vigentes"]:
             L.append(f"| `{s['opp_id']}` | {s['estado']} {s.get('motivo_cierre') or ''} | {s.get('decision_broker') or '—'} | {s['comentario']} |")
@@ -336,6 +350,11 @@ class Redaccion:
             for o in d["opciones"]:
                 for ob in o["objeciones"]:
                     L.append(f"| `{o['opp_id']}` | {ob['fuerza']} | {ob['resumen']} | {ob.get('respuesta') or '—'} | {ob['estado']} |")
+        for c in p["clases"]:   # T-175: las de las alternativas descartadas de 4.N.4 (fuertes y moderadas, plantilla V5.0)
+            for a in alternativas.get(c, []):
+                for ob in a["objeciones"]:
+                    L.append(f"| `{a['opp_id']}` (alternativa descartada) | {ob['fuerza']} | {_celda(ob['resumen']) or '—'} | "
+                             f"{_celda(ob['respuesta']) or '—'} | {ob['estado']} |")
         L += ["", CABECERA_LIMITACIONES, ""] + [f"- {x}" for x in p["limitaciones"]]
         if p.get("supuestos_declarados"):
             L += ["", "**Supuestos declarados (consultas al Broker sin respuesta, CT-23).**", ""] + \
@@ -380,6 +399,10 @@ class Redaccion:
         Path(rutas["informe_visual"]).write_text(visual, encoding="utf-8")
         leg = ht07.analizar(Path(rutas["informe_visual"]).read_text(encoding="utf-8"), es_html=True)
         res = sint.ht09_validar(bloque, paquete, extras, rutas["informe_visual"])
+        # T-175 r02 (QA r01, H-01): el texto del modelo de una alternativa que G3-MET-13 rechazaría no se presenta en el técnico
+        # (se sustituye y queda íntegro en F3); en su lugar, una ADVERTENCIA en HA. Lo que escribe el ejecutor sigue comprobándose
+        extras["alternativas_descartadas"] = sint.alternativas_descartadas(paquete, extras, bloque)
+        sint.advertir_alternativas_retiradas(res, extras["alternativas_descartadas"])
         # T-165 r03: G3-MET-13 lee lo que se ha redactado; después, el ejecutor pone junto a cada ficha su madurez canónica desde el
         # Catálogo (R22), en los tres entregables. Es el último paso: lo que escribe el ejecutor no se toma por lo del modelo
         Path(rutas["informe_visual"]).write_text(sint.anotar(bloque, visual), encoding="utf-8")
@@ -430,7 +453,7 @@ class Redaccion:
                                                 "legibilidad": {"fernandez_huerta": leg["fernandez_huerta"], "pct_frases_mas_de_20": leg["pct_frases_mas_de_20"],
                                                                 "jerga_sin_explicar": leg["jerga_sin_explicar"]},
                                                 "errores_esquema": errores, "incoherencias": coh,
-                                                "comprobaciones": [{"id": c["id"], "resultado": c["resultado"], "detalle": [i["detalle"] for i in c["incidencias"]][:5]}
+                                                "comprobaciones": [{"id": c["id"], "resultado": c["resultado"], "detalle": detalles_g3v(c)}
                                                                    for c in res["comprobaciones"]]})
         return rutas, {"dictamen": dictamen, "bloqueos": bloq, "advertencias": adv, "legibilidad": leg["fernandez_huerta"],
                        "frases_largas": leg["frases_largas"][:10], "errores_esquema": errores, "incoherencias": coh}
@@ -445,6 +468,19 @@ def _con_madurez(tecnico: str, resumen: str) -> str:
     if f"{CABECERA_LIMITACIONES}\n\n" in tecnico:
         return tecnico.replace(f"{CABECERA_LIMITACIONES}\n\n", f"{CABECERA_LIMITACIONES}\n\n{linea}\n", 1)
     return f"{tecnico.rstrip()}\n\n{linea}\n"
+
+
+def detalles_g3v(comprobacion: dict, maximo: int = 5) -> list[str]:
+    """Los detalles de una comprobación que guarda el G3V de F7 en HA: los cinco primeros, con los BLOQUEOS siempre delante (en su
+    orden; la ordenación es estable), para que un bloqueo no quede tapado por advertencias (T-175, QA r02 H-04)."""
+    return [i["detalle"] for i in sorted(comprobacion["incidencias"], key=lambda i: i.get("severidad") != "BLOQUEO")][:maximo]
+
+
+def _celda(x) -> str:
+    """Texto para una celda de tabla Markdown (T-175): sin saltos de línea ni «|» que rompan la tabla; lo que no es texto, vacío."""
+    if not isinstance(x, str):
+        return ""
+    return " ".join(x.split()).replace("|", "\\|")
 
 
 def _fuente_riesgo(extras: dict, o: dict) -> str:
