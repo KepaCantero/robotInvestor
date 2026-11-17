@@ -1,4 +1,4 @@
-d8f9e3d05c19aa91f17d27ed254fdf706b9905b25b82da42567e8f284ae01e37  bloque_a/01_Gobernanza/Documento 0 - Protocolo maestro del Bloque A - Versión óptima V5.2.md
+12cc5182ca4fb2cb9ca1cbbe43c1286985add017f1dff10582c70dd9f721cf74  bloque_a/01_Gobernanza/Documento 0 - Protocolo maestro del Bloque A - Versión óptima V5.3.md
 cb1c4ab900c73df2bc6256171d463e6f4a7ecea535fcafe1ee2e0dc012b4f91a  bloque_a/02_System_prompts/Marco común de los Analistas de tipo de activo (plantilla) - V5.0.docx
 a3c7bf05530d0ccaf18c14d6fd5eec01e3c07b859c08088881ed6e2ac90ab38d  bloque_a/02_System_prompts/Marco común de los Analistas de tipo de activo (plantilla) - V5.0.md
 fc4ae71b420b1e00f2260753eb6c74add16d26483dadac39dd3d2afb55e3117a  bloque_a/02_System_prompts/System prompt - Analista Inmobiliario y de Infraestructuras - Versión óptima V5.0.docx
@@ -43,18 +43,12 @@ b52accee2b382366aa8ab6f182c94c76f8196ce7a1418f8120f025b8dc214fbf  bloque_a/02_Sy
 0b161d44a5aacf9cd9cb458051275f555d2e530342c52f7cc36397c1d1f0b7a4  bloque_a/02_System_prompts/System prompt - Documentador para el Analizador - Versión óptima V5.0.md
 17d06779d8a3e150bfa49c5f3f49ce59044e0b04bd6e55a7bc7dc2ac8910135a  bloque_a/02_System_prompts/System prompt - Documentador para el Motor de Cálculo Avanzado - Versión óptima V5.0.docx
 35cdca45a81d8f20e4951d3868c872934fcb5353a01ff861e5b7bf6d16cca268  bloque_a/02_System_prompts/System prompt - Documentador para el Motor de Cálculo Avanzado - Versión óptima V5.0.md
-c2cfe1e2ca67e6d7eb503c2bdf7d5ab4afb246f7aafd16559090d358e05be2a5  bloque_a/02_System_prompts/System prompt - Evaluador de Previsiones y Aprendizaje - Versión óptima V5.0.docx
-ded6b16b72d3ebb02d248f1c03288da4b6536de8eba492bb4981ae50658cea63  bloque_a/02_System_prompts/System prompt - Evaluador de Previsiones y Aprendizaje - Versión óptima V5.0.md
-534d035ee45344350a2d712af31ae641e36fdaeb79cadb373ad845f7b9452190  bloque_a/02_System_prompts/System prompt - MC-01 Fundamentos cuantitativos y estadística - Versión óptima V5.0.docx
-2e258d3f8c6d005a4613f0504b08cc13adfff5d5141010bd032881e0ddb1c409  bloque_a/02_System_prompts/System prompt - MC-01 Fundamentos cuantitativos y estadística - Versión óptima V5.0.md
-8e5b6340cd5397c2ef9bef673b2c2c67dc27d48d82f542b3dfe43fdd0e538782  bloque_a/02_System_prompts/System prompt - MC-02 Series temporales, tendencias, regímenes y volatilidad - Versión óptima V5.0.docx
-9783076409f783e37b0bb10cb30e54c85c377fec1feb4dd58ad84fe6ecec8776  bloque_a/02_System_prompts/System prompt - MC-02 Series temporales, tendencias, regímenes y volatilidad - Versión óptima V5.0.md
-4ae7faf1b8008f09a317349c42325ee421041e5cc390e70a98bbef6b38660f41  bloque_a/02_System_prompts/System prompt - MC-03 Econometría, causalidad y macroeconomía cuantitativa - Versión óptima V5.0.docx
-f2c629ef1e0cd2723faf3ca19347e93f916ecae4bae6093de5ad70e75a33d989  bloque_a/02_System_prompts/System prompt - MC-03 Econometría, causalidad y macroeconomía cuantitativa - Versión óptima V5.0.md
-686619d185087aeb455db26317e98aae8221bfa79195cec6b0c91472742714df  bloque_a/02_System_prompts/System prompt - MC-04 Crecimiento, difusión y prospectiva cuantitativa - Versión óptima V5.0.docx
-e4d4f05319dacb51cc96499b239049f50229a90c126cbac038f8356fa4ff028c  bloque_a/02_System_prompts/System prompt - MC-04 Crecimiento, difusión y prospectiva cuantitativa - Versión óptima V5.0.md
-c79d31868043199ed95fbadba97c5c79bbf8423f7c419aebd97b21beed2b8eca  bloque_a/02_System_prompts/System prompt - MC-05 Simulación estocástica y escenarios - Versión óptima V5.0.docx
-3029867a97a5861cfb858def978cb0768aca20c5016f9f33f12ed703aa24483a  bloque_a/02_System_prompts/System prompt - MC-05 Simulación estocástica y escenarios - Versión óptima V5.0.md
+f99524549d2e5d2bd75f533634bf756e9a10404450c21ff479cf061839bc2585  bloque_a/02_System_prompts/System prompt - Evaluador de Previsiones y Aprendizaje - Versión óptima V5.0.md
+0c4eafb703f144511085921494797ce0bd4c0dcfa8049017cf96d80ead28a145  bloque_a/02_System_prompts/System prompt - MC-01 Fundamentos cuantitativos y estadística - Versión óptima V5.0.md
+d149604b88c2b7a584ecc3b557f8a662ce386a1472bff5463121f13af29fbe25  bloque_a/02_System_prompts/System prompt - MC-02 Series temporales, tendencias, regímenes y volatilidad - Versión óptima V5.0.md
+a6eb91ff8024b6ab1ba06f3107d9dbe8c843971cc8d3f0e131a3c40a9b3baeb8  bloque_a/02_System_prompts/System prompt - MC-03 Econometría, causalidad y macroeconomía cuantitativa - Versión óptima V5.0.md
+c3a6f1df183f10153babdbf99092553a7818693425d48b9a0ecac2b87cbbb8df  bloque_a/02_System_prompts/System prompt - MC-04 Crecimiento, difusión y prospectiva cuantitativa - Versión óptima V5.0.md
+a0878d992781ebc2c0ac62751d7aea1b7b3dad1c96963cd69b04121aa2d929af  bloque_a/02_System_prompts/System prompt - MC-05 Simulación estocástica y escenarios - Versión óptima V5.0.md
 6a953c155b9ba648bba5e63444ad7f65050b99a1b28eba1647c533c46f2f3439  bloque_a/02_System_prompts/System prompt - MC-06 Aprendizaje automático y predicción calibrada - Versión óptima V5.0.docx
 ba32181f3c7d834bf728df4d0705bdd844a6dde7da5b488ac59fa7dd82546c42  bloque_a/02_System_prompts/System prompt - MC-06 Aprendizaje automático y predicción calibrada - Versión óptima V5.0.md
 1324b79a004710e7e32ccc225e552db5a7be371d113793f6045aaf4233e29961  bloque_a/02_System_prompts/System prompt - MC-07 Optimización, decisión y riesgo - Versión óptima V5.0.docx
@@ -115,8 +109,7 @@ e4b3733503290fe79a5c3861620eaf6407a6cd77985fd735030369cbd9fee5bf  bloque_a/03_Fu
 e271ea1562d48fc0414e75e2c637e3a782caea3d2ce413ae1f50df85d74f4325  bloque_a/03_Funciones/Funciones, tareas y cometidos – Documentador para el Motor de Cálculo Avanzado – óptima V5.0.md
 94c88cdf886a70a059f6adfa5b74cfdeb72cb08f90a223eacf81a5dbdde74411  bloque_a/03_Funciones/Funciones, tareas y cometidos – Evaluador de Previsiones y Aprendizaje – óptima V5.0.docx
 7e4815fc3cdf93b3d532691665f05d6ac7f89ace91a6adebc862042dbf818a1c  bloque_a/03_Funciones/Funciones, tareas y cometidos – Evaluador de Previsiones y Aprendizaje – óptima V5.0.md
-81dc7ff721da9a03a2199f2e2af001bfff4e802c26ee2399a15fddc158cd00a9  bloque_a/03_Funciones/Funciones, tareas y cometidos – Motor de Cálculo Avanzado para el Analizador de Tendencias de Inversión – óptima V5.0.docx
-174fdaf335de0f32566c80fdb6a63f02e76532687e50ba9056fbaf9be70038d7  bloque_a/03_Funciones/Funciones, tareas y cometidos – Motor de Cálculo Avanzado para el Analizador de Tendencias de Inversión – óptima V5.0.md
+ecc7d30171f15abfdffb2d966b9d7eafbf724d3d60355c6290d81758fa178005  bloque_a/03_Funciones/Funciones, tareas y cometidos – Motor de Cálculo Avanzado para el Analizador de Tendencias de Inversión – óptima V5.0.md
 6aa63a960427f57e3b8b7fe4e2111437d773b7d28379c2e3884c0a136857d96b  bloque_a/03_Funciones/Funciones, tareas y cometidos – Orquestador técnico – óptima V5.0.docx
 6a84b23f551ee99e04b3cac01cb776a5498dae97c7cb344f52427717cf50d713  bloque_a/03_Funciones/Funciones, tareas y cometidos – Orquestador técnico – óptima V5.0.md
 6479a2c67348fbf859ffd9c2400b133d5067f8f097e489dd274ae78f42d18624  bloque_a/03_Funciones/Funciones, tareas y cometidos – Redactor y Diseñador de Informes – óptima V5.0.docx
@@ -143,8 +136,7 @@ c1197a41e4e0d931c8521e2fab232773f2e7504362588db08ba5a67f66cbc3a2  bloque_a/05_Ar
 cb7ddb883e6a32b6f138c5b78399ef252d48bdde0906db8e8d18f93e9b65e9b6  bloque_a/05_Archivos_operativos/Memoria de aprendizaje (esquema V2.0).md
 84e015d1ee945e496c672a79376f22b1b7c5c415ef4df22bcfd3abe83c967a54  bloque_a/05_Archivos_operativos/Registro de Fuentes para el Analizador de Tendencias de Inversión - V3.2.docx
 ae3b98ddc39cbdaf37b9362637f012db1258735a2ed97c01d56b99dcde5e5365  bloque_a/05_Archivos_operativos/Registro de Fuentes para el Analizador de Tendencias de Inversión - V3.2.md
-191aaf4a4601a89364cc1f9e5e0d9c2930dd6c9a78a967c4e464fc703c6c919b  bloque_a/05_Archivos_operativos/Registro de cálculos del Motor (esquema V2.0).docx
-d775b0ce8ba2e5fc0670beae3ec7aa708e06734f0f6d4ae71ef8a5435ff2e6b0  bloque_a/05_Archivos_operativos/Registro de cálculos del Motor (esquema V2.0).md
+eee1f512ca6fbace4d43256b5d10e060ab60306de6ed4b992058c7c75a0fb9b2  bloque_a/05_Archivos_operativos/Registro de cálculos del Motor (esquema V2.0).md
 2693fb7e80616beecbf36a47657921d7406cf0a6b957a0d27b9409cfddd35fab  bloque_a/05_Archivos_operativos/Registro de evidencia y afirmaciones (esquema V2.0).docx
 5d20f04352cfa10aec6720682015405c140c67c4c7e29259872f8ca7f8c37b0c  bloque_a/05_Archivos_operativos/Registro de evidencia y afirmaciones (esquema V2.0).md
 acdf1858faaade94096779a89d9357601f0a732de9129caedf351efdaf7abc98  bloque_a/05_Archivos_operativos/Registro de oportunidades (esquema V3.0).docx
@@ -241,8 +233,25 @@ a59b7246c42787cb19d6fddac820f774b0d97f081f19ad8bfc6723341a339d2d  bloque_a/99_Hi
 983d4a70af8f261de9b2576d7c0562894d9a52d5c0d50c3f72941567f4bfa523  bloque_a/99_Historico_V3.0/README - índice de la entrega y registro de la actualización.md
 26691b68bf3f6277779209f29710c686b9e29276a05a9098940563c43d3d4d1b  bloque_a/99_Historico_V5.1/01_Gobernanza/Documento 0 - Protocolo maestro del Bloque A - Versión óptima V5.1.docx
 7e708a030dad30d70517c26c7641e14488401fb76c1457b8dd8e1f9af31ff8cb  bloque_a/99_Historico_V5.1/01_Gobernanza/Documento 0 - Protocolo maestro del Bloque A - Versión óptima V5.1.md
+d8f9e3d05c19aa91f17d27ed254fdf706b9905b25b82da42567e8f284ae01e37  bloque_a/99_Historico_V5.2/01_Gobernanza/Documento 0 - Protocolo maestro del Bloque A - Versión óptima V5.2.md
+c2cfe1e2ca67e6d7eb503c2bdf7d5ab4afb246f7aafd16559090d358e05be2a5  bloque_a/99_Historico_V5.2/02_System_prompts/System prompt - Evaluador de Previsiones y Aprendizaje - Versión óptima V5.0.docx
+ded6b16b72d3ebb02d248f1c03288da4b6536de8eba492bb4981ae50658cea63  bloque_a/99_Historico_V5.2/02_System_prompts/System prompt - Evaluador de Previsiones y Aprendizaje - Versión óptima V5.0.md
+534d035ee45344350a2d712af31ae641e36fdaeb79cadb373ad845f7b9452190  bloque_a/99_Historico_V5.2/02_System_prompts/System prompt - MC-01 Fundamentos cuantitativos y estadística - Versión óptima V5.0.docx
+2e258d3f8c6d005a4613f0504b08cc13adfff5d5141010bd032881e0ddb1c409  bloque_a/99_Historico_V5.2/02_System_prompts/System prompt - MC-01 Fundamentos cuantitativos y estadística - Versión óptima V5.0.md
+8e5b6340cd5397c2ef9bef673b2c2c67dc27d48d82f542b3dfe43fdd0e538782  bloque_a/99_Historico_V5.2/02_System_prompts/System prompt - MC-02 Series temporales, tendencias, regímenes y volatilidad - Versión óptima V5.0.docx
+9783076409f783e37b0bb10cb30e54c85c377fec1feb4dd58ad84fe6ecec8776  bloque_a/99_Historico_V5.2/02_System_prompts/System prompt - MC-02 Series temporales, tendencias, regímenes y volatilidad - Versión óptima V5.0.md
+4ae7faf1b8008f09a317349c42325ee421041e5cc390e70a98bbef6b38660f41  bloque_a/99_Historico_V5.2/02_System_prompts/System prompt - MC-03 Econometría, causalidad y macroeconomía cuantitativa - Versión óptima V5.0.docx
+f2c629ef1e0cd2723faf3ca19347e93f916ecae4bae6093de5ad70e75a33d989  bloque_a/99_Historico_V5.2/02_System_prompts/System prompt - MC-03 Econometría, causalidad y macroeconomía cuantitativa - Versión óptima V5.0.md
+686619d185087aeb455db26317e98aae8221bfa79195cec6b0c91472742714df  bloque_a/99_Historico_V5.2/02_System_prompts/System prompt - MC-04 Crecimiento, difusión y prospectiva cuantitativa - Versión óptima V5.0.docx
+e4d4f05319dacb51cc96499b239049f50229a90c126cbac038f8356fa4ff028c  bloque_a/99_Historico_V5.2/02_System_prompts/System prompt - MC-04 Crecimiento, difusión y prospectiva cuantitativa - Versión óptima V5.0.md
+c79d31868043199ed95fbadba97c5c79bbf8423f7c419aebd97b21beed2b8eca  bloque_a/99_Historico_V5.2/02_System_prompts/System prompt - MC-05 Simulación estocástica y escenarios - Versión óptima V5.0.docx
+3029867a97a5861cfb858def978cb0768aca20c5016f9f33f12ed703aa24483a  bloque_a/99_Historico_V5.2/02_System_prompts/System prompt - MC-05 Simulación estocástica y escenarios - Versión óptima V5.0.md
+81dc7ff721da9a03a2199f2e2af001bfff4e802c26ee2399a15fddc158cd00a9  bloque_a/99_Historico_V5.2/03_Funciones/Funciones, tareas y cometidos – Motor de Cálculo Avanzado para el Analizador de Tendencias de Inversión – óptima V5.0.docx
+174fdaf335de0f32566c80fdb6a63f02e76532687e50ba9056fbaf9be70038d7  bloque_a/99_Historico_V5.2/03_Funciones/Funciones, tareas y cometidos – Motor de Cálculo Avanzado para el Analizador de Tendencias de Inversión – óptima V5.0.md
+191aaf4a4601a89364cc1f9e5e0d9c2930dd6c9a78a967c4e464fc703c6c919b  bloque_a/99_Historico_V5.2/05_Archivos_operativos/Registro de cálculos del Motor (esquema V2.0).docx
+d775b0ce8ba2e5fc0670beae3ec7aa708e06734f0f6d4ae71ef8a5435ff2e6b0  bloque_a/99_Historico_V5.2/05_Archivos_operativos/Registro de cálculos del Motor (esquema V2.0).md
 be660fc35264bb0f2602c65c2a9c6d45a1f34f79586bdbfd3b5f4d11c4a8c857  bloque_a/README - Índice de la entrega y registro de la actualización V5.1.docx
-e25d7eb768ffd390e7c929222e07001038594e4493972d46c876c3f84b55f624  bloque_a/README - Índice de la entrega y registro de la actualización V5.1.md
+b3c4d7b1977e1da3319d1cd1b8c48c6597856dbbfc710410ebb4ea9b5426fba2  bloque_a/README - Índice de la entrega y registro de la actualización V5.1.md
 be5d4f2fa3bd0a212059b9a371d0d73df4675b4a47cdfe56292e1ac2b399272b  bloque_a_forex/01_Gobernanza/Documento 0 - Protocolo maestro del Bloque A Forex - Versión óptima V1.1.docx
 4ab8f5eb83b9151047c32e0b5cccda57ad515c1c094036bd90396af0063c63e1  bloque_a_forex/01_Gobernanza/Documento 0 - Protocolo maestro del Bloque A Forex - Versión óptima V1.1.md
 d623031dd5b91328211d7dae3e0af8837bcccee812d00c5609a4302833d582d8  bloque_a_forex/02_System_prompts/Marco común de los Analistas de segmento (plantilla) - Bloque A Forex - V1.0.docx

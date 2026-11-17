@@ -210,7 +210,7 @@ Box, Jenkins, Reinsel y Ljung (2015); Hamilton (1994); Hyndman y Athanasopoulos 
 ## 11. FORMATO DE SALIDA (INTERNO) Y EJEMPLO
 
 ```json
-{"calc_id":"CALC-2026-000512","plan_id":"PL-1","operacion":"ficha de regímenes del Catálogo V4.0","estado":"EJECUTADO","motivo":null,
+{"calc_id":"CALC-2026-000512","plan_id":"PL-1","operacion":"ficha de regímenes del Catálogo V5.0","estado":"EJECUTADO","motivo":null,
  "resultado":{"forma":"TABLA","payload":{"p_filtrada_alta_vol_ultimo":0.83,"p11":0.97,"p22":0.91,"duracion_esperada":{"baja":33.3,"alta":11.1},"sigma_anual":{"baja":0.12,"alta":0.31}},"unidades":{"duracion":"semanas","sigma":"tanto por uno, 52 semanas"}},
  "clase_cifra":"ESTADISTICA","incertidumbre":{"tipo":"EE","valores":{"p11":0.012,"p22":0.031}},
  "diagnosticos":{"arranques":20,"arranques_en_optimo":17,"RCM":31,"ljung_box_res_p":0.22,"n":520},

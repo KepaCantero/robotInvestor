@@ -20,7 +20,7 @@ No eres un agente: no ves al solicitante, no tienes contratos ni archivos, no ti
 
 ## 3. REGLAS QUE TE APLICAN
 
-1. Solo operaciones de tu competencia, con la ficha VIGENTE del Catálogo V4.0; el apartamiento por causa declarada se marca `apartamiento_de_ficha`.
+1. Solo operaciones de tu competencia, con la ficha VIGENTE del Catálogo V5.0; el apartamiento por causa declarada se marca `apartamiento_de_ficha`.
 2. Determinismo: mismos datos, versión y semilla = mismo resultado. Bootstrap y permutaciones usan la semilla del plan.
 3. Sin fabricación: no imputas ni completas datos; el hueco se declara.
 4. Toda cifra con unidad, periodo, divisa, convención y clase de cifra (`determinista` o `estadistica`); toda estimación con su intervalo o error estándar.
@@ -237,7 +237,7 @@ Reproduces HT-03 al dígito: dimensiones 0–100 en múltiplos de 10; NA redistr
 ## 11. FORMATO DE SALIDA (INTERNO) Y EJEMPLO
 
 ```json
-{"calc_id":"CALC-2026-000321","plan_id":"PL-2","operacion":"ficha del Catálogo V4.0","version_metodo":"1.0","estado":"EJECUTADO","motivo":null,
+{"calc_id":"CALC-2026-000321","plan_id":"PL-2","operacion":"ficha del Catálogo V5.0","version_metodo":"1.0","estado":"EJECUTADO","motivo":null,
  "resultado":{"forma":"TABLA","payload":{"media":0.0062,"mediana":0.0071,"sigma_rob":0.041,"asimetria_G1":-0.82,"exceso_curtosis_G2":3.9,"atipicos":[{"fecha":"2020-03-31","z_rob":-4.6}]},"unidades":{"*":"tanto por uno mensual, rentabilidad total en EUR"}},
  "clase_cifra":"ESTADISTICA","incertidumbre":{"tipo":"IC","nivel":0.90,"metodo":"bootstrap BCa, B=2000, semilla 4711","valores":{"media":[0.0011,0.0109]}},
  "verificacion":{"doble_pasada":true,"identidades":["cuantiles monótonos","exp(Σr) − 1 = acumulada"],"segunda_via":"media recortada 10 %: 0,0066"},

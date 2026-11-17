@@ -45,7 +45,7 @@ El informe semanal propone **hasta 3 opciones por cada uno de los doce tipos**, 
 
 | Carpeta | Contenido |
 |---|---|
-| `01_Gobernanza` | **Documento 0 V5.2** (V5.2, 15/11/2026: la V5.1 con el Anexo B corregido para que describa lo que hace el ejecutor; sin `.docx` todavía. V5.1: CT-23 a CT-25, F11, ciclo C6, H5 y horizonte principal, R26–R27): función única y frontera con el Bloque B (2.1–2.5), doce tipos (2.6), 25 agentes, contratos, ciclos, estrategias y horizontes por tipo (8), puntuaciones y top-3 (9), aprendizaje, referencias, entregables, Anexos A–G |
+| `01_Gobernanza` | **Documento 0 V5.3** (V5.3, 17/11/2026: la V5.2 con la respuesta final de CT-03 en el Anexo B; V5.2, 15/11/2026: la V5.1 con el Anexo B corregido para que describa lo que hace el ejecutor; sin `.docx` todavía. V5.1: CT-23 a CT-25, F11, ciclo C6, H5 y horizonte principal, R26–R27): función única y frontera con el Bloque B (2.1–2.5), doce tipos (2.6), 25 agentes, contratos, ciclos, estrategias y horizontes por tipo (8), puntuaciones y top-3 (9), aprendizaje, referencias, entregables, Anexos A–G |
 | `02_System_prompts` | 35 system prompts (25 agentes y 10 módulos del Motor) y la plantilla común de los Analistas de tipo de activo |
 | `03_Funciones` | 25 fichas de funciones, tareas y cometidos (actualizadas en V5.1 las afectadas) |
 | `04_Motor_conocimiento_y_catalogo` | Catálogo de cálculos V5.0 (81 fichas), Perfiles de tipo de activo V3.0 (12 perfiles y 3 capas) y Mapa de conocimientos V4.0 |
@@ -58,6 +58,7 @@ El informe semanal propone **hasta 3 opciones por cada uno de los doce tipos**, 
 | `11_Ejecutor` | **Ejecutor en Python para probar y backtestear el bloque** (comando `bloque-a`), con README propio, ejemplo de salida y 58 pruebas superadas con cliente simulado (V1.2: subcomandos `seguimiento`, `consulta-broker` y `credencial`, F11, H5 con hitos) |
 | `99_Historico_V3.0` | Paquete V3.0 original |
 | `99_Historico_V5.1` | Documento 0 V5.1 (`.md` y `.docx`), sustituido por la V5.2 el 15/11/2026 |
+| `99_Historico_V5.2` | Lo que sustituyó la entrega del 17/11/2026, sin cambios y en sus mismas subcarpetas: el Documento 0 V5.2 (no tenía `.docx`) y la versión anterior (`.md` y `.docx`) de los ocho archivos corregidos en su sitio: los prompts MC-01 a MC-05 y del Evaluador, las funciones del Motor y el Registro de cálculos |
 
 Los .md son los documentos canónicos; los .docx son copias de consulta.
 
@@ -144,6 +145,7 @@ Los detalles están en `11_Ejecutor/README.md`.
 
 | Versión | Fecha | Contenido |
 |---|---|---|
+| Documento 0 óptima V5.3 y correcciones del corpus | 17/11/2026 | Entrega decidida por delegación del operador el 16/11/2026 (D-2 a D-4 de T-157; T-166). Documento 0 V5.3: el Anexo B describe la respuesta final de CT-03 de una consulta escalada (`respuesta_final`), como la envía el ejecutor; la V5.2 pasa a `99_Historico_V5.2`. Corregidos en su sitio, con el mismo nombre: los prompts MC-01 a MC-05 y las funciones del Motor (MOTOR-F05) citan el Catálogo vigente, V5.0, y no el anterior; el ejemplo del Registro de cálculos cita FC-EVAL-001, con `catalog_version` 5.0, en lugar de una ficha que no existía; el ejemplo del prompt del Evaluador cita RF-0046 en lugar de una RF que no existía en F9. Su versión anterior (`.md` y `.docx`) está en `99_Historico_V5.2`; los `.md` corregidos y la V5.3 no tienen `.docx` (INC-T166-01). Sin cambios de topología, reglas ni formatos (`version_contrato` sigue en "5.1") |
 | Documento 0 óptima V5.2 | 15/11/2026 | Nueva entrega del Documento 0 con el Anexo B corregido para que describa lo que hace el ejecutor (decisión del operador del 13/11/2026: si el Documento 0 y el código difieren, manda el código; entrega autorizada el 15/11/2026; INC-T114-01, T-143). La V5.1 pasa a `99_Historico_V5.1`. El resto de la entrega sigue siendo la V5.1: no cambia ningún otro documento, ni la topología, las reglas o los formatos (`version_contrato` sigue en "5.1"). La V5.2 no tiene `.docx` todavía (INC-T143-01) |
 | óptima V5.1 | 03/11/2026 | Cambios del propietario A1–A4: credenciales por CT-25 y bóveda de HT-01 (R8 adaptada); consultas del bloque al Broker por CT-23 (R26); horizonte H5 con hitos HIT- y horizonte principal con regla de adecuación validada por HT-09; seguimiento encargado de opción (CT-24, ciclo C6, F11, informe de seguimiento de opción; R27). Propagado a prompts, funciones, archivos operativos, plantillas, objetivos, arquitectura, pruebas, HT-09 y ejecutor (V1.2) |
 | óptima V5.0 | 02/11/2026 | Función única y frontera con el Bloque B; doce tipos de activo con cinco Analistas nuevos; ámbito, indicador de seguimiento y encargo para el Bloque B; Motor con 12 perfiles y 81 fichas; 14 áreas de conocimiento nuevas con 315 referencias verificadas; HT-07 corregido; ejecutor adaptado |

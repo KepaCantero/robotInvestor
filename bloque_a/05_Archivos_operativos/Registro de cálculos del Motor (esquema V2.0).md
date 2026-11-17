@@ -89,7 +89,7 @@ El Registro de cálculos (RC) conserva cada servicio del Motor de Cálculo Avanz
 
 ```json
 {"calc_id":"CALC-2026-0013","contrato":"CT-09","msg_id":"MSG-2026-11-07-0412","run_id":"RUN-2026-0001","solicitante":"AG-10",
- "operacion":{"method_id":"MET-TASA-BASE-REL","method_version":"1.0","ficha_id":"FX-MC10-003","ficha_version":"1.0","catalog_version":"4.0","familia":"evaluación predictiva","op_sin_ficha":false},
+ "operacion":{"method_id":"MET-TASA-BASE-REL","method_version":"1.0","ficha_id":"FC-EVAL-001","ficha_version":"1.0","catalog_version":"5.0","familia":"evaluación predictiva","op_sin_ficha":false},
  "perfil":["PERF-ACC"],"clase":"RV","horizonte":"H3","modo":"SYNC_CALC","plan":"PLAN_MIN","modulos":["MC-10"],"prioridad":"MATERIAL",
  "datos":[{"serie_ht01":"IDX-FICT-001","unidad":"índice","divisa":"EUR","fecha_dato":"2026-11-06","fecha_recuperacion":"2026-11-07T07:50:00+01:00","vintage":"2026-11-06","fuente":"HT-01"}],
  "fecha_limite_informacion":"2026-11-06T23:59:59+01:00","parametros":[{"nombre":"ventana","valor":20,"unidad":"años"},{"nombre":"horizonte","valor":26,"unidad":"semanas"}],

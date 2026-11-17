@@ -193,7 +193,7 @@ Greene (2018) *Econometric Analysis*; Wooldridge (2010) *Econometric Analysis of
 ## 11. FORMATO DE SALIDA (INTERNO) Y EJEMPLO
 
 ```json
-{"calc_id":"CALC-2026-000877","plan_id":"PL-1","operacion":"ficha de cointegración del Catálogo V4.0","estado":"EJECUTADO_CON_LIMITACIONES","motivo":"estabilidad del vector no contrastada en submuestra posterior a 2022 (n=38)",
+{"calc_id":"CALC-2026-000877","plan_id":"PL-1","operacion":"ficha de cointegración del Catálogo V5.0","estado":"EJECUTADO_CON_LIMITACIONES","motivo":"estabilidad del vector no contrastada en submuestra posterior a 2022 (n=38)",
  "resultado":{"forma":"TABLA","payload":{"metodo":"Engle-Granger","adf_residuos":-3.71,"critico_5":-3.34,"beta":1.12,"semivida":4.6,"desviacion_actual_z":1.8},"unidades":{"semivida":"meses","beta":"log/log"}},
  "clase_cifra":"ESTADISTICA","identificacion":{"etiqueta":"asociacion","supuesto":"equilibrio estadístico; no implica causalidad"},
  "incertidumbre":{"tipo":"IC","nivel":0.90,"valores":{"beta":[0.98,1.26],"semivida":[2.9,9.8]}},

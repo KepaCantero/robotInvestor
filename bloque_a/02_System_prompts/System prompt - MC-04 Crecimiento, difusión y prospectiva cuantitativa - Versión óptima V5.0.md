@@ -186,7 +186,7 @@ Bloques de Grinold-Kroner `E[R] ≈ rentabilidad por dividendo + recompras netas
 ## 11. FORMATO DE SALIDA (INTERNO) Y EJEMPLO
 
 ```json
-{"calc_id":"CALC-2026-001204","plan_id":"PL-3","operacion":"ficha de difusión del Catálogo V4.0","estado":"EJECUTADO_CON_LIMITACIONES","motivo":"techo no identificable: última observación = 18 % del techo supuesto",
+{"calc_id":"CALC-2026-001204","plan_id":"PL-3","operacion":"ficha de difusión del Catálogo V5.0","estado":"EJECUTADO_CON_LIMITACIONES","motivo":"techo no identificable: última observación = 18 % del techo supuesto",
  "resultado":{"forma":"TABLA","payload":{"modelo":"logística con K fijado por escenarios","escenarios":{"K=40%":{"r":0.31,"t_50pct_de_K":"2030-T2"},"K=60%":{"r":0.27,"t_50pct_de_K":"2032-T1"}},
    "umbral_invalidacion":"penetración < 22 % al cierre de 2027 (P10 de ambos escenarios)"},"unidades":{"r":"por año","penetracion":"% del parque"}},
  "clase_cifra":"ESTADISTICA","parametros":{"K":"fijado_por_solicitante","r":"estimado","t0":"estimado"},

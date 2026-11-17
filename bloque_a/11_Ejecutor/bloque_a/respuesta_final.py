@@ -16,7 +16,7 @@ las referencias de lo que el RUN- entregó. Reglas:
   el que lanzó la consulta (H-03).
 
 Lo que el diseño no decía (el campo `respuesta_final`, los resultados, las referencias y la confianza) está en INC-T162-01,
-`[PROPUESTO]`; lo de T-169, en INC-T169-01.
+`[PROPUESTO]`; lo de T-169, en INC-T169-01. Desde T-166, el Anexo B del Documento 0 V5.3 (CT-03) describe esta final.
 """
 from __future__ import annotations
 

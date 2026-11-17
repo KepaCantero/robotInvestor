@@ -21,7 +21,9 @@ DIVERGENCIAS = RAIZ / "bloque_a" / "11_Ejecutor" / "tests" / "goldens" / "diverg
 SALIDA = RAIZ / ".docs" / "diseno" / "bloque_a" / "borrador_correccion_anexo_b.md"
 # T-143: las diferencias contra el Anexo B V5.1, tal como estaban congeladas antes de la V5.2 (copia del golden)
 DIVERGENCIAS_V51 = RAIZ / ".docs" / "diseno" / "bloque_a" / "divergencias_anexo_b_v51.json"
-DOC0_V52 = "bloque_a/01_Gobernanza/Documento 0 - Protocolo maestro del Bloque A - Versión óptima V5.2.md"
+# T-166: la V5.2 está en el histórico; la vigente es la V5.3, que solo añade al Anexo B la respuesta final de CT-03
+DOC0_V52 = "bloque_a/99_Historico_V5.2/01_Gobernanza/Documento 0 - Protocolo maestro del Bloque A - Versión óptima V5.2.md"
+DOC0_V53 = "bloque_a/01_Gobernanza/Documento 0 - Protocolo maestro del Bloque A - Versión óptima V5.3.md"
 
 # T-143: lo que queda contra la V5.2 y no sale del golden (no es una diferencia medida o está fuera del Documento 0)
 QUEDA = [
@@ -206,17 +208,17 @@ def _lo_que_queda(d: dict) -> list[str]:
     medidas = any(d.get(k) for k in ("por_contrato", "mensajes_de_los_flujos_simulados_que_no_cumplen_el_anexo_b",
                                      "valores_que_el_anexo_b_nombra_en_un_campo_y_el_ejecutor_emite_en_otro"))
     sin = d.get("contratos_sin_campos_en_el_anexo_b", [])
-    out = [f"- **Contratos sin campos en el Anexo B.** {_lista(sin)}: la V5.2 los sigue remitiendo a los prompts de sistema."
+    out = [f"- **Contratos sin campos en el Anexo B.** {_lista(sin)}: la V5.3 los sigue remitiendo a los prompts de sistema."
            if sin else "- **Contratos sin campos en el Anexo B.** Ninguno."]
     if not medidas:
-        out += ["- **Diferencias medidas.** Ninguna: contra la V5.2, `divergencias_anexo_b.json` no tiene diferencias por "
+        out += ["- **Diferencias medidas.** Ninguna: contra la V5.3, `divergencias_anexo_b.json` no tiene diferencias por "
                 "contrato, ni mensajes de los flujos que no cumplan el Anexo B, ni valores en otro campo."]
     out += [f"- **{titulo}.** {texto}" for titulo, texto in QUEDA]
-    if medidas:   # una diferencia nueva contra la V5.2: se dice contrato a contrato, como en el borrador
+    if medidas:   # una diferencia nueva contra la V5.3: se dice contrato a contrato, como en el borrador
         tabla = _borrador(d)
         desde = tabla.index("| Contrato | Lo que difiere hoy | Cambio propuesto en el Anexo B |")
         hasta = tabla.index("## 3. Contratos sin campos en el Anexo B")
-        out += ["", "### Diferencias medidas contra la V5.2", ""] + tabla[desde:hasta - 1]
+        out += ["", "### Diferencias medidas contra la V5.3", ""] + tabla[desde:hasta - 1]
     return out
 
 
@@ -227,10 +229,11 @@ def generar() -> str:
     cuerpo = borrador[borrador.index("## 1. Cambios generales"):]
     out = ["# Borrador · corrección del Anexo B del Documento 0 del Bloque A", "",
            f"**Estado: aplicado en el Documento 0 V5.2** (`{DOC0_V52}`, T-143, 15-11-2026). La V5.1 está en "
-           "`bloque_a/99_Historico_V5.1/01_Gobernanza/`. Generado por `.docs/scripts/borrador_anexo_b.py`; no se edita a mano: "
+           f"`bloque_a/99_Historico_V5.1/01_Gobernanza/`. Desde el 17-11-2026 la vigente es la V5.3 (`{DOC0_V53}`, T-166), que solo "
+           "añade al Anexo B la respuesta final de CT-03. Generado por `.docs/scripts/borrador_anexo_b.py`; no se edita a mano: "
            "si cambian las diferencias, se vuelve a generar. Las decisiones de la aplicación están en INC-T114-01 "
            "(`docs/incidencias.md`) y en `.docs/tickets/T-143/analisis-tecnico.md`.", "",
-           "## Lo que queda contra la V5.2", ""] + _lo_que_queda(actual)
+           "## Lo que queda contra la V5.3", ""] + _lo_que_queda(actual)
     out += ["", "## Borrador aplicado (contra el Anexo B V5.1)", "",
             "El borrador tal como se aplicó, generado con las diferencias congeladas contra la V5.1 "
             "(`.docs/diseno/bloque_a/divergencias_anexo_b_v51.json`, copia de `divergencias_anexo_b.json` antes de T-143).", "",

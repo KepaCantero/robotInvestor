@@ -70,8 +70,8 @@ H5 décadas con hitos HIT- y `horizonte_principal` obligatorio (HT-09 C17–C19)
 
 ## Trampas conocidas de los corpus (auditadas 03-11-2026)
 
-- **Catálogo del Bloque A:** los prompts MC congelados citan "Catálogo V4.0"; el catálogo entregado es V5.0
-  (81 fichas). Desde T-92 (auditoría de Astra, C6) el despacho CT-09 reconoce las 81
+- **Catálogo del Bloque A:** desde T-166 los prompts MC citan el Catálogo V5.0 (81 fichas), el entregado; la versión
+  anterior, que citaba «Catálogo V4.0», está en `bloque_a/99_Historico_V5.2/`. Desde T-92 (auditoría de Astra, C6) el despacho CT-09 reconoce las 81
   (`bloque_a/11_Ejecutor/bloque_a/motor/servicio.py`, `CATALOG_VERSION = "5.0"`). Hay 80 manejadores y los 80 dan
   cifras citables: desde T-106 el Motor lee la madurez de la tabla del Catálogo y solo sirve lo que tiene código y está
   IMPLEMENTADO allí. Con casos de control (§20.2) se promovieron las 21 fichas V5.0 de IDX, FON, DER, MON y TCV (T-106) y
@@ -116,7 +116,7 @@ Flags: `--core` (rápido: corpus+config+tests), `--strict` (corta al primer fall
 
 | Gate | Qué protege |
 |---|---|
-| corpus-integridad | El corpus canónico congelado por hash (696 archivos: prompts, catálogo, esquemas, referencias…). Adaptación de los goldens de conformance: **re-congelar solo es deliberado** — `--update-corpus` en el MISMO commit que el cambio y con el motivo en el mensaje. Nada silencioso. |
+| corpus-integridad | El corpus canónico congelado por hash (705 archivos: prompts, catálogo, esquemas, referencias…). Adaptación de los goldens de conformance: **re-congelar solo es deliberado** — `--update-corpus` en el MISMO commit que el cambio y con el motivo en el mensaje. Nada silencioso. |
 | nombres-nfc | Lección macOS pagada 2×: nombres NFD rompen tests que en Linux pasan. |
 | yaml-configs | Los 3 `por_defecto.yaml` parsean. |
 | secrets | Repo público: patrones reales con allowlist explícita (`tools/secrets_allowlist.txt`, solo cadadas verificadas a mano). |
