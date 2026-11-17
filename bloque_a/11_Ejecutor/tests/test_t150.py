@@ -512,7 +512,7 @@ def _en_tramo(lo, hi, semilla):
 
 
 @pytest.mark.parametrize("paso, lo, hi, agrupa", [
-    (0.05, 2.55, 2.75, True),     # q/p de 1,82 a 1,96 %: justo por debajo del umbral
+    (0.05, 2.55, 2.75, True),     # q/p de 1,82 a 2,00 %: ⌊2,55⌋ = 2,50 está justo en el umbral (q/p = 2 % exacto)
     (0.05, 2.75, 4.5, True),      # de 1,11 a 1,82 %: lo que gana el umbral nuevo (con el 1 %, ninguna)
     (0.01, 0.55, 0.95, True),     # de 1,05 a 1,82 %, con otro paso
     (0.05, 4.6, 4.9, True),       # de 1,02 a 1,09 %: con el 1 % no se agrupaba (T-152, primera versión)
@@ -520,16 +520,33 @@ def _en_tramo(lo, hi, semilla):
 ])
 def test_t152_h02_el_umbral_del_desplazamiento_esta_en_q_p_del_2_por_ciento(paso, lo, hi, agrupa):
     """H-02 y la decisión del operador (16-11-2026): un precio se desplaza a la hipótesis truncada si su paso entero no
-    pasa de 2·`tolerancia_clon` (q/p ≤ 2 %; la media anchura q/2p no pasa de `tolerancia_clon`). Por debajo, la copia
-    truncada se agrupa; por encima del 2 %, no: la cota de la serie redondeada llega al tope de los casi clones, y
-    desplazarla no la hace caber, sea cual sea el umbral (`.docs/tickets/T-152/medir_umbral.py`). Por eso un umbral más
-    alto no se distingue (mutante equivalente) y esta prueba fija el lado de abajo: mata un umbral un 5 % más bajo (el
-    tramo de 1,82 a 1,96 %) y el 1 % de antes. Si el umbral cambia (T-57), esta prueba cambia con él."""
+    pasa de 2·`tolerancia_clon` (q/p ≤ 2 %; la media anchura q/2p no pasa de `tolerancia_clon`). Con todos los precios por
+    debajo, la copia truncada se agrupa; con todos por encima del 2 %, no: la cota de la serie redondeada llega al tope
+    de los casi clones y desplazarla no la hace caber, sea cual sea el umbral (`.docs/tickets/T-152/medir_umbral.py`).
+    Esta prueba fija el lado de abajo. El primer tramo tiene un precio con q/p = 2 % exacto (⌊2,55/0,05⌋·0,05 = 2,50), así
+    que mata cualquier umbral más bajo y el `<` estricto (QA r01 de T-152, O-01). El de arriba lo fija
+    `test_t190_h01_el_umbral_tambien_se_fija_por_arriba` (T-190: un umbral más alto no es equivalente con series que
+    cruzan el 2 %). Si el umbral cambia (T-57), las dos pruebas cambian con él."""
     assert fb.FRONTERA_B["tolerancia_clon"] == 0.01
     qp = paso / np.array([hi, lo])
     assert ((qp <= 0.02).all() if agrupa else (qp > 0.02).all())
     juntas = [_juntas(x, _trunc(x, paso)) for x in (_en_tramo(lo, hi, s) for s in range(12))]
     assert juntas == [agrupa] * 12
+
+
+@pytest.mark.parametrize("lo, semillas, agrupa", [
+    (0.48, (8, 12, 14, 27, 28, 33), True),
+    (0.4905, (1, 2, 4, 5, 7, 10), False),
+])
+def test_t190_h01_el_umbral_tambien_se_fija_por_arriba(lo, semillas, agrupa):
+    """T-190 (QA r01 de T-152, H-01): un umbral más alto que el 2 % no es equivalente. Con paso 0,01 y precios en [lo, 0,9],
+    casi todos tienen q/p por debajo del 2 % y unos pocos, los de abajo (⌊0,49⌋ a 2,04 %, ⌊0,48⌋ a 2,08 %), por encima: la
+    serie se desplaza a medias. Con estas semillas, en [0,48, 0,9] la copia truncada se agrupa con el 2 % y no con un
+    umbral del 2,1 % o más; en [0,4905, 0,9], al revés: no se agrupa con el 2 % (límite declarado en INC-T127-01, ronda
+    T-190: una copia truncada que pasa del umbral en unas pocas sesiones) y sí con el 2,1 % o más. Las dos matan un
+    umbral más alto; entre el 2 y el 2,04 % no se distinguen (no hay precio en ese tramo)."""
+    juntas = [_juntas(x, _trunc(x, 0.01)) for x in (_en_tramo(lo, 0.9, s) for s in semillas)]
+    assert juntas == [agrupa] * len(semillas)
 
 
 def test_t152_o01_un_cambio_de_metodo_a_mitad_de_la_historia_no_se_agrupa():
@@ -603,3 +620,114 @@ def test_t152_o02_un_paquete_sin_la_forma_da_paquete_ilegible(tmp_path, ejemplo,
 
 def test_t152_o02_el_paquete_de_ejemplo_tiene_la_forma(ejemplo):
     _modulo("cadena_a_b")._forma_paquete(ejemplo)
+
+
+# ================================================================ T-190 · hallazgos bajos de la QA r01 de T-152
+def test_t190_h02_un_sustituto_suelto_se_escribe_con_escapes(tmp_path):
+    """H-02: un texto con un sustituto suelto (que `json.loads` admite) no se codifica en UTF-8; antes, `write_text` daba
+    `UnicodeEncodeError` y dejaba el fichero con 0 bytes."""
+    mod = _modulo("cadena_a_b")
+    datos = {"nombre": "a\ud800b", "otro": "ñ"}
+    ruta = mod._escribir(tmp_path / "x" / "p.json", datos)
+    assert json.loads(ruta.read_text(encoding="utf-8")) == datos
+    assert json.loads(mod._json(datos)) == datos and "ñ" in mod._json({"otro": "ñ"})        # sin sustituto, sin escapes
+    assert sorted(p.name for p in ruta.parent.iterdir()) == ["p.json"]
+
+
+def test_t190_h02_un_fallo_al_escribir_no_deja_el_fichero_vacio(tmp_path, monkeypatch):
+    mod = _modulo("cadena_a_b")
+    ruta = tmp_path / "resumen.json"
+    ruta.write_text('{"antes": 1}', encoding="utf-8")
+
+    def falla(a, b):
+        raise OSError(28, "No queda espacio")
+    monkeypatch.setattr(mod.os, "replace", falla)
+    with pytest.raises(OSError):
+        mod._escribir(ruta, {"nuevo": 2})
+    assert ruta.read_text(encoding="utf-8") == '{"antes": 1}' and [p.name for p in tmp_path.iterdir()] == ["resumen.json"]
+
+
+def test_t190_h02_un_opp_id_que_no_cabe_en_un_nombre_de_fichero_no_se_envia(tmp_path, ejemplo, monkeypatch, capsys):
+    """H-02: el patrón del esquema (`^OPP-[0-9]{4}-[0-9]{4,}$`) admite un `opp_id` de 300 cifras; el nombre de su petición
+    no cabe en el sistema de ficheros. Antes, una traza de `OSError`; ahora queda en `no_enviadas`."""
+    mod = _modulo("cadena_a_b")
+    largo = "OPP-2026-" + "9" * 300
+    for o in (o for c in ejemplo["clases"].values() for o in c["opciones"]):
+        if o["opp_id"] == OPP:
+            o["opp_id"] = largo
+    for e in ejemplo["paquete_para_bloque_B"]:
+        if e["opp_id"] == OPP:
+            e["opp_id"] = largo
+    paquete = tmp_path / "paquete.json"
+    paquete.write_text(json.dumps(ejemplo, ensure_ascii=False), encoding="utf-8")
+    llamadas = []
+    monkeypatch.setattr(mod, "_cli", _cli_ciclo(paquete, llamadas))
+    w = tmp_path / "w"
+    assert mod.main(["--trabajo", str(w), "--config-a", str(_extra(tmp_path))]) == 1
+    err = capsys.readouterr().err
+    assert "Traceback" not in err
+    resumen = json.loads((w / "resumen.json").read_text(encoding="utf-8"))
+    fallo = [n for n in resumen["no_enviadas"] if n["opp_id"] == largo]
+    assert fallo and fallo[0]["codigo"] == "PETICION_NO_ESCRITA" and "OSError" in fallo[0]["detalle"]
+    assert "9" * 300 not in fallo[0]["detalle"] and llamadas == [("a", "ciclo")]
+
+
+@pytest.mark.parametrize("donde", ["paquete", "config"])
+def test_t190_h02_un_fichero_anidado_sin_fin_da_un_mensaje_y_1(tmp_path, monkeypatch, capsys, donde):
+    """H-02: un JSON o un YAML anidados 100 000 niveles daban `RecursionError`."""
+    mod = _modulo("cadena_a_b")
+    hondo = "[" * 100_000 + "]" * 100_000
+    paquete = tmp_path / "paquete.json"
+    paquete.write_text('{"clases": {}, "x": ' + hondo + "}", encoding="utf-8")
+    llamadas = []
+    monkeypatch.setattr(mod, "_cli", _cli_ciclo(paquete, llamadas))
+    config = _extra(tmp_path, "a: " + hondo + "\n") if donde == "config" else _extra(tmp_path)
+    w = tmp_path / "w"
+    assert mod.main(["--trabajo", str(w), "--config-a", str(config)]) == 1
+    err = capsys.readouterr().err
+    assert "RecursionError" in err and "Traceback" not in err
+    if donde == "paquete":
+        assert json.loads((w / "resumen.json").read_text(encoding="utf-8"))["sin_envio"]["motivo"] == "PAQUETE_ILEGIBLE"
+    else:
+        assert not llamadas and not (w / "resumen.json").exists()
+
+
+def test_t190_h02_la_sonda_con_un_opp_id_que_no_cabe_tampoco_da_traza(tmp_path, ejemplo, monkeypatch, capsys):
+    """H-02, la sonda: sin correspondencia para ninguna opción, la sonda escribe la petición de la primera; con un `opp_id`
+    de 300 cifras no cabe y queda anotada con `PETICION_NO_ESCRITA`, sin llamar al Bloque B."""
+    mod = _modulo("cadena_a_b")
+    enviables = cadena_b.opciones_enviables(ejemplo)
+    largos = {o: f"OPP-2026-{n}" + "9" * 300 for n, o in enumerate(enviables)}
+    for o in (o for c in ejemplo["clases"].values() for o in c["opciones"]):
+        o["opp_id"] = largos.get(o["opp_id"], o["opp_id"])
+    for e in ejemplo["paquete_para_bloque_B"]:
+        e["opp_id"] = largos.get(e["opp_id"], e["opp_id"])
+    paquete = tmp_path / "paquete.json"
+    paquete.write_text(json.dumps(ejemplo, ensure_ascii=False), encoding="utf-8")
+    llamadas = []
+    monkeypatch.setattr(mod, "_cli", _cli_ciclo(paquete, llamadas))
+    extra = _extra(tmp_path, json.dumps({"cadena_b": {"correspondencia_ambitos": {"OTRO-SIMBOLO": "liquidez_eur"}}}))
+    w = tmp_path / "w"
+    assert mod.main(["--trabajo", str(w), "--config-a", str(extra), "--sonda-sin-correspondencia"]) == 1
+    assert "Traceback" not in capsys.readouterr().err
+    sonda = json.loads((w / "resumen.json").read_text(encoding="utf-8"))["sonda_sin_correspondencia"]
+    assert sonda["codigo"] == "PETICION_NO_ESCRITA" and "9" * 300 not in sonda["detalle"] and llamadas == [("a", "ciclo")]
+
+
+def test_t190_h02_un_sustituto_en_el_resumen_se_imprime_con_escapes(tmp_path, ejemplo, monkeypatch, capsys):
+    """H-02: un `opp_id` con un sustituto suelto llega al resumen (en `opciones_enviables` y en `no_enviadas`); el resumen se
+    escribe y se imprime con los escapes de JSON (antes, `UnicodeEncodeError` al escribirlo o al imprimirlo)."""
+    mod = _modulo("cadena_a_b")
+    raro = OPP + "\ud800"
+    for o in (o for c in ejemplo["clases"].values() for o in c["opciones"]):
+        if o["opp_id"] == OPP:
+            o["opp_id"] = raro
+    paquete = tmp_path / "paquete.json"
+    paquete.write_text(json.dumps(ejemplo), encoding="utf-8")                    # con escapes: el fichero es UTF-8 válido
+    llamadas = []
+    monkeypatch.setattr(mod, "_cli", _cli_ciclo(paquete, llamadas))
+    w = tmp_path / "w"
+    assert mod.main(["--trabajo", str(w), "--config-a", str(_extra(tmp_path))]) == 1
+    salida = capsys.readouterr()
+    assert "Traceback" not in salida.err and raro in json.loads(salida.out)["opciones_enviables"]
+    assert raro in json.loads((w / "resumen.json").read_text(encoding="utf-8"))["opciones_enviables"]

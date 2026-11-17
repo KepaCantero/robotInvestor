@@ -40,7 +40,7 @@ Cerrar H-01, H-02 y las observaciones O-01 y O-02 de la QA r01 de T-150 (`.docs/
 | --- | --- | --- |
 | La comprobación de forma rechaza un paquete válido | La cadena no envía nada | El paquete de ejemplo del Bloque A y la cadena real con los dos ejecutores simulados pasan (`pruebas.md`) |
 | Las pruebas del borde dependen de la semilla | Prueba frágil | 12 semillas por caso, con precios llevados a un tramo de q/p que no cruza el 1 %; medidas con 20 semillas antes de fijarlas |
-| La prueba del borde no ve un umbral algo distinto | Un cambio pequeño del umbral pasa | Resolución medida y declarada: mata un umbral un 5 % más bajo (U2b) y el de antes (U1). Uno más alto es equivalente, porque por encima del 2 % la cota está en el tope y no se agrupa nada (U2, `analisis-tecnico.md`) |
+| La prueba del borde no ve un umbral algo distinto | Un cambio pequeño del umbral pasa | Resolución medida y declarada: mata un umbral un 5 % más bajo (U2b) y el de antes (U1). Uno más alto es equivalente, porque por encima del 2 % la cota está en el tope y no se agrupa nada (U2, `analisis-tecnico.md`) **Corregido en T-190 (QA r01 de T-152, H-01): no es equivalente** con series que cruzan el 2 %; lo matan `test_t190_h01_el_umbral_tambien_se_fija_por_arriba` y U2, U5 y U6 de `mutantes.py`. |
 | Subir el umbral agrupa series distintas | Amplitud no servida en índices de verdad | Medido con 300 semillas: falsos positivos de índices y de la rentabilidad total en 0; el límite declarado de los fondos se mueve en ±1 de 300 en tres casillas |
 
 ## Criterios de aceptación (binarios)
@@ -63,7 +63,7 @@ Cerrar H-01, H-02 y las observaciones O-01 y O-02 de la QA r01 de T-150 (`.docs/
 
 ## Scripts
 
-`.docs/tickets/T-152/medir_umbral.py` (el umbral del 1 al 10 %; su salida con 100 semillas, en `medir_umbral_100.txt`); `.docs/tickets/T-152/mutantes.py` (17 mutantes propios, uno equivalente esperado); `mutantes_heredados.py` (los de T-150 con la línea nueva del umbral); los de T-150 y sus revisores.
+`.docs/tickets/T-152/medir_umbral.py` (el umbral del 1 al 10 %; su salida con 100 semillas, en `medir_umbral_100.txt`); `.docs/tickets/T-152/mutantes.py` (17 mutantes propios; desde T-190, 19 y ninguno equivalente); `mutantes_heredados.py` (los de T-150 con la línea nueva del umbral); los de T-150 y sus revisores.
 
 ## Registro
 

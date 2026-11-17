@@ -41,6 +41,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import os
 import subprocess
 import sys
 import tempfile
@@ -112,10 +113,23 @@ def _motivo_lectura(e: Exception) -> str:
     return type(e).__name__
 
 
+def _leer_json(ruta: Path):
+    """El paquete del Bloque A. T-190 (QA r01 de T-152, H-02): un JSON anidado sin fin da `RecursionError` en `json`;
+    se convierte en `TypeError` con el motivo, que es lo que `main` trata como un paquete que no se lee."""
+    texto = ruta.read_text(encoding="utf-8")
+    try:
+        return json.loads(texto)
+    except RecursionError:
+        raise TypeError("anidado sin fin (RecursionError)") from None
+
+
 def _leer_yaml_extra(ruta: str) -> None:
     """El `--config-a` se lee y se mira antes de nada: un diccionario (o vacío), con `cadena_b` y su correspondencia de
     ámbitos, si están, también diccionarios. Si no, `ValueError` con el motivo, sin el contenido."""
-    datos = yaml.safe_load(Path(ruta).read_text(encoding="utf-8"))
+    try:
+        datos = yaml.safe_load(Path(ruta).read_text(encoding="utf-8"))
+    except RecursionError:   # T-190 (QA r01 de T-152, H-02): anidado sin fin; antes, una traza
+        raise ValueError("anidado sin fin (RecursionError)") from None
     if datos is not None and not isinstance(datos, dict):
         raise ValueError(f"no es un diccionario sino {type(datos).__name__}")
     sec = (datos or {}).get("cadena_b")
@@ -154,10 +168,36 @@ def _forma_paquete(paquete: dict) -> None:
         raise TypeError(f"«paquete_para_bloque_B» no es una lista sino {type(entradas).__name__}")
 
 
+def _json(datos) -> str:
+    """El JSON de lo que se escribe o se imprime. T-190 (QA r01 de T-152, H-02): un texto con un sustituto suelto (\\ud800,
+    que `json.loads` admite) no se codifica en UTF-8; entonces va con los escapes de JSON (`ensure_ascii`), que lo
+    conservan tal cual en vez de dar una traza."""
+    texto = json.dumps(datos, ensure_ascii=False, indent=1)
+    try:
+        texto.encode("utf-8")
+    except UnicodeEncodeError:
+        texto = json.dumps(datos, ensure_ascii=True, indent=1)
+    return texto
+
+
 def _escribir(ruta: Path, datos: dict) -> Path:
+    """T-190 (H-02): se escribe en un temporal junto al destino y se mueve al final; un fallo a medias no deja el fichero
+    vacío (antes, la petición o `resumen.json` quedaban con 0 bytes)."""
     ruta.parent.mkdir(parents=True, exist_ok=True)
-    ruta.write_text(json.dumps(datos, ensure_ascii=False, indent=1), encoding="utf-8")
+    datos_json = _json(datos).encode("utf-8")
+    tmp = ruta.with_name(f".{ruta.name[:40]}.tmp")
+    try:
+        tmp.write_bytes(datos_json)
+        os.replace(tmp, ruta)
+    finally:
+        tmp.unlink(missing_ok=True)
     return ruta
+
+
+def _no_escrita(e: OSError) -> str:
+    """T-190 (H-02): por qué no se escribe un fichero de la cadena (p. ej. un `opp_id` de 300 cifras, que el patrón del
+    esquema admite, da un nombre demasiado largo): el tipo y la descripción, sin la ruta (lleva el `opp_id`)."""
+    return f"{type(e).__name__}: {e.strerror or 'sin descripción'}"
 
 
 def _errores_esquema_b(ruta_paquete: str) -> list[str]:
@@ -239,7 +279,7 @@ def main(argv: list[str] | None = None) -> int:
                                                 "no se envía nada al Bloque B"), file=sys.stderr)
             return 1
         try:   # T-150 (O-04): un paquete que no se lee daba una traza
-            paquete = json.loads(Path(ruta_paquete).read_text(encoding="utf-8"))
+            paquete = _leer_json(Path(ruta_paquete))
             if not isinstance(paquete, dict):
                 raise TypeError(f"no es un objeto JSON sino {type(paquete).__name__}")
             _forma_paquete(paquete)   # T-152 (O-02): leído, pero sin la forma que se recorre
@@ -258,7 +298,11 @@ def main(argv: list[str] | None = None) -> int:
             except cadena_b.ErrorCadenaB as e:
                 resumen["no_enviadas"].append({"opp_id": opp_id, "codigo": e.codigo, "detalle": e.detalle})
                 continue
-            ruta_pet = _escribir(w / "peticiones" / f"{opp_id}.json", pet)
+            try:
+                ruta_pet = _escribir(w / "peticiones" / f"{opp_id}.json", pet)
+            except OSError as e:   # T-190 (H-02): sin la petición escrita no se envía (antes, una traza)
+                resumen["no_enviadas"].append({"opp_id": opp_id, "codigo": "PETICION_NO_ESCRITA", "detalle": _no_escrita(e)})
+                continue
             res, auts = _analizar_b(base_b, ruta_pet, a.max_autorizaciones)
             envio = {"opp_id": opp_id, "clave_universo": pet["objeto"]["clave_universo"], "peticion": str(ruta_pet),
                      "pet_id": res.get("pet_id"), "admision": (res.get("acuse_inmediato") or {}).get("admision"),
@@ -286,7 +330,13 @@ def main(argv: list[str] | None = None) -> int:
                 resumen["sonda_sin_correspondencia"] = {"opp_id": sin["opp_id"], "codigo": e.codigo, "detalle": e.detalle}
                 pet = None
             if pet is not None:
-                ruta_pet = _escribir(w / "sonda" / f"{sin['opp_id']}_sin_clave.json", pet)
+                try:
+                    ruta_pet = _escribir(w / "sonda" / f"{sin['opp_id']}_sin_clave.json", pet)
+                except OSError as e:   # T-190 (H-02)
+                    resumen["sonda_sin_correspondencia"] = {"opp_id": sin["opp_id"], "codigo": "PETICION_NO_ESCRITA",
+                                                            "detalle": _no_escrita(e)}
+                    pet = None
+            if pet is not None:
                 estado_sonda = w / "b_sonda" / "estado"
                 res = _cli("b", ["--estado", str(estado_sonda), "--salida", str(w / "b_sonda" / "salida"), "--as-of", a.as_of,
                                  "analizar", "--json", str(ruta_pet)])
@@ -306,7 +356,7 @@ def main(argv: list[str] | None = None) -> int:
     resumen["veredicto_cadena"] = {"entregadas": len(entregadas),
                                    "todas_validas": all(e.get("paquete_b_valido") for e in entregadas),
                                    "vueltas_registradas": sum(1 for e in resumen["envios"] if (e.get("vuelta_a") or {}).get("ret_id"))}
-    print(json.dumps(_resumen(w, resumen), ensure_ascii=False, indent=1))
+    print(_json(_resumen(w, resumen)))
     return 0 if entregadas and resumen["veredicto_cadena"]["todas_validas"] else 1
 
 

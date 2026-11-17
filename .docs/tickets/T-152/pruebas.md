@@ -1,6 +1,6 @@
 # T-152 · Pruebas
 
-Las pruebas se hicieron en el árbol de trabajo y en una copia desechable **completa** con «t147_mut» en la ruta: HEAD extraído con `git archive`, los ficheros cambiados encima y `.venv` enlazado. Sin red ni coste. Esta es la versión definitiva, con el umbral a q/p ≤ 2 % por decisión del operador (16-11-2026). La primera versión, con el umbral en el 1 %, se subió en `4e39324`. Su QA se detuvo al empezar, cuando llegó la decisión.
+Las pruebas se hicieron en el árbol de trabajo y en una copia desechable **completa** con «t147_mut» en la ruta: HEAD extraído con `git archive`, los ficheros cambiados encima y `.venv` enlazado. Sin red ni coste. Esta es la versión definitiva, con el umbral a q/p ≤ 2 % por decisión del operador (16-11-2026). La primera versión, con el umbral en el 1 %, se subió en `32af7fe`. Su QA se detuvo al empezar, cuando llegó la decisión.
 
 | Suite | Antes | Después |
 | --- | --- | --- |
@@ -19,12 +19,12 @@ Las pruebas se hicieron en el árbol de trabajo y en una copia desechable **comp
 | CA-2 (H-02) | `medir_umbral.py --semillas 100`, salida en `medir_umbral_100.txt` (idéntica con el código nuevo, porque el script reconstruye el módulo con cada umbral). Umbral a q/p ≤ 2 %. `T-150/medir_truncado.py --semillas 300`, nuevo frente al de antes (`--modulo`): **idéntico**. `T-149/medir_copias.py --semillas 300`: idéntico salvo tres casillas del límite declarado de los fondos (284 → 283, 287 → 288 y 196 → 195). `test_t152_h02_el_umbral_del_desplazamiento_esta_en_q_p_del_2_por_ciento` (5 tramos × 12 semillas). Mutantes U1 (el 1 % de antes) y U2b (un 5 % más bajo) muertos; U2 (el doble) equivalente, como se esperaba |
 | CA-3 (O-01) | `test_t152_o01_un_cambio_de_metodo_a_mitad_de_la_historia_no_se_agrupa`: la copia mixta no se agrupa, y cada mitad sola sí. Nombrada en INC-T127-01 |
 | CA-4 (O-02) | `test_t152_o02_una_correspondencia_que_no_son_textos…` (4 formas) y `…un_paquete_sin_la_forma_da_paquete_ilegible` (6 formas, con un correo y una marca sin datos de R8 que no puede salir ni en el mensaje ni en el resumen). Además, `…el_paquete_de_ejemplo_tiene_la_forma`. Las 11 fallan con el `cadena_a_b.py` de antes de T-152 y pasan con el nuevo |
-| CA-5 | `T-152/mutantes.py <copia>`: **16 muertos y 1 equivalente esperado (U2), 0 vivos**. `T-150/mutantes.py` (con F3 sobre la línea nueva, vía `mutantes_heredados.py`): **22 de 22 muertos**. `T-149/revisores/r01_02_mutantes_qa.py <copia>`: 0 vivos (sin contar los equivalentes). Cadena real con los dos ejecutores simulados (`cadena_a_b.py --sonda-sin-correspondencia`, primera versión; el umbral no la toca): código 0, ENTREGADA, G3 APTO, 3 enviables, 1 envío con un paquete del Bloque B válido y la sonda ADMITIDA. Gate, en el commit |
+| CA-5 | `T-152/mutantes.py <copia>`: **16 muertos y 1 equivalente esperado (U2), 0 vivos** (T-190: U2 no era equivalente; ahora 19 muertos). `T-150/mutantes.py` (con F3 sobre la línea nueva, vía `mutantes_heredados.py`): **22 de 22 muertos**. `T-149/revisores/r01_02_mutantes_qa.py <copia>`: 0 vivos (sin contar los equivalentes). Cadena real con los dos ejecutores simulados (`cadena_a_b.py --sonda-sin-correspondencia`, primera versión; el umbral no la toca): código 0, ENTREGADA, G3 APTO, 3 enviables, 1 envío con un paquete del Bloque B válido y la sonda ADMITIDA. Gate, en el commit |
 
 ## Límites
 
 - **X02** (media anchura truncada q/2p̃ en vez de (q/2)/(p̃ + q/2)) sigue vivo: es la observación O-03 del revisor. La diferencia es del orden de (q/2p̃)², por debajo de la resolución de cualquier prueba con series.
-- **Resolución de la prueba del umbral:** mata un umbral un 5 % más bajo y el 1 % de antes. Uno más alto es equivalente, porque por encima del 2 % la cota está en el tope (`analisis-tecnico.md`).
+- **Resolución de la prueba del umbral:** mata un umbral un 5 % más bajo y el 1 % de antes. Uno más alto es equivalente, porque por encima del 2 % la cota está en el tope (`analisis-tecnico.md`). **Corregido en T-190 (QA r01 de T-152, H-01): no es equivalente** con series que cruzan el 2 %; lo matan `test_t190_h01_el_umbral_tambien_se_fija_por_arriba` y U2, U5 y U6 de `mutantes.py`.
 - **Scripts heredados.** X01 del revisor de T-150 y F3 de `T-150/mutantes.py` mutan la línea de antes («`desplaza = 2 * rel <= tol`»), y sus scripts se paran con un `assert` si no la encuentran. `mutantes_heredados.py` los ejecuta con la línea nueva: no toca los originales, escribe copias adaptadas en una carpeta temporal. El revisor de T-150 termina con 1 por X02.
 - **Mutante descartado.** El primer intento de los mutantes usó una copia con solo `bloque_a` y `.docs/scripts`. Todos «morían» porque faltaba `bloque_b/11_Ejecutor/config/ambitos_ejemplo.yaml`. Se rehízo con la copia completa, que pasa las 217 pruebas sin mutar.
 
@@ -32,7 +32,7 @@ Las pruebas se hicieron en el árbol de trabajo y en una copia desechable **comp
 
 ```bash
 .venv/bin/python -I .docs/tickets/T-152/medir_umbral.py --semillas 100
-git show 4e39324:bloque_a/11_Ejecutor/bloque_a/motor/frontera_b.py > <tmp>/frontera_b_1pc.py
+git show 32af7fe:bloque_a/11_Ejecutor/bloque_a/motor/frontera_b.py > <tmp>/frontera_b_1pc.py
 .venv/bin/python -I .docs/tickets/T-150/medir_truncado.py --semillas 300 [--modulo <tmp>/frontera_b_1pc.py]
 .venv/bin/python -I .docs/tickets/T-149/medir_copias.py --semillas 300 [--modulo <tmp>/frontera_b_1pc.py]
 .venv/bin/python .docs/tickets/T-152/mutantes.py <copia «t147_mut»>
