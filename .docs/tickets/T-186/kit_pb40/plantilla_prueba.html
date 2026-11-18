@@ -1,0 +1,277 @@
+<title>Prueba PB-40</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Space+Grotesk:wght@500;600&display=swap">
+<style>
+/* Mesa de prueba: una columna de lectura, barra de pasos arriba, el informe en su propia caja. */
+:root{
+  --bg:#f5f7f8; --surface:#ffffff; --fg:#17212b; --muted:#5b6876; --line:#d9e0e6;
+  --accent:#1f5f8b; --accent-fg:#ffffff; --ok:#1d7a46; --ko:#b3261e; --warn:#8a5a00; --soft:#e8f0f6;
+  --f-display:"Space Grotesk", "Segoe UI", system-ui, sans-serif;
+  --f-body:"Inter", "Segoe UI", system-ui, -apple-system, sans-serif;
+}
+@media (prefers-color-scheme: dark){ :root:not([data-theme="light"]){
+  --bg:#11171d; --surface:#18212a; --fg:#e6edf3; --muted:#9aa8b6; --line:#2b3742;
+  --accent:#7bb7e3; --accent-fg:#0d1a24; --ok:#5fcf8f; --ko:#f2857c; --warn:#e3b55a; --soft:#1e2c38; color-scheme:dark } }
+:root[data-theme="dark"]{
+  --bg:#11171d; --surface:#18212a; --fg:#e6edf3; --muted:#9aa8b6; --line:#2b3742;
+  --accent:#7bb7e3; --accent-fg:#0d1a24; --ok:#5fcf8f; --ko:#f2857c; --warn:#e3b55a; --soft:#1e2c38; color-scheme:dark }
+[hidden]{display:none!important}
+body{background:var(--bg);color:var(--fg);font-family:var(--f-body);font-size:15px;line-height:1.55}
+.envoltura{max-width:980px;margin:0 auto;padding-block:20px 48px;padding-left:max(16px, env(safe-area-inset-left, 0px));padding-right:max(16px, env(safe-area-inset-right, 0px));display:grid;gap:20px}
+h1,h2,h3{font-family:var(--f-display);text-wrap:balance;margin:0;line-height:1.2}
+h1{font-size:1.6rem} h2{font-size:1.2rem} h3{font-size:1rem}
+p{margin:0;max-width:68ch}
+.cabecera{display:flex;flex-wrap:wrap;gap:12px;align-items:baseline;justify-content:space-between}
+.etiqueta{font-size:.75rem;letter-spacing:.06em;text-transform:uppercase;color:var(--muted)}
+.pestanas{display:flex;gap:6px;flex-wrap:wrap}
+.pestanas button{font:inherit;font-size:.9rem;padding:6px 12px;border-radius:999px;border:1px solid var(--line);background:var(--surface);color:var(--fg);cursor:pointer}
+.pestanas button[aria-pressed="true"]{background:var(--accent);color:var(--accent-fg);border-color:var(--accent)}
+.panel{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:20px;display:grid;gap:14px;min-width:0}
+.pasos{display:grid;gap:8px;margin:0;padding-left:1.2em}
+label.campo{display:grid;gap:6px;max-width:320px}
+input[type=text]{font:inherit;padding:8px 10px;border-radius:6px;border:1px solid var(--line);background:var(--bg);color:var(--fg)}
+.boton{font:inherit;font-weight:600;padding:10px 18px;border-radius:8px;border:0;background:var(--accent);color:var(--accent-fg);cursor:pointer;justify-self:start}
+.boton[disabled]{opacity:.5;cursor:not-allowed}
+.boton.secundario{background:transparent;color:var(--accent);border:1px solid var(--accent)}
+:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
+.aviso{font-size:.9rem;color:var(--muted)}
+.error{color:var(--ko);font-size:.9rem}
+.barra-lectura{position:sticky;top:env(safe-area-inset-top, 0px);z-index:5;display:flex;flex-wrap:wrap;gap:12px;align-items:center;justify-content:space-between;background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:10px 14px}
+.caja-informe{border:1px solid var(--line);border-radius:10px;overflow:hidden;background:var(--surface);min-width:0}
+fieldset{border:1px solid var(--line);border-radius:8px;padding:14px;margin:0;display:grid;gap:8px;min-width:0}
+legend{font-weight:600;padding:0 6px}
+.opcion{display:flex;gap:10px;align-items:flex-start;padding:6px 8px;border-radius:6px;cursor:pointer}
+.opcion:hover{background:var(--soft)}
+.opcion input{margin-top:4px}
+.cifras{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:12px}
+.cifra{border:1px solid var(--line);border-radius:8px;padding:12px;display:grid;gap:4px}
+.cifra b{font-family:var(--f-display);font-size:1.5rem;font-variant-numeric:tabular-nums}
+.estado{display:inline-block;font-size:.8rem;font-weight:600;padding:2px 8px;border-radius:999px;border:1px solid currentColor}
+.estado.ok{color:var(--ok)} .estado.ko{color:var(--ko)} .estado.pendiente{color:var(--warn)}
+.tabla{overflow-x:auto}
+table{border-collapse:collapse;width:100%;font-size:.9rem;font-variant-numeric:tabular-nums}
+th,td{border-bottom:1px solid var(--line);padding:6px 8px;text-align:left;white-space:nowrap}
+th{font-weight:600;color:var(--muted)}
+.si{color:var(--ok)} .no{color:var(--ko)}
+@media (prefers-reduced-motion:reduce){*{transition:none!important}}
+</style>
+
+<div class="envoltura">
+  <header class="cabecera">
+    <div>
+      <div class="etiqueta">Bloque A · Plan de pruebas V3.0 · RP-14</div>
+      <h1>Prueba PB-40: ¿se entiende el informe visual?</h1>
+    </div>
+    <nav class="pestanas" aria-label="Vistas">
+      <button id="tab-sesion" aria-pressed="true">Sesión</button>
+      <button id="tab-resumen" aria-pressed="false">Resultados</button>
+    </nav>
+  </header>
+
+  <section id="v-inicio" class="panel">
+    <h2>Antes de empezar</h2>
+    <p>Esta página la maneja quien dirige la prueba, en su propio dispositivo. Cada participante lee el informe aquí mismo y luego responde cinco preguntas, sin volver a verlo.</p>
+    <ol class="pasos">
+      <li>Busca 10 personas sin formación financiera. No se guarda ningún nombre: a cada una le das un código, como P01.</li>
+      <li>Pulsa «Empezar a leer» y deja el dispositivo a la persona. El reloj corre hasta que pulse «He terminado de leer».</li>
+      <li>Después responde las cinco preguntas. Al enviarlas, el resultado se guarda y la página vuelve aquí para la siguiente.</li>
+    </ol>
+    <p class="aviso">Criterio del plan: mediana de lectura por debajo de 3 minutos, al menos el 80 % de respuestas correctas y nadie que tome el informe por una recomendación personal.</p>
+    <label class="campo" for="codigo">Código del participante
+      <input type="text" id="codigo" maxlength="12" placeholder="P01" autocomplete="off">
+    </label>
+    <div id="msg-inicio" class="error" role="status"></div>
+    <button class="boton" id="empezar">Empezar a leer</button>
+  </section>
+
+  <section id="v-lectura" hidden>
+    <div class="barra-lectura">
+      <span>Lee el informe con calma, como lo harías en casa. Cuando acabes, pulsa el botón.</span>
+      <button class="boton" id="terminar">He terminado de leer</button>
+    </div>
+    <div class="caja-informe"><div id="informe"></div></div>
+  </section>
+
+  <section id="v-preguntas" class="panel" hidden>
+    <h2>Cinco preguntas sobre lo que has leído</h2>
+    <p class="aviso">Elige una respuesta en cada pregunta. Si no lo sabes, elige «No lo sé».</p>
+    <form id="cuestionario" novalidate></form>
+    <div id="msg-preguntas" class="error" role="status"></div>
+    <button class="boton" id="enviar" form="cuestionario" type="submit">Enviar respuestas</button>
+  </section>
+
+  <section id="v-gracias" class="panel" hidden>
+    <h2>Gracias</h2>
+    <p id="gracias-texto">Respuestas guardadas.</p>
+    <button class="boton" id="otra">Siguiente participante</button>
+  </section>
+
+  <section id="v-resumen" class="panel" hidden>
+    <h2>Resultados</h2>
+    <p id="resumen-estado" class="aviso">Cargando los resultados guardados…</p>
+    <div class="cifras" id="cifras"></div>
+    <div class="tabla"><table id="tabla-preguntas"></table></div>
+    <div class="tabla"><table id="tabla-participantes"></table></div>
+  </section>
+</div>
+
+<script type="application/json" id="datos-informe">__INFORME_JSON__</script>
+<script>
+"use strict";
+const RUN = "RUN-2024-0001";
+const PREGUNTAS = [
+  {id:"q1", tema:"Qué oportunidades", texto:"¿Qué ideas propone el informe esta semana?", correcta:"a",
+   opciones:{a:"Monedas de Japón, de Australia y de América Latina", b:"Acciones de grandes empresas tecnológicas", c:"Comprar oro y plata", d:"No propone ninguna idea"}},
+  {id:"q2", tema:"Por qué", texto:"¿Por qué ha elegido el sistema esas ideas?", correcta:"b",
+   opciones:{a:"Porque son las más baratas del mercado", b:"Porque su precio sube más que el de otras ideas parecidas desde hace meses", c:"Porque nunca pueden perder valor", d:"Porque las recomienda tu banco"}},
+  {id:"q3", tema:"Riesgo", texto:"¿Qué riesgo tienen esas ideas, según el informe?", correcta:"c",
+   opciones:{a:"Ninguno: no pueden salir mal", b:"Muy alto (5 de 5)", c:"Bajo (2 de 5)", d:"El informe no lo dice"}},
+  {id:"q4", tema:"Horizonte", texto:"¿En qué plazo se espera que se cumplan, sobre todo?", correcta:"b",
+   opciones:{a:"En unos días", b:"En unos meses", c:"En varios años", d:"En décadas"}},
+  {id:"q5", tema:"Qué no es", texto:"¿Te dice este informe qué debes comprar tú?", correcta:"a", recomendacion:["b","c"],
+   opciones:{a:"No: señala zonas del mercado, y mi Broker Personal valora si encajan conmigo", b:"Sí: me dice qué comprar", c:"Sí, pero solo si quiero poco riesgo"}},
+];
+const NO_SE = "x";
+
+const $ = (id) => document.getElementById(id);
+const vistas = ["v-inicio","v-lectura","v-preguntas","v-gracias","v-resumen"];
+function mostrar(v){ vistas.forEach(x => { $(x).hidden = x !== v; }); window.scrollTo(0,0); }
+
+let db = null, col = null, sesion = null, filas = [], dbListo = false;
+
+// El informe va en una sombra propia para que sus estilos no choquen con los de la página.
+function montarInforme(){
+  const d = JSON.parse($("datos-informe").textContent);
+  const raiz = $("informe").attachShadow({mode:"open"});
+  const css = d.css.replace(/:root\b/g, ":host").replace(/(^|[}\s,])(html|body)(?=\s*[{,])/g, "$1.cuerpo");
+  raiz.innerHTML = "<style>:host{display:block;all:initial}" + css + "</style><div class=\"cuerpo\">" + d.html + "</div>";
+}
+
+function barajar(lista, semilla){
+  const a = lista.slice(); let s = 0;
+  for (const c of semilla) s = (s * 31 + c.charCodeAt(0)) >>> 0;
+  for (let i = a.length - 1; i > 0; i--) { s = (s * 1103515245 + 12345) >>> 0; const j = s % (i + 1); [a[i], a[j]] = [a[j], a[i]]; }
+  return a;
+}
+
+function pintarCuestionario(codigo){
+  const f = $("cuestionario"); f.textContent = "";
+  PREGUNTAS.forEach((q, n) => {
+    const fs = document.createElement("fieldset");
+    const lg = document.createElement("legend"); lg.textContent = (n + 1) + ". " + q.texto; fs.appendChild(lg);
+    const claves = barajar(Object.keys(q.opciones), codigo + q.id).concat([NO_SE]);
+    claves.forEach(k => {
+      const lab = document.createElement("label"); lab.className = "opcion";
+      const r = document.createElement("input"); r.type = "radio"; r.name = q.id; r.value = k; r.id = q.id + "-" + k;
+      const sp = document.createElement("span"); sp.textContent = k === NO_SE ? "No lo sé" : q.opciones[k];
+      lab.append(r, sp); fs.appendChild(lab);
+    });
+    f.appendChild(fs);
+  });
+}
+
+function normalizar(c){ return c.trim().toUpperCase().replace(/[^A-Z0-9-]/g, ""); }
+
+$("empezar").addEventListener("click", () => {
+  const c = normalizar($("codigo").value);
+  if (!c) { $("msg-inicio").textContent = "Escribe un código para el participante, como P01."; return; }
+  if (filas.some(r => r.codigo === c)) { $("msg-inicio").textContent = "Ese código ya tiene resultados. Usa otro."; return; }
+  $("msg-inicio").textContent = "";
+  sesion = {codigo: c, inicio: performance.now()};
+  pintarCuestionario(c);
+  mostrar("v-lectura");
+});
+
+$("terminar").addEventListener("click", () => {
+  sesion.segundos = Math.round((performance.now() - sesion.inicio) / 100) / 10;
+  mostrar("v-preguntas");
+});
+
+$("cuestionario").addEventListener("submit", async (ev) => {
+  ev.preventDefault();
+  const resp = {}; const faltan = [];
+  PREGUNTAS.forEach((q, n) => { const m = document.querySelector('input[name="' + q.id + '"]:checked'); if (m) resp[q.id] = m.value; else faltan.push(n + 1); });
+  if (faltan.length) { $("msg-preguntas").textContent = "Falta responder: " + faltan.join(", ") + "."; return; }
+  const aciertos = {}; PREGUNTAS.forEach(q => { aciertos[q.id] = resp[q.id] === q.correcta; });
+  const q5 = PREGUNTAS[4];
+  const fila = {codigo: sesion.codigo, informe: RUN, segundos_lectura: sesion.segundos, respuestas: resp, aciertos,
+                n_aciertos: Object.values(aciertos).filter(Boolean).length,
+                recomendacion_personal: q5.recomendacion.includes(resp.q5), fecha: new Date().toISOString()};
+  $("enviar").disabled = true; $("msg-preguntas").textContent = "";
+  try {
+    if (!col) throw new Error("sin almacén");
+    await col.doc(sesion.codigo).set(fila);
+    $("gracias-texto").textContent = "Respuestas de " + sesion.codigo + " guardadas.";
+  } catch (e) {
+    $("gracias-texto").textContent = "No se han podido guardar las respuestas de " + sesion.codigo + ". Apunta a mano: lectura " + sesion.segundos + " s, " + fila.n_aciertos + " de 5 correctas.";
+  }
+  $("enviar").disabled = false; sesion = null; $("codigo").value = "";
+  mostrar("v-gracias");
+});
+
+$("otra").addEventListener("click", () => mostrar("v-inicio"));
+function pestana(cual){
+  $("tab-sesion").setAttribute("aria-pressed", String(cual === "sesion"));
+  $("tab-resumen").setAttribute("aria-pressed", String(cual === "resumen"));
+  if (cual === "resumen") { pintarResumen(); mostrar("v-resumen"); } else mostrar(sesion ? "v-lectura" : "v-inicio");
+}
+$("tab-sesion").addEventListener("click", () => pestana("sesion"));
+$("tab-resumen").addEventListener("click", () => pestana("resumen"));
+
+function mediana(xs){ if (!xs.length) return null; const a = xs.slice().sort((x, y) => x - y); const m = a.length >> 1; return a.length % 2 ? a[m] : (a[m - 1] + a[m]) / 2; }
+function mmss(s){ if (s == null) return "—"; const m = Math.floor(s / 60), r = Math.round(s % 60); return m + " min " + String(r).padStart(2, "0") + " s"; }
+function cifra(titulo, valor, estado, nota){
+  const d = document.createElement("div"); d.className = "cifra";
+  const t = document.createElement("span"); t.className = "etiqueta"; t.textContent = titulo;
+  const b = document.createElement("b"); b.textContent = valor;
+  d.append(t, b);
+  if (estado) { const e = document.createElement("span"); e.className = "estado " + estado[0]; e.textContent = estado[1]; d.appendChild(e); }
+  if (nota) { const p = document.createElement("span"); p.className = "aviso"; p.textContent = nota; d.appendChild(p); }
+  return d;
+}
+function celda(tr, texto, cls, th){ const c = document.createElement(th ? "th" : "td"); c.textContent = texto; if (cls) c.className = cls; tr.appendChild(c); }
+
+function pintarResumen(){
+  const n = filas.length;
+  $("resumen-estado").textContent = !dbListo ? "No se puede leer el almacén de resultados en esta vista. Ábrela con tu cuenta para verlos."
+    : n === 0 ? "Aún no hay participantes. Los resultados aparecen aquí en cuanto se envía el primer cuestionario."
+    : n + " participante" + (n === 1 ? "" : "s") + " de los 10 que pide el plan.";
+  const med = mediana(filas.map(r => r.segundos_lectura));
+  const tot = filas.reduce((s, r) => s + r.n_aciertos, 0), pct = n ? (100 * tot / (5 * n)) : null;
+  const reco = filas.filter(r => r.recomendacion_personal).length;
+  const fin = n >= 10;
+  const est = (ok) => !n ? null : ok ? ["ok", fin ? "Cumple" : "Cumple por ahora"] : ["ko", "No cumple"];
+  const c = $("cifras"); c.textContent = "";
+  c.append(
+    cifra("Mediana de lectura", mmss(med), est(med != null && med < 180), "Criterio: menos de 3 min"),
+    cifra("Respuestas correctas", pct == null ? "—" : pct.toFixed(0) + " %", est(pct != null && pct >= 80), "Criterio: al menos 80 %"),
+    cifra("Lo toman por recomendación", n ? String(reco) : "—", est(reco === 0), "Criterio: nadie"),
+    cifra("Veredicto PB-40", !n ? "—" : !fin ? "Pendiente" : (med < 180 && pct >= 80 && reco === 0) ? "Superada" : "No superada",
+          !n ? null : !fin ? ["pendiente", "Faltan " + (10 - n)] : (med < 180 && pct >= 80 && reco === 0) ? ["ok", "Superada"] : ["ko", "No superada"], null)
+  );
+  const tq = $("tabla-preguntas"); tq.textContent = "";
+  let tr = document.createElement("tr"); ["Pregunta", "Tema", "Correctas"].forEach(h => celda(tr, h, null, true)); tq.appendChild(tr);
+  PREGUNTAS.forEach((q, i) => { tr = document.createElement("tr"); celda(tr, String(i + 1)); celda(tr, q.tema);
+    const k = filas.filter(r => r.aciertos && r.aciertos[q.id]).length; celda(tr, n ? k + " de " + n : "—"); tq.appendChild(tr); });
+  const tp = $("tabla-participantes"); tp.textContent = "";
+  tr = document.createElement("tr"); ["Código", "Lectura", "Correctas", "Recomendación", "Fecha"].forEach(h => celda(tr, h, null, true)); tp.appendChild(tr);
+  filas.slice().sort((a, b) => a.codigo.localeCompare(b.codigo)).forEach(r => { tr = document.createElement("tr");
+    celda(tr, r.codigo); celda(tr, mmss(r.segundos_lectura)); celda(tr, r.n_aciertos + " de 5");
+    celda(tr, r.recomendacion_personal ? "Sí" : "No", r.recomendacion_personal ? "no" : "si");
+    celda(tr, (r.fecha || "").slice(0, 10)); tp.appendChild(tr); });
+}
+
+montarInforme();
+(async () => {
+  const temporizador = setTimeout(() => { if (!dbListo) { $("resumen-estado").textContent = "El almacén de resultados no responde. Las respuestas que envíes podrían no guardarse."; } }, 10000);
+  try { db = await window.claude?.use?.("db"); } catch (e) { db = null; }
+  if (!db) { clearTimeout(temporizador); pintarResumen(); return; }
+  col = db.collection("participaciones");
+  col.onSnapshot(snap => {
+    clearTimeout(temporizador); dbListo = true;
+    filas = snap.docs.map(d => d.data()).filter(x => x && typeof x.codigo === "string");
+    if (!$("v-resumen").hidden) pintarResumen();
+  }, () => { clearTimeout(temporizador); pintarResumen(); });
+})();
+</script>
