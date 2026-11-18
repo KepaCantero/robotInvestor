@@ -1,6 +1,6 @@
 # Evidencias del Plan de pruebas del Bloque A (Fase 4, T-116)
 
-Generado por `.docs/scripts/evidencias_plan_a.py --ejecutar` el 2026-11-18 sobre el commit `9c130c0`, con el cliente simulado (`MockClient`): sin red, sin clave y sin coste. No se edita a mano: se regenera.
+Generado por `.docs/scripts/evidencias_plan_a.py --ejecutar` el 2026-11-18 sobre el commit `66257f9`, con el cliente simulado (`MockClient`): sin red, sin clave y sin coste. No se edita a mano: se regenera.
 
 Qué significa cada resultado:
 
@@ -17,8 +17,8 @@ Con el cliente simulado se valida la tubería (canales, archivos, puertas, herra
 
 | Resultado | Pruebas del plan |
 | --- | --- |
-| Superada | 39 |
-| Superada en parte | 19 |
+| Superada | 40 |
+| Superada en parte | 18 |
 | Pendiente API | 7 |
 | Requiere usuarios | 1 |
 | Revisión documental | 1 |
@@ -85,7 +85,7 @@ Con el cliente simulado se valida la tubería (canales, archivos, puertas, herra
 | PB-55 Cobertura de los doce tipos de activo | Superada | Los doce tipos en el paquete, en el informe visual y en el técnico (un apartado con su semáforo por tipo), con tres opciones como máximo cada uno y el motivo cuando hay menos. | — |
 | PB-56 Oportunidad duplicada entre tipos | Superada | El caso del plan en un C1: RV e IDX proponen el mismo ámbito y queda en un solo top-3, con el motivo de la otra en F3; ningún nombre ni ámbito en dos top-3. La regla (se quita la de menor RK, con su motivo) sobre la función, y HT-09 bloquea un duplicado por nombre, por ámbito o por identificador. | — |
 | PB-57 Estrategias de los tipos nuevos | Pendiente API | — | Lo audita el Auditor con el modelo real. |
-| PB-58 Solicitud y provisión de una credencial por CT-25 | Superada en parte | Solicitud con CRD- en F5 sin valor; servicio degradado y declarado en los entregables hasta la provisión (corrección de INC-T116-03); depósito en la bóveda y respuesta solo con estado y alias; la herramienta obtiene el valor de la bóveda; la segunda solicitud se resuelve sin volver al Broker; el valor no aparece en ningún archivo, mensaje, entregable ni contexto enviado a los agentes. | Los pasos 1 y 2 del plan: el ejecutor no lee `solicitudes_credenciales` del retorno del Buscador (ni de un Analista) ni tiene el mantenimiento C4 en el que el Buscador las detecta; la solicitud CT-25 se emite con `credenciales.solicitar` (orden `credencial solicitar`). Declarado en INC-T116-03 (r05). |
+| PB-58 Solicitud y provisión de una credencial por CT-25 | Superada | «Superada» con su preparación: la configuración por defecto no declara ningún servicio de pago del BFA (`credenciales.servicios_bfa` vacía, `[PROPUESTO]`, INC-T177-01), así que en un run real el C4 no llama al BFA (SIN_SERVICIOS); las pruebas declaran un servicio ficticio, y declarar la lista es el pendiente del operador T-179. Pasos 1 a 4 del plan (T-177): en el mantenimiento C4 (`credencial c4`) el Buscador de Fuentes Avanzadas recibe solo el alias y el estado en la bóveda de HT-01 de sus servicios de pago o API y devuelve `solicitudes_credenciales`; el Coordinador las deduplica por alias, comprueba en HT-01 que faltan y emite el CT-25 al Broker con solicitante AG-16, uso e impacto (CRD- en F5 sin valor y C4- que la enlaza); un retorno con un valor se rechaza íntegro (R8, sin CT-25 ni copia en la caché), lo mal formado se descarta con motivo. Además: solicitud con CRD- en F5 sin valor; servicio degradado y declarado en los entregables hasta la provisión (corrección de INC-T116-03); depósito en la bóveda y respuesta solo con estado y alias; la herramienta obtiene el valor de la bóveda; la segunda C4 se resuelve sin volver al Broker; el valor no aparece en ningún archivo, mensaje, entregable ni contexto enviado a los agentes. Ronda r02 (QA r01 de T-177): el valor en cualquier sitio de un retorno con `solicitudes_credenciales`, en cualquier grafía de la clave, o una ficha opaca en el servicio, el motivo o el impacto, no llega a la caché ni a la cinta de grabación (`llm.respuesta_segura`); otra grafía del servicio en la segunda C4 y dos C4 a la vez dan un solo CT-25; el C4 sin servicios no llama al BFA y la bolsa de 3 UC del Anexo A es semanal. Ronda r03 (QA r02): la barrera solo mira los retornos con `solicitudes_credenciales`, leídos primero como JSON; dentro del subárbol, una ficha opaca en cualquier clave u hoja o un número bajo una clave de valor bloquea; fuera, solo las claves inequívocas o las ambiguas con ficha opaca, así que el informe de Analista del Marco común (lista vacía e `indicadores[].valor` de texto, que el simulado emite) se usa; dos C4 a la vez no pasan de la bolsa semanal (reserva bajo la transacción). | — |
 | PB-59 Credencial expuesta en un mensaje del Broker | Superada | El mensaje con el valor se rechaza, queda una incidencia SEGURIDAD en HA, el valor no aparece en ningún archivo ni mensaje y se pide depositar y renovar; HT-09 bloquea un valor de credencial en el paquete. | — |
 | PB-60 Credencial denegada | Superada | Tras la denegación queda la limitación de servicio en F10; una nueva necesidad del mismo servicio no envía ninguna CT-25, salvo con cambio de circunstancias; el paquete, el informe técnico, el JSON y el visual del ciclo declaran la degradación, y dejan de declararla cuando la credencial se provee (corrección de INC-T116-03). | — |
 | PB-61 Consulta bloqueante al Broker con vencimiento | Superada | Solo CRI se pausa y RV sigue; al vencer, el análisis continúa con el supuesto declarado, que figura en el paquete, en el JSON y en el informe técnico (C19 de HT-09 en OK); la respuesta tardía que contesta ese supuesto ya entregado abre una revisión C2: un RUN- AD_HOC disparado por la CT-23, con los RUN- revisados, cuyo paquete ya no lleva el supuesto, declara la revisión en sus entregables y llega al Broker por CT-02 (corrección de INC-T116-03; reglas en INC-T174-01). Sin informe entregado con el supuesto no hay revisión, y una respuesta sin nada nuevo no la reabre; un fallo queda anotado y escalado al operador y un error de control se relanza dejando la revisión INTERRUMPIDA, que se relanza; dos procesos con la misma respuesta abren una sola revisión; el alcance no pasa de lo entregado ni de lo entregado hasta la fecha de la respuesta (QA r01 de T-174, H-01 a H-06); una revisión cuyo proceso murió se avisa una vez al operador y, si ya se había entregado, relanzarla no la repite (QA r02, H-07 y H-08). | Que el modelo real no invente un dato del Broker (con el cliente simulado no se puede medir; modo sombra). Los plazos con el reloj de pared (las pruebas fijan la hora). Si la respuesta contradice de verdad el supuesto: el ejecutor no lo juzga y toda respuesta nueva cuenta como invalidación (INC-T174-01). |
@@ -817,12 +817,54 @@ Criterio de aprobación del plan: Ninguna oportunidad en dos top-3
 Criterio de aprobación del plan: Cero apariciones del valor en mensajes, F1–F11, entregables y contextos; segunda solicitud resuelta sin molestar al Broker
 
 ```bash
-(cd bloque_a/11_Ejecutor && ../../.venv/bin/python -m pytest -q 'tests/test_v51.py::test_credenciales_boveda' 'tests/test_v51.py::test_cli_v51' 'tests/test_fase4_huecos.py::test_pb58_el_servicio_pendiente_se_declara_hasta_la_provision_y_el_valor_no_llega_a_ningun_contexto')
+(cd bloque_a/11_Ejecutor && ../../.venv/bin/python -m pytest -q 'tests/test_v51.py::test_credenciales_boveda' 'tests/test_v51.py::test_cli_v51' 'tests/test_fase4_huecos.py::test_pb58_el_servicio_pendiente_se_declara_hasta_la_provision_y_el_valor_no_llega_a_ningun_contexto' 'tests/test_t177_c4_credenciales.py::test_t177_pb58_c4_bfa_solicita_y_coordinador_emite_ct25' 'tests/test_t177_c4_credenciales.py::test_t177_desde_retorno_deduplica_y_comprueba_ht01' 'tests/test_t177_c4_credenciales.py::test_t177_urgencia_y_denegada_no_se_vuelve_a_pedir' 'tests/test_t177_c4_credenciales.py::test_t177_retorno_con_valor_se_rechaza_integro' 'tests/test_t177_c4_credenciales.py::test_t177_c4_con_valor_en_el_retorno_del_bfa_no_emite_nada' 'tests/test_t177_c4_credenciales.py::test_t177_solicitudes_mal_formadas_se_descartan_con_motivo' 'tests/test_t177_c4_credenciales.py::test_t177_retorno_vacio_o_sin_solicitudes_no_pide_nada' 'tests/test_t177_c4_credenciales.py::test_t177_configuracion_invalida_falla_antes_de_mutar' 'tests/test_t177_c4_credenciales.py::test_t177_pb58_criterio_completo' 'tests/test_t177_c4_credenciales.py::test_t177_cli_credencial_c4' 'tests/test_t177_c4_credenciales.py::test_t177_r02_h01_valor_en_cualquier_sitio_no_llega_a_la_cache' 'tests/test_t177_c4_credenciales.py::test_t177_r02_h04_la_cinta_de_grabacion_no_guarda_el_valor' 'tests/test_t177_c4_credenciales.py::test_t177_r02_solicitud_con_valor_limites' 'tests/test_t177_c4_credenciales.py::test_t177_r02_h02_otra_grafia_en_la_segunda_c4_no_duplica' 'tests/test_t177_c4_credenciales.py::test_t177_r02_h03_dos_c4_a_la_vez_un_solo_ct25' 'tests/test_t177_c4_credenciales.py::test_t177_r02_h05_grafias_de_campos_de_valor' 'tests/test_t177_c4_credenciales.py::test_t177_r02_h05_credencial_ref_no_es_un_valor_y_el_broker_tampoco_lo_cuela' 'tests/test_t177_c4_credenciales.py::test_t177_r02_h06_ficha_opaca_en_texto_libre_se_rechaza' 'tests/test_t177_c4_credenciales.py::test_t177_r02_h06_textos_corrientes_y_urls_no_se_rechazan' 'tests/test_t177_c4_credenciales.py::test_t177_r02_h07_tope_semanal_real' 'tests/test_t177_c4_credenciales.py::test_t177_r02_ficha_opaca_en_el_retorno_no_llega_a_la_cache' 'tests/test_t177_c4_credenciales.py::test_t177_r02_segunda_barrera_en_agentes' 'tests/test_t177_c4_credenciales.py::test_t177_r02_la_cache_envenenada_no_se_sirve' 'tests/test_t177_c4_credenciales.py::test_t177_r03_reserva_de_la_bolsa_en_curso_y_tras_un_error' 'tests/test_t177_c4_credenciales.py::test_t177_r03_h12_informe_de_analista_canonico_no_se_descarta' 'tests/test_t177_c4_credenciales.py::test_t177_r03_el_mock_de_analistas_ejerce_la_barrera' 'tests/test_t177_c4_credenciales.py::test_t177_r03_h08_cualquier_clave_del_subarbol' 'tests/test_t177_c4_credenciales.py::test_t177_r03_h08_texto_json_dict_y_claves' 'tests/test_t177_c4_credenciales.py::test_t177_r03_h08_solicitud_no_vacia_mira_el_retorno_entero' 'tests/test_t177_c4_credenciales.py::test_t177_r03_h09_escape_unicode_en_la_clave' 'tests/test_t177_c4_credenciales.py::test_t177_r03_h10_base64' 'tests/test_t177_c4_credenciales.py::test_t177_r03_h11_numero_bajo_clave_de_valor' 'tests/test_t177_c4_credenciales.py::test_t177_r03_h13_guiones_y_uuid_no_son_fichas' 'tests/test_t177_c4_credenciales.py::test_t177_r03_el_coordinador_rechaza_una_clave_de_valor_en_cualquier_sitio' 'tests/test_t177_c4_credenciales.py::test_t177_r03_json_demasiado_anidado' 'tests/test_t177_c4_credenciales.py::test_t177_cierre_h14_texto_ilegible_con_la_clave_escapada' 'tests/test_t177_c4_credenciales.py::test_t177_cierre_h15_identificadores_publicos_solo_fuera' 'tests/test_t177_c4_credenciales.py::test_t177_cierre_h16_reserva_huerfana_avisada_una_vez' 'tests/test_t177_c4_credenciales.py::test_t177_cierre_h17_campo_de_mas_en_una_solicitud' 'tests/test_t177_c4_credenciales.py::test_t177_cierre2_h18_campo_admitido_que_no_se_copia' 'tests/test_t177_c4_credenciales.py::test_t177_cierre2_h18_lo_que_se_copia_pasa' 'tests/test_t177_c4_credenciales.py::test_t177_cierre3_h19_urgencia_sin_contenido_se_reduce_a_normal')
 ```
 
 - `11_Ejecutor/tests/test_v51.py::test_credenciales_boveda`: SUPERADA
 - `11_Ejecutor/tests/test_v51.py::test_cli_v51`: SUPERADA
 - `11_Ejecutor/tests/test_fase4_huecos.py::test_pb58_el_servicio_pendiente_se_declara_hasta_la_provision_y_el_valor_no_llega_a_ningun_contexto`: SUPERADA
+- `11_Ejecutor/tests/test_t177_c4_credenciales.py::test_t177_pb58_c4_bfa_solicita_y_coordinador_emite_ct25`: SUPERADA
+- `11_Ejecutor/tests/test_t177_c4_credenciales.py::test_t177_desde_retorno_deduplica_y_comprueba_ht01`: SUPERADA
+- `11_Ejecutor/tests/test_t177_c4_credenciales.py::test_t177_urgencia_y_denegada_no_se_vuelve_a_pedir`: SUPERADA
+- `11_Ejecutor/tests/test_t177_c4_credenciales.py::test_t177_retorno_con_valor_se_rechaza_integro`: SUPERADA
+- `11_Ejecutor/tests/test_t177_c4_credenciales.py::test_t177_c4_con_valor_en_el_retorno_del_bfa_no_emite_nada`: SUPERADA
+- `11_Ejecutor/tests/test_t177_c4_credenciales.py::test_t177_solicitudes_mal_formadas_se_descartan_con_motivo`: SUPERADA
+- `11_Ejecutor/tests/test_t177_c4_credenciales.py::test_t177_retorno_vacio_o_sin_solicitudes_no_pide_nada`: SUPERADA
+- `11_Ejecutor/tests/test_t177_c4_credenciales.py::test_t177_configuracion_invalida_falla_antes_de_mutar`: SUPERADA
+- `11_Ejecutor/tests/test_t177_c4_credenciales.py::test_t177_pb58_criterio_completo`: SUPERADA
+- `11_Ejecutor/tests/test_t177_c4_credenciales.py::test_t177_cli_credencial_c4`: SUPERADA
+- `11_Ejecutor/tests/test_t177_c4_credenciales.py::test_t177_r02_h01_valor_en_cualquier_sitio_no_llega_a_la_cache`: SUPERADA
+- `11_Ejecutor/tests/test_t177_c4_credenciales.py::test_t177_r02_h04_la_cinta_de_grabacion_no_guarda_el_valor`: SUPERADA
+- `11_Ejecutor/tests/test_t177_c4_credenciales.py::test_t177_r02_solicitud_con_valor_limites`: SUPERADA
+- `11_Ejecutor/tests/test_t177_c4_credenciales.py::test_t177_r02_h02_otra_grafia_en_la_segunda_c4_no_duplica`: SUPERADA
+- `11_Ejecutor/tests/test_t177_c4_credenciales.py::test_t177_r02_h03_dos_c4_a_la_vez_un_solo_ct25`: SUPERADA
+- `11_Ejecutor/tests/test_t177_c4_credenciales.py::test_t177_r02_h05_grafias_de_campos_de_valor`: SUPERADA
+- `11_Ejecutor/tests/test_t177_c4_credenciales.py::test_t177_r02_h05_credencial_ref_no_es_un_valor_y_el_broker_tampoco_lo_cuela`: SUPERADA
+- `11_Ejecutor/tests/test_t177_c4_credenciales.py::test_t177_r02_h06_ficha_opaca_en_texto_libre_se_rechaza`: SUPERADA
+- `11_Ejecutor/tests/test_t177_c4_credenciales.py::test_t177_r02_h06_textos_corrientes_y_urls_no_se_rechazan`: SUPERADA
+- `11_Ejecutor/tests/test_t177_c4_credenciales.py::test_t177_r02_h07_tope_semanal_real`: SUPERADA
+- `11_Ejecutor/tests/test_t177_c4_credenciales.py::test_t177_r02_ficha_opaca_en_el_retorno_no_llega_a_la_cache`: SUPERADA
+- `11_Ejecutor/tests/test_t177_c4_credenciales.py::test_t177_r02_segunda_barrera_en_agentes`: SUPERADA
+- `11_Ejecutor/tests/test_t177_c4_credenciales.py::test_t177_r02_la_cache_envenenada_no_se_sirve`: SUPERADA
+- `11_Ejecutor/tests/test_t177_c4_credenciales.py::test_t177_r03_reserva_de_la_bolsa_en_curso_y_tras_un_error`: SUPERADA
+- `11_Ejecutor/tests/test_t177_c4_credenciales.py::test_t177_r03_h12_informe_de_analista_canonico_no_se_descarta`: SUPERADA
+- `11_Ejecutor/tests/test_t177_c4_credenciales.py::test_t177_r03_el_mock_de_analistas_ejerce_la_barrera`: SUPERADA
+- `11_Ejecutor/tests/test_t177_c4_credenciales.py::test_t177_r03_h08_cualquier_clave_del_subarbol`: SUPERADA
+- `11_Ejecutor/tests/test_t177_c4_credenciales.py::test_t177_r03_h08_texto_json_dict_y_claves`: SUPERADA
+- `11_Ejecutor/tests/test_t177_c4_credenciales.py::test_t177_r03_h08_solicitud_no_vacia_mira_el_retorno_entero`: SUPERADA
+- `11_Ejecutor/tests/test_t177_c4_credenciales.py::test_t177_r03_h09_escape_unicode_en_la_clave`: SUPERADA
+- `11_Ejecutor/tests/test_t177_c4_credenciales.py::test_t177_r03_h10_base64`: SUPERADA
+- `11_Ejecutor/tests/test_t177_c4_credenciales.py::test_t177_r03_h11_numero_bajo_clave_de_valor`: SUPERADA
+- `11_Ejecutor/tests/test_t177_c4_credenciales.py::test_t177_r03_h13_guiones_y_uuid_no_son_fichas`: SUPERADA
+- `11_Ejecutor/tests/test_t177_c4_credenciales.py::test_t177_r03_el_coordinador_rechaza_una_clave_de_valor_en_cualquier_sitio`: SUPERADA
+- `11_Ejecutor/tests/test_t177_c4_credenciales.py::test_t177_r03_json_demasiado_anidado`: SUPERADA
+- `11_Ejecutor/tests/test_t177_c4_credenciales.py::test_t177_cierre_h14_texto_ilegible_con_la_clave_escapada`: SUPERADA
+- `11_Ejecutor/tests/test_t177_c4_credenciales.py::test_t177_cierre_h15_identificadores_publicos_solo_fuera`: SUPERADA
+- `11_Ejecutor/tests/test_t177_c4_credenciales.py::test_t177_cierre_h16_reserva_huerfana_avisada_una_vez`: SUPERADA
+- `11_Ejecutor/tests/test_t177_c4_credenciales.py::test_t177_cierre_h17_campo_de_mas_en_una_solicitud`: SUPERADA
+- `11_Ejecutor/tests/test_t177_c4_credenciales.py::test_t177_cierre2_h18_campo_admitido_que_no_se_copia`: SUPERADA
+- `11_Ejecutor/tests/test_t177_c4_credenciales.py::test_t177_cierre2_h18_lo_que_se_copia_pasa`: SUPERADA
+- `11_Ejecutor/tests/test_t177_c4_credenciales.py::test_t177_cierre3_h19_urgencia_sin_contenido_se_reduce_a_normal`: SUPERADA
 
 ### PB-59 · Credencial expuesta en un mensaje del Broker
 

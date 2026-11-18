@@ -320,6 +320,17 @@ credenciales:
   respuesta_esperada_horas: 72
   recordatorio_dias: 7
   max_recordatorios: 3
+  # T-177 · [PROPUESTO] (INC-T177-01): servicios de pago o API del Buscador de Fuentes Avanzadas cuya credencial revisa en el
+  # mantenimiento C4 (`bloque-a credencial c4`): lista de {servicio, uso_previsto, impacto_si_falta}, sin valores. Vacía: qué
+  # servicios se contratan lo decide el operador (T-57). F9 no sirve de lista: su regla (c) usa las fuentes de acceso
+  # restringido solo por su contenido público.
+  servicios_bfa: []
+
+# T-177: presupuesto del mantenimiento continuo C4 por semana y agente (Anexo A del Documento 0 V5.3, «Calibrable»; el
+# barrido HT-02 no consume UC). Fuera de `presupuesto_uc` para no cambiar P-17 de F10. Hoy solo lo usa la revisión de
+# credenciales del BFA (PB-58).
+mantenimiento_c4:
+  presupuesto_uc_semana: {DOC_A: 3, BFA: 3, DOC_M: 2}
 
 # Referencias de comparación por tipo de activo (8.4; propuesta inicial, a ratificar por el operador en F10).
 # Valores: símbolo HT-01 · CESTA (equiponderada de los indicadores del tipo en el universo) · SUBYACENTE (columna

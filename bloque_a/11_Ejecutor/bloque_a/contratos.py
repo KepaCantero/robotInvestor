@@ -421,7 +421,34 @@ NOMBRES_CLAVE_GENERICOS = r"token|secret|secreto"
 RE_ASIGNACION_CLAVE = re.compile(
     rf"(?i)(?<![A-Za-z0-9])(?:(?P<fuerte>{NOMBRES_CLAVE_FUERTES})|(?P<generico>{NOMBRES_CLAVE_GENERICOS}))[\"']?\s*[:=]\s*"
     r"[\"']?(?P<valor>[^\s\"',;<>()\[\]{}]{6,512})")
-RE_VALOR_GENERICO = re.compile(r"(?=[A-Za-z0-9._~+/=\-]*[A-Za-z])(?=[A-Za-z0-9._~+/=\-]*[0-9])[A-Za-z0-9._~+/=\-]{16,}")
+# T-177 r02 (QA r01, H-06): longitud mínima de un valor opaco (letras y cifras), común a RE_VALOR_GENERICO y RE_FICHA_OPACA
+LONGITUD_MIN_VALOR_OPACO = 16
+RE_VALOR_GENERICO = re.compile(r"(?=[A-Za-z0-9._~+/=\-]*[A-Za-z])(?=[A-Za-z0-9._~+/=\-]*[0-9])[A-Za-z0-9._~+/=\-]"
+                               rf"{{{LONGITUD_MIN_VALOR_OPACO},}}")
+# Ficha opaca dentro de un texto de una solicitud de credencial: un tramo de letras y cifras (con alguna de cada) de al menos
+# LONGITUD_MIN_VALOR_OPACO, delimitado por cualquier otro carácter. T-177 r03 (QA r02, H-13): `-` y `_` separan tramos, así
+# que `CURVA-USD-2S10S-TR` o `ICE-BofA-US-HY-2024` no son fichas. Un identificador largo (un LEI, un sha256) sí cae (falla
+# cerrado); una clave con forma de UUID (tramos de 12 o menos) no se reconoce sin etiqueta (INC-T177-01).
+RE_FICHA_OPACA = re.compile(r"(?<![A-Za-z0-9])(?=[A-Za-z0-9]*[A-Za-z])(?=[A-Za-z0-9]*\d)[A-Za-z0-9]"
+                            rf"{{{LONGITUD_MIN_VALOR_OPACO},}}(?![A-Za-z0-9])")
+# T-177 r03 (H-10): un base64 con «/» y «+» intercalados (tramos cortos) es una palabra entera de esta forma, sin «.» ni «:»
+RE_PALABRA_BASE64 = re.compile(r"(?=[A-Za-z0-9+/=]*[A-Za-z])(?=[A-Za-z0-9+/=]*\d)[A-Za-z0-9+/=]"
+                               rf"{{{LONGITUD_MIN_VALOR_OPACO},}}")
+_BORDES_PALABRA = "\"'«»()[]{}<>,;¿?¡!"
+
+
+def ficha_opaca(t: str) -> bool:
+    """T-177 r03 (QA r02, H-10 y H-13): ¿lleva el texto un valor opaco sin etiqueta? Un tramo de `RE_FICHA_OPACA` o una palabra
+    entera (sin «.» ni «:», para no tomar una URL) con forma de base64 (`RE_PALABRA_BASE64`)."""
+    if not isinstance(t, str):
+        return False
+    if RE_FICHA_OPACA.search(t):
+        return True
+    for palabra in t.split():
+        p = palabra.strip(_BORDES_PALABRA)
+        if "." not in p and ":" not in p and RE_PALABRA_BASE64.fullmatch(p):
+            return True
+    return False
 
 
 def _asignaciones_de_clave(texto: str) -> list[str]:
@@ -474,6 +501,200 @@ def contiene_credenciales(obj: Any) -> list[str]:
     for t in _textos(obj):
         hallados += secretos_en_texto(t)
     return list(dict.fromkeys(h[:6] + "…" for h in hallados))
+
+
+# T-177: campos que nunca pueden llevar una solicitud o una respuesta de credenciales (el valor va solo a la bóveda de HT-01).
+# No se buscan en todo retorno (`valor` o `token` son campos corrientes en otros sitios): solo en los retornos que traen
+# `solicitudes_credenciales` (`llm.solicitud_con_valor`) y en los mensajes CT-25. T-177 r02 (QA r01, H-05): la clave se
+# compara normalizada (`clave_normalizada`: minúsculas, solo letras, cifras y «ñ»), así que `API-KEY`, `api_key` y `apiKey`
+# son la misma; `credencial_ref` («credencialref») no cae.
+CAMPOS_VALOR_CREDENCIAL = frozenset({"valor", "clave", "secreto", "secret", "valorcredencial", "credencial", "credential",
+                                     "password", "passwd", "pwd", "contrasena", "contraseña", "token", "accesstoken",
+                                     "apikey"})
+
+
+def clave_normalizada(k: Any) -> str:
+    return re.sub(r"[^a-z0-9ñ]", "", str(k).lower())
+
+
+def claves_valor_credencial(obj: Any, solo_texto: bool = False) -> list[str]:
+    """Campos de `CAMPOS_VALOR_CREDENCIAL` a cualquier profundidad (clave normalizada). Con `solo_texto`, solo los que llevan
+    algún texto no vacío dentro (un `valor` numérico no es una credencial)."""
+    if isinstance(obj, dict):
+        propias = [str(k) for k, v in obj.items() if clave_normalizada(k) in CAMPOS_VALOR_CREDENCIAL
+                   and (not solo_texto or _tiene_texto(v))]
+        return propias + [c for v in obj.values() for c in claves_valor_credencial(v, solo_texto)]
+    if isinstance(obj, (list, tuple)):
+        return [c for v in obj for c in claves_valor_credencial(v, solo_texto)]
+    return []
+
+
+# T-177 r03 (QA r02, H-12): fuera del subárbol `solicitudes_credenciales`, estas claves son corrientes en cualquier retorno
+# (`indicadores[].valor` de texto en todo informe de Analista, `clave` de una tabla, `token` de un criptoactivo, `credencial`
+# en una frase): solo cuentan si su texto lleva una ficha opaca. Las demás de `CAMPOS_VALOR_CREDENCIAL` son inequívocas.
+CAMPOS_VALOR_AMBIGUOS = frozenset({"valor", "clave", "token", "credencial"})
+CLAVE_SOLICITUDES = "solicitudescredenciales"   # `clave_normalizada("solicitudes_credenciales")`
+
+
+def _textos_de(v: Any):
+    """Todas las claves y hojas de texto de un objeto, a cualquier profundidad."""
+    if isinstance(v, str):
+        yield v
+    elif isinstance(v, dict):
+        for k, x in v.items():
+            yield str(k)
+            yield from _textos_de(x)
+    elif isinstance(v, (list, tuple)):
+        for x in v:
+            yield from _textos_de(x)
+
+
+def _json_en_texto(v: str) -> Any:
+    """El JSON que contiene un texto que empieza por «{» o «[» (un modelo puede escribir una lista como texto), o None."""
+    s = v.strip()
+    if not s or s[0] not in "{[":
+        return None
+    try:
+        return json.loads(s)
+    except ValueError:
+        return None
+
+
+def _tiene_numero(v: Any) -> bool:
+    if isinstance(v, bool):
+        return False
+    if isinstance(v, (int, float)):
+        return True
+    if isinstance(v, dict):
+        return any(_tiene_numero(x) for x in v.values())
+    if isinstance(v, (list, tuple)):
+        return any(_tiene_numero(x) for x in v)
+    return False
+
+
+def _subarboles_solicitudes(obj: Any) -> list:
+    """Los valores de toda clave que se normaliza a `solicitudes_credenciales`, a cualquier profundidad (también dentro de un
+    JSON escrito como texto)."""
+    out: list = []
+    if isinstance(obj, dict):
+        for k, v in obj.items():
+            if clave_normalizada(k) == CLAVE_SOLICITUDES:
+                out.append(v)
+            else:
+                out += _subarboles_solicitudes(v)
+    elif isinstance(obj, (list, tuple)):
+        for v in obj:
+            out += _subarboles_solicitudes(v)
+    elif isinstance(obj, str):
+        dentro = _json_en_texto(obj)
+        if dentro is not None:
+            out += _subarboles_solicitudes(dentro)
+    return out
+
+
+# T-177 cierre (QA r03, H-17): los únicos campos de una solicitud que lee `Credenciales.desde_retorno` (normalizados); los
+# prompts del BFA y de los Analistas no piden otros. Cualquier otro con contenido descarta el retorno (falla cerrado).
+CAMPOS_SOLICITUD = frozenset({"servicio", "motivo", "impactosifalta", "impacto", "urgencia"})
+# H-18: los mismos, con la grafía literal que lee `desde_retorno`, y los valores de urgencia que copia
+CAMPOS_SOLICITUD_LITERALES = frozenset({"servicio", "motivo", "impacto_si_falta", "impacto", "urgencia"})
+URGENCIAS = ("ALTA", "NORMAL")
+RE_DIRECCION_0X = re.compile(r"0x[0-9a-fA-F]{40}")
+RE_LEI = re.compile(r"[0-9A-Z]{18}[0-9]{2}")
+
+
+def _publico(t: str) -> bool:
+    """T-177 cierre (QA r03, H-15): un identificador público que no es un valor de credencial: una dirección 0x de 40
+    hexadecimales (no una clave privada de 64) o un LEI válido (ISO 17442: módulo 97 igual a 1, como el IBAN de T-123)."""
+    if RE_DIRECCION_0X.fullmatch(t):
+        return True
+    if RE_LEI.fullmatch(t):
+        return int("".join(str(int(c, 36)) for c in t)) % 97 == 1
+    return False
+
+
+def _sin_publicos(t: str) -> str:
+    return " ".join(w for w in t.split() if not _publico(w.strip(_BORDES_PALABRA)))
+
+
+def _subarbol_sensible(v: Any) -> bool:
+    """Dentro de `solicitudes_credenciales` (H-11 y H-17): una clave de `CAMPOS_VALOR_CREDENCIAL`, o una que no está en
+    `CAMPOS_SOLICITUD`, con texto o con un número (no un booleano), a cualquier profundidad, también dentro de un texto que es
+    JSON. Las fichas opacas del subárbol (H-08) las ve
+    `retorno_con_credencial`, que mira entero todo retorno con alguna solicitud no vacía."""
+    if isinstance(v, str):
+        dentro = _json_en_texto(v)
+        return dentro is not None and _subarbol_sensible(dentro)
+    if isinstance(v, dict):
+        for k, x in v.items():
+            n = clave_normalizada(k)
+            con_contenido = _tiene_texto(x) or _tiene_numero(x)
+            # T-177 cierre (QA r03, H-17): una clave que no es de las que lee el Coordinador, con contenido, es sensible.
+            # Segunda ronda de cierre (H-18): la clave se compara tal cual (`Servicio` junto a `servicio` no se copia), una
+            # urgencia que no es exactamente ALTA ni NORMAL no se copia (se reduce a NORMAL) y un `impacto` junto a
+            # `impacto_si_falta` tampoco (se lee el segundo): con contenido, los tres son sensibles
+            if con_contenido and (n in CAMPOS_VALOR_CREDENCIAL or k not in CAMPOS_SOLICITUD_LITERALES
+                                  or (k == "urgencia" and x not in URGENCIAS)
+                                  or (k == "impacto" and "impacto_si_falta" in v)):
+                return True
+            if _subarbol_sensible(x):
+                return True
+        return False
+    if isinstance(v, (list, tuple)):
+        return any(_subarbol_sensible(x) for x in v)
+    return False
+
+
+def _fuera_sensible(obj: Any) -> bool:
+    """Fuera de `solicitudes_credenciales` (H-12): una clave inequívoca de `CAMPOS_VALOR_CREDENCIAL` con texto, o una de
+    `CAMPOS_VALOR_AMBIGUOS` cuyo texto lleva una ficha opaca. También dentro de un JSON escrito como texto."""
+    if isinstance(obj, dict):
+        for k, x in obj.items():
+            n = clave_normalizada(k)
+            if n == CLAVE_SOLICITUDES:
+                continue
+            if n in CAMPOS_VALOR_CREDENCIAL:
+                if n not in CAMPOS_VALOR_AMBIGUOS and _tiene_texto(x):
+                    return True
+                if n in CAMPOS_VALOR_AMBIGUOS and any(ficha_opaca(_sin_publicos(s)) for s in _textos_de(x)):   # H-15
+                    return True
+            if _fuera_sensible(x):
+                return True
+        return False
+    if isinstance(obj, (list, tuple)):
+        return any(_fuera_sensible(x) for x in obj)
+    if isinstance(obj, str):
+        dentro = _json_en_texto(obj)
+        return dentro is not None and _fuera_sensible(dentro)
+    return False
+
+
+def retorno_con_credencial(datos: Any) -> bool:
+    """T-177 r03: ¿trae este retorno, que lleva `solicitudes_credenciales` (en cualquier grafía), algo que pueda ser el valor de
+    una credencial? Sin ese campo, no se mira (el texto libre de los demás retornos lo cubre `secretos_en_texto`).
+    - Dentro del subárbol, H-11 (`_subarbol_sensible`).
+    - H-08: si alguna solicitud no está vacía, el retorno trata de credenciales y se mira entero, subárbol incluido: una ficha
+      opaca en cualquier clave u hoja de texto basta (también en `lagunas` o `sintesis`, extensión de la r03, INC-T177-01).
+      Un informe de Analista lleva `solicitudes_credenciales: []`: a ese no se le aplica.
+    - Fuera del subárbol, solo lo de `_fuera_sensible` (H-12).
+    Puede lanzar RecursionError: quien la llama falla cerrado."""
+    subarboles = _subarboles_solicitudes(datos)
+    if not subarboles:
+        return False
+    if any(_subarbol_sensible(s) for s in subarboles):
+        return True
+    if any(s not in (None, [], {}, "") for s in subarboles) and any(ficha_opaca(x) for x in _textos_de(datos)):
+        return True
+    return _fuera_sensible(datos)
+
+
+def _tiene_texto(v: Any) -> bool:
+    if isinstance(v, str):
+        return bool(v.strip())
+    if isinstance(v, dict):
+        return any(_tiene_texto(x) for x in list(v.keys()) + list(v.values()))
+    if isinstance(v, (list, tuple)):
+        return any(_tiene_texto(x) for x in v)
+    return False
 
 
 # T-101 · Canales del diseño V6: solo se abren con `diseno: v6` (en la V5 siguen cerrados, R2). El Lector de evidencia
