@@ -22,7 +22,14 @@ import pandas as pd
 
 from . import respuesta_final
 from .configuracion import parametro
-from .contratos import DatosSensibles, contiene_credenciales
+from .contratos import (
+    CAMPOS_VALOR_CREDENCIAL,
+    DatosSensibles,
+    clave_normalizada,
+    claves_valor_credencial,
+    contiene_credenciales,
+    retorno_con_credencial,
+)
 from .herramientas.ht01_boveda import Boveda, alias_de
 from .herramientas.ht06_indice import normalizar
 
@@ -55,7 +62,8 @@ def _pid_vivo(pid) -> bool | None:
     return True
 ESTADOS_CREDENCIAL = ("PROVISTA", "DENEGADA", "APLAZADA")
 # Campos que nunca pueden viajar en un mensaje CT-25 (el valor va solo a la bóveda)
-CAMPOS_VALOR = {"valor", "clave", "secreto", "valor_credencial", "password", "token", "api_key", "apikey"}
+# (claves normalizadas con `contratos.clave_normalizada`, T-177 r02)
+CAMPOS_VALOR = CAMPOS_VALOR_CREDENCIAL
 
 
 RE_SOLO_FECHA = re.compile(r"\d{4}-\d{2}-\d{2}|\d{8}")
@@ -483,21 +491,83 @@ class Credenciales:
         e = self.boveda.estado_servicio(servicio, as_of.date())
         if e["estado"] == "PROVISTA":
             return {"estado": "PROVISTA", "credencial_ref": e["alias"], "solicitud": None}
-        previas = [c for c in self._todas().values() if c.get("servicio") == servicio]
-        abiertas = [c for c in previas if c.get("estado") in ("SOLICITADA", "APLAZADA")]
-        if abiertas:
-            return {"estado": "YA_SOLICITADA", "crd_id": abiertas[-1]["crd_id"], "modo": "DEGRADADO_DECLARADO"}
-        if any(c.get("estado") == "DENEGADA" for c in previas) and not cambio_circunstancias:
-            return {"estado": "DENEGADA", "modo": "DEGRADADO_DECLARADO",
-                    "nota": "Credencial denegada: no se vuelve a pedir salvo cambio de circunstancias (Anexo A)"}
-        crd_id = self.b.almacen.nuevo_id("CRD")
-        cuerpo = {"crd_id": crd_id, "servicio": servicio, "herramienta": "HT-01", "uso_previsto": uso_previsto, "solicitante": solicitante,
-                  "impacto_si_falta": impacto_si_falta, "urgencia": urgencia}
-        msg = self.b.mensajeria.crear("CT-25", "AG-01", "BROKER", cuerpo, query_id=crd_id)
-        self.b.almacen.escribir("F5", "AG-01", {"tipo_entrada": "CRD", "id": crd_id, **cuerpo, "estado": "SOLICITADA",
-                                                 "credencial_ref": None, "recordatorios": 0, "msg_id": msg["msg_id"],
-                                                 "estado_boveda": e["estado"]})
-        return {"estado": "SOLICITADA", "crd_id": crd_id, "modo": "DEGRADADO_DECLARADO"}
+        # T-177 r02 (QA r01, H-03): comprobar lo previo y escribir la CRD- de una vez, también entre procesos (dos C4 a la vez)
+        with self.b.almacen._transaccion():
+            # H-02: lo previo se busca por el alias de la bóveda, no por la grafía literal del servicio
+            previas = [c for c in self._todas().values() if alias_de(str(c.get("servicio") or "")) == alias_de(servicio)]
+            abiertas = [c for c in previas if c.get("estado") in ("SOLICITADA", "APLAZADA")]
+            if abiertas:
+                return {"estado": "YA_SOLICITADA", "crd_id": abiertas[-1]["crd_id"], "modo": "DEGRADADO_DECLARADO"}
+            if any(c.get("estado") == "DENEGADA" for c in previas) and not cambio_circunstancias:
+                return {"estado": "DENEGADA", "modo": "DEGRADADO_DECLARADO",
+                        "nota": "Credencial denegada: no se vuelve a pedir salvo cambio de circunstancias (Anexo A)"}
+            crd_id = self.b.almacen.nuevo_id("CRD")
+            cuerpo = {"crd_id": crd_id, "servicio": servicio, "herramienta": "HT-01", "uso_previsto": uso_previsto, "solicitante": solicitante,
+                      "impacto_si_falta": impacto_si_falta, "urgencia": urgencia}
+            msg = self.b.mensajeria.crear("CT-25", "AG-01", "BROKER", cuerpo, query_id=crd_id)
+            self.b.almacen.escribir("F5", "AG-01", {"tipo_entrada": "CRD", "id": crd_id, **cuerpo, "estado": "SOLICITADA",
+                                                     "credencial_ref": None, "recordatorios": 0, "msg_id": msg["msg_id"],
+                                                     "estado_boveda": e["estado"]})
+            return {"estado": "SOLICITADA", "crd_id": crd_id, "modo": "DEGRADADO_DECLARADO"}
+
+    def desde_retorno(self, retorno, solicitante: str, as_of, origen: str | None = None) -> dict:
+        """T-177 (PB-58, 7.10.1 y 7.10.2): el Coordinador lee las `solicitudes_credenciales` del retorno de un agente (hoy, el
+        del BFA en el mantenimiento C4), las deduplica por alias de la bóveda, comprueba en HT-01 que faltan de verdad y emite
+        el CT-25 con `solicitar`. Falla cerrado: un retorno con un campo de valor (o algo que parezca una credencial) se
+        rechaza íntegro, con incidencia SEGURIDAD y sin copiar el dato (6.2.5); una solicitud mal formada se descarta con su
+        motivo; sin retorno, no se pide nada. Devuelve lo resuelto de cada solicitud, sin valores."""
+        if retorno is None:
+            return {"solicitudes": [], "descartadas": [], "rechazo": None}
+        try:
+            sensible = bool(claves_valor_credencial(retorno)) or bool(contiene_credenciales(retorno))
+        except RecursionError:   # demasiado anidado para comprobarlo: falla cerrado
+            sensible = True
+        if sensible:
+            self.b.almacen.incidencia("SEGURIDAD", "Retorno con solicitudes de credenciales que trae un valor de credencial: "
+                                      "rechazado íntegro sin copiarlo (R8, 6.2.5)", solicitante, origen=origen)
+            return {"solicitudes": [], "descartadas": [], "rechazo": "VALOR_DE_CREDENCIAL_EN_EL_RETORNO"}
+        # T-177 r02 (QA r01, H-06) y r03 (QA r02, H-08, H-10 y H-11): una ficha opaca en cualquier clave u hoja de texto de las
+        # solicitudes (o del retorno, si pide algo), o un número bajo una clave de valor, rechaza el retorno entero antes de
+        # pedir nada; es la misma regla que aplica `llm.respuesta_segura` antes de la caché
+        try:
+            opaca = retorno_con_credencial(retorno)
+        except RecursionError:
+            opaca = True
+        if opaca:
+            self.b.almacen.incidencia("SEGURIDAD", "Solicitud de credencial con una ficha opaca (posible valor): retorno "
+                                      "rechazado íntegro sin copiarla (R8, 6.2.5)", solicitante, origen=origen)
+            return {"solicitudes": [], "descartadas": [], "rechazo": "VALOR_DE_CREDENCIAL_EN_EL_RETORNO"}
+        lista = retorno.get("solicitudes_credenciales") if isinstance(retorno, dict) else None
+        if lista is None:
+            return {"solicitudes": [], "descartadas": [], "rechazo": None}
+        if not isinstance(lista, list):
+            return {"solicitudes": [], "descartadas": [{"indice": None, "motivo": "solicitudes_credenciales no es una lista"}],
+                    "rechazo": None}
+        resueltas: list[dict] = []
+        descartadas: list[dict] = []
+        vistos: dict[str, int] = {}
+        for i, s in enumerate(lista):
+            if not isinstance(s, dict):
+                descartadas.append({"indice": i, "motivo": "la solicitud no es un objeto"})
+                continue
+            campos = {"servicio": s.get("servicio"), "motivo": s.get("motivo"),
+                      "impacto_si_falta": s.get("impacto_si_falta", s.get("impacto"))}
+            textos = {k: v.strip() for k, v in campos.items() if isinstance(v, str) and v.strip()}
+            faltan = [k for k in campos if k not in textos]
+            if faltan:
+                descartadas.append({"indice": i, "motivo": "faltan " + ", ".join(faltan)})
+                continue
+            servicio, motivo, impacto = textos["servicio"], textos["motivo"], textos["impacto_si_falta"]
+            alias = alias_de(servicio)
+            if alias in vistos:   # deduplicación (7.10.2): un mismo servicio de la bóveda, una sola solicitud
+                descartadas.append({"indice": i, "motivo": f"duplicada de la solicitud {vistos[alias]}"})
+                continue
+            vistos[alias] = i
+            urgencia = "ALTA" if s.get("urgencia") == "ALTA" else "NORMAL"
+            r = self.solicitar(servicio, solicitante, motivo, impacto, urgencia, as_of=as_of)
+            resueltas.append({"servicio": servicio, "resultado": r["estado"], "crd_id": r.get("crd_id"),
+                              "credencial_ref": r.get("credencial_ref")})
+        return {"solicitudes": resueltas, "descartadas": descartadas, "rechazo": None}
 
     def responder(self, respuesta: dict, as_of=None) -> dict:
         """Respuesta del Broker (CT-25 retorno): solo estado y alias. Si trae el valor, se rechaza íntegra (6.2.5)."""
@@ -509,9 +579,10 @@ class Credenciales:
         if not c:
             raise KeyError(f"Solicitud desconocida {crd_id}")
         try:
-            if set(respuesta) & CAMPOS_VALOR:
+            con_valor = sorted(str(k) for k in respuesta if clave_normalizada(k) in CAMPOS_VALOR)   # T-177 r02 (H-05)
+            if con_valor:
                 self.b.almacen.incidencia("SEGURIDAD", "Respuesta CT-25 con un campo de valor de credencial rechazada íntegra (R8, 6.2.5)",
-                                          "BROKER", campo_afectado=sorted(set(respuesta) & CAMPOS_VALOR))
+                                          "BROKER", campo_afectado=con_valor)
                 raise DatosSensibles("Campo de valor de credencial en un mensaje")
             self.b.mensajeria.crear("CT-25", "BROKER", "AG-01", respuesta, query_id=crd_id, tipo_mensaje="RETORNO", estado="COMPLETO")
         except DatosSensibles:

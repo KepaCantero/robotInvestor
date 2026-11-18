@@ -89,7 +89,8 @@ def main(argv: list[str] | None = None) -> int:
                    help="relanzar: también las EN_CURSO (solo si el proceso que las lanzó ya no corre; T-174)")
     # V5.1 · Credenciales (CT-25, bóveda simulada de HT-01)
     p = sub.add_parser("credencial", help="CT-25: solicitar, depositar (Broker, fuera de banda), responder, estado, recordatorios")
-    p.add_argument("accion", choices=["solicitar", "depositar", "responder", "estado", "recordatorios"])
+    p.add_argument("accion", choices=["solicitar", "depositar", "responder", "estado", "recordatorios", "c4"],
+                   help="c4: mantenimiento C4 del BFA (revisa la bóveda de sus servicios y emite los CT-25 que falten, T-177)")
     p.add_argument("--servicio")
     p.add_argument("--solicitante", default="AG-16")
     p.add_argument("--uso", default="Fuente de datos para el análisis")
@@ -253,6 +254,9 @@ def _credencial(bloque, a, as_of) -> object:
         return c.depositar(a.crd, valor, a.caducidad, as_of)
     if a.accion == "responder":
         return c.responder({"crd_id": a.crd, "estado": a.estado_credencial, "credencial_ref": None}, as_of)
+    if a.accion == "c4":
+        from .mantenimiento_c4 import mantenimiento_c4
+        return mantenimiento_c4(bloque, as_of)
     if a.accion == "recordatorios":
         bloque.fijar_fecha(as_of)
         return {"recordatorios": c.recordatorios(as_of)}

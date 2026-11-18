@@ -19,6 +19,7 @@ import hashlib
 import json
 import math
 import os
+import re
 import threading
 import time
 from collections.abc import Callable, Iterator
@@ -27,7 +28,12 @@ from pathlib import Path
 from typing import Any
 
 from .configuracion import parametro
-from .contratos import secretos_en_texto
+from .contratos import (
+    CLAVE_SOLICITUDES,
+    clave_normalizada,
+    retorno_con_credencial,
+    secretos_en_texto,
+)
 
 
 @dataclass
@@ -153,8 +159,42 @@ def _diccionarios_de_arriba(valor) -> list[dict]:
     return hallados
 
 
+def _leer_json(texto: str) -> tuple[bool, Any]:
+    """(leído, datos): como `agentes.extraer_json` (sin el bloque ```` ``` ````, entero o el tramo `{…}`)."""
+    s = texto.strip()
+    if s.startswith("```"):
+        s = re.sub(r"^```[a-zA-Z]*\n?", "", s)
+        s = re.sub(r"\n?```\s*$", "", s)
+    for trozo in (s, s[s.find("{"):s.rfind("}") + 1] if "{" in s else ""):
+        if trozo:
+            try:
+                return True, json.loads(trozo)
+            except (ValueError, RecursionError):   # demasiado anidado para leerlo: como ilegible (prefiltro textual)
+                continue
+    return False, None
+
+
+def solicitud_con_valor(texto: str | None) -> bool:
+    """T-177 (QA r01, H-01 y H-04; QA r02, H-08 a H-13): ¿trae la respuesta `solicitudes_credenciales` con algo que pueda ser el
+    valor de una credencial? Se comprueba aquí, en `respuesta_segura`, antes de la caché de resultados y de la cinta de
+    grabación. H-09: primero se lee el JSON (una clave escrita con escapes `\\uXXXX` se ve así) y se decide con
+    `contratos.retorno_con_credencial`; solo si no se puede leer se mira el texto crudo, y entonces nombrar el campo basta para
+    tratarla como sensible (falla cerrado). Demasiado anidada para comprobarla: sensible."""
+    if not texto:
+        return False
+    try:
+        leido, datos = _leer_json(texto)
+        if leido:
+            return retorno_con_credencial(datos)
+    except RecursionError:
+        return True
+    # T-177 cierre (QA r03, H-14): también con los escapes \\uXXXX resueltos (un texto ilegible que nombra el campo así)
+    return (CLAVE_SOLICITUDES in clave_normalizada(texto)
+            or CLAVE_SOLICITUDES in clave_normalizada(re.sub(r"\\u([0-9a-fA-F]{4})", lambda m: chr(int(m.group(1), 16)), texto)))
+
+
 def respuesta_segura(r: RespuestaLLM) -> RespuestaLLM:
-    if contenido_sensible(r.texto):
+    if contenido_sensible(r.texto) or solicitud_con_valor(r.texto):
         return RespuestaLLM("", r.uso, r.modelo, stop_reason="contenido_sensible")
     return r
 

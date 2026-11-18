@@ -97,7 +97,7 @@ Pruebas adicionales exigidas por el encargo del ejecutor: guardia de fuga del pr
 | PB-66 Seguimiento encargado: alta, ciclo C6, informe validado (HT-09 y esquema), pausa, reanudación, cancelación inmediata, aviso al Evaluador | Automática | `test_seguimiento_alta_ciclo_y_cancelacion`, `test_seguimiento_frecuencia_corta_y_opp_inexistente` | Superada |
 | PB-61 Consulta BLOQUEANTE: pausa del tipo afectado, vencimiento con supuesto declarado (C19), respuesta tardía | Automática | `test_consulta_bloqueante_pausa_y_vencimiento` | Superada |
 | PB-62 Validación, agrupación (máx. 3 por RUN-), recurrencia y aportación espontánea | Automática | `test_consulta_validaciones_agrupacion_y_entrante` | Superada |
-| PB-58, PB-59, PB-60 Credenciales: solicitud, rechazo del valor en un mensaje, depósito en la bóveda, denegación y recordatorio | Automática | `test_credenciales_boveda`, `test_cli_v51` | Superada |
+| PB-58, PB-59, PB-60 Credenciales: solicitud (también desde el mantenimiento C4 del BFA, T-177), rechazo del valor en un mensaje, depósito en la bóveda, denegación y recordatorio | Automática | `test_credenciales_boveda`, `test_cli_v51`, `test_t177_c4_credenciales.py` | Superada |
 | PB-67 Recomendación PROPONER_ENVIO_A_B | Parcial (perfil SEGUIMIENTO de HT-09) | `10_Herramientas/tests/test_ht09_validador_g3.py::TestV51::test_seguimiento_envio_a_b` | Superada |
 
 ## Pruebas de las revisiones T-53, T-66 y T-65

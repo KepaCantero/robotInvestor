@@ -156,13 +156,17 @@ def _analista(msg: Dict, ctx: Dict, rng: random.Random, inyectado: bool) -> Dict
     revision = [{"opp_id": v["opp_id"], "invalidacion_activada": bool(v.get("invalidacion_activada")),
                  "recomendacion": "CERRAR" if v.get("invalidacion_activada") else "MANTENER"} for v in msg.get("opciones_vigentes", [])]
     universo = sorted(msg.get("universo", []), key=lambda u: (-(u["senales"].get("senal_compuesta") or 0), u["simbolo"]))
-    regimen = {"diagnostico": f"Régimen de {clase} a {ctx['fecha_as_of']}: señal compuesta media "
-                              f"{(sum((u['senales'].get('senal_compuesta') or 0) for u in universo) / max(len(universo), 1)):.2f}."}
+    media = sum((u['senales'].get('senal_compuesta') or 0) for u in universo) / max(len(universo), 1)
+    # T-177 r03 (QA r02, H-12): como pide el formato de retorno del Marco común V5.0, `indicadores[].valor` de texto y
+    # `solicitudes_credenciales: []`, para que el backtest y los ciclos ejerciten siempre la barrera R8 de `respuesta_segura`
+    regimen = {"diagnostico": f"Régimen de {clase} a {ctx['fecha_as_of']}: señal compuesta media {media:.2f}.",
+               "indicadores": [{"nombre": "Señal compuesta media", "valor": f"{media:.2f}".replace(".", ","),
+                                "fecha": ctx["fecha_as_of"], "fuente": "HT-01"}]}
     if fase == "REVISION_VIGENTES":
         rot = [u for u in universo if u["simbolo"] in (msg.get("rotacion_exploratoria") or [])]
         expl = [_ficha(u, msg, ctx, rng, inyectado) for u in rot if (u["senales"].get("senal_compuesta") or 0) >= 0.75][:1]
         return {"clase": clase, "estado": "COMPLETO", "regimen_clase": regimen, "revision_vigentes": revision, "exploratorias": expl,
-                "autoevaluacion": "Arrastre verificado sin incidencias."}
+                "solicitudes_credenciales": [], "autoevaluacion": "Arrastre verificado sin incidencias."}
     cand = universo[:int(msg.get("max_candidatas", 8))]
     umbral = 0.55
     cribado = [{"candidata": u["simbolo"], "tipo_opcion": u.get("tipo_opcion"), "senal": u["senales"].get("senal_compuesta"),
@@ -173,7 +177,8 @@ def _analista(msg: Dict, ctx: Dict, rng: random.Random, inyectado: bool) -> Dict
                                              "objetivo": "confirmar", "para": fin[0]["indicador_seguimiento"]["simbolo"]}]
     return {"clase": clase, "fase": fase, "estado": "COMPLETO", "regimen_clase": regimen, "revision_vigentes": revision, "cribado": cribado,
             "finalistas": fin, "descartadas_relevantes": [{"nombre": u["simbolo"], "motivo": "señal débil"} for u in cand if u not in cand[:len(fin)]][:3],
-            "senales_para_otras_clases": [], "lagunas": ["Sin datos de flujos ni de posicionamiento en el proveedor"],
+            "senales_para_otras_clases": [], "solicitudes_credenciales": [],
+            "lagunas": ["Sin datos de flujos ni de posicionamiento en el proveedor"],
             "autoevaluacion": "Cribado basado en señales cuantitativas; evidencia cualitativa limitada."}
 
 
@@ -321,10 +326,22 @@ def _evaluador(msg, ctx, rng):
 
 
 def _busqueda(msg, ctx, rng):
+    if isinstance(msg, dict) and msg.get("tipo") == "MANTENIMIENTO_C4":   # T-177: revisión C4 de credenciales del BFA
+        return _mantenimiento_c4(msg)
     refs = [{"ref_id": r["ref_id"], "afirmacion": f"La referencia «{r['titulo'][:80]}» aporta contexto a la pregunta", "direccion": "favorable",
              "motivo": "temática de la clase"} for r in (msg.get("referencias_candidatas") or [])[:2]]
     return {"referencias": refs, "sintesis": "Contexto bibliográfico registrado; sin datos posteriores a la fecha límite.",
             "contradicciones": [], "lagunas": [] if refs else ["sin referencias registradas para la temática"]}
+
+
+def _mantenimiento_c4(msg):
+    """El BFA pide por CT-25 (vía el Coordinador) las credenciales de sus servicios que no están PROVISTA en la bóveda."""
+    faltan = [s for s in msg.get("servicios") or [] if s.get("estado") != "PROVISTA"]
+    return {"referencias": [], "sintesis": f"Revisados {len(msg.get('servicios') or [])} servicios de pago o API en la bóveda de HT-01.",
+            "lagunas": [f"{s['servicio']}: sin credencial, fuente alternativa con su calidad declarada" for s in faltan],
+            "solicitudes_credenciales": [{"servicio": s["servicio"], "motivo": s.get("uso_previsto", ""),
+                                          "impacto_si_falta": s.get("impacto_si_falta", ""), "urgencia": "NORMAL"}
+                                         for s in faltan]}
 
 
 def _plan_motor(msg, ctx, rng):

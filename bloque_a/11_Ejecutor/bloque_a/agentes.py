@@ -22,6 +22,7 @@ from .llm import (
     contenido_sensible,
     herramienta_busqueda_web,
     respuesta_segura,
+    solicitud_con_valor,
 )
 from .prompts import NOMBRES, CatalogoPrompts, mensaje_usuario
 
@@ -125,7 +126,9 @@ class Agentes:
         # Replay debe consultar siempre su cinta (o grabar la respuesta de la base).
         if self.cache is not None and clave and not isinstance(cliente, ReplayClient):
             previo = self.cache.obtener(clave)
-            if previo is not None and not contenido_sensible(previo) and not errores_esquema(previo, esquema):
+            if (previo is not None and not contenido_sensible(previo)
+                    and not solicitud_con_valor(json.dumps(previo, ensure_ascii=False, default=str))   # T-177 r02
+                    and not errores_esquema(previo, esquema)):
                 self.contabilidad.registrar(run_id, agente, modelo, Uso(), clase, fase, cache_hit=True)
                 return ResultadoAgente(agente, previo, "COMPLETO", 0.0, 0, [], True)
         mensajes = [{"role": "user", "content": texto_u}]
@@ -168,7 +171,10 @@ class Agentes:
                 except (json.JSONDecodeError, ValueError, RecursionError) as e:   # T-146 r02 (H-05): también si no se puede
                     datos, errores = None, [f"JSON no válido: {e}"[:200]]       # validar por lo anidado (falla cerrado)
                 try:
-                    con_credenciales = datos is not None and bool(contiene_credenciales(datos))
+                    con_credenciales = datos is not None and (bool(contiene_credenciales(datos)) or (
+                        # T-177: segunda barrera (la primera es `respuesta_segura`): una solicitud de credencial con un
+                        # campo de valor en cualquier sitio del retorno no se guarda en la caché ni sigue
+                        solicitud_con_valor(json.dumps(datos, ensure_ascii=False, default=str))))
                 except RecursionError:   # T-146 r02 (H-05): demasiado anidado para comprobarlo: falla cerrado
                     con_credenciales = True
                 if con_credenciales:
