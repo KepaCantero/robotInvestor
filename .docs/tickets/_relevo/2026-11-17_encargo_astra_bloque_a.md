@@ -1,5 +1,7 @@
 # Encargo a Astra · cinco tickets del Bloque A (17-11-2026)
 
+> **18-11-2026:** las directrices ampliadas de `.docs/tickets/_relevo/2026-11-18_encargo_astra_bloque_a_2.md` valen también para estas cinco tareas, y mandan si algo choca. Una tarea solo está terminada cuando se cumplen cuatro cosas: la QA ha dado APTO; ningún hallazgo queda abierto, tampoco los bajos (se corrigen en una ronda de cierre que comprueba el mismo revisor); el ticket está CERRADO; y está integrado en `develop`.
+
 Lo pidió el operador el 17-11-2026: «Asígnale a Astra varios tickets (4 o 5) para que los complete ella. Dales prioridad absoluta en el listado de tareas de Astra. Detállale las directrices que debe de seguir hasta llegar a QA apto». Son las tareas C-38 a C-42 de `.docs/tickets/_relevo/cola_astra.md`. Van **antes que cualquier otra tarea de la cola, también antes que C-08 (EN CURSO) y C-37**. C-08 queda en pausa hasta que estas cinco estén HECHAS.
 
 Cada tarea está **HECHA solo cuando su ticket está CERRADO con QA APTO e integrado en `develop`**. Que el ticket esté «EN QA» no basta, aunque `cola_astra.py` lo cuente como entregado.
