@@ -1,5 +1,7 @@
 # Cola de trabajo de Astra
 
+> **17-11-2026 (operador): prioridad absoluta para C-38 a C-42**, cinco tickets del Bloque A (T-181 a T-185). Van antes que cualquier otra tarea, también antes que C-08 (que pasa a PENDIENTE, en pausa) y C-37. Directrices completas, hasta la QA APTO, en `.docs/tickets/_relevo/2026-11-17_encargo_astra_bloque_a.md`; ese encargo autoriza subir a `develop` estos cinco tickets. Una tarea está HECHA solo con su ticket CERRADO tras la QA APTO.
+
 > **Instrucción expresa del operador, 12-11-2026: TODO EN LOCAL hasta que autorice subirlo.** Las reglas de push de este documento quedan suspendidas. Reclamar, revisar, registrar y hacer commits solo en local; no escribir en GitHub. Ver `.docs/memoria/astra/2026-11-12_solo-local-hasta-autorizacion.md`.
 
 > **13-11-2026: el operador asigna C-37 (construir el Bloque B V3) y levanta la congelación de `bloque_b/`** para esa tarea. Va después de C-08 y antes que las demás revisiones. Directrices en `.docs/diseno/bloque_b/directrices_astra.md`. **Publicación autorizada para C-37** (operador, 13-11-2026: «Sí, autorizo publicar todos los tickets»): cada ticket de C-37 (T-111 en adelante) se sube a `develop` al terminarlo, con `.docs/scripts/commit_limpio.sh`, para que Claude haga su QA. El resto de tareas sigue en local hasta nueva autorización.
@@ -29,6 +31,11 @@ Las rutas que aún no existen van entre «…» (el gate `refs-vivas` no las exi
 
 | # | Tarea | Tipo | Encargo o ticket | Entregable | Estado | Commit | Nota |
 | --- | --- | --- | --- | --- | --- | --- | --- |
+| C-38 | Bloque A: T-181, PB-24 y PB-25 (enlace roto, contenido cambiado y retractación) | IMPLEMENTAR | `.docs/tickets/_relevo/2026-11-17_encargo_astra_bloque_a.md` | «.docs/tickets/T-181/README.md» | PENDIENTE | | Prioridad absoluta (operador, 17-11-2026); HECHA solo con QA APTO y CERRADO |
+| C-39 | Bloque A: T-182, PB-20 (instrucción incrustada en una fuente) | IMPLEMENTAR | `.docs/tickets/_relevo/2026-11-17_encargo_astra_bloque_a.md` | «.docs/tickets/T-182/README.md» | PENDIENTE | | Prioridad absoluta (operador, 17-11-2026); HECHA solo con QA APTO y CERRADO |
+| C-40 | Bloque A: T-183, PB-29 (contar raíces en G3 sobre un paquete real) | IMPLEMENTAR | `.docs/tickets/_relevo/2026-11-17_encargo_astra_bloque_a.md` | «.docs/tickets/T-183/README.md» | PENDIENTE | | Prioridad absoluta (operador, 17-11-2026); HECHA solo con QA APTO y CERRADO |
+| C-41 | Bloque A: T-184, PB-26 (clasificación temática y orden por calidad en F7–F9) | IMPLEMENTAR | `.docs/tickets/_relevo/2026-11-17_encargo_astra_bloque_a.md` | «.docs/tickets/T-184/README.md» | PENDIENTE | | Prioridad absoluta (operador, 17-11-2026); HECHA solo con QA APTO y CERRADO |
+| C-42 | Bloque A: T-185, PB-13 (GC0 negativo con arrastre verificado) | IMPLEMENTAR | `.docs/tickets/_relevo/2026-11-17_encargo_astra_bloque_a.md` | «.docs/tickets/T-185/README.md» | PENDIENTE | | Prioridad absoluta (operador, 17-11-2026); HECHA solo con QA APTO y CERRADO |
 | C-01 | Rediseño de A | REVISION | `.docs/diseno/bloque_a/encargo_revision_astra.md` | «.docs/diseno/bloque_a/revision_astra.md» | HECHA | | |
 | C-02 | B: evaluación T-68 y rediseño, juntos | REVISION | `.docs/tickets/T-68/encargo_revision_astra.md` y `.docs/diseno/bloque_b/encargo_revision_astra.md` | «.docs/tickets/T-68/revision_astra.md» | HECHA | | Sin tocar `bloque_b/` |
 | C-03 | C | REVISION | `.docs/diseno/bloque_c/encargo_revision_astra.md` | «.docs/diseno/bloque_c/revision_astra.md» | HECHA | | |
@@ -36,7 +43,7 @@ Las rutas que aún no existen van entre «…» (el gate `refs-vivas` no las exi
 | C-05 | E | REVISION | `.docs/diseno/bloque_e/encargo_revision_astra.md` | «.docs/diseno/bloque_e/revision_astra.md» | HECHA | | Subida autorizada el 13-11-2026 |
 | C-06 | F | REVISION | `.docs/diseno/bloque_f/encargo_revision_astra.md` | «.docs/diseno/bloque_f/revision_astra.md» | HECHA | | Subida autorizada el 13-11-2026; T-74 sigue en espera |
 | C-07 | G | REVISION | `.docs/diseno/bloque_g/encargo_revision_astra.md` | «.docs/diseno/bloque_g/revision_astra.md» | HECHA | | Subida autorizada el 13-11-2026 |
-| C-08 | H | REVISION | `.docs/diseno/bloque_h/encargo_revision_astra.md` | «.docs/diseno/bloque_h/revision_astra.md» | EN CURSO 2026-11-12 | | |
+| C-08 | H | REVISION | `.docs/diseno/bloque_h/encargo_revision_astra.md` | «.docs/diseno/bloque_h/revision_astra.md» | PENDIENTE | | En pausa desde el 17-11-2026 por orden del operador (antes EN CURSO 2026-11-12): primero C-38 a C-42 |
 | C-37 | B: construir e implementar el Bloque B V3 | IMPLEMENTAR | `.docs/diseno/bloque_b/directrices_astra.md` (diseño en `.docs/diseno/bloque_b/decision_claude_c02.md`) | «.docs/tickets/T-111/README.md» | PENDIENTE | | Asignada por el operador el 13-11-2026, después de C-08 y antes que las demás revisiones. Congelación de `bloque_b/` levantada ese día. Siete tickets B-0 a B-6, uno tras otro, cada uno con QA de Claude. Abre el primero como T-111 |
 | C-09 | I | REVISION | `.docs/diseno/bloque_i/encargo_revision_astra.md` | «.docs/diseno/bloque_i/revision_astra.md» | PENDIENTE | | |
 | C-10 | J | REVISION | `.docs/diseno/bloque_j/encargo_revision_astra.md` | «.docs/diseno/bloque_j/revision_astra.md» | PENDIENTE | | |
