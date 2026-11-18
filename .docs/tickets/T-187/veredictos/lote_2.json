@@ -1,0 +1,456 @@
+{
+ "lote": 2,
+ "revisor": "claude (revisor independiente)",
+ "veredictos": [
+  {
+   "id": "AF-AG-04-01",
+   "veredicto": "CORRECTA",
+   "nota": "Jerarquía de liquidez coherente con la práctica del mercado de bonos (soberanos y supranacionales > IG y EM divisa fuerte > HY de nicho, ABS no AAA, pagarés). (conocimiento propio)"
+  },
+  {
+   "id": "AF-AG-04-02",
+   "veredicto": "CORRECTA",
+   "nota": "Proveedores reales de índices de renta fija: Bloomberg, ICE BofA, J.P. Morgan (EMBI/GBI-EM), iBoxx, FTSE (WGBI). (conocimiento propio)"
+  },
+  {
+   "id": "AF-AG-04-03",
+   "veredicto": "NO_VERIFICABLE",
+   "nota": "Lista de preguntas tipo para el Bloque B: instrucción operativa, no afirmación contrastable."
+  },
+  {
+   "id": "AF-AG-04-04",
+   "veredicto": "CORRECTA",
+   "nota": "Definición estándar del bootstrapping de la curva cero (Hull, Options, Futures and Other Derivatives). (conocimiento propio)"
+  },
+  {
+   "id": "AF-AG-04-05",
+   "veredicto": "CORRECTA",
+   "nota": "Coherente con la descomposición expectativas + prima por plazo y el control del tramo corto por el banco central (Gürkaynak y Wright, 2012). (conocimiento propio)"
+  },
+  {
+   "id": "AF-AG-04-06",
+   "veredicto": "CORRECTA",
+   "nota": "Distancia al impago de Merton/KMV con deriva física μ y PD = N(−DD): fórmula estándar (Merton, 1974; Crosbie y Bohn, 2003). (conocimiento propio)"
+  },
+  {
+   "id": "AF-AG-04-07",
+   "veredicto": "CORRECTA",
+   "nota": "Regla Greenspan-Guidotti (reservas ≥ deuda externa a corto plazo) correcta; umbral 4–5 % de déficit corriente es regla práctica habitual (Summers). (conocimiento propio)"
+  },
+  {
+   "id": "AF-AG-04-08",
+   "veredicto": "NO_VERIFICABLE",
+   "nota": "Reparto de competencias interno entre agentes (MON, AG-24); el corte ≤ 12 meses coincide con la convención del mercado monetario, pero es una regla del sistema."
+  },
+  {
+   "id": "AF-AG-04-09",
+   "veredicto": "CORRECTA",
+   "nota": "Cascada de pérdidas de abajo arriba (equity/primera pérdida → subordinados → mezzanine → sénior) es la estructura estándar de titulizaciones (Fabozzi). (conocimiento propio)"
+  },
+  {
+   "id": "AF-AG-04-10",
+   "veredicto": "CORRECTA",
+   "nota": "Resultado de convergencia de la TIR: horizonte ≈ 2×duración − 1 (Leibowitz, Bova y Kogelman, 2014); «cercano al doble» es simplificación razonable. (conocimiento propio)"
+  },
+  {
+   "id": "AF-AG-03-01",
+   "veredicto": "NO_VERIFICABLE",
+   "nota": "Convención interna de estandarización (ventana de 10 años, winsorización ±3): parámetros del robot."
+  },
+  {
+   "id": "AF-AG-03-02",
+   "veredicto": "NO_VERIFICABLE",
+   "nota": "Regla de veto interna con umbrales propios del sistema (GC1); no contrastable con literatura."
+  },
+  {
+   "id": "AF-AG-03-03",
+   "veredicto": "CORRECTA",
+   "nota": "Acciones A chinas con acceso restringido fuera de Stock Connect/QFII; límites a propiedad extranjera y sanciones reducen la invertibilidad (criterios MSCI de accesibilidad). (conocimiento propio)"
+  },
+  {
+   "id": "AF-AG-03-04",
+   "veredicto": "CORRECTA",
+   "nota": "Bernstein y Arnott (2003), FAJ 59(5): el BPA crece menos que el PIB por dilución de nuevas empresas y emisiones. Cita y contenido correctos. (conocimiento propio)"
+  },
+  {
+   "id": "AF-AG-03-05",
+   "veredicto": "CORRECTA",
+   "nota": "Damodaran: ERP implícita del S&P 500 desde 1960 entre ≈2 % (1999-2000) y ≈6,5 %, media ≈4 %. (conocimiento propio)"
+  },
+  {
+   "id": "AF-AG-03-06",
+   "veredicto": "CORRECTA",
+   "nota": "Coherente con la literatura del ciclo de vida de la industria y difusión (Rogers; Klepper, 1996): riesgo de adopción al inicio, de competencia en madurez. Simplificación. (conocimiento propio)"
+  },
+  {
+   "id": "AF-AG-03-07",
+   "veredicto": "CORRECTA",
+   "nota": "Baker y Wurgler (2006, JF 61(4)): con sentimiento alto, las acciones especulativas (pequeñas, jóvenes, volátiles, sin beneficios) rinden menos después. (conocimiento propio)"
+  },
+  {
+   "id": "AF-AG-03-08",
+   "veredicto": "CORRECTA",
+   "nota": "Ratio de accruals por flujos de caja (NI − CFO)/activo medio: versión estándar (Sloan, 1996; Hribar y Collins, 2002). (conocimiento propio)"
+  },
+  {
+   "id": "AF-AG-03-09",
+   "veredicto": "CORRECTA",
+   "nota": "Correlación bonos-acciones positiva ~1970-finales 90 y 2022, negativa ~2000-2020 (Campbell, Pflueger y Viceira, 2020). Fechas simplificadas razonablemente. (conocimiento propio)"
+  },
+  {
+   "id": "AF-AG-03-10",
+   "veredicto": "CORRECTA",
+   "nota": "Gravámenes temporales a banca y energéticas en España (Ley 38/2022, aplicados desde 2023); CHIPS Act de EE. UU. y Chips Act de la UE existen. (conocimiento propio)"
+  },
+  {
+   "id": "AF-AG-25-01",
+   "veredicto": "NO_VERIFICABLE",
+   "nota": "Regla de veto interna del sistema (escenario de salto del Motor)."
+  },
+  {
+   "id": "AF-AG-25-02",
+   "veredicto": "CORRECTA",
+   "nota": "Principio estándar: la rentabilidad de una posición en tipos depende del cambio frente al implícito en forwards/carry-roll (Ilmanen, Expected Returns, 2011). (conocimiento propio)"
+  },
+  {
+   "id": "AF-AG-25-03",
+   "veredicto": "CORRECTA",
+   "nota": "Vasicek (1977) dr=κ(θ−r)dt+σdW, CIR (1985) volatilidad ∝ √r, Duffie y Kan (1996) modelos afines: correctos; permiten separar expectativas y prima por plazo. (conocimiento propio)"
+  },
+  {
+   "id": "AF-AG-25-04",
+   "veredicto": "ERRONEA",
+   "nota": "AACMY (2016, JME) sí es modelo afín conjunto nominal-real; Gürkaynak, Sack y Wright (2010, AEJ Macro) ajustan curvas TIPS suavizadas (Svensson), no un modelo afín. Sustituir por D'Amico, Kim y Wei (2018). Búsqueda web."
+  },
+  {
+   "id": "AF-AG-25-05",
+   "veredicto": "CORRECTA",
+   "nota": "Big Bang de CDS de 2009 (SNAC): cupones fijos 100/500 pb y upfront ≈ (spread − cupón)×RPV01 (ISDA; Markit). En Europa hubo más cupones; simplificación. (conocimiento propio)"
+  },
+  {
+   "id": "AF-AG-25-06",
+   "veredicto": "CORRECTA",
+   "nota": "5-2-2018: XIV perdió ~90-96 %, evento de aceleración y liquidación; SVXY pasó a −0,5x (27-2-2018). Datos correctos. (conocimiento propio)"
+  },
+  {
+   "id": "AF-AG-25-07",
+   "veredicto": "CORRECTA",
+   "nota": "Fórmula estándar de correlación implícita; Cboe publica índices de correlación implícita del S&P 500; Driessen, Maenhout y Vilkov (2009, JF) prima de correlación. (conocimiento propio)"
+  },
+  {
+   "id": "AF-AG-25-08",
+   "veredicto": "ERRONEA",
+   "nota": "Vencimiento × plazo forma la matriz (o superficie) de volatilidad de swaptions; el «cubo» añade la tercera dimensión, el strike. MOVE como análogo sobre opciones del Tesoro es correcto. (conocimiento propio)"
+  },
+  {
+   "id": "AF-AG-25-09",
+   "veredicto": "NO_VERIFICABLE",
+   "nota": "Mapa interno de identificadores TM- del archivo F8: convención del sistema."
+  },
+  {
+   "id": "AF-AG-25-10",
+   "veredicto": "NO_VERIFICABLE",
+   "nota": "Mapa interno de identificadores TF- del archivo F9: convención del sistema."
+  },
+  {
+   "id": "AF-AG-11-01",
+   "veredicto": "CORRECTA",
+   "nota": "Harvey, Liu y Zhu (2016, RFS 29(1)): proponen t > 3,0 para nuevos factores por pruebas múltiples. (conocimiento propio)"
+  },
+  {
+   "id": "AF-AG-11-02",
+   "veredicto": "CORRECTA",
+   "nota": "Errores causales estándar (causalidad inversa, variable omitida, colisionador/selección, retardos) (Pearl, 2009; Hernán y Robins). (conocimiento propio)"
+  },
+  {
+   "id": "AF-AG-11-03",
+   "veredicto": "CORRECTA",
+   "nota": "Pasos del ACH coherentes con Heuer (1999, Psychology of Intelligence Analysis, cap. 8): diagnosticidad, menos inconsistencias, análisis de sensibilidad. (conocimiento propio)"
+  },
+  {
+   "id": "AF-AG-11-04",
+   "veredicto": "CORRECTA",
+   "nota": "Key Assumptions Check (Heuer y Pherson, 2010): clasificación en sólidos, con salvedades y sin respaldo. (conocimiento propio)"
+  },
+  {
+   "id": "AF-AG-11-05",
+   "veredicto": "CORRECTA",
+   "nota": "Heurística coherente con eficiencia de mercado y límites al arbitraje (Shleifer y Vishny, 1997, JF): preguntar por qué otros no lo han arbitrado. (conocimiento propio)"
+  },
+  {
+   "id": "AF-AG-11-06",
+   "veredicto": "CORRECTA",
+   "nota": "Bailey y López de Prado (2014, JPM 40(5)): el DSR corrige por número de ensayos, longitud de muestra, asimetría y curtosis. (conocimiento propio)"
+  },
+  {
+   "id": "AF-AG-11-07",
+   "veredicto": "CORRECTA",
+   "nota": "El 10 años de EE. UU. tocó máximo en 1981 y bajó hasta 2020-2021: periodo de tipos a la baja correcto. (conocimiento propio)"
+  },
+  {
+   "id": "AF-AG-11-08",
+   "veredicto": "CORRECTA",
+   "nota": "Principio estadístico elemental: con pocas observaciones los intervalos de confianza son muy anchos. (conocimiento propio)"
+  },
+  {
+   "id": "AF-AG-11-09",
+   "veredicto": "CORRECTA",
+   "nota": "Geltner (1993) desuavizado de índices tasados; Getmansky, Lo y Makarov (2004, JFE) autocorrelación por suavizado en hedge funds. (conocimiento propio)"
+  },
+  {
+   "id": "AF-AG-11-10",
+   "veredicto": "NO_VERIFICABLE",
+   "nota": "Mapa interno de identificadores TA- del archivo F7."
+  },
+  {
+   "id": "AF-AG-21-01",
+   "veredicto": "NO_VERIFICABLE",
+   "nota": "Límite operativo interno (8 candidatas, 3 por clúster)."
+  },
+  {
+   "id": "AF-AG-21-02",
+   "veredicto": "NO_VERIFICABLE",
+   "nota": "Regla interna del sistema para H5 e hitos HIT-."
+  },
+  {
+   "id": "AF-AG-21-03",
+   "veredicto": "CORRECTA",
+   "nota": "Criterios de elegibilidad habituales (MSCI GIMI, S&P); el S&P 500 exige beneficios GAAP positivos (último trimestre y suma de cuatro). (conocimiento propio)"
+  },
+  {
+   "id": "AF-AG-21-04",
+   "veredicto": "CORRECTA",
+   "nota": "Shleifer (1986, JF), Harris y Gurel (1986, JF), Chen, Noronha y Singal (2004, JF) asimetría, Patel y Welch (2017, RAPS) atenuación: citas y contenido correctos. (conocimiento propio)"
+  },
+  {
+   "id": "AF-AG-21-05",
+   "veredicto": "CORRECTA",
+   "nota": "Datos de Shiller: mediana ≈ 16 desde 1881, máximo ≈ 44 (dic. 1999), mínimos ≈ 4,8 (1920) y ≈ 6,6 (1982). (conocimiento propio)"
+  },
+  {
+   "id": "AF-AG-21-06",
+   "veredicto": "CORRECTA",
+   "nota": "(1+r€)=(1+r_local)(1+r_divisa) ⇒ r_local + r_divisa + producto cruzado. Correcto. (conocimiento propio)"
+  },
+  {
+   "id": "AF-AG-21-07",
+   "veredicto": "CORRECTA",
+   "nota": "Plyakha, Uppal y Vilkov (capítulo Springer 2021, Financial Risk Management and Modeling): tamaño, valor y rebalanceo; DeMiguel, Garlappi y Uppal (2009, RFS) 1/N. Búsqueda web."
+  },
+  {
+   "id": "AF-AG-21-08",
+   "veredicto": "CORRECTA",
+   "nota": "Metodología Cboe del VIX: varianza sin modelo a 30 días con opciones OTM del S&P 500. (conocimiento propio)"
+  },
+  {
+   "id": "AF-AG-21-09",
+   "veredicto": "NO_VERIFICABLE",
+   "nota": "Instrucción de uso interna."
+  },
+  {
+   "id": "AF-AG-21-10",
+   "veredicto": "CORRECTA",
+   "nota": "Grinold-Kroner incluye el término de variación de acciones (−ΔN/N); las recompras y la mejora de ROE en Japón (2014 Stewardship Code/JPX400; 2023 TSE) lo alteran. (conocimiento propio)"
+  },
+  {
+   "id": "AF-AG-02-01",
+   "veredicto": "NO_VERIFICABLE",
+   "nota": "Regla interna de ranking (top-3 por tipo)."
+  },
+  {
+   "id": "AF-AG-02-02",
+   "veredicto": "NO_VERIFICABLE",
+   "nota": "Encabezado de una definición operativa del propio sistema; no hay afirmación contrastable."
+  },
+  {
+   "id": "AF-AG-02-03",
+   "veredicto": "CORRECTA",
+   "nota": "Nuevos pedidos y nuevos pedidos − inventarios del ISM se usan como adelantados de unos meses; regla práctica extendida, simplificación aceptable. (conocimiento propio)"
+  },
+  {
+   "id": "AF-AG-02-04",
+   "veredicto": "CORRECTA",
+   "nota": "ISM publica que un PMI manufacturero por encima de ≈42,3-42,5 se asocia con expansión del PIB total. (conocimiento propio)"
+  },
+  {
+   "id": "AF-AG-02-05",
+   "veredicto": "CORRECTA",
+   "nota": "Estrella y Mishkin (1998, REStat): pendiente 10a−3m predice recesiones; inversiones previas desde 1968 con 6-24 meses de adelanto. (conocimiento propio)"
+  },
+  {
+   "id": "AF-AG-02-06",
+   "veredicto": "CORRECTA",
+   "nota": "«Retardos largos y variables» (Friedman); bancos centrales estiman 1-2 años sobre la inflación (BCE, BoE). (conocimiento propio)"
+  },
+  {
+   "id": "AF-AG-02-07",
+   "veredicto": "CORRECTA",
+   "nota": "Utilidad esperada (von Neumann y Morgenstern, 1944) y aversión a las pérdidas (Kahneman y Tversky, 1979, Econometrica): atribuciones correctas. (conocimiento propio)"
+  },
+  {
+   "id": "AF-AG-02-08",
+   "veredicto": "CORRECTA",
+   "nota": "Dixit y Pindyck (1994): la irreversibilidad y la llegada de información dan valor a esperar y elevan el umbral de inversión. (conocimiento propio)"
+  },
+  {
+   "id": "AF-AG-02-09",
+   "veredicto": "ERRONEA",
+   "nota": "Meucci (2009, Risk 22(5)) define el número efectivo de apuestas como la EXPONENCIAL de la entropía de la distribución de contribuciones al riesgo, N = exp(−Σ p ln p), no la entropía. Búsqueda web."
+  },
+  {
+   "id": "AF-AG-02-10",
+   "veredicto": "CORRECTA",
+   "nota": "Los datos macro se revisan; ALFRED (Fed de St. Louis) guarda las vintages en tiempo real (Croushore y Stark, 2001). (conocimiento propio)"
+  },
+  {
+   "id": "AF-AG-19-01",
+   "veredicto": "NO_VERIFICABLE",
+   "nota": "Criterio de auditoría interno sobre ámbitos del Bloque B."
+  },
+  {
+   "id": "AF-AG-19-02",
+   "veredicto": "NO_VERIFICABLE",
+   "nota": "Pregunta de auditoría interna sobre consultas CT-23."
+  },
+  {
+   "id": "AF-AG-19-03",
+   "veredicto": "NO_VERIFICABLE",
+   "nota": "Instrucción operativa interna."
+  },
+  {
+   "id": "AF-AG-19-04",
+   "veredicto": "NO_VERIFICABLE",
+   "nota": "Criterio de auditoría interno."
+  },
+  {
+   "id": "AF-AG-19-05",
+   "veredicto": "CORRECTA",
+   "nota": "Chan, Karceski y Lakonishok (2003, JF 58(2)) «The Level and Persistence of Growth Rates»: escasa persistencia del crecimiento. Resto de errores son estándar. (conocimiento propio)"
+  },
+  {
+   "id": "AF-AG-19-06",
+   "veredicto": "CORRECTA",
+   "nota": "Aritmética correcta: (0,5 − 0,5)/2 = 0 %; 1,5 × 0,5 = 0,75 ⇒ −25 %."
+  },
+  {
+   "id": "AF-AG-19-07",
+   "veredicto": "ERRONEA",
+   "nota": "Año erróneo: la PBO de Bailey, Borwein, López de Prado y Zhu se publicó en Journal of Computational Finance 20(4), 2017 (preprint 2013-2015). DSR en JPM 2014 sí es correcto. Búsqueda web."
+  },
+  {
+   "id": "AF-AG-19-08",
+   "veredicto": "CORRECTA",
+   "nota": "INFLESZ: Barrio-Cantalejo et al. (2008, An. Sist. Sanit. Navar.); índice de perspicuidad de Szigriszt-Pazos (tesis, 1993). (conocimiento propio)"
+  },
+  {
+   "id": "AF-AG-19-09",
+   "veredicto": "CORRECTA",
+   "nota": "Form 13F: plazo de 45 días tras el trimestre; no recoge cortos y solo algunas opciones sobre valores 13F (SEC). (conocimiento propio)"
+  },
+  {
+   "id": "AF-AG-19-10",
+   "veredicto": "NO_VERIFICABLE",
+   "nota": "Criterios internos de muestreo (umbrales propios); el principio de complementar con muestra aleatoria es estándar (NIA 530), pero el contenido es del sistema."
+  },
+  {
+   "id": "AF-AG-16-01",
+   "veredicto": "CORRECTA",
+   "nota": "Aritmética verificada con la fórmula del prompt 10+(S−10)·n/(n+30): 12,86≈13 y 16,67≈17."
+  },
+  {
+   "id": "AF-AG-16-02",
+   "veredicto": "NO_VERIFICABLE",
+   "nota": "Política interna de depuración de fuentes (umbrales Q y 180 días)."
+  },
+  {
+   "id": "AF-AG-16-03",
+   "veredicto": "ERRONEA",
+   "nota": "Tetlock (2005) halló que los expertos quedaban por DEBAJO de algoritmos de extrapolación simple y apenas superaban al azar; no «poco mejor que reglas simples». Búsqueda web (Gardner y Tetlock, Cato Unbound)."
+  },
+  {
+   "id": "AF-AG-16-04",
+   "veredicto": "CORRECTA",
+   "nota": "Polymarket y Kalshi (mercados) y Metaculus y Good Judgment Open (agregadores) existen; riesgos de liquidez, resolución y manipulación son conocidos. (conocimiento propio)"
+  },
+  {
+   "id": "AF-AG-16-05",
+   "veredicto": "CORRECTA",
+   "nota": "Martin y Puthenpurackal (2008, SSRN, Berkshire), Agarwal, Jiang, Tang y Yang (2013, JF), Frazzini, Kabiller y Pedersen (2018, FAJ): citas correctas. (conocimiento propio)"
+  },
+  {
+   "id": "AF-AG-16-06",
+   "veredicto": "CORRECTA",
+   "nota": "Da, Engelberg y Gao (2011, JF 66(5)) usan el SVI de Google como medida de atención minorista; GDELT existe. (conocimiento propio)"
+  },
+  {
+   "id": "AF-AG-16-07",
+   "veredicto": "CORRECTA",
+   "nota": "Los paneles de Dune son consultas SQL de usuarios: correcto y prudente. (conocimiento propio)"
+  },
+  {
+   "id": "AF-AG-16-08",
+   "veredicto": "CORRECTA",
+   "nota": "FOMC, BCE, BoE, BoJ, Eurostat, INE, BLS y BEA publican sus calendarios por adelantado. (conocimiento propio)"
+  },
+  {
+   "id": "AF-AG-16-09",
+   "veredicto": "CORRECTA",
+   "nota": "Actas FOMC a 3 semanas; cuentas BCE ~4 semanas; SEP y proyecciones BCE en mar/jun/sep/dic; Libro Beige 8 veces al año. (conocimiento propio)"
+  },
+  {
+   "id": "AF-AG-16-10",
+   "veredicto": "CORRECTA",
+   "nota": "Billion = 10⁹ = mil millones; billón español = 10¹². Distinción SAAR/trimestral/interanual correcta. (conocimiento propio)"
+  },
+  {
+   "id": "AF-AG-01-01",
+   "veredicto": "NO_VERIFICABLE",
+   "nota": "Umbral interno de escalado (R25)."
+  },
+  {
+   "id": "AF-AG-01-02",
+   "veredicto": "NO_VERIFICABLE",
+   "nota": "Regla operativa interna sobre nivel_forzado."
+  },
+  {
+   "id": "AF-AG-01-03",
+   "veredicto": "CORRECTA",
+   "nota": "Notación estándar de teoría de colas: λ, μ y utilización ρ = λ/μ (Kleinrock, 1975). (conocimiento propio)"
+  },
+  {
+   "id": "AF-AG-01-04",
+   "veredicto": "CORRECTA",
+   "nota": "Buena práctica estándar: guardar zona IANA (tz database) porque el desfase UTC cambia con el horario de verano. (conocimiento propio)"
+  },
+  {
+   "id": "AF-AG-01-05",
+   "veredicto": "NO_VERIFICABLE",
+   "nota": "Convención interna de identificadores."
+  },
+  {
+   "id": "AF-AG-01-06",
+   "veredicto": "NO_VERIFICABLE",
+   "nota": "Esquema interno de registro CNS- en F5."
+  },
+  {
+   "id": "AF-AG-01-07",
+   "veredicto": "NO_VERIFICABLE",
+   "nota": "Esquema interno de registro CRD- en F5."
+  },
+  {
+   "id": "AF-AG-01-08",
+   "veredicto": "NO_VERIFICABLE",
+   "nota": "Definición interna de relevancia decisional ALTA."
+  },
+  {
+   "id": "AF-AG-01-09",
+   "veredicto": "NO_VERIFICABLE",
+   "nota": "Campos mínimos de una petición: convención del sistema."
+  },
+  {
+   "id": "AF-AG-01-10",
+   "veredicto": "NO_VERIFICABLE",
+   "nota": "Convención interna de SLA; comprometer por percentil y no por media es práctica habitual, pero el 80-90 es del sistema."
+  }
+ ]
+}

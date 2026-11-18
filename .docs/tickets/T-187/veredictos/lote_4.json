@@ -1,0 +1,406 @@
+{
+  "lote": 4,
+  "revisor": "claude (revisor independiente)",
+  "veredictos": [
+    {
+      "id": "AF-MC-06-01",
+      "veredicto": "CORRECTA",
+      "nota": "Con h=10 y muestreo diario, los errores siguen un MA(h−1) (Hansen y Hodrick, 1980); n efectivo ≈ n/h es la aproximación habitual. Conocimiento propio."
+    },
+    {
+      "id": "AF-MC-06-02",
+      "veredicto": "CORRECTA",
+      "nota": "Bergmeir, Hyndman y Koo (2018, CSDA 120) prueban que el k-fold es válido en modelos autorregresivos puros con errores incorrelados. El «solo» exagera algo, pero es fiel al resultado. Conocimiento propio."
+    },
+    {
+      "id": "AF-MC-06-03",
+      "veredicto": "CORRECTA",
+      "nota": "El rompecabezas de la combinación de previsiones: Stock y Watson (2004, J. Forecasting) y Smith y Wallis (2009, Oxford Bull. Econ. Stat.). Conocimiento propio."
+    },
+    {
+      "id": "AF-MC-06-04",
+      "veredicto": "CORRECTA",
+      "nota": "Es la definición estándar de calibración (fiabilidad), P(o=1|p)=p (Murphy y Winkler; Dawid, 1982). Conocimiento propio."
+    },
+    {
+      "id": "AF-MC-06-05",
+      "veredicto": "CORRECTA",
+      "nota": "El conformal inductivo (split) da cobertura marginal ≥1−α bajo intercambiabilidad; está en Vovk, Gammerman y Shafer (2005), *Algorithmic Learning in a Random World*. Conocimiento propio."
+    },
+    {
+      "id": "AF-MC-06-06",
+      "veredicto": "CORRECTA",
+      "nota": "Brier y log-score son reglas de puntuación propias (Gneiting y Raftery, 2007). Recortar p es una convención práctica habitual y el acierto bruto no es propio. Conocimiento propio."
+    },
+    {
+      "id": "AF-MC-06-07",
+      "veredicto": "CORRECTA",
+      "nota": "Elegir k por BIC en mezclas gaussianas es la práctica estándar (Fraley y Raftery, 2002). Las GMM no modelan la dinámica temporal, que queda para MC-02. Conocimiento propio."
+    },
+    {
+      "id": "AF-MC-06-08",
+      "veredicto": "CORRECTA",
+      "nota": "La Mahalanobis robusta con MCD es de Rousseeuw (1984/1999) e Isolation Forest de Liu, Ting y Zhou (2008); el parámetro contamination existe y se declara. Conocimiento propio."
+    },
+    {
+      "id": "AF-MC-06-09",
+      "veredicto": "CORRECTA",
+      "nota": "El metaetiquetado de López de Prado (2018, AFML cap. 3) filtra falsos positivos del primario, así que sube la precisión a costa del recall; cada modelo cuenta como ensayo. Conocimiento propio."
+    },
+    {
+      "id": "AF-MC-06-10",
+      "veredicto": "CORRECTA",
+      "nota": "Coincide con la fórmula de Campbell y Thompson (2008, RFS): S*=√((S²+R²)/(1−R²)). Conocimiento propio."
+    },
+    {
+      "id": "AF-MC-07-01",
+      "veredicto": "CORRECTA",
+      "nota": "Con VaR_α=−q_{1−α}(R), ES_α=−E[R|R≤−VaR_α] es la definición estándar de ES/CVaR para distribuciones continuas (Acerbi y Tasche, 2002). Conocimiento propio."
+    },
+    {
+      "id": "AF-MC-07-02",
+      "veredicto": "CORRECTA",
+      "nota": "Hyndman y Fan (1996, Am. Stat.) definen 9 tipos de cuantil; el tipo 7 es el predeterminado en R y en NumPy. Conocimiento propio."
+    },
+    {
+      "id": "AF-MC-07-03",
+      "veredicto": "CORRECTA",
+      "nota": "La cartera de mínima varianza, w∝Σ⁻¹1, no depende de μ y es más estable fuera de muestra (Jagannathan y Ma, 2003). Conocimiento propio."
+    },
+    {
+      "id": "AF-MC-07-04",
+      "veredicto": "CORRECTA",
+      "nota": "ERC con contribuciones iguales (Maillard, Roncalli y Teïletche, 2010); se resuelve por punto fijo/descenso cíclico o Newton (Spinu, 2013). Conocimiento propio."
+    },
+    {
+      "id": "AF-MC-07-05",
+      "veredicto": "NO_VERIFICABLE",
+      "nota": "El análisis de sensibilidad a μ es buena práctica, pero los umbrales (±1 EE, 20 puntos) son una convención interna sin fuente canónica."
+    },
+    {
+      "id": "AF-MC-07-06",
+      "veredicto": "CORRECTA",
+      "nota": "Es la definición estándar de EVPI (Raiffa y Schlaifer, 1961) y es la cota superior del valor de cualquier información. Conocimiento propio."
+    },
+    {
+      "id": "AF-MC-07-07",
+      "veredicto": "CORRECTA",
+      "nota": "La RDM es de Lempert, Popper y Bankes (2003, RAND, *Shaping the Next One Hundred Years*) y el info-gap de Ben-Haim (2006, 2.ª ed.); la descripción de la incertidumbre profunda es fiel. Conocimiento propio."
+    },
+    {
+      "id": "AF-MC-07-08",
+      "veredicto": "CORRECTA",
+      "nota": "Son trampas reconocidas: con un año, un VaR 99 % se apoya en ≈2–3 observaciones de cola, y la regla √h exige incrementos iid sin autocorrelación (Danielsson; Jorion). Conocimiento propio."
+    },
+    {
+      "id": "AF-MC-07-09",
+      "veredicto": "CORRECTA",
+      "nota": "El programa lineal de CVaR es de Rockafellar y Uryasev (2000, J. Risk) y el ratio de diversificación, w'σ/σ_p, de Choueifaty y Coignard (2008, JPM). Conocimiento propio."
+    },
+    {
+      "id": "AF-MC-07-10",
+      "veredicto": "CORRECTA",
+      "nota": "Los escenarios adversos de la EBA y de la Fed (CCAR/DFAST) son narrativas coherentes sin probabilidad asignada. Matiz: quien los publica es la Junta de Gobernadores de la Fed. Conocimiento propio."
+    },
+    {
+      "id": "AF-MC-08-01",
+      "veredicto": "NO_VERIFICABLE",
+      "nota": "Son umbrales internos del bloque (E 60, A 55, ECE<0,15…): una regla operativa, no contrastable con la literatura."
+    },
+    {
+      "id": "AF-MC-08-02",
+      "veredicto": "CORRECTA",
+      "nota": "Act/365, Act/360, 30/360 y Act/Act ICMA son convenciones estándar (ISDA/ICMA), y el cupón corrido se calcula a la fecha de liquidación. Conocimiento propio."
+    },
+    {
+      "id": "AF-MC-08-03",
+      "veredicto": "CORRECTA",
+      "nota": "Las revisiones y las vintages de los datos macro son una fuente documentada de discrepancia (Croushore y Stark, 2001; ALFRED). Conocimiento propio."
+    },
+    {
+      "id": "AF-MC-08-04",
+      "veredicto": "CORRECTA",
+      "nota": "Es el método delta estándar de primer orden, Var[f(θ)]≈∇fᵀΣ∇f, y su alternativa Monte Carlo (Casella y Berger; GUM JCGM 100). Conocimiento propio."
+    },
+    {
+      "id": "AF-MC-08-05",
+      "veredicto": "NO_VERIFICABLE",
+      "nota": "Es una regla interna: se aplica el criterio congelado en F4."
+    },
+    {
+      "id": "AF-MC-08-06",
+      "veredicto": "NO_VERIFICABLE",
+      "nota": "La premisa técnica es correcta (el solapamiento induce autocorrelación), pero la afirmación es la regla interna que lo clasifica como ERROR_IMPLEMENTACION."
+    },
+    {
+      "id": "AF-MC-08-07",
+      "veredicto": "CORRECTA",
+      "nota": "Comprobado a mano: (7·0,3²+3·0,7²)/10 = (0,63+1,47)/10 = 0,21."
+    },
+    {
+      "id": "AF-MC-08-08",
+      "veredicto": "NO_VERIFICABLE",
+      "nota": "Son indicadores internos de seguimiento de fichas y del procedimiento de cambio de tipo 3."
+    },
+    {
+      "id": "AF-MC-08-09",
+      "veredicto": "CORRECTA",
+      "nota": "El LRE=−log₁₀(|x−c|/|c|) es de McCullough (1998, Am. Stat., «Assessing the reliability of statistical software, Part I»); un error relativo de 10⁻⁸ equivale a LRE 8. Conocimiento propio."
+    },
+    {
+      "id": "AF-MC-08-10",
+      "veredicto": "CORRECTA",
+      "nota": "La SR 11-7 (Fed/OCC, 2011) fija tres elementos de validación: solidez conceptual, seguimiento continuo y análisis de resultados. Conocimiento propio."
+    },
+    {
+      "id": "AF-MC-09-01",
+      "veredicto": "CORRECTA",
+      "nota": "Las ratios de valoración predicen poco a corto plazo y mejor a 1–5 años o más, con ruido (Campbell y Shiller, 1988/1998; Cochrane, 2008). Concuerda con H1–H2 frente a H4 (1–5 años). Conocimiento propio."
+    },
+    {
+      "id": "AF-MC-09-02",
+      "veredicto": "CORRECTA",
+      "nota": "Es la fórmula estándar del WACC con escudo fiscal y pesos a valor de mercado (Brealey-Myers; Damodaran). Conocimiento propio."
+    },
+    {
+      "id": "AF-MC-09-03",
+      "veredicto": "CORRECTA",
+      "nota": "El R² in-sample es alto (≈0,4) con observaciones solapadas, pocas independientes y deriva del nivel del CAPE (Asness, 2012; Campbell y Shiller, 1998); a menos de un año apenas predice. Conocimiento propio."
+    },
+    {
+      "id": "AF-MC-09-04",
+      "veredicto": "CORRECTA",
+      "nota": "El cap rate implícito es el NOI adelantado entre el valor inmobiliario implícito (EV ajustado por activos no operativos), al estilo Green Street o Nareit. Conocimiento propio."
+    },
+    {
+      "id": "AF-MC-09-05",
+      "veredicto": "CORRECTA",
+      "nota": "Es la anualización simple estándar de la base de futuros en cripto: (F/S−1)·365/días. Conocimiento propio."
+    },
+    {
+      "id": "AF-MC-09-06",
+      "veredicto": "CORRECTA",
+      "nota": "La curva J, con flujos netos acumulados negativos los primeros 3–5 años, y la comparación por cosecha y estrategia son la práctica estándar (Preqin, Cambridge Associates; Kaplan y Schoar, 2005). Conocimiento propio."
+    },
+    {
+      "id": "AF-MC-09-07",
+      "veredicto": "CORRECTA",
+      "nota": "Es la fórmula de Geltner (1993) con φ=1−a, el coeficiente AR(1) de la serie observada; es coherente con AF-AG-07-04. Conocimiento propio."
+    },
+    {
+      "id": "AF-MC-09-08",
+      "veredicto": "CORRECTA",
+      "nota": "La definición del ECY (Shiller, Black y Jivraj, 2020) es 1/CAPE menos el rendimiento real a 10 años. La referencia Campbell-Shiller 1998 corresponde a la frase anterior. Conocimiento propio."
+    },
+    {
+      "id": "AF-MC-09-09",
+      "veredicto": "CORRECTA",
+      "nota": "Con P=NAV(1+d), cerrar el descuento de d a d_obj rinde (1+d_obj)/(1+d)−1 más el NAV, en aproximación aditiva. La vida media AR(1) es ln0,5/lnφ. Conocimiento propio."
+    },
+    {
+      "id": "AF-MC-09-10",
+      "veredicto": "CORRECTA",
+      "nota": "Kim y Wright (2005, FEDS 2005-33) es un modelo afín gaussiano de tres factores con encuestas de tipos a corto plazo. Conocimiento propio."
+    },
+    {
+      "id": "AF-MC-10-01",
+      "veredicto": "CORRECTA",
+      "nota": "Por definición, BSS=1−BS/BS_ref, así que BSS>0 significa mejor que la referencia (Wilks, *Statistical Methods in the Atmospheric Sciences*). Conocimiento propio."
+    },
+    {
+      "id": "AF-MC-10-02",
+      "veredicto": "CORRECTA",
+      "nota": "Es la fórmula estándar del tamaño muestral para el contraste unilateral de una proporción (Fleiss, Levin y Paik; Chow et al.). Conocimiento propio."
+    },
+    {
+      "id": "AF-MC-10-03",
+      "veredicto": "CORRECTA",
+      "nota": "Son el estadístico de Diebold y Mariano (1995) y su varianza de largo plazo con h−1 autocovarianzas; usar Bartlett/Newey-West si V̂<0 es el remedio habitual (Diebold, 2015, JBES). Conocimiento propio."
+    },
+    {
+      "id": "AF-MC-10-04",
+      "veredicto": "CORRECTA",
+      "nota": "Son exactamente la corrección de Harvey, Leybourne y Newbold (1997, IJF) y su comparación con una t de T−1 grados de libertad. Conocimiento propio."
+    },
+    {
+      "id": "AF-MC-10-05",
+      "veredicto": "CORRECTA",
+      "nota": "Es la recalibración logística de Cox (1958): b<1 indica previsiones demasiado extremas (sobreconfianza), b>1 infraconfianza y a≠0 un sesgo de nivel. Conocimiento propio."
+    },
+    {
+      "id": "AF-MC-10-06",
+      "veredicto": "CORRECTA",
+      "nota": "Para una métrica de series dependientes, el bootstrap por bloques de pares (p,o) recalculando BS y BS_ref es la práctica correcta (Künsch, 1989; Wilks). Conocimiento propio."
+    },
+    {
+      "id": "AF-MC-10-07",
+      "veredicto": "CORRECTA",
+      "nota": "Coincide con la MinTRL de Bailey y López de Prado (2012, J. Risk), donde γ₄ es la curtosis sin exceso. Conocimiento propio."
+    },
+    {
+      "id": "AF-MC-10-08",
+      "veredicto": "CORRECTA",
+      "nota": "Es el principio estándar de evaluación sin look-ahead: la referencia y la climatología solo pueden usar información disponible en la fecha de emisión (Tashman, 2000). Conocimiento propio."
+    },
+    {
+      "id": "AF-MC-10-09",
+      "veredicto": "NO_VERIFICABLE",
+      "nota": "Es una regla interna sobre las decisiones del Broker (7.7); no es contrastable."
+    },
+    {
+      "id": "AF-MC-10-10",
+      "veredicto": "CORRECTA",
+      "nota": "El AUC mide discriminación, con 0,5 igual al azar, y es invariante a transformaciones monótonas, luego no mide calibración (Hanley y McNeil, 1982). Por eso se usa junto al Brier. Conocimiento propio."
+    },
+    {
+      "id": "AF-AG-13-01",
+      "veredicto": "CORRECTA",
+      "nota": "Son las definiciones estándar: Sortino con desviación a la baja, IR = rentabilidad activa/tracking error y Calmar = rentabilidad anual/|MDD| (Young, 1991). Conocimiento propio."
+    },
+    {
+      "id": "AF-AG-13-02",
+      "veredicto": "CORRECTA",
+      "nota": "Son las fórmulas estándar de Mann-Kendall (Kendall, 1975): S, Var(S) con corrección por empates y Z con corrección de continuidad (Z=0 si S=0). Conocimiento propio."
+    },
+    {
+      "id": "AF-AG-13-03",
+      "veredicto": "CORRECTA",
+      "nota": "Es la RCM de Ang y Bekaert (2002, JBES) para dos regímenes: 400·media de p_t(1−p_t), de 0 (perfecta) a 100 (sin información). Conocimiento propio."
+    },
+    {
+      "id": "AF-AG-13-04",
+      "veredicto": "CORRECTA",
+      "nota": "Es el modelo HAR-RV de Corsi (2009, J. Financial Econometrics) con componentes diaria, semanal (5) y mensual (22), estimado por MCO-HAC; es una referencia difícil de batir. Conocimiento propio."
+    },
+    {
+      "id": "AF-AG-13-05",
+      "veredicto": "CORRECTA",
+      "nota": "El valor crítico de MacKinnon (1991/2010) para N=2, con constante y al 5 %, es ≈ −3,34 (asintótico −3,336); el resultado de Engle-Granger depende de la normalización. Conocimiento propio."
+    },
+    {
+      "id": "AF-AG-13-06",
+      "veredicto": "CORRECTA",
+      "nota": "El análisis de estilo de Sharpe (1992, JPM) es una regresión restringida a pesos no negativos que suman 1. Conocimiento propio."
+    },
+    {
+      "id": "AF-AG-13-07",
+      "veredicto": "CORRECTA",
+      "nota": "Es la expansión de Cornish-Fisher estándar con S y el exceso de curtosis; fuera de un dominio la función deja de ser monótona (Maillard, 2012). Conocimiento propio."
+    },
+    {
+      "id": "AF-AG-13-08",
+      "veredicto": "CORRECTA",
+      "nota": "Michaud (1989, FAJ) habla del «error maximization»; según Chopra y Ziemba (1993, JPM), los errores en medias pesan ≈10× los de varianzas, y la 1/N es difícil de batir (DeMiguel et al., 2009, RFS). Conocimiento propio."
+    },
+    {
+      "id": "AF-AG-13-09",
+      "veredicto": "CORRECTA",
+      "nota": "Correlación constante: «Honey, I shrunk…» (JPM, 2004; working paper de junio de 2003). Identidad escalada: JMVA (2004). Contracción no lineal: Ann. Stat. (2020). Matiz: mejor citar 2004. Búsqueda web: bse.eu, ideas.repec.org."
+    },
+    {
+      "id": "AF-AG-13-10",
+      "veredicto": "CORRECTA",
+      "nota": "El PSR y el DSR de Bailey y López de Prado (2012, 2014) se calculan con el SR por periodo y T observaciones, sin anualizar. Conocimiento propio."
+    },
+    {
+      "id": "AF-AG-18-01",
+      "veredicto": "NO_VERIFICABLE",
+      "nota": "Es un principio operativo interno del Auditor, no una afirmación técnica contrastable."
+    },
+    {
+      "id": "AF-AG-18-02",
+      "veredicto": "NO_VERIFICABLE",
+      "nota": "Es una regla interna (HT-03, F10)."
+    },
+    {
+      "id": "AF-AG-18-03",
+      "veredicto": "NO_VERIFICABLE",
+      "nota": "Es un principio de auditoría basado en riesgo (análogo a las NIA), formulado como regla interna; no es contrastable con exactitud."
+    },
+    {
+      "id": "AF-AG-18-04",
+      "veredicto": "NO_VERIFICABLE",
+      "nota": "Son criterios internos de evidencia (análogos al «suficiente y adecuada» de la NIA 500), pero se formulan como una convención propia."
+    },
+    {
+      "id": "AF-AG-18-05",
+      "veredicto": "NO_VERIFICABLE",
+      "nota": "Son reglas internas de redacción de ítems (HAL-, LEC-, caducidad de 2 trimestres)."
+    },
+    {
+      "id": "AF-AG-18-06",
+      "veredicto": "NO_VERIFICABLE",
+      "nota": "Es una regla interna de concurrencia sobre los propietarios de F2 y F7–F9."
+    },
+    {
+      "id": "AF-AG-18-07",
+      "veredicto": "CORRECTA",
+      "nota": "Es la ley de Little (1961, Operations Research), L=λW, despejada como W=L/λ. Conocimiento propio."
+    },
+    {
+      "id": "AF-AG-18-08",
+      "veredicto": "CORRECTA",
+      "nota": "La fórmula estándar de la ley de Amdahl (Amdahl, 1967, AFIPS) está bien escrita; además, el ejemplo de 30 % serial da un límite de 3,3×, que es correcto. Conocimiento propio."
+    },
+    {
+      "id": "AF-AG-18-09",
+      "veredicto": "CORRECTA",
+      "nota": "Por la ley de Little, la longitud de cola sola no determina la espera: hay que mirar W y la utilización ρ. Coherente con la teoría de colas (Kleinrock, 1975). Conocimiento propio."
+    },
+    {
+      "id": "AF-AG-18-10",
+      "veredicto": "NO_VERIFICABLE",
+      "nota": "Son indicadores internos de salud del conocimiento (CT-21)."
+    },
+    {
+      "id": "AF-AG-17-01",
+      "veredicto": "NO_VERIFICABLE",
+      "nota": "Son pautas de estilo de redacción e incluyen convenciones internas (RK); no hay afirmación técnica contrastable."
+    },
+    {
+      "id": "AF-AG-17-02",
+      "veredicto": "NO_VERIFICABLE",
+      "nota": "Es una pauta de lenguaje claro y estilo, no una afirmación técnica contrastable."
+    },
+    {
+      "id": "AF-AG-17-03",
+      "veredicto": "CORRECTA",
+      "nota": "Gwillim Law documentó en 2011 la incoherencia del término de frases de Fernández Huerta (LINGUIST List 22.2332, junio de 2011). Szigriszt-Pazos usa palabras/frases. Búsqueda web: listserv.linguistlist.org."
+    },
+    {
+      "id": "AF-AG-17-04",
+      "veredicto": "CORRECTA",
+      "nota": "La escala por tramos de 10 es la de Fernández Huerta (adaptada de Flesch). Los niveles orientativos difieren algo entre fuentes, pero son una simplificación razonable. Conocimiento propio."
+    },
+    {
+      "id": "AF-AG-17-05",
+      "veredicto": "CORRECTA",
+      "nota": "Concuerda con la Ortografía de la RAE (2010): diptongo = abierta + cerrada átona o dos cerradas; hiato = dos abiertas o cerrada tónica con abierta; triptongo = una sílaba. Conocimiento propio."
+    },
+    {
+      "id": "AF-AG-17-06",
+      "veredicto": "CORRECTA",
+      "nota": "La región común o cerramiento (Palmer, 1992; Few) agrupa las tarjetas, y la semejanza agrupa por apariencia (color o forma) en el semáforo. Es una simplificación razonable. Conocimiento propio."
+    },
+    {
+      "id": "AF-AG-17-07",
+      "veredicto": "CORRECTA",
+      "nota": "Crameri, Shephard y Heron (2020), «The misuse of colour in science communication», Nat. Commun. 11:5444, desaconsejan el jet/arcoíris y el contraste rojo-verde. Conocimiento propio."
+    },
+    {
+      "id": "AF-AG-17-08",
+      "veredicto": "NO_VERIFICABLE",
+      "nota": "Es una pauta de estilo interna («nada de decimales»), coherente con la comunicación del riesgo, pero no contrastable."
+    },
+    {
+      "id": "AF-AG-17-09",
+      "veredicto": "NO_VERIFICABLE",
+      "nota": "Es una regla interna de redacción del informe visual."
+    },
+    {
+      "id": "AF-AG-17-10",
+      "veredicto": "NO_VERIFICABLE",
+      "nota": "Es una convención interna de plantillas ({{…}}, REPETIR, Instrucción)."
+    }
+  ]
+}
