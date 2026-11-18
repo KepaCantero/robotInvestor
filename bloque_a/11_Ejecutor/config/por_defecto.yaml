@@ -448,6 +448,17 @@ evaluacion:
   # (T-65, CS-10 de T-53). `dif_ic_min`: diferencia mínima de capacidad ordenadora (IC de Spearman) entre A y E para
   # proponer un ajuste, y `meses_sombra`: duración de la sombra; ninguno figura en el Anexo A ([PROPUESTO], técnico)
   recalibracion_rk: {paso: 0.05, banda_trimestral: 0.05, banda_total: 0.15, dif_ic_min: 0.10, meses_sombra: 3}
+  # T-176 (PB-36) · Bandas de los parámetros CALIBRABLES de F10 que el Evaluador puede proponer ajustar (`proponer_ajuste`).
+  # P-09, umbrales de elegibilidad: Anexo A, «±5/trimestre; ±10 total» (cada umbral; esquema F10 4.3). P-05, candidatas
+  # máximas tras cribado: el Documento 0 no le da banda (esquema F10 4.3: PENDIENTE_OPERADOR); mientras el operador no la
+  # fije, todo cambio es tipo 3 (regla 2 de F10, R23). Un CALIBRABLE que no esté aquí también es PENDIENTE_OPERADOR.
+  bandas_f10:
+    P-09: {estado: DEFINIDA, trimestral: 5, total: 10}
+    P-05: {estado: PENDIENTE_OPERADOR}
+  # T-176 r02 (QA r01, H-05) · `pruebas_regresion` de las propuestas de tipo 3 del Evaluador (esquema F6 4.7): la batería de
+  # regresión de la §6 del Plan de pruebas V3.0 (literal) y las específicas de R18 de su matriz de trazabilidad (§5)
+  bateria_regresion: [PB-01, PB-02, PB-06, PB-08, PB-13, PB-18, PB-20, PB-21, PB-22, PB-23, PB-30, PB-31, PB-36, PB-37, PB-39, PB-49]
+  regresion_r18: [PB-10, PB-34, PB-35, PB-36, PB-50]
   # T-66 · PA-03, muestra efectiva: los certificados exigen n_eff ≥ min_certificar (efecto de diseño de Kish por
   # conglomerados de fecha de resolución; si falta, de emisión) y el IC del BSS sale de un bootstrap por fechas
   min_conglomerados_bootstrap: 10 # fechas distintas mínimas para dar IC del BSS por conglomerados; con menos, sin IC (no certifica)

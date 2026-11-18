@@ -35,6 +35,7 @@ from .calendario import (  # noqa: F401
     _sesiones_entre,
     validar_festivos_ps2,
 )
+from .carga import registrar_carga
 from .configuracion import (
     CLASES,
     HORIZONTES,
@@ -621,6 +622,11 @@ class Bloque:
                               self.cfg)
         self._informe_aprendizaje(res_eval, as_of, run_id, pres_c5)
         self._comunicar_fiabilidad(res_eval, run_id)
+        try:
+            self.elevar_propuestas_tipo3(as_of, run_id)   # T-176 (PB-36): P3-EVAL- por CT-19 a la cola de tipo 3 de HA
+        except Exception as e:  # noqa: BLE001 — no bloquea C1–C3; la P3- sigue sin `elevada_via` y se reintenta
+            self.almacen.incidencia("HERRAMIENTA", f"Propuestas de tipo 3 del Evaluador no elevadas en este ciclo: {e}", "AG-20",
+                                    severidad="Operativa")
         if self.v6 and v6.op(self, "cobertura.registrar"):   # T-101 (idea 4): descartes muestreados cuyo horizonte ya venció
             v6.resolver_contrafactual(self, as_of, run_id)
 
@@ -690,8 +696,7 @@ class Bloque:
             futuros = {c: ex.submit(self._analizar_clase_en_ambito, *args) for c, args in tareas.items()}
             analisis = {c: futuros[c].result() for c in clases}
         presupuesto.liquidar_primas()   # T-88: tras la fase en paralelo, el reparto de las primas de caché ya no depende del orden
-        for orden in self.monitor.evaluar_instancias():
-            self.almacen.escribir("HA", "AG-18", {**orden, "id": self.almacen.nuevo_id(orden["tipo_entrada"]), "run_id": run_id})
+        registrar_carga(self.almacen, self.monitor.evaluar_instancias(), run_id)   # T-178: ORD-, CAR- y P3- si se repite
 
         # T-101 (V6): Prospectiva una vez por ciclo para las finalistas de todos los tipos, en lotes con control de cobertura
         global_v6 = self.v6 and v6.op(self, "prospectiva.global")
@@ -799,6 +804,35 @@ class Bloque:
             run_id=run_id, tipo_mensaje="RETORNO", estado="COMPLETO")
         for f in fue:
             self.almacen.escribir("F6", "AG-20", {"tipo_entrada": "FUE", "id": f["fue_id"], "comunicado_ct19": msg["msg_id"]})
+
+    def elevar_propuestas_tipo3(self, as_of, run_id: str) -> list[str]:
+        """T-176 (PB-36; 12.2 nivel C, 18.1 y esquema F6 4.7): cada P3-EVAL- de F6 que aún no tiene `elevada_via` sale por CT-19
+        del Evaluador al Orquestador (AG-18), que la registra en la cola de tipo 3 de HA como PENDING_OPERATOR, y la P3- de F6
+        anota el msg_id en `elevada_via`. Idempotente: una P3- ya en HA no se duplica; una ya elevada no se vuelve a enviar.
+        T-176 r02 (QA r01): también se eleva la que tiene `elevada_via` pero no está en HA (H-06), y de la lectura de F6 a la
+        última escritura todo va en una sola transacción del almacén (H-04)."""
+        with self.almacen._transaccion():
+            return self._elevar_propuestas_tipo3(as_of, run_id)
+
+    def _elevar_propuestas_tipo3(self, as_of, run_id: str) -> list[str]:
+        en_ha = self.almacen.estado("HA")
+        pendientes = sorted((p for p in self.almacen.estado("F6", as_of, clave="id").values()
+                             if p.get("tipo_entrada") == "P3" and str(p.get("id", "")).startswith("P3-EVAL-")
+                             and (not p.get("elevada_via") or p["id"] not in en_ha)), key=lambda p: p["id"])
+        elevadas = []
+        for p in pendientes:
+            p3 = {k: v for k, v in p.items() if not k.startswith("_") and k not in ("tipo_entrada", "elevada_via")}
+            msg = self.mensajeria.crear("CT-19", "AG-20", "AG-18", {"tipo": "PROPUESTA_TIPO_3", "p3": p3}, run_id=run_id,
+                                        tipo_mensaje="RETORNO", estado="COMPLETO")
+            if p["id"] not in en_ha:
+                self.almacen.escribir("HA", "AG-18", {
+                    "tipo_entrada": "P3", "id": p["id"], "origen": "EVAL", "detectado_por": "AG-20", "objeto": p.get("objeto"),
+                    "motivo": p.get("motivo"), "evidencia": p.get("evidencia"), "impacto": p.get("impacto_esperado"),
+                    "pruebas_regresion": p.get("pruebas_regresion"), "plan_reversion": p.get("plan_reversion"),
+                    "recibida_via": msg["msg_id"], "estado": "PENDING_OPERATOR", "decision_operador": None, "run_id": run_id})
+            self.almacen.escribir("F6", "AG-20", {"tipo_entrada": "P3", "id": p["id"], "elevada_via": msg["msg_id"]})
+            elevadas.append(p["id"])
+        return elevadas
 
     def _reparto(self, tipo: str, clases: list[str], nivel: dict[str, str], presupuesto_override: dict[str, float] | None,
                  tope_ciclo: float) -> dict[str, float]:
@@ -1388,7 +1422,7 @@ class Bloque:
                 ref = self.referencias.por_id(fuente) if fuente.startswith("REF-") else None
                 if p.get("_sin_contraste"):
                     nivel_f, tipo_f, raiz = "C", "SECUNDARIA", fuente
-                elif fuente.startswith("HT-01:") or fuente.startswith("CALC-"):
+                elif fuente.startswith(("HT-01:", "CALC-")):
                     nivel_f, tipo_f, raiz = "A", "PRIMARIA", fuente if fuente.startswith("HT-01:") else f"HT-01:{f['proxy']}"
                 elif ref:
                     nivel_f, tipo_f, raiz = ref["nivel"] or "C", "PRIMARIA" if "primaria" in (ref.get("tipologia") or "").lower() else "SECUNDARIA", fuente

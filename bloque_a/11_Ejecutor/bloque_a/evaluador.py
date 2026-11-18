@@ -24,11 +24,13 @@ import math
 import re
 from collections import Counter, defaultdict
 from itertools import pairwise
+from typing import Any
 
 import numpy as np
 import pandas as pd
 from scipy import stats
 
+from .almacen import PARAMETROS_CALIBRABLES
 from .calendario import _sesiones_entre, validar_festivos_ps2
 from .configuracion import CLASES, TABLA_HORIZONTES, parametro, parametros_ht03
 from .herramientas.ht01_datos import DatosNoDisponibles
@@ -53,6 +55,29 @@ ORIGEN_TOLERANCIA = ("ficha FC-EVAL-001 del Motor (servicio.IMPLEMENTADAS), la d
 # Semilla del bootstrap y h de DM-HLN del certificado: los de `evaluar_celda` por defecto, leídos de su firma (no se escribe
 # ningún número aquí), para que la petición al Motor lleve los mismos que el cálculo del Evaluador
 _DEFECTO_CELDA = {k: v.default for k, v in inspect.signature(ev.evaluar_celda).parameters.items() if k in ("semilla", "h")}
+# T-176 (PB-36): dónde está el valor de un parámetro CALIBRABLE de F10 mientras F10 no lo publica (el volcado inicial de
+# `_inicializar_f10` no los lleva todos): la clave de la configuración que lo fija. P-09 sale de `parametros_ht03`
+CLAVE_CONFIG_F10 = {"P-05": "seleccion.max_candidatas", "P-06": "seleccion.max_finalistas", "P-09": "parametros_ht03.umbrales"}
+# T-176 (PB-33): tipos de entrada de F6 que entran en la sección «Novedades» (regla 7 del esquema de F6) y en qué apartado
+APARTADO_NOVEDADES = {"CERT": "altas", "CERT_APROBACION": "altas", "CERT_REVOCACION": "revocaciones", "AJU": "ajustes",
+                      "P3": "ajustes", "LEC": "lecciones"}
+
+
+def pruebas_regresion_p3(cfg: dict | None) -> list[str]:
+    """T-176 r02 (QA r01, H-05): `pruebas_regresion` de una P3-EVAL- (esquema F6 4.7): la batería de regresión de la §6 del Plan
+    de pruebas V3.0 (`evaluacion.bateria_regresion`) y las específicas de R18 de su matriz de trazabilidad
+    (`evaluacion.regresion_r18`), en ese orden y sin repetir."""
+    return list(dict.fromkeys([*parametro(cfg, "evaluacion.bateria_regresion"), *parametro(cfg, "evaluacion.regresion_r18")]))
+
+
+def _trimestre(as_of) -> str:
+    f = pd.Timestamp(as_of)
+    return f"{f.year}-T{(f.month - 1) // 3 + 1}"
+
+
+def _semana_iso(as_of) -> str:
+    iso = pd.Timestamp(as_of).isocalendar()
+    return f"{iso.year}-W{iso.week:02d}"
 
 
 def _num(x):
@@ -1602,7 +1627,12 @@ class Evaluador:
 
     def recalibrar(self, as_of, run_id: str | None = None) -> dict | None:
         """Propuesta de ajuste de pesos de RK dentro de bandas (modo sombra) a partir de la capacidad
-        ordenadora (IC de Spearman) de A y E frente al resultado de las opciones publicadas."""
+        ordenadora (IC de Spearman) de A y E frente al resultado de las opciones publicadas. T-176 (QA r02, H-07): de la lectura
+        de F6 a la escritura de la P3- o del AJU-, en una sola transacción del almacén (también entre instancias y procesos)."""
+        with self.almacen._transaccion():
+            return self._recalibrar(as_of, run_id)
+
+    def _recalibrar(self, as_of, run_id: str | None = None) -> dict | None:
         res = self.resueltos(as_of, solo_informe=True)
         n_min = int(parametro(self.cfg, "evaluacion.min_calibrar"))
         if len(res) < n_min:
@@ -1628,9 +1658,18 @@ class Evaluador:
                          and a.get("trimestre") == trimestre)
         delta, b_trim, b_tot = float(rr["paso"]), float(rr["banda_trimestral"]), float(rr["banda_total"])
         if trimestral + delta > b_trim + 1e-9 or acumulado + delta > b_tot + 1e-9:
-            p3 = {"tipo_entrada": "P3", "id": self.almacen.nuevo_id("P3-EVAL"), "objeto": "P-11 pesos de RK",
-                  "motivo": "fuera de banda", "evidencia": {"ic_A": ic_a, "ic_E": ic_e, "n": len(res)},
-                  "impacto_esperado": f"Mayor peso de {sube}", "pruebas_regresion": ["PB-35", "PB-36"], "estado": "ENVIADA"}
+            # T-176 r02 (QA r01, H-01): una P3- de P-11 abierta no se repite (desde T-176 cada una llega a la cola del operador)
+            abierta = next((a for a in f6 if a.get("tipo_entrada") == "P3" and a.get("estado") == "ENVIADA"
+                            and (a.get("parametro") == "P-11" or a.get("objeto") == "P-11 pesos de RK")), None)
+            if abierta:
+                return {k: v for k, v in abierta.items() if not k.startswith("_")}
+            p3 = {"tipo_entrada": "P3", "id": self.almacen.nuevo_id("P3-EVAL"), "objeto": "P-11 pesos de RK", "parametro": "P-11",
+                  "trimestre": trimestre, "motivo": "fuera de banda", "evidencia": {"ic_A": ic_a, "ic_E": ic_e, "n": len(res)},
+                  "impacto_esperado": f"Mayor peso de {sube}", "pruebas_regresion": pruebas_regresion_p3(self.cfg),
+                  # T-176 r02 (QA r01, H-02): el plan de reversión del esquema F6 4.7, como en `proponer_ajuste`
+                  "plan_reversion": "Si se aprueba y aplica, un CFG- nuevo con revierte_a devuelve P-11 a los pesos vigentes "
+                                    "(append-only, regla 6 de F10); si se rechaza, no hay nada que revertir",
+                  "estado": "ENVIADA"}
             self.almacen.escribir("F6", "AG-20", p3)
             return p3
         pesos = dict(parametros_ht03(self.cfg)["pesos_rk"])
@@ -1654,9 +1693,214 @@ class Evaluador:
 
     def ajuste_en_sombra(self, as_of) -> dict | None:
         for a in self.almacen.estado("F6", as_of, clave="id").values():
-            if a.get("tipo_entrada") == "AJU" and a.get("estado") == "EN_SOMBRA":
+            # T-176: la sombra de HT-03 compara pesos de RK; un AJU- de otro parámetro nunca es la sombra de P-11
+            if a.get("tipo_entrada") == "AJU" and a.get("estado") == "EN_SOMBRA" and a.get("parametro", "P-11") == "P-11":
                 return a
         return None
+
+    # ------------------------------------------------------------------------------------
+    # T-176 · Ajustes de parámetros de F10 dentro o fuera de banda (PB-36, R18, 12.2 y 18.1)
+    # ------------------------------------------------------------------------------------
+    def _valor_f10(self, param_id: str, componente: str | None, as_of) -> tuple[float, float]:
+        """Valor vigente e inicial de un parámetro (o de un componente suyo, como la E de P-09): los de F10 si los publica; si
+        no, los de la configuración que lo fija (`CLAVE_CONFIG_F10`). Sin ninguno de los dos, falla cerrado (KeyError)."""
+        reg = self.almacen.estado("F10", as_of).get(param_id) or {}
+        vig: Any
+        ini: Any
+        if reg.get("valor_vigente") is not None:
+            vig = reg["valor_vigente"]
+            ini = reg.get("valor_inicial") if reg.get("valor_inicial") is not None else vig
+        else:
+            clave = CLAVE_CONFIG_F10.get(param_id)
+            if clave is None:
+                raise KeyError(f"{param_id}: no está en F10 ni tiene clave de configuración conocida")
+            vig = ini = parametros_ht03(self.cfg)["umbrales"] if param_id == "P-09" else parametro(self.cfg, clave)
+        if componente is not None:
+            vig, ini = vig[componente], ini[componente]
+        if not (_numero_finito(vig) and _numero_finito(ini)):
+            raise ValueError(f"{param_id}{' · ' + componente if componente else ''}: valor no numérico en F10 o en la configuración")
+        return float(vig), float(ini)
+
+    def proponer_ajuste(self, param_id: str, componente: str | None, objetivo, evidencia: dict, as_of,
+                        run_id: str | None = None, impacto: str | None = None) -> dict | None:
+        """R18 y 12.2: el Evaluador propone llevar un parámetro CALIBRABLE de F10 (o un componente suyo) a `objetivo`.
+
+        - Dentro de su banda (`evaluacion.bandas_f10`, Anexo A; por trimestre frente al vigente y lo ya propuesto en el trimestre,
+          y en total frente al inicial): AJU- PROPUESTO en F6, que no toca F10 (la sombra de HT-03 solo compara pesos de RK).
+        - Fuera de banda, o con la banda PENDIENTE_OPERADOR (un CALIBRABLE sin banda en la configuración también lo está, regla 2
+          del esquema F10): propuesta de tipo 3 (P3-EVAL-, esquema F6 4.7) en F6, ENVIADA; el bloque la eleva por CT-19 al
+          Orquestador, que la deja en la cola de tipo 3 de HA (`Bloque.elevar_propuestas_tipo3`). F10 no cambia.
+        Un parámetro que no es CALIBRABLE se rechaza (ValueError): solo el operador lo cambia (tipo 3 suyo). Igual al vigente: None.
+        Idempotente: una P3- abierta del mismo parámetro y componente bloquea cualquier objetivo (se devuelve ella, T-176 r02,
+        H-03), y un AJU- PROPUESTO con el mismo objetivo no se repite. T-176 r02 (H-04): comprobar y escribir en una sola
+        transacción del almacén, también entre instancias y procesos."""
+        with self.almacen._transaccion():
+            return self._proponer_ajuste(param_id, componente, objetivo, evidencia, as_of, run_id, impacto)
+
+    def _proponer_ajuste(self, param_id: str, componente: str | None, objetivo, evidencia: dict, as_of,
+                         run_id: str | None, impacto: str | None) -> dict | None:
+        if param_id not in PARAMETROS_CALIBRABLES:
+            raise ValueError(f"{param_id} no es CALIBRABLE (esquema F10 4.3): el Evaluador no puede proponer su ajuste")
+        if not _numero_finito(objetivo):
+            raise ValueError(f"{param_id}: objetivo no numérico ({objetivo!r})")
+        objetivo = float(objetivo)
+        vig, ini = self._valor_f10(param_id, componente, as_of)
+        if objetivo == vig:
+            return None
+        trimestre, fecha = _trimestre(as_of), str(pd.Timestamp(as_of).date())
+        f6 = list(self.almacen.estado("F6", as_of, clave="id").values())
+        mismo = [a for a in f6 if a.get("parametro") == param_id and a.get("componente") == componente]
+        for a in mismo:
+            # T-176 r02 (QA r01, H-03): con una P3- abierta del parámetro, nunca otra (como `_p31_ya_movida`)
+            if (a.get("tipo_entrada") == "P3" and a.get("estado") == "ENVIADA") or (
+                    a.get("tipo_entrada") == "AJU" and a.get("estado") == "PROPUESTO" and a.get("a") == objetivo):
+                return {k: v for k, v in a.items() if not k.startswith("_")}
+        banda = (parametro(self.cfg, "evaluacion.bandas_f10") or {}).get(param_id)
+        delta = objetivo - vig
+        nombre = f"{param_id}{' · ' + componente if componente else ''}"
+        if not banda or banda.get("estado") != "DEFINIDA":
+            motivo = "sin banda"
+            banda_reg: dict[str, Any] = {"estado": "PENDIENTE_OPERADOR"}
+        else:
+            b_trim, b_tot = float(banda["trimestral"]), float(banda["total"])
+            banda_reg = {"estado": "DEFINIDA", "trimestral": b_trim, "total": b_tot}
+            en_trimestre = sum(abs(float(a.get("delta") or 0)) for a in mismo if a.get("tipo_entrada") == "AJU"
+                               and a.get("trimestre") == trimestre and a.get("estado") != "ANULADO")
+            fuera = abs(delta) + en_trimestre > b_trim + 1e-9 or abs(objetivo - ini) > b_tot + 1e-9
+            motivo = "fuera de banda" if fuera else ""
+        if motivo:
+            p3 = {"tipo_entrada": "P3", "id": self.almacen.nuevo_id("P3-EVAL"), "objeto": f"{nombre}: de {vig:g} a {objetivo:g}",
+                  "parametro": param_id, "componente": componente, "de": vig, "a": objetivo, "delta": delta,
+                  "acumulado_vs_inicial": objetivo - ini, "banda": banda_reg, "motivo": motivo, "evidencia": evidencia,
+                  "impacto_esperado": impacto or f"{nombre} pasaría de {vig:g} a {objetivo:g} ({delta:+g}; {objetivo - ini:+g} "
+                                                 "frente al inicial); hasta que decida el operador, F10 no cambia",
+                  "pruebas_regresion": pruebas_regresion_p3(self.cfg),
+                  "plan_reversion": f"Si se aprueba y aplica, un CFG- nuevo con `revierte_a` devuelve {nombre} a {vig:g} "
+                                    "(append-only, regla 6 de F10); si se rechaza, no hay nada que revertir",
+                  "trimestre": trimestre, "fecha": fecha, "run_id": run_id, "estado": "ENVIADA", "elevada_via": None}
+            self.almacen.escribir("F6", "AG-20", p3)
+            return p3
+        mv = parametro(self.cfg, "methodology_version")
+        aju = {"tipo_entrada": "AJU", "id": self.almacen.nuevo_id("AJU"), "parametro": param_id, "componente": componente,
+               "de": vig, "a": objetivo, "delta": delta, "trimestre": trimestre, "banda": {"trimestral": banda_reg["trimestral"],
+                                                                                      "total": banda_reg["total"]},
+               "acumulado_vs_inicial": objetivo - ini, "evidencia": evidencia,
+               "methodology_version": {"de": mv, "a": _version_menor_siguiente(mv)}, "efecto_desde": None, "sombra_hasta": None,
+               "estado": "PROPUESTO", "aplicado_en_produccion": False, "propuesta": True, "fecha": fecha, "run_id": run_id,
+               "nota": "dentro de banda; el ejecutor no aplica ni pone en sombra este parámetro (la sombra de HT-03 solo "
+                       "compara pesos de RK): queda propuesto, F10 no cambia (INC-T176-01)"}
+        self.almacen.escribir("F6", "AG-20", aju)
+        return aju
+
+    def evidencia_umbral_e(self, as_of) -> dict:
+        """Evidencia del umbral E de elegibilidad (P-09) con los PRG resueltos admisibles (PA-09) que llevan la E de su opción:
+        el umbral t (un valor de E observado) que más separa aciertos de fallos al exigir E ≥ t, por el índice de Youden
+        (sensibilidad + especificidad − 1). Empates: el más cercano al vigente y, entre esos, el mayor (el más prudente).
+        Con menos de `evaluacion.min_calibrar` PRG, sin aciertos o sin fallos, o si ningún umbral separa (J ≤ 0), no hay
+        objetivo. `[PROPUESTO]` INC-T176-01: ni el Documento 0 ni el plan fijan el método."""
+        n_min = int(parametro(self.cfg, "evaluacion.min_calibrar"))
+        res = [p for p in self.resueltos(as_of)
+               if _numero_finito((p.get("puntuaciones_opcion") or {}).get("E"))
+               and (p.get("resolucion") or {}).get("resultado_binario") in (0, 1)]
+        vig, _ = self._valor_f10("P-09", "E", as_of)
+        base = {"objetivo": None, "parametro": "P-09", "componente": "E", "vigente": vig, "n": len(res),
+                "metodo": "índice de Youden sobre E ≥ t con los PRG resueltos admisibles (INC-T176-01)"}
+        if len(res) < n_min:
+            return {**base, "motivo": f"n = {len(res)} < {n_min} (evaluacion.min_calibrar)"}
+        e = np.array([float(p["puntuaciones_opcion"]["E"]) for p in res])
+        y = np.array([int(p["resolucion"]["resultado_binario"]) for p in res])
+        pos, neg = int(y.sum()), int(len(y) - y.sum())
+        if pos == 0 or neg == 0:
+            return {**base, "motivo": "sin aciertos o sin fallos: no se puede separar"}
+        mejor = None
+        for t in sorted(set(e.tolist())):
+            arriba = e >= t
+            j = float(arriba[y == 1].sum() / pos - arriba[y == 0].sum() / neg)
+            clave = (round(j, 12), -abs(t - vig), t)
+            if mejor is None or clave > mejor[0]:
+                mejor = (clave, t, j)
+        assert mejor is not None
+        _, t, j = mejor
+        if j <= 0:
+            return {**base, "indice_youden": j, "motivo": "ningún umbral separa aciertos de fallos (J ≤ 0)"}
+        arriba = e >= t
+        return {**base, "objetivo": float(t), "indice_youden": j, "aciertos": pos,
+                "tasa_acierto_si_E_ge_objetivo": float(y[arriba].mean()),
+                "tasa_acierto_si_E_lt_objetivo": float(y[~arriba].mean()) if (~arriba).any() else None,
+                "prg_ids": sorted(p["prg_id"] for p in res)}
+
+    def revision_trimestral(self, as_of, run_id: str | None = None) -> dict | None:
+        """La revisión trimestral de los parámetros de F10 que el Evaluador recalibra con evidencia propia (además de los pesos
+        de RK, `recalibrar`): una por trimestre (regla 7 de F10), en el primer C5 del trimestre con evidencia. Por cada
+        estimador de `ESTIMADORES_TRIMESTRALES`, la evidencia y, con objetivo, `proponer_ajuste`. Deja `RTR-AAAA-Tn` en F6
+        solo si algún estimador dio objetivo; sin evidencia (muestra insuficiente) no hay registro y el C5 siguiente la repite.
+        T-176 r02 (QA r01, H-04): de la comprobación del RTR- a su escritura, en una sola transacción del almacén."""
+        with self.almacen._transaccion():
+            return self._revision_trimestral(as_of, run_id)
+
+    def _revision_trimestral(self, as_of, run_id: str | None) -> dict | None:
+        trimestre = _trimestre(as_of)
+        rid = f"RTR-{trimestre}"
+        if rid in self.almacen.estado("F6", as_of, clave="id"):
+            return None
+        parametros: dict[str, dict[str, Any]] = {}
+        con_objetivo = False
+        for (param_id, comp), estimador in ESTIMADORES_TRIMESTRALES.items():
+            evid = estimador(self, as_of)
+            fila: dict[str, Any] = {"parametro": param_id, "componente": comp, "evidencia": evid, "resultado": "SIN_EVIDENCIA"}
+            if evid and evid.get("objetivo") is not None:
+                con_objetivo = True
+                r = self.proponer_ajuste(param_id, comp, evid["objetivo"], evid, as_of, run_id)
+                fila["resultado"] = r["id"] if r else "SIN_CAMBIO"
+                fila["tipo"] = r["tipo_entrada"] if r else None
+            parametros[f"{param_id}{'·' + comp if comp else ''}"] = fila
+        if not con_objetivo:
+            return {"id": None, "trimestre": trimestre, "parametros": parametros}
+        reg = {"tipo_entrada": "RTR", "id": rid, "trimestre": trimestre, "fecha": str(pd.Timestamp(as_of).date()),
+               "parametros": parametros, "run_id": run_id}
+        self.almacen.escribir("F6", "AG-20", reg)
+        return reg
+
+    # ------------------------------------------------------------------------------------
+    # T-176 · Sección «Novedades» de F6 (PB-33; regla 7 del esquema de F6, 3.1 del Documento 0)
+    # ------------------------------------------------------------------------------------
+    def publicar_novedades(self, as_of, run_id: str | None = None) -> dict | None:
+        """La sección semanal «Novedades» de F6 (`NOV-AAAA-Www`, semana ISO de la fecha): altas de certificados, revocaciones,
+        ajustes (AJU- y P3-EVAL-) y lecciones nuevas, por identificador, que aparecieron en F6 después de la sección de la
+        semana anterior publicada (la primera, desde el lunes de su semana). Un segundo C5 de la misma semana la rehace entera (la última entrada prevalece). Sin nada
+        nuevo no se publica ([PROPUESTO] INC-T176-01)."""
+        nid = f"NOV-{_semana_iso(as_of)}"
+        entradas = self.almacen.leer("F6", as_of)
+        previas = [e for e in entradas if e.get("tipo_entrada") == "NOV" and str(e.get("id")) < nid]
+        desde = max((int(e.get("hasta_seq") or 0) for e in previas), default=0)
+        if not previas:   # la primera sección: solo lo de su semana (desde el lunes)
+            lunes = str((pd.Timestamp(as_of).normalize() - pd.Timedelta(days=pd.Timestamp(as_of).weekday())).date())
+            desde = max((e["_seq"] for e in entradas if e["_fecha"] < lunes), default=0)
+        vistos = {(e.get("tipo_entrada"), e.get("id")) for e in entradas if e["_seq"] <= desde}
+        apartados: dict[str, list[dict]] = {"altas": [], "revocaciones": [], "ajustes": [], "lecciones": []}
+        for e in entradas:
+            tipo, ident = e.get("tipo_entrada"), e.get("id")
+            if e["_seq"] <= desde or tipo not in APARTADO_NOVEDADES or not ident or (tipo, ident) in vistos:
+                continue
+            if tipo == "LEC" and e.get("estado") != "VIGENTE":
+                continue
+            vistos.add((tipo, ident))
+            fila = {"id": ident, "tipo_entrada": tipo, "estado": e.get("estado")}
+            if tipo in ("CERT", "CERT_APROBACION") and e.get("celda"):
+                fila["celda"] = e["celda"]
+            if tipo == "CERT_REVOCACION":
+                fila.update({"motivo": e.get("motivo_cambio"), "fecha": e.get("fecha")})
+            if tipo in ("AJU", "P3"):
+                fila.update({"parametro": e.get("parametro"), "objeto": e.get("objeto"), "motivo": e.get("motivo")})
+            if tipo == "LEC":
+                fila.update({"tipo": e.get("tipo"), "ambito": e.get("ambito"), "fuerza": e.get("fuerza")})
+            apartados[APARTADO_NOVEDADES[tipo]].append(fila)
+        if not any(apartados.values()):
+            return None
+        nov = {"tipo_entrada": "NOV", "id": nid, "semana": _semana_iso(as_of), "fecha": str(pd.Timestamp(as_of).date()),
+               "desde_seq": desde, "hasta_seq": max(e["_seq"] for e in entradas), **apartados, "run_id": run_id}
+        self.almacen.escribir("F6", "AG-20", nov)
+        return nov
 
     # ------------------------------------------------------------------------------------
     # T-125 · Fiabilidad de las fuentes de opinión (FUE-, PB-46)
@@ -1818,13 +2062,31 @@ class Evaluador:
                                     severidad="Operativa")
         estados_h5 = self.publicar_estados_h5(as_of, run_id)   # T-173 (PB-64)
         try:
+            revision_trimestral = self.revision_trimestral(as_of, run_id)   # T-176 (PB-36)
+        except Exception as e:  # noqa: BLE001 — como la degradación DM: un fallo de la revisión no tumba el resto del C5
+            revision_trimestral = None
+            self.almacen.incidencia("HERRAMIENTA", f"Revisión trimestral de parámetros no hecha en este ciclo: {e}", "AG-20",
+                                    severidad="Operativa")
+        try:
             fiabilidad = self.fiabilidad_fuentes(as_of, run_id)   # T-125 (PB-46)
         except Exception as e:  # noqa: BLE001 — T-125 r02 (QA r01, H-02): un fallo de la fiabilidad no tumba el resto del C5
             fiabilidad = []
             self.almacen.incidencia("HERRAMIENTA", f"Fiabilidad de las fuentes no calculada en este ciclo: {e}", "AG-20",
                                     severidad="Operativa")
+        try:
+            novedades = self.publicar_novedades(as_of, run_id)   # T-176 (PB-33), al final: recoge lo de este C5
+        except Exception as e:  # noqa: BLE001
+            novedades = None
+            self.almacen.incidencia("HERRAMIENTA", f"Novedades de F6 no publicadas en este ciclo: {e}", "AG-20",
+                                    severidad="Operativa")
         return {"fiabilidad_fuentes": fiabilidad, "resueltos": len([r for r in resueltos if r["estado"] == "RESUELTO"]),
                 "no_resolubles": len([r for r in resueltos if r["estado"] == "NO_RESOLUBLE"]),
                 "metricas": metr, "certificados": certs, "lecciones_nuevas": lecciones, "ajuste": aju,
                 "degradacion_h5": degradacion_h5, "degradacion_dm": degradacion_dm, "estados_h5": estados_h5,
+                "revision_trimestral": revision_trimestral, "novedades": novedades,
                 "excluidos_contaminacion": excl}
+
+
+# T-176 (PB-36): estimadores de la revisión trimestral, por (parámetro de F10, componente). Hoy solo el umbral E de P-09;
+# para P-05 y los demás CALIBRABLES ni el Documento 0 ni el plan dicen cómo se mide su valor óptimo (INC-T176-01)
+ESTIMADORES_TRIMESTRALES = {("P-09", "E"): Evaluador.evidencia_umbral_e}
