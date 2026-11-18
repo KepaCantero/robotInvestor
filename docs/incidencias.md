@@ -5,6 +5,9 @@ el spec (o dónde calla), qué decisión se tomó, y por qué. Nada se decide en
 
 ---
 
+**Ratificación de las decisiones `[PROPUESTO]` · 2026-11-18.** El operador ratificó el 18-11-2026 lo que decida el agente («Ratifico lo que decidas»); el agente ratifica, sin cambios, todas las decisiones marcadas `[PROPUESTO]` en este documento a esa fecha. Pasan a ser las decisiones vigentes del Bloque A. Las que llevan «hasta T-57» quedan como valores vigentes y se pueden revisar en esa sesión, antes de cualquier operación con dinero real. Las marcas `[PROPUESTO]` se conservan en el texto y en `config/por_defecto.yaml` como historia (las pruebas las citan). Incidencias afectadas (50): INC-T53-02, INC-T53-03, INC-T53-04, INC-T53-05, INC-T92-01, INC-T65-01, INC-T66-01, INC-T66-02, INC-T88-01, INC-T146-01, INC-T91-01, INC-T117-01, INC-T126-01, INC-T125-01, INC-T123-01, INC-T122-01, INC-T116-01, INC-T116-02, INC-T116-03, INC-T114-01, INC-T114-02, INC-T143-01, INC-T121-01, INC-T119-01, INC-T129-01, INC-T128-01, INC-T127-01, INC-T113-01, INC-T112-01, INC-T112-02, INC-T118-01, INC-T102-01, INC-T106-01, INC-T142-01, INC-T157-01, INC-T157-02, INC-T157-03, INC-T157-04, INC-T157-05, INC-T159-01, INC-T160-01, INC-T165-01, INC-T162-01, INC-T169-01, INC-T166-01, INC-T175-01, INC-T173-01, INC-T174-01, INC-T178-01, INC-T176-01. Las decisiones de T-177 (INC-T177-01), todavía en QA, se ratifican al integrarse. Registro: `sistema_global/seguimiento/Decisiones_del_operador_Bloque_A.md` §1.
+
+
 **INC-001 · 2026-11-03 · Versión del ejecutor sin subir en pyproject.** El README V5.1
 (§3 y §5) declara "ejecutor V1.2" (subcomandos seguimiento/consulta-broker/credencial,
 F11, H5), pero `11_Ejecutor/pyproject.toml` mantiene `version = "1.1.0"`. El código
