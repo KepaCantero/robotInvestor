@@ -1,0 +1,456 @@
+{
+ "lote": 1,
+ "revisor": "claude (revisor independiente)",
+ "veredictos": [
+  {
+   "id": "AF-AG-07-01",
+   "veredicto": "CORRECTA",
+   "nota": "Coincide con la definición EPRA BPR: renta en vigor anualizada menos gastos no recuperables, dividida por el valor bruto de mercado con costes estimados de compra. Conocimiento propio, sin búsqueda web."
+  },
+  {
+   "id": "AF-AG-07-02",
+   "veredicto": "CORRECTA",
+   "nota": "Indexación a IPC con suelos/techos habitual en arrendamientos comerciales europeos; topes legales al alquiler residencial en algunos países (p. ej., España, Alemania). Conocimiento propio, sin búsqueda web."
+  },
+  {
+   "id": "AF-AG-07-03",
+   "veredicto": "CORRECTA",
+   "nota": "Definición estándar de prima/descuento sobre NAV por acción. Conocimiento propio, sin búsqueda web."
+  },
+  {
+   "id": "AF-AG-07-04",
+   "veredicto": "CORRECTA",
+   "nota": "Modelo e inversión de Geltner (1993, JREFE): 1−a = autocorrelación AR(1); a≈0,4–0,5 anual habitual; autocorrelación de 4.º orden en trimestrales por tasaciones anuales. Conocimiento propio, sin búsqueda web."
+  },
+  {
+   "id": "AF-AG-07-05",
+   "veredicto": "CORRECTA",
+   "nota": "Periodos regulatorios de redes de 4–6 años (RIIO y Ofwat 5, España 6 años); la CNMC regula redes eléctricas y de gas en España. Conocimiento propio, sin búsqueda web."
+  },
+  {
+   "id": "AF-AG-07-06",
+   "veredicto": "CORRECTA",
+   "nota": "Pagos por disponibilidad en APP: flujos cuasi renta fija con riesgo de contraparte pública; descripción estándar (OCDE, EPEC). Conocimiento propio, sin búsqueda web."
+  },
+  {
+   "id": "AF-AG-07-07",
+   "veredicto": "CORRECTA",
+   "nota": "Rasgos habituales de infraestructuras (larga duración, indexación, apalancamiento de activo, sensibilidad a tipos reales); la analogía con bonos ligados a inflación es una simplificación común. Conocimiento propio, sin búsqueda web."
+  },
+  {
+   "id": "AF-AG-07-08",
+   "veredicto": "CORRECTA",
+   "nota": "Ley 11/2009 de SOCIMI (reparto obligatorio y cotización) y reglas del IRC/IRS para REIT (reparto ≥90 %, tests de actividad). Conocimiento propio, sin búsqueda web."
+  },
+  {
+   "id": "AF-AG-07-09",
+   "veredicto": "CORRECTA",
+   "nota": "Reglamento (UE) 2023/606, aplicable desde el 10-01-2024: suprime el mínimo de 10 000 EUR, mantiene la idoneidad y permite ELTIF semiabiertos con colchón de liquidez. Conocimiento propio, sin búsqueda web."
+  },
+  {
+   "id": "AF-AG-07-10",
+   "veredicto": "CORRECTA",
+   "nota": "CRREM publica trayectorias por país y tipo de activo alineadas con 1,5 °C; el año de varado es su métrica central. «Métrica estándar» es una simplificación aceptable. Conocimiento propio, sin búsqueda web."
+  },
+  {
+   "id": "AF-AG-09-01",
+   "veredicto": "NO_VERIFICABLE",
+   "nota": "Lista de comprobación de la estrategia de análisis, no una afirmación contrastable. Los términos (curva J, gates, colchón de liquidez) son correctos."
+  },
+  {
+   "id": "AF-AG-09-02",
+   "veredicto": "CORRECTA",
+   "nota": "Curva J estándar (comisiones sobre comprometido, costes, valoración conservadora). Equilibrio hacia los años 3–5 en buyout y más tarde en capital riesgo, coherente con datos de Cambridge Associates y Preqin. Conocimiento propio, sin búsqueda web."
+  },
+  {
+   "id": "AF-AG-09-03",
+   "veredicto": "CORRECTA",
+   "nota": "Metrick y Yasuda (2010, RFS, «The Economics of Private Equity Funds»): ~2/3 de la remuneración esperada es fija. 2/20 con hurdle del 8 % y catch-up, típico. Conocimiento propio, sin búsqueda web."
+  },
+  {
+   "id": "AF-AG-09-04",
+   "veredicto": "CORRECTA",
+   "nota": "Kaplan y Strömberg (2009, JEP) documentan captación procíclica y peores añadas en auges. Robinson y Sensoy (2016, JFE) también tratan la ciclicidad. Simplificación razonable. Conocimiento propio, sin búsqueda web."
+  },
+  {
+   "id": "AF-AG-09-05",
+   "veredicto": "CORRECTA",
+   "nota": "Sesgo de relleno retroactivo de ~1,4 pp (Fung y Hsieh, 2000) a más de 5 pp (Malkiel y Saha, 2005). La corrección habitual elimina los primeros 12–24 meses. Conocimiento propio, sin búsqueda web."
+  },
+  {
+   "id": "AF-AG-09-06",
+   "veredicto": "CORRECTA",
+   "nota": "ELTIF 2.0: suprime el mínimo de 10 000 EUR y el límite del 10 % para patrimonios <500 000 EUR, exige idoneidad, amplía los activos aptos y permite semiabiertos; las RTS se adoptaron en 2025. Conocimiento propio, sin búsqueda web."
+  },
+  {
+   "id": "AF-AG-09-07",
+   "veredicto": "CORRECTA",
+   "nota": "Igual que AF-AG-07-05: periodos regulatorios de 4–6 años y competencia de la CNMC en España. Conocimiento propio, sin búsqueda web."
+  },
+  {
+   "id": "AF-AG-09-08",
+   "veredicto": "CORRECTA",
+   "nota": "Descomposición estándar de la rentabilidad del farmland (renta + revalorización; índice NCREIF Farmland), con volatilidad suavizada por tasación y cobertura de inflación. Conocimiento propio, sin búsqueda web."
+  },
+  {
+   "id": "AF-AG-09-09",
+   "veredicto": "CORRECTA",
+   "nota": "Los artículos 8 y 9 del SFDR son correctos; la oleada de reclasificaciones de art. 9 a art. 8 (2022–2023) afectó a la captación. Conocimiento propio, sin búsqueda web."
+  },
+  {
+   "id": "AF-AG-09-10",
+   "veredicto": "NO_VERIFICABLE",
+   "nota": "Mapa interno de fuentes del sistema (F9, BFA, CT-07, TF-xx): convención del robot, no contrastable con literatura."
+  },
+  {
+   "id": "AF-AG-08-01",
+   "veredicto": "NO_VERIFICABLE",
+   "nota": "Lista de comprobación operativa (funding, base, open interest, liquidaciones), no una afirmación contrastable."
+  },
+  {
+   "id": "AF-AG-08-02",
+   "veredicto": "NO_VERIFICABLE",
+   "nota": "Postura metodológica de valoración (P/S sobre ingresos para el titular frente a TVL). Coherente con la práctica (Token Terminal), pero «solo tienen valor fundamental» es un juicio, no un hecho."
+  },
+  {
+   "id": "AF-AG-08-03",
+   "veredicto": "NO_VERIFICABLE",
+   "nota": "Criterio metodológico del robot (analizar las stablecoins por reservas y regulación); no es contrastable como hecho."
+  },
+  {
+   "id": "AF-AG-08-04",
+   "veredicto": "CORRECTA",
+   "nota": "Daian et al. (2020, IEEE S&P, «Flash Boys 2.0») introducen el MEV (originalmente «miner extractable value») como coste para usuarios. Conocimiento propio, sin búsqueda web."
+  },
+  {
+   "id": "AF-AG-08-05",
+   "veredicto": "CORRECTA",
+   "nota": "Tipo de interés base de 0,01 % por 8 h (Binance, Bybit): 0,03 %/día × 365 ≈ 10,95 % anual. Cálculo verificado. Conocimiento propio, sin búsqueda web."
+  },
+  {
+   "id": "AF-AG-08-06",
+   "veredicto": "CORRECTA",
+   "nota": "Fórmula estándar de base anualizada simple. Conocimiento propio, sin búsqueda web."
+  },
+  {
+   "id": "AF-AG-08-07",
+   "veredicto": "CORRECTA",
+   "nota": "La SEC aprobó los ETF spot de bitcoin el 10-01-2024; los de ether empezaron a cotizar el 23-07-2024 (19b-4 en mayo, S-1 en julio); estándares genéricos de cotización en sept. 2025. Conocimiento propio, sin búsqueda web."
+  },
+  {
+   "id": "AF-AG-08-08",
+   "veredicto": "CORRECTA",
+   "nota": "Un FDV/capitalización alto implica una oferta no circulante grande y presión por desbloqueos; interpretación estándar en tokenómica. Conocimiento propio, sin búsqueda web."
+  },
+  {
+   "id": "AF-AG-08-09",
+   "veredicto": "CORRECTA",
+   "nota": "Mt. Gox (quiebra en 2014), FTX (noviembre de 2022, uso indebido de fondos de clientes) y Celsius (quiebra en julio de 2022). La «referencia» Gox (2014) es un artefacto del extractor. Conocimiento propio, sin búsqueda web."
+  },
+  {
+   "id": "AF-AG-08-10",
+   "veredicto": "CORRECTA",
+   "nota": "Volúmenes de NFT con caída >90 % desde 2021–2022 y wash trading documentado en LooksRare y Blur con incentivos de tokens (informes de Chainalysis). Conocimiento propio, sin búsqueda web."
+  },
+  {
+   "id": "AF-AG-23-01",
+   "veredicto": "NO_VERIFICABLE",
+   "nota": "Taxonomía interna del robot (tipos ESTRATEGIA/SEGMENTO); no contrastable."
+  },
+  {
+   "id": "AF-AG-23-02",
+   "veredicto": "NO_VERIFICABLE",
+   "nota": "Instrucción operativa sobre indicadores. Los índices citados existen (Cboe BXM, PUT y CLL del S&P 500), pero no es una afirmación técnica."
+  },
+  {
+   "id": "AF-AG-23-03",
+   "veredicto": "CORRECTA",
+   "nota": "Dew-Becker, Giglio, Le y Rodríguez (2017, JFE): prima concentrada en plazos cortos. Driessen, Maenhout y Vilkov (2009, JF): prima de correlación. Hay evidencia en otras clases. Conocimiento propio, sin búsqueda web."
+  },
+  {
+   "id": "AF-AG-23-04",
+   "veredicto": "CORRECTA",
+   "nota": "Teoría del almacenamiento: Kaldor (1939, RES), Working (1949, AER), Brennan (1958, AER); con inventarios bajos, alto rendimiento de conveniencia y backwardation. Conocimiento propio, sin búsqueda web."
+  },
+  {
+   "id": "AF-AG-23-05",
+   "veredicto": "CORRECTA",
+   "nota": "Definición estándar de IRS y valoración como diferencia de VP de las patas (Hull). Conocimiento propio, sin búsqueda web."
+  },
+  {
+   "id": "AF-AG-23-06",
+   "veredicto": "CORRECTA",
+   "nota": "TRS y swaps de varianza son OTC bajo ISDA/CSA y en la práctica no accesibles al minorista. Conocimiento propio, sin búsqueda web."
+  },
+  {
+   "id": "AF-AG-23-07",
+   "veredicto": "CORRECTA",
+   "nota": "Base CDS-bono = spread CDS − spread del bono (Z o asset swap); muy negativa en 2008 por tensión de financiación (Bai y Collin-Dufresne). Conocimiento propio, sin búsqueda web."
+  },
+  {
+   "id": "AF-AG-23-08",
+   "veredicto": "CORRECTA",
+   "nota": "Datos verificados: S&P 500 −20,5 % el 19-10-1987; Volmageddon en feb-2018; VIX cerró en 82,69 el 16-03-2020; VIX intradía ≈65 el 05-08-2024 con deshacer del carry del yen. Conocimiento propio, sin búsqueda web."
+  },
+  {
+   "id": "AF-AG-23-09",
+   "veredicto": "CORRECTA",
+   "nota": "Las ECC mitigan el riesgo de contraparte, con márgenes procíclicos en estrés (BIS/CPMI). Conocimiento propio, sin búsqueda web."
+  },
+  {
+   "id": "AF-AG-23-10",
+   "veredicto": "NO_VERIFICABLE",
+   "nota": "Regla práctica interna (historia ≥3–5 años); convención del robot, no contrastable."
+  },
+  {
+   "id": "AF-AG-05-01",
+   "veredicto": "NO_VERIFICABLE",
+   "nota": "Criterio interno de accesibilidad del robot; no contrastable."
+  },
+  {
+   "id": "AF-AG-05-02",
+   "veredicto": "NO_VERIFICABLE",
+   "nota": "Regla interna del sistema (H5, hitos HIT-, Prospectiva); no contrastable con literatura."
+  },
+  {
+   "id": "AF-AG-05-03",
+   "veredicto": "NO_VERIFICABLE",
+   "nota": "Ejemplo ilustrativo interno de criterios de encargo; no contrastable."
+  },
+  {
+   "id": "AF-AG-05-04",
+   "veredicto": "CORRECTA",
+   "nota": "CIP correcta con la convención del prompt (cotizadas por unidad de base). Du, Tepper y Verdelhan (2018, JF) y Avdjiev, Du, Koch y Shin (2019, AER: Insights) existen y son pertinentes. Conocimiento propio, sin búsqueda web."
+  },
+  {
+   "id": "AF-AG-05-05",
+   "veredicto": "CORRECTA",
+   "nota": "PPA relativa estándar (Krugman-Obstfeld), con S en moneda doméstica por extranjera. Conocimiento propio, sin búsqueda web."
+  },
+  {
+   "id": "AF-AG-05-06",
+   "veredicto": "CORRECTA",
+   "nota": "Descomposición estándar del carry: diferencial de tipos + apreciación de la divisa de alto tipo (Burnside et al.). Conocimiento propio, sin búsqueda web."
+  },
+  {
+   "id": "AF-AG-05-07",
+   "veredicto": "CORRECTA",
+   "nota": "Datos verificados: suelo de la BNS en 1,20 (09-2011 a 15-01-2015); intervenciones del MoF en 2022 y 2024; banda de ±2 % del CNY desde 2014; HKD 7,75–7,85; DKK en el MTC II. Conocimiento propio, sin búsqueda web."
+  },
+  {
+   "id": "AF-AG-05-08",
+   "veredicto": "CORRECTA",
+   "nota": "Coincide con las 10 categorías de facto del AREAER del FMI (clasificación de 2009). Conocimiento propio, sin búsqueda web."
+  },
+  {
+   "id": "AF-AG-05-09",
+   "veredicto": "CORRECTA",
+   "nota": "Evans y Lyons (2002, JPE): el flujo de órdenes explica ~60 % de la variación diaria del DEM/USD, frente a poco de los modelos macro. Conocimiento propio, sin búsqueda web."
+  },
+  {
+   "id": "AF-AG-05-10",
+   "veredicto": "NO_VERIFICABLE",
+   "nota": "Mapa interno de fuentes (F7, DOC-A, CT-08, TA-xx); convención del robot."
+  },
+  {
+   "id": "AF-AG-22-01",
+   "veredicto": "NO_VERIFICABLE",
+   "nota": "Pregunta de la lista de comprobación de delimitación; no contrastable."
+  },
+  {
+   "id": "AF-AG-22-02",
+   "veredicto": "NO_VERIFICABLE",
+   "nota": "Instrucción sobre indicadores. HFRI, HFRX e índices de CTA (p. ej., SG CTA) existen, pero no es una afirmación técnica."
+  },
+  {
+   "id": "AF-AG-22-03",
+   "veredicto": "ERRONEA",
+   "nota": "ESMA: RV activa >1,5 %; pasivos y ETF ≈0,6 % de media (solo ETF ≈0,2–0,3 %). Correcto: «≈1,5–2 % frente a ≈0,5–0,6 % de pasivos». Web: esma.europa.eu/node/95133."
+  },
+  {
+   "id": "AF-AG-22-04",
+   "veredicto": "CORRECTA",
+   "nota": "Trampas conocidas de los fondos cerrados: NAV rancio de activos privados, refinanciación con apalancamiento y costes fijos en vehículos pequeños (Lee, Shleifer y Thaler, 1991; práctica de UK investment trusts). Conocimiento propio, sin búsqueda web."
+  },
+  {
+   "id": "AF-AG-22-05",
+   "veredicto": "CORRECTA",
+   "nota": "Las tres citas existen: Fama-French (2010, JF), Barras-Scaillet-Wermers (2010, JF) y Kosowski et al. (2006, JF). La conclusión de que pocos fondos cubren costes es coherente con ellas. Conocimiento propio, sin búsqueda web."
+  },
+  {
+   "id": "AF-AG-22-06",
+   "veredicto": "CORRECTA",
+   "nota": "Sirri y Tufano (1998, JF) y Chevalier y Ellison (1997, JPE): relación flujo-rentabilidad convexa. Conocimiento propio, sin búsqueda web."
+  },
+  {
+   "id": "AF-AG-22-07",
+   "veredicto": "CORRECTA",
+   "nota": "Coval y Stafford (2007, JFE): ventas forzadas con reversión. Lou (2012, RFS): presión de precio inducida por flujos que predice rentabilidades. Conocimiento propio, sin búsqueda web."
+  },
+  {
+   "id": "AF-AG-22-08",
+   "veredicto": "CORRECTA",
+   "nota": "La dispersión P10–P90 intra-categoría es una medida habitual (Morningstar, SPIVA) de la importancia de elegir gestor; inferencia razonable. Conocimiento propio, sin búsqueda web."
+  },
+  {
+   "id": "AF-AG-22-09",
+   "veredicto": "CORRECTA",
+   "nota": "Por CIP, el coste o beneficio de la cobertura de divisa ≈ diferencial de tipos; clases acumulación/distribución e institucionales, correcto. Conocimiento propio, sin búsqueda web."
+  },
+  {
+   "id": "AF-AG-22-10",
+   "veredicto": "CORRECTA",
+   "nota": "La concentración de flujos por plataformas y carteras modelo (rebalanceos en bloque) está documentada en informes del sector (Morningstar). Afirmación cualitativa razonable. Conocimiento propio, sin búsqueda web."
+  },
+  {
+   "id": "AF-AG-24-01",
+   "veredicto": "CORRECTA",
+   "nota": "Euribor de EMMI con metodología híbrida desde 2019, plazos 1s, 1, 3, 6 y 12m; incorpora prima de plazo y crédito bancario. Conocimiento propio, sin búsqueda web."
+  },
+  {
+   "id": "AF-AG-24-02",
+   "veredicto": "CORRECTA",
+   "nota": "Marco de la Fed desde 2021: IORB dentro del rango, ON RRP en el límite inferior y SRF (julio de 2021) en el superior, con rango de 25 pb. Conocimiento propio, sin búsqueda web."
+  },
+  {
+   "id": "AF-AG-24-03",
+   "veredicto": "CORRECTA",
+   "nota": "Contratos existentes: €STR y Euribor 3M (Eurex, ICE), SOFR 1M/3M y fed funds a 30 días (CME), SONIA (ICE, CME); precio = 100 − tipo. Conocimiento propio, sin búsqueda web."
+  },
+  {
+   "id": "AF-AG-24-04",
+   "veredicto": "CORRECTA",
+   "nota": "Coincide con la metodología FedWatch de CME (media ponderada por días del mes de la reunión). Álgebra verificada. Conocimiento propio, sin búsqueda web."
+  },
+  {
+   "id": "AF-AG-24-05",
+   "veredicto": "ERRONEA",
+   "nota": "Exagerada y sin fuente: el propio ejemplo (ACT/360 vs ACT/365 al 3 %) da 4 pb; descuento vs rendimiento al 4 % ≈4–8 pb. Correcto: «unos pocos pb (≈3–10)», sin comparar frecuencias. Cálculo propio."
+  },
+  {
+   "id": "AF-AG-24-06",
+   "veredicto": "CORRECTA",
+   "nota": "Rentabilidad a 7 días de los fondos monetarios (SEC 7-day yield neta en EE. UU., bruta o neta según el proveedor en Europa); comparar neta y con la misma anualización es correcto. Conocimiento propio, sin búsqueda web."
+  },
+  {
+   "id": "AF-AG-24-07",
+   "veredicto": "CORRECTA",
+   "nota": "Directiva 2014/49/UE: 100 000 € por depositante y entidad, reembolso en 7 días hábiles desde el 01-01-2024; en España, el FGD. Conocimiento propio, sin búsqueda web."
+  },
+  {
+   "id": "AF-AG-24-08",
+   "veredicto": "CORRECTA",
+   "nota": "Correcto en sustancia: letras = crédito frente al Tesoro, segregadas del custodio; el exceso sobre 100 000 € es crédito no garantizado; un FMM es patrimonio separado. Conocimiento propio, sin búsqueda web."
+  },
+  {
+   "id": "AF-AG-24-09",
+   "veredicto": "CORRECTA",
+   "nota": "SVB: ~94 % de depósitos no asegurados a cierre de 2022 y ~42 000 M$ retirados el 09-03-2023 (Fed, informe Barr). La «referencia» Directiva 2014 es un artefacto del extractor. Conocimiento propio, sin búsqueda web."
+  },
+  {
+   "id": "AF-AG-24-10",
+   "veredicto": "CORRECTA",
+   "nota": "Exposición neta del prestamista en repo = max(0, E − C·(1 − haircut)), como en el marco de Basilea (CRM), más el riesgo de liquidación. Conocimiento propio, sin búsqueda web."
+  },
+  {
+   "id": "AF-AG-06-01",
+   "veredicto": "NO_VERIFICABLE",
+   "nota": "Etiquetas de régimen y umbral (PMI < 48) propios del robot; convención interna no contrastable."
+  },
+  {
+   "id": "AF-AG-06-02",
+   "veredicto": "NO_VERIFICABLE",
+   "nota": "Pregunta de la lista de comprobación. Las fuentes citadas (AIE, EIA, OPEP, USDA, CONAB, IGC, WBMS, ICSG) existen, pero no es una afirmación técnica."
+  },
+  {
+   "id": "AF-AG-06-03",
+   "veredicto": "NO_VERIFICABLE",
+   "nota": "Pregunta operativa de análisis; no contrastable."
+  },
+  {
+   "id": "AF-AG-06-04",
+   "veredicto": "NO_VERIFICABLE",
+   "nota": "Preguntas modelo para el Bloque B; instrucción interna."
+  },
+  {
+   "id": "AF-AG-06-05",
+   "veredicto": "CORRECTA",
+   "nota": "El S&P GSCI pondera por producción mundial y la energía suele pesar más del 50 % (≈55–60 %; metodología de S&P DJI). Conocimiento propio, sin búsqueda web."
+  },
+  {
+   "id": "AF-AG-06-06",
+   "veredicto": "CORRECTA",
+   "nota": "Ventana de roll del 5.º al 9.º día hábil (GSCI y BCOM). Mou (2011), «Limits to Arbitrage and Commodity Index Investment: Front-Running the Goldman Roll», documento de trabajo, Columbia. Conocimiento propio, sin búsqueda web."
+  },
+  {
+   "id": "AF-AG-06-07",
+   "veredicto": "CORRECTA",
+   "nota": "Indicadores estándar del mercado del cobre. TC/RC spot en mínimos y negativos a finales de 2024 y en 2025, con benchmark 2025 a la baja. Conocimiento propio, sin búsqueda web."
+  },
+  {
+   "id": "AF-AG-06-08",
+   "veredicto": "CORRECTA",
+   "nota": "Las categorías del COT desagregado de la CFTC coinciden exactamente. Conocimiento propio, sin búsqueda web."
+  },
+  {
+   "id": "AF-AG-06-09",
+   "veredicto": "CORRECTA",
+   "nota": "Mecanismo de corrección del mercado (Reglamento (UE) 2022/2578, aplicable desde feb-2023), compras conjuntas (AggregateEU) y objetivos de almacenamiento (Reglamento 2022/1032). Conocimiento propio, sin búsqueda web."
+  },
+  {
+   "id": "AF-AG-06-10",
+   "veredicto": "CORRECTA",
+   "nota": "El EUDR (Reglamento (UE) 2023/1115) cubre cacao, café, soja, palma, caucho, madera y bovino; aplicación aplazada (2024) y en revisión. Conocimiento propio, sin búsqueda web."
+  },
+  {
+   "id": "AF-AG-10-01",
+   "veredicto": "NO_VERIFICABLE",
+   "nota": "Rejilla y límites probabilísticos internos del sistema; convención no contrastable."
+  },
+  {
+   "id": "AF-AG-10-02",
+   "veredicto": "NO_VERIFICABLE",
+   "nota": "Requisito interno de formato (HT-01); no contrastable."
+  },
+  {
+   "id": "AF-AG-10-03",
+   "veredicto": "CORRECTA",
+   "nota": "Klein (2007, HBR, sept., «Performing a Project Premortem»); se apoya en la retrospectiva prospectiva (Mitchell, Russo y Pennington, 1989), que mejora la identificación de causas. Conocimiento propio, sin búsqueda web."
+  },
+  {
+   "id": "AF-AG-10-04",
+   "veredicto": "CORRECTA",
+   "nota": "Tetlock y Gardner (2015) y Mellers et al. (2014, Psychological Science): formación, equipos y agregación mejoraron la precisión; los superprevisores persisten. Conocimiento propio, sin búsqueda web."
+  },
+  {
+   "id": "AF-AG-10-05",
+   "veredicto": "CORRECTA",
+   "nota": "Rendimiento inicial ≈ rentabilidad de una cartera de duración constante a un horizonte ≈2D−1 (Leibowitz et al.; Lozada, 2015). «Del orden de dos veces» es una simplificación aceptable. Conocimiento propio, sin búsqueda web."
+  },
+  {
+   "id": "AF-AG-10-06",
+   "veredicto": "CORRECTA",
+   "nota": "Principio de reflexión para un movimiento browniano sin deriva: P(máx ≥ b) = 2·P(S_T ≥ b); en tiempo discreto es aproximado. Conocimiento propio, sin búsqueda web."
+  },
+  {
+   "id": "AF-AG-10-07",
+   "veredicto": "NO_VERIFICABLE",
+   "nota": "Criterio interno de calidad de un PRG; convención del robot."
+  },
+  {
+   "id": "AF-AG-10-08",
+   "veredicto": "CORRECTA",
+   "nota": "Brier (1950, Monthly Weather Review); forma binaria estándar, 0 perfecto, 0,25 con p = 0,5 constante. Conocimiento propio, sin búsqueda web."
+  },
+  {
+   "id": "AF-AG-10-09",
+   "veredicto": "NO_VERIFICABLE",
+   "nota": "Propuesta interna de referencias de comparación (a ratificar por el operador); convención, no contrastable."
+  },
+  {
+   "id": "AF-AG-10-10",
+   "veredicto": "CORRECTA",
+   "nota": "Axioma de probabilidad: escenarios mutuamente excluyentes y exhaustivos suman 1. Conocimiento propio, sin búsqueda web."
+  }
+ ]
+}

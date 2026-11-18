@@ -1,0 +1,456 @@
+{
+  "lote": 3,
+  "revisor": "claude (revisor independiente)",
+  "veredictos": [
+    {
+      "id": "AF-AG-12-01",
+      "veredicto": "CORRECTA",
+      "nota": "Jaccard |A∩B|/|A∪B| sobre shingles es la definición estándar (Broder 1997; Leskovec, Rajaraman y Ullman, MMDS cap. 3); k = 5 palabras es una elección habitual. Conocimiento propio."
+    },
+    {
+      "id": "AF-AG-12-02",
+      "veredicto": "CORRECTA",
+      "nota": "Umbral de banding t ≈ (1/b)^(1/r) según MMDS cap. 3; (1/20)^(1/5) ≈ 0,549 → 0,55. Minhash de Broder 1997 bien citado. Comprobado a mano."
+    },
+    {
+      "id": "AF-AG-12-03",
+      "veredicto": "CORRECTA",
+      "nota": "SimHash de Charikar (STOC 2002); Manku, Jain y Das Sarma (WWW 2007) usan huellas de 64 bits y k = 3 bits de Hamming para casi duplicados web. Conocimiento propio."
+    },
+    {
+      "id": "AF-AG-12-04",
+      "veredicto": "CORRECTA",
+      "nota": "Definición contable elemental: ejercicio fiscal distinto del natural y trimestres fiscales desfasados (p. ej., Apple, Microsoft). Conocimiento propio."
+    },
+    {
+      "id": "AF-AG-12-05",
+      "veredicto": "CORRECTA",
+      "nota": "Distinción estándar entre índice de precio y de rentabilidad total (reinversión de dividendos/cupones), p. ej., metodologías S&P/MSCI. Conocimiento propio."
+    },
+    {
+      "id": "AF-AG-12-06",
+      "veredicto": "NO_VERIFICABLE",
+      "nota": "Convención interna de serialización del sistema (clave de partición = hash canónico / claim_id); no hay literatura externa con la que contrastarla."
+    },
+    {
+      "id": "AF-AG-12-07",
+      "veredicto": "NO_VERIFICABLE",
+      "nota": "Regla operativa interna de asignación de identificadores EVD-/CLM-; no es una afirmación técnica contrastable."
+    },
+    {
+      "id": "AF-AG-12-08",
+      "veredicto": "NO_VERIFICABLE",
+      "nota": "Taxonomía propia del sistema para tipos de afirmación; no hay una fuente canónica única con la que comparar."
+    },
+    {
+      "id": "AF-AG-12-09",
+      "veredicto": "CORRECTA",
+      "nota": "Coincide con las seis dimensiones de DAMA UK (2013): completitud, unicidad, actualidad, validez, exactitud y coherencia. Conocimiento propio."
+    },
+    {
+      "id": "AF-AG-12-10",
+      "veredicto": "NO_VERIFICABLE",
+      "nota": "Asignación interna de tipos de fuente TF-xx al archivo F9; convención del robot, no contrastable."
+    },
+    {
+      "id": "AF-AG-14-01",
+      "veredicto": "CORRECTA",
+      "nota": "Escalas reales: AJG (Chartered ABS) 4*/4/3, ABDC A*/A, cuartiles SJR/JCR; la equivalencia AJG 3 ≈ ABDC A es habitual. El umbral de «primer nivel» es criterio propio. Conocimiento propio."
+    },
+    {
+      "id": "AF-AG-14-02",
+      "veredicto": "CORRECTA",
+      "nota": "Harvey, Liu y Zhu (2016, RFS) proponen t > 3 para nuevos factores. La penalización de 5 puntos es criterio interno. Conocimiento propio."
+    },
+    {
+      "id": "AF-AG-14-03",
+      "veredicto": "NO_VERIFICABLE",
+      "nota": "OpenAlex sí publica percentiles de citas normalizadas, pero la escala 10/7/5/3/0 y sus cortes son criterio interno de puntuación, no contrastable."
+    },
+    {
+      "id": "AF-AG-14-04",
+      "veredicto": "NO_VERIFICABLE",
+      "nota": "Niveles A–D por Q son convención interna del sistema; no hay fuente externa."
+    },
+    {
+      "id": "AF-AG-14-05",
+      "veredicto": "CORRECTA",
+      "nota": "Índice h (Hirsch 2005): crece con la edad, depende de la base (Harzing y Alakangas, 2016, Scientometrics: GS > Scopus ≈ WoS) y no pondera la posición de autor. Conocimiento propio."
+    },
+    {
+      "id": "AF-AG-14-06",
+      "veredicto": "ERRONEA",
+      "nota": "Referencias reales, pero McLean y Pontiff (2016, JF) hallan rentabilidades un 26 % menores fuera de muestra (≈ un cuarto) y un 58 % menores tras publicarse. Debería decir «en torno a un cuarto» o «26 %»."
+    },
+    {
+      "id": "AF-AG-14-07",
+      "veredicto": "NO_VERIFICABLE",
+      "nota": "Regla operativa interna (BORRAR/RETRACTADA y aviso al Curador); no contrastable."
+    },
+    {
+      "id": "AF-AG-14-08",
+      "veredicto": "CORRECTA",
+      "nota": "SIFT de Mike Caulfield (2019): Stop, Investigate the source, Find better coverage, Trace claims, quotes and media to the original context. Descripción fiel. Conocimiento propio."
+    },
+    {
+      "id": "AF-AG-14-09",
+      "veredicto": "CORRECTA",
+      "nota": "Referencias reales: Ouzzani et al. (2016, Systematic Reviews, Rayyan) y Sandve et al. (2013, PLoS Comput Biol, «Ten simple rules…», incluye guardar resultados intermedios y versiones). Respaldan la regla. Conocimiento propio."
+    },
+    {
+      "id": "AF-AG-14-10",
+      "veredicto": "CORRECTA",
+      "nota": "Las citas fabricadas por LLM están documentadas (p. ej., Walters y Wilder, 2023, Scientific Reports). Conocimiento propio."
+    },
+    {
+      "id": "AF-AG-15-01",
+      "veredicto": "NO_VERIFICABLE",
+      "nota": "Acciones REPARAR/DEGRADAR/BORRAR y sus umbrales (dos barridos, Q < 50, 180 días) son reglas internas del sistema."
+    },
+    {
+      "id": "AF-AG-15-02",
+      "veredicto": "CORRECTA",
+      "nota": "Doble precisión IEEE 754 ≈ 15–17 dígitos; la suma no es asociativa y hay cancelación catastrófica; Goldberg (1991, ACM Computing Surveys) y Higham (2002, 2.ª ed., SIAM) bien citados. Conocimiento propio."
+    },
+    {
+      "id": "AF-AG-15-03",
+      "veredicto": "CORRECTA",
+      "nota": "IC normal correcto; L = 4(T/100)^(2/9) es la regla de Newey y West (1994); Benjamini-Hochberg: mayor k con p(k) ≤ kq/m. Conocimiento propio."
+    },
+    {
+      "id": "AF-AG-15-04",
+      "veredicto": "CORRECTA",
+      "nota": "Hamilton (2018, REStat, «Why you should never use the HP filter») critica el filtro en el extremo de la muestra; regresión espuria de Granger y Newbold (1974). Conocimiento propio."
+    },
+    {
+      "id": "AF-AG-15-05",
+      "veredicto": "CORRECTA",
+      "nota": "Michaud (1989, FAJ) acuña «error maximization»; DeMiguel, Garlappi y Uppal (2009, RFS) muestran que 1/N es difícil de batir. Conocimiento propio."
+    },
+    {
+      "id": "AF-AG-15-06",
+      "veredicto": "CORRECTA",
+      "nota": "Todas las obras existen con esos años y temas (p. ej., Maillard-Roncalli-Teïletche 2010 JPM, ERC; López de Prado 2016 JPM, HRP; Kelly-Pruitt-Su 2019 JFE, IPCA; Feng-Giglio-Xiu 2020 JF). Conocimiento propio."
+    },
+    {
+      "id": "AF-AG-15-07",
+      "veredicto": "CORRECTA",
+      "nota": "Atribuciones correctas (lasso 1996, LSTM 1997, Platt 1999, RF 2001, GBM 2001, Zadrozny-Elkan 2002, Bergmeir-Benítez 2012, XGBoost 2016, Guo 2017, SHAP 2017, Gu-Kelly-Xiu 2020, Kelly-Malamud-Zhou 2024 JF). Conocimiento propio."
+    },
+    {
+      "id": "AF-AG-15-08",
+      "veredicto": "CORRECTA",
+      "nota": "Logística, hazard de Bass f/(1−F) = p + qF, Fisher-Pry y ley de Wright (caída porcentual fija por duplicación de la producción acumulada) son correctas. Conocimiento propio."
+    },
+    {
+      "id": "AF-AG-15-09",
+      "veredicto": "CORRECTA",
+      "nota": "Referencias reales sobre fondos cerrados, ETF apalancados y fondos: LST 1991 JF, Pontiff 1995 JFE, Cherkes-Sagi-Stanton 2009 RFS, Cheng-Madhavan 2009, Avellaneda-Zhang 2010 SIFIN, Carhart 1997, FF 2010, BFM 2018 JF. Conocimiento propio."
+    },
+    {
+      "id": "AF-AG-15-10",
+      "veredicto": "CORRECTA",
+      "nota": "Stigum y Crescenzi (2007, 4.ª ed.), Kuttner (2001, JME), Gürkaynak-Sack-Swanson (2005, IJCB) y Piazzesi-Swanson (2008, JME) existen y tratan mercado monetario/política monetaria. Conocimiento propio."
+    },
+    {
+      "id": "AF-AG-20-01",
+      "veredicto": "NO_VERIFICABLE",
+      "nota": "Umbral n < 30 y texto de la nota son convención interna de presentación; no contrastable."
+    },
+    {
+      "id": "AF-AG-20-02",
+      "veredicto": "NO_VERIFICABLE",
+      "nota": "Definición interna del universo (F2, CLM-, Curador/Buscador); convención del sistema."
+    },
+    {
+      "id": "AF-AG-20-03",
+      "veredicto": "CORRECTA",
+      "nota": "Las cuatro preguntas del After-Action Review (US Army: qué se esperaba, qué pasó, por qué, qué mantener/cambiar) son correctas; el umbral de −1 desviación típica es criterio interno. Conocimiento propio."
+    },
+    {
+      "id": "AF-AG-20-04",
+      "veredicto": "CORRECTA",
+      "nota": "Regla esférica binaria p_o/√(p² + (1−p)²): estrictamente propia y poco usada (Gneiting y Raftery, 2007). Conocimiento propio."
+    },
+    {
+      "id": "AF-AG-20-05",
+      "veredicto": "CORRECTA",
+      "nota": "Pérdida pinball (Koenker y Bassett, 1978): τ(y−q) si y ≥ q; (1−τ)(q−y) si y < q. Correcta. Conocimiento propio."
+    },
+    {
+      "id": "AF-AG-20-06",
+      "veredicto": "CORRECTA",
+      "nota": "Bröcker (2012, Climate Dynamics 39) muestra que los estimadores empíricos de fiabilidad y resolución están sesgados al alza; términos intra-bin (Stephenson et al., 2008). Título correcto. Conocimiento propio."
+    },
+    {
+      "id": "AF-AG-20-07",
+      "veredicto": "CORRECTA",
+      "nota": "PIT de Dawid (1984, JRSS A) y Diebold-Gunther-Tay (1998, IER): u_t iid U(0,1); forma de U = infradispersión/sobreconfianza; campana = sobredispersión. Conocimiento propio."
+    },
+    {
+      "id": "AF-AG-20-08",
+      "veredicto": "CORRECTA",
+      "nota": "Bootstrap emparejado por índices es el procedimiento estándar para diferencias de puntuación; Efron (1987, JASA) existe. El mínimo de 2 000/10 000 réplicas es convención interna razonable (Efron-Tibshirani piden ≥ 1 000). Conocimiento propio."
+    },
+    {
+      "id": "AF-AG-20-09",
+      "veredicto": "CORRECTA",
+      "nota": "Recalculado: (1,645·0,5 + 0,8416·√0,24)/0,10 = 12,35 → n ≈ 152,4 ≈ 153 (y 617 para p_1 = 0,55). Cálculo propio."
+    },
+    {
+      "id": "AF-AG-20-10",
+      "veredicto": "CORRECTA",
+      "nota": "Evaluar solo condicionales cumplidos sin informar de los no activados introduce sesgo de selección; criterio metodológico coherente con la literatura de evaluación de pronósticos condicionales. Conocimiento propio."
+    },
+    {
+      "id": "AF-MC-01-01",
+      "veredicto": "CORRECTA",
+      "nota": "Definiciones estándar de rentabilidad simple, logarítmica, acumulada y de cartera con pesos iniciales (p. ej., Campbell, Lo y MacKinlay, 1997). Conocimiento propio."
+    },
+    {
+      "id": "AF-MC-01-02",
+      "veredicto": "CORRECTA",
+      "nota": "CAGR estándar; no está definida con V_i ≤ 0 o cambio de signo (raíz de número negativo). Conocimiento propio."
+    },
+    {
+      "id": "AF-MC-01-03",
+      "veredicto": "CORRECTA",
+      "nota": "DPI, RVPI y TVPI = DPI + RVPI sobre capital desembolsado (ILPA). Conocimiento propio."
+    },
+    {
+      "id": "AF-MC-01-04",
+      "veredicto": "CORRECTA",
+      "nota": "Gredil, Griffiths y Stucke (2014, SSRN, «Benchmarking Private Equity: The Direct Alpha Method»): TIR de flujos capitalizados al índice; alfa continua ln(1+a). Conocimiento propio."
+    },
+    {
+      "id": "AF-MC-01-05",
+      "veredicto": "ERRONEA",
+      "nota": "Para dos grupos el tamaño por grupo es n ≈ 2·[(z_{1−α/2} + z_{1−β})σ/δ]²; la fórmula sin el factor 2 es la de una muestra. d de Cohen correcta. Conocimiento propio (Chow et al., Sample Size Calculations)."
+    },
+    {
+      "id": "AF-MC-01-06",
+      "veredicto": "CORRECTA",
+      "nota": "Propiedades estándar de min-max, z, z robusto (mediana/MAD) y rango percentil (OCDE/JRC, Handbook on Constructing Composite Indicators, 2008). Conocimiento propio."
+    },
+    {
+      "id": "AF-MC-01-07",
+      "veredicto": "NO_VERIFICABLE",
+      "nota": "Regla de uso interna (a petición, conteos del corpus registrado); no contiene una afirmación técnica contrastable."
+    },
+    {
+      "id": "AF-MC-01-08",
+      "veredicto": "CORRECTA",
+      "nota": "TD = R_fondo − R_índice y TE anualizado = σ(R_v − R_i)·√m con m periodos al año (definición estándar, p. ej., ESMA/UCITS). Conocimiento propio."
+    },
+    {
+      "id": "AF-MC-01-09",
+      "veredicto": "CORRECTA",
+      "nota": "Elton, Gruber y Blake (1996, RFS) estiman ≈ 0,9 pp/año de sesgo de supervivencia; Fung y Hsieh (2000, JFQA) tratan el relleno retrospectivo eliminando los primeros meses (incubación mediana ≈ 1 año). Conocimiento propio."
+    },
+    {
+      "id": "AF-MC-01-10",
+      "veredicto": "NO_VERIFICABLE",
+      "nota": "Reglas de la plantilla interna HT-03 (pesos 0,45/0,35/0,20, redondeos); convención del sistema."
+    },
+    {
+      "id": "AF-MC-02-01",
+      "veredicto": "NO_VERIFICABLE",
+      "nota": "Elección de frecuencia por horizonte H1–H4 es convención interna; usar datos semanales por el trading asíncrono es práctica habitual, pero el conjunto no es contrastable."
+    },
+    {
+      "id": "AF-MC-02-02",
+      "veredicto": "CORRECTA",
+      "nota": "auto.arima de Hyndman y Khandakar (2008, JSS): AICc, búsqueda escalonada y d por pruebas KPSS sucesivas. Conocimiento propio."
+    },
+    {
+      "id": "AF-MC-02-03",
+      "veredicto": "CORRECTA",
+      "nota": "SES y Holt amortiguado correctos; Hyndman y Athanasopoulos (FPP) recomiendan φ entre 0,8 y 0,98. Conocimiento propio."
+    },
+    {
+      "id": "AF-MC-02-04",
+      "veredicto": "CORRECTA",
+      "nota": "Hyndman y Koehler (2006): MASE < 1 indica mejor que el ingenuo de un paso dentro de muestra. Simplificación razonable; ojo: no garantiza batir al ingenuo a horizonte h fuera de muestra. Conocimiento propio."
+    },
+    {
+      "id": "AF-MC-02-05",
+      "veredicto": "CORRECTA",
+      "nota": "Bai y Perron (1998, 2003): recorte ε = 0,15, UDmax, sup-F(ℓ+1|ℓ) secuencial, selección por BIC/LWZ, IC asimétricos de las fechas. Conocimiento propio."
+    },
+    {
+      "id": "AF-MC-02-06",
+      "veredicto": "CORRECTA",
+      "nota": "RCM de Ang y Bekaert (2002): 400·(1/T)·Σp_t(1−p_t) con 2 estados, 0 nítido y 100 indeterminado. El corte < 50 es orientativo. Conocimiento propio."
+    },
+    {
+      "id": "AF-MC-02-07",
+      "veredicto": "CORRECTA",
+      "nota": "RiskMetrics (J.P. Morgan, 1996): λ = 0,94 diario y 0,97 mensual; un λ común garantiza matriz semidefinida positiva. Conocimiento propio."
+    },
+    {
+      "id": "AF-MC-02-08",
+      "veredicto": "CORRECTA",
+      "nota": "Semivida ln 0,5/ln(α+β); con 0,98 → 0,6931/0,0202 ≈ 34,3 sesiones. Cálculo propio."
+    },
+    {
+      "id": "AF-MC-02-09",
+      "veredicto": "CORRECTA",
+      "nota": "Trampas correctas y conocidas: regresión espuria (Granger-Newbold 1974), HP en extremo (Hamilton 2018), escalado √h inválido con reversión, convención 252/365. Conocimiento propio."
+    },
+    {
+      "id": "AF-MC-02-10",
+      "veredicto": "CORRECTA",
+      "nota": "Working (1949, AER, «The Theory of Price of Storage»): inventario bajo ↔ rendimiento de conveniencia alto y backwardation. Conocimiento propio."
+    },
+    {
+      "id": "AF-MC-03-01",
+      "veredicto": "CORRECTA",
+      "nota": "Sesgo de Stambaugh (1999): E[β̂−β] = (σ_uv/σ²_v)·E[ρ̂−ρ], con sesgo de Kendall −(1+3ρ)/T; IVX (Kostakis, Magdalinos y Stamatogiannis, 2015). Conocimiento propio."
+    },
+    {
+      "id": "AF-MC-03-02",
+      "veredicto": "CORRECTA",
+      "nota": "Reglas prácticas estándar: Cook > 4/n y apalancamiento > 2k/n (Belsley, Kuh y Welsch, 1980). Conocimiento propio."
+    },
+    {
+      "id": "AF-MC-03-03",
+      "veredicto": "CORRECTA",
+      "nota": "RESET de Ramsey (1969), F/LR para anidados, AIC/BIC o Vuong (1989) para no anidados. Conocimiento propio."
+    },
+    {
+      "id": "AF-MC-03-04",
+      "veredicto": "CORRECTA",
+      "nota": "Sesgo de Nickell (1981) ≈ −(1+ρ)/(T−1) con N grande; Arellano-Bond/Blundell-Bond con Hansen y AR(2). Conocimiento propio."
+    },
+    {
+      "id": "AF-MC-03-05",
+      "veredicto": "CORRECTA",
+      "nota": "Definición estándar de causalidad de Granger como prueba de Wald conjunta en un VAR estacionario (Hamilton, 1994; Lütkepohl, 2005). Conocimiento propio."
+    },
+    {
+      "id": "AF-MC-03-06",
+      "veredicto": "CORRECTA",
+      "nota": "Problema del TWFE escalonado (Goodman-Bacon 2021 JoE; pesos negativos formalizados también por de Chaisemartin-D'Haultfœuille 2020 AER) y estimadores alternativos con años correctos. Conocimiento propio."
+    },
+    {
+      "id": "AF-MC-03-07",
+      "veredicto": "CORRECTA",
+      "nota": "PCA estandarizada, Bai-Ng (2002), Marchenko-Pastur; nivel-pendiente-curvatura explican > 95 % (Litterman y Scheinkman, 1991); signo arbitrario. Conocimiento propio."
+    },
+    {
+      "id": "AF-MC-03-08",
+      "veredicto": "CORRECTA",
+      "nota": "Brunnermeier, Nagel y Pedersen (2008, NBER Macro Annual, «Carry Trades and Currency Crashes») y Lustig, Roussanov y Verdelhan (2011, RFS). Bien descritos. Conocimiento propio."
+    },
+    {
+      "id": "AF-MC-03-09",
+      "veredicto": "CORRECTA",
+      "nota": "Giannone, Reichlin y Small (2008, JME): factores dinámicos con panel irregular; ecuaciones puente y MIDAS (Ghysels et al.). Conocimiento propio."
+    },
+    {
+      "id": "AF-MC-03-10",
+      "veredicto": "CORRECTA",
+      "nota": "Alcances 1–3 del GHG Protocol; WACI = Σ w_i·emisiones/ingresos es la métrica TCFD (2017); PCAF atribuye por EVIC. Conocimiento propio."
+    },
+    {
+      "id": "AF-MC-04-01",
+      "veredicto": "CORRECTA",
+      "nota": "Ajustar sobre la acumulada induce errores autocorrelacionados e incertidumbre subestimada; logit ln[y/(K−y)] = r(t−t0) es lineal si K es conocido. Conocimiento propio (Meade e Islam, 2006)."
+    },
+    {
+      "id": "AF-MC-04-02",
+      "veredicto": "CORRECTA",
+      "nota": "La ley de Metcalfe carece de respaldo robusto (Briscoe, Odlyzko y Tilly, 2006, proponen n·log n); los ajustes favorables son discutidos. Conocimiento propio."
+    },
+    {
+      "id": "AF-MC-04-03",
+      "veredicto": "CORRECTA",
+      "nota": "Fórmula de LCOE (costes descontados / energía descontada) y E = P·8 760·FC estándar (IEA/NREL). Conocimiento propio."
+    },
+    {
+      "id": "AF-MC-04-04",
+      "veredicto": "CORRECTA",
+      "nota": "Inversa de Leontief (I − A)^{−1} como matriz de multiplicadores input-output (Miller y Blair). Conocimiento propio."
+    },
+    {
+      "id": "AF-MC-04-05",
+      "veredicto": "CORRECTA",
+      "nota": "Coherente con la planificación por escenarios (Schwartz; Van der Heijden; análisis de consistencia morfológica): 2–4 impulsores clave e indicadores adelantados. Conocimiento propio."
+    },
+    {
+      "id": "AF-MC-04-06",
+      "veredicto": "CORRECTA",
+      "nota": "Descripción estándar del diagrama de tornado (sensibilidad de un factor a la vez, ordenado por rango). Conocimiento propio."
+    },
+    {
+      "id": "AF-MC-04-07",
+      "veredicto": "CORRECTA",
+      "nota": "Morris (1991) y Campolongo et al. (2007, μ*): coste r(k+1); r 10–20 y p 4–8 niveles dentro de lo recomendado (Saltelli et al., 2008). Conocimiento propio."
+    },
+    {
+      "id": "AF-MC-04-08",
+      "veredicto": "CORRECTA",
+      "nota": "Kahneman y Lovallo (1993, Management Science) y Flyvbjerg (2006, PMJ); los pasos y la contracción hacia la clase según la predictibilidad siguen a Kahneman y Tversky (1979). Conocimiento propio."
+    },
+    {
+      "id": "AF-MC-04-09",
+      "veredicto": "CORRECTA",
+      "nota": "Scheffer et al. (2009, Nature): aumento de AR(1) y varianza por frenado crítico; tau de Kendall con sustitutos (Dakos et al., 2012). Conocimiento propio."
+    },
+    {
+      "id": "AF-MC-04-10",
+      "veredicto": "CORRECTA",
+      "nota": "Escenarios AIE (STEPS, APS, NZE) y NGFS (ordenado, desordenado, hot house) son condicionales; Way et al. (2022, Joule) documentan la infraestimación reiterada de la solar por la AIE. Conocimiento propio."
+    },
+    {
+      "id": "AF-MC-05-01",
+      "veredicto": "CORRECTA",
+      "nota": "√(0,05·0,95/10 000) = 0,00218 ≈ 0,0022. Cálculo propio."
+    },
+    {
+      "id": "AF-MC-05-02",
+      "veredicto": "CORRECTA",
+      "nota": "Varianza asintótica del cuantil muestral √(q(1−q)/N)/f(x_q) (Serfling, 1980; Glasserman, 2004). Conocimiento propio."
+    },
+    {
+      "id": "AF-MC-05-03",
+      "veredicto": "CORRECTA",
+      "nota": "Sklar y coeficientes de cola correctos (McNeil, Frey y Embrechts, 2005); con ν = 4, ρ = 0,5: 2·t_5(−1,291) ≈ 0,25. Cálculo propio."
+    },
+    {
+      "id": "AF-MC-05-04",
+      "veredicto": "CORRECTA",
+      "nota": "Pseudo-observaciones R/(n+1) y máxima verosimilitud canónica (Genest et al., 1995); inversiones de tau: sin(πτ/2), 2τ/(1−τ), 1/(1−τ). Conocimiento propio."
+    },
+    {
+      "id": "AF-MC-05-05",
+      "veredicto": "CORRECTA",
+      "nota": "Para el movimiento browniano con deriva (log-GBM) la probabilidad de alcanzar una barrera tiene forma cerrada por reflexión/Girsanov (Shreve, 2004). Conocimiento propio."
+    },
+    {
+      "id": "AF-MC-05-06",
+      "veredicto": "CORRECTA",
+      "nota": "Ley de la varianza total Var = E[Var|θ] + Var(E[·|θ]): componente aleatoria frente a paramétrica. Conocimiento propio."
+    },
+    {
+      "id": "AF-MC-05-07",
+      "veredicto": "NO_VERIFICABLE",
+      "nota": "Recomendación operativa interna sobre qué entregar (referencia no condicional con la misma semilla); no es una afirmación técnica contrastable."
+    },
+    {
+      "id": "AF-MC-05-08",
+      "veredicto": "CORRECTA",
+      "nota": "Fórmulas de la normal multivariante condicionada (media y complemento de Schur) correctas. Conocimiento propio."
+    },
+    {
+      "id": "AF-MC-05-09",
+      "veredicto": "CORRECTA",
+      "nota": "Pástor y Stambaugh (2012, JF, «Are Stocks Really Less Volatile in the Long Run?»): la incertidumbre paramétrica eleva la varianza predictiva a largo plazo. Conocimiento propio."
+    },
+    {
+      "id": "AF-MC-05-10",
+      "veredicto": "CORRECTA",
+      "nota": "Con reequilibrio continuo bajo GBM el arrastre logarítmico es ½(L²−L)σ²T (Avellaneda y Zhang, 2010; Cheng y Madhavan, 2009); financiación (L−1)rT como aproximación. Conocimiento propio."
+    }
+  ]
+}

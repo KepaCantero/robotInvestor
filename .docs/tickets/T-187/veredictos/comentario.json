@@ -1,0 +1,76 @@
+{
+ "ticket": "T-187",
+ "prueba": "PB-51",
+ "paso": 3,
+ "uso": "Comentario del contraste, escrito por quien implementa a partir de las notas de los revisores (lote_1.json a lote_4.json). Cada errata lleva «cita_nota» y cada caso dudoso su cita en «dudosas_cita_nota»: un fragmento literal de la nota del revisor que lo sostiene. El script comprueba que las erratas son exactamente las ERRONEA, que los casos dudosos son exactamente las CORRECTA con matiz en la nota (criterio de abajo), que cada «cita_nota» está en la nota, que una «discutible» lo es según la nota de su revisor y que los casos de la sensibilidad son ERRONEA; si no, termina con 2.",
+ "erratas": {
+  "AF-AG-22-03": {
+   "error": "Los informes de ESMA dan para los fondos UCITS activos de renta variable más del 1,5 % anual y para los pasivos y ETF en torno al 0,6 % de media (solo ETF, 0,2–0,3 %); el intervalo 1,3–1,6 % frente a 0,2–0,4 % no coincide.",
+   "correccion": "«del orden de 1,5–2 % anual frente a 0,5–0,6 % de los fondos pasivos»",
+   "cita_nota": "Correcto: «≈1,5–2 % frente a ≈0,5–0,6 % de pasivos»"
+  },
+  "AF-AG-24-05": {
+   "error": "Cifra exagerada y sin fuente: el ejemplo del propio prompt (ACT/360 frente a ACT/365 al 3 %) da 4 pb, y descuento frente a rendimiento al 4 %, unos 4–8 pb.",
+   "correccion": "«produce errores de unos pocos pb (≈ 3–10)», sin comparar frecuencias",
+   "cita_nota": "Correcto: «unos pocos pb (≈3–10)», sin comparar frecuencias"
+  },
+  "AF-AG-25-04": {
+   "error": "Gürkaynak, Sack y Wright (2010) ajustan curvas de los TIPS suavizadas (Svensson), no un modelo afín conjunto nominal-real; Abrahams, Adrian, Crump, Moench y Yu (2016) sí lo es.",
+   "correccion": "Sustituir la segunda cita por D'Amico, Kim y Wei (2018).",
+   "cita_nota": "Sustituir por D'Amico, Kim y Wei (2018)"
+  },
+  "AF-AG-25-08": {
+   "error": "Vencimiento de la opción × plazo del swap forma la matriz (o superficie) de volatilidad de las swaptions; el «cubo» añade la tercera dimensión, el strike. Lo del MOVE es correcto.",
+   "correccion": "«forma la matriz (o superficie) de volatilidad de swaptions»; el cubo, con el strike",
+   "cita_nota": "Vencimiento × plazo forma la matriz (o superficie) de volatilidad de swaptions"
+  },
+  "AF-AG-02-09": {
+   "error": "Meucci (2009) define el número efectivo de apuestas como la exponencial de la entropía de la distribución de las contribuciones al riesgo, no como la entropía.",
+   "correccion": "«exponencial de la entropía…»: N = exp(−Σ p·ln p)",
+   "cita_nota": "N = exp(−Σ p ln p), no la entropía"
+  },
+  "AF-AG-19-07": {
+   "error": "Año de la cita: la PBO de Bailey, Borwein, López de Prado y Zhu se publicó en el Journal of Computational Finance 20(4) en 2017 (preprints de 2013–2015). El Sharpe deflactado de 2014 en el JPM es correcto.",
+   "correccion": "«Bailey, Borwein, López de Prado y Zhu, 2017»",
+   "cita_nota": "se publicó en Journal of Computational Finance 20(4), 2017"
+  },
+  "AF-AG-16-03": {
+   "error": "Tetlock (2005) halló que los expertos quedaban por debajo de los algoritmos de extrapolación simple y apenas superaban al azar, no «poco mejor que reglas simples».",
+   "correccion": "Decir lo que halló: por debajo de los algoritmos de extrapolación simple y apenas por encima del azar (la nota no propone otra redacción).",
+   "cita_nota": "quedaban por DEBAJO de algoritmos de extrapolación simple y apenas superaban al azar"
+  },
+  "AF-AG-14-06": {
+   "error": "McLean y Pontiff (2016) hallan rentabilidades un 26 % menores fuera de muestra (en torno a un cuarto) y un 58 % menores tras publicarse, no «en torno a un tercio». Las demás referencias de la frase son reales.",
+   "correccion": "«en torno a un cuarto» o «26 %»",
+   "cita_nota": "Debería decir «en torno a un cuarto» o «26 %»"
+  },
+  "AF-MC-01-05": {
+   "error": "Para dos grupos, el tamaño por grupo lleva un factor 2; la fórmula sin él es la de una muestra. La d de Cohen es correcta.",
+   "correccion": "`n ≈ 2·[(z_{1−α/2} + z_{1−β})σ/δ]²` por grupo",
+   "cita_nota": "la fórmula sin el factor 2 es la de una muestra"
+  }
+ },
+ "criterio_dudosas": "CORRECTA cuya nota trae un matiz explícito («matiz», «exagera», «difieren» u «ojo»; `RE_MATIZ` del script).",
+ "dudosas": {
+  "AF-MC-02-04": "MASE < 1 es mejor que el ingenuo de un paso dentro de muestra; no garantiza batir al ingenuo a horizonte h fuera de muestra.",
+  "AF-MC-06-02": "Bergmeir, Hyndman y Koo (2018) prueban la validez del k-fold en modelos autorregresivos puros con errores incorrelados; el «solo» exagera algo.",
+  "AF-MC-07-10": "Quien publica los escenarios de estrés de la Fed es la Junta de Gobernadores, no un «Banco de la Reserva Federal».",
+  "AF-AG-13-09": "Ledoit y Wolf: el objetivo de correlación constante se publicó en el JPM en 2004 (documento de trabajo de 2003); mejor citar 2004.",
+  "AF-AG-17-04": "Los niveles orientativos de la escala de Fernández Huerta difieren algo entre fuentes."
+ },
+ "dudosas_cita_nota": {
+  "AF-MC-02-04": "ojo: no garantiza batir al ingenuo a horizonte h fuera de muestra",
+  "AF-MC-06-02": "El «solo» exagera algo, pero es fiel al resultado",
+  "AF-MC-07-10": "Matiz: quien los publica es la Junta de Gobernadores de la Fed",
+  "AF-AG-13-09": "Matiz: mejor citar 2004",
+  "AF-AG-17-04": "Los niveles orientativos difieren algo entre fuentes"
+ },
+ "discutibles": [],
+ "sensibilidad": {
+  "ids": [
+   "AF-AG-22-03",
+   "AF-AG-24-05"
+  ],
+  "motivo": "Los elige quien escribe el comentario, no los revisores (ninguna nota las llama discutibles): son las dos ERRONEA que discuten la magnitud de un intervalo numérico y no un concepto, una cita o una fórmula; la QA r01 no pudo confirmar ni refutar AF-AG-22-03 con una búsqueda."
+ }
+}

@@ -589,10 +589,17 @@
   "no_comprueba": "La revisión mensual en el calendario real: el reloj es simulado (el primer C5 de cada mes hace la revisión). Las muestras mínimas (`evaluacion.min_calibrar` sobre n_eff y `evaluacion.min_conglomerados_bootstrap`) y la periodicidad mensual de 12.2 no figuran en el Anexo A ([PROPUESTO] INC-T173-01); el α (`evaluacion.alfa_holm`) con Holm sobre la familia fija de la revisión es decisión del operador por delegación (17-11-2026, INC-T173-01)."
  },
  "PB-51": {
-  "cobertura": "DOCUMENTAL",
-  "pruebas": [],
-  "comprueba": "",
-  "no_comprueba": "Revisión documental de los prompts de sistema; no es una prueba del ejecutor."
+  "cobertura": "PARCIAL",
+  "pruebas": [
+   "11_Ejecutor/tests/test_t187_pb51.py::test_pb51_el_informe_y_la_muestra_guardados_son_los_del_corpus_y_los_veredictos_actuales",
+   "11_Ejecutor/tests/test_t187_pb51.py::test_pb51_paso_1_todos_los_prompts_con_las_secciones_del_anexo_g",
+   "11_Ejecutor/tests/test_t187_pb51.py::test_pb51_paso_2_seccion_10_por_areas_con_formulas_y_referencias_sin_doi_invalidos",
+   "11_Ejecutor/tests/test_t187_pb51.py::test_pb51_paso_3_al_menos_95_por_ciento_de_las_verificables_correctas",
+   "11_Ejecutor/tests/test_t187_pb51.py::test_pb51_tamanos_dentro_de_las_orientaciones_escritas",
+   "11_Ejecutor/tests/test_t187_pb51.py::test_pb51_fila_del_mapa_superada_en_parte"
+  ],
+  "comprueba": "Revisión documental con el script de T-187 (`.docs/scripts/revision_prompts_pb51.py`, sin red y determinista; datos en `.docs/tickets/T-187/`), atada al corpus actual: el informe y la muestra guardados son los que salen hoy de los prompts, del Documento 0, de la configuración y de los veredictos. Paso 1: los 35 prompts tienen las 12 secciones del Anexo G, una vez y en orden (la plantilla, fuera del denominador). Paso 2: la sección 10 de cada prompt está partida en subáreas, con fórmulas y referencias contadas, y ningún DOI escrito tiene estructura inválida. Paso 3: cuatro revisores independientes juzgaron las 350 afirmaciones de la muestra: 260 CORRECTA, 9 ERRONEA y 81 NO_VERIFICABLE, 96,7 % correctas sobre las verificables (≥ 95 %; 74,3 % sobre las 350). Los 14 papeles con tope en `v6.tope_tokens_system` quedan dentro.",
+  "no_comprueba": "El resultado esperado del plan, «ninguna afirmación técnica errónea en la muestra», no se cumple: 9 ERRONEA (INC-T187-03), pendientes de la próxima entrega del corpus. «Tamaños dentro de las orientaciones» solo se comprueba en los 14 papeles con tope; los otros 21 papeles no tienen orientación (INC-T187-01, T-57). El paso 3 pide 10 afirmaciones técnicas por prompt: 28 de 35 tienen menos de 10 verificables (mínimo 2, el Coordinador), porque las 81 NO_VERIFICABLE son reglas internas; se declara y no hay muestra de reposición (INC-T187-02). De las 260 CORRECTA, 249 las juzgó el revisor de memoria («conocimiento propio»), sin consultar la referencia, 3 con búsqueda web y 8 con un cálculo a mano; la QA r01 contrastó 10 al azar y coincidió en las 10 (INC-T187-02). Los criterios son `[PROPUESTO]`: el denominador del 95 % (INC-T187-02: las NO_VERIFICABLE quedan fuera) y la estructura completa y la orientación de tamaño (INC-T187-01). Que los DOI existan no se comprueba (sin red; hoy no hay ninguno escrito). El juicio de las afirmaciones es de los revisores, no del script."
  },
  "PB-52": {
   "cobertura": "PARCIAL",
