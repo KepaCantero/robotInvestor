@@ -972,6 +972,15 @@ class Bloque:
             vistos = {simbolo_seguimiento(v) for v in vigentes}
             rot = sorted([u["simbolo"] for u in universo if u["simbolo"] not in vistos],
                          key=lambda s: hashlib.sha256(f"{as_of.date()}{s}".encode()).hexdigest())[:int(parametro(self.cfg, "seleccion.rotacion_exploratoria_celdas"))]
+            fraccion = parametro(self.cfg, "presupuesto_uc.rotacion_exploratoria")
+            if isinstance(fraccion, bool) or not isinstance(fraccion, (int, float)) or not 0 <= fraccion <= 1:
+                raise ValueError("Fracción de rotación exploratoria fuera de rango")
+            uc_cribado = presupuesto.asignado[clase] * parametro(self.cfg, "presupuesto_uc.reparto_fases.cribado")
+            uc_rotacion = uc_cribado * fraccion if rot else 0.0
+            if not uc_rotacion:
+                rot = []
+            out["cribado_n1"] = {"uc_cribado": uc_cribado, "uc_rotacion": uc_rotacion,
+                                 "uc_vigentes": uc_cribado - uc_rotacion, "simbolos": rot}
             if not vigentes and not rot:
                 out["regimen"] = "Sin cambios materiales; sin opciones vigentes que revisar."
                 return out
@@ -993,6 +1002,8 @@ class Bloque:
                "horizontes_interes": hz_interes, "max_candidatas": parametro(self.cfg, "seleccion.max_candidatas"), "max_finalistas": parametro(self.cfg, "seleccion.max_finalistas"),
                "umbral_senal_gc1": (v6.umbral_gc1(self, clase) if v6.activo(self, "gc1.por_codigo")
                                     else parametro(self.cfg, "seleccion.umbral_senal_gc1")), "fecha_limite_informacion": str(as_of.date()) if self.modo == "backtest" else None}
+        if "cribado_n1" in out:
+            msg["reparto_cribado"] = out["cribado_n1"]
         instr = INSTR[fase].format(max_cand=parametro(self.cfg, "seleccion.max_candidatas"), max_fin=parametro(self.cfg, "seleccion.max_finalistas"),
                                    max_pet=parametro(self.cfg, "seleccion.peticiones_conocimiento_por_clase"),
                                    max_expl=parametro(self.cfg, "seleccion.rotacion_exploratoria_celdas"))
@@ -2154,6 +2165,7 @@ class Bloque:
             "apuestas_independientes": paquete.get("apuestas_independientes"), "prg_congelados": prg, "entregables": entreg,
             "g3": resultado.get("g3_entregables") or resultado.get("g3"), "estado": resultado["estado"],
             "entrega": resultado.get("entrega", "ENTREGADA"), "limitaciones": paquete.get("limitaciones", []),
+            "cribado_n1": {c: a["cribado_n1"] for c, a in analisis.items() if "cribado_n1" in a},
             "sombra": {c: s["sombra"] for c, s in seleccion.items() if s.get("sombra")},
             "ablacion": {c: s.get("ablacion") for c, s in seleccion.items() if s.get("ablacion")},
             # T-158: guías CT-18 aplicadas por agente («el agente registra la guia_id aplicada», 6.9); solo si hubo alguna
