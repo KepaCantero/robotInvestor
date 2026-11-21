@@ -36,3 +36,21 @@ def test_cuarenta_ingestas_concurrentes_sin_duplicados(tmp_path, universo):
         list(pool.map(ingresar, range(40)))
     assert len(b.almacen.estado("F2", clave="evd_id")) == 1
     assert len(b.almacen.estado("F2", clave="clm_id")) == 1
+
+
+def test_la_orden_por_ingesta_se_registra_en_el_mismo_ciclo(tmp_path, universo, monkeypatch):
+    b = nuevo_bloque(tmp_path, universo)
+    reloj = [0.0]
+    b.monitor = Monitor(objetivo_ingesta_s=1, reloj=lambda: reloj[0])
+    b.agentes.monitor = b.monitor
+    curar = b._curar_lote
+
+    def ingesta_lenta(*args, **kwargs):
+        curar(*args, **kwargs)
+        reloj[0] += 3
+
+    monkeypatch.setattr(b, "_curar_lote", ingesta_lenta)
+    run = b.ciclo(AS_OF, alcance={"clases": ["RV"]})
+    orden, = [e for e in b.almacen.leer("HA") if e.get("tipo_entrada") == "ORD" and e["agente"] == "AG-12"]
+    assert orden["run_id"] == run["run_id"]
+    assert orden["accion"] == "ABRIR" and orden["metricas_disparo"]["W_medio_s"] == 3
