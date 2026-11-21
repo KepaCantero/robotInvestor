@@ -467,6 +467,13 @@ class ConsultasBroker:
             self.b.almacen.escribir("F5", "AG-01", {"tipo_entrada": "AVISO_CT22", "id": self.b.almacen.nuevo_id("F5AV"),
                                                      "tipo_aviso": "CONSULTA_RECURRENTE", "cns_ids": ids})
 
+        por_run = {c["run_id"]: c["cns_id"] for c in iguales if c.get("run_id")}
+        if len(por_run) >= n:
+            with self.b.almacen._transaccion():
+                self.b.evaluador._nueva_leccion(as_of, {"agente": ["AG-01", "AG-17"], "tema": "CONSULTA_RECURRENTE"},
+                    "PRODUCTO", f"La misma duda aparece en {len(por_run)} análisis en {semanas} semanas.",
+                    "Precisar el dato en la admisión del CT-01.", "recurrente", list(por_run.values()), len(por_run))
+
 
 class Credenciales:
     """CT-25 · Solicitud y provisión de credenciales (Coordinador ↔ Broker; clave en la bóveda de HT-01)."""

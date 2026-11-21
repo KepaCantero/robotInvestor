@@ -1619,6 +1619,35 @@ class Evaluador:
                     nuevas.append(l)
         return nuevas
 
+    def comparar_decisiones_broker(self, as_of):
+        with self.almacen._transaccion():
+            decisiones = defaultdict(list)
+            for e in self.almacen.leer("F3", as_of):
+                if e.get("tipo_entrada") == "DECISION_BROKER":
+                    decisiones[e["opp_id"]].append(e["decision_broker"])
+            if not decisiones:
+                return None
+            grupos: dict[str, list] = {"ENVIADA_A_BLOQUE_B": [], "DESCARTADA": []}
+            for p in self.resueltos(as_of, solo_informe=True):
+                limite = min(p["fecha_resolucion"], p["resolucion"]["fecha_dato"])
+                dec = next((x for x in reversed(decisiones.get(p.get("opp_id"), []))
+                            if p["fecha_emision"] <= x["fecha"] < limite), {})
+                grupo = dec.get("decision")
+                if grupo in grupos:
+                    grupos[grupo].append(p)
+            if min(len({p["opp_id"] for p in g}) for g in grupos.values()) < parametro(self.cfg, "evaluacion.min_calibrar"):
+                return None
+            resumen = []
+            ids = []
+            for nombre, grupo in grupos.items():
+                total = sum(p["resolucion"]["resultado_binario"] for p in grupo)
+                etiqueta = "enviadas" if nombre == "ENVIADA_A_BLOQUE_B" else "descartadas"
+                resumen.append(f"{etiqueta}: {total}/{len(grupo)} pronósticos acertados")
+                ids.extend(p["prg_id"] for p in grupo)
+            return self._nueva_leccion(as_of, {"agente": ["AG-17", "AG-02"], "tema": "DECISION_BROKER"},
+                                       "PRODUCTO", ". ".join(resumen), "Mostrar ambos grupos en la lectura del informe.",
+                                       "recurrente", ids, len(ids))
+
     def leccion_producto(self, as_of, tema: str, qry_ids: list[str]) -> dict | None:
         return self._nueva_leccion(as_of, {"clase": None, "horizonte": None, "agente": ["AG-17", "AG-02"]}, "PRODUCTO",
                                    f"La pregunta «{tema}» se ha repetido {len(qry_ids)} veces en 4 semanas.",
@@ -2052,6 +2081,9 @@ class Evaluador:
                                                   "comprobacion_fuga": "SUPERADA", "madurez": "implementado"})
         certs = self.revisar_certificados(as_of, run_id)
         lecciones = self.extraer_lecciones(as_of, metr)
+        comparacion = self.comparar_decisiones_broker(as_of)
+        if comparacion:
+            lecciones.append(comparacion)
         aju = self.recalibrar(as_of, run_id)
         degradacion_h5 = self.aplicar_degradacion_h5(as_of, run_id)
         try:
