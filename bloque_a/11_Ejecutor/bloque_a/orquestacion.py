@@ -1921,7 +1921,7 @@ class Bloque:
         intento = 0
         while True:
             intento += 1
-            res = sint.ht09_validar(self, paquete, extras, None)
+            res = sint.control_con_respaldo(self, paquete, extras, None, run_id)
             dictamen = res["dictamen"]
             advert = [c for c in res["comprobaciones"] if c["resultado"] == "ADVERTENCIA"
                       and not (c["id"] == "C12" and all("no se ha facilitado" in i["detalle"] for i in c["incidencias"]))]
@@ -1931,6 +1931,11 @@ class Bloque:
                    "fase": "F6", "dictamen_ht09": dictamen, "dictamen_efectivo": efectivo,
                    "comprobaciones": [{"id": c["id"], "resultado": c["resultado"], "n_incidencias": len(c["incidencias"]),
                                        "detalle": [i["detalle"] for i in c["incidencias"]][:5]} for c in res["comprobaciones"]]}
+            if res.get("modo") == "G3_MANUAL":
+                g3v.update(tipo_control="G3_MANUAL", dictamen_ht09="NO_DISPONIBLE")
+                self.almacen.escribir("HA", "AG-18", g3v)
+                paquete.setdefault("limitaciones", []).append(res["motivo"])
+                return paquete, {"dictamen": "BLOQUEADO", "bloqueos": ["G3-MANUAL"], "g3v_id": g3v["id"], "modo": "G3_MANUAL"}
             if efectivo == "APTO":
                 self.almacen.escribir("HA", "AG-18", g3v)
                 return paquete, {"dictamen": "APTO", "advertencias": [], "intentos": intento, "g3v_id": g3v["id"]}

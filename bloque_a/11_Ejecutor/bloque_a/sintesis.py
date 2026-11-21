@@ -636,6 +636,22 @@ def control_est06(res, ruta, contenido):
     return True
 
 
+def control_con_respaldo(bloque, paquete, extras, visual, run_id):
+    try:
+        return ht09_validar(bloque, paquete, extras, visual)
+    except (RuntimeError, OSError, ValueError, KeyError, TypeError):
+        fase = "F7" if visual is not None else "F6"
+        detalle = "HT-09 no ha completado todas las comprobaciones. El Orquestador retiene la entrega."
+        with bloque.almacen._transaccion():
+            aviso = bloque.mensajeria.crear("CT-14", "AG-02", "AG-18",
+                {"paquete_sintesis": {"run_id": run_id}, "resultado_ht09": {"dictamen": "NO_DISPONIBLE", "fase": fase}},
+                run_id=run_id)
+            bloque.almacen.incidencia("HERRAMIENTA", detalle, run_id, fase=fase, msg_id=aviso["msg_id"])
+        return {"dictamen": "BLOQUEADO", "modo": "G3_MANUAL", "motivo": detalle, "resumen": {"bloqueos": 1},
+                "comprobaciones": [{"id": "G3-MANUAL", "nombre": "Completitud de las comprobaciones", "resultado": "BLOQUEO",
+                                    "incidencias": [{"ruta": fase, "detalle": detalle, "severidad": "BLOQUEO"}]}]}
+
+
 def ht09_validar(bloque, paquete: dict, extras: dict, informe_visual: str | None) -> dict:
     certs = [{**c["celda"], "vigente": True} for c in bloque.evaluador.certificados_vigentes(paquete["fecha"])
              if c["celda"].get("metodo")]

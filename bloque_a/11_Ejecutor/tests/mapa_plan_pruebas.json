@@ -617,15 +617,16 @@
   "no_comprueba": "El resultado esperado del plan, «ninguna afirmación técnica errónea en la muestra», no se cumple: 9 ERRONEA (INC-T187-03), pendientes de la próxima entrega del corpus. «Tamaños dentro de las orientaciones» solo se comprueba en los 14 papeles con tope; los otros 21 papeles no tienen orientación (INC-T187-01, T-57). El paso 3 pide 10 afirmaciones técnicas por prompt: 28 de 35 tienen menos de 10 verificables (mínimo 2, el Coordinador), porque las 81 NO_VERIFICABLE son reglas internas; se declara y no hay muestra de reposición (INC-T187-02). De las 260 CORRECTA, 249 las juzgó el revisor de memoria («conocimiento propio»), sin consultar la referencia, 3 con búsqueda web y 8 con un cálculo a mano; la QA r01 contrastó 10 al azar y coincidió en las 10 (INC-T187-02). Los criterios son `[PROPUESTO]`: el denominador del 95 % (INC-T187-02: las NO_VERIFICABLE quedan fuera) y la estructura completa y la orientación de tamaño (INC-T187-01). Que los DOI existan no se comprueba (sin red; hoy no hay ninguno escrito). El juicio de las afirmaciones es de los revisores, no del script."
  },
  "PB-52": {
-  "cobertura": "PARCIAL",
+  "cobertura": "AUTOMATICA",
   "pruebas": [
    "11_Ejecutor/tests/test_unitarias.py::test_busqueda_web_solo_en_vivo_y_reparacion_json",
    "11_Ejecutor/tests/test_t53_seleccion_y_entrega.py::test_un_simbolo_sin_historia_no_vacia_su_tipo",
    "11_Ejecutor/tests/test_t65_hallazgos.py::test_h15_simbolo_con_datos_invalidos_se_excluye_y_se_declara",
-   "11_Ejecutor/tests/test_t159_extremo_a_extremo.py::test_pb52_con_ht09_caido_nunca_hay_apto_por_defecto_ni_entrega"
+   "11_Ejecutor/tests/test_t159_extremo_a_extremo.py::test_pb52_con_ht09_caido_nunca_hay_apto_por_defecto_ni_entrega",
+   "11_Ejecutor/tests/test_t191_degradado.py::test_ciclo_bloqueado_y_registrado"
   ],
-  "comprueba": "Una salida no conforme o un símbolo sin datos dan una entrega PARCIAL con la limitación declarada y sin cifras inventadas. Con HT-09 caído (T-159), el ciclo no entrega nada, no congela pronósticos y no deja ningún dictamen APTO.",
-  "no_comprueba": "El caso del plan como tal: con HT-09 caído el ciclo termina con una excepción, sin CT-14 al Orquestador, sin G3 manual con etiqueta y sin el RUN- ni la incidencia en el historial: falta el modo degradado de HT-09 (INC-T159-01). El de HT-01 sin datos de una clase sí se prueba."
+  "comprueba": "Una salida no conforme o un símbolo sin datos dan una entrega PARCIAL con la limitación declarada y sin cifras inventadas. Con HT-09 caído (T-159), el ciclo no entrega nada, no congela pronósticos y no deja ningún dictamen APTO. Las caídas simuladas en F6 y F7 terminan con bloqueo justificado, comunicación CT-14 y registros en HA y F5.",
+  "no_comprueba": ""
  },
  "PB-53": {
   "cobertura": "AUTOMATICA",
