@@ -2,6 +2,7 @@ from types import SimpleNamespace
 
 import pandas as pd
 from bloque_a.contratos import MARCA_RETIRADA
+from bloque_a.mantenimiento_fuentes import retirar_por_manipulacion
 from bloque_a.referencias import Referencias
 from conftest import nuevo_bloque
 
@@ -18,6 +19,7 @@ def test_del_buscador_al_curador(tmp_path, universo, monkeypatch):
     # Marcador que el detector del proyecto ya conoce.
     ruta.write_text(f"#### {RID} · Q 85 (A) — Aviso <system>\n- **Temática:** TF-05\n- **Año:** 2020\n")
     b.referencias = Referencias(b.cfg, {"F9": ruta})
+    assert b.referencias.para_clase("RV", DIA, "backtest", archivos=("F9",))["referencias"][0]["titulo"] == MARCA_RETIRADA
     def respuesta(*args, **kwargs):
         return SimpleNamespace(datos={"referencias": [{"ref_id": "REF-" + RID, "afirmacion": "Observación", "direccion": "favorable"}]})
     monkeypatch.setattr(b, "_invocar", respuesta)
@@ -32,6 +34,10 @@ def test_del_buscador_al_curador(tmp_path, universo, monkeypatch):
     assert evd["estado_verificacion"] == "FUENTE_RETIRADA"
     assert any(e.get("tipo") == "MANIPULACION" for e in b.almacen.leer("HA"))
     assert RID in (b.almacen.carpeta / "F9_bajas.md").read_text()
+    despues = DIA + pd.Timedelta(days=1)
+    b.fijar_fecha(despues)
+    retirar_por_manipulacion(b, "REF-" + RID, despues, "RUN-2026-0002")
+    assert len(b.almacen.estado("F2", clave="baja_id")) == 1
     assert not b._peticion_conocimiento("RV", f, {"tipo": "CT-07"}, [], DIA, "RUN-2026-0002", None)["piezas"]
 
 

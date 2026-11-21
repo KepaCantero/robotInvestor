@@ -224,7 +224,8 @@ def retirar_por_manipulacion(bloque, ref_id, as_of, run_id):
     dia = str(as_of)[:10]
     with almacen._transaccion():
         texto = ruta.read_text(encoding="utf-8") if ruta.exists() else ""
-        if ref_id not in bloque.referencias.retiradas_f9(as_of):
+        previa = min((fecha for rid, fecha in bajas_registradas(texto.splitlines()) if rid == ref["ref_id"] and fecha <= dia), default=None)
+        if previa is None:
             # El título original puede contener texto externo o datos sensibles.
             linea = f"| {ref['ref_id']} | Título en cuarentena | Manipulación confirmada en F9 | {dia} | — |\n"
             cabecera = "## Registro de bajas\n\n| REF-id | Título | Motivo | Fecha | Sustituta |\n|---|---|---|---|---|\n"
@@ -232,4 +233,4 @@ def retirar_por_manipulacion(bloque, ref_id, as_of, run_id):
             with NamedTemporaryFile("w", encoding="utf-8", dir=ruta.parent, delete=False) as tmp:
                 tmp.write((texto or cabecera) + linea)
             Path(tmp.name).replace(ruta)
-        avisar_curador(almacen, bloque.mensajeria, as_of, run_id, {("F9", ref_id, dia)})
+        avisar_curador(almacen, bloque.mensajeria, as_of, run_id, {("F9", ref_id, previa or dia)})
