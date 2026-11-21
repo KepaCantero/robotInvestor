@@ -60,6 +60,9 @@ def main(argv: list[str] | None = None) -> int:
     p.add_argument("--json", required=True)
     sub.add_parser("evaluar", help="C5: resolución de pronósticos, métricas, certificados y lecciones")
     sub.add_parser("estado", help="Colas, consumo y últimos runs")
+    p = sub.add_parser("alta-referencias", help="Incorpora un lote de fichas a su catálogo temático")
+    p.add_argument("--archivo", choices=("F7", "F8", "F9"), required=True)
+    p.add_argument("--json", required=True)
     p = sub.add_parser("verificar-enlaces", help="HT-02 sobre F7, F8, F9 y FM")
     p.add_argument("--revisiones", help="JSON de decisiones del custodio por archivo e identificador (T-181)")
     p.add_argument("--aplicar", action="store_true", help="Escribe los estados en los archivos (por defecto solo informe)")
@@ -134,6 +137,11 @@ def main(argv: list[str] | None = None) -> int:
         r.pop("bloque")
         r.pop("metricas")
         print(json.dumps(r, ensure_ascii=False, indent=1))
+        return 0
+    if a.cmd == "alta-referencias":
+        from .altas_referencias import incorporar
+        from .referencias import ARCHIVOS_REF, localizar
+        incorporar(localizar(ruta(cfg, "archivos_operativos"), ARCHIVOS_REF[a.archivo]), a.archivo, json.loads(Path(a.json).read_text(encoding="utf-8")))
         return 0
     if a.cmd == "verificar-enlaces":
         from .herramientas import ht02
