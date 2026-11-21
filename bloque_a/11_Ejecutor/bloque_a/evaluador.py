@@ -32,7 +32,7 @@ from scipy import stats
 
 from .almacen import PARAMETROS_CALIBRABLES
 from .calendario import _sesiones_entre, validar_festivos_ps2
-from .configuracion import CLASES, TABLA_HORIZONTES, parametro, parametros_ht03
+from .configuracion import CLASES, TABLA_HORIZONTES, parametro, parametros_ht03, sesiones_horizonte
 from .herramientas.ht01_datos import DatosNoDisponibles
 from .herramientas.ht05_planificador import dias_habiles_entre
 from .motor import evaluacion as ev
@@ -649,6 +649,7 @@ class Evaluador:
         pendientes = [p for p in abiertos if pd.Timestamp(p["fecha_resolucion"]) <= as_of and p.get("prob_interna") is not None]
         resueltos: list[dict] = []
         filas: list[tuple[dict, dict | None]] = []
+        rc_tasas = self.almacen.estado("RC", as_of) if pendientes else {}
         for p in sorted(pendientes, key=lambda x: x["prg_id"]):
             f0, f1 = pd.Timestamp(p["fecha_emision"]), pd.Timestamp(p["fecha_resolucion"])
             try:
@@ -696,12 +697,15 @@ class Evaluador:
             f_base = pd.Timestamp(nr["fecha"]) if isinstance(nr, dict) and nr.get("fecha") else f0
             fuga_ok = (f_base <= f0 and d1 <= as_of and f1 <= as_of)
             fuga_ok = fuga_ok and (d1b is None or d1b <= as_of)
-            filas.append((p, {"rent_proxy": rp, "rent_referencia": rr, "exceso": x, "o": o,
+            soporte = rc_tasas.get((p.get("referencia_ingenua") or {}).get("calc_id"), {})
+            fechas_base = [str(soporte.get("as_of") or "")[:10], *(str(d.get("fecha_dato") or "")[:10] for d in soporte.get("datos") or [] if isinstance(d, dict))]
+            fuga_base = max(fechas_base) > str(f0.date())
+            filas.append((p, {"fuga_base": fuga_base and fuga_ok, "rent_proxy": rp, "rent_referencia": rr, "exceso": x, "o": o,
                               "fecha_dato": max(d1, d1b) if d1b is not None else d1, "fecha_dato_proxy": d1,
-                              "fecha_dato_referencia": d1b, "fuga": "SUPERADA" if fuga_ok else "FALLIDA"}))
+                              "fecha_dato_referencia": d1b, "fuga": "SUPERADA" if fuga_ok and not fuga_base else "FALLIDA"}))
         if not filas:
             return []
-        validas = [(p, r) for p, r in filas if r is not None]
+        validas = [(p, r) for p, r in filas if r is not None and r["fuga"] == "SUPERADA"]
         calc_id = None
         if validas:
             res = self.motor.servir({"operacion": "FC-EVAL-001", "plan": "PLAN_MIN", "datos": [{"valores": {
@@ -734,7 +738,7 @@ class Evaluador:
                                     "puntuaciones": {"brier": (pi - o) ** 2, "log": -math.log(min(max(pi if o else 1 - pi, 0.01), 0.99)),
                                                      "brier_ref": (pr - o) ** 2,
                                                      "log_ref": -math.log(min(max(pr if o else 1 - pr, 0.01), 0.99))},
-                                    "calc_id": calc_id, "comprobacion_fuga": r["fuga"]}}
+                                    "calc_id": calc_id if r["fuga"] == "SUPERADA" else None, "fuga_tasa_base": r["fuga_base"], "comprobacion_fuga": r["fuga"]}}
             self.almacen.escribir("F4", "AG-20", e)
             resueltos.append({**p, **e})
         self.almacen.escribir("F6", "AG-20", {"tipo_entrada": "RES", "id": f"RES-{as_of.date()}-{self.almacen.nuevo_id('RESL')[-4:]}",
@@ -753,9 +757,23 @@ class Evaluador:
         independientes de la celda en la que se registran (8.3, 12.1); se evalúan aparte, por tipo × H5, en `estado_h5`.
         Así no cuentan en métricas, certificados, historial publicado ni recalibración.
         `admisibles` (PA-09): excluye los PRG con `contaminacion_posible`; False los devuelve todos."""
-        out = [p for p in self.almacen.estado("F4", as_of).values()
-               if p.get("estado") == "RESUELTO" and not p.get("es_hito")
-               and (p.get("resolucion") or {}).get("comprobacion_fuga") == "SUPERADA"]
+        out = []
+        correcciones = None
+        for p in self.almacen.estado("F4", as_of).values():
+            if p.get("estado") != "RESUELTO" or p.get("es_hito"):
+                continue
+            r = p.get("resolucion") or {}
+            if r.get("comprobacion_fuga") != "SUPERADA":
+                if not r.get("fuga_tasa_base"):
+                    continue
+                if correcciones is None:
+                    correcciones = self.almacen.estado("F6", as_of, clave="prg_corregido")
+                correccion = correcciones.get(p["prg_id"])
+                if not correccion:
+                    continue
+                p["referencia_ingenua"] = correccion["referencia_limpia"]
+                p["resolucion"] = {**r, "comprobacion_fuga": "SUPERADA", "puntuaciones": correccion["puntuaciones"]}
+            out.append(p)
         if admisibles:
             out = [p for p in out if not contaminacion_posible(p)]
         return [p for p in out if p.get("en_informe")] if solo_informe else out
@@ -1720,6 +1738,36 @@ class Evaluador:
         self.almacen.escribir("F6", "AG-20", aju)
         return aju
 
+    def cerrar_sombra(self, as_of):
+        from .sombra import comparar
+        with self.almacen._transaccion():
+            aju = self.ajuste_en_sombra(as_of)
+            if not aju or not aju.get("sombra_hasta") or str(as_of)[:10] < aju["sombra_hasta"]:
+                return None
+            cierre = comparar(self, aju, as_of)
+            return self.almacen.escribir("F6", "AG-20", {"tipo_entrada": "AJU", "id": aju["id"],
+                                         "fecha_cierre": str(as_of)[:10], **cierre})
+
+    def corregir_fugas(self, as_of, run_id):
+        with self.almacen._transaccion():
+            previas = self.almacen.estado("F6", as_of, clave="prg_corregido")
+            for p in self.almacen.estado("F4", as_of).values():
+                r = p.get("resolucion") or {}
+                if not r.get("fuga_tasa_base") or p["prg_id"] in previas:
+                    continue
+                try:
+                    limpia = self.tasa_base(p["variable"]["serie_ht01"], p.get("referencia_indice"), p["clase"],
+                                            sesiones_horizonte(self.cfg, p["horizonte"]), p["sentido"] == "POSITIVO",
+                                            p["fecha_emision"], run_id)
+                except DatosNoDisponibles:
+                    continue
+                o, pr = r["resultado_binario"], limpia["valor_o_prob"]
+                puntos = {**r["puntuaciones"], "brier_ref": (pr - o) ** 2,
+                          "log_ref": -math.log(min(max(pr if o else 1 - pr, 0.01), 0.99))}
+                self.almacen.escribir("F6", "AG-20", {"tipo_entrada": "CORRECCION_FUGA", "id": self.almacen.nuevo_id("COR"),
+                    "prg_id": p["prg_id"], "prg_corregido": p["prg_id"], "original": "FALLIDA", "comprobacion_fuga": "SUPERADA",
+                    "referencia_limpia": limpia, "fecha_corte": p["fecha_emision"], "puntuaciones": puntos})
+
     def ajuste_en_sombra(self, as_of) -> dict | None:
         for a in self.almacen.estado("F6", as_of, clave="id").values():
             # T-176: la sombra de HT-03 compara pesos de RK; un AJU- de otro parámetro nunca es la sombra de P-11
@@ -2072,6 +2120,7 @@ class Evaluador:
     def ciclo(self, as_of, run_id: str | None = None) -> dict:
         """C5: resolución de vencidos, métricas, certificados, lecciones y recalibración (nunca bloquea C1–C3)."""
         resueltos = self.resolver(as_of, run_id)
+        self.corregir_fugas(as_of, run_id)
         metr = self.metricas(as_of)
         excl = self.excluidos_contaminacion(as_of)
         if metr or excl["total"]:
@@ -2084,7 +2133,8 @@ class Evaluador:
         comparacion = self.comparar_decisiones_broker(as_of)
         if comparacion:
             lecciones.append(comparacion)
-        aju = self.recalibrar(as_of, run_id)
+        cierre_sombra = self.cerrar_sombra(as_of)
+        aju = cierre_sombra or self.recalibrar(as_of, run_id)
         degradacion_h5 = self.aplicar_degradacion_h5(as_of, run_id)
         try:
             degradacion_dm = self.aplicar_degradacion_dm(as_of, run_id)   # T-173 (PB-50)

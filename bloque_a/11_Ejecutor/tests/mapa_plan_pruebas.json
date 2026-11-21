@@ -372,19 +372,21 @@
    "11_Ejecutor/tests/test_unitarias.py::test_guardia_de_fuga_del_proveedor",
    "11_Ejecutor/tests/test_unitarias.py::test_fecha_publicacion_filtra_revisiones",
    "11_Ejecutor/tests/test_unitarias.py::test_servicio_del_motor_rc_cache_fuga_y_reejecucion",
-   "11_Ejecutor/tests/test_t66_evaluacion.py::test_pa09_contaminados_no_cuentan_para_la_recalibracion"
+   "11_Ejecutor/tests/test_t66_evaluacion.py::test_pa09_contaminados_no_cuentan_para_la_recalibracion",
+   "11_Ejecutor/tests/test_t192_evaluacion.py::test_recalcular_referencia_sin_futuro"
   ],
-  "comprueba": "Ningún dato posterior a la fecha de corte (proveedor, Motor y resolución) y los pronósticos contaminados no cuentan para recalibrar.",
-  "no_comprueba": "La corrección registrada en F6 tras detectar la fuga: el Evaluador marca la resolución FALLIDA y la deja fuera, pero no registra la corrección ni el recálculo como entrada nueva (INC-T159-01)."
+  "comprueba": "Ningún dato posterior a la fecha de corte (proveedor, Motor y resolución) y los pronósticos contaminados no cuentan para recalibrar. F6 conserva la corrección de la base contaminada y las nuevas puntuaciones, y documenta la decisión de sombra mediante comparaciones pareadas y DM-HLN.",
+  "no_comprueba": "No se ha usado un proveedor macroeconómico real con histórico de revisiones."
  },
  "PB-35": {
   "cobertura": "PARCIAL",
   "pruebas": [
    "11_Ejecutor/tests/test_t66_evaluacion.py::test_pa10_recalibracion_siempre_propuesta",
-   "11_Ejecutor/tests/test_t65_qa_r01.py::test_r01_h08_recalibracion_de_rk_con_el_paso_y_las_bandas_de_la_configuracion"
+   "11_Ejecutor/tests/test_t65_qa_r01.py::test_r01_h08_recalibracion_de_rk_con_el_paso_y_las_bandas_de_la_configuracion",
+   "11_Ejecutor/tests/test_t192_evaluacion.py::test_cierre_con_comparacion_pareada"
   ],
-  "comprueba": "La recalibración respeta el paso y las bandas de la configuración y queda como propuesta.",
-  "no_comprueba": "El registro de la evaluación sombra y la decisión documentada con DM-HLN: la selección calcula el top-3 con los pesos en sombra, pero nada cierra el AJU- EN_SOMBRA como CONFIRMADO o REVERTIDO (INC-T159-01)."
+  "comprueba": "La recalibración respeta el paso y las bandas de la configuración y queda como propuesta. F6 conserva la corrección de la base contaminada y las nuevas puntuaciones, y documenta la decisión de sombra mediante comparaciones pareadas y DM-HLN.",
+  "no_comprueba": "No se cambia la configuración productiva sin la autorización prevista en PA-10. Datos de prueba controlados."
  },
  "PB-36": {
   "cobertura": "AUTOMATICA",

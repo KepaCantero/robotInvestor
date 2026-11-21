@@ -1740,7 +1740,8 @@ class Bloque:
             ps = ht03.fusionar_parametros({"pesos_rk": aju["a"]})
             ev_s = [ht03.evaluar_opcion(e, ps) for e in entradas_ht03]
             sel_s = ht03.seleccionar_top3(ev_s, ps, max(n_cand, len(ev_s)))
-            sombra = {"aju_id": aju["id"], "top3_sombra": [t["opp_id"] for t in sel_s["top3"]],
+            sombra = {"aju_id": aju["id"], "rk_pareado": {x["opp_id"]: [x["puntuaciones"]["RK"], y["puntuaciones"]["RK"]]
+                                                          for x, y in zip(evaluadas, ev_s)}, "top3_sombra": [t["opp_id"] for t in sel_s["top3"]],
                       "cambios": len({t["opp_id"] for t in sel_s["top3"]} ^ {t["opp_id"] for t in sel["top3"]})}
         for f, e in zip(candidatos, evaluadas):
             f["_ht03"] = e
