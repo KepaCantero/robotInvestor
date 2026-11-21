@@ -510,6 +510,7 @@ bandas_verbales:
 # Paralelismo de agentes sin estado (R25)
 paralelismo:
   hilos_analistas: 4
+  objetivo_ingesta_s: null  # INC-T193-01: objetivo temporal a fijar por instancia; la cola sigue operativa
   umbral_cola: 3
 
 backtest:

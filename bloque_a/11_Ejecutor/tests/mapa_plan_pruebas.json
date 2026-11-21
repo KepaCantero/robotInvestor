@@ -165,10 +165,12 @@
   "cobertura": "PARCIAL",
   "pruebas": [
    "11_Ejecutor/tests/test_unitarias.py::test_ht04_y_ht06_y_ht08",
-   "11_Ejecutor/tests/test_t53_evaluacion_y_almacen.py::test_monitor_abre_instancias_de_los_analistas_nuevos"
+   "11_Ejecutor/tests/test_t53_evaluacion_y_almacen.py::test_monitor_abre_instancias_de_los_analistas_nuevos",
+   "11_Ejecutor/tests/test_t193_ingesta.py::test_abrir_por_tiempo_y_cerrar_con_histeresis",
+   "11_Ejecutor/tests/test_t193_ingesta.py::test_cuarenta_ingestas_concurrentes_sin_duplicados"
   ],
-  "comprueba": "El monitor ordena abrir instancia (ORD-) de un agente sin estado al superar el umbral de cola.",
-  "no_comprueba": "Cero duplicados en F2 y la vuelta del tiempo medio de ingesta al objetivo: HT-08 solo abre instancias por cola; no tiene el disparo por tiempo (> 2 × objetivo), ni el objetivo de tiempo de ingesta, ni la orden ORD- de cierre tras dos lecturas con cola 0 y ρ < 0,30 (INC-T159-01)."
+  "comprueba": "El monitor ordena abrir instancia (ORD-) de un agente sin estado al superar el umbral de cola. Comprueba apertura por duración, cierre tras dos lecturas y deduplicación concurrente.",
+  "no_comprueba": "Falta medir la vuelta al objetivo bajo carga real y con un tiempo objetivo acordado."
  },
  "PB-19": {
   "cobertura": "AUTOMATICA",

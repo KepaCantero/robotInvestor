@@ -175,7 +175,7 @@ class Bloque:
         self.almacen = Almacen(carpeta_estado, self.reloj)
         self.carpeta_entregables = Path(carpeta_entregables or (cfg.get("rutas") or {}).get("entregables", "./entregables"))
         self.contabilidad = Contabilidad(cfg)
-        self.monitor = Monitor(int(parametro(cfg, "paralelismo.umbral_cola")))
+        self.monitor = Monitor(int(parametro(cfg, "paralelismo.umbral_cola")), objetivo_ingesta_s=cfg["paralelismo"].get("objetivo_ingesta_s"))
         self.cache = CacheResultados(Path(carpeta_estado) / "cache_resultados.jsonl")
         self.cliente = cliente
         self.agentes = Agentes(cfg, cliente, self.almacen, self.contabilidad, self.monitor, self.cache)
@@ -1411,6 +1411,14 @@ class Bloque:
     # Evidencia (F2), clústeres y selección
     # ====================================================================================
     def _registrar_evidencia_clase(self, an: dict, as_of, run_id: str, presupuesto: Presupuesto | None = None) -> None:
+        self.monitor.encolar("AG-12")
+        t0 = self.monitor.inicio("AG-12")
+        try:
+            self._curar_lote(an, as_of, run_id, presupuesto)
+        finally:
+            self.monitor.fin("AG-12", t0)
+
+    def _curar_lote(self, an, as_of, run_id, presupuesto):
         clase = an["clase"]
         self._registrar_r9(an.get("hallazgos_r9", []), run_id)
         for p in an.get("peticiones", []):
@@ -1434,6 +1442,10 @@ class Bloque:
                                   as_of, run_id, clase, "investigacion", presupuesto)   # T-113 (H-14 de T-107): con su bolsa
                 if r and r.datos:
                     clasif = {x["indice"]: x for x in r.datos.get("piezas", [])}
+        with self.almacen._transaccion():
+            self._guardar_lote_evidencia(finales, clasif, clase, as_of, run_id)
+
+    def _guardar_lote_evidencia(self, finales, clasif, clase, as_of, run_id):
         i = 0
         clm_por_texto = {normalizar(c.get("afirmacion", "")): c for c in self.almacen.estado("F2", as_of, clave="clm_id").values()
                          if c.get("tipo_entrada") == "CLM"}
