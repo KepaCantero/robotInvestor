@@ -1,6 +1,6 @@
 # Evidencias del Plan de pruebas del Bloque A (Fase 4, T-116)
 
-Generado por `.docs/scripts/evidencias_plan_a.py --ejecutar` el 2026-11-18 sobre el commit `37fc01d`, con el cliente simulado (`MockClient`): sin red, sin clave y sin coste. No se edita a mano: se regenera.
+Generado por `.docs/scripts/evidencias_plan_a.py --ejecutar` el 2026-11-21 sobre el commit `e034e99`, con el cliente simulado (`MockClient`): sin red, sin clave y sin coste. No se edita a mano: se regenera.
 
 Qué significa cada resultado:
 
@@ -17,8 +17,8 @@ Con el cliente simulado se valida la tubería (canales, archivos, puertas, herra
 
 | Resultado | Pruebas del plan |
 | --- | --- |
-| Superada | 40 |
-| Superada en parte | 19 |
+| Superada | 42 |
+| Superada en parte | 17 |
 | Pendiente API | 7 |
 | Requiere usuarios | 1 |
 | **Total** | **67** |
@@ -50,8 +50,8 @@ Con el cliente simulado se valida la tubería (canales, archivos, puertas, herra
 | PB-21 Credencial en un mensaje | Superada en parte | El CT-04 del plan (una clave API y un IBAN en el comentario) se rechaza íntegro, deja una incidencia SEGURIDAD con el campo y sin el valor, y ni la clave ni el IBAN aparecen en ningún archivo ni mensaje; lo mismo en CT-03 y con las credenciales de CT-25. | El tipo de dato protegido en la incidencia (clave API, IBAN): el ejecutor registra el campo y «credenciales o datos personales», no el tipo (INC-T116-03). |
 | PB-22 Canal no previsto | Superada | Los tres mensajes del plan (Auditor → Analizador, Analista → Analista, Redactor → Broker) se rechazan, dejan tres incidencias CANAL_NO_PREVISTO marcadas para escalar al operador, que las ve en el estado (`incidencias_escaladas` de la orden `estado`, r05), y no cambian ningún archivo salvo el historial de auditoría. | — |
 | PB-23 Escritura fuera de reserva | Superada | Los tres intentos del plan (el Analizador escribe en F4, Prospectiva escribe un campo de resolución y el Evaluador cambia la afirmación) se rechazan, dejan tres incidencias y la huella de F4 no cambia tras ninguno. | — |
-| PB-24 Enlace roto y borrado con registro de bajas | Superada en parte | HT-02 confirma el enlace roto y borra con línea en el Registro de bajas y motivo obligatorio. | La integración en el bloque: EVD marcada FUENTE_RETIRADA, revisión registrada en F3 y el paquete CT-21 del mes. El ejecutor solo invoca HT-02; la propagación de la baja no existe (INC-T159-01). |
-| PB-25 Contenido cambiado y retractación | Superada en parte | HT-02 detecta el contenido cambiado y la retractación. | El ejecutor no trata CONTENIDO_CAMBIADO ni RETRACTADA que detecta HT-02: no se recalcula Q en F9 ni la baja se propaga a F2, como en PB-24 (QA r01 de T-159, H-02; función que falta, INC-T159-01). El recálculo con motivo lo hace después el Documentador con el modelo real. |
+| PB-24 Enlace roto y borrado con registro de bajas | Superada | Barrido y baja con registro, aviso CT-11, retirada de la evidencia, revisión de oportunidades en F3 y bajas del mes en CT-21. Comprueba también reintentos y conservación de la ficha ante fallos de red. | — |
+| PB-25 Contenido cambiado y retractación | Superada | Contrasta la revisión con la huella del contenido, recalcula Q por rúbrica con motivo, verifica la copia archivada y registra la retractación confirmada. El registro alimenta la propagación a F2. | — |
 | PB-26 Clasificación temática y orden por calidad | Superada en parte | En los F7, F8 y F9 entregados: cada referencia está físicamente en la sección `## TX-nn` de su temática del Anexo D (y su campo «Temática» lo dice), 0 inversiones del orden por Q dentro de cada sección, a igualdad de Q la de año de publicación más reciente primero, el nivel A/B/C/D coherente con Q (13.3) y las de nivel D marcadas como candidatas a baja o única fuente; las mismas comprobaciones detectan un desorden, un nivel, una temática, una sección o un desempate estropeados. | El alta de 30 referencias nuevas que pide el plan: la hacen los Documentadores con el modelo real; aquí se comprueba el estado de los archivos. El desempate solo compara fichas con año de publicación: un «Documento vivo» (ANA-DOC-0089) y las fuentes de F9, que no tienen año, no se desempatan (INC-T126-01, [PROPUESTO]). |
 | PB-27 Aplicación del Fondo metodológico | Pendiente API | — | Las etapas del Fondo metodológico las aplica el modelo. |
 | PB-28 Alimentación continua y Novedades | Pendiente API | — | La publicación y la lectura de Novedades dependen del modelo. |
@@ -362,23 +362,31 @@ Criterio de aprobación del plan: Hash de F4 sin cambios; tres INC-
 Criterio de aprobación del plan: Línea de baja presente; EVD marcada; revisión registrada en F3; paquete CT-21 del mes la incluye
 
 ```bash
+(cd bloque_a/11_Ejecutor && ../../.venv/bin/python -m pytest -q 'tests/test_t181_fuentes.py::test_baja_con_registro_y_propagacion' 'tests/test_t181_fuentes.py::test_cli_solo_informe_y_aplicar' 'tests/test_t181_fuentes.py::test_caida_archivo_y_ausencia_no_equivalen')
 (cd bloque_a/10_Herramientas && ../../.venv/bin/python -m pytest -q 'tests/test_ht02_verificador_enlaces.py::TestEstados::test_roto_confirmado_y_baja' 'tests/test_ht02_verificador_enlaces.py::TestEscritura::test_borrar_crea_registro_y_exige_motivo' 'tests/test_ht02_verificador_enlaces.py::TestEscritura::test_borrar_con_registro_existente')
 ```
 
 - `10_Herramientas/tests/test_ht02_verificador_enlaces.py::TestEstados::test_roto_confirmado_y_baja`: SUPERADA
 - `10_Herramientas/tests/test_ht02_verificador_enlaces.py::TestEscritura::test_borrar_crea_registro_y_exige_motivo`: SUPERADA
 - `10_Herramientas/tests/test_ht02_verificador_enlaces.py::TestEscritura::test_borrar_con_registro_existente`: SUPERADA
+- `11_Ejecutor/tests/test_t181_fuentes.py::test_baja_con_registro_y_propagacion`: SUPERADA
+- `11_Ejecutor/tests/test_t181_fuentes.py::test_cli_solo_informe_y_aplicar`: SUPERADA
+- `11_Ejecutor/tests/test_t181_fuentes.py::test_caida_archivo_y_ausencia_no_equivalen`: SUPERADA
 
 ### PB-25 · Contenido cambiado y retractación
 
 Criterio de aprobación del plan: Q recalculada con motivo; baja registrada
 
 ```bash
+(cd bloque_a/11_Ejecutor && ../../.venv/bin/python -m pytest -q 'tests/test_t181_fuentes.py::test_revision_cambio_y_retractacion' 'tests/test_t181_fuentes.py::test_reparar_exige_copia_original' 'tests/test_t181_fuentes.py::test_baja_con_registro_y_propagacion')
 (cd bloque_a/10_Herramientas && ../../.venv/bin/python -m pytest -q 'tests/test_ht02_verificador_enlaces.py::TestEstados::test_contenido_igual_casi_y_cambiado' 'tests/test_ht02_verificador_enlaces.py::TestEstados::test_retractacion')
 ```
 
 - `10_Herramientas/tests/test_ht02_verificador_enlaces.py::TestEstados::test_contenido_igual_casi_y_cambiado`: SUPERADA
 - `10_Herramientas/tests/test_ht02_verificador_enlaces.py::TestEstados::test_retractacion`: SUPERADA
+- `11_Ejecutor/tests/test_t181_fuentes.py::test_revision_cambio_y_retractacion`: SUPERADA
+- `11_Ejecutor/tests/test_t181_fuentes.py::test_reparar_exige_copia_original`: SUPERADA
+- `11_Ejecutor/tests/test_t181_fuentes.py::test_baja_con_registro_y_propagacion`: SUPERADA
 
 ### PB-26 · Clasificación temática y orden por calidad
 

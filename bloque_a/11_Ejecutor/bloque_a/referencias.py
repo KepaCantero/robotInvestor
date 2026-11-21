@@ -69,17 +69,35 @@ class Referencias:
         base = ruta(cfg, "archivos_operativos")
         self.rutas = rutas or {k: localizar(base, v) for k, v in ARCHIVOS_REF.items()}
         self.fichas: Dict[str, List[Dict]] = {}
+        self.bajas: dict[str, list[tuple[str, str]]] = {}
+        self._firmas: dict[str, tuple | None] = {}
+        self.actualizar()
+
+    def actualizar(self):
+        from .mantenimiento_fuentes import CUSTODIOS, bajas_registradas
         for k, p in self.rutas.items():
-            self.fichas[k] = []
-            if not Path(p).exists():
+            p = Path(p)
+            stat = p.stat() if p.exists() else None
+            firma = (stat.st_ino, stat.st_mtime_ns, stat.st_size) if stat else None
+            if k in self._firmas and firma == self._firmas[k]:
                 continue
-            for f in ht02.leer_fichas(Path(p).read_text(encoding="utf-8").splitlines()):
+            self.fichas[k] = []
+            self.bajas[k] = []
+            if not stat:
+                self._firmas[k] = firma
+                continue
+            lineas = Path(p).read_text(encoding="utf-8").splitlines()
+            if k in CUSTODIOS:
+                self.bajas[k] = list(bajas_registradas(lineas))
+            for f in ht02.leer_fichas(lineas):
                 tem = f.campo("Temática", "Ámbito metodológico") or ""
                 m = re.search(r"\b(T[AMF]-\d{2}|MB-\d{2})\b", tem)
                 self.fichas[k].append({"ref_id": f.id, "archivo": k, "titulo": f.titulo, "q": f.q, "nivel": f.nivel,
                                        "tematica": m.group(1) if m else None, "anio": _anio(f),
                                        "tipologia": (f.campo("Tipología", "Tipo de documento", "Tipo de fuente") or "")[:80],
                                        "estado_enlace": f.campo("Estado del enlace")})
+
+            self._firmas[k] = firma
 
     def por_id(self, ref_id: str) -> Optional[Dict]:
         rid = ref_id.replace("REF-", "")

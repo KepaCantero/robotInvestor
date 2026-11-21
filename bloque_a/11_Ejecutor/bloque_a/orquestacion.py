@@ -605,6 +605,8 @@ class Bloque:
         respuesta_final.enviar_pendientes(self, as_of)   # T-169 (H-02): las finales CT-03 que no salieron (sin ninguna, nada)
         self.consultas.huerfanas()   # T-174 r03 (H-07): avisa una vez de cada revisión C2 EN_CURSO cuyo proceso murió
         run_id = self.almacen.nuevo_id("RUN")
+        from .mantenimiento_fuentes import revisar_bajas
+        revisar_bajas(self, as_of, run_id)
         limitaciones: list[str] = []
         # T-158 (F0): el receptor revisa las guías CT-18 antes de aplicarlas; un ítem que contradice una regla no se aplica,
         # queda un COR- y un P3- en HA y el Orquestador lo retira (R23, PB-48)
@@ -1414,11 +1416,15 @@ class Bloque:
         evd_por_hash = {e.get("hash_contenido"): e for e in self.almacen.estado("F2", as_of, clave="evd_id").values()
                         if e.get("tipo_entrada") == "EVD"}
         for f in finales:
+            f["_evidencias_ps1"] = []
             f["_evidencias"], f["_raices"], f["_manipulacion"] = [], {}, False
             for p in f["_piezas"]:
                 cl = clasif.get(i, {})
                 i += 1
                 fuente = p["fuente"]
+                if any(rid == fuente.removeprefix("REF-") and dia <= str(as_of)[:10]
+                       for filas in self.referencias.bajas.values() for rid, dia in filas):
+                    continue
                 ref = self.referencias.por_id(fuente) if fuente.startswith("REF-") else None
                 if p.get("_sin_contraste"):
                     nivel_f, tipo_f, raiz = "C", "SECUNDARIA", fuente
@@ -1467,6 +1473,7 @@ class Bloque:
                 # PS1 exige corroborar las afirmaciones centrales del Analista (9.3): la pieza de momentum que añade el
                 # ejecutor es contexto y su «dirección» no depende de la tesis, así que no cuenta como raíz.
                 if evd["direccion"] == "FAVORABLE" and p.get("origen") != "AG-13" and not p.get("_sin_contraste"):
+                    f["_evidencias_ps1"].append(evd["evd_id"])
                     f["_raices"][evd.get("_raiz", fuente)] = (evd["nivel_fuente"], evd["tipo_fuente"])
                 if clm["clm_id"] not in f["_evidencias"]:
                     f["_evidencias"].append(clm["clm_id"])
@@ -1977,7 +1984,7 @@ class Bloque:
                      "objeciones_internas": f.get("_objeciones", []), "veredicto_refutacion": f.get("_veredicto"),
                      "veredicto_contradictor": f.get("_veredicto_contradictor"),
                      "premortem": f.get("premortem"), "cluster_id": f.get("_cluster"),
-                     "ps1": f.get("_ps1"), "evidencias": f.get("_evidencias", []), "tipo_pronostico": f.get("_tipo_pronostico"),
+                     "ps1": f.get("_ps1"), "evidencias_ps1": f.get("_evidencias_ps1", []), "evidencias": f.get("_evidencias", []), "tipo_pronostico": f.get("_tipo_pronostico"),
                      "referencia_indice": f.get("_referencia"), "horizontes_prg": prg_por_opp.get(f["opp_id"], {}),
                      "naturaleza_inversion": f.get("_naturaleza"), "horizonte_principal": f.get("_hp"),
                      "estado": estado, "de": (previa or {}).get("estado"), "rango_top3": (sel_ids.get(f["opp_id"]) or {}).get("rango"),
