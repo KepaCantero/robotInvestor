@@ -288,10 +288,11 @@
  "PB-29": {
   "cobertura": "PARCIAL",
   "pruebas": [
-   "11_Ejecutor/tests/test_t65_qa_r01.py::test_r01_h08_ps1_con_el_minimo_de_raices_de_la_configuracion"
+   "11_Ejecutor/tests/test_t65_qa_r01.py::test_r01_h08_ps1_con_el_minimo_de_raices_de_la_configuracion",
+   "11_Ejecutor/tests/test_t183_raices.py::test_un_original_y_veinte_derivadas"
   ],
-  "comprueba": "La puerta PS1 cuenta raíces independientes con el mínimo de la configuración.",
-  "no_comprueba": "La comprobación G3 de raíces sobre un paquete real y el recuento del Auditor. El ejecutor no distingue derivadas (escribe `grado_independencia = RAIZ` siempre): «1 raíz y 20 derivadas» depende del Curador, que es un agente de lenguaje. Además, las raíces se cuentan por fuente: veinte medios distintos serían veinte raíces (INC-T159-01)."
+  "comprueba": "La puerta PS1 cuenta raíces independientes con el mínimo de la configuración. El ejecutor distingue una raíz y veinte derivadas documentadas; G3 contrasta las cifras de las afirmaciones de cada oportunidad con F2.",
+  "no_comprueba": "La identificación semántica de reproducciones sin metadatos de procedencia y la revisión humana del Auditor."
  },
  "PB-30": {
   "cobertura": "AUTOMATICA",

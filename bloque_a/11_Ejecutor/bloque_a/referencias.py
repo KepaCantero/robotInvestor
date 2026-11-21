@@ -97,6 +97,7 @@ class Referencias:
                 self.fichas[k].append({"ref_id": f.id, "archivo": k, "titulo": f.titulo, "q": f.q, "nivel": f.nivel,
                                        "tematica": m.group(1) if m else None, "anio": _anio(f),
                                        "tipologia": (f.campo("Tipología", "Tipo de documento", "Tipo de fuente") or "")[:80],
+                                       "fuente_original": f.campo("Fuente original", "Referencia original"),
                                        "estado_enlace": f.campo("Estado del enlace")})
 
             self._firmas[k] = firma
