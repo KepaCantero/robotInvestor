@@ -232,23 +232,29 @@
   "no_comprueba": ""
  },
  "PB-24": {
-  "cobertura": "PARCIAL",
+  "cobertura": "AUTOMATICA",
   "pruebas": [
    "10_Herramientas/tests/test_ht02_verificador_enlaces.py::TestEstados::test_roto_confirmado_y_baja",
    "10_Herramientas/tests/test_ht02_verificador_enlaces.py::TestEscritura::test_borrar_crea_registro_y_exige_motivo",
-   "10_Herramientas/tests/test_ht02_verificador_enlaces.py::TestEscritura::test_borrar_con_registro_existente"
+   "10_Herramientas/tests/test_ht02_verificador_enlaces.py::TestEscritura::test_borrar_con_registro_existente",
+   "11_Ejecutor/tests/test_t181_fuentes.py::test_baja_con_registro_y_propagacion",
+   "11_Ejecutor/tests/test_t181_fuentes.py::test_cli_solo_informe_y_aplicar",
+   "11_Ejecutor/tests/test_t181_fuentes.py::test_caida_archivo_y_ausencia_no_equivalen"
   ],
-  "comprueba": "HT-02 confirma el enlace roto y borra con línea en el Registro de bajas y motivo obligatorio.",
-  "no_comprueba": "La integración en el bloque: EVD marcada FUENTE_RETIRADA, revisión registrada en F3 y el paquete CT-21 del mes. El ejecutor solo invoca HT-02; la propagación de la baja no existe (INC-T159-01)."
+  "comprueba": "Barrido y baja con registro, aviso CT-11, retirada de la evidencia, revisión de oportunidades en F3 y bajas del mes en CT-21. Comprueba también reintentos y conservación de la ficha ante fallos de red.",
+  "no_comprueba": ""
  },
  "PB-25": {
-  "cobertura": "PARCIAL",
+  "cobertura": "AUTOMATICA",
   "pruebas": [
    "10_Herramientas/tests/test_ht02_verificador_enlaces.py::TestEstados::test_contenido_igual_casi_y_cambiado",
-   "10_Herramientas/tests/test_ht02_verificador_enlaces.py::TestEstados::test_retractacion"
+   "10_Herramientas/tests/test_ht02_verificador_enlaces.py::TestEstados::test_retractacion",
+   "11_Ejecutor/tests/test_t181_fuentes.py::test_revision_cambio_y_retractacion",
+   "11_Ejecutor/tests/test_t181_fuentes.py::test_reparar_exige_copia_original",
+   "11_Ejecutor/tests/test_t181_fuentes.py::test_baja_con_registro_y_propagacion"
   ],
-  "comprueba": "HT-02 detecta el contenido cambiado y la retractación.",
-  "no_comprueba": "El ejecutor no trata CONTENIDO_CAMBIADO ni RETRACTADA que detecta HT-02: no se recalcula Q en F9 ni la baja se propaga a F2, como en PB-24 (QA r01 de T-159, H-02; función que falta, INC-T159-01). El recálculo con motivo lo hace después el Documentador con el modelo real."
+  "comprueba": "Contrasta la revisión con la huella del contenido, recalcula Q por rúbrica con motivo, verifica la copia archivada y registra la retractación confirmada. El registro alimenta la propagación a F2.",
+  "no_comprueba": ""
  },
  "PB-26": {
   "cobertura": "PARCIAL",
