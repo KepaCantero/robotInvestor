@@ -118,6 +118,7 @@ class Presupuesto:
         self.retenido: dict[str, float] = defaultdict(float)
         self.recortes: list[dict] = []
         self.excesos: list[dict] = []
+        self.fases_servidas: dict[str, set] = defaultdict(set)
         self.factor_observado: dict[str, float] = {}
         # T-151 (r01 H-09 de T-146): las peticiones que fallaron sin respuesta y que la API pudo cobrar (conexión o timeout),
         # cargadas en su bolsa por su peor caso reservado
@@ -292,6 +293,21 @@ class Presupuesto:
 
     def puede(self, clase: str, estimado: float) -> bool:
         return self.disponible(clase) >= estimado
+
+    def registrar_fase_servida(self, bolsa, fase):
+        with self._lock:
+            self.fases_servidas[bolsa].add(fase)
+
+    def valor_ganado(self, bolsa, fase):
+        reparto = parametro(self.cfg, "presupuesto_uc.reparto_fases")
+        with self._lock:
+            bac = self._base(bolsa)
+            ac = self.consumido[bolsa]
+            terminadas = self.fases_servidas[bolsa] - {fase}
+            ev = bac * sum(peso for nombre, peso in reparto.items() if nombre in terminadas)
+        cpi = ev / ac if ac > 0 else None
+        eac = ac + (bac - ev) / cpi if cpi else None
+        return {"ev": ev, "ac": ac, "bac": bac, "cpi": cpi, "eac": eac}
 
     def autorizar_hasta_tope(self, clase: str, estimado: float, fase_admitida: bool) -> tuple[bool, float]:
         """T-92 (auditoría de Astra, A6): el máximo incluye tanto el margen automático como lo ya autorizado, y la

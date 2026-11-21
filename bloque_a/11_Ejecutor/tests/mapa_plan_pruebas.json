@@ -88,13 +88,14 @@
   "no_comprueba": "El disparo del siguiente C1 en la fecha nueva: HT-05 tiene `proxima_ejecucion`, pero nada la llama con el P-01 de F10, y el P-01 que escribe el CT-04 guarda la hora de entrega y pierde la del ciclo (INC-T159-01). Que ningún otro parámetro cambie."
  },
  "PB-10": {
-  "cobertura": "PARCIAL",
+  "cobertura": "AUTOMATICA",
   "pruebas": [
    "11_Ejecutor/tests/test_integracion.py::test_peticion_ad_hoc_y_decisiones",
-   "11_Ejecutor/tests/test_fase4_huecos.py::test_pb10_la_configuracion_rechazada_en_parte_no_toca_nada_mas"
+   "11_Ejecutor/tests/test_fase4_huecos.py::test_pb10_la_configuracion_rechazada_en_parte_no_toca_nada_mas",
+   "11_Ejecutor/tests/test_t189_controles.py::test_ct04_rechaza_lista_global_incompatible"
   ],
-  "comprueba": "Estado APLICADA_PARCIALMENTE; el umbral E y la celda ALT×H1 se rechazan con su motivo y la celda sigue sin aplicarse; P-02 aplicado; ningún otro parámetro de F10 cambia salvo la lista de horizontes; HA sin incidencia de escritura.",
-  "no_comprueba": "Que F10 cambie solo en P-02: el CT-04 del ejecutor lleva una lista global de horizontes y la guarda en P-03 aunque rechace la celda ALT×H1 (INC-T116-01)."
+  "comprueba": "Estado APLICADA_PARCIALMENTE; el umbral E y la celda ALT×H1 se rechazan con su motivo y la celda sigue sin aplicarse; P-02 aplicado; ningún otro parámetro de F10 cambia salvo la lista de horizontes; HA sin incidencia de escritura. CT-04 conserva P-03 cuando rechaza una celda; AUT lleva CPI y EAC; R8 registra la clase de dato sin guardar el valor.",
+  "no_comprueba": ""
  },
  "PB-11": {
   "cobertura": "AUTOMATICA",
@@ -151,13 +152,14 @@
   "no_comprueba": ""
  },
  "PB-17": {
-  "cobertura": "PARCIAL",
+  "cobertura": "AUTOMATICA",
   "pruebas": [
    "11_Ejecutor/tests/test_fase4_huecos.py::test_pb17_ampliacion_autorizada_y_denegada_dejan_su_aut_en_ha",
-   "11_Ejecutor/tests/test_fase4_huecos.py::test_pb17_en_un_ciclo_la_ampliacion_denegada_cierra_con_alcance_reducido"
+   "11_Ejecutor/tests/test_fase4_huecos.py::test_pb17_en_un_ciclo_la_ampliacion_denegada_cierra_con_alcance_reducido",
+   "11_Ejecutor/tests/test_t189_controles.py::test_aut_con_valor_ganado"
   ],
-  "comprueba": "Una ampliación que puede cambiar el top-3 y cabe en el tope se autoriza; una que no puede cambiarlo o que supera el tope se deniega; cada decisión deja su AUT- en HA con el motivo; en un ciclo, la denegada cierra con alcance reducido y el consumo real queda en F5.",
-  "no_comprueba": "Los campos CPI y EAC de la AUT-, que el ejecutor no registra (INC-T116-02), y una ampliación autorizada dentro de un ciclo completo."
+  "comprueba": "Una ampliación que puede cambiar el top-3 y cabe en el tope se autoriza; una que no puede cambiarlo o que supera el tope se deniega; cada decisión deja su AUT- en HA con el motivo; en un ciclo, la denegada cierra con alcance reducido y el consumo real queda en F5. CT-04 conserva P-03 cuando rechaza una celda; AUT lleva CPI y EAC; R8 registra la clase de dato sin guardar el valor.",
+  "no_comprueba": ""
  },
  "PB-18": {
   "cobertura": "PARCIAL",
@@ -204,15 +206,16 @@
   "no_comprueba": ""
  },
  "PB-21": {
-  "cobertura": "PARCIAL",
+  "cobertura": "AUTOMATICA",
   "pruebas": [
    "11_Ejecutor/tests/test_unitarias.py::test_contratos_canales_credenciales_e_idempotencia",
    "11_Ejecutor/tests/test_v51.py::test_credenciales_boveda",
    "10_Herramientas/tests/test_ht09_validador_g3.py::TestBloqueos::test_credenciales",
-   "11_Ejecutor/tests/test_fase4_huecos.py::test_pb21_un_ct04_con_una_clave_y_un_iban_se_rechaza_y_no_queda_en_ningun_archivo"
+   "11_Ejecutor/tests/test_fase4_huecos.py::test_pb21_un_ct04_con_una_clave_y_un_iban_se_rechaza_y_no_queda_en_ningun_archivo",
+   "11_Ejecutor/tests/test_t189_controles.py::test_seguridad_solo_etiquetas"
   ],
-  "comprueba": "El CT-04 del plan (una clave API y un IBAN en el comentario) se rechaza íntegro, deja una incidencia SEGURIDAD con el campo y sin el valor, y ni la clave ni el IBAN aparecen en ningún archivo ni mensaje; lo mismo en CT-03 y con las credenciales de CT-25.",
-  "no_comprueba": "El tipo de dato protegido en la incidencia (clave API, IBAN): el ejecutor registra el campo y «credenciales o datos personales», no el tipo (INC-T116-03)."
+  "comprueba": "El CT-04 del plan (una clave API y un IBAN en el comentario) se rechaza íntegro, deja una incidencia SEGURIDAD con el campo y sin el valor, y ni la clave ni el IBAN aparecen en ningún archivo ni mensaje; lo mismo en CT-03 y con las credenciales de CT-25. CT-04 conserva P-03 cuando rechaza una celda; AUT lleva CPI y EAC; R8 registra la clase de dato sin guardar el valor.",
+  "no_comprueba": ""
  },
  "PB-22": {
   "cobertura": "AUTOMATICA",
