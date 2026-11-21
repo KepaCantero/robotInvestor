@@ -259,7 +259,7 @@
   "no_comprueba": ""
  },
  "PB-26": {
-  "cobertura": "PARCIAL",
+  "cobertura": "AUTOMATICA",
   "pruebas": [
    "11_Ejecutor/tests/test_t126_pb26_pb48.py::test_pb26_cada_referencia_esta_en_una_tematica_del_anexo_d",
    "11_Ejecutor/tests/test_t126_pb26_pb48.py::test_pb26_dentro_de_cada_tematica_el_orden_es_por_calidad_descendente",
@@ -268,10 +268,11 @@
    "11_Ejecutor/tests/test_t126_pb26_pb48.py::test_pb26_la_comprobacion_detecta_un_orden_o_un_nivel_mal_puestos",
    "11_Ejecutor/tests/test_t126_r02.py::test_h02_cada_referencia_esta_fisicamente_en_la_seccion_de_su_tematica",
    "11_Ejecutor/tests/test_t126_r02.py::test_h02_a_igualdad_de_q_va_primero_la_mas_reciente",
-   "11_Ejecutor/tests/test_t126_r02.py::test_h03_las_comprobaciones_detectan_fichas_estropeadas"
+   "11_Ejecutor/tests/test_t126_r02.py::test_h03_las_comprobaciones_detectan_fichas_estropeadas",
+   "11_Ejecutor/tests/test_t184_altas.py::test_treinta_altas_y_lote_invalido"
   ],
-  "comprueba": "En los F7, F8 y F9 entregados: cada referencia está físicamente en la sección `## TX-nn` de su temática del Anexo D (y su campo «Temática» lo dice), 0 inversiones del orden por Q dentro de cada sección, a igualdad de Q la de año de publicación más reciente primero, el nivel A/B/C/D coherente con Q (13.3) y las de nivel D marcadas como candidatas a baja o única fuente; las mismas comprobaciones detectan un desorden, un nivel, una temática, una sección o un desempate estropeados.",
-  "no_comprueba": "El alta de 30 referencias nuevas que pide el plan: la hacen los Documentadores con el modelo real; aquí se comprueba el estado de los archivos. El desempate solo compara fichas con año de publicación: un «Documento vivo» (ANA-DOC-0089) y las fuentes de F9, que no tienen año, no se desempatan (INC-T126-01, [PROPUESTO])."
+  "comprueba": "En los F7, F8 y F9 entregados: cada referencia está físicamente en la sección `## TX-nn` de su temática del Anexo D (y su campo «Temática» lo dice), 0 inversiones del orden por Q dentro de cada sección, a igualdad de Q la de año de publicación más reciente primero, el nivel A/B/C/D coherente con Q (13.3) y las de nivel D marcadas como candidatas a baja o única fuente; las mismas comprobaciones detectan un desorden, un nivel, una temática, una sección o un desempate estropeados. La CLI incorpora treinta referencias en TA-06, TM-11 y TF-04 y mantiene el orden por calidad y fecha sin alterar el registro de bajas.",
+  "no_comprueba": ""
  },
  "PB-27": {
   "cobertura": "PENDIENTE_API",
