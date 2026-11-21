@@ -97,13 +97,14 @@
   "no_comprueba": "Que F10 cambie solo en P-02: el CT-04 del ejecutor lleva una lista global de horizontes y la guarda en P-03 aunque rechace la celda ALT×H1 (INC-T116-01)."
  },
  "PB-11": {
-  "cobertura": "PARCIAL",
+  "cobertura": "AUTOMATICA",
   "pruebas": [
    "11_Ejecutor/tests/test_integracion.py::test_peticion_ad_hoc_y_decisiones",
-   "11_Ejecutor/tests/test_fase4_huecos.py::test_pb11_la_opcion_descartada_se_resuelve_y_cuenta_en_el_historial"
+   "11_Ejecutor/tests/test_fase4_huecos.py::test_pb11_la_opcion_descartada_se_resuelve_y_cuenta_en_el_historial",
+   "11_Ejecutor/tests/test_t188_producto.py::test_comparacion_por_decision"
   ],
-  "comprueba": "La decisión del Broker se anota sin cambiar el estado de la opción en F3 y se avisa al Evaluador (CT-22); al vencer, los PRG de la opción enviada y de la descartada quedan RESUELTO y el historial de aciertos los cuenta; ningún mensaje al Bloque B.",
-  "no_comprueba": "La lección de producto que compara las enviadas con las descartadas cuando haya muestra: el Evaluador no la genera (INC-T116-03)."
+  "comprueba": "La decisión del Broker se anota sin cambiar el estado de la opción en F3 y se avisa al Evaluador (CT-22); al vencer, los PRG de la opción enviada y de la descartada quedan RESUELTO y el historial de aciertos los cuenta; ningún mensaje al Bloque B. El Evaluador escribe en F6 lecciones de producto a partir de decisiones anteriores al resultado y de consultas recurrentes de análisis distintos.",
+  "no_comprueba": ""
  },
  "PB-12": {
   "cobertura": "AUTOMATICA",
@@ -780,12 +781,13 @@
   "no_comprueba": "Que el modelo real no invente un dato del Broker (con el cliente simulado no se puede medir; modo sombra). Los plazos con el reloj de pared (las pruebas fijan la hora). Si la respuesta contradice de verdad el supuesto: el ejecutor no lo juzga y toda respuesta nueva cuenta como invalidación (INC-T174-01)."
  },
  "PB-62": {
-  "cobertura": "PARCIAL",
+  "cobertura": "AUTOMATICA",
   "pruebas": [
-   "11_Ejecutor/tests/test_v51.py::test_consulta_validaciones_agrupacion_y_entrante"
+   "11_Ejecutor/tests/test_v51.py::test_consulta_validaciones_agrupacion_y_entrante",
+   "11_Ejecutor/tests/test_t188_producto.py::test_recurrencia_entre_analisis"
   ],
-  "comprueba": "Tres CT-23 como máximo por RUN- (la cuarta se agrupa), validaciones y aviso de consulta recurrente.",
-  "no_comprueba": "La LEC- de producto: el aviso CONSULTA_RECURRENTE sale, pero el ejecutor no crea la lección (INC-T116-03)."
+  "comprueba": "Tres CT-23 como máximo por RUN- (la cuarta se agrupa), validaciones y aviso de consulta recurrente. El Evaluador escribe en F6 lecciones de producto a partir de decisiones anteriores al resultado y de consultas recurrentes de análisis distintos.",
+  "no_comprueba": ""
  },
  "PB-63": {
   "cobertura": "AUTOMATICA",
