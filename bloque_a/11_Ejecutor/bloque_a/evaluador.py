@@ -32,7 +32,13 @@ from scipy import stats
 
 from .almacen import PARAMETROS_CALIBRABLES
 from .calendario import _sesiones_entre, validar_festivos_ps2
-from .configuracion import CLASES, TABLA_HORIZONTES, parametro, parametros_ht03, sesiones_horizonte
+from .configuracion import (
+    CLASES,
+    TABLA_HORIZONTES,
+    parametro,
+    parametros_ht03,
+    sesiones_horizonte,
+)
 from .herramientas.ht01_datos import DatosNoDisponibles
 from .herramientas.ht05_planificador import dias_habiles_entre
 from .motor import evaluacion as ev
@@ -1645,8 +1651,10 @@ class Evaluador:
                     decisiones[e["opp_id"]].append(e["decision_broker"])
             if not decisiones:
                 return None
-            grupos: dict[str, list] = {"ENVIADA_A_BLOQUE_B": [], "DESCARTADA": []}
+            grupos = {"ENVIADA_A_BLOQUE_B": [], "DESCARTADA": []}
             for p in self.resueltos(as_of, solo_informe=True):
+                if p.get("opp_id") not in decisiones or not all((p.get("fecha_resolucion"), p["resolucion"].get("fecha_dato"), p.get("fecha_emision"))):
+                    continue
                 limite = min(p["fecha_resolucion"], p["resolucion"]["fecha_dato"])
                 dec = next((x for x in reversed(decisiones.get(p.get("opp_id"), []))
                             if p["fecha_emision"] <= x["fecha"] < limite), {})

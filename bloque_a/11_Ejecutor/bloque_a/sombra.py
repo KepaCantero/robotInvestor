@@ -20,7 +20,7 @@ def comparar(evaluador, ajuste, as_of):
         if sombra.get("aju_id") != ajuste["id"] or not par:
             continue
         dato = p["resolucion"]["valor_observado"] * (1 if p["sentido"] == "POSITIVO" else -1)
-        if all(np.isfinite(v) for v in (*par, dato)):
+        if len(par) == 2 and all(isinstance(v, (int, float)) and np.isfinite(v) for v in (*par, dato)):
             series[run["_fecha"], p["run_id"], p["clase"], p["horizonte"]].append((*par, dato))
     por_dia = defaultdict(list)
     for (dia, _, _, _), filas in series.items():
