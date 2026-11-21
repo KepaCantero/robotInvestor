@@ -1,7 +1,6 @@
 import pytest
-from conftest import AS_OF, nuevo_bloque
-
 from bloque_a.contratos import DatosSensibles
+from conftest import AS_OF, nuevo_bloque
 
 
 def test_ct04_rechaza_lista_global_incompatible(tmp_path, universo):

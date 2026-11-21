@@ -1,10 +1,10 @@
 import json
 
 import pytest
-
-from bloque_a import cli
 from bloque_a.herramientas import ht02
 from bloque_a.referencias import ARCHIVOS_REF
+
+from bloque_a import cli
 
 
 def test_treinta_altas_y_lote_invalido(tmp_path, monkeypatch):

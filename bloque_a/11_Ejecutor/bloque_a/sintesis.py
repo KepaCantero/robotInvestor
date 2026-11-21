@@ -25,7 +25,7 @@ from .configuracion import (
     parametro,
     sesiones_horizonte,
 )
-from .contratos import MARCA_RETIRADA, REGIONES, RE_INYECCION
+from .contratos import MARCA_RETIRADA, RE_INYECCION, REGIONES
 from .evaluador import estado_hito
 from .herramientas import ht03, ht09
 from .herramientas.ht05_planificador import fecha_resolucion

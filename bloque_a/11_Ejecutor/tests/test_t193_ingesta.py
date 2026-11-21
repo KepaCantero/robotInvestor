@@ -1,9 +1,8 @@
 from concurrent.futures import ThreadPoolExecutor
 
 import pandas as pd
-from conftest import AS_OF, nuevo_bloque
-
 from bloque_a.herramientas.ht08_monitor import Monitor
+from conftest import AS_OF, nuevo_bloque
 
 
 def test_abrir_por_tiempo_y_cerrar_con_histeresis():

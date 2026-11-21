@@ -1,8 +1,8 @@
 import pandas as pd
+from bloque_a.referencias import Referencias
 from conftest import nuevo_bloque
 
 from bloque_a import sintesis
-from bloque_a.referencias import Referencias
 
 
 def test_un_original_y_veinte_derivadas(tmp_path, universo):

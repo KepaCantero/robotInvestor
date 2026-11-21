@@ -10,7 +10,6 @@ from pathlib import Path
 
 import numpy as np
 import pandas as pd
-import pytest
 from bloque_a.evaluador import contaminacion_posible
 from bloque_a.herramientas import ht03, ht07
 from bloque_a.herramientas.ht01_datos import ProveedorCSV

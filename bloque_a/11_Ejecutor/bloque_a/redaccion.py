@@ -451,9 +451,8 @@ class Redaccion:
         tec_g3 = self.tecnico(paquete, extras, g3, {k: f"<{k}>" for k in rutas_entrega}, estado_run, cons)
         if sint.g3_met13_tecnico(bloque, res, tec_g3) and "G3-MET-13" not in bloq:
             bloq.append("G3-MET-13")
-        if any(sint.control_est06(res, nombre, Path(ruta).read_text(encoding="utf-8")) for nombre, ruta in rutas.items()):
-            if "G3-EST-06" not in bloq:
-                bloq.append("G3-EST-06")
+        if any(sint.control_est06(res, nombre, Path(ruta).read_text(encoding="utf-8")) for nombre, ruta in rutas.items()) and "G3-EST-06" not in bloq:
+            bloq.append("G3-EST-06")
         if errores:
             bloq.append("ESQUEMA_JSON")
         if coh:
