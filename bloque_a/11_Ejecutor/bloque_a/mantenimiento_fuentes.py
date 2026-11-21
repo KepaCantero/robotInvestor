@@ -153,6 +153,9 @@ def revisar_bajas(bloque, as_of, run_id):
     refs.actualizar()
     fecha = str(as_of)[:10]
     bajas = {(archivo, "REF-" + rid, dia) for archivo, filas in refs.bajas.items() for rid, dia in filas if dia <= fecha}
+    if refs.registro_bajas_f9 and refs.registro_bajas_f9.exists():
+        bajas.update(("F9", "REF-" + rid, dia) for rid, dia in bajas_registradas(
+            refs.registro_bajas_f9.read_text(encoding="utf-8").splitlines()) if dia <= fecha)
     if not bajas:
         return
     almacen = bloque.almacen
@@ -205,3 +208,28 @@ def avisar_curador(almacen, mensajeria, as_of, run_id, bajas):
                     almacen.escribir("F2", "AG-12", {"tipo_entrada": "EVD", "evd_id": eid, "estado_verificacion": "FUENTE_RETIRADA"})
                     e["estado_verificacion"] = "FUENTE_RETIRADA"
         return evds
+
+
+def retirar_por_manipulacion(bloque, ref_id, as_of, run_id):
+    """El registro de explotación pertenece a esta instancia, también durante un backtest."""
+    ref = bloque.referencias.por_id(ref_id)
+    if not ref or ref["archivo"] != "F9" or not re.fullmatch(r"[A-Z][A-Z0-9-]*-\d+", ref["ref_id"]):
+        return
+    from .contratos import RE_INYECCION
+    if not RE_INYECCION.search(ref["titulo"]):
+        return  # una atribución del modelo no demuestra manipulación en la fuente
+    almacen = bloque.almacen
+    ruta = almacen.carpeta / "F9_bajas.md"
+    bloque.referencias.registro_bajas_f9 = ruta
+    dia = str(as_of)[:10]
+    with almacen._transaccion():
+        texto = ruta.read_text(encoding="utf-8") if ruta.exists() else ""
+        if ref_id not in bloque.referencias.retiradas_f9(as_of):
+            # El título original puede contener texto externo o datos sensibles.
+            linea = f"| {ref['ref_id']} | Título en cuarentena | Manipulación confirmada en F9 | {dia} | — |\n"
+            cabecera = "## Registro de bajas\n\n| REF-id | Título | Motivo | Fecha | Sustituta |\n|---|---|---|---|---|\n"
+            from tempfile import NamedTemporaryFile
+            with NamedTemporaryFile("w", encoding="utf-8", dir=ruta.parent, delete=False) as tmp:
+                tmp.write((texto or cabecera) + linea)
+            Path(tmp.name).replace(ruta)
+        avisar_curador(almacen, bloque.mensajeria, as_of, run_id, {("F9", ref_id, dia)})

@@ -191,13 +191,15 @@
   "no_comprueba": ""
  },
  "PB-20": {
-  "cobertura": "PARCIAL",
+  "cobertura": "AUTOMATICA",
   "pruebas": [
    "11_Ejecutor/tests/test_integracion.py::test_instruccion_incrustada_ignorada_y_registrada",
-   "11_Ejecutor/tests/test_unitarias.py::test_saneamiento_r9"
+   "11_Ejecutor/tests/test_unitarias.py::test_saneamiento_r9",
+   "11_Ejecutor/tests/test_t182_procedencia.py::test_del_buscador_al_curador",
+   "11_Ejecutor/tests/test_t182_procedencia.py::test_control_de_salida"
   ],
-  "comprueba": "La instrucción se neutraliza, queda una incidencia MANIPULACION, ninguna puntuación cambia y el texto no llega a los entregables.",
-  "no_comprueba": "La degradación o el borrado de la fuente en F9 con su línea en el Registro de bajas; el camino del plan (una fuente que trae el Buscador y que pasa al Curador) no se ejerce; ninguna prueba afirma la EVD con `incidencia_manipulacion`; la comprobación G3-EST-06 no existe en el ejecutor ni en HT-09; y el «destino» de la fuente no se prueba. Lo que falta es del ejecutor: degradar o borrar la fuente en F9 y G3-EST-06 (INC-T159-01)."
+  "comprueba": "La instrucción se neutraliza, queda una incidencia MANIPULACION, ninguna puntuación cambia y el texto no llega a los entregables. Una recuperación CT-07 de una fuente contaminada deja EVD, incidencia y baja de F9. G3-EST-06 bloquea contenido contaminado en la salida.",
+  "no_comprueba": ""
  },
  "PB-21": {
   "cobertura": "PARCIAL",
