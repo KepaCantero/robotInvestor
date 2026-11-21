@@ -25,7 +25,7 @@ from .configuracion import (
     parametro,
     sesiones_horizonte,
 )
-from .contratos import REGIONES
+from .contratos import MARCA_RETIRADA, REGIONES, RE_INYECCION
 from .evaluador import estado_hito
 from .herramientas import ht03, ht09
 from .herramientas.ht05_planificador import fecha_resolucion
@@ -603,6 +603,16 @@ def _control_unitarias(paquete, res):
     return res
 
 
+def control_est06(res, ruta, contenido):
+    import json
+    texto = contenido if isinstance(contenido, str) else json.dumps(contenido, ensure_ascii=False)
+    if MARCA_RETIRADA not in texto and not RE_INYECCION.search(texto):
+        return False
+    res["comprobaciones"].append({"id": "G3-EST-06", "nombre": "Contenido externo en la entrega", "resultado": "BLOQUEO",
+                                  "incidencias": [{"severidad": "BLOQUEO", "ruta": ruta, "detalle": "Texto en cuarentena"}]})
+    return True
+
+
 def ht09_validar(bloque, paquete: dict, extras: dict, informe_visual: str | None) -> dict:
     certs = [{**c["celda"], "vigente": True} for c in bloque.evaluador.certificados_vigentes(paquete["fecha"])
              if c["celda"].get("metodo")]
@@ -611,6 +621,7 @@ def ht09_validar(bloque, paquete: dict, extras: dict, informe_visual: str | None
     artef = [e["calc_id"] for e in bloque.almacen.leer("RC") if e.get("estado") in ("SERVED", "SERVED_WITH_LIMITATIONS")]
     res = ht09.validar(paquete, certs, informe_visual, extras["desgloses"], bloque.params_ht03, trazas, artef,
                        float(parametro(bloque.cfg, "redaccion.umbral_fh")))
+    control_est06(res, "paquete", paquete)
     _control_unitarias(paquete, res)
     # La herramienta de referencia admite método ausente como comodín; R13 exige uno explícito para publicar cifras.
     c07 = next(c for c in res["comprobaciones"] if c["id"] == "C07")
