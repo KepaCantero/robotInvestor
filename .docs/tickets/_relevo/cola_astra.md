@@ -33,7 +33,7 @@ Las rutas que aún no existen van entre «…» (el gate `refs-vivas` no las exi
 
 | # | Tarea | Tipo | Encargo o ticket | Entregable | Estado | Commit | Nota |
 | --- | --- | --- | --- | --- | --- | --- | --- |
-| C-38 | Bloque A: T-181, PB-24 y PB-25 (enlace roto, contenido cambiado y retractación) | IMPLEMENTAR | `.docs/tickets/_relevo/2026-11-17_encargo_astra_bloque_a.md` | «.docs/tickets/T-181/README.md» | PENDIENTE | | Prioridad absoluta (operador, 17-11-2026); HECHA solo con QA APTO y CERRADO |
+| C-38 | Bloque A: T-181, PB-24 y PB-25 (enlace roto, contenido cambiado y retractación) | IMPLEMENTAR | `.docs/tickets/_relevo/2026-11-17_encargo_astra_bloque_a.md` | «.docs/tickets/T-181/README.md» | EN CURSO 2026-11-21 | | Prioridad absoluta (operador, 17-11-2026); HECHA solo con QA APTO y CERRADO |
 | C-39 | Bloque A: T-182, PB-20 (instrucción incrustada en una fuente) | IMPLEMENTAR | `.docs/tickets/_relevo/2026-11-17_encargo_astra_bloque_a.md` | «.docs/tickets/T-182/README.md» | PENDIENTE | | Prioridad absoluta (operador, 17-11-2026); HECHA solo con QA APTO y CERRADO |
 | C-40 | Bloque A: T-183, PB-29 (contar raíces en G3 sobre un paquete real) | IMPLEMENTAR | `.docs/tickets/_relevo/2026-11-17_encargo_astra_bloque_a.md` | «.docs/tickets/T-183/README.md» | PENDIENTE | | Prioridad absoluta (operador, 17-11-2026); HECHA solo con QA APTO y CERRADO |
 | C-41 | Bloque A: T-184, PB-26 (clasificación temática y orden por calidad en F7–F9) | IMPLEMENTAR | `.docs/tickets/_relevo/2026-11-17_encargo_astra_bloque_a.md` | «.docs/tickets/T-184/README.md» | PENDIENTE | | Prioridad absoluta (operador, 17-11-2026); HECHA solo con QA APTO y CERRADO |
