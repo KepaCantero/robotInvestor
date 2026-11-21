@@ -493,6 +493,23 @@ def _textos(obj: Any):
             yield from _textos(v)
 
 
+def tipos_protegidos(obj):
+    """Solo etiquetas cerradas: ni los valores ni sus prefijos salen en la incidencia."""
+    tipos = set()
+    for indicio in secretos_en_texto(json.dumps(obj, ensure_ascii=False, default=str)):
+        if ibanes_en_texto(indicio) or re.match(r"(?i)^ES\d{2}", indicio):
+            tipos.add("IBAN")
+        elif tarjetas_en_texto(indicio):
+            tipos.add("TARJETA")
+        elif RE_CORREO.fullmatch(indicio):
+            tipos.add("CORREO")
+        elif re.fullmatch(r"\d{8}-?[A-Z]", indicio):
+            tipos.add("IDENTIFICACION_PERSONAL")
+        else:
+            tipos.add("CLAVE_API")
+    return sorted(tipos) or ["DATO_PROTEGIDO"]
+
+
 def contiene_credenciales(obj: Any) -> list[str]:
     """T-92 (QA r02, H-18): se busca en el volcado JSON (para los pares «"password": "…"») y en cada texto tal cual (en el
     volcado un salto de línea delante de la clave sale escapado como «\\n» y ocultaría la clave)."""
@@ -800,7 +817,8 @@ class Mensajeria:
         if cred:
             campos = [k for k, v in msg.items() if contiene_credenciales(v)]
             self.almacen.incidencia("SEGURIDAD", "Mensaje con credenciales o datos personales rechazado íntegro (R8)",
-                                    msg["emisor"], campo_afectado=campos)
+                                    msg["emisor"], campo_afectado=[k if not contiene_credenciales(k) else "campo_protegido" for k in campos],
+                                    tipos_dato=tipos_protegidos(msg))
             raise DatosSensibles(f"Mensaje {msg['msg_id']} con datos protegidos en {campos}")
         if not msg.get("run_id") and not msg.get("query_id") and msg["contrato"] not in ("CT-01", "CT-03", "CT-04", "CT-18", "CT-21", "CT-23", "CT-24", "CT-25"):
             raise MensajeInvalido("Falta run_id o query_id")

@@ -324,6 +324,8 @@ class Bloque:
             return None
         if r.datos is not None:
             r.datos = self._real(r.datos)
+            if presupuesto is not None:
+                presupuesto.registrar_fase_servida(bolsa, fase)
         return r
 
     def _cargar(self, presupuesto: Presupuesto, bolsa: str, agente: str, r, prefijo: int | None = None) -> None:
@@ -367,6 +369,7 @@ class Bloque:
         self.almacen.escribir("HA", "AG-18", {"tipo_entrada": "AUT", "id": self.almacen.nuevo_id("AUT"), "run_id": run_id,
                                               "solicitante": "AG-02", "bolsa": bolsa, "presupuesto_base": asignado,
                                               "ampliacion_uc": round(falta, 4), "valor_informacion": valor,
+                                              **presupuesto.valor_ganado(bolsa, fase),
                                               "decision": "AUTORIZADA" if autoriza else "DENEGADA",
                                               "motivo": "dentro del tope de ampliación" if autoriza else "supera el tope o la fase no cambia la decisión"})
         return autoriza
@@ -2379,15 +2382,22 @@ class Bloque:
                     rechazos.append({"parametro": k, "motivo": f"clases desconocidas {malas}"})
                     continue
             if k == "horizontes":
+                if not isinstance(v, list) or not v:
+                    rechazos.append({"parametro": k, "motivo": "se necesita una lista de horizontes"})
+                    continue
                 no = [h for h in v if h not in HORIZONTES]
                 if no:
                     rechazos.append({"parametro": k, "motivo": f"horizontes desconocidos {no}"})
                     continue
                 activas = conf.get("clases_activas") or f10.get("P-02") or list(CLASES)
+                incompatible = False
                 for h in v:
                     for c in activas:
                         if aplicabilidad(self.cfg, c, h) == "NO":
+                            incompatible = True
                             rechazos.append({"parametro": f"horizontes:{c}:{h}", "motivo": f"{h} es «No» para {c} en la tabla 8.3 (no se activa para esa clase)"})
+                if incompatible:
+                    continue
             pid = mapa[k]
             valor = v if pid != "P-01" else f"{periodicidad} · {horario}"
             if pid in aplicado:
