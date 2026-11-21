@@ -167,7 +167,8 @@
    "11_Ejecutor/tests/test_unitarias.py::test_ht04_y_ht06_y_ht08",
    "11_Ejecutor/tests/test_t53_evaluacion_y_almacen.py::test_monitor_abre_instancias_de_los_analistas_nuevos",
    "11_Ejecutor/tests/test_t193_ingesta.py::test_abrir_por_tiempo_y_cerrar_con_histeresis",
-   "11_Ejecutor/tests/test_t193_ingesta.py::test_cuarenta_ingestas_concurrentes_sin_duplicados"
+   "11_Ejecutor/tests/test_t193_ingesta.py::test_cuarenta_ingestas_concurrentes_sin_duplicados",
+   "11_Ejecutor/tests/test_t193_ingesta.py::test_la_orden_por_ingesta_se_registra_en_el_mismo_ciclo"
   ],
   "comprueba": "El monitor ordena abrir instancia (ORD-) de un agente sin estado al superar el umbral de cola. Comprueba apertura por duración, cierre tras dos lecturas y deduplicación concurrente.",
   "no_comprueba": "Falta medir la vuelta al objetivo bajo carga real y con un tiempo objetivo acordado."

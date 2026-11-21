@@ -702,7 +702,6 @@ class Bloque:
             futuros = {c: ex.submit(self._analizar_clase_en_ambito, *args) for c, args in tareas.items()}
             analisis = {c: futuros[c].result() for c in clases}
         presupuesto.liquidar_primas()   # T-88: tras la fase en paralelo, el reparto de las primas de caché ya no depende del orden
-        registrar_carga(self.almacen, self.monitor.evaluar_instancias(), run_id)   # T-178: ORD-, CAR- y P3- si se repite
 
         # T-101 (V6): Prospectiva una vez por ciclo para las finalistas de todos los tipos, en lotes con control de cobertura
         global_v6 = self.v6 and v6.op(self, "prospectiva.global")
@@ -713,6 +712,7 @@ class Bloque:
         # Registro de evidencia (F2) y asignación de identificadores en orden determinista
         for c in clases:
             self._registrar_evidencia_clase(analisis[c], as_of, run_id, presupuesto)
+        registrar_carga(self.almacen, self.monitor.evaluar_instancias(), run_id)   # T-178: ORD-, CAR- y P3- si se repite
         # Clústeres de exposición entre todas las finalistas (ML-CLUS-001)
         clusteres = self._clusteres(analisis, as_of, run_id)
         if global_v6:
