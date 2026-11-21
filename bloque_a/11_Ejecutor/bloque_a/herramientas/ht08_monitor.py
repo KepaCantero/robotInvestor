@@ -54,7 +54,7 @@ def clave_prioridad(orden: dict) -> tuple:
 
 
 class Monitor:
-    def __init__(self, umbral_cola: int = 3, instancias_max: int = 8) -> None:
+    def __init__(self, umbral_cola: int = 3, instancias_max: int = 8, *, objetivo_ingesta_s=None, reloj=None) -> None:
         self.umbral_cola = umbral_cola
         self.instancias_max = instancias_max
         self._lock = threading.Lock()
@@ -64,6 +64,15 @@ class Monitor:
         self.instancias: dict[str, int] = defaultdict(lambda: 1)
         self.ordenes: list[dict] = []
         self.pendientes: dict[str, list[dict]] = defaultdict(list)   # T-178: órdenes conocidas de cada cola
+        if objetivo_ingesta_s is not None and (isinstance(objetivo_ingesta_s, bool) or not isinstance(objetivo_ingesta_s, (int, float))
+                                              or not math.isfinite(objetivo_ingesta_s) or objetivo_ingesta_s <= 0):
+            raise ValueError("El objetivo de ingesta debe ser positivo y finito")
+        self.objetivo_ingesta_s = objetivo_ingesta_s
+        self._reloj = reloj or time.perf_counter
+        self._ultima_lectura = self._reloj()
+        self._lecturas_vacias: dict[str, int] = defaultdict(int)
+        self._llegadas: dict[str, int] = defaultdict(int)
+        self._previos: dict[str, tuple[int, float]] = {}
         self._llegada = 0
 
     def encolar(self, agente: str, n: int = 1, ordenes: list[dict] | None = None) -> None:
@@ -95,6 +104,7 @@ class Monitor:
                 self._llegada += 1
                 self.pendientes[agente].append({**o, "llegada": self._llegada})
             self.cola[agente] += n
+            self._llegadas[agente] += n
 
     def retirar(self, agente: str, ref: str) -> None:
         """Saca de la cola una orden atendida (T-178). Una referencia que no está en la cola se rechaza."""
@@ -107,7 +117,7 @@ class Monitor:
             self.cola[agente] = max(self.cola[agente] - 1, 0)
 
     def inicio(self, agente: str) -> float:
-        return time.perf_counter()
+        return self._reloj()
 
     def fin(self, agente: str, t0: float) -> None:
         # T-178 r02 (QA r01, H-06): una orden con detalle solo sale de la cola con `retirar`; `fin` (la ruta de
@@ -115,7 +125,7 @@ class Monitor:
         with self._lock:
             self.cola[agente] = max(self.cola[agente] - 1, len(self.pendientes[agente]))
             self.completados[agente] += 1
-            self.tiempo_total[agente] += time.perf_counter() - t0
+            self.tiempo_total[agente] += self._reloj() - t0
 
     def evaluar_instancias(self) -> list[dict]:
         """Devuelve órdenes ORD- (ABRIR) para agentes sin estado con cola > umbral. Un agente con estado (instancia única)
@@ -124,19 +134,46 @@ class Monitor:
         Orquestador V5.0, 5.3 punto 5). La propuesta de tipo 3 si se repite la decide `carga.registrar_carga`, que lee HA."""
         nuevas = []
         with self._lock:
+            ahora = self._reloj()
+            ventana = ahora - self._ultima_lectura
             for ag, q in self.cola.items():
-                if q <= self.umbral_cola:
+                if ag not in SIN_ESTADO:
+                    if q > self.umbral_cola:
+                        nuevas.append(self._saturacion(ag, q))
                     continue
-                if ag in SIN_ESTADO:
-                    antes = self.instancias[ag]
-                    c = min(max(math.ceil(q / (self.umbral_cola * 0.75)), antes + 1), self.instancias_max)
-                    if c > antes:
-                        self.instancias[ag] = c
+                prev_n, prev_s = self._previos.get(ag, (0, 0.0))
+                n = self.completados[ag] - prev_n
+                ocupado = self.tiempo_total[ag] - prev_s
+                media = ocupado / n if n else None
+                antes = self.instancias[ag]
+                lenta = ag == "AG-12" and self.objetivo_ingesta_s is not None and media is not None and media > 2 * self.objetivo_ingesta_s
+                rho = ocupado / (ventana * antes) if ventana > 0 else None
+                metricas = {"cola": q, "W_medio_s": media, "rho": rho}
+                if lenta or q > self.umbral_cola:
+                    self._lecturas_vacias[ag] = 0
+                    if ventana > 0 and media:
+                        tasa = self._llegadas[ag] / ventana
+                        c = math.ceil(tasa * media / 0.75)
+                        calculo = "c = ⌈λ/(μ·0,75)⌉"
+                    else:
+                        c = antes + 1
+                        calculo = "primera apertura por cola sin tasa observada"
+                    destino = min(max(c, antes + 1), self.instancias_max)
+                    if destino > antes:
                         nuevas.append({"tipo_entrada": "ORD", "agente": ag, "accion": "ABRIR", "instancias_antes": antes,
-                                       "instancias_despues": c, "metricas_disparo": {"cola": q},
-                                       "calculo": "c = ⌈cola/(umbral·0,75)⌉"})
-                else:
-                    nuevas.append(self._saturacion(ag, q))
+                                       "instancias_despues": destino, "metricas_disparo": metricas, "calculo": calculo})
+                        self.instancias[ag] = destino
+                elif antes > 1:
+                    libre = q == 0 and rho is not None and rho < 0.30
+                    self._lecturas_vacias[ag] = self._lecturas_vacias[ag] + 1 if libre else 0
+                    if self._lecturas_vacias[ag] >= 2:
+                        self.instancias[ag] -= 1
+                        self._lecturas_vacias[ag] = 0
+                        nuevas.append({"tipo_entrada": "ORD", "agente": ag, "accion": "CERRAR", "instancias_antes": antes,
+                                       "instancias_despues": antes - 1, "metricas_disparo": metricas})
+                self._previos[ag] = self.completados[ag], self.tiempo_total[ag]
+                self._llegadas[ag] = 0
+            self._ultima_lectura = ahora
             self.ordenes.extend(nuevas)
         return nuevas
 
