@@ -1425,6 +1425,7 @@ class Bloque:
                          if c.get("tipo_entrada") == "CLM"}
         evd_por_hash = {e.get("hash_contenido"): e for e in self.almacen.estado("F2", as_of, clave="evd_id").values()
                         if e.get("tipo_entrada") == "EVD"}
+        por_id = {e["evd_id"]: e for e in evd_por_hash.values()}
         for f in finales:
             f["_evidencias_ps1"] = []
             f["_evidencias"], f["_raices"], f["_manipulacion"] = [], {}, False
@@ -1444,6 +1445,7 @@ class Bloque:
                     nivel_f, tipo_f, raiz = ref["nivel"] or "C", "PRIMARIA" if "primaria" in (ref.get("tipologia") or "").lower() else "SECUNDARIA", fuente
                 else:
                     nivel_f, tipo_f, raiz = "C", "SECUNDARIA", fuente   # «C provisional»
+                original = (ref or {}).get("fuente_original")
                 h = clave_hash(normalizar(p.get("extracto", "")), fuente, p["afirmacion"], p["direccion"],
                                nivel_f, tipo_f, str(as_of.date()) if fuente.startswith(("HT-01:", "CALC-")) else None)[:32]
                 clave_clm = normalizar(p["afirmacion"])
@@ -1463,7 +1465,8 @@ class Bloque:
                 if dup is None:
                     evd = {"tipo_entrada": "EVD", "evd_id": self.almacen.nuevo_id("EVD"), "clm_ids": [clm["clm_id"]],
                            "direccion": p["direccion"].upper(), "ref_id": fuente, "nivel_fuente": nivel_f, "tipo_fuente": tipo_f,
-                           "grado_independencia": "RAIZ", "raiz_evd_id": None, "url_canonica": None, "identificador_documental": fuente,
+                           "grado_independencia": "DERIVADA" if original else "RAIZ", "raiz_evd_id": None,
+                           "origen_documental": original or raiz, "url_canonica": None, "identificador_documental": fuente,
                            "extracto": p.get("extracto", "")[:200], "hash_contenido": h, "estado_verificacion": "VERIFICADA" if nivel_f == "A" else "PENDIENTE",
                            "limitaciones": "dato de mercado HT-01" if fuente.startswith(("HT-01", "CALC")) else "fuente registrada; extracto mínimo",
                            "fecha_publicacion": None, "fecha_dato": (f.get("senales") or {}).get("fecha_dato")
@@ -1476,6 +1479,7 @@ class Bloque:
                         f["_manipulacion"] = True
                     self.almacen.escribir("F2", "AG-12", evd)
                     evd_por_hash[h] = evd
+                    por_id[evd["evd_id"]] = evd
                 else:
                     evd = dup
                 if p.get("incidencia") or evd.get("incidencia_manipulacion"):
@@ -1492,17 +1496,29 @@ class Bloque:
                     clm["evidencias"].append(evd["evd_id"])
                 # PS1 exige corroborar las afirmaciones centrales del Analista (9.3): la pieza de momentum que añade el
                 # ejecutor es contexto y su «dirección» no depende de la tesis, así que no cuenta como raíz.
-                if evd["direccion"] == "FAVORABLE" and p.get("origen") != "AG-13" and not p.get("_sin_contraste"):
+                if evd.get("grado_independencia") == "RAIZ" and not original and evd["direccion"] == "FAVORABLE" and p.get("origen") != "AG-13" and not p.get("_sin_contraste"):
+                    ids_ps1 = clm.setdefault("evidencias_ps1", [])
+                    if evd["evd_id"] not in ids_ps1:
+                        ids_ps1.append(evd["evd_id"])
                     f["_evidencias_ps1"].append(evd["evd_id"])
-                    f["_raices"][evd.get("_raiz", fuente)] = (evd["nivel_fuente"], evd["tipo_fuente"])
+                    f["_raices"][evd.get("origen_documental", raiz)] = (evd["nivel_fuente"], evd["tipo_fuente"])
                 if clm["clm_id"] not in f["_evidencias"]:
                     f["_evidencias"].append(clm["clm_id"])
             raices = f["_raices"]
             f["_ps1"] = self._ps1(raices)
             for cid in f["_evidencias"]:
                 clm = next(c for c in clm_por_texto.values() if c["clm_id"] == cid)
-                clm["raices_independientes"] = len(raices)
-                clm["ps1_cumple"] = f["_ps1"]
+                propias = sint.raices_de_clm(clm, por_id)
+                clm["raices_independientes"] = len(propias)
+                clm["ps1_cumple"] = self._ps1(propias)
+                originales = {por_id[eid]["ref_id"]: eid for eid in clm["evidencias"] if eid in por_id
+                              and por_id[eid].get("grado_independencia") == "RAIZ"}
+                for eid in clm["evidencias"]:
+                    e = por_id.get(eid, {})
+                    soporte = originales.get(e.get("origen_documental"))
+                    if e.get("grado_independencia") == "DERIVADA" and soporte and e.get("raiz_evd_id") != soporte:
+                        self.almacen.escribir("F2", "AG-12", {"tipo_entrada": "EVD", "evd_id": eid, "raiz_evd_id": soporte})
+                        e["raiz_evd_id"] = soporte
         escritos = set()
         for f in finales:
             for cid in f["_evidencias"]:
