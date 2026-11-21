@@ -11,7 +11,7 @@ from pathlib import Path
 from typing import Dict, List, Optional
 
 from .configuracion import ruta
-from .contratos import sanear_contenido_externo
+from .contratos import MARCA_RETIRADA, sanear_contenido_externo
 from .herramientas import ht02
 
 # Prefijos de nombre; se toma el archivo con la versión más alta («… - V3.1.md», «… - V3.2.md», …)
@@ -131,7 +131,7 @@ class Referencias:
             for r in cand[:max_n // len(archivos) + 1]:
                 titulo, h = sanear_contenido_externo(r["titulo"], f"{a}:{r['ref_id']}")
                 hallazgos += h
-                sel.append({"ref_id": f"REF-{r['ref_id']}", "archivo": a, "titulo": titulo, "q": r["q"], "nivel": r["nivel"],
+                sel.append({"ref_id": f"REF-{r['ref_id']}", "archivo": a, "titulo": MARCA_RETIRADA if h else titulo, "q": r["q"], "nivel": r["nivel"],
                             "tematica": r["tematica"], "anio": r["anio"],
                             "nota": "canal sin fecha: solo catálogo, contenido no accesible en backtest" if (a == "F9" and modo == "backtest") else None})
         return {"referencias": sel[:max_n], "hallazgos_r9": hallazgos}
