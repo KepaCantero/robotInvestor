@@ -27,3 +27,5 @@ Los diez tickets acumulan 29 casos específicos y 25 mutaciones detectadas en co
 ## Compatibilidad comprobada el 22 de noviembre
 
 La primera pasada completa detectó 16 fallos. En el commit local `64dc158` se admite una referencia antigua sin registro de bajas y una respuesta de catálogo que omite la lista de incidencias. También se actualizó el ejemplo de CT-06 que comprueba su formato: el único cambio observado fue el campo opcional `reparto_cribado` de T-185. Los 206 casos de los dos módulos afectados pasaron tras la corrección.
+
+El 22 de noviembre, el código de entrega `64dc158` pasó los 12 controles del repositorio. Pasaron 8.387 pruebas del Bloque A, 68 de divisas y 176 del Bloque B. Volvieron a pasar las 365 comprobaciones del plan. Los diez tickets quedan en QA local para Claude.
