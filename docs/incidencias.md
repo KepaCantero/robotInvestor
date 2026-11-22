@@ -904,3 +904,43 @@ Detalle en `.docs/tickets/T-187/informe_pb51.md` (paso 3).
 - **AF-AG-14-06** (Documentador para el Analizador, línea 354): McLean y Pontiff (2016): un 26 % menos fuera de muestra («en torno a un cuarto») y un 58 % tras publicarse, no «en torno a un tercio».
 - **AF-MC-01-05** (MC-01 Fundamentos cuantitativos y estadística, línea 152): tamaño por grupo para dos medias `n ≈ 2·[(z_{1−α/2} + z_{1−β})σ/δ]²` (falta el factor 2).
 Además, las cinco CORRECTA cuya nota trae un matiz explícito («matiz», «exagera», «difieren», «ojo»), que conviene revisar en la misma entrega: AF-MC-02-04 (MASE < 1 no garantiza batir al ingenuo a horizonte h fuera de muestra), AF-MC-06-02 (Bergmeir, Hyndman y Koo: el «solo» exagera), AF-MC-07-10 (los escenarios los publica la Junta de Gobernadores de la Fed), AF-AG-13-09 (Ledoit-Wolf: mejor 2004 que 2003) y AF-AG-17-04 (niveles de la escala de Fernández Huerta). AF-AG-21-07, que figuraba antes, sale de la lista: su nota la confirma sin matiz (QA r01, H-03). Error, frase y nota de cada una en `.docs/tickets/T-187/informe_pb51.md`.
+
+### INC-T-181-01 [PROPUESTO] · Revisión de una huella concreta
+
+Documento 0 §13.3–13.6 atribuye al custodio la revisión de contenido y la recalificación. Se propone recibir su decisión como JSON ligado a la huella del barrido. Así se puede probar con el cliente simulado y se evita aplicar una decisión a otra versión de la página. Para oportunidades antiguas sin detalle de las evidencias que contaron en PS1, la retirada de una fuente se registra como necesidad de reevaluación. El informe de bajas mensual se emite en el primer ciclo posterior al cierre del mes.
+
+### INC-T182-01 [PROPUESTO] · Confirmación de la fuente antes de una baja
+
+La detección usa las reglas R9 del proyecto. La atribución libre de una respuesta del modelo permite poner la pieza en cuarentena; una baja en el catálogo exige comprobar la fuente local.
+
+### INC-T183-01 [PROPUESTO] · Reproducciones sin atribución
+
+La identificación de reproducciones sin atribución documental requiere curación. Los registros históricos sin traza de PS1 siguen siendo legibles.
+
+### INC-T184-01 [PROPUESTO] · Prioridad de fichas antiguas sin fecha
+
+La entrada exige fecha de publicación para las altas nuevas. Las fichas antiguas sin fecha quedan detrás de las fechadas a igual calidad. Usar la configuración de la instancia para indicar el directorio operativo.
+
+### INC-T185-01 [PROPUESTO] · Reparto del presupuesto de exploración
+
+El proveedor factura la llamada CT-06 completa. El presupuesto de exploración se conoce por separado; su coste efectivo dentro de esa llamada no se puede desglosar.
+
+### INC-T188-01 [PROPUESTO] · Muestra para comparar decisiones del Broker
+
+La comparación es descriptiva. El umbral por grupo reutiliza evaluacion.min_calibrar [PROPUESTO]. Las lecciones de PRODUCTO solo van a agentes de producto.
+
+### INC-T189-01 [PROPUESTO] · Estimación del progreso al pedir más presupuesto
+
+EV estima el avance por las fases servidas anteriores a la fase solicitante. Una sola llamada no revela progreso interno. Las categorías de R8 no contienen fragmentos del dato.
+
+### INC-T191-01 [PROPUESTO] · Bloqueo ante la caída del verificador
+
+El modo manual no acredita que se hayan ejecutado los controles de la herramienta caída. El resultado seguro es un bloqueo justificado.
+
+### INC-T192-01 [PROPUESTO] · Evaluación del ajuste antes de aplicarlo
+
+Se evalúan ordenaciones observadas y resultados disponibles antes del cierre. Una sombra sin muestra suficiente se retira. Confirmar una propuesta en F6 no autoriza a relajar parámetros de producción. El estudio no sustituye a un proveedor con vintages históricos.
+
+### INC-T193-01 [PROPUESTO] · Objetivo temporal para la ingesta
+
+El operador debe fijar el objetivo de segundos y verificar la recuperación bajo carga real. Las órdenes del monitor no despliegan trabajadores físicos.

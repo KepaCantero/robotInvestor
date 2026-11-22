@@ -25,7 +25,7 @@ from .configuracion import (
     parametro,
     sesiones_horizonte,
 )
-from .contratos import REGIONES
+from .contratos import MARCA_RETIRADA, RE_INYECCION, REGIONES
 from .evaluador import estado_hito
 from .herramientas import ht03, ht09
 from .herramientas.ht05_planificador import fecha_resolucion
@@ -603,14 +603,65 @@ def _control_unitarias(paquete, res):
     return res
 
 
+def raices_de_clm(clm, evds):
+    raices = {}
+    for eid in clm.get("evidencias_ps1", []):
+        e = evds.get(eid, {})
+        if (eid in clm.get("evidencias", []) and e.get("grado_independencia") == "RAIZ"
+                and e.get("estado_verificacion") in ("VERIFICADA", "PENDIENTE") and e.get("direccion") == "FAVORABLE"):
+            origen = e.get("origen_documental") or e["ref_id"]
+            raices[origen] = (e["nivel_fuente"], e["tipo_fuente"])
+    return raices
+
+
+def control_raices(paquete, clms, evds):
+    incidencias = []
+    for clase in paquete["clases"].values():
+        for op in clase.get("opciones", []):
+            for cid in op.get("evidencias", []):
+                clm = clms.get(cid, {})
+                if "evidencias_ps1" in clm and len(raices_de_clm(clm, evds)) != clm.get("raices_independientes"):
+                    incidencias.append({"severidad": "BLOQUEO", "ruta": op["opp_id"], "detalle": f"Recuento de raíces incoherente en {cid}"})
+    return {"id": "G3-DAT-09", "nombre": "Raíces independientes", "resultado": "BLOQUEO" if incidencias else "OK",
+            "incidencias": incidencias}
+
+
+def control_est06(res, ruta, contenido):
+    import json
+    texto = contenido if isinstance(contenido, str) else json.dumps(contenido, ensure_ascii=False)
+    if MARCA_RETIRADA not in texto and not RE_INYECCION.search(texto):
+        return False
+    res["comprobaciones"].append({"id": "G3-EST-06", "nombre": "Contenido externo en la entrega", "resultado": "BLOQUEO",
+                                  "incidencias": [{"severidad": "BLOQUEO", "ruta": ruta, "detalle": "Texto en cuarentena"}]})
+    return True
+
+
+def control_con_respaldo(bloque, paquete, extras, visual, run_id):
+    try:
+        return ht09_validar(bloque, paquete, extras, visual)
+    except (RuntimeError, OSError, ValueError, KeyError, TypeError):
+        fase = "F7" if visual is not None else "F6"
+        detalle = "HT-09 no ha completado todas las comprobaciones. El Orquestador retiene la entrega."
+        with bloque.almacen._transaccion():
+            aviso = bloque.mensajeria.crear("CT-14", "AG-02", "AG-18",
+                {"paquete_sintesis": {"run_id": run_id}, "resultado_ht09": {"dictamen": "NO_DISPONIBLE", "fase": fase}},
+                run_id=run_id)
+            bloque.almacen.incidencia("HERRAMIENTA", detalle, run_id, fase=fase, msg_id=aviso["msg_id"])
+        return {"dictamen": "BLOQUEADO", "modo": "G3_MANUAL", "motivo": detalle, "resumen": {"bloqueos": 1},
+                "comprobaciones": [{"id": "G3-MANUAL", "nombre": "Completitud de las comprobaciones", "resultado": "BLOQUEO",
+                                    "incidencias": [{"ruta": fase, "detalle": detalle, "severidad": "BLOQUEO"}]}]}
+
+
 def ht09_validar(bloque, paquete: dict, extras: dict, informe_visual: str | None) -> dict:
     certs = [{**c["celda"], "vigente": True} for c in bloque.evaluador.certificados_vigentes(paquete["fecha"])
              if c["celda"].get("metodo")]
-    f2 = bloque.almacen.estado("F2", clave="clm_id")
+    f2 = bloque.almacen.estado("F2", paquete["fecha"], clave="clm_id")
     trazas = {k: v.get("evidencias", []) for k, v in f2.items() if v.get("tipo_entrada") == "CLM"}
     artef = [e["calc_id"] for e in bloque.almacen.leer("RC") if e.get("estado") in ("SERVED", "SERVED_WITH_LIMITATIONS")]
     res = ht09.validar(paquete, certs, informe_visual, extras["desgloses"], bloque.params_ht03, trazas, artef,
                        float(parametro(bloque.cfg, "redaccion.umbral_fh")))
+    res["comprobaciones"].append(control_raices(paquete, f2, bloque.almacen.estado("F2", paquete["fecha"], clave="evd_id")))
+    control_est06(res, "paquete", paquete)
     _control_unitarias(paquete, res)
     # La herramienta de referencia admite método ausente como comodín; R13 exige uno explícito para publicar cifras.
     c07 = next(c for c in res["comprobaciones"] if c["id"] == "C07")

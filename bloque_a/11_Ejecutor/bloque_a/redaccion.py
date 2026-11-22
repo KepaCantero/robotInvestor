@@ -414,7 +414,7 @@ class Redaccion:
         visual = self.visual(bloque, paquete, red, as_of)
         Path(rutas["informe_visual"]).write_text(visual, encoding="utf-8")
         leg = ht07.analizar(Path(rutas["informe_visual"]).read_text(encoding="utf-8"), es_html=True)
-        res = sint.ht09_validar(bloque, paquete, extras, rutas["informe_visual"])
+        res = sint.control_con_respaldo(bloque, paquete, extras, rutas["informe_visual"], run_id)
         # T-175 r02 (QA r01, H-01): el texto del modelo de una alternativa que G3-MET-13 rechazaría no se presenta en el técnico
         # (se sustituye y queda íntegro en F3); en su lugar, una ADVERTENCIA en HA. Lo que escribe el ejecutor sigue comprobándose
         extras["alternativas_descartadas"] = sint.alternativas_descartadas(paquete, extras, bloque)
@@ -451,6 +451,8 @@ class Redaccion:
         tec_g3 = self.tecnico(paquete, extras, g3, {k: f"<{k}>" for k in rutas_entrega}, estado_run, cons)
         if sint.g3_met13_tecnico(bloque, res, tec_g3) and "G3-MET-13" not in bloq:
             bloq.append("G3-MET-13")
+        if any(sint.control_est06(res, nombre, Path(ruta).read_text(encoding="utf-8")) for nombre, ruta in rutas.items()) and "G3-EST-06" not in bloq:
+            bloq.append("G3-EST-06")
         if errores:
             bloq.append("ESQUEMA_JSON")
         if coh:
@@ -465,7 +467,7 @@ class Redaccion:
             destino = dirs
         rutas = _publicar(rutas, destino, nombres)
         bloque.almacen.escribir("HA", "AG-18", {"tipo_entrada": "G3V", "id": f"G3V-{run_id[4:]}-F7", "run_id": run_id, "fase": "F7",
-                                                "tipo_control": "SINCRONO_DETERMINISTA", "dictamen_ht09": res["dictamen"], "dictamen_efectivo": dictamen,
+                                                "tipo_control": res.get("modo", "SINCRONO_DETERMINISTA"), "dictamen_ht09": "NO_DISPONIBLE" if res.get("modo") else res["dictamen"], "dictamen_efectivo": dictamen,
                                                 "legibilidad": {"fernandez_huerta": leg["fernandez_huerta"], "pct_frases_mas_de_20": leg["pct_frases_mas_de_20"],
                                                                 "jerga_sin_explicar": leg["jerga_sin_explicar"]},
                                                 "errores_esquema": errores, "incoherencias": coh,

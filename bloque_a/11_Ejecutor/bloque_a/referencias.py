@@ -11,7 +11,7 @@ from pathlib import Path
 from typing import Dict, List, Optional
 
 from .configuracion import ruta
-from .contratos import sanear_contenido_externo
+from .contratos import MARCA_RETIRADA, sanear_contenido_externo
 from .herramientas import ht02
 
 # Prefijos de nombre; se toma el archivo con la versión más alta («… - V3.1.md», «… - V3.2.md», …)
@@ -65,21 +65,50 @@ def conocible_desde(ref: dict) -> str | None:
 
 
 class Referencias:
+    registro_bajas_f9: Path | None = None
+
     def __init__(self, cfg: Dict, rutas: Optional[Dict[str, Path]] = None) -> None:
         base = ruta(cfg, "archivos_operativos")
         self.rutas = rutas or {k: localizar(base, v) for k, v in ARCHIVOS_REF.items()}
         self.fichas: Dict[str, List[Dict]] = {}
+        self.bajas: dict[str, list[tuple[str, str]]] = {}
+        self._firmas: dict[str, tuple | None] = {}
+        self.actualizar()
+
+    def actualizar(self):
+        from .mantenimiento_fuentes import CUSTODIOS, bajas_registradas
         for k, p in self.rutas.items():
-            self.fichas[k] = []
-            if not Path(p).exists():
+            p = Path(p)
+            stat = p.stat() if p.exists() else None
+            firma = (stat.st_ino, stat.st_mtime_ns, stat.st_size) if stat else None
+            if k in self._firmas and firma == self._firmas[k]:
                 continue
-            for f in ht02.leer_fichas(Path(p).read_text(encoding="utf-8").splitlines()):
+            self.fichas[k] = []
+            self.bajas[k] = []
+            if not stat:
+                self._firmas[k] = firma
+                continue
+            lineas = Path(p).read_text(encoding="utf-8").splitlines()
+            if k in CUSTODIOS:
+                self.bajas[k] = list(bajas_registradas(lineas))
+            for f in ht02.leer_fichas(lineas):
                 tem = f.campo("Temática", "Ámbito metodológico") or ""
                 m = re.search(r"\b(T[AMF]-\d{2}|MB-\d{2})\b", tem)
                 self.fichas[k].append({"ref_id": f.id, "archivo": k, "titulo": f.titulo, "q": f.q, "nivel": f.nivel,
                                        "tematica": m.group(1) if m else None, "anio": _anio(f),
                                        "tipologia": (f.campo("Tipología", "Tipo de documento", "Tipo de fuente") or "")[:80],
+                                       "fuente_original": f.campo("Fuente original", "Referencia original"),
                                        "estado_enlace": f.campo("Estado del enlace")})
+
+            self._firmas[k] = firma
+
+    def retiradas_f9(self, as_of):
+        from .mantenimiento_fuentes import bajas_registradas
+        ruta = self.registro_bajas_f9
+        if ruta is None or not ruta.exists():
+            return set()
+        return {"REF-" + rid for rid, dia in bajas_registradas(ruta.read_text(encoding="utf-8").splitlines())
+                if dia <= str(as_of)[:10]}
 
     def por_id(self, ref_id: str) -> Optional[Dict]:
         rid = ref_id.replace("REF-", "")
@@ -94,15 +123,16 @@ class Referencias:
         corte = str(as_of)[:10]
         tem = set(TEMATICAS_CLASE.get(clase, []))
         sel, hallazgos = [], []
+        retiradas = self.retiradas_f9(as_of)
         for a in archivos:
-            cand = [r for r in self.fichas.get(a, []) if r["tematica"] in tem]
+            cand = [r for r in self.fichas.get(a, []) if r["tematica"] in tem and "REF-" + r["ref_id"] not in retiradas]
             if modo == "backtest":
                 cand = [r for r in cand if ((conocible_desde(r) or "9999") <= corte) or (a == "F9" and r["anio"] is None)]
             cand.sort(key=lambda r: (-(r["q"] or 0), r["ref_id"]))
             for r in cand[:max_n // len(archivos) + 1]:
                 titulo, h = sanear_contenido_externo(r["titulo"], f"{a}:{r['ref_id']}")
                 hallazgos += h
-                sel.append({"ref_id": f"REF-{r['ref_id']}", "archivo": a, "titulo": titulo, "q": r["q"], "nivel": r["nivel"],
+                sel.append({"ref_id": f"REF-{r['ref_id']}", "archivo": a, "titulo": MARCA_RETIRADA if h else titulo, "q": r["q"], "nivel": r["nivel"],
                             "tematica": r["tematica"], "anio": r["anio"],
                             "nota": "canal sin fecha: solo catálogo, contenido no accesible en backtest" if (a == "F9" and modo == "backtest") else None})
         return {"referencias": sel[:max_n], "hallazgos_r9": hallazgos}

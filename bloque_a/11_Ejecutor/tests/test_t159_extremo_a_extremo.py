@@ -10,7 +10,6 @@ from pathlib import Path
 
 import numpy as np
 import pandas as pd
-import pytest
 from bloque_a.evaluador import contaminacion_posible
 from bloque_a.herramientas import ht03, ht07
 from bloque_a.herramientas.ht01_datos import ProveedorCSV
@@ -306,18 +305,17 @@ def test_pb47_un_metodo_documentado_no_se_usa_y_la_entrega_lo_declara(tmp_path, 
 
 # ---------------------------------------------------------------- PB-52 · herramienta caída (lo que sí cumple)
 def test_pb52_con_ht09_caido_nunca_hay_apto_por_defecto_ni_entrega(tmp_path, universo, monkeypatch):
-    """PB-52, parte que el ejecutor cumple: con HT-09 caído el ciclo no entrega nada, no congela pronósticos y no deja
-    ningún dictamen APTO. Lo que no hace (CT-14, G3 manual con etiqueta y bloqueo registrado) queda en T-159 como (B)."""
+    """T-191: un bloqueo manual se registra en el historial del ciclo."""
 
     def caido(*args, **kwargs):
         raise RuntimeError("HT-09 no disponible")
     monkeypatch.setattr(sint, "ht09_validar", caido)
     b = nuevo_bloque(tmp_path, universo)
-    with pytest.raises(RuntimeError, match="HT-09 no disponible"):
-        b.ciclo(AS_OF, alcance={"clases": ["RV"]})
+    r = b.ciclo(AS_OF, alcance={"clases": ["RV"]})
+    assert r["entrega"] == "BLOQUEADA" and r["g3"]["modo"] == "G3_MANUAL"
     assert not [p for p in (tmp_path / "ent").rglob("*") if p.is_file()]
     assert not [e for e in b.almacen.leer("F4") if e.get("tipo_entrada") == "ALTA"]
-    assert not [e for e in b.almacen.leer("HA") if e.get("tipo_entrada") == "G3V"]
+    assert any(e.get("tipo_control") == "G3_MANUAL" for e in b.almacen.leer("HA"))
 
 
 # ---------------------------------------------------------------- PB-67 · el seguimiento propone el envío al Bloque B

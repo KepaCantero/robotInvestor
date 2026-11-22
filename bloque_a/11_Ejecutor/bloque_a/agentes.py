@@ -136,9 +136,10 @@ class Agentes:
         uc_total = 0.0
         uso_total = Uso()
         reintentos = int(parametro(self.cfg, "llm.reintento_reparacion"))
-        t0 = self.monitor.inicio(agente) if self.monitor else None
-        if self.monitor:
-            self.monitor.encolar(agente)
+        monitor = self.monitor if (agente, contrato) != ("AG-12", "CT-11") else None
+        t0 = monitor.inicio(agente) if monitor else None
+        if monitor:
+            monitor.encolar(agente)
         try:
             for intento in range(reintentos + 1):
                 mt = max_tokens
@@ -190,8 +191,8 @@ class Agentes:
                         {"role": "user", "content": "Tu respuesta no cumple el formato exigido. Errores:\n- "
                          + "\n- ".join(errores) + "\nDevuelve SOLO el objeto JSON completo y corregido."}]
         finally:
-            if self.monitor:
-                self.monitor.fin(agente, t0)
+            if monitor:
+                monitor.fin(agente, t0)
         self.almacen.incidencia("OTRO", f"Salida no conforme de {agente} ({NOMBRES[agente]}) tras {intento + 1} intento(s): "
                                 + "; ".join(errores)[:500], agente, severidad="Operativa",
                                 tratamiento="estado PARCIAL declarado; la fase continúa con alcance reducido", run_id=run_id)

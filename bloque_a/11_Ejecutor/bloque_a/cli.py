@@ -60,7 +60,11 @@ def main(argv: list[str] | None = None) -> int:
     p.add_argument("--json", required=True)
     sub.add_parser("evaluar", help="C5: resolución de pronósticos, métricas, certificados y lecciones")
     sub.add_parser("estado", help="Colas, consumo y últimos runs")
+    p = sub.add_parser("alta-referencias", help="Incorpora un lote de fichas a su catálogo temático")
+    p.add_argument("--archivo", choices=("F7", "F8", "F9"), required=True)
+    p.add_argument("--json", required=True)
     p = sub.add_parser("verificar-enlaces", help="HT-02 sobre F7, F8, F9 y FM")
+    p.add_argument("--revisiones", help="JSON de decisiones del custodio por archivo e identificador (T-181)")
     p.add_argument("--aplicar", action="store_true", help="Escribe los estados en los archivos (por defecto solo informe)")
     p = sub.add_parser("reconciliar-mensaje", help="CT-01: liberar la reserva de un mensaje fallido o interrumpido (tras revisar F5)")
     p.add_argument("--msg-id", required=True)
@@ -134,6 +138,11 @@ def main(argv: list[str] | None = None) -> int:
         r.pop("metricas")
         print(json.dumps(r, ensure_ascii=False, indent=1))
         return 0
+    if a.cmd == "alta-referencias":
+        from .altas_referencias import incorporar
+        from .referencias import ARCHIVOS_REF, localizar
+        incorporar(localizar(ruta(cfg, "archivos_operativos"), ARCHIVOS_REF[a.archivo]), a.archivo, json.loads(Path(a.json).read_text(encoding="utf-8")))
+        return 0
     if a.cmd == "verificar-enlaces":
         from .herramientas import ht02
         from .referencias import ARCHIVOS_REF, localizar
@@ -141,9 +150,38 @@ def main(argv: list[str] | None = None) -> int:
         out = Path(a.salida or ".")
         out.mkdir(parents=True, exist_ok=True)
         codigo = 0
+        from .almacen import Almacen, Reloj
+        from .contratos import Mensajeria
+        from .diseno_v6 import validar
+        from .mantenimiento_fuentes import (
+            CUSTODIOS,
+            avisar_curador,
+            bajas_registradas,
+            publicar,
+            tratar,
+        )
+        revisiones = json.loads(Path(a.revisiones).read_text(encoding="utf-8")) if a.revisiones else {}
         for k, nombre in ARCHIVOS_REF.items():
-            args = [str(localizar(base, nombre)), "--salida-json", str(out / f"ht02_{k}.json")] + (["--aplicar"] if a.aplicar else [])
-            codigo = max(codigo, ht02.main(args) or 0)
+            archivo = localizar(base, nombre)
+            informe = out / f"ht02_{k}.json"
+            original = archivo.read_text(encoding="utf-8") if a.aplicar and k in CUSTODIOS and archivo.exists() else None
+            args = [str(archivo), "--salida-json", str(informe)]
+            if a.as_of:
+                args.extend(["--fecha", a.as_of])
+            if a.aplicar and k == "FM":
+                args.append("--aplicar")
+            resultado = ht02.main(args) or 0
+            codigo = max(codigo, resultado)
+            if resultado == 0 and original is not None:
+                datos = json.loads(informe.read_text(encoding="utf-8"))
+                nuevo = tratar(k, original, datos, revisiones.get(k, {}))
+                publicar(archivo, original, nuevo)
+                bajas = {(k, "REF-" + rid, dia) for rid, dia in bajas_registradas(nuevo.splitlines()) if dia <= datos["fecha"]}
+                if bajas:
+                    reloj = Reloj(cfg["zona_horaria"])
+                    reloj.fijar(datos["fecha"])
+                    almacen = Almacen(a.estado or cfg["rutas"]["almacen"], reloj)
+                    avisar_curador(almacen, Mensajeria(almacen, validar(cfg)), datos["fecha"], almacen.nuevo_id("RUN"), bajas)
         return codigo
     bloque = _bloque(a, cfg)
     as_of = pd.Timestamp(a.as_of) if a.as_of else pd.Timestamp.now(tz=bloque.reloj.zona).tz_localize(None)

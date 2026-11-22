@@ -88,22 +88,24 @@
   "no_comprueba": "El disparo del siguiente C1 en la fecha nueva: HT-05 tiene `proxima_ejecucion`, pero nada la llama con el P-01 de F10, y el P-01 que escribe el CT-04 guarda la hora de entrega y pierde la del ciclo (INC-T159-01). Que ningún otro parámetro cambie."
  },
  "PB-10": {
-  "cobertura": "PARCIAL",
+  "cobertura": "AUTOMATICA",
   "pruebas": [
    "11_Ejecutor/tests/test_integracion.py::test_peticion_ad_hoc_y_decisiones",
-   "11_Ejecutor/tests/test_fase4_huecos.py::test_pb10_la_configuracion_rechazada_en_parte_no_toca_nada_mas"
+   "11_Ejecutor/tests/test_fase4_huecos.py::test_pb10_la_configuracion_rechazada_en_parte_no_toca_nada_mas",
+   "11_Ejecutor/tests/test_t189_controles.py::test_ct04_rechaza_lista_global_incompatible"
   ],
-  "comprueba": "Estado APLICADA_PARCIALMENTE; el umbral E y la celda ALT×H1 se rechazan con su motivo y la celda sigue sin aplicarse; P-02 aplicado; ningún otro parámetro de F10 cambia salvo la lista de horizontes; HA sin incidencia de escritura.",
-  "no_comprueba": "Que F10 cambie solo en P-02: el CT-04 del ejecutor lleva una lista global de horizontes y la guarda en P-03 aunque rechace la celda ALT×H1 (INC-T116-01)."
+  "comprueba": "Estado APLICADA_PARCIALMENTE; el umbral E y la celda ALT×H1 se rechazan con su motivo y la celda sigue sin aplicarse; P-02 aplicado; ningún otro parámetro de F10 cambia salvo la lista de horizontes; HA sin incidencia de escritura. CT-04 conserva P-03 cuando rechaza una celda; AUT lleva CPI y EAC; R8 registra la clase de dato sin guardar el valor.",
+  "no_comprueba": ""
  },
  "PB-11": {
-  "cobertura": "PARCIAL",
+  "cobertura": "AUTOMATICA",
   "pruebas": [
    "11_Ejecutor/tests/test_integracion.py::test_peticion_ad_hoc_y_decisiones",
-   "11_Ejecutor/tests/test_fase4_huecos.py::test_pb11_la_opcion_descartada_se_resuelve_y_cuenta_en_el_historial"
+   "11_Ejecutor/tests/test_fase4_huecos.py::test_pb11_la_opcion_descartada_se_resuelve_y_cuenta_en_el_historial",
+   "11_Ejecutor/tests/test_t188_producto.py::test_comparacion_por_decision"
   ],
-  "comprueba": "La decisión del Broker se anota sin cambiar el estado de la opción en F3 y se avisa al Evaluador (CT-22); al vencer, los PRG de la opción enviada y de la descartada quedan RESUELTO y el historial de aciertos los cuenta; ningún mensaje al Bloque B.",
-  "no_comprueba": "La lección de producto que compara las enviadas con las descartadas cuando haya muestra: el Evaluador no la genera (INC-T116-03)."
+  "comprueba": "La decisión del Broker se anota sin cambiar el estado de la opción en F3 y se avisa al Evaluador (CT-22); al vencer, los PRG de la opción enviada y de la descartada quedan RESUELTO y el historial de aciertos los cuenta; ningún mensaje al Bloque B. El Evaluador escribe en F6 lecciones de producto a partir de decisiones anteriores al resultado y de consultas recurrentes de análisis distintos.",
+  "no_comprueba": ""
  },
  "PB-12": {
   "cobertura": "AUTOMATICA",
@@ -120,10 +122,11 @@
   "cobertura": "PARCIAL",
   "pruebas": [
    "11_Ejecutor/tests/test_integracion.py::test_gc0_negativo_arrastre_verificado",
-   "11_Ejecutor/tests/test_t65_resto_t53.py::test_cs10_celdas_de_rotacion_exploratoria_de_la_configuracion"
+   "11_Ejecutor/tests/test_t65_resto_t53.py::test_cs10_celdas_de_rotacion_exploratoria_de_la_configuracion",
+   "11_Ejecutor/tests/test_t185_rotacion.py::test_rotacion_presupuestada_en_f5"
   ],
-  "comprueba": "Nivel N1 con 5 UC como máximo, arrastre verificado, sin candidatas nuevas, solo modo ligero; las celdas de rotación exploratoria salen de la configuración.",
-  "no_comprueba": "Que la rotación exploratoria quede entre el 15 % y el 25 %: el ejecutor la mide en celdas fijas (`seleccion.rotacion_exploratoria_celdas`, [PROPUESTO] hasta T-57) y no lee `presupuesto_uc.rotacion_exploratoria` (0,20) (INC-T159-01). AS-06 es del Auditor (modelo real)."
+  "comprueba": "Nivel N1 con 5 UC como máximo, arrastre verificado, sin candidatas nuevas, solo modo ligero; las celdas de rotación exploratoria salen de la configuración. Un ciclo registra en F5 el presupuesto de cribado de N1, la reserva de exploración y las celdas ofrecidas.",
+  "no_comprueba": "AS-06 corresponde al Auditor con el modelo real. La llamada conjunta no mide consumo efectivo por símbolo."
  },
  "PB-14": {
   "cobertura": "AUTOMATICA",
@@ -149,22 +152,26 @@
   "no_comprueba": ""
  },
  "PB-17": {
-  "cobertura": "PARCIAL",
+  "cobertura": "AUTOMATICA",
   "pruebas": [
    "11_Ejecutor/tests/test_fase4_huecos.py::test_pb17_ampliacion_autorizada_y_denegada_dejan_su_aut_en_ha",
-   "11_Ejecutor/tests/test_fase4_huecos.py::test_pb17_en_un_ciclo_la_ampliacion_denegada_cierra_con_alcance_reducido"
+   "11_Ejecutor/tests/test_fase4_huecos.py::test_pb17_en_un_ciclo_la_ampliacion_denegada_cierra_con_alcance_reducido",
+   "11_Ejecutor/tests/test_t189_controles.py::test_aut_con_valor_ganado"
   ],
-  "comprueba": "Una ampliación que puede cambiar el top-3 y cabe en el tope se autoriza; una que no puede cambiarlo o que supera el tope se deniega; cada decisión deja su AUT- en HA con el motivo; en un ciclo, la denegada cierra con alcance reducido y el consumo real queda en F5.",
-  "no_comprueba": "Los campos CPI y EAC de la AUT-, que el ejecutor no registra (INC-T116-02), y una ampliación autorizada dentro de un ciclo completo."
+  "comprueba": "Una ampliación que puede cambiar el top-3 y cabe en el tope se autoriza; una que no puede cambiarlo o que supera el tope se deniega; cada decisión deja su AUT- en HA con el motivo; en un ciclo, la denegada cierra con alcance reducido y el consumo real queda en F5. CT-04 conserva P-03 cuando rechaza una celda; AUT lleva CPI y EAC; R8 registra la clase de dato sin guardar el valor.",
+  "no_comprueba": ""
  },
  "PB-18": {
   "cobertura": "PARCIAL",
   "pruebas": [
    "11_Ejecutor/tests/test_unitarias.py::test_ht04_y_ht06_y_ht08",
-   "11_Ejecutor/tests/test_t53_evaluacion_y_almacen.py::test_monitor_abre_instancias_de_los_analistas_nuevos"
+   "11_Ejecutor/tests/test_t53_evaluacion_y_almacen.py::test_monitor_abre_instancias_de_los_analistas_nuevos",
+   "11_Ejecutor/tests/test_t193_ingesta.py::test_abrir_por_tiempo_y_cerrar_con_histeresis",
+   "11_Ejecutor/tests/test_t193_ingesta.py::test_cuarenta_ingestas_concurrentes_sin_duplicados",
+   "11_Ejecutor/tests/test_t193_ingesta.py::test_la_orden_por_ingesta_se_registra_en_el_mismo_ciclo"
   ],
-  "comprueba": "El monitor ordena abrir instancia (ORD-) de un agente sin estado al superar el umbral de cola.",
-  "no_comprueba": "Cero duplicados en F2 y la vuelta del tiempo medio de ingesta al objetivo: HT-08 solo abre instancias por cola; no tiene el disparo por tiempo (> 2 × objetivo), ni el objetivo de tiempo de ingesta, ni la orden ORD- de cierre tras dos lecturas con cola 0 y ρ < 0,30 (INC-T159-01)."
+  "comprueba": "El monitor ordena abrir instancia (ORD-) de un agente sin estado al superar el umbral de cola. Comprueba apertura por duración, cierre tras dos lecturas y deduplicación concurrente.",
+  "no_comprueba": "Falta medir la vuelta al objetivo bajo carga real y con un tiempo objetivo acordado."
  },
  "PB-19": {
   "cobertura": "AUTOMATICA",
@@ -191,24 +198,27 @@
   "no_comprueba": ""
  },
  "PB-20": {
-  "cobertura": "PARCIAL",
+  "cobertura": "AUTOMATICA",
   "pruebas": [
    "11_Ejecutor/tests/test_integracion.py::test_instruccion_incrustada_ignorada_y_registrada",
-   "11_Ejecutor/tests/test_unitarias.py::test_saneamiento_r9"
+   "11_Ejecutor/tests/test_unitarias.py::test_saneamiento_r9",
+   "11_Ejecutor/tests/test_t182_procedencia.py::test_del_buscador_al_curador",
+   "11_Ejecutor/tests/test_t182_procedencia.py::test_control_de_salida"
   ],
-  "comprueba": "La instrucción se neutraliza, queda una incidencia MANIPULACION, ninguna puntuación cambia y el texto no llega a los entregables.",
-  "no_comprueba": "La degradación o el borrado de la fuente en F9 con su línea en el Registro de bajas; el camino del plan (una fuente que trae el Buscador y que pasa al Curador) no se ejerce; ninguna prueba afirma la EVD con `incidencia_manipulacion`; la comprobación G3-EST-06 no existe en el ejecutor ni en HT-09; y el «destino» de la fuente no se prueba. Lo que falta es del ejecutor: degradar o borrar la fuente en F9 y G3-EST-06 (INC-T159-01)."
+  "comprueba": "La instrucción se neutraliza, queda una incidencia MANIPULACION, ninguna puntuación cambia y el texto no llega a los entregables. Una recuperación CT-07 de una fuente contaminada deja EVD, incidencia y baja de F9. G3-EST-06 bloquea contenido contaminado en la salida.",
+  "no_comprueba": ""
  },
  "PB-21": {
-  "cobertura": "PARCIAL",
+  "cobertura": "AUTOMATICA",
   "pruebas": [
    "11_Ejecutor/tests/test_unitarias.py::test_contratos_canales_credenciales_e_idempotencia",
    "11_Ejecutor/tests/test_v51.py::test_credenciales_boveda",
    "10_Herramientas/tests/test_ht09_validador_g3.py::TestBloqueos::test_credenciales",
-   "11_Ejecutor/tests/test_fase4_huecos.py::test_pb21_un_ct04_con_una_clave_y_un_iban_se_rechaza_y_no_queda_en_ningun_archivo"
+   "11_Ejecutor/tests/test_fase4_huecos.py::test_pb21_un_ct04_con_una_clave_y_un_iban_se_rechaza_y_no_queda_en_ningun_archivo",
+   "11_Ejecutor/tests/test_t189_controles.py::test_seguridad_solo_etiquetas"
   ],
-  "comprueba": "El CT-04 del plan (una clave API y un IBAN en el comentario) se rechaza íntegro, deja una incidencia SEGURIDAD con el campo y sin el valor, y ni la clave ni el IBAN aparecen en ningún archivo ni mensaje; lo mismo en CT-03 y con las credenciales de CT-25.",
-  "no_comprueba": "El tipo de dato protegido en la incidencia (clave API, IBAN): el ejecutor registra el campo y «credenciales o datos personales», no el tipo (INC-T116-03)."
+  "comprueba": "El CT-04 del plan (una clave API y un IBAN en el comentario) se rechaza íntegro, deja una incidencia SEGURIDAD con el campo y sin el valor, y ni la clave ni el IBAN aparecen en ningún archivo ni mensaje; lo mismo en CT-03 y con las credenciales de CT-25. CT-04 conserva P-03 cuando rechaza una celda; AUT lleva CPI y EAC; R8 registra la clase de dato sin guardar el valor.",
+  "no_comprueba": ""
  },
  "PB-22": {
   "cobertura": "AUTOMATICA",
@@ -232,26 +242,32 @@
   "no_comprueba": ""
  },
  "PB-24": {
-  "cobertura": "PARCIAL",
+  "cobertura": "AUTOMATICA",
   "pruebas": [
    "10_Herramientas/tests/test_ht02_verificador_enlaces.py::TestEstados::test_roto_confirmado_y_baja",
    "10_Herramientas/tests/test_ht02_verificador_enlaces.py::TestEscritura::test_borrar_crea_registro_y_exige_motivo",
-   "10_Herramientas/tests/test_ht02_verificador_enlaces.py::TestEscritura::test_borrar_con_registro_existente"
+   "10_Herramientas/tests/test_ht02_verificador_enlaces.py::TestEscritura::test_borrar_con_registro_existente",
+   "11_Ejecutor/tests/test_t181_fuentes.py::test_baja_con_registro_y_propagacion",
+   "11_Ejecutor/tests/test_t181_fuentes.py::test_cli_solo_informe_y_aplicar",
+   "11_Ejecutor/tests/test_t181_fuentes.py::test_caida_archivo_y_ausencia_no_equivalen"
   ],
-  "comprueba": "HT-02 confirma el enlace roto y borra con línea en el Registro de bajas y motivo obligatorio.",
-  "no_comprueba": "La integración en el bloque: EVD marcada FUENTE_RETIRADA, revisión registrada en F3 y el paquete CT-21 del mes. El ejecutor solo invoca HT-02; la propagación de la baja no existe (INC-T159-01)."
+  "comprueba": "Barrido y baja con registro, aviso CT-11, retirada de la evidencia, revisión de oportunidades en F3 y bajas del mes en CT-21. Comprueba también reintentos y conservación de la ficha ante fallos de red.",
+  "no_comprueba": ""
  },
  "PB-25": {
-  "cobertura": "PARCIAL",
+  "cobertura": "AUTOMATICA",
   "pruebas": [
    "10_Herramientas/tests/test_ht02_verificador_enlaces.py::TestEstados::test_contenido_igual_casi_y_cambiado",
-   "10_Herramientas/tests/test_ht02_verificador_enlaces.py::TestEstados::test_retractacion"
+   "10_Herramientas/tests/test_ht02_verificador_enlaces.py::TestEstados::test_retractacion",
+   "11_Ejecutor/tests/test_t181_fuentes.py::test_revision_cambio_y_retractacion",
+   "11_Ejecutor/tests/test_t181_fuentes.py::test_reparar_exige_copia_original",
+   "11_Ejecutor/tests/test_t181_fuentes.py::test_baja_con_registro_y_propagacion"
   ],
-  "comprueba": "HT-02 detecta el contenido cambiado y la retractación.",
-  "no_comprueba": "El ejecutor no trata CONTENIDO_CAMBIADO ni RETRACTADA que detecta HT-02: no se recalcula Q en F9 ni la baja se propaga a F2, como en PB-24 (QA r01 de T-159, H-02; función que falta, INC-T159-01). El recálculo con motivo lo hace después el Documentador con el modelo real."
+  "comprueba": "Contrasta la revisión con la huella del contenido, recalcula Q por rúbrica con motivo, verifica la copia archivada y registra la retractación confirmada. El registro alimenta la propagación a F2.",
+  "no_comprueba": ""
  },
  "PB-26": {
-  "cobertura": "PARCIAL",
+  "cobertura": "AUTOMATICA",
   "pruebas": [
    "11_Ejecutor/tests/test_t126_pb26_pb48.py::test_pb26_cada_referencia_esta_en_una_tematica_del_anexo_d",
    "11_Ejecutor/tests/test_t126_pb26_pb48.py::test_pb26_dentro_de_cada_tematica_el_orden_es_por_calidad_descendente",
@@ -260,10 +276,11 @@
    "11_Ejecutor/tests/test_t126_pb26_pb48.py::test_pb26_la_comprobacion_detecta_un_orden_o_un_nivel_mal_puestos",
    "11_Ejecutor/tests/test_t126_r02.py::test_h02_cada_referencia_esta_fisicamente_en_la_seccion_de_su_tematica",
    "11_Ejecutor/tests/test_t126_r02.py::test_h02_a_igualdad_de_q_va_primero_la_mas_reciente",
-   "11_Ejecutor/tests/test_t126_r02.py::test_h03_las_comprobaciones_detectan_fichas_estropeadas"
+   "11_Ejecutor/tests/test_t126_r02.py::test_h03_las_comprobaciones_detectan_fichas_estropeadas",
+   "11_Ejecutor/tests/test_t184_altas.py::test_treinta_altas_y_lote_invalido"
   ],
-  "comprueba": "En los F7, F8 y F9 entregados: cada referencia está físicamente en la sección `## TX-nn` de su temática del Anexo D (y su campo «Temática» lo dice), 0 inversiones del orden por Q dentro de cada sección, a igualdad de Q la de año de publicación más reciente primero, el nivel A/B/C/D coherente con Q (13.3) y las de nivel D marcadas como candidatas a baja o única fuente; las mismas comprobaciones detectan un desorden, un nivel, una temática, una sección o un desempate estropeados.",
-  "no_comprueba": "El alta de 30 referencias nuevas que pide el plan: la hacen los Documentadores con el modelo real; aquí se comprueba el estado de los archivos. El desempate solo compara fichas con año de publicación: un «Documento vivo» (ANA-DOC-0089) y las fuentes de F9, que no tienen año, no se desempatan (INC-T126-01, [PROPUESTO])."
+  "comprueba": "En los F7, F8 y F9 entregados: cada referencia está físicamente en la sección `## TX-nn` de su temática del Anexo D (y su campo «Temática» lo dice), 0 inversiones del orden por Q dentro de cada sección, a igualdad de Q la de año de publicación más reciente primero, el nivel A/B/C/D coherente con Q (13.3) y las de nivel D marcadas como candidatas a baja o única fuente; las mismas comprobaciones detectan un desorden, un nivel, una temática, una sección o un desempate estropeados. La CLI incorpora treinta referencias en TA-06, TM-11 y TF-04 y mantiene el orden por calidad y fecha sin alterar el registro de bajas.",
+  "no_comprueba": ""
  },
  "PB-27": {
   "cobertura": "PENDIENTE_API",
@@ -280,10 +297,11 @@
  "PB-29": {
   "cobertura": "PARCIAL",
   "pruebas": [
-   "11_Ejecutor/tests/test_t65_qa_r01.py::test_r01_h08_ps1_con_el_minimo_de_raices_de_la_configuracion"
+   "11_Ejecutor/tests/test_t65_qa_r01.py::test_r01_h08_ps1_con_el_minimo_de_raices_de_la_configuracion",
+   "11_Ejecutor/tests/test_t183_raices.py::test_un_original_y_veinte_derivadas"
   ],
-  "comprueba": "La puerta PS1 cuenta raíces independientes con el mínimo de la configuración.",
-  "no_comprueba": "La comprobación G3 de raíces sobre un paquete real y el recuento del Auditor. El ejecutor no distingue derivadas (escribe `grado_independencia = RAIZ` siempre): «1 raíz y 20 derivadas» depende del Curador, que es un agente de lenguaje. Además, las raíces se cuentan por fuente: veinte medios distintos serían veinte raíces (INC-T159-01)."
+  "comprueba": "La puerta PS1 cuenta raíces independientes con el mínimo de la configuración. El ejecutor distingue una raíz y veinte derivadas documentadas; G3 contrasta las cifras de las afirmaciones de cada oportunidad con F2.",
+  "no_comprueba": "La identificación semántica de reproducciones sin metadatos de procedencia y la revisión humana del Auditor."
  },
  "PB-30": {
   "cobertura": "AUTOMATICA",
@@ -357,19 +375,21 @@
    "11_Ejecutor/tests/test_unitarias.py::test_guardia_de_fuga_del_proveedor",
    "11_Ejecutor/tests/test_unitarias.py::test_fecha_publicacion_filtra_revisiones",
    "11_Ejecutor/tests/test_unitarias.py::test_servicio_del_motor_rc_cache_fuga_y_reejecucion",
-   "11_Ejecutor/tests/test_t66_evaluacion.py::test_pa09_contaminados_no_cuentan_para_la_recalibracion"
+   "11_Ejecutor/tests/test_t66_evaluacion.py::test_pa09_contaminados_no_cuentan_para_la_recalibracion",
+   "11_Ejecutor/tests/test_t192_evaluacion.py::test_recalcular_referencia_sin_futuro"
   ],
-  "comprueba": "Ningún dato posterior a la fecha de corte (proveedor, Motor y resolución) y los pronósticos contaminados no cuentan para recalibrar.",
-  "no_comprueba": "La corrección registrada en F6 tras detectar la fuga: el Evaluador marca la resolución FALLIDA y la deja fuera, pero no registra la corrección ni el recálculo como entrada nueva (INC-T159-01)."
+  "comprueba": "Ningún dato posterior a la fecha de corte (proveedor, Motor y resolución) y los pronósticos contaminados no cuentan para recalibrar. F6 conserva la corrección de la base contaminada y las nuevas puntuaciones, y documenta la decisión de sombra mediante comparaciones pareadas y DM-HLN.",
+  "no_comprueba": "No se ha usado un proveedor macroeconómico real con histórico de revisiones."
  },
  "PB-35": {
   "cobertura": "PARCIAL",
   "pruebas": [
    "11_Ejecutor/tests/test_t66_evaluacion.py::test_pa10_recalibracion_siempre_propuesta",
-   "11_Ejecutor/tests/test_t65_qa_r01.py::test_r01_h08_recalibracion_de_rk_con_el_paso_y_las_bandas_de_la_configuracion"
+   "11_Ejecutor/tests/test_t65_qa_r01.py::test_r01_h08_recalibracion_de_rk_con_el_paso_y_las_bandas_de_la_configuracion",
+   "11_Ejecutor/tests/test_t192_evaluacion.py::test_cierre_con_comparacion_pareada"
   ],
-  "comprueba": "La recalibración respeta el paso y las bandas de la configuración y queda como propuesta.",
-  "no_comprueba": "El registro de la evaluación sombra y la decisión documentada con DM-HLN: la selección calcula el top-3 con los pesos en sombra, pero nada cierra el AJU- EN_SOMBRA como CONFIRMADO o REVERTIDO (INC-T159-01)."
+  "comprueba": "La recalibración respeta el paso y las bandas de la configuración y queda como propuesta. F6 conserva la corrección de la base contaminada y las nuevas puntuaciones, y documenta la decisión de sombra mediante comparaciones pareadas y DM-HLN.",
+  "no_comprueba": "No se cambia la configuración productiva sin la autorización prevista en PA-10. Datos de prueba controlados."
  },
  "PB-36": {
   "cobertura": "AUTOMATICA",
@@ -602,15 +622,16 @@
   "no_comprueba": "El resultado esperado del plan, «ninguna afirmación técnica errónea en la muestra», no se cumple: 9 ERRONEA (INC-T187-03), pendientes de la próxima entrega del corpus. «Tamaños dentro de las orientaciones» solo se comprueba en los 14 papeles con tope; los otros 21 papeles no tienen orientación (INC-T187-01, T-57). El paso 3 pide 10 afirmaciones técnicas por prompt: 28 de 35 tienen menos de 10 verificables (mínimo 2, el Coordinador), porque las 81 NO_VERIFICABLE son reglas internas; se declara y no hay muestra de reposición (INC-T187-02). De las 260 CORRECTA, 249 las juzgó el revisor de memoria («conocimiento propio»), sin consultar la referencia, 3 con búsqueda web y 8 con un cálculo a mano; la QA r01 contrastó 10 al azar y coincidió en las 10 (INC-T187-02). Los criterios son `[PROPUESTO]`: el denominador del 95 % (INC-T187-02: las NO_VERIFICABLE quedan fuera) y la estructura completa y la orientación de tamaño (INC-T187-01). Que los DOI existan no se comprueba (sin red; hoy no hay ninguno escrito). El juicio de las afirmaciones es de los revisores, no del script."
  },
  "PB-52": {
-  "cobertura": "PARCIAL",
+  "cobertura": "AUTOMATICA",
   "pruebas": [
    "11_Ejecutor/tests/test_unitarias.py::test_busqueda_web_solo_en_vivo_y_reparacion_json",
    "11_Ejecutor/tests/test_t53_seleccion_y_entrega.py::test_un_simbolo_sin_historia_no_vacia_su_tipo",
    "11_Ejecutor/tests/test_t65_hallazgos.py::test_h15_simbolo_con_datos_invalidos_se_excluye_y_se_declara",
-   "11_Ejecutor/tests/test_t159_extremo_a_extremo.py::test_pb52_con_ht09_caido_nunca_hay_apto_por_defecto_ni_entrega"
+   "11_Ejecutor/tests/test_t159_extremo_a_extremo.py::test_pb52_con_ht09_caido_nunca_hay_apto_por_defecto_ni_entrega",
+   "11_Ejecutor/tests/test_t191_degradado.py::test_ciclo_bloqueado_y_registrado"
   ],
-  "comprueba": "Una salida no conforme o un símbolo sin datos dan una entrega PARCIAL con la limitación declarada y sin cifras inventadas. Con HT-09 caído (T-159), el ciclo no entrega nada, no congela pronósticos y no deja ningún dictamen APTO.",
-  "no_comprueba": "El caso del plan como tal: con HT-09 caído el ciclo termina con una excepción, sin CT-14 al Orquestador, sin G3 manual con etiqueta y sin el RUN- ni la incidencia en el historial: falta el modo degradado de HT-09 (INC-T159-01). El de HT-01 sin datos de una clase sí se prueba."
+  "comprueba": "Una salida no conforme o un símbolo sin datos dan una entrega PARCIAL con la limitación declarada y sin cifras inventadas. Con HT-09 caído (T-159), el ciclo no entrega nada, no congela pronósticos y no deja ningún dictamen APTO. Las caídas simuladas en F6 y F7 terminan con bloqueo justificado, comunicación CT-14 y registros en HA y F5.",
+  "no_comprueba": ""
  },
  "PB-53": {
   "cobertura": "AUTOMATICA",
@@ -769,12 +790,13 @@
   "no_comprueba": "Que el modelo real no invente un dato del Broker (con el cliente simulado no se puede medir; modo sombra). Los plazos con el reloj de pared (las pruebas fijan la hora). Si la respuesta contradice de verdad el supuesto: el ejecutor no lo juzga y toda respuesta nueva cuenta como invalidación (INC-T174-01)."
  },
  "PB-62": {
-  "cobertura": "PARCIAL",
+  "cobertura": "AUTOMATICA",
   "pruebas": [
-   "11_Ejecutor/tests/test_v51.py::test_consulta_validaciones_agrupacion_y_entrante"
+   "11_Ejecutor/tests/test_v51.py::test_consulta_validaciones_agrupacion_y_entrante",
+   "11_Ejecutor/tests/test_t188_producto.py::test_recurrencia_entre_analisis"
   ],
-  "comprueba": "Tres CT-23 como máximo por RUN- (la cuarta se agrupa), validaciones y aviso de consulta recurrente.",
-  "no_comprueba": "La LEC- de producto: el aviso CONSULTA_RECURRENTE sale, pero el ejecutor no crea la lección (INC-T116-03)."
+  "comprueba": "Tres CT-23 como máximo por RUN- (la cuarta se agrupa), validaciones y aviso de consulta recurrente. El Evaluador escribe en F6 lecciones de producto a partir de decisiones anteriores al resultado y de consultas recurrentes de análisis distintos.",
+  "no_comprueba": ""
  },
  "PB-63": {
   "cobertura": "AUTOMATICA",
