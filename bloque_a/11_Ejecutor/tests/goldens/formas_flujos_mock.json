@@ -134,6 +134,7 @@
     },
     "CT-06.ENCARGO": {
      "combinaciones_de_claves_a_veces": [
+      "calculos_disponibles delta_gc0 fecha_limite_informacion foco horizontes_aplicables_clase horizontes_interes max_candidatas max_finalistas referencias_disponibles reparto_cribado rotacion_exploratoria tipo_activo umbral_senal_gc1 universo",
       "calculos_disponibles delta_gc0 fecha_limite_informacion foco horizontes_aplicables_clase horizontes_interes max_candidatas max_finalistas referencias_disponibles rotacion_exploratoria tipo_activo umbral_senal_gc1 universo",
       "objeciones"
      ],
@@ -168,6 +169,7 @@
       "objeciones": "array",
       "opciones_vigentes[]": "object",
       "referencias_disponibles": "array",
+      "reparto_cribado": "object",
       "rotacion_exploratoria": "array",
       "rotacion_exploratoria[]": "string",
       "tipo_activo": "string",
@@ -239,6 +241,11 @@
       "referencias_disponibles[].ref_id": "string",
       "referencias_disponibles[].tematica": "string",
       "referencias_disponibles[].titulo": "string",
+      "reparto_cribado.simbolos": "array",
+      "reparto_cribado.simbolos[]": "string",
+      "reparto_cribado.uc_cribado": "number",
+      "reparto_cribado.uc_rotacion": "number",
+      "reparto_cribado.uc_vigentes": "number",
       "run_id": "string",
       "timestamp": "string",
       "tipo_mensaje": "string",
