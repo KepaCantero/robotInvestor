@@ -65,13 +65,14 @@ def conocible_desde(ref: dict) -> str | None:
 
 
 class Referencias:
+    registro_bajas_f9: Path | None = None
+
     def __init__(self, cfg: Dict, rutas: Optional[Dict[str, Path]] = None) -> None:
         base = ruta(cfg, "archivos_operativos")
         self.rutas = rutas or {k: localizar(base, v) for k, v in ARCHIVOS_REF.items()}
         self.fichas: Dict[str, List[Dict]] = {}
         self.bajas: dict[str, list[tuple[str, str]]] = {}
         self._firmas: dict[str, tuple | None] = {}
-        self.registro_bajas_f9: Path | None = None
         self.actualizar()
 
     def actualizar(self):

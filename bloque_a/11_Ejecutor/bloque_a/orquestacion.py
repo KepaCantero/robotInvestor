@@ -1147,7 +1147,7 @@ class Bloque:
         datos, hall = sanear_estructura(r.datos, f"{agente}:{run_id}")
         piezas = []
         ofrecidas = {x["ref_id"] for x in cand["referencias"] if x.get("anio") is not None}
-        contaminadas = {"REF-" + h["origen"].removeprefix("F9:") for h in cand["hallazgos_r9"] if h["origen"].startswith("F9:")}
+        contaminadas = {"REF-" + h["origen"].removeprefix("F9:") for h in cand.get("hallazgos_r9", []) if h["origen"].startswith("F9:")}
         retiradas = self.referencias.retiradas_f9(as_of)
         for indice, ref in enumerate(datos.get("referencias", [])[:3]):
             if ref.get("ref_id") in retiradas:
@@ -1162,7 +1162,7 @@ class Bloque:
             if pieza["incidencia"]:
                 pieza.update(afirmacion="Pieza en cuarentena", extracto="", direccion="neutra")
                 pieza.pop("pronostico_fuente", None)
-        return {"para": f["proxy"], "piezas": piezas, "refs_ofrecidas": sorted(ofrecidas), "hallazgos_r9": hall + cand["hallazgos_r9"],
+        return {"para": f["proxy"], "piezas": piezas, "refs_ofrecidas": sorted(ofrecidas), "hallazgos_r9": hall + cand.get("hallazgos_r9", []),
                 "estado": "COMPLETO" if piezas else "SIN_RESULTADO"}
 
     def _prospectiva(self, clase, finales, as_of, run_id, presupuesto, hz_interes) -> None:
