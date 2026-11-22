@@ -2,7 +2,7 @@
 
 | Campo | Valor |
 | --- | --- |
-| Estado | IMPLEMENTADO · pendiente de comprobación general y QA |
+| Estado | EN QA (r01, revisión independiente pendiente) |
 | Implementación | Astra |
 | QA independiente | Claude |
 
