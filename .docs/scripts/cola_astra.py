@@ -107,7 +107,7 @@ def main():
     hoy = date.today()
     errores, avisos, resumen = [], [], []
     rows = filas()
-    st = subprocess.run(["git", "-C", str(RAIZ), "status", "--porcelain"], capture_output=True, text=True, check=False).stdout
+    st = subprocess.run(["git", "-C", str(RAIZ), "-c", "core.quotePath=false", "status", "--porcelain", "--untracked-files=all"], capture_output=True, text=True, check=False).stdout
     sin_subir = {l[3:] for l in st.splitlines() if len(l) > 3}   # sin recortar: la primera columna puede ser un espacio
     en_curso = []
     autor = autor_efectivo()

@@ -7,6 +7,7 @@ cd "$RAIZ"
 base="$(grep -m1 -oE '^[0-9]+' .docs/scripts/linea_base_pruebas.txt || true)"   # el primer número de la primera línea (QA r04, H-38)
 [[ -n "$base" ]] || fallo "no hay línea base en .docs/scripts/linea_base_pruebas.txt"
 codigo=0
+unset COLA_ASTRA_SCRIPT   # el gate prueba siempre el cola_astra.py real, no el de los mutantes (T-194, QA r01 H-01)
 salida="$("$PY" -m pytest -q -p no:cacheprovider .docs/scripts/pruebas_*.py 2>&1)" || codigo=$?   # sin que set -e corte aquí
 if [[ $codigo -ne 0 ]]; then echo "$salida" | tail -40; fallo "las pruebas de .docs/scripts fallan"; fi
 echo "$salida" | tail -1

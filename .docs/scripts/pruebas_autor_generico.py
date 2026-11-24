@@ -33,13 +33,6 @@ def _cola(tmp_path, monkeypatch, env, dotenv=None):
     return m
 
 
-def _git_original():
-    spec = importlib.util.spec_from_file_location("cola_astra_git", SCRIPTS / "cola_astra.py")
-    m = importlib.util.module_from_spec(spec)
-    spec.loader.exec_module(m)
-    return m.git
-
-
 def _bash(env):
     entorno = {k: v for k, v in os.environ.items() if not k.startswith("GIT_AUTOR_")}
     entorno.update(env)
@@ -107,11 +100,16 @@ def test_los_scripts_de_commit_lo_comprueban_antes_del_gate():
 
 
 def test_la_cola_da_error_con_un_autor_personal(tmp_path, monkeypatch, capsys):
+    """Con una cola propia en tmp_path, no la real (T-194, QA r01 H-06)."""
     m = _cola(tmp_path, monkeypatch, {"GIT_AUTOR_NOMBRE": PERSONAL[0], "GIT_AUTOR_EMAIL": PERSONAL[1]})
-    monkeypatch.setattr(m, "RAIZ", RAIZ)        # la cola real, con el autor personal del entorno
+    cola = tmp_path / ".docs/tickets/_relevo/cola_astra.md"
+    cola.parent.mkdir(parents=True)
+    cola.write_text("| # | Tarea | Tipo | Encargo o ticket | Entregable | Estado | Commit | Nota |\n"
+                    "| --- | --- | --- | --- | --- | --- | --- | --- |\n"
+                    "| C-01 | Tarea | REVISION | encargo | «no/existe.md» | PENDIENTE | | |\n", encoding="utf-8")
+    monkeypatch.setattr(m, "COLA", cola)
     falso = {"config user.name": PERSONAL[0], "config user.email": PERSONAL[1]}
-    original = _git_original()
-    monkeypatch.setattr(m, "git", lambda *a: falso.get(" ".join(a), None) or original(*a))
+    monkeypatch.setattr(m, "git", lambda *a: falso.get(" ".join(a), ""))
     monkeypatch.setattr(m.sys, "argv", ["cola_astra.py"])
     assert m.main() == 1
     salida = capsys.readouterr().out
