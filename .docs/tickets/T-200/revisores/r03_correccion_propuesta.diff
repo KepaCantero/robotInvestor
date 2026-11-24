@@ -1,0 +1,21 @@
+diff --git a/bloque_a/11_Ejecutor/bloque_a/contratos.py b/bloque_a/11_Ejecutor/bloque_a/contratos.py
+index 992dc6b0..fed6c493 100644
+--- a/bloque_a/11_Ejecutor/bloque_a/contratos.py
++++ b/bloque_a/11_Ejecutor/bloque_a/contratos.py
+@@ -867,11 +867,12 @@ class Mensajeria:
+         # `error` ni hacen las dos el ALTER TABLE. Cualquier error sale tal cual, con la transacción deshecha y la conexión
+         # cerrada
+         try:
+-            db.execute("BEGIN IMMEDIATE")
+-            db.execute("CREATE TABLE IF NOT EXISTS acuses (id TEXT PRIMARY KEY, huella TEXT NOT NULL, respuesta TEXT)")
+             if "error" not in {fila[1] for fila in db.execute("PRAGMA table_info(acuses)")}:
+-                db.execute("ALTER TABLE acuses ADD COLUMN error TEXT")
+-            db.commit()
++                db.execute("BEGIN IMMEDIATE")
++                db.execute("CREATE TABLE IF NOT EXISTS acuses (id TEXT PRIMARY KEY, huella TEXT NOT NULL, respuesta TEXT)")
++                if "error" not in {fila[1] for fila in db.execute("PRAGMA table_info(acuses)")}:
++                    db.execute("ALTER TABLE acuses ADD COLUMN error TEXT")
++                db.commit()
+         except BaseException:
+             db.close()   # cerrar sin commit deshace la transacción
+             raise

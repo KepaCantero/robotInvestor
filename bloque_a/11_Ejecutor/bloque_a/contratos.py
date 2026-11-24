@@ -862,9 +862,21 @@ class Mensajeria:
 
     def _acuses(self):
         db = sqlite3.connect(self.almacen.carpeta / "acuses.sqlite3")
-        db.execute("CREATE TABLE IF NOT EXISTS acuses (id TEXT PRIMARY KEY, huella TEXT NOT NULL, respuesta TEXT)")
-        if "error" not in {fila[1] for fila in db.execute("PRAGMA table_info(acuses)")}:
-            db.execute("ALTER TABLE acuses ADD COLUMN error TEXT")
+        # T-200: con la tabla ya migrada (el caso normal) solo se lee el esquema, sin cerrojo de escritura (r02, H-01: un lector
+        # no espera a otra escritura en curso). Si falta la tabla o la columna `error`, se crea y se migra en UNA transacción
+        # de escritura (BEGIN IMMEDIATE toma el cerrojo de escritura de SQLite, también entre procesos) y DENTRO se vuelve a
+        # comprobar: la lectura de fuera solo decide si hace falta el camino lento; otra instancia que acabe de migrar ya se ve
+        # dentro y nadie repite el ALTER TABLE. Cualquier error sale tal cual, con la transacción deshecha y la conexión cerrada
+        try:
+            if "error" not in {fila[1] for fila in db.execute("PRAGMA table_info(acuses)")}:
+                db.execute("BEGIN IMMEDIATE")
+                db.execute("CREATE TABLE IF NOT EXISTS acuses (id TEXT PRIMARY KEY, huella TEXT NOT NULL, respuesta TEXT)")
+                if "error" not in {fila[1] for fila in db.execute("PRAGMA table_info(acuses)")}:
+                    db.execute("ALTER TABLE acuses ADD COLUMN error TEXT")
+                db.commit()
+        except BaseException:
+            db.close()   # cerrar sin commit deshace la transacción
+            raise
         return db
 
     def estado_reserva(self, msg_id: str) -> dict:
