@@ -1,6 +1,5 @@
 """T-123 · R8: IBAN de otros países y números de tarjeta, validados con su dígito de control (hueco menor de la deuda)."""
 import random
-import time
 
 import pytest
 from bloque_a.contratos import (
@@ -14,6 +13,7 @@ from bloque_a.contratos import (
     tarjetas_en_texto,
 )
 from conftest import AS_OF, nuevo_bloque
+from tiempo_cpu import cpu
 
 # IBAN y tarjetas de ejemplo publicados por los bancos y las redes para pruebas (ninguno es una cuenta real)
 IBAN = {"DE": "DE89" + "370400440532013000", "GB": "GB82" + "WEST12345698765432", "FR": "FR14" + "20041010050500013M02606",
@@ -80,9 +80,7 @@ def test_pocos_falsos_positivos_en_series_de_cifras_al_azar():
 
 def test_el_coste_es_lineal(tmp_path):
     texto = ("Cifras 1234 5678 9012 y DE89 algo más. " * 40000)
-    t0 = time.perf_counter()
-    secretos_en_texto(texto)
-    assert time.perf_counter() - t0 < 10
+    assert cpu(lambda: secretos_en_texto(texto)) < 10   # T-199: tiempo de CPU, no de reloj
 
 
 def test_luhn_y_longitudes():

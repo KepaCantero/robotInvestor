@@ -305,11 +305,9 @@ def test_r02_h17_r8_detecta_todas_las_claves_con_forma_real():
 
 
 def test_r02_h17_r8_sin_retroceso_cuadratico():
-    import time
+    from tiempo_cpu import cpu
     for texto in ("_" + SK) * 32768, ("a-" * 70000), (SK + "a-" * 70000), ("x" + SK) * 30000:
-        t0 = time.perf_counter()
-        contenido_sensible(texto)
-        assert time.perf_counter() - t0 < 2.0
+        assert cpu(lambda t=texto: contenido_sensible(t)) < 2.0   # T-199: tiempo de CPU, no de reloj
 
 
 def test_r02_h18_una_clave_en_su_propia_linea_se_detecta():
@@ -407,6 +405,7 @@ def test_r03_h25_clave_detras_de_separadores_y_escapes(delante):
 def test_r03_h26_formatos_genericos():
     import secrets as sec
     import uuid
+
     from bloque_a.contratos import contiene_credenciales
     casos = [f"{SK}{uuid.uuid4()}", f"{SK}lf-{uuid.uuid4()}", f"{SK}{sec.token_hex(8)}-{sec.token_hex(8)}",
              f"{SK}{'abc_def_' * 3}{sec.token_hex(4)}", f"SK-{sec.token_urlsafe(24)}"]

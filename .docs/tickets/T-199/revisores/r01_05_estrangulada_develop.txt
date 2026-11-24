@@ -1,0 +1,19 @@
+F......                                                                  [100%]
+=================================== FAILURES ===================================
+___________________________ test_el_coste_es_lineal ____________________________
+
+tmp_path = PosixPath('/tmp/pytest-of-root/pytest-9024/test_el_coste_es_lineal0')
+
+    def test_el_coste_es_lineal(tmp_path):
+        texto = ("Cifras 1234 5678 9012 y DE89 algo más. " * 40000)
+        t0 = time.perf_counter()
+        secretos_en_texto(texto)
+>       assert time.perf_counter() - t0 < 10
+E       assert (13501.550627442 - 13491.509474028) < 10
+E        +  where 13501.550627442 = <built-in function perf_counter>()
+E        +    where <built-in function perf_counter> = time.perf_counter
+
+tests/test_t123_r8_iban_y_tarjetas.py:85: AssertionError
+=========================== short test summary info ============================
+FAILED tests/test_t123_r8_iban_y_tarjetas.py::test_el_coste_es_lineal - asser...
+1 failed, 6 passed in 49.07s

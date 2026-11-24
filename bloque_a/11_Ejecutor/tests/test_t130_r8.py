@@ -1,10 +1,10 @@
 """T-130 · R8: hallazgos de la QA r02 de T-123 (H-05 a H-10)."""
 import hashlib
 import random
-import time
 
 import pytest
 from bloque_a.contratos import ibanes_en_texto, secretos_en_texto, tarjetas_en_texto
+from tiempo_cpu import minimos_intercalados
 
 VISA = "4111" + "1111" + "1111" + "1111"            # número de prueba publicado, partido
 DE = "DE89" + "370400440532013000"
@@ -80,11 +80,9 @@ def test_h07_identificadores_con_guion_bajo():
 # ---------------------------------------------------------------- H-08 · coste lineal
 @pytest.mark.parametrize("unidad", ["DE12 ", "DE11 " + "1 " * 30, "4111 "])
 def test_h08_coste_lineal(unidad):
-    def tarda(n):
-        t0 = time.perf_counter()
-        secretos_en_texto(unidad * (n // len(unidad)))
-        return time.perf_counter() - t0
-    corto, largo = tarda(50_000), tarda(200_000)
+    """T-199: tiempo de CPU, la mínima de varias medidas intercaladas de cada tamaño (`tiempo_cpu`)."""
+    t_corto, t_largo = unidad * (50_000 // len(unidad)), unidad * (200_000 // len(unidad))
+    corto, largo = minimos_intercalados(lambda: secretos_en_texto(t_corto), lambda: secretos_en_texto(t_largo))
     assert largo < 3.0 and largo < 10 * max(corto, 0.01)
 
 

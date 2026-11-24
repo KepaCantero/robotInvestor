@@ -8,6 +8,7 @@ import pytest
 from bloque_a.almacen import Almacen
 from bloque_a.configuracion import cargar_config
 from bloque_a.motor import fichas_mon_idx, servicio
+from tiempo_cpu import medir_cpu
 
 
 class _Proveedor:
@@ -128,15 +129,13 @@ def test_h55_la_version_de_python_declarada_es_la_que_hace_falta():
 
 
 def test_h56_contenido_sensible_lineal_con_mucho_anidamiento():
-    import time
-
     from bloque_a.llm import contenido_sensible
     d: object = "x" * (1 << 20)
     for _ in range(400):
         d = {"a": d}
-    t0 = time.perf_counter()
-    assert not contenido_sensible(d)
-    assert time.perf_counter() - t0 < 5
+    with medir_cpu() as m:   # T-199: tiempo de CPU, no de reloj
+        assert not contenido_sensible(d)
+    assert m.segundos < 5
     assert contenido_sensible({"a": {"b": [{"c": "sk-" + "ant-api03-abcdefghijklmnopqrstuvwxyz0123"}]}})
     profundo: object = "sk-" + "ant-api03-abcdefghijklmnopqrstuvwxyz0123"
     for _ in range(5000):
@@ -369,30 +368,26 @@ def test_r02_h01_ciclos_y_demasiado_hondo_fallan_cerrado_y_terminan():
 
 
 def test_r02_h01_lineal_con_listas_de_diccionarios():
-    import time
-
     from bloque_a.llm import contenido_sensible
     honda: object = ["x" * 1000]
     for _ in range(50000):
         honda = [honda, {"k": "v"}]
     ancha = [{"a": "palabra " * 20, "b": [i, str(i)]} for i in range(20000)]
-    t0 = time.perf_counter()
-    assert not contenido_sensible(honda) and not contenido_sensible(ancha)
-    assert time.perf_counter() - t0 < 20
+    with medir_cpu() as m:   # T-199: tiempo de CPU, no de reloj
+        assert not contenido_sensible(honda) and not contenido_sensible(ancha)
+    assert m.segundos < 20
 
 
 def test_r02_h01_la_misma_lista_en_muchos_sitios_se_mira_una_vez():
     """Una lista que contiene dos veces a la anterior, 26 veces: 2**26 caminos, pero 27 listas. Cada contenedor se mira una vez."""
-    import time
-
     from bloque_a.llm import contenido_sensible
     for hoja, esperado in (("inofensivo", False), ({"a": "inofensivo"}, False), (_SK, True), ({_CLAVE: "abcdef"}, True)):
         x: object = [hoja]
         for _ in range(26):
             x = [x, x]
-        t0 = time.perf_counter()
-        assert contenido_sensible(x) is esperado
-        assert time.perf_counter() - t0 < 5
+        with medir_cpu() as m:   # T-199: tiempo de CPU, no de reloj
+            assert contenido_sensible(x) is esperado
+        assert m.segundos < 5
 
 
 def test_r02_h01_la_ultima_puerta_antes_de_la_api_bloquea_el_contenido_estructurado():

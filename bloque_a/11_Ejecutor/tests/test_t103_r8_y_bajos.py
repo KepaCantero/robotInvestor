@@ -116,11 +116,11 @@ def test_h43_una_consulta_sin_plazo_vence_con_incidencia(tmp_path, universo):
 
 # ================================================================================================== ronda r02 (QA r01 de T-103)
 def test_r02_h47_r8_lineal_con_un_tramo_largo_de_barras():
-    import time
-    t0 = time.perf_counter()
-    contenido_sensible("\\" * 99_999 + "z")
-    contiene_credenciales({"x": "\\" * 100_000})
-    assert time.perf_counter() - t0 < 2   # antes: 129 s y 114 s
+    from tiempo_cpu import medir_cpu
+    with medir_cpu() as m:   # T-199: tiempo de CPU, no de reloj
+        contenido_sensible("\\" * 99_999 + "z")
+        contiene_credenciales({"x": "\\" * 100_000})
+    assert m.segundos < 2   # antes: 129 s y 114 s
 
 
 @pytest.mark.parametrize("sep", [" ", " ", "\u0085"])

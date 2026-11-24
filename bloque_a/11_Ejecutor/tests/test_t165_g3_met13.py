@@ -11,7 +11,6 @@ preparación completa, la declaración corregida, el informe técnico y el visua
 """
 import json
 import re
-import time
 from pathlib import Path
 from types import SimpleNamespace
 
@@ -20,6 +19,7 @@ from bloque_a.herramientas import ht09
 from bloque_a.motor import servicio
 from bloque_a.redaccion import Redaccion
 from conftest import AS_OF, config_pruebas, nuevo_bloque
+from tiempo_cpu import minimos_intercalados
 
 from bloque_a import mock_respuestas
 from bloque_a import sintesis as sint
@@ -167,18 +167,16 @@ def test_una_parcial_ambigua_falla_cerrado(ficha_ambigua):
     assert c["resultado"] == "BLOQUEO" and "no se puede reconocer con seguridad" in c["incidencias"][0]["detalle"]
 
 
-def _cpu(texto):
-    t0 = time.process_time()
-    _real(texto)
-    return time.process_time() - t0
-
-
 def test_coste_lineal_en_una_frase_larga_y_en_muchas_fichas_por_parrafo():
-    """Tiempo de CPU del proceso (como T-168): 4 veces más texto, como mucho unas 6 veces más tiempo (cuadrático serían 16)."""
-    _cpu("ST-DESC-001")
+    """Tiempo de CPU del proceso (como T-168): 8 veces más texto, como mucho 12 veces más tiempo (×1,5 de lo lineal, el
+    margen relativo que tenía el tope de 6 con ×4). Un coste lineal + cuadrático (b·n + a·n²) falla en cuanto el término
+    cuadrático, al tamaño largo, pasa de 0,62 veces el lineal (con ×4 y tope 6 era 0,8).
+    T-199 r02 (QA r01, H-01): la mínima de tres medidas intercaladas de cada tamaño, sin el recolector (`tiempo_cpu`); con una
+    sola medida de ×4 y tope 6, la razón llegaba a 5,97 con la máquina cargada (lineal: 4)."""
+    _real("ST-DESC-001")
     for unidad in ("no está validado, ", "ST-DESC-001 implementado. ", "VOL GARCH 001 y ST-DESC-001; "):
-        corto, largo = _cpu(unidad * 2000), _cpu(unidad * 8000)
-        assert largo < 6 * max(corto, 0.02), (unidad, corto, largo)
+        corto, largo = minimos_intercalados(lambda u=unidad: _real(u * 1000), lambda u=unidad: _real(u * 8000))
+        assert largo < 12 * max(corto, 0.02), (unidad, corto, largo)
 
 
 # ------------------------------------------------------------------ HTML (H-11)

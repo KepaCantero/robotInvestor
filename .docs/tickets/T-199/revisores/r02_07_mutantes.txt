@@ -1,0 +1,6 @@
+ 15:24:57 up  2:04,  0 user,  load average: 3.82, 4.13, 4.33
+M14 G3-MET-13 re-comprueba el prefijo (bloque 120 000): MUERTO (9 s de reloj) E           AssertionError: ('ST-DESC-001 implementado. ', 0.03153444500000013, 0.5044856210000006)
+M15 G3-MET-13 re-comprueba el prefijo (bloque 160 000): MUERTO (6 s de reloj) E           AssertionError: ('ST-DESC-001 implementado. ', 0.03025822800000011, 0.45075952200000025)
+M16 texto_prohibido con retroceso ((?:\w+[ ,]+)+;): MUERTO (68 s de reloj) E       assert 61.62331549300001 < 2
+M18 frase_prohibida con retroceso en el sufijo ((?:[A-Z]\.)+[a-z]): MUERTO (31 s de reloj) E       assert 24.432279776999998 < 2.0
+ 15:26:51 up  2:06,  0 user,  load average: 4.43, 4.31, 4.37

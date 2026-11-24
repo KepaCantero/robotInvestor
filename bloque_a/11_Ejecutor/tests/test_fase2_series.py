@@ -8,7 +8,6 @@ import collections
 import copy
 import json
 import math
-import time
 
 import numpy as np
 import pandas as pd
@@ -16,6 +15,7 @@ import pytest
 from bloque_a.motor import fichas_series as S
 from bloque_a.motor.operaciones import ErrorFicha
 from scipy import optimize, stats
+from tiempo_cpu import medir_cpu
 
 FICHAS = sorted(S.FICHAS)
 
@@ -913,11 +913,10 @@ def test_tem_diff_fases_por_umbral():
 # ============================================================================= QA r01: H-01 (cotas de tamaño)
 def _rapido(ficha, valores, params, texto, ent_extra=None, limite=2.0):
     """Rechazo por la cota antes de calcular: rápido y con el motivo."""
-    t0 = time.perf_counter()
-    with pytest.raises(ErrorFicha) as e:
+    with medir_cpu() as m, pytest.raises(ErrorFicha) as e:   # T-199: tiempo de CPU, no de reloj
         S.FICHAS[ficha]["fn"]({**_ent(valores), **(ent_extra or {})}, params)
     assert texto in str(e.value), str(e.value)
-    assert time.perf_counter() - t0 < limite, f"{ficha}: rechazo lento"
+    assert m.segundos < limite, f"{ficha}: rechazo lento"
     return str(e.value)
 
 
@@ -1049,16 +1048,45 @@ def test_st_inf_n_minimo_de_potencia_acotado():
     limitación; con d diminuto, también None (sin desbordar ni colgarse)."""
     v = {"contrastes": [{"nombre": "a", "muestra": [0.3, 1.2, -0.4, 0.8, 1.9, 0.1]}]}
     for d in (0.05, 1e-300):
-        t0 = time.perf_counter()
-        r, lim = _correr("ST-INF-001", v, {"tipo_contraste": "t_una_muestra", "efecto_potencia": d,
-                                           "potencia_objetivo": 0.8})
-        assert time.perf_counter() - t0 < 2
+        with medir_cpu() as m:   # T-199: tiempo de CPU, no de reloj
+            r, lim = _correr("ST-INF-001", v, {"tipo_contraste": "t_una_muestra", "efecto_potencia": d,
+                                               "potencia_objetivo": 0.8})
+        assert m.segundos < 2
         assert r["contrastes"]["a"]["potencia"]["n_minimo"] is None
         assert r["contrastes"]["a"]["potencia"]["n_minimo_supera_cota"] == 2520 and any("supera la cota" in x for x in lim)
     r, lim = _correr("ST-INF-001", v, {"tipo_contraste": "t_una_muestra", "efecto_potencia": 0.06, "potencia_objetivo": 0.8})
     n = r["contrastes"]["a"]["potencia"]["n_minimo"]
     z = stats.norm.ppf(0.975) + stats.norm.ppf(0.8)
     assert abs(n - (z / 0.06) ** 2) < 5 and n <= 2520 and not any("supera la cota" in x for x in lim)
+
+
+def test_st_inf_la_busqueda_del_n_minimo_empieza_en_la_aproximacion(monkeypatch):
+    """T-199 r02 (QA r01 de T-199, H-02): el coste de la búsqueda se cuenta en evaluaciones de la potencia (`_potencia_t`), no
+    en tiempo, así que no depende de la carga. Con d = 0,05 y con d diminuto la aproximación ya pasa de la cota: solo se evalúa
+    la potencia de la muestra. Con d = 0,06, unas pocas alrededor de la aproximación (la cota daría 2 520). Una búsqueda desde
+    2 cabe en el tope de tiempo (0,5 s), pero no en este recuento; el contador corta a las 50 para no esperar a un cuadrático."""
+    original = S._potencia_t
+    v = {"contrastes": [{"nombre": "a", "muestra": [0.3, 1.2, -0.4, 0.8, 1.9, 0.1]}]}
+
+    def evaluaciones(d):
+        n = [0]
+
+        def contada(*a, **k):
+            n[0] += 1
+            assert n[0] <= 50, f"más de 50 evaluaciones de la potencia (d = {d})"
+            return original(*a, **k)
+        monkeypatch.setattr(S, "_potencia_t", contada)
+        try:
+            r, _ = _correr("ST-INF-001", v, {"tipo_contraste": "t_una_muestra", "efecto_potencia": d, "potencia_objetivo": 0.8})
+        finally:
+            monkeypatch.setattr(S, "_potencia_t", original)
+        return n[0], r["contrastes"]["a"]["potencia"]["n_minimo"]
+
+    for d in (0.05, 1e-300):
+        evals, n_min = evaluaciones(d)
+        assert n_min is None and evals <= 1, (d, evals)
+    evals, n_min = evaluaciones(0.06)
+    assert n_min is not None and evals <= 20, evals
 
 
 # ============================================================================= QA r01: H-08 (mutantes QS04, QS05, QS08)

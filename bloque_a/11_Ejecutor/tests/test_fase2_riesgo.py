@@ -1062,11 +1062,11 @@ def test_cscv_por_tandas_da_lo_mismo_que_de_una_vez(monkeypatch):
 def test_la_ficha_mas_cara_en_su_cota_cabe_en_tiempo():
     """SIM-MC-001 con las trayectorias por defecto hasta H5 (el presupuesto entero) y 99 cuantiles: una pasada en segundos.
     La medida completa (1e6 × 25, SCN-H con 1e6, BT-PBO con S = 20, bootstrap con 10 000 réplicas) está en grupo_R.md."""
-    import time
-    t0 = time.perf_counter()
-    r, _ = _correr("SIM-MC-001", {"dinamica": {"tipo": "paseo_aleatorio", "mu": 0.0, "sigma": 0.01}},
-                   {"n_trayectorias": 10_000, "horizonte": H5, "semilla": 3, "cuantiles": [i / 100 for i in range(1, 100)]})
-    assert time.perf_counter() - t0 < 30 and len(r["distribucion"]["cuantiles"]) == 99
+    from tiempo_cpu import medir_cpu
+    with medir_cpu() as m:   # T-199: tiempo de CPU, no de reloj
+        r, _ = _correr("SIM-MC-001", {"dinamica": {"tipo": "paseo_aleatorio", "mu": 0.0, "sigma": 0.01}},
+                       {"n_trayectorias": 10_000, "horizonte": H5, "semilla": 3, "cuantiles": [i / 100 for i in range(1, 100)]})
+    assert m.segundos < 30 and len(r["distribucion"]["cuantiles"]) == 99
 
 
 # --- H-02: un parámetro no declarado (errata) se rechaza en las 9 fichas; `clase` se admite en todas

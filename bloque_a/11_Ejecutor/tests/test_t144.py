@@ -2,7 +2,6 @@
 redondeada (H-01), el aviso de CHR-TOKEN-001 con un dato movido (H-02), el coste n²·T (H-03), precios ≤ 0 (H-04) y dos
 copias más otra serie (H-05, límite declarado)."""
 import copy
-import time
 
 import numpy as np
 import pandas as pd
@@ -11,6 +10,7 @@ from bloque_a.motor import fichas_mon_idx as fm
 from bloque_a.motor import fichas_p2 as fp
 from bloque_a.motor import frontera_b as fb
 from bloque_a.motor.operaciones import ErrorFicha
+from tiempo_cpu import medir_cpu
 
 FECHAS = pd.bdate_range("2025-06-02", periods=320)
 AVISO = "aviso (1.6)"
@@ -165,9 +165,9 @@ def test_h03_indice_grande_con_salida_y_exclusion_sin_fechas_comunes():
     series["S0000"] = series["S0000"].iloc[-380:]
     series["S0001"] = series["S0001"].iloc[:300]
     comp = {"fecha": "2026-10-31", "componentes": [{"id": k, "peso": 1 / 2000, "sector": "X"} for k in series]}
-    t0 = time.perf_counter()
-    res, _ = _correr(series, comp=comp)
-    assert time.perf_counter() - t0 < 60 and res["amplitud"] is not None
+    with medir_cpu() as m:   # T-199: tiempo de CPU, no de reloj
+        res, _ = _correr(series, comp=comp)
+    assert m.segundos < 60 and res["amplitud"] is not None
 
 
 # ---------------------------------------------------------------- H-04 · precios ≤ 0 o no finitos

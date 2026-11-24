@@ -1,0 +1,5 @@
+M12: MUERTO E       AssertionError: más de 50 evaluaciones de la potencia (d = 0.05)
+M12: MUERTO E       AssertionError: más de 50 evaluaciones de la potencia
+M13: MUERTO E       AssertionError: más de 50 evaluaciones de la potencia (d = 0.05)
+M13: MUERTO E       AssertionError: más de 50 evaluaciones de la potencia
+2 passed in 0.16s

@@ -1,0 +1,18 @@
+ 11:46:28 up  3:46,  0 user,  load average: 9.48, 8.35, 7.27
+0 no está  una medida 4.28  mínima de 3 intercaladas 4.77
+0 ST-DESC- una medida 8.46  mínima de 3 intercaladas 7.42
+0 VOL GARC una medida 2.56  mínima de 3 intercaladas 8.12
+1 no está  una medida 4.31  mínima de 3 intercaladas 3.96
+1 ST-DESC- una medida 8.81  mínima de 3 intercaladas 8.31
+1 VOL GARC una medida 8.11  mínima de 3 intercaladas 7.93
+2 no está  una medida 3.99  mínima de 3 intercaladas 3.85
+2 ST-DESC- una medida 8.81  mínima de 3 intercaladas 7.87
+2 VOL GARC una medida 4.92  mínima de 3 intercaladas 8.16
+3 no está  una medida 4.01  mínima de 3 intercaladas 3.85
+3 ST-DESC- una medida 8.23  mínima de 3 intercaladas 8.18
+3 VOL GARC una medida 8.09  mínima de 3 intercaladas 8.14
+4 no está  una medida 5.03  mínima de 3 intercaladas 3.89
+4 ST-DESC- una medida 8.38  mínima de 3 intercaladas 8.12
+4 VOL GARC una medida 9.37  mínima de 3 intercaladas 7.96
+PEOR: una medida 9.37; mínima de 3 intercaladas 8.31
+ 11:47:45 up  3:47,  0 user,  load average: 12.53, 9.48, 7.75

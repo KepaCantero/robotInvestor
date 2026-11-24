@@ -1,0 +1,7 @@
+ 11:46:41 up  3:46,  0 user,  load average: 9.52, 8.41, 7.30
+M03 R8 re-escanea el prefijo (bloque 1 000): MUERTO (41 s de reloj) E       assert 13.249214053 < 2
+M04 R8 re-escanea el prefijo (bloque 2 000): MUERTO (38 s de reloj) E       assert (5.405568633 < 3.0)
+M08 G3-MET-13 re-comprueba el prefijo (bloque 2 400): MUERTO (11 s de reloj) E           AssertionError: ('no está validado, ', 0.0460597530000002, 2.462870561)
+M11 TEM-DIFF-001: la cota de B se comprueba después del bootstrap: MUERTO (8 s de reloj) E       AssertionError: TEM-DIFF-001: rechazo lento
+M13 ST-INF-001: búsqueda lineal desde 2, sin la aproximación (no cuadrático: ver pruebas.md): VIVO (5 s de reloj) 
+ 11:48:26 up  3:48,  0 user,  load average: 12.84, 9.94, 7.97
