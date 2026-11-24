@@ -22,7 +22,7 @@ from typing import Any
 import pandas as pd
 
 from . import diseno_v6 as v6
-from . import respuesta_final
+from . import fiabilidad_f9, respuesta_final
 from . import sintesis as sint
 from .agentes import Agentes
 from .almacen import Almacen, Reloj
@@ -621,7 +621,7 @@ class Bloque:
         pres_c5 = Presupuesto({"COMUN": self._comun_minimo_c5(as_of, tipo, alcance, nivel_forzado, presupuesto_override, tope_ciclo)},
                               self.cfg)
         self._informe_aprendizaje(res_eval, as_of, run_id, pres_c5)
-        self._comunicar_fiabilidad(res_eval, run_id)
+        self._comunicar_fiabilidad(as_of, run_id)
         try:
             self.elevar_propuestas_tipo3(as_of, run_id)   # T-176 (PB-36): P3-EVAL- por CT-19 a la cola de tipo 3 de HA
         except Exception as e:  # noqa: BLE001 — no bloquea C1–C3; la P3- sigue sin `elevada_via` y se reintenta
@@ -793,17 +793,28 @@ class Bloque:
         return resultado
 
     # ------------------------------------------------------------------------------------
-    def _comunicar_fiabilidad(self, res_eval: dict, run_id: str) -> None:
-        """T-125 (PB-46): las FUE- nuevas van al Buscador de Fuentes Avanzadas por CT-19, que recalifica las fuentes en F9; cada
-        FUE- anota el mensaje. Determinista: no hace falta el informe por IA."""
-        fue = res_eval.get("fiabilidad_fuentes") or []
-        if not fue:
-            return
-        msg = self.mensajeria.crear("CT-19", "AG-20", "AG-16", {"tipo": "FIABILIDAD_FUENTES", "fuentes": [
-            {k: f[k] for k in ("fue_id", "ref_id", "periodo", "n", "aciertos", "bss", "bss_contraido", "puntos_historial")} for f in fue]},
-            run_id=run_id, tipo_mensaje="RETORNO", estado="COMPLETO")
-        for f in fue:
-            self.almacen.escribir("F6", "AG-20", {"tipo_entrada": "FUE", "id": f["fue_id"], "comunicado_ct19": msg["msg_id"]})
+    def _comunicar_fiabilidad(self, as_of, run_id: str) -> list[str]:
+        """T-125 (PB-46): las FUE- nuevas van al Buscador de Fuentes Avanzadas por CT-19 y cada FUE- anota el mensaje.
+        Determinista: no hace falta el informe por IA. T-198: el Buscador lo atiende (`fiabilidad_f9.atender_ct19`) y deja la
+        fiabilidad medida en F9 de la instancia; las FUE- que quedaron sin atender en un ciclo anterior salen otra vez. Si el
+        mensaje no cuadra con F6 o F9, no se escribe nada en F9 y queda una incidencia en HA. r02 (H-01): una FUE- cuya fuente
+        ya no es de F9 no va en el CT-19 y se declara una sola vez, para que no bloquee a las demás. Devuelve los `fue_id`
+        atendidos."""
+        with self.almacen._transaccion():
+            fue = fiabilidad_f9.por_comunicar(self.almacen, as_of)
+            fue = fiabilidad_f9.apartar_no_atendibles(self.almacen, fue, self.referencias, run_id)   # r02 (H-01)
+            if not fue:
+                return []
+            msg = self.mensajeria.crear("CT-19", "AG-20", "AG-16", fiabilidad_f9.cuerpo_ct19(fue), run_id=run_id,
+                                        tipo_mensaje="RETORNO", estado="COMPLETO")
+            for f in fue:
+                self.almacen.escribir("F6", "AG-20", {"tipo_entrada": "FUE", "id": f["fue_id"], "comunicado_ct19": msg["msg_id"]})
+            try:
+                return fiabilidad_f9.atender_ct19(self, msg, as_of, run_id)
+            except fiabilidad_f9.FiabilidadNoAtendible as e:
+                self.almacen.incidencia("DATOS", f"CT-19 {msg['msg_id']} no atendido por el Buscador: {e}; F9 sin cambios, "
+                                        "se reintenta en el ciclo siguiente", "AG-16", severidad="Operativa", run_id=run_id)
+                return []
 
     def elevar_propuestas_tipo3(self, as_of, run_id: str) -> list[str]:
         """T-176 (PB-36; 12.2 nivel C, 18.1 y esquema F6 4.7): cada P3-EVAL- de F6 que aún no tiene `elevada_via` sale por CT-19
@@ -1116,6 +1127,7 @@ class Bloque:
             agente_archivo = agente
         arch = ("F9",) if agente_archivo == "AG-16" else ("F7",)
         cand = self.referencias.para_clase(clase, as_of, self.modo, max_n=8, archivos=arch)
+        fiabilidad_f9.anotar_candidatas(self.almacen, as_of, cand["referencias"])   # T-198: la fiabilidad medida, si la hay
         msg = {"pregunta": pet.get("pregunta", ""), "objetivo": pet.get("objetivo", "confirmar"), "clase": clase,
                "horizonte": (f.get("horizontes_aplicables") or ["H3"])[0], "profundidad": "minima", "max_fuentes": 3,
                "fecha_limite_informacion": str(as_of.date()), "referencias_candidatas": cand["referencias"],

@@ -1,4 +1,4 @@
-"""Almacén de archivos operativos del bloque (F1–F6, F10, F11, RC, HA) en JSONL append-only.
+"""Almacén de archivos operativos del bloque (F1–F6, F9 de la instancia, F10, F11, RC, HA) en JSONL append-only.
 
 - Cada línea es una entrada con metadatos `_seq`, `_fecha` (fecha as_of en que se conoció), `_ts`,
   `_autor`, `_hash_prev` y `_hash` (cadena de integridad: cualquier modificación o borrado se detecta).
@@ -7,6 +7,8 @@
   (AG-01), calibrables (AG-20) y del operador. Una escritura fuera de reserva se rechaza, se registra
   como incidencia en HA y lanza `EscrituraFueraDeReserva`.
 - Vista `as_of`: `leer(archivo, as_of)` solo devuelve lo conocible en esa fecha (backtest sin fuga).
+- T-198 (PB-46): F9 es aquí lo que el Buscador (AG-16) escribe en la instancia encima de las fichas del corpus congelado
+  (`05_Archivos_operativos`), que no cambian: por ahora, la fiabilidad medida que le comunica el Evaluador por CT-19.
 """
 from __future__ import annotations
 
@@ -29,14 +31,15 @@ ARCHIVOS = {
     "F4": "F4_registro_pronosticos.jsonl",
     "F5": "F5_historial_analisis.jsonl",
     "F6": "F6_memoria_aprendizaje.jsonl",
+    "F9": "F9_registro_fuentes.jsonl",   # T-198: F9 de la instancia (AG-16), encima del corpus
     "F10": "F10_configuracion.jsonl",
     "F11": "F11_registro_seguimientos.jsonl",    # V5.1: Registro de seguimientos encargados (CT-24)
     "RC": "RC_registro_calculos.jsonl",
     "HA": "HA_historial_auditorias.jsonl",
 }
 PROPIETARIOS = {"F1": {"AG-02"}, "F2": {"AG-12"}, "F3": {"AG-02"}, "F4": {"AG-10", "AG-20"}, "F5": {"AG-01"},
-                "F6": {"AG-20"}, "F10": {"AG-01", "AG-20", "OPERADOR"}, "F11": {"AG-01"}, "RC": {"AG-13"}, "HA": {"AG-18"}}
-CLAVES = {"F1": "tnd_id", "F2": "id", "F3": "opp_id", "F4": "prg_id", "F5": "id", "F6": "id", "F10": "param_id", "F11": "seg_id",
+                "F6": {"AG-20"}, "F9": {"AG-16"}, "F10": {"AG-01", "AG-20", "OPERADOR"}, "F11": {"AG-01"}, "RC": {"AG-13"}, "HA": {"AG-18"}}
+CLAVES = {"F1": "tnd_id", "F2": "id", "F3": "opp_id", "F4": "prg_id", "F5": "id", "F6": "id", "F9": "ref_id", "F10": "param_id", "F11": "seg_id",
           "RC": "calc_id", "HA": "id"}
 # Regímenes del esquema F10 V3.0 (05_Archivos_operativos, «Configuración y parámetros del bloque», tabla de P-01 a P-44).
 # T-65 (CS-11 de T-53): se completan con P-34, P-38 y P-44 (SERVICIO) y P-35, P-36, P-39 y P-40 (CALIBRABLE)
@@ -45,6 +48,10 @@ PARAMETROS_CALIBRABLES = {"P-05", "P-06", "P-07", "P-08", "P-09", "P-10", "P-11"
                           "P-23", "P-24", "P-25", "P-26", "P-27", "P-30", "P-31", "P-35", "P-36", "P-39", "P-40",
                           "P-42"}   # P-42: degradación automática de H5 (12.2), CALIBRABLE en el esquema F10 V3.0
 CAMPOS_RESOLUCION_F4 = {"prg_id", "tipo_entrada", "resolucion", "estado"}
+# T-198: lo que AG-16 puede escribir en F9 de la instancia (la recalificación de Q la hará el Buscador con el modelo real)
+TIPOS_F9 = {"FIABILIDAD_MEDIDA"}
+# T-198 r02 (H-02): archivos añadidos al almacén después del sellado; solo estos se sellan vacíos al abrir si no existen
+ARCHIVOS_NUEVOS = ("F9",)
 
 
 class EscrituraFueraDeReserva(PermissionError):
@@ -116,6 +123,11 @@ class Almacen:
             if legado and self._ruta_formato.exists():
                 raise ValueError("Fallo de integridad: falta el fichero de sellos de un almacén ya sellado")
             sellos = {} if legado else self._leer_json(self._ruta_sellos)
+            # T-198: un archivo que se añade al almacén (F9, `ARCHIVOS_NUEVOS`) nace vacío en uno ya sellado: se sella vacío si
+            # no existe; si existe sin sello, falla cerrado como cualquier otro. Los demás sin sello fallan siempre (r02, H-02)
+            nuevos = [] if legado else [a for a in ARCHIVOS_NUEVOS if a not in sellos and not (self.carpeta / ARCHIVOS[a]).exists()]
+            for archivo in nuevos:
+                sellos[archivo] = self._ultimo([])
             for archivo in ARCHIVOS:
                 self._actualizar(archivo, sellos, legado=legado, recuperar=True)
             # T-92 (QA r02, H-20): las recuperaciones se aplican solo cuando todos los ficheros han pasado la validación.
@@ -129,6 +141,8 @@ class Almacen:
             self._por_recuperar.clear()
             if legado:
                 self._guardar_json(self._ruta_sellos, {a: self._ultimo(es) for a, es in self._entradas.items()})
+            elif nuevos:
+                self._guardar_json(self._ruta_sellos, sellos)
             if not self._ruta_formato.exists():
                 self._guardar_json(self._ruta_formato, {"sellos_integridad": 1})
         for archivo, n, aparte in self._recuperadas:
@@ -297,6 +311,8 @@ class Almacen:
         if autor not in PROPIETARIOS[archivo]:
             return f"{autor} no es propietario de escritura de {archivo} (propietarios: {sorted(PROPIETARIOS[archivo])})"
         tipo = entrada.get("tipo_entrada")
+        if archivo == "F9" and tipo not in TIPOS_F9:
+            return f"{autor} no puede registrar {tipo} en F9 de la instancia (admitidos: {sorted(TIPOS_F9)})"
         if archivo == "F4":
             if autor == "AG-10" and tipo != "ALTA":
                 return "AG-10 solo da de alta pronósticos en F4 (R11)"

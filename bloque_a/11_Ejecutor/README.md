@@ -229,6 +229,7 @@ Las salidas reales del modelo serán más largas que las simuladas; tómelo como
     almacen.py · orquestacion.py · sintesis.py · redaccion.py · evaluador.py · backtest.py · cli.py
     referencias.py · anonimizacion.py · configuracion.py · interfaz_broker.py (CT-23, CT-25) · mantenimiento_c4.py (C4 de credenciales del BFA, T-177) · seguimiento.py (CT-24, C6, F11) · guias.py (CT-18, T-158)
     carga.py (T-178: Orquestador en modo CARGA, ORD-/CAR- en HA y P3- por saturación repetida de un agente de instancia única)
+    fiabilidad_f9.py (T-198: el Buscador atiende el CT-19 FIABILIDAD_FUENTES y deja la fiabilidad medida, FMD-, en F9 de la instancia)
     cadena_b.py (T-142: petición CT-B-01 al Bloque B desde una opción, en el papel del Broker; vuelta CT-04)
     motor/ (operaciones.py, evaluacion.py, servicio.py)
     herramientas/ (ht01_datos, ht01_boveda, ht02, ht03, ht04_graficos, ht05_planificador, ht06_indice, ht07, ht08_monitor, ht09, referencia/;

@@ -507,10 +507,23 @@
    "11_Ejecutor/tests/test_t125_r03.py::test_h09_el_evaluador_no_cuenta_una_variable_no_resoluble",
    "11_Ejecutor/tests/test_t125_r03.py::test_h11_umbral_entero_y_decimal_son_el_mismo_pronostico",
    "11_Ejecutor/tests/test_t125_r03.py::test_h12_una_direccion_que_no_es_texto_no_tumba_la_fiabilidad",
-   "11_Ejecutor/tests/test_t125_r03.py::test_h13_la_entrada_de_rc_de_la_fue_lleva_run_id"
+   "11_Ejecutor/tests/test_t125_r03.py::test_h13_la_entrada_de_rc_de_la_fue_lleva_run_id",
+   "11_Ejecutor/tests/test_t198_buscador_ct19.py::test_ca1_las_dos_fuentes_del_plan_quedan_en_f9_con_su_fiabilidad_medida",
+   "11_Ejecutor/tests/test_t198_buscador_ct19.py::test_ca1_en_un_ciclo_el_buscador_atiende_el_ct19",
+   "11_Ejecutor/tests/test_t198_buscador_ct19.py::test_ca2_un_ct19_que_no_cuadra_no_escribe_nada_en_f9",
+   "11_Ejecutor/tests/test_t198_buscador_ct19.py::test_ca2_en_el_ciclo_queda_una_incidencia_y_se_reintenta_en_el_siguiente",
+   "11_Ejecutor/tests/test_t198_buscador_ct19.py::test_ca3_dos_instancias_a_la_vez_dejan_una_entrada_por_fuente",
+   "11_Ejecutor/tests/test_t198_buscador_ct19.py::test_ca4_una_fue_comunicada_antes_de_t198_se_atiende_en_el_ciclo_siguiente",
+   "11_Ejecutor/tests/test_t198_buscador_ct19.py::test_ca5_en_un_ciclo_la_busqueda_del_buscador_lleva_la_fiabilidad_medida",
+   "11_Ejecutor/tests/test_t198_buscador_ct19.py::test_ca6_un_almacen_sellado_antes_de_t198_abre_y_sella_f9_vacio",
+   "11_Ejecutor/tests/test_t198_buscador_ct19.py::test_r02_h01_una_fue_cuya_fuente_salio_de_f9_no_bloquea_a_las_demas",
+   "11_Ejecutor/tests/test_t198_buscador_ct19.py::test_r02_h03_un_timestamp_posterior_a_as_of_o_que_no_es_fecha_no_se_atiende",
+   "11_Ejecutor/tests/test_t198_buscador_ct19.py::test_r02_h04_una_fue_escrita_despues_de_as_of_no_se_atiende_en_as_of",
+   "11_Ejecutor/tests/test_t198_buscador_ct19.py::test_r02_h04_en_un_ciclo_el_ct07_no_ve_fiabilidad_posterior_a_as_of",
+   "11_Ejecutor/tests/test_t198_buscador_ct19.py::test_r02_h05_dos_bloques_a_la_vez_un_solo_ct19_y_ninguna_incidencia"
   ],
-  "comprueba": "El caso del plan (dos fuentes de 25 pronósticos explícitos, una con habilidad y otra sin ella): FUE- en F6 con n, aciertos, BSS (Brier del Motor, FC-EVAL-001, con su `calc_id`), BSS contraído con k = 20 y puntos de historial (por encima y por debajo del neutro 10), una por fuente y mes y comunicadas al Buscador por CT-19. En ciclos (r02 de T-125): el pronóstico que devuelve el Analista o el Buscador llega a F2 con su bloque y, vencido, sale en la FUE- y en el CT-19; solo cuenta lo registrado antes de su fecha objetivo, de una fuente de F9, dentro de la ventana y con cierre reciente.",
-  "no_comprueba": "La recalificación de Q y el orden en F9, que hace el Buscador con el modelo real (T-125). En backtest no entra ningún pronóstico de una fuente de F9 sin fecha (el filtro de evidencia no la da por conocible): el camino se prueba en modo vivo con el cliente simulado. Además, el CT-19 al Buscador se crea COMPLETO y nadie lo atiende: no hay en F9 dónde escribir la recalificación (QA r01 de T-159, H-02; función que falta, INC-T159-01)."
+  "comprueba": "El caso del plan (dos fuentes de 25 pronósticos explícitos, una con habilidad y otra sin ella): FUE- en F6 con n, aciertos, BSS (Brier del Motor, FC-EVAL-001, con su `calc_id`), BSS contraído con k = 20 y puntos de historial (por encima y por debajo del neutro 10), una por fuente y mes y comunicadas al Buscador por CT-19. En ciclos (r02 de T-125): el pronóstico que devuelve el Analista o el Buscador llega a F2 con su bloque y, vencido, sale en la FUE- y en el CT-19; solo cuenta lo registrado antes de su fecha objetivo, de una fuente de F9, dentro de la ventana y con cierre reciente. El Buscador atiende el CT-19 (T-198): con las dos fuentes del plan, cada FUE- queda en F9 de la instancia (almacén, escrita por AG-16) con su fiabilidad medida (pronósticos registrados, resueltos, aciertos, BSS, BSS contraído, puntos y `calc_id`, iguales a F6), la fecha y el msg_id del CT-19; un CT-19 que no cuadra con F6 o F9 (o con fecha posterior a as_of) no escribe nada, deja incidencia en HA y se reintenta en el ciclo siguiente; una FUE- cuya fuente salió de F9 se declara una vez y no bloquea a las demás; sin duplicados, también con cuatro instancias o dos ciclos a la vez; sin fuga (solo lo conocible en as_of, también en el CT-07 del ciclo); y el Buscador ve esa fiabilidad en las fuentes de F9 de sus búsquedas CT-07.",
+  "no_comprueba": "La recalificación de Q, el nivel y el orden dentro de su temática en F9 («Q y orden actualizados en F9 con motivo»): los hace el Buscador con el modelo real; el ejecutor deja la fiabilidad medida con `recalificacion_q` PENDIENTE y la Q del corpus no cambia, porque el prompt del Buscador (6.3, n / (n + 30) sobre una puntuación por bandas) y el esquema de F6 (k = 20) no dan el mismo criterio 2 (INC-T198-01). En backtest no entra ningún pronóstico de una fuente de F9 sin fecha (el filtro de evidencia no la da por conocible): el camino se prueba en modo vivo con el cliente simulado."
  },
  "PB-47": {
   "cobertura": "AUTOMATICA",
