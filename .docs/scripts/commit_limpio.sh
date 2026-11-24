@@ -8,6 +8,7 @@
 # antes del gate y sale del índice al hacer el commit. Solo ficheros que están en HEAD; nunca nada de `.docs/`.
 # Autor y líneas finales: GIT_AUTOR_NOMBRE, GIT_AUTOR_EMAIL y GIT_TRAILERS de .env (como commit.sh).
 source "$(dirname "$0")/common.sh"
+requiere_autor_generico   # antes del gate: un autor personal no llega a ningún commit
 
 mensaje="${1:-}"; [[ -n "$mensaje" ]] || fallo "uso: commit_limpio.sh \"mensaje\" ruta [ruta...] [--sin-push]"
 shift

@@ -44,5 +44,26 @@ if [[ -z "${PY:-}" ]]; then
 fi
 export PY
 
+# Autores genéricos (operador, 24-11-2026: «Usa un autor genérico»). El repositorio es público: ningún commit lleva un
+# nombre, un correo o un equipo personal. Lista cerrada de pares «Nombre <correo>»; lo que no está, no se acepta.
+AUTORES_GENERICOS=("Astra <astra@users.noreply.github.com>" "Claude <noreply@anthropic.com>")
+
+# autor_efectivo → «Nombre <correo>» con el que saldría el commit (GIT_AUTOR_* de .env o del entorno; si no, git).
+autor_efectivo() {
+  local n e
+  n="${GIT_AUTOR_NOMBRE:-}"; e="${GIT_AUTOR_EMAIL:-}"
+  [[ -n "$n" ]] || n="$(git -C "$RAIZ" config user.name 2>/dev/null || true)"
+  [[ -n "$e" ]] || e="$(git -C "$RAIZ" config user.email 2>/dev/null || true)"
+  printf '%s <%s>' "$n" "$e"
+}
+
+# requiere_autor_generico → falla si el autor efectivo no es uno de AUTORES_GENERICOS.
+requiere_autor_generico() {
+  local a g
+  a="$(autor_efectivo)"
+  for g in "${AUTORES_GENERICOS[@]}"; do [[ "$a" == "$g" ]] && return 0; done
+  fallo "el autor del commit no es genérico. Pon GIT_AUTOR_NOMBRE y GIT_AUTOR_EMAIL en .env con uno de: ${AUTORES_GENERICOS[*]} (repositorio público: nada de nombres ni correos personales)"
+}
+
 hoy() { date +%Y-%m-%d; }
 mes() { date +%Y-%m; }

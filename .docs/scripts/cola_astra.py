@@ -13,6 +13,7 @@ Cuándo cuenta un entregable como hecho:
 Uso: python3 .docs/scripts/cola_astra.py [--json]. Devuelve 1 si hay algún ERROR. Solo biblioteca estándar.
 """
 import json
+import os
 import re
 import subprocess
 import sys
@@ -30,6 +31,23 @@ ESTADOS = re.compile(r"^(PENDIENTE|HECHA|BLOQUEADA|RETIRADA|EN CURSO( \d{4}-\d{2
 def git(*args):
     r = subprocess.run(["git", "-C", str(RAIZ), *args], capture_output=True, text=True, check=False)
     return r.stdout.strip() if r.returncode == 0 else ""
+
+# Autores genéricos (operador, 24-11-2026): los mismos pares que AUTORES_GENERICOS de common.sh.
+AUTORES_GENERICOS = ("Astra <astra@users.noreply.github.com>", "Claude <noreply@anthropic.com>")
+
+
+def autor_efectivo():
+    """«Nombre <correo>» con el que saldría un commit: GIT_AUTOR_* del entorno o de .env y, si faltan, el git config."""
+    valores = {k: os.environ.get(k, "") for k in ("GIT_AUTOR_NOMBRE", "GIT_AUTOR_EMAIL")}
+    env = RAIZ / ".env"
+    if env.is_file():
+        for linea in env.read_text(encoding="utf-8", errors="replace").splitlines():
+            k, _, v = linea.strip().partition("=")
+            if k in valores and not valores[k]:
+                valores[k] = v.strip().strip('"').strip("'")
+    nombre = valores["GIT_AUTOR_NOMBRE"] or git("config", "user.name")
+    correo = valores["GIT_AUTOR_EMAIL"] or git("config", "user.email")
+    return f"{nombre} <{correo}>"
 
 
 def filas():
@@ -92,6 +110,11 @@ def main():
     st = subprocess.run(["git", "-C", str(RAIZ), "status", "--porcelain"], capture_output=True, text=True, check=False).stdout
     sin_subir = {l[3:] for l in st.splitlines() if len(l) > 3}   # sin recortar: la primera columna puede ser un espacio
     en_curso = []
+    autor = autor_efectivo()
+    if autor not in AUTORES_GENERICOS:
+        errores.append("autor de los commits no genérico (repositorio público: ni nombre ni correo personal): pon "
+                       "GIT_AUTOR_NOMBRE=Astra y GIT_AUTOR_EMAIL=astra@users.noreply.github.com en .env y, para los "
+                       "commits sin script, git config user.name Astra y git config user.email astra@users.noreply.github.com")
     for f in rows:
         if "error_forma" in f:
             errores.append(f"{f['id']}: {f['error_forma']}")

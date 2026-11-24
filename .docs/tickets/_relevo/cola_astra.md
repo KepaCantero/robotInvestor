@@ -1,5 +1,7 @@
 # Cola de trabajo de Astra
 
+> **24-11-2026 (operador): «Usa un autor genérico».** Los commits de Astra llevan siempre `Astra <astra@users.noreply.github.com>`: `git config user.name Astra`, `git config user.email astra@users.noreply.github.com` y lo mismo en `.env` (`GIT_AUTOR_NOMBRE`, `GIT_AUTOR_EMAIL`). Nunca un nombre, un correo o un equipo personales: el repositorio es público. `cola_astra.py` da ERROR si el autor no es genérico. Regla 7 de `AGENTS.md`.
+
 > **18-11-2026 (operador): otras cinco tareas del Bloque A, C-43 a C-47** (T-188, T-189, T-191, T-192 y T-193), después de C-42 y antes que C-08 y C-37. Directrices en `.docs/tickets/_relevo/2026-11-18_encargo_astra_bloque_a_2.md`, que valen también para C-38 a C-42. Ese encargo autoriza subir estos tickets a `develop`. Una tarea está HECHA solo con la QA APTO, **todos** los hallazgos corregidos (también los bajos, en una ronda de cierre que comprueba el mismo revisor), el ticket CERRADO y la integración en `develop`.
 
 > **17-11-2026 (operador): prioridad absoluta para C-38 a C-42**, cinco tickets del Bloque A (T-181 a T-185). Van antes que cualquier otra tarea, también antes que C-08 (que pasa a PENDIENTE, en pausa) y C-37. Directrices completas, hasta la QA APTO, en `.docs/tickets/_relevo/2026-11-17_encargo_astra_bloque_a.md`; ese encargo autoriza subir a `develop` estos cinco tickets. Una tarea está HECHA solo con su ticket CERRADO tras la QA APTO.

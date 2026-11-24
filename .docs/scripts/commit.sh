@@ -5,6 +5,7 @@
 #   --completo: gate completo en lugar del rápido
 # Autor: GIT_AUTOR_NOMBRE/GIT_AUTOR_EMAIL de .env o tu git config. Líneas finales: GIT_TRAILERS de .env.
 source "$(dirname "$0")/common.sh"
+requiere_autor_generico   # antes del gate: un autor personal no llega a ningún commit
 
 mensaje="${1:-}"; [[ -n "$mensaje" ]] || fallo "uso: commit.sh \"mensaje\" [rutas...] [--completo] [--sin-push]"
 shift
