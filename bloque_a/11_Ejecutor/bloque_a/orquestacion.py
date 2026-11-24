@@ -65,6 +65,7 @@ from .evaluador import (
 )
 from .guias import Guias, conflicto_de_leccion
 from .herramientas import ht03, ht09
+from .herramientas import ht05_planificador as ht05
 from .herramientas.ht01_datos import (
     DatosInvalidos,
     DatosNoDisponibles,
@@ -221,7 +222,7 @@ class Bloque:
         if self.almacen.leer("F10"):
             return
         a = self.cfg
-        params = [("P-01", "Periodicidad del ciclo C1", "SEMANAL · SAB 06:00 · entrega LUN 07:00", "SERVICIO"),
+        params = [("P-01", "Periodicidad del ciclo C1", ht05.P01_INICIAL, "SERVICIO"),
                   ("P-02", "Clases de activo activas", perfiles_activos(a), "SERVICIO"),
                   ("P-03", "Horizontes de interés", list(HORIZONTES), "SERVICIO"),
                   ("P-09", "Umbrales de elegibilidad", self.params_ht03["umbrales"], "CALIBRABLE"),
@@ -2309,13 +2310,22 @@ class Bloque:
         f10 = self.f10(as_of)
         # Las dos partes de P-01 pueden llegar por separado, incluso en dos CT-04 del mismo día.
         # Al preparar el cambio de mañana se conserva el último P-01 ya programado hasta hoy.
-        calendario = next((e["valor_vigente"] for e in reversed(self.almacen.leer("F10", as_of))
-                           if e.get("param_id") == "P-01" and e.get("valor_vigente")), None)
-        if calendario is None:
-            calendario = "SEMANAL · SAB 06:00 · entrega LUN 07:00"
-        partes = calendario.split(" · ")
-        periodicidad = conf.get("periodicidad", partes[0])
-        horario = conf.get("dia_hora_entrega", partes[-1].removeprefix("entrega "))
+        p01_vig = next((e for e in reversed(self.almacen.leer("F10", as_of))
+                        if e.get("param_id") == "P-01" and e.get("valor_vigente")), None)
+        calendario = p01_vig["valor_vigente"] if p01_vig else None
+        # T-197 (PB-09): el P-01 guarda la periodicidad, la ejecución y la entrega; la ejecución la fija HT-05 a partir de la
+        # entrega (especificación de HT-05, §4), así que el Broker cambia la entrega y la periodicidad y nada más
+        periodicidad_vig: str | None
+        entrega_vig: str | None
+        try:
+            periodicidad_vig, _, entrega_vig = ht05.leer_p01(calendario or ht05.P01_INICIAL)
+        except ht05.P01Invalido:   # un P-01 ilegible no se completa a ciegas: el CT-04 tiene que traer las dos partes
+            periodicidad_vig = entrega_vig = None
+        periodicidad = conf.get("periodicidad", periodicidad_vig)
+        horario = conf.get("dia_hora_entrega", entrega_vig)
+        ejecucion = None
+        sin_cambio: list[str] = []   # T-197 r02 (H-01): un P-01 igual al vigente no escribe CFG- (no mueve la quincena)
+        efecto = (as_of + pd.Timedelta(days=1)).date()
         for k, v in conf.items():
             if k not in mapa:
                 rechazos.append({"parametro": k, "motivo": "no es un parámetro de servicio (régimen CALIBRABLE u OPERADOR)"})
@@ -2326,6 +2336,11 @@ class Bloque:
                     continue
                 if not isinstance(horario, str) or not re.fullmatch(r"(LUN|MAR|MIE|MIÉ|JUE|VIE|SAB|SÁB|DOM) (?:[01]\d|2[0-3]):[0-5]\d", horario):
                     rechazos.append({"parametro": k, "motivo": "se espera día de la semana y hora HH:MM"})
+                    continue
+                try:
+                    ejecucion = ht05.ejecucion_para_entrega(periodicidad, horario, parametro(self.cfg, "planificador"))
+                except ht05.P01Invalido as e:
+                    rechazos.append({"parametro": k, "motivo": str(e)})
                     continue
             if k == "clases_activas":
                 if not isinstance(v, list) or not v:   # T-66 (QA H-03): una lista vacía no apaga el bloque en silencio
@@ -2346,13 +2361,24 @@ class Bloque:
                         if aplicabilidad(self.cfg, c, h) == "NO":
                             rechazos.append({"parametro": f"horizontes:{c}:{h}", "motivo": f"{h} es «No» para {c} en la tabla 8.3 (no se activa para esa clase)"})
             pid = mapa[k]
-            valor = v if pid != "P-01" else f"{periodicidad} · {horario}"
+            valor = v if pid != "P-01" else ht05.componer_p01(periodicidad, ejecucion, horario)
             if pid in aplicado:
                 continue
+            extra: dict[str, Any] = {}
+            if pid == "P-01":
+                if pid in sin_cambio or valor == calendario:
+                    if pid not in sin_cambio:
+                        sin_cambio.append(pid)
+                    continue
+                # T-197 r02 (H-01): de QUINCENAL a QUINCENAL se conserva `semana_ancla_quincenal`; si no, la quincena nueva
+                # se ancla en su primera ejecución desde la fecha de efecto. Siempre explícita (None si no es quincenal)
+                extra["semana_ancla_quincenal"] = (
+                    str(ht05.ancla_de_p01(p01_vig, parametro(self.cfg, "planificador")) if periodicidad_vig == "QUINCENAL" and p01_vig
+                        else ht05.ancla_quincenal(ejecucion, efecto)) if periodicidad == "QUINCENAL" else None)
             cfg_id = self.almacen.nuevo_id("CFG")
             self.almacen.escribir("F10", "AG-01", {"tipo_entrada": "CFG", "cfg_id": cfg_id, "param_id": pid, "de": f10.get(pid), "a": valor,
                                                    "valor_vigente": valor, "autor": "AG-01", "origen": ret_id,
-                                                   "fecha_efecto": str((as_of + pd.Timedelta(days=1)).date())})
+                                                   "fecha_efecto": str((as_of + pd.Timedelta(days=1)).date()), **extra})
             aplicado[pid] = cfg_id
         # PA-10 (T-66): un certificado relaja un control (habilita probabilidades numéricas), así que solo entra en vigor
         # por la ruta única de cambios: lo aprueba el operador a través del Broker
@@ -2374,9 +2400,10 @@ class Bloque:
         self.almacen.escribir("F5", "AG-01", {"tipo_entrada": "RET", "id": ret_id, "msg_id": msg["msg_id"], "fecha": str(as_of.date()),
                                               "decisiones": ct04.get("decisiones"), "valoracion_informe": ct04.get("valoracion_informe"),
                                               "configuracion": conf or None, "resultado_comunicado": ct04.get("resultado_comunicado"),
-                                              "aplicado_en_f10": {"parametros": aplicado, "rechazos": rechazos}, "aviso_ct22": aviso["msg_id"],
+                                              "aplicado_en_f10": {"parametros": aplicado, "rechazos": rechazos, "sin_cambio": sin_cambio}, "aviso_ct22": aviso["msg_id"],
                                               "certificados_aprobados": certificados, "estado": estado})
-        return {"ret_id": ret_id, "estado": estado, "aplicado": aplicado, "rechazos": rechazos, "certificados_aprobados": certificados}
+        return {"ret_id": ret_id, "estado": estado, "aplicado": aplicado, "rechazos": rechazos, "sin_cambio": sin_cambio,
+                "certificados_aprobados": certificados}
 
     # ====================================================================================
     def estado(self) -> dict:

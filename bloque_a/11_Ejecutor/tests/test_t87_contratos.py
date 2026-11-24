@@ -83,12 +83,13 @@ def test_ct04_conserva_frecuencia_y_aplica_desde_fecha_efecto(tmp_path, universo
     b = nuevo_bloque(tmp_path, universo)
     b.decision({"configuracion": {"periodicidad": "MENSUAL", "dia_hora_entrega": "LUN 10:00"}}, AS_OF)
     b.decision({"configuracion": {"dia_hora_entrega": "MAR 12:00"}}, AS_OF)
-    assert b.f10(AS_OF).get("P-01") != "MENSUAL · MAR 12:00"
-    assert b.f10("2026-06-06")["P-01"] == "MENSUAL · MAR 12:00"
+    # T-197 (PB-09): el P-01 lleva también la ejecución que HT-05 deduce de la entrega (49 h antes, a la hora en punto)
+    assert b.f10(AS_OF).get("P-01") != "MENSUAL · DOM 11:00 · entrega MAR 12:00"
+    assert b.f10("2026-06-06")["P-01"] == "MENSUAL · DOM 11:00 · entrega MAR 12:00"
     for cambio in [{"periodicidad": "PATATA"}, {"dia_hora_entrega": "LUN 27:04"}]:
         r = b.decision({"configuracion": cambio}, AS_OF)
         assert r["rechazos"] and not r["aplicado"]
-    assert b.f10("2026-06-06")["P-01"] == "MENSUAL · MAR 12:00"
+    assert b.f10("2026-06-06")["P-01"] == "MENSUAL · DOM 11:00 · entrega MAR 12:00"
 
 
 def test_catalogo_v5_despacho_y_alternativas(tmp_path, universo):

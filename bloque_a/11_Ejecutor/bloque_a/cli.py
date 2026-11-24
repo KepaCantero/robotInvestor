@@ -51,6 +51,9 @@ def main(argv: list[str] | None = None) -> int:
     ap.add_argument("--anonimizar", action="store_true", default=None)
     sub = ap.add_subparsers(dest="cmd", required=True)
     sub.add_parser("ciclo", help="Ciclo periódico C1")
+    # T-197 (PB-09) · HT-05: el C1 programado según el P-01 de F10 (para lanzarlo cada hora desde cron o similar)
+    p = sub.add_parser("planificar", help="HT-05: siguiente C1 según el P-01 de F10 y, con --ejecutar, el C1 vencido (una vez)")
+    p.add_argument("--ejecutar", action="store_true", help="dispara el C1 vencido; sin ella solo informa")
     p = sub.add_parser("peticion", help="Petición ad hoc CT-01")
     p.add_argument("--json", required=True)
     p = sub.add_parser("consulta", help="Consulta CT-03")
@@ -175,6 +178,10 @@ def main(argv: list[str] | None = None) -> int:
         print(json.dumps(_credencial(bloque, a, as_of), ensure_ascii=False, indent=1, default=str))
     elif a.cmd == "guia":
         print(json.dumps(_guia(bloque, a, as_of), ensure_ascii=False, indent=1, default=str))
+    elif a.cmd == "planificar":
+        from .planificacion_c1 import disparar
+        r = disparar(bloque, as_of, ejecutar=a.ejecutar)
+        print(json.dumps(r, ensure_ascii=False, indent=1, default=str))
     return 0
 
 

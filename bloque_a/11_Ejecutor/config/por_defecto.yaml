@@ -309,6 +309,18 @@ seguimiento:
   # declara (antes, un umbral inventado del 5 %). Técnico.
   min_semanas_sigma: 6
 
+# T-197 (PB-09) · HT-05, disparo del ciclo C1 según el P-01 de F10. Números de la especificación de HT-05
+# (bloque_a/10_Herramientas/ht05_planificador_ejemplo.md): §4, la ejecución se adelanta 49 h a la entrega (sábado 06:00 →
+# lunes 07:00) y, en la diaria, 2 h (05:00 → 07:00); §2, ningún disparo entre las 02:00 y las 03:00 (ni la ejecución ni la
+# entrega); §5.2, un C1 perdido se ejecuta una vez si su entrega no venció en más de 24 h. [PROPUESTO] INC-T197-01: el adelanto
+# de 49 h vale también para la quincenal y la mensual (sus filas de §4 tienen la misma ejecución y entrega que la semanal); las
+# 2 h de la diaria se deducen de su fila de §4 (el texto no las dice); el redondeo a la hora en punto es hacia abajo; el borde
+# de las 24 h es inclusivo (a las 24 h justas, RECUPERADO). Técnico, sin pregunta.
+planificador:
+  adelanto_ejecucion_h: {DIARIA: 2, SEMANAL: 49, QUINCENAL: 49, MENSUAL: 49}
+  franja_sin_disparos_h: [2, 3]
+  recuperacion_disparo_perdido_h: 24
+
 # Consultas del bloque al Broker (CT-23; Anexo A V5.1)
 consultas_broker:
   plazo_horas: {BLOQUEANTE: 4, NO_BLOQUEANTE: 24}

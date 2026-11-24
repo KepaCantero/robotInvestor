@@ -76,6 +76,8 @@ El universo de ejemplo (57 ámbitos) incluye proxies de seguimiento para los tip
 ```bash
 # Ciclo periódico C1 (vivo o con --as-of para simular una fecha)
 bloque-a --datos DATOS --estado ./estado --salida ./entregables --as-of 2026-06-05 ciclo
+# HT-05 (T-197): siguiente C1 según el P-01 de F10; con --ejecutar dispara una vez el C1 vencido (cron cada hora, hora local)
+bloque-a --datos DATOS --estado ./estado --salida ./entregables --as-of 2026-11-30T07:05 planificar --ejecutar
 # Petición ad hoc CT-01 (ejemplo en ejemplos/peticiones/peticion_ad_hoc.json)
 bloque-a --datos DATOS --estado ./estado peticion --json ejemplos/peticiones/peticion_ad_hoc.json
 # Consulta CT-03 (N0 desde la memoria o escalado a C2)

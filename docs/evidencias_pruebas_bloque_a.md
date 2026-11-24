@@ -1,6 +1,6 @@
 # Evidencias del Plan de pruebas del Bloque A (Fase 4, T-116)
 
-Generado por `.docs/scripts/evidencias_plan_a.py --ejecutar` el 2026-11-24 sobre el commit `b9ce786f`, con el cliente simulado (`MockClient`): sin red, sin clave y sin coste. No se edita a mano: se regenera.
+Generado por `.docs/scripts/evidencias_plan_a.py --ejecutar` el 2026-11-24 sobre el commit `b3be72d6`, con el cliente simulado (`MockClient`): sin red, sin clave y sin coste. No se edita a mano: se regenera.
 
 Qué significa cada resultado:
 
@@ -17,8 +17,8 @@ Con el cliente simulado se valida la tubería (canales, archivos, puertas, herra
 
 | Resultado | Pruebas del plan |
 | --- | --- |
-| Superada | 40 |
-| Superada en parte | 19 |
+| Superada | 41 |
+| Superada en parte | 18 |
 | Pendiente API | 7 |
 | Requiere usuarios | 1 |
 | **Total** | **67** |
@@ -35,7 +35,7 @@ Con el cliente simulado se valida la tubería (canales, archivos, puertas, herra
 | PB-06 Consulta N0 sin escalado | Superada | Clase ACLARACION y ruta N0; cada referencia de la respuesta es el identificador de una entrada de F1–F6 (no solo un prefijo válido); QRY- en F5 con sus referencias; cero encargos CT-05, ningún RUN- nuevo y consumo de 1 UC como máximo. | El tiempo de respuesta real (< 2 minutos) y que cada afirmación del texto del modelo real lleve su referencia. |
 | PB-07 Consulta que escala a análisis | Superada | Clase CONTRASTE y ruta ANALITICA; respuesta provisional por CT-03 con el nivel y el plazo; RUN- ad hoc de alcance mínimo enlazado a la QRY-; al terminar el RUN-, respuesta final por CT-03 (después de la provisional y de la entrega CT-02), enlazada a la QRY- y al RUN-, con referencias que existen en F1–F5 (el RUN- y las OPP- del top-3 con sus TND-, CLM- y PRG-), validada contra su esquema y por la mensajería, una sola vez; si el RUN- falla, no entrega o no se lanza, la final lo dice sin citar nada (T-162); un fallo de integridad del almacén para la consulta sin responder, y una final que no salió la envía la consulta siguiente, enlazada a la provisional registrada en F5 (T-169). | El tiempo real de la respuesta provisional (< 2 minutos) y que el Coordinador no responda con conocimiento propio con un modelo real (modo sombra). En el ejecutor síncrono la provisional se crea al terminar el RUN-, justo antes de la final. |
 | PB-08 Ráfaga de peticiones sin límite | Superada en parte | Idempotencia y acuse por mensaje; cola del monitor HT-08. | La ráfaga del plan: el ejecutor atiende cada CT-01 y cada CT-03 en el momento, sin cola de peticiones con prioridad y envejecimiento ni presupuesto por nivel (INC-T159-01). El p90 de N0 es de tiempo real. |
-| PB-09 Cambio de periodicidad por el Broker | Superada en parte | La periodicidad cambia en F10 (P-01) desde su fecha de efecto, los valores no válidos se rechazan y se avisa al Evaluador (CT-22). | El disparo del siguiente C1 en la fecha nueva: HT-05 tiene `proxima_ejecucion`, pero nada la llama con el P-01 de F10, y el P-01 que escribe el CT-04 guarda la hora de entrega y pierde la del ciclo (INC-T159-01). Que ningún otro parámetro cambie. |
+| PB-09 Cambio de periodicidad por el Broker | Superada | CT-04 con QUINCENAL y entrega MIE 08:00: RET- APLICADA, un solo CFG- de P-01 escrito por AG-01 con fecha de efecto («QUINCENAL · LUN 07:00 · entrega MIE 08:00»: la ejecución la deduce HT-05, 49 h antes de la entrega) y aviso CT-22 al Evaluador; los valores que HT-05 no puede programar (ejecución o entrega entre las 02:00 y las 03:00, diaria del día anterior) se rechazan sin tocar F10, y un P-01 igual al vigente no escribe CFG-. HT-05 calcula el siguiente C1 con el P-01 de F10, su fecha de efecto y el ancla quincenal guardada (un cambio de hora o de día de la entrega no reinicia la quincena); la orden `bloque-a planificar --ejecutar` (probada por `cli.main`) lo dispara en la fecha nueva (lunes 08-06 07:00, luego cada 14 días) y no en la antigua (sábado 06-06), una sola vez también con varios procesos; un disparo cuyo proceso murió (o cuyo pid reutiliza otro proceso u otro arranque) queda FALLIDO, como un ciclo cortado, con incidencia en HA y no se repite. El RUN- lleva el P-01 y el CFG- con que empezó. Ningún otro parámetro de F10 cambia (methodology_version incluida), ni con el CT-04 ni con el disparo (T-197, INC-T197-01). | Fuera del criterio: quién llama a `planificar` cada hora (cron del operador, no un demonio del ejecutor) y el disparo C1-ENTREGA (la entrega CT-02 sigue saliendo al terminar el ciclo). |
 | PB-10 Configuración no permitida rechazada parcialmente | Superada en parte | Estado APLICADA_PARCIALMENTE; el umbral E y la celda ALT×H1 se rechazan con su motivo y la celda sigue sin aplicarse; P-02 aplicado; ningún otro parámetro de F10 cambia salvo la lista de horizontes; HA sin incidencia de escritura. | Que F10 cambie solo en P-02: el CT-04 del ejecutor lleva una lista global de horizontes y la guarda en P-03 aunque rechace la celda ALT×H1 (INC-T116-01). |
 | PB-11 Decisión del Broker sin alterar el análisis ni la evaluación | Superada en parte | La decisión del Broker se anota sin cambiar el estado de la opción en F3 y se avisa al Evaluador (CT-22); al vencer, los PRG de la opción enviada y de la descartada quedan RESUELTO y el historial de aciertos los cuenta; ningún mensaje al Bloque B. | La lección de producto que compara las enviadas con las descartadas cuando haya muestra: el Evaluador no la genera (INC-T116-03). |
 | PB-12 Campos de decisión y paquete para el Bloque B | Superada | El JSON entregado cumple el esquema publicado y G3 APTO (C01, C10 y C11 en OK); la relevancia de cada opción sigue la regla del Anexo A (una CRI nueva, ALTA; una RF de seguimiento, MEDIA o BAJA); `siguiente_paso_sugerido`, `reversibilidad` y `que_cambiaria_la_conclusion` presentes; `paquete_para_bloque_B` con una entrada por opción y los mismos datos; HT-09 bloquea un paquete para B incompleto. | — |
@@ -185,11 +185,52 @@ Criterio de aprobación del plan: 100 % registradas; 100 % respondidas o con pla
 Criterio de aprobación del plan: Siguiente C1 disparado en la nueva fecha; ningún otro parámetro modificado
 
 ```bash
-(cd bloque_a/11_Ejecutor && ../../.venv/bin/python -m pytest -q 'tests/test_t87_contratos.py::test_ct04_conserva_frecuencia_y_aplica_desde_fecha_efecto' 'tests/test_integracion.py::test_peticion_ad_hoc_y_decisiones')
+(cd bloque_a/11_Ejecutor && ../../.venv/bin/python -m pytest -q 'tests/test_t87_contratos.py::test_ct04_conserva_frecuencia_y_aplica_desde_fecha_efecto' 'tests/test_integracion.py::test_peticion_ad_hoc_y_decisiones' 'tests/test_t197_periodicidad.py::test_ca1_ct04_escribe_el_p01_completo_con_fecha_de_efecto' 'tests/test_t197_periodicidad.py::test_ca1_cambios_parciales_conservan_la_otra_parte_y_recalculan_la_ejecucion' 'tests/test_t197_periodicidad.py::test_ca1_lee_el_p01_de_dos_partes_anterior_a_t197' 'tests/test_t197_periodicidad.py::test_ca1_rechaza_lo_que_ht05_no_puede_programar_sin_tocar_f10' 'tests/test_t197_periodicidad.py::test_ca1_p01_ilegible_exige_las_dos_partes' 'tests/test_t197_periodicidad.py::test_ca2_proximo_c1_en_la_fecha_nueva' 'tests/test_t197_periodicidad.py::test_ca2_calendarios_de_ht05' 'tests/test_t197_periodicidad.py::test_ca2_los_numeros_salen_de_la_configuracion' 'tests/test_t197_periodicidad.py::test_ca3_el_c1_se_dispara_en_la_fecha_nueva_y_no_en_la_antigua' 'tests/test_t197_periodicidad.py::test_ca3_ciclo_real_disparado_lleva_su_p01_en_el_run' 'tests/test_t197_periodicidad.py::test_ca4_ningun_otro_parametro_cambia' 'tests/test_t197_periodicidad.py::test_ca5_disparo_perdido_se_recupera_una_vez_o_queda_perdido' 'tests/test_t197_periodicidad.py::test_ca5_limite_de_24_horas' 'tests/test_t197_periodicidad.py::test_ca5_sin_ejecutar_no_escribe' 'tests/test_t197_periodicidad.py::test_ca5_ciclo_cortado_queda_fallido_y_no_se_repite' 'tests/test_t197_periodicidad.py::test_ca5_p01_ilegible_falla_cerrado_sin_escribir' 'tests/test_t197_periodicidad.py::test_ca5_dos_procesos_a_la_vez_disparan_un_solo_c1' 'tests/test_t197_periodicidad.py::test_ca5_instante_con_zona_y_dias_antes_del_inicio' 'tests/test_t197_periodicidad.py::test_r02_h01_cambio_solo_de_hora_conserva_la_quincena' 'tests/test_t197_periodicidad.py::test_r02_h01_ct04_identico_no_escribe_cfg_ni_reinicia_la_quincena' 'tests/test_t197_periodicidad.py::test_r02_h01_cambio_de_dia_de_entrega_sigue_en_la_misma_quincena' 'tests/test_t197_periodicidad.py::test_r02_h01_de_otra_periodicidad_a_quincenal_ancla_de_nuevo' 'tests/test_t197_periodicidad.py::test_r02_h02_proceso_muerto_deja_el_disparo_fallido_con_incidencia_y_sin_repetir' 'tests/test_t197_periodicidad.py::test_r02_h02_proceso_vivo_da_en_curso_sin_escribir' 'tests/test_t197_periodicidad.py::test_r02_h03_orden_planificar_de_la_cli' 'tests/test_t197_periodicidad.py::test_r02_h06_r3_cambio_que_rige_el_dia_del_c1_antiguo' 'tests/test_t197_periodicidad.py::test_r02_h06_r6_a_la_hora_exacta_de_la_entrega_es_recuperado' 'tests/test_t197_periodicidad.py::test_r02_h06_r7_mensual_el_dia_7' 'tests/test_t197_periodicidad.py::test_r02_h06_r8_disparo_a_su_minuto_exacto' 'tests/test_t197_periodicidad.py::test_r02_h06_r9_la_entrega_diaria_es_la_del_mismo_dia' 'tests/test_t197_periodicidad.py::test_r02_h06_r10_lo_que_f10_aun_no_sabe_no_cuenta' 'tests/test_t197_periodicidad.py::test_r02_h06_r11_los_segundos_no_cuentan' 'tests/test_t197_periodicidad.py::test_r02_h06_r14_diaria_a_medianoche_admitida' 'tests/test_t197_periodicidad.py::test_r02_h06_r15_el_planificador_deduce_la_ejecucion_del_p01_de_dos_partes' 'tests/test_t197_periodicidad.py::test_r02_h06_r16_el_disparo_lleva_la_fecha_del_dia_del_disparo' 'tests/test_t197_periodicidad.py::test_cierre_h07_pid_propio_que_este_proceso_no_abrio_cuenta_como_muerto' 'tests/test_t197_periodicidad.py::test_cierre_h07_pid_vivo_de_otro_proceso_con_otra_hora_de_arranque_cuenta_como_muerto' 'tests/test_t197_periodicidad.py::test_cierre_h07_pid_vivo_del_mismo_arranque_sigue_en_curso' 'tests/test_t197_periodicidad.py::test_cierre2_h09_arranque_proceso_es_la_hora_de_arranque_del_proceso' 'tests/test_t197_periodicidad.py::test_cierre2_h10_boot_id_ilegible_no_se_puede_saber' 'tests/test_t197_periodicidad.py::test_cierre2_h10_reserva_sin_identidad_no_se_puede_saber')
 ```
 
 - `11_Ejecutor/tests/test_t87_contratos.py::test_ct04_conserva_frecuencia_y_aplica_desde_fecha_efecto`: SUPERADA
 - `11_Ejecutor/tests/test_integracion.py::test_peticion_ad_hoc_y_decisiones`: SUPERADA
+- `11_Ejecutor/tests/test_t197_periodicidad.py::test_ca1_ct04_escribe_el_p01_completo_con_fecha_de_efecto`: SUPERADA
+- `11_Ejecutor/tests/test_t197_periodicidad.py::test_ca1_cambios_parciales_conservan_la_otra_parte_y_recalculan_la_ejecucion`: SUPERADA
+- `11_Ejecutor/tests/test_t197_periodicidad.py::test_ca1_lee_el_p01_de_dos_partes_anterior_a_t197`: SUPERADA
+- `11_Ejecutor/tests/test_t197_periodicidad.py::test_ca1_rechaza_lo_que_ht05_no_puede_programar_sin_tocar_f10`: SUPERADA
+- `11_Ejecutor/tests/test_t197_periodicidad.py::test_ca1_p01_ilegible_exige_las_dos_partes`: SUPERADA
+- `11_Ejecutor/tests/test_t197_periodicidad.py::test_ca2_proximo_c1_en_la_fecha_nueva`: SUPERADA
+- `11_Ejecutor/tests/test_t197_periodicidad.py::test_ca2_calendarios_de_ht05`: SUPERADA
+- `11_Ejecutor/tests/test_t197_periodicidad.py::test_ca2_los_numeros_salen_de_la_configuracion`: SUPERADA
+- `11_Ejecutor/tests/test_t197_periodicidad.py::test_ca3_el_c1_se_dispara_en_la_fecha_nueva_y_no_en_la_antigua`: SUPERADA
+- `11_Ejecutor/tests/test_t197_periodicidad.py::test_ca3_ciclo_real_disparado_lleva_su_p01_en_el_run`: SUPERADA
+- `11_Ejecutor/tests/test_t197_periodicidad.py::test_ca4_ningun_otro_parametro_cambia`: SUPERADA
+- `11_Ejecutor/tests/test_t197_periodicidad.py::test_ca5_disparo_perdido_se_recupera_una_vez_o_queda_perdido`: SUPERADA
+- `11_Ejecutor/tests/test_t197_periodicidad.py::test_ca5_limite_de_24_horas`: SUPERADA
+- `11_Ejecutor/tests/test_t197_periodicidad.py::test_ca5_sin_ejecutar_no_escribe`: SUPERADA
+- `11_Ejecutor/tests/test_t197_periodicidad.py::test_ca5_ciclo_cortado_queda_fallido_y_no_se_repite`: SUPERADA
+- `11_Ejecutor/tests/test_t197_periodicidad.py::test_ca5_p01_ilegible_falla_cerrado_sin_escribir`: SUPERADA
+- `11_Ejecutor/tests/test_t197_periodicidad.py::test_ca5_dos_procesos_a_la_vez_disparan_un_solo_c1`: SUPERADA
+- `11_Ejecutor/tests/test_t197_periodicidad.py::test_ca5_instante_con_zona_y_dias_antes_del_inicio`: SUPERADA
+- `11_Ejecutor/tests/test_t197_periodicidad.py::test_r02_h01_cambio_solo_de_hora_conserva_la_quincena`: SUPERADA
+- `11_Ejecutor/tests/test_t197_periodicidad.py::test_r02_h01_ct04_identico_no_escribe_cfg_ni_reinicia_la_quincena`: SUPERADA
+- `11_Ejecutor/tests/test_t197_periodicidad.py::test_r02_h01_cambio_de_dia_de_entrega_sigue_en_la_misma_quincena`: SUPERADA
+- `11_Ejecutor/tests/test_t197_periodicidad.py::test_r02_h01_de_otra_periodicidad_a_quincenal_ancla_de_nuevo`: SUPERADA
+- `11_Ejecutor/tests/test_t197_periodicidad.py::test_r02_h02_proceso_muerto_deja_el_disparo_fallido_con_incidencia_y_sin_repetir`: SUPERADA
+- `11_Ejecutor/tests/test_t197_periodicidad.py::test_r02_h02_proceso_vivo_da_en_curso_sin_escribir`: SUPERADA
+- `11_Ejecutor/tests/test_t197_periodicidad.py::test_r02_h03_orden_planificar_de_la_cli`: SUPERADA
+- `11_Ejecutor/tests/test_t197_periodicidad.py::test_r02_h06_r3_cambio_que_rige_el_dia_del_c1_antiguo`: SUPERADA
+- `11_Ejecutor/tests/test_t197_periodicidad.py::test_r02_h06_r6_a_la_hora_exacta_de_la_entrega_es_recuperado`: SUPERADA
+- `11_Ejecutor/tests/test_t197_periodicidad.py::test_r02_h06_r7_mensual_el_dia_7`: SUPERADA
+- `11_Ejecutor/tests/test_t197_periodicidad.py::test_r02_h06_r8_disparo_a_su_minuto_exacto`: SUPERADA
+- `11_Ejecutor/tests/test_t197_periodicidad.py::test_r02_h06_r9_la_entrega_diaria_es_la_del_mismo_dia`: SUPERADA
+- `11_Ejecutor/tests/test_t197_periodicidad.py::test_r02_h06_r10_lo_que_f10_aun_no_sabe_no_cuenta`: SUPERADA
+- `11_Ejecutor/tests/test_t197_periodicidad.py::test_r02_h06_r11_los_segundos_no_cuentan`: SUPERADA
+- `11_Ejecutor/tests/test_t197_periodicidad.py::test_r02_h06_r14_diaria_a_medianoche_admitida`: SUPERADA
+- `11_Ejecutor/tests/test_t197_periodicidad.py::test_r02_h06_r15_el_planificador_deduce_la_ejecucion_del_p01_de_dos_partes`: SUPERADA
+- `11_Ejecutor/tests/test_t197_periodicidad.py::test_r02_h06_r16_el_disparo_lleva_la_fecha_del_dia_del_disparo`: SUPERADA
+- `11_Ejecutor/tests/test_t197_periodicidad.py::test_cierre_h07_pid_propio_que_este_proceso_no_abrio_cuenta_como_muerto`: SUPERADA
+- `11_Ejecutor/tests/test_t197_periodicidad.py::test_cierre_h07_pid_vivo_de_otro_proceso_con_otra_hora_de_arranque_cuenta_como_muerto`: SUPERADA
+- `11_Ejecutor/tests/test_t197_periodicidad.py::test_cierre_h07_pid_vivo_del_mismo_arranque_sigue_en_curso`: SUPERADA
+- `11_Ejecutor/tests/test_t197_periodicidad.py::test_cierre2_h09_arranque_proceso_es_la_hora_de_arranque_del_proceso`: SUPERADA
+- `11_Ejecutor/tests/test_t197_periodicidad.py::test_cierre2_h10_boot_id_ilegible_no_se_puede_saber`: SUPERADA
+- `11_Ejecutor/tests/test_t197_periodicidad.py::test_cierre2_h10_reserva_sin_identidad_no_se_puede_saber`: SUPERADA
 
 ### PB-10 · Configuración no permitida rechazada parcialmente
 
