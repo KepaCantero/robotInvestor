@@ -44,14 +44,18 @@ def bajas_registradas(lineas, archivo="Registro de bajas"):
         yield rid, dia
 
 
-def _degradar(lineas, ficha, revision, archivo, cfg):
-    puntos = revision.get("puntos")
+def puntuar_referencia(puntos, archivo, cfg=None):
     limites = parametro(cfg, f"referencias.rubricas.{archivo}")
     if not isinstance(puntos, list) or len(puntos) != len(limites) or any(
         type(p) is not int or not 0 <= p <= limite for p, limite in zip(puntos, limites)
     ):
         raise ValueError("La puntuación debe respetar los siete criterios de la rúbrica")
-    q = sum(puntos)
+    return sum(puntos)
+
+
+def _degradar(lineas, ficha, revision, archivo, cfg):
+    puntos = revision.get("puntos")
+    q = puntuar_referencia(puntos, archivo, cfg)
     if ficha.q is None or q >= ficha.q:
         raise ValueError("DEGRADAR requiere una reducción de Q")
     nivel = nivel_de_q(q, cfg)
