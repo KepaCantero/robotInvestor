@@ -1,4 +1,8 @@
 """PB-24 y PB-25: decisiones del custodio y propagación en los almacenes reales."""
+import json
+from pathlib import Path
+
+import jsonschema
 import pytest
 from bloque_a.mantenimiento_fuentes import (
     bajas_registradas,
@@ -39,18 +43,41 @@ def test_baja_con_registro_y_propagacion(tmp_path, universo, monkeypatch):
                  "direccion": "FAVORABLE", "grado_independencia": "RAIZ", "nivel_fuente": "A", "tipo_fuente": "PRIMARIA"})
     alm.escribir("F3", "AG-02", {"opp_id": "OPP-2", "estado": "VIGENTE", "evidencias": ["CLM-1", "EVD-2"],
                  "evidencias_ps1": ["EVD-1", "EVD-2"], "ps1": True})
+    for oid, estado, ps1 in [("OPP-3", "DESCARTADA", True), ("OPP-4", "VIGENTE", False)]:
+        alm.escribir("F3", "AG-02", {"opp_id": oid, "estado": estado, "evidencias": ["CLM-1", "EVD-2"],
+                     "evidencias_ps1": ["EVD-1", "EVD-2"], "ps1": ps1})
+    alm.escribir("F2", "AG-12", {"evd_id": "EVD-1", "ref_id": "REF-" + RID, "direccion": "FAVORABLE",
+                 "grado_independencia": "RAIZ", "nivel_fuente": "A", "tipo_fuente": "PRIMARIA"})
+    alm.escribir("F3", "AG-02", {"opp_id": "OPP-1", "evidencias_ps1": ["EVD-1"]})
+    alm.escribir("F2", "AG-12", {"tipo_entrada": "EVD", "evd_id": "EVD-3", "ref_id": "REF-ANA-DOC-0003",
+                 "direccion": "FAVORABLE", "grado_independencia": "RAIZ", "nivel_fuente": "B", "tipo_fuente": "SECUNDARIA"})
+    alm.escribir("F3", "AG-02", {"opp_id": "OPP-5", "estado": "VIGENTE", "ps1": True,
+                 "evidencias": ["CLM-1", "EVD-3"], "evidencias_ps1": ["EVD-1", "EVD-3"]})
     revisar_bajas(bloque, "2026-06-04", "RUN-1")
     assert not alm.estado("F2", clave="baja_id")
     for dia in (DIA, "2026-07-01", "2026-07-01"):
         bloque.fijar_fecha(dia)
         revisar_bajas(bloque, dia, "RUN-2")
+        if dia == DIA:
+            assert not any("mes_bajas" in e for e in alm.leer("HA"))
+    assert len([e for e in alm.leer("F2") if e.get("estado_verificacion") == "FUENTE_RETIRADA"]) == 1
+    assert len([e for e in alm.leer("F3") if "revision_bajas" in e]) == 4
+    assert "revision_bajas" not in alm.estado("F3")["OPP-3"]
+    assert alm.estado("F3")["OPP-4"]["ps1"] is False
+    assert alm.estado("F3")["OPP-5"]["revision_bajas"]["conclusion"] == "REQUIERE_REEVALUACION"
+    assert alm.estado("F3")["OPP-5"]["ps1"] is False
     assert alm.estado("F2", clave="evd_id")["EVD-1"]["estado_verificacion"] == "FUENTE_RETIRADA"
     assert alm.estado("F3")["OPP-1"]["ps1"] is False
     assert alm.estado("F3")["OPP-2"]["revision_bajas"]["conclusion"] == "MANTIENE_RESPALDO"
     alertas = [x["mensaje"] for x in alm.leer("F2") if "mensaje" in x]
     assert [x["contrato"] for x in alertas] == ["CT-11"]
     paquetes = [x["mensaje"] for x in alm.leer("HA") if x.get("mes_bajas")]
-    assert [(x["contrato"], x["mes"], x["bajas"]) for x in paquetes] == [("CT-21", "2026-06", ["REF-" + RID])]
+    esquemas = json.loads((Path(__file__).parent / "goldens/anexo_b_esquemas.json").read_text())
+    jsonschema.validate(alertas[0], esquemas["CT-11.ENCARGO"])
+    motivo = "Enlace roto confirmado y sin alternativa tras dos barridos"
+    assert motivo in alertas[0]["piezas"][0]["afirmacion"]
+    assert [(x["contrato"], x["periodo"], x["bajas"]) for x in paquetes] == [
+        ("CT-21", "2026-06", [{"ref_id": "REF-" + RID, "motivo": motivo}])]
 
 
 def test_revision_cambio_y_retractacion():
@@ -112,16 +139,20 @@ def test_cli_solo_informe_y_aplicar(tmp_path, monkeypatch):
     from bloque_a import cli
     prefijo = ARCHIVOS_REF["F7"]
     ruta = tmp_path / f"{prefijo} - V1.0.md"
-    ruta.write_text(FICHA)
+    ruta.write_text(FICHA + "\n## Registro de bajas\n| ANA-DOC-0999 | T | M | 2027-01-01 | — |\n")
+    original = ruta.read_text()
     for nombre in list(ARCHIVOS_REF.values())[1:]:
         (tmp_path / f"{nombre} - V1.0.md").write_text("")
     monkeypatch.setattr(cli, "ruta", lambda *a: tmp_path)
     monkeypatch.setattr("bloque_a.mantenimiento_fuentes._sin_copia", lambda r: True)
     monkeypatch.setattr(ht02.modulo, "verificar_archivo", lambda lineas, *a: barrido(url="https://example.org/doc")["resultados"] if lineas else [])
     args = ["--salida", str(tmp_path), "--estado", str(tmp_path / "estado"), "--as-of", DIA, "verificar-enlaces"]
-    assert cli.main(args) == 0 and ruta.read_text() == FICHA
+    assert cli.main(args) == 0 and ruta.read_text() == original
     assert cli.main([*args, "--aplicar"]) == 0
-    assert list(bajas_registradas(ruta.read_text().splitlines())) == [(RID, DIA)]
+    assert (RID, DIA) in list(bajas_registradas(ruta.read_text().splitlines()))
+    from bloque_a.almacen import Almacen
+    alertas = Almacen(tmp_path / "estado").estado("F2", clave="baja_id")
+    assert len(alertas) == 1 and all("0999" not in clave for clave in alertas)
     assert json.loads((tmp_path / "ht02_F7.json").read_text())["fecha"] == DIA
 
 
@@ -157,3 +188,111 @@ def test_retractacion_editor_f8_hasta_f2(tmp_path, monkeypatch):
     assert cli.main([*args, "--aplicar", "--revisiones", str(decision)]) == 0
     assert almacen.estado("F2", clave="evd_id")["EVD-2"]["estado_verificacion"] == "FUENTE_RETIRADA"
     assert almacen.estado("F2", clave="baja_id")[f"F8/{DIA}/REF-{ref}"]["mensaje"]["emisor"] == "AG-15"
+
+
+@pytest.mark.parametrize("motivo", ["primera\nsegunda", "texto <externo>", "clave AKIA" + "ABCDEFGHIJKLMNOP"])
+def test_motivo_no_apto(motivo):
+    with pytest.raises(ValueError):
+        tratar("F7", FICHA, barrido(retractacion=True, hash="abc"),
+               {RID: {"accion": "RETRACTADA", "hash": "abc", "motivo": motivo}})
+
+
+def test_informe_sin_respuesta_y_revision_sin_observacion():
+    datos = barrido(codigo_http=None, primer_fallo=DIA)
+    assert f"Última verificación:** {DIA}" in tratar("F7", FICHA, datos, {})
+    with pytest.raises(ValueError, match="observación HTTP"):
+        tratar("F7", FICHA, datos, {RID: {"accion": "REPARAR"}})
+    with pytest.raises(ValueError):
+        tratar("F7", FICHA, barrido(estado="OK", hash="abc", retractacion=False),
+               {RID: {"accion": "RETRACTADA", "hash": "abc", "motivo": "ejemplo"}})
+
+
+def test_baja_con_alternativa_o_doi_sin_verificar(monkeypatch):
+    from bloque_a import mantenimiento_fuentes as mf
+    monkeypatch.setattr(mf.ht02.modulo, "_con_reintentos", lambda *a: ({"codigo": 200, "cuerpo": b'{"archived_snapshots":{}}'}, 1))
+    assert not mf._sin_copia({"url": "https://example.org", "doi": "identificador", "doi_codigo_http": None})
+    monkeypatch.setattr(mf, "_sin_copia", lambda r: True)
+    assert "####" in tratar("F7", FICHA + "- **Copia archivada:** copia\n", barrido(), {})
+    datos = barrido()
+    datos["resumen"]["incidencia_red"] = True
+    assert tratar("F7", FICHA, datos, {}) == FICHA
+
+
+def test_lectura_registro_con_sufijo_y_error_contextual():
+    lineas = ["## Registro de bajas (R24)", "| ANA-DOC-0001 | T | M | 2026-02-03 | — |"]
+    assert list(bajas_registradas(lineas, "F7.md")) == [(RID, "2026-02-03")]
+    with pytest.raises(ValueError, match=r"F7.md, fila 2"):
+        list(bajas_registradas([lineas[0], lineas[1].replace("02-03", "13-45")], "F7.md"))
+
+
+@pytest.mark.parametrize(("q", "nivel"), [(80, "A"), (79, "B"), (65, "B"), (64, "C"), (50, "C"), (49, "D")])
+def test_bordes_de_calidad(q, nivel):
+    from bloque_a.referencias import nivel_de_q
+    assert nivel_de_q(q) == nivel
+    assert nivel_de_q(65, {"referencias": {"niveles_q": {"B": 66}}}) == "C"
+
+
+def test_igual_calidad_no_es_degradacion():
+    datos = barrido(estado="CONTENIDO_CAMBIADO", hash="h1", codigo_http=200)
+    with pytest.raises(ValueError, match="reducción"):
+        tratar("F8", FICHA, datos, {RID: {"accion": "DEGRADAR", "hash": "h1", "motivo": "revisión",
+                                         "puntos": [25, 20, 15, 10, 10, 5, 5]}})
+
+
+def test_la_copia_debe_ser_la_aprobada_y_no_retractada(monkeypatch):
+    from bloque_a.herramientas import ht02
+    url = "https://web.archive.org/web/20260601/https://example.org/doc"
+    datos = barrido(estado="CONTENIDO_CAMBIADO", hash="modificado", copia_archivada={"url": url})
+    ficha = FICHA + "- **Hash de contenido:** anterior\n"
+    revision = {"accion": "REPARAR", "hash": "modificado", "motivo": "copia", "url": url}
+    monkeypatch.setattr(ht02, "comprobar_url", lambda *a: {"hash": "anterior", "huella": "ok"})
+    with pytest.raises(ValueError):
+        tratar("F8", ficha, datos, {RID: {**revision, "url": "https://example.org"}})
+    monkeypatch.setattr(ht02, "comprobar_url", lambda *a: {"hash": "anterior", "huella": "ok", "retractacion": True})
+    with pytest.raises(ValueError):
+        tratar("F8", ficha, datos, {RID: revision})
+
+
+def test_dos_ciclos_y_baja_con_fuentes_supervivientes(tmp_path, universo):
+    b = nuevo_bloque(tmp_path, universo)
+    b.ciclo(DIA)
+    primeras = {k: v for k, v in b.almacen.estado("F3").items() if v.get("estado") == "PROPUESTA"}
+    assert any(v.get("evidencias_ps1") for v in primeras.values())
+    b.ciclo("2026-06-12")
+    evds = b.almacen.estado("F2", clave="evd_id")
+    arrastradas = {oid: op for oid, op in b.almacen.estado("F3").items() if op.get("estado") == "VIGENTE"
+                   and oid in primeras and primeras[oid].get("evidencias_ps1")}
+    assert arrastradas and all(op["evidencias_ps1"] for op in arrastradas.values())
+    for oid, op in arrastradas.items():
+        fuentes = [evds[e] for e in op["evidencias_ps1"]]
+        for fuente in fuentes:
+            ref = fuente["ref_id"]
+            otras = {e.get("origen_documental") for e in fuentes if e["ref_id"] != ref and e.get("nivel_fuente") in ("A", "B")}
+            if ref.startswith("REF-") and len(otras) >= 2 and op["ps1"]:
+                b.fijar_fecha("2026-06-13")
+                b.referencias.bajas["F7"].append((ref.removeprefix("REF-"), "2026-06-13"))
+                revisar_bajas(b, "2026-06-13", "RUN-3")
+                final = b.almacen.estado("F3")[oid]
+                assert final["revision_bajas"]["conclusion"] == "MANTIENE_RESPALDO" and final["ps1"]
+                return
+    pytest.fail("El ciclo debe contener una opción con fuentes independientes supervivientes")
+
+
+def test_una_fuente_retirada_no_vuelve_a_ingresar(tmp_path, universo):
+    b = nuevo_bloque(tmp_path, universo)
+    b.modo = "vivo"
+    dia = b.fijar_fecha(DIA)
+    b.referencias.bajas["F7"] = [(RID, DIA)]
+    f = {"proxy": "X", "senales": {}, "_piezas": [{"fuente": "REF-" + RID, "afirmacion": "dato anterior",
+         "direccion": "favorable", "origen": "AG-14"}]}
+    b._registrar_evidencia_clase({"nivel": "N1", "clase": "RV", "finalistas": [f]}, dia, "RUN-1")
+    assert not any(e.get("ref_id") == "REF-" + RID for e in b.almacen.leer("F2"))
+
+
+def test_nivel_configurado_se_aplica_en_la_revision():
+    revision = {"accion": "DEGRADAR", "hash": "h", "motivo": "revisión de la rúbrica",
+                "puntos": [25, 20, 15, 5, 0, 0, 0]}
+    datos = barrido(estado="CONTENIDO_CAMBIADO", codigo_http=200, hash="h", huella="h")
+    assert "Q 65 (B)" in tratar("F8", FICHA, datos, {RID: revision})
+    cfg = {"referencias": {"niveles_q": {"B": 66}}}
+    assert "Q 65 (C)" in tratar("F8", FICHA, datos, {RID: revision}, cfg)

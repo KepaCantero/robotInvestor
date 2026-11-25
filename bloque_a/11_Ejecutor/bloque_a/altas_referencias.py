@@ -8,7 +8,7 @@ from urllib.parse import urlsplit
 from .contratos import RE_INYECCION, contiene_credenciales
 from .herramientas import ht02
 from .mantenimiento_fuentes import publicar
-from .referencias import _anio
+from .referencias import _anio, nivel_de_q
 
 PREFIJOS = {"F7": ("ANA-DOC", "TA"), "F8": ("DOC-MOT", "TM"), "F9": ("RF", "TF")}
 
@@ -24,7 +24,7 @@ def clave_orden(ficha):
     return (-(ficha.q or 0), -date(anio, 1, 1).toordinal() if anio else 0, ficha.id)
 
 
-def incorporar(ruta, archivo, lote):
+def incorporar(ruta, archivo, lote, cfg=None):
     original = ruta.read_text(encoding="utf-8")
     lineas = original.splitlines(keepends=True)
     pref, tax = PREFIJOS[archivo]
@@ -44,7 +44,7 @@ def incorporar(ruta, archivo, lote):
         if enlace.scheme not in ("https", "http") or not enlace.hostname or enlace.username or enlace.password or contiene_credenciales(a) or RE_INYECCION.search(titulo):
             raise ValueError("Ficha rechazada por origen o por contenido")
         fecha = date.fromisoformat(a["fecha_publicacion"])
-        nivel = "A" if q >= 80 else "B" if q >= 65 else "C" if q >= 50 else "D"
+        nivel = nivel_de_q(q, cfg)
         inicio = [i for i, l in enumerate(lineas) if re.match(rf"^## {tema}(?:\s|$)", l)]
         if len(inicio) != 1:
             raise ValueError("Sección temática ausente o ambigua")

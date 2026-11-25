@@ -8,3 +8,9 @@
 - Evidencias regeneradas con el servidor HTTP de prueba en la interfaz local. El plan recoge 349/349 pruebas automáticas citadas superadas, incluidos PB-24 y PB-25. Pasaron también las 337 pruebas de los scripts del repositorio.
 - Suite completa del ejecutor A dentro de la comprobación general del repositorio: 8369 pruebas superadas. Ruff 2807 y mypy de A 102, dentro de las cuotas de la versión de partida.
 - La comprobación general del repositorio pasó los doce controles, sin omisiones.
+
+## Ronda r02
+
+En la base de Claude el script r01 registró seis hallazgos, incluidas 22 listas de respaldo perdidas al segundo ciclo. El test de dos ciclos exige una oportunidad con raíces supervivientes e interrumpe la prueba si no existe. Los casos de la suite ejercen la deduplicación, el cierre del mes, el esquema de CT-11, el contenido de CT-21, las fechas, las revisiones sin observación HTTP y las fronteras de la rúbrica.
+
+El script original de casos funcionales exige aceptar una fecha imposible. H-06 del dictamen exige rechazarla citando archivo y fila. La implementación sigue H-06 y la prueba de regresión comprueba el mensaje. Por ello ese script antiguo conserva un aviso, reproducible. La copia r02 del programa de mutantes adapta únicamente la ubicación del corte Q a la función compartida configurable. En sus 18 ensayos las pruebas detectaron los 18 fallos deliberados.

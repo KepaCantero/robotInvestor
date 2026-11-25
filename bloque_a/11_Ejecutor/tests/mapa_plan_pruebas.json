@@ -249,7 +249,10 @@
    "10_Herramientas/tests/test_ht02_verificador_enlaces.py::TestEscritura::test_borrar_con_registro_existente",
    "11_Ejecutor/tests/test_t181_fuentes.py::test_baja_con_registro_y_propagacion",
    "11_Ejecutor/tests/test_t181_fuentes.py::test_cli_solo_informe_y_aplicar",
-   "11_Ejecutor/tests/test_t181_fuentes.py::test_caida_archivo_y_ausencia_no_equivalen"
+   "11_Ejecutor/tests/test_t181_fuentes.py::test_caida_archivo_y_ausencia_no_equivalen",
+   "11_Ejecutor/tests/test_t181_fuentes.py::test_dos_ciclos_y_baja_con_fuentes_supervivientes",
+   "11_Ejecutor/tests/test_t181_fuentes.py::test_una_fuente_retirada_no_vuelve_a_ingresar",
+   "11_Ejecutor/tests/test_t181_fuentes.py::test_lectura_registro_con_sufijo_y_error_contextual"
   ],
   "comprueba": "Barrido y baja con registro, aviso CT-11, retirada de la evidencia, revisión de oportunidades en F3 y bajas del mes en CT-21. Comprueba también reintentos y conservación de la ficha ante fallos de red.",
   "no_comprueba": ""
@@ -261,7 +264,14 @@
    "10_Herramientas/tests/test_ht02_verificador_enlaces.py::TestEstados::test_retractacion",
    "11_Ejecutor/tests/test_t181_fuentes.py::test_revision_cambio_y_retractacion",
    "11_Ejecutor/tests/test_t181_fuentes.py::test_reparar_exige_copia_original",
-   "11_Ejecutor/tests/test_t181_fuentes.py::test_baja_con_registro_y_propagacion"
+   "11_Ejecutor/tests/test_t181_fuentes.py::test_baja_con_registro_y_propagacion",
+   "11_Ejecutor/tests/test_t181_fuentes.py::test_nivel_configurado_se_aplica_en_la_revision",
+   "11_Ejecutor/tests/test_t181_fuentes.py::test_igual_calidad_no_es_degradacion",
+   "11_Ejecutor/tests/test_t181_fuentes.py::test_la_copia_debe_ser_la_aprobada_y_no_retractada",
+   "11_Ejecutor/tests/test_t181_fuentes.py::test_informe_sin_respuesta_y_revision_sin_observacion",
+   "11_Ejecutor/tests/test_t181_fuentes.py::test_motivo_no_apto",
+   "11_Ejecutor/tests/test_t181_fuentes.py::test_bordes_de_calidad",
+   "11_Ejecutor/tests/test_t181_fuentes.py::test_baja_con_alternativa_o_doi_sin_verificar"
   ],
   "comprueba": "Contrasta la revisión con la huella del contenido, recalcula Q por rúbrica con motivo, verifica la copia archivada y registra la retractación confirmada. El registro alimenta la propagación a F2.",
   "no_comprueba": ""

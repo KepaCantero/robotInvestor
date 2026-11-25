@@ -141,7 +141,7 @@ def main(argv: list[str] | None = None) -> int:
     if a.cmd == "alta-referencias":
         from .altas_referencias import incorporar
         from .referencias import ARCHIVOS_REF, localizar
-        incorporar(localizar(ruta(cfg, "archivos_operativos"), ARCHIVOS_REF[a.archivo]), a.archivo, json.loads(Path(a.json).read_text(encoding="utf-8")))
+        incorporar(localizar(ruta(cfg, "archivos_operativos"), ARCHIVOS_REF[a.archivo]), a.archivo, json.loads(Path(a.json).read_text(encoding="utf-8")), cfg)
         return 0
     if a.cmd == "verificar-enlaces":
         from .herramientas import ht02
@@ -156,7 +156,7 @@ def main(argv: list[str] | None = None) -> int:
         from .mantenimiento_fuentes import (
             CUSTODIOS,
             avisar_curador,
-            bajas_registradas,
+            detalle_bajas,
             publicar,
             tratar,
         )
@@ -174,14 +174,14 @@ def main(argv: list[str] | None = None) -> int:
             codigo = max(codigo, resultado)
             if resultado == 0 and original is not None:
                 datos = json.loads(informe.read_text(encoding="utf-8"))
-                nuevo = tratar(k, original, datos, revisiones.get(k, {}))
+                nuevo = tratar(k, original, datos, revisiones.get(k, {}), cfg)
                 publicar(archivo, original, nuevo)
-                bajas = {(k, "REF-" + rid, dia) for rid, dia in bajas_registradas(nuevo.splitlines()) if dia <= datos["fecha"]}
+                bajas = {(k, "REF-" + rid, dia): motivo for rid, dia, motivo in detalle_bajas(nuevo.splitlines(), archivo) if dia <= datos["fecha"]}
                 if bajas:
                     reloj = Reloj(cfg["zona_horaria"])
                     reloj.fijar(datos["fecha"])
                     almacen = Almacen(a.estado or cfg["rutas"]["almacen"], reloj)
-                    avisar_curador(almacen, Mensajeria(almacen, validar(cfg)), datos["fecha"], almacen.nuevo_id("RUN"), bajas)
+                    avisar_curador(almacen, Mensajeria(almacen, validar(cfg)), datos["fecha"], almacen.nuevo_id("RUN"), bajas, bajas)
         return codigo
     bloque = _bloque(a, cfg)
     as_of = pd.Timestamp(a.as_of) if a.as_of else pd.Timestamp.now(tz=bloque.reloj.zona).tz_localize(None)

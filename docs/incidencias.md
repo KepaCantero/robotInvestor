@@ -944,3 +944,7 @@ Se evalúan ordenaciones observadas y resultados disponibles antes del cierre. U
 ### INC-T193-01 [PROPUESTO] · Objetivo temporal para la ingesta
 
 El operador debe fijar el objetivo de segundos y verificar la recuperación bajo carga real. Las órdenes del monitor no despliegan trabajadores físicos.
+
+### INC-T-181-03 [PROPUESTO] · Calificación de referencias
+
+La configuración transcribe las siete rúbricas de puntuación por catálogo y los niveles de calidad del §13.3. Altas y revisiones consultan los mismos límites de la instancia.

@@ -7,31 +7,44 @@ import tempfile
 from datetime import date
 from pathlib import Path
 
+from .configuracion import parametro
 from .contratos import contiene_credenciales
 from .herramientas import ht02
+from .referencias import nivel_de_q
 
 CUSTODIOS = {"F7": "AG-14", "F8": "AG-15", "F9": "AG-16"}
-# Documento 0 §13.3, en el orden de los criterios de cada rúbrica.
-RUBRICAS = {"F7": (25, 20, 15, 10, 10, 10, 10), "F8": (25, 20, 15, 10, 10, 10, 10),
-            "F9": (20, 20, 15, 15, 10, 10, 10)}
 
 
-def bajas_registradas(lineas):
-    seccion = False
-    for linea in lineas:
-        if linea.startswith("#"):
-            seccion = bool(re.fullmatch(r"#{1,3}\s+Registro de bajas\s*", linea.rstrip(), re.IGNORECASE))
-        elif seccion and linea.startswith("|"):
+def detalle_bajas(lineas, archivo="Registro de bajas"):
+    nivel = 0
+    for numero, linea in enumerate(lineas, 1):
+        titulo = ht02.modulo.RE_TITULO.match(linea)
+        if titulo:
+            profundidad = len(titulo.group(1))
+            if "registro de bajas" in ht02.modulo._norm_clave(linea):
+                nivel = profundidad
+            elif profundidad <= nivel:
+                nivel = 0
+        elif nivel and linea.startswith("|"):
             partes = re.split(r"(?<!\\)\|", linea.strip().strip("|"))
             if len(partes) == 5:
-                rid, _, _, fecha, _ = (p.strip() for p in partes)
-                if re.fullmatch(r"[A-Z][A-Z0-9-]*-\d+", rid) and re.fullmatch(r"\d{4}-\d{2}-\d{2}", fecha):
-                    yield rid.removeprefix("REF-"), date.fromisoformat(fecha).isoformat()
+                rid, _, motivo, fecha, _ = (p.strip() for p in partes)
+                if re.fullmatch(r"[A-Z][A-Z0-9-]*-\d+", rid):
+                    try:
+                        dia = date.fromisoformat(fecha).isoformat()
+                    except ValueError as exc:
+                        raise ValueError(f"{archivo}, fila {numero}: fecha de baja inválida {fecha!r}") from exc
+                    yield rid.removeprefix("REF-"), dia, motivo.replace(r"\|", "|")
 
 
-def _degradar(lineas, ficha, revision, archivo):
+def bajas_registradas(lineas, archivo="Registro de bajas"):
+    for rid, dia, _ in detalle_bajas(lineas, archivo):
+        yield rid, dia
+
+
+def _degradar(lineas, ficha, revision, archivo, cfg):
     puntos = revision.get("puntos")
-    limites = RUBRICAS[archivo]
+    limites = parametro(cfg, f"referencias.rubricas.{archivo}")
     if not isinstance(puntos, list) or len(puntos) != len(limites) or any(
         type(p) is not int or not 0 <= p <= limite for p, limite in zip(puntos, limites)
     ):
@@ -39,7 +52,7 @@ def _degradar(lineas, ficha, revision, archivo):
     q = sum(puntos)
     if ficha.q is None or q >= ficha.q:
         raise ValueError("DEGRADAR requiere una reducción de Q")
-    nivel = "A" if q >= 80 else "B" if q >= 65 else "C" if q >= 50 else "D"
+    nivel = nivel_de_q(q, cfg)
     marca = f"{q} ({nivel})"
     i = ficha.linea_inicio
     lineas[i] = re.sub(r"·\s*Q\s*\d+\s*\([A-D]\)", "· Q " + marca, lineas[i], count=1)
@@ -68,11 +81,13 @@ def _sin_copia(r):
     return isinstance(datos, dict) and datos.get("archived_snapshots") == {}
 
 
-def tratar(archivo, original, informe, revisiones):
+def tratar(archivo, original, informe, revisiones, cfg=None):
     """Calcula todo antes de publicar. Cada revisión local identifica la huella examinada."""
     lineas = original.splitlines(keepends=True)
     fecha = date.fromisoformat(informe["fecha"])
     if informe["resumen"]["incidencia_red"]:
+        if revisiones:
+            raise ValueError("La revisión exige una observación HTTP del barrido")
         return original
     estados = []
     fichas = {f.id: f for f in ht02.leer_fichas(lineas)}
@@ -80,6 +95,9 @@ def tratar(archivo, original, informe, revisiones):
         raise ValueError("Revisión sin referencia en el barrido")
     for r in informe["resultados"]:
         if r.get("codigo_http") is None and r.get("doi_codigo_http") is None:
+            if r["id"] in revisiones:
+                raise ValueError("La revisión exige una observación HTTP del barrido")
+            estados.append(r)
             continue
         ficha = fichas.get(r["id"])
         if ficha is None:
@@ -101,7 +119,7 @@ def tratar(archivo, original, informe, revisiones):
                 baja = "Retractación confirmada por el custodio: " + motivo
             elif rev.get("accion") == "DEGRADAR" and r["estado"] == "CONTENIDO_CAMBIADO":
                 ficha = next(f for f in ht02.leer_fichas(lineas) if f.id == ficha.id)
-                _degradar(lineas, ficha, rev, archivo)
+                _degradar(lineas, ficha, rev, archivo, cfg)
                 lineas = ht02.rebasar_contenido(lineas, ficha.id, r)
             elif rev.get("accion") == "REPARAR" and r["estado"] == "CONTENIDO_CAMBIADO":
                 url = (r.get("copia_archivada") or {}).get("url", "")
@@ -153,19 +171,24 @@ def revisar_bajas(bloque, as_of, run_id):
     refs.actualizar()
     fecha = str(as_of)[:10]
     bajas = {(archivo, "REF-" + rid, dia) for archivo, filas in refs.bajas.items() for rid, dia in filas if dia <= fecha}
+    motivos = dict(refs.motivos_bajas)
     if refs.registro_bajas_f9 and refs.registro_bajas_f9.exists():
-        bajas.update(("F9", "REF-" + rid, dia) for rid, dia in bajas_registradas(
-            refs.registro_bajas_f9.read_text(encoding="utf-8").splitlines()) if dia <= fecha)
+        ruta = refs.registro_bajas_f9
+        for rid, dia, motivo in detalle_bajas(ruta.read_text(encoding="utf-8").splitlines(), ruta):
+            if dia <= fecha:
+                clave = ("F9", "REF-" + rid, dia)
+                bajas.add(clave)
+                motivos[clave] = motivo
     if not bajas:
         return
     almacen = bloque.almacen
     with almacen._transaccion():
-        evds = avisar_curador(almacen, bloque.mensajeria, as_of, run_id, bajas)
+        evds = avisar_curador(almacen, bloque.mensajeria, as_of, run_id, bajas, motivos)
         clms = almacen.estado("F2", as_of, clave="clm_id")
         opciones = almacen.estado("F3", as_of)
-        meses: dict[tuple[str, str], list[str]] = {}
+        meses = {}
         for archivo, ref, dia in sorted(bajas):
-            meses.setdefault((archivo, dia[:7]), []).append(ref)
+            meses.setdefault((archivo, dia[:7]), []).append({"ref_id": ref, "motivo": motivos.get((archivo, ref, dia), "Motivo no consignado")})
         retiradas = {eid for eid, e in evds.items() if e.get("estado_verificacion") == "FUENTE_RETIRADA"}
         for oid, op in opciones.items():
             if op.get("estado") != "VIGENTE":
@@ -181,27 +204,32 @@ def revisar_bajas(bloque, as_of, run_id):
                 if (origen and e.get("direccion") == "FAVORABLE"
                         and e.get("grado_independencia") == "RAIZ" and e.get("nivel_fuente") in ("A", "B")):
                     raices[origen] = (e["nivel_fuente"], e.get("tipo_fuente"))
-            mantiene = bloque._ps1(raices)
+            mantiene = op.get("ps1") is True and bloque._ps1(raices)
             almacen.escribir("F3", "AG-02", {"tipo_entrada": "ACTUALIZACION", "opp_id": oid,
                 "ps1": mantiene, "revision_bajas": {"run_id": run_id, "evidencias_retiradas": afectadas,
                 "conclusion": "MANTIENE_RESPALDO" if mantiene else "REQUIERE_REEVALUACION"}})
         emitidos = almacen.estado("HA", as_of, clave="mes_bajas")
-        for (archivo, mes), referencias in meses.items():
+        for (archivo, mes), detalle in meses.items():
             clave = archivo + "/" + mes
-            if mes < fecha[:7] and sorted(referencias) != emitidos.get(clave, {}).get("bajas"):
-                msg = bloque.mensajeria.crear("CT-21", CUSTODIOS[archivo], "AG-18", {"mes": mes, "bajas": sorted(referencias)}, run_id=run_id)
-                almacen.escribir("HA", "AG-18", {"tipo_entrada": "MANTENIMIENTO", "mes_bajas": clave, "bajas": sorted(referencias), "mensaje": msg})
+            referencias = sorted(fila["ref_id"] for fila in detalle)
+            if mes < fecha[:7] and referencias != emitidos.get(clave, {}).get("bajas"):
+                msg = bloque.mensajeria.crear("CT-21", CUSTODIOS[archivo], "AG-18",
+                                              {"periodo": mes, "bajas": detalle}, run_id=run_id)
+                almacen.escribir("HA", "AG-18", {"tipo_entrada": "MANTENIMIENTO", "mes_bajas": clave,
+                                                 "bajas": referencias, "mensaje": msg})
 
 
-def avisar_curador(almacen, mensajeria, as_of, run_id, bajas):
+def avisar_curador(almacen, mensajeria, as_of, run_id, bajas, motivos=None):
     with almacen._transaccion():
         alertas = almacen.estado("F2", as_of, clave="baja_id")
         evds = almacen.estado("F2", as_of, clave="evd_id")
         for archivo, ref, dia in sorted(bajas):
             clave = f"{archivo}/{dia}/{ref}"
             if clave not in alertas:
+                motivo = (motivos or {}).get((archivo, ref, dia), "Motivo no consignado")
                 msg = mensajeria.crear("CT-11", CUSTODIOS[archivo], "AG-12",
-                    {"tipo": "fuente_retirada", "piezas": [{"ref_id": ref, "fecha_baja": dia}]}, run_id=run_id)
+                    {"tipo": "fuente_retirada", "piezas": [{"indice": 0, "fuente": ref, "ref_id": ref, "fecha_baja": dia,
+                     "extracto": "", "direccion": "neutra", "afirmacion": f"Fuente retirada de {archivo} el {dia}: {motivo}"}]}, run_id=run_id)
                 almacen.escribir("F2", "AG-12", {"tipo_entrada": "ALERTA_PROCEDENCIA", "baja_id": clave, "mensaje": msg})
             for eid, e in evds.items():
                 if e.get("ref_id") in (ref, ref.removeprefix("REF-")) and e.get("estado_verificacion") != "FUENTE_RETIRADA":
@@ -233,4 +261,5 @@ def retirar_por_manipulacion(bloque, ref_id, as_of, run_id):
             with NamedTemporaryFile("w", encoding="utf-8", dir=ruta.parent, delete=False) as tmp:
                 tmp.write((texto or cabecera) + linea)
             Path(tmp.name).replace(ruta)
-        avisar_curador(almacen, bloque.mensajeria, as_of, run_id, {("F9", ref_id, previa or dia)})
+        baja = ("F9", ref_id, previa or dia)
+        avisar_curador(almacen, bloque.mensajeria, as_of, run_id, {baja}, {baja: "Manipulación confirmada en F9"})

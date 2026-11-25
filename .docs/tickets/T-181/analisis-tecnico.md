@@ -13,3 +13,7 @@ El custodio usa el informe del barrido para revisar el contenido. Puede entregar
 ```
 
 Los puntos se indican en el orden del Documento 0 §13.3. Para RETRACTADA se aportan la huella y el motivo de confirmación del editor. Para REPARAR se añade la URL archivada del informe. El ejecutor comprueba que reproduce la huella de la versión original. La revisión de contenido es entrada del custodio; las comprobaciones realizadas aquí usan revisiones preparadas, sin llamar a un modelo ni a un editor real.
+
+### Ronda r02
+
+La oportunidad arrastrada conserva sus identificadores de evidencia y una baja solo puede mantener o retirar el respaldo previo. El mismo lector del registro conserva motivos, cita archivo y fila ante una fecha inválida y reconoce títulos admitidos por HT-02. El custodio actualiza el estado sin respuesta y rechaza decisiones sin observación. Las bajas comunican piezas de CT-11 y el resumen de CT-21 lleva el periodo y los motivos. Se centralizaron las rúbricas y umbrales de la instancia.

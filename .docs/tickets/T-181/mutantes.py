@@ -13,7 +13,7 @@ mutaciones = [
     ('rev.get("hash") != r["hash"]', "False"),
     ('if clave not in alertas:', 'if True:'),
     ('if dia <= fecha}', 'if True}'),
-    ('mantiene = bloque._ps1(raices)', 'mantiene = True'),
+    ('mantiene = op.get("ps1") is True and bloque._ps1(raices)', 'mantiene = True'),
     ('datos.get("archived_snapshots") == {}', 'True'),
     ('copia["hash"] != ficha.campo("Hash de contenido")', 'False'),
     ('if ruta.read_text(encoding="utf-8") != original:', 'if False:'),

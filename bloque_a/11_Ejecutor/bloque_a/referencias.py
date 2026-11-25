@@ -10,7 +10,7 @@ import re
 from pathlib import Path
 from typing import Dict, List, Optional
 
-from .configuracion import ruta
+from .configuracion import parametro, ruta
 from .contratos import MARCA_RETIRADA, sanear_contenido_externo
 from .herramientas import ht02
 
@@ -21,6 +21,13 @@ ARCHIVOS_REF = {
     "F9": "Registro de Fuentes para el Analizador de Tendencias de Inversión",
     "FM": "Fondo Metodológico Bibliográfico",
 }
+
+
+def nivel_de_q(q, cfg=None):
+    for nivel in ("A", "B", "C"):
+        if q >= parametro(cfg, f"referencias.niveles_q.{nivel}"):
+            return nivel
+    return "D"
 
 
 def localizar(base: Path, prefijo: str) -> Path:
@@ -72,11 +79,12 @@ class Referencias:
         self.rutas = rutas or {k: localizar(base, v) for k, v in ARCHIVOS_REF.items()}
         self.fichas: Dict[str, List[Dict]] = {}
         self.bajas: dict[str, list[tuple[str, str]]] = {}
+        self.motivos_bajas: dict[tuple[str, str, str], str] = {}
         self._firmas: dict[str, tuple | None] = {}
         self.actualizar()
 
     def actualizar(self):
-        from .mantenimiento_fuentes import CUSTODIOS, bajas_registradas
+        from .mantenimiento_fuentes import CUSTODIOS, detalle_bajas
         for k, p in self.rutas.items():
             p = Path(p)
             stat = p.stat() if p.exists() else None
@@ -85,12 +93,15 @@ class Referencias:
                 continue
             self.fichas[k] = []
             self.bajas[k] = []
+            self.motivos_bajas = {clave: m for clave, m in self.motivos_bajas.items() if clave[0] != k}
             if not stat:
                 self._firmas[k] = firma
                 continue
             lineas = Path(p).read_text(encoding="utf-8").splitlines()
             if k in CUSTODIOS:
-                self.bajas[k] = list(bajas_registradas(lineas))
+                for rid, dia, motivo in detalle_bajas(lineas, p):
+                    self.bajas[k].append((rid, dia))
+                    self.motivos_bajas[k, "REF-" + rid, dia] = motivo
             for f in ht02.leer_fichas(lineas):
                 tem = f.campo("Temática", "Ámbito metodológico") or ""
                 m = re.search(r"\b(T[AMF]-\d{2}|MB-\d{2})\b", tem)

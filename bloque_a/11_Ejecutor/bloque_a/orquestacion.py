@@ -1839,6 +1839,7 @@ class Bloque:
         f.setdefault("invertibilidad", {"universo_suficiente": True, "nota": "Registro anterior a V5.0: invertibilidad no declarada"})
         f.update({"clase": v["clase"], "tipo_activo": v["clase"], "proxy": sym, "opp_id": v["opp_id"], "_previa": v, "_vigente": True, "_arrastre": True,
                   "senales": sen, "_ps1": v.get("ps1", True), "_evidencias": v.get("evidencias", []),
+                  "_evidencias_ps1": list(v.get("evidencias_ps1", [])),
                   "_objeciones": v.get("objeciones_internas", []), "_refutacion": {"arrastre": True},
                   "_tipo_pronostico": v.get("tipo_pronostico", "RELATIVO"), "_referencia": v.get("referencia_indice"),
                   "tnd_id": v.get("tnd_id"), "afirmaciones": [], "_gc3": True})
@@ -2052,7 +2053,7 @@ class Bloque:
                      "objeciones_internas": f.get("_objeciones", []), "veredicto_refutacion": f.get("_veredicto"),
                      "veredicto_contradictor": f.get("_veredicto_contradictor"),
                      "premortem": f.get("premortem"), "cluster_id": f.get("_cluster"),
-                     "ps1": f.get("_ps1"), "evidencias_ps1": f.get("_evidencias_ps1", []), "evidencias": f.get("_evidencias", []), "tipo_pronostico": f.get("_tipo_pronostico"),
+                     "ps1": f.get("_ps1"), "evidencias_ps1": f.get("_evidencias_ps1", (f.get("_previa") or {}).get("evidencias_ps1", [])), "evidencias": f.get("_evidencias", []), "tipo_pronostico": f.get("_tipo_pronostico"),
                      "referencia_indice": f.get("_referencia"), "horizontes_prg": prg_por_opp.get(f["opp_id"], {}),
                      "naturaleza_inversion": f.get("_naturaleza"), "horizonte_principal": f.get("_hp"),
                      "estado": estado, "de": (previa or {}).get("estado"), "rango_top3": (sel_ids.get(f["opp_id"]) or {}).get("rango"),

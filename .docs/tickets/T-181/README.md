@@ -2,7 +2,7 @@
 
 | Campo | Valor |
 | --- | --- |
-| Estado | EN QA (r01, revisión independiente pendiente) |
+| Estado | EN QA (r02: QA r01 NO APTO) |
 | Planifica e implementa | Astra |
 | QA independiente | Claude, pendiente |
 

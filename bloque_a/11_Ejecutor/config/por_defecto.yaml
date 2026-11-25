@@ -400,7 +400,14 @@ ps2_festivos: {viernes_santo: true, lunes_de_pascua: false, fijos: ['01-01', '12
 # indicador, con SUBYACENTE) no se analiza en ese ciclo, declarado. El Anexo A solo fija la antigüedad de PS2 por horizonte;
 # 7 días es la de H3 y la misma tolerancia que ya usaba la resolución. Pregunta (T-57): «¿Con cuántos días de retraso
 # deja de valer el índice con el que se compara una oportunidad?»
-referencias: {antiguedad_maxima_dias: 7}
+referencias:
+  antiguedad_maxima_dias: 7
+  # Documento 0 §13.3, en orden de criterio de la rúbrica de cada catálogo
+  rubricas:
+    F7: [25, 20, 15, 10, 10, 10, 10]
+    F8: [25, 20, 15, 10, 10, 10, 10]
+    F9: [20, 20, 15, 15, 10, 10, 10]
+  niveles_q: {A: 80, B: 65, C: 50}
 
 # T-53 · Clústeres de exposición (ML-CLUS-001; Catálogo del Motor): umbral de correlación y ventana. T-65 (CS-18): la
 # ventana es la del Catálogo (≥ 3 años semanales) y fija también el inicio de los datos. El prompt del Analizador dice
