@@ -101,10 +101,15 @@ def test_un_ct24_sin_seg_id_sigue_siendo_un_encargo_desconocido(tmp_path):
         s._cambio({"accion": "PAUSA"}, "PAUSA", pd.Timestamp(AS_OF))
 
 
-@pytest.mark.parametrize(("clase", "agente"), [("RV", "AG-03"), ("RF", "AG-04"), ("TCV", "AG-25"), (None, "AG-03"),
-                                               ("XYZ", "AG-03"), ("", "AG-03")])
-def test_b_agente_conserva_el_analista_por_defecto(clase, agente):
-    assert seguimiento.b_agente(clase) == agente
+@pytest.mark.parametrize(("clase", "agente"), [("RV", "AG-03"), ("RF", "AG-04"), ("TCV", "AG-25"), (None, None),
+                                               ("XYZ", None), ("", None)])
+def test_b_agente_da_el_analista_de_su_clase_o_falla(clase, agente):
+    # T-205: una clase desconocida, vacía o None ya no va al AG-03 por defecto: falla de forma explícita
+    if agente is None:
+        with pytest.raises(seguimiento.ClaseNoAdmitida):
+            seguimiento.b_agente(clase)
+    else:
+        assert seguimiento.b_agente(clase) == agente
 
 
 @pytest.mark.parametrize(("hito", "estado"), [

@@ -15,17 +15,34 @@ from __future__ import annotations
 import json
 import math
 from pathlib import Path
+from typing import TypeGuard
 
 import numpy as np
 import pandas as pd
 
 from .configuracion import parametro
+from .contratos import AGENTE_CLASE
 from .herramientas import ht03, ht09
 from .herramientas.ht01_datos import DatosNoDisponibles
 from .redaccion import carpeta_bloqueados
 
 FRECUENCIAS = ("DIARIA", "SEMANAL", "QUINCENAL", "MENSUAL", "TRIMESTRAL", "PERSONALIZADA")
 ACCIONES = ("ALTA", "MODIFICACION", "PAUSA", "REANUDACION", "CANCELACION")
+
+
+class ClaseNoAdmitida(ValueError):
+    """T-205: la clase de la opción (F3) no es uno de los doce tipos de activo de `AGENTE_CLASE`, o falta. Lleva el INC- de HA
+    que deja el rechazo (None si no se registra ninguno, como en `b_agente`)."""
+
+    def __init__(self, mensaje: str, inc_id: str | None = None) -> None:
+        super().__init__(mensaje)
+        self.inc_id = inc_id
+
+
+def clase_admitida(clase: object) -> TypeGuard[str]:
+    """T-205: solo una de las doce claves de `AGENTE_CLASE` (Documento 0, 4.2; F3 y F11: «uno de los doce tipos de activo»).
+    None, la cadena vacía, otra cadena u otro tipo no lo son."""
+    return isinstance(clase, str) and clase in AGENTE_CLASE
 
 
 def _simbolo(opp: dict) -> str | None:
@@ -61,6 +78,8 @@ class Seguimientos:
         accion = ct24.get("accion")
         if accion not in ACCIONES:
             raise ValueError(f"Acción no válida {accion!r} (válidas: {', '.join(ACCIONES)})")
+        if accion == "ALTA":   # T-205: una clase no admitida se rechaza antes de registrar nada, ni el CT-24 de entrada
+            self._exigir_clase_alta(ct24.get("opp_id"), as_of)
         msg = self.b.mensajeria.crear("CT-24", "BROKER", "AG-01", ct24, query_id=ct24.get("seg_id") or "SEG-ALTA")
         if accion == "ALTA":
             r = self._alta(ct24, as_of)
@@ -76,6 +95,7 @@ class Seguimientos:
         f3 = self.b.almacen.estado("F3", as_of)
         if opp_id not in f3:
             raise KeyError(f"{opp_id} no está registrada en F3: solo se admite el seguimiento de una OPP- existente (7.11.2)")
+        self._exigir_clase_alta(opp_id, as_of)
         frec = ct24.get("frecuencia") or "SEMANAL"
         if frec not in FRECUENCIAS:
             raise ValueError(f"Frecuencia no válida {frec!r}")
@@ -98,6 +118,26 @@ class Seguimientos:
                                                  "decision_broker": {"decision": "EN_SEGUIMIENTO", "motivo": enc["motivo"],
                                                                      "fecha": str(as_of.date()), "seg_id": seg_id}})
         return {"seg_id": seg_id, "estado": "ACTIVO", "proximo_ciclo": enc["proximo_ciclo"], "aviso": aviso}
+
+    def _exigir_clase_alta(self, opp_id, as_of) -> None:
+        """T-205: el alta de una OPP- de F3 cuya clase no es uno de los doce tipos de activo se rechaza con un INC- en HA y
+        sin escribir nada más (ni F11, ni F3, ni F5, ni identificadores SEG- o MSG-). Una OPP- que no está en F3 sigue siendo el
+        `KeyError` de `_alta`."""
+        f3 = self.b.almacen.estado("F3", as_of)
+        if opp_id not in f3 or clase_admitida(f3[opp_id].get("clase")):
+            return
+        inc = self.b.almacen.incidencia(
+            "OTRO", f"Alta de seguimiento (CT-24) de {opp_id} rechazada: su clase en F3 no es uno de los doce tipos de activo, o "
+                    "falta. No se registra el encargo (T-205)", objeto=opp_id, campo_afectado="clase",
+            tratamiento="rechazada y registrada", escalado_operador=True, fase="ALTA", opp_id=opp_id,
+            f3_seq_clase=self._seq_clase(opp_id, as_of))
+        raise ClaseNoAdmitida(f"{opp_id}: la clase de la opción en F3 no es uno de los doce tipos de activo ({inc['id']})", inc["id"])
+
+    def _seq_clase(self, opp_id, as_of) -> int | None:
+        """T-205: `_seq` de la última entrada de F3 de la opción que fija su clase (None si ninguna). Identifica el valor sin
+        copiarlo en HA (`campo_afectado`, sin el valor: esquema de HA, 4.8)."""
+        con_clase = self.b.almacen.leer("F3", as_of, filtro=lambda e: e.get("opp_id") == opp_id and "clase" in e)
+        return con_clase[-1].get("_seq") if con_clase else None
 
     def _cambio(self, ct24: dict, accion: str, as_of) -> dict:
         seg_id = ct24.get("seg_id")
@@ -176,7 +216,11 @@ class Seguimientos:
     def ciclo_c6(self, enc: dict, as_of) -> dict:
         b, seg_id, opp_id = self.b, enc["seg_id"], enc["opp_id"]
         opp = b.almacen.estado("F3", as_of).get(opp_id) or {}
-        clase = opp.get("clase") or enc.get("clase")
+        # T-205: la clase del ciclo es la de F3, la misma que lleva el informe (`tipo_activo`); la copia de F11 ya no la suple.
+        # Si no es uno de los doce tipos de activo, el ciclo se omite antes de escribir nada, con un INC- en HA
+        clase = opp.get("clase")
+        if not clase_admitida(clase):
+            return self._c6_clase_no_admitida(enc, opp_id, as_of)
         # Absorción en C1 (7.11.5): si la opción vuelve a estar VIGENTE en el top-3, el ciclo se omite
         if opp.get("estado") == "VIGENTE":
             b.almacen.escribir("F11", "AG-01", {"tipo_entrada": "CICLO_OMITIDO", "seg_id": seg_id, "fecha": str(as_of.date()),
@@ -238,6 +282,26 @@ class Seguimientos:
         return {"seg_id": seg_id, "run_id": run_id, "ejecutado": True, "entregado": entregado, "g3": val["dictamen"],
                 "recomendacion": informe["recomendacion"], "semaforo": informe["semaforo"], "sin_novedad": rev["sin_novedad"],
                 "rutas": rutas, "informe": informe, "validacion": val}
+
+    def _c6_clase_no_admitida(self, enc: dict, opp_id, as_of) -> dict:
+        """T-205: ciclo C6 omitido por la clase de la opción. Ni CT-05 ni CT-06, ni RUN-, ni F5, ni informe; F11 no avanza
+        (`proximo_ciclo` sigue vencido). Un solo INC- por encargo, entrada de F3 que fija la clase y número de ciclos hechos:
+        mientras nada de eso cambie, los ciclos siguientes citan el mismo INC- (lectura y escritura en la misma transacción,
+        también entre procesos)."""
+        b, seg_id = self.b, enc["seg_id"]
+        clave = {"seg_id": seg_id, "f3_seq_clase": self._seq_clase(opp_id, as_of), "ciclos_encargo": int(enc.get("ciclos") or 0)}
+        with b.almacen._transaccion():
+            previas = b.almacen.leer("HA", filtro=lambda e: e.get("tipo_entrada") == "INC" and e.get("fase") == "C6"
+                                     and e.get("campo_afectado") == "clase" and all(e.get(k) == v for k, v in clave.items()))
+            if previas:
+                inc_id, nueva = previas[0]["id"], False
+            else:
+                inc_id, nueva = b.almacen.incidencia(
+                    "OTRO", f"Ciclo C6 de {seg_id} ({opp_id}) omitido: la clase de la opción en F3 no es uno de los doce tipos de "
+                            "activo, o falta. Sin CT-05 ni CT-06; F11 no avanza (T-205)", objeto=seg_id, campo_afectado="clase",
+                    tratamiento="ciclo omitido y registrado", escalado_operador=True, fase="C6", opp_id=opp_id, **clave)["id"], True
+        return {"seg_id": seg_id, "opp_id": opp_id, "ejecutado": False, "motivo": "clase de la opción no admitida", "inc_id": inc_id,
+                "incidencia_nueva": nueva}
 
     # -------------------------------------------------------------------------------- revisión ligera
     def _revision(self, enc: dict, opp: dict, as_of) -> dict:
@@ -422,9 +486,11 @@ class Seguimientos:
 
 
 def b_agente(clase: str | None) -> str:
-    from .contratos import AGENTE_CLASE
-    # T-201: una opción sin clase va, como una clase desconocida, al AG-03 (lo que ya hacía `AGENTE_CLASE.get(None, "AG-03")`)
-    return AGENTE_CLASE.get(clase, "AG-03") if clase is not None else "AG-03"
+    """Analista de tipo de activo de la clase. T-205: una clase desconocida, vacía o None falla de forma explícita
+    (`ClaseNoAdmitida`); antes iba al AG-03 sin aviso."""
+    if not clase_admitida(clase):
+        raise ClaseNoAdmitida("La clase de la opción no es uno de los doce tipos de activo: no hay Analista al que encargar el CT-06")
+    return AGENTE_CLASE[clase]
 
 
 def _estado_hito(hito: dict) -> str:
