@@ -296,3 +296,39 @@ def test_nivel_configurado_se_aplica_en_la_revision():
     assert "Q 65 (B)" in tratar("F8", FICHA, datos, {RID: revision})
     cfg = {"referencias": {"niveles_q": {"B": 66}}}
     assert "Q 65 (C)" in tratar("F8", FICHA, datos, {RID: revision}, cfg)
+
+
+def test_reintento_tras_baja_persistida_antes_de_actualizar_clm(tmp_path, universo, monkeypatch):
+    bloque = nuevo_bloque(tmp_path, universo)
+    bloque.fijar_fecha(DIA)
+    bloque.referencias.bajas["F7"].append((RID, DIA))
+    almacen = bloque.almacen
+    almacen.escribir("F2", "AG-12", {
+        "tipo_entrada": "EVD", "evd_id": "EVD-1", "ref_id": "REF-" + RID, "clm_ids": ["CLM-1"],
+        "estado_verificacion": "VERIFICADA", "direccion": "FAVORABLE", "grado_independencia": "RAIZ",
+        "nivel_fuente": "A", "tipo_fuente": "PRIMARIA",
+    })
+    almacen.escribir("F2", "AG-12", {
+        "tipo_entrada": "CLM", "clm_id": "CLM-1", "evidencias": ["EVD-1"], "evidencias_ps1": ["EVD-1"],
+        "raices_independientes": 1, "ps1_cumple": True,
+    })
+    escribir = almacen.escribir
+
+    def interrumpir(archivo, agente, entrada):
+        if entrada.get("clm_id") == "CLM-1":
+            raise OSError("fallo al guardar CLM")
+        return escribir(archivo, agente, entrada)
+
+    with monkeypatch.context() as parche:
+        parche.setattr(almacen, "escribir", interrumpir)
+        with pytest.raises(OSError, match="guardar CLM"):
+            revisar_bajas(bloque, DIA, "RUN-1")
+    assert almacen.estado("F2", clave="evd_id")["EVD-1"]["estado_verificacion"] == "FUENTE_RETIRADA"
+    assert almacen.estado("F2", clave="clm_id")["CLM-1"]["ps1_cumple"] is True
+
+    revisar_bajas(bloque, DIA, "RUN-2")
+    clm = almacen.estado("F2", clave="clm_id")["CLM-1"]
+    assert clm["raices_independientes"] == 0 and clm["ps1_cumple"] is False
+    registros = almacen.leer("F2")
+    revisar_bajas(bloque, DIA, "RUN-3")
+    assert almacen.leer("F2") == registros

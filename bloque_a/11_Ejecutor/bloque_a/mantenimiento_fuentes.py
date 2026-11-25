@@ -7,11 +7,11 @@ import tempfile
 from datetime import date
 from pathlib import Path
 
-from .configuracion import parametro
-from .procedencia import cumple_ps1
 from . import sintesis as sint
+from .configuracion import parametro
 from .contratos import contiene_credenciales
 from .herramientas import ht02
+from .procedencia import cumple_ps1
 from .referencias import nivel_de_q
 
 CUSTODIOS = {"F7": "AG-14", "F8": "AG-15", "F9": "AG-16"}
@@ -233,18 +233,22 @@ def avisar_curador(almacen, mensajeria, as_of, run_id, bajas, motivos=None, cfg=
                      "extracto": "", "direccion": "neutra", "afirmacion": f"Fuente retirada de {archivo} el {dia}: {motivo}"}]}, run_id=run_id)
                 almacen.escribir("F2", "AG-12", {"tipo_entrada": "ALERTA_PROCEDENCIA", "baja_id": clave, "mensaje": msg})
             for eid, e in evds.items():
-                if e.get("ref_id") in (ref, ref.removeprefix("REF-")) and e.get("estado_verificacion") != "FUENTE_RETIRADA":
+                if e.get("ref_id") not in (ref, ref.removeprefix("REF-")):
+                    continue
+                afectadas.update(e.get("clm_ids", []))
+                if e.get("estado_verificacion") != "FUENTE_RETIRADA":
                     almacen.escribir("F2", "AG-12", {"tipo_entrada": "EVD", "evd_id": eid, "estado_verificacion": "FUENTE_RETIRADA"})
                     e["estado_verificacion"] = "FUENTE_RETIRADA"
-                    afectadas.update(e.get("clm_ids", []))
         if afectadas:
             clms = almacen.estado("F2", as_of, clave="clm_id")
             for cid in sorted(afectadas):
                 clm = clms.get(cid, {})
                 if "evidencias_ps1" in clm:
                     raices = sint.raices_de_clm(clm, evds)
-                    almacen.escribir("F2", "AG-12", {"tipo_entrada": "CLM", "clm_id": cid,
-                                     "raices_independientes": len(raices), "ps1_cumple": cumple_ps1(raices, cfg)})
+                    cumple = cumple_ps1(raices, cfg)
+                    if clm.get("raices_independientes") != len(raices) or clm.get("ps1_cumple") is not cumple:
+                        almacen.escribir("F2", "AG-12", {"tipo_entrada": "CLM", "clm_id": cid,
+                                         "raices_independientes": len(raices), "ps1_cumple": cumple})
         return evds
 
 

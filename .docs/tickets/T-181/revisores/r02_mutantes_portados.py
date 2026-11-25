@@ -27,7 +27,7 @@ mutaciones = [
     (MF, ' or copia.get("retractacion"):', ':'),                                    # repara con una copia retractada
     (MF, 'if ficha.q is None or q >= ficha.q:', 'if ficha.q is None or q > ficha.q:'),
     ('bloque_a/referencias.py', 'if q >= parametro(cfg, f"referencias.niveles_q.{nivel}"):', 'if q > parametro(cfg, f"referencias.niveles_q.{nivel}"):'),
-    (MF, ' and e.get("estado_verificacion") != "FUENTE_RETIRADA":', ':'),           # marca la EVD en cada pasada
+    (MF, 'if e.get("estado_verificacion") != "FUENTE_RETIRADA":', 'if True:'),           # marca la EVD en cada pasada
     (MF, 'afectadas == op.get("revision_bajas", {}).get("evidencias_retiradas")', 'False'),  # F3 en cada pasada
     (MF, 'if not destino or (r.get("doi") and not isinstance(r.get("doi_codigo_http"), int)):', 'if not destino:'),
     (ORQ, 'if any(rid == fuente.removeprefix("REF-") and dia <= str(as_of)[:10]', 'if False and any(rid == fuente.removeprefix("REF-") and dia <= str(as_of)[:10]'),
