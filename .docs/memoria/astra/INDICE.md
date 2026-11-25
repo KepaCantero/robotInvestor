@@ -13,3 +13,4 @@
 | astra/2026-11-13_publicacion-puntual-revisiones | decision | Subida puntual autorizada de D–G y registros; futuros trabajos siguen locales | vigente |
 | astra/2026-11-21_t181-bajas | estado | T-181 local. Revisión de referencias del Bloque A y pruebas de propagación. | vigente |
 | astra/2026-11-21_encargos-bloque-a | estado | Encargos locales C-39 a C-47. Alcance, pruebas y relevo para Claude. | vigente |
+| astra/2026-11-25_r02_c38-c47 | estado | Segunda entrega local de los diez tickets del Bloque A y pruebas para Claude. | vigente |
