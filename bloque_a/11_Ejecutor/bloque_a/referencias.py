@@ -65,6 +65,8 @@ def conocible_desde(ref: dict) -> str | None:
 
 
 class Referencias:
+    registro_bajas_f9: Path | None = None
+
     def __init__(self, cfg: Dict, rutas: Optional[Dict[str, Path]] = None) -> None:
         base = ruta(cfg, "archivos_operativos")
         self.rutas = rutas or {k: localizar(base, v) for k, v in ARCHIVOS_REF.items()}
@@ -99,6 +101,14 @@ class Referencias:
 
             self._firmas[k] = firma
 
+    def retiradas_f9(self, as_of):
+        from .mantenimiento_fuentes import bajas_registradas
+        ruta = self.registro_bajas_f9
+        if ruta is None or not ruta.exists():
+            return set()
+        return {"REF-" + rid for rid, dia in bajas_registradas(ruta.read_text(encoding="utf-8").splitlines())
+                if dia <= str(as_of)[:10]}
+
     def por_id(self, ref_id: str) -> Optional[Dict]:
         rid = ref_id.replace("REF-", "")
         for lst in self.fichas.values():
@@ -112,8 +122,9 @@ class Referencias:
         corte = str(as_of)[:10]
         tem = set(TEMATICAS_CLASE.get(clase, []))
         sel, hallazgos = [], []
+        retiradas = self.retiradas_f9(as_of)
         for a in archivos:
-            cand = [r for r in self.fichas.get(a, []) if r["tematica"] in tem]
+            cand = [r for r in self.fichas.get(a, []) if r["tematica"] in tem and "REF-" + r["ref_id"] not in retiradas]
             if modo == "backtest":
                 cand = [r for r in cand if ((conocible_desde(r) or "9999") <= corte) or (a == "F9" and r["anio"] is None)]
             cand.sort(key=lambda r: (-(r["q"] or 0), r["ref_id"]))

@@ -183,6 +183,7 @@ class Bloque:
             self.agentes.clientes["AG-11"] = cliente_contradictor
         self.motor = Motor(self.almacen, proveedor, cfg, self.contabilidad)
         self.referencias = Referencias(cfg)
+        self.referencias.registro_bajas_f9 = self.almacen.carpeta / "F9_bajas.md"
         # T-125 r02 (QA r01, H-04): el Evaluador valida la fuente de los pronósticos de fuentes contra F9
         self.evaluador = Evaluador(self.almacen, proveedor, self.motor, cfg, self.universo, referencias=self.referencias)
         self.mensajeria = Mensajeria(self.almacen, self.v6)
@@ -1132,13 +1133,22 @@ class Bloque:
         datos, hall = sanear_estructura(r.datos, f"{agente}:{run_id}")
         piezas = []
         ofrecidas = {x["ref_id"] for x in cand["referencias"] if x.get("anio") is not None}
-        for ref in datos.get("referencias", [])[:3]:
+        contaminadas = {"REF-" + h["origen"].removeprefix("F9:") for h in cand.get("hallazgos_r9", []) if h["origen"].startswith("F9:")}
+        retiradas = self.referencias.retiradas_f9(as_of)
+        for indice, ref in enumerate(datos.get("referencias", [])[:3]):
+            if ref.get("ref_id") in retiradas:
+                continue
             if self.modo == "backtest" and str(ref.get("ref_id")) not in ofrecidas:
                 continue   # en backtest solo referencias registradas y anteriores a as_of
             piezas.append({"afirmacion": ref.get("afirmacion") or datos.get("sintesis", "")[:200], "fuente": ref["ref_id"],
                            "direccion": ref.get("direccion", "neutra"), "extracto": (ref.get("extracto") or ref.get("motivo") or "")[:160],
-                           "origen": agente, "incidencia": bool(hall), **_bloque_pronostico_fuente(ref)})
-        return {"para": f["proxy"], "piezas": piezas, "refs_ofrecidas": sorted(ofrecidas), "hallazgos_r9": hall,
+                           "origen": agente, "incidencia": ref["ref_id"] in contaminadas or any(
+                               h["origen"].startswith(f"{agente}:{run_id}.referencias[{indice}].") for h in hall), **_bloque_pronostico_fuente(ref)})
+        for pieza in piezas:
+            if pieza["incidencia"]:
+                pieza.update(afirmacion="Pieza en cuarentena", extracto="", direccion="neutra")
+                pieza.pop("pronostico_fuente", None)
+        return {"para": f["proxy"], "piezas": piezas, "refs_ofrecidas": sorted(ofrecidas), "hallazgos_r9": hall + cand.get("hallazgos_r9", []),
                 "estado": "COMPLETO" if piezas else "SIN_RESULTADO"}
 
     def _prospectiva(self, clase, finales, as_of, run_id, presupuesto, hz_interes) -> None:
@@ -1468,6 +1478,16 @@ class Bloque:
                     evd_por_hash[h] = evd
                 else:
                     evd = dup
+                if p.get("incidencia") or evd.get("incidencia_manipulacion"):
+                    from .mantenimiento_fuentes import retirar_por_manipulacion
+                    f["_manipulacion"] = True
+                    evd["incidencia_manipulacion"] = {"tipo": "INSTRUCCION_INCRUSTADA", "detalle": "pieza en cuarentena"}
+                    self.almacen.escribir("F2", "AG-12", {"tipo_entrada": "EVD", "evd_id": evd["evd_id"],
+                                          "incidencia_manipulacion": evd["incidencia_manipulacion"], "estado_verificacion": "CUARENTENA"})
+                    retirar_por_manipulacion(self, fuente, as_of, run_id)
+                    continue
+                if evd.get("estado_verificacion") == "FUENTE_RETIRADA" or fuente in self.referencias.retiradas_f9(as_of):
+                    continue
                 if evd["evd_id"] not in clm["evidencias"]:
                     clm["evidencias"].append(evd["evd_id"])
                 # PS1 exige corroborar las afirmaciones centrales del Analista (9.3): la pieza de momentum que añade el
