@@ -29,6 +29,7 @@ from .contratos import (
     claves_valor_credencial,
     contiene_credenciales,
     retorno_con_credencial,
+    tipos_protegidos,
 )
 from .herramientas.ht01_boveda import Boveda, alias_de
 from .herramientas.ht06_indice import normalizar
@@ -128,7 +129,8 @@ class ConsultasBroker:
             if not p.get("texto") or not p.get("supuesto_declarado"):
                 raise ValueError("Cada pregunta necesita «texto» y «supuesto_declarado» (7.9.2)")
         if contiene_credenciales(consulta):
-            self.b.almacen.incidencia("SEGURIDAD", "Consulta CT-23 con datos protegidos rechazada (R8)", "AG-01")
+            self.b.almacen.incidencia("SEGURIDAD", "Consulta CT-23 con datos protegidos rechazada (R8)", "AG-01",
+                                      tipos_dato=tipos_protegidos(consulta))
             raise DatosSensibles("La consulta contiene datos protegidos")
         run_id = consulta.get("run_id")
         maximo = int(parametro(self.b.cfg, "consultas_broker.max_mensajes_por_run"))
@@ -527,12 +529,18 @@ class Credenciales:
         if retorno is None:
             return {"solicitudes": [], "descartadas": [], "rechazo": None}
         try:
-            sensible = bool(claves_valor_credencial(retorno)) or bool(contiene_credenciales(retorno))
+            campos_con_valor = claves_valor_credencial(retorno)
+            sensible = bool(campos_con_valor) or bool(contiene_credenciales(retorno))
+            if sensible:
+                tipos = tipos_protegidos(retorno)
+                if campos_con_valor and tipos == ["DATO_PROTEGIDO"]:
+                    tipos = ["CREDENCIAL"]
         except RecursionError:   # demasiado anidado para comprobarlo: falla cerrado
             sensible = True
+            tipos = ["CREDENCIAL"]
         if sensible:
             self.b.almacen.incidencia("SEGURIDAD", "Retorno con solicitudes de credenciales que trae un valor de credencial: "
-                                      "rechazado íntegro sin copiarlo (R8, 6.2.5)", solicitante, origen=origen)
+                                      "rechazado íntegro sin copiarlo (R8, 6.2.5)", solicitante, origen=origen, tipos_dato=tipos)
             return {"solicitudes": [], "descartadas": [], "rechazo": "VALOR_DE_CREDENCIAL_EN_EL_RETORNO"}
         # T-177 r02 (QA r01, H-06) y r03 (QA r02, H-08, H-10 y H-11): una ficha opaca en cualquier clave u hoja de texto de las
         # solicitudes (o del retorno, si pide algo), o un número bajo una clave de valor, rechaza el retorno entero antes de
@@ -543,7 +551,7 @@ class Credenciales:
             opaca = True
         if opaca:
             self.b.almacen.incidencia("SEGURIDAD", "Solicitud de credencial con una ficha opaca (posible valor): retorno "
-                                      "rechazado íntegro sin copiarla (R8, 6.2.5)", solicitante, origen=origen)
+                                      "rechazado íntegro sin copiarla (R8, 6.2.5)", solicitante, origen=origen, tipos_dato=["CREDENCIAL"])
             return {"solicitudes": [], "descartadas": [], "rechazo": "VALOR_DE_CREDENCIAL_EN_EL_RETORNO"}
         lista = retorno.get("solicitudes_credenciales") if isinstance(retorno, dict) else None
         if lista is None:
@@ -590,7 +598,7 @@ class Credenciales:
             con_valor = sorted(str(k) for k in respuesta if clave_normalizada(k) in CAMPOS_VALOR)   # T-177 r02 (H-05)
             if con_valor:
                 self.b.almacen.incidencia("SEGURIDAD", "Respuesta CT-25 con un campo de valor de credencial rechazada íntegra (R8, 6.2.5)",
-                                          "BROKER", campo_afectado=con_valor)
+                                          "BROKER", campo_afectado=con_valor, tipos_dato=["CREDENCIAL"])
                 raise DatosSensibles("Campo de valor de credencial en un mensaje")
             self.b.mensajeria.crear("CT-25", "BROKER", "AG-01", respuesta, query_id=crd_id, tipo_mensaje="RETORNO", estado="COMPLETO")
         except DatosSensibles:

@@ -92,9 +92,10 @@
   "pruebas": [
    "11_Ejecutor/tests/test_integracion.py::test_peticion_ad_hoc_y_decisiones",
    "11_Ejecutor/tests/test_fase4_huecos.py::test_pb10_la_configuracion_rechazada_en_parte_no_toca_nada_mas",
-   "11_Ejecutor/tests/test_t189_controles.py::test_ct04_rechaza_lista_global_incompatible"
+   "11_Ejecutor/tests/test_t189_controles.py::test_ct04_rechaza_lista_global_incompatible",
+   "11_Ejecutor/tests/test_t189_controles.py::test_p03_rechaza_forma_invalida"
   ],
-  "comprueba": "Estado APLICADA_PARCIALMENTE; el umbral E y la celda ALT×H1 se rechazan con su motivo y la celda sigue sin aplicarse; P-02 aplicado; ningún otro parámetro de F10 cambia salvo la lista de horizontes; HA sin incidencia de escritura. CT-04 conserva P-03 cuando rechaza una celda; AUT lleva CPI y EAC; R8 registra la clase de dato sin guardar el valor.",
+  "comprueba": "CT-04 cambia la lista global de horizontes y rechaza individualmente cada celda prohibida por la tabla 8.3. En PB-10 el Broker conserva la lista vigente y solo se registra el cambio de P-02. Se rechazan listas vacías, inválidas o repetidas.",
   "no_comprueba": ""
  },
  "PB-11": {
@@ -156,14 +157,15 @@
   "no_comprueba": ""
  },
  "PB-17": {
-  "cobertura": "AUTOMATICA",
+  "cobertura": "PARCIAL",
   "pruebas": [
    "11_Ejecutor/tests/test_fase4_huecos.py::test_pb17_ampliacion_autorizada_y_denegada_dejan_su_aut_en_ha",
    "11_Ejecutor/tests/test_fase4_huecos.py::test_pb17_en_un_ciclo_la_ampliacion_denegada_cierra_con_alcance_reducido",
-   "11_Ejecutor/tests/test_t189_controles.py::test_aut_con_valor_ganado"
+   "11_Ejecutor/tests/test_t189_controles.py::test_aut_con_valor_ganado",
+   "11_Ejecutor/tests/test_t189_controles.py::test_valor_ganado_de_fases_realmente_servidas"
   ],
-  "comprueba": "Una ampliación que puede cambiar el top-3 y cabe en el tope se autoriza; una que no puede cambiarlo o que supera el tope se deniega; cada decisión deja su AUT- en HA con el motivo; en un ciclo, la denegada cierra con alcance reducido y el consumo real queda en F5. CT-04 conserva P-03 cuando rechaza una celda; AUT lleva CPI y EAC; R8 registra la clase de dato sin guardar el valor.",
-  "no_comprueba": ""
+  "comprueba": "Un ciclo autorizado y otro caso denegado dejan su decisión, motivo, condiciones y cálculo del valor ganado en HA. La autorización explicita las UC y el límite de la bolsa. Se contrastan EV, AC, BAC, CPI y EAC con fases de peso y coste conocidos. F5 registra el consumo efectivo.",
+  "no_comprueba": "El límite del EAC de la regla (c) espera decisión del operador (INC-T189-01)."
  },
  "PB-18": {
   "cobertura": "PARCIAL",
@@ -223,9 +225,12 @@
    "11_Ejecutor/tests/test_v51.py::test_credenciales_boveda",
    "10_Herramientas/tests/test_ht09_validador_g3.py::TestBloqueos::test_credenciales",
    "11_Ejecutor/tests/test_fase4_huecos.py::test_pb21_un_ct04_con_una_clave_y_un_iban_se_rechaza_y_no_queda_en_ningun_archivo",
-   "11_Ejecutor/tests/test_t189_controles.py::test_seguridad_solo_etiquetas"
+   "11_Ejecutor/tests/test_t189_controles.py::test_seguridad_solo_etiquetas",
+   "11_Ejecutor/tests/test_t189_controles.py::test_tipo_sin_valor_en_almacen",
+   "11_Ejecutor/tests/test_t189_controles.py::test_nombre_sensible_se_enmascara",
+   "11_Ejecutor/tests/test_t189_controles.py::test_vias_de_consultas_y_credenciales"
   ],
-  "comprueba": "El CT-04 del plan (una clave API y un IBAN en el comentario) se rechaza íntegro, deja una incidencia SEGURIDAD con el campo y sin el valor, y ni la clave ni el IBAN aparecen en ningún archivo ni mensaje; lo mismo en CT-03 y con las credenciales de CT-25. CT-04 conserva P-03 cuando rechaza una celda; AUT lleva CPI y EAC; R8 registra la clase de dato sin guardar el valor.",
+  "comprueba": "La mensajería rechaza el CT-04 con datos protegidos y registra su tipo y el campo enmascarado en la incidencia. Se comprueban claves, cuentas, tarjetas, correo y documentos, también como nombre de campo. Las vías CT-23 y CT-25 registran el tipo y evitan persistir el valor.",
   "no_comprueba": ""
  },
  "PB-22": {

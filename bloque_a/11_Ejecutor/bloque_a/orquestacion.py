@@ -369,6 +369,7 @@ class Bloque:
         valor = f"control {fase} (R16): la verificación no se recorta" if control else f"fase {fase}: puede cambiar el top-3"
         self.almacen.escribir("HA", "AG-18", {"tipo_entrada": "AUT", "id": self.almacen.nuevo_id("AUT"), "run_id": run_id,
                                               "solicitante": "AG-02", "bolsa": bolsa, "presupuesto_base": asignado,
+                                              "condiciones": [f"Ampliación de {falta:.4f} UC; límite resultante {presupuesto.limite(bolsa):.4f} UC"] if autoriza else [],
                                               "ampliacion_uc": round(falta, 4), "valor_informacion": valor,
                                               **presupuesto.valor_ganado(bolsa, fase),
                                               "decision": "AUTORIZADA" if autoriza else "DENEGADA",
@@ -2379,6 +2380,10 @@ class Bloque:
                            if e.get("param_id") == "P-01" and e.get("valor_vigente")), None)
         if calendario is None:
             calendario = "SEMANAL · SAB 06:00 · entrega LUN 07:00"
+        programados = {e["param_id"]: e["valor_vigente"] for e in self.almacen.leer("F10", as_of)
+                       if e.get("tipo_entrada") == "CFG" and e.get("fecha_efecto") == str((as_of + pd.Timedelta(days=1)).date())}
+        vigentes = {"P-01": calendario, "P-02": perfiles_activos(self.cfg), "P-03": list(HORIZONTES),
+                    "P-29": self.cfg.get("idioma", "es-ES"), **f10, **programados}
         partes = calendario.split(" · ")
         periodicidad = conf.get("periodicidad", partes[0])
         horario = conf.get("dia_hora_entrega", partes[-1].removeprefix("entrega "))
@@ -2410,17 +2415,16 @@ class Bloque:
                     rechazos.append({"parametro": k, "motivo": f"horizontes desconocidos {no}"})
                     continue
                 activas = conf.get("clases_activas") or f10.get("P-02") or list(CLASES)
-                incompatible = False
+                if len(set(v)) != len(v):
+                    rechazos.append({"parametro": k, "motivo": "horizontes repetidos"})
+                    continue
                 for h in v:
                     for c in activas:
                         if aplicabilidad(self.cfg, c, h) == "NO":
-                            incompatible = True
                             rechazos.append({"parametro": f"horizontes:{c}:{h}", "motivo": f"{h} es «No» para {c} en la tabla 8.3 (no se activa para esa clase)"})
-                if incompatible:
-                    continue
             pid = mapa[k]
             valor = v if pid != "P-01" else f"{periodicidad} · {horario}"
-            if pid in aplicado:
+            if pid in aplicado or valor == vigentes.get(pid):
                 continue
             cfg_id = self.almacen.nuevo_id("CFG")
             self.almacen.escribir("F10", "AG-01", {"tipo_entrada": "CFG", "cfg_id": cfg_id, "param_id": pid, "de": f10.get(pid), "a": valor,

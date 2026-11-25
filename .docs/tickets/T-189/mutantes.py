@@ -9,7 +9,13 @@ from pathlib import Path
 raiz = Path(__file__).resolve().parents[3]
 ej = Path("bloque_a/11_Ejecutor")
 prueba = "tests/test_t189_controles.py"
-mutaciones = [['bloque_a/orquestacion.py', 'if incompatible:', 'if False:'], ['bloque_a/consumo.py', 'cpi = ev / ac if ac > 0 else None', 'cpi = 0 if ac > 0 else None'], ['bloque_a/contratos.py', 'tipos.add("IBAN")', 'tipos.add("OTRO")']]
+mutaciones = [['bloque_a/orquestacion.py', 'if len(set(v)) != len(v):', 'if False:'],
+ ['bloque_a/consumo.py', 'cpi = ev / ac if ac > 0 else None', 'cpi = 0 if ac > 0 else None'],
+ ['bloque_a/contratos.py', 'yield "IBAN", indicio', 'yield "OTRO", indicio'],
+ ['bloque_a/contratos.py', '"campo_protegido" if contiene_credenciales(k) else k', 'k'],
+ ['bloque_a/contratos.py', 'yield "TARJETA", indicio', 'yield "CLAVE_API", indicio'],
+ ['bloque_a/contratos.py', 'yield "IDENTIFICACION_PERSONAL", m.group(0)', 'yield "CLAVE_API", m.group(0)'],
+ ['bloque_a/contratos.py', 'yield "CORREO", m.group(0)', 'yield "CLAVE_API", m.group(0)']]
 
 
 def correr(carpeta):

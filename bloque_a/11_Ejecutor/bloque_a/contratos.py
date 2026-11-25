@@ -99,7 +99,7 @@ RE_SECRETO = re.compile(
     # guion entre grupos (antes, solo todo junto). T-122 (QA r01 de T-120, H-01): con cualquier espacio Unicode (el duro de
     # un IBAN copiado de una web o un PDF), hasta dos separadores seguidos y en cualquier agrupación (la impresa
     # «ES91 2100 0418 45 0200051332») y también en minúsculas: ES, dos cifras de control y 20 cifras
-    r"|(?-i:(\b[Ee][Ss]\d{2}(?:[\s.\-]{0,2}\d){20}\b)|(\b\d{8}-?[A-HJ-NP-TV-Z]\b))")
+    r"|(?-i:(?P<iban_es>\b[Ee][Ss]\d{2}(?:[\s.\-]{0,2}\d){20}\b)|(?P<dni>\b\d{8}-?[A-HJ-NP-TV-Z]\b))")
 
 # R9: patrones de instrucciones incrustadas en contenido externo (español e inglés)
 # EST-06 inspecciona cadenas transportadas y los entregables redactados.
@@ -476,13 +476,29 @@ def secretos_en_texto(texto) -> list[str]:
     y los «%XX» de una URL. Acepta `bytes` (H-26)."""
     if isinstance(texto, (bytes, bytearray)):
         texto = bytes(texto).decode("utf-8", errors="replace")
-    hallados: list[str] = []
+    return list(dict.fromkeys(indicio for _, indicio in _detecciones(texto)))
+
+
+def _detecciones(texto: str):
     for t in {texto, RE_ESCAPES.sub(" ", texto)}:
-        hallados += [m.group(0) for m in RE_SECRETO.finditer(t)]
-        hallados += [m.group(0) for m in RE_CANDIDATO_SK.finditer(t) if _es_clave_sk(m.group(1))]
-        hallados += ibanes_en_texto(t) + tarjetas_en_texto(t)   # T-123
-        hallados += [m.group(0) for m in RE_CORREO.finditer(t)] + _asignaciones_de_clave(t)   # T-147
-    return list(dict.fromkeys(hallados))
+        for m in RE_SECRETO.finditer(t):
+            if m.group("iban_es"):
+                yield "IBAN", m.group(0)
+            elif m.group("dni"):
+                yield "IDENTIFICACION_PERSONAL", m.group(0)
+            else:
+                yield "CLAVE_API", m.group(0)
+        for m in RE_CANDIDATO_SK.finditer(t):
+            if _es_clave_sk(m.group(1)):
+                yield "CLAVE_API", m.group(0)
+        for indicio in ibanes_en_texto(t):
+            yield "IBAN", indicio
+        for indicio in tarjetas_en_texto(t):
+            yield "TARJETA", indicio
+        for m in RE_CORREO.finditer(t):
+            yield "CORREO", m.group(0)
+        for indicio in _asignaciones_de_clave(t):
+            yield "CLAVE_API", indicio
 
 
 def _textos(obj: Any):
@@ -499,18 +515,12 @@ def _textos(obj: Any):
 
 def tipos_protegidos(obj):
     """Solo etiquetas cerradas: ni los valores ni sus prefijos salen en la incidencia."""
-    tipos = set()
-    for indicio in secretos_en_texto(json.dumps(obj, ensure_ascii=False, default=str)):
-        if ibanes_en_texto(indicio) or re.match(r"(?i)^ES\d{2}", indicio):
-            tipos.add("IBAN")
-        elif tarjetas_en_texto(indicio):
-            tipos.add("TARJETA")
-        elif RE_CORREO.fullmatch(indicio):
-            tipos.add("CORREO")
-        elif re.fullmatch(r"\d{8}-?[A-Z]", indicio):
-            tipos.add("IDENTIFICACION_PERSONAL")
-        else:
-            tipos.add("CLAVE_API")
+    volcado = json.dumps(obj, ensure_ascii=False, default=str)
+    tipos = {tipo for tipo, _ in _detecciones(volcado)}
+    for texto in _textos(obj):
+        if isinstance(texto, (bytes, bytearray)):
+            texto = bytes(texto).decode("utf-8", errors="replace")
+        tipos.update(tipo for tipo, _ in _detecciones(texto))
     return sorted(tipos) or ["DATO_PROTEGIDO"]
 
 
@@ -819,9 +829,10 @@ class Mensajeria:
             raise CanalNoPrevisto(f"{msg['emisor']} → {msg['receptor']} por {msg['contrato']} no previsto (R2)")
         cred = contiene_credenciales({k: v for k, v in msg.items() if k not in ("msg_id", "timestamp")})
         if cred:
-            campos = [k for k, v in msg.items() if contiene_credenciales(v)]
+            campos = ["campo_protegido" if contiene_credenciales(k) else k for k, v in msg.items()
+                      if contiene_credenciales(k) or contiene_credenciales(v) or contiene_credenciales({k: v})]
             self.almacen.incidencia("SEGURIDAD", "Mensaje con credenciales o datos personales rechazado íntegro (R8)",
-                                    msg["emisor"], campo_afectado=[k if not contiene_credenciales(k) else "campo_protegido" for k in campos],
+                                    msg["emisor"], campo_afectado=campos,
                                     tipos_dato=tipos_protegidos(msg))
             raise DatosSensibles(f"Mensaje {msg['msg_id']} con datos protegidos en {campos}")
         if not msg.get("run_id") and not msg.get("query_id") and msg["contrato"] not in ("CT-01", "CT-03", "CT-04", "CT-18", "CT-21", "CT-23", "CT-24", "CT-25"):

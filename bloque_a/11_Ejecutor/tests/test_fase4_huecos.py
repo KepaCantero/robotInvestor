@@ -30,12 +30,13 @@ def test_pb10_la_configuracion_rechazada_en_parte_no_toca_nada_mas(tmp_path, uni
     antes = b.f10("2026-12-31")
     activas = [c for c in antes["P-02"] if c != "CRI"] if "CRI" in antes["P-02"] else [*antes["P-02"], "CRI"]
     assert "ALT" in activas and aplicabilidad(b.cfg, "ALT", "H1") == "NO"
-    d = b.decision({"configuracion": {"clases_activas": activas, "horizontes": ["H1", "H3"], "umbral_E": 50}}, AS_OF)
+    d = b.decision({"configuracion": {"clases_activas": activas, "horizontes": antes["P-03"], "umbral_E": 50}}, AS_OF)
     assert d["estado"] == "APLICADA_PARCIALMENTE"
     rechazos = {x["parametro"]: x["motivo"] for x in d["rechazos"]}
     assert "CALIBRABLE" in rechazos["umbral_E"] and "«No» para ALT" in rechazos["horizontes:ALT:H1"]
     despues = b.f10("2026-12-31")
     cambiados = {k for k in set(antes) | set(despues) if antes.get(k) != despues.get(k)}
+    assert not [x for x in b.almacen.leer("F10") if x.get("tipo_entrada") == "CFG" and x["param_id"] == "P-03"]
     assert cambiados == {"P-02"} and despues["P-02"] == activas and despues["P-03"] == antes["P-03"]
     assert aplicabilidad(b.cfg, "ALT", "H1") == "NO"                                  # la celda rechazada sigue sin aplicarse
     assert not [e for e in b.almacen.leer("HA") if e.get("tipo") in ("ACCESO_FUERA_DE_MATRIZ", "CANAL_NO_PREVISTO")]
