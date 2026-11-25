@@ -192,9 +192,9 @@ def main(argv: list[str] | None = None) -> int:
                 publicar(archivo, original, nuevo)
                 bajas = {(k, "REF-" + rid, dia): motivo for rid, dia, motivo in detalle_bajas(nuevo.splitlines(), archivo) if dia <= datos["fecha"]}
                 if bajas:
-                    reloj = Reloj(cfg["zona_horaria"])
-                    reloj.fijar(datos["fecha"])
-                    almacen = Almacen(a.estado or cfg["rutas"]["almacen"], reloj)
+                    reloj_barrido = Reloj(cfg["zona_horaria"])
+                    reloj_barrido.fijar(datos["fecha"])
+                    almacen = Almacen(a.estado or cfg["rutas"]["almacen"], reloj_barrido)
                     avisar_curador(almacen, Mensajeria(almacen, validar(cfg)), datos["fecha"], almacen.nuevo_id("RUN"), bajas, bajas, cfg)
         return codigo
     bloque = _bloque(a, cfg)

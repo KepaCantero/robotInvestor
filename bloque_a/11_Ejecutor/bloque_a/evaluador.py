@@ -361,7 +361,7 @@ def fuente_de_opinion_registrada(ref_id, referencias, as_of=None) -> bool:
         ficha = referencias.por_id(ref_id, as_of)
     else:
         ficha = referencias.por_id(ref_id)
-    return bool(ficha) and ficha.get("archivo") == "F9" and ficha.get("estado_enlace") != "RETIRADA"
+    return ficha is not None and ficha.get("archivo") == "F9" and ficha.get("estado_enlace") != "RETIRADA"
 
 
 def variables_nivel(cfg: dict | None) -> list[str]:
