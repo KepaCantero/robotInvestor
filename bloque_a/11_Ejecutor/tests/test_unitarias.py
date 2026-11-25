@@ -1,23 +1,34 @@
 """Pruebas unitarias: herramientas, HT-01, Motor, contratos, almacén, clientes LLM y agentes."""
 import hashlib
 import json
-from pathlib import Path
 
 import numpy as np
 import pandas as pd
 import pytest
-
-from conftest import AS_OF, DATOS, RAIZ, config_pruebas, nuevo_bloque
 from bloque_a.agentes import Agentes
 from bloque_a.almacen import Almacen, EscrituraFueraDeReserva
 from bloque_a.consumo import Contabilidad
-from bloque_a.contratos import CanalNoPrevisto, DatosSensibles, MensajeInvalido, Mensajeria, sanear_contenido_externo
+from bloque_a.contratos import (
+    CanalNoPrevisto,
+    DatosSensibles,
+    MensajeInvalido,
+    Mensajeria,
+    sanear_contenido_externo,
+)
 from bloque_a.herramientas import ht03, ht04_graficos, ht05_planificador
-from bloque_a.herramientas.ht01_datos import FugaDeInformacion, ProveedorCSV, ProveedorSintetico, ProveedorYahoo
+from bloque_a.herramientas.ht01_datos import (
+    FugaDeInformacion,
+    ProveedorCSV,
+    ProveedorSintetico,
+    ProveedorYahoo,
+)
 from bloque_a.herramientas.ht06_indice import CacheResultados
 from bloque_a.herramientas.ht08_monitor import Monitor
 from bloque_a.llm import AnthropicClient, MockClient, Uso
-from bloque_a.motor import Motor, evaluacion as ev, operaciones as op
+from bloque_a.motor import Motor
+from bloque_a.motor import evaluacion as ev
+from bloque_a.motor import operaciones as op
+from conftest import AS_OF, DATOS, RAIZ, config_pruebas
 
 HERR = RAIZ.parent / "10_Herramientas"
 

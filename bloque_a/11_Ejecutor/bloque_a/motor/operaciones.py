@@ -6,8 +6,8 @@ lo pide), anualización 252 sesiones (365 en criptoactivos), cuantiles de tipo 7
 from __future__ import annotations
 
 import math
+from collections.abc import Sequence
 from fractions import Fraction
-from typing import Dict, List, Optional, Sequence, Tuple
 
 import numpy as np
 import pandas as pd
@@ -38,7 +38,7 @@ def _arr(x) -> np.ndarray:
 
 
 # ------------------------------------------------------------------ ST-DESC-001
-def descriptiva(x: Sequence[float], cuantiles=(0.05, 0.25, 0.5, 0.75, 0.95)) -> Dict:
+def descriptiva(x: Sequence[float], cuantiles=(0.05, 0.25, 0.5, 0.75, 0.95)) -> dict:
     a = _arr(x)
     n = len(a)
     if n < 5:
@@ -58,7 +58,7 @@ def descriptiva(x: Sequence[float], cuantiles=(0.05, 0.25, 0.5, 0.75, 0.95)) -> 
             "cuantiles": q, "atipicos_3_robustas": atipicos}
 
 
-def posicion_historica(valor: float, historia: Sequence[float] | np.ndarray) -> Dict:
+def posicion_historica(valor: float, historia: Sequence[float] | np.ndarray) -> dict:
     """z-score y percentil histórico del valor frente a su historia (ST-DESC-001, posición)."""
     h = _arr(historia)
     if len(h) < 5:
@@ -84,14 +84,14 @@ def rentabilidades(precios: pd.Series, log: bool = False) -> pd.Series:
     return (np.log(p).diff() if log else p.pct_change()).dropna()
 
 
-def rentabilidad_periodo(precios: pd.Series, sesiones: int) -> Optional[float]:
+def rentabilidad_periodo(precios: pd.Series, sesiones: int) -> float | None:
     if len(precios) <= sesiones:
         return None
     return float(precios.iloc[-1] / precios.iloc[-1 - sesiones] - 1)
 
 
 # ------------------------------------------------------------------ ACC-MOM-001 / FX-MOM-001
-def momentum_12_1(precios: pd.Series, retro: int = 12, salto: int = 1, sesiones_mes: int = 21) -> Dict:
+def momentum_12_1(precios: pd.Series, retro: int = 12, salto: int = 1, sesiones_mes: int = 21) -> dict:
     n_necesario = retro * sesiones_mes + 1
     if len(precios) < n_necesario:
         raise ErrorFicha(f"ACC-MOM-001: se necesitan al menos {retro + 1} meses de precios")
@@ -107,7 +107,7 @@ def momentum_12_1(precios: pd.Series, retro: int = 12, salto: int = 1, sesiones_
             "rent_3m": float(p[-1] / p[-1 - 3 * sesiones_mes] - 1)}
 
 
-def rango_transversal(valores: Dict[str, float]) -> Dict[str, Dict]:
+def rango_transversal(valores: dict[str, float]) -> dict[str, dict]:
     """Percentil y z-score transversal dentro del universo de la clase."""
     claves = [k for k, v in valores.items() if v is not None and not np.isnan(v)]
     if not claves:
@@ -122,7 +122,7 @@ def rango_transversal(valores: Dict[str, float]) -> Dict[str, Dict]:
 
 
 # ------------------------------------------------------------------ FX-VOL-001 / RI-EWMA / VOL-GARCH-001
-def volatilidad(precios: pd.Series, ventana: int = 20, anual: int = 252) -> Dict:
+def volatilidad(precios: pd.Series, ventana: int = 20, anual: int = 252) -> dict:
     r = rentabilidades(precios, log=True)
     if len(r) < 30:
         raise ErrorFicha("FX-VOL-001: se necesitan al menos 30 observaciones")
@@ -142,7 +142,7 @@ def ewma_vol(rend: Sequence[float], lam: float = 0.94, anual: int = 252) -> floa
     return float(math.sqrt(var * anual))
 
 
-def garch11(precios: pd.Series, horizonte: int = 10, anual: int = 252) -> Dict:
+def garch11(precios: pd.Series, horizonte: int = 10, anual: int = 252) -> dict:
     try:
         from arch import arch_model
     except ImportError as e:
@@ -164,7 +164,7 @@ def garch11(precios: pd.Series, horizonte: int = 10, anual: int = 252) -> Dict:
 
 
 # ------------------------------------------------------------------ RISK-DD-001
-def drawdowns(precios: pd.Series) -> Dict:
+def drawdowns(precios: pd.Series) -> dict:
     p = precios.astype(float).values
     pico = np.maximum.accumulate(p)
     dd = 1 - p / pico
@@ -177,7 +177,7 @@ def drawdowns(precios: pd.Series) -> Dict:
             "cdar_95": float(peores.mean()), "drawdown_actual": float(dd[-1])}
 
 
-def escala_riesgo(precios: pd.Series, anual: int = 252, dias_liquidacion: Optional[float] = None) -> Dict:
+def escala_riesgo(precios: pd.Series, anual: int = 252, dias_liquidacion: float | None = None) -> dict:
     """RISK-DD-001: escala 1–5 por volatilidad anualizada con +1 por colas, liquidez o MDD > 50 %."""
     if len(precios) < 252:
         raise ErrorFicha("RISK-DD-001: se necesita al menos 1 año de datos")
@@ -220,7 +220,7 @@ def _var_s(x: np.ndarray) -> float:
     return (n * (n - 1) * (2 * n + 5) - np.sum(t * (t - 1) * (2 * t + 5))) / 18.0
 
 
-def mann_kendall(serie: Sequence[float], alpha: float = 0.05, corregir_autocorrelacion: bool = True) -> Dict:
+def mann_kendall(serie: Sequence[float], alpha: float = 0.05, corregir_autocorrelacion: bool = True) -> dict:
     x = _arr(serie)
     n = len(x)
     if n < 10:
@@ -264,7 +264,7 @@ def mann_kendall(serie: Sequence[float], alpha: float = 0.05, corregir_autocorre
 
 
 # ------------------------------------------------------------------ FX-CORR-001 / ML-CLUS-001
-def correlaciones(rend: pd.DataFrame, cola_q: float = 0.05) -> Dict:
+def correlaciones(rend: pd.DataFrame, cola_q: float = 0.05) -> dict:
     r = rend.dropna()
     if len(r) < 60:
         raise ErrorFicha("FX-CORR-001: se necesitan al menos 60 observaciones comunes")
@@ -281,7 +281,7 @@ def correlaciones(rend: pd.DataFrame, cola_q: float = 0.05) -> Dict:
     return {"pearson": pear.round(10).to_dict(), "spearman": spear.round(10).to_dict(), "cola_inferior": colas, "n": len(r)}
 
 
-def clusteres(rend: pd.DataFrame, umbral_rho: float = 0.7) -> Dict:
+def clusteres(rend: pd.DataFrame, umbral_rho: float = 0.7) -> dict:
     r = rend.dropna()
     cols = list(r.columns)
     if len(cols) == 0:
@@ -309,7 +309,7 @@ def clusteres(rend: pd.DataFrame, umbral_rho: float = 0.7) -> Dict:
 
 
 # ------------------------------------------------------------------ FX-CARRY-001
-def carry_divisas(tipo_base: float, tipo_cotizada: float, spot_ini: float, spot_fin: float, anios: float) -> Dict:
+def carry_divisas(tipo_base: float, tipo_cotizada: float, spot_ini: float, spot_fin: float, anios: float) -> dict:
     """Par BASE/COTIZADA (precio = unidades de cotizada por unidad de base), posición larga en la base.
     Tipos en tanto por uno anual. Rentabilidad total = variación cambiaria + carry·años (identidad aditiva)."""
     diferencial = tipo_base - tipo_cotizada
@@ -319,12 +319,12 @@ def carry_divisas(tipo_base: float, tipo_cotizada: float, spot_ini: float, spot_
             "rentabilidad_total": var_spot + carry, "referencia_ingenua_RI_PA": carry}
 
 
-def carry_ajustado_vol(diferencial_anual: float, vol_anual: float) -> Optional[float]:
+def carry_ajustado_vol(diferencial_anual: float, vol_anual: float) -> float | None:
     return diferencial_anual / vol_anual if vol_anual and vol_anual > 0 else None
 
 
 # ------------------------------------------------------------------ CMD-CURVE-001
-def roll_yield(f_proximo: float, f_siguiente: float, dias_entre: float, tipo_libre: Optional[float] = None) -> Dict:
+def roll_yield(f_proximo: float, f_siguiente: float, dias_entre: float, tipo_libre: float | None = None) -> dict:
     if dias_entre <= 0 or f_proximo <= 0 or f_siguiente <= 0:
         raise ErrorFicha("CMD-CURVE-001: precios y días entre vencimientos deben ser positivos")
     ry = (f_proximo / f_siguiente - 1) * 365.0 / dias_entre
@@ -336,8 +336,8 @@ def roll_yield(f_proximo: float, f_siguiente: float, dias_entre: float, tipo_lib
 
 
 # ------------------------------------------------------------------ ACC-ERP-001 / REI-CAP-001
-def diferencial_rentabilidades(rend_activo: float, rend_referencia: float, historia: Optional[Sequence[float]] = None,
-                               en_pb: bool = False) -> Dict:
+def diferencial_rentabilidades(rend_activo: float, rend_referencia: float, historia: Sequence[float] | None = None,
+                               en_pb: bool = False) -> dict:
     """Diferencial (p. ej., earnings yield − rendimiento real del bono, o cap rate − bono) y su posición."""
     dif = rend_activo - rend_referencia
     diferencial = dif * (10000 if en_pb else 100)
@@ -356,7 +356,7 @@ def _redondeo_5(x: Fraction) -> int:
     return int(5 * (ent + (1 if resto > Fraction(1, 2) else 0)))
 
 
-def puntuacion_total(dims: Dict, pesos: Dict, tope_valoracion: Optional[int] = None) -> Optional[int]:
+def puntuacion_total(dims: dict, pesos: dict, tope_valoracion: int | None = None) -> int | None:
     """Media ponderada con NA (redistribución) y NE (= 0), máximo 2 NA/NE, redondeo a 5 (empates abajo)."""
     na_ne = sum(1 for k in pesos if str(dims.get(k, "NE")).upper() in ("NA", "NE"))
     if na_ne > 2:
@@ -374,7 +374,7 @@ def puntuacion_total(dims: Dict, pesos: Dict, tope_valoracion: Optional[int] = N
     return _redondeo_5(num / den) if den else None
 
 
-def clave_rk(A: int, E: int, T: Optional[int], pesos=(0.45, 0.35, 0.20)) -> int:
+def clave_rk(A: int, E: int, T: int | None, pesos=(0.45, 0.35, 0.20)) -> int:
     wa, we, wt = (Fraction(str(w)) for w in pesos)
     if T is None:
         x = (wa * A + we * E) / (wa + we)

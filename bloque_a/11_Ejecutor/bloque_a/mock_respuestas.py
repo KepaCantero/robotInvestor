@@ -12,7 +12,7 @@ import hashlib
 import json
 import random
 import re
-from typing import Any, Dict, List
+from typing import Any
 
 import pandas as pd
 
@@ -42,7 +42,7 @@ def _r10(x: float) -> int:
     return int(min(max(round(x / 10.0) * 10, 0), 100))
 
 
-def responder(agente: str, mensajes: List[Dict], semilla: int) -> Dict:
+def responder(agente: str, mensajes: list[dict], semilla: int) -> dict:
     texto = mensajes[0]["content"]
     enc = extraer_encargo(texto)
     msg, ctx = enc["mensaje"], enc["contexto"]
@@ -75,7 +75,7 @@ def _obedece_r22(msg: dict, d: Any) -> Any:
 
 
 # ------------------------------------------------------------------------------------------
-def _horizontes(msg: Dict) -> List[str]:
+def _horizontes(msg: dict) -> list[str]:
     tabla = msg.get("horizontes_aplicables_clase") or {}
     interes = msg.get("horizontes_interes") or ["H1", "H2", "H3", "H4"]
     si = [h for h in ("H2", "H3", "H4", "H1") if tabla.get(h) == "SI" and h in interes]
@@ -85,7 +85,7 @@ def _horizontes(msg: Dict) -> List[str]:
     return out
 
 
-def _ficha(u: Dict, msg: Dict, ctx: Dict, rng: random.Random, inyectado: bool) -> Dict:
+def _ficha(u: dict, msg: dict, ctx: dict, rng: random.Random, inyectado: bool) -> dict:
     s = u["senales"]
     clase, sym = msg["clase"], u["simbolo"]
     sc = s.get("senal_compuesta") or 0.5
@@ -142,7 +142,7 @@ def _ficha(u: Dict, msg: Dict, ctx: Dict, rng: random.Random, inyectado: bool) -
     return out
 
 
-def _analista(msg: Dict, ctx: Dict, rng: random.Random, inyectado: bool) -> Dict:
+def _analista(msg: dict, ctx: dict, rng: random.Random, inyectado: bool) -> dict:
     clase, fase = msg["clase"], msg["fase"]
     if fase == "RESPUESTA_OBJECIONES":
         res = []

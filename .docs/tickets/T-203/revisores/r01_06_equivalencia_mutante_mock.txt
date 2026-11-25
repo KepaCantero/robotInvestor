@@ -1,0 +1,78 @@
+90 ficheros comparados; códigos de salida de la base: {'backtest': '0', 'ciclo': '0', 'peticion': '0', 'consulta': '0'}
+solo en uno: bt/estado/F1_registro_maestro_tendencias.jsonl
+solo en uno: bt/estado/F2_registro_evidencia.jsonl
+solo en uno: bt/estado/F3_registro_oportunidades.jsonl
+solo en uno: bt/estado/F4_registro_pronosticos.jsonl
+solo en uno: est/F1_registro_maestro_tendencias.jsonl
+solo en uno: est/F2_registro_evidencia.jsonl
+solo en uno: est/F3_registro_oportunidades.jsonl
+solo en uno: est/F4_registro_pronosticos.jsonl
+distinto: backtest.err
+distinto: backtest.out
+distinto: bt/consumo.csv
+distinto: bt/entregables/2024-01-05/2024-01-05_informe-tecnico_RUN-2024-0001.md
+distinto: bt/entregables/2024-01-05/2024-01-05_informe-visual_RUN-2024-0001.html
+distinto: bt/entregables/2024-01-05/2024-01-05_paquete-json_RUN-2024-0001.json
+distinto: bt/entregables/2024-01-12/2024-01-12_informe-tecnico_RUN-2024-0002.md
+distinto: bt/entregables/2024-01-12/2024-01-12_informe-visual_RUN-2024-0002.html
+distinto: bt/entregables/2024-01-12/2024-01-12_paquete-json_RUN-2024-0002.json
+distinto: bt/entregables/2024-01-19/2024-01-19_informe-tecnico_RUN-2024-0003.md
+distinto: bt/entregables/2024-01-19/2024-01-19_informe-visual_RUN-2024-0003.html
+distinto: bt/entregables/2024-01-19/2024-01-19_paquete-json_RUN-2024-0003.json
+distinto: bt/entregables/2024-01-26/2024-01-26_informe-tecnico_RUN-2024-0004.md
+distinto: bt/entregables/2024-01-26/2024-01-26_informe-visual_RUN-2024-0004.html
+distinto: bt/entregables/2024-01-26/2024-01-26_paquete-json_RUN-2024-0004.json
+distinto: bt/entregables/2024-02-02/2024-02-02_informe-tecnico_RUN-2024-0005.md
+distinto: bt/entregables/2024-02-02/2024-02-02_informe-visual_RUN-2024-0005.html
+distinto: bt/entregables/2024-02-02/2024-02-02_paquete-json_RUN-2024-0005.json
+distinto: bt/entregables/2024-02-09/2024-02-09_informe-tecnico_RUN-2024-0006.md
+distinto: bt/entregables/2024-02-09/2024-02-09_informe-visual_RUN-2024-0006.html
+distinto: bt/entregables/2024-02-09/2024-02-09_paquete-json_RUN-2024-0006.json
+distinto: bt/entregables/2024-02-16/2024-02-16_informe-tecnico_RUN-2024-0007.md
+distinto: bt/entregables/2024-02-16/2024-02-16_informe-visual_RUN-2024-0007.html
+distinto: bt/entregables/2024-02-16/2024-02-16_paquete-json_RUN-2024-0007.json
+distinto: bt/entregables/2024-02-23/2024-02-23_informe-tecnico_RUN-2024-0008.md
+distinto: bt/entregables/2024-02-23/2024-02-23_informe-visual_RUN-2024-0008.html
+distinto: bt/entregables/2024-02-23/2024-02-23_paquete-json_RUN-2024-0008.json
+distinto: bt/entregables/2024-03-01/2024-03-01_informe-tecnico_RUN-2024-0009.md
+distinto: bt/entregables/2024-03-01/2024-03-01_informe-visual_RUN-2024-0009.html
+distinto: bt/entregables/2024-03-01/2024-03-01_paquete-json_RUN-2024-0009.json
+distinto: bt/entregables/2024-03-08/2024-03-08_informe-tecnico_RUN-2024-0010.md
+distinto: bt/entregables/2024-03-08/2024-03-08_informe-visual_RUN-2024-0010.html
+distinto: bt/entregables/2024-03-08/2024-03-08_paquete-json_RUN-2024-0010.json
+distinto: bt/entregables/2024-03-15/2024-03-15_informe-tecnico_RUN-2024-0011.md
+distinto: bt/entregables/2024-03-15/2024-03-15_informe-visual_RUN-2024-0011.html
+distinto: bt/entregables/2024-03-15/2024-03-15_paquete-json_RUN-2024-0011.json
+distinto: bt/entregables/2024-03-22/2024-03-22_informe-tecnico_RUN-2024-0012.md
+distinto: bt/entregables/2024-03-22/2024-03-22_informe-visual_RUN-2024-0012.html
+distinto: bt/entregables/2024-03-22/2024-03-22_paquete-json_RUN-2024-0012.json
+distinto: bt/entregables/2024-03-29/2024-03-29_informe-tecnico_RUN-2024-0013.md
+distinto: bt/entregables/2024-03-29/2024-03-29_informe-visual_RUN-2024-0013.html
+distinto: bt/entregables/2024-03-29/2024-03-29_paquete-json_RUN-2024-0013.json
+distinto: bt/estado/F5_historial_analisis.jsonl
+distinto: bt/estado/F6_memoria_aprendizaje.jsonl
+distinto: bt/estado/HA_historial_auditorias.jsonl
+distinto: bt/estado/RC_registro_calculos.jsonl
+distinto: bt/estado/cache_resultados.jsonl
+distinto: bt/estado/contadores.json
+distinto: bt/estado/sellos_integridad.json
+distinto: bt/metricas.json
+distinto: bt/pronosticos.csv
+distinto: bt/senales.csv
+distinto: ciclo.out
+distinto: consulta.out
+distinto: ent/Informes técnicos Broker/2026-06-05_informe-tecnico_RUN-2026-0001.md
+distinto: ent/Informes técnicos Broker/2026-06-05_informe-tecnico_RUN-2026-0002.md
+distinto: ent/Informes visuales Usuario/2026-06-05_informe-visual_RUN-2026-0001.html
+distinto: ent/Informes visuales Usuario/2026-06-05_informe-visual_RUN-2026-0002.html
+distinto: ent/Paquetes JSON/2026-06-05_paquete-json_RUN-2026-0001.json
+distinto: ent/Paquetes JSON/2026-06-05_paquete-json_RUN-2026-0002.json
+distinto: est/F5_historial_analisis.jsonl
+distinto: est/HA_historial_auditorias.jsonl
+distinto: est/RC_registro_calculos.jsonl
+distinto: est/acuses.sqlite3
+distinto: est/cache_resultados.jsonl
+distinto: est/contadores.json
+distinto: est/sellos_integridad.json
+distinto: peticion.out
+76 DIFERENCIAS

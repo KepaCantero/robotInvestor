@@ -4,19 +4,22 @@ Anexo A y regla 5 de 2.6 (sin duplicados entre tipos)."""
 import unicodedata
 from pathlib import Path
 
-import pandas as pd
 import pytest
-
-from conftest import AS_OF, RAIZ, config_pruebas, nuevo_bloque
-from bloque_a.almacen import Almacen
 from bloque_a.agentes import Agentes
-from bloque_a.configuracion import CLASES, TABLA_HORIZONTES, buscar_versionado, cargar_config
+from bloque_a.almacen import Almacen
+from bloque_a.configuracion import (
+    CLASES,
+    TABLA_HORIZONTES,
+    buscar_versionado,
+    cargar_config,
+)
 from bloque_a.consumo import Contabilidad
 from bloque_a.contratos import AGENTE_CLASE, ANALISTAS, ESQUEMAS, canal_permitido
 from bloque_a.herramientas import ht03
 from bloque_a.herramientas.ht01_datos import ProveedorCSV, cargar_universo
 from bloque_a.llm import MockClient
 from bloque_a.prompts import NOMBRES, CatalogoPrompts
+from conftest import RAIZ, config_pruebas, nuevo_bloque
 
 
 def test_doce_tipos_agentes_y_canales():

@@ -11,7 +11,6 @@ from itertools import pairwise
 import numpy as np
 import pandas as pd
 import pytest
-
 from bloque_a.motor import fichas_mon_idx as fm
 from bloque_a.motor.operaciones import ErrorFicha
 

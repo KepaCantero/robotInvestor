@@ -6,12 +6,16 @@ import sys
 from pathlib import Path
 
 import pytest
-
-from conftest import AS_OF, DATOS, RAIZ, nuevo_bloque
 from bloque_a.almacen import EscrituraFueraDeReserva
-from bloque_a.configuracion import HORIZONTES, NATURALEZAS, TABLA_HORIZONTES, naturaleza_coherente
+from bloque_a.configuracion import (
+    HORIZONTES,
+    NATURALEZAS,
+    TABLA_HORIZONTES,
+    naturaleza_coherente,
+)
 from bloque_a.contratos import CANALES, canal_permitido
 from bloque_a.herramientas import ht09
+from conftest import AS_OF, DATOS, RAIZ, nuevo_bloque
 
 SEMANA_SIG = "2026-06-12"
 

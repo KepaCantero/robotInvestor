@@ -7,9 +7,8 @@ from pathlib import Path
 
 import pandas as pd
 import pytest
-from conftest import AS_OF, nuevo_bloque
-
 from bloque_a.herramientas.referencia import ht09_validador_g3 as ht09
+from conftest import AS_OF, nuevo_bloque
 
 SEMANA_SIG = str((pd.Timestamp(AS_OF) + pd.Timedelta(days=7)).date())
 SEMANA_3 = str((pd.Timestamp(AS_OF) + pd.Timedelta(days=14)).date())

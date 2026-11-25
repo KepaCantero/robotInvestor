@@ -8,7 +8,6 @@ import math
 import numpy as np
 import pandas as pd
 import pytest
-
 from bloque_a.motor import fichas_tcv as tcv
 from bloque_a.motor.operaciones import ErrorFicha
 

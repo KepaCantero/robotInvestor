@@ -6,15 +6,13 @@ from pathlib import Path
 import jsonschema
 import pandas as pd
 import pytest
-
-from conftest import AS_OF, DATOS, RAIZ, config_pruebas, nuevo_bloque
 from bloque_a.backtest import COLUMNAS_PRONOSTICOS, COLUMNAS_SENALES, ejecutar_backtest
 from bloque_a.cli import main as cli_main
 from bloque_a.configuracion import CLASES, buscar_versionado
-from bloque_a.evaluador import Evaluador
 from bloque_a.herramientas import ht07
 from bloque_a.herramientas.ht01_datos import ProveedorCSV
 from bloque_a.llm import MockClient, ReplayClient, ReplayFaltante
+from conftest import AS_OF, DATOS, RAIZ, config_pruebas, nuevo_bloque
 
 # El esquema se localiza por nombre con cualquier sufijo de versión (V4.0, V5.0, …)
 ESQUEMA = json.loads(buscar_versionado(RAIZ.parent / "06_Plantillas_entregables", "Esquema JSON - Paquete de oportunidades", ".json")
@@ -199,6 +197,7 @@ def test_anonimizacion_oculta_simbolos(tmp_path, universo):
     b = nuevo_bloque(tmp_path, universo, cliente=graba, anonimizar=True)
     b.ciclo(AS_OF, alcance={"clases": ["RV"]})
     import hashlib  # noqa: F401
+
     from bloque_a.llm import ReplayClient as RC  # noqa: F401
     # Se reconstruye lo que vio el Analista de RV a partir de la caché de resultados (mensaje anonimizado)
     vistos = (tmp_path / "estado" / "cache_resultados.jsonl").read_text(encoding="utf-8")

@@ -8,10 +8,6 @@ from pathlib import Path
 
 import pandas as pd
 import pytest
-from conftest import AS_OF, DATOS, config_pruebas
-
-from bloque_a import mock_respuestas as mr
-from bloque_a import sintesis
 from bloque_a.configuracion import (
     CLASES,
     RUTA_UNIVERSO_EJEMPLO,
@@ -21,6 +17,10 @@ from bloque_a.configuracion import (
 from bloque_a.herramientas.ht01_datos import ProveedorCSV, cargar_universo
 from bloque_a.llm import MockClient
 from bloque_a.orquestacion import Bloque
+from conftest import AS_OF, DATOS, config_pruebas
+
+from bloque_a import mock_respuestas as mr
+from bloque_a import sintesis
 
 
 def _bloque(tmp_path, cfg=None, cliente=None):

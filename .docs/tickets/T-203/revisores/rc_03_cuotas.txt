@@ -1,0 +1,4 @@
+qa_t203_dev (358576c3) y qa_t203 (7da2b8e2), con r01_03_cuotas.sh:
+qa_t203_dev ruff=2797 mypy_bloque_a=67 mypy_bloque_a_forex=174 mypy_bloque_b=159
+qa_t203 ruff=2735 mypy_bloque_a=67 mypy_bloque_a_forex=174 mypy_bloque_b=159
+quitados: UP006 30, I001 11, UP045 8, F401 7, UP035 6 (−62); nuevos: 0; mypy A: mismos 67 avisos; A-Forex y B: idénticos

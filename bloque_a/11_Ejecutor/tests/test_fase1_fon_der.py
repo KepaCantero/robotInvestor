@@ -10,10 +10,9 @@ import math
 import numpy as np
 import pandas as pd
 import pytest
-from scipy import stats
-
 from bloque_a.motor import fichas_fon_der as fd
 from bloque_a.motor.operaciones import ErrorFicha
+from scipy import stats
 
 FICHAS_TAREA = ["FON-DISC-001", "FON-FLOW-001", "FON-TD-001", "FON-LEV-001",
                 "DER-VRP-001", "DER-SKEW-001", "DER-TERM-001", "DER-ROLL-001"]

@@ -1,6 +1,5 @@
 """PB-38 (objeción fuerte sin resolver fuera del top-3) y PB-14 (arrastre con invalidación activada)."""
 import pandas as pd
-
 from conftest import AS_OF, nuevo_bloque
 
 
