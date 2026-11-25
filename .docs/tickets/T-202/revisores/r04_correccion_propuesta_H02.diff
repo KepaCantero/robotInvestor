@@ -1,0 +1,14 @@
+diff --git a/.docs/scripts/pruebas_preparar_entorno.py b/.docs/scripts/pruebas_preparar_entorno.py
+index fac9b6b8..0d52ab69 100644
+--- a/.docs/scripts/pruebas_preparar_entorno.py
++++ b/.docs/scripts/pruebas_preparar_entorno.py
+@@ -97,7 +97,8 @@ def test_t202_el_script_instala_cada_stub_de_tipos_fijado(raiz):
+     Si se fijara uno sin instalarlo, --comprobar fallaría en un entorno nuevo («falta …») y mypy mediría otra cosa."""
+     real = (AQUI.parent.parent / "tools" / "requisitos_entorno.txt").read_text(encoding="utf-8")
+     pins = [x for x in real.splitlines() if x.strip() and not x.startswith("#")]
+-    stubs = {norma(x.split("==")[0]) for x in pins if re.match(r"types-|[^=]+-stubs==", x)}
++    nombres = {norma(x.split("==")[0].strip()) for x in pins}
++    stubs = {n for n in nombres if n.startswith("types-") or n.endswith("-stubs")}
+     assert {"types-pyyaml", "types-jsonschema", "scipy-stubs"} <= stubs
+     (raiz / "tools" / "requisitos_entorno.txt").write_text(real, encoding="utf-8")
+     (raiz / ".venv" / "bin" / "freeze.txt").write_text("\n".join(pins) + "\n", encoding="utf-8")

@@ -155,9 +155,15 @@ if [ "$CORE_ONLY" = false ]; then
         echo "ruff no instalado, omitiendo"; ((SKIPPED++)); ((TOTAL++))
     fi
 
+    # T-202 (QA r01, H-03; INC-T202-01, decisión 4): las cuotas de mypy dependen de los stubs fijados en
+    # tools/requisitos_entorno.txt. Con un .venv que no coincide, mypy no mide lo mismo: sus gates fallan sin ejecutarlo.
+    entorno_mypy=""
+    salida_entorno="$(.docs/scripts/preparar_entorno.sh --comprobar 2>&1)" || entorno_mypy="${salida_entorno:-preparar_entorno.sh --comprobar falló}"
+    [ -z "$entorno_mypy" ] || echo "$entorno_mypy"
     if command -v .venv/bin/mypy &> /dev/null; then
         for i in "${!PAQUETES[@]}"; do
             paq="${PAQUETES[$i]}"
+            if [ -n "$entorno_mypy" ]; then ((TOTAL++)); ((FAILED++)); echo -e "${RED}✗ mypy $paq: el .venv no coincide con tools/requisitos_entorno.txt (stubs incluidos): ejecuta .docs/scripts/preparar_entorno.sh${NC}"; continue; fi
             actual="$(.venv/bin/mypy --ignore-missing-imports --no-error-summary "${EJECUTORES[$i]}/$paq" 2>/dev/null | wc -l | tr -d ' ')"
             gate_cuota "mypy $paq" "$actual" "$(cuota mypy_$paq)"
         done

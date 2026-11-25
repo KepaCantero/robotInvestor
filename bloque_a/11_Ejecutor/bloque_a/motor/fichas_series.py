@@ -31,7 +31,7 @@ from collections.abc import Callable
 from datetime import date, datetime
 from functools import wraps
 from itertools import pairwise
-from typing import Any
+from typing import Any, Literal
 
 import numpy as np
 import pandas as pd
@@ -529,7 +529,9 @@ def _etiqueta(i: int, fechas: list[str] | None) -> str | None:
 
 
 # ====================================================================== ST-INF-001
-_SCIPY_ALT = {"bilateral": "two-sided", "mayor": "greater", "menor": "less"}
+# T-202: el tipo dice a mypy (con scipy-stubs) que los valores son los de `alternative` de SciPy.
+_SCIPY_ALT: dict[str, Literal["two-sided", "greater", "less"]] = {"bilateral": "two-sided", "mayor": "greater",
+                                                                 "menor": "less"}
 
 
 def _p_t(t: float, gl: float, alternativa: str) -> float:
@@ -677,9 +679,9 @@ def _un_contraste(c: dict[str, Any], nombre: str, p: dict[str, Any], lim: list[s
         b = _vector(c.get("muestra_b"), f"{que}: muestra_b", p["n_minimo"], p["obs_maximas"])
         if float(np.ptp(np.concatenate([a, b]))) == 0:
             raise ErrorFicha(f"{que}: todas las observaciones empatadas: los datos no sostienen el contraste")
-        res = stats.mannwhitneyu(a, b, alternative=_SCIPY_ALT[alt])
-        u1 = float(res.statistic)
-        r.update({"n": [len(a), len(b)], "estadistico": u1, "p_valor": float(res.pvalue), "ic": None,
+        res_u = stats.mannwhitneyu(a, b, alternative=_SCIPY_ALT[alt])     # T-202: otro nombre, otro tipo de resultado
+        u1 = float(res_u.statistic)
+        r.update({"n": [len(a), len(b)], "estadistico": u1, "p_valor": float(res_u.pvalue), "ic": None,
                   "efecto": {"tipo": "correlacion_biserial_de_rangos", "valor": 2 * u1 / (len(a) * len(b)) - 1}})
         lim.append(f"«{nombre}»: contraste de rangos sin IC (solo el p-valor)")
     potencia = r.get("potencia")

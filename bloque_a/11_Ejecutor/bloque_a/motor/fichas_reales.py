@@ -1408,9 +1408,11 @@ def _glm_theta(r: np.ndarray, k: int, tol: float) -> np.ndarray:
     x = r - r.mean()
     def objetivo(t: np.ndarray) -> float:
         return _glm_nll(np.r_[1 - np.sum(t), t], x)
+    def holgura(t: np.ndarray) -> np.float64:                           # T-202: función con tipos en vez de lambda
+        return 1 - np.sum(t)
     inicio = np.full(k, 1 / (k + 1))                                     # θ iguales: arranque fijo, sin azar
     res = optimize.minimize(objetivo, inicio, method="SLSQP", bounds=[(0.0, 1.0)] * k,
-                            constraints=[{"type": "ineq", "fun": lambda t: 1 - np.sum(t)}],
+                            constraints=[{"type": "ineq", "fun": holgura}],
                             options={"ftol": tol})
     if not res.success:
         raise ErrorFicha(f"ALT-DESMOOTH-001: el estimador GLM no converge ({res.message})")

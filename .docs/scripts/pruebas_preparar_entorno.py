@@ -4,6 +4,7 @@ El script calcula la raíz desde su propia carpeta, así que cada prueba lo copi
 `tools/requisitos_entorno.txt` y un `.venv/bin/python` falso que responde a lo que el script le pregunta.
 Uso: .venv/bin/python -m pytest -q .docs/scripts/pruebas_preparar_entorno.py"""
 import os
+import re
 import shutil
 import subprocess
 from pathlib import Path
@@ -84,3 +85,26 @@ def test_h06_argumentos_de_mas_y_python_por_nombre(raiz, tmp_path_factory):
     (carpeta / "python3.11falso").chmod(0o755)
     codigo, salida = correr(raiz, PYTHON_ENTORNO="python3.11falso", PATH=f"{carpeta}:{os.environ['PATH']}")
     assert codigo != 0 and "es Python 3.11" in salida and not (raiz / ".venv").exists()
+
+
+def norma(nombre):
+    """El nombre de un paquete como lo compara pip (PEP 503)."""
+    return re.sub(r"[-_.]+", "-", nombre).lower()
+
+
+def test_t202_el_script_instala_cada_stub_de_tipos_fijado(raiz):
+    """T-202: cada stub de tipos fijado en el fichero real (types-*, *-stubs) está en la orden de instalación del script.
+    Si se fijara uno sin instalarlo, --comprobar fallaría en un entorno nuevo («falta …») y mypy mediría otra cosa."""
+    real = (AQUI.parent.parent / "tools" / "requisitos_entorno.txt").read_text(encoding="utf-8")
+    pins = [x for x in real.splitlines() if x.strip() and not x.startswith("#")]
+    nombres = {norma(x.split("==")[0].strip()) for x in pins}
+    stubs = {n for n in nombres if n.startswith("types-") or n.endswith("-stubs")}
+    assert {"types-pyyaml", "types-jsonschema", "scipy-stubs"} <= stubs
+    (raiz / "tools" / "requisitos_entorno.txt").write_text(real, encoding="utf-8")
+    (raiz / ".venv" / "bin" / "freeze.txt").write_text("\n".join(pins) + "\n", encoding="utf-8")
+    codigo, salida = correr(raiz)
+    assert codigo == 0 and f"entorno conforme: {len(pins)} paquetes" in salida
+    llamadas = (raiz / ".venv" / "bin" / "llamadas.log").read_text(encoding="utf-8").splitlines()
+    orden = next(x for x in llamadas if x.startswith("-m pip install"))
+    assert "-c tools/requisitos_entorno.txt" in orden
+    assert stubs <= {norma(x) for x in orden.split()}

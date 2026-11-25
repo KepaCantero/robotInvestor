@@ -103,9 +103,20 @@ def _raiz_falsa(tmp: Path, pasan: dict[str, int]) -> Path:
     for ej in _lista_bash(CHECK_ALL.read_text(encoding="utf-8"), "EJECUTORES"):
         (tmp / ej / "config").mkdir(parents=True)
         (tmp / ej / "config" / "por_defecto.yaml").write_text("a: 1\n", encoding="utf-8")
+    # T-202 (H-03): el gate ejecuta preparar_entorno.sh --comprobar antes de mypy; la raíz falsa lleva el script, el fichero
+    # de versiones real y un pip freeze que coincide con él, así que el entorno es conforme y mypy se mide.
+    (tmp / ".docs" / "scripts").mkdir(parents=True)
+    for f in ("preparar_entorno.sh", "common.sh"):
+        shutil.copy2(RAIZ / ".docs" / "scripts" / f, tmp / ".docs" / "scripts" / f)
+    shutil.copy(RAIZ / "tools" / "requisitos_entorno.txt", tmp / "tools" / "requisitos_entorno.txt")
     bin_ = tmp / ".venv" / "bin"
     bin_.mkdir(parents=True)
-    (bin_ / "python").write_text(f'#!/usr/bin/env bash\nexec "{sys.executable}" "$@"\n', encoding="utf-8")
+    (bin_ / "freeze.txt").write_text("".join(l + "\n" for l in (RAIZ / "tools" / "requisitos_entorno.txt").read_text(
+        encoding="utf-8").splitlines() if l.strip() and not l.startswith("#")), encoding="utf-8")
+    (bin_ / "python").write_text('#!/usr/bin/env bash\n'
+                                 'if [[ "$1 $2 $3" == "-m pip --version" ]]; then echo "pip 24.0"; exit 0; fi\n'
+                                 'if [[ "$1 $2 $3" == "-m pip freeze" ]]; then cat "$(dirname "$0")/freeze.txt"; exit 0; fi\n'
+                                 f'exec "{sys.executable}" "$@"\n', encoding="utf-8")
     (bin_ / "python").chmod(0o755)
     for h in ("ruff", "mypy", "pytest"):
         (bin_ / h).write_text(HERRAMIENTA_FALSA, encoding="utf-8")

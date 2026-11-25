@@ -1211,7 +1211,9 @@ def f_der_skew(ent: dict, params: dict) -> tuple[dict, list[str]]:
         w_obs = vol * vol * T
         x0 = np.array([float(np.min(w_obs)), float(np.ptp(w_obs) / np.ptp(k)), 0.0,
                        float(k[int(np.argmin(w_obs))]), float(np.std(k))])
-        ajuste = optimize.least_squares(lambda x: _svi(x, k)[0] - w_obs, x0,
+        def residuo(x: np.ndarray) -> np.ndarray:                       # T-202: función con tipos en vez de lambda
+            return _svi(x, k)[0] - w_obs
+        ajuste = optimize.least_squares(residuo, x0,
                                         bounds=([-np.inf, 0, -1, -np.inf, 0], [np.inf, np.inf, 1, np.inf, np.inf]))
         xs = ajuste.x
         nodos = np.sort(np.concatenate([k, (k[1:] + k[:-1]) / 2]))
