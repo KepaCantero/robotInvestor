@@ -117,3 +117,19 @@ def test_vias_de_consultas_y_credenciales(tmp_path, universo):
     b.credenciales.responder({"crd_id": solicitud["crd_id"], "estado": "PROVISTA", "valor": valor}, AS_OF)
     assert b.almacen.leer("HA")[-1]["tipos_dato"] == ["CREDENCIAL"]
     assert not any(v.encode() in p.read_bytes() for p in tmp_path.rglob("*") if p.is_file() for v in (correo, opaco, valor))
+
+
+def test_ct04_compone_el_calendario_y_los_horizontes_en_el_mismo_dia(tmp_path, universo):
+    b = nuevo_bloque(tmp_path, universo)
+    b.fijar_fecha(AS_OF)
+    primero = b.decision({"configuracion": {"dia_hora_entrega": "MIE 08:00", "horizontes": ["H1", "H3"]}}, AS_OF)
+    assert set(primero["aplicado"]) == {"P-01", "P-03"}
+    assert {e["parametro"] for e in primero["rechazos"]} == {"horizontes:FON:H1", "horizontes:INM:H1", "horizontes:ALT:H1"}
+    segundo = b.decision({"configuracion": {"periodicidad": "QUINCENAL", "horizontes": ["H1", "H3"]}}, AS_OF)
+    assert set(segundo["aplicado"]) == {"P-01"}
+    vigente = b.f10("2026-06-06")
+    assert vigente["P-01"] == "QUINCENAL · LUN 07:00 · entrega MIE 08:00"
+    assert vigente["P-03"] == ["H1", "H3"]
+    cambios = [e for e in b.almacen.leer("F10") if e.get("tipo_entrada") == "CFG"]
+    assert [e["param_id"] for e in cambios].count("P-03") == 1
+    assert len([e for e in cambios if e["param_id"] == "P-01"]) == 2
