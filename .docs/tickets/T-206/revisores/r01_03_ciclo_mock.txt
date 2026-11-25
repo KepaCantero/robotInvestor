@@ -1,0 +1,5 @@
+carpeta de trabajo: <scratchpad>/qa206_tmp/qa_t206_r01_03.WciL
+INC- antiguas 2, nuevas 2 (1 de datos; tipos ['OTRO'])
+objetos de las de datos: ['EURUSD=X']
+escaladas en estado: [('DATOS', 'antigua 2')]
+RESULTADO: OK

@@ -257,7 +257,7 @@ class ConsultasBroker:
         msg_id = rev["msg_id"]
         tratamiento = f"relanzar la revisión C2 de {cns_id} (consulta-broker relanzar --cns {cns_id})"
         if not rev["clases"]:   # sin tipo analizado que revisar (RUN- sin tipos): no se lanza un ciclo de todo el alcance
-            self.b.almacen.incidencia("DATOS", f"La revisión C2 de {cns_id} no tiene tipos de activo que revisar", "AG-01",
+            self.b.almacen.incidencia_de_datos(f"La revisión C2 de {cns_id} no tiene tipos de activo que revisar", "AG-01",
                                       tratamiento=f"revisar a mano el alcance de la revisión C2 de {cns_id}", escalado_operador=True)
             return self._anotar_revision(cns_id, msg_id, {"estado": "SIN_ALCANCE"})
         pregunta = (f"Revisión C2 por la respuesta del Broker a {cns_id}: " +
@@ -413,7 +413,7 @@ class ConsultasBroker:
             try:
                 vencida = self._instante(c.get("plazo_respuesta"), plazo=True) <= ahora
             except (ValueError, TypeError):   # T-93 (H-38) y T-103 (H-43): un plazo que ya no se lee o que falta
-                self.b.almacen.incidencia("DATOS", f"Consulta CT-23 {k} con un plazo que no se puede leer ({str(c.get('plazo_respuesta'))[:40]!r}): "
+                self.b.almacen.incidencia_de_datos(f"Consulta CT-23 {k} con un plazo que no se puede leer ({str(c.get('plazo_respuesta'))[:40]!r}): "
                                                    "se da por vencida y el análisis sigue con el supuesto declarado", "AG-01")
                 vencida = True
             if vencida:

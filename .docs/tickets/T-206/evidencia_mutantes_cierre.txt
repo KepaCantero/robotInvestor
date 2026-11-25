@@ -1,0 +1,43 @@
+M1 incidencia sin validar el tipo: MUERTO
+M2 _incidencia_interna sin validar el tipo: MUERTO
+M3 valida después de gastar el contador: MUERTO
+M4 sin comprobar que es texto: MUERTO
+M4b isinstance en vez del tipo exacto (cierre H-02): MUERTO
+M5 el enumerado admite DATOS: MUERTO
+M6 el enumerado pierde ESCRITURA: MUERTO
+M7 los de datos como HERRAMIENTA: MUERTO
+M8 sin categoria DATOS: MUERTO
+M9 el lector no reconoce las antiguas: MUERTO
+M10 el lector no reconoce las nuevas: MUERTO
+M11 el lector no mira tipo_entrada: MUERTO
+M21 el lector toma cualquier tipo con categoria DATOS: MUERTO
+M22 incidencia no comprueba la categoría: MUERTO
+M23 la categoría se admite con cualquier tipo: MUERTO
+M24 la categoría se admite con cualquier valor: MUERTO
+M25 categoría sin tipo exacto: MUERTO
+M26 incidencia no pasa la categoría a la comprobación: MUERTO
+M27 escribir no comprueba una INC- de HA: MUERTO
+M28 escribir no comprueba la categoría de una INC-: MUERTO
+M29 estado no enseña la categoría: MUERTO
+M30 estado enseña categoria en todas: MUERTO
+Q6 incidencia_de_datos cambia la severidad por omisión: MUERTO
+Q14 broker C2 sin alcance pierde su tratamiento: MUERTO
+Q15 broker plazo ilegible cambia de objeto: MUERTO
+Q16 referencia inválida cambia de severidad: MUERTO
+Q18 datos inválidos de un símbolo cambia de severidad: MUERTO
+Q20 CT-19 no atendido cambia de severidad: MUERTO
+Q21 pronóstico no registrable pierde run_id: MUERTO
+Q22 F9 sin fichas cambia de severidad: MUERTO
+Q24 F9 fuente fuera cambia de severidad: MUERTO
+Q25 F9 fuente fuera pierde su tratamiento: MUERTO
+M12 broker: revisión C2 sin alcance escribe DATOS: MUERTO
+M13 broker: plazo ilegible escribe DATOS: MUERTO
+M14 orquestación: referencia inválida escribe DATOS: MUERTO
+M15 orquestación: datos inválidos escribe DATOS: MUERTO
+M16 orquestación: CT-19 no atendido escribe DATOS: MUERTO
+M17 orquestación: pronóstico no registrable escribe DATOS: MUERTO
+M18 F9: sin fichas escribe DATOS: MUERTO
+M19 F9: fuente fuera de F9 escribe DATOS: MUERTO
+M20 F9: la marca antigua no cuenta: MUERTO
+vivos: []
+rc=0

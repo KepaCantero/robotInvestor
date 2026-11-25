@@ -1,0 +1,21 @@
+M1 incidencia sin validar el tipo: MUERTO
+M2 _incidencia_interna sin validar el tipo: MUERTO
+M3 valida después de gastar el contador: MUERTO
+M4 sin comprobar que es texto: VIVO (equivalente)
+M5 el enumerado admite DATOS: MUERTO
+M6 el enumerado pierde ESCRITURA: MUERTO
+M7 los de datos como HERRAMIENTA: MUERTO
+M8 sin categoria DATOS: MUERTO
+M9 el lector no reconoce las antiguas: MUERTO
+M10 el lector no reconoce las nuevas: MUERTO
+M11 el lector no mira tipo_entrada: MUERTO
+M12 broker: revisión C2 sin alcance escribe DATOS: MUERTO
+M13 broker: plazo ilegible escribe DATOS: MUERTO
+M14 orquestación: referencia inválida escribe DATOS: MUERTO
+M15 orquestación: datos inválidos escribe DATOS: MUERTO
+M16 orquestación: CT-19 no atendido escribe DATOS: MUERTO
+M17 orquestación: pronóstico no registrable escribe DATOS: MUERTO
+M18 F9: sin fichas escribe DATOS: MUERTO
+M19 F9: fuente fuera de F9 escribe DATOS: MUERTO
+M20 F9: la marca antigua no cuenta: MUERTO
+vivos: []

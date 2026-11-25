@@ -8,7 +8,7 @@ from pathlib import Path
 
 import pandas as pd
 import pytest
-from bloque_a.almacen import Almacen
+from bloque_a.almacen import Almacen, es_incidencia_de_datos
 from bloque_a.configuracion import RUTA_UNIVERSO_EJEMPLO, cargar_config
 from bloque_a.herramientas.ht01_datos import (
     DatosInvalidos,
@@ -56,7 +56,7 @@ def test_r03_h16_referencia_parada_deja_fuera_los_tipos_que_la_usan(tmp_path):
     assert not altas                                               # ningún pronóstico con la referencia parada
     lim = " ".join(r["paquete"]["limitaciones"])
     assert "referencia de comparación ACWI" in lim and "2025-06-30" in lim
-    assert len([x for x in b.almacen.leer("HA") if x.get("tipo") == "DATOS" and x.get("objeto") == "ACWI"]) == 2
+    assert len([x for x in b.almacen.leer("HA") if es_incidencia_de_datos(x) and x.get("objeto") == "ACWI"]) == 2
 
 
 def test_r03_h16_la_frescura_de_la_referencia_sale_de_la_configuracion(tmp_path):
@@ -173,7 +173,7 @@ def test_r03_h19_la_referencia_guardada_en_una_vigente_se_valida(tmp_path, monke
     monkeypatch.setattr(b, "vigentes", lambda as_of, clase=None: [vigente] if clase == "RV" else [])
     with pytest.raises(DatosInvalidos, match="AGG"):
         b.senales_clase("RV", AS_OF, "RUN-2026-0001")
-    assert [x for x in b.almacen.leer("HA") if x.get("tipo") == "DATOS" and x.get("objeto") == "AGG"]
+    assert [x for x in b.almacen.leer("HA") if es_incidencia_de_datos(x) and x.get("objeto") == "AGG"]
 
 
 def test_r03_h19_una_fuga_de_informacion_en_la_referencia_corta(tmp_path, monkeypatch):

@@ -8,7 +8,7 @@ from pathlib import Path
 
 import pandas as pd
 import pytest
-from bloque_a.almacen import Almacen
+from bloque_a.almacen import Almacen, es_incidencia_de_datos
 from bloque_a.configuracion import RUTA_UNIVERSO_EJEMPLO, cargar_config, max_tokens_de
 from bloque_a.evaluador import Evaluador
 from bloque_a.herramientas.ht01_datos import (
@@ -90,7 +90,7 @@ def test_r01_h01_un_precio_invalido_excluye_y_declara_el_simbolo(tmp_path, monke
     sen, _ = b.senales_clase("DIV", AS_OF, "RUN-2026-0001")
     assert "EURUSD=X" not in sen and sen                                         # b699d4f: se quedaba sin precio, en silencio
     assert b._datos_invalidos[("DIV", "RUN-2026-0001")] == ["EURUSD=X"]
-    assert [x for x in b.almacen.leer("HA") if x.get("tipo") == "DATOS" and x.get("objeto") == "EURUSD=X"]
+    assert [x for x in b.almacen.leer("HA") if es_incidencia_de_datos(x) and x.get("objeto") == "EURUSD=X"]
 
 
 # ---------------------------------------------------------------- H-02 · un CSV ilegible no tumba el ciclo

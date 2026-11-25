@@ -8,6 +8,7 @@ from pathlib import Path
 
 import pandas as pd
 import pytest
+from bloque_a.almacen import es_incidencia_de_datos
 from bloque_a.configuracion import RUTA_UNIVERSO_EJEMPLO
 from bloque_a.herramientas.ht01_datos import (
     DatosInvalidos,
@@ -65,7 +66,7 @@ def test_r02_h12_referencia_mala_degrada_solo_los_tipos_que_la_usan(tmp_path, es
     lim = _limitaciones(r)
     assert "referencia de comparación ACWI" in lim
     assert "Renta variable" in lim and "Índices bursátiles" in lim
-    incs = [x for x in b.almacen.leer("HA") if x.get("tipo") == "DATOS" and x.get("objeto") == "ACWI"]
+    incs = [x for x in b.almacen.leer("HA") if es_incidencia_de_datos(x) and x.get("objeto") == "ACWI"]
     assert len(incs) == 2 and {x["run_id"] for x in incs} == {r["run_id"]}  # una por tipo afectado
 
 
@@ -74,7 +75,7 @@ def test_r02_h12_referencia_sana_no_cambia_nada(tmp_path):
     r = b.ciclo(AS_OF, alcance={"clases": ["RV"]})
     assert r["paquete"]["clases"]["RV"]["opciones"]
     assert "referencia de comparación" not in _limitaciones(r)
-    assert not [x for x in b.almacen.leer("HA") if x.get("tipo") == "DATOS"]
+    assert not [x for x in b.almacen.leer("HA") if es_incidencia_de_datos(x)]
 
 
 def test_r02_h12_subyacente_malo_excluye_solo_su_indicador(tmp_path, monkeypatch):

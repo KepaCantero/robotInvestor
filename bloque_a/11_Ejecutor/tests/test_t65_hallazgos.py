@@ -12,7 +12,7 @@ from pathlib import Path
 import pandas as pd
 import pytest
 import yaml
-from bloque_a.almacen import Almacen
+from bloque_a.almacen import Almacen, es_incidencia_de_datos
 from bloque_a.configuracion import (
     RUTA_CONFIG_POR_DEFECTO,
     RUTA_UNIVERSO_EJEMPLO,
@@ -154,7 +154,7 @@ def test_h10c_datos_invalidos_con_motivo_propio_e_incidencia(tmp_path):
     lagunas = " ".join(r["paquete"]["limitaciones"])
     assert "datos HT-01 inválidos" in lagunas and "USDNEW=X" in lagunas
     assert "USDNEW=X" not in (b._sin_historia.get(("DIV", r["run_id"])) or [])     # antes: «sin datos HT-01»
-    incs = [x for x in b.almacen.leer("HA") if x.get("tipo") == "DATOS" and x.get("objeto") == "USDNEW=X"]
+    incs = [x for x in b.almacen.leer("HA") if es_incidencia_de_datos(x) and x.get("objeto") == "USDNEW=X"]
     assert incs and incs[0]["run_id"] == r["run_id"]
 
 
@@ -226,7 +226,7 @@ def test_h15_cualquier_error_del_proveedor_para_un_simbolo_se_declara(tmp_path, 
     senales, _ = b.senales_clase("DIV", AS_OF, "RUN-2026-0001")
     assert "EURUSD=X" not in senales and senales                     # antes: RuntimeError, el tipo entero sin señales
     assert b._datos_invalidos[("DIV", "RUN-2026-0001")] == ["EURUSD=X"]
-    assert [x for x in b.almacen.leer("HA") if x.get("tipo") == "DATOS" and "RuntimeError" in x.get("detalle", "")]
+    assert [x for x in b.almacen.leer("HA") if es_incidencia_de_datos(x) and "RuntimeError" in x.get("detalle", "")]
 
 
 def test_h15_ht01_rechaza_cierres_no_positivos_y_fechas_duplicadas(tmp_path):

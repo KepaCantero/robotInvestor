@@ -1,0 +1,79 @@
+--- revisores/r01_01_ataques.py (QA r01)
++++ revisores/r01_01_ataques.py (cierre)
+@@ -98,11 +98,21 @@
+                     f"rechazo={rechazo}; tipos en HA={escritos}")
+ 
+     # ---------------------------------------------------------------- 2. lector: solo las de datos (CA-4 «y solo esas»)
++    # Ronda de cierre (implementador, T-206 H-03): la corrección que pide el qa.md hace que `incidencia` rechace la categoría
++    # con otro tipo (TipoIncidenciaNoAdmitido, sin escribir nada); este bloque acepta ese rechazo como OK y el lector se
++    # prueba con la entrada montada a mano. Las comprobaciones no cambian.
+     with tempfile.TemporaryDirectory() as d:
+         a = alm(d)
+-        e = a.incidencia("SEGURIDAD", "credencial en un mensaje", "AG-18", categoria="DATOS")
+-        informe("2 incidencia() acepta categoria DATOS con un tipo que no es OTRO", "categoria" not in e,
+-                f"escrita tipo={e['tipo']} categoria={e.get('categoria')}")
++        a.incidencia("OTRO", "previa")
++        antes = disco(d)
++        try:
++            e = a.incidencia("SEGURIDAD", "credencial en un mensaje", "AG-18", categoria="DATOS")
++        except TipoIncidenciaNoAdmitido:
++            e = None
++        informe("2 incidencia() acepta categoria DATOS con un tipo que no es OTRO", (e is None and disco(d) == antes)
++                or (e is not None and "categoria" not in e),
++                "rechazada sin escribir" if e is None else f"escrita tipo={e['tipo']} categoria={e.get('categoria')}")
++        e = {"tipo_entrada": "INC", "tipo": "SEGURIDAD", "categoria": "DATOS"}
+         informe("2 el lector no toma una SEGURIDAD por incidencia de datos", not es_incidencia_de_datos(e),
+                 f"es_incidencia_de_datos={es_incidencia_de_datos(e)}")
+ 
+@@ -119,12 +129,19 @@
+                 "se escribe" if escrito else "")
+ 
+     # ---------------------------------------------------------------- 4. HA antiguo: abrir, sellar, añadir, reabrir
++    # Ronda de cierre (implementador, T-206 H-04): `escribir` ya rechaza una INC- con DATOS; el HA antiguo se monta como lo
++    # dejaba el ejecutor de antes de T-206, con la comprobación desactivada solo mientras se monta.
+     with tempfile.TemporaryDirectory() as d:
+         a = alm(d)
+-        for i in range(3):
+-            a.escribir("HA", "AG-18", {"tipo_entrada": "INC", "id": a.nuevo_id("INC"), "tipo": "DATOS", "severidad": "Operativa",
+-                                       "objeto": "AG-16", "detalle": f"antigua {i}", "tratamiento": "registrada",
+-                                       **({"fue_no_atendible": "FUE-2026-0001"} if i == 0 else {})})
++        _comprobar = Almacen.__dict__["_comprobar_tipo_incidencia"]
++        Almacen._comprobar_tipo_incidencia = staticmethod(lambda tipo, extra=None: None)
++        try:
++            for i in range(3):
++                a.escribir("HA", "AG-18", {"tipo_entrada": "INC", "id": a.nuevo_id("INC"), "tipo": "DATOS", "severidad": "Operativa",
++                                           "objeto": "AG-16", "detalle": f"antigua {i}", "tratamiento": "registrada",
++                                           **({"fue_no_atendible": "FUE-2026-0001"} if i == 0 else {})})
++        finally:
++            Almacen._comprobar_tipo_incidencia = _comprobar
+         b = alm(d)
+         ok_abre = all(b.verificar_integridad().values())
+         b.incidencia_de_datos("nueva", "AG-16")
+--- revisores/r01_02_mutantes.py (QA r01)
++++ revisores/r01_02_mutantes.py (cierre)
+@@ -27,10 +27,10 @@
+     ("Q3 el error cita el detalle (no solo el tipo)", ALM,
+      "fuera del esquema de HA (4.8: \"", "fuera del esquema de HA {tipo!r} (4.8: \""),
+     ("Q4 la comprobación normaliza mayúsculas y espacios", ALM,
+-     "        if not isinstance(tipo, str) or tipo not in TIPOS_INCIDENCIA:",
+-     "        if not isinstance(tipo, str) or tipo.strip().upper() not in TIPOS_INCIDENCIA:"),
++     "        if type(tipo) is not str or tipo not in TIPOS_INCIDENCIA:",   # cierre (H-02): anclaje nuevo
++     "        if type(tipo) is not str or tipo.strip().upper() not in TIPOS_INCIDENCIA:"),
+     ("Q5 la comprobación con tipo de str (no isinstance) y la pertenencia", ALM,
+-     "        if not isinstance(tipo, str) or tipo not in TIPOS_INCIDENCIA:",
++     "        if type(tipo) is not str or tipo not in TIPOS_INCIDENCIA:",   # cierre (H-02): anclaje nuevo
+      "        if tipo not in TIPOS_INCIDENCIA:"),
+     # incidencia_de_datos: lo que conserva cada camino
+     ("Q6 incidencia_de_datos cambia la severidad por omisión", ALM,
+--- revisores/r01_03_ciclo_mock.sh (QA r01)
++++ revisores/r01_03_ciclo_mock.sh (cierre)
+@@ -30,6 +30,9 @@
+ "$PY" - "$TRAB/estado" <<'EOF'
+ import sys
+ from bloque_a.almacen import Almacen, Reloj
++# Ronda de cierre (implementador, T-206 H-04): `escribir` ya rechaza una INC- con DATOS; se monta como lo dejaba el ejecutor
++# de antes de T-206, con la comprobación desactivada solo en este proceso de montaje
++Almacen._comprobar_tipo_incidencia = staticmethod(lambda tipo, extra=None: None)
+ a = Almacen(sys.argv[1], Reloj()); a.reloj.fijar("2026-05-29")
+ for n, esc in ((1, False), (2, True)):
+     a.escribir("HA", "AG-18", {"tipo_entrada": "INC", "id": a.nuevo_id("INC"), "tipo": "DATOS", "severidad": "Operativa",

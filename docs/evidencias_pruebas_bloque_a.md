@@ -1,6 +1,6 @@
 # Evidencias del Plan de pruebas del Bloque A (Fase 4, T-116)
 
-Generado por `.docs/scripts/evidencias_plan_a.py --ejecutar` el 2026-11-25 sobre el commit `d23afe04`, con el cliente simulado (`MockClient`): sin red, sin clave y sin coste. No se edita a mano: se regenera.
+Generado por `.docs/scripts/evidencias_plan_a.py --ejecutar` el 2026-11-25 sobre el commit `786ad26a`, con el cliente simulado (`MockClient`): sin red, sin clave y sin coste. No se edita a mano: se regenera.
 
 Qué significa cada resultado:
 

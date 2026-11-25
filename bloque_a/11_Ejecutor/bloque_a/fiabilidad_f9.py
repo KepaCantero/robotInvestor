@@ -19,7 +19,7 @@ Lo que hace el ejecutor (determinista, con el cliente simulado o con el real):
 - **Sin duplicados y con reintento.** Una FUE- ya atendida no se vuelve a escribir; una que quedó sin atender (el ciclo cayó o
   el mensaje no cuadró) sale de nuevo en el CT-19 del ciclo siguiente.
 - **FUE- que ya no se puede atender** (r02, H-01). Si la fuente de una FUE- ya no es de F9 (baja R19, borrado de HT-02, versión
-  nueva de F9), el ciclo no la mete en el CT-19: deja una sola incidencia DATOS en HA con la marca `fue_no_atendible` y no
+  nueva de F9), el ciclo no la mete en el CT-19: deja una sola incidencia de datos en HA con la marca `fue_no_atendible` y no
   vuelve a salir; las demás FUE- se atienden.
 - **F9 ilegible** (cierre de la r02, H-08). Si F9 no tiene ninguna ficha cargada, no se marca nada: una incidencia sin marca y
   el reintento en el ciclo siguiente.
@@ -76,14 +76,14 @@ def por_comunicar(almacen, as_of) -> list[dict]:
 
 
 def apartar_no_atendibles(almacen, fues: list[dict], referencias, run_id: str) -> list[dict]:
-    """r02 (H-01): separa las FUE- cuya fuente ya no es de F9. Cada una deja UNA incidencia DATOS en HA con la marca
+    """r02 (H-01): separa las FUE- cuya fuente ya no es de F9. Cada una deja UNA incidencia de datos en HA con la marca
     `fue_no_atendible` (que `por_comunicar` excluye después) y no va en el CT-19; devuelve las demás. Se llama bajo el cerrojo
     del almacén, con la lista que acaba de dar `por_comunicar`.
     Cierre de la QA r02 (H-08): si F9 no tiene ninguna ficha cargada (archivo ausente o ruta mal puesta), no se sabe qué fuente
-    salió de F9: no se marca ninguna, queda una incidencia DATOS sin marca y no hay CT-19 este ciclo (se reintenta en el
+    salió de F9: no se marca ninguna, queda una incidencia de datos sin marca y no hay CT-19 este ciclo (se reintenta en el
     siguiente)."""
     if fues and not (getattr(referencias, "fichas", None) or {}).get("F9"):
-        almacen.incidencia("DATOS", f"F9 no se pudo leer (ninguna ficha cargada): {len(fues)} FUE- sin enviar al Buscador; se "
+        almacen.incidencia_de_datos(f"F9 no se pudo leer (ninguna ficha cargada): {len(fues)} FUE- sin enviar al Buscador; se "
                            "reintentan en el ciclo siguiente", "AG-16", severidad="Operativa", run_id=run_id,
                            tratamiento="sin marca; reintento en el ciclo siguiente")
         return []
@@ -92,7 +92,7 @@ def apartar_no_atendibles(almacen, fues: list[dict], referencias, run_id: str) -
         if fuente_de_opinion_registrada(f.get("ref_id"), referencias):
             quedan.append(f)
             continue
-        almacen.incidencia("DATOS", f"{f.get('fue_id')}: la fuente {f.get('ref_id')!r} ya no es de F9; su fiabilidad no se puede "
+        almacen.incidencia_de_datos(f"{f.get('fue_id')}: la fuente {f.get('ref_id')!r} ya no es de F9; su fiabilidad no se puede "
                            "incorporar y no se vuelve a enviar al Buscador", "AG-16", severidad="Operativa", run_id=run_id,
                            fue_no_atendible=f.get("fue_id"), tratamiento="declarada una vez; excluida de los CT-19 siguientes")
     return quedan

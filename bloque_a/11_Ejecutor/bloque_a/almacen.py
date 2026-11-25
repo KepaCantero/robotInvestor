@@ -52,10 +52,32 @@ CAMPOS_RESOLUCION_F4 = {"prg_id", "tipo_entrada", "resolucion", "estado"}
 TIPOS_F9 = {"FIABILIDAD_MEDIDA"}
 # T-198 r02 (H-02): archivos añadidos al almacén después del sellado; solo estos se sellan vacíos al abrir si no existen
 ARCHIVOS_NUEVOS = ("F9",)
+# T-206: el `tipo` de una incidencia (INC-) es el enumerado del esquema de HA V2.0 (05_Archivos_operativos, «Historial de
+# auditorías», 4.8); es el único sitio del código que lo fija y una prueba lo compara con el esquema. Los problemas de datos
+# (el antiguo «DATOS», que el esquema no admite) son OTRO con `categoria` DATOS (INC-T206-01 [PROPUESTO]).
+TIPOS_INCIDENCIA = ("SEGURIDAD", "MANIPULACION", "CANAL_NO_PREVISTO", "ACCESO_FUERA_DE_MATRIZ", "HERRAMIENTA", "ESCRITURA",
+                    "OTRO")
+TIPO_INCIDENCIA_DATOS = "OTRO"
+CATEGORIA_DATOS = "DATOS"
+
+
+def es_incidencia_de_datos(entrada: dict) -> bool:
+    """T-206: una INC- de HA por un problema de datos, y solo esas: la nueva (la pareja OTRO con `categoria` DATOS) o la de
+    antes de T-206 (`tipo` DATOS, que siguen teniendo los almacenes existentes, append-only). Cierre de la QA r01 (H-03):
+    otro tipo con `categoria` DATOS no cuenta."""
+    if entrada.get("tipo_entrada") != "INC" or entrada.get("tipo") not in (CATEGORIA_DATOS, TIPO_INCIDENCIA_DATOS):
+        return False
+    return (entrada.get("tipo") == CATEGORIA_DATOS
+            or entrada.get("categoria") == CATEGORIA_DATOS)
 
 
 class EscrituraFueraDeReserva(PermissionError):
     pass
+
+
+class TipoIncidenciaNoAdmitido(ValueError):
+    """T-206: una incidencia con un `tipo` fuera del enumerado del esquema de HA (4.8). Se rechaza antes de escribir nada
+    (ni la entrada ni su contador de INC-)."""
 
 
 class PronosticoCongelado(EscrituraFueraDeReserva):
@@ -311,6 +333,12 @@ class Almacen:
         if autor not in PROPIETARIOS[archivo]:
             return f"{autor} no es propietario de escritura de {archivo} (propietarios: {sorted(PROPIETARIOS[archivo])})"
         tipo = entrada.get("tipo_entrada")
+        if archivo == "HA" and tipo == "INC":
+            # T-206, cierre de la QA r01 (H-04): también una INC- montada a mano lleva un tipo del esquema (y su categoría)
+            try:
+                self._comprobar_tipo_incidencia(entrada.get("tipo"), entrada)
+            except TipoIncidenciaNoAdmitido as e:
+                return str(e)
         if archivo == "F9" and tipo not in TIPOS_F9:
             return f"{autor} no puede registrar {tipo} en F9 de la instancia (admitidos: {sorted(TIPOS_F9)})"
         if archivo == "F4":
@@ -412,15 +440,36 @@ class Almacen:
                 self._f4_tipos.setdefault(e["prg_id"], set()).add(e.get("tipo_entrada"))
             return copy.deepcopy(e)
 
+    @staticmethod
+    def _comprobar_tipo_incidencia(tipo, extra: dict | None = None) -> None:
+        """T-206: el `tipo` de una INC- es un texto (exactamente `str`, no una subclase: cierre de la QA r01, H-02) del
+        enumerado del esquema; `categoria`, si la lleva, solo es la pareja OTRO con DATOS (H-03)."""
+        if type(tipo) is not str or tipo not in TIPOS_INCIDENCIA:
+            raise TipoIncidenciaNoAdmitido(f"Tipo de incidencia {str(tipo)[:40]!r} fuera del esquema de HA (4.8: "
+                                           f"{', '.join(TIPOS_INCIDENCIA)}); no se escribe nada")
+        if extra is not None and "categoria" in extra:
+            cat = extra["categoria"]
+            if type(cat) is not str or cat != CATEGORIA_DATOS or tipo != TIPO_INCIDENCIA_DATOS:
+                raise TipoIncidenciaNoAdmitido(f"Categoría {str(cat)[:40]!r} con el tipo {tipo}: solo {TIPO_INCIDENCIA_DATOS} "
+                                               f"lleva categoria {CATEGORIA_DATOS} (incidencia_de_datos); no se escribe nada")
+
     def _incidencia_interna(self, tipo: str, detalle: str, agente: str) -> None:
+        self._comprobar_tipo_incidencia(tipo)   # T-206: antes de pedir el id
         self.escribir("HA", "AG-18", {"tipo_entrada": "INC", "id": self.nuevo_id("INC"), "tipo": tipo,
                                       "severidad": "Material", "objeto": agente, "detalle": detalle,
                                       "tratamiento": "rechazada y registrada", "escalado_operador": True})
 
     def incidencia(self, tipo: str, detalle: str, objeto: str = "", severidad: str = "Material", **extra) -> dict:
+        self._comprobar_tipo_incidencia(tipo, extra)   # T-206: falla cerrado antes de pedir el id (sin contador ni entrada)
         return self.escribir("HA", "AG-18", {"tipo_entrada": "INC", "id": self.nuevo_id("INC"), "tipo": tipo,
                                              "severidad": severidad, "objeto": objeto, "detalle": detalle,
                                              "tratamiento": extra.pop("tratamiento", "registrada"), **extra})
+
+    def incidencia_de_datos(self, detalle: str, objeto: str = "", severidad: str = "Material", **extra) -> dict:
+        """T-206 (INC-T206-01 [PROPUESTO]): incidencia por un dato ausente, inválido o que no cuadra. El esquema de HA no tiene
+        un tipo para eso: va como OTRO y `categoria` DATOS lo conserva (solo la categoría, nunca el valor: regla 4 del
+        esquema). `es_incidencia_de_datos` reconoce estas y las de antes de T-206 (`tipo` DATOS)."""
+        return self.incidencia(TIPO_INCIDENCIA_DATOS, detalle, objeto, severidad, categoria=CATEGORIA_DATOS, **extra)
 
     # ----------------------------------------------------------------------------------------
     # Lectura

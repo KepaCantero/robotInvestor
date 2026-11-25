@@ -1,0 +1,18 @@
+OK       1 tipo nan rechazado sin escribir: rechazo=True; tipos en HA=['OTRO']
+OK       1 tipo inf rechazado sin escribir: rechazo=True; tipos en HA=['OTRO']
+OK       1 tipo bytes rechazado sin escribir: rechazo=True; tipos en HA=['OTRO']
+OK       1 tipo dict rechazado sin escribir: rechazo=True; tipos en HA=['OTRO']
+OK       1 tipo bool rechazado sin escribir: rechazo=True; tipos en HA=['OTRO']
+OK       1 tipo NFD/ancho completo rechazado sin escribir: rechazo=True; tipos en HA=['OTRO']
+OK       1 tipo cero ancho rechazado sin escribir: rechazo=True; tipos en HA=['OTRO']
+OK       1 tipo objeto con == permisivo rechazado sin escribir: rechazo=True; tipos en HA=['OTRO']
+OK       1 tipo str con == permisivo y valor DATOS rechazado sin escribir: rechazo=True; tipos en HA=['OTRO']
+OK       2 incidencia() acepta categoria DATOS con un tipo que no es OTRO: rechazada sin escribir
+OK       2 el lector no toma una SEGURIDAD por incidencia de datos: es_incidencia_de_datos=False
+OK       3 escribir() rechaza una INC- montada a mano con tipo DATOS
+OK       4 HA antiguo con DATOS se abre, se amplía y se reabre íntegro: ['DATOS', 'DATOS', 'DATOS', 'OTRO']
+OK       4 un HA antiguo con el tipo reescrito a mano se detecta
+OK       5 cuatro procesos: 40 INC- de datos, ids contiguos, ningún contador gastado por los rechazos: 40 INC-, último ['INC-2026-0040']
+OK       6 TIPOS_INCIDENCIA es inmutable (tupla)
+
+hallazgos: 0: []

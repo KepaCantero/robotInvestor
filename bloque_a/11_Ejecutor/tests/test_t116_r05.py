@@ -105,7 +105,7 @@ def test_h12_las_incidencias_escaladas_se_ven_en_el_estado_del_operador(tmp_path
         with pytest.raises(CanalNoPrevisto):
             b.mensajeria.crear(contrato, emisor, receptor, {}, run_id="RUN-2026-0001",
                                tipo_mensaje="RETORNO" if contrato == "CT-02" else "ENCARGO")
-    b.almacen.incidencia("DATOS", "una incidencia que no se escala", "AG-20", severidad="Menor")
+    b.almacen.incidencia_de_datos("una incidencia que no se escala", "AG-20", severidad="Menor")
     esc = b.estado()["incidencias_escaladas"]
     assert [(e["tipo"], e["objeto"]) for e in esc] == [("CANAL_NO_PREVISTO", "AG-19"), ("CANAL_NO_PREVISTO", "AG-17")]
     assert all(e["id"].startswith("INC-") and e["fecha"] == AS_OF and "no previsto" in e["detalle"] for e in esc)

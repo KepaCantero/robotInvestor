@@ -402,7 +402,7 @@ class Bloque:
         simbolos, sin_historia, invalidos = [], [], []
         # T-65 (QA r02, H-12): la referencia de comparación del tipo se valida una vez, antes de nada, en la ventana que usan
         # la tasa base y el nivel de referencia. Si no vale, el tipo no se analiza en este ciclo (PARCIAL, declarado, con
-        # incidencia DATOS) y los demás tipos siguen; nunca cifras con una referencia mala ni la caída del ciclo
+        # incidencia de datos) y los demás tipos siguen; nunca cifras con una referencia mala ni la caída del ciclo
         ini_ref = min(pd.Timestamp(ini), pd.Timestamp(as_of) - pd.DateOffset(years=int(parametro(self.cfg, "tasa_base.ventana_anios"))))
         # T-65 (QA r03, H-18): con SUBYACENTE, la referencia guardada en una vigente es la de su indicador y se valida con él
         # (más abajo), no como referencia del tipo
@@ -413,7 +413,7 @@ class Bloque:
         for ref in sorted(r for r in refs_tipo if r and r not in ("CESTA", "SUBYACENTE")):
             motivo = self._referencia_invalida(ref, ini_ref, as_of)
             if motivo:
-                self.almacen.incidencia("DATOS", f"HT-01: referencia de comparación {ref} de {clase} inválida ({motivo[:200]}); "
+                self.almacen.incidencia_de_datos(f"HT-01: referencia de comparación {ref} de {clase} inválida ({motivo[:200]}); "
                                         "tipo no analizado en este ciclo", ref, severidad="Operativa",
                                         tratamiento="tipo de activo PARCIAL y declarado", run_id=run_id)
                 raise DatosInvalidos(f"referencia de comparación {ref} con datos HT-01 inválidos o ausentes ({motivo[:160]}): "
@@ -499,7 +499,7 @@ class Bloque:
         # Símbolos con datos inválidos (en la ventana del lote o en su precio): laguna del tipo e incidencia en HA
         self._datos_invalidos[(clase, run_id)] = [s for s, _ in invalidos]
         for s, motivo in invalidos:
-            self.almacen.incidencia("DATOS", f"HT-01: datos inválidos de {s} ({motivo[:200]}); símbolo excluido del cribado",
+            self.almacen.incidencia_de_datos(f"HT-01: datos inválidos de {s} ({motivo[:200]}); símbolo excluido del cribado",
                                     s, severidad="Operativa", tratamiento="símbolo excluido y declarado como laguna del tipo",
                                     run_id=run_id)
         return {s: t for s, t in tabla.items() if t}, calcs
@@ -816,7 +816,7 @@ class Bloque:
             try:
                 return fiabilidad_f9.atender_ct19(self, msg, as_of, run_id)
             except fiabilidad_f9.FiabilidadNoAtendible as e:
-                self.almacen.incidencia("DATOS", f"CT-19 {msg['msg_id']} no atendido por el Buscador: {e}; F9 sin cambios, "
+                self.almacen.incidencia_de_datos(f"CT-19 {msg['msg_id']} no atendido por el Buscador: {e}; F9 sin cambios, "
                                         "se reintenta en el ciclo siguiente", "AG-16", severidad="Operativa", run_id=run_id)
                 return []
 
@@ -1512,7 +1512,7 @@ class Bloque:
                                                                variables_nivel(self.cfg))
         if motivo is None:
             return "PRONOSTICO_FUENTE"
-        self.almacen.incidencia("DATOS", f"Pronóstico de fuente no registrable ({motivo}): la afirmación «{str(p.get('afirmacion'))[:80]}» "
+        self.almacen.incidencia_de_datos(f"Pronóstico de fuente no registrable ({motivo}): la afirmación «{str(p.get('afirmacion'))[:80]}» "
                                 "queda sin bloque pronostico_fuente y no cuenta para la fiabilidad de la fuente", p.get("origen") or "",
                                 severidad="Menor", run_id=run_id)
         return "PREVISION" if tipo == "PRONOSTICO_FUENTE" else tipo
@@ -2441,7 +2441,9 @@ class Bloque:
                 "certificados_vigentes": [c["id"] for c in self.evaluador.certificados_vigentes()],
                 # T-116 r05 (QA r04, H-12): las incidencias marcadas para escalar (canal no previsto, acceso fuera de matriz)
                 # se ven en el estado que consulta el operador (orden `estado`)
+                # T-206 (cierre de la QA r01, H-06): la categoría (DATOS), solo si la INC- la lleva
                 "incidencias_escaladas": [{"id": e.get("id"), "fecha": e.get("_fecha"), "tipo": e.get("tipo"), "objeto": e.get("objeto"),
-                                           "detalle": e.get("detalle")} for e in self.almacen.leer("HA")
+                                           "detalle": e.get("detalle"), **({"categoria": e["categoria"]} if "categoria" in e else {})}
+                                          for e in self.almacen.leer("HA")
                                           if e.get("tipo_entrada") == "INC" and e.get("escalado_operador") is True],
                 "integridad_archivos": self.almacen.verificar_integridad()}

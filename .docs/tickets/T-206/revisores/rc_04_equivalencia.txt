@@ -1,0 +1,18 @@
+carpeta de trabajo: <scratchpad>/qa206_tmp/t201_equivalencia.I9KK
+ficheros: 89 base, 89 nuevo; idénticos sin normalizar: 63; solo en un lado: []
+distintos tras normalizar: []
+VEREDICTO: EQUIVALENTE
+  OK    F3 liquidez: DISTINTO (esperado DISTINTO)
+  OK    F3 estado de una opción: DISTINTO (esperado DISTINTO)
+  OK    F3 dimensión T «duracion» (entrada de HT-03): DISTINTO (esperado DISTINTO)
+  OK    RC «duracion_sesiones» (resultado del Motor): DISTINTO (esperado DISTINTO)
+  OK    F4 «fecha_congelacion»: DISTINTO (esperado DISTINTO)
+  OK    F3 fecha con hora: DISTINTO (esperado DISTINTO)
+  OK    F11 «_ts»: DISTINTO (esperado DISTINTO)
+  OK    03_peticion.out «timestamp» del acuse: DISTINTO (esperado DISTINTO)
+  OK    consumo.csv reintentos (vecina de la latencia): DISTINTO (esperado DISTINTO)
+  OK    04_consulta.out «latencia_s» (se enmascara): EQUIVALENTE (esperado EQUIVALENTE)
+  OK    F5 «tiempo_respuesta_s» (se enmascara): EQUIVALENTE (esperado EQUIVALENTE)
+  OK    consumo.csv latencia (se enmascara): EQUIVALENTE (esperado EQUIVALENTE)
+SENSIBILIDAD: puntos ciegos: ninguno
+rc=0

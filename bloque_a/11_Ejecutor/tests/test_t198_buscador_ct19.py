@@ -11,7 +11,13 @@ import threading
 import types
 
 import pytest
-from bloque_a.almacen import ARCHIVOS, Almacen, EscrituraFueraDeReserva, Reloj
+from bloque_a.almacen import (
+    ARCHIVOS,
+    Almacen,
+    EscrituraFueraDeReserva,
+    Reloj,
+    es_incidencia_de_datos,
+)
 from bloque_a.configuracion import cargar_config, parametro
 from bloque_a.fiabilidad_f9 import CAMPOS_CT19, FiabilidadNoAtendible
 from conftest import AS_OF, config_pruebas, nuevo_bloque
@@ -421,7 +427,7 @@ def test_r02_h01_una_fue_cuya_fuente_salio_de_f9_no_bloquea_a_las_demas(tmp_path
         b._comunicar_fiabilidad(b.reloj.fecha, f"RUN-2026-000{i + 2}")
     assert [e["ref_id"] for e in _f9(b)] == [FUENTE_A]
     marcas = [e for e in b.almacen.leer("HA") if e.get("fue_no_atendible")]
-    assert [e["fue_no_atendible"] for e in marcas] == [fues[FUENTE_B]["fue_id"]] and marcas[0]["tipo"] == "DATOS"
+    assert [e["fue_no_atendible"] for e in marcas] == [fues[FUENTE_B]["fue_id"]] and es_incidencia_de_datos(marcas[0])
     assert marcas[0]["run_id"] == "RUN-2026-0002" and _inc_no_atendido(b) == []
     ct19 = _ct19_al_buscador(b)
     assert len(ct19) == 1                                   # los ciclos 3 y 4 no reenvían nada
@@ -440,7 +446,7 @@ def test_r02_h01_con_todas_las_fuentes_fuera_de_f9_no_hay_ct19(tmp_path, univers
 
 def test_r02_h02_solo_f9_se_sella_vacio_los_demas_borrados_fallan_cerrado(tmp_path):
     """El script `revisores/r01_sello_generico.py` hecho prueba: HA, F4 o F6 borrados con su sello quitado no abren."""
-    for archivo, autor, entrada in (("HA", "AG-18", {"tipo_entrada": "INC", "id": "INC-2026-0001"}),
+    for archivo, autor, entrada in (("HA", "AG-18", {"tipo_entrada": "INC", "id": "INC-2026-0001", "tipo": "OTRO"}),   # T-206 (H-04)
                                     ("F4", "AG-10", {"tipo_entrada": "ALTA", "prg_id": "PRG-2026-0001"}),
                                     ("F6", "AG-20", {"tipo_entrada": "FUE", "id": "FUE-2026-0001"})):
         carpeta = tmp_path / archivo

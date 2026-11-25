@@ -10,7 +10,7 @@
 """
 import pandas as pd
 import pytest
-from bloque_a.almacen import Almacen
+from bloque_a.almacen import Almacen, es_incidencia_de_datos
 from bloque_a.configuracion import parametro
 from bloque_a.evaluador import Evaluador, motivo_pronostico_fuente_no_registrable
 from bloque_a.herramientas.ht01_datos import ProveedorCSV
@@ -153,7 +153,7 @@ def test_r02_h01_un_bloque_no_registrable_no_entra_y_queda_en_ha(tmp_path, unive
     b.ciclo(AS_OF, alcance={"clases": ["RV"]})
     clm = [c for c in b.almacen.estado("F2", clave="clm_id").values() if c.get("tipo_entrada") == "CLM"]
     assert clm and not [c for c in clm if c.get("pronostico_fuente") or c["tipo_afirmacion"] == "PRONOSTICO_FUENTE"]
-    incs = [e["detalle"] for e in b.almacen.leer("HA") if e.get("tipo") == "DATOS" and "Pronóstico de fuente no registrable" in e.get("detalle", "")]
+    incs = [e["detalle"] for e in b.almacen.leer("HA") if es_incidencia_de_datos(e) and "Pronóstico de fuente no registrable" in e.get("detalle", "")]
     assert incs and all("posterior al registro" in d or "no es la fuente de la pieza" in d for d in incs)
 
 

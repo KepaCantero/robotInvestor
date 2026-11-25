@@ -11,7 +11,7 @@ import string
 import urllib.parse
 
 import pytest
-from bloque_a.almacen import Almacen
+from bloque_a.almacen import Almacen, es_incidencia_de_datos
 from bloque_a.contratos import contiene_credenciales
 from bloque_a.llm import contenido_sensible
 from conftest import nuevo_bloque
@@ -110,7 +110,7 @@ def test_h43_una_consulta_sin_plazo_vence_con_incidencia(tmp_path, universo):
                                        "estado": "ENVIADA", "modo": "BLOQUEANTE", "clases": ["RV"],
                                        "preguntas": [{"texto": "¿RV?", "supuesto_declarado": "esperar"}]})
     assert b.consultas.vencer("2026-06-06T09:00") == ["CNS-2026-9999"]
-    assert any("CNS-2026-9999" in str(e.get("detalle")) and e.get("tipo") == "DATOS" for e in b.almacen.leer("HA"))
+    assert any("CNS-2026-9999" in str(e.get("detalle")) and es_incidencia_de_datos(e) for e in b.almacen.leer("HA"))
     assert b.consultas.vencer("2026-06-07T09:00") == []
 
 
