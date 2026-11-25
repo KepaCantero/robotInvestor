@@ -465,7 +465,7 @@ evaluacion:
   # Recalibración de los pesos de RK (Anexo A, P-11): paso por propuesta y bandas ±0,05 por trimestre y ±0,15 en total
   # (T-65, CS-10 de T-53). `dif_ic_min`: diferencia mínima de capacidad ordenadora (IC de Spearman) entre A y E para
   # proponer un ajuste, y `meses_sombra`: duración de la sombra; ninguno figura en el Anexo A ([PROPUESTO], técnico)
-  recalibracion_rk: {paso: 0.05, banda_trimestral: 0.05, banda_total: 0.15, dif_ic_min: 0.10, meses_sombra: 3}
+  recalibracion_rk: {paso: 0.05, banda_trimestral: 0.05, banda_total: 0.15, dif_ic_min: 0.10, meses_sombra: 3, p_reversion: 0.10} # p de reversión: Evaluador V5.0 §8.
   # T-176 (PB-36) · Bandas de los parámetros CALIBRABLES de F10 que el Evaluador puede proponer ajustar (`proponer_ajuste`).
   # P-09, umbrales de elegibilidad: Anexo A, «±5/trimestre; ±10 total» (cada umbral; esquema F10 4.3). P-05, candidatas
   # máximas tras cribado: el Documento 0 no le da banda (esquema F10 4.3: PENDIENTE_OPERADOR); mientras el operador no la

@@ -423,6 +423,10 @@ def motivo_pronostico_fuente_no_registrable(pf, fuente, registro, referencias, v
     return None
 
 
+class ComparacionSombraNoDisponible(RuntimeError):
+    """Se aplaza la decisión del AJU; C5 aún puede publicar otras novedades."""
+
+
 class Evaluador:
     def __init__(self, almacen, proveedor, motor, cfg: dict, universo: pd.DataFrame, referencias=None) -> None:
         lecciones_por_encargo(cfg)   # T-122: una configuración mal formada falla al crear el Evaluador, no a mitad de ciclo
@@ -750,6 +754,8 @@ class Evaluador:
                                                      "log_ref": -math.log(min(max(pr if o else 1 - pr, 0.01), 0.99))},
                                     "calc_id": calc_id if r["fuga"] == "SUPERADA" else None, "fuga_tasa_base": r["fuga_base"], "comprobacion_fuga": r["fuga"]}}
             self.almacen.escribir("F4", "AG-20", e)
+            if (e.get("resolucion") or {}).get("fuga_tasa_base"):
+                self._avisar_fuga(p["prg_id"])
             resueltos.append({**p, **e})
         self.almacen.escribir("F6", "AG-20", {"tipo_entrada": "RES", "id": f"RES-{as_of.date()}-{self.almacen.nuevo_id('RESL')[-4:]}",
                                               "fecha": str(as_of.date()),
@@ -1757,15 +1763,39 @@ class Evaluador:
             aju = self.ajuste_en_sombra(as_of)
             if not aju or not aju.get("sombra_hasta") or str(as_of)[:10] < aju["sombra_hasta"]:
                 return None
-            cierre = comparar(self, aju, as_of)
+            try:
+                cierre = comparar(self, aju, as_of)
+            except Exception as exc:
+                from .respuesta_final import para_la_consulta
+                if para_la_consulta(self.almacen, exc):
+                    raise
+                raise ComparacionSombraNoDisponible("No se pudo comparar la sombra") from exc
             return self.almacen.escribir("F6", "AG-20", {"tipo_entrada": "AJU", "id": aju["id"],
                                          "fecha_cierre": str(as_of)[:10], **cierre})
+
+    def _avisar_fuga(self, prg_id):
+        self.almacen.incidencia("OTRO", "Fuga detectada en la tasa base del pronóstico", prg_id,
+                                severidad="Operativa", tratamiento="resolución FALLIDA; corrección en C5",
+                                fuga_detectada=prg_id, comunicado_a=["AG-18"])
+
+    def _comunicar_correccion(self, correccion):
+        self.almacen.escribir("HA", "AG-18", {"tipo_entrada": "COR", "id": correccion["id"],
+            "entrada_corregida": correccion["prg_id"], "correccion_f6": correccion["id"],
+            "motivo": "Fuga en la tasa base; referencia y puntuaciones recalculadas al corte de emisión",
+            "comunicado_a": ["AG-18"]})
 
     def corregir_fugas(self, as_of, run_id):
         with self.almacen._transaccion():
             previas = self.almacen.estado("F6", as_of, clave="prg_corregido")
+            avisadas = self.almacen.estado("HA", as_of, clave="fuga_detectada")
+            comunicadas = self.almacen.estado("HA", as_of, clave="correccion_f6")
+            for correccion in previas.values():
+                if correccion["id"] not in comunicadas:
+                    self._comunicar_correccion(correccion)
             for p in self.almacen.estado("F4", as_of).values():
                 r = p.get("resolucion") or {}
+                if r.get("fuga_tasa_base") and p["prg_id"] not in avisadas:
+                    self._avisar_fuga(p["prg_id"])
                 if not r.get("fuga_tasa_base") or p["prg_id"] in previas:
                     continue
                 try:
@@ -1773,13 +1803,16 @@ class Evaluador:
                                             sesiones_horizonte(self.cfg, p["horizonte"]), p["sentido"] == "POSITIVO",
                                             p["fecha_emision"], run_id)
                 except DatosNoDisponibles:
+                    self.almacen.incidencia("HERRAMIENTA", "Pendiente la corrección de la fuga por falta de datos históricos",
+                                            p["prg_id"], severidad="Operativa", comunicado_a=["AG-18"])
                     continue
                 o, pr = r["resultado_binario"], limpia["valor_o_prob"]
                 puntos = {**r["puntuaciones"], "brier_ref": (pr - o) ** 2,
                           "log_ref": -math.log(min(max(pr if o else 1 - pr, 0.01), 0.99))}
-                self.almacen.escribir("F6", "AG-20", {"tipo_entrada": "CORRECCION_FUGA", "id": self.almacen.nuevo_id("COR"),
+                correccion = self.almacen.escribir("F6", "AG-20", {"tipo_entrada": "CORRECCION_FUGA", "id": self.almacen.nuevo_id("COR"),
                     "prg_id": p["prg_id"], "prg_corregido": p["prg_id"], "original": "FALLIDA", "comprobacion_fuga": "SUPERADA",
                     "referencia_limpia": limpia, "fecha_corte": p["fecha_emision"], "puntuaciones": puntos})
+                self._comunicar_correccion(correccion)
 
     def ajuste_en_sombra(self, as_of) -> dict | None:
         for a in self.almacen.estado("F6", as_of, clave="id").values():
@@ -2146,8 +2179,14 @@ class Evaluador:
         comparacion = self.comparar_decisiones_broker(as_of)
         if comparacion:
             lecciones.append(comparacion)
-        cierre_sombra = self.cerrar_sombra(as_of)
-        aju = cierre_sombra or self.recalibrar(as_of, run_id)
+        try:
+            cierre_sombra = self.cerrar_sombra(as_of)
+        except ComparacionSombraNoDisponible:
+            self.almacen.incidencia("HERRAMIENTA", "No se pudo evaluar el cierre de sombra en este ciclo", "AG-20",
+                                    severidad="Operativa")
+            aju = None
+        else:
+            aju = cierre_sombra or self.recalibrar(as_of, run_id)
         degradacion_h5 = self.aplicar_degradacion_h5(as_of, run_id)
         try:
             degradacion_dm = self.aplicar_degradacion_dm(as_of, run_id)   # T-173 (PB-50)

@@ -941,7 +941,9 @@ El Orquestador retiene la entrega cuando HT-09 no puede ejecutarse. El historial
 
 ### INC-T192-01 [PROPUESTO] · Evaluación del ajuste antes de aplicarlo
 
-Se evalúan ordenaciones observadas y resultados disponibles antes del cierre. Una sombra sin muestra suficiente se retira. Confirmar una propuesta en F6 no autoriza a relajar parámetros de producción. El estudio no sustituye a un proveedor con vintages históricos.
+El mínimo del Anexo A se cuenta en pronósticos pareados resueltos. Cada correlación compara dos ordenaciones dentro de la misma clase, horizonte y RUN entregado. La DM-HLN usa la media por fecha y necesita al menos tres fechas con correlaciones definidas. El umbral propio `evaluacion.recalibracion_rk.p_reversion` corresponde al §8 del Evaluador. La única métrica de rendimiento comparada es la capacidad ordenadora (IC). Un IC inferior también implica reversión. El número de cambios top-3 describe las decisiones y queda en `resultado_sombra`. PA-10 reserva la aplicación a producción al operador.
+
+Para una tasa base contaminada, F6 conserva una entrada propuesta `CORRECCION_FUGA` con identificador COR, PRG afectado, corte de emisión, referencia RI-TB limpia con su CALC, comprobación SUPERADA y puntuaciones corregidas. F4 conserva el original FALLIDA. HA conserva la incidencia por cada PRG y una corrección COR comunicada a AG-18. Ante datos históricos insuficientes, la referencia sigue excluida y C5 vuelve a intentarlo.
 
 ### INC-T193-01 [PROPUESTO] · Objetivo temporal para la ingesta
 
